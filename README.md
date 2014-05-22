@@ -20,7 +20,7 @@ Technologies: MPI, OpenMP
 
 Branch | Browse | HTTPS | SSH
 --- | --- | --- | ---
- Stable | https://github.com/GeneAssembly/biosal/tree/master | https://github.com/sebhtml/biosal.git | git@github.com:sebhtml/biosal.git
+ Stable | https://github.com/GeneAssembly/biosal/tree/master | https://github.com/GeneAssembly/biosal.git | 
  Seb (development) | https://github.com/sebhtml/biosal/tree/energy | https://github.com/sebhtml/biosal.git | git@github.com:sebhtml/biosal.git
  Fangfang (development) | - | -
 
