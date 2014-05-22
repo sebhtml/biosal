@@ -12,7 +12,7 @@ LIBRARY_TEST=test/interface.o test/mock_actor.o
 %.o: %.c
 #$(Q)$(ECHO) "  CC $@"
 	$(Q)$(CC) $(CFLAGS) -c $< -o $@
-	
+
 test_mock: $(LIBRARY_TEST) $(OBJECTS)
 	$(CC) $(CFLAGS) $^ -o $@
 
