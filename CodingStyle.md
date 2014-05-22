@@ -10,7 +10,4 @@ struct types are defined with typedef and their names end with _t.
 
 The name of function types end with  *_fn_t
 
-# License (see LICENSE.md)
-
-http://opensource.org/licenses/BSD-2-Clause
 
