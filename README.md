@@ -1,19 +1,20 @@
+biosal is a distributed BIOlogical Sequence Analysis Library.
+
+This is a work in progress.
+
+# Technologies
+
 Name: biosal
 Language: C99
 Model: actor model
 Technologies: MPI, OpenMP
 
-biosal is a distributed BIOlogical Sequence Analysis Library.
-
-This is a work in progress.
-
 # Actor model links
 
-- [http://en.wikipedia.org/wiki/Actor_model Actor model]
+- [Actor model](http://en.wikipedia.org/wiki/Actor_model)
 - [Actors: a model of concurrent computation in distributed systems](http://dl.acm.org/citation.cfm?id=7929)
-- [http://dl.acm.org/citation.cfm?id=1624804 A universal modular ACTOR for malism for  artif icial intelligence]
-- [http://lambda-the-ultimate.org/node/4683 Why say Actor Model instead of message passing?]
-
+- [A universal modular ACTOR for malism for  artif icial intelligence](http://dl.acm.org/citation.cfm?id=1624804)
+- [Why say Actor Model instead of message passing?](http://lambda-the-ultimate.org/node/4683)
 
 # Branches
 
@@ -24,5 +25,5 @@ This is a work in progress.
 
 # License (see LICENSE.md)
 
-http://opensource.org/licenses/BSD-2-Clause
+[The BSD 2-Clause License](http://opensource.org/licenses/BSD-2-Clause)
 
