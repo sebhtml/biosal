@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-void bsal_node_spawn_actor(struct bsal_node *node, struct bsal_actor *actor)
+void bsal_node_spawn(struct bsal_node *node, struct bsal_actor *actor)
 {
 
     struct bsal_actor *copy;
@@ -22,6 +22,7 @@ void bsal_node_spawn_actor(struct bsal_node *node, struct bsal_actor *actor)
     name = bsal_node_assign_name(node);
 
     bsal_actor_set_name(copy,  name);
+    bsal_actor_set_node(copy, node);
 
     /* bsal_actor_print(copy); */
 
@@ -30,7 +31,7 @@ void bsal_node_spawn_actor(struct bsal_node *node, struct bsal_actor *actor)
 
 int bsal_node_assign_name(struct bsal_node *node)
 {
-    return node->rank + node->ranks * node->actor_count;
+    return node->rank + node->size * node->actor_count;
 }
 
 /*
@@ -53,7 +54,7 @@ void bsal_node_construct(struct bsal_node *node, int threads,  int *argc,  char 
 
     /* printf("bsal_node_construct !\n"); */
     node->rank = rank;
-    node->ranks = ranks;
+    node->size = ranks;
     node->threads = threads;
 
     node->actors = NULL;
@@ -61,8 +62,8 @@ void bsal_node_construct(struct bsal_node *node, int threads,  int *argc,  char 
 
     printf("bsal_node_construct Node # %i is online with %i threads"
                     ", the system contains %i nodes (%i threads)\n",
-                    node->rank, node->threads, node->ranks,
-                    node->ranks * node->threads);
+                    node->rank, node->threads, node->size,
+                    node->size * node->threads);
 }
 
 void bsal_node_destruct(struct bsal_node *node)
@@ -86,19 +87,49 @@ void bsal_node_start(struct bsal_node *node)
         int source = name;
 
         struct bsal_message message;
-        bsal_message_construct(&message, source, name);
-        bsal_node_send(node, name, &message);
+        bsal_message_construct(&message, BSAL_START, source, name, 0, NULL);
+        bsal_node_send(node, &message);
         bsal_message_destruct(&message);
     }
 }
 
-void bsal_node_send(struct bsal_node *node, int name, struct bsal_message *message)
+void bsal_node_send(struct bsal_node *node, struct bsal_message *message)
+{
+        int name;
+        int rank;
+
+        name = bsal_message_destination(message);
+        rank = bsal_node_actor_rank(node, name);
+
+        if (rank == node->rank) {
+            bsal_node_send_here(node, message);
+        } else {
+            bsal_node_send_elsewhere(node, message);
+        }
+}
+
+void bsal_node_send_here(struct bsal_node *node, struct bsal_message *message)
+{
+    bsal_node_receive(node, message);
+}
+
+void bsal_node_send_elsewhere(struct bsal_node *node, struct bsal_message *message)
+{
+    /* TODO to implement */
+}
+
+void bsal_node_receive(struct bsal_node *node, struct bsal_message *message)
 {
         struct bsal_actor *actor;
         bsal_actor_receive_fn_t receive;
         int index;
+        int name;
+        int rank;
 
-        index = bsal_node_get_index(node, name);
+        rank = node->rank;
+        name = bsal_message_destination(message);
+
+        index = bsal_node_actor_index(node, rank, name);
         actor = node->actors + index;
 
         /* bsal_actor_print(actor); */
@@ -109,7 +140,22 @@ void bsal_node_send(struct bsal_node *node, int name, struct bsal_message *messa
         receive(actor, message);
 }
 
-int bsal_node_get_index(struct bsal_node *node, int name)
+int bsal_node_actor_index(struct bsal_node *node, int rank, int name)
 {
-    return (name - node->rank) / node->ranks;
+    return (name - rank) / node->size;
+}
+
+int bsal_node_actor_rank(struct bsal_node *node, int name)
+{
+    return name % node->size;
+}
+
+int bsal_node_rank(struct bsal_node *node)
+{
+    return node->rank;
+}
+
+int bsal_node_size(struct bsal_node *node)
+{
+    return node->size;
 }

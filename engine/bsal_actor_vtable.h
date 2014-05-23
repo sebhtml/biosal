@@ -1,7 +1,6 @@
 
-
-#ifndef _BIOSAL_ACTOR_VTABLE_H
-#define _BIOSAL_ACTOR_VTABLE_H
+#ifndef _BSAL_ACTOR_VTABLE_H
+#define _BSAL_ACTOR_VTABLE_H
 
 struct bsal_actor;
 struct bsal_message;

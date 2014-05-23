@@ -28,16 +28,32 @@ void mock_actor_destruct(struct bsal_actor *actor)
 
 void mock_actor_receive(struct bsal_actor *actor, struct bsal_message *message)
 {
+    int tag;
+
+    tag = bsal_message_tag(message);
+
+    if (tag == BSAL_START) {
+        mock_actor_start(actor, message);
+    }
+}
+
+void mock_actor_start(struct bsal_actor *actor, struct bsal_message *message)
+{
     struct mock_actor *mock;
     int source;
     int name;
     int destination;
+    int tag;
 
-    mock = (struct mock_actor *)bsal_actor_actor(actor);
+    tag = bsal_message_tag(message);
+    source = bsal_message_source(message);
+    destination = bsal_message_destination(message);
+
     name = bsal_actor_name(actor);
-    source = bsal_message_get_source_actor(message);
-    destination = bsal_message_get_destination_actor(message);
+    mock = (struct mock_actor *)bsal_actor_actor(actor);
 
-    printf("Actor #%i (value: %i) received message from source %i, destination %i\n",
-            name, mock->value, source, destination);
+    printf("Actor #%i (value: %i) received message (tag: %i)"
+                    " from source %i, destination %i\n",
+            name, mock->value, tag, source, destination);
+
 }

@@ -1,6 +1,6 @@
 
-#ifndef _SAL_MESSAGE_H
-#define _SAL_MESSAGE_H
+#ifndef _BSAL_MESSAGE_H
+#define _BSAL_MESSAGE_H
 
 struct bsal_message {
     int source_actor;
@@ -9,15 +9,23 @@ struct bsal_message {
     int destination_rank;
     int routing_source;
     int routing_destination;
+    int tag;
+    char *buffer;
+    int bytes;
 };
 typedef struct bsal_message bsal_message_t;
 
-void bsal_message_construct(struct bsal_message *message, int source, int destination);
+void bsal_message_construct(struct bsal_message *message, int tag,
+                int source, int destination, int bytes, char *buffer);
 void bsal_message_destruct(struct bsal_message *message);
 
-int bsal_message_get_source_actor(struct bsal_message *message);
-int bsal_message_get_destination_actor(struct bsal_message *message);
-int bsal_message_get_source_rank(struct bsal_message *message);
-int bsal_message_get_destination_rank(struct bsal_message *message);
+int bsal_message_source(struct bsal_message *message);
+int bsal_message_destination(struct bsal_message *message);
+int bsal_message_source_rank(struct bsal_message *message);
+int bsal_message_destination_rank(struct bsal_message *message);
+int bsal_message_tag(struct bsal_message *message);
+
+void bsal_message_set_source(struct bsal_message *message, int source);
+void bsal_message_set_destination(struct bsal_message *message, int destination);
 
 #endif

@@ -1,6 +1,5 @@
 
 #include "bsal_actor_vtable.h"
-
 #include <stdlib.h>
 
 void bsal_actor_vtable_construct(struct bsal_actor_vtable *vtable, bsal_actor_construct_fn_t construct,
