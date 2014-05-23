@@ -8,8 +8,16 @@
 void bsal_actor_construct(struct bsal_actor *bsal_actor, void *actor, bsal_receive_fn_t receive)
 {
     bsal_actor->actor = actor;
+    bsal_actor->name = -1;
+
     bsal_actor->receive = receive;
 
+    /*
+    TODO: use a vtable... (where do I allocate memory for  the vtable ?)
+    struct bsal_actor_vtable *vtable = ...;
+    bsal_actor_vtable_construct(vtable,  receive);
+    bsal_actor->vtable = vtable;
+    */
     /* printf("bsal_actor_construct %p %p %p\n", (void*)bsal_actor, (void*)actor, (void*)receive); */
 }
 
@@ -34,6 +42,7 @@ bsal_receive_fn_t bsal_actor_handler(struct bsal_actor *bsal_actor)
     /* printf("bsal_actor_handler %p %p\n", (void*)bsal_actor, (void*)bsal_actor->receive); */
 
     return bsal_actor->receive;
+    /* return bsal_actor_vtable_receive(bsal_actor->vtable); */
 }
 
 void bsal_actor_set_name(struct bsal_actor *actor, int name)

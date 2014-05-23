@@ -4,18 +4,13 @@
 #define _BIOSAL_ACTOR_H
 
 #include "bsal_message.h"
-
-struct bsal_actor;
-
-typedef void (*bsal_receive_fn_t)(
-    struct bsal_actor *actor,
-    struct bsal_message *message
-);
+#include "bsal_actor_vtable.h"
 
 /**
  * TODO: the actor attribute should be a void *
  */
 struct bsal_actor {
+    /* bsal_actor_vtable *vtable; */
     bsal_receive_fn_t receive;
     void *actor;
     int name;
