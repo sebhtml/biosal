@@ -20,3 +20,7 @@ test_mock: $(LIBRARY_TEST) $(OBJECTS)
 clean:
 	$(Q)$(ECHO) "  RM"
 	$(Q)$(RM) $(LIBRARY_TEST) $(OBJECTS) test_mock
+
+mock:
+	./scripts/build-dev.sh
+	./test_mock

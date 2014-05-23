@@ -5,17 +5,25 @@
 #include "mock_actor.h"
 
 struct bsal_actor_vtable mock_actor_vtable = {
+    .construct = mock_actor_construct,
+    .destruct = mock_actor_destruct,
     .receive = mock_actor_receive
 };
 
-void mock_actor_construct(struct mock_actor *actor)
+void mock_actor_construct(struct bsal_actor *actor)
 {
-    actor->value = 42;
+    struct mock_actor *mock;
+    mock = (struct mock_actor *)bsal_actor_actor(actor);
+
+    mock->value = 42;
 }
 
-void mock_actor_destruct(struct mock_actor *actor)
+void mock_actor_destruct(struct bsal_actor *actor)
 {
-    actor->value = -1;
+    struct mock_actor *mock;
+    mock = (struct mock_actor *)bsal_actor_actor(actor);
+
+    mock->value = -1;
 }
 
 void mock_actor_receive(struct bsal_actor *actor, struct bsal_message *message)

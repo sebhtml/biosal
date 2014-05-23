@@ -6,6 +6,8 @@
 
 void bsal_actor_construct(struct bsal_actor *bsal_actor, void *actor, struct bsal_actor_vtable *vtable)
 {
+    bsal_actor_construct_fn_t construct;
+
     bsal_actor->actor = actor;
     bsal_actor->name = -1;
 
@@ -20,10 +22,20 @@ void bsal_actor_construct(struct bsal_actor *bsal_actor, void *actor, struct bsa
     bsal_actor->vtable = vtable;
 
     /* printf("bsal_actor_construct %p %p %p\n", (void*)bsal_actor, (void*)actor, (void*)receive); */
+
+    /* call the specialized constructor too. */
+    construct = bsal_actor_get_construct(bsal_actor);
+    construct(bsal_actor);
 }
 
 void bsal_actor_destruct(struct bsal_actor *bsal_actor)
 {
+    bsal_actor_destruct_fn_t destruct;
+
+    /* call the specialized destructor */
+    destruct = bsal_actor_get_destruct(bsal_actor);
+    destruct(bsal_actor);
+
     bsal_actor->actor = NULL;
     bsal_actor->name = -1;
 }
@@ -38,12 +50,12 @@ void *bsal_actor_actor(struct bsal_actor *bsal_actor)
     return bsal_actor->actor;
 }
 
-bsal_receive_fn_t bsal_actor_handler(struct bsal_actor *bsal_actor)
+bsal_actor_receive_fn_t bsal_actor_get_receive(struct bsal_actor *bsal_actor)
 {
     /* printf("bsal_actor_handler %p %p\n", (void*)bsal_actor, (void*)bsal_actor->receive); */
 
     /* return bsal_actor->receive; */
-    return bsal_actor_vtable_receive(bsal_actor->vtable);
+    return bsal_actor_vtable_get_receive(bsal_actor->vtable);
 }
 
 void bsal_actor_set_name(struct bsal_actor *actor, int name)
@@ -59,4 +71,14 @@ void bsal_actor_print(struct bsal_actor *actor)
                     (void*)actor, (void*)bsal_actor_actor(actor),
                     (void*)bsal_actor_handler(actor));
                     */
+}
+
+bsal_actor_construct_fn_t bsal_actor_get_construct(struct bsal_actor *actor)
+{
+    return bsal_actor_vtable_get_construct(actor->vtable);
+}
+
+bsal_actor_destruct_fn_t bsal_actor_get_destruct(struct bsal_actor *actor)
+{
+    return bsal_actor_vtable_get_destruct(actor->vtable);
 }
