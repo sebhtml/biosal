@@ -2,6 +2,6 @@
 
 struct graph {
 
-	struct biosal *biosal;
+    struct biosal *biosal;
 
 };

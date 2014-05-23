@@ -2,11 +2,11 @@
 #include "bsal_actor.h"
 
 struct bsal_node {
-	int rank;
-	int ranks;
-	int threads;
+    int rank;
+    int ranks;
+    int threads;
 
-	struct bsal_actor *actors;
+    struct bsal_actor *actors;
     int actor_count;
 };
 

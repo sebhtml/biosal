@@ -2,7 +2,7 @@
 #include <engine/bsal_actor.h>
 
 struct mock_actor {
-	int value;
+    int value;
 };
 
 void mock_actor_construct(struct mock_actor *actor);

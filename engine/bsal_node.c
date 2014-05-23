@@ -12,7 +12,7 @@ void bsal_node_spawn_actor(struct bsal_node *node, struct bsal_actor *actor)
     int name;
 
     if (node->actors == NULL) {
-            node->actors = (struct bsal_actor*)malloc(10 * sizeof(struct bsal_actor));
+        node->actors = (struct bsal_actor*)malloc(10 * sizeof(struct bsal_actor));
     }
 
     /* do a copy of the actor wrapper */
