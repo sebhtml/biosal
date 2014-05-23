@@ -19,6 +19,7 @@ struct bsal_actor {
     bsal_actor_receive_fn_t receive;
     void *actor;
     int name;
+    int dead;
     struct bsal_node *node;
 };
 typedef struct bsal_actor bsal_actor_t;
@@ -33,6 +34,8 @@ void bsal_actor_set_name(struct bsal_actor *actor, int name);
 void bsal_actor_set_node(struct bsal_actor *actor, struct bsal_node *node);
 void bsal_actor_print(struct bsal_actor *actor);
 int bsal_actor_size(struct bsal_actor *actor);
+int bsal_actor_dead(struct bsal_actor *actor);
+void bsal_actor_die(struct bsal_actor *actor);
 
 bsal_actor_construct_fn_t bsal_actor_get_construct(struct bsal_actor *actor);
 bsal_actor_destruct_fn_t bsal_actor_get_destruct(struct bsal_actor *actor);

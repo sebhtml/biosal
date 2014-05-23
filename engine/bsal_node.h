@@ -9,6 +9,8 @@ struct bsal_node {
 
     struct bsal_actor *actors;
     int actor_count;
+    int dead_actors;
+    int alive_actors;
 
 	MPI_Comm comm;
 };

@@ -58,6 +58,10 @@ void mock_start(struct bsal_actor *actor, struct bsal_message *message)
             name, mock->value, tag, source, destination);
 
     mock_spawn_children(actor);
+
+    printf("mock_start actor %i dies\n", name);
+    mock_destruct(actor);
+    bsal_actor_die(actor);
 }
 
 void mock_spawn_children(struct bsal_actor *actor)

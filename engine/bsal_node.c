@@ -34,6 +34,9 @@ int bsal_node_spawn(struct bsal_node *node, void *actor,
     /* bsal_actor_print(copy); */
 
     node->actor_count++;
+    node->alive_actors++;
+
+    /* printf("bsal_node_spawn alive %i\n", node->alive_actors); */
 
     return name;
 }
@@ -68,6 +71,8 @@ void bsal_node_construct(struct bsal_node *node, int threads,  int *argc,  char 
 
     node->actors = NULL;
     node->actor_count = 0;
+    node->dead_actors = 0;
+    node->alive_actors = 0;
 
     /*
     printf("bsal_node_construct Node # %i is online with %i threads"
@@ -91,6 +96,7 @@ void bsal_node_destruct(struct bsal_node *node)
 void bsal_node_start(struct bsal_node *node)
 {
     int i;
+    int actors;
 
     /*
     printf("bsal_node_start Node #%i is starting, %i threads,"
@@ -98,7 +104,9 @@ void bsal_node_start(struct bsal_node *node)
                     node->rank, node->threads, node->actor_count);
                     */
 
-    for (i = 0; i < node->actor_count; ++i) {
+    actors = node->actor_count;
+
+    for (i = 0; i < actors; ++i) {
         struct bsal_actor *actor = node->actors + i;
         int name = bsal_actor_name(actor);
         int source = name;
@@ -108,6 +116,20 @@ void bsal_node_start(struct bsal_node *node)
         bsal_node_send(node, &message);
         bsal_message_destruct(&message);
     }
+
+    /* wait until all actors are dead... */
+
+    while(1) {
+
+        if (node->alive_actors == 0) {
+            break;
+        }
+
+        /* pull message */
+
+        /* dispatch message */
+    }
+
 }
 
 void bsal_node_send(struct bsal_node *node, struct bsal_message *message)
@@ -142,9 +164,17 @@ void bsal_node_receive(struct bsal_node *node, struct bsal_message *message)
         int index;
         int name;
         int rank;
+        /* int tag; */
+
+        /* tag = bsal_message_tag(message); */
 
         rank = node->rank;
         name = bsal_message_destination(message);
+
+        /*
+        printf("///bsal_node_receive actor %i tag %i\n",
+                        name, tag);
+                        */
 
         index = bsal_node_actor_index(node, rank, name);
         actor = node->actors + index;
@@ -155,6 +185,19 @@ void bsal_node_receive(struct bsal_node *node, struct bsal_message *message)
                         (void*)pointer, (void*)message); */
 
         receive(actor, message);
+        int dead = bsal_actor_dead(actor);
+
+        /*
+        printf("bsal_node_receive actor %i state: %i\n",
+                        name,  dead);
+                        */
+
+        if (dead) {
+            node->alive_actors--;
+            node->dead_actors++;
+
+            /* printf("bsal_node_receive alive %i\n", node->alive_actors); */
+        }
 }
 
 int bsal_node_actor_index(struct bsal_node *node, int rank, int name)

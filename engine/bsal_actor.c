@@ -12,6 +12,7 @@ void bsal_actor_construct(struct bsal_actor *actor, void *pointer,
 
     actor->actor = pointer;
     actor->name = -1;
+    actor->dead = 0;
 
     /* bsal_actor->receive = receive; */
 
@@ -124,4 +125,14 @@ int bsal_actor_spawn(struct bsal_actor *actor, void *new_actor,
 struct bsal_node *bsal_actor_node(struct bsal_actor *actor)
 {
     return actor->node;
+}
+
+int bsal_actor_dead(struct bsal_actor *actor)
+{
+    return actor->dead;
+}
+
+void bsal_actor_die(struct bsal_actor *actor)
+{
+    actor->dead = 1;
 }

@@ -34,5 +34,9 @@ void buddy_receive(struct bsal_actor *actor, struct bsal_message *message)
         buddy_construct(actor);
         printf("buddy_receive Actor %i received a message (%i) from actor %i\n",
                         name, tag, source);
+
+        printf("buddy_receive actor %i dies\n", name);
+        buddy_destruct(actor);
+        bsal_actor_die(actor);
     }
 }
