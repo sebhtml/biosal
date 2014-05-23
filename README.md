@@ -4,10 +4,10 @@ This is a work in progress.
 
 # Technologies
 
-Name: biosal
-Language: C99
-Model: actor model
-Technologies: MPI, OpenMP
+- Name: biosal
+- Language: C99
+- Model: actor model
+- Technologies: MPI, OpenMP
 
 # Actor model links
 
