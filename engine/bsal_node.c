@@ -73,7 +73,6 @@ void bsal_node_start(struct bsal_node *node)
 void bsal_node_send(struct bsal_node *node, int name, struct bsal_message *message)
 {
         struct bsal_actor *actor;
-        struct bsal_actor *pointer;
         bsal_receive_fn_t receive;
         int index;
 
@@ -81,12 +80,11 @@ void bsal_node_send(struct bsal_node *node, int name, struct bsal_message *messa
         actor = node->actors + index;
 
         /* bsal_actor_print(actor); */
-        pointer = bsal_actor_actor(actor);
         receive = bsal_actor_handler(actor);
         /* printf("bsal_node_send %p %p %p %p\n", (void*)actor, (void*)receive,
                         (void*)pointer, (void*)message); */
 
-        receive(pointer, message);
+        receive(actor, message);
 }
 
 int bsal_node_get_index(struct bsal_node *node, int name)

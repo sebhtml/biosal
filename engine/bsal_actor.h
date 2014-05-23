@@ -5,8 +5,10 @@
 
 #include "bsal_message.h"
 
+struct bsal_actor;
+
 typedef void (*bsal_receive_fn_t)(
-    void *actor,
+    struct bsal_actor *actor,
     struct bsal_message *message
 );
 
