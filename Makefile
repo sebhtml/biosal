@@ -1,5 +1,5 @@
 CC=mpicc
-CFLAGS=-O2 -std=c89 -Wall -pedantic -I.
+CFLAGS=-O2 -std=c89 -Wall -pedantic -I. -g -Werror=implicit-function-declaration
 LD=$(CC)
 Q=
 ECHO=echo

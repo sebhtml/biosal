@@ -1,5 +1,6 @@
 
 #include <biosal.h>
+#include <stdio.h>
 
 #include "mock_actor.h"
 
@@ -16,8 +17,9 @@ void mock_actor_destruct(struct mock_actor *actor)
 void mock_actor_receive(struct bsal_actor *actor, struct bsal_message *message)
 {
 
-   struct mock_actor *mock = (struct mock_actor *)actor;
+   /* struct mock_actor *mock = (struct mock_actor *)actor; */
 
    int source = bsal_message_get_source_actor(message);
 
+   printf("Received message from %i\n", source);
 }

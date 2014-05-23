@@ -12,6 +12,9 @@ struct bsal_message {
 };
 typedef struct bsal_message bsal_message_t;
 
+void bsal_message_construct(struct bsal_message *message, int source, int destination);
+void bsal_message_destruct(struct bsal_message *message);
+
 int bsal_message_get_source_actor(struct bsal_message *message);
 int bsal_message_get_destination_actor(struct bsal_message *message);
 int bsal_message_get_source_rank(struct bsal_message *message);
