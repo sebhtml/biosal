@@ -24,7 +24,7 @@ int bsal_actor_name(struct bsal_actor *bsal_actor)
     return bsal_actor->name;
 }
 
-struct bsal_actor *bsal_actor_actor(struct bsal_actor *bsal_actor)
+void *bsal_actor_actor(struct bsal_actor *bsal_actor)
 {
     return bsal_actor->actor;
 }

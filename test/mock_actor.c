@@ -14,12 +14,14 @@ void mock_actor_destruct(struct mock_actor *actor)
     actor->value = -1;
 }
 
-void mock_actor_receive(struct bsal_actor *actor, struct bsal_message *message)
+void mock_actor_receive(void *actor, struct bsal_message *message)
 {
+    struct mock_actor *mock;
+    int source;
 
-   /* struct mock_actor *mock = (struct mock_actor *)actor; */
+    mock = (struct mock_actor *)actor;
+    source = bsal_message_get_source_actor(message);
 
-   int source = bsal_message_get_source_actor(message);
-
-   printf("Received message from %i\n", source);
+    printf("Actor (value: %i) received message from %i\n",
+            mock->value, source);
 }
