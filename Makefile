@@ -6,7 +6,8 @@ ECHO=echo
 
 all: test_mock
 
-OBJECTS=engine/bsal_message.o engine/bsal_node.o engine/bsal_actor.o engine/bsal_actor_vtable.o
+OBJECTS=engine/bsal_message.o engine/bsal_node.o engine/bsal_actor.o engine/bsal_actor_vtable.o \
+        engine/bsal_pool.o engine/bsal_work.o
 LIBRARY_TEST=examples/mock/main.o examples/mock/mock.o examples/mock/buddy.o
 
 %.o: %.c
