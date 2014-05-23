@@ -33,6 +33,7 @@ void mock_receive(struct bsal_actor *actor, struct bsal_message *message)
     tag = bsal_message_tag(message);
 
     if (tag == BSAL_START) {
+        mock_construct(actor);
         mock_start(actor, message);
     }
 }
@@ -74,13 +75,10 @@ void mock_spawn_children(struct bsal_actor *actor)
     for (i = 0; i <total; i++) {
 
         struct buddy *buddy_actor = mock->buddy_actors + i;
-        struct bsal_actor *bsal_actor = mock->bsal_actors + i;
         int name;
         int tag;
 
-        bsal_actor_construct(bsal_actor, buddy_actor, &buddy_vtable);
-
-        name = bsal_actor_spawn(actor, bsal_actor);
+        name = bsal_actor_spawn(actor, buddy_actor, buddy_receive);
         tag = bsal_message_tag(&message);
 
         printf("mock_spawn_children sending tag %i to %i\n",

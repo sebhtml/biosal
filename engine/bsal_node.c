@@ -5,19 +5,21 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-int bsal_node_spawn(struct bsal_node *node, struct bsal_actor *actor)
+int bsal_node_spawn(struct bsal_node *node, void *actor,
+                bsal_actor_receive_fn_t receive)
 {
 
     struct bsal_actor *copy;
     int name;
 
+    /* TODO make sure that we have place above 10 actors */
     if (node->actors == NULL) {
         node->actors = (struct bsal_actor*)malloc(10 * sizeof(struct bsal_actor));
     }
 
     /* do a copy of the actor wrapper */
     copy = node->actors + node->actor_count;
-    *copy = *actor;
+    bsal_actor_construct(copy, actor, receive);
 
     name = bsal_node_assign_name(node);
 

@@ -30,6 +30,7 @@ void buddy_receive(struct bsal_actor *actor, struct bsal_message *message)
     tag = bsal_message_tag(message);
 
     if (tag == BUDDY_HELLO) {
+        buddy_construct(actor);
         printf("buddy_receive Actor %i received a message (%i) from actor %i\n",
                         name, tag, source);
     }

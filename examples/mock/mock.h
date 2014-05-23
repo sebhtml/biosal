@@ -1,11 +1,8 @@
 
-#include <engine/bsal_actor.h>
-
 #include "buddy.h"
 
 struct mock {
     struct buddy buddy_actors[3];
-    struct bsal_actor bsal_actors[3];
     int value;
 };
 

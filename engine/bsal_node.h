@@ -16,7 +16,7 @@ struct bsal_node {
 void bsal_node_construct(struct bsal_node *node, int threads, int *argc, char ***argv);
 void bsal_node_destruct(struct bsal_node *node);
 void bsal_node_start(struct bsal_node *node);
-int bsal_node_spawn(struct bsal_node *node, struct bsal_actor *actor);
+int bsal_node_spawn(struct bsal_node *node, void *actor, bsal_actor_receive_fn_t receive);
 
 void bsal_node_send(struct bsal_node *node, struct bsal_message *message);
 void bsal_node_receive(struct bsal_node *node, struct bsal_message *message);

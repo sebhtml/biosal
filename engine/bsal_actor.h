@@ -15,7 +15,8 @@ struct bsal_node;
  * the actor attribute is a void *
  */
 struct bsal_actor {
-    struct bsal_actor_vtable *vtable;
+    /* struct bsal_actor_vtable *vtable; */
+    bsal_actor_receive_fn_t receive;
     void *actor;
     int name;
     struct bsal_node *node;
@@ -23,7 +24,7 @@ struct bsal_actor {
 typedef struct bsal_actor bsal_actor_t;
 
 void bsal_actor_construct(struct bsal_actor *bsal_actor, void *actor,
-                struct bsal_actor_vtable *vtable);
+                bsal_actor_receive_fn_t receive);
 void bsal_actor_destruct(struct bsal_actor *bsal_actor);
 
 int bsal_actor_name(struct bsal_actor *bsal_actor);
@@ -39,6 +40,6 @@ bsal_actor_receive_fn_t bsal_actor_get_receive(struct bsal_actor *bsal_actor);
 void bsal_actor_send(struct bsal_actor *actor, int name, struct bsal_message *message);
 
 struct bsal_node *bsal_actor_node(struct bsal_actor *actor);
-int bsal_actor_spawn(struct bsal_actor *actor, struct bsal_actor *new_actor);
+int bsal_actor_spawn(struct bsal_actor *actor, void *pointer, bsal_actor_receive_fn_t receive);
 
 #endif
