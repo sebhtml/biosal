@@ -33,16 +33,36 @@ int bsal_node_assign_name(struct bsal_node *node)
     return node->rank + node->ranks * node->actor_count;
 }
 
-void bsal_node_construct(struct bsal_node *node, int rank, int ranks, int threads)
+/*
+ * \see http://www.mpich.org/static/docs/v3.1/www3/MPI_Comm_dup.html
+ * \see http://www.dartmouth.edu/~rc/classes/intro_mpi/hello_world_ex.html
+ * \see https://github.com/GeneAssembly/kiki/blob/master/ki.c#L960
+ * \see http://mpi.deino.net/mpi_functions/MPI_Comm_create.html
+ */
+void bsal_node_construct(struct bsal_node *node, int threads,  int *argc,  char ***argv)
 {
+    int rank;
+    int ranks;
+
+    MPI_Init(argc, argv);
+
+    /* make a new communicator for the library and don't use MPI_COMM_WORLD later */
+    MPI_Comm_dup(MPI_COMM_WORLD, &node->comm);
+    MPI_Comm_rank(node->comm, &rank);
+    MPI_Comm_size(node->comm, &ranks);
+
     /* printf("bsal_node_construct !\n"); */
     node->rank = rank;
     node->ranks = ranks;
     node->threads = threads;
 
     node->actors = NULL;
-
     node->actor_count = 0;
+
+    printf("bsal_node_construct Node # %i is online with %i threads"
+                    ", the system contains %i nodes (%i threads)\n",
+                    node->rank, node->threads, node->ranks,
+                    node->ranks * node->threads);
 }
 
 void bsal_node_destruct(struct bsal_node *node)
@@ -52,6 +72,8 @@ void bsal_node_destruct(struct bsal_node *node)
         node->actor_count = 0;
         node->actors = NULL;
     }
+
+    MPI_Finalize();
 }
 
 void bsal_node_start(struct bsal_node *node)

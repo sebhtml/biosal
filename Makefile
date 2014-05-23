@@ -23,4 +23,4 @@ clean:
 
 mock:
 	./scripts/build-dev.sh
-	./test_mock
+	mpiexec -n 3 ./test_mock

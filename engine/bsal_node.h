@@ -1,5 +1,6 @@
 
 #include "bsal_actor.h"
+#include <mpi.h>
 
 struct bsal_node {
     int rank;
@@ -8,9 +9,11 @@ struct bsal_node {
 
     struct bsal_actor *actors;
     int actor_count;
+
+	MPI_Comm comm;
 };
 
-void bsal_node_construct(struct bsal_node *node, int rank, int ranks, int threads);
+void bsal_node_construct(struct bsal_node *node, int threads, int *argc, char ***argv);
 void bsal_node_destruct(struct bsal_node *node);
 void bsal_node_start(struct bsal_node *node);
 void bsal_node_spawn_actor(struct bsal_node *node, struct bsal_actor *actor);
