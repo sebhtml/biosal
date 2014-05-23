@@ -10,7 +10,7 @@ void bsal_actor_construct(struct bsal_actor *bsal_actor, void *actor, bsal_recei
     bsal_actor->actor = actor;
     bsal_actor->receive = receive;
 
-    printf("bsal_actor_construct %p %p %p\n", (void*)bsal_actor, (void*)actor, (void*)receive);
+    /* printf("bsal_actor_construct %p %p %p\n", (void*)bsal_actor, (void*)actor, (void*)receive); */
 }
 
 void bsal_actor_destruct(struct bsal_actor *bsal_actor)
@@ -18,7 +18,6 @@ void bsal_actor_destruct(struct bsal_actor *bsal_actor)
     bsal_actor->actor = NULL;
     bsal_actor->receive = NULL;
 }
-
 
 int bsal_actor_name(struct bsal_actor *bsal_actor)
 {
@@ -32,7 +31,7 @@ struct bsal_actor *bsal_actor_actor(struct bsal_actor *bsal_actor)
 
 bsal_receive_fn_t bsal_actor_handler(struct bsal_actor *bsal_actor)
 {
-    printf("bsal_actor_handler %p %p\n", (void*)bsal_actor, (void*)bsal_actor->receive);
+    /* printf("bsal_actor_handler %p %p\n", (void*)bsal_actor, (void*)bsal_actor->receive); */
 
     return bsal_actor->receive;
 }
