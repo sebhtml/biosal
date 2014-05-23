@@ -5,13 +5,13 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-void bsal_actor_construct(struct bsal_actor *bsal_actor, void *actor,
+void bsal_actor_construct(struct bsal_actor *actor, void *pointer,
                 bsal_actor_receive_fn_t receive)
 {
     /* bsal_actor_construct_fn_t construct; */
 
-    bsal_actor->actor = actor;
-    bsal_actor->name = -1;
+    actor->actor = pointer;
+    actor->name = -1;
 
     /* bsal_actor->receive = receive; */
 
@@ -22,7 +22,7 @@ void bsal_actor_construct(struct bsal_actor *bsal_actor, void *actor,
     */
 
     /* bsal_actor->vtable = vtable; */
-    bsal_actor->receive = receive;
+    actor->receive = receive;
 
     /* printf("bsal_actor_construct %p %p %p\n", (void*)bsal_actor, (void*)actor, (void*)receive); */
 
@@ -33,7 +33,7 @@ void bsal_actor_construct(struct bsal_actor *bsal_actor, void *actor,
     */
 }
 
-void bsal_actor_destruct(struct bsal_actor *bsal_actor)
+void bsal_actor_destruct(struct bsal_actor *actor)
 {
     /* bsal_actor_destruct_fn_t destruct; */
 
@@ -43,25 +43,25 @@ void bsal_actor_destruct(struct bsal_actor *bsal_actor)
     destruct(bsal_actor);
     */
 
-    bsal_actor->actor = NULL;
-    bsal_actor->name = -1;
+    actor->actor = NULL;
+    actor->name = -1;
 }
 
-int bsal_actor_name(struct bsal_actor *bsal_actor)
+int bsal_actor_name(struct bsal_actor *actor)
 {
-    return bsal_actor->name;
+    return actor->name;
 }
 
-void *bsal_actor_actor(struct bsal_actor *bsal_actor)
+void *bsal_actor_actor(struct bsal_actor *actor)
 {
-    return bsal_actor->actor;
+    return actor->actor;
 }
 
-bsal_actor_receive_fn_t bsal_actor_get_receive(struct bsal_actor *bsal_actor)
+bsal_actor_receive_fn_t bsal_actor_get_receive(struct bsal_actor *actor)
 {
     /* printf("bsal_actor_handler %p %p\n", (void*)bsal_actor, (void*)bsal_actor->receive); */
 
-    return bsal_actor->receive;
+    return actor->receive;
     /* return bsal_actor_vtable_get_receive(bsal_actor->vtable); */
 }
 

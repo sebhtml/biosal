@@ -3,6 +3,7 @@
 
 #include <stdio.h>
 
+/* this vtable is not required anymore */
 struct bsal_actor_vtable buddy_vtable = {
     .construct = buddy_construct,
     .destruct = buddy_destruct,
