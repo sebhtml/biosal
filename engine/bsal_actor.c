@@ -61,6 +61,9 @@ bsal_actor_receive_fn_t bsal_actor_get_receive(struct bsal_actor *bsal_actor)
 
 void bsal_actor_set_name(struct bsal_actor *actor, int name)
 {
+    /*
+       printf("bsal_actor_set_name %p %i\n", (void*)actor, name);
+       */
     actor->name = name;
 }
 
@@ -104,9 +107,9 @@ int bsal_actor_size(struct bsal_actor *actor)
     return bsal_node_size(actor->node);
 }
 
-void bsal_actor_spawn(struct bsal_actor *actor, struct bsal_actor *new_actor)
+int bsal_actor_spawn(struct bsal_actor *actor, struct bsal_actor *new_actor)
 {
-    bsal_node_spawn(bsal_actor_node(actor), new_actor);
+    return bsal_node_spawn(bsal_actor_node(actor), new_actor);
 }
 
 struct bsal_node *bsal_actor_node(struct bsal_actor *actor)

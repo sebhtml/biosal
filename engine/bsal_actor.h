@@ -6,7 +6,7 @@
 #include "bsal_actor_vtable.h"
 
 enum {
-    BSAL_START = 1000
+    BSAL_START = 1000 /* FIRST_TAG */ /* LAST_TAG */
 };
 
 struct bsal_node;
@@ -39,6 +39,6 @@ bsal_actor_receive_fn_t bsal_actor_get_receive(struct bsal_actor *bsal_actor);
 void bsal_actor_send(struct bsal_actor *actor, int name, struct bsal_message *message);
 
 struct bsal_node *bsal_actor_node(struct bsal_actor *actor);
-void bsal_actor_spawn(struct bsal_actor *actor, struct bsal_actor *new_actor);
+int bsal_actor_spawn(struct bsal_actor *actor, struct bsal_actor *new_actor);
 
 #endif

@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-void bsal_node_spawn(struct bsal_node *node, struct bsal_actor *actor)
+int bsal_node_spawn(struct bsal_node *node, struct bsal_actor *actor)
 {
 
     struct bsal_actor *copy;
@@ -21,12 +21,19 @@ void bsal_node_spawn(struct bsal_node *node, struct bsal_actor *actor)
 
     name = bsal_node_assign_name(node);
 
-    bsal_actor_set_name(copy,  name);
+    bsal_actor_set_name(copy, name);
     bsal_actor_set_node(copy, node);
+
+    /*
+    printf("bsal_node_spawn new spawn: %i\n",
+                    name);
+                    */
 
     /* bsal_actor_print(copy); */
 
     node->actor_count++;
+
+    return name;
 }
 
 int bsal_node_assign_name(struct bsal_node *node)
@@ -60,10 +67,12 @@ void bsal_node_construct(struct bsal_node *node, int threads,  int *argc,  char 
     node->actors = NULL;
     node->actor_count = 0;
 
+    /*
     printf("bsal_node_construct Node # %i is online with %i threads"
                     ", the system contains %i nodes (%i threads)\n",
                     node->rank, node->threads, node->size,
                     node->size * node->threads);
+                    */
 }
 
 void bsal_node_destruct(struct bsal_node *node)
@@ -80,6 +89,12 @@ void bsal_node_destruct(struct bsal_node *node)
 void bsal_node_start(struct bsal_node *node)
 {
     int i;
+
+    /*
+    printf("bsal_node_start Node #%i is starting, %i threads,"
+                    " %i actors in system\n",
+                    node->rank, node->threads, node->actor_count);
+                    */
 
     for (i = 0; i < node->actor_count; ++i) {
         struct bsal_actor *actor = node->actors + i;
