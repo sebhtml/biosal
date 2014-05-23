@@ -19,4 +19,4 @@ test_mock: $(LIBRARY_TEST) $(OBJECTS)
 
 clean:
 	$(Q)$(ECHO) "  RM"
-	$(Q)$(RM) $(LIBRARY_TEST) $(OBJECTS)
+	$(Q)$(RM) $(LIBRARY_TEST) $(OBJECTS) test_mock
