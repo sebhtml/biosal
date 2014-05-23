@@ -7,7 +7,7 @@ ECHO=echo
 all: test_mock
 
 OBJECTS=engine/bsal_message.o engine/bsal_node.o engine/bsal_actor.o engine/bsal_actor_vtable.o
-LIBRARY_TEST=examples/mock/interface.o examples/mock/mock_actor.o examples/mock/buddy.o
+LIBRARY_TEST=examples/mock/main.o examples/mock/mock.o examples/mock/buddy.o
 
 %.o: %.c
 	$(Q)$(ECHO) "  CC $@"
