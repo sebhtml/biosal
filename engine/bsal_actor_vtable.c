@@ -1,6 +1,8 @@
 
 #include "bsal_actor_vtable.h"
 
+#include <stdlib.h>
+
 bsal_receive_fn_t bsal_actor_vtable_receive(struct bsal_actor_vtable *vtable)
 {
     return vtable->receive;

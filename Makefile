@@ -1,12 +1,12 @@
 CC=mpicc
-CFLAGS=-O2 -std=c89 -Wall -pedantic -I. -g -Werror=implicit-function-declaration
+CFLAGS=-O2 -std=c99 -Wall -pedantic -I. -g -Werror=implicit-function-declaration
 LD=$(CC)
 Q=@
 ECHO=echo
 
 all: test_mock
 
-OBJECTS=engine/bsal_message.o engine/bsal_node.o engine/bsal_actor.o
+OBJECTS=engine/bsal_message.o engine/bsal_node.o engine/bsal_actor.o engine/bsal_actor_vtable.o
 LIBRARY_TEST=test/interface.o test/mock_actor.o
 
 %.o: %.c

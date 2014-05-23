@@ -4,6 +4,7 @@
 #define _BIOSAL_ACTOR_VTABLE_H
 
 struct bsal_actor;
+struct bsal_message;
 
 typedef void (*bsal_receive_fn_t)(
     struct bsal_actor *actor,

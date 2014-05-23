@@ -4,6 +4,10 @@
 
 #include "mock_actor.h"
 
+struct bsal_actor_vtable mock_actor_vtable = {
+    .receive = mock_actor_receive
+};
+
 void mock_actor_construct(struct mock_actor *actor)
 {
     actor->value = 42;
