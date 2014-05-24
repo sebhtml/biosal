@@ -156,23 +156,18 @@ void bsal_node_send(struct bsal_node *node, struct bsal_message *message)
         rank = bsal_node_actor_rank(node, name);
 
         if (rank == node->rank) {
-            bsal_node_send_here(node, message);
+            bsal_node_enqueue_inbound_message(node, message);
         } else {
-            bsal_node_send_elsewhere(node, message);
+            bsal_node_enqueue_outbound_message(node, message);
         }
 }
 
-void bsal_node_send_here(struct bsal_node *node, struct bsal_message *message)
+void bsal_node_enqueue_outbound_message(struct bsal_node *node, struct bsal_message *message)
 {
-    bsal_node_receive(node, message);
+
 }
 
-void bsal_node_send_elsewhere(struct bsal_node *node, struct bsal_message *message)
-{
-    /* TODO to implement */
-}
-
-void bsal_node_receive(struct bsal_node *node, struct bsal_message *message)
+void bsal_node_enqueue_inbound_message(struct bsal_node *node, struct bsal_message *message)
 {
     struct bsal_message *new_message;
     struct bsal_actor *actor;

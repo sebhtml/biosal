@@ -36,9 +36,8 @@ void bsal_node_start(struct bsal_node *node);
 int bsal_node_spawn(struct bsal_node *node, void *actor, bsal_actor_receive_fn_t receive);
 
 void bsal_node_send(struct bsal_node *node, struct bsal_message *message);
-void bsal_node_receive(struct bsal_node *node, struct bsal_message *message);
-void bsal_node_send_here(struct bsal_node *node, struct bsal_message *message);
-void bsal_node_send_elsewhere(struct bsal_node *node, struct bsal_message *message);
+void bsal_node_enqueue_inbound_message(struct bsal_node *node, struct bsal_message *message);
+void bsal_node_enqueue_outbound_message(struct bsal_node *node, struct bsal_message *message);
 
 int bsal_node_assign_name(struct bsal_node *node);
 int bsal_node_actor_rank(struct bsal_node *node, int name);
