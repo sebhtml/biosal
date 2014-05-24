@@ -8,7 +8,6 @@
 int bsal_node_spawn(struct bsal_node *node, void *actor,
                 bsal_actor_receive_fn_t receive)
 {
-
     struct bsal_actor *copy;
     int name;
 

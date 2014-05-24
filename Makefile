@@ -28,8 +28,12 @@ clean:
 	$(Q)$(ECHO) "  RM"
 	$(Q)$(RM) $(MOCK_EXAMPLE) $(LIBRARY) $(FIFO_TEST) $(PRODUCTS)
 
+# qemu causes this with -march=native:
+# test/interface.c:1:0: error: CPU you selected does not support x86-64 instruction set
+#make CFLAGS="-O3 -march=native -g -std=c99 -Wall -pedantic -I. -Werror" -j 7
 mock:
-	./scripts/build-dev.sh
+	make clean
+	make CFLAGS="-O3 -march=x86-64 -g -std=c99 -Wall -pedantic -I. -Werror" -j 7
 	mpiexec -n 3 ./test_mock
 
 test: fifo_test

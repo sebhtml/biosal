@@ -23,7 +23,5 @@ if(test_equal(a, b)) { \
     int all = correct_tests + incorrect_tests; \
     printf("Correct: %i/%i,  Incorrect: %i/%i\n", correct_tests, all, incorrect_tests, all);
 
-
-
 #endif
 
