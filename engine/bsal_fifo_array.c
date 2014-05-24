@@ -15,7 +15,7 @@ void bsal_fifo_array_construct(struct bsal_fifo_array *fifo, int units, int byte
 
     bsal_fifo_array_reset(fifo);
 
-    fifo->previous  = NULL;
+    fifo->previous = NULL;
     fifo->next = NULL;
 }
 
@@ -70,7 +70,7 @@ int bsal_fifo_array_pop(struct bsal_fifo_array *fifo, void *item)
     }
 
     position = fifo->consumer_head++;
-    source =  bsal_fifo_array_unit(fifo, position);
+    source = bsal_fifo_array_unit(fifo, position);
     memcpy(item, source, fifo->bytes_per_unit);
 
     return 1;
