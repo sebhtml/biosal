@@ -32,10 +32,27 @@ void mock_receive(struct bsal_actor *actor, struct bsal_message *message)
 
     tag = bsal_message_tag(message);
 
+    /* printf("mock_receive %i\n", tag); */
+
     if (tag == BSAL_START) {
         mock_construct(actor);
         mock_start(actor, message);
+    } else if (tag == MOCK_DIE) {
+        mock_die(actor, message);
     }
+}
+
+void mock_die(struct bsal_actor *actor, struct bsal_message *message)
+{
+    int name;
+    int source;
+
+    name = bsal_actor_name(actor);
+    source = bsal_message_source(message);
+
+    printf("mock_die actor %i dies (MOCK_DIE from %i)\n", name, source);
+    mock_destruct(actor);
+    bsal_actor_die(actor);
 }
 
 void mock_start(struct bsal_actor *actor, struct bsal_message *message)
@@ -45,6 +62,8 @@ void mock_start(struct bsal_actor *actor, struct bsal_message *message)
     int name;
     int destination;
     int tag;
+    int size;
+    int next;
 
     tag = bsal_message_tag(message);
     source = bsal_message_source(message);
@@ -53,15 +72,22 @@ void mock_start(struct bsal_actor *actor, struct bsal_message *message)
     name = bsal_actor_name(actor);
     mock = (struct mock *)bsal_actor_actor(actor);
 
-    printf("mock_start Actor #%i (value: %i) received message (tag: %i)"
+    printf("mock_start Actor #%i (value: %i) received message (tag: %i BSAL_START)"
                     " from source %i, destination %i\n",
             name, mock->value, tag, source, destination);
 
     mock_spawn_children(actor);
 
-    printf("mock_start actor %i dies\n", name);
-    mock_destruct(actor);
-    bsal_actor_die(actor);
+    size = bsal_actor_size(actor);
+
+    next = (name + 1) % size;
+
+    printf("[mock_start] %i next is %i, sending MOCK_DIE to it\n", name, next);
+
+    struct bsal_message message2;
+    bsal_message_construct(&message2, MOCK_DIE, -1, -1, 0, NULL);
+    bsal_actor_send(actor, next, &message2);
+    bsal_message_destruct(&message2);
 }
 
 void mock_spawn_children(struct bsal_actor *actor)
@@ -74,7 +100,7 @@ void mock_spawn_children(struct bsal_actor *actor)
     total = 1;
 
     mock = (struct mock *)bsal_actor_actor(actor);
-    bsal_message_construct(&message, BUDDY_HELLO, -1, -1, 0, NULL);
+    bsal_message_construct(&message, BUDDY_DIE, -1, -1, 0, NULL);
 
     for (i = 0; i <total; i++) {
 
@@ -85,7 +111,7 @@ void mock_spawn_children(struct bsal_actor *actor)
         name = bsal_actor_spawn(actor, buddy_actor, buddy_receive);
         tag = bsal_message_tag(&message);
 
-        printf("mock_spawn_children sending tag %i to %i\n",
+        printf("mock_spawn_children sending tag %i BUDDY_DIE to %i\n",
                         tag, name);
         bsal_actor_send(actor, name, &message);
     }

@@ -11,6 +11,11 @@ void bsal_message_construct(struct bsal_message *message, int tag, int source,
     message->tag = tag;
     message->buffer = buffer;
     message->bytes = bytes;
+
+    message->source_rank = -1;
+    message->destination_rank = -1;
+    message->routing_source = -1;
+    message->routing_destination = -1;
 }
 
 void bsal_message_destruct(struct bsal_message *message)
@@ -59,4 +64,24 @@ void bsal_message_set_destination(struct bsal_message *message, int destination)
 
 void bsal_message_print(struct bsal_message *message)
 {
+}
+
+char *bsal_message_buffer(struct bsal_message *message)
+{
+    return message->buffer;
+}
+
+int bsal_message_bytes(struct bsal_message *message)
+{
+    return message->bytes;
+}
+
+void bsal_message_set_source_rank(struct bsal_message *message, int source)
+{
+    message->source_rank = source;
+}
+
+void bsal_message_set_destination_rank(struct bsal_message *message, int destination)
+{
+    message->destination_rank = destination;
 }

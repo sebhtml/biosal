@@ -58,6 +58,8 @@ void bsal_node_construct(struct bsal_node *node, int threads,  int *argc,  char 
 
     MPI_Init(argc, argv);
 
+    node->datatype = MPI_BYTE;
+
     /* make a new communicator for the library and don't use MPI_COMM_WORLD later */
     MPI_Comm_dup(MPI_COMM_WORLD, &node->comm);
     MPI_Comm_rank(node->comm, &rank);
@@ -129,42 +131,140 @@ void bsal_node_start(struct bsal_node *node)
 
 void bsal_node_run(struct bsal_node *node)
 {
+    struct bsal_work work;
+    struct bsal_message message;
+
     while(1) {
 
         if (node->alive_actors == 0) {
             break;
         }
 
-        /* pull message */
+        /* pull message from network */
+        bsal_node_receive_inbound_message(node, &message);
 
-        struct bsal_work work;
+        /* check for messages in inbound FIFO */
         if (bsal_fifo_pop(&node->inbound_messages, &work)) {
 
             /* printf("[bsal_node_run] popped message\n"); */
-        /* dispatch message */
+            /* dispatch message to a worker thread (currently, this is the main thread) */
             bsal_node_work(node, &work);
+        }
+
+        /* check for messages to send from the outbound FIFO */
+        if (bsal_fifo_pop(&node->outbound_messages, &message)) {
+
+            /* send messages over the network */
+            bsal_node_send_outbound_message(node, &message);
         }
     }
 }
 
+/* \see http://www.mpich.org/static/docs/v3.1/www3/MPI_Iprobe.html */
+/* \see http://www.mpich.org/static/docs/v3.1/www3/MPI_Recv.html */
+/* \see http://www.malcolmmclean.site11.com/www/MpiTutorial/MPIStatus.html */
+void bsal_node_receive_inbound_message(struct bsal_node *node, struct bsal_message *message)
+{
+    char *buffer;
+    int count;
+    int source;
+    int destination;
+    int tag;
+    int flag;
+    MPI_Status status;
+
+    /* printf("DEBUG MPI_Iprobe + MPI_Recv\n"); */
+
+    source = MPI_ANY_SOURCE;
+    tag = MPI_ANY_TAG;
+    destination = node->rank;
+
+    MPI_Iprobe(source, tag, node->comm, &flag, &status);
+
+    if (!flag) {
+        return;
+    }
+
+    /* printf("bsal_node_receive_inbound_message MPI_Iprobe sucess !\n"); */
+
+    MPI_Get_count(&status, node->datatype, &count);
+    buffer = NULL; /* TODO actually allocate a buffer with count bytes ! */
+    source = status.MPI_SOURCE;
+    tag = status.MPI_TAG;
+
+    MPI_Recv(buffer, count, node->datatype, source, tag,
+                    node->comm, &status);
+
+    bsal_message_construct(message, tag, source, destination, count, buffer);
+    bsal_node_resolve(node, message);
+
+    bsal_node_enqueue_inbound_message(node, message);
+}
+
+void bsal_node_resolve(struct bsal_node *node, struct bsal_message *message)
+{
+    int actor;
+    int rank;
+
+    actor = bsal_message_source(message);
+    rank = bsal_node_actor_rank(node, actor);
+    bsal_message_set_source_rank(message, rank);
+
+    actor = bsal_message_destination(message);
+    rank = bsal_node_actor_rank(node, actor);
+    bsal_message_set_destination_rank(message, rank);
+}
+
+/* \see http://www.mpich.org/static/docs/v3.1/www3/MPI_Isend.html */
+void bsal_node_send_outbound_message(struct bsal_node *node, struct bsal_message *message)
+{
+    char *buffer;
+    int count;
+    /* int source; */
+    int destination;
+    int tag;
+    MPI_Request request;
+
+    bsal_node_resolve(node, message);
+
+    buffer = bsal_message_buffer(message);
+    count = bsal_message_bytes(message);
+    destination = bsal_message_destination_rank(message);
+    tag = bsal_message_tag(message);
+
+    /* source = bsal_message_source_rank(message); */
+    /* printf("[bsal_node_send_outbound_message] MPI_Isend %i -> %i tag %i\n",
+                    source, destination, tag); */
+
+    MPI_Isend(buffer, count, node->datatype, destination, tag,
+                    node->comm, &request);
+
+    /* TODO store the MPI_Request to test it later to know when
+     * the buffer can be reused
+     */
+    MPI_Request_free(&request);
+}
+
 void bsal_node_send(struct bsal_node *node, struct bsal_message *message)
 {
-        int name;
-        int rank;
+    int name;
+    int rank;
 
-        name = bsal_message_destination(message);
-        rank = bsal_node_actor_rank(node, name);
+    name = bsal_message_destination(message);
+    rank = bsal_node_actor_rank(node, name);
 
-        if (rank == node->rank) {
-            bsal_node_enqueue_inbound_message(node, message);
-        } else {
-            bsal_node_enqueue_outbound_message(node, message);
-        }
+    if (rank == node->rank) {
+        bsal_node_enqueue_inbound_message(node, message);
+    } else {
+        bsal_node_enqueue_outbound_message(node, message);
+    }
 }
 
 void bsal_node_enqueue_outbound_message(struct bsal_node *node, struct bsal_message *message)
 {
+    /* printf("<bsal_node_enqueue_outbound_message> pushed packet\n"); */
 
+    bsal_fifo_push(&node->outbound_messages, message);
 }
 
 void bsal_node_enqueue_inbound_message(struct bsal_node *node, struct bsal_message *message)

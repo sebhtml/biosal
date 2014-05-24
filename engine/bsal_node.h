@@ -1,4 +1,7 @@
 
+#ifndef _BSAL_NODE_H
+#define _BSAL_NODE_H
+
 #include "bsal_actor.h"
 #include "bsal_fifo.h"
 #include "bsal_work.h"
@@ -25,6 +28,7 @@ struct bsal_node {
     int alive_actors;
 
     MPI_Comm comm;
+    MPI_Datatype datatype;
 
     struct bsal_fifo inbound_messages;
     struct bsal_fifo outbound_messages;
@@ -36,6 +40,7 @@ void bsal_node_start(struct bsal_node *node);
 int bsal_node_spawn(struct bsal_node *node, void *actor, bsal_actor_receive_fn_t receive);
 
 void bsal_node_send(struct bsal_node *node, struct bsal_message *message);
+
 void bsal_node_enqueue_inbound_message(struct bsal_node *node, struct bsal_message *message);
 void bsal_node_enqueue_outbound_message(struct bsal_node *node, struct bsal_message *message);
 
@@ -48,3 +53,9 @@ int bsal_node_size(struct bsal_node *node);
 void bsal_node_run(struct bsal_node *node);
 void bsal_node_work(struct bsal_node *node, struct bsal_work *work);
 
+void bsal_node_resolve(struct bsal_node *node, struct bsal_message *message);
+
+void bsal_node_send_outbound_message(struct bsal_node *node, struct bsal_message *message);
+void bsal_node_receive_inbound_message(struct bsal_node *node, struct bsal_message *message);
+
+#endif
