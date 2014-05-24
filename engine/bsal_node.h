@@ -1,5 +1,7 @@
 
 #include "bsal_actor.h"
+#include "bsal_fifo.h"
+#include "bsal_work.h"
 #include <mpi.h>
 
 /*
@@ -23,6 +25,9 @@ struct bsal_node {
     int alive_actors;
 
 	MPI_Comm comm;
+
+    struct bsal_fifo inbound_messages;
+    struct bsal_fifo outbound_messages;
 };
 
 void bsal_node_construct(struct bsal_node *node, int threads, int *argc, char ***argv);
@@ -40,4 +45,7 @@ int bsal_node_actor_rank(struct bsal_node *node, int name);
 int bsal_node_actor_index(struct bsal_node *node, int rank, int name);
 int bsal_node_rank(struct bsal_node *node);
 int bsal_node_size(struct bsal_node *node);
+
+void bsal_node_run(struct bsal_node *node);
+void bsal_node_work(struct bsal_node *node, struct bsal_work *work);
 

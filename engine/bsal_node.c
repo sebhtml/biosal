@@ -1,9 +1,9 @@
 
 #include "bsal_node.h"
-#include "bsal_actor.h"
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 
 int bsal_node_spawn(struct bsal_node *node, void *actor,
                 bsal_actor_receive_fn_t receive)
@@ -79,10 +79,16 @@ void bsal_node_construct(struct bsal_node *node, int threads,  int *argc,  char 
                     node->rank, node->threads, node->size,
                     node->size * node->threads);
                     */
+
+    bsal_fifo_construct(&node->inbound_messages, 16, sizeof(struct bsal_work));
+    bsal_fifo_construct(&node->outbound_messages, 16, sizeof(struct bsal_message));
 }
 
 void bsal_node_destruct(struct bsal_node *node)
 {
+    bsal_fifo_destruct(&node->outbound_messages);
+    bsal_fifo_destruct(&node->inbound_messages);
+
     if (node->actors != NULL) {
         free(node->actors);
         node->actor_count = 0;
@@ -118,6 +124,11 @@ void bsal_node_start(struct bsal_node *node)
 
     /* wait until all actors are dead... */
 
+    bsal_node_run(node);
+}
+
+void bsal_node_run(struct bsal_node *node)
+{
     while(1) {
 
         if (node->alive_actors == 0) {
@@ -126,9 +137,14 @@ void bsal_node_start(struct bsal_node *node)
 
         /* pull message */
 
-        /* dispatch message */
-    }
+        struct bsal_work work;
+        if (bsal_fifo_pop(&node->inbound_messages, &work)) {
 
+            /* printf("[bsal_node_run] popped message\n"); */
+        /* dispatch message */
+            bsal_node_work(node, &work);
+        }
+    }
 }
 
 void bsal_node_send(struct bsal_node *node, struct bsal_message *message)
@@ -158,11 +174,11 @@ void bsal_node_send_elsewhere(struct bsal_node *node, struct bsal_message *messa
 
 void bsal_node_receive(struct bsal_node *node, struct bsal_message *message)
 {
+        struct bsal_message *new_message;
         struct bsal_actor *actor;
-        bsal_actor_receive_fn_t receive;
         int index;
-        int name;
         int rank;
+        int name;
         /* int tag; */
 
         /* tag = bsal_message_tag(message); */
@@ -178,6 +194,28 @@ void bsal_node_receive(struct bsal_node *node, struct bsal_message *message)
         index = bsal_node_actor_index(node, rank, name);
         actor = node->actors + index;
 
+        /* we need to do a copy of the message */
+        /* TODO replace with slab allocator */
+        new_message = (struct bsal_message *)malloc(sizeof(struct bsal_message));
+        memcpy(new_message, message, sizeof(struct bsal_message));
+
+        struct bsal_work work;
+        bsal_work_construct(&work, actor, new_message);
+        bsal_fifo_push(&node->inbound_messages, &work);
+
+        /* printf("[bsal_node_receive] pushed work\n"); */
+        /* bsal_work_print(&work); */
+}
+
+void bsal_node_work(struct bsal_node *node, struct bsal_work *work)
+{
+        bsal_actor_receive_fn_t receive;
+        struct bsal_actor *actor;
+        struct bsal_message *message;
+
+        actor = bsal_work_actor(work);
+        message = bsal_work_message(work);
+
         /* bsal_actor_print(actor); */
         receive = bsal_actor_get_receive(actor);
         /* printf("bsal_node_send %p %p %p %p\n", (void*)actor, (void*)receive,
@@ -187,9 +225,9 @@ void bsal_node_receive(struct bsal_node *node, struct bsal_message *message)
         int dead = bsal_actor_dead(actor);
 
         /*
-        printf("bsal_node_receive actor %i state: %i\n",
-                        name,  dead);
-                        */
+        printf("[bsal_node_work] -> ");
+        bsal_work_print(work);
+        */
 
         if (dead) {
             node->alive_actors--;
@@ -197,6 +235,9 @@ void bsal_node_receive(struct bsal_node *node, struct bsal_message *message)
 
             /* printf("bsal_node_receive alive %i\n", node->alive_actors); */
         }
+
+        /* TODO replace with slab allocator */
+        free(message);
 }
 
 int bsal_node_actor_index(struct bsal_node *node, int rank, int name)

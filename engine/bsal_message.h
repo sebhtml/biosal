@@ -27,5 +27,6 @@ int bsal_message_tag(struct bsal_message *message);
 
 void bsal_message_set_source(struct bsal_message *message, int source);
 void bsal_message_set_destination(struct bsal_message *message, int destination);
+void bsal_message_print(struct bsal_message *message);
 
 #endif

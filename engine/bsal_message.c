@@ -56,3 +56,7 @@ void bsal_message_set_destination(struct bsal_message *message, int destination)
 {
     message->destination_actor = destination;
 }
+
+void bsal_message_print(struct bsal_message *message)
+{
+}

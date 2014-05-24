@@ -31,4 +31,4 @@ bsal_actor_construct_fn_t bsal_actor_vtable_get_construct(struct bsal_actor_vtab
 bsal_actor_destruct_fn_t bsal_actor_vtable_get_destruct(struct bsal_actor_vtable *vtable);
 bsal_actor_receive_fn_t bsal_actor_vtable_get_receive(struct bsal_actor_vtable *vtable);
 
-#endif 
+#endif
