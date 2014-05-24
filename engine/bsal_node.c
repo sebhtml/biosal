@@ -174,70 +174,70 @@ void bsal_node_send_elsewhere(struct bsal_node *node, struct bsal_message *messa
 
 void bsal_node_receive(struct bsal_node *node, struct bsal_message *message)
 {
-        struct bsal_message *new_message;
-        struct bsal_actor *actor;
-        int index;
-        int rank;
-        int name;
-        /* int tag; */
+    struct bsal_message *new_message;
+    struct bsal_actor *actor;
+    int index;
+    int rank;
+    int name;
+    /* int tag; */
 
-        /* tag = bsal_message_tag(message); */
+    /* tag = bsal_message_tag(message); */
 
-        rank = node->rank;
-        name = bsal_message_destination(message);
+    rank = node->rank;
+    name = bsal_message_destination(message);
 
-        /*
-        printf("///bsal_node_receive actor %i tag %i\n",
-                        name, tag);
-                        */
+    /*
+    printf("///bsal_node_receive actor %i tag %i\n",
+                    name, tag);
+                    */
 
-        index = bsal_node_actor_index(node, rank, name);
-        actor = node->actors + index;
+    index = bsal_node_actor_index(node, rank, name);
+    actor = node->actors + index;
 
-        /* we need to do a copy of the message */
-        /* TODO replace with slab allocator */
-        new_message = (struct bsal_message *)malloc(sizeof(struct bsal_message));
-        memcpy(new_message, message, sizeof(struct bsal_message));
+    /* we need to do a copy of the message */
+    /* TODO replace with slab allocator */
+    new_message = (struct bsal_message *)malloc(sizeof(struct bsal_message));
+    memcpy(new_message, message, sizeof(struct bsal_message));
 
-        struct bsal_work work;
-        bsal_work_construct(&work, actor, new_message);
-        bsal_fifo_push(&node->inbound_messages, &work);
+    struct bsal_work work;
+    bsal_work_construct(&work, actor, new_message);
+    bsal_fifo_push(&node->inbound_messages, &work);
 
-        /* printf("[bsal_node_receive] pushed work\n"); */
-        /* bsal_work_print(&work); */
+    /* printf("[bsal_node_receive] pushed work\n"); */
+    /* bsal_work_print(&work); */
 }
 
 void bsal_node_work(struct bsal_node *node, struct bsal_work *work)
 {
-        bsal_actor_receive_fn_t receive;
-        struct bsal_actor *actor;
-        struct bsal_message *message;
+    bsal_actor_receive_fn_t receive;
+    struct bsal_actor *actor;
+    struct bsal_message *message;
 
-        actor = bsal_work_actor(work);
-        message = bsal_work_message(work);
+    actor = bsal_work_actor(work);
+    message = bsal_work_message(work);
 
-        /* bsal_actor_print(actor); */
-        receive = bsal_actor_get_receive(actor);
-        /* printf("bsal_node_send %p %p %p %p\n", (void*)actor, (void*)receive,
-                        (void*)pointer, (void*)message); */
+    /* bsal_actor_print(actor); */
+    receive = bsal_actor_get_receive(actor);
+    /* printf("bsal_node_send %p %p %p %p\n", (void*)actor, (void*)receive,
+                    (void*)pointer, (void*)message); */
 
-        receive(actor, message);
-        int dead = bsal_actor_dead(actor);
+    receive(actor, message);
+    int dead = bsal_actor_dead(actor);
 
-        /*
-        printf("[bsal_node_work] -> ");
-        bsal_work_print(work);
-        */
+    /*
+    printf("[bsal_node_work] -> ");
+    bsal_work_print(work);
+    */
 
-        if (dead) {
-            node->alive_actors--;
-            node->dead_actors++;
+    if (dead) {
+        node->alive_actors--;
+        node->dead_actors++;
 
-            /* printf("bsal_node_receive alive %i\n", node->alive_actors); */
-        }
+        /* printf("bsal_node_receive alive %i\n", node->alive_actors); */
+    }
 
-        /* TODO replace with slab allocator */
-        free(message);
+    /* TODO replace with slab allocator */
+    free(message);
 }
 
 int bsal_node_actor_index(struct bsal_node *node, int rank, int name)
