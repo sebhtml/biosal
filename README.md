@@ -5,9 +5,9 @@ This is a work in progress.
 # Technologies
 
 - Name: biosal
-- Language: C99
+- Language: C99 (ISO/IEC 9899:1999)
 - Model: actor model
-- Technologies: MPI, OpenMP
+- Technologies: MPI, Pthreads (IEEE Std 1003.1c - 1995)
 
 # Actor model links
 
