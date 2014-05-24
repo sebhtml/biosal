@@ -3,6 +3,10 @@
 #define _BSAL_TEST_H
 
 #include <stdio.h>
+#include <stdlib.h>
+
+    /*#ifdef(__GNUC__) \ */
+    /*#endif \ */
 
 int test_equal(int a, int b);
 
@@ -11,6 +15,7 @@ if(test_equal(a, b)) { \
     correct_tests++; \
 } else { \
     incorrect_tests++; \
+    printf("Error File: %s, Function: %s, Line: %i\n", __FILE__, __func__, __LINE__); \
 }
 
 #define BEGIN_TESTS() \
@@ -21,7 +26,7 @@ if(test_equal(a, b)) { \
 
 #define END_TESTS() \
     int all = correct_tests + incorrect_tests; \
-    printf("Correct: %i/%i,  Incorrect: %i/%i\n", correct_tests, all, incorrect_tests, all);
+    printf("PASS: %i/%i\nFAIL: %i/%i\n", correct_tests, all, incorrect_tests, all);
 
 #endif
 

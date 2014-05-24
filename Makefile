@@ -12,9 +12,10 @@ LIBRARY=engine/bsal_message.o engine/bsal_node.o engine/bsal_actor.o engine/bsal
 
 MOCK_EXAMPLE=examples/mock/main.o examples/mock/mock.o examples/mock/buddy.o
 
-FIFO_TEST=test/test.o test/fifo.o
+TEST_FIFO=test/test.o test/test_fifo.o
+TEST_FIFO_ARRAY=test/test.o test/test_fifo_array.o
 
-PRODUCTS=test_mock fifo_test
+PRODUCTS=test_mock test_fifo test_fifo_array
 
 %.o: %.c
 	$(Q)$(ECHO) "  CC $@"
@@ -26,19 +27,24 @@ test_mock: $(MOCK_EXAMPLE) $(LIBRARY)
 
 clean:
 	$(Q)$(ECHO) "  RM"
-	$(Q)$(RM) $(MOCK_EXAMPLE) $(LIBRARY) $(FIFO_TEST) $(PRODUCTS)
+	$(Q)$(RM) $(MOCK_EXAMPLE) $(LIBRARY) $(TEST_FIFO) $(TEST_FIFO_ARRAY) $(PRODUCTS)
 
 # qemu causes this with -march=native:
 # test/interface.c:1:0: error: CPU you selected does not support x86-64 instruction set
 #make CFLAGS="-O3 -march=native -g -std=c99 -Wall -pedantic -I. -Werror" -j 7
 mock:
 	make clean
-	make CFLAGS="-O3 -march=x86-64 -g -std=c99 -Wall -pedantic -I. -Werror" -j 7
+	make -j 7
 	mpiexec -n 3 ./test_mock
 
-test: fifo_test
-	./fifo_test
+test: test_fifo test_fifo_array
+	./test_fifo
+	./test_fifo_array
 
-fifo_test: $(LIBRARY) $(FIFO_TEST)
+test_fifo: $(LIBRARY) $(TEST_FIFO)
+	$(Q)$(ECHO) "  LD $@"
+	$(Q)$(CC) $(CFLAGS) $^ -o $@
+
+test_fifo_array: $(LIBRARY) $(TEST_FIFO_ARRAY)
 	$(Q)$(ECHO) "  LD $@"
 	$(Q)$(CC) $(CFLAGS) $^ -o $@
