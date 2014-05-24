@@ -2,6 +2,16 @@
 #include "bsal_actor.h"
 #include <mpi.h>
 
+/*
+ * - message reception: one fifo per thread
+ * - the fifo has volatile variables for its heads
+ * - fifo is implemented as linked list of arrays
+ *
+ * - message send process: one fifo per thread
+ * - for states,  use OR (|)
+ * - use actor affinity in implementation
+ *
+ */
 struct bsal_node {
     int rank;
     int size;
