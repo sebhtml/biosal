@@ -11,7 +11,7 @@
 int test_equal(int a, int b);
 
 #define TEST_EQUAL(a, b) \
-if(test_equal(a, b)) { \
+if (test_equal(a, b)) { \
     correct_tests++; \
 } else { \
     incorrect_tests++; \
