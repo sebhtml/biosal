@@ -24,7 +24,7 @@ struct bsal_node {
     int dead_actors;
     int alive_actors;
 
-	MPI_Comm comm;
+    MPI_Comm comm;
 
     struct bsal_fifo inbound_messages;
     struct bsal_fifo outbound_messages;
