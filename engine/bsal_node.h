@@ -5,6 +5,8 @@
 #include "bsal_actor.h"
 #include "bsal_work.h"
 #include "bsal_thread.h"
+
+#include <pthread.h>
 #include <mpi.h>
 
 struct bsal_actor_vtable;
@@ -33,6 +35,8 @@ struct bsal_node {
     MPI_Datatype datatype;
 
     struct bsal_thread thread;
+
+    pthread_mutex_t death_mutex;
 };
 
 void bsal_node_construct(struct bsal_node *node, int threads, int *argc, char ***argv);

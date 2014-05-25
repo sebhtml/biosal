@@ -34,10 +34,9 @@ void bsal_thread_run(struct bsal_thread *thread)
 {
     struct bsal_work work;
 
-/* check for messages in inbound FIFO */
+    /* check for messages in inbound FIFO */
     if (bsal_fifo_pop(&thread->inbound_messages, &work)) {
 
-        /* printf("[bsal_node_run] popped message\n"); */
         /* dispatch message to a worker thread (currently, this is the main thread) */
         bsal_thread_work(thread, &work);
     }
@@ -55,10 +54,7 @@ void bsal_thread_work(struct bsal_thread *thread, struct bsal_work *work)
     bsal_actor_set_thread(actor, thread);
     message = bsal_work_message(work);
 
-    /* bsal_actor_print(actor); */
     receive = bsal_actor_get_receive(actor);
-    /* printf("bsal_node_send %p %p %p %p\n", (void*)actor, (void*)receive,
-                    (void*)pointer, (void*)message); */
 
     receive(actor, message);
 
@@ -66,15 +62,8 @@ void bsal_thread_work(struct bsal_thread *thread, struct bsal_work *work)
     bsal_actor_unlock(actor);
     int dead = bsal_actor_dead(actor);
 
-    /*
-    printf("[bsal_node_work] -> ");
-    bsal_work_print(work);
-    */
-
     if (dead) {
         bsal_node_notify_death(thread->node, actor);
-
-        /* printf("bsal_node_receive alive %i\n", node->alive_actors); */
     }
 
     /* TODO replace with slab allocator */

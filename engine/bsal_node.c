@@ -75,10 +75,14 @@ void bsal_node_construct(struct bsal_node *node, int threads,  int *argc,  char 
                     */
 
     bsal_thread_construct(&node->thread, node);
+
+    pthread_mutex_init(&node->death_mutex, NULL);
 }
 
 void bsal_node_destruct(struct bsal_node *node)
 {
+    pthread_mutex_destroy(&node->death_mutex);
+
     bsal_thread_destruct(&node->thread);
 
     if (node->actors != NULL) {
@@ -350,6 +354,8 @@ void bsal_node_notify_death(struct bsal_node *node, struct bsal_actor *actor)
     /*index = bsal_node_actor_index(node, rank, name); */
     /* node->actors[index] = NULL; */
 
+    pthread_mutex_lock(&node->death_mutex);
     node->alive_actors--;
     node->dead_actors++;
+    pthread_mutex_unlock(&node->death_mutex);
 }
