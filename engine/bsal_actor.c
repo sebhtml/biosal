@@ -1,5 +1,6 @@
 
 #include "bsal_actor.h"
+#include "bsal_thread.h"
 #include "bsal_node.h"
 
 #include <stdlib.h>
@@ -95,9 +96,9 @@ bsal_actor_destruct_fn_t bsal_actor_get_destruct(struct bsal_actor *actor)
     /* return bsal_actor_vtable_get_destruct(actor->vtable); */
 }
 
-void bsal_actor_set_node(struct bsal_actor *actor, struct bsal_node *node)
+void bsal_actor_set_thread(struct bsal_actor *actor, struct bsal_thread *thread)
 {
-    actor->node = node;
+    actor->thread = thread;
 }
 
 void bsal_actor_send(struct bsal_actor *actor, int name, struct bsal_message *message)
@@ -107,12 +108,7 @@ void bsal_actor_send(struct bsal_actor *actor, int name, struct bsal_message *me
     source = bsal_actor_name(actor);
     bsal_message_set_source(message, source);
     bsal_message_set_destination(message, name);
-    bsal_node_send(actor->node, message);
-}
-
-int bsal_actor_size(struct bsal_actor *actor)
-{
-    return bsal_node_size(actor->node);
+    bsal_thread_send(actor->thread, message);
 }
 
 int bsal_actor_spawn(struct bsal_actor *actor, void *new_actor,
@@ -121,9 +117,9 @@ int bsal_actor_spawn(struct bsal_actor *actor, void *new_actor,
     return bsal_node_spawn(bsal_actor_node(actor), new_actor, receive);
 }
 
-struct bsal_node *bsal_actor_node(struct bsal_actor *actor)
+struct bsal_thread *bsal_actor_thread(struct bsal_actor *actor)
 {
-    return actor->node;
+    return actor->thread;
 }
 
 int bsal_actor_dead(struct bsal_actor *actor)
@@ -134,4 +130,18 @@ int bsal_actor_dead(struct bsal_actor *actor)
 void bsal_actor_die(struct bsal_actor *actor)
 {
     actor->dead = 1;
+}
+
+int bsal_actor_size(struct bsal_actor *actor)
+{
+    return bsal_node_size(bsal_actor_node(actor));
+}
+
+struct bsal_node *bsal_actor_node(struct bsal_actor *actor)
+{
+    if (actor->thread == NULL) {
+        return NULL;
+    }
+
+    return bsal_thread_node(bsal_actor_thread(actor));
 }

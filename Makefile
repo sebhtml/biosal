@@ -8,7 +8,7 @@ all: test_mock
 
 LIBRARY=engine/bsal_message.o engine/bsal_node.o engine/bsal_actor.o engine/bsal_actor_vtable.o \
         engine/bsal_fifo.o engine/bsal_work.o \
-        engine/bsal_fifo_array.o
+        engine/bsal_fifo_array.o engine/bsal_thread.o
 
 MOCK_EXAMPLE=examples/mock/main.o examples/mock/mock.o examples/mock/buddy.o
 

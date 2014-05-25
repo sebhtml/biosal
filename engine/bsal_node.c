@@ -23,7 +23,6 @@ int bsal_node_spawn(struct bsal_node *node, void *actor,
     name = bsal_node_assign_name(node);
 
     bsal_actor_set_name(copy, name);
-    bsal_actor_set_node(copy, node);
 
     /*
     printf("bsal_node_spawn new spawn: %i\n",
@@ -82,14 +81,12 @@ void bsal_node_construct(struct bsal_node *node, int threads,  int *argc,  char 
                     node->size * node->threads);
                     */
 
-    bsal_fifo_construct(&node->inbound_messages, 16, sizeof(struct bsal_work));
-    bsal_fifo_construct(&node->outbound_messages, 16, sizeof(struct bsal_message));
+    bsal_thread_construct(&node->thread, node);
 }
 
 void bsal_node_destruct(struct bsal_node *node)
 {
-    bsal_fifo_destruct(&node->outbound_messages);
-    bsal_fifo_destruct(&node->inbound_messages);
+    bsal_thread_destruct(&node->thread);
 
     if (node->actors != NULL) {
         free(node->actors);
@@ -131,7 +128,6 @@ void bsal_node_start(struct bsal_node *node)
 
 void bsal_node_run(struct bsal_node *node)
 {
-    struct bsal_work work;
     struct bsal_message message;
 
     while(1) {
@@ -140,22 +136,17 @@ void bsal_node_run(struct bsal_node *node)
             break;
         }
 
-        /* pull message from network */
-        bsal_node_receive_inbound_message(node, &message);
+        /* pull message from network and assign the message to a thread */
+        bsal_node_receive(node);
 
-        /* check for messages in inbound FIFO */
-        if (bsal_fifo_pop(&node->inbound_messages, &work)) {
+        /* make the thread work (currently, this is the main thread) */
+        bsal_thread_run(&node->thread);
 
-            /* printf("[bsal_node_run] popped message\n"); */
-            /* dispatch message to a worker thread (currently, this is the main thread) */
-            bsal_node_work(node, &work);
-        }
+        /* check for messages to send from from threads */
+        if (bsal_fifo_pop(bsal_thread_outbound_messages(&node->thread), &message)) {
 
-        /* check for messages to send from the outbound FIFO */
-        if (bsal_fifo_pop(&node->outbound_messages, &message)) {
-
-            /* send messages over the network */
-            bsal_node_send_outbound_message(node, &message);
+            /* send it locally or over the network */
+            bsal_node_send(node, &message);
         }
     }
 }
@@ -163,7 +154,7 @@ void bsal_node_run(struct bsal_node *node)
 /* \see http://www.mpich.org/static/docs/v3.1/www3/MPI_Iprobe.html */
 /* \see http://www.mpich.org/static/docs/v3.1/www3/MPI_Recv.html */
 /* \see http://www.malcolmmclean.site11.com/www/MpiTutorial/MPIStatus.html */
-void bsal_node_receive_inbound_message(struct bsal_node *node, struct bsal_message *message)
+void bsal_node_receive(struct bsal_node *node)
 {
     char *buffer;
     int count;
@@ -172,9 +163,12 @@ void bsal_node_receive_inbound_message(struct bsal_node *node, struct bsal_messa
     int tag;
     int flag;
     MPI_Status status;
+    struct bsal_message *message;
+    struct bsal_message received_message;
 
     /* printf("DEBUG MPI_Iprobe + MPI_Recv\n"); */
 
+    message = &received_message;
     source = MPI_ANY_SOURCE;
     tag = MPI_ANY_TAG;
     destination = node->rank;
@@ -185,7 +179,7 @@ void bsal_node_receive_inbound_message(struct bsal_node *node, struct bsal_messa
         return;
     }
 
-    /* printf("bsal_node_receive_inbound_message MPI_Iprobe sucess !\n"); */
+    /* printf("bsal_node_receive MPI_Iprobe sucess !\n"); */
 
     MPI_Get_count(&status, node->datatype, &count);
     buffer = NULL; /* TODO actually allocate a buffer with count bytes ! */
@@ -198,7 +192,7 @@ void bsal_node_receive_inbound_message(struct bsal_node *node, struct bsal_messa
     bsal_message_construct(message, tag, source, destination, count, buffer);
     bsal_node_resolve(node, message);
 
-    bsal_node_enqueue_inbound_message(node, message);
+    bsal_node_dispatch(node, message);
 }
 
 void bsal_node_resolve(struct bsal_node *node, struct bsal_message *message)
@@ -254,20 +248,15 @@ void bsal_node_send(struct bsal_node *node, struct bsal_message *message)
     rank = bsal_node_actor_rank(node, name);
 
     if (rank == node->rank) {
-        bsal_node_enqueue_inbound_message(node, message);
+        bsal_node_dispatch(node, message);
     } else {
-        bsal_node_enqueue_outbound_message(node, message);
+
+        /* send messages over the network */
+        bsal_node_send_outbound_message(node, message);
     }
 }
 
-void bsal_node_enqueue_outbound_message(struct bsal_node *node, struct bsal_message *message)
-{
-    /* printf("<bsal_node_enqueue_outbound_message> pushed packet\n"); */
-
-    bsal_fifo_push(&node->outbound_messages, message);
-}
-
-void bsal_node_enqueue_inbound_message(struct bsal_node *node, struct bsal_message *message)
+void bsal_node_dispatch(struct bsal_node *node, struct bsal_message *message)
 {
     struct bsal_message *new_message;
     struct bsal_actor *actor;
@@ -294,45 +283,13 @@ void bsal_node_enqueue_inbound_message(struct bsal_node *node, struct bsal_messa
     new_message = (struct bsal_message *)malloc(sizeof(struct bsal_message));
     memcpy(new_message, message, sizeof(struct bsal_message));
 
+    /* TODO: select the thread */
     struct bsal_work work;
     bsal_work_construct(&work, actor, new_message);
-    bsal_fifo_push(&node->inbound_messages, &work);
+    bsal_fifo_push(bsal_thread_inbound_messages(&node->thread), &work);
 
     /* printf("[bsal_node_receive] pushed work\n"); */
     /* bsal_work_print(&work); */
-}
-
-void bsal_node_work(struct bsal_node *node, struct bsal_work *work)
-{
-    bsal_actor_receive_fn_t receive;
-    struct bsal_actor *actor;
-    struct bsal_message *message;
-
-    actor = bsal_work_actor(work);
-    message = bsal_work_message(work);
-
-    /* bsal_actor_print(actor); */
-    receive = bsal_actor_get_receive(actor);
-    /* printf("bsal_node_send %p %p %p %p\n", (void*)actor, (void*)receive,
-                    (void*)pointer, (void*)message); */
-
-    receive(actor, message);
-    int dead = bsal_actor_dead(actor);
-
-    /*
-    printf("[bsal_node_work] -> ");
-    bsal_work_print(work);
-    */
-
-    if (dead) {
-        node->alive_actors--;
-        node->dead_actors++;
-
-        /* printf("bsal_node_receive alive %i\n", node->alive_actors); */
-    }
-
-    /* TODO replace with slab allocator */
-    free(message);
 }
 
 int bsal_node_actor_index(struct bsal_node *node, int rank, int name)
@@ -353,4 +310,10 @@ int bsal_node_rank(struct bsal_node *node)
 int bsal_node_size(struct bsal_node *node)
 {
     return node->size;
+}
+
+void bsal_node_notify_death(struct bsal_node *node, struct bsal_actor *actor)
+{
+    node->alive_actors--;
+    node->dead_actors++;
 }

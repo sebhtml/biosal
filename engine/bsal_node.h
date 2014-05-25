@@ -3,8 +3,8 @@
 #define _BSAL_NODE_H
 
 #include "bsal_actor.h"
-#include "bsal_fifo.h"
 #include "bsal_work.h"
+#include "bsal_thread.h"
 #include <mpi.h>
 
 /*
@@ -30,8 +30,7 @@ struct bsal_node {
     MPI_Comm comm;
     MPI_Datatype datatype;
 
-    struct bsal_fifo inbound_messages;
-    struct bsal_fifo outbound_messages;
+    struct bsal_thread thread;
 };
 
 void bsal_node_construct(struct bsal_node *node, int threads, int *argc, char ***argv);
@@ -51,11 +50,14 @@ int bsal_node_rank(struct bsal_node *node);
 int bsal_node_size(struct bsal_node *node);
 
 void bsal_node_run(struct bsal_node *node);
-void bsal_node_work(struct bsal_node *node, struct bsal_work *work);
 
 void bsal_node_resolve(struct bsal_node *node, struct bsal_message *message);
 
 void bsal_node_send_outbound_message(struct bsal_node *node, struct bsal_message *message);
 void bsal_node_receive_inbound_message(struct bsal_node *node, struct bsal_message *message);
+void bsal_node_notify_death(struct bsal_node *node, struct bsal_actor *actor);
+
+void bsal_node_receive(struct bsal_node *node);
+void bsal_node_dispatch(struct bsal_node *node, struct bsal_message *message);
 
 #endif
