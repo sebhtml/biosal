@@ -1,7 +1,6 @@
 
-
-#ifndef _BSAL_POOL
-#define _BSAL_POOL
+#ifndef _BSAL_FIFO_H
+#define _BSAL_FIFO_H
 
 #include "bsal_fifo_array.h"
 

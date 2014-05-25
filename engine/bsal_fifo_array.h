@@ -1,5 +1,4 @@
 
-
 #ifndef _BSAL_FIFO_ARRAY_H
 #define _BSAL_FIFO_ARRAY_H
 

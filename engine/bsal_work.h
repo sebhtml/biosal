@@ -7,8 +7,6 @@
 struct bsal_work {
     struct bsal_actor *actor;
     struct bsal_message *message;
-    int completed;
-    int started;
 };
 
 void bsal_work_construct(struct bsal_work *work, struct bsal_actor *actor,
