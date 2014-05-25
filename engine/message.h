@@ -6,13 +6,17 @@ struct bsal_message {
     char *buffer;
     int bytes;
     int tag;
+
     int source_actor;
     int destination_actor;
+
     int source_rank;
     int destination_rank;
+
     int routing_source;
     int routing_destination;
 };
+
 typedef struct bsal_message bsal_message_t;
 
 void bsal_message_init(struct bsal_message *message, int tag,

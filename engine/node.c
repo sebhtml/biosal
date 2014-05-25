@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <string.h>
 
-/* #define BSAL_NODE_DEBUG */
+/*#define BSAL_NODE_DEBUG*/
 
 int bsal_node_spawn(struct bsal_node *node, void *pointer,
                 struct bsal_actor_vtable *vtable)
@@ -105,12 +105,6 @@ void bsal_node_start(struct bsal_node *node)
     int source;
     struct bsal_message message;
 
-    /*
-    printf("bsal_node_start Node #%i is starting, %i threads,"
-                    " %i actors in system\n",
-                    node->rank, node->threads, node->actor_count);
-                    */
-
     actors = node->actor_count;
 
     for (i = 0; i < actors; ++i) {
@@ -123,8 +117,6 @@ void bsal_node_start(struct bsal_node *node)
         bsal_message_destroy(&message);
     }
 
-    /* wait until all actors are dead... */
-
     bsal_node_run(node);
 }
 
@@ -134,6 +126,7 @@ void bsal_node_run(struct bsal_node *node)
 
     while(1) {
 
+        /* wait until all actors are dead... */
         if (node->alive_actors == 0) {
             break;
         }
@@ -270,6 +263,7 @@ void bsal_node_dispatch(struct bsal_node *node, struct bsal_message *message)
 {
     struct bsal_message *new_message;
     struct bsal_actor *actor;
+    struct bsal_work work;
     int index;
     int rank;
     int name;
@@ -309,7 +303,6 @@ void bsal_node_dispatch(struct bsal_node *node, struct bsal_message *message)
     new_message = (struct bsal_message *)malloc(sizeof(struct bsal_message));
     memcpy(new_message, message, sizeof(struct bsal_message));
 
-    struct bsal_work work;
     bsal_work_init(&work, actor, new_message);
 
     bsal_node_assign_work(node, &work);

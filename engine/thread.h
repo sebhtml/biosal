@@ -11,9 +11,8 @@ struct bsal_node;
 struct bsal_message;
 
 struct bsal_thread {
-    pthread_t thread;
-
     struct bsal_node *node;
+    pthread_t thread;
 
     struct bsal_fifo inbound_messages;
     struct bsal_fifo outbound_messages;

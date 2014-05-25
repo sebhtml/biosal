@@ -10,6 +10,8 @@ void bsal_fifo_init(struct bsal_fifo *fifo, int units, int bytes_per_unit)
     fifo->units = units;
     fifo->bytes_per_unit = bytes_per_unit;
 
+    /* allocate an initial array
+     */
     array = bsal_fifo_get_array(fifo);
 
     fifo->first = array;
@@ -46,9 +48,9 @@ void bsal_fifo_delete(struct bsal_fifo_array *array)
 
 void bsal_fifo_destroy_array(struct bsal_fifo_array *array)
 {
-    /* printf("[bsal_fifo_destroy_array] %p\n", array); */
-
     bsal_fifo_array_destroy(array);
+
+    /* TODO use a slab allocator */
     free(array);
 }
 
@@ -128,6 +130,7 @@ struct bsal_fifo_array *bsal_fifo_get_array(struct bsal_fifo *fifo)
 {
     struct bsal_fifo_array *array;
 
+    /* TODO: use a slab allocator here */
     array = (struct bsal_fifo_array *)malloc(sizeof(struct bsal_fifo_array));
     bsal_fifo_array_init(array, fifo->units, fifo->bytes_per_unit);
 

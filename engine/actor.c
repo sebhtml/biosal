@@ -9,7 +9,7 @@
 void bsal_actor_init(struct bsal_actor *actor, void *pointer,
                 struct bsal_actor_vtable *vtable)
 {
-    actor->actor = pointer;
+    actor->pointer = pointer;
     actor->name = -1;
     actor->dead = 0;
     actor->vtable = vtable;
@@ -21,15 +21,23 @@ void bsal_actor_init(struct bsal_actor *actor, void *pointer,
 
 void bsal_actor_destroy(struct bsal_actor *actor)
 {
-    actor->actor = NULL;
     actor->name = -1;
     actor->dead = 1;
+
     actor->vtable = NULL;
     actor->thread = NULL;
+    actor->pointer = NULL;
 
+    /* unlock the actor if the actor is being destroyed while
+     * being locked
+     */
     bsal_actor_unlock(actor);
 
     pthread_mutex_destroy(&actor->mutex);
+
+    /* when exiting the destructor, the actor is unlocked
+     * and destroyed too
+     */
 }
 
 int bsal_actor_name(struct bsal_actor *actor)
@@ -39,7 +47,7 @@ int bsal_actor_name(struct bsal_actor *actor)
 
 void *bsal_actor_actor(struct bsal_actor *actor)
 {
-    return actor->actor;
+    return actor->pointer;
 }
 
 bsal_actor_receive_fn_t bsal_actor_get_receive(struct bsal_actor *actor)
@@ -54,9 +62,9 @@ void bsal_actor_set_name(struct bsal_actor *actor, int name)
 
 void bsal_actor_print(struct bsal_actor *actor)
 {
-        /*  with -Werror -Wall:
-           engine/bsal_actor.c:58:21: error: ISO C for bids conversion of function pointer to object pointer type [-Werror=edantic]
-           */
+    /* with -Werror -Wall:
+     * engine/bsal_actor.c:58:21: error: ISO C for bids conversion of function pointer to object pointer type [-Werror=edantic]
+     */
     printf("bsal_actor_print name: %i bsal_actor %p pointer %p\n", bsal_actor_name(actor),
                     (void*)actor, (void*)bsal_actor_actor(actor));
 }

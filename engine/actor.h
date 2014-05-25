@@ -4,6 +4,7 @@
 
 #include "message.h"
 #include "actor_vtable.h"
+
 #include <pthread.h>
 
 enum {
@@ -18,13 +19,16 @@ struct bsal_thread;
  */
 struct bsal_actor {
     struct bsal_actor_vtable *vtable;
+    void *pointer;
     struct bsal_thread *thread;
-    void *actor;
+
     pthread_mutex_t mutex;
+
     int locked;
     int name;
     int dead;
 };
+
 typedef struct bsal_actor bsal_actor_t;
 
 void bsal_actor_init(struct bsal_actor *actor, void *pointer,

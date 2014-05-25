@@ -22,21 +22,19 @@ struct bsal_actor_vtable;
  *
  */
 struct bsal_node {
+    struct bsal_actor *actors;
+    struct bsal_thread thread;
+    pthread_mutex_t death_mutex;
+    MPI_Comm comm;
+    MPI_Datatype datatype;
+
     int rank;
     int size;
     int threads;
 
-    struct bsal_actor *actors;
     int actor_count;
     int dead_actors;
     int alive_actors;
-
-    MPI_Comm comm;
-    MPI_Datatype datatype;
-
-    struct bsal_thread thread;
-
-    pthread_mutex_t death_mutex;
 };
 
 void bsal_node_init(struct bsal_node *node, int threads, int *argc, char ***argv);
@@ -55,6 +53,7 @@ int bsal_node_size(struct bsal_node *node);
 
 void bsal_node_run(struct bsal_node *node);
 
+/* MPI ranks are set with bsal_node_resolve */
 void bsal_node_resolve(struct bsal_node *node, struct bsal_message *message);
 
 void bsal_node_send_outbound_message(struct bsal_node *node, struct bsal_message *message);

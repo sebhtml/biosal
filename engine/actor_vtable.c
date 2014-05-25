@@ -1,5 +1,6 @@
 
 #include "actor_vtable.h"
+
 #include <stdlib.h>
 
 void bsal_actor_vtable_init(struct bsal_actor_vtable *vtable, bsal_actor_init_fn_t init,
@@ -12,6 +13,8 @@ void bsal_actor_vtable_init(struct bsal_actor_vtable *vtable, bsal_actor_init_fn
 
 void bsal_actor_vtable_destroy(struct bsal_actor_vtable *vtable)
 {
+    vtable->init = NULL;
+    vtable->destroy = NULL;
     vtable->receive = NULL;
 }
 

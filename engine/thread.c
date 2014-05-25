@@ -1,5 +1,6 @@
 
 #include "thread.h"
+
 #include "work.h"
 #include "message.h"
 #include "node.h"
@@ -17,6 +18,8 @@ void bsal_thread_init(struct bsal_thread *thread, struct bsal_node *node)
 
 void bsal_thread_destroy(struct bsal_thread *thread)
 {
+    thread->node = NULL;
+
     bsal_fifo_destroy(&thread->outbound_messages);
     bsal_fifo_destroy(&thread->inbound_messages);
 }
@@ -45,28 +48,34 @@ void bsal_thread_run(struct bsal_thread *thread)
 
 void bsal_thread_work(struct bsal_thread *thread, struct bsal_work *work)
 {
-    bsal_actor_receive_fn_t receive;
     struct bsal_actor *actor;
     struct bsal_message *message;
+    bsal_actor_receive_fn_t receive;
+    int dead;
 
     actor = bsal_work_actor(work);
 
+    /* lock the actor to prevent another thread from making work
+     * on the same actor at the same time
+     */
     bsal_actor_lock(actor);
 
     bsal_actor_set_thread(actor, thread);
     message = bsal_work_message(work);
-
     receive = bsal_actor_get_receive(actor);
-
     receive(actor, message);
 
     bsal_actor_set_thread(actor, NULL);
-    int dead = bsal_actor_dead(actor);
+    dead = bsal_actor_dead(actor);
 
     if (dead) {
         bsal_node_notify_death(thread->node, actor);
     }
 
+    /* Unlock the actor.
+     * This does not do anything if a death notification
+     * was sent to the node
+     */
     bsal_actor_unlock(actor);
 
     /* TODO free the buffer with the slab allocator */
@@ -82,9 +91,9 @@ struct bsal_node *bsal_thread_node(struct bsal_thread *thread)
 
 void bsal_thread_send(struct bsal_thread *thread, struct bsal_message *message)
 {
+    struct bsal_message copy;
     char *buffer;
     int count;
-    struct bsal_message copy;
 
     memcpy(&copy, message, sizeof(struct bsal_message));
     count = bsal_message_count(&copy);

@@ -1,5 +1,6 @@
 
 #include "mock.h"
+
 #include <biosal.h>
 
 /*
@@ -16,7 +17,6 @@ int main(int argc, char **argv)
     bsal_node_init(&node, threads, &argc, &argv);
     bsal_node_spawn(&node, &mock1, &mock_vtable);
     bsal_node_start(&node);
-
     bsal_node_destroy(&node);
 
     return 0;

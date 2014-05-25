@@ -5,11 +5,12 @@
 #include "fifo_array.h"
 
 struct bsal_fifo {
-    int units;
-    int bytes_per_unit;
     struct bsal_fifo_array *first;
     struct bsal_fifo_array *last;
     struct bsal_fifo_array *bin;
+
+    int units;
+    int bytes_per_unit;
 };
 
 void bsal_fifo_init(struct bsal_fifo *fifo, int units, int bytes_per_unit);

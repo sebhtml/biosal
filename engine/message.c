@@ -8,12 +8,15 @@ void bsal_message_init(struct bsal_message *message, int tag, int source,
 {
     message->source_actor = source;
     message->destination_actor = destination;
+
     message->tag = tag;
     message->buffer = buffer;
     message->bytes = bytes;
 
+    /* MPI ranks are set with bsal_node_resolve */
     message->source_rank = -1;
     message->destination_rank = -1;
+
     message->routing_source = -1;
     message->routing_destination = -1;
 }

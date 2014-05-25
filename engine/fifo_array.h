@@ -9,14 +9,15 @@
  * \see http://www.codeproject.com/Articles/43510/Lock-Free-Single-Producer-Single-Consumer-Circular
  */
 struct bsal_fifo_array {
-    int units;
-    int bytes_per_unit;
     void *array;
-    volatile int consumer_head;
-    volatile int producer_tail;
 
     struct bsal_fifo_array *previous;
     struct bsal_fifo_array *next;
+
+    int units;
+    int bytes_per_unit;
+    volatile int consumer_head;
+    volatile int producer_tail;
 };
 
 void bsal_fifo_array_init(struct bsal_fifo_array *fifo, int units, int bytes_per_unit);
@@ -36,5 +37,3 @@ struct bsal_fifo_array *bsal_fifo_array_next(struct bsal_fifo_array *fifo);
 struct bsal_fifo_array *bsal_fifo_array_previous(struct bsal_fifo_array *fifo);
 
 #endif
-
-

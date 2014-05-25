@@ -40,8 +40,6 @@ void buddy_receive(struct bsal_actor *actor, struct bsal_message *message)
         printf("buddy_receive Actor %i received a message (%i BUDDY_DIE) from actor %i\n",
                         name, tag, source);
 
-        printf("buddy_receive actor %i dies\n", name);
-
         bsal_actor_die(actor);
     }
 }
