@@ -65,4 +65,6 @@ void bsal_node_dispatch(struct bsal_node *node, struct bsal_message *message);
 void bsal_node_assign_work(struct bsal_node *node, struct bsal_work *work);
 int bsal_node_pull(struct bsal_node *node, struct bsal_message *message);
 
+struct bsal_thread *bsal_node_select_thread_for_pull(struct bsal_node *node);
+
 #endif

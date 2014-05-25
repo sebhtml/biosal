@@ -66,6 +66,7 @@ void bsal_thread_work(struct bsal_thread *thread, struct bsal_work *work)
         bsal_node_notify_death(thread->node, actor);
     }
 
+    /* TODO free the buffer with the slab allocator */
     /* TODO replace with slab allocator */
     free((void*)message);
 }

@@ -153,10 +153,18 @@ void bsal_node_run(struct bsal_node *node)
     }
 }
 
+/* TODO select a thread to pull from */
+struct bsal_thread *bsal_node_select_thread_for_pull(struct bsal_node *node)
+{
+    return &node->thread;
+}
+
 int bsal_node_pull(struct bsal_node *node, struct bsal_message *message)
 {
-    /* TODO select a thread to pull from */
-    return bsal_fifo_pop(bsal_thread_outbound_messages(&node->thread), message);
+    struct bsal_thread *thread;
+
+    thread = bsal_node_select_thread_for_pull(node);
+    return bsal_fifo_pop(bsal_thread_outbound_messages(thread), message);
 }
 
 /* \see http://www.mpich.org/static/docs/v3.1/www3/MPI_Iprobe.html */
@@ -187,7 +195,8 @@ int bsal_node_receive(struct bsal_node *node, struct bsal_message *message)
     /* printf("bsal_node_receive MPI_Iprobe sucess !\n"); */
 
     MPI_Get_count(&status, node->datatype, &count);
-    buffer = NULL; /* TODO actually allocate a buffer with count bytes ! */
+    /* TODO actually allocate a buffer with count bytes ! */
+    buffer = NULL;
     source = status.MPI_SOURCE;
     tag = status.MPI_TAG;
 
@@ -309,10 +318,18 @@ void bsal_node_dispatch(struct bsal_node *node, struct bsal_message *message)
     /* bsal_work_print(&work); */
 }
 
+/* TODO: select the thread */
+struct bsal_thread *bsal_node_select_thread_for_push(struct bsal_node *node)
+{
+    return &node->thread;
+}
+
 void bsal_node_assign_work(struct bsal_node *node, struct bsal_work *work)
 {
-    /* TODO: select the thread */
-    bsal_fifo_push(bsal_thread_inbound_messages(&node->thread), work);
+    struct bsal_thread *thread;
+
+    thread = bsal_node_select_thread_for_push(node);
+    bsal_fifo_push(bsal_thread_inbound_messages(thread), work);
 }
 
 int bsal_node_actor_index(struct bsal_node *node, int rank, int name)
