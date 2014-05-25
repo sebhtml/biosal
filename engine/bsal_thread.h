@@ -24,7 +24,7 @@ void bsal_thread_destruct(struct bsal_thread *thread);
 struct bsal_fifo *bsal_thread_inbound_messages(struct bsal_thread *thread);
 struct bsal_fifo *bsal_thread_outbound_messages(struct bsal_thread *thread);
 
-void bsal_thread_run(struct  bsal_thread *thread);
+void bsal_thread_run(struct bsal_thread *thread);
 void bsal_thread_work(struct bsal_thread *thread, struct bsal_work *work);
 struct bsal_node *bsal_thread_node(struct bsal_thread *thread);
 

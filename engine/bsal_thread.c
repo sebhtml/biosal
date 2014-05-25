@@ -30,7 +30,7 @@ struct bsal_fifo *bsal_thread_outbound_messages(struct bsal_thread *thread)
     return &thread->outbound_messages;
 }
 
-void bsal_thread_run(struct  bsal_thread *thread)
+void bsal_thread_run(struct bsal_thread *thread)
 {
     struct bsal_work work;
 
