@@ -263,6 +263,7 @@ void bsal_node_dispatch(struct bsal_node *node, struct bsal_message *message)
     int index;
     int rank;
     int name;
+    int dead;
     /* int tag; */
 
     /* tag = bsal_message_tag(message); */
@@ -277,6 +278,11 @@ void bsal_node_dispatch(struct bsal_node *node, struct bsal_message *message)
 
     index = bsal_node_actor_index(node, rank, name);
     actor = node->actors + index;
+    dead = bsal_actor_dead(actor);
+
+    if (dead) {
+        return;
+    }
 
     /* we need to do a copy of the message */
     /* TODO replace with slab allocator */
