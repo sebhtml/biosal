@@ -16,6 +16,7 @@ void bsal_actor_init(struct bsal_actor *actor, void *pointer,
     actor->thread = NULL;
 
     pthread_mutex_init(&actor->mutex, NULL);
+    actor->locked = 0;
 }
 
 void bsal_actor_destroy(struct bsal_actor *actor)
@@ -25,6 +26,8 @@ void bsal_actor_destroy(struct bsal_actor *actor)
     actor->dead = 1;
     actor->vtable = NULL;
     actor->thread = NULL;
+
+    bsal_actor_unlock(actor);
 
     pthread_mutex_destroy(&actor->mutex);
 }
@@ -121,9 +124,15 @@ struct bsal_node *bsal_actor_node(struct bsal_actor *actor)
 void bsal_actor_lock(struct bsal_actor *actor)
 {
     pthread_mutex_lock(&actor->mutex);
+    actor->locked = 1;
 }
 
 void bsal_actor_unlock(struct bsal_actor *actor)
 {
+    if (!actor->locked) {
+        return;
+    }
+
+    actor->locked = 0;
     pthread_mutex_unlock(&actor->mutex);
 }

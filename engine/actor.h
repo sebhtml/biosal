@@ -21,6 +21,7 @@ struct bsal_actor {
     struct bsal_thread *thread;
     void *actor;
     pthread_mutex_t mutex;
+    int locked;
     int name;
     int dead;
 };
