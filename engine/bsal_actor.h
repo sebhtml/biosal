@@ -4,7 +4,6 @@
 
 #include "bsal_message.h"
 #include "bsal_actor_vtable.h"
-
 #include <pthread.h>
 
 enum {
@@ -19,7 +18,6 @@ struct bsal_thread;
  */
 struct bsal_actor {
     struct bsal_actor_vtable *vtable;
-    bsal_actor_receive_fn_t receive;
     struct bsal_thread *thread;
     void *actor;
     pthread_mutex_t mutex;
@@ -29,7 +27,7 @@ struct bsal_actor {
 typedef struct bsal_actor bsal_actor_t;
 
 void bsal_actor_construct(struct bsal_actor *actor, void *pointer,
-                bsal_actor_receive_fn_t receive);
+                struct bsal_actor_vtable *vtable);
 void bsal_actor_destruct(struct bsal_actor *actor);
 
 int bsal_actor_name(struct bsal_actor *actor);
@@ -52,7 +50,8 @@ struct bsal_node *bsal_actor_node(struct bsal_actor *actor);
 /*
  * This function returns the name of the spawned actor.
  */
-int bsal_actor_spawn(struct bsal_actor *actor, void *pointer, bsal_actor_receive_fn_t receive);
+int bsal_actor_spawn(struct bsal_actor *actor, void *pointer,
+                struct bsal_actor_vtable *vtable);
 
 void bsal_actor_lock(struct bsal_actor *actor);
 void bsal_actor_unlock(struct bsal_actor *actor);

@@ -6,7 +6,7 @@
 #include <string.h>
 
 int bsal_node_spawn(struct bsal_node *node, void *actor,
-                bsal_actor_receive_fn_t receive)
+                struct bsal_actor_vtable *vtable)
 {
     struct bsal_actor *copy;
     int name;
@@ -18,7 +18,7 @@ int bsal_node_spawn(struct bsal_node *node, void *actor,
 
     /* do a copy of the actor wrapper */
     copy = node->actors + node->actor_count;
-    bsal_actor_construct(copy, actor, receive);
+    bsal_actor_construct(copy, actor, vtable);
 
     name = bsal_node_assign_name(node);
 

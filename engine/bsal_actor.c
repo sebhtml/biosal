@@ -7,7 +7,7 @@
 #include <stdio.h>
 
 void bsal_actor_construct(struct bsal_actor *actor, void *pointer,
-                bsal_actor_receive_fn_t receive)
+                struct bsal_actor_vtable *vtable)
 {
     /* bsal_actor_construct_fn_t construct; */
 
@@ -23,8 +23,8 @@ void bsal_actor_construct(struct bsal_actor *actor, void *pointer,
     bsal_actor_vtable_construct(vtable,  receive);
     */
 
-    /* bsal_actor->vtable = vtable; */
-    actor->receive = receive;
+    actor->vtable = vtable;
+    /* actor->receive = receive; */
 
     /* printf("bsal_actor_construct %p %p %p\n", (void*)bsal_actor, (void*)actor, (void*)receive); */
 
@@ -63,8 +63,8 @@ bsal_actor_receive_fn_t bsal_actor_get_receive(struct bsal_actor *actor)
 {
     /* printf("bsal_actor_handler %p %p\n", (void*)bsal_actor, (void*)bsal_actor->receive); */
 
-    return actor->receive;
-    /* return bsal_actor_vtable_get_receive(bsal_actor->vtable); */
+    /* return actor->receive; */
+    return bsal_actor_vtable_get_receive(actor->vtable);
 }
 
 void bsal_actor_set_name(struct bsal_actor *actor, int name)
@@ -109,10 +109,10 @@ void bsal_actor_send(struct bsal_actor *actor, int name, struct bsal_message *me
     bsal_thread_send(actor->thread, message);
 }
 
-int bsal_actor_spawn(struct bsal_actor *actor, void *new_actor,
-                bsal_actor_receive_fn_t receive)
+int bsal_actor_spawn(struct bsal_actor *actor, void *pointer,
+                struct bsal_actor_vtable *vtable)
 {
-    return bsal_node_spawn(bsal_actor_node(actor), new_actor, receive);
+    return bsal_node_spawn(bsal_actor_node(actor), pointer, vtable);
 }
 
 struct bsal_thread *bsal_actor_thread(struct bsal_actor *actor)

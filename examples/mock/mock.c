@@ -108,7 +108,7 @@ void mock_spawn_children(struct bsal_actor *actor)
         int name;
         int tag;
 
-        name = bsal_actor_spawn(actor, buddy_actor, buddy_receive);
+        name = bsal_actor_spawn(actor, buddy_actor, &buddy_vtable);
         tag = bsal_message_tag(&message);
 
         printf("mock_spawn_children sending tag %i BUDDY_DIE to %i\n",

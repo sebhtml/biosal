@@ -7,6 +7,8 @@
 #include "bsal_thread.h"
 #include <mpi.h>
 
+struct bsal_actor_vtable;
+
 /*
  * - message reception: one fifo per thread
  * - the fifo has volatile variables for its heads
@@ -36,7 +38,8 @@ struct bsal_node {
 void bsal_node_construct(struct bsal_node *node, int threads, int *argc, char ***argv);
 void bsal_node_destruct(struct bsal_node *node);
 void bsal_node_start(struct bsal_node *node);
-int bsal_node_spawn(struct bsal_node *node, void *actor, bsal_actor_receive_fn_t receive);
+int bsal_node_spawn(struct bsal_node *node, void *pointer,
+                struct bsal_actor_vtable *vtable);
 
 void bsal_node_send(struct bsal_node *node, struct bsal_message *message);
 
