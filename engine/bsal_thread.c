@@ -51,7 +51,7 @@ void bsal_thread_work(struct bsal_thread *thread, struct bsal_work *work)
 
     actor = bsal_work_actor(work);
 
-    /* TODO: lock actor */
+    bsal_actor_lock(actor);
     bsal_actor_set_thread(actor, thread);
     message = bsal_work_message(work);
 
@@ -63,7 +63,7 @@ void bsal_thread_work(struct bsal_thread *thread, struct bsal_work *work)
     receive(actor, message);
 
     bsal_actor_set_thread(actor, NULL);
-    /* TODO unlock actor */
+    bsal_actor_unlock(actor);
     int dead = bsal_actor_dead(actor);
 
     /*

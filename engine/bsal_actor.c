@@ -145,3 +145,13 @@ struct bsal_node *bsal_actor_node(struct bsal_actor *actor)
 
     return bsal_thread_node(bsal_actor_thread(actor));
 }
+
+void bsal_actor_lock(struct bsal_actor *actor)
+{
+    pthread_mutex_lock(&actor->mutex);
+}
+
+void bsal_actor_unlock(struct bsal_actor *actor)
+{
+    pthread_mutex_unlock(&actor->mutex);
+}

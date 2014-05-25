@@ -5,6 +5,8 @@
 #include "bsal_message.h"
 #include "bsal_actor_vtable.h"
 
+#include <pthread.h>
+
 enum {
     BSAL_START = 1000 /* FIRST_TAG */ /* LAST_TAG */
 };
@@ -22,6 +24,7 @@ struct bsal_actor {
     int name;
     int dead;
     struct bsal_thread *thread;
+    pthread_mutex_t mutex;
 };
 typedef struct bsal_actor bsal_actor_t;
 
@@ -47,5 +50,8 @@ void bsal_actor_send(struct bsal_actor *actor, int name, struct bsal_message *me
 
 struct bsal_node *bsal_actor_node(struct bsal_actor *actor);
 int bsal_actor_spawn(struct bsal_actor *actor, void *pointer, bsal_actor_receive_fn_t receive);
+
+void bsal_actor_lock(struct bsal_actor *actor);
+void bsal_actor_unlock(struct bsal_actor *actor);
 
 #endif
