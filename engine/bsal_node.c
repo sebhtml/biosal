@@ -137,13 +137,15 @@ void bsal_node_run(struct bsal_node *node)
         }
 
         /* pull message from network and assign the message to a thread */
-        bsal_node_receive(node);
+        if (bsal_node_receive(node, &message)) {
+            bsal_node_dispatch(node, &message);
+        }
 
         /* make the thread work (currently, this is the main thread) */
         bsal_thread_run(&node->thread);
 
         /* check for messages to send from from threads */
-        if (bsal_fifo_pop(bsal_thread_outbound_messages(&node->thread), &message)) {
+        if (bsal_node_pull(node, &message)) {
 
             /* send it locally or over the network */
             bsal_node_send(node, &message);
@@ -151,10 +153,16 @@ void bsal_node_run(struct bsal_node *node)
     }
 }
 
+int bsal_node_pull(struct bsal_node *node, struct bsal_message *message)
+{
+    /* TODO select a thread to pull from */
+    return bsal_fifo_pop(bsal_thread_outbound_messages(&node->thread), message);
+}
+
 /* \see http://www.mpich.org/static/docs/v3.1/www3/MPI_Iprobe.html */
 /* \see http://www.mpich.org/static/docs/v3.1/www3/MPI_Recv.html */
 /* \see http://www.malcolmmclean.site11.com/www/MpiTutorial/MPIStatus.html */
-void bsal_node_receive(struct bsal_node *node)
+int bsal_node_receive(struct bsal_node *node, struct bsal_message *message)
 {
     char *buffer;
     int count;
@@ -163,12 +171,9 @@ void bsal_node_receive(struct bsal_node *node)
     int tag;
     int flag;
     MPI_Status status;
-    struct bsal_message *message;
-    struct bsal_message received_message;
 
     /* printf("DEBUG MPI_Iprobe + MPI_Recv\n"); */
 
-    message = &received_message;
     source = MPI_ANY_SOURCE;
     tag = MPI_ANY_TAG;
     destination = node->rank;
@@ -176,7 +181,7 @@ void bsal_node_receive(struct bsal_node *node)
     MPI_Iprobe(source, tag, node->comm, &flag, &status);
 
     if (!flag) {
-        return;
+        return 0;
     }
 
     /* printf("bsal_node_receive MPI_Iprobe sucess !\n"); */
@@ -192,7 +197,7 @@ void bsal_node_receive(struct bsal_node *node)
     bsal_message_construct(message, tag, source, destination, count, buffer);
     bsal_node_resolve(node, message);
 
-    bsal_node_dispatch(node, message);
+    return 1;
 }
 
 void bsal_node_resolve(struct bsal_node *node, struct bsal_message *message)
@@ -289,13 +294,19 @@ void bsal_node_dispatch(struct bsal_node *node, struct bsal_message *message)
     new_message = (struct bsal_message *)malloc(sizeof(struct bsal_message));
     memcpy(new_message, message, sizeof(struct bsal_message));
 
-    /* TODO: select the thread */
     struct bsal_work work;
     bsal_work_construct(&work, actor, new_message);
-    bsal_fifo_push(bsal_thread_inbound_messages(&node->thread), &work);
+
+    bsal_node_assign_work(node, &work);
 
     /* printf("[bsal_node_receive] pushed work\n"); */
     /* bsal_work_print(&work); */
+}
+
+void bsal_node_assign_work(struct bsal_node *node, struct bsal_work *work)
+{
+    /* TODO: select the thread */
+    bsal_fifo_push(bsal_thread_inbound_messages(&node->thread), work);
 }
 
 int bsal_node_actor_index(struct bsal_node *node, int rank, int name)
