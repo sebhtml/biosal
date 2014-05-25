@@ -32,9 +32,7 @@ clean:
 # qemu causes this with -march=native:
 # test/interface.c:1:0: error: CPU you selected does not support x86-64 instruction set
 #make CFLAGS="-O3 -march=native -g -std=c99 -Wall -pedantic -I. -Werror" -j 7
-mock:
-	make clean
-	make -j 7
+mock: test_mock
 	mpiexec -n 3 ./test_mock
 
 test: test_fifo test_fifo_array

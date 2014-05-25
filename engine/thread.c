@@ -5,6 +5,7 @@
 #include "node.h"
 
 #include <stdlib.h>
+#include <string.h>
 
 void bsal_thread_init(struct bsal_thread *thread, struct bsal_node *node)
 {
@@ -69,8 +70,9 @@ void bsal_thread_work(struct bsal_thread *thread, struct bsal_work *work)
     bsal_actor_unlock(actor);
 
     /* TODO free the buffer with the slab allocator */
+    free(bsal_message_buffer(message));
     /* TODO replace with slab allocator */
-    free((void*)message);
+    free(message);
 }
 
 struct bsal_node *bsal_thread_node(struct bsal_thread *thread)
@@ -80,7 +82,21 @@ struct bsal_node *bsal_thread_node(struct bsal_thread *thread)
 
 void bsal_thread_send(struct bsal_thread *thread, struct bsal_message *message)
 {
-    bsal_fifo_push(bsal_thread_outbound_messages(thread), message);
+    char *buffer;
+    int count;
+    struct bsal_message copy;
+
+    memcpy(&copy, message, sizeof(struct bsal_message));
+    count = bsal_message_count(&copy);
+
+    if (count > 0) {
+        /* TODO use slab allocator to allocate buffer... */
+        buffer = (char *)malloc(count * sizeof(char));
+        memcpy(buffer, bsal_message_buffer(message), count);
+        bsal_message_set_buffer(&copy, buffer);
+    }
+
+    bsal_fifo_push(bsal_thread_outbound_messages(thread), &copy);
 }
 
 void bsal_thread_receive(struct bsal_thread *thread, struct bsal_message *message)

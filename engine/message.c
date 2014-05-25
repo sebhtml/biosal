@@ -71,7 +71,7 @@ char *bsal_message_buffer(struct bsal_message *message)
     return message->buffer;
 }
 
-int bsal_message_bytes(struct bsal_message *message)
+int bsal_message_count(struct bsal_message *message)
 {
     return message->bytes;
 }
@@ -84,4 +84,14 @@ void bsal_message_set_source_rank(struct bsal_message *message, int source)
 void bsal_message_set_destination_rank(struct bsal_message *message, int destination)
 {
     message->destination_rank = destination;
+}
+
+void bsal_message_set_buffer(struct bsal_message *message, char *buffer)
+{
+    message->buffer = buffer;
+}
+
+void bsal_message_set_tag(struct bsal_message *message, int tag)
+{
+    message->tag = tag;
 }

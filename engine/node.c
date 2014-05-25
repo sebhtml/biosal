@@ -5,6 +5,8 @@
 #include <stdio.h>
 #include <string.h>
 
+/* #define BSAL_NODE_DEBUG */
+
 int bsal_node_spawn(struct bsal_node *node, void *pointer,
                 struct bsal_actor_vtable *vtable)
 {
@@ -180,8 +182,6 @@ int bsal_node_receive(struct bsal_node *node, struct bsal_message *message)
     int flag;
     MPI_Status status;
 
-    /* printf("DEBUG MPI_Iprobe + MPI_Recv\n"); */
-
     source = MPI_ANY_SOURCE;
     tag = MPI_ANY_TAG;
     destination = node->rank;
@@ -192,11 +192,10 @@ int bsal_node_receive(struct bsal_node *node, struct bsal_message *message)
         return 0;
     }
 
-    /* printf("bsal_node_receive MPI_Iprobe sucess !\n"); */
-
     MPI_Get_count(&status, node->datatype, &count);
-    /* TODO actually allocate a buffer with count bytes ! */
-    buffer = NULL;
+
+    /* TODO actually allocate (slab allocator) a buffer with count bytes ! */
+    buffer = (char *)malloc(count * sizeof(char));
     source = status.MPI_SOURCE;
     tag = status.MPI_TAG;
 
@@ -236,13 +235,9 @@ void bsal_node_send_outbound_message(struct bsal_node *node, struct bsal_message
     bsal_node_resolve(node, message);
 
     buffer = bsal_message_buffer(message);
-    count = bsal_message_bytes(message);
+    count = bsal_message_count(message);
     destination = bsal_message_destination_rank(message);
     tag = bsal_message_tag(message);
-
-    /* source = bsal_message_source_rank(message); */
-    /* printf("[bsal_node_send_outbound_message] MPI_Isend %i -> %i tag %i\n",
-                    source, destination, tag); */
 
     MPI_Isend(buffer, count, node->datatype, destination, tag,
                     node->comm, &request);
@@ -279,17 +274,22 @@ void bsal_node_dispatch(struct bsal_node *node, struct bsal_message *message)
     int rank;
     int name;
     int dead;
-    /* int tag; */
 
-    /* tag = bsal_message_tag(message); */
+#ifdef BSAL_NODE_DEBUG
+    int tag;
+    int source;
+#endif
 
     rank = node->rank;
     name = bsal_message_destination(message);
 
-    /*
-    printf("///bsal_node_receive actor %i tag %i\n",
-                    name, tag);
-                    */
+#ifdef BSAL_NODE_DEBUG
+    source = bsal_message_source(message);
+    tag = bsal_message_tag(message);
+
+    printf("[DEBUG %s %s %i] %i -> %i (tag %i)\n", __FILE__, __func__,
+                    __LINE__, source, name, tag);
+#endif
 
     index = bsal_node_actor_index(node, rank, name);
     actor = node->actors + index;
@@ -313,9 +313,6 @@ void bsal_node_dispatch(struct bsal_node *node, struct bsal_message *message)
     bsal_work_init(&work, actor, new_message);
 
     bsal_node_assign_work(node, &work);
-
-    /* printf("[bsal_node_receive] pushed work\n"); */
-    /* bsal_work_print(&work); */
 }
 
 /* TODO: select the thread */
