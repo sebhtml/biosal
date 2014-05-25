@@ -14,8 +14,8 @@ enum {
 
 struct bsal_actor_vtable buddy_vtable;
 
-void buddy_construct(struct bsal_actor *actor);
-void buddy_destruct(struct bsal_actor *actor);
+void buddy_init(struct bsal_actor *actor);
+void buddy_destroy(struct bsal_actor *actor);
 void buddy_receive(struct bsal_actor *actor, struct bsal_message *message);
 
 #endif

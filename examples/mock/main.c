@@ -13,11 +13,11 @@ int main(int argc, char **argv)
     int threads;
 
     threads = 4;
-    bsal_node_construct(&node, threads, &argc, &argv);
+    bsal_node_init(&node, threads, &argc, &argv);
     bsal_node_spawn(&node, &mock1, &mock_vtable);
     bsal_node_start(&node);
 
-    bsal_node_destruct(&node);
+    bsal_node_destroy(&node);
 
     return 0;
 }

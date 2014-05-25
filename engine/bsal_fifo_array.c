@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-void bsal_fifo_array_construct(struct bsal_fifo_array *fifo, int units, int bytes_per_unit)
+void bsal_fifo_array_init(struct bsal_fifo_array *fifo, int units, int bytes_per_unit)
 {
     int bytes;
 
@@ -19,7 +19,7 @@ void bsal_fifo_array_construct(struct bsal_fifo_array *fifo, int units, int byte
     fifo->next = NULL;
 }
 
-void bsal_fifo_array_destruct(struct bsal_fifo_array *fifo)
+void bsal_fifo_array_destroy(struct bsal_fifo_array *fifo)
 {
     fifo->units = 0;
     fifo->bytes_per_unit = 0;

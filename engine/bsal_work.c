@@ -4,14 +4,14 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-void bsal_work_construct(struct bsal_work *work, struct bsal_actor *actor,
+void bsal_work_init(struct bsal_work *work, struct bsal_actor *actor,
                 struct bsal_message *message)
 {
     work->actor = actor;
     work->message = message;
 }
 
-void bsal_work_destruct(struct bsal_work *work)
+void bsal_work_destroy(struct bsal_work *work)
 {
     work->actor = NULL;
     work->message = NULL;

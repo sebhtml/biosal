@@ -10,7 +10,7 @@ int bsal_node_spawn(struct bsal_node *node, void *pointer,
 {
     struct bsal_actor *actor;
     int name;
-    bsal_actor_construct_fn_t construct;
+    bsal_actor_init_fn_t init;
 
     /* TODO make sure that we have place above 10 actors */
     if (node->actors == NULL) {
@@ -18,9 +18,9 @@ int bsal_node_spawn(struct bsal_node *node, void *pointer,
     }
 
     actor = node->actors + node->actor_count;
-    bsal_actor_construct(actor, pointer, vtable);
-    construct = bsal_actor_get_construct(actor);
-    construct(actor);
+    bsal_actor_init(actor, pointer, vtable);
+    init = bsal_actor_get_init(actor);
+    init(actor);
 
     name = bsal_node_assign_name(node);
 
@@ -43,7 +43,7 @@ int bsal_node_assign_name(struct bsal_node *node)
  * \see https://github.com/GeneAssembly/kiki/blob/master/ki.c#L960
  * \see http://mpi.deino.net/mpi_functions/MPI_Comm_create.html
  */
-void bsal_node_construct(struct bsal_node *node, int threads,  int *argc,  char ***argv)
+void bsal_node_init(struct bsal_node *node, int threads,  int *argc,  char ***argv)
 {
     int rank;
     int ranks;
@@ -57,7 +57,7 @@ void bsal_node_construct(struct bsal_node *node, int threads,  int *argc,  char 
     MPI_Comm_rank(node->comm, &rank);
     MPI_Comm_size(node->comm, &ranks);
 
-    /* printf("bsal_node_construct !\n"); */
+    /* printf("bsal_node_init !\n"); */
     node->rank = rank;
     node->size = ranks;
     node->threads = threads;
@@ -68,22 +68,22 @@ void bsal_node_construct(struct bsal_node *node, int threads,  int *argc,  char 
     node->alive_actors = 0;
 
     /*
-    printf("bsal_node_construct Node # %i is online with %i threads"
+    printf("bsal_node_init Node # %i is online with %i threads"
                     ", the system contains %i nodes (%i threads)\n",
                     node->rank, node->threads, node->size,
                     node->size * node->threads);
                     */
 
-    bsal_thread_construct(&node->thread, node);
+    bsal_thread_init(&node->thread, node);
 
     pthread_mutex_init(&node->death_mutex, NULL);
 }
 
-void bsal_node_destruct(struct bsal_node *node)
+void bsal_node_destroy(struct bsal_node *node)
 {
     pthread_mutex_destroy(&node->death_mutex);
 
-    bsal_thread_destruct(&node->thread);
+    bsal_thread_destroy(&node->thread);
 
     if (node->actors != NULL) {
         free(node->actors);
@@ -116,9 +116,9 @@ void bsal_node_start(struct bsal_node *node)
         name = bsal_actor_name(actor);
         source = name;
 
-        bsal_message_construct(&message, BSAL_START, source, name, 0, NULL);
+        bsal_message_init(&message, BSAL_START, source, name, 0, NULL);
         bsal_node_send(node, &message);
-        bsal_message_destruct(&message);
+        bsal_message_destroy(&message);
     }
 
     /* wait until all actors are dead... */
@@ -203,7 +203,7 @@ int bsal_node_receive(struct bsal_node *node, struct bsal_message *message)
     MPI_Recv(buffer, count, node->datatype, source, tag,
                     node->comm, &status);
 
-    bsal_message_construct(message, tag, source, destination, count, buffer);
+    bsal_message_init(message, tag, source, destination, count, buffer);
     bsal_node_resolve(node, message);
 
     return 1;
@@ -310,7 +310,7 @@ void bsal_node_dispatch(struct bsal_node *node, struct bsal_message *message)
     memcpy(new_message, message, sizeof(struct bsal_message));
 
     struct bsal_work work;
-    bsal_work_construct(&work, actor, new_message);
+    bsal_work_init(&work, actor, new_message);
 
     bsal_node_assign_work(node, &work);
 
@@ -354,7 +354,7 @@ int bsal_node_size(struct bsal_node *node)
 
 void bsal_node_notify_death(struct bsal_node *node, struct bsal_actor *actor)
 {
-    bsal_actor_construct_fn_t destruct;
+    bsal_actor_init_fn_t destroy;
     /*int rank;*/
     /* int name; */
     /*int index;*/
@@ -364,9 +364,9 @@ void bsal_node_notify_death(struct bsal_node *node, struct bsal_actor *actor)
     name = bsal_actor_name(actor);
     */
 
-    destruct = bsal_actor_get_destruct(actor);
-    destruct(actor);
-    bsal_actor_destruct(actor);
+    destroy = bsal_actor_get_destroy(actor);
+    destroy(actor);
+    bsal_actor_destroy(actor);
 
     /*index = bsal_node_actor_index(node, rank, name); */
     /* node->actors[index] = NULL; */

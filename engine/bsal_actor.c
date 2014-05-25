@@ -6,7 +6,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-void bsal_actor_construct(struct bsal_actor *actor, void *pointer,
+void bsal_actor_init(struct bsal_actor *actor, void *pointer,
                 struct bsal_actor_vtable *vtable)
 {
     actor->actor = pointer;
@@ -18,7 +18,7 @@ void bsal_actor_construct(struct bsal_actor *actor, void *pointer,
     pthread_mutex_init(&actor->mutex, NULL);
 }
 
-void bsal_actor_destruct(struct bsal_actor *actor)
+void bsal_actor_destroy(struct bsal_actor *actor)
 {
     actor->actor = NULL;
     actor->name = -1;
@@ -58,14 +58,14 @@ void bsal_actor_print(struct bsal_actor *actor)
                     (void*)actor, (void*)bsal_actor_actor(actor));
 }
 
-bsal_actor_construct_fn_t bsal_actor_get_construct(struct bsal_actor *actor)
+bsal_actor_init_fn_t bsal_actor_get_init(struct bsal_actor *actor)
 {
-    return bsal_actor_vtable_get_construct(actor->vtable);
+    return bsal_actor_vtable_get_init(actor->vtable);
 }
 
-bsal_actor_destruct_fn_t bsal_actor_get_destruct(struct bsal_actor *actor)
+bsal_actor_destroy_fn_t bsal_actor_get_destroy(struct bsal_actor *actor)
 {
-    return bsal_actor_vtable_get_destruct(actor->vtable);
+    return bsal_actor_vtable_get_destroy(actor->vtable);
 }
 
 void bsal_actor_set_thread(struct bsal_actor *actor, struct bsal_thread *thread)

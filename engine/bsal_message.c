@@ -3,7 +3,7 @@
 
 #include <stdlib.h>
 
-void bsal_message_construct(struct bsal_message *message, int tag, int source,
+void bsal_message_init(struct bsal_message *message, int tag, int source,
                 int destination, int bytes, char *buffer)
 {
     message->source_actor = source;
@@ -18,7 +18,7 @@ void bsal_message_construct(struct bsal_message *message, int tag, int source,
     message->routing_destination = -1;
 }
 
-void bsal_message_destruct(struct bsal_message *message)
+void bsal_message_destroy(struct bsal_message *message)
 {
     message->source_actor = -1;
     message->destination_actor = -1;

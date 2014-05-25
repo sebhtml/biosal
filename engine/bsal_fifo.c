@@ -3,7 +3,7 @@
 
 #include <stdlib.h>
 
-void bsal_fifo_construct(struct bsal_fifo *fifo, int units, int bytes_per_unit)
+void bsal_fifo_init(struct bsal_fifo *fifo, int units, int bytes_per_unit)
 {
     struct bsal_fifo_array *array;
 
@@ -17,7 +17,7 @@ void bsal_fifo_construct(struct bsal_fifo *fifo, int units, int bytes_per_unit)
     fifo->bin = NULL;
 }
 
-void bsal_fifo_destruct(struct bsal_fifo *fifo)
+void bsal_fifo_destroy(struct bsal_fifo *fifo)
 {
     bsal_fifo_delete(fifo->first);
     bsal_fifo_delete(fifo->bin);
@@ -48,7 +48,7 @@ void bsal_fifo_destroy_array(struct bsal_fifo_array *array)
 {
     /* printf("[bsal_fifo_destroy_array] %p\n", array); */
 
-    bsal_fifo_array_destruct(array);
+    bsal_fifo_array_destroy(array);
     free(array);
 }
 
@@ -129,7 +129,7 @@ struct bsal_fifo_array *bsal_fifo_get_array(struct bsal_fifo *fifo)
     struct bsal_fifo_array *array;
 
     array = (struct bsal_fifo_array *)malloc(sizeof(struct bsal_fifo_array));
-    bsal_fifo_array_construct(array, fifo->units, fifo->bytes_per_unit);
+    bsal_fifo_array_init(array, fifo->units, fifo->bytes_per_unit);
 
     return array;
 }

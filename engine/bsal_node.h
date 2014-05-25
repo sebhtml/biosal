@@ -39,8 +39,8 @@ struct bsal_node {
     pthread_mutex_t death_mutex;
 };
 
-void bsal_node_construct(struct bsal_node *node, int threads, int *argc, char ***argv);
-void bsal_node_destruct(struct bsal_node *node);
+void bsal_node_init(struct bsal_node *node, int threads, int *argc, char ***argv);
+void bsal_node_destroy(struct bsal_node *node);
 void bsal_node_start(struct bsal_node *node);
 int bsal_node_spawn(struct bsal_node *node, void *pointer,
                 struct bsal_actor_vtable *vtable);

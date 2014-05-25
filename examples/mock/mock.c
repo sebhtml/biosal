@@ -5,12 +5,12 @@
 #include <stdio.h>
 
 struct bsal_actor_vtable mock_vtable = {
-    .construct = mock_construct,
-    .destruct = mock_destruct,
+    .init = mock_init,
+    .destroy = mock_destroy,
     .receive = mock_receive
 };
 
-void mock_construct(struct bsal_actor *actor)
+void mock_init(struct bsal_actor *actor)
 {
     struct mock *mock;
 
@@ -18,7 +18,7 @@ void mock_construct(struct bsal_actor *actor)
     mock->value = 42;
 }
 
-void mock_destruct(struct bsal_actor *actor)
+void mock_destroy(struct bsal_actor *actor)
 {
     struct mock *mock;
 
@@ -84,9 +84,9 @@ void mock_start(struct bsal_actor *actor, struct bsal_message *message)
     printf("[mock_start] %i next is %i, sending MOCK_DIE to it\n", name, next);
 
     struct bsal_message message2;
-    bsal_message_construct(&message2, MOCK_DIE, -1, -1, 0, NULL);
+    bsal_message_init(&message2, MOCK_DIE, -1, -1, 0, NULL);
     bsal_actor_send(actor, next, &message2);
-    bsal_message_destruct(&message2);
+    bsal_message_destroy(&message2);
 }
 
 void mock_spawn_children(struct bsal_actor *actor)
@@ -99,7 +99,7 @@ void mock_spawn_children(struct bsal_actor *actor)
     total = 1;
 
     mock = (struct mock *)bsal_actor_actor(actor);
-    bsal_message_construct(&message, BUDDY_DIE, -1, -1, 0, NULL);
+    bsal_message_init(&message, BUDDY_DIE, -1, -1, 0, NULL);
 
     for (i = 0; i <total; i++) {
 
@@ -116,5 +116,5 @@ void mock_spawn_children(struct bsal_actor *actor)
         bsal_actor_send(actor, name, &message);
     }
 
-    bsal_message_destruct(&message);
+    bsal_message_destroy(&message);
 }

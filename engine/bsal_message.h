@@ -15,9 +15,9 @@ struct bsal_message {
 };
 typedef struct bsal_message bsal_message_t;
 
-void bsal_message_construct(struct bsal_message *message, int tag,
+void bsal_message_init(struct bsal_message *message, int tag,
                 int source, int destination, int bytes, char *buffer);
-void bsal_message_destruct(struct bsal_message *message);
+void bsal_message_destroy(struct bsal_message *message);
 
 int bsal_message_source(struct bsal_message *message);
 int bsal_message_destination(struct bsal_message *message);

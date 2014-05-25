@@ -12,7 +12,7 @@ int main(int argc, char **argv)
 
         struct bsal_fifo fifo;
         int i;
-        bsal_fifo_construct(&fifo, 16, sizeof(int));
+        bsal_fifo_init(&fifo, 16, sizeof(int));
 
         TEST_EQUAL(bsal_fifo_empty(&fifo), 1);
 
@@ -40,7 +40,7 @@ int main(int argc, char **argv)
             TEST_EQUAL(bsal_fifo_pop(&fifo, &item), 1);
         }
 
-        bsal_fifo_destruct(&fifo);
+        bsal_fifo_destroy(&fifo);
 
     }
 
@@ -49,7 +49,7 @@ int main(int argc, char **argv)
 
         struct bsal_fifo fifo;
         int i;
-        bsal_fifo_construct(&fifo, 10, sizeof(int));
+        bsal_fifo_init(&fifo, 10, sizeof(int));
 
         TEST_EQUAL(bsal_fifo_empty(&fifo), 1);
 
@@ -76,7 +76,7 @@ int main(int argc, char **argv)
 
         struct bsal_fifo fifo;
         int i;
-        bsal_fifo_construct(&fifo, 1, sizeof(int));
+        bsal_fifo_init(&fifo, 1, sizeof(int));
 
         TEST_EQUAL(bsal_fifo_empty(&fifo), 1);
 
@@ -104,7 +104,7 @@ int main(int argc, char **argv)
 
         struct bsal_fifo fifo;
         int i;
-        bsal_fifo_construct(&fifo, 4, sizeof(int));
+        bsal_fifo_init(&fifo, 4, sizeof(int));
 
         TEST_EQUAL(bsal_fifo_empty(&fifo), 1);
 

@@ -10,25 +10,25 @@ typedef void (*bsal_actor_receive_fn_t)(
     struct bsal_message *message
 );
 
-typedef void (*bsal_actor_construct_fn_t)(
+typedef void (*bsal_actor_init_fn_t)(
     struct bsal_actor *actor
 );
 
-typedef void (*bsal_actor_destruct_fn_t)(
+typedef void (*bsal_actor_destroy_fn_t)(
     struct bsal_actor *actor
 );
 
 struct bsal_actor_vtable {
-    bsal_actor_construct_fn_t construct;
-    bsal_actor_destruct_fn_t destruct;
+    bsal_actor_init_fn_t init;
+    bsal_actor_destroy_fn_t destroy;
     bsal_actor_receive_fn_t receive;
 };
 
-void bsal_actor_vtable_construct(struct bsal_actor_vtable *vtable, bsal_actor_construct_fn_t construct,
-                bsal_actor_destruct_fn_t destruct, bsal_actor_receive_fn_t receive);
-void bsal_actor_vtable_destruct(struct bsal_actor_vtable *vtable);
-bsal_actor_construct_fn_t bsal_actor_vtable_get_construct(struct bsal_actor_vtable *vtable);
-bsal_actor_destruct_fn_t bsal_actor_vtable_get_destruct(struct bsal_actor_vtable *vtable);
+void bsal_actor_vtable_init(struct bsal_actor_vtable *vtable, bsal_actor_init_fn_t init,
+                bsal_actor_destroy_fn_t destroy, bsal_actor_receive_fn_t receive);
+void bsal_actor_vtable_destroy(struct bsal_actor_vtable *vtable);
+bsal_actor_init_fn_t bsal_actor_vtable_get_init(struct bsal_actor_vtable *vtable);
+bsal_actor_destroy_fn_t bsal_actor_vtable_get_destroy(struct bsal_actor_vtable *vtable);
 bsal_actor_receive_fn_t bsal_actor_vtable_get_receive(struct bsal_actor_vtable *vtable);
 
 #endif

@@ -5,12 +5,12 @@
 
 /* this vtable is required */
 struct bsal_actor_vtable buddy_vtable = {
-    .construct = buddy_construct,
-    .destruct = buddy_destruct,
+    .init = buddy_init,
+    .destroy = buddy_destroy,
     .receive = buddy_receive
 };
 
-void buddy_construct(struct bsal_actor *actor)
+void buddy_init(struct bsal_actor *actor)
 {
     struct buddy *buddy1;
 
@@ -18,7 +18,7 @@ void buddy_construct(struct bsal_actor *actor)
     buddy1->received = 0;
 }
 
-void buddy_destruct(struct bsal_actor *actor)
+void buddy_destroy(struct bsal_actor *actor)
 {
     struct buddy *buddy1;
 

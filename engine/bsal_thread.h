@@ -19,8 +19,8 @@ struct bsal_thread {
     struct bsal_fifo outbound_messages;
 };
 
-void bsal_thread_construct(struct bsal_thread *thread, struct bsal_node *node);
-void bsal_thread_destruct(struct bsal_thread *thread);
+void bsal_thread_init(struct bsal_thread *thread, struct bsal_node *node);
+void bsal_thread_destroy(struct bsal_thread *thread);
 struct bsal_fifo *bsal_thread_inbound_messages(struct bsal_thread *thread);
 struct bsal_fifo *bsal_thread_outbound_messages(struct bsal_thread *thread);
 

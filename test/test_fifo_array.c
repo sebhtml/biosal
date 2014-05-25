@@ -10,7 +10,7 @@ int main(int argc, char **argv)
     {
         struct bsal_fifo_array fifo;
         int i;
-        bsal_fifo_array_construct(&fifo, 16, sizeof(int));
+        bsal_fifo_array_init(&fifo, 16, sizeof(int));
 
         i = 16;
         while(i--) {
@@ -34,7 +34,7 @@ int main(int argc, char **argv)
             TEST_EQUAL(bsal_fifo_array_pop(&fifo, &item), 0);
         }
 
-        bsal_fifo_array_destruct(&fifo);
+        bsal_fifo_array_destroy(&fifo);
 
     }
 

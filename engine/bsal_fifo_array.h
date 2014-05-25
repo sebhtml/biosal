@@ -19,8 +19,8 @@ struct bsal_fifo_array {
     struct bsal_fifo_array *next;
 };
 
-void bsal_fifo_array_construct(struct bsal_fifo_array *fifo, int units, int bytes_per_unit);
-void bsal_fifo_array_destruct(struct bsal_fifo_array *fifo);
+void bsal_fifo_array_init(struct bsal_fifo_array *fifo, int units, int bytes_per_unit);
+void bsal_fifo_array_destroy(struct bsal_fifo_array *fifo);
 void bsal_fifo_array_reset(struct bsal_fifo_array *fifo);
 int bsal_fifo_array_push(struct bsal_fifo_array *fifo, void *item);
 int bsal_fifo_array_pop(struct bsal_fifo_array *fifo, void *item);

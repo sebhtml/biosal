@@ -6,18 +6,18 @@
 
 #include <stdlib.h>
 
-void bsal_thread_construct(struct bsal_thread *thread, struct bsal_node *node)
+void bsal_thread_init(struct bsal_thread *thread, struct bsal_node *node)
 {
-    bsal_fifo_construct(&thread->inbound_messages, 16, sizeof(struct bsal_work));
-    bsal_fifo_construct(&thread->outbound_messages, 16, sizeof(struct bsal_message));
+    bsal_fifo_init(&thread->inbound_messages, 16, sizeof(struct bsal_work));
+    bsal_fifo_init(&thread->outbound_messages, 16, sizeof(struct bsal_message));
 
     thread->node = node;
 }
 
-void bsal_thread_destruct(struct bsal_thread *thread)
+void bsal_thread_destroy(struct bsal_thread *thread)
 {
-    bsal_fifo_destruct(&thread->outbound_messages);
-    bsal_fifo_destruct(&thread->inbound_messages);
+    bsal_fifo_destroy(&thread->outbound_messages);
+    bsal_fifo_destroy(&thread->inbound_messages);
 }
 
 struct bsal_fifo *bsal_thread_inbound_messages(struct bsal_thread *thread)
