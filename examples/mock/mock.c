@@ -13,16 +13,16 @@ struct bsal_actor_vtable mock_vtable = {
 void mock_construct(struct bsal_actor *actor)
 {
     struct mock *mock;
-    mock = (struct mock *)bsal_actor_actor(actor);
 
+    mock = (struct mock *)bsal_actor_actor(actor);
     mock->value = 42;
 }
 
 void mock_destruct(struct bsal_actor *actor)
 {
     struct mock *mock;
-    mock = (struct mock *)bsal_actor_actor(actor);
 
+    mock = (struct mock *)bsal_actor_actor(actor);
     mock->value = -1;
 }
 
@@ -35,7 +35,6 @@ void mock_receive(struct bsal_actor *actor, struct bsal_message *message)
     /* printf("mock_receive %i\n", tag); */
 
     if (tag == BSAL_START) {
-        mock_construct(actor);
         mock_start(actor, message);
     } else if (tag == MOCK_DIE) {
         mock_die(actor, message);
@@ -51,7 +50,7 @@ void mock_die(struct bsal_actor *actor, struct bsal_message *message)
     source = bsal_message_source(message);
 
     printf("mock_die actor %i dies (MOCK_DIE from %i)\n", name, source);
-    mock_destruct(actor);
+
     bsal_actor_die(actor);
 }
 
@@ -113,6 +112,7 @@ void mock_spawn_children(struct bsal_actor *actor)
 
         printf("mock_spawn_children sending tag %i BUDDY_DIE to %i\n",
                         tag, name);
+
         bsal_actor_send(actor, name, &message);
     }
 

@@ -5,36 +5,29 @@
 #include <stdio.h>
 #include <string.h>
 
-int bsal_node_spawn(struct bsal_node *node, void *actor,
+int bsal_node_spawn(struct bsal_node *node, void *pointer,
                 struct bsal_actor_vtable *vtable)
 {
-    struct bsal_actor *copy;
+    struct bsal_actor *actor;
     int name;
+    bsal_actor_construct_fn_t construct;
 
     /* TODO make sure that we have place above 10 actors */
     if (node->actors == NULL) {
         node->actors = (struct bsal_actor*)malloc(10 * sizeof(struct bsal_actor));
     }
 
-    /* do a copy of the actor wrapper */
-    copy = node->actors + node->actor_count;
-    bsal_actor_construct(copy, actor, vtable);
+    actor = node->actors + node->actor_count;
+    bsal_actor_construct(actor, pointer, vtable);
+    construct = bsal_actor_get_construct(actor);
+    construct(actor);
 
     name = bsal_node_assign_name(node);
 
-    bsal_actor_set_name(copy, name);
-
-    /*
-    printf("bsal_node_spawn new spawn: %i\n",
-                    name);
-                    */
-
-    /* bsal_actor_print(copy); */
+    bsal_actor_set_name(actor, name);
 
     node->actor_count++;
     node->alive_actors++;
-
-    /* printf("bsal_node_spawn alive %i\n", node->alive_actors); */
 
     return name;
 }
@@ -101,6 +94,10 @@ void bsal_node_start(struct bsal_node *node)
 {
     int i;
     int actors;
+    struct bsal_actor *actor;
+    int name;
+    int source;
+    struct bsal_message message;
 
     /*
     printf("bsal_node_start Node #%i is starting, %i threads,"
@@ -111,11 +108,10 @@ void bsal_node_start(struct bsal_node *node)
     actors = node->actor_count;
 
     for (i = 0; i < actors; ++i) {
-        struct bsal_actor *actor = node->actors + i;
-        int name = bsal_actor_name(actor);
-        int source = name;
+        actor = node->actors + i;
+        name = bsal_actor_name(actor);
+        source = name;
 
-        struct bsal_message message;
         bsal_message_construct(&message, BSAL_START, source, name, 0, NULL);
         bsal_node_send(node, &message);
         bsal_message_destruct(&message);
@@ -284,6 +280,11 @@ void bsal_node_dispatch(struct bsal_node *node, struct bsal_message *message)
 
     index = bsal_node_actor_index(node, rank, name);
     actor = node->actors + index;
+
+    if (actor == NULL) {
+        return;
+    }
+
     dead = bsal_actor_dead(actor);
 
     if (dead) {
@@ -332,6 +333,23 @@ int bsal_node_size(struct bsal_node *node)
 
 void bsal_node_notify_death(struct bsal_node *node, struct bsal_actor *actor)
 {
+    bsal_actor_construct_fn_t destruct;
+    /*int rank;*/
+    /* int name; */
+    /*int index;*/
+
+    /*
+    rank = node->rank;
+    name = bsal_actor_name(actor);
+    */
+
+    destruct = bsal_actor_get_destruct(actor);
+    destruct(actor);
+    bsal_actor_destruct(actor);
+
+    /*index = bsal_node_actor_index(node, rank, name); */
+    /* node->actors[index] = NULL; */
+
     node->alive_actors--;
     node->dead_actors++;
 }

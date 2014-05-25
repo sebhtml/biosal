@@ -9,44 +9,19 @@
 void bsal_actor_construct(struct bsal_actor *actor, void *pointer,
                 struct bsal_actor_vtable *vtable)
 {
-    /* bsal_actor_construct_fn_t construct; */
-
     actor->actor = pointer;
     actor->name = -1;
     actor->dead = 0;
 
-    /* bsal_actor->receive = receive; */
-
-    /*
-    use a vtable... (where do I allocate memory for  the vtable ? answer: it is in the .o directly.)
-    struct bsal_actor_vtable *vtable = ...;
-    bsal_actor_vtable_construct(vtable,  receive);
-    */
-
     actor->vtable = vtable;
-    /* actor->receive = receive; */
-
-    /* printf("bsal_actor_construct %p %p %p\n", (void*)bsal_actor, (void*)actor, (void*)receive); */
-
-    /* call the specialized constructor too. */
-    /*
-    construct = bsal_actor_get_construct(bsal_actor);
-    construct(bsal_actor);
-    */
 }
 
 void bsal_actor_destruct(struct bsal_actor *actor)
 {
-    /* bsal_actor_destruct_fn_t destruct; */
-
-    /* call the specialized destructor */
-    /*
-    destruct = bsal_actor_get_destruct(bsal_actor);
-    destruct(bsal_actor);
-    */
-
     actor->actor = NULL;
     actor->name = -1;
+    actor->dead = 1;
+    actor->vtable = NULL;
 }
 
 int bsal_actor_name(struct bsal_actor *actor)
@@ -61,17 +36,11 @@ void *bsal_actor_actor(struct bsal_actor *actor)
 
 bsal_actor_receive_fn_t bsal_actor_get_receive(struct bsal_actor *actor)
 {
-    /* printf("bsal_actor_handler %p %p\n", (void*)bsal_actor, (void*)bsal_actor->receive); */
-
-    /* return actor->receive; */
     return bsal_actor_vtable_get_receive(actor->vtable);
 }
 
 void bsal_actor_set_name(struct bsal_actor *actor, int name)
 {
-    /*
-       printf("bsal_actor_set_name %p %i\n", (void*)actor, name);
-       */
     actor->name = name;
 }
 

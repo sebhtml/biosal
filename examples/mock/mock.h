@@ -1,4 +1,7 @@
 
+#ifndef _MOCK_H
+#define _MOCK_H
+
 #include "buddy.h"
 
 struct mock {
@@ -19,3 +22,5 @@ void mock_receive(struct bsal_actor *actor, struct bsal_message *message);
 void mock_start(struct bsal_actor *actor, struct bsal_message *message);
 void mock_spawn_children(struct bsal_actor *actor);
 void mock_die(struct bsal_actor *actor, struct bsal_message *message);
+
+#endif

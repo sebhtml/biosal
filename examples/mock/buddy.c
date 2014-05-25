@@ -3,7 +3,7 @@
 
 #include <stdio.h>
 
-/* this vtable is not required anymore */
+/* this vtable is required */
 struct bsal_actor_vtable buddy_vtable = {
     .construct = buddy_construct,
     .destruct = buddy_destruct,
@@ -12,12 +12,18 @@ struct bsal_actor_vtable buddy_vtable = {
 
 void buddy_construct(struct bsal_actor *actor)
 {
-    ((struct buddy *)(bsal_actor_actor(actor)))->received = 0;
+    struct buddy *buddy1;
+
+    buddy1 = (struct buddy *)bsal_actor_actor(actor);
+    buddy1->received = 0;
 }
 
 void buddy_destruct(struct bsal_actor *actor)
 {
-    ((struct buddy *)(bsal_actor_actor(actor)))->received = -1;
+    struct buddy *buddy1;
+
+    buddy1 = (struct buddy *)bsal_actor_actor(actor);
+    buddy1->received = -1;
 }
 
 void buddy_receive(struct bsal_actor *actor, struct bsal_message *message)
@@ -31,13 +37,11 @@ void buddy_receive(struct bsal_actor *actor, struct bsal_message *message)
     tag = bsal_message_tag(message);
 
     if (tag == BUDDY_DIE) {
-        buddy_construct(actor);
         printf("buddy_receive Actor %i received a message (%i BUDDY_DIE) from actor %i\n",
                         name, tag, source);
 
         printf("buddy_receive actor %i dies\n", name);
 
-        buddy_destruct(actor);
         bsal_actor_die(actor);
     }
 }
