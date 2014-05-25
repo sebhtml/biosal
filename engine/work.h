@@ -2,7 +2,7 @@
 #ifndef _BSAL_WORK_H
 #define _BSAL_WORK_H
 
-#include "bsal_actor.h"
+#include "actor.h"
 
 struct bsal_work {
     struct bsal_actor *actor;

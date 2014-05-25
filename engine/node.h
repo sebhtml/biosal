@@ -2,9 +2,9 @@
 #ifndef _BSAL_NODE_H
 #define _BSAL_NODE_H
 
-#include "bsal_actor.h"
-#include "bsal_work.h"
-#include "bsal_thread.h"
+#include "actor.h"
+#include "work.h"
+#include "thread.h"
 
 #include <pthread.h>
 #include <mpi.h>

@@ -1,5 +1,5 @@
 
-#include "bsal_actor_vtable.h"
+#include "actor_vtable.h"
 #include <stdlib.h>
 
 void bsal_actor_vtable_init(struct bsal_actor_vtable *vtable, bsal_actor_init_fn_t init,

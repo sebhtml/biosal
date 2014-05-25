@@ -1,5 +1,5 @@
 
-#include <engine/bsal_fifo_array.h>
+#include <engine/fifo_array.h>
 
 #include "test.h"
 

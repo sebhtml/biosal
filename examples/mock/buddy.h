@@ -2,7 +2,7 @@
 #ifndef _BUDDY_H
 #define _BUDDY_H
 
-#include <engine/bsal_actor.h>
+#include <engine/actor.h>
 
 struct buddy {
     int received;

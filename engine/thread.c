@@ -1,8 +1,8 @@
 
-#include "bsal_thread.h"
-#include "bsal_work.h"
-#include "bsal_message.h"
-#include "bsal_node.h"
+#include "thread.h"
+#include "work.h"
+#include "message.h"
+#include "node.h"
 
 #include <stdlib.h>
 

@@ -2,7 +2,7 @@
 #ifndef _BSAL_FIFO_H
 #define _BSAL_FIFO_H
 
-#include "bsal_fifo_array.h"
+#include "fifo_array.h"
 
 struct bsal_fifo {
     int units;

@@ -1,7 +1,7 @@
 
-#include "bsal_actor.h"
-#include "bsal_thread.h"
-#include "bsal_node.h"
+#include "actor.h"
+#include "thread.h"
+#include "node.h"
 
 #include <stdlib.h>
 #include <stdio.h>

@@ -2,9 +2,9 @@
 #ifndef _BSAL_H
 #define _BSAL_H
 
-#include "engine/bsal_actor.h"
-#include "engine/bsal_message.h"
-#include "engine/bsal_node.h"
+#include "engine/actor.h"
+#include "engine/message.h"
+#include "engine/node.h"
 
 struct bsal_biosal {
     int version;

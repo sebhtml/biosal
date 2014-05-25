@@ -1,5 +1,5 @@
 
-#include "bsal_message.h"
+#include "message.h"
 
 #include <stdlib.h>
 

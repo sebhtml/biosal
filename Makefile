@@ -6,9 +6,9 @@ ECHO=echo
 
 all: test_mock
 
-LIBRARY=engine/bsal_message.o engine/bsal_node.o engine/bsal_actor.o engine/bsal_actor_vtable.o \
-        engine/bsal_fifo.o engine/bsal_work.o \
-        engine/bsal_fifo_array.o engine/bsal_thread.o
+LIBRARY=engine/message.o engine/node.o engine/actor.o engine/actor_vtable.o \
+        engine/fifo.o engine/work.o \
+        engine/fifo_array.o engine/thread.o
 
 MOCK_EXAMPLE=examples/mock/main.o examples/mock/mock.o examples/mock/buddy.o
 

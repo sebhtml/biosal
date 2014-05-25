@@ -2,8 +2,8 @@
 #ifndef _BSAL_ACTOR_H
 #define _BSAL_ACTOR_H
 
-#include "bsal_message.h"
-#include "bsal_actor_vtable.h"
+#include "message.h"
+#include "actor_vtable.h"
 #include <pthread.h>
 
 enum {
