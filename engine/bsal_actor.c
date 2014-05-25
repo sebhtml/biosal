@@ -12,8 +12,10 @@ void bsal_actor_construct(struct bsal_actor *actor, void *pointer,
     actor->actor = pointer;
     actor->name = -1;
     actor->dead = 0;
-
     actor->vtable = vtable;
+    actor->thread = NULL;
+
+    pthread_mutex_init(&actor->mutex, NULL);
 }
 
 void bsal_actor_destruct(struct bsal_actor *actor)
@@ -22,6 +24,9 @@ void bsal_actor_destruct(struct bsal_actor *actor)
     actor->name = -1;
     actor->dead = 1;
     actor->vtable = NULL;
+    actor->thread = NULL;
+
+    pthread_mutex_destroy(&actor->mutex);
 }
 
 int bsal_actor_name(struct bsal_actor *actor)
