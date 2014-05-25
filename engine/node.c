@@ -159,7 +159,7 @@ int bsal_node_pull(struct bsal_node *node, struct bsal_message *message)
     struct bsal_thread *thread;
 
     thread = bsal_node_select_thread_for_pull(node);
-    return bsal_fifo_pop(bsal_thread_outbound_messages(thread), message);
+    return bsal_fifo_pop(bsal_thread_messages(thread), message);
 }
 
 /* \see http://www.mpich.org/static/docs/v3.1/www3/MPI_Iprobe.html */
@@ -319,7 +319,7 @@ void bsal_node_assign_work(struct bsal_node *node, struct bsal_work *work)
     struct bsal_thread *thread;
 
     thread = bsal_node_select_thread_for_push(node);
-    bsal_fifo_push(bsal_thread_inbound_messages(thread), work);
+    bsal_fifo_push(bsal_thread_works(thread), work);
 }
 
 int bsal_node_actor_index(struct bsal_node *node, int rank, int name)

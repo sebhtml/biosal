@@ -14,12 +14,14 @@ function run_checks() {
     grep -n "	" * -R|grep -v Makefile|grep -v git
 }
 
+make clean
 clear
 
 echo "=== Quality Assurance ($(date)) ==="
 
 echo "User: $(whoami)"
 echo "Host: $(hostname)"
+echo ""
 
 git branch
 echo ""
@@ -27,8 +29,6 @@ git diff --stat energy
 echo ""
 git status
 echo ""
-
-make clean
 
 echo ""
 

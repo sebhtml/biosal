@@ -10,8 +10,8 @@
 
 void bsal_thread_init(struct bsal_thread *thread, struct bsal_node *node)
 {
-    bsal_fifo_init(&thread->inbound_messages, 16, sizeof(struct bsal_work));
-    bsal_fifo_init(&thread->outbound_messages, 16, sizeof(struct bsal_message));
+    bsal_fifo_init(&thread->works, 16, sizeof(struct bsal_work));
+    bsal_fifo_init(&thread->messages, 16, sizeof(struct bsal_message));
 
     thread->node = node;
 }
@@ -20,18 +20,18 @@ void bsal_thread_destroy(struct bsal_thread *thread)
 {
     thread->node = NULL;
 
-    bsal_fifo_destroy(&thread->outbound_messages);
-    bsal_fifo_destroy(&thread->inbound_messages);
+    bsal_fifo_destroy(&thread->messages);
+    bsal_fifo_destroy(&thread->works);
 }
 
-struct bsal_fifo *bsal_thread_inbound_messages(struct bsal_thread *thread)
+struct bsal_fifo *bsal_thread_works(struct bsal_thread *thread)
 {
-    return &thread->inbound_messages;
+    return &thread->works;
 }
 
-struct bsal_fifo *bsal_thread_outbound_messages(struct bsal_thread *thread)
+struct bsal_fifo *bsal_thread_messages(struct bsal_thread *thread)
 {
-    return &thread->outbound_messages;
+    return &thread->messages;
 }
 
 void bsal_thread_run(struct bsal_thread *thread)
@@ -39,7 +39,7 @@ void bsal_thread_run(struct bsal_thread *thread)
     struct bsal_work work;
 
     /* check for messages in inbound FIFO */
-    if (bsal_fifo_pop(&thread->inbound_messages, &work)) {
+    if (bsal_fifo_pop(&thread->works, &work)) {
 
         /* dispatch message to a worker thread (currently, this is the main thread) */
         bsal_thread_work(thread, &work);
@@ -101,14 +101,15 @@ void bsal_thread_send(struct bsal_thread *thread, struct bsal_message *message)
     if (count > 0) {
         /* TODO use slab allocator to allocate buffer... */
         buffer = (char *)malloc(count * sizeof(char));
+
         memcpy(buffer, bsal_message_buffer(message), count);
         bsal_message_set_buffer(&copy, buffer);
     }
 
-    bsal_fifo_push(bsal_thread_outbound_messages(thread), &copy);
+    bsal_fifo_push(bsal_thread_messages(thread), &copy);
 }
 
 void bsal_thread_receive(struct bsal_thread *thread, struct bsal_message *message)
 {
-    bsal_fifo_push(bsal_thread_inbound_messages(thread), message);
+    bsal_fifo_push(bsal_thread_works(thread), message);
 }

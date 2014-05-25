@@ -14,14 +14,14 @@ struct bsal_thread {
     struct bsal_node *node;
     pthread_t thread;
 
-    struct bsal_fifo inbound_messages;
-    struct bsal_fifo outbound_messages;
+    struct bsal_fifo works;
+    struct bsal_fifo messages;
 };
 
 void bsal_thread_init(struct bsal_thread *thread, struct bsal_node *node);
 void bsal_thread_destroy(struct bsal_thread *thread);
-struct bsal_fifo *bsal_thread_inbound_messages(struct bsal_thread *thread);
-struct bsal_fifo *bsal_thread_outbound_messages(struct bsal_thread *thread);
+struct bsal_fifo *bsal_thread_works(struct bsal_thread *thread);
+struct bsal_fifo *bsal_thread_messages(struct bsal_thread *thread);
 
 void bsal_thread_run(struct bsal_thread *thread);
 void bsal_thread_work(struct bsal_thread *thread, struct bsal_work *work);

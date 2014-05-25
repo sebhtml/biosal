@@ -2,8 +2,11 @@
 
 CFLAGS="-O3 -march=x86-64 -g -std=c99 -Wall -pedantic -I. -Werror -DBSAL_NODE_DEBUG1"
 
-make clean
-make mock CFLAGS="$CFLAGS"
+clear
+echo "CFLAGS: $CFLAGS"
 
-echo "TESTS"
+make clean
+make all -j 8
+
+make mock CFLAGS="$CFLAGS"
 make test CFLAGS="$CFLAGS"
