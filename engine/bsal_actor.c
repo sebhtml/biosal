@@ -86,14 +86,12 @@ void bsal_actor_print(struct bsal_actor *actor)
 
 bsal_actor_construct_fn_t bsal_actor_get_construct(struct bsal_actor *actor)
 {
-    return NULL;
-    /* return bsal_actor_vtable_get_construct(actor->vtable); */
+    return bsal_actor_vtable_get_construct(actor->vtable);
 }
 
 bsal_actor_destruct_fn_t bsal_actor_get_destruct(struct bsal_actor *actor)
 {
-    return NULL;
-    /* return bsal_actor_vtable_get_destruct(actor->vtable); */
+    return bsal_actor_vtable_get_destruct(actor->vtable);
 }
 
 void bsal_actor_set_thread(struct bsal_actor *actor, struct bsal_thread *thread)

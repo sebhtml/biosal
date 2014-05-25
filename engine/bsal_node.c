@@ -253,6 +253,7 @@ void bsal_node_send(struct bsal_node *node, struct bsal_message *message)
     rank = bsal_node_actor_rank(node, name);
 
     if (rank == node->rank) {
+        /* dispatch locally */
         bsal_node_dispatch(node, message);
     } else {
 
