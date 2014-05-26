@@ -23,7 +23,8 @@ struct bsal_actor_vtable;
  */
 struct bsal_node {
     struct bsal_actor *actors;
-    struct bsal_thread thread;
+    struct bsal_thread *thread_array;
+
     pthread_mutex_t death_mutex;
     MPI_Comm comm;
     MPI_Datatype datatype;
@@ -65,5 +66,10 @@ void bsal_node_assign_work(struct bsal_node *node, struct bsal_work *work);
 int bsal_node_pull(struct bsal_node *node, struct bsal_message *message);
 
 struct bsal_thread *bsal_node_select_thread_for_pull(struct bsal_node *node);
+struct bsal_thread *bsal_node_select_thread_for_push(struct bsal_node *node);
+struct bsal_thread *bsal_node_select_thread(struct bsal_node *node);
+
+void bsal_node_delete_threads(struct bsal_node *node);
+void bsal_node_create_threads(struct bsal_node *node);
 
 #endif

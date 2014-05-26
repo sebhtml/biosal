@@ -59,33 +59,26 @@ void bsal_node_init(struct bsal_node *node, int threads,  int *argc,  char ***ar
     MPI_Comm_rank(node->comm, &rank);
     MPI_Comm_size(node->comm, &ranks);
 
-    /* printf("bsal_node_init !\n"); */
     node->rank = rank;
     node->size = ranks;
     node->threads = threads;
+    node->thread_array = NULL;
 
     node->actors = NULL;
     node->actor_count = 0;
     node->dead_actors = 0;
     node->alive_actors = 0;
 
-    /*
-    printf("bsal_node_init Node # %i is online with %i threads"
-                    ", the system contains %i nodes (%i threads)\n",
-                    node->rank, node->threads, node->size,
-                    node->size * node->threads);
-                    */
-
-    bsal_thread_init(&node->thread, node);
-
     pthread_mutex_init(&node->death_mutex, NULL);
+
+    bsal_node_create_threads(node);
 }
 
 void bsal_node_destroy(struct bsal_node *node)
 {
-    pthread_mutex_destroy(&node->death_mutex);
+    bsal_node_delete_threads(node);
 
-    bsal_thread_destroy(&node->thread);
+    pthread_mutex_destroy(&node->death_mutex);
 
     if (node->actors != NULL) {
         free(node->actors);
@@ -96,6 +89,39 @@ void bsal_node_destroy(struct bsal_node *node)
     MPI_Finalize();
 }
 
+void bsal_node_delete_threads(struct bsal_node *node)
+{
+    int i = 0;
+
+    if (node->threads <= 0) {
+        return;
+    }
+
+    for (i = 0; i < node->threads; i++) {
+        bsal_thread_destroy(node->thread_array + i);
+    }
+
+    free(node->thread_array);
+    node->thread_array = NULL;
+}
+
+void bsal_node_create_threads(struct bsal_node *node)
+{
+    int bytes;
+    int i;
+
+    if (node->threads <= 0) {
+        return;
+    }
+
+    bytes = node->threads * sizeof(struct bsal_thread);
+    node->thread_array = (struct bsal_thread *)malloc(bytes);
+
+    for (i = 0; i < node->threads; i++) {
+        bsal_thread_init(node->thread_array + i, i, node);
+    }
+}
+
 void bsal_node_start(struct bsal_node *node)
 {
     int i;
@@ -104,6 +130,15 @@ void bsal_node_start(struct bsal_node *node)
     int name;
     int source;
     struct bsal_message message;
+
+    /* start threads
+     *
+     * we start at 1 because the thread 0 is
+     * used by the main thread...
+     */
+    for (i = 1; i < node->threads; i++) {
+        bsal_thread_start(node->thread_array + i);
+    }
 
     actors = node->actor_count;
 
@@ -123,6 +158,7 @@ void bsal_node_start(struct bsal_node *node)
 void bsal_node_run(struct bsal_node *node)
 {
     struct bsal_message message;
+    int i;
 
     while(1) {
 
@@ -137,7 +173,7 @@ void bsal_node_run(struct bsal_node *node)
         }
 
         /* make the thread work (currently, this is the main thread) */
-        bsal_thread_run(&node->thread);
+        bsal_thread_run(bsal_node_select_thread(node));
 
         /* check for messages to send from from threads */
         if (bsal_node_pull(node, &message)) {
@@ -146,12 +182,23 @@ void bsal_node_run(struct bsal_node *node)
             bsal_node_send(node, &message);
         }
     }
+
+    /*
+     * stop threads
+     */
+
+    for (i = 1; i < node->threads; i++) {
+        bsal_thread_stop(node->thread_array + i);
+    }
 }
 
 /* TODO select a thread to pull from */
 struct bsal_thread *bsal_node_select_thread_for_pull(struct bsal_node *node)
 {
-    return &node->thread;
+    int thread;
+
+    thread = 0;
+    return node->thread_array + thread;
 }
 
 int bsal_node_pull(struct bsal_node *node, struct bsal_message *message)
@@ -327,7 +374,18 @@ void bsal_node_dispatch(struct bsal_node *node, struct bsal_message *message)
 /* TODO: select the thread */
 struct bsal_thread *bsal_node_select_thread_for_push(struct bsal_node *node)
 {
-    return &node->thread;
+    int thread;
+
+    thread = 0;
+    return node->thread_array + thread;
+}
+
+struct bsal_thread *bsal_node_select_thread(struct bsal_node *node)
+{
+    int thread;
+
+    thread = 0;
+    return node->thread_array + thread;
 }
 
 void bsal_node_assign_work(struct bsal_node *node, struct bsal_work *work)

@@ -6,14 +6,19 @@
 #include "node.h"
 
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 
-void bsal_thread_init(struct bsal_thread *thread, struct bsal_node *node)
+/*#define BSAL_THREAD_DEBUG*/
+
+void bsal_thread_init(struct bsal_thread *thread, int name, struct bsal_node *node)
 {
     bsal_fifo_init(&thread->works, 16, sizeof(struct bsal_work));
     bsal_fifo_init(&thread->messages, 16, sizeof(struct bsal_message));
 
     thread->node = node;
+    thread->name = name;
+    thread->dead = 0;
 }
 
 void bsal_thread_destroy(struct bsal_thread *thread)
@@ -22,6 +27,8 @@ void bsal_thread_destroy(struct bsal_thread *thread)
 
     bsal_fifo_destroy(&thread->messages);
     bsal_fifo_destroy(&thread->works);
+    thread->name = -1;
+    thread->dead = 1;
 }
 
 struct bsal_fifo *bsal_thread_works(struct bsal_thread *thread)
@@ -125,4 +132,67 @@ void bsal_thread_send(struct bsal_thread *thread, struct bsal_message *message)
 void bsal_thread_receive(struct bsal_thread *thread, struct bsal_message *message)
 {
     bsal_fifo_push(bsal_thread_works(thread), message);
+}
+
+void bsal_thread_start(struct bsal_thread *thread)
+{
+    /*
+     * http://pubs.opengroup.org/onlinepubs/7908799/xsh/pthread_create.html
+     */
+
+    pthread_create(bsal_thread_thread(thread), NULL, bsal_thread_main,
+                    thread);
+}
+
+void *bsal_thread_main(void *pointer)
+{
+    struct bsal_thread *thread;
+
+    thread = (struct bsal_thread*)pointer;
+
+#ifdef BSAL_THREAD_DEBUG
+    bsal_thread_display(thread);
+    printf("Starting thread\n");
+#endif
+
+    while (!thread->dead) {
+
+    }
+
+    return NULL;
+}
+
+void bsal_thread_display(struct bsal_thread *thread)
+{
+    printf("[bsal_thread_main] node %i thread %i\n",
+                    bsal_node_rank(thread->node),
+                    bsal_thread_name(thread));
+}
+
+int bsal_thread_name(struct bsal_thread *thread)
+{
+    return thread->name;
+}
+
+void bsal_thread_stop(struct bsal_thread *thread)
+{
+#ifdef BSAL_THREAD_DEBUG
+    bsal_thread_display(thread);
+    printf("stopping thread!\n");
+#endif
+
+    /*
+     * thread->dead is volatile and will be read
+     * by the running thread.
+     */
+    thread->dead = 1;
+
+    /* http://man7.org/linux/man-pages/man3/pthread_join.3.html
+     */
+    pthread_join(thread->thread, NULL);
+}
+
+pthread_t *bsal_thread_thread(struct bsal_thread *thread)
+{
+    return &thread->thread;
 }

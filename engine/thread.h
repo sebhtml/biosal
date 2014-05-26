@@ -14,14 +14,22 @@ struct bsal_thread {
     struct bsal_node *node;
     pthread_t thread;
 
+    int name;
+    volatile int dead;
+
     struct bsal_fifo works;
     struct bsal_fifo messages;
 };
 
-void bsal_thread_init(struct bsal_thread *thread, struct bsal_node *node);
+void bsal_thread_init(struct bsal_thread *thread, int name, struct bsal_node *node);
 void bsal_thread_destroy(struct bsal_thread *thread);
+
 struct bsal_fifo *bsal_thread_works(struct bsal_thread *thread);
 struct bsal_fifo *bsal_thread_messages(struct bsal_thread *thread);
+
+void bsal_thread_start(struct bsal_thread *thread);
+void bsal_thread_stop(struct bsal_thread *thread);
+pthread_t *bsal_thread_thread(struct bsal_thread *thread);
 
 void bsal_thread_run(struct bsal_thread *thread);
 void bsal_thread_work(struct bsal_thread *thread, struct bsal_work *work);
@@ -29,5 +37,9 @@ struct bsal_node *bsal_thread_node(struct bsal_thread *thread);
 
 void bsal_thread_receive(struct bsal_thread *thread, struct bsal_message *message);
 void bsal_thread_send(struct bsal_thread *thread, struct bsal_message *message);
+
+void *bsal_thread_main(void *pointer);
+int bsal_thread_name(struct bsal_thread *thread);
+void bsal_thread_display(struct bsal_thread *thread);
 
 #endif
