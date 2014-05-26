@@ -22,7 +22,7 @@ struct bsal_actor {
     void *pointer;
     struct bsal_thread *thread;
 
-    pthread_mutex_t mutex;
+    pthread_spinlock_t lock;
 
     int locked;
     int name;

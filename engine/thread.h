@@ -23,8 +23,8 @@ struct bsal_thread {
     struct bsal_fifo messages;
 
 #ifdef BSAL_THREAD_USE_MUTEX
-    pthread_mutex_t work_mutex;
-    pthread_mutex_t message_mutex;
+    pthread_spinlock_t work_lock;
+    pthread_spinlock_t message_lock;
 #endif
 };
 

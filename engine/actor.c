@@ -15,7 +15,7 @@ void bsal_actor_init(struct bsal_actor *actor, void *pointer,
     actor->vtable = vtable;
     actor->thread = NULL;
 
-    pthread_mutex_init(&actor->mutex, NULL);
+    pthread_spin_init(&actor->lock, 0);
     actor->locked = 0;
 }
 
@@ -33,7 +33,7 @@ void bsal_actor_destroy(struct bsal_actor *actor)
      */
     bsal_actor_unlock(actor);
 
-    pthread_mutex_destroy(&actor->mutex);
+    pthread_spin_destroy(&actor->lock);
 
     /* when exiting the destructor, the actor is unlocked
      * and destroyed too
@@ -135,7 +135,7 @@ struct bsal_node *bsal_actor_node(struct bsal_actor *actor)
 
 void bsal_actor_lock(struct bsal_actor *actor)
 {
-    pthread_mutex_lock(&actor->mutex);
+    pthread_spin_lock(&actor->lock);
     actor->locked = 1;
 }
 
@@ -146,5 +146,5 @@ void bsal_actor_unlock(struct bsal_actor *actor)
     }
 
     actor->locked = 0;
-    pthread_mutex_unlock(&actor->mutex);
+    pthread_spin_unlock(&actor->lock);
 }

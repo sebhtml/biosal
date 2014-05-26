@@ -25,7 +25,7 @@ struct bsal_node {
     struct bsal_actor *actors;
     struct bsal_thread *thread_array;
 
-    pthread_mutex_t death_mutex;
+    pthread_spinlock_t death_lock;
     MPI_Comm comm;
     MPI_Datatype datatype;
 
