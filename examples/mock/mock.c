@@ -65,10 +65,8 @@ void mock_add_contacts(struct bsal_actor *actor, struct bsal_message *message)
     bsal_message_set_tag(message, MOCK_NEW_CONTACTS_OK);
     bsal_actor_send(actor, source, message);
 
-    /*
-    bsal_message_set_tag(buffer, BUDDY_DIE);
+    bsal_message_set_tag(message, BUDDY_DIE);
     bsal_actor_send(actor, remote_actor, message);
-    */
 }
 
 void mock_send_death(struct bsal_actor *actor, struct bsal_message *message)
@@ -170,7 +168,7 @@ void mock_spawn_children(struct bsal_actor *actor)
         printf("mock_spawn_children sending tag %i BUDDY_DIE to %i\n",
                         tag, name);
 
-        bsal_actor_send(actor, name, &message);
+        /*bsal_actor_send(actor, name, &message);*/
 
         mock->children[i] = name;
     }

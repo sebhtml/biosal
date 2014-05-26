@@ -173,6 +173,7 @@ int bsal_node_receive(struct bsal_node *node, struct bsal_message *message)
     int destination;
     int tag;
     int flag;
+    int metadata_size;
     MPI_Status status;
 
     source = MPI_ANY_SOURCE;
@@ -195,7 +196,16 @@ int bsal_node_receive(struct bsal_node *node, struct bsal_message *message)
     MPI_Recv(buffer, count, node->datatype, source, tag,
                     node->comm, &status);
 
+    metadata_size = bsal_message_metadata_size(message);
+    count -= metadata_size;
+
+    /* Initially assign the MPI source rank and MPI destination
+     * rank for the actor source and actor destination, respectively.
+     * Then, read the metadata and resolve the MPI rank from
+     * that. The resolved MPI ranks should be the same in all cases
+     */
     bsal_message_init(message, tag, source, destination, count, buffer);
+    bsal_message_read_metadata(message);
     bsal_node_resolve(node, message);
 
     return 1;
@@ -223,16 +233,18 @@ void bsal_node_send_outbound_message(struct bsal_node *node, struct bsal_message
     /* int source; */
     int destination;
     int tag;
+    int metadata_size;
     MPI_Request request;
-
-    bsal_node_resolve(node, message);
+    int all;
 
     buffer = bsal_message_buffer(message);
     count = bsal_message_count(message);
+    metadata_size = bsal_message_metadata_size(message);
+    all = count + metadata_size;
     destination = bsal_message_destination_rank(message);
     tag = bsal_message_tag(message);
 
-    MPI_Isend(buffer, count, node->datatype, destination, tag,
+    MPI_Isend(buffer, all, node->datatype, destination, tag,
                     node->comm, &request);
 
     /* TODO store the MPI_Request to test it later to know when
@@ -248,6 +260,7 @@ void bsal_node_send(struct bsal_node *node, struct bsal_message *message)
 
     name = bsal_message_destination(message);
     rank = bsal_node_actor_rank(node, name);
+    bsal_node_resolve(node, message);
 
     if (rank == node->rank) {
         /* dispatch locally */
@@ -281,8 +294,11 @@ void bsal_node_dispatch(struct bsal_node *node, struct bsal_message *message)
     source = bsal_message_source(message);
     tag = bsal_message_tag(message);
 
-    printf("[DEBUG %s %s %i] %i -> %i (tag %i)\n", __FILE__, __func__,
-                    __LINE__, source, name, tag);
+    printf("[DEBUG %s %s %i] actor%i (rank%i) -> actor%i (rank%i) (tag %i)\n",
+                    __FILE__, __func__, __LINE__,
+                   source, bsal_message_source_rank(message),
+                   name, bsal_message_destination_rank(message),
+                   tag);
 #endif
 
     index = bsal_node_actor_index(node, rank, name);

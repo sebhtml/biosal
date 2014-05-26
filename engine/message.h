@@ -4,7 +4,7 @@
 
 struct bsal_message {
     char *buffer;
-    int bytes;
+    int count;
     int tag;
 
     int source_actor;
@@ -20,7 +20,7 @@ struct bsal_message {
 typedef struct bsal_message bsal_message_t;
 
 void bsal_message_init(struct bsal_message *message, int tag,
-                int source, int destination, int bytes, char *buffer);
+                int source, int destination, int count, char *buffer);
 void bsal_message_destroy(struct bsal_message *message);
 
 int bsal_message_source(struct bsal_message *message);
@@ -39,5 +39,9 @@ int bsal_message_count(struct bsal_message *message);
 
 void bsal_message_set_source_rank(struct bsal_message *message, int source);
 void bsal_message_set_destination_rank(struct bsal_message *message, int destination);
+
+int bsal_message_metadata_size(struct bsal_message *message);
+void bsal_message_read_metadata(struct bsal_message *message);
+void bsal_message_write_metadata(struct bsal_message *message);
 
 #endif

@@ -94,17 +94,30 @@ void bsal_thread_send(struct bsal_thread *thread, struct bsal_message *message)
     struct bsal_message copy;
     char *buffer;
     int count;
+    int metadata_size;
+    int all;
 
     memcpy(&copy, message, sizeof(struct bsal_message));
     count = bsal_message_count(&copy);
+    metadata_size = bsal_message_metadata_size(message);
+    all = count + metadata_size;
 
+    /* TODO use slab allocator to allocate buffer... */
+    buffer = (char *)malloc(all * sizeof(char));
+
+    /* according to
+     * http://stackoverflow.com/questions/3751797/can-i-call-memcpy-and-memmove-with-number-of-bytes-set-to-zero
+     * memcpy works with a count of 0, but the addresses must be valid
+     * nonetheless
+     *
+     * Copy the message data.
+     */
     if (count > 0) {
-        /* TODO use slab allocator to allocate buffer... */
-        buffer = (char *)malloc(count * sizeof(char));
-
         memcpy(buffer, bsal_message_buffer(message), count);
-        bsal_message_set_buffer(&copy, buffer);
     }
+
+    bsal_message_set_buffer(&copy, buffer);
+    bsal_message_write_metadata(&copy);
 
     bsal_fifo_push(bsal_thread_messages(thread), &copy);
 }
