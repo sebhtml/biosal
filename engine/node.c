@@ -188,8 +188,10 @@ void bsal_node_run(struct bsal_node *node)
             bsal_node_dispatch(node, &message);
         }
 
-        /* make the thread work (currently, this is the main thread) */
-        bsal_thread_run(bsal_node_select_thread(node));
+        if (node->threads == 1) {
+            /* make the thread work (this is the main thread) */
+            bsal_thread_run(bsal_node_select_thread(node));
+        }
 
         /* check for messages to send from from threads */
         if (bsal_node_pull(node, &message)) {

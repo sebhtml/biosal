@@ -32,6 +32,9 @@ clean:
 mock: test_mock
 	mpiexec -n 3 ./test_mock
 
+mock1: test_mock
+	mpiexec -n 3 ./test_mock 1
+
 test: test_fifo test_fifo_array
 	./test_fifo
 	./test_fifo_array
