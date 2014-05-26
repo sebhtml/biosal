@@ -36,6 +36,10 @@ struct bsal_node {
     int actor_count;
     int dead_actors;
     int alive_actors;
+
+    int thread_for_work;
+    int thread_for_message;
+    int thread_for_run;
 };
 
 void bsal_node_init(struct bsal_node *node, int threads, int *argc, char ***argv);
@@ -66,10 +70,11 @@ void bsal_node_assign_work(struct bsal_node *node, struct bsal_work *work);
 int bsal_node_pull(struct bsal_node *node, struct bsal_message *message);
 
 struct bsal_thread *bsal_node_select_thread_for_pull(struct bsal_node *node);
-struct bsal_thread *bsal_node_select_thread_for_push(struct bsal_node *node);
+struct bsal_thread *bsal_node_select_thread_for_work(struct bsal_node *node);
 struct bsal_thread *bsal_node_select_thread(struct bsal_node *node);
 
 void bsal_node_delete_threads(struct bsal_node *node);
 void bsal_node_create_threads(struct bsal_node *node);
+int bsal_node_next_thread(struct bsal_node *node, int index);
 
 #endif

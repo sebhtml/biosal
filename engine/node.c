@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <string.h>
 
-/*#define BSAL_NODE_DEBUG*/
+/*#define BSAL_NODE_DEBUG */
 
 int bsal_node_spawn(struct bsal_node *node, void *pointer,
                 struct bsal_actor_vtable *vtable)
@@ -72,6 +72,22 @@ void bsal_node_init(struct bsal_node *node, int threads,  int *argc,  char ***ar
     pthread_mutex_init(&node->death_mutex, NULL);
 
     bsal_node_create_threads(node);
+
+    /* with only one thread,  the main thread
+     * handles everything.
+     */
+    if (node->threads == 1) {
+        node->thread_for_run = 0;
+        node->thread_for_message = 0;
+        node->thread_for_work = 0;
+    } else if (node->threads > 1) {
+        node->thread_for_run = 0;
+        node->thread_for_message = 1;
+        node->thread_for_work = 1;
+    } else {
+        printf("Error: the number of threads must be at least 1.\n");
+        exit(1);
+    }
 }
 
 void bsal_node_destroy(struct bsal_node *node)
@@ -193,20 +209,62 @@ void bsal_node_run(struct bsal_node *node)
 }
 
 /* TODO select a thread to pull from */
-struct bsal_thread *bsal_node_select_thread_for_pull(struct bsal_node *node)
+struct bsal_thread *bsal_node_select_thread_for_message(struct bsal_node *node)
 {
-    int thread;
+    struct bsal_thread *thread;
+    int iterations;
+    int index;
 
-    thread = 0;
-    return node->thread_array + thread;
+    index = node->thread_for_message;
+
+    return node->thread_array + index;
+
+    /* pick up the first thread with messages
+     */
+    if (node->threads > 1) {
+        iterations = node->threads - 1;
+        thread = node->thread_array + index;
+
+        while (iterations > 0
+                        && bsal_fifo_empty(bsal_thread_messages(thread))) {
+
+            node->thread_for_message = bsal_node_next_thread(node,
+                            index);
+            thread = node->thread_array + index;
+            iterations++;
+        }
+
+        node->thread_for_message = bsal_node_next_thread(node,
+                        index);
+    }
+
+    /* printf("Selected thread %i for message\n", index); */
+
+    return node->thread_array + index;
+}
+
+int bsal_node_next_thread(struct bsal_node *node, int index)
+{
+    if (node->threads == 1) {
+        return 0;
+    }
+
+    index++;
+    index %= node->threads;
+    if (index == 0) {
+        index = 1;
+    }
+
+    return index;
 }
 
 int bsal_node_pull(struct bsal_node *node, struct bsal_message *message)
 {
     struct bsal_thread *thread;
 
-    thread = bsal_node_select_thread_for_pull(node);
-    return bsal_fifo_pop(bsal_thread_messages(thread), message);
+    thread = bsal_node_select_thread_for_message(node);
+
+    return bsal_thread_pull_message(thread, message);
 }
 
 /* \see http://www.mpich.org/static/docs/v3.1/www3/MPI_Iprobe.html */
@@ -372,28 +430,55 @@ void bsal_node_dispatch(struct bsal_node *node, struct bsal_message *message)
 }
 
 /* TODO: select the thread */
-struct bsal_thread *bsal_node_select_thread_for_push(struct bsal_node *node)
+struct bsal_thread *bsal_node_select_thread_for_work(struct bsal_node *node)
 {
-    int thread;
+    struct bsal_thread *thread;
+    int iterations;
+    int index;
 
-    thread = 0;
-    return node->thread_array + thread;
+    index = node->thread_for_work;
+
+    return node->thread_array + index;
+
+    /* pick up the first thread with messages
+     */
+
+    if (node->threads > 1) {
+        iterations = node->threads - 1;
+        thread = node->thread_array + index;
+
+        while (iterations > 0
+                        && !bsal_fifo_empty(bsal_thread_messages(thread))) {
+
+            node->thread_for_message = bsal_node_next_thread(node,
+                            index);
+            thread = node->thread_array + index;
+            iterations++;
+        }
+
+        node->thread_for_work = bsal_node_next_thread(node,
+                        index);
+    }
+
+    printf("Selected thread %i for work\n", index);
+
+    return node->thread_array + index;
 }
 
 struct bsal_thread *bsal_node_select_thread(struct bsal_node *node)
 {
-    int thread;
+    int index;
 
-    thread = 0;
-    return node->thread_array + thread;
+    index = node->thread_for_run;
+    return node->thread_array + index;
 }
 
 void bsal_node_assign_work(struct bsal_node *node, struct bsal_work *work)
 {
     struct bsal_thread *thread;
 
-    thread = bsal_node_select_thread_for_push(node);
-    bsal_fifo_push(bsal_thread_works(thread), work);
+    thread = bsal_node_select_thread_for_work(node);
+    bsal_thread_push_work(thread, work);
 }
 
 int bsal_node_actor_index(struct bsal_node *node, int rank, int name)

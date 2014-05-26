@@ -19,6 +19,9 @@ struct bsal_thread {
 
     struct bsal_fifo works;
     struct bsal_fifo messages;
+
+    pthread_mutex_t work_mutex;
+    pthread_mutex_t message_mutex;
 };
 
 void bsal_thread_init(struct bsal_thread *thread, int name, struct bsal_node *node);
@@ -35,11 +38,19 @@ void bsal_thread_run(struct bsal_thread *thread);
 void bsal_thread_work(struct bsal_thread *thread, struct bsal_work *work);
 struct bsal_node *bsal_thread_node(struct bsal_thread *thread);
 
+/*
 void bsal_thread_receive(struct bsal_thread *thread, struct bsal_message *message);
+*/
 void bsal_thread_send(struct bsal_thread *thread, struct bsal_message *message);
 
 void *bsal_thread_main(void *pointer);
 int bsal_thread_name(struct bsal_thread *thread);
 void bsal_thread_display(struct bsal_thread *thread);
+
+void bsal_thread_push_work(struct bsal_thread *thread, struct bsal_work *work);
+int bsal_thread_pull_work(struct bsal_thread *thread, struct bsal_work *work);
+
+void bsal_thread_push_message(struct bsal_thread *thread, struct bsal_message *message);
+int bsal_thread_pull_message(struct bsal_thread *thread, struct bsal_message *message);
 
 #endif
