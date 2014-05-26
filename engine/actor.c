@@ -65,7 +65,11 @@ void bsal_actor_print(struct bsal_actor *actor)
     /* with -Werror -Wall:
      * engine/bsal_actor.c:58:21: error: ISO C for bids conversion of function pointer to object pointer type [-Werror=edantic]
      */
-    printf("bsal_actor_print name: %i bsal_actor %p pointer %p\n", bsal_actor_name(actor),
+
+    printf("[bsal_actor_print] Name: %i Node: %i, Thread: %i"
+                    " bsal_actor %p pointer %p\n", bsal_actor_name(actor),
+                    bsal_node_rank(bsal_actor_node(actor)),
+                    bsal_thread_name(bsal_actor_thread(actor)),
                     (void*)actor, (void*)bsal_actor_actor(actor));
 }
 

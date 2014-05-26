@@ -219,7 +219,9 @@ struct bsal_thread *bsal_node_select_thread_for_message(struct bsal_node *node)
 
     index = node->thread_for_message;
 
+#ifdef BSAL_NODE_NO_THREADS
     return node->thread_array + index;
+#endif
 
     /* pick up the first thread with messages
      */
@@ -233,7 +235,7 @@ struct bsal_thread *bsal_node_select_thread_for_message(struct bsal_node *node)
             node->thread_for_message = bsal_node_next_thread(node,
                             index);
             thread = node->thread_array + index;
-            iterations++;
+            iterations--;
         }
 
         node->thread_for_message = bsal_node_next_thread(node,
@@ -440,7 +442,9 @@ struct bsal_thread *bsal_node_select_thread_for_work(struct bsal_node *node)
 
     index = node->thread_for_work;
 
+#ifdef BSAL_NODE_NO_THREADS
     return node->thread_array + index;
+#endif
 
     /* pick up the first thread with messages
      */
@@ -455,14 +459,14 @@ struct bsal_thread *bsal_node_select_thread_for_work(struct bsal_node *node)
             node->thread_for_message = bsal_node_next_thread(node,
                             index);
             thread = node->thread_array + index;
-            iterations++;
+            iterations--;
         }
 
         node->thread_for_work = bsal_node_next_thread(node,
                         index);
     }
 
-    printf("Selected thread %i for work\n", index);
+    /*printf("Selected thread %i for work\n", index); */
 
     return node->thread_array + index;
 }

@@ -20,14 +20,19 @@ void bsal_thread_init(struct bsal_thread *thread, int name, struct bsal_node *no
     thread->name = name;
     thread->dead = 0;
 
+
+#ifdef BSAL_THREAD_USE_MUTEX
     pthread_mutex_init(&thread->work_mutex, NULL);
     pthread_mutex_init(&thread->message_mutex, NULL);
+#endif
 }
 
 void bsal_thread_destroy(struct bsal_thread *thread)
 {
+#ifdef BSAL_THREAD_USE_MUTEX
     pthread_mutex_destroy(&thread->message_mutex);
     pthread_mutex_destroy(&thread->work_mutex);
+#endif
 
     thread->node = NULL;
 
@@ -208,36 +213,60 @@ pthread_t *bsal_thread_thread(struct bsal_thread *thread)
 
 void bsal_thread_push_work(struct bsal_thread *thread, struct bsal_work *work)
 {
+#ifdef BSAL_THREAD_USE_MUTEX
     pthread_mutex_lock(&thread->work_mutex);
+#endif
+
     bsal_fifo_push(bsal_thread_works(thread), work);
+
+#ifdef BSAL_THREAD_USE_MUTEX
     pthread_mutex_unlock(&thread->work_mutex);
+#endif
 }
 
 int bsal_thread_pull_work(struct bsal_thread *thread, struct bsal_work *work)
 {
     int value;
 
+#ifdef BSAL_THREAD_USE_MUTEX
     pthread_mutex_lock(&thread->work_mutex);
+#endif
+
     value = bsal_fifo_pop(bsal_thread_works(thread), work);
+
+#ifdef BSAL_THREAD_USE_MUTEX
     pthread_mutex_unlock(&thread->work_mutex);
+#endif
 
     return value;
 }
 
 void bsal_thread_push_message(struct bsal_thread *thread, struct bsal_message *message)
 {
+#ifdef BSAL_THREAD_USE_MUTEX
     pthread_mutex_lock(&thread->message_mutex);
+#endif
+
     bsal_fifo_push(bsal_thread_messages(thread), message);
+
+#ifdef BSAL_THREAD_USE_MUTEX
     pthread_mutex_unlock(&thread->message_mutex);
+#endif
 }
 
 int bsal_thread_pull_message(struct bsal_thread *thread, struct bsal_message *message)
 {
     int value;
 
+#ifdef BSAL_THREAD_USE_MUTEX
     pthread_mutex_lock(&thread->message_mutex);
+#endif
+
     value = bsal_fifo_pop(bsal_thread_messages(thread), message);
+
+#ifdef BSAL_THREAD_USE_MUTEX
     pthread_mutex_unlock(&thread->message_mutex);
+#endif
 
     return value;
 }

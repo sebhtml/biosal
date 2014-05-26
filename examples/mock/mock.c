@@ -35,8 +35,7 @@ void mock_receive(struct bsal_actor *actor, struct bsal_message *message)
     int tag;
 
     tag = bsal_message_tag(message);
-
-    /* printf("mock_receive %i\n", tag); */
+    bsal_actor_print(actor);
 
     if (tag == BSAL_START) {
         mock_start(actor, message);

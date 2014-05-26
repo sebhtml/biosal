@@ -10,6 +10,8 @@ struct bsal_work;
 struct bsal_node;
 struct bsal_message;
 
+#define BSAL_THREAD_USE_MUTEX
+
 struct bsal_thread {
     struct bsal_node *node;
     pthread_t thread;
@@ -20,8 +22,10 @@ struct bsal_thread {
     struct bsal_fifo works;
     struct bsal_fifo messages;
 
+#ifdef BSAL_THREAD_USE_MUTEX
     pthread_mutex_t work_mutex;
     pthread_mutex_t message_mutex;
+#endif
 };
 
 void bsal_thread_init(struct bsal_thread *thread, int name, struct bsal_node *node);
