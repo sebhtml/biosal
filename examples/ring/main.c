@@ -11,7 +11,7 @@ int main(int argc, char **argv)
     struct bsal_node node;
     int threads;
 
-    threads = 14;
+    threads = 10;
 
     bsal_node_init(&node, threads, &argc, &argv);
     bsal_node_spawn(&node, &actor, &sender_vtable);

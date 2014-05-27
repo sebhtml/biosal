@@ -213,7 +213,7 @@ void bsal_node_run(struct bsal_node *node)
     }
 }
 
-/* TODO select a thread to pull from */
+/* select a thread to pull from */
 struct bsal_thread *bsal_node_select_thread_for_message(struct bsal_node *node)
 {
     struct bsal_thread *thread;
@@ -226,14 +226,15 @@ struct bsal_thread *bsal_node_select_thread_for_message(struct bsal_node *node)
     return node->thread_array + index;
 #endif
 
-    /* pick up the first thread with messages
-     */
     if (node->threads > 1) {
         iterations = node->threads - 1;
         thread = node->thread_array + index;
 
+        /* pick up the first thread with messages
+         * TODO: this does not scale to 244 threads (Xeon Phi)
+         */
         while (iterations > 0
-                        && bsal_fifo_empty(bsal_thread_messages(thread))) {
+                        && bsal_fifo_size(bsal_thread_messages(thread)) == 0) {
 
             node->thread_for_message = bsal_node_next_thread(node,
                             index);
@@ -437,7 +438,7 @@ void bsal_node_dispatch(struct bsal_node *node, struct bsal_message *message)
     bsal_node_assign_work(node, &work);
 }
 
-/* TODO: select the thread */
+/* select the thread to push work to */
 struct bsal_thread *bsal_node_select_thread_for_work(struct bsal_node *node)
 {
     struct bsal_thread *thread;
@@ -450,15 +451,15 @@ struct bsal_thread *bsal_node_select_thread_for_work(struct bsal_node *node)
     return node->thread_array + index;
 #endif
 
-    /* pick up the first thread with messages
-     */
-
     if (node->threads > 1) {
         iterations = node->threads - 1;
         thread = node->thread_array + index;
 
+        /* pick up the first thread with messages
+         * TODO: this does not scale to 244 threads (Xeon Phi)
+         */
         while (iterations > 0
-                        && !bsal_fifo_empty(bsal_thread_messages(thread))) {
+                        && bsal_fifo_size(bsal_thread_works(thread)) > 0) {
 
             node->thread_for_message = bsal_node_next_thread(node,
                             index);

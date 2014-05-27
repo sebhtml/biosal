@@ -11,6 +11,7 @@ struct bsal_fifo {
 
     int units;
     int bytes_per_unit;
+    int elements;
 };
 
 void bsal_fifo_init(struct bsal_fifo *fifo, int units, int bytes_per_unit);
@@ -26,5 +27,6 @@ int bsal_fifo_full(struct bsal_fifo *fifo);
 struct bsal_fifo_array *bsal_fifo_get_array(struct bsal_fifo *fifo);
 void bsal_fifo_delete(struct bsal_fifo_array *array);
 void bsal_fifo_destroy_array(struct bsal_fifo_array *array);
+int bsal_fifo_size(struct bsal_fifo *fifo);
 
 #endif
