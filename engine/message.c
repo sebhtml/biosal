@@ -90,7 +90,7 @@ void bsal_message_set_destination_rank(struct bsal_message *message, int destina
     message->destination_rank = destination;
 }
 
-void bsal_message_set_buffer(struct bsal_message *message, char *buffer)
+void bsal_message_set_buffer(struct bsal_message *message, void *buffer)
 {
     message->buffer = buffer;
 }
@@ -128,4 +128,9 @@ void bsal_message_read_metadata(struct bsal_message *message)
     memcpy(&message->destination_actor,
             message->buffer + message->count + sizeof(message->source_actor),
             sizeof(message->destination_actor));
+}
+
+void bsal_message_set_count(struct bsal_message *message, int count)
+{
+    message->count = count;
 }

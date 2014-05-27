@@ -34,6 +34,7 @@ struct bsal_node {
     int threads;
 
     int actor_count;
+    int actor_capacity;
     int dead_actors;
     int alive_actors;
 

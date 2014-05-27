@@ -10,7 +10,7 @@ struct bsal_work;
 struct bsal_node;
 struct bsal_message;
 
-#define BSAL_THREAD_USE_MUTEX
+#define BSAL_THREAD_USE_LOCK
 
 struct bsal_thread {
     struct bsal_node *node;
@@ -22,7 +22,7 @@ struct bsal_thread {
     struct bsal_fifo works;
     struct bsal_fifo messages;
 
-#ifdef BSAL_THREAD_USE_MUTEX
+#ifdef BSAL_THREAD_USE_LOCK
     pthread_spinlock_t work_lock;
     pthread_spinlock_t message_lock;
 #endif

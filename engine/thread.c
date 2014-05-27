@@ -21,7 +21,7 @@ void bsal_thread_init(struct bsal_thread *thread, int name, struct bsal_node *no
     thread->dead = 0;
 
 
-#ifdef BSAL_THREAD_USE_MUTEX
+#ifdef BSAL_THREAD_USE_LOCK
     pthread_spin_init(&thread->work_lock, 0);
     pthread_spin_init(&thread->message_lock, 0);
 #endif
@@ -29,7 +29,7 @@ void bsal_thread_init(struct bsal_thread *thread, int name, struct bsal_node *no
 
 void bsal_thread_destroy(struct bsal_thread *thread)
 {
-#ifdef BSAL_THREAD_USE_MUTEX
+#ifdef BSAL_THREAD_USE_LOCK
     pthread_spin_destroy(&thread->message_lock);
     pthread_spin_destroy(&thread->work_lock);
 #endif
@@ -70,6 +70,7 @@ void bsal_thread_work(struct bsal_thread *thread, struct bsal_work *work)
     struct bsal_message *message;
     bsal_actor_receive_fn_t receive;
     int dead;
+    char *buffer;
 
     actor = bsal_work_actor(work);
 
@@ -81,6 +82,16 @@ void bsal_thread_work(struct bsal_thread *thread, struct bsal_work *work)
     bsal_actor_set_thread(actor, thread);
     message = bsal_work_message(work);
     receive = bsal_actor_get_receive(actor);
+
+    /* Store the buffer location before calling the user
+     * code because the user may change the message buffer
+     * pointer. We need to free the buffer regardless if the
+     * actor code changes it.
+     */
+    buffer = bsal_message_buffer(message);
+
+    /* call the actor receive code
+     */
     receive(actor, message);
 
     bsal_actor_set_thread(actor, NULL);
@@ -97,7 +108,15 @@ void bsal_thread_work(struct bsal_thread *thread, struct bsal_work *work)
     bsal_actor_unlock(actor);
 
     /* TODO free the buffer with the slab allocator */
-    free(bsal_message_buffer(message));
+
+#ifdef BSAL_THREAD_DEBUG
+    printf("bsal_thread_work Freeing buffer %p %i tag %i\n",
+                    buffer, bsal_message_count(message),
+                    bsal_message_tag(message));
+#endif
+
+    free(buffer);
+
     /* TODO replace with slab allocator */
     free(message);
 }
@@ -122,6 +141,14 @@ void bsal_thread_send(struct bsal_thread *thread, struct bsal_message *message)
 
     /* TODO use slab allocator to allocate buffer... */
     buffer = (char *)malloc(all * sizeof(char));
+
+#ifdef BSAL_THREAD_DEBUG
+    printf("[bsal_thread_send] allocated %i bytes (%i + %i) for buffer %p\n",
+                    all, count, metadata_size, buffer);
+
+    printf("bsal_thread_send old buffer: %p\n",
+                    bsal_message_buffer(message));
+#endif
 
     /* according to
      * http://stackoverflow.com/questions/3751797/can-i-call-memcpy-and-memmove-with-number-of-bytes-set-to-zero
@@ -213,13 +240,13 @@ pthread_t *bsal_thread_thread(struct bsal_thread *thread)
 
 void bsal_thread_push_work(struct bsal_thread *thread, struct bsal_work *work)
 {
-#ifdef BSAL_THREAD_USE_MUTEX
+#ifdef BSAL_THREAD_USE_LOCK
     pthread_spin_lock(&thread->work_lock);
 #endif
 
     bsal_fifo_push(bsal_thread_works(thread), work);
 
-#ifdef BSAL_THREAD_USE_MUTEX
+#ifdef BSAL_THREAD_USE_LOCK
     pthread_spin_unlock(&thread->work_lock);
 #endif
 }
@@ -228,13 +255,13 @@ int bsal_thread_pull_work(struct bsal_thread *thread, struct bsal_work *work)
 {
     int value;
 
-#ifdef BSAL_THREAD_USE_MUTEX
+#ifdef BSAL_THREAD_USE_LOCK
     pthread_spin_lock(&thread->work_lock);
 #endif
 
     value = bsal_fifo_pop(bsal_thread_works(thread), work);
 
-#ifdef BSAL_THREAD_USE_MUTEX
+#ifdef BSAL_THREAD_USE_LOCK
     pthread_spin_unlock(&thread->work_lock);
 #endif
 
@@ -243,13 +270,18 @@ int bsal_thread_pull_work(struct bsal_thread *thread, struct bsal_work *work)
 
 void bsal_thread_push_message(struct bsal_thread *thread, struct bsal_message *message)
 {
-#ifdef BSAL_THREAD_USE_MUTEX
+#ifdef BSAL_THREAD_USE_LOCK
     pthread_spin_lock(&thread->message_lock);
+#endif
+
+#ifdef BSAL_THREAD_DEBUG
+    printf("bsal_thread_push_message message %p buffer %p\n",
+                    (void *)message, bsal_message_buffer(message));
 #endif
 
     bsal_fifo_push(bsal_thread_messages(thread), message);
 
-#ifdef BSAL_THREAD_USE_MUTEX
+#ifdef BSAL_THREAD_USE_LOCK
     pthread_spin_unlock(&thread->message_lock);
 #endif
 }
@@ -258,13 +290,13 @@ int bsal_thread_pull_message(struct bsal_thread *thread, struct bsal_message *me
 {
     int value;
 
-#ifdef BSAL_THREAD_USE_MUTEX
+#ifdef BSAL_THREAD_USE_LOCK
     pthread_spin_lock(&thread->message_lock);
 #endif
 
     value = bsal_fifo_pop(bsal_thread_messages(thread), message);
 
-#ifdef BSAL_THREAD_USE_MUTEX
+#ifdef BSAL_THREAD_USE_LOCK
     pthread_spin_unlock(&thread->message_lock);
 #endif
 

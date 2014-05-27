@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <string.h>
 
-/*#define BSAL_NODE_DEBUG */
+/*#define BSAL_NODE_DEBUG*/
 
 int bsal_node_spawn(struct bsal_node *node, void *pointer,
                 struct bsal_actor_vtable *vtable)
@@ -13,11 +13,6 @@ int bsal_node_spawn(struct bsal_node *node, void *pointer,
     struct bsal_actor *actor;
     int name;
     bsal_actor_init_fn_t init;
-
-    /* TODO make sure that we have place above 10 actors */
-    if (node->actors == NULL) {
-        node->actors = (struct bsal_actor*)malloc(10 * sizeof(struct bsal_actor));
-    }
 
     actor = node->actors + node->actor_count;
     bsal_actor_init(actor, pointer, vtable);
@@ -64,10 +59,13 @@ void bsal_node_init(struct bsal_node *node, int threads,  int *argc,  char ***ar
     node->threads = threads;
     node->thread_array = NULL;
 
-    node->actors = NULL;
     node->actor_count = 0;
+    node->actor_capacity = 16384;
     node->dead_actors = 0;
     node->alive_actors = 0;
+
+    /* TODO make sure that we have place above node->actor_capacity actors */
+    node->actors = (struct bsal_actor*)malloc(node->actor_capacity * sizeof(struct bsal_actor));
 
     pthread_spin_init(&node->death_lock, 0);
 
@@ -96,11 +94,10 @@ void bsal_node_destroy(struct bsal_node *node)
 
     pthread_spin_destroy(&node->death_lock);
 
-    if (node->actors != NULL) {
-        free(node->actors);
-        node->actor_count = 0;
-        node->actors = NULL;
-    }
+    free(node->actors);
+    node->actor_count = 0;
+    node->actor_capacity = 0;
+    node->actors = NULL;
 
     MPI_Finalize();
 }
@@ -195,6 +192,12 @@ void bsal_node_run(struct bsal_node *node)
 
         /* check for messages to send from from threads */
         if (bsal_node_pull(node, &message)) {
+
+#ifdef BSAL_NODE_DEBUG
+            printf("bsal_node_run pulled tag %i buffer %p\n",
+                            bsal_message_tag(&message),
+                            bsal_message_buffer(&message));
+#endif
 
             /* send it locally or over the network */
             bsal_node_send(node, &message);
@@ -403,11 +406,12 @@ void bsal_node_dispatch(struct bsal_node *node, struct bsal_message *message)
     source = bsal_message_source(message);
     tag = bsal_message_tag(message);
 
-    printf("[DEBUG %s %s %i] actor%i (rank%i) -> actor%i (rank%i) (tag %i)\n",
+    printf("[DEBUG %s %s %i] actor%i (rank%i) -> actor%i (rank%i)"
+                    "(tag %i) %i bytes\n",
                     __FILE__, __func__, __LINE__,
                    source, bsal_message_source_rank(message),
                    name, bsal_message_destination_rank(message),
-                   tag);
+                   tag, bsal_message_count(message));
 #endif
 
     index = bsal_node_actor_index(node, rank, name);
