@@ -4,6 +4,8 @@ LD=$(CC)
 Q=@
 ECHO=echo
 
+PRODUCTS=test_mock test_fifo test_fifo_array test_ring
+
 all: $(PRODUCTS)
 
 LIBRARY=engine/message.o engine/node.o engine/actor.o engine/actor_vtable.o \
@@ -15,8 +17,6 @@ RING_EXAMPLE=examples/ring/main.o examples/ring/sender.o
 
 TEST_FIFO=test/test.o test/test_fifo.o
 TEST_FIFO_ARRAY=test/test.o test/test_fifo_array.o
-
-PRODUCTS=test_mock test_fifo test_fifo_array test_ring
 
 %.o: %.c
 	$(Q)$(ECHO) "  CC $@"
