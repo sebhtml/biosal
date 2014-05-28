@@ -2,7 +2,7 @@
 #ifndef _BSAL_THREAD_H
 #define _BSAL_THREAD_H
 
-#include "fifo.h"
+#include <structures/fifo.h>
 
 #include <pthread.h>
 

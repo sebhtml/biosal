@@ -1,5 +1,5 @@
 
-#include <engine/fifo.h>
+#include <structures/fifo.h>
 
 #include "test.h"
 
