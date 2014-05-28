@@ -26,6 +26,8 @@ struct bsal_node {
     struct bsal_thread *thread_array;
 
     pthread_spinlock_t death_lock;
+    pthread_spinlock_t spawn_lock;
+
     MPI_Comm comm;
     MPI_Datatype datatype;
 

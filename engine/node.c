@@ -14,6 +14,8 @@ int bsal_node_spawn(struct bsal_node *node, void *pointer,
     int name;
     bsal_actor_init_fn_t init;
 
+    pthread_spin_lock(&node->spawn_lock);
+
     actor = node->actors + node->actor_count;
     bsal_actor_init(actor, pointer, vtable);
     init = bsal_actor_get_init(actor);
@@ -25,6 +27,8 @@ int bsal_node_spawn(struct bsal_node *node, void *pointer,
 
     node->actor_count++;
     node->alive_actors++;
+
+    pthread_spin_unlock(&node->spawn_lock);
 
     return name;
 }
@@ -68,6 +72,7 @@ void bsal_node_init(struct bsal_node *node, int threads,  int *argc,  char ***ar
     node->actors = (struct bsal_actor*)malloc(node->actor_capacity * sizeof(struct bsal_actor));
 
     pthread_spin_init(&node->death_lock, 0);
+    pthread_spin_init(&node->spawn_lock, 0);
 
     bsal_node_create_threads(node);
 
@@ -92,6 +97,7 @@ void bsal_node_destroy(struct bsal_node *node)
 {
     bsal_node_delete_threads(node);
 
+    pthread_spin_destroy(&node->spawn_lock);
     pthread_spin_destroy(&node->death_lock);
 
     free(node->actors);
