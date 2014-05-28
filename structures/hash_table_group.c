@@ -8,6 +8,7 @@
 void bsal_hash_table_group_init(struct bsal_hash_table_group *group,
                 int buckets_per_group, int key_size, int value_size)
 {
+    /*printf("%i\n", buckets_per_group);*/
     group->bitmap = malloc(buckets_per_group / 8);
     group->array = malloc(buckets_per_group * (key_size + value_size));
 }

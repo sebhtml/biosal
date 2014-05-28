@@ -4,9 +4,10 @@ LD=$(CC)
 Q=@
 ECHO=echo
 
-PRODUCTS=test_mock test_fifo test_fifo_array test_ring
+TESTS=test_fifo test_fifo_array test_hash_table_group
+PRODUCTS=test_mock test_ring
 
-all: $(PRODUCTS)
+all: $(PRODUCTS) $(TESTS)
 
 LIBRARY=engine/message.o engine/node.o engine/actor.o engine/actor_vtable.o \
 	engine/work.o engine/worker_thread.o engine/worker_pool.o \
@@ -18,6 +19,7 @@ RING_EXAMPLE=examples/ring/main.o examples/ring/sender.o
 
 TEST_FIFO=test/test.o test/test_fifo.o
 TEST_FIFO_ARRAY=test/test.o test/test_fifo_array.o
+TEST_HASH_TABLE_GROUP=test/test.o test/test_hash_table_group.o
 
 %.o: %.c
 	$(Q)$(ECHO) "  CC $@"
@@ -27,11 +29,11 @@ clean:
 	$(Q)$(ECHO) "  RM"
 	$(Q)$(RM) $(LIBRARY)
 	$(Q)$(RM) $(RING_EXAMPLE) $(MOCK_EXAMPLE)
-	$(Q)$(RM) $(TEST_FIFO) $(TEST_FIFO_ARRAY)
-	$(Q)$(RM) $(PRODUCTS)
+	$(Q)$(RM) $(TEST_FIFO) $(TEST_FIFO_ARRAY) $(TEST_HASH_TABLE_GROUP)
+	$(Q)$(RM) $(PRODUCTS) $(TESTS)
 
 ring: test_ring
-	mpiexec -n 2 ./test_ring
+	mpiexec -n 2 ./test_ring 8
 
 mock: test_mock
 	mpiexec -n 3 ./test_mock
@@ -39,13 +41,18 @@ mock: test_mock
 mock1: test_mock
 	mpiexec -n 3 ./test_mock 1
 
-test: test_fifo test_fifo_array
+test: $(TESTS)
 	./test_fifo
 	./test_fifo_array
+	./test_hash_table_group
 
 run: mock mock1 ring
 
 test_fifo: $(LIBRARY) $(TEST_FIFO)
+	$(Q)$(ECHO) "  LD $@"
+	$(Q)$(CC) $(CFLAGS) $^ -o $@
+
+test_hash_table_group: $(LIBRARY) $(TEST_HASH_TABLE_GROUP)
 	$(Q)$(ECHO) "  LD $@"
 	$(Q)$(CC) $(CFLAGS) $^ -o $@
 

@@ -14,24 +14,24 @@ int main(int argc, char **argv)
 
         i = 16;
         while(i--) {
-            TEST_EQUAL(bsal_fifo_array_push(&fifo, &i), 1);
+            TEST_INT_EQUALS(bsal_fifo_array_push(&fifo, &i), 1);
         }
 
         i = 16;
         while(i--) {
-            TEST_EQUAL(bsal_fifo_array_push(&fifo, &i), 0);
-        }
-
-        i = 16;
-        while(i--) {
-            int item;
-            TEST_EQUAL(bsal_fifo_array_pop(&fifo, &item), 1);
+            TEST_INT_EQUALS(bsal_fifo_array_push(&fifo, &i), 0);
         }
 
         i = 16;
         while(i--) {
             int item;
-            TEST_EQUAL(bsal_fifo_array_pop(&fifo, &item), 0);
+            TEST_INT_EQUALS(bsal_fifo_array_pop(&fifo, &item), 1);
+        }
+
+        i = 16;
+        while(i--) {
+            int item;
+            TEST_INT_EQUALS(bsal_fifo_array_pop(&fifo, &item), 0);
         }
 
         bsal_fifo_array_destroy(&fifo);
