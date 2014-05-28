@@ -4,13 +4,18 @@
 #include <stdlib.h>
 #include <stdint.h>
 
-/* TODO: use slab allocator */
 void bsal_hash_table_group_init(struct bsal_hash_table_group *group,
                 int buckets_per_group, int key_size, int value_size)
 {
-    /*printf("%i\n", buckets_per_group);*/
-    group->bitmap = malloc(buckets_per_group / 8);
-    group->array = malloc(buckets_per_group * (key_size + value_size));
+    int bitmap_bytes;
+    int array_bytes;
+
+    bitmap_bytes = buckets_per_group / 8;
+    array_bytes = buckets_per_group * (key_size + value_size);
+
+    /* TODO: use slab allocator */
+    group->bitmap = malloc(bitmap_bytes);
+    group->array = malloc(array_bytes);
 }
 
 void bsal_hash_table_group_destroy(struct bsal_hash_table_group *group)
@@ -85,6 +90,8 @@ int bsal_hash_table_group_get_bit(struct bsal_hash_table_group *group, int bucke
 
     unit = bucket / 8;
     bit = bucket % 8;
+
+    /*printf("bsal_hash_table_group_get_bit %p %i\n", group->bitmap, unit);*/
 
     bits = (uint64_t)((char *)group->bitmap)[unit];
     bitValue = (bits<<(63 - bit))>>63;

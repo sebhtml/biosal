@@ -7,6 +7,8 @@
 void bsal_hash_table_init(struct bsal_hash_table *table, uint64_t buckets,
                 int buckets_per_group, int key_size, int value_size)
 {
+    int i;
+
     table->buckets = buckets;
     table->buckets_per_group = buckets_per_group;
     table->key_size = key_size;
@@ -18,10 +20,21 @@ void bsal_hash_table_init(struct bsal_hash_table *table, uint64_t buckets,
 
     table->groups = (struct bsal_hash_table_group *)
             malloc(table->group_count * sizeof(struct bsal_hash_table_group));
+
+    for (i = 0; i < table->group_count; i++) {
+        bsal_hash_table_group_init(table->groups + i, buckets_per_group,
+                        key_size, value_size);
+    }
 }
 
 void bsal_hash_table_destroy(struct bsal_hash_table *table)
 {
+    int i;
+
+    for (i = 0; i < table->group_count; i++) {
+        bsal_hash_table_group_destroy(table->groups + i);
+    }
+
     free(table->groups);
     table->groups = NULL;
 }
@@ -70,9 +83,11 @@ uint64_t bsal_hash_table_hash1(struct bsal_hash_table *table, void *key)
     return 0;
 }
 
+/* the number of buckets and hash2 must be co-prime
+ */
 uint64_t bsal_hash_table_hash2(struct bsal_hash_table *table, void *key)
 {
-    return 0;
+    return 3;
 }
 
 uint64_t bsal_hash_table_double_hash(struct bsal_hash_table *table, void *key, uint64_t stride)
