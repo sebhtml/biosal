@@ -159,10 +159,16 @@ struct bsal_worker_thread *bsal_worker_pool_select_worker_thread(struct bsal_wor
     return pool->thread_array + index;
 }
 
+/*
+ * \see http://lxr.free-electrons.com/source/include/linux/workqueue.h
+ * \see http://lxr.free-electrons.com/source/include/linux/workqueue.c
+ */
 void bsal_worker_pool_schedule_work(struct bsal_worker_pool *pool, struct bsal_work *work)
 {
     struct bsal_worker_thread *thread;
 
     thread = bsal_worker_pool_select_worker_thread_for_work(pool);
+
+    /* bsal_worker_thread_push_message use a spinlock to spin fast ! */
     bsal_worker_thread_push_work(thread, work);
 }
