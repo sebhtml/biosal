@@ -10,7 +10,8 @@ all: $(PRODUCTS)
 
 LIBRARY=engine/message.o engine/node.o engine/actor.o engine/actor_vtable.o \
         engine/fifo.o engine/work.o \
-        engine/fifo_array.o engine/thread.o
+        engine/fifo_array.o engine/thread.o \
+        structures/hash_table.o structures/hash_table_group.o
 
 MOCK_EXAMPLE=examples/mock/main.o examples/mock/mock.o examples/mock/buddy.o
 RING_EXAMPLE=examples/ring/main.o examples/ring/sender.o
