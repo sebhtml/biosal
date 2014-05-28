@@ -1,6 +1,6 @@
 
 #include "actor.h"
-#include "thread.h"
+#include "worker_thread.h"
 #include "node.h"
 
 #include <stdlib.h>
@@ -69,7 +69,7 @@ void bsal_actor_print(struct bsal_actor *actor)
     printf("[bsal_actor_print] Name: %i Node: %i, Thread: %i"
                     " bsal_actor %p pointer %p\n", bsal_actor_name(actor),
                     bsal_node_rank(bsal_actor_node(actor)),
-                    bsal_thread_name(bsal_actor_thread(actor)),
+                    bsal_worker_thread_name(bsal_actor_thread(actor)),
                     (void*)actor, (void*)bsal_actor_actor(actor));
 }
 
@@ -95,7 +95,7 @@ void bsal_actor_send(struct bsal_actor *actor, int name, struct bsal_message *me
     source = bsal_actor_name(actor);
     bsal_message_set_source(message, source);
     bsal_message_set_destination(message, name);
-    bsal_thread_send(actor->thread, message);
+    bsal_worker_thread_send(actor->thread, message);
 }
 
 int bsal_actor_spawn(struct bsal_actor *actor, void *pointer,
@@ -130,7 +130,7 @@ struct bsal_node *bsal_actor_node(struct bsal_actor *actor)
         return NULL;
     }
 
-    return bsal_thread_node(bsal_actor_thread(actor));
+    return bsal_worker_thread_node(bsal_actor_thread(actor));
 }
 
 void bsal_actor_lock(struct bsal_actor *actor)

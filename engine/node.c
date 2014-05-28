@@ -117,7 +117,7 @@ void bsal_node_delete_threads(struct bsal_node *node)
     }
 
     for (i = 0; i < node->threads; i++) {
-        bsal_thread_destroy(node->thread_array + i);
+        bsal_worker_thread_destroy(node->thread_array + i);
     }
 
     free(node->thread_array);
@@ -137,7 +137,7 @@ void bsal_node_create_threads(struct bsal_node *node)
     node->thread_array = (struct bsal_thread *)malloc(bytes);
 
     for (i = 0; i < node->threads; i++) {
-        bsal_thread_init(node->thread_array + i, i, node);
+        bsal_worker_thread_init(node->thread_array + i, i, node);
     }
 }
 
@@ -156,7 +156,7 @@ void bsal_node_start(struct bsal_node *node)
      * used by the main thread...
      */
     for (i = 1; i < node->threads; i++) {
-        bsal_thread_start(node->thread_array + i);
+        bsal_worker_thread_start(node->thread_array + i);
     }
 
     actors = node->actor_count;
@@ -193,7 +193,7 @@ void bsal_node_run(struct bsal_node *node)
 
         if (node->threads == 1) {
             /* make the thread work (this is the main thread) */
-            bsal_thread_run(bsal_node_select_thread(node));
+            bsal_worker_thread_run(bsal_node_select_thread(node));
         }
 
         /* check for messages to send from from threads */
@@ -215,12 +215,12 @@ void bsal_node_run(struct bsal_node *node)
      */
 
     for (i = 1; i < node->threads; i++) {
-        bsal_thread_stop(node->thread_array + i);
+        bsal_worker_thread_stop(node->thread_array + i);
     }
 }
 
 /* select a thread to pull from */
-struct bsal_thread *bsal_node_select_thread_for_message(struct bsal_node *node)
+struct bsal_thread *bsal_node_select_worker_thread_for_message(struct bsal_node *node)
 {
     struct bsal_thread *thread;
     int iterations;
@@ -240,7 +240,7 @@ struct bsal_thread *bsal_node_select_thread_for_message(struct bsal_node *node)
          * TODO: this does not scale to 244 threads (Xeon Phi)
          */
         while (iterations > 0
-                        && bsal_fifo_size(bsal_thread_messages(thread)) == 0) {
+                        && bsal_fifo_size(bsal_worker_thread_messages(thread)) == 0) {
 
             node->thread_for_message = bsal_node_next_thread(node,
                             index);
@@ -276,9 +276,9 @@ int bsal_node_pull(struct bsal_node *node, struct bsal_message *message)
 {
     struct bsal_thread *thread;
 
-    thread = bsal_node_select_thread_for_message(node);
+    thread = bsal_node_select_worker_thread_for_message(node);
 
-    return bsal_thread_pull_message(thread, message);
+    return bsal_worker_thread_pull_message(thread, message);
 }
 
 /* \see http://www.mpich.org/static/docs/v3.1/www3/MPI_Iprobe.html */
@@ -445,7 +445,7 @@ void bsal_node_dispatch(struct bsal_node *node, struct bsal_message *message)
 }
 
 /* select the thread to push work to */
-struct bsal_thread *bsal_node_select_thread_for_work(struct bsal_node *node)
+struct bsal_thread *bsal_node_select_worker_thread_for_work(struct bsal_node *node)
 {
     struct bsal_thread *thread;
     int iterations;
@@ -465,7 +465,7 @@ struct bsal_thread *bsal_node_select_thread_for_work(struct bsal_node *node)
          * TODO: this does not scale to 244 threads (Xeon Phi)
          */
         while (iterations > 0
-                        && bsal_fifo_size(bsal_thread_works(thread)) > 0) {
+                        && bsal_fifo_size(bsal_worker_thread_works(thread)) > 0) {
 
             node->thread_for_message = bsal_node_next_thread(node,
                             index);
@@ -494,8 +494,8 @@ void bsal_node_assign_work(struct bsal_node *node, struct bsal_work *work)
 {
     struct bsal_thread *thread;
 
-    thread = bsal_node_select_thread_for_work(node);
-    bsal_thread_push_work(thread, work);
+    thread = bsal_node_select_worker_thread_for_work(node);
+    bsal_worker_thread_push_work(thread, work);
 }
 
 int bsal_node_actor_index(struct bsal_node *node, int rank, int name)

@@ -4,7 +4,7 @@
 
 #include "actor.h"
 #include "work.h"
-#include "thread.h"
+#include "worker_thread.h"
 
 #include <pthread.h>
 #include <mpi.h>
