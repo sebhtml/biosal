@@ -68,8 +68,8 @@ void bsal_node_send_outbound_message(struct bsal_node *node, struct bsal_message
 void bsal_node_notify_death(struct bsal_node *node, struct bsal_actor *actor);
 
 int bsal_node_receive(struct bsal_node *node, struct bsal_message *message);
-void bsal_node_dispatch(struct bsal_node *node, struct bsal_message *message);
-void bsal_node_assign_work(struct bsal_node *node, struct bsal_work *work);
+void bsal_node_create_work(struct bsal_node *node, struct bsal_message *message);
+void bsal_node_schedule_work(struct bsal_node *node, struct bsal_work *work);
 int bsal_node_pull(struct bsal_node *node, struct bsal_message *message);
 
 struct bsal_thread *bsal_node_select_thread_for_pull(struct bsal_node *node);

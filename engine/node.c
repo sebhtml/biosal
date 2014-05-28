@@ -188,7 +188,7 @@ void bsal_node_run(struct bsal_node *node)
 
         /* pull message from network and assign the message to a thread */
         if (bsal_node_receive(node, &message)) {
-            bsal_node_dispatch(node, &message);
+            bsal_node_create_work(node, &message);
         }
 
         if (node->threads == 1) {
@@ -383,7 +383,7 @@ void bsal_node_send(struct bsal_node *node, struct bsal_message *message)
 
     if (rank == node->rank) {
         /* dispatch locally */
-        bsal_node_dispatch(node, message);
+        bsal_node_create_work(node, message);
     } else {
 
         /* send messages over the network */
@@ -391,7 +391,7 @@ void bsal_node_send(struct bsal_node *node, struct bsal_message *message)
     }
 }
 
-void bsal_node_dispatch(struct bsal_node *node, struct bsal_message *message)
+void bsal_node_create_work(struct bsal_node *node, struct bsal_message *message)
 {
     struct bsal_message *new_message;
     struct bsal_actor *actor;
@@ -441,7 +441,7 @@ void bsal_node_dispatch(struct bsal_node *node, struct bsal_message *message)
 
     bsal_work_init(&work, actor, new_message);
 
-    bsal_node_assign_work(node, &work);
+    bsal_node_schedule_work(node, &work);
 }
 
 /* select the thread to push work to */
@@ -490,7 +490,7 @@ struct bsal_thread *bsal_node_select_thread(struct bsal_node *node)
     return node->thread_array + index;
 }
 
-void bsal_node_assign_work(struct bsal_node *node, struct bsal_work *work)
+void bsal_node_schedule_work(struct bsal_node *node, struct bsal_work *work)
 {
     struct bsal_thread *thread;
 
