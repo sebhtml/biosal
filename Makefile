@@ -9,7 +9,7 @@ PRODUCTS=test_mock test_fifo test_fifo_array test_ring
 all: $(PRODUCTS)
 
 LIBRARY=engine/message.o engine/node.o engine/actor.o engine/actor_vtable.o \
-	engine/work.o engine/worker_thread.o \
+	engine/work.o engine/worker_thread.o engine/worker_pool.o \
 	structures/hash_table.o structures/hash_table_group.o \
 	structures/fifo.o structures/fifo_array.o
 
@@ -42,6 +42,8 @@ mock1: test_mock
 test: test_fifo test_fifo_array
 	./test_fifo
 	./test_fifo_array
+
+run: mock mock1 ring
 
 test_fifo: $(LIBRARY) $(TEST_FIFO)
 	$(Q)$(ECHO) "  LD $@"

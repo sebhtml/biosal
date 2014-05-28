@@ -60,8 +60,8 @@ void bsal_node_init(struct bsal_node *node, int threads,  int *argc,  char ***ar
 
     node->rank = rank;
     node->size = ranks;
-    node->threads = threads;
-    node->thread_array = NULL;
+
+    bsal_worker_pool_init(&node->worker_pool, threads, node);
 
     node->actor_count = 0;
     node->actor_capacity = 16384;
@@ -73,30 +73,10 @@ void bsal_node_init(struct bsal_node *node, int threads,  int *argc,  char ***ar
 
     pthread_spin_init(&node->death_lock, 0);
     pthread_spin_init(&node->spawn_lock, 0);
-
-    bsal_node_create_threads(node);
-
-    /* with only one thread,  the main thread
-     * handles everything.
-     */
-    if (node->threads == 1) {
-        node->thread_for_run = 0;
-        node->thread_for_message = 0;
-        node->thread_for_work = 0;
-    } else if (node->threads > 1) {
-        node->thread_for_run = 0;
-        node->thread_for_message = 1;
-        node->thread_for_work = 1;
-    } else {
-        printf("Error: the number of threads must be at least 1.\n");
-        exit(1);
-    }
 }
 
 void bsal_node_destroy(struct bsal_node *node)
 {
-    bsal_node_delete_threads(node);
-
     pthread_spin_destroy(&node->spawn_lock);
     pthread_spin_destroy(&node->death_lock);
 
@@ -108,39 +88,6 @@ void bsal_node_destroy(struct bsal_node *node)
     MPI_Finalize();
 }
 
-void bsal_node_delete_threads(struct bsal_node *node)
-{
-    int i = 0;
-
-    if (node->threads <= 0) {
-        return;
-    }
-
-    for (i = 0; i < node->threads; i++) {
-        bsal_worker_thread_destroy(node->thread_array + i);
-    }
-
-    free(node->thread_array);
-    node->thread_array = NULL;
-}
-
-void bsal_node_create_threads(struct bsal_node *node)
-{
-    int bytes;
-    int i;
-
-    if (node->threads <= 0) {
-        return;
-    }
-
-    bytes = node->threads * sizeof(struct bsal_thread);
-    node->thread_array = (struct bsal_thread *)malloc(bytes);
-
-    for (i = 0; i < node->threads; i++) {
-        bsal_worker_thread_init(node->thread_array + i, i, node);
-    }
-}
-
 void bsal_node_start(struct bsal_node *node)
 {
     int i;
@@ -150,14 +97,7 @@ void bsal_node_start(struct bsal_node *node)
     int source;
     struct bsal_message message;
 
-    /* start threads
-     *
-     * we start at 1 because the thread 0 is
-     * used by the main thread...
-     */
-    for (i = 1; i < node->threads; i++) {
-        bsal_worker_thread_start(node->thread_array + i);
-    }
+    bsal_worker_pool_start(&node->worker_pool);
 
     actors = node->actor_count;
 
@@ -177,7 +117,6 @@ void bsal_node_start(struct bsal_node *node)
 void bsal_node_run(struct bsal_node *node)
 {
     struct bsal_message message;
-    int i;
 
     while(1) {
 
@@ -191,10 +130,7 @@ void bsal_node_run(struct bsal_node *node)
             bsal_node_create_work(node, &message);
         }
 
-        if (node->threads == 1) {
-            /* make the thread work (this is the main thread) */
-            bsal_worker_thread_run(bsal_node_select_thread(node));
-        }
+        bsal_worker_pool_run(&node->worker_pool);
 
         /* check for messages to send from from threads */
         if (bsal_node_pull(node, &message)) {
@@ -210,97 +146,12 @@ void bsal_node_run(struct bsal_node *node)
         }
     }
 
-    /*
-     * stop threads
-     */
-
-    for (i = 1; i < node->threads; i++) {
-        bsal_worker_thread_stop(node->thread_array + i);
-    }
-}
-
-/* select a thread to pull from */
-struct bsal_thread *bsal_node_select_worker_thread_for_message(struct bsal_node *node)
-{
-    int index;
-
-    index = node->thread_for_message;
-    node->thread_for_message = bsal_node_next_worker(node, node->thread_for_message);
-    return node->thread_array + index;
-}
-
-int bsal_node_next_worker(struct bsal_node *node, int thread)
-{
-    /*
-     * 1 thread : thread 0 (main thread)
-     * 2 threads : thread 0 (main thread) and thread 1 (worker)
-     * 3 threads : thread 0 (main thread) and thread 1 (worker) and thread 2 (worker)
-     * N threads (N >= 2) : thread 0
-     */
-    if (node->threads >= 3) {
-        thread++;
-        if (thread == node->threads) {
-            thread = 1;
-        }
-    }
-
-    return thread;
-}
-
-
-#if 0
-    int iterations;
-#ifdef BSAL_NODE_NO_THREADS
-    return node->thread_array + index;
-#endif
-
-    if (node->threads > 1) {
-        iterations = node->threads - 1;
-        thread = node->thread_array + index;
-
-        /* pick up the first thread with messages
-         * TODO: this does not scale to 244 threads (Xeon Phi)
-         */
-        while (iterations > 0
-                        && bsal_fifo_size(bsal_worker_thread_messages(thread)) == 0) {
-
-            node->thread_for_message = bsal_node_next_thread(node,
-                            index);
-            thread = node->thread_array + index;
-            iterations--;
-        }
-
-        node->thread_for_message = bsal_node_next_thread(node,
-                        index);
-    }
-
-    /* printf("Selected thread %i for message\n", index); */
-
-    return node->thread_array + index;
-#endif
-
-int bsal_node_next_thread(struct bsal_node *node, int index)
-{
-    if (node->threads == 1) {
-        return 0;
-    }
-
-    index++;
-    index %= node->threads;
-    if (index == 0) {
-        index = 1;
-    }
-
-    return index;
+    bsal_worker_pool_stop(&node->worker_pool);
 }
 
 int bsal_node_pull(struct bsal_node *node, struct bsal_message *message)
 {
-    struct bsal_thread *thread;
-
-    thread = bsal_node_select_worker_thread_for_message(node);
-
-    return bsal_worker_thread_pull_message(thread, message);
+    return bsal_worker_pool_pull(&node->worker_pool, message);
 }
 
 /* \see http://www.mpich.org/static/docs/v3.1/www3/MPI_Iprobe.html */
@@ -463,70 +314,7 @@ void bsal_node_create_work(struct bsal_node *node, struct bsal_message *message)
 
     bsal_work_init(&work, actor, new_message);
 
-    bsal_node_schedule_work(node, &work);
-}
-
-/* select the thread to push work to */
-struct bsal_thread *bsal_node_select_worker_thread_for_work(struct bsal_node *node)
-{
-    int index;
-
-    index = node->thread_for_message;
-    node->thread_for_message = bsal_node_next_worker(node, node->thread_for_message);
-    return node->thread_array + index;
-}
-
-#if 0
-    struct bsal_thread *thread;
-    int iterations;
-    int index;
-
-    index = node->thread_for_work;
-
-#ifdef BSAL_NODE_NO_THREADS
-    return node->thread_array + index;
-#endif
-
-    if (node->threads > 1) {
-        iterations = node->threads - 1;
-        thread = node->thread_array + index;
-
-        /* pick up the first thread with messages
-         * TODO: this does not scale to 244 threads (Xeon Phi)
-         */
-        while (iterations > 0
-                        && bsal_fifo_size(bsal_worker_thread_works(thread)) > 0) {
-
-            node->thread_for_message = bsal_node_next_thread(node,
-                            index);
-            thread = node->thread_array + index;
-            iterations--;
-        }
-
-        node->thread_for_work = bsal_node_next_thread(node,
-                        index);
-    }
-
-    /*printf("Selected thread %i for work\n", index); */
-
-    return node->thread_array + index;
-}
-#endif
-
-struct bsal_thread *bsal_node_select_thread(struct bsal_node *node)
-{
-    int index;
-
-    index = node->thread_for_run;
-    return node->thread_array + index;
-}
-
-void bsal_node_schedule_work(struct bsal_node *node, struct bsal_work *work)
-{
-    struct bsal_thread *thread;
-
-    thread = bsal_node_select_worker_thread_for_work(node);
-    bsal_worker_thread_push_work(thread, work);
+    bsal_worker_pool_schedule_work(&node->worker_pool, &work);
 }
 
 int bsal_node_actor_index(struct bsal_node *node, int rank, int name)

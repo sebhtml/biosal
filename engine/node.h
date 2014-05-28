@@ -4,7 +4,7 @@
 
 #include "actor.h"
 #include "work.h"
-#include "worker_thread.h"
+#include "worker_pool.h"
 
 #include <pthread.h>
 #include <mpi.h>
@@ -23,7 +23,7 @@ struct bsal_actor_vtable;
  */
 struct bsal_node {
     struct bsal_actor *actors;
-    struct bsal_thread *thread_array;
+    struct bsal_worker_pool worker_pool;
 
     pthread_spinlock_t death_lock;
     pthread_spinlock_t spawn_lock;
@@ -33,16 +33,11 @@ struct bsal_node {
 
     int rank;
     int size;
-    int threads;
 
     int actor_count;
     int actor_capacity;
     int dead_actors;
     int alive_actors;
-
-    int thread_for_work;
-    int thread_for_message;
-    int thread_for_run;
 };
 
 void bsal_node_init(struct bsal_node *node, int threads, int *argc, char ***argv);
@@ -54,8 +49,10 @@ int bsal_node_spawn(struct bsal_node *node, void *pointer,
 void bsal_node_send(struct bsal_node *node, struct bsal_message *message);
 
 int bsal_node_assign_name(struct bsal_node *node);
+
 int bsal_node_actor_rank(struct bsal_node *node, int name);
 int bsal_node_actor_index(struct bsal_node *node, int rank, int name);
+
 int bsal_node_rank(struct bsal_node *node);
 int bsal_node_size(struct bsal_node *node);
 
@@ -69,17 +66,6 @@ void bsal_node_notify_death(struct bsal_node *node, struct bsal_actor *actor);
 
 int bsal_node_receive(struct bsal_node *node, struct bsal_message *message);
 void bsal_node_create_work(struct bsal_node *node, struct bsal_message *message);
-void bsal_node_schedule_work(struct bsal_node *node, struct bsal_work *work);
 int bsal_node_pull(struct bsal_node *node, struct bsal_message *message);
-
-struct bsal_thread *bsal_node_select_thread_for_pull(struct bsal_node *node);
-struct bsal_thread *bsal_node_select_thread_for_work(struct bsal_node *node);
-struct bsal_thread *bsal_node_select_thread(struct bsal_node *node);
-
-void bsal_node_delete_threads(struct bsal_node *node);
-void bsal_node_create_threads(struct bsal_node *node);
-int bsal_node_next_thread(struct bsal_node *node, int index);
-
-int bsal_node_next_worker(struct bsal_node *node, int thread);
 
 #endif
