@@ -80,4 +80,6 @@ void bsal_node_delete_threads(struct bsal_node *node);
 void bsal_node_create_threads(struct bsal_node *node);
 int bsal_node_next_thread(struct bsal_node *node, int index);
 
+int bsal_node_next_worker(struct bsal_node *node, int thread);
+
 #endif

@@ -222,12 +222,34 @@ void bsal_node_run(struct bsal_node *node)
 /* select a thread to pull from */
 struct bsal_thread *bsal_node_select_worker_thread_for_message(struct bsal_node *node)
 {
-    struct bsal_thread *thread;
-    int iterations;
     int index;
 
     index = node->thread_for_message;
+    node->thread_for_message = bsal_node_next_worker(node, node->thread_for_message);
+    return node->thread_array + index;
+}
 
+int bsal_node_next_worker(struct bsal_node *node, int thread)
+{
+    /*
+     * 1 thread : thread 0 (main thread)
+     * 2 threads : thread 0 (main thread) and thread 1 (worker)
+     * 3 threads : thread 0 (main thread) and thread 1 (worker) and thread 2 (worker)
+     * N threads (N >= 2) : thread 0
+     */
+    if (node->threads >= 3) {
+        thread++;
+        if (thread == node->threads) {
+            thread = 1;
+        }
+    }
+
+    return thread;
+}
+
+
+#if 0
+    int iterations;
 #ifdef BSAL_NODE_NO_THREADS
     return node->thread_array + index;
 #endif
@@ -255,7 +277,7 @@ struct bsal_thread *bsal_node_select_worker_thread_for_message(struct bsal_node 
     /* printf("Selected thread %i for message\n", index); */
 
     return node->thread_array + index;
-}
+#endif
 
 int bsal_node_next_thread(struct bsal_node *node, int index)
 {
@@ -447,6 +469,14 @@ void bsal_node_create_work(struct bsal_node *node, struct bsal_message *message)
 /* select the thread to push work to */
 struct bsal_thread *bsal_node_select_worker_thread_for_work(struct bsal_node *node)
 {
+    int index;
+
+    index = node->thread_for_message;
+    node->thread_for_message = bsal_node_next_worker(node, node->thread_for_message);
+    return node->thread_array + index;
+}
+
+#if 0
     struct bsal_thread *thread;
     int iterations;
     int index;
@@ -481,6 +511,7 @@ struct bsal_thread *bsal_node_select_worker_thread_for_work(struct bsal_node *no
 
     return node->thread_array + index;
 }
+#endif
 
 struct bsal_thread *bsal_node_select_thread(struct bsal_node *node)
 {
