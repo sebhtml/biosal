@@ -49,8 +49,6 @@ int main(int argc, char **argv)
             TEST_POINTER_NOT_EQUALS(bsal_hash_table_add(&table, &key), NULL);
         }
 
-        TEST_POINTER_EQUALS(bsal_hash_table_get(&table, &key), NULL);
-
         bsal_hash_table_destroy(&table);
     }
 
