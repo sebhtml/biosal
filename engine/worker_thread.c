@@ -11,7 +11,7 @@
 
 /*#define BSAL_THREAD_DEBUG*/
 
-void bsal_worker_thread_init(struct bsal_thread *thread, int name, struct bsal_node *node)
+void bsal_worker_thread_init(struct bsal_worker_thread *thread, int name, struct bsal_node *node)
 {
     bsal_fifo_init(&thread->works, 16, sizeof(struct bsal_work));
     bsal_fifo_init(&thread->messages, 16, sizeof(struct bsal_message));
@@ -27,7 +27,7 @@ void bsal_worker_thread_init(struct bsal_thread *thread, int name, struct bsal_n
 #endif
 }
 
-void bsal_worker_thread_destroy(struct bsal_thread *thread)
+void bsal_worker_thread_destroy(struct bsal_worker_thread *thread)
 {
 #ifdef BSAL_THREAD_USE_LOCK
     pthread_spin_destroy(&thread->message_lock);
@@ -42,17 +42,17 @@ void bsal_worker_thread_destroy(struct bsal_thread *thread)
     thread->dead = 1;
 }
 
-struct bsal_fifo *bsal_worker_thread_works(struct bsal_thread *thread)
+struct bsal_fifo *bsal_worker_thread_works(struct bsal_worker_thread *thread)
 {
     return &thread->works;
 }
 
-struct bsal_fifo *bsal_worker_thread_messages(struct bsal_thread *thread)
+struct bsal_fifo *bsal_worker_thread_messages(struct bsal_worker_thread *thread)
 {
     return &thread->messages;
 }
 
-void bsal_worker_thread_run(struct bsal_thread *thread)
+void bsal_worker_thread_run(struct bsal_worker_thread *thread)
 {
     struct bsal_work work;
 
@@ -64,7 +64,7 @@ void bsal_worker_thread_run(struct bsal_thread *thread)
     }
 }
 
-void bsal_worker_thread_work(struct bsal_thread *thread, struct bsal_work *work)
+void bsal_worker_thread_work(struct bsal_worker_thread *thread, struct bsal_work *work)
 {
     struct bsal_actor *actor;
     struct bsal_message *message;
@@ -121,12 +121,12 @@ void bsal_worker_thread_work(struct bsal_thread *thread, struct bsal_work *work)
     free(message);
 }
 
-struct bsal_node *bsal_worker_thread_node(struct bsal_thread *thread)
+struct bsal_node *bsal_worker_thread_node(struct bsal_worker_thread *thread)
 {
     return thread->node;
 }
 
-void bsal_worker_thread_send(struct bsal_thread *thread, struct bsal_message *message)
+void bsal_worker_thread_send(struct bsal_worker_thread *thread, struct bsal_message *message)
 {
     struct bsal_message copy;
     char *buffer;
@@ -168,13 +168,13 @@ void bsal_worker_thread_send(struct bsal_thread *thread, struct bsal_message *me
 }
 
 /*
-void bsal_worker_thread_receive(struct bsal_thread *thread, struct bsal_message *message)
+void bsal_worker_thread_receive(struct bsal_worker_thread *thread, struct bsal_message *message)
 {
     bsal_fifo_push(bsal_worker_thread_works(thread), message);
 }
 */
 
-void bsal_worker_thread_start(struct bsal_thread *thread)
+void bsal_worker_thread_start(struct bsal_worker_thread *thread)
 {
     /*
      * http://pubs.opengroup.org/onlinepubs/7908799/xsh/pthread_create.html
@@ -186,9 +186,9 @@ void bsal_worker_thread_start(struct bsal_thread *thread)
 
 void *bsal_worker_thread_main(void *pointer)
 {
-    struct bsal_thread *thread;
+    struct bsal_worker_thread *thread;
 
-    thread = (struct bsal_thread*)pointer;
+    thread = (struct bsal_worker_thread*)pointer;
 
 #ifdef BSAL_THREAD_DEBUG
     bsal_worker_thread_display(thread);
@@ -203,19 +203,19 @@ void *bsal_worker_thread_main(void *pointer)
     return NULL;
 }
 
-void bsal_worker_thread_display(struct bsal_thread *thread)
+void bsal_worker_thread_display(struct bsal_worker_thread *thread)
 {
     printf("[bsal_worker_thread_main] node %i thread %i\n",
                     bsal_node_rank(thread->node),
                     bsal_worker_thread_name(thread));
 }
 
-int bsal_worker_thread_name(struct bsal_thread *thread)
+int bsal_worker_thread_name(struct bsal_worker_thread *thread)
 {
     return thread->name;
 }
 
-void bsal_worker_thread_stop(struct bsal_thread *thread)
+void bsal_worker_thread_stop(struct bsal_worker_thread *thread)
 {
 #ifdef BSAL_THREAD_DEBUG
     bsal_worker_thread_display(thread);
@@ -233,12 +233,12 @@ void bsal_worker_thread_stop(struct bsal_thread *thread)
     pthread_join(thread->thread, NULL);
 }
 
-pthread_t *bsal_worker_thread_thread(struct bsal_thread *thread)
+pthread_t *bsal_worker_thread_thread(struct bsal_worker_thread *thread)
 {
     return &thread->thread;
 }
 
-void bsal_worker_thread_push_work(struct bsal_thread *thread, struct bsal_work *work)
+void bsal_worker_thread_push_work(struct bsal_worker_thread *thread, struct bsal_work *work)
 {
 #ifdef BSAL_THREAD_USE_LOCK
     pthread_spin_lock(&thread->work_lock);
@@ -251,7 +251,7 @@ void bsal_worker_thread_push_work(struct bsal_thread *thread, struct bsal_work *
 #endif
 }
 
-int bsal_worker_thread_pull_work(struct bsal_thread *thread, struct bsal_work *work)
+int bsal_worker_thread_pull_work(struct bsal_worker_thread *thread, struct bsal_work *work)
 {
     int value;
 
@@ -268,7 +268,7 @@ int bsal_worker_thread_pull_work(struct bsal_thread *thread, struct bsal_work *w
     return value;
 }
 
-void bsal_worker_thread_push_message(struct bsal_thread *thread, struct bsal_message *message)
+void bsal_worker_thread_push_message(struct bsal_worker_thread *thread, struct bsal_message *message)
 {
 #ifdef BSAL_THREAD_USE_LOCK
     pthread_spin_lock(&thread->message_lock);
@@ -286,7 +286,7 @@ void bsal_worker_thread_push_message(struct bsal_thread *thread, struct bsal_mes
 #endif
 }
 
-int bsal_worker_thread_pull_message(struct bsal_thread *thread, struct bsal_message *message)
+int bsal_worker_thread_pull_message(struct bsal_worker_thread *thread, struct bsal_message *message)
 {
     int value;
 

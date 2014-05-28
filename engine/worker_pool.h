@@ -5,10 +5,10 @@
 #include "worker_thread.h"
 
 struct bsal_node;
-struct bsal_thread;
+struct bsal_worker_thread;
 
 struct bsal_worker_pool {
-    struct bsal_thread *thread_array;
+    struct bsal_worker_thread *thread_array;
     struct bsal_node *node;
 
     int thread_for_work;
@@ -30,9 +30,9 @@ void bsal_worker_pool_stop(struct bsal_worker_pool *pool);
 
 int bsal_worker_pool_pull(struct bsal_worker_pool *pool, struct bsal_message *message);
 
-struct bsal_thread *bsal_worker_pool_select_worker_thread(struct bsal_worker_pool *pool);
-struct bsal_thread *bsal_worker_pool_select_worker_thread_for_work(struct bsal_worker_pool *node);
-struct bsal_thread *bsal_worker_pool_select_worker_thread_for_message(struct bsal_worker_pool *pool);
+struct bsal_worker_thread *bsal_worker_pool_select_worker_thread(struct bsal_worker_pool *pool);
+struct bsal_worker_thread *bsal_worker_pool_select_worker_thread_for_work(struct bsal_worker_pool *node);
+struct bsal_worker_thread *bsal_worker_pool_select_worker_thread_for_message(struct bsal_worker_pool *pool);
 int bsal_worker_pool_next_worker(struct bsal_worker_pool *node, int thread);
 
 void bsal_worker_pool_schedule_work(struct bsal_worker_pool *pool, struct bsal_work *work);

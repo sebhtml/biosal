@@ -12,7 +12,7 @@ enum {
 };
 
 struct bsal_node;
-struct bsal_thread;
+struct bsal_worker_thread;
 
 /*
  * the actor attribute is a void *
@@ -20,7 +20,7 @@ struct bsal_thread;
 struct bsal_actor {
     struct bsal_actor_vtable *vtable;
     void *pointer;
-    struct bsal_thread *thread;
+    struct bsal_worker_thread *thread;
 
     pthread_spinlock_t lock;
 
@@ -39,8 +39,8 @@ int bsal_actor_name(struct bsal_actor *actor);
 void *bsal_actor_actor(struct bsal_actor *actor);
 void bsal_actor_set_name(struct bsal_actor *actor, int name);
 
-void bsal_actor_set_thread(struct bsal_actor *actor, struct bsal_thread *thread);
-struct bsal_thread *bsal_actor_thread(struct bsal_actor *actor);
+void bsal_actor_set_thread(struct bsal_actor *actor, struct bsal_worker_thread *thread);
+struct bsal_worker_thread *bsal_actor_thread(struct bsal_actor *actor);
 
 void bsal_actor_print(struct bsal_actor *actor);
 int bsal_actor_dead(struct bsal_actor *actor);

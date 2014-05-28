@@ -61,8 +61,8 @@ void bsal_worker_pool_create_threads(struct bsal_worker_pool *pool)
         return;
     }
 
-    bytes = pool->threads * sizeof(struct bsal_thread);
-    pool->thread_array = (struct bsal_thread *)malloc(bytes);
+    bytes = pool->threads * sizeof(struct bsal_worker_thread);
+    pool->thread_array = (struct bsal_worker_thread *)malloc(bytes);
 
     for (i = 0; i < pool->threads; i++) {
         bsal_worker_thread_init(pool->thread_array + i, i, pool->node);
@@ -107,14 +107,14 @@ void bsal_worker_pool_stop(struct bsal_worker_pool *pool)
 
 int bsal_worker_pool_pull(struct bsal_worker_pool *pool, struct bsal_message *message)
 {
-    struct bsal_thread *thread;
+    struct bsal_worker_thread *thread;
 
     thread = bsal_worker_pool_select_worker_thread_for_message(pool);
     return bsal_worker_thread_pull_message(thread, message);
 }
 
 /* select a thread to pull from */
-struct bsal_thread *bsal_worker_pool_select_worker_thread_for_message(struct bsal_worker_pool *pool)
+struct bsal_worker_thread *bsal_worker_pool_select_worker_thread_for_message(struct bsal_worker_pool *pool)
 {
     int index;
 
@@ -142,7 +142,7 @@ int bsal_worker_pool_next_worker(struct bsal_worker_pool *pool, int thread)
 }
 
 /* select the thread to push work to */
-struct bsal_thread *bsal_worker_pool_select_worker_thread_for_work(struct bsal_worker_pool *pool)
+struct bsal_worker_thread *bsal_worker_pool_select_worker_thread_for_work(struct bsal_worker_pool *pool)
 {
     int index;
 
@@ -151,7 +151,7 @@ struct bsal_thread *bsal_worker_pool_select_worker_thread_for_work(struct bsal_w
     return pool->thread_array + index;
 }
 
-struct bsal_thread *bsal_worker_pool_select_worker_thread(struct bsal_worker_pool *pool)
+struct bsal_worker_thread *bsal_worker_pool_select_worker_thread(struct bsal_worker_pool *pool)
 {
     int index;
 
@@ -161,7 +161,7 @@ struct bsal_thread *bsal_worker_pool_select_worker_thread(struct bsal_worker_poo
 
 void bsal_worker_pool_schedule_work(struct bsal_worker_pool *pool, struct bsal_work *work)
 {
-    struct bsal_thread *thread;
+    struct bsal_worker_thread *thread;
 
     thread = bsal_worker_pool_select_worker_thread_for_work(pool);
     bsal_worker_thread_push_work(thread, work);

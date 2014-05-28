@@ -83,7 +83,7 @@ bsal_actor_destroy_fn_t bsal_actor_get_destroy(struct bsal_actor *actor)
     return bsal_actor_vtable_get_destroy(actor->vtable);
 }
 
-void bsal_actor_set_thread(struct bsal_actor *actor, struct bsal_thread *thread)
+void bsal_actor_set_thread(struct bsal_actor *actor, struct bsal_worker_thread *thread)
 {
     actor->thread = thread;
 }
@@ -104,7 +104,7 @@ int bsal_actor_spawn(struct bsal_actor *actor, void *pointer,
     return bsal_node_spawn(bsal_actor_node(actor), pointer, vtable);
 }
 
-struct bsal_thread *bsal_actor_thread(struct bsal_actor *actor)
+struct bsal_worker_thread *bsal_actor_thread(struct bsal_actor *actor)
 {
     return actor->thread;
 }
