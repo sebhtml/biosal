@@ -17,6 +17,8 @@ void bsal_actor_init(struct bsal_actor *actor, void *pointer,
 
     pthread_spin_init(&actor->lock, 0);
     actor->locked = 0;
+
+    bsal_actor_unpin(actor);
 }
 
 void bsal_actor_destroy(struct bsal_actor *actor)
@@ -162,4 +164,19 @@ int bsal_actor_argc(struct bsal_actor *actor)
 char **bsal_actor_argv(struct bsal_actor *actor)
 {
     return bsal_node_argv(bsal_actor_node(actor));
+}
+
+void bsal_actor_pin(struct bsal_actor *actor)
+{
+    actor->affinity_thread = actor->thread;
+}
+
+struct bsal_worker_thread *bsal_actor_affinity_thread(struct bsal_actor *actor)
+{
+    return actor->affinity_thread;
+}
+
+void bsal_actor_unpin(struct bsal_actor *actor)
+{
+    actor->affinity_thread = NULL;
 }

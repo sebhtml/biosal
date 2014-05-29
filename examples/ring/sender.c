@@ -36,9 +36,12 @@ void sender_receive(struct bsal_actor *actor, struct bsal_message *message)
     tag = bsal_message_tag(message);
 
     if (tag == BSAL_START) {
+        bsal_actor_pin(actor);
+
         sender_start(actor, message);
 
     } else if (tag == SENDER_HELLO) {
+        bsal_actor_unpin(actor);
         sender_hello(actor, message);
     } else if (tag == SENDER_KILL) {
         bsal_actor_die(actor);

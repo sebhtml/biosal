@@ -1,6 +1,8 @@
 
 #include "worker_pool.h"
 
+#include "actor.h"
+#include "work.h"
 #include "worker_thread.h"
 
 #include <stdlib.h>
@@ -146,10 +148,20 @@ int bsal_worker_pool_next_worker(struct bsal_worker_pool *pool, int thread)
 }
 
 /* select the thread to push work to */
-struct bsal_worker_thread *bsal_worker_pool_select_worker_thread_for_work(struct bsal_worker_pool *pool)
+struct bsal_worker_thread *bsal_worker_pool_select_worker_thread_for_work(
+                struct bsal_worker_pool *pool, struct bsal_work *work)
 {
     int index;
+    struct bsal_worker_thread *thread;
 
+    /* check if actor has an affinity thread */
+    thread = bsal_actor_affinity_thread(bsal_work_actor(work));
+
+    if (thread != NULL) {
+        return thread;
+    }
+
+    /* otherwise, pick a thread with round robin */
     index = pool->thread_for_message;
     pool->thread_for_message = bsal_worker_pool_next_worker(pool, pool->thread_for_message);
     return pool->thread_array + index;
@@ -172,7 +184,7 @@ void bsal_worker_pool_schedule_work(struct bsal_worker_pool *pool, struct bsal_w
 {
     struct bsal_worker_thread *thread;
 
-    thread = bsal_worker_pool_select_worker_thread_for_work(pool);
+    thread = bsal_worker_pool_select_worker_thread_for_work(pool, work);
 
     /* bsal_worker_thread_push_message use a spinlock to spin fast ! */
     bsal_worker_thread_push_work(thread, work);
