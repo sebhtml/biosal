@@ -73,6 +73,8 @@ int main(int argc, char **argv)
             /*printf("elements after adding %i : %i\n", i,
                             bsal_hash_table_elements(&table)); */
             TEST_INT_EQUALS(bsal_hash_table_elements(&table), i + 1);
+
+            TEST_POINTER_NOT_EQUALS(bsal_hash_table_get(&table, &key), NULL);
         }
 
         key = 9999;
