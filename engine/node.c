@@ -40,7 +40,7 @@ void bsal_node_init(struct bsal_node *node, int threads,  int *argc,  char ***ar
     MPI_Comm_size(node->comm, &ranks);
 
     node->rank = rank;
-    node->size = ranks;
+    node->nodes = ranks;
 
     bsal_worker_pool_init(&node->worker_pool, threads, node);
 
@@ -97,7 +97,7 @@ int bsal_node_spawn(struct bsal_node *node, void *pointer,
 
 int bsal_node_assign_name(struct bsal_node *node)
 {
-    return node->rank + node->size * node->actor_count;
+    return node->rank + node->nodes * node->actor_count;
 }
 
 void bsal_node_start(struct bsal_node *node)
@@ -338,12 +338,12 @@ void bsal_node_create_work(struct bsal_node *node, struct bsal_message *message)
 
 int bsal_node_actor_index(struct bsal_node *node, int rank, int name)
 {
-    return (name - rank) / node->size;
+    return (name - rank) / node->nodes;
 }
 
 int bsal_node_actor_rank(struct bsal_node *node, int name)
 {
-    return name % node->size;
+    return name % node->nodes;
 }
 
 int bsal_node_rank(struct bsal_node *node)
@@ -351,9 +351,9 @@ int bsal_node_rank(struct bsal_node *node)
     return node->rank;
 }
 
-int bsal_node_size(struct bsal_node *node)
+int bsal_node_nodes(struct bsal_node *node)
 {
-    return node->size;
+    return node->nodes;
 }
 
 void bsal_node_notify_death(struct bsal_node *node, struct bsal_actor *actor)

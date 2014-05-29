@@ -119,9 +119,9 @@ void bsal_actor_die(struct bsal_actor *actor)
     actor->dead = 1;
 }
 
-int bsal_actor_size(struct bsal_actor *actor)
+int bsal_actor_nodes(struct bsal_actor *actor)
 {
-    return bsal_node_size(bsal_actor_node(actor));
+    return bsal_node_nodes(bsal_actor_node(actor));
 }
 
 struct bsal_node *bsal_actor_node(struct bsal_actor *actor)

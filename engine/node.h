@@ -32,7 +32,7 @@ struct bsal_node {
     MPI_Datatype datatype;
 
     int rank;
-    int size;
+    int nodes;
 
     int actor_count;
     int actor_capacity;
@@ -57,7 +57,7 @@ int bsal_node_actor_rank(struct bsal_node *node, int name);
 int bsal_node_actor_index(struct bsal_node *node, int rank, int name);
 
 int bsal_node_rank(struct bsal_node *node);
-int bsal_node_size(struct bsal_node *node);
+int bsal_node_nodes(struct bsal_node *node);
 
 void bsal_node_run(struct bsal_node *node);
 

@@ -130,7 +130,7 @@ void mock_start(struct bsal_actor *actor, struct bsal_message *message)
 
     mock_spawn_children(actor);
 
-    size = bsal_actor_size(actor);
+    size = bsal_actor_nodes(actor);
 
     next = (name + 1) % size;
 

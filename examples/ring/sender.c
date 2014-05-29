@@ -53,7 +53,7 @@ void sender_kill_all(struct bsal_actor *actor, struct bsal_message *message)
     struct sender *sender1;
     sender1 = (struct sender *)bsal_actor_actor(actor);
 
-    size = bsal_actor_size(actor);
+    size = bsal_actor_nodes(actor);
     total = size * sender1->actors_per_node;
 
     bsal_message_set_tag(message, SENDER_KILL);
@@ -76,7 +76,7 @@ void sender_hello(struct bsal_actor *actor, struct bsal_message *message)
 
     sender1 = (struct sender *)bsal_actor_actor(actor);
     name = bsal_actor_name(actor);
-    size = bsal_actor_size(actor);
+    size = bsal_actor_nodes(actor);
     total = size * sender1->actors_per_node;
 
     memcpy(&events, bsal_message_buffer(message), sizeof(events));
@@ -121,7 +121,7 @@ void sender_start(struct bsal_actor *actor, struct bsal_message *message)
     /*events = 10000;*/
 
     name = bsal_actor_name(actor);
-    size = bsal_actor_size(actor);
+    size = bsal_actor_nodes(actor);
     total = size * sender1->actors_per_node;
 
     /* spawn a lot of actors ! */
@@ -137,8 +137,8 @@ void sender_start(struct bsal_actor *actor, struct bsal_message *message)
 
     printf("sender_start send SENDER_HELLO, system has: %i bsal_actors on %i "
                     "bsal_nodes (%i worker threads each)\n",
-                    sender1->actors_per_node * bsal_actor_size(actor),
-                    bsal_actor_size(actor),
+                    sender1->actors_per_node * bsal_actor_nodes(actor),
+                    bsal_actor_nodes(actor),
                     bsal_actor_threads(actor));
 
     bsal_message_set_tag(message, SENDER_HELLO);

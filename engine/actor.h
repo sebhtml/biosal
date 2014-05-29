@@ -42,7 +42,7 @@ struct bsal_worker_thread *bsal_actor_thread(struct bsal_actor *actor);
 
 void bsal_actor_print(struct bsal_actor *actor);
 int bsal_actor_dead(struct bsal_actor *actor);
-int bsal_actor_size(struct bsal_actor *actor);
+int bsal_actor_nodes(struct bsal_actor *actor);
 void bsal_actor_die(struct bsal_actor *actor);
 
 bsal_actor_init_fn_t bsal_actor_get_init(struct bsal_actor *actor);
