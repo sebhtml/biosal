@@ -6,11 +6,16 @@
 #include <stdint.h>
 #include <string.h>
 
-#define BSAL_HASH_TABLE_NOT_FOUND 0
-#define BSAL_HASH_TABLE_FOUND 1
+#define BSAL_HASH_TABLE_KEY_NOT_FOUND 0
+#define BSAL_HASH_TABLE_KEY_FOUND 1
 #define BSAL_HASH_TABLE_FULL 2
 
-/*#define BSAL_HASH_TABLE_DEBUG */
+#define BSAL_HASH_TABLE_OPERATION_ADD 0
+#define BSAL_HASH_TABLE_OPERATION_GET 1
+#define BSAL_HASH_TABLE_OPERATION_DELETE 2
+
+/*#define BSAL_HASH_TABLE_DEBUG*/
+
 void bsal_hash_table_init(struct bsal_hash_table *table, uint64_t buckets,
                 int key_size, int value_size)
 {
@@ -59,12 +64,13 @@ void *bsal_hash_table_add(struct bsal_hash_table *table, void *key)
     void *bucket_key;
     int code;
 
-    code = bsal_hash_table_find_bucket(table, key, &group, &bucket_in_group);
+    code = bsal_hash_table_find_bucket(table, key, &group, &bucket_in_group,
+                    BSAL_HASH_TABLE_OPERATION_ADD);
 
-    if (code == BSAL_HASH_TABLE_NOT_FOUND) {
+    if (code == BSAL_HASH_TABLE_KEY_NOT_FOUND) {
 
 #ifdef BSAL_HASH_TABLE_DEBUG
-        printf("bsal_hash_table_add code BSAL_HASH_TABLE_NOT_FOUND "
+        printf("bsal_hash_table_add code BSAL_HASH_TABLE_KEY_NOT_FOUND"
                         "(group %i bucket %i)\n", group, bucket_in_group);
 #endif
 
@@ -79,10 +85,10 @@ void *bsal_hash_table_add(struct bsal_hash_table *table, void *key)
         return bsal_hash_table_group_add(table->groups + group, bucket_in_group,
                    table->key_size, table->value_size);
 
-    } else if (code == BSAL_HASH_TABLE_FOUND) {
+    } else if (code == BSAL_HASH_TABLE_KEY_FOUND) {
 
 #ifdef BSAL_HASH_TABLE_DEBUG
-        printf("bsal_hash_table_add code BSAL_HASH_TABLE_FOUND "
+        printf("bsal_hash_table_add code BSAL_HASH_TABLE_KEY_FOUND"
                         "(group %i bucket %i)\n", group, bucket_in_group);
 #endif
 
@@ -109,13 +115,19 @@ void *bsal_hash_table_get(struct bsal_hash_table *table, void *key)
     int bucket_in_group;
     int code;
 
-    code = bsal_hash_table_find_bucket(table, key, &group, &bucket_in_group);
+    code = bsal_hash_table_find_bucket(table, key, &group, &bucket_in_group,
+                    BSAL_HASH_TABLE_OPERATION_GET);
 
     /* bsal_hash_table_group_get would return NULL too,
      * but using this return code is cleaner */
-    if (code == BSAL_HASH_TABLE_NOT_FOUND) {
+    if (code == BSAL_HASH_TABLE_KEY_NOT_FOUND) {
         return NULL;
     }
+
+#ifdef BSAL_HASH_TABLE_DEBUG
+    printf("get %i %i code %i\n", group, bucket_in_group,
+                    code);
+#endif
 
     return bsal_hash_table_group_get(table->groups + group, bucket_in_group,
                     table->key_size, table->value_size);
@@ -127,9 +139,16 @@ void bsal_hash_table_delete(struct bsal_hash_table *table, void *key)
     int bucket_in_group;
     int code;
 
-    code = bsal_hash_table_find_bucket(table, key, &group, &bucket_in_group);
+    code = bsal_hash_table_find_bucket(table, key, &group, &bucket_in_group,
+                    BSAL_HASH_TABLE_OPERATION_DELETE);
 
-    if (code == BSAL_HASH_TABLE_FOUND) {
+    if (code == BSAL_HASH_TABLE_KEY_FOUND) {
+
+#ifdef BSAL_HASH_TABLE_DEBUG
+        printf("bsal_hash_table_delete code BSAL_HASH_TABLE_KEY_FOUND %i %i\n",
+                        group, bucket_in_group);
+#endif
+
         bsal_hash_table_group_delete(table->groups + group, bucket_in_group);
         table->elements--;
     }
@@ -229,7 +248,12 @@ uint64_t bsal_hash_table_double_hash(struct bsal_hash_table *table, void *key, u
     return result;
 }
 
-int bsal_hash_table_find_bucket(struct bsal_hash_table *table, void *key, int *group, int *bucket_in_group)
+/* this is the most important function for the hash table.
+ * return BSAL_HASH_TABLE_KEY_FOUND or BSAL_HASH_TABLE_KEY_NOT_FOUND or
+ * BSAL_HASH_TABLE_FULL
+ */
+int bsal_hash_table_find_bucket(struct bsal_hash_table *table, void *key,
+                int *group, int *bucket_in_group, int operation)
 {
     uint64_t stride;
     uint64_t bucket;
@@ -248,27 +272,61 @@ int bsal_hash_table_find_bucket(struct bsal_hash_table *table, void *key, int *g
 
         state = bsal_hash_table_group_state(hash_group, *bucket_in_group);
 
-        /* we found an empty bucket to fulful the procurement.
+        /* nothing to see here, it is deleted !
+         * we only pick it up for BSAL_HASH_TABLE_OPERATION_ADD
+         * \see http://webdocs.cs.ualberta.ca/~holte/T26/open-addr.html
          */
-        if (state == 0) {
-            return BSAL_HASH_TABLE_NOT_FOUND;
+        if (state == BSAL_HASH_TABLE_BUCKET_DELETED
+              && (operation == BSAL_HASH_TABLE_OPERATION_DELETE
+                      ||
+                  operation == BSAL_HASH_TABLE_OPERATION_GET)) {
+            stride++;
+            continue;
+        }
+
+        /* a deleted bucket was found, it can be used to add
+         * an item.
+         */
+        if (state == BSAL_HASH_TABLE_BUCKET_DELETED
+               && operation == BSAL_HASH_TABLE_OPERATION_ADD) {
+            return BSAL_HASH_TABLE_KEY_NOT_FOUND;
+        }
+
+        /* we found an empty bucket to fulfil the procurement.
+         */
+        if (state == BSAL_HASH_TABLE_BUCKET_EMPTY) {
+            return BSAL_HASH_TABLE_KEY_NOT_FOUND;
         }
 
         bucket_key = bsal_hash_table_group_key(hash_group, *bucket_in_group,
                         table->key_size, table->value_size);
 
         /*
-         * we found the key
+         * we found a key, check if it matches the query.
          */
-        if (memcmp(bucket_key, key, table->key_size) == 0) {
-            return BSAL_HASH_TABLE_FOUND;
+        if (state == BSAL_HASH_TABLE_BUCKET_OCCUPIED
+                && memcmp(bucket_key, key, table->key_size) == 0) {
+            return BSAL_HASH_TABLE_KEY_FOUND;
         }
 
+        /* otherwise, continue the search
+         */
         stride++;
     }
 
-    /* this statement will only be reached when the table is already full
+    /* this statement will only be reached when the table is already full,
+     * or if a key was not found and the table is full
      */
+
+    if (operation == BSAL_HASH_TABLE_OPERATION_ADD) {
+        return BSAL_HASH_TABLE_FULL;
+    }
+
+    if (operation == BSAL_HASH_TABLE_OPERATION_GET
+                    || operation == BSAL_HASH_TABLE_OPERATION_DELETE) {
+        return BSAL_HASH_TABLE_KEY_NOT_FOUND;
+    }
+
     return BSAL_HASH_TABLE_FULL;
 }
 

@@ -8,13 +8,15 @@ int main(int argc, char **argv)
     struct bsal_hash_table_group group;
     int key_size;
     int value_size;
+    int buckets;
 
+    buckets = 64;
     key_size = 8;
     value_size = 48;
 
     BEGIN_TESTS();
 
-    bsal_hash_table_group_init(&group, 64, key_size, value_size);
+    bsal_hash_table_group_init(&group, buckets, key_size, value_size);
 
     TEST_POINTER_EQUALS(bsal_hash_table_group_get(&group, 0, key_size, value_size), NULL);
     TEST_POINTER_NOT_EQUALS(bsal_hash_table_group_add(&group, 0, key_size, value_size), NULL);

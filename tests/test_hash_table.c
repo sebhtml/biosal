@@ -69,12 +69,19 @@ int main(int argc, char **argv)
 
             TEST_INT_EQUALS(bsal_hash_table_elements(&table), i);
             /*printf("before adding %i\n", i);*/
+            /*printf("add %i DEBUG ", i); */
             TEST_POINTER_NOT_EQUALS(bsal_hash_table_add(&table, &key), NULL);
             /*printf("elements after adding %i : %i\n", i,
                             bsal_hash_table_elements(&table)); */
             TEST_INT_EQUALS(bsal_hash_table_elements(&table), i + 1);
 
             TEST_POINTER_NOT_EQUALS(bsal_hash_table_get(&table, &key), NULL);
+
+            if (i >= 21) {
+                key = 21;
+                TEST_POINTER_NOT_EQUALS(bsal_hash_table_get(&table, &key),
+                                NULL);
+            }
         }
 
         key = 9999;
@@ -82,10 +89,38 @@ int main(int argc, char **argv)
         TEST_POINTER_EQUALS(bsal_hash_table_add(&table, &key), NULL);
         TEST_INT_EQUALS(bsal_hash_table_elements(&table), buckets);
 
+        for (i = 0; i < buckets; i++) {
+
+            if (i < 21) {
+                key = 21;
+                TEST_POINTER_NOT_EQUALS(bsal_hash_table_get(&table, &key),
+                                NULL);
+            }
+
+            key = i;
+
+            /*printf("test bsal_hash_table_get key %i value %p\n",
+                            i, bsal_hash_table_get(&table, &key));*/
+            TEST_POINTER_NOT_EQUALS(bsal_hash_table_get(&table, &key), NULL);
+
+            /*printf("delete %i\n", i); */
+
+            bsal_hash_table_delete(&table, &key);
+            TEST_POINTER_EQUALS(bsal_hash_table_get(&table, &key), NULL);
+            /*printf("get %i returns %p\n", i, bsal_hash_table_get(&table, &key)); */
+
+            if (i < 21) {
+                key = 21;
+                TEST_POINTER_NOT_EQUALS(bsal_hash_table_get(&table, &key),
+                                NULL);
+            }
+        }
+
+        TEST_INT_EQUALS(bsal_hash_table_elements(&table), 0);
+        TEST_INT_EQUALS(bsal_hash_table_buckets(&table), buckets);
+
         bsal_hash_table_destroy(&table);
     }
-
-
 
     END_TESTS();
 
