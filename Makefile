@@ -6,7 +6,7 @@ Q=@
 ECHO=echo
 
 TESTS=test_fifo test_fifo_array test_hash_table_group test_hash_table
-EXAMPLES=test_mock test_ring
+EXAMPLES=test_mock test_ring test_reader
 
 all: $(EXAMPLES) $(TESTS)
 
@@ -18,6 +18,7 @@ LIBRARY=engine/message.o engine/node.o engine/actor.o engine/actor_vtable.o \
 
 MOCK_EXAMPLE=examples/mock/main.o examples/mock/mock.o examples/mock/buddy.o
 RING_EXAMPLE=examples/ring/main.o examples/ring/sender.o
+READER_EXAMPLE=examples/reader/main.o examples/reader/reader.o
 
 TEST_FIFO=tests/test.o tests/test_fifo.o
 TEST_FIFO_ARRAY=tests/test.o tests/test_fifo_array.o
@@ -31,7 +32,7 @@ TEST_HASH_TABLE=tests/test.o tests/test_hash_table.o
 clean:
 	$(Q)$(ECHO) "  RM"
 	$(Q)$(RM) $(LIBRARY)
-	$(Q)$(RM) $(RING_EXAMPLE) $(MOCK_EXAMPLE)
+	$(Q)$(RM) $(RING_EXAMPLE) $(MOCK_EXAMPLE) $(READER_EXAMPLE)
 	$(Q)$(RM) $(TEST_FIFO) $(TEST_FIFO_ARRAY) $(TEST_HASH_TABLE_GROUP)
 	$(Q)$(RM) $(TEST_HASH_TABLE)
 	$(Q)$(RM) $(EXAMPLES) $(TESTS)
@@ -44,6 +45,9 @@ mock: test_mock
 
 mock1: test_mock
 	mpiexec -n 3 ./test_mock -workers-per-node 1
+
+reader: test_reader
+	mpiexec -n 2 ./test_reader -workers-per-node 13 -read ~/dropbox/GPIC.1424-1.1371.fastq
 
 test: $(TESTS)
 	./test_fifo_array
@@ -74,5 +78,9 @@ test_ring: $(RING_EXAMPLE) $(LIBRARY)
 	$(Q)$(CC) $(CFLAGS) $^ -o $@
 
 test_mock: $(MOCK_EXAMPLE) $(LIBRARY)
+	$(Q)$(ECHO) "  LD $@"
+	$(Q)$(CC) $(CFLAGS) $^ -o $@
+
+test_reader: $(READER_EXAMPLE) $(LIBRARY)
 	$(Q)$(ECHO) "  LD $@"
 	$(Q)$(CC) $(CFLAGS) $^ -o $@

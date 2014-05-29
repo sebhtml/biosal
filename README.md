@@ -82,9 +82,9 @@ The following command starts 256 nodes (there is 1 MPI rank per
 node) and 64 workers per node for a total of
 256 * 64 = 16384 distributed workers.
 
-Because the whole thing is event - driven by inbound and outbound messages,
-a single bsal_node can run much more bsal_actor actors than the number of
-bsal_worker_thread workers.
+Because the whole thing is event-driven by inbound and outbound messages,
+a single node can run much more actors than the number of
+workers it has.
 
 # Application programming interface
 

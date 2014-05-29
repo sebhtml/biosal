@@ -19,6 +19,9 @@ void bsal_node_init(struct bsal_node *node, int threads,  int *argc,  char ***ar
     int ranks;
     int i;
 
+    node->argc = *argc;
+    node->argv = *argv;
+
     for (i = 0; i < *argc; i++) {
         if (strcmp((*argv)[i], "-workers-per-node") == 0 && i + 1 < *argc) {
             /*printf("bsal_node_init threads: %s\n",
@@ -381,4 +384,14 @@ void bsal_node_notify_death(struct bsal_node *node, struct bsal_actor *actor)
 int bsal_node_workers(struct bsal_node *node)
 {
     return bsal_worker_pool_workers(&node->worker_pool);
+}
+
+int bsal_node_argc(struct bsal_node *node)
+{
+    return node->argc;
+}
+
+char **bsal_node_argv(struct bsal_node *node)
+{
+    return node->argv;
 }

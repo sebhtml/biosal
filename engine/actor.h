@@ -62,5 +62,7 @@ void bsal_actor_lock(struct bsal_actor *actor);
 void bsal_actor_unlock(struct bsal_actor *actor);
 
 int bsal_actor_threads(struct bsal_actor *actor);
+int bsal_actor_argc(struct bsal_actor *actor);
+char **bsal_actor_argv(struct bsal_actor *actor);
 
 #endif

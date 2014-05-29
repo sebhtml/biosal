@@ -38,6 +38,9 @@ struct bsal_node {
     int actor_capacity;
     int dead_actors;
     int alive_actors;
+
+    int argc;
+    char **argv;
 };
 
 void bsal_node_init(struct bsal_node *node, int threads, int *argc, char ***argv);
@@ -68,5 +71,8 @@ int bsal_node_receive(struct bsal_node *node, struct bsal_message *message);
 void bsal_node_create_work(struct bsal_node *node, struct bsal_message *message);
 int bsal_node_pull(struct bsal_node *node, struct bsal_message *message);
 int bsal_node_workers(struct bsal_node *node);
+
+int bsal_node_argc(struct bsal_node *node);
+char **bsal_node_argv(struct bsal_node *node);
 
 #endif

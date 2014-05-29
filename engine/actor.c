@@ -153,3 +153,13 @@ int bsal_actor_threads(struct bsal_actor *actor)
 {
     return bsal_node_workers(bsal_actor_node(actor));
 }
+
+int bsal_actor_argc(struct bsal_actor *actor)
+{
+    return bsal_node_argc(bsal_actor_node(actor));
+}
+
+char **bsal_actor_argv(struct bsal_actor *actor)
+{
+    return bsal_node_argv(bsal_actor_node(actor));
+}
