@@ -29,8 +29,6 @@ struct bsal_actor {
     int dead;
 };
 
-typedef struct bsal_actor bsal_actor_t;
-
 void bsal_actor_init(struct bsal_actor *actor, void *pointer,
                 struct bsal_actor_vtable *vtable);
 void bsal_actor_destroy(struct bsal_actor *actor);

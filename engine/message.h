@@ -17,8 +17,6 @@ struct bsal_message {
     int routing_destination;
 };
 
-typedef struct bsal_message bsal_message_t;
-
 void bsal_message_init(struct bsal_message *message, int tag,
                 int source, int destination, int count, char *buffer);
 void bsal_message_destroy(struct bsal_message *message);
