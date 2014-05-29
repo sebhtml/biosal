@@ -1,17 +1,32 @@
 #!/bin/bash
 
+function run_check() {
+    pattern=$1
+    grep -n "$pattern"  * -R|grep -v git|grep -v check.sh
+}
+
 function run_checks() {
-    grep -n "struct  "  * -R|grep -v git
-    grep -n "enum  "  * -R|grep -v git
-    grep -n "if  ("  * -R|grep -v git
-    grep -n "if("  * -R|grep -v git
-    grep -n "for(" * -R|grep -v git
-    grep -n "for  (" * -R|grep -v git
-    grep -n " -> " * -R|grep -v git | grep -v printf
-    grep -n "  =" * -R|grep -v git
-    grep -n "=  " * -R|grep -v git
-    grep -n " $" * -R|grep -v git
-    grep -n "	" * -R|grep -v Makefile|grep -v git
+    run_check "struct  "
+    run_check "enum  "
+    run_check "enum{"
+
+    run_check "for("
+    run_check "if("
+    run_check "switch("
+    run_check "while("
+
+    run_check "for  ("
+    run_check "if  ("
+    run_check "switch  ("
+    run_check "while  ("
+
+    run_check " -> "
+    run_check "  ="
+    run_check "=  "
+    run_check ")  {"
+    run_check "}  ("
+
+    grep -n ") {" * -R |grep void|grep bsal_|grep -v check.sh
 }
 
 make clean

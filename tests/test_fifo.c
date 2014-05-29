@@ -17,25 +17,25 @@ int main(int argc, char **argv)
         TEST_INT_EQUALS(bsal_fifo_empty(&fifo), 1);
 
         i = 16;
-        while(i--) {
+        while (i--) {
             TEST_INT_EQUALS(bsal_fifo_push(&fifo, &i), 1);
         }
 
         i = 16;
-        while(i--) {
+        while (i--) {
             TEST_INT_EQUALS(bsal_fifo_push(&fifo, &i), 1);
         }
 
         TEST_INT_EQUALS(bsal_fifo_full(&fifo), 0);
 
         i = 16;
-        while(i--) {
+        while (i--) {
             int item;
             TEST_INT_EQUALS(bsal_fifo_pop(&fifo, &item), 1);
         }
 
         i = 16;
-        while(i--) {
+        while (i--) {
             int item;
             TEST_INT_EQUALS(bsal_fifo_pop(&fifo, &item), 1);
         }
@@ -54,14 +54,14 @@ int main(int argc, char **argv)
         TEST_INT_EQUALS(bsal_fifo_empty(&fifo), 1);
 
         i = 1000;
-        while(i--) {
+        while (i--) {
             TEST_INT_EQUALS(bsal_fifo_push(&fifo, &i), 1);
         }
 
         TEST_INT_EQUALS(bsal_fifo_full(&fifo), 0);
 
         i = 1000;
-        while(i--) {
+        while (i--) {
             int item;
             TEST_INT_EQUALS(bsal_fifo_pop(&fifo, &item), 1);
             TEST_INT_EQUALS(item, i);
@@ -81,14 +81,14 @@ int main(int argc, char **argv)
         TEST_INT_EQUALS(bsal_fifo_empty(&fifo), 1);
 
         i = 2000;
-        while(i--) {
+        while (i--) {
             TEST_INT_EQUALS(bsal_fifo_push(&fifo, &i), 1);
         }
 
         TEST_INT_EQUALS(bsal_fifo_full(&fifo), 0);
 
         i = 2000;
-        while(i--) {
+        while (i--) {
             int item;
             TEST_INT_EQUALS(bsal_fifo_pop(&fifo, &item), 1);
             TEST_INT_EQUALS(item, i);
@@ -109,7 +109,7 @@ int main(int argc, char **argv)
         TEST_INT_EQUALS(bsal_fifo_empty(&fifo), 1);
 
         i = 3000;
-        while(i--) {
+        while (i--) {
             TEST_INT_EQUALS(bsal_fifo_push(&fifo, &i), 1);
             TEST_INT_EQUALS(bsal_fifo_pop(&fifo, &i), 1);
             TEST_INT_EQUALS(bsal_fifo_empty(&fifo), 1);

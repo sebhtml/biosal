@@ -118,7 +118,7 @@ void bsal_node_run(struct bsal_node *node)
 {
     struct bsal_message message;
 
-    while(1) {
+    while (1) {
 
         /* wait until all actors are dead... */
         if (node->alive_actors == 0) {
@@ -286,7 +286,7 @@ void bsal_node_create_work(struct bsal_node *node, struct bsal_message *message)
     source = bsal_message_source(message);
     tag = bsal_message_tag(message);
 
-    printf("[DEBUG %s %s %i] actor%i (rank%i) -> actor%i (rank%i)"
+    printf("[DEBUG %s %s %i] actor%i (rank%i) : actor%i (rank%i)"
                     "(tag %i) %i bytes\n",
                     __FILE__, __func__, __LINE__,
                    source, bsal_message_source_rank(message),

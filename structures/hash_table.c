@@ -52,16 +52,15 @@ void bsal_hash_table_destroy(struct bsal_hash_table *table)
     table->groups = NULL;
 }
 
-void *bsal_hash_table_add(struct bsal_hash_table *table, void *key) {
+void *bsal_hash_table_add(struct bsal_hash_table *table, void *key)
+{
     int group;
     int bucket_in_group;
     void *bucket_key;
     int code;
 
     code = bsal_hash_table_find_bucket(table, key, &group, &bucket_in_group);
-    /* install the key if
-     * it is not already there.
-     */
+
     if (code == BSAL_HASH_TABLE_NOT_FOUND) {
 
 #ifdef BSAL_HASH_TABLE_DEBUG
@@ -104,7 +103,8 @@ void *bsal_hash_table_add(struct bsal_hash_table *table, void *key) {
     return NULL;
 }
 
-void *bsal_hash_table_get(struct bsal_hash_table *table, void *key) {
+void *bsal_hash_table_get(struct bsal_hash_table *table, void *key)
+{
     int group;
     int bucket_in_group;
     int code;
@@ -121,7 +121,8 @@ void *bsal_hash_table_get(struct bsal_hash_table *table, void *key) {
                     table->key_size, table->value_size);
 }
 
-void bsal_hash_table_delete(struct bsal_hash_table *table, void *key) {
+void bsal_hash_table_delete(struct bsal_hash_table *table, void *key)
+{
     int group;
     int bucket_in_group;
     int code;
@@ -134,11 +135,13 @@ void bsal_hash_table_delete(struct bsal_hash_table *table, void *key) {
     }
 }
 
-int bsal_hash_table_get_group(struct bsal_hash_table *table, uint64_t bucket) {
+int bsal_hash_table_get_group(struct bsal_hash_table *table, uint64_t bucket)
+{
     return bucket / table->buckets_per_group;
 }
 
-int bsal_hash_table_get_group_bucket(struct bsal_hash_table *table, uint64_t bucket) {
+int bsal_hash_table_get_group_bucket(struct bsal_hash_table *table, uint64_t bucket)
+{
     return bucket % table->buckets_per_group;
 }
 
@@ -156,7 +159,7 @@ uint64_t bsal_murmur_hash_64(const void *key, int len, unsigned int seed)
     const uint64_t * data = (const uint64_t *)key;
     const uint64_t * end = data + (len/8);
 
-    while(data != end) {
+    while (data != end) {
         uint64_t k = *data++;
 
         k *= m;
@@ -187,11 +190,13 @@ uint64_t bsal_murmur_hash_64(const void *key, int len, unsigned int seed)
     return h;
 }
 
-uint64_t bsal_hash_table_hash1(struct bsal_hash_table *table, void *key) {
+uint64_t bsal_hash_table_hash1(struct bsal_hash_table *table, void *key)
+{
     return bsal_murmur_hash_64(key, table->key_size, 0x5cd902cb);
 }
 
-uint64_t bsal_hash_table_hash2(struct bsal_hash_table *table, void *key) {
+uint64_t bsal_hash_table_hash2(struct bsal_hash_table *table, void *key)
+{
     uint64_t value;
 
     value = bsal_murmur_hash_64(key, table->key_size, 0x80435418);
@@ -206,7 +211,8 @@ uint64_t bsal_hash_table_hash2(struct bsal_hash_table *table, void *key) {
     return value;
 }
 
-uint64_t bsal_hash_table_double_hash(struct bsal_hash_table *table, void *key, uint64_t stride) {
+uint64_t bsal_hash_table_double_hash(struct bsal_hash_table *table, void *key, uint64_t stride)
+{
     uint64_t hash1;
     uint64_t hash2;
     uint64_t result;
@@ -223,7 +229,8 @@ uint64_t bsal_hash_table_double_hash(struct bsal_hash_table *table, void *key, u
     return result;
 }
 
-int bsal_hash_table_find_bucket(struct bsal_hash_table *table, void *key, int *group, int *bucket_in_group) {
+int bsal_hash_table_find_bucket(struct bsal_hash_table *table, void *key, int *group, int *bucket_in_group)
+{
     uint64_t stride;
     uint64_t bucket;
     int state;

@@ -40,7 +40,7 @@ void bsal_fifo_delete(struct bsal_fifo_array *array)
 
     current = array;
 
-    while(current != NULL) {
+    while (current != NULL) {
         next = bsal_fifo_array_next(current);
         bsal_fifo_destroy_array(current);
         current = next;
