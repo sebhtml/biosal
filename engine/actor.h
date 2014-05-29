@@ -61,4 +61,6 @@ int bsal_actor_spawn(struct bsal_actor *actor, void *pointer,
 void bsal_actor_lock(struct bsal_actor *actor);
 void bsal_actor_unlock(struct bsal_actor *actor);
 
+int bsal_actor_threads(struct bsal_actor *actor);
+
 #endif

@@ -17,7 +17,7 @@ void sender_init(struct bsal_actor *actor)
 
     sender1 = (struct sender *)bsal_actor_actor(actor);
     sender1->received = 0;
-    sender1->actors_per_node = 10;
+    sender1->actors_per_node = 1000;
 }
 
 void sender_destroy(struct bsal_actor *actor)
@@ -26,7 +26,7 @@ void sender_destroy(struct bsal_actor *actor)
 
     sender1 = (struct sender *)bsal_actor_actor(actor);
     sender1->received = 0;
-    sender1->actors_per_node = 10;
+    sender1->actors_per_node = 0;
 }
 
 void sender_receive(struct bsal_actor *actor, struct bsal_message *message)
@@ -134,7 +134,11 @@ void sender_start(struct bsal_actor *actor, struct bsal_message *message)
         return;
     }
 
-    printf("sender_start send SENDER_HELLO\n");
+    printf("sender_start send SENDER_HELLO, system has: %i bsal_actors on %i "
+                    "bsal_nodes (%i worker threads each)\n",
+                    sender1->actors_per_node * bsal_actor_size(actor),
+                    bsal_actor_size(actor),
+                    bsal_actor_threads(actor));
 
     bsal_message_set_tag(message, SENDER_HELLO);
     bsal_message_set_buffer(message, &events);

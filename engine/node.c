@@ -362,3 +362,8 @@ void bsal_node_notify_death(struct bsal_node *node, struct bsal_actor *actor)
     node->dead_actors++;
     pthread_spin_unlock(&node->death_lock);
 }
+
+int bsal_node_workers(struct bsal_node *node)
+{
+    return bsal_worker_pool_workers(&node->worker_pool);
+}

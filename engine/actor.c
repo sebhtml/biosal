@@ -148,3 +148,8 @@ void bsal_actor_unlock(struct bsal_actor *actor)
     actor->locked = 0;
     pthread_spin_unlock(&actor->lock);
 }
+
+int bsal_actor_threads(struct bsal_actor *actor)
+{
+    return bsal_node_workers(bsal_actor_node(actor));
+}

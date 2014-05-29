@@ -161,6 +161,7 @@ struct bsal_worker_thread *bsal_worker_pool_select_worker_thread(struct bsal_wor
 }
 
 /*
+ * names are based on names found in:
  * \see http://lxr.free-electrons.com/source/include/linux/workqueue.h
  * \see http://lxr.free-electrons.com/source/kernel/workqueue.c
  */
@@ -172,4 +173,9 @@ void bsal_worker_pool_schedule_work(struct bsal_worker_pool *pool, struct bsal_w
 
     /* bsal_worker_thread_push_message use a spinlock to spin fast ! */
     bsal_worker_thread_push_work(thread, work);
+}
+
+int bsal_worker_pool_workers(struct bsal_worker_pool *pool)
+{
+    return pool->threads;
 }

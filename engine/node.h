@@ -67,5 +67,6 @@ void bsal_node_notify_death(struct bsal_node *node, struct bsal_actor *actor);
 int bsal_node_receive(struct bsal_node *node, struct bsal_message *message);
 void bsal_node_create_work(struct bsal_node *node, struct bsal_message *message);
 int bsal_node_pull(struct bsal_node *node, struct bsal_message *message);
+int bsal_node_workers(struct bsal_node *node);
 
 #endif
