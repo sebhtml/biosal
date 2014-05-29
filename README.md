@@ -97,7 +97,8 @@ Functions that can be called within an actor context
 | bsal_actor_send | Send a message |
 | bsal_actor_die | Die |
 | bsal_actor_nodes | Get number of nodes |
-| bsal_actor_pin | Pin the actor to an actor for memory affinity purposes |
+| bsal_actor_pin | Pin an actor to an worker for memory affinity purposes |
+| bsal_actor_unpin | Unpin an actor |
 
 # Tests
 
