@@ -44,9 +44,6 @@ void bsal_worker_thread_run(struct bsal_worker_thread *thread);
 void bsal_worker_thread_work(struct bsal_worker_thread *thread, struct bsal_work *work);
 struct bsal_node *bsal_worker_thread_node(struct bsal_worker_thread *thread);
 
-/*
-void bsal_worker_thread_receive(struct bsal_worker_thread *thread, struct bsal_message *message);
-*/
 void bsal_worker_thread_send(struct bsal_worker_thread *thread, struct bsal_message *message);
 
 void *bsal_worker_thread_main(void *pointer);

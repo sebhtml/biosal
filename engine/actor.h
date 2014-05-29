@@ -19,8 +19,8 @@ struct bsal_worker_thread;
  */
 struct bsal_actor {
     struct bsal_actor_vtable *vtable;
-    void *pointer;
     struct bsal_worker_thread *thread;
+    void *pointer;
 
     pthread_spinlock_t lock;
 
@@ -55,7 +55,7 @@ void bsal_actor_send(struct bsal_actor *actor, int name, struct bsal_message *me
 struct bsal_node *bsal_actor_node(struct bsal_actor *actor);
 
 /*
- * This function returns the name of the spawned actor.
+ * \return This function returns the name of the spawned actor.
  */
 int bsal_actor_spawn(struct bsal_actor *actor, void *pointer,
                 struct bsal_actor_vtable *vtable);

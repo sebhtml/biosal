@@ -2,6 +2,8 @@
 #ifndef _BSAL_FIFO_ARRAY_H
 #define _BSAL_FIFO_ARRAY_H
 
+/*#define BSAL_FIFO_ARRAY_VOLATILE */
+
 /*
  * sizeof(char) is always 1 byte in C 1999
  * \see http://stackoverflow.com/questions/2215445/are-there-machines-where-sizeofchar-1
@@ -16,8 +18,14 @@ struct bsal_fifo_array {
 
     int units;
     int bytes_per_unit;
+
+#ifdef BSAL_FIFO_ARRAY_VOLATILE
     volatile int consumer_head;
     volatile int producer_tail;
+#else
+    int consumer_head;
+    int producer_tail;
+#endif
 };
 
 void bsal_fifo_array_init(struct bsal_fifo_array *fifo, int units, int bytes_per_unit);

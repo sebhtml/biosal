@@ -9,13 +9,12 @@
 /**
  * features:
  *
- * - open addressing
- * - double-hashing
+ * - [x] open addressing
+ * - [x] double-hashing
  *
- * possibly:
- *
- * - smart pointers
- * - incremental resizing
+ * - [ ] sparsity (important)
+ * - [ ] smart pointers (?)
+ * - [ ] incremental resizing (?)
  *
  * for deletion, see http://webdocs.cs.ualberta.ca/~holte/T26/open-addr.html
  */
@@ -53,7 +52,8 @@ int bsal_hash_table_get_group_bucket(struct bsal_hash_table *table, uint64_t buc
 uint64_t bsal_murmur_hash_64(const void *key, int len, unsigned int seed);
 uint64_t bsal_hash_table_hash1(struct bsal_hash_table *table, void *key);
 uint64_t bsal_hash_table_hash2(struct bsal_hash_table *table, void *key);
-uint64_t bsal_hash_table_double_hash(struct bsal_hash_table *table, void *key, uint64_t stride);
+uint64_t bsal_hash_table_double_hash(struct bsal_hash_table *table, void *key,
+                uint64_t stride);
 int bsal_hash_table_find_bucket(struct bsal_hash_table *table, void *key,
                 int *group, int *bucket_in_group, int operation);
 

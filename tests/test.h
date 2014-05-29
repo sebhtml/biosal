@@ -57,4 +57,3 @@ if (test_pointer_not_equals(a, b)) { \
 }
 
 #endif
-

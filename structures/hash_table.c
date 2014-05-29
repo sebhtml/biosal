@@ -14,6 +14,8 @@
 #define BSAL_HASH_TABLE_OPERATION_GET 1
 #define BSAL_HASH_TABLE_OPERATION_DELETE 2
 
+#define BSAL_HASH_TABLE_MATCH 0
+
 /*#define BSAL_HASH_TABLE_DEBUG*/
 
 void bsal_hash_table_init(struct bsal_hash_table *table, uint64_t buckets,
@@ -22,6 +24,7 @@ void bsal_hash_table_init(struct bsal_hash_table *table, uint64_t buckets,
     int i;
     int buckets_per_group;
 
+    /* google sparsehash uses 48. 64 is nice too */
     buckets_per_group = 64;
 
     while (buckets % buckets_per_group != 0) {
@@ -249,7 +252,12 @@ uint64_t bsal_hash_table_double_hash(struct bsal_hash_table *table, void *key, u
 }
 
 /* this is the most important function for the hash table.
- * return BSAL_HASH_TABLE_KEY_FOUND or BSAL_HASH_TABLE_KEY_NOT_FOUND or
+ * it finds a bucket with a key
+ *
+ * \param operation is one of these: BSAL_HASH_TABLE_OPERATION_ADD,
+ * BSAL_HASH_TABLE_OPERATION_GET, BSAL_HASH_TABLE_OPERATION_DELETE
+ *
+ * \return value is BSAL_HASH_TABLE_KEY_FOUND or BSAL_HASH_TABLE_KEY_NOT_FOUND or
  * BSAL_HASH_TABLE_FULL
  */
 int bsal_hash_table_find_bucket(struct bsal_hash_table *table, void *key,
@@ -298,6 +306,7 @@ int bsal_hash_table_find_bucket(struct bsal_hash_table *table, void *key,
             return BSAL_HASH_TABLE_KEY_NOT_FOUND;
         }
 
+        /* the bucket is occupied, compare it with the key */
         bucket_key = bsal_hash_table_group_key(hash_group, *bucket_in_group,
                         table->key_size, table->value_size);
 
@@ -305,7 +314,8 @@ int bsal_hash_table_find_bucket(struct bsal_hash_table *table, void *key,
          * we found a key, check if it matches the query.
          */
         if (state == BSAL_HASH_TABLE_BUCKET_OCCUPIED
-                && memcmp(bucket_key, key, table->key_size) == 0) {
+                && memcmp(bucket_key, key, table->key_size) ==
+                BSAL_HASH_TABLE_MATCH) {
             return BSAL_HASH_TABLE_KEY_FOUND;
         }
 

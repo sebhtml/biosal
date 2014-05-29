@@ -107,14 +107,13 @@ void bsal_worker_thread_work(struct bsal_worker_thread *thread, struct bsal_work
      */
     bsal_actor_unlock(actor);
 
-    /* TODO free the buffer with the slab allocator */
-
 #ifdef BSAL_THREAD_DEBUG
     printf("bsal_worker_thread_work Freeing buffer %p %i tag %i\n",
                     buffer, bsal_message_count(message),
                     bsal_message_tag(message));
 #endif
 
+    /* TODO free the buffer with the slab allocator */
     free(buffer);
 
     /* TODO replace with slab allocator */
@@ -166,13 +165,6 @@ void bsal_worker_thread_send(struct bsal_worker_thread *thread, struct bsal_mess
 
     bsal_worker_thread_push_message(thread, &copy);
 }
-
-/*
-void bsal_worker_thread_receive(struct bsal_worker_thread *thread, struct bsal_message *message)
-{
-    bsal_fifo_push(bsal_worker_thread_works(thread), message);
-}
-*/
 
 void bsal_worker_thread_start(struct bsal_worker_thread *thread)
 {

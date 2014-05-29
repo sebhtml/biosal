@@ -1,5 +1,6 @@
 
 #include "worker_pool.h"
+
 #include "worker_thread.h"
 
 #include <stdlib.h>

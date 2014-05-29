@@ -182,6 +182,7 @@ int bsal_node_receive(struct bsal_node *node, struct bsal_message *message)
 
     /* TODO actually allocate (slab allocator) a buffer with count bytes ! */
     buffer = (char *)malloc(count * sizeof(char));
+
     source = status.MPI_SOURCE;
     tag = status.MPI_TAG;
 
