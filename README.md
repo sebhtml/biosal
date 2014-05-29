@@ -34,18 +34,24 @@ https://github.com/GeneAssembly/biosal/issues?state=open
 
 # Languages using actors
 
-- [Erlang http://www.erlang.org/]
-- [Scala http://www.scala-lang.org/]
-- [D http://dlang.org/]
+- [Erlang](http://www.erlang.org/)
+- [Scala](http://www.scala-lang.org/)
+- [D](http://dlang.org/)
 
 # Design
 
 | Concept | Description | Structure |
+---
 | Message | Information with a source and a destination | struct bsal_message |
+---
 | Actor | Something that receives messages | struct bsal_actor |
+---
 | Work | 2-tuple with an Actor and a Message | struct bsal_work |
+---
 | Node | A runtime system that can be connected to other Node instances (see [Erlang's definition http://www.erlang.org/doc/reference_manual/distributed.html]) | struct bsal_node |
+---
 | Worker | An object that performs work for a living | bsal_worker_thread |
+---
 | Queue | Each Worker has a Work Queue and a Message Queue | bsal_fifo |
 
 
