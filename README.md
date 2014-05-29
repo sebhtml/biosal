@@ -49,7 +49,7 @@ Key concepts
 | Message | Information with a source and a destination | struct bsal_message |
 | Actor | Something that receives messages | struct bsal_actor |
 | Work | 2-tuple with an actor and a message | struct bsal_work |
-| Node | A runtime system that can be connected to other nodes (see [Erlang's definition](http://www.erlang.org/doc/reference_manual/distributed.html) | struct bsal_node |
+| Node | A runtime system that can be connected to other nodes (see [Erlang's definition](http://www.erlang.org/doc/reference_manual/distributed.html)) | struct bsal_node |
 | Worker | An object that performs work for a living | bsal_worker_thread |
 | Queue | Each worker has a work queue and a message queue | struct bsal_fifo |
 | Worker Pool | A set of available workers inside a node | struct bsal_worker_pool |
@@ -66,11 +66,6 @@ the corresponding receive function using the actor and message presented inside
 the work.
 
 When an actor receives a message, it can:
-
-- send messages (bsal_actor_send);
-- spawn actors (bsal_actor_spawn);
-- 
-
 
 - send a finite number of messages to other actors (bsal_actor_send);
 - create a finite number of new actors (bnsal_actor_spawn);
