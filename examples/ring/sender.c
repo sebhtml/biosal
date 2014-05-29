@@ -118,7 +118,7 @@ void sender_start(struct bsal_actor *actor, struct bsal_message *message)
     /* \see http://rlrr.drum-corps.net/misc/primes3.shtml
      */
     events = 200087;
-    /*events = 100;*/
+    /*events = 10000;*/
 
     name = bsal_actor_name(actor);
     size = bsal_actor_size(actor);

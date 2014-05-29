@@ -125,7 +125,10 @@ void bsal_node_run(struct bsal_node *node)
             break;
         }
 
-        /* pull message from network and assign the message to a thread */
+        /* pull message from network and assign the message to a thread.
+         * this code path will call spin_lock if
+         * there is a message received.
+         */
         if (bsal_node_receive(node, &message)) {
             bsal_node_create_work(node, &message);
         }
@@ -133,6 +136,9 @@ void bsal_node_run(struct bsal_node *node)
         bsal_worker_pool_run(&node->worker_pool);
 
         /* check for messages to send from from threads */
+        /* this call spin_lock only if there is at least
+         * a message in the FIFO
+         */
         if (bsal_node_pull(node, &message)) {
 
 #ifdef BSAL_NODE_DEBUG

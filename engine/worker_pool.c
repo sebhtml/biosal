@@ -86,6 +86,9 @@ void bsal_worker_pool_start(struct bsal_worker_pool *pool)
 
 void bsal_worker_pool_run(struct bsal_worker_pool *pool)
 {
+    /* the worker worker/0 only works if
+     * there are no other workers
+     */
     if (pool->threads > 1) {
         return;
     }
