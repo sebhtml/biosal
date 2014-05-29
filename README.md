@@ -97,7 +97,7 @@ bsal_worker_thread workers.
 Functions that can be called within an actor context
 
 | Function | Description |
-| --- |
+| --- | --- |
 | bsal_node_spawn | Spawn an actor from the outside,  this is usually used to spawn the first actor of a node |
 | bsal_actor_spawn | Spawn a new actor and return its name |
 | bsal_actor_send | Send a message |
