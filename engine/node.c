@@ -7,37 +7,6 @@
 
 /*#define BSAL_NODE_DEBUG*/
 
-int bsal_node_spawn(struct bsal_node *node, void *pointer,
-                struct bsal_actor_vtable *vtable)
-{
-    struct bsal_actor *actor;
-    int name;
-    bsal_actor_init_fn_t init;
-
-    pthread_spin_lock(&node->spawn_lock);
-
-    actor = node->actors + node->actor_count;
-    bsal_actor_init(actor, pointer, vtable);
-    init = bsal_actor_get_init(actor);
-    init(actor);
-
-    name = bsal_node_assign_name(node);
-
-    bsal_actor_set_name(actor, name);
-
-    node->actor_count++;
-    node->alive_actors++;
-
-    pthread_spin_unlock(&node->spawn_lock);
-
-    return name;
-}
-
-int bsal_node_assign_name(struct bsal_node *node)
-{
-    return node->rank + node->size * node->actor_count;
-}
-
 /*
  * \see http://www.mpich.org/static/docs/v3.1/www3/MPI_Comm_dup.html
  * \see http://www.dartmouth.edu/~rc/classes/intro_mpi/hello_world_ex.html
@@ -86,6 +55,37 @@ void bsal_node_destroy(struct bsal_node *node)
     node->actors = NULL;
 
     MPI_Finalize();
+}
+
+int bsal_node_spawn(struct bsal_node *node, void *pointer,
+                struct bsal_actor_vtable *vtable)
+{
+    struct bsal_actor *actor;
+    int name;
+    bsal_actor_init_fn_t init;
+
+    pthread_spin_lock(&node->spawn_lock);
+
+    actor = node->actors + node->actor_count;
+    bsal_actor_init(actor, pointer, vtable);
+    init = bsal_actor_get_init(actor);
+    init(actor);
+
+    name = bsal_node_assign_name(node);
+
+    bsal_actor_set_name(actor, name);
+
+    node->actor_count++;
+    node->alive_actors++;
+
+    pthread_spin_unlock(&node->spawn_lock);
+
+    return name;
+}
+
+int bsal_node_assign_name(struct bsal_node *node)
+{
+    return node->rank + node->size * node->actor_count;
 }
 
 void bsal_node_start(struct bsal_node *node)
