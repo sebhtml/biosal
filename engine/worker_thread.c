@@ -247,6 +247,13 @@ int bsal_worker_thread_pull_work(struct bsal_worker_thread *thread, struct bsal_
 {
     int value;
 
+    /* avoid the spinlock by checking first if
+     * there is something to actually pull...
+     */
+    if (bsal_fifo_empty(bsal_worker_thread_works(thread))) {
+        return 0;
+    }
+
 #ifdef BSAL_THREAD_USE_LOCK
     pthread_spin_lock(&thread->work_lock);
 #endif

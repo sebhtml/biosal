@@ -92,7 +92,7 @@ void sender_hello(struct bsal_actor *actor, struct bsal_message *message)
         memcpy(bsal_message_buffer(message), &events, sizeof(events));
         next = (name + 1) % total;
 
-        if (events % 1000 == 0) {
+        if (events % 20000 == 0) {
             printf("sender_hello remaining events %i\n", events);
         }
 
@@ -118,6 +118,7 @@ void sender_start(struct bsal_actor *actor, struct bsal_message *message)
     /* \see http://rlrr.drum-corps.net/misc/primes3.shtml
      */
     events = 200087;
+    /*events = 100;*/
 
     name = bsal_actor_name(actor);
     size = bsal_actor_size(actor);

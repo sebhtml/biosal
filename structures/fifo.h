@@ -11,7 +11,7 @@ struct bsal_fifo {
 
     int units;
     int bytes_per_unit;
-    int elements;
+    volatile int size;
 };
 
 void bsal_fifo_init(struct bsal_fifo *fifo, int units, int bytes_per_unit);

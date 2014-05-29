@@ -17,7 +17,7 @@ void bsal_fifo_init(struct bsal_fifo *fifo, int units, int bytes_per_unit)
     fifo->first = array;
     fifo->last = array;
     fifo->bin = NULL;
-    fifo->elements = 0;
+    fifo->size = 0;
 }
 
 void bsal_fifo_destroy(struct bsal_fifo *fifo)
@@ -60,7 +60,7 @@ int bsal_fifo_push(struct bsal_fifo *fifo, void *item)
     struct bsal_fifo_array *array;
 
     if (bsal_fifo_array_push(fifo->last, item)) {
-        fifo->elements++;
+        fifo->size++;
         return 1;
     }
 
@@ -91,7 +91,7 @@ int bsal_fifo_pop(struct bsal_fifo *fifo, void *item)
             if (fifo->first == fifo->last) {
                 bsal_fifo_array_reset(fifo->first);
 
-                fifo->elements--;
+                fifo->size--;
                 return 1;
             }
 
@@ -104,7 +104,7 @@ int bsal_fifo_pop(struct bsal_fifo *fifo, void *item)
             bsal_fifo_destroy_array(array);
         }
 
-        fifo->elements--;
+        fifo->size--;
         return 1;
     }
 
@@ -118,12 +118,12 @@ int bsal_fifo_bytes(struct bsal_fifo *fifo)
 
 int bsal_fifo_empty(struct bsal_fifo *fifo)
 {
-    return fifo->elements == 0;
+    return fifo->size == 0;
 }
 
 int bsal_fifo_size(struct bsal_fifo *fifo)
 {
-    return fifo->elements;
+    return fifo->size;
 }
 
 int bsal_fifo_full(struct bsal_fifo *fifo)
