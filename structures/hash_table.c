@@ -1,6 +1,8 @@
 
 #include "hash_table.h"
 
+#include <hash/murmur_hash_2_64_a.h>
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdint.h>
@@ -167,88 +169,43 @@ int bsal_hash_table_get_group_bucket(struct bsal_hash_table *table, uint64_t buc
     return bucket % table->buckets_per_group;
 }
 
-/* \see http://en.wikipedia.org/wiki/MurmurHash
- * \see http://www.maatkit.org/
- * \see https://code.google.com/p/maatkit/issues/attachmentText?id=19&aid=7029841249934490324&name=MurmurHash64.cpp&token=3b615cc6c16c91de800419e5e95ed1ba
+/*
+ * The hash function can be changed here.
  */
-uint64_t bsal_murmur_hash_64(const void *key, int len, unsigned int seed)
+uint64_t bsal_hash_table_hash(void *key, int key_size, int seed)
 {
-    const uint64_t m = 0xc6a4a7935bd1e995;
-    const int r = 47;
-
-    uint64_t h = seed ^ len;
-
-    const uint64_t * data = (const uint64_t *)key;
-    const uint64_t * end = data + (len/8);
-
-    while (data != end) {
-        uint64_t k = *data++;
-
-        k *= m;
-        k ^= k >> r;
-        k *= m;
-
-        h ^= k;
-        h *= m;
-    }
-
-    const unsigned char * data2 = (const unsigned char*)data;
-
-    switch (len & 7) {
-        case 7: h ^= (uint64_t)(data2[6]) << 48;
-        case 6: h ^= (uint64_t)(data2[5]) << 40;
-        case 5: h ^= (uint64_t)(data2[4]) << 32;
-        case 4: h ^= (uint64_t)(data2[3]) << 24;
-        case 3: h ^= (uint64_t)(data2[2]) << 16;
-        case 2: h ^= (uint64_t)(data2[1]) << 8;
-        case 1: h ^= (uint64_t)(data2[0]);
-                h *= m;
-    }
-
-    h ^= h >> r;
-    h *= m;
-    h ^= h >> r;
-
-    return h;
+    return bsal_murmur_hash_2_64_a(key, key_size, seed);
 }
 
 uint64_t bsal_hash_table_hash1(struct bsal_hash_table *table, void *key)
 {
-    return bsal_murmur_hash_64(key, table->key_size, 0x5cd902cb);
+    return bsal_hash_table_hash(key, table->key_size, 0x5cd902cb);
 }
 
 uint64_t bsal_hash_table_hash2(struct bsal_hash_table *table, void *key)
 {
-    uint64_t value;
-
-    value = bsal_murmur_hash_64(key, table->key_size, 0x80435418);
-
-    /* the number of buckets and hash2 must be co-prime
-     * the number of buckets is a power of 2
-     */
-    if (value % 2 == 0) {
-        value++;
-    }
-
-    return value;
+    return bsal_hash_table_hash(key, table->key_size, 0x80435418);
 }
 
 uint64_t bsal_hash_table_double_hash(struct bsal_hash_table *table, void *key, uint64_t stride)
 {
     uint64_t hash1;
     uint64_t hash2;
-    uint64_t result;
 
     hash2 = 0;
     hash1 = bsal_hash_table_hash1(table, key);
 
     if (stride > 0) {
         hash2 = bsal_hash_table_hash2(table, key);
+        /* the number of buckets and hash2 must be co-prime
+         * the number of buckets is a power of 2
+         */
+        if (hash2 % 2 == 0) {
+            hash2++;
+        }
     }
 
-    result = (hash1 + stride * hash2) % table->buckets;
-
-    return result;
+    return (hash1 + stride * hash2) % table->buckets;
 }
 
 /* this is the most important function for the hash table.

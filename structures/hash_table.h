@@ -49,7 +49,6 @@ int bsal_hash_table_buckets(struct bsal_hash_table *table);
 int bsal_hash_table_get_group(struct bsal_hash_table *table, uint64_t bucket);
 int bsal_hash_table_get_group_bucket(struct bsal_hash_table *table, uint64_t bucket);
 
-uint64_t bsal_murmur_hash_64(const void *key, int len, unsigned int seed);
 uint64_t bsal_hash_table_hash1(struct bsal_hash_table *table, void *key);
 uint64_t bsal_hash_table_hash2(struct bsal_hash_table *table, void *key);
 uint64_t bsal_hash_table_double_hash(struct bsal_hash_table *table, void *key,

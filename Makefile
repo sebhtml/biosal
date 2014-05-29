@@ -13,7 +13,8 @@ all: $(EXAMPLES) $(TESTS)
 LIBRARY=engine/message.o engine/node.o engine/actor.o engine/actor_vtable.o \
 	engine/work.o engine/worker_thread.o engine/worker_pool.o \
 	structures/hash_table.o structures/hash_table_group.o \
-	structures/fifo.o structures/fifo_array.o
+	structures/fifo.o structures/fifo_array.o \
+	hash/murmur_hash_2_64_a.o
 
 MOCK_EXAMPLE=examples/mock/main.o examples/mock/mock.o examples/mock/buddy.o
 RING_EXAMPLE=examples/ring/main.o examples/ring/sender.o
