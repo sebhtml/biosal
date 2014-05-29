@@ -43,7 +43,6 @@ https://github.com/GeneAssembly/biosal/issues?state=open
 | Concept | Description | Structure |
 | --- | --- | --- |
 | Message | Information with a source and a destination | struct bsal_message |
----
 | --- | --- | --- |
 | Actor | Something that receives messages | struct bsal_actor |
 | --- | --- | --- |
