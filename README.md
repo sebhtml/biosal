@@ -43,6 +43,7 @@ https://github.com/GeneAssembly/biosal/issues?state=open
 
 
 Key concepts
+
 | Concept | Description | Structure |
 | --- | --- | --- |
 | Message | Information with a source and a destination | struct bsal_message |
@@ -94,6 +95,7 @@ bsal_worker_thread workers.
 # Application programming interface
 
 Functions that can be called within an actor context
+
 | Function | Description |
 | --- |
 | bsal_node_spawn | Spawn an actor from the outside,  this is usually used to spawn the first actor of a node |
