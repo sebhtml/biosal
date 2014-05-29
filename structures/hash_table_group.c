@@ -63,9 +63,12 @@ void *bsal_hash_table_group_add(struct bsal_hash_table_group *group,
 void *bsal_hash_table_group_get(struct bsal_hash_table_group *group,
                 int bucket, int key_size, int value_size)
 {
+    int offset;
+
     if (bsal_hash_table_group_state(group, bucket) ==
                     BSAL_HASH_TABLE_BUCKET_OCCUPIED) {
-        return (char *)group->array + bucket * (key_size + value_size);
+        offset = bucket * (key_size + value_size) + key_size;
+        return (char *)group->array + offset;
     }
 
     /* BSAL_HASH_TABLE_BUCKET_EMPTY and BSAL_HASH_TABLE_BUCKET_DELETED

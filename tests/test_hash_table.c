@@ -12,6 +12,10 @@ int main(int argc, char **argv)
     uint64_t buckets;
     uint64_t key;
 
+    int *value;
+    int actual_value;
+    int expected_value;
+
     BEGIN_TESTS();
 
     {
@@ -76,6 +80,22 @@ int main(int argc, char **argv)
             TEST_INT_EQUALS(bsal_hash_table_elements(&table), i + 1);
 
             TEST_POINTER_NOT_EQUALS(bsal_hash_table_get(&table, &key), NULL);
+            TEST_POINTER_NOT_EQUALS(bsal_hash_table_get(&table, &key), NULL);
+
+            value = bsal_hash_table_get(&table, &key);
+            expected_value = i * 2;
+            *value = expected_value;
+
+            value = bsal_hash_table_get(&table, &key);
+            /*printf("expected %i actual %i\n", i * 2, *value);*/
+
+            actual_value = *value;
+
+            /*printf("actual_value %i\n", actual_value); */
+
+            TEST_INT_EQUALS(actual_value, expected_value);
+            actual_value++;
+            expected_value++;
 
             if (i >= 21) {
                 key = 21;

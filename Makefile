@@ -1,5 +1,6 @@
 CC=mpicc
 CFLAGS=-O2 -g -I.
+#CFLAGS=-g -I.
 LD=$(CC)
 Q=@
 ECHO=echo
