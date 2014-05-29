@@ -12,11 +12,6 @@ int main(int argc, char **argv)
     int threads;
 
     threads = 10;
-
-    if (argc == 2) {
-        threads = atoi(argv[1]);
-    }
-
     bsal_node_init(&node, threads, &argc, &argv);
     bsal_node_spawn(&node, &actor, &sender_vtable);
     bsal_node_start(&node);

@@ -37,13 +37,13 @@ clean:
 	$(Q)$(RM) $(EXAMPLES) $(TESTS)
 
 ring: test_ring
-	mpiexec -n 2 ./test_ring 8
+	mpiexec -n 2 ./test_ring -workers-per-node 8
 
 mock: test_mock
 	mpiexec -n 3 ./test_mock
 
 mock1: test_mock
-	mpiexec -n 3 ./test_mock 1
+	mpiexec -n 3 ./test_mock -workers-per-node 1
 
 test: $(TESTS)
 	./test_fifo_array
