@@ -71,7 +71,6 @@ When an actor receives a message, it can:
 - create a finite number of new actors (bnsal_actor_spawn);
 - designate the behavior to be used for the next message it receives (bsal_actor_actor, bsal_actor_die)
 
-- [Linux workqueue https://www.kernel.org/doc/Documentation/workqueue.txt]
 
 # Runtime
 
@@ -107,3 +106,7 @@ see examples/ and tests/
 # Authors
 
 see 'git log'
+
+# Design links
+
+- [Linux workqueue](https://www.kernel.org/doc/Documentation/workqueue.txt)
