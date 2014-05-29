@@ -17,10 +17,10 @@ LIBRARY=engine/message.o engine/node.o engine/actor.o engine/actor_vtable.o \
 MOCK_EXAMPLE=examples/mock/main.o examples/mock/mock.o examples/mock/buddy.o
 RING_EXAMPLE=examples/ring/main.o examples/ring/sender.o
 
-TEST_FIFO=test/test.o test/test_fifo.o
-TEST_FIFO_ARRAY=test/test.o test/test_fifo_array.o
-TEST_HASH_TABLE_GROUP=test/test.o test/test_hash_table_group.o
-TEST_HASH_TABLE=test/test.o test/test_hash_table.o
+TEST_FIFO=tests/test.o tests/test_fifo.o
+TEST_FIFO_ARRAY=tests/test.o tests/test_fifo_array.o
+TEST_HASH_TABLE_GROUP=tests/test.o tests/test_hash_table_group.o
+TEST_HASH_TABLE=tests/test.o tests/test_hash_table.o
 
 %.o: %.c
 	$(Q)$(ECHO) "  CC $@"
