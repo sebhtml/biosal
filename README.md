@@ -69,17 +69,17 @@ When an actor receives a message, it can:
 
 - send a finite number of messages to other actors (bsal_actor_send);
 - create a finite number of new actors (bnsal_actor_spawn);
-- designate the behavior to be used for the next message it receives (bsal_actor_actor, bsal_actor_die)
+- designate the behavior to be used for the next message it receives (bsal_actor_actor, bsal_actor_die).
 
 
 # Runtime
 
-The number of bsal_node nodes is set by mpiexec -n @number_of_bsal_nodes
-The number of bsal_worker_thread objects on each bsal_node is set with
+The number of nodes is set by mpiexec -n @number_of_bsal_nodes
+The number of workers on each node is set with
 -workers-by-node
 
-The following command starts 256 bsal_node node nodes (there is 1 MPI rank per
-bsal_node) and 64 bsal_worker_thread workers per bsal_node for a total of
+The following command starts 256 nodes (there is 1 MPI rank per
+node) and 64 workers per node for a total of
 256 * 64 = 16384 distributed workers.
 
 Because the whole thing is event - driven by inbound and outbound messages,
