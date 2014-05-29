@@ -3,6 +3,7 @@
 
 #include <stdlib.h>
 #include <stdint.h>
+#include <string.h>
 
 void bsal_hash_table_group_init(struct bsal_hash_table_group *group,
                 int buckets_per_group, int key_size, int value_size)
@@ -16,6 +17,9 @@ void bsal_hash_table_group_init(struct bsal_hash_table_group *group,
     /* TODO: use slab allocator */
     group->bitmap = malloc(bitmap_bytes);
     group->array = malloc(array_bytes);
+
+    /* mark all buckets as not occupied */
+    memset(group->bitmap, 0, bitmap_bytes);
 }
 
 void bsal_hash_table_group_destroy(struct bsal_hash_table_group *group)
@@ -103,5 +107,5 @@ void *bsal_hash_table_group_key(struct bsal_hash_table_group *group, int bucket,
                 int key_size, int value_size)
 {
     /* we assume that the key is stored first */
-    return bsal_hash_table_group_get(group, bucket, key_size, value_size);
+    return (char *)group->array + bucket * (key_size + value_size);
 }

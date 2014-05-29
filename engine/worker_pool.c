@@ -161,7 +161,7 @@ struct bsal_worker_thread *bsal_worker_pool_select_worker_thread(struct bsal_wor
 
 /*
  * \see http://lxr.free-electrons.com/source/include/linux/workqueue.h
- * \see http://lxr.free-electrons.com/source/include/linux/workqueue.c
+ * \see http://lxr.free-electrons.com/source/kernel/workqueue.c
  */
 void bsal_worker_pool_schedule_work(struct bsal_worker_pool *pool, struct bsal_work *work)
 {
