@@ -40,22 +40,40 @@ https://github.com/GeneAssembly/biosal/issues?state=open
 
 # Design
 
+
+
+Key concepts
 | Concept | Description | Structure |
 | --- | --- | --- |
 | Message | Information with a source and a destination | struct bsal_message |
 | Actor | Something that receives messages | struct bsal_actor |
-| Work | 2-tuple with an Actor and a Message | struct bsal_work |
-| Node | A runtime system that can be connected to other Node instances (see [Erlang's definition http://www.erlang.org/doc/reference_manual/distributed.html]) | struct bsal_node |
+| Work | 2-tuple with an actor and a message | struct bsal_work |
+| Node | A runtime system that can be connected to other nodes (see [Erlang's definition](http://www.erlang.org/doc/reference_manual/distributed.html) | struct bsal_node |
 | Worker | An object that performs work for a living | bsal_worker_thread |
-| Queue | Each Worker has a Work Queue and a Message Queue | bsal_fifo |
+| Queue | Each worker has a work queue and a message queue | struct bsal_fifo |
+| Worker Pool | A set of available workers inside a node | struct bsal_worker_pool |
 
 
-Work to be done has to be formulated in term of actors (bsal_actor).
-A bsal_actor has a name, do something when it receives a bsal_message.
-A bsal_message is however first received by a bsal_node. The bsal_node
-prepares a bsal_work and gives it to a bsal_worker_pool. The bsal_worker_pool
-assigns the bsal_work to a bsal_worker_thread. Finally,  the bsal_worker_thread calls
-receive using the bsal_actor and bsal_message presented inside the bsal_work.
+## Workflow
+
+The code has to be formulated in term of actors.
+An actor has a name, and does something when it receives a message.
+A message is however first received by a node. The node
+prepares a work and gives it to a worker_pool. The worker pool
+assigns the work to a worker. Finally, worker eventually calls
+the corresponding receive function using the actor and message presented inside
+the work.
+
+When an actor receives a message, it can:
+
+- send messages (bsal_actor_send);
+- spawn actors (bsal_actor_spawn);
+- 
+
+
+- send a finite number of messages to other actors (bsal_actor_send);
+- create a finite number of new actors (bnsal_actor_spawn);
+- designate the behavior to be used for the next message it receives (bsal_actor_actor, bsal_actor_die)
 
 - [Linux workqueue https://www.kernel.org/doc/Documentation/workqueue.txt]
 
@@ -77,10 +95,18 @@ bsal_worker_thread workers.
 
 Functions that can be called within an actor context
 | Function | Description |
+| --- |
+| bsal_node_spawn | Spawn an actor from the outside,  this is usually used to spawn the first actor of a node |
 | bsal_actor_spawn | Spawn a new actor and return its name |
 | bsal_actor_send | Send a message |
 | bsal_actor_die | Die |
+| bsal_actor_nodes | Get number of nodes |
+| bsal_actor_pin | Pin the actor to an actor for memory affinity purposes |
 
 # Tests
 
 see examples/ and tests/
+
+# Authors
+
+see 'git log'
