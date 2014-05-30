@@ -24,6 +24,7 @@ struct bsal_actor_vtable;
 struct bsal_node {
     struct bsal_actor *actors;
     struct bsal_worker_pool worker_pool;
+    pthread_t thread;
 
     pthread_spinlock_t death_lock;
     pthread_spinlock_t spawn_lock;
@@ -34,6 +35,11 @@ struct bsal_node {
 
     int name;
     int nodes;
+    int threads;
+
+    int worker_in_main_thread;
+    int send_in_thread;
+    int workers_in_threads;
 
     int actor_count;
     int actor_capacity;
@@ -68,6 +74,7 @@ void bsal_node_run(struct bsal_node *node);
 /* MPI ranks are set with bsal_node_resolve */
 void bsal_node_resolve(struct bsal_node *node, struct bsal_message *message);
 
+void bsal_node_send_message(struct bsal_node *node);
 void bsal_node_send_outbound_message(struct bsal_node *node, struct bsal_message *message);
 void bsal_node_notify_death(struct bsal_node *node, struct bsal_actor *actor);
 
@@ -78,5 +85,9 @@ int bsal_node_workers(struct bsal_node *node);
 
 int bsal_node_argc(struct bsal_node *node);
 char **bsal_node_argv(struct bsal_node *node);
+pthread_t *bsal_node_thread(struct bsal_node *node);
+void *bsal_node_main(void *pointer);
+int bsal_node_running(struct bsal_node *node);
+void bsal_node_start_send_thread(struct bsal_node *node);
 
 #endif

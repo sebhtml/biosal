@@ -27,7 +27,7 @@ function run_checks() {
     run_check "}  ("
 
     grep -n ") {" * -R |grep void|grep bsal_|grep -v check.sh
-    grep " "$ * -R
+    grep -n " "$ * -R
 }
 
 make clean

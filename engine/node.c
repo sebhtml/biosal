@@ -20,7 +20,9 @@ void bsal_node_init(struct bsal_node *node, int threads,  int *argc,  char ***ar
     int i;
     int required;
     int provided;
-    int threads_for_workers;
+    int workers;
+
+    node->threads = threads;
 
     node->argc = *argc;
     node->argv = *argv;
@@ -29,25 +31,79 @@ void bsal_node_init(struct bsal_node *node, int threads,  int *argc,  char ***ar
         if (strcmp((*argv)[i], "-threads-per-node") == 0 && i + 1 < *argc) {
             /*printf("bsal_node_init threads: %s\n",
                             (*argv)[i + 1]);*/
-            threads = atoi((*argv)[i + 1]);
+            node->threads = atoi((*argv)[i + 1]);
         }
     }
 
-    required = MPI_THREAD_SINGLE;
-    if (threads == 1) {
-        required = MPI_THREAD_SINGLE;
-        threads_for_workers = 0;
-    } else if (threads == 2) {
-        required = MPI_THREAD_FUNNELED;
-        threads_for_workers  = 1;
-    } else if (threads >= 3) {
-        required = MPI_THREAD_MULTIPLE;
-        threads_for_workers = threads - 1;
+    if (node->threads < 1) {
+        node->threads = 1;
     }
 
-    threads_for_workers++;
+    node->worker_in_main_thread = 1;
+
+    if (node->threads >= 2) {
+        node->worker_in_main_thread = 0;
+    }
+
+    node->workers_in_threads = 0;
+    /* with 2 threads, one of them runs a worker */
+    if (node->threads >= 2) {
+        node->workers_in_threads = 1;
+    }
+
+	/*
+     * 3 cases with T threads using MPI_Init_thread:
+     *
+     * Case 0: T is 1, ask for MPI_THREAD_SINGLE
+     * Design: receive, run, and send in main thread
+     *
+     * Case 1: if T is 2, ask for MPI_THREAD_FUNNELED
+     * Design: receive and send in main thread, workers in (T-1) thread
+     *
+     * Case 2: if T is 3 or more, ask for MPI_THREAD_MULTIPLE
+     *
+     * Design: if MPI_THREAD_MULTIPLE is provided, receive in main thread, send in 1 thread,
+     * workers in (T - 2) threads, otherwise delegate the case to Case 1
+     */
+    required = MPI_THREAD_SINGLE;
+    workers = 1;
+
+    if (node->threads == 1) {
+        required = MPI_THREAD_SINGLE;
+        workers = node->threads - 0;
+
+    } else if (node->threads == 2) {
+        required = MPI_THREAD_FUNNELED;
+        workers = node->threads - 1;
+
+    } else if (node->threads >= 3) {
+        required = MPI_THREAD_MULTIPLE;
+
+        /* the number of workers depends on whether or not
+         * MPI_THREAD_MULTIPLE is provided
+         */
+    }
 
     MPI_Init_thread(argc, argv, required, &provided);
+
+    node->send_in_thread = 0;
+
+    if (node->threads >= 3) {
+
+#ifdef BSAL_NODE_DEBUG
+        printf("DEBUG= threads: %i\n", node->threads);
+#endif
+        if (node->provided == MPI_THREAD_MULTIPLE) {
+            node->send_in_thread = 1;
+            workers = node->threads - 2;
+        } else {
+
+#ifdef BSAL_NODE_DEBUG
+            printf("DEBUG= MPI_THREAD_MULTIPLE was not provided...\n");
+#endif
+            workers = node->threads - 1;
+        }
+    }
 
     node->provided = provided;
     node->datatype = MPI_BYTE;
@@ -60,7 +116,12 @@ void bsal_node_init(struct bsal_node *node, int threads,  int *argc,  char ***ar
     node->name = node_name;
     node->nodes = nodes;
 
-    bsal_worker_pool_init(&node->worker_pool, threads, node);
+#ifdef BSAL_NODE_DEBUG
+    printf("DEBUG threads: %i workers: %i send_in_thread: %i\n",
+                    node->threads, workers, node->send_in_thread);
+#endif
+
+    bsal_worker_pool_init(&node->worker_pool, workers, node);
 
     node->actor_count = 0;
     node->actor_capacity = 16384;
@@ -135,7 +196,16 @@ void bsal_node_start(struct bsal_node *node)
     int source;
     struct bsal_message message;
 
-    bsal_worker_pool_start(&node->worker_pool);
+    if (node->workers_in_threads) {
+        printf("DEBUG starting %i worker threads\n",
+                        bsal_worker_pool_workers(&node->worker_pool));
+        bsal_worker_pool_start(&node->worker_pool);
+    }
+
+    if (node->send_in_thread) {
+        printf("DEBUG starting send thread\n");
+        bsal_node_start_send_thread(node);
+    }
 
     actors = node->actor_count;
 
@@ -153,18 +223,35 @@ void bsal_node_start(struct bsal_node *node)
     }
 
     bsal_node_run(node);
+
+#ifdef BSAL_NODE_DEBUG
+    printf("BSAL_NODE_DEBUG after loop in bsal_node_run\n");
+#endif
+
+    if (node->workers_in_threads) {
+        bsal_worker_pool_stop(&node->worker_pool);
+    }
+
+    if (node->send_in_thread) {
+        pthread_join(node->thread, NULL);
+    }
+}
+
+int bsal_node_running(struct bsal_node *node)
+{
+    /* wait until all actors are dead... */
+    if (node->alive_actors == 0) {
+        return 0;
+    }
+
+    return 1;
 }
 
 void bsal_node_run(struct bsal_node *node)
 {
     struct bsal_message message;
 
-    while (1) {
-
-        /* wait until all actors are dead... */
-        if (node->alive_actors == 0) {
-            break;
-        }
+    while (bsal_node_running(node)) {
 
         /* pull message from network and assign the message to a thread.
          * this code path will call spin_lock if
@@ -174,26 +261,68 @@ void bsal_node_run(struct bsal_node *node)
             bsal_node_create_work(node, &message);
         }
 
-        bsal_worker_pool_run(&node->worker_pool);
-
-        /* check for messages to send from from threads */
-        /* this call spin_lock only if there is at least
-         * a message in the FIFO
+        /* the one worker works here if there is only
+         * one thread
          */
-        if (bsal_node_pull(node, &message)) {
-
-#ifdef BSAL_NODE_DEBUG
-            printf("bsal_node_run pulled tag %i buffer %p\n",
-                            bsal_message_tag(&message),
-                            bsal_message_buffer(&message));
-#endif
-
-            /* send it locally or over the network */
-            bsal_node_send(node, &message);
+        if (node->worker_in_main_thread) {
+            bsal_worker_pool_run(&node->worker_pool);
         }
+
+        /* with 3 or more threads, the sending operations are
+         * in another thread */
+        if (node->send_in_thread) {
+            continue;
+        }
+
+        bsal_node_send_message(node);
     }
 
-    bsal_worker_pool_stop(&node->worker_pool);
+}
+
+/* TODO, this needs MPI_THREAD_MULTIPLE, this has not been tested */
+void bsal_node_start_send_thread(struct bsal_node *node)
+{
+    pthread_create(bsal_node_thread(node), NULL, bsal_node_main,
+                    node);
+}
+
+void *bsal_node_main(void *pointer)
+{
+    struct bsal_node *node;
+
+    node = (struct bsal_node*)pointer;
+
+    while (bsal_node_running(node)) {
+        bsal_node_send_message(node);
+    }
+
+    return NULL;
+}
+
+pthread_t *bsal_node_thread(struct bsal_node *node)
+{
+    return &node->thread;
+}
+
+void bsal_node_send_message(struct bsal_node *node)
+{
+    struct bsal_message message;
+
+    /* check for messages to send from from threads */
+    /* this call spin_lock only if there is at least
+     * a message in the FIFO
+     */
+    if (bsal_node_pull(node, &message)) {
+
+#ifdef BSAL_NODE_DEBUG
+        printf("bsal_node_run pulled tag %i buffer %p\n",
+                        bsal_message_tag(&message),
+                        bsal_message_buffer(&message));
+#endif
+
+        /* send it locally or over the network */
+        bsal_node_send(node, &message);
+    }
 }
 
 int bsal_node_pull(struct bsal_node *node, struct bsal_message *message)

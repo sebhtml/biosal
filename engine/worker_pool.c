@@ -8,67 +8,63 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-void bsal_worker_pool_init(struct bsal_worker_pool *pool, int threads,
+void bsal_worker_pool_init(struct bsal_worker_pool *pool, int workers,
                 struct bsal_node *node)
 {
     pool->node = node;
-    pool->threads = threads;
-    pool->thread_array = NULL;
+    pool->workers = workers;
+    pool->worker_array = NULL;
 
     /* with only one thread,  the main thread
      * handles everything.
      */
-    if (pool->threads == 1) {
-        pool->thread_for_run = 0;
-        pool->thread_for_message = 0;
-        pool->thread_for_work = 0;
-    } else if (pool->threads > 1) {
-        pool->thread_for_run = 0;
-        pool->thread_for_message = 1;
-        pool->thread_for_work = 1;
+    if (pool->workers >= 1) {
+        pool->worker_for_run = 0;
+        pool->worker_for_message = 0;
+        pool->worker_for_work = 0;
     } else {
-        printf("Error: the number of threads must be at least 1.\n");
+        printf("Error: the number of workers must be at least 1.\n");
         exit(1);
     }
 
-    bsal_worker_pool_create_threads(pool);
+    bsal_worker_pool_create_workers(pool);
 }
 
 void bsal_worker_pool_destroy(struct bsal_worker_pool *pool)
 {
-    bsal_worker_pool_delete_threads(pool);
+    bsal_worker_pool_delete_workers(pool);
 }
 
-void bsal_worker_pool_delete_threads(struct bsal_worker_pool *pool)
+void bsal_worker_pool_delete_workers(struct bsal_worker_pool *pool)
 {
     int i = 0;
 
-    if (pool->threads <= 0) {
+    if (pool->workers <= 0) {
         return;
     }
 
-    for (i = 0; i < pool->threads; i++) {
-        bsal_worker_thread_destroy(pool->thread_array + i);
+    for (i = 0; i < pool->workers; i++) {
+        bsal_worker_thread_destroy(pool->worker_array + i);
     }
 
-    free(pool->thread_array);
-    pool->thread_array = NULL;
+    free(pool->worker_array);
+    pool->worker_array = NULL;
 }
 
-void bsal_worker_pool_create_threads(struct bsal_worker_pool *pool)
+void bsal_worker_pool_create_workers(struct bsal_worker_pool *pool)
 {
     int bytes;
     int i;
 
-    if (pool->threads <= 0) {
+    if (pool->workers <= 0) {
         return;
     }
 
-    bytes = pool->threads * sizeof(struct bsal_worker_thread);
-    pool->thread_array = (struct bsal_worker_thread *)malloc(bytes);
+    bytes = pool->workers * sizeof(struct bsal_worker_thread);
+    pool->worker_array = (struct bsal_worker_thread *)malloc(bytes);
 
-    for (i = 0; i < pool->threads; i++) {
-        bsal_worker_thread_init(pool->thread_array + i, i, pool->node);
+    for (i = 0; i < pool->workers; i++) {
+        bsal_worker_thread_init(pool->worker_array + i, i, pool->node);
     }
 }
 
@@ -76,38 +72,31 @@ void bsal_worker_pool_start(struct bsal_worker_pool *pool)
 {
     int i;
 
-    /* start threads
+    /* start workers
      *
      * we start at 1 because the thread 0 is
      * used by the main thread...
      */
-    for (i = 1; i < pool->threads; i++) {
-        bsal_worker_thread_start(pool->thread_array + i);
+    for (i = 0; i < pool->workers; i++) {
+        bsal_worker_thread_start(pool->worker_array + i);
     }
 }
 
 void bsal_worker_pool_run(struct bsal_worker_pool *pool)
 {
-    /* the worker worker/0 only works if
-     * there are no other workers
-     */
-    if (pool->threads > 1) {
-        return;
-    }
-
     /* make the thread work (this is the main thread) */
-    bsal_worker_thread_run(bsal_worker_pool_select_worker_thread(pool));
+    bsal_worker_thread_run(bsal_worker_pool_select_worker_for_run(pool));
 }
 
 void bsal_worker_pool_stop(struct bsal_worker_pool *pool)
 {
     int i;
     /*
-     * stop threads
+     * stop workers
      */
 
-    for (i = 1; i < pool->threads; i++) {
-        bsal_worker_thread_stop(pool->thread_array + i);
+    for (i = 0; i < pool->workers; i++) {
+        bsal_worker_thread_stop(pool->worker_array + i);
     }
 }
 
@@ -115,40 +104,30 @@ int bsal_worker_pool_pull(struct bsal_worker_pool *pool, struct bsal_message *me
 {
     struct bsal_worker_thread *thread;
 
-    thread = bsal_worker_pool_select_worker_thread_for_message(pool);
+    thread = bsal_worker_pool_select_worker_for_message(pool);
     return bsal_worker_thread_pull_message(thread, message);
 }
 
 /* select a thread to pull from */
-struct bsal_worker_thread *bsal_worker_pool_select_worker_thread_for_message(struct bsal_worker_pool *pool)
+struct bsal_worker_thread *bsal_worker_pool_select_worker_for_message(struct bsal_worker_pool *pool)
 {
     int index;
 
-    index = pool->thread_for_message;
-    pool->thread_for_message = bsal_worker_pool_next_worker(pool, pool->thread_for_message);
-    return pool->thread_array + index;
+    index = pool->worker_for_message;
+    pool->worker_for_message = bsal_worker_pool_next_worker(pool, pool->worker_for_message);
+    return pool->worker_array + index;
 }
 
-int bsal_worker_pool_next_worker(struct bsal_worker_pool *pool, int thread)
+int bsal_worker_pool_next_worker(struct bsal_worker_pool *pool, int worker)
 {
-    /*
-     * 1 thread : thread 0 (main thread)
-     * 2 threads : thread 0 (main thread) and thread 1 (worker)
-     * 3 threads : thread 0 (main thread) and thread 1 (worker) and thread 2 (worker)
-     * N threads (N >= 2) : thread 0
-     */
-    if (pool->threads >= 3) {
-        thread++;
-        if (thread == pool->threads) {
-            thread = 1;
-        }
-    }
+    worker++;
+    worker %= pool->workers;
 
-    return thread;
+    return worker;
 }
 
 /* select the thread to push work to */
-struct bsal_worker_thread *bsal_worker_pool_select_worker_thread_for_work(
+struct bsal_worker_thread *bsal_worker_pool_select_worker_worker_for_work(
                 struct bsal_worker_pool *pool, struct bsal_work *work)
 {
     int index;
@@ -162,17 +141,17 @@ struct bsal_worker_thread *bsal_worker_pool_select_worker_thread_for_work(
     }
 
     /* otherwise, pick a thread with round robin */
-    index = pool->thread_for_message;
-    pool->thread_for_message = bsal_worker_pool_next_worker(pool, pool->thread_for_message);
-    return pool->thread_array + index;
+    index = pool->worker_for_message;
+    pool->worker_for_message = bsal_worker_pool_next_worker(pool, pool->worker_for_message);
+    return pool->worker_array + index;
 }
 
-struct bsal_worker_thread *bsal_worker_pool_select_worker_thread(struct bsal_worker_pool *pool)
+struct bsal_worker_thread *bsal_worker_pool_select_worker_for_run(struct bsal_worker_pool *pool)
 {
     int index;
 
-    index = pool->thread_for_run;
-    return pool->thread_array + index;
+    index = pool->worker_for_run;
+    return pool->worker_array + index;
 }
 
 /*
@@ -184,7 +163,7 @@ void bsal_worker_pool_schedule_work(struct bsal_worker_pool *pool, struct bsal_w
 {
     struct bsal_worker_thread *thread;
 
-    thread = bsal_worker_pool_select_worker_thread_for_work(pool, work);
+    thread = bsal_worker_pool_select_worker_worker_for_work(pool, work);
 
     /* bsal_worker_thread_push_message use a spinlock to spin fast ! */
     bsal_worker_thread_push_work(thread, work);
@@ -192,5 +171,5 @@ void bsal_worker_pool_schedule_work(struct bsal_worker_pool *pool, struct bsal_w
 
 int bsal_worker_pool_workers(struct bsal_worker_pool *pool)
 {
-    return pool->threads;
+    return pool->workers;
 }
