@@ -11,9 +11,12 @@ void bsal_actor_init(struct bsal_actor *actor, void *pointer,
 {
     actor->pointer = pointer;
     actor->name = -1;
+    actor->supervisor = -1;
     actor->dead = 0;
     actor->vtable = vtable;
     actor->thread = NULL;
+
+    actor->received_messages = 0;
 
     pthread_spin_init(&actor->lock, 0);
     actor->locked = 0;
@@ -69,11 +72,11 @@ void bsal_actor_print(struct bsal_actor *actor)
      */
 
     printf("[bsal_actor_print] Name: %i Supervisor %i Node: %i, Thread: %i"
-                    " bsal_actor %p pointer %p\n", bsal_actor_name(actor),
+                    " received %i sent %i\n", bsal_actor_name(actor),
                     bsal_actor_supervisor(actor),
                     bsal_node_rank(bsal_actor_node(actor)),
                     bsal_worker_thread_name(bsal_actor_thread(actor)),
-                    (void*)actor, (void*)bsal_actor_actor(actor));
+                    bsal_actor_received_messages(actor), 0);
 }
 
 bsal_actor_init_fn_t bsal_actor_get_init(struct bsal_actor *actor)
@@ -195,4 +198,14 @@ int bsal_actor_supervisor(struct bsal_actor *actor)
 void bsal_actor_set_supervisor(struct bsal_actor *actor, int supervisor)
 {
     actor->supervisor = supervisor;
+}
+
+int bsal_actor_received_messages(struct bsal_actor *actor)
+{
+    return actor->received_messages;
+}
+
+void bsal_actor_increase_received_messages(struct bsal_actor *actor)
+{
+    actor->received_messages++;
 }

@@ -81,6 +81,8 @@ void bsal_worker_thread_work(struct bsal_worker_thread *thread, struct bsal_work
 
     bsal_actor_set_thread(actor, thread);
     message = bsal_work_message(work);
+
+    bsal_actor_increase_received_messages(actor);
     receive = bsal_actor_get_receive(actor);
 
     /* Store the buffer location before calling the user

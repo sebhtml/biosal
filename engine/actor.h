@@ -29,6 +29,7 @@ struct bsal_actor {
     int name;
     int dead;
     int supervisor;
+    int received_messages;
 };
 
 void bsal_actor_init(struct bsal_actor *actor, void *pointer,
@@ -72,5 +73,7 @@ void bsal_actor_pin(struct bsal_actor *actor);
 void bsal_actor_unpin(struct bsal_actor *actor);
 int bsal_actor_supervisor(struct bsal_actor *actor);
 void bsal_actor_set_supervisor(struct bsal_actor *actor, int supervisor);
+int bsal_actor_received_messages(struct bsal_actor *actor);
+void bsal_actor_increase_received_messages(struct bsal_actor *actor);
 
 #endif
