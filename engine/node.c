@@ -118,7 +118,7 @@ void bsal_node_start(struct bsal_node *node)
         name = bsal_actor_name(actor);
         source = name;
 
-        bsal_message_init(&message, BSAL_START, source, name, 0, NULL);
+        bsal_message_init(&message, BSAL_ACTOR_START, source, name, 0, NULL);
         bsal_node_send(node, &message);
         bsal_message_destroy(&message);
     }

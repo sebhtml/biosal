@@ -37,7 +37,7 @@ void mock_receive(struct bsal_actor *actor, struct bsal_message *message)
     tag = bsal_message_tag(message);
     bsal_actor_print(actor);
 
-    if (tag == BSAL_START) {
+    if (tag == BSAL_ACTOR_START) {
         mock_start(actor, message);
     } else if (tag == MOCK_DIE) {
         mock_try_die(actor, message);
@@ -124,7 +124,7 @@ void mock_start(struct bsal_actor *actor, struct bsal_message *message)
     name = bsal_actor_name(actor);
     mock = (struct mock *)bsal_actor_actor(actor);
 
-    printf("mock_start Actor #%i (value: %i) received message (tag: %i BSAL_START)"
+    printf("mock_start Actor #%i (value: %i) received message (tag: %i BSAL_ACTOR_START)"
                     " from source %i, destination %i\n",
             name, mock->value, tag, source, destination);
 

@@ -5,7 +5,8 @@
 #include <biosal.h>
 
 struct reader {
-    int foo;
+    int sequence_reader;
+    struct bsal_input_actor input_actor;
 };
 
 struct bsal_actor_vtable reader_vtable;

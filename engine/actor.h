@@ -8,7 +8,7 @@
 #include <pthread.h>
 
 enum {
-    BSAL_START = 1000 /* FIRST_TAG */ /* LAST_TAG */
+    BSAL_ACTOR_START = 1000 /* FIRST_TAG */ /* LAST_TAG */
 };
 
 struct bsal_node;

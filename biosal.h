@@ -6,6 +6,8 @@
 #include "engine/message.h"
 #include "engine/node.h"
 
+#include "input/input_actor.h"
+
 struct bsal_biosal {
     int version;
 };
