@@ -18,6 +18,9 @@ void bsal_node_init(struct bsal_node *node, int threads,  int *argc,  char ***ar
     int node_name;
     int nodes;
     int i;
+    int required;
+    int provided;
+    int threads_for_workers;
 
     node->argc = *argc;
     node->argv = *argv;
@@ -30,8 +33,23 @@ void bsal_node_init(struct bsal_node *node, int threads,  int *argc,  char ***ar
         }
     }
 
-    MPI_Init(argc, argv);
+    required = MPI_THREAD_SINGLE;
+    if (threads == 1) {
+        required = MPI_THREAD_SINGLE;
+        threads_for_workers = 0;
+    } else if (threads == 2) {
+        required = MPI_THREAD_FUNNELED;
+        threads_for_workers  = 1;
+    } else if (threads >= 3) {
+        required = MPI_THREAD_MULTIPLE;
+        threads_for_workers = threads - 1;
+    }
 
+    threads_for_workers++;
+
+    MPI_Init_thread(argc, argv, required, &provided);
+
+    node->provided = provided;
     node->datatype = MPI_BYTE;
 
     /* make a new communicator for the library and don't use MPI_COMM_WORLD later */

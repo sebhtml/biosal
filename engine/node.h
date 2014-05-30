@@ -30,6 +30,7 @@ struct bsal_node {
 
     MPI_Comm comm;
     MPI_Datatype datatype;
+    int provided;
 
     int name;
     int nodes;
