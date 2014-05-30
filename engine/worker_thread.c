@@ -200,7 +200,7 @@ void *bsal_worker_thread_main(void *pointer)
 void bsal_worker_thread_display(struct bsal_worker_thread *thread)
 {
     printf("[bsal_worker_thread_main] node %i thread %i\n",
-                    bsal_node_rank(thread->node),
+                    bsal_node_name(thread->node),
                     bsal_worker_thread_name(thread));
 }
 

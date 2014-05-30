@@ -15,8 +15,8 @@
  */
 void bsal_node_init(struct bsal_node *node, int threads,  int *argc,  char ***argv)
 {
-    int rank;
-    int ranks;
+    int node_name;
+    int nodes;
     int i;
 
     node->argc = *argc;
@@ -36,11 +36,11 @@ void bsal_node_init(struct bsal_node *node, int threads,  int *argc,  char ***ar
 
     /* make a new communicator for the library and don't use MPI_COMM_WORLD later */
     MPI_Comm_dup(MPI_COMM_WORLD, &node->comm);
-    MPI_Comm_rank(node->comm, &rank);
-    MPI_Comm_size(node->comm, &ranks);
+    MPI_Comm_rank(node->comm, &node_name);
+    MPI_Comm_size(node->comm, &nodes);
 
-    node->rank = rank;
-    node->nodes = ranks;
+    node->name = node_name;
+    node->nodes = nodes;
 
     bsal_worker_pool_init(&node->worker_pool, threads, node);
 
@@ -105,7 +105,7 @@ int bsal_node_spawn(struct bsal_node *node, void *pointer,
 
 int bsal_node_assign_name(struct bsal_node *node)
 {
-    return node->rank + node->nodes * node->actor_count;
+    return node->name + node->nodes * node->actor_count;
 }
 
 void bsal_node_start(struct bsal_node *node)
@@ -199,7 +199,7 @@ int bsal_node_receive(struct bsal_node *node, struct bsal_message *message)
 
     source = MPI_ANY_SOURCE;
     tag = MPI_ANY_TAG;
-    destination = node->rank;
+    destination = node->name;
 
     MPI_Iprobe(source, tag, node->comm, &flag, &status);
 
@@ -236,15 +236,15 @@ int bsal_node_receive(struct bsal_node *node, struct bsal_message *message)
 void bsal_node_resolve(struct bsal_node *node, struct bsal_message *message)
 {
     int actor;
-    int rank;
+    int node_name;
 
     actor = bsal_message_source(message);
-    rank = bsal_node_actor_rank(node, actor);
-    bsal_message_set_source_rank(message, rank);
+    node_name = bsal_node_actor_node(node, actor);
+    bsal_message_set_source_node(message, node_name);
 
     actor = bsal_message_destination(message);
-    rank = bsal_node_actor_rank(node, actor);
-    bsal_message_set_destination_rank(message, rank);
+    node_name = bsal_node_actor_node(node, actor);
+    bsal_message_set_destination_node(message, node_name);
 }
 
 /* \see http://www.mpich.org/static/docs/v3.1/www3/MPI_Isend.html */
@@ -263,7 +263,7 @@ void bsal_node_send_outbound_message(struct bsal_node *node, struct bsal_message
     count = bsal_message_count(message);
     metadata_size = bsal_message_metadata_size(message);
     all = count + metadata_size;
-    destination = bsal_message_destination_rank(message);
+    destination = bsal_message_destination_node(message);
     tag = bsal_message_tag(message);
 
     MPI_Isend(buffer, all, node->datatype, destination, tag,
@@ -278,13 +278,13 @@ void bsal_node_send_outbound_message(struct bsal_node *node, struct bsal_message
 void bsal_node_send(struct bsal_node *node, struct bsal_message *message)
 {
     int name;
-    int rank;
+    int node_name;
 
     name = bsal_message_destination(message);
-    rank = bsal_node_actor_rank(node, name);
+    node_name = bsal_node_actor_node(node, name);
     bsal_node_resolve(node, message);
 
-    if (rank == node->rank) {
+    if (node_name == node->name) {
         /* dispatch locally */
         bsal_node_create_work(node, message);
     } else {
@@ -299,10 +299,10 @@ struct bsal_actor *bsal_node_get_actor_from_name(struct bsal_node *node,
 {
     struct bsal_actor *actor;
     int index;
-    int rank;
+    int node_name;
 
-    rank = node->rank;
-    index = bsal_node_actor_index(node, rank, name);
+    node_name = node->name;
+    index = bsal_node_actor_index(node, node_name, name);
     actor = node->actors + index;
 
     return actor;
@@ -327,11 +327,11 @@ void bsal_node_create_work(struct bsal_node *node, struct bsal_message *message)
     source = bsal_message_source(message);
     tag = bsal_message_tag(message);
 
-    printf("[DEBUG %s %s %i] actor%i (rank%i) : actor%i (rank%i)"
+    printf("[DEBUG %s %s %i] actor%i (node%i) : actor%i (node%i)"
                     "(tag %i) %i bytes\n",
                     __FILE__, __func__, __LINE__,
-                   source, bsal_message_source_rank(message),
-                   name, bsal_message_destination_rank(message),
+                   source, bsal_message_source_node(message),
+                   name, bsal_message_destination_node(message),
                    tag, bsal_message_count(message));
 #endif
 
@@ -357,19 +357,19 @@ void bsal_node_create_work(struct bsal_node *node, struct bsal_message *message)
     bsal_worker_pool_schedule_work(&node->worker_pool, &work);
 }
 
-int bsal_node_actor_index(struct bsal_node *node, int rank, int name)
+int bsal_node_actor_index(struct bsal_node *node, int node_name, int name)
 {
-    return (name - rank) / node->nodes;
+    return (name - node_name) / node->nodes;
 }
 
-int bsal_node_actor_rank(struct bsal_node *node, int name)
+int bsal_node_actor_node(struct bsal_node *node, int name)
 {
     return name % node->nodes;
 }
 
-int bsal_node_rank(struct bsal_node *node)
+int bsal_node_name(struct bsal_node *node)
 {
-    return node->rank;
+    return node->name;
 }
 
 int bsal_node_nodes(struct bsal_node *node)
@@ -380,12 +380,11 @@ int bsal_node_nodes(struct bsal_node *node)
 void bsal_node_notify_death(struct bsal_node *node, struct bsal_actor *actor)
 {
     bsal_actor_init_fn_t destroy;
-    /*int rank;*/
     /* int name; */
     /*int index;*/
 
     /*
-    rank = node->rank;
+    node_name = node->name;
     name = bsal_actor_name(actor);
     */
 
@@ -393,7 +392,7 @@ void bsal_node_notify_death(struct bsal_node *node, struct bsal_actor *actor)
     destroy(actor);
     bsal_actor_destroy(actor);
 
-    /*index = bsal_node_actor_index(node, rank, name); */
+    /*index = bsal_node_actor_index(node, node_name, name); */
     /* node->actors[index] = NULL; */
 
     pthread_spin_lock(&node->death_lock);

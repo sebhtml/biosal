@@ -15,8 +15,8 @@ void bsal_message_init(struct bsal_message *message, int tag, int source,
     message->count = count;
 
     /* MPI ranks are set with bsal_node_resolve */
-    message->source_rank = -1;
-    message->destination_rank = -1;
+    message->source_node = -1;
+    message->destination_node = -1;
 
     message->routing_source = -1;
     message->routing_destination = -1;
@@ -41,14 +41,14 @@ int bsal_message_destination(struct bsal_message *message)
     return message->destination_actor;
 }
 
-int bsal_message_source_rank(struct bsal_message *message)
+int bsal_message_source_node(struct bsal_message *message)
 {
-    return message->source_rank;
+    return message->source_node;
 }
 
-int bsal_message_destination_rank(struct bsal_message *message)
+int bsal_message_destination_node(struct bsal_message *message)
 {
-    return message->destination_rank;
+    return message->destination_node;
 }
 
 int bsal_message_tag(struct bsal_message *message)
@@ -80,14 +80,14 @@ int bsal_message_count(struct bsal_message *message)
     return message->count;
 }
 
-void bsal_message_set_source_rank(struct bsal_message *message, int source)
+void bsal_message_set_source_node(struct bsal_message *message, int source)
 {
-    message->source_rank = source;
+    message->source_node = source;
 }
 
-void bsal_message_set_destination_rank(struct bsal_message *message, int destination)
+void bsal_message_set_destination_node(struct bsal_message *message, int destination)
 {
-    message->destination_rank = destination;
+    message->destination_node = destination;
 }
 
 void bsal_message_set_buffer(struct bsal_message *message, void *buffer)

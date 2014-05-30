@@ -78,7 +78,7 @@ void bsal_actor_print(struct bsal_actor *actor)
     printf("[bsal_actor_print] Name: %i Supervisor %i Node: %i, Thread: %i"
                     " received %i sent %i\n", bsal_actor_name(actor),
                     bsal_actor_supervisor(actor),
-                    bsal_node_rank(bsal_actor_node(actor)),
+                    bsal_node_name(bsal_actor_node(actor)),
                     bsal_worker_thread_name(bsal_actor_thread(actor)),
                     received, sent);
 }

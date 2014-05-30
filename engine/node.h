@@ -31,7 +31,7 @@ struct bsal_node {
     MPI_Comm comm;
     MPI_Datatype datatype;
 
-    int rank;
+    int name;
     int nodes;
 
     int actor_count;
@@ -53,12 +53,12 @@ void bsal_node_send(struct bsal_node *node, struct bsal_message *message);
 
 int bsal_node_assign_name(struct bsal_node *node);
 
-int bsal_node_actor_rank(struct bsal_node *node, int name);
-int bsal_node_actor_index(struct bsal_node *node, int rank, int name);
+int bsal_node_actor_node(struct bsal_node *node, int name);
+int bsal_node_actor_index(struct bsal_node *node, int node_name, int name);
 struct bsal_actor *bsal_node_get_actor_from_name(struct bsal_node *node,
                 int name);
 
-int bsal_node_rank(struct bsal_node *node);
+int bsal_node_name(struct bsal_node *node);
 int bsal_node_nodes(struct bsal_node *node);
 void bsal_node_set_supervisor(struct bsal_node *node, int name, int supervisor);
 
