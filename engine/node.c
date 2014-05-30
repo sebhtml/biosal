@@ -69,6 +69,14 @@ void bsal_node_destroy(struct bsal_node *node)
     MPI_Finalize();
 }
 
+void bsal_node_set_supervisor(struct bsal_node *node, int name, int supervisor)
+{
+    struct bsal_actor *actor;
+
+    actor = bsal_node_get_actor_from_name(node, name);
+    bsal_actor_set_supervisor(actor, supervisor);
+}
+
 int bsal_node_spawn(struct bsal_node *node, void *pointer,
                 struct bsal_actor_vtable *vtable)
 {
@@ -116,6 +124,9 @@ void bsal_node_start(struct bsal_node *node)
     for (i = 0; i < actors; ++i) {
         actor = node->actors + i;
         name = bsal_actor_name(actor);
+
+        /* initial actors are supervised by themselves... */
+        bsal_actor_set_supervisor(actor, name);
         source = name;
 
         bsal_message_init(&message, BSAL_ACTOR_START, source, name, 0, NULL);
@@ -283,13 +294,25 @@ void bsal_node_send(struct bsal_node *node, struct bsal_message *message)
     }
 }
 
+struct bsal_actor *bsal_node_get_actor_from_name(struct bsal_node *node,
+                int name)
+{
+    struct bsal_actor *actor;
+    int index;
+    int rank;
+
+    rank = node->rank;
+    index = bsal_node_actor_index(node, rank, name);
+    actor = node->actors + index;
+
+    return actor;
+}
+
 void bsal_node_create_work(struct bsal_node *node, struct bsal_message *message)
 {
     struct bsal_message *new_message;
     struct bsal_actor *actor;
     struct bsal_work work;
-    int index;
-    int rank;
     int name;
     int dead;
 
@@ -298,7 +321,6 @@ void bsal_node_create_work(struct bsal_node *node, struct bsal_message *message)
     int source;
 #endif
 
-    rank = node->rank;
     name = bsal_message_destination(message);
 
 #ifdef BSAL_NODE_DEBUG
@@ -313,8 +335,7 @@ void bsal_node_create_work(struct bsal_node *node, struct bsal_message *message)
                    tag, bsal_message_count(message));
 #endif
 
-    index = bsal_node_actor_index(node, rank, name);
-    actor = node->actors + index;
+    actor = bsal_node_get_actor_from_name(node, name);
 
     if (actor == NULL) {
         return;

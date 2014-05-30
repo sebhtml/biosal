@@ -55,9 +55,12 @@ int bsal_node_assign_name(struct bsal_node *node);
 
 int bsal_node_actor_rank(struct bsal_node *node, int name);
 int bsal_node_actor_index(struct bsal_node *node, int rank, int name);
+struct bsal_actor *bsal_node_get_actor_from_name(struct bsal_node *node,
+                int name);
 
 int bsal_node_rank(struct bsal_node *node);
 int bsal_node_nodes(struct bsal_node *node);
+void bsal_node_set_supervisor(struct bsal_node *node, int name, int supervisor);
 
 void bsal_node_run(struct bsal_node *node);
 

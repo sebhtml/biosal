@@ -68,8 +68,9 @@ void bsal_actor_print(struct bsal_actor *actor)
      * engine/bsal_actor.c:58:21: error: ISO C for bids conversion of function pointer to object pointer type [-Werror=edantic]
      */
 
-    printf("[bsal_actor_print] Name: %i Node: %i, Thread: %i"
+    printf("[bsal_actor_print] Name: %i Supervisor %i Node: %i, Thread: %i"
                     " bsal_actor %p pointer %p\n", bsal_actor_name(actor),
+                    bsal_actor_supervisor(actor),
                     bsal_node_rank(bsal_actor_node(actor)),
                     bsal_worker_thread_name(bsal_actor_thread(actor)),
                     (void*)actor, (void*)bsal_actor_actor(actor));
@@ -103,7 +104,12 @@ void bsal_actor_send(struct bsal_actor *actor, int name, struct bsal_message *me
 int bsal_actor_spawn(struct bsal_actor *actor, void *pointer,
                 struct bsal_actor_vtable *vtable)
 {
-    return bsal_node_spawn(bsal_actor_node(actor), pointer, vtable);
+    int name;
+
+    name = bsal_node_spawn(bsal_actor_node(actor), pointer, vtable);
+    bsal_node_set_supervisor(bsal_actor_node(actor), name, bsal_actor_name(actor));
+
+    return name;
 }
 
 struct bsal_worker_thread *bsal_actor_thread(struct bsal_actor *actor)
@@ -179,4 +185,14 @@ struct bsal_worker_thread *bsal_actor_affinity_thread(struct bsal_actor *actor)
 void bsal_actor_unpin(struct bsal_actor *actor)
 {
     actor->affinity_thread = NULL;
+}
+
+int bsal_actor_supervisor(struct bsal_actor *actor)
+{
+    return actor->supervisor;
+}
+
+void bsal_actor_set_supervisor(struct bsal_actor *actor, int supervisor)
+{
+    actor->supervisor = supervisor;
 }
