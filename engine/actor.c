@@ -17,6 +17,7 @@ void bsal_actor_init(struct bsal_actor *actor, void *pointer,
     actor->thread = NULL;
 
     actor->received_messages = 0;
+    actor->sent_messages = 0;
 
     pthread_spin_init(&actor->lock, 0);
     actor->locked = 0;
@@ -71,12 +72,15 @@ void bsal_actor_print(struct bsal_actor *actor)
      * engine/bsal_actor.c:58:21: error: ISO C for bids conversion of function pointer to object pointer type [-Werror=edantic]
      */
 
+    int received = bsal_actor_received_messages(actor);
+    int sent = bsal_actor_sent_messages(actor);
+
     printf("[bsal_actor_print] Name: %i Supervisor %i Node: %i, Thread: %i"
                     " received %i sent %i\n", bsal_actor_name(actor),
                     bsal_actor_supervisor(actor),
                     bsal_node_rank(bsal_actor_node(actor)),
                     bsal_worker_thread_name(bsal_actor_thread(actor)),
-                    bsal_actor_received_messages(actor), 0);
+                    received, sent);
 }
 
 bsal_actor_init_fn_t bsal_actor_get_init(struct bsal_actor *actor)
@@ -102,6 +106,8 @@ void bsal_actor_send(struct bsal_actor *actor, int name, struct bsal_message *me
     bsal_message_set_source(message, source);
     bsal_message_set_destination(message, name);
     bsal_worker_thread_send(actor->thread, message);
+
+    bsal_actor_increase_sent_messages(actor);
 }
 
 int bsal_actor_spawn(struct bsal_actor *actor, void *pointer,
@@ -200,7 +206,7 @@ void bsal_actor_set_supervisor(struct bsal_actor *actor, int supervisor)
     actor->supervisor = supervisor;
 }
 
-int bsal_actor_received_messages(struct bsal_actor *actor)
+uint64_t bsal_actor_received_messages(struct bsal_actor *actor)
 {
     return actor->received_messages;
 }
@@ -208,4 +214,14 @@ int bsal_actor_received_messages(struct bsal_actor *actor)
 void bsal_actor_increase_received_messages(struct bsal_actor *actor)
 {
     actor->received_messages++;
+}
+
+uint64_t bsal_actor_sent_messages(struct bsal_actor *actor)
+{
+    return actor->sent_messages;
+}
+
+void bsal_actor_increase_sent_messages(struct bsal_actor *actor)
+{
+    actor->sent_messages++;
 }

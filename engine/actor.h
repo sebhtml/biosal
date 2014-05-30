@@ -6,6 +6,7 @@
 #include "actor_vtable.h"
 
 #include <pthread.h>
+#include <stdint.h>
 
 enum {
     BSAL_ACTOR_START = 1000 /* FIRST_TAG */ /* LAST_TAG */
@@ -29,7 +30,8 @@ struct bsal_actor {
     int name;
     int dead;
     int supervisor;
-    int received_messages;
+    uint64_t received_messages;
+    uint64_t sent_messages;
 };
 
 void bsal_actor_init(struct bsal_actor *actor, void *pointer,
@@ -73,7 +75,10 @@ void bsal_actor_pin(struct bsal_actor *actor);
 void bsal_actor_unpin(struct bsal_actor *actor);
 int bsal_actor_supervisor(struct bsal_actor *actor);
 void bsal_actor_set_supervisor(struct bsal_actor *actor, int supervisor);
-int bsal_actor_received_messages(struct bsal_actor *actor);
+
+uint64_t bsal_actor_received_messages(struct bsal_actor *actor);
 void bsal_actor_increase_received_messages(struct bsal_actor *actor);
+uint64_t bsal_actor_sent_messages(struct bsal_actor *actor);
+void bsal_actor_increase_sent_messages(struct bsal_actor *actor);
 
 #endif
