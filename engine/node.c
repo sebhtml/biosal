@@ -23,7 +23,7 @@ void bsal_node_init(struct bsal_node *node, int threads,  int *argc,  char ***ar
     node->argv = *argv;
 
     for (i = 0; i < *argc; i++) {
-        if (strcmp((*argv)[i], "-workers-per-node") == 0 && i + 1 < *argc) {
+        if (strcmp((*argv)[i], "-threads-per-node") == 0 && i + 1 < *argc) {
             /*printf("bsal_node_init threads: %s\n",
                             (*argv)[i + 1]);*/
             threads = atoi((*argv)[i + 1]);

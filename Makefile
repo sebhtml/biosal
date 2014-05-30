@@ -39,16 +39,16 @@ clean:
 	$(Q)$(RM) $(EXAMPLES) $(TESTS)
 
 ring: test_ring
-	mpiexec -n 2 ./test_ring -workers-per-node 8
+	mpiexec -n 2 ./test_ring -threads-per-node 8
 
 mock: test_mock
 	mpiexec -n 3 ./test_mock
 
 mock1: test_mock
-	mpiexec -n 3 ./test_mock -workers-per-node 1
+	mpiexec -n 3 ./test_mock -threads-per-node 1
 
 reader: test_reader
-	mpiexec -n 2 ./test_reader -workers-per-node 13 -read ~/dropbox/GPIC.1424-1.1371.fastq
+	mpiexec -n 2 ./test_reader -threads-per-node 13 -read ~/dropbox/GPIC.1424-1.1371.fastq
 
 test: $(TESTS)
 	./test_fifo_array
