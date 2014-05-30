@@ -7,7 +7,8 @@ This is a work in progress.
 - Name: biosal
 - Language: C99 (ISO/IEC 9899:1999)
 - Model: actor model
-- Technologies: MPI, Pthreads (IEEE Std 1003.1c - 1995)
+- Message passing: MPI 2.2
+- Threads: Pthreads (IEEE Std 1003.1c - 1995)
 
 # Try it out
 
