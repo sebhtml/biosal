@@ -9,6 +9,13 @@ This is a work in progress.
 - Model: actor model
 - Technologies: MPI, Pthreads (IEEE Std 1003.1c - 1995)
 
+# Try it out
+
+```bash
+make test # run tests
+make run # run examples
+```
+
 # Branches
 
 Branch | Browse | HTTPS | SSH
