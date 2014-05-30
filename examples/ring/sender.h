@@ -12,8 +12,8 @@ struct sender {
 };
 
 enum {
-    SENDER_HELLO = 1100, /* FIRST_TAG */
-    SENDER_KILL /* LAST_TAG */
+    SENDER_HELLO = 1100,
+    SENDER_KILL
 };
 
 struct bsal_actor_vtable sender_vtable;
