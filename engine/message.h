@@ -3,7 +3,7 @@
 #define _BSAL_MESSAGE_H
 
 struct bsal_message {
-    char *buffer;
+    void *buffer;
     int count;
     int tag;
 
@@ -18,7 +18,7 @@ struct bsal_message {
 };
 
 void bsal_message_init(struct bsal_message *message, int tag,
-                int source, int destination, int count, char *buffer);
+                int source, int destination, int count, void *buffer);
 void bsal_message_destroy(struct bsal_message *message);
 
 int bsal_message_source(struct bsal_message *message);
@@ -31,7 +31,7 @@ void bsal_message_set_tag(struct bsal_message *message, int tag);
 void bsal_message_set_source(struct bsal_message *message, int source);
 void bsal_message_set_destination(struct bsal_message *message, int destination);
 void bsal_message_print(struct bsal_message *message);
-char *bsal_message_buffer(struct bsal_message *message);
+void *bsal_message_buffer(struct bsal_message *message);
 void bsal_message_set_buffer(struct bsal_message *message, void *buffer);
 int bsal_message_count(struct bsal_message *message);
 void bsal_message_set_count(struct bsal_message *message, int count);

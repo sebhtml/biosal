@@ -5,7 +5,7 @@
 #include <string.h>
 
 void bsal_message_init(struct bsal_message *message, int tag, int source,
-                int destination, int count, char *buffer)
+                int destination, int count, void *buffer)
 {
     message->source_actor = source;
     message->destination_actor = destination;
@@ -70,7 +70,7 @@ void bsal_message_print(struct bsal_message *message)
 {
 }
 
-char *bsal_message_buffer(struct bsal_message *message)
+void *bsal_message_buffer(struct bsal_message *message)
 {
     return message->buffer;
 }
@@ -110,10 +110,10 @@ void bsal_message_write_metadata(struct bsal_message *message)
     /* TODO this could be a single memcpy with 2 *sizeof(int)
      * because source_actor and destination_actor are consecutive
      */
-    memcpy(message->buffer + message->count, &message->source_actor,
+    memcpy((char *)message->buffer + message->count, &message->source_actor,
                     sizeof(message->source_actor));
 
-    memcpy(message->buffer + message->count + sizeof(message->source_actor),
+    memcpy((char *)message->buffer + message->count + sizeof(message->source_actor),
             &message->destination_actor, sizeof(message->destination_actor));
 }
 
@@ -122,11 +122,11 @@ void bsal_message_read_metadata(struct bsal_message *message)
     /* TODO this could be a single memcpy with 2 *sizeof(int)
      * because source_actor and destination_actor are consecutive
      */
-    memcpy(&message->source_actor, message->buffer + message->count,
+    memcpy(&message->source_actor, (char *)message->buffer + message->count,
                     sizeof(message->source_actor));
 
     memcpy(&message->destination_actor,
-            message->buffer + message->count + sizeof(message->source_actor),
+            (char *)message->buffer + message->count + sizeof(message->source_actor),
             sizeof(message->destination_actor));
 }
 
