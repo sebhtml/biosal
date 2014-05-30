@@ -291,6 +291,13 @@ int bsal_worker_thread_pull_message(struct bsal_worker_thread *thread, struct bs
 {
     int value;
 
+    /* avoid the spinlock by checking first if
+     * there is something to actually pull...
+     */
+    if (bsal_fifo_empty(bsal_worker_thread_messages(thread))) {
+        return 0;
+    }
+
 #ifdef BSAL_THREAD_USE_LOCK
     pthread_spin_lock(&thread->message_lock);
 #endif
