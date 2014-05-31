@@ -161,14 +161,11 @@ int bsal_node_spawn(struct bsal_node *node, void *pointer,
 {
     struct bsal_actor *actor;
     int name;
-    bsal_actor_init_fn_t init;
 
     pthread_spin_lock(&node->spawn_lock);
 
     actor = node->actors + node->actor_count;
     bsal_actor_init(actor, pointer, vtable);
-    init = bsal_actor_get_init(actor);
-    init(actor);
 
     name = bsal_node_assign_name(node);
 
@@ -534,7 +531,6 @@ int bsal_node_nodes(struct bsal_node *node)
 
 void bsal_node_notify_death(struct bsal_node *node, struct bsal_actor *actor)
 {
-    bsal_actor_init_fn_t destroy;
     /* int name; */
     /*int index;*/
 
@@ -543,8 +539,6 @@ void bsal_node_notify_death(struct bsal_node *node, struct bsal_actor *actor)
     name = bsal_actor_name(actor);
     */
 
-    destroy = bsal_actor_get_destroy(actor);
-    destroy(actor);
     bsal_actor_destroy(actor);
 
     /*index = bsal_node_actor_index(node, node_name, name); */

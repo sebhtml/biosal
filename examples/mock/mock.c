@@ -5,8 +5,6 @@
 #include <stdio.h>
 
 struct bsal_actor_vtable mock_vtable = {
-    .init = mock_init,
-    .destroy = mock_destroy,
     .receive = mock_receive
 };
 
@@ -28,6 +26,8 @@ void mock_destroy(struct bsal_actor *actor)
 
     mock = (struct mock *)bsal_actor_pointer(actor);
     mock->value = -1;
+
+    bsal_actor_die(actor);
 }
 
 void mock_receive(struct bsal_actor *actor, struct bsal_message *message)
@@ -38,6 +38,7 @@ void mock_receive(struct bsal_actor *actor, struct bsal_message *message)
     bsal_actor_print(actor);
 
     if (tag == BSAL_ACTOR_START) {
+        mock_init(actor);
         mock_start(actor, message);
     } else if (tag == MOCK_DIE) {
         mock_try_die(actor, message);
@@ -103,7 +104,7 @@ void mock_die(struct bsal_actor *actor, struct bsal_message *message)
 
     printf("mock_die actor %i dies (MOCK_DIE from %i)\n", name, source);
 
-    bsal_actor_die(actor);
+    mock_destroy(actor);
 }
 
 void mock_start(struct bsal_actor *actor, struct bsal_message *message)

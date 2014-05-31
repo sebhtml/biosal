@@ -6,27 +6,38 @@
 #include <string.h>
 
 struct bsal_actor_vtable sender_vtable = {
-    .init = sender_init,
-    .destroy = sender_destroy,
     .receive = sender_receive
 };
 
 void sender_init(struct bsal_actor *actor)
 {
     struct sender *sender1;
+/*
+    int name;
 
+    name = bsal_actor_name(actor);
+    */
     sender1 = (struct sender *)bsal_actor_pointer(actor);
     sender1->received = 0;
     sender1->actors_per_node = 1000;
+
+    /*
+    printf("DEBUG actor %i sender_init\n", name);
+    */
 }
 
 void sender_destroy(struct bsal_actor *actor)
 {
     struct sender *sender1;
 
+    /*
+    printf("DEBUG sender_destroy\n");
+    */
     sender1 = (struct sender *)bsal_actor_pointer(actor);
     sender1->received = 0;
     sender1->actors_per_node = 0;
+
+    bsal_actor_die(actor);
 }
 
 void sender_receive(struct bsal_actor *actor, struct bsal_message *message)
@@ -36,16 +47,23 @@ void sender_receive(struct bsal_actor *actor, struct bsal_message *message)
     tag = bsal_message_tag(message);
 
     if (tag == BSAL_ACTOR_START) {
+        sender_init(actor);
 
         sender_start(actor, message);
 
+
     } else if (tag == SENDER_HELLO) {
+
+        if (bsal_actor_received_messages(actor) == 1) {
+            sender_init(actor);
+        }
+
         sender_hello(actor, message);
 
     } else if (tag == SENDER_KILL) {
         /*printf("Receives SENDER_KILL\n"); */
 
-        bsal_actor_die(actor);
+        sender_destroy(actor);
 
     } else if (tag == BSAL_ACTOR_BARRIER_REPLY) {
 
@@ -90,6 +108,10 @@ void sender_hello(struct bsal_actor *actor, struct bsal_message *message)
     sender1 = (struct sender *)bsal_actor_pointer(actor);
     name = bsal_actor_name(actor);
     size = bsal_actor_nodes(actor);
+    /*
+    printf("DEBUG actor %i size: %i, actors_per_node: %i\n", name, size,
+                    sender1->actors_per_node);
+                    */
     total = size * sender1->actors_per_node;
 
     memcpy(&events, bsal_message_buffer(message), sizeof(events));

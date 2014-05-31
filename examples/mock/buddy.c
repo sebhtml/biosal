@@ -5,8 +5,6 @@
 
 /* this vtable is required */
 struct bsal_actor_vtable buddy_vtable = {
-    .init = buddy_init,
-    .destroy = buddy_destroy,
     .receive = buddy_receive
 };
 
@@ -24,6 +22,8 @@ void buddy_destroy(struct bsal_actor *actor)
 
     buddy1 = (struct buddy *)bsal_actor_pointer(actor);
     buddy1->received = -1;
+
+    bsal_actor_die(actor);
 }
 
 void buddy_receive(struct bsal_actor *actor, struct bsal_message *message)
@@ -37,10 +37,11 @@ void buddy_receive(struct bsal_actor *actor, struct bsal_message *message)
     tag = bsal_message_tag(message);
 
     if (tag == BUDDY_DIE) {
+        buddy_init(actor);
         bsal_actor_print(actor);
         printf("buddy_receive Actor %i received a message (%i BUDDY_DIE) from actor %i\n",
                         name, tag, source);
 
-        bsal_actor_die(actor);
+        buddy_destroy(actor);
     }
 }

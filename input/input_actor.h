@@ -8,7 +8,6 @@
 
 struct bsal_input_actor {
     struct bsal_input_proxy proxy;
-    char *file_name;
     int proxy_ready;
 };
 

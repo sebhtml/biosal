@@ -16,6 +16,8 @@
 void bsal_actor_init(struct bsal_actor *actor, void *pointer,
                 struct bsal_actor_vtable *vtable)
 {
+    /*bsal_actor_init_fn_t init;*/
+
     actor->pointer = pointer;
     actor->name = -1;
     actor->supervisor = -1;
@@ -34,10 +36,21 @@ void bsal_actor_init(struct bsal_actor *actor, void *pointer,
     actor->locked = 0;
 
     bsal_actor_unpin(actor);
+
+    /*
+    init = bsal_actor_get_init(actor);
+    init(actor);
+    */
 }
 
 void bsal_actor_destroy(struct bsal_actor *actor)
 {
+    /*bsal_actor_init_fn_t destroy;*/
+/*
+    destroy = bsal_actor_get_destroy(actor);
+    destroy(actor);
+    */
+
     actor->name = -1;
     actor->dead = 1;
 
