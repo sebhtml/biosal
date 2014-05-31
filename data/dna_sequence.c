@@ -20,3 +20,16 @@ void bsal_dna_sequence_destroy(struct bsal_dna_sequence *sequence)
     sequence->length = 0;
     sequence->pair = -1;
 }
+
+int bsal_dna_sequence_load(struct bsal_dna_sequence *sequence,
+                void *buffer)
+{
+    return 0;
+}
+
+int bsal_dna_sequence_save(struct bsal_dna_sequence *sequence,
+                void *buffer)
+{
+    return 0;
+}
+
