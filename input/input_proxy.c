@@ -1,6 +1,8 @@
 
 #include "input_proxy.h"
 
+#include "input.h"
+
 #include <stdio.h>
 
 /*
@@ -14,8 +16,13 @@ void bsal_input_proxy_init(struct bsal_input_proxy *proxy,
     printf("DEBUG bsal_input_proxy_init open file %s\n", file);
 #endif
 
-    bsal_input_init(&proxy->input, &proxy->fastq, &bsal_fastq_input_vtable,
-                    file);
+    proxy->done = 0;
+
+    /* Try to open the input with various formats
+     */
+
+    bsal_input_proxy_try(proxy, &proxy->input, &proxy->fastq,
+                    &bsal_fastq_input_vtable, file);
 }
 
 int bsal_input_proxy_get_sequence(struct bsal_input_proxy *proxy,
@@ -44,5 +51,56 @@ int bsal_input_proxy_size(struct bsal_input_proxy *proxy)
 
 int bsal_input_proxy_error(struct bsal_input_proxy *proxy)
 {
-    return bsal_input_error(&proxy->input);
+    if (proxy->not_found) {
+        return BSAL_INPUT_ERROR_NOT_FOUND;
+
+    } else if (proxy->not_supported) {
+        return BSAL_INPUT_ERROR_NOT_SUPPORTED;
+    }
+
+    return BSAL_INPUT_ERROR_NONE;
+}
+
+void bsal_input_proxy_try(struct bsal_input_proxy *proxy,
+                struct bsal_input *input, void *pointer,
+                struct bsal_input_vtable *vtable, char *file)
+{
+    int error;
+
+    if (proxy->done) {
+        return;
+    }
+
+    /* Assume the worst case
+     */
+    proxy->not_supported = 1;
+    proxy->not_found = 1;
+
+    bsal_input_init(input, pointer, vtable, file);
+    error = bsal_input_error(input);
+
+    /* File does not exist.
+     */
+    if (error == BSAL_INPUT_ERROR_NOT_FOUND) {
+        bsal_input_destroy(input);
+        proxy->not_found = 1;
+        proxy->not_supported = 0;
+        proxy->done = 1;
+        return;
+    }
+
+    /* Format is not supported
+     */
+    if (!bsal_input_detect(input)) {
+        proxy->not_supported = 1;
+        proxy->not_found = 0;
+        bsal_input_destroy(input);
+
+    } else {
+        /* Found the format
+         */
+        proxy->not_supported = 0;
+        proxy->not_found = 0;
+        proxy->done = 1;
+    }
 }

@@ -8,6 +8,7 @@
 
 #define BSAL_INPUT_ERROR_NONE 0
 #define BSAL_INPUT_ERROR_NOT_FOUND 1
+#define BSAL_INPUT_ERROR_NOT_SUPPORTED 2
 
 struct bsal_dna_sequence;
 struct bsal_input_vtable;
