@@ -21,11 +21,8 @@ token=$(cat ~/github-token.txt)
 title=$(curl -X GET https://api.github.com/repos/$owner/$repo/issues/$number | grep '"title": '|sed 's="title": "==g'|sed 's=",==g')
 link=https://github.com/$owner/$repo/issues/$number
 
-title="$title"
-link="$link"
-
-echo $title
-echo $link
+echo "Title=$title"
+echo "Link: $link"
 
 (
 cat << EOF
@@ -43,17 +40,17 @@ rm message.txt
 commit=git log|head -n1 | awk '{print $2}'
 commit_link=https://github.com/$worker/$repo/commit/$commit
 
-# post comment
 # see http://stackoverflow.com/questions/7172784/how-to-post-json-data-with-curl-from-terminal-commandline-to-test-spring-rest
+echo "Adding comment"
 curl -X POST \
      -u $token:x-oauth-basic \
      -H "Content-Type: application/json" \
-     -d "{\"body\": \"Robot says: implemented in commit $commit_link by @$worker !\"}" \
-     https://api.github.com/repos/$owner/$repo/issues/$number/comments
+     -d "{\"body\": \"Hubot says: implemented in commit $commit_link by @$worker !\"}" \
+     https://api.github.com/repos/$owner/$repo/issues/$number/comments &> /dev/null
 
-# close issue
+echo "Closing issue"
 curl -X POST \
      -u $token:x-oauth-basic \
      -H "Content-Type: application/json" \
      -d "{\"state\": \"closed\"}" \
-     https://api.github.com/repos/$owner/$repo/issues/$number
+     https://api.github.com/repos/$owner/$repo/issues/$number &> /dev/null
