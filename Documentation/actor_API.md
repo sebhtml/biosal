@@ -20,13 +20,13 @@ BSAL_ACTOR_START
 
 Responses: -
 
-## BSAL_ACTOR_BARRIER_REPLY
+## BSAL_ACTOR_SYNCHRONIZE_REPLY
 
 ```C
-BSAL_ACTOR_BARRIER_REPLY
+BSAL_ACTOR_SYNCHRONIZE_REPLY
 ```
 
-- Description: Notification of barrier progression.
+- Description: Notification of synchronization progression.
 - Request message buffer: -
 
 Responses: -
@@ -125,23 +125,23 @@ int bsal_actor_nodes(struct bsal_actor *actor);
 
 Get number of nodes.
 
-## bsal_actor_barrier
+## bsal_actor_synchronize
 
 ```C
-void bsal_actor_barrier(struct bsal_actor *actor, int first_actor, int last_actor);
+void bsal_actor_synchronize(struct bsal_actor *actor, int first_actor, int last_actor);
 ```
 
-Begin a barrier.
+Begin a synchronization. A binomial-tree algorithm is used.
 
-## bsal_actor_barrier_completed
+## bsal_actor_synchronization_completed
 
 ```C
-int bsal_actor_barrier_completed(struct bsal_actor *actor);
+int bsal_actor_synchronization_completed(struct bsal_actor *actor);
 ```
 
-Verify is a barrier has completed. An actor is notified
-of a barrier progression with a message with tag
-BSAL_ACTOR_BARRIER_REPLY.
+Verify is a synchronization has completed. An actor is notified
+of a synchronization progression with a message with tag
+BSAL_ACTOR_SYNCHRONIZE_REPLY.
 
 ## bsal_actor_pin
 

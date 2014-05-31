@@ -65,12 +65,12 @@ void sender_receive(struct bsal_actor *actor, struct bsal_message *message)
 
         sender_destroy(actor);
 
-    } else if (tag == BSAL_ACTOR_BARRIER_REPLY) {
+    } else if (tag == BSAL_ACTOR_SYNCHRONIZE_REPLY) {
 
-        /*printf("sender_receive BSAL_ACTOR_BARRIER_REPLY\n");*/
+        /*printf("sender_receive BSAL_ACTOR_SYNCHRONIZE_REPLY\n");*/
 
-        if (bsal_actor_barrier_completed(actor)) {
-            printf("Completed barrier !\n");
+        if (bsal_actor_synchronization_completed(actor)) {
+            printf("Completed synchronize !\n");
             sender_kill_all(actor, message);
         }
     }
@@ -121,8 +121,8 @@ void sender_hello(struct bsal_actor *actor, struct bsal_message *message)
         printf("sender_hello completed test on actor %i, %i actors in total\n",
                         name, total);
 
-        printf("barrier %i-%i\n", 0, total - 1);
-        bsal_actor_barrier(actor, 0, total - 1);
+        printf("synchronize %i-%i\n", 0, total - 1);
+        bsal_actor_synchronize(actor, 0, total - 1);
         /*sender_kill_all(actor, message); */
     } else {
 

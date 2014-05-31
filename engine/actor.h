@@ -21,8 +21,8 @@
 
 enum {
     BSAL_ACTOR_START = BSAL_TAG_OFFSET_ACTOR,
-    BSAL_ACTOR_BARRIER,
-    BSAL_ACTOR_BARRIER_REPLY,
+    BSAL_ACTOR_SYNCHRONIZE,
+    BSAL_ACTOR_SYNCHRONIZE_REPLY,
     BSAL_ACTOR_BINOMIAL_TREE_SEND,
     BSAL_ACTOR_PROXY_MESSAGE
 };
@@ -48,9 +48,9 @@ struct bsal_actor {
     uint64_t received_messages;
     uint64_t sent_messages;
 
-    int barrier_started;
-    int barrier_responses;
-    int barrier_expected_responses;
+    int synchronization_started;
+    int synchronization_responses;
+    int synchronization_expected_responses;
 };
 
 void bsal_actor_init(struct bsal_actor *actor, void *pointer,
@@ -126,14 +126,14 @@ void bsal_actor_increase_received_messages(struct bsal_actor *actor);
 uint64_t bsal_actor_sent_messages(struct bsal_actor *actor);
 void bsal_actor_increase_sent_messages(struct bsal_actor *actor);
 
-/* barrier functions
+/* synchronization functions
  */
-void bsal_actor_receive_barrier(struct bsal_actor *actor,
+void bsal_actor_receive_synchronize(struct bsal_actor *actor,
                 struct bsal_message *message);
-void bsal_actor_receive_barrier_reply(struct bsal_actor *actor,
+void bsal_actor_receive_synchronize_reply(struct bsal_actor *actor,
                 struct bsal_message *message);
-int bsal_actor_barrier_completed(struct bsal_actor *actor);
-void bsal_actor_barrier(struct bsal_actor *actor, int first_actor, int last_actor);
+int bsal_actor_synchronization_completed(struct bsal_actor *actor);
+void bsal_actor_synchronize(struct bsal_actor *actor, int first_actor, int last_actor);
 
 void bsal_actor_receive_proxy_message(struct bsal_actor *actor,
                 struct bsal_message *message);

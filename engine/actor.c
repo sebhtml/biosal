@@ -25,9 +25,9 @@ void bsal_actor_init(struct bsal_actor *actor, void *pointer,
     actor->vtable = vtable;
     actor->worker = NULL;
 
-    actor->barrier_started = 0;
-    actor->barrier_expected_responses = 0;
-    actor->barrier_responses = 0;
+    actor->synchronization_started = 0;
+    actor->synchronization_expected_responses = 0;
+    actor->synchronization_responses = 0;
 
     actor->received_messages = 0;
     actor->sent_messages = 0;
@@ -274,12 +274,12 @@ void bsal_actor_receive(struct bsal_actor *actor, struct bsal_message *message)
         bsal_actor_receive_binomial_tree_send(actor, message);
         return;
 
-    } else if (tag == BSAL_ACTOR_BARRIER) {
-        bsal_actor_receive_barrier(actor, message);
+    } else if (tag == BSAL_ACTOR_SYNCHRONIZE) {
+        bsal_actor_receive_synchronize(actor, message);
         return;
 
-    } else if (tag == BSAL_ACTOR_BARRIER_REPLY) {
-        bsal_actor_receive_barrier_reply(actor, message);
+    } else if (tag == BSAL_ACTOR_SYNCHRONIZE_REPLY) {
+        bsal_actor_receive_synchronize_reply(actor, message);
     } else if (tag == BSAL_ACTOR_PROXY_MESSAGE) {
         bsal_actor_receive_proxy_message(actor, message);
         return;
@@ -303,69 +303,69 @@ void bsal_actor_receive_proxy_message(struct bsal_actor *actor,
                     message, source);
 }
 
-void bsal_actor_receive_barrier(struct bsal_actor *actor,
+void bsal_actor_receive_synchronize(struct bsal_actor *actor,
                 struct bsal_message *message)
 {
 #ifdef BSAL_ACTOR_DEBUG
-    printf("DEBUG56 replying to %i with BSAL_ACTOR_BARRIER_REPLY\n",
+    printf("DEBUG56 replying to %i with BSAL_ACTOR_SYNCHRONIZE_REPLY\n",
                     bsal_message_source(message));
 #endif
 
-    bsal_message_set_tag(message, BSAL_ACTOR_BARRIER_REPLY);
+    bsal_message_set_tag(message, BSAL_ACTOR_SYNCHRONIZE_REPLY);
     bsal_actor_send(actor, bsal_message_source(message), message);
 }
 
-void bsal_actor_receive_barrier_reply(struct bsal_actor *actor,
+void bsal_actor_receive_synchronize_reply(struct bsal_actor *actor,
                 struct bsal_message *message)
 {
-    if (actor->barrier_started) {
+    if (actor->synchronization_started) {
 
 #ifdef BSAL_ACTOR_DEBUG
-        printf("DEBUG99 barrier_reply %i/%i\n",
-                        actor->barrier_responses,
-                        actor->barrier_expected_responses);
+        printf("DEBUG99 synchronization_reply %i/%i\n",
+                        actor->synchronization_responses,
+                        actor->synchronization_expected_responses);
 #endif
 
-        actor->barrier_responses++;
+        actor->synchronization_responses++;
     }
 }
 
-void bsal_actor_barrier(struct bsal_actor *actor, int first, int last)
+void bsal_actor_synchronize(struct bsal_actor *actor, int first, int last)
 {
     struct bsal_message message;
 
-    actor->barrier_started = 1;
-    actor->barrier_expected_responses = last - first + 1;
-    actor->barrier_responses = 0;
+    actor->synchronization_started = 1;
+    actor->synchronization_expected_responses = last - first + 1;
+    actor->synchronization_responses = 0;
 
-    /* emit barrier
+    /* emit synchronization
      */
 
 #ifdef BSAL_ACTOR_DEBUG
-    printf("DEBUG actor %i emit barrier %i-%i, expected: %i\n",
+    printf("DEBUG actor %i emit synchronization %i-%i, expected: %i\n",
                     bsal_actor_name(actor), first, last,
-                    actor->barrier_expected_responses);
+                    actor->synchronization_expected_responses);
 #endif
 
-    bsal_message_init(&message, BSAL_ACTOR_BARRIER, 0, NULL);
+    bsal_message_init(&message, BSAL_ACTOR_SYNCHRONIZE, 0, NULL);
     bsal_actor_send_range(actor, first, last, &message);
     bsal_message_destroy(&message);
 }
 
-int bsal_actor_barrier_completed(struct bsal_actor *actor)
+int bsal_actor_synchronization_completed(struct bsal_actor *actor)
 {
-    if (actor->barrier_started == 0) {
+    if (actor->synchronization_started == 0) {
         return 0;
     }
 
 #ifdef BSAL_ACTOR_DEBUG
-    printf("DEBUG32 actor %i bsal_actor_barrier_completed %i/%i\n",
+    printf("DEBUG32 actor %i bsal_actor_synchronization_completed %i/%i\n",
                     bsal_actor_name(actor),
-                    actor->barrier_responses,
-                    actor->barrier_expected_responses);
+                    actor->synchronization_responses,
+                    actor->synchronization_expected_responses);
 #endif
 
-    if (actor->barrier_responses == actor->barrier_expected_responses) {
+    if (actor->synchronization_responses == actor->synchronization_expected_responses) {
         return 1;
     }
 
