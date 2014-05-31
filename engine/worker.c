@@ -111,6 +111,8 @@ void bsal_worker_work(struct bsal_worker *worker, struct bsal_work *work)
 #endif
 
     /* TODO free the buffer with the slab allocator */
+
+    /*printf("DEBUG182 Worker free %p\n", buffer);*/
     free(buffer);
 
     /* TODO replace with slab allocator */
@@ -125,10 +127,11 @@ struct bsal_node *bsal_worker_node(struct bsal_worker *worker)
 void bsal_worker_send(struct bsal_worker *worker, struct bsal_message *message)
 {
     struct bsal_message copy;
-    char *buffer;
+    void *buffer;
     int count;
     int metadata_size;
     int all;
+    void *old_buffer;
 
     memcpy(&copy, message, sizeof(struct bsal_message));
     count = bsal_message_count(&copy);
@@ -154,7 +157,10 @@ void bsal_worker_send(struct bsal_worker *worker, struct bsal_message *message)
      * Copy the message data.
      */
     if (count > 0) {
-        memcpy(buffer, bsal_message_buffer(message), count);
+        old_buffer = bsal_message_buffer(message);
+        memcpy(buffer, old_buffer, count);
+
+        /* TODO use slab allocator */
     }
 
     bsal_message_set_buffer(&copy, buffer);

@@ -107,6 +107,8 @@ Functions that can be called within an actor context
 | bsal_actor_nodes | Get number of nodes |
 | bsal_actor_pin | Pin an actor to an worker for memory affinity purposes |
 | bsal_actor_unpin | Unpin an actor |
+| bsal_actor_barrier | Begin a barrier |
+| bsal_actor_barrier_completed | (BSAL_ACTOR_BARRIER_REPLY is a reply barrier message tag) |
 
 # Tests
 
