@@ -13,7 +13,6 @@ void bsal_input_init(struct bsal_input *input, void *pointer,
     input->pointer = pointer;
     input->vtable = vtable;
     input->sequences = 0;
-    input->buffer = NULL;
     input->file = file;
 
     handler = bsal_input_vtable_get_init(input->vtable);
@@ -26,6 +25,11 @@ void bsal_input_destroy(struct bsal_input *input)
 
     handler = bsal_input_vtable_get_init(input->vtable);
     handler(input);
+
+    input->pointer = NULL;
+    input->vtable = NULL;
+    input->sequences = -1;
+    input->file = NULL;
 }
 
 int bsal_input_get_sequence(struct bsal_input *input,

@@ -2,6 +2,10 @@
 #ifndef _BSAL_INPUT_H
 #define _BSAL_INPUT_H
 
+/*
+#define BSAL_INPUT_DEBUG
+*/
+
 struct bsal_dna_sequence;
 struct bsal_input_vtable;
 
@@ -10,7 +14,6 @@ struct bsal_input {
     void *pointer;
     char *file;
     int sequences;
-    char *buffer;
 };
 
 void bsal_input_init(struct bsal_input *input, void *pointer,

@@ -2,6 +2,8 @@
 #include "fastq_input.h"
 
 #include <stdio.h>
+#include <stdlib.h>
+
 
 struct bsal_input_vtable bsal_fastq_input_vtable = {
     .init = bsal_fastq_input_init,
@@ -17,12 +19,14 @@ void bsal_fastq_input_init(struct bsal_input *input)
 
     file = bsal_input_file(input);
 
+#ifdef BSAL_INPUT_DEBUG
     printf("DEBUG bsal_fastq_input_init %s\n",
                     file);
+#endif
 
     fastq = (struct bsal_fastq_input *)bsal_input_pointer(input);
-    fastq->descriptor = fopen(file, "r");
-    fastq->dummy = 0;
+
+    bsal_buffered_reader_init(&fastq->reader, file);
 }
 
 void bsal_fastq_input_destroy(struct bsal_input *input)
@@ -30,9 +34,7 @@ void bsal_fastq_input_destroy(struct bsal_input *input)
     struct bsal_fastq_input *fastq;
 
     fastq = (struct bsal_fastq_input *)bsal_input_pointer(input);
-    fclose(fastq->descriptor);
-    fastq->dummy = -1;
-    fastq->descriptor = NULL;
+    bsal_buffered_reader_destroy(&fastq->reader);
 }
 
 int bsal_fastq_input_get_sequence(struct bsal_input *input,
@@ -40,14 +42,18 @@ int bsal_fastq_input_get_sequence(struct bsal_input *input,
 {
     struct bsal_fastq_input *fastq;
 
+    /* TODO use a dynamic buffer to accept long reads... */
+    char buffer[2048];
+    int value;
+
     fastq = (struct bsal_fastq_input *)bsal_input_pointer(input);
-    fastq->dummy++;
 
-    if (fastq->dummy < 1555999) {
-        return 1;
-    }
+    value = bsal_buffered_reader_read_line(&fastq->reader, buffer, 2048);
+    value = bsal_buffered_reader_read_line(&fastq->reader, buffer, 2048);
+    value = bsal_buffered_reader_read_line(&fastq->reader, buffer, 2048);
+    value = bsal_buffered_reader_read_line(&fastq->reader, buffer, 2048);
 
-    return 0;
+    return value;
 }
 
 int bsal_fastq_input_detect(struct bsal_input *input)

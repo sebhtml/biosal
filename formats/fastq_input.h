@@ -4,12 +4,12 @@
 
 #include <input/input.h>
 #include <input/input_vtable.h>
+#include <input/buffered_reader.h>
 
 #include <stdio.h>
 
 struct bsal_fastq_input {
-    FILE *descriptor;
-    int dummy;
+    struct bsal_buffered_reader reader;
 };
 
 struct bsal_input_vtable bsal_fastq_input_vtable;
