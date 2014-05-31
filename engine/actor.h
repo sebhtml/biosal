@@ -10,7 +10,7 @@
 
 /* engine/actor.h */
 #define BSAL_TAG_OFFSET_ACTOR 0
-#define BSAL_TAG_COUNT_ACTOR 1
+#define BSAL_TAG_COUNT_ACTOR 2
 
 /* input/input_actor.h */
 #define BSAL_TAG_OFFSET_INPUT_ACTOR ( BSAL_TAG_OFFSET_ACTOR + BSAL_TAG_COUNT_ACTOR )
@@ -20,7 +20,8 @@
 #define BSAL_TAG_OFFSET_USER ( BSAL_TAG_OFFSET_INPUT_ACTOR + BSAL_TAG_COUNT_INPUT_ACTOR )
 
 enum {
-    BSAL_ACTOR_START = BSAL_TAG_OFFSET_ACTOR
+    BSAL_ACTOR_START = BSAL_TAG_OFFSET_ACTOR,
+    BSAL_ACTOR_BINOMIAL_TREE_SEND
 };
 
 struct bsal_node;
@@ -67,7 +68,20 @@ bsal_actor_destroy_fn_t bsal_actor_get_destroy(struct bsal_actor *actor);
 bsal_actor_receive_fn_t bsal_actor_get_receive(struct bsal_actor *actor);
 
 void bsal_actor_send(struct bsal_actor *actor, int name, struct bsal_message *message);
+
+/* Send a message to a range of actors.
+ * The implementation uses a binomial tree.
+ */
+void bsal_actor_send_range(struct bsal_actor *actor, int first, int last,
+                struct bsal_message *message);
+void bsal_actor_send_range_standard(struct bsal_actor *actor, int first, int last,
+                struct bsal_message *message);
+void bsal_actor_send_range_binomial_tree(struct bsal_actor *actor, int first, int last,
+                struct bsal_message *message);
+
 void bsal_actor_receive(struct bsal_actor *actor, struct bsal_message *message);
+void bsal_actor_receive_binomial_tree_send(struct bsal_actor *actor,
+                struct bsal_message *message);
 
 struct bsal_node *bsal_actor_node(struct bsal_actor *actor);
 

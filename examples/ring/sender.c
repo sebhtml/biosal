@@ -49,7 +49,6 @@ void sender_receive(struct bsal_actor *actor, struct bsal_message *message)
 
 void sender_kill_all(struct bsal_actor *actor, struct bsal_message *message)
 {
-    int i;
     int total;
     int size;
     struct sender *sender1;
@@ -60,9 +59,10 @@ void sender_kill_all(struct bsal_actor *actor, struct bsal_message *message)
 
     bsal_message_set_tag(message, SENDER_KILL);
 
-    for (i = 0; i < total; i++) {
-        bsal_actor_send(actor, i, message);
-    }
+    printf("Killing range %i to %i\n",
+                    0, total - 1);
+
+    bsal_actor_send_range(actor, 0, total - 1, message);
 }
 
 void sender_hello(struct bsal_actor *actor, struct bsal_message *message)
