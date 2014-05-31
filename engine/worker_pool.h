@@ -2,13 +2,13 @@
 #ifndef _BSAL_WORKER_POOL_H
 #define _BSAL_WORKER_POOL_H
 
-#include "worker_thread.h"
+#include "worker.h"
 
 struct bsal_node;
-struct bsal_worker_thread;
+struct bsal_worker;
 
 struct bsal_worker_pool {
-    struct bsal_worker_thread *worker_array;
+    struct bsal_worker *worker_array;
     struct bsal_node *node;
 
     int worker_for_work;
@@ -30,10 +30,10 @@ void bsal_worker_pool_stop(struct bsal_worker_pool *pool);
 
 int bsal_worker_pool_pull(struct bsal_worker_pool *pool, struct bsal_message *message);
 
-struct bsal_worker_thread *bsal_worker_pool_select_worker_for_run(struct bsal_worker_pool *pool);
-struct bsal_worker_thread *bsal_worker_pool_select_worker_for_work(
+struct bsal_worker *bsal_worker_pool_select_worker_for_run(struct bsal_worker_pool *pool);
+struct bsal_worker *bsal_worker_pool_select_worker_for_work(
                 struct bsal_worker_pool *node, struct bsal_work *work);
-struct bsal_worker_thread *bsal_worker_pool_select_worker_for_message(struct bsal_worker_pool *pool);
+struct bsal_worker *bsal_worker_pool_select_worker_for_message(struct bsal_worker_pool *pool);
 int bsal_worker_pool_next_worker(struct bsal_worker_pool *node, int thread);
 
 void bsal_worker_pool_schedule_work(struct bsal_worker_pool *pool, struct bsal_work *work);

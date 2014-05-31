@@ -1,6 +1,6 @@
 
 #include "actor.h"
-#include "worker_thread.h"
+#include "worker.h"
 #include "node.h"
 
 #include <stdlib.h>
@@ -79,7 +79,7 @@ void bsal_actor_print(struct bsal_actor *actor)
                     " received %i sent %i\n", bsal_actor_name(actor),
                     bsal_actor_supervisor(actor),
                     bsal_node_name(bsal_actor_node(actor)),
-                    bsal_worker_thread_name(bsal_actor_thread(actor)),
+                    bsal_worker_name(bsal_actor_thread(actor)),
                     received, sent);
 }
 
@@ -93,7 +93,7 @@ bsal_actor_destroy_fn_t bsal_actor_get_destroy(struct bsal_actor *actor)
     return bsal_actor_vtable_get_destroy(actor->vtable);
 }
 
-void bsal_actor_set_thread(struct bsal_actor *actor, struct bsal_worker_thread *thread)
+void bsal_actor_set_thread(struct bsal_actor *actor, struct bsal_worker *thread)
 {
     actor->thread = thread;
 }
@@ -105,7 +105,7 @@ void bsal_actor_send(struct bsal_actor *actor, int name, struct bsal_message *me
     source = bsal_actor_name(actor);
     bsal_message_set_source(message, source);
     bsal_message_set_destination(message, name);
-    bsal_worker_thread_send(actor->thread, message);
+    bsal_worker_send(actor->thread, message);
 
     bsal_actor_increase_sent_messages(actor);
 }
@@ -121,7 +121,7 @@ int bsal_actor_spawn(struct bsal_actor *actor, void *pointer,
     return name;
 }
 
-struct bsal_worker_thread *bsal_actor_thread(struct bsal_actor *actor)
+struct bsal_worker *bsal_actor_thread(struct bsal_actor *actor)
 {
     return actor->thread;
 }
@@ -147,7 +147,7 @@ struct bsal_node *bsal_actor_node(struct bsal_actor *actor)
         return NULL;
     }
 
-    return bsal_worker_thread_node(bsal_actor_thread(actor));
+    return bsal_worker_node(bsal_actor_thread(actor));
 }
 
 void bsal_actor_lock(struct bsal_actor *actor)
@@ -186,7 +186,7 @@ void bsal_actor_pin(struct bsal_actor *actor)
     actor->affinity_thread = actor->thread;
 }
 
-struct bsal_worker_thread *bsal_actor_affinity_thread(struct bsal_actor *actor)
+struct bsal_worker *bsal_actor_affinity_thread(struct bsal_actor *actor)
 {
     return actor->affinity_thread;
 }
