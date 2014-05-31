@@ -1,3 +1,3 @@
 #!/bin/bash
 
-git push sebhtml energy
+git push origin energy
