@@ -74,5 +74,5 @@ BSAL_INPUT_ACTOR_CLOSE
 - Description: Close the file
 - Request message buffer: -
 
- Responses: -
+Responses: -
 

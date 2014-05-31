@@ -31,6 +31,8 @@ Branch | Browse | HTTPS | SSH
  entropy (Fangfang's development branch) | https://github.com/levinas/biosal/tree/entropy | https://github.com/levinas/biosal.git | git@github.com:levinas/biosal.git
  energy (Seb's development branch) | https://github.com/sebhtml/biosal/tree/energy | https://github.com/sebhtml/biosal.git | git@github.com:sebhtml/biosal.git
 
+see 'git log' for authors
+
 # License
 
 biosal is licensed under the [The BSD 2-Clause License](LICENSE.md)
@@ -100,10 +102,6 @@ node) and 64 workers per node for a total of
 Because the whole thing is event-driven by inbound and outbound messages,
 a single node can run much more actors than the number of
 workers it has.
-
-# Authors
-
-see 'git log'
 
 # Design links
 
