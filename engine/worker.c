@@ -67,7 +67,6 @@ void bsal_worker_work(struct bsal_worker *worker, struct bsal_work *work)
 {
     struct bsal_actor *actor;
     struct bsal_message *message;
-    bsal_actor_receive_fn_t receive;
     int dead;
     char *buffer;
 
@@ -81,9 +80,6 @@ void bsal_worker_work(struct bsal_worker *worker, struct bsal_work *work)
     bsal_actor_set_worker(actor, worker);
     message = bsal_work_message(work);
 
-    bsal_actor_increase_received_messages(actor);
-    receive = bsal_actor_get_receive(actor);
-
     /* Store the buffer location before calling the user
      * code because the user may change the message buffer
      * pointer. We need to free the buffer regardless if the
@@ -93,7 +89,7 @@ void bsal_worker_work(struct bsal_worker *worker, struct bsal_work *work)
 
     /* call the actor receive code
      */
-    receive(actor, message);
+    bsal_actor_receive(actor, message);
 
     bsal_actor_set_worker(actor, NULL);
     dead = bsal_actor_dead(actor);

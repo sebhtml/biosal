@@ -62,7 +62,9 @@ void bsal_actor_die(struct bsal_actor *actor);
 bsal_actor_init_fn_t bsal_actor_get_init(struct bsal_actor *actor);
 bsal_actor_destroy_fn_t bsal_actor_get_destroy(struct bsal_actor *actor);
 bsal_actor_receive_fn_t bsal_actor_get_receive(struct bsal_actor *actor);
+
 void bsal_actor_send(struct bsal_actor *actor, int name, struct bsal_message *message);
+void bsal_actor_receive(struct bsal_actor *actor, struct bsal_message *message);
 
 struct bsal_node *bsal_actor_node(struct bsal_actor *actor);
 

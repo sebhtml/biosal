@@ -1,3 +1,3 @@
 #!/bin/bash
 
-EDITOR=nano git commit -as
+git commit -as

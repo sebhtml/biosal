@@ -74,7 +74,7 @@ test: $(TESTS)
 	./test_hash_table_group
 	./test_hash_table
 
-run: mock mock1 ring reader
+run: mock mock1 ring
 
 test_fifo: $(LIBRARY) $(TEST_FIFO)
 	$(Q)$(ECHO) "  LD $@"

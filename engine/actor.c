@@ -230,3 +230,13 @@ int bsal_actor_threads(struct bsal_actor *actor)
 {
     return bsal_node_threads(bsal_actor_node(actor));
 }
+
+void bsal_actor_receive(struct bsal_actor *actor, struct bsal_message *message)
+{
+    bsal_actor_receive_fn_t receive;
+
+    receive = bsal_actor_get_receive(actor);
+    bsal_actor_increase_received_messages(actor);
+
+    receive(actor, message);
+}
