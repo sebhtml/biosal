@@ -2,11 +2,13 @@
 #ifndef _BSAL_INPUT_ACTOR_H
 #define _BSAL_INPUT_ACTOR_H
 
+#include "input_proxy.h"
+
 #include <engine/actor.h>
 
 struct bsal_input_actor {
+    struct bsal_input_proxy proxy;
     char *file_name;
-    int supervisor;
 };
 
 enum {
@@ -15,6 +17,7 @@ enum {
     BSAL_INPUT_ACTOR_COUNT,
     BSAL_INPUT_ACTOR_COUNT_YIELD,
     BSAL_INPUT_ACTOR_COUNT_CONTINUE,
+    BSAL_INPUT_ACTOR_COUNT_READY,
     BSAL_INPUT_ACTOR_COUNT_RESULT,
     BSAL_INPUT_ACTOR_CLOSE
 };

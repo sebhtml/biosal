@@ -74,7 +74,7 @@ void reader_receive(struct bsal_actor *actor, struct bsal_message *message)
 
     } else if (tag == BSAL_INPUT_ACTOR_COUNT_RESULT) {
 
-        count = *(char *)bsal_message_buffer(message);
+        count = *(int *)bsal_message_buffer(message);
         printf("actor %i: file has %i items\n", name, count);
 
         bsal_message_set_tag(message, BSAL_INPUT_ACTOR_CLOSE);

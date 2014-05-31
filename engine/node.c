@@ -199,8 +199,8 @@ void bsal_node_start(struct bsal_node *node)
     if (node->workers_in_threads) {
 #ifdef BSAL_NODE_DEBUG
         printf("DEBUG starting %i worker threads\n",
-#endif
                         bsal_worker_pool_workers(&node->worker_pool));
+#endif
         bsal_worker_pool_start(&node->worker_pool);
     }
 

@@ -10,12 +10,24 @@ EXAMPLES=test_mock test_ring test_reader
 
 all: $(EXAMPLES) $(TESTS)
 
-LIBRARY=engine/message.o engine/node.o engine/actor.o engine/actor_vtable.o \
-	engine/work.o engine/worker_thread.o engine/worker_pool.o \
-	structures/hash_table.o structures/hash_table_group.o \
-	structures/fifo.o structures/fifo_array.o \
-	hash/murmur_hash_2_64_a.o \
-    input/input_actor.o
+LIBRARY=
+
+# actor engine
+LIBRARY += engine/message.o engine/node.o engine/actor.o engine/actor_vtable.o \
+	engine/work.o engine/worker_thread.o engine/worker_pool.o
+
+# data structures
+LIBRARY += structures/hash_table.o structures/hash_table_group.o \
+	structures/fifo.o structures/fifo_array.o
+
+# hash functions
+LIBRARY += hash/murmur_hash_2_64_a.o
+
+# inputs for actors
+LIBRARY += input/input_actor.o input/input_proxy.o
+
+# data storage
+LIBRARY += data/dna_sequence.o
 
 MOCK_EXAMPLE=examples/mock/main.o examples/mock/mock.o examples/mock/buddy.o
 RING_EXAMPLE=examples/ring/main.o examples/ring/sender.o
