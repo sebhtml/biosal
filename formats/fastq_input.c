@@ -1,6 +1,8 @@
 
 #include "fastq_input.h"
 
+#include <data/dna_sequence.h>
+
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -59,6 +61,8 @@ int bsal_fastq_input_get_sequence(struct bsal_input *input,
 #ifdef BSAL_FASTQ_INPUT_DEBUG2
     printf("DEBUG bsal_fastq_input_get_sequence %s\n", buffer);
 #endif
+
+    bsal_dna_sequence_init(sequence, buffer);
 
     value = bsal_buffered_reader_read_line(&fastq->reader, buffer, 2048);
     value = bsal_buffered_reader_read_line(&fastq->reader, buffer, 2048);
