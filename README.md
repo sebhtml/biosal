@@ -1,4 +1,4 @@
-biosal is a distributed **BIO**logical **S**equence **A**nalysis **L**ibrary.
+biosal is a distributed BIOlogical Sequence Analysis Library.
 
 This is a work in progress.
 
@@ -13,22 +13,16 @@ Looking for the Application Programming Interface (API) ? Look no further !
 - Message passing: MPI 2.2
 - Threads: Pthreads (IEEE Std 1003.1c - 1995)
 
-# Other possible names
-
-- <name> := <bio><s><a><l>
-- <bio> := Biological or Biology
-- <s> := Sequence or Scalable or Salable or Salubrious or Satisfactory
-- <a> := Analysis or Actor or Actors
-- <l> := Library or Lift
-
-Example of a name: Biolog
-
 # Try it out
 
 ```bash
 make test # run tests
 make run # run examples
-```
+
+`see [examples](examples)
+see [tests](tests)
+
+``
 
 # Branches
 
@@ -108,14 +102,6 @@ Because the whole thing is event-driven by inbound and outbound messages,
 a single node can run much more actors than the number of
 workers it has.
 
-# Examples
-
-see examples/
-
-# Tests
-
-see tests/
-
 # Authors
 
 see 'git log'
@@ -123,3 +109,13 @@ see 'git log'
 # Design links
 
 - [Linux workqueue](https://www.kernel.org/doc/Documentation/workqueue.txt)
+
+# Other possible names
+
+- name := biosal
+- bio := Biological or Biology
+- s := Sequence or Scalable or Salable or Salubrious or Satisfactory
+- a := Analysis or Actor or Actors
+- l := Library or Lift
+
+

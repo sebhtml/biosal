@@ -5,10 +5,10 @@ The library has much more under its hood.
 
 Also, this is in heavy development.
 
-# Actor
+# Actor API
 
-These functions (except bsal_node_spawn) can be called within an actor context (inside a receive function).
-Actors spawned with **bsal_node_spawn** (initial actors) receive a message with tag BSAL_ACTOR_START.
+These functions (except **bsal_node_spawn**) can be called within an actor context (inside a receive function).
+Actors spawned with **bsal_node_spawn** (initial actors) receive a message with tag **BSAL_ACTOR_START**.
 
 ## Header
 
@@ -173,19 +173,39 @@ to interact with it in order to read sequence data.
 
 ## BSAL_INPUT_ACTOR_OPEN
 
-- Request message tag: BSAL_INPUT_ACTOR_OPEN
+- Request message tag:
+
+```C
+BSAL_INPUT_ACTOR_OPEN
+```
+
 - Description: Open an input file.
 - Request message buffer: File path (char *)
 
 Responses:
 
-- Response message tag: BSAL_INPUT_ACTOR_OPEN_OK
+```C
+BSAL_INPUT_ACTOR_OPEN_OK
+```
+
 - Condition: Successful
 - Response message buffer: -
 
-- Response message tag: BSAL_INPUT_ACTOR_OPEN_NOT_FOUND
+```C
+BSAL_INPUT_ACTOR_OPEN_NOT_FOUND
+```
+
 - Condition: File not found
 - Response message buffer: -
+
+```C
+BSAL_INPUT_ACTOR_OPEN_NOT_SUPPORTED
+```
+
+- Condition: Format not supported
+- Response message buffer: -
+
+
 
 ## BSAL_INPUT_ACTOR_COUNT
 
