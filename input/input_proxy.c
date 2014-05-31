@@ -14,24 +14,14 @@ void bsal_input_proxy_init(struct bsal_input_proxy *proxy,
     printf("DEBUG bsal_input_proxy_init open file %s\n", file);
 #endif
 
-    proxy->sequences = 0;
+    bsal_input_init(&proxy->input, &proxy->fastq, &bsal_fastq_input_vtable,
+                    file);
 }
 
 int bsal_input_proxy_get_sequence(struct bsal_input_proxy *proxy,
                 struct bsal_dna_sequence *sequence)
 {
-    proxy->sequences++;
-
-    if (proxy->sequences < 1234567) {
-        return 1;
-    }
-
-#ifdef BSAL_INPUT_PROXY_DEBUG
-    printf("DEBUG bsal_input_proxy_get_sequence END %i\n",
-                    proxy->sequences);
-#endif
-
-    return 0;
+    return bsal_input_get_sequence(&proxy->input, sequence);
 }
 
 void bsal_input_proxy_destroy(struct bsal_input_proxy *proxy)
@@ -40,7 +30,7 @@ void bsal_input_proxy_destroy(struct bsal_input_proxy *proxy)
     printf("DEBUG bsal_input_proxy_destroy\n");
 #endif
 
-    proxy->sequences = -1;
+    bsal_input_destroy(&proxy->input);
 }
 
 int bsal_input_proxy_size(struct bsal_input_proxy *proxy)
@@ -49,5 +39,5 @@ int bsal_input_proxy_size(struct bsal_input_proxy *proxy)
     printf("DEBUG size %i\n", proxy->sequences);
 #endif
 
-    return proxy->sequences;
+    return bsal_input_size(&proxy->input);
 }

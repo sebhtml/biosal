@@ -1,6 +1,8 @@
 
 #include "input_actor.h"
 
+#include <data/dna_sequence.h>
+
 #include <stdio.h>
 
 /*

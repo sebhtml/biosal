@@ -2,10 +2,13 @@
 #ifndef _BSAL_INPUT_PROXY_H
 #define _BSAL_INPUT_PROXY_H
 
-#include <data/dna_sequence.h>
+#include <formats/fastq_input.h>
+
+struct bsal_dna_sequence;
 
 struct bsal_input_proxy {
-    int sequences;
+    struct bsal_input input;
+    struct bsal_fastq_input fastq;
 };
 
 void bsal_input_proxy_init(struct bsal_input_proxy *proxy,

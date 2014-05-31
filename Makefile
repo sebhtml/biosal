@@ -24,15 +24,21 @@ LIBRARY += structures/hash_table.o structures/hash_table_group.o \
 LIBRARY += hash/murmur_hash_2_64_a.o
 
 # inputs for actors
-LIBRARY += input/input_actor.o input/input_proxy.o
+LIBRARY += input/input_actor.o input/input_proxy.o input/input.o \
+           input/input_vtable.o
 
 # data storage
 LIBRARY += data/dna_sequence.o
 
+# formats
+LIBRARY += formats/fastq_input.o
+
+# examples
 MOCK_EXAMPLE=examples/mock/main.o examples/mock/mock.o examples/mock/buddy.o
 RING_EXAMPLE=examples/ring/main.o examples/ring/sender.o
 READER_EXAMPLE=examples/reader/main.o examples/reader/reader.o
 
+# tests
 TEST_FIFO=tests/test.o tests/test_fifo.o
 TEST_FIFO_ARRAY=tests/test.o tests/test_fifo_array.o
 TEST_HASH_TABLE_GROUP=tests/test.o tests/test_hash_table_group.o
