@@ -18,7 +18,7 @@ number=$1
 token=$(cat ~/github-token.txt)
 
 # get title
-title=$(curl -X GET https://api.github.com/repos/$owner/$repo/issues/$number | grep '"title": '|sed 's="title": "==g'|sed 's=",==g')
+title=$(curl -X GET https://api.github.com/repos/$owner/$repo/issues/$number | grep '"title": '|sed 's=  "title": "==g'|sed 's=",==g')
 link=https://github.com/$owner/$repo/issues/$number
 
 echo "Title=$title"
@@ -45,7 +45,7 @@ echo "Adding comment"
 curl -X POST \
      -u $token:x-oauth-basic \
      -H "Content-Type: application/json" \
-     -d "{\"body\": \"Hubot says: implemented in commit $commit_link by @$worker !\"}" \
+     -d "{\"body\": \"@hubot says: implemented in commit $commit_link by @$worker !\"}" \
      https://api.github.com/repos/$owner/$repo/issues/$number/comments &> /dev/null
 
 echo "Closing issue"
