@@ -1,10 +1,3 @@
-# Notice
-
-This API only lists the public interface elements.
-The library has much more under its hood.
-
-Also, this is in heavy development.
-
 # Actor API
 
 These functions (except **bsal_node_spawn**) can be called within an actor context (inside a receive function).
@@ -18,7 +11,12 @@ Actors spawned with **bsal_node_spawn** (initial actors) receive a message with 
 
 ## BSAL_ACTOR_START
 
-- Request message tag: BSAL_ACTOR_START
+Request message tag:
+
+```C
+BSAL_ACTOR_START
+```
+
 - Description: A message with this tag is sent to every actor present when the runtime system starts.
 - Request message buffer: -
 
@@ -26,7 +24,12 @@ Responses: -
 
 ## BSAL_ACTOR_BARRIER_REPLY
 
-- Request message tag: BSAL_ACTOR_BARRIER_REPLY
+Request message tag:
+
+```C
+BSAL_ACTOR_BARRIER_REPLY
+```
+
 - Description: Notification of barrier progression.
 - Request message buffer: -
 
@@ -160,73 +163,4 @@ Unpin an actor.
 void bsal_actor_unpin(struct bsal_actor *actor);
 ```
 
-# Input actor API
 
-How to use: spawn an bsal_input_actor actor and send it messages
-to interact with it in order to read sequence data.
-
-## Header
-
-```C
-#include <input/input_actor.h>
-```
-
-## BSAL_INPUT_ACTOR_OPEN
-
-- Request message tag:
-
-```C
-BSAL_INPUT_ACTOR_OPEN
-```
-
-- Description: Open an input file.
-- Request message buffer: File path (char *)
-
-Responses:
-
-```C
-BSAL_INPUT_ACTOR_OPEN_OK
-```
-
-- Condition: Successful
-- Response message buffer: -
-
-```C
-BSAL_INPUT_ACTOR_OPEN_NOT_FOUND
-```
-
-- Condition: File not found
-- Response message buffer: -
-
-```C
-BSAL_INPUT_ACTOR_OPEN_NOT_SUPPORTED
-```
-
-- Condition: Format not supported
-- Response message buffer: -
-
-
-
-## BSAL_INPUT_ACTOR_COUNT
-
-- Request message tag: BSAL_INPUT_ACTOR_COUNT
-- Description: Count entries
-- Request message buffer: -
-
-Responses:
-
-- Response message tag: BSAL_INPUT_ACTOR_COUNT_PROGRESS
-- Condition: This is sent to notify supervisor about the progression.
-- Response message buffer: entries (int)
-
-- Response message tag: BSAL_INPUT_ACTOR_COUNT_RESULT
-- Condition: Counting has finished
-- Response message buffer: entries (int)
-
-## BSAL_INPUT_ACTOR_CLOSE
-
-- Request message tag: BSAL_INPUT_ACTOR_CLOSE
-- Description: Close the file
-- Request message buffer: -
-
-Responses: -

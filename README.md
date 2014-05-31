@@ -3,7 +3,8 @@ biosal is a distributed BIOlogical Sequence Analysis Library.
 This is a work in progress.
 
 Looking for the Application Programming Interface (API) ? Look no further !
-[biosal API](API.md)
+
+[biosal API](Documentation/API.md)
 
 # Technologies
 
@@ -18,11 +19,10 @@ Looking for the Application Programming Interface (API) ? Look no further !
 ```bash
 make test # run tests
 make run # run examples
+```
 
-`see [examples](examples)
+see [examples](examples)
 see [tests](tests)
-
-``
 
 # Branches
 
