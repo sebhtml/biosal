@@ -82,8 +82,15 @@ int bsal_actor_threads(struct bsal_actor *actor);
 int bsal_actor_argc(struct bsal_actor *actor);
 char **bsal_actor_argv(struct bsal_actor *actor);
 
+/* an actor can be pinned to a worker
+ * so that the next message is processed
+ * on the same worker.
+ * this has implications for memory affinity in
+ * NUMA systems
+ */
 void bsal_actor_pin(struct bsal_actor *actor);
 void bsal_actor_unpin(struct bsal_actor *actor);
+
 int bsal_actor_supervisor(struct bsal_actor *actor);
 void bsal_actor_set_supervisor(struct bsal_actor *actor, int supervisor);
 
