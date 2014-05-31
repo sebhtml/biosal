@@ -197,13 +197,17 @@ void bsal_node_start(struct bsal_node *node)
     struct bsal_message message;
 
     if (node->workers_in_threads) {
+#ifdef BSAL_NODE_DEBUG
         printf("DEBUG starting %i worker threads\n",
+#endif
                         bsal_worker_pool_workers(&node->worker_pool));
         bsal_worker_pool_start(&node->worker_pool);
     }
 
     if (node->send_in_thread) {
+#ifdef BSAL_NODE_DEBUG
         printf("DEBUG starting send thread\n");
+#endif
         bsal_node_start_send_thread(node);
     }
 
