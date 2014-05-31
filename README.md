@@ -100,10 +100,7 @@ Functions that can be called within an actor context
 
 | Function | Description |
 | --- | --- |
-| 
-int bsal_node_spawn(struct bsal_node *node, void *pointer,
-                struct bsal_actor_vtable *vtable);
-| Spawn an actor from the outside,  this is usually used to spawn the first actor of a node |
+| int bsal_node_spawn(struct bsal_node *node, void *pointer, struct bsal_actor_vtable *vtable); | Spawn an actor from the outside,  this is usually used to spawn the first actor of a node |
 | bsal_actor_spawn | Spawn a new actor and return its name |
 | bsal_actor_send | Send a message |
 | bsal_actor_die | Die |
