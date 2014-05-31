@@ -28,8 +28,8 @@ struct bsal_worker;
  */
 struct bsal_actor {
     struct bsal_actor_vtable *vtable;
-    struct bsal_worker *thread;
-    struct bsal_worker *affinity_thread;
+    struct bsal_worker *worker;
+    struct bsal_worker *affinity_worker;
     void *pointer;
 
     pthread_spinlock_t lock;
@@ -50,9 +50,9 @@ int bsal_actor_name(struct bsal_actor *actor);
 void *bsal_actor_actor(struct bsal_actor *actor);
 void bsal_actor_set_name(struct bsal_actor *actor, int name);
 
-void bsal_actor_set_thread(struct bsal_actor *actor, struct bsal_worker *thread);
-struct bsal_worker *bsal_actor_thread(struct bsal_actor *actor);
-struct bsal_worker *bsal_actor_affinity_thread(struct bsal_actor *actor);
+void bsal_actor_set_worker(struct bsal_actor *actor, struct bsal_worker *worker);
+struct bsal_worker *bsal_actor_worker(struct bsal_actor *actor);
+struct bsal_worker *bsal_actor_affinity_worker(struct bsal_actor *actor);
 
 void bsal_actor_print(struct bsal_actor *actor);
 int bsal_actor_dead(struct bsal_actor *actor);
@@ -75,6 +75,7 @@ int bsal_actor_spawn(struct bsal_actor *actor, void *pointer,
 void bsal_actor_lock(struct bsal_actor *actor);
 void bsal_actor_unlock(struct bsal_actor *actor);
 
+int bsal_actor_workers(struct bsal_actor *actor);
 int bsal_actor_threads(struct bsal_actor *actor);
 int bsal_actor_argc(struct bsal_actor *actor);
 char **bsal_actor_argv(struct bsal_actor *actor);

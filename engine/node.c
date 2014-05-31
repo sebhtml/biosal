@@ -566,3 +566,8 @@ char **bsal_node_argv(struct bsal_node *node)
 {
     return node->argv;
 }
+
+int bsal_node_threads(struct bsal_node *node)
+{
+    return node->threads;
+}

@@ -102,13 +102,13 @@ void bsal_worker_pool_stop(struct bsal_worker_pool *pool)
 
 int bsal_worker_pool_pull(struct bsal_worker_pool *pool, struct bsal_message *message)
 {
-    struct bsal_worker *thread;
+    struct bsal_worker *worker;
 
-    thread = bsal_worker_pool_select_worker_for_message(pool);
-    return bsal_worker_pull_message(thread, message);
+    worker = bsal_worker_pool_select_worker_for_message(pool);
+    return bsal_worker_pull_message(worker, message);
 }
 
-/* select a thread to pull from */
+/* select a worker to pull from */
 struct bsal_worker *bsal_worker_pool_select_worker_for_message(struct bsal_worker_pool *pool)
 {
     int index;
@@ -126,21 +126,21 @@ int bsal_worker_pool_next_worker(struct bsal_worker_pool *pool, int worker)
     return worker;
 }
 
-/* select the thread to push work to */
+/* select the worker to push work to */
 struct bsal_worker *bsal_worker_pool_select_worker_worker_for_work(
                 struct bsal_worker_pool *pool, struct bsal_work *work)
 {
     int index;
-    struct bsal_worker *thread;
+    struct bsal_worker *worker;
 
-    /* check if actor has an affinity thread */
-    thread = bsal_actor_affinity_thread(bsal_work_actor(work));
+    /* check if actor has an affinity worker */
+    worker = bsal_actor_affinity_worker(bsal_work_actor(work));
 
-    if (thread != NULL) {
-        return thread;
+    if (worker != NULL) {
+        return worker;
     }
 
-    /* otherwise, pick a thread with round robin */
+    /* otherwise, pick a worker with round robin */
     index = pool->worker_for_message;
     pool->worker_for_message = bsal_worker_pool_next_worker(pool, pool->worker_for_message);
     return pool->worker_array + index;
@@ -161,12 +161,12 @@ struct bsal_worker *bsal_worker_pool_select_worker_for_run(struct bsal_worker_po
  */
 void bsal_worker_pool_schedule_work(struct bsal_worker_pool *pool, struct bsal_work *work)
 {
-    struct bsal_worker *thread;
+    struct bsal_worker *worker;
 
-    thread = bsal_worker_pool_select_worker_worker_for_work(pool, work);
+    worker = bsal_worker_pool_select_worker_worker_for_work(pool, work);
 
     /* bsal_worker_push_message use a spinlock to spin fast ! */
-    bsal_worker_push_work(thread, work);
+    bsal_worker_push_work(worker, work);
 }
 
 int bsal_worker_pool_workers(struct bsal_worker_pool *pool)

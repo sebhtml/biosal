@@ -14,7 +14,7 @@ void bsal_actor_init(struct bsal_actor *actor, void *pointer,
     actor->supervisor = -1;
     actor->dead = 0;
     actor->vtable = vtable;
-    actor->thread = NULL;
+    actor->worker = NULL;
 
     actor->received_messages = 0;
     actor->sent_messages = 0;
@@ -31,7 +31,7 @@ void bsal_actor_destroy(struct bsal_actor *actor)
     actor->dead = 1;
 
     actor->vtable = NULL;
-    actor->thread = NULL;
+    actor->worker = NULL;
     actor->pointer = NULL;
 
     /* unlock the actor if the actor is being destroyed while
@@ -79,7 +79,7 @@ void bsal_actor_print(struct bsal_actor *actor)
                     " received %i sent %i\n", bsal_actor_name(actor),
                     bsal_actor_supervisor(actor),
                     bsal_node_name(bsal_actor_node(actor)),
-                    bsal_worker_name(bsal_actor_thread(actor)),
+                    bsal_worker_name(bsal_actor_worker(actor)),
                     received, sent);
 }
 
@@ -93,9 +93,9 @@ bsal_actor_destroy_fn_t bsal_actor_get_destroy(struct bsal_actor *actor)
     return bsal_actor_vtable_get_destroy(actor->vtable);
 }
 
-void bsal_actor_set_thread(struct bsal_actor *actor, struct bsal_worker *thread)
+void bsal_actor_set_worker(struct bsal_actor *actor, struct bsal_worker *worker)
 {
-    actor->thread = thread;
+    actor->worker = worker;
 }
 
 void bsal_actor_send(struct bsal_actor *actor, int name, struct bsal_message *message)
@@ -105,7 +105,7 @@ void bsal_actor_send(struct bsal_actor *actor, int name, struct bsal_message *me
     source = bsal_actor_name(actor);
     bsal_message_set_source(message, source);
     bsal_message_set_destination(message, name);
-    bsal_worker_send(actor->thread, message);
+    bsal_worker_send(actor->worker, message);
 
     bsal_actor_increase_sent_messages(actor);
 }
@@ -121,9 +121,9 @@ int bsal_actor_spawn(struct bsal_actor *actor, void *pointer,
     return name;
 }
 
-struct bsal_worker *bsal_actor_thread(struct bsal_actor *actor)
+struct bsal_worker *bsal_actor_worker(struct bsal_actor *actor)
 {
-    return actor->thread;
+    return actor->worker;
 }
 
 int bsal_actor_dead(struct bsal_actor *actor)
@@ -143,11 +143,11 @@ int bsal_actor_nodes(struct bsal_actor *actor)
 
 struct bsal_node *bsal_actor_node(struct bsal_actor *actor)
 {
-    if (actor->thread == NULL) {
+    if (actor->worker == NULL) {
         return NULL;
     }
 
-    return bsal_worker_node(bsal_actor_thread(actor));
+    return bsal_worker_node(bsal_actor_worker(actor));
 }
 
 void bsal_actor_lock(struct bsal_actor *actor)
@@ -166,7 +166,7 @@ void bsal_actor_unlock(struct bsal_actor *actor)
     pthread_spin_unlock(&actor->lock);
 }
 
-int bsal_actor_threads(struct bsal_actor *actor)
+int bsal_actor_workers(struct bsal_actor *actor)
 {
     return bsal_node_workers(bsal_actor_node(actor));
 }
@@ -183,17 +183,17 @@ char **bsal_actor_argv(struct bsal_actor *actor)
 
 void bsal_actor_pin(struct bsal_actor *actor)
 {
-    actor->affinity_thread = actor->thread;
+    actor->affinity_worker = actor->worker;
 }
 
-struct bsal_worker *bsal_actor_affinity_thread(struct bsal_actor *actor)
+struct bsal_worker *bsal_actor_affinity_worker(struct bsal_actor *actor)
 {
-    return actor->affinity_thread;
+    return actor->affinity_worker;
 }
 
 void bsal_actor_unpin(struct bsal_actor *actor)
 {
-    actor->affinity_thread = NULL;
+    actor->affinity_worker = NULL;
 }
 
 int bsal_actor_supervisor(struct bsal_actor *actor)
@@ -224,4 +224,9 @@ uint64_t bsal_actor_sent_messages(struct bsal_actor *actor)
 void bsal_actor_increase_sent_messages(struct bsal_actor *actor)
 {
     actor->sent_messages++;
+}
+
+int bsal_actor_threads(struct bsal_actor *actor)
+{
+    return bsal_node_threads(bsal_actor_node(actor));
 }
