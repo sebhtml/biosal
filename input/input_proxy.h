@@ -17,5 +17,6 @@ int bsal_input_proxy_get_sequence(struct bsal_input_proxy *proxy,
                 struct bsal_dna_sequence *sequence);
 void bsal_input_proxy_destroy(struct bsal_input_proxy *proxy);
 int bsal_input_proxy_size(struct bsal_input_proxy *proxy);
+int bsal_input_proxy_error(struct bsal_input_proxy *proxy);
 
 #endif

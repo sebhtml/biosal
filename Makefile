@@ -68,13 +68,16 @@ mock1: test_mock
 reader: test_reader
 	mpiexec -n 2 ./test_reader -threads-per-node 13 -read ~/dropbox/GPIC.1424-1.1371.fastq
 
+not_found: test_reader
+	mpiexec -n 3 ./test_reader -threads-per-node 7 -read void.fastq
+
 test: $(TESTS)
 	./test_fifo_array
 	./test_fifo
 	./test_hash_table_group
 	./test_hash_table
 
-run: mock mock1 ring
+run: mock mock1 ring reader not_found
 
 test_fifo: $(LIBRARY) $(TEST_FIFO)
 	$(Q)$(ECHO) "  LD $@"

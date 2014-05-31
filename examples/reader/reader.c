@@ -54,6 +54,12 @@ void reader_receive(struct bsal_actor *actor, struct bsal_message *message)
             bsal_actor_die(actor);
             return;
         }
+
+        if (argc == 1) {
+            bsal_actor_die(actor);
+            return;
+        }
+
         reader1->sequence_reader = bsal_actor_spawn(actor, &reader1->input_actor,
                         &bsal_input_actor_vtable);
 
@@ -67,6 +73,10 @@ void reader_receive(struct bsal_actor *actor, struct bsal_message *message)
                         name, reader1->sequence_reader, file);
 
         bsal_actor_send(actor, reader1->sequence_reader, message);
+    } else if (tag == BSAL_INPUT_ACTOR_OPEN_NOT_FOUND) {
+
+        printf("Error, file not found! \n");
+        bsal_actor_die(actor);
 
     } else if (tag == BSAL_INPUT_ACTOR_OPEN_OK) {
         bsal_message_set_tag(message, BSAL_INPUT_ACTOR_COUNT);

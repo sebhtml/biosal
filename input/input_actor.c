@@ -21,6 +21,7 @@ void bsal_input_actor_init(struct bsal_actor *actor)
 
     input = (struct bsal_input_actor *)bsal_actor_actor(actor);
     input->file_name = NULL;
+    input->proxy_ready = 0;
 }
 
 void bsal_input_actor_destroy(struct bsal_actor *actor)
@@ -52,6 +53,13 @@ void bsal_input_actor_receive(struct bsal_actor *actor, struct bsal_message *mes
     name = bsal_actor_name(actor);
     buffer = (char *)bsal_message_buffer(message);
 
+    /* Do nothing if there is an error.
+     * has_error returns the error to the source.
+     */
+    if (bsal_input_actor_has_error(actor, message)) {
+        return;
+    }
+
     if (tag == BSAL_INPUT_ACTOR_OPEN) {
 
 #ifdef BSAL_INPUT_ACTOR_DEBUG
@@ -60,6 +68,17 @@ void bsal_input_actor_receive(struct bsal_actor *actor, struct bsal_message *mes
 #endif
 
         bsal_input_proxy_init(&input->proxy, buffer);
+        input->proxy_ready = 1;
+
+        /* Die if there is an error...
+         */
+        if (bsal_input_actor_has_error(actor, message)) {
+            bsal_input_proxy_destroy(&input->proxy);
+            bsal_actor_die(actor);
+
+            return;
+        }
+
         bsal_message_set_tag(message, BSAL_INPUT_ACTOR_OPEN_OK);
         bsal_actor_send(actor, source, message);
 
@@ -106,4 +125,33 @@ void bsal_input_actor_receive(struct bsal_actor *actor, struct bsal_message *mes
         bsal_input_proxy_destroy(&input->proxy);
         bsal_actor_die(actor);
     }
+}
+
+int bsal_input_actor_has_error(struct bsal_actor *actor,
+                struct bsal_message *message)
+{
+    int source;
+    struct bsal_input_actor *input;
+
+    input = (struct bsal_input_actor *)bsal_actor_actor(actor);
+
+    if (!input->proxy_ready) {
+        return 0;
+    }
+
+    if (bsal_input_proxy_error(&input->proxy) ==
+                    BSAL_INPUT_ERROR_NOT_FOUND) {
+
+#ifdef BSAL_INPUT_ACTOR_DEBUG
+        printf("DEBUG bsal_input_actor_has_error BSAL_INPUT_ERROR_NOT_FOUND\n");
+#endif
+
+        source = bsal_message_source(message);
+
+        bsal_message_set_tag(message, BSAL_INPUT_ACTOR_OPEN_NOT_FOUND);
+        bsal_actor_send(actor, source, message);
+        return 1;
+    }
+
+    return 0;
 }

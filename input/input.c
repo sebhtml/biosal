@@ -10,11 +10,22 @@ void bsal_input_init(struct bsal_input *input, void *pointer,
                 struct bsal_input_vtable *vtable, char *file)
 {
     bsal_input_init_fn_t handler;
+    FILE *descriptor;
 
     input->pointer = pointer;
     input->vtable = vtable;
     input->sequences = 0;
     input->file = file;
+    input->error = BSAL_INPUT_ERROR_NONE;
+
+    descriptor = fopen(input->file, "r");
+
+    if (descriptor == NULL) {
+        input->error = BSAL_INPUT_ERROR_NOT_FOUND;
+        return;
+    } else {
+        fclose(descriptor);
+    }
 
     handler = bsal_input_vtable_get_init(input->vtable);
     handler(input);
@@ -24,8 +35,10 @@ void bsal_input_destroy(struct bsal_input *input)
 {
     bsal_input_destroy_fn_t handler;
 
-    handler = bsal_input_vtable_get_init(input->vtable);
-    handler(input);
+    if (bsal_input_valid(input)) {
+        handler = bsal_input_vtable_get_init(input->vtable);
+        handler(input);
+    }
 
     input->pointer = NULL;
     input->vtable = NULL;
@@ -38,6 +51,10 @@ int bsal_input_get_sequence(struct bsal_input *input,
 {
     bsal_input_get_sequence_fn_t handler;
     int value;
+
+    if (!bsal_input_valid(input)) {
+        return 0;
+    }
 
     handler = bsal_input_vtable_get_get_sequence(input->vtable);
     value = handler(input, sequence);
@@ -69,9 +86,23 @@ void *bsal_input_pointer(struct bsal_input *input)
     return input->pointer;
 }
 
+int bsal_input_valid(struct bsal_input *input)
+{
+    return bsal_input_error(input) == BSAL_INPUT_ERROR_NONE;
+}
+
+int bsal_input_error(struct bsal_input *input)
+{
+    return input->error;
+}
+
 int bsal_input_detect(struct bsal_input *input)
 {
     bsal_input_detect_fn_t handler;
+
+    if (!bsal_input_valid(input)) {
+        return 0;
+    }
 
     handler = bsal_input_vtable_get_detect(input->vtable);
     return handler(input);

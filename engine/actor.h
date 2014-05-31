@@ -8,16 +8,19 @@
 #include <pthread.h>
 #include <stdint.h>
 
-/* biosal uses tags from 0 to 999 */
+/* engine/actor.h */
+#define BSAL_TAG_OFFSET_ACTOR 0
+#define BSAL_TAG_COUNT_ACTOR 1
 
-#define BSAL_OFFSET_BSAL_ACTOR 0
-#define BSAL_OFFSET_BSAL_INPUT_ACTOR 10
-/* ... */
+/* input/input_actor.h */
+#define BSAL_TAG_OFFSET_INPUT_ACTOR ( BSAL_TAG_OFFSET_ACTOR + BSAL_TAG_COUNT_ACTOR )
+#define BSAL_TAG_COUNT_INPUT_ACTOR 10
 
-#define BSAL_START_USER 1000
+/* the user can start with this value */
+#define BSAL_TAG_OFFSET_USER ( BSAL_TAG_OFFSET_INPUT_ACTOR + BSAL_TAG_COUNT_INPUT_ACTOR )
 
 enum {
-    BSAL_ACTOR_START = BSAL_OFFSET_BSAL_ACTOR
+    BSAL_ACTOR_START = BSAL_TAG_OFFSET_ACTOR
 };
 
 struct bsal_node;
