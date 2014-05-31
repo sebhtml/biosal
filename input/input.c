@@ -36,7 +36,7 @@ void bsal_input_destroy(struct bsal_input *input)
     bsal_input_destroy_fn_t handler;
 
     if (bsal_input_valid(input)) {
-        handler = bsal_input_vtable_get_init(input->vtable);
+        handler = bsal_input_vtable_get_destroy(input->vtable);
         handler(input);
     }
 

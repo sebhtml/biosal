@@ -37,7 +37,13 @@ void bsal_input_proxy_destroy(struct bsal_input_proxy *proxy)
     printf("DEBUG bsal_input_proxy_destroy\n");
 #endif
 
-    bsal_input_destroy(&proxy->input);
+    if (proxy->not_supported == 0) {
+        bsal_input_destroy(&proxy->input);
+    }
+
+    proxy->not_supported = 1;
+    proxy->not_found = 1;
+    proxy->done = 1;
 }
 
 int bsal_input_proxy_size(struct bsal_input_proxy *proxy)

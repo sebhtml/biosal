@@ -96,6 +96,11 @@ void reader_receive(struct bsal_actor *actor, struct bsal_message *message)
         printf("Error, file not found! \n");
         bsal_actor_die(actor);
 
+    } else if (tag == BSAL_INPUT_ACTOR_OPEN_NOT_SUPPORTED) {
+
+        printf("Error, format not supported! \n");
+        bsal_actor_die(actor);
+
     } else if (tag == BSAL_INPUT_ACTOR_OPEN_OK) {
         bsal_message_set_tag(message, BSAL_INPUT_ACTOR_COUNT);
         bsal_actor_send(actor, source, message);

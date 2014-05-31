@@ -142,6 +142,7 @@ int bsal_input_actor_has_error(struct bsal_actor *actor,
 {
     int source;
     struct bsal_input_actor *input;
+    int error;
 
     input = (struct bsal_input_actor *)bsal_actor_pointer(actor);
 
@@ -149,8 +150,9 @@ int bsal_input_actor_has_error(struct bsal_actor *actor,
         return 0;
     }
 
-    if (bsal_input_proxy_error(&input->proxy) ==
-                    BSAL_INPUT_ERROR_NOT_FOUND) {
+    error = bsal_input_proxy_error(&input->proxy);
+
+    if (error == BSAL_INPUT_ERROR_NOT_FOUND) {
 
 #ifdef BSAL_INPUT_ACTOR_DEBUG
         printf("DEBUG bsal_input_actor_has_error BSAL_INPUT_ERROR_NOT_FOUND\n");
@@ -159,6 +161,13 @@ int bsal_input_actor_has_error(struct bsal_actor *actor,
         source = bsal_message_source(message);
 
         bsal_message_set_tag(message, BSAL_INPUT_ACTOR_OPEN_NOT_FOUND);
+        bsal_actor_send(actor, source, message);
+        return 1;
+
+    } else if (error == BSAL_INPUT_ERROR_NOT_SUPPORTED) {
+        source = bsal_message_source(message);
+
+        bsal_message_set_tag(message, BSAL_INPUT_ACTOR_OPEN_NOT_SUPPORTED);
         bsal_actor_send(actor, source, message);
         return 1;
     }
