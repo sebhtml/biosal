@@ -11,8 +11,6 @@ to interact with it in order to read sequence data.
 
 ## BSAL_INPUT_ACTOR_OPEN
 
-Request message tag:
-
 ```C
 BSAL_INPUT_ACTOR_OPEN
 ```
@@ -45,6 +43,36 @@ BSAL_INPUT_ACTOR_OPEN_NOT_SUPPORTED
 
 ## BSAL_INPUT_ACTOR_COUNT
 
-Request message tag:
+```C
+BSAL_INPUT_ACTOR_COUNT
+```
+
+- Description: Count entries
+- Request message buffer: -
+
+Responses:
 
 ```C
+BSAL_INPUT_ACTOR_COUNT_PROGRESS
+```
+
+- Condition: This is sent to notify supervisor about the progression.
+- Response message buffer: entries (int)
+
+```C
+BSAL_INPUT_ACTOR_COUNT_RESULT
+```
+
+- Condition: Counting has finished
+- Response message buffer: entries (int)
+
+## BSAL_INPUT_ACTOR_CLOSE
+
+```C
+BSAL_INPUT_ACTOR_CLOSE
+```
+- Description: Close the file
+- Request message buffer: -
+
+ Responses: -
+

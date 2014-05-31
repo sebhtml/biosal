@@ -21,8 +21,7 @@ make test # run tests
 make run # run examples
 ```
 
-see [examples](examples)
-see [tests](tests)
+see [examples](examples) and [tests](tests)
 
 # Branches
 

@@ -11,8 +11,6 @@ Actors spawned with **bsal_node_spawn** (initial actors) receive a message with 
 
 ## BSAL_ACTOR_START
 
-Request message tag:
-
 ```C
 BSAL_ACTOR_START
 ```
@@ -23,8 +21,6 @@ BSAL_ACTOR_START
 Responses: -
 
 ## BSAL_ACTOR_BARRIER_REPLY
-
-Request message tag:
 
 ```C
 BSAL_ACTOR_BARRIER_REPLY
@@ -37,130 +33,130 @@ Responses: -
 
 ## bsal_node_spawn
 
-Spawn an actor from the outside, this is usually used to spawn the first actor of a node.
-Actors spawned with this function will receive a message with tag BSAL_ACTOR_START.
-
 ```C
 int bsal_node_spawn(struct bsal_node *node, void *pointer, struct bsal_actor_vtable *vtable);
 ```
 
-## bsal_actor_name
+Spawn an actor from the outside, this is usually used to spawn the first actor of a node.
+Actors spawned with this function will receive a message with tag BSAL_ACTOR_START.
 
-Get actor name.
+## bsal_actor_name
 
 ```C
 int bsal_actor_name(struct bsal_actor *actor);
 ```
 
-## bsal_actor_supervisor
+Get actor name.
 
-Get supervisor name. The supervisor is the actor that spawned the current
-actor.
+## bsal_actor_supervisor
 
 ```C
 int bsal_actor_supervisor(struct bsal_actor *actor);
 ```
 
-## bsal_actor_argc
+Get supervisor name. The supervisor is the actor that spawned the current
+actor.
 
-Get command line argument count.
+## bsal_actor_argc
 
 ```C
 int bsal_actor_argc(struct bsal_actor *actor);
 ```
 
-## bsal_actor_argv
+Get command line argument count.
 
-Get command line arguments
+## bsal_actor_argv
 
 ```C
 char **bsal_actor_argv(struct bsal_actor *actor);
 ```
 
-## bsal_actor_spawn
+Get command line arguments
 
-Spawn a new actor and return its name. The supervisor assigned to the newly spawned actor is the actor
-that calls **bsal_actor_spawn**.
+## bsal_actor_spawn
 
 ```C
 int bsal_actor_spawn(struct bsal_actor *actor, void *pointer,
                 struct bsal_actor_vtable *vtable);
 ```
+Spawn a new actor and return its name. The supervisor assigned to the newly spawned actor is the actor
+that calls **bsal_actor_spawn**.
+
 
 ## bsal_actor_send
-
-Send a message to an actor.
 
 ```C
 void bsal_actor_send(struct bsal_actor *actor, int destination, struct bsal_message *message);
 ```
 
+Send a message to an actor.
+
 ## bsal_actor_send_range
 
-Send a message to many actors in a range.
-
 ```C
-void bsal_actor_send_range(struct bsal_actor *actor, int first, int last,
-                struct bsal_message *message);
+void bsal_actor_send_range(struct bsal_actor *actor, int first, int last, struct bsal_message *message);
 ```
 
-## bsal_actor_pointer
+Send a message to many actors in a range. The implementation uses
+a binomial-tree algorithm.
 
-Get the implementation of an actor. This is useful when implementing new
-actors.
+## bsal_actor_pointer
 
 ```C
 void *bsal_actor_pointer(struct bsal_actor *actor);
 ```
 
-##  bsal_actor_die
+Get the implementation of an actor. This is useful when implementing new
+actors.
 
-Die.
+##  bsal_actor_die
 
 ```C
 void bsal_actor_die(struct bsal_actor *actor);
 ```
 
-## bsal_actor_nodes
+Die.
 
-Get number of nodes.
+## bsal_actor_nodes
 
 ```C
 int bsal_actor_nodes(struct bsal_actor *actor);
 ```
 
-## bsal_actor_barrier
+Get number of nodes.
 
-Begin a barrier.
+## bsal_actor_barrier
 
 ```C
 void bsal_actor_barrier(struct bsal_actor *actor, int first_actor, int last_actor);
 ```
 
-## bsal_actor_barrier_completed
+Begin a barrier.
 
-Verify is a barrier has completed. An actor is notified
-of a barrier progression with a message with tag
-BSAL_ACTOR_BARRIER_REPLY.
+## bsal_actor_barrier_completed
 
 ```C
 int bsal_actor_barrier_completed(struct bsal_actor *actor);
 ```
 
-## bsal_actor_pin
+Verify is a barrier has completed. An actor is notified
+of a barrier progression with a message with tag
+BSAL_ACTOR_BARRIER_REPLY.
 
-Pin an actor to an worker for memory affinity purposes.
+## bsal_actor_pin
 
 ```C
 void bsal_actor_pin(struct bsal_actor *actor);
 ```
 
-## bsal_actor_unpin
+Pin an actor to an worker for memory affinity purposes.
 
-Unpin an actor.
+## bsal_actor_unpin
 
 ```C
 void bsal_actor_unpin(struct bsal_actor *actor);
 ```
+
+Unpin an actor.
 
 
