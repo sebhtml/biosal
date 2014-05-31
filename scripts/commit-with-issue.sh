@@ -11,6 +11,7 @@ fi
 owner=GeneAssembly
 repo=biosal
 worker=sebhtml
+branch=energy
 number=$1
 
 # https://help.github.com/articles/creating-an-access-token-for-command-line-use
@@ -35,7 +36,8 @@ EOF
 git commit --all --signoff -F message.txt --edit
 rm message.txt
 
-./scripts/push-energy.sh
+echo "Pushing branch"
+git push origin $branch &> /dev/null
 
 commit=git log|head -n1 | awk '{print $2}'
 commit_link=https://github.com/$worker/$repo/commit/$commit
