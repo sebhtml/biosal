@@ -3,6 +3,7 @@
 #include "input_vtable.h"
 
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 
 void bsal_input_init(struct bsal_input *input, void *pointer,
@@ -43,6 +44,11 @@ int bsal_input_get_sequence(struct bsal_input *input,
 
     if (value) {
         input->sequences++;
+    }
+
+    if (input->sequences % 10000000 == 0) {
+        printf("DEBUG bsal_input_get_sequence %i\n",
+                        input->sequences);
     }
 
     return value;

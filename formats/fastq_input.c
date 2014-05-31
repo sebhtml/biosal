@@ -4,6 +4,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+/*
+#define BSAL_FASTQ_INPUT_DEBUG
+
+#define BSAL_FASTQ_INPUT_DEBUG2
+*/
 
 struct bsal_input_vtable bsal_fastq_input_vtable = {
     .init = bsal_fastq_input_init,
@@ -19,7 +24,7 @@ void bsal_fastq_input_init(struct bsal_input *input)
 
     file = bsal_input_file(input);
 
-#ifdef BSAL_INPUT_DEBUG
+#ifdef BSAL_FASTQ_INPUT_DEBUG
     printf("DEBUG bsal_fastq_input_init %s\n",
                     file);
 #endif
@@ -50,6 +55,11 @@ int bsal_fastq_input_get_sequence(struct bsal_input *input,
 
     value = bsal_buffered_reader_read_line(&fastq->reader, buffer, 2048);
     value = bsal_buffered_reader_read_line(&fastq->reader, buffer, 2048);
+
+#ifdef BSAL_FASTQ_INPUT_DEBUG2
+    printf("DEBUG bsal_fastq_input_get_sequence %s\n", buffer);
+#endif
+
     value = bsal_buffered_reader_read_line(&fastq->reader, buffer, 2048);
     value = bsal_buffered_reader_read_line(&fastq->reader, buffer, 2048);
 
