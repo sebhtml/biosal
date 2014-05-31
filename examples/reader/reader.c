@@ -31,16 +31,20 @@ void reader_receive(struct bsal_actor *actor, struct bsal_message *message)
     char *file;
     int count;
     int nodes;
+    void *buffer;
+    int sequences;
 
     reader1 = (struct reader *)bsal_actor_actor(actor);
     tag = bsal_message_tag(message);
     source = bsal_message_source(message);
     nodes = bsal_actor_nodes(actor);
+    buffer = bsal_message_buffer(message);
 
     if (tag == BSAL_ACTOR_START) {
         argc = bsal_actor_argc(actor);
         argv = bsal_actor_argv(actor);
         name = bsal_actor_name(actor);
+        reader1->last_report = 0;
 
         /*
         printf("actor %i received %i arguments\n", name, argc);
@@ -73,6 +77,20 @@ void reader_receive(struct bsal_actor *actor, struct bsal_message *message)
                         name, reader1->sequence_reader, file);
 
         bsal_actor_send(actor, reader1->sequence_reader, message);
+
+    } else if (tag == BSAL_INPUT_ACTOR_COUNT_PROGRESS) {
+
+        sequences = *(int *)buffer;
+
+        if (sequences < reader1->last_report + 10000000) {
+
+            return;
+        }
+
+        printf("Actor %i received a progress report from actor %i: %i\n",
+                        name, source, sequences);
+        reader1->last_report = sequences;
+
     } else if (tag == BSAL_INPUT_ACTOR_OPEN_NOT_FOUND) {
 
         printf("Error, file not found! \n");

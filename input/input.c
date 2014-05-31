@@ -63,10 +63,12 @@ int bsal_input_get_sequence(struct bsal_input *input,
         input->sequences++;
     }
 
+#ifdef BSAL_INPUT_DEBUG
     if (input->sequences % 10000000 == 0) {
         printf("DEBUG bsal_input_get_sequence %i\n",
                         input->sequences);
     }
+#endif
 
     return value;
 }

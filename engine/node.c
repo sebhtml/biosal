@@ -221,7 +221,9 @@ void bsal_node_start(struct bsal_node *node)
         bsal_actor_set_supervisor(actor, name);
         source = name;
 
-        bsal_message_init(&message, BSAL_ACTOR_START, source, name, 0, NULL);
+        bsal_message_init(&message, BSAL_ACTOR_START, 0, NULL);
+        bsal_message_set_source(&message, source);
+        bsal_message_set_destination(&message, name);
         bsal_node_send(node, &message);
         bsal_message_destroy(&message);
     }
@@ -377,7 +379,9 @@ int bsal_node_receive(struct bsal_node *node, struct bsal_message *message)
      * Then, read the metadata and resolve the MPI rank from
      * that. The resolved MPI ranks should be the same in all cases
      */
-    bsal_message_init(message, tag, source, destination, count, buffer);
+    bsal_message_init(message, tag, count, buffer);
+    bsal_message_set_source(message, destination);
+    bsal_message_set_destination(message, destination);
     bsal_message_read_metadata(message);
     bsal_node_resolve(node, message);
 

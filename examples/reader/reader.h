@@ -7,6 +7,7 @@
 struct reader {
     int sequence_reader;
     struct bsal_input_actor input_actor;
+    int last_report;
 };
 
 struct bsal_actor_vtable reader_vtable;

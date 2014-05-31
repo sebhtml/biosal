@@ -136,7 +136,7 @@ void mock_start(struct bsal_actor *actor, struct bsal_message *message)
 
     printf("[mock_start] %i next is %i, sending MOCK_DIE to it\n", name, next);
 
-    bsal_message_init(&message2, MOCK_NEW_CONTACTS, -1, -1, 3 * sizeof(int),
+    bsal_message_init(&message2, MOCK_NEW_CONTACTS, 3 * sizeof(int),
                     (char *)mock->children);
     bsal_actor_send(actor, next, &message2);
     bsal_message_destroy(&message2);
@@ -155,7 +155,7 @@ void mock_spawn_children(struct bsal_actor *actor)
     total = 1;
 
     mock = (struct mock *)bsal_actor_actor(actor);
-    bsal_message_init(&message, BUDDY_DIE, -1, -1, 0, NULL);
+    bsal_message_init(&message, BUDDY_DIE, 0, NULL);
 
     for (i = 0; i <total; i++) {
 

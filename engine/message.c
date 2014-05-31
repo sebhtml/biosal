@@ -4,15 +4,15 @@
 #include <stdlib.h>
 #include <string.h>
 
-void bsal_message_init(struct bsal_message *message, int tag, int source,
-                int destination, int count, void *buffer)
+void bsal_message_init(struct bsal_message *message, int tag, int count,
+                void *buffer)
 {
-    message->source_actor = source;
-    message->destination_actor = destination;
-
     message->tag = tag;
     message->buffer = buffer;
     message->count = count;
+
+    message->source_actor = -1;
+    message->destination_actor = -1;
 
     /* MPI ranks are set with bsal_node_resolve */
     message->source_node = -1;

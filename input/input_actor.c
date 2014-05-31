@@ -46,6 +46,7 @@ void bsal_input_actor_receive(struct bsal_actor *actor, struct bsal_message *mes
     char *buffer;
     int i;
     int has_sequence;
+    int sequences;
 
     input = (struct bsal_input_actor *)bsal_actor_actor(actor);
     tag = bsal_message_tag(message);
@@ -88,7 +89,7 @@ void bsal_input_actor_receive(struct bsal_actor *actor, struct bsal_message *mes
         i = 0;
         /* continue counting ... */
         has_sequence = 1;
-        while (i < 1024 && has_sequence) {
+        while (i < 1000 && has_sequence) {
             has_sequence = bsal_input_proxy_get_sequence(&input->proxy,
                             &sequence);
             i++;
@@ -99,6 +100,15 @@ void bsal_input_actor_receive(struct bsal_actor *actor, struct bsal_message *mes
             /*printf("DEBUG yield\n");*/
             bsal_message_set_tag(message, BSAL_INPUT_ACTOR_COUNT_YIELD);
             bsal_actor_send(actor, name, message);
+
+            /* notify the supervisor of our progress...
+             */
+
+            sequences = bsal_input_proxy_size(&input->proxy);
+            bsal_message_init(message, BSAL_INPUT_ACTOR_COUNT_PROGRESS,
+                            sizeof(sequences), &sequences);
+            bsal_actor_send(actor, bsal_actor_supervisor(actor), message);
+            bsal_message_destroy(message);
         } else {
             bsal_message_set_tag(message, BSAL_INPUT_ACTOR_COUNT_READY);
             bsal_actor_send(actor, name, message);
