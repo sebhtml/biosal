@@ -404,16 +404,6 @@ void bsal_actor_receive_binomial_tree_send(struct bsal_actor *actor, struct bsal
     bsal_message_set_tag(message, real_tag);
     bsal_message_set_count(message, new_count);
 
-    /* TODO: use slab allocator */
-    if (buffer != NULL) {
-            /*
-        printf("DEBUG12 Free %p\n",
-                        buffer);
-                        */
-        /*free(buffer);
-        buffer = NULL;*/
-    }
-
     if (amount < limit) {
         bsal_actor_send_range_standard(actor, first, last, message);
     } else {
@@ -573,11 +563,6 @@ void bsal_actor_send_range_binomial_tree(struct bsal_actor *actor, int first, in
 #endif
 
     memcpy(new_buffer, buffer, count);
-
-#ifdef BSAL_ACTOR_DEBUG
-    printf("DEBUG12 free %p (send_binomial_range)\n",
-                    buffer);
-#endif
 
     /* send to the left actor
      */
