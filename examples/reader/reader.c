@@ -34,7 +34,7 @@ void reader_receive(struct bsal_actor *actor, struct bsal_message *message)
     void *buffer;
     int sequences;
 
-    reader1 = (struct reader *)bsal_actor_actor(actor);
+    reader1 = (struct reader *)bsal_actor_pointer(actor);
     tag = bsal_message_tag(message);
     source = bsal_message_source(message);
     nodes = bsal_actor_nodes(actor);

@@ -14,7 +14,7 @@ void buddy_init(struct bsal_actor *actor)
 {
     struct buddy *buddy1;
 
-    buddy1 = (struct buddy *)bsal_actor_actor(actor);
+    buddy1 = (struct buddy *)bsal_actor_pointer(actor);
     buddy1->received = 0;
 }
 
@@ -22,7 +22,7 @@ void buddy_destroy(struct bsal_actor *actor)
 {
     struct buddy *buddy1;
 
-    buddy1 = (struct buddy *)bsal_actor_actor(actor);
+    buddy1 = (struct buddy *)bsal_actor_pointer(actor);
     buddy1->received = -1;
 }
 

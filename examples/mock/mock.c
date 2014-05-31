@@ -14,7 +14,7 @@ void mock_init(struct bsal_actor *actor)
 {
     struct mock *mock;
 
-    mock = (struct mock *)bsal_actor_actor(actor);
+    mock = (struct mock *)bsal_actor_pointer(actor);
     mock->value = 42;
     mock->tasks = 0;
     mock->children[0] = -1;
@@ -26,7 +26,7 @@ void mock_destroy(struct bsal_actor *actor)
 {
     struct mock *mock;
 
-    mock = (struct mock *)bsal_actor_actor(actor);
+    mock = (struct mock *)bsal_actor_pointer(actor);
     mock->value = -1;
 }
 
@@ -85,7 +85,7 @@ void mock_try_die(struct bsal_actor *actor, struct bsal_message *message)
 {
     struct mock *mock;
 
-    mock = (struct mock *)bsal_actor_actor(actor);
+    mock = (struct mock *)bsal_actor_pointer(actor);
     mock->tasks++;
 
     if (mock->tasks == 2) {
@@ -122,7 +122,7 @@ void mock_start(struct bsal_actor *actor, struct bsal_message *message)
     destination = bsal_message_destination(message);
 
     name = bsal_actor_name(actor);
-    mock = (struct mock *)bsal_actor_actor(actor);
+    mock = (struct mock *)bsal_actor_pointer(actor);
 
     printf("mock_start Actor #%i (value: %i) received message (tag: %i BSAL_ACTOR_START)"
                     " from source %i, destination %i\n",
@@ -154,7 +154,7 @@ void mock_spawn_children(struct bsal_actor *actor)
 
     total = 1;
 
-    mock = (struct mock *)bsal_actor_actor(actor);
+    mock = (struct mock *)bsal_actor_pointer(actor);
     bsal_message_init(&message, BUDDY_DIE, 0, NULL);
 
     for (i = 0; i <total; i++) {

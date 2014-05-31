@@ -58,7 +58,7 @@ void bsal_actor_init(struct bsal_actor *actor, void *pointer,
 void bsal_actor_destroy(struct bsal_actor *actor);
 
 int bsal_actor_name(struct bsal_actor *actor);
-void *bsal_actor_actor(struct bsal_actor *actor);
+void *bsal_actor_pointer(struct bsal_actor *actor);
 void bsal_actor_set_name(struct bsal_actor *actor, int name);
 
 void bsal_actor_set_worker(struct bsal_actor *actor, struct bsal_worker *worker);
@@ -74,7 +74,7 @@ bsal_actor_init_fn_t bsal_actor_get_init(struct bsal_actor *actor);
 bsal_actor_destroy_fn_t bsal_actor_get_destroy(struct bsal_actor *actor);
 bsal_actor_receive_fn_t bsal_actor_get_receive(struct bsal_actor *actor);
 
-void bsal_actor_send(struct bsal_actor *actor, int name, struct bsal_message *message);
+void bsal_actor_send(struct bsal_actor *actor, int destination, struct bsal_message *message);
 
 void bsal_actor_send_with_source(struct bsal_actor *actor, int name, struct bsal_message *message,
                 int source);
@@ -133,7 +133,7 @@ void bsal_actor_receive_barrier(struct bsal_actor *actor,
 void bsal_actor_receive_barrier_reply(struct bsal_actor *actor,
                 struct bsal_message *message);
 int bsal_actor_barrier_completed(struct bsal_actor *actor);
-void bsal_actor_barrier(struct bsal_actor *actor, int first, int last);
+void bsal_actor_barrier(struct bsal_actor *actor, int first_actor, int last_actor);
 
 void bsal_actor_receive_proxy_message(struct bsal_actor *actor,
                 struct bsal_message *message);

@@ -1,6 +1,9 @@
-biosal is a distributed BIOlogical Sequence Analysis Library.
+biosal is a distributed **BIO**logical **S**equence **A**nalysis **L**ibrary.
 
 This is a work in progress.
+
+Looking for the Application Programming Interface (API) ? Look no further !
+[biosal API](API.md)
 
 # Technologies
 
@@ -9,6 +12,16 @@ This is a work in progress.
 - Model: actor model
 - Message passing: MPI 2.2
 - Threads: Pthreads (IEEE Std 1003.1c - 1995)
+
+# Other possible names
+
+- <name> := <bio><s><a><l>
+- <bio> := Biological or Biology
+- <s> := Sequence or Scalable or Salable or Salubrious or Satisfactory
+- <a> := Analysis or Actor or Actors
+- <l> := Library or Lift
+
+Example of a name: Biolog
 
 # Try it out
 
@@ -25,13 +38,14 @@ Branch | Browse | HTTPS | SSH
  entropy (Fangfang's development branch) | https://github.com/levinas/biosal/tree/entropy | https://github.com/levinas/biosal.git | git@github.com:levinas/biosal.git
  energy (Seb's development branch) | https://github.com/sebhtml/biosal/tree/energy | https://github.com/sebhtml/biosal.git | git@github.com:sebhtml/biosal.git
 
-# License (see LICENSE.md)
+# License
 
-[The BSD 2-Clause License](http://opensource.org/licenses/BSD-2-Clause)
+biosal is licensed under the [The BSD 2-Clause License](LICENSE.md)
 
 # Tickets
 
-https://github.com/GeneAssembly/biosal/issues?state=open
+- https://github.com/GeneAssembly/biosal/issues?state=open
+- Website: https://github.com/GeneAssembly/biosal
 
 # Actor model links
 
@@ -94,32 +108,13 @@ Because the whole thing is event-driven by inbound and outbound messages,
 a single node can run much more actors than the number of
 workers it has.
 
-# Application programming interface
+# Examples
 
-These functions (except bsal_node_spawn) can be called within an actor context.
-
-## bsal_node_spawn
-
-```c
-int bsal_node_spawn(struct bsal_node *node, void *pointer, struct bsal_actor_vtable *vtable);
-```
-
-
-Spawn an actor from the outside,  this is usually used to spawn the first actor of a node
-
-
-| bsal_actor_spawn | Spawn a new actor and return its name |
-| bsal_actor_send | Send a message |
-| bsal_actor_die | Die |
-| bsal_actor_nodes | Get number of nodes |
-| bsal_actor_pin | Pin an actor to an worker for memory affinity purposes |
-| bsal_actor_unpin | Unpin an actor |
-| bsal_actor_barrier | Begin a barrier |
-| bsal_actor_barrier_completed | (BSAL_ACTOR_BARRIER_REPLY is a reply barrier message tag) |
+see examples/
 
 # Tests
 
-see examples/ and tests/
+see tests/
 
 # Authors
 

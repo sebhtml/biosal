@@ -62,7 +62,7 @@ int bsal_actor_name(struct bsal_actor *actor)
     return actor->name;
 }
 
-void *bsal_actor_actor(struct bsal_actor *actor)
+void *bsal_actor_pointer(struct bsal_actor *actor)
 {
     return actor->pointer;
 }
