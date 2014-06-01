@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <string.h>
 
-/*#include <unistd.h>*/
+#include <unistd.h>
 
 /*#define BSAL_NODE_DEBUG*/
 
@@ -24,6 +24,7 @@ void bsal_node_init(struct bsal_node *node, int *argc, char ***argv)
     int provided;
     int workers;
     int threads;
+    char *required_threads;
 
     /* the default is 1 thread */
     threads = 1;
@@ -37,7 +38,19 @@ void bsal_node_init(struct bsal_node *node, int *argc, char ***argv)
         if (strcmp((*argv)[i], "-threads-per-node") == 0 && i + 1 < *argc) {
             /*printf("bsal_node_init threads: %s\n",
                             (*argv)[i + 1]);*/
-            node->threads = atoi((*argv)[i + 1]);
+
+            required_threads = (*argv)[i + 1];
+
+/* \see http://stackoverflow.com/questions/4586405/get-number-of-cpus-in-linux-using-c
+ */
+#ifdef _SC_NPROCESSORS_ONLN
+            if (strcmp(required_threads, "all") == 0) {
+                node->threads = sysconf(_SC_NPROCESSORS_ONLN);
+                continue;
+            }
+#endif
+
+            node->threads = atoi(required_threads);
         }
     }
 
