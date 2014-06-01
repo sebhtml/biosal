@@ -5,9 +5,7 @@
 
 #include <stdio.h>
 
-/*
-#define BSAL_INPUT_PROXY_DEBUG
-*/
+/*#define BSAL_INPUT_PROXY_DEBUG*/
 
 void bsal_input_proxy_init(struct bsal_input_proxy *proxy,
                 char *file)
@@ -48,7 +46,7 @@ void bsal_input_proxy_destroy(struct bsal_input_proxy *proxy)
 
 int bsal_input_proxy_size(struct bsal_input_proxy *proxy)
 {
-#ifdef BSAL_INPUT_PROXY_DEBUG
+#ifdef BSAL_INPUT_PROXY_DEBUG12
     printf("DEBUG size %i\n", proxy->sequences);
 #endif
 
@@ -72,6 +70,10 @@ void bsal_input_proxy_try(struct bsal_input_proxy *proxy,
                 struct bsal_input_vtable *vtable, char *file)
 {
     int error;
+
+#ifdef BSAL_INPUT_DEBUG
+    printf("DEBUG bsal_input_proxy_try\n");
+#endif
 
     if (proxy->done) {
         return;
@@ -108,5 +110,9 @@ void bsal_input_proxy_try(struct bsal_input_proxy *proxy,
         proxy->not_supported = 0;
         proxy->not_found = 0;
         proxy->done = 1;
+
+#ifdef BSAL_INPUT_PROXY_DEBUG
+        printf("Found format.\n");
+#endif
     }
 }

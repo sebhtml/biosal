@@ -5,9 +5,7 @@
 
 #include <stdio.h>
 
-/*
-#define BSAL_INPUT_ACTOR_DEBUG
-*/
+/*#define BSAL_INPUT_ACTOR_DEBUG*/
 
 struct bsal_actor_vtable bsal_input_actor_vtable = {
     .receive = bsal_input_actor_receive
@@ -142,6 +140,10 @@ int bsal_input_actor_has_error(struct bsal_actor *actor,
     int source;
     struct bsal_input_actor *input;
     int error;
+
+    if (bsal_actor_received_messages(actor) == 1) {
+        return 0;
+    }
 
     input = (struct bsal_input_actor *)bsal_actor_pointer(actor);
 
