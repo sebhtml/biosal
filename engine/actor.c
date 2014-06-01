@@ -125,6 +125,25 @@ void bsal_actor_set_worker(struct bsal_actor *actor, struct bsal_worker *worker)
 void bsal_actor_send(struct bsal_actor *actor, int name, struct bsal_message *message)
 {
     int source;
+    int tag;
+    int self;
+
+    tag = bsal_message_tag(message);
+    self = bsal_actor_name(actor);
+
+    /* Verify if the message is a special message.
+     * For instance, it is important to pin an
+     * actor right away if it is requested.
+     */
+    if (name == self) {
+        if (tag == BSAL_ACTOR_PIN) {
+            bsal_actor_pin(actor);
+            return;
+        } else if (tag == BSAL_ACTOR_UNPIN) {
+            bsal_actor_unpin(actor);
+            return;
+        }
+    }
 
     source = bsal_actor_name(actor);
     bsal_actor_send_with_source(actor, name, message, source);
@@ -282,6 +301,15 @@ void bsal_actor_receive(struct bsal_actor *actor, struct bsal_message *message)
         bsal_actor_receive_synchronize_reply(actor, message);
     } else if (tag == BSAL_ACTOR_PROXY_MESSAGE) {
         bsal_actor_receive_proxy_message(actor, message);
+        return;
+
+    /* Ignore BSAL_ACTOR_PIN and BSAL_ACTOR_UNPIN
+     * because they can only be sent by an actor
+     * to itself.
+     */
+    } else if (tag == BSAL_ACTOR_PIN) {
+        return;
+    } else if (tag == BSAL_ACTOR_UNPIN) {
         return;
     }
 

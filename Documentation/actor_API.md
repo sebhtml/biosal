@@ -15,7 +15,7 @@ Actors spawned with **bsal_node_spawn** (initial actors) receive a message with 
 BSAL_ACTOR_START
 ```
 
-- Description: A message with this tag is sent to every actor present when the runtime system starts.
+A message with this tag is sent to every actor present when the runtime system starts.
 - Request message buffer: -
 
 Responses: -
@@ -26,10 +26,32 @@ Responses: -
 BSAL_ACTOR_SYNCHRONIZE_REPLY
 ```
 
-- Description: Notification of synchronization progression.
-- Request message buffer: -
+Notification of synchronization progression.
+- Request message buffer: empty
 
 Responses: -
+
+## BSAL_ACTOR_PIN
+
+```C
+BSAL_ACTOR_PIN
+```
+
+Pin an actor to an worker for memory affinity purposes. Can only be sent to an actor by itself.
+- Request message buffer: empty
+
+Responses: none
+
+## BSAL_ACTOR_UNPIN
+
+```C
+BSAL_ACTOR_UNPIN
+```
+
+Unpin an actor. Can only be sent to an actor by itself.
+- Request message buffer: empty
+
+Responses: none
 
 ## bsal_node_spawn
 
@@ -142,21 +164,5 @@ int bsal_actor_synchronization_completed(struct bsal_actor *actor);
 Verify is a synchronization has completed. An actor is notified
 of a synchronization progression with a message with tag
 BSAL_ACTOR_SYNCHRONIZE_REPLY.
-
-## bsal_actor_pin
-
-```C
-void bsal_actor_pin(struct bsal_actor *actor);
-```
-
-Pin an actor to an worker for memory affinity purposes.
-
-## bsal_actor_unpin
-
-```C
-void bsal_actor_unpin(struct bsal_actor *actor);
-```
-
-Unpin an actor.
 
 

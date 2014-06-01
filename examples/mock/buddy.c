@@ -42,6 +42,11 @@ void buddy_receive(struct bsal_actor *actor, struct bsal_message *message)
         printf("buddy_receive Actor %i received a message (%i BUDDY_DIE) from actor %i\n",
                         name, tag, source);
 
+        bsal_message_set_tag(message, BSAL_ACTOR_PIN);
+        bsal_actor_send(actor, name, message);
+        bsal_message_set_tag(message, BSAL_ACTOR_UNPIN);
+        bsal_actor_send(actor, name, message);
+
         buddy_destroy(actor);
     }
 }
