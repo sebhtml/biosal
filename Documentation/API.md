@@ -4,6 +4,7 @@ The library has much more under its hood.
 Also, this is in heavy development.
 
 - [Actor API](actor_API.md)
+- [Message API](message_API.md)
 - [Input actor API](input_actor_API.md)
 
 - [Examples](../examples)
