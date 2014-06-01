@@ -20,17 +20,6 @@ A message with this tag is sent to every actor present when the runtime system s
 
 Responses: -
 
-## BSAL_ACTOR_SYNCHRONIZE_REPLY
-
-```C
-BSAL_ACTOR_SYNCHRONIZE_REPLY
-```
-
-Notification of synchronization progression.
-- Request message buffer: empty
-
-Responses: -
-
 ## BSAL_ACTOR_PIN
 
 ```C
@@ -154,15 +143,6 @@ void bsal_actor_synchronize(struct bsal_actor *actor, int first_actor, int last_
 ```
 
 Begin a synchronization. A binomial-tree algorithm is used.
-
-## bsal_actor_synchronization_completed
-
-```C
-int bsal_actor_synchronization_completed(struct bsal_actor *actor);
-```
-
-Verify is a synchronization has completed. An actor is notified
-of a synchronization progression with a message with tag
-BSAL_ACTOR_SYNCHRONIZE_REPLY.
-
+A message with tag BSAL_ACTOR_SYNCHRONIZED is received when the
+synchronization has completed.
 

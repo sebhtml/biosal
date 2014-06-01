@@ -65,14 +65,12 @@ void sender_receive(struct bsal_actor *actor, struct bsal_message *message)
 
         sender_destroy(actor);
 
-    } else if (tag == BSAL_ACTOR_SYNCHRONIZE_REPLY) {
+    } else if (tag == BSAL_ACTOR_SYNCHRONIZED) {
 
         /*printf("sender_receive BSAL_ACTOR_SYNCHRONIZE_REPLY\n");*/
 
-        if (bsal_actor_synchronization_completed(actor)) {
-            printf("Completed synchronize !\n");
-            sender_kill_all(actor, message);
-        }
+        printf("Completed synchronize !\n");
+        sender_kill_all(actor, message);
     }
 }
 

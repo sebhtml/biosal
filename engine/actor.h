@@ -10,7 +10,7 @@
 
 /* engine/actor.h */
 #define BSAL_TAG_OFFSET_ACTOR 0
-#define BSAL_TAG_COUNT_ACTOR 7
+#define BSAL_TAG_COUNT_ACTOR 9
 
 /* input/input_actor.h */
 #define BSAL_TAG_OFFSET_INPUT_ACTOR ( BSAL_TAG_OFFSET_ACTOR + BSAL_TAG_COUNT_ACTOR )
@@ -21,12 +21,14 @@
 
 enum {
     BSAL_ACTOR_START = BSAL_TAG_OFFSET_ACTOR,
-    BSAL_ACTOR_SYNCHRONIZE,
-    BSAL_ACTOR_SYNCHRONIZE_REPLY,
+    BSAL_ACTOR_PRIVATE_SYNCHRONIZE,
+    BSAL_ACTOR_PRIVATE_SYNCHRONIZE_REPLY,
     BSAL_ACTOR_BINOMIAL_TREE_SEND,
     BSAL_ACTOR_PROXY_MESSAGE,
     BSAL_ACTOR_PIN,
-    BSAL_ACTOR_UNPIN
+    BSAL_ACTOR_UNPIN,
+    BSAL_ACTOR_SYNCHRONIZE,
+    BSAL_ACTOR_SYNCHRONIZED
 };
 
 struct bsal_node;
@@ -80,6 +82,7 @@ void bsal_actor_send(struct bsal_actor *actor, int destination, struct bsal_mess
 
 void bsal_actor_send_with_source(struct bsal_actor *actor, int name, struct bsal_message *message,
                 int source);
+int bsal_actor_send_system(struct bsal_actor *actor, int name, struct bsal_message *message);
 
 /* Send a message to a range of actors.
  * The implementation uses a binomial tree.
@@ -92,6 +95,7 @@ void bsal_actor_send_range_binomial_tree(struct bsal_actor *actor, int first, in
                 struct bsal_message *message);
 
 void bsal_actor_receive(struct bsal_actor *actor, struct bsal_message *message);
+int bsal_actor_receive_system(struct bsal_actor *actor, struct bsal_message *message);
 void bsal_actor_receive_binomial_tree_send(struct bsal_actor *actor,
                 struct bsal_message *message);
 
