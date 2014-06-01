@@ -50,7 +50,7 @@ struct bsal_node {
     char **argv;
 };
 
-void bsal_node_init(struct bsal_node *node, int threads, int *argc, char ***argv);
+void bsal_node_init(struct bsal_node *node, int *argc, char ***argv);
 void bsal_node_destroy(struct bsal_node *node);
 void bsal_node_start(struct bsal_node *node);
 int bsal_node_spawn(struct bsal_node *node, void *pointer,

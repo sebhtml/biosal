@@ -60,7 +60,7 @@ ring: test_ring
 	mpiexec -n 2 ./test_ring -threads-per-node 8
 
 mock: test_mock
-	mpiexec -n 3 ./test_mock
+	mpiexec -n 3 ./test_mock -threads-per-node 7
 
 mock1: test_mock
 	mpiexec -n 3 ./test_mock -threads-per-node 1

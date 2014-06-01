@@ -5,6 +5,8 @@
 #include <stdio.h>
 #include <string.h>
 
+/*#include <unistd.h>*/
+
 /*#define BSAL_NODE_DEBUG*/
 
 /*
@@ -13,7 +15,7 @@
  * \see https://github.com/GeneAssembly/kiki/blob/master/ki.c#L960
  * \see http://mpi.deino.net/mpi_functions/MPI_Comm_create.html
  */
-void bsal_node_init(struct bsal_node *node, int threads,  int *argc,  char ***argv)
+void bsal_node_init(struct bsal_node *node, int *argc, char ***argv)
 {
     int node_name;
     int nodes;
@@ -21,6 +23,10 @@ void bsal_node_init(struct bsal_node *node, int threads,  int *argc,  char ***ar
     int required;
     int provided;
     int workers;
+    int threads;
+
+    /* the default is 1 thread */
+    threads = 1;
 
     node->threads = threads;
 
