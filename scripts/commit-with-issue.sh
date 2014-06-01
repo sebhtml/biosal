@@ -19,7 +19,7 @@ number=$1
 token=$(cat ~/github-token.txt)
 
 # get title
-title=$(curl -X GET https://api.github.com/repos/$owner/$repo/issues/$number | grep '"title": '|sed 's=  "title": "==g'|sed 's=",==g')
+title=$(curl -X GET https://api.github.com/repos/$owner/$repo/issues/$number | grep '"title": '| head -n 1|sed 's=  "title": "==g'|sed 's=",==g')
 link=https://github.com/$owner/$repo/issues/$number
 
 echo "Fetching issue"
