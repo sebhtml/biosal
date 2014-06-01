@@ -15,10 +15,10 @@ to interact with it in order to read sequence data.
 BSAL_INPUT_ACTOR_OPEN
 ```
 
-- Description: Open an input file.
-- Request message buffer: File path (char *)
+Open an input file.
 
-Responses:
+- Request message buffer: File path (char *)
+- Responses:
 
 ```C
 BSAL_INPUT_ACTOR_OPEN_OK
@@ -47,10 +47,10 @@ BSAL_INPUT_ACTOR_OPEN_NOT_SUPPORTED
 BSAL_INPUT_ACTOR_COUNT
 ```
 
-- Description: Count entries
-- Request message buffer: -
+Count entries
 
-Responses:
+- Request message buffer: -
+- Responses:
 
 ```C
 BSAL_INPUT_ACTOR_COUNT_PROGRESS
@@ -71,8 +71,8 @@ BSAL_INPUT_ACTOR_COUNT_RESULT
 ```C
 BSAL_INPUT_ACTOR_CLOSE
 ```
-- Description: Close the file
-- Request message buffer: -
+Close the file
 
-Responses: -
+- Request message buffer: -
+- Responses: none
 

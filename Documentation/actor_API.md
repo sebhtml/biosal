@@ -16,9 +16,9 @@ BSAL_ACTOR_START
 ```
 
 A message with this tag is sent to every actor present when the runtime system starts.
-- Request message buffer: -
 
-Responses: -
+- Request message buffer: not application, this is a received message
+- Responses: none
 
 ## BSAL_ACTOR_PIN
 
@@ -27,9 +27,9 @@ BSAL_ACTOR_PIN
 ```
 
 Pin an actor to an worker for memory affinity purposes. Can only be sent to an actor by itself.
-- Request message buffer: empty
 
-Responses: none
+- Request message buffer: empty
+- Responses: none
 
 ## BSAL_ACTOR_UNPIN
 
@@ -38,9 +38,20 @@ BSAL_ACTOR_UNPIN
 ```
 
 Unpin an actor. Can only be sent to an actor by itself.
-- Request message buffer: empty
 
-Responses: none
+- Request message buffer: empty
+- Responses: none
+
+## BSAL_ACTOR_SYNCHRONIZED
+
+```C
+BSAL_ACTOR_SYNCHRONIZED
+```
+
+Notification of completed synchronization.
+
+- Request message buffer: not application, this is a received message
+- Responses: none
 
 ## bsal_node_spawn
 
