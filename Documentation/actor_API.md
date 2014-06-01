@@ -7,7 +7,7 @@ When creating actors, the developer needs to provides 3 functions: init, destroy
 (in **bsal_actor_vtable**). init is called when the actor is spawned, destroy is called
 when bsal_actor_die is called, and receive is called whenever a message is received.
 
-Example: (buddy.h)[../examples/mock/buddy.h] (buddy.c)[../examples/mock/buddy.c]
+Example: [buddy.h](../examples/mock/buddy.h) [buddy.c](../examples/mock/buddy.c)
 
 ## Header
 
