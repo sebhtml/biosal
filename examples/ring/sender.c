@@ -6,6 +6,8 @@
 #include <string.h>
 
 struct bsal_actor_vtable sender_vtable = {
+    .init = sender_init,
+    .destroy = sender_destroy,
     .receive = sender_receive
 };
 
@@ -21,9 +23,6 @@ void sender_init(struct bsal_actor *actor)
     sender1->received = 0;
     sender1->actors_per_node = 1000;
 
-    /*
-    printf("DEBUG actor %i sender_init\n", name);
-    */
 }
 
 void sender_destroy(struct bsal_actor *actor)
@@ -37,7 +36,6 @@ void sender_destroy(struct bsal_actor *actor)
     sender1->received = 0;
     sender1->actors_per_node = 0;
 
-    bsal_actor_die(actor);
 }
 
 void sender_receive(struct bsal_actor *actor, struct bsal_message *message)
@@ -47,23 +45,17 @@ void sender_receive(struct bsal_actor *actor, struct bsal_message *message)
     tag = bsal_message_tag(message);
 
     if (tag == BSAL_ACTOR_START) {
-        sender_init(actor);
 
         sender_start(actor, message);
 
-
     } else if (tag == SENDER_HELLO) {
-
-        if (bsal_actor_received_messages(actor) == 1) {
-            sender_init(actor);
-        }
 
         sender_hello(actor, message);
 
     } else if (tag == SENDER_KILL) {
         /*printf("Receives SENDER_KILL\n"); */
 
-        sender_destroy(actor);
+        bsal_actor_die(actor);
 
     } else if (tag == BSAL_ACTOR_SYNCHRONIZED) {
 
@@ -89,7 +81,11 @@ void sender_kill_all(struct bsal_actor *actor, struct bsal_message *message)
     printf("Killing range %i to %i\n",
                     0, total - 1);
 
-    bsal_actor_send_range(actor, 0, total - 1, message);
+   /* the default binomial-tree algorithm can not
+    * be used here because proxy actors may die
+    * before they are needed.
+    */
+    bsal_actor_send_range_standard(actor, 0, total - 1, message);
 }
 
 void sender_hello(struct bsal_actor *actor, struct bsal_message *message)

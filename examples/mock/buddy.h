@@ -9,7 +9,11 @@ struct buddy {
 };
 
 enum {
-    BUDDY_DIE = 1100 /* FIRST_TAG */ /* LAST_TAG */
+    BUDDY_DIE = 1100,
+    BUDDY_HELLO,
+    BUDDY_HELLO_OK,
+    BUDDY_BOOT,
+    BUDDY_BOOT_OK
 };
 
 struct bsal_actor_vtable buddy_vtable;

@@ -8,6 +8,8 @@
 /*#define BSAL_INPUT_ACTOR_DEBUG*/
 
 struct bsal_actor_vtable bsal_input_actor_vtable = {
+    .init = bsal_input_actor_init,
+    .destroy = bsal_input_actor_destroy,
     .receive = bsal_input_actor_receive
 };
 
@@ -28,8 +30,6 @@ void bsal_input_actor_destroy(struct bsal_actor *actor)
     if (input->proxy_ready) {
         bsal_input_proxy_destroy(&input->proxy);
     }
-
-    bsal_actor_die(actor);
 }
 
 void bsal_input_actor_receive(struct bsal_actor *actor, struct bsal_message *message)
@@ -60,7 +60,7 @@ void bsal_input_actor_receive(struct bsal_actor *actor, struct bsal_message *mes
 
     if (tag == BSAL_INPUT_ACTOR_OPEN) {
 
-        bsal_input_actor_init(actor);
+        /*bsal_input_actor_init(actor);*/
 
 #ifdef BSAL_INPUT_ACTOR_DEBUG
         printf("DEBUG bsal_input_actor_receive open %s\n",
@@ -73,7 +73,7 @@ void bsal_input_actor_receive(struct bsal_actor *actor, struct bsal_message *mes
         /* Die if there is an error...
          */
         if (bsal_input_actor_has_error(actor, message, 1)) {
-            bsal_input_actor_destroy(actor);
+            bsal_actor_die(actor);
 
             return;
         }
@@ -130,7 +130,7 @@ void bsal_input_actor_receive(struct bsal_actor *actor, struct bsal_message *mes
         printf("DEBUG destroy proxy\n");
 #endif
 
-        bsal_input_actor_destroy(actor);
+        bsal_actor_die(actor);
     }
 }
 

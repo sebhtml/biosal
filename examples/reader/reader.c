@@ -6,6 +6,8 @@
 #include <string.h>
 
 struct bsal_actor_vtable reader_vtable = {
+    .init = reader_init,
+    .destroy = reader_destroy,
     .receive = reader_receive
 };
 
@@ -15,7 +17,6 @@ void reader_init(struct bsal_actor *actor)
 
 void reader_destroy(struct bsal_actor *actor)
 {
-    bsal_actor_die(actor);
 }
 
 void reader_receive(struct bsal_actor *actor, struct bsal_message *message)
@@ -40,7 +41,6 @@ void reader_receive(struct bsal_actor *actor, struct bsal_message *message)
     buffer = bsal_message_buffer(message);
 
     if (tag == BSAL_ACTOR_START) {
-        reader_init(actor);
 
         argc = bsal_actor_argc(actor);
         argv = bsal_actor_argv(actor);
@@ -56,12 +56,14 @@ void reader_receive(struct bsal_actor *actor, struct bsal_message *message)
         */
 
         if (name % nodes != 0) {
-            reader_destroy(actor);
+            bsal_actor_die(actor);
+
             return;
         }
 
         if (argc == 1) {
-            reader_destroy(actor);
+            bsal_actor_die(actor);
+
             return;
         }
 
@@ -95,12 +97,12 @@ void reader_receive(struct bsal_actor *actor, struct bsal_message *message)
     } else if (tag == BSAL_INPUT_ACTOR_OPEN_NOT_FOUND) {
 
         printf("Error, file not found! \n");
-        reader_destroy(actor);
+        bsal_actor_die(actor);
 
     } else if (tag == BSAL_INPUT_ACTOR_OPEN_NOT_SUPPORTED) {
 
         printf("Error, format not supported! \n");
-        reader_destroy(actor);
+        bsal_actor_die(actor);
 
     } else if (tag == BSAL_INPUT_ACTOR_OPEN_OK) {
         bsal_message_set_tag(message, BSAL_INPUT_ACTOR_COUNT);
@@ -114,6 +116,6 @@ void reader_receive(struct bsal_actor *actor, struct bsal_message *message)
         bsal_message_set_tag(message, BSAL_INPUT_ACTOR_CLOSE);
         bsal_actor_send(actor, source, message);
 
-        reader_destroy(actor);
+        bsal_actor_die(actor);
     }
 }

@@ -3,6 +3,12 @@
 These functions (except **bsal_node_spawn**) can be called within an actor context (inside a receive function).
 Actors spawned with **bsal_node_spawn** (initial actors) receive a message with tag **BSAL_ACTOR_START**.
 
+When creating actors, the developer needs to provides 3 functions: init, destroy and receive
+(in **bsal_actor_vtable**). init is called when the actor is spawned, destroy is called
+when bsal_actor_die is called, and receive is called whenever a message is received.
+
+Example: (buddy.h)[../examples/mock/buddy.h] (buddy.c)[../examples/mock/buddy.c]
+
 ## Header
 
 ```C
