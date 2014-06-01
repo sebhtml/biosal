@@ -46,7 +46,7 @@ biosal is licensed under the [The BSD 2-Clause License](LICENSE.md)
 
 The actor model has actors and messages, mostly.
 
-When an actor receives a message, it can ([Agha 1986](http://dl.acm.org/citation.cfm?id=7929), p. 12):
+When an actor receives a message, it can ([Agha 1986](http://dl.acm.org/citation.cfm?id=7929), p. 12, 2.1.3):
 
 - send a finite number of messages to other actors (bsal_actor_send);
 - create a finite number of new actors (bnsal_actor_spawn);
@@ -54,6 +54,9 @@ When an actor receives a message, it can ([Agha 1986](http://dl.acm.org/citation
 
 Other names for the actor model: actors, virtual processors, activation frames, streams
 ([Hewitt, Bishop, Steiger 1973](http://dl.acm.org/citation.cfm?id=1624804)).
+
+Also, in the actor model, the arrival order of messages is both arbitrary and unknown
+([Agha 1986](http://dl.acm.org/citation.cfm?id=7929), p. 22, 2.4).
 
 ## Actor model links
 
