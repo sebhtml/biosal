@@ -32,6 +32,6 @@ void bsal_input_actor_destroy(struct bsal_actor *actor);
 void bsal_input_actor_receive(struct bsal_actor *actor, struct bsal_message *message);
 
 int bsal_input_actor_has_error(struct bsal_actor *actor,
-                struct bsal_message *message);
+                struct bsal_message *message, int force);
 
 #endif

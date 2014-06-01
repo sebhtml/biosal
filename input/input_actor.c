@@ -54,7 +54,7 @@ void bsal_input_actor_receive(struct bsal_actor *actor, struct bsal_message *mes
     /* Do nothing if there is an error.
      * has_error returns the error to the source.
      */
-    if (bsal_input_actor_has_error(actor, message)) {
+    if (bsal_input_actor_has_error(actor, message, 0)) {
         return;
     }
 
@@ -72,7 +72,7 @@ void bsal_input_actor_receive(struct bsal_actor *actor, struct bsal_message *mes
 
         /* Die if there is an error...
          */
-        if (bsal_input_actor_has_error(actor, message)) {
+        if (bsal_input_actor_has_error(actor, message, 1)) {
             bsal_input_actor_destroy(actor);
 
             return;
@@ -135,13 +135,13 @@ void bsal_input_actor_receive(struct bsal_actor *actor, struct bsal_message *mes
 }
 
 int bsal_input_actor_has_error(struct bsal_actor *actor,
-                struct bsal_message *message)
+                struct bsal_message *message, int force)
 {
     int source;
     struct bsal_input_actor *input;
     int error;
 
-    if (bsal_actor_received_messages(actor) == 1) {
+    if (bsal_actor_received_messages(actor) == 1 && !force) {
         return 0;
     }
 
