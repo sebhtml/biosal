@@ -5,7 +5,7 @@ LD=$(CC)
 Q=@
 ECHO=echo
 
-TESTS=test_fifo test_fifo_array test_hash_table_group test_hash_table
+TESTS=test_fifo test_fifo_array test_hash_table_group test_hash_table test_node
 EXAMPLES=test_mock test_ring test_reader
 
 all: $(EXAMPLES) $(TESTS)
@@ -43,6 +43,7 @@ TEST_FIFO=tests/test.o tests/test_fifo.o
 TEST_FIFO_ARRAY=tests/test.o tests/test_fifo_array.o
 TEST_HASH_TABLE_GROUP=tests/test.o tests/test_hash_table_group.o
 TEST_HASH_TABLE=tests/test.o tests/test_hash_table.o
+TEST_NODE=tests/test.o tests/test_node.o
 
 %.o: %.c
 	$(Q)$(ECHO) "  CC $@"
@@ -52,7 +53,7 @@ clean:
 	$(Q)$(ECHO) "  RM"
 	$(Q)$(RM) $(LIBRARY)
 	$(Q)$(RM) $(RING_EXAMPLE) $(MOCK_EXAMPLE) $(READER_EXAMPLE)
-	$(Q)$(RM) $(TEST_FIFO) $(TEST_FIFO_ARRAY) $(TEST_HASH_TABLE_GROUP)
+	$(Q)$(RM) $(TEST_FIFO) $(TEST_FIFO_ARRAY) $(TEST_HASH_TABLE_GROUP) $(TEST_NODE)
 	$(Q)$(RM) $(TEST_HASH_TABLE)
 	$(Q)$(RM) $(EXAMPLES) $(TESTS)
 
@@ -76,8 +77,13 @@ test: $(TESTS)
 	./test_fifo
 	./test_hash_table_group
 	./test_hash_table
+	./test_node
 
 run: mock mock1 ring reader not_found
+
+test_node: $(LIBRARY) $(TEST_NODE)
+	$(Q)$(ECHO) "  LD $@"
+	$(Q)$(CC) $(CFLAGS) $^ -o $@
 
 test_fifo: $(LIBRARY) $(TEST_FIFO)
 	$(Q)$(ECHO) "  LD $@"

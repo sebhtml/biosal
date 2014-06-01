@@ -25,6 +25,11 @@ void bsal_node_init(struct bsal_node *node, int *argc, char ***argv)
     int workers;
     int threads;
     char *required_threads;
+    int detected;
+
+    /* the rank number is needed to decide on
+     * the number of threads
+     */
 
     /* the default is 1 thread */
     threads = 1;
@@ -34,6 +39,15 @@ void bsal_node_init(struct bsal_node *node, int *argc, char ***argv)
     node->argc = *argc;
     node->argv = *argv;
 
+    required = MPI_THREAD_MULTIPLE;
+
+    MPI_Init_thread(argc, argv, required, &provided);
+
+    /* make a new communicator for the library and don't use MPI_COMM_WORLD later */
+    MPI_Comm_dup(MPI_COMM_WORLD, &node->comm);
+    MPI_Comm_rank(node->comm, &node_name);
+    MPI_Comm_size(node->comm, &nodes);
+
     for (i = 0; i < *argc; i++) {
         if (strcmp((*argv)[i], "-threads-per-node") == 0 && i + 1 < *argc) {
             /*printf("bsal_node_init threads: %s\n",
@@ -41,16 +55,42 @@ void bsal_node_init(struct bsal_node *node, int *argc, char ***argv)
 
             required_threads = (*argv)[i + 1];
 
-/* \see http://stackoverflow.com/questions/4586405/get-number-of-cpus-in-linux-using-c
- */
+            /* -threads-per-node all
+             *
+             * \see http://stackoverflow.com/questions/4586405/get-number-of-cpus-in-linux-using-c
+             */
 #ifdef _SC_NPROCESSORS_ONLN
             if (strcmp(required_threads, "all") == 0) {
                 node->threads = sysconf(_SC_NPROCESSORS_ONLN);
+#ifdef BSAL_NODE_DEBUG
+                printf("DEBUG using all threads: %d\n", node->threads);
+#endif
                 continue;
             }
 #endif
 
+            /* -threads-per-node 5,6,9
+             */
+            detected = bsal_node_threads_from_string(node, required_threads, node_name);
+
+            if (detected > 0) {
+                node->threads = detected;
+
+#ifdef BSAL_NODE_DEBUG
+                printf("DEBUG %s node %d : %d threads\n", required_threads,
+                                node_name, detected);
+#endif
+
+                continue;
+            }
+
+            /* -threads-per-node 99
+             */
             node->threads = atoi(required_threads);
+
+#ifdef BSAL_NODE_DEBUG
+            printf("DEBUG using %d threads\n", node->threads);
+#endif
         }
     }
 
@@ -84,26 +124,20 @@ void bsal_node_init(struct bsal_node *node, int *argc, char ***argv)
      * Design: if MPI_THREAD_MULTIPLE is provided, receive in main thread, send in 1 thread,
      * workers in (T - 2) threads, otherwise delegate the case to Case 1
      */
-    required = MPI_THREAD_SINGLE;
     workers = 1;
 
     if (node->threads == 1) {
-        required = MPI_THREAD_SINGLE;
         workers = node->threads - 0;
 
     } else if (node->threads == 2) {
-        required = MPI_THREAD_FUNNELED;
         workers = node->threads - 1;
 
     } else if (node->threads >= 3) {
-        required = MPI_THREAD_MULTIPLE;
 
         /* the number of workers depends on whether or not
          * MPI_THREAD_MULTIPLE is provided
          */
     }
-
-    MPI_Init_thread(argc, argv, required, &provided);
 
     node->send_in_thread = 0;
 
@@ -115,6 +149,9 @@ void bsal_node_init(struct bsal_node *node, int *argc, char ***argv)
         if (node->provided == MPI_THREAD_MULTIPLE) {
             node->send_in_thread = 1;
             workers = node->threads - 2;
+
+        /* assume MPI_THREAD_FUNNELED
+         */
         } else {
 
 #ifdef BSAL_NODE_DEBUG
@@ -126,11 +163,6 @@ void bsal_node_init(struct bsal_node *node, int *argc, char ***argv)
 
     node->provided = provided;
     node->datatype = MPI_BYTE;
-
-    /* make a new communicator for the library and don't use MPI_COMM_WORLD later */
-    MPI_Comm_dup(MPI_COMM_WORLD, &node->comm);
-    MPI_Comm_rank(node->comm, &node_name);
-    MPI_Comm_size(node->comm, &nodes);
 
     node->name = node_name;
     node->nodes = nodes;
@@ -165,6 +197,65 @@ void bsal_node_destroy(struct bsal_node *node)
     node->actors = NULL;
 
     MPI_Finalize();
+}
+
+int bsal_node_threads_from_string(struct bsal_node *node,
+                char *required_threads, int index)
+{
+    int j;
+    int commas = 0;
+    int start;
+    int value;
+    int length;
+
+
+    start = 0;
+    length = strlen(required_threads);
+
+    /* first, count commas to change the index
+     */
+    for (j = 0; j < length; j++) {
+        if (required_threads[j] == ',') {
+            commas++;
+        }
+    }
+
+    index %= (commas + 1);
+
+    commas = 0;
+
+    for (j = 0; j < length; j++) {
+        if (required_threads[j] == ',') {
+            if (index == commas) {
+                required_threads[j] = '\0';
+                value = atoi(required_threads + start);
+                required_threads[j] = ',';
+                return value;
+            }
+            commas++;
+            start = j + 1;
+        }
+    }
+
+    if (commas == 0) {
+        return -1;
+    }
+
+    /* the last integer is not followed
+     * by a comma
+     */
+    if (index == commas) {
+        value = atoi(required_threads + start);
+        return value;
+    } else {
+        /* recursive call...
+         * this never happens because the index is changed at the beginning
+         * of the function.
+         */
+        return bsal_node_threads_from_string(node, required_threads, index - commas -1);
+    }
+
+    return -1;
 }
 
 void bsal_node_set_supervisor(struct bsal_node *node, int name, int supervisor)

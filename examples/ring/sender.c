@@ -141,15 +141,13 @@ void sender_start(struct bsal_actor *actor, struct bsal_message *message)
     int total;
     int next;
     struct sender *sender1;
+    int argc;
+    char **argv;
 
     printf("sender_start\n");
 
     sender1 = (struct sender *)bsal_actor_pointer(actor);
 
-    /* \see http://rlrr.drum-corps.net/misc/primes3.shtml
-     */
-    events = 200087;
-    /*events = 10000;*/
 
     name = bsal_actor_name(actor);
     size = bsal_actor_nodes(actor);
@@ -165,6 +163,24 @@ void sender_start(struct bsal_actor *actor, struct bsal_message *message)
     if (name != 0) {
         return;
     }
+
+    /* \see http://rlrr.drum-corps.net/misc/primes3.shtml
+     */
+    events = 200087;
+
+    argc = bsal_actor_argc(actor);
+    argv = bsal_actor_argv(actor);
+
+    for (i = 0; i < argc; i++) {
+        if (strcmp(argv[i], "-messages") == 0 && i + 1 < argc) {
+            events = atoi(argv[i + 1]);
+            break;
+        }
+    }
+
+    printf("Using %d messages\n", events);
+
+    /*events = 10000;*/
 
     printf("sender_start send SENDER_HELLO, system has: %i bsal_actors on %i "
                     "bsal_nodes (%i worker threads each)\n",

@@ -91,5 +91,7 @@ pthread_t *bsal_node_thread(struct bsal_node *node);
 void *bsal_node_main(void *pointer);
 int bsal_node_running(struct bsal_node *node);
 void bsal_node_start_send_thread(struct bsal_node *node);
+int bsal_node_threads_from_string(struct bsal_node *node,
+                char *required_threads, int index);
 
 #endif

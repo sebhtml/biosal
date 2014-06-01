@@ -97,17 +97,27 @@ the work.
 
 ## Runtime
 
-The number of nodes is set by mpiexec -n @number_of_bsal_nodes
-The number of workers on each node is set with
--workers-by-node
+The number of nodes is set by mpiexec -n @number_of_bsal_nodes Program.
+The number of threads on each node is set with -threads-per-node.
 
 The following command starts 256 nodes (there is 1 MPI rank per
-node) and 64 workers per node for a total of
-256 * 64 = 16384 distributed workers.
+node) and 64 threads per node for a total of
+256 * 64 = 16384 threads.
+
+```bash
+mpiexec -n 256 ./a.out -threads-per-node 64
+```
 
 Because the whole thing is event-driven by inbound and outbound messages,
 a single node can run much more actors than the number of
-workers it has.
+threads it has.
+
+The runtime also supports asymmetric numbers of threads:
+
+```bash
+# launch 32 nodes with 32 threads, 244 threads, 32 threads, 244 threads, and so on
+mpiexec -n 32 ./a.out -threads-per-node 32,244
+```
 
 ## Design links
 
