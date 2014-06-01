@@ -9,6 +9,10 @@ to interact with it in order to read sequence data.
 #include <input/input_actor.h>
 ```
 
+([input/input_actor.h](../input/input_actor.h))
+
+# Message tags
+
 ## BSAL_INPUT_ACTOR_OPEN
 
 ```C
@@ -25,21 +29,21 @@ BSAL_INPUT_ACTOR_OPEN_OK
 ```
 
 - Condition: Successful
-- Response message buffer: -
+- Response message buffer: empty
 
 ```C
 BSAL_INPUT_ACTOR_OPEN_NOT_FOUND
 ```
 
 - Condition: File not found
-- Response message buffer: -
+- Response message buffer: empty
 
 ```C
 BSAL_INPUT_ACTOR_OPEN_NOT_SUPPORTED
 ```
 
 - Condition: Format not supported
-- Response message buffer: -
+- Response message buffer: empty
 
 ## BSAL_INPUT_ACTOR_COUNT
 
@@ -49,7 +53,7 @@ BSAL_INPUT_ACTOR_COUNT
 
 Count entries
 
-- Request message buffer: -
+- Request message buffer: empty
 - Responses:
 
 ```C
@@ -73,6 +77,6 @@ BSAL_INPUT_ACTOR_CLOSE
 ```
 Close the file
 
-- Request message buffer: -
+- Request message buffer: empty
 - Responses: none
 

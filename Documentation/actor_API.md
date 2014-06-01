@@ -1,19 +1,28 @@
 # Actor API
 
-These functions (except **bsal_node_spawn**) can be called within an actor context (inside a receive function).
-Actors spawned with **bsal_node_spawn** (initial actors) receive a message with tag **BSAL_ACTOR_START**.
+When creating actors, the developer needs to provides 3 functions: init
+(**bsal_actor_init_fn_t**), destroy (**bsal_actor_destroy_fn_t**) and receive
+(**bsal_actor_receive_fn_t**)
+(with a **struct bsal_actor_vtable**). init is called when the actor is spawned, destroy is called
+when **bsal_actor_die** is called, and receive is called whenever a message is received.
 
-When creating actors, the developer needs to provides 3 functions: init, destroy and receive
-(in **bsal_actor_vtable**). init is called when the actor is spawned, destroy is called
-when bsal_actor_die is called, and receive is called whenever a message is received.
+All the functions below (except **bsal_node_spawn** which is used
+                to spawn initial actors) must be called within an actor context (inside a
+**bsal_actor_receive_fn_t** function).
+Actors spawned with **bsal_node_spawn** (initial actors) receive a message with tag **BSAL_ACTOR_START**
+when the system starts.
 
-Example: [buddy.h](../examples/mock/buddy.h) [buddy.c](../examples/mock/buddy.c)
+Custom actor example: [buddy.h](../examples/mock/buddy.h) [buddy.c](../examples/mock/buddy.c)
 
-## Header
+# Header
 
 ```C
 #include <engine/actor.h>
 ```
+
+([engine/actor.h](../engine/actor.h))
+
+# Message tags
 
 ## BSAL_ACTOR_START
 
@@ -54,10 +63,12 @@ Unpin an actor. Can only be sent to an actor by itself.
 BSAL_ACTOR_SYNCHRONIZED
 ```
 
-Notification of completed synchronization.
+Notification of completed synchronization (started with **bsal_actor_synchronize**).
 
 - Request message buffer: not application, this is a received message
 - Responses: none
+
+# Most important functions
 
 ## bsal_node_spawn
 
@@ -67,6 +78,52 @@ int bsal_node_spawn(struct bsal_node *node, void *pointer, struct bsal_actor_vta
 
 Spawn an actor from the outside, this is usually used to spawn the first actor of a node.
 Actors spawned with this function will receive a message with tag BSAL_ACTOR_START.
+
+## bsal_actor_spawn
+
+```C
+int bsal_actor_spawn(struct bsal_actor *actor, void *pointer,
+                struct bsal_actor_vtable *vtable);
+```
+Spawn a new actor and return its name. The supervisor assigned to the newly spawned actor is the actor
+that calls **bsal_actor_spawn**.
+
+
+## bsal_actor_send
+
+```C
+void bsal_actor_send(struct bsal_actor *actor, int destination, struct bsal_message *message);
+```
+
+Send a message to an actor.
+
+## bsal_actor_pointer
+
+```C
+void *bsal_actor_pointer(struct bsal_actor *actor);
+```
+
+Get the implementation of an actor. This is used when implementing new
+actors.
+
+##  bsal_actor_die
+
+```C
+void bsal_actor_die(struct bsal_actor *actor);
+```
+
+Die.
+
+## bsal_actor_nodes
+
+```C
+int bsal_actor_nodes(struct bsal_actor *actor);
+```
+
+Get number of nodes.
+
+
+# Other functions
 
 ## bsal_actor_name
 
@@ -101,24 +158,6 @@ char **bsal_actor_argv(struct bsal_actor *actor);
 
 Get command line arguments
 
-## bsal_actor_spawn
-
-```C
-int bsal_actor_spawn(struct bsal_actor *actor, void *pointer,
-                struct bsal_actor_vtable *vtable);
-```
-Spawn a new actor and return its name. The supervisor assigned to the newly spawned actor is the actor
-that calls **bsal_actor_spawn**.
-
-
-## bsal_actor_send
-
-```C
-void bsal_actor_send(struct bsal_actor *actor, int destination, struct bsal_message *message);
-```
-
-Send a message to an actor.
-
 ## bsal_actor_send_range
 
 ```C
@@ -127,31 +166,6 @@ void bsal_actor_send_range(struct bsal_actor *actor, int first, int last, struct
 
 Send a message to many actors in a range. The implementation uses
 a binomial-tree algorithm.
-
-## bsal_actor_pointer
-
-```C
-void *bsal_actor_pointer(struct bsal_actor *actor);
-```
-
-Get the implementation of an actor. This is useful when implementing new
-actors.
-
-##  bsal_actor_die
-
-```C
-void bsal_actor_die(struct bsal_actor *actor);
-```
-
-Die.
-
-## bsal_actor_nodes
-
-```C
-int bsal_actor_nodes(struct bsal_actor *actor);
-```
-
-Get number of nodes.
 
 ## bsal_actor_synchronize
 

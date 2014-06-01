@@ -81,7 +81,7 @@ Key concepts
 | Actor | Something that receives messages | struct bsal_actor |
 | Work | 2-tuple with an actor and a message | struct bsal_work |
 | Node | A runtime system that can be connected to other nodes (see [Erlang's definition](http://www.erlang.org/doc/reference_manual/distributed.html)) | struct bsal_node |
-| Worker | An object that performs work for a living | bsal_worker_thread |
+| Worker | An object that performs work for a living | bsal_worker |
 | Queue | Each worker has a work queue and a message queue | struct bsal_fifo |
 | Worker Pool | A set of available workers inside a node | struct bsal_worker_pool |
 
@@ -131,4 +131,4 @@ mpiexec -n 32 ./a.out -threads-per-node 32,244
 - a := Analysis or Actor or Actors
 - l := Library or Lift
 
-
+Alternative name: BIOlogy Scalable Actor Library
