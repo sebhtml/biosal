@@ -12,7 +12,7 @@ struct bsal_biosal {
     int version;
 };
 
-int bsal_biosal_init(struct bsal_biosal *biosal, int threads, int *argc, char ***argv);
+int bsal_biosal_init(struct bsal_biosal *biosal, int *argc, char ***argv);
 int bsal_biosal_destroy(struct bsal_biosal *biosal);
 
 #endif
