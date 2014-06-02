@@ -1,7 +1,7 @@
 # Message API
 
 In the actor model, everything is either an actor or a message.
-This API describe what can be done with messages. The list below
+This API describes what can be done with messages. The list below
 only includes the functions that are useful within an actor.
 
 # Header
@@ -20,7 +20,7 @@ only includes the functions that are useful within an actor.
 void bsal_message_init(struct bsal_message *message, int tag, int count, void *buffer);
 ```
 
-Initialize a message.
+Initialize a message. count is a number of bytes.
 
 ## bsal_message_destroy
 

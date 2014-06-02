@@ -1,7 +1,7 @@
 # Node API
 
 The node API allows one to spawn the initial actors.
-see this example: [main.c](../examples/remote_spawn/main.c)
+See this example: [main.c](../examples/remote_spawn/main.c)
 
 # Functions
 
