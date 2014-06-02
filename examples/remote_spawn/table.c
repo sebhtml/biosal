@@ -52,13 +52,13 @@ void table_receive(struct bsal_actor *actor, struct bsal_message *message)
 
         script = TABLE_SCRIPT;
         bsal_message_init(&spawn_message, BSAL_ACTOR_SPAWN, sizeof(script), &script);
-        /*
         bsal_actor_send(actor, remote, &spawn_message);
-*/
+
+        /*
         printf("sending notification\n");
         bsal_message_set_tag(message, TABLE_NOTIFY);
         bsal_actor_send(actor, 0, message);
-
+*/
         /*
         bsal_actor_die(actor);
         */
@@ -75,6 +75,7 @@ void table_receive(struct bsal_actor *actor, struct bsal_message *message)
         bsal_actor_send(actor, new_actor, message);
 
         bsal_message_set_tag(message, TABLE_NOTIFY);
+        bsal_actor_send(actor, 0, message);
 
     } else if (tag == TABLE_DIE2) {
 
