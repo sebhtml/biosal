@@ -17,6 +17,8 @@ Looking for the Application Programming Interface (API) ? Look no further !
 # Try it out
 
 ```bash
+git clone https://github.com/GeneAssembly/biosal.git
+cd biosal
 make test # run tests
 make run # run examples
 ```
@@ -50,7 +52,7 @@ When an actor receives a message, it can ([Agha 1986](http://dl.acm.org/citation
 
 - send a finite number of messages to other actors (bsal_actor_send);
 - create a finite number of new actors (bnsal_actor_spawn);
-- designate the behavior to be used for the next message it receives (bsal_actor_actor, bsal_actor_die).
+- designate the behavior to be used for the next message it receives (bsal_actor_pointer, bsal_actor_die).
 
 Other names for the actor model: actors, virtual processors, activation frames, streams
 ([Hewitt, Bishop, Steiger 1973](http://dl.acm.org/citation.cfm?id=1624804)).
@@ -78,14 +80,15 @@ Key concepts
 | Concept | Description | Structure |
 | --- | --- | --- |
 | Message | Information with a source and a destination | struct bsal_message |
-| Actor | Something that receives messages | struct bsal_actor |
+| Actor | Something that receives messages and behaves according to a script | struct bsal_actor |
+| Script | Describes the behavior of an actor ([Hewitt, Bishop, Steiger 1973](http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.77.7898))| struct bsal_script |
 | Work | 2-tuple with an actor and a message | struct bsal_work |
 | Node | A runtime system that can be connected to other nodes (see [Erlang's definition](http://www.erlang.org/doc/reference_manual/distributed.html)) | struct bsal_node |
 | Worker | An object that performs work for a living | bsal_worker |
 | Queue | Each worker has a work queue and a message queue | struct bsal_fifo |
 | Worker Pool | A set of available workers inside a node | struct bsal_worker_pool |
 
-## Workflow
+## Workflow (implementation of the runtime system)
 
 The code has to be formulated in term of actors.
 An actor has a name, and does something when it receives a message.
@@ -97,7 +100,7 @@ the work.
 
 ## Runtime
 
-The number of nodes is set by mpiexec -n @number_of_bsal_nodes Program.
+The number of nodes is set by mpiexec -n @number_of_bsal_nodes ./a.out.
 The number of threads on each node is set with -threads-per-node.
 
 The following command starts 256 nodes (there is 1 MPI rank per
