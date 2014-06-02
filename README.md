@@ -60,6 +60,8 @@ Other names for the actor model: actors, virtual processors, activation frames, 
 Also, in the actor model, the arrival order of messages is both arbitrary and unknown
 ([Agha 1986](http://dl.acm.org/citation.cfm?id=7929), p. 22, 2.4).
 
+[Important actor model papers](Documentation/Actors.md)
+
 ## Actor model links
 
 - [Why say Actor Model instead of message passing?](http://lambda-the-ultimate.org/node/4683)
