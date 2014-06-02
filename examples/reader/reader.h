@@ -9,6 +9,9 @@
 struct reader {
     int sequence_reader;
     int last_report;
+    char *file;
+    int counted;
+    int pulled;
 };
 
 struct bsal_script reader_script;

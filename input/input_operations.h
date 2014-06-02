@@ -15,7 +15,7 @@ typedef void (*bsal_input_destroy_fn_t)(
 
 typedef int (*bsal_input_get_sequence_fn_t)(
     struct bsal_input *input,
-    struct bsal_dna_sequence *sequence
+    char *sequence
 );
 
 typedef int (*bsal_input_detect_fn_t)(

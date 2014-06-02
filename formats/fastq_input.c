@@ -1,8 +1,6 @@
 
 #include "fastq_input.h"
 
-#include <data/dna_sequence.h>
-
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -34,6 +32,7 @@ void bsal_fastq_input_init(struct bsal_input *input)
     fastq = (struct bsal_fastq_input *)bsal_input_implementation(input);
 
     bsal_buffered_reader_init(&fastq->reader, file);
+    fastq->buffer = NULL;
 }
 
 void bsal_fastq_input_destroy(struct bsal_input *input)
@@ -42,30 +41,42 @@ void bsal_fastq_input_destroy(struct bsal_input *input)
 
     fastq = (struct bsal_fastq_input *)bsal_input_implementation(input);
     bsal_buffered_reader_destroy(&fastq->reader);
+
+    if (fastq->buffer != NULL) {
+        free(fastq->buffer);
+        fastq->buffer = NULL;
+    }
 }
 
 int bsal_fastq_input_get_sequence(struct bsal_input *input,
-                struct bsal_dna_sequence *sequence)
+                char *sequence)
 {
     struct bsal_fastq_input *fastq;
 
     /* TODO use a dynamic buffer to accept long reads... */
-    char buffer[2048];
+    char *buffer = sequence;
+    int maximum_sequence_length = BSAL_INPUT_MAXIMUM_SEQUENCE_LENGTH;
     int value;
 
     fastq = (struct bsal_fastq_input *)bsal_input_implementation(input);
 
-    value = bsal_buffered_reader_read_line(&fastq->reader, buffer, 2048);
-    value = bsal_buffered_reader_read_line(&fastq->reader, buffer, 2048);
+    if (fastq->buffer == NULL) {
+        fastq->buffer = (char *)malloc(maximum_sequence_length + 1);
+    }
+
+    value = bsal_buffered_reader_read_line(&fastq->reader, fastq->buffer,
+                    maximum_sequence_length);
+    value = bsal_buffered_reader_read_line(&fastq->reader, buffer,
+                    maximum_sequence_length);
 
 #ifdef BSAL_FASTQ_INPUT_DEBUG2
     printf("DEBUG bsal_fastq_input_get_sequence %s\n", buffer);
 #endif
 
-    bsal_dna_sequence_init(sequence, buffer);
-
-    value = bsal_buffered_reader_read_line(&fastq->reader, buffer, 2048);
-    value = bsal_buffered_reader_read_line(&fastq->reader, buffer, 2048);
+    value = bsal_buffered_reader_read_line(&fastq->reader, fastq->buffer,
+                    maximum_sequence_length);
+    value = bsal_buffered_reader_read_line(&fastq->reader, fastq->buffer,
+                    maximum_sequence_length);
 
     return value;
 }

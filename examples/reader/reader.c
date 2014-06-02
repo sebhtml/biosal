@@ -15,10 +15,20 @@ struct bsal_script reader_script = {
 
 void reader_init(struct bsal_actor *actor)
 {
+    struct reader *reader1;
+
+    reader1 = (struct reader *)bsal_actor_state(actor);
+    reader1->counted = 0;
+    reader1->pulled = 0;
 }
 
 void reader_destroy(struct bsal_actor *actor)
 {
+    struct reader *reader1;
+
+    reader1 = (struct reader *)bsal_actor_state(actor);
+    reader1->counted = 0;
+    reader1->pulled = 0;
 }
 
 void reader_receive(struct bsal_actor *actor, struct bsal_message *message)
@@ -30,11 +40,13 @@ void reader_receive(struct bsal_actor *actor, struct bsal_message *message)
     int name;
     struct reader *reader1;
     int source;
-    char *file;
     int count;
     int nodes;
     void *buffer;
     int sequences;
+    int script;
+    int sequence_index;
+    char *received_sequence;
 
     reader1 = (struct reader *)bsal_actor_state(actor);
     tag = bsal_message_tag(message);
@@ -74,14 +86,14 @@ void reader_receive(struct bsal_actor *actor, struct bsal_message *message)
 
         reader1->sequence_reader = bsal_actor_spawn(actor, BSAL_INPUT_ACTOR_SCRIPT);
 
-        file = argv[argc - 1];
+        reader1->file = argv[argc - 1];
 
         bsal_message_set_tag(message, BSAL_INPUT_ACTOR_OPEN);
-        bsal_message_set_buffer(message, file);
-        bsal_message_set_count(message, strlen(file));
+        bsal_message_set_buffer(message, reader1->file);
+        bsal_message_set_count(message, strlen(reader1->file) + 1);
 
         printf("actor %i: asking actor %i to count entries in %s\n",
-                        name, reader1->sequence_reader, file);
+                        name, reader1->sequence_reader, reader1->file);
 
         bsal_actor_send(actor, reader1->sequence_reader, message);
 
@@ -98,20 +110,20 @@ void reader_receive(struct bsal_actor *actor, struct bsal_message *message)
                         name, source, sequences);
         reader1->last_report = sequences;
 
-    } else if (tag == BSAL_INPUT_ACTOR_OPEN_NOT_FOUND) {
+    } else if (tag == BSAL_INPUT_ACTOR_ERROR_FILE_NOT_FOUND) {
 
         printf("Error, file not found! \n");
         bsal_message_set_tag(message, BSAL_ACTOR_STOP);
         bsal_actor_send(actor, name, message);
 
-    } else if (tag == BSAL_INPUT_ACTOR_OPEN_NOT_SUPPORTED) {
+    } else if (tag == BSAL_INPUT_ACTOR_ERROR_FORMAT_NOT_SUPPORTED) {
 
         printf("Error, format not supported! \n");
 
         bsal_message_set_tag(message, BSAL_ACTOR_STOP);
         bsal_actor_send(actor, name, message);
 
-    } else if (tag == BSAL_INPUT_ACTOR_OPEN_OK) {
+    } else if (tag == BSAL_INPUT_ACTOR_OPEN_OK && !reader1->counted) {
         bsal_message_set_tag(message, BSAL_INPUT_ACTOR_COUNT);
         bsal_actor_send(actor, source, message);
 
@@ -122,6 +134,71 @@ void reader_receive(struct bsal_actor *actor, struct bsal_message *message)
 
         bsal_message_set_tag(message, BSAL_INPUT_ACTOR_CLOSE);
         bsal_actor_send(actor, source, message);
+
+        reader1->counted = 1;
+    } else if (tag == BSAL_INPUT_ACTOR_CLOSE_OK && !reader1->pulled) {
+
+            /*
+        bsal_message_set_tag(message, BSAL_ACTOR_STOP);
+        bsal_actor_send(actor, name, message);
+
+        return;
+        */
+
+        script = BSAL_INPUT_ACTOR_SCRIPT;
+
+        bsal_message_init(message, BSAL_ACTOR_SPAWN, sizeof(script), &script);
+        bsal_actor_send(actor, name, message);
+
+    } else if (tag == BSAL_INPUT_ACTOR_CLOSE_OK && reader1->pulled) {
+
+        bsal_message_init(message, BSAL_ACTOR_STOP, 0, NULL);
+        bsal_actor_send(actor, name, message);
+
+    } else if (tag == BSAL_ACTOR_SPAWN_REPLY) {
+
+        reader1->sequence_reader = *(int *)buffer;
+
+        printf("actor %d tells actor %d to open %s\n",
+                        name, reader1->sequence_reader, reader1->file);
+
+        bsal_message_init(message, BSAL_INPUT_ACTOR_OPEN,
+                        strlen(reader1->file) + 1, reader1->file);
+        bsal_actor_send(actor, reader1->sequence_reader, message);
+
+    } else if (tag == BSAL_INPUT_ACTOR_OPEN_OK && reader1->counted) {
+
+        bsal_message_init(message, BSAL_INPUT_ACTOR_GET_SEQUENCE, 0, NULL);
+        bsal_actor_send(actor, source, message);
+
+    } else if (tag == BSAL_INPUT_ACTOR_GET_SEQUENCE_REPLY) {
+
+        sequence_index = *(int *)buffer;
+        received_sequence = (char*)buffer + sizeof(sequence_index);
+
+        /*
+        printf("DEBUG %d %s\n", sequence_index, received_sequence);
+*/
+        if (sequence_index == 123456) {
+            printf("actor %d says that sequence %d is %s.\n",
+                            name, sequence_index, received_sequence);
+        } else if (sequence_index % 100000 == 0) {
+            printf("actor %d is pulling sequences from fellow local actor %d,"
+                            " %d sequences pulled so far !\n",
+                            name, reader1->sequence_reader, sequence_index);
+        }
+
+        if (sequence_index < 1000000) {
+            bsal_message_init(message, BSAL_INPUT_ACTOR_GET_SEQUENCE, 0, NULL);
+            bsal_actor_send(actor, source, message);
+        } else {
+            bsal_message_init(message, BSAL_INPUT_ACTOR_CLOSE, 0, NULL);
+            bsal_actor_send(actor, source, message);
+            reader1->pulled = 1;
+        }
+
+    } else if (tag == BSAL_INPUT_ACTOR_ERROR_END) {
+        printf("actor %d: reached the end...\n", name);
 
         bsal_message_set_tag(message, BSAL_ACTOR_STOP);
         bsal_actor_send(actor, name, message);

@@ -24,7 +24,7 @@ void bsal_input_proxy_init(struct bsal_input_proxy *proxy,
 }
 
 int bsal_input_proxy_get_sequence(struct bsal_input_proxy *proxy,
-                struct bsal_dna_sequence *sequence)
+                char *sequence)
 {
     return bsal_input_get_sequence(&proxy->input, sequence);
 }

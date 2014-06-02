@@ -50,7 +50,7 @@ Spawn a remote actor. [Example](../examples/remote_spawn/table.c)
 BSAL_ACTOR_SPAWN_REPLY
 ```
 
-- Condition: Spawn an actor remotely
+Spawn an actor remotely
 - Response message buffer: actor name
 
 ## BSAL_ACTOR_STOP

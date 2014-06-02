@@ -10,6 +10,7 @@
 
 struct bsal_fastq_input {
     struct bsal_buffered_reader reader;
+    char *buffer;
 };
 
 struct bsal_input_operations bsal_fastq_input_operations;
@@ -17,7 +18,7 @@ struct bsal_input_operations bsal_fastq_input_operations;
 void bsal_fastq_input_init(struct bsal_input *input);
 void bsal_fastq_input_destroy(struct bsal_input *input);
 int bsal_fastq_input_get_sequence(struct bsal_input *input,
-                struct bsal_dna_sequence *sequence);
+                char *sequence);
 int bsal_fastq_input_detect(struct bsal_input *input);
 
 #endif

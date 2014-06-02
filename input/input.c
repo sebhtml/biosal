@@ -47,7 +47,7 @@ void bsal_input_destroy(struct bsal_input *input)
 }
 
 int bsal_input_get_sequence(struct bsal_input *input,
-                struct bsal_dna_sequence *sequence)
+                char *sequence)
 {
     bsal_input_get_sequence_fn_t handler;
     int value;
