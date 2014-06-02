@@ -7,7 +7,7 @@
 
 /*#define BSAL_INPUT_ACTOR_DEBUG*/
 
-struct bsal_actor_vtable bsal_input_actor_vtable = {
+struct bsal_script bsal_input_script = {
     .name = BSAL_INPUT_ACTOR_SCRIPT,
     .init = bsal_input_actor_init,
     .destroy = bsal_input_actor_destroy,

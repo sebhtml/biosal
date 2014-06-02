@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <string.h>
 
-struct bsal_actor_vtable sender_vtable = {
+struct bsal_script sender_script = {
     .name = SENDER_SCRIPT,
     .init = sender_init,
     .destroy = sender_destroy,

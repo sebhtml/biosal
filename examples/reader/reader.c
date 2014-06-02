@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <string.h>
 
-struct bsal_actor_vtable reader_vtable = {
+struct bsal_script reader_script = {
     .name = READER_SCRIPT,
     .init = reader_init,
     .destroy = reader_destroy,

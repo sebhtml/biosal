@@ -34,8 +34,8 @@ void bsal_node_init(struct bsal_node *node, int *argc, char ***argv)
 
     node->maximum_scripts = 1024;
     node->available_scripts = 0;
-    bytes = node->maximum_scripts * sizeof(struct bsal_actor_vtable *);
-    node->scripts = (struct bsal_actor_vtable **)malloc(bytes);
+    bytes = node->maximum_scripts * sizeof(struct bsal_script *);
+    node->scripts = (struct bsal_script **)malloc(bytes);
 
     /* the rank number is needed to decide on
      * the number of threads
@@ -278,7 +278,7 @@ void bsal_node_set_supervisor(struct bsal_node *node, int name, int supervisor)
 
 int bsal_node_spawn(struct bsal_node *node, int script)
 {
-    struct bsal_actor_vtable *script1;
+    struct bsal_script *script1;
     int size;
     void *pointer;
 
@@ -288,7 +288,7 @@ int bsal_node_spawn(struct bsal_node *node, int script)
         return -1;
     }
 
-    size = bsal_actor_vtable_size(script1);
+    size = bsal_script_size(script1);
 
     pointer = malloc(size);
 
@@ -296,7 +296,7 @@ int bsal_node_spawn(struct bsal_node *node, int script)
 }
 
 int bsal_node_spawn_pointer(struct bsal_node *node, void *pointer,
-                struct bsal_actor_vtable *vtable)
+                struct bsal_script *script)
 {
     struct bsal_actor *actor;
     int name;
@@ -304,7 +304,7 @@ int bsal_node_spawn_pointer(struct bsal_node *node, void *pointer,
     pthread_spin_lock(&node->spawn_lock);
 
     actor = node->actors + node->actor_count;
-    bsal_actor_init(actor, pointer, vtable);
+    bsal_actor_init(actor, pointer, script);
 
     name = bsal_node_assign_name(node);
 
@@ -752,9 +752,9 @@ int bsal_node_threads(struct bsal_node *node)
 }
 
 void bsal_node_add_script(struct bsal_node *node, int name,
-                struct bsal_actor_vtable *vtable)
+                struct bsal_script *script)
 {
-    if (bsal_node_has_script(node, vtable)) {
+    if (bsal_node_has_script(node, script)) {
         return;
     }
 
@@ -762,26 +762,26 @@ void bsal_node_add_script(struct bsal_node *node, int name,
         return;
     }
 
-    node->scripts[node->available_scripts++] = vtable;
+    node->scripts[node->available_scripts++] = script;
 }
 
-int bsal_node_has_script(struct bsal_node *node, struct bsal_actor_vtable *vtable)
+int bsal_node_has_script(struct bsal_node *node, struct bsal_script *script)
 {
-    if (bsal_node_find_script(node, vtable->name) != NULL) {
+    if (bsal_node_find_script(node, script->name) != NULL) {
         return 1;
     }
     return 0;
 }
 
-struct bsal_actor_vtable *bsal_node_find_script(struct bsal_node *node, int name)
+struct bsal_script *bsal_node_find_script(struct bsal_node *node, int name)
 {
     int i;
-    struct bsal_actor_vtable *script;
+    struct bsal_script *script;
 
     for (i = 0; i < node->available_scripts; i++) {
         script = node->scripts[i];
 
-        if (bsal_actor_vtable_name(script) == name) {
+        if (bsal_script_name(script) == name) {
             return script;
         }
     }

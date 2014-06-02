@@ -18,7 +18,7 @@ typedef void (*bsal_actor_destroy_fn_t)(
     struct bsal_actor *actor
 );
 
-struct bsal_actor_vtable {
+struct bsal_script {
     bsal_actor_init_fn_t init;
     bsal_actor_destroy_fn_t destroy;
     bsal_actor_receive_fn_t receive;
@@ -26,13 +26,13 @@ struct bsal_actor_vtable {
     int size;
 };
 
-void bsal_actor_vtable_init(struct bsal_actor_vtable *vtable, bsal_actor_init_fn_t init,
+void bsal_script_init(struct bsal_script *script, bsal_actor_init_fn_t init,
                 bsal_actor_destroy_fn_t destroy, bsal_actor_receive_fn_t receive);
-void bsal_actor_vtable_destroy(struct bsal_actor_vtable *vtable);
-bsal_actor_init_fn_t bsal_actor_vtable_get_init(struct bsal_actor_vtable *vtable);
-bsal_actor_destroy_fn_t bsal_actor_vtable_get_destroy(struct bsal_actor_vtable *vtable);
-bsal_actor_receive_fn_t bsal_actor_vtable_get_receive(struct bsal_actor_vtable *vtable);
-int bsal_actor_vtable_name(struct bsal_actor_vtable *vtable);
-int bsal_actor_vtable_size(struct bsal_actor_vtable *vtable);
+void bsal_script_destroy(struct bsal_script *script);
+bsal_actor_init_fn_t bsal_script_get_init(struct bsal_script *script);
+bsal_actor_destroy_fn_t bsal_script_get_destroy(struct bsal_script *script);
+bsal_actor_receive_fn_t bsal_script_get_receive(struct bsal_script *script);
+int bsal_script_name(struct bsal_script *script);
+int bsal_script_size(struct bsal_script *script);
 
 #endif

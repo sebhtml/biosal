@@ -14,7 +14,7 @@
 */
 
 void bsal_actor_init(struct bsal_actor *actor, void *pointer,
-                struct bsal_actor_vtable *vtable)
+                struct bsal_script *script)
 {
     bsal_actor_init_fn_t init;
 
@@ -22,7 +22,7 @@ void bsal_actor_init(struct bsal_actor *actor, void *pointer,
     actor->name = -1;
     actor->supervisor = -1;
     actor->dead = 0;
-    actor->vtable = vtable;
+    actor->script = script;
     actor->worker = NULL;
 
     actor->synchronization_started = 0;
@@ -53,7 +53,7 @@ void bsal_actor_destroy(struct bsal_actor *actor)
 
     bsal_actor_unpin(actor);
 
-    actor->vtable = NULL;
+    actor->script = NULL;
     actor->worker = NULL;
     actor->pointer = NULL;
 
@@ -81,7 +81,7 @@ void *bsal_actor_pointer(struct bsal_actor *actor)
 
 bsal_actor_receive_fn_t bsal_actor_get_receive(struct bsal_actor *actor)
 {
-    return bsal_actor_vtable_get_receive(actor->vtable);
+    return bsal_script_get_receive(actor->script);
 }
 
 void bsal_actor_set_name(struct bsal_actor *actor, int name)
@@ -108,12 +108,12 @@ void bsal_actor_print(struct bsal_actor *actor)
 
 bsal_actor_init_fn_t bsal_actor_get_init(struct bsal_actor *actor)
 {
-    return bsal_actor_vtable_get_init(actor->vtable);
+    return bsal_script_get_init(actor->script);
 }
 
 bsal_actor_destroy_fn_t bsal_actor_get_destroy(struct bsal_actor *actor)
 {
-    return bsal_actor_vtable_get_destroy(actor->vtable);
+    return bsal_script_get_destroy(actor->script);
 }
 
 void bsal_actor_set_worker(struct bsal_actor *actor, struct bsal_worker *worker)

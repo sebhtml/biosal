@@ -27,7 +27,7 @@ enum {
     BSAL_INPUT_ACTOR_CLOSE
 };
 
-struct bsal_actor_vtable bsal_input_actor_vtable;
+struct bsal_script bsal_input_script;
 
 void bsal_input_actor_init(struct bsal_actor *actor);
 void bsal_input_actor_destroy(struct bsal_actor *actor);

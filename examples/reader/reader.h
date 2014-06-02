@@ -11,7 +11,7 @@ struct reader {
     int last_report;
 };
 
-struct bsal_actor_vtable reader_vtable;
+struct bsal_script reader_script;
 
 void reader_init(struct bsal_actor *actor);
 void reader_destroy(struct bsal_actor *actor);

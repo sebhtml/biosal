@@ -3,7 +3,7 @@
 #define _BSAL_ACTOR_H
 
 #include "message.h"
-#include "actor_vtable.h"
+#include "script.h"
 
 #include <pthread.h>
 #include <stdint.h>
@@ -40,7 +40,7 @@ struct bsal_worker;
  * the actor attribute is a void *
  */
 struct bsal_actor {
-    struct bsal_actor_vtable *vtable;
+    struct bsal_script *script;
     struct bsal_worker *worker;
     struct bsal_worker *affinity_worker;
     void *pointer;
@@ -60,7 +60,7 @@ struct bsal_actor {
 };
 
 void bsal_actor_init(struct bsal_actor *actor, void *pointer,
-                struct bsal_actor_vtable *vtable);
+                struct bsal_script *script);
 void bsal_actor_destroy(struct bsal_actor *actor);
 
 int bsal_actor_name(struct bsal_actor *actor);

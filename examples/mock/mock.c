@@ -4,7 +4,7 @@
 
 #include <stdio.h>
 
-struct bsal_actor_vtable mock_vtable = {
+struct bsal_script mock_script = {
     .name = MOCK_SCRIPT,
     .init = mock_init,
     .destroy = mock_destroy,

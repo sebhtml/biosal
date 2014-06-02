@@ -12,7 +12,7 @@ int main(int argc, char **argv)
 
     bsal_node_init(&node, &argc, &argv);
 
-    bsal_node_add_script(&node, SENDER_SCRIPT, &sender_vtable);
+    bsal_node_add_script(&node, SENDER_SCRIPT, &sender_script);
 
     bsal_node_spawn(&node, SENDER_SCRIPT);
     bsal_node_start(&node);

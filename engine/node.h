@@ -9,7 +9,7 @@
 #include <pthread.h>
 #include <mpi.h>
 
-struct bsal_actor_vtable;
+struct bsal_script;
 
 /*
  * - message reception: one fifo per thread
@@ -25,7 +25,7 @@ struct bsal_node {
     struct bsal_actor *actors;
     struct bsal_worker_pool worker_pool;
 
-    struct bsal_actor_vtable **scripts;
+    struct bsal_script **scripts;
     int available_scripts;
     int maximum_scripts;
 
@@ -61,7 +61,7 @@ void bsal_node_init(struct bsal_node *node, int *argc, char ***argv);
 void bsal_node_destroy(struct bsal_node *node);
 void bsal_node_start(struct bsal_node *node);
 int bsal_node_spawn_pointer(struct bsal_node *node, void *pointer,
-                struct bsal_actor_vtable *vtable);
+                struct bsal_script *script);
 int bsal_node_spawn(struct bsal_node *node, int script);
 void bsal_node_send(struct bsal_node *node, struct bsal_message *message);
 
@@ -101,8 +101,8 @@ void bsal_node_start_send_thread(struct bsal_node *node);
 int bsal_node_threads_from_string(struct bsal_node *node,
                 char *required_threads, int index);
 
-void bsal_node_add_script(struct bsal_node *node, int script, struct bsal_actor_vtable *vtable);
-struct bsal_actor_vtable *bsal_node_find_script(struct bsal_node *node, int name);
-int bsal_node_has_script(struct bsal_node *node, struct bsal_actor_vtable *vtable);
+void bsal_node_add_script(struct bsal_node *node, int name, struct bsal_script *script);
+struct bsal_script *bsal_node_find_script(struct bsal_node *node, int name);
+int bsal_node_has_script(struct bsal_node *node, struct bsal_script *script);
 
 #endif

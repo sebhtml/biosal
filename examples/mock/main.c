@@ -16,8 +16,8 @@ int main(int argc, char **argv)
 
     bsal_node_init(&node, &argc, &argv);
 
-    bsal_node_add_script(&node, MOCK_SCRIPT, &mock_vtable);
-    bsal_node_add_script(&node, BUDDY_SCRIPT, &buddy_vtable);
+    bsal_node_add_script(&node, MOCK_SCRIPT, &mock_script);
+    bsal_node_add_script(&node, BUDDY_SCRIPT, &buddy_script);
 
     bsal_node_spawn(&node, MOCK_SCRIPT);
     bsal_node_start(&node);

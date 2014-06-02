@@ -16,7 +16,7 @@ enum {
     SENDER_KILL
 };
 
-struct bsal_actor_vtable sender_vtable;
+struct bsal_script sender_script;
 
 void sender_init(struct bsal_actor *actor);
 void sender_destroy(struct bsal_actor *actor);

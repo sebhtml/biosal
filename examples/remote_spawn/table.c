@@ -3,7 +3,7 @@
 
 #include <stdio.h>
 
-struct bsal_actor_vtable table_script = {
+struct bsal_script table_script = {
     .name = TABLE_SCRIPT,
     .init = table_init,
     .destroy = table_destroy,

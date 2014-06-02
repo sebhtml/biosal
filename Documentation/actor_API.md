@@ -3,7 +3,7 @@
 When creating actors, the developer needs to provides 3 functions: init
 (**bsal_actor_init_fn_t**), destroy (**bsal_actor_destroy_fn_t**) and receive
 (**bsal_actor_receive_fn_t**)
-(with a **struct bsal_actor_vtable**). init is called when the actor is spawned, destroy is called
+(with a **struct bsal_script**). init is called when the actor is spawned, destroy is called
 when **bsal_actor_die** is called, and receive is called whenever a message is received.
 
 All the functions below (except **bsal_node_spawn** which is used
@@ -92,7 +92,7 @@ Notification of completed synchronization (started with **bsal_actor_synchronize
 
 ```C
 int bsal_actor_spawn(struct bsal_actor *actor, void *pointer,
-                struct bsal_actor_vtable *vtable);
+                struct bsal_script *script);
 ```
 Spawn a new actor and return its name. The supervisor assigned to the newly spawned actor is the actor
 that calls **bsal_actor_spawn**.

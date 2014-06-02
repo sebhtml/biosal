@@ -3,8 +3,8 @@
 
 #include <stdio.h>
 
-/* this vtable is required */
-struct bsal_actor_vtable buddy_vtable = {
+/* this script is required */
+struct bsal_script buddy_script = {
     .name = BUDDY_SCRIPT,
     .init = buddy_init,
     .destroy = buddy_destroy,

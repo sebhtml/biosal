@@ -10,5 +10,5 @@ Actors spawned with this function will receive a message with tag BSAL_ACTOR_STA
 ##
 
 ```C
-void bsal_node_add_script(struct bsal_node *node, int script, struct bsal_actor_vtable *vtable);
+void bsal_node_add_script(struct bsal_node *node, int script, struct bsal_script *script);
 ```

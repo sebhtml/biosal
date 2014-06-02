@@ -13,7 +13,7 @@ all: $(EXAMPLES) $(TESTS)
 LIBRARY=
 
 # actor engine
-LIBRARY += engine/message.o engine/node.o engine/actor.o engine/actor_vtable.o \
+LIBRARY += engine/message.o engine/node.o engine/actor.o engine/script.o \
 	engine/work.o engine/worker.o engine/worker_pool.o
 
 # data structures
