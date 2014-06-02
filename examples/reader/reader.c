@@ -41,6 +41,7 @@ void reader_receive(struct bsal_actor *actor, struct bsal_message *message)
     source = bsal_message_source(message);
     nodes = bsal_actor_nodes(actor);
     buffer = bsal_message_buffer(message);
+    name = bsal_actor_name(actor);
 
     if (tag == BSAL_ACTOR_START) {
 
@@ -58,13 +59,15 @@ void reader_receive(struct bsal_actor *actor, struct bsal_message *message)
         */
 
         if (name % nodes != 0) {
-            bsal_actor_die(actor);
+            bsal_message_set_tag(message, BSAL_ACTOR_STOP);
+            bsal_actor_send(actor, name, message);
 
             return;
         }
 
         if (argc == 1) {
-            bsal_actor_die(actor);
+            bsal_message_set_tag(message, BSAL_ACTOR_STOP);
+            bsal_actor_send(actor, name, message);
 
             return;
         }
@@ -98,12 +101,15 @@ void reader_receive(struct bsal_actor *actor, struct bsal_message *message)
     } else if (tag == BSAL_INPUT_ACTOR_OPEN_NOT_FOUND) {
 
         printf("Error, file not found! \n");
-        bsal_actor_die(actor);
+        bsal_message_set_tag(message, BSAL_ACTOR_STOP);
+        bsal_actor_send(actor, name, message);
 
     } else if (tag == BSAL_INPUT_ACTOR_OPEN_NOT_SUPPORTED) {
 
         printf("Error, format not supported! \n");
-        bsal_actor_die(actor);
+
+        bsal_message_set_tag(message, BSAL_ACTOR_STOP);
+        bsal_actor_send(actor, name, message);
 
     } else if (tag == BSAL_INPUT_ACTOR_OPEN_OK) {
         bsal_message_set_tag(message, BSAL_INPUT_ACTOR_COUNT);
@@ -117,6 +123,7 @@ void reader_receive(struct bsal_actor *actor, struct bsal_message *message)
         bsal_message_set_tag(message, BSAL_INPUT_ACTOR_CLOSE);
         bsal_actor_send(actor, source, message);
 
-        bsal_actor_die(actor);
+        bsal_message_set_tag(message, BSAL_ACTOR_STOP);
+        bsal_actor_send(actor, name, message);
     }
 }

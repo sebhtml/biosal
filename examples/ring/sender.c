@@ -43,8 +43,10 @@ void sender_destroy(struct bsal_actor *actor)
 void sender_receive(struct bsal_actor *actor, struct bsal_message *message)
 {
     int tag;
+    int name;
 
     tag = bsal_message_tag(message);
+    name = bsal_actor_name(actor);
 
     if (tag == BSAL_ACTOR_START) {
 
@@ -57,7 +59,8 @@ void sender_receive(struct bsal_actor *actor, struct bsal_message *message)
     } else if (tag == SENDER_KILL) {
         /*printf("Receives SENDER_KILL\n"); */
 
-        bsal_actor_die(actor);
+        bsal_message_set_tag(message, BSAL_ACTOR_STOP);
+        bsal_actor_send(actor, name, message);
 
     } else if (tag == BSAL_ACTOR_SYNCHRONIZED) {
 

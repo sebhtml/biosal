@@ -26,8 +26,6 @@ void buddy_destroy(struct bsal_actor *actor)
 
     buddy1 = (struct buddy *)bsal_actor_pointer(actor);
     buddy1->received = -1;
-
-    bsal_actor_die(actor);
 }
 
 void buddy_receive(struct bsal_actor *actor, struct bsal_message *message)
@@ -70,6 +68,7 @@ void buddy_receive(struct bsal_actor *actor, struct bsal_message *message)
         bsal_message_set_tag(message, BSAL_ACTOR_UNPIN);
         bsal_actor_send(actor, name, message);
 
-        buddy_destroy(actor);
+        bsal_message_set_tag(message, BSAL_ACTOR_STOP);
+        bsal_actor_send(actor, name, message);
     }
 }

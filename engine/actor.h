@@ -10,7 +10,7 @@
 
 /* engine/actor.h */
 #define BSAL_TAG_OFFSET_ACTOR 0
-#define BSAL_TAG_COUNT_ACTOR 11
+#define BSAL_TAG_COUNT_ACTOR 12
 
 /* input/input_actor.h */
 #define BSAL_TAG_OFFSET_INPUT_ACTOR ( BSAL_TAG_OFFSET_ACTOR + BSAL_TAG_COUNT_ACTOR )
@@ -30,7 +30,8 @@ enum {
     BSAL_ACTOR_SYNCHRONIZE,
     BSAL_ACTOR_SYNCHRONIZED,
     BSAL_ACTOR_SPAWN,
-    BSAL_ACTOR_SPAWN_REPLY
+    BSAL_ACTOR_SPAWN_REPLY,
+    BSAL_ACTOR_STOP
 };
 
 struct bsal_node;

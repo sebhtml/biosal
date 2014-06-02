@@ -75,7 +75,8 @@ void bsal_input_actor_receive(struct bsal_actor *actor, struct bsal_message *mes
         /* Die if there is an error...
          */
         if (bsal_input_actor_has_error(actor, message, 1)) {
-            bsal_actor_die(actor);
+            bsal_message_set_tag(message, BSAL_ACTOR_STOP);
+            bsal_actor_send(actor, name, message);
 
             return;
         }
@@ -132,7 +133,8 @@ void bsal_input_actor_receive(struct bsal_actor *actor, struct bsal_message *mes
         printf("DEBUG destroy proxy\n");
 #endif
 
-        bsal_actor_die(actor);
+        bsal_message_set_tag(message, BSAL_ACTOR_STOP);
+        bsal_actor_send(actor, name, message);
     }
 }
 

@@ -135,7 +135,8 @@ void mock_die(struct bsal_actor *actor, struct bsal_message *message)
 
     printf("mock_die actor %i dies (MOCK_DIE from %i)\n", name, source);
 
-    bsal_actor_die(actor);
+    bsal_message_set_tag(message, BSAL_ACTOR_STOP);
+    bsal_actor_send(actor, name, message);
 }
 
 void mock_start(struct bsal_actor *actor, struct bsal_message *message)

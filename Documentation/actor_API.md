@@ -4,7 +4,7 @@ When creating actors, the developer needs to provides 3 functions: init
 (**bsal_actor_init_fn_t**), destroy (**bsal_actor_destroy_fn_t**) and receive
 (**bsal_actor_receive_fn_t**)
 (with a **struct bsal_script**). init is called when the actor is spawned, destroy is called
-when **bsal_actor_die** is called, and receive is called whenever a message is received.
+when **BSAL_ACTOR_STOP** is received, and receive is called whenever a message is received.
 
 All the functions below (except **bsal_node_spawn** which is used
                 to spawn initial actors) must be called within an actor context (inside a
@@ -53,13 +53,36 @@ BSAL_ACTOR_SPAWN_REPLY
 - Condition: Spawn an actor remotely
 - Response message buffer: actor name
 
+## BSAL_ACTOR_START
+
+```C
+BSAL_ACTOR_START
+```
+
+A message with this tag is sent to every actor present when the runtime system starts.
+
+- Request message buffer: not application, this is a received message
+- Responses: none
+
+## BSAL_ACTOR_STOP
+
+```C
+BSAL_ACTOR_STOP
+```
+
+Stop actor. This message tag can only be sent to an actor by
+itself.
+
+- Request message buffer: empty
+- Responses: none
+
 ## BSAL_ACTOR_PIN
 
 ```C
 BSAL_ACTOR_PIN
 ```
 
-Pin an actor to an worker for memory affinity purposes. Can only be sent to an actor by itself.
+Pin an actor. Can only be sent to an actor by itself.
 
 - Request message buffer: empty
 - Responses: none
@@ -114,14 +137,6 @@ void *bsal_actor_pointer(struct bsal_actor *actor);
 
 Get the implementation of an actor. This is used when implementing new
 actors.
-
-##  bsal_actor_die
-
-```C
-void bsal_actor_die(struct bsal_actor *actor);
-```
-
-Die.
 
 ## bsal_actor_nodes
 

@@ -59,9 +59,6 @@ void table_receive(struct bsal_actor *actor, struct bsal_message *message)
         bsal_message_set_tag(message, TABLE_NOTIFY);
         bsal_actor_send(actor, 0, message);
 */
-        /*
-        bsal_actor_die(actor);
-        */
     } else if (tag == BSAL_ACTOR_SPAWN_REPLY) {
 
         buffer = bsal_message_buffer(message);
@@ -86,14 +83,16 @@ void table_receive(struct bsal_actor *actor, struct bsal_message *message)
             return;
         }
 
-        bsal_actor_die(actor);
+        bsal_message_set_tag(message, BSAL_ACTOR_STOP);
+        bsal_actor_send(actor, name, message);
 
     } else if (tag == TABLE_DIE) {
 
         printf("Actor %i receives TABLE_DIE from actor %i\n",
                         name,  source);
 
-        bsal_actor_die(actor);
+        bsal_message_set_tag(message, BSAL_ACTOR_STOP);
+        bsal_actor_send(actor, name, message);
 
     } else if (tag == TABLE_NOTIFY) {
 

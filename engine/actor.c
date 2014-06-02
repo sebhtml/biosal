@@ -345,6 +345,11 @@ int bsal_actor_receive_system(struct bsal_actor *actor, struct bsal_message *mes
     } else if (tag == BSAL_ACTOR_SYNCHRONIZED && name != source) {
         return 1;
 
+    } else if (tag == BSAL_ACTOR_STOP && source == name ) {
+
+        bsal_actor_die(actor);
+        return 1;
+
     /* spawn an actor
      */
     } else if (tag == BSAL_ACTOR_SPAWN) {
