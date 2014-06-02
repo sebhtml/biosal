@@ -41,7 +41,7 @@ A message with this tag is sent to every actor present when the runtime system s
 BSAL_ACTOR_SPAWN
 ```
 
-Spawn a remote actor.
+Spawn a remote actor. [Example](examples/remote_spawn/table.c)
 
 - Request message buffer: script name
 - Responses:
@@ -98,7 +98,7 @@ Notification of completed synchronization (started with **bsal_actor_synchronize
 - Request message buffer: not application, this is a received message
 - Responses: none
 
-# Most important functions
+# Functions
 
 ## bsal_actor_spawn
 
@@ -133,9 +133,6 @@ int bsal_actor_nodes(struct bsal_actor *actor);
 ```
 
 Get number of nodes.
-
-
-# Other functions
 
 ## bsal_actor_name
 
