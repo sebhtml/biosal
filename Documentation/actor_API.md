@@ -1,16 +1,16 @@
 # Actor API
 
-When creating actors, the developer needs to provides 3 functions: init
-(**bsal_actor_init_fn_t**), destroy (**bsal_actor_destroy_fn_t**) and receive
-(**bsal_actor_receive_fn_t**)
-(with a **struct bsal_script**). init is called when the actor is spawned, destroy is called
-when **BSAL_ACTOR_STOP** is received, and receive is called whenever a message is received.
-
 All the functions below (except **bsal_node_spawn** which is used
                 to spawn initial actors) must be called within an actor context (inside a
 **bsal_actor_receive_fn_t** function).
 Actors spawned with **bsal_node_spawn** (initial actors) receive a message with tag **BSAL_ACTOR_START**
 when the system starts.
+
+When creating actors, the developer needs to provides 3 functions: init
+(**bsal_actor_init_fn_t**), destroy (**bsal_actor_destroy_fn_t**) and receive
+(**bsal_actor_receive_fn_t**)
+(with a **struct bsal_script**). init is called when the actor is spawned, destroy is called
+when **BSAL_ACTOR_STOP** is received, and receive is called whenever a message is received.
 
 Custom actor example: [buddy.h](../examples/mock/buddy.h) [buddy.c](../examples/mock/buddy.c)
 
@@ -52,17 +52,6 @@ BSAL_ACTOR_SPAWN_REPLY
 
 - Condition: Spawn an actor remotely
 - Response message buffer: actor name
-
-## BSAL_ACTOR_START
-
-```C
-BSAL_ACTOR_START
-```
-
-A message with this tag is sent to every actor present when the runtime system starts.
-
-- Request message buffer: not application, this is a received message
-- Responses: none
 
 ## BSAL_ACTOR_STOP
 
