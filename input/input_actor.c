@@ -19,7 +19,7 @@ void bsal_input_actor_init(struct bsal_actor *actor)
 {
     struct bsal_input_actor *input;
 
-    input = (struct bsal_input_actor *)bsal_actor_pointer(actor);
+    input = (struct bsal_input_actor *)bsal_actor_state(actor);
     input->proxy_ready = 0;
 }
 
@@ -27,7 +27,7 @@ void bsal_input_actor_destroy(struct bsal_actor *actor)
 {
     struct bsal_input_actor *input;
 
-    input = (struct bsal_input_actor *)bsal_actor_pointer(actor);
+    input = (struct bsal_input_actor *)bsal_actor_state(actor);
 
     if (input->proxy_ready) {
         bsal_input_proxy_destroy(&input->proxy);
@@ -47,7 +47,7 @@ void bsal_input_actor_receive(struct bsal_actor *actor, struct bsal_message *mes
     int has_sequence;
     int sequences;
 
-    input = (struct bsal_input_actor *)bsal_actor_pointer(actor);
+    input = (struct bsal_input_actor *)bsal_actor_state(actor);
     tag = bsal_message_tag(message);
     source = bsal_message_source(message);
     name = bsal_actor_name(actor);
@@ -149,7 +149,7 @@ int bsal_input_actor_has_error(struct bsal_actor *actor,
         return 0;
     }
 
-    input = (struct bsal_input_actor *)bsal_actor_pointer(actor);
+    input = (struct bsal_input_actor *)bsal_actor_state(actor);
 
     if (!input->proxy_ready) {
         return 0;

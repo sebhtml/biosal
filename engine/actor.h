@@ -44,7 +44,7 @@ struct bsal_actor {
     struct bsal_script *script;
     struct bsal_worker *worker;
     struct bsal_worker *affinity_worker;
-    void *pointer;
+    void *state;
 
     pthread_spinlock_t lock;
 
@@ -60,12 +60,12 @@ struct bsal_actor {
     int synchronization_expected_responses;
 };
 
-void bsal_actor_init(struct bsal_actor *actor, void *pointer,
+void bsal_actor_init(struct bsal_actor *actor, void *state,
                 struct bsal_script *script);
 void bsal_actor_destroy(struct bsal_actor *actor);
 
 int bsal_actor_name(struct bsal_actor *actor);
-void *bsal_actor_pointer(struct bsal_actor *actor);
+void *bsal_actor_state(struct bsal_actor *actor);
 void bsal_actor_set_name(struct bsal_actor *actor, int name);
 
 void bsal_actor_set_worker(struct bsal_actor *actor, struct bsal_worker *worker);

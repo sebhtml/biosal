@@ -15,13 +15,13 @@ struct bsal_input_operations;
 
 struct bsal_input {
     struct bsal_input_operations *operations;
-    void *pointer;
+    void *implementation;
     char *file;
     int sequences;
     int error;
 };
 
-void bsal_input_init(struct bsal_input *input, void *pointer,
+void bsal_input_init(struct bsal_input *input, void *implementation,
                 struct bsal_input_operations *operations, char *file);
 void bsal_input_destroy(struct bsal_input *input);
 
@@ -29,7 +29,7 @@ int bsal_input_get_sequence(struct bsal_input *input,
                 struct bsal_dna_sequence *sequence);
 char *bsal_input_file(struct bsal_input *input);
 int bsal_input_size(struct bsal_input *input);
-void *bsal_input_pointer(struct bsal_input *input);
+void *bsal_input_implementation(struct bsal_input *input);
 int bsal_input_detect(struct bsal_input *input);
 int bsal_input_has_suffix(struct bsal_input *input, const char *suffix);
 int bsal_input_valid(struct bsal_input *input);

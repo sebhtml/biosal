@@ -66,7 +66,7 @@ int bsal_input_proxy_error(struct bsal_input_proxy *proxy)
 }
 
 void bsal_input_proxy_try(struct bsal_input_proxy *proxy,
-                struct bsal_input *input, void *pointer,
+                struct bsal_input *input, void *implementation,
                 struct bsal_input_operations *operations, char *file)
 {
     int error;
@@ -84,7 +84,7 @@ void bsal_input_proxy_try(struct bsal_input_proxy *proxy,
     proxy->not_supported = 1;
     proxy->not_found = 1;
 
-    bsal_input_init(input, pointer, operations, file);
+    bsal_input_init(input, implementation, operations, file);
     error = bsal_input_error(input);
 
     /* File does not exist.

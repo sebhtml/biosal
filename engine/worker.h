@@ -48,7 +48,7 @@ struct bsal_node *bsal_worker_node(struct bsal_worker *worker);
 
 void bsal_worker_send(struct bsal_worker *worker, struct bsal_message *message);
 
-void *bsal_worker_main(void *pointer);
+void *bsal_worker_main(void *worker1);
 int bsal_worker_name(struct bsal_worker *worker);
 void bsal_worker_display(struct bsal_worker *worker);
 

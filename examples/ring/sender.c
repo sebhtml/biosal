@@ -21,7 +21,7 @@ void sender_init(struct bsal_actor *actor)
 
     name = bsal_actor_name(actor);
     */
-    sender1 = (struct sender *)bsal_actor_pointer(actor);
+    sender1 = (struct sender *)bsal_actor_state(actor);
     sender1->received = 0;
     sender1->actors_per_node = 1000;
 
@@ -34,7 +34,7 @@ void sender_destroy(struct bsal_actor *actor)
     /*
     printf("DEBUG sender_destroy\n");
     */
-    sender1 = (struct sender *)bsal_actor_pointer(actor);
+    sender1 = (struct sender *)bsal_actor_state(actor);
     sender1->received = 0;
     sender1->actors_per_node = 0;
 
@@ -76,7 +76,7 @@ void sender_kill_all(struct bsal_actor *actor, struct bsal_message *message)
     int total;
     int size;
     struct sender *sender1;
-    sender1 = (struct sender *)bsal_actor_pointer(actor);
+    sender1 = (struct sender *)bsal_actor_state(actor);
 
     size = bsal_actor_nodes(actor);
     total = size * sender1->actors_per_node;
@@ -104,7 +104,7 @@ void sender_hello(struct bsal_actor *actor, struct bsal_message *message)
 
     /*printf("sender_hello\n"); */
 
-    sender1 = (struct sender *)bsal_actor_pointer(actor);
+    sender1 = (struct sender *)bsal_actor_state(actor);
     name = bsal_actor_name(actor);
     size = bsal_actor_nodes(actor);
     /*
@@ -151,7 +151,7 @@ void sender_start(struct bsal_actor *actor, struct bsal_message *message)
 
     printf("sender_start\n");
 
-    sender1 = (struct sender *)bsal_actor_pointer(actor);
+    sender1 = (struct sender *)bsal_actor_state(actor);
 
 
     name = bsal_actor_name(actor);

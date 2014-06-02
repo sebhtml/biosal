@@ -6,13 +6,13 @@
 #include <stdio.h>
 #include <string.h>
 
-void bsal_input_init(struct bsal_input *input, void *pointer,
+void bsal_input_init(struct bsal_input *input, void *implementation,
                 struct bsal_input_operations *operations, char *file)
 {
     bsal_input_init_fn_t handler;
     FILE *descriptor;
 
-    input->pointer = pointer;
+    input->implementation = implementation;
     input->operations = operations;
     input->sequences = 0;
     input->file = file;
@@ -40,7 +40,7 @@ void bsal_input_destroy(struct bsal_input *input)
         handler(input);
     }
 
-    input->pointer = NULL;
+    input->implementation = NULL;
     input->operations = NULL;
     input->sequences = -1;
     input->file = NULL;
@@ -83,9 +83,9 @@ char *bsal_input_file(struct bsal_input *input)
     return input->file;
 }
 
-void *bsal_input_pointer(struct bsal_input *input)
+void *bsal_input_implementation(struct bsal_input *input)
 {
-    return input->pointer;
+    return input->implementation;
 }
 
 int bsal_input_valid(struct bsal_input *input)

@@ -103,8 +103,7 @@ Notification of completed synchronization (started with **bsal_actor_synchronize
 ## bsal_actor_spawn
 
 ```C
-int bsal_actor_spawn(struct bsal_actor *actor, void *pointer,
-                struct bsal_script *script);
+int bsal_actor_spawn(struct bsal_actor *actor, int script);
 ```
 Spawn a new actor and return its name. The supervisor assigned to the newly spawned actor is the actor
 that calls **bsal_actor_spawn**.
@@ -118,13 +117,13 @@ void bsal_actor_send(struct bsal_actor *actor, int destination, struct bsal_mess
 
 Send a message to an actor.
 
-## bsal_actor_pointer
+## bsal_actor_state
 
 ```C
-void *bsal_actor_pointer(struct bsal_actor *actor);
+void *bsal_actor_state(struct bsal_actor *actor);
 ```
 
-Get the implementation of an actor. This is used when implementing new
+Get the state of an actor. This is used when implementing new
 actors.
 
 ## bsal_actor_nodes

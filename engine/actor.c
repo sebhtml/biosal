@@ -13,12 +13,12 @@
 #define BSAL_ACTOR_DEBUG1
 */
 
-void bsal_actor_init(struct bsal_actor *actor, void *pointer,
+void bsal_actor_init(struct bsal_actor *actor, void *state,
                 struct bsal_script *script)
 {
     bsal_actor_init_fn_t init;
 
-    actor->pointer = pointer;
+    actor->state = state;
     actor->name = -1;
     actor->supervisor = -1;
     actor->dead = 0;
@@ -55,7 +55,7 @@ void bsal_actor_destroy(struct bsal_actor *actor)
 
     actor->script = NULL;
     actor->worker = NULL;
-    actor->pointer = NULL;
+    actor->state = NULL;
 
     /* unlock the actor if the actor is being destroyed while
      * being locked
@@ -74,9 +74,9 @@ int bsal_actor_name(struct bsal_actor *actor)
     return actor->name;
 }
 
-void *bsal_actor_pointer(struct bsal_actor *actor)
+void *bsal_actor_state(struct bsal_actor *actor)
 {
-    return actor->pointer;
+    return actor->state;
 }
 
 bsal_actor_receive_fn_t bsal_actor_get_receive(struct bsal_actor *actor)

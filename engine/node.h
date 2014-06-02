@@ -60,7 +60,7 @@ struct bsal_node {
 void bsal_node_init(struct bsal_node *node, int *argc, char ***argv);
 void bsal_node_destroy(struct bsal_node *node);
 void bsal_node_run(struct bsal_node *node);
-int bsal_node_spawn_pointer(struct bsal_node *node, void *pointer,
+int bsal_node_spawn_state(struct bsal_node *node, void *state,
                 struct bsal_script *script);
 int bsal_node_spawn(struct bsal_node *node, int script);
 void bsal_node_send(struct bsal_node *node, struct bsal_message *message);
@@ -95,7 +95,7 @@ int bsal_node_threads(struct bsal_node *node);
 int bsal_node_argc(struct bsal_node *node);
 char **bsal_node_argv(struct bsal_node *node);
 pthread_t *bsal_node_thread(struct bsal_node *node);
-void *bsal_node_main(void *pointer);
+void *bsal_node_main(void *node1);
 int bsal_node_running(struct bsal_node *node);
 void bsal_node_start_send_thread(struct bsal_node *node);
 int bsal_node_threads_from_string(struct bsal_node *node,

@@ -280,7 +280,7 @@ int bsal_node_spawn(struct bsal_node *node, int script)
 {
     struct bsal_script *script1;
     int size;
-    void *pointer;
+    void *state;
 
     script1 = bsal_node_find_script(node, script);
 
@@ -290,12 +290,12 @@ int bsal_node_spawn(struct bsal_node *node, int script)
 
     size = bsal_script_size(script1);
 
-    pointer = malloc(size);
+    state = malloc(size);
 
-    return bsal_node_spawn_pointer(node, pointer, script1);
+    return bsal_node_spawn_state(node, state, script1);
 }
 
-int bsal_node_spawn_pointer(struct bsal_node *node, void *pointer,
+int bsal_node_spawn_state(struct bsal_node *node, void *state,
                 struct bsal_script *script)
 {
     struct bsal_actor *actor;
@@ -304,7 +304,7 @@ int bsal_node_spawn_pointer(struct bsal_node *node, void *pointer,
     pthread_spin_lock(&node->spawn_lock);
 
     actor = node->actors + node->actor_count;
-    bsal_actor_init(actor, pointer, script);
+    bsal_actor_init(actor, state, script);
 
     name = bsal_node_assign_name(node);
 
@@ -443,11 +443,11 @@ void bsal_node_start_send_thread(struct bsal_node *node)
                     node);
 }
 
-void *bsal_node_main(void *pointer)
+void *bsal_node_main(void *node1)
 {
     struct bsal_node *node;
 
-    node = (struct bsal_node*)pointer;
+    node = (struct bsal_node*)node1;
 
     while (bsal_node_running(node)) {
         bsal_node_send_message(node);
@@ -699,7 +699,7 @@ int bsal_node_nodes(struct bsal_node *node)
 
 void bsal_node_notify_death(struct bsal_node *node, struct bsal_actor *actor)
 {
-    void *pointer;
+    void *state;
 
     /* int name; */
     /*int index;*/
@@ -709,10 +709,10 @@ void bsal_node_notify_death(struct bsal_node *node, struct bsal_actor *actor)
     name = bsal_actor_name(actor);
     */
 
-    pointer = bsal_actor_pointer(actor);
+    state = bsal_actor_state(actor);
     bsal_actor_destroy(actor);
-    free(pointer);
-    pointer = NULL;
+    free(state);
+    state = NULL;
 
 #ifdef BSAL_NODE_DEBUG_20140601_8
     printf("DEBUG bsal_node_notify_death\n");

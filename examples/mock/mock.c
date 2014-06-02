@@ -16,7 +16,7 @@ void mock_init(struct bsal_actor *actor)
 {
     struct mock *mock;
 
-    mock = (struct mock *)bsal_actor_pointer(actor);
+    mock = (struct mock *)bsal_actor_state(actor);
     mock->value = 42;
     mock->children[0] = -1;
     mock->children[1] = -1;
@@ -28,7 +28,7 @@ void mock_destroy(struct bsal_actor *actor)
 {
     struct mock *mock;
 
-    mock = (struct mock *)bsal_actor_pointer(actor);
+    mock = (struct mock *)bsal_actor_state(actor);
     mock->value = -1;
 
 }
@@ -40,7 +40,7 @@ void mock_receive(struct bsal_actor *actor, struct bsal_message *message)
     struct mock *mock1;
     int nodes;
 
-    mock1 = (struct mock *)bsal_actor_pointer(actor);
+    mock1 = (struct mock *)bsal_actor_state(actor);
     nodes = bsal_actor_nodes(actor);
 
     tag = bsal_message_tag(message);
@@ -108,7 +108,7 @@ void mock_add_contacts(struct bsal_actor *actor, struct bsal_message *message)
     char *buffer;
     struct mock *mock1;
 
-    mock1 = (struct mock *)bsal_actor_pointer(actor);
+    mock1 = (struct mock *)bsal_actor_state(actor);
     source = bsal_message_source(message);
     buffer = bsal_message_buffer(message);
     mock1->remote_actor = ((int*)buffer)[0];
@@ -160,7 +160,7 @@ void mock_share(struct bsal_actor *actor, struct bsal_message *message)
     struct bsal_message message2;
     int next;
 
-    mock = (struct mock *)bsal_actor_pointer(actor);
+    mock = (struct mock *)bsal_actor_state(actor);
     size = bsal_actor_nodes(actor);
     name = bsal_actor_name(actor);
 
@@ -185,7 +185,7 @@ void mock_spawn_children(struct bsal_actor *actor)
     bsal_message_init(&message, BUDDY_BOOT, 0, NULL);
 
     total = 1;
-    mock = (struct mock*)bsal_actor_pointer(actor);
+    mock = (struct mock*)bsal_actor_state(actor);
 
     for (i = 0; i <total; i++) {
 

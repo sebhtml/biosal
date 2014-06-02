@@ -90,8 +90,8 @@ void bsal_worker_work(struct bsal_worker *worker, struct bsal_work *work)
     message = bsal_work_message(work);
 
     /* Store the buffer location before calling the user
-     * code because the user may change the message buffer
-     * pointer. We need to free the buffer regardless if the
+     * code because the user may change the message buffer.
+     * We need to free the buffer regardless if the
      * actor code changes it.
      */
     buffer = bsal_message_buffer(message);
@@ -208,11 +208,11 @@ void bsal_worker_start(struct bsal_worker *worker)
                     worker);
 }
 
-void *bsal_worker_main(void *pointer)
+void *bsal_worker_main(void *worker1)
 {
     struct bsal_worker *worker;
 
-    worker = (struct bsal_worker*)pointer;
+    worker = (struct bsal_worker*)worker1;
 
 #ifdef BSAL_THREAD_DEBUG
     bsal_worker_display(worker);
