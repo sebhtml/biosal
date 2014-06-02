@@ -11,10 +11,10 @@
 #define BSAL_INPUT_ERROR_NOT_SUPPORTED 2
 
 struct bsal_dna_sequence;
-struct bsal_input_vtable;
+struct bsal_input_operations;
 
 struct bsal_input {
-    struct bsal_input_vtable *vtable;
+    struct bsal_input_operations *operations;
     void *pointer;
     char *file;
     int sequences;
@@ -22,7 +22,7 @@ struct bsal_input {
 };
 
 void bsal_input_init(struct bsal_input *input, void *pointer,
-                struct bsal_input_vtable *vtable, char *file);
+                struct bsal_input_operations *operations, char *file);
 void bsal_input_destroy(struct bsal_input *input);
 
 int bsal_input_get_sequence(struct bsal_input *input,

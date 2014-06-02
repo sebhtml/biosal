@@ -1,19 +1,19 @@
 
 #include "input.h"
-#include "input_vtable.h"
+#include "input_operations.h"
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 
 void bsal_input_init(struct bsal_input *input, void *pointer,
-                struct bsal_input_vtable *vtable, char *file)
+                struct bsal_input_operations *operations, char *file)
 {
     bsal_input_init_fn_t handler;
     FILE *descriptor;
 
     input->pointer = pointer;
-    input->vtable = vtable;
+    input->operations = operations;
     input->sequences = 0;
     input->file = file;
     input->error = BSAL_INPUT_ERROR_NONE;
@@ -27,7 +27,7 @@ void bsal_input_init(struct bsal_input *input, void *pointer,
         fclose(descriptor);
     }
 
-    handler = bsal_input_vtable_get_init(input->vtable);
+    handler = bsal_input_operations_get_init(input->operations);
     handler(input);
 }
 
@@ -36,12 +36,12 @@ void bsal_input_destroy(struct bsal_input *input)
     bsal_input_destroy_fn_t handler;
 
     if (bsal_input_valid(input)) {
-        handler = bsal_input_vtable_get_destroy(input->vtable);
+        handler = bsal_input_operations_get_destroy(input->operations);
         handler(input);
     }
 
     input->pointer = NULL;
-    input->vtable = NULL;
+    input->operations = NULL;
     input->sequences = -1;
     input->file = NULL;
 }
@@ -56,7 +56,7 @@ int bsal_input_get_sequence(struct bsal_input *input,
         return 0;
     }
 
-    handler = bsal_input_vtable_get_get_sequence(input->vtable);
+    handler = bsal_input_operations_get_get_sequence(input->operations);
     value = handler(input, sequence);
 
     if (value) {
@@ -106,7 +106,7 @@ int bsal_input_detect(struct bsal_input *input)
         return 0;
     }
 
-    handler = bsal_input_vtable_get_detect(input->vtable);
+    handler = bsal_input_operations_get_detect(input->operations);
     return handler(input);
 }
 

@@ -20,7 +20,7 @@ void bsal_input_proxy_init(struct bsal_input_proxy *proxy,
      */
 
     bsal_input_proxy_try(proxy, &proxy->input, &proxy->fastq,
-                    &bsal_fastq_input_vtable, file);
+                    &bsal_fastq_input_operations, file);
 }
 
 int bsal_input_proxy_get_sequence(struct bsal_input_proxy *proxy,
@@ -67,7 +67,7 @@ int bsal_input_proxy_error(struct bsal_input_proxy *proxy)
 
 void bsal_input_proxy_try(struct bsal_input_proxy *proxy,
                 struct bsal_input *input, void *pointer,
-                struct bsal_input_vtable *vtable, char *file)
+                struct bsal_input_operations *operations, char *file)
 {
     int error;
 
@@ -84,7 +84,7 @@ void bsal_input_proxy_try(struct bsal_input_proxy *proxy,
     proxy->not_supported = 1;
     proxy->not_found = 1;
 
-    bsal_input_init(input, pointer, vtable, file);
+    bsal_input_init(input, pointer, operations, file);
     error = bsal_input_error(input);
 
     /* File does not exist.

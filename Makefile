@@ -25,7 +25,7 @@ LIBRARY += hash/murmur_hash_2_64_a.o
 
 # inputs for actors
 LIBRARY += input/input_actor.o input/input_proxy.o input/input.o \
-           input/input_vtable.o input/buffered_reader.o
+           input/input_operations.o input/buffered_reader.o
 
 # data storage
 LIBRARY += data/dna_sequence.o

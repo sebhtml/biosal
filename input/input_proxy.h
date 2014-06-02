@@ -25,5 +25,5 @@ int bsal_input_proxy_error(struct bsal_input_proxy *proxy);
 
 void bsal_input_proxy_try(struct bsal_input_proxy *proxy,
                 struct bsal_input *input, void *pointer,
-                struct bsal_input_vtable *vtable, char *file);
+                struct bsal_input_operations *operations, char *file);
 #endif

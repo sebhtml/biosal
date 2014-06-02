@@ -12,7 +12,7 @@
 #define BSAL_FASTQ_INPUT_DEBUG2
 */
 
-struct bsal_input_vtable bsal_fastq_input_vtable = {
+struct bsal_input_operations bsal_fastq_input_operations = {
     .init = bsal_fastq_input_init,
     .destroy = bsal_fastq_input_destroy,
     .get_sequence = bsal_fastq_input_get_sequence,
