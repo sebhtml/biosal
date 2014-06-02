@@ -41,7 +41,7 @@ A message with this tag is sent to every actor present when the runtime system s
 BSAL_ACTOR_SPAWN
 ```
 
-Spawn a remote actor. [Example](examples/remote_spawn/table.c)
+Spawn a remote actor. [Example](../examples/remote_spawn/table.c)
 
 - Request message buffer: script name
 - Responses:
