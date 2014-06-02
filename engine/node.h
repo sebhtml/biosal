@@ -59,7 +59,7 @@ struct bsal_node {
 
 void bsal_node_init(struct bsal_node *node, int *argc, char ***argv);
 void bsal_node_destroy(struct bsal_node *node);
-void bsal_node_start(struct bsal_node *node);
+void bsal_node_run(struct bsal_node *node);
 int bsal_node_spawn_pointer(struct bsal_node *node, void *pointer,
                 struct bsal_script *script);
 int bsal_node_spawn(struct bsal_node *node, int script);
@@ -76,7 +76,7 @@ int bsal_node_name(struct bsal_node *node);
 int bsal_node_nodes(struct bsal_node *node);
 void bsal_node_set_supervisor(struct bsal_node *node, int name, int supervisor);
 
-void bsal_node_run(struct bsal_node *node);
+void bsal_node_run_loop(struct bsal_node *node);
 
 /* MPI ranks are set with bsal_node_resolve */
 void bsal_node_resolve(struct bsal_node *node, struct bsal_message *message);

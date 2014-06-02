@@ -20,7 +20,7 @@ int main(int argc, char **argv)
     bsal_node_add_script(&node, BUDDY_SCRIPT, &buddy_script);
 
     bsal_node_spawn(&node, MOCK_SCRIPT);
-    bsal_node_start(&node);
+    bsal_node_run(&node);
     bsal_node_destroy(&node);
 
     return 0;

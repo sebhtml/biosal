@@ -323,7 +323,7 @@ int bsal_node_assign_name(struct bsal_node *node)
     return node->name + node->nodes * node->actor_count;
 }
 
-void bsal_node_start(struct bsal_node *node)
+void bsal_node_run(struct bsal_node *node)
 {
     int i;
     int actors;
@@ -364,7 +364,7 @@ void bsal_node_start(struct bsal_node *node)
         bsal_message_destroy(&message);
     }
 
-    bsal_node_run(node);
+    bsal_node_run_loop(node);
 
 #ifdef BSAL_NODE_DEBUG
     printf("BSAL_NODE_DEBUG after loop in bsal_node_run\n");
@@ -393,7 +393,7 @@ int bsal_node_running(struct bsal_node *node)
     return 0;
 }
 
-void bsal_node_run(struct bsal_node *node)
+void bsal_node_run_loop(struct bsal_node *node)
 {
     struct bsal_message message;
 
