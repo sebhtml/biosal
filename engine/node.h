@@ -24,6 +24,11 @@ struct bsal_actor_vtable;
 struct bsal_node {
     struct bsal_actor *actors;
     struct bsal_worker_pool worker_pool;
+
+    struct bsal_actor_vtable **scripts;
+    int available_scripts;
+    int maximum_scripts;
+
     pthread_t thread;
 
     pthread_spinlock_t death_lock;
@@ -48,14 +53,16 @@ struct bsal_node {
 
     int argc;
     char **argv;
+
+    int debug;
 };
 
 void bsal_node_init(struct bsal_node *node, int *argc, char ***argv);
 void bsal_node_destroy(struct bsal_node *node);
 void bsal_node_start(struct bsal_node *node);
-int bsal_node_spawn(struct bsal_node *node, void *pointer,
+int bsal_node_spawn_pointer(struct bsal_node *node, void *pointer,
                 struct bsal_actor_vtable *vtable);
-
+int bsal_node_spawn(struct bsal_node *node, int script);
 void bsal_node_send(struct bsal_node *node, struct bsal_message *message);
 
 int bsal_node_assign_name(struct bsal_node *node);
@@ -93,5 +100,9 @@ int bsal_node_running(struct bsal_node *node);
 void bsal_node_start_send_thread(struct bsal_node *node);
 int bsal_node_threads_from_string(struct bsal_node *node,
                 char *required_threads, int index);
+
+void bsal_node_add_script(struct bsal_node *node, int script, struct bsal_actor_vtable *vtable);
+struct bsal_actor_vtable *bsal_node_find_script(struct bsal_node *node, int name);
+int bsal_node_has_script(struct bsal_node *node, struct bsal_actor_vtable *vtable);
 
 #endif

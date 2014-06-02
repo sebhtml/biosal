@@ -10,7 +10,7 @@
 
 /* engine/actor.h */
 #define BSAL_TAG_OFFSET_ACTOR 0
-#define BSAL_TAG_COUNT_ACTOR 9
+#define BSAL_TAG_COUNT_ACTOR 11
 
 /* input/input_actor.h */
 #define BSAL_TAG_OFFSET_INPUT_ACTOR ( BSAL_TAG_OFFSET_ACTOR + BSAL_TAG_COUNT_ACTOR )
@@ -28,7 +28,9 @@ enum {
     BSAL_ACTOR_PIN,
     BSAL_ACTOR_UNPIN,
     BSAL_ACTOR_SYNCHRONIZE,
-    BSAL_ACTOR_SYNCHRONIZED
+    BSAL_ACTOR_SYNCHRONIZED,
+    BSAL_ACTOR_SPAWN,
+    BSAL_ACTOR_SPAWN_REPLY
 };
 
 struct bsal_node;
@@ -104,8 +106,7 @@ struct bsal_node *bsal_actor_node(struct bsal_actor *actor);
 /*
  * \return This function returns the name of the spawned actor.
  */
-int bsal_actor_spawn(struct bsal_actor *actor, void *pointer,
-                struct bsal_actor_vtable *vtable);
+int bsal_actor_spawn(struct bsal_actor *actor, int script);
 
 void bsal_actor_lock(struct bsal_actor *actor);
 void bsal_actor_unlock(struct bsal_actor *actor);

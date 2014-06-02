@@ -6,9 +6,11 @@
 #include <string.h>
 
 struct bsal_actor_vtable reader_vtable = {
+    .name = READER_SCRIPT,
     .init = reader_init,
     .destroy = reader_destroy,
-    .receive = reader_receive
+    .receive = reader_receive,
+    .size = sizeof(struct reader)
 };
 
 void reader_init(struct bsal_actor *actor)
@@ -67,8 +69,7 @@ void reader_receive(struct bsal_actor *actor, struct bsal_message *message)
             return;
         }
 
-        reader1->sequence_reader = bsal_actor_spawn(actor, &reader1->input_actor,
-                        &bsal_input_actor_vtable);
+        reader1->sequence_reader = bsal_actor_spawn(actor, BSAL_INPUT_ACTOR_SCRIPT);
 
         file = argv[argc - 1];
 

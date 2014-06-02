@@ -4,6 +4,8 @@
 
 #include <engine/actor.h>
 
+#define BUDDY_SCRIPT 0xd0c6b654
+
 struct buddy {
     int received;
 };

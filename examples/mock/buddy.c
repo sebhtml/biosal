@@ -5,9 +5,11 @@
 
 /* this vtable is required */
 struct bsal_actor_vtable buddy_vtable = {
+    .name = BUDDY_SCRIPT,
     .init = buddy_init,
     .destroy = buddy_destroy,
-    .receive = buddy_receive
+    .receive = buddy_receive,
+    .size = sizeof(struct buddy)
 };
 
 void buddy_init(struct bsal_actor *actor)

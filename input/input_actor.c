@@ -8,9 +8,11 @@
 /*#define BSAL_INPUT_ACTOR_DEBUG*/
 
 struct bsal_actor_vtable bsal_input_actor_vtable = {
+    .name = BSAL_INPUT_ACTOR_SCRIPT,
     .init = bsal_input_actor_init,
     .destroy = bsal_input_actor_destroy,
-    .receive = bsal_input_actor_receive
+    .receive = bsal_input_actor_receive,
+    .size = sizeof(struct bsal_input_actor)
 };
 
 void bsal_input_actor_init(struct bsal_actor *actor)

@@ -1,7 +1,8 @@
 
-#include "reader.h"
+#include "table.h"
 
 #include <biosal.h>
+
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -10,12 +11,8 @@ int main(int argc, char **argv)
     struct bsal_node node;
 
     bsal_node_init(&node, &argc, &argv);
-
-    bsal_node_add_script(&node, READER_SCRIPT, &reader_vtable);
-    bsal_node_add_script(&node, BSAL_INPUT_ACTOR_SCRIPT,
-                    &bsal_input_actor_vtable);
-
-    bsal_node_spawn(&node, READER_SCRIPT);
+    bsal_node_add_script(&node, TABLE_SCRIPT, &table_script);
+    bsal_node_spawn(&node, TABLE_SCRIPT);
     bsal_node_start(&node);
     bsal_node_destroy(&node);
 

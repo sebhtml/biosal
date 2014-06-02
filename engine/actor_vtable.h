@@ -22,6 +22,8 @@ struct bsal_actor_vtable {
     bsal_actor_init_fn_t init;
     bsal_actor_destroy_fn_t destroy;
     bsal_actor_receive_fn_t receive;
+    int name;
+    int size;
 };
 
 void bsal_actor_vtable_init(struct bsal_actor_vtable *vtable, bsal_actor_init_fn_t init,
@@ -30,5 +32,7 @@ void bsal_actor_vtable_destroy(struct bsal_actor_vtable *vtable);
 bsal_actor_init_fn_t bsal_actor_vtable_get_init(struct bsal_actor_vtable *vtable);
 bsal_actor_destroy_fn_t bsal_actor_vtable_get_destroy(struct bsal_actor_vtable *vtable);
 bsal_actor_receive_fn_t bsal_actor_vtable_get_receive(struct bsal_actor_vtable *vtable);
+int bsal_actor_vtable_name(struct bsal_actor_vtable *vtable);
+int bsal_actor_vtable_size(struct bsal_actor_vtable *vtable);
 
 #endif

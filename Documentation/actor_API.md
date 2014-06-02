@@ -35,6 +35,24 @@ A message with this tag is sent to every actor present when the runtime system s
 - Request message buffer: not application, this is a received message
 - Responses: none
 
+## BSAL_ACTOR_SPAWN
+
+```C
+BSAL_ACTOR_SPAWN
+```
+
+Spawn a remote actor.
+
+- Request message buffer: script name
+- Responses:
+
+```C
+BSAL_ACTOR_SPAWN_REPLY
+```
+
+- Condition: Spawn an actor remotely
+- Response message buffer: actor name
+
 ## BSAL_ACTOR_PIN
 
 ```C
@@ -69,15 +87,6 @@ Notification of completed synchronization (started with **bsal_actor_synchronize
 - Responses: none
 
 # Most important functions
-
-## bsal_node_spawn
-
-```C
-int bsal_node_spawn(struct bsal_node *node, void *pointer, struct bsal_actor_vtable *vtable);
-```
-
-Spawn an actor from the outside, this is usually used to spawn the first actor of a node.
-Actors spawned with this function will receive a message with tag BSAL_ACTOR_START.
 
 ## bsal_actor_spawn
 

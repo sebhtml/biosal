@@ -7,7 +7,9 @@
 
 #include <unistd.h>
 
-/*#define BSAL_NODE_DEBUG*/
+/*
+#define BSAL_NODE_DEBUG
+*/
 
 /*
  * \see http://www.mpich.org/static/docs/v3.1/www3/MPI_Comm_dup.html
@@ -26,6 +28,14 @@ void bsal_node_init(struct bsal_node *node, int *argc, char ***argv)
     int threads;
     char *required_threads;
     int detected;
+    int bytes;
+
+    node->debug = 0;
+
+    node->maximum_scripts = 1024;
+    node->available_scripts = 0;
+    bytes = node->maximum_scripts * sizeof(struct bsal_actor_vtable *);
+    node->scripts = (struct bsal_actor_vtable **)malloc(bytes);
 
     /* the rank number is needed to decide on
      * the number of threads
@@ -266,7 +276,26 @@ void bsal_node_set_supervisor(struct bsal_node *node, int name, int supervisor)
     bsal_actor_set_supervisor(actor, supervisor);
 }
 
-int bsal_node_spawn(struct bsal_node *node, void *pointer,
+int bsal_node_spawn(struct bsal_node *node, int script)
+{
+    struct bsal_actor_vtable *script1;
+    int size;
+    void *pointer;
+
+    script1 = bsal_node_find_script(node, script);
+
+    if (script1 == NULL) {
+        return -1;
+    }
+
+    size = bsal_actor_vtable_size(script1);
+
+    pointer = malloc(size);
+
+    return bsal_node_spawn_pointer(node, pointer, script1);
+}
+
+int bsal_node_spawn_pointer(struct bsal_node *node, void *pointer,
                 struct bsal_actor_vtable *vtable)
 {
     struct bsal_actor *actor;
@@ -353,11 +382,15 @@ void bsal_node_start(struct bsal_node *node)
 int bsal_node_running(struct bsal_node *node)
 {
     /* wait until all actors are dead... */
-    if (node->alive_actors == 0) {
-        return 0;
+    if (node->alive_actors > 0) {
+        return 1;
     }
 
-    return 1;
+    if (bsal_worker_pool_has_messages(&node->worker_pool)) {
+        return 1;
+    }
+
+    return 0;
 }
 
 void bsal_node_run(struct bsal_node *node)
@@ -365,6 +398,13 @@ void bsal_node_run(struct bsal_node *node)
     struct bsal_message message;
 
     while (bsal_node_running(node)) {
+
+#ifdef BSAL_NODE_DEBUG
+        if (node->debug) {
+            printf("DEBUG node/%d is running\n",
+                            bsal_node_name(node));
+        }
+#endif
 
         /* pull message from network and assign the message to a thread.
          * this code path will call spin_lock if
@@ -390,6 +430,10 @@ void bsal_node_run(struct bsal_node *node)
         bsal_node_send_message(node);
     }
 
+#ifdef BSAL_NODE_DEBUG_20140601_8
+    printf("DEBUG node/%d exited loop\n",
+                    bsal_node_name(node));
+#endif
 }
 
 /* TODO, this needs MPI_THREAD_MULTIPLE, this has not been tested */
@@ -549,10 +593,24 @@ void bsal_node_send(struct bsal_node *node, struct bsal_message *message)
     if (node_name == node->name) {
         /* dispatch locally */
         bsal_node_create_work(node, message);
+
+#ifdef BSAL_NODE_DEBUG_20140601_8
+        if (bsal_message_tag(message) == 1100) {
+            printf("DEBUG local message 1100\n");
+        }
+#endif
     } else {
 
         /* send messages over the network */
         bsal_node_send_outbound_message(node, message);
+
+#ifdef BSAL_NODE_DEBUG_20140601_8
+        if (bsal_message_tag(message) == 1100) {
+            printf("DEBUG outbound message 1100\n");
+
+            node->debug = 1;
+        }
+#endif
     }
 }
 
@@ -641,6 +699,8 @@ int bsal_node_nodes(struct bsal_node *node)
 
 void bsal_node_notify_death(struct bsal_node *node, struct bsal_actor *actor)
 {
+    void *pointer;
+
     /* int name; */
     /*int index;*/
 
@@ -649,7 +709,14 @@ void bsal_node_notify_death(struct bsal_node *node, struct bsal_actor *actor)
     name = bsal_actor_name(actor);
     */
 
+    pointer = bsal_actor_pointer(actor);
     bsal_actor_destroy(actor);
+    free(pointer);
+    pointer = NULL;
+
+#ifdef BSAL_NODE_DEBUG_20140601_8
+    printf("DEBUG bsal_node_notify_death\n");
+#endif
 
     /*index = bsal_node_actor_index(node, node_name, name); */
     /* node->actors[index] = NULL; */
@@ -658,6 +725,10 @@ void bsal_node_notify_death(struct bsal_node *node, struct bsal_actor *actor)
     node->alive_actors--;
     node->dead_actors++;
     pthread_spin_unlock(&node->death_lock);
+
+#ifdef BSAL_NODE_DEBUG_20140601_8
+    printf("DEBUG exiting bsal_node_notify_death\n");
+#endif
 }
 
 int bsal_node_workers(struct bsal_node *node)
@@ -678,4 +749,42 @@ char **bsal_node_argv(struct bsal_node *node)
 int bsal_node_threads(struct bsal_node *node)
 {
     return node->threads;
+}
+
+void bsal_node_add_script(struct bsal_node *node, int name,
+                struct bsal_actor_vtable *vtable)
+{
+    if (bsal_node_has_script(node, vtable)) {
+        return;
+    }
+
+    if (node->available_scripts == node->maximum_scripts) {
+        return;
+    }
+
+    node->scripts[node->available_scripts++] = vtable;
+}
+
+int bsal_node_has_script(struct bsal_node *node, struct bsal_actor_vtable *vtable)
+{
+    if (bsal_node_find_script(node, vtable->name) != NULL) {
+        return 1;
+    }
+    return 0;
+}
+
+struct bsal_actor_vtable *bsal_node_find_script(struct bsal_node *node, int name)
+{
+    int i;
+    struct bsal_actor_vtable *script;
+
+    for (i = 0; i < node->available_scripts; i++) {
+        script = node->scripts[i];
+
+        if (bsal_actor_vtable_name(script) == name) {
+            return script;
+        }
+    }
+
+    return NULL;
 }

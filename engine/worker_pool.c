@@ -14,6 +14,7 @@ void bsal_worker_pool_init(struct bsal_worker_pool *pool, int workers,
     pool->node = node;
     pool->workers = workers;
     pool->worker_array = NULL;
+    pool->ticks_without_messages = 0;
 
     /* with only one thread,  the main thread
      * handles everything.
@@ -103,9 +104,18 @@ void bsal_worker_pool_stop(struct bsal_worker_pool *pool)
 int bsal_worker_pool_pull(struct bsal_worker_pool *pool, struct bsal_message *message)
 {
     struct bsal_worker *worker;
+    int answer;
 
     worker = bsal_worker_pool_select_worker_for_message(pool);
-    return bsal_worker_pull_message(worker, message);
+    answer = bsal_worker_pull_message(worker, message);
+
+    if (!answer) {
+        pool->ticks_without_messages++;
+    } else {
+        pool->ticks_without_messages = 0;
+    }
+
+    return answer;
 }
 
 /* select a worker to pull from */
@@ -114,7 +124,7 @@ struct bsal_worker *bsal_worker_pool_select_worker_for_message(struct bsal_worke
     int index;
 
     index = pool->worker_for_message;
-    pool->worker_for_message = bsal_worker_pool_next_worker(pool, pool->worker_for_message);
+    pool->worker_for_message = bsal_worker_pool_next_worker(pool, index);
     return pool->worker_array + index;
 }
 
@@ -172,4 +182,17 @@ void bsal_worker_pool_schedule_work(struct bsal_worker_pool *pool, struct bsal_w
 int bsal_worker_pool_workers(struct bsal_worker_pool *pool)
 {
     return pool->workers;
+}
+
+int bsal_worker_pool_has_messages(struct bsal_worker_pool *pool)
+{
+    int threshold;
+
+    threshold = 200000;
+
+    if (pool->ticks_without_messages > threshold) {
+        return 0;
+    }
+
+    return 1;
 }

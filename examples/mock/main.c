@@ -1,5 +1,6 @@
 
 #include "mock.h"
+#include "buddy.h"
 
 #include <biosal.h>
 #include <stdio.h>
@@ -11,11 +12,14 @@
  */
 int main(int argc, char **argv)
 {
-    struct mock mock1;
     struct bsal_node node;
 
     bsal_node_init(&node, &argc, &argv);
-    bsal_node_spawn(&node, &mock1, &mock_vtable);
+
+    bsal_node_add_script(&node, MOCK_SCRIPT, &mock_vtable);
+    bsal_node_add_script(&node, BUDDY_SCRIPT, &buddy_vtable);
+
+    bsal_node_spawn(&node, MOCK_SCRIPT);
     bsal_node_start(&node);
     bsal_node_destroy(&node);
 

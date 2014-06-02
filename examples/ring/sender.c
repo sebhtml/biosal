@@ -6,9 +6,11 @@
 #include <string.h>
 
 struct bsal_actor_vtable sender_vtable = {
+    .name = SENDER_SCRIPT,
     .init = sender_init,
     .destroy = sender_destroy,
-    .receive = sender_receive
+    .receive = sender_receive,
+    .size = sizeof(struct sender)
 };
 
 void sender_init(struct bsal_actor *actor)
@@ -154,10 +156,9 @@ void sender_start(struct bsal_actor *actor, struct bsal_message *message)
     total = size * sender1->actors_per_node;
 
     /* spawn a lot of actors ! */
-    sender1->actors = (struct sender *)malloc((sender1->actors_per_node - 1) * sizeof(struct sender));
 
     for (i = 0; i < sender1->actors_per_node - 1; i++) {
-        bsal_actor_spawn(actor, sender1->actors + i, &sender_vtable);
+        bsal_actor_spawn(actor, SENDER_SCRIPT);
     }
 
     if (name != 0) {

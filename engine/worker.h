@@ -28,6 +28,8 @@ struct bsal_worker {
     pthread_spinlock_t work_lock;
     pthread_spinlock_t message_lock;
 #endif
+
+    int debug;
 };
 
 void bsal_worker_init(struct bsal_worker *worker, int name, struct bsal_node *node);

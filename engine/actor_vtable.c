@@ -32,3 +32,13 @@ bsal_actor_receive_fn_t bsal_actor_vtable_get_receive(struct bsal_actor_vtable *
 {
     return vtable->receive;
 }
+
+int bsal_actor_vtable_name(struct bsal_actor_vtable *vtable)
+{
+    return vtable->name;
+}
+
+int bsal_actor_vtable_size(struct bsal_actor_vtable *vtable)
+{
+    return vtable->size;
+}

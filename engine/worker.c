@@ -24,6 +24,8 @@ void bsal_worker_init(struct bsal_worker *worker, int name, struct bsal_node *no
     pthread_spin_init(&worker->work_lock, 0);
     pthread_spin_init(&worker->message_lock, 0);
 #endif
+
+    worker->debug = 0;
 }
 
 void bsal_worker_destroy(struct bsal_worker *worker)
@@ -54,6 +56,13 @@ struct bsal_fifo *bsal_worker_messages(struct bsal_worker *worker)
 void bsal_worker_run(struct bsal_worker *worker)
 {
     struct bsal_work work;
+
+#ifdef BSAL_WORKER_DEBUG
+    if (worker->debug) {
+        printf("DEBUG worker/%d bsal_worker_run\n",
+                        bsal_worker_name(worker));
+    }
+#endif
 
     /* check for messages in inbound FIFO */
     if (bsal_worker_pull_work(worker, &work)) {
@@ -98,6 +107,13 @@ void bsal_worker_work(struct bsal_worker *worker, struct bsal_work *work)
         bsal_node_notify_death(worker->node, actor);
     }
 
+#ifdef BSAL_WORKER_DEBUG_20140601
+    if (worker->debug) {
+        printf("DEBUG worker/%d after dead call\n",
+                        bsal_worker_name(worker));
+    }
+#endif
+
     /* Unlock the actor.
      * This does not do anything if a death notification
      * was sent to the node
@@ -117,6 +133,13 @@ void bsal_worker_work(struct bsal_worker *worker, struct bsal_work *work)
 
     /* TODO replace with slab allocator */
     free(message);
+
+#ifdef BSAL_WORKER_DEBUG_20140601
+    if (worker->debug) {
+        printf("DEBUG worker/%d exiting bsal_worker_work\n",
+                        bsal_worker_name(worker));
+    }
+#endif
 }
 
 struct bsal_node *bsal_worker_node(struct bsal_worker *worker)
@@ -165,6 +188,12 @@ void bsal_worker_send(struct bsal_worker *worker, struct bsal_message *message)
 
     bsal_message_set_buffer(&copy, buffer);
     bsal_message_write_metadata(&copy);
+
+#ifdef BSAL_WORKER_DEBUG_20140601
+    if (bsal_message_tag(message) == 1100) {
+        printf("DEBUG bsal_worker_send 1100\n");
+    }
+#endif
 
     bsal_worker_push_message(worker, &copy);
 }
@@ -272,6 +301,15 @@ int bsal_worker_pull_work(struct bsal_worker *worker, struct bsal_work *work)
 
 void bsal_worker_push_message(struct bsal_worker *worker, struct bsal_message *message)
 {
+#ifdef BSAL_WORKER_DEBUG_20140601
+    if (bsal_message_tag(message) == 1100) {
+        printf("DEBUG worker/%d bsal_worker_push_message 1100 before %d\n",
+                        bsal_worker_name(worker),
+                        bsal_fifo_size(bsal_worker_messages(worker)));
+        worker->debug = 1;
+    }
+#endif
+
 #ifdef BSAL_THREAD_USE_LOCK
     pthread_spin_lock(&worker->message_lock);
 #endif
@@ -283,6 +321,14 @@ void bsal_worker_push_message(struct bsal_worker *worker, struct bsal_message *m
 
     bsal_fifo_push(bsal_worker_messages(worker), message);
 
+#ifdef BSAL_WORKER_DEBUG_20140601
+    if (bsal_message_tag(message) == 1100) {
+        printf("DEBUG worker/%d bsal_worker_push_message 1100 after %d\n",
+                        bsal_worker_name(worker),
+                        bsal_fifo_size(bsal_worker_messages(worker)));
+    }
+#endif
+
 #ifdef BSAL_THREAD_USE_LOCK
     pthread_spin_unlock(&worker->message_lock);
 #endif
@@ -291,6 +337,14 @@ void bsal_worker_push_message(struct bsal_worker *worker, struct bsal_message *m
 int bsal_worker_pull_message(struct bsal_worker *worker, struct bsal_message *message)
 {
     int value;
+
+#ifdef BSAL_WORKER_DEBUG
+    if (worker->debug) {
+        printf("DEBUG worker/%d bsal_worker_pull_message 1100 remaining messages %d\n",
+                        bsal_worker_name(worker),
+                        bsal_fifo_size(bsal_worker_messages(worker)));
+    }
+#endif
 
     /* avoid the spinlock by checking first if
      * there is something to actually pull...
@@ -304,6 +358,15 @@ int bsal_worker_pull_message(struct bsal_worker *worker, struct bsal_message *me
 #endif
 
     value = bsal_fifo_pop(bsal_worker_messages(worker), message);
+
+#ifdef BSAL_WORKER_DEBUG_20140601
+    if (value && bsal_message_tag(message) == 1100) {
+        printf("DEBUG worker/%d bsal_worker_pull_message 1100 after %d\n",
+                        bsal_worker_name(worker),
+                        bsal_fifo_size(bsal_worker_messages(worker)));
+
+    }
+#endif
 
 #ifdef BSAL_THREAD_USE_LOCK
     pthread_spin_unlock(&worker->message_lock);

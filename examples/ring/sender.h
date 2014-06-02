@@ -4,11 +4,11 @@
 
 #include <biosal.h>
 
+#define SENDER_SCRIPT 0x99a9f4e1
+
 struct sender {
     int received;
     int actors_per_node;
-
-    struct sender *actors;
 };
 
 enum {

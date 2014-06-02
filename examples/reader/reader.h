@@ -4,9 +4,10 @@
 
 #include <biosal.h>
 
+#define READER_SCRIPT 0x0edc63d2
+
 struct reader {
     int sequence_reader;
-    struct bsal_input_actor input_actor;
     int last_report;
 };
 

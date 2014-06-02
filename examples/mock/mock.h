@@ -2,10 +2,11 @@
 #ifndef _MOCK_H
 #define _MOCK_H
 
-#include "buddy.h"
+#include <engine/actor.h>
+
+#define MOCK_SCRIPT 0x959ff8ea
 
 struct mock {
-    struct buddy buddy_actors[3];
     int value;
     int children[3];
     int remote_actor;

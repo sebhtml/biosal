@@ -5,9 +5,11 @@
 #include <stdio.h>
 
 struct bsal_actor_vtable mock_vtable = {
+    .name = MOCK_SCRIPT,
     .init = mock_init,
     .destroy = mock_destroy,
-    .receive = mock_receive
+    .receive = mock_receive,
+    .size = sizeof(struct mock)
 };
 
 void mock_init(struct bsal_actor *actor)
@@ -177,7 +179,6 @@ void mock_spawn_children(struct bsal_actor *actor)
     struct mock *mock;
     int i;
     int name;
-    struct buddy *buddy_actor;
     struct bsal_message message;
 
     bsal_message_init(&message, BUDDY_BOOT, 0, NULL);
@@ -187,9 +188,7 @@ void mock_spawn_children(struct bsal_actor *actor)
 
     for (i = 0; i <total; i++) {
 
-        buddy_actor = mock->buddy_actors + i;
-
-        name = bsal_actor_spawn(actor, buddy_actor, &buddy_vtable);
+        name = bsal_actor_spawn(actor, BUDDY_SCRIPT);
 
         bsal_actor_send(actor, name, &message);
 

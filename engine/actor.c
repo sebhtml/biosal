@@ -163,17 +163,23 @@ void bsal_actor_send_with_source(struct bsal_actor *actor, int name, struct bsal
 {
     bsal_message_set_source(message, source);
     bsal_message_set_destination(message, name);
+
+#ifdef BSAL_ACTOR_DEBUG9
+    if (bsal_message_tag(message) == 1100) {
+        printf("DEBUG bsal_message_set_source 1100\n");
+    }
+#endif
+
     bsal_worker_send(actor->worker, message);
 
     bsal_actor_increase_sent_messages(actor);
 }
 
-int bsal_actor_spawn(struct bsal_actor *actor, void *pointer,
-                struct bsal_actor_vtable *vtable)
+int bsal_actor_spawn(struct bsal_actor *actor, int script)
 {
     int name;
 
-    name = bsal_node_spawn(bsal_actor_node(actor), pointer, vtable);
+    name = bsal_node_spawn(bsal_actor_node(actor), script);
     bsal_node_set_supervisor(bsal_actor_node(actor), name, bsal_actor_name(actor));
 
     return name;
@@ -292,10 +298,15 @@ int bsal_actor_threads(struct bsal_actor *actor)
 int bsal_actor_receive_system(struct bsal_actor *actor, struct bsal_message *message)
 {
     int tag;
-    int name = bsal_actor_name(actor);
-    int source =bsal_message_source(message);
+    int name;
+    int source;
+    int spawned;
+    int script;
+    void *buffer;
 
     tag = bsal_message_tag(message);
+    name = bsal_actor_name(actor);
+    source =bsal_message_source(message);
 
     /* Perform binomial routing.
      */
@@ -333,6 +344,18 @@ int bsal_actor_receive_system(struct bsal_actor *actor, struct bsal_message *mes
      */
     } else if (tag == BSAL_ACTOR_SYNCHRONIZED && name != source) {
         return 1;
+
+    /* spawn an actor
+     */
+    } else if (tag == BSAL_ACTOR_SPAWN) {
+        buffer = bsal_message_buffer(message);
+        script = *(int *)buffer;
+        spawned = bsal_actor_spawn(actor, script);
+        bsal_message_set_buffer(message, &spawned);
+        bsal_message_set_tag(message, BSAL_ACTOR_SPAWN_REPLY);
+        bsal_actor_send(actor, source, message);
+
+        return 1;
     }
 
     return 0;
@@ -341,6 +364,12 @@ int bsal_actor_receive_system(struct bsal_actor *actor, struct bsal_message *mes
 void bsal_actor_receive(struct bsal_actor *actor, struct bsal_message *message)
 {
     bsal_actor_receive_fn_t receive;
+
+#ifdef BSAL_ACTOR_DEBUG9
+    printf("DEBUG bsal_actor_receive tag %d for %d\n",
+                    bsal_message_tag(message),
+                    bsal_actor_name(actor));
+#endif
 
     if (bsal_actor_receive_system(actor, message)) {
         return;
@@ -579,7 +608,7 @@ void bsal_actor_send_range_standard(struct bsal_actor *actor, int first, int las
 {
     int i;
 
-#ifdef BSAL_ACTOR_DEBUG
+#ifdef BSAL_ACTOR_DEBUG1
     printf("DEBUG bsal_actor_send_range_standard %i-%i\n",
                     first, last);
 #endif
@@ -587,6 +616,12 @@ void bsal_actor_send_range_standard(struct bsal_actor *actor, int first, int las
     i = first;
 
     while (i <= last) {
+
+#ifdef BSAL_ACTOR_DEBUG_20140601_1
+        printf("DEBUG sending %d to %d\n",
+                       bsal_message_tag(message), i);
+#endif
+
         bsal_actor_send(actor, i, message);
         i++;
     }
