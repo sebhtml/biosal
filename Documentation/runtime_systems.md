@@ -1,4 +1,4 @@
-C 1999, MPI, Pthread
+# C 1999, MPI, Pthread
 
 - https://github.com/GeneAssembly/biosal/tree/master/engine
 

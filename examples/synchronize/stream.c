@@ -61,6 +61,8 @@ void stream_receive(struct bsal_actor *actor, struct bsal_message *message)
             i++;
         }
 
+        printf("actor %d spawned %d actors\n", name, to_spawn);
+
         /* synchronize with other initial actors
          */
 
