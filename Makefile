@@ -1,12 +1,11 @@
 CC=mpicc
 CFLAGS=-O2 -g -I.
-#CFLAGS=-g -I.
 LD=$(CC)
 Q=@
 ECHO=echo
 
 TESTS=test_fifo test_fifo_array test_hash_table_group test_hash_table test_node
-EXAMPLES=test_mock test_ring test_reader test_remote_spawn example_synchronize
+EXAMPLES=example_mock example_ring example_reader example_remote_spawn example_synchronize
 
 all: $(EXAMPLES) $(TESTS)
 
@@ -34,10 +33,10 @@ LIBRARY += data/dna_sequence.o
 LIBRARY += formats/fastq_input.o
 
 # examples
-MOCK_EXAMPLE=examples/mock/main.o examples/mock/mock.o examples/mock/buddy.o
-RING_EXAMPLE=examples/ring/main.o examples/ring/sender.o
-READER_EXAMPLE=examples/reader/main.o examples/reader/reader.o
-REMOTE_SPAWN_EXAMPLE=examples/remote_spawn/main.o examples/remote_spawn/table.o
+EXAMPLE_MOCK=examples/mock/main.o examples/mock/mock.o examples/mock/buddy.o
+EXAMPLE_RING=examples/ring/main.o examples/ring/sender.o
+EXAMPLE_READER=examples/reader/main.o examples/reader/reader.o
+EXAMPLE_REMOTE_SPAWN=examples/remote_spawn/main.o examples/remote_spawn/table.o
 EXAMPLE_SYNCHRONIZE=examples/synchronize/main.o examples/synchronize/stream.o
 
 # tests
@@ -54,32 +53,32 @@ TEST_NODE=tests/test.o tests/test_node.o
 clean:
 	$(Q)$(ECHO) "  RM"
 	$(Q)$(RM) $(LIBRARY)
-	$(Q)$(RM) $(RING_EXAMPLE) $(MOCK_EXAMPLE) $(READER_EXAMPLE) $(REMOTE_SPAWN_EXAMPLE)
+	$(Q)$(RM) $(EXAMPLE_RING) $(EXAMPLE_MOCK) $(EXAMPLE_READER) $(EXAMPLE_REMOTE_SPAWN)
 	$(Q)$(RM) $(EXAMPLE_SYNCHRONIZE)
 	$(Q)$(RM) $(TEST_FIFO) $(TEST_FIFO_ARRAY) $(TEST_HASH_TABLE_GROUP) $(TEST_NODE)
 	$(Q)$(RM) $(TEST_HASH_TABLE)
 	$(Q)$(RM) $(EXAMPLES) $(TESTS)
 
-ring: test_ring
-	mpiexec -n 2 ./test_ring -threads-per-node 8
+ring: example_ring
+	mpiexec -n 2 ./example_ring -threads-per-node 8
 
-mock: test_mock
-	mpiexec -n 3 ./test_mock -threads-per-node 7
+mock: example_mock
+	mpiexec -n 3 ./example_mock -threads-per-node 7
 
-mock1: test_mock
-	mpiexec -n 3 ./test_mock -threads-per-node 1
+mock1: example_mock
+	mpiexec -n 3 ./example_mock -threads-per-node 1
 
-reader: test_reader
-	mpiexec -n 2 ./test_reader -threads-per-node 13 -read ~/dropbox/GPIC.1424-1.1371.fastq
+reader: example_reader
+	mpiexec -n 2 ./example_reader -threads-per-node 13 -read ~/dropbox/GPIC.1424-1.1371.fastq
 
 synchronize: example_synchronize
 	mpiexec -n 3 ./example_synchronize -threads-per-node 9
 
-remote_spawn: test_remote_spawn
-	mpiexec -n 6 ./test_remote_spawn -threads-per-node 1,2,3
+remote_spawn: example_remote_spawn
+	mpiexec -n 6 ./example_remote_spawn -threads-per-node 1,2,3
 
-not_found: test_reader
-	mpiexec -n 3 ./test_reader -threads-per-node 7 -read void.fastq
+not_found: example_reader
+	mpiexec -n 3 ./example_reader -threads-per-node 7 -read void.fastq
 
 test: tests
 
@@ -91,6 +90,8 @@ tests: $(TESTS)
 	./test_node
 
 examples: mock mock1 ring reader not_found remote_spawn synchronize
+
+# tests
 
 test_node: $(LIBRARY) $(TEST_NODE)
 	$(Q)$(ECHO) "  LD $@"
@@ -112,19 +113,21 @@ test_fifo_array: $(LIBRARY) $(TEST_FIFO_ARRAY)
 	$(Q)$(ECHO) "  LD $@"
 	$(Q)$(CC) $(CFLAGS) $^ -o $@
 
-test_remote_spawn: $(REMOTE_SPAWN_EXAMPLE) $(LIBRARY)
+# examples
+
+example_remote_spawn: $(EXAMPLE_REMOTE_SPAWN) $(LIBRARY)
 	$(Q)$(ECHO) "  LD $@"
 	$(Q)$(CC) $(CFLAGS) $^ -o $@
 
-test_ring: $(RING_EXAMPLE) $(LIBRARY)
+example_ring: $(EXAMPLE_RING) $(LIBRARY)
 	$(Q)$(ECHO) "  LD $@"
 	$(Q)$(CC) $(CFLAGS) $^ -o $@
 
-test_mock: $(MOCK_EXAMPLE) $(LIBRARY)
+example_mock: $(EXAMPLE_MOCK) $(LIBRARY)
 	$(Q)$(ECHO) "  LD $@"
 	$(Q)$(CC) $(CFLAGS) $^ -o $@
 
-test_reader: $(READER_EXAMPLE) $(LIBRARY)
+example_reader: $(EXAMPLE_READER) $(LIBRARY)
 	$(Q)$(ECHO) "  LD $@"
 	$(Q)$(CC) $(CFLAGS) $^ -o $@
 
