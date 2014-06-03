@@ -355,6 +355,7 @@ int bsal_actor_receive_system(struct bsal_actor *actor, struct bsal_message *mes
         buffer = bsal_message_buffer(message);
         script = *(int *)buffer;
         spawned = bsal_actor_spawn(actor, script);
+        bsal_node_set_supervisor(bsal_actor_node(actor), spawned, source);
         bsal_message_init(message, BSAL_ACTOR_SPAWN_REPLY, sizeof(spawned), &spawned);
         bsal_actor_send(actor, source, message);
 
