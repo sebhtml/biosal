@@ -15,7 +15,7 @@
 
 # C++ 1998, MPI
 
-- https://github.com/sebhtml/BioActors 
+- https://github.com/sebhtml/BioActors
 - https://github.com/sebhtml/RayPlatform/tree/master/RayPlatform/actors
 
 

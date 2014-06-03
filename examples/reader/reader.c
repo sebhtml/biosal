@@ -91,9 +91,8 @@ void reader_receive(struct bsal_actor *actor, struct bsal_message *message)
 
         reader1->file = argv[argc - 1];
 
-        bsal_message_set_tag(message, BSAL_INPUT_OPEN);
-        bsal_message_set_buffer(message, reader1->file);
-        bsal_message_set_count(message, strlen(reader1->file) + 1);
+        bsal_message_init(message, BSAL_INPUT_OPEN, strlen(reader1->file) + 1,
+                        reader1->file);
 
         printf("actor %i: asking actor %i to count entries in %s\n",
                         name, reader1->sequence_reader, reader1->file);

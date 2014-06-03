@@ -46,14 +46,6 @@ int bsal_message_tag(struct bsal_message *message);
 
 Get tag.
 
-## bsal_message_set_tag
-
-```C
-void bsal_message_set_tag(struct bsal_message *message, int tag);
-```
-
-Set tag.
-
 ## bsal_message_buffer
 
 ```C
@@ -61,14 +53,6 @@ void *bsal_message_buffer(struct bsal_message *message);
 ```
 
 Get message buffer.
-
-## bsal_message_set_buffer
-
-```C
-void bsal_message_set_buffer(struct bsal_message *message, void *buffer);
-```
-
-Set message buffer. This does not do any copy.
 
 ## bsal_message_count
 
@@ -78,10 +62,3 @@ int bsal_message_count(struct bsal_message *message);
 
 Get the number of bytes in the message buffer.
 
-## bsal_message_set_count
-
-```C
-void bsal_message_set_count(struct bsal_message *message, int count);
-```
-
-Set buffer byte count.

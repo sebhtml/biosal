@@ -355,8 +355,7 @@ int bsal_actor_receive_system(struct bsal_actor *actor, struct bsal_message *mes
         buffer = bsal_message_buffer(message);
         script = *(int *)buffer;
         spawned = bsal_actor_spawn(actor, script);
-        bsal_message_set_buffer(message, &spawned);
-        bsal_message_set_tag(message, BSAL_ACTOR_SPAWN_REPLY);
+        bsal_message_init(message, BSAL_ACTOR_SPAWN_REPLY, sizeof(spawned), &spawned);
         bsal_actor_send(actor, source, message);
 
         return 1;
@@ -591,9 +590,7 @@ void bsal_actor_pack_proxy_message(struct bsal_actor *actor,
     memcpy((char *)new_buffer + offset, &real_tag, sizeof(real_tag));
     offset += sizeof(real_tag);
 
-    bsal_message_set_buffer(message, new_buffer);
-    bsal_message_set_count(message, new_count);
-    bsal_message_set_tag(message, BSAL_ACTOR_PROXY_MESSAGE);
+    bsal_message_init(message, BSAL_ACTOR_PROXY_MESSAGE, new_count, new_buffer);
     bsal_message_set_source(message, real_source);
 }
 
@@ -704,9 +701,7 @@ void bsal_actor_send_range_binomial_tree(struct bsal_actor *actor, int first, in
     memcpy((char *)new_buffer + offset, &last1, sizeof(last1));
     offset += sizeof(last1);
 
-    bsal_message_set_buffer(message, new_buffer);
-    bsal_message_set_count(message, new_count);
-    bsal_message_set_tag(message, BSAL_ACTOR_BINOMIAL_TREE_SEND);
+    bsal_message_init(message, BSAL_ACTOR_BINOMIAL_TREE_SEND, new_count, new_buffer);
 
 #ifdef BSAL_ACTOR_DEBUG
     printf("DEBUG111111 actor %i sending BSAL_ACTOR_BINOMIAL_TREE_SEND to %i, range is %i-%i\n",
@@ -732,9 +727,7 @@ void bsal_actor_send_range_binomial_tree(struct bsal_actor *actor, int first, in
                     name, source, tag);
 #endif
 
-    bsal_message_set_buffer(message, new_buffer);
-    bsal_message_set_count(message, new_count);
-    bsal_message_set_tag(message, BSAL_ACTOR_BINOMIAL_TREE_SEND);
+    bsal_message_init(message, BSAL_ACTOR_BINOMIAL_TREE_SEND, new_count, new_buffer);
 
 #ifdef BSAL_ACTOR_DEBUG
     printf("DEBUG %i sending BSAL_ACTOR_BINOMIAL_TREE_SEND to %i, range is %i-%i\n",
@@ -745,6 +738,7 @@ void bsal_actor_send_range_binomial_tree(struct bsal_actor *actor, int first, in
 
     /* restore the buffer for the user */
     free(new_buffer);
+
     bsal_message_set_buffer(message, buffer);
 }
 

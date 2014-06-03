@@ -167,9 +167,9 @@ void bsal_input_actor_receive(struct bsal_actor *actor, struct bsal_message *mes
         }
 
         count = bsal_input_proxy_size(&input->proxy);
-        bsal_message_set_buffer(message, &count);
-        bsal_message_set_count(message, sizeof(count));
-        bsal_message_set_tag(message, BSAL_INPUT_COUNT_RESULT);
+
+        bsal_message_init(message, BSAL_INPUT_COUNT_RESULT, sizeof(count),
+                        &count);
         bsal_actor_send(actor, bsal_actor_supervisor(actor), message);
 
     } else if (tag == BSAL_INPUT_CLOSE) {

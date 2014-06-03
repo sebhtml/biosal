@@ -199,9 +199,7 @@ void sender_start(struct bsal_actor *actor, struct bsal_message *message)
                     bsal_actor_nodes(actor),
                     bsal_actor_threads(actor));
 
-    bsal_message_set_tag(message, SENDER_HELLO);
-    bsal_message_set_buffer(message, &events);
-    bsal_message_set_count(message, sizeof(events));
+    bsal_message_init(message, SENDER_HELLO, sizeof(events), &events);
 
     next = (name + 1) % total;
     bsal_actor_send(actor, next, message);
