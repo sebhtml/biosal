@@ -756,12 +756,12 @@ void bsal_actor_add_script(struct bsal_actor *actor, int name, struct bsal_scrip
     bsal_node_add_script(bsal_actor_node(actor), name, script);
 }
 
-void bsal_actor_send_empty_reply(struct bsal_actor *actor, int tag)
+void bsal_actor_send_reply_empty(struct bsal_actor *actor, int tag)
 {
     bsal_actor_send_empty(actor, actor->current_source, tag);
 }
 
-void bsal_actor_send_empty_to_self(struct bsal_actor *actor, int tag)
+void bsal_actor_send_to_self_empty(struct bsal_actor *actor, int tag)
 {
     bsal_actor_send_empty(actor, bsal_actor_name(actor), tag);
 }
@@ -772,4 +772,23 @@ void bsal_actor_send_empty(struct bsal_actor *actor, int destination, int tag)
 
     bsal_message_init(&message, tag, 0, NULL);
     bsal_actor_send(actor, destination, &message);
+}
+
+void bsal_actor_send_reply(struct bsal_actor *actor, struct bsal_message *message)
+{
+    bsal_actor_send(actor, actor->current_source, message);
+}
+
+void bsal_actor_send_to_self(struct bsal_actor *actor, struct bsal_message *message)
+{
+    bsal_actor_send(actor, bsal_actor_name(actor), message);
+}
+
+void bsal_actor_send_range_standard_empty(struct bsal_actor *actor, int first, int last,
+                int tag)
+{
+    struct bsal_message message;
+
+    bsal_message_init(&message, tag, 0, NULL);
+    bsal_actor_send_range_standard(actor, first, last, &message);
 }

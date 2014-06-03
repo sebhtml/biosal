@@ -2,7 +2,7 @@
 #ifndef _TABLE_H
 #define _TABLE_H
 
-#include <engine/actor.h>
+#include <biosal.h>
 
 #define TABLE_SCRIPT 0x53f9c43c
 

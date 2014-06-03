@@ -2,7 +2,7 @@
 #ifndef _BUDDY_H
 #define _BUDDY_H
 
-#include <engine/actor.h>
+#include <biosal.h>
 
 #define BUDDY_SCRIPT 0xd0c6b654
 

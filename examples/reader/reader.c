@@ -57,7 +57,7 @@ void reader_receive(struct bsal_actor *actor, struct bsal_message *message)
 
     if (tag == BSAL_ACTOR_START) {
 
-        bsal_actor_add_script(actor, BSAL_INPUT_ACTOR_SCRIPT,
+        bsal_actor_add_script(actor, BSAL_INPUT_STREAM_SCRIPT,
                     &bsal_input_script);
 
         argc = bsal_actor_argc(actor);
@@ -87,7 +87,7 @@ void reader_receive(struct bsal_actor *actor, struct bsal_message *message)
             return;
         }
 
-        reader1->sequence_reader = bsal_actor_spawn(actor, BSAL_INPUT_ACTOR_SCRIPT);
+        reader1->sequence_reader = bsal_actor_spawn(actor, BSAL_INPUT_STREAM_SCRIPT);
 
         reader1->file = argv[argc - 1];
 
@@ -147,7 +147,7 @@ void reader_receive(struct bsal_actor *actor, struct bsal_message *message)
         return;
         */
 
-        script = BSAL_INPUT_ACTOR_SCRIPT;
+        script = BSAL_INPUT_STREAM_SCRIPT;
 
         bsal_message_init(message, BSAL_ACTOR_SPAWN, sizeof(script), &script);
         bsal_actor_send(actor, name, message);

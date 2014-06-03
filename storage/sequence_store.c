@@ -29,15 +29,15 @@ void bsal_sequence_store_receive(struct bsal_actor *actor, struct bsal_message *
 
     if (tag == BSAL_STORE_SEQUENCES) {
 
-        bsal_actor_send_empty_reply(actor, BSAL_STORE_SEQUENCES_REPLY);
+        bsal_actor_send_reply_empty(actor, BSAL_STORE_SEQUENCES_REPLY);
 
     } else if (tag == BSAL_SEQUENCE_STORE_ALLOCATE) {
 
-        bsal_actor_send_empty_reply(actor, BSAL_SEQUENCE_STORE_ALLOCATE_REPLY);
+        bsal_actor_send_reply_empty(actor, BSAL_SEQUENCE_STORE_ALLOCATE_REPLY);
 
     } else if (tag == BSAL_SEQUENCE_STORE_STOP) {
 
-        bsal_actor_send_empty_to_self(actor, BSAL_ACTOR_STOP);
+        bsal_actor_send_to_self_empty(actor, BSAL_ACTOR_STOP);
     }
 }
 

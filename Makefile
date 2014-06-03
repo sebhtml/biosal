@@ -47,7 +47,7 @@ clean:
 	$(Q)$(ECHO) "  RM"
 	$(Q)$(RM) $(LIBRARY)
 	$(Q)$(RM) $(EXAMPLE_RING) $(EXAMPLE_MOCK) $(EXAMPLE_READER) $(EXAMPLE_REMOTE_SPAWN)
-	$(Q)$(RM) $(EXAMPLE_SYNCHRONIZE)
+	$(Q)$(RM) $(EXAMPLE_SYNCHRONIZE) $(EXAMPLE_CONTROLLER)
 	$(Q)$(RM) $(TEST_FIFO) $(TEST_FIFO_ARRAY) $(TEST_HASH_TABLE_GROUP) $(TEST_NODE)
 	$(Q)$(RM) $(TEST_HASH_TABLE)
 	$(Q)$(RM) $(EXAMPLES) $(TESTS)
@@ -94,5 +94,9 @@ example_reader: $(EXAMPLE_READER) $(LIBRARY)
 	$(Q)$(CC) $(CFLAGS) $^ -o $@
 
 example_synchronize: $(EXAMPLE_SYNCHRONIZE) $(LIBRARY)
+	$(Q)$(ECHO) "  LD $@"
+	$(Q)$(CC) $(CFLAGS) $^ -o $@
+
+example_controller: $(EXAMPLE_CONTROLLER) $(LIBRARY)
 	$(Q)$(ECHO) "  LD $@"
 	$(Q)$(CC) $(CFLAGS) $^ -o $@

@@ -2,7 +2,7 @@
 #ifndef _MOCK_H
 #define _MOCK_H
 
-#include <engine/actor.h>
+#include <biosal.h>
 
 #define MOCK_SCRIPT 0x959ff8ea
 

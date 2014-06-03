@@ -1,12 +1,12 @@
 
-#ifndef _BSAL_INPUT_ACTOR_H
-#define _BSAL_INPUT_ACTOR_H
+#ifndef _BSAL_INPUT_STREAM_H
+#define _BSAL_INPUT_STREAM_H
 
 #include "input_proxy.h"
 
 #include <engine/actor.h>
 
-#define BSAL_INPUT_ACTOR_SCRIPT 0xeb2fe16a
+#define BSAL_INPUT_STREAM_SCRIPT 0xeb2fe16a
 
 struct bsal_input_stream {
     struct bsal_input_proxy proxy;
@@ -17,7 +17,7 @@ struct bsal_input_stream {
 };
 
 enum {
-    BSAL_INPUT_OPEN = BSAL_TAG_OFFSET_INPUT_ACTOR, /* +0 */
+    BSAL_INPUT_OPEN = BSAL_TAG_OFFSET_INPUT_STREAM, /* +0 */
     BSAL_INPUT_OPEN_OK,
     BSAL_INPUT_ERROR,
     BSAL_INPUT_ERROR_FILE_NOT_FOUND,

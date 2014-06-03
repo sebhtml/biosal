@@ -2,7 +2,7 @@
 #ifndef _STREAM_H
 #define _STREAM_H
 
-#include <engine/actor.h>
+#include <biosal.h>
 
 #define STREAM_SCRIPT 0xb9b19139
 

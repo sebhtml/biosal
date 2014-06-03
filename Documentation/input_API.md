@@ -1,6 +1,6 @@
 # Input actor API
 
-How to use: spawn an actor with script BSAL_INPUT_ACTOR_SCRIPT
+How to use: spawn an actor with script BSAL_INPUT_STREAM_SCRIPT
 and send it messages to interact with it in order to read sequence data.
 
 ## Header

@@ -1,7 +1,7 @@
 
-examples: mock mock1 ring reader not_found remote_spawn synchronize
+examples: mock mock1 ring reader not_found remote_spawn synchronize controller
 
-EXAMPLES=example_mock example_ring example_reader example_remote_spawn example_synchronize
+EXAMPLES=example_mock example_ring example_reader example_remote_spawn example_synchronize example_controller
 
 # examples
 EXAMPLE_MOCK=examples/mock/main.o examples/mock/mock.o examples/mock/buddy.o
@@ -9,6 +9,7 @@ EXAMPLE_RING=examples/ring/main.o examples/ring/sender.o
 EXAMPLE_READER=examples/reader/main.o examples/reader/reader.o
 EXAMPLE_REMOTE_SPAWN=examples/remote_spawn/main.o examples/remote_spawn/table.o
 EXAMPLE_SYNCHRONIZE=examples/synchronize/main.o examples/synchronize/stream.o
+EXAMPLE_CONTROLLER=examples/controller/main.o examples/controller/root.o
 
 ring: example_ring
 	mpiexec -n 2 ./example_ring -threads-per-node 8
@@ -24,6 +25,9 @@ reader: example_reader
 
 synchronize: example_synchronize
 	mpiexec -n 3 ./example_synchronize -threads-per-node 9
+
+controller: example_controller
+	mpiexec -n 3 ./example_controller -threads-per-node 9
 
 remote_spawn: example_remote_spawn
 	mpiexec -n 6 ./example_remote_spawn -threads-per-node 1,2,3

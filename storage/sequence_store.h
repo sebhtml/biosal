@@ -1,6 +1,6 @@
 
-#ifndef _BSAL_INPUT_ACTOR_H
-#define _BSAL_INPUT_ACTOR_H
+#ifndef _BSAL_INPUT_STREAM_H
+#define _BSAL_INPUT_STREAM_H
 
 #include <engine/actor.h>
 
