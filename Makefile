@@ -13,7 +13,7 @@ LIBRARY=
 
 # actor engine
 LIBRARY += engine/message.o engine/node.o engine/actor.o engine/script.o \
-	engine/work.o engine/worker.o engine/worker_pool.o
+	engine/work.o engine/worker.o engine/worker_pool.o engine/active_buffer.o
 
 # data structures
 LIBRARY += structures/hash_table.o structures/hash_table_group.o \

@@ -195,10 +195,14 @@ void bsal_node_init(struct bsal_node *node, int *argc, char ***argv)
     pthread_spin_init(&node->death_lock, 0);
     pthread_spin_init(&node->spawn_lock, 0);
     pthread_spin_init(&node->script_lock, 0);
+
+    bsal_fifo_init(&node->active_buffers, 64, sizeof(struct bsal_active_buffer));
 }
 
 void bsal_node_destroy(struct bsal_node *node)
 {
+    struct bsal_active_buffer active_buffer;
+
     pthread_spin_destroy(&node->spawn_lock);
     pthread_spin_destroy(&node->death_lock);
     pthread_spin_destroy(&node->script_lock);
@@ -207,6 +211,12 @@ void bsal_node_destroy(struct bsal_node *node)
     node->actor_count = 0;
     node->actor_capacity = 0;
     node->actors = NULL;
+
+    while (bsal_fifo_pop(&node->active_buffers, &active_buffer)) {
+        bsal_active_buffer_destroy(&active_buffer);
+    }
+
+    bsal_fifo_destroy(&node->active_buffers);
 
     MPI_Finalize();
 }
@@ -395,6 +405,29 @@ int bsal_node_running(struct bsal_node *node)
     return 0;
 }
 
+void bsal_node_test_requests(struct bsal_node *node)
+{
+    struct bsal_active_buffer active_buffer;
+    void *buffer;
+
+    if (bsal_fifo_pop(&node->active_buffers, &active_buffer)) {
+
+        if (bsal_active_buffer_test(&active_buffer)) {
+            buffer = bsal_active_buffer_buffer(&active_buffer);
+
+            /* TODO use an allocator
+             */
+            free(buffer);
+
+            bsal_active_buffer_destroy(&active_buffer);
+
+        /* Just put it back in the FIFO for later */
+        } else {
+            bsal_fifo_push(&node->active_buffers, &active_buffer);
+        }
+    }
+}
+
 void bsal_node_run_loop(struct bsal_node *node)
 {
     struct bsal_message message;
@@ -467,6 +500,10 @@ void bsal_node_send_message(struct bsal_node *node)
 {
     struct bsal_message message;
 
+    /* Free buffers of active requests
+     */
+    bsal_node_test_requests(node);
+
     /* check for messages to send from from threads */
     /* this call spin_lock only if there is at least
      * a message in the FIFO
@@ -507,12 +544,14 @@ int bsal_node_receive(struct bsal_node *node, struct bsal_message *message)
     tag = MPI_ANY_TAG;
     destination = node->name;
 
+    /* TODO get return value */
     MPI_Iprobe(source, tag, node->comm, &flag, &status);
 
     if (!flag) {
         return 0;
     }
 
+    /* TODO get return value */
     MPI_Get_count(&status, node->datatype, &count);
 
     /* TODO actually allocate (slab allocator) a buffer with count bytes ! */
@@ -521,6 +560,7 @@ int bsal_node_receive(struct bsal_node *node, struct bsal_message *message)
     source = status.MPI_SOURCE;
     tag = status.MPI_TAG;
 
+    /* TODO get return value */
     MPI_Recv(buffer, count, node->datatype, source, tag,
                     node->comm, &status);
 
@@ -566,8 +606,9 @@ void bsal_node_send_outbound_message(struct bsal_node *node, struct bsal_message
     int destination;
     int tag;
     int metadata_size;
-    MPI_Request request;
+    MPI_Request *request;
     int all;
+    struct bsal_active_buffer active_buffer;
 
     buffer = bsal_message_buffer(message);
     count = bsal_message_count(message);
@@ -576,13 +617,21 @@ void bsal_node_send_outbound_message(struct bsal_node *node, struct bsal_message
     destination = bsal_message_destination_node(message);
     tag = bsal_message_tag(message);
 
-    MPI_Isend(buffer, all, node->datatype, destination, tag,
-                    node->comm, &request);
+    bsal_active_buffer_init(&active_buffer, buffer);
+    request = bsal_active_buffer_request(&active_buffer);
 
-    /* TODO store the MPI_Request to test it later to know when
+    /* TODO get return value */
+    MPI_Isend(buffer, all, node->datatype, destination, tag,
+                    node->comm, request);
+
+    /* store the MPI_Request to test it later to know when
      * the buffer can be reused
      */
-    MPI_Request_free(&request);
+    /* \see http://blogs.cisco.com/performance/mpi_request_free-is-evil/
+     */
+    /*MPI_Request_free(&request);*/
+
+    bsal_fifo_push(&node->active_buffers, &active_buffer);
 }
 
 void bsal_node_send(struct bsal_node *node, struct bsal_message *message)

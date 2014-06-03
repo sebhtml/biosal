@@ -5,6 +5,9 @@
 #include "actor.h"
 #include "work.h"
 #include "worker_pool.h"
+#include "active_buffer.h"
+
+#include <structures/fifo.h>
 
 #include <pthread.h>
 #include <mpi.h>
@@ -34,6 +37,8 @@ struct bsal_node {
     pthread_spinlock_t death_lock;
     pthread_spinlock_t spawn_lock;
     pthread_spinlock_t script_lock;
+
+    struct bsal_fifo active_buffers;
 
     MPI_Comm comm;
     MPI_Datatype datatype;
@@ -111,5 +116,7 @@ struct bsal_script *bsal_node_find_script(struct bsal_node *node, int name);
 int bsal_node_has_script(struct bsal_node *node, struct bsal_script *script);
 uint64_t bsal_node_get_counter(struct bsal_node *node, int counter);
 void bsal_node_increment_counter(struct bsal_node *node, int counter);
+
+void bsal_node_test_requests(struct bsal_node *node);
 
 #endif

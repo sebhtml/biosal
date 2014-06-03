@@ -155,6 +155,7 @@ void sender_start(struct bsal_actor *actor, struct bsal_message *message)
     struct sender *sender1;
     int argc;
     char **argv;
+    int message_size;
 
     printf("sender_start\n");
 
@@ -178,6 +179,7 @@ void sender_start(struct bsal_actor *actor, struct bsal_message *message)
     /* \see http://rlrr.drum-corps.net/misc/primes3.shtml
      */
     events = 200087;
+    message_size = sizeof(events);
 
     argc = bsal_actor_argc(actor);
     argv = bsal_actor_argv(actor);
@@ -185,11 +187,17 @@ void sender_start(struct bsal_actor *actor, struct bsal_message *message)
     for (i = 0; i < argc; i++) {
         if (strcmp(argv[i], "-messages") == 0 && i + 1 < argc) {
             events = atoi(argv[i + 1]);
-            break;
+        } else if (strcmp(argv[i], "-buffer_count") == 0 && i + 1 < argc) {
+            message_size = atoi(argv[i + 1]);
         }
     }
 
-    printf("Using %d messages\n", events);
+    if (message_size < sizeof(events)) {
+        message_size = sizeof(events);
+    }
+
+    printf("Using %d messages (-messages)\n", events);
+    printf("Using %d bytes for buffer_count (-buffer_count)\n", message_size);
 
     /*events = 10000;*/
 
@@ -199,7 +207,7 @@ void sender_start(struct bsal_actor *actor, struct bsal_message *message)
                     bsal_actor_nodes(actor),
                     bsal_actor_threads(actor));
 
-    bsal_message_init(message, SENDER_HELLO, sizeof(events), &events);
+    bsal_message_init(message, SENDER_HELLO, message_size, &events);
 
     next = (name + 1) % total;
     bsal_actor_send(actor, next, message);

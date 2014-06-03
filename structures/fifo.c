@@ -80,6 +80,11 @@ int bsal_fifo_pop(struct bsal_fifo *fifo, void *item)
 {
     struct bsal_fifo_array *array;
 
+    /* empty. */
+    if (bsal_fifo_empty(fifo)) {
+        return 0;
+    }
+
     if (bsal_fifo_array_pop(fifo->first, item)) {
 
         /* check if it is empty
