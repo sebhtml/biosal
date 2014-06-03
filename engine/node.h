@@ -33,6 +33,7 @@ struct bsal_node {
 
     pthread_spinlock_t death_lock;
     pthread_spinlock_t spawn_lock;
+    pthread_spinlock_t script_lock;
 
     MPI_Comm comm;
     MPI_Datatype datatype;

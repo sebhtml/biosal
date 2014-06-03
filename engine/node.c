@@ -194,12 +194,14 @@ void bsal_node_init(struct bsal_node *node, int *argc, char ***argv)
 
     pthread_spin_init(&node->death_lock, 0);
     pthread_spin_init(&node->spawn_lock, 0);
+    pthread_spin_init(&node->script_lock, 0);
 }
 
 void bsal_node_destroy(struct bsal_node *node)
 {
     pthread_spin_destroy(&node->spawn_lock);
     pthread_spin_destroy(&node->death_lock);
+    pthread_spin_destroy(&node->script_lock);
 
     free(node->actors);
     node->actor_count = 0;
@@ -754,15 +756,24 @@ int bsal_node_threads(struct bsal_node *node)
 void bsal_node_add_script(struct bsal_node *node, int name,
                 struct bsal_script *script)
 {
+    int can_add;
+
+    pthread_spin_lock(&node->script_lock);
+
+    can_add = 1;
     if (bsal_node_has_script(node, script)) {
-        return;
+        can_add = 0;
     }
 
     if (node->available_scripts == node->maximum_scripts) {
-        return;
+        can_add = 0;
     }
 
-    node->scripts[node->available_scripts++] = script;
+    if (can_add) {
+        node->scripts[node->available_scripts++] = script;
+    }
+
+    pthread_spin_unlock(&node->script_lock);
 }
 
 int bsal_node_has_script(struct bsal_node *node, struct bsal_script *script)

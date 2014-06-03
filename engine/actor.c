@@ -748,3 +748,8 @@ int bsal_actor_script(struct bsal_actor *actor)
 {
     return bsal_script_name(actor->script);
 }
+
+void bsal_actor_add_script(struct bsal_actor *actor, int name, struct bsal_script *script)
+{
+    bsal_node_add_script(bsal_actor_node(actor), name, script);
+}

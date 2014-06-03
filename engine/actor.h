@@ -150,5 +150,6 @@ void bsal_actor_pack_proxy_message(struct bsal_actor *actor,
 int bsal_actor_unpack_proxy_message(struct bsal_actor *actor,
                 struct bsal_message *message);
 int bsal_actor_script(struct bsal_actor *actor);
+void bsal_actor_add_script(struct bsal_actor *actor, int name, struct bsal_script *script);
 
 #endif
