@@ -7,10 +7,10 @@
 #include <stdio.h>
 #include <string.h>
 
-/*#define BSAL_INPUT_ACTOR_DEBUG*/
+/*#define BSAL_INPUT_DEBUG*/
 
 struct bsal_script bsal_input_script = {
-    .name = BSAL_INPUT_ACTOR_SCRIPT,
+    .name = BSAL_INPUT_SCRIPT,
     .init = bsal_input_actor_init,
     .destroy = bsal_input_actor_destroy,
     .receive = bsal_input_actor_receive,
@@ -76,10 +76,10 @@ void bsal_input_actor_receive(struct bsal_actor *actor, struct bsal_message *mes
         return;
     }
 
-    if (tag == BSAL_INPUT_ACTOR_OPEN) {
+    if (tag == BSAL_INPUT_OPEN) {
 
         if (input->open) {
-            bsal_message_set_tag(message, BSAL_INPUT_ACTOR_ERROR_ALREADY_OPEN);
+            bsal_message_set_tag(message, BSAL_INPUT_ERROR_ALREADY_OPEN);
             bsal_actor_send(actor, source, message);
 
             bsal_message_set_tag(message, BSAL_ACTOR_STOP);
@@ -96,7 +96,7 @@ void bsal_input_actor_receive(struct bsal_actor *actor, struct bsal_message *mes
 
         /*bsal_input_actor_init(actor);*/
 
-#ifdef BSAL_INPUT_ACTOR_DEBUG
+#ifdef BSAL_INPUT_DEBUG
         printf("DEBUG bsal_input_actor_receive open %s\n",
                         buffer);
 #endif
@@ -113,10 +113,10 @@ void bsal_input_actor_receive(struct bsal_actor *actor, struct bsal_message *mes
             return;
         }
 
-        bsal_message_set_tag(message, BSAL_INPUT_ACTOR_OPEN_OK);
+        bsal_message_set_tag(message, BSAL_INPUT_OPEN_OK);
         bsal_actor_send(actor, source, message);
 
-    } else if (tag == BSAL_INPUT_ACTOR_COUNT) {
+    } else if (tag == BSAL_INPUT_COUNT) {
         /* count a little bit and yield the worker */
 
         if (bsal_input_actor_check_open_error(actor, message)) {
@@ -135,32 +135,32 @@ void bsal_input_actor_receive(struct bsal_actor *actor, struct bsal_message *mes
         if (has_sequence) {
 
             /*printf("DEBUG yield\n");*/
-            bsal_message_set_tag(message, BSAL_INPUT_ACTOR_COUNT_YIELD);
+            bsal_message_set_tag(message, BSAL_INPUT_COUNT_YIELD);
             bsal_actor_send(actor, name, message);
 
             /* notify the supervisor of our progress...
              */
 
             sequences = bsal_input_proxy_size(&input->proxy);
-            bsal_message_init(message, BSAL_INPUT_ACTOR_COUNT_PROGRESS,
+            bsal_message_init(message, BSAL_INPUT_COUNT_PROGRESS,
                             sizeof(sequences), &sequences);
             bsal_actor_send(actor, bsal_actor_supervisor(actor), message);
             bsal_message_destroy(message);
         } else {
-            bsal_message_set_tag(message, BSAL_INPUT_ACTOR_COUNT_READY);
+            bsal_message_set_tag(message, BSAL_INPUT_COUNT_READY);
             bsal_actor_send(actor, name, message);
         }
 
-    } else if (tag == BSAL_INPUT_ACTOR_COUNT_YIELD) {
+    } else if (tag == BSAL_INPUT_COUNT_YIELD) {
 
         if (bsal_input_actor_check_open_error(actor, message)) {
             return;
         }
 
-        bsal_message_set_tag(message, BSAL_INPUT_ACTOR_COUNT);
+        bsal_message_set_tag(message, BSAL_INPUT_COUNT);
         bsal_actor_send(actor, source, message);
 
-    } else if (tag == BSAL_INPUT_ACTOR_COUNT_READY) {
+    } else if (tag == BSAL_INPUT_COUNT_READY) {
 
         if (bsal_input_actor_check_open_error(actor, message)) {
             return;
@@ -169,12 +169,12 @@ void bsal_input_actor_receive(struct bsal_actor *actor, struct bsal_message *mes
         count = bsal_input_proxy_size(&input->proxy);
         bsal_message_set_buffer(message, &count);
         bsal_message_set_count(message, sizeof(count));
-        bsal_message_set_tag(message, BSAL_INPUT_ACTOR_COUNT_RESULT);
+        bsal_message_set_tag(message, BSAL_INPUT_COUNT_RESULT);
         bsal_actor_send(actor, bsal_actor_supervisor(actor), message);
 
-    } else if (tag == BSAL_INPUT_ACTOR_CLOSE) {
+    } else if (tag == BSAL_INPUT_CLOSE) {
 
-#ifdef BSAL_INPUT_ACTOR_DEBUG
+#ifdef BSAL_INPUT_DEBUG
         printf("DEBUG destroy proxy\n");
 #endif
 
@@ -182,13 +182,13 @@ void bsal_input_actor_receive(struct bsal_actor *actor, struct bsal_message *mes
             return;
         }
 
-        bsal_message_set_tag(message, BSAL_INPUT_ACTOR_CLOSE_OK);
+        bsal_message_set_tag(message, BSAL_INPUT_CLOSE_OK);
         bsal_actor_send(actor, source, message);
 
         bsal_message_set_tag(message, BSAL_ACTOR_STOP);
         bsal_actor_send(actor, name, message);
 
-    } else if (tag == BSAL_INPUT_ACTOR_GET_SEQUENCE) {
+    } else if (tag == BSAL_INPUT_GET_SEQUENCE) {
 
         if (bsal_input_actor_check_open_error(actor, message)) {
             return;
@@ -204,7 +204,7 @@ void bsal_input_actor_receive(struct bsal_actor *actor, struct bsal_message *mes
                             read_buffer);
 
         if (!has_sequence) {
-            bsal_message_set_tag(message, BSAL_INPUT_ACTOR_GET_SEQUENCE_END);
+            bsal_message_set_tag(message, BSAL_INPUT_GET_SEQUENCE_END);
             bsal_actor_send(actor, source, message);
 
             return;
@@ -214,7 +214,7 @@ void bsal_input_actor_receive(struct bsal_actor *actor, struct bsal_message *mes
 
         memcpy(input->buffer_for_sequence, &sequence_index, sizeof(sequence_index));
 
-        bsal_message_init(message, BSAL_INPUT_ACTOR_GET_SEQUENCE_REPLY,
+        bsal_message_init(message, BSAL_INPUT_GET_SEQUENCE_REPLY,
                         buffer_size, input->buffer_for_sequence);
         bsal_actor_send(actor, source, message);
     }
@@ -237,20 +237,20 @@ int bsal_input_actor_has_error(struct bsal_actor *actor,
 
     if (error == BSAL_INPUT_ERROR_NOT_FOUND) {
 
-#ifdef BSAL_INPUT_ACTOR_DEBUG
+#ifdef BSAL_INPUT_DEBUG
         printf("DEBUG bsal_input_actor_has_error BSAL_INPUT_ERROR_NOT_FOUND\n");
 #endif
 
         source = bsal_message_source(message);
 
-        bsal_message_set_tag(message, BSAL_INPUT_ACTOR_ERROR_FILE_NOT_FOUND);
+        bsal_message_set_tag(message, BSAL_INPUT_ERROR_FILE_NOT_FOUND);
         bsal_actor_send(actor, source, message);
         return 1;
 
     } else if (error == BSAL_INPUT_ERROR_NOT_SUPPORTED) {
         source = bsal_message_source(message);
 
-        bsal_message_set_tag(message, BSAL_INPUT_ACTOR_ERROR_FORMAT_NOT_SUPPORTED);
+        bsal_message_set_tag(message, BSAL_INPUT_ERROR_FORMAT_NOT_SUPPORTED);
         bsal_actor_send(actor, source, message);
         return 1;
     }
@@ -270,7 +270,7 @@ int bsal_input_actor_check_open_error(struct bsal_actor *actor,
     name = bsal_actor_name(actor);
 
     if (!input->open) {
-        bsal_message_set_tag(message, BSAL_INPUT_ACTOR_ERROR_FILE_NOT_OPEN);
+        bsal_message_set_tag(message, BSAL_INPUT_ERROR_FILE_NOT_OPEN);
         bsal_actor_send(actor, source, message);
 
         bsal_message_set_tag(message, BSAL_ACTOR_STOP);

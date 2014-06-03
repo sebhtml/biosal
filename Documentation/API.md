@@ -8,7 +8,7 @@ Also, this is in heavy development.
 - [Actor API](actor_API.md)
 - [Message API](message_API.md)
 - [Node API](node_API.md)
-- [Input actor API](input_actor_API.md)
+- [Input API](input_API.md)
 
 # Examples
 

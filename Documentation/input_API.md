@@ -1,6 +1,6 @@
 # Input actor API
 
-How to use: spawn an actor with script BSAL_INPUT_ACTOR_SCRIPT
+How to use: spawn an actor with script BSAL_INPUT_SCRIPT
 and send it messages to interact with it in order to read sequence data.
 
 ## Header
@@ -13,10 +13,10 @@ and send it messages to interact with it in order to read sequence data.
 
 # Message tags
 
-## BSAL_INPUT_ACTOR_OPEN
+## BSAL_INPUT_OPEN
 
 ```C
-BSAL_INPUT_ACTOR_OPEN
+BSAL_INPUT_OPEN
 ```
 
 Open an input file.
@@ -25,30 +25,30 @@ Open an input file.
 - Responses:
 
 ```C
-BSAL_INPUT_ACTOR_OPEN_OK
+BSAL_INPUT_OPEN_OK
 ```
 
 Successful
 - Response message buffer: empty
 
 ```C
-BSAL_INPUT_ACTOR_ERROR_FILE_NOT_FOUND
+BSAL_INPUT_ERROR_FILE_NOT_FOUND
 ```
 
 File not found
 - Response message buffer: empty
 
 ```C
-BSAL_INPUT_ACTOR_ERROR_FORMAT_NOT_SUPPORTED
+BSAL_INPUT_ERROR_FORMAT_NOT_SUPPORTED
 ```
 
 Format not supported
 - Response message buffer: empty
 
-## BSAL_INPUT_ACTOR_COUNT
+## BSAL_INPUT_COUNT
 
 ```C
-BSAL_INPUT_ACTOR_COUNT
+BSAL_INPUT_COUNT
 ```
 
 Count entries
@@ -57,21 +57,21 @@ Count entries
 - Responses:
 
 ```C
-BSAL_INPUT_ACTOR_COUNT_PROGRESS
+BSAL_INPUT_COUNT_PROGRESS
 ```
 
 This is sent to notify supervisor about the progression.
 - Response message buffer: entries (int)
 
 ```C
-BSAL_INPUT_ACTOR_COUNT_RESULT
+BSAL_INPUT_COUNT_RESULT
 ```
 
 Counting has finished
 - Response message buffer: entries (int)
 
 ```C
-BSAL_INPUT_ACTOR_ERROR_NOT_OPEN
+BSAL_INPUT_ERROR_NOT_OPEN
 ```
 
 the actor is not open
@@ -79,10 +79,10 @@ the actor is not open
 
 
 
-## BSAL_INPUT_ACTOR_GET_SEQUENCE
+## BSAL_INPUT_GET_SEQUENCE
 
 ```C
-BSAL_INPUT_ACTOR_GET_SEQUENCE
+BSAL_INPUT_GET_SEQUENCE
 ```
 
 Read a sequence.
@@ -91,7 +91,7 @@ Read a sequence.
 - Responses:
 
 ```C
-BSAL_INPUT_ACTOR_GET_SEQUENCE_REPLY
+BSAL_INPUT_GET_SEQUENCE_REPLY
 ```
 
 The actor is open and there is a sequence to read
@@ -99,23 +99,23 @@ The actor is open and there is a sequence to read
 
 
 ```C
-BSAL_INPUT_ACTOR_GET_SEQUENCE_END
+BSAL_INPUT_GET_SEQUENCE_END
 ```
 
 there is nothing more to read
 - Response message buffer: empty
 
 ```C
-BSAL_INPUT_ACTOR_ERROR_NOT_OPEN
+BSAL_INPUT_ERROR_NOT_OPEN
 ```
 
 the actor is not open
 - Respons message buffer: empty
 
-## BSAL_INPUT_ACTOR_CLOSE
+## BSAL_INPUT_CLOSE
 
 ```C
-BSAL_INPUT_ACTOR_CLOSE
+BSAL_INPUT_CLOSE
 ```
 Close the file
 
@@ -123,7 +123,7 @@ Close the file
 - Responses:
 
 ```C
-BSAL_INPUT_ACTOR_CLOSE_OK
+BSAL_INPUT_CLOSE_OK
 ```
 
 successfully closed
@@ -131,7 +131,7 @@ successfully closed
 
 
 ```C
-BSAL_INPUT_ACTOR_ERROR_NOT_OPEN
+BSAL_INPUT_ERROR_NOT_OPEN
 ```
 
 the actor is not open
