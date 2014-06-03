@@ -29,8 +29,8 @@ void bsal_actor_init(struct bsal_actor *actor, void *state,
     actor->synchronization_expected_responses = 0;
     actor->synchronization_responses = 0;
 
-    actor->received_messages = 0;
-    actor->sent_messages = 0;
+    actor->counter_received_messages = 0;
+    actor->counter_sent_messages = 0;
 
     pthread_spin_init(&actor->lock, 0);
     actor->locked = 0;
@@ -95,8 +95,8 @@ void bsal_actor_print(struct bsal_actor *actor)
      * engine/bsal_actor.c:58:21: error: ISO C for bids conversion of function pointer to object pointer type [-Werror=edantic]
      */
 
-    int received = bsal_actor_received_messages(actor);
-    int sent = bsal_actor_sent_messages(actor);
+    int received = bsal_actor_get_counter(actor, BSAL_COUNTER_RECEIVED_MESSAGES);
+    int sent = bsal_actor_get_counter(actor, BSAL_COUNTER_SENT_MESSAGES);
 
     printf("[bsal_actor_print] Name: %i Supervisor %i Node: %i, Thread: %i"
                     " received %i sent %i\n", bsal_actor_name(actor),
@@ -172,7 +172,7 @@ void bsal_actor_send_with_source(struct bsal_actor *actor, int name, struct bsal
 
     bsal_worker_send(actor->worker, message);
 
-    bsal_actor_increase_sent_messages(actor);
+    bsal_actor_increase_counter(actor, BSAL_COUNTER_SENT_MESSAGES);
 }
 
 int bsal_actor_spawn(struct bsal_actor *actor, int script)
@@ -270,24 +270,24 @@ void bsal_actor_set_supervisor(struct bsal_actor *actor, int supervisor)
     actor->supervisor = supervisor;
 }
 
-uint64_t bsal_actor_received_messages(struct bsal_actor *actor)
+uint64_t bsal_actor_get_counter(struct bsal_actor *actor, int counter)
 {
-    return actor->received_messages;
+    if (counter == BSAL_COUNTER_RECEIVED_MESSAGES) {
+        return actor->counter_received_messages;
+    } else if (counter == BSAL_COUNTER_SENT_MESSAGES) {
+        return actor->counter_sent_messages;
+    }
+
+    return 0;
 }
 
-void bsal_actor_increase_received_messages(struct bsal_actor *actor)
+void bsal_actor_increase_counter(struct bsal_actor *actor, int counter)
 {
-    actor->received_messages++;
-}
-
-uint64_t bsal_actor_sent_messages(struct bsal_actor *actor)
-{
-    return actor->sent_messages;
-}
-
-void bsal_actor_increase_sent_messages(struct bsal_actor *actor)
-{
-    actor->sent_messages++;
+    if (counter == BSAL_COUNTER_RECEIVED_MESSAGES) {
+        actor->counter_received_messages++;
+    } else if (counter == BSAL_COUNTER_SENT_MESSAGES) {
+        actor->counter_sent_messages++;
+    }
 }
 
 int bsal_actor_threads(struct bsal_actor *actor)
@@ -383,7 +383,7 @@ void bsal_actor_receive(struct bsal_actor *actor, struct bsal_message *message)
     /* Otherwise, this is a message for the actor itself.
      */
     receive = bsal_actor_get_receive(actor);
-    bsal_actor_increase_received_messages(actor);
+    bsal_actor_increase_counter(actor, BSAL_COUNTER_RECEIVED_MESSAGES);
 
     receive(actor, message);
 }

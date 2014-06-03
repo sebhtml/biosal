@@ -19,6 +19,15 @@
 /* the user can start with this value */
 #define BSAL_TAG_OFFSET_USER ( BSAL_TAG_OFFSET_INPUT_ACTOR + BSAL_TAG_COUNT_INPUT_ACTOR )
 
+/* counters */
+
+#define BSAL_COUNTER_RECEIVED_MESSAGES 0
+#define BSAL_COUNTER_RECEIVED_MESSAGES_SAME_NODE 1
+#define BSAL_COUNTER_RECEIVED_MESSAGES_OTHER_NODE 2
+#define BSAL_COUNTER_SENT_MESSAGES 3
+#define BSAL_COUNTER_SENT_MESSAGES_SAME_NODE 4
+#define BSAL_COUNTER_SENT_MESSAGES_OTHER_NODE 5
+
 enum {
     BSAL_ACTOR_START = BSAL_TAG_OFFSET_ACTOR, /* +0 */
     BSAL_ACTOR_PRIVATE_SYNCHRONIZE,
@@ -52,8 +61,8 @@ struct bsal_actor {
     int name;
     int dead;
     int supervisor;
-    uint64_t received_messages;
-    uint64_t sent_messages;
+    uint64_t counter_received_messages;
+    uint64_t counter_sent_messages;
 
     int synchronization_started;
     int synchronization_responses;
@@ -129,10 +138,8 @@ void bsal_actor_unpin(struct bsal_actor *actor);
 int bsal_actor_supervisor(struct bsal_actor *actor);
 void bsal_actor_set_supervisor(struct bsal_actor *actor, int supervisor);
 
-uint64_t bsal_actor_received_messages(struct bsal_actor *actor);
-void bsal_actor_increase_received_messages(struct bsal_actor *actor);
-uint64_t bsal_actor_sent_messages(struct bsal_actor *actor);
-void bsal_actor_increase_sent_messages(struct bsal_actor *actor);
+uint64_t bsal_actor_get_counter(struct bsal_actor *actor, int counter);
+void bsal_actor_increase_counter(struct bsal_actor *actor, int counter);
 
 /* synchronization functions
  */
