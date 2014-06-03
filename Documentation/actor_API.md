@@ -117,10 +117,10 @@ void bsal_actor_send(struct bsal_actor *actor, int destination, struct bsal_mess
 
 Send a message to an actor.
 
-## bsal_actor_state
+## bsal_actor_concrete_actor
 
 ```C
-void *bsal_actor_state(struct bsal_actor *actor);
+void *bsal_actor_concrete_actor(struct bsal_actor *actor);
 ```
 
 Get the state of an actor. This is used when implementing new

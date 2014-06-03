@@ -717,7 +717,7 @@ void bsal_node_notify_death(struct bsal_node *node, struct bsal_actor *actor)
     name = bsal_actor_name(actor);
     */
 
-    state = bsal_actor_state(actor);
+    state = bsal_actor_concrete_actor(actor);
     bsal_actor_destroy(actor);
     free(state);
     state = NULL;

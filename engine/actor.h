@@ -74,7 +74,7 @@ void bsal_actor_init(struct bsal_actor *actor, void *state,
 void bsal_actor_destroy(struct bsal_actor *actor);
 
 int bsal_actor_name(struct bsal_actor *actor);
-void *bsal_actor_state(struct bsal_actor *actor);
+void *bsal_actor_concrete_actor(struct bsal_actor *actor);
 void bsal_actor_set_name(struct bsal_actor *actor, int name);
 
 void bsal_actor_set_worker(struct bsal_actor *actor, struct bsal_worker *worker);

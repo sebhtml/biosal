@@ -21,7 +21,7 @@ void bsal_input_actor_init(struct bsal_actor *actor)
 {
     struct bsal_input_actor *input;
 
-    input = (struct bsal_input_actor *)bsal_actor_state(actor);
+    input = (struct bsal_input_actor *)bsal_actor_concrete_actor(actor);
     input->proxy_ready = 0;
     input->buffer_for_sequence = NULL;
     input->maximum_sequence_length = 0;
@@ -32,7 +32,7 @@ void bsal_input_actor_destroy(struct bsal_actor *actor)
 {
     struct bsal_input_actor *input;
 
-    input = (struct bsal_input_actor *)bsal_actor_state(actor);
+    input = (struct bsal_input_actor *)bsal_actor_concrete_actor(actor);
 
     if (input->buffer_for_sequence != NULL) {
         free(input->buffer_for_sequence);
@@ -63,7 +63,7 @@ void bsal_input_actor_receive(struct bsal_actor *actor, struct bsal_message *mes
     char *buffer;
     char *read_buffer;
 
-    input = (struct bsal_input_actor *)bsal_actor_state(actor);
+    input = (struct bsal_input_actor *)bsal_actor_concrete_actor(actor);
     tag = bsal_message_tag(message);
     source = bsal_message_source(message);
     name = bsal_actor_name(actor);
@@ -227,7 +227,7 @@ int bsal_input_actor_has_error(struct bsal_actor *actor,
     struct bsal_input_actor *input;
     int error;
 
-    input = (struct bsal_input_actor *)bsal_actor_state(actor);
+    input = (struct bsal_input_actor *)bsal_actor_concrete_actor(actor);
 
     if (!input->proxy_ready) {
         return 0;
@@ -266,7 +266,7 @@ int bsal_input_actor_check_open_error(struct bsal_actor *actor,
     int name;
 
     source = bsal_message_source(message);
-    input = (struct bsal_input_actor *)bsal_actor_state(actor);
+    input = (struct bsal_input_actor *)bsal_actor_concrete_actor(actor);
     name = bsal_actor_name(actor);
 
     if (!input->open) {

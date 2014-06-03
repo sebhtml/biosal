@@ -17,7 +17,7 @@ void reader_init(struct bsal_actor *actor)
 {
     struct reader *reader1;
 
-    reader1 = (struct reader *)bsal_actor_state(actor);
+    reader1 = (struct reader *)bsal_actor_concrete_actor(actor);
     reader1->counted = 0;
     reader1->pulled = 0;
 }
@@ -26,7 +26,7 @@ void reader_destroy(struct bsal_actor *actor)
 {
     struct reader *reader1;
 
-    reader1 = (struct reader *)bsal_actor_state(actor);
+    reader1 = (struct reader *)bsal_actor_concrete_actor(actor);
     reader1->counted = 0;
     reader1->pulled = 0;
 }
@@ -48,7 +48,7 @@ void reader_receive(struct bsal_actor *actor, struct bsal_message *message)
     int sequence_index;
     char *received_sequence;
 
-    reader1 = (struct reader *)bsal_actor_state(actor);
+    reader1 = (struct reader *)bsal_actor_concrete_actor(actor);
     tag = bsal_message_tag(message);
     source = bsal_message_source(message);
     nodes = bsal_actor_nodes(actor);

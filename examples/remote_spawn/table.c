@@ -15,7 +15,7 @@ void table_init(struct bsal_actor *actor)
 {
     struct table *table1;
 
-    table1 = (struct table *)bsal_actor_state(actor);
+    table1 = (struct table *)bsal_actor_concrete_actor(actor);
     table1->done = 0;
 }
 
@@ -38,7 +38,7 @@ void table_receive(struct bsal_actor *actor, struct bsal_message *message)
     struct table *table1;
 
     nodes = bsal_actor_nodes(actor);
-    table1 = (struct table *)bsal_actor_state(actor);
+    table1 = (struct table *)bsal_actor_concrete_actor(actor);
     source = bsal_message_source(message);
     tag = bsal_message_tag(message);
     name = bsal_actor_name(actor);

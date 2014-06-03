@@ -74,7 +74,7 @@ int bsal_actor_name(struct bsal_actor *actor)
     return actor->name;
 }
 
-void *bsal_actor_state(struct bsal_actor *actor)
+void *bsal_actor_concrete_actor(struct bsal_actor *actor)
 {
     return actor->state;
 }
