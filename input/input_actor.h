@@ -6,7 +6,7 @@
 
 #include <engine/actor.h>
 
-#define BSAL_INPUT_SCRIPT 0xeb2fe16a
+#define BSAL_INPUT_ACTOR_SCRIPT 0xeb2fe16a
 
 struct bsal_input_actor {
     struct bsal_input_proxy proxy;

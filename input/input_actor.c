@@ -1,8 +1,6 @@
 
 #include "input_actor.h"
 
-#include <data/dna_sequence.h>
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -10,7 +8,7 @@
 /*#define BSAL_INPUT_DEBUG*/
 
 struct bsal_script bsal_input_script = {
-    .name = BSAL_INPUT_SCRIPT,
+    .name = BSAL_INPUT_ACTOR_SCRIPT,
     .init = bsal_input_actor_init,
     .destroy = bsal_input_actor_destroy,
     .receive = bsal_input_actor_receive,

@@ -2,31 +2,12 @@
 #ifndef _BSAL_ACTOR_H
 #define _BSAL_ACTOR_H
 
+#include "constants.h"
 #include "message.h"
 #include "script.h"
 
 #include <pthread.h>
 #include <stdint.h>
-
-/* engine/actor.h */
-#define BSAL_TAG_OFFSET_ACTOR 0
-#define BSAL_TAG_COUNT_ACTOR 64
-
-/* input/input_actor.h */
-#define BSAL_TAG_OFFSET_INPUT_ACTOR ( BSAL_TAG_OFFSET_ACTOR + BSAL_TAG_COUNT_ACTOR )
-#define BSAL_TAG_COUNT_INPUT_ACTOR 64
-
-/* the user can start with this value */
-#define BSAL_TAG_OFFSET_USER ( BSAL_TAG_OFFSET_INPUT_ACTOR + BSAL_TAG_COUNT_INPUT_ACTOR )
-
-/* counters */
-
-#define BSAL_COUNTER_RECEIVED_MESSAGES 0
-#define BSAL_COUNTER_RECEIVED_MESSAGES_SAME_NODE 1
-#define BSAL_COUNTER_RECEIVED_MESSAGES_OTHER_NODE 2
-#define BSAL_COUNTER_SENT_MESSAGES 3
-#define BSAL_COUNTER_SENT_MESSAGES_SAME_NODE 4
-#define BSAL_COUNTER_SENT_MESSAGES_OTHER_NODE 5
 
 enum {
     BSAL_ACTOR_START = BSAL_TAG_OFFSET_ACTOR, /* +0 */
@@ -52,6 +33,7 @@ struct bsal_actor {
     struct bsal_script *script;
     struct bsal_worker *worker;
     struct bsal_worker *affinity_worker;
+    int current_source;
     void *state;
 
     pthread_spinlock_t lock;
@@ -89,11 +71,15 @@ bsal_actor_init_fn_t bsal_actor_get_init(struct bsal_actor *actor);
 bsal_actor_destroy_fn_t bsal_actor_get_destroy(struct bsal_actor *actor);
 bsal_actor_receive_fn_t bsal_actor_get_receive(struct bsal_actor *actor);
 
+/* send functions
+ */
 void bsal_actor_send(struct bsal_actor *actor, int destination, struct bsal_message *message);
-
+void bsal_actor_send_empty(struct bsal_actor *actor, int destination, int tag);
 void bsal_actor_send_with_source(struct bsal_actor *actor, int name, struct bsal_message *message,
                 int source);
 int bsal_actor_send_system(struct bsal_actor *actor, int name, struct bsal_message *message);
+void bsal_actor_send_empty_reply(struct bsal_actor *actor, int tag);
+void bsal_actor_send_empty_to_self(struct bsal_actor *actor, int tag);
 
 /* Send a message to a range of actors.
  * The implementation uses a binomial tree.

@@ -15,6 +15,9 @@ LIBRARY=
 LIBRARY += engine/message.o engine/node.o engine/actor.o engine/script.o \
 	engine/work.o engine/worker.o engine/worker_pool.o engine/active_buffer.o
 
+# storage
+LIBRARY += storage/sequence_store.o storage/graph_store.o
+
 # data structures
 LIBRARY += structures/hash_table.o structures/hash_table_group.o \
 	structures/fifo.o structures/fifo_array.o
