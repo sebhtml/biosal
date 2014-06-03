@@ -404,7 +404,7 @@ void bsal_actor_receive_synchronize(struct bsal_actor *actor,
                     bsal_message_source(message));
 #endif
 
-    bsal_message_set_tag(message, BSAL_ACTOR_SYNCHRONIZE_REPLY);
+    bsal_message_init(message, BSAL_ACTOR_SYNCHRONIZE_REPLY, 0, NULL);
     bsal_actor_send(actor, bsal_message_source(message), message);
 }
 
@@ -522,8 +522,7 @@ void bsal_actor_receive_binomial_tree_send(struct bsal_actor *actor, struct bsal
 
     amount = last - first + 1;
 
-    bsal_message_set_tag(message, real_tag);
-    bsal_message_set_count(message, new_count);
+    bsal_message_init(message, real_tag, new_count, buffer);
 
     if (amount < limit) {
         bsal_actor_send_range_standard(actor, first, last, message);
@@ -553,7 +552,9 @@ int bsal_actor_unpack_proxy_message(struct bsal_actor *actor,
     tag = *(int *)((char *)buffer + offset);
     offset += sizeof(tag);
 
-    bsal_message_set_tag(message, tag);
+    /* TODO, verify if it is new_count or old count
+     */
+    bsal_message_init(message, tag, new_count, buffer);
 
     return source;
 }

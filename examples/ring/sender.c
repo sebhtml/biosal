@@ -61,7 +61,7 @@ void sender_receive(struct bsal_actor *actor, struct bsal_message *message)
     } else if (tag == SENDER_KILL) {
         /*printf("Receives SENDER_KILL\n"); */
 
-        bsal_message_set_tag(message, BSAL_ACTOR_STOP);
+        bsal_message_init(message, BSAL_ACTOR_STOP, 0, NULL);
         bsal_actor_send(actor, name, message);
 
     } else if (tag == BSAL_ACTOR_SYNCHRONIZE) {
@@ -88,7 +88,7 @@ void sender_kill_all(struct bsal_actor *actor, struct bsal_message *message)
     size = bsal_actor_nodes(actor);
     total = size * sender1->actors_per_node;
 
-    bsal_message_set_tag(message, SENDER_KILL);
+    bsal_message_init(message, SENDER_KILL, 0, NULL);
 
     printf("Killing range %i to %i\n",
                     0, total - 1);

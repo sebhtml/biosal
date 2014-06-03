@@ -68,7 +68,7 @@ void mock_receive(struct bsal_actor *actor, struct bsal_message *message)
     } else if (tag == BUDDY_HELLO_OK) {
 
         printf("BUDDY_HELLO_OK\n");
-        bsal_message_set_tag(message, MOCK_NOTIFY);
+        bsal_message_init(message, MOCK_NOTIFY, 0, NULL);
         bsal_actor_send(actor, 0, message);
 
     } else if (tag == MOCK_NOTIFY) {
@@ -78,7 +78,7 @@ void mock_receive(struct bsal_actor *actor, struct bsal_message *message)
         printf("notifications %d/%d\n", mock1->notified, nodes);
 
         if (mock1->notified == nodes) {
-            bsal_message_set_tag(message, MOCK_PREPARE_DEATH);
+            bsal_message_init(message, MOCK_PREPARE_DEATH, 0, NULL);
 
             /* the default binomial-tree algorithm can not
              * be used here because proxy actors may die
@@ -90,12 +90,12 @@ void mock_receive(struct bsal_actor *actor, struct bsal_message *message)
         }
 
     } else if (tag == MOCK_PREPARE_DEATH) {
-        bsal_message_set_tag(message, MOCK_DIE);
+        bsal_message_init(message, MOCK_DIE, 0, NULL);
 
         name = bsal_actor_name(actor);
         bsal_actor_send(actor, name, message);
 
-        bsal_message_set_tag(message, BUDDY_DIE);
+        bsal_message_init(message, BUDDY_DIE, 0, NULL);
         bsal_actor_send(actor, mock1->children[0], message);
 
     } else if (tag == BUDDY_BOOT_OK) {
@@ -118,12 +118,12 @@ void mock_add_contacts(struct bsal_actor *actor, struct bsal_message *message)
     printf("mock_receive remote friend is %i\n",
                         mock1->remote_actor);
 
-    bsal_message_set_tag(message, MOCK_NEW_CONTACTS_OK);
+    bsal_message_init(message, MOCK_NEW_CONTACTS_OK, 0, NULL);
     bsal_actor_send(actor, source, message);
 
     /* say hello to remote actor too !
      */
-    bsal_message_set_tag(message, BUDDY_HELLO);
+    bsal_message_init(message, BUDDY_HELLO, 0, NULL);
     bsal_actor_send(actor, mock1->remote_actor, message);
 }
 
@@ -137,7 +137,7 @@ void mock_die(struct bsal_actor *actor, struct bsal_message *message)
 
     printf("mock_die actor %i dies (MOCK_DIE from %i)\n", name, source);
 
-    bsal_message_set_tag(message, BSAL_ACTOR_STOP);
+    bsal_message_init(message, BSAL_ACTOR_STOP, 0, NULL);
     bsal_actor_send(actor, name, message);
 }
 

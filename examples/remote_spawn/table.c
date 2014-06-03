@@ -56,7 +56,7 @@ void table_receive(struct bsal_actor *actor, struct bsal_message *message)
 
         /*
         printf("sending notification\n");
-        bsal_message_set_tag(message, TABLE_NOTIFY);
+        bsal_message_init(message, TABLE_NOTIFY, 0, NULL);
         bsal_actor_send(actor, 0, message);
 */
     } else if (tag == BSAL_ACTOR_SPAWN_REPLY) {
@@ -68,10 +68,10 @@ void table_receive(struct bsal_actor *actor, struct bsal_message *message)
                         " new actor is %d\n",
                         name,  source, new_actor);
 
-        bsal_message_set_tag(message, TABLE_DIE2);
+        bsal_message_init(message, TABLE_DIE2, 0, NULL);
         bsal_actor_send(actor, new_actor, message);
 
-        bsal_message_set_tag(message, TABLE_NOTIFY);
+        bsal_message_init(message, TABLE_NOTIFY, 0, NULL);
         bsal_actor_send(actor, 0, message);
 
     } else if (tag == TABLE_DIE2) {
@@ -83,7 +83,7 @@ void table_receive(struct bsal_actor *actor, struct bsal_message *message)
             return;
         }
 
-        bsal_message_set_tag(message, BSAL_ACTOR_STOP);
+        bsal_message_init(message, BSAL_ACTOR_STOP, 0, NULL);
         bsal_actor_send(actor, name, message);
 
     } else if (tag == TABLE_DIE) {
@@ -91,7 +91,7 @@ void table_receive(struct bsal_actor *actor, struct bsal_message *message)
         printf("Actor %i receives TABLE_DIE from actor %i\n",
                         name,  source);
 
-        bsal_message_set_tag(message, BSAL_ACTOR_STOP);
+        bsal_message_init(message, BSAL_ACTOR_STOP, 0, NULL);
         bsal_actor_send(actor, name, message);
 
     } else if (tag == TABLE_NOTIFY) {
@@ -104,7 +104,7 @@ void table_receive(struct bsal_actor *actor, struct bsal_message *message)
         if (table1->done == nodes) {
             printf("actor %d kills %d to %d\n",
                            name, 0, nodes - 1);
-            bsal_message_set_tag(message, TABLE_DIE);
+            bsal_message_init(message, TABLE_DIE, 0, NULL);
             bsal_actor_send_range_standard(actor, 0, nodes - 1, message);
         }
     }

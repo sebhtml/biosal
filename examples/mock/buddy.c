@@ -44,7 +44,7 @@ void buddy_receive(struct bsal_actor *actor, struct bsal_message *message)
         buddy_init(actor);
         bsal_actor_print(actor);
 
-        bsal_message_set_tag(message, BUDDY_BOOT_OK);
+        bsal_message_init(message, BUDDY_BOOT_OK, 0, NULL);
         bsal_actor_send(actor, source, message);
 
     } else if (tag == BUDDY_HELLO) {
@@ -53,10 +53,10 @@ void buddy_receive(struct bsal_actor *actor, struct bsal_message *message)
 
         /* pin the actor to the worker for no reason !
          */
-        bsal_message_set_tag(message, BSAL_ACTOR_PIN);
+        bsal_message_init(message, BSAL_ACTOR_PIN, 0, NULL);
         bsal_actor_send(actor, name, message);
 
-        bsal_message_set_tag(message, BUDDY_HELLO_OK);
+        bsal_message_init(message, BUDDY_HELLO_OK, 0, NULL);
         bsal_actor_send(actor, source, message);
 
     } else if (tag == BUDDY_DIE) {
@@ -65,10 +65,10 @@ void buddy_receive(struct bsal_actor *actor, struct bsal_message *message)
         printf("buddy_receive Actor %i received a message (%i BUDDY_DIE) from actor %i\n",
                         name, tag, source);
 
-        bsal_message_set_tag(message, BSAL_ACTOR_UNPIN);
+        bsal_message_init(message, BSAL_ACTOR_UNPIN, 0, NULL);
         bsal_actor_send(actor, name, message);
 
-        bsal_message_set_tag(message, BSAL_ACTOR_STOP);
+        bsal_message_init(message, BSAL_ACTOR_STOP, 0, NULL);
         bsal_actor_send(actor, name, message);
     }
 }
