@@ -185,7 +185,7 @@ void bsal_node_init(struct bsal_node *node, int *argc, char ***argv)
     bsal_worker_pool_init(&node->worker_pool, workers, node);
 
     node->actor_count = 0;
-    node->actor_capacity = 16384;
+    node->actor_capacity = 1048576;
     node->dead_actors = 0;
     node->alive_actors = 0;
 

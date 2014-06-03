@@ -314,11 +314,10 @@ int bsal_actor_receive_system(struct bsal_actor *actor, struct bsal_message *mes
         bsal_actor_receive_binomial_tree_send(actor, message);
         return 1;
 
-    } else if (tag == BSAL_ACTOR_PRIVATE_SYNCHRONIZE) {
-        bsal_actor_receive_synchronize(actor, message);
-        return 1;
+    } else if (tag == BSAL_ACTOR_SYNCHRONIZE) {
+        /* the concrete actor must catch this one */
 
-    } else if (tag == BSAL_ACTOR_PRIVATE_SYNCHRONIZE_REPLY) {
+    } else if (tag == BSAL_ACTOR_SYNCHRONIZE_REPLY) {
         bsal_actor_receive_synchronize_reply(actor, message);
         return 1;
     } else if (tag == BSAL_ACTOR_PROXY_MESSAGE) {
@@ -406,7 +405,7 @@ void bsal_actor_receive_synchronize(struct bsal_actor *actor,
                     bsal_message_source(message));
 #endif
 
-    bsal_message_set_tag(message, BSAL_ACTOR_PRIVATE_SYNCHRONIZE_REPLY);
+    bsal_message_set_tag(message, BSAL_ACTOR_SYNCHRONIZE_REPLY);
     bsal_actor_send(actor, bsal_message_source(message), message);
 }
 
@@ -425,8 +424,13 @@ void bsal_actor_receive_synchronize_reply(struct bsal_actor *actor,
 
         actor->synchronization_responses++;
 
+        /* send BSAL_ACTOR_SYNCHRONIZED to self
+         */
         if (bsal_actor_synchronization_completed(actor)) {
-            bsal_message_set_tag(message, BSAL_ACTOR_SYNCHRONIZED);
+
+            bsal_message_init(message, BSAL_ACTOR_SYNCHRONIZED,
+                            sizeof(actor->synchronization_responses),
+                            &actor->synchronization_responses);
 
             name = bsal_actor_name(actor);
 
@@ -452,7 +456,7 @@ void bsal_actor_synchronize(struct bsal_actor *actor, int first, int last)
                     actor->synchronization_expected_responses);
 #endif
 
-    bsal_message_init(&message, BSAL_ACTOR_PRIVATE_SYNCHRONIZE, 0, NULL);
+    bsal_message_init(&message, BSAL_ACTOR_SYNCHRONIZE, 0, NULL);
     bsal_actor_send_range(actor, first, last, &message);
     bsal_message_destroy(&message);
 }

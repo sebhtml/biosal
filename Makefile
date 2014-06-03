@@ -6,7 +6,7 @@ Q=@
 ECHO=echo
 
 TESTS=test_fifo test_fifo_array test_hash_table_group test_hash_table test_node
-EXAMPLES=test_mock test_ring test_reader test_remote_spawn
+EXAMPLES=test_mock test_ring test_reader test_remote_spawn example_synchronize
 
 all: $(EXAMPLES) $(TESTS)
 
@@ -38,6 +38,7 @@ MOCK_EXAMPLE=examples/mock/main.o examples/mock/mock.o examples/mock/buddy.o
 RING_EXAMPLE=examples/ring/main.o examples/ring/sender.o
 READER_EXAMPLE=examples/reader/main.o examples/reader/reader.o
 REMOTE_SPAWN_EXAMPLE=examples/remote_spawn/main.o examples/remote_spawn/table.o
+EXAMPLE_SYNCHRONIZE=examples/synchronize/main.o examples/synchronize/stream.o
 
 # tests
 TEST_FIFO=tests/test.o tests/test_fifo.o
@@ -54,6 +55,7 @@ clean:
 	$(Q)$(ECHO) "  RM"
 	$(Q)$(RM) $(LIBRARY)
 	$(Q)$(RM) $(RING_EXAMPLE) $(MOCK_EXAMPLE) $(READER_EXAMPLE) $(REMOTE_SPAWN_EXAMPLE)
+	$(Q)$(RM) $(EXAMPLE_SYNCHRONIZE)
 	$(Q)$(RM) $(TEST_FIFO) $(TEST_FIFO_ARRAY) $(TEST_HASH_TABLE_GROUP) $(TEST_NODE)
 	$(Q)$(RM) $(TEST_HASH_TABLE)
 	$(Q)$(RM) $(EXAMPLES) $(TESTS)
@@ -70,20 +72,25 @@ mock1: test_mock
 reader: test_reader
 	mpiexec -n 2 ./test_reader -threads-per-node 13 -read ~/dropbox/GPIC.1424-1.1371.fastq
 
+synchronize: example_synchronize
+	mpiexec -n 3 ./example_synchronize -threads-per-node 9
+
 remote_spawn: test_remote_spawn
 	mpiexec -n 6 ./test_remote_spawn -threads-per-node 1,2,3
 
 not_found: test_reader
 	mpiexec -n 3 ./test_reader -threads-per-node 7 -read void.fastq
 
-test: $(TESTS)
+test: tests
+
+tests: $(TESTS)
 	./test_fifo_array
 	./test_fifo
 	./test_hash_table_group
 	./test_hash_table
 	./test_node
 
-run: mock mock1 ring reader not_found remote_spawn
+examples: mock mock1 ring reader not_found remote_spawn synchronize
 
 test_node: $(LIBRARY) $(TEST_NODE)
 	$(Q)$(ECHO) "  LD $@"
@@ -118,5 +125,9 @@ test_mock: $(MOCK_EXAMPLE) $(LIBRARY)
 	$(Q)$(CC) $(CFLAGS) $^ -o $@
 
 test_reader: $(READER_EXAMPLE) $(LIBRARY)
+	$(Q)$(ECHO) "  LD $@"
+	$(Q)$(CC) $(CFLAGS) $^ -o $@
+
+example_synchronize: $(EXAMPLE_SYNCHRONIZE) $(LIBRARY)
 	$(Q)$(ECHO) "  LD $@"
 	$(Q)$(CC) $(CFLAGS) $^ -o $@

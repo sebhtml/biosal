@@ -87,6 +87,11 @@ Unpin an actor. Can only be sent to an actor by itself.
 - Request message buffer: empty
 - Responses: none
 
+## BSAL_ACTOR_SYNCHRONIZE
+
+The source started a synchronization. To accept the synchronization,
+the reply BSAL_ACTOR_SYNCHRONIZE_REPLY must be sent.
+
 ## BSAL_ACTOR_SYNCHRONIZED
 
 ```C

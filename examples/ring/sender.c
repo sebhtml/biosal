@@ -44,8 +44,10 @@ void sender_receive(struct bsal_actor *actor, struct bsal_message *message)
 {
     int tag;
     int name;
+    int source;
 
     tag = bsal_message_tag(message);
+    source = bsal_message_source(message);
     name = bsal_actor_name(actor);
 
     if (tag == BSAL_ACTOR_START) {
@@ -61,6 +63,11 @@ void sender_receive(struct bsal_actor *actor, struct bsal_message *message)
 
         bsal_message_set_tag(message, BSAL_ACTOR_STOP);
         bsal_actor_send(actor, name, message);
+
+    } else if (tag == BSAL_ACTOR_SYNCHRONIZE) {
+
+        bsal_message_init(message, BSAL_ACTOR_SYNCHRONIZE_REPLY, 0, NULL);
+        bsal_actor_send(actor, source, message);
 
     } else if (tag == BSAL_ACTOR_SYNCHRONIZED) {
 

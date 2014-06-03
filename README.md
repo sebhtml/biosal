@@ -19,8 +19,8 @@ Looking for the Application Programming Interface (API) ? Look no further !
 ```bash
 git clone https://github.com/GeneAssembly/biosal.git
 cd biosal
-make test # run tests
-make run # run examples
+make tests # run tests
+make examples # run examples
 ```
 
 see [examples](examples) and [tests](tests)
