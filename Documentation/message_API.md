@@ -22,14 +22,6 @@ void bsal_message_init(struct bsal_message *message, int tag, int count, void *b
 
 Initialize a message. count is a number of bytes.
 
-## bsal_message_destroy
-
-```C
-void bsal_message_destroy(struct bsal_message *message);
-```
-
-Destroy a message.
-
 ## bsal_message_source
 
 ```C
@@ -61,4 +53,13 @@ int bsal_message_count(struct bsal_message *message);
 ```
 
 Get the number of bytes in the message buffer.
+
+## bsal_message_destroy
+
+```C
+void bsal_message_destroy(struct bsal_message *message);
+```
+
+Destroy a message.
+
 
