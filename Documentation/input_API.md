@@ -6,10 +6,10 @@ and send it messages to interact with it in order to read sequence data.
 ## Header
 
 ```C
-#include <input/input_actor.h>
+#include <input/input_stream.h>
 ```
 
-([input/input_actor.h](../input/input_actor.h))
+([input/input_stream.h](../input/input_stream.h))
 
 # Message tags
 

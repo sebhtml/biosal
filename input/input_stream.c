@@ -1,5 +1,5 @@
 
-#include "input_actor.h"
+#include "input_stream.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -9,28 +9,28 @@
 
 struct bsal_script bsal_input_script = {
     .name = BSAL_INPUT_ACTOR_SCRIPT,
-    .init = bsal_input_actor_init,
-    .destroy = bsal_input_actor_destroy,
-    .receive = bsal_input_actor_receive,
-    .size = sizeof(struct bsal_input_actor)
+    .init = bsal_input_stream_init,
+    .destroy = bsal_input_stream_destroy,
+    .receive = bsal_input_stream_receive,
+    .size = sizeof(struct bsal_input_stream)
 };
 
-void bsal_input_actor_init(struct bsal_actor *actor)
+void bsal_input_stream_init(struct bsal_actor *actor)
 {
-    struct bsal_input_actor *input;
+    struct bsal_input_stream *input;
 
-    input = (struct bsal_input_actor *)bsal_actor_concrete_actor(actor);
+    input = (struct bsal_input_stream *)bsal_actor_concrete_actor(actor);
     input->proxy_ready = 0;
     input->buffer_for_sequence = NULL;
     input->maximum_sequence_length = 0;
     input->open = 0;
 }
 
-void bsal_input_actor_destroy(struct bsal_actor *actor)
+void bsal_input_stream_destroy(struct bsal_actor *actor)
 {
-    struct bsal_input_actor *input;
+    struct bsal_input_stream *input;
 
-    input = (struct bsal_input_actor *)bsal_actor_concrete_actor(actor);
+    input = (struct bsal_input_stream *)bsal_actor_concrete_actor(actor);
 
     if (input->buffer_for_sequence != NULL) {
         free(input->buffer_for_sequence);
@@ -46,13 +46,13 @@ void bsal_input_actor_destroy(struct bsal_actor *actor)
     }
 }
 
-void bsal_input_actor_receive(struct bsal_actor *actor, struct bsal_message *message)
+void bsal_input_stream_receive(struct bsal_actor *actor, struct bsal_message *message)
 {
     int tag;
     int source;
     int name;
     int count;
-    struct bsal_input_actor *input;
+    struct bsal_input_stream *input;
     int i;
     int has_sequence;
     int sequences;
@@ -61,7 +61,7 @@ void bsal_input_actor_receive(struct bsal_actor *actor, struct bsal_message *mes
     char *buffer;
     char *read_buffer;
 
-    input = (struct bsal_input_actor *)bsal_actor_concrete_actor(actor);
+    input = (struct bsal_input_stream *)bsal_actor_concrete_actor(actor);
     tag = bsal_message_tag(message);
     source = bsal_message_source(message);
     name = bsal_actor_name(actor);
@@ -70,7 +70,7 @@ void bsal_input_actor_receive(struct bsal_actor *actor, struct bsal_message *mes
     /* Do nothing if there is an error.
      * has_error returns the error to the source.
      */
-    if (bsal_input_actor_has_error(actor, message)) {
+    if (bsal_input_stream_has_error(actor, message)) {
         return;
     }
 
@@ -92,10 +92,10 @@ void bsal_input_actor_receive(struct bsal_actor *actor, struct bsal_message *mes
 
         input->buffer_for_sequence = (char *)malloc(input->maximum_sequence_length);
 
-        /*bsal_input_actor_init(actor);*/
+        /*bsal_input_stream_init(actor);*/
 
 #ifdef BSAL_INPUT_DEBUG
-        printf("DEBUG bsal_input_actor_receive open %s\n",
+        printf("DEBUG bsal_input_stream_receive open %s\n",
                         buffer);
 #endif
 
@@ -104,7 +104,7 @@ void bsal_input_actor_receive(struct bsal_actor *actor, struct bsal_message *mes
 
         /* Die if there is an error...
          */
-        if (bsal_input_actor_has_error(actor, message)) {
+        if (bsal_input_stream_has_error(actor, message)) {
             bsal_message_init(message, BSAL_ACTOR_STOP, 0, NULL);
             bsal_actor_send(actor, name, message);
 
@@ -117,7 +117,7 @@ void bsal_input_actor_receive(struct bsal_actor *actor, struct bsal_message *mes
     } else if (tag == BSAL_INPUT_COUNT) {
         /* count a little bit and yield the worker */
 
-        if (bsal_input_actor_check_open_error(actor, message)) {
+        if (bsal_input_stream_check_open_error(actor, message)) {
             return;
         }
 
@@ -151,7 +151,7 @@ void bsal_input_actor_receive(struct bsal_actor *actor, struct bsal_message *mes
 
     } else if (tag == BSAL_INPUT_COUNT_YIELD) {
 
-        if (bsal_input_actor_check_open_error(actor, message)) {
+        if (bsal_input_stream_check_open_error(actor, message)) {
             return;
         }
 
@@ -160,7 +160,7 @@ void bsal_input_actor_receive(struct bsal_actor *actor, struct bsal_message *mes
 
     } else if (tag == BSAL_INPUT_COUNT_READY) {
 
-        if (bsal_input_actor_check_open_error(actor, message)) {
+        if (bsal_input_stream_check_open_error(actor, message)) {
             return;
         }
 
@@ -176,7 +176,7 @@ void bsal_input_actor_receive(struct bsal_actor *actor, struct bsal_message *mes
         printf("DEBUG destroy proxy\n");
 #endif
 
-        if (bsal_input_actor_check_open_error(actor, message)) {
+        if (bsal_input_stream_check_open_error(actor, message)) {
             return;
         }
 
@@ -188,7 +188,7 @@ void bsal_input_actor_receive(struct bsal_actor *actor, struct bsal_message *mes
 
     } else if (tag == BSAL_INPUT_GET_SEQUENCE) {
 
-        if (bsal_input_actor_check_open_error(actor, message)) {
+        if (bsal_input_stream_check_open_error(actor, message)) {
             return;
         }
 
@@ -218,14 +218,14 @@ void bsal_input_actor_receive(struct bsal_actor *actor, struct bsal_message *mes
     }
 }
 
-int bsal_input_actor_has_error(struct bsal_actor *actor,
+int bsal_input_stream_has_error(struct bsal_actor *actor,
                 struct bsal_message *message)
 {
     int source;
-    struct bsal_input_actor *input;
+    struct bsal_input_stream *input;
     int error;
 
-    input = (struct bsal_input_actor *)bsal_actor_concrete_actor(actor);
+    input = (struct bsal_input_stream *)bsal_actor_concrete_actor(actor);
 
     if (!input->proxy_ready) {
         return 0;
@@ -236,7 +236,7 @@ int bsal_input_actor_has_error(struct bsal_actor *actor,
     if (error == BSAL_INPUT_ERROR_NOT_FOUND) {
 
 #ifdef BSAL_INPUT_DEBUG
-        printf("DEBUG bsal_input_actor_has_error BSAL_INPUT_ERROR_NOT_FOUND\n");
+        printf("DEBUG bsal_input_stream_has_error BSAL_INPUT_ERROR_NOT_FOUND\n");
 #endif
 
         source = bsal_message_source(message);
@@ -256,15 +256,15 @@ int bsal_input_actor_has_error(struct bsal_actor *actor,
     return 0;
 }
 
-int bsal_input_actor_check_open_error(struct bsal_actor *actor,
+int bsal_input_stream_check_open_error(struct bsal_actor *actor,
                 struct bsal_message *message)
 {
-    struct bsal_input_actor *input;
+    struct bsal_input_stream *input;
     int source;
     int name;
 
     source = bsal_message_source(message);
-    input = (struct bsal_input_actor *)bsal_actor_concrete_actor(actor);
+    input = (struct bsal_input_stream *)bsal_actor_concrete_actor(actor);
     name = bsal_actor_name(actor);
 
     if (!input->open) {

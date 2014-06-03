@@ -8,7 +8,7 @@
 
 #define BSAL_INPUT_ACTOR_SCRIPT 0xeb2fe16a
 
-struct bsal_input_actor {
+struct bsal_input_stream {
     struct bsal_input_proxy proxy;
     int proxy_ready;
     char *buffer_for_sequence;
@@ -38,13 +38,13 @@ enum {
 
 extern struct bsal_script bsal_input_script;
 
-void bsal_input_actor_init(struct bsal_actor *actor);
-void bsal_input_actor_destroy(struct bsal_actor *actor);
-void bsal_input_actor_receive(struct bsal_actor *actor, struct bsal_message *message);
+void bsal_input_stream_init(struct bsal_actor *actor);
+void bsal_input_stream_destroy(struct bsal_actor *actor);
+void bsal_input_stream_receive(struct bsal_actor *actor, struct bsal_message *message);
 
-int bsal_input_actor_has_error(struct bsal_actor *actor,
+int bsal_input_stream_has_error(struct bsal_actor *actor,
                 struct bsal_message *message);
 
-int bsal_input_actor_check_open_error(struct bsal_actor *actor,
+int bsal_input_stream_check_open_error(struct bsal_actor *actor,
                 struct bsal_message *message);
 #endif
