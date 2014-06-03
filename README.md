@@ -90,7 +90,7 @@ Key concepts
 | Queue | Each worker has a work queue and a message queue | struct bsal_fifo |
 | Worker Pool | A set of available workers inside a node | struct bsal_worker_pool |
 
-## Workflow (implementation of the runtime system)
+## Implementation of the runtime system
 
 The code has to be formulated in term of actors.
 An actor has a name, and does something when it receives a message.
@@ -99,6 +99,11 @@ prepares a work and gives it to a worker_pool. The worker pool
 assigns the work to a worker. Finally, worker eventually calls
 the corresponding receive function using the actor and message presented inside
 the work.
+
+When an actor sends a message, the destination is either an actor on the
+same node or an actor on another node. The runtime sends messages for actors
+on other nodes with MPI. Otherwise, a work is prepared and assigned to
+a worker directly on the same node.
 
 ## Runtime
 
