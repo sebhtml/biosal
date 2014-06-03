@@ -743,3 +743,8 @@ void bsal_actor_send_range_binomial_tree(struct bsal_actor *actor, int first, in
     free(new_buffer);
     bsal_message_set_buffer(message, buffer);
 }
+
+int bsal_actor_script(struct bsal_actor *actor)
+{
+    return bsal_script_name(actor->script);
+}

@@ -149,5 +149,6 @@ void bsal_actor_pack_proxy_message(struct bsal_actor *actor,
                 int real_source, struct bsal_message *message);
 int bsal_actor_unpack_proxy_message(struct bsal_actor *actor,
                 struct bsal_message *message);
+int bsal_actor_script(struct bsal_actor *actor);
 
 #endif
