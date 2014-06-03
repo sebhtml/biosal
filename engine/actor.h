@@ -139,7 +139,7 @@ int bsal_actor_supervisor(struct bsal_actor *actor);
 void bsal_actor_set_supervisor(struct bsal_actor *actor, int supervisor);
 
 uint64_t bsal_actor_get_counter(struct bsal_actor *actor, int counter);
-void bsal_actor_increase_counter(struct bsal_actor *actor, int counter);
+void bsal_actor_increment_counter(struct bsal_actor *actor, int counter);
 
 /* synchronization functions
  */

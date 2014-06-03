@@ -172,7 +172,7 @@ void bsal_actor_send_with_source(struct bsal_actor *actor, int name, struct bsal
 
     bsal_worker_send(actor->worker, message);
 
-    bsal_actor_increase_counter(actor, BSAL_COUNTER_SENT_MESSAGES);
+    bsal_actor_increment_counter(actor, BSAL_COUNTER_SENT_MESSAGES);
 }
 
 int bsal_actor_spawn(struct bsal_actor *actor, int script)
@@ -281,7 +281,7 @@ uint64_t bsal_actor_get_counter(struct bsal_actor *actor, int counter)
     return 0;
 }
 
-void bsal_actor_increase_counter(struct bsal_actor *actor, int counter)
+void bsal_actor_increment_counter(struct bsal_actor *actor, int counter)
 {
     if (counter == BSAL_COUNTER_RECEIVED_MESSAGES) {
         actor->counter_received_messages++;
@@ -383,7 +383,7 @@ void bsal_actor_receive(struct bsal_actor *actor, struct bsal_message *message)
     /* Otherwise, this is a message for the actor itself.
      */
     receive = bsal_actor_get_receive(actor);
-    bsal_actor_increase_counter(actor, BSAL_COUNTER_RECEIVED_MESSAGES);
+    bsal_actor_increment_counter(actor, BSAL_COUNTER_RECEIVED_MESSAGES);
 
     receive(actor, message);
 }
