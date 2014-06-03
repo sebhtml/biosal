@@ -204,10 +204,8 @@ void bsal_input_actor_receive(struct bsal_actor *actor, struct bsal_message *mes
                             read_buffer);
 
         if (!has_sequence) {
-            bsal_message_set_tag(message, BSAL_INPUT_ACTOR_ERROR_END);
+            bsal_message_set_tag(message, BSAL_INPUT_ACTOR_GET_SEQUENCE_END);
             bsal_actor_send(actor, source, message);
-            bsal_message_set_tag(message, BSAL_ACTOR_STOP);
-            bsal_actor_send(actor, name, message);
 
             return;
         }

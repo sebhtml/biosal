@@ -197,8 +197,11 @@ void reader_receive(struct bsal_actor *actor, struct bsal_message *message)
             reader1->pulled = 1;
         }
 
-    } else if (tag == BSAL_INPUT_ACTOR_ERROR_END) {
+    } else if (tag == BSAL_INPUT_ACTOR_GET_SEQUENCE_END) {
         printf("actor %d: reached the end...\n", name);
+
+        bsal_message_init(message, BSAL_INPUT_ACTOR_CLOSE, 0, NULL);
+        bsal_actor_send(actor, source, message);
 
         bsal_message_set_tag(message, BSAL_ACTOR_STOP);
         bsal_actor_send(actor, name, message);

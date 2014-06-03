@@ -99,7 +99,7 @@ The actor is open and there is a sequence to read
 
 
 ```C
-BSAL_INPUT_ACTOR_ERROR_END
+BSAL_INPUT_ACTOR_GET_SEQUENCE_END
 ```
 
 there is nothing more to read
