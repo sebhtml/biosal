@@ -17,7 +17,7 @@ enum {
     TABLE_NOTIFY
 };
 
-struct bsal_script table_script;
+extern struct bsal_script table_script;
 
 void table_init(struct bsal_actor *actor);
 void table_destroy(struct bsal_actor *actor);

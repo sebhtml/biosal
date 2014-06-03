@@ -14,7 +14,7 @@ struct reader {
     int pulled;
 };
 
-struct bsal_script reader_script;
+extern struct bsal_script reader_script;
 
 void reader_init(struct bsal_actor *actor);
 void reader_destroy(struct bsal_actor *actor);

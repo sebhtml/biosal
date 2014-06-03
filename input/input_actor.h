@@ -36,7 +36,7 @@ enum {
     BSAL_INPUT_ACTOR_GET_SEQUENCE_REPLY /* +16 */
 };
 
-struct bsal_script bsal_input_script;
+extern struct bsal_script bsal_input_script;
 
 void bsal_input_actor_init(struct bsal_actor *actor);
 void bsal_input_actor_destroy(struct bsal_actor *actor);

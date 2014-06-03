@@ -18,7 +18,7 @@ enum {
     BUDDY_BOOT_OK
 };
 
-struct bsal_script buddy_script;
+extern struct bsal_script buddy_script;
 
 void buddy_init(struct bsal_actor *actor);
 void buddy_destroy(struct bsal_actor *actor);

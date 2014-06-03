@@ -21,7 +21,7 @@ enum {
     MOCK_NEW_CONTACTS_OK /* LAST_TAG */
 };
 
-struct bsal_script mock_script;
+extern struct bsal_script mock_script;
 
 void mock_init(struct bsal_actor *actor);
 void mock_destroy(struct bsal_actor *actor);
