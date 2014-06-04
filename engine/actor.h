@@ -9,17 +9,31 @@
 #include <pthread.h>
 #include <stdint.h>
 
+/* for control */
 #define BSAL_ACTOR_START 0x00000885
+#define BSAL_ACTOR_STOP 0x0000388c
+
+/* binomial-tree */
 #define BSAL_ACTOR_BINOMIAL_TREE_SEND 0x00005b36
 #define BSAL_ACTOR_PROXY_MESSAGE 0x00004bed
+
+/* affinity */
 #define BSAL_ACTOR_PIN 0x000017a1
 #define BSAL_ACTOR_UNPIN 0x00007b66
+
+/* synchronization */
 #define BSAL_ACTOR_SYNCHRONIZE 0x00004ac9
 #define BSAL_ACTOR_SYNCHRONIZE_REPLY 0x00000663
 #define BSAL_ACTOR_SYNCHRONIZED 0x0000453d
+
+/* spawn new actors remotely */
 #define BSAL_ACTOR_SPAWN 0x00000119
 #define BSAL_ACTOR_SPAWN_REPLY 0x00007b68
-#define BSAL_ACTOR_STOP 0x0000388c
+
+/* for migration */
+#define BSAL_ACTOR_PACK 0x00004cae
+#define BSAL_ACTOR_UNPACK 0x00001c73
+#define BSAL_ACTOR_SIZE 0x00003307
 
 struct bsal_node;
 struct bsal_worker;
