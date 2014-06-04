@@ -792,3 +792,13 @@ void bsal_actor_send_range_standard_empty(struct bsal_actor *actor, int first, i
     bsal_message_init(&message, tag, 0, NULL);
     bsal_actor_send_range_standard(actor, first, last, &message);
 }
+
+void bsal_actor_send_to_supervisor(struct bsal_actor *actor, struct bsal_message *message)
+{
+    bsal_actor_send(actor, bsal_actor_supervisor(actor), message);
+}
+
+void bsal_actor_send_to_supervisor_empty(struct bsal_actor *actor, int tag)
+{
+    bsal_actor_send_empty(actor, bsal_actor_supervisor(actor), tag);
+}

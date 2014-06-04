@@ -7,7 +7,7 @@
 
 /*#define BSAL_INPUT_DEBUG*/
 
-struct bsal_script bsal_input_script = {
+struct bsal_script bsal_input_stream_script = {
     .name = BSAL_INPUT_STREAM_SCRIPT,
     .init = bsal_input_stream_init,
     .destroy = bsal_input_stream_destroy,

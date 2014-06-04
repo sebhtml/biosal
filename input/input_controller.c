@@ -1,6 +1,8 @@
 
 #include "input_controller.h"
 
+#include "input_stream.h"
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -15,10 +17,28 @@ struct bsal_script bsal_input_controller_script = {
 
 void bsal_input_controller_init(struct bsal_actor *actor)
 {
+    struct bsal_input_controller *controller;
+
+    controller = (struct bsal_input_controller *)bsal_actor_concrete_actor(actor);
+    bsal_vector_init(&controller->streams, sizeof(int));
+    bsal_vector_init(&controller->files, sizeof(char *));
 }
 
 void bsal_input_controller_destroy(struct bsal_actor *actor)
 {
+    struct bsal_input_controller *controller;
+    int i;
+    char *pointer;
+
+    controller = (struct bsal_input_controller *)bsal_actor_concrete_actor(actor);
+
+    for (i = 0; i < bsal_vector_size(&controller->files); i++) {
+        pointer = *(char **)bsal_vector_at(&controller->files, i);
+        free(pointer);
+    }
+
+    bsal_vector_destroy(&controller->streams);
+    bsal_vector_destroy(&controller->files);
 }
 
 void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message *message)
@@ -26,26 +46,82 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
     int tag;
     char *file;
     void *buffer;
+    struct bsal_input_controller *controller;
+    int nodes;
+    int destination;
+    int script;
+    int stream;
+    char *local_file;
+    int i;
+    int name;
+    int source;
 
+    name = bsal_actor_name(actor);
+    controller = (struct bsal_input_controller *)bsal_actor_concrete_actor(actor);
     tag = bsal_message_tag(message);
+    source = bsal_message_source(message);
     buffer = bsal_message_buffer(message);
+    nodes = bsal_actor_nodes(actor);
 
     if (tag == BSAL_INPUT_CONTROLLER_START) {
 
+        bsal_actor_add_script(actor, BSAL_INPUT_STREAM_SCRIPT, &bsal_input_stream_script);
+
         bsal_actor_send_reply_empty(actor, BSAL_INPUT_CONTROLLER_START_REPLY);
+
     } else if (tag == BSAL_ADD_FILE) {
 
         file = (char *)buffer;
-        file[0]=0;
+
+        local_file = malloc(strlen(file) + 1);
+        strcpy(local_file, file);
+
+        bsal_vector_push_back(&controller->files, &local_file);
 
         bsal_actor_send_reply_empty(actor, BSAL_ADD_FILE_REPLY);
+
+    } else if (tag == BSAL_ACTOR_SPAWN_REPLY) {
+
+        stream = *(int *)buffer;
+
+        printf("actor %d receives stream id %d from actor %d for file %s\n",
+                        name, stream, source,
+                        *(char **)bsal_vector_at(&controller->files, bsal_vector_size(&controller->streams)));
+
+        bsal_vector_push_back(&controller->streams, &stream);
+
+        /* TODO continue work here */
+        bsal_actor_send_empty(actor, stream, BSAL_INPUT_CLOSE);
+
+        if (bsal_vector_size(&controller->streams) == bsal_vector_size(&controller->files)) {
+
+            bsal_actor_send_reply_empty(actor, BSAL_INPUT_DISTRIBUTE_REPLY);
+        } else {
+
+            bsal_actor_send_to_self_empty(actor, BSAL_INPUT_SPAWN);
+        }
 
     } else if (tag == BSAL_INPUT_DISTRIBUTE) {
 
         /* for each file, spawn a stream to count */
-        /* also, spawn 4 stores on each node */
 
-        bsal_actor_send_reply_empty(actor, BSAL_INPUT_DISTRIBUTE_REPLY);
+        bsal_actor_send_to_self_empty(actor, BSAL_INPUT_SPAWN);
+
+    } else if (tag == BSAL_INPUT_SPAWN && source == name) {
+
+        script = BSAL_INPUT_STREAM_SCRIPT;
+
+        i = bsal_vector_size(&controller->streams);
+
+        destination = i % nodes;
+        bsal_message_init(message, BSAL_ACTOR_SPAWN, sizeof(script), &script);
+        bsal_actor_send(actor, destination, message);
+
+        local_file = *(char **)bsal_vector_at(&controller->files, i);
+        printf("actor %d spawns a stream for %s via actor %d\n",
+                        name, local_file, destination);
+
+        /* also, spawn 4 stores on each node */
 
     } else if (tag == BSAL_INPUT_STOP) {
 

@@ -34,7 +34,7 @@ struct bsal_input_stream {
 #define BSAL_INPUT_GET_SEQUENCE_END 0x00006d55
 #define BSAL_INPUT_GET_SEQUENCE_REPLY 0x00005295
 
-extern struct bsal_script bsal_input_script;
+extern struct bsal_script bsal_input_stream_script;
 
 void bsal_input_stream_init(struct bsal_actor *actor);
 void bsal_input_stream_destroy(struct bsal_actor *actor);

@@ -62,17 +62,46 @@ void root_receive(struct bsal_actor *actor, struct bsal_message *message)
 
         if (is_king) {
             root1->controller = bsal_actor_spawn(actor, BSAL_INPUT_CONTROLLER_SCRIPT);
-
             printf("actor %d spawned controller %d\n", name, root1->controller);
+            bsal_actor_synchronize(actor, 0, nodes - 1);
+            printf("actor %d synchronizes\n", name);
         }
 
-        if (root1->controller == -1) {
-            return;
-        }
+    } else if (tag == BSAL_ACTOR_SYNCHRONIZE) {
+
+        bsal_actor_add_script(actor, BSAL_INPUT_CONTROLLER_SCRIPT,
+                        &bsal_input_controller_script);
+
+        /* TODO remove this, BSAL_INPUT_CONTROLLER_SCRIPT should pull
+         * its dependencies...
+         */
+        bsal_actor_add_script(actor, BSAL_INPUT_STREAM_SCRIPT,
+                        &bsal_input_stream_script);
+
+        bsal_actor_send_reply_empty(actor, BSAL_ACTOR_SYNCHRONIZE_REPLY);
+
+    } else if (tag == BSAL_ACTOR_SYNCHRONIZED) {
+
+        printf("actor %d synchronized\n", name);
+        bsal_actor_send_to_self_empty(actor, ROOT_CONTINUE);
+
+    } else if (tag == ROOT_CONTINUE) {
 
         bsal_actor_send_empty(actor, root1->controller, BSAL_INPUT_CONTROLLER_START);
 
+        printf("actor %d ROOT_CONTINUE, starting controller %d\n", name,
+                        root1->controller);
+
     } else if (tag == BSAL_INPUT_CONTROLLER_START_REPLY) {
+
+        if (!is_king) {
+            printf("actor %d stops controller %d\n", name, source);
+
+            bsal_actor_send_reply_empty(actor, BSAL_INPUT_STOP);
+            return;
+        }
+
+        printf("actor %d is king\n", name);
 
         argc = bsal_actor_argc(actor);
         argv = bsal_actor_argv(actor);

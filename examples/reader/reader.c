@@ -58,7 +58,7 @@ void reader_receive(struct bsal_actor *actor, struct bsal_message *message)
     if (tag == BSAL_ACTOR_START) {
 
         bsal_actor_add_script(actor, BSAL_INPUT_STREAM_SCRIPT,
-                    &bsal_input_script);
+                    &bsal_input_stream_script);
 
         argc = bsal_actor_argc(actor);
         argv = bsal_actor_argv(actor);

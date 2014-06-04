@@ -94,6 +94,9 @@ void bsal_actor_send_reply_empty(struct bsal_actor *actor, int tag);
 void bsal_actor_send_to_self(struct bsal_actor *actor, struct bsal_message *message);
 void bsal_actor_send_to_self_empty(struct bsal_actor *actor, int tag);
 
+void bsal_actor_send_to_supervisor(struct bsal_actor *actor, struct bsal_message *message);
+void bsal_actor_send_to_supervisor_empty(struct bsal_actor *actor, int tag);
+
 void bsal_actor_send_with_source(struct bsal_actor *actor, int name, struct bsal_message *message,
                 int source);
 int bsal_actor_send_system(struct bsal_actor *actor, int name, struct bsal_message *message);
