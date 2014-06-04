@@ -27,7 +27,7 @@ synchronize: example_synchronize
 	mpiexec -n 3 ./example_synchronize -threads-per-node 9
 
 controller: example_controller
-	mpiexec -n 3 ./example_controller -threads-per-node 9
+	mpiexec -n 3 ./example_controller -threads-per-node 9 ~/dropbox/*.fastq
 
 remote_spawn: example_remote_spawn
 	mpiexec -n 6 ./example_remote_spawn -threads-per-node 1,2,3

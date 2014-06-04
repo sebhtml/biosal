@@ -49,11 +49,15 @@ clean:
 	$(Q)$(RM) $(EXAMPLE_RING) $(EXAMPLE_MOCK) $(EXAMPLE_READER) $(EXAMPLE_REMOTE_SPAWN)
 	$(Q)$(RM) $(EXAMPLE_SYNCHRONIZE) $(EXAMPLE_CONTROLLER)
 	$(Q)$(RM) $(TEST_FIFO) $(TEST_FIFO_ARRAY) $(TEST_HASH_TABLE_GROUP) $(TEST_NODE)
-	$(Q)$(RM) $(TEST_HASH_TABLE)
+	$(Q)$(RM) $(TEST_HASH_TABLE) $(TEST_VECTOR)
 	$(Q)$(RM) $(EXAMPLES) $(TESTS)
 
 
 # tests
+
+test_vector: $(LIBRARY) $(TEST_VECTOR)
+	$(Q)$(ECHO) "  LD $@"
+	$(Q)$(CC) $(CFLAGS) $^ -o $@
 
 test_node: $(LIBRARY) $(TEST_NODE)
 	$(Q)$(ECHO) "  LD $@"
