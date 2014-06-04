@@ -10,9 +10,7 @@ struct stream {
     int initial_synchronization;
 };
 
-enum {
-    STREAM_DIE = 1100
-};
+#define STREAM_DIE 0x00005988
 
 extern struct bsal_script stream_script;
 

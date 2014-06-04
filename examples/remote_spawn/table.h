@@ -11,11 +11,9 @@ struct table {
     int done;
 };
 
-enum {
-    TABLE_DIE = 1100,
-    TABLE_DIE2,
-    TABLE_NOTIFY
-};
+#define TABLE_DIE 0x00003391
+#define TABLE_DIE2 0x000005e0
+#define TABLE_NOTIFY 0x000026ea
 
 extern struct bsal_script table_script;
 

@@ -10,11 +10,9 @@ struct bsal_graph_store {
     int foo;
 };
 
-enum {
-    BSAL_VERTEX = BSAL_TAG_OFFSET_GRAPH_STORE, /* +0 */
-    BSAL_VERTEX_REPLY,
-    BSAL_GRAPH_STORE_STOP
-};
+#define BSAL_VERTEX 0x000027bf
+#define BSAL_VERTEX_REPLY 0x0000733a
+#define BSAL_GRAPH_STORE_STOP 0x00006b59
 
 extern struct bsal_script bsal_graph_store_script;
 

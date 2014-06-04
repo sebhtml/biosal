@@ -11,10 +11,8 @@ struct sender {
     int actors_per_node;
 };
 
-enum {
-    SENDER_HELLO = 1100,
-    SENDER_KILL
-};
+#define SENDER_HELLO 0x000050c1
+#define SENDER_KILL 0x00004cfe
 
 extern struct bsal_script sender_script;
 

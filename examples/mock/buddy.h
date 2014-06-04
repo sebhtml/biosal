@@ -10,13 +10,11 @@ struct buddy {
     int received;
 };
 
-enum {
-    BUDDY_DIE = 1100,
-    BUDDY_HELLO,
-    BUDDY_HELLO_OK,
-    BUDDY_BOOT,
-    BUDDY_BOOT_OK
-};
+#define BUDDY_DIE 0x0000688f
+#define BUDDY_HELLO 0x000028b6
+#define BUDDY_HELLO_OK 0x00003819
+#define BUDDY_BOOT 0x0000265b
+#define BUDDY_BOOT_OK 0x00006d65
 
 extern struct bsal_script buddy_script;
 

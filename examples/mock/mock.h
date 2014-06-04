@@ -13,13 +13,11 @@ struct mock {
     int notified;
 };
 
-enum {
-    MOCK_DIE = 1200, /* FIRST_TAG */
-    MOCK_PREPARE_DEATH,
-    MOCK_NOTIFY,
-    MOCK_NEW_CONTACTS,
-    MOCK_NEW_CONTACTS_OK /* LAST_TAG */
-};
+#define MOCK_DIE 0x00006917
+#define MOCK_PREPARE_DEATH 0x00007437
+#define MOCK_NOTIFY 0x00002d45
+#define MOCK_NEW_CONTACTS 0x00003f75
+#define MOCK_NEW_CONTACTS_OK 0x000071a1
 
 extern struct bsal_script mock_script;
 

@@ -11,10 +11,8 @@ struct root {
     int events;
 };
 
-enum {
-    ROOT_DIE = 1100,
-    ROOT_STOP_ALL
-};
+#define ROOT_DIE 0x00002381
+#define ROOT_STOP_ALL 0x00005fd3
 
 extern struct bsal_script root_script;
 
