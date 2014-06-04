@@ -80,6 +80,7 @@ void root_receive(struct bsal_actor *actor, struct bsal_message *message)
         if (argc == 1) {
 
             bsal_actor_send_to_self_empty(actor, ROOT_STOP_ALL);
+            bsal_actor_send_reply_empty(actor, BSAL_INPUT_STOP);
         }
 
         for (i = 1; i < argc; i++) {
