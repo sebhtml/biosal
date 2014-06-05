@@ -27,6 +27,8 @@ struct bsal_hash_table {
     int buckets_per_group;
     int key_size;
     int value_size;
+
+    int debug;
 };
 
 /*
@@ -40,7 +42,7 @@ void *bsal_hash_table_add(struct bsal_hash_table *table, void *key);
 void *bsal_hash_table_get(struct bsal_hash_table *table, void *key);
 void bsal_hash_table_delete(struct bsal_hash_table *table, void *key);
 
-int bsal_hash_table_elements(struct bsal_hash_table *table);
+int bsal_hash_table_size(struct bsal_hash_table *table);
 int bsal_hash_table_buckets(struct bsal_hash_table *table);
 
 /*
@@ -55,5 +57,6 @@ uint64_t bsal_hash_table_double_hash(struct bsal_hash_table *table, void *key,
                 uint64_t stride);
 int bsal_hash_table_find_bucket(struct bsal_hash_table *table, void *key,
                 int *group, int *bucket_in_group, int operation);
+void bsal_hash_table_toggle_debug(struct bsal_hash_table *table);
 
 #endif

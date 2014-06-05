@@ -24,7 +24,10 @@ void *bsal_hash_table_group_get(struct bsal_hash_table_group *group, int bucket,
 void bsal_hash_table_group_delete(struct bsal_hash_table_group *group, int bucket);
 
 int bsal_hash_table_group_state(struct bsal_hash_table_group *group, int bucket);
+
 void *bsal_hash_table_group_key(struct bsal_hash_table_group *group, int bucket,
+               int key_size, int value_size);
+void *bsal_hash_table_group_value(struct bsal_hash_table_group *group, int bucket,
                int key_size, int value_size);
 
 int bsal_hash_table_group_get_bit(void *bitmap, int bucket);

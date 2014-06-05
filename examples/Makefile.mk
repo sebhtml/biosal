@@ -5,7 +5,7 @@ EXAMPLES=example_mock example_ring example_reader example_remote_spawn example_s
 
 # examples
 EXAMPLE_MOCK=examples/mock/main.o examples/mock/mock.o examples/mock/buddy.o
-EXAMPLE_RING=examples/ring/main.o examples/ring/sender.o
+EXAMPLE_RING=examples/ring/main.o examples/ring/sender.o examples/ring/ring.o
 EXAMPLE_READER=examples/reader/main.o examples/reader/reader.o
 EXAMPLE_REMOTE_SPAWN=examples/remote_spawn/main.o examples/remote_spawn/table.o
 EXAMPLE_SYNCHRONIZE=examples/synchronize/main.o examples/synchronize/stream.o

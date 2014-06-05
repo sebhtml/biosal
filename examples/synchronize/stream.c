@@ -16,17 +16,24 @@ void stream_init(struct bsal_actor *actor)
     struct stream *stream1;
 
     stream1 = (struct stream *)bsal_actor_concrete_actor(actor);
-    stream1->initial_synchronization = 0;
+    stream1->initial_synchronization = 1;
+    stream1->ready = 0;
+
+    bsal_vector_init(&stream1->children, sizeof(int));
 }
 
 void stream_destroy(struct bsal_actor *actor)
 {
+    struct stream *stream1;
+
+    stream1 = (struct stream *)bsal_actor_concrete_actor(actor);
+
+    bsal_vector_destroy(&stream1->children);
 }
 
 void stream_receive(struct bsal_actor *actor, struct bsal_message *message)
 {
     int tag;
-    int source;
     int nodes;
     int to_spawn;
     int i;
@@ -34,8 +41,7 @@ void stream_receive(struct bsal_actor *actor, struct bsal_message *message)
     int king;
     int is_king;
     struct stream *stream1;
-    int synchronized_actors;
-    void *buffer;
+    int new_actor;
 
     stream1 = (struct stream *)bsal_actor_concrete_actor(actor);
     tag = bsal_message_tag(message);
@@ -54,10 +60,14 @@ void stream_receive(struct bsal_actor *actor, struct bsal_message *message)
 
     if (tag == BSAL_ACTOR_START) {
 
+        bsal_actor_add_script(actor, STREAM_SCRIPT, &stream_script);
+
         i = 0;
 
         while (i < to_spawn) {
-            bsal_actor_spawn(actor, STREAM_SCRIPT);
+            new_actor = bsal_actor_spawn(actor, STREAM_SCRIPT);
+
+            bsal_vector_push_back(&stream1->children, &new_actor);
             i++;
         }
 
@@ -72,36 +82,52 @@ void stream_receive(struct bsal_actor *actor, struct bsal_message *message)
 
         bsal_actor_synchronize(actor, 0, nodes - 1);
 
+    } else if (tag == BSAL_ACTOR_SYNCHRONIZED && stream1->initial_synchronization == 1) {
+
+        printf("king %d synchronized\n", name);
+
+        stream1->ready = 0;
+        stream1->initial_synchronization = 0;
+
+        bsal_actor_send_range_standard_empty(actor, 0, nodes - 1, STREAM_SYNC);
+
     } else if (tag == BSAL_ACTOR_SYNCHRONIZE) {
-        source = bsal_message_source(message);
 
-        bsal_message_init(message, BSAL_ACTOR_SYNCHRONIZE_REPLY, 0, NULL);
-        bsal_actor_send(actor, source, message);
+        bsal_actor_send_reply_empty(actor, BSAL_ACTOR_SYNCHRONIZE_REPLY);
 
-    } else if (tag == BSAL_ACTOR_SYNCHRONIZED) {
+    } else if (tag == BSAL_ACTOR_SYNCHRONIZE_REPLY && stream1->initial_synchronization == 0) {
 
-        if (!stream1->initial_synchronization) {
-            stream1->initial_synchronization = 1;
+        stream1->ready++;
 
-            printf("actor %d synchronized with initial %d actors\n", name, nodes);
+        if (stream1->ready == bsal_vector_size(&stream1->children)) {
 
-            /* synchronize with everyone ! */
-            bsal_actor_synchronize(actor, 0, to_spawn * nodes + nodes - 1);
-
-        } else {
-
-            buffer = bsal_message_buffer(message);
-            synchronized_actors = *(int *)buffer;
-
-            printf("actor %d synchronized with %d actors\n", name,
-                            synchronized_actors);
-
-            bsal_message_init(message, STREAM_DIE, 0, NULL);
-            bsal_actor_send_range_standard(actor, 0, synchronized_actors - 1, message);
+            bsal_actor_send_range_standard_empty(actor, 0, nodes - 1, STREAM_DIE);
         }
+
+    } else if (tag == STREAM_SYNC) {
+
+        stream1->ready = 0;
+
+        /* synchronize with everyone ! */
+
+        printf("actor %d sends BSAL_ACTOR_SYNCHRONIZE manually to %d actors\n",
+                        name, (int)bsal_vector_size(&stream1->children));
+
+        for (i = 0 ; i < bsal_vector_size(&stream1->children); i++) {
+            new_actor = *(int *)bsal_vector_at(&stream1->children, i);
+
+            bsal_actor_send_empty(actor, new_actor, BSAL_ACTOR_SYNCHRONIZE);
+        }
+
     } else if (tag == STREAM_DIE) {
-        bsal_message_init(message, BSAL_ACTOR_STOP, 0, NULL);
-        bsal_actor_send(actor, name, message);
+
+        for (i = 0 ; i < bsal_vector_size(&stream1->children); i++) {
+            new_actor = *(int *)bsal_vector_at(&stream1->children, i);
+
+            bsal_actor_send_empty(actor, new_actor, STREAM_DIE);
+        }
+
+        bsal_actor_send_to_self_empty(actor, BSAL_ACTOR_STOP);
     }
 }
 

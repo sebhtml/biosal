@@ -178,9 +178,20 @@ void bsal_actor_send_with_source(struct bsal_actor *actor, int name, struct bsal
 int bsal_actor_spawn(struct bsal_actor *actor, int script)
 {
     int name;
+    int self_name = bsal_actor_name(actor);
+
+#ifdef BSAL_ACTOR_DEBUG
+    printf("DEBUG bsal_actor_spawn\n");
+#endif
 
     name = bsal_node_spawn(bsal_actor_node(actor), script);
-    bsal_node_set_supervisor(bsal_actor_node(actor), name, bsal_actor_name(actor));
+
+#ifdef BSAL_ACTOR_DEBUG
+    printf("DEBUG bsal_actor_spawn before set_supervisor, spawned %d\n",
+                    name);
+#endif
+
+    bsal_node_set_supervisor(bsal_actor_node(actor), name, self_name);
 
     return name;
 }
@@ -319,7 +330,9 @@ int bsal_actor_receive_system(struct bsal_actor *actor, struct bsal_message *mes
 
     } else if (tag == BSAL_ACTOR_SYNCHRONIZE_REPLY) {
         bsal_actor_receive_synchronize_reply(actor, message);
-        return 1;
+
+        /* we also allow the concrete actor to receive this */
+
     } else if (tag == BSAL_ACTOR_PROXY_MESSAGE) {
         bsal_actor_receive_proxy_message(actor, message);
         return 1;

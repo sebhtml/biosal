@@ -71,13 +71,11 @@ int main(int argc, char **argv)
         for (i = 0; i < buckets; i++) {
             key = i;
 
-            TEST_INT_EQUALS(bsal_hash_table_elements(&table), i);
+            TEST_INT_EQUALS(bsal_hash_table_size(&table), i);
             /*printf("before adding %i\n", i);*/
             /*printf("add %i DEBUG ", i); */
             TEST_POINTER_NOT_EQUALS(bsal_hash_table_add(&table, &key), NULL);
-            /*printf("elements after adding %i : %i\n", i,
-                            bsal_hash_table_elements(&table)); */
-            TEST_INT_EQUALS(bsal_hash_table_elements(&table), i + 1);
+            TEST_INT_EQUALS(bsal_hash_table_size(&table), i + 1);
 
             TEST_POINTER_NOT_EQUALS(bsal_hash_table_get(&table, &key), NULL);
             TEST_POINTER_NOT_EQUALS(bsal_hash_table_get(&table, &key), NULL);
@@ -107,7 +105,7 @@ int main(int argc, char **argv)
         key = 9999;
         /* try to add something to a full table */
         TEST_POINTER_EQUALS(bsal_hash_table_add(&table, &key), NULL);
-        TEST_INT_EQUALS(bsal_hash_table_elements(&table), buckets);
+        TEST_INT_EQUALS(bsal_hash_table_size(&table), buckets);
 
         for (i = 0; i < buckets; i++) {
 
@@ -136,8 +134,35 @@ int main(int argc, char **argv)
             }
         }
 
-        TEST_INT_EQUALS(bsal_hash_table_elements(&table), 0);
+        TEST_INT_EQUALS(bsal_hash_table_size(&table), 0);
         TEST_INT_EQUALS(bsal_hash_table_buckets(&table), buckets);
+
+        bsal_hash_table_destroy(&table);
+    }
+
+    {
+        struct bsal_hash_table table;
+        int key;
+        int value;
+        int actual_value;
+        int *bucket;
+
+        bsal_hash_table_init(&table, 16, sizeof(int), sizeof(int));
+        TEST_INT_EQUALS(bsal_hash_table_size(&table), 0);
+
+        key = 1231243213;
+        value = 1;
+        actual_value = 1;
+
+        bsal_hash_table_toggle_debug(&table);
+        bucket = bsal_hash_table_add(&table, &key);
+        TEST_POINTER_NOT_EQUALS(bucket, NULL);
+        *bucket = value;
+
+        bucket = bsal_hash_table_get(&table, &key);
+        TEST_POINTER_NOT_EQUALS(bucket, NULL);
+        value = *bucket;
+        TEST_INT_EQUALS(value, actual_value);
 
         bsal_hash_table_destroy(&table);
     }

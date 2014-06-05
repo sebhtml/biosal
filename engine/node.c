@@ -12,6 +12,10 @@
 */
 
 /*
+#define BSAL_NODE_DEBUG_SPAWN
+*/
+
+/*
  * \see http://www.mpich.org/static/docs/v3.1/www3/MPI_Comm_dup.html
  * \see http://www.dartmouth.edu/~rc/classes/intro_mpi/hello_world_ex.html
  * \see https://github.com/GeneAssembly/kiki/blob/master/ki.c#L960
@@ -29,6 +33,8 @@ void bsal_node_init(struct bsal_node *node, int *argc, char ***argv)
     char *required_threads;
     int detected;
     int bytes;
+
+    srand(time(NULL));
 
     node->debug = 0;
 
@@ -191,6 +197,7 @@ void bsal_node_init(struct bsal_node *node, int *argc, char ***argv)
 
     /* TODO make sure that we have place above node->actor_capacity actors */
     node->actors = (struct bsal_actor*)malloc(node->actor_capacity * sizeof(struct bsal_actor));
+    bsal_hash_table_init(&node->actor_names, node->actor_capacity, sizeof(int), sizeof(int));
 
     pthread_spin_init(&node->death_lock, 0);
     pthread_spin_init(&node->spawn_lock, 0);
@@ -203,6 +210,7 @@ void bsal_node_destroy(struct bsal_node *node)
 {
     struct bsal_active_buffer active_buffer;
 
+    bsal_hash_table_destroy(&node->actor_names);
     pthread_spin_destroy(&node->spawn_lock);
     pthread_spin_destroy(&node->death_lock);
     pthread_spin_destroy(&node->script_lock);
@@ -284,7 +292,16 @@ void bsal_node_set_supervisor(struct bsal_node *node, int name, int supervisor)
 {
     struct bsal_actor *actor;
 
+#ifdef BSAL_NODE_DEBUG
+    printf("DEBUG bsal_node_set_supervisor %d %d\n", name, supervisor);
+#endif
+
     actor = bsal_node_get_actor_from_name(node, name);
+
+#ifdef BSAL_NODE_DEBUG
+    printf("DEBUG set supervisor %d %d %p\n", name, supervisor, (void *)actor);
+#endif
+
     bsal_actor_set_supervisor(actor, supervisor);
 }
 
@@ -312,15 +329,38 @@ int bsal_node_spawn_state(struct bsal_node *node, void *state,
 {
     struct bsal_actor *actor;
     int name;
+    int *bucket;
+    int index;
+
+#ifdef BSAL_NODE_DEBUG
+    printf("DEBUG bsal_node_spawn_state\n");
+#endif
 
     pthread_spin_lock(&node->spawn_lock);
 
-    actor = node->actors + node->actor_count;
+    index = node->actor_count;
+    actor = node->actors + index;
     bsal_actor_init(actor, state, script);
 
-    name = bsal_node_assign_name(node);
+    /* the first actor on node i is named i */
+    name = index + bsal_node_name(node);
+
+    /* other actors have random names to enforce
+     * the acquaintance paradigm
+     */
+    if (node->actor_count > 0) {
+        name = bsal_node_assign_name(node);
+    }
 
     bsal_actor_set_name(actor, name);
+
+    bucket = bsal_hash_table_add(&node->actor_names, &name);
+    *bucket = index;
+
+#ifdef BSAL_NODE_DEBUG_SPAWN
+    printf("DEBUG added Actor %d, index is %d, bucket: %p\n", name, index,
+                    (void *)bucket);
+#endif
 
     node->actor_count++;
     node->alive_actors++;
@@ -332,7 +372,48 @@ int bsal_node_spawn_state(struct bsal_node *node, void *state,
 
 int bsal_node_assign_name(struct bsal_node *node)
 {
-    return node->name + node->nodes * node->actor_count;
+    int minimal_value;
+    int maximum_value;
+    int name;
+    int range;
+    struct bsal_actor *actor;
+    int node_name;
+    int difference;
+
+#ifdef BSAL_NODE_DEBUG
+    printf("DEBUG bsal_node_assign_name\n");
+#endif
+
+    node_name = bsal_node_name(node);
+    actor = NULL;
+    minimal_value = 0;
+    name = -1;
+    maximum_value = 2000000000;
+    range = maximum_value - minimal_value;
+
+#ifdef BSAL_NODE_DEBUG
+    printf("DEBUG assigning name\n");
+#endif
+
+    while (actor != NULL || name < 0) {
+        name = rand() % range + minimal_value;
+
+        difference = node_name - name % node->nodes;
+        /* add the difference */
+        name += difference;
+        actor = bsal_node_get_actor_from_name(node, name);
+
+        /*printf("DEBUG trying %d... %p\n", name, (void *)actor);*/
+
+    }
+
+#ifdef BSAL_NODE_DEBUG_SPAWN
+    printf("DEBUG node %d assigned name %d\n", node->name, name);
+#endif
+
+    /*return node->name + node->nodes * node->actor_count;*/
+
+    return name;
 }
 
 void bsal_node_run(struct bsal_node *node)
@@ -676,10 +757,21 @@ struct bsal_actor *bsal_node_get_actor_from_name(struct bsal_node *node,
 {
     struct bsal_actor *actor;
     int index;
-    int node_name;
 
-    node_name = node->name;
-    index = bsal_node_actor_index(node, node_name, name);
+#ifdef BSAL_NODE_DEBUG
+    printf("DEBUG bsal_node_get_actor_from_name %d\n", name);
+#endif
+
+    if (name < 0) {
+        return NULL;
+    }
+
+    index = bsal_node_actor_index(node, name);
+
+    if (index < 0) {
+        return NULL;
+    }
+
     actor = node->actors + index;
 
     return actor;
@@ -734,9 +826,28 @@ void bsal_node_create_work(struct bsal_node *node, struct bsal_message *message)
     bsal_worker_pool_schedule_work(&node->worker_pool, &work);
 }
 
-int bsal_node_actor_index(struct bsal_node *node, int node_name, int name)
+int bsal_node_actor_index(struct bsal_node *node, int name)
 {
-    return (name - node_name) / node->nodes;
+    int *bucket;
+    int index;
+
+#ifdef BSAL_NODE_DEBUG
+    printf("DEBUG calling bsal_hash_table_get with pointer to %d, entries %d\n",
+                    name, (int)bsal_hash_table_size(&node->actor_names));
+#endif
+
+    bucket = bsal_hash_table_get(&node->actor_names, &name);
+
+#ifdef BSAL_NODE_DEBUG
+    printf("DEBUG bsal_node_actor_index %d %p\n", name, (void *)bucket);
+#endif
+
+    if (bucket == NULL) {
+        return -1;
+    }
+
+    index = *bucket;
+    return index;
 }
 
 int bsal_node_actor_node(struct bsal_node *node, int name)
@@ -774,9 +885,6 @@ void bsal_node_notify_death(struct bsal_node *node, struct bsal_actor *actor)
 #ifdef BSAL_NODE_DEBUG_20140601_8
     printf("DEBUG bsal_node_notify_death\n");
 #endif
-
-    /*index = bsal_node_actor_index(node, node_name, name); */
-    /* node->actors[index] = NULL; */
 
     pthread_spin_lock(&node->death_lock);
     node->alive_actors--;

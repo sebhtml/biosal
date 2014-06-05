@@ -66,19 +66,16 @@ void *bsal_hash_table_group_add(struct bsal_hash_table_group *group,
     bsal_hash_table_group_set_bit(group->deletion_bitmap, bucket,
                     BSAL_BIT_ZERO);
 
-    return (char *)group->array + bucket * (key_size + value_size);
+    return bsal_hash_table_group_value(group, bucket, key_size, value_size);
 }
 
 void *bsal_hash_table_group_get(struct bsal_hash_table_group *group,
                 int bucket, int key_size, int value_size)
 {
-    int offset;
-
     if (bsal_hash_table_group_state(group, bucket) ==
                     BSAL_HASH_TABLE_BUCKET_OCCUPIED) {
 
-        offset = bucket * (key_size + value_size) + key_size;
-        return (char *)group->array + offset;
+        return bsal_hash_table_group_value(group, bucket, key_size, value_size);
     }
 
     /* BSAL_HASH_TABLE_BUCKET_EMPTY and BSAL_HASH_TABLE_BUCKET_DELETED
@@ -155,4 +152,11 @@ void *bsal_hash_table_group_key(struct bsal_hash_table_group *group, int bucket,
 {
     /* we assume that the key is stored first */
     return (char *)group->array + bucket * (key_size + value_size);
+}
+
+void *bsal_hash_table_group_value(struct bsal_hash_table_group *group, int bucket,
+                int key_size, int value_size)
+{
+    /* we assume that the key is stored first */
+    return (char *)bsal_hash_table_group_key(group, bucket, key_size, value_size) + key_size;
 }

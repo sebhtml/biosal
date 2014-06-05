@@ -8,6 +8,7 @@
 #include "active_buffer.h"
 
 #include <structures/fifo.h>
+#include <structures/hash_table.h>
 
 #include <pthread.h>
 #include <mpi.h>
@@ -27,6 +28,7 @@ struct bsal_script;
 struct bsal_node {
     struct bsal_actor *actors;
     struct bsal_worker_pool worker_pool;
+    struct bsal_hash_table actor_names;
 
     struct bsal_script **scripts;
     int available_scripts;
@@ -78,7 +80,7 @@ void bsal_node_send(struct bsal_node *node, struct bsal_message *message);
 int bsal_node_assign_name(struct bsal_node *node);
 
 int bsal_node_actor_node(struct bsal_node *node, int name);
-int bsal_node_actor_index(struct bsal_node *node, int node_name, int name);
+int bsal_node_actor_index(struct bsal_node *node, int name);
 struct bsal_actor *bsal_node_get_actor_from_name(struct bsal_node *node,
                 int name);
 
