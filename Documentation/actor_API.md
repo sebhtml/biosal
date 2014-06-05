@@ -131,13 +131,6 @@ void *bsal_actor_concrete_actor(struct bsal_actor *actor);
 Get the state of an actor. This is used when implementing new
 actors.
 
-## bsal_actor_nodes
-
-```C
-int bsal_actor_nodes(struct bsal_actor *actor);
-```
-
-Get number of nodes.
 
 ## bsal_actor_name
 

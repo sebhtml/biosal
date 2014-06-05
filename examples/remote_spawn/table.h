@@ -9,6 +9,7 @@
 struct table {
     int received;
     int done;
+    struct bsal_vector spawners;
 };
 
 #define TABLE_DIE 0x00003391

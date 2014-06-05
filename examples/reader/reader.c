@@ -20,6 +20,8 @@ void reader_init(struct bsal_actor *actor)
     reader1 = (struct reader *)bsal_actor_concrete_actor(actor);
     reader1->counted = 0;
     reader1->pulled = 0;
+
+    bsal_vector_init(&reader1->spawners, sizeof(int));
 }
 
 void reader_destroy(struct bsal_actor *actor)
@@ -29,6 +31,8 @@ void reader_destroy(struct bsal_actor *actor)
     reader1 = (struct reader *)bsal_actor_concrete_actor(actor);
     reader1->counted = 0;
     reader1->pulled = 0;
+
+    bsal_vector_destroy(&reader1->spawners);
 }
 
 void reader_receive(struct bsal_actor *actor, struct bsal_message *message)
@@ -41,7 +45,6 @@ void reader_receive(struct bsal_actor *actor, struct bsal_message *message)
     struct reader *reader1;
     int source;
     int count;
-    int nodes;
     void *buffer;
     int sequences;
     int script;
@@ -51,12 +54,12 @@ void reader_receive(struct bsal_actor *actor, struct bsal_message *message)
     reader1 = (struct reader *)bsal_actor_concrete_actor(actor);
     tag = bsal_message_tag(message);
     source = bsal_message_source(message);
-    nodes = bsal_actor_nodes(actor);
     buffer = bsal_message_buffer(message);
     name = bsal_actor_name(actor);
 
     if (tag == BSAL_ACTOR_START) {
 
+        bsal_vector_unpack(&reader1->spawners, buffer);
         bsal_actor_add_script(actor, BSAL_INPUT_STREAM_SCRIPT,
                     &bsal_input_stream_script);
 
@@ -73,7 +76,7 @@ void reader_receive(struct bsal_actor *actor, struct bsal_message *message)
         }
         */
 
-        if (name % nodes != 0) {
+        if (name % bsal_vector_size(&reader1->spawners) != 0) {
             bsal_message_init(message, BSAL_ACTOR_STOP, 0, NULL);
             bsal_actor_send(actor, name, message);
 

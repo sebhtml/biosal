@@ -7,6 +7,7 @@
 #define READER_SCRIPT 0x0edc63d2
 
 struct reader {
+    struct bsal_vector spawners;
     int sequence_reader;
     int last_report;
     char *file;

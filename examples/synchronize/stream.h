@@ -9,6 +9,7 @@
 #define STREAM_SCRIPT 0xb9b19139
 
 struct stream {
+    struct bsal_vector spawners;
     int initial_synchronization;
     int ready;
     struct bsal_vector children;

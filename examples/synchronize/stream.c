@@ -20,6 +20,7 @@ void stream_init(struct bsal_actor *actor)
     stream1->ready = 0;
 
     bsal_vector_init(&stream1->children, sizeof(int));
+    bsal_vector_init(&stream1->spawners, sizeof(int));
 }
 
 void stream_destroy(struct bsal_actor *actor)
@@ -29,12 +30,12 @@ void stream_destroy(struct bsal_actor *actor)
     stream1 = (struct stream *)bsal_actor_concrete_actor(actor);
 
     bsal_vector_destroy(&stream1->children);
+    bsal_vector_destroy(&stream1->spawners);
 }
 
 void stream_receive(struct bsal_actor *actor, struct bsal_message *message)
 {
     int tag;
-    int nodes;
     int to_spawn;
     int i;
     int name;
@@ -42,13 +43,14 @@ void stream_receive(struct bsal_actor *actor, struct bsal_message *message)
     int is_king;
     struct stream *stream1;
     int new_actor;
+    char *buffer;
 
     stream1 = (struct stream *)bsal_actor_concrete_actor(actor);
     tag = bsal_message_tag(message);
-    nodes = bsal_actor_nodes(actor);
+    buffer = bsal_message_buffer(message);
     name = bsal_actor_name(actor);
 
-    king = nodes / 2;
+    king = bsal_vector_size(&stream1->spawners) / 2;
 
     is_king = 0;
 
@@ -59,6 +61,8 @@ void stream_receive(struct bsal_actor *actor, struct bsal_message *message)
     to_spawn = 250000;
 
     if (tag == BSAL_ACTOR_START) {
+
+        bsal_vector_unpack(&stream1->spawners, buffer);
 
         bsal_actor_add_script(actor, STREAM_SCRIPT, &stream_script);
 
@@ -80,7 +84,7 @@ void stream_receive(struct bsal_actor *actor, struct bsal_message *message)
             return;
         }
 
-        bsal_actor_synchronize(actor, 0, nodes - 1);
+        bsal_actor_synchronize(actor, 0, bsal_vector_size(&stream1->spawners) - 1);
 
     } else if (tag == BSAL_ACTOR_SYNCHRONIZED && stream1->initial_synchronization == 1) {
 
@@ -89,7 +93,7 @@ void stream_receive(struct bsal_actor *actor, struct bsal_message *message)
         stream1->ready = 0;
         stream1->initial_synchronization = 0;
 
-        bsal_actor_send_range_standard_empty(actor, 0, nodes - 1, STREAM_SYNC);
+        bsal_actor_send_range_standard_empty(actor, 0, bsal_vector_size(&stream1->spawners) - 1, STREAM_SYNC);
 
     } else if (tag == BSAL_ACTOR_SYNCHRONIZE) {
 
@@ -101,7 +105,7 @@ void stream_receive(struct bsal_actor *actor, struct bsal_message *message)
 
         if (stream1->ready == bsal_vector_size(&stream1->children)) {
 
-            bsal_actor_send_range_standard_empty(actor, 0, nodes - 1, STREAM_DIE);
+            bsal_actor_send_range_standard_empty(actor, 0, bsal_vector_size(&stream1->spawners) - 1, STREAM_DIE);
         }
 
     } else if (tag == STREAM_SYNC) {

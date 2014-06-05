@@ -7,8 +7,10 @@
 #define ROOT_SCRIPT 0xf04a42e1
 
 struct root {
+    struct bsal_vector spawners;
     int controller;
     int events;
+    int synchronized;
 };
 
 #define ROOT_DIE 0x00002381

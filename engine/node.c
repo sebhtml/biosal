@@ -199,11 +199,16 @@ void bsal_node_init(struct bsal_node *node, int *argc, char ***argv)
     node->actors = (struct bsal_actor*)malloc(node->actor_capacity * sizeof(struct bsal_actor));
     bsal_hash_table_init(&node->actor_names, node->actor_capacity, sizeof(int), sizeof(int));
 
+    bsal_vector_init(&node->initial_actors, sizeof(int));
+    bsal_vector_resize(&node->initial_actors, bsal_node_nodes(node));
+
     pthread_spin_init(&node->death_lock, 0);
     pthread_spin_init(&node->spawn_lock, 0);
     pthread_spin_init(&node->script_lock, 0);
 
     bsal_fifo_init(&node->active_buffers, 64, sizeof(struct bsal_active_buffer));
+
+    node->started = 0;
 }
 
 void bsal_node_destroy(struct bsal_node *node)
@@ -211,6 +216,8 @@ void bsal_node_destroy(struct bsal_node *node)
     struct bsal_active_buffer active_buffer;
 
     bsal_hash_table_destroy(&node->actor_names);
+    bsal_vector_destroy(&node->initial_actors);
+
     pthread_spin_destroy(&node->spawn_lock);
     pthread_spin_destroy(&node->death_lock);
     pthread_spin_destroy(&node->script_lock);
@@ -305,11 +312,23 @@ void bsal_node_set_supervisor(struct bsal_node *node, int name, int supervisor)
     bsal_actor_set_supervisor(actor, supervisor);
 }
 
+int bsal_node_actors(struct bsal_node *node)
+{
+    return node->actor_count;
+}
+
 int bsal_node_spawn(struct bsal_node *node, int script)
 {
     struct bsal_script *script1;
     int size;
     void *state;
+
+    /* in the current implementation, there can only be one initial
+     * actor on each node
+     */
+    if (node->started == 0 && bsal_node_actors(node) > 0) {
+        return -1;
+    }
 
     script1 = bsal_node_find_script(node, script);
 
@@ -416,6 +435,14 @@ int bsal_node_assign_name(struct bsal_node *node)
     return name;
 }
 
+void bsal_node_set_initial_actor(struct bsal_node *node, int node_name, int actor)
+{
+    int *bucket;
+
+    bucket = bsal_vector_at(&node->initial_actors, node_name);
+    *bucket = actor;
+}
+
 void bsal_node_run(struct bsal_node *node)
 {
     int i;
@@ -424,6 +451,10 @@ void bsal_node_run(struct bsal_node *node)
     int name;
     int source;
     struct bsal_message message;
+    int bytes;
+    void *buffer;
+
+    node->started = 1;
 
     if (node->workers_in_threads) {
 #ifdef BSAL_NODE_DEBUG
@@ -442,6 +473,16 @@ void bsal_node_run(struct bsal_node *node)
 
     actors = node->actor_count;
 
+    /* send the initial actor names to each initial actor
+     */
+    for (i = 0; i < bsal_node_nodes(node); i++) {
+        bsal_node_set_initial_actor(node, i, i);
+    }
+
+    bytes = bsal_vector_pack_size(&node->initial_actors);
+    buffer = malloc(bytes);
+    bsal_vector_pack(&node->initial_actors, buffer);
+
     for (i = 0; i < actors; ++i) {
         actor = node->actors + i;
         name = bsal_actor_name(actor);
@@ -450,10 +491,12 @@ void bsal_node_run(struct bsal_node *node)
         bsal_actor_set_supervisor(actor, name);
         source = name;
 
-        bsal_message_init(&message, BSAL_ACTOR_START, 0, NULL);
+        bsal_message_init(&message, BSAL_ACTOR_START, bytes, buffer);
         bsal_message_set_source(&message, source);
         bsal_message_set_destination(&message, name);
+
         bsal_node_send(node, &message);
+
         bsal_message_destroy(&message);
     }
 

@@ -211,11 +211,6 @@ void bsal_actor_die(struct bsal_actor *actor)
     actor->dead = 1;
 }
 
-int bsal_actor_nodes(struct bsal_actor *actor)
-{
-    return bsal_node_nodes(bsal_actor_node(actor));
-}
-
 struct bsal_node *bsal_actor_node(struct bsal_actor *actor)
 {
     if (actor->worker == NULL) {
@@ -383,6 +378,10 @@ void bsal_actor_receive(struct bsal_actor *actor, struct bsal_message *message)
     bsal_actor_receive_fn_t receive;
 
 #ifdef BSAL_ACTOR_DEBUG9
+    if (bsal_message_tag(message) == BSAL_ACTOR_SYNCHRONIZED) {
+        printf("DEBUG bsal_actor_receive before concrete receive BSAL_ACTOR_SYNCHRONIZED\n");
+    }
+
     printf("DEBUG bsal_actor_receive tag %d for %d\n",
                     bsal_message_tag(message),
                     bsal_actor_name(actor));
@@ -443,6 +442,10 @@ void bsal_actor_receive_synchronize_reply(struct bsal_actor *actor,
          */
         if (bsal_actor_synchronization_completed(actor)) {
 
+#ifdef BSAL_ACTOR_DEBUG_SYNC
+            printf("DEBUG sending BSAL_ACTOR_SYNCHRONIZED to self\n");
+#endif
+
             bsal_message_init(message, BSAL_ACTOR_SYNCHRONIZED,
                             sizeof(actor->synchronization_responses),
                             &actor->synchronization_responses);
@@ -450,6 +453,7 @@ void bsal_actor_receive_synchronize_reply(struct bsal_actor *actor,
             name = bsal_actor_name(actor);
 
             bsal_actor_send(actor, name, message);
+            actor->synchronization_started = 0;
         }
     }
 }

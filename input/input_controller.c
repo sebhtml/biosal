@@ -22,6 +22,7 @@ void bsal_input_controller_init(struct bsal_actor *actor)
     controller = (struct bsal_input_controller *)bsal_actor_concrete_actor(actor);
     bsal_vector_init(&controller->streams, sizeof(int));
     bsal_vector_init(&controller->files, sizeof(char *));
+    bsal_vector_init(&controller->spawners, sizeof(int));
 }
 
 void bsal_input_controller_destroy(struct bsal_actor *actor)
@@ -39,6 +40,7 @@ void bsal_input_controller_destroy(struct bsal_actor *actor)
 
     bsal_vector_destroy(&controller->streams);
     bsal_vector_destroy(&controller->files);
+    bsal_vector_destroy(&controller->spawners);
 }
 
 void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message *message)
@@ -47,7 +49,6 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
     char *file;
     void *buffer;
     struct bsal_input_controller *controller;
-    int nodes;
     int destination;
     int script;
     int stream;
@@ -55,16 +56,17 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
     int i;
     int name;
     int source;
+    int destination_index;
 
     name = bsal_actor_name(actor);
     controller = (struct bsal_input_controller *)bsal_actor_concrete_actor(actor);
     tag = bsal_message_tag(message);
     source = bsal_message_source(message);
     buffer = bsal_message_buffer(message);
-    nodes = bsal_actor_nodes(actor);
 
     if (tag == BSAL_INPUT_CONTROLLER_START) {
 
+        bsal_vector_unpack(&controller->spawners, buffer);
         bsal_actor_add_script(actor, BSAL_INPUT_STREAM_SCRIPT, &bsal_input_stream_script);
 
         bsal_actor_send_reply_empty(actor, BSAL_INPUT_CONTROLLER_START_REPLY);
@@ -113,7 +115,9 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
 
         i = bsal_vector_size(&controller->streams);
 
-        destination = i % nodes;
+        destination_index = i % bsal_vector_size(&controller->spawners);
+        destination = *(int *)bsal_vector_at(&controller->spawners, destination_index);
+
         bsal_message_init(message, BSAL_ACTOR_SPAWN, sizeof(script), &script);
         bsal_actor_send(actor, destination, message);
 

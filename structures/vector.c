@@ -26,7 +26,7 @@ void bsal_vector_destroy(struct bsal_vector *self)
     self->data = NULL;
 }
 
-void bsal_vector_resize(struct bsal_vector *self, uint64_t size)
+void bsal_vector_resize(struct bsal_vector *self, int size)
 {
     void *new_data;
 
@@ -57,12 +57,12 @@ void bsal_vector_resize(struct bsal_vector *self, uint64_t size)
     self->maximum_size = size;
 }
 
-uint64_t bsal_vector_size(struct bsal_vector *self)
+int bsal_vector_size(struct bsal_vector *self)
 {
     return self->size;
 }
 
-void *bsal_vector_at(struct bsal_vector *self, uint64_t index)
+void *bsal_vector_at(struct bsal_vector *self, int index)
 {
     if (index >= self->size) {
         return NULL;
@@ -73,8 +73,8 @@ void *bsal_vector_at(struct bsal_vector *self, uint64_t index)
 
 void bsal_vector_push_back(struct bsal_vector *self, void *data)
 {
-    uint64_t index;
-    uint64_t new_maximum_size;
+    int index;
+    int new_maximum_size;
     void *bucket;
     void *new_data;
 
@@ -111,4 +111,71 @@ void bsal_vector_push_back(struct bsal_vector *self, void *data)
     memcpy(bucket, data, self->element_size);
 }
 
+int bsal_vector_pack_size(struct bsal_vector *self)
+{
+    return sizeof(self->size) + sizeof(self->element_size) + self->size * self->element_size;
+}
+
+void bsal_vector_pack(struct bsal_vector *self, void *buffer)
+{
+    int offset;
+    int bytes;
+
+    offset = 0;
+
+    bytes = sizeof(self->size);
+    memcpy((char *)buffer + offset, &self->size, bytes);
+    offset += bytes;
+
+    bytes = sizeof(self->element_size);
+    memcpy((char *)buffer + offset, &self->element_size, bytes);
+    offset += bytes;
+
+    bytes = self->size * self->element_size;
+    memcpy((char *)buffer + offset, self->data, bytes);
+    offset += bytes;
+}
+
+void bsal_vector_unpack(struct bsal_vector *self, void *buffer)
+{
+    int offset;
+    int bytes;
+    int element_size;
+    int size;
+    int i;
+    void *value;
+
+    offset = 0;
+
+    bytes = sizeof(size);
+    memcpy(&size, (char *)buffer + offset, bytes);
+    offset += bytes;
+
+    bytes = sizeof(element_size);
+    memcpy(&element_size, (char *)buffer + offset, bytes);
+    offset += bytes;
+
+#ifdef BSAL_VECTOR_DEBUG
+    printf("DEBUG size %d element_size %d\n", size, element_size);
+#endif
+
+    value = malloc(element_size);
+
+    bsal_vector_init(self, element_size);
+
+    for (i = 0; i < size; i++) {
+        bytes = element_size;
+        memcpy(value, (char *)buffer + offset, bytes);
+        offset += bytes;
+
+        bsal_vector_push_back(self, value);
+    }
+
+    free(value);
+    value = NULL;
+
+#ifdef BSAL_VECTOR_DEBUG
+    printf("DEBUG unpack successful\n");
+#endif
+}
 

@@ -11,6 +11,7 @@ struct mock {
     int children[3];
     int remote_actor;
     int notified;
+    struct bsal_vector spawners;
 };
 
 #define MOCK_DIE 0x00006917

@@ -7,6 +7,7 @@
 #include "worker_pool.h"
 #include "active_buffer.h"
 
+#include <structures/vector.h>
 #include <structures/fifo.h>
 #include <structures/hash_table.h>
 
@@ -29,6 +30,8 @@ struct bsal_node {
     struct bsal_actor *actors;
     struct bsal_worker_pool worker_pool;
     struct bsal_hash_table actor_names;
+    struct bsal_vector initial_actors;
+    int started;
 
     struct bsal_script **scripts;
     int available_scripts;
@@ -86,6 +89,9 @@ struct bsal_actor *bsal_node_get_actor_from_name(struct bsal_node *node,
 
 int bsal_node_name(struct bsal_node *node);
 int bsal_node_nodes(struct bsal_node *node);
+int bsal_node_actors(struct bsal_node *node);
+void bsal_node_set_initial_actor(struct bsal_node *node, int node_name, int actor);
+
 void bsal_node_set_supervisor(struct bsal_node *node, int name, int supervisor);
 
 void bsal_node_run_loop(struct bsal_node *node);

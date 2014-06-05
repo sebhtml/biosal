@@ -14,23 +14,26 @@ struct bsal_script mock_script = {
 
 void mock_init(struct bsal_actor *actor)
 {
-    struct mock *mock;
+    struct mock *mock1;
 
-    mock = (struct mock *)bsal_actor_concrete_actor(actor);
-    mock->value = 42;
-    mock->children[0] = -1;
-    mock->children[1] = -1;
-    mock->children[2] = -1;
-    mock->notified = 0;
+    mock1 = (struct mock *)bsal_actor_concrete_actor(actor);
+    mock1->value = 42;
+    mock1->children[0] = -1;
+    mock1->children[1] = -1;
+    mock1->children[2] = -1;
+    mock1->notified = 0;
+
+    bsal_vector_init(&mock1->spawners, sizeof(int));
 }
 
 void mock_destroy(struct bsal_actor *actor)
 {
-    struct mock *mock;
+    struct mock *mock1;
 
-    mock = (struct mock *)bsal_actor_concrete_actor(actor);
-    mock->value = -1;
+    mock1 = (struct mock *)bsal_actor_concrete_actor(actor);
+    mock1->value = -1;
 
+    bsal_vector_destroy(&mock1->spawners);
 }
 
 void mock_receive(struct bsal_actor *actor, struct bsal_message *message)
@@ -38,18 +41,19 @@ void mock_receive(struct bsal_actor *actor, struct bsal_message *message)
     int tag;
     int name;
     struct mock *mock1;
-    int nodes;
+    char *buffer;
 
     mock1 = (struct mock *)bsal_actor_concrete_actor(actor);
-    nodes = bsal_actor_nodes(actor);
 
     tag = bsal_message_tag(message);
+    buffer = bsal_message_buffer(message);
     /*bsal_actor_print(actor);*/
 
     if (tag == BSAL_ACTOR_START) {
 
         printf("BSAL_ACTOR_START\n");
 
+        bsal_vector_unpack(&mock1->spawners, buffer);
         bsal_actor_add_script(actor, BUDDY_SCRIPT, &buddy_script);
 
         /*mock_init(actor);*/
@@ -75,16 +79,16 @@ void mock_receive(struct bsal_actor *actor, struct bsal_message *message)
 
         mock1->notified++;
 
-        printf("notifications %d/%d\n", mock1->notified, nodes);
+        printf("notifications %d/%d\n", mock1->notified, bsal_vector_size(&mock1->spawners));
 
-        if (mock1->notified == nodes) {
+        if (mock1->notified == bsal_vector_size(&mock1->spawners)) {
             bsal_message_init(message, MOCK_PREPARE_DEATH, 0, NULL);
 
             /* the default binomial-tree algorithm can not
              * be used here because proxy actors may die
              * before they are needed.
              */
-            bsal_actor_send_range_standard(actor, 0, nodes - 1, message);
+            bsal_actor_send_range_standard(actor, 0, bsal_vector_size(&mock1->spawners) - 1, message);
 
             printf("Stopping all initial actors now\n");
         }
@@ -156,22 +160,20 @@ void mock_start(struct bsal_actor *actor, struct bsal_message *message)
 
 void mock_share(struct bsal_actor *actor, struct bsal_message *message)
 {
-    int size;
     int name;
-    struct mock *mock;
+    struct mock *mock1;
     struct bsal_message message2;
     int next;
 
-    mock = (struct mock *)bsal_actor_concrete_actor(actor);
-    size = bsal_actor_nodes(actor);
+    mock1 = (struct mock *)bsal_actor_concrete_actor(actor);
     name = bsal_actor_name(actor);
 
     /* get the next mock actor
      */
-    next = (name + 1) % size;
+    next = (name + 1) % bsal_vector_size(&mock1->spawners);
 
     bsal_message_init(&message2, MOCK_NEW_CONTACTS, 3 * sizeof(int),
-                    (char *)mock->children);
+                    (char *)mock1->children);
     bsal_actor_send(actor, next, &message2);
     bsal_message_destroy(&message2);
 }
