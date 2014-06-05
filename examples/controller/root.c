@@ -55,6 +55,10 @@ void root_receive(struct bsal_actor *actor, struct bsal_message *message)
     buffer = bsal_message_buffer(message);
     name = bsal_actor_name(actor);
 
+    /*
+    printf(">>root_receive source %d name %d tag %d BSAL_ACTOR_SYNCHRONIZED is %d\n", source, name, tag,
+                    BSAL_ACTOR_SYNCHRONIZED);
+*/
     king = 0;
 
     is_king = 0;

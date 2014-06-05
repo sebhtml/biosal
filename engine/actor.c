@@ -11,6 +11,8 @@
 #define BSAL_ACTOR_DEBUG
 
 #define BSAL_ACTOR_DEBUG1
+
+#define BSAL_ACTOR_DEBUG_SYNC
 */
 
 void bsal_actor_init(struct bsal_actor *actor, void *state,
@@ -377,8 +379,12 @@ void bsal_actor_receive(struct bsal_actor *actor, struct bsal_message *message)
 {
     bsal_actor_receive_fn_t receive;
 
-#ifdef BSAL_ACTOR_DEBUG9
+#ifdef BSAL_ACTOR_DEBUG_SYNC
+    printf("\nDEBUG bsal_actor_receive...... tag %d\n",
+                    bsal_message_tag(message));
+
     if (bsal_message_tag(message) == BSAL_ACTOR_SYNCHRONIZED) {
+        printf("DEBUG =============\n");
         printf("DEBUG bsal_actor_receive before concrete receive BSAL_ACTOR_SYNCHRONIZED\n");
     }
 
@@ -397,6 +403,11 @@ void bsal_actor_receive(struct bsal_actor *actor, struct bsal_message *message)
     bsal_actor_increment_counter(actor, BSAL_COUNTER_RECEIVED_MESSAGES);
 
     actor->current_source = bsal_message_source(message);
+
+#ifdef BSAL_ACTOR_DEBUG_SYNC
+    printf("DEBUG bsal_actor_receive calls concrete receive tag %d\n",
+                    bsal_message_tag(message));
+#endif
 
     receive(actor, message);
 }
@@ -445,14 +456,14 @@ void bsal_actor_receive_synchronize_reply(struct bsal_actor *actor,
 #ifdef BSAL_ACTOR_DEBUG_SYNC
             printf("DEBUG sending BSAL_ACTOR_SYNCHRONIZED to self\n");
 #endif
-
-            bsal_message_init(message, BSAL_ACTOR_SYNCHRONIZED,
+            struct bsal_message new_message;
+            bsal_message_init(&new_message, BSAL_ACTOR_SYNCHRONIZED,
                             sizeof(actor->synchronization_responses),
                             &actor->synchronization_responses);
 
             name = bsal_actor_name(actor);
 
-            bsal_actor_send(actor, name, message);
+            bsal_actor_send(actor, name, &new_message);
             actor->synchronization_started = 0;
         }
     }
