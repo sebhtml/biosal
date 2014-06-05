@@ -14,6 +14,11 @@
 #include <pthread.h>
 #include <mpi.h>
 
+#define BSAL_NODE_ADD_INITIAL_ACTOR 0x00002438
+#define BSAL_NODE_ADD_INITIAL_ACTORS 0x00004c19
+#define BSAL_NODE_ADD_INITIAL_ACTORS_REPLY 0x00003ad3
+#define BSAL_NODE_START 0x0000082c
+
 struct bsal_script;
 
 /*
@@ -31,6 +36,9 @@ struct bsal_node {
     struct bsal_worker_pool worker_pool;
     struct bsal_hash_table actor_names;
     struct bsal_vector initial_actors;
+    int received_initial_actors;
+    int ready;
+
     int started;
 
     struct bsal_script **scripts;
@@ -75,6 +83,8 @@ struct bsal_node {
 void bsal_node_init(struct bsal_node *node, int *argc, char ***argv);
 void bsal_node_destroy(struct bsal_node *node);
 void bsal_node_run(struct bsal_node *node);
+void bsal_node_start_initial_actor(struct bsal_node *node);
+
 int bsal_node_spawn_state(struct bsal_node *node, void *state,
                 struct bsal_script *script);
 int bsal_node_spawn(struct bsal_node *node, int script);
@@ -90,7 +100,6 @@ struct bsal_actor *bsal_node_get_actor_from_name(struct bsal_node *node,
 int bsal_node_name(struct bsal_node *node);
 int bsal_node_nodes(struct bsal_node *node);
 int bsal_node_actors(struct bsal_node *node);
-void bsal_node_set_initial_actor(struct bsal_node *node, int node_name, int actor);
 
 void bsal_node_set_supervisor(struct bsal_node *node, int name, int supervisor);
 
@@ -126,5 +135,12 @@ uint64_t bsal_node_get_counter(struct bsal_node *node, int counter);
 void bsal_node_increment_counter(struct bsal_node *node, int counter);
 
 void bsal_node_test_requests(struct bsal_node *node);
+
+void bsal_node_send_to_node(struct bsal_node *node, int destination,
+                struct bsal_message *message);
+void bsal_node_send_to_node_empty(struct bsal_node *node, int destination, int tag);
+int bsal_node_receive_system(struct bsal_node *node, struct bsal_message *message);
+void bsal_node_dispatch_message(struct bsal_node *node, struct bsal_message *message);
+void bsal_node_set_initial_actor(struct bsal_node *node, int node_name, int actor);
 
 #endif

@@ -58,7 +58,8 @@ void ring_receive(struct bsal_actor *actor, struct bsal_message *message)
     if (tag == BSAL_ACTOR_START) {
 
         bsal_vector_unpack(&ring1->spawners, buffer);
-        printf("actor %d BSAL_ACTOR_START\n", name);
+        printf("actor %d BSAL_ACTOR_START, %d spawners\n", name,
+                        bsal_vector_size(&ring1->spawners));
 
         bsal_actor_add_script(actor, SENDER_SCRIPT, &sender_script);
 

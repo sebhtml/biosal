@@ -51,9 +51,11 @@ void mock_receive(struct bsal_actor *actor, struct bsal_message *message)
 
     if (tag == BSAL_ACTOR_START) {
 
-        printf("BSAL_ACTOR_START\n");
-
         bsal_vector_unpack(&mock1->spawners, buffer);
+
+        printf("BSAL_ACTOR_START spawners: %d\n",
+                        bsal_vector_size(&mock1->spawners));
+
         bsal_actor_add_script(actor, BUDDY_SCRIPT, &buddy_script);
 
         /*mock_init(actor);*/

@@ -5,6 +5,10 @@
 #include <stdio.h>
 #include <string.h>
 
+/*
+#define BSAL_VECTOR_DEBUG
+*/
+
 void bsal_vector_init(struct bsal_vector *self, int element_size)
 {
     self->element_size = element_size;
@@ -145,6 +149,8 @@ void bsal_vector_unpack(struct bsal_vector *self, void *buffer)
     int i;
     void *value;
 
+    bsal_vector_destroy(self);
+
     offset = 0;
 
     bytes = sizeof(size);
@@ -156,7 +162,7 @@ void bsal_vector_unpack(struct bsal_vector *self, void *buffer)
     offset += bytes;
 
 #ifdef BSAL_VECTOR_DEBUG
-    printf("DEBUG size %d element_size %d\n", size, element_size);
+    printf("DEBUG bsal_vector_unpack size %d element_size %d\n", size, element_size);
 #endif
 
     value = malloc(element_size);
@@ -175,7 +181,7 @@ void bsal_vector_unpack(struct bsal_vector *self, void *buffer)
     value = NULL;
 
 #ifdef BSAL_VECTOR_DEBUG
-    printf("DEBUG unpack successful\n");
+    printf("DEBUG bsal_vector_unpack unpack successful\n");
 #endif
 }
 

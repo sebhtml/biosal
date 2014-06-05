@@ -9,9 +9,9 @@
 
 /*
 #define BSAL_NODE_DEBUG
-*/
 
-/*
+#define BSAL_NODE_DEBUG_LOOP
+#define BSAL_NODE_DEBUG_RECEIVE_SYSTEM
 #define BSAL_NODE_DEBUG_SPAWN
 */
 
@@ -37,6 +37,10 @@ void bsal_node_init(struct bsal_node *node, int *argc, char ***argv)
     srand(time(NULL));
 
     node->debug = 0;
+
+#ifdef BSAL_NODE_DEBUG_LOOP
+    node->debug = 1;
+#endif
 
     node->maximum_scripts = 1024;
     node->available_scripts = 0;
@@ -201,6 +205,8 @@ void bsal_node_init(struct bsal_node *node, int *argc, char ***argv)
 
     bsal_vector_init(&node->initial_actors, sizeof(int));
     bsal_vector_resize(&node->initial_actors, bsal_node_nodes(node));
+    node->received_initial_actors = 0;
+    node->ready = 0;
 
     pthread_spin_init(&node->death_lock, 0);
     pthread_spin_init(&node->spawn_lock, 0);
@@ -322,6 +328,7 @@ int bsal_node_spawn(struct bsal_node *node, int script)
     struct bsal_script *script1;
     int size;
     void *state;
+    int name;
 
     /* in the current implementation, there can only be one initial
      * actor on each node
@@ -340,7 +347,17 @@ int bsal_node_spawn(struct bsal_node *node, int script)
 
     state = malloc(size);
 
-    return bsal_node_spawn_state(node, state, script1);
+    name = bsal_node_spawn_state(node, state, script1);
+
+    /* send the initial actor to the master node
+     */
+    if (bsal_node_actors(node) == 1) {
+        struct bsal_message message;
+        bsal_message_init(&message, BSAL_NODE_ADD_INITIAL_ACTOR, sizeof(name), &name);
+        bsal_node_send_to_node(node, 0, &message);
+    }
+
+    return name;
 }
 
 int bsal_node_spawn_state(struct bsal_node *node, void *state,
@@ -361,15 +378,10 @@ int bsal_node_spawn_state(struct bsal_node *node, void *state,
     actor = node->actors + index;
     bsal_actor_init(actor, state, script);
 
-    /* the first actor on node i is named i */
-    name = index + bsal_node_name(node);
-
-    /* other actors have random names to enforce
+    /* actors have random names to enforce
      * the acquaintance paradigm
      */
-    if (node->actor_count > 0) {
-        name = bsal_node_assign_name(node);
-    }
+    name = bsal_node_assign_name(node);
 
     bsal_actor_set_name(actor, name);
 
@@ -398,10 +410,15 @@ int bsal_node_assign_name(struct bsal_node *node)
     struct bsal_actor *actor;
     int node_name;
     int difference;
+    int nodes;
 
 #ifdef BSAL_NODE_DEBUG
     printf("DEBUG bsal_node_assign_name\n");
 #endif
+
+    if (node->actor_count == 0) {
+        return bsal_node_name(node);
+    }
 
     node_name = bsal_node_name(node);
     actor = NULL;
@@ -414,12 +431,21 @@ int bsal_node_assign_name(struct bsal_node *node)
     printf("DEBUG assigning name\n");
 #endif
 
+    nodes = bsal_node_nodes(node);
+
     while (actor != NULL || name < 0) {
         name = rand() % range + minimal_value;
 
         difference = node_name - name % node->nodes;
         /* add the difference */
         name += difference;
+
+        /* disallow names between 0 and nodes - 1
+         */
+        if (name < nodes) {
+            continue;
+        }
+
         actor = bsal_node_get_actor_from_name(node, name);
 
         /*printf("DEBUG trying %d... %p\n", name, (void *)actor);*/
@@ -441,19 +467,15 @@ void bsal_node_set_initial_actor(struct bsal_node *node, int node_name, int acto
 
     bucket = bsal_vector_at(&node->initial_actors, node_name);
     *bucket = actor;
+
+#ifdef BSAL_NODE_DEBUG_INITIAL_ACTORS
+    printf("DEBUG bsal_node_set_initial_actor node %d actor %d, %d actors\n",
+                    node_name, actor, bsal_vector_size(&node->initial_actors));
+#endif
 }
 
 void bsal_node_run(struct bsal_node *node)
 {
-    int i;
-    int actors;
-    struct bsal_actor *actor;
-    int name;
-    int source;
-    struct bsal_message message;
-    int bytes;
-    void *buffer;
-
     node->started = 1;
 
     if (node->workers_in_threads) {
@@ -471,15 +493,41 @@ void bsal_node_run(struct bsal_node *node)
         bsal_node_start_send_thread(node);
     }
 
-    actors = node->actor_count;
+    bsal_node_run_loop(node);
 
-    /* send the initial actor names to each initial actor
-     */
-    for (i = 0; i < bsal_node_nodes(node); i++) {
-        bsal_node_set_initial_actor(node, i, i);
+#ifdef BSAL_NODE_DEBUG
+    printf("BSAL_NODE_DEBUG after loop in bsal_node_run\n");
+#endif
+
+    if (node->workers_in_threads) {
+        bsal_worker_pool_stop(&node->worker_pool);
     }
 
+    if (node->send_in_thread) {
+        pthread_join(node->thread, NULL);
+    }
+}
+
+void bsal_node_start_initial_actor(struct bsal_node *node)
+{
+    int actors;
+    int bytes;
+    void *buffer;
+    struct bsal_actor *actor;
+    int source;
+    int i;
+    int name;
+    struct bsal_message message;
+
+    actors = node->actor_count;
+
     bytes = bsal_vector_pack_size(&node->initial_actors);
+
+#ifdef BSAL_NODE_DEBUG_INITIAL_ACTORS
+    printf("DEBUG packing %d initial actors\n",
+                    bsal_vector_size(&node->initial_actors));
+#endif
+
     buffer = malloc(bytes);
     bsal_vector_pack(&node->initial_actors, buffer);
 
@@ -498,20 +546,6 @@ void bsal_node_run(struct bsal_node *node)
         bsal_node_send(node, &message);
 
         bsal_message_destroy(&message);
-    }
-
-    bsal_node_run_loop(node);
-
-#ifdef BSAL_NODE_DEBUG
-    printf("BSAL_NODE_DEBUG after loop in bsal_node_run\n");
-#endif
-
-    if (node->workers_in_threads) {
-        bsal_worker_pool_stop(&node->worker_pool);
-    }
-
-    if (node->send_in_thread) {
-        pthread_join(node->thread, NULL);
     }
 }
 
@@ -558,7 +592,7 @@ void bsal_node_run_loop(struct bsal_node *node)
 
     while (bsal_node_running(node)) {
 
-#ifdef BSAL_NODE_DEBUG
+#ifdef BSAL_NODE_DEBUG_LOOP1
         if (node->debug) {
             printf("DEBUG node/%d is running\n",
                             bsal_node_name(node));
@@ -570,7 +604,7 @@ void bsal_node_run_loop(struct bsal_node *node)
          * there is a message received.
          */
         if (bsal_node_receive(node, &message)) {
-            bsal_node_create_work(node, &message);
+            bsal_node_dispatch_message(node, &message);
         }
 
         /* the one worker works here if there is only
@@ -707,6 +741,118 @@ int bsal_node_receive(struct bsal_node *node, struct bsal_message *message)
     return 1;
 }
 
+int bsal_node_receive_system(struct bsal_node *node, struct bsal_message *message)
+{
+    int tag;
+    void *buffer;
+    int name;
+    int bytes;
+    int i;
+    int nodes;
+    int source;
+    struct bsal_message new_message;
+
+#ifdef BSAL_NODE_DEBUG_RECEIVE_SYSTEM
+    int count;
+
+    printf("DEBUG bsal_node_receive_system\n");
+#endif
+
+    tag = bsal_message_tag(message);
+
+    if (tag == BSAL_NODE_ADD_INITIAL_ACTOR) {
+
+#ifdef BSAL_NODE_DEBUG_RECEIVE_SYSTEM
+        printf("DEBUG BSAL_NODE_ADD_INITIAL_ACTOR received\n");
+#endif
+
+        source = bsal_message_source(message);
+        buffer = bsal_message_buffer(message);
+        name = *(int *)buffer;
+        bsal_node_set_initial_actor(node, source, name);
+
+        nodes = bsal_node_nodes(node);
+        node->received_initial_actors++;
+
+        if (node->received_initial_actors == nodes) {
+
+#ifdef BSAL_NODE_DEBUG_RECEIVE_SYSTEM
+            printf("DEBUG send BSAL_NODE_ADD_INITIAL_ACTOR to all nodes\n");
+#endif
+
+            bytes = bsal_vector_pack_size(&node->initial_actors);
+            buffer = malloc(bytes);
+            bsal_vector_pack(&node->initial_actors, buffer);
+
+            bsal_message_init(&new_message, BSAL_NODE_ADD_INITIAL_ACTORS, bytes, buffer);
+
+            for (i = 0; i < nodes; i++) {
+                bsal_node_send_to_node(node, i, &new_message);
+            }
+
+            free(buffer);
+        }
+
+        return 1;
+
+    } else if (tag == BSAL_NODE_ADD_INITIAL_ACTORS) {
+
+#ifdef BSAL_NODE_DEBUG_RECEIVE_SYSTEM
+        printf("DEBUG BSAL_NODE_ADD_INITIAL_ACTORS received\n");
+#endif
+
+        buffer = bsal_message_buffer(message);
+        source = bsal_message_source_node(message);
+        bsal_vector_unpack(&node->initial_actors, buffer);
+
+#ifdef BSAL_NODE_DEBUG_RECEIVE_SYSTEM
+        count = bsal_message_count(message);
+        printf("DEBUG buffer size: %d, unpacked %d actor names from node/%d\n",
+                        count, bsal_vector_size(&node->initial_actors),
+                        source);
+#endif
+
+        bsal_node_send_to_node_empty(node, source, BSAL_NODE_ADD_INITIAL_ACTORS_REPLY);
+        return 1;
+
+    } else if (tag == BSAL_NODE_ADD_INITIAL_ACTORS_REPLY) {
+
+        node->ready++;
+        nodes = bsal_node_nodes(node);
+        source = bsal_message_source_node(message);
+
+#ifdef BSAL_NODE_DEBUG_RECEIVE_SYSTEM
+        printf("node/%d DEBUG BSAL_NODE_ADD_INITIAL_ACTORS_REPLY received from"
+                        " %d, %d/%d ready\n", bsal_node_name(node),
+                        source, node->ready, nodes);
+#endif
+        if (node->ready == nodes) {
+
+            for (i = 0; i < nodes; i++) {
+                bsal_node_send_to_node_empty(node, i, BSAL_NODE_START);
+            }
+        }
+
+        return 1;
+
+    } else if (tag == BSAL_NODE_START) {
+
+#ifdef BSAL_NODE_DEBUG_RECEIVE_SYSTEM
+        printf("DEBUG node %d starts its initial actor\n",
+                        bsal_node_name(node));
+#endif
+
+        /* send BSAL_ACTOR_START to initial actor
+         * on this node
+         */
+        bsal_node_start_initial_actor(node);
+
+        return 1;
+    }
+
+    return 0;
+}
+
 void bsal_node_resolve(struct bsal_node *node, struct bsal_message *message)
 {
     int actor;
@@ -719,6 +865,51 @@ void bsal_node_resolve(struct bsal_node *node, struct bsal_message *message)
     actor = bsal_message_destination(message);
     node_name = bsal_node_actor_node(node, actor);
     bsal_message_set_destination_node(message, node_name);
+}
+
+void bsal_node_send_to_node_empty(struct bsal_node *node, int destination, int tag)
+{
+    struct bsal_message message;
+    bsal_message_init(&message, tag, 0, NULL);
+    bsal_node_send_to_node(node, destination, &message);
+}
+
+void bsal_node_send_to_node(struct bsal_node *node, int destination,
+                struct bsal_message *message)
+{
+    void *new_buffer;
+    int count;
+    int new_count;
+    void *buffer;
+    struct bsal_message new_message;
+    int tag;
+
+    tag = bsal_message_tag(message);
+    count = bsal_message_count(message);
+    buffer = bsal_message_buffer(message);
+    new_count = sizeof(int) * 2 + count;
+
+    /* the runtime system always needs at least
+     * 2 int in the buffer for actor names
+     * Since we are sending messages between
+     * nodes, these names are faked...
+     */
+    new_buffer = malloc(new_count);
+    memcpy(new_buffer, buffer, count);
+
+    /* the metadata size is added by the runtime
+     * this is why the value is count and not new_count
+     */
+    bsal_message_init(&new_message, tag, count, new_buffer);
+    bsal_message_set_source(&new_message, bsal_node_name(node));
+    bsal_message_set_destination(&new_message, destination);
+    bsal_message_write_metadata(&new_message);
+
+#ifdef BSAL_NODE_DEBUG
+    printf("DEBUG bsal_node_send_to_node %d\n", destination);
+#endif
+
+    bsal_node_send(node, &new_message);
 }
 
 /* \see http://www.mpich.org/static/docs/v3.1/www3/MPI_Isend.html */
@@ -769,7 +960,7 @@ void bsal_node_send(struct bsal_node *node, struct bsal_message *message)
 
     if (node_name == node->name) {
         /* dispatch locally */
-        bsal_node_create_work(node, message);
+        bsal_node_dispatch_message(node, message);
 
 #ifdef BSAL_NODE_DEBUG_20140601_8
         if (bsal_message_tag(message) == 1100) {
@@ -818,6 +1009,18 @@ struct bsal_actor *bsal_node_get_actor_from_name(struct bsal_node *node,
     actor = node->actors + index;
 
     return actor;
+}
+
+void bsal_node_dispatch_message(struct bsal_node *node, struct bsal_message *message)
+{
+    if (bsal_node_receive_system(node, message)) {
+        return;
+    }
+
+    /* otherwise, create work and dispatch work to a worker via
+     * the worker pool
+     */
+    bsal_node_create_work(node, message);
 }
 
 void bsal_node_create_work(struct bsal_node *node, struct bsal_message *message)
