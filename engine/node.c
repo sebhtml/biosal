@@ -38,7 +38,7 @@ void bsal_node_init(struct bsal_node *node, int *argc, char ***argv)
     int detected;
     int bytes;
 
-    srand(time(NULL));
+    srand(time(NULL) * getpid());
 
     node->debug = 0;
 
