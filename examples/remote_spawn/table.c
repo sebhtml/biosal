@@ -54,12 +54,12 @@ void table_receive(struct bsal_actor *actor, struct bsal_message *message)
 
         bsal_vector_unpack(&table1->spawners, buffer);
 
-        remote = name + 1;
+        remote = bsal_vector_index_of(&table1->spawners, &name) + 1;
         remote %= bsal_vector_size(&table1->spawners);
 
         script = TABLE_SCRIPT;
         bsal_message_init(&spawn_message, BSAL_ACTOR_SPAWN, sizeof(script), &script);
-        bsal_actor_send(actor, remote, &spawn_message);
+        bsal_actor_send(actor, *(int *)bsal_vector_at(&table1->spawners, remote), &spawn_message);
 
         /*
         printf("sending notification\n");
@@ -78,7 +78,7 @@ void table_receive(struct bsal_actor *actor, struct bsal_message *message)
         bsal_actor_send(actor, new_actor, message);
 
         bsal_message_init(message, TABLE_NOTIFY, 0, NULL);
-        bsal_actor_send(actor, 0, message);
+        bsal_actor_send(actor, bsal_vector_at_as_int(&table1->spawners, 0), message);
 
     } else if (tag == TABLE_DIE2) {
 

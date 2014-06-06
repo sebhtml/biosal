@@ -210,3 +210,16 @@ int bsal_vector_index_of(struct bsal_vector *self, void *data)
 
     return -1;
 }
+
+int bsal_vector_at_as_int(struct bsal_vector *self, int index)
+{
+    int *bucket;
+
+    bucket = bsal_vector_at(self, index);
+
+    if (bucket == NULL) {
+        return -1;
+    }
+
+    return *bucket;
+}
