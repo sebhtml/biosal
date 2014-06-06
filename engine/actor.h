@@ -6,6 +6,8 @@
 #include "message.h"
 #include "script.h"
 
+#include <structures/vector.h>
+
 #include <pthread.h>
 #include <stdint.h>
 
@@ -103,13 +105,13 @@ int bsal_actor_send_system(struct bsal_actor *actor, int name, struct bsal_messa
 /* Send a message to a range of actors.
  * The implementation uses a binomial tree.
  */
-void bsal_actor_send_range(struct bsal_actor *actor, int first, int last,
+void bsal_actor_send_range(struct bsal_actor *actor, struct bsal_vector *actors,
                 struct bsal_message *message);
-void bsal_actor_send_range_standard(struct bsal_actor *actor, int first, int last,
+void bsal_actor_send_range_standard(struct bsal_actor *actor, struct bsal_vector *actors,
                 struct bsal_message *message);
-void bsal_actor_send_range_standard_empty(struct bsal_actor *actor, int first, int last,
+void bsal_actor_send_range_standard_empty(struct bsal_actor *actor, struct bsal_vector *actors,
                 int tag);
-void bsal_actor_send_range_binomial_tree(struct bsal_actor *actor, int first, int last,
+void bsal_actor_send_range_binomial_tree(struct bsal_actor *actor, struct bsal_vector *actors,
                 struct bsal_message *message);
 
 void bsal_actor_receive(struct bsal_actor *actor, struct bsal_message *message);
@@ -154,7 +156,7 @@ void bsal_actor_receive_synchronize(struct bsal_actor *actor,
 void bsal_actor_receive_synchronize_reply(struct bsal_actor *actor,
                 struct bsal_message *message);
 int bsal_actor_synchronization_completed(struct bsal_actor *actor);
-void bsal_actor_synchronize(struct bsal_actor *actor, int first_actor, int last_actor);
+void bsal_actor_synchronize(struct bsal_actor *actor, struct bsal_vector *actors);
 
 void bsal_actor_receive_proxy_message(struct bsal_actor *actor,
                 struct bsal_message *message);

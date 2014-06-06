@@ -15,6 +15,8 @@
 #define BSAL_ACTOR_DEBUG_SYNC
 */
 
+#define BSAL_ACTOR_DEBUG_BINOMIAL_TREE
+
 void bsal_actor_init(struct bsal_actor *actor, void *state,
                 struct bsal_script *script)
 {
@@ -469,12 +471,12 @@ void bsal_actor_receive_synchronize_reply(struct bsal_actor *actor,
     }
 }
 
-void bsal_actor_synchronize(struct bsal_actor *actor, int first, int last)
+void bsal_actor_synchronize(struct bsal_actor *actor, struct bsal_vector *actors)
 {
     struct bsal_message message;
 
     actor->synchronization_started = 1;
-    actor->synchronization_expected_responses = last - first + 1;
+    actor->synchronization_expected_responses = bsal_vector_size(actors);
     actor->synchronization_responses = 0;
 
     /* emit synchronization
@@ -487,7 +489,9 @@ void bsal_actor_synchronize(struct bsal_actor *actor, int first, int last)
 #endif
 
     bsal_message_init(&message, BSAL_ACTOR_SYNCHRONIZE, 0, NULL);
-    bsal_actor_send_range(actor, first, last, &message);
+
+    /* TODO bsal_actor_send_range_binomial_tree is broken */
+    bsal_actor_send_range_standard(actor, actors, &message);
     bsal_message_destroy(&message);
 }
 
@@ -514,8 +518,6 @@ int bsal_actor_synchronization_completed(struct bsal_actor *actor)
 void bsal_actor_receive_binomial_tree_send(struct bsal_actor *actor, struct bsal_message *message)
 {
     int real_tag;
-    int first;
-    int last;
     void *buffer;
     int count;
     int amount;
@@ -523,15 +525,21 @@ void bsal_actor_receive_binomial_tree_send(struct bsal_actor *actor, struct bsal
     int limit;
     int real_source;
     int offset;
+    struct bsal_vector actors;
+    int magic_offset;
 
     limit = 42;
     count = bsal_message_count(message);
     buffer = bsal_message_buffer(message);
-    new_count = count;
+
+    offset = count - 1 - sizeof(magic_offset);
+
+    magic_offset = *(int *)(char *)buffer + offset;
+    bsal_vector_unpack(&actors, (char *)buffer + magic_offset);
+
+    new_count = magic_offset;
     new_count -= sizeof(real_source);
     new_count -= sizeof(real_tag);
-    new_count -= sizeof(first);
-    new_count -= sizeof(last);
 
     offset = new_count;
 
@@ -539,10 +547,6 @@ void bsal_actor_receive_binomial_tree_send(struct bsal_actor *actor, struct bsal
     offset += sizeof(real_source);
     real_tag = *(int *)((char *)buffer + offset);
     offset += sizeof(real_tag);
-    first = *(int *)((char *)buffer + offset);
-    offset += sizeof(first);
-    last = *(int *)((char *)buffer + offset);
-    offset += sizeof(last);
 
 #ifdef BSAL_ACTOR_DEBUG
     printf("DEBUG78 actor %i received BSAL_ACTOR_BINOMIAL_TREE_SEND "
@@ -551,15 +555,17 @@ void bsal_actor_receive_binomial_tree_send(struct bsal_actor *actor, struct bsal
                     last);
 #endif
 
-    amount = last - first + 1;
+    amount = bsal_vector_size(&actors);
 
     bsal_message_init(message, real_tag, new_count, buffer);
 
     if (amount < limit) {
-        bsal_actor_send_range_standard(actor, first, last, message);
+        bsal_actor_send_range_standard(actor, &actors, message);
     } else {
-        bsal_actor_send_range_binomial_tree(actor, first, last, message);
+        bsal_actor_send_range_binomial_tree(actor, &actors, message);
     }
+
+    bsal_vector_destroy(&actors);
 }
 
 int bsal_actor_unpack_proxy_message(struct bsal_actor *actor,
@@ -626,7 +632,7 @@ void bsal_actor_pack_proxy_message(struct bsal_actor *actor,
     bsal_message_set_source(message, real_source);
 }
 
-void bsal_actor_send_range(struct bsal_actor *actor, int first, int last,
+void bsal_actor_send_range(struct bsal_actor *actor, struct bsal_vector *actors,
                 struct bsal_message *message)
 {
     int real_source;
@@ -638,13 +644,19 @@ void bsal_actor_send_range(struct bsal_actor *actor, int first, int last,
     */
 
     bsal_actor_pack_proxy_message(actor, real_source, message);
-    bsal_actor_send_range_binomial_tree(actor, first, last, message);
+    bsal_actor_send_range_binomial_tree(actor, actors, message);
 }
 
-void bsal_actor_send_range_standard(struct bsal_actor *actor, int first, int last,
+void bsal_actor_send_range_standard(struct bsal_actor *actor, struct bsal_vector *actors,
                 struct bsal_message *message)
 {
     int i;
+    int first;
+    int last;
+    int the_actor;
+
+    first = 0;
+    last = bsal_vector_size(actors) - 1;
 
 #ifdef BSAL_ACTOR_DEBUG1
     printf("DEBUG bsal_actor_send_range_standard %i-%i\n",
@@ -659,13 +671,13 @@ void bsal_actor_send_range_standard(struct bsal_actor *actor, int first, int las
         printf("DEBUG sending %d to %d\n",
                        bsal_message_tag(message), i);
 #endif
-
-        bsal_actor_send(actor, i, message);
+        the_actor = *(int *)bsal_vector_at(actors, i);
+        bsal_actor_send(actor, the_actor, message);
         i++;
     }
 }
 
-void bsal_actor_send_range_binomial_tree(struct bsal_actor *actor, int first, int last,
+void bsal_actor_send_range_binomial_tree(struct bsal_actor *actor, struct bsal_vector *actors,
                 struct bsal_message *message)
 {
     int middle;
@@ -682,8 +694,27 @@ void bsal_actor_send_range_binomial_tree(struct bsal_actor *actor, int first, in
     int new_count;
     int source;
     int offset;
+    int first;
+    int last;
+    struct bsal_vector left_part;
+    struct bsal_vector right_part;
+    int left_actor;
+    int right_actor;
+    struct bsal_message new_message;
+    int magic_offset;
+    int limit;
 
-#ifdef BSAL_ACTOR_DEBUG
+    limit = 0;
+
+    if (bsal_vector_size(actors) < limit) {
+        bsal_actor_send_range_standard(actor, actors, message);
+        return;
+    }
+
+    bsal_vector_init(&left_part, sizeof(int));
+    bsal_vector_init(&right_part, sizeof(int));
+
+#ifdef BSAL_ACTOR_DEBUG_BINOMIAL_TREE
     int name;
 
     name = bsal_actor_name(actor);
@@ -692,9 +723,11 @@ void bsal_actor_send_range_binomial_tree(struct bsal_actor *actor, int first, in
     source = bsal_actor_name(actor);
     bsal_message_set_source(message, source);
 
+    first = 0;
+    last = bsal_vector_size(actors) - 1;
     middle = first + (last - first) / 2;
 
-#ifdef BSAL_ACTOR_DEBUG
+#ifdef BSAL_ACTOR_DEBUG_BINOMIAL_TREE
     printf("DEBUG %i bsal_actor_send_range_binomial_tree\n", name);
     printf("DEBUG %i first: %i last: %i middle: %i\n", name, first, last, middle);
 #endif
@@ -710,68 +743,91 @@ void bsal_actor_send_range_binomial_tree(struct bsal_actor *actor, int first, in
     buffer = bsal_message_buffer(message);
     count = bsal_message_count(message);
 
-    /* TODO use slab allocator */
-    new_count = count + sizeof(source) + sizeof(tag) + sizeof(first1) + sizeof(last1);
-    new_buffer = malloc(new_count);
+    magic_offset = count + sizeof(source) + sizeof(tag);
 
-#ifdef BSAL_ACTOR_DEBUG
-    printf("DEBUG12 malloc %p (send_binomial_range)\n",
+    if (bsal_vector_size(&left_part) > 0) {
+        bsal_vector_copy_range(actors, first1, last1, &left_part);
+
+        /* TODO use slab allocator */
+        new_count = count + sizeof(source) + sizeof(tag) + bsal_vector_pack_size(&left_part) + sizeof(magic_offset);
+        new_buffer = malloc(new_count);
+
+#ifdef BSAL_ACTOR_DEBUG_BINOMIAL_TREE
+        printf("DEBUG12 malloc %p (send_binomial_range)\n",
                     new_buffer);
 #endif
 
-    memcpy(new_buffer, buffer, count);
+        memcpy(new_buffer, buffer, count);
 
-    /* send to the left actor
-     */
-    offset = count;
-    memcpy((char *)new_buffer + offset, &source, sizeof(source));
-    offset += sizeof(source);
-    memcpy((char *)new_buffer + offset, &tag, sizeof(tag));
-    offset += sizeof(tag);
-    memcpy((char *)new_buffer + offset, &first1, sizeof(first1));
-    offset += sizeof(first1);
-    memcpy((char *)new_buffer + offset, &last1, sizeof(last1));
-    offset += sizeof(last1);
+        /* send to the left actor
+        */
+        offset = count;
+        memcpy((char *)new_buffer + offset, &source, sizeof(source));
+        offset += sizeof(source);
+        memcpy((char *)new_buffer + offset, &tag, sizeof(tag));
+        offset += sizeof(tag);
+        bsal_vector_pack(&left_part, (char *)new_buffer + offset);
+        offset += bsal_vector_pack_size(&left_part);
+        memcpy((char *)new_buffer + offset, &magic_offset, sizeof(magic_offset));
+        offset += sizeof(magic_offset);
 
-    bsal_message_init(message, BSAL_ACTOR_BINOMIAL_TREE_SEND, new_count, new_buffer);
+        bsal_message_init(&new_message, BSAL_ACTOR_BINOMIAL_TREE_SEND, new_count, new_buffer);
 
-#ifdef BSAL_ACTOR_DEBUG
-    printf("DEBUG111111 actor %i sending BSAL_ACTOR_BINOMIAL_TREE_SEND to %i, range is %i-%i\n",
-                    name, middle1, first1, last1);
-#endif
+    #ifdef BSAL_ACTOR_DEBUG_BINOMIAL_TREE
+        printf("DEBUG111111 actor %i sending BSAL_ACTOR_BINOMIAL_TREE_SEND to %i, range is %i-%i\n",
+                        name, middle1, first1, last1);
+    #endif
 
-    bsal_actor_send(actor, middle1, message);
+        printf("DEBUG left part size: %d\n", bsal_vector_size(&left_part));
+
+        left_actor = *(int *)bsal_vector_at(&left_part, middle1);
+        bsal_actor_send(actor, left_actor, &new_message);
+
+        /* restore the buffer for the user */
+        free(new_buffer);
+        bsal_vector_destroy(&left_part);
+    }
 
     /* send to the right actor
      */
-    offset = count;
-    memcpy((char *)new_buffer + offset, &source, sizeof(source));
-    offset += sizeof(source);
-    memcpy((char *)new_buffer + offset, &tag, sizeof(tag));
-    offset += sizeof(tag);
-    memcpy((char *)new_buffer + offset, &first2, sizeof(first2));
-    offset += sizeof(first2);
-    memcpy((char *)new_buffer + offset, &last2, sizeof(last2));
-    offset += sizeof(last2);
 
-#ifdef BSAL_ACTOR_DEBUG
-    printf("DEBUG78 %i source: %i tag: %i BSAL_ACTOR_BINOMIAL_TREE_SEND\n",
+    bsal_vector_copy_range(actors, first2, last2, &right_part);
+
+    if (bsal_vector_size(&right_part) > 0) {
+
+        new_count = count + sizeof(source) + sizeof(tag) + bsal_vector_pack_size(&right_part) + sizeof(magic_offset);
+        new_buffer = malloc(new_count);
+
+        memcpy(new_buffer, buffer, count);
+        offset = count;
+        memcpy((char *)new_buffer + offset, &source, sizeof(source));
+        offset += sizeof(source);
+        memcpy((char *)new_buffer + offset, &tag, sizeof(tag));
+        offset += sizeof(tag);
+        bsal_vector_pack(&right_part, (char *)new_buffer + offset);
+        offset += bsal_vector_pack_size(&right_part);
+        memcpy((char *)new_buffer + offset, &magic_offset, sizeof(magic_offset));
+        offset += sizeof(magic_offset);
+
+#ifdef BSAL_ACTOR_DEBUG_BINOMIAL_TREE2
+        printf("DEBUG78 %i source: %i tag: %i BSAL_ACTOR_BINOMIAL_TREE_SEND\n",
                     name, source, tag);
 #endif
 
-    bsal_message_init(message, BSAL_ACTOR_BINOMIAL_TREE_SEND, new_count, new_buffer);
+        bsal_message_init(&new_message, BSAL_ACTOR_BINOMIAL_TREE_SEND, new_count, new_buffer);
 
-#ifdef BSAL_ACTOR_DEBUG
-    printf("DEBUG %i sending BSAL_ACTOR_BINOMIAL_TREE_SEND to %i, range is %i-%i\n",
+#ifdef BSAL_ACTOR_DEBUG_BINOMIAL_TREE
+        printf("DEBUG %i sending BSAL_ACTOR_BINOMIAL_TREE_SEND to %i, range is %i-%i\n",
                     name, middle2, first2, last2);
 #endif
 
-    bsal_actor_send(actor, middle2, message);
+        right_actor = *(int *)bsal_vector_at(&right_part, middle2);
+        bsal_actor_send(actor, right_actor, &new_message);
 
-    /* restore the buffer for the user */
-    free(new_buffer);
-
-    bsal_message_set_buffer(message, buffer);
+        bsal_vector_destroy(&right_part);
+        free(new_buffer);
+        new_buffer = NULL;
+    }
 }
 
 int bsal_actor_script(struct bsal_actor *actor)
@@ -812,13 +868,13 @@ void bsal_actor_send_to_self(struct bsal_actor *actor, struct bsal_message *mess
     bsal_actor_send(actor, bsal_actor_name(actor), message);
 }
 
-void bsal_actor_send_range_standard_empty(struct bsal_actor *actor, int first, int last,
+void bsal_actor_send_range_standard_empty(struct bsal_actor *actor, struct bsal_vector *actors,
                 int tag)
 {
     struct bsal_message message;
 
     bsal_message_init(&message, tag, 0, NULL);
-    bsal_actor_send_range_standard(actor, first, last, &message);
+    bsal_actor_send_range_standard(actor, actors, &message);
 }
 
 void bsal_actor_send_to_supervisor(struct bsal_actor *actor, struct bsal_message *message)

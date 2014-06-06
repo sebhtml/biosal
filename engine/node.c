@@ -15,6 +15,8 @@
 #define BSAL_NODE_DEBUG_SPAWN
 */
 
+#define BSAL_NODE_SIMPLE_INITIAL_ACTOR_NAMES
+
 /*
  * \see http://www.mpich.org/static/docs/v3.1/www3/MPI_Comm_dup.html
  * \see http://www.dartmouth.edu/~rc/classes/intro_mpi/hello_world_ex.html
@@ -381,7 +383,7 @@ int bsal_node_spawn_state(struct bsal_node *node, void *state,
     /* actors have random names to enforce
      * the acquaintance paradigm
      */
-    name = bsal_node_assign_name(node);
+    name = bsal_node_generate_name(node);
 
     bsal_actor_set_name(actor, name);
 
@@ -401,7 +403,7 @@ int bsal_node_spawn_state(struct bsal_node *node, void *state,
     return name;
 }
 
-int bsal_node_assign_name(struct bsal_node *node)
+int bsal_node_generate_name(struct bsal_node *node)
 {
     int minimal_value;
     int maximum_value;
@@ -413,12 +415,14 @@ int bsal_node_assign_name(struct bsal_node *node)
     int nodes;
 
 #ifdef BSAL_NODE_DEBUG
-    printf("DEBUG bsal_node_assign_name\n");
+    printf("DEBUG bsal_node_generate_name\n");
 #endif
 
+#ifdef BSAL_NODE_SIMPLE_INITIAL_ACTOR_NAMES
     if (node->actor_count == 0) {
         return bsal_node_name(node);
     }
+#endif
 
     node_name = bsal_node_name(node);
     actor = NULL;

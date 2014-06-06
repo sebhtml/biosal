@@ -78,7 +78,7 @@ void root_receive(struct bsal_actor *actor, struct bsal_message *message)
             printf("is king\n");
             root1->controller = bsal_actor_spawn(actor, BSAL_INPUT_CONTROLLER_SCRIPT);
             printf("actor %d spawned controller %d\n", name, root1->controller);
-            bsal_actor_synchronize(actor, 0, bsal_vector_size(&root1->spawners) - 1);
+            bsal_actor_synchronize(actor, &root1->spawners);
             printf("actor %d synchronizes\n", name);
         }
 
@@ -179,7 +179,7 @@ void root_receive(struct bsal_actor *actor, struct bsal_message *message)
 
         printf("actor %d stops all other actors\n", name);
 
-        bsal_actor_send_range_standard_empty(actor, 0, bsal_vector_size(&root1->spawners) - 1, ROOT_DIE);
+        bsal_actor_send_range_standard_empty(actor, &root1->spawners, ROOT_DIE);
 
     } else if (tag == ROOT_DIE) {
 

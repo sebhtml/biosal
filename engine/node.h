@@ -90,7 +90,7 @@ int bsal_node_spawn_state(struct bsal_node *node, void *state,
 int bsal_node_spawn(struct bsal_node *node, int script);
 void bsal_node_send(struct bsal_node *node, struct bsal_message *message);
 
-int bsal_node_assign_name(struct bsal_node *node);
+int bsal_node_generate_name(struct bsal_node *node);
 
 int bsal_node_actor_node(struct bsal_node *node, int name);
 int bsal_node_actor_index(struct bsal_node *node, int name);

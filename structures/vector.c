@@ -185,3 +185,12 @@ void bsal_vector_unpack(struct bsal_vector *self, void *buffer)
 #endif
 }
 
+void bsal_vector_copy_range(struct bsal_vector *self, int first, int last, struct bsal_vector *other)
+{
+    int i;
+
+    for (i = first; i <= last; i++) {
+
+        bsal_vector_push_back(other, bsal_vector_at(self, i));
+    }
+}
