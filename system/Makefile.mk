@@ -1,0 +1,2 @@
+
+SYSTEM = system/lock.o

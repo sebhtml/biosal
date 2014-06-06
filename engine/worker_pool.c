@@ -175,7 +175,7 @@ void bsal_worker_pool_schedule_work(struct bsal_worker_pool *pool, struct bsal_w
 
     worker = bsal_worker_pool_select_worker_worker_for_work(pool, work);
 
-    /* bsal_worker_push_message use a spinlock to spin fast ! */
+    /* bsal_worker_push_message use a lock */
     bsal_worker_push_work(worker, work);
 }
 

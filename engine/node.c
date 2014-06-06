@@ -224,9 +224,9 @@ void bsal_node_init(struct bsal_node *node, int *argc, char ***argv)
     node->received_initial_actors = 0;
     node->ready = 0;
 
-    pthread_spin_init(&node->death_lock, 0);
-    pthread_spin_init(&node->spawn_lock, 0);
-    pthread_spin_init(&node->script_lock, 0);
+    bsal_lock_init(&node->death_lock);
+    bsal_lock_init(&node->spawn_lock);
+    bsal_lock_init(&node->script_lock);
 
     bsal_fifo_init(&node->active_buffers, 64, sizeof(struct bsal_active_buffer));
     bsal_fifo_init(&node->dead_indices, 64, sizeof(int));
@@ -241,9 +241,9 @@ void bsal_node_destroy(struct bsal_node *node)
     bsal_hash_table_destroy(&node->actor_names);
     bsal_vector_destroy(&node->initial_actors);
 
-    pthread_spin_destroy(&node->spawn_lock);
-    pthread_spin_destroy(&node->death_lock);
-    pthread_spin_destroy(&node->script_lock);
+    bsal_lock_destroy(&node->spawn_lock);
+    bsal_lock_destroy(&node->death_lock);
+    bsal_lock_destroy(&node->script_lock);
 
     bsal_vector_destroy(&node->actors);
 
@@ -387,7 +387,7 @@ int bsal_node_spawn_state(struct bsal_node *node, void *state,
     printf("DEBUG bsal_node_spawn_state\n");
 #endif
 
-    pthread_spin_lock(&node->spawn_lock);
+    bsal_lock_lock(&node->spawn_lock);
 
     /* add an actor in the vector of actors
      */
@@ -413,7 +413,7 @@ int bsal_node_spawn_state(struct bsal_node *node, void *state,
 
     node->alive_actors++;
 
-    pthread_spin_unlock(&node->spawn_lock);
+    bsal_lock_unlock(&node->spawn_lock);
 
     return name;
 }
@@ -642,7 +642,7 @@ void bsal_node_run_loop(struct bsal_node *node)
 #endif
 
         /* pull message from network and assign the message to a thread.
-         * this code path will call spin_lock if
+         * this code path will call lock if
          * there is a message received.
          */
         if (bsal_node_receive(node, &message)) {
@@ -705,7 +705,7 @@ void bsal_node_send_message(struct bsal_node *node)
     bsal_node_test_requests(node);
 
     /* check for messages to send from from threads */
-    /* this call spin_lock only if there is at least
+    /* this call lock only if there is at least
      * a message in the FIFO
      */
     if (bsal_node_pull(node, &message)) {
@@ -1211,10 +1211,10 @@ void bsal_node_notify_death(struct bsal_node *node, struct bsal_actor *actor)
     printf("DEBUG bsal_node_notify_death\n");
 #endif
 
-    pthread_spin_lock(&node->death_lock);
+    bsal_lock_lock(&node->death_lock);
     node->alive_actors--;
     node->dead_actors++;
-    pthread_spin_unlock(&node->death_lock);
+    bsal_lock_unlock(&node->death_lock);
 
 #ifdef BSAL_NODE_DEBUG_20140601_8
     printf("DEBUG exiting bsal_node_notify_death\n");
@@ -1246,7 +1246,7 @@ void bsal_node_add_script(struct bsal_node *node, int name,
 {
     int can_add;
 
-    pthread_spin_lock(&node->script_lock);
+    bsal_lock_lock(&node->script_lock);
 
     can_add = 1;
     if (bsal_node_has_script(node, script)) {
@@ -1261,7 +1261,7 @@ void bsal_node_add_script(struct bsal_node *node, int name,
         node->scripts[node->available_scripts++] = script;
     }
 
-    pthread_spin_unlock(&node->script_lock);
+    bsal_lock_unlock(&node->script_lock);
 }
 
 int bsal_node_has_script(struct bsal_node *node, struct bsal_script *script)

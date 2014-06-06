@@ -15,6 +15,10 @@ LIBRARY=
 include engine/Makefile.mk
 LIBRARY += $(ENGINE)
 
+# system stuff
+include system/Makefile.mk
+LIBRARY += $(SYSTEM)
+
 # storage
 include storage/Makefile.mk
 LIBRARY += $(STORAGE)

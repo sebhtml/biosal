@@ -12,7 +12,7 @@ Looking for the Application Programming Interface (API) ? Look no further !
 - Language: C99 (ISO/IEC 9899:1999)
 - Model: actor model
 - Message passing: MPI 2.2
-- Threads: Pthreads (with spinlocks)
+- Threads: Pthreads (spinlock are used if available)
 
 # Try it out
 

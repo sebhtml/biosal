@@ -4,13 +4,13 @@
 
 #include <structures/fifo.h>
 
-#include <pthread.h>
+#include <system/lock.h>
 
 struct bsal_work;
 struct bsal_node;
 struct bsal_message;
 
-#define BSAL_THREAD_USE_LOCK
+#define BSAL_WORKER_USE_LOCK
 
 /* this is similar to worker threads in linux ([kworker/0] [kworker/1])
  */
@@ -24,9 +24,9 @@ struct bsal_worker {
     struct bsal_fifo works;
     struct bsal_fifo messages;
 
-#ifdef BSAL_THREAD_USE_LOCK
-    pthread_spinlock_t work_lock;
-    pthread_spinlock_t message_lock;
+#ifdef BSAL_WORKER_USE_LOCK
+    struct bsal_lock work_lock;
+    struct bsal_lock message_lock;
 #endif
 
     int debug;

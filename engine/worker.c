@@ -20,9 +20,9 @@ void bsal_worker_init(struct bsal_worker *worker, int name, struct bsal_node *no
     worker->name = name;
     worker->dead = 0;
 
-#ifdef BSAL_THREAD_USE_LOCK
-    pthread_spin_init(&worker->work_lock, 0);
-    pthread_spin_init(&worker->message_lock, 0);
+#ifdef BSAL_WORKER_USE_LOCK
+    bsal_lock_init(&worker->work_lock);
+    bsal_lock_init(&worker->message_lock);
 #endif
 
     worker->debug = 0;
@@ -30,9 +30,9 @@ void bsal_worker_init(struct bsal_worker *worker, int name, struct bsal_node *no
 
 void bsal_worker_destroy(struct bsal_worker *worker)
 {
-#ifdef BSAL_THREAD_USE_LOCK
-    pthread_spin_destroy(&worker->message_lock);
-    pthread_spin_destroy(&worker->work_lock);
+#ifdef BSAL_WORKER_USE_LOCK
+    bsal_lock_destroy(&worker->message_lock);
+    bsal_lock_destroy(&worker->work_lock);
 #endif
 
     worker->node = NULL;
@@ -264,14 +264,14 @@ pthread_t *bsal_worker_thread(struct bsal_worker *worker)
 
 void bsal_worker_push_work(struct bsal_worker *worker, struct bsal_work *work)
 {
-#ifdef BSAL_THREAD_USE_LOCK
-    pthread_spin_lock(&worker->work_lock);
+#ifdef BSAL_WORKER_USE_LOCK
+    bsal_lock_lock(&worker->work_lock);
 #endif
 
     bsal_fifo_push(bsal_worker_works(worker), work);
 
-#ifdef BSAL_THREAD_USE_LOCK
-    pthread_spin_unlock(&worker->work_lock);
+#ifdef BSAL_WORKER_USE_LOCK
+    bsal_lock_unlock(&worker->work_lock);
 #endif
 }
 
@@ -279,21 +279,21 @@ int bsal_worker_pull_work(struct bsal_worker *worker, struct bsal_work *work)
 {
     int value;
 
-    /* avoid the spinlock by checking first if
+    /* avoid the lock by checking first if
      * there is something to actually pull...
      */
     if (bsal_fifo_empty(bsal_worker_works(worker))) {
         return 0;
     }
 
-#ifdef BSAL_THREAD_USE_LOCK
-    pthread_spin_lock(&worker->work_lock);
+#ifdef BSAL_WORKER_USE_LOCK
+    bsal_lock_lock(&worker->work_lock);
 #endif
 
     value = bsal_fifo_pop(bsal_worker_works(worker), work);
 
-#ifdef BSAL_THREAD_USE_LOCK
-    pthread_spin_unlock(&worker->work_lock);
+#ifdef BSAL_WORKER_USE_LOCK
+    bsal_lock_unlock(&worker->work_lock);
 #endif
 
     return value;
@@ -310,8 +310,8 @@ void bsal_worker_push_message(struct bsal_worker *worker, struct bsal_message *m
     }
 #endif
 
-#ifdef BSAL_THREAD_USE_LOCK
-    pthread_spin_lock(&worker->message_lock);
+#ifdef BSAL_WORKER_USE_LOCK
+    bsal_lock_lock(&worker->message_lock);
 #endif
 
 #ifdef BSAL_THREAD_DEBUG
@@ -329,8 +329,8 @@ void bsal_worker_push_message(struct bsal_worker *worker, struct bsal_message *m
     }
 #endif
 
-#ifdef BSAL_THREAD_USE_LOCK
-    pthread_spin_unlock(&worker->message_lock);
+#ifdef BSAL_WORKER_USE_LOCK
+    bsal_lock_unlock(&worker->message_lock);
 #endif
 }
 
@@ -346,15 +346,15 @@ int bsal_worker_pull_message(struct bsal_worker *worker, struct bsal_message *me
     }
 #endif
 
-    /* avoid the spinlock by checking first if
+    /* avoid the lock by checking first if
      * there is something to actually pull...
      */
     if (bsal_fifo_empty(bsal_worker_messages(worker))) {
         return 0;
     }
 
-#ifdef BSAL_THREAD_USE_LOCK
-    pthread_spin_lock(&worker->message_lock);
+#ifdef BSAL_WORKER_USE_LOCK
+    bsal_lock_lock(&worker->message_lock);
 #endif
 
     value = bsal_fifo_pop(bsal_worker_messages(worker), message);
@@ -368,8 +368,8 @@ int bsal_worker_pull_message(struct bsal_worker *worker, struct bsal_message *me
     }
 #endif
 
-#ifdef BSAL_THREAD_USE_LOCK
-    pthread_spin_unlock(&worker->message_lock);
+#ifdef BSAL_WORKER_USE_LOCK
+    bsal_lock_unlock(&worker->message_lock);
 #endif
 
     return value;

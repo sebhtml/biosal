@@ -11,6 +11,8 @@
 #include <structures/fifo.h>
 #include <structures/hash_table.h>
 
+#include <system/lock.h>
+
 #include <pthread.h>
 #include <mpi.h>
 
@@ -47,9 +49,9 @@ struct bsal_node {
 
     pthread_t thread;
 
-    pthread_spinlock_t death_lock;
-    pthread_spinlock_t spawn_lock;
-    pthread_spinlock_t script_lock;
+    struct bsal_lock death_lock;
+    struct bsal_lock spawn_lock;
+    struct bsal_lock script_lock;
 
     struct bsal_fifo active_buffers;
     struct bsal_fifo dead_indices;

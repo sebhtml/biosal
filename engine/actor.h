@@ -8,6 +8,8 @@
 
 #include <structures/vector.h>
 
+#include <system/lock.h>
+
 #include <pthread.h>
 #include <stdint.h>
 
@@ -106,7 +108,7 @@ struct bsal_actor {
     int current_source;
     void *state;
 
-    pthread_spinlock_t lock;
+    struct bsal_lock receive_lock;
 
     int locked;
     int name;

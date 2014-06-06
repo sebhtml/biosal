@@ -38,7 +38,7 @@ void bsal_actor_init(struct bsal_actor *actor, void *state,
     actor->counter_received_messages = 0;
     actor->counter_sent_messages = 0;
 
-    pthread_spin_init(&actor->lock, 0);
+    bsal_lock_init(&actor->receive_lock);
     actor->locked = 0;
 
     bsal_actor_unpin(actor);
@@ -71,7 +71,7 @@ void bsal_actor_destroy(struct bsal_actor *actor)
      */
     bsal_actor_unlock(actor);
 
-    pthread_spin_destroy(&actor->lock);
+    bsal_lock_destroy(&actor->receive_lock);
 
     /* when exiting the destructor, the actor is unlocked
      * and destroyed too
@@ -272,7 +272,7 @@ struct bsal_node *bsal_actor_node(struct bsal_actor *actor)
 
 void bsal_actor_lock(struct bsal_actor *actor)
 {
-    pthread_spin_lock(&actor->lock);
+    bsal_lock_lock(&actor->receive_lock);
     actor->locked = 1;
 }
 
@@ -283,7 +283,7 @@ void bsal_actor_unlock(struct bsal_actor *actor)
     }
 
     actor->locked = 0;
-    pthread_spin_unlock(&actor->lock);
+    bsal_lock_unlock(&actor->receive_lock);
 }
 
 int bsal_actor_workers(struct bsal_actor *actor)
