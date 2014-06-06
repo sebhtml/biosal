@@ -21,6 +21,7 @@ void stream_init(struct bsal_actor *actor)
 
     bsal_vector_init(&stream1->children, sizeof(int));
     bsal_vector_init(&stream1->spawners, sizeof(int));
+    stream1->is_king = 0;
 }
 
 void stream_destroy(struct bsal_actor *actor)
@@ -40,7 +41,6 @@ void stream_receive(struct bsal_actor *actor, struct bsal_message *message)
     int i;
     int name;
     int king;
-    int is_king;
     struct stream *stream1;
     int new_actor;
     char *buffer;
@@ -50,19 +50,16 @@ void stream_receive(struct bsal_actor *actor, struct bsal_message *message)
     buffer = bsal_message_buffer(message);
     name = bsal_actor_name(actor);
 
-    king = bsal_vector_size(&stream1->spawners) / 2;
-
-    is_king = 0;
-
-    if (name == king) {
-        is_king = 1;
-    }
-
     to_spawn = 250000;
 
     if (tag == BSAL_ACTOR_START) {
 
         bsal_vector_unpack(&stream1->spawners, buffer);
+        king = *(int *)bsal_vector_at(&stream1->spawners, bsal_vector_size(&stream1->spawners) / 2);
+
+        if (name == king) {
+            stream1->is_king = 1;
+        }
 
         bsal_actor_add_script(actor, STREAM_SCRIPT, &stream_script);
 
@@ -80,7 +77,7 @@ void stream_receive(struct bsal_actor *actor, struct bsal_message *message)
         /* synchronize with other initial actors
          */
 
-        if (!is_king) {
+        if (!stream1->is_king) {
             return;
         }
 

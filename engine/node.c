@@ -1059,8 +1059,12 @@ void bsal_node_create_work(struct bsal_node *node, struct bsal_message *message)
     actor = bsal_node_get_actor_from_name(node, name);
 
     if (actor == NULL) {
+
+#ifdef BSAL_NODE_DEBUG_NULL_ACTOR
         printf("DEBUG node/%d: actor/%d does not exist\n", node->name,
                         name);
+#endif
+
         return;
     }
 

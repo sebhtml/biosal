@@ -13,6 +13,7 @@ struct stream {
     int initial_synchronization;
     int ready;
     struct bsal_vector children;
+    int is_king;
 };
 
 #define STREAM_DIE 0x00005988
