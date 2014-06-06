@@ -65,6 +65,28 @@ reply BSAL_ CLONE_REPLY with newly spawned actor
 #define BSAL_ACTOR_MIGRATE 0x000073ff
 #define BSAL_ACTOR_MIGRATE_REPLY 0x00001442
 
+/* name change for acquaintances
+
+Design notes:
+
+in engine/actor.c
+change of name
+
+notification_name_change = BSAL_ACTOR_NOTIFICATION_NAME_CHANGE_NOT_SUPPORTED
+BSAL_ACTOR_NOTIFICATION_NAME_CHANGE_SUPPORTED
+
+if unsupported, auto-reply
+
+BSAL_ACTOR_NOTIFY_NAME_CHANGE (source is old name, name is new name)
+
+the actor just need to change any acquaintance with old name to
+new name.
+*/
+#define BSAL_ACTOR_NOTIFY_NAME_CHANGE 0x000068b9
+#define BSAL_ACTOR_NOTIFY_NAME_CHANGE_REPLY 0x00003100
+#define BSAL_ACTOR_NOTIFY_NAME_ENABLE 0x00005aab
+#define BSAL_ACTOR_NOTIFY_NAME_DISABLE 0x00002156
+
 /* states */
 #define BSAL_ACTOR_STATUS_NOT_SUPPORTED 0
 #define BSAL_ACTOR_STATUS_SUPPORTED 1
@@ -101,6 +123,8 @@ struct bsal_actor {
     int cloning_spawner;
     int cloning_new_actor;
     int cloning_client;
+
+    int acquaintance_name_change_status;
 };
 
 void bsal_actor_init(struct bsal_actor *actor, void *state,

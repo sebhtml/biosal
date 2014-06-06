@@ -47,6 +47,7 @@ void bsal_actor_init(struct bsal_actor *actor, void *state,
     init(actor);
 
     actor->cloning_status = BSAL_ACTOR_STATUS_NOT_SUPPORTED;
+    actor->acquaintance_name_change_status = BSAL_ACTOR_STATUS_NOT_SUPPORTED;
 }
 
 void bsal_actor_destroy(struct bsal_actor *actor)
@@ -163,7 +164,19 @@ int bsal_actor_send_system(struct bsal_actor *actor, int name, struct bsal_messa
                 actor->cloning_status = BSAL_ACTOR_STATUS_NOT_SUPPORTED;
                 return 1;
             }
+        } else if (tag == BSAL_ACTOR_NOTIFY_NAME_ENABLE) {
+            if (actor->acquaintance_name_change_status == BSAL_ACTOR_STATUS_NOT_SUPPORTED) {
+
+                actor->acquaintance_name_change_status = BSAL_ACTOR_STATUS_SUPPORTED;
+                return 1;
+            }
+        } else if (tag == BSAL_ACTOR_NOTIFY_NAME_DISABLE) {
+            if (actor->acquaintance_name_change_status == BSAL_ACTOR_STATUS_SUPPORTED) {
+                actor->acquaintance_name_change_status = BSAL_ACTOR_STATUS_NOT_SUPPORTED;
+                return 1;
+            }
         }
+
     }
 
     if (tag == BSAL_ACTOR_PACK) {
@@ -412,6 +425,12 @@ int bsal_actor_receive_system(struct bsal_actor *actor, struct bsal_message *mes
         bsal_actor_clone(actor, message);
 
         return 1;
+
+    } else if (tag == BSAL_ACTOR_NOTIFY_NAME_CHANGE &&
+                    actor->acquaintance_name_change_status == BSAL_ACTOR_STATUS_NOT_SUPPORTED) {
+
+        bsal_actor_send_reply_empty(actor, BSAL_ACTOR_NOTIFY_NAME_CHANGE_REPLY);
+        return 1;
     }
 
 
@@ -447,6 +466,8 @@ void bsal_actor_receive(struct bsal_actor *actor, struct bsal_message *message)
                     bsal_actor_name(actor));
 #endif
 
+    actor->current_source = bsal_message_source(message);
+
     if (bsal_actor_receive_system(actor, message)) {
         return;
     }
@@ -455,8 +476,6 @@ void bsal_actor_receive(struct bsal_actor *actor, struct bsal_message *message)
      */
     receive = bsal_actor_get_receive(actor);
     bsal_actor_increment_counter(actor, BSAL_COUNTER_RECEIVED_MESSAGES);
-
-    actor->current_source = bsal_message_source(message);
 
 #ifdef BSAL_ACTOR_DEBUG_SYNC
     printf("DEBUG bsal_actor_receive calls concrete receive tag %d\n",
