@@ -4,10 +4,12 @@
 
 #include <engine/actor.h>
 
+#include <structures/vector.h>
+
 #define BSAL_SEQUENCE_STORE_SCRIPT 0x47e2e424
 
 struct bsal_sequence_store {
-    int foo;
+    struct bsal_vector sequences;
 };
 
 #define BSAL_SEQUENCE_STORE_ALLOCATE 0x00000d3c

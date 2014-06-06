@@ -19,7 +19,7 @@ better (quadratic split, constant number of blocks):
 
 64 * 64 blocks = 4096 blocks
 
-10000001 / 4096 
+10000001 / 4096
 2441, 2441, 2441, ... 4106
 
 block i goes to sequence store (i % stores)
@@ -35,7 +35,7 @@ irb(main):023:0> 2441 * 4095 + 1 * 4106
 best
 256 nodes
 4 sequence stores per node
-1024 sequence stores 
+1024 sequence stores
 block size 4096
 3000000000 sequences
 blocksize 4096 sequences
