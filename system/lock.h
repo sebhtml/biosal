@@ -19,6 +19,7 @@
 #endif
 
 /*
+Uncomment this to force mutexes
 #define BSAL_LOCK_USE_MUTEX
 */
 
@@ -33,9 +34,9 @@
 
 struct bsal_lock {
 
-#ifdef BSAL_LOCK_USE_SPIN_LOCK
+#if defined(BSAL_LOCK_USE_SPIN_LOCK)
     pthread_spinlock_t lock;
-#elif BSAL_LOCK_USE_MUTEX
+#elif defined(BSAL_LOCK_USE_MUTEX)
     pthread_mutex_t lock;
 #endif
 
