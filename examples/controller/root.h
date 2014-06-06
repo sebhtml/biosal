@@ -11,6 +11,7 @@ struct root {
     int controller;
     int events;
     int synchronized;
+    int is_king;
 };
 
 #define ROOT_DIE 0x00002381

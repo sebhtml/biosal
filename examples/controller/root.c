@@ -24,6 +24,7 @@ void root_init(struct bsal_actor *actor)
     root1->events = 0;
     root1->synchronized = 0;
     bsal_vector_init(&root1->spawners, sizeof(int));
+    root1->is_king = 0;
 }
 
 void root_destroy(struct bsal_actor *actor)
@@ -40,7 +41,6 @@ void root_receive(struct bsal_actor *actor, struct bsal_message *message)
     int source;
     int name;
     int king;
-    int is_king;
     int argc;
     char **argv;
     int i;
@@ -59,14 +59,6 @@ void root_receive(struct bsal_actor *actor, struct bsal_message *message)
     printf(">>root_receive source %d name %d tag %d BSAL_ACTOR_SYNCHRONIZED is %d\n", source, name, tag,
                     BSAL_ACTOR_SYNCHRONIZED);
 */
-    king = 0;
-
-    is_king = 0;
-
-    if (name == king) {
-        is_king = 1;
-    }
-
     if (tag == BSAL_ACTOR_START) {
 
         bsal_vector_unpack(&root1->spawners, buffer);
@@ -74,7 +66,13 @@ void root_receive(struct bsal_actor *actor, struct bsal_message *message)
         bsal_actor_add_script(actor, BSAL_INPUT_CONTROLLER_SCRIPT,
                         &bsal_input_controller_script);
 
-        if (is_king) {
+        king = *(int *)bsal_vector_at(&root1->spawners, 0);
+
+        if (name == king) {
+            root1->is_king = 1;
+        }
+
+        if (root1->is_king) {
             printf("is king\n");
             root1->controller = bsal_actor_spawn(actor, BSAL_INPUT_CONTROLLER_SCRIPT);
             printf("actor %d spawned controller %d\n", name, root1->controller);
@@ -124,7 +122,7 @@ void root_receive(struct bsal_actor *actor, struct bsal_message *message)
 
     } else if (tag == BSAL_INPUT_CONTROLLER_START_REPLY) {
 
-        if (!is_king) {
+        if (!root1->is_king) {
             printf("actor %d stops controller %d\n", name, source);
 
             bsal_actor_send_reply_empty(actor, BSAL_INPUT_STOP);
