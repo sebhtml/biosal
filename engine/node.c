@@ -7,6 +7,10 @@
 
 #include <unistd.h>
 
+/* options */
+#define BSAL_NODE_REUSE_DEAD_INDICES
+
+/* debugging options */
 /*
 #define BSAL_NODE_DEBUG
 
@@ -18,8 +22,8 @@
 #define BSAL_NODE_SIMPLE_INITIAL_ACTOR_NAMES
 #define BSAL_NODE_DEBUG_SPAWN
 #define BSAL_NODE_DEBUG_SUPERVISOR
-*/
 
+*/
 
 /*
  * \see http://www.mpich.org/static/docs/v3.1/www3/MPI_Comm_dup.html
@@ -225,6 +229,7 @@ void bsal_node_init(struct bsal_node *node, int *argc, char ***argv)
     pthread_spin_init(&node->script_lock, 0);
 
     bsal_fifo_init(&node->active_buffers, 64, sizeof(struct bsal_active_buffer));
+    bsal_fifo_init(&node->dead_indices, 64, sizeof(int));
 
     node->started = 0;
 }
@@ -247,6 +252,7 @@ void bsal_node_destroy(struct bsal_node *node)
     }
 
     bsal_fifo_destroy(&node->active_buffers);
+    bsal_fifo_destroy(&node->dead_indices);
 
     MPI_Finalize();
 }
@@ -385,8 +391,7 @@ int bsal_node_spawn_state(struct bsal_node *node, void *state,
 
     /* add an actor in the vector of actors
      */
-    index = bsal_vector_size(&node->actors);
-    bsal_vector_resize(&node->actors, bsal_vector_size(&node->actors) + 1);
+    index = bsal_node_allocate_actor_index(node);
     actor = (struct bsal_actor *)bsal_vector_at(&node->actors, index);
     bsal_actor_init(actor, state, script);
 
@@ -394,9 +399,10 @@ int bsal_node_spawn_state(struct bsal_node *node, void *state,
      * the acquaintance paradigm
      */
     name = bsal_node_generate_name(node);
-
     bsal_actor_set_name(actor, name);
 
+    /* register the actor name
+     */
     bucket = bsal_hash_table_add(&node->actor_names, &name);
     *bucket = index;
 
@@ -410,6 +416,29 @@ int bsal_node_spawn_state(struct bsal_node *node, void *state,
     pthread_spin_unlock(&node->spawn_lock);
 
     return name;
+}
+
+int bsal_node_allocate_actor_index(struct bsal_node *node)
+{
+    int index;
+
+#ifdef BSAL_NODE_REUSE_DEAD_INDICES
+    if (bsal_fifo_pop(&node->dead_indices, &index)) {
+
+#ifdef BSAL_NODE_DEBUG_SPAWN
+        printf("DEBUG node/%d bsal_node_allocate_actor_index using an old index %d, size %d\n",
+                        bsal_node_name(node),
+                        index, bsal_vector_size(&node->actors));
+#endif
+
+        return index;
+    }
+#endif
+
+    index = bsal_vector_size(&node->actors);
+    bsal_vector_resize(&node->actors, bsal_vector_size(&node->actors) + 1);
+
+    return index;
 }
 
 int bsal_node_generate_name(struct bsal_node *node)
@@ -1133,6 +1162,11 @@ int bsal_node_nodes(struct bsal_node *node)
 void bsal_node_notify_death(struct bsal_node *node, struct bsal_actor *actor)
 {
     void *state;
+    int name;
+
+#ifdef BSAL_NODE_REUSE_DEAD_INDICES
+    int index;
+#endif
 
     /* int name; */
     /*int index;*/
@@ -1142,10 +1176,36 @@ void bsal_node_notify_death(struct bsal_node *node, struct bsal_actor *actor)
     name = bsal_actor_name(actor);
     */
 
+    name = bsal_actor_name(actor);
+
+#ifdef BSAL_NODE_REUSE_DEAD_INDICES
+    index = bsal_node_actor_index(node, name);
+
+#ifdef BSAL_NODE_DEBUG_SPAWN
+    printf("DEBUG node/%d BSAL_NODE_REUSE_DEAD_INDICES push index %d\n",
+                   bsal_node_name(node), index);
+#endif
+
+#endif
+
     state = bsal_actor_concrete_actor(actor);
+
+    /* destroy the abstract actor.
+     * this calls destroy on the concrete actor
+     * too
+     */
     bsal_actor_destroy(actor);
+
+    /* free the bytes of the concrete actor */
     free(state);
     state = NULL;
+
+    /* remove the name from the registry */
+    bsal_hash_table_delete(&node->actor_names, &name);
+
+#ifdef BSAL_NODE_REUSE_DEAD_INDICES
+    bsal_fifo_push(&node->dead_indices, &index);
+#endif
 
 #ifdef BSAL_NODE_DEBUG_20140601_8
     printf("DEBUG bsal_node_notify_death\n");

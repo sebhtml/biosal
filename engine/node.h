@@ -52,6 +52,7 @@ struct bsal_node {
     pthread_spinlock_t script_lock;
 
     struct bsal_fifo active_buffers;
+    struct bsal_fifo dead_indices;
 
     MPI_Comm comm;
     MPI_Datatype datatype;
@@ -140,5 +141,6 @@ void bsal_node_send_to_node_empty(struct bsal_node *node, int destination, int t
 int bsal_node_receive_system(struct bsal_node *node, struct bsal_message *message);
 void bsal_node_dispatch_message(struct bsal_node *node, struct bsal_message *message);
 void bsal_node_set_initial_actor(struct bsal_node *node, int node_name, int actor);
+int bsal_node_allocate_actor_index(struct bsal_node *node);
 
 #endif
