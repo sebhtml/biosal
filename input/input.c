@@ -16,12 +16,12 @@ void bsal_input_init(struct bsal_input *input, void *implementation,
     input->operations = operations;
     input->sequences = 0;
     input->file = file;
-    input->error = BSAL_INPUT_ERROR_NONE;
+    input->error = BSAL_INPUT_ERROR_NO_ERROR;
 
     descriptor = fopen(input->file, "r");
 
     if (descriptor == NULL) {
-        input->error = BSAL_INPUT_ERROR_NOT_FOUND;
+        input->error = BSAL_INPUT_ERROR_FILE_NOT_FOUND;
         return;
     } else {
         fclose(descriptor);
@@ -90,7 +90,7 @@ void *bsal_input_implementation(struct bsal_input *input)
 
 int bsal_input_valid(struct bsal_input *input)
 {
-    return bsal_input_error(input) == BSAL_INPUT_ERROR_NONE;
+    return bsal_input_error(input) == BSAL_INPUT_ERROR_NO_ERROR;
 }
 
 int bsal_input_error(struct bsal_input *input)

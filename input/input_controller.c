@@ -57,6 +57,7 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
     int name;
     int source;
     int destination_index;
+    struct bsal_message new_message;
 
     name = bsal_actor_name(actor);
     controller = (struct bsal_input_controller *)bsal_actor_concrete_actor(actor);
@@ -86,14 +87,16 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
 
         stream = *(int *)buffer;
 
+        local_file = *(char **)bsal_vector_at(&controller->files, bsal_vector_size(&controller->streams));
+
         printf("actor %d receives stream id %d from actor %d for file %s\n",
                         name, stream, source,
-                        *(char **)bsal_vector_at(&controller->files, bsal_vector_size(&controller->streams)));
+                        local_file);
 
         bsal_vector_push_back(&controller->streams, &stream);
 
-        /* TODO continue work here */
-        bsal_actor_send_empty(actor, stream, BSAL_INPUT_CLOSE);
+        bsal_message_init(&new_message, BSAL_INPUT_OPEN, strlen(local_file) + 1, local_file);
+        bsal_actor_send(actor, stream, &new_message);
 
         if (bsal_vector_size(&controller->streams) == bsal_vector_size(&controller->files)) {
 
@@ -102,6 +105,14 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
 
             bsal_actor_send_to_self_empty(actor, BSAL_INPUT_SPAWN);
         }
+
+    } else if (tag == BSAL_INPUT_OPEN_REPLY) {
+
+        stream = source;
+
+        /* TODO continue work here */
+        bsal_actor_send_empty(actor, stream, BSAL_INPUT_CLOSE);
+
 
     } else if (tag == BSAL_INPUT_DISTRIBUTE) {
 

@@ -1,5 +1,5 @@
 CC=mpicc
-CFLAGS=-O2 -g -I.
+CFLAGS=-O2 -g -I. -D_POSIX_C_SOURCE=200112L
 LD=$(CC)
 Q=@
 ECHO=echo

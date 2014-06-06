@@ -62,6 +62,8 @@ void bsal_input_stream_receive(struct bsal_actor *actor, struct bsal_message *me
     int buffer_size;
     char *buffer;
     char *read_buffer;
+    struct bsal_message new_message;
+    int error;
 
     input = (struct bsal_input_stream *)bsal_actor_concrete_actor(actor);
     tag = bsal_message_tag(message);
@@ -83,7 +85,10 @@ void bsal_input_stream_receive(struct bsal_actor *actor, struct bsal_message *me
 #endif
 
         if (input->open) {
-            bsal_message_init(message, BSAL_INPUT_ERROR_ALREADY_OPEN, 0, NULL);
+
+            error = BSAL_INPUT_ERROR_ALREADY_OPEN;
+
+            bsal_message_init(&new_message, BSAL_INPUT_OPEN_REPLY, sizeof(error), &error);
             bsal_actor_send(actor, source, message);
 
             bsal_message_init(message, BSAL_ACTOR_STOP, 0, NULL);
@@ -120,7 +125,7 @@ void bsal_input_stream_receive(struct bsal_actor *actor, struct bsal_message *me
             return;
         }
 
-        bsal_message_init(message, BSAL_INPUT_OPEN_OK, 0, NULL);
+        bsal_message_init(message, BSAL_INPUT_OPEN_REPLY, 0, NULL);
         bsal_actor_send(actor, source, message);
 
     } else if (tag == BSAL_INPUT_COUNT) {
@@ -175,7 +180,7 @@ void bsal_input_stream_receive(struct bsal_actor *actor, struct bsal_message *me
 
         count = bsal_input_proxy_size(&input->proxy);
 
-        bsal_message_init(message, BSAL_INPUT_COUNT_RESULT, sizeof(count),
+        bsal_message_init(message, BSAL_INPUT_COUNT_REPLY, sizeof(count),
                         &count);
         bsal_actor_send(actor, bsal_actor_supervisor(actor), message);
 
@@ -189,7 +194,7 @@ void bsal_input_stream_receive(struct bsal_actor *actor, struct bsal_message *me
             return;
         }
 
-        bsal_message_init(message, BSAL_INPUT_CLOSE_OK, 0, NULL);
+        bsal_message_init(message, BSAL_INPUT_CLOSE_REPLY, 0, NULL);
         bsal_actor_send(actor, source, message);
 
         bsal_message_init(message, BSAL_ACTOR_STOP, 0, NULL);
@@ -233,6 +238,7 @@ int bsal_input_stream_has_error(struct bsal_actor *actor,
     int source;
     struct bsal_input_stream *input;
     int error;
+    struct bsal_message new_message;
 
     input = (struct bsal_input_stream *)bsal_actor_concrete_actor(actor);
 
@@ -242,23 +248,23 @@ int bsal_input_stream_has_error(struct bsal_actor *actor,
 
     error = bsal_input_proxy_error(&input->proxy);
 
-    if (error == BSAL_INPUT_ERROR_NOT_FOUND) {
+    if (error == BSAL_INPUT_ERROR_FILE_NOT_FOUND) {
 
 #ifdef BSAL_INPUT_DEBUG
-        printf("DEBUG bsal_input_stream_has_error BSAL_INPUT_ERROR_NOT_FOUND\n");
+        printf("DEBUG bsal_input_stream_has_error BSAL_INPUT_ERROR_FILE_NOT_FOUND\n");
 #endif
 
         source = bsal_message_source(message);
 
-        bsal_message_init(message, BSAL_INPUT_ERROR_FILE_NOT_FOUND, 0, NULL);
-        bsal_actor_send(actor, source, message);
+        bsal_message_init(&new_message, BSAL_INPUT_ERROR_FILE_NOT_FOUND, 0, NULL);
+        bsal_actor_send(actor, source, &new_message);
         return 1;
 
-    } else if (error == BSAL_INPUT_ERROR_NOT_SUPPORTED) {
+    } else if (error == BSAL_INPUT_ERROR_FORMAT_NOT_SUPPORTED) {
         source = bsal_message_source(message);
 
-        bsal_message_init(message, BSAL_INPUT_ERROR_FORMAT_NOT_SUPPORTED, 0, NULL);
-        bsal_actor_send(actor, source, message);
+        bsal_message_init(&new_message, BSAL_INPUT_ERROR_FORMAT_NOT_SUPPORTED, 0, NULL);
+        bsal_actor_send(actor, source, &new_message);
         return 1;
     }
 

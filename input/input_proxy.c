@@ -56,13 +56,13 @@ int bsal_input_proxy_size(struct bsal_input_proxy *proxy)
 int bsal_input_proxy_error(struct bsal_input_proxy *proxy)
 {
     if (proxy->not_found) {
-        return BSAL_INPUT_ERROR_NOT_FOUND;
+        return BSAL_INPUT_ERROR_FILE_NOT_FOUND;
 
     } else if (proxy->not_supported) {
-        return BSAL_INPUT_ERROR_NOT_SUPPORTED;
+        return BSAL_INPUT_ERROR_FORMAT_NOT_SUPPORTED;
     }
 
-    return BSAL_INPUT_ERROR_NONE;
+    return BSAL_INPUT_ERROR_NO_ERROR;
 }
 
 void bsal_input_proxy_try(struct bsal_input_proxy *proxy,
@@ -89,7 +89,7 @@ void bsal_input_proxy_try(struct bsal_input_proxy *proxy,
 
     /* File does not exist.
      */
-    if (error == BSAL_INPUT_ERROR_NOT_FOUND) {
+    if (error == BSAL_INPUT_ERROR_FILE_NOT_FOUND) {
         bsal_input_destroy(input);
         proxy->not_found = 1;
         proxy->not_supported = 0;
