@@ -76,7 +76,7 @@ void reader_receive(struct bsal_actor *actor, struct bsal_message *message)
         }
         */
 
-        if (name % bsal_vector_size(&reader1->spawners) != 0) {
+        if (bsal_vector_index_of(&reader1->spawners, &name) != 0) {
             bsal_message_init(message, BSAL_ACTOR_STOP, 0, NULL);
             bsal_actor_send(actor, name, message);
 
@@ -118,15 +118,13 @@ void reader_receive(struct bsal_actor *actor, struct bsal_message *message)
     } else if (tag == BSAL_INPUT_ERROR_FILE_NOT_FOUND) {
 
         printf("Error, file not found! \n");
-        bsal_message_init(message, BSAL_ACTOR_STOP, 0, NULL);
-        bsal_actor_send(actor, name, message);
+        bsal_actor_send_to_self_empty(actor, BSAL_ACTOR_STOP);
 
     } else if (tag == BSAL_INPUT_ERROR_FORMAT_NOT_SUPPORTED) {
 
         printf("Error, format not supported! \n");
 
-        bsal_message_init(message, BSAL_ACTOR_STOP, 0, NULL);
-        bsal_actor_send(actor, name, message);
+        bsal_actor_send_to_self_empty(actor, BSAL_ACTOR_STOP);
 
     } else if (tag == BSAL_INPUT_OPEN_OK && !reader1->counted) {
         bsal_message_init(message, BSAL_INPUT_COUNT, 0, NULL);

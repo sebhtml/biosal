@@ -5,7 +5,9 @@
 #include <stdio.h>
 #include <string.h>
 
-/*#define BSAL_INPUT_DEBUG*/
+/*
+#define BSAL_INPUT_DEBUG
+*/
 
 struct bsal_script bsal_input_stream_script = {
     .name = BSAL_INPUT_STREAM_SCRIPT,
@@ -76,6 +78,10 @@ void bsal_input_stream_receive(struct bsal_actor *actor, struct bsal_message *me
 
     if (tag == BSAL_INPUT_OPEN) {
 
+#ifdef BSAL_INPUT_DEBUG
+        printf("DEBUG BSAL_INPUT_OPEN\n");
+#endif
+
         if (input->open) {
             bsal_message_init(message, BSAL_INPUT_ERROR_ALREADY_OPEN, 0, NULL);
             bsal_actor_send(actor, source, message);
@@ -105,6 +111,9 @@ void bsal_input_stream_receive(struct bsal_actor *actor, struct bsal_message *me
         /* Die if there is an error...
          */
         if (bsal_input_stream_has_error(actor, message)) {
+
+            printf("DEBUG has error\n");
+
             bsal_message_init(message, BSAL_ACTOR_STOP, 0, NULL);
             bsal_actor_send(actor, name, message);
 
