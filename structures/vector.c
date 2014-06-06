@@ -194,3 +194,19 @@ void bsal_vector_copy_range(struct bsal_vector *self, int first, int last, struc
         bsal_vector_push_back(other, bsal_vector_at(self, i));
     }
 }
+
+int bsal_vector_index_of(struct bsal_vector *self, void *data)
+{
+    int i;
+    int last;
+
+    last = bsal_vector_size(self) - 1;
+
+    for (i = 0; i <= last; i++) {
+        if (memcmp(bsal_vector_at(self, i), data, self->element_size) == 0) {
+            return i;
+        }
+    }
+
+    return -1;
+}

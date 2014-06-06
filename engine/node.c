@@ -15,7 +15,9 @@
 #define BSAL_NODE_DEBUG_SPAWN
 */
 
+/*
 #define BSAL_NODE_SIMPLE_INITIAL_ACTOR_NAMES
+*/
 
 /*
  * \see http://www.mpich.org/static/docs/v3.1/www3/MPI_Comm_dup.html
@@ -1057,6 +1059,8 @@ void bsal_node_create_work(struct bsal_node *node, struct bsal_message *message)
     actor = bsal_node_get_actor_from_name(node, name);
 
     if (actor == NULL) {
+        printf("DEBUG node/%d: actor/%d does not exist\n", node->name,
+                        name);
         return;
     }
 

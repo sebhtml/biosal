@@ -75,7 +75,7 @@ void mock_receive(struct bsal_actor *actor, struct bsal_message *message)
 
         printf("BUDDY_HELLO_OK\n");
         bsal_message_init(message, MOCK_NOTIFY, 0, NULL);
-        bsal_actor_send(actor, 0, message);
+        bsal_actor_send(actor, *(int *)bsal_vector_at(&mock1->spawners, 0), message);
 
     } else if (tag == MOCK_NOTIFY) {
 
@@ -166,17 +166,19 @@ void mock_share(struct bsal_actor *actor, struct bsal_message *message)
     struct mock *mock1;
     struct bsal_message message2;
     int next;
+    int index;
 
     mock1 = (struct mock *)bsal_actor_concrete_actor(actor);
     name = bsal_actor_name(actor);
+    index = bsal_vector_index_of(&mock1->spawners, &name);
 
     /* get the next mock actor
      */
-    next = (name + 1) % bsal_vector_size(&mock1->spawners);
+    next = (index + 1) % bsal_vector_size(&mock1->spawners);
 
     bsal_message_init(&message2, MOCK_NEW_CONTACTS, 3 * sizeof(int),
                     (char *)mock1->children);
-    bsal_actor_send(actor, next, &message2);
+    bsal_actor_send(actor, *(int *)bsal_vector_at(&mock1->spawners, next), &message2);
     bsal_message_destroy(&message2);
 }
 

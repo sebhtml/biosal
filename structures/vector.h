@@ -21,5 +21,6 @@ int bsal_vector_pack_size(struct bsal_vector *self);
 void bsal_vector_pack(struct bsal_vector *self, void *buffer);
 void bsal_vector_unpack(struct bsal_vector *self, void *buffer);
 void bsal_vector_copy_range(struct bsal_vector *self, int first, int last, struct bsal_vector *other);
+int bsal_vector_index_of(struct bsal_vector *self, void *data);
 
 #endif
