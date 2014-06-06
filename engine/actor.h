@@ -14,6 +14,7 @@
 /* for control */
 #define BSAL_ACTOR_START 0x00000885
 #define BSAL_ACTOR_STOP 0x0000388c
+#define BSAL_ACTOR_ASK_TO_STOP 0x0000607b
 
 /* binomial-tree */
 #define BSAL_ACTOR_BINOMIAL_TREE_SEND 0x00005b36
@@ -32,10 +33,43 @@
 #define BSAL_ACTOR_SPAWN 0x00000119
 #define BSAL_ACTOR_SPAWN_REPLY 0x00007b68
 
-/* for migration */
+/* for import and export */
 #define BSAL_ACTOR_PACK 0x00004cae
+#define BSAL_ACTOR_PACK_REPLY 0x000024fc
 #define BSAL_ACTOR_UNPACK 0x00001c73
-#define BSAL_ACTOR_SIZE 0x00003307
+#define BSAL_ACTOR_UNPACK_REPLY 0x000064e4
+#define BSAL_ACTOR_PACK_SIZE 0x00003307
+#define BSAL_ACTOR_PACK_SIZE_REPLY 0x00005254
+
+/* cloning */
+/* design notes:
+
+   clone a process
+
+   BSAL_ACTOR_CLONE
+   BSAL_ACTOR_REPLY (contains the clone name)
+
+cloning_state: not supported, supported, started, finished
+
+does this: BSAL_ACTOR_SPAWN
+BSAL_ACTOR_PACK to self
+forward BSAL_ACTOR_PACK_REPLY to new spawnee as UNPACK
+reply BSAL_ CLONE_REPLY with newly spawned actor
+*/
+#define BSAL_ACTOR_CLONE 0x00000d60
+#define BSAL_ACTOR_CLONE_ENABLE 0x000015d3
+#define BSAL_ACTOR_CLONE_DISABLE 0x00007392
+#define BSAL_ACTOR_CLONE_REPLY 0x00006881
+
+/* for migration */
+#define BSAL_ACTOR_MIGRATE 0x000073ff
+#define BSAL_ACTOR_MIGRATE_REPLY 0x00001442
+
+/* states */
+#define BSAL_ACTOR_STATUS_NOT_SUPPORTED 0
+#define BSAL_ACTOR_STATUS_SUPPORTED 1
+#define BSAL_ACTOR_STATUS_STARTED 2
+#define BSAL_ACTOR_STATUS_FINISHED 3
 
 struct bsal_node;
 struct bsal_worker;
@@ -62,6 +96,11 @@ struct bsal_actor {
     int synchronization_started;
     int synchronization_responses;
     int synchronization_expected_responses;
+
+    int cloning_status;
+    int cloning_spawner;
+    int cloning_new_actor;
+    int cloning_client;
 };
 
 void bsal_actor_init(struct bsal_actor *actor, void *state,
@@ -166,5 +205,9 @@ int bsal_actor_unpack_proxy_message(struct bsal_actor *actor,
                 struct bsal_message *message);
 int bsal_actor_script(struct bsal_actor *actor);
 void bsal_actor_add_script(struct bsal_actor *actor, int name, struct bsal_script *script);
+
+/* actor cloning */
+void bsal_actor_clone(struct bsal_actor *actor, struct bsal_message *message);
+int bsal_actor_continue_clone(struct bsal_actor *actor, struct bsal_message *message);
 
 #endif

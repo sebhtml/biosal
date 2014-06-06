@@ -48,6 +48,7 @@ clean:
 	$(Q)$(RM) $(LIBRARY)
 	$(Q)$(RM) $(EXAMPLE_RING) $(EXAMPLE_MOCK) $(EXAMPLE_READER) $(EXAMPLE_REMOTE_SPAWN)
 	$(Q)$(RM) $(EXAMPLE_SYNCHRONIZE) $(EXAMPLE_CONTROLLER) $(EXAMPLE_HELLO_WORLD)
+	$(Q)$(RM) $(EXAMPLE_CLONE)
 	$(Q)$(RM) $(TEST_FIFO) $(TEST_FIFO_ARRAY) $(TEST_HASH_TABLE_GROUP) $(TEST_NODE)
 	$(Q)$(RM) $(TEST_HASH_TABLE) $(TEST_VECTOR)
 	$(Q)$(RM) $(EXAMPLES) $(TESTS)
@@ -105,5 +106,9 @@ example_controller: $(EXAMPLE_CONTROLLER) $(LIBRARY)
 	$(Q)$(CC) $(CFLAGS) $^ -o $@
 
 example_hello_world: $(EXAMPLE_HELLO_WORLD) $(LIBRARY)
+	$(Q)$(ECHO) "  LD $@"
+	$(Q)$(CC) $(CFLAGS) $^ -o $@
+
+example_clone: $(EXAMPLE_CLONE) $(LIBRARY)
 	$(Q)$(ECHO) "  LD $@"
 	$(Q)$(CC) $(CFLAGS) $^ -o $@

@@ -13,9 +13,11 @@
 #define BSAL_ACTOR_DEBUG1
 
 #define BSAL_ACTOR_DEBUG_SYNC
-*/
-
 #define BSAL_ACTOR_DEBUG_BINOMIAL_TREE
+
+#define BSAL_ACTOR_DEBUG_SPAWN
+#define BSAL_ACTOR_DEBUG_CLONE
+*/
 
 void bsal_actor_init(struct bsal_actor *actor, void *state,
                 struct bsal_script *script)
@@ -43,6 +45,8 @@ void bsal_actor_init(struct bsal_actor *actor, void *state,
 
     init = bsal_actor_get_init(actor);
     init(actor);
+
+    actor->cloning_status = BSAL_ACTOR_STATUS_NOT_SUPPORTED;
 }
 
 void bsal_actor_destroy(struct bsal_actor *actor)
@@ -144,7 +148,36 @@ int bsal_actor_send_system(struct bsal_actor *actor, int name, struct bsal_messa
         } else if (tag == BSAL_ACTOR_UNPIN) {
             bsal_actor_unpin(actor);
             return 1;
+        } else if (tag == BSAL_ACTOR_CLONE_ENABLE) {
+            if (actor->cloning_status == BSAL_ACTOR_STATUS_NOT_SUPPORTED) {
+
+#ifdef BSAL_ACTOR_DEBUG_CLONE
+                printf("DEBUG enable cloning\n");
+#endif
+
+                actor->cloning_status = BSAL_ACTOR_STATUS_SUPPORTED;
+                return 1;
+            }
+        } else if (tag == BSAL_ACTOR_CLONE_DISABLE) {
+            if (actor->cloning_status == BSAL_ACTOR_STATUS_SUPPORTED) {
+                actor->cloning_status = BSAL_ACTOR_STATUS_NOT_SUPPORTED;
+                return 1;
+            }
         }
+    }
+
+    if (tag == BSAL_ACTOR_PACK) {
+        /* the concrete actor must catch this one */
+
+    } else if (tag == BSAL_ACTOR_PACK_SIZE) {
+        /* the concrete actor must catch this one */
+
+    } else if (tag == BSAL_ACTOR_UNPACK) {
+        /* the concrete actor must catch this one */
+
+    } else if (tag == BSAL_ACTOR_CLONE_REPLY) {
+        /* the concrete actor must catch this one */
+
     }
 
     return 0;
@@ -184,13 +217,13 @@ int bsal_actor_spawn(struct bsal_actor *actor, int script)
     int name;
     int self_name = bsal_actor_name(actor);
 
-#ifdef BSAL_ACTOR_DEBUG
-    printf("DEBUG bsal_actor_spawn\n");
+#ifdef BSAL_ACTOR_DEBUG_SPAWN
+    printf("DEBUG bsal_actor_spawn script %d\n", script);
 #endif
 
     name = bsal_node_spawn(bsal_actor_node(actor), script);
 
-#ifdef BSAL_ACTOR_DEBUG
+#ifdef BSAL_ACTOR_DEBUG_SPAWN
     printf("DEBUG bsal_actor_spawn before set_supervisor, spawned %d\n",
                     name);
 #endif
@@ -372,6 +405,25 @@ int bsal_actor_receive_system(struct bsal_actor *actor, struct bsal_message *mes
         bsal_actor_send(actor, source, message);
 
         return 1;
+
+    } else if (tag == BSAL_ACTOR_CLONE) {
+
+        /* begin the cloning operation */
+        bsal_actor_clone(actor, message);
+
+        return 1;
+    }
+
+
+    /* cloning workflow in 4 easy steps ! */
+    if (actor->cloning_status == BSAL_ACTOR_STATUS_STARTED) {
+
+        /* call a function called
+         * bsal_actor_continue_clone
+         */
+        if (bsal_actor_continue_clone(actor, message)) {
+            return 1;
+        }
     }
 
     return 0;
@@ -885,4 +937,95 @@ void bsal_actor_send_to_supervisor(struct bsal_actor *actor, struct bsal_message
 void bsal_actor_send_to_supervisor_empty(struct bsal_actor *actor, int tag)
 {
     bsal_actor_send_empty(actor, bsal_actor_supervisor(actor), tag);
+}
+
+void bsal_actor_clone(struct bsal_actor *actor, struct bsal_message *message)
+{
+    int spawner;
+    void *buffer;
+    int script;
+    struct bsal_message new_message;
+    int source;
+
+    script = bsal_actor_script(actor);
+    source = bsal_message_source(message);
+    actor->cloning_status = BSAL_ACTOR_STATUS_STARTED;
+    buffer = bsal_message_buffer(message);
+    spawner = *(int *)buffer;
+    actor->cloning_spawner = spawner;
+    actor->cloning_client = source;
+
+#ifdef BSAL_ACTOR_DEBUG_CLONE
+    int name;
+    name = bsal_actor_name(actor);
+    printf("DEBUG %d sending BSAL_ACTOR_SPAWN to spawner %d for client %d\n", name, spawner,
+                    source);
+#endif
+
+    bsal_message_init(&new_message, BSAL_ACTOR_SPAWN, sizeof(script), &script);
+    bsal_actor_send(actor, spawner, &new_message);
+}
+
+int bsal_actor_continue_clone(struct bsal_actor *actor, struct bsal_message *message)
+{
+    int tag;
+    int source;
+    int self;
+    struct bsal_message new_message;
+    int count;
+    void *buffer;
+
+    count = bsal_message_count(message);
+    buffer = bsal_message_buffer(message);
+    self = bsal_actor_name(actor);
+    tag = bsal_message_tag(message);
+    source = bsal_message_source(message);
+
+#ifdef BSAL_ACTOR_DEBUG_CLONE1
+    printf("DEBUG bsal_actor_continue_clone source %d tag %d\n", source, tag);
+#endif
+
+    if (tag == BSAL_ACTOR_SPAWN_REPLY && source == actor->cloning_spawner) {
+
+#ifdef BSAL_ACTOR_DEBUG_CLONE
+        printf("DEBUG bsal_actor_continue_clone BSAL_ACTOR_SPAWN_REPLY\n");
+#endif
+
+        actor->cloning_new_actor = *(int *)buffer;
+        bsal_actor_send_to_self_empty(actor, BSAL_ACTOR_PACK);
+
+        return 1;
+
+    } else if (tag == BSAL_ACTOR_PACK_REPLY && source == self) {
+
+#ifdef BSAL_ACTOR_DEBUG_CLONE
+        printf("DEBUG bsal_actor_continue_clone BSAL_ACTOR_PACK_REPLY\n");
+#endif
+
+        /* forward the buffer to the new actor */
+        bsal_message_init(&new_message, BSAL_ACTOR_UNPACK, count, buffer);
+        bsal_actor_send(actor, actor->cloning_new_actor, &new_message);
+
+        return 1;
+    } else if (tag == BSAL_ACTOR_UNPACK_REPLY && source == actor->cloning_new_actor) {
+
+#ifdef BSAL_ACTOR_DEBUG_CLONE
+        printf("DEBUG bsal_actor_continue_clone BSAL_ACTOR_UNPACK_REPLY\n");
+#endif
+
+        bsal_message_init(&new_message, BSAL_ACTOR_CLONE_REPLY, sizeof(actor->cloning_new_actor),
+                        &actor->cloning_new_actor);
+        bsal_actor_send(actor, actor->cloning_client, &new_message);
+
+        /* we are ready for another cloning */
+        actor->cloning_status = BSAL_ACTOR_STATUS_SUPPORTED;
+
+#ifdef BSAL_ACTOR_DEBUG_CLONE
+        printf("actor:%d sends clone %d to client %d\n", bsal_actor_name(actor),
+                        actor->cloning_new_actor, actor->cloning_client);
+#endif
+        return 1;
+    }
+
+    return 0;
 }

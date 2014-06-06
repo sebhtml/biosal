@@ -17,7 +17,9 @@
 /*
 #define BSAL_NODE_SIMPLE_INITIAL_ACTOR_NAMES
 #define BSAL_NODE_DEBUG_SPAWN
+#define BSAL_NODE_DEBUG_SUPERVISOR
 */
+
 
 /*
  * \see http://www.mpich.org/static/docs/v3.1/www3/MPI_Comm_dup.html
@@ -312,13 +314,13 @@ void bsal_node_set_supervisor(struct bsal_node *node, int name, int supervisor)
 {
     struct bsal_actor *actor;
 
-#ifdef BSAL_NODE_DEBUG
+#ifdef BSAL_NODE_DEBUG_SUPERVISOR
     printf("DEBUG bsal_node_set_supervisor %d %d\n", name, supervisor);
 #endif
 
     actor = bsal_node_get_actor_from_name(node, name);
 
-#ifdef BSAL_NODE_DEBUG
+#ifdef BSAL_NODE_DEBUG_SUPERVISOR
     printf("DEBUG set supervisor %d %d %p\n", name, supervisor, (void *)actor);
 #endif
 
