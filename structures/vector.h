@@ -13,8 +13,12 @@ struct bsal_vector{
 
 void bsal_vector_init(struct bsal_vector *self, int element_size);
 void bsal_vector_destroy(struct bsal_vector *self);
+
 void bsal_vector_resize(struct bsal_vector *self, int size);
 int bsal_vector_size(struct bsal_vector *self);
+void bsal_vector_reserve(struct bsal_vector *self, int size);
+int bsal_vector_capacity(struct bsal_vector *self);
+
 void *bsal_vector_at(struct bsal_vector *self, int index);
 int bsal_vector_at_as_int(struct bsal_vector *self, int index);
 void bsal_vector_push_back(struct bsal_vector *self, void *data);

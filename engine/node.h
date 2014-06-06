@@ -32,7 +32,7 @@ struct bsal_script;
  *
  */
 struct bsal_node {
-    struct bsal_actor *actors;
+    struct bsal_vector actors;
     struct bsal_worker_pool worker_pool;
     struct bsal_hash_table actor_names;
     struct bsal_vector initial_actors;
@@ -65,8 +65,6 @@ struct bsal_node {
     int send_in_thread;
     int workers_in_threads;
 
-    int actor_count;
-    int actor_capacity;
     int dead_actors;
     int alive_actors;
 

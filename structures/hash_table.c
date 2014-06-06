@@ -18,8 +18,8 @@
 
 #define BSAL_HASH_TABLE_MATCH 0
 
-/*#define BSAL_HASH_TABLE_DEBUG*/
 /*
+#define BSAL_HASH_TABLE_DEBUG
 #define BSAL_HASH_TABLE_DEBUG_DOUBLE_HASHING_DEBUG
 */
 
@@ -28,6 +28,11 @@ void bsal_hash_table_init(struct bsal_hash_table *table, uint64_t buckets,
 {
     int i;
     int buckets_per_group;
+
+#ifdef BSAL_HASH_TABLE_DEBUG_INIT
+    printf("DEBUG bsal_hash_table_init buckets: %d key_size: %d value_size: %d\n",
+                    (int)buckets, key_size, value_size);
+#endif
 
     table->debug = 0;
 
@@ -223,6 +228,10 @@ int bsal_hash_table_get_group_bucket(struct bsal_hash_table *table, uint64_t buc
  */
 uint64_t bsal_hash_table_hash(void *key, int key_size, int seed)
 {
+    if (key_size < 0) {
+        printf("DEBUG ERROR key_size %d\n", key_size);
+    }
+
     return bsal_murmur_hash_2_64_a(key, key_size, seed);
 }
 

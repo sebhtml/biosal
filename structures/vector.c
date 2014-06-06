@@ -32,8 +32,6 @@ void bsal_vector_destroy(struct bsal_vector *self)
 
 void bsal_vector_resize(struct bsal_vector *self, int size)
 {
-    void *new_data;
-
     if (size == self->size) {
         return;
     }
@@ -53,12 +51,8 @@ void bsal_vector_resize(struct bsal_vector *self, int size)
         return;
     }
 
-    new_data = malloc(size * self->element_size);
-    memcpy(new_data, self->data, self->size * self->element_size);
-    free(self->data);
-    self->data = new_data;
-    self->size = size;
-    self->maximum_size = size;
+    bsal_vector_reserve(self, size);
+    self->size = self->maximum_size;
 }
 
 int bsal_vector_size(struct bsal_vector *self)
@@ -80,9 +74,6 @@ void bsal_vector_push_back(struct bsal_vector *self, void *data)
     int index;
     int new_maximum_size;
     void *bucket;
-    void *new_data;
-
-    index = self->size;
 
 #ifdef BSAL_VECTOR_DEBUG8
     printf("index %d size %d max %d\n", (int)index,
@@ -97,19 +88,12 @@ void bsal_vector_push_back(struct bsal_vector *self, void *data)
             new_maximum_size = 4;
         }
 
-        new_data = malloc(new_maximum_size * self->element_size);
-        if (self->size > 0) {
-            memcpy(new_data, self->data, self->size * self->element_size);
-            free(self->data);
-        }
-
-        self->data = new_data;
-        self->maximum_size = new_maximum_size;
-
+        bsal_vector_reserve(self, new_maximum_size);
         bsal_vector_push_back(self, data);
         return;
     }
 
+    index = self->size;
     self->size++;
     bucket = bsal_vector_at(self, index);
     memcpy(bucket, data, self->element_size);
@@ -222,4 +206,29 @@ int bsal_vector_at_as_int(struct bsal_vector *self, int index)
     }
 
     return *bucket;
+}
+
+void bsal_vector_reserve(struct bsal_vector *self, int size)
+{
+    char *new_data;
+
+    if (size <= self->maximum_size) {
+        return;
+    }
+
+    new_data = malloc(size * self->element_size);
+
+    /* copy old data */
+    if (self->size > 0) {
+        memcpy(new_data, self->data, self->size * self->element_size);
+        free(self->data);
+    }
+
+    self->data = new_data;
+    self->maximum_size = size;
+}
+
+int bsal_vector_capacity(struct bsal_vector *self)
+{
+    return self->maximum_size;
 }

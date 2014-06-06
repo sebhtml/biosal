@@ -12,11 +12,11 @@
 
 #define BSAL_NODE_DEBUG_LOOP
 #define BSAL_NODE_DEBUG_RECEIVE_SYSTEM
-#define BSAL_NODE_DEBUG_SPAWN
 */
 
 /*
 #define BSAL_NODE_SIMPLE_INITIAL_ACTOR_NAMES
+#define BSAL_NODE_DEBUG_SPAWN
 */
 
 /*
@@ -37,6 +37,7 @@ void bsal_node_init(struct bsal_node *node, int *argc, char ***argv)
     char *required_threads;
     int detected;
     int bytes;
+    int actor_capacity;
 
     srand(time(NULL) * getpid());
 
@@ -198,14 +199,19 @@ void bsal_node_init(struct bsal_node *node, int *argc, char ***argv)
 
     bsal_worker_pool_init(&node->worker_pool, workers, node);
 
-    node->actor_count = 0;
-    node->actor_capacity = 1048576;
+    actor_capacity = 1048576;
     node->dead_actors = 0;
     node->alive_actors = 0;
 
     /* TODO make sure that we have place above node->actor_capacity actors */
-    node->actors = (struct bsal_actor*)malloc(node->actor_capacity * sizeof(struct bsal_actor));
-    bsal_hash_table_init(&node->actor_names, node->actor_capacity, sizeof(int), sizeof(int));
+    bsal_vector_init(&node->actors, sizeof(struct bsal_actor));
+
+    /* it is necessary to reserve because work units will point
+     * to actors so their addresses can not be changed
+     */
+    bsal_vector_reserve(&node->actors, actor_capacity);
+
+    bsal_hash_table_init(&node->actor_names, actor_capacity, sizeof(int), sizeof(int));
 
     bsal_vector_init(&node->initial_actors, sizeof(int));
     bsal_vector_resize(&node->initial_actors, bsal_node_nodes(node));
@@ -232,10 +238,7 @@ void bsal_node_destroy(struct bsal_node *node)
     pthread_spin_destroy(&node->death_lock);
     pthread_spin_destroy(&node->script_lock);
 
-    free(node->actors);
-    node->actor_count = 0;
-    node->actor_capacity = 0;
-    node->actors = NULL;
+    bsal_vector_destroy(&node->actors);
 
     while (bsal_fifo_pop(&node->active_buffers, &active_buffer)) {
         bsal_active_buffer_destroy(&active_buffer);
@@ -324,7 +327,7 @@ void bsal_node_set_supervisor(struct bsal_node *node, int name, int supervisor)
 
 int bsal_node_actors(struct bsal_node *node)
 {
-    return node->actor_count;
+    return bsal_vector_size(&node->actors);
 }
 
 int bsal_node_spawn(struct bsal_node *node, int script)
@@ -378,8 +381,11 @@ int bsal_node_spawn_state(struct bsal_node *node, void *state,
 
     pthread_spin_lock(&node->spawn_lock);
 
-    index = node->actor_count;
-    actor = node->actors + index;
+    /* add an actor in the vector of actors
+     */
+    index = bsal_vector_size(&node->actors);
+    bsal_vector_resize(&node->actors, bsal_vector_size(&node->actors) + 1);
+    actor = (struct bsal_actor *)bsal_vector_at(&node->actors, index);
     bsal_actor_init(actor, state, script);
 
     /* actors have random names to enforce
@@ -397,7 +403,6 @@ int bsal_node_spawn_state(struct bsal_node *node, void *state,
                     (void *)bucket);
 #endif
 
-    node->actor_count++;
     node->alive_actors++;
 
     pthread_spin_unlock(&node->spawn_lock);
@@ -421,7 +426,7 @@ int bsal_node_generate_name(struct bsal_node *node)
 #endif
 
 #ifdef BSAL_NODE_SIMPLE_INITIAL_ACTOR_NAMES
-    if (node->actor_count == 0) {
+    if (bsal_node_actors(node) == 0) {
         return bsal_node_name(node);
     }
 #endif
@@ -462,7 +467,7 @@ int bsal_node_generate_name(struct bsal_node *node)
     printf("DEBUG node %d assigned name %d\n", node->name, name);
 #endif
 
-    /*return node->name + node->nodes * node->actor_count;*/
+    /*return node->name + node->nodes * bsal_node_actors(node);*/
 
     return name;
 }
@@ -525,7 +530,7 @@ void bsal_node_start_initial_actor(struct bsal_node *node)
     int name;
     struct bsal_message message;
 
-    actors = node->actor_count;
+    actors = bsal_vector_size(&node->actors);
 
     bytes = bsal_vector_pack_size(&node->initial_actors);
 
@@ -538,7 +543,7 @@ void bsal_node_start_initial_actor(struct bsal_node *node)
     bsal_vector_pack(&node->initial_actors, buffer);
 
     for (i = 0; i < actors; ++i) {
-        actor = node->actors + i;
+        actor = (struct bsal_actor *)bsal_vector_at(&node->actors, i);
         name = bsal_actor_name(actor);
 
         /* initial actors are supervised by themselves... */
@@ -1012,7 +1017,7 @@ struct bsal_actor *bsal_node_get_actor_from_name(struct bsal_node *node,
         return NULL;
     }
 
-    actor = node->actors + index;
+    actor = (struct bsal_actor *)bsal_vector_at(&node->actors, index);
 
     return actor;
 }
