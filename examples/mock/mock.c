@@ -61,7 +61,7 @@ void mock_receive(struct bsal_actor *actor, struct bsal_message *message)
         /*mock_init(actor);*/
         mock_start(actor, message);
 
-    } else if (tag == MOCK_DIE) {
+    } else if (tag == BSAL_ACTOR_ASK_TO_STOP) {
         printf("MOCK_DIE\n");
         mock_die(actor, message);
 
@@ -69,9 +69,9 @@ void mock_receive(struct bsal_actor *actor, struct bsal_message *message)
         printf("MOCK_NEW_CONTACTS\n");
         mock_add_contacts(actor, message);
 
-    } else if (tag == MOCK_NEW_CONTACTS_OK) {
+    } else if (tag == MOCK_NEW_CONTACTS_REPLY) {
 
-    } else if (tag == BUDDY_HELLO_OK) {
+    } else if (tag == BUDDY_HELLO_REPLY) {
 
         printf("BUDDY_HELLO_OK\n");
         bsal_message_init(message, MOCK_NOTIFY, 0, NULL);
@@ -96,15 +96,15 @@ void mock_receive(struct bsal_actor *actor, struct bsal_message *message)
         }
 
     } else if (tag == MOCK_PREPARE_DEATH) {
-        bsal_message_init(message, MOCK_DIE, 0, NULL);
+        bsal_message_init(message, BSAL_ACTOR_ASK_TO_STOP, 0, NULL);
 
         name = bsal_actor_name(actor);
         bsal_actor_send(actor, name, message);
 
-        bsal_message_init(message, BUDDY_DIE, 0, NULL);
+        bsal_message_init(message, BSAL_ACTOR_ASK_TO_STOP, 0, NULL);
         bsal_actor_send(actor, mock1->children[0], message);
 
-    } else if (tag == BUDDY_BOOT_OK) {
+    } else if (tag == BUDDY_BOOT_REPLY) {
 
         mock_share(actor, message);
     }
@@ -124,7 +124,7 @@ void mock_add_contacts(struct bsal_actor *actor, struct bsal_message *message)
     printf("mock_receive remote friend is %i\n",
                         mock1->remote_actor);
 
-    bsal_message_init(message, MOCK_NEW_CONTACTS_OK, 0, NULL);
+    bsal_message_init(message, MOCK_NEW_CONTACTS_REPLY, 0, NULL);
     bsal_actor_send(actor, source, message);
 
     /* say hello to remote actor too !

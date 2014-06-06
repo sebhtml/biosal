@@ -12,11 +12,10 @@ struct root {
     int events;
     int synchronized;
     int is_king;
+    int ready;
 };
 
-#define ROOT_DIE 0x00002381
 #define ROOT_STOP_ALL 0x00005fd3
-#define ROOT_CONTINUE 0x00000b76
 
 extern struct bsal_script root_script;
 

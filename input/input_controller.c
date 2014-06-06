@@ -23,6 +23,7 @@ void bsal_input_controller_init(struct bsal_actor *actor)
     bsal_vector_init(&controller->streams, sizeof(int));
     bsal_vector_init(&controller->files, sizeof(char *));
     bsal_vector_init(&controller->spawners, sizeof(int));
+    controller->opened_streams = 0;
 }
 
 void bsal_input_controller_destroy(struct bsal_actor *actor)
@@ -58,6 +59,7 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
     int source;
     int destination_index;
     struct bsal_message new_message;
+    int error;
 
     name = bsal_actor_name(actor);
     controller = (struct bsal_input_controller *)bsal_actor_concrete_actor(actor);
@@ -89,7 +91,7 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
 
         local_file = *(char **)bsal_vector_at(&controller->files, bsal_vector_size(&controller->streams));
 
-        printf("actor %d receives stream id %d from actor %d for file %s\n",
+        printf("DEBUG actor %d receives stream %d from spawner %d for file %s\n",
                         name, stream, source,
                         local_file);
 
@@ -98,25 +100,39 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
         bsal_message_init(&new_message, BSAL_INPUT_OPEN, strlen(local_file) + 1, local_file);
         bsal_actor_send(actor, stream, &new_message);
 
-        if (bsal_vector_size(&controller->streams) == bsal_vector_size(&controller->files)) {
-
-            bsal_actor_send_reply_empty(actor, BSAL_INPUT_DISTRIBUTE_REPLY);
-        } else {
+        if (bsal_vector_size(&controller->streams) != bsal_vector_size(&controller->files)) {
 
             bsal_actor_send_to_self_empty(actor, BSAL_INPUT_SPAWN);
+
         }
 
     } else if (tag == BSAL_INPUT_OPEN_REPLY) {
 
+        controller->opened_streams++;
+
         stream = source;
-
+        bsal_message_unpack_int(message, 0, &error);
         /* TODO continue work here */
-        bsal_actor_send_empty(actor, stream, BSAL_INPUT_CLOSE);
 
+        if (error == BSAL_INPUT_ERROR_NO_ERROR) {
+            /*bsal_actor_send_empty(actor, stream, BSAL_INPUT_CLOSE);*/
+            bsal_actor_send_empty(actor, stream, BSAL_ACTOR_ASK_TO_STOP);
+        }
+
+        if (controller->opened_streams == bsal_vector_size(&controller->files)) {
+
+            printf("DEBUG controller %d sends BSAL_INPUT_DISTRIBUTE_REPLY to supervisor %d [%d/%d]\n",
+                            name, bsal_actor_supervisor(actor),
+                            controller->opened_streams, bsal_vector_size(&controller->files));
+
+            bsal_actor_send_to_supervisor_empty(actor, BSAL_INPUT_DISTRIBUTE_REPLY);
+        }
 
     } else if (tag == BSAL_INPUT_DISTRIBUTE) {
 
         /* for each file, spawn a stream to count */
+
+        printf("DEBUG actor %d receives BSAL_INPUT_DISTRIBUTE\n", name);
 
         bsal_actor_send_to_self_empty(actor, BSAL_INPUT_SPAWN);
 
@@ -133,13 +149,16 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
         bsal_actor_send(actor, destination, message);
 
         local_file = *(char **)bsal_vector_at(&controller->files, i);
-        printf("actor %d spawns a stream for %s via actor %d\n",
+        printf("DEBUG actor %d spawns a stream for %s via spawner %d\n",
                         name, local_file, destination);
 
         /* also, spawn 4 stores on each node */
 
-    } else if (tag == BSAL_INPUT_STOP) {
+    } else if (tag == BSAL_ACTOR_ASK_TO_STOP && source == bsal_actor_supervisor(actor)) {
+
+        printf("DEBUG controller %d dies\n", name);
 
         bsal_actor_send_to_self_empty(actor, BSAL_ACTOR_STOP);
+        bsal_actor_send_reply_empty(actor, BSAL_ACTOR_ASK_TO_STOP_REPLY);
     }
 }

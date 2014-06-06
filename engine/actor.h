@@ -15,8 +15,19 @@
 
 /* for control */
 #define BSAL_ACTOR_START 0x00000885
+#define BSAL_ACTOR_START_REPLY 0x0000232f
 #define BSAL_ACTOR_STOP 0x0000388c
+#define BSAL_ACTOR_STOP_REPLY 0x00006fd8
 #define BSAL_ACTOR_ASK_TO_STOP 0x0000607b
+#define BSAL_ACTOR_ASK_TO_STOP_REPLY 0x00003602
+
+/* control YIELD is used as a yielding process.
+ * an actor sends this to itself
+ * when it receives BSAL_ACTOR_YIELD_REPLY, it continues
+ * its work
+ */
+#define BSAL_ACTOR_YIELD 0x00000173
+#define BSAL_ACTOR_YIELD_REPLY 0x000016f1
 
 /* binomial-tree */
 #define BSAL_ACTOR_BINOMIAL_TREE_SEND 0x00005b36
@@ -152,20 +163,26 @@ bsal_actor_receive_fn_t bsal_actor_get_receive(struct bsal_actor *actor);
 /* send functions
  */
 void bsal_actor_send(struct bsal_actor *actor, int destination, struct bsal_message *message);
+void bsal_actor_send_int(struct bsal_actor *actor, int destination, int tag, int value);
 void bsal_actor_send_empty(struct bsal_actor *actor, int destination, int tag);
 
 void bsal_actor_send_reply(struct bsal_actor *actor, struct bsal_message *message);
+void bsal_actor_send_reply_int(struct bsal_actor *actor, int tag, int error);
 void bsal_actor_send_reply_empty(struct bsal_actor *actor, int tag);
 
 void bsal_actor_send_to_self(struct bsal_actor *actor, struct bsal_message *message);
+void bsal_actor_send_to_self_int(struct bsal_actor *actor, int tag, int value);
 void bsal_actor_send_to_self_empty(struct bsal_actor *actor, int tag);
 
 void bsal_actor_send_to_supervisor(struct bsal_actor *actor, struct bsal_message *message);
+void bsal_actor_send_to_supervisor_int(struct bsal_actor *actor, int tag, int value);
 void bsal_actor_send_to_supervisor_empty(struct bsal_actor *actor, int tag);
 
 void bsal_actor_send_with_source(struct bsal_actor *actor, int name, struct bsal_message *message,
                 int source);
 int bsal_actor_send_system(struct bsal_actor *actor, int name, struct bsal_message *message);
+
+int bsal_actor_source(struct bsal_actor *actor);
 
 /* Send a message to a range of actors.
  * The implementation uses a binomial tree.

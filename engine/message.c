@@ -134,3 +134,21 @@ void bsal_message_set_count(struct bsal_message *message, int count)
 {
     message->count = count;
 }
+
+int bsal_message_unpack_int(struct bsal_message *message, int offset, int *value)
+{
+    int bytes;
+    void *buffer;
+    int *pointer;
+
+    bytes = sizeof(value);
+    buffer = bsal_message_buffer(message);
+
+    pointer = (int *)((char *)buffer + offset);
+
+    *value = *pointer;
+
+    offset += bytes;
+
+    return offset;
+}

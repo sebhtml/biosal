@@ -41,10 +41,9 @@ void buddy_receive(struct bsal_actor *actor, struct bsal_message *message)
     if (tag == BUDDY_BOOT) {
 
         printf("BUDDY_BOOT\n");
-        buddy_init(actor);
         bsal_actor_print(actor);
 
-        bsal_message_init(message, BUDDY_BOOT_OK, 0, NULL);
+        bsal_message_init(message, BUDDY_BOOT_REPLY, 0, NULL);
         bsal_actor_send(actor, source, message);
 
     } else if (tag == BUDDY_HELLO) {
@@ -56,10 +55,11 @@ void buddy_receive(struct bsal_actor *actor, struct bsal_message *message)
         bsal_message_init(message, BSAL_ACTOR_PIN, 0, NULL);
         bsal_actor_send(actor, name, message);
 
-        bsal_message_init(message, BUDDY_HELLO_OK, 0, NULL);
+        bsal_message_init(message, BUDDY_HELLO_REPLY, 0, NULL);
         bsal_actor_send(actor, source, message);
 
-    } else if (tag == BUDDY_DIE) {
+    } else if (tag == BSAL_ACTOR_ASK_TO_STOP) {
+
         printf("BUDDY_DIE\n");
 
         printf("buddy_receive Actor %i received a message (%i BUDDY_DIE) from actor %i\n",

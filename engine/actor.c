@@ -175,8 +175,10 @@ int bsal_actor_send_system(struct bsal_actor *actor, int name, struct bsal_messa
                 actor->acquaintance_name_change_status = BSAL_ACTOR_STATUS_NOT_SUPPORTED;
                 return 1;
             }
+        } else if (tag == BSAL_ACTOR_YIELD) {
+            bsal_actor_send_to_self_empty(actor, BSAL_ACTOR_YIELD_REPLY);
+            return 1;
         }
-
     }
 
     if (tag == BSAL_ACTOR_PACK) {
@@ -405,6 +407,14 @@ int bsal_actor_receive_system(struct bsal_actor *actor, struct bsal_message *mes
     } else if (tag == BSAL_ACTOR_STOP && source == name ) {
 
         bsal_actor_die(actor);
+        return 1;
+
+
+    /* block BSAL_ACTOR_STOP if it is not from self
+     * acquaintances have to use BSAL_ACTOR_ASK_TO_STOP
+     */
+    } else if (tag == BSAL_ACTOR_STOP && source != name ) {
+
         return 1;
 
     /* spawn an actor
@@ -913,7 +923,7 @@ void bsal_actor_add_script(struct bsal_actor *actor, int name, struct bsal_scrip
 
 void bsal_actor_send_reply_empty(struct bsal_actor *actor, int tag)
 {
-    bsal_actor_send_empty(actor, actor->current_source, tag);
+    bsal_actor_send_empty(actor, bsal_actor_source(actor), tag);
 }
 
 void bsal_actor_send_to_self_empty(struct bsal_actor *actor, int tag)
@@ -931,7 +941,7 @@ void bsal_actor_send_empty(struct bsal_actor *actor, int destination, int tag)
 
 void bsal_actor_send_reply(struct bsal_actor *actor, struct bsal_message *message)
 {
-    bsal_actor_send(actor, actor->current_source, message);
+    bsal_actor_send(actor, bsal_actor_source(actor), message);
 }
 
 void bsal_actor_send_to_self(struct bsal_actor *actor, struct bsal_message *message)
@@ -1048,3 +1058,32 @@ int bsal_actor_continue_clone(struct bsal_actor *actor, struct bsal_message *mes
 
     return 0;
 }
+
+void bsal_actor_send_reply_int(struct bsal_actor *actor, int tag, int value)
+{
+    bsal_actor_send_int(actor, bsal_actor_source(actor), tag, value);
+}
+
+int bsal_actor_source(struct bsal_actor *actor)
+{
+    return actor->current_source;
+}
+
+void bsal_actor_send_int(struct bsal_actor *actor, int destination, int tag, int value)
+{
+    struct bsal_message message;
+
+    bsal_message_init(&message, tag, sizeof(value), &value);
+    bsal_actor_send(actor, destination, &message);
+}
+
+void bsal_actor_send_to_supervisor_int(struct bsal_actor *actor, int tag, int value)
+{
+    bsal_actor_send_int(actor, bsal_actor_supervisor(actor), tag, value);
+}
+
+void bsal_actor_send_to_self_int(struct bsal_actor *actor, int tag, int value)
+{
+    bsal_actor_send_int(actor, bsal_actor_name(actor), tag, value);
+}
+
