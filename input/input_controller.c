@@ -91,9 +91,11 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
 
         local_file = *(char **)bsal_vector_at(&controller->files, bsal_vector_size(&controller->streams));
 
+#ifdef BSAL_INPUT_CONTROLLER_DEBUG
         printf("DEBUG actor %d receives stream %d from spawner %d for file %s\n",
                         name, stream, source,
                         local_file);
+#endif
 
         bsal_vector_push_back(&controller->streams, &stream);
 
@@ -120,9 +122,11 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
 
         if (controller->opened_streams == bsal_vector_size(&controller->files)) {
 
+#ifdef BSAL_INPUT_CONTROLLER_DEBUG
             printf("DEBUG controller %d sends BSAL_INPUT_DISTRIBUTE_REPLY to supervisor %d [%d/%d]\n",
                             name, bsal_actor_supervisor(actor),
                             controller->opened_streams, bsal_vector_size(&controller->files));
+#endif
 
             bsal_actor_send_to_supervisor_empty(actor, BSAL_INPUT_DISTRIBUTE_REPLY);
         }
@@ -131,7 +135,9 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
 
         /* for each file, spawn a stream to count */
 
+#ifdef BSAL_INPUT_CONTROLLER_DEBUG
         printf("DEBUG actor %d receives BSAL_INPUT_DISTRIBUTE\n", name);
+#endif
 
         bsal_actor_send_to_self_empty(actor, BSAL_INPUT_SPAWN);
 
@@ -148,14 +154,19 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
         bsal_actor_send(actor, destination, message);
 
         local_file = *(char **)bsal_vector_at(&controller->files, i);
+
+#ifdef BSAL_INPUT_CONTROLLER_DEBUG
         printf("DEBUG actor %d spawns a stream for %s via spawner %d\n",
                         name, local_file, destination);
+#endif
 
         /* also, spawn 4 stores on each node */
 
     } else if (tag == BSAL_ACTOR_ASK_TO_STOP && source == bsal_actor_supervisor(actor)) {
 
+#ifdef BSAL_INPUT_CONTROLLER_DEBUG
         printf("DEBUG controller %d dies\n", name);
+#endif
 
         bsal_actor_send_to_self_empty(actor, BSAL_ACTOR_STOP);
         bsal_actor_send_reply_empty(actor, BSAL_ACTOR_ASK_TO_STOP_REPLY);

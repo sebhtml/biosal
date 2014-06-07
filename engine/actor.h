@@ -125,8 +125,8 @@ struct bsal_actor {
     int name;
     int dead;
     int supervisor;
-    uint64_t counter_received_messages;
-    uint64_t counter_sent_messages;
+    uint64_t event_counter_received_messages;
+    uint64_t event_counter_sent_messages;
 
     int synchronization_started;
     int synchronization_responses;

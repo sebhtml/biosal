@@ -76,9 +76,9 @@ struct bsal_node {
 
     int debug;
 
-    uint64_t counter_messages_sent_to_self;
-    uint64_t counter_messages_received_from_other;
-    uint64_t counter_messages_sent_to_other;
+    uint64_t event_counter_messages_sent_to_self;
+    uint64_t event_counter_messages_received_from_other;
+    uint64_t event_counter_messages_sent_to_other;
 };
 
 void bsal_node_init(struct bsal_node *node, int *argc, char ***argv);

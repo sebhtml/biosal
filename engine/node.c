@@ -778,7 +778,7 @@ int bsal_node_receive(struct bsal_node *node, struct bsal_message *message)
     bsal_message_read_metadata(message);
     bsal_node_resolve(node, message);
 
-    bsal_node_increment_counter(node, BSAL_COUNTER_RECEIVED_MESSAGES_OTHER_NODE);
+    bsal_node_increment_counter(node, BSAL_EVENT_COUNTER_RECEIVED_MESSAGES_OTHER_NODE);
 
     return 1;
 }
@@ -1009,8 +1009,8 @@ void bsal_node_send(struct bsal_node *node, struct bsal_message *message)
             printf("DEBUG local message 1100\n");
         }
 #endif
-        bsal_node_increment_counter(node, BSAL_COUNTER_SENT_MESSAGES_SAME_NODE);
-        bsal_node_increment_counter(node, BSAL_COUNTER_RECEIVED_MESSAGES_SAME_NODE);
+        bsal_node_increment_counter(node, BSAL_EVENT_COUNTER_SENT_MESSAGES_SAME_NODE);
+        bsal_node_increment_counter(node, BSAL_EVENT_COUNTER_RECEIVED_MESSAGES_SAME_NODE);
     } else {
 
         /* send messages over the network */
@@ -1024,7 +1024,7 @@ void bsal_node_send(struct bsal_node *node, struct bsal_message *message)
         }
 #endif
 
-        bsal_node_increment_counter(node, BSAL_COUNTER_SENT_MESSAGES_OTHER_NODE);
+        bsal_node_increment_counter(node, BSAL_EVENT_COUNTER_SENT_MESSAGES_OTHER_NODE);
     }
 }
 
@@ -1290,25 +1290,25 @@ struct bsal_script *bsal_node_find_script(struct bsal_node *node, int name)
 
 uint64_t bsal_node_get_counter(struct bsal_node *node, int counter)
 {
-    if (counter == BSAL_COUNTER_RECEIVED_MESSAGES) {
-        return bsal_node_get_counter(node, BSAL_COUNTER_RECEIVED_MESSAGES_SAME_NODE) +
-                bsal_node_get_counter(node, BSAL_COUNTER_RECEIVED_MESSAGES_OTHER_NODE);
+    if (counter == BSAL_EVENT_COUNTER_RECEIVED_MESSAGES) {
+        return bsal_node_get_counter(node, BSAL_EVENT_COUNTER_RECEIVED_MESSAGES_SAME_NODE) +
+                bsal_node_get_counter(node, BSAL_EVENT_COUNTER_RECEIVED_MESSAGES_OTHER_NODE);
 
-    } else if (counter == BSAL_COUNTER_SENT_MESSAGES) {
-        return bsal_node_get_counter(node, BSAL_COUNTER_SENT_MESSAGES_SAME_NODE) +
-                bsal_node_get_counter(node, BSAL_COUNTER_SENT_MESSAGES_OTHER_NODE);
+    } else if (counter == BSAL_EVENT_COUNTER_SENT_MESSAGES) {
+        return bsal_node_get_counter(node, BSAL_EVENT_COUNTER_SENT_MESSAGES_SAME_NODE) +
+                bsal_node_get_counter(node, BSAL_EVENT_COUNTER_SENT_MESSAGES_OTHER_NODE);
 
-    } else if (counter == BSAL_COUNTER_RECEIVED_MESSAGES_SAME_NODE) {
-        return bsal_node_get_counter(node, BSAL_COUNTER_SENT_MESSAGES_SAME_NODE);
+    } else if (counter == BSAL_EVENT_COUNTER_RECEIVED_MESSAGES_SAME_NODE) {
+        return bsal_node_get_counter(node, BSAL_EVENT_COUNTER_SENT_MESSAGES_SAME_NODE);
 
-    } else if (counter == BSAL_COUNTER_SENT_MESSAGES_SAME_NODE) {
-        return node->counter_messages_sent_to_self;
+    } else if (counter == BSAL_EVENT_COUNTER_SENT_MESSAGES_SAME_NODE) {
+        return node->event_counter_messages_sent_to_self;
 
-    } else if (counter == BSAL_COUNTER_RECEIVED_MESSAGES_OTHER_NODE) {
-        return node->counter_messages_received_from_other;
+    } else if (counter == BSAL_EVENT_COUNTER_RECEIVED_MESSAGES_OTHER_NODE) {
+        return node->event_counter_messages_received_from_other;
 
-    } else if (counter == BSAL_COUNTER_SENT_MESSAGES_OTHER_NODE) {
-        return node->counter_messages_sent_to_other;
+    } else if (counter == BSAL_EVENT_COUNTER_SENT_MESSAGES_OTHER_NODE) {
+        return node->event_counter_messages_sent_to_other;
     }
 
     return 0;
@@ -1316,19 +1316,19 @@ uint64_t bsal_node_get_counter(struct bsal_node *node, int counter)
 
 void bsal_node_increment_counter(struct bsal_node *node, int counter)
 {
-    if (counter == BSAL_COUNTER_SENT_MESSAGES_OTHER_NODE) {
-        node->counter_messages_sent_to_other++;
-    } else if (counter == BSAL_COUNTER_RECEIVED_MESSAGES_OTHER_NODE) {
-        node->counter_messages_received_from_other++;
-    } else if (counter == BSAL_COUNTER_RECEIVED_MESSAGES) {
+    if (counter == BSAL_EVENT_COUNTER_SENT_MESSAGES_OTHER_NODE) {
+        node->event_counter_messages_sent_to_other++;
+    } else if (counter == BSAL_EVENT_COUNTER_RECEIVED_MESSAGES_OTHER_NODE) {
+        node->event_counter_messages_received_from_other++;
+    } else if (counter == BSAL_EVENT_COUNTER_RECEIVED_MESSAGES) {
 
         /* do nothing */
-    } else if (counter == BSAL_COUNTER_SENT_MESSAGES) {
+    } else if (counter == BSAL_EVENT_COUNTER_SENT_MESSAGES) {
 
         /* do nothing */
-    } else if (counter == BSAL_COUNTER_SENT_MESSAGES_SAME_NODE) {
-        node->counter_messages_sent_to_self++;
-    } else if (counter == BSAL_COUNTER_RECEIVED_MESSAGES_SAME_NODE) {
+    } else if (counter == BSAL_EVENT_COUNTER_SENT_MESSAGES_SAME_NODE) {
+        node->event_counter_messages_sent_to_self++;
+    } else if (counter == BSAL_EVENT_COUNTER_RECEIVED_MESSAGES_SAME_NODE) {
         /* do nothing */
     }
 }
