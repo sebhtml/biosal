@@ -8,8 +8,9 @@
 #include <string.h>
 
 /*
-#define BSAL_INPUT_CONTROLLER_DEBUG
 */
+
+#define BSAL_INPUT_CONTROLLER_DEBUG
 
 struct bsal_script bsal_input_controller_script = {
     .name = BSAL_INPUT_CONTROLLER_SCRIPT,
@@ -133,11 +134,20 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
         bsal_message_unpack_int(message, 0, &error);
 
         if (error == BSAL_INPUT_ERROR_NO_ERROR) {
+            printf("DEBUG actor %d asks %d BSAL_INPUT_COUNT\n", name, stream);
             bsal_actor_send_empty(actor, stream, BSAL_INPUT_COUNT);
         } else {
+            printf("DEBUG actor %d received error %d from %d\n", name, error, stream);
             controller->counted++;
         }
 
+	/* if all streams failed, notice supervisor */
+        if (controller->counted == bsal_vector_size(&controller->files)) {
+
+            bsal_actor_send_to_supervisor_empty(actor, BSAL_INPUT_DISTRIBUTE_REPLY);
+        }
+
+/*
         if (controller->opened_streams == bsal_vector_size(&controller->files)) {
 
 #ifdef BSAL_INPUT_CONTROLLER_DEBUG
@@ -147,6 +157,7 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
 #endif
 
         }
+*/
 
     } else if (tag == BSAL_INPUT_COUNT_PROGRESS) {
 
