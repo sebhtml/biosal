@@ -178,6 +178,11 @@ int bsal_actor_send_system(struct bsal_actor *actor, int name, struct bsal_messa
         } else if (tag == BSAL_ACTOR_YIELD) {
             bsal_actor_send_to_self_empty(actor, BSAL_ACTOR_YIELD_REPLY);
             return 1;
+
+        } else if (tag == BSAL_ACTOR_STOP) {
+
+            bsal_actor_die(actor);
+            return 1;
         }
     }
 
@@ -403,12 +408,6 @@ int bsal_actor_receive_system(struct bsal_actor *actor, struct bsal_message *mes
      */
     } else if (tag == BSAL_ACTOR_SYNCHRONIZED && name != source) {
         return 1;
-
-    } else if (tag == BSAL_ACTOR_STOP && source == name ) {
-
-        bsal_actor_die(actor);
-        return 1;
-
 
     /* block BSAL_ACTOR_STOP if it is not from self
      * acquaintances have to use BSAL_ACTOR_ASK_TO_STOP

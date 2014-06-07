@@ -52,4 +52,8 @@ echo "Detected issues: $(run_checks|wc -l)"
 
 run_checks
 
+./scripts/check-tags.sh
+
+./scripts/check-scripts.sh
+
 echo "Thank you."

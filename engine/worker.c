@@ -86,7 +86,6 @@ void bsal_worker_work(struct bsal_worker *worker, struct bsal_work *work)
      */
     bsal_actor_lock(actor);
 
-    bsal_actor_set_worker(actor, worker);
     message = bsal_work_message(work);
 
     /* Store the buffer location before calling the user
@@ -96,8 +95,26 @@ void bsal_worker_work(struct bsal_worker *worker, struct bsal_work *work)
      */
     buffer = bsal_message_buffer(message);
 
+    /* the actor died while this worker was waiting for the lock
+     */
+    if (bsal_actor_dead(actor)) {
+
+#ifdef BSAL_WORKER_DEBUG
+        printf("DEBUG bsal_worker_work actor died while the worker was waiting for the lock.\n");
+#endif
+        /* TODO free the buffer with the slab allocator */
+        free(buffer);
+
+        /* TODO replace with slab allocator */
+        free(message);
+
+        bsal_actor_unlock(actor);
+        return;
+    }
+
     /* call the actor receive code
      */
+    bsal_actor_set_worker(actor, worker);
     bsal_actor_receive(actor, message);
 
     bsal_actor_set_worker(actor, NULL);

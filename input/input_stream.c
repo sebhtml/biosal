@@ -219,6 +219,8 @@ void bsal_input_stream_receive(struct bsal_actor *actor, struct bsal_message *me
         bsal_message_init(message, BSAL_INPUT_CLOSE_REPLY, sizeof(error), &error);
         bsal_actor_send(actor, source, message);
 
+        bsal_actor_send_to_self_empty(actor, BSAL_ACTOR_STOP);
+
         printf("actor %d sending BSAL_INPUT_CLOSE_REPLY to %d\n", name, source);
 
     } else if (tag == BSAL_INPUT_GET_SEQUENCE) {

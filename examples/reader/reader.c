@@ -147,6 +147,7 @@ void reader_receive(struct bsal_actor *actor, struct bsal_message *message)
 
     } else if (tag == BSAL_INPUT_CLOSE_REPLY && !reader1->pulled) {
 
+        /* not necessary, it is already dead. */
         bsal_actor_send_reply_empty(actor, BSAL_ACTOR_ASK_TO_STOP);
 
         printf("actor %d received BSAL_INPUT_CLOSE_REPLY from actor %d, asking it to stop"
@@ -167,8 +168,11 @@ void reader_receive(struct bsal_actor *actor, struct bsal_message *message)
 
         bsal_actor_send_reply_empty(actor, BSAL_ACTOR_ASK_TO_STOP);
 
+        bsal_actor_send_to_self_empty(actor, BSAL_ACTOR_STOP);
+
     } else if (tag == BSAL_ACTOR_ASK_TO_STOP_REPLY && reader1->pulled) {
 
+        /* this tag will never arrive here */
         bsal_message_init(message, BSAL_ACTOR_STOP, 0, NULL);
         bsal_actor_send(actor, name, message);
 

@@ -112,11 +112,10 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
 
         stream = source;
         bsal_message_unpack_int(message, 0, &error);
-        /* TODO continue work here */
 
+        /* TODO continue work here */
         if (error == BSAL_INPUT_ERROR_NO_ERROR) {
-            /*bsal_actor_send_empty(actor, stream, BSAL_INPUT_CLOSE);*/
-            bsal_actor_send_empty(actor, stream, BSAL_ACTOR_ASK_TO_STOP);
+            bsal_actor_send_empty(actor, stream, BSAL_INPUT_CLOSE);
         }
 
         if (controller->opened_streams == bsal_vector_size(&controller->files)) {
