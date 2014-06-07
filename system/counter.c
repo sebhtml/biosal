@@ -2,6 +2,7 @@
 #include "counter.h"
 
 #include <stdio.h>
+#include <inttypes.h>
 
 void bsal_counter_init(struct bsal_counter *self)
 {
@@ -81,28 +82,38 @@ void bsal_counter_increment(struct bsal_counter *self, int counter)
     }
 }
 
+/*
+http://pubs.opengroup.org/onlinepubs/009696799/basedefs/inttypes.h.html
+http://www.cplusplus.com/reference/cinttypes/
+http://en.wikibooks.org/wiki/C_Programming/C_Reference/inttypes.h
+http://stackoverflow.com/questions/16859500/mmh-who-are-you-priu64
+
+#include <inttypes.h>
+
+use PRIu64
+*/
 void bsal_counter_print(struct bsal_counter *self)
 {
     /* print uint64_t, not int
      */
-    printf("BSAL_COUNTER_EVENT_SPAWN_ACTOR %d\n",
-                    (int)bsal_counter_get(self, BSAL_COUNTER_EVENT_SPAWN_ACTOR));
-    printf("BSAL_COUNTER_EVENT_KILL_ACTOR %d\n",
-                    (int)bsal_counter_get(self, BSAL_COUNTER_EVENT_KILL_ACTOR));
+    printf("BSAL_COUNTER_EVENT_SPAWN_ACTOR %" PRIu64 "\n",
+                    bsal_counter_get(self, BSAL_COUNTER_EVENT_SPAWN_ACTOR));
+    printf("BSAL_COUNTER_EVENT_KILL_ACTOR %" PRIu64 "\n",
+                    bsal_counter_get(self, BSAL_COUNTER_EVENT_KILL_ACTOR));
 
-    printf("BSAL_COUNTER_EVENT_SEND_MESSAGE %d\n",
-                    (int)bsal_counter_get(self, BSAL_COUNTER_EVENT_SEND_MESSAGE));
-    printf("BSAL_COUNTER_EVENT_SEND_MESSAGE_TO_SELF %d\n",
-                    (int)bsal_counter_get(self, BSAL_COUNTER_EVENT_SEND_MESSAGE_TO_SELF));
-    printf("BSAL_COUNTER_EVENT_SEND_MESSAGE_NOT_TO_SELF %d\n",
-                    (int)bsal_counter_get(self, BSAL_COUNTER_EVENT_SEND_MESSAGE_NOT_TO_SELF));
+    printf("BSAL_COUNTER_EVENT_SEND_MESSAGE %" PRIu64 "\n",
+                    bsal_counter_get(self, BSAL_COUNTER_EVENT_SEND_MESSAGE));
+    printf("BSAL_COUNTER_EVENT_SEND_MESSAGE_TO_SELF %" PRIu64 "\n",
+                    bsal_counter_get(self, BSAL_COUNTER_EVENT_SEND_MESSAGE_TO_SELF));
+    printf("BSAL_COUNTER_EVENT_SEND_MESSAGE_NOT_TO_SELF %" PRIu64 "\n",
+                    bsal_counter_get(self, BSAL_COUNTER_EVENT_SEND_MESSAGE_NOT_TO_SELF));
 
-    printf("BSAL_COUNTER_EVENT_RECEIVE_MESSAGE %d\n",
-                    (int)bsal_counter_get(self, BSAL_COUNTER_EVENT_RECEIVE_MESSAGE));
-    printf("BSAL_COUNTER_EVENT_RECEIVE_MESSAGE_FROM_SELF %d\n",
-                    (int)bsal_counter_get(self, BSAL_COUNTER_EVENT_RECEIVE_MESSAGE_FROM_SELF));
-    printf("BSAL_COUNTER_EVENT_RECEIVE_MESSAGE_NOT_FROM_SELF %d\n",
-                    (int)bsal_counter_get(self, BSAL_COUNTER_EVENT_RECEIVE_MESSAGE_NOT_FROM_SELF));
+    printf("BSAL_COUNTER_EVENT_RECEIVE_MESSAGE %" PRIu64 "\n",
+                    bsal_counter_get(self, BSAL_COUNTER_EVENT_RECEIVE_MESSAGE));
+    printf("BSAL_COUNTER_EVENT_RECEIVE_MESSAGE_FROM_SELF %" PRIu64 "\n",
+                    bsal_counter_get(self, BSAL_COUNTER_EVENT_RECEIVE_MESSAGE_FROM_SELF));
+    printf("BSAL_COUNTER_EVENT_RECEIVE_MESSAGE_NOT_FROM_SELF %" PRIu64 "\n",
+                    bsal_counter_get(self, BSAL_COUNTER_EVENT_RECEIVE_MESSAGE_NOT_FROM_SELF));
 }
 
 
