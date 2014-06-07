@@ -4,10 +4,12 @@ LD=$(CC)
 Q=@
 ECHO=echo
 
+all: 
+
 include tests/Makefile.mk
 include examples/Makefile.mk
 
-all: $(EXAMPLES) $(TESTS)
+all: $(TESTS) $(EXAMPLES)
 
 LIBRARY=
 
