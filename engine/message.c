@@ -152,3 +152,11 @@ int bsal_message_unpack_int(struct bsal_message *message, int offset, int *value
 
     return offset;
 }
+
+void bsal_message_get_all(struct bsal_message *message, int *tag, int *count, void **buffer, int *source)
+{
+    *tag = bsal_message_tag(message);
+    *count = bsal_message_count(message);
+    *buffer = bsal_message_buffer(message);
+    *source = bsal_message_source(message);
+}

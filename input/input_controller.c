@@ -54,6 +54,7 @@ void bsal_input_controller_destroy(struct bsal_actor *actor)
 void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message *message)
 {
     int tag;
+    int count;
     char *file;
     void *buffer;
     struct bsal_input_controller *controller;
@@ -71,11 +72,10 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
     int entries;
     int *bucket;
 
+    bsal_message_get_all(message, &tag, &count, &buffer, &source);
+
     name = bsal_actor_name(actor);
     controller = (struct bsal_input_controller *)bsal_actor_concrete_actor(actor);
-    tag = bsal_message_tag(message);
-    source = bsal_message_source(message);
-    buffer = bsal_message_buffer(message);
 
     if (tag == BSAL_INPUT_CONTROLLER_START) {
 
@@ -96,7 +96,7 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
         bucket = bsal_vector_at(&controller->files, bsal_vector_size(&controller->files) - 1);
         local_file = *(char **)bucket;
 
-#ifdef BSAL_INPUT_CONTROLLER_DEBUG
+#ifdef BSAL_INPUT_CONTROLLER_DEBUG98
         printf("DEBUG11 BSAL_ADD_FILE %s %p bucket %p index %d\n",
                         local_file, local_file, (void *)bucket, bsal_vector_size(&controller->files) - 1);
 #endif
@@ -219,7 +219,7 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
 
         bsal_actor_send_to_self_empty(actor, BSAL_INPUT_SPAWN);
 
-#ifdef BSAL_INPUT_CONTROLLER_DEBUG
+#ifdef BSAL_INPUT_CONTROLLER_DEBUG12
         printf("DEBUG resizing counts to %d\n", bsal_vector_size(&controller->files));
 #endif
 
@@ -246,7 +246,7 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
         bucket = bsal_vector_at(&controller->files, i);
         local_file = *(char **)bsal_vector_at(&controller->files, i);
 
-#ifdef BSAL_INPUT_CONTROLLER_DEBUG
+#ifdef BSAL_INPUT_CONTROLLER_DEBUG12
         printf("DEBUG890 local_file %p bucket %p index %d\n", local_file, (void *)bucket,
                         i);
 #endif
