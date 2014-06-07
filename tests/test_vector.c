@@ -13,6 +13,8 @@ int main(int argc, char **argv)
         int value;
         int *pointer;
         int expected;
+        int actual;
+        int j;
 
         bsal_vector_init(&vector, sizeof(int));
         TEST_INT_EQUALS(bsal_vector_size(&vector), 0);
@@ -33,7 +35,22 @@ int main(int argc, char **argv)
 
             value = *(int *)bsal_vector_at(&vector, i);
 
+            /* restore the value */
+            *pointer = i;
+
             TEST_INT_EQUALS(value, expected);
+
+            for (j = 0; j <= i; j++) {
+                expected = j;
+                pointer = bsal_vector_at(&vector, j);
+                actual = *pointer;
+/*
+                printf("DEBUG index %d actual %d expected %d bucket %p\n",
+                                j, actual, expected, (void *)pointer);
+                                */
+
+                TEST_INT_EQUALS(actual, expected);
+            }
         }
 
         bsal_vector_resize(&vector, 42);

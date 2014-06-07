@@ -12,6 +12,8 @@ struct bsal_input_controller {
     struct bsal_vector streams;
     struct bsal_vector spawners;
     int opened_streams;
+    int counted;
+    struct bsal_vector counts;
 };
 
 #define BSAL_INPUT_DISTRIBUTE 0x00003cbe

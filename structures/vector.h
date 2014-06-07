@@ -21,6 +21,7 @@ int bsal_vector_capacity(struct bsal_vector *self);
 
 void *bsal_vector_at(struct bsal_vector *self, int index);
 int bsal_vector_at_as_int(struct bsal_vector *self, int index);
+char *bsal_vector_at_as_char_pointer(struct bsal_vector *self, int index);
 void bsal_vector_push_back(struct bsal_vector *self, void *data);
 int bsal_vector_pack_size(struct bsal_vector *self);
 void bsal_vector_pack(struct bsal_vector *self, void *buffer);

@@ -51,6 +51,7 @@ void bsal_vector_resize(struct bsal_vector *self, int size)
         return;
     }
 
+    /* otherwise, the array needs to grow */
     bsal_vector_reserve(self, size);
     self->size = self->maximum_size;
 }
@@ -66,7 +67,7 @@ void *bsal_vector_at(struct bsal_vector *self, int index)
         return NULL;
     }
 
-    return (char *)self->data + index * self->element_size;
+    return ((char *)self->data) + index * self->element_size;
 }
 
 void bsal_vector_push_back(struct bsal_vector *self, void *data)
@@ -75,8 +76,8 @@ void bsal_vector_push_back(struct bsal_vector *self, void *data)
     int new_maximum_size;
     void *bucket;
 
-#ifdef BSAL_VECTOR_DEBUG8
-    printf("index %d size %d max %d\n", (int)index,
+#ifdef BSAL_VECTOR_DEBUG
+    printf("DEBUG bsal_vector_push_back size %d max %d\n",
                     (int)self->size, (int)self->maximum_size);
 #endif
 
@@ -97,6 +98,11 @@ void bsal_vector_push_back(struct bsal_vector *self, void *data)
     self->size++;
     bucket = bsal_vector_at(self, index);
     memcpy(bucket, data, self->element_size);
+
+#ifdef BSAL_VECTOR_DEBUG
+    printf("DEBUG bsal_vector_push_back new_size is %d, pushed in bucket %d, value in bucket %d\n",
+                    self->size, index, *(int *)bucket);
+#endif
 }
 
 int bsal_vector_pack_size(struct bsal_vector *self)
@@ -202,7 +208,7 @@ int bsal_vector_at_as_int(struct bsal_vector *self, int index)
 {
     int *bucket;
 
-    bucket = bsal_vector_at(self, index);
+    bucket = (int *)bsal_vector_at(self, index);
 
     if (bucket == NULL) {
         return -1;
@@ -211,19 +217,47 @@ int bsal_vector_at_as_int(struct bsal_vector *self, int index)
     return *bucket;
 }
 
+char *bsal_vector_at_as_char_pointer(struct bsal_vector *self, int index)
+{
+    char **bucket;
+
+    bucket = (char **)bsal_vector_at(self, index);
+
+    if (bucket == NULL) {
+        return NULL;
+    }
+
+    return *bucket;
+}
+
 void bsal_vector_reserve(struct bsal_vector *self, int size)
 {
-    char *new_data;
+    void *new_data;
+    int old_byte_count;
+    int new_byte_count;
+
+#ifdef BSAL_VECTOR_DEBUG
+    printf("DEBUG bsal_vector_reserve %d buckets current_size %d\n", size,
+                    self->size);
+#endif
 
     if (size <= self->maximum_size) {
         return;
     }
 
-    new_data = malloc(size * self->element_size);
+    new_byte_count = size * self->element_size;
+    old_byte_count = self->size * self->element_size;
+
+#ifdef BSAL_VECTOR_DEBUG
+    printf("DEBUG bsal_vector_reserve old_byte_count %d new_byte_count %d\n",
+                    old_byte_count, new_byte_count);
+#endif
+
+    new_data = malloc(new_byte_count);
 
     /* copy old data */
     if (self->size > 0) {
-        memcpy(new_data, self->data, self->size * self->element_size);
+        memcpy(new_data, self->data, old_byte_count);
         free(self->data);
     }
 

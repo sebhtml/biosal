@@ -7,6 +7,10 @@
 #include <stdio.h>
 #include <string.h>
 
+/*
+#define BSAL_INPUT_CONTROLLER_DEBUG
+*/
+
 struct bsal_script bsal_input_controller_script = {
     .name = BSAL_INPUT_CONTROLLER_SCRIPT,
     .init = bsal_input_controller_init,
@@ -23,6 +27,7 @@ void bsal_input_controller_init(struct bsal_actor *actor)
     bsal_vector_init(&controller->streams, sizeof(int));
     bsal_vector_init(&controller->files, sizeof(char *));
     bsal_vector_init(&controller->spawners, sizeof(int));
+    bsal_vector_init(&controller->counts, sizeof(int));
     controller->opened_streams = 0;
 }
 
@@ -42,6 +47,7 @@ void bsal_input_controller_destroy(struct bsal_actor *actor)
     bsal_vector_destroy(&controller->streams);
     bsal_vector_destroy(&controller->files);
     bsal_vector_destroy(&controller->spawners);
+    bsal_vector_destroy(&controller->counts);
 }
 
 void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message *message)
@@ -60,6 +66,9 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
     int destination_index;
     struct bsal_message new_message;
     int error;
+    int stream_index;
+    int entries;
+    int *bucket;
 
     name = bsal_actor_name(actor);
     controller = (struct bsal_input_controller *)bsal_actor_concrete_actor(actor);
@@ -82,6 +91,14 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
         strcpy(local_file, file);
 
         bsal_vector_push_back(&controller->files, &local_file);
+
+        bucket = bsal_vector_at(&controller->files, bsal_vector_size(&controller->files) - 1);
+        local_file = *(char **)bucket;
+
+#ifdef BSAL_INPUT_CONTROLLER_DEBUG
+        printf("DEBUG11 BSAL_ADD_FILE %s %p bucket %p index %d\n",
+                        local_file, local_file, (void *)bucket, bsal_vector_size(&controller->files) - 1);
+#endif
 
         bsal_actor_send_reply_empty(actor, BSAL_ADD_FILE_REPLY);
 
@@ -115,9 +132,10 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
         stream = source;
         bsal_message_unpack_int(message, 0, &error);
 
-        /* TODO continue work here */
         if (error == BSAL_INPUT_ERROR_NO_ERROR) {
-            bsal_actor_send_empty(actor, stream, BSAL_INPUT_CLOSE);
+            bsal_actor_send_empty(actor, stream, BSAL_INPUT_COUNT);
+        } else {
+            controller->counted++;
         }
 
         if (controller->opened_streams == bsal_vector_size(&controller->files)) {
@@ -128,9 +146,54 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
                             controller->opened_streams, bsal_vector_size(&controller->files));
 #endif
 
-            bsal_actor_send_to_supervisor_empty(actor, BSAL_INPUT_DISTRIBUTE_REPLY);
         }
 
+    } else if (tag == BSAL_INPUT_COUNT_PROGRESS) {
+
+        stream_index = bsal_vector_index_of(&controller->streams, &source);
+        local_file = bsal_vector_at_as_char_pointer(&controller->files, stream_index);
+        bsal_message_unpack_int(message, 0, &entries);
+
+        bucket = (int *)bsal_vector_at(&controller->counts, stream_index);
+
+        if (entries > *bucket + 10000000) {
+            printf("DEBUG actor:%d receives from actor:%d, file %s, %d entries so far\n",
+                        name, source, local_file, entries);
+            *bucket = entries;
+        }
+
+    } else if (tag == BSAL_INPUT_COUNT_REPLY) {
+
+        stream_index = bsal_vector_index_of(&controller->streams, &source);
+        local_file = bsal_vector_at_as_char_pointer(&controller->files, stream_index);
+        bsal_message_unpack_int(message, 0, &entries);
+
+        bucket = (int *)bsal_vector_at(&controller->counts, stream_index);
+        *bucket = entries;
+
+        printf("DEBUG Actor %d received from actor %d for file %s: %d entries\n",
+                        name, source, local_file, entries);
+
+        controller->counted++;
+
+        bsal_actor_send_reply_empty(actor, BSAL_INPUT_CLOSE);
+
+        /* continue work here, tell supervisor about it */
+        if (controller->counted == bsal_vector_size(&controller->files)) {
+
+            for (i = 0; i < bsal_vector_size(&controller->files); i++) {
+                entries = bsal_vector_at_as_int(&controller->counts, i);
+                local_file = bsal_vector_at_as_char_pointer(&controller->files, i);
+
+                printf("actor:%d, %d/%d %s %d\n",
+                                name, i,
+                                bsal_vector_size(&controller->files),
+                                local_file,
+                                entries);
+            }
+
+            bsal_actor_send_to_supervisor_empty(actor, BSAL_INPUT_DISTRIBUTE_REPLY);
+        }
     } else if (tag == BSAL_INPUT_DISTRIBUTE) {
 
         /* for each file, spawn a stream to count */
@@ -139,12 +202,28 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
         printf("DEBUG actor %d receives BSAL_INPUT_DISTRIBUTE\n", name);
 #endif
 
+#ifdef BSAL_INPUT_CONTROLLER_DEBUG
+        printf("DEBUG send BSAL_INPUT_SPAWN to self\n");
+#endif
+
         bsal_actor_send_to_self_empty(actor, BSAL_INPUT_SPAWN);
+
+#ifdef BSAL_INPUT_CONTROLLER_DEBUG
+        printf("DEBUG resizing counts to %d\n", bsal_vector_size(&controller->files));
+#endif
+
+        bsal_vector_resize(&controller->counts, bsal_vector_size(&controller->files));
+
+        for (i = 0; i < bsal_vector_size(&controller->counts); i++) {
+            bucket = (int *)bsal_vector_at(&controller->counts, i);
+            *bucket = 0;
+        }
 
     } else if (tag == BSAL_INPUT_SPAWN && source == name) {
 
         script = BSAL_INPUT_STREAM_SCRIPT;
 
+        /* the next file name to send is the current number of streams */
         i = bsal_vector_size(&controller->streams);
 
         destination_index = i % bsal_vector_size(&controller->spawners);
@@ -153,11 +232,17 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
         bsal_message_init(message, BSAL_ACTOR_SPAWN, sizeof(script), &script);
         bsal_actor_send(actor, destination, message);
 
+        bucket = bsal_vector_at(&controller->files, i);
         local_file = *(char **)bsal_vector_at(&controller->files, i);
 
 #ifdef BSAL_INPUT_CONTROLLER_DEBUG
-        printf("DEBUG actor %d spawns a stream for %s via spawner %d\n",
-                        name, local_file, destination);
+        printf("DEBUG890 local_file %p bucket %p index %d\n", local_file, (void *)bucket,
+                        i);
+#endif
+
+#ifdef BSAL_INPUT_CONTROLLER_DEBUG
+        printf("DEBUG actor %d spawns a stream for file %d/%d via spawner %d\n",
+                        name, i, bsal_vector_size(&controller->files), destination);
 #endif
 
         /* also, spawn 4 stores on each node */
