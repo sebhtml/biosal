@@ -230,7 +230,7 @@ void bsal_node_init(struct bsal_node *node, int *argc, char ***argv)
     bsal_fifo_init(&node->active_buffers, 64, sizeof(struct bsal_active_buffer));
     bsal_fifo_init(&node->dead_indices, 64, sizeof(int));
 
-    bsal_event_counter_init(&node->events);
+    bsal_counter_init(&node->counter);
 
     node->started = 0;
 }
@@ -254,7 +254,7 @@ void bsal_node_destroy(struct bsal_node *node)
     bsal_fifo_destroy(&node->active_buffers);
     bsal_fifo_destroy(&node->dead_indices);
 
-    bsal_event_counter_destroy(&node->events);
+    bsal_counter_destroy(&node->counter);
 
     MPI_Finalize();
 }
@@ -377,11 +377,11 @@ int bsal_node_spawn(struct bsal_node *node, int script)
         /* initial actors are their own spawners.
          */
         actor = bsal_node_get_actor_from_name(node, name);
-        bsal_event_counter_increment(bsal_actor_event_counter(actor),
-                        BSAL_EVENT_COUNTER_SPAWN_ACTOR);
+        bsal_counter_increment(bsal_actor_counter(actor),
+                        BSAL_COUNTER_EVENT_SPAWN_ACTOR);
     }
 
-    bsal_event_counter_increment(&node->events, BSAL_EVENT_COUNTER_SPAWN_ACTOR);
+    bsal_counter_increment(&node->counter, BSAL_COUNTER_EVENT_SPAWN_ACTOR);
 
     return name;
 }
@@ -561,8 +561,8 @@ void bsal_node_run(struct bsal_node *node)
     }
 
     printf("----------------------------------------------\n");
-    printf("Event counter for node/%d\n", bsal_node_name(node));
-    bsal_event_counter_print(&node->events);
+    printf("Counters for node/%d\n", bsal_node_name(node));
+    bsal_counter_print(&node->counter);
     printf("----------------------------------------------\n");
 }
 
@@ -794,7 +794,7 @@ int bsal_node_receive(struct bsal_node *node, struct bsal_message *message)
     bsal_message_read_metadata(message);
     bsal_node_resolve(node, message);
 
-    bsal_event_counter_increment(&node->events, BSAL_EVENT_COUNTER_RECEIVE_MESSAGE_NOT_FROM_SELF);
+    bsal_counter_increment(&node->counter, BSAL_COUNTER_EVENT_RECEIVE_MESSAGE_NOT_FROM_SELF);
 
     return 1;
 }
@@ -1025,8 +1025,8 @@ void bsal_node_send(struct bsal_node *node, struct bsal_message *message)
             printf("DEBUG local message 1100\n");
         }
 #endif
-        bsal_event_counter_increment(&node->events, BSAL_EVENT_COUNTER_SEND_MESSAGE_TO_SELF);
-        bsal_event_counter_increment(&node->events, BSAL_EVENT_COUNTER_RECEIVE_MESSAGE_FROM_SELF);
+        bsal_counter_increment(&node->counter, BSAL_COUNTER_EVENT_SEND_MESSAGE_TO_SELF);
+        bsal_counter_increment(&node->counter, BSAL_COUNTER_EVENT_RECEIVE_MESSAGE_FROM_SELF);
 
     } else {
 
@@ -1041,7 +1041,7 @@ void bsal_node_send(struct bsal_node *node, struct bsal_message *message)
         }
 #endif
 
-        bsal_event_counter_increment(&node->events, BSAL_EVENT_COUNTER_SEND_MESSAGE_NOT_TO_SELF);
+        bsal_counter_increment(&node->counter, BSAL_COUNTER_EVENT_SEND_MESSAGE_NOT_TO_SELF);
     }
 }
 
@@ -1209,9 +1209,9 @@ void bsal_node_notify_death(struct bsal_node *node, struct bsal_actor *actor)
 
 #ifdef BSAL_NODE_DEBUG_ACTOR_EVENTS
     printf("----------------------------------------------\n");
-    printf("Event counter for actor/%d\n",
+    printf("Counters for actor/%d\n",
                     name);
-    bsal_event_counter_print(bsal_actor_event_counter(actor));
+    bsal_counter_print(bsal_actor_event_counter(actor));
     printf("----------------------------------------------\n");
 #endif
 
@@ -1246,7 +1246,7 @@ void bsal_node_notify_death(struct bsal_node *node, struct bsal_actor *actor)
     node->dead_actors++;
     bsal_lock_unlock(&node->spawn_and_death_lock);
 
-    bsal_event_counter_increment(&node->events, BSAL_EVENT_COUNTER_KILL_ACTOR);
+    bsal_counter_increment(&node->counter, BSAL_COUNTER_EVENT_KILL_ACTOR);
 
 #ifdef BSAL_NODE_DEBUG_20140601_8
     printf("DEBUG exiting bsal_node_notify_death\n");

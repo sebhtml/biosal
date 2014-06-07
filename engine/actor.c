@@ -101,8 +101,8 @@ void bsal_actor_print(struct bsal_actor *actor)
      * engine/bsal_actor.c:58:21: error: ISO C for bids conversion of function pointer to object pointer type [-Werror=edantic]
      */
 
-    int received = (int)bsal_event_counter_get(&actor->events, BSAL_EVENT_COUNTER_RECEIVE_MESSAGE);
-    int sent = (int)bsal_event_counter_get(&actor->events, BSAL_EVENT_COUNTER_SEND_MESSAGE);
+    int received = (int)bsal_counter_get(&actor->counter, BSAL_COUNTER_EVENT_RECEIVE_MESSAGE);
+    int sent = (int)bsal_counter_get(&actor->counter, BSAL_COUNTER_EVENT_SEND_MESSAGE);
 
     printf("[bsal_actor_print] Name: %i Supervisor %i Node: %i, Thread: %i"
                     " received %i sent %i\n", bsal_actor_name(actor),
@@ -206,9 +206,9 @@ void bsal_actor_send(struct bsal_actor *actor, int name, struct bsal_message *me
     source = bsal_actor_name(actor);
 
     if (source == name) {
-        bsal_event_counter_increment(&actor->events, BSAL_EVENT_COUNTER_SEND_MESSAGE_TO_SELF);
+        bsal_counter_increment(&actor->counter, BSAL_COUNTER_EVENT_SEND_MESSAGE_TO_SELF);
     } else {
-        bsal_event_counter_increment(&actor->events, BSAL_EVENT_COUNTER_SEND_MESSAGE_NOT_TO_SELF);
+        bsal_counter_increment(&actor->counter, BSAL_COUNTER_EVENT_SEND_MESSAGE_NOT_TO_SELF);
     }
 
     if (bsal_actor_send_system(actor, name, message)) {
@@ -251,7 +251,7 @@ int bsal_actor_spawn(struct bsal_actor *actor, int script)
 
     bsal_node_set_supervisor(bsal_actor_node(actor), name, self_name);
 
-    bsal_event_counter_increment(&actor->events, BSAL_EVENT_COUNTER_SPAWN_ACTOR);
+    bsal_counter_increment(&actor->counter, BSAL_COUNTER_EVENT_SPAWN_ACTOR);
 
     return name;
 }
@@ -268,13 +268,13 @@ int bsal_actor_dead(struct bsal_actor *actor)
 
 void bsal_actor_die(struct bsal_actor *actor)
 {
-    bsal_event_counter_increment(&actor->events, BSAL_EVENT_COUNTER_KILL_ACTOR);
+    bsal_counter_increment(&actor->counter, BSAL_COUNTER_EVENT_KILL_ACTOR);
     actor->dead = 1;
 }
 
-struct bsal_event_counter *bsal_actor_event_counter(struct bsal_actor *actor)
+struct bsal_counter *bsal_actor_counter(struct bsal_actor *actor)
 {
-    return &actor->events;
+    return &actor->counter;
 }
 
 struct bsal_node *bsal_actor_node(struct bsal_actor *actor)
@@ -485,9 +485,9 @@ void bsal_actor_receive(struct bsal_actor *actor, struct bsal_message *message)
     source = bsal_message_source(message);
 
     if (source == name) {
-        bsal_event_counter_increment(&actor->events, BSAL_EVENT_COUNTER_RECEIVE_MESSAGE_FROM_SELF);
+        bsal_counter_increment(&actor->counter, BSAL_COUNTER_EVENT_RECEIVE_MESSAGE_FROM_SELF);
     } else {
-        bsal_event_counter_increment(&actor->events, BSAL_EVENT_COUNTER_RECEIVE_MESSAGE_NOT_FROM_SELF);
+        bsal_counter_increment(&actor->counter, BSAL_COUNTER_EVENT_RECEIVE_MESSAGE_NOT_FROM_SELF);
     }
 
     receive(actor, message);

@@ -8,7 +8,7 @@
 #include <structures/vector.h>
 
 #include <system/lock.h>
-#include <system/event_counter.h>
+#include <system/counter.h>
 
 #include <pthread.h>
 #include <stdint.h>
@@ -126,7 +126,7 @@ struct bsal_actor {
     int dead;
     int supervisor;
 
-    struct bsal_event_counter events;
+    struct bsal_counter counter;
 
     int synchronization_started;
     int synchronization_responses;
@@ -251,6 +251,6 @@ void bsal_actor_add_script(struct bsal_actor *actor, int name, struct bsal_scrip
 void bsal_actor_clone(struct bsal_actor *actor, struct bsal_message *message);
 int bsal_actor_continue_clone(struct bsal_actor *actor, struct bsal_message *message);
 
-struct bsal_event_counter *bsal_actor_event_counter(struct bsal_actor *actor);
+struct bsal_counter *bsal_actor_counter(struct bsal_actor *actor);
 
 #endif

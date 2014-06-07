@@ -12,7 +12,7 @@
 #include <structures/hash_table.h>
 
 #include <system/lock.h>
-#include <system/event_counter.h>
+#include <system/counter.h>
 
 #include <pthread.h>
 #include <mpi.h>
@@ -76,7 +76,7 @@ struct bsal_node {
 
     int debug;
 
-    struct bsal_event_counter events;
+    struct bsal_counter counter;
 };
 
 void bsal_node_init(struct bsal_node *node, int *argc, char ***argv);
