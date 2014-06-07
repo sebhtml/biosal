@@ -153,6 +153,9 @@ void bsal_vector_unpack(struct bsal_vector *self, void *buffer)
 
     bsal_vector_init(self, element_size);
 
+    /* reserve space */
+    bsal_vector_reserve(self, size);
+
     for (i = 0; i < size; i++) {
         bytes = element_size;
         memcpy(value, (char *)buffer + offset, bytes);
