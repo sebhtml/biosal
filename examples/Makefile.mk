@@ -11,7 +11,7 @@ EXAMPLE_READER=examples/reader/main.o examples/reader/reader.o
 EXAMPLE_REMOTE_SPAWN=examples/remote_spawn/main.o examples/remote_spawn/table.o
 EXAMPLE_SYNCHRONIZE=examples/synchronize/main.o examples/synchronize/stream.o
 EXAMPLE_CONTROLLER=examples/controller/main.o examples/controller/root.o
-EXAMPLE_HELLO_WORLD=examples/hello_world/main.o examples/hello_world/process.o
+EXAMPLE_HELLO_WORLD=examples/hello_world/main.o examples/hello_world/hello.o
 EXAMPLE_CLONE=examples/clone/main.o examples/clone/process.o
 
 ring: example_ring
