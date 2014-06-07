@@ -1086,3 +1086,7 @@ void bsal_actor_send_to_self_int(struct bsal_actor *actor, int tag, int value)
     bsal_actor_send_int(actor, bsal_actor_name(actor), tag, value);
 }
 
+int bsal_actor_node_name(struct bsal_actor *actor)
+{
+    return bsal_node_name(bsal_actor_node(actor));
+}

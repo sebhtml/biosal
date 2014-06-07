@@ -202,6 +202,7 @@ void bsal_actor_receive_binomial_tree_send(struct bsal_actor *actor,
                 struct bsal_message *message);
 
 struct bsal_node *bsal_actor_node(struct bsal_actor *actor);
+int bsal_actor_node_name(struct bsal_actor *actor);
 
 /*
  * \return This function returns the name of the spawned actor.
