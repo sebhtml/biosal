@@ -529,12 +529,17 @@ void bsal_node_set_initial_actor(struct bsal_node *node, int node_name, int acto
 
 void bsal_node_run(struct bsal_node *node)
 {
+    printf("----------------------------------------------\n");
+    printf("biosal> node/%d: %d threads, %d workers\n", bsal_node_name(node),
+                    bsal_node_thread_count(node),
+                    bsal_node_worker_count(node));
+
     node->started = 1;
 
     if (node->workers_in_threads) {
 #ifdef BSAL_NODE_DEBUG
         printf("DEBUG starting %i worker threads\n",
-                        bsal_worker_pool_workers(&node->worker_pool));
+                        bsal_worker_pool_worker_count(&node->worker_pool));
 #endif
         bsal_worker_pool_start(&node->worker_pool);
     }
@@ -561,9 +566,8 @@ void bsal_node_run(struct bsal_node *node)
     }
 
     printf("----------------------------------------------\n");
-    printf("Counters for node/%d\n", bsal_node_name(node));
+    printf("biosal> Counters for node/%d\n", bsal_node_name(node));
     bsal_counter_print(&node->counter);
-    printf("----------------------------------------------\n");
 }
 
 void bsal_node_start_initial_actor(struct bsal_node *node)
@@ -1253,9 +1257,9 @@ void bsal_node_notify_death(struct bsal_node *node, struct bsal_actor *actor)
 #endif
 }
 
-int bsal_node_workers(struct bsal_node *node)
+int bsal_node_worker_count(struct bsal_node *node)
 {
-    return bsal_worker_pool_workers(&node->worker_pool);
+    return bsal_worker_pool_worker_count(&node->worker_pool);
 }
 
 int bsal_node_argc(struct bsal_node *node)
@@ -1268,7 +1272,7 @@ char **bsal_node_argv(struct bsal_node *node)
     return node->argv;
 }
 
-int bsal_node_threads(struct bsal_node *node)
+int bsal_node_thread_count(struct bsal_node *node)
 {
     return node->threads;
 }

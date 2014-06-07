@@ -21,6 +21,12 @@
 #define BSAL_ACTOR_ASK_TO_STOP 0x0000607b
 #define BSAL_ACTOR_ASK_TO_STOP_REPLY 0x00003602
 
+/* runtime info */
+#define BSAL_ACTOR_GET_NODE_NAME 0x00003323
+#define BSAL_ACTOR_GET_NODE_NAME_REPLY 0x00004d9a
+#define BSAL_ACTOR_GET_NODE_WORKER_COUNT 0x0000147d
+#define BSAL_ACTOR_GET_NODE_WORKER_COUNT_REPLY 0x000004ec
+
 /* control YIELD is used as a yielding process.
  * an actor sends this to itself
  * when it receives BSAL_ACTOR_YIELD_REPLY, it continues
@@ -203,6 +209,7 @@ void bsal_actor_receive_binomial_tree_send(struct bsal_actor *actor,
 
 struct bsal_node *bsal_actor_node(struct bsal_actor *actor);
 int bsal_actor_node_name(struct bsal_actor *actor);
+int bsal_actor_node_worker_count(struct bsal_actor *actor);
 
 /*
  * \return This function returns the name of the spawned actor.
@@ -212,8 +219,6 @@ int bsal_actor_spawn(struct bsal_actor *actor, int script);
 void bsal_actor_lock(struct bsal_actor *actor);
 void bsal_actor_unlock(struct bsal_actor *actor);
 
-int bsal_actor_workers(struct bsal_actor *actor);
-int bsal_actor_threads(struct bsal_actor *actor);
 int bsal_actor_argc(struct bsal_actor *actor);
 char **bsal_actor_argv(struct bsal_actor *actor);
 

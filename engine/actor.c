@@ -302,11 +302,6 @@ void bsal_actor_unlock(struct bsal_actor *actor)
     bsal_lock_unlock(&actor->receive_lock);
 }
 
-int bsal_actor_workers(struct bsal_actor *actor)
-{
-    return bsal_node_workers(bsal_actor_node(actor));
-}
-
 int bsal_actor_argc(struct bsal_actor *actor)
 {
     return bsal_node_argc(bsal_actor_node(actor));
@@ -340,11 +335,6 @@ int bsal_actor_supervisor(struct bsal_actor *actor)
 void bsal_actor_set_supervisor(struct bsal_actor *actor, int supervisor)
 {
     actor->supervisor = supervisor;
-}
-
-int bsal_actor_threads(struct bsal_actor *actor)
-{
-    return bsal_node_threads(bsal_actor_node(actor));
 }
 
 int bsal_actor_receive_system(struct bsal_actor *actor, struct bsal_message *message)
@@ -429,8 +419,19 @@ int bsal_actor_receive_system(struct bsal_actor *actor, struct bsal_message *mes
 
         bsal_actor_send_reply_empty(actor, BSAL_ACTOR_NOTIFY_NAME_CHANGE_REPLY);
         return 1;
-    }
 
+    } else if (tag == BSAL_ACTOR_GET_NODE_NAME) {
+
+        bsal_actor_send_reply_int(actor, BSAL_ACTOR_GET_NODE_NAME_REPLY,
+                        bsal_actor_node_name(actor));
+        return 1;
+
+    } else if (tag == BSAL_ACTOR_GET_NODE_WORKER_COUNT) {
+
+        bsal_actor_send_reply_int(actor, BSAL_ACTOR_GET_NODE_WORKER_COUNT_REPLY,
+                        bsal_actor_node_worker_count(actor));
+        return 1;
+    }
 
     /* cloning workflow in 4 easy steps ! */
     if (actor->cloning_status == BSAL_ACTOR_STATUS_STARTED) {
@@ -1088,4 +1089,9 @@ void bsal_actor_send_to_self_int(struct bsal_actor *actor, int tag, int value)
 int bsal_actor_node_name(struct bsal_actor *actor)
 {
     return bsal_node_name(bsal_actor_node(actor));
+}
+
+int bsal_actor_node_worker_count(struct bsal_actor *actor)
+{
+    return bsal_node_worker_count(bsal_actor_node(actor));
 }

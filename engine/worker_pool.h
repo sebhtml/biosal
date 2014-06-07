@@ -40,7 +40,7 @@ int bsal_worker_pool_next_worker(struct bsal_worker_pool *node, int thread);
 
 void bsal_worker_pool_schedule_work(struct bsal_worker_pool *pool, struct bsal_work *work);
 
-int bsal_worker_pool_workers(struct bsal_worker_pool *pool);
+int bsal_worker_pool_worker_count(struct bsal_worker_pool *pool);
 int bsal_worker_pool_has_messages(struct bsal_worker_pool *pool);
 
 #endif

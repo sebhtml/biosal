@@ -179,7 +179,7 @@ void bsal_worker_pool_schedule_work(struct bsal_worker_pool *pool, struct bsal_w
     bsal_worker_push_work(worker, work);
 }
 
-int bsal_worker_pool_workers(struct bsal_worker_pool *pool)
+int bsal_worker_pool_worker_count(struct bsal_worker_pool *pool)
 {
     return pool->workers;
 }
