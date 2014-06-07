@@ -112,6 +112,11 @@ new name.
 #define BSAL_ACTOR_STATUS_STARTED 2
 #define BSAL_ACTOR_STATUS_FINISHED 3
 
+/* special names */
+#define BSAL_ACTOR_SELF 0
+#define BSAL_ACTOR_SUPERVISOR 1
+#define BSAL_ACTOR_SOURCE 2
+
 struct bsal_node;
 struct bsal_worker;
 
