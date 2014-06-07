@@ -2,13 +2,13 @@
 #ifndef _BSAL_ACTOR_H
 #define _BSAL_ACTOR_H
 
-#include "constants.h"
 #include "message.h"
 #include "script.h"
 
 #include <structures/vector.h>
 
 #include <system/lock.h>
+#include <system/event_counter.h>
 
 #include <pthread.h>
 #include <stdint.h>
@@ -125,8 +125,8 @@ struct bsal_actor {
     int name;
     int dead;
     int supervisor;
-    uint64_t event_counter_received_messages;
-    uint64_t event_counter_sent_messages;
+
+    struct bsal_event_counter events;
 
     int synchronization_started;
     int synchronization_responses;
@@ -229,9 +229,6 @@ void bsal_actor_unpin(struct bsal_actor *actor);
 int bsal_actor_supervisor(struct bsal_actor *actor);
 void bsal_actor_set_supervisor(struct bsal_actor *actor, int supervisor);
 
-uint64_t bsal_actor_get_counter(struct bsal_actor *actor, int counter);
-void bsal_actor_increment_counter(struct bsal_actor *actor, int counter);
-
 /* synchronization functions
  */
 void bsal_actor_receive_synchronize(struct bsal_actor *actor,
@@ -253,5 +250,7 @@ void bsal_actor_add_script(struct bsal_actor *actor, int name, struct bsal_scrip
 /* actor cloning */
 void bsal_actor_clone(struct bsal_actor *actor, struct bsal_message *message);
 int bsal_actor_continue_clone(struct bsal_actor *actor, struct bsal_message *message);
+
+struct bsal_event_counter *bsal_actor_event_counter(struct bsal_actor *actor);
 
 #endif

@@ -12,6 +12,7 @@
 #include <structures/hash_table.h>
 
 #include <system/lock.h>
+#include <system/event_counter.h>
 
 #include <pthread.h>
 #include <mpi.h>
@@ -49,8 +50,7 @@ struct bsal_node {
 
     pthread_t thread;
 
-    struct bsal_lock death_lock;
-    struct bsal_lock spawn_lock;
+    struct bsal_lock spawn_and_death_lock;
     struct bsal_lock script_lock;
 
     struct bsal_fifo active_buffers;
@@ -76,9 +76,7 @@ struct bsal_node {
 
     int debug;
 
-    uint64_t event_counter_messages_sent_to_self;
-    uint64_t event_counter_messages_received_from_other;
-    uint64_t event_counter_messages_sent_to_other;
+    struct bsal_event_counter events;
 };
 
 void bsal_node_init(struct bsal_node *node, int *argc, char ***argv);
@@ -132,8 +130,6 @@ int bsal_node_threads_from_string(struct bsal_node *node,
 void bsal_node_add_script(struct bsal_node *node, int name, struct bsal_script *script);
 struct bsal_script *bsal_node_find_script(struct bsal_node *node, int name);
 int bsal_node_has_script(struct bsal_node *node, struct bsal_script *script);
-uint64_t bsal_node_get_counter(struct bsal_node *node, int counter);
-void bsal_node_increment_counter(struct bsal_node *node, int counter);
 
 void bsal_node_test_requests(struct bsal_node *node);
 
@@ -144,5 +140,7 @@ int bsal_node_receive_system(struct bsal_node *node, struct bsal_message *messag
 void bsal_node_dispatch_message(struct bsal_node *node, struct bsal_message *message);
 void bsal_node_set_initial_actor(struct bsal_node *node, int node_name, int actor);
 int bsal_node_allocate_actor_index(struct bsal_node *node);
+
+void bsal_node_print_event_counters(struct bsal_node *node);
 
 #endif

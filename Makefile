@@ -4,7 +4,7 @@ LD=$(CC)
 Q=@
 ECHO=echo
 
-all: 
+all:
 
 include tests/Makefile.mk
 include examples/Makefile.mk

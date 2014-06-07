@@ -35,9 +35,6 @@ void bsal_actor_init(struct bsal_actor *actor, void *state,
     actor->synchronization_expected_responses = 0;
     actor->synchronization_responses = 0;
 
-    actor->event_counter_received_messages = 0;
-    actor->event_counter_sent_messages = 0;
-
     bsal_lock_init(&actor->receive_lock);
     actor->locked = 0;
 
@@ -104,8 +101,8 @@ void bsal_actor_print(struct bsal_actor *actor)
      * engine/bsal_actor.c:58:21: error: ISO C for bids conversion of function pointer to object pointer type [-Werror=edantic]
      */
 
-    int received = bsal_actor_get_counter(actor, BSAL_EVENT_COUNTER_RECEIVED_MESSAGES);
-    int sent = bsal_actor_get_counter(actor, BSAL_EVENT_COUNTER_SENT_MESSAGES);
+    int received = (int)bsal_event_counter_get(&actor->events, BSAL_EVENT_COUNTER_RECEIVE_MESSAGE);
+    int sent = (int)bsal_event_counter_get(&actor->events, BSAL_EVENT_COUNTER_SEND_MESSAGE);
 
     printf("[bsal_actor_print] Name: %i Supervisor %i Node: %i, Thread: %i"
                     " received %i sent %i\n", bsal_actor_name(actor),
@@ -206,12 +203,18 @@ int bsal_actor_send_system(struct bsal_actor *actor, int name, struct bsal_messa
 void bsal_actor_send(struct bsal_actor *actor, int name, struct bsal_message *message)
 {
     int source;
+    source = bsal_actor_name(actor);
+
+    if (source == name) {
+        bsal_event_counter_increment(&actor->events, BSAL_EVENT_COUNTER_SEND_MESSAGE_TO_SELF);
+    } else {
+        bsal_event_counter_increment(&actor->events, BSAL_EVENT_COUNTER_SEND_MESSAGE_NOT_TO_SELF);
+    }
 
     if (bsal_actor_send_system(actor, name, message)) {
         return;
     }
 
-    source = bsal_actor_name(actor);
     bsal_actor_send_with_source(actor, name, message, source);
 }
 
@@ -228,8 +231,6 @@ void bsal_actor_send_with_source(struct bsal_actor *actor, int name, struct bsal
 #endif
 
     bsal_worker_send(actor->worker, message);
-
-    bsal_actor_increment_counter(actor, BSAL_EVENT_COUNTER_SENT_MESSAGES);
 }
 
 int bsal_actor_spawn(struct bsal_actor *actor, int script)
@@ -250,6 +251,8 @@ int bsal_actor_spawn(struct bsal_actor *actor, int script)
 
     bsal_node_set_supervisor(bsal_actor_node(actor), name, self_name);
 
+    bsal_event_counter_increment(&actor->events, BSAL_EVENT_COUNTER_SPAWN_ACTOR);
+
     return name;
 }
 
@@ -265,7 +268,13 @@ int bsal_actor_dead(struct bsal_actor *actor)
 
 void bsal_actor_die(struct bsal_actor *actor)
 {
+    bsal_event_counter_increment(&actor->events, BSAL_EVENT_COUNTER_KILL_ACTOR);
     actor->dead = 1;
+}
+
+struct bsal_event_counter *bsal_actor_event_counter(struct bsal_actor *actor)
+{
+    return &actor->events;
 }
 
 struct bsal_node *bsal_actor_node(struct bsal_actor *actor)
@@ -331,26 +340,6 @@ int bsal_actor_supervisor(struct bsal_actor *actor)
 void bsal_actor_set_supervisor(struct bsal_actor *actor, int supervisor)
 {
     actor->supervisor = supervisor;
-}
-
-uint64_t bsal_actor_get_counter(struct bsal_actor *actor, int counter)
-{
-    if (counter == BSAL_EVENT_COUNTER_RECEIVED_MESSAGES) {
-        return actor->event_counter_received_messages;
-    } else if (counter == BSAL_EVENT_COUNTER_SENT_MESSAGES) {
-        return actor->event_counter_sent_messages;
-    }
-
-    return 0;
-}
-
-void bsal_actor_increment_counter(struct bsal_actor *actor, int counter)
-{
-    if (counter == BSAL_EVENT_COUNTER_RECEIVED_MESSAGES) {
-        actor->event_counter_received_messages++;
-    } else if (counter == BSAL_EVENT_COUNTER_SENT_MESSAGES) {
-        actor->event_counter_sent_messages++;
-    }
 }
 
 int bsal_actor_threads(struct bsal_actor *actor)
@@ -460,6 +449,8 @@ int bsal_actor_receive_system(struct bsal_actor *actor, struct bsal_message *mes
 void bsal_actor_receive(struct bsal_actor *actor, struct bsal_message *message)
 {
     bsal_actor_receive_fn_t receive;
+    int name;
+    int source;
 
 #ifdef BSAL_ACTOR_DEBUG_SYNC
     printf("\nDEBUG bsal_actor_receive...... tag %d\n",
@@ -484,12 +475,20 @@ void bsal_actor_receive(struct bsal_actor *actor, struct bsal_message *message)
     /* Otherwise, this is a message for the actor itself.
      */
     receive = bsal_actor_get_receive(actor);
-    bsal_actor_increment_counter(actor, BSAL_EVENT_COUNTER_RECEIVED_MESSAGES);
 
 #ifdef BSAL_ACTOR_DEBUG_SYNC
     printf("DEBUG bsal_actor_receive calls concrete receive tag %d\n",
                     bsal_message_tag(message));
 #endif
+
+    name = bsal_actor_name(actor);
+    source = bsal_message_source(message);
+
+    if (source == name) {
+        bsal_event_counter_increment(&actor->events, BSAL_EVENT_COUNTER_RECEIVE_MESSAGE_FROM_SELF);
+    } else {
+        bsal_event_counter_increment(&actor->events, BSAL_EVENT_COUNTER_RECEIVE_MESSAGE_NOT_FROM_SELF);
+    }
 
     receive(actor, message);
 }

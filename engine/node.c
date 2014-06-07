@@ -224,12 +224,13 @@ void bsal_node_init(struct bsal_node *node, int *argc, char ***argv)
     node->received_initial_actors = 0;
     node->ready = 0;
 
-    bsal_lock_init(&node->death_lock);
-    bsal_lock_init(&node->spawn_lock);
+    bsal_lock_init(&node->spawn_and_death_lock);
     bsal_lock_init(&node->script_lock);
 
     bsal_fifo_init(&node->active_buffers, 64, sizeof(struct bsal_active_buffer));
     bsal_fifo_init(&node->dead_indices, 64, sizeof(int));
+
+    bsal_event_counter_init(&node->events);
 
     node->started = 0;
 }
@@ -241,8 +242,7 @@ void bsal_node_destroy(struct bsal_node *node)
     bsal_hash_table_destroy(&node->actor_names);
     bsal_vector_destroy(&node->initial_actors);
 
-    bsal_lock_destroy(&node->spawn_lock);
-    bsal_lock_destroy(&node->death_lock);
+    bsal_lock_destroy(&node->spawn_and_death_lock);
     bsal_lock_destroy(&node->script_lock);
 
     bsal_vector_destroy(&node->actors);
@@ -253,6 +253,8 @@ void bsal_node_destroy(struct bsal_node *node)
 
     bsal_fifo_destroy(&node->active_buffers);
     bsal_fifo_destroy(&node->dead_indices);
+
+    bsal_event_counter_destroy(&node->events);
 
     MPI_Finalize();
 }
@@ -344,6 +346,7 @@ int bsal_node_spawn(struct bsal_node *node, int script)
     int size;
     void *state;
     int name;
+    struct bsal_actor *actor;
 
     /* in the current implementation, there can only be one initial
      * actor on each node
@@ -370,7 +373,15 @@ int bsal_node_spawn(struct bsal_node *node, int script)
         struct bsal_message message;
         bsal_message_init(&message, BSAL_NODE_ADD_INITIAL_ACTOR, sizeof(name), &name);
         bsal_node_send_to_node(node, 0, &message);
+
+        /* initial actors are their own spawners.
+         */
+        actor = bsal_node_get_actor_from_name(node, name);
+        bsal_event_counter_increment(bsal_actor_event_counter(actor),
+                        BSAL_EVENT_COUNTER_SPAWN_ACTOR);
     }
+
+    bsal_event_counter_increment(&node->events, BSAL_EVENT_COUNTER_SPAWN_ACTOR);
 
     return name;
 }
@@ -387,7 +398,7 @@ int bsal_node_spawn_state(struct bsal_node *node, void *state,
     printf("DEBUG bsal_node_spawn_state\n");
 #endif
 
-    bsal_lock_lock(&node->spawn_lock);
+    bsal_lock_lock(&node->spawn_and_death_lock);
 
     /* add an actor in the vector of actors
      */
@@ -413,7 +424,7 @@ int bsal_node_spawn_state(struct bsal_node *node, void *state,
 
     node->alive_actors++;
 
-    bsal_lock_unlock(&node->spawn_lock);
+    bsal_lock_unlock(&node->spawn_and_death_lock);
 
     return name;
 }
@@ -548,6 +559,11 @@ void bsal_node_run(struct bsal_node *node)
     if (node->send_in_thread) {
         pthread_join(node->thread, NULL);
     }
+
+    printf("----------------------------------------------\n");
+    printf("Event counter for node/%d\n", bsal_node_name(node));
+    bsal_event_counter_print(&node->events);
+    printf("----------------------------------------------\n");
 }
 
 void bsal_node_start_initial_actor(struct bsal_node *node)
@@ -778,7 +794,7 @@ int bsal_node_receive(struct bsal_node *node, struct bsal_message *message)
     bsal_message_read_metadata(message);
     bsal_node_resolve(node, message);
 
-    bsal_node_increment_counter(node, BSAL_EVENT_COUNTER_RECEIVED_MESSAGES_OTHER_NODE);
+    bsal_event_counter_increment(&node->events, BSAL_EVENT_COUNTER_RECEIVE_MESSAGE_NOT_FROM_SELF);
 
     return 1;
 }
@@ -1009,8 +1025,9 @@ void bsal_node_send(struct bsal_node *node, struct bsal_message *message)
             printf("DEBUG local message 1100\n");
         }
 #endif
-        bsal_node_increment_counter(node, BSAL_EVENT_COUNTER_SENT_MESSAGES_SAME_NODE);
-        bsal_node_increment_counter(node, BSAL_EVENT_COUNTER_RECEIVED_MESSAGES_SAME_NODE);
+        bsal_event_counter_increment(&node->events, BSAL_EVENT_COUNTER_SEND_MESSAGE_TO_SELF);
+        bsal_event_counter_increment(&node->events, BSAL_EVENT_COUNTER_RECEIVE_MESSAGE_FROM_SELF);
+
     } else {
 
         /* send messages over the network */
@@ -1024,7 +1041,7 @@ void bsal_node_send(struct bsal_node *node, struct bsal_message *message)
         }
 #endif
 
-        bsal_node_increment_counter(node, BSAL_EVENT_COUNTER_SENT_MESSAGES_OTHER_NODE);
+        bsal_event_counter_increment(&node->events, BSAL_EVENT_COUNTER_SEND_MESSAGE_NOT_TO_SELF);
     }
 }
 
@@ -1190,6 +1207,14 @@ void bsal_node_notify_death(struct bsal_node *node, struct bsal_actor *actor)
 
     state = bsal_actor_concrete_actor(actor);
 
+#ifdef BSAL_NODE_DEBUG_ACTOR_EVENTS
+    printf("----------------------------------------------\n");
+    printf("Event counter for actor/%d\n",
+                    name);
+    bsal_event_counter_print(bsal_actor_event_counter(actor));
+    printf("----------------------------------------------\n");
+#endif
+
     /* destroy the abstract actor.
      * this calls destroy on the concrete actor
      * too
@@ -1201,6 +1226,12 @@ void bsal_node_notify_death(struct bsal_node *node, struct bsal_actor *actor)
     state = NULL;
 
     /* remove the name from the registry */
+    /* maybe a lock is needed for this
+     * because spawn also access this attribute
+     */
+
+    bsal_lock_lock(&node->spawn_and_death_lock);
+
     bsal_hash_table_delete(&node->actor_names, &name);
 
 #ifdef BSAL_NODE_REUSE_DEAD_INDICES
@@ -1211,10 +1242,11 @@ void bsal_node_notify_death(struct bsal_node *node, struct bsal_actor *actor)
     printf("DEBUG bsal_node_notify_death\n");
 #endif
 
-    bsal_lock_lock(&node->death_lock);
     node->alive_actors--;
     node->dead_actors++;
-    bsal_lock_unlock(&node->death_lock);
+    bsal_lock_unlock(&node->spawn_and_death_lock);
+
+    bsal_event_counter_increment(&node->events, BSAL_EVENT_COUNTER_KILL_ACTOR);
 
 #ifdef BSAL_NODE_DEBUG_20140601_8
     printf("DEBUG exiting bsal_node_notify_death\n");
@@ -1288,47 +1320,3 @@ struct bsal_script *bsal_node_find_script(struct bsal_node *node, int name)
     return NULL;
 }
 
-uint64_t bsal_node_get_counter(struct bsal_node *node, int counter)
-{
-    if (counter == BSAL_EVENT_COUNTER_RECEIVED_MESSAGES) {
-        return bsal_node_get_counter(node, BSAL_EVENT_COUNTER_RECEIVED_MESSAGES_SAME_NODE) +
-                bsal_node_get_counter(node, BSAL_EVENT_COUNTER_RECEIVED_MESSAGES_OTHER_NODE);
-
-    } else if (counter == BSAL_EVENT_COUNTER_SENT_MESSAGES) {
-        return bsal_node_get_counter(node, BSAL_EVENT_COUNTER_SENT_MESSAGES_SAME_NODE) +
-                bsal_node_get_counter(node, BSAL_EVENT_COUNTER_SENT_MESSAGES_OTHER_NODE);
-
-    } else if (counter == BSAL_EVENT_COUNTER_RECEIVED_MESSAGES_SAME_NODE) {
-        return bsal_node_get_counter(node, BSAL_EVENT_COUNTER_SENT_MESSAGES_SAME_NODE);
-
-    } else if (counter == BSAL_EVENT_COUNTER_SENT_MESSAGES_SAME_NODE) {
-        return node->event_counter_messages_sent_to_self;
-
-    } else if (counter == BSAL_EVENT_COUNTER_RECEIVED_MESSAGES_OTHER_NODE) {
-        return node->event_counter_messages_received_from_other;
-
-    } else if (counter == BSAL_EVENT_COUNTER_SENT_MESSAGES_OTHER_NODE) {
-        return node->event_counter_messages_sent_to_other;
-    }
-
-    return 0;
-}
-
-void bsal_node_increment_counter(struct bsal_node *node, int counter)
-{
-    if (counter == BSAL_EVENT_COUNTER_SENT_MESSAGES_OTHER_NODE) {
-        node->event_counter_messages_sent_to_other++;
-    } else if (counter == BSAL_EVENT_COUNTER_RECEIVED_MESSAGES_OTHER_NODE) {
-        node->event_counter_messages_received_from_other++;
-    } else if (counter == BSAL_EVENT_COUNTER_RECEIVED_MESSAGES) {
-
-        /* do nothing */
-    } else if (counter == BSAL_EVENT_COUNTER_SENT_MESSAGES) {
-
-        /* do nothing */
-    } else if (counter == BSAL_EVENT_COUNTER_SENT_MESSAGES_SAME_NODE) {
-        node->event_counter_messages_sent_to_self++;
-    } else if (counter == BSAL_EVENT_COUNTER_RECEIVED_MESSAGES_SAME_NODE) {
-        /* do nothing */
-    }
-}
