@@ -57,6 +57,7 @@ void bsal_node_init(struct bsal_node *node, int *argc, char ***argv)
 
     node->maximum_scripts = 1024;
     node->available_scripts = 0;
+    node->print_counters = 0;
     bytes = node->maximum_scripts * sizeof(struct bsal_script *);
     node->scripts = (struct bsal_script **)malloc(bytes);
 
@@ -80,6 +81,12 @@ void bsal_node_init(struct bsal_node *node, int *argc, char ***argv)
     MPI_Comm_dup(MPI_COMM_WORLD, &node->comm);
     MPI_Comm_rank(node->comm, &node_name);
     MPI_Comm_size(node->comm, &nodes);
+
+    for (i = 0; i < *argc; i++) {
+        if (strcmp((*argv)[i], "-print-counters") == 0) {
+            node->print_counters = 1;
+        }
+    }
 
     for (i = 0; i < *argc; i++) {
         if (strcmp((*argv)[i], "-threads-per-node") == 0 && i + 1 < *argc) {
@@ -567,9 +574,11 @@ void bsal_node_run(struct bsal_node *node)
         pthread_join(node->thread, NULL);
     }
 
-    printf("----------------------------------------------\n");
-    printf("biosal> Counters for node/%d\n", bsal_node_name(node));
-    bsal_counter_print(&node->counter);
+    if (node->print_counters) {
+        printf("----------------------------------------------\n");
+        printf("biosal> Counters for node/%d\n", bsal_node_name(node));
+        bsal_counter_print(&node->counter);
+    }
 }
 
 void bsal_node_start_initial_actor(struct bsal_node *node)

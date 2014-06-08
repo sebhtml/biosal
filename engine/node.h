@@ -77,6 +77,8 @@ struct bsal_node {
     int debug;
 
     struct bsal_counter counter;
+
+    int print_counters;
 };
 
 void bsal_node_init(struct bsal_node *node, int *argc, char ***argv);
