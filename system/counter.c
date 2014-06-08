@@ -11,12 +11,11 @@ void bsal_counter_init(struct bsal_counter *self)
 
 void bsal_counter_reset(struct bsal_counter *self)
 {
-    self->count_event_receive_message_from_self = 0;
-    self->count_event_receive_message_not_from_self = 0;
-    self->count_event_send_message_to_self = 0;
-    self->count_event_send_message_not_to_self = 0;
-    self->count_event_spawn_actor = 0;
-    self->count_event_kill_actor = 0;
+    int i;
+
+    for (i = 0; i < BSAL_COUNTER_MAXIMUM; i++) {
+        self->counters[i] = 0;
+    }
 }
 
 void bsal_counter_destroy(struct bsal_counter *self)
@@ -24,62 +23,47 @@ void bsal_counter_destroy(struct bsal_counter *self)
     bsal_counter_reset(self);
 }
 
-uint64_t bsal_counter_get(struct bsal_counter *self, int counter)
+int64_t bsal_counter_get(struct bsal_counter *self, int counter)
 {
-    if (counter == BSAL_COUNTER_EVENT_RECEIVE_MESSAGE) {
-        return bsal_counter_get(self, BSAL_COUNTER_EVENT_RECEIVE_MESSAGE_FROM_SELF) +
-                bsal_counter_get(self, BSAL_COUNTER_EVENT_RECEIVE_MESSAGE_NOT_FROM_SELF);
+    if (counter == BSAL_COUNTER_RECEIVED_MESSAGES) {
+        return bsal_counter_sum(self, BSAL_COUNTER_RECEIVED_MESSAGES_FROM_SELF,
+                        BSAL_COUNTER_RECEIVED_MESSAGES_NOT_FROM_SELF);
 
-    } else if (counter == BSAL_COUNTER_EVENT_SEND_MESSAGE) {
-        return bsal_counter_get(self, BSAL_COUNTER_EVENT_SEND_MESSAGE_TO_SELF) +
-                bsal_counter_get(self, BSAL_COUNTER_EVENT_SEND_MESSAGE_NOT_TO_SELF);
+    } else if (counter == BSAL_COUNTER_SENT_MESSAGES) {
 
-    } else if (counter == BSAL_COUNTER_EVENT_RECEIVE_MESSAGE_FROM_SELF) {
-        return self->count_event_receive_message_from_self;
+        return bsal_counter_sum(self, BSAL_COUNTER_SENT_MESSAGES_TO_SELF,
+                        BSAL_COUNTER_SENT_MESSAGES_NOT_TO_SELF);
 
-    } else if (counter == BSAL_COUNTER_EVENT_SEND_MESSAGE_TO_SELF) {
-        return self->count_event_send_message_to_self;
+    } else if (counter == BSAL_COUNTER_RECEIVED_BYTES) {
+        return bsal_counter_sum(self, BSAL_COUNTER_RECEIVED_BYTES_FROM_SELF,
+                        BSAL_COUNTER_RECEIVED_BYTES_NOT_FROM_SELF);
 
-    } else if (counter == BSAL_COUNTER_EVENT_RECEIVE_MESSAGE_NOT_FROM_SELF) {
-        return self->count_event_receive_message_not_from_self;
+    } else if (counter == BSAL_COUNTER_SENT_BYTES) {
 
-    } else if (counter == BSAL_COUNTER_EVENT_SEND_MESSAGE_NOT_TO_SELF) {
-        return self->count_event_send_message_not_to_self;
+        return bsal_counter_sum(self, BSAL_COUNTER_SENT_BYTES_TO_SELF,
+                        BSAL_COUNTER_SENT_BYTES_NOT_TO_SELF);
 
-    } else if (counter == BSAL_COUNTER_EVENT_SPAWN_ACTOR) {
-        return self->count_event_spawn_actor;
+    } else if (counter == BSAL_COUNTER_BALANCE_MESSAGES) {
 
-    } else if (counter == BSAL_COUNTER_EVENT_KILL_ACTOR) {
-        return self->count_event_kill_actor;
+        return bsal_counter_difference(self, BSAL_COUNTER_RECEIVED_MESSAGES,
+                        BSAL_COUNTER_SENT_MESSAGES);
+
+    } else if (counter == BSAL_COUNTER_BALANCE_BYTES) {
+
+        return bsal_counter_difference(self, BSAL_COUNTER_RECEIVED_BYTES,
+                        BSAL_COUNTER_SENT_BYTES);
     }
 
-    return 0;
+    if (counter >= BSAL_COUNTER_MAXIMUM) {
+        return 0;
+    }
+
+    return self->counters[counter];
 }
 
 void bsal_counter_increment(struct bsal_counter *self, int counter)
 {
-    if (counter == BSAL_COUNTER_EVENT_RECEIVE_MESSAGE) {
-
-    } else if (counter == BSAL_COUNTER_EVENT_SEND_MESSAGE) {
-
-    } else if (counter == BSAL_COUNTER_EVENT_RECEIVE_MESSAGE_FROM_SELF) {
-        self->count_event_receive_message_from_self++;
-
-    } else if (counter == BSAL_COUNTER_EVENT_SEND_MESSAGE_TO_SELF) {
-        self->count_event_send_message_to_self++;
-
-    } else if (counter == BSAL_COUNTER_EVENT_RECEIVE_MESSAGE_NOT_FROM_SELF) {
-        self->count_event_receive_message_not_from_self++;
-
-    } else if (counter == BSAL_COUNTER_EVENT_SEND_MESSAGE_NOT_TO_SELF) {
-        self->count_event_send_message_not_to_self++;
-
-    } else if (counter == BSAL_COUNTER_EVENT_SPAWN_ACTOR) {
-        self->count_event_spawn_actor++;
-
-    } else if (counter == BSAL_COUNTER_EVENT_KILL_ACTOR) {
-        self->count_event_kill_actor++;
-    }
+    bsal_counter_add(self, counter, 1);
 }
 
 /*
@@ -92,28 +76,53 @@ http://stackoverflow.com/questions/16859500/mmh-who-are-you-priu64
 
 use PRIu64
 */
+
+#define BSAL_DISPLAY_COUNTER(counter, spacing) \
+    printf("%s" #counter " %" PRId64 "\n", spacing, \
+                    bsal_counter_get(self, counter));
+
 void bsal_counter_print(struct bsal_counter *self)
 {
-    /* print uint64_t, not int
+    /* print int64_t, not int
      */
-    printf("BSAL_COUNTER_EVENT_SPAWN_ACTOR %" PRIu64 "\n",
-                    bsal_counter_get(self, BSAL_COUNTER_EVENT_SPAWN_ACTOR));
-    printf("BSAL_COUNTER_EVENT_KILL_ACTOR %" PRIu64 "\n",
-                    bsal_counter_get(self, BSAL_COUNTER_EVENT_KILL_ACTOR));
+    BSAL_DISPLAY_COUNTER(BSAL_COUNTER_SPAWNED_ACTORS, "");
+    BSAL_DISPLAY_COUNTER(BSAL_COUNTER_KILLED_ACTORS, "");
+    BSAL_DISPLAY_COUNTER(BSAL_COUNTER_BALANCE_ACTORS, " balance ");
 
-    printf("BSAL_COUNTER_EVENT_SEND_MESSAGE %" PRIu64 "\n",
-                    bsal_counter_get(self, BSAL_COUNTER_EVENT_SEND_MESSAGE));
-    printf("BSAL_COUNTER_EVENT_SEND_MESSAGE_TO_SELF %" PRIu64 "\n",
-                    bsal_counter_get(self, BSAL_COUNTER_EVENT_SEND_MESSAGE_TO_SELF));
-    printf("BSAL_COUNTER_EVENT_SEND_MESSAGE_NOT_TO_SELF %" PRIu64 "\n",
-                    bsal_counter_get(self, BSAL_COUNTER_EVENT_SEND_MESSAGE_NOT_TO_SELF));
+    BSAL_DISPLAY_COUNTER(BSAL_COUNTER_RECEIVED_MESSAGES, "");
+    BSAL_DISPLAY_COUNTER(BSAL_COUNTER_RECEIVED_MESSAGES_FROM_SELF, "  ");
+    BSAL_DISPLAY_COUNTER(BSAL_COUNTER_RECEIVED_MESSAGES_NOT_FROM_SELF, "  ");
 
-    printf("BSAL_COUNTER_EVENT_RECEIVE_MESSAGE %" PRIu64 "\n",
-                    bsal_counter_get(self, BSAL_COUNTER_EVENT_RECEIVE_MESSAGE));
-    printf("BSAL_COUNTER_EVENT_RECEIVE_MESSAGE_FROM_SELF %" PRIu64 "\n",
-                    bsal_counter_get(self, BSAL_COUNTER_EVENT_RECEIVE_MESSAGE_FROM_SELF));
-    printf("BSAL_COUNTER_EVENT_RECEIVE_MESSAGE_NOT_FROM_SELF %" PRIu64 "\n",
-                    bsal_counter_get(self, BSAL_COUNTER_EVENT_RECEIVE_MESSAGE_NOT_FROM_SELF));
+    BSAL_DISPLAY_COUNTER(BSAL_COUNTER_SENT_MESSAGES, "");
+    BSAL_DISPLAY_COUNTER(BSAL_COUNTER_SENT_MESSAGES_TO_SELF, "  ");
+    BSAL_DISPLAY_COUNTER(BSAL_COUNTER_SENT_MESSAGES_NOT_TO_SELF, "  ");
+
+    BSAL_DISPLAY_COUNTER(BSAL_COUNTER_BALANCE_MESSAGES, " balance ");
+
+    BSAL_DISPLAY_COUNTER(BSAL_COUNTER_RECEIVED_BYTES, "");
+    BSAL_DISPLAY_COUNTER(BSAL_COUNTER_RECEIVED_BYTES_FROM_SELF, "  ");
+    BSAL_DISPLAY_COUNTER(BSAL_COUNTER_RECEIVED_BYTES_NOT_FROM_SELF, "  ");
+
+    BSAL_DISPLAY_COUNTER(BSAL_COUNTER_SENT_BYTES, "");
+    BSAL_DISPLAY_COUNTER(BSAL_COUNTER_SENT_BYTES_TO_SELF, "  ");
+    BSAL_DISPLAY_COUNTER(BSAL_COUNTER_SENT_BYTES_NOT_TO_SELF, " ");
+
+    BSAL_DISPLAY_COUNTER(BSAL_COUNTER_BALANCE_BYTES, " balance ");
 }
 
+void bsal_counter_add(struct bsal_counter *self, int counter, int quantity)
+{
+    if (counter < BSAL_COUNTER_MAXIMUM) {
+        self->counters[counter] += quantity;
+    }
+}
 
+int64_t bsal_counter_sum(struct bsal_counter *self, int counter1, int counter2)
+{
+    return bsal_counter_get(self, counter1) + bsal_counter_get(self, counter2);
+}
+
+int64_t bsal_counter_difference(struct bsal_counter *self, int counter1, int counter2)
+{
+    return bsal_counter_get(self, counter1) - bsal_counter_get(self, counter2);
+}
