@@ -14,7 +14,7 @@ struct bsal_fifo {
     volatile int size;
 };
 
-void bsal_fifo_init(struct bsal_fifo *fifo, int units, int bytes_per_unit);
+void bsal_fifo_init(struct bsal_fifo *fifo, int bytes_per_unit);
 void bsal_fifo_destroy(struct bsal_fifo *fifo);
 
 int bsal_fifo_push(struct bsal_fifo *fifo, void *item);

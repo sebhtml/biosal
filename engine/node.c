@@ -229,8 +229,8 @@ void bsal_node_init(struct bsal_node *node, int *argc, char ***argv)
     bsal_lock_init(&node->spawn_and_death_lock);
     bsal_lock_init(&node->script_lock);
 
-    bsal_fifo_init(&node->active_buffers, 64, sizeof(struct bsal_active_buffer));
-    bsal_fifo_init(&node->dead_indices, 64, sizeof(int));
+    bsal_fifo_init(&node->active_buffers, sizeof(struct bsal_active_buffer));
+    bsal_fifo_init(&node->dead_indices, sizeof(int));
 
     bsal_counter_init(&node->counter);
 
@@ -412,7 +412,7 @@ int bsal_node_spawn_state(struct bsal_node *node, void *state,
      */
     name = bsal_node_generate_name(node);
 
-    bsal_actor_init(actor, state, script, name);
+    bsal_actor_init(actor, state, script, name, node);
 
     /* register the actor name
      */

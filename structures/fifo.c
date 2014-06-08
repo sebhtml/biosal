@@ -3,9 +3,12 @@
 
 #include <stdlib.h>
 
-void bsal_fifo_init(struct bsal_fifo *fifo, int units, int bytes_per_unit)
+void bsal_fifo_init(struct bsal_fifo *fifo, int bytes_per_unit)
 {
     struct bsal_fifo_array *array;
+    int units;
+
+    units = 64;
 
     fifo->units = units;
     fifo->bytes_per_unit = bytes_per_unit;

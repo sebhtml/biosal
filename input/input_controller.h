@@ -4,6 +4,7 @@
 
 #include <engine/actor.h>
 #include <structures/vector.h>
+#include <structures/fifo.h>
 
 #define BSAL_INPUT_CONTROLLER_SCRIPT 0x985607aa
 
@@ -15,6 +16,9 @@ struct bsal_input_controller {
     int opened_streams;
     int counted;
     struct bsal_vector counts;
+    struct bsal_vector stores_per_spawner;
+    struct bsal_fifo unprepared_spawners;
+    int state;
 };
 
 #define BSAL_INPUT_DISTRIBUTE 0x00003cbe
@@ -27,6 +31,7 @@ struct bsal_input_controller {
 #define BSAL_INPUT_SPAWN 0x00000a5d
 #define BSAL_INPUT_CONTROLLER_CREATE_STORES 0x0000285f
 #define BSAL_INPUT_CONTROLLER_CREATE_STORES_REPLY 0x000048ed
+#define BSAL_INPUT_CONTROLLER_PREPARE_SPAWNERS 0x00004a85
 
 extern struct bsal_script bsal_input_controller_script;
 
@@ -35,5 +40,9 @@ void bsal_input_controller_destroy(struct bsal_actor *actor);
 void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message *message);
 
 void bsal_input_controller_create_stores(struct bsal_actor *actor, struct bsal_message *message);
+void bsal_input_controller_get_node_name_reply(struct bsal_actor *actor, struct bsal_message *message);
+void bsal_input_controller_get_node_worker_count_reply(struct bsal_actor *actor, struct bsal_message *message);
+void bsal_input_controller_add_store(struct bsal_actor *actor, struct bsal_message *message);
+void bsal_input_controller_prepare_spawners(struct bsal_actor *actor, struct bsal_message *message);
 
 #endif

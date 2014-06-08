@@ -127,6 +127,7 @@ struct bsal_worker;
 struct bsal_actor {
     struct bsal_script *script;
     struct bsal_worker *worker;
+    struct bsal_node *node;
     struct bsal_worker *affinity_worker;
 
     struct bsal_dispatcher dispatcher;
@@ -155,7 +156,7 @@ struct bsal_actor {
 };
 
 void bsal_actor_init(struct bsal_actor *actor, void *state,
-                struct bsal_script *script, int name);
+                struct bsal_script *script, int name, struct bsal_node *node);
 void bsal_actor_destroy(struct bsal_actor *actor);
 
 int bsal_actor_name(struct bsal_actor *actor);
@@ -268,5 +269,6 @@ struct bsal_counter *bsal_actor_counter(struct bsal_actor *actor);
 int bsal_actor_dispatch(struct bsal_actor *actor, struct bsal_message *message);
 void bsal_actor_register(struct bsal_actor *actor, int tag, bsal_actor_receive_fn_t handler);
 struct bsal_dispatcher *bsal_actor_dispatcher(struct bsal_actor *actor);
+void bsal_actor_set_node(struct bsal_actor *actor, struct bsal_node *node);
 
 #endif

@@ -24,6 +24,7 @@ void mock_init(struct bsal_actor *actor)
     mock1->notified = 0;
 
     bsal_vector_init(&mock1->spawners, sizeof(int));
+    bsal_actor_add_script(actor, BUDDY_SCRIPT, &buddy_script);
 }
 
 void mock_destroy(struct bsal_actor *actor)
@@ -55,8 +56,6 @@ void mock_receive(struct bsal_actor *actor, struct bsal_message *message)
 
         printf("BSAL_ACTOR_START spawners: %d\n",
                         bsal_vector_size(&mock1->spawners));
-
-        bsal_actor_add_script(actor, BUDDY_SCRIPT, &buddy_script);
 
         /*mock_init(actor);*/
         mock_start(actor, message);

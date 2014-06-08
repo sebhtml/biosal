@@ -13,8 +13,8 @@
 
 void bsal_worker_init(struct bsal_worker *worker, int name, struct bsal_node *node)
 {
-    bsal_fifo_init(&worker->works, 16, sizeof(struct bsal_work));
-    bsal_fifo_init(&worker->messages, 16, sizeof(struct bsal_message));
+    bsal_fifo_init(&worker->works, sizeof(struct bsal_work));
+    bsal_fifo_init(&worker->messages, sizeof(struct bsal_message));
 
     worker->node = node;
     worker->name = name;

@@ -21,7 +21,7 @@
 */
 
 void bsal_actor_init(struct bsal_actor *actor, void *state,
-                struct bsal_script *script, int name)
+                struct bsal_script *script, int name, struct bsal_node *node)
 {
     bsal_actor_init_fn_t init;
 
@@ -32,6 +32,7 @@ void bsal_actor_init(struct bsal_actor *actor, void *state,
 
     actor->state = state;
     actor->name = name;
+    actor->node = node;
     actor->supervisor = -1;
     actor->dead = 0;
     actor->script = script;
@@ -295,6 +296,10 @@ struct bsal_counter *bsal_actor_counter(struct bsal_actor *actor)
 
 struct bsal_node *bsal_actor_node(struct bsal_actor *actor)
 {
+    if (actor->node != NULL) {
+        return actor->node;
+    }
+
     if (actor->worker == NULL) {
         return NULL;
     }
@@ -1156,4 +1161,9 @@ void bsal_actor_register(struct bsal_actor *actor, int tag, bsal_actor_receive_f
 struct bsal_dispatcher *bsal_actor_dispatcher(struct bsal_actor *actor)
 {
     return &actor->dispatcher;
+}
+
+void bsal_actor_set_node(struct bsal_actor *actor, struct bsal_node *node)
+{
+    actor->node = node;
 }

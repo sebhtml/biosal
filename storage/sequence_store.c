@@ -53,7 +53,7 @@ void bsal_sequence_store_receive(struct bsal_actor *actor, struct bsal_message *
 
         bsal_actor_send_reply_empty(actor, BSAL_SEQUENCE_STORE_ALLOCATE_REPLY);
 
-    } else if (tag == BSAL_SEQUENCE_STORE_STOP) {
+    } else if (tag == BSAL_ACTOR_ASK_TO_STOP) {
 
         bsal_actor_send_to_self_empty(actor, BSAL_ACTOR_STOP);
     }

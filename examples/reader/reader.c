@@ -22,6 +22,8 @@ void reader_init(struct bsal_actor *actor)
     reader1->pulled = 0;
 
     bsal_vector_init(&reader1->spawners, sizeof(int));
+    bsal_actor_add_script(actor, BSAL_INPUT_STREAM_SCRIPT,
+                    &bsal_input_stream_script);
 }
 
 void reader_destroy(struct bsal_actor *actor)
@@ -61,8 +63,6 @@ void reader_receive(struct bsal_actor *actor, struct bsal_message *message)
     if (tag == BSAL_ACTOR_START) {
 
         bsal_vector_unpack(&reader1->spawners, buffer);
-        bsal_actor_add_script(actor, BSAL_INPUT_STREAM_SCRIPT,
-                    &bsal_input_stream_script);
 
         argc = bsal_actor_argc(actor);
         argv = bsal_actor_argv(actor);

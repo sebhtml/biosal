@@ -26,6 +26,9 @@ void root_init(struct bsal_actor *actor)
     bsal_vector_init(&root1->spawners, sizeof(int));
     root1->is_king = 0;
     root1->ready = 0;
+
+    bsal_actor_add_script(actor, BSAL_INPUT_CONTROLLER_SCRIPT,
+                        &bsal_input_controller_script);
 }
 
 void root_destroy(struct bsal_actor *actor)
@@ -64,8 +67,6 @@ void root_receive(struct bsal_actor *actor, struct bsal_message *message)
 
         bsal_vector_unpack(&root1->spawners, buffer);
 
-        bsal_actor_add_script(actor, BSAL_INPUT_CONTROLLER_SCRIPT,
-                        &bsal_input_controller_script);
 
         king = *(int *)bsal_vector_at(&root1->spawners, 0);
 
