@@ -82,6 +82,8 @@ reply BSAL_ CLONE_REPLY with newly spawned actor
 #define BSAL_ACTOR_CLONE_REPLY 0x00006881
 
 /* for migration */
+#define BSAL_ACTOR_MIGRATE_ENABLE 0x00001d0b
+#define BSAL_ACTOR_MIGRATE_DISABLE 0x00005c6e
 #define BSAL_ACTOR_MIGRATE 0x000073ff
 #define BSAL_ACTOR_MIGRATE_REPLY 0x00001442
 
@@ -151,6 +153,8 @@ struct bsal_actor {
     int cloning_spawner;
     int cloning_new_actor;
     int cloning_client;
+
+    int migration_status;
 
     int acquaintance_name_change_status;
 };

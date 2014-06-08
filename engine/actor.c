@@ -183,6 +183,18 @@ int bsal_actor_send_system(struct bsal_actor *actor, int name, struct bsal_messa
                 actor->acquaintance_name_change_status = BSAL_ACTOR_STATUS_NOT_SUPPORTED;
                 return 1;
             }
+        } else if (tag == BSAL_ACTOR_MIGRATE_ENABLE) {
+            if (actor->migration_status == BSAL_ACTOR_STATUS_NOT_SUPPORTED) {
+
+                actor->migration_status = BSAL_ACTOR_STATUS_SUPPORTED;
+                return 1;
+            }
+        } else if (tag == BSAL_ACTOR_MIGRATE_DISABLE) {
+            if (actor->migration_status == BSAL_ACTOR_STATUS_SUPPORTED) {
+                actor->migration_status = BSAL_ACTOR_STATUS_NOT_SUPPORTED;
+                return 1;
+            }
+
         } else if (tag == BSAL_ACTOR_YIELD) {
             bsal_actor_send_to_self_empty(actor, BSAL_ACTOR_YIELD_REPLY);
             return 1;
@@ -1011,9 +1023,18 @@ void bsal_actor_clone(struct bsal_actor *actor, struct bsal_message *message)
     struct bsal_message new_message;
     int source;
 
+    /* return nothing if the cloning is not supported or
+     * if a cloning is already in progress
+     */
+    if (actor->cloning_status == BSAL_ACTOR_STATUS_NOT_SUPPORTED
+                    || actor->cloning_status == BSAL_ACTOR_STATUS_STARTED) {
+
+        bsal_actor_send_reply_int(actor, BSAL_ACTOR_CLONE_REPLY, -1);
+        return;
+    }
+
     script = bsal_actor_script(actor);
     source = bsal_message_source(message);
-    actor->cloning_status = BSAL_ACTOR_STATUS_STARTED;
     buffer = bsal_message_buffer(message);
     spawner = *(int *)buffer;
     actor->cloning_spawner = spawner;
@@ -1028,6 +1049,8 @@ void bsal_actor_clone(struct bsal_actor *actor, struct bsal_message *message)
 
     bsal_message_init(&new_message, BSAL_ACTOR_SPAWN, sizeof(script), &script);
     bsal_actor_send(actor, spawner, &new_message);
+
+    actor->cloning_status = BSAL_ACTOR_STATUS_STARTED;
 }
 
 int bsal_actor_continue_clone(struct bsal_actor *actor, struct bsal_message *message)
