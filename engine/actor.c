@@ -59,7 +59,7 @@ void bsal_actor_init(struct bsal_actor *actor, void *state,
     bsal_lock_init(&actor->receive_lock);
     actor->locked = 0;
 
-    bsal_actor_unpin(actor);
+    bsal_actor_unpin_from_worker(actor);
     actor->can_pack = BSAL_ACTOR_STATUS_NOT_SUPPORTED;
 
     actor->cloning_status = BSAL_ACTOR_STATUS_NOT_STARTED;
@@ -77,6 +77,9 @@ void bsal_actor_init(struct bsal_actor *actor, void *state,
     bsal_fifo_init(&actor->forwarding_queue, sizeof(struct bsal_message));
 
     bsal_actor_register(actor, BSAL_ACTOR_FORWARD_MESSAGES, bsal_actor_forward_messages);
+
+    bsal_actor_send_to_self_empty(actor, BSAL_ACTOR_UNPIN_FROM_WORKER);
+    bsal_actor_send_to_self_empty(actor, BSAL_ACTOR_PIN_TO_NODE);
 
     /* call the concrete initializer
      * this must be the last call.
@@ -103,7 +106,7 @@ void bsal_actor_destroy(struct bsal_actor *actor)
     actor->name = -1;
     actor->dead = 1;
 
-    bsal_actor_unpin(actor);
+    bsal_actor_unpin_from_worker(actor);
 
     actor->script = NULL;
     actor->worker = NULL;
@@ -186,12 +189,20 @@ int bsal_actor_send_system(struct bsal_actor *actor, int name, struct bsal_messa
      * actor right away if it is requested.
      */
     if (name == self) {
-        if (tag == BSAL_ACTOR_PIN) {
-            bsal_actor_pin(actor);
+        if (tag == BSAL_ACTOR_PIN_TO_WORKER) {
+            bsal_actor_pin_to_worker(actor);
             return 1;
 
-        } else if (tag == BSAL_ACTOR_UNPIN) {
-            bsal_actor_unpin(actor);
+        } else if (tag == BSAL_ACTOR_UNPIN_FROM_WORKER) {
+            bsal_actor_unpin_from_worker(actor);
+            return 1;
+
+        } else if (tag == BSAL_ACTOR_PIN_TO_NODE) {
+            bsal_actor_pin_to_node(actor);
+            return 1;
+
+        } else if (tag == BSAL_ACTOR_UNPIN_FROM_NODE) {
+            bsal_actor_unpin_from_node(actor);
             return 1;
 
         } else if (tag == BSAL_ACTOR_PACK_ENABLE) {
@@ -202,6 +213,9 @@ int bsal_actor_send_system(struct bsal_actor *actor, int name, struct bsal_messa
                             */
 
             actor->can_pack = BSAL_ACTOR_STATUS_SUPPORTED;
+            bsal_actor_send_to_self_empty(actor, BSAL_ACTOR_UNPIN_FROM_WORKER);
+            bsal_actor_send_to_self_empty(actor, BSAL_ACTOR_UNPIN_FROM_NODE);
+
             return 1;
 
         } else if (tag == BSAL_ACTOR_PACK_DISABLE) {
@@ -351,7 +365,7 @@ char **bsal_actor_argv(struct bsal_actor *actor)
     return bsal_node_argv(bsal_actor_node(actor));
 }
 
-void bsal_actor_pin(struct bsal_actor *actor)
+void bsal_actor_pin_to_worker(struct bsal_actor *actor)
 {
     actor->affinity_worker = actor->worker;
 }
@@ -361,7 +375,7 @@ struct bsal_worker *bsal_actor_affinity_worker(struct bsal_actor *actor)
     return actor->affinity_worker;
 }
 
-void bsal_actor_unpin(struct bsal_actor *actor)
+void bsal_actor_unpin_from_worker(struct bsal_actor *actor)
 {
     actor->affinity_worker = NULL;
 }
@@ -591,10 +605,16 @@ int bsal_actor_receive_system(struct bsal_actor *actor, struct bsal_message *mes
      * because they can only be sent by an actor
      * to itself.
      */
-    } else if (tag == BSAL_ACTOR_PIN) {
+    } else if (tag == BSAL_ACTOR_PIN_TO_WORKER) {
         return 1;
 
-    } else if (tag == BSAL_ACTOR_UNPIN) {
+    } else if (tag == BSAL_ACTOR_UNPIN_FROM_WORKER) {
+        return 1;
+
+    } else if (tag == BSAL_ACTOR_PIN_TO_NODE) {
+        return 1;
+
+    } else if (tag == BSAL_ACTOR_UNPIN_FROM_NODE) {
         return 1;
 
     } else if (tag == BSAL_ACTOR_SET_SUPERVISOR
@@ -1714,3 +1734,12 @@ void bsal_actor_forward_messages(struct bsal_actor *actor, struct bsal_message *
     }
 }
 
+void bsal_actor_pin_to_node(struct bsal_actor *actor)
+{
+
+}
+
+void bsal_actor_unpin_from_node(struct bsal_actor *actor)
+{
+
+}

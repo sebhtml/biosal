@@ -42,8 +42,10 @@
 #define BSAL_ACTOR_PROXY_MESSAGE 0x00004bed
 
 /* affinity */
-#define BSAL_ACTOR_PIN 0x000017a1
-#define BSAL_ACTOR_UNPIN 0x00007b66
+#define BSAL_ACTOR_PIN_TO_WORKER 0x000017a1
+#define BSAL_ACTOR_UNPIN_FROM_WORKER 0x00007b66
+#define BSAL_ACTOR_PIN_TO_NODE 0x00007b38
+#define BSAL_ACTOR_UNPIN_FROM_NODE 0x00006dab
 
 /* synchronization */
 #define BSAL_ACTOR_SYNCHRONIZE 0x00004ac9
@@ -263,8 +265,10 @@ char **bsal_actor_argv(struct bsal_actor *actor);
  * this has implications for memory affinity in
  * NUMA systems
  */
-void bsal_actor_pin(struct bsal_actor *actor);
-void bsal_actor_unpin(struct bsal_actor *actor);
+void bsal_actor_pin_to_worker(struct bsal_actor *actor);
+void bsal_actor_unpin_from_worker(struct bsal_actor *actor);
+void bsal_actor_pin_to_node(struct bsal_actor *actor);
+void bsal_actor_unpin_from_node(struct bsal_actor *actor);
 
 int bsal_actor_supervisor(struct bsal_actor *actor);
 void bsal_actor_set_supervisor(struct bsal_actor *actor, int supervisor);
