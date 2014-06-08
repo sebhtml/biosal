@@ -178,13 +178,13 @@ void bsal_vector_unpack(struct bsal_vector *self, void *buffer)
 #endif
 }
 
-void bsal_vector_copy_range(struct bsal_vector *self, int first, int last, struct bsal_vector *other)
+void bsal_vector_copy_range(struct bsal_vector *self, int first, int last, struct bsal_vector *destination)
 {
     int i;
 
     for (i = first; i <= last; i++) {
 
-        bsal_vector_push_back(other, bsal_vector_at(self, i));
+        bsal_vector_push_back(destination, bsal_vector_at(self, i));
     }
 }
 
@@ -273,4 +273,64 @@ void bsal_vector_reserve(struct bsal_vector *self, int size)
 int bsal_vector_capacity(struct bsal_vector *self)
 {
     return self->maximum_size;
+}
+
+void bsal_vector_update(struct bsal_vector *self, void *old_item, void *new_item)
+{
+    int i;
+    int last;
+    void *bucket;
+
+    last = bsal_vector_size(self) - 1;
+
+    for (i = 0; i <= last; i++) {
+        bucket = bsal_vector_at(self, i);
+        if (memcmp(bucket, old_item, self->element_size) == 0) {
+
+            bsal_vector_set(self, i, new_item);
+        }
+    }
+}
+
+void bsal_vector_push_back_vector(struct bsal_vector *self, struct bsal_vector *other_vector)
+{
+    bsal_vector_copy_range(other_vector, 0, bsal_vector_size(other_vector) - 1, self);
+}
+
+void bsal_vector_set(struct bsal_vector *self, int index, void *data)
+{
+    void *bucket;
+
+    bucket = bsal_vector_at(self, index);
+    memcpy(bucket, data, self->element_size);
+}
+
+void bsal_vector_set_int(struct bsal_vector *self, int index, int value)
+{
+    bsal_vector_set(self, index, &value);
+}
+
+void bsal_vector_push_back_int(struct bsal_vector *self, int value)
+{
+    bsal_vector_push_back(self, &value);
+}
+
+void bsal_vector_print_int(struct bsal_vector *self)
+{
+    int i;
+    int size;
+
+    size = bsal_vector_size(self);
+    i = 0;
+
+    printf("[");
+    while (i < size) {
+
+        if (i > 0) {
+            printf(", ");
+        }
+        printf("%d", bsal_vector_at_as_int(self, i));
+        i++;
+    }
+    printf("]");
 }

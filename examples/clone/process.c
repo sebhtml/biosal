@@ -19,6 +19,8 @@ void process_init(struct bsal_actor *actor)
     process1->clone = -1;
     process1->value = 42;
     process1->ready = 0;
+
+    bsal_actor_send_to_self_empty(actor, BSAL_ACTOR_PACK_ENABLE);
 }
 
 void process_destroy(struct bsal_actor *actor)
@@ -61,7 +63,6 @@ void process_receive(struct bsal_actor *actor, struct bsal_message *message)
         printf("Hi, I am actor:%d and my value is %d. I will clone myself using %d as the spawner\n",
                         name, process1->value, other);
 
-        bsal_actor_send_to_self_empty(actor, BSAL_ACTOR_CLONE_ENABLE);
         bsal_message_init(&new_message, BSAL_ACTOR_CLONE, sizeof(other), &other);
         bsal_actor_send_to_self(actor, &new_message);
 

@@ -54,6 +54,8 @@
 #define BSAL_ACTOR_SPAWN_REPLY 0x00007b68
 
 /* for import and export */
+#define BSAL_ACTOR_PACK_ENABLE 0x000015d3
+#define BSAL_ACTOR_PACK_DISABLE 0x00007f0f
 #define BSAL_ACTOR_PACK 0x00004cae
 #define BSAL_ACTOR_PACK_REPLY 0x000024fc
 #define BSAL_ACTOR_UNPACK 0x00001c73
@@ -76,14 +78,10 @@ BSAL_ACTOR_PACK to self
 forward BSAL_ACTOR_PACK_REPLY to new spawnee as UNPACK
 reply BSAL_ CLONE_REPLY with newly spawned actor
 */
-#define BSAL_ACTOR_CLONE_ENABLE 0x000015d3
-#define BSAL_ACTOR_CLONE_DISABLE 0x00007392
 #define BSAL_ACTOR_CLONE 0x00000d60
 #define BSAL_ACTOR_CLONE_REPLY 0x00006881
 
 /* for migration */
-#define BSAL_ACTOR_MIGRATE_ENABLE 0x00001d0b
-#define BSAL_ACTOR_MIGRATE_DISABLE 0x00005c6e
 #define BSAL_ACTOR_MIGRATE 0x000073ff
 #define BSAL_ACTOR_MIGRATE_REPLY 0x00001442
 #define BSAL_ACTOR_MIGRATE_NOTIFY_ACQUAINTANCES 0x000029b6
@@ -106,17 +104,18 @@ BSAL_ACTOR_NOTIFY_NAME_CHANGE (source is old name, name is new name)
 the actor just need to change any acquaintance with old name to
 new name.
 */
-#define BSAL_ACTOR_NOTIFY_NAME_ENABLE 0x00005aab
-#define BSAL_ACTOR_NOTIFY_NAME_DISABLE 0x00002156
 #define BSAL_ACTOR_NOTIFY_NAME_CHANGE 0x000068b9
 #define BSAL_ACTOR_NOTIFY_NAME_CHANGE_REPLY 0x00003100
 
+#define BSAL_ACTOR_PING 0x000040b3
+#define BSAL_ACTOR_PING_REPLY 0x00006eda
 
 /* states */
 #define BSAL_ACTOR_STATUS_NOT_SUPPORTED 0
 #define BSAL_ACTOR_STATUS_SUPPORTED 1
-#define BSAL_ACTOR_STATUS_STARTED 2
-#define BSAL_ACTOR_STATUS_FINISHED 3
+#define BSAL_ACTOR_STATUS_NOT_STARTED 2
+#define BSAL_ACTOR_STATUS_STARTED 3
+#define BSAL_ACTOR_STATUS_FINISHED 4
 
 /* special names */
 #define BSAL_ACTOR_SELF 0
@@ -135,6 +134,7 @@ struct bsal_actor {
     struct bsal_worker *worker;
     struct bsal_node *node;
     struct bsal_worker *affinity_worker;
+    struct bsal_vector acquaintance_vector;
 
     struct bsal_dispatcher dispatcher;
     int current_source;
@@ -145,13 +145,14 @@ struct bsal_actor {
     int locked;
     int name;
     int dead;
-    int supervisor;
 
     struct bsal_counter counter;
 
     int synchronization_started;
     int synchronization_responses;
     int synchronization_expected_responses;
+
+    int can_pack;
 
     int cloning_status;
     int cloning_spawner;
@@ -163,8 +164,9 @@ struct bsal_actor {
     int migration_new_actor;
     int migration_client;
     int migration_progressed;
+    int migration_cloned;
 
-    int acquaintance_name_change_status;
+    int acquaintance_index;
 };
 
 void bsal_actor_init(struct bsal_actor *actor, void *state,
@@ -284,5 +286,9 @@ struct bsal_dispatcher *bsal_actor_dispatcher(struct bsal_actor *actor);
 void bsal_actor_set_node(struct bsal_actor *actor, struct bsal_node *node);
 
 void bsal_actor_migrate(struct bsal_actor *actor, struct bsal_message *message);
+void bsal_actor_notify_name_change(struct bsal_actor *actor, struct bsal_message *message);
+
+struct bsal_vector *bsal_actor_acquaintance_vector(struct bsal_actor *actor);
+void bsal_actor_migrate_notify_acquaintances(struct bsal_actor *actor, struct bsal_message *message);
 
 #endif

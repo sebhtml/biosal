@@ -1,8 +1,8 @@
 
-examples: mock mock1 ring reader not_found remote_spawn synchronize controller hello_world clone
+examples: mock mock1 ring reader not_found remote_spawn synchronize controller hello_world clone migration
 
 EXAMPLES=example_mock example_ring example_reader example_remote_spawn example_synchronize example_controller example_hello_world \
-         example_clone
+         example_clone example_migration
 
 # examples
 EXAMPLE_MOCK=examples/mock/main.o examples/mock/mock.o examples/mock/buddy.o
@@ -13,6 +13,7 @@ EXAMPLE_SYNCHRONIZE=examples/synchronize/main.o examples/synchronize/stream.o
 EXAMPLE_CONTROLLER=examples/controller/main.o examples/controller/root.o
 EXAMPLE_HELLO_WORLD=examples/hello_world/main.o examples/hello_world/hello.o
 EXAMPLE_CLONE=examples/clone/main.o examples/clone/process.o
+EXAMPLE_MIGRATION=examples/migration/main.o examples/migration/frame.o
 
 ring: example_ring
 	mpiexec -n 2 ./example_ring -threads-per-node 8
@@ -46,4 +47,7 @@ hello_world: example_hello_world
 
 clone: example_clone
 	mpiexec -n 3 ./example_clone -threads-per-node 5
+
+migration: example_migration
+	mpiexec -n 3 ./example_migration -threads-per-node 5
 
