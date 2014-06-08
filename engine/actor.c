@@ -447,6 +447,15 @@ int bsal_actor_receive_system(struct bsal_actor *actor, struct bsal_message *mes
 
         return 1;
 
+    } else if (tag == BSAL_ACTOR_MIGRATE) {
+        bsal_actor_migrate(actor, message);
+        return 1;
+
+    } else if (tag == BSAL_ACTOR_MIGRATE_NOTIFY_ACQUAINTANCES) {
+        if (actor->migration_status == BSAL_ACTOR_STATUS_NOT_SUPPORTED) {
+            bsal_actor_send_reply_empty(actor, BSAL_ACTOR_MIGRATE_NOTIFY_ACQUAINTANCES_REPLY);
+            return 1;
+        }
     } else if (tag == BSAL_ACTOR_NOTIFY_NAME_CHANGE &&
                     actor->acquaintance_name_change_status == BSAL_ACTOR_STATUS_NOT_SUPPORTED) {
 
@@ -473,6 +482,14 @@ int bsal_actor_receive_system(struct bsal_actor *actor, struct bsal_message *mes
          * bsal_actor_continue_clone
          */
         if (bsal_actor_continue_clone(actor, message)) {
+            return 1;
+        }
+    }
+
+    if (actor->migration_status == BSAL_ACTOR_STATUS_STARTED) {
+        actor->migration_progressed = 0;
+        bsal_actor_migrate(actor, message);
+        if (actor->migration_progressed) {
             return 1;
         }
     }
@@ -1189,4 +1206,59 @@ struct bsal_dispatcher *bsal_actor_dispatcher(struct bsal_actor *actor)
 void bsal_actor_set_node(struct bsal_actor *actor, struct bsal_node *node)
 {
     actor->node = node;
+}
+
+void bsal_actor_migrate(struct bsal_actor *actor, struct bsal_message *message)
+{
+    int spawner;
+    void *buffer;
+    int source;
+    int tag;
+    int name;
+
+    tag = bsal_message_tag(message);
+    source = bsal_message_source(message);
+    name = bsal_actor_name(actor);
+
+    /* return nothing if the cloning is not supported or
+     * if a cloning is already in progress
+     */
+    if (actor->migration_status == BSAL_ACTOR_STATUS_NOT_SUPPORTED) {
+
+        bsal_actor_send_reply_int(actor, BSAL_ACTOR_MIGRATE_REPLY, BSAL_ACTOR_NOBODY);
+        actor->migration_progressed = 1;
+        return;
+
+    } else if (actor->migration_status == BSAL_ACTOR_STATUS_SUPPORTED) {
+
+        /* clone self
+         */
+        source = bsal_message_source(message);
+        buffer = bsal_message_buffer(message);
+        spawner = *(int *)buffer;
+        name = bsal_actor_name(actor);
+
+        actor->migration_spawner = spawner;
+        actor->migration_client = source;
+
+        bsal_actor_send_to_self_int(actor, BSAL_ACTOR_CLONE, spawner);
+
+        actor->migration_status = BSAL_ACTOR_STATUS_STARTED;
+        actor->migration_progressed = 1;
+
+    } else if (tag == BSAL_ACTOR_CLONE_REPLY && source == name) {
+
+        /* tell acquaintances that the clone is the new original.
+         */
+        bsal_message_unpack_int(message, 0, &actor->migration_new_actor);
+        bsal_actor_send_to_self_empty(actor, BSAL_ACTOR_MIGRATE_NOTIFY_ACQUAINTANCES);
+
+    } else if (tag == BSAL_ACTOR_MIGRATE_NOTIFY_ACQUAINTANCES_REPLY && source == name) {
+
+        /* send the name of the new copy and die of a peaceful death.
+         */
+        bsal_actor_send_to_self_empty(actor, BSAL_ACTOR_STOP);
+        bsal_actor_send_int(actor, actor->migration_client, BSAL_ACTOR_MIGRATE_REPLY,
+                        actor->migration_new_actor);
+    }
 }

@@ -76,9 +76,9 @@ BSAL_ACTOR_PACK to self
 forward BSAL_ACTOR_PACK_REPLY to new spawnee as UNPACK
 reply BSAL_ CLONE_REPLY with newly spawned actor
 */
-#define BSAL_ACTOR_CLONE 0x00000d60
 #define BSAL_ACTOR_CLONE_ENABLE 0x000015d3
 #define BSAL_ACTOR_CLONE_DISABLE 0x00007392
+#define BSAL_ACTOR_CLONE 0x00000d60
 #define BSAL_ACTOR_CLONE_REPLY 0x00006881
 
 /* for migration */
@@ -86,6 +86,8 @@ reply BSAL_ CLONE_REPLY with newly spawned actor
 #define BSAL_ACTOR_MIGRATE_DISABLE 0x00005c6e
 #define BSAL_ACTOR_MIGRATE 0x000073ff
 #define BSAL_ACTOR_MIGRATE_REPLY 0x00001442
+#define BSAL_ACTOR_MIGRATE_NOTIFY_ACQUAINTANCES 0x000029b6
+#define BSAL_ACTOR_MIGRATE_NOTIFY_ACQUAINTANCES_REPLY 0x00007fe2
 
 /* name change for acquaintances
 
@@ -104,10 +106,11 @@ BSAL_ACTOR_NOTIFY_NAME_CHANGE (source is old name, name is new name)
 the actor just need to change any acquaintance with old name to
 new name.
 */
-#define BSAL_ACTOR_NOTIFY_NAME_CHANGE 0x000068b9
-#define BSAL_ACTOR_NOTIFY_NAME_CHANGE_REPLY 0x00003100
 #define BSAL_ACTOR_NOTIFY_NAME_ENABLE 0x00005aab
 #define BSAL_ACTOR_NOTIFY_NAME_DISABLE 0x00002156
+#define BSAL_ACTOR_NOTIFY_NAME_CHANGE 0x000068b9
+#define BSAL_ACTOR_NOTIFY_NAME_CHANGE_REPLY 0x00003100
+
 
 /* states */
 #define BSAL_ACTOR_STATUS_NOT_SUPPORTED 0
@@ -119,6 +122,7 @@ new name.
 #define BSAL_ACTOR_SELF 0
 #define BSAL_ACTOR_SUPERVISOR 1
 #define BSAL_ACTOR_SOURCE 2
+#define BSAL_ACTOR_NOBODY -1
 
 struct bsal_node;
 struct bsal_worker;
@@ -155,6 +159,10 @@ struct bsal_actor {
     int cloning_client;
 
     int migration_status;
+    int migration_spawner;
+    int migration_new_actor;
+    int migration_client;
+    int migration_progressed;
 
     int acquaintance_name_change_status;
 };
@@ -274,5 +282,7 @@ int bsal_actor_dispatch(struct bsal_actor *actor, struct bsal_message *message);
 void bsal_actor_register(struct bsal_actor *actor, int tag, bsal_actor_receive_fn_t handler);
 struct bsal_dispatcher *bsal_actor_dispatcher(struct bsal_actor *actor);
 void bsal_actor_set_node(struct bsal_actor *actor, struct bsal_node *node);
+
+void bsal_actor_migrate(struct bsal_actor *actor, struct bsal_message *message);
 
 #endif
