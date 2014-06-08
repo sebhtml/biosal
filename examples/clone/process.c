@@ -19,7 +19,7 @@ void process_init(struct bsal_actor *actor)
     process1->clone = -1;
     process1->value = 42;
     process1->ready = 0;
-
+    process1->cloned = 0;
     bsal_actor_send_to_self_empty(actor, BSAL_ACTOR_PACK_ENABLE);
 }
 
@@ -64,6 +64,12 @@ void process_receive(struct bsal_actor *actor, struct bsal_message *message)
                         name, process1->value, other);
 
         bsal_message_init(&new_message, BSAL_ACTOR_CLONE, sizeof(other), &other);
+
+        /* create 2 clones
+         * to test the capacity of the runtime to queue messages
+         * during cloning
+         */
+        bsal_actor_send_to_self(actor, &new_message);
         bsal_actor_send_to_self(actor, &new_message);
 
     } else if (tag == BSAL_ACTOR_CLONE_REPLY) {
@@ -73,6 +79,14 @@ void process_receive(struct bsal_actor *actor, struct bsal_message *message)
         printf("New clone is actor:%d\n", process1->clone);
 
         bsal_actor_send_empty(actor, process1->clone, BSAL_ACTOR_ASK_TO_STOP);
+
+        process1->cloned++;
+
+        /* wait for the second clone
+         */
+        if (process1->cloned != 2) {
+            return;
+        }
 
         if (bsal_vector_at_as_int(&process1->initial_processes, 0) == name) {
             bsal_actor_synchronize(actor, &process1->initial_processes);

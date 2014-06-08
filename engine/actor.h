@@ -158,18 +158,25 @@ struct bsal_actor {
 
     int can_pack;
 
+
+    int forwarding_selector;
+    struct bsal_fifo forwarding_queue;
+    struct bsal_fifo queued_messages_for_clone;
+    struct bsal_fifo queued_messages_for_migration;
+
     int cloning_status;
     int cloning_spawner;
     int cloning_new_actor;
     int cloning_client;
+    int cloning_progressed;
 
     int migration_status;
     int migration_spawner;
     int migration_new_actor;
     int migration_client;
-    int migration_progressed;
     int migration_cloned;
-    struct bsal_fifo migration_queued_messages;
+    int migration_progressed;
+    int migration_forwarded_messages;
 
     int acquaintance_index;
 };
@@ -280,12 +287,14 @@ int bsal_actor_unpack_proxy_message(struct bsal_actor *actor,
 void bsal_actor_send_proxy(struct bsal_actor *actor, int destination,
                 struct bsal_message *message, int real_source);
 
+void bsal_actor_forward_messages(struct bsal_actor *actor, struct bsal_message *message);
+
 int bsal_actor_script(struct bsal_actor *actor);
 void bsal_actor_add_script(struct bsal_actor *actor, int name, struct bsal_script *script);
 
 /* actor cloning */
 void bsal_actor_clone(struct bsal_actor *actor, struct bsal_message *message);
-int bsal_actor_continue_clone(struct bsal_actor *actor, struct bsal_message *message);
+void bsal_actor_continue_clone(struct bsal_actor *actor, struct bsal_message *message);
 
 struct bsal_counter *bsal_actor_counter(struct bsal_actor *actor);
 int bsal_actor_dispatch(struct bsal_actor *actor, struct bsal_message *message);
@@ -298,5 +307,7 @@ void bsal_actor_notify_name_change(struct bsal_actor *actor, struct bsal_message
 
 struct bsal_vector *bsal_actor_acquaintance_vector(struct bsal_actor *actor);
 void bsal_actor_migrate_notify_acquaintances(struct bsal_actor *actor, struct bsal_message *message);
+void bsal_actor_queue_message(struct bsal_actor *actor,
+                struct bsal_message *message);
 
 #endif

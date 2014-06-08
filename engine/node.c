@@ -538,10 +538,12 @@ void bsal_node_set_initial_actor(struct bsal_node *node, int node_name, int acto
 
 void bsal_node_run(struct bsal_node *node)
 {
-    printf("----------------------------------------------\n");
-    printf("biosal> node/%d: %d threads, %d workers\n", bsal_node_name(node),
+    if (node->print_counters) {
+        printf("----------------------------------------------\n");
+        printf("biosal> node/%d: %d threads, %d workers\n", bsal_node_name(node),
                     bsal_node_thread_count(node),
                     bsal_node_worker_count(node));
+    }
 
     node->started = 1;
 

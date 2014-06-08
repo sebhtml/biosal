@@ -11,6 +11,7 @@ struct process {
     struct bsal_vector initial_processes;
     int value;
     int ready;
+    int cloned;
 };
 
 extern struct bsal_script process_script;

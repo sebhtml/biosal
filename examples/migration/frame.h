@@ -9,6 +9,7 @@
 struct frame {
     int value;
     int migrated_other;
+    int pings;
 };
 
 extern struct bsal_script frame_script;
