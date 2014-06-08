@@ -20,6 +20,8 @@ void frame_init(struct bsal_actor *actor)
     concrete_actor->value = rand() % 12345;
 
     bsal_actor_send_to_self_empty(actor, BSAL_ACTOR_PACK_ENABLE);
+
+    concrete_actor->migrated_other = 0;
 }
 
 void frame_destroy(struct bsal_actor *actor)
@@ -71,11 +73,26 @@ void frame_receive(struct bsal_actor *actor, struct bsal_message *message)
 
         printf("actor %d (value %d) receives BSAL_ACTOR_PING from actor %d\n",
                         name, concrete_actor->value, source);
+        printf("Acquaintances of actor %d: ", name);
+        bsal_vector_print_int(acquaintance_vector);
+        printf("\n");
 
         bsal_actor_send_reply_empty(actor, BSAL_ACTOR_PING_REPLY);
 
     } else if (tag == BSAL_ACTOR_PING_REPLY) {
 
+        /* kill the system
+         */
+        if (concrete_actor->migrated_other) {
+
+            bsal_actor_send_reply_empty(actor, BSAL_ACTOR_ASK_TO_STOP);
+            bsal_actor_send_to_self_empty(actor, BSAL_ACTOR_ASK_TO_STOP);
+
+            return;
+        }
+
+        /* migrate other actor
+         */
         printf("actor %d receives BSAL_ACTOR_PING_REPLY from actor %d\n",
                         name, source);
 
@@ -88,6 +105,13 @@ void frame_receive(struct bsal_actor *actor, struct bsal_message *message)
 
         bsal_actor_send_reply_int(actor, BSAL_ACTOR_MIGRATE, name);
 
+        /* send a message to other while it is migrating.
+         * this is supposed to work !
+         */
+        bsal_actor_send_reply_empty(actor, BSAL_ACTOR_PING);
+
+        concrete_actor->migrated_other = 1;
+
     } else if (tag == BSAL_ACTOR_MIGRATE_REPLY) {
 
         bsal_message_unpack_int(message, 0, &other);
@@ -95,9 +119,6 @@ void frame_receive(struct bsal_actor *actor, struct bsal_message *message)
         printf("Acquaintances of actor %d: ", name);
         bsal_vector_print_int(acquaintance_vector);
         printf("\n");
-
-        bsal_actor_send_empty(actor, other, BSAL_ACTOR_ASK_TO_STOP);
-        bsal_actor_send_to_self_empty(actor, BSAL_ACTOR_ASK_TO_STOP);
 
     } else if (tag == BSAL_ACTOR_PACK) {
 

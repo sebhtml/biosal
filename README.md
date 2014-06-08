@@ -62,6 +62,11 @@ Also, in the actor model, the arrival order of messages is both arbitrary and un
 
 One of the most important requirements of actors is that of acquaintances. An actor can only send
 message to one of its acquaintances.
+Acquaintance vectors were introduced in ([Hewitt and Baker 1977](http://dspace.mit.edu/handle/1721.1/41962), p. 7,
+                section III.3).
+Any actor using an acquaintance vector is migratable by an actor machine.
+An actor machine can distribute and balance actors according to some arbitrary rules wwhen
+all the actors in an actor system use acquaintance vectors.
 
 [Important actor model papers](Documentation/Actors.md)
 

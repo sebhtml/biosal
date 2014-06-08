@@ -8,6 +8,7 @@
 
 struct frame {
     int value;
+    int migrated_other;
 };
 
 extern struct bsal_script frame_script;

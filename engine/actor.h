@@ -6,6 +6,7 @@
 #include "script.h"
 
 #include <structures/vector.h>
+#include <structures/fifo.h>
 
 #include <engine/dispatcher.h>
 #include <system/lock.h>
@@ -86,6 +87,10 @@ reply BSAL_ CLONE_REPLY with newly spawned actor
 #define BSAL_ACTOR_MIGRATE_REPLY 0x00001442
 #define BSAL_ACTOR_MIGRATE_NOTIFY_ACQUAINTANCES 0x000029b6
 #define BSAL_ACTOR_MIGRATE_NOTIFY_ACQUAINTANCES_REPLY 0x00007fe2
+#define BSAL_ACTOR_FORWARD_MESSAGES 0x00000bef
+#define BSAL_ACTOR_FORWARD_MESSAGES_REPLY 0x00002ff3
+#define BSAL_ACTOR_SET_SUPERVISOR 0x0000312f
+#define BSAL_ACTOR_SET_SUPERVISOR_REPLY 0x00007b18
 
 /* name change for acquaintances
 
@@ -115,7 +120,6 @@ new name.
 #define BSAL_ACTOR_STATUS_SUPPORTED 1
 #define BSAL_ACTOR_STATUS_NOT_STARTED 2
 #define BSAL_ACTOR_STATUS_STARTED 3
-#define BSAL_ACTOR_STATUS_FINISHED 4
 
 /* special names */
 #define BSAL_ACTOR_SELF 0
@@ -165,6 +169,7 @@ struct bsal_actor {
     int migration_client;
     int migration_progressed;
     int migration_cloned;
+    struct bsal_fifo migration_queued_messages;
 
     int acquaintance_index;
 };
@@ -269,9 +274,12 @@ void bsal_actor_synchronize(struct bsal_actor *actor, struct bsal_vector *actors
 void bsal_actor_receive_proxy_message(struct bsal_actor *actor,
                 struct bsal_message *message);
 void bsal_actor_pack_proxy_message(struct bsal_actor *actor,
-                int real_source, struct bsal_message *message);
+                struct bsal_message *message, int real_source);
 int bsal_actor_unpack_proxy_message(struct bsal_actor *actor,
                 struct bsal_message *message);
+void bsal_actor_send_proxy(struct bsal_actor *actor, int destination,
+                struct bsal_message *message, int real_source);
+
 int bsal_actor_script(struct bsal_actor *actor);
 void bsal_actor_add_script(struct bsal_actor *actor, int name, struct bsal_script *script);
 

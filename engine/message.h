@@ -21,6 +21,7 @@ struct bsal_message {
 };
 
 void bsal_message_init(struct bsal_message *message, int tag, int count, void *buffer);
+void bsal_message_init_copy(struct bsal_message *message, struct bsal_message *old_message);
 void bsal_message_destroy(struct bsal_message *message);
 
 int bsal_message_source(struct bsal_message *message);
