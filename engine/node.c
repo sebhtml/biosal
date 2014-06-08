@@ -406,13 +406,13 @@ int bsal_node_spawn_state(struct bsal_node *node, void *state,
      */
     index = bsal_node_allocate_actor_index(node);
     actor = (struct bsal_actor *)bsal_vector_at(&node->actors, index);
-    bsal_actor_init(actor, state, script);
 
     /* actors have random names to enforce
      * the acquaintance paradigm
      */
     name = bsal_node_generate_name(node);
-    bsal_actor_set_name(actor, name);
+
+    bsal_actor_init(actor, state, script, name);
 
     /* register the actor name
      */

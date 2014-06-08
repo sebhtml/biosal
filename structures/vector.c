@@ -219,9 +219,14 @@ int bsal_vector_at_as_int(struct bsal_vector *self, int index)
 
 char *bsal_vector_at_as_char_pointer(struct bsal_vector *self, int index)
 {
-    char **bucket;
+    return (char *)bsal_vector_at_as_void_pointer(self, index);
+}
 
-    bucket = (char **)bsal_vector_at(self, index);
+void *bsal_vector_at_as_void_pointer(struct bsal_vector *self, int index)
+{
+    void **bucket;
+
+    bucket = (void **)bsal_vector_at(self, index);
 
     if (bucket == NULL) {
         return NULL;

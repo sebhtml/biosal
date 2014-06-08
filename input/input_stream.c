@@ -6,7 +6,7 @@
 #include <string.h>
 
 /*
-#define BSAL_INPUT_DEBUG
+#define BSAL_INPUT_STREAM_DEBUG
 */
 
 struct bsal_script bsal_input_stream_script = {
@@ -53,7 +53,6 @@ void bsal_input_stream_receive(struct bsal_actor *actor, struct bsal_message *me
 {
     int tag;
     int source;
-    int name;
     int count;
     struct bsal_input_stream *concrete_actor;
     int i;
@@ -67,7 +66,6 @@ void bsal_input_stream_receive(struct bsal_actor *actor, struct bsal_message *me
     concrete_actor = (struct bsal_input_stream *)bsal_actor_concrete_actor(actor);
     tag = bsal_message_tag(message);
     source = bsal_message_source(message);
-    name = bsal_actor_name(actor);
     buffer = (char *)bsal_message_buffer(message);
 
     /* Do nothing if there is an error.
@@ -82,7 +80,7 @@ void bsal_input_stream_receive(struct bsal_actor *actor, struct bsal_message *me
 
     if (tag == BSAL_INPUT_OPEN) {
 
-#ifdef BSAL_INPUT_DEBUG
+#ifdef BSAL_INPUT_STREAM_DEBUG
         printf("DEBUG BSAL_INPUT_OPEN\n");
 #endif
 
@@ -104,7 +102,7 @@ void bsal_input_stream_receive(struct bsal_actor *actor, struct bsal_message *me
 
         /*bsal_input_stream_init(actor);*/
 
-#ifdef BSAL_INPUT_DEBUG
+#ifdef BSAL_INPUT_STREAM_DEBUG
         printf("DEBUG bsal_input_stream_receive open %s\n",
                         buffer);
 #endif
@@ -116,7 +114,7 @@ void bsal_input_stream_receive(struct bsal_actor *actor, struct bsal_message *me
          */
         if (bsal_input_stream_has_error(actor, message)) {
 
-#ifdef BSAL_INPUT_DEBUG
+#ifdef BSAL_INPUT_STREAM_DEBUG
             printf("DEBUG has error\n");
 #endif
 
@@ -142,7 +140,7 @@ void bsal_input_stream_receive(struct bsal_actor *actor, struct bsal_message *me
             return;
         }
 
-#ifdef BSAL_INPUT_DEBUG
+#ifdef BSAL_INPUT_STREAM_DEBUG
         printf("DEBUG BSAL_INPUT_COUNT received...\n");
 #endif
 
@@ -166,7 +164,7 @@ void bsal_input_stream_receive(struct bsal_actor *actor, struct bsal_message *me
 
             sequences = bsal_input_proxy_size(&concrete_actor->proxy);
 
-#ifdef BSAL_INPUT_DEBUG
+#ifdef BSAL_INPUT_STREAM_DEBUG
             printf("DEBUG BSAL_INPUT_COUNT sequences %d...\n", sequences);
 #endif
 
@@ -206,7 +204,7 @@ void bsal_input_stream_receive(struct bsal_actor *actor, struct bsal_message *me
 
     } else if (tag == BSAL_INPUT_CLOSE) {
 
-#ifdef BSAL_INPUT_DEBUG
+#ifdef BSAL_INPUT_STREAM_DEBUG
         printf("DEBUG destroy proxy\n");
 #endif
         concrete_actor->error = BSAL_INPUT_ERROR_NO_ERROR;
@@ -228,7 +226,9 @@ void bsal_input_stream_receive(struct bsal_actor *actor, struct bsal_message *me
 
         bsal_actor_send_to_self_empty(actor, BSAL_ACTOR_STOP);
 
+#ifdef BSAL_INPUT_STREAM_DEBUG
         printf("actor %d sending BSAL_INPUT_CLOSE_REPLY to %d\n", name, source);
+#endif
 
     } else if (tag == BSAL_INPUT_GET_SEQUENCE) {
 

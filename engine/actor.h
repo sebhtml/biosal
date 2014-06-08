@@ -7,6 +7,7 @@
 
 #include <structures/vector.h>
 
+#include <engine/dispatcher.h>
 #include <system/lock.h>
 #include <system/counter.h>
 
@@ -127,6 +128,8 @@ struct bsal_actor {
     struct bsal_script *script;
     struct bsal_worker *worker;
     struct bsal_worker *affinity_worker;
+
+    struct bsal_dispatcher dispatcher;
     int current_source;
     void *state;
 
@@ -152,7 +155,7 @@ struct bsal_actor {
 };
 
 void bsal_actor_init(struct bsal_actor *actor, void *state,
-                struct bsal_script *script);
+                struct bsal_script *script, int name);
 void bsal_actor_destroy(struct bsal_actor *actor);
 
 int bsal_actor_name(struct bsal_actor *actor);
@@ -262,5 +265,8 @@ void bsal_actor_clone(struct bsal_actor *actor, struct bsal_message *message);
 int bsal_actor_continue_clone(struct bsal_actor *actor, struct bsal_message *message);
 
 struct bsal_counter *bsal_actor_counter(struct bsal_actor *actor);
+int bsal_actor_dispatch(struct bsal_actor *actor, struct bsal_message *message);
+void bsal_actor_register(struct bsal_actor *actor, int tag, bsal_actor_receive_fn_t handler);
+struct bsal_dispatcher *bsal_actor_dispatcher(struct bsal_actor *actor);
 
 #endif

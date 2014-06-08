@@ -8,6 +8,8 @@
 #include <string.h>
 
 /*
+#define BSAL_INPUT_CONTROLLER_DEBUG_LEVEL_2
+#define BSAL_INPUT_CONTROLLER_DEBUG_10355
 */
 
 #define BSAL_INPUT_CONTROLLER_DEBUG
@@ -25,11 +27,22 @@ void bsal_input_controller_init(struct bsal_actor *actor)
     struct bsal_input_controller *controller;
 
     controller = (struct bsal_input_controller *)bsal_actor_concrete_actor(actor);
+
     bsal_vector_init(&controller->streams, sizeof(int));
     bsal_vector_init(&controller->files, sizeof(char *));
     bsal_vector_init(&controller->spawners, sizeof(int));
     bsal_vector_init(&controller->counts, sizeof(int));
+    bsal_vector_init(&controller->stores, sizeof(int));
+
     controller->opened_streams = 0;
+
+#ifdef BSAL_INPUT_CONTROLLER_DEBUG_10355
+    printf("DEBUG actor %d register BSAL_INPUT_CONTROLLER_CREATE_STORES\n",
+                    bsal_actor_name(actor));
+#endif
+
+    bsal_actor_register(actor, BSAL_INPUT_CONTROLLER_CREATE_STORES,
+                    bsal_input_controller_create_stores);
 }
 
 void bsal_input_controller_destroy(struct bsal_actor *actor)
@@ -49,6 +62,7 @@ void bsal_input_controller_destroy(struct bsal_actor *actor)
     bsal_vector_destroy(&controller->files);
     bsal_vector_destroy(&controller->spawners);
     bsal_vector_destroy(&controller->counts);
+    bsal_vector_destroy(&controller->stores);
 }
 
 void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message *message)
@@ -84,6 +98,10 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
 
         bsal_actor_send_reply_empty(actor, BSAL_INPUT_CONTROLLER_START_REPLY);
 
+        /*
+        bsal_dispatcher_print(bsal_actor_dispatcher(actor));
+        */
+
     } else if (tag == BSAL_ADD_FILE) {
 
         file = (char *)buffer;
@@ -96,7 +114,7 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
         bucket = bsal_vector_at(&controller->files, bsal_vector_size(&controller->files) - 1);
         local_file = *(char **)bucket;
 
-#ifdef BSAL_INPUT_CONTROLLER_DEBUG98
+#ifdef BSAL_INPUT_CONTROLLER_DEBUG_LEVEL_2
         printf("DEBUG11 BSAL_ADD_FILE %s %p bucket %p index %d\n",
                         local_file, local_file, (void *)bucket, bsal_vector_size(&controller->files) - 1);
 #endif
@@ -134,10 +152,17 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
         bsal_message_unpack_int(message, 0, &error);
 
         if (error == BSAL_INPUT_ERROR_NO_ERROR) {
+
+#ifdef BSAL_INPUT_CONTROLLER_DEBUG_LEVEL_2
             printf("DEBUG actor %d asks %d BSAL_INPUT_COUNT\n", name, stream);
+#endif
+
             bsal_actor_send_empty(actor, stream, BSAL_INPUT_COUNT);
         } else {
+
+#ifdef BSAL_INPUT_CONTROLLER_DEBUG_LEVEL_2
             printf("DEBUG actor %d received error %d from %d\n", name, error, stream);
+#endif
             controller->counted++;
         }
 
@@ -203,23 +228,28 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
                                 entries);
             }
 
-            bsal_actor_send_to_supervisor_empty(actor, BSAL_INPUT_DISTRIBUTE_REPLY);
+#ifdef BSAL_INPUT_CONTROLLER_DEBUG_10355
+            printf("DEBUG send BSAL_INPUT_CONTROLLER_CREATE_STORES to self %d\n",
+                            bsal_actor_name(actor));
+#endif
+
+            bsal_actor_send_to_self_empty(actor, BSAL_INPUT_CONTROLLER_CREATE_STORES);
         }
     } else if (tag == BSAL_INPUT_DISTRIBUTE) {
 
         /* for each file, spawn a stream to count */
 
-#ifdef BSAL_INPUT_CONTROLLER_DEBUG
+#ifdef BSAL_INPUT_CONTROLLER_DEBUG_LEVEL_2
         printf("DEBUG actor %d receives BSAL_INPUT_DISTRIBUTE\n", name);
 #endif
 
-#ifdef BSAL_INPUT_CONTROLLER_DEBUG
+#ifdef BSAL_INPUT_CONTROLLER_DEBUG_LEVEL_2
         printf("DEBUG send BSAL_INPUT_SPAWN to self\n");
 #endif
 
         bsal_actor_send_to_self_empty(actor, BSAL_INPUT_SPAWN);
 
-#ifdef BSAL_INPUT_CONTROLLER_DEBUG12
+#ifdef BSAL_INPUT_CONTROLLER_DEBUG_LEVEL_2
         printf("DEBUG resizing counts to %d\n", bsal_vector_size(&controller->files));
 #endif
 
@@ -246,12 +276,12 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
         bucket = bsal_vector_at(&controller->files, i);
         local_file = *(char **)bsal_vector_at(&controller->files, i);
 
-#ifdef BSAL_INPUT_CONTROLLER_DEBUG12
+#ifdef BSAL_INPUT_CONTROLLER_DEBUG_LEVEL_2
         printf("DEBUG890 local_file %p bucket %p index %d\n", local_file, (void *)bucket,
                         i);
 #endif
 
-#ifdef BSAL_INPUT_CONTROLLER_DEBUG
+#ifdef BSAL_INPUT_CONTROLLER_DEBUG_LEVEL_2
         printf("DEBUG actor %d spawns a stream for file %d/%d via spawner %d\n",
                         name, i, bsal_vector_size(&controller->files), destination);
 #endif
@@ -260,11 +290,31 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
 
     } else if (tag == BSAL_ACTOR_ASK_TO_STOP && source == bsal_actor_supervisor(actor)) {
 
-#ifdef BSAL_INPUT_CONTROLLER_DEBUG
+#ifdef BSAL_INPUT_CONTROLLER_DEBUG_LEVEL_2
         printf("DEBUG controller %d dies\n", name);
 #endif
 
         bsal_actor_send_to_self_empty(actor, BSAL_ACTOR_STOP);
         bsal_actor_send_reply_empty(actor, BSAL_ACTOR_ASK_TO_STOP_REPLY);
+
     }
+}
+
+void bsal_input_controller_create_stores(struct bsal_actor *actor, struct bsal_message *message)
+{
+    int tag;
+    int source;
+    void *buffer;
+    int count;
+
+    bsal_message_get_all(message, &tag, &count, &buffer, &source);
+/*
+    printf("DEBUG bsal_input_controller_create_stores\n");
+    */
+
+    bsal_actor_send_to_supervisor_empty(actor, BSAL_INPUT_DISTRIBUTE_REPLY);
+
+    /*
+    bsal_actor_send_to_self_empty(actor, BSAL_ACTOR_STOP);
+    */
 }

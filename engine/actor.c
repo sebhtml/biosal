@@ -17,15 +17,21 @@
 
 #define BSAL_ACTOR_DEBUG_SPAWN
 #define BSAL_ACTOR_DEBUG_CLONE
+#define BSAL_ACTOR_DEBUG_10335
 */
 
 void bsal_actor_init(struct bsal_actor *actor, void *state,
-                struct bsal_script *script)
+                struct bsal_script *script, int name)
 {
     bsal_actor_init_fn_t init;
 
+    /* initialize the dispatcher before calling
+     * the concrete initializer
+     */
+    bsal_dispatcher_init(&actor->dispatcher);
+
     actor->state = state;
-    actor->name = -1;
+    actor->name = name;
     actor->supervisor = -1;
     actor->dead = 0;
     actor->script = script;
@@ -40,6 +46,8 @@ void bsal_actor_init(struct bsal_actor *actor, void *state,
 
     bsal_actor_unpin(actor);
 
+    /* call the concrete initializer
+     */
     init = bsal_actor_get_init(actor);
     init(actor);
 
@@ -50,6 +58,8 @@ void bsal_actor_init(struct bsal_actor *actor, void *state,
 void bsal_actor_destroy(struct bsal_actor *actor)
 {
     bsal_actor_init_fn_t destroy;
+
+    bsal_dispatcher_destroy(&actor->dispatcher);
 
     destroy = bsal_actor_get_destroy(actor);
     destroy(actor);
@@ -475,7 +485,16 @@ void bsal_actor_receive(struct bsal_actor *actor, struct bsal_message *message)
 
     actor->current_source = bsal_message_source(message);
 
+    /* check if this is a message that the system can
+     * figure out what to do with it
+     */
     if (bsal_actor_receive_system(actor, message)) {
+        return;
+
+    /* otherwise, verify if the actor registered a
+     * handler for this tag
+     */
+    } else if (bsal_actor_dispatch(actor, message)) {
         return;
     }
 
@@ -1106,4 +1125,35 @@ int bsal_actor_node_name(struct bsal_actor *actor)
 int bsal_actor_node_worker_count(struct bsal_actor *actor)
 {
     return bsal_node_worker_count(bsal_actor_node(actor));
+}
+
+int bsal_actor_dispatch(struct bsal_actor *actor, struct bsal_message *message)
+{
+
+#ifdef BSAL_ACTOR_DEBUG_10335
+    if (bsal_message_tag(message) == 10335) {
+        printf("DEBUG actor %d bsal_actor_dispatch 10335\n",
+                        bsal_actor_name(actor));
+    }
+#endif
+
+    return bsal_dispatcher_dispatch(&actor->dispatcher, actor, message);
+}
+
+void bsal_actor_register(struct bsal_actor *actor, int tag, bsal_actor_receive_fn_t handler)
+{
+
+#ifdef BSAL_ACTOR_DEBUG_10335
+    if (tag == 10335) {
+        printf("DEBUG actor %d bsal_actor_register 10335\n",
+                        bsal_actor_name(actor));
+    }
+#endif
+
+    bsal_dispatcher_register(&actor->dispatcher, tag, handler);
+}
+
+struct bsal_dispatcher *bsal_actor_dispatcher(struct bsal_actor *actor)
+{
+    return &actor->dispatcher;
 }

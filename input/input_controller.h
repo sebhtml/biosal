@@ -11,6 +11,7 @@ struct bsal_input_controller {
     struct bsal_vector files;
     struct bsal_vector streams;
     struct bsal_vector spawners;
+    struct bsal_vector stores;
     int opened_streams;
     int counted;
     struct bsal_vector counts;
@@ -24,11 +25,15 @@ struct bsal_input_controller {
 #define BSAL_ADD_FILE_REPLY 0x00007036
 #define BSAL_INPUT_DISTRIBUTE_REPLY 0x00001ab0
 #define BSAL_INPUT_SPAWN 0x00000a5d
+#define BSAL_INPUT_CONTROLLER_CREATE_STORES 0x0000285f
+#define BSAL_INPUT_CONTROLLER_CREATE_STORES_REPLY 0x000048ed
 
 extern struct bsal_script bsal_input_controller_script;
 
 void bsal_input_controller_init(struct bsal_actor *actor);
 void bsal_input_controller_destroy(struct bsal_actor *actor);
 void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message *message);
+
+void bsal_input_controller_create_stores(struct bsal_actor *actor, struct bsal_message *message);
 
 #endif

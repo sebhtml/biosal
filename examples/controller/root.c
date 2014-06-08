@@ -74,11 +74,15 @@ void root_receive(struct bsal_actor *actor, struct bsal_message *message)
         }
 
         if (root1->is_king) {
+/*
             printf("is king\n");
+            */
             root1->controller = bsal_actor_spawn(actor, BSAL_INPUT_CONTROLLER_SCRIPT);
             printf("actor %d spawned controller %d\n", name, root1->controller);
             bsal_actor_synchronize(actor, &root1->spawners);
+            /*
             printf("actor %d synchronizes\n", name);
+            */
         }
 
         root1->ready++;
@@ -90,8 +94,9 @@ void root_receive(struct bsal_actor *actor, struct bsal_message *message)
 
     } else if (tag == BSAL_ACTOR_SYNCHRONIZE) {
 
+            /*
         printf("actor %d receives BSAL_ACTOR_SYNCHRONIZE\n", name);
-
+*/
         bsal_actor_add_script(actor, BSAL_INPUT_CONTROLLER_SCRIPT,
                         &bsal_input_controller_script);
 
@@ -117,7 +122,9 @@ void root_receive(struct bsal_actor *actor, struct bsal_message *message)
         }
 
         root1->synchronized = 1;
+        /*
         printf("actor %d receives BSAL_ACTOR_SYNCHRONIZED, sending BSAL_ACTOR_YIELD\n", name);
+        */
         bsal_actor_send_to_self_empty(actor, BSAL_ACTOR_YIELD);
 
     } else if (tag == BSAL_ACTOR_YIELD_REPLY) {
@@ -142,9 +149,9 @@ void root_receive(struct bsal_actor *actor, struct bsal_message *message)
             bsal_actor_send_reply_empty(actor, BSAL_INPUT_STOP);
             return;
         }
-
+/*
         printf("actor %d is king\n", name);
-
+*/
         argc = bsal_actor_argc(actor);
         argv = bsal_actor_argv(actor);
 
