@@ -407,6 +407,57 @@ void bsal_actor_set_supervisor(struct bsal_actor *actor, int supervisor)
     }
 }
 
+int bsal_actor_receive_system_no_pack(struct bsal_actor *actor, struct bsal_message *message)
+{
+    int tag;
+
+    tag = bsal_message_tag(message);
+
+    if (tag == BSAL_ACTOR_PACK) {
+
+        bsal_actor_send_reply_empty(actor, BSAL_ACTOR_PACK_REPLY);
+        return 1;
+
+    } else if (tag == BSAL_ACTOR_PACK_SIZE) {
+        bsal_actor_send_reply_int(actor, BSAL_ACTOR_PACK_SIZE_REPLY, 0);
+        return 1;
+
+    } else if (tag == BSAL_ACTOR_UNPACK) {
+        bsal_actor_send_reply_empty(actor, BSAL_ACTOR_PACK_REPLY);
+        return 1;
+
+    } else if (tag == BSAL_ACTOR_CLONE) {
+
+        /* return nothing if the cloning is not supported or
+         * if a cloning is already in progress, the message will be queued below.
+         */
+
+            /*
+        printf("DEBUG actor %d BSAL_ACTOR_CLONE not supported can_pack %d\n", bsal_actor_name(actor),
+                        actor->can_pack);
+                        */
+
+        bsal_actor_send_reply_int(actor, BSAL_ACTOR_CLONE_REPLY, BSAL_ACTOR_NOBODY);
+        return 1;
+
+    } else if (tag == BSAL_ACTOR_MIGRATE) {
+
+        /* return nothing if the cloning is not supported or
+         * if a cloning is already in progress
+         */
+
+#ifdef BSAL_ACTOR_DEBUG_MIGRATE
+        printf("DEBUG bsal_actor_migrate: pack not supported\n");
+#endif
+
+        bsal_actor_send_reply_int(actor, BSAL_ACTOR_MIGRATE_REPLY, BSAL_ACTOR_NOBODY);
+
+        return 1;
+    }
+
+    return 0;
+}
+
 int bsal_actor_receive_system(struct bsal_actor *actor, struct bsal_message *message)
 {
     int tag;
@@ -426,44 +477,7 @@ int bsal_actor_receive_system(struct bsal_actor *actor, struct bsal_message *mes
      */
     if (actor->can_pack == BSAL_ACTOR_STATUS_NOT_SUPPORTED) {
 
-        if (tag == BSAL_ACTOR_PACK) {
-
-            bsal_actor_send_reply_empty(actor, BSAL_ACTOR_PACK_REPLY);
-            return 1;
-
-        } else if (tag == BSAL_ACTOR_PACK_SIZE) {
-            bsal_actor_send_reply_int(actor, BSAL_ACTOR_PACK_SIZE_REPLY, 0);
-            return 1;
-
-        } else if (tag == BSAL_ACTOR_UNPACK) {
-            bsal_actor_send_reply_empty(actor, BSAL_ACTOR_PACK_REPLY);
-            return 1;
-
-        } else if (tag == BSAL_ACTOR_CLONE) {
-
-            /* return nothing if the cloning is not supported or
-             * if a cloning is already in progress, the message will be queued below.
-             */
-/*
-            printf("DEBUG actor %d BSAL_ACTOR_CLONE not supported can_pack %d\n", bsal_actor_name(actor),
-                            actor->can_pack);
-                            */
-
-            bsal_actor_send_reply_int(actor, BSAL_ACTOR_CLONE_REPLY, BSAL_ACTOR_NOBODY);
-            return 1;
-
-        } else if (tag == BSAL_ACTOR_MIGRATE) {
-
-            /* return nothing if the cloning is not supported or
-             * if a cloning is already in progress
-             */
-
-#ifdef BSAL_ACTOR_DEBUG_MIGRATE
-            printf("DEBUG bsal_actor_migrate: pack not supported\n");
-#endif
-
-            bsal_actor_send_reply_int(actor, BSAL_ACTOR_MIGRATE_REPLY, BSAL_ACTOR_NOBODY);
-
+        if (bsal_actor_receive_system_no_pack(actor, message)) {
             return 1;
         }
     }

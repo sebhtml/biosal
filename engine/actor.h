@@ -242,6 +242,8 @@ void bsal_actor_send_range_binomial_tree(struct bsal_actor *actor, struct bsal_v
 
 void bsal_actor_receive(struct bsal_actor *actor, struct bsal_message *message);
 int bsal_actor_receive_system(struct bsal_actor *actor, struct bsal_message *message);
+int bsal_actor_receive_system_no_pack(struct bsal_actor *actor, struct bsal_message *message);
+
 void bsal_actor_receive_binomial_tree_send(struct bsal_actor *actor,
                 struct bsal_message *message);
 
