@@ -44,6 +44,8 @@ void bsal_hash_table_delete(struct bsal_hash_table *table, void *key);
 
 uint64_t bsal_hash_table_size(struct bsal_hash_table *table);
 uint64_t bsal_hash_table_buckets(struct bsal_hash_table *table);
+int bsal_hash_table_value_size(struct bsal_hash_table *table);
+int bsal_hash_table_key_size(struct bsal_hash_table *table);
 
 int bsal_hash_table_state(struct bsal_hash_table *self, uint64_t bucket);
 void *bsal_hash_table_key(struct bsal_hash_table *self, uint64_t bucket);

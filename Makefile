@@ -56,7 +56,7 @@ clean:
 	$(Q)$(RM) $(EXAMPLE_SYNCHRONIZE) $(EXAMPLE_CONTROLLER) $(EXAMPLE_HELLO_WORLD)
 	$(Q)$(RM) $(EXAMPLE_CLONE) $(EXAMPLE_MIGRATION)
 	$(Q)$(RM) $(TEST_FIFO) $(TEST_FIFO_ARRAY) $(TEST_HASH_TABLE_GROUP) $(TEST_NODE)
-	$(Q)$(RM) $(TEST_HASH_TABLE) $(TEST_VECTOR)
+	$(Q)$(RM) $(TEST_HASH_TABLE) $(TEST_VECTOR) $(TEST_DYNAMIC_HASH_TABLE)
 	$(Q)$(RM) $(EXAMPLES) $(TESTS)
 
 # tests
@@ -82,6 +82,10 @@ test_hash_table_group: $(LIBRARY) $(TEST_HASH_TABLE_GROUP)
 	$(Q)$(CC) $(CFLAGS) $^ -o $@
 
 test_queue_group: $(LIBRARY) $(TEST_FIFO_ARRAY)
+	$(Q)$(ECHO) "  LD $@"
+	$(Q)$(CC) $(CFLAGS) $^ -o $@
+
+test_dynamic_hash_table: $(LIBRARY) $(TEST_DYNAMIC_HASH_TABLE)
 	$(Q)$(ECHO) "  LD $@"
 	$(Q)$(CC) $(CFLAGS) $^ -o $@
 

@@ -486,3 +486,13 @@ void *bsal_hash_table_value(struct bsal_hash_table *self, uint64_t bucket)
     return bsal_hash_table_group_value(table_group, bucket_in_group,
                     self->key_size, self->value_size);
 }
+
+int bsal_hash_table_value_size(struct bsal_hash_table *self)
+{
+    return self->key_size;
+}
+
+int bsal_hash_table_key_size(struct bsal_hash_table *self)
+{
+    return self->value_size;
+}
