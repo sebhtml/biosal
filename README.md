@@ -30,12 +30,12 @@ see [examples](examples) and [tests](tests)
 
 # Branches
 
-| Branch | Clone URL |
+| Branch | URL | Clone URL |
 | --- | --- |
-| [master](https://github.com/sebhtml/biosal/tree/master) | [HTTPS](https://github.com/GeneAssembly/biosal.git) |
-| [master (mirror)](https://github.com/GeneAssembly/biosal/tree/master) | [HTTPS](https://github.com/GeneAssembly/biosal.git) |
-| [entropy (Fangfang's branch)](https://github.com/levinas/biosal/tree/entropy) | [HTTPS](https://github.com/levinas/biosal.git) |
-| [energy (Sébastien's branch)](https://github.com/sebhtml/biosal/tree/energy) | [https://github.com/sebhtml/biosal.git](HTTPS) |
+| master | https://github.com/sebhtml/biosal/tree/master | [HTTPS](https://github.com/GeneAssembly/biosal.git) |
+| master (mirror) |(https://github.com/GeneAssembly/biosal/tree/master | [HTTPS](https://github.com/GeneAssembly/biosal.git) |
+| entropy | Fangfang's branch) | https://github.com/levinas/biosal/tree/entropy | [HTTPS](https://github.com/levinas/biosal.git) |
+| energy | Sébastien's branch) | https://github.com/sebhtml/biosal/tree/energy | [https://github.com/sebhtml/biosal.git](HTTPS) |
 
 # Product team
 
