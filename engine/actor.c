@@ -1654,6 +1654,7 @@ void bsal_actor_forward_messages(struct bsal_actor *actor, struct bsal_message *
     struct bsal_message new_message;
     struct bsal_fifo *queue;
     int destination;
+    void *buffer_to_release;
 
     queue = NULL;
     destination = -1;
@@ -1695,6 +1696,9 @@ void bsal_actor_forward_messages(struct bsal_actor *actor, struct bsal_message *
         bsal_actor_pack_proxy_message(actor, &new_message,
                         bsal_message_source(&new_message));
         bsal_actor_send(actor, destination, &new_message);
+
+        buffer_to_release = bsal_message_buffer(&new_message);
+        free(buffer_to_release);
 
         /* recursive actor call
          */
