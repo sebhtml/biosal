@@ -80,13 +80,12 @@ void bsal_worker_work(struct bsal_worker *worker, struct bsal_work *work)
     char *buffer;
 
     actor = bsal_work_actor(work);
+    message = bsal_work_message(work);
 
     /* lock the actor to prevent another worker from making work
      * on the same actor at the same time
      */
     bsal_actor_lock(actor);
-
-    message = bsal_work_message(work);
 
     /* Store the buffer location before calling the user
      * code because the user may change the message buffer.
