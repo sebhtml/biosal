@@ -52,12 +52,15 @@ void stream_receive(struct bsal_actor *actor, struct bsal_message *message)
     buffer = bsal_message_buffer(message);
     name = bsal_actor_name(actor);
 
-    to_spawn = 250000;
+    to_spawn = 30000;
 
     if (tag == BSAL_ACTOR_START) {
 
         bsal_vector_unpack(&stream1->spawners, buffer);
         king = *(int *)bsal_vector_at(&stream1->spawners, bsal_vector_size(&stream1->spawners) / 2);
+
+        printf("actor %d says that king is %d\n",
+                        bsal_actor_name(actor), king);
 
         if (name == king) {
             stream1->is_king = 1;
