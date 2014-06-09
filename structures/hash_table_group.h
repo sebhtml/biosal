@@ -17,6 +17,7 @@ void bsal_hash_table_group_init(struct bsal_hash_table_group *group,
                 int buckets_per_group, int key_size, int value_size);
 void bsal_hash_table_group_destroy(struct bsal_hash_table_group *group);
 
+int bsal_hash_table_group_buckets(struct bsal_hash_table_group *group);
 void *bsal_hash_table_group_add(struct bsal_hash_table_group *group, int bucket,
                 int key_size, int value_size);
 void *bsal_hash_table_group_get(struct bsal_hash_table_group *group, int bucket,
