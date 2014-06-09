@@ -176,12 +176,62 @@ void bsal_actor_set_worker(struct bsal_actor *actor, struct bsal_worker *worker)
     actor->worker = worker;
 }
 
-int bsal_actor_send_system(struct bsal_actor *actor, int name, struct bsal_message *message)
+int bsal_actor_send_system_self(struct bsal_actor *actor, struct bsal_message *message)
 {
     int tag;
-    int self;
 
     tag = bsal_message_tag(message);
+
+    if (tag == BSAL_ACTOR_PIN_TO_WORKER) {
+        bsal_actor_pin_to_worker(actor);
+        return 1;
+
+    } else if (tag == BSAL_ACTOR_UNPIN_FROM_WORKER) {
+        bsal_actor_unpin_from_worker(actor);
+        return 1;
+
+    } else if (tag == BSAL_ACTOR_PIN_TO_NODE) {
+        bsal_actor_pin_to_node(actor);
+        return 1;
+
+    } else if (tag == BSAL_ACTOR_UNPIN_FROM_NODE) {
+        bsal_actor_unpin_from_node(actor);
+        return 1;
+
+    } else if (tag == BSAL_ACTOR_PACK_ENABLE) {
+
+            /*
+        printf("DEBUG actor %d enabling can_pack\n",
+                        bsal_actor_name(actor));
+                        */
+
+        actor->can_pack = BSAL_ACTOR_STATUS_SUPPORTED;
+        bsal_actor_send_to_self_empty(actor, BSAL_ACTOR_UNPIN_FROM_WORKER);
+        bsal_actor_send_to_self_empty(actor, BSAL_ACTOR_UNPIN_FROM_NODE);
+
+        return 1;
+
+    } else if (tag == BSAL_ACTOR_PACK_DISABLE) {
+        actor->can_pack = BSAL_ACTOR_STATUS_NOT_SUPPORTED;
+        return 1;
+
+    } else if (tag == BSAL_ACTOR_YIELD) {
+        bsal_actor_send_to_self_empty(actor, BSAL_ACTOR_YIELD_REPLY);
+        return 1;
+
+    } else if (tag == BSAL_ACTOR_STOP) {
+
+        bsal_actor_die(actor);
+        return 1;
+    }
+
+    return 0;
+}
+
+int bsal_actor_send_system(struct bsal_actor *actor, int name, struct bsal_message *message)
+{
+    int self;
+
     self = bsal_actor_name(actor);
 
     /* Verify if the message is a special message.
@@ -189,46 +239,7 @@ int bsal_actor_send_system(struct bsal_actor *actor, int name, struct bsal_messa
      * actor right away if it is requested.
      */
     if (name == self) {
-        if (tag == BSAL_ACTOR_PIN_TO_WORKER) {
-            bsal_actor_pin_to_worker(actor);
-            return 1;
-
-        } else if (tag == BSAL_ACTOR_UNPIN_FROM_WORKER) {
-            bsal_actor_unpin_from_worker(actor);
-            return 1;
-
-        } else if (tag == BSAL_ACTOR_PIN_TO_NODE) {
-            bsal_actor_pin_to_node(actor);
-            return 1;
-
-        } else if (tag == BSAL_ACTOR_UNPIN_FROM_NODE) {
-            bsal_actor_unpin_from_node(actor);
-            return 1;
-
-        } else if (tag == BSAL_ACTOR_PACK_ENABLE) {
-
-                /*
-            printf("DEBUG actor %d enabling can_pack\n",
-                            bsal_actor_name(actor));
-                            */
-
-            actor->can_pack = BSAL_ACTOR_STATUS_SUPPORTED;
-            bsal_actor_send_to_self_empty(actor, BSAL_ACTOR_UNPIN_FROM_WORKER);
-            bsal_actor_send_to_self_empty(actor, BSAL_ACTOR_UNPIN_FROM_NODE);
-
-            return 1;
-
-        } else if (tag == BSAL_ACTOR_PACK_DISABLE) {
-            actor->can_pack = BSAL_ACTOR_STATUS_NOT_SUPPORTED;
-            return 1;
-
-        } else if (tag == BSAL_ACTOR_YIELD) {
-            bsal_actor_send_to_self_empty(actor, BSAL_ACTOR_YIELD_REPLY);
-            return 1;
-
-        } else if (tag == BSAL_ACTOR_STOP) {
-
-            bsal_actor_die(actor);
+        if (bsal_actor_send_system_self(actor, message)) {
             return 1;
         }
     }
