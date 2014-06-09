@@ -31,7 +31,7 @@ see [examples](examples) and [tests](tests)
 # Branches
 
 | Branch | URL | Clone URL |
-| --- | --- |
+| --- | --- | --- |
 | master | https://github.com/sebhtml/biosal/tree/master | [HTTPS](https://github.com/GeneAssembly/biosal.git) |
 | master (mirror) |(https://github.com/GeneAssembly/biosal/tree/master | [HTTPS](https://github.com/GeneAssembly/biosal.git) |
 | entropy | Fangfang's branch) | https://github.com/levinas/biosal/tree/entropy | [HTTPS](https://github.com/levinas/biosal.git) |
