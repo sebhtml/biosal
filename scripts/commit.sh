@@ -1,4 +1,6 @@
 #!/bin/bash
 
 git commit -as
-git push origin energy
+
+echo "Push energy"
+git push origin energy &> /dev/null

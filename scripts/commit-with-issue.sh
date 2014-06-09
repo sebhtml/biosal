@@ -14,6 +14,7 @@ worker=sebhtml
 branch=energy
 number=$1
 
+################ 
 # https://help.github.com/articles/creating-an-access-token-for-command-line-use
 # https://developer.github.com/v3/auth/#basic-authentication
 token=$(cat ~/github-token.txt)
@@ -22,9 +23,10 @@ token=$(cat ~/github-token.txt)
 title=$(curl -X GET https://api.github.com/repos/$owner/$repo/issues/$number | grep '"title": '| head -n 1|sed 's=  "title": "==g'|sed 's=",==g')
 link=https://github.com/$owner/$repo/issues/$number
 
-echo "Fetching issue"
+echo "Fetch issue $number"
 echo "Title=$title"
 echo "Link: $link"
+sleep 2
 
 (
 cat << EOF
@@ -34,25 +36,25 @@ Link: $link
 EOF
 ) > message.txt
 
-echo "Committing content"
+echo "Commit content"
 git commit --all --signoff -F message.txt --edit
 rm message.txt
 
-echo "Pushing branch"
+echo "Push branch $branch"
 git push origin $branch &> /dev/null
 
 commit=$(git log|head -n1 | awk '{print $2}')
 commit_link=https://github.com/$worker/$repo/commit/$commit
 
 # see http://stackoverflow.com/questions/7172784/how-to-post-json-data-with-curl-from-terminal-commandline-to-test-spring-rest
-echo "Adding comment"
+echo "Add comment in issue $number"
 curl -X POST \
      -u $token:x-oauth-basic \
      -H "Content-Type: application/json" \
      -d "{\"body\": \"@hubot says: implemented in commit $commit_link by @$worker !\"}" \
      https://api.github.com/repos/$owner/$repo/issues/$number/comments &> /dev/null
 
-echo "Closing issue"
+echo "Close issue $number"
 curl -X POST \
      -u $token:x-oauth-basic \
      -H "Content-Type: application/json" \

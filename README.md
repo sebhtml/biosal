@@ -8,11 +8,14 @@ Looking for the Application Programming Interface (API) ? Look no further !
 
 # Technologies
 
-- Name: biosal
-- Language: C99 (ISO/IEC 9899:1999)
-- Model: actor model
-- Message passing: MPI 2.2
-- Threads: Pthreads (spinlock are used if available)
+| Key | Value |
+| --- | --- |
+| Name | biosal |
+| Programming language | C99 (ISO/IEC 9899:1999) |
+| Computation model: actor model |
+| Message passing | MPI 2.2 |
+| Threads | Pthreads |
+| License | [The BSD 2-Clause License](LICENSE.md) |
 
 # Try it out
 
@@ -29,12 +32,11 @@ see [examples](examples) and [tests](tests)
 
 | Branch | Clone URL |
 | --- | --- |
-| [https://github.com/sebhtml/biosal/tree/master](master) | [https://github.com/GeneAssembly/biosal.git](HTTPS) [git@github.com:GeneAssembly/biosal.git](SSH) |
-| [https://github.com/GeneAssembly/biosal/tree/master](master (mirror)) | [https://github.com/GeneAssembly/biosal.git](HTTPS) [git@github.com:GeneAssembly/biosal.git](SSH) |
-| [https://github.com/levinas/biosal/tree/entropy](entropy (Fangfang's branch) | [https://github.com/levinas/biosal.git](HTTPS) [git@github.com:levinas/biosal.git](SSH) |
-| [https://github.com/sebhtml/biosal/tree/energy](energy (Sébastien's branch) | [https://github.com/sebhtml/biosal.git](HTTPS) [git@github.com:sebhtml/biosal.git](SSH) |
+| [master](https://github.com/sebhtml/biosal/tree/master) | [HTTPS](https://github.com/GeneAssembly/biosal.git) [SSH](git@github.com:GeneAssembly/biosal.git) |
+| [master (mirror)](https://github.com/GeneAssembly/biosal/tree/master) | [HTTPS](https://github.com/GeneAssembly/biosal.git) [SSH](git@github.com:GeneAssembly/biosal.git) |
+| [entropy (Fangfang's branch)](https://github.com/levinas/biosal/tree/entropy) | [HTTPS](https://github.com/levinas/biosal.git) [SSH](git@github.com:levinas/biosal.git) |
+| [energy (Sébastien's branch)](https://github.com/sebhtml/biosal/tree/energy]() | [https://github.com/sebhtml/biosal.git](HTTPS) [git@github.com:sebhtml/biosal.git](SSH) |
 
-biosal is licensed under the [The BSD 2-Clause License](LICENSE.md)
 
 # Product team
 
