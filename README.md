@@ -35,7 +35,7 @@ see [examples](examples) and [tests](tests)
 | master | https://github.com/sebhtml/biosal/tree/master | [HTTPS](https://github.com/GeneAssembly/biosal.git) |
 | master (mirror) | https://github.com/GeneAssembly/biosal/tree/master | [HTTPS](https://github.com/GeneAssembly/biosal.git) |
 | entropy (Fangfang's branch) | https://github.com/levinas/biosal/tree/entropy | [HTTPS](https://github.com/levinas/biosal.git) |
-| energy (Sébastien's branch) | https://github.com/sebhtml/biosal/tree/energy | [https://github.com/sebhtml/biosal.git](HTTPS) |
+| energy (Sébastien's branch) | https://github.com/sebhtml/biosal/tree/energy | [HTTPS]https://github.com/sebhtml/biosal.git) |
 
 # Product team
 
