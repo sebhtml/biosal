@@ -2,10 +2,11 @@
 
 echo "Warning, this will merge in master !!!"
 
-echo "Merge energy into master"
+echo "Push energy"
+git push origin energy &> /dev/null
 
+echo "Merge energy into master"
 (
-git push origin energy
 
 # merge in the master branch
 git checkout master
