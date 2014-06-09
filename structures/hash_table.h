@@ -42,20 +42,25 @@ void *bsal_hash_table_add(struct bsal_hash_table *table, void *key);
 void *bsal_hash_table_get(struct bsal_hash_table *table, void *key);
 void bsal_hash_table_delete(struct bsal_hash_table *table, void *key);
 
-int bsal_hash_table_size(struct bsal_hash_table *table);
-int bsal_hash_table_buckets(struct bsal_hash_table *table);
+uint64_t bsal_hash_table_size(struct bsal_hash_table *table);
+uint64_t bsal_hash_table_buckets(struct bsal_hash_table *table);
+
+int bsal_hash_table_state(struct bsal_hash_table *self, uint64_t bucket);
+void *bsal_hash_table_key(struct bsal_hash_table *self, uint64_t bucket);
+void *bsal_hash_table_value(struct bsal_hash_table *self, uint64_t bucket);
 
 /*
  * functions for the implementation
  */
 int bsal_hash_table_get_group(struct bsal_hash_table *table, uint64_t bucket);
 int bsal_hash_table_get_group_bucket(struct bsal_hash_table *table, uint64_t bucket);
+int bsal_hash_table_state(struct bsal_hash_table *table, uint64_t bucket);
 
 uint64_t bsal_hash_table_hash1(struct bsal_hash_table *table, void *key);
 uint64_t bsal_hash_table_hash2(struct bsal_hash_table *table, void *key);
 uint64_t bsal_hash_table_double_hash(struct bsal_hash_table *table, void *key,
                 uint64_t stride);
-int bsal_hash_table_find_bucket(struct bsal_hash_table *table, void *key,
+uint64_t bsal_hash_table_find_bucket(struct bsal_hash_table *table, void *key,
                 int *group, int *bucket_in_group, int operation);
 void bsal_hash_table_toggle_debug(struct bsal_hash_table *table);
 

@@ -275,7 +275,7 @@ uint64_t bsal_hash_table_double_hash(struct bsal_hash_table *table, void *key, u
  * \return value is BSAL_HASH_TABLE_KEY_FOUND or BSAL_HASH_TABLE_KEY_NOT_FOUND or
  * BSAL_HASH_TABLE_FULL
  */
-int bsal_hash_table_find_bucket(struct bsal_hash_table *table, void *key,
+uint64_t bsal_hash_table_find_bucket(struct bsal_hash_table *table, void *key,
                 int *group, int *bucket_in_group, int operation)
 {
     uint64_t stride;
@@ -411,12 +411,12 @@ int bsal_hash_table_find_bucket(struct bsal_hash_table *table, void *key,
     return BSAL_HASH_TABLE_FULL;
 }
 
-int bsal_hash_table_size(struct bsal_hash_table *table)
+uint64_t bsal_hash_table_size(struct bsal_hash_table *table)
 {
     return table->elements;
 }
 
-int bsal_hash_table_buckets(struct bsal_hash_table *table)
+uint64_t bsal_hash_table_buckets(struct bsal_hash_table *table)
 {
     return table->buckets;
 }
@@ -429,4 +429,60 @@ void bsal_hash_table_toggle_debug(struct bsal_hash_table *table)
     }
 
     table->debug = 1;
+}
+
+int bsal_hash_table_state(struct bsal_hash_table *self, uint64_t bucket)
+{
+    int group;
+    int bucket_in_group;
+    struct bsal_hash_table_group *table_group;
+
+    if (bucket >= bsal_hash_table_buckets(self)) {
+        return BSAL_HASH_TABLE_BUCKET_EMPTY;
+    }
+
+    group = bsal_hash_table_get_group(self, bucket);
+    bucket_in_group = bsal_hash_table_get_group_bucket(self, bucket);
+
+    table_group = self->groups + group;
+
+    return bsal_hash_table_group_state(table_group, bucket_in_group);
+}
+
+void *bsal_hash_table_key(struct bsal_hash_table *self, uint64_t bucket)
+{
+    int group;
+    int bucket_in_group;
+    struct bsal_hash_table_group *table_group;
+
+    if (bucket >= bsal_hash_table_buckets(self)) {
+        return NULL;
+    }
+
+    group = bsal_hash_table_get_group(self, bucket);
+    bucket_in_group = bsal_hash_table_get_group_bucket(self, bucket);
+
+    table_group = self->groups + group;
+
+    return bsal_hash_table_group_key(table_group, bucket_in_group,
+                    self->key_size, self->value_size);
+}
+
+void *bsal_hash_table_value(struct bsal_hash_table *self, uint64_t bucket)
+{
+    int group;
+    int bucket_in_group;
+    struct bsal_hash_table_group *table_group;
+
+    if (bucket >= bsal_hash_table_buckets(self)) {
+        return NULL;
+    }
+
+    group = bsal_hash_table_get_group(self, bucket);
+    bucket_in_group = bsal_hash_table_get_group_bucket(self, bucket);
+
+    table_group = self->groups + group;
+
+    return bsal_hash_table_group_value(table_group, bucket_in_group,
+                    self->key_size, self->value_size);
 }

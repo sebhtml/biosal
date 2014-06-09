@@ -1,5 +1,6 @@
 
 #include <structures/hash_table.h>
+#include <structures/hash_table_iterator.h>
 
 #include "test.h"
 
@@ -163,6 +164,50 @@ int main(int argc, char **argv)
         TEST_POINTER_NOT_EQUALS(bucket, NULL);
         value = *bucket;
         TEST_INT_EQUALS(value, actual_value);
+
+        bsal_hash_table_destroy(&table);
+
+    }
+
+    {
+        struct bsal_hash_table table;
+        struct bsal_hash_table_iterator iterator;
+        int *key_bucket;
+        int *value_bucket;
+        int i;
+
+        bsal_hash_table_init(&table, 30000, sizeof(int), sizeof(int));
+        TEST_INT_EQUALS(bsal_hash_table_size(&table), 0);
+
+        for (i = 0; i < 1000; i++) {
+            bsal_hash_table_add(&table, &i);
+
+            value_bucket = bsal_hash_table_get(&table, &i);
+
+            *value_bucket = i;
+        }
+
+        TEST_INT_EQUALS(bsal_hash_table_size(&table), 1000);
+
+        bsal_hash_table_iterator_init(&iterator, &table);
+
+        i = 0;
+
+        while (bsal_hash_table_iterator_has_next(&iterator)) {
+
+            bsal_hash_table_iterator_next(&iterator, (void **)&key_bucket,
+                            (void **)&value_bucket);
+
+            /*
+            printf("DEBUG %d %d %d\n", i, *key_bucket, *value_bucket);
+            */
+
+            i++;
+        }
+
+        TEST_INT_EQUALS(i, 1000);
+
+        bsal_hash_table_iterator_destroy(&iterator);
 
         bsal_hash_table_destroy(&table);
     }

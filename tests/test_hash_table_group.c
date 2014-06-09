@@ -46,7 +46,7 @@ int main(int argc, char **argv)
         i = 0;
 
         while (bsal_hash_table_group_iterator_has_next(&iterator)) {
-            bsal_hash_table_group_iterator_next(&iterator, (void *)&key, (void *)&value);
+            bsal_hash_table_group_iterator_next(&iterator, (void **)&key, (void **)&value);
 
             /*
             printf("DEBUG %d %d\n", *key, *value);
