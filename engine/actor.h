@@ -6,7 +6,7 @@
 #include "script.h"
 
 #include <structures/vector.h>
-#include <structures/fifo.h>
+#include <structures/queue.h>
 
 #include <engine/dispatcher.h>
 #include <system/lock.h>
@@ -162,9 +162,9 @@ struct bsal_actor {
 
 
     int forwarding_selector;
-    struct bsal_fifo forwarding_queue;
-    struct bsal_fifo queued_messages_for_clone;
-    struct bsal_fifo queued_messages_for_migration;
+    struct bsal_queue forwarding_queue;
+    struct bsal_queue queued_messages_for_clone;
+    struct bsal_queue queued_messages_for_migration;
 
     int cloning_status;
     int cloning_spawner;

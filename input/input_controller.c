@@ -44,7 +44,7 @@ void bsal_input_controller_init(struct bsal_actor *actor)
     bsal_vector_init(&controller->stores, sizeof(int));
     bsal_vector_init(&controller->stores_per_spawner, sizeof(int));
 
-    bsal_fifo_init(&controller->unprepared_spawners, sizeof(int));
+    bsal_queue_init(&controller->unprepared_spawners, sizeof(int));
 
     controller->opened_streams = 0;
     controller->state = BSAL_INPUT_CONTROLLER_STATE_NONE;
@@ -87,7 +87,7 @@ void bsal_input_controller_destroy(struct bsal_actor *actor)
     bsal_vector_destroy(&controller->counts);
     bsal_vector_destroy(&controller->stores);
     bsal_vector_destroy(&controller->stores_per_spawner);
-    bsal_fifo_destroy(&controller->unprepared_spawners);
+    bsal_queue_destroy(&controller->unprepared_spawners);
 }
 
 void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message *message)
@@ -133,7 +133,7 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
 
             spawner = bsal_vector_at_as_int(&controller->spawners, i);
 
-            bsal_fifo_push(&concrete_actor->unprepared_spawners, &spawner);
+            bsal_queue_enqueue(&concrete_actor->unprepared_spawners, &spawner);
         }
 
         controller->state = BSAL_INPUT_CONTROLLER_PREPARE_SPAWNERS;
@@ -562,7 +562,7 @@ void bsal_input_controller_prepare_spawners(struct bsal_actor *actor, struct bsa
     /* spawn an actor of the same script on every spawner to load required
      * scripts on all nodes
      */
-    if (bsal_fifo_pop(&concrete_actor->unprepared_spawners, &spawner)) {
+    if (bsal_queue_dequeue(&concrete_actor->unprepared_spawners, &spawner)) {
 
         bsal_actor_send_int(actor, spawner, BSAL_ACTOR_SPAWN, bsal_actor_script(actor));
         concrete_actor->state = BSAL_INPUT_CONTROLLER_STATE_PREPARE_SPAWNERS;

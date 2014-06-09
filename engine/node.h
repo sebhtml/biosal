@@ -8,7 +8,7 @@
 #include "active_buffer.h"
 
 #include <structures/vector.h>
-#include <structures/fifo.h>
+#include <structures/queue.h>
 #include <structures/hash_table.h>
 
 #include <system/lock.h>
@@ -25,11 +25,11 @@
 struct bsal_script;
 
 /*
- * - message reception: one fifo per thread
- * - the fifo has volatile variables for its heads
- * - fifo is implemented as linked list of arrays
+ * - message reception: one queue per thread
+ * - the queue has volatile variables for its heads
+ * - queue is implemented as linked list of arrays
  *
- * - message send process: one fifo per thread
+ * - message send process: one queue per thread
  * - for states,  use OR (|)
  * - use actor affinity in implementation
  *
@@ -53,8 +53,8 @@ struct bsal_node {
     struct bsal_lock spawn_and_death_lock;
     struct bsal_lock script_lock;
 
-    struct bsal_fifo active_buffers;
-    struct bsal_fifo dead_indices;
+    struct bsal_queue active_buffers;
+    struct bsal_queue dead_indices;
 
     MPI_Comm comm;
     MPI_Datatype datatype;

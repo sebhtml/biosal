@@ -236,8 +236,8 @@ void bsal_node_init(struct bsal_node *node, int *argc, char ***argv)
     bsal_lock_init(&node->spawn_and_death_lock);
     bsal_lock_init(&node->script_lock);
 
-    bsal_fifo_init(&node->active_buffers, sizeof(struct bsal_active_buffer));
-    bsal_fifo_init(&node->dead_indices, sizeof(int));
+    bsal_queue_init(&node->active_buffers, sizeof(struct bsal_active_buffer));
+    bsal_queue_init(&node->dead_indices, sizeof(int));
 
     bsal_counter_init(&node->counter);
 
@@ -256,12 +256,12 @@ void bsal_node_destroy(struct bsal_node *node)
 
     bsal_vector_destroy(&node->actors);
 
-    while (bsal_fifo_pop(&node->active_buffers, &active_buffer)) {
+    while (bsal_queue_dequeue(&node->active_buffers, &active_buffer)) {
         bsal_active_buffer_destroy(&active_buffer);
     }
 
-    bsal_fifo_destroy(&node->active_buffers);
-    bsal_fifo_destroy(&node->dead_indices);
+    bsal_queue_destroy(&node->active_buffers);
+    bsal_queue_destroy(&node->dead_indices);
 
     bsal_counter_destroy(&node->counter);
 
@@ -443,7 +443,7 @@ int bsal_node_allocate_actor_index(struct bsal_node *node)
     int index;
 
 #ifdef BSAL_NODE_REUSE_DEAD_INDICES
-    if (bsal_fifo_pop(&node->dead_indices, &index)) {
+    if (bsal_queue_dequeue(&node->dead_indices, &index)) {
 
 #ifdef BSAL_NODE_DEBUG_SPAWN
         printf("DEBUG node/%d bsal_node_allocate_actor_index using an old index %d, size %d\n",
@@ -643,7 +643,7 @@ void bsal_node_test_requests(struct bsal_node *node)
     struct bsal_active_buffer active_buffer;
     void *buffer;
 
-    if (bsal_fifo_pop(&node->active_buffers, &active_buffer)) {
+    if (bsal_queue_dequeue(&node->active_buffers, &active_buffer)) {
 
         if (bsal_active_buffer_test(&active_buffer)) {
             buffer = bsal_active_buffer_buffer(&active_buffer);
@@ -656,7 +656,7 @@ void bsal_node_test_requests(struct bsal_node *node)
 
         /* Just put it back in the FIFO for later */
         } else {
-            bsal_fifo_push(&node->active_buffers, &active_buffer);
+            bsal_queue_enqueue(&node->active_buffers, &active_buffer);
         }
     }
 }
@@ -1023,7 +1023,7 @@ void bsal_node_send_outbound_message(struct bsal_node *node, struct bsal_message
      */
     /*MPI_Request_free(&request);*/
 
-    bsal_fifo_push(&node->active_buffers, &active_buffer);
+    bsal_queue_enqueue(&node->active_buffers, &active_buffer);
 }
 
 void bsal_node_send(struct bsal_node *node, struct bsal_message *message)
@@ -1261,7 +1261,7 @@ void bsal_node_notify_death(struct bsal_node *node, struct bsal_actor *actor)
     bsal_hash_table_delete(&node->actor_names, &name);
 
 #ifdef BSAL_NODE_REUSE_DEAD_INDICES
-    bsal_fifo_push(&node->dead_indices, &index);
+    bsal_queue_enqueue(&node->dead_indices, &index);
 #endif
 
 #ifdef BSAL_NODE_DEBUG_20140601_8

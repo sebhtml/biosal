@@ -69,7 +69,7 @@ test_node: $(LIBRARY) $(TEST_NODE)
 	$(Q)$(ECHO) "  LD $@"
 	$(Q)$(CC) $(CFLAGS) $^ -o $@
 
-test_fifo: $(LIBRARY) $(TEST_FIFO)
+test_queue: $(LIBRARY) $(TEST_FIFO)
 	$(Q)$(ECHO) "  LD $@"
 	$(Q)$(CC) $(CFLAGS) $^ -o $@
 
@@ -81,7 +81,7 @@ test_hash_table_group: $(LIBRARY) $(TEST_HASH_TABLE_GROUP)
 	$(Q)$(ECHO) "  LD $@"
 	$(Q)$(CC) $(CFLAGS) $^ -o $@
 
-test_fifo_array: $(LIBRARY) $(TEST_FIFO_ARRAY)
+test_queue_group: $(LIBRARY) $(TEST_FIFO_ARRAY)
 	$(Q)$(ECHO) "  LD $@"
 	$(Q)$(CC) $(CFLAGS) $^ -o $@
 

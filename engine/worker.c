@@ -13,8 +13,8 @@
 
 void bsal_worker_init(struct bsal_worker *worker, int name, struct bsal_node *node)
 {
-    bsal_fifo_init(&worker->works, sizeof(struct bsal_work));
-    bsal_fifo_init(&worker->messages, sizeof(struct bsal_message));
+    bsal_queue_init(&worker->works, sizeof(struct bsal_work));
+    bsal_queue_init(&worker->messages, sizeof(struct bsal_message));
 
     worker->node = node;
     worker->name = name;
@@ -37,18 +37,18 @@ void bsal_worker_destroy(struct bsal_worker *worker)
 
     worker->node = NULL;
 
-    bsal_fifo_destroy(&worker->messages);
-    bsal_fifo_destroy(&worker->works);
+    bsal_queue_destroy(&worker->messages);
+    bsal_queue_destroy(&worker->works);
     worker->name = -1;
     worker->dead = 1;
 }
 
-struct bsal_fifo *bsal_worker_works(struct bsal_worker *worker)
+struct bsal_queue *bsal_worker_works(struct bsal_worker *worker)
 {
     return &worker->works;
 }
 
-struct bsal_fifo *bsal_worker_messages(struct bsal_worker *worker)
+struct bsal_queue *bsal_worker_messages(struct bsal_worker *worker)
 {
     return &worker->messages;
 }
@@ -285,7 +285,7 @@ void bsal_worker_push_work(struct bsal_worker *worker, struct bsal_work *work)
     bsal_lock_lock(&worker->work_lock);
 #endif
 
-    bsal_fifo_push(bsal_worker_works(worker), work);
+    bsal_queue_enqueue(bsal_worker_works(worker), work);
 
 #ifdef BSAL_WORKER_USE_LOCK
     bsal_lock_unlock(&worker->work_lock);
@@ -299,7 +299,7 @@ int bsal_worker_pull_work(struct bsal_worker *worker, struct bsal_work *work)
     /* avoid the lock by checking first if
      * there is something to actually pull...
      */
-    if (bsal_fifo_empty(bsal_worker_works(worker))) {
+    if (bsal_queue_empty(bsal_worker_works(worker))) {
         return 0;
     }
 
@@ -307,7 +307,7 @@ int bsal_worker_pull_work(struct bsal_worker *worker, struct bsal_work *work)
     bsal_lock_lock(&worker->work_lock);
 #endif
 
-    value = bsal_fifo_pop(bsal_worker_works(worker), work);
+    value = bsal_queue_dequeue(bsal_worker_works(worker), work);
 
 #ifdef BSAL_WORKER_USE_LOCK
     bsal_lock_unlock(&worker->work_lock);
@@ -322,7 +322,7 @@ void bsal_worker_push_message(struct bsal_worker *worker, struct bsal_message *m
     if (bsal_message_tag(message) == 1100) {
         printf("DEBUG worker/%d bsal_worker_push_message 1100 before %d\n",
                         bsal_worker_name(worker),
-                        bsal_fifo_size(bsal_worker_messages(worker)));
+                        bsal_queue_size(bsal_worker_messages(worker)));
         worker->debug = 1;
     }
 #endif
@@ -336,13 +336,13 @@ void bsal_worker_push_message(struct bsal_worker *worker, struct bsal_message *m
                     (void *)message, bsal_message_buffer(message));
 #endif
 
-    bsal_fifo_push(bsal_worker_messages(worker), message);
+    bsal_queue_enqueue(bsal_worker_messages(worker), message);
 
 #ifdef BSAL_WORKER_DEBUG_20140601
     if (bsal_message_tag(message) == 1100) {
         printf("DEBUG worker/%d bsal_worker_push_message 1100 after %d\n",
                         bsal_worker_name(worker),
-                        bsal_fifo_size(bsal_worker_messages(worker)));
+                        bsal_queue_size(bsal_worker_messages(worker)));
     }
 #endif
 
@@ -359,14 +359,14 @@ int bsal_worker_pull_message(struct bsal_worker *worker, struct bsal_message *me
     if (worker->debug) {
         printf("DEBUG worker/%d bsal_worker_pull_message 1100 remaining messages %d\n",
                         bsal_worker_name(worker),
-                        bsal_fifo_size(bsal_worker_messages(worker)));
+                        bsal_queue_size(bsal_worker_messages(worker)));
     }
 #endif
 
     /* avoid the lock by checking first if
      * there is something to actually pull...
      */
-    if (bsal_fifo_empty(bsal_worker_messages(worker))) {
+    if (bsal_queue_empty(bsal_worker_messages(worker))) {
         return 0;
     }
 
@@ -374,13 +374,13 @@ int bsal_worker_pull_message(struct bsal_worker *worker, struct bsal_message *me
     bsal_lock_lock(&worker->message_lock);
 #endif
 
-    value = bsal_fifo_pop(bsal_worker_messages(worker), message);
+    value = bsal_queue_dequeue(bsal_worker_messages(worker), message);
 
 #ifdef BSAL_WORKER_DEBUG_20140601
     if (value && bsal_message_tag(message) == 1100) {
         printf("DEBUG worker/%d bsal_worker_pull_message 1100 after %d\n",
                         bsal_worker_name(worker),
-                        bsal_fifo_size(bsal_worker_messages(worker)));
+                        bsal_queue_size(bsal_worker_messages(worker)));
 
     }
 #endif

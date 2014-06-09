@@ -4,7 +4,7 @@
 
 #include <engine/actor.h>
 #include <structures/vector.h>
-#include <structures/fifo.h>
+#include <structures/queue.h>
 
 #define BSAL_INPUT_CONTROLLER_SCRIPT 0x985607aa
 
@@ -17,7 +17,7 @@ struct bsal_input_controller {
     int counted;
     struct bsal_vector counts;
     struct bsal_vector stores_per_spawner;
-    struct bsal_fifo unprepared_spawners;
+    struct bsal_queue unprepared_spawners;
     int state;
 };
 

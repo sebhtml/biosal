@@ -2,7 +2,7 @@
 #ifndef _BSAL_THREAD_H
 #define _BSAL_THREAD_H
 
-#include <structures/fifo.h>
+#include <structures/queue.h>
 
 #include <system/lock.h>
 
@@ -21,8 +21,8 @@ struct bsal_worker {
     int name;
     volatile int dead;
 
-    struct bsal_fifo works;
-    struct bsal_fifo messages;
+    struct bsal_queue works;
+    struct bsal_queue messages;
 
 #ifdef BSAL_WORKER_USE_LOCK
     struct bsal_lock work_lock;
@@ -35,8 +35,8 @@ struct bsal_worker {
 void bsal_worker_init(struct bsal_worker *worker, int name, struct bsal_node *node);
 void bsal_worker_destroy(struct bsal_worker *worker);
 
-struct bsal_fifo *bsal_worker_works(struct bsal_worker *worker);
-struct bsal_fifo *bsal_worker_messages(struct bsal_worker *worker);
+struct bsal_queue *bsal_worker_works(struct bsal_worker *worker);
+struct bsal_queue *bsal_worker_messages(struct bsal_worker *worker);
 
 void bsal_worker_start(struct bsal_worker *worker);
 void bsal_worker_stop(struct bsal_worker *worker);

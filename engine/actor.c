@@ -72,9 +72,9 @@ void bsal_actor_init(struct bsal_actor *actor, void *state,
                     bsal_actor_name(actor), actor->can_pack);
 */
     bsal_vector_init(&actor->acquaintance_vector, sizeof(int));
-    bsal_fifo_init(&actor->queued_messages_for_clone, sizeof(struct bsal_message));
-    bsal_fifo_init(&actor->queued_messages_for_migration, sizeof(struct bsal_message));
-    bsal_fifo_init(&actor->forwarding_queue, sizeof(struct bsal_message));
+    bsal_queue_init(&actor->queued_messages_for_clone, sizeof(struct bsal_message));
+    bsal_queue_init(&actor->queued_messages_for_migration, sizeof(struct bsal_message));
+    bsal_queue_init(&actor->forwarding_queue, sizeof(struct bsal_message));
 
     bsal_actor_register(actor, BSAL_ACTOR_FORWARD_MESSAGES, bsal_actor_forward_messages);
 
@@ -99,9 +99,9 @@ void bsal_actor_destroy(struct bsal_actor *actor)
 
     bsal_dispatcher_destroy(&actor->dispatcher);
     bsal_vector_destroy(&actor->acquaintance_vector);
-    bsal_fifo_destroy(&actor->queued_messages_for_clone);
-    bsal_fifo_destroy(&actor->queued_messages_for_migration);
-    bsal_fifo_destroy(&actor->forwarding_queue);
+    bsal_queue_destroy(&actor->queued_messages_for_clone);
+    bsal_queue_destroy(&actor->queued_messages_for_migration);
+    bsal_queue_destroy(&actor->forwarding_queue);
 
     actor->name = -1;
     actor->dead = 1;
@@ -1537,7 +1537,7 @@ void bsal_actor_migrate(struct bsal_actor *actor, struct bsal_message *message)
             /* queue the selector into the forwarding system
              */
             selector = BSAL_ACTOR_FORWARDING_MIGRATE;
-            bsal_fifo_push(&actor->forwarding_queue, &selector);
+            bsal_queue_enqueue(&actor->forwarding_queue, &selector);
         }
 
         actor->migration_progressed = 1;
@@ -1613,7 +1613,7 @@ void bsal_actor_queue_message(struct bsal_actor *actor,
     void *new_buffer;
     int count;
     struct bsal_message new_message;
-    struct bsal_fifo *queue;
+    struct bsal_queue *queue;
     int tag;
     int source;
 
@@ -1646,13 +1646,13 @@ void bsal_actor_queue_message(struct bsal_actor *actor,
         queue = &actor->queued_messages_for_migration;
     }
 
-    bsal_fifo_push(queue, &new_message);
+    bsal_queue_enqueue(queue, &new_message);
 }
 
 void bsal_actor_forward_messages(struct bsal_actor *actor, struct bsal_message *message)
 {
     struct bsal_message new_message;
-    struct bsal_fifo *queue;
+    struct bsal_queue *queue;
     int destination;
     void *buffer_to_release;
 
@@ -1682,7 +1682,7 @@ void bsal_actor_forward_messages(struct bsal_actor *actor, struct bsal_message *
         return;
     }
 
-    if (bsal_fifo_pop(queue, &new_message)) {
+    if (bsal_queue_dequeue(queue, &new_message)) {
 
 #ifdef BSAL_ACTOR_DEBUG_FORWARDING
         printf("DEBUG bsal_actor_forward_messages actor %d forwarding message to actor %d tag is %d,"
@@ -1710,7 +1710,7 @@ void bsal_actor_forward_messages(struct bsal_actor *actor, struct bsal_message *
                         bsal_actor_name(actor), actor->forwarding_selector);
 #endif
 
-        if (bsal_fifo_pop(&actor->forwarding_queue, &actor->forwarding_selector)) {
+        if (bsal_queue_dequeue(&actor->forwarding_queue, &actor->forwarding_selector)) {
 
 #ifdef BSAL_ACTOR_DEBUG_FORWARDING
             printf("DEBUG bsal_actor_forward_messages will now using queue (FIFO pop)/%d\n",

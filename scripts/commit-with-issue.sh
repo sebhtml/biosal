@@ -14,7 +14,7 @@ worker=sebhtml
 branch=energy
 number=$1
 
-################ 
+################
 # https://help.github.com/articles/creating-an-access-token-for-command-line-use
 # https://developer.github.com/v3/auth/#basic-authentication
 token=$(cat ~/github-token.txt)
