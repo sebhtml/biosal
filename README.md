@@ -54,7 +54,7 @@ When an actor receives a message, it can ([Agha 1986](http://dl.acm.org/citation
 
 - send a finite number of messages to other actors (**bsal_actor_send**);
 - create a finite number of new actors (**bsal_actor_spawn**, **BSAL_ACTOR_SPAWN**);
-- designate the behavior to be used for the next message it receives (**bsal_actor_state**, **BSAL_ACTOR_STOP**).
+- designate the behavior to be used for the next message it receives (**bsal_actor_concrete_actor**, **BSAL_ACTOR_STOP**).
 
 Other names for the actor model: actors, virtual processors, activation frames, streams
 ([Hewitt, Bishop, Steiger 1973](http://dl.acm.org/citation.cfm?id=1624804)).
