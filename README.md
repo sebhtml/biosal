@@ -27,17 +27,18 @@ see [examples](examples) and [tests](tests)
 
 # Branches
 
-Branch | Browse | HTTPS | SSH
---- | --- | --- | ---
- master | https://github.com/GeneAssembly/biosal/tree/master | https://github.com/GeneAssembly/biosal.git | git@github.com:GeneAssembly/biosal.git
- entropy (Fangfang's development branch) | https://github.com/levinas/biosal/tree/entropy | https://github.com/levinas/biosal.git | git@github.com:levinas/biosal.git
- energy (Seb's development branch) | https://github.com/sebhtml/biosal/tree/energy | https://github.com/sebhtml/biosal.git | git@github.com:sebhtml/biosal.git
-
-see 'git log' for authors
-
-# License
+| Branch | Clone URL |
+| --- | --- |
+| [https://github.com/sebhtml/biosal/tree/master](master) | [https://github.com/GeneAssembly/biosal.git](HTTPS) [git@github.com:GeneAssembly/biosal.git](SSH) |
+| [https://github.com/GeneAssembly/biosal/tree/master](master (mirror)) | [https://github.com/GeneAssembly/biosal.git](HTTPS) [git@github.com:GeneAssembly/biosal.git](SSH) |
+| [https://github.com/levinas/biosal/tree/entropy](entropy (Fangfang's branch) | [https://github.com/levinas/biosal.git](HTTPS) [git@github.com:levinas/biosal.git](SSH) |
+| [https://github.com/sebhtml/biosal/tree/energy](energy (Sébastien's branch) | [https://github.com/sebhtml/biosal.git](HTTPS) [git@github.com:sebhtml/biosal.git](SSH) |
 
 biosal is licensed under the [The BSD 2-Clause License](LICENSE.md)
+
+# Product team
+
+see [CREDITS.md](CREDITS.md)
 
 # Tickets
 
