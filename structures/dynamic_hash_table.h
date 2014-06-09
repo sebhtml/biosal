@@ -8,6 +8,9 @@
 struct bsal_dynamic_hash_table {
     struct bsal_hash_table table1;
     struct bsal_hash_table table2;
+
+    /* information for resizing
+     */
     struct bsal_hash_table_iterator iterator;
     struct bsal_hash_table *current;
     struct bsal_hash_table *next;
@@ -28,5 +31,9 @@ uint64_t bsal_dynamic_hash_table_buckets(struct bsal_dynamic_hash_table *self);
 
 void bsal_dynamic_hash_table_resize(struct bsal_dynamic_hash_table *self);
 void bsal_dynamic_hash_table_start_resizing(struct bsal_dynamic_hash_table *self);
+
+int bsal_dynamic_hash_table_state(struct bsal_dynamic_hash_table *self, uint64_t bucket);
+void *bsal_dynamic_hash_table_key(struct bsal_dynamic_hash_table *self, uint64_t bucket);
+void *bsal_dynamic_hash_table_value(struct bsal_dynamic_hash_table *self, uint64_t bucket);
 
 #endif

@@ -152,7 +152,7 @@ void bsal_dynamic_hash_table_resize(struct bsal_dynamic_hash_table *self)
         return;
     }
 
-    value_size = bsal_hash_table_value_size(self->next);
+    value_size = bsal_hash_table_value_size(self->current);
 
     /* transfer N elements in the next table
      */
@@ -166,7 +166,6 @@ void bsal_dynamic_hash_table_resize(struct bsal_dynamic_hash_table *self)
 
         /* remove the old copy from current
          */
-
         bsal_hash_table_delete(self->current, key);
     }
 
@@ -187,4 +186,49 @@ void bsal_dynamic_hash_table_resize(struct bsal_dynamic_hash_table *self)
 
         self->resize_in_progress = 0;
     }
+}
+
+int bsal_dynamic_hash_table_state(struct bsal_dynamic_hash_table *self, uint64_t bucket)
+{
+    if (!self->resize_in_progress) {
+        return bsal_hash_table_state(self->current, bucket);
+    }
+
+    bsal_dynamic_hash_table_resize(self);
+
+    if (bucket < bsal_hash_table_buckets(self->current)) {
+        return bsal_hash_table_state(self->current, bucket);
+    }
+
+    return bsal_hash_table_state(self->next, bucket);
+}
+
+void *bsal_dynamic_hash_table_key(struct bsal_dynamic_hash_table *self, uint64_t bucket)
+{
+    if (!self->resize_in_progress) {
+        return bsal_hash_table_key(self->current, bucket);
+    }
+
+    bsal_dynamic_hash_table_resize(self);
+
+    if (bucket < bsal_hash_table_buckets(self->current)) {
+        return bsal_hash_table_key(self->current, bucket);
+    }
+
+    return bsal_hash_table_key(self->next, bucket);
+}
+
+void *bsal_dynamic_hash_table_value(struct bsal_dynamic_hash_table *self, uint64_t bucket)
+{
+    if (!self->resize_in_progress) {
+        return bsal_hash_table_value(self->current, bucket);
+    }
+
+    bsal_dynamic_hash_table_resize(self);
+
+    if (bucket < bsal_hash_table_buckets(self->current)) {
+        return bsal_hash_table_value(self->current, bucket);
+    }
+
+    return bsal_hash_table_value(self->next, bucket);
 }

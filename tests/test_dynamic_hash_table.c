@@ -1,5 +1,6 @@
 
 #include <structures/dynamic_hash_table.h>
+#include <structures/dynamic_hash_table_iterator.h>
 
 #include "test.h"
 
@@ -9,14 +10,17 @@ int main(int argc, char **argv)
 
     {
         struct bsal_dynamic_hash_table table;
+        struct bsal_dynamic_hash_table_iterator iterator;
         int key_size;
         int value_size;
         int buckets;
         int i;
         int j;
-        int *value_bucket;
         int inserted;
         int key;
+        int *key_bucket;
+        int *value_bucket;
+        int found;
 
         key_size = sizeof(int);
         value_size = sizeof(int);
@@ -67,6 +71,30 @@ int main(int argc, char **argv)
                 TEST_POINTER_NOT_EQUALS(value_bucket, NULL);
             }
         }
+
+        key = 9999;
+        value_bucket = bsal_dynamic_hash_table_add(&table, &key);
+        *value_bucket = 8888;
+
+        bsal_dynamic_hash_table_iterator_init(&iterator, &table);
+
+        i = 0;
+        found = 0;
+
+        while (bsal_dynamic_hash_table_iterator_has_next(&iterator)) {
+            bsal_dynamic_hash_table_iterator_next(&iterator, (void **)&key_bucket,
+                            (void **)&value_bucket);
+
+            if (*key_bucket == 9999 && *value_bucket == 8888) {
+                found = 1;
+            }
+            i++;
+        }
+
+        TEST_INT_EQUALS(i, bsal_dynamic_hash_table_size(&table));
+        TEST_INT_EQUALS(found, 1);
+
+        bsal_dynamic_hash_table_iterator_destroy(&iterator);
 
         bsal_dynamic_hash_table_destroy(&table);
     }
