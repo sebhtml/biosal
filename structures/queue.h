@@ -1,6 +1,6 @@
 
-#ifndef _BSAL_FIFO_H
-#define _BSAL_FIFO_H
+#ifndef BSAL_FIFO_H
+#define BSAL_FIFO_H
 
 #include "queue_group.h"
 

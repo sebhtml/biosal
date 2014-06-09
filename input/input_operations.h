@@ -1,6 +1,6 @@
 
-#ifndef _BSAL_INPUT_VTABLE_H
-#define _BSAL_INPUT_VTABLE_H
+#ifndef BSAL_INPUT_VTABLE_H
+#define BSAL_INPUT_VTABLE_H
 
 struct bsal_input;
 struct bsal_dna_sequence;

@@ -1,6 +1,6 @@
 
-#ifndef _BSAL_COUNTER_H
-#define _BSAL_COUNTER_H
+#ifndef BSAL_COUNTER_H
+#define BSAL_COUNTER_H
 
 #include <stdint.h>
 

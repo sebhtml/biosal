@@ -1,6 +1,6 @@
 
-#ifndef _BSAL_HASH_TABLE_H
-#define _BSAL_HASH_TABLE_H
+#ifndef BSAL_HASH_TABLE_H
+#define BSAL_HASH_TABLE_H
 
 #include "hash_table_group.h"
 

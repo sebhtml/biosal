@@ -1,6 +1,6 @@
 
-#ifndef _BSAL_LOCK_H
-#define _BSAL_LOCK_H
+#ifndef BSAL_LOCK_H
+#define BSAL_LOCK_H
 
 #include <pthread.h>
 

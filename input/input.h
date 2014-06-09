@@ -1,6 +1,6 @@
 
-#ifndef _BSAL_INPUT_H
-#define _BSAL_INPUT_H
+#ifndef BSAL_INPUT_H
+#define BSAL_INPUT_H
 
 /*
 #define BSAL_INPUT_DEBUG

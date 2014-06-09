@@ -1,6 +1,6 @@
 
-#ifndef _BSAL_NODE_H
-#define _BSAL_NODE_H
+#ifndef BSAL_NODE_H
+#define BSAL_NODE_H
 
 #include "actor.h"
 #include "work.h"

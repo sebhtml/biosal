@@ -1,6 +1,6 @@
 
-#ifndef _BSAL_INPUT_CONTROLLER_H
-#define _BSAL_INPUT_CONTROLLER_H
+#ifndef BSAL_INPUT_CONTROLLER_H
+#define BSAL_INPUT_CONTROLLER_H
 
 #include <engine/actor.h>
 #include <structures/vector.h>

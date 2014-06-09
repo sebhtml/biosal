@@ -1,6 +1,6 @@
 
-#ifndef _BSAL_VECTOR_H
-#define _BSAL_VECTOR_H
+#ifndef BSAL_VECTOR_H
+#define BSAL_VECTOR_H
 
 #include <stdint.h>
 

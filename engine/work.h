@@ -1,6 +1,6 @@
 
-#ifndef _BSAL_WORK_H
-#define _BSAL_WORK_H
+#ifndef BSAL_WORK_H
+#define BSAL_WORK_H
 
 #include "actor.h"
 

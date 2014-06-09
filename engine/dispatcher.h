@@ -1,6 +1,6 @@
 
-#ifndef _BSAL_DISPATCHER_H
-#define _BSAL_DISPATCHER_H
+#ifndef BSAL_DISPATCHER_H
+#define BSAL_DISPATCHER_H
 
 #include <engine/script.h>
 #include <structures/vector.h>

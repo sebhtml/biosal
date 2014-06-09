@@ -1,6 +1,6 @@
 
-#ifndef _BSAL_DNA_SEQUENCE_H
-#define _BSAL_DNA_SEQUENCE_H
+#ifndef BSAL_DNA_SEQUENCE_H
+#define BSAL_DNA_SEQUENCE_H
 
 #include <stdint.h>
 

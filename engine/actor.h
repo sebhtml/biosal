@@ -1,6 +1,6 @@
 
-#ifndef _BSAL_ACTOR_H
-#define _BSAL_ACTOR_H
+#ifndef BSAL_ACTOR_H
+#define BSAL_ACTOR_H
 
 #include "message.h"
 #include "script.h"

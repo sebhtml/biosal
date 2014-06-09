@@ -1,6 +1,6 @@
 
-#ifndef _BSAL_WORKER_POOL_H
-#define _BSAL_WORKER_POOL_H
+#ifndef BSAL_WORKER_POOL_H
+#define BSAL_WORKER_POOL_H
 
 #include "worker.h"
 

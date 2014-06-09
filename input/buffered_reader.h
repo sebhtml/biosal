@@ -1,6 +1,6 @@
 
-#ifndef _BSAL_BUFFERED_READER_H
-#define _BSAL_BUFFERED_READER_H
+#ifndef BSAL_BUFFERED_READER_H
+#define BSAL_BUFFERED_READER_H
 
 #include <stdio.h>
 

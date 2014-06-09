@@ -1,6 +1,6 @@
 
-#ifndef _BSAL_FASTQ_INPUT_H
-#define _BSAL_FASTQ_INPUT_H
+#ifndef BSAL_FASTQ_INPUT_H
+#define BSAL_FASTQ_INPUT_H
 
 #include <input/input.h>
 #include <input/input_operations.h>

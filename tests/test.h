@@ -1,6 +1,6 @@
 
-#ifndef _BSAL_TEST_H
-#define _BSAL_TEST_H
+#ifndef BSAL_TEST_H
+#define BSAL_TEST_H
 
 #include <stdio.h>
 #include <stdlib.h>

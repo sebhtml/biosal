@@ -1,6 +1,6 @@
 
-#ifndef _BSAL_FIFO_ARRAY_H
-#define _BSAL_FIFO_ARRAY_H
+#ifndef BSAL_FIFO_ARRAY_H
+#define BSAL_FIFO_ARRAY_H
 
 /*#define BSAL_FIFO_ARRAY_VOLATILE */
 

@@ -1,6 +1,6 @@
 
-#ifndef _BSAL_H
-#define _BSAL_H
+#ifndef BSAL_H
+#define BSAL_H
 
 #define BSAL_VERSION "/dev/null"
 

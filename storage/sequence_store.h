@@ -1,6 +1,6 @@
 
-#ifndef _BSAL_SEQUENCE_STORE_H
-#define _BSAL_SEQUENCE_STORE_H
+#ifndef BSAL_SEQUENCE_STORE_H
+#define BSAL_SEQUENCE_STORE_H
 
 #include <engine/actor.h>
 

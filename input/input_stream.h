@@ -1,6 +1,6 @@
 
-#ifndef _BSAL_INPUT_STREAM_H
-#define _BSAL_INPUT_STREAM_H
+#ifndef BSAL_INPUT_STREAM_H
+#define BSAL_INPUT_STREAM_H
 
 #include "input_proxy.h"
 

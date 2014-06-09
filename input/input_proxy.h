@@ -1,6 +1,6 @@
 
-#ifndef _BSAL_INPUT_PROXY_H
-#define _BSAL_INPUT_PROXY_H
+#ifndef BSAL_INPUT_PROXY_H
+#define BSAL_INPUT_PROXY_H
 
 #include <formats/fastq_input.h>
 

@@ -1,6 +1,6 @@
 
-#ifndef _BSAL_HEAP_H
-#define _BSAL_HEAP_H
+#ifndef BSAL_HEAP_H
+#define BSAL_HEAP_H
 
 /**
  * \see http://en.wikipedia.org/wiki/Heap_%28data_structure%29

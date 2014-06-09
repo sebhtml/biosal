@@ -1,6 +1,6 @@
 
-#ifndef _BSAL_DYNAMIC_HASH_TABLE_H
-#define _BSAL_DYNAMIC_HASH_TABLE_H
+#ifndef BSAL_DYNAMIC_HASH_TABLE_H
+#define BSAL_DYNAMIC_HASH_TABLE_H
 
 #include "hash_table.h"
 #include "hash_table_iterator.h"

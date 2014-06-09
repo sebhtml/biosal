@@ -1,6 +1,6 @@
 
-#ifndef _BSAL_ACTIVE_BUFFER_H
-#define _BSAL_ACTIVE_BUFFER_H
+#ifndef BSAL_ACTIVE_BUFFER_H
+#define BSAL_ACTIVE_BUFFER_H
 
 #include <mpi.h>
 

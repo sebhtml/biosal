@@ -1,6 +1,6 @@
 
-#ifndef _BSAL_THREAD_H
-#define _BSAL_THREAD_H
+#ifndef BSAL_THREAD_H
+#define BSAL_THREAD_H
 
 #include <structures/queue.h>
 
