@@ -26,6 +26,7 @@ struct bsal_input_controller {
     int block_size;
 
     int ready_stores;
+    int stores_per_worker_per_spawner;
 };
 
 #define BSAL_INPUT_DISTRIBUTE 0x00003cbe
@@ -57,5 +58,6 @@ void bsal_input_controller_get_node_worker_count_reply(struct bsal_actor *actor,
 void bsal_input_controller_add_store(struct bsal_actor *actor, struct bsal_message *message);
 void bsal_input_controller_prepare_spawners(struct bsal_actor *actor, struct bsal_message *message);
 void bsal_input_controller_receive_store_entry_counts(struct bsal_actor *actor, struct bsal_message *message);
+void bsal_input_controller_receive_command(struct bsal_actor *actor, struct bsal_message *message);
 
 #endif

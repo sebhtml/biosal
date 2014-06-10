@@ -69,7 +69,7 @@ uint64_t bsal_stream_command_stream_first(struct bsal_stream_command *self)
     return self->stream_first;
 }
 
-uint64_t bsal_stream_command_last(struct bsal_stream_command *self)
+uint64_t bsal_stream_command_stream_last(struct bsal_stream_command *self)
 {
     return self->stream_last;
 }

@@ -11,6 +11,7 @@
 
 /*
 #define BSAL_SEQUENCE_PARTITIONER_DEBUG
+
 */
 
 struct bsal_script bsal_sequence_partitioner_script = {

@@ -1,6 +1,11 @@
 
 #include "input_stream.h"
 
+#include "input_command.h"
+
+#include <data/dna_sequence.h>
+#include <storage/sequence_store.h>
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -27,6 +32,8 @@ void bsal_input_stream_init(struct bsal_actor *actor)
     input->maximum_sequence_length = 0;
     input->open = 0;
     input->error = BSAL_INPUT_ERROR_NO_ERROR;
+
+    input->file_name = NULL;
 }
 
 void bsal_input_stream_destroy(struct bsal_actor *actor)
@@ -47,6 +54,13 @@ void bsal_input_stream_destroy(struct bsal_actor *actor)
         bsal_input_proxy_destroy(&input->proxy);
         input->proxy_ready = 0;
     }
+
+    if (input->file_name != NULL) {
+        free(input->file_name);
+        input->file_name = NULL;
+    }
+
+    input->file_name = NULL;
 }
 
 void bsal_input_stream_receive(struct bsal_actor *actor, struct bsal_message *message)
@@ -106,6 +120,9 @@ void bsal_input_stream_receive(struct bsal_actor *actor, struct bsal_message *me
         printf("DEBUG bsal_input_stream_receive open %s\n",
                         buffer);
 #endif
+
+        concrete_actor->file_name = malloc(strlen(buffer) + 1);
+        strcpy(concrete_actor->file_name, buffer);
 
         bsal_input_proxy_init(&concrete_actor->proxy, buffer);
         concrete_actor->proxy_ready = 1;
@@ -202,6 +219,10 @@ void bsal_input_stream_receive(struct bsal_actor *actor, struct bsal_message *me
 
         bsal_actor_send_int(actor, concrete_actor->controller, BSAL_INPUT_COUNT_REPLY, count);
 
+    } else if (tag == BSAL_ACTOR_ASK_TO_STOP) {
+
+        bsal_actor_send_to_self_empty(actor, BSAL_INPUT_CLOSE);
+
     } else if (tag == BSAL_INPUT_CLOSE) {
 
 #ifdef BSAL_INPUT_STREAM_DEBUG
@@ -227,7 +248,8 @@ void bsal_input_stream_receive(struct bsal_actor *actor, struct bsal_message *me
         bsal_actor_send_to_self_empty(actor, BSAL_ACTOR_STOP);
 
 #ifdef BSAL_INPUT_STREAM_DEBUG
-        printf("actor %d sending BSAL_INPUT_CLOSE_REPLY to %d\n", name, source);
+        printf("actor %d sending BSAL_INPUT_CLOSE_REPLY to %d\n",
+                        bsal_actor_name(actor), source);
 #endif
 
     } else if (tag == BSAL_INPUT_GET_SEQUENCE) {
@@ -266,50 +288,36 @@ void bsal_input_stream_receive(struct bsal_actor *actor, struct bsal_message *me
                         buffer_size, concrete_actor->buffer_for_sequence);
         bsal_actor_send(actor, source, message);
 
-    } else if (tag == BSAL_INPUT_SEND_SEQUENCES_TO) {
-        bsal_input_stream_send_sequences_to(actor, message);
+    } else if (tag == BSAL_INPUT_PUSH_SEQUENCES) {
 
-    } else if (tag == BSAL_INPUT_PUSH_SEQUENCES_REPLY) {
-
-        bsal_actor_send_empty(actor, concrete_actor->controller, BSAL_INPUT_SEND_SEQUENCES_TO_REPLY);
-
+        bsal_input_stream_push_sequences(actor, message);
     } else if (tag == BSAL_ACTOR_ASK_TO_STOP) {
 
         bsal_actor_send_to_self_empty(actor, BSAL_ACTOR_STOP);
         bsal_actor_send_reply_empty(actor, BSAL_ACTOR_ASK_TO_STOP_REPLY);
+
+    } else if (tag == BSAL_INPUT_STREAM_RESET) {
+
+        /* fail silently
+         */
+        if (!concrete_actor->open) {
+            bsal_actor_send_reply_empty(actor, BSAL_INPUT_STREAM_RESET_REPLY);
+            return;
+        }
+
+#ifdef BSAL_INPUT_STREAM_DEBUG
+        printf("DEBUG BSAL_INPUT_STREAM_RESET\n");
+#endif
+
+        bsal_input_proxy_destroy(&concrete_actor->proxy);
+        bsal_input_proxy_init(&concrete_actor->proxy, concrete_actor->file_name);
+
+        bsal_actor_send_reply_empty(actor, BSAL_INPUT_STREAM_RESET_REPLY);
+
+    } else if (tag == BSAL_STORE_SEQUENCES_REPLY) {
+
+        bsal_actor_send_to_supervisor_empty(actor, BSAL_INPUT_PUSH_SEQUENCES_REPLY);
     }
-}
-
-void bsal_input_stream_send_sequences_to(struct bsal_actor *actor,
-                struct bsal_message *message)
-{
-    int target_for_sequences;
-    int first_sequence;
-    int last_sequence;
-    int name;
-    int offset;
-    struct bsal_input_stream *concrete_actor;
-    int source;
-
-    source = bsal_message_source(message);
-    concrete_actor = (struct bsal_input_stream *)bsal_actor_concrete_actor(actor);
-    concrete_actor->controller = source;
-    offset = 0;
-    offset = bsal_message_unpack_int(message, offset, &first_sequence);
-    offset = bsal_message_unpack_int(message, offset, &last_sequence);
-    offset = bsal_message_unpack_int(message, offset, &target_for_sequences);
-    name = bsal_actor_name(actor);
-
-
-    /* TODO
-     * send sequences from first_sequence to last_sequence to
-     * actor target_for_sequences
-     */
-
-    printf("DEBUG stream %d, sequences: %d-%d, storage target: %d\n",
-                    name, first_sequence, last_sequence, target_for_sequences);
-
-    bsal_actor_send_empty(actor, target_for_sequences, BSAL_INPUT_PUSH_SEQUENCES);
 }
 
 int bsal_input_stream_has_error(struct bsal_actor *actor,
@@ -352,4 +360,116 @@ int bsal_input_stream_check_open_error(struct bsal_actor *actor,
     return 0;
 }
 
+void bsal_input_stream_push_sequences(struct bsal_actor *actor,
+                struct bsal_message *message)
+{
+    struct bsal_input_command command;
+    void *buffer;
+    int store_name;
+    uint64_t store_first;
+    uint64_t store_last;
+    int sequences_to_read;
+    void *new_buffer;
+    int new_count;
+    struct bsal_message new_message;
+    void *buffer_for_sequence;
+    struct bsal_dna_sequence dna_sequence;
+    struct bsal_vector *command_entries;
+    struct bsal_dna_sequence *a_sequence;
+    int has_sequence;
+    int i;
 
+    has_sequence = 1;
+
+#ifdef BSAL_INPUT_STREAM_DEBUG
+    int count;
+    printf("DEBUG bsal_input_stream_push_sequences entering...\n");
+#endif
+
+    struct bsal_input_stream *concrete_actor;
+
+    buffer = bsal_message_buffer(message);
+
+#ifdef BSAL_INPUT_STREAM_DEBUG
+    count = bsal_message_count(message);
+#endif
+
+    concrete_actor = (struct bsal_input_stream *)bsal_actor_concrete_actor(actor);
+    bsal_input_command_unpack(&command, buffer);
+
+#ifdef BSAL_INPUT_STREAM_DEBUG
+    printf("DEBUG bsal_input_stream_push_sequences after unpack, count %d:\n",
+                    count);
+
+    bsal_input_command_print(&command);
+#endif
+
+    store_name = bsal_input_command_store_name(&command);
+    store_first = bsal_input_command_store_first(&command);
+    store_last = bsal_input_command_store_last(&command);
+
+    sequences_to_read = store_last - store_first + 1;
+
+#ifdef BSAL_INPUT_STREAM_DEBUG
+    printf("DEBUG bsal_input_stream_push_sequences received BSAL_INPUT_PUSH_SEQUENCES\n");
+    printf("DEBUG Command before sending it\n");
+
+    bsal_input_command_print(&command);
+#endif
+
+    /*
+     * add sequences to the input command
+     */
+
+    buffer_for_sequence = concrete_actor->buffer_for_sequence;
+    command_entries = bsal_input_command_entries(&command);
+
+    while (sequences_to_read-- && has_sequence) {
+        break;
+        has_sequence = bsal_input_proxy_get_sequence(&concrete_actor->proxy,
+                            buffer_for_sequence);
+
+        bsal_dna_sequence_init(&dna_sequence, buffer_for_sequence);
+
+        bsal_vector_push_back(command_entries,
+                        &dna_sequence);
+    }
+
+    new_count = bsal_input_command_pack_size(&command);
+    new_buffer = malloc(new_count);
+    bsal_input_command_pack(&command, new_buffer);
+
+    bsal_message_init(&new_message, BSAL_STORE_SEQUENCES,
+                    new_count, new_buffer);
+    bsal_actor_send(actor, store_name, &new_message);
+
+#ifdef BSAL_INPUT_STREAM_DEBUG
+    printf("DEBUG bsal_input_stream_push_sequences sending BSAL_STORE_SEQUENCES to %d\n",
+                    store_name);
+#endif
+
+    /*
+     * send sequences to store.
+     * The required information is the input command
+     */
+    /*
+    bsal_actor_send_reply_empty(actor, BSAL_INPUT_PUSH_SEQUENCES_REPLY);
+    */
+
+    /* free memory
+     */
+    free(new_buffer);
+
+#ifdef BSAL_INPUT_STREAM_DEBUG
+    printf("DEBUG freeing %d entries\n",
+                    bsal_vector_size(command_entries));
+#endif
+
+    for (i = 0; i < bsal_vector_size(command_entries); i++) {
+        a_sequence = (struct bsal_dna_sequence *)bsal_vector_at(command_entries, i);
+
+        bsal_dna_sequence_destroy(a_sequence);
+    }
+
+    bsal_vector_destroy(command_entries);
+}

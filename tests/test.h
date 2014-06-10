@@ -19,10 +19,19 @@
     printf("PASS: %i/%i\nFAIL: %i/%i\n", correct_tests, all, incorrect_tests, all);
 
 int test_int_equals(int a, int b);
+int test_int_is_greater_than(int a, int b);
 int test_int_not_equals(int a, int b);
 
 int test_pointer_equals(void *a, void *b);
 int test_pointer_not_equals(void *a, void *b);
+
+#define TEST_INT_IS_GREATER_THAN(a, b) \
+if (test_int_is_greater_than(a, b)) { \
+    correct_tests++; \
+} else { \
+    incorrect_tests++; \
+    printf("Error File: %s, Function: %s, Line: %i\n", __FILE__, __func__, __LINE__); \
+}
 
 #define TEST_INT_EQUALS(a, b) \
 if (test_int_equals(a, b)) { \

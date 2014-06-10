@@ -28,12 +28,16 @@ int main(int argc, char **argv)
 
     bsal_packer_init(&packer, BSAL_PACKER_OPERATION_UNPACK, buffer);
 
+    /*
     printf("DEBUG unpacking in test\n");
+    */
     bsal_packer_work(&packer, &actual_value, sizeof(actual_value));
     bsal_packer_destroy(&packer);
 
+    /*
     printf("DEBUG actual_value %d expected_value %d\n",
                     actual_value, expected_value);
+                    */
 
     TEST_INT_EQUALS(actual_value, expected_value);
 

@@ -71,6 +71,40 @@ int main(int argc, char **argv)
         bsal_vector_destroy(&vector);
     }
 
+    {
+        struct bsal_vector vector1;
+        struct bsal_vector vector2;
+        int i;
+        void *buffer;
+        int value1;
+        int value2;
+        int count;
+
+        bsal_vector_init(&vector1, sizeof(int));
+
+        for (i = 0; i < 99; i++) {
+            bsal_vector_push_back(&vector1, &i);
+        }
+
+        count = bsal_vector_pack_size(&vector1);
+
+        TEST_INT_IS_GREATER_THAN(count, 0);
+
+        buffer = malloc(count);
+
+        bsal_vector_pack(&vector1, buffer);
+        bsal_vector_unpack(&vector2, buffer);
+
+        for (i = 0; i < bsal_vector_size(&vector1); i++) {
+            value1 = *(int *)bsal_vector_at(&vector1, i);
+            value2 = *(int *)bsal_vector_at(&vector2, i);
+
+            TEST_INT_EQUALS(value1, value2);
+        }
+
+        free(buffer);
+    }
+
     END_TESTS();
 
     return 0;

@@ -34,8 +34,9 @@ void bsal_vector_push_back_int(struct bsal_vector *self, int value);
 void bsal_vector_push_back_vector(struct bsal_vector *self, struct bsal_vector *other_vector);
 
 int bsal_vector_pack_size(struct bsal_vector *self);
-void bsal_vector_pack(struct bsal_vector *self, void *buffer);
-void bsal_vector_unpack(struct bsal_vector *self, void *buffer);
+int bsal_vector_pack_unpack(struct bsal_vector *self, void *buffer, int operation);
+int bsal_vector_pack(struct bsal_vector *self, void *buffer);
+int bsal_vector_unpack(struct bsal_vector *self, void *buffer);
 
 /* copy positions first to last from self to destination
  */

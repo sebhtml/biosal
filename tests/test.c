@@ -36,3 +36,12 @@ int test_pointer_not_equals(void *a, void *b)
 
     return 1;
 }
+
+int test_int_is_greater_than(int a, int b)
+{
+    if (a > b) {
+        return 1;
+    }
+
+    return 0;
+}
