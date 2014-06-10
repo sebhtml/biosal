@@ -147,7 +147,7 @@ void root_receive(struct bsal_actor *actor, struct bsal_message *message)
         if (!root1->is_king) {
             printf("actor %d stops controller %d\n", name, source);
 
-            bsal_actor_send_reply_empty(actor, BSAL_INPUT_STOP);
+            bsal_actor_send_reply_empty(actor, BSAL_ACTOR_ASK_TO_STOP);
             return;
         }
 /*

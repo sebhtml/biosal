@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <inttypes.h>
 
 struct bsal_script bsal_sequence_store_script = {
     .name = BSAL_SEQUENCE_STORE_SCRIPT,
@@ -32,7 +33,7 @@ void bsal_sequence_store_destroy(struct bsal_actor *actor)
 void bsal_sequence_store_receive(struct bsal_actor *actor, struct bsal_message *message)
 {
     int tag;
-    int amount;
+    uint64_t amount;
     void *buffer;
     struct bsal_sequence_store *concrete_actor;
 
@@ -45,13 +46,16 @@ void bsal_sequence_store_receive(struct bsal_actor *actor, struct bsal_message *
 
         bsal_actor_send_reply_empty(actor, BSAL_STORE_SEQUENCES_REPLY);
 
-    } else if (tag == BSAL_SEQUENCE_STORE_ALLOCATE) {
+    } else if (tag == BSAL_SEQUENCE_STORE_RESERVE) {
 
-        amount = *(int *)buffer;
+        amount = *(uint64_t*)buffer;
+
+        printf("DEBUG bsal_sequence_store_receive amount= %" PRIu64 "\n",
+                        amount);
 
         bsal_vector_resize(&concrete_actor->sequences, amount);
 
-        bsal_actor_send_reply_empty(actor, BSAL_SEQUENCE_STORE_ALLOCATE_REPLY);
+        bsal_actor_send_reply_empty(actor, BSAL_SEQUENCE_STORE_RESERVE_REPLY);
 
     } else if (tag == BSAL_ACTOR_ASK_TO_STOP) {
 

@@ -20,6 +20,9 @@ struct bsal_sequence_partitioner {
     struct bsal_vector stream_positions;
     struct bsal_vector stream_global_positions;
 
+    struct bsal_vector store_entries;
+    struct bsal_vector store_current_entries;
+
     uint64_t total;
 
     int block_size;
@@ -36,10 +39,16 @@ struct bsal_sequence_partitioner {
 #define BSAL_SEQUENCE_PARTITIONER_SET_ENTRY_VECTOR_REPLY 0x000054b8
 #define BSAL_SEQUENCE_PARTITIONER_SET_ACTOR_COUNT 0x0000618d
 #define BSAL_SEQUENCE_PARTITIONER_SET_ACTOR_COUNT_REPLY 0x00001529
+
+#define BSAL_SEQUENCE_PARTITIONER_PROVIDE_STORE_ENTRY_COUNTS 0x00002c39
+#define BSAL_SEQUENCE_PARTITIONER_PROVIDE_STORE_ENTRY_COUNTS_REPLY 0x000056ed
+
+#define BSAL_SEQUENCE_PARTITIONER_COMMAND_IS_READY 0x00002d74
+
 #define BSAL_SEQUENCE_PARTITIONER_GET_COMMAND 0x00003662
 #define BSAL_SEQUENCE_PARTITIONER_GET_COMMAND_REPLY 0x0000116e
 #define BSAL_SEQUENCE_PARTITIONER_GET_COMMAND_REPLY_REPLY 0x00003444
-#define BSAL_SEQUENCE_PARTITIONER_COMMAND_IS_READY 0x00002d74
+
 #define BSAL_SEQUENCE_PARTITIONER_FINISHED 0x00005db5
 
 extern struct bsal_script bsal_sequence_partitioner_script;

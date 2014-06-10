@@ -213,7 +213,9 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
             count = bsal_vector_pack_size(&concrete_actor->counts);
             buffer = malloc(count);
 
+#ifdef BSAL_INPUT_CONTROLLER_DEBUG
             printf("DEBUG packed counts, %d bytes\n", count);
+#endif
 
             bsal_vector_pack(&concrete_actor->counts, buffer);
             bsal_message_init(&new_message, BSAL_SEQUENCE_PARTITIONER_SET_ENTRY_VECTOR,
@@ -447,7 +449,58 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
                         BSAL_ACTOR_ASK_TO_STOP);
 
         bsal_actor_send_to_supervisor_empty(actor, BSAL_INPUT_DISTRIBUTE_REPLY);
+
+    } else if (tag == BSAL_SEQUENCE_PARTITIONER_PROVIDE_STORE_ENTRY_COUNTS) {
+
+        bsal_input_controller_receive_store_entry_counts(actor, message);
+
+    } else if (tag == BSAL_SEQUENCE_STORE_RESERVE_REPLY) {
+        concrete_actor->ready_stores++;
+
+        if (concrete_actor->ready_stores == bsal_vector_size(&concrete_actor->stores)) {
+
+            printf("DEBUG all stores are ready\n");
+            bsal_actor_send_empty(actor,
+                            bsal_actor_get_acquaintance(actor, concrete_actor->partitioner),
+                            BSAL_SEQUENCE_PARTITIONER_PROVIDE_STORE_ENTRY_COUNTS_REPLY);
+        }
     }
+}
+
+void bsal_input_controller_receive_store_entry_counts(struct bsal_actor *actor, struct bsal_message *message)
+{
+    struct bsal_input_controller *concrete_actor;
+    struct bsal_vector store_entries;
+    void *buffer;
+    int i;
+    int store;
+    uint64_t entries;
+    struct bsal_message new_message;
+    int name;
+
+    bsal_vector_init(&store_entries, sizeof(uint64_t));
+
+    concrete_actor = (struct bsal_input_controller *)bsal_actor_concrete_actor(actor);
+    buffer = bsal_message_buffer(message);
+    name = bsal_actor_name(actor);
+    concrete_actor->ready_stores = 0;
+
+    printf("DEBUG bsal_input_controller_receive_store_entry_counts unpacking entries\n");
+    bsal_vector_unpack(&store_entries, buffer);
+
+    for (i = 0; i < bsal_vector_size(&store_entries); i++) {
+        store = *(int *)bsal_vector_at(&concrete_actor->stores, i);
+        entries = *(uint64_t *)bsal_vector_at(&store_entries, i);
+
+        printf("DEBUG actor %d tells actor %d to reserve %" PRIu64 " buckets\n",
+                        name, store, entries);
+
+        bsal_message_init(&new_message, BSAL_SEQUENCE_STORE_RESERVE,
+                        sizeof(entries), &entries);
+        bsal_actor_send(actor, store, &new_message);
+    }
+
+    printf("DEBUG bsal_input_controller_receive_store_entry_counts will wait for replies\n");
 }
 
 void bsal_input_controller_create_stores(struct bsal_actor *actor, struct bsal_message *message)

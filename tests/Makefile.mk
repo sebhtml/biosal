@@ -1,7 +1,8 @@
 
 test: tests
 
-TESTS=test_queue test_queue_group test_hash_table_group test_hash_table test_node test_vector test_dynamic_hash_table
+TESTS=test_queue test_queue_group test_hash_table_group test_hash_table test_node test_vector test_dynamic_hash_table \
+	test_packer
 
 # tests
 TEST_FIFO=tests/test.o tests/test_queue.o
@@ -11,6 +12,7 @@ TEST_HASH_TABLE=tests/test.o tests/test_hash_table.o
 TEST_DYNAMIC_HASH_TABLE=tests/test.o tests/test_dynamic_hash_table.o
 TEST_NODE=tests/test.o tests/test_node.o
 TEST_VECTOR=tests/test.o tests/test_vector.o
+TEST_PACKER=tests/test.o tests/test_packer.o
 
 tests: $(TESTS)
 	./test_queue_group
@@ -20,3 +22,4 @@ tests: $(TESTS)
 	./test_node
 	./test_vector
 	./test_dynamic_hash_table
+	./test_packer

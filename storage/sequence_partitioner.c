@@ -30,6 +30,8 @@ void bsal_sequence_partitioner_init(struct bsal_actor *actor)
     bsal_vector_init(&concrete_actor->stream_entries, sizeof(uint64_t));
     bsal_vector_init(&concrete_actor->stream_positions, sizeof(uint64_t));
     bsal_vector_init(&concrete_actor->stream_global_positions, sizeof(uint64_t));
+    bsal_vector_init(&concrete_actor->store_entries, sizeof(uint64_t));
+    bsal_vector_init(&concrete_actor->store_current_entries, sizeof(uint64_t));
 
     bsal_queue_init(&concrete_actor->available_commands, sizeof(struct bsal_stream_command));
     bsal_dynamic_hash_table_init(&concrete_actor->active_commands, 128, sizeof(int),
@@ -50,6 +52,8 @@ void bsal_sequence_partitioner_destroy(struct bsal_actor *actor)
     bsal_vector_destroy(&concrete_actor->stream_entries);
     bsal_vector_destroy(&concrete_actor->stream_positions);
     bsal_vector_destroy(&concrete_actor->stream_global_positions);
+    bsal_vector_destroy(&concrete_actor->store_entries);
+    bsal_vector_destroy(&concrete_actor->store_current_entries);
 
     bsal_queue_destroy(&concrete_actor->available_commands);
     bsal_dynamic_hash_table_destroy(&concrete_actor->active_commands);
@@ -69,6 +73,7 @@ void bsal_sequence_partitioner_receive(struct bsal_actor *actor, struct bsal_mes
     struct bsal_stream_command *active_command;
     int stream_index;
     struct bsal_stream_command *command_bucket;
+    int i;
 
     bsal_message_get_all(message, &tag, &count, &buffer, &source);
 
@@ -116,10 +121,12 @@ void bsal_sequence_partitioner_receive(struct bsal_actor *actor, struct bsal_mes
 
         if (bsal_queue_dequeue(&concrete_actor->available_commands, &command)) {
 
-                /*
-            printf("DEBUG partitioner has command !\n");
-            */
             bytes = bsal_stream_command_pack_size(&command);
+
+            /*
+            printf("DEBUG partitioner has command, packing %d bytes!\n", bytes);
+            */
+
             buffer = malloc(bytes);
             bsal_stream_command_pack(&command, buffer);
 
@@ -178,6 +185,14 @@ void bsal_sequence_partitioner_receive(struct bsal_actor *actor, struct bsal_mes
 
         bsal_actor_send_to_self_empty(actor,
                         BSAL_ACTOR_STOP);
+
+    } else if (tag == BSAL_SEQUENCE_PARTITIONER_PROVIDE_STORE_ENTRY_COUNTS_REPLY) {
+        /* generate commands
+         */
+        for (i = 0; i < bsal_vector_size(&concrete_actor->stream_entries); i++) {
+
+            bsal_sequence_partitioner_generate_command(actor, i);
+        }
     }
 }
 
@@ -188,6 +203,12 @@ void bsal_sequence_partitioner_verify(struct bsal_actor *actor)
     uint64_t entries;
     int position;
     uint64_t stream_entries;
+    int remainder;
+    uint64_t *bucket;
+    int bytes;
+    void *buffer;
+    struct bsal_message message;
+    uint64_t initial_store_entries;
 
     concrete_actor = (struct bsal_sequence_partitioner *)bsal_actor_concrete_actor(actor);
 
@@ -228,19 +249,36 @@ void bsal_sequence_partitioner_verify(struct bsal_actor *actor)
 
     concrete_actor->total = entries;
 
-    /*
-    printf("DEBUG entries= %" PRIu64 "\n", entries);
-    printf("DEBUG generating commands \n");
-*/
-    /* generate commands
+    /* compute the number of entries for each store
      */
-    for (i = 0; i < bsal_vector_size(&concrete_actor->stream_entries); i++) {
 
-            /*
-        printf("DEBUG %d...\n", i);
-        */
-        bsal_sequence_partitioner_generate_command(actor, i);
+    entries = concrete_actor->total / concrete_actor->store_count;
+
+    initial_store_entries = 0;
+
+    for (i = 0; i < concrete_actor->store_count; i++) {
+        bsal_vector_push_back(&concrete_actor->store_entries, &entries);
+        bsal_vector_push_back(&concrete_actor->store_current_entries, &initial_store_entries);
     }
+
+    remainder = concrete_actor->total % concrete_actor->store_count;
+
+    bucket = (uint64_t *)bsal_vector_at(&concrete_actor->store_entries,
+                    bsal_vector_size(&concrete_actor->store_entries) - 1);
+
+    *bucket += remainder;
+
+#ifdef BSAL_SEQUENCE_PARTITIONER_DEBUG
+    printf("DEBUG bsal_sequence_partitioner_verify sending store counts\n");
+#endif
+
+    bytes = bsal_vector_pack_size(&concrete_actor->store_entries);
+    buffer = malloc(bytes);
+    bsal_vector_pack(&concrete_actor->store_entries, buffer);
+
+    bsal_message_init(&message, BSAL_SEQUENCE_PARTITIONER_PROVIDE_STORE_ENTRY_COUNTS,
+                    bytes, buffer);
+    bsal_actor_send_reply(actor, &message);
 }
 
 int bsal_sequence_partitioner_get_store(int block_size, int store_count, uint64_t index)
@@ -292,14 +330,20 @@ void bsal_sequence_partitioner_generate_command(struct bsal_actor *actor, int st
 {
     uint64_t *bucket_for_position;
     uint64_t *bucket_for_global_position;
+    uint64_t *bucket_for_store_position;
     struct bsal_stream_command command;
-    int first;
-    int last;
+
     int store_index;
+    uint64_t stream_first;
+    uint64_t stream_last;
+
+    uint64_t stream_entries;
+    uint64_t store_first;
+    uint64_t store_last;
+    struct bsal_sequence_partitioner *concrete_actor;
+    int actual_block_size;
     uint64_t global_first;
     uint64_t global_last;
-    uint64_t stream_entries;
-    struct bsal_sequence_partitioner *concrete_actor;
 
     concrete_actor = (struct bsal_sequence_partitioner *)bsal_actor_concrete_actor(actor);
 
@@ -315,7 +359,7 @@ void bsal_sequence_partitioner_generate_command(struct bsal_actor *actor, int st
     /*
     printf("DEBUG got buckets.\n");
 */
-    first = *bucket_for_position;
+    stream_first = *bucket_for_position;
     stream_entries = *(uint64_t *)bsal_vector_at(&concrete_actor->stream_entries, stream_index);
 
     if (stream_entries == 0) {
@@ -327,15 +371,17 @@ void bsal_sequence_partitioner_generate_command(struct bsal_actor *actor, int st
                     stream_index, stream_entries, first);
 */
 
-    if (first > stream_entries - 1) {
+    if (stream_first > stream_entries - 1) {
         return;
     }
 
-    last = first + concrete_actor->block_size - 1;
+    stream_last = stream_first + concrete_actor->block_size - 1;
 
-    if (last > stream_entries - 1) {
-        last = stream_entries - 1;
+    if (stream_last > stream_entries - 1) {
+        stream_last = stream_entries - 1;
     }
+
+    actual_block_size = stream_last - stream_first + 1;
 
     global_first = *bucket_for_global_position;
 
@@ -343,7 +389,7 @@ void bsal_sequence_partitioner_generate_command(struct bsal_actor *actor, int st
         return;
     }
 
-    global_last = global_first + concrete_actor->block_size - 1;
+    global_last = global_first + actual_block_size - 1;
 
     if (global_last > concrete_actor->total - 1) {
         global_last = concrete_actor->total - 1;
@@ -351,27 +397,40 @@ void bsal_sequence_partitioner_generate_command(struct bsal_actor *actor, int st
 
     store_index = bsal_sequence_partitioner_get_store(concrete_actor->block_size,
                     concrete_actor->store_count, global_first);
+
+    bucket_for_store_position = bsal_vector_at(&concrete_actor->store_current_entries,
+                    store_index);
+
+    store_first = *bucket_for_store_position;
+    store_last = store_first + actual_block_size - 1;
+
     /*
     printf("DEBUG %" PRIu64 " goes in store %d\n",
                     global_first, store_index);
 */
     bsal_stream_command_init(&command, concrete_actor->command_number,
-                    stream_index, first, last, global_first,
-                    global_last, store_index);
+                    stream_index, stream_first, stream_last,
+                    store_index, store_first, store_last,
+                    global_first, global_last);
+
     concrete_actor->command_number++;
 
     bsal_queue_enqueue(&concrete_actor->available_commands,
                     &command);
-    /*
+
+#ifdef BSAL_SEQUENCE_PARTITIONER_DEBUG
+    printf("DEBUG in partitioner:\n");
     bsal_stream_command_print(&command);
-    */
+#endif
 
     bsal_stream_command_destroy(&command);
 
     /* update positions
      */
-    *bucket_for_position = last + 1;
+
+    *bucket_for_position = stream_last + 1;
     *bucket_for_global_position = global_last + 1;
+    *bucket_for_store_position = store_last + 1;
 
     /*
     printf("DEBUG command is ready\n");
