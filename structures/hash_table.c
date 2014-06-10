@@ -23,6 +23,8 @@
 #define BSAL_HASH_TABLE_DEBUG_DOUBLE_HASHING_DEBUG
 */
 
+#define BSAL_HASH_TABLE_USE_ONE_GROUP
+
 void bsal_hash_table_init(struct bsal_hash_table *table, uint64_t buckets,
                 int key_size, int value_size)
 {
@@ -43,6 +45,12 @@ void bsal_hash_table_init(struct bsal_hash_table *table, uint64_t buckets,
         buckets++;
     }
 
+#ifdef BSAL_HASH_TABLE_USE_ONE_GROUP
+    /* trick the code
+     */
+    buckets_per_group = buckets;
+#endif
+
     table->buckets = buckets;
     table->buckets_per_group = buckets_per_group;
     table->key_size = key_size;
@@ -53,6 +61,11 @@ void bsal_hash_table_init(struct bsal_hash_table *table, uint64_t buckets,
 
     table->groups = (struct bsal_hash_table_group *)
             malloc(table->group_count * sizeof(struct bsal_hash_table_group));
+
+#ifdef BSAL_HASH_TABLE_DEBUG_INIT
+    printf("DEBUG bsal_hash_table_init group_count %d\n",
+                    table->group_count);
+#endif
 
     for (i = 0; i < table->group_count; i++) {
         bsal_hash_table_group_init(table->groups + i, buckets_per_group,
