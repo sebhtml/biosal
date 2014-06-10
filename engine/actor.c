@@ -1772,3 +1772,20 @@ void bsal_actor_unpin_from_node(struct bsal_actor *actor)
 {
 
 }
+
+int bsal_actor_add_acquaintance(struct bsal_actor *actor, int name)
+{
+    bsal_vector_push_back_int(bsal_actor_acquaintance_vector(actor),
+                    name);
+    return bsal_vector_size(bsal_actor_acquaintance_vector(actor)) - 1;
+}
+
+int bsal_actor_get_acquaintance(struct bsal_actor *actor, int index)
+{
+    if (index < bsal_vector_size(bsal_actor_acquaintance_vector(actor))) {
+        return bsal_vector_at_as_int(bsal_actor_acquaintance_vector(actor),
+                        index);
+    }
+
+    return BSAL_ACTOR_NOBODY;
+}

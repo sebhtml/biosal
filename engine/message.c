@@ -141,6 +141,10 @@ int bsal_message_unpack_int(struct bsal_message *message, int offset, int *value
     void *buffer;
     int *pointer;
 
+    if (offset >= bsal_message_count(message)) {
+        return -1;
+    }
+
     bytes = sizeof(value);
     buffer = bsal_message_buffer(message);
 

@@ -73,7 +73,7 @@ int bsal_input_get_sequence(struct bsal_input *input,
     return value;
 }
 
-int bsal_input_size(struct bsal_input *input)
+uint64_t bsal_input_size(struct bsal_input *input)
 {
     return input->sequences;
 }

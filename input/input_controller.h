@@ -16,9 +16,12 @@ struct bsal_input_controller {
     int opened_streams;
     int counted;
     struct bsal_vector counts;
+    struct bsal_vector stream_commands;
     struct bsal_vector stores_per_spawner;
     struct bsal_queue unprepared_spawners;
     int state;
+    int partitioner;
+    int block_size;
 };
 
 #define BSAL_INPUT_DISTRIBUTE 0x00003cbe
@@ -32,6 +35,7 @@ struct bsal_input_controller {
 #define BSAL_INPUT_CONTROLLER_CREATE_STORES 0x0000285f
 #define BSAL_INPUT_CONTROLLER_CREATE_STORES_REPLY 0x000048ed
 #define BSAL_INPUT_CONTROLLER_PREPARE_SPAWNERS 0x00004a85
+#define BSAL_INPUT_CONTROLLER_CREATE_PARTITION 0x00005b68
 
 extern struct bsal_script bsal_input_controller_script;
 

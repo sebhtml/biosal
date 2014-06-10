@@ -44,7 +44,7 @@ void bsal_input_proxy_destroy(struct bsal_input_proxy *proxy)
     proxy->done = 1;
 }
 
-int bsal_input_proxy_size(struct bsal_input_proxy *proxy)
+uint64_t bsal_input_proxy_size(struct bsal_input_proxy *proxy)
 {
 #ifdef BSAL_INPUT_PROXY_DEBUG12
     printf("DEBUG size %i\n", proxy->sequences);

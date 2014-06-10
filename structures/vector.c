@@ -67,6 +67,10 @@ void *bsal_vector_at(struct bsal_vector *self, int index)
         return NULL;
     }
 
+    if (index < 0) {
+        return NULL;
+    }
+
     return ((char *)self->data) + index * self->element_size;
 }
 
