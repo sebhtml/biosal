@@ -1,5 +1,6 @@
 
 #include <structures/vector.h>
+#include <structures/vector_iterator.h>
 
 #include "test.h"
 
@@ -74,17 +75,32 @@ int main(int argc, char **argv)
     {
         struct bsal_vector vector1;
         struct bsal_vector vector2;
+        struct bsal_vector_iterator iterator;
         int i;
         void *buffer;
         int value1;
         int value2;
         int count;
+        int *iterator_value;
 
         bsal_vector_init(&vector1, sizeof(int));
 
         for (i = 0; i < 99; i++) {
             bsal_vector_push_back(&vector1, &i);
         }
+
+        bsal_vector_iterator_init(&iterator, &vector1);
+
+        i = 0;
+
+        while (bsal_vector_iterator_has_next(&iterator)) {
+            bsal_vector_iterator_next(&iterator, (void **)&iterator_value);
+
+            TEST_INT_EQUALS(*iterator_value, i);
+            i++;
+        }
+
+        bsal_vector_iterator_destroy(&iterator);
 
         count = bsal_vector_pack_size(&vector1);
 
