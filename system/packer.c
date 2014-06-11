@@ -66,7 +66,7 @@ int bsal_packer_work(struct bsal_packer *self, void *object, int bytes)
 {
 
 #ifdef BSAL_PACKER_DEBUG
-    printf("DEBUG bsal_packer_work operation %d object %p bytes %d offset %d buffer %p\n",
+    printf("DEBUG ENTRY bsal_packer_work operation %d object %p bytes %d offset %d buffer %p\n",
                     self->operation,
                     object, bytes, self->offset, self->buffer);
 #endif
@@ -78,6 +78,12 @@ int bsal_packer_work(struct bsal_packer *self, void *object, int bytes)
     if (bytes == 0) {
         return self->offset;
     }
+
+#ifdef BSAL_PACKER_DEBUG
+    if (self->buffer != NULL) {
+        bsal_packer_print_bytes((char *)self->buffer + self->offset, bytes);
+    }
+#endif
 
     if (self->operation == BSAL_PACKER_OPERATION_PACK) {
         memcpy((char *)self->buffer + self->offset, object, bytes);
@@ -94,6 +100,13 @@ int bsal_packer_work(struct bsal_packer *self, void *object, int bytes)
         /* just increase the offset.
          */
     }
+
+#ifdef BSAL_PACKER_DEBUG
+    if (self->buffer != NULL) {
+        bsal_packer_print_bytes((char *)self->buffer + self->offset, bytes);
+    }
+#endif
+
 
     self->offset += bytes;
 
@@ -112,4 +125,22 @@ void bsal_packer_rewind(struct bsal_packer *self)
 int bsal_packer_worked_bytes(struct bsal_packer *self)
 {
     return self->offset;
+}
+
+void bsal_packer_print_bytes(void *buffer, int bytes)
+{
+    int i;
+    char byte;
+    int *integer_value;
+
+    printf("BYTES, count: %d, starting address: %p", bytes, buffer);
+
+    for (i = 0; i < bytes; i++) {
+        byte = ((char *)buffer)[i];
+        printf(" %d", (int)byte);
+    }
+
+    integer_value = (int *)buffer;
+
+    printf(" integer value: %d\n", *integer_value);
 }

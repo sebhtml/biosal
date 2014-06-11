@@ -210,6 +210,7 @@ void bsal_sequence_partitioner_verify(struct bsal_actor *actor)
     void *buffer;
     struct bsal_message message;
     uint64_t initial_store_entries;
+    uint64_t remaining;
 
     concrete_actor = (struct bsal_sequence_partitioner *)bsal_actor_concrete_actor(actor);
 
@@ -255,10 +256,33 @@ void bsal_sequence_partitioner_verify(struct bsal_actor *actor)
 
     entries = concrete_actor->total / concrete_actor->store_count;
 
+    /* make sure that at most one store has less
+     * than block size
+     */
+    if (entries < concrete_actor->block_size) {
+        entries = concrete_actor->block_size;
+    }
+
+    remaining = concrete_actor->total;
+
     initial_store_entries = 0;
 
+    /* example: 10000, block_size 4096,  3 stores
+     *
+     * total entries remaining
+     * 10000 4096    5904
+     * 10000 4096    1808
+     * 10000 1808    0
+     */
     for (i = 0; i < concrete_actor->store_count; i++) {
         bsal_vector_push_back(&concrete_actor->store_entries, &entries);
+
+        remaining -= entries;
+
+        if (remaining < entries) {
+            entries = remaining;
+        }
+
         bsal_vector_push_back(&concrete_actor->store_current_entries, &initial_store_entries);
     }
 
@@ -378,6 +402,8 @@ void bsal_sequence_partitioner_generate_command(struct bsal_actor *actor, int st
 
     stream_last = stream_first + concrete_actor->block_size - 1;
 
+    /* check the border for the stream.
+     */
     if (stream_last > stream_entries - 1) {
         stream_last = stream_entries - 1;
     }

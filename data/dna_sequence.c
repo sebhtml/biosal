@@ -4,8 +4,12 @@
 #include <system/packer.h>
 
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 
+/*
+#define BSAL_DNA_SEQUENCE_DEBUG
+*/
 void bsal_dna_sequence_init(struct bsal_dna_sequence *sequence, void *data)
 {
     /* TODO
@@ -54,10 +58,33 @@ int bsal_dna_sequence_pack_unpack(struct bsal_dna_sequence *sequence,
     struct bsal_packer packer;
     int offset;
 
-    bsal_packer_init(&packer, operation, &buffer);
-    bsal_packer_work(&packer, &sequence->pair, sizeof(sequence->pair));
+#ifdef BSAL_DNA_SEQUENCE_DEBUG
+    printf("DEBUG ENTRY bsal_dna_sequence_pack_unpack operation %d\n",
+                    operation);
 
-        bsal_packer_work(&packer, &sequence->length, sizeof(sequence->length));
+    if (operation == BSAL_PACKER_OPERATION_PACK) {
+        bsal_dna_sequence_print(sequence);
+    }
+#endif
+
+    bsal_packer_init(&packer, operation, buffer);
+
+    /*
+    bsal_packer_work(&packer, &sequence->pair, sizeof(sequence->pair));
+*/
+    bsal_packer_work(&packer, &sequence->length, sizeof(sequence->length));
+
+#ifdef BSAL_DNA_SEQUENCE_DEBUG
+    if (operation == BSAL_PACKER_OPERATION_UNPACK) {
+        printf("DEBUG bsal_dna_sequence_pack_unpack unpacking: length %d\n",
+                        sequence->length);
+
+    } else if (operation == BSAL_PACKER_OPERATION_PACK) {
+
+        printf("DEBUG bsal_dna_sequence_pack_unpack packing: length %d\n",
+                        sequence->length);
+    }
+#endif
 
     /* TODO: encode in 2 bits instead !
      */
@@ -65,15 +92,48 @@ int bsal_dna_sequence_pack_unpack(struct bsal_dna_sequence *sequence,
 
         if (sequence->length > 0) {
             sequence->data = malloc(sequence->length + 1);
-            bsal_packer_work(&packer, sequence->data, sequence->length);
         } else {
             sequence->data = NULL;
         }
+    }
+
+#ifdef BSAL_DNA_SEQUENCE_DEBUG
+    if (operation == BSAL_PACKER_OPERATION_UNPACK) {
+        printf("DEBUG unpacking %d bytes\n", sequence->length + 1);
+    }
+#endif
+
+    if (sequence->length > 0) {
+        bsal_packer_work(&packer, sequence->data, sequence->length + 1);
     }
 
     offset = bsal_packer_worked_bytes(&packer);
 
     bsal_packer_destroy(&packer);
 
+#ifdef BSAL_DNA_SEQUENCE_DEBUG
+    printf("DEBUG EXIT bsal_dna_sequence_pack_unpack operation %d offset %d\n",
+                    operation, offset);
+#endif
+
     return offset;
+}
+
+void bsal_dna_sequence_print(struct bsal_dna_sequence *self)
+{
+    char *dna_sequence;
+
+    dna_sequence = self->data;
+
+    printf("DNA: length %d %s\n", self->length, dna_sequence);
+}
+
+int bsal_dna_sequence_length(struct bsal_dna_sequence *self)
+{
+    return self->length;
+}
+
+char *bsal_dna_sequence_sequence(struct bsal_dna_sequence *self)
+{
+    return (char *)self->data;
 }

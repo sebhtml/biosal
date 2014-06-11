@@ -2,7 +2,7 @@
 test: tests
 
 TESTS=test_queue test_queue_group test_hash_table_group test_hash_table test_node test_vector test_dynamic_hash_table \
-	test_packer
+	test_packer test_dna_sequence
 
 # tests
 TEST_FIFO=tests/test.o tests/test_queue.o
@@ -13,6 +13,7 @@ TEST_DYNAMIC_HASH_TABLE=tests/test.o tests/test_dynamic_hash_table.o
 TEST_NODE=tests/test.o tests/test_node.o
 TEST_VECTOR=tests/test.o tests/test_vector.o
 TEST_PACKER=tests/test.o tests/test_packer.o
+TEST_DNA_SEQUENCE=tests/test.o tests/test_dna_sequence.o
 
 tests: $(TESTS)
 	./test_queue_group
@@ -23,3 +24,4 @@ tests: $(TESTS)
 	./test_vector
 	./test_dynamic_hash_table
 	./test_packer
+	./test_dna_sequence

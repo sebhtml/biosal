@@ -22,5 +22,6 @@ int bsal_packer_work(struct bsal_packer *self, void *object, int bytes);
 
 void bsal_packer_rewind(struct bsal_packer *self);
 int bsal_packer_worked_bytes(struct bsal_packer *self);
+void bsal_packer_print_bytes(void *buffer, int bytes);
 
 #endif

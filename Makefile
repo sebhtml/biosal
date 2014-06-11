@@ -57,12 +57,16 @@ clean:
 	$(Q)$(RM) $(EXAMPLE_CLONE) $(EXAMPLE_MIGRATION)
 	$(Q)$(RM) $(TEST_FIFO) $(TEST_FIFO_ARRAY) $(TEST_HASH_TABLE_GROUP) $(TEST_NODE)
 	$(Q)$(RM) $(TEST_HASH_TABLE) $(TEST_VECTOR) $(TEST_DYNAMIC_HASH_TABLE)
-	$(Q)$(RM) $(TEST_PACKER)
+	$(Q)$(RM) $(TEST_PACKER) $(TEST_DNA_SEQUENCE)
 	$(Q)$(RM) $(EXAMPLES) $(TESTS)
 
 # tests
 
 test_vector: $(LIBRARY) $(TEST_VECTOR)
+	$(Q)$(ECHO) "  LD $@"
+	$(Q)$(CC) $(CFLAGS) $^ -o $@
+
+test_dna_sequence: $(LIBRARY) $(TEST_DNA_SEQUENCE)
 	$(Q)$(ECHO) "  LD $@"
 	$(Q)$(CC) $(CFLAGS) $^ -o $@
 

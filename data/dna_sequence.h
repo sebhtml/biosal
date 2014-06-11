@@ -5,9 +5,9 @@
 #include <stdint.h>
 
 struct bsal_dna_sequence {
-    void *data;
     int length;
     int64_t pair;
+    void *data;
 };
 
 void bsal_dna_sequence_init(struct bsal_dna_sequence *sequence,
@@ -21,5 +21,11 @@ int bsal_dna_sequence_pack(struct bsal_dna_sequence *sequence,
 int bsal_dna_sequence_pack_size(struct bsal_dna_sequence *sequence);
 int bsal_dna_sequence_pack_unpack(struct bsal_dna_sequence *sequence,
                 void *buffer, int operation);
+
+void bsal_dna_sequence_print(struct bsal_dna_sequence *sequence);
+
+int bsal_dna_sequence_length(struct bsal_dna_sequence *self);
+
+char *bsal_dna_sequence_sequence(struct bsal_dna_sequence *self);
 
 #endif

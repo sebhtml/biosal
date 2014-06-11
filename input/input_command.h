@@ -26,8 +26,8 @@ uint64_t bsal_input_command_store_first(struct bsal_input_command *self);
 uint64_t bsal_input_command_store_last(struct bsal_input_command *self);
 
 int bsal_input_command_pack_size(struct bsal_input_command *self);
-void bsal_input_command_pack(struct bsal_input_command *self, void *buffer);
-void bsal_input_command_unpack(struct bsal_input_command *self, void *buffer);
+int bsal_input_command_pack(struct bsal_input_command *self, void *buffer);
+int bsal_input_command_unpack(struct bsal_input_command *self, void *buffer);
 
 int bsal_input_command_pack_unpack(struct bsal_input_command *self, void *buffer,
                 int operation);

@@ -378,6 +378,7 @@ void bsal_input_stream_push_sequences(struct bsal_actor *actor,
     struct bsal_dna_sequence *a_sequence;
     int has_sequence;
     int i;
+    int actual_count;
 
     has_sequence = 1;
 
@@ -424,8 +425,10 @@ void bsal_input_stream_push_sequences(struct bsal_actor *actor,
     buffer_for_sequence = concrete_actor->buffer_for_sequence;
     command_entries = bsal_input_command_entries(&command);
 
+    i = 0;
+    /* TODO: actually load something
+     */
     while (sequences_to_read-- && has_sequence) {
-        break;
         has_sequence = bsal_input_proxy_get_sequence(&concrete_actor->proxy,
                             buffer_for_sequence);
 
@@ -433,20 +436,31 @@ void bsal_input_stream_push_sequences(struct bsal_actor *actor,
 
         bsal_vector_push_back(command_entries,
                         &dna_sequence);
+
+        i++;
     }
 
+#ifdef BSAL_INPUT_STREAM_DEBUG
+    printf("DEBUG prepared %d sequences for command\n",
+                    i);
+    bsal_input_command_print(&command);
+#endif
+
     new_count = bsal_input_command_pack_size(&command);
+
     new_buffer = malloc(new_count);
-    bsal_input_command_pack(&command, new_buffer);
+    actual_count = bsal_input_command_pack(&command, new_buffer);
+
+    printf("DEBUG123 new_count %d actual_count %d\n", new_count,
+                    actual_count);
 
     bsal_message_init(&new_message, BSAL_STORE_SEQUENCES,
                     new_count, new_buffer);
-    bsal_actor_send(actor, store_name, &new_message);
 
-#ifdef BSAL_INPUT_STREAM_DEBUG
     printf("DEBUG bsal_input_stream_push_sequences sending BSAL_STORE_SEQUENCES to %d\n",
                     store_name);
-#endif
+
+    bsal_actor_send(actor, store_name, &new_message);
 
     /*
      * send sequences to store.
@@ -460,10 +474,8 @@ void bsal_input_stream_push_sequences(struct bsal_actor *actor,
      */
     free(new_buffer);
 
-#ifdef BSAL_INPUT_STREAM_DEBUG
     printf("DEBUG freeing %d entries\n",
                     bsal_vector_size(command_entries));
-#endif
 
     for (i = 0; i < bsal_vector_size(command_entries); i++) {
         a_sequence = (struct bsal_dna_sequence *)bsal_vector_at(command_entries, i);
@@ -472,4 +484,6 @@ void bsal_input_stream_push_sequences(struct bsal_actor *actor,
     }
 
     bsal_vector_destroy(command_entries);
+
+    printf("DEBUG bsal_input_stream_push_sequences EXIT\n");
 }

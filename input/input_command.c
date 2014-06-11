@@ -13,6 +13,7 @@
 /*
 #define BSAL_INPUT_COMMAND_DEBUG
 */
+
 void bsal_input_command_init(struct bsal_input_command *self,
                 int store_name, uint64_t store_first, uint64_t store_last)
 {
@@ -42,18 +43,18 @@ int bsal_input_command_pack_size(struct bsal_input_command *self)
     return bsal_input_command_pack_unpack(self, NULL, BSAL_PACKER_OPERATION_DRY_RUN);
 }
 
-void bsal_input_command_pack(struct bsal_input_command *self, void *buffer)
+int bsal_input_command_pack(struct bsal_input_command *self, void *buffer)
 {
-    bsal_input_command_pack_unpack(self, buffer, BSAL_PACKER_OPERATION_PACK);
+    return bsal_input_command_pack_unpack(self, buffer, BSAL_PACKER_OPERATION_PACK);
 }
 
-void bsal_input_command_unpack(struct bsal_input_command *self, void *buffer)
+int bsal_input_command_unpack(struct bsal_input_command *self, void *buffer)
 {
 #ifdef BSAL_INPUT_COMMAND_DEBUG
     printf("DEBUG bsal_input_command_unpack %p\n", buffer);
 #endif
 
-    bsal_input_command_pack_unpack(self, buffer, BSAL_PACKER_OPERATION_UNPACK);
+    return bsal_input_command_pack_unpack(self, buffer, BSAL_PACKER_OPERATION_UNPACK);
 }
 
 uint64_t bsal_input_command_store_first(struct bsal_input_command *self)
@@ -73,10 +74,13 @@ int bsal_input_command_pack_unpack(struct bsal_input_command *self, void *buffer
     int offset;
     int entries;
     struct bsal_dna_sequence dna_sequence;
+    struct bsal_dna_sequence *other_sequence;
+    int bytes;
+    int i;
 
 #ifdef BSAL_INPUT_COMMAND_DEBUG
-    if (operation == BSAL_PACKER_OPERATION_UNPACK) {
-        printf("DEBUG bsal_input_command_pack_unpack operation %d\n",
+    if (1 || operation == BSAL_PACKER_OPERATION_UNPACK) {
+        printf("DEBUG ENTRY bsal_input_command_pack_unpack operation %d\n",
                         operation);
     }
 #endif
@@ -92,14 +96,16 @@ int bsal_input_command_pack_unpack(struct bsal_input_command *self, void *buffer
     /* TODO remove this line
      */
 
+    /*
     if (operation == BSAL_PACKER_OPERATION_UNPACK) {
         bsal_vector_init(&self->entries, sizeof(struct bsal_dna_sequence));
     }
 
     return bsal_packer_worked_bytes(&packer);
+*/
 
 #ifdef BSAL_INPUT_COMMAND_DEBUG
-    if (operation == BSAL_PACKER_OPERATION_UNPACK) {
+    if (1 || operation == BSAL_PACKER_OPERATION_UNPACK) {
         printf("DEBUG bsal_input_command_pack_unpack offset after packing stuff %d\n",
                     offset);
     }
@@ -110,49 +116,93 @@ int bsal_input_command_pack_unpack(struct bsal_input_command *self, void *buffer
      * then, process every read.
      */
 
+    if (operation == BSAL_PACKER_OPERATION_PACK
+                    || operation == BSAL_PACKER_OPERATION_DRY_RUN) {
+        entries = bsal_vector_size(&self->entries);
+    } else if (operation == BSAL_PACKER_OPERATION_UNPACK) {
+
+        bsal_vector_init(&self->entries, sizeof(struct bsal_dna_sequence));
+    }
+
     /* 1. entries
      */
     bsal_packer_work(&packer, &entries, sizeof(entries));
 
-    offset += bsal_packer_worked_bytes(&packer);
+    offset = bsal_packer_worked_bytes(&packer);
     bsal_packer_destroy(&packer);
+
+#ifdef BSAL_INPUT_COMMAND_DEBUG
+    printf("DEBUG bsal_input_command_pack_unpack operation %d entries %d offset %d\n",
+                    operation, entries, offset);
+#endif
 
     /* 2. get the entries
      */
     if (operation == BSAL_PACKER_OPERATION_UNPACK) {
-        bsal_vector_init(&self->entries, sizeof(struct bsal_dna_sequence));
 
         while (entries--) {
-            offset += bsal_dna_sequence_unpack(&dna_sequence,
+            bytes = bsal_dna_sequence_unpack(&dna_sequence,
                             (char *) buffer + offset);
+
+#ifdef BSAL_INPUT_COMMAND_DEBUG
+            printf("DEBUG unpacking DNA sequence, used %d bytes\n",
+                            bytes);
+#endif
+            offset += bytes;
+
+            bsal_vector_push_back(&self->entries, &dna_sequence);
         }
     } else if (operation == BSAL_PACKER_OPERATION_PACK) {
 
+        i = 0;
         while (entries--) {
-            offset += bsal_dna_sequence_pack(&dna_sequence,
+            other_sequence = (struct bsal_dna_sequence *)bsal_vector_at(&self->entries,
+                            i++);
+            bytes = bsal_dna_sequence_pack(other_sequence,
                             (char *) buffer + offset);
+            offset += bytes;
+
+#ifdef BSAL_INPUT_COMMAND_DEBUG
+            printf("DEBUG packing DNA sequence, used %d bytes, sum %d\n",
+                            bytes, offset);
+#endif
         }
     } else if (operation == BSAL_PACKER_OPERATION_DRY_RUN) {
 
+        i = 0;
         while (entries--) {
-            offset += bsal_dna_sequence_pack_size(&dna_sequence);
+            other_sequence = (struct bsal_dna_sequence *)bsal_vector_at(&self->entries,
+                            i++);
+            bytes = bsal_dna_sequence_pack_size(other_sequence);
+
+            offset += bytes;
+
+#ifdef BSAL_INPUT_COMMAND_DEBUG
+            printf("DEBUG dry run DNA sequence, used %d bytes, sum %d\n",
+                            bytes, offset);
+#endif
         }
     }
 
 #ifdef BSAL_INPUT_COMMAND_DEBUG
-    if (operation == BSAL_PACKER_OPERATION_UNPACK) {
-        printf("DEBUG bsal_input_command_pack_unpack final offset %d\n",
-                    offset);
-    }
+    printf("DEBUG bsal_input_command_pack_unpack operation %d final offset %d\n",
+                    operation, offset);
 #endif
+
+    if (operation == BSAL_PACKER_OPERATION_UNPACK) {
+        printf("DEBUG bsal_input_command_pack_unpack unpacked %d entries\n",
+                        bsal_vector_size(&self->entries));
+    }
 
     return offset;
 }
 
 void bsal_input_command_print(struct bsal_input_command *self)
 {
-    printf("[===] input command: store_name %d store_first %" PRIu64 " store_last %" PRIu64 "\n",
-            self->store_name, self->store_first, self->store_last);
+    printf("[===] input command: store_name %d store_first %" PRIu64 " store_last %" PRIu64 ""
+                    " entries %d bytes %d\n",
+            self->store_name, self->store_first, self->store_last,
+            bsal_vector_size(&self->entries), bsal_input_command_pack_size(self));
 }
 
 struct bsal_vector *bsal_input_command_entries(struct bsal_input_command *self)
