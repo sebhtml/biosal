@@ -6,7 +6,7 @@
 
 struct bsal_hash_table_iterator {
     struct bsal_hash_table *list;
-    int index;
+    uint64_t index;
 };
 
 void bsal_hash_table_iterator_init(struct bsal_hash_table_iterator *self, struct bsal_hash_table *list);

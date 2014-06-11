@@ -17,7 +17,7 @@ void bsal_dynamic_hash_table_iterator_destroy(struct bsal_dynamic_hash_table_ite
 
 int bsal_dynamic_hash_table_iterator_has_next(struct bsal_dynamic_hash_table_iterator *self)
 {
-    int size;
+    uint64_t size;
 
     if (self->list == NULL) {
         return 0;
