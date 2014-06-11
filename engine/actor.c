@@ -1144,7 +1144,7 @@ void bsal_actor_send_range_binomial_tree(struct bsal_actor *actor, struct bsal_v
                         name, middle1, first1, last1);
     #endif
 
-        printf("DEBUG left part size: %d\n", bsal_vector_size(&left_part));
+        printf("DEBUG left part size: %d\n", (int)bsal_vector_size(&left_part));
 
         left_actor = *(int *)bsal_vector_at(&left_part, middle1);
         bsal_actor_send(actor, left_actor, &new_message);

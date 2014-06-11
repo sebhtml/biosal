@@ -112,7 +112,7 @@ void bsal_sequence_store_store_sequences(struct bsal_actor *actor, struct bsal_m
 
     printf("DEBUG store %d bsal_sequence_store_store_sequences entries %d\n",
                     bsal_actor_name(actor),
-                    bsal_vector_size(new_entries));
+                    (int)bsal_vector_size(new_entries));
 
     for (i = 0; i < bsal_vector_size(new_entries); i++) {
 

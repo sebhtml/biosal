@@ -97,7 +97,7 @@ void bsal_dispatcher_print(struct bsal_dispatcher *self)
     void *handler;
 
     printf("DEBUG DATA Dispatcher handlers (%d):",
-                    bsal_vector_size(&self->tags));
+                    (int)bsal_vector_size(&self->tags));
 
     for (i = 0; i < bsal_vector_size(&self->tags); i++) {
         tag = bsal_vector_at_as_int(&self->tags, i);

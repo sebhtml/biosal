@@ -191,7 +191,7 @@ int bsal_input_command_pack_unpack(struct bsal_input_command *self, void *buffer
 
     if (operation == BSAL_PACKER_OPERATION_UNPACK) {
         printf("DEBUG bsal_input_command_pack_unpack unpacked %d entries\n",
-                        bsal_vector_size(&self->entries));
+                        (int)bsal_vector_size(&self->entries));
     }
 
     return offset;
@@ -202,7 +202,7 @@ void bsal_input_command_print(struct bsal_input_command *self)
     printf("[===] input command: store_name %d store_first %" PRIu64 " store_last %" PRIu64 ""
                     " entries %d bytes %d\n",
             self->store_name, self->store_first, self->store_last,
-            bsal_vector_size(&self->entries), bsal_input_command_pack_size(self));
+            (int)bsal_vector_size(&self->entries), bsal_input_command_pack_size(self));
 }
 
 struct bsal_vector *bsal_input_command_entries(struct bsal_input_command *self)

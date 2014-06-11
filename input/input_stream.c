@@ -475,7 +475,7 @@ void bsal_input_stream_push_sequences(struct bsal_actor *actor,
     free(new_buffer);
 
     printf("DEBUG freeing %d entries\n",
-                    bsal_vector_size(command_entries));
+                    (int)bsal_vector_size(command_entries));
 
     for (i = 0; i < bsal_vector_size(command_entries); i++) {
         a_sequence = (struct bsal_dna_sequence *)bsal_vector_at(command_entries, i);

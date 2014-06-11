@@ -61,7 +61,7 @@ void ring_receive(struct bsal_actor *actor, struct bsal_message *message)
 
         bsal_vector_unpack(&ring1->spawners, buffer);
         printf("actor %d BSAL_ACTOR_START, %d spawners\n", name,
-                        bsal_vector_size(&ring1->spawners));
+                        (int)bsal_vector_size(&ring1->spawners));
 
         i = 0;
         while (i < ring1->senders) {

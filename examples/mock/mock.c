@@ -55,7 +55,7 @@ void mock_receive(struct bsal_actor *actor, struct bsal_message *message)
         bsal_vector_unpack(&mock1->spawners, buffer);
 
         printf("BSAL_ACTOR_START spawners: %d\n",
-                        bsal_vector_size(&mock1->spawners));
+                        (int)bsal_vector_size(&mock1->spawners));
 
         /*mock_init(actor);*/
         mock_start(actor, message);
@@ -80,7 +80,8 @@ void mock_receive(struct bsal_actor *actor, struct bsal_message *message)
 
         mock1->notified++;
 
-        printf("notifications %d/%d\n", mock1->notified, bsal_vector_size(&mock1->spawners));
+        printf("notifications %d/%d\n", mock1->notified,
+                        (int)bsal_vector_size(&mock1->spawners));
 
         if (mock1->notified == bsal_vector_size(&mock1->spawners)) {
             bsal_message_init(message, MOCK_PREPARE_DEATH, 0, NULL);

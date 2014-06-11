@@ -46,7 +46,7 @@ void hello_receive(struct bsal_actor *actor, struct bsal_message *message)
         bsal_vector_unpack(&hello1->initial_helloes, buffer);
 
         printf("Hello world ! my name is actor:%d and I have %d acquaintances:",
-                        name, bsal_vector_size(&hello1->initial_helloes));
+                        name, (int)bsal_vector_size(&hello1->initial_helloes));
 
         for (i = 0; i < bsal_vector_size(&hello1->initial_helloes); i++) {
             printf(" actor:%d", bsal_vector_at_as_int(&hello1->initial_helloes, i));

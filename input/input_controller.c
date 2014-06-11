@@ -606,7 +606,7 @@ void bsal_input_controller_create_stores(struct bsal_actor *actor, struct bsal_m
     }
 
     printf("DEBUG sequence stores are ready (%d)\n",
-                    bsal_vector_size(&concrete_actor->stores));
+                    (int)bsal_vector_size(&concrete_actor->stores));
 
     for (i = 0; i < bsal_vector_size(&concrete_actor->stores); i++) {
         value = bsal_vector_at_as_int(&concrete_actor->stores, i);
@@ -625,7 +625,7 @@ void bsal_input_controller_create_stores(struct bsal_actor *actor, struct bsal_m
 
         printf("actor:%d, %d/%d %s %" PRIu64 "\n",
                         name, i,
-                        bsal_vector_size(&concrete_actor->files),
+                        (int)bsal_vector_size(&concrete_actor->files),
                         local_file,
                         entries);
         total += entries;

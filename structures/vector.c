@@ -32,7 +32,7 @@ void bsal_vector_destroy(struct bsal_vector *self)
     self->data = NULL;
 }
 
-void bsal_vector_resize(struct bsal_vector *self, int size)
+void bsal_vector_resize(struct bsal_vector *self, int64_t size)
 {
     if (size == self->size) {
         return;
@@ -62,12 +62,12 @@ void bsal_vector_resize(struct bsal_vector *self, int size)
 #endif
 }
 
-int bsal_vector_size(struct bsal_vector *self)
+int64_t bsal_vector_size(struct bsal_vector *self)
 {
     return self->size;
 }
 
-void *bsal_vector_at(struct bsal_vector *self, int index)
+void *bsal_vector_at(struct bsal_vector *self, int64_t index)
 {
     if (index >= self->size) {
         return NULL;
@@ -82,8 +82,8 @@ void *bsal_vector_at(struct bsal_vector *self, int index)
 
 void bsal_vector_push_back(struct bsal_vector *self, void *data)
 {
-    int index;
-    int new_maximum_size;
+    int64_t index;
+    int64_t new_maximum_size;
     void *bucket;
 
 #ifdef BSAL_VECTOR_DEBUG
@@ -130,9 +130,9 @@ int bsal_vector_unpack(struct bsal_vector *self, void *buffer)
     return bsal_vector_pack_unpack(self, buffer, BSAL_PACKER_OPERATION_UNPACK);
 }
 
-void bsal_vector_copy_range(struct bsal_vector *self, int first, int last, struct bsal_vector *destination)
+void bsal_vector_copy_range(struct bsal_vector *self, int64_t first, int64_t last, struct bsal_vector *destination)
 {
-    int i;
+    int64_t i;
 
     for (i = first; i <= last; i++) {
 
@@ -140,10 +140,10 @@ void bsal_vector_copy_range(struct bsal_vector *self, int first, int last, struc
     }
 }
 
-int bsal_vector_index_of(struct bsal_vector *self, void *data)
+int64_t bsal_vector_index_of(struct bsal_vector *self, void *data)
 {
-    int i;
-    int last;
+    int64_t i;
+    int64_t last;
 
     last = bsal_vector_size(self) - 1;
 
@@ -156,7 +156,7 @@ int bsal_vector_index_of(struct bsal_vector *self, void *data)
     return -1;
 }
 
-int bsal_vector_at_as_int(struct bsal_vector *self, int index)
+int bsal_vector_at_as_int(struct bsal_vector *self, int64_t index)
 {
     int *bucket;
 
@@ -169,12 +169,12 @@ int bsal_vector_at_as_int(struct bsal_vector *self, int index)
     return *bucket;
 }
 
-char *bsal_vector_at_as_char_pointer(struct bsal_vector *self, int index)
+char *bsal_vector_at_as_char_pointer(struct bsal_vector *self, int64_t index)
 {
     return (char *)bsal_vector_at_as_void_pointer(self, index);
 }
 
-void *bsal_vector_at_as_void_pointer(struct bsal_vector *self, int index)
+void *bsal_vector_at_as_void_pointer(struct bsal_vector *self, int64_t index)
 {
     void **bucket;
 
@@ -187,11 +187,11 @@ void *bsal_vector_at_as_void_pointer(struct bsal_vector *self, int index)
     return *bucket;
 }
 
-void bsal_vector_reserve(struct bsal_vector *self, int size)
+void bsal_vector_reserve(struct bsal_vector *self, int64_t size)
 {
     void *new_data;
-    int old_byte_count;
-    int new_byte_count;
+    int64_t old_byte_count;
+    int64_t new_byte_count;
 
 #ifdef BSAL_VECTOR_DEBUG
     printf("DEBUG bsal_vector_reserve %d buckets current_size %d\n", size,
@@ -222,15 +222,15 @@ void bsal_vector_reserve(struct bsal_vector *self, int size)
     self->maximum_size = size;
 }
 
-int bsal_vector_capacity(struct bsal_vector *self)
+int64_t bsal_vector_capacity(struct bsal_vector *self)
 {
     return self->maximum_size;
 }
 
 void bsal_vector_update(struct bsal_vector *self, void *old_item, void *new_item)
 {
-    int i;
-    int last;
+    int64_t i;
+    int64_t last;
     void *bucket;
 
     last = bsal_vector_size(self) - 1;
@@ -249,7 +249,7 @@ void bsal_vector_push_back_vector(struct bsal_vector *self, struct bsal_vector *
     bsal_vector_copy_range(other_vector, 0, bsal_vector_size(other_vector) - 1, self);
 }
 
-void bsal_vector_set(struct bsal_vector *self, int index, void *data)
+void bsal_vector_set(struct bsal_vector *self, int64_t index, void *data)
 {
     void *bucket;
 
@@ -257,7 +257,7 @@ void bsal_vector_set(struct bsal_vector *self, int index, void *data)
     memcpy(bucket, data, self->element_size);
 }
 
-void bsal_vector_set_int(struct bsal_vector *self, int index, int value)
+void bsal_vector_set_int(struct bsal_vector *self, int64_t index, int value)
 {
     bsal_vector_set(self, index, &value);
 }
@@ -269,8 +269,8 @@ void bsal_vector_push_back_int(struct bsal_vector *self, int value)
 
 void bsal_vector_print_int(struct bsal_vector *self)
 {
-    int i;
-    int size;
+    int64_t i;
+    int64_t size;
 
     size = bsal_vector_size(self);
     i = 0;
@@ -290,7 +290,7 @@ void bsal_vector_print_int(struct bsal_vector *self)
 int bsal_vector_pack_unpack(struct bsal_vector *self, void *buffer, int operation)
 {
     struct bsal_packer packer;
-    int bytes;
+    int64_t bytes;
 
     bsal_packer_init(&packer, operation, buffer);
 
