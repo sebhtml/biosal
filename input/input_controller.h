@@ -19,7 +19,7 @@ struct bsal_input_controller {
     int opened_streams;
     int counted;
     struct bsal_vector counts;
-    struct bsal_vector stream_commands;
+    struct bsal_vector partition_commands;
     struct bsal_vector stores_per_spawner;
     struct bsal_queue unprepared_spawners;
     int state;

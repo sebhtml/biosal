@@ -5,7 +5,7 @@
 
 #include <storage/sequence_store.h>
 #include <storage/sequence_partitioner.h>
-#include <storage/stream_command.h>
+#include <storage/partition_command.h>
 #include <input/input_command.h>
 
 #include <stdlib.h>
@@ -47,7 +47,7 @@ void bsal_input_controller_init(struct bsal_actor *actor)
     controller = (struct bsal_input_controller *)bsal_actor_concrete_actor(actor);
 
     bsal_vector_init(&controller->streams, sizeof(int));
-    bsal_vector_init(&controller->stream_commands, sizeof(int));
+    bsal_vector_init(&controller->partition_commands, sizeof(int));
     bsal_vector_init(&controller->files, sizeof(char *));
     bsal_vector_init(&controller->spawners, sizeof(int));
     bsal_vector_init(&controller->counts, sizeof(uint64_t));
@@ -100,7 +100,7 @@ void bsal_input_controller_destroy(struct bsal_actor *actor)
     }
 
     bsal_vector_destroy(&controller->streams);
-    bsal_vector_destroy(&controller->stream_commands);
+    bsal_vector_destroy(&controller->partition_commands);
     bsal_vector_destroy(&controller->files);
     bsal_vector_destroy(&controller->spawners);
     bsal_vector_destroy(&controller->counts);
@@ -246,9 +246,9 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
 #endif
 
         bsal_vector_push_back(&controller->streams, &stream);
-        bsal_vector_push_back(&controller->stream_commands, &stream);
-        *(int *)bsal_vector_at(&controller->stream_commands,
-                        bsal_vector_size(&controller->stream_commands) -1) = -1;
+        bsal_vector_push_back(&controller->partition_commands, &stream);
+        *(int *)bsal_vector_at(&controller->partition_commands,
+                        bsal_vector_size(&controller->partition_commands) -1) = -1;
 
         bsal_message_init(&new_message, BSAL_INPUT_OPEN, strlen(local_file) + 1, local_file);
         bsal_actor_send(actor, stream, &new_message);
@@ -483,7 +483,7 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
         stream_name = source;
 
         stream_index = bsal_vector_index_of(&concrete_actor->streams, &stream_name);
-        command_name = *(int *)bsal_vector_at(&concrete_actor->stream_commands,
+        command_name = *(int *)bsal_vector_at(&concrete_actor->partition_commands,
                         stream_index);
 
         bsal_actor_send_int(actor, bsal_actor_get_acquaintance(actor,
@@ -770,7 +770,7 @@ void bsal_input_controller_prepare_spawners(struct bsal_actor *actor, struct bsa
 
 void bsal_input_controller_receive_command(struct bsal_actor *actor, struct bsal_message *message)
 {
-    struct bsal_stream_command command;
+    struct bsal_partition_command command;
     void *buffer;
     int stream_index;
     int store_index;
@@ -788,24 +788,24 @@ void bsal_input_controller_receive_command(struct bsal_actor *actor, struct bsal
 
     concrete_actor = (struct bsal_input_controller *)bsal_actor_concrete_actor(actor);
     buffer = bsal_message_buffer(message);
-    bsal_stream_command_unpack(&command, buffer);
-    stream_index = bsal_stream_command_stream_index(&command);
+    bsal_partition_command_unpack(&command, buffer);
+    stream_index = bsal_partition_command_stream_index(&command);
 
 #ifdef BSAL_INPUT_CONTROLLER_DEBUG_COMMANDS
     printf("DEBUG bsal_input_controller_receive_command controller receives command for stream %d\n", stream_index);
-    bsal_stream_command_print(&command);
+    bsal_partition_command_print(&command);
 #endif
 
-    store_index = bsal_stream_command_store_index(&command);
-    bucket_for_command_name = (int *)bsal_vector_at(&concrete_actor->stream_commands,
+    store_index = bsal_partition_command_store_index(&command);
+    bucket_for_command_name = (int *)bsal_vector_at(&concrete_actor->partition_commands,
                     stream_index);
 
     stream_name = *(int *)bsal_vector_at(&concrete_actor->streams,
                     stream_index);
 
     store_name = *(int *)bsal_vector_at(&concrete_actor->stores, store_index);
-    store_first = bsal_stream_command_store_first(&command);
-    store_last = bsal_stream_command_store_last(&command);
+    store_first = bsal_partition_command_store_first(&command);
+    store_last = bsal_partition_command_store_last(&command);
 
     bsal_input_command_init(&input_command, store_name, store_first, store_last);
 
@@ -834,7 +834,7 @@ void bsal_input_controller_receive_command(struct bsal_actor *actor, struct bsal
 
     free(new_buffer);
 
-    command_name = bsal_stream_command_name(&command);
+    command_name = bsal_partition_command_name(&command);
 
     *bucket_for_command_name = command_name;
 }

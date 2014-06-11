@@ -1,7 +1,7 @@
 
 #include "sequence_partitioner.h"
 
-#include "stream_command.h"
+#include "partition_command.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -34,9 +34,9 @@ void bsal_sequence_partitioner_init(struct bsal_actor *actor)
     bsal_vector_init(&concrete_actor->store_entries, sizeof(uint64_t));
     bsal_vector_init(&concrete_actor->store_current_entries, sizeof(uint64_t));
 
-    bsal_queue_init(&concrete_actor->available_commands, sizeof(struct bsal_stream_command));
+    bsal_queue_init(&concrete_actor->available_commands, sizeof(struct bsal_partition_command));
     bsal_dynamic_hash_table_init(&concrete_actor->active_commands, 128, sizeof(int),
-                    sizeof(struct bsal_stream_command));
+                    sizeof(struct bsal_partition_command));
 
     concrete_actor->store_count = -1;
     concrete_actor->block_size = -1;
@@ -68,12 +68,12 @@ void bsal_sequence_partitioner_receive(struct bsal_actor *actor, struct bsal_mes
     void *buffer;
     int bytes;
     struct bsal_sequence_partitioner *concrete_actor;
-    struct bsal_stream_command command;
+    struct bsal_partition_command command;
     struct bsal_message response;
     int command_number;
-    struct bsal_stream_command *active_command;
+    struct bsal_partition_command *active_command;
     int stream_index;
-    struct bsal_stream_command *command_bucket;
+    struct bsal_partition_command *command_bucket;
     int i;
 
     bsal_message_get_all(message, &tag, &count, &buffer, &source);
@@ -122,14 +122,14 @@ void bsal_sequence_partitioner_receive(struct bsal_actor *actor, struct bsal_mes
 
         if (bsal_queue_dequeue(&concrete_actor->available_commands, &command)) {
 
-            bytes = bsal_stream_command_pack_size(&command);
+            bytes = bsal_partition_command_pack_size(&command);
 
             /*
             printf("DEBUG partitioner has command, packing %d bytes!\n", bytes);
             */
 
             buffer = malloc(bytes);
-            bsal_stream_command_pack(&command, buffer);
+            bsal_partition_command_pack(&command, buffer);
 
             bsal_message_init(&response, BSAL_SEQUENCE_PARTITIONER_GET_COMMAND_REPLY,
                             bytes, buffer);
@@ -137,8 +137,8 @@ void bsal_sequence_partitioner_receive(struct bsal_actor *actor, struct bsal_mes
 
             /* store the active command
              */
-            command_number = bsal_stream_command_name(&command);
-            command_bucket = (struct bsal_stream_command *)bsal_dynamic_hash_table_add(&concrete_actor->active_commands,
+            command_number = bsal_partition_command_name(&command);
+            command_bucket = (struct bsal_partition_command *)bsal_dynamic_hash_table_add(&concrete_actor->active_commands,
                             &command_number);
             *command_bucket = command;
 
@@ -164,7 +164,7 @@ void bsal_sequence_partitioner_receive(struct bsal_actor *actor, struct bsal_mes
             return;
         }
 
-        stream_index = bsal_stream_command_stream_index(active_command);
+        stream_index = bsal_partition_command_stream_index(active_command);
         active_command = NULL;
         bsal_dynamic_hash_table_delete(&concrete_actor->active_commands,
                         &command_number);
@@ -353,7 +353,7 @@ void bsal_sequence_partitioner_generate_command(struct bsal_actor *actor, int st
     uint64_t *bucket_for_stream_position;
     uint64_t *bucket_for_global_position;
     uint64_t *bucket_for_store_position;
-    struct bsal_stream_command command;
+    struct bsal_partition_command command;
 
     int store_index;
     uint64_t stream_entries;
@@ -435,7 +435,7 @@ void bsal_sequence_partitioner_generate_command(struct bsal_actor *actor, int st
     printf("DEBUG %" PRIu64 " goes in store %d\n",
                     global_first, store_index);
 */
-    bsal_stream_command_init(&command, concrete_actor->command_number,
+    bsal_partition_command_init(&command, concrete_actor->command_number,
                     stream_index, stream_first, stream_last,
                     store_index, store_first, store_last,
                     global_first, global_last);
@@ -447,10 +447,10 @@ void bsal_sequence_partitioner_generate_command(struct bsal_actor *actor, int st
 
 #ifdef BSAL_SEQUENCE_PARTITIONER_DEBUG
     printf("DEBUG in partitioner:\n");
-    bsal_stream_command_print(&command);
+    bsal_partition_command_print(&command);
 #endif
 
-    bsal_stream_command_destroy(&command);
+    bsal_partition_command_destroy(&command);
 
     /* update positions
      */
