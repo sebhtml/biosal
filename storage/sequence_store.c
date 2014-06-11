@@ -128,9 +128,10 @@ void bsal_sequence_store_store_sequences(struct bsal_actor *actor, struct bsal_m
 
     for (i = 0; i < bsal_vector_size(new_entries); i++) {
 
-        if (concrete_actor->received % 10000000 == 0) {
-            printf("store %d now has %" PRId64 " entries\n",
+        if (concrete_actor->received % 1000000 == 0) {
+            printf("store %d has %" PRId64 "/%" PRId64 " entries\n",
                             bsal_actor_name(actor),
+                            concrete_actor->received,
                             bsal_vector_size(&concrete_actor->sequences));
         }
 
@@ -173,8 +174,9 @@ void bsal_sequence_store_store_sequences(struct bsal_actor *actor, struct bsal_m
 #endif
 
         if (concrete_actor->received == bsal_vector_size(&concrete_actor->sequences)) {
-            printf("store %d has a final number of entries of %" PRId64 "\n",
+            printf("store %d has %" PRId64 "/%" PRId64 " entries\n",
                             bsal_actor_name(actor),
+                            concrete_actor->received,
                             bsal_vector_size(&concrete_actor->sequences));
         }
     }

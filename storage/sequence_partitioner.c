@@ -204,8 +204,6 @@ void bsal_sequence_partitioner_verify(struct bsal_actor *actor)
     uint64_t entries;
     int position;
     uint64_t stream_entries;
-    int remainder;
-    uint64_t *bucket;
     int bytes;
     void *buffer;
     struct bsal_message message;
@@ -277,6 +275,12 @@ void bsal_sequence_partitioner_verify(struct bsal_actor *actor)
     for (i = 0; i < concrete_actor->store_count; i++) {
         bsal_vector_push_back(&concrete_actor->store_entries, &entries);
 
+#ifdef BSAL_SEQUENCE_PARTITIONER_DEBUG
+        printf("DEBUG store %d will have %d entries\n",
+                        bsal_actor_name(actor),
+                        (int)entries);
+#endif
+
         remaining -= entries;
 
         if (remaining < entries) {
@@ -285,13 +289,6 @@ void bsal_sequence_partitioner_verify(struct bsal_actor *actor)
 
         bsal_vector_push_back(&concrete_actor->store_current_entries, &initial_store_entries);
     }
-
-    remainder = concrete_actor->total % concrete_actor->store_count;
-
-    bucket = (uint64_t *)bsal_vector_at(&concrete_actor->store_entries,
-                    bsal_vector_size(&concrete_actor->store_entries) - 1);
-
-    *bucket += remainder;
 
 #ifdef BSAL_SEQUENCE_PARTITIONER_DEBUG
     printf("DEBUG bsal_sequence_partitioner_verify sending store counts\n");
