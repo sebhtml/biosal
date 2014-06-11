@@ -24,7 +24,6 @@
 #define BSAL_INPUT_CONTROLLER_DEBUG_COMMANDS
 */
 
-
 /* states of this actor
  */
 #define BSAL_INPUT_CONTROLLER_STATE_NONE 0
@@ -813,6 +812,9 @@ void bsal_input_controller_receive_command(struct bsal_actor *actor, struct bsal
     bytes = bsal_input_command_pack_size(&input_command);
 
 #ifdef BSAL_INPUT_CONTROLLER_DEBUG_COMMANDS
+    printf("DEBUG input command\n");
+    bsal_input_command_print(&input_command);
+
     printf("DEBUG bsal_input_controller_receive_command bytes %d\n",
                     bytes);
 #endif

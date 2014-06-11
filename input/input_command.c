@@ -2,11 +2,13 @@
 #include "input_command.h"
 
 #include <system/packer.h>
+#include <structures/vector_iterator.h>
 #include <data/dna_sequence.h>
 
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <stdint.h>
 
 #include <inttypes.h>
 
@@ -26,9 +28,21 @@ void bsal_input_command_init(struct bsal_input_command *self,
 
 void bsal_input_command_destroy(struct bsal_input_command *self)
 {
+    struct bsal_dna_sequence *sequence;
+    struct bsal_vector_iterator iterator;
     self->store_name= -1;
     self->store_first = 0;
     self->store_last = 0;
+
+    bsal_vector_iterator_init(&iterator, &self->entries);
+
+    while (bsal_vector_iterator_has_next(&iterator)) {
+        bsal_vector_iterator_next(&iterator, (void **)&sequence);
+
+        bsal_dna_sequence_destroy(sequence);
+    }
+
+    bsal_vector_iterator_destroy(&iterator);
 
     bsal_vector_destroy(&self->entries);
 }
@@ -72,7 +86,7 @@ int bsal_input_command_pack_unpack(struct bsal_input_command *self, void *buffer
 {
     struct bsal_packer packer;
     int offset;
-    int entries;
+    int64_t entries;
     struct bsal_dna_sequence dna_sequence;
     struct bsal_dna_sequence *other_sequence;
     int bytes;
@@ -187,12 +201,12 @@ int bsal_input_command_pack_unpack(struct bsal_input_command *self, void *buffer
 #ifdef BSAL_INPUT_COMMAND_DEBUG
     printf("DEBUG bsal_input_command_pack_unpack operation %d final offset %d\n",
                     operation, offset);
-#endif
 
     if (operation == BSAL_PACKER_OPERATION_UNPACK) {
         printf("DEBUG bsal_input_command_pack_unpack unpacked %d entries\n",
                         (int)bsal_vector_size(&self->entries));
     }
+#endif
 
     return offset;
 }

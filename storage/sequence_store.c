@@ -34,6 +34,8 @@ void bsal_sequence_store_init(struct bsal_actor *actor)
     printf("DEBUG bsal_sequence_store_init name %d\n",
                     bsal_actor_name(actor));
 #endif
+
+    concrete_actor->received = 0;
 }
 
 void bsal_sequence_store_destroy(struct bsal_actor *actor)
@@ -86,23 +88,31 @@ void bsal_sequence_store_store_sequences(struct bsal_actor *actor, struct bsal_m
     struct bsal_sequence_store *concrete_actor;
     void *buffer;
     uint64_t i;
+
+#ifdef BSAL_SEQUENCE_STORE_DEBUG
     int count;
+#endif
+
     struct bsal_dna_sequence *bucket_in_message;
     struct bsal_dna_sequence *bucket_in_store;
 
     buffer = bsal_message_buffer(message);
-    count = bsal_message_count(message);
     concrete_actor = (struct bsal_sequence_store *)bsal_actor_concrete_actor(actor);
 
+#ifdef BSAL_SEQUENCE_STORE_DEBUG
+    count = bsal_message_count(message);
     printf("DEBUG store receives BSAL_STORE_SEQUENCES %d bytes\n",
                     count);
+#endif
 
     bsal_input_command_unpack(&payload, buffer);
 
+#ifdef BSAL_SEQUENCE_STORE_DEBUG
     printf("DEBUG store %d bsal_sequence_store_receive command:\n",
                     bsal_actor_name(actor));
 
     bsal_input_command_print(&payload);
+#endif
 
     first = bsal_input_command_store_first(&payload);
     /*
@@ -110,11 +120,19 @@ void bsal_sequence_store_store_sequences(struct bsal_actor *actor, struct bsal_m
     */
     new_entries = bsal_input_command_entries(&payload);
 
+#ifdef BSAL_SEQUENCE_STORE_DEBUG
     printf("DEBUG store %d bsal_sequence_store_store_sequences entries %d\n",
                     bsal_actor_name(actor),
                     (int)bsal_vector_size(new_entries));
+#endif
 
     for (i = 0; i < bsal_vector_size(new_entries); i++) {
+
+        if (concrete_actor->received % 10000000 == 0) {
+            printf("store %d now has %" PRId64 " entries\n",
+                            bsal_actor_name(actor),
+                            bsal_vector_size(&concrete_actor->sequences));
+        }
 
         bucket_in_message = (struct bsal_dna_sequence *)bsal_vector_at(new_entries,
                         i);
@@ -137,17 +155,33 @@ void bsal_sequence_store_store_sequences(struct bsal_actor *actor, struct bsal_m
 
             printf("DEBUG i %d first %d size %d store size %d\n",
                    (int)i, (int)first,
-                   bsal_vector_size(new_entries),
-                   bsal_vector_size(&concrete_actor->sequences));
+                   (int)bsal_vector_size(new_entries),
+                   (int)bsal_vector_size(&concrete_actor->sequences));
 
             bsal_dna_sequence_print(bucket_in_message);
         }
 #endif
 
-        bsal_dna_sequence_init_same_data(bucket_in_store, bucket_in_message);
+        bsal_dna_sequence_init_copy(bucket_in_store, bucket_in_message);
+
+        concrete_actor->received++;
+
+#ifdef BSAL_SEQUENCE_STORE_DEBUG
+        printf("%" PRId64 "/%" PRId64 "\n",
+                        concrete_actor->received,
+                        bsal_vector_size(&concrete_actor->sequences));
+#endif
+
+        if (concrete_actor->received == bsal_vector_size(&concrete_actor->sequences)) {
+            printf("store %d has a final number of entries of %" PRId64 "\n",
+                            bsal_actor_name(actor),
+                            bsal_vector_size(&concrete_actor->sequences));
+        }
     }
 
+#ifdef BSAL_SEQUENCE_STORE_DEBUG
     printf("DONE.\n");
+#endif
 
     /* The DNA sequences are kept and are not
      * destroyed.
@@ -180,7 +214,7 @@ void bsal_sequence_store_reserve(struct bsal_actor *actor, struct bsal_message *
 #ifdef BSAL_SEQUENCE_STORE_DEBUG
     printf("DEBUG store %d now has %d buckets\n",
                     bsal_actor_name(actor),
-                    bsal_vector_size(&concrete_actor->sequences));
+                    (int)bsal_vector_size(&concrete_actor->sequences));
 #endif
 
     for ( i = 0; i < bsal_vector_size(&concrete_actor->sequences); i++) {
