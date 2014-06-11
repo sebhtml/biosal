@@ -69,6 +69,22 @@ int main(int argc, char **argv)
         TEST_POINTER_NOT_EQUALS(bsal_vector_at(&vector, 0), NULL);
         TEST_POINTER_EQUALS(bsal_vector_at(&vector, 2000000), NULL);
 
+        for (i = 0; i < 100000; i++) {
+
+            expected = i * i;
+
+            pointer = (int *)bsal_vector_at(&vector, i);
+
+            TEST_POINTER_NOT_EQUALS(pointer, NULL);
+
+            *pointer = expected;
+
+            pointer = (int *)bsal_vector_at(&vector, i);
+            actual = *pointer;
+
+            TEST_INT_EQUALS(actual, expected);
+        }
+
         bsal_vector_destroy(&vector);
     }
 

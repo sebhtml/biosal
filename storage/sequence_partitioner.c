@@ -353,20 +353,25 @@ int bsal_sequence_partitioner_get_store(int block_size, int store_count, uint64_
 
 void bsal_sequence_partitioner_generate_command(struct bsal_actor *actor, int stream_index)
 {
-    uint64_t *bucket_for_position;
+    uint64_t *bucket_for_stream_position;
     uint64_t *bucket_for_global_position;
     uint64_t *bucket_for_store_position;
     struct bsal_stream_command command;
 
     int store_index;
+    uint64_t stream_entries;
     uint64_t stream_first;
     uint64_t stream_last;
+    uint64_t available_in_stream;
 
-    uint64_t stream_entries;
+    uint64_t store_entries;
     uint64_t store_first;
     uint64_t store_last;
+    uint64_t available_in_store;
+
     struct bsal_sequence_partitioner *concrete_actor;
     int actual_block_size;
+
     uint64_t global_first;
     uint64_t global_last;
 
@@ -377,59 +382,57 @@ void bsal_sequence_partitioner_generate_command(struct bsal_actor *actor, int st
                     stream_index);
 */
 
-    bucket_for_position = (uint64_t *)bsal_vector_at(&concrete_actor->stream_positions, stream_index);
+    bucket_for_stream_position = (uint64_t *)bsal_vector_at(&concrete_actor->stream_positions, stream_index);
     bucket_for_global_position = (uint64_t *)bsal_vector_at(&concrete_actor->stream_global_positions,
                     stream_index);
 
     /*
     printf("DEBUG got buckets.\n");
 */
-    stream_first = *bucket_for_position;
-    stream_entries = *(uint64_t *)bsal_vector_at(&concrete_actor->stream_entries, stream_index);
 
-    if (stream_entries == 0) {
-        return;
-    }
-
-    /*
-    printf("DEBUG bsal_sequence_partitioner_generate_command stream %d entries %" PRIu64 " first %d\n",
-                    stream_index, stream_entries, first);
-*/
-
-    if (stream_first > stream_entries - 1) {
-        return;
-    }
-
-    stream_last = stream_first + concrete_actor->block_size - 1;
-
-    /* check the border for the stream.
+    /* compute feasible block size given the stream and the store.
      */
-    if (stream_last > stream_entries - 1) {
-        stream_last = stream_entries - 1;
-    }
-
-    actual_block_size = stream_last - stream_first + 1;
-
     global_first = *bucket_for_global_position;
-
-    if (global_first > concrete_actor->total - 1) {
-        return;
-    }
-
-    global_last = global_first + actual_block_size - 1;
-
-    if (global_last > concrete_actor->total - 1) {
-        global_last = concrete_actor->total - 1;
-    }
 
     store_index = bsal_sequence_partitioner_get_store(concrete_actor->block_size,
                     concrete_actor->store_count, global_first);
 
     bucket_for_store_position = bsal_vector_at(&concrete_actor->store_current_entries,
                     store_index);
+    stream_entries = *(uint64_t *)bsal_vector_at(&concrete_actor->stream_entries, stream_index);
+    store_entries = *(uint64_t *)bsal_vector_at(&concrete_actor->store_entries, store_index);
+
+    stream_first = *bucket_for_stream_position;
+
+    /* check out what is left in the stream
+     */
+    actual_block_size = concrete_actor->block_size;
+    available_in_stream = stream_entries - *bucket_for_stream_position;
+
+    if (available_in_stream < actual_block_size) {
+        actual_block_size = available_in_stream;
+    }
+
+    available_in_store = store_entries - *bucket_for_store_position;
+
+    if (available_in_store < actual_block_size) {
+
+        actual_block_size = available_in_store;
+    }
+
+    /* can't do that
+     */
+    if (actual_block_size == 0) {
+        return;
+    }
+
+    stream_first = *bucket_for_stream_position;
+    stream_last = stream_first + actual_block_size - 1;
 
     store_first = *bucket_for_store_position;
     store_last = store_first + actual_block_size - 1;
+
+    global_last = global_first + actual_block_size - 1;
 
     /*
     printf("DEBUG %" PRIu64 " goes in store %d\n",
@@ -455,7 +458,7 @@ void bsal_sequence_partitioner_generate_command(struct bsal_actor *actor, int st
     /* update positions
      */
 
-    *bucket_for_position = stream_last + 1;
+    *bucket_for_stream_position = stream_last + 1;
     *bucket_for_global_position = global_last + 1;
     *bucket_for_store_position = store_last + 1;
 

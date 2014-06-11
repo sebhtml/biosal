@@ -1,6 +1,7 @@
 
 #include "sequence_store.h"
 
+#include <structures/vector_iterator.h>
 #include <input/input_command.h>
 #include <data/dna_sequence.h>
 
@@ -27,7 +28,7 @@ void bsal_sequence_store_init(struct bsal_actor *actor)
     struct bsal_sequence_store *concrete_actor;
 
     concrete_actor = (struct bsal_sequence_store *)bsal_actor_concrete_actor(actor);
-    bsal_vector_init(&concrete_actor->sequences, sizeof(int));
+    bsal_vector_init(&concrete_actor->sequences, sizeof(struct bsal_dna_sequence));
 
 #ifdef BSAL_SEQUENCE_STORE_DEBUG
     printf("DEBUG bsal_sequence_store_init name %d\n",
@@ -38,8 +39,19 @@ void bsal_sequence_store_init(struct bsal_actor *actor)
 void bsal_sequence_store_destroy(struct bsal_actor *actor)
 {
     struct bsal_sequence_store *concrete_actor;
+    struct bsal_vector_iterator iterator;
+    struct bsal_dna_sequence *sequence;
 
     concrete_actor = (struct bsal_sequence_store *)bsal_actor_concrete_actor(actor);
+
+    bsal_vector_iterator_init(&iterator, &concrete_actor->sequences);
+
+    while (bsal_vector_iterator_has_next(&iterator)) {
+
+        bsal_vector_iterator_next(&iterator, (void**)&sequence);
+        bsal_dna_sequence_destroy(sequence);
+    }
+
     bsal_vector_destroy(&concrete_actor->sequences);
 }
 
@@ -117,29 +129,22 @@ void bsal_sequence_store_store_sequences(struct bsal_actor *actor, struct bsal_m
         */
 
 #ifdef BSAL_SEQUENCE_STORE_DEBUG
-        printf("DEBUG-thor i %d bucket_in_store %p bucket_in_message %p\n",
+        if (i == 0) {
+            printf("DEBUG first in payload\n");
+            printf("DEBUG-thor i %d bucket_in_store %p bucket_in_message %p\n",
                         (int)i,
                         (void *)bucket_in_store, (void *)bucket_in_message);
 
-        printf("DEBUG i %d first %d size %d store size %d\n",
+            printf("DEBUG i %d first %d size %d store size %d\n",
                    (int)i, (int)first,
                    bsal_vector_size(new_entries),
                    bsal_vector_size(&concrete_actor->sequences));
 
-        bsal_dna_sequence_print(bucket_in_message);
+            bsal_dna_sequence_print(bucket_in_message);
+        }
 #endif
 
-        if (bucket_in_store == NULL) {
-
-        }
-
-        if (bucket_in_message == NULL) {
-
-        }
-
-        /*
-        bsal_dna_sequence_init_copy(bucket_in_store, bucket_in_message);
-        */
+        bsal_dna_sequence_init_same_data(bucket_in_store, bucket_in_message);
     }
 
     printf("DONE.\n");
@@ -172,15 +177,16 @@ void bsal_sequence_store_reserve(struct bsal_actor *actor, struct bsal_message *
 
     bsal_vector_resize(&concrete_actor->sequences, amount);
 
+#ifdef BSAL_SEQUENCE_STORE_DEBUG
     printf("DEBUG store %d now has %d buckets\n",
                     bsal_actor_name(actor),
                     bsal_vector_size(&concrete_actor->sequences));
+#endif
 
     for ( i = 0; i < bsal_vector_size(&concrete_actor->sequences); i++) {
-        /* TODO
-         * remove break
+        /*
+         * initialize sequences with empty things
          */
-        break;
         dna_sequence = (struct bsal_dna_sequence *)bsal_vector_at(&concrete_actor->sequences,
                         i);
 

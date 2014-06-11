@@ -27,6 +27,8 @@ void bsal_dna_sequence_print(struct bsal_dna_sequence *sequence);
 int bsal_dna_sequence_length(struct bsal_dna_sequence *self);
 
 char *bsal_dna_sequence_sequence(struct bsal_dna_sequence *self);
+void bsal_dna_sequence_init_same_data(struct bsal_dna_sequence *self,
+                struct bsal_dna_sequence *other);
 void bsal_dna_sequence_init_copy(struct bsal_dna_sequence *self,
                 struct bsal_dna_sequence *other);
 

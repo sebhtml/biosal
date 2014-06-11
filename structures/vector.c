@@ -56,6 +56,10 @@ void bsal_vector_resize(struct bsal_vector *self, int size)
     /* otherwise, the array needs to grow */
     bsal_vector_reserve(self, size);
     self->size = self->maximum_size;
+
+#ifdef BSAL_VECTOR_DEBUG
+    printf("DEBUG resized to %d\n", self->size);
+#endif
 }
 
 int bsal_vector_size(struct bsal_vector *self)

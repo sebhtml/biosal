@@ -148,3 +148,10 @@ void bsal_dna_sequence_init_copy(struct bsal_dna_sequence *self,
 {
     bsal_dna_sequence_init(self, other->data);
 }
+
+void bsal_dna_sequence_init_same_data(struct bsal_dna_sequence *self,
+                struct bsal_dna_sequence *other)
+{
+    self->data = other->data;
+    self->length = other->length;
+}
