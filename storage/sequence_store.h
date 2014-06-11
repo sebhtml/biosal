@@ -29,5 +29,6 @@ int bsal_sequence_store_has_error(struct bsal_actor *actor,
 int bsal_sequence_store_check_open_error(struct bsal_actor *actor,
                 struct bsal_message *message);
 void bsal_sequence_store_store_sequences(struct bsal_actor *actor, struct bsal_message *message);
+void bsal_sequence_store_reserve(struct bsal_actor *actor, struct bsal_message *message);
 
 #endif

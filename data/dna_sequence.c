@@ -16,10 +16,15 @@ void bsal_dna_sequence_init(struct bsal_dna_sequence *sequence, void *data)
      * encode @raw_data in 2-bit format
      * use an allocator provided to allocate memory
      */
-    sequence->length = strlen((char *)data);
-    sequence->data = malloc(sequence->length + 1);
+    if (data == NULL) {
+        sequence->data = NULL;
+        sequence->length = 0;
+    } else {
+        sequence->length = strlen((char *)data);
+        sequence->data = malloc(sequence->length + 1);
+        memcpy(sequence->data, data, sequence->length + 1);
+    }
 
-    memcpy(sequence->data, data, sequence->length + 1);
     sequence->pair = -1;
 }
 
@@ -136,4 +141,10 @@ int bsal_dna_sequence_length(struct bsal_dna_sequence *self)
 char *bsal_dna_sequence_sequence(struct bsal_dna_sequence *self)
 {
     return (char *)self->data;
+}
+
+void bsal_dna_sequence_init_copy(struct bsal_dna_sequence *self,
+                struct bsal_dna_sequence *other)
+{
+    bsal_dna_sequence_init(self, other->data);
 }
