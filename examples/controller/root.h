@@ -13,6 +13,8 @@ struct root {
     int synchronized;
     int is_king;
     int ready;
+
+    int manager;
 };
 
 #define ROOT_STOP_ALL 0x00005fd3

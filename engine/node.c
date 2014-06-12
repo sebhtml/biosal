@@ -14,16 +14,16 @@
 /*
 #define BSAL_NODE_DEBUG
 
-#define BSAL_NODE_DEBUG_LOOP
 #define BSAL_NODE_DEBUG_RECEIVE_SYSTEM
 */
 
 /*
 #define BSAL_NODE_SIMPLE_INITIAL_ACTOR_NAMES
 #define BSAL_NODE_DEBUG_SPAWN
-#define BSAL_NODE_DEBUG_SUPERVISOR
 
 #define BSAL_NODE_DEBUG_ACTOR_COUNTERS
+#define BSAL_NODE_DEBUG_SUPERVISOR
+#define BSAL_NODE_DEBUG_LOOP
 */
 
 
@@ -35,6 +35,8 @@
  */
 void bsal_node_init(struct bsal_node *node, int *argc, char ***argv)
 {
+    printf("DEBUG bsal_node_init 1\n");
+
     int node_name;
     int nodes;
     int i;
@@ -75,6 +77,7 @@ void bsal_node_init(struct bsal_node *node, int *argc, char ***argv)
 
     required = MPI_THREAD_MULTIPLE;
 
+    printf("DEBUG bsal_node_init 2100\n");
     MPI_Init_thread(argc, argv, required, &provided);
 
     /* make a new communicator for the library and don't use MPI_COMM_WORLD later */
@@ -224,6 +227,7 @@ void bsal_node_init(struct bsal_node *node, int *argc, char ***argv)
      * to actors so their addresses can not be changed
      */
     bsal_vector_reserve(&node->actors, actor_capacity);
+
     bsal_dynamic_hash_table_init(&node->actor_names, actor_capacity, sizeof(int), sizeof(int));
 
     bsal_vector_init(&node->initial_actors, sizeof(int));
@@ -328,6 +332,10 @@ int bsal_node_threads_from_string(struct bsal_node *node,
 void bsal_node_set_supervisor(struct bsal_node *node, int name, int supervisor)
 {
     struct bsal_actor *actor;
+
+    if (name == BSAL_ACTOR_NOBODY) {
+        return;
+    }
 
 #ifdef BSAL_NODE_DEBUG_SUPERVISOR
     printf("DEBUG bsal_node_set_supervisor %d %d\n", name, supervisor);

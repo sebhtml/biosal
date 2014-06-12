@@ -839,8 +839,8 @@ void bsal_input_controller_receive_command(struct bsal_actor *actor, struct bsal
 
 #ifdef BSAL_INPUT_CONTROLLER_DEBUG_COMMANDS
     printf("DEBUG bsal_input_controller_receive_command controller receives command for stream %d\n", stream_index);
-#endif
     bsal_partition_command_print(&command);
+#endif
 
     store_index = bsal_partition_command_store_index(&command);
     bucket_for_command_name = (int *)bsal_vector_at(&concrete_actor->partition_commands,

@@ -42,13 +42,16 @@ int bsal_hash_table_group_iterator_has_next(struct bsal_hash_table_group_iterato
 void bsal_hash_table_group_iterator_next(struct bsal_hash_table_group_iterator *self, void **key, void **value)
 {
     if (!bsal_hash_table_group_iterator_has_next(self)) {
-        *key = NULL;
-        *value = NULL;
         return;
     }
 
-    *key = bsal_hash_table_group_key(self->list, self->index, self->key_size, self->value_size);
-    *value = bsal_hash_table_group_value(self->list, self->index, self->key_size, self->value_size);
+    if (key != NULL) {
+        *key = bsal_hash_table_group_key(self->list, self->index, self->key_size, self->value_size);
+    }
+
+    if (value != NULL) {
+        *value = bsal_hash_table_group_value(self->list, self->index, self->key_size, self->value_size);
+    }
 
     self->index++;
 }

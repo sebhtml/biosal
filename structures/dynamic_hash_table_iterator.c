@@ -45,13 +45,16 @@ int bsal_dynamic_hash_table_iterator_has_next(struct bsal_dynamic_hash_table_ite
 void bsal_dynamic_hash_table_iterator_next(struct bsal_dynamic_hash_table_iterator *self, void **key, void **value)
 {
     if (!bsal_dynamic_hash_table_iterator_has_next(self)) {
-        *key = NULL;
-        *value = NULL;
         return;
     }
 
-    *key = bsal_dynamic_hash_table_key(self->list, self->index);
-    *value = bsal_dynamic_hash_table_value(self->list, self->index);
+    if (key != NULL) {
+        *key = bsal_dynamic_hash_table_key(self->list, self->index);
+    }
+
+    if (value != NULL) {
+        *value = bsal_dynamic_hash_table_value(self->list, self->index);
+    }
 
     self->index++;
 }

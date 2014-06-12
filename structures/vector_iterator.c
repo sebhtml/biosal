@@ -22,7 +22,13 @@ int bsal_vector_iterator_has_next(struct bsal_vector_iterator *self)
 
 void bsal_vector_iterator_next(struct bsal_vector_iterator *self, void **value)
 {
-    *value = bsal_vector_at(self->list, self->index);
+    if (!bsal_vector_iterator_has_next(self)) {
+        return;
+    }
+
+    if (value != NULL) {
+        *value = bsal_vector_at(self->list, self->index);
+    }
 
     self->index++;
 }

@@ -29,6 +29,13 @@ void root_init(struct bsal_actor *actor)
 
     bsal_actor_add_script(actor, BSAL_INPUT_CONTROLLER_SCRIPT,
                         &bsal_input_controller_script);
+    bsal_actor_add_script(actor, BSAL_SEQUENCE_STORE_MANAGER_SCRIPT,
+                        &bsal_sequence_store_manager_script);
+
+    /* TODO: do this one inside the manager script.
+*/
+bsal_actor_add_script(actor, BSAL_SEQUENCE_STORE_SCRIPT,
+                        &bsal_sequence_store_script);
 }
 
 void root_destroy(struct bsal_actor *actor)
@@ -50,10 +57,18 @@ void root_receive(struct bsal_actor *actor, struct bsal_message *message)
     int i;
     char *file;
     struct root *root1;
+    struct root *concrete_actor;
     char *buffer;
     int bytes;
+    int manager;
+    struct bsal_vector spawners;
+    int new_count;
+    void *new_buffer;
+    struct bsal_message new_message;
+    struct bsal_vector stores;
 
     root1 = (struct root *)bsal_actor_concrete_actor(actor);
+    concrete_actor = root1;
     source = bsal_message_source(message);
     tag = bsal_message_tag(message);
     buffer = bsal_message_buffer(message);
@@ -129,6 +144,39 @@ void root_receive(struct bsal_actor *actor, struct bsal_message *message)
         bsal_actor_send_to_self_empty(actor, BSAL_ACTOR_YIELD);
 
     } else if (tag == BSAL_ACTOR_YIELD_REPLY) {
+
+        manager = bsal_actor_spawn(actor, BSAL_SEQUENCE_STORE_MANAGER_SCRIPT);
+
+        printf("DEBUG root actor/%d spawned manager actor/%d\n",
+                        bsal_actor_name(actor), manager);
+
+        concrete_actor->manager = bsal_actor_get_child_index(actor, manager);
+
+        bsal_vector_init(&spawners, sizeof(int));
+
+        bsal_vector_push_back_vector(&spawners, &concrete_actor->spawners);
+
+        new_count = bsal_vector_pack_size(&spawners);
+        new_buffer = malloc(new_count);
+        bsal_vector_pack(&spawners, new_buffer);
+
+        bsal_message_init(&new_message, BSAL_ACTOR_START, new_count, new_buffer);
+        bsal_actor_send(actor, manager, &new_message);
+
+        free(new_buffer);
+
+        bsal_vector_destroy(&spawners);
+
+    } else if (tag == BSAL_ACTOR_START_REPLY
+                    && source == bsal_actor_get_child(actor, concrete_actor->manager)) {
+
+        bsal_vector_unpack(&stores, buffer);
+
+        printf("DEBUG root actor/%d received stores from manager actor/%d\n",
+                        bsal_actor_name(actor),
+                        source);
+        bsal_vector_print_int(&stores);
+        printf("\n");
 
         bytes = bsal_vector_pack_size(&root1->spawners);
         buffer = malloc(bytes);
@@ -215,6 +263,9 @@ void root_receive(struct bsal_actor *actor, struct bsal_message *message)
         bsal_actor_send_range_standard_empty(actor, &root1->spawners, BSAL_ACTOR_ASK_TO_STOP);
 
     } else if (tag == BSAL_ACTOR_ASK_TO_STOP) {
+
+        bsal_actor_send_empty(actor, bsal_actor_get_child(actor,
+                                concrete_actor->manager), BSAL_ACTOR_ASK_TO_STOP);
 
         printf("DEBUG stopping root actor/%d (source: %d)\n", bsal_actor_name(actor),
                         source);

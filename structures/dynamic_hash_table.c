@@ -12,6 +12,10 @@
 void bsal_dynamic_hash_table_init(struct bsal_dynamic_hash_table *self, uint64_t buckets,
                 int key_size, int value_size)
 {
+#ifdef BSAL_DYNAMIC_HASH_TABLE_DEBUG
+    printf("DEBUG bsal_dynamic_hash_table_init \n");
+#endif
+
     self->current = &self->table1;
     self->next = &self->table2;
 
@@ -130,6 +134,10 @@ void bsal_dynamic_hash_table_start_resizing(struct bsal_dynamic_hash_table *self
         return;
     }
 
+#ifdef BSAL_DYNAMIC_HASH_TABLE_DEBUG
+    printf("DEBUG bsal_dynamic_hash_table_start_resizing start resizing\n");
+#endif
+
     self->resize_in_progress = 1;
 
     bsal_hash_table_init(self->next, 2 * bsal_hash_table_buckets(self->current),
@@ -185,6 +193,10 @@ void bsal_dynamic_hash_table_resize(struct bsal_dynamic_hash_table *self)
         bsal_hash_table_destroy(self->next);
 
         self->resize_in_progress = 0;
+
+#ifdef BSAL_DYNAMIC_HASH_TABLE_DEBUG
+        printf("DEBUG bsal_dynamic_hash_table_resize resizing is done\n");
+#endif
     }
 }
 

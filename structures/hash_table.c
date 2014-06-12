@@ -3,6 +3,8 @@
 
 #include <hash/murmur_hash_2_64_a.h>
 
+#include <system/memory.h>
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdint.h>
@@ -60,7 +62,7 @@ void bsal_hash_table_init(struct bsal_hash_table *table, uint64_t buckets,
     table->group_count = (buckets / buckets_per_group);
 
     table->groups = (struct bsal_hash_table_group *)
-            malloc(table->group_count * sizeof(struct bsal_hash_table_group));
+            bsal_malloc(table->group_count * sizeof(struct bsal_hash_table_group));
 
 #ifdef BSAL_HASH_TABLE_DEBUG_INIT
     printf("DEBUG bsal_hash_table_init group_count %d\n",
@@ -81,7 +83,7 @@ void bsal_hash_table_destroy(struct bsal_hash_table *table)
         bsal_hash_table_group_destroy(table->groups + i);
     }
 
-    free(table->groups);
+    bsal_free(table->groups);
     table->groups = NULL;
     table->debug = 0;
 }

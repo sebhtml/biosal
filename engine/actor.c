@@ -77,6 +77,8 @@ void bsal_actor_init(struct bsal_actor *actor, void *state,
     bsal_queue_init(&actor->queued_messages_for_migration, sizeof(struct bsal_message));
     bsal_queue_init(&actor->forwarding_queue, sizeof(struct bsal_message));
 
+    bsal_dynamic_hash_table_init(&actor->acquaintance_map, 64, sizeof(int), sizeof(int));
+
     bsal_actor_register(actor, BSAL_ACTOR_FORWARD_MESSAGES, bsal_actor_forward_messages);
 
     bsal_actor_send_to_self_empty(actor, BSAL_ACTOR_UNPIN_FROM_WORKER);
@@ -104,6 +106,7 @@ void bsal_actor_destroy(struct bsal_actor *actor)
     bsal_queue_destroy(&actor->queued_messages_for_clone);
     bsal_queue_destroy(&actor->queued_messages_for_migration);
     bsal_queue_destroy(&actor->forwarding_queue);
+    bsal_dynamic_hash_table_destroy(&actor->acquaintance_map);
 
     actor->name = -1;
     actor->dead = 1;
@@ -316,6 +319,10 @@ int bsal_actor_spawn_real(struct bsal_actor *actor, int script)
 #endif
 
     name = bsal_node_spawn(bsal_actor_node(actor), script);
+
+    if (name == BSAL_ACTOR_NOBODY) {
+        return name;
+    }
 
 #ifdef BSAL_ACTOR_DEBUG_SPAWN
     printf("DEBUG bsal_actor_spawn before set_supervisor, spawned %d\n",
@@ -1825,9 +1832,26 @@ int bsal_actor_add_child(struct bsal_actor *actor, int name)
 
 int bsal_actor_add_acquaintance(struct bsal_actor *actor, int name)
 {
+    int index;
+
+    index = bsal_actor_get_acquaintance_index(actor, name);
+
+    if (index >= 0) {
+        return index;
+    }
+
     bsal_vector_push_back_int(bsal_actor_acquaintance_vector(actor),
                     name);
-    return bsal_vector_size(bsal_actor_acquaintance_vector(actor)) - 1;
+
+    index = bsal_vector_size(bsal_actor_acquaintance_vector(actor)) - 1;
+
+#if 0
+    int *bucket;
+    bucket = bsal_dynamic_hash_table_add(&actor->acquaintance_map, &index);
+    *bucket = index;
+#endif
+
+    return index;
 }
 
 int bsal_actor_get_acquaintance(struct bsal_actor *actor, int index)
@@ -1838,4 +1862,48 @@ int bsal_actor_get_acquaintance(struct bsal_actor *actor, int index)
     }
 
     return BSAL_ACTOR_NOBODY;
+}
+
+int bsal_actor_get_acquaintance_index(struct bsal_actor *actor, int name)
+{
+    return bsal_vector_index_of(&actor->acquaintance_vector, &name);
+
+#if 0
+    int *bucket;
+
+    bucket = bsal_dynamic_hash_table_get(&actor->acquaintance_map, &name);
+
+    if (bucket == NULL) {
+        return -1;
+    }
+
+    return *bucket;
+#endif
+}
+
+int bsal_actor_get_child_index(struct bsal_actor *actor, int name)
+{
+    int i;
+    int index;
+    int child;
+
+    if (name == BSAL_ACTOR_NOBODY) {
+        return -1;
+    }
+
+    for (i = 0; i < bsal_actor_child_count(actor); i++) {
+        index = *(int *)bsal_vector_at(&actor->children, i);
+
+#ifdef BSAL_ACTOR_DEBUG_CHILDREN
+        printf("DEBUG index %d\n", index);
+#endif
+
+        child = bsal_actor_get_acquaintance(actor, index);
+
+        if (child == name) {
+            return i;
+        }
+    }
+
+    return -1;
 }
