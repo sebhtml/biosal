@@ -390,6 +390,12 @@ int bsal_node_spawn(struct bsal_node *node, int script)
 
     bsal_counter_add(&node->counter, BSAL_COUNTER_SPAWNED_ACTORS, 1);
 
+#ifdef BSAL_NODE_DEBUG_SPAWN
+    printf("DEBUG node/%d bsal_node_spawn actor/%d script/%x\n",
+                    bsal_node_name(node),
+                    name, script);
+#endif
+
     return name;
 }
 
@@ -581,9 +587,7 @@ void bsal_node_run(struct bsal_node *node)
     }
 
     if (node->print_counters) {
-        printf("----------------------------------------------\n");
-        printf("biosal> Counters for node/%d\n", bsal_node_name(node));
-        bsal_counter_print(&node->counter);
+        bsal_node_print_counters(node);
     }
 }
 
@@ -668,8 +672,17 @@ void bsal_node_test_requests(struct bsal_node *node)
 void bsal_node_run_loop(struct bsal_node *node)
 {
     struct bsal_message message;
+    int ticks;
+
+    ticks = 0;
 
     while (bsal_node_running(node)) {
+
+#ifdef BSAL_NODE_DEBUG_LOOP
+        if (ticks % 1000000 == 0) {
+            bsal_node_print_counters(node);
+        }
+#endif
 
 #ifdef BSAL_NODE_DEBUG_LOOP1
         if (node->debug) {
@@ -695,11 +708,11 @@ void bsal_node_run_loop(struct bsal_node *node)
 
         /* with 3 or more threads, the sending operations are
          * in another thread */
-        if (node->send_in_thread) {
-            continue;
+        if (!node->send_in_thread) {
+            bsal_node_send_message(node);
         }
 
-        bsal_node_send_message(node);
+        ticks++;
     }
 
 #ifdef BSAL_NODE_DEBUG_20140601_8
@@ -1225,6 +1238,13 @@ void bsal_node_notify_death(struct bsal_node *node, struct bsal_actor *actor)
 
     name = bsal_actor_name(actor);
 
+#ifdef BSAL_NODE_DEBUG_SPAWN
+    printf("DEBUG bsal_node_notify_death node/%d actor/%d script/%x\n",
+                    bsal_node_name(node),
+                    name,
+                    bsal_actor_script(actor));
+#endif
+
 #ifdef BSAL_NODE_REUSE_DEAD_INDICES
     index = bsal_node_actor_index(node, name);
 
@@ -1350,3 +1370,9 @@ struct bsal_script *bsal_node_find_script(struct bsal_node *node, int name)
     return NULL;
 }
 
+void bsal_node_print_counters(struct bsal_node *node)
+{
+    printf("----------------------------------------------\n");
+    printf("biosal> Counters for node/%d\n", bsal_node_name(node));
+    bsal_counter_print(&node->counter);
+}

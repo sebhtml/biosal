@@ -26,6 +26,7 @@ struct bsal_input_controller {
     int block_size;
 
     int ready_stores;
+    int ready_spawners;
     int stores_per_worker_per_spawner;
 };
 

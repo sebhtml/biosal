@@ -156,11 +156,6 @@ void root_receive(struct bsal_actor *actor, struct bsal_message *message)
         argc = bsal_actor_argc(actor);
         argv = bsal_actor_argv(actor);
 
-        if (argc == 1) {
-
-            bsal_actor_send_to_self_empty(actor, ROOT_STOP_ALL);
-        }
-
         for (i = 1; i < argc; i++) {
             file = argv[i];
 
@@ -171,6 +166,15 @@ void root_receive(struct bsal_actor *actor, struct bsal_message *message)
                             file, source);
 
             root1->events++;
+        }
+
+        /* if there are no files,
+         * simulate a mock file
+         */
+        if (root1->events == 0) {
+            root1->events++;
+
+            bsal_actor_send_to_self_empty(actor, BSAL_ADD_FILE_REPLY);
         }
 
         printf("root actor/%d has no more files to add\n", name);
@@ -184,7 +188,8 @@ void root_receive(struct bsal_actor *actor, struct bsal_message *message)
             printf("root actor/%d asks controller actor/%d to distribute data\n",
                             name, source);
 
-            bsal_actor_send_reply_empty(actor, BSAL_INPUT_DISTRIBUTE);
+            bsal_actor_send_empty(actor, root1->controller,
+                            BSAL_INPUT_DISTRIBUTE);
         }
     } else if (tag == BSAL_INPUT_DISTRIBUTE_REPLY) {
 
@@ -195,7 +200,11 @@ void root_receive(struct bsal_actor *actor, struct bsal_message *message)
 
     } else if (tag == BSAL_ACTOR_ASK_TO_STOP_REPLY) {
 
+        printf("DEBUG root receives BSAL_ACTOR_ASK_TO_STOP_REPLY\n");
         if (source == root1->controller) {
+
+            printf("DEBUG root actor/%d sending to self ROOT_STOP_ALL\n",
+                            bsal_actor_name(actor));
 
             bsal_actor_send_to_self_empty(actor, ROOT_STOP_ALL);
         }
@@ -207,6 +216,8 @@ void root_receive(struct bsal_actor *actor, struct bsal_message *message)
 
     } else if (tag == BSAL_ACTOR_ASK_TO_STOP) {
 
+        printf("DEBUG stopping root actor/%d (source: %d)\n", bsal_actor_name(actor),
+                        source);
         bsal_actor_send_to_self_empty(actor, BSAL_ACTOR_STOP);
     }
 }

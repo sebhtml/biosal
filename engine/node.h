@@ -144,5 +144,6 @@ void bsal_node_set_initial_actor(struct bsal_node *node, int node_name, int acto
 int bsal_node_allocate_actor_index(struct bsal_node *node);
 
 void bsal_node_print_event_counters(struct bsal_node *node);
+void bsal_node_print_counters(struct bsal_node *node);
 
 #endif

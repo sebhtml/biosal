@@ -36,6 +36,9 @@ controller: example_controller
 mini: example_controller
 	mpiexec -n 3 ./example_controller -threads-per-node 9 ~/mini.fastq
 
+void_controller: example_controller
+	mpiexec -n 3 ./example_controller -threads-per-node 9 void.fastq
+
 remote_spawn: example_remote_spawn
 	mpiexec -n 6 ./example_remote_spawn -threads-per-node 1,2,3
 
