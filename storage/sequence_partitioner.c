@@ -352,7 +352,8 @@ uint64_t bsal_sequence_partitioner_get_index_in_store(uint64_t index, int block_
        irb(main):014:0> (1000000 / 8192) / 72 * 81 = 8192
      */
 
-    return ( ( index / ((uint64_t)block_size) ) / (uint64_t)store_count ) * (uint64_t)block_size;
+    return ( ( index / ((uint64_t)block_size) ) / (uint64_t)store_count ) * (uint64_t)block_size +
+            index % block_size;
 }
 
 int bsal_sequence_partitioner_get_store(uint64_t index, int block_size, int store_count)
@@ -444,7 +445,7 @@ void bsal_sequence_partitioner_generate_command(struct bsal_actor *actor, int st
 
     actual_block_size = concrete_actor->block_size;
 
-    next_block_first = global_first + 
+    next_block_first = global_first +
             (concrete_actor->block_size - global_first % concrete_actor->block_size);
 
     distance = next_block_first - global_first;
