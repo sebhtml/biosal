@@ -72,6 +72,7 @@ void bsal_actor_init(struct bsal_actor *actor, void *state,
                     bsal_actor_name(actor), actor->can_pack);
 */
     bsal_vector_init(&actor->acquaintance_vector, sizeof(int));
+    bsal_vector_init(&actor->children, sizeof(int));
     bsal_queue_init(&actor->queued_messages_for_clone, sizeof(struct bsal_message));
     bsal_queue_init(&actor->queued_messages_for_migration, sizeof(struct bsal_message));
     bsal_queue_init(&actor->forwarding_queue, sizeof(struct bsal_message));
@@ -99,6 +100,7 @@ void bsal_actor_destroy(struct bsal_actor *actor)
 
     bsal_dispatcher_destroy(&actor->dispatcher);
     bsal_vector_destroy(&actor->acquaintance_vector);
+    bsal_vector_destroy(&actor->children);
     bsal_queue_destroy(&actor->queued_messages_for_clone);
     bsal_queue_destroy(&actor->queued_messages_for_migration);
     bsal_queue_destroy(&actor->forwarding_queue);
@@ -294,6 +296,17 @@ void bsal_actor_send_with_source(struct bsal_actor *actor, int name, struct bsal
 }
 
 int bsal_actor_spawn(struct bsal_actor *actor, int script)
+{
+    int name;
+
+    name = bsal_actor_spawn_real(actor, script);
+
+    bsal_actor_add_child(actor, name);
+
+    return name;
+}
+
+int bsal_actor_spawn_real(struct bsal_actor *actor, int script)
 {
     int name;
     int self_name = bsal_actor_name(actor);
@@ -543,12 +556,17 @@ int bsal_actor_receive_system(struct bsal_actor *actor, struct bsal_message *mes
      */
     if (tag == BSAL_ACTOR_SPAWN) {
         script = *(int *)buffer;
-        spawned = bsal_actor_spawn(actor, script);
+        spawned = bsal_actor_spawn_real(actor, script);
         bsal_node_set_supervisor(bsal_actor_node(actor), spawned, source);
         bsal_message_init(message, BSAL_ACTOR_SPAWN_REPLY, sizeof(spawned), &spawned);
         bsal_actor_send(actor, source, message);
 
         return 1;
+
+    } else if (tag == BSAL_ACTOR_SPAWN_REPLY) {
+
+        name = *(int *)buffer;
+        bsal_actor_add_child(actor, name);
 
     } else if (tag == BSAL_ACTOR_FORWARD_MESSAGES) {
 
@@ -1771,6 +1789,38 @@ void bsal_actor_pin_to_node(struct bsal_actor *actor)
 void bsal_actor_unpin_from_node(struct bsal_actor *actor)
 {
 
+}
+
+int bsal_actor_acquaintance_count(struct bsal_actor *actor)
+{
+    return bsal_vector_size(&actor->acquaintance_vector);
+}
+
+int bsal_actor_get_child(struct bsal_actor *actor, int index)
+{
+    int index2;
+
+    if (index < bsal_vector_size(&actor->children)) {
+        index2 = *(int *)bsal_vector_at(&actor->children, index);
+        return bsal_actor_get_acquaintance(actor, index2);
+    }
+
+    return BSAL_ACTOR_NOBODY;
+}
+
+int bsal_actor_child_count(struct bsal_actor *actor)
+{
+    return bsal_vector_size(&actor->children);
+}
+
+int bsal_actor_add_child(struct bsal_actor *actor, int name)
+{
+    int index;
+
+    index = bsal_actor_add_acquaintance(actor, name);
+    bsal_vector_push_back(&actor->children, &index);
+
+    return index;
 }
 
 int bsal_actor_add_acquaintance(struct bsal_actor *actor, int name)
