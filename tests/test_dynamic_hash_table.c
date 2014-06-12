@@ -99,6 +99,35 @@ int main(int argc, char **argv)
         bsal_dynamic_hash_table_destroy(&table);
     }
 
+    {
+        struct bsal_dynamic_hash_table table;
+        int key;
+        int *value;
+
+        /*
+        printf("-------------------\n");
+        printf("DEBUG TEST-alpha-89\n");
+        */
+
+        bsal_dynamic_hash_table_init(&table, 8, sizeof(int), sizeof(int));
+
+        for (key = 0; key < 1000000; key++) {
+
+/*
+            printf("DEBUG key %d\n", key);
+            */
+            bsal_dynamic_hash_table_add(&table, &key);
+
+            value = (int *)bsal_dynamic_hash_table_get(&table, &key);
+
+            TEST_POINTER_NOT_EQUALS(value, NULL);
+
+            *value = key;
+        }
+
+        bsal_dynamic_hash_table_destroy(&table);
+    }
+
     END_TESTS();
 
     return 0;

@@ -64,8 +64,18 @@ void ring_receive(struct bsal_actor *actor, struct bsal_message *message)
                         (int)bsal_vector_size(&ring1->spawners));
 
         i = 0;
+
+        printf("actor/%d is spawning %d senders\n",
+                        bsal_actor_name(actor), ring1->senders);
+
         while (i < ring1->senders) {
             new_actor = bsal_actor_spawn(actor, SENDER_SCRIPT);
+
+            if (i % 10000 == 0) {
+
+                printf("actor/%d spawned %d/%d senders\n",
+                        bsal_actor_name(actor), i, ring1->senders);
+            }
 
             if (i > 0) {
                 bsal_message_init(message, SENDER_SET_NEXT, sizeof(new_actor), &new_actor);

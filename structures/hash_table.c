@@ -20,12 +20,16 @@
 
 #define BSAL_HASH_TABLE_MATCH 0
 
+/* only use a single group
+ */
+#define BSAL_HASH_TABLE_USE_ONE_GROUP
+
+/* debugging options
+ */
 /*
 #define BSAL_HASH_TABLE_DEBUG
 #define BSAL_HASH_TABLE_DEBUG_DOUBLE_HASHING_DEBUG
 */
-
-#define BSAL_HASH_TABLE_USE_ONE_GROUP
 
 void bsal_hash_table_init(struct bsal_hash_table *table, uint64_t buckets,
                 int key_size, int value_size)
@@ -34,7 +38,8 @@ void bsal_hash_table_init(struct bsal_hash_table *table, uint64_t buckets,
     int buckets_per_group;
 
 #ifdef BSAL_HASH_TABLE_DEBUG_INIT
-    printf("DEBUG bsal_hash_table_init buckets: %d key_size: %d value_size: %d\n",
+    printf("DEBUG %p bsal_hash_table_init buckets: %d key_size: %d value_size: %d\n",
+                    (void *)table,
                     (int)buckets, key_size, value_size);
 #endif
 
@@ -317,6 +322,10 @@ uint64_t bsal_hash_table_find_bucket(struct bsal_hash_table *table, void *key,
         *bucket_in_group = bsal_hash_table_get_group_bucket(table, bucket);
         hash_group = table->groups + *group;
 
+        if (table->groups == NULL) {
+            printf("DEBUG %p Error groups is %p\n", (void *)table,
+                            (void *)table->groups);
+        }
         state = bsal_hash_table_group_state(hash_group, *bucket_in_group);
 
 #ifdef BSAL_HASH_TABLE_DEBUG_DOUBLE_HASHING_DEBUG

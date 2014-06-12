@@ -13,7 +13,8 @@ void bsal_dynamic_hash_table_init(struct bsal_dynamic_hash_table *self, uint64_t
                 int key_size, int value_size)
 {
 #ifdef BSAL_DYNAMIC_HASH_TABLE_DEBUG
-    printf("DEBUG bsal_dynamic_hash_table_init \n");
+    printf("DEBUG bsal_dynamic_hash_table_init buckets %d key_size %d value_size %d\n",
+                    (int)buckets, key_size, value_size);
 #endif
 
     self->current = &self->table1;
@@ -42,27 +43,43 @@ void *bsal_dynamic_hash_table_add(struct bsal_dynamic_hash_table *self, void *ke
     float ratio;
     float threshold;
 
+    /* if no resize is in progress, the load is verified
+     */
     if (!self->resize_in_progress) {
 
         threshold = 0.75;
         ratio = (0.0 + bsal_hash_table_size(self->current)) / bsal_hash_table_buckets(self->current);
 
         if (ratio < threshold) {
+            /* there is still place in the table.
+             */
             return bsal_hash_table_add(self->current, key);
+
         } else {
 
+            /* the resizing must begin
+             */
 #ifdef BSAL_DYNAMIC_HASH_TABLE_DEBUG_ADD
             printf("DEBUG bsal_dynamic_hash_table_add start resizing\n");
 #endif
 
             bsal_dynamic_hash_table_start_resizing(self);
 
+            /* perform a fancy recursive call
+             */
             return bsal_dynamic_hash_table_add(self, key);
         }
     }
 
-    bsal_dynamic_hash_table_resize(self);
+    /* if the resizing finished, just return a recursive call
+     */
+    if (bsal_dynamic_hash_table_resize(self)) {
+        return bsal_dynamic_hash_table_add(self, key);
+    }
 
+    /*
+     * the current table has the key
+     */
     if (bsal_hash_table_get(self->current, key) != NULL) {
         return bsal_hash_table_get(self->current, key);
     }
@@ -78,7 +95,11 @@ void *bsal_dynamic_hash_table_get(struct bsal_dynamic_hash_table *self, void *ke
         return bsal_hash_table_get(self->current, key);
     }
 
-    bsal_dynamic_hash_table_resize(self);
+    /* recursive call if the resizing is finished
+     */
+    if (bsal_dynamic_hash_table_resize(self)) {
+        return bsal_dynamic_hash_table_get(self, key);
+    }
 
     bucket = bsal_hash_table_get(self->current, key);
 
@@ -96,7 +117,11 @@ void bsal_dynamic_hash_table_delete(struct bsal_dynamic_hash_table *self, void *
         return;
     }
 
-    bsal_dynamic_hash_table_resize(self);
+    if (bsal_dynamic_hash_table_resize(self)) {
+
+        bsal_dynamic_hash_table_delete(self, key);
+        return;
+    }
 
     if (bsal_hash_table_get(self->current, key) != NULL) {
         bsal_hash_table_delete(self->current, key);
@@ -112,7 +137,9 @@ uint64_t bsal_dynamic_hash_table_size(struct bsal_dynamic_hash_table *self)
         return bsal_hash_table_size(self->current);
     }
 
-    bsal_dynamic_hash_table_resize(self);
+    if (bsal_dynamic_hash_table_resize(self)) {
+        return bsal_dynamic_hash_table_size(self);
+    }
 
     return bsal_hash_table_size(self->current) + bsal_hash_table_size(self->next);
 }
@@ -123,31 +150,48 @@ uint64_t bsal_dynamic_hash_table_buckets(struct bsal_dynamic_hash_table *self)
         return bsal_hash_table_buckets(self->current);
     }
 
-    bsal_dynamic_hash_table_resize(self);
+    if (bsal_dynamic_hash_table_resize(self)) {
+        return bsal_dynamic_hash_table_buckets(self);
+    }
 
     return bsal_hash_table_buckets(self->current) + bsal_hash_table_buckets(self->next);
 }
 
 void bsal_dynamic_hash_table_start_resizing(struct bsal_dynamic_hash_table *self)
 {
+    uint64_t new_size;
+
     if (self->resize_in_progress) {
         return;
     }
 
+    new_size = bsal_hash_table_buckets(self->current) * 2;
+
 #ifdef BSAL_DYNAMIC_HASH_TABLE_DEBUG
-    printf("DEBUG bsal_dynamic_hash_table_start_resizing start resizing\n");
+    printf("DEBUG bsal_dynamic_hash_table_start_resizing start resizing %d\n",
+                    (int)new_size);
 #endif
 
     self->resize_in_progress = 1;
 
-    bsal_hash_table_init(self->next, 2 * bsal_hash_table_buckets(self->current),
+    bsal_hash_table_init(self->next, new_size,
                     bsal_hash_table_key_size(self->current),
                     bsal_hash_table_value_size(self->current));
 
     bsal_hash_table_iterator_init(&self->iterator, self->current);
+
+#ifdef BSAL_DYNAMIC_HASH_TABLE_DEBUG
+    printf("DEBUG current %p %d/%d, next %p %d/%d\n",
+                    (void *)self->current,
+                        (int)bsal_hash_table_size(self->current),
+                        (int)bsal_hash_table_buckets(self->current),
+                        (void *)self->next,
+                        (int)bsal_hash_table_size(self->next),
+                        (int)bsal_hash_table_buckets(self->next));
+#endif
 }
 
-void bsal_dynamic_hash_table_resize(struct bsal_dynamic_hash_table *self)
+int bsal_dynamic_hash_table_resize(struct bsal_dynamic_hash_table *self)
 {
     int count;
     struct bsal_hash_table *table;
@@ -157,7 +201,7 @@ void bsal_dynamic_hash_table_resize(struct bsal_dynamic_hash_table *self)
     int value_size;
 
     if (!self->resize_in_progress) {
-        return;
+        return 0;
     }
 
     value_size = bsal_hash_table_value_size(self->current);
@@ -180,8 +224,19 @@ void bsal_dynamic_hash_table_resize(struct bsal_dynamic_hash_table *self)
     if (!bsal_hash_table_iterator_has_next(&self->iterator)) {
 
 #ifdef BSAL_DYNAMIC_HASH_TABLE_DEBUG_ADD
-        printf("DEBUG bsal_dynamic_hash_table_resize completed.\n");
+        printf("DEBUG %p bsal_dynamic_hash_table_resize completed.\n",
+                        (void *)self);
+
+        printf("DEBUG current %p %d/%d, next %p %d/%d\n",
+                    (void *)self->current,
+                        (int)bsal_hash_table_size(self->current),
+                        (int)bsal_hash_table_buckets(self->current),
+                        (void *)self->next,
+                        (int)bsal_hash_table_size(self->next),
+                        (int)bsal_hash_table_buckets(self->next));
 #endif
+
+        bsal_hash_table_iterator_destroy(&self->iterator);
 
         /* the transfer is finished, swap current and main
          */
@@ -189,15 +244,18 @@ void bsal_dynamic_hash_table_resize(struct bsal_dynamic_hash_table *self)
         self->current = self->next;
         self->next = table;
 
-        bsal_hash_table_iterator_destroy(&self->iterator);
         bsal_hash_table_destroy(self->next);
 
         self->resize_in_progress = 0;
 
 #ifdef BSAL_DYNAMIC_HASH_TABLE_DEBUG
-        printf("DEBUG bsal_dynamic_hash_table_resize resizing is done\n");
+        printf("DEBUG bsal_dynamic_hash_table_resize resizing is done current %p next %p\n",
+                        (void *)self->current, (void *)self->next);
 #endif
+        return 1;
     }
+
+    return 0;
 }
 
 int bsal_dynamic_hash_table_state(struct bsal_dynamic_hash_table *self, uint64_t bucket)
@@ -206,13 +264,15 @@ int bsal_dynamic_hash_table_state(struct bsal_dynamic_hash_table *self, uint64_t
         return bsal_hash_table_state(self->current, bucket);
     }
 
-    bsal_dynamic_hash_table_resize(self);
+    if (bsal_dynamic_hash_table_resize(self)) {
+        return bsal_dynamic_hash_table_state(self, bucket);
+    }
 
     if (bucket < bsal_hash_table_buckets(self->current)) {
         return bsal_hash_table_state(self->current, bucket);
     }
 
-    return bsal_hash_table_state(self->next, bucket);
+    return bsal_hash_table_state(self->next, bucket - bsal_hash_table_buckets(self->current));
 }
 
 void *bsal_dynamic_hash_table_key(struct bsal_dynamic_hash_table *self, uint64_t bucket)
@@ -221,7 +281,9 @@ void *bsal_dynamic_hash_table_key(struct bsal_dynamic_hash_table *self, uint64_t
         return bsal_hash_table_key(self->current, bucket);
     }
 
-    bsal_dynamic_hash_table_resize(self);
+    if (bsal_dynamic_hash_table_resize(self)) {
+        return bsal_dynamic_hash_table_key(self, bucket);
+    }
 
     if (bucket < bsal_hash_table_buckets(self->current)) {
         return bsal_hash_table_key(self->current, bucket);
@@ -236,7 +298,9 @@ void *bsal_dynamic_hash_table_value(struct bsal_dynamic_hash_table *self, uint64
         return bsal_hash_table_value(self->current, bucket);
     }
 
-    bsal_dynamic_hash_table_resize(self);
+    if (bsal_dynamic_hash_table_resize(self)) {
+        return bsal_dynamic_hash_table_value(self, bucket);
+    }
 
     if (bucket < bsal_hash_table_buckets(self->current)) {
         return bsal_hash_table_value(self->current, bucket);

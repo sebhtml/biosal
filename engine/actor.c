@@ -77,7 +77,7 @@ void bsal_actor_init(struct bsal_actor *actor, void *state,
     bsal_queue_init(&actor->queued_messages_for_migration, sizeof(struct bsal_message));
     bsal_queue_init(&actor->forwarding_queue, sizeof(struct bsal_message));
 
-    bsal_dynamic_hash_table_init(&actor->acquaintance_map, 64, sizeof(int), sizeof(int));
+    bsal_dynamic_hash_table_init(&actor->acquaintance_map, 4, sizeof(int), sizeof(int));
 
     bsal_actor_register(actor, BSAL_ACTOR_FORWARD_MESSAGES, bsal_actor_forward_messages);
 
@@ -1599,12 +1599,17 @@ void bsal_actor_notify_name_change(struct bsal_actor *actor, struct bsal_message
     int old_name;
     int new_name;
     int source;
+    int index;
+    int *bucket;
 
     source = bsal_message_source(message);
     old_name = source;
     bsal_message_unpack_int(message, 0, &new_name);
 
-    bsal_vector_update(&actor->acquaintance_vector, &old_name, &new_name);
+    index = bsal_actor_get_acquaintance_index(actor, old_name);
+
+    bucket = bsal_vector_at(&actor->acquaintance_vector, index);
+    *bucket = new_name;
 
     bsal_actor_send_reply_empty(actor, BSAL_ACTOR_NOTIFY_NAME_CHANGE_REPLY);
 }
@@ -1833,6 +1838,7 @@ int bsal_actor_add_child(struct bsal_actor *actor, int name)
 int bsal_actor_add_acquaintance(struct bsal_actor *actor, int name)
 {
     int index;
+    int *bucket;
 
     index = bsal_actor_get_acquaintance_index(actor, name);
 
@@ -1845,11 +1851,8 @@ int bsal_actor_add_acquaintance(struct bsal_actor *actor, int name)
 
     index = bsal_vector_size(bsal_actor_acquaintance_vector(actor)) - 1;
 
-#if 0
-    int *bucket;
-    bucket = bsal_dynamic_hash_table_add(&actor->acquaintance_map, &index);
+    bucket = bsal_dynamic_hash_table_add(&actor->acquaintance_map, &name);
     *bucket = index;
-#endif
 
     return index;
 }
@@ -1866,10 +1869,11 @@ int bsal_actor_get_acquaintance(struct bsal_actor *actor, int index)
 
 int bsal_actor_get_acquaintance_index(struct bsal_actor *actor, int name)
 {
-    return bsal_vector_index_of(&actor->acquaintance_vector, &name);
+    int *bucket;
 
 #if 0
-    int *bucket;
+    return bsal_vector_index_of(&actor->acquaintance_vector, &name);
+#endif
 
     bucket = bsal_dynamic_hash_table_get(&actor->acquaintance_map, &name);
 
@@ -1878,7 +1882,6 @@ int bsal_actor_get_acquaintance_index(struct bsal_actor *actor, int name)
     }
 
     return *bucket;
-#endif
 }
 
 int bsal_actor_get_child_index(struct bsal_actor *actor, int name)
