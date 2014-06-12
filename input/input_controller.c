@@ -83,7 +83,7 @@ void bsal_input_controller_init(struct bsal_actor *actor)
      * other values for block size: 512, 1024, 2048, 4096, 8192 * /
      */
     controller->block_size = 8192;
-    controller->stores_per_worker_per_spawner = 3;
+    controller->stores_per_worker_per_spawner = 0;
 
 #ifdef BSAL_INPUT_CONTROLLER_DEBUG
     printf("DEBUG actor/%d init controller\n",
@@ -160,14 +160,14 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
 
         for (i = 0; i < bsal_vector_size(&controller->spawners); i++) {
             int_bucket = (int *)bsal_vector_at(&controller->stores_per_spawner, i);
-            *int_bucket = -1;
+            *int_bucket = 0;
 
             spawner = bsal_vector_at_as_int(&controller->spawners, i);
 
             bsal_queue_enqueue(&concrete_actor->unprepared_spawners, &spawner);
         }
 
-        controller->state = BSAL_INPUT_CONTROLLER_PREPARE_SPAWNERS;
+        controller->state = BSAL_INPUT_CONTROLLER_STATE_PREPARE_SPAWNERS;
 
         printf("DEBUG preparing first spawner\n");
 
@@ -534,6 +534,18 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
                                 concrete_actor->partitioner),
                         BSAL_SEQUENCE_PARTITIONER_GET_COMMAND_REPLY_REPLY,
                         command_name);
+
+    } else if (tag == BSAL_INPUT_CONTROLLER_SET_CUSTOMERS) {
+
+        bsal_vector_unpack(&concrete_actor->stores, buffer);
+        printf("controller actor/%d receives %d customers\n",
+                        bsal_actor_name(actor),
+                        (int)bsal_vector_size(&concrete_actor->stores));
+
+        bsal_vector_print_int(&concrete_actor->stores);
+        printf("\n");
+
+        bsal_actor_send_reply_empty(actor, BSAL_INPUT_CONTROLLER_SET_CUSTOMERS_REPLY);
     }
 }
 

@@ -66,6 +66,7 @@ void root_receive(struct bsal_actor *actor, struct bsal_message *message)
     void *new_buffer;
     struct bsal_message new_message;
     struct bsal_vector stores;
+    int count;
 
     root1 = (struct root *)bsal_actor_concrete_actor(actor);
     concrete_actor = root1;
@@ -73,6 +74,7 @@ void root_receive(struct bsal_actor *actor, struct bsal_message *message)
     tag = bsal_message_tag(message);
     buffer = bsal_message_buffer(message);
     name = bsal_actor_name(actor);
+    count = bsal_message_count(message);
 
     /*
     printf(">>root_receive source %d name %d tag %d BSAL_ACTOR_SYNCHRONIZED is %d\n", source, name, tag,
@@ -175,8 +177,11 @@ void root_receive(struct bsal_actor *actor, struct bsal_message *message)
         printf("DEBUG root actor/%d received stores from manager actor/%d\n",
                         bsal_actor_name(actor),
                         source);
-        bsal_vector_print_int(&stores);
-        printf("\n");
+
+        bsal_message_init(&new_message, BSAL_INPUT_CONTROLLER_SET_CUSTOMERS, count, buffer);
+        bsal_actor_send(actor, root1->controller, &new_message);
+
+    } else if (tag == BSAL_INPUT_CONTROLLER_SET_CUSTOMERS_REPLY) {
 
         bytes = bsal_vector_pack_size(&root1->spawners);
         buffer = malloc(bytes);

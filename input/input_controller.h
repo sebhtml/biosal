@@ -9,24 +9,25 @@
 #define BSAL_INPUT_CONTROLLER_SCRIPT 0x985607aa
 
 struct bsal_input_controller {
+    struct bsal_vector stores;
+
     struct bsal_vector files;
 
     struct bsal_vector streams;
     struct bsal_vector spawners;
-    struct bsal_vector stores;
     int partitioner;
 
     int opened_streams;
     int counted;
     struct bsal_vector counts;
     struct bsal_vector partition_commands;
-    struct bsal_vector stores_per_spawner;
     struct bsal_queue unprepared_spawners;
     int state;
     int block_size;
 
     int ready_stores;
     int ready_spawners;
+    struct bsal_vector stores_per_spawner;
     int stores_per_worker_per_spawner;
 };
 
@@ -44,6 +45,8 @@ struct bsal_input_controller {
 
 #define BSAL_INPUT_CONTROLLER_CREATE_STORES 0x0000285f
 #define BSAL_INPUT_CONTROLLER_CREATE_STORES_REPLY 0x000048ed
+#define BSAL_INPUT_CONTROLLER_SET_CUSTOMERS 0x0000671d
+#define BSAL_INPUT_CONTROLLER_SET_CUSTOMERS_REPLY 0x000071e4
 #define BSAL_INPUT_CONTROLLER_PREPARE_SPAWNERS 0x00004a85
 #define BSAL_INPUT_CONTROLLER_CREATE_PARTITION 0x00005b68
 
