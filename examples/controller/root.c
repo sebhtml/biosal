@@ -79,7 +79,7 @@ void root_receive(struct bsal_actor *actor, struct bsal_message *message)
             printf("is king\n");
             */
             root1->controller = bsal_actor_spawn(actor, BSAL_INPUT_CONTROLLER_SCRIPT);
-            printf("actor %d spawned controller %d\n", name, root1->controller);
+            printf("root actor/%d spawned controller actor/%d\n", name, root1->controller);
             bsal_actor_synchronize(actor, &root1->spawners);
             /*
             printf("actor %d synchronizes\n", name);
@@ -139,13 +139,13 @@ void root_receive(struct bsal_actor *actor, struct bsal_message *message)
         free(buffer);
         buffer = NULL;
 
-        printf("actor %d, starting controller %d\n", name,
+        printf("root actor/%d starts controller actor/%d\n", name,
                         root1->controller);
 
     } else if (tag == BSAL_INPUT_CONTROLLER_START_REPLY) {
 
         if (!root1->is_king) {
-            printf("actor %d stops controller %d\n", name, source);
+            printf("root actor/%d stops controller actor/%d\n", name, source);
 
             bsal_actor_send_reply_empty(actor, BSAL_ACTOR_ASK_TO_STOP);
             return;
@@ -167,13 +167,13 @@ void root_receive(struct bsal_actor *actor, struct bsal_message *message)
             bsal_message_init(message, BSAL_ADD_FILE, strlen(file) + 1, file);
             bsal_actor_send_reply(actor, message);
 
-            printf("actor %d add file %s to actor %d\n", name,
+            printf("root actor/%d add file %s to controller actor/%d\n", name,
                             file, source);
 
             root1->events++;
         }
 
-        printf("actor %i no more files to add\n", name);
+        printf("root actor/%d has no more files to add\n", name);
 
     } else if (tag == BSAL_ADD_FILE_REPLY) {
 
@@ -181,14 +181,14 @@ void root_receive(struct bsal_actor *actor, struct bsal_message *message)
 
         if (root1->events == 0) {
 
-            printf("actor %d asks actor %d to distribute data\n",
+            printf("root actor/%d asks controller actor/%d to distribute data\n",
                             name, source);
 
             bsal_actor_send_reply_empty(actor, BSAL_INPUT_DISTRIBUTE);
         }
     } else if (tag == BSAL_INPUT_DISTRIBUTE_REPLY) {
 
-        printf("Actor %d is notified by actor %d that the distribution is complete\n",
+        printf("root actor/%d is notified by controller actor/%d that the distribution is complete\n",
                         name, source);
 
         bsal_actor_send_reply_empty(actor, BSAL_ACTOR_ASK_TO_STOP);
@@ -201,7 +201,7 @@ void root_receive(struct bsal_actor *actor, struct bsal_message *message)
         }
     } else if (tag == ROOT_STOP_ALL) {
 
-        printf("actor %d stops all other actors\n", name);
+        printf("root actor/%d stops all other actors\n", name);
 
         bsal_actor_send_range_standard_empty(actor, &root1->spawners, BSAL_ACTOR_ASK_TO_STOP);
 

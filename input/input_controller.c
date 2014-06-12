@@ -311,7 +311,7 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
         bucket = (uint64_t *)bsal_vector_at(&controller->counts, stream_index);
 
         if (entries > *bucket + 10000000) {
-            printf("DEBUG actor:%d receives from actor:%d, file %s, %d entries so far\n",
+            printf("controller actor/%d receives from stream actor/%d: file %s, %d entries so far\n",
                         name, source, local_file, entries);
             *bucket = entries;
         }
@@ -325,7 +325,7 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
         bucket = (uint64_t*)bsal_vector_at(&controller->counts, stream_index);
         *bucket = entries;
 
-        printf("DEBUG Actor %d received from actor %d for file %s: %d entries\n",
+        printf("controller actor/%d received from stream actor/%d for file %s: %d entries\n",
                         name, source, local_file, entries);
 
         bsal_actor_send_reply_empty(actor, BSAL_INPUT_STREAM_RESET);
@@ -521,7 +521,7 @@ void bsal_input_controller_receive_store_entry_counts(struct bsal_actor *actor, 
         store = *(int *)bsal_vector_at(&concrete_actor->stores, i);
         entries = *(uint64_t *)bsal_vector_at(&store_entries, i);
 
-        printf("DEBUG input controller %d tells store %d to reserve %" PRIu64 " buckets\n",
+        printf("DEBUG controller actor/%d tells store actor/%d to reserve %" PRIu64 " buckets\n",
                         name, store, entries);
 
         bsal_message_init(&new_message, BSAL_SEQUENCE_STORE_RESERVE,
@@ -550,7 +550,6 @@ void bsal_input_controller_create_stores(struct bsal_actor *actor, struct bsal_m
     uint64_t entries;
     char *local_file;
     int name;
-    int stores;
 
     concrete_actor = (struct bsal_input_controller *)bsal_actor_concrete_actor(actor);
 
@@ -604,16 +603,19 @@ void bsal_input_controller_create_stores(struct bsal_actor *actor, struct bsal_m
         */
     }
 
-    printf("DEBUG sequence stores are ready (%d)\n",
+    printf("DEBUG controller actor/%d: sequence stores are ready (%d)\n",
+                    bsal_actor_name(actor),
                     (int)bsal_vector_size(&concrete_actor->stores));
 
     for (i = 0; i < bsal_vector_size(&concrete_actor->stores); i++) {
         value = bsal_vector_at_as_int(&concrete_actor->stores, i);
 
-        printf("DEBUG sequence store %i is %d\n", i, value);
+        printf("DEBUG controller actor/%d: sequence store %i is actor/%d\n",
+                        bsal_actor_name(actor), i, value);
     }
 
-    printf("DEBUG sequence files\n");
+    printf("DEBUG controller actor/%d: stream actors are\n",
+                    bsal_actor_name(actor));
 
     total = 0;
     block_size = concrete_actor->block_size;
@@ -621,8 +623,9 @@ void bsal_input_controller_create_stores(struct bsal_actor *actor, struct bsal_m
     for (i = 0; i < bsal_vector_size(&concrete_actor->files); i++) {
         entries = *(uint64_t*)bsal_vector_at(&concrete_actor->counts, i);
         local_file = bsal_vector_at_as_char_pointer(&concrete_actor->files, i);
+        name = *(int *)bsal_vector_at(&concrete_actor->streams, i);
 
-        printf("actor:%d, %d/%d %s %" PRIu64 "\n",
+        printf("stream actor/%d, %d/%d %s %" PRIu64 "\n",
                         name, i,
                         (int)bsal_vector_size(&concrete_actor->files),
                         local_file,
@@ -636,11 +639,9 @@ void bsal_input_controller_create_stores(struct bsal_actor *actor, struct bsal_m
         blocks++;
     }
 
-    stores = bsal_vector_size(&concrete_actor->stores);
-    printf("DEBUG Partition Total: %" PRIu64 ", block_size: %d, blocks: %d\n",
+    printf("DEBUG controller actor/%d: Partition Total: %" PRIu64 ", block_size: %d, blocks: %d\n",
+                    bsal_actor_name(actor),
                     total, block_size, blocks);
-    printf("DEBUG Stores: %d, Blocks per store: %d, entries per store: %d\n",
-                          stores, blocks / stores, (int)(total / stores));
 
 #ifdef BSAL_INPUT_CONTROLLER_DEBUG_10355
     printf("DEBUG send BSAL_INPUT_CONTROLLER_CREATE_STORES to self %d\n",
@@ -671,7 +672,7 @@ void bsal_input_controller_get_node_name_reply(struct bsal_actor *actor, struct 
     spawner = source;
     bsal_message_unpack_int(message, 0, &node);
 
-    printf("DEBUG spawner %d is on node %d\n", spawner, node);
+    printf("DEBUG spawner actor/%d is on node node/%d\n", spawner, node);
 
     bsal_actor_send_reply_empty(actor, BSAL_ACTOR_GET_NODE_WORKER_COUNT);
 }
@@ -698,7 +699,7 @@ void bsal_input_controller_get_node_worker_count_reply(struct bsal_actor *actor,
     bucket = bsal_vector_at(&concrete_actor->stores_per_spawner, index);
     *bucket = worker_count * concrete_actor->stores_per_worker_per_spawner;
 
-    printf("DEBUG spawner %d (%d) is on a node that has %d workers\n", spawner,
+    printf("DEBUG spawner actor/%d (node/%d) is on a node that has %d workers\n", spawner,
                     index, worker_count);
 
     bsal_actor_send_to_self_empty(actor, BSAL_INPUT_CONTROLLER_CREATE_STORES);
@@ -793,8 +794,8 @@ void bsal_input_controller_receive_command(struct bsal_actor *actor, struct bsal
 
 #ifdef BSAL_INPUT_CONTROLLER_DEBUG_COMMANDS
     printf("DEBUG bsal_input_controller_receive_command controller receives command for stream %d\n", stream_index);
-    bsal_partition_command_print(&command);
 #endif
+    bsal_partition_command_print(&command);
 
     store_index = bsal_partition_command_store_index(&command);
     bucket_for_command_name = (int *)bsal_vector_at(&concrete_actor->partition_commands,
@@ -830,6 +831,7 @@ void bsal_input_controller_receive_command(struct bsal_actor *actor, struct bsal
                     stream_name, stream_index);
     bsal_input_command_print(&input_command);
 #endif
+
     bsal_actor_send(actor, stream_name, &new_message);
 
     free(new_buffer);

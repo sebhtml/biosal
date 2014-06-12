@@ -21,7 +21,6 @@ struct bsal_sequence_partitioner {
     struct bsal_vector stream_global_positions;
 
     struct bsal_vector store_entries;
-    struct bsal_vector store_current_entries;
 
     uint64_t total;
 
@@ -59,7 +58,8 @@ void bsal_sequence_partitioner_receive(struct bsal_actor *actor, struct bsal_mes
 
 void bsal_sequence_partitioner_verify(struct bsal_actor *actor);
 
-int bsal_sequence_partitioner_get_store(int block_size, int store_count, uint64_t index);
+int bsal_sequence_partitioner_get_store(uint64_t index, int block_size, int store_count);
+uint64_t bsal_sequence_partitioner_get_index_in_store(uint64_t index, int block_size, int store_count);
 void bsal_sequence_partitioner_generate_command(struct bsal_actor *actor, int stream_index);
 
 #endif

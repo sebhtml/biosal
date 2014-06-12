@@ -100,7 +100,7 @@ void bsal_partition_command_unpack(struct bsal_partition_command *self, void *bu
 
 void bsal_partition_command_print(struct bsal_partition_command *self)
 {
-    printf(">> stream command # %d"
+    printf(">> partition command # %d"
                     ", stream %d range %" PRIu64 "-%" PRIu64 " (%" PRIu64 ")"
                     ", store %d range %" PRIu64 "-%" PRIu64 " (%" PRIu64 ")"
                     ", global range %" PRIu64 "-%" PRIu64 "\n",

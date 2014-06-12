@@ -73,6 +73,10 @@ void bsal_sequence_store_receive(struct bsal_actor *actor, struct bsal_message *
 
     } else if (tag == BSAL_ACTOR_ASK_TO_STOP) {
 
+        printf("DEBUG store actor/%d dies\n",
+                        bsal_actor_name(actor));
+
+        bsal_sequence_store_show_progress(actor, message);
         bsal_actor_send_to_self_empty(actor, BSAL_ACTOR_STOP);
     }
 }
@@ -129,10 +133,7 @@ void bsal_sequence_store_store_sequences(struct bsal_actor *actor, struct bsal_m
     for (i = 0; i < bsal_vector_size(new_entries); i++) {
 
         if (concrete_actor->received % 1000000 == 0) {
-            printf("store %d has %" PRId64 "/%" PRId64 " entries\n",
-                            bsal_actor_name(actor),
-                            concrete_actor->received,
-                            bsal_vector_size(&concrete_actor->sequences));
+            bsal_sequence_store_show_progress(actor, message);
         }
 
         bucket_in_message = (struct bsal_dna_sequence *)bsal_vector_at(new_entries,
@@ -174,10 +175,7 @@ void bsal_sequence_store_store_sequences(struct bsal_actor *actor, struct bsal_m
 #endif
 
         if (concrete_actor->received == bsal_vector_size(&concrete_actor->sequences)) {
-            printf("store %d has %" PRId64 "/%" PRId64 " entries\n",
-                            bsal_actor_name(actor),
-                            concrete_actor->received,
-                            bsal_vector_size(&concrete_actor->sequences));
+            bsal_sequence_store_show_progress(actor, message);
         }
     }
 
@@ -207,7 +205,7 @@ void bsal_sequence_store_reserve(struct bsal_actor *actor, struct bsal_message *
     amount = *(uint64_t*)buffer;
     concrete_actor = (struct bsal_sequence_store *)bsal_actor_concrete_actor(actor);
 
-    printf("DEBUG store %d reserves %" PRIu64 " buckets\n",
+    printf("DEBUG store actor/%d reserves %" PRIu64 " buckets\n",
                     bsal_actor_name(actor),
                     amount);
 
@@ -230,4 +228,16 @@ void bsal_sequence_store_reserve(struct bsal_actor *actor, struct bsal_message *
     }
 
     bsal_actor_send_reply_empty(actor, BSAL_SEQUENCE_STORE_RESERVE_REPLY);
+}
+
+void bsal_sequence_store_show_progress(struct bsal_actor *actor, struct bsal_message *message)
+{
+    struct bsal_sequence_store *concrete_actor;
+
+    concrete_actor = (struct bsal_sequence_store *)bsal_actor_concrete_actor(actor);
+
+    printf("store actor/%d has %" PRId64 "/%" PRId64 " entries\n",
+                    bsal_actor_name(actor),
+                    concrete_actor->received,
+                    bsal_vector_size(&concrete_actor->sequences));
 }
