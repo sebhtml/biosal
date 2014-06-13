@@ -1,7 +1,7 @@
 
 #include "manager.h"
-#include "helper.h"
 
+#include <helpers/actor_helper.h>
 #include <structures/vector_iterator.h>
 #include <structures/dynamic_hash_table_iterator.h>
 
@@ -95,7 +95,7 @@ void bsal_manager_receive(struct bsal_actor *actor, struct bsal_message *message
         if (concrete_actor->script == BSAL_MANAGER_NO_VALUE) {
 
             bsal_vector_init(&all_stores, sizeof(int));
-            bsal_helper_send_reply_vector(actor, BSAL_ACTOR_START_REPLY, &all_stores);
+            bsal_actor_helper_send_reply_vector(actor, BSAL_ACTOR_START_REPLY, &all_stores);
             bsal_vector_destroy(&all_stores);
             return;
         }
@@ -134,12 +134,12 @@ void bsal_manager_receive(struct bsal_actor *actor, struct bsal_message *message
 
 #ifdef BSAL_MANAGER_DEBUG
             printf("DEBUG685-1 spawner %d index %d bucket %p\n", spawner, index, (void *)bucket);
-            bsal_helper_vector_print_int(bsal_actor_acquaintance_vector(actor));
+            bsal_vector_helper_print_int(bsal_actor_acquaintance_vector(actor));
 #endif
 
             bsal_vector_init(stores, sizeof(int));
 
-            bsal_helper_send_empty(actor, spawner, BSAL_ACTOR_GET_NODE_WORKER_COUNT);
+            bsal_actor_helper_send_empty(actor, spawner, BSAL_ACTOR_GET_NODE_WORKER_COUNT);
         }
 
         bsal_vector_iterator_destroy(&iterator);
@@ -149,7 +149,7 @@ void bsal_manager_receive(struct bsal_actor *actor, struct bsal_message *message
 
         concrete_actor->script = *(int *)buffer;
 
-        bsal_helper_send_reply_empty(actor, BSAL_MANAGER_SET_SCRIPT_REPLY);
+        bsal_actor_helper_send_reply_empty(actor, BSAL_MANAGER_SET_SCRIPT_REPLY);
 
     } else if (tag == BSAL_ACTOR_GET_NODE_WORKER_COUNT_REPLY) {
 
@@ -166,7 +166,7 @@ void bsal_manager_receive(struct bsal_actor *actor, struct bsal_message *message
 
 #ifdef BSAL_MANAGER_DEBUG
         printf("DEBUG685-2 spawner %d index %d bucket %p\n", source, index, (void *)bucket);
-        bsal_helper_vector_print_int(bsal_actor_acquaintance_vector(actor));
+        bsal_vector_helper_print_int(bsal_actor_acquaintance_vector(actor));
 #endif
 
         /* set the number of actors desired for each spawner
@@ -177,7 +177,7 @@ void bsal_manager_receive(struct bsal_actor *actor, struct bsal_message *message
             *bucket = concrete_actor->actors_per_spawner;
         }
 
-        bsal_helper_send_reply_int(actor, BSAL_ACTOR_SPAWN, concrete_actor->script);
+        bsal_actor_helper_send_reply_int(actor, BSAL_ACTOR_SPAWN, concrete_actor->script);
 
     } else if (tag == BSAL_ACTOR_SPAWN_REPLY) {
 
@@ -237,7 +237,7 @@ void bsal_manager_receive(struct bsal_actor *actor, struct bsal_message *message
             }
         } else {
 
-            bsal_helper_send_reply_int(actor, BSAL_ACTOR_SPAWN, concrete_actor->script);
+            bsal_actor_helper_send_reply_int(actor, BSAL_ACTOR_SPAWN, concrete_actor->script);
         }
     } else if (tag == BSAL_ACTOR_ASK_TO_STOP) {
 
@@ -248,11 +248,11 @@ void bsal_manager_receive(struct bsal_actor *actor, struct bsal_message *message
 
             printf("manager actor/%d tells worker actor/%d to stop\n",
                             bsal_actor_name(actor), child);
-            bsal_helper_send_empty(actor, child, BSAL_ACTOR_ASK_TO_STOP);
+            bsal_actor_helper_send_empty(actor, child, BSAL_ACTOR_ASK_TO_STOP);
         }
 
         printf("DEBUG manager actor/%d dies\n",
                         bsal_actor_name(actor));
-        bsal_helper_send_to_self_empty(actor, BSAL_ACTOR_STOP);
+        bsal_actor_helper_send_to_self_empty(actor, BSAL_ACTOR_STOP);
     }
 }

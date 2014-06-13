@@ -20,6 +20,9 @@
 #include "storage/sequence_store.h"
 
 #include "patterns/manager.h"
-#include "patterns/helper.h"
+
+#include "helpers/actor_helper.h"
+#include "helpers/vector_helper.h"
+#include "helpers/message_helper.h"
 
 #endif

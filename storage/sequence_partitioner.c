@@ -4,7 +4,8 @@
 #include "partition_command.h"
 
 #include <structures/vector_iterator.h>
-#include <patterns/helper.h>
+#include <helpers/message_helper.h>
+#include <helpers/actor_helper.h>
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -77,13 +78,13 @@ void bsal_sequence_partitioner_receive(struct bsal_actor *actor, struct bsal_mes
     struct bsal_partition_command *command_bucket;
     int i;
 
-    bsal_helper_message_get_all(message, &tag, &count, &buffer, &source);
+    bsal_message_helper_get_all(message, &tag, &count, &buffer, &source);
 
     concrete_actor = (struct bsal_sequence_partitioner *)bsal_actor_concrete_actor(actor);
 
     if (tag == BSAL_SEQUENCE_PARTITIONER_SET_BLOCK_SIZE) {
-        bsal_helper_message_unpack_int(message, 0, &concrete_actor->block_size);
-        bsal_helper_send_reply_empty(actor, BSAL_SEQUENCE_PARTITIONER_SET_BLOCK_SIZE_REPLY);
+        bsal_message_helper_unpack_int(message, 0, &concrete_actor->block_size);
+        bsal_actor_helper_send_reply_empty(actor, BSAL_SEQUENCE_PARTITIONER_SET_BLOCK_SIZE_REPLY);
 
         bsal_sequence_partitioner_verify(actor);
 /*
@@ -102,7 +103,7 @@ void bsal_sequence_partitioner_receive(struct bsal_actor *actor, struct bsal_mes
         printf("DEBUG after unpack\n");
         */
 
-        bsal_helper_send_reply_empty(actor, BSAL_SEQUENCE_PARTITIONER_SET_ENTRY_VECTOR_REPLY);
+        bsal_actor_helper_send_reply_empty(actor, BSAL_SEQUENCE_PARTITIONER_SET_ENTRY_VECTOR_REPLY);
 
         /*
         printf("DEBUG bsal_sequence_partitioner_receive received received entry vector\n");
@@ -111,8 +112,8 @@ void bsal_sequence_partitioner_receive(struct bsal_actor *actor, struct bsal_mes
 
     } else if (tag == BSAL_SEQUENCE_PARTITIONER_SET_ACTOR_COUNT) {
 
-        bsal_helper_message_unpack_int(message, 0, &concrete_actor->store_count);
-        bsal_helper_send_reply_empty(actor, BSAL_SEQUENCE_PARTITIONER_SET_ACTOR_COUNT_REPLY);
+        bsal_message_helper_unpack_int(message, 0, &concrete_actor->store_count);
+        bsal_actor_helper_send_reply_empty(actor, BSAL_SEQUENCE_PARTITIONER_SET_ACTOR_COUNT_REPLY);
 
         bsal_sequence_partitioner_verify(actor);
         /*
@@ -156,7 +157,7 @@ void bsal_sequence_partitioner_receive(struct bsal_actor *actor, struct bsal_mes
          * as a reply
          */
 
-        bsal_helper_message_unpack_int(message, 0, &command_number);
+        bsal_message_helper_unpack_int(message, 0, &command_number);
 
         active_command = bsal_dynamic_hash_table_get(&concrete_actor->active_commands,
                         &command_number);
@@ -175,7 +176,7 @@ void bsal_sequence_partitioner_receive(struct bsal_actor *actor, struct bsal_mes
         if (bsal_dynamic_hash_table_size(&concrete_actor->active_commands) == 0
                         && bsal_queue_size(&concrete_actor->available_commands) == 0) {
 
-            bsal_helper_send_reply_empty(actor, BSAL_SEQUENCE_PARTITIONER_FINISHED);
+            bsal_actor_helper_send_reply_empty(actor, BSAL_SEQUENCE_PARTITIONER_FINISHED);
         }
 
     } else if (tag == BSAL_ACTOR_ASK_TO_STOP
@@ -185,7 +186,7 @@ void bsal_sequence_partitioner_receive(struct bsal_actor *actor, struct bsal_mes
         printf("DEBUG bsal_sequence_partitioner_receive BSAL_ACTOR_ASK_TO_STOP\n");
 #endif
 
-        bsal_helper_send_to_self_empty(actor,
+        bsal_actor_helper_send_to_self_empty(actor,
                         BSAL_ACTOR_STOP);
 
     } else if (tag == BSAL_SEQUENCE_PARTITIONER_PROVIDE_STORE_ENTRY_COUNTS_REPLY) {
@@ -526,5 +527,5 @@ void bsal_sequence_partitioner_generate_command(struct bsal_actor *actor, int st
 
     /* emit a signal
      */
-    bsal_helper_send_reply_empty(actor, BSAL_SEQUENCE_PARTITIONER_COMMAND_IS_READY);
+    bsal_actor_helper_send_reply_empty(actor, BSAL_SEQUENCE_PARTITIONER_COMMAND_IS_READY);
 }

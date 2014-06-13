@@ -5,7 +5,7 @@
 
 #include <data/dna_sequence.h>
 #include <storage/sequence_store.h>
-#include <patterns/helper.h>
+#include <helpers/actor_helper.h>
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -102,8 +102,8 @@ void bsal_input_stream_receive(struct bsal_actor *actor, struct bsal_message *me
         if (concrete_actor->open) {
 
             concrete_actor->error = BSAL_INPUT_ERROR_ALREADY_OPEN;
-            bsal_helper_send_reply_int(actor, BSAL_INPUT_OPEN_REPLY, concrete_actor->error);
-            bsal_helper_send_to_self_empty(actor, BSAL_ACTOR_STOP);
+            bsal_actor_helper_send_reply_int(actor, BSAL_INPUT_OPEN_REPLY, concrete_actor->error);
+            bsal_actor_helper_send_to_self_empty(actor, BSAL_ACTOR_STOP);
 
             return;
         }
@@ -136,8 +136,8 @@ void bsal_input_stream_receive(struct bsal_actor *actor, struct bsal_message *me
             printf("DEBUG has error\n");
 #endif
 
-            bsal_helper_send_reply_int(actor, BSAL_INPUT_OPEN_REPLY, concrete_actor->error);
-            bsal_helper_send_to_self_empty(actor, BSAL_ACTOR_STOP);
+            bsal_actor_helper_send_reply_int(actor, BSAL_INPUT_OPEN_REPLY, concrete_actor->error);
+            bsal_actor_helper_send_to_self_empty(actor, BSAL_ACTOR_STOP);
 
             return;
         }
@@ -145,15 +145,15 @@ void bsal_input_stream_receive(struct bsal_actor *actor, struct bsal_message *me
         concrete_actor->controller = source;
 
         /* no error here... */
-        bsal_helper_send_reply_int(actor, BSAL_INPUT_OPEN_REPLY, concrete_actor->error);
+        bsal_actor_helper_send_reply_int(actor, BSAL_INPUT_OPEN_REPLY, concrete_actor->error);
 
     } else if (tag == BSAL_INPUT_COUNT) {
         /* count a little bit and yield the worker */
 
         if (bsal_input_stream_check_open_error(actor, message)) {
 
-            bsal_helper_send_reply_int(actor, BSAL_INPUT_COUNT_REPLY, concrete_actor->error);
-            bsal_helper_send_to_self_empty(actor, BSAL_ACTOR_STOP);
+            bsal_actor_helper_send_reply_int(actor, BSAL_INPUT_COUNT_REPLY, concrete_actor->error);
+            bsal_actor_helper_send_to_self_empty(actor, BSAL_ACTOR_STOP);
 
             return;
         }
@@ -175,7 +175,7 @@ void bsal_input_stream_receive(struct bsal_actor *actor, struct bsal_message *me
 
             /*printf("DEBUG yield\n");*/
 
-            bsal_helper_send_to_self_empty(actor, BSAL_ACTOR_YIELD);
+            bsal_actor_helper_send_to_self_empty(actor, BSAL_ACTOR_YIELD);
 
             /* notify the controller of our progress...
              */
@@ -186,13 +186,13 @@ void bsal_input_stream_receive(struct bsal_actor *actor, struct bsal_message *me
             printf("DEBUG BSAL_INPUT_COUNT sequences %d...\n", sequences);
 #endif
 
-            bsal_helper_send_int(actor, concrete_actor->controller, BSAL_INPUT_COUNT_PROGRESS, sequences);
+            bsal_actor_helper_send_int(actor, concrete_actor->controller, BSAL_INPUT_COUNT_PROGRESS, sequences);
 
             bsal_message_destroy(message);
 
         } else {
 
-            bsal_helper_send_to_self_empty(actor, BSAL_INPUT_COUNT_READY);
+            bsal_actor_helper_send_to_self_empty(actor, BSAL_INPUT_COUNT_READY);
         }
 
     } else if (tag == BSAL_ACTOR_YIELD_REPLY) {
@@ -201,14 +201,14 @@ void bsal_input_stream_receive(struct bsal_actor *actor, struct bsal_message *me
                 /*
                  * it is not clear that there can be an error when receiving YIELD.
             error = concrete_actor->error;
-            bsal_helper_send_reply_int(actor, BSAL_INPUT_COUNT_REPLY, error);
+            bsal_actor_helper_send_reply_int(actor, BSAL_INPUT_COUNT_REPLY, error);
             bsal_actor_send_to_self(actor, BSAL_ACTOR_STOP);
 
                  */
             return;
         }
 
-        bsal_helper_send_to_self_empty(actor, BSAL_INPUT_COUNT);
+        bsal_actor_helper_send_to_self_empty(actor, BSAL_INPUT_COUNT);
 
     } else if (tag == BSAL_INPUT_COUNT_READY) {
 
@@ -218,11 +218,11 @@ void bsal_input_stream_receive(struct bsal_actor *actor, struct bsal_message *me
 
         count = bsal_input_proxy_size(&concrete_actor->proxy);
 
-        bsal_helper_send_int(actor, concrete_actor->controller, BSAL_INPUT_COUNT_REPLY, count);
+        bsal_actor_helper_send_int(actor, concrete_actor->controller, BSAL_INPUT_COUNT_REPLY, count);
 
     } else if (tag == BSAL_ACTOR_ASK_TO_STOP) {
 
-        bsal_helper_send_to_self_empty(actor, BSAL_INPUT_CLOSE);
+        bsal_actor_helper_send_to_self_empty(actor, BSAL_INPUT_CLOSE);
 
     } else if (tag == BSAL_INPUT_CLOSE) {
 
@@ -238,7 +238,7 @@ void bsal_input_stream_receive(struct bsal_actor *actor, struct bsal_message *me
                 &concrete_actor->error);
             bsal_actor_send(actor, source, message);
 
-            bsal_helper_send_to_self_empty(actor, BSAL_ACTOR_STOP);
+            bsal_actor_helper_send_to_self_empty(actor, BSAL_ACTOR_STOP);
             return;
         }
 
@@ -246,7 +246,7 @@ void bsal_input_stream_receive(struct bsal_actor *actor, struct bsal_message *me
                 &concrete_actor->error);
         bsal_actor_send(actor, source, message);
 
-        bsal_helper_send_to_self_empty(actor, BSAL_ACTOR_STOP);
+        bsal_actor_helper_send_to_self_empty(actor, BSAL_ACTOR_STOP);
 
 #ifdef BSAL_INPUT_STREAM_DEBUG
         printf("actor %d sending BSAL_INPUT_CLOSE_REPLY to %d\n",
@@ -294,15 +294,15 @@ void bsal_input_stream_receive(struct bsal_actor *actor, struct bsal_message *me
         bsal_input_stream_push_sequences(actor, message);
     } else if (tag == BSAL_ACTOR_ASK_TO_STOP) {
 
-        bsal_helper_send_to_self_empty(actor, BSAL_ACTOR_STOP);
-        bsal_helper_send_reply_empty(actor, BSAL_ACTOR_ASK_TO_STOP_REPLY);
+        bsal_actor_helper_send_to_self_empty(actor, BSAL_ACTOR_STOP);
+        bsal_actor_helper_send_reply_empty(actor, BSAL_ACTOR_ASK_TO_STOP_REPLY);
 
     } else if (tag == BSAL_INPUT_STREAM_RESET) {
 
         /* fail silently
          */
         if (!concrete_actor->open) {
-            bsal_helper_send_reply_empty(actor, BSAL_INPUT_STREAM_RESET_REPLY);
+            bsal_actor_helper_send_reply_empty(actor, BSAL_INPUT_STREAM_RESET_REPLY);
             return;
         }
 
@@ -313,11 +313,11 @@ void bsal_input_stream_receive(struct bsal_actor *actor, struct bsal_message *me
         bsal_input_proxy_destroy(&concrete_actor->proxy);
         bsal_input_proxy_init(&concrete_actor->proxy, concrete_actor->file_name);
 
-        bsal_helper_send_reply_empty(actor, BSAL_INPUT_STREAM_RESET_REPLY);
+        bsal_actor_helper_send_reply_empty(actor, BSAL_INPUT_STREAM_RESET_REPLY);
 
     } else if (tag == BSAL_PUSH_SEQUENCE_DATA_BLOCK_REPLY) {
 
-        bsal_helper_send_to_supervisor_empty(actor, BSAL_INPUT_PUSH_SEQUENCES_REPLY);
+        bsal_actor_helper_send_to_supervisor_empty(actor, BSAL_INPUT_PUSH_SEQUENCES_REPLY);
     }
 }
 
@@ -477,7 +477,7 @@ void bsal_input_stream_push_sequences(struct bsal_actor *actor,
      * The required information is the input command
      */
     /*
-    bsal_helper_send_reply_empty(actor, BSAL_INPUT_PUSH_SEQUENCES_REPLY);
+    bsal_actor_helper_send_reply_empty(actor, BSAL_INPUT_PUSH_SEQUENCES_REPLY);
     */
 
     /* free memory

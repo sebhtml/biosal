@@ -49,10 +49,10 @@ void hello_receive(struct bsal_actor *actor, struct bsal_message *message)
                         name, (int)bsal_vector_size(&hello1->initial_helloes));
 
         for (i = 0; i < bsal_vector_size(&hello1->initial_helloes); i++) {
-            printf(" actor:%d", bsal_helper_vector_at_as_int(&hello1->initial_helloes, i));
+            printf(" actor:%d", bsal_vector_helper_at_as_int(&hello1->initial_helloes, i));
         }
         printf("\n");
 
-        bsal_helper_send_to_self_empty(actor, BSAL_ACTOR_STOP);
+        bsal_actor_helper_send_to_self_empty(actor, BSAL_ACTOR_STOP);
     }
 }

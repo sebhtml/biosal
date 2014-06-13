@@ -1,3 +1,3 @@
 
-PATTERNS = patterns/manager.o patterns/helper.o
+PATTERNS = patterns/manager.o
 

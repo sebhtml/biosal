@@ -78,7 +78,7 @@ void table_receive(struct bsal_actor *actor, struct bsal_message *message)
         bsal_actor_send(actor, new_actor, message);
 
         bsal_message_init(message, TABLE_NOTIFY, 0, NULL);
-        bsal_actor_send(actor, bsal_helper_vector_at_as_int(&table1->spawners, 0), message);
+        bsal_actor_send(actor, bsal_vector_helper_at_as_int(&table1->spawners, 0), message);
 
     } else if (tag == TABLE_DIE2) {
 

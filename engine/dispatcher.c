@@ -2,7 +2,7 @@
 #include "dispatcher.h"
 #include "message.h"
 
-#include <patterns/helper.h>
+#include <helpers/vector_helper.h>
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -102,8 +102,8 @@ void bsal_dispatcher_print(struct bsal_dispatcher *self)
                     (int)bsal_vector_size(&self->tags));
 
     for (i = 0; i < bsal_vector_size(&self->tags); i++) {
-        tag = bsal_helper_vector_at_as_int(&self->tags, i);
-        handler = bsal_helper_vector_at_as_void_pointer(&self->handlers, i);
+        tag = bsal_vector_helper_at_as_int(&self->tags, i);
+        handler = bsal_vector_helper_at_as_void_pointer(&self->handlers, i);
 
         printf(" (%d %p)", tag, handler);
     }

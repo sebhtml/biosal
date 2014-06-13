@@ -20,7 +20,7 @@ void process_init(struct bsal_actor *actor)
     process1->value = 42;
     process1->ready = 0;
     process1->cloned = 0;
-    bsal_helper_send_to_self_empty(actor, BSAL_ACTOR_PACK_ENABLE);
+    bsal_actor_helper_send_to_self_empty(actor, BSAL_ACTOR_PACK_ENABLE);
 }
 
 void process_destroy(struct bsal_actor *actor)
@@ -52,7 +52,7 @@ void process_receive(struct bsal_actor *actor, struct bsal_message *message)
 
         for (i = 0; i < bsal_vector_size(&process1->initial_processes); i++) {
 
-            other = bsal_helper_vector_at_as_int(&process1->initial_processes, i);
+            other = bsal_vector_helper_at_as_int(&process1->initial_processes, i);
 
             if (other != name) {
                 break;
@@ -78,7 +78,7 @@ void process_receive(struct bsal_actor *actor, struct bsal_message *message)
 
         printf("New clone is actor:%d\n", process1->clone);
 
-        bsal_helper_send_empty(actor, process1->clone, BSAL_ACTOR_ASK_TO_STOP);
+        bsal_actor_helper_send_empty(actor, process1->clone, BSAL_ACTOR_ASK_TO_STOP);
 
         process1->cloned++;
 
@@ -88,12 +88,12 @@ void process_receive(struct bsal_actor *actor, struct bsal_message *message)
             return;
         }
 
-        if (bsal_helper_vector_at_as_int(&process1->initial_processes, 0) == name) {
+        if (bsal_vector_helper_at_as_int(&process1->initial_processes, 0) == name) {
             bsal_actor_synchronize(actor, &process1->initial_processes);
         }
 
         if (process1->ready) {
-            bsal_helper_send_empty(actor, bsal_helper_vector_at_as_int(&process1->initial_processes, 0),
+            bsal_actor_helper_send_empty(actor, bsal_vector_helper_at_as_int(&process1->initial_processes, 0),
                             BSAL_ACTOR_SYNCHRONIZE_REPLY);
         }
         process1->ready = 1;
@@ -101,7 +101,7 @@ void process_receive(struct bsal_actor *actor, struct bsal_message *message)
     } else if (tag == BSAL_ACTOR_SYNCHRONIZE) {
 
         if (process1->ready) {
-            bsal_helper_send_empty(actor, bsal_helper_vector_at_as_int(&process1->initial_processes, 0),
+            bsal_actor_helper_send_empty(actor, bsal_vector_helper_at_as_int(&process1->initial_processes, 0),
                             BSAL_ACTOR_SYNCHRONIZE_REPLY);
         }
         process1->ready = 1;
@@ -118,7 +118,7 @@ void process_receive(struct bsal_actor *actor, struct bsal_message *message)
     } else if (tag == BSAL_ACTOR_UNPACK) {
 
         process1->value = *(int*)buffer;
-        bsal_helper_send_reply_empty(actor, BSAL_ACTOR_UNPACK_REPLY);
+        bsal_actor_helper_send_reply_empty(actor, BSAL_ACTOR_UNPACK_REPLY);
 
     } else if (tag == BSAL_ACTOR_ASK_TO_STOP) {
 
@@ -129,6 +129,6 @@ void process_receive(struct bsal_actor *actor, struct bsal_message *message)
             printf("Hello. my name is %d and my value is %d. I am an original.\n", name, process1->value);
         }
 
-        bsal_helper_send_to_self_empty(actor, BSAL_ACTOR_STOP);
+        bsal_actor_helper_send_to_self_empty(actor, BSAL_ACTOR_STOP);
     }
 }

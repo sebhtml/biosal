@@ -97,7 +97,7 @@ void ring_receive(struct bsal_actor *actor, struct bsal_message *message)
         printf("actor %d spawned %d actors for a part of the ring\n",
                         name, ring1->senders);
 
-        bsal_helper_send_empty(actor, *(int *)bsal_vector_at(&ring1->spawners, 0),
+        bsal_actor_helper_send_empty(actor, *(int *)bsal_vector_at(&ring1->spawners, 0),
                         RING_READY);
 
     } else if (tag == RING_READY && ring1->step == 0) {
@@ -127,7 +127,7 @@ void ring_receive(struct bsal_actor *actor, struct bsal_message *message)
 
     } else if (tag == SENDER_SET_NEXT_REPLY) {
 
-        bsal_helper_send_empty(actor, *(int *)bsal_vector_at(&ring1->spawners, 0), RING_READY);
+        bsal_actor_helper_send_empty(actor, *(int *)bsal_vector_at(&ring1->spawners, 0), RING_READY);
 
     } else if (tag == RING_READY && ring1->step == 1) {
         ring1->ready++;
@@ -141,10 +141,10 @@ void ring_receive(struct bsal_actor *actor, struct bsal_message *message)
     } else if (tag == SENDER_HELLO_REPLY) {
 
         bsal_actor_send_range_standard_empty(actor, &ring1->spawners, RING_KILL);
-        bsal_helper_send_empty(actor, ring1->first, SENDER_KILL);
+        bsal_actor_helper_send_empty(actor, ring1->first, SENDER_KILL);
 
     } else if (tag == RING_KILL) {
 
-        bsal_helper_send_to_self_empty(actor, BSAL_ACTOR_STOP);
+        bsal_actor_helper_send_to_self_empty(actor, BSAL_ACTOR_STOP);
     }
 }

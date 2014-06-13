@@ -4,7 +4,7 @@
 #include <data/dna_kmer.h>
 #include <storage/sequence_store.h>
 #include <input/input_command.h>
-#include <patterns/helper.h>
+#include <helpers/actor_helper.h>
 
 #include <stdio.h>
 #include <stdint.h>
@@ -80,13 +80,13 @@ void bsal_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_mess
 
         bsal_dna_kmer_init(&kmer, NULL);
 
-        bsal_helper_send_reply_empty(actor, BSAL_PUSH_SEQUENCE_DATA_BLOCK_REPLY);
+        bsal_actor_helper_send_reply_empty(actor, BSAL_PUSH_SEQUENCE_DATA_BLOCK_REPLY);
 
         bsal_input_command_destroy(&payload);
 
     } else if (tag == BSAL_ACTOR_START) {
 
-        bsal_helper_send_reply_empty(actor, BSAL_ACTOR_START_REPLY);
+        bsal_actor_helper_send_reply_empty(actor, BSAL_ACTOR_START_REPLY);
 
     } else if (tag == BSAL_SEQUENCE_STORE_RESERVE) {
 
@@ -94,7 +94,7 @@ void bsal_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_mess
 
         concrete_actor->expected = *(uint64_t *)buffer;
 
-        bsal_helper_send_reply_empty(actor, BSAL_SEQUENCE_STORE_RESERVE_REPLY);
+        bsal_actor_helper_send_reply_empty(actor, BSAL_SEQUENCE_STORE_RESERVE_REPLY);
 
     } else if (tag == BSAL_ACTOR_ASK_TO_STOP
                     && source == bsal_actor_supervisor(actor)) {
@@ -102,7 +102,7 @@ void bsal_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_mess
         printf("kernel actor/%d receives request to stop from actor/%d, supervisor is actor/%d\n",
                         name, source, bsal_actor_supervisor(actor));
 
-        bsal_helper_send_to_self_empty(actor, BSAL_ACTOR_STOP);
+        bsal_actor_helper_send_to_self_empty(actor, BSAL_ACTOR_STOP);
     }
 }
 

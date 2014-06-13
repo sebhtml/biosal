@@ -17,6 +17,10 @@ LIBRARY += $(ENGINE)
 include patterns/Makefile.mk
 LIBRARY += $(PATTERNS)
 
+# helpers
+include helpers/Makefile.mk
+LIBRARY += $(HELPERS)
+
 # kernels for genomics
 include kernels/Makefile.mk
 LIBRARY += $(KERNELS)

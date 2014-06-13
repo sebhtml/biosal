@@ -1,7 +1,7 @@
 
 #include "graph_store.h"
 
-#include <patterns/helper.h>
+#include <helpers/actor_helper.h>
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -31,10 +31,10 @@ void bsal_graph_store_receive(struct bsal_actor *actor, struct bsal_message *mes
 
     if (tag == BSAL_VERTEX) {
 
-        bsal_helper_send_reply_empty(actor, BSAL_VERTEX_REPLY);
+        bsal_actor_helper_send_reply_empty(actor, BSAL_VERTEX_REPLY);
 
     } else if (tag == BSAL_GRAPH_STORE_STOP) {
 
-        bsal_helper_send_to_self_empty(actor, BSAL_ACTOR_STOP);
+        bsal_actor_helper_send_to_self_empty(actor, BSAL_ACTOR_STOP);
     }
 }
