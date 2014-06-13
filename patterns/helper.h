@@ -25,4 +25,7 @@ void bsal_helper_send_to_self_int(struct bsal_actor *actor, int tag, int value);
 void bsal_helper_send_to_supervisor_empty(struct bsal_actor *actor, int tag);
 void bsal_helper_send_to_supervisor_int(struct bsal_actor *actor, int tag, int value);
 
+int bsal_helper_unpack_int(struct bsal_message *message, int offset, int *value);
+void bsal_helper_get_all(struct bsal_message *message, int *tag, int *count, void **buffer, int *source);
+
 #endif

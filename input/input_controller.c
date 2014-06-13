@@ -146,7 +146,7 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
     int command_name;
     int stream_name;
 
-    bsal_message_get_all(message, &tag, &count, &buffer, &source);
+    bsal_helper_get_all(message, &tag, &count, &buffer, &source);
 
     name = bsal_actor_name(actor);
     controller = (struct bsal_input_controller *)bsal_actor_concrete_actor(actor);
@@ -207,7 +207,7 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
         } else if (controller->state == BSAL_INPUT_CONTROLLER_STATE_PREPARE_SPAWNERS) {
 
             concrete_actor->ready_spawners++;
-            bsal_message_unpack_int(message, 0, &name);
+            bsal_helper_unpack_int(message, 0, &name);
             bsal_helper_send_empty(actor, name, BSAL_ACTOR_ASK_TO_STOP);
             bsal_helper_send_to_self_empty(actor, BSAL_INPUT_CONTROLLER_PREPARE_SPAWNERS);
 
@@ -227,7 +227,7 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
             printf("DEBUG received spawn reply, state is spawn_partitioner\n");
 #endif
 
-            bsal_message_unpack_int(message, 0, &concrete_actor->partitioner);
+            bsal_helper_unpack_int(message, 0, &concrete_actor->partitioner);
             concrete_actor->partitioner = bsal_actor_add_acquaintance(actor,
                             concrete_actor->partitioner);
 
@@ -286,7 +286,7 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
         controller->opened_streams++;
 
         stream = source;
-        bsal_message_unpack_int(message, 0, &error);
+        bsal_helper_unpack_int(message, 0, &error);
 
         if (error == BSAL_INPUT_ERROR_NO_ERROR) {
 
@@ -329,7 +329,7 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
 
         stream_index = bsal_vector_index_of(&controller->streams, &source);
         local_file = bsal_vector_at_as_char_pointer(&controller->files, stream_index);
-        bsal_message_unpack_int(message, 0, &entries);
+        bsal_helper_unpack_int(message, 0, &entries);
 
         bucket = (uint64_t *)bsal_vector_at(&controller->counts, stream_index);
 
@@ -343,7 +343,7 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
 
         stream_index = bsal_vector_index_of(&controller->streams, &source);
         local_file = bsal_vector_at_as_char_pointer(&controller->files, stream_index);
-        bsal_message_unpack_int(message, 0, &entries);
+        bsal_helper_unpack_int(message, 0, &entries);
 
         bucket = (uint64_t*)bsal_vector_at(&controller->counts, stream_index);
         *bucket = entries;
@@ -610,7 +610,7 @@ void bsal_input_controller_create_stores(struct bsal_actor *actor, struct bsal_m
 
     concrete_actor = (struct bsal_input_controller *)bsal_actor_concrete_actor(actor);
 
-    bsal_message_get_all(message, &tag, &count, &buffer, &source);
+    bsal_helper_get_all(message, &tag, &count, &buffer, &source);
 /*
     printf("DEBUG bsal_input_controller_create_stores\n");
     */
@@ -732,9 +732,9 @@ void bsal_input_controller_get_node_name_reply(struct bsal_actor *actor, struct 
     int spawner;
     int node;
 
-    bsal_message_get_all(message, &tag, &count, &buffer, &source);
+    bsal_helper_get_all(message, &tag, &count, &buffer, &source);
     spawner = source;
-    bsal_message_unpack_int(message, 0, &node);
+    bsal_helper_unpack_int(message, 0, &node);
 
     printf("DEBUG spawner actor/%d is on node node/%d\n", spawner, node);
 
@@ -755,9 +755,9 @@ void bsal_input_controller_get_node_worker_count_reply(struct bsal_actor *actor,
 
     concrete_actor = (struct bsal_input_controller *)bsal_actor_concrete_actor(actor);
 
-    bsal_message_get_all(message, &tag, &count, &buffer, &source);
+    bsal_helper_get_all(message, &tag, &count, &buffer, &source);
     spawner = source;
-    bsal_message_unpack_int(message, 0, &worker_count);
+    bsal_helper_unpack_int(message, 0, &worker_count);
 
     index = bsal_vector_index_of(&concrete_actor->spawners, &spawner);
     bucket = bsal_vector_at(&concrete_actor->stores_per_spawner, index);
@@ -783,7 +783,7 @@ void bsal_input_controller_add_store(struct bsal_actor *actor, struct bsal_messa
 
     concrete_actor = (struct bsal_input_controller *)bsal_actor_concrete_actor(actor);
     source = bsal_message_source(message);
-    bsal_message_unpack_int(message, 0, &store);
+    bsal_helper_unpack_int(message, 0, &store);
 
     index = bsal_vector_index_of(&concrete_actor->spawners, &source);
 

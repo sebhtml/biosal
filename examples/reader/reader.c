@@ -118,7 +118,7 @@ void reader_receive(struct bsal_actor *actor, struct bsal_message *message)
 
     } else if (tag == BSAL_INPUT_OPEN_REPLY && !reader1->counted) {
 
-        bsal_message_unpack_int(message, 0, &error);
+        bsal_helper_unpack_int(message, 0, &error);
 
         if (error == BSAL_INPUT_ERROR_NO_ERROR) {
             printf("Successfully opened file.\n");

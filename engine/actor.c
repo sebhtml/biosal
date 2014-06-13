@@ -683,8 +683,8 @@ int bsal_actor_receive_system(struct bsal_actor *actor, struct bsal_message *mes
             return 1;
         }
 
-        bsal_message_unpack_int(message, 0, &old_supervisor);
-        bsal_message_unpack_int(message, sizeof(old_supervisor), &supervisor);
+        bsal_helper_unpack_int(message, 0, &old_supervisor);
+        bsal_helper_unpack_int(message, sizeof(old_supervisor), &supervisor);
 
 #ifdef BSAL_ACTOR_DEBUG_MIGRATE
         printf("DEBUG bsal_actor_receive_system actor %d receives BSAL_ACTOR_SET_SUPERVISOR old supervisor %d (provided %d), new supervisor %d\n",
@@ -1471,7 +1471,7 @@ void bsal_actor_migrate(struct bsal_actor *actor, struct bsal_message *message)
 
         /* tell acquaintances that the clone is the new original.
          */
-        bsal_message_unpack_int(message, 0, &actor->migration_new_actor);
+        bsal_helper_unpack_int(message, 0, &actor->migration_new_actor);
 
         actor->acquaintance_index = 0;
         bsal_helper_send_to_self_empty(actor, BSAL_ACTOR_MIGRATE_NOTIFY_ACQUAINTANCES);
@@ -1571,7 +1571,7 @@ void bsal_actor_notify_name_change(struct bsal_actor *actor, struct bsal_message
 
     source = bsal_message_source(message);
     old_name = source;
-    bsal_message_unpack_int(message, 0, &new_name);
+    bsal_helper_unpack_int(message, 0, &new_name);
 
     index = bsal_actor_get_acquaintance_index(actor, old_name);
 
@@ -1639,7 +1639,7 @@ void bsal_actor_queue_message(struct bsal_actor *actor,
     int tag;
     int source;
 
-    bsal_message_get_all(message, &tag, &count, &buffer, &source);
+    bsal_helper_get_all(message, &tag, &count, &buffer, &source);
 
     new_buffer = NULL;
 
