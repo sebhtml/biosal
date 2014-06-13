@@ -1,0 +1,3 @@
+
+PATTERNS = patterns/manager.o
+

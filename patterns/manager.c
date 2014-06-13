@@ -1,9 +1,6 @@
 
 #include "manager.h"
 
-#include "sequence_store.h"
-#include <kernels/kmer_counter_kernel.h>
-
 #include <structures/vector_iterator.h>
 #include <structures/dynamic_hash_table_iterator.h>
 
@@ -33,9 +30,6 @@ void bsal_manager_init(struct bsal_actor *actor)
 
     concrete_actor->ready_spawners = 0;
     concrete_actor->spawners = 0;
-
-    bsal_actor_add_script(actor, BSAL_SEQUENCE_STORE_SCRIPT, &bsal_sequence_store_script);
-    bsal_actor_add_script(actor, BSAL_KMER_COUNTER_KERNEL_SCRIPT, &bsal_kmer_counter_kernel_script);
 }
 
 void bsal_manager_destroy(struct bsal_actor *actor)

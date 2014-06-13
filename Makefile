@@ -18,6 +18,9 @@ LIBRARY=
 include engine/Makefile.mk
 LIBRARY += $(ENGINE)
 
+include patterns/Makefile.mk
+LIBRARY += $(PATTERNS)
+
 # kernels for genomics
 include kernels/Makefile.mk
 LIBRARY += $(KERNELS)

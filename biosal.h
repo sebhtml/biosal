@@ -18,6 +18,7 @@
 /* storage */
 
 #include "storage/sequence_store.h"
-#include "storage/manager.h"
+
+#include "patterns/manager.h"
 
 #endif

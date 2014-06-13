@@ -5,7 +5,7 @@
 #include <structures/vector_iterator.h>
 
 #include <kernels/kmer_counter_kernel.h>
-#include <storage/manager.h>
+#include <patterns/manager.h>
 
 #include <system/memory.h>
 
