@@ -63,7 +63,7 @@ void bsal_sequence_store_receive(struct bsal_actor *actor, struct bsal_message *
 
     tag = bsal_message_tag(message);
 
-    if (tag == BSAL_STORE_SEQUENCES) {
+    if (tag == BSAL_PUSH_SEQUENCE_DATA_BLOCK) {
 
         bsal_sequence_store_store_sequences(actor, message);
 
@@ -105,7 +105,7 @@ void bsal_sequence_store_store_sequences(struct bsal_actor *actor, struct bsal_m
 
 #ifdef BSAL_SEQUENCE_STORE_DEBUG
     count = bsal_message_count(message);
-    printf("DEBUG store receives BSAL_STORE_SEQUENCES %d bytes\n",
+    printf("DEBUG store receives BSAL_PUSH_SEQUENCE_DATA_BLOCK %d bytes\n",
                     count);
 #endif
 
@@ -190,7 +190,7 @@ void bsal_sequence_store_store_sequences(struct bsal_actor *actor, struct bsal_m
      */
     bsal_input_command_destroy(&payload);
 
-    bsal_actor_send_reply_empty(actor, BSAL_STORE_SEQUENCES_REPLY);
+    bsal_actor_send_reply_empty(actor, BSAL_PUSH_SEQUENCE_DATA_BLOCK_REPLY);
 }
 
 void bsal_sequence_store_reserve(struct bsal_actor *actor, struct bsal_message *message)

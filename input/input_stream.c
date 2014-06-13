@@ -314,7 +314,7 @@ void bsal_input_stream_receive(struct bsal_actor *actor, struct bsal_message *me
 
         bsal_actor_send_reply_empty(actor, BSAL_INPUT_STREAM_RESET_REPLY);
 
-    } else if (tag == BSAL_STORE_SEQUENCES_REPLY) {
+    } else if (tag == BSAL_PUSH_SEQUENCE_DATA_BLOCK_REPLY) {
 
         bsal_actor_send_to_supervisor_empty(actor, BSAL_INPUT_PUSH_SEQUENCES_REPLY);
     }
@@ -461,11 +461,11 @@ void bsal_input_stream_push_sequences(struct bsal_actor *actor,
                     actual_count);
 #endif
 
-    bsal_message_init(&new_message, BSAL_STORE_SEQUENCES,
+    bsal_message_init(&new_message, BSAL_PUSH_SEQUENCE_DATA_BLOCK,
                     new_count, new_buffer);
 
 #ifdef BSAL_INPUT_STREAM_DEBUG
-    printf("DEBUG bsal_input_stream_push_sequences sending BSAL_STORE_SEQUENCES to %d\n",
+    printf("DEBUG bsal_input_stream_push_sequences sending BSAL_PUSH_SEQUENCE_DATA_BLOCK to %d\n",
                     store_name);
 #endif
 

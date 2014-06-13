@@ -55,7 +55,7 @@ void bsal_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_mess
     source = bsal_message_source(message);
     buffer = bsal_message_buffer(message);
 
-    if (tag == BSAL_STORE_SEQUENCES) {
+    if (tag == BSAL_PUSH_SEQUENCE_DATA_BLOCK) {
 
         bsal_input_command_unpack(&payload, buffer);
 
@@ -79,7 +79,7 @@ void bsal_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_mess
 
         bsal_dna_kmer_init(&kmer, NULL);
 
-        bsal_actor_send_reply_empty(actor, BSAL_STORE_SEQUENCES_REPLY);
+        bsal_actor_send_reply_empty(actor, BSAL_PUSH_SEQUENCE_DATA_BLOCK_REPLY);
 
         bsal_input_command_destroy(&payload);
 
