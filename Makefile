@@ -6,12 +6,6 @@ ECHO=echo
 
 all:
 
-include tests/Makefile.mk
-include examples/Makefile.mk
-include applications/Makefile.mk
-
-all: $(TESTS) $(EXAMPLES) $(APPLICATIONS)
-
 LIBRARY=
 
 # actor engine
@@ -57,16 +51,18 @@ LIBRARY += $(FORMATS)
 	$(Q)$(ECHO) "  CC $@"
 	$(Q)$(CC) $(CFLAGS) -c $< -o $@
 
-clean:
-	$(Q)$(ECHO) "  RM"
-	$(Q)$(RM) $(LIBRARY)
-	$(Q)$(RM) $(EXAMPLE_RING) $(EXAMPLE_MOCK) $(EXAMPLE_READER) $(EXAMPLE_REMOTE_SPAWN)
-	$(Q)$(RM) $(EXAMPLE_SYNCHRONIZE) $(EXAMPLE_CONTROLLER) $(EXAMPLE_HELLO_WORLD)
-	$(Q)$(RM) $(EXAMPLE_CLONE) $(EXAMPLE_MIGRATION)
-	$(Q)$(RM) $(TEST_FIFO) $(TEST_FIFO_ARRAY) $(TEST_HASH_TABLE_GROUP) $(TEST_NODE)
-	$(Q)$(RM) $(TEST_HASH_TABLE) $(TEST_VECTOR) $(TEST_DYNAMIC_HASH_TABLE)
-	$(Q)$(RM) $(TEST_PACKER) $(TEST_DNA_SEQUENCE) $(ARGONNITE)
-	$(Q)$(RM) $(EXAMPLES) $(TESTS) $(APPLICATIONS)
+
+# include these after the library 
+include tests/Makefile.mk
+include examples/Makefile.mk
+include applications/Makefile.mk
+
+# applications
+argonnite: $(ARGONNITE) $(LIBRARY)
+	$(Q)$(ECHO) "  LD $@"
+	$(Q)$(CC) $(CFLAGS) $^ -o $@
+
+
 
 # tests
 
@@ -106,45 +102,16 @@ test_dynamic_hash_table: $(LIBRARY) $(TEST_DYNAMIC_HASH_TABLE)
 	$(Q)$(ECHO) "  LD $@"
 	$(Q)$(CC) $(CFLAGS) $^ -o $@
 
-# examples
+all: $(APPLICATIONS) $(EXAMPLES) $(TESTS)
 
-example_remote_spawn: $(EXAMPLE_REMOTE_SPAWN) $(LIBRARY)
-	$(Q)$(ECHO) "  LD $@"
-	$(Q)$(CC) $(CFLAGS) $^ -o $@
+clean:
+	$(Q)$(ECHO) "  RM"
+	$(Q)$(RM) $(LIBRARY)
+	$(Q)$(RM) $(EXAMPLE_RING) $(EXAMPLE_MOCK) $(EXAMPLE_READER) $(EXAMPLE_REMOTE_SPAWN)
+	$(Q)$(RM) $(EXAMPLE_SYNCHRONIZE) $(EXAMPLE_CONTROLLER) $(EXAMPLE_HELLO_WORLD)
+	$(Q)$(RM) $(EXAMPLE_CLONE) $(EXAMPLE_MIGRATION)
+	$(Q)$(RM) $(TEST_FIFO) $(TEST_FIFO_ARRAY) $(TEST_HASH_TABLE_GROUP) $(TEST_NODE)
+	$(Q)$(RM) $(TEST_HASH_TABLE) $(TEST_VECTOR) $(TEST_DYNAMIC_HASH_TABLE)
+	$(Q)$(RM) $(TEST_PACKER) $(TEST_DNA_SEQUENCE) $(ARGONNITE)
+	$(Q)$(RM) $(EXAMPLES) $(TESTS) $(APPLICATIONS)
 
-example_ring: $(EXAMPLE_RING) $(LIBRARY)
-	$(Q)$(ECHO) "  LD $@"
-	$(Q)$(CC) $(CFLAGS) $^ -o $@
-
-example_mock: $(EXAMPLE_MOCK) $(LIBRARY)
-	$(Q)$(ECHO) "  LD $@"
-	$(Q)$(CC) $(CFLAGS) $^ -o $@
-
-example_reader: $(EXAMPLE_READER) $(LIBRARY)
-	$(Q)$(ECHO) "  LD $@"
-	$(Q)$(CC) $(CFLAGS) $^ -o $@
-
-example_synchronize: $(EXAMPLE_SYNCHRONIZE) $(LIBRARY)
-	$(Q)$(ECHO) "  LD $@"
-	$(Q)$(CC) $(CFLAGS) $^ -o $@
-
-example_controller: $(EXAMPLE_CONTROLLER) $(LIBRARY)
-	$(Q)$(ECHO) "  LD $@"
-	$(Q)$(CC) $(CFLAGS) $^ -o $@
-
-example_hello_world: $(EXAMPLE_HELLO_WORLD) $(LIBRARY)
-	$(Q)$(ECHO) "  LD $@"
-	$(Q)$(CC) $(CFLAGS) $^ -o $@
-
-example_clone: $(EXAMPLE_CLONE) $(LIBRARY)
-	$(Q)$(ECHO) "  LD $@"
-	$(Q)$(CC) $(CFLAGS) $^ -o $@
-
-example_migration: $(EXAMPLE_MIGRATION) $(LIBRARY)
-	$(Q)$(ECHO) "  LD $@"
-	$(Q)$(CC) $(CFLAGS) $^ -o $@
-
-# applications
-argonnite: $(ARGONNITE) $(LIBRARY)
-	$(Q)$(ECHO) "  LD $@"
-	$(Q)$(CC) $(CFLAGS) $^ -o $@
