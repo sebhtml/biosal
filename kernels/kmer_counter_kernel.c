@@ -1,6 +1,7 @@
 
 #include "kmer_counter_kernel.h"
 
+#include <data/dna_kmer.h>
 #include <storage/sequence_store.h>
 
 struct bsal_script bsal_kmer_counter_kernel_script = {
@@ -32,11 +33,14 @@ void bsal_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_mess
 {
     int tag;
     int source;
+    struct bsal_dna_kmer kmer;
 
     source = bsal_message_tag(message);
     tag = bsal_message_tag(message);
 
     if (tag == BSAL_STORE_SEQUENCES) {
+
+        bsal_dna_kmer_init(&kmer, NULL);
 
         bsal_actor_send_reply_empty(actor, BSAL_STORE_SEQUENCES_REPLY);
 

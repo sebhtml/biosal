@@ -1,2 +1,2 @@
 
-DATA = data/dna_sequence.o
+DATA = data/dna_sequence.o data/dna_kmer.o
