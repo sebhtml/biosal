@@ -1,5 +1,6 @@
 
 #include "actor_helper.h"
+#include "vector_helper.h"
 
 #include <structures/vector_iterator.h>
 #include <engine/actor.h>
@@ -83,4 +84,38 @@ void bsal_actor_helper_get_acquaintances(struct bsal_actor *actor, struct bsal_v
     }
 
     bsal_vector_iterator_destroy(&iterator);
+}
+
+void bsal_actor_helper_add_acquaintances(struct bsal_actor *actor,
+                struct bsal_vector *names, struct bsal_vector *indices)
+{
+    struct bsal_vector_iterator iterator;
+    int index;
+    int *bucket;
+    int name;
+
+    bsal_vector_iterator_init(&iterator, names);
+
+    while (bsal_vector_iterator_has_next(&iterator)) {
+        bsal_vector_iterator_next(&iterator, (void **)&bucket);
+
+        name = *bucket;
+        index = bsal_actor_add_acquaintance(actor, name);
+
+#ifdef BSAL_ACTOR_HELPER_DEBUG
+        printf("DEBUG bsal_actor_helper_add_acquaintances name %d index %d\n",
+                        name, index);
+#endif
+
+        bsal_vector_push_back(indices, &index);
+    }
+
+    bsal_vector_iterator_destroy(&iterator);
+
+#ifdef BSAL_ACTOR_HELPER_DEBUG
+    bsal_vector_helper_print_int(names);
+    printf("\n");
+    bsal_vector_helper_print_int(indices);
+    printf("\n");
+#endif
 }

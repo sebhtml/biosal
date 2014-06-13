@@ -254,8 +254,11 @@ void bsal_manager_receive(struct bsal_actor *actor, struct bsal_message *message
 
             child = bsal_actor_get_child(actor, i);
 
+#ifdef BSAL_MANAGER_DEBUG
             printf("manager actor/%d tells worker actor/%d to stop\n",
                             bsal_actor_name(actor), child);
+#endif
+
             bsal_actor_helper_send_empty(actor, child, BSAL_ACTOR_ASK_TO_STOP);
         }
 

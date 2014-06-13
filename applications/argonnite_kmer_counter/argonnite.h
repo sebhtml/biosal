@@ -9,6 +9,7 @@
 struct argonnite {
     struct bsal_vector initial_actors;
     struct bsal_vector kernels;
+    struct bsal_vector aggregators;
 
     int controller;
     int manager_for_kernels;

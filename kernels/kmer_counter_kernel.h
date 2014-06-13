@@ -13,6 +13,7 @@ struct bsal_kmer_counter_kernel {
     uint64_t expected;
     uint64_t actual;
     uint64_t last;
+    int blocks;
     int customer;
 };
 

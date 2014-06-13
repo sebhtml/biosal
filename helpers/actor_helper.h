@@ -20,4 +20,6 @@ void bsal_actor_helper_send_to_supervisor_int(struct bsal_actor *actor, int tag,
 
 void bsal_actor_helper_get_acquaintances(struct bsal_actor *actor, struct bsal_vector *indices,
                 struct bsal_vector *names);
+void bsal_actor_helper_add_acquaintances(struct bsal_actor *actor,
+                struct bsal_vector *names, struct bsal_vector *indices);
 #endif

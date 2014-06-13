@@ -11,9 +11,11 @@
 #include <stdint.h>
 #include <inttypes.h>
 
+/* options for this kernel
+ */
 /*
-#define BSAL_KMER_COUNTER_KERNEL_ENABLED
 */
+#define BSAL_KMER_COUNTER_KERNEL_ENABLED
 
 struct bsal_script bsal_kmer_counter_kernel_script = {
     .name = BSAL_KMER_COUNTER_KERNEL_SCRIPT,
@@ -33,6 +35,7 @@ void bsal_kmer_counter_kernel_init(struct bsal_actor *actor)
     concrete_actor->actual = 0;
     concrete_actor->last = 0;
     concrete_actor->customer = 0;
+    concrete_actor->blocks = 0;
 }
 
 void bsal_kmer_counter_kernel_destroy(struct bsal_actor *actor)
@@ -55,6 +58,7 @@ void bsal_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_mess
     int entries;
     struct bsal_kmer_counter_kernel *concrete_actor;
     int source_index;
+    int customer;
 
     concrete_actor = (struct bsal_kmer_counter_kernel *)bsal_actor_concrete_actor(actor);
     tag = bsal_message_tag(message);
@@ -63,6 +67,8 @@ void bsal_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_mess
     buffer = bsal_message_buffer(message);
 
     if (tag == BSAL_PUSH_SEQUENCE_DATA_BLOCK) {
+
+        customer = bsal_actor_get_acquaintance(actor, concrete_actor->customer);
 
         bsal_input_command_unpack(&payload, buffer);
 
@@ -75,13 +81,15 @@ void bsal_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_mess
         source_index = bsal_actor_add_acquaintance(actor, source);
 
         concrete_actor->actual += entries;
+        concrete_actor->blocks++;
 
         if (concrete_actor->actual == concrete_actor->expected
                         || concrete_actor->actual > concrete_actor->last + 1000000
                         || concrete_actor->last == 0) {
 
-            printf("kernel actor/%d processed %" PRIu64 "/%" PRIu64 " entries so far\n",
-                            name, concrete_actor->actual, concrete_actor->expected);
+            printf("kernel actor/%d processed %" PRIu64 "/%" PRIu64 " entries (%d blocks) so far\n",
+                            name, concrete_actor->actual, concrete_actor->expected,
+                            concrete_actor->blocks);
 
             concrete_actor->last = concrete_actor->actual;
         }
@@ -89,9 +97,13 @@ void bsal_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_mess
         bsal_dna_kmer_init(&kmer, NULL);
         bsal_input_command_destroy(&payload);
 
-#if BSAL_KMER_COUNTER_KERNEL_ENABLED
-        bsal_actor_helper_send_int(actor, bsal_actor_get_acquaintance(actor,
-                                concrete_actor->customer),
+#ifdef BSAL_KMER_COUNTER_KERNEL_DEBUG
+        printf("customer %d\n", customer);
+#endif
+
+#ifdef BSAL_KMER_COUNTER_KERNEL_ENABLED
+
+        bsal_actor_helper_send_int(actor, customer,
                         BSAL_AGGREGATE_KERNEL_OUTPUT,
                         source_index);
 #else
@@ -114,7 +126,9 @@ void bsal_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_mess
 
     } else if (tag == BSAL_SEQUENCE_STORE_RESERVE) {
 
+#ifdef BSAL_KMER_COUNTER_KERNEL_DEBUG
         printf("kmer counter kernel actor/%d is online !\n", name);
+#endif
 
         concrete_actor->expected = *(uint64_t *)buffer;
 
@@ -132,7 +146,8 @@ void bsal_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_mess
 
     } else if (tag == BSAL_SET_CUSTOMER) {
 
-        concrete_actor->customer = *(int *)buffer;
+        customer = *(int *)buffer;
+        concrete_actor->customer = bsal_actor_add_acquaintance(actor, customer);
 
         bsal_actor_helper_send_reply_empty(actor, BSAL_SET_CUSTOMER_REPLY);
     }

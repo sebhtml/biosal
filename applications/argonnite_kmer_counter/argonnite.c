@@ -28,6 +28,7 @@ void argonnite_init(struct bsal_actor *actor)
     concrete_actor = (struct argonnite *)bsal_actor_concrete_actor(actor);
     bsal_vector_init(&concrete_actor->initial_actors, sizeof(int));
     bsal_vector_init(&concrete_actor->kernels, sizeof(int));
+    bsal_vector_init(&concrete_actor->aggregators, sizeof(int));
 
     bsal_actor_add_script(actor, BSAL_INPUT_CONTROLLER_SCRIPT,
                     &bsal_input_controller_script);
@@ -47,6 +48,7 @@ void argonnite_destroy(struct bsal_actor *actor)
 
     bsal_vector_destroy(&concrete_actor->initial_actors);
     bsal_vector_destroy(&concrete_actor->kernels);
+    bsal_vector_destroy(&concrete_actor->aggregators);
 }
 
 void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message)
@@ -55,6 +57,7 @@ void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message)
     void *buffer;
     struct argonnite *concrete_actor;
     struct bsal_vector initial_actors;
+    struct bsal_vector aggregators;
     int *bucket;
     int index;
     int controller;
@@ -73,6 +76,11 @@ void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message)
     int source;
     int kernel;
     int kernel_index;
+    int kernel_index_index;
+    int aggregator;
+    int aggregator_index;
+    int aggregator_index_index;
+    int kernels_per_aggregator;
 
     concrete_actor = (struct argonnite *)bsal_actor_concrete_actor(actor);
     tag = bsal_message_tag(message);
@@ -84,7 +92,7 @@ void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message)
 
     if (tag == BSAL_ACTOR_START) {
 
-        printf("argonnite actor%d starts\n", name);
+        printf("argonnite actor/%d starts\n", name);
 
         bsal_vector_unpack(&initial_actors, buffer);
 
@@ -251,12 +259,77 @@ void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message)
     } else if (tag == BSAL_ACTOR_START_REPLY &&
                     source == bsal_actor_get_acquaintance(actor, concrete_actor->manager_for_aggregators)) {
 
-            /* TODO
-             * before distributing, wire together the kernels and the aggregators.
-             * It is like a brain, with some connections
+        concrete_actor->wired_kernels = 0;
+
+        bsal_vector_unpack(&aggregators, buffer);
+
+        bsal_actor_helper_add_acquaintances(actor, &aggregators, &concrete_actor->aggregators);
+        bsal_vector_destroy(&aggregators);
+
+        /*
+         * before distributing, wire together the kernels and the aggregators.
+         * It is like a brain, with some connections
+         */
+
+        bsal_vector_iterator_init(&iterator, &concrete_actor->kernels);
+
+        printf("argonnite actor/%d wires the brain, %d kernels, %d aggregators\n",
+                        bsal_actor_name(actor),
+                        (int)bsal_vector_size(&concrete_actor->kernels),
+                        (int)bsal_vector_size(&concrete_actor->aggregators));
+
+        bsal_vector_helper_print_int(&concrete_actor->aggregators);
+
+        /* TODO, the wiring should use the number of
+         * workers per node
+         */
+        kernels_per_aggregator = (bsal_vector_size(&concrete_actor->kernels) /
+                            bsal_vector_size(&concrete_actor->aggregators));
+
+        kernel_index_index = 0;
+        while (bsal_vector_iterator_has_next(&iterator)) {
+            bsal_vector_iterator_next(&iterator, (void **)&bucket);
+
+            kernel_index = *bucket;
+            kernel = bsal_actor_get_acquaintance(actor, kernel_index);
+
+            aggregator_index_index = kernel_index_index / kernels_per_aggregator;
+
+            /* avoid invalid index
              */
+            if (aggregator_index_index >= (int)bsal_vector_size(&concrete_actor->aggregators)) {
+                aggregator_index_index = (int)bsal_vector_size(&concrete_actor->aggregators) - 1;
+            }
+
+            aggregator_index = bsal_vector_helper_at_as_int(&concrete_actor->aggregators, aggregator_index_index);
+
+            aggregator = bsal_actor_get_acquaintance(actor, aggregator_index);
+
+#ifdef ARGONNITE_DEBUG
+            printf("argonnite actor/%d set the customer of kernel actor/%d (%d) to aggregator actor/%d (%d)\n",
+                            bsal_actor_name(actor), kernel,
+                           kernel_index_index, aggregator, aggregator_index_index);
+#endif
+
+            bsal_actor_helper_send_int(actor, kernel, BSAL_SET_CUSTOMER, aggregator);
+
+            kernel_index_index++;
+        }
+
+        bsal_vector_iterator_destroy(&iterator);
+
+    } else if (tag == BSAL_SET_CUSTOMER_REPLY) {
+
+        concrete_actor->wired_kernels++;
+
+        if (concrete_actor->wired_kernels == (int)bsal_vector_size(&concrete_actor->kernels)) {
+
+            printf("argonnite actor/%d completed the wiring of the brain\n",
+                bsal_actor_name(actor));
+
             bsal_actor_helper_send_empty(actor, bsal_actor_get_acquaintance(actor,
                                     concrete_actor->controller), BSAL_INPUT_DISTRIBUTE);
+        }
 
     } else if (tag == BSAL_INPUT_DISTRIBUTE_REPLY) {
 
