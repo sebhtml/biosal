@@ -29,8 +29,8 @@ void root_init(struct bsal_actor *actor)
 
     bsal_actor_add_script(actor, BSAL_INPUT_CONTROLLER_SCRIPT,
                         &bsal_input_controller_script);
-    bsal_actor_add_script(actor, BSAL_SEQUENCE_STORE_MANAGER_SCRIPT,
-                        &bsal_sequence_store_manager_script);
+    bsal_actor_add_script(actor, BSAL_MANAGER_SCRIPT,
+                        &bsal_manager_script);
 
     /* TODO: do this one inside the manager script.
 */
@@ -147,7 +147,7 @@ void root_receive(struct bsal_actor *actor, struct bsal_message *message)
 
     } else if (tag == BSAL_ACTOR_YIELD_REPLY) {
 
-        manager = bsal_actor_spawn(actor, BSAL_SEQUENCE_STORE_MANAGER_SCRIPT);
+        manager = bsal_actor_spawn(actor, BSAL_MANAGER_SCRIPT);
 
         bsal_actor_send_int(actor, manager, BSAL_MANAGER_SET_SCRIPT, BSAL_SEQUENCE_STORE_SCRIPT);
 

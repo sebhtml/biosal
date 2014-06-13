@@ -1,5 +1,5 @@
 
-#include "sequence_store_manager.h"
+#include "manager.h"
 
 #include "sequence_store.h"
 #include <kernels/kmer_counter_kernel.h>
@@ -13,19 +13,19 @@
 
 #include <inttypes.h>
 
-struct bsal_script bsal_sequence_store_manager_script = {
-    .name = BSAL_SEQUENCE_STORE_MANAGER_SCRIPT,
-    .init = bsal_sequence_store_manager_init,
-    .destroy = bsal_sequence_store_manager_destroy,
-    .receive = bsal_sequence_store_manager_receive,
-    .size = sizeof(struct bsal_sequence_store_manager)
+struct bsal_script bsal_manager_script = {
+    .name = BSAL_MANAGER_SCRIPT,
+    .init = bsal_manager_init,
+    .destroy = bsal_manager_destroy,
+    .receive = bsal_manager_receive,
+    .size = sizeof(struct bsal_manager)
 };
 
-void bsal_sequence_store_manager_init(struct bsal_actor *actor)
+void bsal_manager_init(struct bsal_actor *actor)
 {
-    struct bsal_sequence_store_manager *concrete_actor;
+    struct bsal_manager *concrete_actor;
 
-    concrete_actor = (struct bsal_sequence_store_manager *)bsal_actor_concrete_actor(actor);
+    concrete_actor = (struct bsal_manager *)bsal_actor_concrete_actor(actor);
 
     bsal_dynamic_hash_table_init(&concrete_actor->spawner_child_count, 128, sizeof(int), sizeof(int));
     bsal_dynamic_hash_table_init(&concrete_actor->spawner_children, 128, sizeof(int), sizeof(struct bsal_vector));
@@ -38,13 +38,13 @@ void bsal_sequence_store_manager_init(struct bsal_actor *actor)
     bsal_actor_add_script(actor, BSAL_KMER_COUNTER_KERNEL_SCRIPT, &bsal_kmer_counter_kernel_script);
 }
 
-void bsal_sequence_store_manager_destroy(struct bsal_actor *actor)
+void bsal_manager_destroy(struct bsal_actor *actor)
 {
-    struct bsal_sequence_store_manager *concrete_actor;
+    struct bsal_manager *concrete_actor;
     struct bsal_dynamic_hash_table_iterator iterator;
     struct bsal_vector *vector;
 
-    concrete_actor = (struct bsal_sequence_store_manager *)bsal_actor_concrete_actor(actor);
+    concrete_actor = (struct bsal_manager *)bsal_actor_concrete_actor(actor);
 
     bsal_dynamic_hash_table_destroy(&concrete_actor->spawner_child_count);
 
@@ -63,14 +63,14 @@ void bsal_sequence_store_manager_destroy(struct bsal_actor *actor)
     bsal_vector_destroy(&concrete_actor->indices);
 }
 
-void bsal_sequence_store_manager_receive(struct bsal_actor *actor, struct bsal_message *message)
+void bsal_manager_receive(struct bsal_actor *actor, struct bsal_message *message)
 {
     int tag;
     struct bsal_vector spawners;
     struct bsal_vector_iterator iterator;
     int *bucket;
     int index;
-    struct bsal_sequence_store_manager *concrete_actor;
+    struct bsal_manager *concrete_actor;
     struct bsal_vector *stores;
     int spawner;
     int workers;
@@ -87,7 +87,7 @@ void bsal_sequence_store_manager_receive(struct bsal_actor *actor, struct bsal_m
 
     source = bsal_message_source(message);
     buffer = bsal_message_buffer(message);
-    concrete_actor = (struct bsal_sequence_store_manager *)bsal_actor_concrete_actor(actor);
+    concrete_actor = (struct bsal_manager *)bsal_actor_concrete_actor(actor);
     tag = bsal_message_tag(message);
 
     if (tag == BSAL_ACTOR_START) {
@@ -124,7 +124,7 @@ void bsal_sequence_store_manager_receive(struct bsal_actor *actor, struct bsal_m
             bucket = (int *)bsal_dynamic_hash_table_add(&concrete_actor->spawner_child_count, &index);
             *bucket = 0;
 
-#ifdef BSAL_SEQUENCE_STORE_MANAGER_DEBUG
+#ifdef BSAL_MANAGER_DEBUG
             printf("DEBUG685-1 spawner %d index %d bucket %p\n", spawner, index, (void *)bucket);
             bsal_vector_print_int(bsal_actor_acquaintance_vector(actor));
 #endif
@@ -156,7 +156,7 @@ void bsal_sequence_store_manager_receive(struct bsal_actor *actor, struct bsal_m
         printf("DEBUG getting table index %d\n", index);
         bucket = (int *)bsal_dynamic_hash_table_get(&concrete_actor->spawner_child_count, &index);
 
-#ifdef BSAL_SEQUENCE_STORE_MANAGER_DEBUG
+#ifdef BSAL_MANAGER_DEBUG
         printf("DEBUG685-2 spawner %d index %d bucket %p\n", source, index, (void *)bucket);
         bsal_vector_print_int(bsal_actor_acquaintance_vector(actor));
 #endif

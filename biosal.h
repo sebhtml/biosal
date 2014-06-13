@@ -18,6 +18,6 @@
 /* storage */
 
 #include "storage/sequence_store.h"
-#include "storage/sequence_store_manager.h"
+#include "storage/manager.h"
 
 #endif
