@@ -1,5 +1,6 @@
 
 #include "manager.h"
+#include "helper.h"
 
 #include <structures/vector_iterator.h>
 #include <structures/dynamic_hash_table_iterator.h>
@@ -10,6 +11,7 @@
 
 #include <inttypes.h>
 
+#define BSAL_MANAGER_NO_VALUE -1
 struct bsal_script bsal_manager_script = {
     .name = BSAL_MANAGER_SCRIPT,
     .init = bsal_manager_init,
@@ -30,6 +32,8 @@ void bsal_manager_init(struct bsal_actor *actor)
 
     concrete_actor->ready_spawners = 0;
     concrete_actor->spawners = 0;
+    concrete_actor->actors_per_spawner = BSAL_MANAGER_NO_VALUE;
+    concrete_actor->script = BSAL_MANAGER_NO_VALUE;
 }
 
 void bsal_manager_destroy(struct bsal_actor *actor)
@@ -78,6 +82,7 @@ void bsal_manager_receive(struct bsal_actor *actor, struct bsal_message *message
     int new_count;
     void *new_buffer;
     struct bsal_message new_message;
+    struct bsal_helper helper;
 
     source = bsal_message_source(message);
     buffer = bsal_message_buffer(message);
@@ -85,6 +90,16 @@ void bsal_manager_receive(struct bsal_actor *actor, struct bsal_message *message
     tag = bsal_message_tag(message);
 
     if (tag == BSAL_ACTOR_START) {
+
+        /* return empty vector
+         */
+        if (concrete_actor->script == BSAL_MANAGER_NO_VALUE) {
+
+            bsal_vector_init(&all_stores, sizeof(int));
+            bsal_helper_send_reply_vector(&helper, actor, BSAL_ACTOR_START_REPLY, &all_stores);
+            bsal_vector_destroy(&all_stores);
+            return;
+        }
 
         printf("DEBUG manager actor/%d starts\n",
                         bsal_actor_name(actor));
@@ -155,7 +170,13 @@ void bsal_manager_receive(struct bsal_actor *actor, struct bsal_message *message
         bsal_vector_print_int(bsal_actor_acquaintance_vector(actor));
 #endif
 
-        *bucket = workers * stores_per_worker;
+        /* set the number of actors desired for each spawner
+         */
+        if (concrete_actor->actors_per_spawner == BSAL_MANAGER_NO_VALUE) {
+            *bucket = workers * stores_per_worker;
+        } else {
+            *bucket = concrete_actor->actors_per_spawner;
+        }
 
         bsal_actor_send_reply_int(actor, BSAL_ACTOR_SPAWN, concrete_actor->script);
 

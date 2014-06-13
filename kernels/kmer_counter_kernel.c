@@ -22,11 +22,11 @@ void bsal_kmer_counter_kernel_init(struct bsal_actor *actor)
     struct bsal_kmer_counter_kernel *concrete_actor;
 
     concrete_actor = (struct bsal_kmer_counter_kernel *)bsal_actor_concrete_actor(actor);
-    bsal_vector_init(&concrete_actor->customers, sizeof(int));
 
     concrete_actor->expected = 0;
     concrete_actor->actual = 0;
     concrete_actor->last = 0;
+    concrete_actor->customer = 0;
 }
 
 void bsal_kmer_counter_kernel_destroy(struct bsal_actor *actor)
@@ -35,7 +35,7 @@ void bsal_kmer_counter_kernel_destroy(struct bsal_actor *actor)
 
     concrete_actor = (struct bsal_kmer_counter_kernel *)bsal_actor_concrete_actor(actor);
 
-    bsal_vector_destroy(&concrete_actor->customers);
+    concrete_actor->customer = 0;
 }
 
 void bsal_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_message *message)

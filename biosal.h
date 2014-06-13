@@ -20,5 +20,6 @@
 #include "storage/sequence_store.h"
 
 #include "patterns/manager.h"
+#include "patterns/helper.h"
 
 #endif
