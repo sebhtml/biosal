@@ -49,6 +49,7 @@ LIBRARY += $(DATA)
 include formats/Makefile.mk
 LIBRARY += $(FORMATS)
 
+# generic build rule
 %.o: %.c
 	$(Q)$(ECHO) "  CC $@"
 	$(Q)$(CC) $(CFLAGS) -c $< -o $@
@@ -57,11 +58,6 @@ LIBRARY += $(FORMATS)
 include tests/Makefile.mk
 include examples/Makefile.mk
 include applications/Makefile.mk
-
-# applications
-argonnite: $(ARGONNITE) $(LIBRARY)
-	$(Q)$(ECHO) "  LD $@"
-	$(Q)$(CC) $(CFLAGS) $^ -o $@
 
 all: $(APPLICATIONS) $(EXAMPLES) $(TESTS)
 
@@ -73,6 +69,7 @@ clean:
 	$(Q)$(RM) $(EXAMPLE_CLONE) $(EXAMPLE_MIGRATION)
 	$(Q)$(RM) $(TEST_FIFO) $(TEST_FIFO_ARRAY) $(TEST_HASH_TABLE_GROUP) $(TEST_NODE)
 	$(Q)$(RM) $(TEST_HASH_TABLE) $(TEST_VECTOR) $(TEST_DYNAMIC_HASH_TABLE)
-	$(Q)$(RM) $(TEST_PACKER) $(TEST_DNA_SEQUENCE) $(ARGONNITE)
-	$(Q)$(RM) $(EXAMPLES) $(TESTS) $(APPLICATIONS)
+	$(Q)$(RM) $(TEST_PACKER) $(TEST_DNA_SEQUENCE)
+	$(Q)$(RM) $(EXAMPLES) $(TESTS)
+	$(Q)$(RM) $(EXAMPLES) $(TESTS) $(APPLICATIONS) $(APPLICATION_ARGONNITE_OBJECTS)
 
