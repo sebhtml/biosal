@@ -149,7 +149,15 @@ void bsal_manager_receive(struct bsal_actor *actor, struct bsal_message *message
 
         concrete_actor->script = *(int *)buffer;
 
+        printf("manager actor/%d sets script to script/%x\n",
+                        bsal_actor_name(actor), concrete_actor->script);
+
         bsal_actor_helper_send_reply_empty(actor, BSAL_MANAGER_SET_SCRIPT_REPLY);
+
+    } else if (tag == BSAL_MANAGER_SET_ACTORS_PER_SPAWNER) {
+        concrete_actor->actors_per_spawner = *(int *)buffer;
+
+        bsal_actor_helper_send_reply_empty(actor, BSAL_MANAGER_SET_ACTORS_PER_SPAWNER_REPLY);
 
     } else if (tag == BSAL_ACTOR_GET_NODE_WORKER_COUNT_REPLY) {
 

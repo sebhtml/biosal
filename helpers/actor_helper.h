@@ -18,4 +18,6 @@ void bsal_actor_helper_send_to_self_int(struct bsal_actor *actor, int tag, int v
 void bsal_actor_helper_send_to_supervisor_empty(struct bsal_actor *actor, int tag);
 void bsal_actor_helper_send_to_supervisor_int(struct bsal_actor *actor, int tag, int value);
 
+void bsal_actor_helper_get_acquaintances(struct bsal_actor *actor, struct bsal_vector *indices,
+                struct bsal_vector *names);
 #endif

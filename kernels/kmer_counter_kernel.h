@@ -5,6 +5,7 @@
 #include <engine/actor.h>
 
 #include <structures/vector.h>
+#include <structures/dynamic_hash_table.h>
 
 #define BSAL_KMER_COUNTER_KERNEL_SCRIPT 0xed338fa2
 
@@ -14,6 +15,9 @@ struct bsal_kmer_counter_kernel {
     uint64_t last;
     int customer;
 };
+
+#define BSAL_SET_CUSTOMER 0x000020a9
+#define BSAL_SET_CUSTOMER_REPLY 0x00004db0
 
 extern struct bsal_script bsal_kmer_counter_kernel_script;
 

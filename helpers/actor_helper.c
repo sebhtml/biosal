@@ -1,6 +1,7 @@
 
 #include "actor_helper.h"
 
+#include <structures/vector_iterator.h>
 #include <engine/actor.h>
 #include <engine/message.h>
 
@@ -62,3 +63,24 @@ void bsal_actor_helper_send_int(struct bsal_actor *actor, int destination, int t
     bsal_actor_send(actor, destination, &message);
 }
 
+void bsal_actor_helper_get_acquaintances(struct bsal_actor *actor, struct bsal_vector *indices,
+                struct bsal_vector *names)
+{
+    struct bsal_vector_iterator iterator;
+    int index;
+    int *bucket;
+    int name;
+
+    bsal_vector_iterator_init(&iterator, indices);
+
+    while (bsal_vector_iterator_has_next(&iterator)) {
+        bsal_vector_iterator_next(&iterator, (void **)&bucket);
+
+        index = *bucket;
+        name = bsal_actor_get_acquaintance(actor, index);
+
+        bsal_vector_push_back(names, &name);
+    }
+
+    bsal_vector_iterator_destroy(&iterator);
+}

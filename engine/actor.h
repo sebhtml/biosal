@@ -308,8 +308,7 @@ void bsal_actor_notify_name_change(struct bsal_actor *actor, struct bsal_message
 struct bsal_vector *bsal_actor_acquaintance_vector(struct bsal_actor *actor);
 int bsal_actor_add_acquaintance(struct bsal_actor *actor, int name);
 int bsal_actor_get_acquaintance(struct bsal_actor *actor, int index);
-void bsal_actor_get_acquaintances(struct bsal_actor *actor, struct bsal_vector *indices,
-                struct bsal_vector *names);
+
 int bsal_actor_get_acquaintance_index(struct bsal_actor *actor, int name);
 int bsal_actor_acquaintance_count(struct bsal_actor *actor);
 int bsal_actor_add_child(struct bsal_actor *actor, int name);

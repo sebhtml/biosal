@@ -1881,24 +1881,4 @@ int bsal_actor_get_child_index(struct bsal_actor *actor, int name)
     return -1;
 }
 
-void bsal_actor_get_acquaintances(struct bsal_actor *actor, struct bsal_vector *indices,
-                struct bsal_vector *names)
-{
-    struct bsal_vector_iterator iterator;
-    int index;
-    int *bucket;
-    int name;
 
-    bsal_vector_iterator_init(&iterator, indices);
-
-    while (bsal_vector_iterator_has_next(&iterator)) {
-        bsal_vector_iterator_next(&iterator, (void **)&bucket);
-
-        index = *bucket;
-        name = bsal_actor_get_acquaintance(actor, index);
-
-        bsal_vector_push_back(names, &name);
-    }
-
-    bsal_vector_iterator_destroy(&iterator);
-}

@@ -8,9 +8,13 @@
 
 struct argonnite {
     struct bsal_vector initial_actors;
+    struct bsal_vector kernels;
+
     int controller;
-    int manager;
+    int manager_for_kernels;
+    int manager_for_aggregators;
     int argument_iterator;
+    int wired_kernels;
 };
 
 extern struct bsal_script argonnite_script;
