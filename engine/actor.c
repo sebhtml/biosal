@@ -416,7 +416,7 @@ void bsal_actor_unpin_from_worker(struct bsal_actor *actor)
 
 int bsal_actor_supervisor(struct bsal_actor *actor)
 {
-    return bsal_vector_at_as_int(&actor->acquaintance_vector,
+    return bsal_helper_vector_at_as_int(&actor->acquaintance_vector,
                     BSAL_ACTOR_ACQUAINTANCE_SUPERVISOR);
 }
 
@@ -425,7 +425,7 @@ void bsal_actor_set_supervisor(struct bsal_actor *actor, int supervisor)
     if (bsal_vector_size(&actor->acquaintance_vector) == 0) {
         bsal_vector_push_back(&actor->acquaintance_vector, &supervisor);
     } else {
-        bsal_vector_set_int(&actor->acquaintance_vector, BSAL_ACTOR_ACQUAINTANCE_SUPERVISOR,
+        bsal_helper_vector_set_int(&actor->acquaintance_vector, BSAL_ACTOR_ACQUAINTANCE_SUPERVISOR,
                         supervisor);
     }
 }
@@ -683,8 +683,8 @@ int bsal_actor_receive_system(struct bsal_actor *actor, struct bsal_message *mes
             return 1;
         }
 
-        bsal_helper_unpack_int(message, 0, &old_supervisor);
-        bsal_helper_unpack_int(message, sizeof(old_supervisor), &supervisor);
+        bsal_helper_message_unpack_int(message, 0, &old_supervisor);
+        bsal_helper_message_unpack_int(message, sizeof(old_supervisor), &supervisor);
 
 #ifdef BSAL_ACTOR_DEBUG_MIGRATE
         printf("DEBUG bsal_actor_receive_system actor %d receives BSAL_ACTOR_SET_SUPERVISOR old supervisor %d (provided %d), new supervisor %d\n",
@@ -1471,7 +1471,7 @@ void bsal_actor_migrate(struct bsal_actor *actor, struct bsal_message *message)
 
         /* tell acquaintances that the clone is the new original.
          */
-        bsal_helper_unpack_int(message, 0, &actor->migration_new_actor);
+        bsal_helper_message_unpack_int(message, 0, &actor->migration_new_actor);
 
         actor->acquaintance_index = 0;
         bsal_helper_send_to_self_empty(actor, BSAL_ACTOR_MIGRATE_NOTIFY_ACQUAINTANCES);
@@ -1571,7 +1571,7 @@ void bsal_actor_notify_name_change(struct bsal_actor *actor, struct bsal_message
 
     source = bsal_message_source(message);
     old_name = source;
-    bsal_helper_unpack_int(message, 0, &new_name);
+    bsal_helper_message_unpack_int(message, 0, &new_name);
 
     index = bsal_actor_get_acquaintance_index(actor, old_name);
 
@@ -1595,7 +1595,7 @@ void bsal_actor_migrate_notify_acquaintances(struct bsal_actor *actor, struct bs
 
     if (actor->acquaintance_index < bsal_vector_size(acquaintance_vector)) {
 
-        acquaintance = bsal_vector_at_as_int(acquaintance_vector, actor->acquaintance_index);
+        acquaintance = bsal_helper_vector_at_as_int(acquaintance_vector, actor->acquaintance_index);
         bsal_helper_send_int(actor, acquaintance, BSAL_ACTOR_NOTIFY_NAME_CHANGE,
                         actor->migration_new_actor);
         actor->acquaintance_index++;
@@ -1639,7 +1639,7 @@ void bsal_actor_queue_message(struct bsal_actor *actor,
     int tag;
     int source;
 
-    bsal_helper_get_all(message, &tag, &count, &buffer, &source);
+    bsal_helper_message_get_all(message, &tag, &count, &buffer, &source);
 
     new_buffer = NULL;
 
@@ -1813,7 +1813,7 @@ int bsal_actor_add_acquaintance(struct bsal_actor *actor, int name)
         return index;
     }
 
-    bsal_vector_push_back_int(bsal_actor_acquaintance_vector(actor),
+    bsal_helper_vector_push_back_int(bsal_actor_acquaintance_vector(actor),
                     name);
 
     index = bsal_vector_size(bsal_actor_acquaintance_vector(actor)) - 1;
@@ -1827,7 +1827,7 @@ int bsal_actor_add_acquaintance(struct bsal_actor *actor, int name)
 int bsal_actor_get_acquaintance(struct bsal_actor *actor, int index)
 {
     if (index < bsal_vector_size(bsal_actor_acquaintance_vector(actor))) {
-        return bsal_vector_at_as_int(bsal_actor_acquaintance_vector(actor),
+        return bsal_helper_vector_at_as_int(bsal_actor_acquaintance_vector(actor),
                         index);
     }
 

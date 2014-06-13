@@ -4,6 +4,7 @@
 #include <engine/message.h>
 
 #include <stdlib.h>
+#include <stdio.h>
 
 void bsal_helper_init(struct bsal_helper *self)
 {
@@ -70,7 +71,7 @@ void bsal_helper_send_int(struct bsal_actor *actor, int destination, int tag, in
     bsal_actor_send(actor, destination, &message);
 }
 
-int bsal_helper_unpack_int(struct bsal_message *message, int offset, int *value)
+int bsal_helper_message_unpack_int(struct bsal_message *message, int offset, int *value)
 {
     int bytes;
     void *buffer;
@@ -92,12 +93,73 @@ int bsal_helper_unpack_int(struct bsal_message *message, int offset, int *value)
     return offset;
 }
 
-void bsal_helper_get_all(struct bsal_message *message, int *tag, int *count, void **buffer, int *source)
+void bsal_helper_message_get_all(struct bsal_message *message, int *tag, int *count, void **buffer, int *source)
 {
     *tag = bsal_message_tag(message);
     *count = bsal_message_count(message);
     *buffer = bsal_message_buffer(message);
     *source = bsal_message_source(message);
+}
+
+int bsal_helper_vector_at_as_int(struct bsal_vector *self, int64_t index)
+{
+    int *bucket;
+
+    bucket = (int *)bsal_vector_at(self, index);
+
+    if (bucket == NULL) {
+        return -1;
+    }
+
+    return *bucket;
+}
+
+char *bsal_helper_vector_at_as_char_pointer(struct bsal_vector *self, int64_t index)
+{
+    return (char *)bsal_helper_vector_at_as_void_pointer(self, index);
+}
+
+void *bsal_helper_vector_at_as_void_pointer(struct bsal_vector *self, int64_t index)
+{
+    void **bucket;
+
+    bucket = (void **)bsal_vector_at(self, index);
+
+    if (bucket == NULL) {
+        return NULL;
+    }
+
+    return *bucket;
+}
+
+void bsal_helper_vector_print_int(struct bsal_vector *self)
+{
+    int64_t i;
+    int64_t size;
+
+    size = bsal_vector_size(self);
+    i = 0;
+
+    printf("[");
+    while (i < size) {
+
+        if (i > 0) {
+            printf(", ");
+        }
+        printf("%d", bsal_helper_vector_at_as_int(self, i));
+        i++;
+    }
+    printf("]");
+}
+
+void bsal_helper_vector_set_int(struct bsal_vector *self, int64_t index, int value)
+{
+    bsal_vector_set(self, index, &value);
+}
+
+void bsal_helper_vector_push_back_int(struct bsal_vector *self, int value)
+{
+    bsal_vector_push_back(self, &value);
 }
 
 

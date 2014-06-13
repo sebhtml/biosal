@@ -146,7 +146,7 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
     int command_name;
     int stream_name;
 
-    bsal_helper_get_all(message, &tag, &count, &buffer, &source);
+    bsal_helper_message_get_all(message, &tag, &count, &buffer, &source);
 
     name = bsal_actor_name(actor);
     controller = (struct bsal_input_controller *)bsal_actor_concrete_actor(actor);
@@ -163,7 +163,7 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
             int_bucket = (int *)bsal_vector_at(&controller->stores_per_spawner, i);
             *int_bucket = 0;
 
-            spawner = bsal_vector_at_as_int(&controller->spawners, i);
+            spawner = bsal_helper_vector_at_as_int(&controller->spawners, i);
 
             bsal_queue_enqueue(&concrete_actor->unprepared_spawners, &spawner);
         }
@@ -207,7 +207,7 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
         } else if (controller->state == BSAL_INPUT_CONTROLLER_STATE_PREPARE_SPAWNERS) {
 
             concrete_actor->ready_spawners++;
-            bsal_helper_unpack_int(message, 0, &name);
+            bsal_helper_message_unpack_int(message, 0, &name);
             bsal_helper_send_empty(actor, name, BSAL_ACTOR_ASK_TO_STOP);
             bsal_helper_send_to_self_empty(actor, BSAL_INPUT_CONTROLLER_PREPARE_SPAWNERS);
 
@@ -227,7 +227,7 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
             printf("DEBUG received spawn reply, state is spawn_partitioner\n");
 #endif
 
-            bsal_helper_unpack_int(message, 0, &concrete_actor->partitioner);
+            bsal_helper_message_unpack_int(message, 0, &concrete_actor->partitioner);
             concrete_actor->partitioner = bsal_actor_add_acquaintance(actor,
                             concrete_actor->partitioner);
 
@@ -286,7 +286,7 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
         controller->opened_streams++;
 
         stream = source;
-        bsal_helper_unpack_int(message, 0, &error);
+        bsal_helper_message_unpack_int(message, 0, &error);
 
         if (error == BSAL_INPUT_ERROR_NO_ERROR) {
 
@@ -328,8 +328,8 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
     } else if (tag == BSAL_INPUT_COUNT_PROGRESS) {
 
         stream_index = bsal_vector_index_of(&controller->streams, &source);
-        local_file = bsal_vector_at_as_char_pointer(&controller->files, stream_index);
-        bsal_helper_unpack_int(message, 0, &entries);
+        local_file = bsal_helper_vector_at_as_char_pointer(&controller->files, stream_index);
+        bsal_helper_message_unpack_int(message, 0, &entries);
 
         bucket = (uint64_t *)bsal_vector_at(&controller->counts, stream_index);
 
@@ -342,8 +342,8 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
     } else if (tag == BSAL_INPUT_COUNT_REPLY) {
 
         stream_index = bsal_vector_index_of(&controller->streams, &source);
-        local_file = bsal_vector_at_as_char_pointer(&controller->files, stream_index);
-        bsal_helper_unpack_int(message, 0, &entries);
+        local_file = bsal_helper_vector_at_as_char_pointer(&controller->files, stream_index);
+        bsal_helper_message_unpack_int(message, 0, &entries);
 
         bucket = (uint64_t*)bsal_vector_at(&controller->counts, stream_index);
         *bucket = entries;
@@ -443,7 +443,7 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
         /* stop data stores
          */
         for (i = 0; i < bsal_vector_size(&concrete_actor->stores); i++) {
-            store = bsal_vector_at_as_int(&concrete_actor->stores, i);
+            store = bsal_helper_vector_at_as_int(&concrete_actor->stores, i);
 
             bsal_helper_send_empty(actor, store, BSAL_ACTOR_ASK_TO_STOP);
         }
@@ -543,7 +543,7 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
                         bsal_actor_name(actor),
                         (int)bsal_vector_size(&concrete_actor->stores));
 
-        bsal_vector_print_int(&concrete_actor->stores);
+        bsal_helper_vector_print_int(&concrete_actor->stores);
         printf("\n");
 
         bsal_helper_send_reply_empty(actor, BSAL_INPUT_CONTROLLER_SET_CUSTOMERS_REPLY);
@@ -610,13 +610,13 @@ void bsal_input_controller_create_stores(struct bsal_actor *actor, struct bsal_m
 
     concrete_actor = (struct bsal_input_controller *)bsal_actor_concrete_actor(actor);
 
-    bsal_helper_get_all(message, &tag, &count, &buffer, &source);
+    bsal_helper_message_get_all(message, &tag, &count, &buffer, &source);
 /*
     printf("DEBUG bsal_input_controller_create_stores\n");
     */
 
     for (i = 0; i < bsal_vector_size(&concrete_actor->stores_per_spawner); i++) {
-        value = bsal_vector_at_as_int(&concrete_actor->stores_per_spawner, i);
+        value = bsal_helper_vector_at_as_int(&concrete_actor->stores_per_spawner, i);
 
         if (value == -1) {
 
@@ -625,7 +625,7 @@ void bsal_input_controller_create_stores(struct bsal_actor *actor, struct bsal_m
                             i);
                             */
 
-            spawner = bsal_vector_at_as_int(&concrete_actor->spawners, i);
+            spawner = bsal_helper_vector_at_as_int(&concrete_actor->spawners, i);
 
             bsal_helper_send_empty(actor, spawner, BSAL_ACTOR_GET_NODE_NAME);
             return;
@@ -643,11 +643,11 @@ void bsal_input_controller_create_stores(struct bsal_actor *actor, struct bsal_m
         printf("DEBUG polling spawner %i/%d\n", i,
                         bsal_vector_size(&concrete_actor->stores_per_spawner));
 */
-        value = bsal_vector_at_as_int(&concrete_actor->stores_per_spawner, i);
+        value = bsal_helper_vector_at_as_int(&concrete_actor->stores_per_spawner, i);
 
         if (value != 0) {
 
-            spawner = bsal_vector_at_as_int(&concrete_actor->spawners, i);
+            spawner = bsal_helper_vector_at_as_int(&concrete_actor->spawners, i);
 /*
             printf("DEBUG spawner %d is %d\n", i, spawner);
 */
@@ -665,7 +665,7 @@ void bsal_input_controller_create_stores(struct bsal_actor *actor, struct bsal_m
                     (int)bsal_vector_size(&concrete_actor->stores));
 
     for (i = 0; i < bsal_vector_size(&concrete_actor->stores); i++) {
-        value = bsal_vector_at_as_int(&concrete_actor->stores, i);
+        value = bsal_helper_vector_at_as_int(&concrete_actor->stores, i);
 
         printf("DEBUG controller actor/%d: sequence store %i is actor/%d\n",
                         bsal_actor_name(actor), i, value);
@@ -679,7 +679,7 @@ void bsal_input_controller_create_stores(struct bsal_actor *actor, struct bsal_m
 
     for (i = 0; i < bsal_vector_size(&concrete_actor->files); i++) {
         entries = *(uint64_t*)bsal_vector_at(&concrete_actor->counts, i);
-        local_file = bsal_vector_at_as_char_pointer(&concrete_actor->files, i);
+        local_file = bsal_helper_vector_at_as_char_pointer(&concrete_actor->files, i);
         name = *(int *)bsal_vector_at(&concrete_actor->streams, i);
 
         printf("stream actor/%d, %d/%d %s %" PRIu64 "\n",
@@ -732,9 +732,9 @@ void bsal_input_controller_get_node_name_reply(struct bsal_actor *actor, struct 
     int spawner;
     int node;
 
-    bsal_helper_get_all(message, &tag, &count, &buffer, &source);
+    bsal_helper_message_get_all(message, &tag, &count, &buffer, &source);
     spawner = source;
-    bsal_helper_unpack_int(message, 0, &node);
+    bsal_helper_message_unpack_int(message, 0, &node);
 
     printf("DEBUG spawner actor/%d is on node node/%d\n", spawner, node);
 
@@ -755,9 +755,9 @@ void bsal_input_controller_get_node_worker_count_reply(struct bsal_actor *actor,
 
     concrete_actor = (struct bsal_input_controller *)bsal_actor_concrete_actor(actor);
 
-    bsal_helper_get_all(message, &tag, &count, &buffer, &source);
+    bsal_helper_message_get_all(message, &tag, &count, &buffer, &source);
     spawner = source;
-    bsal_helper_unpack_int(message, 0, &worker_count);
+    bsal_helper_message_unpack_int(message, 0, &worker_count);
 
     index = bsal_vector_index_of(&concrete_actor->spawners, &spawner);
     bucket = bsal_vector_at(&concrete_actor->stores_per_spawner, index);
@@ -783,7 +783,7 @@ void bsal_input_controller_add_store(struct bsal_actor *actor, struct bsal_messa
 
     concrete_actor = (struct bsal_input_controller *)bsal_actor_concrete_actor(actor);
     source = bsal_message_source(message);
-    bsal_helper_unpack_int(message, 0, &store);
+    bsal_helper_message_unpack_int(message, 0, &store);
 
     index = bsal_vector_index_of(&concrete_actor->spawners, &source);
 

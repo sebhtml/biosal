@@ -134,7 +134,7 @@ void bsal_manager_receive(struct bsal_actor *actor, struct bsal_message *message
 
 #ifdef BSAL_MANAGER_DEBUG
             printf("DEBUG685-1 spawner %d index %d bucket %p\n", spawner, index, (void *)bucket);
-            bsal_vector_print_int(bsal_actor_acquaintance_vector(actor));
+            bsal_helper_vector_print_int(bsal_actor_acquaintance_vector(actor));
 #endif
 
             bsal_vector_init(stores, sizeof(int));
@@ -166,7 +166,7 @@ void bsal_manager_receive(struct bsal_actor *actor, struct bsal_message *message
 
 #ifdef BSAL_MANAGER_DEBUG
         printf("DEBUG685-2 spawner %d index %d bucket %p\n", source, index, (void *)bucket);
-        bsal_vector_print_int(bsal_actor_acquaintance_vector(actor));
+        bsal_helper_vector_print_int(bsal_actor_acquaintance_vector(actor));
 #endif
 
         /* set the number of actors desired for each spawner

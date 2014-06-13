@@ -25,7 +25,14 @@ void bsal_helper_send_to_self_int(struct bsal_actor *actor, int tag, int value);
 void bsal_helper_send_to_supervisor_empty(struct bsal_actor *actor, int tag);
 void bsal_helper_send_to_supervisor_int(struct bsal_actor *actor, int tag, int value);
 
-int bsal_helper_unpack_int(struct bsal_message *message, int offset, int *value);
-void bsal_helper_get_all(struct bsal_message *message, int *tag, int *count, void **buffer, int *source);
+int bsal_helper_message_unpack_int(struct bsal_message *message, int offset, int *value);
+void bsal_helper_message_get_all(struct bsal_message *message, int *tag, int *count, void **buffer, int *source);
+
+void bsal_helper_vector_print_int(struct bsal_vector *self);
+void bsal_helper_vector_set_int(struct bsal_vector *self, int64_t index, int value);
+void bsal_helper_vector_push_back_int(struct bsal_vector *self, int value);
+int bsal_helper_vector_at_as_int(struct bsal_vector *self, int64_t index);
+char *bsal_helper_vector_at_as_char_pointer(struct bsal_vector *self, int64_t index);
+void *bsal_helper_vector_at_as_void_pointer(struct bsal_vector *self, int64_t index);
 
 #endif

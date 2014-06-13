@@ -59,7 +59,7 @@ void frame_receive(struct bsal_actor *actor, struct bsal_message *message)
         bsal_vector_destroy(&initial_actors);
 
         other = bsal_actor_spawn(actor, bsal_actor_script(actor));
-        bsal_vector_push_back_int(acquaintance_vector, other);
+        bsal_helper_vector_push_back_int(acquaintance_vector, other);
 
         bsal_helper_send_empty(actor, other, BSAL_ACTOR_PING);
 
@@ -75,7 +75,7 @@ void frame_receive(struct bsal_actor *actor, struct bsal_message *message)
         printf("actor %d (value %d) receives BSAL_ACTOR_PING from actor %d\n",
                         name, concrete_actor->value, source);
         printf("Acquaintances of actor %d: ", name);
-        bsal_vector_print_int(acquaintance_vector);
+        bsal_helper_vector_print_int(acquaintance_vector);
         printf("\n");
 
         bsal_helper_send_reply_empty(actor, BSAL_ACTOR_PING_REPLY);
@@ -104,7 +104,7 @@ void frame_receive(struct bsal_actor *actor, struct bsal_message *message)
                         name, source, name);
 
         printf("Acquaintances of actor %d: ", name);
-        bsal_vector_print_int(acquaintance_vector);
+        bsal_helper_vector_print_int(acquaintance_vector);
         printf("\n");
 
         bsal_helper_send_reply_int(actor, BSAL_ACTOR_MIGRATE, name);
@@ -120,10 +120,10 @@ void frame_receive(struct bsal_actor *actor, struct bsal_message *message)
 
     } else if (tag == BSAL_ACTOR_MIGRATE_REPLY) {
 
-        bsal_helper_unpack_int(message, 0, &other);
+        bsal_helper_message_unpack_int(message, 0, &other);
         printf("actor %d received migrated actor %d\n", name, other);
         printf("Acquaintances of actor %d: ", name);
-        bsal_vector_print_int(acquaintance_vector);
+        bsal_helper_vector_print_int(acquaintance_vector);
         printf("\n");
 
         /* it is possible that the BSAL_ACTOR_PING went through
@@ -140,7 +140,7 @@ void frame_receive(struct bsal_actor *actor, struct bsal_message *message)
 
     } else if (tag == BSAL_ACTOR_UNPACK) {
 
-        bsal_helper_unpack_int(message, 0, &concrete_actor->value);
+        bsal_helper_message_unpack_int(message, 0, &concrete_actor->value);
         bsal_helper_send_reply_empty(actor, BSAL_ACTOR_UNPACK_REPLY);
 
     } else if (tag == BSAL_ACTOR_ASK_TO_STOP) {
@@ -148,7 +148,7 @@ void frame_receive(struct bsal_actor *actor, struct bsal_message *message)
         printf("actor %d received BSAL_ACTOR_ASK_TO_STOP, value: %d ",
                         name, concrete_actor->value);
         printf("acquaintance vector: ");
-        bsal_vector_print_int(acquaintance_vector);
+        bsal_helper_vector_print_int(acquaintance_vector);
         printf("\n");
 
         bsal_helper_send_to_self_empty(actor, BSAL_ACTOR_STOP);
