@@ -7,6 +7,7 @@
 #include <storage/sequence_partitioner.h>
 #include <storage/partition_command.h>
 #include <input/input_command.h>
+#include <patterns/helper.h>
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -171,7 +172,7 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
 
         printf("DEBUG preparing first spawner\n");
 
-        bsal_actor_send_to_self_empty(actor, BSAL_INPUT_CONTROLLER_PREPARE_SPAWNERS);
+        bsal_helper_send_to_self_empty(actor, BSAL_INPUT_CONTROLLER_PREPARE_SPAWNERS);
 
         /*
         bsal_dispatcher_print(bsal_actor_dispatcher(actor));
@@ -194,7 +195,7 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
                         local_file, local_file, (void *)bucket, bsal_vector_size(&controller->files) - 1);
 #endif
 
-        bsal_actor_send_reply_empty(actor, BSAL_ADD_FILE_REPLY);
+        bsal_helper_send_reply_empty(actor, BSAL_ADD_FILE_REPLY);
 
     } else if (tag == BSAL_ACTOR_SPAWN_REPLY) {
 
@@ -207,15 +208,15 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
 
             concrete_actor->ready_spawners++;
             bsal_message_unpack_int(message, 0, &name);
-            bsal_actor_send_empty(actor, name, BSAL_ACTOR_ASK_TO_STOP);
-            bsal_actor_send_to_self_empty(actor, BSAL_INPUT_CONTROLLER_PREPARE_SPAWNERS);
+            bsal_helper_send_empty(actor, name, BSAL_ACTOR_ASK_TO_STOP);
+            bsal_helper_send_to_self_empty(actor, BSAL_INPUT_CONTROLLER_PREPARE_SPAWNERS);
 
             if (concrete_actor->ready_spawners == (int)bsal_vector_size(&concrete_actor->spawners)) {
 
                 printf("DEBUG all spawners are prepared\n");
 #ifdef BSAL_INPUT_CONTROLLER_DEBUG
 #endif
-                bsal_actor_send_to_supervisor_empty(actor, BSAL_INPUT_CONTROLLER_START_REPLY);
+                bsal_helper_send_to_supervisor_empty(actor, BSAL_INPUT_CONTROLLER_START_REPLY);
             }
 
             return;
@@ -234,10 +235,10 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
              */
             destination = bsal_actor_get_acquaintance(actor,
                                     concrete_actor->partitioner);
-            bsal_actor_send_int(actor, destination,
+            bsal_helper_send_int(actor, destination,
                             BSAL_SEQUENCE_PARTITIONER_SET_BLOCK_SIZE,
                             concrete_actor->block_size);
-            bsal_actor_send_int(actor, destination,
+            bsal_helper_send_int(actor, destination,
                             BSAL_SEQUENCE_PARTITIONER_SET_ACTOR_COUNT,
                             bsal_vector_size(&concrete_actor->stores));
 
@@ -276,7 +277,7 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
 
         if (bsal_vector_size(&controller->streams) != bsal_vector_size(&controller->files)) {
 
-            bsal_actor_send_to_self_empty(actor, BSAL_INPUT_SPAWN);
+            bsal_helper_send_to_self_empty(actor, BSAL_INPUT_SPAWN);
 
         }
 
@@ -293,7 +294,7 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
             printf("DEBUG actor %d asks %d BSAL_INPUT_COUNT\n", name, stream);
 #endif
 
-            bsal_actor_send_empty(actor, stream, BSAL_INPUT_COUNT);
+            bsal_helper_send_empty(actor, stream, BSAL_INPUT_COUNT);
         } else {
 
 #ifdef BSAL_INPUT_CONTROLLER_DEBUG_LEVEL_2
@@ -309,7 +310,7 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
 #endif
             printf("DEBUG actor/%d: all streams failed.\n",
                             bsal_actor_name(actor));
-            bsal_actor_send_to_supervisor_empty(actor, BSAL_INPUT_DISTRIBUTE_REPLY);
+            bsal_helper_send_to_supervisor_empty(actor, BSAL_INPUT_DISTRIBUTE_REPLY);
         }
 
 /*
@@ -350,7 +351,7 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
         printf("controller actor/%d received from stream actor/%d for file %s: %d entries\n",
                         name, source, local_file, entries);
 
-        bsal_actor_send_reply_empty(actor, BSAL_INPUT_STREAM_RESET);
+        bsal_helper_send_reply_empty(actor, BSAL_INPUT_STREAM_RESET);
 
     } else if (tag == BSAL_INPUT_STREAM_RESET_REPLY) {
 
@@ -358,7 +359,7 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
 
         /* continue work here, tell supervisor about it */
         if (controller->counted == bsal_vector_size(&controller->files)) {
-            bsal_actor_send_to_self_empty(actor, BSAL_INPUT_CONTROLLER_CREATE_STORES);
+            bsal_helper_send_to_self_empty(actor, BSAL_INPUT_CONTROLLER_CREATE_STORES);
         }
     } else if (tag == BSAL_INPUT_DISTRIBUTE) {
 
@@ -367,7 +368,7 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
         /* no files, return immediately
          */
         if (bsal_vector_size(&concrete_actor->files) == 0) {
-            bsal_actor_send_reply_empty(actor, BSAL_INPUT_DISTRIBUTE_REPLY);
+            bsal_helper_send_reply_empty(actor, BSAL_INPUT_DISTRIBUTE_REPLY);
             return;
         }
 
@@ -379,7 +380,7 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
         printf("DEBUG send BSAL_INPUT_SPAWN to self\n");
 #endif
 
-        bsal_actor_send_to_self_empty(actor, BSAL_INPUT_SPAWN);
+        bsal_helper_send_to_self_empty(actor, BSAL_INPUT_SPAWN);
 
 #ifdef BSAL_INPUT_CONTROLLER_DEBUG_LEVEL_2
         printf("DEBUG resizing counts to %d\n", bsal_vector_size(&controller->files));
@@ -436,7 +437,7 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
         for (i = 0; i < bsal_vector_size(&concrete_actor->streams); i++) {
             stream = *(int *)bsal_vector_at(&concrete_actor->streams, i);
 
-            bsal_actor_send_empty(actor, stream, BSAL_ACTOR_ASK_TO_STOP);
+            bsal_helper_send_empty(actor, stream, BSAL_ACTOR_ASK_TO_STOP);
         }
 
         /* stop data stores
@@ -444,14 +445,14 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
         for (i = 0; i < bsal_vector_size(&concrete_actor->stores); i++) {
             store = bsal_vector_at_as_int(&concrete_actor->stores, i);
 
-            bsal_actor_send_empty(actor, store, BSAL_ACTOR_ASK_TO_STOP);
+            bsal_helper_send_empty(actor, store, BSAL_ACTOR_ASK_TO_STOP);
         }
 
         /* stop partitioner
          */
 
         if (concrete_actor->partitioner > 0) {
-            bsal_actor_send_empty(actor, bsal_actor_get_acquaintance(actor,
+            bsal_helper_send_empty(actor, bsal_actor_get_acquaintance(actor,
                                 concrete_actor->partitioner),
                         BSAL_ACTOR_ASK_TO_STOP);
 
@@ -461,11 +462,11 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
 
         }
 
-        bsal_actor_send_reply_empty(actor, BSAL_ACTOR_ASK_TO_STOP_REPLY);
+        bsal_helper_send_reply_empty(actor, BSAL_ACTOR_ASK_TO_STOP_REPLY);
 
         /* stop self
          */
-        bsal_actor_send_to_self_empty(actor, BSAL_ACTOR_STOP);
+        bsal_helper_send_to_self_empty(actor, BSAL_ACTOR_STOP);
 
         printf("DEBUG controller actor/%d dies\n", name);
 
@@ -474,7 +475,7 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
         spawner = *(int *)bsal_vector_at(&concrete_actor->spawners,
                         bsal_vector_size(&concrete_actor->spawners) / 2);
 
-        bsal_actor_send_int(actor, spawner, BSAL_ACTOR_SPAWN,
+        bsal_helper_send_int(actor, spawner, BSAL_ACTOR_SPAWN,
                         BSAL_SEQUENCE_PARTITIONER_SCRIPT);
         concrete_actor->state = BSAL_INPUT_CONTROLLER_STATE_SPAWN_PARTITIONER;
 
@@ -489,7 +490,7 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
         printf("DEBUG controller receives BSAL_SEQUENCE_PARTITIONER_COMMAND_IS_READY, asks for command\n");
 #endif
 
-        bsal_actor_send_reply_empty(actor, BSAL_SEQUENCE_PARTITIONER_GET_COMMAND);
+        bsal_helper_send_reply_empty(actor, BSAL_SEQUENCE_PARTITIONER_GET_COMMAND);
 
     } else if (tag == BSAL_SEQUENCE_PARTITIONER_GET_COMMAND_REPLY) {
 
@@ -497,11 +498,11 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
 
     } else if (tag == BSAL_SEQUENCE_PARTITIONER_FINISHED) {
 
-        bsal_actor_send_empty(actor, bsal_actor_get_acquaintance(actor,
+        bsal_helper_send_empty(actor, bsal_actor_get_acquaintance(actor,
                                 concrete_actor->partitioner),
                         BSAL_ACTOR_ASK_TO_STOP);
 
-        bsal_actor_send_to_supervisor_empty(actor, BSAL_INPUT_DISTRIBUTE_REPLY);
+        bsal_helper_send_to_supervisor_empty(actor, BSAL_INPUT_DISTRIBUTE_REPLY);
 
     } else if (tag == BSAL_SEQUENCE_PARTITIONER_PROVIDE_STORE_ENTRY_COUNTS) {
 
@@ -513,7 +514,7 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
         if (concrete_actor->ready_stores == bsal_vector_size(&concrete_actor->stores)) {
 
             printf("DEBUG all stores are ready\n");
-            bsal_actor_send_empty(actor,
+            bsal_helper_send_empty(actor,
                             bsal_actor_get_acquaintance(actor, concrete_actor->partitioner),
                             BSAL_SEQUENCE_PARTITIONER_PROVIDE_STORE_ENTRY_COUNTS_REPLY);
         }
@@ -530,7 +531,7 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
         command_name = *(int *)bsal_vector_at(&concrete_actor->partition_commands,
                         stream_index);
 
-        bsal_actor_send_int(actor, bsal_actor_get_acquaintance(actor,
+        bsal_helper_send_int(actor, bsal_actor_get_acquaintance(actor,
                                 concrete_actor->partitioner),
                         BSAL_SEQUENCE_PARTITIONER_GET_COMMAND_REPLY_REPLY,
                         command_name);
@@ -545,7 +546,7 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
         bsal_vector_print_int(&concrete_actor->stores);
         printf("\n");
 
-        bsal_actor_send_reply_empty(actor, BSAL_INPUT_CONTROLLER_SET_CUSTOMERS_REPLY);
+        bsal_helper_send_reply_empty(actor, BSAL_INPUT_CONTROLLER_SET_CUSTOMERS_REPLY);
     }
 }
 
@@ -626,7 +627,7 @@ void bsal_input_controller_create_stores(struct bsal_actor *actor, struct bsal_m
 
             spawner = bsal_vector_at_as_int(&concrete_actor->spawners, i);
 
-            bsal_actor_send_empty(actor, spawner, BSAL_ACTOR_GET_NODE_NAME);
+            bsal_helper_send_empty(actor, spawner, BSAL_ACTOR_GET_NODE_NAME);
             return;
         }
     }
@@ -650,7 +651,7 @@ void bsal_input_controller_create_stores(struct bsal_actor *actor, struct bsal_m
 /*
             printf("DEBUG spawner %d is %d\n", i, spawner);
 */
-            bsal_actor_send_int(actor, spawner, BSAL_ACTOR_SPAWN, BSAL_SEQUENCE_STORE_SCRIPT);
+            bsal_helper_send_int(actor, spawner, BSAL_ACTOR_SPAWN, BSAL_SEQUENCE_STORE_SCRIPT);
 
             return;
         }
@@ -711,14 +712,14 @@ void bsal_input_controller_create_stores(struct bsal_actor *actor, struct bsal_m
     /* no sequences at all !
      */
     if (total == 0) {
-        bsal_actor_send_to_supervisor_empty(actor, BSAL_INPUT_DISTRIBUTE_REPLY);
+        bsal_helper_send_to_supervisor_empty(actor, BSAL_INPUT_DISTRIBUTE_REPLY);
         return;
     } else {
-        bsal_actor_send_to_self_empty(actor, BSAL_INPUT_CONTROLLER_CREATE_PARTITION);
+        bsal_helper_send_to_self_empty(actor, BSAL_INPUT_CONTROLLER_CREATE_PARTITION);
     }
 
     /*
-    bsal_actor_send_to_self_empty(actor, BSAL_ACTOR_STOP);
+    bsal_helper_send_to_self_empty(actor, BSAL_ACTOR_STOP);
     */
 }
 
@@ -737,7 +738,7 @@ void bsal_input_controller_get_node_name_reply(struct bsal_actor *actor, struct 
 
     printf("DEBUG spawner actor/%d is on node node/%d\n", spawner, node);
 
-    bsal_actor_send_reply_empty(actor, BSAL_ACTOR_GET_NODE_WORKER_COUNT);
+    bsal_helper_send_reply_empty(actor, BSAL_ACTOR_GET_NODE_WORKER_COUNT);
 }
 
 void bsal_input_controller_get_node_worker_count_reply(struct bsal_actor *actor, struct bsal_message *message)
@@ -765,7 +766,7 @@ void bsal_input_controller_get_node_worker_count_reply(struct bsal_actor *actor,
     printf("DEBUG spawner actor/%d (node/%d) is on a node that has %d workers\n", spawner,
                     index, worker_count);
 
-    bsal_actor_send_to_self_empty(actor, BSAL_INPUT_CONTROLLER_CREATE_STORES);
+    bsal_helper_send_to_self_empty(actor, BSAL_INPUT_CONTROLLER_CREATE_STORES);
 }
 
 void bsal_input_controller_add_store(struct bsal_actor *actor, struct bsal_message *message)
@@ -798,7 +799,7 @@ void bsal_input_controller_add_store(struct bsal_actor *actor, struct bsal_messa
     *bucket = (*bucket - 1);
     bsal_vector_push_back(&concrete_actor->stores, &store);
 
-    bsal_actor_send_to_self_empty(actor, BSAL_INPUT_CONTROLLER_CREATE_STORES);
+    bsal_helper_send_to_self_empty(actor, BSAL_INPUT_CONTROLLER_CREATE_STORES);
 
     /*
     printf("DEBUG remaining to spawn: %d (before returning)\n", *bucket);
@@ -821,7 +822,7 @@ void bsal_input_controller_prepare_spawners(struct bsal_actor *actor, struct bsa
      */
     if (bsal_queue_dequeue(&concrete_actor->unprepared_spawners, &spawner)) {
 
-        bsal_actor_send_int(actor, spawner, BSAL_ACTOR_SPAWN, bsal_actor_script(actor));
+        bsal_helper_send_int(actor, spawner, BSAL_ACTOR_SPAWN, bsal_actor_script(actor));
         concrete_actor->state = BSAL_INPUT_CONTROLLER_STATE_PREPARE_SPAWNERS;
     }
 }

@@ -82,7 +82,6 @@ void bsal_manager_receive(struct bsal_actor *actor, struct bsal_message *message
     int new_count;
     void *new_buffer;
     struct bsal_message new_message;
-    struct bsal_helper helper;
 
     source = bsal_message_source(message);
     buffer = bsal_message_buffer(message);
@@ -96,7 +95,7 @@ void bsal_manager_receive(struct bsal_actor *actor, struct bsal_message *message
         if (concrete_actor->script == BSAL_MANAGER_NO_VALUE) {
 
             bsal_vector_init(&all_stores, sizeof(int));
-            bsal_helper_send_reply_vector(&helper, actor, BSAL_ACTOR_START_REPLY, &all_stores);
+            bsal_helper_send_reply_vector(actor, BSAL_ACTOR_START_REPLY, &all_stores);
             bsal_vector_destroy(&all_stores);
             return;
         }
@@ -140,7 +139,7 @@ void bsal_manager_receive(struct bsal_actor *actor, struct bsal_message *message
 
             bsal_vector_init(stores, sizeof(int));
 
-            bsal_actor_send_empty(actor, spawner, BSAL_ACTOR_GET_NODE_WORKER_COUNT);
+            bsal_helper_send_empty(actor, spawner, BSAL_ACTOR_GET_NODE_WORKER_COUNT);
         }
 
         bsal_vector_iterator_destroy(&iterator);
@@ -150,7 +149,7 @@ void bsal_manager_receive(struct bsal_actor *actor, struct bsal_message *message
 
         concrete_actor->script = *(int *)buffer;
 
-        bsal_actor_send_reply_empty(actor, BSAL_MANAGER_SET_SCRIPT_REPLY);
+        bsal_helper_send_reply_empty(actor, BSAL_MANAGER_SET_SCRIPT_REPLY);
 
     } else if (tag == BSAL_ACTOR_GET_NODE_WORKER_COUNT_REPLY) {
 
@@ -178,7 +177,7 @@ void bsal_manager_receive(struct bsal_actor *actor, struct bsal_message *message
             *bucket = concrete_actor->actors_per_spawner;
         }
 
-        bsal_actor_send_reply_int(actor, BSAL_ACTOR_SPAWN, concrete_actor->script);
+        bsal_helper_send_reply_int(actor, BSAL_ACTOR_SPAWN, concrete_actor->script);
 
     } else if (tag == BSAL_ACTOR_SPAWN_REPLY) {
 
@@ -238,7 +237,7 @@ void bsal_manager_receive(struct bsal_actor *actor, struct bsal_message *message
             }
         } else {
 
-            bsal_actor_send_reply_int(actor, BSAL_ACTOR_SPAWN, concrete_actor->script);
+            bsal_helper_send_reply_int(actor, BSAL_ACTOR_SPAWN, concrete_actor->script);
         }
     } else if (tag == BSAL_ACTOR_ASK_TO_STOP) {
 
@@ -249,11 +248,11 @@ void bsal_manager_receive(struct bsal_actor *actor, struct bsal_message *message
 
             printf("manager actor/%d tells worker actor/%d to stop\n",
                             bsal_actor_name(actor), child);
-            bsal_actor_send_empty(actor, child, BSAL_ACTOR_ASK_TO_STOP);
+            bsal_helper_send_empty(actor, child, BSAL_ACTOR_ASK_TO_STOP);
         }
 
         printf("DEBUG manager actor/%d dies\n",
                         bsal_actor_name(actor));
-        bsal_actor_send_to_self_empty(actor, BSAL_ACTOR_STOP);
+        bsal_helper_send_to_self_empty(actor, BSAL_ACTOR_STOP);
     }
 }

@@ -103,7 +103,7 @@ void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message)
         manager = bsal_actor_spawn(actor, BSAL_MANAGER_SCRIPT);
         concrete_actor->manager = bsal_actor_add_acquaintance(actor, manager);
 
-        bsal_actor_send_int(actor, manager, BSAL_MANAGER_SET_SCRIPT,
+        bsal_helper_send_int(actor, manager, BSAL_MANAGER_SET_SCRIPT,
                         BSAL_KMER_COUNTER_KERNEL_SCRIPT);
 
     } else if (tag == BSAL_MANAGER_SET_SCRIPT_REPLY) {
@@ -174,7 +174,7 @@ void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message)
             argonnite_add_file(actor, message);
         } else {
 
-            bsal_actor_send_reply_empty(actor, BSAL_INPUT_DISTRIBUTE);
+            bsal_helper_send_reply_empty(actor, BSAL_INPUT_DISTRIBUTE);
         }
     } else if (tag == BSAL_INPUT_DISTRIBUTE_REPLY) {
 
@@ -184,8 +184,8 @@ void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message)
         controller = bsal_actor_get_acquaintance(actor, concrete_actor->controller);
         manager = bsal_actor_get_acquaintance(actor, concrete_actor->manager);
 
-        bsal_actor_send_empty(actor, controller, BSAL_ACTOR_ASK_TO_STOP);
-        bsal_actor_send_empty(actor, manager, BSAL_ACTOR_ASK_TO_STOP);
+        bsal_helper_send_empty(actor, controller, BSAL_ACTOR_ASK_TO_STOP);
+        bsal_helper_send_empty(actor, manager, BSAL_ACTOR_ASK_TO_STOP);
 
         bsal_vector_init(&initial_actors, sizeof(int));
         bsal_actor_get_acquaintances(actor, &concrete_actor->initial_actors, &initial_actors);
@@ -200,7 +200,7 @@ void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message)
             printf("argonnite actor/%d stops argonnite actor/%d\n",
                             name, other_name);
 
-            bsal_actor_send_empty(actor, other_name, BSAL_ACTOR_ASK_TO_STOP);
+            bsal_helper_send_empty(actor, other_name, BSAL_ACTOR_ASK_TO_STOP);
         }
 
         bsal_vector_destroy(&initial_actors);
@@ -211,7 +211,7 @@ void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message)
 
         printf("argonnite actor/%d stops\n", name);
 
-        bsal_actor_send_to_self_empty(actor, BSAL_ACTOR_STOP);
+        bsal_helper_send_to_self_empty(actor, BSAL_ACTOR_STOP);
     }
 }
 

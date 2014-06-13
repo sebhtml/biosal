@@ -210,20 +210,9 @@ bsal_actor_receive_fn_t bsal_actor_get_receive(struct bsal_actor *actor);
 /* send functions
  */
 void bsal_actor_send(struct bsal_actor *actor, int destination, struct bsal_message *message);
-void bsal_actor_send_int(struct bsal_actor *actor, int destination, int tag, int value);
-void bsal_actor_send_empty(struct bsal_actor *actor, int destination, int tag);
-
 void bsal_actor_send_reply(struct bsal_actor *actor, struct bsal_message *message);
-void bsal_actor_send_reply_int(struct bsal_actor *actor, int tag, int error);
-void bsal_actor_send_reply_empty(struct bsal_actor *actor, int tag);
-
 void bsal_actor_send_to_self(struct bsal_actor *actor, struct bsal_message *message);
-void bsal_actor_send_to_self_int(struct bsal_actor *actor, int tag, int value);
-void bsal_actor_send_to_self_empty(struct bsal_actor *actor, int tag);
-
 void bsal_actor_send_to_supervisor(struct bsal_actor *actor, struct bsal_message *message);
-void bsal_actor_send_to_supervisor_int(struct bsal_actor *actor, int tag, int value);
-void bsal_actor_send_to_supervisor_empty(struct bsal_actor *actor, int tag);
 
 void bsal_actor_send_with_source(struct bsal_actor *actor, int name, struct bsal_message *message,
                 int source);

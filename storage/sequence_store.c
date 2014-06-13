@@ -4,6 +4,7 @@
 #include <structures/vector_iterator.h>
 #include <input/input_command.h>
 #include <data/dna_sequence.h>
+#include <patterns/helper.h>
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -77,7 +78,7 @@ void bsal_sequence_store_receive(struct bsal_actor *actor, struct bsal_message *
                         bsal_actor_name(actor));
 
         bsal_sequence_store_show_progress(actor, message);
-        bsal_actor_send_to_self_empty(actor, BSAL_ACTOR_STOP);
+        bsal_helper_send_to_self_empty(actor, BSAL_ACTOR_STOP);
     }
 }
 
@@ -190,7 +191,7 @@ void bsal_sequence_store_store_sequences(struct bsal_actor *actor, struct bsal_m
      */
     bsal_input_command_destroy(&payload);
 
-    bsal_actor_send_reply_empty(actor, BSAL_PUSH_SEQUENCE_DATA_BLOCK_REPLY);
+    bsal_helper_send_reply_empty(actor, BSAL_PUSH_SEQUENCE_DATA_BLOCK_REPLY);
 }
 
 void bsal_sequence_store_reserve(struct bsal_actor *actor, struct bsal_message *message)
@@ -227,7 +228,7 @@ void bsal_sequence_store_reserve(struct bsal_actor *actor, struct bsal_message *
         bsal_dna_sequence_init(dna_sequence, NULL);
     }
 
-    bsal_actor_send_reply_empty(actor, BSAL_SEQUENCE_STORE_RESERVE_REPLY);
+    bsal_helper_send_reply_empty(actor, BSAL_SEQUENCE_STORE_RESERVE_REPLY);
 }
 
 void bsal_sequence_store_show_progress(struct bsal_actor *actor, struct bsal_message *message)
