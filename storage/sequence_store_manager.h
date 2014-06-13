@@ -10,12 +10,16 @@
 #define BSAL_SEQUENCE_STORE_MANAGER_SCRIPT 0xe41954c7
 
 struct bsal_sequence_store_manager {
-    struct bsal_dynamic_hash_table spawner_stores;
-    struct bsal_dynamic_hash_table spawner_store_count;
+    struct bsal_dynamic_hash_table spawner_children;
+    struct bsal_dynamic_hash_table spawner_child_count;
     int ready_spawners;
     int spawners;
     struct bsal_vector indices;
+    int script;
 };
+
+#define BSAL_MANAGER_SET_SCRIPT 0x00007595
+#define BSAL_MANAGER_SET_SCRIPT_REPLY 0x00007667
 
 extern struct bsal_script bsal_sequence_store_manager_script;
 

@@ -2,6 +2,7 @@
 #include "sequence_store_manager.h"
 
 #include "sequence_store.h"
+#include <kernels/kmer_counter_kernel.h>
 
 #include <structures/vector_iterator.h>
 #include <structures/dynamic_hash_table_iterator.h>
@@ -26,12 +27,15 @@ void bsal_sequence_store_manager_init(struct bsal_actor *actor)
 
     concrete_actor = (struct bsal_sequence_store_manager *)bsal_actor_concrete_actor(actor);
 
-    bsal_dynamic_hash_table_init(&concrete_actor->spawner_store_count, 128, sizeof(int), sizeof(int));
-    bsal_dynamic_hash_table_init(&concrete_actor->spawner_stores, 128, sizeof(int), sizeof(struct bsal_vector));
+    bsal_dynamic_hash_table_init(&concrete_actor->spawner_child_count, 128, sizeof(int), sizeof(int));
+    bsal_dynamic_hash_table_init(&concrete_actor->spawner_children, 128, sizeof(int), sizeof(struct bsal_vector));
     bsal_vector_init(&concrete_actor->indices, sizeof(int));
 
     concrete_actor->ready_spawners = 0;
     concrete_actor->spawners = 0;
+
+    bsal_actor_add_script(actor, BSAL_SEQUENCE_STORE_SCRIPT, &bsal_sequence_store_script);
+    bsal_actor_add_script(actor, BSAL_KMER_COUNTER_KERNEL_SCRIPT, &bsal_kmer_counter_kernel_script);
 }
 
 void bsal_sequence_store_manager_destroy(struct bsal_actor *actor)
@@ -42,9 +46,9 @@ void bsal_sequence_store_manager_destroy(struct bsal_actor *actor)
 
     concrete_actor = (struct bsal_sequence_store_manager *)bsal_actor_concrete_actor(actor);
 
-    bsal_dynamic_hash_table_destroy(&concrete_actor->spawner_store_count);
+    bsal_dynamic_hash_table_destroy(&concrete_actor->spawner_child_count);
 
-    bsal_dynamic_hash_table_iterator_init(&iterator, &concrete_actor->spawner_stores);
+    bsal_dynamic_hash_table_iterator_init(&iterator, &concrete_actor->spawner_children);
 
     while (bsal_dynamic_hash_table_iterator_has_next(&iterator)) {
         bsal_dynamic_hash_table_iterator_next(&iterator, NULL, (void **)&vector);
@@ -54,7 +58,7 @@ void bsal_sequence_store_manager_destroy(struct bsal_actor *actor)
 
     bsal_dynamic_hash_table_iterator_destroy(&iterator);
 
-    bsal_dynamic_hash_table_destroy(&concrete_actor->spawner_stores);
+    bsal_dynamic_hash_table_destroy(&concrete_actor->spawner_children);
 
     bsal_vector_destroy(&concrete_actor->indices);
 }
@@ -68,7 +72,6 @@ void bsal_sequence_store_manager_receive(struct bsal_actor *actor, struct bsal_m
     int index;
     struct bsal_sequence_store_manager *concrete_actor;
     struct bsal_vector *stores;
-    int script;
     int spawner;
     int workers;
     int stores_per_worker;
@@ -86,7 +89,6 @@ void bsal_sequence_store_manager_receive(struct bsal_actor *actor, struct bsal_m
     buffer = bsal_message_buffer(message);
     concrete_actor = (struct bsal_sequence_store_manager *)bsal_actor_concrete_actor(actor);
     tag = bsal_message_tag(message);
-    script = BSAL_SEQUENCE_STORE_SCRIPT;
 
     if (tag == BSAL_ACTOR_START) {
 
@@ -115,11 +117,11 @@ void bsal_sequence_store_manager_receive(struct bsal_actor *actor, struct bsal_m
             printf("DEBUG manager actor/%d add store vector and store count for spawner actor/%d\n",
                             bsal_actor_name(actor), spawner);
 
-            stores = (struct bsal_vector *)bsal_dynamic_hash_table_add(&concrete_actor->spawner_stores, &index);
+            stores = (struct bsal_vector *)bsal_dynamic_hash_table_add(&concrete_actor->spawner_children, &index);
 
             printf("DEBUG adding %d to table\n", index);
 
-            bucket = (int *)bsal_dynamic_hash_table_add(&concrete_actor->spawner_store_count, &index);
+            bucket = (int *)bsal_dynamic_hash_table_add(&concrete_actor->spawner_child_count, &index);
             *bucket = 0;
 
 #ifdef BSAL_SEQUENCE_STORE_MANAGER_DEBUG
@@ -135,6 +137,12 @@ void bsal_sequence_store_manager_receive(struct bsal_actor *actor, struct bsal_m
         bsal_vector_iterator_destroy(&iterator);
         bsal_vector_destroy(&spawners);
 
+    } else if (tag == BSAL_MANAGER_SET_SCRIPT) {
+
+        concrete_actor->script = *(int *)buffer;
+
+        bsal_actor_send_reply_empty(actor, BSAL_MANAGER_SET_SCRIPT_REPLY);
+
     } else if (tag == BSAL_ACTOR_GET_NODE_WORKER_COUNT_REPLY) {
 
         workers = *(int *)buffer;
@@ -146,7 +154,7 @@ void bsal_sequence_store_manager_receive(struct bsal_actor *actor, struct bsal_m
                         bsal_actor_name(actor), source, workers);
 
         printf("DEBUG getting table index %d\n", index);
-        bucket = (int *)bsal_dynamic_hash_table_get(&concrete_actor->spawner_store_count, &index);
+        bucket = (int *)bsal_dynamic_hash_table_get(&concrete_actor->spawner_child_count, &index);
 
 #ifdef BSAL_SEQUENCE_STORE_MANAGER_DEBUG
         printf("DEBUG685-2 spawner %d index %d bucket %p\n", source, index, (void *)bucket);
@@ -155,15 +163,15 @@ void bsal_sequence_store_manager_receive(struct bsal_actor *actor, struct bsal_m
 
         *bucket = workers * stores_per_worker;
 
-        bsal_actor_send_reply_int(actor, BSAL_ACTOR_SPAWN, script);
+        bsal_actor_send_reply_int(actor, BSAL_ACTOR_SPAWN, concrete_actor->script);
 
     } else if (tag == BSAL_ACTOR_SPAWN_REPLY) {
 
         store = *(int *)buffer;
         index = bsal_actor_get_acquaintance_index(actor, source);
 
-        stores = (struct bsal_vector *)bsal_dynamic_hash_table_get(&concrete_actor->spawner_stores, &index);
-        bucket = (int *)bsal_dynamic_hash_table_get(&concrete_actor->spawner_store_count, &index);
+        stores = (struct bsal_vector *)bsal_dynamic_hash_table_get(&concrete_actor->spawner_children, &index);
+        bucket = (int *)bsal_dynamic_hash_table_get(&concrete_actor->spawner_child_count, &index);
 
         bsal_vector_push_back(stores, &store);
 
@@ -193,7 +201,7 @@ void bsal_sequence_store_manager_receive(struct bsal_actor *actor, struct bsal_m
 
                     index = *bucket;
 
-                    stores = (struct bsal_vector *)bsal_dynamic_hash_table_get(&concrete_actor->spawner_stores,
+                    stores = (struct bsal_vector *)bsal_dynamic_hash_table_get(&concrete_actor->spawner_children,
                                     &index);
 
                     bsal_vector_push_back_vector(&all_stores, stores);
@@ -215,7 +223,7 @@ void bsal_sequence_store_manager_receive(struct bsal_actor *actor, struct bsal_m
             }
         } else {
 
-            bsal_actor_send_reply_int(actor, BSAL_ACTOR_SPAWN, script);
+            bsal_actor_send_reply_int(actor, BSAL_ACTOR_SPAWN, concrete_actor->script);
         }
     } else if (tag == BSAL_ACTOR_ASK_TO_STOP) {
 

@@ -149,10 +149,15 @@ void root_receive(struct bsal_actor *actor, struct bsal_message *message)
 
         manager = bsal_actor_spawn(actor, BSAL_SEQUENCE_STORE_MANAGER_SCRIPT);
 
+        bsal_actor_send_int(actor, manager, BSAL_MANAGER_SET_SCRIPT, BSAL_SEQUENCE_STORE_SCRIPT);
+
         printf("DEBUG root actor/%d spawned manager actor/%d\n",
                         bsal_actor_name(actor), manager);
-
         concrete_actor->manager = bsal_actor_get_child_index(actor, manager);
+
+    } else if (tag == BSAL_MANAGER_SET_SCRIPT_REPLY) {
+
+        manager = source;
 
         bsal_vector_init(&spawners, sizeof(int));
 
