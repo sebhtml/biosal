@@ -227,16 +227,18 @@ void bsal_manager_receive(struct bsal_actor *actor, struct bsal_message *message
         }
     } else if (tag == BSAL_ACTOR_ASK_TO_STOP) {
 
-        printf("DEBUG manager actor/%d dies\n",
-                        bsal_actor_name(actor));
 
         for (i = 0; i < bsal_actor_child_count(actor); i++) {
 
             child = bsal_actor_get_child(actor, i);
 
+            printf("manager actor/%d tells worker actor/%d to stop\n",
+                            bsal_actor_name(actor), child);
             bsal_actor_send_empty(actor, child, BSAL_ACTOR_ASK_TO_STOP);
         }
 
+        printf("DEBUG manager actor/%d dies\n",
+                        bsal_actor_name(actor));
         bsal_actor_send_to_self_empty(actor, BSAL_ACTOR_STOP);
     }
 }

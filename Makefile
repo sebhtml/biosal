@@ -8,8 +8,9 @@ all:
 
 include tests/Makefile.mk
 include examples/Makefile.mk
+include applications/Makefile.mk
 
-all: $(TESTS) $(EXAMPLES)
+all: $(TESTS) $(EXAMPLES) $(APPLICATIONS)
 
 LIBRARY=
 
@@ -61,8 +62,8 @@ clean:
 	$(Q)$(RM) $(EXAMPLE_CLONE) $(EXAMPLE_MIGRATION)
 	$(Q)$(RM) $(TEST_FIFO) $(TEST_FIFO_ARRAY) $(TEST_HASH_TABLE_GROUP) $(TEST_NODE)
 	$(Q)$(RM) $(TEST_HASH_TABLE) $(TEST_VECTOR) $(TEST_DYNAMIC_HASH_TABLE)
-	$(Q)$(RM) $(TEST_PACKER) $(TEST_DNA_SEQUENCE)
-	$(Q)$(RM) $(EXAMPLES) $(TESTS)
+	$(Q)$(RM) $(TEST_PACKER) $(TEST_DNA_SEQUENCE) $(ARGONNITE)
+	$(Q)$(RM) $(EXAMPLES) $(TESTS) $(APPLICATIONS)
 
 # tests
 
@@ -137,5 +138,10 @@ example_clone: $(EXAMPLE_CLONE) $(LIBRARY)
 	$(Q)$(CC) $(CFLAGS) $^ -o $@
 
 example_migration: $(EXAMPLE_MIGRATION) $(LIBRARY)
+	$(Q)$(ECHO) "  LD $@"
+	$(Q)$(CC) $(CFLAGS) $^ -o $@
+
+# applications
+argonnite: $(ARGONNITE) $(LIBRARY)
 	$(Q)$(ECHO) "  LD $@"
 	$(Q)$(CC) $(CFLAGS) $^ -o $@

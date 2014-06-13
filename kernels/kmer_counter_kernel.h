@@ -10,6 +10,9 @@
 
 struct bsal_kmer_counter_kernel {
     struct bsal_vector customers;
+    uint64_t expected;
+    uint64_t actual;
+    uint64_t last;
 };
 
 extern struct bsal_script bsal_kmer_counter_kernel_script;

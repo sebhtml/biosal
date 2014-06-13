@@ -24,8 +24,8 @@
 #define BSAL_NODE_DEBUG_ACTOR_COUNTERS
 #define BSAL_NODE_DEBUG_SUPERVISOR
 #define BSAL_NODE_DEBUG_LOOP
+#define BSAL_NODE_DEBUG_SPAWN_KILL
 */
-
 
 /*
  * \see http://www.mpich.org/static/docs/v3.1/www3/MPI_Comm_dup.html
@@ -35,8 +35,6 @@
  */
 void bsal_node_init(struct bsal_node *node, int *argc, char ***argv)
 {
-    printf("DEBUG bsal_node_init 1\n");
-
     int node_name;
     int nodes;
     int i;
@@ -77,7 +75,6 @@ void bsal_node_init(struct bsal_node *node, int *argc, char ***argv)
 
     required = MPI_THREAD_MULTIPLE;
 
-    printf("DEBUG bsal_node_init 2100\n");
     MPI_Init_thread(argc, argv, required, &provided);
 
     /* make a new communicator for the library and don't use MPI_COMM_WORLD later */
@@ -398,7 +395,7 @@ int bsal_node_spawn(struct bsal_node *node, int script)
 
     bsal_counter_add(&node->counter, BSAL_COUNTER_SPAWNED_ACTORS, 1);
 
-#ifdef BSAL_NODE_DEBUG_SPAWN
+#ifdef BSAL_NODE_DEBUG_SPAWN_KILL
     printf("DEBUG node/%d bsal_node_spawn actor/%d script/%x\n",
                     bsal_node_name(node),
                     name, script);
@@ -1246,7 +1243,7 @@ void bsal_node_notify_death(struct bsal_node *node, struct bsal_actor *actor)
 
     name = bsal_actor_name(actor);
 
-#ifdef BSAL_NODE_DEBUG_SPAWN
+#ifdef BSAL_NODE_DEBUG_SPAWN_KILL
     printf("DEBUG bsal_node_notify_death node/%d actor/%d script/%x\n",
                     bsal_node_name(node),
                     name,
