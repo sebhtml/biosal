@@ -86,7 +86,7 @@ void bsal_input_controller_init(struct bsal_actor *actor)
     /* configuration for the input controller
      * other values for block size: 512, 1024, 2048, 4096, 8192 * /
      */
-    controller->block_size = 32;
+    controller->block_size = 4096;
     controller->stores_per_worker_per_spawner = 0;
 
 #ifdef BSAL_INPUT_CONTROLLER_DEBUG
@@ -550,6 +550,11 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
         printf("\n");
 
         bsal_actor_helper_send_reply_empty(actor, BSAL_INPUT_CONTROLLER_SET_CUSTOMERS_REPLY);
+
+    } else if (tag == BSAL_SET_BLOCK_SIZE) {
+
+        bsal_message_helper_unpack_int(message, 0, &concrete_actor->block_size);
+        bsal_actor_helper_send_reply_empty(actor, BSAL_SET_BLOCK_SIZE_REPLY);
     }
 }
 

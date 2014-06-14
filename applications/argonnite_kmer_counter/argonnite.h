@@ -17,6 +17,7 @@ struct argonnite {
     int argument_iterator;
     int wired_kernels;
 
+    int block_size;
     int kmer_length;
     int configured_actors;
 };

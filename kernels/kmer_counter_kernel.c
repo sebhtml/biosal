@@ -150,6 +150,8 @@ void bsal_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_mess
         // extract kmers
         for (i = 0; i < entries; i++) {
 
+            /* TODO improve this */
+            break;
             sequence = (struct bsal_dna_sequence *)bsal_vector_at(command_entries, i);
 
             sequence_data = bsal_dna_sequence_sequence(sequence);
@@ -170,8 +172,6 @@ void bsal_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_mess
 
                 sequence_data[j + concrete_actor->kmer_length] = saved;
             }
-
-            required_bytes += (sequence_length - concrete_actor->kmer_length + 1) * concrete_actor->bytes_per_kmer;
         }
 
         concrete_actor->actual += entries;
@@ -187,6 +187,10 @@ void bsal_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_mess
 
         bsal_message_init(&new_message, BSAL_AGGREGATE_KERNEL_OUTPUT,
                         offset, new_buffer);
+        /*
+        bsal_message_init(&new_message, BSAL_AGGREGATE_KERNEL_OUTPUT,
+                        sizeof(source_index), &source_index);
+                        */
 
         bsal_actor_send(actor, customer, &new_message);
 #else

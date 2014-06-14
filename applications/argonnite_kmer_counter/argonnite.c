@@ -40,6 +40,7 @@ void argonnite_init(struct bsal_actor *actor)
                     &bsal_aggregator_script);
 
     concrete_actor->kmer_length = 41;
+    concrete_actor->block_size = 4096;
 
     concrete_actor->configured_actors = 0;
 }
@@ -364,10 +365,16 @@ void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message)
 
         if (concrete_actor->configured_actors == total_actors) {
 
-            bsal_actor_helper_send_empty(actor, bsal_actor_get_acquaintance(actor,
-                                    concrete_actor->controller), BSAL_INPUT_DISTRIBUTE);
+            bsal_actor_helper_send_int(actor, bsal_actor_get_acquaintance(actor,
+                                    concrete_actor->controller), BSAL_SET_BLOCK_SIZE,
+                            concrete_actor->block_size);
 
         }
+    } else if (tag == BSAL_SET_BLOCK_SIZE_REPLY) {
+
+        bsal_actor_helper_send_empty(actor, bsal_actor_get_acquaintance(actor,
+                                    concrete_actor->controller), BSAL_INPUT_DISTRIBUTE);
+
     } else if (tag == BSAL_INPUT_DISTRIBUTE_REPLY) {
 
         printf("argonnite actor/%d receives BSAL_INPUT_DISTRIBUTE_REPLY\n",
