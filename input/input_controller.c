@@ -141,7 +141,7 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
     struct bsal_message new_message;
     int error;
     int stream_index;
-    uint64_t entries;
+    int64_t entries;
     uint64_t *bucket;
     int *int_bucket;
     int store;
@@ -332,7 +332,7 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
 
         stream_index = bsal_vector_index_of(&controller->streams, &source);
         local_file = bsal_vector_helper_at_as_char_pointer(&controller->files, stream_index);
-        bsal_message_helper_unpack_uint64_t(message, 0, &entries);
+        bsal_message_helper_unpack_int64_t(message, 0, &entries);
 
         bucket = (uint64_t *)bsal_vector_at(&controller->counts, stream_index);
 
@@ -346,7 +346,7 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
 
         stream_index = bsal_vector_index_of(&controller->streams, &source);
         local_file = bsal_vector_helper_at_as_char_pointer(&controller->files, stream_index);
-        bsal_message_helper_unpack_uint64_t(message, 0, &entries);
+        bsal_message_helper_unpack_int64_t(message, 0, &entries);
 
         bucket = (uint64_t*)bsal_vector_at(&controller->counts, stream_index);
         *bucket = entries;

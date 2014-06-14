@@ -56,6 +56,11 @@ void bsal_actor_helper_send_reply_int(struct bsal_actor *actor, int tag, int val
     bsal_actor_helper_send_int(actor, bsal_actor_source(actor), tag, value);
 }
 
+void bsal_actor_helper_send_reply_int64_t(struct bsal_actor *actor, int tag, int value)
+{
+    bsal_actor_helper_send_int64_t(actor, bsal_actor_source(actor), tag, value);
+}
+
 void bsal_actor_helper_send_int(struct bsal_actor *actor, int destination, int tag, int value)
 {
     struct bsal_message message;
@@ -65,6 +70,14 @@ void bsal_actor_helper_send_int(struct bsal_actor *actor, int destination, int t
 }
 
 void bsal_actor_helper_send_uint64_t(struct bsal_actor *actor, int destination, int tag, uint64_t value)
+{
+    struct bsal_message message;
+
+    bsal_message_init(&message, tag, sizeof(value), &value);
+    bsal_actor_send(actor, destination, &message);
+}
+
+void bsal_actor_helper_send_int64_t(struct bsal_actor *actor, int destination, int tag, int64_t value)
 {
     struct bsal_message message;
 

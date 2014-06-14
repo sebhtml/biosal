@@ -5,6 +5,8 @@
 #include <stdio.h>
 #include <string.h>
 
+#include <inttypes.h>
+
 struct bsal_script reader_script = {
     .name = READER_SCRIPT,
     .init = reader_init,
@@ -46,7 +48,7 @@ void reader_receive(struct bsal_actor *actor, struct bsal_message *message)
     int name;
     struct reader *reader1;
     int source;
-    int count;
+    uint64_t count;
     void *buffer;
     int sequences;
     int script;
@@ -105,7 +107,7 @@ void reader_receive(struct bsal_actor *actor, struct bsal_message *message)
 
     } else if (tag == BSAL_INPUT_COUNT_PROGRESS) {
 
-        sequences = *(uint64_t *)buffer;
+        sequences = *(int64_t *)buffer;
 
         if (sequences < reader1->last_report + 10000000) {
 
@@ -137,8 +139,8 @@ void reader_receive(struct bsal_actor *actor, struct bsal_message *message)
         }
     } else if (tag == BSAL_INPUT_COUNT_REPLY) {
 
-        count = *(int *)bsal_message_buffer(message);
-        printf("actor %i: file has %i items\n", name, count);
+        count = *(int64_t*)bsal_message_buffer(message);
+        printf("actor %i: file has %" PRIu64 " items\n", name, count);
 
         bsal_message_init(message, BSAL_INPUT_CLOSE, 0, NULL);
         bsal_actor_send(actor, source, message);

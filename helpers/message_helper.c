@@ -57,4 +57,26 @@ void bsal_message_helper_get_all(struct bsal_message *message, int *tag, int *co
     *source = bsal_message_source(message);
 }
 
+int bsal_message_helper_unpack_int64_t(struct bsal_message *message, int offset, int64_t *value)
+{
+    int bytes;
+    void *buffer;
+    int64_t *pointer;
+
+    if (offset >= bsal_message_count(message)) {
+        return -1;
+    }
+
+    bytes = sizeof(value);
+    buffer = bsal_message_buffer(message);
+
+    pointer = (int64_t *)((char *)buffer + offset);
+
+    *value = *pointer;
+
+    offset += bytes;
+
+    return offset;
+}
+
 
