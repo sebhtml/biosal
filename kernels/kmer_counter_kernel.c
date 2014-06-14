@@ -12,6 +12,7 @@
 #include <patterns/aggregator.h>
 #include <system/memory.h>
 #include <system/timer.h>
+#include <system/debugger.h>
 
 #include <stdio.h>
 #include <stdint.h>
@@ -47,10 +48,10 @@ void bsal_kmer_counter_kernel_init(struct bsal_actor *actor)
     concrete_actor->expected = 0;
     concrete_actor->actual = 0;
     concrete_actor->last = 0;
-    concrete_actor->customer = 0;
     concrete_actor->blocks = 0;
 
     concrete_actor->kmer_length = -1;
+    concrete_actor->customer = -1;
 }
 
 void bsal_kmer_counter_kernel_destroy(struct bsal_actor *actor)
@@ -104,6 +105,12 @@ void bsal_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_mess
     if (tag == BSAL_PUSH_SEQUENCE_DATA_BLOCK) {
 
         if (concrete_actor->kmer_length == -1) {
+            printf("Error no kmer length set in kernel\n");
+            return;
+        }
+
+        if (concrete_actor->customer == -1) {
+            printf("Error no customer set in kernel\n");
             return;
         }
 
@@ -151,7 +158,6 @@ void bsal_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_mess
         for (i = 0; i < entries; i++) {
 
             /* TODO improve this */
-            break;
             sequence = (struct bsal_dna_sequence *)bsal_vector_at(command_entries, i);
 
             sequence_data = bsal_dna_sequence_sequence(sequence);
@@ -184,6 +190,11 @@ void bsal_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_mess
 #endif
 
 #ifdef BSAL_KMER_COUNTER_KERNEL_ENABLED
+
+#ifdef BSAL_KMER_COUNTER_KERNEL_DEBUG
+        BSAL_DEBUG_MARKER("kernel sends to customer\n");
+        printf("customer is %d\n", customer);
+#endif
 
         bsal_message_init(&new_message, BSAL_AGGREGATE_KERNEL_OUTPUT,
                         offset, new_buffer);
@@ -257,6 +268,11 @@ void bsal_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_mess
 
         customer = *(int *)buffer;
         concrete_actor->customer = bsal_actor_add_acquaintance(actor, customer);
+
+#ifdef BSAL_KMER_COUNTER_KERNEL_DEBUG
+        printf("BSAL_SET_CUSTOMER customer %d index %d\n", customer,
+                        concrete_actor->customer);
+#endif
 
         bsal_actor_helper_send_reply_empty(actor, BSAL_SET_CUSTOMER_REPLY);
 

@@ -16,6 +16,7 @@
 #include <pthread.h>
 #include <stdint.h>
 
+
 /* for control */
 #define BSAL_ACTOR_START 0x00000885
 #define BSAL_ACTOR_START_REPLY 0x0000232f
@@ -145,6 +146,8 @@ struct bsal_actor {
     struct bsal_vector acquaintance_vector;
     struct bsal_vector children;
     struct bsal_dynamic_hash_table acquaintance_map;
+
+    struct bsal_queue enqueued_messages;
 
     struct bsal_dispatcher dispatcher;
     int current_source;
@@ -305,5 +308,9 @@ void bsal_actor_migrate_notify_acquaintances(struct bsal_actor *actor, struct bs
 void bsal_actor_queue_message(struct bsal_actor *actor,
                 struct bsal_message *message);
 int bsal_actor_spawn_real(struct bsal_actor *actor, int script);
+
+void bsal_actor_enqueue_message(struct bsal_actor *actor, struct bsal_message *message);
+void bsal_actor_dequeue_message(struct bsal_actor *actor, struct bsal_message *message);
+int bsal_actor_enqueued_message_count(struct bsal_actor *actor);
 
 #endif

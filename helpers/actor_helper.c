@@ -10,7 +10,8 @@
 #include <stdio.h>
 #include <string.h>
 
-void bsal_actor_helper_send_reply_vector(struct bsal_actor *actor, int tag, struct bsal_vector *vector)
+void bsal_actor_helper_send_vector(struct bsal_actor *actor, int destination,
+                int tag, struct bsal_vector *vector)
 {
     int count;
     struct bsal_message message;
@@ -22,11 +23,16 @@ void bsal_actor_helper_send_reply_vector(struct bsal_actor *actor, int tag, stru
 
     bsal_message_init(&message, tag, count, buffer);
 
-    bsal_actor_send_reply(actor, &message);
+    bsal_actor_send(actor, destination, &message);
 
     free(buffer);
 
     bsal_message_destroy(&message);
+}
+
+void bsal_actor_helper_send_reply_vector(struct bsal_actor *actor, int tag, struct bsal_vector *vector)
+{
+    bsal_actor_helper_send_vector(actor, bsal_actor_source(actor), tag, vector);
 }
 
 void bsal_actor_helper_send_reply_empty(struct bsal_actor *actor, int tag)
@@ -50,6 +56,11 @@ void bsal_actor_helper_send_empty(struct bsal_actor *actor, int destination, int
 void bsal_actor_helper_send_to_supervisor_empty(struct bsal_actor *actor, int tag)
 {
     bsal_actor_helper_send_empty(actor, bsal_actor_supervisor(actor), tag);
+}
+
+void bsal_actor_helper_send_to_self_int(struct bsal_actor *actor, int tag, int value)
+{
+    bsal_actor_helper_send_int(actor, bsal_actor_name(actor), tag, value);
 }
 
 void bsal_actor_helper_send_reply_int(struct bsal_actor *actor, int tag, int value)
@@ -416,4 +427,35 @@ void bsal_actor_helper_receive_binomial_tree_send(struct bsal_actor *actor, stru
     bsal_vector_destroy(&actors);
 }
 
+void bsal_actor_helper_ask_to_stop(struct bsal_actor *actor, struct bsal_message *message)
+{
+    /* only the supervisor or self can
+     * call this.
+     */
 
+    int source = bsal_message_source(message);
+    int name = bsal_actor_name(actor);
+    int supervisor = bsal_actor_supervisor(actor);
+    int i;
+    int child;
+
+    if (source != name && source != supervisor) {
+        return;
+    }
+
+    for (i = 0; i < bsal_actor_child_count(actor); i++) {
+
+        child = bsal_actor_get_child(actor, i);
+
+#ifdef BSAL_MANAGER_DEBUG
+        printf("manager actor/%d tells worker actor/%d to stop\n",
+                            bsal_actor_name(actor), child);
+#endif
+
+        bsal_actor_helper_send_empty(actor, child, BSAL_ACTOR_ASK_TO_STOP);
+    }
+
+    printf("DEBUG manager actor/%d dies\n",
+                    bsal_actor_name(actor));
+    bsal_actor_helper_send_to_self_empty(actor, BSAL_ACTOR_STOP);
+}

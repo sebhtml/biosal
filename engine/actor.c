@@ -90,6 +90,8 @@ void bsal_actor_init(struct bsal_actor *actor, void *state,
     bsal_actor_helper_send_to_self_empty(actor, BSAL_ACTOR_UNPIN_FROM_WORKER);
     bsal_actor_helper_send_to_self_empty(actor, BSAL_ACTOR_PIN_TO_NODE);
 
+    bsal_queue_init(&actor->enqueued_messages, sizeof(struct bsal_message));
+
     /* call the concrete initializer
      * this must be the last call.
      */
@@ -113,6 +115,7 @@ void bsal_actor_destroy(struct bsal_actor *actor)
     bsal_queue_destroy(&actor->queued_messages_for_migration);
     bsal_queue_destroy(&actor->forwarding_queue);
     bsal_dynamic_hash_table_destroy(&actor->acquaintance_map);
+    bsal_queue_destroy(&actor->enqueued_messages);
 
     actor->name = -1;
     actor->dead = 1;
@@ -312,6 +315,12 @@ int bsal_actor_spawn(struct bsal_actor *actor, int script)
 
     bsal_actor_add_child(actor, name);
 
+#ifdef BSAL_ACTOR_DEBUG_SPAWN
+    printf("acquaintances after spawning\n");
+    bsal_vector_helper_print_int(&actor->acquaintance_vector);
+    printf("\n");
+#endif
+
     return name;
 }
 
@@ -327,6 +336,7 @@ int bsal_actor_spawn_real(struct bsal_actor *actor, int script)
     name = bsal_node_spawn(bsal_actor_node(actor), script);
 
     if (name == BSAL_ACTOR_NOBODY) {
+        printf("Problem with spawning! did you register the scrippt ?\n");
         return name;
     }
 
@@ -1311,15 +1321,32 @@ void bsal_actor_notify_name_change(struct bsal_actor *actor, struct bsal_message
     int source;
     int index;
     int *bucket;
+    struct bsal_message new_message;
+    int enqueued_messages;
 
     source = bsal_message_source(message);
     old_name = source;
     bsal_message_helper_unpack_int(message, 0, &new_name);
 
+    /* update the acquaintance vector
+     */
     index = bsal_actor_get_acquaintance_index(actor, old_name);
 
     bucket = bsal_vector_at(&actor->acquaintance_vector, index);
     *bucket = new_name;
+
+    /* update userland queued messages
+     */
+    enqueued_messages = bsal_actor_enqueued_message_count(actor);
+
+    while (enqueued_messages--) {
+
+        bsal_actor_dequeue_message(actor, &new_message);
+        if (bsal_message_source(&new_message) == old_name) {
+            bsal_message_set_source(&new_message, new_name);
+        }
+        bsal_actor_enqueue_message(actor, &new_message);
+    }
 
     bsal_actor_helper_send_reply_empty(actor, BSAL_ACTOR_NOTIFY_NAME_CHANGE_REPLY);
 }
@@ -1556,6 +1583,10 @@ int bsal_actor_add_acquaintance(struct bsal_actor *actor, int name)
         return index;
     }
 
+    if (name == BSAL_ACTOR_NOBODY || name < 0) {
+        return -1;
+    }
+
     bsal_vector_helper_push_back_int(bsal_actor_acquaintance_vector(actor),
                     name);
 
@@ -1621,4 +1652,45 @@ int bsal_actor_get_child_index(struct bsal_actor *actor, int name)
     return -1;
 }
 
+void bsal_actor_enqueue_message(struct bsal_actor *actor, struct bsal_message *message)
+{
+    void *new_buffer;
+    int count;
+    void *buffer;
+    int source;
+    int tag;
+    struct bsal_message new_message;
+    int destination;
+
+    bsal_message_helper_get_all(message, &tag, &count, &buffer, &source);
+    destination = bsal_message_destination(message);
+
+    new_buffer = NULL;
+
+    if (buffer != NULL) {
+        new_buffer = malloc(count);
+        memcpy(new_buffer, buffer, count);
+    }
+
+    bsal_message_init(&new_message, tag, count, new_buffer);
+    bsal_message_set_source(&new_message, source);
+    bsal_message_set_destination(&new_message, destination);
+
+    bsal_queue_enqueue(&actor->enqueued_messages, &new_message);
+    bsal_message_destroy(&new_message);
+}
+
+void bsal_actor_dequeue_message(struct bsal_actor *actor, struct bsal_message *message)
+{
+    if (bsal_actor_enqueued_message_count(actor) == 0) {
+        return;
+    }
+
+    bsal_queue_dequeue(&actor->enqueued_messages, message);
+}
+
+int bsal_actor_enqueued_message_count(struct bsal_actor *actor)
+{
+    return bsal_queue_size(&actor->enqueued_messages);
+}
 

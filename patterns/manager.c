@@ -1,9 +1,12 @@
-
 #include "manager.h"
 
 #include <helpers/actor_helper.h>
+#include <helpers/vector_helper.h>
+
 #include <structures/vector_iterator.h>
 #include <structures/dynamic_hash_table_iterator.h>
+
+#include <system/debugger.h>
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -11,7 +14,12 @@
 
 #include <inttypes.h>
 
+/*
+#define BSAL_MANAGER_DEBUG
+*/
+
 #define BSAL_MANAGER_NO_VALUE -1
+
 struct bsal_script bsal_manager_script = {
     .name = BSAL_MANAGER_SCRIPT,
     .init = bsal_manager_init,
@@ -76,8 +84,6 @@ void bsal_manager_receive(struct bsal_actor *actor, struct bsal_message *message
     void *buffer;
     int source;
     int store;
-    int child;
-    int i;
     struct bsal_vector all_stores;
     int new_count;
     void *new_buffer;
@@ -122,7 +128,7 @@ void bsal_manager_receive(struct bsal_actor *actor, struct bsal_message *message
 
             bsal_vector_push_back(&concrete_actor->indices, &index);
 
-            printf("DEBUG manager actor/%d add store vector and store count for spawner actor/%d\n",
+            printf("DEBUG manager actor/%d add actor vector and store count for spawner actor/%d\n",
                             bsal_actor_name(actor), spawner);
 
             stores = (struct bsal_vector *)bsal_dynamic_hash_table_add(&concrete_actor->spawner_children, &index);
@@ -149,10 +155,18 @@ void bsal_manager_receive(struct bsal_actor *actor, struct bsal_message *message
 
         concrete_actor->script = *(int *)buffer;
 
+#ifdef BSAL_MANAGER_DEBUG
+        BSAL_DEBUG_MARKER("set_the_script_now");
+#endif
+
         printf("manager actor/%d sets script to script/%x\n",
                         bsal_actor_name(actor), concrete_actor->script);
 
         bsal_actor_helper_send_reply_empty(actor, BSAL_MANAGER_SET_SCRIPT_REPLY);
+
+#ifdef BSAL_MANAGER_DEBUG
+        BSAL_DEBUG_MARKER("manager sends reply");
+#endif
 
     } else if (tag == BSAL_MANAGER_SET_ACTORS_PER_SPAWNER) {
         concrete_actor->actors_per_spawner = *(int *)buffer;
@@ -247,23 +261,10 @@ void bsal_manager_receive(struct bsal_actor *actor, struct bsal_message *message
 
             bsal_actor_helper_send_reply_int(actor, BSAL_ACTOR_SPAWN, concrete_actor->script);
         }
+
     } else if (tag == BSAL_ACTOR_ASK_TO_STOP) {
 
+        bsal_actor_helper_ask_to_stop(actor, message);
 
-        for (i = 0; i < bsal_actor_child_count(actor); i++) {
-
-            child = bsal_actor_get_child(actor, i);
-
-#ifdef BSAL_MANAGER_DEBUG
-            printf("manager actor/%d tells worker actor/%d to stop\n",
-                            bsal_actor_name(actor), child);
-#endif
-
-            bsal_actor_helper_send_empty(actor, child, BSAL_ACTOR_ASK_TO_STOP);
-        }
-
-        printf("DEBUG manager actor/%d dies\n",
-                        bsal_actor_name(actor));
-        bsal_actor_helper_send_to_self_empty(actor, BSAL_ACTOR_STOP);
     }
 }

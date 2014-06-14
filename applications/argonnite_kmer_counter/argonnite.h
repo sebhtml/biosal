@@ -8,14 +8,15 @@
 
 struct argonnite {
     struct bsal_vector initial_actors;
-    struct bsal_vector kernels;
     struct bsal_vector aggregators;
+    struct bsal_vector directors;
+
+    int wired_directors;
 
     int controller;
-    int manager_for_kernels;
+    int manager_for_directors;
     int manager_for_aggregators;
     int argument_iterator;
-    int wired_kernels;
 
     int block_size;
     int kmer_length;
