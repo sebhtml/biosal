@@ -68,7 +68,7 @@ void bsal_input_stream_receive(struct bsal_actor *actor, struct bsal_message *me
 {
     int tag;
     int source;
-    int count;
+    uint64_t count;
     struct bsal_input_stream *concrete_actor;
     int i;
     int has_sequence;
@@ -186,7 +186,7 @@ void bsal_input_stream_receive(struct bsal_actor *actor, struct bsal_message *me
             printf("DEBUG BSAL_INPUT_COUNT sequences %d...\n", sequences);
 #endif
 
-            bsal_actor_helper_send_int(actor, concrete_actor->controller, BSAL_INPUT_COUNT_PROGRESS, sequences);
+            bsal_actor_helper_send_uint64_t(actor, concrete_actor->controller, BSAL_INPUT_COUNT_PROGRESS, sequences);
 
             bsal_message_destroy(message);
 
@@ -218,7 +218,7 @@ void bsal_input_stream_receive(struct bsal_actor *actor, struct bsal_message *me
 
         count = bsal_input_proxy_size(&concrete_actor->proxy);
 
-        bsal_actor_helper_send_int(actor, concrete_actor->controller, BSAL_INPUT_COUNT_REPLY, count);
+        bsal_actor_helper_send_uint64_t(actor, concrete_actor->controller, BSAL_INPUT_COUNT_REPLY, count);
 
     } else if (tag == BSAL_ACTOR_ASK_TO_STOP) {
 

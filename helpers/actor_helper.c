@@ -64,6 +64,14 @@ void bsal_actor_helper_send_int(struct bsal_actor *actor, int destination, int t
     bsal_actor_send(actor, destination, &message);
 }
 
+void bsal_actor_helper_send_uint64_t(struct bsal_actor *actor, int destination, int tag, uint64_t value)
+{
+    struct bsal_message message;
+
+    bsal_message_init(&message, tag, sizeof(value), &value);
+    bsal_actor_send(actor, destination, &message);
+}
+
 void bsal_actor_helper_get_acquaintances(struct bsal_actor *actor, struct bsal_vector *indices,
                 struct bsal_vector *names)
 {

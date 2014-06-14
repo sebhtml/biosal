@@ -2,11 +2,14 @@
 #ifndef BSAL_ACTOR_HELPER_H
 #define BSAL_ACTOR_HELPER_H
 
+#include <stdint.h>
+
 struct bsal_actor;
 struct bsal_vector;
 
 void bsal_actor_helper_send_empty(struct bsal_actor *actor, int destination, int tag);
 void bsal_actor_helper_send_int(struct bsal_actor *actor, int destination, int tag, int value);
+void bsal_actor_helper_send_uint64_t(struct bsal_actor *actor, int destination, int tag, uint64_t value);
 
 void bsal_actor_helper_send_reply_empty(struct bsal_actor *actor, int tag);
 void bsal_actor_helper_send_reply_int(struct bsal_actor *actor, int tag, int error);

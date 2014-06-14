@@ -141,7 +141,7 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
     struct bsal_message new_message;
     int error;
     int stream_index;
-    int entries;
+    uint64_t entries;
     uint64_t *bucket;
     int *int_bucket;
     int store;
@@ -332,12 +332,12 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
 
         stream_index = bsal_vector_index_of(&controller->streams, &source);
         local_file = bsal_vector_helper_at_as_char_pointer(&controller->files, stream_index);
-        bsal_message_helper_unpack_int(message, 0, &entries);
+        bsal_message_helper_unpack_uint64_t(message, 0, &entries);
 
         bucket = (uint64_t *)bsal_vector_at(&controller->counts, stream_index);
 
         if (entries > *bucket + 10000000) {
-            printf("controller actor/%d receives from stream actor/%d: file %s, %d entries so far\n",
+            printf("controller actor/%d receives from stream actor/%d: file %s, %" PRIu64 " entries so far\n",
                         name, source, local_file, entries);
             *bucket = entries;
         }
@@ -346,12 +346,12 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
 
         stream_index = bsal_vector_index_of(&controller->streams, &source);
         local_file = bsal_vector_helper_at_as_char_pointer(&controller->files, stream_index);
-        bsal_message_helper_unpack_int(message, 0, &entries);
+        bsal_message_helper_unpack_uint64_t(message, 0, &entries);
 
         bucket = (uint64_t*)bsal_vector_at(&controller->counts, stream_index);
         *bucket = entries;
 
-        printf("controller actor/%d received from stream actor/%d for file %s: %d entries\n",
+        printf("controller actor/%d received from stream actor/%d for file %s: %" PRIu64 " entries (final)\n",
                         name, source, local_file, entries);
 
         bsal_actor_helper_send_reply_empty(actor, BSAL_INPUT_STREAM_RESET);

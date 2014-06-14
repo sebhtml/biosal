@@ -3,6 +3,8 @@
 
 #include <engine/message.h>
 
+#include <stdint.h>
+
 int bsal_message_helper_unpack_int(struct bsal_message *message, int offset, int *value)
 {
     int bytes;
@@ -17,6 +19,28 @@ int bsal_message_helper_unpack_int(struct bsal_message *message, int offset, int
     buffer = bsal_message_buffer(message);
 
     pointer = (int *)((char *)buffer + offset);
+
+    *value = *pointer;
+
+    offset += bytes;
+
+    return offset;
+}
+
+int bsal_message_helper_unpack_uint64_t(struct bsal_message *message, int offset, uint64_t *value)
+{
+    int bytes;
+    void *buffer;
+    uint64_t *pointer;
+
+    if (offset >= bsal_message_count(message)) {
+        return -1;
+    }
+
+    bytes = sizeof(value);
+    buffer = bsal_message_buffer(message);
+
+    pointer = (uint64_t *)((char *)buffer + offset);
 
     *value = *pointer;
 

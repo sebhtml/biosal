@@ -105,7 +105,7 @@ void reader_receive(struct bsal_actor *actor, struct bsal_message *message)
 
     } else if (tag == BSAL_INPUT_COUNT_PROGRESS) {
 
-        sequences = *(int *)buffer;
+        sequences = *(uint64_t *)buffer;
 
         if (sequences < reader1->last_report + 10000000) {
 
