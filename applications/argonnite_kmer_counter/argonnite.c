@@ -38,6 +38,10 @@ void argonnite_init(struct bsal_actor *actor)
                     &bsal_manager_script);
     bsal_actor_add_script(actor, BSAL_AGGREGATOR_SCRIPT,
                     &bsal_aggregator_script);
+
+    concrete_actor->kmer_length = 41;
+
+    concrete_actor->configured_actors = 0;
 }
 
 void argonnite_destroy(struct bsal_actor *actor)
@@ -55,9 +59,11 @@ void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message)
 {
     int tag;
     void *buffer;
+    int total_actors;
     struct argonnite *concrete_actor;
     struct bsal_vector initial_actors;
     struct bsal_vector aggregators;
+    struct bsal_vector kernels;
     int *bucket;
     int index;
     int controller;
@@ -72,6 +78,7 @@ void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message)
     int count;
     struct bsal_vector_iterator iterator;
     int argc;
+    char **argv;
     int name;
     int source;
     int kernel;
@@ -81,18 +88,27 @@ void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message)
     int aggregator_index;
     int aggregator_index_index;
     int kernels_per_aggregator;
+    int i;
 
     concrete_actor = (struct argonnite *)bsal_actor_concrete_actor(actor);
     tag = bsal_message_tag(message);
     buffer = bsal_message_buffer(message);
     count = bsal_message_count(message);
     argc = bsal_actor_argc(actor);
+    argv = bsal_actor_argv(actor);
     name = bsal_actor_name(actor);
     source = bsal_message_source(message);
 
     if (tag == BSAL_ACTOR_START) {
 
         printf("argonnite actor/%d starts\n", name);
+
+        for (i = 0; i < argc; i++) {
+            if (strcmp(argv[i], "-k") == 0 && i + 1 < argc) {
+
+                concrete_actor->kmer_length =atoi(argv[i + 1]);
+            }
+        }
 
         bsal_vector_unpack(&initial_actors, buffer);
 
@@ -327,10 +343,31 @@ void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message)
             printf("argonnite actor/%d completed the wiring of the brain\n",
                 bsal_actor_name(actor));
 
-            bsal_actor_helper_send_empty(actor, bsal_actor_get_acquaintance(actor,
-                                    concrete_actor->controller), BSAL_INPUT_DISTRIBUTE);
+            bsal_vector_init(&kernels, sizeof(int));
+            bsal_vector_init(&aggregators, sizeof(int));
+
+            bsal_actor_helper_get_acquaintances(actor, &concrete_actor->kernels, &kernels);
+            bsal_actor_helper_get_acquaintances(actor, &concrete_actor->aggregators, &aggregators);
+
+            bsal_actor_helper_send_range_int(actor, &kernels, BSAL_SET_KMER_LENGTH, concrete_actor->kmer_length);
+            bsal_actor_helper_send_range_int(actor, &aggregators, BSAL_SET_KMER_LENGTH, concrete_actor->kmer_length);
+
+            bsal_vector_destroy(&kernels);
+            bsal_vector_destroy(&aggregators);
         }
 
+    } else if (tag == BSAL_SET_KMER_LENGTH_REPLY) {
+
+        concrete_actor->configured_actors++;
+        total_actors = bsal_vector_size(&concrete_actor->aggregators) +
+                                bsal_vector_size(&concrete_actor->kernels);
+
+        if (concrete_actor->configured_actors == total_actors) {
+
+            bsal_actor_helper_send_empty(actor, bsal_actor_get_acquaintance(actor,
+                                    concrete_actor->controller), BSAL_INPUT_DISTRIBUTE);
+
+        }
     } else if (tag == BSAL_INPUT_DISTRIBUTE_REPLY) {
 
         printf("argonnite actor/%d receives BSAL_INPUT_DISTRIBUTE_REPLY\n",

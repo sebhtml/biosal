@@ -15,10 +15,13 @@ struct bsal_kmer_counter_kernel {
     uint64_t last;
     int blocks;
     int customer;
+    int kmer_length;
 };
 
 #define BSAL_SET_CUSTOMER 0x000020a9
 #define BSAL_SET_CUSTOMER_REPLY 0x00004db0
+#define BSAL_SET_KMER_LENGTH 0x0000702b
+#define BSAL_SET_KMER_LENGTH_REPLY 0x00005162
 
 extern struct bsal_script bsal_kmer_counter_kernel_script;
 

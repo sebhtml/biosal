@@ -90,7 +90,7 @@ void mock_receive(struct bsal_actor *actor, struct bsal_message *message)
              * be used here because proxy actors may die
              * before they are needed.
              */
-            bsal_actor_send_range_standard(actor, &mock1->spawners, message);
+            bsal_actor_helper_send_range(actor, &mock1->spawners, message);
 
             printf("Stopping all initial actors now\n");
         }

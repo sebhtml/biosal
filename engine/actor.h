@@ -221,24 +221,9 @@ int bsal_actor_send_system_self(struct bsal_actor *actor, struct bsal_message *m
 
 int bsal_actor_source(struct bsal_actor *actor);
 
-/* Send a message to a range of actors.
- * The implementation uses a binomial tree.
- */
-void bsal_actor_send_range(struct bsal_actor *actor, struct bsal_vector *actors,
-                struct bsal_message *message);
-void bsal_actor_send_range_standard(struct bsal_actor *actor, struct bsal_vector *actors,
-                struct bsal_message *message);
-void bsal_actor_send_range_standard_empty(struct bsal_actor *actor, struct bsal_vector *actors,
-                int tag);
-void bsal_actor_send_range_binomial_tree(struct bsal_actor *actor, struct bsal_vector *actors,
-                struct bsal_message *message);
-
 void bsal_actor_receive(struct bsal_actor *actor, struct bsal_message *message);
 int bsal_actor_receive_system(struct bsal_actor *actor, struct bsal_message *message);
 int bsal_actor_receive_system_no_pack(struct bsal_actor *actor, struct bsal_message *message);
-
-void bsal_actor_receive_binomial_tree_send(struct bsal_actor *actor,
-                struct bsal_message *message);
 
 struct bsal_node *bsal_actor_node(struct bsal_actor *actor);
 int bsal_actor_node_name(struct bsal_actor *actor);

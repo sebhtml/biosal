@@ -108,7 +108,7 @@ void process_receive(struct bsal_actor *actor, struct bsal_message *message)
 
     } else if (tag == BSAL_ACTOR_SYNCHRONIZED) {
 
-        bsal_actor_send_range_standard_empty(actor, &process1->initial_processes, BSAL_ACTOR_ASK_TO_STOP);
+        bsal_actor_helper_send_range_empty(actor, &process1->initial_processes, BSAL_ACTOR_ASK_TO_STOP);
 
     } else if (tag == BSAL_ACTOR_PACK) {
 

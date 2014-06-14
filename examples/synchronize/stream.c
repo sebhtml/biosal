@@ -93,7 +93,7 @@ void stream_receive(struct bsal_actor *actor, struct bsal_message *message)
         stream1->ready = 0;
         stream1->initial_synchronization = 0;
 
-        bsal_actor_send_range_standard_empty(actor, &stream1->spawners, STREAM_SYNC);
+        bsal_actor_helper_send_range_empty(actor, &stream1->spawners, STREAM_SYNC);
 
     } else if (tag == BSAL_ACTOR_SYNCHRONIZE) {
 
@@ -105,7 +105,7 @@ void stream_receive(struct bsal_actor *actor, struct bsal_message *message)
 
         if (stream1->ready == bsal_vector_size(&stream1->children)) {
 
-            bsal_actor_send_range_standard_empty(actor, &stream1->spawners, STREAM_DIE);
+            bsal_actor_helper_send_range_empty(actor, &stream1->spawners, STREAM_DIE);
         }
 
     } else if (tag == STREAM_SYNC) {

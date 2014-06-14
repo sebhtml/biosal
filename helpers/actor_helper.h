@@ -6,6 +6,7 @@
 
 struct bsal_actor;
 struct bsal_vector;
+struct bsal_message;
 
 void bsal_actor_helper_send_empty(struct bsal_actor *actor, int destination, int tag);
 void bsal_actor_helper_send_int(struct bsal_actor *actor, int destination, int tag, int value);
@@ -27,4 +28,21 @@ void bsal_actor_helper_get_acquaintances(struct bsal_actor *actor, struct bsal_v
                 struct bsal_vector *names);
 void bsal_actor_helper_add_acquaintances(struct bsal_actor *actor,
                 struct bsal_vector *names, struct bsal_vector *indices);
+
+void bsal_actor_helper_send_range_standard(struct bsal_actor *actor, struct bsal_vector *actors,
+                struct bsal_message *message);
+/* Send a message to a range of actors.
+ * The implementation uses a binomial tree.
+ */
+void bsal_actor_helper_send_range(struct bsal_actor *actor, struct bsal_vector *actors,
+                struct bsal_message *message);
+void bsal_actor_helper_send_range_int(struct bsal_actor *actor, struct bsal_vector *actors,
+                int tag, int value);
+void bsal_actor_helper_send_range_empty(struct bsal_actor *actor, struct bsal_vector *actors,
+                int tag);
+void bsal_actor_helper_send_range_binomial_tree(struct bsal_actor *actor, struct bsal_vector *actors,
+                struct bsal_message *message);
+void bsal_actor_helper_receive_binomial_tree_send(struct bsal_actor *actor,
+                struct bsal_message *message);
+
 #endif

@@ -105,7 +105,7 @@ void ring_receive(struct bsal_actor *actor, struct bsal_message *message)
 
         if (ring1->ready == bsal_vector_size(&ring1->spawners)) {
 
-            bsal_actor_send_range_standard_empty(actor, &ring1->spawners, RING_PUSH_NEXT);
+            bsal_actor_helper_send_range_empty(actor, &ring1->spawners, RING_PUSH_NEXT);
             ring1->step++;
             ring1->ready = 0;
         }
@@ -140,7 +140,7 @@ void ring_receive(struct bsal_actor *actor, struct bsal_message *message)
         }
     } else if (tag == SENDER_HELLO_REPLY) {
 
-        bsal_actor_send_range_standard_empty(actor, &ring1->spawners, RING_KILL);
+        bsal_actor_helper_send_range_empty(actor, &ring1->spawners, RING_KILL);
         bsal_actor_helper_send_empty(actor, ring1->first, SENDER_KILL);
 
     } else if (tag == RING_KILL) {

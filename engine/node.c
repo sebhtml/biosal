@@ -499,7 +499,10 @@ int bsal_node_generate_name(struct bsal_node *node)
 
     node_name = bsal_node_name(node);
     actor = NULL;
-    minimal_value = 0;
+
+    /* reserve  the first numbers
+     */
+    minimal_value = 4* bsal_node_nodes(node);
     name = -1;
     maximum_value = 2000000000;
     range = maximum_value - minimal_value;

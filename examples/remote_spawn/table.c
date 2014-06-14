@@ -111,7 +111,7 @@ void table_receive(struct bsal_actor *actor, struct bsal_message *message)
             printf("actor %d kills %d to %d\n",
                            name, 0, (int)bsal_vector_size(&table1->spawners) - 1);
             bsal_message_init(message, TABLE_DIE, 0, NULL);
-            bsal_actor_send_range_standard(actor, &table1->spawners, message);
+            bsal_actor_helper_send_range(actor, &table1->spawners, message);
         }
     }
 }

@@ -16,6 +16,9 @@ struct argonnite {
     int manager_for_aggregators;
     int argument_iterator;
     int wired_kernels;
+
+    int kmer_length;
+    int configured_actors;
 };
 
 extern struct bsal_script argonnite_script;

@@ -11,6 +11,7 @@
 struct bsal_aggregator {
     uint64_t received;
     uint64_t last;
+    int kmer_length;
 };
 
 /* message tags

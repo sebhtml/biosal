@@ -1,7 +1,9 @@
 
 #include "aggregator.h"
 
+#include <kernels/kmer_counter_kernel.h>
 #include <helpers/actor_helper.h>
+#include <helpers/message_helper.h>
 
 #include <stdio.h>
 #include <inttypes.h>
@@ -67,5 +69,12 @@ void bsal_aggregator_receive(struct bsal_actor *actor, struct bsal_message *mess
                     && source == bsal_actor_supervisor(actor)) {
 
         bsal_actor_helper_send_to_self_empty(actor, BSAL_ACTOR_STOP);
+
+    } else if (tag == BSAL_SET_KMER_LENGTH) {
+
+        bsal_message_helper_unpack_int(message, 0, &concrete_actor->kmer_length);
+
+        bsal_actor_helper_send_reply_empty(actor, BSAL_SET_KMER_LENGTH_REPLY);
     }
+
 }

@@ -270,7 +270,7 @@ void root_receive(struct bsal_actor *actor, struct bsal_message *message)
 
         printf("root actor/%d stops all other actors\n", name);
 
-        bsal_actor_send_range_standard_empty(actor, &root1->spawners, BSAL_ACTOR_ASK_TO_STOP);
+        bsal_actor_helper_send_range_empty(actor, &root1->spawners, BSAL_ACTOR_ASK_TO_STOP);
 
     } else if (tag == BSAL_ACTOR_ASK_TO_STOP) {
 

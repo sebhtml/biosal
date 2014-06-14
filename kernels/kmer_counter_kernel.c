@@ -4,7 +4,10 @@
 #include <data/dna_kmer.h>
 #include <storage/sequence_store.h>
 #include <input/input_command.h>
+
 #include <helpers/actor_helper.h>
+#include <helpers/message_helper.h>
+
 #include <patterns/aggregator.h>
 
 #include <stdio.h>
@@ -73,6 +76,8 @@ void bsal_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_mess
         bsal_input_command_unpack(&payload, buffer);
 
         entries = bsal_vector_size(bsal_input_command_entries(&payload));
+
+
 
 #ifdef BSAL_KMER_COUNTER_KERNEL_DEBUG
         printf("DEBUG kernel receives %d entries\n", entries);
@@ -150,6 +155,12 @@ void bsal_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_mess
         concrete_actor->customer = bsal_actor_add_acquaintance(actor, customer);
 
         bsal_actor_helper_send_reply_empty(actor, BSAL_SET_CUSTOMER_REPLY);
+
+    } else if (tag == BSAL_SET_KMER_LENGTH) {
+
+        bsal_message_helper_unpack_int(message, 0, &concrete_actor->kmer_length);
+
+        bsal_actor_helper_send_reply_empty(actor, BSAL_SET_KMER_LENGTH_REPLY);
     }
 }
 
