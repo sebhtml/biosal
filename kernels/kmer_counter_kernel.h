@@ -16,6 +16,8 @@ struct bsal_kmer_counter_kernel {
     int blocks;
     int customer;
     int kmer_length;
+
+    int bytes_per_kmer;
 };
 
 #define BSAL_SET_CUSTOMER 0x000020a9

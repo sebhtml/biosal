@@ -86,7 +86,7 @@ void bsal_input_controller_init(struct bsal_actor *actor)
     /* configuration for the input controller
      * other values for block size: 512, 1024, 2048, 4096, 8192 * /
      */
-    controller->block_size = 8192;
+    controller->block_size = 32;
     controller->stores_per_worker_per_spawner = 0;
 
 #ifdef BSAL_INPUT_CONTROLLER_DEBUG

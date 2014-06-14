@@ -53,7 +53,7 @@ void bsal_aggregator_receive(struct bsal_actor *actor, struct bsal_message *mess
         content = *(int *)buffer;
 
         if (concrete_actor->last == 0
-                        || concrete_actor->received > concrete_actor->last + 1000) {
+                        || concrete_actor->received > concrete_actor->last + 10000) {
 
             printf("aggregator actor/%d received %" PRIu64 " kernel outputs so far.\n",
                             bsal_actor_name(actor),
