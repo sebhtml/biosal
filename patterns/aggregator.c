@@ -1,12 +1,24 @@
 
 #include "aggregator.h"
 
+#include <data/dna_kmer_block.h>
+#include <data/dna_kmer.h>
+
 #include <kernels/kmer_counter_kernel.h>
+
 #include <helpers/actor_helper.h>
 #include <helpers/message_helper.h>
 
+#include <system/debugger.h>
+
 #include <stdio.h>
 #include <inttypes.h>
+
+/* debugging options
+ */
+/*
+#define BSAL_AGGREGATOR_DEBUG
+*/
 
 struct bsal_script bsal_aggregator_script = {
     .name = BSAL_AGGREGATOR_SCRIPT,
@@ -38,9 +50,14 @@ void bsal_aggregator_receive(struct bsal_actor *actor, struct bsal_message *mess
 {
     int tag;
     struct bsal_aggregator *concrete_actor;
-    int content;
     void *buffer;
     int source;
+    struct bsal_dna_kmer_block block;
+    int source_index;
+    struct bsal_vector *kmers;
+    struct bsal_dna_kmer *kmer;
+    int entries;
+    int i;
 
     concrete_actor = (struct bsal_aggregator *)bsal_actor_concrete_actor(actor);
     buffer = bsal_message_buffer(message);
@@ -49,8 +66,42 @@ void bsal_aggregator_receive(struct bsal_actor *actor, struct bsal_message *mess
 
     if (tag == BSAL_AGGREGATE_KERNEL_OUTPUT) {
 
+#ifdef BSAL_AGGREGATOR_DEBUG
+        BSAL_DEBUG_MARKER("aggregator receives");
+
+        printf("name %d source %d UNPACK ON %d bytes\n",
+                        bsal_actor_name(actor), source, bsal_message_count(message));
+#endif
+
         concrete_actor->received++;
-        content = *(int *)buffer;
+
+        bsal_dna_kmer_block_unpack(&block, buffer);
+
+        /* TODO
+         * classify the kmers according to their ownership
+         */
+
+        kmers = bsal_dna_kmer_block_kmers(&block);
+        entries = bsal_vector_size(kmers);
+
+        for (i = 0; i < entries; i++) {
+            kmer = (struct bsal_dna_kmer *)bsal_vector_at(kmers, i);
+
+            /*
+            bsal_dna_kmer_print(kmer);
+            */
+
+            bsal_dna_kmer_length(kmer);
+
+            /* classify the kmer and put it in the good buffer.
+             */
+        }
+
+#ifdef BSAL_AGGREGATOR_DEBUG
+        BSAL_DEBUG_MARKER("aggregator after unpack");
+#endif
+
+        source_index = bsal_dna_kmer_block_source_index(&block);
 
         if (concrete_actor->last == 0
                         || concrete_actor->received > concrete_actor->last + 10000) {
@@ -62,8 +113,18 @@ void bsal_aggregator_receive(struct bsal_actor *actor, struct bsal_message *mess
             concrete_actor->last = concrete_actor->received;
         }
 
+        /* answer immediately
+         */
         bsal_actor_helper_send_reply_int(actor, BSAL_AGGREGATE_KERNEL_OUTPUT_REPLY,
-                        content);
+                        source_index);
+
+#ifdef BSAL_AGGREGATOR_DEBUG
+        BSAL_DEBUG_MARKER("aggregator OK 2");
+#endif
+
+        /* destroy the local copy of the block
+         */
+        bsal_dna_kmer_block_destroy(&block);
 
     } else if (tag == BSAL_ACTOR_ASK_TO_STOP
                     && source == bsal_actor_supervisor(actor)) {

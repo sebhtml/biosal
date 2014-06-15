@@ -105,3 +105,17 @@ void bsal_dna_kmer_init_mock(struct bsal_dna_kmer *sequence, int kmer_length)
     bsal_dna_kmer_init(sequence, dna);
     bsal_free(dna);
 }
+
+void bsal_dna_kmer_init_copy(struct bsal_dna_kmer *sequence, struct bsal_dna_kmer *other)
+{
+    sequence->length = other->length;
+
+    sequence->data = malloc(sequence->length + 1);
+    memcpy(sequence->data, other->data, sequence->length + 1);
+}
+
+void bsal_dna_kmer_print(struct bsal_dna_kmer *self)
+{
+    printf("KMER length: %d nucleotides, sequence: %s\n", self->length,
+                    (char *)self->data);
+}

@@ -2,6 +2,7 @@
 #include "kmer_counter_kernel.h"
 
 #include <data/dna_kmer.h>
+#include <data/dna_kmer_block.h>
 #include <data/dna_sequence.h>
 #include <storage/sequence_store.h>
 #include <input/input_command.h>
@@ -76,18 +77,18 @@ void bsal_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_mess
     int source_index;
     int customer;
     int i;
-    int required_bytes;
     struct bsal_dna_sequence *sequence;
     char *sequence_data;
     struct bsal_vector *command_entries;
     int sequence_length;
+    int new_count;
     void *new_buffer;
-    int offset;
     struct bsal_message new_message;
     int j;
     int limit;
     char saved;
     struct bsal_timer timer;
+    struct bsal_dna_kmer_block block;
 
 #ifdef BSAL_KMER_COUNTER_KERNEL_DEBUG
     int count;
@@ -119,6 +120,8 @@ void bsal_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_mess
         customer = bsal_actor_get_acquaintance(actor, concrete_actor->customer);
         source_index = bsal_actor_add_acquaintance(actor, source);
 
+        bsal_dna_kmer_block_init(&block, concrete_actor->kmer_length, source_index);
+
         bsal_input_command_unpack(&payload, buffer);
 
         command_entries = bsal_input_command_entries(&payload);
@@ -131,29 +134,8 @@ void bsal_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_mess
                         concrete_actor->bytes_per_kmer);
 #endif
 
-        required_bytes = 0;
-        required_bytes += sizeof(source_index);
-
-        for (i = 0; i < entries; i++) {
-            sequence = (struct bsal_dna_sequence *)bsal_vector_at(command_entries, i);
-
-            sequence_data = bsal_dna_sequence_sequence(sequence);
-            sequence_length = strlen(sequence_data);
-/*
-            printf("KERNEL COMPUTE %d/%d %s\n",
-                            i, entries, sequence_data);
-                            */
-
-            required_bytes += (sequence_length - concrete_actor->kmer_length + 1) * concrete_actor->bytes_per_kmer;
-        }
-
-        new_buffer = bsal_malloc(required_bytes);
-
-        offset = 0;
-        memcpy((char *)new_buffer + offset, &source_index, sizeof(source_index));
-        offset += sizeof(source_index);
-
-        // extract kmers
+        /* extract kmers
+         */
         for (i = 0; i < entries; i++) {
 
             /* TODO improve this */
@@ -172,12 +154,16 @@ void bsal_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_mess
                 printf("KERNEL kmer %d,%d %s\n", i, j, sequence_data + j);
 #endif
 
-                offset += bsal_dna_kmer_pack(&kmer, (char *)new_buffer + offset);
+                bsal_dna_kmer_block_add_kmer(&block, &kmer);
                 bsal_dna_kmer_destroy(&kmer);
 
                 sequence_data[j + concrete_actor->kmer_length] = saved;
             }
         }
+
+#ifdef BSAL_KMER_COUNTER_KERNEL_DEBUG
+        BSAL_DEBUG_MARKER("after generating kmers\n");
+#endif
 
         concrete_actor->actual += entries;
         concrete_actor->blocks++;
@@ -195,14 +181,26 @@ void bsal_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_mess
         printf("customer is %d\n", customer);
 #endif
 
+        new_count = bsal_dna_kmer_block_pack_size(&block);
+        new_buffer = bsal_malloc(new_count);
+        bsal_dna_kmer_block_pack(&block, new_buffer);
+
+#ifdef BSAL_KMER_COUNTER_KERNEL_DEBUG
+        printf("name %d destination %d PACK with %d bytes\n", name,
+                       customer, new_count);
+#endif
+
         bsal_message_init(&new_message, BSAL_AGGREGATE_KERNEL_OUTPUT,
-                        offset, new_buffer);
+                        new_count, new_buffer);
+
         /*
         bsal_message_init(&new_message, BSAL_AGGREGATE_KERNEL_OUTPUT,
                         sizeof(source_index), &source_index);
                         */
 
         bsal_actor_send(actor, customer, &new_message);
+        bsal_free(new_buffer);
+
 #else
 
         bsal_actor_helper_send_empty(actor,
@@ -230,7 +228,12 @@ void bsal_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_mess
 #endif
 
         bsal_timer_destroy(&timer);
-        bsal_free(new_buffer);
+
+        bsal_dna_kmer_block_destroy(&block);
+
+#ifdef BSAL_KMER_COUNTER_KERNEL_DEBUG
+        BSAL_DEBUG_MARKER("leaving call.\n");
+#endif
 
     } else if (tag == BSAL_AGGREGATE_KERNEL_OUTPUT_REPLY) {
 

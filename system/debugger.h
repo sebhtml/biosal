@@ -2,6 +2,8 @@
 #ifndef BSAL_DEBUGGER_H
 #define BSAL_DEBUGGER_H
 
+#include <stdio.h>
+
 /*
  */
 
