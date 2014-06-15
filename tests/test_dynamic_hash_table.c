@@ -190,6 +190,30 @@ int main(int argc, char **argv)
         bsal_dynamic_hash_table_destroy(&table);
     }
 
+    {
+        struct bsal_dynamic_hash_table table;
+        int i;
+        void *bucket;
+
+        bsal_dynamic_hash_table_init(&table, 2, sizeof(int), 128);
+
+        for (i = 0; i < 999; i++) {
+
+            bsal_dynamic_hash_table_add(&table, &i);
+
+            TEST_INT_EQUALS(bsal_dynamic_hash_table_size(&table), i + 1);
+        }
+
+        for (i = 0; i < 999; i++) {
+            bucket = bsal_dynamic_hash_table_get(&table, &i);
+
+            TEST_POINTER_NOT_EQUALS(bucket, NULL);
+        }
+
+        bsal_dynamic_hash_table_destroy(&table);
+
+    }
+
     END_TESTS();
 
     return 0;
