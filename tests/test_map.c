@@ -24,7 +24,7 @@ int main(int argc, char **argv)
 
         key_size = sizeof(int);
         value_size = sizeof(int);
-        buckets = 5;
+        buckets = 500;
         inserted = 0;
 
         bsal_map_init(&table, key_size, value_size);
@@ -126,6 +126,27 @@ int main(int argc, char **argv)
         }
 
         bsal_map_destroy(&table);
+    }
+
+    {
+        struct bsal_map map;
+        int key;
+        int elements;
+        int i;
+
+        elements = 900;
+        bsal_map_init(&map, sizeof(int), sizeof(int));
+
+        for (i = 0; i < elements; i++) {
+
+            key = i;
+
+            TEST_INT_EQUALS(bsal_map_size(&map), i);
+            bsal_map_add(&map, &key);
+            TEST_INT_EQUALS(bsal_map_size(&map), i + 1);
+        }
+
+        bsal_map_destroy(&map);
     }
 
     END_TESTS();

@@ -2,9 +2,9 @@
 #ifndef BSAL_MAP_ITERATOR_H
 #define BSAL_MAP_ITERATOR_H
 
-#include "map.h"
-
 #include "dynamic_hash_table_iterator.h"
+
+struct bsal_map;
 
 struct bsal_map_iterator {
     struct bsal_dynamic_hash_table_iterator iterator;

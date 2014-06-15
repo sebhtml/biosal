@@ -1,6 +1,8 @@
 
 #include "map_iterator.h"
 
+#include "map.h"
+
 #include <stdlib.h>
 
 void bsal_map_iterator_init(struct bsal_map_iterator *self, struct bsal_map *list)

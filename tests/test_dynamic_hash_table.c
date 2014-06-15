@@ -128,6 +128,22 @@ int main(int argc, char **argv)
         bsal_dynamic_hash_table_destroy(&table);
     }
 
+    {
+        struct bsal_dynamic_hash_table table;
+        int i;
+
+        bsal_dynamic_hash_table_init(&table, 2, sizeof(int), sizeof(int));
+
+        for (i = 0; i < 999; i++) {
+
+            bsal_dynamic_hash_table_add(&table, &i);
+
+            TEST_INT_EQUALS(bsal_dynamic_hash_table_size(&table), i + 1);
+        }
+
+        bsal_dynamic_hash_table_destroy(&table);
+    }
+
     END_TESTS();
 
     return 0;
