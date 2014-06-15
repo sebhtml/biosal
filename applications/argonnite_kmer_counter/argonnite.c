@@ -174,7 +174,7 @@ void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message)
 
         controller = bsal_actor_get_acquaintance(actor, concrete_actor->controller);
 
-        bsal_actor_helper_send_vector(actor, controller, BSAL_INPUT_CONTROLLER_SET_CUSTOMERS,
+        bsal_actor_helper_send_vector(actor, controller, BSAL_SET_CUSTOMERS,
                         &customers);
 
         /* save the directors
@@ -183,7 +183,7 @@ void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message)
 
         bsal_vector_destroy(&customers);
 
-    } else if (tag == BSAL_INPUT_CONTROLLER_SET_CUSTOMERS_REPLY) {
+    } else if (tag == BSAL_SET_CUSTOMERS_REPLY) {
 
         bsal_vector_init(&spawners, sizeof(int));
         bsal_actor_helper_get_acquaintances(actor, &concrete_actor->initial_actors, &spawners);

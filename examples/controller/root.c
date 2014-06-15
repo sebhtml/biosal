@@ -183,10 +183,10 @@ void root_receive(struct bsal_actor *actor, struct bsal_message *message)
                         bsal_actor_name(actor),
                         source);
 
-        bsal_message_init(&new_message, BSAL_INPUT_CONTROLLER_SET_CUSTOMERS, count, buffer);
+        bsal_message_init(&new_message, BSAL_SET_CUSTOMERS, count, buffer);
         bsal_actor_send(actor, root1->controller, &new_message);
 
-    } else if (tag == BSAL_INPUT_CONTROLLER_SET_CUSTOMERS_REPLY) {
+    } else if (tag == BSAL_SET_CUSTOMERS_REPLY) {
 
         bytes = bsal_vector_pack_size(&root1->spawners);
         buffer = malloc(bytes);

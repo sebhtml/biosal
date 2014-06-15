@@ -20,8 +20,6 @@ struct bsal_kmer_counter_kernel {
     int bytes_per_kmer;
 };
 
-#define BSAL_SET_CUSTOMER 0x000020a9
-#define BSAL_SET_CUSTOMER_REPLY 0x00004db0
 #define BSAL_SET_KMER_LENGTH 0x0000702b
 #define BSAL_SET_KMER_LENGTH_REPLY 0x00005162
 
