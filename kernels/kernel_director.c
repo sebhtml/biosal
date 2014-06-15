@@ -171,7 +171,13 @@ void bsal_kernel_director_receive(struct bsal_actor *actor, struct bsal_message 
 
         bsal_kernel_director_try_kernel(actor, kernel);
 
-    } else if (tag == BSAL_ACTOR_ASK_TO_STOP) {
+    } else if (tag == BSAL_ACTOR_ASK_TO_STOP && (source == name
+                    || source == bsal_actor_supervisor(actor))) {
+
+#ifdef BSAL_KERNEL_DIRECTOR_DEBUG
+        printf("DEBUG %d receives BSAL_ACTOR_ASK_TO_STOP from %d\n",
+                        bsal_actor_name(actor), source);
+#endif
 
         printf("director actor/%d: spawned kernels: %d/%d, received %d data blocks\n",
                         bsal_actor_name(actor),
@@ -180,6 +186,10 @@ void bsal_kernel_director_receive(struct bsal_actor *actor, struct bsal_message 
                         concrete_actor->received);
 
         bsal_actor_helper_ask_to_stop(actor, message);
+
+#ifdef BSAL_KERNEL_DIRECTOR_DEBUG
+        printf("DEBUG %d is now dead.\n", bsal_actor_name(actor));
+#endif
 
     } else if (tag == BSAL_SET_CUSTOMER) {
 

@@ -448,14 +448,19 @@ void bsal_actor_helper_ask_to_stop(struct bsal_actor *actor, struct bsal_message
         child = bsal_actor_get_child(actor, i);
 
 #ifdef BSAL_MANAGER_DEBUG
-        printf("manager actor/%d tells worker actor/%d to stop\n",
+        printf("actor/%d tells worker actor/%d to stop\n",
                             bsal_actor_name(actor), child);
 #endif
 
         bsal_actor_helper_send_empty(actor, child, BSAL_ACTOR_ASK_TO_STOP);
     }
 
-    printf("DEBUG manager actor/%d dies\n",
+#ifdef BSAL_MANAGER_DEBUG
+    printf("DEBUG121212 actor/%d dies\n",
                     bsal_actor_name(actor));
+
+    printf("DEBUG %d send BSAL_ACTOR_STOP to self\n",
+                    bsal_actor_name(actor));
+#endif
     bsal_actor_helper_send_to_self_empty(actor, BSAL_ACTOR_STOP);
 }
