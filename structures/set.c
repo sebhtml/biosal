@@ -5,10 +5,10 @@
 
 void bsal_set_init(struct bsal_set *self, int key_size)
 {
-    /* TODO
+    /*
      * use 0 for value size...
      */
-    bsal_map_init(&self->map, key_size, 4);
+    bsal_map_init(&self->map, key_size, 0);
 }
 
 void bsal_set_destroy(struct bsal_set *self)
@@ -23,7 +23,18 @@ void bsal_set_add(struct bsal_set *self, void *key)
 
 int bsal_set_find(struct bsal_set *self, void *key)
 {
-    if (bsal_map_get(&self->map, key) != NULL) {
+    void *value;
+
+    value = bsal_map_get(&self->map, key);
+
+    if (value != NULL) {
+
+        /*
+         * don't do anything with this pointer because it point to 0 bytes !
+         * In fact, it is a pointer to the next key since the set is using
+         * 0 bytes for values (no values)
+         */
+
         return 1;
     }
 

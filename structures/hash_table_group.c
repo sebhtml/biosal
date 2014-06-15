@@ -157,6 +157,21 @@ void *bsal_hash_table_group_key(struct bsal_hash_table_group *group, int bucket,
 void *bsal_hash_table_group_value(struct bsal_hash_table_group *group, int bucket,
                 int key_size, int value_size)
 {
+    /*
+     * It would be logical to return a NULL pointer
+     * if value size is 0.
+     * However, some use cases, like the set, require
+     * a pointer even when value_size is 0.
+     * Otherwise, it is impossible to verify if a key
+     * is inside with the current interface
+     *
+     */
+#if 0
+    if (value_size == 0) {
+        return NULL;
+    }
+#endif
+
     /* we assume that the key is stored first */
     return (char *)bsal_hash_table_group_key(group, bucket, key_size, value_size) + key_size;
 }

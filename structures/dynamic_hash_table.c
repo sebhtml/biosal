@@ -20,6 +20,10 @@ void bsal_dynamic_hash_table_init(struct bsal_dynamic_hash_table *self, uint64_t
     self->current = &self->table1;
     self->next = &self->table2;
 
+#ifdef BSAL_DYNAMIC_HASH_TABLE_DEBUG
+    printf("value size %d\n", value_size);
+#endif
+
     bsal_hash_table_init(self->current, buckets, key_size, value_size);
 
     self->resize_in_progress = 0;
@@ -206,15 +210,23 @@ int bsal_dynamic_hash_table_resize(struct bsal_dynamic_hash_table *self)
 
     value_size = bsal_hash_table_value_size(self->current);
 
+#ifdef BSAL_DYNAMIC_HASH_TABLE_DEBUG
+    printf("value_size = %d\n", value_size);
+#endif
+
     /* transfer N elements in the next table
      */
     count = 32;
     while (count-- && bsal_hash_table_iterator_has_next(&self->iterator)) {
 
-        bsal_hash_table_iterator_next(&self->iterator, &key, &value);
-
-        new_value = bsal_hash_table_add(self->next, key);
-        memcpy(new_value, value, value_size);
+        if (value_size == 0) {
+            bsal_hash_table_iterator_next(&self->iterator, &key, NULL);
+            bsal_hash_table_add(self->next, key);
+        } else {
+            bsal_hash_table_iterator_next(&self->iterator, &key, &value);
+            new_value = bsal_hash_table_add(self->next, key);
+            memcpy(new_value, value, value_size);
+        }
 
         /* remove the old copy from current
          */

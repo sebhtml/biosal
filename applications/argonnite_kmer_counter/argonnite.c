@@ -231,6 +231,9 @@ void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message)
                     && source == bsal_actor_get_acquaintance(actor,
                             concrete_actor->manager_for_aggregators)) {
 
+        manager_for_aggregators = bsal_actor_get_acquaintance(actor,
+                        concrete_actor->manager_for_aggregators);
+
 #ifdef ARGONNITE_DEBUG2
             BSAL_DEBUG_MARKER("set actors per spawner ");
 #endif
@@ -244,6 +247,9 @@ void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message)
     } else if (tag == BSAL_MANAGER_SET_ACTORS_PER_SPAWNER_REPLY
                     && source == bsal_actor_get_acquaintance(actor,
                             concrete_actor->manager_for_aggregators)) {
+
+        manager_for_aggregators = bsal_actor_get_acquaintance(actor,
+                        concrete_actor->manager_for_aggregators);
 
         /* send spawners to the aggregator manager
          */

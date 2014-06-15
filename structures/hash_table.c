@@ -513,10 +513,10 @@ void *bsal_hash_table_value(struct bsal_hash_table *self, uint64_t bucket)
 
 int bsal_hash_table_value_size(struct bsal_hash_table *self)
 {
-    return self->key_size;
+    return self->value_size;
 }
 
 int bsal_hash_table_key_size(struct bsal_hash_table *self)
 {
-    return self->value_size;
+    return self->key_size;
 }

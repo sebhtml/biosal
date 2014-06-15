@@ -20,6 +20,18 @@ int main(int argc, char **argv)
     BEGIN_TESTS();
 
     {
+        bsal_hash_table_init(&table, 900, sizeof(int), 0);
+
+        for (i = 0; i < 500; i++) {
+            TEST_INT_EQUALS(bsal_hash_table_size(&table), i);
+            bsal_hash_table_add(&table, &i);
+            TEST_INT_EQUALS(bsal_hash_table_size(&table), i + 1);
+        }
+
+        bsal_hash_table_destroy(&table);
+    }
+
+    {
         buckets = 1048576;
         key = 1234;
         key_size = sizeof(key);
