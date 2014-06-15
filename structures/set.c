@@ -5,7 +5,10 @@
 
 void bsal_set_init(struct bsal_set *self, int key_size)
 {
-    bsal_map_init(&self->map, key_size, 8);
+    /* TODO
+     * use 0 for value size...
+     */
+    bsal_map_init(&self->map, key_size, 4);
 }
 
 void bsal_set_destroy(struct bsal_set *self)
