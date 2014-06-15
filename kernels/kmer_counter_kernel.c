@@ -89,6 +89,7 @@ void bsal_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_mess
     char saved;
     struct bsal_timer timer;
     struct bsal_dna_kmer_block block;
+    int to_reserve;
 
 #ifdef BSAL_KMER_COUNTER_KERNEL_DEBUG
     int count;
@@ -120,8 +121,6 @@ void bsal_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_mess
         customer = bsal_actor_get_acquaintance(actor, concrete_actor->customer);
         source_index = bsal_actor_add_acquaintance(actor, source);
 
-        bsal_dna_kmer_block_init(&block, concrete_actor->kmer_length, source_index);
-
         bsal_input_command_unpack(&payload, buffer);
 
         command_entries = bsal_input_command_entries(&payload);
@@ -133,6 +132,21 @@ void bsal_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_mess
                         entries, count, concrete_actor->kmer_length,
                         concrete_actor->bytes_per_kmer);
 #endif
+
+        to_reserve = 0;
+
+        for (i = 0; i < entries; i++) {
+
+            /* TODO improve this */
+            sequence = (struct bsal_dna_sequence *)bsal_vector_at(command_entries, i);
+
+            sequence_data = bsal_dna_sequence_sequence(sequence);
+            sequence_length = strlen(sequence_data);
+
+            to_reserve += (sequence_length - concrete_actor->kmer_length + 1);
+        }
+
+        bsal_dna_kmer_block_init(&block, concrete_actor->kmer_length, source_index, to_reserve);
 
         /* extract kmers
          */
@@ -154,7 +168,11 @@ void bsal_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_mess
                 printf("KERNEL kmer %d,%d %s\n", i, j, sequence_data + j);
 #endif
 
+                /*
+                 * add kmer in block
+                 */
                 bsal_dna_kmer_block_add_kmer(&block, &kmer);
+
                 bsal_dna_kmer_destroy(&kmer);
 
                 sequence_data[j + concrete_actor->kmer_length] = saved;

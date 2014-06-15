@@ -15,7 +15,7 @@ struct bsal_dna_kmer_block {
 };
 
 void bsal_dna_kmer_block_init(struct bsal_dna_kmer_block *self, int kmer_length,
-                int source_index);
+                int source_index, int kmers);
 void bsal_dna_kmer_block_destroy(struct bsal_dna_kmer_block *self);
 void bsal_dna_kmer_block_add_kmer(struct bsal_dna_kmer_block *self, struct bsal_dna_kmer *kmer);
 

@@ -14,11 +14,13 @@
 #define BSAL_DNA_KMER_BLOCK_DEBUG
 */
 
-void bsal_dna_kmer_block_init(struct bsal_dna_kmer_block *self, int kmer_length, int source_index)
+void bsal_dna_kmer_block_init(struct bsal_dna_kmer_block *self, int kmer_length, int source_index, int kmers)
 {
     self->source_index = source_index;
     self->kmer_length = kmer_length;
     bsal_vector_init(&self->kmers, sizeof(struct bsal_dna_kmer));
+
+    bsal_vector_reserve(&self->kmers, kmers);
 }
 
 void bsal_dna_kmer_block_destroy(struct bsal_dna_kmer_block *self)
@@ -91,9 +93,7 @@ int bsal_dna_kmer_block_pack_unpack(struct bsal_dna_kmer_block *self, void *buff
     bsal_packer_work(&packer, &self->kmer_length, sizeof(self->kmer_length));
     bsal_packer_work(&packer, &self->source_index, sizeof(self->source_index));
 
-    if (operation == BSAL_PACKER_OPERATION_UNPACK) {
-        bsal_dna_kmer_block_init(self, self->kmer_length, self->source_index);
-    } else {
+    if (operation != BSAL_PACKER_OPERATION_UNPACK) {
         elements = bsal_vector_size(&self->kmers);
     }
 
@@ -102,6 +102,11 @@ int bsal_dna_kmer_block_pack_unpack(struct bsal_dna_kmer_block *self, void *buff
 #endif
 
     bsal_packer_work(&packer, &elements, sizeof(elements));
+
+    if (operation == BSAL_PACKER_OPERATION_UNPACK) {
+
+        bsal_dna_kmer_block_init(self, self->kmer_length, self->source_index, elements);
+    }
 
 #ifdef BSAL_DNA_KMER_BLOCK_DEBUG
     printf("DEBUG kmer_length %d source_index %d elements %d\n", self->kmer_length,
@@ -124,6 +129,8 @@ int bsal_dna_kmer_block_pack_unpack(struct bsal_dna_kmer_block *self, void *buff
             offset += bsal_dna_kmer_pack_unpack(&new_kmer, (char *)buffer + offset, operation);
 
             bsal_dna_kmer_block_add_kmer(self, &new_kmer);
+
+            bsal_dna_kmer_destroy(&new_kmer);
         }
     } else {
         for (i = 0; i < elements; i++) {
