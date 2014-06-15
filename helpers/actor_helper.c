@@ -6,6 +6,8 @@
 #include <engine/actor.h>
 #include <engine/message.h>
 
+#include <system/memory.h>
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -104,6 +106,8 @@ void bsal_actor_helper_get_acquaintances(struct bsal_actor *actor, struct bsal_v
     int index;
     int *bucket;
     int name;
+
+    bsal_vector_init(names, sizeof(int));
 
     bsal_vector_iterator_init(&iterator, indices);
 
@@ -374,6 +378,24 @@ void bsal_actor_helper_send_range_int(struct bsal_actor *actor, struct bsal_vect
     bsal_message_destroy(&message);
 }
 
+void bsal_actor_helper_send_range_vector(struct bsal_actor *actor, struct bsal_vector *actors,
+                int tag, struct bsal_vector *vector)
+{
+    struct bsal_message message;
+    int count;
+    void *buffer;
+
+    count = bsal_vector_pack_size(vector);
+    buffer = bsal_malloc(count);
+    bsal_vector_pack(vector, buffer);
+    bsal_message_init(&message, tag, count, buffer);
+    bsal_actor_helper_send_range(actor, actors, &message);
+
+    bsal_message_destroy(&message);
+
+    bsal_free(buffer);
+}
+
 void bsal_actor_helper_receive_binomial_tree_send(struct bsal_actor *actor, struct bsal_message *message)
 {
     int real_tag;
@@ -463,4 +485,18 @@ void bsal_actor_helper_ask_to_stop(struct bsal_actor *actor, struct bsal_message
                     bsal_actor_name(actor));
 #endif
     bsal_actor_helper_send_to_self_empty(actor, BSAL_ACTOR_STOP);
+}
+
+int bsal_actor_helper_get_acquaintance(struct bsal_actor *actor, struct bsal_vector *indices,
+                int index)
+{
+    int index2;
+
+    if (index >= bsal_vector_size(indices)) {
+        return BSAL_ACTOR_NOBODY;
+    }
+
+    index2 = bsal_vector_helper_at_as_int(indices, index);
+
+    return bsal_actor_get_acquaintance(actor, index2);
 }

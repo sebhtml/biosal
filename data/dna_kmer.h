@@ -27,4 +27,6 @@ void bsal_dna_kmer_init_copy(struct bsal_dna_kmer *sequence, struct bsal_dna_kme
 
 void bsal_dna_kmer_print(struct bsal_dna_kmer *sequence);
 
+int bsal_dna_kmer_store_index(struct bsal_dna_kmer *self, int stores);
+
 #endif

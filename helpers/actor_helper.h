@@ -25,8 +25,14 @@ void bsal_actor_helper_send_to_self_int(struct bsal_actor *actor, int tag, int v
 void bsal_actor_helper_send_to_supervisor_empty(struct bsal_actor *actor, int tag);
 void bsal_actor_helper_send_to_supervisor_int(struct bsal_actor *actor, int tag, int value);
 
+/*
+ * initialize avector and push actor names using a vector
+ * of acquaintance indices
+ */
 void bsal_actor_helper_get_acquaintances(struct bsal_actor *actor, struct bsal_vector *indices,
                 struct bsal_vector *names);
+int bsal_actor_helper_get_acquaintance(struct bsal_actor *actor, struct bsal_vector *indices,
+                int index);
 void bsal_actor_helper_add_acquaintances(struct bsal_actor *actor,
                 struct bsal_vector *names, struct bsal_vector *indices);
 
@@ -39,6 +45,8 @@ void bsal_actor_helper_send_range(struct bsal_actor *actor, struct bsal_vector *
                 struct bsal_message *message);
 void bsal_actor_helper_send_range_int(struct bsal_actor *actor, struct bsal_vector *actors,
                 int tag, int value);
+void bsal_actor_helper_send_range_vector(struct bsal_actor *actor, struct bsal_vector *actors,
+                int tag, struct bsal_vector *vector);
 void bsal_actor_helper_send_range_empty(struct bsal_actor *actor, struct bsal_vector *actors,
                 int tag);
 void bsal_actor_helper_send_range_binomial_tree(struct bsal_actor *actor, struct bsal_vector *actors,

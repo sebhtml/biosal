@@ -10,13 +10,17 @@
 #include <patterns/manager.h>
 #include <patterns/aggregator.h>
 
+#include <storage/kmer_store.h>
+
 #include <system/memory.h>
 #include <system/debugger.h>
 
 #include <stdio.h>
 #include <string.h>
 
+/*
 #define ARGONNITE_DEBUG
+*/
 
 struct bsal_script argonnite_script = {
     .name = ARGONNITE_SCRIPT,
@@ -34,6 +38,7 @@ void argonnite_init(struct bsal_actor *actor)
     bsal_vector_init(&concrete_actor->initial_actors, sizeof(int));
     bsal_vector_init(&concrete_actor->directors, sizeof(int));
     bsal_vector_init(&concrete_actor->aggregators, sizeof(int));
+    bsal_vector_init(&concrete_actor->stores, sizeof(int));
 
     bsal_actor_add_script(actor, BSAL_INPUT_CONTROLLER_SCRIPT,
                     &bsal_input_controller_script);
@@ -45,6 +50,8 @@ void argonnite_init(struct bsal_actor *actor)
                     &bsal_aggregator_script);
     bsal_actor_add_script(actor, BSAL_KERNEL_DIRECTOR_SCRIPT,
                     &bsal_kernel_director_script);
+    bsal_actor_add_script(actor, BSAL_KMER_STORE_SCRIPT,
+                    &bsal_kmer_store_script);
 
     concrete_actor->kmer_length = 41;
     concrete_actor->block_size = 512;
@@ -62,6 +69,7 @@ void argonnite_destroy(struct bsal_actor *actor)
     bsal_vector_destroy(&concrete_actor->initial_actors);
     bsal_vector_destroy(&concrete_actor->directors);
     bsal_vector_destroy(&concrete_actor->aggregators);
+    bsal_vector_destroy(&concrete_actor->stores);
 }
 
 void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message)
@@ -90,6 +98,8 @@ void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message)
     int aggregator;
     int aggregator_index;
     int i;
+    int manager_for_stores;
+    struct bsal_vector stores;
 
     concrete_actor = (struct argonnite *)bsal_actor_concrete_actor(actor);
     tag = bsal_message_tag(message);
@@ -153,8 +163,6 @@ void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message)
                     && source == bsal_actor_get_acquaintance(actor,
                             concrete_actor->manager_for_directors)) {
 
-        bsal_vector_init(&spawners, sizeof(int));
-
         bsal_actor_helper_get_acquaintances(actor, &concrete_actor->initial_actors, &spawners);
 
         bsal_actor_helper_send_reply_vector(actor, BSAL_ACTOR_START, &spawners);
@@ -183,9 +191,9 @@ void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message)
 
         bsal_vector_destroy(&customers);
 
-    } else if (tag == BSAL_SET_CUSTOMERS_REPLY) {
+    } else if (tag == BSAL_SET_CUSTOMERS_REPLY
+                    && source == bsal_actor_get_acquaintance(actor, concrete_actor->controller)) {
 
-        bsal_vector_init(&spawners, sizeof(int));
         bsal_actor_helper_get_acquaintances(actor, &concrete_actor->initial_actors, &spawners);
 
         bsal_actor_helper_send_reply_vector(actor, BSAL_INPUT_CONTROLLER_START, &spawners);
@@ -253,7 +261,6 @@ void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message)
 
         /* send spawners to the aggregator manager
          */
-        bsal_vector_init(&spawners, sizeof(int));
         bsal_actor_helper_get_acquaintances(actor, &concrete_actor->initial_actors, &spawners);
 
         bsal_actor_helper_send_reply_vector(actor, BSAL_ACTOR_START,
@@ -261,6 +268,7 @@ void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message)
 
         printf("argonnite actor/%d ask manager actor/%d to spawn children for work\n",
                         bsal_actor_name(actor), manager_for_aggregators);
+
         bsal_vector_destroy(&spawners);
 
     } else if (tag == BSAL_ACTOR_START_REPLY &&
@@ -314,9 +322,6 @@ void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message)
 
             concrete_actor->configured_actors = 0;
 
-            bsal_vector_init(&directors, sizeof(int));
-            bsal_vector_init(&aggregators, sizeof(int));
-
             bsal_actor_helper_get_acquaintances(actor, &concrete_actor->directors, &directors);
             bsal_actor_helper_get_acquaintances(actor, &concrete_actor->aggregators, &aggregators);
 
@@ -343,17 +348,74 @@ void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message)
         }
     } else if (tag == BSAL_SET_BLOCK_SIZE_REPLY) {
 
-        bsal_actor_helper_send_empty(actor, bsal_actor_get_acquaintance(actor,
+        manager_for_stores = bsal_actor_spawn(actor, BSAL_MANAGER_SCRIPT);
+
+        concrete_actor->manager_for_stores = bsal_actor_get_acquaintance_index(actor, manager_for_stores);
+
+        printf("DEBUG manager_for_stores %d\n", concrete_actor->manager_for_stores);
+
+        bsal_actor_helper_send_int(actor, manager_for_stores, BSAL_MANAGER_SET_SCRIPT,
+                        BSAL_KMER_STORE_SCRIPT);
+
+    } else if (tag == BSAL_MANAGER_SET_SCRIPT_REPLY
+                    && source == bsal_actor_get_acquaintance(actor,
+                            concrete_actor->manager_for_stores)) {
+
+        bsal_actor_helper_send_reply_int(actor, BSAL_MANAGER_SET_ACTORS_PER_WORKER,
+                        4);
+
+    } else if (tag == BSAL_MANAGER_SET_ACTORS_PER_WORKER_REPLY
+                    && source == bsal_actor_get_acquaintance(actor,
+                            concrete_actor->manager_for_stores)) {
+
+        bsal_actor_helper_get_acquaintances(actor, &concrete_actor->initial_actors,
+                        &spawners);
+        bsal_actor_helper_send_reply_vector(actor, BSAL_ACTOR_START, &spawners);
+
+        bsal_vector_destroy(&spawners);
+
+    } else if (tag == BSAL_ACTOR_START_REPLY
+                    && source == bsal_actor_get_acquaintance(actor,
+                            concrete_actor->manager_for_stores)) {
+
+        bsal_vector_unpack(&stores, buffer);
+        bsal_actor_helper_add_acquaintances(actor, &stores, &concrete_actor->stores);
+
+        concrete_actor->configured_aggregators = 0;
+
+        bsal_actor_helper_get_acquaintances(actor, &concrete_actor->aggregators,
+                    &aggregators);
+
+        bsal_actor_helper_send_range_vector(actor, &aggregators, BSAL_SET_CUSTOMERS,
+                &stores);
+
+        bsal_vector_destroy(&aggregators);
+        bsal_vector_destroy(&stores);
+
+    } else if (tag == BSAL_SET_CUSTOMERS_REPLY) {
+        /*
+         * received a reply from one of the aggregators.
+         */
+
+        concrete_actor->configured_aggregators++;
+
+        if (concrete_actor->configured_aggregators == bsal_vector_size(&concrete_actor->aggregators)) {
+
+            bsal_actor_helper_send_empty(actor, bsal_actor_get_acquaintance(actor,
                                     concrete_actor->controller), BSAL_INPUT_DISTRIBUTE);
+        }
 
     } else if (tag == BSAL_INPUT_DISTRIBUTE_REPLY) {
 
+#ifdef ARGONNITE_DEBUG
         printf("argonnite actor/%d receives BSAL_INPUT_DISTRIBUTE_REPLY\n",
                         name);
+#endif
 
         controller = bsal_actor_get_acquaintance(actor, concrete_actor->controller);
         manager_for_directors = bsal_actor_get_acquaintance(actor, concrete_actor->manager_for_directors);
         manager_for_aggregators = bsal_actor_get_acquaintance(actor, concrete_actor->manager_for_aggregators);
+        manager_for_stores = bsal_actor_get_acquaintance(actor, concrete_actor->manager_for_stores);
 
         printf("argonnite actor/%d stops controller actor/%d\n",
                         bsal_actor_name(actor), controller);
@@ -367,7 +429,10 @@ void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message)
                         bsal_actor_name(actor), manager_for_aggregators);
         bsal_actor_helper_send_empty(actor, manager_for_aggregators, BSAL_ACTOR_ASK_TO_STOP);
 
-        bsal_vector_init(&initial_actors, sizeof(int));
+        printf("argonnite actor/%d stops store manager actor/%d\n",
+                        bsal_actor_name(actor), manager_for_stores);
+        bsal_actor_helper_send_empty(actor, manager_for_stores, BSAL_ACTOR_ASK_TO_STOP);
+
         bsal_actor_helper_get_acquaintances(actor, &concrete_actor->initial_actors, &initial_actors);
 
         bsal_vector_iterator_init(&iterator, &initial_actors);

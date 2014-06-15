@@ -5,9 +5,13 @@
 
 #include <system/memory.h>
 
+#include <hash/murmur_hash_2_64_a.h>
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+
+#include <stdint.h>
 
 /*
 #define BSAL_DNA_SEQUENCE_DEBUG
@@ -118,4 +122,16 @@ void bsal_dna_kmer_print(struct bsal_dna_kmer *self)
 {
     printf("KMER length: %d nucleotides, sequence: %s\n", self->length,
                     (char *)self->data);
+}
+
+int bsal_dna_kmer_store_index(struct bsal_dna_kmer *self, int stores)
+{
+    uint64_t value;
+    int seed;
+
+    seed = 0xcaa9cfcf;
+
+    value = bsal_murmur_hash_2_64_a(self->data, self->length, seed);
+
+    return value % stores;
 }

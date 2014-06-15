@@ -125,6 +125,10 @@ new name.
 #define BSAL_ACTOR_PING 0x000040b3
 #define BSAL_ACTOR_PING_REPLY 0x00006eda
 
+/*
+ * some actor constants
+ */
+
 /* states */
 #define BSAL_ACTOR_STATUS_NOT_SUPPORTED 0
 #define BSAL_ACTOR_STATUS_SUPPORTED 1
@@ -136,6 +140,8 @@ new name.
 #define BSAL_ACTOR_SUPERVISOR 1
 #define BSAL_ACTOR_SOURCE 2
 #define BSAL_ACTOR_NOBODY -1
+
+#define BSAL_ACTOR_NO_VALUE -1
 
 struct bsal_node;
 struct bsal_worker;

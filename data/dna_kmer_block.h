@@ -29,4 +29,6 @@ int bsal_dna_kmer_block_pack_unpack(struct bsal_dna_kmer_block *self, void *buff
 int bsal_dna_kmer_block_source_index(struct bsal_dna_kmer_block *self);
 struct bsal_vector *bsal_dna_kmer_block_kmers(struct bsal_dna_kmer_block *self);
 
+int bsal_dna_kmer_block_size(struct bsal_dna_kmer_block *self);
+
 #endif

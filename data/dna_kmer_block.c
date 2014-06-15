@@ -156,3 +156,8 @@ struct bsal_vector *bsal_dna_kmer_block_kmers(struct bsal_dna_kmer_block *self)
 {
     return &self->kmers;
 }
+
+int bsal_dna_kmer_block_size(struct bsal_dna_kmer_block *self)
+{
+    return bsal_vector_size(&self->kmers);
+}

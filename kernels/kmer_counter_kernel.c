@@ -208,6 +208,10 @@ void bsal_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_mess
                        customer, new_count);
 #endif
 
+#ifdef BSAL_KMER_COUNTER_KERNEL_DEBUG
+        BSAL_DEBUG_MARKER("kernel sends to aggregator");
+#endif
+
         bsal_message_init(&new_message, BSAL_AGGREGATE_KERNEL_OUTPUT,
                         new_count, new_buffer);
 
@@ -240,7 +244,6 @@ void bsal_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_mess
         bsal_timer_stop(&timer);
 
 #ifdef BSAL_KMER_COUNTER_KERNEL_DEBUG
-        printf("KERNEL, output: %d bytes\n", offset);
 
         bsal_timer_print(&timer);
 #endif
@@ -254,6 +257,10 @@ void bsal_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_mess
 #endif
 
     } else if (tag == BSAL_AGGREGATE_KERNEL_OUTPUT_REPLY) {
+
+#ifdef BSAL_KMER_COUNTER_KERNEL_DEBUG
+        BSAL_DEBUG_MARKER("kernel receives reply from aggregator\n");
+#endif
 
         source_index = *(int *)buffer;
         bsal_actor_helper_send_empty(actor,

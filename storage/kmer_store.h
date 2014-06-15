@@ -4,12 +4,12 @@
 
 #include <engine/actor.h>
 
-#include <structures/dynamic_hash_table.h>
+#include <structures/map.h>
 
 #define BSAL_KMER_STORE_SCRIPT 0xe6d32c91
 
 struct bsal_kmer_store {
-    struct bsal_dynamic_hash_table table;
+    struct bsal_map table;
     int kmer_length;
     int key_length_in_bytes;
 };
