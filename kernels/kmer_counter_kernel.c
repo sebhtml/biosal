@@ -77,7 +77,6 @@ void bsal_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_mess
     int customer;
     int i;
     int required_bytes;
-    char *dna;
     struct bsal_dna_sequence *sequence;
     char *sequence_data;
     struct bsal_vector *command_entries;
@@ -280,20 +279,9 @@ void bsal_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_mess
 
         bsal_message_helper_unpack_int(message, 0, &concrete_actor->kmer_length);
 
-        dna = (char *)bsal_malloc(concrete_actor->kmer_length);
-
-        for (i = 0; i < concrete_actor->kmer_length; i++) {
-            dna[i] = 'A';
-        }
-
-        dna[concrete_actor->kmer_length] = '\0';
-
-        bsal_dna_kmer_init(&kmer, dna);
-
+        bsal_dna_kmer_init_mock(&kmer, concrete_actor->kmer_length);
         concrete_actor->bytes_per_kmer = bsal_dna_kmer_pack_size(&kmer);
-
         bsal_dna_kmer_destroy(&kmer);
-        bsal_free(dna);
 
         bsal_actor_helper_send_reply_empty(actor, BSAL_SET_KMER_LENGTH_REPLY);
     }

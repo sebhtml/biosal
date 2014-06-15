@@ -47,8 +47,6 @@ void bsal_kmer_store_receive(struct bsal_actor *actor, struct bsal_message *mess
     struct bsal_kmer_store *concrete_actor;
     int buckets;
     struct bsal_dna_kmer kmer;
-    char *dna;
-    int i;
     int name;
 
     concrete_actor = (struct bsal_kmer_store *)bsal_actor_concrete_actor(actor);
@@ -60,15 +58,9 @@ void bsal_kmer_store_receive(struct bsal_actor *actor, struct bsal_message *mess
         buckets = 8;
         bsal_message_helper_unpack_int(message, 0, &concrete_actor->kmer_length);
 
-        dna = (char *)bsal_malloc(concrete_actor->kmer_length + 1);
-
-        for (i = 0; i < concrete_actor->kmer_length; i++) {
-            dna[i] = 'A';
-        }
-        dna[concrete_actor->kmer_length] = '\0';
-
-        bsal_dna_kmer_init(&kmer, dna);
+        bsal_dna_kmer_init_mock(&kmer, concrete_actor->kmer_length);
         concrete_actor->key_length_in_bytes = bsal_dna_kmer_pack_size(&kmer);
+        bsal_dna_kmer_destroy(&kmer);
 
         printf("kmer store actor/%d will use %d bytes for keys (k is %d)\n",
                         name, concrete_actor->key_length_in_bytes,
@@ -78,8 +70,6 @@ void bsal_kmer_store_receive(struct bsal_actor *actor, struct bsal_message *mess
                         sizeof(int));
 
         bsal_actor_helper_send_reply_empty(actor, BSAL_ACTOR_START_REPLY);
-
-        bsal_free(dna);
 
     } else if (tag == BSAL_PUSH_KMER_BLOCK) {
 

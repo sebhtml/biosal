@@ -22,5 +22,6 @@ int bsal_dna_kmer_pack_unpack(struct bsal_dna_kmer *sequence,
                 void *buffer, int operation);
 
 int bsal_dna_kmer_length(struct bsal_dna_kmer *self);
+void bsal_dna_kmer_init_mock(struct bsal_dna_kmer *sequence, int kmer_length);
 
 #endif

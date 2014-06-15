@@ -3,6 +3,8 @@
 
 #include <system/packer.h>
 
+#include <system/memory.h>
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -87,3 +89,19 @@ int bsal_dna_kmer_length(struct bsal_dna_kmer *self)
     return self->length;
 }
 
+void bsal_dna_kmer_init_mock(struct bsal_dna_kmer *sequence, int kmer_length)
+{
+    char *dna;
+    int i;
+
+    dna = (char *)bsal_malloc(kmer_length + 1);
+
+    for (i = 0; i < kmer_length; i++) {
+        dna[i] = 'A';
+    }
+
+    dna[kmer_length] = '\0';
+
+    bsal_dna_kmer_init(sequence, dna);
+    bsal_free(dna);
+}
