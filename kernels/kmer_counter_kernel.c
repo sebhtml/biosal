@@ -244,7 +244,7 @@ void bsal_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_mess
 
         bsal_actor_helper_send_reply_empty(actor, BSAL_ACTOR_START_REPLY);
 
-    } else if (tag == BSAL_SEQUENCE_STORE_RESERVE) {
+    } else if (tag == BSAL_RESERVE) {
 
 #ifdef BSAL_KMER_COUNTER_KERNEL_DEBUG
         printf("kmer counter kernel actor/%d is online !\n", name);
@@ -252,7 +252,7 @@ void bsal_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_mess
 
         concrete_actor->expected = *(uint64_t *)buffer;
 
-        bsal_actor_helper_send_reply_empty(actor, BSAL_SEQUENCE_STORE_RESERVE_REPLY);
+        bsal_actor_helper_send_reply_empty(actor, BSAL_RESERVE_REPLY);
 
     } else if (tag == BSAL_ACTOR_ASK_TO_STOP
                     && source == bsal_actor_supervisor(actor)) {

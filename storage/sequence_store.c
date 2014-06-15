@@ -68,7 +68,7 @@ void bsal_sequence_store_receive(struct bsal_actor *actor, struct bsal_message *
 
         bsal_sequence_store_store_sequences(actor, message);
 
-    } else if (tag == BSAL_SEQUENCE_STORE_RESERVE) {
+    } else if (tag == BSAL_RESERVE) {
 
         bsal_sequence_store_reserve(actor, message);
 
@@ -228,7 +228,7 @@ void bsal_sequence_store_reserve(struct bsal_actor *actor, struct bsal_message *
         bsal_dna_sequence_init(dna_sequence, NULL);
     }
 
-    bsal_actor_helper_send_reply_empty(actor, BSAL_SEQUENCE_STORE_RESERVE_REPLY);
+    bsal_actor_helper_send_reply_empty(actor, BSAL_RESERVE_REPLY);
 }
 
 void bsal_sequence_store_show_progress(struct bsal_actor *actor, struct bsal_message *message)

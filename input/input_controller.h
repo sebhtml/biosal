@@ -9,7 +9,7 @@
 #define BSAL_INPUT_CONTROLLER_SCRIPT 0x985607aa
 
 struct bsal_input_controller {
-    struct bsal_vector stores;
+    struct bsal_vector customers;
 
     struct bsal_vector files;
 
@@ -25,7 +25,7 @@ struct bsal_input_controller {
     int state;
     int block_size;
 
-    int ready_stores;
+    int ready_customers;
     int ready_spawners;
     struct bsal_vector stores_per_spawner;
     int stores_per_worker_per_spawner;

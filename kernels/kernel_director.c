@@ -60,9 +60,9 @@ void bsal_kernel_director_receive(struct bsal_actor *actor, struct bsal_message 
     source = bsal_message_source(message);
     name = bsal_actor_name(actor);
 
-    if (tag == BSAL_SEQUENCE_STORE_RESERVE) {
+    if (tag == BSAL_RESERVE) {
 
-        bsal_actor_helper_send_reply_empty(actor, BSAL_SEQUENCE_STORE_RESERVE_REPLY);
+        bsal_actor_helper_send_reply_empty(actor, BSAL_RESERVE_REPLY);
 
     } else if (tag == BSAL_PUSH_SEQUENCE_DATA_BLOCK) {
 

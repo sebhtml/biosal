@@ -106,8 +106,10 @@ void bsal_manager_receive(struct bsal_actor *actor, struct bsal_message *message
             return;
         }
 
+#ifdef BSAL_MANAGER_DEBUG
         printf("DEBUG manager actor/%d starts\n",
                         bsal_actor_name(actor));
+#endif
 
         bsal_vector_unpack(&spawners, buffer);
 
@@ -128,12 +130,14 @@ void bsal_manager_receive(struct bsal_actor *actor, struct bsal_message *message
 
             bsal_vector_push_back(&concrete_actor->indices, &index);
 
-            printf("DEBUG manager actor/%d add actor vector and store count for spawner actor/%d\n",
+            printf("DEBUG manager actor/%d add actor vector and actor count for spawner actor/%d\n",
                             bsal_actor_name(actor), spawner);
 
             stores = (struct bsal_vector *)bsal_dynamic_hash_table_add(&concrete_actor->spawner_children, &index);
 
+#ifdef BSAL_MANAGER_DEBUG
             printf("DEBUG adding %d to table\n", index);
+#endif
 
             bucket = (int *)bsal_dynamic_hash_table_add(&concrete_actor->spawner_child_count, &index);
             *bucket = 0;
@@ -183,7 +187,10 @@ void bsal_manager_receive(struct bsal_actor *actor, struct bsal_message *message
         printf("DEBUG manager actor/%d says that spawner actor/%d is on a node with %d workers\n",
                         bsal_actor_name(actor), source, workers);
 
+#ifdef BSAL_MANAGER_DEBUG
         printf("DEBUG getting table index %d\n", index);
+#endif
+
         bucket = (int *)bsal_dynamic_hash_table_get(&concrete_actor->spawner_child_count, &index);
 
 #ifdef BSAL_MANAGER_DEBUG
@@ -211,7 +218,7 @@ void bsal_manager_receive(struct bsal_actor *actor, struct bsal_message *message
 
         bsal_vector_push_back(stores, &store);
 
-        printf("DEBUG manager actor/%d receives store actor/%d from spawner actor/%d, now %d/%d\n",
+        printf("DEBUG manager actor/%d receives actor/%d from spawner actor/%d, now %d/%d\n",
                         bsal_actor_name(actor), store, source,
                         (int)bsal_vector_size(stores), *bucket);
 
