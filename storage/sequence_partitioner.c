@@ -204,7 +204,7 @@ void bsal_sequence_partitioner_verify(struct bsal_actor *actor)
     struct bsal_sequence_partitioner *concrete_actor;
     int i;
     uint64_t entries;
-    int position;
+    uint64_t position;
     uint64_t stream_entries;
     int bytes;
     void *buffer;
@@ -467,9 +467,14 @@ void bsal_sequence_partitioner_generate_command(struct bsal_actor *actor, int st
      */
     available_in_stream = stream_entries - *bucket_for_stream_position;
 
+#ifdef BSAL_SEQUENCE_PARTITIONER_DEBUG
+    printf("DEBUG stream_entries %" PRIu64 " !\n", stream_entries);
+    printf("DEBUG bucket_for_stream_position %" PRIu64 " !\n", *bucket_for_stream_position);
+    printf("DEBUG available_in_stream %" PRIu64 " !\n", available_in_stream);
+#endif
+
     if (available_in_stream < actual_block_size) {
 #ifdef BSAL_SEQUENCE_PARTITIONER_DEBUG
-        printf("DEBUG available_in_stream %" PRIu64 " !\n", available_in_stream);
 #endif
         actual_block_size = available_in_stream;
     }
