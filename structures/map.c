@@ -31,24 +31,7 @@ uint64_t bsal_map_size(struct bsal_map *self)
     return bsal_dynamic_hash_table_size(&self->table);
 }
 
-uint64_t bsal_map_buckets(struct bsal_map *self)
+struct bsal_dynamic_hash_table *bsal_map_table(struct bsal_map *self)
 {
-    return bsal_dynamic_hash_table_buckets(&self->table);
+    return &self->table;
 }
-
-int bsal_map_state(struct bsal_map *self, uint64_t bucket)
-{
-    return bsal_dynamic_hash_table_state(&self->table, bucket);
-}
-
-void *bsal_map_key(struct bsal_map *self, uint64_t bucket)
-{
-    return bsal_dynamic_hash_table_key(&self->table, bucket);
-}
-
-void *bsal_map_value(struct bsal_map *self, uint64_t bucket)
-{
-    return bsal_dynamic_hash_table_value(&self->table, bucket);
-}
-
-
