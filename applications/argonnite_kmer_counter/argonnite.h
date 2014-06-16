@@ -26,6 +26,8 @@ struct argonnite {
     int configured_aggregators;
 
     int spawned_stores;
+
+    int distribution;
 };
 
 extern struct bsal_script argonnite_script;

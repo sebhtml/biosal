@@ -1,6 +1,8 @@
 
 #include "argonnite.h"
 
+#include <data/coverage_distribution.h>
+
 #include <structures/vector.h>
 #include <structures/vector_iterator.h>
 
@@ -52,6 +54,8 @@ void argonnite_init(struct bsal_actor *actor)
                     &bsal_kernel_director_script);
     bsal_actor_add_script(actor, BSAL_KMER_STORE_SCRIPT,
                     &bsal_kmer_store_script);
+    bsal_actor_add_script(actor, BSAL_COVERAGE_DISTRIBUTION_SCRIPT,
+                    &bsal_coverage_distribution_script);
 
     concrete_actor->kmer_length = 41;
     concrete_actor->block_size = 512;
@@ -86,6 +90,7 @@ void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message)
     int controller;
     int manager_for_directors;
     int manager_for_aggregators;
+    int distribution;
     struct bsal_vector spawners;
     int other_name;
     struct bsal_vector customers;
@@ -101,6 +106,7 @@ void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message)
     int i;
     int manager_for_stores;
     struct bsal_vector stores;
+    int spawner;
 
     concrete_actor = (struct argonnite *)bsal_actor_concrete_actor(actor);
     tag = bsal_message_tag(message);
@@ -127,6 +133,8 @@ void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message)
 
         bsal_vector_unpack(&initial_actors, buffer);
 
+        spawner = bsal_vector_helper_at_as_int(&initial_actors, bsal_vector_size(&initial_actors) / 2);
+
         bsal_actor_helper_add_acquaintances(actor, &initial_actors, &concrete_actor->initial_actors);
 
         /*
@@ -142,13 +150,24 @@ void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message)
         manager_for_directors = bsal_actor_spawn(actor, BSAL_MANAGER_SCRIPT);
         concrete_actor->manager_for_directors = bsal_actor_get_acquaintance_index(actor, manager_for_directors);
 
-        bsal_actor_helper_send_int(actor, manager_for_directors, BSAL_MANAGER_SET_SCRIPT,
-                        BSAL_KERNEL_DIRECTOR_SCRIPT);
-
 #ifdef ARGONNITE_DEBUG1
         BSAL_DEBUG_MARKER("after setting script");
         printf("manager %d, index %d\n", manager_for_directors, concrete_actor->manager_for_directors);
 #endif
+
+        bsal_actor_helper_send_int(actor, spawner, BSAL_ACTOR_SPAWN, BSAL_COVERAGE_DISTRIBUTION_SCRIPT);
+
+        bsal_vector_destroy(&initial_actors);
+
+    } else if (tag == BSAL_ACTOR_SPAWN_REPLY) {
+
+        bsal_message_helper_unpack_int(message, 0, &distribution);
+
+        concrete_actor->distribution = bsal_actor_get_acquaintance_index(actor, distribution);
+
+        manager_for_directors = bsal_actor_get_acquaintance(actor, concrete_actor->manager_for_directors);
+        bsal_actor_helper_send_int(actor, manager_for_directors, BSAL_MANAGER_SET_SCRIPT,
+                        BSAL_KERNEL_DIRECTOR_SCRIPT);
 
     } else if (tag == BSAL_MANAGER_SET_SCRIPT_REPLY
                     && source == bsal_actor_get_acquaintance(actor,
@@ -432,27 +451,6 @@ void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message)
                         name);
 #endif
 
-        controller = bsal_actor_get_acquaintance(actor, concrete_actor->controller);
-        manager_for_directors = bsal_actor_get_acquaintance(actor, concrete_actor->manager_for_directors);
-        manager_for_aggregators = bsal_actor_get_acquaintance(actor, concrete_actor->manager_for_aggregators);
-        manager_for_stores = bsal_actor_get_acquaintance(actor, concrete_actor->manager_for_stores);
-
-        printf("argonnite actor/%d stops controller actor/%d\n",
-                        bsal_actor_name(actor), controller);
-        bsal_actor_helper_send_empty(actor, controller, BSAL_ACTOR_ASK_TO_STOP);
-
-        printf("argonnite actor/%d stops director manager actor/%d\n",
-                        bsal_actor_name(actor), manager_for_directors);
-        bsal_actor_helper_send_empty(actor, manager_for_directors, BSAL_ACTOR_ASK_TO_STOP);
-
-        printf("argonnite actor/%d stops aggregator manager actor/%d\n",
-                        bsal_actor_name(actor), manager_for_aggregators);
-        bsal_actor_helper_send_empty(actor, manager_for_aggregators, BSAL_ACTOR_ASK_TO_STOP);
-
-        printf("argonnite actor/%d stops store manager actor/%d\n",
-                        bsal_actor_name(actor), manager_for_stores);
-        bsal_actor_helper_send_empty(actor, manager_for_stores, BSAL_ACTOR_ASK_TO_STOP);
-
         bsal_actor_helper_get_acquaintances(actor, &concrete_actor->initial_actors, &initial_actors);
 
         bsal_vector_iterator_init(&iterator, &initial_actors);
@@ -475,6 +473,9 @@ void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message)
     } else if (tag == BSAL_ACTOR_ASK_TO_STOP) {
 
         printf("argonnite actor/%d stops\n", name);
+
+        bsal_actor_helper_ask_to_stop(actor, message);
+
 
         bsal_actor_helper_send_to_self_empty(actor, BSAL_ACTOR_STOP);
     }

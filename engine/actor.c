@@ -9,6 +9,8 @@
 #include <helpers/vector_helper.h>
 #include <helpers/message_helper.h>
 
+#include <system/memory.h>
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -505,6 +507,11 @@ int bsal_actor_receive_system(struct bsal_actor *actor, struct bsal_message *mes
     int count;
     int old_supervisor;
     int supervisor;
+    int new_count;
+    void *new_buffer;
+    struct bsal_message new_message;
+    int offset;
+    int bytes;
 
     tag = bsal_message_tag(message);
 
@@ -581,8 +588,23 @@ int bsal_actor_receive_system(struct bsal_actor *actor, struct bsal_message *mes
         script = *(int *)buffer;
         spawned = bsal_actor_spawn_real(actor, script);
         bsal_node_set_supervisor(bsal_actor_node(actor), spawned, source);
-        bsal_message_init(message, BSAL_ACTOR_SPAWN_REPLY, sizeof(spawned), &spawned);
-        bsal_actor_send(actor, source, message);
+
+        new_buffer = bsal_malloc(2 * sizeof(int));
+        offset = 0;
+
+        bytes = sizeof(spawned);
+        memcpy((char *)new_buffer + offset, &spawned, bytes);
+        offset += bytes;
+        bytes = sizeof(script);
+        memcpy((char *)new_buffer + offset, &script, bytes);
+        offset += bytes;
+
+        new_count = offset;
+        bsal_message_init(&new_message, BSAL_ACTOR_SPAWN_REPLY, new_count, new_buffer);
+        bsal_actor_send(actor, source, &new_message);
+
+        bsal_message_destroy(&new_message);
+        bsal_free(new_buffer);
 
         return 1;
 
