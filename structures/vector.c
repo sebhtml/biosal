@@ -267,3 +267,8 @@ int bsal_vector_pack_unpack(struct bsal_vector *self, void *buffer, int operatio
 
     return bytes;
 }
+
+int bsal_vector_element_size(struct bsal_vector *self)
+{
+    return self->element_size;
+}

@@ -33,6 +33,14 @@ if (test_int_is_greater_than(a, b)) { \
     printf("Error File: %s, Function: %s, Line: %i\n", __FILE__, __func__, __LINE__); \
 }
 
+#define TEST_BOOLEAN(a, b) \
+if (( a && b ) || ( !a && !b)) { \
+    correct_tests++; \
+} else { \
+    incorrect_tests++; \
+    printf("Error File: %s, Function: %s, Line: %i\n", __FILE__, __func__, __LINE__); \
+}
+
 #define TEST_INT_EQUALS(a, b) \
 if (test_int_equals(a, b)) { \
     correct_tests++; \

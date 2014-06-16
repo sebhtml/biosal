@@ -2,6 +2,8 @@
 #include <structures/vector.h>
 #include <structures/vector_iterator.h>
 
+#include <helpers/vector_helper.h>
+
 #include "test.h"
 
 int main(int argc, char **argv)
@@ -135,6 +137,50 @@ int main(int argc, char **argv)
         }
 
         free(buffer);
+    }
+
+    {
+        int i;
+        struct bsal_vector vector;
+        int value1;
+        int value2;
+
+        bsal_vector_init(&vector, sizeof(int));
+
+        i = 1000;
+
+        while (i--) {
+            bsal_vector_push_back(&vector, &i);
+
+            if (bsal_vector_size(&vector) > 10) {
+                break;
+            }
+        }
+
+        /*
+        bsal_vector_helper_print_int(&vector);
+        printf("\n");
+        */
+
+        bsal_vector_helper_sort_int(&vector);
+
+        /*
+        bsal_vector_helper_print_int(&vector);
+        printf("\n");
+        */
+
+        for (i = 0; i < bsal_vector_size(&vector) - 1; i++) {
+            value1 = bsal_vector_helper_at_as_int(&vector, i);
+            value2 = bsal_vector_helper_at_as_int(&vector, i + 1);
+
+            if (value2 < value1) {
+                printf("%d %d\n", value1, value2);
+            }
+
+            TEST_BOOLEAN(value1 <= value2, 1);
+        }
+
+        bsal_vector_destroy(&vector);
     }
 
     END_TESTS();
