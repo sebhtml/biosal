@@ -23,4 +23,6 @@ void bsal_kmer_store_init(struct bsal_actor *actor);
 void bsal_kmer_store_destroy(struct bsal_actor *actor);
 void bsal_kmer_store_receive(struct bsal_actor *actor, struct bsal_message *message);
 
+void bsal_kmer_store_print(struct bsal_actor *self);
+
 #endif

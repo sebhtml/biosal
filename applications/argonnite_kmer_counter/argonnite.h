@@ -24,6 +24,8 @@ struct argonnite {
     int kmer_length;
     int configured_actors;
     int configured_aggregators;
+
+    int spawned_stores;
 };
 
 extern struct bsal_script argonnite_script;

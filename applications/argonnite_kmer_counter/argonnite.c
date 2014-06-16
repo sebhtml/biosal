@@ -58,6 +58,7 @@ void argonnite_init(struct bsal_actor *actor)
 
     concrete_actor->configured_actors = 0;
     concrete_actor->wired_directors = 0;
+    concrete_actor->spawned_stores = 0;
 }
 
 void argonnite_destroy(struct bsal_actor *actor)
@@ -332,7 +333,8 @@ void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message)
             bsal_vector_destroy(&aggregators);
         }
 
-    } else if (tag == BSAL_SET_KMER_LENGTH_REPLY) {
+    } else if (tag == BSAL_SET_KMER_LENGTH_REPLY
+                    && concrete_actor->spawned_stores == 0) {
 
         concrete_actor->configured_actors++;
 
@@ -378,6 +380,8 @@ void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message)
                     && source == bsal_actor_get_acquaintance(actor,
                             concrete_actor->manager_for_stores)) {
 
+        concrete_actor->spawned_stores = 1;
+
         bsal_vector_unpack(&stores, buffer);
         bsal_actor_helper_add_acquaintances(actor, &stores, &concrete_actor->stores);
 
@@ -401,6 +405,22 @@ void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message)
 
         if (concrete_actor->configured_aggregators == bsal_vector_size(&concrete_actor->aggregators)) {
 
+            concrete_actor->configured_actors = 0;
+
+            bsal_actor_helper_get_acquaintances(actor, &concrete_actor->stores, &stores);
+
+            bsal_actor_helper_send_range_int(actor, &stores, BSAL_SET_KMER_LENGTH,
+                            concrete_actor->kmer_length);
+
+            bsal_vector_destroy(&stores);
+        }
+
+    } else if (tag == BSAL_SET_KMER_LENGTH_REPLY
+                    && concrete_actor->spawned_stores == 1) {
+
+        concrete_actor->configured_actors++;
+
+        if (concrete_actor->configured_actors == bsal_vector_size(&concrete_actor->stores)) {
             bsal_actor_helper_send_empty(actor, bsal_actor_get_acquaintance(actor,
                                     concrete_actor->controller), BSAL_INPUT_DISTRIBUTE);
         }

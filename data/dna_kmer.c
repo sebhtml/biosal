@@ -135,3 +135,8 @@ int bsal_dna_kmer_store_index(struct bsal_dna_kmer *self, int stores)
 
     return value % stores;
 }
+
+char *bsal_dna_kmer_sequence(struct bsal_dna_kmer *sequence)
+{
+    return sequence->data;
+}
