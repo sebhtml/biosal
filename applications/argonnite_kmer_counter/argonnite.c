@@ -63,6 +63,7 @@ void argonnite_init(struct bsal_actor *actor)
     concrete_actor->configured_actors = 0;
     concrete_actor->wired_directors = 0;
     concrete_actor->spawned_stores = 0;
+    concrete_actor->wiring_distribution = 0;
 }
 
 void argonnite_destroy(struct bsal_actor *actor)
@@ -331,6 +332,18 @@ void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message)
             BSAL_DEBUG_MARKER("after loop");
 #endif
 
+    } else if (tag == BSAL_SET_CUSTOMER_REPLY
+                    && concrete_actor->wiring_distribution) {
+
+        concrete_actor->configured_actors++;
+
+        if (concrete_actor->configured_actors == bsal_vector_size(&concrete_actor->stores)) {
+            bsal_actor_helper_send_empty(actor, bsal_actor_get_acquaintance(actor,
+                                    concrete_actor->controller), BSAL_INPUT_DISTRIBUTE);
+
+            concrete_actor->wiring_distribution = 0;
+        }
+
     } else if (tag == BSAL_SET_CUSTOMER_REPLY) {
 
         concrete_actor->wired_directors++;
@@ -440,8 +453,19 @@ void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message)
         concrete_actor->configured_actors++;
 
         if (concrete_actor->configured_actors == bsal_vector_size(&concrete_actor->stores)) {
-            bsal_actor_helper_send_empty(actor, bsal_actor_get_acquaintance(actor,
-                                    concrete_actor->controller), BSAL_INPUT_DISTRIBUTE);
+
+            concrete_actor->configured_actors = 0;
+
+            bsal_actor_helper_get_acquaintances(actor, &concrete_actor->stores, &stores);
+
+            distribution = bsal_actor_get_acquaintance(actor, concrete_actor->distribution);
+
+            concrete_actor->wiring_distribution = 1;
+
+            bsal_actor_helper_send_range_int(actor, &stores, BSAL_SET_CUSTOMER,
+                            distribution);
+
+            bsal_vector_destroy(&stores);
         }
 
     } else if (tag == BSAL_INPUT_DISTRIBUTE_REPLY) {
@@ -450,6 +474,16 @@ void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message)
         printf("argonnite actor/%d receives BSAL_INPUT_DISTRIBUTE_REPLY\n",
                         name);
 #endif
+
+        distribution = bsal_actor_get_acquaintance(actor, concrete_actor->distribution);
+        bsal_actor_helper_get_acquaintances(actor, &concrete_actor->stores, &stores);
+
+        bsal_actor_helper_send_int(actor, distribution, BSAL_SET_EXPECTED_MESSAGES, bsal_vector_size(&stores));
+
+        bsal_actor_helper_send_range_empty(actor, &stores, BSAL_PUSH_DATA);
+        bsal_vector_destroy(&stores);
+
+    } else if (tag == BSAL_SET_EXPECTED_MESSAGES_REPLY) {
 
         bsal_actor_helper_get_acquaintances(actor, &concrete_actor->initial_actors, &initial_actors);
 

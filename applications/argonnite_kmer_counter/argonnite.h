@@ -28,6 +28,7 @@ struct argonnite {
     int spawned_stores;
 
     int distribution;
+    int wiring_distribution;
 };
 
 extern struct bsal_script argonnite_script;

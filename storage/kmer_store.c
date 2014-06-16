@@ -4,6 +4,8 @@
 #include <kernels/kmer_counter_kernel.h>
 
 #include <data/dna_kmer_block.h>
+#include <data/coverage_distribution.h>
+
 #include <helpers/message_helper.h>
 #include <helpers/actor_helper.h>
 
@@ -61,6 +63,7 @@ void bsal_kmer_store_receive(struct bsal_actor *self, struct bsal_message *messa
     struct bsal_vector_iterator iterator;
     struct bsal_dna_kmer *kmer_pointer;
     int *bucket;
+    int customer;
 
     concrete_actor = (struct bsal_kmer_store *)bsal_actor_concrete_actor(self);
     tag = bsal_message_tag(message);
@@ -132,6 +135,20 @@ void bsal_kmer_store_receive(struct bsal_actor *self, struct bsal_message *messa
 #endif
 
         bsal_actor_helper_ask_to_stop(self, message);
+
+    } else if (tag == BSAL_SET_CUSTOMER) {
+
+        bsal_message_helper_unpack_int(message, 0, &customer);
+
+        printf("store actor/%d will use distribution actor/%d\n",
+                        name, customer);
+        concrete_actor->customer = bsal_actor_add_acquaintance(self, customer);
+
+        bsal_actor_helper_send_reply_empty(self, BSAL_SET_CUSTOMER_REPLY);
+
+    } else if (tag == BSAL_PUSH_DATA) {
+
+        bsal_kmer_store_push_data(self, message);
     }
 }
 
@@ -162,4 +179,64 @@ void bsal_kmer_store_print(struct bsal_actor *self)
     }
 
     bsal_map_iterator_destroy(&iterator);
+}
+
+void bsal_kmer_store_push_data(struct bsal_actor *self, struct bsal_message *message)
+{
+    struct bsal_map_iterator iterator;
+    struct bsal_dna_kmer kmer;
+    void *key;
+    int *value;
+    int coverage;
+    struct bsal_kmer_store *concrete_actor;
+    int customer;
+    struct bsal_map coverage_distribution;
+    uint64_t *count;
+    int new_count;
+    void *new_buffer;
+    struct bsal_message new_message;
+
+    concrete_actor = (struct bsal_kmer_store *)bsal_actor_concrete_actor(self);
+    customer = bsal_actor_get_acquaintance(self, concrete_actor->customer);
+
+    bsal_map_init(&coverage_distribution, sizeof(int), sizeof(uint64_t));
+
+    bsal_map_iterator_init(&iterator, &concrete_actor->table);
+
+    while (bsal_map_iterator_has_next(&iterator)) {
+        bsal_map_iterator_next(&iterator, (void **)&key, (void **)&value);
+
+        bsal_dna_kmer_unpack(&kmer, key);
+
+        coverage = *value;
+
+        count = (uint64_t *)bsal_map_get(&coverage_distribution, &coverage);
+
+        if (count == NULL) {
+
+            count = (uint64_t *)bsal_map_add(&coverage_distribution, &coverage);
+
+            (*count) = 0;
+        }
+
+        (*count)++;
+    }
+
+    bsal_map_iterator_destroy(&iterator);
+
+    new_count = bsal_map_pack_size(&coverage_distribution);
+    new_buffer = bsal_malloc(new_count);
+
+    bsal_map_pack(&coverage_distribution, new_buffer);
+
+    printf("SENDING map to %d, %d bytes\n", customer, new_count);
+
+    bsal_message_init(&new_message, BSAL_PUSH_DATA, new_count, new_buffer);
+
+    bsal_actor_send(self, customer, &new_message);
+    bsal_free(new_buffer);
+
+    bsal_map_destroy(&coverage_distribution);
+
+    bsal_actor_helper_send_reply_empty(self, BSAL_PUSH_DATA_REPLY);
 }
