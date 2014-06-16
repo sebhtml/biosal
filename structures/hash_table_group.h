@@ -34,4 +34,7 @@ void *bsal_hash_table_group_value(struct bsal_hash_table_group *group, int bucke
 int bsal_hash_table_group_get_bit(void *bitmap, int bucket);
 void bsal_hash_table_group_set_bit(void *bitmap, int bucket, int value1);
 
+int bsal_hash_table_group_pack_unpack(struct bsal_hash_table_group *self, void *buffer, int operation,
+                int buckets_per_group, int key_size, int value_size);
+
 #endif

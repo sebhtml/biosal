@@ -133,6 +133,11 @@ int main(int argc, char **argv)
         int key;
         int elements;
         int i;
+        void *buffer;
+        int count;
+        struct bsal_map map2;
+        int *bucket;
+        int value;
 
         elements = 900;
         bsal_map_init(&map, sizeof(int), sizeof(int));
@@ -142,9 +147,37 @@ int main(int argc, char **argv)
             key = i;
 
             TEST_INT_EQUALS(bsal_map_size(&map), i);
-            bsal_map_add(&map, &key);
+            bucket = bsal_map_add(&map, &key);
             TEST_INT_EQUALS(bsal_map_size(&map), i + 1);
+
+            (*bucket) = i * i;
         }
+
+        count = bsal_map_pack_size(&map);
+        buffer = malloc(count);
+        bsal_map_pack(&map, buffer);
+
+        /*
+        printf("before unpacking %d bytes %p\n", count, buffer);
+        */
+        bsal_map_unpack(&map2, buffer);
+
+        /*
+        printf("after unpacking\n");
+        */
+
+        for (i = 0; i < elements; i++) {
+
+            bucket = (int *)bsal_map_get(&map2, &i);
+
+            TEST_POINTER_NOT_EQUALS(bucket, NULL);
+
+            value = *bucket;
+
+            TEST_INT_EQUALS(value, i * i);
+        }
+
+        free(buffer);
 
         bsal_map_destroy(&map);
     }

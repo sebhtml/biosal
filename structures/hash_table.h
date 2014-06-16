@@ -66,4 +66,10 @@ uint64_t bsal_hash_table_find_bucket(struct bsal_hash_table *table, void *key,
                 int *group, int *bucket_in_group, int operation);
 void bsal_hash_table_toggle_debug(struct bsal_hash_table *table);
 
+int bsal_hash_table_pack_size(struct bsal_hash_table *self);
+int bsal_hash_table_pack(struct bsal_hash_table *self, void *buffer);
+int bsal_hash_table_unpack(struct bsal_hash_table *self, void *buffer);
+
+int bsal_hash_table_pack_unpack(struct bsal_hash_table *self, void *buffer, int operation);
+
 #endif

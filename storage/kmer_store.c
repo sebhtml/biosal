@@ -130,7 +130,7 @@ void bsal_kmer_store_receive(struct bsal_actor *self, struct bsal_message *messa
 #ifdef BSAL_KMER_STORE_DEBUG
         bsal_kmer_store_print(self);
 #endif
-        
+
         bsal_actor_helper_ask_to_stop(self, message);
     }
 }

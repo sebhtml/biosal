@@ -5,6 +5,8 @@
 
 #include <system/memory.h>
 
+#include <system/packer.h>
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdint.h>
@@ -520,3 +522,78 @@ int bsal_hash_table_key_size(struct bsal_hash_table *self)
 {
     return self->key_size;
 }
+
+int bsal_hash_table_pack_size(struct bsal_hash_table *self)
+{
+    return bsal_hash_table_pack_unpack(self, NULL, BSAL_PACKER_OPERATION_DRY_RUN);
+}
+
+int bsal_hash_table_pack(struct bsal_hash_table *self, void *buffer)
+{
+    return bsal_hash_table_pack_unpack(self, buffer, BSAL_PACKER_OPERATION_PACK);
+}
+
+int bsal_hash_table_unpack(struct bsal_hash_table *self, void *buffer)
+{
+#ifdef BSAL_HASH_TABLE_DEBUG
+    printf("hash unpack\n");
+#endif
+
+    return bsal_hash_table_pack_unpack(self, buffer, BSAL_PACKER_OPERATION_UNPACK);
+}
+
+int bsal_hash_table_pack_unpack(struct bsal_hash_table *self, void *buffer, int operation)
+{
+    /* implement packing for the hash table
+     */
+    struct bsal_packer packer;
+    int offset;
+    int i;
+
+#ifdef BSAL_HASH_TABLE_DEBUG
+    printf("hash pack/unpack %p\n", buffer);
+#endif
+
+    bsal_packer_init(&packer, operation, buffer);
+
+    bsal_packer_work(&packer, &self->elements, sizeof(self->elements));
+    bsal_packer_work(&packer, &self->buckets, sizeof(self->buckets));
+
+    bsal_packer_work(&packer, &self->group_count, sizeof(self->group_count));
+    bsal_packer_work(&packer, &self->buckets_per_group, sizeof(self->buckets_per_group));
+    bsal_packer_work(&packer, &self->key_size, sizeof(self->key_size));
+    bsal_packer_work(&packer, &self->value_size, sizeof(self->value_size));
+
+    bsal_packer_work(&packer, &self->debug, sizeof(self->debug));
+
+    offset = bsal_packer_worked_bytes(&packer);
+
+#ifdef BSAL_HASH_TABLE_DEBUG
+    printf("before destroy\n");
+#endif
+
+    bsal_packer_destroy(&packer);
+
+    if (operation == BSAL_PACKER_OPERATION_UNPACK) {
+
+#ifdef BSAL_HASH_TABLE_DEBUG
+        printf("hash init, buckets key_size value_size %d %d %d\n",
+                         (int)self->buckets, self->key_size, self->value_size);
+#endif
+
+        bsal_hash_table_init(self, self->buckets, self->key_size, self->value_size);
+    }
+
+    for (i = 0; i < self->group_count; i++) {
+
+        offset += bsal_hash_table_group_pack_unpack(self->groups + i,
+                        (char *)buffer + offset, operation,
+                        self->buckets_per_group, self->key_size,
+                        self->value_size);
+    }
+
+    return offset;
+}
+
+
+

@@ -1,6 +1,8 @@
 
 #include "map.h"
 
+#include <stdio.h>
+
 void bsal_map_init(struct bsal_map *self, int key_size, int value_size)
 {
     bsal_dynamic_hash_table_init(&self->table, 2, key_size, value_size);
@@ -34,4 +36,19 @@ uint64_t bsal_map_size(struct bsal_map *self)
 struct bsal_dynamic_hash_table *bsal_map_table(struct bsal_map *self)
 {
     return &self->table;
+}
+
+int bsal_map_pack_size(struct bsal_map *self)
+{
+    return bsal_dynamic_hash_table_pack_size(&self->table);
+}
+
+int bsal_map_pack(struct bsal_map *self, void *buffer)
+{
+    return bsal_dynamic_hash_table_pack(&self->table, buffer);
+}
+
+int bsal_map_unpack(struct bsal_map *self, void *buffer)
+{
+    return bsal_dynamic_hash_table_unpack(&self->table, buffer);
 }

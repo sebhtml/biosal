@@ -29,11 +29,21 @@ void bsal_dynamic_hash_table_delete(struct bsal_dynamic_hash_table *self, void *
 uint64_t bsal_dynamic_hash_table_size(struct bsal_dynamic_hash_table *self);
 uint64_t bsal_dynamic_hash_table_buckets(struct bsal_dynamic_hash_table *self);
 
+/**
+ * \return 1 if resizing was completed, 0 otherwise
+ */
 int bsal_dynamic_hash_table_resize(struct bsal_dynamic_hash_table *self);
 void bsal_dynamic_hash_table_start_resizing(struct bsal_dynamic_hash_table *self);
 
 int bsal_dynamic_hash_table_state(struct bsal_dynamic_hash_table *self, uint64_t bucket);
 void *bsal_dynamic_hash_table_key(struct bsal_dynamic_hash_table *self, uint64_t bucket);
 void *bsal_dynamic_hash_table_value(struct bsal_dynamic_hash_table *self, uint64_t bucket);
+
+int bsal_dynamic_hash_table_pack_size(struct bsal_dynamic_hash_table *self);
+int bsal_dynamic_hash_table_pack(struct bsal_dynamic_hash_table *self, void *buffer);
+int bsal_dynamic_hash_table_unpack(struct bsal_dynamic_hash_table *self, void *buffer);
+
+void bsal_dynamic_hash_table_finish_resizing(struct bsal_dynamic_hash_table *self);
+void bsal_dynamic_hash_table_reset(struct bsal_dynamic_hash_table *self);
 
 #endif

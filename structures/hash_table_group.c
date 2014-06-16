@@ -1,6 +1,8 @@
 
 #include "hash_table_group.h"
 
+#include <system/packer.h>
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdint.h>
@@ -175,3 +177,34 @@ void *bsal_hash_table_group_value(struct bsal_hash_table_group *group, int bucke
     /* we assume that the key is stored first */
     return (char *)bsal_hash_table_group_key(group, bucket, key_size, value_size) + key_size;
 }
+
+int bsal_hash_table_group_pack_unpack(struct bsal_hash_table_group *self, void *buffer, int operation,
+                int buckets_per_group, int key_size, int value_size)
+{
+
+    struct bsal_packer packer;
+    int offset;
+    int bitmap_bytes;
+    int array_bytes;
+
+    if (operation == BSAL_PACKER_OPERATION_UNPACK) {
+
+        bsal_hash_table_group_init(self, buckets_per_group, key_size, value_size);
+    }
+
+    bitmap_bytes = buckets_per_group / BSAL_BITS_PER_BYTE;
+    array_bytes = buckets_per_group * (key_size + value_size);
+
+    bsal_packer_init(&packer, operation, buffer);
+
+    bsal_packer_work(&packer, self->array, array_bytes);
+    bsal_packer_work(&packer, self->occupancy_bitmap, bitmap_bytes);
+    bsal_packer_work(&packer, self->deletion_bitmap, bitmap_bytes);
+
+    offset = bsal_packer_worked_bytes(&packer);
+    bsal_packer_destroy(&packer);
+
+    return offset;
+}
+
+
