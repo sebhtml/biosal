@@ -178,7 +178,7 @@ int main(int argc, char **argv)
                 printf("%d %d\n", value1, value2);
             }
 
-            TEST_BOOLEAN(value1 <= value2, 1);
+            TEST_BOOLEAN_EQUALS(value1 <= value2, 1);
         }
 
         bsal_vector_destroy(&vector);
