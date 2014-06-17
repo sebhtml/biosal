@@ -26,6 +26,8 @@ struct bsal_aggregator {
  */
 #define BSAL_AGGREGATE_KERNEL_OUTPUT 0x0000225f
 #define BSAL_AGGREGATE_KERNEL_OUTPUT_REPLY 0x00005cf2
+#define BSAL_AGGREGATOR_FLUSH 0x00007305
+#define BSAL_AGGREGATOR_FLUSH_REPLY 0x000029fe
 
 extern struct bsal_script bsal_aggregator_script;
 

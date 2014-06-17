@@ -35,6 +35,7 @@ void bsal_kmer_store_init(struct bsal_actor *self)
 
     concrete_actor = (struct bsal_kmer_store *)bsal_actor_concrete_actor(self);
     concrete_actor->kmer_length = -1;
+    concrete_actor->received = 0;
 }
 
 void bsal_kmer_store_destroy(struct bsal_actor *self)
@@ -121,6 +122,8 @@ void bsal_kmer_store_receive(struct bsal_actor *self, struct bsal_message *messa
             }
 
             (*bucket)++;
+
+            concrete_actor->received++;
         }
 
         bsal_free(key);
@@ -154,6 +157,11 @@ void bsal_kmer_store_receive(struct bsal_actor *self, struct bsal_message *messa
     } else if (tag == BSAL_PUSH_DATA) {
 
         bsal_kmer_store_push_data(self, message);
+
+    } else if (tag == BSAL_STORE_GET_ENTRY_COUNT) {
+
+        bsal_actor_helper_send_reply_uint64_t(self, BSAL_STORE_GET_ENTRY_COUNT_REPLY,
+                        concrete_actor->received);
     }
 }
 

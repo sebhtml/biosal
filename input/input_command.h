@@ -34,5 +34,6 @@ int bsal_input_command_pack_unpack(struct bsal_input_command *self, void *buffer
 void bsal_input_command_print(struct bsal_input_command *self);
 
 struct bsal_vector *bsal_input_command_entries(struct bsal_input_command *self);
+int bsal_input_command_entry_count(struct bsal_input_command *self);
 
 #endif

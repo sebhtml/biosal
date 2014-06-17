@@ -14,10 +14,14 @@ struct bsal_kmer_store {
     int key_length_in_bytes;
 
     int customer;
+
+    uint64_t received;
 };
 
 #define BSAL_PUSH_KMER_BLOCK 0x00004f09
 #define BSAL_PUSH_KMER_BLOCK_REPLY 0x000058fb
+#define BSAL_STORE_GET_ENTRY_COUNT 0x00007aad
+#define BSAL_STORE_GET_ENTRY_COUNT_REPLY 0x00002e6a
 
 extern struct bsal_script bsal_kmer_store_script;
 

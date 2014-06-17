@@ -15,6 +15,8 @@
 
 #include <stdint.h>
 
+#include <inttypes.h>
+
 /*
 #define BSAL_DNA_SEQUENCE_DEBUG
 */
@@ -188,10 +190,33 @@ void bsal_dna_kmer_print(struct bsal_dna_kmer *self)
 uint64_t bsal_dna_kmer_hash(struct bsal_dna_kmer *self)
 {
     unsigned int seed;
+    char *sequence;
+    uint64_t hash;
+
     seed = 0xcaa9cfcf;
 
-    return bsal_murmur_hash_2_64_a(self->encoded_data, self->length_in_bases, seed);
+    /* TODO
+     * comment this block
+     */
+#if 1
+    hash = bsal_murmur_hash_2_64_a(self->encoded_data, self->length_in_bases, seed);
+
+    return hash;
+#endif
+
+    /* decode sequence because otherwise we'll get a bad performance
+     */
+    sequence = bsal_malloc(self->length_in_bases + 1);
+    bsal_dna_kmer_get_sequence(self, sequence);
+    hash = bsal_murmur_hash_2_64_a(sequence, self->length_in_bases, seed);
+/*
+    printf("%s %" PRIu64 "\n", sequence, hash);
+*/
+    bsal_free(sequence);
+
+    return hash;
 }
+
 int bsal_dna_kmer_store_index(struct bsal_dna_kmer *self, int stores)
 {
     uint64_t value;

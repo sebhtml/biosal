@@ -70,9 +70,14 @@ void bsal_actor_helper_send_reply_int(struct bsal_actor *actor, int tag, int val
     bsal_actor_helper_send_int(actor, bsal_actor_source(actor), tag, value);
 }
 
-void bsal_actor_helper_send_reply_int64_t(struct bsal_actor *actor, int tag, int value)
+void bsal_actor_helper_send_reply_int64_t(struct bsal_actor *actor, int tag, int64_t value)
 {
     bsal_actor_helper_send_int64_t(actor, bsal_actor_source(actor), tag, value);
+}
+
+void bsal_actor_helper_send_reply_uint64_t(struct bsal_actor *actor, int tag, uint64_t value)
+{
+    bsal_actor_helper_send_uint64_t(actor, bsal_actor_source(actor), tag, value);
 }
 
 void bsal_actor_helper_send_int(struct bsal_actor *actor, int destination, int tag, int value)

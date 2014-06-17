@@ -3,6 +3,7 @@
 
 #include "kmer_counter_kernel.h"
 
+#include <input/input_command.h>
 #include <storage/sequence_store.h>
 
 #include <helpers/actor_helper.h>
@@ -12,6 +13,8 @@
 #include <system/debugger.h>
 
 #include <stdio.h>
+
+#include <inttypes.h>
 
 struct bsal_script bsal_kernel_director_script = {
     .name = BSAL_KERNEL_DIRECTOR_SCRIPT,
@@ -35,6 +38,14 @@ void bsal_kernel_director_init(struct bsal_actor *actor)
     concrete_actor->maximum_kernels = bsal_actor_node_worker_count(actor) * kernels_per_worker;
     concrete_actor->kmer_length = -1;
     concrete_actor->aggregator = -1;
+
+    concrete_actor->expected_entries = 0;
+    concrete_actor->last_entries = 0;
+    concrete_actor->actual_entries = 0;
+
+    concrete_actor->total_kmers = 0;
+    concrete_actor->notified = 0;
+    concrete_actor->notification_source = 0;
 }
 
 void bsal_kernel_director_destroy(struct bsal_actor *actor)
@@ -56,13 +67,19 @@ void bsal_kernel_director_receive(struct bsal_actor *actor, struct bsal_message 
     int aggregator;
     int source;
     struct bsal_kernel_director *concrete_actor;
+    struct bsal_input_command command;
+    void *buffer;
+    int produced;
 
     concrete_actor = (struct bsal_kernel_director *)bsal_actor_concrete_actor(actor);
     tag = bsal_message_tag(message);
     source = bsal_message_source(message);
     name = bsal_actor_name(actor);
+    buffer = bsal_message_buffer(message);
 
     if (tag == BSAL_RESERVE) {
+
+        bsal_message_helper_unpack_uint64_t(message, 0, &concrete_actor->expected_entries);
 
         bsal_actor_helper_send_reply_empty(actor, BSAL_RESERVE_REPLY);
 
@@ -73,6 +90,13 @@ void bsal_kernel_director_receive(struct bsal_actor *actor, struct bsal_message 
 #endif
 
         concrete_actor->received++;
+
+        bsal_input_command_unpack(&command, buffer);
+        concrete_actor->actual_entries += bsal_input_command_entry_count(&command);
+
+
+
+        bsal_input_command_destroy(&command);
 
         if (bsal_queue_empty(&concrete_actor->available_kernels)) {
 
@@ -104,6 +128,22 @@ void bsal_kernel_director_receive(struct bsal_actor *actor, struct bsal_message 
         /* tell the source that it's OK to send other commands now
          */
         bsal_actor_helper_send_reply_empty(actor, BSAL_PUSH_SEQUENCE_DATA_BLOCK_REPLY);
+
+        if (concrete_actor->last_entries == 0
+                 || concrete_actor->actual_entries > concrete_actor->last_entries + 100000) {
+
+            printf("kernel director actor/%d received %" PRIu64 "/%" PRIu64 " entries so far, %d queued blocks,"
+                            " %d/%d idle kernels\n",
+                            name, concrete_actor->actual_entries,
+                            concrete_actor->expected_entries,
+                            bsal_actor_enqueued_message_count(actor),
+                            bsal_queue_size(&concrete_actor->available_kernels),
+                            (int)bsal_vector_size(&concrete_actor->kernels));
+
+            concrete_actor->last_entries = concrete_actor->actual_entries;
+        }
+
+
 
     } else if (tag == BSAL_SPAWN_KERNEL_REPLY) {
 
@@ -162,6 +202,15 @@ void bsal_kernel_director_receive(struct bsal_actor *actor, struct bsal_message 
 
     } else if (tag == BSAL_PUSH_SEQUENCE_DATA_BLOCK_REPLY) {
 
+        bsal_message_helper_unpack_int(message, 0, &produced);
+
+#ifdef BSAL_KERNEL_DIRECTOR_DEBUG
+        printf("DEBUG kernel produced %d kmers\n",
+                        produced);
+#endif
+
+        concrete_actor->total_kmers += produced;
+
         /* one of the kernel completed his work.
          */
 
@@ -172,6 +221,8 @@ void bsal_kernel_director_receive(struct bsal_actor *actor, struct bsal_message 
         kernel = source;
 
         bsal_kernel_director_try_kernel(actor, kernel);
+
+        bsal_kernel_director_verify(actor, message);
 
     } else if (tag == BSAL_ACTOR_ASK_TO_STOP && (source == name
                     || source == bsal_actor_supervisor(actor))) {
@@ -201,7 +252,48 @@ void bsal_kernel_director_receive(struct bsal_actor *actor, struct bsal_message 
 
         bsal_actor_helper_send_reply_empty(actor, BSAL_SET_CUSTOMER_REPLY);
 
+    } else if (tag == BSAL_KERNEL_DIRECTOR_NOTIFY) {
+
+        concrete_actor->notified = 1;
+        concrete_actor->notification_source = bsal_actor_add_acquaintance(actor, source);
+
+        bsal_kernel_director_verify(actor, message);
     }
+}
+
+void bsal_kernel_director_verify(struct bsal_actor *actor, struct bsal_message *message)
+{
+    struct bsal_kernel_director *concrete_actor;
+
+    concrete_actor = (struct bsal_kernel_director *)bsal_actor_concrete_actor(actor);
+
+    /* not all entries were received
+     */
+    if (concrete_actor->actual_entries < concrete_actor->expected_entries) {
+        return;
+    }
+
+    /* not all kernels are available
+     */
+    if (bsal_queue_size(&concrete_actor->available_kernels) !=
+                    bsal_vector_size(&concrete_actor->kernels)) {
+        return;
+    }
+
+    /* there are queued messages
+     */
+
+    if (bsal_actor_enqueued_message_count(actor) > 0) {
+        return;
+    }
+
+    /* otherwise, respond with the expected number of kmers
+     */
+
+    bsal_actor_helper_send_uint64_t(actor, bsal_actor_get_acquaintance(actor,
+                            concrete_actor->notification_source),
+                    BSAL_KERNEL_DIRECTOR_NOTIFY_REPLY,
+                    concrete_actor->total_kmers);
 }
 
 void bsal_kernel_director_try_kernel(struct bsal_actor *actor, int kernel)

@@ -24,7 +24,6 @@
  */
 /*
 */
-#define BSAL_KMER_COUNTER_KERNEL_ENABLED
 
 /* debugging options
  */
@@ -91,6 +90,7 @@ void bsal_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_mess
     struct bsal_dna_kmer_block block;
     int to_reserve;
     int maximum_length;
+    int produced;
 
 #ifdef BSAL_KMER_COUNTER_KERNEL_DEBUG
     int count;
@@ -119,6 +119,7 @@ void bsal_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_mess
         bsal_timer_init(&timer);
         bsal_timer_start(&timer);
 
+        produced = 0;
         customer = bsal_actor_get_acquaintance(actor, concrete_actor->customer);
         source_index = bsal_actor_add_acquaintance(actor, source);
 
@@ -185,6 +186,8 @@ void bsal_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_mess
                 bsal_dna_kmer_destroy(&kmer);
 
                 sequence_data[j + concrete_actor->kmer_length] = saved;
+
+                produced++;
             }
         }
 
@@ -204,7 +207,6 @@ void bsal_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_mess
         printf("customer %d\n", customer);
 #endif
 
-#ifdef BSAL_KMER_COUNTER_KERNEL_ENABLED
 
 #ifdef BSAL_KMER_COUNTER_KERNEL_DEBUG
         BSAL_DEBUG_MARKER("kernel sends to customer\n");
@@ -235,12 +237,9 @@ void bsal_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_mess
         bsal_actor_send(actor, customer, &new_message);
         bsal_free(new_buffer);
 
-#else
-
-        bsal_actor_helper_send_empty(actor,
+        bsal_actor_helper_send_int(actor,
                         bsal_actor_get_acquaintance(actor, source_index),
-                        BSAL_PUSH_SEQUENCE_DATA_BLOCK_REPLY);
-#endif
+                        BSAL_PUSH_SEQUENCE_DATA_BLOCK_REPLY, produced);
 
         if (concrete_actor->actual == concrete_actor->expected
                         || concrete_actor->actual > concrete_actor->last + 100000
@@ -274,10 +273,12 @@ void bsal_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_mess
         BSAL_DEBUG_MARKER("kernel receives reply from aggregator\n");
 #endif
 
+        /*
         source_index = *(int *)buffer;
         bsal_actor_helper_send_empty(actor,
                         bsal_actor_get_acquaintance(actor, source_index),
                         BSAL_PUSH_SEQUENCE_DATA_BLOCK_REPLY);
+                        */
 
     } else if (tag == BSAL_ACTOR_START) {
 

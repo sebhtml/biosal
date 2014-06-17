@@ -16,7 +16,8 @@ void bsal_actor_helper_send_vector(struct bsal_actor *actor, int destination, in
 
 void bsal_actor_helper_send_reply_empty(struct bsal_actor *actor, int tag);
 void bsal_actor_helper_send_reply_int(struct bsal_actor *actor, int tag, int value);
-void bsal_actor_helper_send_reply_int64_t(struct bsal_actor *actor, int tag, int value);
+void bsal_actor_helper_send_reply_int64_t(struct bsal_actor *actor, int tag, int64_t value);
+void bsal_actor_helper_send_reply_uint64_t(struct bsal_actor *actor, int tag, uint64_t value);
 void bsal_actor_helper_send_reply_vector(struct bsal_actor *actor, int tag, struct bsal_vector *vector);
 
 void bsal_actor_helper_send_to_self_empty(struct bsal_actor *actor, int tag);

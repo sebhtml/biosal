@@ -20,6 +20,8 @@
 #include <stdio.h>
 #include <string.h>
 
+#include <inttypes.h>
+
 /*
 #define ARGONNITE_DEBUG
 */
@@ -69,6 +71,9 @@ void argonnite_init(struct bsal_actor *actor)
     concrete_actor->wired_directors = 0;
     concrete_actor->spawned_stores = 0;
     concrete_actor->wiring_distribution = 0;
+
+    concrete_actor->ready_directors = 0;
+    concrete_actor->total_kmers = 0;
 }
 
 void argonnite_destroy(struct bsal_actor *actor)
@@ -114,6 +119,7 @@ void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message)
     struct bsal_vector stores;
     int spawner;
     int is_boss;
+    uint64_t produced;
 
     concrete_actor = (struct argonnite *)bsal_actor_concrete_actor(actor);
     tag = bsal_message_tag(message);
@@ -502,13 +508,69 @@ void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message)
                         name);
 #endif
 
-        distribution = bsal_actor_get_acquaintance(actor, concrete_actor->distribution);
+        bsal_actor_helper_get_acquaintances(actor, &concrete_actor->directors, &directors);
+        bsal_actor_helper_send_range_empty(actor, &directors, BSAL_KERNEL_DIRECTOR_NOTIFY);
+
+    } else if (tag == BSAL_KERNEL_DIRECTOR_NOTIFY_REPLY) {
+
+        bsal_message_helper_unpack_uint64_t(message, 0, &produced);
+
+        printf("director actor/%d generated %" PRIu64 " kmers\n",
+                        source, produced);
+
+        concrete_actor->total_kmers += produced;
+
+        concrete_actor->ready_directors++;
+
+        if (concrete_actor->ready_directors == bsal_vector_size(&concrete_actor->directors)) {
+
+            bsal_actor_helper_send_to_self_empty(actor, ARGONNITE_PROBE_STORES);
+        }
+
+    } else if (tag == BSAL_STORE_GET_ENTRY_COUNT_REPLY) {
+
+        concrete_actor->ready_stores++;
+        bsal_message_helper_unpack_uint64_t(message, 0, &produced);
+        concrete_actor->actual_kmers += produced;
+
+        if (concrete_actor->ready_stores == bsal_vector_size(&concrete_actor->stores)) {
+
+            if (concrete_actor->actual_kmers == concrete_actor->total_kmers) {
+                distribution = bsal_actor_get_acquaintance(actor, concrete_actor->distribution);
+                bsal_actor_helper_get_acquaintances(actor, &concrete_actor->stores, &stores);
+
+                bsal_actor_helper_send_int(actor, distribution, BSAL_SET_EXPECTED_MESSAGES, bsal_vector_size(&stores));
+
+                bsal_actor_helper_send_range_empty(actor, &stores, BSAL_PUSH_DATA);
+                bsal_vector_destroy(&stores);
+
+            } else {
+
+                printf("argonnite actor/%d: stores are not ready, %" PRIu64 "/%" PRIu64 " kmers\n",
+                                name, concrete_actor->actual_kmers, concrete_actor->total_kmers);
+
+                bsal_actor_helper_send_to_self_empty(actor, ARGONNITE_PROBE_STORES);
+            }
+        }
+
+    } else if (tag == ARGONNITE_PROBE_STORES) {
+
+        /* tell aggregators to flush
+         */
+
+        bsal_actor_helper_get_acquaintances(actor, &concrete_actor->aggregators, &aggregators);
+        bsal_actor_helper_send_range_empty(actor, &aggregators, BSAL_AGGREGATOR_FLUSH);
+
+        /* ask all stores how many kmers they have
+         */
         bsal_actor_helper_get_acquaintances(actor, &concrete_actor->stores, &stores);
 
-        bsal_actor_helper_send_int(actor, distribution, BSAL_SET_EXPECTED_MESSAGES, bsal_vector_size(&stores));
+        bsal_actor_helper_send_range_empty(actor, &stores, BSAL_STORE_GET_ENTRY_COUNT);
 
-        bsal_actor_helper_send_range_empty(actor, &stores, BSAL_PUSH_DATA);
+        concrete_actor->ready_stores = 0;
+        concrete_actor->actual_kmers = 0;
         bsal_vector_destroy(&stores);
+        bsal_vector_destroy(&aggregators);
 
     } else if (tag == BSAL_SET_EXPECTED_MESSAGES_REPLY) {
 

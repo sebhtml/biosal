@@ -9,7 +9,8 @@
 #define BSAL_DYNAMIC_HASH_TABLE_DEBUG_ADD
 */
 
-#define BSAL_DYNAMIC_HASH_TABLE_THRESHOLD 0.90
+/*#define BSAL_DYNAMIC_HASH_TABLE_THRESHOLD 0.90*/
+#define BSAL_DYNAMIC_HASH_TABLE_THRESHOLD 0.75
 
 void bsal_dynamic_hash_table_init(struct bsal_dynamic_hash_table *self, uint64_t buckets,
                 int key_size, int value_size)

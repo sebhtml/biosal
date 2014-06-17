@@ -19,9 +19,12 @@
 
 #include <stdint.h>
 
+/* TODO
+ * enable 2-bit encoding
+ */
 /*
-*/
 #define BSAL_DNA_CODEC_UASE_TWO_BIT_ENCODING_DEFAULT
+*/
 
 int bsal_dna_codec_encoded_length(int length_in_nucleotides)
 {

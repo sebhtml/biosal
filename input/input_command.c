@@ -223,3 +223,8 @@ struct bsal_vector *bsal_input_command_entries(struct bsal_input_command *self)
 {
     return &self->entries;
 }
+
+int bsal_input_command_entry_count(struct bsal_input_command *self)
+{
+    return bsal_vector_size(&self->entries);
+}

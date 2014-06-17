@@ -244,6 +244,17 @@ void bsal_aggregator_receive(struct bsal_actor *self, struct bsal_message *messa
 #endif
 
         bsal_actor_helper_send_reply_empty(self, BSAL_SET_CUSTOMERS_REPLY);
+
+    } else if (tag == BSAL_AGGREGATOR_FLUSH) {
+
+        customer_count = bsal_vector_size(&concrete_actor->customers);
+
+        for (customer_index = 0; customer_index < customer_count; customer_index++) {
+
+            bsal_aggregator_flush(self, customer_index, BSAL_AGGREGATOR_FORCED_FLUSH_YES);
+        }
+
+        bsal_actor_helper_send_reply_empty(self, BSAL_AGGREGATOR_FLUSH_REPLY);
     }
 }
 

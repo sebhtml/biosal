@@ -13,6 +13,8 @@ struct argonnite {
     struct bsal_vector stores;
 
     int wired_directors;
+    int ready_directors;
+    int ready_stores;
 
     int controller;
     int manager_for_directors;
@@ -29,9 +31,14 @@ struct argonnite {
 
     int distribution;
     int wiring_distribution;
+
+    uint64_t total_kmers;
+    uint64_t actual_kmers;
 };
 
 extern struct bsal_script argonnite_script;
+
+#define ARGONNITE_PROBE_STORES 0x00001ba7
 
 void argonnite_init(struct bsal_actor *actor);
 void argonnite_destroy(struct bsal_actor *actor);
