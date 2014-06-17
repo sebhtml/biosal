@@ -96,7 +96,7 @@ void bsal_dispatcher_print(struct bsal_dispatcher *self)
     void *handler;
     struct bsal_map_iterator iterator;
 
-    printf("DEBUG DATA Dispatcher handlers (%d):",
+    printf("DEBUG Dispatcher handlers (%d):",
                     (int)bsal_map_size(&self->table));
 
     bsal_map_iterator_init(&iterator, &self->table);

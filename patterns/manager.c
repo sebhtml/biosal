@@ -222,9 +222,11 @@ void bsal_manager_receive(struct bsal_actor *actor, struct bsal_message *message
 
         bsal_vector_push_back(stores, &store);
 
+#ifdef BSAL_MANAGER_DEBUG
         printf("DEBUG manager actor/%d receives actor/%d from spawner actor/%d, now %d/%d\n",
                         bsal_actor_name(actor), store, source,
                         (int)bsal_vector_size(stores), *bucket);
+#endif
 
         if (bsal_vector_size(stores) == *bucket) {
 

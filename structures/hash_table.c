@@ -549,6 +549,7 @@ int bsal_hash_table_pack_unpack(struct bsal_hash_table *self, void *buffer, int 
     struct bsal_packer packer;
     int offset;
     int i;
+    uint64_t elements;
 
 #ifdef BSAL_HASH_TABLE_DEBUG
     printf("hash pack/unpack %p\n", buffer);
@@ -580,8 +581,9 @@ int bsal_hash_table_pack_unpack(struct bsal_hash_table *self, void *buffer, int 
         printf("hash init, buckets key_size value_size %d %d %d\n",
                          (int)self->buckets, self->key_size, self->value_size);
 #endif
-
+        elements = self->elements;
         bsal_hash_table_init(self, self->buckets, self->key_size, self->value_size);
+        self->elements = elements;
     }
 
     for (i = 0; i < self->group_count; i++) {

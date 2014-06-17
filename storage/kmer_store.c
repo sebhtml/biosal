@@ -81,6 +81,8 @@ void bsal_kmer_store_receive(struct bsal_actor *self, struct bsal_message *messa
         printf("kmer store actor/%d will use %d bytes for keys (k is %d)\n",
                         name, concrete_actor->key_length_in_bytes,
                         concrete_actor->kmer_length);
+#ifdef BSAL_KMER_STORE_DEBUG
+#endif
 
         bsal_map_init(&concrete_actor->table, concrete_actor->key_length_in_bytes,
                         sizeof(int));
@@ -140,8 +142,11 @@ void bsal_kmer_store_receive(struct bsal_actor *self, struct bsal_message *messa
 
         bsal_message_helper_unpack_int(message, 0, &customer);
 
+#ifdef BSAL_KMER_STORE_DEBUG
         printf("store actor/%d will use distribution actor/%d\n",
                         name, customer);
+#endif
+
         concrete_actor->customer = bsal_actor_add_acquaintance(self, customer);
 
         bsal_actor_helper_send_reply_empty(self, BSAL_SET_CUSTOMER_REPLY);
@@ -201,6 +206,10 @@ void bsal_kmer_store_push_data(struct bsal_actor *self, struct bsal_message *mes
 
     bsal_map_init(&coverage_distribution, sizeof(int), sizeof(uint64_t));
 
+#ifdef BSAL_KMER_STORE_DEBUG
+    printf("Local table has %d kmers\n", (int)bsal_map_size(&concrete_actor->table));
+#endif
+
     bsal_map_iterator_init(&iterator, &concrete_actor->table);
 
     while (bsal_map_iterator_has_next(&iterator)) {
@@ -229,7 +238,10 @@ void bsal_kmer_store_push_data(struct bsal_actor *self, struct bsal_message *mes
 
     bsal_map_pack(&coverage_distribution, new_buffer);
 
-    printf("SENDING map to %d, %d bytes\n", customer, new_count);
+#ifdef BSAL_KMER_STORE_DEBUG
+    printf("SENDING map to %d, %d bytes / %d entries\n", customer, new_count,
+                    (int)bsal_map_size(&coverage_distribution));
+#endif
 
     bsal_message_init(&new_message, BSAL_PUSH_DATA, new_count, new_buffer);
 

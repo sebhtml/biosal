@@ -10,6 +10,7 @@
 
 #include <stdio.h>
 #include <stdint.h>
+#include <string.h>
 
 #include <inttypes.h>
 
@@ -53,7 +54,8 @@ void bsal_coverage_distribution_receive(struct bsal_actor *self, struct bsal_mes
     int *coverage_from_message;
     uint64_t *count_from_message;
     int *coverage;
-    uint64_t *count;
+    uint64_t *frequency;
+    int count;
     void *buffer;
     struct bsal_vector coverage_values;
     struct bsal_coverage_distribution *concrete_actor;
@@ -64,6 +66,7 @@ void bsal_coverage_distribution_receive(struct bsal_actor *self, struct bsal_mes
     source = bsal_message_source(message);
     concrete_actor = (struct bsal_coverage_distribution *)bsal_actor_concrete_actor(self);
     tag = bsal_message_tag(message);
+    count = bsal_message_count(message);
     buffer = bsal_message_buffer(message);
 
     if (tag == BSAL_PUSH_DATA) {
@@ -72,26 +75,28 @@ void bsal_coverage_distribution_receive(struct bsal_actor *self, struct bsal_mes
 
         bsal_map_iterator_init(&iterator, &map);
 
-        printf("distribution actor/%d receives coverage data from actor/%d, %d entries\n",
-                        name, source, (int)bsal_map_size(&map));
+        printf("distribution actor/%d receives coverage data from actor/%d, %d entries / %d bytes\n",
+                        name, source, (int)bsal_map_size(&map), count);
 
         while (bsal_map_iterator_has_next(&iterator)) {
 
             bsal_map_iterator_next(&iterator, (void **)&coverage_from_message,
                             (void **)&count_from_message);
 
+#ifdef BSAL_COVERAGE_DISTRIBUTION_DEBUG
             printf("DEBUG DATA %d %d\n", (int)*coverage_from_message, (int)*count_from_message);
+#endif
 
-            count = bsal_map_get(&concrete_actor->distribution, coverage_from_message);
+            frequency = bsal_map_get(&concrete_actor->distribution, coverage_from_message);
 
-            if (count == NULL) {
+            if (frequency == NULL) {
 
-                count = bsal_map_add(&concrete_actor->distribution, coverage_from_message);
+                frequency = bsal_map_add(&concrete_actor->distribution, coverage_from_message);
 
-                (*count) = 0;
+                (*frequency) = 0;
             }
 
-            (*count) += (*count_from_message);
+            (*frequency) += (*count_from_message);
         }
 
         bsal_map_iterator_destroy(&iterator);
@@ -142,43 +147,93 @@ void bsal_coverage_distribution_write_distribution(struct bsal_actor *self)
 {
     struct bsal_map_iterator iterator;
     int *coverage;
-    uint64_t *count;
+    uint64_t *frequency;
     struct bsal_coverage_distribution *concrete_actor;
     struct bsal_vector coverage_values;
     struct bsal_vector_iterator vector_iterator;
+    uint64_t the_frequency;
+    FILE *descriptor;
+    char *file_name;
+    char default_file_name[] = "coverage_distribution.txt";
+    int argc;
+    char **argv;
+    int i;
+    int name;
+
+    name = bsal_actor_name(self);
+    argc = bsal_actor_argc(self);
+    argv = bsal_actor_argv(self);
+
+    file_name = default_file_name;
+
+    for (i = 0; i < argc; i++) {
+        if (strcmp(argv[i], "-o") == 0 && i + 1 < argc) {
+            file_name = argv[i + 1];
+            break;
+        }
+    }
+
+    descriptor = fopen(file_name, "w");
 
     concrete_actor = (struct bsal_coverage_distribution *)bsal_actor_concrete_actor(self);
-    bsal_map_iterator_init(&iterator, &concrete_actor->distribution);
-    bsal_vector_init(&coverage_values, sizeof(int));
 
+    bsal_vector_init(&coverage_values, sizeof(int));
+    bsal_map_iterator_init(&iterator, &concrete_actor->distribution);
+
+#ifdef BSAL_COVERAGE_DISTRIBUTION_DEBUG
     printf("map size %d\n", (int)bsal_map_size(&concrete_actor->distribution));
+#endif
 
     while (bsal_map_iterator_has_next(&iterator)) {
-        bsal_map_iterator_next(&iterator, (void **)&coverage, (void **)&count);
+        bsal_map_iterator_next(&iterator, (void **)&coverage, (void **)&frequency);
+
+#ifdef BSAL_COVERAGE_DISTRIBUTION_DEBUG
+        printf("DEBUG COVERAGE %d FREQUENCY %" PRIu64 "\n", *coverage, *frequency);
+#endif
 
         bsal_vector_push_back(&coverage_values, coverage);
     }
 
     bsal_map_iterator_destroy(&iterator);
+
     bsal_vector_helper_sort_int(&coverage_values);
+
+#ifdef BSAL_COVERAGE_DISTRIBUTION_DEBUG
+    printf("after sort ");
+    bsal_vector_helper_print_int(&coverage_values);
+    printf("\n");
+#endif
 
     bsal_vector_iterator_init(&vector_iterator, &coverage_values);
 
-    printf("Coverage\tFrequency\n");
+    fprintf(descriptor, "Coverage\tFrequency\n");
+#ifdef BSAL_COVERAGE_DISTRIBUTION_DEBUG
+#endif
 
     while (bsal_vector_iterator_has_next(&vector_iterator)) {
 
-        bsal_vector_iterator_next(&vector_iterator, (void **)coverage);
+        bsal_vector_iterator_next(&vector_iterator, (void **)&coverage);
 
-        count = (uint64_t *)bsal_map_get(&concrete_actor->distribution, coverage);
+        /*
+        printf("ITERATED COVERAGE %d\n", *coverage);
+        */
 
-        printf("COVERAGE DISTRIBUTION %d\t%" PRIu64 "\n",
+        frequency = (uint64_t *)bsal_map_get(&concrete_actor->distribution, coverage);
+
+        the_frequency = *frequency;
+
+        fprintf(descriptor, "%d\t%" PRIu64 "\n",
                         *coverage,
-                        *count);
+                        the_frequency);
     }
 
     bsal_vector_destroy(&coverage_values);
     bsal_vector_iterator_destroy(&vector_iterator);
+
+    printf("distribution actor/%d wrote %s\n", name, file_name);
+
+    fclose(descriptor);
+    descriptor = NULL;
 }
 
 

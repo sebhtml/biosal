@@ -177,6 +177,13 @@ int main(int argc, char **argv)
             TEST_INT_EQUALS(value, i * i);
         }
 
+        /*
+        printf("actual %d expected %d\n", (int)bsal_map_size(&map2), (int)bsal_map_size(&map));
+        */
+
+        TEST_INT_EQUALS(bsal_map_size(&map2), bsal_map_size(&map));
+        TEST_INT_EQUALS(bsal_map_size(&map2), elements);
+
         free(buffer);
 
         bsal_map_destroy(&map);

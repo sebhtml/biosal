@@ -152,7 +152,7 @@ int main(int argc, char **argv)
         while (i--) {
             bsal_vector_push_back(&vector, &i);
 
-            if (bsal_vector_size(&vector) > 10) {
+            if (bsal_vector_size(&vector) > 10 && 0) {
                 break;
             }
         }
