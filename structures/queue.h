@@ -11,6 +11,10 @@ struct bsal_queue {
 
     int units;
     int bytes_per_unit;
+
+    /* the size is read by 2 threads, but only written by
+     * 1 thread.
+     */
     volatile int size;
 };
 

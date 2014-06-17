@@ -19,6 +19,9 @@ struct bsal_worker {
     pthread_t thread;
 
     int name;
+
+    /* this is read by 2 threads, but written by 1 thread
+     */
     volatile int dead;
 
     struct bsal_queue works;
@@ -30,6 +33,10 @@ struct bsal_worker {
 #endif
 
     int debug;
+
+    /* this is read by 2 threads, but written by 1 thread
+     */
+    volatile int busy;
 };
 
 void bsal_worker_init(struct bsal_worker *worker, int name, struct bsal_node *node);
@@ -57,5 +64,8 @@ int bsal_worker_pull_work(struct bsal_worker *worker, struct bsal_work *work);
 
 void bsal_worker_push_message(struct bsal_worker *worker, struct bsal_message *message);
 int bsal_worker_pull_message(struct bsal_worker *worker, struct bsal_message *message);
+
+int bsal_worker_is_busy(struct bsal_worker *self);
+int bsal_worker_enqueued_work_count(struct bsal_worker *self);
 
 #endif

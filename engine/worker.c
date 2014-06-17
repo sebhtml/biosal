@@ -26,6 +26,7 @@ void bsal_worker_init(struct bsal_worker *worker, int name, struct bsal_node *no
 #endif
 
     worker->debug = 0;
+    worker->busy = 0;
 }
 
 void bsal_worker_destroy(struct bsal_worker *worker)
@@ -306,7 +307,11 @@ int bsal_worker_pull_work(struct bsal_worker *worker, struct bsal_work *work)
     bsal_lock_lock(&worker->work_lock);
 #endif
 
+    worker->busy = 1;
+
     value = bsal_queue_dequeue(bsal_worker_works(worker), work);
+
+    worker->busy = 0;
 
 #ifdef BSAL_WORKER_USE_LOCK
     bsal_lock_unlock(&worker->work_lock);
@@ -389,4 +394,14 @@ int bsal_worker_pull_message(struct bsal_worker *worker, struct bsal_message *me
 #endif
 
     return value;
+}
+
+int bsal_worker_is_busy(struct bsal_worker *self)
+{
+    return self->busy;
+}
+
+int bsal_worker_enqueued_work_count(struct bsal_worker *self)
+{
+    return bsal_queue_size(&self->works);
 }

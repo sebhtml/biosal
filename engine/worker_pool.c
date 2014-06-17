@@ -8,6 +8,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#define BSAL_WORKER_POOL_USE_LEAST_BUSY
+
 void bsal_worker_pool_init(struct bsal_worker_pool *pool, int workers,
                 struct bsal_node *node)
 {
@@ -45,7 +47,7 @@ void bsal_worker_pool_delete_workers(struct bsal_worker_pool *pool)
     }
 
     for (i = 0; i < pool->workers; i++) {
-        bsal_worker_destroy(pool->worker_array + i);
+        bsal_worker_destroy(bsal_worker_pool_get_worker(pool, i));
     }
 
     free(pool->worker_array);
@@ -65,7 +67,7 @@ void bsal_worker_pool_create_workers(struct bsal_worker_pool *pool)
     pool->worker_array = (struct bsal_worker *)malloc(bytes);
 
     for (i = 0; i < pool->workers; i++) {
-        bsal_worker_init(pool->worker_array + i, i, pool->node);
+        bsal_worker_init(bsal_worker_pool_get_worker(pool, i), i, pool->node);
     }
 }
 
@@ -79,7 +81,7 @@ void bsal_worker_pool_start(struct bsal_worker_pool *pool)
      * used by the main thread...
      */
     for (i = 0; i < pool->workers; i++) {
-        bsal_worker_start(pool->worker_array + i);
+        bsal_worker_start(bsal_worker_pool_get_worker(pool, i));
     }
 }
 
@@ -97,7 +99,7 @@ void bsal_worker_pool_stop(struct bsal_worker_pool *pool)
      */
 
     for (i = 0; i < pool->workers; i++) {
-        bsal_worker_stop(pool->worker_array + i);
+        bsal_worker_stop(bsal_worker_pool_get_worker(pool, i));
     }
 }
 
@@ -125,7 +127,7 @@ struct bsal_worker *bsal_worker_pool_select_worker_for_message(struct bsal_worke
 
     index = pool->worker_for_message;
     pool->worker_for_message = bsal_worker_pool_next_worker(pool, index);
-    return pool->worker_array + index;
+    return bsal_worker_pool_get_worker(pool, index);
 }
 
 int bsal_worker_pool_next_worker(struct bsal_worker_pool *pool, int worker)
@@ -137,7 +139,18 @@ int bsal_worker_pool_next_worker(struct bsal_worker_pool *pool, int worker)
 }
 
 /* select the worker to push work to */
-struct bsal_worker *bsal_worker_pool_select_worker_worker_for_work(
+struct bsal_worker *bsal_worker_pool_select_worker_for_work(
+                struct bsal_worker_pool *pool, struct bsal_work *work)
+{
+#ifdef BSAL_WORKER_POOL_USE_LEAST_BUSY
+    return bsal_worker_pool_select_worker_least_busy(pool, work);
+
+#else
+    return bsal_worker_pool_select_worker_round_robin(pool, work);
+#endif
+}
+
+struct bsal_worker *bsal_worker_pool_select_worker_round_robin(
                 struct bsal_worker_pool *pool, struct bsal_work *work)
 {
     int index;
@@ -153,7 +166,73 @@ struct bsal_worker *bsal_worker_pool_select_worker_worker_for_work(
     /* otherwise, pick a worker with round robin */
     index = pool->worker_for_message;
     pool->worker_for_message = bsal_worker_pool_next_worker(pool, pool->worker_for_message);
-    return pool->worker_array + index;
+
+    return bsal_worker_pool_get_worker(pool, index);
+}
+
+struct bsal_worker *bsal_worker_pool_get_worker(
+                struct bsal_worker_pool *self, int index)
+{
+    if (index < 0 || index >= self->workers) {
+        return NULL;
+    }
+
+    return self->worker_array + index;
+}
+
+struct bsal_worker *bsal_worker_pool_select_worker_least_busy(
+                struct bsal_worker_pool *self, struct bsal_work *work)
+{
+    int to_check;
+    int score;
+    int best_score;
+    struct bsal_worker *worker;
+    struct bsal_worker *best_worker;
+
+    best_worker = NULL;
+    best_score = 99;
+
+    to_check = self->workers;
+
+    while (to_check--) {
+
+        /*
+         * get the worker to test for this iteration.
+         */
+        worker = bsal_worker_pool_get_worker(self, self->worker_for_work);
+
+        /*
+         * assign the next worker
+         */
+        self->worker_for_work = bsal_worker_pool_next_worker(self, self->worker_for_work);
+
+        score = 0;
+
+        if (bsal_worker_is_busy(worker)) {
+            score ++;
+        }
+
+        score += bsal_worker_enqueued_work_count(worker);
+
+
+        /* if the worker is not busy and it has no work to do,
+         * select it right away...
+         */
+        if (score == 0) {
+            return worker;
+        }
+
+        /* Otherwise, test the worker
+         */
+        if (best_worker == NULL || score < best_score) {
+            best_worker = worker;
+            best_score = score;
+        }
+    }
+
+    /* This is a best effort algorithm
+     */
+    return best_worker;
 }
 
 struct bsal_worker *bsal_worker_pool_select_worker_for_run(struct bsal_worker_pool *pool)
@@ -161,7 +240,7 @@ struct bsal_worker *bsal_worker_pool_select_worker_for_run(struct bsal_worker_po
     int index;
 
     index = pool->worker_for_run;
-    return pool->worker_array + index;
+    return bsal_worker_pool_get_worker(pool, index);
 }
 
 /*
@@ -173,7 +252,7 @@ void bsal_worker_pool_schedule_work(struct bsal_worker_pool *pool, struct bsal_w
 {
     struct bsal_worker *worker;
 
-    worker = bsal_worker_pool_select_worker_worker_for_work(pool, work);
+    worker = bsal_worker_pool_select_worker_for_work(pool, work);
 
     /* bsal_worker_push_message use a lock */
     bsal_worker_push_work(worker, work);

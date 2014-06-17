@@ -43,4 +43,12 @@ void bsal_worker_pool_schedule_work(struct bsal_worker_pool *pool, struct bsal_w
 int bsal_worker_pool_worker_count(struct bsal_worker_pool *pool);
 int bsal_worker_pool_has_messages(struct bsal_worker_pool *pool);
 
+struct bsal_worker *bsal_worker_pool_get_worker(
+                struct bsal_worker_pool *self, int index);
+
+struct bsal_worker *bsal_worker_pool_select_worker_round_robin(
+                struct bsal_worker_pool *pool, struct bsal_work *work);
+struct bsal_worker *bsal_worker_pool_select_worker_least_busy(
+                struct bsal_worker_pool *pool, struct bsal_work *work);
+
 #endif
