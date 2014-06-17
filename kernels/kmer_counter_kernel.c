@@ -90,6 +90,7 @@ void bsal_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_mess
     struct bsal_timer timer;
     struct bsal_dna_kmer_block block;
     int to_reserve;
+    int maximum_length;
 
 #ifdef BSAL_KMER_COUNTER_KERNEL_DEBUG
     int count;
@@ -135,18 +136,24 @@ void bsal_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_mess
 
         to_reserve = 0;
 
+        maximum_length = 0;
+
         for (i = 0; i < entries; i++) {
 
-            /* TODO improve this */
             sequence = (struct bsal_dna_sequence *)bsal_vector_at(command_entries, i);
 
-            sequence_data = bsal_dna_sequence_sequence(sequence);
-            sequence_length = strlen(sequence_data);
+            sequence_length = bsal_dna_sequence_length(sequence);
+
+            if (sequence_length > maximum_length) {
+                maximum_length = sequence_length;
+            }
 
             to_reserve += (sequence_length - concrete_actor->kmer_length + 1);
         }
 
         bsal_dna_kmer_block_init(&block, concrete_actor->kmer_length, source_index, to_reserve);
+
+        sequence_data = bsal_malloc(maximum_length + 1);
 
         /* extract kmers
          */
@@ -155,9 +162,11 @@ void bsal_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_mess
             /* TODO improve this */
             sequence = (struct bsal_dna_sequence *)bsal_vector_at(command_entries, i);
 
-            sequence_data = bsal_dna_sequence_sequence(sequence);
-            sequence_length = strlen(sequence_data);
+            bsal_dna_sequence_get_sequence(sequence, sequence_data);
+
+            sequence_length = bsal_dna_sequence_length(sequence);
             limit = sequence_length - concrete_actor->kmer_length + 1;
+
             for (j = 0; j < limit; j++) {
                 saved = sequence_data[j + concrete_actor->kmer_length];
                 sequence_data[j + concrete_actor->kmer_length] = '\0';
@@ -178,6 +187,9 @@ void bsal_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_mess
                 sequence_data[j + concrete_actor->kmer_length] = saved;
             }
         }
+
+        bsal_free(sequence_data);
+        sequence_data = NULL;
 
 #ifdef BSAL_KMER_COUNTER_KERNEL_DEBUG
         BSAL_DEBUG_MARKER("after generating kmers\n");

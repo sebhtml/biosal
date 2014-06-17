@@ -1,6 +1,8 @@
 
 #include "dna_sequence.h"
 
+#include "dna_codec.h"
+
 #include <system/packer.h>
 #include <system/memory.h>
 
@@ -13,17 +15,22 @@
 */
 void bsal_dna_sequence_init(struct bsal_dna_sequence *sequence, void *data)
 {
+    int encoded_length;
+
     /* TODO
      * encode @raw_data in 2-bit format
      * use an allocator provided to allocate memory
      */
     if (data == NULL) {
-        sequence->data = NULL;
-        sequence->length = 0;
+        sequence->encoded_data = NULL;
+        sequence->length_in_nucleotides = 0;
     } else {
-        sequence->length = strlen((char *)data);
-        sequence->data = bsal_malloc(sequence->length + 1);
-        memcpy(sequence->data, data, sequence->length + 1);
+        sequence->length_in_nucleotides = strlen((char *)data);
+
+        encoded_length = bsal_dna_codec_encoded_length(sequence->length_in_nucleotides);
+        sequence->encoded_data = bsal_malloc(encoded_length);
+
+        bsal_dna_codec_encode(sequence->length_in_nucleotides, data, sequence->encoded_data);
     }
 
     sequence->pair = -1;
@@ -31,13 +38,13 @@ void bsal_dna_sequence_init(struct bsal_dna_sequence *sequence, void *data)
 
 void bsal_dna_sequence_destroy(struct bsal_dna_sequence *sequence)
 {
-    if (sequence->data != NULL) {
-        bsal_free(sequence->data);
-        sequence->data = NULL;
+    if (sequence->encoded_data != NULL) {
+        bsal_free(sequence->encoded_data);
+        sequence->encoded_data = NULL;
     }
 
-    sequence->data = NULL;
-    sequence->length = 0;
+    sequence->encoded_data = NULL;
+    sequence->length_in_nucleotides = 0;
     sequence->pair = -1;
 }
 
@@ -63,6 +70,7 @@ int bsal_dna_sequence_pack_unpack(struct bsal_dna_sequence *sequence,
 {
     struct bsal_packer packer;
     int offset;
+    int encoded_length;
 
 #ifdef BSAL_DNA_SEQUENCE_DEBUG
     printf("DEBUG ENTRY bsal_dna_sequence_pack_unpack operation %d\n",
@@ -78,17 +86,19 @@ int bsal_dna_sequence_pack_unpack(struct bsal_dna_sequence *sequence,
     /*
     bsal_packer_work(&packer, &sequence->pair, sizeof(sequence->pair));
 */
-    bsal_packer_work(&packer, &sequence->length, sizeof(sequence->length));
+    bsal_packer_work(&packer, &sequence->length_in_nucleotides, sizeof(sequence->length_in_nucleotides));
+
+    encoded_length = bsal_dna_codec_encoded_length(sequence->length_in_nucleotides);
 
 #ifdef BSAL_DNA_SEQUENCE_DEBUG
     if (operation == BSAL_PACKER_OPERATION_UNPACK) {
         printf("DEBUG bsal_dna_sequence_pack_unpack unpacking: length %d\n",
-                        sequence->length);
+                        sequence->length_in_nucleotides);
 
     } else if (operation == BSAL_PACKER_OPERATION_PACK) {
 
         printf("DEBUG bsal_dna_sequence_pack_unpack packing: length %d\n",
-                        sequence->length);
+                        sequence->length_in_nucleotides);
     }
 #endif
 
@@ -96,21 +106,21 @@ int bsal_dna_sequence_pack_unpack(struct bsal_dna_sequence *sequence,
      */
     if (operation == BSAL_PACKER_OPERATION_UNPACK) {
 
-        if (sequence->length > 0) {
-            sequence->data = bsal_malloc(sequence->length + 1);
+        if (sequence->length_in_nucleotides > 0) {
+            sequence->encoded_data = bsal_malloc(encoded_length);
         } else {
-            sequence->data = NULL;
+            sequence->encoded_data = NULL;
         }
     }
 
 #ifdef BSAL_DNA_SEQUENCE_DEBUG
     if (operation == BSAL_PACKER_OPERATION_UNPACK) {
-        printf("DEBUG unpacking %d bytes\n", sequence->length + 1);
+        printf("DEBUG unpacking %d bytes\n", sequence->length_in_nucleotides + 1);
     }
 #endif
 
-    if (sequence->length > 0) {
-        bsal_packer_work(&packer, sequence->data, sequence->length + 1);
+    if (sequence->length_in_nucleotides > 0) {
+        bsal_packer_work(&packer, sequence->encoded_data, encoded_length);
     }
 
     offset = bsal_packer_worked_bytes(&packer);
@@ -129,30 +139,50 @@ void bsal_dna_sequence_print(struct bsal_dna_sequence *self)
 {
     char *dna_sequence;
 
-    dna_sequence = self->data;
+    dna_sequence = bsal_malloc(self->length_in_nucleotides + 1);
 
-    printf("DNA: length %d %s\n", self->length, dna_sequence);
+    bsal_dna_codec_decode(self->length_in_nucleotides, self->encoded_data, dna_sequence);
+
+    printf("DNA: length %d %s\n", self->length_in_nucleotides, dna_sequence);
+
+    bsal_free(dna_sequence);
+    dna_sequence = NULL;
 }
 
 int bsal_dna_sequence_length(struct bsal_dna_sequence *self)
 {
-    return self->length;
+    return self->length_in_nucleotides;
 }
 
-char *bsal_dna_sequence_sequence(struct bsal_dna_sequence *self)
+void bsal_dna_sequence_get_sequence(struct bsal_dna_sequence *self, char *sequence)
 {
-    return (char *)self->data;
+    if (sequence == NULL) {
+        return;
+    }
+
+    bsal_dna_codec_decode(self->length_in_nucleotides, self->encoded_data, sequence);
 }
 
 void bsal_dna_sequence_init_copy(struct bsal_dna_sequence *self,
                 struct bsal_dna_sequence *other)
 {
-    bsal_dna_sequence_init(self, other->data);
+    char *dna;
+
+    dna = bsal_malloc(other->length_in_nucleotides);
+
+    bsal_dna_codec_decode(other->length_in_nucleotides, other->encoded_data,
+                    dna);
+
+    bsal_dna_sequence_init(self, dna);
+
+    free(dna);
+    dna = NULL;
 }
 
 void bsal_dna_sequence_init_same_data(struct bsal_dna_sequence *self,
                 struct bsal_dna_sequence *other)
 {
-    self->data = other->data;
-    self->length = other->length;
+    self->encoded_data = other->encoded_data;
+    self->length_in_nucleotides = other->length_in_nucleotides;
+    self->pair = other->pair;
 }
