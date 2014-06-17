@@ -420,7 +420,7 @@ void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message)
                             concrete_actor->manager_for_stores)) {
 
         bsal_actor_helper_send_reply_int(actor, BSAL_MANAGER_SET_ACTORS_PER_WORKER,
-                        4);
+                        1);
 
     } else if (tag == BSAL_MANAGER_SET_ACTORS_PER_WORKER_REPLY
                     && source == bsal_actor_get_acquaintance(actor,
