@@ -461,9 +461,11 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
                                 concrete_actor->partitioner),
                         BSAL_ACTOR_ASK_TO_STOP);
 
+#ifdef BSAL_INPUT_CONTROLLER_DEBUG
             printf("DEBUG controller %d sends BSAL_ACTOR_ASK_TO_STOP_REPLY to %d\n",
                         bsal_actor_name(actor),
                         bsal_message_source(message));
+#endif
 
         }
 
@@ -473,7 +475,9 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
          */
         bsal_actor_helper_send_to_self_empty(actor, BSAL_ACTOR_STOP);
 
+#ifdef BSAL_INPUT_CONTROLLER_DEBUG
         printf("DEBUG controller actor/%d dies\n", name);
+#endif
 
     } else if (tag == BSAL_INPUT_CONTROLLER_CREATE_PARTITION && source == name) {
 

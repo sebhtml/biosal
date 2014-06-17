@@ -57,7 +57,6 @@ void bsal_kmer_store_receive(struct bsal_actor *self, struct bsal_message *messa
     struct bsal_kmer_store *concrete_actor;
     struct bsal_dna_kmer kmer;
     struct bsal_dna_kmer_block block;
-    int name;
     void *key;
     struct bsal_vector *kmers;
     struct bsal_vector_iterator iterator;
@@ -68,7 +67,6 @@ void bsal_kmer_store_receive(struct bsal_actor *self, struct bsal_message *messa
     concrete_actor = (struct bsal_kmer_store *)bsal_actor_concrete_actor(self);
     tag = bsal_message_tag(message);
     buffer = bsal_message_buffer(message);
-    name = bsal_actor_name(self);
 
     if (tag == BSAL_SET_KMER_LENGTH) {
 
@@ -78,10 +76,12 @@ void bsal_kmer_store_receive(struct bsal_actor *self, struct bsal_message *messa
         concrete_actor->key_length_in_bytes = bsal_dna_kmer_pack_size(&kmer);
         bsal_dna_kmer_destroy(&kmer);
 
+#ifdef BSAL_KMER_STORE_DEBUG
+
+        name = bsal_actor_name(self);
         printf("kmer store actor/%d will use %d bytes for keys (k is %d)\n",
                         name, concrete_actor->key_length_in_bytes,
                         concrete_actor->kmer_length);
-#ifdef BSAL_KMER_STORE_DEBUG
 #endif
 
         bsal_map_init(&concrete_actor->table, concrete_actor->key_length_in_bytes,

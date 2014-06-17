@@ -408,7 +408,9 @@ void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message)
 
         concrete_actor->manager_for_stores = bsal_actor_get_acquaintance_index(actor, manager_for_stores);
 
+#ifdef ARGONNITE_DEBUG
         printf("DEBUG manager_for_stores %d\n", concrete_actor->manager_for_stores);
+#endif
 
         bsal_actor_helper_send_int(actor, manager_for_stores, BSAL_MANAGER_SET_SCRIPT,
                         BSAL_KMER_STORE_SCRIPT);
