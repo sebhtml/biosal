@@ -984,10 +984,10 @@ void bsal_actor_pack_proxy_message(struct bsal_actor *actor, struct bsal_message
     new_count = count + sizeof(real_source) + sizeof(real_tag);
 
     /* TODO: use slab allocator */
-    new_buffer = malloc(new_count);
+    new_buffer = bsal_malloc(new_count);
 
 #ifdef BSAL_ACTOR_DEBUG
-    printf("DEBUG12 malloc %p (pack proxy message)\n",
+    printf("DEBUG12 bsal_malloc %p (pack proxy message)\n",
                     new_buffer);
 #endif
 
@@ -1004,7 +1004,7 @@ void bsal_actor_pack_proxy_message(struct bsal_actor *actor, struct bsal_message
 
     /* free the old buffer
      */
-    free(buffer);
+    bsal_free(buffer);
     buffer = NULL;
 }
 
@@ -1441,7 +1441,7 @@ void bsal_actor_queue_message(struct bsal_actor *actor,
 #endif
 
     if (count > 0) {
-        new_buffer = malloc(count);
+        new_buffer = bsal_malloc(count);
         memcpy(new_buffer, buffer, count);
     }
 
@@ -1512,7 +1512,7 @@ void bsal_actor_forward_messages(struct bsal_actor *actor, struct bsal_message *
         bsal_actor_send(actor, destination, &new_message);
 
         buffer_to_release = bsal_message_buffer(&new_message);
-        free(buffer_to_release);
+        bsal_free(buffer_to_release);
 
         /* recursive actor call
          */
@@ -1690,7 +1690,7 @@ void bsal_actor_enqueue_message(struct bsal_actor *actor, struct bsal_message *m
     new_buffer = NULL;
 
     if (buffer != NULL) {
-        new_buffer = malloc(count);
+        new_buffer = bsal_malloc(count);
         memcpy(new_buffer, buffer, count);
     }
 

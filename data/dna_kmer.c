@@ -24,7 +24,7 @@ void bsal_dna_kmer_init(struct bsal_dna_kmer *sequence, void *data)
     } else {
         bsal_dna_kmer_normalize(data);
         sequence->length = strlen((char *)data);
-        sequence->data = malloc(sequence->length + 1);
+        sequence->data = bsal_malloc(sequence->length + 1);
         memcpy(sequence->data, data, sequence->length + 1);
     }
 }
@@ -32,7 +32,7 @@ void bsal_dna_kmer_init(struct bsal_dna_kmer *sequence, void *data)
 void bsal_dna_kmer_destroy(struct bsal_dna_kmer *sequence)
 {
     if (sequence->data != NULL) {
-        free(sequence->data);
+        bsal_free(sequence->data);
         sequence->data = NULL;
     }
 
@@ -101,7 +101,7 @@ int bsal_dna_kmer_pack_unpack(struct bsal_dna_kmer *sequence,
     if (operation == BSAL_PACKER_OPERATION_UNPACK) {
 
         if (sequence->length > 0) {
-            sequence->data = malloc(sequence->length + 1);
+            sequence->data = bsal_malloc(sequence->length + 1);
         } else {
             sequence->data = NULL;
         }
@@ -144,7 +144,7 @@ void bsal_dna_kmer_init_copy(struct bsal_dna_kmer *sequence, struct bsal_dna_kme
 {
     sequence->length = other->length;
 
-    sequence->data = malloc(sequence->length + 1);
+    sequence->data = bsal_malloc(sequence->length + 1);
     memcpy(sequence->data, other->data, sequence->length + 1);
 }
 

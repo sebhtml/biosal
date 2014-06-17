@@ -10,7 +10,7 @@ void *bsal_malloc(size_t size)
     pointer = malloc(size);
 
     if (pointer == NULL) {
-        printf("DEBUG Error malloc returned %p, %d bytes\n", pointer, (int)size);
+        printf("DEBUG Error bsal_malloc returned %p, %d bytes\n", pointer, (int)size);
     }
 
     return pointer;

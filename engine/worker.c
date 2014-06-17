@@ -5,6 +5,8 @@
 #include "message.h"
 #include "node.h"
 
+#include <system/memory.h>
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -103,10 +105,10 @@ void bsal_worker_work(struct bsal_worker *worker, struct bsal_work *work)
         printf("DEBUG bsal_worker_work actor died while the worker was waiting for the lock.\n");
 #endif
         /* TODO free the buffer with the slab allocator */
-        free(buffer);
+        bsal_free(buffer);
 
         /* TODO replace with slab allocator */
-        free(message);
+        bsal_free(message);
 
         bsal_actor_unlock(actor);
         return;
@@ -146,10 +148,10 @@ void bsal_worker_work(struct bsal_worker *worker, struct bsal_work *work)
     /* TODO free the buffer with the slab allocator */
 
     /*printf("DEBUG182 Worker free %p\n", buffer);*/
-    free(buffer);
+    bsal_free(buffer);
 
     /* TODO replace with slab allocator */
-    free(message);
+    bsal_free(message);
 
 #ifdef BSAL_WORKER_DEBUG_20140601
     if (worker->debug) {
@@ -179,7 +181,7 @@ void bsal_worker_send(struct bsal_worker *worker, struct bsal_message *message)
     all = count + metadata_size;
 
     /* TODO use slab allocator to allocate buffer... */
-    buffer = (char *)malloc(all * sizeof(char));
+    buffer = (char *)bsal_malloc(all * sizeof(char));
 
 #ifdef BSAL_THREAD_DEBUG
     printf("[bsal_worker_send] allocated %i bytes (%i + %i) for buffer %p\n",

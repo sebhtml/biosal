@@ -2,6 +2,7 @@
 #include "hash_table_group.h"
 
 #include <system/packer.h>
+#include <system/memory.h>
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -25,9 +26,9 @@ void bsal_hash_table_group_init(struct bsal_hash_table_group *group,
     array_bytes = buckets_per_group * (key_size + value_size);
 
     /* TODO: use slab allocator */
-    group->array = malloc(array_bytes);
-    group->occupancy_bitmap = malloc(bitmap_bytes);
-    group->deletion_bitmap = malloc(bitmap_bytes);
+    group->array = bsal_malloc(array_bytes);
+    group->occupancy_bitmap = bsal_malloc(bitmap_bytes);
+    group->deletion_bitmap = bsal_malloc(bitmap_bytes);
 
     /* mark all buckets as not occupied */
     memset(group->occupancy_bitmap, BSAL_BIT_ZERO, bitmap_bytes);
@@ -37,13 +38,13 @@ void bsal_hash_table_group_init(struct bsal_hash_table_group *group,
 void bsal_hash_table_group_destroy(struct bsal_hash_table_group *group)
 {
     /* TODO use slab allocator */
-    free(group->occupancy_bitmap);
+    bsal_free(group->occupancy_bitmap);
     group->occupancy_bitmap = NULL;
 
-    free(group->deletion_bitmap);
+    bsal_free(group->deletion_bitmap);
     group->deletion_bitmap = NULL;
 
-    free(group->array);
+    bsal_free(group->array);
     group->array = NULL;
 }
 

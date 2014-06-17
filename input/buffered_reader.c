@@ -1,6 +1,8 @@
 
 #include "buffered_reader.h"
 
+#include <system/memory.h>
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -16,7 +18,7 @@ void bsal_buffered_reader_init(struct bsal_buffered_reader *reader,
 {
     reader->descriptor = fopen(file, "r");
 
-    reader->buffer = (char *)malloc(BSAL_BUFFERED_READER_BUFFER_SIZE * sizeof(char));
+    reader->buffer = (char *)bsal_malloc(BSAL_BUFFERED_READER_BUFFER_SIZE * sizeof(char));
     reader->buffer_capacity = BSAL_BUFFERED_READER_BUFFER_SIZE;
     reader->position_in_buffer = 0;
     reader->buffer_size = 0;
@@ -26,7 +28,7 @@ void bsal_buffered_reader_init(struct bsal_buffered_reader *reader,
 
 void bsal_buffered_reader_destroy(struct bsal_buffered_reader *reader)
 {
-    free(reader->buffer);
+    bsal_free(reader->buffer);
 
     reader->buffer = NULL;
     reader->buffer_capacity = 0;

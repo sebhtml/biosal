@@ -1,7 +1,8 @@
 
-#include <data/dna_sequence.h>
-
 #include "test.h"
+
+#include <data/dna_sequence.h>
+#include <system/memory.h>
 
 #include <stdio.h>
 #include <string.h>
@@ -18,7 +19,7 @@ int main(int argc, char **argv)
     int required;
     void *buffer_for_pack;
 
-    buffer = malloc(101);
+    buffer = bsal_malloc(101);
     strcpy((char *)buffer, "TCCCGAGCGCAGGTAGGCCTCGGGATCGATGTCCGGGGTGTTGAGGATGTTGGACGTGTATTCGTGGTTGTACTGGGTCCAGTCCGCCACCGGGCGCCGC");
 
     bsal_dna_sequence_init(&sequence, buffer);
@@ -34,7 +35,7 @@ int main(int argc, char **argv)
 
     TEST_INT_IS_GREATER_THAN(required, 0);
 
-    buffer_for_pack = malloc(required);
+    buffer_for_pack = bsal_malloc(required);
 
     /*
     printf("DEBUG buffer %p size for pack/unpack has %d bytes\n",

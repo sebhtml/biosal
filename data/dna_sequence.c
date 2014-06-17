@@ -2,6 +2,7 @@
 #include "dna_sequence.h"
 
 #include <system/packer.h>
+#include <system/memory.h>
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -21,7 +22,7 @@ void bsal_dna_sequence_init(struct bsal_dna_sequence *sequence, void *data)
         sequence->length = 0;
     } else {
         sequence->length = strlen((char *)data);
-        sequence->data = malloc(sequence->length + 1);
+        sequence->data = bsal_malloc(sequence->length + 1);
         memcpy(sequence->data, data, sequence->length + 1);
     }
 
@@ -31,7 +32,7 @@ void bsal_dna_sequence_init(struct bsal_dna_sequence *sequence, void *data)
 void bsal_dna_sequence_destroy(struct bsal_dna_sequence *sequence)
 {
     if (sequence->data != NULL) {
-        free(sequence->data);
+        bsal_free(sequence->data);
         sequence->data = NULL;
     }
 
@@ -96,7 +97,7 @@ int bsal_dna_sequence_pack_unpack(struct bsal_dna_sequence *sequence,
     if (operation == BSAL_PACKER_OPERATION_UNPACK) {
 
         if (sequence->length > 0) {
-            sequence->data = malloc(sequence->length + 1);
+            sequence->data = bsal_malloc(sequence->length + 1);
         } else {
             sequence->data = NULL;
         }

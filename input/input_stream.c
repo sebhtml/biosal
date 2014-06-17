@@ -6,6 +6,7 @@
 #include <data/dna_sequence.h>
 #include <storage/sequence_store.h>
 #include <helpers/actor_helper.h>
+#include <system/memory.h>
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -44,7 +45,7 @@ void bsal_input_stream_destroy(struct bsal_actor *actor)
     input = (struct bsal_input_stream *)bsal_actor_concrete_actor(actor);
 
     if (input->buffer_for_sequence != NULL) {
-        free(input->buffer_for_sequence);
+        bsal_free(input->buffer_for_sequence);
         input->buffer_for_sequence = NULL;
         input->maximum_sequence_length = 0;
     }
@@ -57,7 +58,7 @@ void bsal_input_stream_destroy(struct bsal_actor *actor)
     }
 
     if (input->file_name != NULL) {
-        free(input->file_name);
+        bsal_free(input->file_name);
         input->file_name = NULL;
     }
 
@@ -113,7 +114,7 @@ void bsal_input_stream_receive(struct bsal_actor *actor, struct bsal_message *me
         /* TODO: find out the maximum read length in some way */
         concrete_actor->maximum_sequence_length = BSAL_INPUT_MAXIMUM_SEQUENCE_LENGTH;
 
-        concrete_actor->buffer_for_sequence = (char *)malloc(concrete_actor->maximum_sequence_length);
+        concrete_actor->buffer_for_sequence = (char *)bsal_malloc(concrete_actor->maximum_sequence_length);
 
         /*bsal_input_stream_init(actor);*/
 
@@ -122,7 +123,7 @@ void bsal_input_stream_receive(struct bsal_actor *actor, struct bsal_message *me
                         buffer);
 #endif
 
-        concrete_actor->file_name = malloc(strlen(buffer) + 1);
+        concrete_actor->file_name = bsal_malloc(strlen(buffer) + 1);
         strcpy(concrete_actor->file_name, buffer);
 
         bsal_input_proxy_init(&concrete_actor->proxy, buffer);
@@ -453,7 +454,7 @@ void bsal_input_stream_push_sequences(struct bsal_actor *actor,
 
     new_count = bsal_input_command_pack_size(&command);
 
-    new_buffer = malloc(new_count);
+    new_buffer = bsal_malloc(new_count);
 
     bsal_input_command_pack(&command, new_buffer);
 
@@ -483,7 +484,7 @@ void bsal_input_stream_push_sequences(struct bsal_actor *actor,
 
     /* free memory
      */
-    free(new_buffer);
+    bsal_free(new_buffer);
 
 #ifdef BSAL_INPUT_STREAM_DEBUG
     printf("DEBUG freeing %d entries\n",

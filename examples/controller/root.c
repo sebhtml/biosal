@@ -164,13 +164,13 @@ void root_receive(struct bsal_actor *actor, struct bsal_message *message)
         bsal_vector_push_back_vector(&spawners, &concrete_actor->spawners);
 
         new_count = bsal_vector_pack_size(&spawners);
-        new_buffer = malloc(new_count);
+        new_buffer = bsal_malloc(new_count);
         bsal_vector_pack(&spawners, new_buffer);
 
         bsal_message_init(&new_message, BSAL_ACTOR_START, new_count, new_buffer);
         bsal_actor_send(actor, manager, &new_message);
 
-        free(new_buffer);
+        bsal_free(new_buffer);
 
         bsal_vector_destroy(&spawners);
 
@@ -189,12 +189,12 @@ void root_receive(struct bsal_actor *actor, struct bsal_message *message)
     } else if (tag == BSAL_SET_CUSTOMERS_REPLY) {
 
         bytes = bsal_vector_pack_size(&root1->spawners);
-        buffer = malloc(bytes);
+        buffer = bsal_malloc(bytes);
         bsal_vector_pack(&root1->spawners, buffer);
 
         bsal_message_init(message, BSAL_INPUT_CONTROLLER_START, bytes, buffer);
         bsal_actor_send(actor, root1->controller, message);
-        free(buffer);
+        bsal_free(buffer);
         buffer = NULL;
 
         printf("root actor/%d starts controller actor/%d\n", name,

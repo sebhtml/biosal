@@ -1,6 +1,8 @@
 
 #include "queue_group.h"
 
+#include <system/memory.h>
+
 #include <stdlib.h>
 #include <string.h>
 
@@ -11,7 +13,7 @@ void bsal_queue_group_init(struct bsal_queue_group *queue, int units, int bytes_
     queue->units = units;
     queue->bytes_per_unit = bytes_per_unit;
     bytes = bsal_queue_group_bytes(queue);
-    queue->array = malloc(bytes * sizeof(char));
+    queue->array = bsal_malloc(bytes * sizeof(char));
 
     bsal_queue_group_reset(queue);
 

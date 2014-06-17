@@ -1,5 +1,6 @@
 
 #include <system/packer.h>
+#include <system/memory.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -18,7 +19,7 @@ int main(int argc, char **argv)
     expected_value = 42;
     actual_value = 100;
 
-    buffer = malloc(sizeof(expected_value));
+    buffer = bsal_malloc(sizeof(expected_value));
 
     struct bsal_packer packer;
 
@@ -41,7 +42,7 @@ int main(int argc, char **argv)
 
     TEST_INT_EQUALS(actual_value, expected_value);
 
-    free(buffer);
+    bsal_free(buffer);
 
     END_TESTS();
 

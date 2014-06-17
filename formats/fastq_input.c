@@ -1,6 +1,8 @@
 
 #include "fastq_input.h"
 
+#include <system/memory.h>
+
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -43,7 +45,7 @@ void bsal_fastq_input_destroy(struct bsal_input *input)
     bsal_buffered_reader_destroy(&fastq->reader);
 
     if (fastq->buffer != NULL) {
-        free(fastq->buffer);
+        bsal_free(fastq->buffer);
         fastq->buffer = NULL;
     }
 }
@@ -61,7 +63,7 @@ int bsal_fastq_input_get_sequence(struct bsal_input *input,
     fastq = (struct bsal_fastq_input *)bsal_input_implementation(input);
 
     if (fastq->buffer == NULL) {
-        fastq->buffer = (char *)malloc(maximum_sequence_length + 1);
+        fastq->buffer = (char *)bsal_malloc(maximum_sequence_length + 1);
     }
 
     value = bsal_buffered_reader_read_line(&fastq->reader, fastq->buffer,

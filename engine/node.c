@@ -1,6 +1,8 @@
 
 #include "node.h"
 
+#include <system/memory.h>
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -59,7 +61,7 @@ void bsal_node_init(struct bsal_node *node, int *argc, char ***argv)
     node->available_scripts = 0;
     node->print_counters = 0;
     bytes = node->maximum_scripts * sizeof(struct bsal_script *);
-    node->scripts = (struct bsal_script **)malloc(bytes);
+    node->scripts = (struct bsal_script **)bsal_malloc(bytes);
 
     /* the rank number is needed to decide on
      * the number of threads
@@ -375,7 +377,7 @@ int bsal_node_spawn(struct bsal_node *node, int script)
 
     size = bsal_script_size(script1);
 
-    state = malloc(size);
+    state = bsal_malloc(size);
 
     name = bsal_node_spawn_state(node, state, script1);
 
@@ -619,7 +621,7 @@ void bsal_node_start_initial_actor(struct bsal_node *node)
                     bsal_vector_size(&node->initial_actors));
 #endif
 
-    buffer = malloc(bytes);
+    buffer = bsal_malloc(bytes);
     bsal_vector_pack(&node->initial_actors, buffer);
 
     for (i = 0; i < actors; ++i) {
@@ -666,7 +668,7 @@ void bsal_node_test_requests(struct bsal_node *node)
 
             /* TODO use an allocator
              */
-            free(buffer);
+            bsal_free(buffer);
 
             bsal_active_buffer_destroy(&active_buffer);
 
@@ -813,7 +815,7 @@ int bsal_node_receive(struct bsal_node *node, struct bsal_message *message)
     MPI_Get_count(&status, node->datatype, &count);
 
     /* TODO actually allocate (slab allocator) a buffer with count bytes ! */
-    buffer = (char *)malloc(count * sizeof(char));
+    buffer = (char *)bsal_malloc(count * sizeof(char));
 
     source = status.MPI_SOURCE;
     tag = status.MPI_TAG;
@@ -883,7 +885,7 @@ int bsal_node_receive_system(struct bsal_node *node, struct bsal_message *messag
 #endif
 
             bytes = bsal_vector_pack_size(&node->initial_actors);
-            buffer = malloc(bytes);
+            buffer = bsal_malloc(bytes);
             bsal_vector_pack(&node->initial_actors, buffer);
 
             bsal_message_init(&new_message, BSAL_NODE_ADD_INITIAL_ACTORS, bytes, buffer);
@@ -892,7 +894,7 @@ int bsal_node_receive_system(struct bsal_node *node, struct bsal_message *messag
                 bsal_node_send_to_node(node, i, &new_message);
             }
 
-            free(buffer);
+            bsal_free(buffer);
         }
 
         return 1;
@@ -996,7 +998,7 @@ void bsal_node_send_to_node(struct bsal_node *node, int destination,
      * Since we are sending messages between
      * nodes, these names are faked...
      */
-    new_buffer = malloc(new_count);
+    new_buffer = bsal_malloc(new_count);
     memcpy(new_buffer, buffer, count);
 
     /* the metadata size is added by the runtime
@@ -1180,7 +1182,7 @@ void bsal_node_create_work(struct bsal_node *node, struct bsal_message *message)
 
     /* we need to do a copy of the message */
     /* TODO replace with slab allocator */
-    new_message = (struct bsal_message *)malloc(sizeof(struct bsal_message));
+    new_message = (struct bsal_message *)bsal_malloc(sizeof(struct bsal_message));
     memcpy(new_message, message, sizeof(struct bsal_message));
 
     bsal_work_init(&work, actor, new_message);
@@ -1280,7 +1282,7 @@ void bsal_node_notify_death(struct bsal_node *node, struct bsal_actor *actor)
     bsal_actor_destroy(actor);
 
     /* free the bytes of the concrete actor */
-    free(state);
+    bsal_free(state);
     state = NULL;
 
     /* remove the name from the registry */

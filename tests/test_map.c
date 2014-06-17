@@ -1,6 +1,7 @@
 
 #include <structures/map.h>
 #include <structures/map_iterator.h>
+#include <system/memory.h>
 
 #include "test.h"
 
@@ -154,7 +155,7 @@ int main(int argc, char **argv)
         }
 
         count = bsal_map_pack_size(&map);
-        buffer = malloc(count);
+        buffer = bsal_malloc(count);
         bsal_map_pack(&map, buffer);
 
         /*
@@ -184,7 +185,7 @@ int main(int argc, char **argv)
         TEST_INT_EQUALS(bsal_map_size(&map2), bsal_map_size(&map));
         TEST_INT_EQUALS(bsal_map_size(&map2), elements);
 
-        free(buffer);
+        bsal_free(buffer);
 
         bsal_map_destroy(&map);
     }

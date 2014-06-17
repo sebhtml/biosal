@@ -2,6 +2,7 @@
 #include "vector.h"
 
 #include <system/packer.h>
+#include <system/memory.h>
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -22,7 +23,7 @@ void bsal_vector_init(struct bsal_vector *self, int element_size)
 void bsal_vector_destroy(struct bsal_vector *self)
 {
     if (self->data != NULL) {
-        free(self->data);
+        bsal_free(self->data);
         self->data = NULL;
     }
 
@@ -179,12 +180,12 @@ void bsal_vector_reserve(struct bsal_vector *self, int64_t size)
                     old_byte_count, new_byte_count);
 #endif
 
-    new_data = malloc(new_byte_count);
+    new_data = bsal_malloc(new_byte_count);
 
     /* copy old data */
     if (self->size > 0) {
         memcpy(new_data, self->data, old_byte_count);
-        free(self->data);
+        bsal_free(self->data);
     }
 
     self->data = new_data;
@@ -251,7 +252,7 @@ int bsal_vector_pack_unpack(struct bsal_vector *self, void *buffer, int operatio
         self->maximum_size = self->size;
 
         if (self->size > 0) {
-            self->data = malloc(self->maximum_size * self->element_size);
+            self->data = bsal_malloc(self->maximum_size * self->element_size);
         } else {
             self->data = NULL;
         }

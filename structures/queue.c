@@ -1,6 +1,8 @@
 
 #include "queue.h"
 
+#include <system/memory.h>
+
 #include <stdlib.h>
 
 void bsal_queue_init(struct bsal_queue *queue, int bytes_per_unit)
@@ -55,7 +57,7 @@ void bsal_queue_destroy_array(struct bsal_queue_group *array)
     bsal_queue_group_destroy(array);
 
     /* TODO use a slab allocator */
-    free(array);
+    bsal_free(array);
 }
 
 int bsal_queue_enqueue(struct bsal_queue *queue, void *item)
@@ -144,7 +146,7 @@ struct bsal_queue_group *bsal_queue_get_array(struct bsal_queue *queue)
     struct bsal_queue_group *array;
 
     /* TODO: use a slab allocator here */
-    array = (struct bsal_queue_group *)malloc(sizeof(struct bsal_queue_group));
+    array = (struct bsal_queue_group *)bsal_malloc(sizeof(struct bsal_queue_group));
     bsal_queue_group_init(array, queue->units, queue->bytes_per_unit);
 
     return array;

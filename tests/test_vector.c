@@ -3,6 +3,7 @@
 #include <structures/vector_iterator.h>
 
 #include <helpers/vector_helper.h>
+#include <system/memory.h>
 
 #include "test.h"
 
@@ -124,7 +125,7 @@ int main(int argc, char **argv)
 
         TEST_INT_IS_GREATER_THAN(count, 0);
 
-        buffer = malloc(count);
+        buffer = bsal_malloc(count);
 
         bsal_vector_pack(&vector1, buffer);
         bsal_vector_unpack(&vector2, buffer);
@@ -136,7 +137,7 @@ int main(int argc, char **argv)
             TEST_INT_EQUALS(value1, value2);
         }
 
-        free(buffer);
+        bsal_free(buffer);
     }
 
     {

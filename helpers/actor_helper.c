@@ -20,14 +20,14 @@ void bsal_actor_helper_send_vector(struct bsal_actor *actor, int destination,
     void *buffer;
 
     count = bsal_vector_pack_size(vector);
-    buffer = malloc(count);
+    buffer = bsal_malloc(count);
     bsal_vector_pack(vector, buffer);
 
     bsal_message_init(&message, tag, count, buffer);
 
     bsal_actor_send(actor, destination, &message);
 
-    free(buffer);
+    bsal_free(buffer);
 
     bsal_message_destroy(&message);
 }
@@ -276,10 +276,10 @@ void bsal_actor_helper_send_range_binomial_tree(struct bsal_actor *actor, struct
 
         /* TODO use slab allocator */
         new_count = count + sizeof(source) + sizeof(tag) + bsal_vector_pack_size(&left_part) + sizeof(magic_offset);
-        new_buffer = malloc(new_count);
+        new_buffer = bsal_malloc(new_count);
 
 #ifdef BSAL_ACTOR_DEBUG_BINOMIAL_TREE
-        printf("DEBUG12 malloc %p (send_binomial_range)\n",
+        printf("DEBUG12 bsal_malloc %p (send_binomial_range)\n",
                     new_buffer);
 #endif
 
@@ -310,7 +310,7 @@ void bsal_actor_helper_send_range_binomial_tree(struct bsal_actor *actor, struct
         bsal_actor_send(actor, left_actor, &new_message);
 
         /* restore the buffer for the user */
-        free(new_buffer);
+        bsal_free(new_buffer);
         bsal_vector_destroy(&left_part);
     }
 
@@ -322,7 +322,7 @@ void bsal_actor_helper_send_range_binomial_tree(struct bsal_actor *actor, struct
     if (bsal_vector_size(&right_part) > 0) {
 
         new_count = count + sizeof(source) + sizeof(tag) + bsal_vector_pack_size(&right_part) + sizeof(magic_offset);
-        new_buffer = malloc(new_count);
+        new_buffer = bsal_malloc(new_count);
 
         memcpy(new_buffer, buffer, count);
         offset = count;
@@ -351,7 +351,7 @@ void bsal_actor_helper_send_range_binomial_tree(struct bsal_actor *actor, struct
         bsal_actor_send(actor, right_actor, &new_message);
 
         bsal_vector_destroy(&right_part);
-        free(new_buffer);
+        bsal_free(new_buffer);
         new_buffer = NULL;
     }
 }

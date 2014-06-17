@@ -6,6 +6,7 @@
 #include <structures/vector_iterator.h>
 #include <helpers/message_helper.h>
 #include <helpers/actor_helper.h>
+#include <system/memory.h>
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -130,7 +131,7 @@ void bsal_sequence_partitioner_receive(struct bsal_actor *actor, struct bsal_mes
             printf("DEBUG partitioner has command, packing %d bytes!\n", bytes);
             */
 
-            buffer = malloc(bytes);
+            buffer = bsal_malloc(bytes);
             bsal_partition_command_pack(&command, buffer);
 
             bsal_message_init(&response, BSAL_SEQUENCE_PARTITIONER_GET_COMMAND_REPLY,
@@ -144,7 +145,7 @@ void bsal_sequence_partitioner_receive(struct bsal_actor *actor, struct bsal_mes
                             &command_number);
             *command_bucket = command;
 
-            free(buffer);
+            bsal_free(buffer);
 
             /* there may be other command available too !
              */
@@ -340,7 +341,7 @@ void bsal_sequence_partitioner_verify(struct bsal_actor *actor)
 #endif
 
     bytes = bsal_vector_pack_size(&concrete_actor->store_entries);
-    buffer = malloc(bytes);
+    buffer = bsal_malloc(bytes);
     bsal_vector_pack(&concrete_actor->store_entries, buffer);
 
     bsal_message_init(&message, BSAL_SEQUENCE_PARTITIONER_PROVIDE_STORE_ENTRY_COUNTS,

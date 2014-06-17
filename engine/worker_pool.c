@@ -5,6 +5,8 @@
 #include "work.h"
 #include "worker.h"
 
+#include <system/memory.h>
+
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -50,7 +52,7 @@ void bsal_worker_pool_delete_workers(struct bsal_worker_pool *pool)
         bsal_worker_destroy(bsal_worker_pool_get_worker(pool, i));
     }
 
-    free(pool->worker_array);
+    bsal_free(pool->worker_array);
     pool->worker_array = NULL;
 }
 
@@ -64,7 +66,7 @@ void bsal_worker_pool_create_workers(struct bsal_worker_pool *pool)
     }
 
     bytes = pool->workers * sizeof(struct bsal_worker);
-    pool->worker_array = (struct bsal_worker *)malloc(bytes);
+    pool->worker_array = (struct bsal_worker *)bsal_malloc(bytes);
 
     for (i = 0; i < pool->workers; i++) {
         bsal_worker_init(bsal_worker_pool_get_worker(pool, i), i, pool->node);
