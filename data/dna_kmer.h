@@ -29,5 +29,12 @@ void bsal_dna_kmer_print(struct bsal_dna_kmer *sequence);
 char *bsal_dna_kmer_sequence(struct bsal_dna_kmer *sequence);
 
 int bsal_dna_kmer_store_index(struct bsal_dna_kmer *self, int stores);
+int bsal_dna_kmer_pack_store_key(struct bsal_dna_kmer *sequence,
+                void *buffer);
+
+char bsal_dna_kmer_complement(char nucleotide);
+void bsal_dna_kmer_reverse_complement(char *sequence1, char *sequence2);
+void bsal_dna_kmer_normalize(char *sequence);
+char bsal_dna_kmer_normalize_nucleotide(char nucleotide);
 
 #endif

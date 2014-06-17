@@ -109,7 +109,7 @@ void bsal_kmer_store_receive(struct bsal_actor *self, struct bsal_message *messa
              */
             bsal_vector_iterator_next(&iterator, (void **)&kmer_pointer);
 
-            bsal_dna_kmer_pack(kmer_pointer, key);
+            bsal_dna_kmer_pack_store_key(kmer_pointer, key);
 
             bucket = (int *)bsal_map_get(&concrete_actor->table, key);
 
@@ -228,6 +228,10 @@ void bsal_kmer_store_push_data(struct bsal_actor *self, struct bsal_message *mes
             (*count) = 0;
         }
 
+        /* increment for the lowest kmer */
+        (*count)++;
+
+        /* increment for the other kmer */
         (*count)++;
     }
 
