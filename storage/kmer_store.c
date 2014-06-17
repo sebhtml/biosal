@@ -221,14 +221,17 @@ void bsal_kmer_store_push_data(struct bsal_actor *self, struct bsal_message *mes
     int new_count;
     void *new_buffer;
     struct bsal_message new_message;
+    int name;
 
     concrete_actor = (struct bsal_kmer_store *)bsal_actor_concrete_actor(self);
     customer = bsal_actor_get_acquaintance(self, concrete_actor->customer);
+    name = bsal_actor_name(self);
 
     bsal_map_init(&coverage_distribution, sizeof(int), sizeof(uint64_t));
 
+    printf("store actor/%d: local table has %d kmers\n",
+                    name, (int)bsal_map_size(&concrete_actor->table));
 #ifdef BSAL_KMER_STORE_DEBUG
-    printf("Local table has %d kmers\n", (int)bsal_map_size(&concrete_actor->table));
 #endif
 
     bsal_map_iterator_init(&iterator, &concrete_actor->table);

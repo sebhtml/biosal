@@ -187,7 +187,7 @@ void bsal_dna_kmer_print(struct bsal_dna_kmer *self)
 
 uint64_t bsal_dna_kmer_hash(struct bsal_dna_kmer *self)
 {
-    int seed;
+    unsigned int seed;
     seed = 0xcaa9cfcf;
 
     return bsal_murmur_hash_2_64_a(self->encoded_data, self->length_in_bases, seed);

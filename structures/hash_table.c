@@ -248,7 +248,7 @@ int bsal_hash_table_get_group_bucket(struct bsal_hash_table *table, uint64_t buc
 /*
  * The hash function can be changed here.
  */
-uint64_t bsal_hash_table_hash(void *key, int key_size, int seed)
+uint64_t bsal_hash_table_hash(void *key, int key_size, unsigned int seed)
 {
     if (key_size < 0) {
         printf("DEBUG ERROR key_size %d\n", key_size);
