@@ -7,51 +7,51 @@ ECHO=echo
 # first target
 all:
 
-LIBRARY=
+LIBRARY_OBJECTS=
 
 # actor engine
 include engine/Makefile.mk
-LIBRARY += $(ENGINE)
+LIBRARY_OBJECTS += $(ENGINE)
 
 # patterns
 include patterns/Makefile.mk
-LIBRARY += $(PATTERNS)
+LIBRARY_OBJECTS += $(PATTERNS)
 
 # helpers
 include helpers/Makefile.mk
-LIBRARY += $(HELPERS)
+LIBRARY_OBJECTS += $(HELPERS)
 
 # kernels for genomics
 include kernels/Makefile.mk
-LIBRARY += $(KERNELS)
+LIBRARY_OBJECTS += $(KERNELS)
 
 # system stuff
 include system/Makefile.mk
-LIBRARY += $(SYSTEM)
+LIBRARY_OBJECTS += $(SYSTEM)
 
 # storage
 include storage/Makefile.mk
-LIBRARY += $(STORAGE)
+LIBRARY_OBJECTS += $(STORAGE)
 
 # data structures
 include structures/Makefile.mk
-LIBRARY += $(STRUCTURES)
+LIBRARY_OBJECTS += $(STRUCTURES)
 
 # hash functions
 include hash/Makefile.mk
-LIBRARY += $(HASH)
+LIBRARY_OBJECTS += $(HASH)
 
 # inputs for actors
 include input/Makefile.mk
-LIBRARY += $(INPUT)
+LIBRARY_OBJECTS += $(INPUT)
 
 # data storage
 include data/Makefile.mk
-LIBRARY += $(DATA)
+LIBRARY_OBJECTS += $(DATA)
 
 # formats
 include formats/Makefile.mk
-LIBRARY += $(FORMATS)
+LIBRARY_OBJECTS += $(FORMATS)
 
 # generic build rule
 %.o: %.c
@@ -63,17 +63,11 @@ include tests/Makefile.mk
 include examples/Makefile.mk
 include applications/Makefile.mk
 
-all: $(APPLICATIONS) $(EXAMPLES) $(TESTS)
+all: $(TEST_EXECUTABLES) $(EXAMPLE_EXECUTABLES) $(APPLICATION_EXECUTABLES)
 
 clean:
 	$(Q)$(ECHO) "  RM"
-	$(Q)$(RM) $(LIBRARY)
-	$(Q)$(RM) $(EXAMPLE_RING) $(EXAMPLE_MOCK) $(EXAMPLE_READER) $(EXAMPLE_REMOTE_SPAWN)
-	$(Q)$(RM) $(EXAMPLE_SYNCHRONIZE) $(EXAMPLE_CONTROLLER) $(EXAMPLE_HELLO_WORLD)
-	$(Q)$(RM) $(EXAMPLE_CLONE) $(EXAMPLE_MIGRATION)
-	$(Q)$(RM) $(TEST_FIFO) $(TEST_FIFO_ARRAY) $(TEST_HASH_TABLE_GROUP) $(TEST_NODE)
-	$(Q)$(RM) $(TEST_HASH_TABLE) $(TEST_VECTOR) $(TEST_DYNAMIC_HASH_TABLE)
-	$(Q)$(RM) $(TEST_PACKER) $(TEST_DNA_SEQUENCE) $(TEST_MAP) $(TEST_SET)
-	$(Q)$(RM) $(EXAMPLES) $(TESTS)
-	$(Q)$(RM) $(EXAMPLES) $(TESTS) $(APPLICATIONS) $(APPLICATION_ARGONNITE_OBJECTS)
-
+	$(Q)$(RM) $(LIBRARY_OBJECTS)
+	$(Q)$(RM) $(TEST_OBJECTS) $(TEST_EXECUTABLES)
+	$(Q)$(RM) $(EXAMPLE_OBJECTS) $(EXAMPLE_EXECUTABLES)
+	$(Q)$(RM) $(APPLICATION_OBJECTS) $(APPLICATION_EXECUTABLES)

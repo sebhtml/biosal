@@ -1,55 +1,65 @@
 
 examples: mock mock1 ring reader not_found remote_spawn synchronize controller hello_world clone migration
 
-EXAMPLES=examples/example_mock examples/example_ring examples/example_reader examples/example_remote_spawn examples/example_synchronize examples/example_controller examples/example_hello_world \
+EXAMPLE_EXECUTABLES=examples/example_mock examples/example_ring examples/example_reader examples/example_remote_spawn examples/example_synchronize examples/example_controller examples/example_hello_world \
          examples/example_clone examples/example_migration
+EXAMPLE_OBJECTS=
 
 # examples
 EXAMPLE_MOCK=examples/mock/main.o examples/mock/mock.o examples/mock/buddy.o
+EXAMPLE_OBJECTS+=$(EXAMPLE_MOCK)
 EXAMPLE_RING=examples/ring/main.o examples/ring/sender.o examples/ring/ring.o
+EXAMPLE_OBJECTS+=$(EXAMPLE_RING)
 EXAMPLE_READER=examples/reader/main.o examples/reader/reader.o
+EXAMPLE_OBJECTS+=$(EXAMPLE_READER)
 EXAMPLE_REMOTE_SPAWN=examples/remote_spawn/main.o examples/remote_spawn/table.o
+EXAMPLE_OBJECTS+=$(EXAMPLE_REMOTE_SPAWN)
 EXAMPLE_SYNCHRONIZE=examples/synchronize/main.o examples/synchronize/stream.o
+EXAMPLE_OBJECTS+=$(EXAMPLE_SYNCHRONIZE)
 EXAMPLE_CONTROLLER=examples/controller/main.o examples/controller/root.o
+EXAMPLE_OBJECTS+=$(EXAMPLE_CONTROLLER)
 EXAMPLE_HELLO_WORLD=examples/hello_world/main.o examples/hello_world/hello.o
+EXAMPLE_OBJECTS+=$(EXAMPLE_HELLO_WORLD)
 EXAMPLE_CLONE=examples/clone/main.o examples/clone/process.o
+EXAMPLE_OBJECTS+=$(EXAMPLE_CLONE)
 EXAMPLE_MIGRATION=examples/migration/main.o examples/migration/frame.o
+EXAMPLE_OBJECTS+=$(EXAMPLE_MIGRATION)
 
 # examples
 
-examples/example_remote_spawn: $(EXAMPLE_REMOTE_SPAWN) $(LIBRARY)
+examples/example_remote_spawn: $(EXAMPLE_REMOTE_SPAWN) $(LIBRARY_OBJECTS)
 	$(Q)$(ECHO) "  LD $@"
 	$(Q)$(CC) $(CFLAGS) $^ -o $@
 
-examples/example_ring: $(EXAMPLE_RING) $(LIBRARY)
+examples/example_ring: $(EXAMPLE_RING) $(LIBRARY_OBJECTS)
 	$(Q)$(ECHO) "  LD $@"
 	$(Q)$(CC) $(CFLAGS) $^ -o $@
 
-examples/example_mock: $(EXAMPLE_MOCK) $(LIBRARY)
+examples/example_mock: $(EXAMPLE_MOCK) $(LIBRARY_OBJECTS)
 	$(Q)$(ECHO) "  LD $@"
 	$(Q)$(CC) $(CFLAGS) $^ -o $@
 
-examples/example_reader: $(EXAMPLE_READER) $(LIBRARY)
+examples/example_reader: $(EXAMPLE_READER) $(LIBRARY_OBJECTS)
 	$(Q)$(ECHO) "  LD $@"
 	$(Q)$(CC) $(CFLAGS) $^ -o $@
 
-examples/example_synchronize: $(EXAMPLE_SYNCHRONIZE) $(LIBRARY)
+examples/example_synchronize: $(EXAMPLE_SYNCHRONIZE) $(LIBRARY_OBJECTS)
 	$(Q)$(ECHO) "  LD $@"
 	$(Q)$(CC) $(CFLAGS) $^ -o $@
 
-examples/example_controller: $(EXAMPLE_CONTROLLER) $(LIBRARY)
+examples/example_controller: $(EXAMPLE_CONTROLLER) $(LIBRARY_OBJECTS)
 	$(Q)$(ECHO) "  LD $@"
 	$(Q)$(CC) $(CFLAGS) $^ -o $@
 
-examples/example_hello_world: $(EXAMPLE_HELLO_WORLD) $(LIBRARY)
+examples/example_hello_world: $(EXAMPLE_HELLO_WORLD) $(LIBRARY_OBJECTS)
 	$(Q)$(ECHO) "  LD $@"
 	$(Q)$(CC) $(CFLAGS) $^ -o $@
 
-examples/example_clone: $(EXAMPLE_CLONE) $(LIBRARY)
+examples/example_clone: $(EXAMPLE_CLONE) $(LIBRARY_OBJECTS)
 	$(Q)$(ECHO) "  LD $@"
 	$(Q)$(CC) $(CFLAGS) $^ -o $@
 
-examples/example_migration: $(EXAMPLE_MIGRATION) $(LIBRARY)
+examples/example_migration: $(EXAMPLE_MIGRATION) $(LIBRARY_OBJECTS)
 	$(Q)$(ECHO) "  LD $@"
 	$(Q)$(CC) $(CFLAGS) $^ -o $@
 
