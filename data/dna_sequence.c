@@ -13,7 +13,7 @@
 /*
 #define BSAL_DNA_SEQUENCE_DEBUG
 */
-void bsal_dna_sequence_init(struct bsal_dna_sequence *sequence, void *data)
+void bsal_dna_sequence_init(struct bsal_dna_sequence *sequence, char *data)
 {
     int encoded_length;
 
@@ -25,7 +25,7 @@ void bsal_dna_sequence_init(struct bsal_dna_sequence *sequence, void *data)
         sequence->encoded_data = NULL;
         sequence->length_in_nucleotides = 0;
     } else {
-        sequence->length_in_nucleotides = strlen((char *)data);
+        sequence->length_in_nucleotides = strlen(data);
 
         encoded_length = bsal_dna_codec_encoded_length(sequence->length_in_nucleotides);
         sequence->encoded_data = bsal_malloc(encoded_length);

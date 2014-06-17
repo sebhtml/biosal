@@ -11,7 +11,7 @@ struct bsal_dna_sequence {
 };
 
 void bsal_dna_sequence_init(struct bsal_dna_sequence *sequence,
-                void *data);
+                char *data);
 void bsal_dna_sequence_destroy(struct bsal_dna_sequence *sequence);
 
 int bsal_dna_sequence_unpack(struct bsal_dna_sequence *sequence,

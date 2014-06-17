@@ -166,23 +166,44 @@ void bsal_kmer_store_print(struct bsal_actor *self)
     int coverage;
     char *sequence;
     struct bsal_kmer_store *concrete_actor;
+    int maximum_length;
+    int length;
 
     concrete_actor = (struct bsal_kmer_store *)bsal_actor_concrete_actor(self);
     bsal_map_iterator_init(&iterator, &concrete_actor->table);
 
     printf("map size %d\n", (int)bsal_map_size(&concrete_actor->table));
 
+    maximum_length = 0;
+
+    while (bsal_map_iterator_has_next(&iterator)) {
+        bsal_map_iterator_next(&iterator, (void **)&key, (void **)&value);
+        bsal_dna_kmer_unpack(&kmer, key);
+
+        length = bsal_dna_kmer_length(&kmer);
+
+        if (length > maximum_length) {
+            length = maximum_length;
+        }
+        bsal_dna_kmer_destroy(&kmer);
+    }
+
+    sequence = bsal_malloc(maximum_length + 1);
+
     while (bsal_map_iterator_has_next(&iterator)) {
         bsal_map_iterator_next(&iterator, (void **)&key, (void **)&value);
 
         bsal_dna_kmer_unpack(&kmer, key);
 
-        sequence = bsal_dna_kmer_sequence(&kmer);
+        bsal_dna_kmer_get_sequence(&kmer, sequence);
         coverage = *value;
 
         printf("Sequence %s Coverage %d\n", sequence, coverage);
+
+        bsal_dna_kmer_destroy(&kmer);
     }
 
+    bsal_free(sequence);
     bsal_map_iterator_destroy(&iterator);
 }
 

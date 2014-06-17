@@ -60,6 +60,9 @@ void argonnite_init(struct bsal_actor *actor)
                     &bsal_coverage_distribution_script);
 
     concrete_actor->kmer_length = ARGONNITE_DEFAULT_KMER_LENGTH;
+
+    /* the number of input sequences per block
+     */
     concrete_actor->block_size = 512;
 
     concrete_actor->configured_actors = 0;
