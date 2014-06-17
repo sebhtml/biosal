@@ -2,7 +2,7 @@
 #include "dispatcher.h"
 #include "message.h"
 
-#include <helpers/vector_helper.h>
+#include <structures/map_iterator.h>
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -13,24 +13,25 @@
 
 void bsal_dispatcher_init(struct bsal_dispatcher *self)
 {
-    bsal_vector_init(&self->tags, sizeof(int));
-    bsal_vector_init(&self->handlers, sizeof(bsal_actor_receive_fn_t));
+    bsal_map_init(&self->table, sizeof(int), sizeof(bsal_actor_receive_fn_t));
 }
 
 void bsal_dispatcher_destroy(struct bsal_dispatcher *self)
 {
-    bsal_vector_destroy(&self->tags);
-    bsal_vector_destroy(&self->handlers);
+    bsal_map_destroy(&self->table);
 }
 
 void bsal_dispatcher_register(struct bsal_dispatcher *self, int tag, bsal_actor_receive_fn_t handler)
 {
+    bsal_actor_receive_fn_t *bucket;
+
     if (bsal_dispatcher_get(self, tag) != NULL) {
         return;
     }
 
-    bsal_vector_push_back(&self->tags, &tag);
-    bsal_vector_push_back(&self->handlers, &handler);
+    bucket = (bsal_actor_receive_fn_t *)bsal_map_add(&self->table, &tag);
+
+    *bucket = handler;
 
 #ifdef BSAL_DISPATCHER_DEBUG_10335
     if (tag == 10335) {
@@ -78,34 +79,35 @@ int bsal_dispatcher_dispatch(struct bsal_dispatcher *self, struct bsal_actor *ac
 
 bsal_actor_receive_fn_t bsal_dispatcher_get(struct bsal_dispatcher *self, int tag)
 {
-    int index;
     bsal_actor_receive_fn_t *bucket;
 
-    index = bsal_vector_index_of(&self->tags, &tag);
+    bucket = (bsal_actor_receive_fn_t *)bsal_map_get(&self->table, &tag);
 
-    if (index < 0) {
+    if (bucket == NULL) {
         return NULL;
     }
-
-    bucket = (bsal_actor_receive_fn_t *)bsal_vector_at(&self->handlers, index);
 
     return *bucket;
 }
 
 void bsal_dispatcher_print(struct bsal_dispatcher *self)
 {
-    int i;
-    int tag;
+    int *tag;
     void *handler;
+    struct bsal_map_iterator iterator;
 
     printf("DEBUG DATA Dispatcher handlers (%d):",
-                    (int)bsal_vector_size(&self->tags));
+                    (int)bsal_map_size(&self->table));
 
-    for (i = 0; i < bsal_vector_size(&self->tags); i++) {
-        tag = bsal_vector_helper_at_as_int(&self->tags, i);
-        handler = bsal_vector_helper_at_as_void_pointer(&self->handlers, i);
+    bsal_map_iterator_init(&iterator, &self->table);
 
-        printf(" (%d %p)", tag, handler);
+    while (bsal_map_iterator_has_next(&iterator)) {
+
+        bsal_map_iterator_next(&iterator, (void **)&tag, (void**)&handler);
+
+        printf(" (%d %p)", *tag, handler);
     }
     printf("\n");
+
+    bsal_map_iterator_destroy(&iterator);
 }

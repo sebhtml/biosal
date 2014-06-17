@@ -3,11 +3,10 @@
 #define BSAL_DISPATCHER_H
 
 #include <engine/script.h>
-#include <structures/vector.h>
+#include <structures/map.h>
 
 struct bsal_dispatcher {
-    struct bsal_vector tags;
-    struct bsal_vector handlers;
+    struct bsal_map table;
 };
 
 void bsal_dispatcher_init(struct bsal_dispatcher *self);
