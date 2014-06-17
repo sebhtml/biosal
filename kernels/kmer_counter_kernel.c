@@ -234,8 +234,8 @@ void bsal_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_mess
                         || concrete_actor->actual > concrete_actor->last + 100000
                         || concrete_actor->last == 0) {
 
-            printf("kernel actor/%d processed %" PRIu64 "/%" PRIu64 " entries (%d blocks) so far\n",
-                            name, concrete_actor->actual, concrete_actor->expected,
+            printf("kernel actor/%d processed %" PRIu64 " entries (%d blocks) so far\n",
+                            name, concrete_actor->actual,
                             concrete_actor->blocks);
 
             concrete_actor->last = concrete_actor->actual;

@@ -24,13 +24,15 @@ struct bsal_script bsal_kernel_director_script = {
 void bsal_kernel_director_init(struct bsal_actor *actor)
 {
     struct bsal_kernel_director *concrete_actor;
+    int kernels_per_worker;
 
     concrete_actor = (struct bsal_kernel_director *)bsal_actor_concrete_actor(actor);
 
     bsal_queue_init(&concrete_actor->available_kernels, sizeof(int));
     bsal_vector_init(&concrete_actor->kernels, sizeof(int));
 
-    concrete_actor->maximum_kernels = bsal_actor_node_worker_count(actor) * 4;
+    kernels_per_worker = 1;
+    concrete_actor->maximum_kernels = bsal_actor_node_worker_count(actor) * kernels_per_worker;
     concrete_actor->kmer_length = -1;
     concrete_actor->aggregator = -1;
 }
