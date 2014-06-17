@@ -154,11 +154,11 @@ void bsal_coverage_distribution_write_distribution(struct bsal_actor *self)
     uint64_t the_frequency;
     FILE *descriptor;
     char *file_name;
-    char default_file_name[] = "coverage_distribution.txt";
     int argc;
     char **argv;
     int i;
     int name;
+    char default_file_name[] = BSAL_COVERAGE_DISTRIBUTION_DEFAULT_OUTPUT;
 
     name = bsal_actor_name(self);
     argc = bsal_actor_argc(self);

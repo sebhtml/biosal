@@ -24,6 +24,8 @@
 #define ARGONNITE_DEBUG
 */
 
+#define ARGONNITE_DEFAULT_KMER_LENGTH 41
+
 struct bsal_script argonnite_script = {
     .name = ARGONNITE_SCRIPT,
     .init = argonnite_init,
@@ -57,7 +59,7 @@ void argonnite_init(struct bsal_actor *actor)
     bsal_actor_add_script(actor, BSAL_COVERAGE_DISTRIBUTION_SCRIPT,
                     &bsal_coverage_distribution_script);
 
-    concrete_actor->kmer_length = 41;
+    concrete_actor->kmer_length = ARGONNITE_DEFAULT_KMER_LENGTH;
     concrete_actor->block_size = 512;
 
     concrete_actor->configured_actors = 0;
@@ -108,6 +110,7 @@ void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message)
     int manager_for_stores;
     struct bsal_vector stores;
     int spawner;
+    int is_boss;
 
     concrete_actor = (struct argonnite *)bsal_actor_concrete_actor(actor);
     tag = bsal_message_tag(message);
@@ -118,8 +121,6 @@ void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message)
     source = bsal_message_source(message);
 
     if (tag == BSAL_ACTOR_START) {
-
-        printf("argonnite actor/%d starts\n", name);
 
         for (i = 0; i < argc; i++) {
             if (strcmp(argv[i], "-k") == 0 && i + 1 < argc) {
@@ -134,6 +135,27 @@ void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message)
 
         bsal_vector_unpack(&initial_actors, buffer);
 
+        is_boss = 0;
+
+        if (bsal_vector_helper_at_as_int(&initial_actors, 0) == name) {
+            is_boss = 1;
+        }
+
+        /* help page
+         */
+        if (argc == 1
+                        || (argc == 2 && strstr(argv[1], "help") != NULL)) {
+
+            if (is_boss) {
+                argonnite_help(actor);
+            }
+
+            bsal_actor_helper_ask_to_stop(actor, message);
+            return;
+        }
+
+        printf("argonnite actor/%d starts\n", name);
+
         spawner = bsal_vector_helper_at_as_int(&initial_actors, bsal_vector_size(&initial_actors) / 2);
 
         bsal_actor_helper_add_acquaintances(actor, &initial_actors, &concrete_actor->initial_actors);
@@ -141,7 +163,7 @@ void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message)
         /*
          * Run only one argonnite actor
          */
-        if (bsal_vector_helper_at_as_int(&initial_actors, 0) != name) {
+        if (!is_boss) {
             return;
         }
 
@@ -540,4 +562,40 @@ void argonnite_add_file(struct bsal_actor *actor, struct bsal_message *message)
 
     bsal_actor_send(actor, controller, &new_message);
 
+}
+
+void argonnite_help(struct bsal_actor *actor)
+{
+    printf("argonnite - distributed kmer counter with actors\n");
+    printf("\n");
+
+    printf("Usage:\n");
+    printf("mpiexec -n node_count argonnite -threads-per-node thread_count -k kmer_length -o output file1 file2 ...");
+    printf("\n");
+
+    printf("Options\n");
+    printf("-thread-per-node thread_count       threads per biosal node\n");
+    printf("-k kmer_length                      kmer length (default: %d, no limit, no compilation option)\n",
+                    ARGONNITE_DEFAULT_KMER_LENGTH);
+    printf("-o output                           output (default: %s)\n", BSAL_COVERAGE_DISTRIBUTION_DEFAULT_OUTPUT);
+    printf("-print-counters                     print node-level biosal counters\n");
+    printf("\n");
+
+    printf("Example\n");
+    printf("\n");
+    printf("mpiexec -n 64 argonnite -threads-per-node 32 -k 47 -o output \\\n");
+    printf(" GPIC.1424-1.1371_1.fastq \\\n");
+    printf(" GPIC.1424-1.1371_2.fastq \\\n");
+    printf(" GPIC.1424-2.1371_1.fastq \\\n");
+    printf(" GPIC.1424-2.1371_2.fastq \\\n");
+    printf(" GPIC.1424-3.1371_1.fastq \\\n");
+    printf(" GPIC.1424-3.1371_2.fastq \\\n");
+    printf(" GPIC.1424-4.1371_1.fastq \\\n");
+    printf(" GPIC.1424-4.1371_2.fastq \\\n");
+    printf(" GPIC.1424-5.1371_1.fastq \\\n");
+    printf(" GPIC.1424-5.1371_2.fastq \\\n");
+    printf(" GPIC.1424-6.1371_1.fastq \\\n");
+    printf(" GPIC.1424-6.1371_2.fastq \\\n");
+    printf(" GPIC.1424-7.1371_1.fastq \\\n");
+    printf(" GPIC.1424-7.1371_2.fastq\n");
 }

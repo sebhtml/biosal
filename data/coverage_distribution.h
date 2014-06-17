@@ -19,6 +19,8 @@ struct bsal_coverage_distribution {
 #define BSAL_SET_EXPECTED_MESSAGES 0x00004878
 #define BSAL_SET_EXPECTED_MESSAGES_REPLY 0x00007e2f
 
+#define BSAL_COVERAGE_DISTRIBUTION_DEFAULT_OUTPUT "coverage_distribution.txt"
+
 extern struct bsal_script bsal_coverage_distribution_script;
 
 void bsal_coverage_distribution_init(struct bsal_actor *actor);

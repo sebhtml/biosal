@@ -38,5 +38,6 @@ void argonnite_destroy(struct bsal_actor *actor);
 void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message);
 
 void argonnite_add_file(struct bsal_actor *actor, struct bsal_message *message);
+void argonnite_help(struct bsal_actor *actor);
 
 #endif
