@@ -9,6 +9,8 @@
 #define BSAL_DYNAMIC_HASH_TABLE_DEBUG_ADD
 */
 
+#define BSAL_DYNAMIC_HASH_TABLE_THRESHOLD 0.90
+
 void bsal_dynamic_hash_table_init(struct bsal_dynamic_hash_table *self, uint64_t buckets,
                 int key_size, int value_size)
 {
@@ -56,7 +58,7 @@ void *bsal_dynamic_hash_table_add(struct bsal_dynamic_hash_table *self, void *ke
      */
     if (!self->resize_in_progress) {
 
-        threshold = 0.75;
+        threshold = BSAL_DYNAMIC_HASH_TABLE_THRESHOLD;
         ratio = (0.0 + bsal_hash_table_size(self->current)) / bsal_hash_table_buckets(self->current);
 
         if (ratio < threshold) {
