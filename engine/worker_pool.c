@@ -208,14 +208,7 @@ struct bsal_worker *bsal_worker_pool_select_worker_least_busy(
          */
         self->worker_for_work = bsal_worker_pool_next_worker(self, self->worker_for_work);
 
-        score = 0;
-
-        if (bsal_worker_is_busy(worker)) {
-            score ++;
-        }
-
-        score += bsal_worker_enqueued_work_count(worker);
-
+        score = bsal_worker_score(worker);
 
         /* if the worker is not busy and it has no work to do,
          * select it right away...

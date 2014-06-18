@@ -407,3 +407,18 @@ int bsal_worker_enqueued_work_count(struct bsal_worker *self)
 {
     return bsal_queue_size(&self->works);
 }
+
+int bsal_worker_score(struct bsal_worker *self)
+{
+    int score;
+
+    score = 0;
+
+    if (bsal_worker_is_busy(self)) {
+        score++;
+    }
+
+    score += bsal_worker_enqueued_work_count(self);
+
+    return score;
+}

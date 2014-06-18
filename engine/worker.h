@@ -68,4 +68,6 @@ int bsal_worker_pull_message(struct bsal_worker *worker, struct bsal_message *me
 int bsal_worker_is_busy(struct bsal_worker *self);
 int bsal_worker_enqueued_work_count(struct bsal_worker *self);
 
+int bsal_worker_score(struct bsal_worker *self);
+
 #endif
