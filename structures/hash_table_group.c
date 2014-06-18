@@ -17,10 +17,10 @@
 #define BSAL_BITS_PER_BYTE 8
 
 void bsal_hash_table_group_init(struct bsal_hash_table_group *group,
-                int buckets_per_group, int key_size, int value_size)
+                uint64_t buckets_per_group, int key_size, int value_size)
 {
-    int bitmap_bytes;
-    int array_bytes;
+    size_t bitmap_bytes;
+    size_t array_bytes;
 
     bitmap_bytes = buckets_per_group / BSAL_BITS_PER_BYTE;
     array_bytes = buckets_per_group * (key_size + value_size);

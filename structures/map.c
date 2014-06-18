@@ -5,7 +5,9 @@
 
 void bsal_map_init(struct bsal_map *self, int key_size, int value_size)
 {
-    bsal_dynamic_hash_table_init(&self->table, 2, key_size, value_size);
+    uint64_t buckets = 2;
+
+    bsal_dynamic_hash_table_init(&self->table, buckets, key_size, value_size);
 }
 
 void bsal_map_destroy(struct bsal_map *self)

@@ -24,7 +24,7 @@ struct bsal_hash_table {
     uint64_t buckets;
 
     int group_count;
-    int buckets_per_group;
+    uint64_t buckets_per_group;
     int key_size;
     int value_size;
 

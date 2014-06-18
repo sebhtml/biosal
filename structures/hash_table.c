@@ -37,7 +37,7 @@ void bsal_hash_table_init(struct bsal_hash_table *table, uint64_t buckets,
                 int key_size, int value_size)
 {
     int i;
-    int buckets_per_group;
+    uint64_t buckets_per_group;
 
 #ifdef BSAL_HASH_TABLE_DEBUG_INIT
     printf("DEBUG %p bsal_hash_table_init buckets: %d key_size: %d value_size: %d\n",

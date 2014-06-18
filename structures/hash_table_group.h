@@ -6,6 +6,8 @@
 #define BSAL_HASH_TABLE_BUCKET_OCCUPIED 1
 #define BSAL_HASH_TABLE_BUCKET_DELETED 2
 
+#include <stdint.h>
+
 /* TODO: implement sparse hash method with bitmap */
 struct bsal_hash_table_group {
     void *array;
@@ -14,7 +16,7 @@ struct bsal_hash_table_group {
 };
 
 void bsal_hash_table_group_init(struct bsal_hash_table_group *group,
-                int buckets_per_group, int key_size, int value_size);
+                uint64_t buckets_per_group, int key_size, int value_size);
 void bsal_hash_table_group_destroy(struct bsal_hash_table_group *group);
 
 int bsal_hash_table_group_buckets(struct bsal_hash_table_group *group);
