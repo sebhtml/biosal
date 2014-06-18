@@ -23,12 +23,12 @@
  * enable 2-bit encoding
  */
 /*
-#define BSAL_DNA_CODEC_UASE_TWO_BIT_ENCODING_DEFAULT
 */
+#define BSAL_DNA_CODEC_USE_TWO_BIT_ENCODING_DEFAULT
 
 int bsal_dna_codec_encoded_length(int length_in_nucleotides)
 {
-#ifdef BSAL_DNA_CODEC_UASE_TWO_BIT_ENCODING_DEFAULT
+#ifdef BSAL_DNA_CODEC_USE_TWO_BIT_ENCODING_DEFAULT
     return bsal_dna_codec_encoded_length_default(length_in_nucleotides);
 #else
     return length_in_nucleotides + 1;
@@ -53,7 +53,7 @@ int bsal_dna_codec_encoded_length_default(int length_in_nucleotides)
 
 void bsal_dna_codec_encode(int length_in_nucleotides, char *dna_sequence, void *encoded_sequence)
 {
-#ifdef BSAL_DNA_CODEC_UASE_TWO_BIT_ENCODING_DEFAULT
+#ifdef BSAL_DNA_CODEC_USE_TWO_BIT_ENCODING_DEFAULT
     bsal_dna_codec_encode_default(length_in_nucleotides, dna_sequence, encoded_sequence);
 #else
     strcpy(encoded_sequence, dna_sequence);
@@ -81,7 +81,7 @@ void bsal_dna_codec_encode_default(int length_in_nucleotides, char *dna_sequence
 
 void bsal_dna_codec_decode(int length_in_nucleotides, void *encoded_sequence, char *dna_sequence)
 {
-#ifdef BSAL_DNA_CODEC_UASE_TWO_BIT_ENCODING_DEFAULT
+#ifdef BSAL_DNA_CODEC_USE_TWO_BIT_ENCODING_DEFAULT
     bsal_dna_codec_decode_default(length_in_nucleotides, encoded_sequence, dna_sequence);
 #else
     strcpy(dna_sequence, encoded_sequence);

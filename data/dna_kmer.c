@@ -190,29 +190,36 @@ void bsal_dna_kmer_print(struct bsal_dna_kmer *self)
 uint64_t bsal_dna_kmer_hash(struct bsal_dna_kmer *self)
 {
     unsigned int seed;
-    char *sequence;
+    /*char *sequence;*/
+    int encoded_length;
     uint64_t hash;
 
+    encoded_length = bsal_dna_codec_encoded_length(self->length_in_bases);
     seed = 0xcaa9cfcf;
 
-    /* TODO
+    /*
      * comment this block
      */
-#if 1
+#if 0
     hash = bsal_murmur_hash_2_64_a(self->encoded_data, self->length_in_bases, seed);
 
     return hash;
-#endif
 
-    /* decode sequence because otherwise we'll get a bad performance
+    /* Decode sequence because otherwise we'll get a bad performance
+     * Update: this is not true. The encoded data is good enough even
+     * if it is shorter.
      */
     sequence = bsal_malloc(self->length_in_bases + 1);
     bsal_dna_kmer_get_sequence(self, sequence);
-    hash = bsal_murmur_hash_2_64_a(sequence, self->length_in_bases, seed);
+#endif
+
+    /*hash = bsal_murmur_hash_2_64_a(sequence, self->length_in_bases, seed);*/
+
+    hash = bsal_murmur_hash_2_64_a(self->encoded_data, encoded_length, seed);
 /*
     printf("%s %" PRIu64 "\n", sequence, hash);
-*/
     bsal_free(sequence);
+*/
 
     return hash;
 }
@@ -225,10 +232,10 @@ int bsal_dna_kmer_store_index(struct bsal_dna_kmer *self, int stores)
     char *self_sequence;
     struct bsal_dna_kmer kmer2;
 
-
     self_sequence = bsal_malloc(self->length_in_bases + 1);
-    reverse_complement_sequence = bsal_malloc(self->length_in_bases + 1);
+    bsal_dna_kmer_get_sequence(self, self_sequence);
 
+    reverse_complement_sequence = bsal_malloc(self->length_in_bases + 1);
     bsal_dna_kmer_reverse_complement(self_sequence, reverse_complement_sequence);
 
     if (strcmp(reverse_complement_sequence, self_sequence) < 0) {
