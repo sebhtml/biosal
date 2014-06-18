@@ -75,7 +75,10 @@ void bsal_node_init(struct bsal_node *node, int *argc, char ***argv)
     node->argc = *argc;
     node->argv = *argv;
 
+    /*
     required = MPI_THREAD_MULTIPLE;
+    */
+    required = MPI_THREAD_FUNNELED;
 
     MPI_Init_thread(argc, argv, required, &provided);
 
