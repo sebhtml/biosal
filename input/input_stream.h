@@ -36,6 +36,7 @@ struct bsal_input_stream {
 #define BSAL_INPUT_GET_SEQUENCE_REPLY 0x00005295
 
 #define BSAL_INPUT_PUSH_SEQUENCES 0x00005e48
+#define BSAL_INPUT_PUSH_SEQUENCES_READY 0x000001d2
 #define BSAL_INPUT_PUSH_SEQUENCES_REPLY 0x0000695c
 
 extern struct bsal_script bsal_input_stream_script;

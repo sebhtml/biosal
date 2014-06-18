@@ -319,7 +319,8 @@ void bsal_input_stream_receive(struct bsal_actor *actor, struct bsal_message *me
 
     } else if (tag == BSAL_PUSH_SEQUENCE_DATA_BLOCK_REPLY) {
 
-        bsal_actor_helper_send_to_supervisor_empty(actor, BSAL_INPUT_PUSH_SEQUENCES_REPLY);
+        bsal_actor_helper_send_to_supervisor_int(actor, BSAL_INPUT_PUSH_SEQUENCES_REPLY,
+                        source);
     }
 }
 
@@ -502,4 +503,6 @@ void bsal_input_stream_push_sequences(struct bsal_actor *actor,
 #ifdef BSAL_INPUT_STREAM_DEBUG
     printf("DEBUG bsal_input_stream_push_sequences EXIT\n");
 #endif
+
+    bsal_actor_helper_send_reply_empty(actor, BSAL_INPUT_PUSH_SEQUENCES_READY);
 }

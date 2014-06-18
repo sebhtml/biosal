@@ -9,7 +9,7 @@
 #define BSAL_INPUT_CONTROLLER_SCRIPT 0x985607aa
 
 struct bsal_input_controller {
-    struct bsal_vector customers;
+    struct bsal_vector consumers;
 
     struct bsal_vector files;
 
@@ -21,14 +21,17 @@ struct bsal_input_controller {
     int counted;
     struct bsal_vector counts;
     struct bsal_vector partition_commands;
+    struct bsal_vector stream_consumers;
     struct bsal_queue unprepared_spawners;
     int state;
     int block_size;
 
-    int ready_customers;
+    int ready_consumers;
     int ready_spawners;
     struct bsal_vector stores_per_spawner;
     int stores_per_worker_per_spawner;
+
+    struct bsal_vector consumer_active_requests;
 };
 
 #define BSAL_INPUT_DISTRIBUTE 0x00003cbe

@@ -60,6 +60,11 @@ void bsal_actor_helper_send_to_supervisor_empty(struct bsal_actor *actor, int ta
     bsal_actor_helper_send_empty(actor, bsal_actor_supervisor(actor), tag);
 }
 
+void bsal_actor_helper_send_to_supervisor_int(struct bsal_actor *actor, int tag, int value)
+{
+    bsal_actor_helper_send_int(actor, bsal_actor_supervisor(actor), tag, value);
+}
+
 void bsal_actor_helper_send_to_self_int(struct bsal_actor *actor, int tag, int value)
 {
     bsal_actor_helper_send_int(actor, bsal_actor_name(actor), tag, value);
@@ -505,3 +510,5 @@ int bsal_actor_helper_get_acquaintance(struct bsal_actor *actor, struct bsal_vec
 
     return bsal_actor_get_acquaintance(actor, index2);
 }
+
+

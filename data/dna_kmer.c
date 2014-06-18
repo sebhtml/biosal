@@ -113,7 +113,7 @@ int bsal_dna_kmer_pack_unpack(struct bsal_dna_kmer *sequence,
 
     encoded_length = bsal_dna_codec_encoded_length(sequence->length_in_bases);
 
-    /* TODO: encode in 2 bits instead !
+    /* encode in 2 bits instead !
      */
     if (operation == BSAL_PACKER_OPERATION_UNPACK) {
 
