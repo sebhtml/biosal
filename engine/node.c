@@ -1,7 +1,12 @@
 
 #include "node.h"
 
+#include <structures/vector.h>
+#include <structures/vector_iterator.h>
+#include <helpers/vector_helper.h>
+
 #include <system/memory.h>
+#include <system/tracer.h>
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -29,6 +34,8 @@
 #define BSAL_NODE_DEBUG_SPAWN_KILL
 */
 
+static struct bsal_node *bsal_node_global_self;
+
 /*
  * \see http://www.mpich.org/static/docs/v3.1/www3/MPI_Comm_dup.html
  * \see http://www.dartmouth.edu/~rc/classes/intro_mpi/hello_world_ex.html
@@ -48,6 +55,8 @@ void bsal_node_init(struct bsal_node *node, int *argc, char ***argv)
     int detected;
     int bytes;
     int actor_capacity;
+
+    bsal_node_global_self = node;
 
     srand(time(NULL) * getpid());
 
@@ -246,6 +255,10 @@ void bsal_node_init(struct bsal_node *node, int *argc, char ***argv)
     bsal_counter_init(&node->counter);
 
     node->started = 0;
+
+    /* register signal handlers
+     */
+    bsal_node_register_signal_handlers(node);
 }
 
 void bsal_node_destroy(struct bsal_node *node)
@@ -1388,4 +1401,92 @@ void bsal_node_print_counters(struct bsal_node *node)
     printf("----------------------------------------------\n");
     printf("biosal> Counters for node/%d\n", bsal_node_name(node));
     bsal_counter_print(&node->counter);
+}
+
+/*
+ * TODO: on segmentation fault, kill the actor and continue
+ * computation
+ */
+void bsal_node_handle_signal(int signal)
+{
+    int node;
+    struct bsal_node *self;
+
+    self = bsal_node_global_self;
+
+    node = bsal_node_name(self);
+
+    if (signal == SIGSEGV) {
+        printf("Error, node/%d received signal SIGSEGV\n", node);
+
+    } else {
+        printf("Error, node/%d received signal %d\n", node, signal);
+    }
+
+    bsal_tracer_print_stack_backtrace();
+
+    fflush(stdout);
+
+    /* remove handler
+     * \see http://stackoverflow.com/questions/9302464/how-do-i-remove-a-signal-handler
+     */
+
+    self->action.sa_handler = SIG_DFL;
+    sigaction(signal, &self->action, NULL);
+}
+
+void bsal_node_register_signal_handlers(struct bsal_node *self)
+{
+    struct bsal_vector signals;
+    struct bsal_vector_iterator iterator;
+    bsal_vector_init(&signals, sizeof(int));
+    int *signal;
+
+    /*
+     * \see http://unixhelp.ed.ac.uk/CGI/man-cgi?signal+7
+     */
+    /* segmentation fault */
+    bsal_vector_helper_push_back_int(&signals, SIGSEGV);
+    /* division by 0 */
+    bsal_vector_helper_push_back_int(&signals, SIGFPE);
+    /* bus error (alignment issue */
+    bsal_vector_helper_push_back_int(&signals, SIGBUS);
+
+#if 0
+    /* interruption */
+    bsal_vector_helper_push_back_int(&signals, SIGINT);
+    /* kill */
+    bsal_vector_helper_push_back_int(&signals, SIGKILL);
+    /* termination*/
+    bsal_vector_helper_push_back_int(&signals, SIGTERM);
+    /* hang up */
+    bsal_vector_helper_push_back_int(&signals, SIGHUP);
+    /* abort */
+    bsal_vector_helper_push_back_int(&signals, SIGABRT);
+    /* illegal instruction */
+    bsal_vector_helper_push_back_int(&signals, SIGILL);
+#endif
+
+    /*
+     * \see http://pubs.opengroup.org/onlinepubs/7908799/xsh/sigaction.html
+     * \see http://stackoverflow.com/questions/10202941/segmentation-fault-handling
+     */
+    self->action.sa_handler = bsal_node_handle_signal;
+    sigemptyset(&self->action.sa_mask);
+    self->action.sa_flags = 0;
+
+    bsal_vector_iterator_init(&iterator, &signals);
+
+    while (bsal_vector_iterator_has_next(&iterator)) {
+
+        bsal_vector_iterator_next(&iterator, (void **)&signal);
+        sigaction(*signal, &self->action, NULL);
+    }
+
+    bsal_vector_iterator_destroy(&iterator);
+    bsal_vector_destroy(&signals);
+
+        /* generate SIGSEGV
+    *((int *)NULL) = 0;
+     */
 }

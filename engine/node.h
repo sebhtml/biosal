@@ -17,6 +17,13 @@
 #include <pthread.h>
 #include <mpi.h>
 
+/*
+ * \see http://pubs.opengroup.org/onlinepubs/009696699/basedefs/signal.h.html
+ */
+#include <signal.h>
+
+
+
 #define BSAL_NODE_ADD_INITIAL_ACTOR 0x00002438
 #define BSAL_NODE_ADD_INITIAL_ACTORS 0x00004c19
 #define BSAL_NODE_ADD_INITIAL_ACTORS_REPLY 0x00003ad3
@@ -79,6 +86,8 @@ struct bsal_node {
     struct bsal_counter counter;
 
     int print_counters;
+
+    struct sigaction action;
 };
 
 void bsal_node_init(struct bsal_node *node, int *argc, char ***argv);
@@ -145,5 +154,8 @@ int bsal_node_allocate_actor_index(struct bsal_node *node);
 
 void bsal_node_print_event_counters(struct bsal_node *node);
 void bsal_node_print_counters(struct bsal_node *node);
+
+void bsal_node_handle_signal(int signal);
+void bsal_node_register_signal_handlers(struct bsal_node *self);
 
 #endif
