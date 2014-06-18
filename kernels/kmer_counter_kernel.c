@@ -52,6 +52,11 @@ void bsal_kmer_counter_kernel_init(struct bsal_actor *actor)
 
     concrete_actor->kmer_length = -1;
     concrete_actor->customer = -1;
+
+    concrete_actor->notified = 0;
+    concrete_actor->notification_source = 0;
+
+    concrete_actor->kmers = 0;
 }
 
 void bsal_kmer_counter_kernel_destroy(struct bsal_actor *actor)
@@ -90,7 +95,6 @@ void bsal_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_mess
     struct bsal_dna_kmer_block block;
     int to_reserve;
     int maximum_length;
-    int produced;
 
 #ifdef BSAL_KMER_COUNTER_KERNEL_DEBUG
     int count;
@@ -119,7 +123,6 @@ void bsal_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_mess
         bsal_timer_init(&timer);
         bsal_timer_start(&timer);
 
-        produced = 0;
         customer = bsal_actor_get_acquaintance(actor, concrete_actor->customer);
         source_index = bsal_actor_add_acquaintance(actor, source);
 
@@ -187,7 +190,7 @@ void bsal_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_mess
 
                 sequence_data[j + concrete_actor->kmer_length] = saved;
 
-                produced++;
+                concrete_actor->kmers++;
             }
         }
 
@@ -237,16 +240,17 @@ void bsal_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_mess
         bsal_actor_send(actor, customer, &new_message);
         bsal_free(new_buffer);
 
-        bsal_actor_helper_send_int(actor,
+        bsal_actor_helper_send_empty(actor,
                         bsal_actor_get_acquaintance(actor, source_index),
-                        BSAL_PUSH_SEQUENCE_DATA_BLOCK_REPLY, produced);
+                        BSAL_PUSH_SEQUENCE_DATA_BLOCK_REPLY);
 
         if (concrete_actor->actual == concrete_actor->expected
                         || concrete_actor->actual > concrete_actor->last + 100000
                         || concrete_actor->last == 0) {
 
-            printf("kernel actor/%d processed %" PRIu64 " entries (%d blocks) so far\n",
+            printf("kernel actor/%d processed %" PRIu64 "/%" PRIu64 " entries (%d blocks) so far\n",
                             name, concrete_actor->actual,
+                            concrete_actor->expected,
                             concrete_actor->blocks);
 
             concrete_actor->last = concrete_actor->actual;
@@ -266,6 +270,8 @@ void bsal_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_mess
 #ifdef BSAL_KMER_COUNTER_KERNEL_DEBUG
         BSAL_DEBUG_MARKER("leaving call.\n");
 #endif
+
+        bsal_kmer_counter_kernel_verify(actor, message);
 
     } else if (tag == BSAL_AGGREGATE_KERNEL_OUTPUT_REPLY) {
 
@@ -297,6 +303,10 @@ void bsal_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_mess
     } else if (tag == BSAL_ACTOR_ASK_TO_STOP
                     && source == bsal_actor_supervisor(actor)) {
 
+        printf("kernel/%d generated %" PRIu64 " kmers from %" PRIu64 " entries (%d blocks)\n",
+                        bsal_actor_name(actor), concrete_actor->kmers,
+                        concrete_actor->expected, concrete_actor->blocks);
+
 #ifdef BSAL_KMER_COUNTER_KERNEL_DEBUG
         printf("kernel actor/%d receives request to stop from actor/%d, supervisor is actor/%d\n",
                         name, source, bsal_actor_supervisor(actor));
@@ -309,9 +319,10 @@ void bsal_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_mess
         customer = *(int *)buffer;
         concrete_actor->customer = bsal_actor_add_acquaintance(actor, customer);
 
-#ifdef BSAL_KMER_COUNTER_KERNEL_DEBUG
-        printf("BSAL_SET_CUSTOMER customer %d index %d\n", customer,
+        printf("kernel %d BSAL_SET_CUSTOMER customer %d index %d\n",
+                        bsal_actor_name(actor), customer,
                         concrete_actor->customer);
+#ifdef BSAL_KMER_COUNTER_KERNEL_DEBUG
 #endif
 
         bsal_actor_helper_send_reply_empty(actor, BSAL_SET_CUSTOMER_REPLY);
@@ -325,7 +336,32 @@ void bsal_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_mess
         bsal_dna_kmer_destroy(&kmer);
 
         bsal_actor_helper_send_reply_empty(actor, BSAL_SET_KMER_LENGTH_REPLY);
+
+    } else if (tag == BSAL_KERNEL_NOTIFY) {
+
+        concrete_actor->notified = 1;
+
+        concrete_actor->notification_source = bsal_actor_add_acquaintance(actor, source);
+        bsal_kmer_counter_kernel_verify(actor, message);
     }
 }
 
+void bsal_kmer_counter_kernel_verify(struct bsal_actor *actor, struct bsal_message *message)
+{
+    struct bsal_kmer_counter_kernel *concrete_actor;
 
+    concrete_actor = (struct bsal_kmer_counter_kernel *)bsal_actor_concrete_actor(actor);
+
+    if (!concrete_actor->notified) {
+
+        return;
+    }
+
+    if (concrete_actor->actual != concrete_actor->expected) {
+        return;
+    }
+
+    bsal_actor_helper_send_uint64_t(actor, bsal_actor_get_acquaintance(actor,
+                            concrete_actor->notification_source),
+                    BSAL_KERNEL_NOTIFY_REPLY, concrete_actor->kmers);
+}
