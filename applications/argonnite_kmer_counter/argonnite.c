@@ -262,7 +262,7 @@ void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message)
 
         controller = bsal_actor_get_acquaintance(actor, concrete_actor->controller);
 
-        bsal_actor_helper_send_vector(actor, controller, BSAL_SET_CUSTOMERS,
+        bsal_actor_helper_send_vector(actor, controller, BSAL_SET_CONSUMERS,
                         &customers);
 
         /* save the kernels
@@ -271,7 +271,7 @@ void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message)
 
         bsal_vector_destroy(&customers);
 
-    } else if (tag == BSAL_SET_CUSTOMERS_REPLY
+    } else if (tag == BSAL_SET_CONSUMERS_REPLY
                     && source == bsal_actor_get_acquaintance(actor, concrete_actor->controller)) {
 
         bsal_actor_helper_get_acquaintances(actor, &concrete_actor->initial_actors, &spawners);
@@ -388,13 +388,13 @@ void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message)
 
                 printf("wiring kernel %d to aggregator %d\n", kernel, aggregator);
 
-                bsal_actor_helper_send_int(actor, kernel, BSAL_SET_CUSTOMER, aggregator);
+                bsal_actor_helper_send_int(actor, kernel, BSAL_SET_CONSUMER, aggregator);
 
                 kernel_index_index++;
             }
         }
 
-    } else if (tag == BSAL_SET_CUSTOMER_REPLY
+    } else if (tag == BSAL_SET_CONSUMER_REPLY
                     && concrete_actor->wiring_distribution) {
 
         concrete_actor->configured_actors++;
@@ -406,7 +406,7 @@ void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message)
             concrete_actor->wiring_distribution = 0;
         }
 
-    } else if (tag == BSAL_SET_CUSTOMER_REPLY) {
+    } else if (tag == BSAL_SET_CONSUMER_REPLY) {
 
         concrete_actor->wired_kernels++;
 
@@ -486,13 +486,13 @@ void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message)
         bsal_actor_helper_get_acquaintances(actor, &concrete_actor->aggregators,
                     &aggregators);
 
-        bsal_actor_helper_send_range_vector(actor, &aggregators, BSAL_SET_CUSTOMERS,
+        bsal_actor_helper_send_range_vector(actor, &aggregators, BSAL_SET_CONSUMERS,
                 &stores);
 
         bsal_vector_destroy(&aggregators);
         bsal_vector_destroy(&stores);
 
-    } else if (tag == BSAL_SET_CUSTOMERS_REPLY) {
+    } else if (tag == BSAL_SET_CONSUMERS_REPLY) {
         /*
          * received a reply from one of the aggregators.
          */
@@ -526,7 +526,7 @@ void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message)
 
             concrete_actor->wiring_distribution = 1;
 
-            bsal_actor_helper_send_range_int(actor, &stores, BSAL_SET_CUSTOMER,
+            bsal_actor_helper_send_range_int(actor, &stores, BSAL_SET_CONSUMER,
                             distribution);
 
             bsal_vector_destroy(&stores);

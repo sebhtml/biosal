@@ -314,18 +314,18 @@ void bsal_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_mess
 
         bsal_actor_helper_send_to_self_empty(actor, BSAL_ACTOR_STOP);
 
-    } else if (tag == BSAL_SET_CUSTOMER) {
+    } else if (tag == BSAL_SET_CONSUMER) {
 
         customer = *(int *)buffer;
         concrete_actor->customer = bsal_actor_add_acquaintance(actor, customer);
 
-        printf("kernel %d BSAL_SET_CUSTOMER customer %d index %d\n",
+        printf("kernel %d BSAL_SET_CONSUMER customer %d index %d\n",
                         bsal_actor_name(actor), customer,
                         concrete_actor->customer);
 #ifdef BSAL_KMER_COUNTER_KERNEL_DEBUG
 #endif
 
-        bsal_actor_helper_send_reply_empty(actor, BSAL_SET_CUSTOMER_REPLY);
+        bsal_actor_helper_send_reply_empty(actor, BSAL_SET_CONSUMER_REPLY);
 
     } else if (tag == BSAL_SET_KMER_LENGTH) {
 

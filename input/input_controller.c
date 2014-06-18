@@ -546,7 +546,7 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
                         BSAL_SEQUENCE_PARTITIONER_GET_COMMAND_REPLY_REPLY,
                         command_name);
 
-    } else if (tag == BSAL_SET_CUSTOMERS) {
+    } else if (tag == BSAL_SET_CONSUMERS) {
 
         bsal_vector_unpack(&concrete_actor->customers, buffer);
         printf("controller actor/%d receives %d customers\n",
@@ -557,7 +557,7 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
         bsal_vector_helper_print_int(&concrete_actor->customers);
         printf("\n");
 #endif
-        bsal_actor_helper_send_reply_empty(actor, BSAL_SET_CUSTOMERS_REPLY);
+        bsal_actor_helper_send_reply_empty(actor, BSAL_SET_CONSUMERS_REPLY);
 
     } else if (tag == BSAL_SET_BLOCK_SIZE) {
 

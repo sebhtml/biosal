@@ -141,7 +141,7 @@ void bsal_kmer_store_receive(struct bsal_actor *self, struct bsal_message *messa
 
         bsal_actor_helper_ask_to_stop(self, message);
 
-    } else if (tag == BSAL_SET_CUSTOMER) {
+    } else if (tag == BSAL_SET_CONSUMER) {
 
         bsal_message_helper_unpack_int(message, 0, &customer);
 
@@ -152,7 +152,7 @@ void bsal_kmer_store_receive(struct bsal_actor *self, struct bsal_message *messa
 
         concrete_actor->customer = bsal_actor_add_acquaintance(self, customer);
 
-        bsal_actor_helper_send_reply_empty(self, BSAL_SET_CUSTOMER_REPLY);
+        bsal_actor_helper_send_reply_empty(self, BSAL_SET_CONSUMER_REPLY);
 
     } else if (tag == BSAL_PUSH_DATA) {
 

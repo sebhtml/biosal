@@ -213,7 +213,7 @@ void bsal_aggregator_receive(struct bsal_actor *self, struct bsal_message *messa
 
         bsal_actor_helper_send_reply_empty(self, BSAL_SET_KMER_LENGTH_REPLY);
 
-    } else if (tag == BSAL_SET_CUSTOMERS) {
+    } else if (tag == BSAL_SET_CONSUMERS) {
 
         /*
          * receive customer list
@@ -243,7 +243,7 @@ void bsal_aggregator_receive(struct bsal_actor *self, struct bsal_message *messa
                         (int)bsal_vector_size(&concrete_actor->customers));
 #endif
 
-        bsal_actor_helper_send_reply_empty(self, BSAL_SET_CUSTOMERS_REPLY);
+        bsal_actor_helper_send_reply_empty(self, BSAL_SET_CONSUMERS_REPLY);
 
     } else if (tag == BSAL_AGGREGATOR_FLUSH) {
 
