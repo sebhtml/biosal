@@ -9,6 +9,10 @@
 
 int main(int argc, char **argv)
 {
+    /*bsal_malloc(0);*/
+    /*bsal_malloc(-1);*/
+    /*bsal_malloc(-10000);*/
+
     BEGIN_TESTS();
 
     {
