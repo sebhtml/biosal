@@ -204,13 +204,13 @@ void bsal_sequence_partitioner_verify(struct bsal_actor *actor)
 {
     struct bsal_sequence_partitioner *concrete_actor;
     int i;
-    uint64_t entries;
+    int64_t entries;
     uint64_t position;
     uint64_t stream_entries;
     int bytes;
     void *buffer;
     struct bsal_message message;
-    uint64_t remaining;
+    int64_t remaining;
     int remainder;
     uint64_t *bucket_for_store_count;
     struct bsal_vector_iterator iterator;
@@ -414,13 +414,13 @@ void bsal_sequence_partitioner_generate_command(struct bsal_actor *actor, int st
     uint64_t stream_entries;
     uint64_t stream_first;
     uint64_t stream_last;
-    uint64_t available_in_stream;
+    int64_t available_in_stream;
 
     uint64_t store_first;
     uint64_t store_last;
 
     struct bsal_sequence_partitioner *concrete_actor;
-    int actual_block_size;
+    int64_t actual_block_size;
     int distance;
 
     uint64_t global_first;

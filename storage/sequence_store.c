@@ -92,7 +92,7 @@ void bsal_sequence_store_store_sequences(struct bsal_actor *actor, struct bsal_m
     struct bsal_input_command payload;
     struct bsal_sequence_store *concrete_actor;
     void *buffer;
-    uint64_t i;
+    int64_t i;
 
 #ifdef BSAL_SEQUENCE_STORE_DEBUG
     int count;

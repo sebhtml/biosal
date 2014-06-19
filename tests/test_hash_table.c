@@ -6,11 +6,11 @@
 
 int main(int argc, char **argv)
 {
-    int i;
+    int64_t i;
     struct bsal_hash_table table;
     int key_size;
     int value_size;
-    uint64_t buckets;
+    int64_t buckets;
     uint64_t key;
 
     int *value;

@@ -488,7 +488,7 @@ int bsal_node_allocate_actor_index(struct bsal_node *node)
     }
 #endif
 
-    index = bsal_vector_size(&node->actors);
+    index = (int)bsal_vector_size(&node->actors);
     bsal_vector_resize(&node->actors, bsal_vector_size(&node->actors) + 1);
 
     return index;
@@ -999,7 +999,7 @@ void bsal_node_send_to_node(struct bsal_node *node, int destination,
 {
     void *new_buffer;
     int count;
-    int new_count;
+    size_t new_count;
     void *buffer;
     struct bsal_message new_message;
     int tag;

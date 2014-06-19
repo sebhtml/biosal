@@ -8,7 +8,7 @@
 
 struct bsal_hash_table_group_iterator {
     struct bsal_hash_table_group *list;
-    uint64_t index;
+    int64_t index;
     int size;
     int key_size;
     int value_size;

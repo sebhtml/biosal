@@ -8,7 +8,7 @@
 
 struct bsal_vector_iterator {
     struct bsal_vector *list;
-    uint64_t index;
+    int64_t index;
 };
 
 void bsal_vector_iterator_init(struct bsal_vector_iterator *self, struct bsal_vector *list);

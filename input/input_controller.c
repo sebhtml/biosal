@@ -59,7 +59,7 @@ void bsal_input_controller_init(struct bsal_actor *actor)
     bsal_vector_init(&controller->consumer_active_requests, sizeof(int));
     bsal_vector_init(&controller->files, sizeof(char *));
     bsal_vector_init(&controller->spawners, sizeof(int));
-    bsal_vector_init(&controller->counts, sizeof(uint64_t));
+    bsal_vector_init(&controller->counts, sizeof(int64_t));
     bsal_vector_init(&controller->consumers, sizeof(int));
     bsal_vector_init(&controller->stores_per_spawner, sizeof(int));
 
@@ -149,7 +149,7 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
     int error;
     int stream_index;
     int64_t entries;
-    uint64_t *bucket;
+    int64_t *bucket;
     int *int_bucket;
     int store;
     int spawner;
@@ -345,7 +345,7 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
         local_file = bsal_vector_helper_at_as_char_pointer(&controller->files, stream_index);
         bsal_message_helper_unpack_int64_t(message, 0, &entries);
 
-        bucket = (uint64_t *)bsal_vector_at(&controller->counts, stream_index);
+        bucket = (int64_t *)bsal_vector_at(&controller->counts, stream_index);
 
         if (entries > *bucket + 10000000) {
             printf("controller actor/%d receives from stream actor/%d: file %s, %" PRIu64 " entries so far\n",
@@ -359,7 +359,7 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
         local_file = bsal_vector_helper_at_as_char_pointer(&controller->files, stream_index);
         bsal_message_helper_unpack_int64_t(message, 0, &entries);
 
-        bucket = (uint64_t*)bsal_vector_at(&controller->counts, stream_index);
+        bucket = (int64_t*)bsal_vector_at(&controller->counts, stream_index);
         *bucket = entries;
 
         printf("controller actor/%d received from stream actor/%d for file %s: %" PRIu64 " entries (final)\n",
@@ -403,7 +403,7 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
         bsal_vector_resize(&controller->counts, bsal_vector_size(&controller->files));
 
         for (i = 0; i < bsal_vector_size(&controller->counts); i++) {
-            bucket = (uint64_t*)bsal_vector_at(&controller->counts, i);
+            bucket = (int64_t*)bsal_vector_at(&controller->counts, i);
             *bucket = 0;
         }
 

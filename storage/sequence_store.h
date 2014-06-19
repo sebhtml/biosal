@@ -10,7 +10,7 @@
 
 struct bsal_sequence_store {
     struct bsal_vector sequences;
-    uint64_t received;
+    int64_t received;
 };
 
 #define BSAL_RESERVE 0x00000d3c
