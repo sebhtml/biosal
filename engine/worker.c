@@ -6,6 +6,7 @@
 #include "node.h"
 
 #include <system/memory.h>
+#include <system/timer.h>
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -29,6 +30,16 @@ void bsal_worker_init(struct bsal_worker *worker, int name, struct bsal_node *no
 
     worker->debug = 0;
     worker->busy = 0;
+
+    worker->last_report = time(NULL);
+
+    worker->epoch_start_in_nanoseconds = bsal_timer_get_nanoseconds_from_clock();
+    worker->epoch_used_nanoseconds = 0;
+    worker->epoch_load = 0;
+
+    worker->loop_start_in_nanoseconds = worker->epoch_start_in_nanoseconds;
+    worker->loop_used_nanoseconds = 0;
+    worker->loop_load = 0;
 }
 
 void bsal_worker_destroy(struct bsal_worker *worker)
@@ -59,6 +70,39 @@ struct bsal_queue *bsal_worker_messages(struct bsal_worker *worker)
 void bsal_worker_run(struct bsal_worker *worker)
 {
     struct bsal_work work;
+    clock_t current_time;
+    clock_t elapsed;
+    int period;
+    uint64_t current_nanoseconds;
+    uint64_t start_time;
+    uint64_t end_time;
+    uint64_t elapsed_nanoseconds;
+    uint64_t elapsed_from_start;
+
+    period = 1;
+    current_time = time(NULL);
+
+    elapsed = current_time - worker->last_report;
+
+    if (elapsed >= period) {
+
+        current_nanoseconds = bsal_timer_get_nanoseconds_from_clock();
+
+#ifdef BSAL_WORKER_DEBUG_LOAD
+        printf("DEBUG Updating load report\n");
+#endif
+        elapsed_nanoseconds = current_nanoseconds - worker->epoch_start_in_nanoseconds;
+        elapsed_from_start = current_nanoseconds - worker->loop_start_in_nanoseconds;
+
+        if (elapsed_nanoseconds > 0) {
+            worker->epoch_load = (0.0 + worker->epoch_used_nanoseconds) / elapsed_nanoseconds;
+            worker->loop_load = (0.0 + worker->loop_used_nanoseconds) / elapsed_from_start;
+
+            worker->epoch_used_nanoseconds = 0;
+            worker->epoch_start_in_nanoseconds = bsal_timer_get_nanoseconds_from_clock();
+            worker->last_report = current_time;
+        }
+    }
 
 #ifdef BSAL_WORKER_DEBUG
     if (worker->debug) {
@@ -70,8 +114,16 @@ void bsal_worker_run(struct bsal_worker *worker)
     /* check for messages in inbound FIFO */
     if (bsal_worker_pull_work(worker, &work)) {
 
+        start_time = bsal_timer_get_nanoseconds_from_clock();
+
         /* dispatch message to a worker */
         bsal_worker_work(worker, &work);
+
+        end_time = bsal_timer_get_nanoseconds_from_clock();
+
+        elapsed_nanoseconds = end_time - start_time;
+        worker->epoch_used_nanoseconds += elapsed_nanoseconds;
+        worker->loop_used_nanoseconds += elapsed_nanoseconds;
     }
 }
 
@@ -408,7 +460,7 @@ int bsal_worker_enqueued_work_count(struct bsal_worker *self)
     return bsal_queue_size(&self->works);
 }
 
-int bsal_worker_score(struct bsal_worker *self)
+int bsal_worker_get_scheduling_score(struct bsal_worker *self)
 {
     int score;
 
@@ -421,4 +473,14 @@ int bsal_worker_score(struct bsal_worker *self)
     score += bsal_worker_enqueued_work_count(self);
 
     return score;
+}
+
+float bsal_worker_get_epoch_load(struct bsal_worker *self)
+{
+    return self->epoch_load;
+}
+
+float bsal_worker_get_loop_load(struct bsal_worker *self)
+{
+    return self->loop_load;
 }

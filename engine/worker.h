@@ -6,6 +6,8 @@
 
 #include <system/lock.h>
 
+#include <stdint.h>
+
 struct bsal_work;
 struct bsal_node;
 struct bsal_message;
@@ -37,6 +39,15 @@ struct bsal_worker {
     /* this is read by 2 threads, but written by 1 thread
      */
     volatile int busy;
+
+    uint64_t last_report;
+    uint64_t epoch_start_in_nanoseconds;
+    uint64_t epoch_used_nanoseconds;
+    volatile float epoch_load;
+
+    uint64_t loop_start_in_nanoseconds;
+    uint64_t loop_used_nanoseconds;
+    volatile float loop_load;
 };
 
 void bsal_worker_init(struct bsal_worker *worker, int name, struct bsal_node *node);
@@ -68,6 +79,9 @@ int bsal_worker_pull_message(struct bsal_worker *worker, struct bsal_message *me
 int bsal_worker_is_busy(struct bsal_worker *self);
 int bsal_worker_enqueued_work_count(struct bsal_worker *self);
 
-int bsal_worker_score(struct bsal_worker *self);
+int bsal_worker_get_scheduling_score(struct bsal_worker *self);
+
+float bsal_worker_get_epoch_load(struct bsal_worker *self);
+float bsal_worker_get_loop_load(struct bsal_worker *self);
 
 #endif

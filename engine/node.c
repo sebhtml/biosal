@@ -56,6 +56,9 @@ void bsal_node_init(struct bsal_node *node, int *argc, char ***argv)
     int bytes;
     int actor_capacity;
 
+    node->print_load = 0;
+    node->last_load_report_time = time(NULL);
+
     bsal_node_global_self = node;
 
     srand(time(NULL) * getpid());
@@ -96,9 +99,11 @@ void bsal_node_init(struct bsal_node *node, int *argc, char ***argv)
     MPI_Comm_rank(node->comm, &node_name);
     MPI_Comm_size(node->comm, &nodes);
 
-    for (i = 0; i < *argc; i++) {
-        if (strcmp((*argv)[i], "-print-counters") == 0) {
+    for (i = 0; i < node->argc; i++) {
+        if (strcmp(node->argv[i], "-print-counters") == 0) {
             node->print_counters = 1;
+        } else if (strcmp(node->argv[i], "-print-load") == 0) {
+            node->print_load = 1;
         }
     }
 
@@ -699,11 +704,23 @@ void bsal_node_run_loop(struct bsal_node *node)
 {
     struct bsal_message message;
     int ticks;
+    clock_t current_time;
+    int period;
 
+    period = 2;
     ticks = 0;
 
     while (bsal_node_running(node)) {
 
+        if (node->print_load) {
+            current_time = time(NULL);
+
+            if (current_time - node->last_load_report_time > period) {
+                bsal_worker_pool_print_load(&node->worker_pool);
+                node->last_load_report_time = current_time;
+            }
+        }
+        
 #ifdef BSAL_NODE_DEBUG_LOOP
         if (ticks % 1000000 == 0) {
             bsal_node_print_counters(node);

@@ -18,13 +18,13 @@ void bsal_timer_destroy(struct bsal_timer *self)
 
 void bsal_timer_start(struct bsal_timer *self)
 {
-    self->start = bsal_timer_get_nanoseconds_from_clock(self);
+    self->start = bsal_timer_get_nanoseconds_from_clock();
 }
 
 void bsal_timer_stop(struct bsal_timer *self)
 {
 
-    self->stop = bsal_timer_get_nanoseconds_from_clock(self);
+    self->stop = bsal_timer_get_nanoseconds_from_clock();
 
 #ifdef BSAL_TIMER_DEBUG
     printf("TIMER start %" PRIu64 " stop %" PRIu64 "\n", stop, self->start);
@@ -37,7 +37,7 @@ void bsal_timer_stop(struct bsal_timer *self)
  * \see http://linux.die.net/man/3/clock_gettime
  * \see http://stackoverflow.com/questions/3523442/difference-between-clock-realtime-and-clock-monotonic
  */
-uint64_t bsal_timer_get_nanoseconds_from_clock(struct bsal_timer *self)
+uint64_t bsal_timer_get_nanoseconds_from_clock()
 {
     uint64_t value;
     struct timespec time_value;

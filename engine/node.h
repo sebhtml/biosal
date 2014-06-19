@@ -88,6 +88,9 @@ struct bsal_node {
     int print_counters;
 
     struct sigaction action;
+
+    clock_t last_load_report_time;
+    int print_load;
 };
 
 void bsal_node_init(struct bsal_node *node, int *argc, char ***argv);

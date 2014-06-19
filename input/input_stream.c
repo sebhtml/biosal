@@ -388,6 +388,10 @@ void bsal_input_stream_push_sequences(struct bsal_actor *actor,
     int actual_count;
 #endif
 
+    /* answer immediately
+     */
+    bsal_actor_helper_send_reply_empty(actor, BSAL_INPUT_PUSH_SEQUENCES_READY);
+
     has_sequence = 1;
 
 #ifdef BSAL_INPUT_STREAM_DEBUG
@@ -504,5 +508,4 @@ void bsal_input_stream_push_sequences(struct bsal_actor *actor,
     printf("DEBUG bsal_input_stream_push_sequences EXIT\n");
 #endif
 
-    bsal_actor_helper_send_reply_empty(actor, BSAL_INPUT_PUSH_SEQUENCES_READY);
 }

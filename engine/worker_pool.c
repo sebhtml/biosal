@@ -4,6 +4,7 @@
 #include "actor.h"
 #include "work.h"
 #include "worker.h"
+#include "node.h"
 
 #include <system/memory.h>
 
@@ -208,7 +209,7 @@ struct bsal_worker *bsal_worker_pool_select_worker_least_busy(
          */
         self->worker_for_work = bsal_worker_pool_next_worker(self, self->worker_for_work);
 
-        score = bsal_worker_score(worker);
+        score = bsal_worker_get_scheduling_score(worker);
 
         /* if the worker is not busy and it has no work to do,
          * select it right away...
@@ -269,4 +270,48 @@ int bsal_worker_pool_has_messages(struct bsal_worker_pool *pool)
     }
 
     return 1;
+}
+
+void bsal_worker_pool_print_load(struct bsal_worker_pool *self)
+{
+    int count;
+    int i;
+    float epoch_load;
+    float loop_load;
+    struct bsal_worker *worker;
+    /*
+    int scheduling_score;
+    */
+    int node_name;
+    char *buffer;
+    int allocated;
+    int offset;
+    int extra;
+
+    extra = 100;
+
+    count = bsal_worker_pool_worker_count(self);
+    allocated = count * 20 + 20 + extra;
+
+    buffer = bsal_malloc(allocated);
+    node_name = bsal_node_name(self->node);
+    offset = 0;
+    i = 0;
+
+    while (i < count && offset + extra < allocated) {
+
+        worker = bsal_worker_pool_get_worker(self, i);
+        epoch_load = bsal_worker_get_epoch_load(worker);
+        loop_load = bsal_worker_get_loop_load(worker);
+        /*
+        scheduling_score = bsal_worker_get_scheduling_score(worker);
+        */
+
+        offset += sprintf(buffer + offset, " [%d %.2f %.2f]", i, epoch_load, loop_load);
+        i++;
+    }
+
+    printf("LOAD node/%d%s\n", node_name, buffer);
+
+    bsal_free(buffer);
 }

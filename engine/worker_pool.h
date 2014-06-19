@@ -51,4 +51,6 @@ struct bsal_worker *bsal_worker_pool_select_worker_round_robin(
 struct bsal_worker *bsal_worker_pool_select_worker_least_busy(
                 struct bsal_worker_pool *pool, struct bsal_work *work);
 
+void bsal_worker_pool_print_load(struct bsal_worker_pool *self);
+
 #endif

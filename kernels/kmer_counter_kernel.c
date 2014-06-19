@@ -319,10 +319,10 @@ void bsal_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_mess
         customer = *(int *)buffer;
         concrete_actor->customer = bsal_actor_add_acquaintance(actor, customer);
 
+#ifdef BSAL_KMER_COUNTER_KERNEL_DEBUG
         printf("kernel %d BSAL_SET_CONSUMER customer %d index %d\n",
                         bsal_actor_name(actor), customer,
                         concrete_actor->customer);
-#ifdef BSAL_KMER_COUNTER_KERNEL_DEBUG
 #endif
 
         bsal_actor_helper_send_reply_empty(actor, BSAL_SET_CONSUMER_REPLY);

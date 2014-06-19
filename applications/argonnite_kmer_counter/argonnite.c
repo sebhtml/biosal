@@ -377,7 +377,9 @@ void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message)
 
             workers = bsal_vector_helper_at_as_int(&concrete_actor->worker_counts, spawner_index);
 
+#ifdef ARGONNITE_DEBUG_WIRING
             printf("Wiring %d, %d kernels\n", spawner_index, workers);
+#endif
 
             while (workers--) {
                 kernel_index = bsal_vector_helper_at_as_int(&concrete_actor->kernels, kernel_index_index);
@@ -386,7 +388,9 @@ void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message)
                 kernel = bsal_actor_get_acquaintance(actor, kernel_index);
                 aggregator = bsal_actor_get_acquaintance(actor, aggregator_index);
 
+#ifdef ARGONNITE_DEBUG_WIRING
                 printf("wiring kernel %d to aggregator %d\n", kernel, aggregator);
+#endif
 
                 bsal_actor_helper_send_int(actor, kernel, BSAL_SET_CONSUMER, aggregator);
 
