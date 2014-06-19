@@ -8,6 +8,8 @@
 #include <structures/map_iterator.h>
 #include <structures/vector_iterator.h>
 
+#include <system/memory.h>
+
 #include <stdio.h>
 #include <stdint.h>
 #include <string.h>
@@ -147,13 +149,15 @@ void bsal_coverage_distribution_write_distribution(struct bsal_actor *self)
 {
     struct bsal_map_iterator iterator;
     int *coverage;
-    uint64_t *frequency;
+    uint64_t *canonical_frequency;
+    uint64_t frequency;
     struct bsal_coverage_distribution *concrete_actor;
     struct bsal_vector coverage_values;
     struct bsal_vector_iterator vector_iterator;
-    uint64_t the_frequency;
     FILE *descriptor;
+    FILE *descriptor_canonical;
     char *file_name;
+    char *canonical_file_name;
     int argc;
     char **argv;
     int i;
@@ -173,7 +177,12 @@ void bsal_coverage_distribution_write_distribution(struct bsal_actor *self)
         }
     }
 
+    canonical_file_name = bsal_malloc(strlen(file_name) + 100);
+    strcpy(canonical_file_name, file_name);
+    strcat(canonical_file_name, "-canonical");
+
     descriptor = fopen(file_name, "w");
+    descriptor_canonical = fopen(canonical_file_name, "w");
 
     concrete_actor = (struct bsal_coverage_distribution *)bsal_actor_concrete_actor(self);
 
@@ -185,7 +194,7 @@ void bsal_coverage_distribution_write_distribution(struct bsal_actor *self)
 #endif
 
     while (bsal_map_iterator_has_next(&iterator)) {
-        bsal_map_iterator_next(&iterator, (void **)&coverage, (void **)&frequency);
+        bsal_map_iterator_next(&iterator, (void **)&coverage, (void **)&canonical_frequency);
 
 #ifdef BSAL_COVERAGE_DISTRIBUTION_DEBUG
         printf("DEBUG COVERAGE %d FREQUENCY %" PRIu64 "\n", *coverage, *frequency);
@@ -218,22 +227,32 @@ void bsal_coverage_distribution_write_distribution(struct bsal_actor *self)
         printf("ITERATED COVERAGE %d\n", *coverage);
         */
 
-        frequency = (uint64_t *)bsal_map_get(&concrete_actor->distribution, coverage);
+        canonical_frequency = (uint64_t *)bsal_map_get(&concrete_actor->distribution, coverage);
 
-        the_frequency = *frequency;
+        frequency = 2 * *canonical_frequency;
+
+        fprintf(descriptor_canonical, "%d %" PRIu64 "\n",
+                        *coverage,
+                        *canonical_frequency);
 
         fprintf(descriptor, "%d\t%" PRIu64 "\n",
                         *coverage,
-                        the_frequency);
+                        frequency);
     }
 
     bsal_vector_destroy(&coverage_values);
     bsal_vector_iterator_destroy(&vector_iterator);
 
     printf("distribution actor/%d wrote %s\n", name, file_name);
+    printf("distribution actor/%d wrote %s\n", name, canonical_file_name);
 
     fclose(descriptor);
     descriptor = NULL;
+    fclose(descriptor_canonical);
+
+    free(canonical_file_name);
+    descriptor_canonical = NULL;
+    canonical_file_name = NULL;
 }
 
 

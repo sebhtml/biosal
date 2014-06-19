@@ -270,10 +270,7 @@ void bsal_kmer_store_push_data(struct bsal_actor *self, struct bsal_message *mes
             (*count) = 0;
         }
 
-        /* increment for the lowest kmer */
-        (*count)++;
-
-        /* increment for the other kmer */
+        /* increment for the lowest kmer (canonical) */
         (*count)++;
     }
 
