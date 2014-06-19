@@ -5,6 +5,10 @@
 
 void bsal_dynamic_hash_table_iterator_init(struct bsal_dynamic_hash_table_iterator *self, struct bsal_dynamic_hash_table *list)
 {
+    /* the list must remain frozen while it is being iterated.
+     */
+    bsal_dynamic_hash_table_finish_resizing(list);
+
     self->index = 0;
     self->list = list;
 }

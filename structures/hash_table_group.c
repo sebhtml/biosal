@@ -48,7 +48,7 @@ void bsal_hash_table_group_destroy(struct bsal_hash_table_group *group)
     group->array = NULL;
 }
 
-void bsal_hash_table_group_delete(struct bsal_hash_table_group *group, int bucket)
+void bsal_hash_table_group_delete(struct bsal_hash_table_group *group, uint64_t bucket)
 {
 #ifdef BSAL_HASH_TABLE_GROUP_DEBUG
     printf("bsal_hash_table_group_delete setting occupancy to 0 and deleted to 1 for %i\n"
@@ -62,7 +62,7 @@ void bsal_hash_table_group_delete(struct bsal_hash_table_group *group, int bucke
 }
 
 void *bsal_hash_table_group_add(struct bsal_hash_table_group *group,
-                int bucket, int key_size, int value_size)
+                uint64_t bucket, int key_size, int value_size)
 {
     bsal_hash_table_group_set_bit(group->occupancy_bitmap, bucket,
                     BSAL_BIT_ONE);
@@ -73,7 +73,7 @@ void *bsal_hash_table_group_add(struct bsal_hash_table_group *group,
 }
 
 void *bsal_hash_table_group_get(struct bsal_hash_table_group *group,
-                int bucket, int key_size, int value_size)
+                uint64_t bucket, int key_size, int value_size)
 {
     if (bsal_hash_table_group_state(group, bucket) ==
                     BSAL_HASH_TABLE_BUCKET_OCCUPIED) {
@@ -92,7 +92,7 @@ void *bsal_hash_table_group_get(struct bsal_hash_table_group *group,
  * BSAL_HASH_TABLE_BUCKET_OCCUPIED or
  * BSAL_HASH_TABLE_BUCKET_DELETED
  */
-int bsal_hash_table_group_state(struct bsal_hash_table_group *group, int bucket)
+int bsal_hash_table_group_state(struct bsal_hash_table_group *group, uint64_t bucket)
 {
     if (bsal_hash_table_group_get_bit(group->occupancy_bitmap, bucket) == 1) {
         return BSAL_HASH_TABLE_BUCKET_OCCUPIED;
@@ -105,7 +105,7 @@ int bsal_hash_table_group_state(struct bsal_hash_table_group *group, int bucket)
     return BSAL_HASH_TABLE_BUCKET_EMPTY;
 }
 
-void bsal_hash_table_group_set_bit(void *bitmap, int bucket, int value1)
+void bsal_hash_table_group_set_bit(void *bitmap, uint64_t bucket, int value1)
 {
     int unit;
     int bit;
@@ -132,7 +132,7 @@ void bsal_hash_table_group_set_bit(void *bitmap, int bucket, int value1)
     ((char *)bitmap)[unit] = bits;
 }
 
-int bsal_hash_table_group_get_bit(void *bitmap, int bucket)
+int bsal_hash_table_group_get_bit(void *bitmap, uint64_t bucket)
 {
     int unit;
     int bit;
@@ -150,14 +150,14 @@ int bsal_hash_table_group_get_bit(void *bitmap, int bucket)
     return bitValue;
 }
 
-void *bsal_hash_table_group_key(struct bsal_hash_table_group *group, int bucket,
+void *bsal_hash_table_group_key(struct bsal_hash_table_group *group, uint64_t bucket,
                 int key_size, int value_size)
 {
     /* we assume that the key is stored first */
     return (char *)group->array + bucket * (key_size + value_size);
 }
 
-void *bsal_hash_table_group_value(struct bsal_hash_table_group *group, int bucket,
+void *bsal_hash_table_group_value(struct bsal_hash_table_group *group, uint64_t bucket,
                 int key_size, int value_size)
 {
     /*
@@ -180,7 +180,7 @@ void *bsal_hash_table_group_value(struct bsal_hash_table_group *group, int bucke
 }
 
 int bsal_hash_table_group_pack_unpack(struct bsal_hash_table_group *self, void *buffer, int operation,
-                int buckets_per_group, int key_size, int value_size)
+                uint64_t buckets_per_group, int key_size, int value_size)
 {
 
     struct bsal_packer packer;

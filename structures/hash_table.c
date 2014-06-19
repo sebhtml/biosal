@@ -12,6 +12,8 @@
 #include <stdint.h>
 #include <string.h>
 
+#include <inttypes.h>
+
 #define BSAL_HASH_TABLE_KEY_NOT_FOUND 0
 #define BSAL_HASH_TABLE_KEY_FOUND 1
 #define BSAL_HASH_TABLE_FULL 2
@@ -279,9 +281,13 @@ uint64_t bsal_hash_table_double_hash(struct bsal_hash_table *table, void *key, u
         hash2 = bsal_hash_table_hash2(table, key);
         /* the number of buckets and hash2 must be co-prime
          * the number of buckets is a power of 2
+         * must be between 1 and M - 1
          */
+        if (hash2 == 0) {
+            hash2 = 1;
+        }
         if (hash2 % 2 == 0) {
-            hash2++;
+            hash2--;
         }
     }
 
@@ -318,6 +324,13 @@ uint64_t bsal_hash_table_find_bucket(struct bsal_hash_table *table, void *key,
     stride = 0;
 
     while (stride < table->buckets) {
+
+
+#ifdef BSAL_HASH_TABLE_DEBUG_DOUBLE_HASHING_DEBUG
+        if (stride > 100) {
+            printf("HASH TABLE stride %" PRIu64 "\n", stride);
+        }
+#endif
 
         bucket = bsal_hash_table_double_hash(table, key, stride);
         *group = bsal_hash_table_get_group(table, bucket);

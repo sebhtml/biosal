@@ -140,6 +140,34 @@ int bsal_dna_kmer_length(struct bsal_dna_kmer *self)
     return self->length_in_bases;
 }
 
+void bsal_dna_kmer_init_random(struct bsal_dna_kmer *sequence, int kmer_length)
+{
+    char *dna;
+    int i;
+    int code;
+
+    dna = (char *)bsal_malloc(kmer_length + 1);
+
+    for (i = 0; i < kmer_length; i++) {
+        code = rand() % 4;
+
+        if (code == 0) {
+            dna[i] = 'A';
+        } else if (code == 1) {
+            dna[i] = 'T';
+        } else if (code == 2) {
+            dna[i] = 'C';
+        } else if (code == 3) {
+            dna[i] = 'G';
+        }
+    }
+
+    dna[kmer_length] = '\0';
+
+    bsal_dna_kmer_init(sequence, dna);
+    bsal_free(dna);
+}
+
 void bsal_dna_kmer_init_mock(struct bsal_dna_kmer *sequence, int kmer_length)
 {
     char *dna;

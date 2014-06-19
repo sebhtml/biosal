@@ -65,6 +65,10 @@ void bsal_kmer_store_receive(struct bsal_actor *self, struct bsal_message *messa
     int *bucket;
     int customer;
 
+#ifdef BSAL_KMER_STORE_DEBUG
+    int name;
+#endif
+
     concrete_actor = (struct bsal_kmer_store *)bsal_actor_concrete_actor(self);
     tag = bsal_message_tag(message);
     buffer = bsal_message_buffer(message);
@@ -77,8 +81,8 @@ void bsal_kmer_store_receive(struct bsal_actor *self, struct bsal_message *messa
         concrete_actor->key_length_in_bytes = bsal_dna_kmer_pack_size(&kmer);
         bsal_dna_kmer_destroy(&kmer);
 
-#ifdef BSAL_KMER_STORE_DEBUG
 
+#ifdef BSAL_KMER_STORE_DEBUG
         name = bsal_actor_name(self);
         printf("kmer store actor/%d will use %d bytes for keys (k is %d)\n",
                         name, concrete_actor->key_length_in_bytes,
@@ -98,6 +102,9 @@ void bsal_kmer_store_receive(struct bsal_actor *self, struct bsal_message *messa
 
 #ifdef BSAL_KMER_STORE_DEBUG
         printf("Allocating key %d bytes\n", concrete_actor->key_length_in_bytes);
+
+        printf("kmer store receives block, kmers in table %" PRIu64 "\n",
+                        bsal_map_size(&concrete_actor->table));
 #endif
 
         kmers = bsal_dna_kmer_block_kmers(&block);
