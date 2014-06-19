@@ -1,2 +1,2 @@
 
-KERNELS = kernels/kmer_counter_kernel.o kernels/kernel_director.o
+KERNELS = kernels/dna_kmer_counter_kernel.o kernels/dna_kmer_counter_kernel_director.o

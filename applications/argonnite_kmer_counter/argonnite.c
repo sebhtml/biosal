@@ -6,7 +6,7 @@
 #include <structures/vector.h>
 #include <structures/vector_iterator.h>
 
-#include <kernels/kmer_counter_kernel.h>
+#include <kernels/dna_kmer_counter_kernel.h>
 
 #include <patterns/manager.h>
 #include <patterns/aggregator.h>

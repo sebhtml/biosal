@@ -1,7 +1,7 @@
 
-#include "kernel_director.h"
+#include "dna_kmer_counter_kernel_director.h"
 
-#include "kmer_counter_kernel.h"
+#include "dna_kmer_counter_kernel.h"
 
 #include <input/input_command.h>
 #include <storage/sequence_store.h>

@@ -1,5 +1,5 @@
 
-#include "kmer_counter_kernel.h"
+#include "dna_kmer_counter_kernel.h"
 
 #include <data/dna_kmer.h>
 #include <data/dna_kmer_block.h>

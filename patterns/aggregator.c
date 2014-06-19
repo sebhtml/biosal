@@ -4,7 +4,7 @@
 #include <data/dna_kmer_block.h>
 #include <data/dna_kmer.h>
 
-#include <kernels/kmer_counter_kernel.h>
+#include <kernels/dna_kmer_counter_kernel.h>
 
 #include <helpers/actor_helper.h>
 #include <helpers/message_helper.h>

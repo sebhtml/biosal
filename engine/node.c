@@ -720,7 +720,7 @@ void bsal_node_run_loop(struct bsal_node *node)
                 node->last_load_report_time = current_time;
             }
         }
-        
+
 #ifdef BSAL_NODE_DEBUG_LOOP
         if (ticks % 1000000 == 0) {
             bsal_node_print_counters(node);

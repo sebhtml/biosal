@@ -1,7 +1,7 @@
 
 #include "kmer_store.h"
 
-#include <kernels/kmer_counter_kernel.h>
+#include <kernels/dna_kmer_counter_kernel.h>
 
 #include <data/dna_kmer_block.h>
 #include <data/coverage_distribution.h>
