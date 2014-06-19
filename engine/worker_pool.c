@@ -277,9 +277,9 @@ void bsal_worker_pool_print_load(struct bsal_worker_pool *self)
     int count;
     int i;
     float epoch_load;
-    float loop_load;
     struct bsal_worker *worker;
     /*
+    float loop_load;
     int scheduling_score;
     */
     int node_name;
@@ -302,12 +302,12 @@ void bsal_worker_pool_print_load(struct bsal_worker_pool *self)
 
         worker = bsal_worker_pool_get_worker(self, i);
         epoch_load = bsal_worker_get_epoch_load(worker);
-        loop_load = bsal_worker_get_loop_load(worker);
         /*
+        loop_load = bsal_worker_get_loop_load(worker);
         scheduling_score = bsal_worker_get_scheduling_score(worker);
         */
 
-        offset += sprintf(buffer + offset, " [%d %.2f %.2f]", i, epoch_load, loop_load);
+        offset += sprintf(buffer + offset, " [%d %.2f]", i, epoch_load);
         i++;
     }
 
