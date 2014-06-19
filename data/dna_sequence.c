@@ -25,6 +25,9 @@ void bsal_dna_sequence_init(struct bsal_dna_sequence *sequence, char *data)
         sequence->encoded_data = NULL;
         sequence->length_in_nucleotides = 0;
     } else {
+
+        bsal_dna_sequence_normalize(data);
+
         sequence->length_in_nucleotides = strlen(data);
 
         encoded_length = bsal_dna_codec_encoded_length(sequence->length_in_nucleotides);
@@ -186,3 +189,52 @@ void bsal_dna_sequence_init_same_data(struct bsal_dna_sequence *self,
     self->length_in_nucleotides = other->length_in_nucleotides;
     self->pair = other->pair;
 }
+
+void bsal_dna_sequence_normalize(char *sequence)
+{
+    int length;
+    int position;
+
+    length = strlen(sequence);
+
+    position = 0;
+
+    while (position < length) {
+
+        sequence[position] = bsal_dna_sequence_normalize_nucleotide(sequence[position]);
+
+        position++;
+    }
+}
+
+char bsal_dna_sequence_normalize_nucleotide(char nucleotide)
+{
+    switch (nucleotide) {
+        case 't':
+            return 'T';
+        case 'a':
+            return 'A';
+        case 'g':
+            return 'G';
+        case 'c':
+            return 'C';
+        case 'T':
+            return 'T';
+        case 'A':
+            return 'A';
+        case 'G':
+            return 'G';
+        case 'C':
+            return 'C';
+        case 'n':
+            return 'N';
+        case '.':
+            return 'N';
+        default:
+            return 'N';
+    }
+
+    return 'N';
+}
+
+

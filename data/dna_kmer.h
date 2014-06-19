@@ -35,8 +35,6 @@ int bsal_dna_kmer_pack_store_key(struct bsal_dna_kmer *sequence,
 
 char bsal_dna_kmer_complement(char nucleotide);
 void bsal_dna_kmer_reverse_complement(char *sequence1, char *sequence2);
-void bsal_dna_kmer_normalize(char *sequence);
-char bsal_dna_kmer_normalize_nucleotide(char nucleotide);
 uint64_t bsal_dna_kmer_hash(struct bsal_dna_kmer *self, int kmer_length);
 
 #endif

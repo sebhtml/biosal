@@ -29,7 +29,6 @@ void bsal_dna_kmer_init(struct bsal_dna_kmer *sequence, char *data)
         sequence->encoded_data = NULL;
         kmer_length = 0;
     } else {
-        bsal_dna_kmer_normalize(data);
 
         kmer_length = strlen((char *)data);
 
@@ -335,53 +334,6 @@ char bsal_dna_kmer_complement(char nucleotide)
     }
 
     return nucleotide;
-}
-
-void bsal_dna_kmer_normalize(char *sequence)
-{
-    int length;
-    int position;
-
-    length = strlen(sequence);
-
-    position = 0;
-
-    while (position < length) {
-
-        sequence[position] = bsal_dna_kmer_normalize_nucleotide(sequence[position]);
-
-        position++;
-    }
-}
-
-char bsal_dna_kmer_normalize_nucleotide(char nucleotide)
-{
-    switch (nucleotide) {
-        case 't':
-            return 'T';
-        case 'a':
-            return 'A';
-        case 'g':
-            return 'G';
-        case 'c':
-            return 'C';
-        case 'T':
-            return 'T';
-        case 'A':
-            return 'A';
-        case 'G':
-            return 'G';
-        case 'C':
-            return 'C';
-        case 'n':
-            return 'N';
-        case '.':
-            return 'N';
-        default:
-            return 'N';
-    }
-
-    return 'N';
 }
 
 void bsal_dna_kmer_get_sequence(struct bsal_dna_kmer *self, char *sequence, int kmer_length)
