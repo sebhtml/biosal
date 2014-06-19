@@ -49,7 +49,7 @@ void argonnite_init(struct bsal_actor *actor)
     bsal_actor_add_script(actor, BSAL_INPUT_CONTROLLER_SCRIPT,
                     &bsal_input_controller_script);
     bsal_actor_add_script(actor, BSAL_KMER_COUNTER_KERNEL_SCRIPT,
-                    &bsal_kmer_counter_kernel_script);
+                    &bsal_dna_kmer_counter_kernel_script);
     bsal_actor_add_script(actor, BSAL_MANAGER_SCRIPT,
                     &bsal_manager_script);
     bsal_actor_add_script(actor, BSAL_AGGREGATOR_SCRIPT,

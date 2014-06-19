@@ -31,19 +31,19 @@
 #define BSAL_KMER_COUNTER_KERNEL_DEBUG
 */
 
-struct bsal_script bsal_kmer_counter_kernel_script = {
+struct bsal_script bsal_dna_kmer_counter_kernel_script = {
     .name = BSAL_KMER_COUNTER_KERNEL_SCRIPT,
-    .init = bsal_kmer_counter_kernel_init,
-    .destroy = bsal_kmer_counter_kernel_destroy,
-    .receive = bsal_kmer_counter_kernel_receive,
-    .size = sizeof(struct bsal_kmer_counter_kernel)
+    .init = bsal_dna_kmer_counter_kernel_init,
+    .destroy = bsal_dna_kmer_counter_kernel_destroy,
+    .receive = bsal_dna_kmer_counter_kernel_receive,
+    .size = sizeof(struct bsal_dna_kmer_counter_kernel)
 };
 
-void bsal_kmer_counter_kernel_init(struct bsal_actor *actor)
+void bsal_dna_kmer_counter_kernel_init(struct bsal_actor *actor)
 {
-    struct bsal_kmer_counter_kernel *concrete_actor;
+    struct bsal_dna_kmer_counter_kernel *concrete_actor;
 
-    concrete_actor = (struct bsal_kmer_counter_kernel *)bsal_actor_concrete_actor(actor);
+    concrete_actor = (struct bsal_dna_kmer_counter_kernel *)bsal_actor_concrete_actor(actor);
 
     concrete_actor->expected = 0;
     concrete_actor->actual = 0;
@@ -59,16 +59,16 @@ void bsal_kmer_counter_kernel_init(struct bsal_actor *actor)
     concrete_actor->kmers = 0;
 }
 
-void bsal_kmer_counter_kernel_destroy(struct bsal_actor *actor)
+void bsal_dna_kmer_counter_kernel_destroy(struct bsal_actor *actor)
 {
-    struct bsal_kmer_counter_kernel *concrete_actor;
+    struct bsal_dna_kmer_counter_kernel *concrete_actor;
 
-    concrete_actor = (struct bsal_kmer_counter_kernel *)bsal_actor_concrete_actor(actor);
+    concrete_actor = (struct bsal_dna_kmer_counter_kernel *)bsal_actor_concrete_actor(actor);
 
     concrete_actor->customer = 0;
 }
 
-void bsal_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_message *message)
+void bsal_dna_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_message *message)
 {
     int tag;
     int source;
@@ -77,7 +77,7 @@ void bsal_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_mess
     struct bsal_input_command payload;
     void *buffer;
     int entries;
-    struct bsal_kmer_counter_kernel *concrete_actor;
+    struct bsal_dna_kmer_counter_kernel *concrete_actor;
     int source_index;
     int customer;
     int i;
@@ -102,7 +102,7 @@ void bsal_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_mess
     count = bsal_message_count(message);
 #endif
 
-    concrete_actor = (struct bsal_kmer_counter_kernel *)bsal_actor_concrete_actor(actor);
+    concrete_actor = (struct bsal_dna_kmer_counter_kernel *)bsal_actor_concrete_actor(actor);
     tag = bsal_message_tag(message);
     name = bsal_actor_name(actor);
     source = bsal_message_source(message);
@@ -271,7 +271,7 @@ void bsal_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_mess
         BSAL_DEBUG_MARKER("leaving call.\n");
 #endif
 
-        bsal_kmer_counter_kernel_verify(actor, message);
+        bsal_dna_kmer_counter_kernel_verify(actor, message);
 
     } else if (tag == BSAL_AGGREGATE_KERNEL_OUTPUT_REPLY) {
 
@@ -342,15 +342,15 @@ void bsal_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_mess
         concrete_actor->notified = 1;
 
         concrete_actor->notification_source = bsal_actor_add_acquaintance(actor, source);
-        bsal_kmer_counter_kernel_verify(actor, message);
+        bsal_dna_kmer_counter_kernel_verify(actor, message);
     }
 }
 
-void bsal_kmer_counter_kernel_verify(struct bsal_actor *actor, struct bsal_message *message)
+void bsal_dna_kmer_counter_kernel_verify(struct bsal_actor *actor, struct bsal_message *message)
 {
-    struct bsal_kmer_counter_kernel *concrete_actor;
+    struct bsal_dna_kmer_counter_kernel *concrete_actor;
 
-    concrete_actor = (struct bsal_kmer_counter_kernel *)bsal_actor_concrete_actor(actor);
+    concrete_actor = (struct bsal_dna_kmer_counter_kernel *)bsal_actor_concrete_actor(actor);
 
     if (!concrete_actor->notified) {
 

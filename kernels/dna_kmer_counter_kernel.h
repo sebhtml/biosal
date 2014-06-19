@@ -9,7 +9,7 @@
 
 #define BSAL_KMER_COUNTER_KERNEL_SCRIPT 0xed338fa2
 
-struct bsal_kmer_counter_kernel {
+struct bsal_dna_kmer_counter_kernel {
     uint64_t expected;
     uint64_t actual;
     uint64_t last;
@@ -29,12 +29,12 @@ struct bsal_kmer_counter_kernel {
 #define BSAL_KERNEL_NOTIFY 0x00005098
 #define BSAL_KERNEL_NOTIFY_REPLY 0x00001d2b
 
-extern struct bsal_script bsal_kmer_counter_kernel_script;
+extern struct bsal_script bsal_dna_kmer_counter_kernel_script;
 
-void bsal_kmer_counter_kernel_init(struct bsal_actor *actor);
-void bsal_kmer_counter_kernel_destroy(struct bsal_actor *actor);
-void bsal_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_message *message);
+void bsal_dna_kmer_counter_kernel_init(struct bsal_actor *actor);
+void bsal_dna_kmer_counter_kernel_destroy(struct bsal_actor *actor);
+void bsal_dna_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_message *message);
 
-void bsal_kmer_counter_kernel_verify(struct bsal_actor *actor, struct bsal_message *message);
+void bsal_dna_kmer_counter_kernel_verify(struct bsal_actor *actor, struct bsal_message *message);
 
 #endif

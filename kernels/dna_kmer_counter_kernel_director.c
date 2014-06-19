@@ -16,20 +16,20 @@
 
 #include <inttypes.h>
 
-struct bsal_script bsal_kernel_director_script = {
+struct bsal_script bsal_dna_kmer_counter_kernel_director_script = {
     .name = BSAL_KERNEL_DIRECTOR_SCRIPT,
-    .init = bsal_kernel_director_init,
-    .destroy = bsal_kernel_director_destroy,
-    .receive = bsal_kernel_director_receive,
-    .size = sizeof(struct bsal_kernel_director)
+    .init = bsal_dna_kmer_counter_kernel_director_init,
+    .destroy = bsal_dna_kmer_counter_kernel_director_destroy,
+    .receive = bsal_dna_kmer_counter_kernel_director_receive,
+    .size = sizeof(struct bsal_dna_kmer_counter_kernel_director)
 };
 
-void bsal_kernel_director_init(struct bsal_actor *actor)
+void bsal_dna_kmer_counter_kernel_director_init(struct bsal_actor *actor)
 {
-    struct bsal_kernel_director *concrete_actor;
+    struct bsal_dna_kmer_counter_kernel_director *concrete_actor;
     int kernels_per_worker;
 
-    concrete_actor = (struct bsal_kernel_director *)bsal_actor_concrete_actor(actor);
+    concrete_actor = (struct bsal_dna_kmer_counter_kernel_director *)bsal_actor_concrete_actor(actor);
 
     bsal_queue_init(&concrete_actor->available_kernels, sizeof(int));
     bsal_vector_init(&concrete_actor->kernels, sizeof(int));
@@ -48,17 +48,17 @@ void bsal_kernel_director_init(struct bsal_actor *actor)
     concrete_actor->notification_source = 0;
 }
 
-void bsal_kernel_director_destroy(struct bsal_actor *actor)
+void bsal_dna_kmer_counter_kernel_director_destroy(struct bsal_actor *actor)
 {
-    struct bsal_kernel_director *concrete_actor;
+    struct bsal_dna_kmer_counter_kernel_director *concrete_actor;
 
-    concrete_actor = (struct bsal_kernel_director *)bsal_actor_concrete_actor(actor);
+    concrete_actor = (struct bsal_dna_kmer_counter_kernel_director *)bsal_actor_concrete_actor(actor);
 
     bsal_queue_destroy(&concrete_actor->available_kernels);
     bsal_vector_destroy(&concrete_actor->kernels);
 }
 
-void bsal_kernel_director_receive(struct bsal_actor *actor, struct bsal_message *message)
+void bsal_dna_kmer_counter_kernel_director_receive(struct bsal_actor *actor, struct bsal_message *message)
 {
     int tag;
     int kernel;
@@ -66,12 +66,12 @@ void bsal_kernel_director_receive(struct bsal_actor *actor, struct bsal_message 
     int name;
     int aggregator;
     int source;
-    struct bsal_kernel_director *concrete_actor;
+    struct bsal_dna_kmer_counter_kernel_director *concrete_actor;
     struct bsal_input_command command;
     void *buffer;
     int produced;
 
-    concrete_actor = (struct bsal_kernel_director *)bsal_actor_concrete_actor(actor);
+    concrete_actor = (struct bsal_dna_kmer_counter_kernel_director *)bsal_actor_concrete_actor(actor);
     tag = bsal_message_tag(message);
     source = bsal_message_source(message);
     name = bsal_actor_name(actor);
@@ -157,7 +157,7 @@ void bsal_kernel_director_receive(struct bsal_actor *actor, struct bsal_message 
         printf("director actor/%d now has %d kernels\n", name,
                         (int)bsal_vector_size(&concrete_actor->kernels));
 
-        bsal_kernel_director_try_kernel(actor, kernel);
+        bsal_dna_kmer_counter_kernel_director_try_kernel(actor, kernel);
 
     } else if (tag == BSAL_SPAWN_KERNEL) {
 
@@ -220,9 +220,9 @@ void bsal_kernel_director_receive(struct bsal_actor *actor, struct bsal_message 
 
         kernel = source;
 
-        bsal_kernel_director_try_kernel(actor, kernel);
+        bsal_dna_kmer_counter_kernel_director_try_kernel(actor, kernel);
 
-        bsal_kernel_director_verify(actor, message);
+        bsal_dna_kmer_counter_kernel_director_verify(actor, message);
 
     } else if (tag == BSAL_ACTOR_ASK_TO_STOP && (source == name
                     || source == bsal_actor_supervisor(actor))) {
@@ -257,15 +257,15 @@ void bsal_kernel_director_receive(struct bsal_actor *actor, struct bsal_message 
         concrete_actor->notified = 1;
         concrete_actor->notification_source = bsal_actor_add_acquaintance(actor, source);
 
-        bsal_kernel_director_verify(actor, message);
+        bsal_dna_kmer_counter_kernel_director_verify(actor, message);
     }
 }
 
-void bsal_kernel_director_verify(struct bsal_actor *actor, struct bsal_message *message)
+void bsal_dna_kmer_counter_kernel_director_verify(struct bsal_actor *actor, struct bsal_message *message)
 {
-    struct bsal_kernel_director *concrete_actor;
+    struct bsal_dna_kmer_counter_kernel_director *concrete_actor;
 
-    concrete_actor = (struct bsal_kernel_director *)bsal_actor_concrete_actor(actor);
+    concrete_actor = (struct bsal_dna_kmer_counter_kernel_director *)bsal_actor_concrete_actor(actor);
 
     /* not all entries were received
      */
@@ -296,20 +296,20 @@ void bsal_kernel_director_verify(struct bsal_actor *actor, struct bsal_message *
                     concrete_actor->total_kmers);
 }
 
-void bsal_kernel_director_try_kernel(struct bsal_actor *actor, int kernel)
+void bsal_dna_kmer_counter_kernel_director_try_kernel(struct bsal_actor *actor, int kernel)
 {
     struct bsal_message new_message;
     int original_source;
     void *new_buffer;
     int kernel_index;
-    struct bsal_kernel_director *concrete_actor;
+    struct bsal_dna_kmer_counter_kernel_director *concrete_actor;
 
 #ifdef BSAL_KERNEL_DIRECTOR_DEBUG
     int name;
     name = bsal_actor_name(actor);
 #endif
 
-    concrete_actor = (struct bsal_kernel_director *)bsal_actor_concrete_actor(actor);
+    concrete_actor = (struct bsal_dna_kmer_counter_kernel_director *)bsal_actor_concrete_actor(actor);
 
 #ifdef BSAL_KERNEL_DIRECTOR_DEBUG
     printf("kernel director actor/%d tries to assign a message to kernel actor/%d\n",
