@@ -30,7 +30,7 @@ int main(int argc, char **argv)
         printf("STRESS TEST\n");
 
         bsal_dna_kmer_init_mock(&kmer, kmer_length);
-        key_length = bsal_dna_kmer_pack_size(&kmer);
+        key_length = bsal_dna_kmer_pack_size(&kmer, kmer_length);
         bsal_dna_kmer_destroy(&kmer);
 
         bsal_map_init(&big_map, key_length, sizeof(coverage));
@@ -41,7 +41,7 @@ int main(int argc, char **argv)
         while (i < count && run_test) {
 
             bsal_dna_kmer_init_random(&kmer, kmer_length);
-            bsal_dna_kmer_pack_store_key(&kmer, key);
+            bsal_dna_kmer_pack_store_key(&kmer, key, kmer_length);
 
             bucket = bsal_map_add(&big_map, key);
             coverage = 99;

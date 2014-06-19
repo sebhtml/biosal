@@ -78,7 +78,8 @@ void bsal_kmer_store_receive(struct bsal_actor *self, struct bsal_message *messa
         bsal_message_helper_unpack_int(message, 0, &concrete_actor->kmer_length);
 
         bsal_dna_kmer_init_mock(&kmer, concrete_actor->kmer_length);
-        concrete_actor->key_length_in_bytes = bsal_dna_kmer_pack_size(&kmer);
+        concrete_actor->key_length_in_bytes = bsal_dna_kmer_pack_size(&kmer,
+                        concrete_actor->kmer_length);
         bsal_dna_kmer_destroy(&kmer);
 
 
@@ -117,7 +118,8 @@ void bsal_kmer_store_receive(struct bsal_actor *self, struct bsal_message *messa
              */
             bsal_vector_iterator_next(&iterator, (void **)&kmer_pointer);
 
-            bsal_dna_kmer_pack_store_key(kmer_pointer, key);
+            bsal_dna_kmer_pack_store_key(kmer_pointer, key,
+                            concrete_actor->kmer_length);
 
             bucket = (int *)bsal_map_get(&concrete_actor->table, key);
 
@@ -193,9 +195,9 @@ void bsal_kmer_store_print(struct bsal_actor *self)
 
     while (bsal_map_iterator_has_next(&iterator)) {
         bsal_map_iterator_next(&iterator, (void **)&key, (void **)&value);
-        bsal_dna_kmer_unpack(&kmer, key);
+        bsal_dna_kmer_unpack(&kmer, key, concrete_actor->kmer_length);
 
-        length = bsal_dna_kmer_length(&kmer);
+        length = bsal_dna_kmer_length(&kmer, concrete_actor->kmer_length);
 
         if (length > maximum_length) {
             length = maximum_length;
@@ -208,9 +210,9 @@ void bsal_kmer_store_print(struct bsal_actor *self)
     while (bsal_map_iterator_has_next(&iterator)) {
         bsal_map_iterator_next(&iterator, (void **)&key, (void **)&value);
 
-        bsal_dna_kmer_unpack(&kmer, key);
+        bsal_dna_kmer_unpack(&kmer, key, concrete_actor->kmer_length);
 
-        bsal_dna_kmer_get_sequence(&kmer, sequence);
+        bsal_dna_kmer_get_sequence(&kmer, sequence, concrete_actor->kmer_length);
         coverage = *value;
 
         printf("Sequence %s Coverage %d\n", sequence, coverage);
@@ -244,8 +246,9 @@ void bsal_kmer_store_push_data(struct bsal_actor *self, struct bsal_message *mes
 
     bsal_map_init(&coverage_distribution, sizeof(int), sizeof(uint64_t));
 
-    printf("store actor/%d: local table has %d kmers\n",
-                    name, (int)bsal_map_size(&concrete_actor->table));
+    printf("store actor/%d: local table has %" PRIu64" keys (%" PRIu64 ")\n",
+                    name, bsal_map_size(&concrete_actor->table),
+                    2 * bsal_map_size(&concrete_actor->table));
 #ifdef BSAL_KMER_STORE_DEBUG
 #endif
 
@@ -254,7 +257,7 @@ void bsal_kmer_store_push_data(struct bsal_actor *self, struct bsal_message *mes
     while (bsal_map_iterator_has_next(&iterator)) {
         bsal_map_iterator_next(&iterator, (void **)&key, (void **)&value);
 
-        bsal_dna_kmer_unpack(&kmer, key);
+        bsal_dna_kmer_unpack(&kmer, key, concrete_actor->kmer_length);
 
         coverage = *value;
 

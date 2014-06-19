@@ -145,7 +145,7 @@ void bsal_aggregator_receive(struct bsal_actor *self, struct bsal_message *messa
             bsal_dna_kmer_length(kmer);
             */
 
-            customer_index = bsal_dna_kmer_store_index(kmer, customer_count);
+            customer_index = bsal_dna_kmer_store_index(kmer, customer_count, concrete_actor->kmer_length);
 
             customer_block_pointer = (struct bsal_dna_kmer_block *)bsal_vector_at(&concrete_actor->buffers,
                             customer_index);

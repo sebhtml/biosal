@@ -49,7 +49,7 @@ void bsal_dna_kmer_block_add_kmer(struct bsal_dna_kmer_block *self, struct bsal_
 {
     struct bsal_dna_kmer copy;
 
-    bsal_dna_kmer_init_copy(&copy, kmer);
+    bsal_dna_kmer_init_copy(&copy, kmer, self->kmer_length);
 
     bsal_vector_push_back(&self->kmers, &copy);
 }
@@ -126,7 +126,8 @@ int bsal_dna_kmer_block_pack_unpack(struct bsal_dna_kmer_block *self, void *buff
     if (operation == BSAL_PACKER_OPERATION_UNPACK) {
 
         for (i = 0; i < elements; i++) {
-            offset += bsal_dna_kmer_pack_unpack(&new_kmer, (char *)buffer + offset, operation);
+            offset += bsal_dna_kmer_pack_unpack(&new_kmer, (char *)buffer + offset, operation,
+                            self->kmer_length);
 
             bsal_dna_kmer_block_add_kmer(self, &new_kmer);
 
@@ -136,7 +137,8 @@ int bsal_dna_kmer_block_pack_unpack(struct bsal_dna_kmer_block *self, void *buff
         for (i = 0; i < elements; i++) {
             kmer = (struct bsal_dna_kmer *)bsal_vector_at(&self->kmers, i);
 
-            offset += bsal_dna_kmer_pack_unpack(kmer, (char *)buffer + offset, operation);
+            offset += bsal_dna_kmer_pack_unpack(kmer, (char *)buffer + offset, operation,
+                            self->kmer_length);
         }
     }
 

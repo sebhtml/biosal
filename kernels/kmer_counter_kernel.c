@@ -332,7 +332,7 @@ void bsal_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_mess
         bsal_message_helper_unpack_int(message, 0, &concrete_actor->kmer_length);
 
         bsal_dna_kmer_init_mock(&kmer, concrete_actor->kmer_length);
-        concrete_actor->bytes_per_kmer = bsal_dna_kmer_pack_size(&kmer);
+        concrete_actor->bytes_per_kmer = bsal_dna_kmer_pack_size(&kmer, concrete_actor->kmer_length);
         bsal_dna_kmer_destroy(&kmer);
 
         bsal_actor_helper_send_reply_empty(actor, BSAL_SET_KMER_LENGTH_REPLY);
