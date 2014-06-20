@@ -23,8 +23,8 @@
  * enable 2-bit encoding
  */
 /*
-#define BSAL_DNA_CODEC_USE_TWO_BIT_ENCODING_DEFAULT
 */
+#define BSAL_DNA_CODEC_USE_TWO_BIT_ENCODING_DEFAULT
 
 int bsal_dna_codec_encoded_length(int length_in_nucleotides)
 {
