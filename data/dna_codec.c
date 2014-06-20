@@ -28,7 +28,16 @@
  * enable 2-bit encoding
  */
 #define BSAL_DNA_CODEC_USE_TWO_BIT_ENCODING_DEFAULT
+
+/*
+ * use block encoder (faster)
+ */
 #define BSAL_DNA_CODEC_USE_TWO_BIT_BLOCK_ENCODER
+
+/*
+ * use block decoder (faster)
+ */
+#define BSAL_DNA_CODEC_USE_TWO_BIT_BLOCK_DECODER
 
 /*
 */
@@ -222,11 +231,45 @@ void bsal_dna_codec_encode_default(int length_in_nucleotides, char *dna_sequence
 void bsal_dna_codec_decode(struct bsal_dna_codec *codec,
                 int length_in_nucleotides, void *encoded_sequence, char *dna_sequence)
 {
-#ifdef BSAL_DNA_CODEC_USE_TWO_BIT_ENCODING_DEFAULT
+#ifdef BSAL_DNA_CODEC_USE_TWO_BIT_BLOCK_DECODER
+    bsal_dna_codec_decode_with_blocks(codec, length_in_nucleotides, encoded_sequence, dna_sequence);
+#elif defined(BSAL_DNA_CODEC_USE_TWO_BIT_ENCODING_DEFAULT)
     bsal_dna_codec_decode_default(length_in_nucleotides, encoded_sequence, dna_sequence);
 #else
     strcpy(dna_sequence, encoded_sequence);
 #endif
+}
+
+void bsal_dna_codec_decode_with_blocks(struct bsal_dna_codec *self,
+                int length_in_nucleotides, void *encoded_sequence, char *dna_sequence)
+{
+    char byte;
+    int nucleotide_position;
+    int encoded_position;
+    int remaining;
+    void *encoded_block;
+    int to_copy;
+
+    encoded_position = 0;
+    nucleotide_position = 0;
+
+    while (nucleotide_position < length_in_nucleotides) {
+
+        remaining = length_in_nucleotides - nucleotide_position;
+        byte = ((char *)encoded_sequence)[encoded_position];
+        encoded_block = bsal_map_get(&self->decoding_lookup_table, &byte);
+        to_copy = self->block_length;
+
+        if (to_copy > remaining) {
+            to_copy = remaining;
+        }
+        memcpy(dna_sequence + nucleotide_position, encoded_block, to_copy);
+
+        nucleotide_position += self->block_length;
+        encoded_position++;
+    }
+
+    dna_sequence[length_in_nucleotides] = '\0';
 }
 
 void bsal_dna_codec_decode_default(int length_in_nucleotides, void *encoded_sequence, char *dna_sequence)

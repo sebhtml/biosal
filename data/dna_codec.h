@@ -36,4 +36,7 @@ void bsal_dna_codec_generate_blocks(struct bsal_dna_codec *self);
 
 void bsal_dna_codec_generate_block(struct bsal_dna_codec *self, int position, char symbol,
                 char *block);
+void bsal_dna_codec_decode_with_blocks(struct bsal_dna_codec *self,
+                int length_in_nucleotides, void *encoded_sequence, char *dna_sequence);
+
 #endif
