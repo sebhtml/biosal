@@ -17,7 +17,7 @@ void bsal_dna_sequence_init(struct bsal_dna_sequence *sequence, char *data)
 {
     int encoded_length;
 
-    /* TODO
+    /*
      * encode @raw_data in 2-bit format
      * use an allocator provided to allocate memory
      */
@@ -27,6 +27,10 @@ void bsal_dna_sequence_init(struct bsal_dna_sequence *sequence, char *data)
     } else {
 
         bsal_dna_sequence_normalize(data);
+
+#ifdef BSAL_DNA_SEQUENCE_DEBUG
+        printf("after normalization %s\n", data);
+#endif
 
         sequence->length_in_nucleotides = strlen(data);
 
@@ -166,19 +170,23 @@ void bsal_dna_sequence_get_sequence(struct bsal_dna_sequence *self, char *sequen
     bsal_dna_codec_decode(self->length_in_nucleotides, self->encoded_data, sequence);
 }
 
+/* copy other to self
+ */
 void bsal_dna_sequence_init_copy(struct bsal_dna_sequence *self,
                 struct bsal_dna_sequence *other)
 {
     char *dna;
 
-    dna = bsal_malloc(other->length_in_nucleotides);
+    /* need +1 for '\0'
+     */
+    dna = bsal_malloc(other->length_in_nucleotides + 1);
 
     bsal_dna_codec_decode(other->length_in_nucleotides, other->encoded_data,
                     dna);
 
     bsal_dna_sequence_init(self, dna);
 
-    free(dna);
+    bsal_free(dna);
     dna = NULL;
 }
 
@@ -209,6 +217,10 @@ void bsal_dna_sequence_normalize(char *sequence)
 
 char bsal_dna_sequence_normalize_nucleotide(char nucleotide)
 {
+    char default_value;
+
+    default_value = 'A';
+
     switch (nucleotide) {
         case 't':
             return 'T';
@@ -227,14 +239,14 @@ char bsal_dna_sequence_normalize_nucleotide(char nucleotide)
         case 'C':
             return 'C';
         case 'n':
-            return 'N';
+            return default_value;
         case '.':
-            return 'N';
+            return default_value;
         default:
-            return 'N';
+            return default_value;
     }
 
-    return 'N';
+    return default_value;
 }
 
 

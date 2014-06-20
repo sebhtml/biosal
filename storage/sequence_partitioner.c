@@ -298,6 +298,10 @@ void bsal_sequence_partitioner_verify(struct bsal_actor *actor)
 
     remaining = concrete_actor->total;
 
+    if (remaining <= entries) {
+        entries = remaining;
+    }
+
     /* example: 10000, block_size 4096,  3 stores
      *
      * total entries remaining

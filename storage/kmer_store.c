@@ -199,13 +199,23 @@ void bsal_kmer_store_print(struct bsal_actor *self)
 
         length = bsal_dna_kmer_length(&kmer, concrete_actor->kmer_length);
 
+        /*
+        printf("length %d\n", length);
+        */
         if (length > maximum_length) {
-            length = maximum_length;
+            maximum_length = length;
         }
         bsal_dna_kmer_destroy(&kmer);
     }
 
+    /*
+    printf("MAx length %d\n", maximum_length);
+    */
+
     sequence = bsal_malloc(maximum_length + 1);
+    sequence[0] = '\0';
+    bsal_map_iterator_destroy(&iterator);
+    bsal_map_iterator_init(&iterator, &concrete_actor->table);
 
     while (bsal_map_iterator_has_next(&iterator)) {
         bsal_map_iterator_next(&iterator, (void **)&key, (void **)&value);
@@ -220,8 +230,8 @@ void bsal_kmer_store_print(struct bsal_actor *self)
         bsal_dna_kmer_destroy(&kmer);
     }
 
-    bsal_free(sequence);
     bsal_map_iterator_destroy(&iterator);
+    bsal_free(sequence);
 }
 
 void bsal_kmer_store_push_data(struct bsal_actor *self, struct bsal_message *message)

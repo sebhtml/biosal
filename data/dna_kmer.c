@@ -30,7 +30,7 @@ void bsal_dna_kmer_init(struct bsal_dna_kmer *sequence, char *data)
         kmer_length = 0;
     } else {
 
-        kmer_length = strlen((char *)data);
+        kmer_length = strlen(data);
 
         encoded_length = bsal_dna_codec_encoded_length(kmer_length);
         sequence->encoded_data = bsal_malloc(encoded_length);
@@ -69,11 +69,9 @@ int bsal_dna_kmer_pack_store_key(struct bsal_dna_kmer *self,
     int bytes;
 
     self_sequence = bsal_malloc(kmer_length + 1);
-
     bsal_dna_codec_decode(kmer_length, self->encoded_data, self_sequence);
 
     reverse_complement_sequence = bsal_malloc(kmer_length + 1);
-
     bsal_dna_kmer_reverse_complement(self_sequence, reverse_complement_sequence);
 
     if (strcmp(reverse_complement_sequence, self_sequence) < 0) {
@@ -338,6 +336,9 @@ char bsal_dna_kmer_complement(char nucleotide)
 
 void bsal_dna_kmer_get_sequence(struct bsal_dna_kmer *self, char *sequence, int kmer_length)
 {
+        /*
+    printf("get sequence %d\n", kmer_length);
+    */
     bsal_dna_codec_decode(kmer_length, self->encoded_data, sequence);
 }
 
