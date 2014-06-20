@@ -3,6 +3,8 @@
 
 #include "dna_codec.h"
 
+#include <helpers/dna_helper.h>
+
 #include <system/packer.h>
 #include <system/memory.h>
 
@@ -27,7 +29,7 @@ void bsal_dna_sequence_init(struct bsal_dna_sequence *sequence, char *data,
         sequence->length_in_nucleotides = 0;
     } else {
 
-        bsal_dna_sequence_normalize(data);
+        bsal_dna_helper_normalize(data);
 
 #ifdef BSAL_DNA_SEQUENCE_DEBUG
         printf("after normalization %s\n", data);
@@ -198,57 +200,6 @@ void bsal_dna_sequence_init_same_data(struct bsal_dna_sequence *self,
     self->encoded_data = other->encoded_data;
     self->length_in_nucleotides = other->length_in_nucleotides;
     self->pair = other->pair;
-}
-
-void bsal_dna_sequence_normalize(char *sequence)
-{
-    int length;
-    int position;
-
-    length = strlen(sequence);
-
-    position = 0;
-
-    while (position < length) {
-
-        sequence[position] = bsal_dna_sequence_normalize_nucleotide(sequence[position]);
-
-        position++;
-    }
-}
-
-char bsal_dna_sequence_normalize_nucleotide(char nucleotide)
-{
-    char default_value;
-
-    default_value = 'A';
-
-    switch (nucleotide) {
-        case 't':
-            return 'T';
-        case 'a':
-            return 'A';
-        case 'g':
-            return 'G';
-        case 'c':
-            return 'C';
-        case 'T':
-            return 'T';
-        case 'A':
-            return 'A';
-        case 'G':
-            return 'G';
-        case 'C':
-            return 'C';
-        case 'n':
-            return default_value;
-        case '.':
-            return default_value;
-        default:
-            return default_value;
-    }
-
-    return default_value;
 }
 
 

@@ -1,6 +1,7 @@
 
 #include "test.h"
 
+#include <helpers/dna_helper.h>
 #include <data/dna_codec.h>
 #include <system/memory.h>
 
@@ -21,6 +22,7 @@ int main(int argc, char **argv)
     */
     char dna[] = "CACCCAGGGAGAGGGAGGACGCACCGAAAGAGAAA";
     char *sequence2;
+    char *expected_sequence;
 
     bsal_dna_codec_init(&codec);
     sequence_length = strlen(dna);
@@ -36,6 +38,7 @@ int main(int argc, char **argv)
     bsal_dna_codec_encode(&codec, sequence_length, dna, encoded_sequence);
 
     sequence2 = bsal_malloc(sequence_length + 1);
+    expected_sequence = bsal_malloc(sequence_length + 1);
 
     TEST_POINTER_NOT_EQUALS(sequence2, NULL);
 
@@ -47,8 +50,27 @@ int main(int argc, char **argv)
 
     TEST_BOOLEAN_EQUALS(strcmp(dna, sequence2) == 0, 1);
 
+    /* test the codec reverse-complement feature
+     */
+    strcpy(expected_sequence, sequence2);
+    bsal_dna_helper_reverse_complement_in_place(expected_sequence);
+
+    bsal_dna_codec_reverse_complement_in_place(&codec, sequence_length, encoded_sequence);
+
+    bsal_dna_codec_decode(&codec, sequence_length, encoded_sequence, sequence2);
+
+#if 0
+    if (strcmp(sequence2, expected_sequence) != 0) {
+        printf("Actual   %s\n", sequence2);
+        printf("Expected %s\n", expected_sequence);
+    }
+
+    TEST_BOOLEAN_EQUALS(strcmp(sequence2, expected_sequence) == 0, 1);
+#endif
+
     bsal_free(encoded_sequence);
     bsal_free(sequence2);
+    bsal_free(expected_sequence);
 
     bsal_dna_codec_destroy(&codec);
     END_TESTS();

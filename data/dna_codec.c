@@ -390,3 +390,10 @@ char bsal_dna_codec_get_nucleotide_from_code(uint64_t code)
     return BSAL_NUCLEOTIDE_SYMBOL_A;
 }
 
+/* this would be diccult to do because the padding at the end is not
+ * always a multiple of block_length
+ */
+void bsal_dna_codec_reverse_complement_in_place(struct bsal_dna_codec *self,
+                int length_in_nucleotides, void *encoded_sequence)
+{
+}

@@ -37,8 +37,14 @@ int bsal_dna_kmer_store_index(struct bsal_dna_kmer *self, int stores, int kmer_l
 int bsal_dna_kmer_pack_store_key(struct bsal_dna_kmer *sequence,
                 void *buffer, int kmer_length, struct bsal_dna_codec *codec);
 
-char bsal_dna_kmer_complement(char nucleotide);
-void bsal_dna_kmer_reverse_complement(char *sequence1, char *sequence2);
 uint64_t bsal_dna_kmer_hash(struct bsal_dna_kmer *self, int kmer_length);
+
+void bsal_dna_kmer_reverse_complement_self(struct bsal_dna_kmer *self, int kmer_length,
+                struct bsal_dna_codec *codec);
+
+int bsal_dna_kmer_is_lower(struct bsal_dna_kmer *self, struct bsal_dna_kmer *other, int kmer_length,
+                struct bsal_dna_codec *codec);
+int bsal_dna_kmer_compare(struct bsal_dna_kmer *self, struct bsal_dna_kmer *other, int kmer_length,
+                struct bsal_dna_codec *codec);
 
 #endif

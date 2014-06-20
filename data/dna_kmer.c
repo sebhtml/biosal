@@ -3,8 +3,9 @@
 
 #include "dna_codec.h"
 
-#include <system/packer.h>
+#include <helpers/dna_helper.h>
 
+#include <system/packer.h>
 #include <system/memory.h>
 
 #include <hash/murmur_hash_2_64_a.h>
@@ -65,30 +66,18 @@ int bsal_dna_kmer_pack_store_key(struct bsal_dna_kmer *self,
                 void *buffer, int kmer_length, struct bsal_dna_codec *codec)
 {
     struct bsal_dna_kmer kmer2;
-    char *reverse_complement_sequence;
-    char *self_sequence;
     int bytes;
 
-    self_sequence = bsal_malloc(kmer_length + 1);
-    bsal_dna_codec_decode(codec, kmer_length, self->encoded_data, self_sequence);
+    bsal_dna_kmer_init_copy(&kmer2, self, kmer_length);
+    bsal_dna_kmer_reverse_complement_self(&kmer2, kmer_length, codec);
 
-    reverse_complement_sequence = bsal_malloc(kmer_length + 1);
-    bsal_dna_kmer_reverse_complement(self_sequence, reverse_complement_sequence);
-
-    if (strcmp(reverse_complement_sequence, self_sequence) < 0) {
-
-        bsal_dna_kmer_init(&kmer2, reverse_complement_sequence, codec);
+    if (bsal_dna_kmer_is_lower(&kmer2, self, kmer_length, codec)) {
         bytes = bsal_dna_kmer_pack(&kmer2, buffer, kmer_length);
-        bsal_dna_kmer_destroy(&kmer2);
-
     } else {
         bytes = bsal_dna_kmer_pack(self, buffer, kmer_length);
     }
 
-    bsal_free(reverse_complement_sequence);
-    reverse_complement_sequence = NULL;
-    bsal_free(self_sequence);
-    self_sequence = NULL;
+    bsal_dna_kmer_destroy(&kmer2);
 
     return bytes;
 }
@@ -250,87 +239,24 @@ uint64_t bsal_dna_kmer_hash(struct bsal_dna_kmer *self, int kmer_length)
 int bsal_dna_kmer_store_index(struct bsal_dna_kmer *self, int stores, int kmer_length,
                 struct bsal_dna_codec *codec)
 {
-    uint64_t value;
-    char *reverse_complement_sequence;
+    uint64_t hash;
     int store_index;
-    char *self_sequence;
     struct bsal_dna_kmer kmer2;
 
-    self_sequence = bsal_malloc(kmer_length + 1);
-    bsal_dna_kmer_get_sequence(self, self_sequence, kmer_length, codec);
+    bsal_dna_kmer_init_copy(&kmer2, self, kmer_length);
+    bsal_dna_kmer_reverse_complement_self(&kmer2, kmer_length, codec);
 
-    reverse_complement_sequence = bsal_malloc(kmer_length + 1);
-    bsal_dna_kmer_reverse_complement(self_sequence, reverse_complement_sequence);
-
-    if (strcmp(reverse_complement_sequence, self_sequence) < 0) {
-
-        bsal_dna_kmer_init(&kmer2, reverse_complement_sequence, codec);
-        value = bsal_dna_kmer_hash(&kmer2, kmer_length);
-        bsal_dna_kmer_destroy(&kmer2);
-
+    if (bsal_dna_kmer_is_lower(&kmer2, self, kmer_length, codec)) {
+        hash = bsal_dna_kmer_hash(&kmer2, kmer_length);
     } else {
-
-        value = bsal_dna_kmer_hash(self, kmer_length);
+        hash = bsal_dna_kmer_hash(self, kmer_length);
     }
 
-    store_index = value % stores;
+    store_index = hash % stores;
 
-    bsal_free(reverse_complement_sequence);
-    reverse_complement_sequence = NULL;
-
-    bsal_free(self_sequence);
-    self_sequence = NULL;
+    bsal_dna_kmer_destroy(&kmer2);
 
     return store_index;
-}
-
-void bsal_dna_kmer_reverse_complement(char *sequence1, char *sequence2)
-{
-    int length;
-    int position1;
-    int position2;
-    char nucleotide1;
-    char nucleotide2;
-
-    length = strlen(sequence1);
-
-    position1 = length - 1;
-    position2 = 0;
-
-    while (position2 < length) {
-
-        nucleotide1 = sequence1[position1];
-        nucleotide2 = bsal_dna_kmer_complement(nucleotide1);
-
-        sequence2[position2] = nucleotide2;
-
-        position2++;
-        position1--;
-    }
-
-    sequence2[position2] = '\0';
-
-#ifdef BSAL_DNA_KMER_DEBUG
-    printf("%s and %s\n", sequence1, sequence2);
-#endif
-}
-
-char bsal_dna_kmer_complement(char nucleotide)
-{
-    switch (nucleotide) {
-        case 'A':
-            return 'T';
-        case 'T':
-            return 'A';
-        case 'C':
-            return 'G';
-        case 'G':
-            return 'C';
-        default:
-            return nucleotide;
-    }
-
-    return nucleotide;
 }
 
 void bsal_dna_kmer_get_sequence(struct bsal_dna_kmer *self, char *sequence, int kmer_length,
@@ -348,4 +274,71 @@ void bsal_dna_kmer_get_sequence(struct bsal_dna_kmer *self, char *sequence, int 
 int bsal_dna_kmer_length(struct bsal_dna_kmer *self, int kmer_length)
 {
     return kmer_length;
+}
+
+void bsal_dna_kmer_reverse_complement_self(struct bsal_dna_kmer *self, int kmer_length,
+                struct bsal_dna_codec *codec)
+{
+    char *sequence;
+
+    sequence = bsal_malloc(kmer_length + 1);
+    bsal_dna_kmer_get_sequence(self, sequence, kmer_length, codec);
+
+#ifdef BSAL_DNA_KMER_DEBUG
+    printf("DEBUG %p before %s\n", (void *)self, sequence);
+#endif
+
+    bsal_dna_helper_reverse_complement_in_place(sequence);
+
+#ifdef BSAL_DNA_KMER_DEBUG
+    printf("DEBUG %p after %s\n", (void *)self, sequence);
+#endif
+
+    bsal_dna_kmer_destroy(self);
+    bsal_dna_kmer_init(self, sequence, codec);
+
+    bsal_free(sequence);
+    sequence = NULL;
+}
+
+int bsal_dna_kmer_is_lower(struct bsal_dna_kmer *self, struct bsal_dna_kmer *other, int kmer_length,
+                struct bsal_dna_codec *codec)
+{
+    int result;
+
+    result = bsal_dna_kmer_compare(self, other, kmer_length, codec);
+
+    if (result < 0) {
+        return 1;
+    }
+    return 0;
+
+}
+
+int bsal_dna_kmer_compare(struct bsal_dna_kmer *self, struct bsal_dna_kmer *other, int kmer_length,
+                struct bsal_dna_codec *codec)
+{
+    int encoded_length;
+    encoded_length = bsal_dna_codec_encoded_length(kmer_length);
+
+    return memcmp(self->encoded_data, other->encoded_data, encoded_length);
+
+#if 0
+    char *sequence1;
+    char *sequence2;
+    int result;
+
+    sequence1 = bsal_malloc(kmer_length + 1);
+    sequence2 = bsal_malloc(kmer_length + 1);
+
+    bsal_dna_kmer_get_sequence(self, sequence1, kmer_length, codec);
+    bsal_dna_kmer_get_sequence(other, sequence2, kmer_length, codec);
+
+    result = strcmp(sequence1, sequence2);
+
+    bsal_free(sequence1);
+    bsal_free(sequence2);
+
+    return result;
+#endif
 }

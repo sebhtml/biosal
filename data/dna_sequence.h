@@ -35,7 +35,4 @@ void bsal_dna_sequence_init_same_data(struct bsal_dna_sequence *self,
 void bsal_dna_sequence_init_copy(struct bsal_dna_sequence *self,
                 struct bsal_dna_sequence *other, struct bsal_dna_codec *codec);
 
-void bsal_dna_sequence_normalize(char *sequence);
-char bsal_dna_sequence_normalize_nucleotide(char nucleotide);
-
 #endif

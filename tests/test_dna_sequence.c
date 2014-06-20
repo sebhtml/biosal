@@ -23,10 +23,10 @@ int main(int argc, char **argv)
 
     buffer = bsal_malloc(101);
     strcpy((char *)buffer, "TCCCGAGCGCAGGTAGGCCTCGGGATCGATGTCCGGGGTGTTGAGGATGTTGGACGTGTATTCGTGGTTGTACTGGGTCCAGTCCGCCACCGGGCGCCGC");
+    bsal_dna_codec_init(&codec);
 
     bsal_dna_sequence_init(&sequence, buffer, &codec);
 
-    bsal_dna_codec_init(&codec);
     actual = bsal_dna_sequence_length(&sequence);
     expected = 100;
 /*
