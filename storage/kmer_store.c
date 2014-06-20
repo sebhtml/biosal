@@ -272,6 +272,8 @@ void bsal_kmer_store_push_data(struct bsal_actor *self, struct bsal_message *mes
 
         /* increment for the lowest kmer (canonical) */
         (*count)++;
+
+        bsal_dna_kmer_destroy(&kmer);
     }
 
     bsal_map_iterator_destroy(&iterator);
