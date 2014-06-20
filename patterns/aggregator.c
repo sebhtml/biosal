@@ -53,6 +53,8 @@ void bsal_aggregator_init(struct bsal_actor *self)
 
     concrete_actor->customer_block_size = 2048;
     concrete_actor->flushed = 0;
+
+    bsal_dna_codec_init(&concrete_actor->codec);
 }
 
 void bsal_aggregator_destroy(struct bsal_actor *self)
@@ -64,6 +66,7 @@ void bsal_aggregator_destroy(struct bsal_actor *self)
     concrete_actor = (struct bsal_aggregator *)bsal_actor_concrete_actor(self);
     concrete_actor->received = 0;
     concrete_actor->last = 0;
+    bsal_dna_codec_destroy(&concrete_actor->codec);
 
     bsal_vector_iterator_init(&iterator, &concrete_actor->buffers);
 
@@ -145,7 +148,8 @@ void bsal_aggregator_receive(struct bsal_actor *self, struct bsal_message *messa
             bsal_dna_kmer_length(kmer);
             */
 
-            customer_index = bsal_dna_kmer_store_index(kmer, customer_count, concrete_actor->kmer_length);
+            customer_index = bsal_dna_kmer_store_index(kmer, customer_count, concrete_actor->kmer_length,
+                            &concrete_actor->codec);
 
             customer_block_pointer = (struct bsal_dna_kmer_block *)bsal_vector_at(&concrete_actor->buffers,
                             customer_index);

@@ -4,12 +4,15 @@
 
 #include <engine/actor.h>
 
+#include <data/dna_codec.h>
+
 #include <structures/map.h>
 
 #define BSAL_KMER_STORE_SCRIPT 0xe6d32c91
 
 struct bsal_kmer_store {
     struct bsal_map table;
+    struct bsal_dna_codec codec;
     int kmer_length;
     int key_length_in_bytes;
 

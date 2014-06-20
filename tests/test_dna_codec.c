@@ -12,6 +12,7 @@ int main(int argc, char **argv)
 {
     BEGIN_TESTS();
 
+    struct bsal_dna_codec codec;
     void *encoded_sequence;
     int encoded_length;
     int sequence_length;
@@ -21,6 +22,7 @@ int main(int argc, char **argv)
     char dna[] = "CACCCAGGGAGAGGGAGGACGCACCGAAAGAGAAA";
     char *sequence2;
 
+    bsal_dna_codec_init(&codec);
     sequence_length = strlen(dna);
 
     encoded_length = bsal_dna_codec_encoded_length(sequence_length);
@@ -31,13 +33,13 @@ int main(int argc, char **argv)
 
     encoded_sequence = bsal_malloc(encoded_length);
 
-    bsal_dna_codec_encode(sequence_length, dna, encoded_sequence);
+    bsal_dna_codec_encode(&codec, sequence_length, dna, encoded_sequence);
 
     sequence2 = bsal_malloc(sequence_length + 1);
 
     TEST_POINTER_NOT_EQUALS(sequence2, NULL);
 
-    bsal_dna_codec_decode(sequence_length, encoded_sequence, sequence2);
+    bsal_dna_codec_decode(&codec, sequence_length, encoded_sequence, sequence2);
 
     /*
     printf("%s and\n%s\n", dna, sequence2);
@@ -48,6 +50,7 @@ int main(int argc, char **argv)
     bsal_free(encoded_sequence);
     bsal_free(sequence2);
 
+    bsal_dna_codec_destroy(&codec);
     END_TESTS();
 
     return 0;

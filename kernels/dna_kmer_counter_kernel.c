@@ -57,6 +57,8 @@ void bsal_dna_kmer_counter_kernel_init(struct bsal_actor *actor)
     concrete_actor->notification_source = 0;
 
     concrete_actor->kmers = 0;
+
+    bsal_dna_codec_init(&concrete_actor->codec);
 }
 
 void bsal_dna_kmer_counter_kernel_destroy(struct bsal_actor *actor)
@@ -66,6 +68,8 @@ void bsal_dna_kmer_counter_kernel_destroy(struct bsal_actor *actor)
     concrete_actor = (struct bsal_dna_kmer_counter_kernel *)bsal_actor_concrete_actor(actor);
 
     concrete_actor->customer = 0;
+
+    bsal_dna_codec_destroy(&concrete_actor->codec);
 }
 
 void bsal_dna_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_message *message)
@@ -166,7 +170,8 @@ void bsal_dna_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_
             /* TODO improve this */
             sequence = (struct bsal_dna_sequence *)bsal_vector_at(command_entries, i);
 
-            bsal_dna_sequence_get_sequence(sequence, sequence_data);
+            bsal_dna_sequence_get_sequence(sequence, sequence_data,
+                            &concrete_actor->codec);
 
             sequence_length = bsal_dna_sequence_length(sequence);
             limit = sequence_length - concrete_actor->kmer_length + 1;
@@ -175,7 +180,8 @@ void bsal_dna_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_
                 saved = sequence_data[j + concrete_actor->kmer_length];
                 sequence_data[j + concrete_actor->kmer_length] = '\0';
 
-                bsal_dna_kmer_init(&kmer, sequence_data + j);
+                bsal_dna_kmer_init(&kmer, sequence_data + j,
+                                &concrete_actor->codec);
 
 #ifdef BSAL_KMER_COUNTER_KERNEL_DEBUG_LEVEL_2
                 printf("KERNEL kmer %d,%d %s\n", i, j, sequence_data + j);
@@ -331,7 +337,7 @@ void bsal_dna_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_
 
         bsal_message_helper_unpack_int(message, 0, &concrete_actor->kmer_length);
 
-        bsal_dna_kmer_init_mock(&kmer, concrete_actor->kmer_length);
+        bsal_dna_kmer_init_mock(&kmer, concrete_actor->kmer_length, &concrete_actor->codec);
         concrete_actor->bytes_per_kmer = bsal_dna_kmer_pack_size(&kmer, concrete_actor->kmer_length);
         bsal_dna_kmer_destroy(&kmer);
 

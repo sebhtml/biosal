@@ -36,6 +36,8 @@ void bsal_kmer_store_init(struct bsal_actor *self)
     concrete_actor = (struct bsal_kmer_store *)bsal_actor_concrete_actor(self);
     concrete_actor->kmer_length = -1;
     concrete_actor->received = 0;
+
+    bsal_dna_codec_init(&concrete_actor->codec);
 }
 
 void bsal_kmer_store_destroy(struct bsal_actor *self)
@@ -47,6 +49,8 @@ void bsal_kmer_store_destroy(struct bsal_actor *self)
     if (concrete_actor->kmer_length != -1) {
         bsal_map_destroy(&concrete_actor->table);
     }
+
+    bsal_dna_codec_destroy(&concrete_actor->codec);
 
     concrete_actor->kmer_length = -1;
 }
@@ -77,7 +81,8 @@ void bsal_kmer_store_receive(struct bsal_actor *self, struct bsal_message *messa
 
         bsal_message_helper_unpack_int(message, 0, &concrete_actor->kmer_length);
 
-        bsal_dna_kmer_init_mock(&kmer, concrete_actor->kmer_length);
+        bsal_dna_kmer_init_mock(&kmer, concrete_actor->kmer_length,
+                        &concrete_actor->codec);
         concrete_actor->key_length_in_bytes = bsal_dna_kmer_pack_size(&kmer,
                         concrete_actor->kmer_length);
         bsal_dna_kmer_destroy(&kmer);
@@ -119,7 +124,7 @@ void bsal_kmer_store_receive(struct bsal_actor *self, struct bsal_message *messa
             bsal_vector_iterator_next(&iterator, (void **)&kmer_pointer);
 
             bsal_dna_kmer_pack_store_key(kmer_pointer, key,
-                            concrete_actor->kmer_length);
+                            concrete_actor->kmer_length, &concrete_actor->codec);
 
             bucket = (int *)bsal_map_get(&concrete_actor->table, key);
 
@@ -222,7 +227,8 @@ void bsal_kmer_store_print(struct bsal_actor *self)
 
         bsal_dna_kmer_unpack(&kmer, key, concrete_actor->kmer_length);
 
-        bsal_dna_kmer_get_sequence(&kmer, sequence, concrete_actor->kmer_length);
+        bsal_dna_kmer_get_sequence(&kmer, sequence, concrete_actor->kmer_length,
+                        &concrete_actor->codec);
         coverage = *value;
 
         printf("Sequence %s Coverage %d\n", sequence, coverage);

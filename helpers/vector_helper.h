@@ -9,7 +9,9 @@ struct bsal_vector;
 void bsal_vector_helper_print_int(struct bsal_vector *self);
 void bsal_vector_helper_set_int(struct bsal_vector *self, int64_t index, int value);
 void bsal_vector_helper_push_back_int(struct bsal_vector *self, int value);
+void bsal_vector_helper_push_back_char(struct bsal_vector *self, char value);
 int bsal_vector_helper_at_as_int(struct bsal_vector *self, int64_t index);
+char bsal_vector_helper_at_as_char(struct bsal_vector *self, int64_t index);
 char *bsal_vector_helper_at_as_char_pointer(struct bsal_vector *self, int64_t index);
 void *bsal_vector_helper_at_as_void_pointer(struct bsal_vector *self, int64_t index);
 

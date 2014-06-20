@@ -37,6 +37,8 @@ void bsal_sequence_store_init(struct bsal_actor *actor)
 #endif
 
     concrete_actor->received = 0;
+
+    bsal_dna_codec_init(&concrete_actor->codec);
 }
 
 void bsal_sequence_store_destroy(struct bsal_actor *actor)
@@ -56,6 +58,7 @@ void bsal_sequence_store_destroy(struct bsal_actor *actor)
     }
 
     bsal_vector_destroy(&concrete_actor->sequences);
+    bsal_dna_codec_destroy(&concrete_actor->codec);
 }
 
 void bsal_sequence_store_receive(struct bsal_actor *actor, struct bsal_message *message)
@@ -165,7 +168,8 @@ void bsal_sequence_store_store_sequences(struct bsal_actor *actor, struct bsal_m
         }
 #endif
 
-        bsal_dna_sequence_init_copy(bucket_in_store, bucket_in_message);
+        bsal_dna_sequence_init_copy(bucket_in_store, bucket_in_message,
+                        &concrete_actor->codec);
 
         concrete_actor->received++;
 
@@ -225,7 +229,7 @@ void bsal_sequence_store_reserve(struct bsal_actor *actor, struct bsal_message *
         dna_sequence = (struct bsal_dna_sequence *)bsal_vector_at(&concrete_actor->sequences,
                         i);
 
-        bsal_dna_sequence_init(dna_sequence, NULL);
+        bsal_dna_sequence_init(dna_sequence, NULL, &concrete_actor->codec);
     }
 
     bsal_actor_helper_send_reply_empty(actor, BSAL_RESERVE_REPLY);

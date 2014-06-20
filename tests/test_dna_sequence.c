@@ -2,6 +2,7 @@
 #include "test.h"
 
 #include <data/dna_sequence.h>
+#include <data/dna_codec.h>
 #include <system/memory.h>
 
 #include <stdio.h>
@@ -14,6 +15,7 @@ int main(int argc, char **argv)
     void *buffer;
     struct bsal_dna_sequence sequence;
     struct bsal_dna_sequence sequence2;
+    struct bsal_dna_codec codec;
     int actual;
     int expected;
     int required;
@@ -22,8 +24,9 @@ int main(int argc, char **argv)
     buffer = bsal_malloc(101);
     strcpy((char *)buffer, "TCCCGAGCGCAGGTAGGCCTCGGGATCGATGTCCGGGGTGTTGAGGATGTTGGACGTGTATTCGTGGTTGTACTGGGTCCAGTCCGCCACCGGGCGCCGC");
 
-    bsal_dna_sequence_init(&sequence, buffer);
+    bsal_dna_sequence_init(&sequence, buffer, &codec);
 
+    bsal_dna_codec_init(&codec);
     actual = bsal_dna_sequence_length(&sequence);
     expected = 100;
 /*
@@ -54,6 +57,7 @@ int main(int argc, char **argv)
 
     bsal_dna_sequence_destroy(&sequence);
 
+    bsal_dna_codec_destroy(&codec);
     END_TESTS();
 
     return 0;

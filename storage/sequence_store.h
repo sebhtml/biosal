@@ -3,13 +3,14 @@
 #define BSAL_SEQUENCE_STORE_H
 
 #include <engine/actor.h>
-
+#include <data/dna_codec.h>
 #include <structures/vector.h>
 
 #define BSAL_SEQUENCE_STORE_SCRIPT 0x47e2e424
 
 struct bsal_sequence_store {
     struct bsal_vector sequences;
+    struct bsal_dna_codec codec;
     int64_t received;
 };
 

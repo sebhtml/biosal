@@ -13,7 +13,8 @@
 /*
 #define BSAL_DNA_SEQUENCE_DEBUG
 */
-void bsal_dna_sequence_init(struct bsal_dna_sequence *sequence, char *data)
+void bsal_dna_sequence_init(struct bsal_dna_sequence *sequence, char *data,
+                struct bsal_dna_codec *codec)
 {
     int encoded_length;
 
@@ -37,7 +38,7 @@ void bsal_dna_sequence_init(struct bsal_dna_sequence *sequence, char *data)
         encoded_length = bsal_dna_codec_encoded_length(sequence->length_in_nucleotides);
         sequence->encoded_data = bsal_malloc(encoded_length);
 
-        bsal_dna_codec_encode(sequence->length_in_nucleotides, data, sequence->encoded_data);
+        bsal_dna_codec_encode(codec, sequence->length_in_nucleotides, data, sequence->encoded_data);
     }
 
     sequence->pair = -1;
@@ -142,13 +143,13 @@ int bsal_dna_sequence_pack_unpack(struct bsal_dna_sequence *sequence,
     return offset;
 }
 
-void bsal_dna_sequence_print(struct bsal_dna_sequence *self)
+void bsal_dna_sequence_print(struct bsal_dna_sequence *self, struct bsal_dna_codec *codec)
 {
     char *dna_sequence;
 
     dna_sequence = bsal_malloc(self->length_in_nucleotides + 1);
 
-    bsal_dna_codec_decode(self->length_in_nucleotides, self->encoded_data, dna_sequence);
+    bsal_dna_codec_decode(codec, self->length_in_nucleotides, self->encoded_data, dna_sequence);
 
     printf("DNA: length %d %s\n", self->length_in_nucleotides, dna_sequence);
 
@@ -161,19 +162,20 @@ int bsal_dna_sequence_length(struct bsal_dna_sequence *self)
     return self->length_in_nucleotides;
 }
 
-void bsal_dna_sequence_get_sequence(struct bsal_dna_sequence *self, char *sequence)
+void bsal_dna_sequence_get_sequence(struct bsal_dna_sequence *self, char *sequence,
+                struct bsal_dna_codec *codec)
 {
     if (sequence == NULL) {
         return;
     }
 
-    bsal_dna_codec_decode(self->length_in_nucleotides, self->encoded_data, sequence);
+    bsal_dna_codec_decode(codec, self->length_in_nucleotides, self->encoded_data, sequence);
 }
 
 /* copy other to self
  */
 void bsal_dna_sequence_init_copy(struct bsal_dna_sequence *self,
-                struct bsal_dna_sequence *other)
+                struct bsal_dna_sequence *other, struct bsal_dna_codec *codec)
 {
     char *dna;
 
@@ -181,10 +183,10 @@ void bsal_dna_sequence_init_copy(struct bsal_dna_sequence *self,
      */
     dna = bsal_malloc(other->length_in_nucleotides + 1);
 
-    bsal_dna_codec_decode(other->length_in_nucleotides, other->encoded_data,
+    bsal_dna_codec_decode(codec, other->length_in_nucleotides, other->encoded_data,
                     dna);
 
-    bsal_dna_sequence_init(self, dna);
+    bsal_dna_sequence_init(self, dna, codec);
 
     bsal_free(dna);
     dna = NULL;

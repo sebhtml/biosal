@@ -538,9 +538,9 @@ void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message)
 
     } else if (tag == BSAL_INPUT_DISTRIBUTE_REPLY) {
 
-#ifdef ARGONNITE_DEBUG
         printf("argonnite actor/%d receives BSAL_INPUT_DISTRIBUTE_REPLY\n",
                         name);
+#ifdef ARGONNITE_DEBUG
 #endif
 
         bsal_actor_helper_get_acquaintances(actor, &concrete_actor->kernels, &kernels);

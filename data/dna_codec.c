@@ -1,6 +1,11 @@
 
 #include "dna_codec.h"
 
+#include <structures/vector.h>
+
+#include <helpers/vector_helper.h>
+#include <system/memory.h>
+
 #include <string.h>
 #include <stdio.h>
 
@@ -23,9 +28,85 @@
  * enable 2-bit encoding
  */
 #define BSAL_DNA_CODEC_USE_TWO_BIT_ENCODING_DEFAULT
+#define BSAL_DNA_CODEC_USE_TWO_BIT_BLOCK_ENCODER
 
 /*
 */
+
+void bsal_dna_codec_init(struct bsal_dna_codec *self)
+{
+    /* 4 * 2 = 8 bits = 1 byte
+     */
+    self->block_length = 4;
+    bsal_map_init(&self->encoding_lookup_table, self->block_length, 1);
+    bsal_map_init(&self->decoding_lookup_table, 1, self->block_length);
+
+    bsal_dna_codec_generate_blocks(self);
+}
+
+void bsal_dna_codec_destroy(struct bsal_dna_codec *self)
+{
+    bsal_map_destroy(&self->encoding_lookup_table);
+    bsal_map_destroy(&self->decoding_lookup_table);
+    self->block_length = 0;
+}
+
+void bsal_dna_codec_generate_blocks(struct bsal_dna_codec *self)
+{
+    char *block;
+
+    block = bsal_malloc(self->block_length + 1);
+
+    bsal_dna_codec_generate_block(self, -1, 'X', block);
+
+    bsal_free(block);
+}
+
+void bsal_dna_codec_generate_block(struct bsal_dna_codec *self, int position, char symbol,
+                char *block)
+{
+    char buffer[2];
+    void *bucket;
+
+#ifdef BSAL_DNA_CODEC_DEBUG
+    printf("DEBUG position %d symbol %c\n", position, symbol);
+#endif
+
+    if (position >= 0) {
+        block[position] = symbol;
+    }
+
+    position++;
+
+    if (position < self->block_length && symbol != '\0') {
+
+        bsal_dna_codec_generate_block(self, position, 'A', block);
+        bsal_dna_codec_generate_block(self, position, 'T', block);
+        bsal_dna_codec_generate_block(self, position, 'G', block);
+        bsal_dna_codec_generate_block(self, position, 'C', block);
+        /*bsal_dna_codec_generate_block(self, position, '\0', block);*/
+    } else {
+
+        while (position < self->block_length + 1) {
+
+            block[position] = '\0';
+            position++;
+        }
+
+        bsal_dna_codec_encode_default(self->block_length, block, buffer);
+
+#ifdef BSAL_DNA_CODEC_DEBUG
+        printf("BLOCK %s (%d) value %d\n", block, self->block_length, (int)buffer[0]);
+#endif
+
+        bucket = bsal_map_add(&self->encoding_lookup_table, block);
+        memcpy(bucket, buffer, 1);
+
+        bucket = bsal_map_add(&self->decoding_lookup_table, buffer);
+        memcpy(bucket, block, self->block_length);
+    }
+
+}
 
 int bsal_dna_codec_encoded_length(int length_in_nucleotides)
 {
@@ -52,13 +133,72 @@ int bsal_dna_codec_encoded_length_default(int length_in_nucleotides)
     return bytes;
 }
 
-void bsal_dna_codec_encode(int length_in_nucleotides, char *dna_sequence, void *encoded_sequence)
+void bsal_dna_codec_encode(struct bsal_dna_codec *self,
+                int length_in_nucleotides, char *dna_sequence, void *encoded_sequence)
 {
-#ifdef BSAL_DNA_CODEC_USE_TWO_BIT_ENCODING_DEFAULT
+#ifdef BSAL_DNA_CODEC_USE_TWO_BIT_BLOCK_ENCODER
+    bsal_dna_codec_encode_with_blocks(self, length_in_nucleotides, dna_sequence, encoded_sequence);
+#elif defined (BSAL_DNA_CODEC_USE_TWO_BIT_ENCODING_DEFAULT)
     bsal_dna_codec_encode_default(length_in_nucleotides, dna_sequence, encoded_sequence);
 #else
     strcpy(encoded_sequence, dna_sequence);
 #endif
+}
+
+void bsal_dna_codec_encode_with_blocks(struct bsal_dna_codec *self,
+                int length_in_nucleotides, char *dna_sequence, void *encoded_sequence)
+{
+
+#if 0
+    bsal_dna_codec_encode_default(length_in_nucleotides, dna_sequence, encoded_sequence);
+#endif
+    int position;
+    uint8_t byte;
+    char data[5];
+    int remaining;
+    char *block;
+    int byte_position;
+
+    byte_position = 0;
+    position = 0;
+
+#ifdef BSAL_DNA_CODEC_DEBUG
+    printf("DEBUG encoding %s\n", dna_sequence);
+#endif
+
+    while (position < length_in_nucleotides) {
+
+
+        remaining = length_in_nucleotides - position;
+        block = dna_sequence + position;
+
+#ifdef BSAL_DNA_CODEC_DEBUG
+        printf("DEBUG position %d remaining %d block_length %d\n",
+                        position, remaining, self->block_length);
+#endif
+
+        /* a buffer is required when less than block size
+         * nucleotides remain
+         */
+        if (remaining < self->block_length) {
+
+            /* A is 00, so it is the same as nothing
+             */
+            memset(data, 'A', self->block_length);
+            memcpy(data, block, remaining);
+            block = data;
+        }
+
+#ifdef BSAL_DNA_CODEC_DEBUG
+        printf("DEBUG block %c%c%c%c\n", block[0], block[1], block[2], block[3]);
+#endif
+
+        byte = *(char *)bsal_map_get(&self->encoding_lookup_table, block);
+        ((char *)encoded_sequence)[byte_position] = byte;
+
+        byte_position++;
+        position += self->block_length;
+    }
 }
 
 void bsal_dna_codec_encode_default(int length_in_nucleotides, char *dna_sequence, void *encoded_sequence)
@@ -67,7 +207,6 @@ void bsal_dna_codec_encode_default(int length_in_nucleotides, char *dna_sequence
     int encoded_length;
 
     encoded_length = bsal_dna_codec_encoded_length(length_in_nucleotides);
-
     memset(encoded_sequence, 0, encoded_length);
 
     i = 0;
@@ -80,7 +219,8 @@ void bsal_dna_codec_encode_default(int length_in_nucleotides, char *dna_sequence
     }
 }
 
-void bsal_dna_codec_decode(int length_in_nucleotides, void *encoded_sequence, char *dna_sequence)
+void bsal_dna_codec_decode(struct bsal_dna_codec *codec,
+                int length_in_nucleotides, void *encoded_sequence, char *dna_sequence)
 {
 #ifdef BSAL_DNA_CODEC_USE_TWO_BIT_ENCODING_DEFAULT
     bsal_dna_codec_decode_default(length_in_nucleotides, encoded_sequence, dna_sequence);
@@ -206,3 +346,4 @@ char bsal_dna_codec_get_nucleotide_from_code(uint64_t code)
 
     return BSAL_NUCLEOTIDE_SYMBOL_A;
 }
+

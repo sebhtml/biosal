@@ -4,12 +4,14 @@
 
 #include <engine/actor.h>
 
+#include <data/dna_codec.h>
 #include <structures/vector.h>
 #include <structures/dynamic_hash_table.h>
 
 #define BSAL_KMER_COUNTER_KERNEL_SCRIPT 0xed338fa2
 
 struct bsal_dna_kmer_counter_kernel {
+    struct bsal_dna_codec codec;
     uint64_t expected;
     uint64_t actual;
     uint64_t last;

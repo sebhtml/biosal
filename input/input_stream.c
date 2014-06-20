@@ -36,6 +36,8 @@ void bsal_input_stream_init(struct bsal_actor *actor)
     input->error = BSAL_INPUT_ERROR_NO_ERROR;
 
     input->file_name = NULL;
+
+    bsal_dna_codec_init(&input->codec);
 }
 
 void bsal_input_stream_destroy(struct bsal_actor *actor)
@@ -63,6 +65,7 @@ void bsal_input_stream_destroy(struct bsal_actor *actor)
     }
 
     input->file_name = NULL;
+    bsal_dna_codec_destroy(&input->codec);
 }
 
 void bsal_input_stream_receive(struct bsal_actor *actor, struct bsal_message *message)
@@ -443,7 +446,8 @@ void bsal_input_stream_push_sequences(struct bsal_actor *actor,
         has_sequence = bsal_input_proxy_get_sequence(&concrete_actor->proxy,
                             buffer_for_sequence);
 
-        bsal_dna_sequence_init(&dna_sequence, buffer_for_sequence);
+        bsal_dna_sequence_init(&dna_sequence, buffer_for_sequence,
+                        &concrete_actor->codec);
 
         bsal_vector_push_back(command_entries,
                         &dna_sequence);

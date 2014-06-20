@@ -4,6 +4,8 @@
 
 #include <engine/actor.h>
 
+#include <data/dna_codec.h>
+
 #include <structures/vector.h>
 
 #include <stdint.h>
@@ -20,6 +22,8 @@ struct bsal_aggregator {
 
     int customer_block_size;
     int flushed;
+
+    struct bsal_dna_codec codec;
 };
 
 /* message tags

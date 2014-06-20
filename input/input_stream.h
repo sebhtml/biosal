@@ -4,12 +4,15 @@
 
 #include "input_proxy.h"
 
+#include <data/dna_codec.h>
+
 #include <engine/actor.h>
 
 #define BSAL_INPUT_STREAM_SCRIPT 0xeb2fe16a
 
 struct bsal_input_stream {
     struct bsal_input_proxy proxy;
+    struct bsal_dna_codec codec;
     int proxy_ready;
     char *buffer_for_sequence;
     int maximum_sequence_length;

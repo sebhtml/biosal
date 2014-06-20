@@ -8,6 +8,18 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+char bsal_vector_helper_at_as_char(struct bsal_vector *self, int64_t index)
+{
+    char *bucket;
+
+    bucket = (char *)bsal_vector_at(self, index);
+
+    if (bucket == NULL) {
+        return -1;
+    }
+
+    return *bucket;
+}
 
 /*
 #define BSAL_VECTOR_HELPER_DEBUG
@@ -66,6 +78,11 @@ void bsal_vector_helper_print_int(struct bsal_vector *self)
 void bsal_vector_helper_set_int(struct bsal_vector *self, int64_t index, int value)
 {
     bsal_vector_set(self, index, &value);
+}
+
+void bsal_vector_helper_push_back_char(struct bsal_vector *self, char value)
+{
+    bsal_vector_push_back(self, &value);
 }
 
 void bsal_vector_helper_push_back_int(struct bsal_vector *self, int value)
