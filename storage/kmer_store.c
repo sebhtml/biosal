@@ -246,7 +246,7 @@ void bsal_kmer_store_push_data(struct bsal_actor *self, struct bsal_message *mes
 
     bsal_map_init(&coverage_distribution, sizeof(int), sizeof(uint64_t));
 
-    printf("store actor/%d: local table has %" PRIu64" keys (%" PRIu64 ")\n",
+    printf("store actor/%d: local table has %" PRIu64" keys (%" PRIu64 " kmers)\n",
                     name, bsal_map_size(&concrete_actor->table),
                     2 * bsal_map_size(&concrete_actor->table));
 #ifdef BSAL_KMER_STORE_DEBUG

@@ -571,6 +571,10 @@ void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message)
         if (concrete_actor->ready_stores == bsal_vector_size(&concrete_actor->stores)) {
 
             if (concrete_actor->actual_kmers == concrete_actor->total_kmers) {
+
+                printf("argonnite actor/%d: stores are ready, %" PRIu64 "/%" PRIu64 " kmers\n",
+                                name, concrete_actor->actual_kmers, concrete_actor->total_kmers);
+
                 distribution = bsal_actor_get_acquaintance(actor, concrete_actor->distribution);
                 bsal_actor_helper_get_acquaintances(actor, &concrete_actor->stores, &stores);
 
