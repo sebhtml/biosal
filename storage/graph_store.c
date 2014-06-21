@@ -12,7 +12,8 @@ struct bsal_script bsal_graph_store_script = {
     .init = bsal_graph_store_init,
     .destroy = bsal_graph_store_destroy,
     .receive = bsal_graph_store_receive,
-    .size = sizeof(struct bsal_graph_store)
+    .size = sizeof(struct bsal_graph_store),
+    .description = "graph_store"
 };
 
 void bsal_graph_store_init(struct bsal_actor *actor)

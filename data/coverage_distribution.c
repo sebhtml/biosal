@@ -21,7 +21,8 @@ struct bsal_script bsal_coverage_distribution_script = {
     .init = bsal_coverage_distribution_init,
     .destroy = bsal_coverage_distribution_destroy,
     .receive = bsal_coverage_distribution_receive,
-    .size = sizeof(struct bsal_coverage_distribution)
+    .size = sizeof(struct bsal_coverage_distribution),
+    .description = "coverage_distribution"
 };
 
 void bsal_coverage_distribution_init(struct bsal_actor *self)

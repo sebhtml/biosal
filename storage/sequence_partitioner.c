@@ -24,7 +24,8 @@ struct bsal_script bsal_sequence_partitioner_script = {
     .init = bsal_sequence_partitioner_init,
     .destroy = bsal_sequence_partitioner_destroy,
     .receive = bsal_sequence_partitioner_receive,
-    .size = sizeof(struct bsal_sequence_partitioner)
+    .size = sizeof(struct bsal_sequence_partitioner),
+    .description = "sequence_partitioner"
 };
 
 void bsal_sequence_partitioner_init(struct bsal_actor *actor)
@@ -523,8 +524,6 @@ void bsal_sequence_partitioner_generate_command(struct bsal_actor *actor, int st
     bsal_partition_command_print(&command);
 #endif
 
-    bsal_partition_command_destroy(&command);
-
     /* update positions
      */
 
@@ -538,4 +537,11 @@ void bsal_sequence_partitioner_generate_command(struct bsal_actor *actor, int st
     /* emit a signal
      */
     bsal_actor_helper_send_reply_empty(actor, BSAL_SEQUENCE_PARTITIONER_COMMAND_IS_READY);
+
+    printf("partitioner/%d generated partition command # %d\n",
+                    bsal_actor_name(actor),
+                    bsal_partition_command_name(&command));
+
+    bsal_partition_command_destroy(&command);
+
 }

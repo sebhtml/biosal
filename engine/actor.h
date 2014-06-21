@@ -6,6 +6,7 @@
 #include "script.h"
 
 #include <structures/vector.h>
+#include <structures/map.h>
 #include <structures/dynamic_hash_table.h>
 #include <structures/queue.h>
 
@@ -154,6 +155,8 @@ struct bsal_actor {
     struct bsal_worker *worker;
     struct bsal_node *node;
     struct bsal_worker *affinity_worker;
+
+    struct bsal_map received_messages;
 
     struct bsal_vector acquaintance_vector;
     struct bsal_vector children;
@@ -324,5 +327,7 @@ int bsal_actor_spawn_real(struct bsal_actor *actor, int script);
 void bsal_actor_enqueue_message(struct bsal_actor *actor, struct bsal_message *message);
 void bsal_actor_dequeue_message(struct bsal_actor *actor, struct bsal_message *message);
 int bsal_actor_enqueued_message_count(struct bsal_actor *actor);
+
+struct bsal_map *bsal_actor_get_received_messages(struct bsal_actor *self);
 
 #endif

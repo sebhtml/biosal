@@ -20,7 +20,6 @@ function run_checks() {
     run_check "switch  ("
     run_check "while  ("
 
-    run_check " -> "
     run_check "  ="
     run_check "=  "
     run_check ")  {"
@@ -28,6 +27,7 @@ function run_checks() {
 
     grep -n ") {" * -R |grep void|grep bsal_|grep -v check.sh
     grep -n " "$ * -R
+    grep -n " -> " * -R | grep -v printf
 }
 
 make clean

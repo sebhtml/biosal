@@ -22,8 +22,6 @@
  */
 #include <signal.h>
 
-
-
 #define BSAL_NODE_ADD_INITIAL_ACTOR 0x00002438
 #define BSAL_NODE_ADD_INITIAL_ACTORS 0x00004c19
 #define BSAL_NODE_ADD_INITIAL_ACTORS_REPLY 0x00003ad3
@@ -48,6 +46,7 @@ struct bsal_node {
     struct bsal_vector initial_actors;
     int received_initial_actors;
     int ready;
+    char print_structure;
 
     int started;
 
@@ -160,5 +159,7 @@ void bsal_node_print_counters(struct bsal_node *node);
 
 void bsal_node_handle_signal(int signal);
 void bsal_node_register_signal_handlers(struct bsal_node *self);
+
+void bsal_node_print_structure(struct bsal_node *node, struct bsal_actor *actor);
 
 #endif

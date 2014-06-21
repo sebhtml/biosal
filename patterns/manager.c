@@ -25,7 +25,8 @@ struct bsal_script bsal_manager_script = {
     .init = bsal_manager_init,
     .destroy = bsal_manager_destroy,
     .receive = bsal_manager_receive,
-    .size = sizeof(struct bsal_manager)
+    .size = sizeof(struct bsal_manager),
+    .description = "manager"
 };
 
 void bsal_manager_init(struct bsal_actor *actor)

@@ -37,7 +37,8 @@ struct bsal_script bsal_aggregator_script = {
     .init = bsal_aggregator_init,
     .destroy = bsal_aggregator_destroy,
     .receive = bsal_aggregator_receive,
-    .size = sizeof(struct bsal_aggregator)
+    .size = sizeof(struct bsal_aggregator),
+    .description = "aggregator"
 };
 
 void bsal_aggregator_init(struct bsal_actor *self)

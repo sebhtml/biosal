@@ -36,7 +36,8 @@ struct bsal_script bsal_dna_kmer_counter_kernel_script = {
     .init = bsal_dna_kmer_counter_kernel_init,
     .destroy = bsal_dna_kmer_counter_kernel_destroy,
     .receive = bsal_dna_kmer_counter_kernel_receive,
-    .size = sizeof(struct bsal_dna_kmer_counter_kernel)
+    .size = sizeof(struct bsal_dna_kmer_counter_kernel),
+    .description = "dna_kmer_counter_kernel"
 };
 
 void bsal_dna_kmer_counter_kernel_init(struct bsal_actor *actor)

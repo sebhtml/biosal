@@ -42,3 +42,8 @@ int bsal_script_size(struct bsal_script *script)
 {
     return script->size;
 }
+
+char *bsal_script_description(struct bsal_script *self)
+{
+    return self->description;
+}

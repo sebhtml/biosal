@@ -2,6 +2,7 @@
 #include "node.h"
 
 #include <structures/vector.h>
+#include <structures/map_iterator.h>
 #include <structures/vector_iterator.h>
 #include <helpers/vector_helper.h>
 
@@ -57,6 +58,7 @@ void bsal_node_init(struct bsal_node *node, int *argc, char ***argv)
     int actor_capacity;
 
     node->print_load = 0;
+    node->print_structure = 0;
     node->last_load_report_time = time(NULL);
 
     bsal_node_global_self = node;
@@ -104,6 +106,8 @@ void bsal_node_init(struct bsal_node *node, int *argc, char ***argv)
             node->print_counters = 1;
         } else if (strcmp(node->argv[i], "-print-load") == 0) {
             node->print_load = 1;
+        } else if (strcmp(node->argv[i], "-print-structure") == 0) {
+            node->print_structure = 1;
         }
     }
 
@@ -1279,6 +1283,10 @@ void bsal_node_notify_death(struct bsal_node *node, struct bsal_actor *actor)
     name = bsal_actor_name(actor);
     */
 
+    if (node->print_structure) {
+        bsal_node_print_structure(node, actor);
+    }
+
     name = bsal_actor_name(actor);
 
 #ifdef BSAL_NODE_DEBUG_SPAWN_KILL
@@ -1506,4 +1514,49 @@ void bsal_node_register_signal_handlers(struct bsal_node *self)
         /* generate SIGSEGV
     *((int *)NULL) = 0;
      */
+}
+
+void bsal_node_print_structure(struct bsal_node *node, struct bsal_actor *actor)
+{
+    struct bsal_map *structure;
+    struct bsal_map_iterator iterator;
+    int *source;
+    int *count;
+    int name;
+    int script;
+    struct bsal_script *actual_script;
+    char color[32];
+    int node_name;
+
+    node_name = bsal_node_name(node);
+    name = bsal_actor_name(actor);
+    script = bsal_actor_script(actor);
+    actual_script = bsal_node_find_script(node, script);
+
+    if (node_name == 0) {
+        strcpy(color, "red");
+    } else if (node_name == 1) {
+        strcpy(color, "green");
+    } else if (node_name == 2) {
+        strcpy(color, "blue");
+    } else if (node_name == 3) {
+        strcpy(color, "pink");
+    }
+
+    structure = bsal_actor_get_received_messages(actor);
+
+    printf("    a%d [label=\"%s/%d\", color=\"%s\"]; /* STRUCTURE vertex */\n", name,
+                    bsal_script_description(actual_script), name, color);
+
+    bsal_map_iterator_init(&iterator, structure);
+
+    while (bsal_map_iterator_has_next(&iterator)) {
+        bsal_map_iterator_next(&iterator, (void **)&source, (void **)&count);
+
+        printf("    a%d -> a%d [label=\"%d\"]; /* STRUCTURE edge */\n", *source, name, *count);
+    }
+
+    printf(" /* STRUCTURE */\n");
+
+    bsal_map_iterator_destroy(&iterator);
 }

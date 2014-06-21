@@ -21,7 +21,8 @@ struct bsal_script bsal_dna_kmer_counter_kernel_director_script = {
     .init = bsal_dna_kmer_counter_kernel_director_init,
     .destroy = bsal_dna_kmer_counter_kernel_director_destroy,
     .receive = bsal_dna_kmer_counter_kernel_director_receive,
-    .size = sizeof(struct bsal_dna_kmer_counter_kernel_director)
+    .size = sizeof(struct bsal_dna_kmer_counter_kernel_director),
+    .description = "dna_kmer_counter_kernel_director"
 };
 
 void bsal_dna_kmer_counter_kernel_director_init(struct bsal_actor *actor)

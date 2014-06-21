@@ -93,6 +93,7 @@ void bsal_actor_init(struct bsal_actor *actor, void *state,
     bsal_actor_helper_send_to_self_empty(actor, BSAL_ACTOR_PIN_TO_NODE);
 
     bsal_queue_init(&actor->enqueued_messages, sizeof(struct bsal_message));
+    bsal_map_init(&actor->received_messages, sizeof(int), sizeof(int));
 
     /* call the concrete initializer
      * this must be the last call.
@@ -104,6 +105,8 @@ void bsal_actor_init(struct bsal_actor *actor, void *state,
 void bsal_actor_destroy(struct bsal_actor *actor)
 {
     bsal_actor_init_fn_t destroy;
+    struct bsal_message message;
+    void *buffer;
 
     /* The concrete actor must first be destroyed.
      */
@@ -117,6 +120,15 @@ void bsal_actor_destroy(struct bsal_actor *actor)
     bsal_queue_destroy(&actor->queued_messages_for_migration);
     bsal_queue_destroy(&actor->forwarding_queue);
     bsal_dynamic_hash_table_destroy(&actor->acquaintance_map);
+
+    while (bsal_queue_dequeue(&actor->enqueued_messages, &message)) {
+        buffer = bsal_message_buffer(&message);
+
+        if (buffer != NULL) {
+            bsal_free(buffer);
+        }
+    }
+
     bsal_queue_destroy(&actor->enqueued_messages);
 
     actor->name = -1;
@@ -781,6 +793,7 @@ void bsal_actor_receive(struct bsal_actor *actor, struct bsal_message *message)
     bsal_actor_receive_fn_t receive;
     int name;
     int source;
+    int *bucket;
 
 #ifdef BSAL_ACTOR_DEBUG_SYNC
     printf("\nDEBUG bsal_actor_receive...... tag %d\n",
@@ -796,7 +809,16 @@ void bsal_actor_receive(struct bsal_actor *actor, struct bsal_message *message)
                     bsal_actor_name(actor));
 #endif
 
-    actor->current_source = bsal_message_source(message);
+    source = bsal_message_source(message);
+
+    actor->current_source = source;
+    bucket = (int *)bsal_map_get(&actor->received_messages, &source);
+
+    if (bucket == NULL) {
+        bucket = (int *)bsal_map_add(&actor->received_messages, &source);
+    }
+
+    (*bucket)++;
 
     /* check if this is a message that the system can
      * figure out what to do with it
@@ -821,7 +843,6 @@ void bsal_actor_receive(struct bsal_actor *actor, struct bsal_message *message)
 #endif
 
     name = bsal_actor_name(actor);
-    source = bsal_message_source(message);
 
     /* update counters
      */
@@ -1716,3 +1737,7 @@ int bsal_actor_enqueued_message_count(struct bsal_actor *actor)
     return bsal_queue_size(&actor->enqueued_messages);
 }
 
+struct bsal_map *bsal_actor_get_received_messages(struct bsal_actor *self)
+{
+    return &self->received_messages;
+}

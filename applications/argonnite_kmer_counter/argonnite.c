@@ -32,7 +32,8 @@ struct bsal_script argonnite_script = {
     .init = argonnite_init,
     .destroy = argonnite_destroy,
     .receive = argonnite_receive,
-    .size = sizeof(struct argonnite)
+    .size = sizeof(struct argonnite),
+    .description = "argonnite"
 };
 
 void argonnite_init(struct bsal_actor *actor)

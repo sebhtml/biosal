@@ -44,7 +44,8 @@ struct bsal_script bsal_input_controller_script = {
     .init = bsal_input_controller_init,
     .destroy = bsal_input_controller_destroy,
     .receive = bsal_input_controller_receive,
-    .size = sizeof(struct bsal_input_controller)
+    .size = sizeof(struct bsal_input_controller),
+    .description = "input_controller"
 };
 
 void bsal_input_controller_init(struct bsal_actor *actor)
@@ -946,6 +947,10 @@ void bsal_input_controller_receive_command(struct bsal_actor *actor, struct bsal
     bsal_free(new_buffer);
 
     command_name = bsal_partition_command_name(&command);
+
+    /*
+    printf("controller/%d processed input command %d\n", bsal_actor_name(actor), command_name);
+    */
 
     *bucket_for_command_name = command_name;
 
