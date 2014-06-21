@@ -12,6 +12,8 @@
 #include <stdio.h>
 #include <string.h>
 
+#include <inttypes.h>
+
 /*
 #define BSAL_INPUT_STREAM_DEBUG
 */
@@ -224,6 +226,10 @@ void bsal_input_stream_receive(struct bsal_actor *actor, struct bsal_message *me
         count = bsal_input_proxy_size(&concrete_actor->proxy);
 
         bsal_actor_helper_send_int64_t(actor, concrete_actor->controller, BSAL_INPUT_COUNT_REPLY, count);
+
+        printf("input_stream/%d on node/%d counted entries in %s, %" PRIu64 "\n",
+                        bsal_actor_name(actor), bsal_actor_node_name(actor),
+                        concrete_actor->file_name, count);
 
     } else if (tag == BSAL_ACTOR_ASK_TO_STOP) {
 

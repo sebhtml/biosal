@@ -64,7 +64,8 @@ void argonnite_init(struct bsal_actor *actor)
 
     /* the number of input sequences per block
      */
-    concrete_actor->block_size = 512;
+    /*concrete_actor->block_size = 512;*/
+    concrete_actor->block_size = 1024;
 
     concrete_actor->configured_actors = 0;
     concrete_actor->wired_kernels = 0;

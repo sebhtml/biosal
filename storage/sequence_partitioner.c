@@ -432,6 +432,8 @@ void bsal_sequence_partitioner_generate_command(struct bsal_actor *actor, int st
     uint64_t global_last;
     uint64_t next_block_first;
 
+    int command_name;
+
     concrete_actor = (struct bsal_sequence_partitioner *)bsal_actor_concrete_actor(actor);
 
     /*
@@ -538,9 +540,15 @@ void bsal_sequence_partitioner_generate_command(struct bsal_actor *actor, int st
      */
     bsal_actor_helper_send_reply_empty(actor, BSAL_SEQUENCE_PARTITIONER_COMMAND_IS_READY);
 
-    printf("partitioner/%d generated partition command # %d\n",
+    command_name = bsal_partition_command_name(&command);
+
+    if (command_name % 100 == 0) {
+        printf("partitioner/%d generated partition command # %d (total %" PRIu64 ", block_size %d, blocks %d)\n",
                     bsal_actor_name(actor),
-                    bsal_partition_command_name(&command));
+                    command_name,
+                    concrete_actor->total, concrete_actor->block_size,
+                    (int)(concrete_actor->total / concrete_actor->block_size));
+    }
 
     bsal_partition_command_destroy(&command);
 

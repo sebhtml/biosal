@@ -240,6 +240,8 @@ void bsal_worker_send(struct bsal_worker *worker, struct bsal_message *message)
     int destination;
     struct bsal_work work;
     struct bsal_actor *actor;
+    int works;
+    int push_locally;
 
     memcpy(&copy, message, sizeof(struct bsal_message));
     count = bsal_message_count(&copy);
@@ -286,8 +288,9 @@ void bsal_worker_send(struct bsal_worker *worker, struct bsal_message *message)
      */
 
     destination = bsal_message_destination(message);
+    push_locally = 0;
 
-    if (bsal_node_has_actor(worker->node, destination)) {
+    if (push_locally && bsal_node_has_actor(worker->node, destination)) {
 
         /*
          * TODO maybe it would be better to check the
@@ -303,6 +306,13 @@ void bsal_worker_send(struct bsal_worker *worker, struct bsal_message *message)
         */
 
         bsal_work_init(&work, actor, new_message);
+
+        works = bsal_queue_size(&worker->works);
+
+        if (works > 0) {
+            printf("NOTICE queuing work in queue with %d works\n",
+                    works);
+        }
 
         bsal_worker_push_work(worker, &work);
 
