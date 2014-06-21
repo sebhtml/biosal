@@ -4,6 +4,8 @@
 
 #include <stdio.h>
 
+#include <stdint.h>
+
 struct bsal_buffered_reader {
     char *buffer;
     int buffer_capacity;
@@ -14,7 +16,7 @@ struct bsal_buffered_reader {
 };
 
 void bsal_buffered_reader_init(struct bsal_buffered_reader *reader,
-                const char *file);
+                const char *file, uint64_t offset);
 void bsal_buffered_reader_destroy(struct bsal_buffered_reader *reader);
 
 /* \return number of bytes copied in buffer

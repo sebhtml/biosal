@@ -7,6 +7,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <inttypes.h>
+
 /*
 #define BSAL_BUFFERED_READER_DEBUG
 */
@@ -14,9 +16,17 @@
 #define BSAL_BUFFERED_READER_BUFFER_SIZE 4194304
 
 void bsal_buffered_reader_init(struct bsal_buffered_reader *reader,
-                const char *file)
+                const char *file, uint64_t offset)
 {
     reader->descriptor = fopen(file, "r");
+
+    /* seek- in the file
+     */
+    fseek(reader->descriptor, offset, SEEK_SET);
+
+#ifdef BSAL_BUFFERED_READER_DEBUG
+    printf("DEBUG fseek %" PRIu64 "\n", offset);
+#endif
 
     reader->buffer = (char *)bsal_malloc(BSAL_BUFFERED_READER_BUFFER_SIZE * sizeof(char));
     reader->buffer_capacity = BSAL_BUFFERED_READER_BUFFER_SIZE;

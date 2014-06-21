@@ -23,8 +23,10 @@ void bsal_fastq_input_init(struct bsal_input *input)
 {
     char *file;
     struct bsal_fastq_input *fastq;
+    uint64_t offset;
 
     file = bsal_input_file(input);
+    offset = bsal_input_offset(input);
 
 #ifdef BSAL_FASTQ_INPUT_DEBUG
     printf("DEBUG bsal_fastq_input_init %s\n",
@@ -33,7 +35,7 @@ void bsal_fastq_input_init(struct bsal_input *input)
 
     fastq = (struct bsal_fastq_input *)bsal_input_implementation(input);
 
-    bsal_buffered_reader_init(&fastq->reader, file);
+    bsal_buffered_reader_init(&fastq->reader, file, offset);
     fastq->buffer = NULL;
 }
 

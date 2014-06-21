@@ -5,13 +5,16 @@
 
 #include <stdio.h>
 
+#include <inttypes.h>
+
 /*#define BSAL_INPUT_PROXY_DEBUG*/
 
 void bsal_input_proxy_init(struct bsal_input_proxy *proxy,
-                char *file)
+                char *file, uint64_t offset)
 {
 #ifdef BSAL_INPUT_PROXY_DEBUG
-    printf("DEBUG bsal_input_proxy_init open file %s\n", file);
+    printf("DEBUG bsal_input_proxy_init open file %s @%" PRIu64 "\n", file,
+                    offset);
 #endif
 
     proxy->done = 0;
@@ -20,7 +23,7 @@ void bsal_input_proxy_init(struct bsal_input_proxy *proxy,
      */
 
     bsal_input_proxy_try(proxy, &proxy->input, &proxy->fastq,
-                    &bsal_fastq_input_operations, file);
+                    &bsal_fastq_input_operations, file, offset);
 }
 
 int bsal_input_proxy_get_sequence(struct bsal_input_proxy *proxy,
@@ -73,7 +76,8 @@ int bsal_input_proxy_error(struct bsal_input_proxy *proxy)
 
 void bsal_input_proxy_try(struct bsal_input_proxy *proxy,
                 struct bsal_input *input, void *implementation,
-                struct bsal_input_operations *operations, char *file)
+                struct bsal_input_operations *operations, char *file,
+                uint64_t offset)
 {
     int error;
 
@@ -90,7 +94,7 @@ void bsal_input_proxy_try(struct bsal_input_proxy *proxy,
     proxy->not_supported = 1;
     proxy->not_found = 1;
 
-    bsal_input_init(input, implementation, operations, file);
+    bsal_input_init(input, implementation, operations, file, offset);
     error = bsal_input_error(input);
 
     /* File does not exist.

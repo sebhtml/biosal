@@ -30,7 +30,8 @@ struct bsal_input {
 };
 
 void bsal_input_init(struct bsal_input *input, void *implementation,
-                struct bsal_input_operations *operations, char *file);
+                struct bsal_input_operations *operations, char *file,
+                uint64_t offset);
 void bsal_input_destroy(struct bsal_input *input);
 
 int bsal_input_get_sequence(struct bsal_input *input,

@@ -6,7 +6,10 @@
 
 #include <data/dna_sequence.h>
 #include <storage/sequence_store.h>
+
 #include <helpers/actor_helper.h>
+#include <helpers/message_helper.h>
+
 #include <system/memory.h>
 
 #include <stdlib.h>
@@ -50,7 +53,11 @@ void bsal_input_stream_init(struct bsal_actor *actor)
 
     input->file_index = -1;
 
+    input->starting_offset = 0;
+
     bsal_vector_init(&input->mega_blocks, sizeof(struct bsal_mega_block));
+
+    bsal_actor_register(actor, BSAL_INPUT_STREAM_SET_OFFSET, bsal_input_stream_set_offset);
 }
 
 void bsal_input_stream_destroy(struct bsal_actor *actor)
@@ -148,7 +155,8 @@ void bsal_input_stream_receive(struct bsal_actor *actor, struct bsal_message *me
         concrete_actor->file_name = bsal_malloc(strlen(file_name_in_buffer) + 1);
         strcpy(concrete_actor->file_name, file_name_in_buffer);
 
-        bsal_input_proxy_init(&concrete_actor->proxy, concrete_actor->file_name);
+        bsal_input_proxy_init(&concrete_actor->proxy, concrete_actor->file_name,
+                        concrete_actor->starting_offset);
         concrete_actor->proxy_ready = 1;
 
         /* Die if there is an error...
@@ -352,7 +360,8 @@ void bsal_input_stream_receive(struct bsal_actor *actor, struct bsal_message *me
 #endif
 
         bsal_input_proxy_destroy(&concrete_actor->proxy);
-        bsal_input_proxy_init(&concrete_actor->proxy, concrete_actor->file_name);
+        bsal_input_proxy_init(&concrete_actor->proxy, concrete_actor->file_name,
+                        concrete_actor->starting_offset);
 
         bsal_actor_helper_send_reply_empty(actor, BSAL_INPUT_STREAM_RESET_REPLY);
 
@@ -421,6 +430,7 @@ void bsal_input_stream_push_sequences(struct bsal_actor *actor,
     struct bsal_dna_sequence *a_sequence;
     int has_sequence;
     int i;
+    struct bsal_input_stream *concrete_actor;
 
 #ifdef BSAL_INPUT_STREAM_DEBUG
     int count;
@@ -437,7 +447,6 @@ void bsal_input_stream_push_sequences(struct bsal_actor *actor,
     printf("DEBUG bsal_input_stream_push_sequences entering...\n");
 #endif
 
-    struct bsal_input_stream *concrete_actor;
 
     buffer = bsal_message_buffer(message);
 
@@ -548,4 +557,13 @@ void bsal_input_stream_push_sequences(struct bsal_actor *actor,
     printf("DEBUG bsal_input_stream_push_sequences EXIT\n");
 #endif
 
+}
+
+void bsal_input_stream_set_offset(struct bsal_actor *self, struct bsal_message *message)
+{
+    struct bsal_input_stream *concrete_actor;
+
+    concrete_actor = (struct bsal_input_stream *)bsal_actor_concrete_actor(self);
+    bsal_message_helper_unpack_uint64_t(message, 0, &concrete_actor->starting_offset);
+    bsal_actor_helper_send_reply_empty(self, BSAL_INPUT_STREAM_SET_OFFSET_REPLY);
 }

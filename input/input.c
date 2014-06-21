@@ -7,7 +7,8 @@
 #include <string.h>
 
 void bsal_input_init(struct bsal_input *input, void *implementation,
-                struct bsal_input_operations *operations, char *file)
+                struct bsal_input_operations *operations, char *file,
+                uint64_t offset)
 {
     bsal_input_init_fn_t handler;
     FILE *descriptor;
@@ -17,6 +18,7 @@ void bsal_input_init(struct bsal_input *input, void *implementation,
     input->sequences = 0;
     input->file = file;
     input->error = BSAL_INPUT_ERROR_NO_ERROR;
+    input->offset = offset;
 
     descriptor = fopen(input->file, "r");
 
@@ -29,8 +31,6 @@ void bsal_input_init(struct bsal_input *input, void *implementation,
 
     handler = bsal_input_operations_get_init(input->operations);
     handler(input);
-
-    input->offset = 0;
 }
 
 void bsal_input_destroy(struct bsal_input *input)
@@ -81,11 +81,6 @@ int bsal_input_get_sequence(struct bsal_input *input,
 uint64_t bsal_input_size(struct bsal_input *input)
 {
     return input->sequences;
-}
-
-uint64_t bsal_input_offset(struct bsal_input *input)
-{
-    return input->offset;
 }
 
 char *bsal_input_file(struct bsal_input *input)
@@ -142,4 +137,9 @@ int bsal_input_has_suffix(struct bsal_input *input, const char *suffix)
     }
 
     return 0;
+}
+
+uint64_t bsal_input_offset(struct bsal_input *input)
+{
+    return input->offset;
 }

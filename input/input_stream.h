@@ -28,6 +28,8 @@ struct bsal_input_stream {
     int file_index;
 
     struct bsal_vector mega_blocks;
+
+    uint64_t starting_offset;
 };
 
 #define BSAL_INPUT_OPEN 0x000075fa
@@ -37,6 +39,9 @@ struct bsal_input_stream {
 #define BSAL_INPUT_COUNT_READY 0x0000710e
 #define BSAL_INPUT_COUNT_REPLY 0x000018a9
 #define BSAL_INPUT_CLOSE 0x00007646
+
+#define BSAL_INPUT_STREAM_SET_OFFSET 0x000041d5
+#define BSAL_INPUT_STREAM_SET_OFFSET_REPLY 0x0000233a
 
 #define BSAL_INPUT_STREAM_RESET 0x00007869
 #define BSAL_INPUT_STREAM_RESET_REPLY 0x00002c63
@@ -65,4 +70,6 @@ int bsal_input_stream_check_open_error(struct bsal_actor *actor,
                 struct bsal_message *message);
 void bsal_input_stream_push_sequences(struct bsal_actor *actor,
                 struct bsal_message *message);
+
+void bsal_input_stream_set_offset(struct bsal_actor *actor, struct bsal_message *message);
 #endif
