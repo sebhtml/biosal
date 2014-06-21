@@ -161,5 +161,6 @@ void bsal_node_handle_signal(int signal);
 void bsal_node_register_signal_handlers(struct bsal_node *self);
 
 void bsal_node_print_structure(struct bsal_node *node, struct bsal_actor *actor);
+int bsal_node_has_actor(struct bsal_node *self, int name);
 
 #endif

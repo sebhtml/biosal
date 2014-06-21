@@ -137,17 +137,27 @@ void bsal_worker_work(struct bsal_worker *worker, struct bsal_work *work)
     actor = bsal_work_actor(work);
     message = bsal_work_message(work);
 
-    /* lock the actor to prevent another worker from making work
-     * on the same actor at the same time
-     */
-    bsal_actor_lock(actor);
-
     /* Store the buffer location before calling the user
      * code because the user may change the message buffer.
      * We need to free the buffer regardless if the
      * actor code changes it.
      */
     buffer = bsal_message_buffer(message);
+
+    /* the actor died while the work was queued.
+     */
+    if (bsal_actor_dead(actor)) {
+
+        bsal_free(buffer);
+        bsal_free(message);
+
+        return;
+    }
+
+    /* lock the actor to prevent another worker from making work
+     * on the same actor at the same time
+     */
+    bsal_actor_lock(actor);
 
     /* the actor died while this worker was waiting for the lock
      */
@@ -162,7 +172,7 @@ void bsal_worker_work(struct bsal_worker *worker, struct bsal_work *work)
         /* TODO replace with slab allocator */
         bsal_free(message);
 
-        bsal_actor_unlock(actor);
+        /*bsal_actor_unlock(actor);*/
         return;
     }
 
@@ -221,11 +231,15 @@ struct bsal_node *bsal_worker_node(struct bsal_worker *worker)
 void bsal_worker_send(struct bsal_worker *worker, struct bsal_message *message)
 {
     struct bsal_message copy;
+    struct bsal_message *new_message;
     void *buffer;
     int count;
     int metadata_size;
     int all;
     void *old_buffer;
+    int destination;
+    struct bsal_work work;
+    struct bsal_actor *actor;
 
     memcpy(&copy, message, sizeof(struct bsal_message));
     count = bsal_message_count(&copy);
@@ -266,7 +280,38 @@ void bsal_worker_send(struct bsal_worker *worker, struct bsal_message *message)
     }
 #endif
 
-    bsal_worker_push_message(worker, &copy);
+    /* if the destination is on the same node,
+     * handle that directly here to avoid locking things
+     * with the node.
+     */
+
+    destination = bsal_message_destination(message);
+
+    if (bsal_node_has_actor(worker->node, destination)) {
+
+        /*
+         * TODO maybe it would be better to check the
+         * scheduling score of the current worker.
+         */
+        actor = bsal_node_get_actor_from_name(worker->node, destination);
+
+        new_message = (struct bsal_message *)bsal_malloc(sizeof(struct bsal_message));
+        memcpy(new_message, &copy, sizeof(struct bsal_message));
+
+        /*
+        printf("Local stuff: %p %p\n", (void *)actor, (void *)new_message);
+        */
+
+        bsal_work_init(&work, actor, new_message);
+
+        bsal_worker_push_work(worker, &work);
+
+    } else {
+        /* Otherwise, the message will be sent
+         * on the network.
+         */
+        bsal_worker_push_message(worker, &copy);
+    }
 }
 
 void bsal_worker_start(struct bsal_worker *worker)

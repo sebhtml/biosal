@@ -1090,16 +1090,31 @@ void bsal_node_send_outbound_message(struct bsal_node *node, struct bsal_message
     bsal_queue_enqueue(&node->active_buffers, &active_buffer);
 }
 
+int bsal_node_has_actor(struct bsal_node *self, int name)
+{
+    int node_name;
+
+    node_name = bsal_node_actor_node(self, name);
+
+    if (node_name == self->name) {
+        /* maybe the actor is dead already !
+         */
+        if (bsal_node_get_actor_from_name(self, name) != NULL) {
+            return 1;
+        }
+    }
+
+    return 0;
+}
+
 void bsal_node_send(struct bsal_node *node, struct bsal_message *message)
 {
     int name;
-    int node_name;
 
     name = bsal_message_destination(message);
-    node_name = bsal_node_actor_node(node, name);
     bsal_node_resolve(node, message);
 
-    if (node_name == node->name) {
+    if (bsal_node_has_actor(node, name)) {
         /* dispatch locally */
         bsal_node_dispatch_message(node, message);
 

@@ -157,6 +157,7 @@ struct bsal_actor {
     struct bsal_worker *affinity_worker;
 
     struct bsal_map received_messages;
+    struct bsal_map sent_messages;
 
     struct bsal_vector acquaintance_vector;
     struct bsal_vector children;
@@ -329,5 +330,6 @@ void bsal_actor_dequeue_message(struct bsal_actor *actor, struct bsal_message *m
 int bsal_actor_enqueued_message_count(struct bsal_actor *actor);
 
 struct bsal_map *bsal_actor_get_received_messages(struct bsal_actor *self);
+struct bsal_map *bsal_actor_get_sent_messages(struct bsal_actor *self);
 
 #endif

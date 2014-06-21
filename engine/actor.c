@@ -94,6 +94,7 @@ void bsal_actor_init(struct bsal_actor *actor, void *state,
 
     bsal_queue_init(&actor->enqueued_messages, sizeof(struct bsal_message));
     bsal_map_init(&actor->received_messages, sizeof(int), sizeof(int));
+    bsal_map_init(&actor->sent_messages, sizeof(int), sizeof(int));
 
     /* call the concrete initializer
      * this must be the last call.
@@ -120,6 +121,9 @@ void bsal_actor_destroy(struct bsal_actor *actor)
     bsal_queue_destroy(&actor->queued_messages_for_migration);
     bsal_queue_destroy(&actor->forwarding_queue);
     bsal_dynamic_hash_table_destroy(&actor->acquaintance_map);
+
+    bsal_map_destroy(&actor->received_messages);
+    bsal_map_destroy(&actor->sent_messages);
 
     while (bsal_queue_dequeue(&actor->enqueued_messages, &message)) {
         buffer = bsal_message_buffer(&message);
@@ -1740,4 +1744,9 @@ int bsal_actor_enqueued_message_count(struct bsal_actor *actor)
 struct bsal_map *bsal_actor_get_received_messages(struct bsal_actor *self)
 {
     return &self->received_messages;
+}
+
+struct bsal_map *bsal_actor_get_sent_messages(struct bsal_actor *self)
+{
+    return &self->sent_messages;
 }
