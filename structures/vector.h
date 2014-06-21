@@ -14,6 +14,8 @@ struct bsal_vector{
 void bsal_vector_init(struct bsal_vector *self, int element_size);
 void bsal_vector_destroy(struct bsal_vector *self);
 
+void bsal_vector_init_copy(struct bsal_vector *self, struct bsal_vector *other);
+
 void bsal_vector_resize(struct bsal_vector *self, int64_t size);
 int64_t bsal_vector_size(struct bsal_vector *self);
 void bsal_vector_reserve(struct bsal_vector *self, int64_t size);

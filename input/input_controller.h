@@ -4,6 +4,7 @@
 
 #include <engine/actor.h>
 #include <structures/vector.h>
+#include <structures/map.h>
 #include <structures/queue.h>
 
 #define BSAL_INPUT_CONTROLLER_SCRIPT 0x985607aa
@@ -13,7 +14,11 @@ struct bsal_input_controller {
 
     struct bsal_vector files;
 
-    struct bsal_vector streams;
+    struct bsal_vector counting_streams;
+    struct bsal_vector reading_streams;
+
+    struct bsal_map mega_blocks;
+
     struct bsal_vector spawners;
     int partitioner;
 

@@ -273,3 +273,10 @@ int bsal_vector_element_size(struct bsal_vector *self)
 {
     return self->element_size;
 }
+
+void bsal_vector_init_copy(struct bsal_vector *self, struct bsal_vector *other)
+{
+    bsal_vector_init(self, bsal_vector_element_size(other));
+
+    bsal_vector_push_back_vector(self, other);
+}
