@@ -18,6 +18,7 @@ void bsal_buffered_reader_init(struct bsal_buffered_reader *reader,
 void bsal_buffered_reader_destroy(struct bsal_buffered_reader *reader);
 
 /* \return number of bytes copied in buffer
+ * This does not include the discarded \n, if any
  */
 int bsal_buffered_reader_read_line(struct bsal_buffered_reader *reader,
                 char *buffer, int length);

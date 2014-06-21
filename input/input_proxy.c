@@ -53,6 +53,12 @@ uint64_t bsal_input_proxy_size(struct bsal_input_proxy *proxy)
     return bsal_input_size(&proxy->input);
 }
 
+uint64_t bsal_input_proxy_offset(struct bsal_input_proxy *self)
+{
+
+    return bsal_input_offset(&self->input);
+}
+
 int bsal_input_proxy_error(struct bsal_input_proxy *proxy)
 {
     if (proxy->not_found) {

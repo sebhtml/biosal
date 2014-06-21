@@ -5,6 +5,8 @@
 struct bsal_input;
 struct bsal_dna_sequence;
 
+#include <stdint.h>
+
 typedef void (*bsal_input_init_fn_t)(
     struct bsal_input *input
 );
@@ -13,7 +15,11 @@ typedef void (*bsal_input_destroy_fn_t)(
     struct bsal_input *input
 );
 
-typedef int (*bsal_input_get_sequence_fn_t)(
+/*
+ * return the number of bytes read to get
+ * the sequence.
+ */
+typedef uint64_t (*bsal_input_get_sequence_fn_t)(
     struct bsal_input *input,
     char *sequence
 );

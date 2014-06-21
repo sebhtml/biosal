@@ -29,6 +29,8 @@ void bsal_input_init(struct bsal_input *input, void *implementation,
 
     handler = bsal_input_operations_get_init(input->operations);
     handler(input);
+
+    input->offset = 0;
 }
 
 void bsal_input_destroy(struct bsal_input *input)
@@ -44,6 +46,7 @@ void bsal_input_destroy(struct bsal_input *input)
     input->operations = NULL;
     input->sequences = -1;
     input->file = NULL;
+    input->offset = 0;
 }
 
 int bsal_input_get_sequence(struct bsal_input *input,
@@ -70,12 +73,19 @@ int bsal_input_get_sequence(struct bsal_input *input,
     }
 #endif
 
+    input->offset += value;
+
     return value;
 }
 
 uint64_t bsal_input_size(struct bsal_input *input)
 {
     return input->sequences;
+}
+
+uint64_t bsal_input_offset(struct bsal_input *input)
+{
+    return input->offset;
 }
 
 char *bsal_input_file(struct bsal_input *input)

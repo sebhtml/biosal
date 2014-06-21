@@ -25,6 +25,7 @@ struct bsal_input {
     void *implementation;
     char *file;
     uint64_t sequences;
+    uint64_t offset;
     int error;
 };
 
@@ -36,6 +37,7 @@ int bsal_input_get_sequence(struct bsal_input *input,
                 char *sequence);
 char *bsal_input_file(struct bsal_input *input);
 uint64_t bsal_input_size(struct bsal_input *input);
+uint64_t bsal_input_offset(struct bsal_input *input);
 void *bsal_input_implementation(struct bsal_input *input);
 int bsal_input_detect(struct bsal_input *input);
 int bsal_input_has_suffix(struct bsal_input *input, const char *suffix);

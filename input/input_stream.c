@@ -2,6 +2,7 @@
 #include "input_stream.h"
 
 #include "input_command.h"
+#include "mega_block.h"
 
 #include <data/dna_sequence.h>
 #include <storage/sequence_store.h>
@@ -41,6 +42,15 @@ void bsal_input_stream_init(struct bsal_actor *actor)
     input->file_name = NULL;
 
     bsal_dna_codec_init(&input->codec);
+
+    input->mega_block_size = 8388608;
+
+    input->last_offset = 0;
+    input->last_entries = 0;
+
+    input->file_index = -1;
+
+    bsal_vector_init(&input->mega_blocks, sizeof(struct bsal_mega_block));
 }
 
 void bsal_input_stream_destroy(struct bsal_actor *actor)
@@ -69,6 +79,8 @@ void bsal_input_stream_destroy(struct bsal_actor *actor)
 
     input->file_name = NULL;
     bsal_dna_codec_destroy(&input->codec);
+
+    bsal_vector_destroy(&input->mega_blocks);
 }
 
 void bsal_input_stream_receive(struct bsal_actor *actor, struct bsal_message *message)
@@ -84,6 +96,8 @@ void bsal_input_stream_receive(struct bsal_actor *actor, struct bsal_message *me
     int buffer_size;
     char *buffer;
     char *read_buffer;
+    struct bsal_mega_block mega_block;
+    char *file_name_in_buffer;
 
     concrete_actor = (struct bsal_input_stream *)bsal_actor_concrete_actor(actor);
     tag = bsal_message_tag(message);
@@ -129,10 +143,12 @@ void bsal_input_stream_receive(struct bsal_actor *actor, struct bsal_message *me
                         buffer);
 #endif
 
-        concrete_actor->file_name = bsal_malloc(strlen(buffer) + 1);
-        strcpy(concrete_actor->file_name, buffer);
+        memcpy(&concrete_actor->file_index, buffer, sizeof(concrete_actor->file_index));
+        file_name_in_buffer = buffer + sizeof(concrete_actor->file_index);
+        concrete_actor->file_name = bsal_malloc(strlen(file_name_in_buffer) + 1);
+        strcpy(concrete_actor->file_name, file_name_in_buffer);
 
-        bsal_input_proxy_init(&concrete_actor->proxy, buffer);
+        bsal_input_proxy_init(&concrete_actor->proxy, concrete_actor->file_name);
         concrete_actor->proxy_ready = 1;
 
         /* Die if there is an error...
@@ -172,10 +188,31 @@ void bsal_input_stream_receive(struct bsal_actor *actor, struct bsal_message *me
         i = 0;
         /* continue counting ... */
         has_sequence = 1;
-        while (i < 1000 && has_sequence) {
+
+        while (i < 1024 && has_sequence) {
             has_sequence = bsal_input_proxy_get_sequence(&concrete_actor->proxy,
                             concrete_actor->buffer_for_sequence);
+
             i++;
+        }
+
+        sequences = bsal_input_proxy_size(&concrete_actor->proxy);
+
+#ifdef BSAL_INPUT_STREAM_DEBUG
+        printf("DEBUG BSAL_INPUT_COUNT sequences %d...\n", sequences);
+#endif
+
+        if (!has_sequence || sequences % concrete_actor->mega_block_size == 0) {
+
+            bsal_mega_block_init(&mega_block, concrete_actor->file_index, concrete_actor->last_offset,
+                            sequences - concrete_actor->last_entries, sequences);
+
+            bsal_vector_push_back(&concrete_actor->mega_blocks, &mega_block);
+
+            concrete_actor->last_entries = sequences;
+            concrete_actor->last_offset = bsal_input_proxy_offset(&concrete_actor->proxy);
+
+            bsal_actor_helper_send_int64_t(actor, concrete_actor->controller, BSAL_INPUT_COUNT_PROGRESS, sequences);
         }
 
         if (has_sequence) {
@@ -187,15 +224,6 @@ void bsal_input_stream_receive(struct bsal_actor *actor, struct bsal_message *me
             /* notify the controller of our progress...
              */
 
-            sequences = bsal_input_proxy_size(&concrete_actor->proxy);
-
-#ifdef BSAL_INPUT_STREAM_DEBUG
-            printf("DEBUG BSAL_INPUT_COUNT sequences %d...\n", sequences);
-#endif
-
-            bsal_actor_helper_send_int64_t(actor, concrete_actor->controller, BSAL_INPUT_COUNT_PROGRESS, sequences);
-
-            bsal_message_destroy(message);
 
         } else {
 
@@ -225,7 +253,8 @@ void bsal_input_stream_receive(struct bsal_actor *actor, struct bsal_message *me
 
         count = bsal_input_proxy_size(&concrete_actor->proxy);
 
-        bsal_actor_helper_send_int64_t(actor, concrete_actor->controller, BSAL_INPUT_COUNT_REPLY, count);
+        bsal_actor_helper_send_vector(actor, concrete_actor->controller, BSAL_INPUT_COUNT_REPLY,
+                        &concrete_actor->mega_blocks);
 
         printf("input_stream/%d on node/%d counted entries in %s, %" PRIu64 "\n",
                         bsal_actor_name(actor), bsal_actor_node_name(actor),

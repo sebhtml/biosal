@@ -19,8 +19,15 @@ struct bsal_input_stream {
     int open;
     int controller;
     int error;
+    int64_t mega_block_size;
+
+    int64_t last_offset;
+    int64_t last_entries;
 
     char *file_name;
+    int file_index;
+
+    struct bsal_vector mega_blocks;
 };
 
 #define BSAL_INPUT_OPEN 0x000075fa

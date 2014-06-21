@@ -2,11 +2,15 @@
 #include "input_controller.h"
 
 #include "input_stream.h"
+#include "mega_block.h"
 
 #include <storage/sequence_store.h>
 #include <storage/sequence_partitioner.h>
 #include <storage/partition_command.h>
 #include <input/input_command.h>
+
+#include <structures/vector.h>
+#include <structures/vector_iterator.h>
 
 #include <helpers/vector_helper.h>
 #include <helpers/actor_helper.h>
@@ -159,6 +163,12 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
     int consumer;
     int consumer_index;
     int *bucket_for_requests;
+    char *new_buffer;
+    int new_count;
+    int file_index;
+    struct bsal_vector mega_blocks;
+    struct bsal_vector_iterator vector_iterator;
+    struct bsal_mega_block *mega_block;
 
     bsal_message_helper_get_all(message, &tag, &count, &buffer, &source);
 
@@ -275,7 +285,8 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
 
         stream = *(int *)buffer;
 
-        local_file = *(char **)bsal_vector_at(&controller->files, bsal_vector_size(&controller->streams));
+        file_index = bsal_vector_size(&controller->streams);
+        local_file = *(char **)bsal_vector_at(&controller->files, file_index);
 
         printf("DEBUG actor %d receives stream %d from spawner %d for file %s\n",
                         name, stream, source,
@@ -287,8 +298,16 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
         bsal_vector_helper_push_back_int(&controller->partition_commands, -1);
         bsal_vector_helper_push_back_int(&controller->stream_consumers, -1);
 
-        bsal_message_init(&new_message, BSAL_INPUT_OPEN, strlen(local_file) + 1, local_file);
+        new_count = sizeof(file_index) + strlen(local_file) + 1;
+        new_buffer = bsal_malloc(new_count);
+        memcpy(new_buffer, &file_index, sizeof(file_index));
+        memcpy(new_buffer + sizeof(file_index), local_file, strlen(local_file) + 1);
+
+        bsal_message_init(&new_message, BSAL_INPUT_OPEN, new_count, new_buffer);
         bsal_actor_send(actor, stream, &new_message);
+        bsal_free(new_buffer);
+        new_buffer = NULL;
+        bsal_message_destroy(&new_message);
 
         if (bsal_vector_size(&controller->streams) != bsal_vector_size(&controller->files)) {
 
@@ -348,17 +367,29 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
 
         bucket = (int64_t *)bsal_vector_at(&controller->counts, stream_index);
 
-        if (entries > *bucket + 10000000) {
-            printf("controller actor/%d receives from stream actor/%d: file %s, %" PRIu64 " entries so far\n",
+        printf("controller actor/%d receives progress from stream actor/%d: file %s, %" PRIu64 " entries so far\n",
                         name, source, local_file, entries);
-            *bucket = entries;
-        }
+        *bucket = entries;
 
     } else if (tag == BSAL_INPUT_COUNT_REPLY) {
 
         stream_index = bsal_vector_index_of(&controller->streams, &source);
         local_file = bsal_vector_helper_at_as_char_pointer(&controller->files, stream_index);
-        bsal_message_helper_unpack_int64_t(message, 0, &entries);
+
+        bsal_vector_unpack(&mega_blocks, buffer);
+
+        bsal_vector_iterator_init(&vector_iterator, &mega_blocks);
+
+        while (bsal_vector_iterator_has_next(&vector_iterator)) {
+            bsal_vector_iterator_next(&vector_iterator, (void **)&mega_block);
+
+            entries = bsal_mega_block_get_entries_from_start(mega_block);
+
+            bsal_mega_block_print(mega_block);
+        }
+
+        bsal_vector_iterator_destroy(&vector_iterator);
+        bsal_vector_destroy(&mega_blocks);
 
         bucket = (int64_t*)bsal_vector_at(&controller->counts, stream_index);
         *bucket = entries;

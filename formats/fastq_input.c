@@ -50,7 +50,7 @@ void bsal_fastq_input_destroy(struct bsal_input *input)
     }
 }
 
-int bsal_fastq_input_get_sequence(struct bsal_input *input,
+uint64_t bsal_fastq_input_get_sequence(struct bsal_input *input,
                 char *sequence)
 {
     struct bsal_fastq_input *fastq;
@@ -66,19 +66,28 @@ int bsal_fastq_input_get_sequence(struct bsal_input *input,
         fastq->buffer = (char *)bsal_malloc(maximum_sequence_length + 1);
     }
 
-    value = bsal_buffered_reader_read_line(&fastq->reader, fastq->buffer,
+    value = 0;
+
+    value += bsal_buffered_reader_read_line(&fastq->reader, fastq->buffer,
                     maximum_sequence_length);
-    value = bsal_buffered_reader_read_line(&fastq->reader, buffer,
+    value += bsal_buffered_reader_read_line(&fastq->reader, buffer,
                     maximum_sequence_length);
 
 #ifdef BSAL_FASTQ_INPUT_DEBUG2
     printf("DEBUG bsal_fastq_input_get_sequence %s\n", buffer);
 #endif
 
-    value = bsal_buffered_reader_read_line(&fastq->reader, fastq->buffer,
+    value += bsal_buffered_reader_read_line(&fastq->reader, fastq->buffer,
                     maximum_sequence_length);
-    value = bsal_buffered_reader_read_line(&fastq->reader, fastq->buffer,
+    value += bsal_buffered_reader_read_line(&fastq->reader, fastq->buffer,
                     maximum_sequence_length);
+
+    /* add the 4 new lines if a sequence was
+     * found
+     */
+    if (value) {
+        value += 4;
+    }
 
     return value;
 }
