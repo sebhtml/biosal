@@ -155,7 +155,7 @@ void bsal_input_stream_receive(struct bsal_actor *actor, struct bsal_message *me
         memcpy(&concrete_actor->file_index, buffer, sizeof(concrete_actor->file_index));
         file_name_in_buffer = buffer + sizeof(concrete_actor->file_index);
 
-        printf("stream/%d (node/%d) opens file %s @%" PRIu64 "\n", bsal_actor_name(actor),
+        printf("stream/%d (node/%d) opens file %s offset %" PRIu64 "\n", bsal_actor_name(actor),
                         bsal_actor_node_name(actor), file_name_in_buffer,
                         concrete_actor->starting_offset);
         concrete_actor->file_name = bsal_malloc(strlen(file_name_in_buffer) + 1);

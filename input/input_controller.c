@@ -456,7 +456,7 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
 
         bucket = (int64_t *)bsal_vector_at(&controller->counts, stream_index);
 
-        printf("controller actor/%d receives progress from stream actor/%d: file %s, %" PRIu64 " entries so far\n",
+        printf("controller/%d receives progress from stream/%d file %s %" PRIu64 " entries so far\n",
                         name, source, local_file, entries);
         *bucket = entries;
 
@@ -487,12 +487,13 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
         bucket = (int64_t*)bsal_vector_at(&controller->counts, stream_index);
         *bucket = entries;
 
-        printf("controller actor/%d received from stream actor/%d for file %s: %" PRIu64 " entries (final)\n",
-                        name, source, local_file, entries);
+        controller->counted++;
+
+        printf("controller/%d received from stream/%d for file %s %" PRIu64 " entries (final) %d/%d\n",
+                        name, source, local_file, entries,
+                        concrete_actor->counted, (int)bsal_vector_size(&controller->files));
 
         bsal_actor_helper_send_reply_empty(actor, BSAL_INPUT_CLOSE);
-
-        controller->counted++;
 
         /* continue work here, tell supervisor about it */
         if (controller->counted == bsal_vector_size(&controller->files)) {
