@@ -4,6 +4,8 @@
 
 #include "worker.h"
 
+#include <time.h>
+
 struct bsal_node;
 struct bsal_worker;
 
@@ -18,6 +20,8 @@ struct bsal_worker_pool {
     int workers;
 
     int ticks_without_messages;
+
+    time_t starting_time;
 };
 
 void bsal_worker_pool_init(struct bsal_worker_pool *pool, int workers, struct bsal_node *node);

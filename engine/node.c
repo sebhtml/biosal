@@ -719,7 +719,7 @@ void bsal_node_run_loop(struct bsal_node *node)
         if (node->print_load) {
             current_time = time(NULL);
 
-            if (current_time - node->last_load_report_time > period) {
+            if (current_time - node->last_load_report_time >= period) {
                 bsal_worker_pool_print_load(&node->worker_pool);
                 node->last_load_report_time = current_time;
             }

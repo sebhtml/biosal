@@ -34,6 +34,8 @@ void bsal_worker_pool_init(struct bsal_worker_pool *pool, int workers,
     }
 
     bsal_worker_pool_create_workers(pool);
+
+    pool->starting_time = time(NULL);
 }
 
 void bsal_worker_pool_destroy(struct bsal_worker_pool *pool)
@@ -287,6 +289,11 @@ void bsal_worker_pool_print_load(struct bsal_worker_pool *self)
     int allocated;
     int offset;
     int extra;
+    clock_t current_time;
+    int elapsed;
+
+    current_time = time(NULL);
+    elapsed = current_time - self->starting_time;
 
     extra = 100;
 
@@ -307,11 +314,11 @@ void bsal_worker_pool_print_load(struct bsal_worker_pool *self)
         scheduling_score = bsal_worker_get_scheduling_score(worker);
         */
 
-        offset += sprintf(buffer + offset, " [%d %.2f]", i, epoch_load);
+        offset += sprintf(buffer + offset, " %.2f", epoch_load);
         i++;
     }
 
-    printf("LOAD node/%d%s\n", node_name, buffer);
+    printf("LOAD %d s node/%d%s\n", elapsed, node_name, buffer);
 
     bsal_free(buffer);
 }
