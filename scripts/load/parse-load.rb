@@ -4,7 +4,6 @@
 # a biosal computation. The biosal option -print-load
 # is required to generate LOAD data
 
-i = 0
 content = Hash.new
 
 def print_content content
@@ -28,9 +27,8 @@ period = 2
 File.open(ARGV[0]).each do |line|
 
     content[line.split[1]] = line.strip
-    i += 1
 
-    if i == 4
+    if content.size == 4
         j = 0
         print second.to_s
         while j < 4
@@ -38,7 +36,6 @@ File.open(ARGV[0]).each do |line|
             j += 1
         end
         puts ""
-        i = 0
         second += period
         content = Hash.new
     end
