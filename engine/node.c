@@ -711,7 +711,7 @@ void bsal_node_run_loop(struct bsal_node *node)
     clock_t current_time;
     int period;
 
-    period = 2;
+    period = 10;
     ticks = 0;
 
     while (bsal_node_running(node)) {

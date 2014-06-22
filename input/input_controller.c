@@ -1099,9 +1099,9 @@ void bsal_input_controller_receive_command(struct bsal_actor *actor, struct bsal
 
     (*bucket)++;
 
-#ifdef BSAL_INPUT_CONTROLLER_DEBUG_CONSUMERS
     printf("DEBUG consumer # %d has %d active requests\n",
                         consumer_index, *bucket);
+#ifdef BSAL_INPUT_CONTROLLER_DEBUG_CONSUMERS
 #endif
 }
 
