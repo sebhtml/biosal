@@ -46,4 +46,7 @@ int bsal_dynamic_hash_table_unpack(struct bsal_dynamic_hash_table *self, void *b
 void bsal_dynamic_hash_table_finish_resizing(struct bsal_dynamic_hash_table *self);
 void bsal_dynamic_hash_table_reset(struct bsal_dynamic_hash_table *self);
 
+int bsal_dynamic_hash_table_get_key_size(struct bsal_dynamic_hash_table *self);
+int bsal_dynamic_hash_table_get_value_size(struct bsal_dynamic_hash_table *self);
+
 #endif

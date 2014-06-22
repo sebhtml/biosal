@@ -31,3 +31,18 @@ uint64_t bsal_mega_block_get_entries_from_start(struct bsal_mega_block *self)
 {
     return self->entries_from_start;
 }
+
+uint64_t bsal_mega_block_get_offset(struct bsal_mega_block *self)
+{
+    return self->offset;
+}
+
+int bsal_mega_block_get_file(struct bsal_mega_block *self)
+{
+    return self->file;
+}
+
+uint64_t bsal_mega_block_get_entries(struct bsal_mega_block *self)
+{
+    return self->entries;
+}

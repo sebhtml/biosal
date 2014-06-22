@@ -384,4 +384,12 @@ void bsal_dynamic_hash_table_finish_resizing(struct bsal_dynamic_hash_table *sel
     }
 }
 
+int bsal_dynamic_hash_table_get_key_size(struct bsal_dynamic_hash_table *self)
+{
+    return bsal_hash_table_key_size(self->current);
+}
 
+int bsal_dynamic_hash_table_get_value_size(struct bsal_dynamic_hash_table *self)
+{
+    return bsal_hash_table_value_size(self->current);
+}

@@ -64,8 +64,8 @@ void argonnite_init(struct bsal_actor *actor)
 
     /* the number of input sequences per block
      */
-    /*concrete_actor->block_size = 512;*/
-    concrete_actor->block_size = 1024;
+    concrete_actor->block_size = 512;
+    /*concrete_actor->block_size = 2048;*/
 
     concrete_actor->configured_actors = 0;
     concrete_actor->wired_kernels = 0;
@@ -552,7 +552,7 @@ void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message)
 
         bsal_message_helper_unpack_uint64_t(message, 0, &produced);
 
-        printf("director actor/%d generated %" PRIu64 " kmers\n",
+        printf("kernel/%d generated %" PRIu64 " kmers\n",
                         source, produced);
 
         concrete_actor->total_kmers += produced;

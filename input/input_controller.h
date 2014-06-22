@@ -18,6 +18,8 @@ struct bsal_input_controller {
     struct bsal_vector reading_streams;
 
     struct bsal_map mega_blocks;
+    struct bsal_vector mega_block_vector;
+    struct bsal_map assigned_blocks;
 
     struct bsal_vector spawners;
     int partitioner;
@@ -30,6 +32,7 @@ struct bsal_input_controller {
     struct bsal_queue unprepared_spawners;
     int state;
     int block_size;
+    int spawner;
 
     int ready_consumers;
     int ready_spawners;
@@ -55,6 +58,7 @@ struct bsal_input_controller {
 
 #define BSAL_INPUT_CONTROLLER_CREATE_STORES 0x0000285f
 #define BSAL_INPUT_CONTROLLER_CREATE_STORES_REPLY 0x000048ed
+#define BSAL_INPUT_CONTROLLER_SPAWN_READING_STREAMS 0x00005341
 #define BSAL_INPUT_CONTROLLER_PREPARE_SPAWNERS 0x00004a85
 #define BSAL_INPUT_CONTROLLER_CREATE_PARTITION 0x00005b68
 
@@ -71,5 +75,8 @@ void bsal_input_controller_add_store(struct bsal_actor *actor, struct bsal_messa
 void bsal_input_controller_prepare_spawners(struct bsal_actor *actor, struct bsal_message *message);
 void bsal_input_controller_receive_store_entry_counts(struct bsal_actor *actor, struct bsal_message *message);
 void bsal_input_controller_receive_command(struct bsal_actor *actor, struct bsal_message *message);
+
+void bsal_input_controller_spawn_streams(struct bsal_actor *actor, struct bsal_message *message);
+void bsal_input_controller_set_offset_reply(struct bsal_actor *self, struct bsal_message *message);
 
 #endif

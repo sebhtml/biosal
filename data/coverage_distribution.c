@@ -78,7 +78,7 @@ void bsal_coverage_distribution_receive(struct bsal_actor *self, struct bsal_mes
 
         bsal_map_iterator_init(&iterator, &map);
 
-        printf("distribution actor/%d receives coverage data from actor/%d, %d entries / %d bytes\n",
+        printf("distribution/%d receives coverage data from producer/%d, %d entries / %d bytes\n",
                         name, source, (int)bsal_map_size(&map), count);
 
         while (bsal_map_iterator_has_next(&iterator)) {

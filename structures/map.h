@@ -14,8 +14,11 @@ void bsal_map_destroy(struct bsal_map *self);
 void *bsal_map_add(struct bsal_map *self, void *key);
 void *bsal_map_get(struct bsal_map *self, void *key);
 void bsal_map_delete(struct bsal_map *self, void *key);
+void bsal_map_add_value(struct bsal_map *self, void *key, void *value);
 
 uint64_t bsal_map_size(struct bsal_map *self);
+int bsal_map_get_key_size(struct bsal_map *self);
+int bsal_map_get_value_size(struct bsal_map *self);
 
 struct bsal_dynamic_hash_table *bsal_map_table(struct bsal_map *self);
 

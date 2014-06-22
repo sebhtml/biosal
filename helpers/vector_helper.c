@@ -37,6 +37,19 @@ int bsal_vector_helper_at_as_int(struct bsal_vector *self, int64_t index)
     return *bucket;
 }
 
+uint64_t bsal_vector_helper_at_as_uint64_t(struct bsal_vector *self, int64_t index)
+{
+    uint64_t *bucket;
+
+    bucket = (uint64_t *)bsal_vector_at(self, index);
+
+    if (bucket == NULL) {
+        return 0;
+    }
+
+    return *bucket;
+}
+
 char *bsal_vector_helper_at_as_char_pointer(struct bsal_vector *self, int64_t index)
 {
     return (char *)bsal_vector_helper_at_as_void_pointer(self, index);
@@ -86,6 +99,11 @@ void bsal_vector_helper_push_back_char(struct bsal_vector *self, char value)
 }
 
 void bsal_vector_helper_push_back_int(struct bsal_vector *self, int value)
+{
+    bsal_vector_push_back(self, &value);
+}
+
+void bsal_vector_helper_push_back_uint64_t(struct bsal_vector *self, uint64_t value)
 {
     bsal_vector_push_back(self, &value);
 }

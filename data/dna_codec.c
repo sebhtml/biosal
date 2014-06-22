@@ -26,18 +26,18 @@
 
 /*
  * enable 2-bit encoding
- */
 #define BSAL_DNA_CODEC_USE_TWO_BIT_ENCODING_DEFAULT
+ */
 
 /*
  * use block encoder (faster)
- */
 #define BSAL_DNA_CODEC_USE_TWO_BIT_BLOCK_ENCODER
+ */
 
 /*
  * use block decoder (faster)
- */
 #define BSAL_DNA_CODEC_USE_TWO_BIT_BLOCK_DECODER
+ */
 
 /*
 */
@@ -50,7 +50,9 @@ void bsal_dna_codec_init(struct bsal_dna_codec *self)
     bsal_map_init(&self->encoding_lookup_table, self->block_length, 1);
     bsal_map_init(&self->decoding_lookup_table, 1, self->block_length);
 
+#ifdef BSAL_DNA_CODEC_USE_TWO_BIT_BLOCK_ENCODER
     bsal_dna_codec_generate_blocks(self);
+#endif
 }
 
 void bsal_dna_codec_destroy(struct bsal_dna_codec *self)

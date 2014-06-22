@@ -495,6 +495,8 @@ void bsal_actor_helper_ask_to_stop(struct bsal_actor *actor, struct bsal_message
                     bsal_actor_name(actor));
 #endif
     bsal_actor_helper_send_to_self_empty(actor, BSAL_ACTOR_STOP);
+
+    bsal_actor_helper_send_reply_empty(actor, BSAL_ACTOR_ASK_TO_STOP_REPLY);
 }
 
 int bsal_actor_helper_get_acquaintance(struct bsal_actor *actor, struct bsal_vector *indices,

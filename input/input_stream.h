@@ -20,6 +20,7 @@ struct bsal_input_stream {
     int controller;
     int error;
     int64_t mega_block_size;
+    int granularity;
 
     int64_t last_offset;
     int64_t last_entries;
@@ -39,13 +40,13 @@ struct bsal_input_stream {
 #define BSAL_INPUT_COUNT_READY 0x0000710e
 #define BSAL_INPUT_COUNT_REPLY 0x000018a9
 #define BSAL_INPUT_CLOSE 0x00007646
+#define BSAL_INPUT_CLOSE_REPLY 0x00004329
 
 #define BSAL_INPUT_STREAM_SET_OFFSET 0x000041d5
 #define BSAL_INPUT_STREAM_SET_OFFSET_REPLY 0x0000233a
 
 #define BSAL_INPUT_STREAM_RESET 0x00007869
 #define BSAL_INPUT_STREAM_RESET_REPLY 0x00002c63
-#define BSAL_INPUT_CLOSE_REPLY 0x00004329
 #define BSAL_INPUT_GET_SEQUENCE 0x00001333
 #define BSAL_INPUT_GET_SEQUENCE_END 0x00006d55
 #define BSAL_INPUT_GET_SEQUENCE_REPLY 0x00005295

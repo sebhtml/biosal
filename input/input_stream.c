@@ -46,7 +46,9 @@ void bsal_input_stream_init(struct bsal_actor *actor)
 
     bsal_dna_codec_init(&input->codec);
 
-    input->mega_block_size = 8388608;
+    /*input->mega_block_size = 2097152*/
+    input->mega_block_size = 2097152;
+    input->granularity = 1024;
 
     input->last_offset = 0;
     input->last_entries = 0;
@@ -152,6 +154,9 @@ void bsal_input_stream_receive(struct bsal_actor *actor, struct bsal_message *me
 
         memcpy(&concrete_actor->file_index, buffer, sizeof(concrete_actor->file_index));
         file_name_in_buffer = buffer + sizeof(concrete_actor->file_index);
+
+        printf("stream/%d opens file %s @%" PRIu64 "\n", bsal_actor_name(actor), file_name_in_buffer,
+                        concrete_actor->starting_offset);
         concrete_actor->file_name = bsal_malloc(strlen(file_name_in_buffer) + 1);
         strcpy(concrete_actor->file_name, file_name_in_buffer);
 
@@ -197,7 +202,7 @@ void bsal_input_stream_receive(struct bsal_actor *actor, struct bsal_message *me
         /* continue counting ... */
         has_sequence = 1;
 
-        while (i < 1024 && has_sequence) {
+        while (i < concrete_actor->granularity && has_sequence) {
             has_sequence = bsal_input_proxy_get_sequence(&concrete_actor->proxy,
                             concrete_actor->buffer_for_sequence);
 
@@ -444,20 +449,18 @@ void bsal_input_stream_push_sequences(struct bsal_actor *actor,
     has_sequence = 1;
 
 #ifdef BSAL_INPUT_STREAM_DEBUG
-    printf("DEBUG bsal_input_stream_push_sequences entering...\n");
+    printf("DEBUG stream/%d bsal_input_stream_push_sequences entering...\n",
+                    bsal_actor_name(actor));
 #endif
 
 
     buffer = bsal_message_buffer(message);
 
-#ifdef BSAL_INPUT_STREAM_DEBUG
-    count = bsal_message_count(message);
-#endif
-
     concrete_actor = (struct bsal_input_stream *)bsal_actor_concrete_actor(actor);
     bsal_input_command_unpack(&command, buffer);
 
 #ifdef BSAL_INPUT_STREAM_DEBUG
+    count = bsal_message_count(message);
     printf("DEBUG bsal_input_stream_push_sequences after unpack, count %d:\n",
                     count);
 

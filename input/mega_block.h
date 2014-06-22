@@ -18,4 +18,8 @@ void bsal_mega_block_destroy(struct bsal_mega_block *self);
 void bsal_mega_block_print(struct bsal_mega_block *self);
 uint64_t bsal_mega_block_get_entries_from_start(struct bsal_mega_block *self);
 
+uint64_t bsal_mega_block_get_offset(struct bsal_mega_block *self);
+uint64_t bsal_mega_block_get_entries(struct bsal_mega_block *self);
+int bsal_mega_block_get_file(struct bsal_mega_block *self);
+
 #endif

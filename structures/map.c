@@ -2,6 +2,7 @@
 #include "map.h"
 
 #include <stdio.h>
+#include <string.h>
 
 void bsal_map_init(struct bsal_map *self, int key_size, int value_size)
 {
@@ -53,4 +54,25 @@ int bsal_map_pack(struct bsal_map *self, void *buffer)
 int bsal_map_unpack(struct bsal_map *self, void *buffer)
 {
     return bsal_dynamic_hash_table_unpack(&self->table, buffer);
+}
+
+void bsal_map_add_value(struct bsal_map *self, void *key, void *value)
+{
+    int value_size;
+    void *bucket;
+
+    value_size = bsal_map_get_value_size(self);
+    bucket = bsal_map_add(self, key);
+
+    memcpy(bucket, value, value_size);
+}
+
+int bsal_map_get_key_size(struct bsal_map *self)
+{
+    return bsal_dynamic_hash_table_get_key_size(&self->table);
+}
+
+int bsal_map_get_value_size(struct bsal_map *self)
+{
+    return bsal_dynamic_hash_table_get_value_size(&self->table);
 }

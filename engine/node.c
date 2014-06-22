@@ -1491,6 +1491,8 @@ void bsal_node_register_signal_handlers(struct bsal_node *self)
     bsal_vector_helper_push_back_int(&signals, SIGFPE);
     /* bus error (alignment issue */
     bsal_vector_helper_push_back_int(&signals, SIGBUS);
+    /* abort */
+    bsal_vector_helper_push_back_int(&signals, SIGABRT);
 
 #if 0
     /* interruption */
@@ -1501,8 +1503,6 @@ void bsal_node_register_signal_handlers(struct bsal_node *self)
     bsal_vector_helper_push_back_int(&signals, SIGTERM);
     /* hang up */
     bsal_vector_helper_push_back_int(&signals, SIGHUP);
-    /* abort */
-    bsal_vector_helper_push_back_int(&signals, SIGABRT);
     /* illegal instruction */
     bsal_vector_helper_push_back_int(&signals, SIGILL);
 #endif

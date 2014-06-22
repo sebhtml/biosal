@@ -14,6 +14,7 @@
 #include <structures/map_iterator.h>
 
 #include <helpers/vector_helper.h>
+#include <helpers/map_helper.h>
 #include <helpers/actor_helper.h>
 #include <helpers/message_helper.h>
 #include <system/memory.h>
@@ -43,6 +44,7 @@
 #define BSAL_INPUT_CONTROLLER_STATE_SPAWN_STREAMS 2
 #define BSAL_INPUT_CONTROLLER_STATE_SPAWN_STORES 3
 #define BSAL_INPUT_CONTROLLER_STATE_SPAWN_PARTITIONER 4
+#define BSAL_INPUT_CONTROLLER_STATE_SPAWN_READING_STREAMS 5
 
 struct bsal_script bsal_input_controller_script = {
     .name = BSAL_INPUT_CONTROLLER_SCRIPT,
@@ -60,6 +62,8 @@ void bsal_input_controller_init(struct bsal_actor *actor)
     controller = (struct bsal_input_controller *)bsal_actor_concrete_actor(actor);
 
     bsal_map_init(&controller->mega_blocks, sizeof(int), sizeof(struct bsal_vector));
+    bsal_map_init(&controller->assigned_blocks, sizeof(int), sizeof(int));
+    bsal_vector_init(&controller->mega_block_vector, sizeof(struct bsal_mega_block));
 
     bsal_vector_init(&controller->counting_streams, sizeof(int));
     bsal_vector_init(&controller->reading_streams, sizeof(int));
@@ -91,7 +95,11 @@ void bsal_input_controller_init(struct bsal_actor *actor)
 
     bsal_actor_register(actor, BSAL_INPUT_CONTROLLER_PREPARE_SPAWNERS,
                     bsal_input_controller_prepare_spawners);
+    bsal_actor_register(actor, BSAL_INPUT_CONTROLLER_SPAWN_READING_STREAMS,
+                    bsal_input_controller_spawn_streams);
 
+    bsal_actor_register(actor, BSAL_INPUT_STREAM_SET_OFFSET_REPLY,
+                    bsal_input_controller_set_offset_reply);
     bsal_actor_add_script(actor, BSAL_INPUT_STREAM_SCRIPT, &bsal_input_stream_script);
     bsal_actor_add_script(actor, BSAL_SEQUENCE_STORE_SCRIPT, &bsal_sequence_store_script);
     bsal_actor_add_script(actor, BSAL_SEQUENCE_PARTITIONER_SCRIPT,
@@ -128,6 +136,7 @@ void bsal_input_controller_destroy(struct bsal_actor *actor)
         bsal_free(pointer);
     }
 
+    bsal_vector_destroy(&controller->mega_block_vector);
     bsal_vector_destroy(&controller->counting_streams);
     bsal_vector_destroy(&controller->reading_streams);
     bsal_vector_destroy(&controller->partition_commands);
@@ -148,6 +157,7 @@ void bsal_input_controller_destroy(struct bsal_actor *actor)
     }
     bsal_map_iterator_destroy(&iterator);
     bsal_map_destroy(&controller->mega_blocks);
+    bsal_map_destroy(&controller->assigned_blocks);
 }
 
 void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message *message)
@@ -172,7 +182,6 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
     int64_t entries;
     int64_t *bucket;
     int *int_bucket;
-    int store;
     int spawner;
     int command_name;
     int stream_name;
@@ -186,6 +195,12 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
     struct bsal_vector_iterator vector_iterator;
     struct bsal_mega_block *mega_block;
     struct bsal_vector *vector_bucket;
+    struct bsal_vector block_counts;
+    uint64_t block_entries;
+    int mega_block_index;
+    uint64_t offset;
+    struct bsal_mega_block *block;
+    int acquaintance_index;
 
     bsal_message_helper_get_all(message, &tag, &count, &buffer, &source);
 
@@ -256,8 +271,8 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
 
             if (concrete_actor->ready_spawners == (int)bsal_vector_size(&concrete_actor->spawners)) {
 
-                printf("DEBUG all spawners are prepared\n");
 #ifdef BSAL_INPUT_CONTROLLER_DEBUG
+                printf("DEBUG all spawners are prepared\n");
 #endif
                 bsal_actor_helper_send_to_supervisor_empty(actor, BSAL_INPUT_CONTROLLER_START_REPLY);
             }
@@ -285,18 +300,60 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
                             BSAL_SEQUENCE_PARTITIONER_SET_ACTOR_COUNT,
                             bsal_vector_size(&concrete_actor->consumers));
 
-            count = bsal_vector_pack_size(&concrete_actor->counts);
-            buffer = bsal_malloc(count);
+            bsal_vector_init(&block_counts, sizeof(uint64_t));
+
+            for (i = 0; i < bsal_vector_size(&concrete_actor->mega_block_vector); i++) {
+
+                block = (struct bsal_mega_block *)bsal_vector_at(&concrete_actor->mega_block_vector, i);
+                block_entries = bsal_mega_block_get_entries(block);
+
+                bsal_vector_helper_push_back_uint64_t(&block_counts, block_entries);
+            }
+
+            new_count = bsal_vector_pack_size(&block_counts);
+            new_buffer = bsal_malloc(new_count);
 
 #ifdef BSAL_INPUT_CONTROLLER_DEBUG
             printf("DEBUG packed counts, %d bytes\n", count);
 #endif
 
-            bsal_vector_pack(&concrete_actor->counts, buffer);
+            bsal_vector_pack(&block_counts, new_buffer);
             bsal_message_init(&new_message, BSAL_SEQUENCE_PARTITIONER_SET_ENTRY_VECTOR,
-                            count, buffer);
+                            new_count, new_buffer);
             bsal_actor_send(actor, destination, &new_message);
-            bsal_free(buffer);
+            bsal_free(new_buffer);
+            bsal_vector_destroy(&block_counts);
+
+            return;
+
+        } else if (concrete_actor->state == BSAL_INPUT_CONTROLLER_STATE_SPAWN_READING_STREAMS) {
+
+            bsal_message_helper_unpack_int(message, 0, &stream);
+
+            stream_index = bsal_actor_add_acquaintance(actor, stream);
+
+            mega_block_index = bsal_vector_size(&concrete_actor->reading_streams);
+
+            bsal_vector_helper_push_back_int(&concrete_actor->reading_streams, stream_index);
+            bsal_vector_helper_push_back_int(&controller->partition_commands, -1);
+            bsal_vector_helper_push_back_int(&controller->stream_consumers, -1);
+
+            stream_index = bsal_vector_size(&concrete_actor->reading_streams) - 1;
+            mega_block = (struct bsal_mega_block *)bsal_vector_at(&concrete_actor->mega_block_vector,
+                            mega_block_index);
+
+            offset = bsal_mega_block_get_offset(mega_block);
+
+            bsal_map_add_value(&concrete_actor->assigned_blocks,
+                            &stream_index, &mega_block_index);
+
+#ifdef BSAL_INPUT_CONTROLLER_DEBUG_READING_STREAMS
+            printf("DEBUG setting offset to %" PRIu64 " for stream/%d\n",
+                            offset, stream);
+#endif
+
+            bsal_actor_helper_send_uint64_t(actor, stream, BSAL_INPUT_STREAM_SET_OFFSET, offset);
+
             return;
         }
 
@@ -305,21 +362,22 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
         file_index = bsal_vector_size(&controller->counting_streams);
         local_file = *(char **)bsal_vector_at(&controller->files, file_index);
 
+#ifdef BSAL_INPUT_CONTROLLER_DEBUG_READING_STREAMS
         printf("DEBUG actor %d receives stream %d from spawner %d for file %s\n",
                         name, stream, source,
                         local_file);
-#ifdef BSAL_INPUT_CONTROLLER_DEBUG
 #endif
 
         bsal_vector_push_back(&controller->counting_streams, &stream);
-        bsal_vector_helper_push_back_int(&controller->partition_commands, -1);
-        bsal_vector_helper_push_back_int(&controller->stream_consumers, -1);
 
         new_count = sizeof(file_index) + strlen(local_file) + 1;
         new_buffer = bsal_malloc(new_count);
         memcpy(new_buffer, &file_index, sizeof(file_index));
         memcpy(new_buffer + sizeof(file_index), local_file, strlen(local_file) + 1);
 
+#ifdef BSAL_INPUT_CONTROLLER_DEBUG_READING_STREAMS
+        printf("asking stream/%d to open %s\n", stream, local_file);
+#endif
         bsal_message_init(&new_message, BSAL_INPUT_OPEN, new_count, new_buffer);
         bsal_actor_send(actor, stream, &new_message);
         bsal_free(new_buffer);
@@ -333,6 +391,20 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
         }
 
     } else if (tag == BSAL_INPUT_OPEN_REPLY) {
+
+        if (concrete_actor->state == BSAL_INPUT_CONTROLLER_STATE_SPAWN_READING_STREAMS) {
+
+#ifdef BSAL_INPUT_CONTROLLER_DEBUG_READING_STREAMS
+            printf("DEBUG receives open.reply for reading stream/%d\n", source);
+#endif
+            controller->opened_streams++;
+
+            if (concrete_actor->opened_streams == bsal_vector_size(&concrete_actor->mega_block_vector)) {
+                bsal_actor_helper_send_to_self_empty(actor, BSAL_INPUT_CONTROLLER_CREATE_STORES);
+            }
+
+            return;
+        }
 
         controller->opened_streams++;
 
@@ -418,16 +490,16 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
         printf("controller actor/%d received from stream actor/%d for file %s: %" PRIu64 " entries (final)\n",
                         name, source, local_file, entries);
 
-        bsal_actor_helper_send_reply_empty(actor, BSAL_INPUT_STREAM_RESET);
-
-    } else if (tag == BSAL_INPUT_STREAM_RESET_REPLY) {
+        bsal_actor_helper_send_reply_empty(actor, BSAL_INPUT_CLOSE);
 
         controller->counted++;
 
         /* continue work here, tell supervisor about it */
         if (controller->counted == bsal_vector_size(&controller->files)) {
-            bsal_actor_helper_send_to_self_empty(actor, BSAL_INPUT_CONTROLLER_CREATE_STORES);
+            bsal_actor_helper_send_to_self_empty(actor, BSAL_INPUT_CONTROLLER_SPAWN_READING_STREAMS);
         }
+
+
     } else if (tag == BSAL_INPUT_DISTRIBUTE) {
 
         /* for each file, spawn a stream to count */
@@ -499,6 +571,8 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
 
 #ifdef BSAL_INPUT_CONTROLLER_DEBUG_LEVEL_2
 #endif
+
+#if 0
         /* stop streams
          */
         for (i = 0; i < bsal_vector_size(&concrete_actor->counting_streams); i++) {
@@ -536,6 +610,9 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
         /* stop self
          */
         bsal_actor_helper_send_to_self_empty(actor, BSAL_ACTOR_STOP);
+#endif
+
+        bsal_actor_helper_ask_to_stop(actor, message);
 
 #ifdef BSAL_INPUT_CONTROLLER_DEBUG
         printf("DEBUG controller actor/%d dies\n", name);
@@ -593,12 +670,13 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
     } else if (tag == BSAL_INPUT_PUSH_SEQUENCES_READY) {
 
 #ifdef BSAL_INPUT_CONTROLLER_DEBUG
-        printf("DEBUG bsal_input_controller_receive received BSAL_INPUT_PUSH_SEQUENCES_REPLY\n");
+        printf("DEBUG bsal_input_controller_receive received BSAL_INPUT_PUSH_SEQUENCES_READY\n");
 #endif
 
         stream_name = source;
 
-        stream_index = bsal_vector_index_of(&concrete_actor->counting_streams, &stream_name);
+        acquaintance_index = bsal_actor_get_acquaintance_index(actor, stream_name);
+        stream_index = bsal_vector_index_of(&concrete_actor->reading_streams, &acquaintance_index);
         command_name = *(int *)bsal_vector_at(&concrete_actor->partition_commands,
                         stream_index);
 
@@ -677,7 +755,7 @@ void bsal_input_controller_receive_store_entry_counts(struct bsal_actor *actor, 
         store = *(int *)bsal_vector_at(&concrete_actor->consumers, i);
         entries = *(uint64_t *)bsal_vector_at(&store_entries, i);
 
-        printf("DEBUG controller actor/%d tells consumer actor/%d to reserve %" PRIu64 " buckets\n",
+        printf("DEBUG controller/%d tells consumer/%d to reserve %" PRIu64 " buckets\n",
                         name, store, entries);
 
         bsal_message_init(&new_message, BSAL_RESERVE,
@@ -697,7 +775,6 @@ void bsal_input_controller_create_stores(struct bsal_actor *actor, struct bsal_m
     void *buffer;
     int count;
     int i;
-    int j;
     struct bsal_input_controller *concrete_actor;
     int value;
     int spawner;
@@ -707,29 +784,8 @@ void bsal_input_controller_create_stores(struct bsal_actor *actor, struct bsal_m
     uint64_t entries;
     char *local_file;
     int name;
-    struct bsal_vector *vector;
-    struct bsal_mega_block *block;
 
     concrete_actor = (struct bsal_input_controller *)bsal_actor_concrete_actor(actor);
-
-    /* print megablocks
-     */
-
-    printf("DEBUG MEGA BLOCKS\n");
-    for (i = 0; i < bsal_vector_size(&concrete_actor->files); i++) {
-
-        vector = (struct bsal_vector *)bsal_map_get(&concrete_actor->mega_blocks, &i);
-
-        if (vector == NULL) {
-            continue;
-        }
-
-        for (j = 0; j < bsal_vector_size(vector); j++) {
-            block = (struct bsal_mega_block *)bsal_vector_at(vector, j);
-
-            bsal_mega_block_print(block);
-        }
-    }
 
     bsal_message_helper_get_all(message, &tag, &count, &buffer, &source);
 /*
@@ -788,7 +844,7 @@ void bsal_input_controller_create_stores(struct bsal_actor *actor, struct bsal_m
     for (i = 0; i < bsal_vector_size(&concrete_actor->consumers); i++) {
         value = bsal_vector_helper_at_as_int(&concrete_actor->consumers, i);
 
-        printf("DEBUG controller actor/%d: consumer %i is actor/%d\n",
+        printf("DEBUG controller/%d: consumer %i is actor/%d\n",
                         bsal_actor_name(actor), i, value);
     }
 
@@ -985,8 +1041,12 @@ void bsal_input_controller_receive_command(struct bsal_actor *actor, struct bsal
     bucket_for_consumer = (int *)bsal_vector_at(&concrete_actor->stream_consumers,
                     stream_index);
 
-    stream_name = *(int *)bsal_vector_at(&concrete_actor->counting_streams,
+    stream_name = bsal_actor_helper_get_acquaintance(actor, &concrete_actor->reading_streams,
                     stream_index);
+
+#ifdef BSAL_INPUT_CONTROLLER_DEBUG_COMMANDS
+    printf("DEBUG stream_index %d stream_name %d\n", stream_index, stream_name);
+#endif
 
     store_name = *(int *)bsal_vector_at(&concrete_actor->consumers, store_index);
     store_first = bsal_partition_command_store_first(&command);
@@ -1014,6 +1074,8 @@ void bsal_input_controller_receive_command(struct bsal_actor *actor, struct bsal
     printf("DEBUG bsal_input_controller_receive_command sending BSAL_INPUT_PUSH_SEQUENCES to %d (index %d)\n",
                     stream_name, stream_index);
     bsal_input_command_print(&input_command);
+
+    printf("SENDING COMMAND TO stream/%d\n", stream_name);
 #endif
 
     bsal_actor_send(actor, stream_name, &new_message);
@@ -1022,9 +1084,10 @@ void bsal_input_controller_receive_command(struct bsal_actor *actor, struct bsal
 
     command_name = bsal_partition_command_name(&command);
 
-    /*
-    printf("controller/%d processed input command %d\n", bsal_actor_name(actor), command_name);
-    */
+#ifdef BSAL_INPUT_CONTROLLER_DEBUG_COMMANDS
+    printf("controller/%d processed input command %d %p\n", bsal_actor_name(actor), command_name,
+                    (void *)bucket_for_command_name);
+#endif
 
     *bucket_for_command_name = command_name;
 
@@ -1039,4 +1102,116 @@ void bsal_input_controller_receive_command(struct bsal_actor *actor, struct bsal
     printf("DEBUG consumer # %d has %d active requests\n",
                         consumer_index, *bucket);
 #endif
+}
+
+void bsal_input_controller_spawn_streams(struct bsal_actor *actor, struct bsal_message *message)
+{
+    int spawner;
+    struct bsal_input_controller *concrete_actor;
+    struct bsal_vector_iterator iterator;
+    int i;
+    int j;
+    int block_index;
+    struct bsal_vector *vector;
+    struct bsal_mega_block *block;
+
+#ifdef BSAL_INPUT_CONTROLLER_DEBUG_READING_STREAMS
+    printf("DEBUG bsal_input_controller_spawn_streams\n");
+#endif
+
+    concrete_actor = (struct bsal_input_controller *)bsal_actor_concrete_actor(actor);
+    concrete_actor->opened_streams = 0;
+    concrete_actor->spawner = 0;
+
+    /* gather mega blocks
+     */
+
+    block_index = 0;
+    printf("DEBUG MEGA BLOCKS\n");
+    for (i = 0; i < bsal_vector_size(&concrete_actor->files); i++) {
+
+        vector = (struct bsal_vector *)bsal_map_get(&concrete_actor->mega_blocks, &i);
+
+        if (vector == NULL) {
+            continue;
+        }
+
+        for (j = 0; j < bsal_vector_size(vector); j++) {
+            block = (struct bsal_mega_block *)bsal_vector_at(vector, j);
+
+            printf("BLOCK # %d ", block_index);
+            block_index++;
+            bsal_mega_block_print(block);
+
+            bsal_vector_push_back(&concrete_actor->mega_block_vector, block);
+        }
+    }
+    printf("DEBUG MEGA BLOCKS (total: %d)\n", block_index);
+
+    bsal_vector_iterator_init(&iterator, &concrete_actor->mega_block_vector);
+
+    while (bsal_vector_iterator_has_next(&iterator)) {
+        bsal_vector_iterator_next(&iterator, NULL);
+        spawner = bsal_vector_helper_at_as_int(&concrete_actor->spawners, concrete_actor->spawner);
+
+        concrete_actor->spawner++;
+        concrete_actor->spawner %= bsal_vector_size(&concrete_actor->spawners);
+
+#ifdef BSAL_INPUT_CONTROLLER_DEBUG_READING_STREAMS
+        printf("DEBUG asking %d to spawn script %d\n", spawner, BSAL_INPUT_STREAM_SCRIPT);
+#endif
+
+        bsal_actor_helper_send_int(actor, spawner, BSAL_ACTOR_SPAWN, BSAL_INPUT_STREAM_SCRIPT);
+    }
+
+    bsal_vector_iterator_destroy(&iterator);
+
+    concrete_actor->state = BSAL_INPUT_CONTROLLER_STATE_SPAWN_READING_STREAMS;
+}
+
+void bsal_input_controller_set_offset_reply(struct bsal_actor *self, struct bsal_message *message)
+{
+    int stream_index;
+    int acquaintance_index;
+    int source;
+    int block_index;
+    struct bsal_mega_block *block;
+    struct bsal_input_controller *concrete_actor;
+    int file_index;
+    char *file_name;
+    char *new_buffer;
+    int new_count;
+    struct bsal_message new_message;
+
+    source = bsal_message_source(message);
+    acquaintance_index = bsal_actor_get_acquaintance_index(self, source);
+    concrete_actor = (struct bsal_input_controller *)bsal_actor_concrete_actor(self);
+    stream_index = bsal_vector_index_of(&concrete_actor->reading_streams, &acquaintance_index);
+
+    block_index = bsal_map_helper_get_int(&concrete_actor->assigned_blocks, &stream_index);
+
+#ifdef BSAL_INPUT_CONTROLLER_DEBUG_READING_STREAMS
+    printf("DEBUG got reply from stream/%d for offset, stream_index %d block_index %d\n", source,
+                    stream_index, block_index);
+#endif
+
+    block = (struct bsal_mega_block *)bsal_vector_at(&concrete_actor->mega_block_vector,
+                    block_index);
+
+    file_index = bsal_mega_block_get_file(block);
+    file_name = *(char **)bsal_vector_at(&concrete_actor->files, file_index);
+
+    new_count = sizeof(file_index) + strlen(file_name) + 1;
+
+    new_buffer = bsal_malloc(new_count);
+
+    memcpy(new_buffer, &file_index, sizeof(file_index));
+    memcpy(new_buffer + sizeof(file_index), file_name, strlen(file_name) + 1);
+
+    bsal_message_init(&new_message, BSAL_INPUT_OPEN, new_count, new_buffer);
+
+    bsal_actor_send_reply(self, &new_message);
+
+    bsal_message_destroy(&new_message);
+    bsal_free(new_buffer);
 }

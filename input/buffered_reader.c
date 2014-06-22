@@ -13,7 +13,8 @@
 #define BSAL_BUFFERED_READER_DEBUG
 */
 
-#define BSAL_BUFFERED_READER_BUFFER_SIZE 4194304
+#define BSAL_BUFFERED_READER_BUFFER_SIZE 1048576
+/*#define BSAL_BUFFERED_READER_BUFFER_SIZE 4194304*/
 
 void bsal_buffered_reader_init(struct bsal_buffered_reader *reader,
                 const char *file, uint64_t offset)
