@@ -15,7 +15,7 @@ struct bsal_fastq_input {
     char *buffer;
 };
 
-struct bsal_input_operations bsal_fastq_input_operations;
+extern struct bsal_input_operations bsal_fastq_input_operations;
 
 void bsal_fastq_input_init(struct bsal_input *input);
 void bsal_fastq_input_destroy(struct bsal_input *input);
