@@ -15,9 +15,12 @@ void bsal_timer_destroy(struct bsal_timer *self);
 void bsal_timer_start(struct bsal_timer *self);
 void bsal_timer_stop(struct bsal_timer *self);
 
-uint64_t bsal_timer_get_nanoseconds_from_clock();
+uint64_t bsal_timer_get_nanoseconds();
 uint64_t bsal_timer_get_elapsed_nanoseconds(struct bsal_timer *self);
 
 void bsal_timer_print(struct bsal_timer *self);
+
+uint64_t bsal_timer_get_nanoseconds_clock_gettime();
+uint64_t bsal_timer_get_nanoseconds_gettimeofday();
 
 #endif
