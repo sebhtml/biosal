@@ -10,7 +10,8 @@ struct argonnite {
     struct bsal_vector initial_actors;
     struct bsal_vector aggregators;
     struct bsal_vector kernels;
-    struct bsal_vector stores;
+    struct bsal_vector kmer_stores;
+    struct bsal_vector sequence_stores;
 
     struct bsal_vector worker_counts;
 
@@ -21,7 +22,8 @@ struct argonnite {
     int controller;
     int manager_for_kernels;
     int manager_for_aggregators;
-    int manager_for_stores;
+    int manager_for_kmer_stores;
+    int manager_for_sequence_stores;
     int argument_iterator;
 
     int block_size;

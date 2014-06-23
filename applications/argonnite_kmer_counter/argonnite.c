@@ -44,7 +44,8 @@ void argonnite_init(struct bsal_actor *actor)
     bsal_vector_init(&concrete_actor->initial_actors, sizeof(int));
     bsal_vector_init(&concrete_actor->kernels, sizeof(int));
     bsal_vector_init(&concrete_actor->aggregators, sizeof(int));
-    bsal_vector_init(&concrete_actor->stores, sizeof(int));
+    bsal_vector_init(&concrete_actor->kmer_stores, sizeof(int));
+    bsal_vector_init(&concrete_actor->sequence_stores, sizeof(int));
     bsal_vector_init(&concrete_actor->worker_counts, sizeof(int));
 
     bsal_actor_add_script(actor, BSAL_INPUT_CONTROLLER_SCRIPT,
@@ -85,7 +86,8 @@ void argonnite_destroy(struct bsal_actor *actor)
     bsal_vector_destroy(&concrete_actor->initial_actors);
     bsal_vector_destroy(&concrete_actor->kernels);
     bsal_vector_destroy(&concrete_actor->aggregators);
-    bsal_vector_destroy(&concrete_actor->stores);
+    bsal_vector_destroy(&concrete_actor->kmer_stores);
+    bsal_vector_destroy(&concrete_actor->sequence_stores);
     bsal_vector_destroy(&concrete_actor->worker_counts);
 }
 
@@ -116,8 +118,8 @@ void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message)
     int aggregator;
     int aggregator_index;
     int i;
-    int manager_for_stores;
-    struct bsal_vector stores;
+    int manager_for_kmer_stores;
+    struct bsal_vector kmer_stores;
     int spawner;
     int is_boss;
     uint64_t produced;
@@ -405,7 +407,7 @@ void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message)
 
         concrete_actor->configured_actors++;
 
-        if (concrete_actor->configured_actors == bsal_vector_size(&concrete_actor->stores)) {
+        if (concrete_actor->configured_actors == bsal_vector_size(&concrete_actor->kmer_stores)) {
             bsal_actor_helper_send_empty(actor, bsal_actor_get_acquaintance(actor,
                                     concrete_actor->controller), BSAL_INPUT_DISTRIBUTE);
 
@@ -450,27 +452,27 @@ void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message)
         }
     } else if (tag == BSAL_SET_BLOCK_SIZE_REPLY) {
 
-        manager_for_stores = bsal_actor_spawn(actor, BSAL_MANAGER_SCRIPT);
+        manager_for_kmer_stores = bsal_actor_spawn(actor, BSAL_MANAGER_SCRIPT);
 
-        concrete_actor->manager_for_stores = bsal_actor_get_acquaintance_index(actor, manager_for_stores);
+        concrete_actor->manager_for_kmer_stores = bsal_actor_get_acquaintance_index(actor, manager_for_kmer_stores);
 
 #ifdef ARGONNITE_DEBUG
-        printf("DEBUG manager_for_stores %d\n", concrete_actor->manager_for_stores);
+        printf("DEBUG manager_for_kmer_stores %d\n", concrete_actor->manager_for_kmer_stores);
 #endif
 
-        bsal_actor_helper_send_int(actor, manager_for_stores, BSAL_MANAGER_SET_SCRIPT,
+        bsal_actor_helper_send_int(actor, manager_for_kmer_stores, BSAL_MANAGER_SET_SCRIPT,
                         BSAL_KMER_STORE_SCRIPT);
 
     } else if (tag == BSAL_MANAGER_SET_SCRIPT_REPLY
                     && source == bsal_actor_get_acquaintance(actor,
-                            concrete_actor->manager_for_stores)) {
+                            concrete_actor->manager_for_kmer_stores)) {
 
         bsal_actor_helper_send_reply_int(actor, BSAL_MANAGER_SET_ACTORS_PER_WORKER,
                         1);
 
     } else if (tag == BSAL_MANAGER_SET_ACTORS_PER_WORKER_REPLY
                     && source == bsal_actor_get_acquaintance(actor,
-                            concrete_actor->manager_for_stores)) {
+                            concrete_actor->manager_for_kmer_stores)) {
 
         bsal_actor_helper_get_acquaintances(actor, &concrete_actor->initial_actors,
                         &spawners);
@@ -480,12 +482,12 @@ void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message)
 
     } else if (tag == BSAL_ACTOR_START_REPLY
                     && source == bsal_actor_get_acquaintance(actor,
-                            concrete_actor->manager_for_stores)) {
+                            concrete_actor->manager_for_kmer_stores)) {
 
         concrete_actor->spawned_stores = 1;
 
-        bsal_vector_unpack(&stores, buffer);
-        bsal_actor_helper_add_acquaintances(actor, &stores, &concrete_actor->stores);
+        bsal_vector_unpack(&kmer_stores, buffer);
+        bsal_actor_helper_add_acquaintances(actor, &kmer_stores, &concrete_actor->kmer_stores);
 
         concrete_actor->configured_aggregators = 0;
 
@@ -493,10 +495,10 @@ void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message)
                     &aggregators);
 
         bsal_actor_helper_send_range_vector(actor, &aggregators, BSAL_SET_CONSUMERS,
-                &stores);
+                &kmer_stores);
 
         bsal_vector_destroy(&aggregators);
-        bsal_vector_destroy(&stores);
+        bsal_vector_destroy(&kmer_stores);
 
     } else if (tag == BSAL_SET_CONSUMERS_REPLY) {
         /*
@@ -509,12 +511,12 @@ void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message)
 
             concrete_actor->configured_actors = 0;
 
-            bsal_actor_helper_get_acquaintances(actor, &concrete_actor->stores, &stores);
+            bsal_actor_helper_get_acquaintances(actor, &concrete_actor->kmer_stores, &kmer_stores);
 
-            bsal_actor_helper_send_range_int(actor, &stores, BSAL_SET_KMER_LENGTH,
+            bsal_actor_helper_send_range_int(actor, &kmer_stores, BSAL_SET_KMER_LENGTH,
                             concrete_actor->kmer_length);
 
-            bsal_vector_destroy(&stores);
+            bsal_vector_destroy(&kmer_stores);
         }
 
     } else if (tag == BSAL_SET_KMER_LENGTH_REPLY
@@ -522,20 +524,20 @@ void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message)
 
         concrete_actor->configured_actors++;
 
-        if (concrete_actor->configured_actors == bsal_vector_size(&concrete_actor->stores)) {
+        if (concrete_actor->configured_actors == bsal_vector_size(&concrete_actor->kmer_stores)) {
 
             concrete_actor->configured_actors = 0;
 
-            bsal_actor_helper_get_acquaintances(actor, &concrete_actor->stores, &stores);
+            bsal_actor_helper_get_acquaintances(actor, &concrete_actor->kmer_stores, &kmer_stores);
 
             distribution = bsal_actor_get_acquaintance(actor, concrete_actor->distribution);
 
             concrete_actor->wiring_distribution = 1;
 
-            bsal_actor_helper_send_range_int(actor, &stores, BSAL_SET_CONSUMER,
+            bsal_actor_helper_send_range_int(actor, &kmer_stores, BSAL_SET_CONSUMER,
                             distribution);
 
-            bsal_vector_destroy(&stores);
+            bsal_vector_destroy(&kmer_stores);
         }
 
     } else if (tag == BSAL_INPUT_DISTRIBUTE_REPLY) {
@@ -570,7 +572,7 @@ void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message)
         bsal_message_helper_unpack_uint64_t(message, 0, &produced);
         concrete_actor->actual_kmers += produced;
 
-        if (concrete_actor->ready_stores == bsal_vector_size(&concrete_actor->stores)) {
+        if (concrete_actor->ready_stores == bsal_vector_size(&concrete_actor->kmer_stores)) {
 
             if (concrete_actor->actual_kmers == concrete_actor->total_kmers) {
 
@@ -578,12 +580,12 @@ void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message)
                                 name, concrete_actor->actual_kmers, concrete_actor->total_kmers);
 
                 distribution = bsal_actor_get_acquaintance(actor, concrete_actor->distribution);
-                bsal_actor_helper_get_acquaintances(actor, &concrete_actor->stores, &stores);
+                bsal_actor_helper_get_acquaintances(actor, &concrete_actor->kmer_stores, &kmer_stores);
 
-                bsal_actor_helper_send_int(actor, distribution, BSAL_SET_EXPECTED_MESSAGES, bsal_vector_size(&stores));
+                bsal_actor_helper_send_int(actor, distribution, BSAL_SET_EXPECTED_MESSAGES, bsal_vector_size(&kmer_stores));
 
-                bsal_actor_helper_send_range_empty(actor, &stores, BSAL_PUSH_DATA);
-                bsal_vector_destroy(&stores);
+                bsal_actor_helper_send_range_empty(actor, &kmer_stores, BSAL_PUSH_DATA);
+                bsal_vector_destroy(&kmer_stores);
 
             } else {
 
@@ -604,13 +606,13 @@ void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message)
 
         /* ask all stores how many kmers they have
          */
-        bsal_actor_helper_get_acquaintances(actor, &concrete_actor->stores, &stores);
+        bsal_actor_helper_get_acquaintances(actor, &concrete_actor->kmer_stores, &kmer_stores);
 
-        bsal_actor_helper_send_range_empty(actor, &stores, BSAL_STORE_GET_ENTRY_COUNT);
+        bsal_actor_helper_send_range_empty(actor, &kmer_stores, BSAL_STORE_GET_ENTRY_COUNT);
 
         concrete_actor->ready_stores = 0;
         concrete_actor->actual_kmers = 0;
-        bsal_vector_destroy(&stores);
+        bsal_vector_destroy(&kmer_stores);
         bsal_vector_destroy(&aggregators);
 
     } else if (tag == BSAL_SET_EXPECTED_MESSAGES_REPLY) {
