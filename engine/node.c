@@ -114,7 +114,7 @@ void bsal_node_init(struct bsal_node *node, int *argc, char ***argv)
             node->print_load = 1;
         } else if (strcmp(argument, "-print-structure") == 0) {
             node->print_structure = 1;
-        } else if (strcmp(argument, "-print-memory-usage")) {
+        } else if (strcmp(argument, "-print-memory-usage") == 0) {
             node->print_memory_usage = 1;
         }
     }

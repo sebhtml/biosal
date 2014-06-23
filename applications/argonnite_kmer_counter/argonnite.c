@@ -27,6 +27,9 @@
 
 #define ARGONNITE_DEFAULT_KMER_LENGTH 41
 
+#define ARGONNITE_STATE_NONE 0
+#define ARGONNITE_STATE_PREPARE_SEQUENCE_STORES 1
+
 struct bsal_script argonnite_script = {
     .name = ARGONNITE_SCRIPT,
     .init = argonnite_init,
@@ -75,6 +78,13 @@ void argonnite_init(struct bsal_actor *actor)
 
     concrete_actor->ready_kernels = 0;
     concrete_actor->total_kmers = 0;
+
+    bsal_actor_register(actor, ARGONNITE_PREPARE_SEQUENCE_STORES,
+                    argonnite_prepare_sequence_stores);
+    bsal_actor_register(actor, ARGONNITE_PREPARE_SEQUENCE_STORES_REPLY,
+                    argonnite_prepare_sequence_stores_reply);
+
+    concrete_actor->state = ARGONNITE_STATE_NONE;
 }
 
 void argonnite_destroy(struct bsal_actor *actor)
@@ -224,6 +234,11 @@ void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message)
 
     } else if (tag == BSAL_ACTOR_SPAWN_REPLY) {
 
+        if (concrete_actor->state == ARGONNITE_STATE_PREPARE_SEQUENCE_STORES) {
+            argonnite_prepare_sequence_stores(actor, message);
+            return;
+        }
+
         bsal_message_helper_unpack_int(message, 0, &distribution);
 
         concrete_actor->distribution = bsal_actor_get_acquaintance_index(actor, distribution);
@@ -231,6 +246,12 @@ void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message)
         manager_for_kernels = bsal_actor_get_acquaintance(actor, concrete_actor->manager_for_kernels);
         bsal_actor_helper_send_int(actor, manager_for_kernels, BSAL_MANAGER_SET_SCRIPT,
                         BSAL_KMER_COUNTER_KERNEL_SCRIPT);
+
+    } else if (tag == BSAL_MANAGER_SET_SCRIPT_REPLY
+                    && source == bsal_actor_get_acquaintance(actor,
+                            concrete_actor->manager_for_sequence_stores)) {
+    
+        argonnite_prepare_sequence_stores(actor, message);
 
     } else if (tag == BSAL_MANAGER_SET_SCRIPT_REPLY
                     && source == bsal_actor_get_acquaintance(actor,
@@ -255,6 +276,12 @@ void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message)
          * these will be the customers of the controller
          */
         bsal_vector_destroy(&spawners);
+
+    } else if (tag == BSAL_ACTOR_START_REPLY
+                    && source == bsal_actor_get_acquaintance(actor,
+                            concrete_actor->manager_for_sequence_stores)) {
+
+        argonnite_prepare_sequence_stores(actor, message);
 
     } else if (tag == BSAL_ACTOR_START_REPLY
                     && source == bsal_actor_get_acquaintance(actor,
@@ -408,11 +435,11 @@ void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message)
         concrete_actor->configured_actors++;
 
         if (concrete_actor->configured_actors == bsal_vector_size(&concrete_actor->kmer_stores)) {
-            bsal_actor_helper_send_empty(actor, bsal_actor_get_acquaintance(actor,
-                                    concrete_actor->controller), BSAL_INPUT_DISTRIBUTE);
 
+            bsal_actor_helper_send_to_self_empty(actor, ARGONNITE_PREPARE_SEQUENCE_STORES);
             concrete_actor->wiring_distribution = 0;
         }
+
 
     } else if (tag == BSAL_SET_CONSUMER_REPLY) {
 
@@ -710,4 +737,61 @@ void argonnite_help(struct bsal_actor *actor)
     printf(" GPIC.1424-6.1371_2.fastq \\\n");
     printf(" GPIC.1424-7.1371_1.fastq \\\n");
     printf(" GPIC.1424-7.1371_2.fastq\n");
+}
+
+void argonnite_prepare_sequence_stores(struct bsal_actor *self, struct bsal_message *message)
+{
+    int tag;
+    struct argonnite *concrete_actor;
+    int spawner;
+    int manager_for_sequence_stores;
+    struct bsal_vector spawners;
+    struct bsal_vector stores;
+    void *buffer;
+
+    concrete_actor = (struct argonnite *)bsal_actor_concrete_actor(self);
+
+    concrete_actor->state = ARGONNITE_STATE_PREPARE_SEQUENCE_STORES;
+
+    tag = bsal_message_tag(message);
+    buffer = bsal_message_buffer(message);
+
+    if (tag == ARGONNITE_PREPARE_SEQUENCE_STORES) {
+
+        spawner = bsal_actor_helper_get_acquaintance(self, &concrete_actor->initial_actors,
+                        bsal_vector_size(&concrete_actor->initial_actors) - 1);
+        bsal_actor_helper_send_int(self, spawner, BSAL_ACTOR_SPAWN, BSAL_MANAGER_SCRIPT);
+        
+    } else if (tag == BSAL_ACTOR_SPAWN_REPLY) {
+    
+        bsal_message_helper_unpack_int(message, 0, &manager_for_sequence_stores);
+        concrete_actor->manager_for_sequence_stores = bsal_actor_add_acquaintance(self, manager_for_sequence_stores);
+
+        bsal_actor_helper_send_int(self, manager_for_sequence_stores, BSAL_MANAGER_SET_SCRIPT, BSAL_SEQUENCE_STORE_SCRIPT);
+
+    } else if (tag == BSAL_MANAGER_SET_SCRIPT_REPLY) {
+    
+        bsal_actor_helper_get_acquaintances(self, &concrete_actor->initial_actors, &spawners);
+
+        bsal_actor_helper_send_reply_vector(self, BSAL_ACTOR_START, &spawners);
+        bsal_vector_destroy(&spawners);
+
+    } else if (tag == BSAL_ACTOR_START_REPLY) {
+
+        bsal_vector_unpack(&stores, buffer);
+
+        bsal_actor_helper_add_acquaintances(self, &stores, &concrete_actor->sequence_stores);
+        bsal_actor_helper_send_to_self_empty(self, ARGONNITE_PREPARE_SEQUENCE_STORES_REPLY);
+
+        bsal_vector_destroy(&stores);
+    }
+}
+
+void argonnite_prepare_sequence_stores_reply(struct bsal_actor *self, struct bsal_message *message)
+{
+    struct argonnite *concrete_actor;
+
+    concrete_actor = (struct argonnite *)bsal_actor_concrete_actor(self);
+    bsal_actor_helper_send_empty(self, bsal_actor_get_acquaintance(self,
+                                    concrete_actor->controller), BSAL_INPUT_DISTRIBUTE);
 }

@@ -31,9 +31,9 @@ void bsal_sequence_store_init(struct bsal_actor *actor)
     concrete_actor = (struct bsal_sequence_store *)bsal_actor_concrete_actor(actor);
     bsal_vector_init(&concrete_actor->sequences, sizeof(struct bsal_dna_sequence));
 
-#ifdef BSAL_SEQUENCE_STORE_DEBUG
-    printf("DEBUG bsal_sequence_store_init name %d\n",
+    printf("DEBUG sequence store %d is online\n",
                     bsal_actor_name(actor));
+#ifdef BSAL_SEQUENCE_STORE_DEBUG
 #endif
 
     concrete_actor->received = 0;
