@@ -687,6 +687,8 @@ void argonnite_help(struct bsal_actor *actor)
                     ARGONNITE_DEFAULT_KMER_LENGTH);
     printf("-o output                           output (default: %s)\n", BSAL_COVERAGE_DISTRIBUTION_DEFAULT_OUTPUT);
     printf("-print-counters                     print node-level biosal counters\n");
+    printf("-print-load                         print load\n");
+    printf("-print-memory-usage                 print memory usage\n");
     printf("\n");
 
     printf("Example\n");

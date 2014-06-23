@@ -15,7 +15,12 @@
 
 #include <unistd.h>
 
+#include <inttypes.h>
+
 /* options */
+/*
+#define BSAL_NODE_DEBUG_ACTOR_COUNTERS
+*/
 #define BSAL_NODE_REUSE_DEAD_INDICES
 
 /* debugging options */
@@ -56,10 +61,10 @@ void bsal_node_init(struct bsal_node *node, int *argc, char ***argv)
     int detected;
     int bytes;
     int actor_capacity;
+    char *argument;
 
     node->print_load = 0;
     node->print_structure = 0;
-    node->last_load_report_time = time(NULL);
 
     bsal_node_global_self = node;
 
@@ -85,7 +90,7 @@ void bsal_node_init(struct bsal_node *node, int *argc, char ***argv)
     threads = 1;
 
     node->threads = threads;
-
+    node->print_memory_usage = 0;
     node->argc = *argc;
     node->argv = *argv;
 
@@ -102,12 +107,15 @@ void bsal_node_init(struct bsal_node *node, int *argc, char ***argv)
     MPI_Comm_size(node->comm, &nodes);
 
     for (i = 0; i < node->argc; i++) {
-        if (strcmp(node->argv[i], "-print-counters") == 0) {
+        argument = node->argv[i];
+        if (strcmp(argument, "-print-counters") == 0) {
             node->print_counters = 1;
-        } else if (strcmp(node->argv[i], "-print-load") == 0) {
+        } else if (strcmp(argument, "-print-load") == 0) {
             node->print_load = 1;
-        } else if (strcmp(node->argv[i], "-print-structure") == 0) {
+        } else if (strcmp(argument, "-print-structure") == 0) {
             node->print_structure = 1;
+        } else if (strcmp(argument, "-print-memory-usage")) {
+            node->print_memory_usage = 1;
         }
     }
 
@@ -268,6 +276,9 @@ void bsal_node_init(struct bsal_node *node, int *argc, char ***argv)
     /* register signal handlers
      */
     bsal_node_register_signal_handlers(node);
+
+    node->start_time = time(NULL);
+    node->last_report_time = node->start_time;
 }
 
 void bsal_node_destroy(struct bsal_node *node)
@@ -710,18 +721,32 @@ void bsal_node_run_loop(struct bsal_node *node)
     int ticks;
     clock_t current_time;
     int period;
+    char print_information = 0;
+
+    if (node->print_load || node->print_memory_usage) {
+        print_information = 1;
+    }
 
     period = 10;
     ticks = 0;
 
     while (bsal_node_running(node)) {
 
-        if (node->print_load) {
+        if (print_information) {
             current_time = time(NULL);
 
-            if (current_time - node->last_load_report_time >= period) {
-                bsal_worker_pool_print_load(&node->worker_pool);
-                node->last_load_report_time = current_time;
+            if (current_time - node->last_report_time >= period) {
+                if (node->print_load) {
+                    bsal_worker_pool_print_load(&node->worker_pool);
+                }
+
+                if (node->print_memory_usage) {
+                    printf("MEMORY %d s node/%d %" PRIu64 " bytes\n",
+                                    (int)(current_time - node->start_time),
+                                    bsal_node_name(node),
+                                    bsal_get_heap_size());
+                }
+                node->last_report_time = current_time;
             }
         }
 

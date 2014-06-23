@@ -84,12 +84,13 @@ struct bsal_node {
 
     struct bsal_counter counter;
 
-    int print_counters;
-
     struct sigaction action;
 
-    clock_t last_load_report_time;
-    int print_load;
+    time_t start_time;
+    time_t last_report_time;
+    char print_load;
+    char print_memory_usage;
+    char print_counters;
 };
 
 void bsal_node_init(struct bsal_node *node, int *argc, char ***argv);
