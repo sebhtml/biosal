@@ -98,8 +98,16 @@ void bsal_worker_run(struct bsal_worker *worker)
             worker->epoch_load = (0.0 + worker->epoch_used_nanoseconds) / elapsed_nanoseconds;
             worker->loop_load = (0.0 + worker->loop_used_nanoseconds) / elapsed_from_start;
 
+            /* \see http://stackoverflow.com/questions/9657993/negative-zero-in-c
+             */
+            if (worker->epoch_load == 0) {
+                worker->epoch_load = 0;
+            }
+            if (worker->loop_load == 0) {
+                worker->loop_load = 0;
+            }
             worker->epoch_used_nanoseconds = 0;
-            worker->epoch_start_in_nanoseconds = bsal_timer_get_nanoseconds();
+            worker->epoch_start_in_nanoseconds = current_nanoseconds;
             worker->last_report = current_time;
         }
     }
