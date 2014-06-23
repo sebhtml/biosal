@@ -119,6 +119,8 @@ void bsal_input_controller_init(struct bsal_actor *actor)
     controller->ready_spawners = 0;
     controller->ready_consumers = 0;
     controller->partitioner = -1;
+
+    controller->counted = 0;
 }
 
 void bsal_input_controller_destroy(struct bsal_actor *actor)
