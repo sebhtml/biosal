@@ -185,7 +185,7 @@ void bsal_aggregator_receive(struct bsal_actor *self, struct bsal_message *messa
         source_index = bsal_dna_kmer_block_source_index(&block);
 
         if (concrete_actor->last == 0
-                        || concrete_actor->received > concrete_actor->last + 1000) {
+                        || concrete_actor->received >= concrete_actor->last + 1000) {
 
             printf("aggregator/%d received %" PRIu64 " kernel outputs so far\n",
                             bsal_actor_name(self),

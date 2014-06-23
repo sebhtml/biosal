@@ -19,6 +19,7 @@ struct bsal_kmer_store {
     int customer;
 
     uint64_t received;
+    uint64_t last_received;
 };
 
 #define BSAL_PUSH_KMER_BLOCK 0x00004f09

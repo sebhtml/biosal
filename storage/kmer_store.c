@@ -39,6 +39,8 @@ void bsal_kmer_store_init(struct bsal_actor *self)
     concrete_actor->received = 0;
 
     bsal_dna_codec_init(&concrete_actor->codec);
+
+    concrete_actor->last_received = 0;
 }
 
 void bsal_kmer_store_destroy(struct bsal_actor *self)
@@ -69,6 +71,7 @@ void bsal_kmer_store_receive(struct bsal_actor *self, struct bsal_message *messa
     struct bsal_dna_kmer *kmer_pointer;
     int *bucket;
     int customer;
+    int period;
 
 #ifdef BSAL_KMER_STORE_DEBUG
     int name;
@@ -91,7 +94,7 @@ void bsal_kmer_store_receive(struct bsal_actor *self, struct bsal_message *messa
 
 #ifdef BSAL_KMER_STORE_DEBUG
         name = bsal_actor_name(self);
-        printf("kmer store actor/%d will use %d bytes for keys (k is %d)\n",
+        printf("kmer store actor/%d will use %d bytes for canonical kmers (k is %d)\n",
                         name, concrete_actor->key_length_in_bytes,
                         concrete_actor->kmer_length);
 #endif
@@ -117,6 +120,8 @@ void bsal_kmer_store_receive(struct bsal_actor *self, struct bsal_message *messa
         kmers = bsal_dna_kmer_block_kmers(&block);
         bsal_vector_iterator_init(&iterator, kmers);
 
+        period = 250000;
+
         while (bsal_vector_iterator_has_next(&iterator)) {
 
             /*
@@ -138,6 +143,15 @@ void bsal_kmer_store_receive(struct bsal_actor *self, struct bsal_message *messa
 
             (*bucket)++;
 
+            if (concrete_actor->received >= concrete_actor->last_received + period) {
+                printf("store/%d received %" PRIu64 " kmers so far,"
+                                " store has %" PRIu64 " canonical kmers, %" PRIu64 " kmers\n",
+                                bsal_actor_name(self), concrete_actor->received,
+                                bsal_map_size(&concrete_actor->table),
+                                2 * bsal_map_size(&concrete_actor->table));
+
+                concrete_actor->last_received = concrete_actor->received;
+            }
             concrete_actor->received++;
         }
 
@@ -263,7 +277,7 @@ void bsal_kmer_store_push_data(struct bsal_actor *self, struct bsal_message *mes
 
     bsal_map_init(&coverage_distribution, sizeof(int), sizeof(uint64_t));
 
-    printf("store actor/%d: local table has %" PRIu64" keys (%" PRIu64 " kmers)\n",
+    printf("store actor/%d: local table has %" PRIu64" canonical kmers (%" PRIu64 " kmers)\n",
                     name, bsal_map_size(&concrete_actor->table),
                     2 * bsal_map_size(&concrete_actor->table));
 #ifdef BSAL_KMER_STORE_DEBUG
