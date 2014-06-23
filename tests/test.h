@@ -5,9 +5,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-    /*#ifdef(__GNUC__) \ */
-    /*#endif \ */
-
 #define BEGIN_TESTS() \
     int correct_tests; \
     int incorrect_tests; \

@@ -1,13 +1,16 @@
 
 #include "tracer.h"
 
-#ifdef __GNUC__
+/* The Blue Gene/Q uses the GNU C Library
+ */
+#if defined(__GNUC__) || defined(__bgq__)
 
 /*
  * GNU glibc has a strack backtrace generator built in
  * \see http://www.gnu.org/software/libc/manual/html_node/Backtraces.html
  */
 #define BSAL_TRACER_AVAILABLE
+
 #endif
 
 #ifdef BSAL_TRACER_AVAILABLE
@@ -22,6 +25,8 @@
 
 void bsal_tracer_print_stack_backtrace()
 {
+    printf("bsal_tracer_print_stack_backtrace\n");
+
 #ifdef BSAL_TRACER_AVAILABLE
     void* trace_pointers[BSAL_TRACER_STACK_DEPTH];
     int count;
