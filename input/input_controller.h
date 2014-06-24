@@ -78,5 +78,6 @@ void bsal_input_controller_receive_command(struct bsal_actor *actor, struct bsal
 
 void bsal_input_controller_spawn_streams(struct bsal_actor *actor, struct bsal_message *message);
 void bsal_input_controller_set_offset_reply(struct bsal_actor *self, struct bsal_message *message);
+void bsal_input_controller_verify_requests(struct bsal_actor *self, struct bsal_message *message);
 
 #endif

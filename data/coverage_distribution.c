@@ -78,8 +78,6 @@ void bsal_coverage_distribution_receive(struct bsal_actor *self, struct bsal_mes
 
         bsal_map_iterator_init(&iterator, &map);
 
-        printf("distribution/%d receives coverage data from producer/%d, %d entries / %d bytes\n",
-                        name, source, (int)bsal_map_size(&map), count);
 
         while (bsal_map_iterator_has_next(&iterator)) {
 
@@ -104,11 +102,13 @@ void bsal_coverage_distribution_receive(struct bsal_actor *self, struct bsal_mes
 
         bsal_map_iterator_destroy(&iterator);
 
-        bsal_map_destroy(&map);
-
         bsal_actor_helper_send_reply_empty(self, BSAL_PUSH_DATA_REPLY);
 
         concrete_actor->actual++;
+
+        printf("distribution/%d receives coverage data from producer/%d, %d entries / %d bytes %d/%d\n",
+                        name, source, (int)bsal_map_size(&map), count,
+                        concrete_actor->actual, concrete_actor->expected);
 
         if (concrete_actor->expected != 0 && concrete_actor->expected == concrete_actor->actual) {
 
@@ -118,6 +118,9 @@ void bsal_coverage_distribution_receive(struct bsal_actor *self, struct bsal_mes
 
             bsal_actor_helper_send_to_supervisor_empty(self, BSAL_SET_EXPECTED_MESSAGES_REPLY);
         }
+
+        bsal_map_destroy(&map);
+
     } else if (tag == BSAL_ACTOR_ASK_TO_STOP) {
 
         bsal_map_iterator_init(&iterator, &concrete_actor->distribution);
@@ -143,6 +146,10 @@ void bsal_coverage_distribution_receive(struct bsal_actor *self, struct bsal_mes
     } else if (tag == BSAL_SET_EXPECTED_MESSAGES) {
 
         bsal_message_helper_unpack_int(message, 0, &concrete_actor->expected);
+
+        printf("distribution %d expects %d messages\n",
+                        bsal_actor_name(self),
+                        concrete_actor->expected);
     }
 }
 

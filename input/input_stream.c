@@ -498,8 +498,7 @@ void bsal_input_stream_push_sequences(struct bsal_actor *actor,
         bsal_dna_sequence_init(&dna_sequence, buffer_for_sequence,
                         &concrete_actor->codec);
 
-        bsal_vector_push_back(command_entries,
-                        &dna_sequence);
+        bsal_input_command_add_entry(&command, &dna_sequence, &concrete_actor->codec);
 
         i++;
     }

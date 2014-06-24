@@ -228,3 +228,17 @@ int bsal_input_command_entry_count(struct bsal_input_command *self)
 {
     return bsal_vector_size(&self->entries);
 }
+
+void bsal_input_command_add_entry(struct bsal_input_command *self,
+                struct bsal_dna_sequence *sequence,
+                struct bsal_dna_codec *codec)
+{
+    struct bsal_vector *entries;
+    struct bsal_dna_sequence copy;
+
+    entries = bsal_input_command_entries(self);
+
+    bsal_dna_sequence_init_copy(&copy,
+                sequence, codec);
+    bsal_vector_push_back(entries, &copy);
+}

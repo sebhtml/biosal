@@ -189,9 +189,9 @@ void bsal_dna_kmer_counter_kernel_director_receive(struct bsal_actor *actor, str
 
         aggregator = bsal_actor_get_acquaintance(actor, concrete_actor->aggregator);
 
-        bsal_actor_helper_send_reply_int(actor, BSAL_SET_CONSUMER, aggregator);
+        bsal_actor_helper_send_reply_int(actor, BSAL_ACTOR_SET_CONSUMER, aggregator);
 
-    } else if (tag == BSAL_SET_CONSUMER_REPLY) {
+    } else if (tag == BSAL_ACTOR_SET_CONSUMER_REPLY) {
 
         bsal_actor_helper_send_to_self_int(actor, BSAL_SPAWN_KERNEL_REPLY, source);
 
@@ -245,13 +245,13 @@ void bsal_dna_kmer_counter_kernel_director_receive(struct bsal_actor *actor, str
         printf("DEBUG %d is now dead.\n", bsal_actor_name(actor));
 #endif
 
-    } else if (tag == BSAL_SET_CONSUMER) {
+    } else if (tag == BSAL_ACTOR_SET_CONSUMER) {
 
         bsal_message_helper_unpack_int(message, 0, &aggregator);
 
         concrete_actor->aggregator = bsal_actor_add_acquaintance(actor, aggregator);
 
-        bsal_actor_helper_send_reply_empty(actor, BSAL_SET_CONSUMER_REPLY);
+        bsal_actor_helper_send_reply_empty(actor, BSAL_ACTOR_SET_CONSUMER_REPLY);
 
     } else if (tag == BSAL_KERNEL_DIRECTOR_NOTIFY) {
 

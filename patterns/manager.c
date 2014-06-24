@@ -279,6 +279,8 @@ void bsal_manager_receive(struct bsal_actor *actor, struct bsal_message *message
 
     } else if (tag == BSAL_ACTOR_ASK_TO_STOP) {
 
+        printf("manager %d dies\n", bsal_actor_name(actor));
+
         bsal_actor_helper_ask_to_stop(actor, message);
 
     } else if (tag == BSAL_MANAGER_SET_ACTORS_PER_WORKER) {

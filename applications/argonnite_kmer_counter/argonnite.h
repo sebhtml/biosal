@@ -43,9 +43,8 @@ struct argonnite {
 
 extern struct bsal_script argonnite_script;
 
-#define ARGONNITE_PROBE_STORES 0x00001ba7
+#define ARGONNITE_PROBE_KMER_STORES 0x00001ba7
 #define ARGONNITE_PREPARE_SEQUENCE_STORES 0x00003264
-#define ARGONNITE_PREPARE_SEQUENCE_STORES_REPLY 0x0000081c
 
 void argonnite_init(struct bsal_actor *actor);
 void argonnite_destroy(struct bsal_actor *actor);
@@ -56,5 +55,6 @@ void argonnite_help(struct bsal_actor *actor);
 
 void argonnite_prepare_sequence_stores_reply(struct bsal_actor *self, struct bsal_message *message);
 void argonnite_prepare_sequence_stores(struct bsal_actor *self, struct bsal_message *message);
+void argonnite_connect_kernels_with_stores(struct bsal_actor *self, struct bsal_message *message);
 
 #endif

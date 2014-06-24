@@ -26,18 +26,18 @@
 
 /*
  * enable 2-bit encoding
- */
 #define BSAL_DNA_CODEC_USE_TWO_BIT_ENCODING_DEFAULT
+ */
 
 /*
  * use block encoder (faster)
- */
 #define BSAL_DNA_CODEC_USE_TWO_BIT_BLOCK_ENCODER
+ */
 
 /*
  * use block decoder (faster)
- */
 #define BSAL_DNA_CODEC_USE_TWO_BIT_BLOCK_DECODER
+ */
 
 /*
 */

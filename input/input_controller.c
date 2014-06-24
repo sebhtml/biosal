@@ -617,8 +617,8 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
 
         bsal_actor_helper_ask_to_stop(actor, message);
 
+        printf("DEBUG controller %d dies\n", name);
 #ifdef BSAL_INPUT_CONTROLLER_DEBUG
-        printf("DEBUG controller actor/%d dies\n", name);
 #endif
 
     } else if (tag == BSAL_INPUT_CONTROLLER_CREATE_PARTITION && source == name) {
@@ -653,7 +653,7 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
                                 concrete_actor->partitioner),
                         BSAL_ACTOR_ASK_TO_STOP);
 
-        bsal_actor_helper_send_to_supervisor_empty(actor, BSAL_INPUT_DISTRIBUTE_REPLY);
+        bsal_input_controller_verify_requests(actor, message);
 
     } else if (tag == BSAL_SEQUENCE_PARTITIONER_PROVIDE_STORE_ENTRY_COUNTS) {
 
@@ -664,6 +664,7 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
 
         if (concrete_actor->ready_consumers == bsal_vector_size(&concrete_actor->consumers)) {
 
+            concrete_actor->ready_consumers = 0;
             printf("DEBUG all consumers are ready\n");
             bsal_actor_helper_send_empty(actor,
                             bsal_actor_get_acquaintance(actor, concrete_actor->partitioner),
@@ -701,12 +702,15 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
 
         (*bucket_for_requests)--;
 
+        bsal_input_controller_verify_requests(actor, message);
+
 #ifdef BSAL_INPUT_CONTROLLER_DEBUG_CONSUMERS
         printf("DEBUG consumer # %d has %d active requests\n",
                         consumer_index, *bucket_for_requests);
 #endif
 
-    } else if (tag == BSAL_SET_CONSUMERS) {
+
+    } else if (tag == BSAL_ACTOR_SET_CONSUMERS) {
 
         bsal_vector_unpack(&concrete_actor->consumers, buffer);
         printf("controller actor/%d receives %d consumers\n",
@@ -721,12 +725,21 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
         bsal_vector_helper_print_int(&concrete_actor->consumers);
         printf("\n");
 #endif
-        bsal_actor_helper_send_reply_empty(actor, BSAL_SET_CONSUMERS_REPLY);
+        bsal_actor_helper_send_reply_empty(actor, BSAL_ACTOR_SET_CONSUMERS_REPLY);
 
     } else if (tag == BSAL_SET_BLOCK_SIZE) {
 
         bsal_message_helper_unpack_int(message, 0, &concrete_actor->block_size);
         bsal_actor_helper_send_reply_empty(actor, BSAL_SET_BLOCK_SIZE_REPLY);
+
+    } else if (tag == BSAL_SEQUENCE_STORE_READY) {
+
+        concrete_actor->ready_consumers++;
+
+        if (concrete_actor->ready_consumers == bsal_vector_size(&concrete_actor->consumers)) {
+            concrete_actor->ready_consumers = 0;
+            bsal_actor_helper_send_to_supervisor_empty(actor, BSAL_INPUT_DISTRIBUTE_REPLY);
+        }
     }
 }
 
@@ -1217,4 +1230,23 @@ void bsal_input_controller_set_offset_reply(struct bsal_actor *self, struct bsal
 
     bsal_message_destroy(&new_message);
     bsal_free(new_buffer);
+}
+
+void bsal_input_controller_verify_requests(struct bsal_actor *self, struct bsal_message *message)
+{
+    struct bsal_input_controller *concrete_actor;
+    int i;
+    int active;
+
+    active = 0;
+    concrete_actor = (struct bsal_input_controller *)bsal_actor_concrete_actor(self);
+
+    for (i = 0; i < bsal_vector_size(&concrete_actor->consumer_active_requests); i++) {
+        if (bsal_vector_helper_at_as_int(&concrete_actor->consumer_active_requests, i) != 0) {
+            active++;
+        }
+    }
+
+    if (active == 0) {
+    }
 }

@@ -1,10 +1,11 @@
 
 #include "dna_kmer_counter_kernel.h"
 
+#include <storage/sequence_store.h>
+
 #include <data/dna_kmer.h>
 #include <data/dna_kmer_block.h>
 #include <data/dna_sequence.h>
-#include <storage/sequence_store.h>
 #include <input/input_command.h>
 
 #include <helpers/actor_helper.h>
@@ -52,7 +53,9 @@ void bsal_dna_kmer_counter_kernel_init(struct bsal_actor *actor)
     concrete_actor->blocks = 0;
 
     concrete_actor->kmer_length = -1;
-    concrete_actor->customer = -1;
+    concrete_actor->consumer = -1;
+    concrete_actor->producer = -1;
+    concrete_actor->producer_source =-1;
 
     concrete_actor->notified = 0;
     concrete_actor->notification_source = 0;
@@ -68,7 +71,9 @@ void bsal_dna_kmer_counter_kernel_destroy(struct bsal_actor *actor)
 
     concrete_actor = (struct bsal_dna_kmer_counter_kernel *)bsal_actor_concrete_actor(actor);
 
-    concrete_actor->customer = 0;
+    concrete_actor->consumer = -1;
+    concrete_actor->producer = -1;
+    concrete_actor->producer_source =-1;
 
     bsal_dna_codec_destroy(&concrete_actor->codec);
 }
@@ -84,7 +89,7 @@ void bsal_dna_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_
     int entries;
     struct bsal_dna_kmer_counter_kernel *concrete_actor;
     int source_index;
-    int customer;
+    int consumer;
     int i;
     struct bsal_dna_sequence *sequence;
     char *sequence_data;
@@ -95,17 +100,15 @@ void bsal_dna_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_
     struct bsal_message new_message;
     int j;
     int limit;
+    int count;
     char saved;
     struct bsal_timer timer;
     struct bsal_dna_kmer_block block;
     int to_reserve;
     int maximum_length;
-
-#ifdef BSAL_KMER_COUNTER_KERNEL_DEBUG
-    int count;
+    int producer;
 
     count = bsal_message_count(message);
-#endif
 
     concrete_actor = (struct bsal_dna_kmer_counter_kernel *)bsal_actor_concrete_actor(actor);
     tag = bsal_message_tag(message);
@@ -120,15 +123,15 @@ void bsal_dna_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_
             return;
         }
 
-        if (concrete_actor->customer == -1) {
-            printf("Error no customer set in kernel\n");
+        if (concrete_actor->consumer == -1) {
+            printf("Error no consumer set in kernel\n");
             return;
         }
 
         bsal_timer_init(&timer);
         bsal_timer_start(&timer);
 
-        customer = bsal_actor_get_acquaintance(actor, concrete_actor->customer);
+        consumer = bsal_actor_get_acquaintance(actor, concrete_actor->consumer);
         source_index = bsal_actor_add_acquaintance(actor, source);
 
         bsal_input_command_unpack(&payload, buffer);
@@ -137,6 +140,9 @@ void bsal_dna_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_
 
         entries = bsal_vector_size(command_entries);
 
+        if (entries == 0) {
+            printf("Error: kernel received empty payload...\n");
+        }
 #ifdef BSAL_KMER_COUNTER_KERNEL_DEBUG
         printf("DEBUG kernel receives %d entries (%d bytes), kmer length: %d, bytes per object: %d\n",
                         entries, count, concrete_actor->kmer_length,
@@ -214,13 +220,13 @@ void bsal_dna_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_
         bsal_input_command_destroy(&payload);
 
 #ifdef BSAL_KMER_COUNTER_KERNEL_DEBUG
-        printf("customer %d\n", customer);
+        printf("consumer%d\n", consumer);
 #endif
 
 
 #ifdef BSAL_KMER_COUNTER_KERNEL_DEBUG
-        BSAL_DEBUG_MARKER("kernel sends to customer\n");
-        printf("customer is %d\n", customer);
+        BSAL_DEBUG_MARKER("kernel sends to consumer\n");
+        printf("consumer is %d\n", consumer);
 #endif
 
         new_count = bsal_dna_kmer_block_pack_size(&block);
@@ -229,7 +235,7 @@ void bsal_dna_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_
 
 #ifdef BSAL_KMER_COUNTER_KERNEL_DEBUG
         printf("name %d destination %d PACK with %d bytes\n", name,
-                       customer, new_count);
+                       consumer, new_count);
 #endif
 
 #ifdef BSAL_KMER_COUNTER_KERNEL_DEBUG
@@ -244,7 +250,7 @@ void bsal_dna_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_
                         sizeof(source_index), &source_index);
                         */
 
-        bsal_actor_send(actor, customer, &new_message);
+        bsal_actor_send(actor, consumer, &new_message);
         bsal_free(new_buffer);
 
         bsal_actor_helper_send_empty(actor,
@@ -252,7 +258,7 @@ void bsal_dna_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_
                         BSAL_PUSH_SEQUENCE_DATA_BLOCK_REPLY);
 
         if (concrete_actor->actual == concrete_actor->expected
-                        || concrete_actor->actual >= concrete_actor->last + 1000
+                        || concrete_actor->actual >= concrete_actor->last + 10000
                         || concrete_actor->last == 0) {
 
             printf("kernel actor/%d processed %" PRIu64 "/%" PRIu64 " entries (%d blocks) so far\n",
@@ -279,6 +285,8 @@ void bsal_dna_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_
 #endif
 
         bsal_dna_kmer_counter_kernel_verify(actor, message);
+
+        bsal_dna_kmer_counter_kernel_ask(actor, message);
 
     } else if (tag == BSAL_AGGREGATE_KERNEL_OUTPUT_REPLY) {
 
@@ -321,18 +329,18 @@ void bsal_dna_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_
 
         bsal_actor_helper_send_to_self_empty(actor, BSAL_ACTOR_STOP);
 
-    } else if (tag == BSAL_SET_CONSUMER) {
+    } else if (tag == BSAL_ACTOR_SET_CONSUMER) {
 
-        customer = *(int *)buffer;
-        concrete_actor->customer = bsal_actor_add_acquaintance(actor, customer);
+        consumer = *(int *)buffer;
+        concrete_actor->consumer = bsal_actor_add_acquaintance(actor, consumer);
 
 #ifdef BSAL_KMER_COUNTER_KERNEL_DEBUG
-        printf("kernel %d BSAL_SET_CONSUMER customer %d index %d\n",
-                        bsal_actor_name(actor), customer,
-                        concrete_actor->customer);
+        printf("kernel %d BSAL_ACTOR_SET_CONSUMER consumer %d index %d\n",
+                        bsal_actor_name(actor), consumer,
+                        concrete_actor->consumer);
 #endif
 
-        bsal_actor_helper_send_reply_empty(actor, BSAL_SET_CONSUMER_REPLY);
+        bsal_actor_helper_send_reply_empty(actor, BSAL_ACTOR_SET_CONSUMER_REPLY);
 
     } else if (tag == BSAL_SET_KMER_LENGTH) {
 
@@ -349,7 +357,30 @@ void bsal_dna_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_
         concrete_actor->notified = 1;
 
         concrete_actor->notification_source = bsal_actor_add_acquaintance(actor, source);
+
         bsal_dna_kmer_counter_kernel_verify(actor, message);
+
+    } else if (tag == BSAL_ACTOR_SET_PRODUCER) {
+
+        if (count == 0) {
+            printf("Error: kernel needs producer\n");
+        }
+        bsal_message_helper_unpack_int(message, 0, &producer);
+
+        concrete_actor->producer = bsal_actor_add_acquaintance(actor, producer);
+
+        bsal_dna_kmer_counter_kernel_ask(actor, message);
+
+        concrete_actor->producer_source = bsal_actor_add_acquaintance(actor, source);
+
+    } else if (tag == BSAL_SEQUENCE_STORE_ASK_REPLY) {
+
+        /* the store has no more sequence...
+         */
+
+        bsal_actor_helper_send_empty(actor, bsal_actor_get_acquaintance(actor,
+                                concrete_actor->producer_source),
+                        BSAL_ACTOR_SET_PRODUCER_REPLY);
     }
 }
 
@@ -364,11 +395,25 @@ void bsal_dna_kmer_counter_kernel_verify(struct bsal_actor *actor, struct bsal_m
         return;
     }
 
+#if 0
     if (concrete_actor->actual != concrete_actor->expected) {
         return;
     }
+#endif
 
     bsal_actor_helper_send_uint64_t(actor, bsal_actor_get_acquaintance(actor,
                             concrete_actor->notification_source),
                     BSAL_KERNEL_NOTIFY_REPLY, concrete_actor->kmers);
+}
+
+void bsal_dna_kmer_counter_kernel_ask(struct bsal_actor *self, struct bsal_message *message)
+{
+    struct bsal_dna_kmer_counter_kernel *concrete_actor;
+    int producer;
+
+    concrete_actor = (struct bsal_dna_kmer_counter_kernel *)bsal_actor_concrete_actor(self);
+
+    producer = bsal_actor_get_acquaintance(self, concrete_actor->producer);
+
+    bsal_actor_helper_send_empty(self, producer, BSAL_SEQUENCE_STORE_ASK);
 }

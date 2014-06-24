@@ -6,6 +6,8 @@
 #include <data/dna_sequence.h>
 #include <helpers/actor_helper.h>
 
+#include <system/memory.h>
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -39,6 +41,11 @@ void bsal_sequence_store_init(struct bsal_actor *actor)
     concrete_actor->received = 0;
 
     bsal_dna_codec_init(&concrete_actor->codec);
+
+    bsal_actor_register(actor, BSAL_SEQUENCE_STORE_ASK,
+                    bsal_sequence_store_ask);
+
+    concrete_actor->iterator_started = 0;
 }
 
 void bsal_sequence_store_destroy(struct bsal_actor *actor)
@@ -59,6 +66,11 @@ void bsal_sequence_store_destroy(struct bsal_actor *actor)
 
     bsal_vector_destroy(&concrete_actor->sequences);
     bsal_dna_codec_destroy(&concrete_actor->codec);
+
+    if (concrete_actor->iterator_started) {
+        bsal_vector_iterator_destroy(&concrete_actor->iterator);
+        concrete_actor->iterator_started = 0;
+    }
 }
 
 void bsal_sequence_store_receive(struct bsal_actor *actor, struct bsal_message *message)
@@ -69,7 +81,7 @@ void bsal_sequence_store_receive(struct bsal_actor *actor, struct bsal_message *
 
     if (tag == BSAL_PUSH_SEQUENCE_DATA_BLOCK) {
 
-        bsal_sequence_store_store_sequences(actor, message);
+        bsal_sequence_store_push_sequence_data_block(actor, message);
 
     } else if (tag == BSAL_RESERVE) {
 
@@ -77,15 +89,16 @@ void bsal_sequence_store_receive(struct bsal_actor *actor, struct bsal_message *
 
     } else if (tag == BSAL_ACTOR_ASK_TO_STOP) {
 
+#ifdef BSAL_SEQUENCE_STORE_DEBUG
         printf("DEBUG store actor/%d dies\n",
                         bsal_actor_name(actor));
+#endif
 
-        bsal_sequence_store_show_progress(actor, message);
-        bsal_actor_helper_send_to_self_empty(actor, BSAL_ACTOR_STOP);
+        bsal_actor_helper_ask_to_stop(actor, message);
     }
 }
 
-void bsal_sequence_store_store_sequences(struct bsal_actor *actor, struct bsal_message *message)
+void bsal_sequence_store_push_sequence_data_block(struct bsal_actor *actor, struct bsal_message *message)
 {
     uint64_t first;
     /*
@@ -129,7 +142,7 @@ void bsal_sequence_store_store_sequences(struct bsal_actor *actor, struct bsal_m
     new_entries = bsal_input_command_entries(&payload);
 
 #ifdef BSAL_SEQUENCE_STORE_DEBUG
-    printf("DEBUG store %d bsal_sequence_store_store_sequences entries %d\n",
+    printf("DEBUG store %d bsal_sequence_store_push_sequence_data_block entries %d\n",
                     bsal_actor_name(actor),
                     (int)bsal_vector_size(new_entries));
 #endif
@@ -179,7 +192,7 @@ void bsal_sequence_store_store_sequences(struct bsal_actor *actor, struct bsal_m
                         bsal_vector_size(&concrete_actor->sequences));
 #endif
 
-        if (concrete_actor->received == bsal_vector_size(&concrete_actor->sequences)) {
+        if (concrete_actor->received == concrete_actor->expected) {
             bsal_sequence_store_show_progress(actor, message);
         }
     }
@@ -205,11 +218,16 @@ void bsal_sequence_store_reserve(struct bsal_actor *actor, struct bsal_message *
     void *buffer;
     struct bsal_dna_sequence *dna_sequence;
     struct bsal_sequence_store *concrete_actor;
+    int source;
 
+    source = bsal_message_source(message);
     buffer = bsal_message_buffer(message);
     amount = *(uint64_t*)buffer;
     concrete_actor = (struct bsal_sequence_store *)bsal_actor_concrete_actor(actor);
 
+    concrete_actor->expected = amount;
+
+    concrete_actor->reservation_producer = bsal_actor_add_acquaintance(actor, source);
     printf("DEBUG store actor/%d reserves %" PRIu64 " buckets\n",
                     bsal_actor_name(actor),
                     amount);
@@ -233,6 +251,11 @@ void bsal_sequence_store_reserve(struct bsal_actor *actor, struct bsal_message *
     }
 
     bsal_actor_helper_send_reply_empty(actor, BSAL_RESERVE_REPLY);
+
+    if (concrete_actor->expected == 0) {
+
+        bsal_sequence_store_show_progress(actor, message);
+    }
 }
 
 void bsal_sequence_store_show_progress(struct bsal_actor *actor, struct bsal_message *message)
@@ -241,8 +264,90 @@ void bsal_sequence_store_show_progress(struct bsal_actor *actor, struct bsal_mes
 
     concrete_actor = (struct bsal_sequence_store *)bsal_actor_concrete_actor(actor);
 
-    printf("store actor/%d has %" PRId64 "/%" PRId64 " entries\n",
+    printf("sequence store %d has %" PRId64 "/%" PRId64 " entries\n",
                     bsal_actor_name(actor),
                     concrete_actor->received,
                     bsal_vector_size(&concrete_actor->sequences));
+
+    if (concrete_actor->received == concrete_actor->expected) {
+
+        bsal_actor_helper_send_empty(actor, bsal_actor_get_acquaintance(actor,
+                                concrete_actor->reservation_producer),
+                        BSAL_SEQUENCE_STORE_READY);
+    }
+}
+
+void bsal_sequence_store_ask(struct bsal_actor *self, struct bsal_message *message)
+{
+    int block_size;
+    int i;
+    struct bsal_sequence_store *concrete_actor;
+    struct bsal_input_command payload;
+    struct bsal_dna_sequence *sequence;
+    int new_count;
+    void *new_buffer;
+    struct bsal_message new_message;
+
+    int name;
+
+    name = bsal_actor_name(self);
+#ifdef BSAL_SEQUENCE_STORE_DEBUG
+#endif
+
+    concrete_actor = (struct bsal_sequence_store *)bsal_actor_concrete_actor(self);
+
+    if (concrete_actor->received != concrete_actor->expected) {
+        printf("Error: sequence store %d is not ready %" PRIu64 "/%" PRIu64 "\n",
+                        name,
+                        concrete_actor->received, concrete_actor->expected);
+    }
+    block_size = 512;
+
+    if (!concrete_actor->iterator_started) {
+        bsal_vector_iterator_init(&concrete_actor->iterator, &concrete_actor->sequences);
+
+        concrete_actor->iterator_started = 1;
+    }
+
+    /* the metadata are not important here.
+     * This is just a container.
+     */
+    bsal_input_command_init(&payload, -1, 0, 0);
+
+    i = 0;
+
+    while ( bsal_vector_iterator_has_next(&concrete_actor->iterator)
+                    && i < block_size) {
+
+        bsal_vector_iterator_next(&concrete_actor->iterator, (void **)&sequence);
+
+        bsal_input_command_add_entry(&payload, sequence, &concrete_actor->codec);
+
+        i++;
+    }
+
+    if (bsal_input_command_entry_count(&payload) > 0) {
+        new_count = bsal_input_command_pack_size(&payload);
+        new_buffer = bsal_malloc(new_count);
+
+        bsal_input_command_pack(&payload, new_buffer);
+
+        bsal_message_init(&new_message, BSAL_PUSH_SEQUENCE_DATA_BLOCK, new_count, new_buffer);
+
+        bsal_actor_send_reply(self, &new_message);
+        bsal_message_destroy(&new_message);
+
+#ifdef BSAL_SEQUENCE_STORE_DEBUG
+        printf("store/%d fulfill order\n", name);
+#endif
+
+        bsal_free(new_buffer);
+    } else {
+        bsal_actor_helper_send_reply_empty(self, BSAL_SEQUENCE_STORE_ASK_REPLY);
+#ifdef BSAL_SEQUENCE_STORE_DEBUG
+        printf("store/%d can not fulfill order\n", name);
+#endif
+    }
+
+    bsal_input_command_destroy(&payload);
 }

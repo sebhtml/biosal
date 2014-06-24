@@ -94,7 +94,7 @@ void bsal_kmer_store_receive(struct bsal_actor *self, struct bsal_message *messa
 
 #ifdef BSAL_KMER_STORE_DEBUG
         name = bsal_actor_name(self);
-        printf("kmer store actor/%d will use %d bytes for canonical kmers (k is %d)\n",
+        printf("kmer store %d will use %d bytes for canonical kmers (k is %d)\n",
                         name, concrete_actor->key_length_in_bytes,
                         concrete_actor->kmer_length);
 #endif
@@ -144,7 +144,7 @@ void bsal_kmer_store_receive(struct bsal_actor *self, struct bsal_message *messa
             (*bucket)++;
 
             if (concrete_actor->received >= concrete_actor->last_received + period) {
-                printf("store/%d received %" PRIu64 " kmers so far,"
+                printf("kmer store %d received %" PRIu64 " kmers so far,"
                                 " store has %" PRIu64 " canonical kmers, %" PRIu64 " kmers\n",
                                 bsal_actor_name(self), concrete_actor->received,
                                 bsal_map_size(&concrete_actor->table),
@@ -170,18 +170,18 @@ void bsal_kmer_store_receive(struct bsal_actor *self, struct bsal_message *messa
 
         bsal_actor_helper_ask_to_stop(self, message);
 
-    } else if (tag == BSAL_SET_CONSUMER) {
+    } else if (tag == BSAL_ACTOR_SET_CONSUMER) {
 
         bsal_message_helper_unpack_int(message, 0, &customer);
 
-#ifdef BSAL_KMER_STORE_DEBUG
         printf("store actor/%d will use distribution actor/%d\n",
-                        name, customer);
+                        bsal_actor_name(self), customer);
+#ifdef BSAL_KMER_STORE_DEBUG
 #endif
 
         concrete_actor->customer = bsal_actor_add_acquaintance(self, customer);
 
-        bsal_actor_helper_send_reply_empty(self, BSAL_SET_CONSUMER_REPLY);
+        bsal_actor_helper_send_reply_empty(self, BSAL_ACTOR_SET_CONSUMER_REPLY);
 
     } else if (tag == BSAL_PUSH_DATA) {
 
@@ -277,7 +277,7 @@ void bsal_kmer_store_push_data(struct bsal_actor *self, struct bsal_message *mes
 
     bsal_map_init(&coverage_distribution, sizeof(int), sizeof(uint64_t));
 
-    printf("store actor/%d: local table has %" PRIu64" canonical kmers (%" PRIu64 " kmers)\n",
+    printf("kmer store %d: local table has %" PRIu64" canonical kmers (%" PRIu64 " kmers)\n",
                     name, bsal_map_size(&concrete_actor->table),
                     2 * bsal_map_size(&concrete_actor->table));
 #ifdef BSAL_KMER_STORE_DEBUG
@@ -314,9 +314,9 @@ void bsal_kmer_store_push_data(struct bsal_actor *self, struct bsal_message *mes
 
     bsal_map_pack(&coverage_distribution, new_buffer);
 
-#ifdef BSAL_KMER_STORE_DEBUG
     printf("SENDING map to %d, %d bytes / %d entries\n", customer, new_count,
                     (int)bsal_map_size(&coverage_distribution));
+#ifdef BSAL_KMER_STORE_DEBUG
 #endif
 
     bsal_message_init(&new_message, BSAL_PUSH_DATA, new_count, new_buffer);

@@ -354,7 +354,7 @@ int bsal_actor_spawn_real(struct bsal_actor *actor, int script)
     name = bsal_node_spawn(bsal_actor_node(actor), script);
 
     if (name == BSAL_ACTOR_NOBODY) {
-        printf("Problem with spawning! did you register the scrippt ?\n");
+        printf("Error: problem with spawning! did you register the script ?\n");
         return name;
     }
 

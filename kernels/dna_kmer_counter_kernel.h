@@ -18,8 +18,11 @@ struct bsal_dna_kmer_counter_kernel {
 
     uint64_t kmers;
     int blocks;
-    int customer;
+    int consumer;
+    int producer;
     int kmer_length;
+
+    int producer_source;
 
     int notified;
     int notification_source;
@@ -38,5 +41,6 @@ void bsal_dna_kmer_counter_kernel_destroy(struct bsal_actor *actor);
 void bsal_dna_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_message *message);
 
 void bsal_dna_kmer_counter_kernel_verify(struct bsal_actor *actor, struct bsal_message *message);
+void bsal_dna_kmer_counter_kernel_ask(struct bsal_actor *self, struct bsal_message *message);
 
 #endif

@@ -4,6 +4,9 @@
 
 #include <stdint.h>
 
+#include <data/dna_codec.h>
+#include <data/dna_sequence.h>
+
 #include <structures/vector.h>
 
 /* This structure contains information
@@ -35,5 +38,8 @@ void bsal_input_command_print(struct bsal_input_command *self);
 
 struct bsal_vector *bsal_input_command_entries(struct bsal_input_command *self);
 int bsal_input_command_entry_count(struct bsal_input_command *self);
+void bsal_input_command_add_entry(struct bsal_input_command *self,
+                struct bsal_dna_sequence *sequence,
+                struct bsal_dna_codec *codec);
 
 #endif
