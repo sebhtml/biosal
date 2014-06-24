@@ -314,9 +314,9 @@ void bsal_kmer_store_push_data(struct bsal_actor *self, struct bsal_message *mes
 
     bsal_map_pack(&coverage_distribution, new_buffer);
 
+#ifdef BSAL_KMER_STORE_DEBUG
     printf("SENDING map to %d, %d bytes / %d entries\n", customer, new_count,
                     (int)bsal_map_size(&coverage_distribution));
-#ifdef BSAL_KMER_STORE_DEBUG
 #endif
 
     bsal_message_init(&new_message, BSAL_PUSH_DATA, new_count, new_buffer);

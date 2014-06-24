@@ -737,8 +737,10 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
 
         concrete_actor->filled_consumers++;
 
+#ifdef BSAL_INPUT_CONTROLLER_DEBUG
         printf("DEBUG BSAL_SEQUENCE_STORE_READY %d/%d\n", concrete_actor->filled_consumers,
                         (int)bsal_vector_size(&concrete_actor->consumers));
+#endif
 
         if (concrete_actor->filled_consumers == bsal_vector_size(&concrete_actor->consumers)) {
             concrete_actor->filled_consumers = 0;
