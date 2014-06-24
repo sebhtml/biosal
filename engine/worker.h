@@ -17,8 +17,8 @@ struct bsal_message;
 #define BSAL_WORKER_USE_LOCK
 
 /*
-#define BSAL_WORKER_HAS_OWN_QUEUES
 */
+#define BSAL_WORKER_HAS_OWN_QUEUES
 
 /* this is similar to worker threads in linux ([kworker/0] [kworker/1])
  */
@@ -36,13 +36,8 @@ struct bsal_worker {
     volatile int dead;
 
 #ifdef BSAL_WORKER_HAS_OWN_QUEUES
-    struct bsal_queue works;
-    struct bsal_queue messages;
-
-#ifdef BSAL_WORKER_USE_LOCK
-    struct bsal_lock work_lock;
-    struct bsal_lock message_lock;
-#endif
+    struct bsal_work_queue works;
+    struct bsal_message_queue messages;
 
 #endif
 
@@ -91,8 +86,6 @@ float bsal_worker_get_epoch_load(struct bsal_worker *self);
 float bsal_worker_get_loop_load(struct bsal_worker *self);
 
 #ifdef BSAL_WORKER_HAS_OWN_QUEUES
-int bsal_worker_pull_work_classic(struct bsal_worker *worker, struct bsal_work *work);
-void bsal_worker_push_message_classic(struct bsal_worker *worker, struct bsal_message *message)
 
 int bsal_worker_enqueued_work_count(struct bsal_worker *self);
 
@@ -100,10 +93,6 @@ int bsal_worker_get_scheduling_score(struct bsal_worker *self);
 
 int bsal_worker_pull_message(struct bsal_worker *worker, struct bsal_message *message);
 void bsal_worker_push_work(struct bsal_worker *worker, struct bsal_work *work);
-
-struct bsal_queue *bsal_worker_works(struct bsal_worker *worker);
-struct bsal_queue *bsal_worker_messages(struct bsal_worker *worker);
-
 
 #endif
 

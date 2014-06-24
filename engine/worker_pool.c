@@ -122,8 +122,12 @@ void bsal_worker_pool_stop(struct bsal_worker_pool *pool)
 int bsal_worker_pool_pull(struct bsal_worker_pool *pool, struct bsal_message *message)
 {
     int answer;
-    
+
+#ifdef BSAL_WORKER_HAS_OWN_QUEUES
+    answer = bsal_worker_pool_pull_classic(pool, message);
+#else
     answer = bsal_message_queue_dequeue(&pool->message_queue, message);
+#endif
 
     if (!answer) {
         pool->ticks_without_messages++;
@@ -142,12 +146,6 @@ int bsal_worker_pool_pull_classic(struct bsal_worker_pool *pool, struct bsal_mes
 
     worker = bsal_worker_pool_select_worker_for_message(pool);
     answer = bsal_worker_pull_message(worker, message);
-
-    if (!answer) {
-        pool->ticks_without_messages++;
-    } else {
-        pool->ticks_without_messages = 0;
-    }
 
     return answer;
 }
@@ -274,7 +272,11 @@ struct bsal_worker *bsal_worker_pool_select_worker_for_run(struct bsal_worker_po
 
 void bsal_worker_pool_schedule_work(struct bsal_worker_pool *pool, struct bsal_work *work)
 {
+#ifdef BSAL_WORKER_HAS_OWN_QUEUES
+    bsal_worker_pool_schedule_work_classic(pool, work);
+#else
     bsal_work_queue_enqueue(&pool->work_queue, work);
+#endif
 }
 
 #ifdef BSAL_WORKER_HAS_OWN_QUEUES
