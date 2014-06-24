@@ -34,6 +34,7 @@ void bsal_worker_pool_init(struct bsal_worker_pool *pool, int workers,
     }
 
     bsal_work_queue_init(&pool->work_queue);
+    bsal_message_queue_init(&pool->message_queue);
     bsal_worker_pool_create_workers(pool);
 
     pool->starting_time = time(NULL);
@@ -45,6 +46,7 @@ void bsal_worker_pool_destroy(struct bsal_worker_pool *pool)
 
     pool->node = NULL;
     bsal_work_queue_destroy(&pool->work_queue);
+    bsal_message_queue_destroy(&pool->message_queue);
 }
 
 void bsal_worker_pool_delete_workers(struct bsal_worker_pool *pool)
@@ -77,7 +79,7 @@ void bsal_worker_pool_create_workers(struct bsal_worker_pool *pool)
 
     for (i = 0; i < pool->workers; i++) {
         bsal_worker_init(bsal_worker_pool_get_worker(pool, i), i, pool->node,
-                        &pool->work_queue);
+                        &pool->work_queue, &pool->message_queue);
     }
 }
 
@@ -108,12 +110,32 @@ void bsal_worker_pool_stop(struct bsal_worker_pool *pool)
      * stop workers
      */
 
+#ifdef BSAL_WORKER_POOL_DEBUG
+    printf("Stop workers\n");
+#endif
+
     for (i = 0; i < pool->workers; i++) {
         bsal_worker_stop(bsal_worker_pool_get_worker(pool, i));
     }
 }
 
 int bsal_worker_pool_pull(struct bsal_worker_pool *pool, struct bsal_message *message)
+{
+    int answer;
+    
+    answer = bsal_message_queue_dequeue(&pool->message_queue, message);
+
+    if (!answer) {
+        pool->ticks_without_messages++;
+    } else {
+        pool->ticks_without_messages = 0;
+    }
+
+    return answer;
+}
+
+#ifdef BSAL_WORKER_HAS_OWN_QUEUES
+int bsal_worker_pool_pull_classic(struct bsal_worker_pool *pool, struct bsal_message *message)
 {
     struct bsal_worker *worker;
     int answer;
@@ -179,6 +201,7 @@ struct bsal_worker *bsal_worker_pool_select_worker_round_robin(
 
     return bsal_worker_pool_get_worker(pool, index);
 }
+#endif
 
 struct bsal_worker *bsal_worker_pool_get_worker(
                 struct bsal_worker_pool *self, int index)
@@ -190,6 +213,7 @@ struct bsal_worker *bsal_worker_pool_get_worker(
     return self->worker_array + index;
 }
 
+#ifdef BSAL_WORKER_HAS_OWN_QUEUES
 struct bsal_worker *bsal_worker_pool_select_worker_least_busy(
                 struct bsal_worker_pool *self, struct bsal_work *work)
 {
@@ -238,6 +262,8 @@ struct bsal_worker *bsal_worker_pool_select_worker_least_busy(
     return best_worker;
 }
 
+#endif
+
 struct bsal_worker *bsal_worker_pool_select_worker_for_run(struct bsal_worker_pool *pool)
 {
     int index;
@@ -251,6 +277,7 @@ void bsal_worker_pool_schedule_work(struct bsal_worker_pool *pool, struct bsal_w
     bsal_work_queue_enqueue(&pool->work_queue, work);
 }
 
+#ifdef BSAL_WORKER_HAS_OWN_QUEUES
 /*
  * names are based on names found in:
  * \see http://lxr.free-electrons.com/source/include/linux/workqueue.h
@@ -265,6 +292,7 @@ void bsal_worker_pool_schedule_work_classic(struct bsal_worker_pool *pool, struc
     /* bsal_worker_push_message use a lock */
     bsal_worker_push_work(worker, work);
 }
+#endif
 
 int bsal_worker_pool_worker_count(struct bsal_worker_pool *pool)
 {

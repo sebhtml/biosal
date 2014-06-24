@@ -15,19 +15,23 @@
 /*#define BSAL_THREAD_DEBUG*/
 
 void bsal_worker_init(struct bsal_worker *worker, int name, struct bsal_node *node,
-                struct bsal_work_queue *work_queue)
+                struct bsal_work_queue *work_queue,
+                struct bsal_message_queue *message_queue)
 {
-    bsal_queue_init(&worker->works, sizeof(struct bsal_work));
-    bsal_queue_init(&worker->messages, sizeof(struct bsal_message));
-
     worker->work_queue = work_queue;
+    worker->message_queue = message_queue;
     worker->node = node;
     worker->name = name;
     worker->dead = 0;
 
+#ifdef BSAL_WORKER_HAS_OWN_QUEUES
+    bsal_queue_init(&worker->works, sizeof(struct bsal_work));
+    bsal_queue_init(&worker->messages, sizeof(struct bsal_message));
+
 #ifdef BSAL_WORKER_USE_LOCK
     bsal_lock_init(&worker->work_lock);
     bsal_lock_init(&worker->message_lock);
+#endif
 #endif
 
     worker->debug = 0;
@@ -46,19 +50,25 @@ void bsal_worker_init(struct bsal_worker *worker, int name, struct bsal_node *no
 
 void bsal_worker_destroy(struct bsal_worker *worker)
 {
+#ifdef BSAL_WORKER_HAS_OWN_QUEUES
 #ifdef BSAL_WORKER_USE_LOCK
     bsal_lock_destroy(&worker->message_lock);
     bsal_lock_destroy(&worker->work_lock);
 #endif
 
-    worker->node = NULL;
-
     bsal_queue_destroy(&worker->messages);
     bsal_queue_destroy(&worker->works);
+#endif
+
+    worker->node = NULL;
+    worker->message_queue = NULL;
+    worker->work_queue = NULL;
+
     worker->name = -1;
     worker->dead = 1;
 }
 
+#ifdef BSAL_WORKER_HAS_OWN_QUEUES
 struct bsal_queue *bsal_worker_works(struct bsal_worker *worker)
 {
     return &worker->works;
@@ -68,6 +78,7 @@ struct bsal_queue *bsal_worker_messages(struct bsal_worker *worker)
 {
     return &worker->messages;
 }
+#endif
 
 void bsal_worker_run(struct bsal_worker *worker)
 {
@@ -241,17 +252,20 @@ struct bsal_node *bsal_worker_node(struct bsal_worker *worker)
 void bsal_worker_send(struct bsal_worker *worker, struct bsal_message *message)
 {
     struct bsal_message copy;
-    struct bsal_message *new_message;
     void *buffer;
     int count;
     int metadata_size;
     int all;
     void *old_buffer;
+
+#ifdef BSAL_WORKER_HAS_OWN_QUEUES
+    struct bsal_message *new_message;
     int destination;
     struct bsal_work work;
     struct bsal_actor *actor;
     int works;
     int push_locally;
+#endif
 
     memcpy(&copy, message, sizeof(struct bsal_message));
     count = bsal_message_count(&copy);
@@ -297,6 +311,7 @@ void bsal_worker_send(struct bsal_worker *worker, struct bsal_message *message)
      * with the node.
      */
 
+#ifdef BSAL_WORKER_HAS_OWN_QUEUES
     destination = bsal_message_destination(message);
     push_locally = 0;
 
@@ -332,6 +347,10 @@ void bsal_worker_send(struct bsal_worker *worker, struct bsal_message *message)
          */
         bsal_worker_push_message(worker, &copy);
     }
+#else
+
+    bsal_worker_push_message(worker, &copy);
+#endif
 }
 
 void bsal_worker_start(struct bsal_worker *worker)
@@ -379,7 +398,7 @@ void bsal_worker_stop(struct bsal_worker *worker)
 {
 #ifdef BSAL_THREAD_DEBUG
     bsal_worker_display(worker);
-    printf("stopping thread!\n");
+    printf("stopping worker!\n");
 #endif
 
     /*
@@ -398,6 +417,7 @@ pthread_t *bsal_worker_thread(struct bsal_worker *worker)
     return &worker->thread;
 }
 
+#ifdef BSAL_WORKER_HAS_OWN_QUEUES
 void bsal_worker_push_work(struct bsal_worker *worker, struct bsal_work *work)
 {
 #ifdef BSAL_WORKER_USE_LOCK
@@ -410,12 +430,14 @@ void bsal_worker_push_work(struct bsal_worker *worker, struct bsal_work *work)
     bsal_lock_unlock(&worker->work_lock);
 #endif
 }
+#endif
 
 int bsal_worker_pull_work(struct bsal_worker *worker, struct bsal_work *work)
 {
     return bsal_work_queue_dequeue(worker->work_queue, work);
 }
 
+#ifdef BSAL_WORKER_HAS_OWN_QUEUES
 int bsal_worker_pull_work_classic(struct bsal_worker *worker, struct bsal_work *work)
 {
     int value;
@@ -443,8 +465,15 @@ int bsal_worker_pull_work_classic(struct bsal_worker *worker, struct bsal_work *
 
     return value;
 }
+#endif
 
 void bsal_worker_push_message(struct bsal_worker *worker, struct bsal_message *message)
+{
+    bsal_message_queue_enqueue(worker->message_queue, message);
+}
+
+#ifdef BSAL_WORKER_HAS_OWN_QUEUES
+void bsal_worker_push_message_classic(struct bsal_worker *worker, struct bsal_message *message)
 {
 #ifdef BSAL_WORKER_DEBUG_20140601
     if (bsal_message_tag(message) == 1100) {
@@ -478,7 +507,9 @@ void bsal_worker_push_message(struct bsal_worker *worker, struct bsal_message *m
     bsal_lock_unlock(&worker->message_lock);
 #endif
 }
+#endif
 
+#ifdef BSAL_WORKER_HAS_OWN_QUEUES
 int bsal_worker_pull_message(struct bsal_worker *worker, struct bsal_message *message)
 {
     int value;
@@ -519,12 +550,14 @@ int bsal_worker_pull_message(struct bsal_worker *worker, struct bsal_message *me
 
     return value;
 }
+#endif
 
 int bsal_worker_is_busy(struct bsal_worker *self)
 {
     return self->busy;
 }
 
+#ifdef BSAL_WORKER_HAS_OWN_QUEUES
 int bsal_worker_enqueued_work_count(struct bsal_worker *self)
 {
     return bsal_queue_size(&self->works);
@@ -544,6 +577,7 @@ int bsal_worker_get_scheduling_score(struct bsal_worker *self)
 
     return score;
 }
+#endif
 
 float bsal_worker_get_epoch_load(struct bsal_worker *self)
 {

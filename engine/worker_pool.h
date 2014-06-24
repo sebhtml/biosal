@@ -4,6 +4,7 @@
 
 #include "worker.h"
 #include "work_queue.h"
+#include "message_queue.h"
 
 #include <time.h>
 
@@ -12,6 +13,7 @@ struct bsal_worker;
 
 struct bsal_worker_pool {
     struct bsal_work_queue work_queue;
+    struct bsal_message_queue message_queue;
     struct bsal_worker *worker_array;
     struct bsal_node *node;
 
@@ -58,5 +60,11 @@ struct bsal_worker *bsal_worker_pool_select_worker_least_busy(
                 struct bsal_worker_pool *pool, struct bsal_work *work);
 
 void bsal_worker_pool_print_load(struct bsal_worker_pool *self);
+
+#ifdef BSAL_WORKER_HAS_OWN_QUEUES
+int bsal_worker_pool_pull_classic(struct bsal_worker_pool *pool, struct bsal_message *message);
+void bsal_worker_pool_schedule_work_classic(struct bsal_worker_pool *pool, struct bsal_work *work);
+
+#endif
 
 #endif
