@@ -38,5 +38,13 @@
 
 #include <system/memory.h>
 
+/* structures */
+
+#include <structures/vector.h>
+#include <structures/vector_iterator.h>
+#include <structures/map.h>
+#include <structures/map_iterator.h>
+#include <structures/set.h>
+#include <structures/set_iterator.h>
 
 #endif

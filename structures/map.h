@@ -26,4 +26,6 @@ int bsal_map_pack_size(struct bsal_map *self);
 int bsal_map_pack(struct bsal_map *self, void *buffer);
 int bsal_map_unpack(struct bsal_map *self, void *buffer);
 
+int bsal_map_empty(struct bsal_map *self);
+
 #endif

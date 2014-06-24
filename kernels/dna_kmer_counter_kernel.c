@@ -378,7 +378,10 @@ void bsal_dna_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_
         /* the store has no more sequence...
          */
 
+#ifdef BSAL_DNA_KMER_COUNTER_KERNEL_DEBUG
         printf("DEBUG kernel was told by producer that nothing is left to do\n");
+#endif
+
         bsal_actor_helper_send_empty(actor, bsal_actor_get_acquaintance(actor,
                                 concrete_actor->producer_source),
                         BSAL_ACTOR_SET_PRODUCER_REPLY);

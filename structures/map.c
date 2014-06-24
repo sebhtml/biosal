@@ -76,3 +76,8 @@ int bsal_map_get_value_size(struct bsal_map *self)
 {
     return bsal_dynamic_hash_table_get_value_size(&self->table);
 }
+
+int bsal_map_empty(struct bsal_map *self)
+{
+    return bsal_map_size(self) == 0;
+}

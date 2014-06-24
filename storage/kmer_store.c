@@ -174,7 +174,7 @@ void bsal_kmer_store_receive(struct bsal_actor *self, struct bsal_message *messa
 
         bsal_message_helper_unpack_int(message, 0, &customer);
 
-        printf("store actor/%d will use distribution actor/%d\n",
+        printf("kmer store %d will use coverage distribution %d\n",
                         bsal_actor_name(self), customer);
 #ifdef BSAL_KMER_STORE_DEBUG
 #endif

@@ -13,6 +13,8 @@ struct argonnite {
     struct bsal_vector kmer_stores;
     struct bsal_vector sequence_stores;
 
+    struct bsal_map plentiful_stores;
+
     struct bsal_vector worker_counts;
 
     int wired_kernels;

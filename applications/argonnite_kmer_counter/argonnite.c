@@ -11,6 +11,7 @@
 #include <patterns/manager.h>
 #include <patterns/aggregator.h>
 
+#include <helpers/set_helper.h>
 #include <storage/kmer_store.h>
 
 #include <system/memory.h>
@@ -50,6 +51,8 @@ void argonnite_init(struct bsal_actor *actor)
     bsal_vector_init(&concrete_actor->kmer_stores, sizeof(int));
     bsal_vector_init(&concrete_actor->sequence_stores, sizeof(int));
     bsal_vector_init(&concrete_actor->worker_counts, sizeof(int));
+
+    bsal_map_init(&concrete_actor->plentiful_stores, sizeof(int), sizeof(int));
 
     bsal_actor_add_script(actor, BSAL_INPUT_CONTROLLER_SCRIPT,
                     &bsal_input_controller_script);
@@ -103,6 +106,8 @@ void argonnite_destroy(struct bsal_actor *actor)
     bsal_vector_destroy(&concrete_actor->kmer_stores);
     bsal_vector_destroy(&concrete_actor->sequence_stores);
     bsal_vector_destroy(&concrete_actor->worker_counts);
+
+    bsal_map_destroy(&concrete_actor->plentiful_stores);
 }
 
 void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message)
@@ -140,6 +145,11 @@ void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message)
     int workers;
     int kernel_index_index;
     int spawner_index;
+    int sequence_store_index;
+    int sequence_store_index_index;
+    int sequence_store;
+    int other_kernel;
+    int print_stuff;
 
     concrete_actor = (struct argonnite *)bsal_actor_concrete_actor(actor);
     tag = bsal_message_tag(message);
@@ -582,10 +592,68 @@ void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message)
 
     } else if (tag == BSAL_ACTOR_SET_PRODUCER_REPLY) {
 
+        /* give it a new producer
+         */
+
+        kernel_index = bsal_actor_get_acquaintance_index(actor, source);
+        kernel_index_index = bsal_vector_index_of(&concrete_actor->kernels, &kernel_index);
+
+        sequence_store_index = bsal_vector_helper_at_as_int(&concrete_actor->sequence_stores, kernel_index_index);
+
+        bucket = bsal_map_get(&concrete_actor->plentiful_stores, &kernel_index_index);
+
+        bsal_map_delete(&concrete_actor->plentiful_stores, &kernel_index_index);
+
         concrete_actor->finished_kernels++;
 
-        printf("DEBUG finished kernels %d/%d\n", concrete_actor->finished_kernels,
-                        (int)bsal_vector_size(&concrete_actor->kernels));
+        print_stuff = 0;
+
+        if (bucket != NULL) {
+
+            print_stuff = 1;
+            printf("DEBUG finished kernels %d/%d, plentiful stores %d/%d\n", concrete_actor->finished_kernels,
+                        (int)bsal_vector_size(&concrete_actor->kernels),
+                        (int)bsal_map_size(&concrete_actor->plentiful_stores),
+                        (int)bsal_vector_size(&concrete_actor->sequence_stores));
+        }
+
+        /* CONSTRUCTION SITE */
+
+        if (!bsal_map_empty(&concrete_actor->plentiful_stores)) {
+
+            sequence_store_index_index = kernel_index_index;
+
+            while (bsal_map_get(&concrete_actor->plentiful_stores, &sequence_store_index_index) == NULL) {
+                sequence_store_index_index++;
+
+                sequence_store_index_index %= (int)bsal_vector_size(&concrete_actor->sequence_stores);
+            }
+
+            bucket = bsal_map_get(&concrete_actor->plentiful_stores, &sequence_store_index_index);
+            (*bucket)++;
+
+            sequence_store_index = bsal_vector_helper_at_as_int(&concrete_actor->sequence_stores,
+                            sequence_store_index_index);
+            sequence_store = bsal_actor_get_acquaintance(actor, sequence_store_index);
+            other_kernel = bsal_actor_helper_get_acquaintance(actor, &concrete_actor->kernels,
+                            sequence_store_index_index);
+            kernel = source;
+
+            bsal_actor_helper_send_int(actor, kernel, BSAL_ACTOR_SET_PRODUCER, sequence_store);
+
+            if (print_stuff) {
+                printf("argonnite %d tells kernel %d to steal work from kernel %d (%d), producer is sequence store %d\n",
+                            bsal_actor_name(actor),
+                            kernel,
+                            other_kernel,
+                            sequence_store_index_index,
+                            sequence_store);
+                printf("any further thefts by kernel %d will not be reported\n",
+                            kernel);
+            }
+
+            concrete_actor->finished_kernels--;
+        }
 
         if (concrete_actor->finished_kernels == bsal_vector_size(&concrete_actor->kernels)) {
             bsal_actor_helper_get_acquaintances(actor, &concrete_actor->kernels, &kernels);
@@ -768,6 +836,8 @@ void argonnite_prepare_sequence_stores(struct bsal_actor *self, struct bsal_mess
     struct bsal_vector stores;
     void *buffer;
     int controller;
+    int i;
+    int *bucket;
 
     concrete_actor = (struct argonnite *)bsal_actor_concrete_actor(self);
 
@@ -810,6 +880,18 @@ void argonnite_prepare_sequence_stores(struct bsal_actor *self, struct bsal_mess
                         &stores);
 
         bsal_actor_helper_add_acquaintances(self, &stores, &concrete_actor->sequence_stores);
+
+        /* add stores in the plentiful stores
+         */
+
+        for (i = 0; i < bsal_vector_size(&concrete_actor->sequence_stores); i++) {
+                /*
+            store_index = bsal_vector_helper_at_as_int(&concrete_actor->sequence_stores, i);
+            */
+
+            bucket = bsal_map_add(&concrete_actor->plentiful_stores, &i);
+            *bucket = 1;
+        }
 
         bsal_vector_destroy(&stores);
     }

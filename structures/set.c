@@ -55,3 +55,8 @@ struct bsal_map *bsal_set_map(struct bsal_set *self)
 {
     return &self->map;
 }
+
+int bsal_set_empty(struct bsal_set *self)
+{
+    return bsal_set_size(self) == 0;
+}

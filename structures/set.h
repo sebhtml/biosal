@@ -16,6 +16,7 @@ int bsal_set_find(struct bsal_set *self, void *key);
 void bsal_set_delete(struct bsal_set *self, void *key);
 
 uint64_t bsal_set_size(struct bsal_set *self);
+int bsal_set_empty(struct bsal_set *self);
 
 struct bsal_map *bsal_set_map(struct bsal_set *self);
 
