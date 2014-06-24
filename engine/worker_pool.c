@@ -12,7 +12,7 @@
 #include <stdio.h>
 
 #define BSAL_WORKER_POOL_USE_LEAST_BUSY
-#define BSAL_WORKER_POOL_ATTEMPT_COUNT 8
+#define BSAL_WORKER_POOL_ATTEMPT_COUNT 4
 
 void bsal_worker_pool_init(struct bsal_worker_pool *pool, int workers,
                 struct bsal_node *node)
@@ -234,7 +234,7 @@ struct bsal_worker *bsal_worker_pool_select_worker_least_busy(
     best_worker = NULL;
     best_score = 99;
 
-    to_check = self->workers;
+    to_check = BSAL_WORKER_POOL_ATTEMPT_COUNT;
 
     while (to_check--) {
 
