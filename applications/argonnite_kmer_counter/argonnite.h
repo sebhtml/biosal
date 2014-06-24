@@ -18,6 +18,7 @@ struct argonnite {
     int wired_kernels;
     int ready_kernels;
     int ready_stores;
+    int finished_kernels;
 
     int controller;
     int manager_for_kernels;

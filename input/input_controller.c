@@ -119,6 +119,7 @@ void bsal_input_controller_init(struct bsal_actor *actor)
     controller->ready_spawners = 0;
     controller->ready_consumers = 0;
     controller->partitioner = -1;
+    controller->filled_consumers = 0;
 
     controller->counted = 0;
 }
@@ -734,10 +735,14 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
 
     } else if (tag == BSAL_SEQUENCE_STORE_READY) {
 
-        concrete_actor->ready_consumers++;
+        concrete_actor->filled_consumers++;
 
-        if (concrete_actor->ready_consumers == bsal_vector_size(&concrete_actor->consumers)) {
-            concrete_actor->ready_consumers = 0;
+        printf("DEBUG BSAL_SEQUENCE_STORE_READY %d/%d\n", concrete_actor->filled_consumers,
+                        (int)bsal_vector_size(&concrete_actor->consumers));
+
+        if (concrete_actor->filled_consumers == bsal_vector_size(&concrete_actor->consumers)) {
+            concrete_actor->filled_consumers = 0;
+
             bsal_actor_helper_send_to_supervisor_empty(actor, BSAL_INPUT_DISTRIBUTE_REPLY);
         }
     }

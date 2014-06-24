@@ -3,6 +3,7 @@
 #define BSAL_WORKER_POOL_H
 
 #include "worker.h"
+#include "work_queue.h"
 
 #include <time.h>
 
@@ -10,6 +11,7 @@ struct bsal_node;
 struct bsal_worker;
 
 struct bsal_worker_pool {
+    struct bsal_work_queue work_queue;
     struct bsal_worker *worker_array;
     struct bsal_node *node;
 

@@ -321,6 +321,7 @@ void bsal_sequence_store_ask(struct bsal_actor *self, struct bsal_message *messa
 
         bsal_vector_iterator_next(&concrete_actor->iterator, (void **)&sequence);
 
+        /*printf("ADDING %d\n", i);*/
         bsal_input_command_add_entry(&payload, sequence, &concrete_actor->codec);
 
         i++;

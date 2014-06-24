@@ -33,6 +33,7 @@ void bsal_worker_pool_init(struct bsal_worker_pool *pool, int workers,
         exit(1);
     }
 
+    bsal_work_queue_init(&pool->work_queue);
     bsal_worker_pool_create_workers(pool);
 
     pool->starting_time = time(NULL);
@@ -41,6 +42,9 @@ void bsal_worker_pool_init(struct bsal_worker_pool *pool, int workers,
 void bsal_worker_pool_destroy(struct bsal_worker_pool *pool)
 {
     bsal_worker_pool_delete_workers(pool);
+
+    pool->node = NULL;
+    bsal_work_queue_destroy(&pool->work_queue);
 }
 
 void bsal_worker_pool_delete_workers(struct bsal_worker_pool *pool)
@@ -72,7 +76,8 @@ void bsal_worker_pool_create_workers(struct bsal_worker_pool *pool)
     pool->worker_array = (struct bsal_worker *)bsal_malloc(bytes);
 
     for (i = 0; i < pool->workers; i++) {
-        bsal_worker_init(bsal_worker_pool_get_worker(pool, i), i, pool->node);
+        bsal_worker_init(bsal_worker_pool_get_worker(pool, i), i, pool->node,
+                        &pool->work_queue);
     }
 }
 
@@ -241,12 +246,17 @@ struct bsal_worker *bsal_worker_pool_select_worker_for_run(struct bsal_worker_po
     return bsal_worker_pool_get_worker(pool, index);
 }
 
+void bsal_worker_pool_schedule_work(struct bsal_worker_pool *pool, struct bsal_work *work)
+{
+    bsal_work_queue_enqueue(&pool->work_queue, work);
+}
+
 /*
  * names are based on names found in:
  * \see http://lxr.free-electrons.com/source/include/linux/workqueue.h
  * \see http://lxr.free-electrons.com/source/kernel/workqueue.c
  */
-void bsal_worker_pool_schedule_work(struct bsal_worker_pool *pool, struct bsal_work *work)
+void bsal_worker_pool_schedule_work_classic(struct bsal_worker_pool *pool, struct bsal_work *work)
 {
     struct bsal_worker *worker;
 

@@ -1,7 +1,8 @@
 
-#ifndef BSAL_THREAD_H
-#define BSAL_THREAD_H
+#ifndef BSAL_WORKER_H
+#define BSAL_WORKER_H
 
+#include "work_queue.h"
 #include <structures/queue.h>
 
 #include <system/lock.h>
@@ -18,6 +19,8 @@ struct bsal_message;
  */
 struct bsal_worker {
     struct bsal_node *node;
+
+    struct bsal_work_queue *work_queue;
     pthread_t thread;
 
     int name;
@@ -50,7 +53,8 @@ struct bsal_worker {
     volatile float loop_load;
 };
 
-void bsal_worker_init(struct bsal_worker *worker, int name, struct bsal_node *node);
+void bsal_worker_init(struct bsal_worker *worker, int name, struct bsal_node *node,
+                struct bsal_work_queue *work_queue);
 void bsal_worker_destroy(struct bsal_worker *worker);
 
 struct bsal_queue *bsal_worker_works(struct bsal_worker *worker);
@@ -83,5 +87,7 @@ int bsal_worker_get_scheduling_score(struct bsal_worker *self);
 
 float bsal_worker_get_epoch_load(struct bsal_worker *self);
 float bsal_worker_get_loop_load(struct bsal_worker *self);
+
+int bsal_worker_pull_work_classic(struct bsal_worker *worker, struct bsal_work *work);
 
 #endif

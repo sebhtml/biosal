@@ -181,7 +181,7 @@ void bsal_dna_kmer_counter_kernel_director_receive(struct bsal_actor *actor, str
          * just yet as it is not ready.
          * It most be trained.
          */
-        kernel = bsal_actor_spawn(actor, BSAL_KMER_COUNTER_KERNEL_SCRIPT);
+        kernel = bsal_actor_spawn(actor, BSAL_DNA_KMER_COUNTER_KERNEL_SCRIPT);
 
         bsal_actor_helper_send_int(actor, kernel, BSAL_SET_KMER_LENGTH, concrete_actor->kmer_length);
 

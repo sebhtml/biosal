@@ -14,11 +14,13 @@
 
 /*#define BSAL_THREAD_DEBUG*/
 
-void bsal_worker_init(struct bsal_worker *worker, int name, struct bsal_node *node)
+void bsal_worker_init(struct bsal_worker *worker, int name, struct bsal_node *node,
+                struct bsal_work_queue *work_queue)
 {
     bsal_queue_init(&worker->works, sizeof(struct bsal_work));
     bsal_queue_init(&worker->messages, sizeof(struct bsal_message));
 
+    worker->work_queue = work_queue;
     worker->node = node;
     worker->name = name;
     worker->dead = 0;
@@ -410,6 +412,11 @@ void bsal_worker_push_work(struct bsal_worker *worker, struct bsal_work *work)
 }
 
 int bsal_worker_pull_work(struct bsal_worker *worker, struct bsal_work *work)
+{
+    return bsal_work_queue_dequeue(worker->work_queue, work);
+}
+
+int bsal_worker_pull_work_classic(struct bsal_worker *worker, struct bsal_work *work)
 {
     int value;
 

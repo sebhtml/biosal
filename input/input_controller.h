@@ -35,6 +35,7 @@ struct bsal_input_controller {
     int spawner;
 
     int ready_consumers;
+    int filled_consumers;
     int ready_spawners;
     struct bsal_vector stores_per_spawner;
     int stores_per_worker_per_spawner;

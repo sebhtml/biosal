@@ -1,6 +1,6 @@
 
-#ifndef BSAL_KMER_COUNTER_KERNEL_H
-#define BSAL_KMER_COUNTER_KERNEL_H
+#ifndef BSAL_DNA_KMER_COUNTER_KERNEL_H
+#define BSAL_DNA_KMER_COUNTER_KERNEL_H
 
 #include <engine/actor.h>
 
@@ -8,7 +8,7 @@
 #include <structures/vector.h>
 #include <structures/dynamic_hash_table.h>
 
-#define BSAL_KMER_COUNTER_KERNEL_SCRIPT 0xed338fa2
+#define BSAL_DNA_KMER_COUNTER_KERNEL_SCRIPT 0xed338fa2
 
 struct bsal_dna_kmer_counter_kernel {
     struct bsal_dna_codec codec;

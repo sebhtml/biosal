@@ -300,6 +300,8 @@ void bsal_node_destroy(struct bsal_node *node)
     bsal_queue_destroy(&node->active_buffers);
     bsal_queue_destroy(&node->dead_indices);
 
+    bsal_worker_pool_destroy(&node->worker_pool);
+
     bsal_counter_destroy(&node->counter);
 
     MPI_Finalize();

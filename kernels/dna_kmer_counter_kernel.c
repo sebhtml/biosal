@@ -33,7 +33,7 @@
 */
 
 struct bsal_script bsal_dna_kmer_counter_kernel_script = {
-    .name = BSAL_KMER_COUNTER_KERNEL_SCRIPT,
+    .name = BSAL_DNA_KMER_COUNTER_KERNEL_SCRIPT,
     .init = bsal_dna_kmer_counter_kernel_init,
     .destroy = bsal_dna_kmer_counter_kernel_destroy,
     .receive = bsal_dna_kmer_counter_kernel_receive,
@@ -378,6 +378,7 @@ void bsal_dna_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_
         /* the store has no more sequence...
          */
 
+        printf("DEBUG kernel was told by producer that nothing is left to do\n");
         bsal_actor_helper_send_empty(actor, bsal_actor_get_acquaintance(actor,
                                 concrete_actor->producer_source),
                         BSAL_ACTOR_SET_PRODUCER_REPLY);
@@ -416,4 +417,8 @@ void bsal_dna_kmer_counter_kernel_ask(struct bsal_actor *self, struct bsal_messa
     producer = bsal_actor_get_acquaintance(self, concrete_actor->producer);
 
     bsal_actor_helper_send_empty(self, producer, BSAL_SEQUENCE_STORE_ASK);
+
+#ifdef BSAL_DNA_KMER_COUNTER_KERNEL_DEBUG
+    printf("DEBUG kernel asks producer\n");
+#endif
 }

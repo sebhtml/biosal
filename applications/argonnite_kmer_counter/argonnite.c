@@ -53,7 +53,7 @@ void argonnite_init(struct bsal_actor *actor)
 
     bsal_actor_add_script(actor, BSAL_INPUT_CONTROLLER_SCRIPT,
                     &bsal_input_controller_script);
-    bsal_actor_add_script(actor, BSAL_KMER_COUNTER_KERNEL_SCRIPT,
+    bsal_actor_add_script(actor, BSAL_DNA_KMER_COUNTER_KERNEL_SCRIPT,
                     &bsal_dna_kmer_counter_kernel_script);
     bsal_actor_add_script(actor, BSAL_MANAGER_SCRIPT,
                     &bsal_manager_script);
@@ -80,6 +80,7 @@ void argonnite_init(struct bsal_actor *actor)
     concrete_actor->wiring_distribution = 0;
 
     concrete_actor->ready_kernels = 0;
+    concrete_actor->finished_kernels = 0;
     concrete_actor->total_kmers = 0;
 
     bsal_actor_register(actor, ARGONNITE_PREPARE_SEQUENCE_STORES,
@@ -248,7 +249,7 @@ void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message)
 
         manager_for_kernels = bsal_actor_get_acquaintance(actor, concrete_actor->manager_for_kernels);
         bsal_actor_helper_send_int(actor, manager_for_kernels, BSAL_MANAGER_SET_SCRIPT,
-                        BSAL_KMER_COUNTER_KERNEL_SCRIPT);
+                        BSAL_DNA_KMER_COUNTER_KERNEL_SCRIPT);
 
     } else if (tag == BSAL_MANAGER_SET_SCRIPT_REPLY
                     && source == bsal_actor_get_acquaintance(actor,
@@ -581,13 +582,16 @@ void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message)
 
     } else if (tag == BSAL_ACTOR_SET_PRODUCER_REPLY) {
 
-        concrete_actor->ready_kernels++;
+        concrete_actor->finished_kernels++;
 
-        if (concrete_actor->ready_kernels == bsal_vector_size(&concrete_actor->kernels)) {
+        printf("DEBUG finished kernels %d/%d\n", concrete_actor->finished_kernels,
+                        (int)bsal_vector_size(&concrete_actor->kernels));
+
+        if (concrete_actor->finished_kernels == bsal_vector_size(&concrete_actor->kernels)) {
             bsal_actor_helper_get_acquaintances(actor, &concrete_actor->kernels, &kernels);
             bsal_actor_helper_send_range_empty(actor, &kernels, BSAL_KERNEL_NOTIFY);
 
-            concrete_actor->ready_kernels = 0;
+            concrete_actor->finished_kernels = 0;
             bsal_vector_destroy(&kernels);
         }
 
