@@ -91,7 +91,7 @@ void bsal_sequence_store_receive(struct bsal_actor *actor, struct bsal_message *
     } else if (tag == BSAL_ACTOR_ASK_TO_STOP) {
 
 #ifdef BSAL_SEQUENCE_STORE_DEBUG
-        printf("DEBUG store actor/%d dies\n",
+        printf("DEBUG store %d dies\n",
                         bsal_actor_name(actor));
 #endif
 
@@ -229,7 +229,7 @@ void bsal_sequence_store_reserve(struct bsal_actor *actor, struct bsal_message *
     concrete_actor->expected = amount;
 
     concrete_actor->reservation_producer = bsal_actor_add_acquaintance(actor, source);
-    printf("DEBUG store actor/%d reserves %" PRIu64 " buckets\n",
+    printf("DEBUG store %d reserves %" PRIu64 " buckets\n",
                     bsal_actor_name(actor),
                     amount);
 

@@ -109,7 +109,7 @@ void bsal_manager_receive(struct bsal_actor *actor, struct bsal_message *message
         }
 
 #ifdef BSAL_MANAGER_DEBUG
-        printf("DEBUG manager actor/%d starts\n",
+        printf("DEBUG manager %d starts\n",
                         bsal_actor_name(actor));
 #endif
 
@@ -117,7 +117,7 @@ void bsal_manager_receive(struct bsal_actor *actor, struct bsal_message *message
 
         concrete_actor->spawners = bsal_vector_size(&spawners);
 
-        printf("DEBUG manager actor/%d starts, supervisor is actor/%d, %d spawners provided\n",
+        printf("DEBUG manager %d starts, supervisor is %d, %d spawners provided\n",
                         bsal_actor_name(actor), bsal_actor_supervisor(actor),
                         (int)bsal_vector_size(&spawners));
 
@@ -132,7 +132,7 @@ void bsal_manager_receive(struct bsal_actor *actor, struct bsal_message *message
 
             bsal_vector_push_back(&concrete_actor->indices, &index);
 
-            printf("DEBUG manager actor/%d add actor vector and actor count for spawner actor/%d\n",
+            printf("DEBUG manager %d add spawned processes for spawner %d\n",
                             bsal_actor_name(actor), spawner);
 
             stores = (struct bsal_vector *)bsal_dynamic_hash_table_add(&concrete_actor->spawner_children, &index);
@@ -165,7 +165,7 @@ void bsal_manager_receive(struct bsal_actor *actor, struct bsal_message *message
         BSAL_DEBUG_MARKER("set_the_script_now");
 #endif
 
-        printf("manager actor/%d sets script to script/%x\n",
+        printf("manager %d sets script to script %x\n",
                         bsal_actor_name(actor), concrete_actor->script);
 
         bsal_actor_helper_send_reply_empty(actor, BSAL_MANAGER_SET_SCRIPT_REPLY);
@@ -190,7 +190,7 @@ void bsal_manager_receive(struct bsal_actor *actor, struct bsal_message *message
 
         index = bsal_actor_get_acquaintance_index(actor, source);
 
-        printf("DEBUG manager actor/%d says that spawner actor/%d is on a node with %d workers\n",
+        printf("DEBUG manager %d says that spawner %d is on a node with %d workers\n",
                         bsal_actor_name(actor), source, workers);
 
 #ifdef BSAL_MANAGER_DEBUG
@@ -225,7 +225,7 @@ void bsal_manager_receive(struct bsal_actor *actor, struct bsal_message *message
         bsal_vector_push_back(stores, &store);
 
 #ifdef BSAL_MANAGER_DEBUG
-        printf("DEBUG manager actor/%d receives actor/%d from spawner actor/%d, now %d/%d\n",
+        printf("DEBUG manager %d receives %d from spawner %d, now %d/%d\n",
                         bsal_actor_name(actor), store, source,
                         (int)bsal_vector_size(stores), *bucket);
 #endif
@@ -234,13 +234,13 @@ void bsal_manager_receive(struct bsal_actor *actor, struct bsal_message *message
 
             concrete_actor->ready_spawners++;
 
-            printf("DEBUG manager actor/%d says that spawner actor/%d is ready, %d/%d\n",
+            printf("DEBUG manager %d says that spawner %d is ready, %d/%d\n",
                         bsal_actor_name(actor), source,
                         concrete_actor->ready_spawners, concrete_actor->spawners);
 
             if (concrete_actor->ready_spawners == concrete_actor->spawners) {
 
-                printf("DEBUG manager actor/%d says that all spawners are ready\n",
+                printf("DEBUG manager %d says that all spawners are ready\n",
                         bsal_actor_name(actor));
 
                 bsal_vector_init(&all_stores, sizeof(int));

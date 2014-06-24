@@ -112,7 +112,7 @@ void bsal_input_controller_init(struct bsal_actor *actor)
     controller->stores_per_worker_per_spawner = 0;
 
 #ifdef BSAL_INPUT_CONTROLLER_DEBUG
-    printf("DEBUG actor/%d init controller\n",
+    printf("DEBUG %d init controller\n",
                     bsal_actor_name(actor));
 #endif
 
@@ -434,7 +434,7 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
 
 #ifdef BSAL_INPUT_CONTROLLER_DEBUG_LEVEL_2
 #endif
-            printf("DEBUG actor/%d: all streams failed.\n",
+            printf("DEBUG %d: all streams failed.\n",
                             bsal_actor_name(actor));
             bsal_actor_helper_send_to_supervisor_empty(actor, BSAL_INPUT_DISTRIBUTE_REPLY);
         }
@@ -714,7 +714,7 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
     } else if (tag == BSAL_ACTOR_SET_CONSUMERS) {
 
         bsal_vector_unpack(&concrete_actor->consumers, buffer);
-        printf("controller actor/%d receives %d consumers\n",
+        printf("controller %d receives %d consumers\n",
                         bsal_actor_name(actor),
                         (int)bsal_vector_size(&concrete_actor->consumers));
 
@@ -860,18 +860,18 @@ void bsal_input_controller_create_stores(struct bsal_actor *actor, struct bsal_m
         */
     }
 
-    printf("DEBUG controller actor/%d: consumers are ready (%d)\n",
+    printf("DEBUG controller %d: consumers are ready (%d)\n",
                     bsal_actor_name(actor),
                     (int)bsal_vector_size(&concrete_actor->consumers));
 
     for (i = 0; i < bsal_vector_size(&concrete_actor->consumers); i++) {
         value = bsal_vector_helper_at_as_int(&concrete_actor->consumers, i);
 
-        printf("DEBUG controller/%d: consumer %i is actor/%d\n",
+        printf("DEBUG controller %d: consumer %i is %d\n",
                         bsal_actor_name(actor), i, value);
     }
 
-    printf("DEBUG controller actor/%d: stream actors are\n",
+    printf("DEBUG controller %d: streams are\n",
                     bsal_actor_name(actor));
 
     total = 0;
@@ -882,7 +882,7 @@ void bsal_input_controller_create_stores(struct bsal_actor *actor, struct bsal_m
         local_file = bsal_vector_helper_at_as_char_pointer(&concrete_actor->files, i);
         name = *(int *)bsal_vector_at(&concrete_actor->counting_streams, i);
 
-        printf("stream actor/%d, %d/%d %s %" PRIu64 "\n",
+        printf("stream %d, %d/%d %s %" PRIu64 "\n",
                         name, i,
                         (int)bsal_vector_size(&concrete_actor->files),
                         local_file,
@@ -896,7 +896,7 @@ void bsal_input_controller_create_stores(struct bsal_actor *actor, struct bsal_m
         blocks++;
     }
 
-    printf("DEBUG controller actor/%d: Partition Total: %" PRIu64 ", block_size: %d, blocks: %d\n",
+    printf("DEBUG controller %d: Partition Total: %" PRIu64 ", block_size: %d, blocks: %d\n",
                     bsal_actor_name(actor),
                     total, block_size, blocks);
 
@@ -936,7 +936,7 @@ void bsal_input_controller_get_node_name_reply(struct bsal_actor *actor, struct 
     spawner = source;
     bsal_message_helper_unpack_int(message, 0, &node);
 
-    printf("DEBUG spawner actor/%d is on node node/%d\n", spawner, node);
+    printf("DEBUG spawner %d is on node node/%d\n", spawner, node);
 
     bsal_actor_helper_send_reply_empty(actor, BSAL_ACTOR_GET_NODE_WORKER_COUNT);
 }
@@ -963,7 +963,7 @@ void bsal_input_controller_get_node_worker_count_reply(struct bsal_actor *actor,
     bucket = bsal_vector_at(&concrete_actor->stores_per_spawner, index);
     *bucket = worker_count * concrete_actor->stores_per_worker_per_spawner;
 
-    printf("DEBUG spawner actor/%d (node/%d) is on a node that has %d workers\n", spawner,
+    printf("DEBUG spawner %d (node %d) is on a node that has %d workers\n", spawner,
                     index, worker_count);
 
     bsal_actor_helper_send_to_self_empty(actor, BSAL_INPUT_CONTROLLER_CREATE_STORES);

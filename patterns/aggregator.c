@@ -113,7 +113,7 @@ void bsal_aggregator_receive(struct bsal_actor *self, struct bsal_message *messa
     if (tag == BSAL_AGGREGATE_KERNEL_OUTPUT) {
 
         if (bsal_vector_size(&concrete_actor->buffers) == 0) {
-            printf("aggregator actor/%d: Error, no configured buffers\n",
+            printf("aggregator %d: Error, no configured buffers\n",
                             bsal_actor_name(self));
             return;
         }
@@ -311,7 +311,7 @@ void bsal_aggregator_flush(struct bsal_actor *self, int customer_index, int forc
     buffer = NULL;
 
     if (concrete_actor->flushed % 1000 == 0) {
-        printf("aggregator actor/%d flushed %d blocks so far\n",
+        printf("aggregator %d flushed %d blocks so far\n",
                         bsal_actor_name(self), concrete_actor->flushed);
     }
 

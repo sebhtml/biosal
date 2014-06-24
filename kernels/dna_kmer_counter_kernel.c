@@ -261,7 +261,7 @@ void bsal_dna_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_
                         || concrete_actor->actual >= concrete_actor->last + 10000
                         || concrete_actor->last == 0) {
 
-            printf("kernel actor/%d processed %" PRIu64 "/%" PRIu64 " entries (%d blocks) so far\n",
+            printf("kernel %d processed %" PRIu64 "/%" PRIu64 " entries (%d blocks) so far\n",
                             name, concrete_actor->actual,
                             concrete_actor->expected,
                             concrete_actor->blocks);
@@ -308,7 +308,7 @@ void bsal_dna_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_
     } else if (tag == BSAL_RESERVE) {
 
 #ifdef BSAL_KMER_COUNTER_KERNEL_DEBUG
-        printf("kmer counter kernel actor/%d is online !\n", name);
+        printf("kmer counter kernel %d is online !\n", name);
 #endif
 
         concrete_actor->expected = *(uint64_t *)buffer;
@@ -323,7 +323,7 @@ void bsal_dna_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_
                         concrete_actor->expected, concrete_actor->blocks);
 
 #ifdef BSAL_KMER_COUNTER_KERNEL_DEBUG
-        printf("kernel actor/%d receives request to stop from actor/%d, supervisor is actor/%d\n",
+        printf("kernel %d receives request to stop from %d, supervisor is %d\n",
                         name, source, bsal_actor_supervisor(actor));
 #endif
 

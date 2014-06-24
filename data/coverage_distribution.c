@@ -251,8 +251,8 @@ void bsal_coverage_distribution_write_distribution(struct bsal_actor *self)
     bsal_vector_destroy(&coverage_values);
     bsal_vector_iterator_destroy(&vector_iterator);
 
-    printf("distribution actor/%d wrote %s\n", name, file_name);
-    printf("distribution actor/%d wrote %s\n", name, canonical_file_name);
+    printf("distribution %d wrote %s\n", name, file_name);
+    printf("distribution %d wrote %s\n", name, canonical_file_name);
 
     fclose(descriptor);
     descriptor = NULL;

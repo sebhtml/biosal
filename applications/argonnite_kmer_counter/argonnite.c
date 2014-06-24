@@ -193,7 +193,7 @@ void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message)
             return;
         }
 
-        printf("argonnite actor/%d starts\n", name);
+        printf("argonnite %d starts\n", name);
 
         bsal_actor_helper_add_acquaintances(actor, &initial_actors, &concrete_actor->initial_actors);
 
@@ -346,7 +346,7 @@ void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message)
             manager_for_aggregators = bsal_actor_spawn(actor,
                             BSAL_MANAGER_SCRIPT);
 
-            printf("argonnite actor/%d spawns manager for aggregators actor/%d\n",
+            printf("argonnite %d spawns manager %d for aggregators\n",
                             bsal_actor_name(actor), manager_for_aggregators);
 
             concrete_actor->manager_for_aggregators = bsal_actor_get_acquaintance_index(actor,
@@ -372,7 +372,7 @@ void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message)
             BSAL_DEBUG_MARKER("set actors per spawner ");
 #endif
 
-        printf("argonnite actor/%d sets count per spawner to 1 for manager actor/%d\n",
+        printf("argonnite %d sets count per spawner to 1 for manager %d\n",
                         bsal_actor_name(actor), manager_for_aggregators);
 
         bsal_actor_helper_send_reply_int(actor,
@@ -392,7 +392,7 @@ void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message)
         bsal_actor_helper_send_reply_vector(actor, BSAL_ACTOR_START,
                         &spawners);
 
-        printf("argonnite actor/%d ask manager actor/%d to spawn children for work\n",
+        printf("argonnite %d ask manager %d to spawn children for work\n",
                         bsal_actor_name(actor), manager_for_aggregators);
 
         bsal_vector_destroy(&spawners);
@@ -412,7 +412,7 @@ void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message)
          * It is like a brain, with some connections
          */
 
-        printf("argonnite actor/%d wires the brain, %d kernels, %d aggregators\n",
+        printf("argonnite %d wires the brain, %d kernels, %d aggregators\n",
                         bsal_actor_name(actor),
                         (int)bsal_vector_size(&concrete_actor->kernels),
                         (int)bsal_vector_size(&concrete_actor->aggregators));
@@ -466,7 +466,7 @@ void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message)
 
         if (concrete_actor->wired_kernels == (int)bsal_vector_size(&concrete_actor->kernels)) {
 
-            printf("argonnite actor/%d completed the wiring of the brain\n",
+            printf("argonnite %d completed the wiring of the brain\n",
                 bsal_actor_name(actor));
 
             concrete_actor->configured_actors = 0;
@@ -690,7 +690,7 @@ void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message)
 
             if (concrete_actor->actual_kmers == concrete_actor->total_kmers) {
 
-                printf("argonnite actor/%d: stores are ready, %" PRIu64 "/%" PRIu64 " kmers\n",
+                printf("argonnite %d: stores are ready, %" PRIu64 "/%" PRIu64 " kmers\n",
                                 name, concrete_actor->actual_kmers, concrete_actor->total_kmers);
 
                 distribution = bsal_actor_get_acquaintance(actor, concrete_actor->distribution);
@@ -703,7 +703,7 @@ void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message)
 
             } else {
 
-                printf("argonnite actor/%d: stores are not ready, %" PRIu64 "/%" PRIu64 " kmers\n",
+                printf("argonnite %d: stores are not ready, %" PRIu64 "/%" PRIu64 " kmers\n",
                                 name, concrete_actor->actual_kmers, concrete_actor->total_kmers);
 
                 bsal_actor_helper_send_to_self_empty(actor, ARGONNITE_PROBE_KMER_STORES);
@@ -740,7 +740,7 @@ void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message)
 
             other_name = *bucket;
 
-            printf("argonnite actor/%d stops argonnite actor/%d\n",
+            printf("argonnite %d stops argonnite %d\n",
                             name, other_name);
 
             bsal_actor_helper_send_empty(actor, other_name, BSAL_ACTOR_ASK_TO_STOP);
@@ -752,7 +752,7 @@ void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message)
 
     } else if (tag == BSAL_ACTOR_ASK_TO_STOP) {
 
-        printf("argonnite actor/%d stops\n", name);
+        printf("argonnite %d stops\n", name);
 
         bsal_actor_helper_ask_to_stop(actor, message);
 
@@ -916,7 +916,7 @@ void argonnite_connect_kernels_with_stores(struct bsal_actor *self, struct bsal_
     name = bsal_actor_name(self);
     concrete_actor = (struct argonnite *)bsal_actor_concrete_actor(self);
 
-    printf("argonnite actor/%d receives BSAL_INPUT_DISTRIBUTE_REPLY\n",
+    printf("argonnite %d receives BSAL_INPUT_DISTRIBUTE_REPLY\n",
                         name);
 #ifdef ARGONNITE_DEBUG
 #endif
