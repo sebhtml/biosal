@@ -12,6 +12,7 @@
 #include <stdio.h>
 
 #define BSAL_WORKER_POOL_USE_LEAST_BUSY
+#define BSAL_WORKER_POOL_ATTEMPT_COUNT 8
 
 void bsal_worker_pool_init(struct bsal_worker_pool *pool, int workers,
                 struct bsal_node *node)
@@ -143,9 +144,18 @@ int bsal_worker_pool_pull_classic(struct bsal_worker_pool *pool, struct bsal_mes
 {
     struct bsal_worker *worker;
     int answer;
+    int attempts;
+    int i;
 
-    worker = bsal_worker_pool_select_worker_for_message(pool);
-    answer = bsal_worker_pull_message(worker, message);
+    i = 0;
+    answer = 0;
+    attempts = BSAL_WORKER_POOL_ATTEMPT_COUNT;
+
+    while (answer == 0 && i < attempts) {
+        worker = bsal_worker_pool_select_worker_for_message(pool);
+        answer = bsal_worker_pull_message(worker, message);
+        i++;
+    }
 
     return answer;
 }
