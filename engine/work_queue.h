@@ -9,8 +9,10 @@
 #include <system/lock.h>
 
 /*
+ * Use ticket lock
+ */
 #define BSAL_WORK_QUEUE_USE_TICKET_LOCK
-*/
+
 struct bsal_work_queue {
     struct bsal_queue queue;
 

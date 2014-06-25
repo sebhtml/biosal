@@ -66,6 +66,7 @@ struct bsal_node {
     int nodes;
     int threads;
 
+    int start;
     int worker_in_main_thread;
     int send_in_thread;
     int workers_in_threads;
@@ -152,5 +153,7 @@ void bsal_node_register_signal_handlers(struct bsal_node *self);
 
 void bsal_node_print_structure(struct bsal_node *node, struct bsal_actor *actor);
 int bsal_node_has_actor(struct bsal_node *self, int name);
+
+struct bsal_worker_pool *bsal_node_get_worker_pool(struct bsal_node *self);
 
 #endif

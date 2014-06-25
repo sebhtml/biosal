@@ -255,6 +255,8 @@ void bsal_node_init(struct bsal_node *node, int *argc, char ***argv)
 
     node->start_time = time(NULL);
     node->last_report_time = node->start_time;
+
+    node->start = 0;
 }
 
 void bsal_node_destroy(struct bsal_node *node)
@@ -1108,7 +1110,7 @@ void bsal_node_create_work(struct bsal_node *node, struct bsal_message *message)
 
     bsal_work_init(&work, actor, new_message);
 
-    bsal_worker_pool_schedule_work(&node->worker_pool, &work);
+    bsal_worker_pool_schedule_work(&node->worker_pool, &work, &node->start);
 }
 
 int bsal_node_actor_index(struct bsal_node *node, int name)
@@ -1443,4 +1445,9 @@ void bsal_node_print_structure(struct bsal_node *node, struct bsal_actor *actor)
     printf(" /* STRUCTURE */\n");
 
     bsal_map_iterator_destroy(&iterator);
+}
+
+struct bsal_worker_pool *bsal_node_get_worker_pool(struct bsal_node *self)
+{
+    return &self->worker_pool;
 }

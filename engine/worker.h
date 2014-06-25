@@ -29,6 +29,8 @@ struct bsal_worker {
     struct bsal_message_queue *message_queue;
     pthread_t thread;
 
+    int start;
+
     int name;
 
     /* this is read by 2 threads, but written by 1 thread

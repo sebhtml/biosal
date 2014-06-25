@@ -14,6 +14,8 @@
 
 /*#define BSAL_THREAD_DEBUG*/
 
+#define BSAL_WORKER_HAS_OWN_QUEUES_AND_PUSH_LOCALLY
+
 void bsal_worker_init(struct bsal_worker *worker, int name, struct bsal_node *node,
                 struct bsal_work_queue *work_queue,
                 struct bsal_message_queue *message_queue)
@@ -44,6 +46,7 @@ void bsal_worker_init(struct bsal_worker *worker, int name, struct bsal_node *no
     worker->loop_start_in_nanoseconds = worker->epoch_start_in_nanoseconds;
     worker->loop_used_nanoseconds = 0;
     worker->loop_load = 0;
+    worker->start = 0;
 }
 
 void bsal_worker_destroy(struct bsal_worker *worker)
@@ -240,6 +243,7 @@ void bsal_worker_send(struct bsal_worker *worker, struct bsal_message *message)
     void *old_buffer;
 
 #ifdef BSAL_WORKER_HAS_OWN_QUEUES_AND_PUSH_LOCALLY
+    int maximum;
     struct bsal_message *new_message;
     int destination;
     struct bsal_work work;
@@ -294,7 +298,8 @@ void bsal_worker_send(struct bsal_worker *worker, struct bsal_message *message)
 
 #ifdef BSAL_WORKER_HAS_OWN_QUEUES_AND_PUSH_LOCALLY
     destination = bsal_message_destination(message);
-    push_locally = 0;
+    push_locally = 1;
+    maximum = 0;
 
     if (push_locally && bsal_node_has_actor(worker->node, destination)) {
 
@@ -313,14 +318,24 @@ void bsal_worker_send(struct bsal_worker *worker, struct bsal_message *message)
 
         bsal_work_init(&work, actor, new_message);
 
-        works = bsal_queue_size(&worker->works);
+        works = bsal_work_queue_size(worker->work_queue);
 
+#ifdef BSAL_WORKER_DEBUG_SCHEDULING
         if (works > 0) {
             printf("NOTICE queuing work in queue with %d works\n",
                     works);
         }
+#endif
 
-        bsal_worker_push_work(worker, &work);
+        if (works <= maximum) {
+            bsal_worker_push_work(worker, &work);
+        } else {
+#ifdef BSAL_WORKER_DEBUG_SCHEDULING
+            printf("DEBUG WORKER LOCAL PUSH %d\n", worker->start);
+#endif
+            bsal_worker_pool_schedule_work(bsal_node_get_worker_pool(worker->node), &work,
+                            &worker->start);
+        }
 
     } else {
         /* Otherwise, the message will be sent
