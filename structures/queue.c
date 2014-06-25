@@ -4,150 +4,144 @@
 #include <system/memory.h>
 
 #include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
 
-void bsal_queue_init(struct bsal_queue *queue, int bytes_per_unit)
+/*
+#define BSAL_QUEUE_DEBUG
+*/
+
+void bsal_queue_init(struct bsal_queue *self, int bytes_per_unit)
 {
-    struct bsal_queue_group *array;
-    int units;
+    self->size = 0;
+    self->enqueue_index = 0;
+    self->dequeue_index = 0;
+    self->bytes_per_element = bytes_per_unit;
 
-    units = 64;
+    bsal_vector_init(&self->vector, bytes_per_unit);
+}
 
-    queue->units = units;
-    queue->bytes_per_unit = bytes_per_unit;
+void bsal_queue_destroy(struct bsal_queue *self)
+{
+    self->size = 0;
+    self->enqueue_index = 0;
+    self->dequeue_index = 0;
+    self->bytes_per_element = 0;
 
-    /* allocate an initial array
+    bsal_vector_destroy(&self->vector);
+}
+
+int bsal_queue_enqueue(struct bsal_queue *self, void *item)
+{
+    int stride;
+    int i;
+    void *bucket1;
+    void *bucket2;
+    int offset1;
+    int offset2;
+    int minimum_stride;
+
+#ifdef BSAL_QUEUE_DEBUG
+    int value;
+
+    value = *(int *)item;
+
+    printf("DEBUG enqueue %d, size %d\n", value, self->size);
+#endif
+
+    /* The vector is full, try to move things on the left.
      */
-    array = bsal_queue_get_array(queue);
+    if (self->enqueue_index == bsal_vector_size(&self->vector)) {
+        stride = self->dequeue_index;
 
-    queue->first = array;
-    queue->last = array;
-    queue->bin = NULL;
-    queue->size = 0;
-}
+#ifdef BSAL_QUEUE_DEBUG
+        printf("dequeue_index %d\n", self->dequeue_index);
+#endif
 
-void bsal_queue_destroy(struct bsal_queue *queue)
-{
-    bsal_queue_delete(queue->first);
-    bsal_queue_delete(queue->bin);
+        minimum_stride = bsal_vector_size(&self->vector) / 8;
 
-    queue->first = NULL;
-    queue->last = NULL;
-    queue->bin = NULL;
+        /* move things on the left
+         */
+        if (stride > 0 && self->size > 0
+                        && stride >= minimum_stride) {
 
-    queue->units = 0;
-    queue->bytes_per_unit = 0;
-}
+            i = 0;
+            while (i < self->size) {
+                offset1 = self->dequeue_index + i;
+                offset2 = self->dequeue_index + i - stride;
 
-void bsal_queue_delete(struct bsal_queue_group *array)
-{
-    struct bsal_queue_group *current;
-    struct bsal_queue_group *next;
+                bucket1 = bsal_vector_at(&self->vector, offset1);
+                bucket2 = bsal_vector_at(&self->vector, offset2);
 
-    current = array;
+#ifdef BSAL_QUEUE_DEBUG
+                printf("DEBUG moving %d %p to %d %p (size %d, vector size %d)\n", offset1, bucket1, offset2, bucket2,
+                                self->size, (int)bsal_vector_size(&self->vector));
+#endif
 
-    while (current != NULL) {
-        next = bsal_queue_group_next(current);
-        bsal_queue_destroy_array(current);
-        current = next;
-    }
-}
+                memcpy(bucket2, bucket1, self->bytes_per_element);
 
-void bsal_queue_destroy_array(struct bsal_queue_group *array)
-{
-    bsal_queue_group_destroy(array);
+                i++;
+            }
 
-    /* TODO use a slab allocator */
-    bsal_free(array);
-}
+            self->enqueue_index -= stride;
+            self->dequeue_index -= stride;
 
-int bsal_queue_enqueue(struct bsal_queue *queue, void *item)
-{
-    struct bsal_queue_group *array;
+            bucket1 = bsal_vector_at(&self->vector, self->enqueue_index);
+            memcpy(bucket1, item, self->bytes_per_element);
+            self->enqueue_index++;
+            self->size++;
+            return 1;
+        }
 
-    if (bsal_queue_group_push(queue->last, item)) {
-        queue->size++;
+        /* there was no place, append the item in the vector
+         */
+
+        bsal_vector_push_back(&self->vector, item);
+        self->enqueue_index++;
+        self->size++;
+
         return 1;
     }
 
-    /* add an array and retry... */
+    /* at this point, there is plenty of space...
+     */
 
-    array = bsal_queue_get_array(queue);
-    bsal_queue_group_set_previous(array, queue->last);
-    bsal_queue_group_set_next(queue->last, array);
-    queue->last = array;
+    bucket1 = bsal_vector_at(&self->vector, self->enqueue_index);
+    memcpy(bucket1, item, self->bytes_per_element);
+    self->enqueue_index++;
+    self->size++;
 
-    /* recursive call... */
-    /* there should be at most 1 recursive call */
-    return bsal_queue_enqueue(queue, item);
+    return 1;
 }
 
-int bsal_queue_dequeue(struct bsal_queue *queue, void *item)
+int bsal_queue_dequeue(struct bsal_queue *self, void *item)
 {
-    struct bsal_queue_group *array;
-
-    /* empty. */
-    if (bsal_queue_empty(queue)) {
+    void *bucket;
+    if (self->size == 0) {
         return 0;
     }
 
-    if (bsal_queue_group_pop(queue->first, item)) {
+    bucket = bsal_vector_at(&self->vector, self->dequeue_index);
+    memcpy(item, bucket, self->bytes_per_element);
+    self->dequeue_index++;
+    self->size--;
 
-        /* check if it is empty
-         * if it is empty, we remove it from the system
-         */
-        if (bsal_queue_group_empty(queue->first)) {
-
-            /* reset it so that it is ready to receive stuff */
-            if (queue->first == queue->last) {
-                bsal_queue_group_reset(queue->first);
-
-                queue->size--;
-                return 1;
-            }
-
-            /* otherwise, remove the first array */
-            array = queue->first;
-
-            queue->first = bsal_queue_group_next(queue->first);
-            bsal_queue_group_set_previous(queue->first, NULL);
-
-            bsal_queue_destroy_array(array);
-        }
-
-        queue->size--;
-        return 1;
-    }
-
-    return 0;
+    return 1;
 }
 
-int bsal_queue_bytes(struct bsal_queue *queue)
+int bsal_queue_empty(struct bsal_queue *self)
 {
-    return queue->bytes_per_unit;
+    return self->size == 0;
 }
 
-int bsal_queue_empty(struct bsal_queue *queue)
-{
-    return queue->size == 0;
-}
-
-int bsal_queue_size(struct bsal_queue *queue)
-{
-    return queue->size;
-}
-
-int bsal_queue_full(struct bsal_queue *queue)
+int bsal_queue_full(struct bsal_queue *self)
 {
     return 0;
 }
 
-struct bsal_queue_group *bsal_queue_get_array(struct bsal_queue *queue)
+int bsal_queue_size(struct bsal_queue *self)
 {
-    struct bsal_queue_group *array;
-
-    /* TODO: use a slab allocator here */
-    array = (struct bsal_queue_group *)bsal_malloc(sizeof(struct bsal_queue_group));
-    bsal_queue_group_init(array, queue->units, queue->bytes_per_unit);
-
-    return array;
+    return self->size;
 }
+
+

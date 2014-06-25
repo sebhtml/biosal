@@ -120,6 +120,24 @@ int main(int argc, char **argv)
         TEST_INT_EQUALS(bsal_queue_full(&queue), 0);
     }
 
+    {
+        struct bsal_queue queue;
+        int i;
+        int value;
+        bsal_queue_init(&queue, sizeof(int));
+
+        TEST_INT_EQUALS(bsal_queue_empty(&queue), 1);
+
+        i = 3000;
+        while (i--) {
+            value = i;
+            TEST_INT_EQUALS(bsal_queue_enqueue(&queue, &value), 1);
+            TEST_INT_EQUALS(bsal_queue_enqueue(&queue, &value), 1);
+            TEST_INT_EQUALS(bsal_queue_dequeue(&queue, &value), 1);
+        }
+
+    }
+
 
     END_TESTS();
 
