@@ -14,9 +14,14 @@
 #define BSAL_WORKER_POOL_USE_LEAST_BUSY
 #define BSAL_WORKER_POOL_ATTEMPT_COUNT 4
 
+/*
+#define BSAL_WORKER_POOL_DEBUG
+*/
+
 void bsal_worker_pool_init(struct bsal_worker_pool *pool, int workers,
                 struct bsal_node *node)
 {
+    pool->debug_mode = 0;
     pool->node = node;
     pool->workers = workers;
     pool->worker_array = NULL;
@@ -232,6 +237,12 @@ struct bsal_worker *bsal_worker_pool_select_worker_least_busy(
     struct bsal_worker *worker;
     struct bsal_worker *best_worker;
 
+#ifdef BSAL_WORKER_DEBUG
+    int tag;
+    int destination;
+    struct bsal_message *message;
+#endif
+
     best_worker = NULL;
     best_score = 99;
 
@@ -244,18 +255,15 @@ struct bsal_worker *bsal_worker_pool_select_worker_least_busy(
          */
         worker = bsal_worker_pool_get_worker(self, *start);
 
-        /*
-         * assign the next worker
-         */
-        *start = bsal_worker_pool_next_worker(self, *start);
-
         score = bsal_worker_get_scheduling_score(worker);
 
         /* if the worker is not busy and it has no work to do,
          * select it right away...
          */
         if (score == 0) {
-            return worker;
+            best_worker = worker;
+            best_score = 0;
+            break;
         }
 
         /* Otherwise, test the worker
@@ -264,7 +272,31 @@ struct bsal_worker *bsal_worker_pool_select_worker_least_busy(
             best_worker = worker;
             best_score = score;
         }
+
+        /*
+         * assign the next worker
+         */
+        *start = bsal_worker_pool_next_worker(self, *start);
     }
+
+#ifdef BSAL_WORKER_POOL_DEBUG
+    message = bsal_work_message(work);
+    tag = bsal_message_tag(message);
+    destination = bsal_message_destination(message);
+
+    if (tag == BSAL_ACTOR_ASK_TO_STOP) {
+        printf("DEBUG dispatching BSAL_ACTOR_ASK_TO_STOP for actor %d to worker %d\n",
+                        destination, *start);
+    }
+
+
+#endif
+
+    /*
+     * assign the next worker
+     */
+    *start = bsal_worker_pool_next_worker(self, *start);
+
 
     /* This is a best effort algorithm
      */
@@ -284,6 +316,25 @@ struct bsal_worker *bsal_worker_pool_select_worker_for_run(struct bsal_worker_po
 void bsal_worker_pool_schedule_work(struct bsal_worker_pool *pool, struct bsal_work *work,
                 int *start)
 {
+#ifdef BSAL_WORKER_POOL_DEBUG
+    if (pool->debug_mode) {
+        printf("DEBUG bsal_worker_pool_schedule_work called\n");
+    }
+
+    int tag;
+    int destination;
+    struct bsal_message *message;
+
+    message = bsal_work_message(work);
+    tag = bsal_message_tag(message);
+    destination = bsal_message_destination(message);
+
+    if (tag == BSAL_ACTOR_ASK_TO_STOP) {
+        printf("DEBUG bsal_worker_pool_schedule_work tag BSAL_ACTOR_ASK_TO_STOP actor %d\n",
+                        destination);
+    }
+#endif
+
 #ifdef BSAL_WORKER_HAS_OWN_QUEUES
     bsal_worker_pool_schedule_work_classic(pool, work, start);
 #else
@@ -374,4 +425,9 @@ void bsal_worker_pool_print_load(struct bsal_worker_pool *self)
     printf("LOAD %d s node/%d%s\n", elapsed, node_name, buffer);
 
     bsal_free(buffer);
+}
+
+void bsal_worker_pool_toggle_debug_mode(struct bsal_worker_pool *self)
+{
+    self->debug_mode = !self->debug_mode;
 }

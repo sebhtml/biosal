@@ -472,6 +472,8 @@ void bsal_actor_helper_ask_to_stop(struct bsal_actor *actor, struct bsal_message
     int child;
 
     if (source != name && source != supervisor) {
+        printf("actor/%d: permission denied, will not stop\n",
+                        bsal_actor_name(actor));
         return;
     }
 
@@ -479,21 +481,22 @@ void bsal_actor_helper_ask_to_stop(struct bsal_actor *actor, struct bsal_message
 
         child = bsal_actor_get_child(actor, i);
 
-#ifdef BSAL_MANAGER_DEBUG
-        printf("actor/%d tells worker actor/%d to stop\n",
+#ifdef BSAL_ACTOR_HELPER_DEBUG_STOP
+        printf("actor/%d tells actor %d to stop\n",
                             bsal_actor_name(actor), child);
 #endif
 
         bsal_actor_helper_send_empty(actor, child, BSAL_ACTOR_ASK_TO_STOP);
     }
 
-#ifdef BSAL_MANAGER_DEBUG
+#ifdef BSAL_ACTOR_HELPER_DEBUG_STOP
     printf("DEBUG121212 actor/%d dies\n",
                     bsal_actor_name(actor));
 
-    printf("DEBUG %d send BSAL_ACTOR_STOP to self\n",
+    printf("DEBUG actor/%d send BSAL_ACTOR_STOP to self\n",
                     bsal_actor_name(actor));
 #endif
+
     bsal_actor_helper_send_to_self_empty(actor, BSAL_ACTOR_STOP);
 
     bsal_actor_helper_send_reply_empty(actor, BSAL_ACTOR_ASK_TO_STOP_REPLY);

@@ -37,6 +37,7 @@
 #define BSAL_NODE_DEBUG_ACTOR_COUNTERS
 #define BSAL_NODE_DEBUG_SUPERVISOR
 #define BSAL_NODE_DEBUG_LOOP
+
 #define BSAL_NODE_DEBUG_SPAWN_KILL
 */
 
@@ -55,6 +56,7 @@ void bsal_node_init(struct bsal_node *node, int *argc, char ***argv)
 
     node->print_load = 0;
     node->print_structure = 0;
+    node->debug_mode = 0;
 
     bsal_node_global_self = node;
 
@@ -688,6 +690,8 @@ void bsal_node_run_loop(struct bsal_node *node)
             if (current_time - node->last_report_time >= period) {
                 if (node->print_load) {
                     bsal_worker_pool_print_load(&node->worker_pool);
+                    printf("LOAD node %d has %d active actors\n", node->name,
+                                    node->alive_actors);
                 }
 
                 if (node->print_memory_usage) {
@@ -1100,6 +1104,10 @@ void bsal_node_create_work(struct bsal_node *node, struct bsal_message *message)
     dead = bsal_actor_dead(actor);
 
     if (dead) {
+#ifdef BSAL_NODE_DEBUG_NULL_ACTOR
+        printf("DEBUG node/%d: actor/%d is dead\n", node->name,
+                        name);
+#endif
         return;
     }
 
@@ -1330,6 +1338,9 @@ void bsal_node_handle_signal(int signal)
     if (signal == SIGSEGV) {
         printf("Error, node/%d received signal SIGSEGV\n", node);
 
+    } else if (signal == SIGUSR1) {
+        bsal_node_toggle_debug_mode(bsal_node_global_self);
+        return;
     } else {
         printf("Error, node/%d received signal %d\n", node, signal);
     }
@@ -1364,6 +1375,8 @@ void bsal_node_register_signal_handlers(struct bsal_node *self)
     bsal_vector_helper_push_back_int(&signals, SIGBUS);
     /* abort */
     bsal_vector_helper_push_back_int(&signals, SIGABRT);
+
+    bsal_vector_helper_push_back_int(&signals, SIGUSR1);
 
 #if 0
     /* interruption */
@@ -1450,4 +1463,10 @@ void bsal_node_print_structure(struct bsal_node *node, struct bsal_actor *actor)
 struct bsal_worker_pool *bsal_node_get_worker_pool(struct bsal_node *self)
 {
     return &self->worker_pool;
+}
+
+void bsal_node_toggle_debug_mode(struct bsal_node *self)
+{
+    self->debug = !self->debug_mode;
+    bsal_worker_pool_toggle_debug_mode(&self->worker_pool);
 }

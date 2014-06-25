@@ -78,6 +78,7 @@ struct bsal_node {
     char **argv;
 
     int debug;
+    int debug_mode;
 
     struct bsal_counter counter;
 
@@ -155,5 +156,7 @@ void bsal_node_print_structure(struct bsal_node *node, struct bsal_actor *actor)
 int bsal_node_has_actor(struct bsal_node *self, int name);
 
 struct bsal_worker_pool *bsal_node_get_worker_pool(struct bsal_node *self);
+
+void bsal_node_toggle_debug_mode(struct bsal_node *self);
 
 #endif

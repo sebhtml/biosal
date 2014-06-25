@@ -21,6 +21,7 @@ struct bsal_worker_pool {
     int worker_for_run;
 
     int workers;
+    int debug_mode;
 
     int ticks_without_messages;
 
@@ -68,5 +69,7 @@ void bsal_worker_pool_schedule_work_classic(struct bsal_worker_pool *pool, struc
                 int *start);
 
 #endif
+
+void bsal_worker_pool_toggle_debug_mode(struct bsal_worker_pool *self);
 
 #endif

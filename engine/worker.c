@@ -12,7 +12,7 @@
 #include <stdio.h>
 #include <string.h>
 
-/*#define BSAL_THREAD_DEBUG*/
+/*#define BSAL_WORKER_DEBUG*/
 
 #define BSAL_WORKER_HAS_OWN_QUEUES_AND_PUSH_LOCALLY
 
@@ -32,6 +32,7 @@ void bsal_worker_init(struct bsal_worker *worker, int name, struct bsal_node *no
 
     bsal_work_queue_init(worker->work_queue);
     bsal_message_queue_init(worker->message_queue);
+
 #endif
 
     worker->debug = 0;
@@ -76,6 +77,12 @@ void bsal_worker_run(struct bsal_worker *worker)
     uint64_t elapsed_nanoseconds;
     uint64_t elapsed_from_start;
 
+#ifdef BSAL_WORKER_DEBUG
+    int tag;
+    int destination;
+    struct bsal_message *message;
+#endif
+
     period = 1;
     current_time = time(NULL);
 
@@ -119,6 +126,17 @@ void bsal_worker_run(struct bsal_worker *worker)
     /* check for messages in inbound FIFO */
     if (bsal_worker_pull_work(worker, &work)) {
 
+#ifdef BSAL_WORKER_DEBUG
+        message = bsal_work_message(&work);
+        tag = bsal_message_tag(message);
+        destination = bsal_message_destination(message);
+
+        if (tag == BSAL_ACTOR_ASK_TO_STOP) {
+            printf("DEBUG pulled BSAL_ACTOR_ASK_TO_STOP for %d\n",
+                            destination);
+        }
+#endif
+
         start_time = bsal_timer_get_nanoseconds();
 
         /* dispatch message to a worker */
@@ -139,8 +157,22 @@ void bsal_worker_work(struct bsal_worker *worker, struct bsal_work *work)
     int dead;
     char *buffer;
 
+#ifdef BSAL_WORKER_DEBUG
+    int tag;
+    int destination;
+#endif
+
     actor = bsal_work_actor(work);
     message = bsal_work_message(work);
+
+#ifdef BSAL_WORKER_DEBUG
+    tag = bsal_message_tag(message);
+    destination = bsal_message_destination(message);
+
+    if (tag == BSAL_ACTOR_ASK_TO_STOP) {
+        printf("DEBUG bsal_worker_work BSAL_ACTOR_ASK_TO_STOP %d\n", destination);
+    }
+#endif
 
     /* Store the buffer location before calling the user
      * code because the user may change the message buffer.
@@ -153,6 +185,8 @@ void bsal_worker_work(struct bsal_worker *worker, struct bsal_work *work)
      */
     if (bsal_actor_dead(actor)) {
 
+        printf("NOTICE actor/%d is dead already (bsal_worker_work)\n",
+                        bsal_message_destination(message));
         bsal_free(buffer);
         bsal_free(message);
 
@@ -168,8 +202,8 @@ void bsal_worker_work(struct bsal_worker *worker, struct bsal_work *work)
      */
     if (bsal_actor_dead(actor)) {
 
-#ifdef BSAL_WORKER_DEBUG
         printf("DEBUG bsal_worker_work actor died while the worker was waiting for the lock.\n");
+#ifdef BSAL_WORKER_DEBUG
 #endif
         /* TODO free the buffer with the slab allocator */
         bsal_free(buffer);
@@ -206,7 +240,7 @@ void bsal_worker_work(struct bsal_worker *worker, struct bsal_work *work)
      */
     bsal_actor_unlock(actor);
 
-#ifdef BSAL_THREAD_DEBUG
+#ifdef BSAL_WORKER_DEBUG
     printf("bsal_worker_work Freeing buffer %p %i tag %i\n",
                     buffer, bsal_message_count(message),
                     bsal_message_tag(message));
@@ -260,7 +294,7 @@ void bsal_worker_send(struct bsal_worker *worker, struct bsal_message *message)
     /* TODO use slab allocator to allocate buffer... */
     buffer = (char *)bsal_malloc(all * sizeof(char));
 
-#ifdef BSAL_THREAD_DEBUG
+#ifdef BSAL_WORKER_DEBUG
     printf("[bsal_worker_send] allocated %i bytes (%i + %i) for buffer %p\n",
                     all, count, metadata_size, buffer);
 
@@ -298,7 +332,7 @@ void bsal_worker_send(struct bsal_worker *worker, struct bsal_message *message)
 
 #ifdef BSAL_WORKER_HAS_OWN_QUEUES_AND_PUSH_LOCALLY
     destination = bsal_message_destination(message);
-    push_locally = 1;
+    push_locally = 0;
     maximum = 0;
 
     if (push_locally && bsal_node_has_actor(worker->node, destination)) {
@@ -365,7 +399,7 @@ void *bsal_worker_main(void *worker1)
 
     worker = (struct bsal_worker*)worker1;
 
-#ifdef BSAL_THREAD_DEBUG
+#ifdef BSAL_WORKER_DEBUG
     bsal_worker_display(worker);
     printf("Starting worker thread\n");
 #endif
@@ -392,7 +426,7 @@ int bsal_worker_name(struct bsal_worker *worker)
 
 void bsal_worker_stop(struct bsal_worker *worker)
 {
-#ifdef BSAL_THREAD_DEBUG
+#ifdef BSAL_WORKER_DEBUG
     bsal_worker_display(worker);
     printf("stopping worker!\n");
 #endif
@@ -416,7 +450,31 @@ pthread_t *bsal_worker_thread(struct bsal_worker *worker)
 #ifdef BSAL_WORKER_HAS_OWN_QUEUES
 void bsal_worker_push_work(struct bsal_worker *worker, struct bsal_work *work)
 {
+#ifdef BSAL_WORKER_DEBUG
+    struct bsal_message *message;
+    int tag;
+    int destination;
+
+    message = bsal_work_message(work);
+    tag = bsal_message_tag(message);
+    destination = bsal_message_destination(message);
+
+    if (tag == BSAL_ACTOR_ASK_TO_STOP) {
+        printf("DEBUG worker/%d before queuing work BSAL_ACTOR_ASK_TO_STOP for actor %d, %d works\n",
+                        worker->name,
+                        destination, bsal_work_queue_size(worker->work_queue));
+    }
+#endif
+
     bsal_work_queue_enqueue(worker->work_queue, work);
+
+#ifdef BSAL_WORKER_DEBUG
+    if (tag == BSAL_ACTOR_ASK_TO_STOP) {
+        printf("DEBUG worker/%d after queuing work BSAL_ACTOR_ASK_TO_STOP for actor %d, %d works\n",
+                        worker->name,
+                        destination, bsal_work_queue_size(worker->work_queue));
+    }
+#endif
 }
 #endif
 

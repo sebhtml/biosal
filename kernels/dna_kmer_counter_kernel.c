@@ -315,8 +315,7 @@ void bsal_dna_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_
 
         bsal_actor_helper_send_reply_empty(actor, BSAL_RESERVE_REPLY);
 
-    } else if (tag == BSAL_ACTOR_ASK_TO_STOP
-                    && source == bsal_actor_supervisor(actor)) {
+    } else if (tag == BSAL_ACTOR_ASK_TO_STOP) {
 
         printf("kernel/%d generated %" PRIu64 " kmers from %" PRIu64 " entries (%d blocks)\n",
                         bsal_actor_name(actor), concrete_actor->kmers,
