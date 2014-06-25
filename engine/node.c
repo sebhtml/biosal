@@ -42,19 +42,9 @@
 
 static struct bsal_node *bsal_node_global_self;
 
-/*
- * \see http://www.mpich.org/static/docs/v3.1/www3/MPI_Comm_dup.html
- * \see http://www.dartmouth.edu/~rc/classes/intro_mpi/hello_world_ex.html
- * \see https://github.com/GeneAssembly/kiki/blob/master/ki.c#L960
- * \see http://mpi.deino.net/mpi_functions/MPI_Comm_create.html
- */
 void bsal_node_init(struct bsal_node *node, int *argc, char ***argv)
 {
-    int node_name;
-    int nodes;
     int i;
-    int required;
-    int provided;
     int workers;
     int threads;
     char *required_threads;
@@ -69,6 +59,11 @@ void bsal_node_init(struct bsal_node *node, int *argc, char ***argv)
     bsal_node_global_self = node;
 
     srand(time(NULL) * getpid());
+
+    bsal_transport_init(&node->transport, node, argc, argv);
+    node->provided = bsal_transport_get_provided(&node->transport);
+    node->name = bsal_transport_get_rank(&node->transport);
+    node->nodes = bsal_transport_get_size(&node->transport);
 
     node->debug = 0;
 
@@ -93,18 +88,6 @@ void bsal_node_init(struct bsal_node *node, int *argc, char ***argv)
     node->print_memory_usage = 0;
     node->argc = *argc;
     node->argv = *argv;
-
-    /*
-    required = MPI_THREAD_MULTIPLE;
-    */
-    required = MPI_THREAD_FUNNELED;
-
-    MPI_Init_thread(argc, argv, required, &provided);
-
-    /* make a new communicator for the library and don't use MPI_COMM_WORLD later */
-    MPI_Comm_dup(MPI_COMM_WORLD, &node->comm);
-    MPI_Comm_rank(node->comm, &node_name);
-    MPI_Comm_size(node->comm, &nodes);
 
     for (i = 0; i < node->argc; i++) {
         argument = node->argv[i];
@@ -142,7 +125,7 @@ void bsal_node_init(struct bsal_node *node, int *argc, char ***argv)
 
             /* -threads-per-node 5,6,9
              */
-            detected = bsal_node_threads_from_string(node, required_threads, node_name);
+            detected = bsal_node_threads_from_string(node, required_threads, node->name);
 
             if (detected > 0) {
                 node->threads = detected;
@@ -232,12 +215,6 @@ void bsal_node_init(struct bsal_node *node, int *argc, char ***argv)
         }
     }
 
-    node->provided = provided;
-    node->datatype = MPI_BYTE;
-
-    node->name = node_name;
-    node->nodes = nodes;
-
 #ifdef BSAL_NODE_DEBUG
     printf("DEBUG threads: %i workers: %i send_in_thread: %i\n",
                     node->threads, workers, node->send_in_thread);
@@ -266,7 +243,6 @@ void bsal_node_init(struct bsal_node *node, int *argc, char ***argv)
     bsal_lock_init(&node->spawn_and_death_lock);
     bsal_lock_init(&node->script_lock);
 
-    bsal_queue_init(&node->active_buffers, sizeof(struct bsal_active_buffer));
     bsal_queue_init(&node->dead_indices, sizeof(int));
 
     bsal_counter_init(&node->counter);
@@ -283,8 +259,6 @@ void bsal_node_init(struct bsal_node *node, int *argc, char ***argv)
 
 void bsal_node_destroy(struct bsal_node *node)
 {
-    struct bsal_active_buffer active_buffer;
-
     bsal_dynamic_hash_table_destroy(&node->actor_names);
     bsal_vector_destroy(&node->initial_actors);
 
@@ -293,18 +267,13 @@ void bsal_node_destroy(struct bsal_node *node)
 
     bsal_vector_destroy(&node->actors);
 
-    while (bsal_queue_dequeue(&node->active_buffers, &active_buffer)) {
-        bsal_active_buffer_destroy(&active_buffer);
-    }
-
-    bsal_queue_destroy(&node->active_buffers);
     bsal_queue_destroy(&node->dead_indices);
 
     bsal_worker_pool_destroy(&node->worker_pool);
 
+    bsal_transport_destroy(&node->transport);
     bsal_counter_destroy(&node->counter);
 
-    MPI_Finalize();
 }
 
 int bsal_node_threads_from_string(struct bsal_node *node,
@@ -694,29 +663,6 @@ int bsal_node_running(struct bsal_node *node)
     return 0;
 }
 
-void bsal_node_test_requests(struct bsal_node *node)
-{
-    struct bsal_active_buffer active_buffer;
-    void *buffer;
-
-    if (bsal_queue_dequeue(&node->active_buffers, &active_buffer)) {
-
-        if (bsal_active_buffer_test(&active_buffer)) {
-            buffer = bsal_active_buffer_buffer(&active_buffer);
-
-            /* TODO use an allocator
-             */
-            bsal_free(buffer);
-
-            bsal_active_buffer_destroy(&active_buffer);
-
-        /* Just put it back in the FIFO for later */
-        } else {
-            bsal_queue_enqueue(&node->active_buffers, &active_buffer);
-        }
-    }
-}
-
 void bsal_node_run_loop(struct bsal_node *node)
 {
     struct bsal_message message;
@@ -769,7 +715,13 @@ void bsal_node_run_loop(struct bsal_node *node)
          * this code path will call lock if
          * there is a message received.
          */
-        if (bsal_node_receive(node, &message)) {
+        if (bsal_transport_receive(&node->transport, &message)) {
+
+            bsal_counter_add(&node->counter, BSAL_COUNTER_RECEIVED_MESSAGES_NOT_FROM_SELF, 1);
+            bsal_counter_add(&node->counter, BSAL_COUNTER_RECEIVED_BYTES_NOT_FROM_SELF,
+                    bsal_message_count(&message));
+
+
             bsal_node_dispatch_message(node, &message);
         }
 
@@ -826,7 +778,7 @@ void bsal_node_send_message(struct bsal_node *node)
 
     /* Free buffers of active requests
      */
-    bsal_node_test_requests(node);
+    bsal_transport_test_requests(&node->transport);
 
     /* check for messages to send from from threads */
     /* this call lock only if there is at least
@@ -848,65 +800,6 @@ void bsal_node_send_message(struct bsal_node *node)
 int bsal_node_pull(struct bsal_node *node, struct bsal_message *message)
 {
     return bsal_worker_pool_pull(&node->worker_pool, message);
-}
-
-/* \see http://www.mpich.org/static/docs/v3.1/www3/MPI_Iprobe.html */
-/* \see http://www.mpich.org/static/docs/v3.1/www3/MPI_Recv.html */
-/* \see http://www.malcolmmclean.site11.com/www/MpiTutorial/MPIStatus.html */
-int bsal_node_receive(struct bsal_node *node, struct bsal_message *message)
-{
-    char *buffer;
-    int count;
-    int source;
-    int destination;
-    int tag;
-    int flag;
-    int metadata_size;
-    MPI_Status status;
-
-    source = MPI_ANY_SOURCE;
-    tag = MPI_ANY_TAG;
-    destination = node->name;
-
-    /* TODO get return value */
-    MPI_Iprobe(source, tag, node->comm, &flag, &status);
-
-    if (!flag) {
-        return 0;
-    }
-
-    /* TODO get return value */
-    MPI_Get_count(&status, node->datatype, &count);
-
-    /* TODO actually allocate (slab allocator) a buffer with count bytes ! */
-    buffer = (char *)bsal_malloc(count * sizeof(char));
-
-    source = status.MPI_SOURCE;
-    tag = status.MPI_TAG;
-
-    /* TODO get return value */
-    MPI_Recv(buffer, count, node->datatype, source, tag,
-                    node->comm, &status);
-
-    metadata_size = bsal_message_metadata_size(message);
-    count -= metadata_size;
-
-    /* Initially assign the MPI source rank and MPI destination
-     * rank for the actor source and actor destination, respectively.
-     * Then, read the metadata and resolve the MPI rank from
-     * that. The resolved MPI ranks should be the same in all cases
-     */
-    bsal_message_init(message, tag, count, buffer);
-    bsal_message_set_source(message, destination);
-    bsal_message_set_destination(message, destination);
-    bsal_message_read_metadata(message);
-    bsal_node_resolve(node, message);
-
-    bsal_counter_add(&node->counter, BSAL_COUNTER_RECEIVED_MESSAGES_NOT_FROM_SELF, 1);
-    bsal_counter_add(&node->counter, BSAL_COUNTER_RECEIVED_BYTES_NOT_FROM_SELF,
-                    bsal_message_count(message));
-
-    return 1;
 }
 
 int bsal_node_receive_system(struct bsal_node *node, struct bsal_message *message)
@@ -1021,20 +914,6 @@ int bsal_node_receive_system(struct bsal_node *node, struct bsal_message *messag
     return 0;
 }
 
-void bsal_node_resolve(struct bsal_node *node, struct bsal_message *message)
-{
-    int actor;
-    int node_name;
-
-    actor = bsal_message_source(message);
-    node_name = bsal_node_actor_node(node, actor);
-    bsal_message_set_source_node(message, node_name);
-
-    actor = bsal_message_destination(message);
-    node_name = bsal_node_actor_node(node, actor);
-    bsal_message_set_destination_node(message, node_name);
-}
-
 void bsal_node_send_to_node_empty(struct bsal_node *node, int destination, int tag)
 {
     struct bsal_message message;
@@ -1080,43 +959,6 @@ void bsal_node_send_to_node(struct bsal_node *node, int destination,
     bsal_node_send(node, &new_message);
 }
 
-/* \see http://www.mpich.org/static/docs/v3.1/www3/MPI_Isend.html */
-void bsal_node_send_outbound_message(struct bsal_node *node, struct bsal_message *message)
-{
-    char *buffer;
-    int count;
-    /* int source; */
-    int destination;
-    int tag;
-    int metadata_size;
-    MPI_Request *request;
-    int all;
-    struct bsal_active_buffer active_buffer;
-
-    buffer = bsal_message_buffer(message);
-    count = bsal_message_count(message);
-    metadata_size = bsal_message_metadata_size(message);
-    all = count + metadata_size;
-    destination = bsal_message_destination_node(message);
-    tag = bsal_message_tag(message);
-
-    bsal_active_buffer_init(&active_buffer, buffer);
-    request = bsal_active_buffer_request(&active_buffer);
-
-    /* TODO get return value */
-    MPI_Isend(buffer, all, node->datatype, destination, tag,
-                    node->comm, request);
-
-    /* store the MPI_Request to test it later to know when
-     * the buffer can be reused
-     */
-    /* \see http://blogs.cisco.com/performance/mpi_request_free-is-evil/
-     */
-    /*MPI_Request_free(&request);*/
-
-    bsal_queue_enqueue(&node->active_buffers, &active_buffer);
-}
-
 int bsal_node_has_actor(struct bsal_node *self, int name)
 {
     int node_name;
@@ -1139,7 +981,7 @@ void bsal_node_send(struct bsal_node *node, struct bsal_message *message)
     int name;
 
     name = bsal_message_destination(message);
-    bsal_node_resolve(node, message);
+    bsal_transport_resolve(&node->transport, message);
 
     if (bsal_node_has_actor(node, name)) {
         /* dispatch locally */
@@ -1161,7 +1003,7 @@ void bsal_node_send(struct bsal_node *node, struct bsal_message *message)
     } else {
 
         /* send messages over the network */
-        bsal_node_send_outbound_message(node, message);
+        bsal_transport_send(&node->transport, message);
 
 #ifdef BSAL_NODE_DEBUG_20140601_8
         if (bsal_message_tag(message) == 1100) {

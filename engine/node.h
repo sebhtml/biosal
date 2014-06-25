@@ -4,8 +4,8 @@
 
 #include "actor.h"
 #include "work.h"
+#include "transport.h"
 #include "worker_pool.h"
-#include "active_buffer.h"
 
 #include <structures/vector.h>
 #include <structures/queue.h>
@@ -15,7 +15,6 @@
 #include <system/counter.h>
 
 #include <pthread.h>
-#include <mpi.h>
 
 /*
  * \see http://pubs.opengroup.org/onlinepubs/009696699/basedefs/signal.h.html
@@ -55,15 +54,12 @@ struct bsal_node {
     int maximum_scripts;
 
     pthread_t thread;
-
+    struct bsal_transport transport;
     struct bsal_lock spawn_and_death_lock;
     struct bsal_lock script_lock;
 
-    struct bsal_queue active_buffers;
     struct bsal_queue dead_indices;
 
-    MPI_Comm comm;
-    MPI_Datatype datatype;
     int provided;
 
     int name;
@@ -118,14 +114,9 @@ void bsal_node_set_supervisor(struct bsal_node *node, int name, int supervisor);
 
 void bsal_node_run_loop(struct bsal_node *node);
 
-/* MPI ranks are set with bsal_node_resolve */
-void bsal_node_resolve(struct bsal_node *node, struct bsal_message *message);
-
 void bsal_node_send_message(struct bsal_node *node);
-void bsal_node_send_outbound_message(struct bsal_node *node, struct bsal_message *message);
 void bsal_node_notify_death(struct bsal_node *node, struct bsal_actor *actor);
 
-int bsal_node_receive(struct bsal_node *node, struct bsal_message *message);
 void bsal_node_create_work(struct bsal_node *node, struct bsal_message *message);
 int bsal_node_pull(struct bsal_node *node, struct bsal_message *message);
 
@@ -144,8 +135,6 @@ int bsal_node_threads_from_string(struct bsal_node *node,
 void bsal_node_add_script(struct bsal_node *node, int name, struct bsal_script *script);
 struct bsal_script *bsal_node_find_script(struct bsal_node *node, int name);
 int bsal_node_has_script(struct bsal_node *node, struct bsal_script *script);
-
-void bsal_node_test_requests(struct bsal_node *node);
 
 void bsal_node_send_to_node(struct bsal_node *node, int destination,
                 struct bsal_message *message);
