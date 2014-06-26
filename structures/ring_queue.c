@@ -13,8 +13,10 @@ void bsal_ring_queue_init(struct bsal_ring_queue *self, int bytes_per_unit)
     self->cell_size = bytes_per_unit;
     self->cells_per_ring = 64;
 
+#ifdef BSAL_RING_QUEUE_THREAD_SAFE
     bsal_lock_init(&self->lock);
     self->locked = 0;
+#endif
 }
 
 void bsal_ring_queue_destroy(struct bsal_ring_queue *self)
@@ -34,9 +36,11 @@ void bsal_ring_queue_destroy(struct bsal_ring_queue *self)
         self->recycle_bin = next;
     }
 
+#ifdef BSAL_RING_QUEUE_THREAD_SAFE
     self->locked = 0;
 
     bsal_lock_destroy(&self->lock);
+#endif
 }
 
 int bsal_ring_queue_enqueue(struct bsal_ring_queue *self, void *item)
@@ -45,13 +49,18 @@ int bsal_ring_queue_enqueue(struct bsal_ring_queue *self, void *item)
     struct bsal_linked_ring *new_ring;
 
     if (self->tail == NULL) {
+
+#ifdef BSAL_RING_QUEUE_THREAD_SAFE
         bsal_ring_queue_lock(self);
+#endif
 
         /* the tail was assigned while this thread was waiting
          */
         if (self->tail != NULL) {
 
+#ifdef BSAL_RING_QUEUE_THREAD_SAFE
             bsal_ring_queue_unlock(self);
+#endif
 
             inserted = bsal_ring_push(bsal_linked_ring_get_ring(self->tail), item);
 
@@ -68,7 +77,9 @@ int bsal_ring_queue_enqueue(struct bsal_ring_queue *self, void *item)
         bsal_linked_ring_init(self->tail, self->cells_per_ring, self->cell_size);
         self->head = self->tail;
 
+#ifdef BSAL_RING_QUEUE_THREAD_SAFE
         bsal_ring_queue_unlock(self);
+#endif
 
         inserted = bsal_ring_push(bsal_linked_ring_get_ring(self->tail), item);
 
@@ -84,7 +95,10 @@ int bsal_ring_queue_enqueue(struct bsal_ring_queue *self, void *item)
     /* it is full
      */
     if (!inserted) {
+
+#ifdef BSAL_RING_QUEUE_THREAD_SAFE
         bsal_ring_queue_lock(self);
+#endif
 
         /* try again
          */
@@ -92,7 +106,9 @@ int bsal_ring_queue_enqueue(struct bsal_ring_queue *self, void *item)
 
         if (inserted) {
 
+#ifdef BSAL_RING_QUEUE_THREAD_SAFE
             bsal_ring_queue_unlock(self);
+#endif
             return inserted;
         }
 
@@ -101,7 +117,9 @@ int bsal_ring_queue_enqueue(struct bsal_ring_queue *self, void *item)
         bsal_linked_ring_set_next(self->tail, new_ring);
         self->tail = new_ring;
 
+#ifdef BSAL_RING_QUEUE_THREAD_SAFE
         bsal_ring_queue_unlock(self);
+#endif
 
         return bsal_ring_push(bsal_linked_ring_get_ring(self->tail), item);
     }
@@ -122,14 +140,18 @@ int bsal_ring_queue_dequeue(struct bsal_ring_queue *self, void *item)
     if (bsal_ring_is_empty(bsal_linked_ring_get_ring(self->head))
                             && self->head != self->tail) {
 
+#ifdef BSAL_RING_QUEUE_THREAD_SAFE
         bsal_ring_queue_lock(self);
+#endif
 
         new_head = bsal_linked_ring_get_next(self->head);
         bsal_linked_ring_set_next(self->head, self->recycle_bin);
         self->recycle_bin = self->head;
         self->head = new_head;
 
+#ifdef BSAL_RING_QUEUE_THREAD_SAFE
         bsal_ring_queue_unlock(self);
+#endif
     }
 
     return 1;
@@ -153,6 +175,7 @@ int bsal_ring_queue_full(struct bsal_ring_queue *self)
     return 0;
 }
 
+#ifdef BSAL_RING_QUEUE_THREAD_SAFE
 void bsal_ring_queue_lock(struct bsal_ring_queue *self)
 {
     bsal_lock_lock(&self->lock);
@@ -164,6 +187,7 @@ void bsal_ring_queue_unlock(struct bsal_ring_queue *self)
     self->locked = 0;
     bsal_lock_unlock(&self->lock);
 }
+#endif
 
 struct bsal_linked_ring *bsal_ring_queue_get_ring(struct bsal_ring_queue *self)
 {
