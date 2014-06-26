@@ -3,7 +3,7 @@
 
 void bsal_message_queue_init(struct bsal_message_queue *self)
 {
-    bsal_queue_init(&self->queue, sizeof(struct bsal_message));
+    bsal_ring_queue_init(&self->queue, sizeof(struct bsal_message));
 
 #ifdef BSAL_MESSAGE_QUEUE_USE_TICKET_LOCK
     bsal_ticket_lock_init(&self->lock);
@@ -14,7 +14,7 @@ void bsal_message_queue_init(struct bsal_message_queue *self)
 
 void bsal_message_queue_destroy(struct bsal_message_queue *self)
 {
-    bsal_queue_destroy(&self->queue);
+    bsal_ring_queue_destroy(&self->queue);
 
 #ifdef BSAL_MESSAGE_QUEUE_USE_TICKET_LOCK
     bsal_ticket_lock_destroy(&self->lock);
@@ -28,7 +28,7 @@ int bsal_message_queue_enqueue(struct bsal_message_queue *self, struct bsal_mess
     int value;
 
     bsal_message_queue_lock(self);
-    value = bsal_queue_enqueue(&self->queue, message);
+    value = bsal_ring_queue_enqueue(&self->queue, message);
     bsal_message_queue_unlock(self);
 
     return value;
@@ -40,12 +40,12 @@ int bsal_message_queue_dequeue(struct bsal_message_queue *self, struct bsal_mess
 
     value = 0;
 
-    if (bsal_queue_empty(&self->queue)) {
+    if (bsal_ring_queue_empty(&self->queue)) {
         return value;
     }
 
     bsal_message_queue_lock(self);
-    value = bsal_queue_dequeue(&self->queue, message);
+    value = bsal_ring_queue_dequeue(&self->queue, message);
     bsal_message_queue_unlock(self);
 
     return value;

@@ -2,7 +2,7 @@
 #ifndef BSAL_MESSAGE_QUEUE_H
 #define BSAL_MESSAGE_QUEUE_H
 
-#include <structures/queue.h>
+#include <structures/ring_queue.h>
 #include <system/ticket_lock.h>
 #include <system/lock.h>
 #include "message.h"
@@ -12,7 +12,7 @@
 */
 
 struct bsal_message_queue {
-    struct bsal_queue queue;
+    struct bsal_ring_queue queue;
 
 #ifdef BSAL_MESSAGE_QUEUE_USE_TICKET_LOCK
     struct bsal_ticket_lock lock;
