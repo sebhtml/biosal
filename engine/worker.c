@@ -12,9 +12,13 @@
 #include <stdio.h>
 #include <string.h>
 
-/*#define BSAL_WORKER_DEBUG*/
+/*#define BSAL_WORKER_DEBUG
+  */
 
+/*
 #define BSAL_WORKER_HAS_OWN_QUEUES_AND_PUSH_LOCALLY
+*/
+
 
 void bsal_worker_init(struct bsal_worker *worker, int name, struct bsal_node *node,
                 struct bsal_work_queue *work_queue,
@@ -503,7 +507,11 @@ int bsal_worker_is_busy(struct bsal_worker *self)
 #ifdef BSAL_WORKER_HAS_OWN_QUEUES
 int bsal_worker_enqueued_work_count(struct bsal_worker *self)
 {
+    /*
     return bsal_work_queue_size(self->work_queue);
+    */
+
+    return 0;
 }
 
 int bsal_worker_get_scheduling_score(struct bsal_worker *self)

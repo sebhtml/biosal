@@ -29,6 +29,7 @@ struct bsal_worker {
     struct bsal_message_queue *message_queue;
     pthread_t thread;
 
+    int work_count;
     int start;
 
     int name;

@@ -153,8 +153,6 @@ int bsal_ring_queue_full(struct bsal_ring_queue *self)
     return 0;
 }
 
-int bsal_ring_queue_size(struct bsal_ring_queue *self);
-
 void bsal_ring_queue_lock(struct bsal_ring_queue *self)
 {
     bsal_lock_lock(&self->lock);
