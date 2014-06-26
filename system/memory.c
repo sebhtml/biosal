@@ -29,7 +29,7 @@
  */
 #define BSAL_MEMORY_MAXIMUM 1000000000000
 
-void *bsal_malloc(size_t size)
+void *bsal_malloc_private(size_t size, const char *function, const char *file, int line)
 {
     void *pointer;
 
@@ -39,6 +39,8 @@ void *bsal_malloc(size_t size)
 
     if (size < BSAL_MEMORY_MINIMUM) {
         printf("DEBUG Error bsal_malloc received a number below the minimum: %zu bytes\n", size);
+        printf("BSAL_MEMORY_DEBUG bsal_malloc %d bytes %p %s %s %d\n",
+                    (int)size, pointer, function, file, line);
         bsal_tracer_print_stack_backtrace();
         exit(1);
     }
@@ -46,11 +48,18 @@ void *bsal_malloc(size_t size)
     if (size > BSAL_MEMORY_MAXIMUM) {
         printf("DEBUG Error bsal_malloc received a number above the maximum: %zu bytes (int value: %d)\n", size,
                         (int)size);
+        printf("BSAL_MEMORY_DEBUG bsal_malloc %d bytes %p %s %s %d\n",
+                    (int)size, pointer, function, file, line);
         bsal_tracer_print_stack_backtrace();
         exit(1);
     }
 
     pointer = malloc(size);
+
+#ifdef BSAL_MEMORY_DEBUG_DETAIL
+    printf("BSAL_MEMORY_DEBUG bsal_malloc %d bytes %p %s %s %d\n",
+                    (int)size, pointer, function, file, line);
+#endif
 
     if (pointer == NULL) {
         printf("DEBUG Error bsal_malloc returned %p, %zu bytes\n", pointer, size);
@@ -61,11 +70,19 @@ void *bsal_malloc(size_t size)
     return pointer;
 }
 
-void bsal_free(void *pointer)
+void bsal_free_private(void *pointer, const char *function, const char *file, int line)
 {
+#ifdef BSAL_MEMORY_DEBUG_DETAIL
+    printf("BSAL_MEMORY_DEBUG bsal_free %p %s %s %d\n",
+                   pointer, function, file, line);
+#endif
+
     if (pointer == NULL) {
         return;
     }
+
+#ifdef BSAL_MEMORY_DEBUG
+#endif
 
     free(pointer);
 }

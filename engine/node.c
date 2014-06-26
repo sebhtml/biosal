@@ -50,7 +50,6 @@ void bsal_node_init(struct bsal_node *node, int *argc, char ***argv)
     int threads;
     char *required_threads;
     int detected;
-    int bytes;
     int actor_capacity;
     char *argument;
 
@@ -73,11 +72,8 @@ void bsal_node_init(struct bsal_node *node, int *argc, char ***argv)
     node->debug = 1;
 #endif
 
-    node->maximum_scripts = 1024;
-    node->available_scripts = 0;
     node->print_counters = 0;
-    bytes = node->maximum_scripts * sizeof(struct bsal_script *);
-    node->scripts = (struct bsal_script **)bsal_malloc(bytes);
+    bsal_map_init(&node->scripts, sizeof(int), sizeof(struct bsal_script *));
 
     /* the rank number is needed to decide on
      * the number of threads
@@ -266,6 +262,7 @@ void bsal_node_destroy(struct bsal_node *node)
     bsal_dynamic_hash_table_destroy(&node->actor_names);
     bsal_vector_destroy(&node->initial_actors);
 
+    bsal_map_destroy(&node->scripts);
     bsal_lock_destroy(&node->spawn_and_death_lock);
     bsal_lock_destroy(&node->script_lock);
 
@@ -1280,13 +1277,11 @@ void bsal_node_add_script(struct bsal_node *node, int name,
         can_add = 0;
     }
 
-    if (node->available_scripts == node->maximum_scripts) {
-        can_add = 0;
+    if (can_add) {
+        bsal_map_add_value(&node->scripts, &name, &script);
     }
 
-    if (can_add) {
-        node->scripts[node->available_scripts++] = script;
-    }
+    printf("DEBUG added script %x %p\n", name, (void *)script);
 
     bsal_lock_unlock(&node->script_lock);
 }
@@ -1301,18 +1296,15 @@ int bsal_node_has_script(struct bsal_node *node, struct bsal_script *script)
 
 struct bsal_script *bsal_node_find_script(struct bsal_node *node, int name)
 {
-    int i;
-    struct bsal_script *script;
+    struct bsal_script **script;
 
-    for (i = 0; i < node->available_scripts; i++) {
-        script = node->scripts[i];
+    script = bsal_map_get(&node->scripts, &name);
 
-        if (bsal_script_name(script) == name) {
-            return script;
-        }
+    if (script == NULL) {
+        return NULL;
     }
 
-    return NULL;
+    return *script;
 }
 
 void bsal_node_print_counters(struct bsal_node *node)

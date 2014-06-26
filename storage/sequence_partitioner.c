@@ -352,6 +352,8 @@ void bsal_sequence_partitioner_verify(struct bsal_actor *actor)
     bsal_message_init(&message, BSAL_SEQUENCE_PARTITIONER_PROVIDE_STORE_ENTRY_COUNTS,
                     bytes, buffer);
     bsal_actor_send_reply(actor, &message);
+
+    bsal_free(buffer);
 }
 
 uint64_t bsal_sequence_partitioner_get_index_in_store(uint64_t index, int block_size, int store_count)

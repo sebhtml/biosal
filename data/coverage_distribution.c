@@ -258,7 +258,7 @@ void bsal_coverage_distribution_write_distribution(struct bsal_actor *self)
     descriptor = NULL;
     fclose(descriptor_canonical);
 
-    free(canonical_file_name);
+    bsal_free(canonical_file_name);
     descriptor_canonical = NULL;
     canonical_file_name = NULL;
 }

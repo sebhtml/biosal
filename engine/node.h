@@ -49,7 +49,7 @@ struct bsal_node {
 
     int started;
 
-    struct bsal_script **scripts;
+    struct bsal_map scripts;
     int available_scripts;
     int maximum_scripts;
 
