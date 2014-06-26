@@ -4,6 +4,7 @@
 
 #include "message_queue.h"
 #include <structures/ring.h>
+#include <structures/ring_queue.h>
 
 #include <system/lock.h>
 
@@ -25,7 +26,9 @@ struct bsal_worker {
     struct bsal_node *node;
 
     struct bsal_ring work_queue;
-    struct bsal_message_queue *message_queue;
+    struct bsal_ring message_queue;
+
+    struct bsal_ring_queue local_message_queue;
     pthread_t thread;
 
     int work_count;

@@ -32,10 +32,10 @@ void bsal_worker_init(struct bsal_worker *worker, int name, struct bsal_node *no
 
 #ifdef BSAL_WORKER_HAS_OWN_QUEUES
     /*worker->work_queue = &worker->works;*/
-    worker->message_queue = &worker->messages;
 
     bsal_ring_init(&worker->work_queue, capacity, sizeof(struct bsal_work));
-    bsal_message_queue_init(worker->message_queue);
+    bsal_ring_init(&worker->message_queue, capacity, sizeof(struct bsal_message));
+    bsal_ring_queue_init(&worker->local_message_queue, sizeof(struct bsal_message));
 
 #endif
 
@@ -58,11 +58,11 @@ void bsal_worker_destroy(struct bsal_worker *worker)
 {
 #ifdef BSAL_WORKER_HAS_OWN_QUEUES
     bsal_ring_destroy(&worker->work_queue);
-    bsal_message_queue_destroy(worker->message_queue);
+    bsal_ring_destroy(&worker->message_queue);
+    bsal_ring_queue_destroy(&worker->local_message_queue);
 #endif
 
     worker->node = NULL;
-    worker->message_queue = NULL;
 
     worker->name = -1;
     worker->dead = 1;
@@ -79,6 +79,7 @@ void bsal_worker_run(struct bsal_worker *worker)
     uint64_t end_time;
     uint64_t elapsed_nanoseconds;
     uint64_t elapsed_from_start;
+    struct bsal_message other_message;
 
 #ifdef BSAL_WORKER_DEBUG
     int tag;
@@ -150,6 +151,13 @@ void bsal_worker_run(struct bsal_worker *worker)
         elapsed_nanoseconds = end_time - start_time;
         worker->epoch_used_nanoseconds += elapsed_nanoseconds;
         worker->loop_used_nanoseconds += elapsed_nanoseconds;
+    }
+
+    /* queue buffered message
+     */
+    if (bsal_ring_queue_dequeue(&worker->local_message_queue, &other_message)) {
+
+        bsal_worker_push_message(worker, &other_message);
     }
 }
 
@@ -488,13 +496,18 @@ int bsal_worker_pull_work(struct bsal_worker *worker, struct bsal_work *work)
 
 void bsal_worker_push_message(struct bsal_worker *worker, struct bsal_message *message)
 {
-    bsal_message_queue_enqueue(worker->message_queue, message);
+    /* if the message can not be queued in the ring,
+     * queue it in the queue
+     */
+    if (!bsal_ring_push(&worker->message_queue, message)) {
+        bsal_ring_queue_enqueue(&worker->local_message_queue, message);
+    }
 }
 
 #ifdef BSAL_WORKER_HAS_OWN_QUEUES
 int bsal_worker_pull_message(struct bsal_worker *worker, struct bsal_message *message)
 {
-    return bsal_message_queue_dequeue(worker->message_queue, message);
+    return bsal_ring_pop(&worker->message_queue, message);
 }
 #endif
 

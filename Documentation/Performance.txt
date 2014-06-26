@@ -1,5 +1,15 @@
 Factors:
 
-- queue implementation (no moves)
-- good work scheduling algorithm
-- lockless work queues for workers
+# queue implementation (no moves)
+
+linked list of rings, maximize reutilization with a recycle bin
+
+
+# good work scheduling algorithm
+
+attempt count is currently 4
+
+
+# lockless rings for workers
+
+One for works, one for messages
