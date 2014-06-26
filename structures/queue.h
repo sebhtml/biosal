@@ -1,6 +1,6 @@
 
-#ifndef BSAL_FIFO_H
-#define BSAL_FIFO_H
+#ifndef BSAL_QUEUE_H
+#define BSAL_QUEUE_H
 
 #include "vector.h"
 
