@@ -2,9 +2,8 @@
 #ifndef BSAL_WORKER_H
 #define BSAL_WORKER_H
 
-#include "work_queue.h"
 #include "message_queue.h"
-#include <structures/queue.h>
+#include <structures/ring.h>
 
 #include <system/lock.h>
 
@@ -25,7 +24,7 @@ struct bsal_message;
 struct bsal_worker {
     struct bsal_node *node;
 
-    struct bsal_work_queue *work_queue;
+    struct bsal_ring work_queue;
     struct bsal_message_queue *message_queue;
     pthread_t thread;
 
@@ -39,7 +38,7 @@ struct bsal_worker {
     int dead;
 
 #ifdef BSAL_WORKER_HAS_OWN_QUEUES
-    struct bsal_work_queue works;
+    /*struct bsal_work_queue works;*/
     struct bsal_message_queue messages;
 
 #endif
@@ -60,9 +59,7 @@ struct bsal_worker {
     float loop_load;
 };
 
-void bsal_worker_init(struct bsal_worker *worker, int name, struct bsal_node *node,
-                struct bsal_work_queue *work_queue,
-                struct bsal_message_queue *message_queue);
+void bsal_worker_init(struct bsal_worker *worker, int name, struct bsal_node *node);
 void bsal_worker_destroy(struct bsal_worker *worker);
 
 void bsal_worker_start(struct bsal_worker *worker);
@@ -95,7 +92,7 @@ int bsal_worker_enqueued_work_count(struct bsal_worker *self);
 int bsal_worker_get_scheduling_score(struct bsal_worker *self);
 
 int bsal_worker_pull_message(struct bsal_worker *worker, struct bsal_message *message);
-void bsal_worker_push_work(struct bsal_worker *worker, struct bsal_work *work);
+int bsal_worker_push_work(struct bsal_worker *worker, struct bsal_work *work);
 
 #endif
 

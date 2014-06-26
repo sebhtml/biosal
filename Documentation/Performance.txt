@@ -1,0 +1,5 @@
+Factors:
+
+- queue implementation (no moves)
+- good work scheduling algorithm
+- lockless work queues for workers

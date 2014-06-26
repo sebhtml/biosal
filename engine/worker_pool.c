@@ -38,11 +38,16 @@ void bsal_worker_pool_init(struct bsal_worker_pool *pool, int workers,
         exit(1);
     }
 
+#ifdef BSAL_WORKER_POOL_HAS_SPECIAL_QUEUES
     bsal_work_queue_init(&pool->work_queue);
     bsal_message_queue_init(&pool->message_queue);
+#endif
+
     bsal_worker_pool_create_workers(pool);
 
     pool->starting_time = time(NULL);
+
+    bsal_ring_queue_init(&pool->local_work_queue, sizeof(struct bsal_work));
 }
 
 void bsal_worker_pool_destroy(struct bsal_worker_pool *pool)
@@ -50,8 +55,13 @@ void bsal_worker_pool_destroy(struct bsal_worker_pool *pool)
     bsal_worker_pool_delete_workers(pool);
 
     pool->node = NULL;
+
+#ifdef BSAL_WORKER_POOL_HAS_SPECIAL_QUEUES
     bsal_work_queue_destroy(&pool->work_queue);
     bsal_message_queue_destroy(&pool->message_queue);
+#endif
+
+    bsal_ring_queue_destroy(&pool->local_work_queue);
 }
 
 void bsal_worker_pool_delete_workers(struct bsal_worker_pool *pool)
@@ -83,8 +93,7 @@ void bsal_worker_pool_create_workers(struct bsal_worker_pool *pool)
     pool->worker_array = (struct bsal_worker *)bsal_malloc(bytes);
 
     for (i = 0; i < pool->workers; i++) {
-        bsal_worker_init(bsal_worker_pool_get_worker(pool, i), i, pool->node,
-                        &pool->work_queue, &pool->message_queue);
+        bsal_worker_init(bsal_worker_pool_get_worker(pool, i), i, pool->node);
     }
 }
 
@@ -316,6 +325,8 @@ struct bsal_worker *bsal_worker_pool_select_worker_for_run(struct bsal_worker_po
 void bsal_worker_pool_schedule_work(struct bsal_worker_pool *pool, struct bsal_work *work,
                 int *start)
 {
+    struct bsal_work other_work;
+
 #ifdef BSAL_WORKER_POOL_DEBUG
     if (pool->debug_mode) {
         printf("DEBUG bsal_worker_pool_schedule_work called\n");
@@ -337,6 +348,10 @@ void bsal_worker_pool_schedule_work(struct bsal_worker_pool *pool, struct bsal_w
 
 #ifdef BSAL_WORKER_HAS_OWN_QUEUES
     bsal_worker_pool_schedule_work_classic(pool, work, start);
+
+    if (bsal_ring_queue_dequeue(&pool->local_work_queue, &other_work)) {
+        bsal_worker_pool_schedule_work_classic(pool, &other_work, start);
+    }
 #else
     bsal_work_queue_enqueue(&pool->work_queue, work);
 #endif
@@ -355,8 +370,12 @@ void bsal_worker_pool_schedule_work_classic(struct bsal_worker_pool *pool, struc
 
     worker = bsal_worker_pool_select_worker_for_work(pool, work, start);
 
-    /* bsal_worker_push_message use a lock */
-    bsal_worker_push_work(worker, work);
+    /* if the work can not be queued,
+     * it will be queued later
+     */
+    if (!bsal_worker_push_work(worker, work)) {
+        bsal_ring_queue_enqueue(&pool->local_work_queue, work);
+    }
 }
 #endif
 

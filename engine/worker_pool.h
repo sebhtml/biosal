@@ -3,17 +3,28 @@
 #define BSAL_WORKER_POOL_H
 
 #include "worker.h"
-#include "work_queue.h"
 #include "message_queue.h"
+
+#include <structures/ring_queue.h>
 
 #include <time.h>
 
 struct bsal_node;
 struct bsal_worker;
 
+/*
+#define BSAL_WORKER_POOL_HAS_SPECIAL_QUEUES
+*/
+
 struct bsal_worker_pool {
+
+#ifdef BSAL_WORKER_POOL_HAS_SPECIAL_QUEUES
     struct bsal_work_queue work_queue;
     struct bsal_message_queue message_queue;
+#endif
+
+    struct bsal_ring_queue local_work_queue;
+
     struct bsal_worker *worker_array;
     struct bsal_node *node;
 
