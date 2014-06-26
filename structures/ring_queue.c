@@ -74,7 +74,6 @@ int bsal_ring_queue_enqueue(struct bsal_ring_queue *self, void *item)
         }
 
         self->tail = bsal_ring_queue_get_ring(self);
-        bsal_linked_ring_init(self->tail, self->cells_per_ring, self->cell_size);
         self->head = self->tail;
 
 #ifdef BSAL_RING_QUEUE_THREAD_SAFE
@@ -113,7 +112,6 @@ int bsal_ring_queue_enqueue(struct bsal_ring_queue *self, void *item)
         }
 
         new_ring = bsal_ring_queue_get_ring(self);
-        bsal_linked_ring_init(new_ring, self->cells_per_ring, self->cell_size);
         bsal_linked_ring_set_next(self->tail, new_ring);
         self->tail = new_ring;
 
@@ -194,7 +192,10 @@ struct bsal_linked_ring *bsal_ring_queue_get_ring(struct bsal_ring_queue *self)
     struct bsal_linked_ring *ring;
 
     if (self->recycle_bin == NULL) {
-        return bsal_malloc(sizeof(struct bsal_linked_ring));
+        ring = bsal_malloc(sizeof(struct bsal_linked_ring));
+        bsal_linked_ring_init(ring, self->cells_per_ring, self->cell_size);
+
+        return ring;
     }
 
     ring = self->recycle_bin;
