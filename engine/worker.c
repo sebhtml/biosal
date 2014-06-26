@@ -436,7 +436,7 @@ void bsal_worker_stop(struct bsal_worker *worker)
 #endif
 
     /*
-     * worker->dead is volatile and will be read
+     * worker->dead is changed and will be read
      * by the running thread.
      */
     worker->dead = 1;

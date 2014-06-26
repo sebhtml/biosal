@@ -13,8 +13,8 @@
  */
 struct bsal_ticket_lock {
     struct bsal_lock lock;
-    volatile int dequeue_ticket;
-    volatile int queue_ticket;
+    int dequeue_ticket;
+    int queue_ticket;
 };
 
 void bsal_ticket_lock_init(struct bsal_ticket_lock *self);

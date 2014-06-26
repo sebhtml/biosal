@@ -36,7 +36,7 @@ struct bsal_worker {
 
     /* this is read by 2 threads, but written by 1 thread
      */
-    volatile int dead;
+    int dead;
 
 #ifdef BSAL_WORKER_HAS_OWN_QUEUES
     struct bsal_work_queue works;
@@ -48,16 +48,16 @@ struct bsal_worker {
 
     /* this is read by 2 threads, but written by 1 thread
      */
-    volatile int busy;
+    int busy;
 
     uint64_t last_report;
     uint64_t epoch_start_in_nanoseconds;
     uint64_t epoch_used_nanoseconds;
-    volatile float epoch_load;
+    float epoch_load;
 
     uint64_t loop_start_in_nanoseconds;
     uint64_t loop_used_nanoseconds;
-    volatile float loop_load;
+    float loop_load;
 };
 
 void bsal_worker_init(struct bsal_worker *worker, int name, struct bsal_node *node,

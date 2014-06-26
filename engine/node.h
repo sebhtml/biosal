@@ -30,7 +30,7 @@ struct bsal_script;
 
 /*
  * - message reception: one queue per thread
- * - the queue has volatile variables for its heads
+ * - the queue has variables for its heads
  * - queue is implemented as linked list of arrays
  *
  * - message send process: one queue per thread

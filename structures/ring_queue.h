@@ -14,7 +14,7 @@ struct bsal_ring_queue {
     int cells_per_ring;
 
     struct bsal_lock lock;
-    volatile int locked;
+    int locked;
 };
 
 void bsal_ring_queue_init(struct bsal_ring_queue *self, int bytes_per_unit);

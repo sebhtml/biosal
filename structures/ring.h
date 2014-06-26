@@ -10,8 +10,8 @@ struct bsal_ring;
 struct bsal_ring {
     void *cells;
     int number_of_cells;
-    volatile int head;
-    volatile int tail;
+    int head;
+    int tail;
     int cell_size;
 };
 
