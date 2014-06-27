@@ -44,3 +44,10 @@ void bsal_memory_block_free(struct bsal_memory_block *self, void *pointer)
 {
     /* do nothing */
 }
+
+void bsal_memory_block_free_all(struct bsal_memory_block *self)
+{
+    /* constant-time massive deallocation of memory blocks
+     */
+    self->offset = 0;
+}

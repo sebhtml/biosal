@@ -32,6 +32,11 @@
 #define BSAL_KMER_COUNTER_KERNEL_DEBUG
 */
 
+/* Disable memory tracking in memory pool
+ * for performance purposes.
+ */
+#define BSAL_DNA_KMER_COUNTER_KERNEL_DISABLE_TRACKING
+
 struct bsal_script bsal_dna_kmer_counter_kernel_script = {
     .name = BSAL_DNA_KMER_COUNTER_KERNEL_SCRIPT,
     .init = bsal_dna_kmer_counter_kernel_init,
@@ -65,6 +70,11 @@ void bsal_dna_kmer_counter_kernel_init(struct bsal_actor *actor)
 
     block_size = 1048576;
     bsal_memory_pool_init(&concrete_actor->memory, block_size);
+
+#ifdef BSAL_DNA_KMER_COUNTER_KERNEL_DISABLE_TRACKING
+    bsal_memory_pool_disable_tracking(&concrete_actor->memory);
+#endif
+
     bsal_dna_codec_init(&concrete_actor->codec);
 }
 
@@ -120,6 +130,13 @@ void bsal_dna_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_
     name = bsal_actor_name(actor);
     source = bsal_message_source(message);
     buffer = bsal_message_buffer(message);
+
+#ifdef BSAL_DNA_KMER_COUNTER_KERNEL_DISABLE_TRACKING
+    /* Release all memory allocations before doing anything.
+     * Tracking is disabled anyway.
+     */
+    bsal_memory_pool_free_all(&concrete_actor->memory);
+#endif
 
     if (tag == BSAL_PUSH_SEQUENCE_DATA_BLOCK) {
 

@@ -6,7 +6,7 @@
 #include "memory_block.h"
 
 #include <structures/map.h>
-#include <structures/vector.h>
+#include <structures/queue.h>
 
 /*
  * \see http://en.wikipedia.org/wiki/Memory_pool
@@ -15,7 +15,8 @@ struct bsal_memory_pool {
     struct bsal_map recycle_bin;
     struct bsal_map allocated_blocks;
     struct bsal_memory_block *current_block;
-    struct bsal_vector dried_blocks;
+    struct bsal_queue ready_blocks;
+    struct bsal_queue dried_blocks;
     int block_size;
     int tracking_is_enabled;
 };
@@ -27,5 +28,7 @@ void bsal_memory_pool_free(struct bsal_memory_pool *self, void *pointer);
 
 void bsal_memory_pool_enable_tracking(struct bsal_memory_pool *self);
 void bsal_memory_pool_disable_tracking(struct bsal_memory_pool *self);
+
+void bsal_memory_pool_free_all(struct bsal_memory_pool *self);
 
 #endif

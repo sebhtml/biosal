@@ -3,15 +3,16 @@
 
 #include <structures/queue.h>
 #include <structures/map_iterator.h>
-#include <structures/vector_iterator.h>
 
 void bsal_memory_pool_init(struct bsal_memory_pool *self, int block_size)
 {
     bsal_map_init(&self->recycle_bin, sizeof(int), sizeof(struct bsal_queue));
     bsal_map_init(&self->allocated_blocks, sizeof(void *), sizeof(int));
+
     self->current_block = NULL;
 
-    bsal_vector_init(&self->dried_blocks, sizeof(struct bsal_memory_block *));
+    bsal_queue_init(&self->dried_blocks, sizeof(struct bsal_memory_block *));
+    bsal_queue_init(&self->ready_blocks, sizeof(struct bsal_memory_block *));
 
     self->block_size = block_size;
     self->tracking_is_enabled = 1;
@@ -21,7 +22,6 @@ void bsal_memory_pool_destroy(struct bsal_memory_pool *self)
 {
     struct bsal_queue *queue;
     struct bsal_map_iterator iterator;
-    struct bsal_vector_iterator vector_iterator;
     struct bsal_memory_block *block;
 
     /* destroy recycled objects
@@ -34,22 +34,27 @@ void bsal_memory_pool_destroy(struct bsal_memory_pool *self)
         bsal_queue_destroy(queue);
     }
     bsal_map_iterator_destroy(&iterator);
-
     bsal_map_destroy(&self->recycle_bin);
+
+    /* destroy allocated blocks */
     bsal_map_destroy(&self->allocated_blocks);
 
     /* destroy dried blocks
      */
-    bsal_vector_iterator_init(&vector_iterator, &self->dried_blocks);
-
-    while (bsal_vector_iterator_has_next(&vector_iterator)) {
-        bsal_vector_iterator_next(&vector_iterator, (void **)&block);
-
+    while (bsal_queue_dequeue(&self->dried_blocks, &block)) {
         bsal_memory_block_destroy(block);
     }
-    bsal_vector_iterator_destroy(&vector_iterator);
-    bsal_vector_destroy(&self->dried_blocks);
+    bsal_queue_destroy(&self->dried_blocks);
 
+    /* destroy ready blocks
+     */
+    while (bsal_queue_dequeue(&self->ready_blocks, &block)) {
+        bsal_memory_block_destroy(block);
+    }
+    bsal_queue_destroy(&self->ready_blocks);
+
+    /* destroy the current block
+     */
     if (self->current_block != NULL) {
         bsal_memory_block_destroy(self->current_block);
         self->current_block = NULL;
@@ -61,7 +66,11 @@ void *bsal_memory_pool_allocate(struct bsal_memory_pool *self, int size)
     struct bsal_queue *queue;
     void *pointer;
 
-    queue = bsal_map_get(&self->recycle_bin, &size);
+    queue = NULL;
+
+    if (self->tracking_is_enabled) {
+        queue = bsal_map_get(&self->recycle_bin, &size);
+    }
 
     /* recycling is good for the environment
      */
@@ -82,9 +91,14 @@ void *bsal_memory_pool_allocate(struct bsal_memory_pool *self, int size)
     }
 
     if (self->current_block == NULL) {
-        self->current_block = bsal_allocate(sizeof(struct bsal_memory_block));
 
-        bsal_memory_block_init(self->current_block, self->block_size);
+        /* Try to pick a block in the ready block list.
+         * Otherwise, create one on-demand today.
+         */
+        if (!bsal_queue_dequeue(&self->ready_blocks, &self->current_block)) {
+            self->current_block = bsal_allocate(sizeof(struct bsal_memory_block));
+            bsal_memory_block_init(self->current_block, self->block_size);
+        }
     }
 
     pointer = bsal_memory_block_allocate(self->current_block, size);
@@ -92,7 +106,7 @@ void *bsal_memory_pool_allocate(struct bsal_memory_pool *self, int size)
     /* the current block is exausted...
      */
     if (pointer == NULL) {
-        bsal_vector_push_back(&self->dried_blocks, &self->current_block);
+        bsal_queue_enqueue(&self->dried_blocks, &self->current_block);
         self->current_block = NULL;
         return bsal_memory_pool_allocate(self, size);
     }
@@ -137,4 +151,36 @@ void bsal_memory_pool_disable_tracking(struct bsal_memory_pool *self)
 void bsal_memory_pool_enable_tracking(struct bsal_memory_pool *self)
 {
     self->tracking_is_enabled = 1;
+}
+
+void bsal_memory_pool_free_all(struct bsal_memory_pool *self)
+{
+    struct bsal_memory_block *block;
+    int i;
+    int size;
+
+    /* reset the current block
+     */
+    if (self->current_block != NULL) {
+        bsal_memory_block_free_all(self->current_block);
+    }
+
+    /* reset all ready blocks
+     */
+
+    size = bsal_queue_size(&self->ready_blocks);
+    i = 0;
+    while (i < size 
+                   && bsal_queue_dequeue(&self->ready_blocks, &block)) {
+        bsal_memory_block_free_all(block);
+        bsal_queue_enqueue(&self->ready_blocks, &block);
+
+        i++;
+    }
+
+    /* reset all dried blocks */
+    while (bsal_queue_dequeue(&self->dried_blocks, &block)) {
+        bsal_memory_block_free_all(block);
+        bsal_queue_enqueue(&self->ready_blocks, &block);
+    }
 }

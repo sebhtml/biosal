@@ -12,5 +12,6 @@ void bsal_memory_block_init(struct bsal_memory_block *self, int total_bytes);
 void bsal_memory_block_destroy(struct bsal_memory_block *self);
 void *bsal_memory_block_allocate(struct bsal_memory_block *self, int size);
 void bsal_memory_block_free(struct bsal_memory_block *self, void *pointer);
+void bsal_memory_block_free_all(struct bsal_memory_block *self);
 
 #endif
