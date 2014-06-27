@@ -44,6 +44,7 @@ struct bsal_script bsal_dna_kmer_counter_kernel_script = {
 void bsal_dna_kmer_counter_kernel_init(struct bsal_actor *actor)
 {
     struct bsal_dna_kmer_counter_kernel *concrete_actor;
+    int block_size;
 
     concrete_actor = (struct bsal_dna_kmer_counter_kernel *)bsal_actor_concrete_actor(actor);
 
@@ -62,6 +63,8 @@ void bsal_dna_kmer_counter_kernel_init(struct bsal_actor *actor)
 
     concrete_actor->kmers = 0;
 
+    block_size = 1048576;
+    bsal_memory_pool_init(&concrete_actor->memory, block_size);
     bsal_dna_codec_init(&concrete_actor->codec);
 }
 
@@ -76,6 +79,8 @@ void bsal_dna_kmer_counter_kernel_destroy(struct bsal_actor *actor)
     concrete_actor->producer_source =-1;
 
     bsal_dna_codec_destroy(&concrete_actor->codec);
+
+    bsal_memory_pool_destroy(&concrete_actor->memory);
 }
 
 void bsal_dna_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_message *message)
@@ -168,7 +173,7 @@ void bsal_dna_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_
 
         bsal_dna_kmer_block_init(&block, concrete_actor->kmer_length, source_index, to_reserve);
 
-        sequence_data = bsal_malloc(maximum_length + 1);
+        sequence_data = bsal_allocate(maximum_length + 1);
 
         /* extract kmers
          */
@@ -188,7 +193,7 @@ void bsal_dna_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_
                 sequence_data[j + concrete_actor->kmer_length] = '\0';
 
                 bsal_dna_kmer_init(&kmer, sequence_data + j,
-                                &concrete_actor->codec);
+                                &concrete_actor->codec, &concrete_actor->memory);
 
 #ifdef BSAL_KMER_COUNTER_KERNEL_DEBUG_LEVEL_2
                 printf("KERNEL kmer %d,%d %s\n", i, j, sequence_data + j);
@@ -197,9 +202,9 @@ void bsal_dna_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_
                 /*
                  * add kmer in block
                  */
-                bsal_dna_kmer_block_add_kmer(&block, &kmer);
+                bsal_dna_kmer_block_add_kmer(&block, &kmer, &concrete_actor->memory);
 
-                bsal_dna_kmer_destroy(&kmer);
+                bsal_dna_kmer_destroy(&kmer, &concrete_actor->memory);
 
                 sequence_data[j + concrete_actor->kmer_length] = saved;
 
@@ -230,7 +235,7 @@ void bsal_dna_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_
 #endif
 
         new_count = bsal_dna_kmer_block_pack_size(&block);
-        new_buffer = bsal_malloc(new_count);
+        new_buffer = bsal_allocate(new_count);
         bsal_dna_kmer_block_pack(&block, new_buffer);
 
 #ifdef BSAL_KMER_COUNTER_KERNEL_DEBUG
@@ -278,7 +283,7 @@ void bsal_dna_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_
 
         bsal_timer_destroy(&timer);
 
-        bsal_dna_kmer_block_destroy(&block);
+        bsal_dna_kmer_block_destroy(&block, &concrete_actor->memory);
 
 #ifdef BSAL_KMER_COUNTER_KERNEL_DEBUG
         BSAL_DEBUG_MARKER("leaving call.\n");
@@ -345,9 +350,10 @@ void bsal_dna_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_
 
         bsal_message_helper_unpack_int(message, 0, &concrete_actor->kmer_length);
 
-        bsal_dna_kmer_init_mock(&kmer, concrete_actor->kmer_length, &concrete_actor->codec);
+        bsal_dna_kmer_init_mock(&kmer, concrete_actor->kmer_length, &concrete_actor->codec,
+                        &concrete_actor->memory);
         concrete_actor->bytes_per_kmer = bsal_dna_kmer_pack_size(&kmer, concrete_actor->kmer_length);
-        bsal_dna_kmer_destroy(&kmer);
+        bsal_dna_kmer_destroy(&kmer, &concrete_actor->memory);
 
         bsal_actor_helper_send_reply_empty(actor, BSAL_SET_KMER_LENGTH_REPLY);
 

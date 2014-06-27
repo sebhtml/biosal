@@ -243,7 +243,7 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
 
         file = (char *)buffer;
 
-        local_file = bsal_malloc(strlen(file) + 1);
+        local_file = bsal_allocate(strlen(file) + 1);
         strcpy(local_file, file);
 
         bsal_vector_push_back(&controller->files, &local_file);
@@ -314,7 +314,7 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
             }
 
             new_count = bsal_vector_pack_size(&block_counts);
-            new_buffer = bsal_malloc(new_count);
+            new_buffer = bsal_allocate(new_count);
 
 #ifdef BSAL_INPUT_CONTROLLER_DEBUG
             printf("DEBUG packed counts, %d bytes\n", count);
@@ -374,7 +374,7 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
         bsal_vector_push_back(&controller->counting_streams, &stream);
 
         new_count = sizeof(file_index) + strlen(local_file) + 1;
-        new_buffer = bsal_malloc(new_count);
+        new_buffer = bsal_allocate(new_count);
         memcpy(new_buffer, &file_index, sizeof(file_index));
         memcpy(new_buffer + sizeof(file_index), local_file, strlen(local_file) + 1);
 
@@ -1087,7 +1087,7 @@ void bsal_input_controller_receive_command(struct bsal_actor *actor, struct bsal
                     bytes);
 #endif
 
-    new_buffer = bsal_malloc(bytes);
+    new_buffer = bsal_allocate(bytes);
     bsal_input_command_pack(&input_command, new_buffer);
 
     bsal_message_init(&new_message, BSAL_INPUT_PUSH_SEQUENCES, bytes,
@@ -1226,7 +1226,7 @@ void bsal_input_controller_set_offset_reply(struct bsal_actor *self, struct bsal
 
     new_count = sizeof(file_index) + strlen(file_name) + 1;
 
-    new_buffer = bsal_malloc(new_count);
+    new_buffer = bsal_allocate(new_count);
 
     memcpy(new_buffer, &file_index, sizeof(file_index));
     memcpy(new_buffer + sizeof(file_index), file_name, strlen(file_name) + 1);

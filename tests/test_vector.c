@@ -9,9 +9,9 @@
 
 int main(int argc, char **argv)
 {
-    /*bsal_malloc(0);*/
-    /*bsal_malloc(-1);*/
-    /*bsal_malloc(-10000);*/
+    /*bsal_allocate(0);*/
+    /*bsal_allocate(-1);*/
+    /*bsal_allocate(-10000);*/
 
     BEGIN_TESTS();
 
@@ -129,7 +129,7 @@ int main(int argc, char **argv)
 
         TEST_INT_IS_GREATER_THAN(count, 0);
 
-        buffer = bsal_malloc(count);
+        buffer = bsal_allocate(count);
 
         bsal_vector_pack(&vector1, buffer);
         bsal_vector_unpack(&vector2, buffer);

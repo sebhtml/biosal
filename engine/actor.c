@@ -605,7 +605,7 @@ int bsal_actor_receive_system(struct bsal_actor *actor, struct bsal_message *mes
         spawned = bsal_actor_spawn_real(actor, script);
         bsal_node_set_supervisor(bsal_actor_node(actor), spawned, source);
 
-        new_buffer = bsal_malloc(2 * sizeof(int));
+        new_buffer = bsal_allocate(2 * sizeof(int));
         offset = 0;
 
         bytes = sizeof(spawned);
@@ -1009,10 +1009,10 @@ void bsal_actor_pack_proxy_message(struct bsal_actor *actor, struct bsal_message
     new_count = count + sizeof(real_source) + sizeof(real_tag);
 
     /* TODO: use slab allocator */
-    new_buffer = bsal_malloc(new_count);
+    new_buffer = bsal_allocate(new_count);
 
 #ifdef BSAL_ACTOR_DEBUG
-    printf("DEBUG12 bsal_malloc %p (pack proxy message)\n",
+    printf("DEBUG12 bsal_allocate %p (pack proxy message)\n",
                     new_buffer);
 #endif
 
@@ -1466,7 +1466,7 @@ void bsal_actor_queue_message(struct bsal_actor *actor,
 #endif
 
     if (count > 0) {
-        new_buffer = bsal_malloc(count);
+        new_buffer = bsal_allocate(count);
         memcpy(new_buffer, buffer, count);
     }
 
@@ -1715,7 +1715,7 @@ void bsal_actor_enqueue_message(struct bsal_actor *actor, struct bsal_message *m
     new_buffer = NULL;
 
     if (buffer != NULL) {
-        new_buffer = bsal_malloc(count);
+        new_buffer = bsal_allocate(count);
         memcpy(new_buffer, buffer, count);
     }
 

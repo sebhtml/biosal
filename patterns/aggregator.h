@@ -8,6 +8,8 @@
 
 #include <structures/vector.h>
 
+#include <system/memory_pool.h>
+
 #include <stdint.h>
 
 #define BSAL_AGGREGATOR_SCRIPT 0x82673850
@@ -24,6 +26,7 @@ struct bsal_aggregator {
     int flushed;
 
     struct bsal_dna_codec codec;
+    struct bsal_memory_pool memory;
 };
 
 /* message tags

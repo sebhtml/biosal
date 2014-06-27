@@ -261,7 +261,7 @@ void bsal_manager_receive(struct bsal_actor *actor, struct bsal_message *message
                 bsal_vector_iterator_destroy(&iterator);
 
                 new_count = bsal_vector_pack_size(&all_stores);
-                new_buffer = bsal_malloc(new_count);
+                new_buffer = bsal_allocate(new_count);
                 bsal_vector_pack(&all_stores, new_buffer);
                 bsal_vector_destroy(&all_stores);
 

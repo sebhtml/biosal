@@ -192,7 +192,7 @@ struct bsal_linked_ring *bsal_ring_queue_get_ring(struct bsal_ring_queue *self)
     struct bsal_linked_ring *ring;
 
     if (self->recycle_bin == NULL) {
-        ring = bsal_malloc(sizeof(struct bsal_linked_ring));
+        ring = bsal_allocate(sizeof(struct bsal_linked_ring));
         bsal_linked_ring_init(ring, self->cells_per_ring, self->cell_size);
 
         return ring;

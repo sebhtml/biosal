@@ -19,7 +19,7 @@ int main(int argc, char **argv)
     expected_value = 42;
     actual_value = 100;
 
-    buffer = bsal_malloc(sizeof(expected_value));
+    buffer = bsal_allocate(sizeof(expected_value));
 
     struct bsal_packer packer;
 

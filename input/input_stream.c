@@ -143,7 +143,7 @@ void bsal_input_stream_receive(struct bsal_actor *actor, struct bsal_message *me
         /* TODO: find out the maximum read length in some way */
         concrete_actor->maximum_sequence_length = BSAL_INPUT_MAXIMUM_SEQUENCE_LENGTH;
 
-        concrete_actor->buffer_for_sequence = (char *)bsal_malloc(concrete_actor->maximum_sequence_length);
+        concrete_actor->buffer_for_sequence = (char *)bsal_allocate(concrete_actor->maximum_sequence_length);
 
         /*bsal_input_stream_init(actor);*/
 
@@ -158,7 +158,7 @@ void bsal_input_stream_receive(struct bsal_actor *actor, struct bsal_message *me
         printf("stream/%d (node/%d) opens file %s offset %" PRIu64 "\n", bsal_actor_name(actor),
                         bsal_actor_node_name(actor), file_name_in_buffer,
                         concrete_actor->starting_offset);
-        concrete_actor->file_name = bsal_malloc(strlen(file_name_in_buffer) + 1);
+        concrete_actor->file_name = bsal_allocate(strlen(file_name_in_buffer) + 1);
         strcpy(concrete_actor->file_name, file_name_in_buffer);
 
         bsal_input_proxy_init(&concrete_actor->proxy, concrete_actor->file_name,
@@ -513,7 +513,7 @@ void bsal_input_stream_push_sequences(struct bsal_actor *actor,
 
     new_count = bsal_input_command_pack_size(&command);
 
-    new_buffer = bsal_malloc(new_count);
+    new_buffer = bsal_allocate(new_count);
 
     bsal_input_command_pack(&command, new_buffer);
 

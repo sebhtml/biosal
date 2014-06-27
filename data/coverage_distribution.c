@@ -185,7 +185,7 @@ void bsal_coverage_distribution_write_distribution(struct bsal_actor *self)
         }
     }
 
-    canonical_file_name = bsal_malloc(strlen(file_name) + 100);
+    canonical_file_name = bsal_allocate(strlen(file_name) + 100);
     strcpy(canonical_file_name, file_name);
     strcat(canonical_file_name, "-canonical");
 

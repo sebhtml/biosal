@@ -330,7 +330,7 @@ void bsal_sequence_store_ask(struct bsal_actor *self, struct bsal_message *messa
 
     if (bsal_input_command_entry_count(&payload) > 0) {
         new_count = bsal_input_command_pack_size(&payload);
-        new_buffer = bsal_malloc(new_count);
+        new_buffer = bsal_allocate(new_count);
 
         bsal_input_command_pack(&payload, new_buffer);
 

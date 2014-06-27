@@ -38,7 +38,7 @@ void bsal_dna_sequence_init(struct bsal_dna_sequence *sequence, char *data,
         sequence->length_in_nucleotides = strlen(data);
 
         encoded_length = bsal_dna_codec_encoded_length(sequence->length_in_nucleotides);
-        sequence->encoded_data = bsal_malloc(encoded_length);
+        sequence->encoded_data = bsal_allocate(encoded_length);
 
         bsal_dna_codec_encode(codec, sequence->length_in_nucleotides, data, sequence->encoded_data);
     }
@@ -117,7 +117,7 @@ int bsal_dna_sequence_pack_unpack(struct bsal_dna_sequence *sequence,
     if (operation == BSAL_PACKER_OPERATION_UNPACK) {
 
         if (sequence->length_in_nucleotides > 0) {
-            sequence->encoded_data = bsal_malloc(encoded_length);
+            sequence->encoded_data = bsal_allocate(encoded_length);
         } else {
             sequence->encoded_data = NULL;
         }
@@ -149,7 +149,7 @@ void bsal_dna_sequence_print(struct bsal_dna_sequence *self, struct bsal_dna_cod
 {
     char *dna_sequence;
 
-    dna_sequence = bsal_malloc(self->length_in_nucleotides + 1);
+    dna_sequence = bsal_allocate(self->length_in_nucleotides + 1);
 
     bsal_dna_codec_decode(codec, self->length_in_nucleotides, self->encoded_data, dna_sequence);
 
@@ -183,7 +183,7 @@ void bsal_dna_sequence_init_copy(struct bsal_dna_sequence *self,
 
     /* need +1 for '\0'
      */
-    dna = bsal_malloc(other->length_in_nucleotides + 1);
+    dna = bsal_allocate(other->length_in_nucleotides + 1);
 
     bsal_dna_codec_decode(codec, other->length_in_nucleotides, other->encoded_data,
                     dna);

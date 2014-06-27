@@ -8,6 +8,8 @@
 #include <structures/vector.h>
 #include <structures/dynamic_hash_table.h>
 
+#include <system/memory_pool.h>
+
 #define BSAL_DNA_KMER_COUNTER_KERNEL_SCRIPT 0xed338fa2
 
 struct bsal_dna_kmer_counter_kernel {
@@ -27,6 +29,8 @@ struct bsal_dna_kmer_counter_kernel {
     int notified;
     int notification_source;
     int bytes_per_kmer;
+
+    struct bsal_memory_pool memory;
 };
 
 #define BSAL_SET_KMER_LENGTH 0x0000702b

@@ -81,3 +81,20 @@ int bsal_map_empty(struct bsal_map *self)
 {
     return bsal_map_size(self) == 0;
 }
+
+int bsal_map_get_value(struct bsal_map *self, void *key, void *value)
+{
+    void *bucket;
+    int size;
+
+    bucket = bsal_map_get(self, key);
+
+    if (bucket == NULL) {
+        return 0;
+    }
+
+    size = bsal_map_get_value_size(self);
+    memcpy(value, bucket, size);
+
+    return 1;
+}

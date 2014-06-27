@@ -12,7 +12,7 @@ void bsal_ring_init(struct bsal_ring *self, int capacity, int cell_size)
     self->head = 0;
     self->tail = 0;
 
-    self->cells = bsal_malloc(self->number_of_cells * self->cell_size);
+    self->cells = bsal_allocate(self->number_of_cells * self->cell_size);
 }
 
 void bsal_ring_destroy(struct bsal_ring *self)

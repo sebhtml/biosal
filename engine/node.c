@@ -385,7 +385,7 @@ int bsal_node_spawn(struct bsal_node *node, int script)
 
     size = bsal_script_size(script1);
 
-    state = bsal_malloc(size);
+    state = bsal_allocate(size);
 
     name = bsal_node_spawn_state(node, state, script1);
 
@@ -629,7 +629,7 @@ void bsal_node_start_initial_actor(struct bsal_node *node)
                     bsal_vector_size(&node->initial_actors));
 #endif
 
-    buffer = bsal_malloc(bytes);
+    buffer = bsal_allocate(bytes);
     bsal_vector_pack(&node->initial_actors, buffer);
 
     for (i = 0; i < actors; ++i) {
@@ -845,7 +845,7 @@ int bsal_node_receive_system(struct bsal_node *node, struct bsal_message *messag
 #endif
 
             bytes = bsal_vector_pack_size(&node->initial_actors);
-            buffer = bsal_malloc(bytes);
+            buffer = bsal_allocate(bytes);
             bsal_vector_pack(&node->initial_actors, buffer);
 
             bsal_message_init(&new_message, BSAL_NODE_ADD_INITIAL_ACTORS, bytes, buffer);
@@ -944,7 +944,7 @@ void bsal_node_send_to_node(struct bsal_node *node, int destination,
      * Since we are sending messages between
      * nodes, these names are faked...
      */
-    new_buffer = bsal_malloc(new_count);
+    new_buffer = bsal_allocate(new_count);
     memcpy(new_buffer, buffer, count);
 
     /* the metadata size is added by the runtime
@@ -1110,7 +1110,7 @@ void bsal_node_create_work(struct bsal_node *node, struct bsal_message *message)
 
     /* we need to do a copy of the message */
     /* TODO replace with slab allocator */
-    new_message = (struct bsal_message *)bsal_malloc(sizeof(struct bsal_message));
+    new_message = (struct bsal_message *)bsal_allocate(sizeof(struct bsal_message));
     memcpy(new_message, message, sizeof(struct bsal_message));
 
     bsal_work_init(&work, actor, new_message);

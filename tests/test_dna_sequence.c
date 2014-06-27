@@ -21,7 +21,7 @@ int main(int argc, char **argv)
     int required;
     void *buffer_for_pack;
 
-    buffer = bsal_malloc(101);
+    buffer = bsal_allocate(101);
     strcpy((char *)buffer, "TCCCGAGCGCAGGTAGGCCTCGGGATCGATGTCCGGGGTGTTGAGGATGTTGGACGTGTATTCGTGGTTGTACTGGGTCCAGTCCGCCACCGGGCGCCGC");
     bsal_dna_codec_init(&codec);
 
@@ -38,7 +38,7 @@ int main(int argc, char **argv)
 
     TEST_INT_IS_GREATER_THAN(required, 0);
 
-    buffer_for_pack = bsal_malloc(required);
+    buffer_for_pack = bsal_allocate(required);
 
     /*
     printf("DEBUG buffer %p size for pack/unpack has %d bytes\n",

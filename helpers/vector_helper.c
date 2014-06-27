@@ -139,7 +139,7 @@ void bsal_vector_helper_sort(struct bsal_vector *self, bsal_compare_fn_t compare
 
     element_size = bsal_vector_element_size(self);
 
-    saved_pivot_value = bsal_malloc(element_size);
+    saved_pivot_value = bsal_allocate(element_size);
 
     bsal_vector_helper_quicksort(self, 0, bsal_vector_size(self) - 1, compare, saved_pivot_value);
 

@@ -158,7 +158,7 @@ int main(int argc, char **argv)
         }
 
         count = bsal_map_pack_size(&map);
-        buffer = bsal_malloc(count);
+        buffer = bsal_allocate(count);
         bsal_map_pack(&map, buffer);
 
         /*

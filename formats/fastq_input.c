@@ -65,7 +65,7 @@ uint64_t bsal_fastq_input_get_sequence(struct bsal_input *input,
     fastq = (struct bsal_fastq_input *)bsal_input_implementation(input);
 
     if (fastq->buffer == NULL) {
-        fastq->buffer = (char *)bsal_malloc(maximum_sequence_length + 1);
+        fastq->buffer = (char *)bsal_allocate(maximum_sequence_length + 1);
     }
 
     value = 0;

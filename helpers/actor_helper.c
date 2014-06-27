@@ -20,7 +20,7 @@ void bsal_actor_helper_send_vector(struct bsal_actor *actor, int destination,
     void *buffer;
 
     count = bsal_vector_pack_size(vector);
-    buffer = bsal_malloc(count);
+    buffer = bsal_allocate(count);
     bsal_vector_pack(vector, buffer);
 
     bsal_message_init(&message, tag, count, buffer);
@@ -286,10 +286,10 @@ void bsal_actor_helper_send_range_binomial_tree(struct bsal_actor *actor, struct
 
         /* TODO use slab allocator */
         new_count = count + sizeof(source) + sizeof(tag) + bsal_vector_pack_size(&left_part) + sizeof(magic_offset);
-        new_buffer = bsal_malloc(new_count);
+        new_buffer = bsal_allocate(new_count);
 
 #ifdef BSAL_ACTOR_DEBUG_BINOMIAL_TREE
-        printf("DEBUG12 bsal_malloc %p (send_binomial_range)\n",
+        printf("DEBUG12 bsal_allocate %p (send_binomial_range)\n",
                     new_buffer);
 #endif
 
@@ -332,7 +332,7 @@ void bsal_actor_helper_send_range_binomial_tree(struct bsal_actor *actor, struct
     if (bsal_vector_size(&right_part) > 0) {
 
         new_count = count + sizeof(source) + sizeof(tag) + bsal_vector_pack_size(&right_part) + sizeof(magic_offset);
-        new_buffer = bsal_malloc(new_count);
+        new_buffer = bsal_allocate(new_count);
 
         memcpy(new_buffer, buffer, count);
         offset = count;
@@ -396,7 +396,7 @@ void bsal_actor_helper_send_range_vector(struct bsal_actor *actor, struct bsal_v
     void *buffer;
 
     count = bsal_vector_pack_size(vector);
-    buffer = bsal_malloc(count);
+    buffer = bsal_allocate(count);
     bsal_vector_pack(vector, buffer);
     bsal_message_init(&message, tag, count, buffer);
     bsal_actor_helper_send_range(actor, actors, &message);

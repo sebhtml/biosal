@@ -164,7 +164,7 @@ void root_receive(struct bsal_actor *actor, struct bsal_message *message)
         bsal_vector_push_back_vector(&spawners, &concrete_actor->spawners);
 
         new_count = bsal_vector_pack_size(&spawners);
-        new_buffer = bsal_malloc(new_count);
+        new_buffer = bsal_allocate(new_count);
         bsal_vector_pack(&spawners, new_buffer);
 
         bsal_message_init(&new_message, BSAL_ACTOR_START, new_count, new_buffer);
@@ -189,7 +189,7 @@ void root_receive(struct bsal_actor *actor, struct bsal_message *message)
     } else if (tag == BSAL_ACTOR_SET_CONSUMERS_REPLY) {
 
         bytes = bsal_vector_pack_size(&root1->spawners);
-        buffer = bsal_malloc(bytes);
+        buffer = bsal_allocate(bytes);
         bsal_vector_pack(&root1->spawners, buffer);
 
         bsal_message_init(message, BSAL_INPUT_CONTROLLER_START, bytes, buffer);

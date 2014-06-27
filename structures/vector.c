@@ -180,7 +180,7 @@ void bsal_vector_reserve(struct bsal_vector *self, int64_t size)
                     old_byte_count, new_byte_count);
 #endif
 
-    new_data = bsal_malloc(new_byte_count);
+    new_data = bsal_allocate(new_byte_count);
 
     /* copy old data */
     if (self->size > 0) {
@@ -252,7 +252,7 @@ int bsal_vector_pack_unpack(struct bsal_vector *self, void *buffer, int operatio
         self->maximum_size = self->size;
 
         if (self->size > 0) {
-            self->data = bsal_malloc(self->maximum_size * self->element_size);
+            self->data = bsal_allocate(self->maximum_size * self->element_size);
         } else {
             self->data = NULL;
         }

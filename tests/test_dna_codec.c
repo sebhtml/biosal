@@ -33,12 +33,12 @@ int main(int argc, char **argv)
     TEST_INT_IS_GREATER_THAN(encoded_length, 0);
     TEST_INT_IS_GREATER_THAN(sequence_length, 0);
 
-    encoded_sequence = bsal_malloc(encoded_length);
+    encoded_sequence = bsal_allocate(encoded_length);
 
     bsal_dna_codec_encode(&codec, sequence_length, dna, encoded_sequence);
 
-    sequence2 = bsal_malloc(sequence_length + 1);
-    expected_sequence = bsal_malloc(sequence_length + 1);
+    sequence2 = bsal_allocate(sequence_length + 1);
+    expected_sequence = bsal_allocate(sequence_length + 1);
 
     TEST_POINTER_NOT_EQUALS(sequence2, NULL);
 

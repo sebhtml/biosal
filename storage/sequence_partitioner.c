@@ -132,7 +132,7 @@ void bsal_sequence_partitioner_receive(struct bsal_actor *actor, struct bsal_mes
             printf("DEBUG partitioner has command, packing %d bytes!\n", bytes);
             */
 
-            buffer = bsal_malloc(bytes);
+            buffer = bsal_allocate(bytes);
             bsal_partition_command_pack(&command, buffer);
 
             bsal_message_init(&response, BSAL_SEQUENCE_PARTITIONER_GET_COMMAND_REPLY,
@@ -346,7 +346,7 @@ void bsal_sequence_partitioner_verify(struct bsal_actor *actor)
 #endif
 
     bytes = bsal_vector_pack_size(&concrete_actor->store_entries);
-    buffer = bsal_malloc(bytes);
+    buffer = bsal_allocate(bytes);
     bsal_vector_pack(&concrete_actor->store_entries, buffer);
 
     bsal_message_init(&message, BSAL_SEQUENCE_PARTITIONER_PROVIDE_STORE_ENTRY_COUNTS,

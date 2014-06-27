@@ -303,7 +303,7 @@ void bsal_worker_send(struct bsal_worker *worker, struct bsal_message *message)
     all = count + metadata_size;
 
     /* TODO use slab allocator to allocate buffer... */
-    buffer = (char *)bsal_malloc(all * sizeof(char));
+    buffer = (char *)bsal_allocate(all * sizeof(char));
 
 #ifdef BSAL_WORKER_DEBUG
     printf("[bsal_worker_send] allocated %i bytes (%i + %i) for buffer %p\n",
@@ -354,7 +354,7 @@ void bsal_worker_send(struct bsal_worker *worker, struct bsal_message *message)
          */
         actor = bsal_node_get_actor_from_name(worker->node, destination);
 
-        new_message = (struct bsal_message *)bsal_malloc(sizeof(struct bsal_message));
+        new_message = (struct bsal_message *)bsal_allocate(sizeof(struct bsal_message));
         memcpy(new_message, &copy, sizeof(struct bsal_message));
 
         /*

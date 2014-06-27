@@ -8,6 +8,8 @@
 
 #include <structures/map.h>
 
+#include <system/memory_pool.h>
+
 #define BSAL_KMER_STORE_SCRIPT 0xe6d32c91
 
 struct bsal_kmer_store {
@@ -20,6 +22,7 @@ struct bsal_kmer_store {
 
     uint64_t received;
     uint64_t last_received;
+    struct bsal_memory_pool memory;
 };
 
 #define BSAL_PUSH_KMER_BLOCK 0x00004f09
