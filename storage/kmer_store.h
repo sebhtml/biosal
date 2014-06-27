@@ -12,6 +12,10 @@
 
 #define BSAL_KMER_STORE_SCRIPT 0xe6d32c91
 
+/*
+ * For ephemeral storage, see
+ * http://docs.openstack.org/openstack-ops/content/storage_decision.html
+ */
 struct bsal_kmer_store {
     struct bsal_map table;
     struct bsal_dna_codec codec;
@@ -22,7 +26,9 @@ struct bsal_kmer_store {
 
     uint64_t received;
     uint64_t last_received;
-    struct bsal_memory_pool memory;
+
+    struct bsal_memory_pool ephemeral_memory;
+    struct bsal_memory_pool persistent_memory;
 };
 
 #define BSAL_PUSH_KMER_BLOCK 0x00004f09

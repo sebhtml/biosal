@@ -49,7 +49,6 @@ struct bsal_script bsal_dna_kmer_counter_kernel_script = {
 void bsal_dna_kmer_counter_kernel_init(struct bsal_actor *actor)
 {
     struct bsal_dna_kmer_counter_kernel *concrete_actor;
-    int block_size;
 
     concrete_actor = (struct bsal_dna_kmer_counter_kernel *)bsal_actor_concrete_actor(actor);
 
@@ -68,8 +67,7 @@ void bsal_dna_kmer_counter_kernel_init(struct bsal_actor *actor)
 
     concrete_actor->kmers = 0;
 
-    block_size = 2097152;
-    bsal_memory_pool_init(&concrete_actor->ephemeral_memory, block_size);
+    bsal_memory_pool_init(&concrete_actor->ephemeral_memory, 2097152);
 
 #ifdef BSAL_DNA_KMER_COUNTER_KERNEL_DISABLE_TRACKING
     bsal_memory_pool_disable_tracking(&concrete_actor->ephemeral_memory);
