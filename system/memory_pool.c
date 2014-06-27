@@ -14,6 +14,7 @@ void bsal_memory_pool_init(struct bsal_memory_pool *self, int block_size)
     bsal_vector_init(&self->dried_blocks, sizeof(struct bsal_memory_block *));
 
     self->block_size = block_size;
+    self->tracking_is_enabled = 1;
 }
 
 void bsal_memory_pool_destroy(struct bsal_memory_pool *self)
@@ -65,7 +66,10 @@ void *bsal_memory_pool_allocate(struct bsal_memory_pool *self, int size)
     /* recycling is good for the environment
      */
     if (queue != NULL && bsal_queue_dequeue(queue, &pointer)) {
-        bsal_map_add_value(&self->allocated_blocks, &pointer, &size);
+
+        if (self->tracking_is_enabled) {
+            bsal_map_add_value(&self->allocated_blocks, &pointer, &size);
+        }
 
 #ifdef BSAL_MEMORY_POOL_DISCARD_EMPTY_QUEUES
         if (bsal_queue_empty(queue)) {
@@ -93,7 +97,9 @@ void *bsal_memory_pool_allocate(struct bsal_memory_pool *self, int size)
         return bsal_memory_pool_allocate(self, size);
     }
 
-    bsal_map_add_value(&self->allocated_blocks, &pointer, &size);
+    if (self->tracking_is_enabled) {
+        bsal_map_add_value(&self->allocated_blocks, &pointer, &size);
+    }
 
     return pointer;
 }
@@ -102,6 +108,10 @@ void bsal_memory_pool_free(struct bsal_memory_pool *self, void *pointer)
 {
     struct bsal_queue *queue;
     int size;
+
+    if (!self->tracking_is_enabled) {
+        return;
+    }
 
     if (!bsal_map_get_value(&self->allocated_blocks, &pointer, &size)) {
         return;
@@ -119,4 +129,12 @@ void bsal_memory_pool_free(struct bsal_memory_pool *self, void *pointer)
     bsal_map_delete(&self->allocated_blocks, &pointer);
 }
 
+void bsal_memory_pool_disable_tracking(struct bsal_memory_pool *self)
+{
+    self->tracking_is_enabled = 0;
+}
 
+void bsal_memory_pool_enable_tracking(struct bsal_memory_pool *self)
+{
+    self->tracking_is_enabled = 1;
+}

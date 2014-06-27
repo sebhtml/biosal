@@ -60,7 +60,10 @@ int main(int argc, char **argv)
         bsal_memory_pool_init(&memory, 16777216);
 
         test_allocator(&memory);
-        /*test_allocator(NULL);*/
+
+        bsal_memory_pool_disable_tracking(&memory);
+        test_allocator(&memory);
+        test_allocator(NULL);
 
         bsal_memory_pool_destroy(&memory);
     }

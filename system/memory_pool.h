@@ -17,11 +17,15 @@ struct bsal_memory_pool {
     struct bsal_memory_block *current_block;
     struct bsal_vector dried_blocks;
     int block_size;
+    int tracking_is_enabled;
 };
 
 void bsal_memory_pool_init(struct bsal_memory_pool *self, int block_size);
 void bsal_memory_pool_destroy(struct bsal_memory_pool *self);
 void *bsal_memory_pool_allocate(struct bsal_memory_pool *self, int size);
 void bsal_memory_pool_free(struct bsal_memory_pool *self, void *pointer);
+
+void bsal_memory_pool_enable_tracking(struct bsal_memory_pool *self);
+void bsal_memory_pool_disable_tracking(struct bsal_memory_pool *self);
 
 #endif
