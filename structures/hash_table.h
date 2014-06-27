@@ -61,10 +61,10 @@ int bsal_hash_table_state(struct bsal_hash_table *table, uint64_t bucket);
 
 uint64_t bsal_hash_table_hash1(struct bsal_hash_table *table, void *key);
 uint64_t bsal_hash_table_hash2(struct bsal_hash_table *table, void *key);
-uint64_t bsal_hash_table_double_hash(struct bsal_hash_table *table, void *key,
-                uint64_t stride);
-uint64_t bsal_hash_table_find_bucket(struct bsal_hash_table *table, void *key,
-                int *group, int *bucket_in_group, int operation);
+uint64_t bsal_hash_table_double_hash(struct bsal_hash_table *table, uint64_t hash1,
+                uint64_t hash2, uint64_t stride);
+int bsal_hash_table_find_bucket(struct bsal_hash_table *table, void *key,
+                int *group, int *bucket_in_group, int operation, uint64_t *last_stride);
 void bsal_hash_table_toggle_debug(struct bsal_hash_table *table);
 
 int bsal_hash_table_pack_size(struct bsal_hash_table *self);

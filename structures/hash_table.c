@@ -33,6 +33,7 @@
 /*
 #define BSAL_HASH_TABLE_DEBUG
 #define BSAL_HASH_TABLE_DEBUG_DOUBLE_HASHING_DEBUG
+#define BSAL_HASH_TABLE_DEBUG_DOUBLE_HASHING_DEBUG_STRIDE
 */
 
 void bsal_hash_table_init(struct bsal_hash_table *table, uint64_t buckets,
@@ -103,6 +104,7 @@ void *bsal_hash_table_add(struct bsal_hash_table *table, void *key)
     int bucket_in_group;
     void *bucket_key;
     int code;
+    uint64_t last_stride;
 
 #ifdef BSAL_HASH_TABLE_DEBUG_DOUBLE_HASHING_DEBUG
     int query_value;
@@ -114,7 +116,15 @@ void *bsal_hash_table_add(struct bsal_hash_table *table, void *key)
 #endif
 
     code = bsal_hash_table_find_bucket(table, key, &group, &bucket_in_group,
-                    BSAL_HASH_TABLE_OPERATION_ADD);
+                    BSAL_HASH_TABLE_OPERATION_ADD, &last_stride);
+
+#ifdef BSAL_HASH_TABLE_DEBUG_DOUBLE_HASHING_DEBUG_STRIDE
+
+    printf("STRIDE load %" PRIu64 "/%" PRIu64 " stride %" PRIu64 "\n",
+                    bsal_hash_table_size(table),
+                    bsal_hash_table_buckets(table),
+                    last_stride);
+#endif
 
 #ifdef BSAL_HASH_TABLE_DEBUG_DOUBLE_HASHING_DEBUG
     if (table->debug) {
@@ -190,9 +200,10 @@ void *bsal_hash_table_get(struct bsal_hash_table *table, void *key)
     int group;
     int bucket_in_group;
     int code;
+    uint64_t last_stride;
 
     code = bsal_hash_table_find_bucket(table, key, &group, &bucket_in_group,
-                    BSAL_HASH_TABLE_OPERATION_GET);
+                    BSAL_HASH_TABLE_OPERATION_GET, &last_stride);
 
 #ifdef BSAL_HASH_TABLE_DEBUG_DOUBLE_HASHING_DEBUG
     if (table->debug) {
@@ -221,9 +232,10 @@ void bsal_hash_table_delete(struct bsal_hash_table *table, void *key)
     int group;
     int bucket_in_group;
     int code;
+    uint64_t last_stride;
 
     code = bsal_hash_table_find_bucket(table, key, &group, &bucket_in_group,
-                    BSAL_HASH_TABLE_OPERATION_DELETE);
+                    BSAL_HASH_TABLE_OPERATION_DELETE, &last_stride);
 
     if (code == BSAL_HASH_TABLE_KEY_FOUND) {
 
@@ -266,31 +278,27 @@ uint64_t bsal_hash_table_hash1(struct bsal_hash_table *table, void *key)
 
 uint64_t bsal_hash_table_hash2(struct bsal_hash_table *table, void *key)
 {
-    return bsal_hash_table_hash(key, table->key_size, 0x80435418);
-}
-
-uint64_t bsal_hash_table_double_hash(struct bsal_hash_table *table, void *key, uint64_t stride)
-{
-    uint64_t hash1;
     uint64_t hash2;
 
-    hash2 = 0;
-    hash1 = bsal_hash_table_hash1(table, key);
+    hash2 = bsal_hash_table_hash(key, table->key_size, 0x80435418);
 
-    if (stride > 0) {
-        hash2 = bsal_hash_table_hash2(table, key);
-        /* the number of buckets and hash2 must be co-prime
-         * the number of buckets is a power of 2
-         * must be between 1 and M - 1
-         */
-        if (hash2 == 0) {
-            hash2 = 1;
-        }
-        if (hash2 % 2 == 0) {
-            hash2--;
-        }
+    /* the number of buckets and hash2 must be co-prime
+     * the number of buckets is a power of 2
+     * must be between 1 and M - 1
+     */
+    if (hash2 == 0) {
+        hash2 = 1;
+    }
+    if (hash2 % 2 == 0) {
+        hash2--;
     }
 
+    return hash2;
+}
+
+uint64_t bsal_hash_table_double_hash(struct bsal_hash_table *table, uint64_t hash1,
+                uint64_t hash2, uint64_t stride)
+{
     return (hash1 + stride * hash2) % table->buckets;
 }
 
@@ -303,14 +311,17 @@ uint64_t bsal_hash_table_double_hash(struct bsal_hash_table *table, void *key, u
  * \return value is BSAL_HASH_TABLE_KEY_FOUND or BSAL_HASH_TABLE_KEY_NOT_FOUND or
  * BSAL_HASH_TABLE_FULL
  */
-uint64_t bsal_hash_table_find_bucket(struct bsal_hash_table *table, void *key,
-                int *group, int *bucket_in_group, int operation)
+int bsal_hash_table_find_bucket(struct bsal_hash_table *table, void *key,
+                int *group, int *bucket_in_group, int operation,
+                uint64_t *last_stride)
 {
-    uint64_t stride;
     uint64_t bucket;
+    uint64_t stride;
     int state;
     struct bsal_hash_table_group *hash_group;
     void *bucket_key;
+    uint64_t hash1;
+    uint64_t hash2;
 
 #ifdef BSAL_HASH_TABLE_DEBUG_DOUBLE_HASHING_DEBUG
     int query_value;
@@ -323,24 +334,33 @@ uint64_t bsal_hash_table_find_bucket(struct bsal_hash_table *table, void *key,
 
     stride = 0;
 
+    hash1 = bsal_hash_table_hash1(table, key);
+    hash2 = 0;
+
     while (stride < table->buckets) {
 
+        *last_stride = stride;
 
-#ifdef BSAL_HASH_TABLE_DEBUG_DOUBLE_HASHING_DEBUG
-        if (stride > 100) {
-            printf("HASH TABLE stride %" PRIu64 "\n", stride);
+        /* compute hash2 only on the second stride
+         * It is not needed for stride # 0.
+         * And strides #1, #2, #3 will used the same value.
+         */
+        if (stride == 1) {
+            hash2 = bsal_hash_table_hash2(table, key);
         }
-#endif
 
-        bucket = bsal_hash_table_double_hash(table, key, stride);
+        bucket = bsal_hash_table_double_hash(table, hash1, hash2, stride);
         *group = bsal_hash_table_get_group(table, bucket);
         *bucket_in_group = bsal_hash_table_get_group_bucket(table, bucket);
         hash_group = table->groups + *group;
 
+#ifdef BSAL_HASH_TABLE_DEBUG_DOUBLE_HASHING_DEBUG
         if (table->groups == NULL) {
             printf("DEBUG %p Error groups is %p\n", (void *)table,
                             (void *)table->groups);
         }
+#endif
+
         state = bsal_hash_table_group_state(hash_group, *bucket_in_group);
 
 #ifdef BSAL_HASH_TABLE_DEBUG_DOUBLE_HASHING_DEBUG
@@ -365,7 +385,7 @@ uint64_t bsal_hash_table_find_bucket(struct bsal_hash_table *table, void *key,
             }
 #endif
 
-            stride++;
+            (stride)++;
             continue;
         }
 
