@@ -47,6 +47,9 @@ void bsal_sequence_store_init(struct bsal_actor *actor)
                     bsal_sequence_store_ask);
 
     concrete_actor->iterator_started = 0;
+
+    /* 2^26 */
+    bsal_memory_pool_init(&concrete_actor->memory, 67108864);
 }
 
 void bsal_sequence_store_destroy(struct bsal_actor *actor)
@@ -62,7 +65,7 @@ void bsal_sequence_store_destroy(struct bsal_actor *actor)
     while (bsal_vector_iterator_has_next(&iterator)) {
 
         bsal_vector_iterator_next(&iterator, (void**)&sequence);
-        bsal_dna_sequence_destroy(sequence);
+        bsal_dna_sequence_destroy(sequence, &concrete_actor->memory);
     }
 
     bsal_vector_destroy(&concrete_actor->sequences);
@@ -72,6 +75,8 @@ void bsal_sequence_store_destroy(struct bsal_actor *actor)
         bsal_vector_iterator_destroy(&concrete_actor->iterator);
         concrete_actor->iterator_started = 0;
     }
+
+    bsal_memory_pool_destroy(&concrete_actor->memory);
 }
 
 void bsal_sequence_store_receive(struct bsal_actor *actor, struct bsal_message *message)
@@ -127,7 +132,7 @@ void bsal_sequence_store_push_sequence_data_block(struct bsal_actor *actor, stru
                     count);
 #endif
 
-    bsal_input_command_unpack(&payload, buffer);
+    bsal_input_command_unpack(&payload, buffer, &concrete_actor->memory);
 
 #ifdef BSAL_SEQUENCE_STORE_DEBUG
     printf("DEBUG store %d bsal_sequence_store_receive command:\n",
@@ -183,7 +188,7 @@ void bsal_sequence_store_push_sequence_data_block(struct bsal_actor *actor, stru
 #endif
 
         bsal_dna_sequence_init_copy(bucket_in_store, bucket_in_message,
-                        &concrete_actor->codec);
+                        &concrete_actor->codec, &concrete_actor->memory);
 
         concrete_actor->received++;
 
@@ -207,7 +212,7 @@ void bsal_sequence_store_push_sequence_data_block(struct bsal_actor *actor, stru
      */
     /* free payload
      */
-    bsal_input_command_destroy(&payload);
+    bsal_input_command_destroy(&payload, &concrete_actor->memory);
 
     bsal_actor_helper_send_reply_empty(actor, BSAL_PUSH_SEQUENCE_DATA_BLOCK_REPLY);
 }
@@ -248,7 +253,7 @@ void bsal_sequence_store_reserve(struct bsal_actor *actor, struct bsal_message *
         dna_sequence = (struct bsal_dna_sequence *)bsal_vector_at(&concrete_actor->sequences,
                         i);
 
-        bsal_dna_sequence_init(dna_sequence, NULL, &concrete_actor->codec);
+        bsal_dna_sequence_init(dna_sequence, NULL, &concrete_actor->codec, &concrete_actor->memory);
     }
 
     bsal_actor_helper_send_reply_empty(actor, BSAL_RESERVE_REPLY);
@@ -323,7 +328,8 @@ void bsal_sequence_store_ask(struct bsal_actor *self, struct bsal_message *messa
         bsal_vector_iterator_next(&concrete_actor->iterator, (void **)&sequence);
 
         /*printf("ADDING %d\n", i);*/
-        bsal_input_command_add_entry(&payload, sequence, &concrete_actor->codec);
+        bsal_input_command_add_entry(&payload, sequence, &concrete_actor->codec,
+                        &concrete_actor->memory);
 
         i++;
     }
@@ -351,5 +357,5 @@ void bsal_sequence_store_ask(struct bsal_actor *self, struct bsal_message *messa
 #endif
     }
 
-    bsal_input_command_destroy(&payload);
+    bsal_input_command_destroy(&payload, &concrete_actor->memory);
 }

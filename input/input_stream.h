@@ -8,6 +8,8 @@
 
 #include <engine/actor.h>
 
+#include <system/memory_pool.h>
+
 #define BSAL_INPUT_STREAM_SCRIPT 0xeb2fe16a
 
 struct bsal_input_stream {
@@ -31,6 +33,7 @@ struct bsal_input_stream {
     struct bsal_vector mega_blocks;
 
     uint64_t starting_offset;
+    struct bsal_memory_pool memory;
 };
 
 #define BSAL_INPUT_OPEN 0x000075fa

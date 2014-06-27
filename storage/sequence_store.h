@@ -7,6 +7,8 @@
 #include <structures/vector.h>
 #include <structures/vector_iterator.h>
 
+#include <system/memory_pool.h>
+
 #define BSAL_SEQUENCE_STORE_SCRIPT 0x47e2e424
 
 struct bsal_sequence_store {
@@ -18,6 +20,8 @@ struct bsal_sequence_store {
     int iterator_started;
     int reservation_producer;
     struct bsal_vector_iterator iterator;
+
+    struct bsal_memory_pool memory;
 };
 
 #define BSAL_RESERVE 0x00000d3c

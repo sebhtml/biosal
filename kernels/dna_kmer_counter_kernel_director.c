@@ -92,12 +92,12 @@ void bsal_dna_kmer_counter_kernel_director_receive(struct bsal_actor *actor, str
 
         concrete_actor->received++;
 
-        bsal_input_command_unpack(&command, buffer);
+        bsal_input_command_unpack(&command, buffer, NULL);
         concrete_actor->actual_entries += bsal_input_command_entry_count(&command);
 
 
 
-        bsal_input_command_destroy(&command);
+        bsal_input_command_destroy(&command, NULL);
 
         if (bsal_queue_empty(&concrete_actor->available_kernels)) {
 

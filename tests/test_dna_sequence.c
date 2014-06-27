@@ -4,6 +4,7 @@
 #include <data/dna_sequence.h>
 #include <data/dna_codec.h>
 #include <system/memory.h>
+#include <system/memory_pool.h>
 
 #include <stdio.h>
 #include <string.h>
@@ -20,12 +21,14 @@ int main(int argc, char **argv)
     int expected;
     int required;
     void *buffer_for_pack;
+    struct bsal_memory_pool memory;
 
+    bsal_memory_pool_init(&memory, 4194304);
     buffer = bsal_allocate(101);
     strcpy((char *)buffer, "TCCCGAGCGCAGGTAGGCCTCGGGATCGATGTCCGGGGTGTTGAGGATGTTGGACGTGTATTCGTGGTTGTACTGGGTCCAGTCCGCCACCGGGCGCCGC");
     bsal_dna_codec_init(&codec);
 
-    bsal_dna_sequence_init(&sequence, buffer, &codec);
+    bsal_dna_sequence_init(&sequence, buffer, &codec, &memory);
 
     actual = bsal_dna_sequence_length(&sequence);
     expected = 100;
@@ -46,7 +49,7 @@ int main(int argc, char **argv)
                     */
 
     bsal_dna_sequence_pack(&sequence, buffer_for_pack);
-    bsal_dna_sequence_unpack(&sequence2, buffer_for_pack);
+    bsal_dna_sequence_unpack(&sequence2, buffer_for_pack, &memory);
 
     actual = bsal_dna_sequence_length(&sequence2);
 
@@ -55,9 +58,11 @@ int main(int argc, char **argv)
     */
     TEST_INT_EQUALS(actual, expected);
 
-    bsal_dna_sequence_destroy(&sequence);
+    bsal_dna_sequence_destroy(&sequence, &memory);
+    bsal_dna_sequence_destroy(&sequence2, &memory);
 
     bsal_dna_codec_destroy(&codec);
+    bsal_memory_pool_destroy(&memory);
     END_TESTS();
 
     return 0;

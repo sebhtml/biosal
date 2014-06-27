@@ -139,7 +139,7 @@ void bsal_dna_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_
         consumer = bsal_actor_get_acquaintance(actor, concrete_actor->consumer);
         source_index = bsal_actor_add_acquaintance(actor, source);
 
-        bsal_input_command_unpack(&payload, buffer);
+        bsal_input_command_unpack(&payload, buffer, &concrete_actor->memory);
 
         command_entries = bsal_input_command_entries(&payload);
 
@@ -222,7 +222,7 @@ void bsal_dna_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_
         concrete_actor->actual += entries;
         concrete_actor->blocks++;
 
-        bsal_input_command_destroy(&payload);
+        bsal_input_command_destroy(&payload, &concrete_actor->memory);
 
 #ifdef BSAL_KMER_COUNTER_KERNEL_DEBUG
         printf("consumer%d\n", consumer);

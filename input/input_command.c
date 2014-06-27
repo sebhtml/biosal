@@ -26,7 +26,7 @@ void bsal_input_command_init(struct bsal_input_command *self,
     bsal_vector_init(&self->entries, sizeof(struct bsal_dna_sequence));
 }
 
-void bsal_input_command_destroy(struct bsal_input_command *self)
+void bsal_input_command_destroy(struct bsal_input_command *self, struct bsal_memory_pool *memory)
 {
     struct bsal_dna_sequence *sequence;
     struct bsal_vector_iterator iterator;
@@ -39,7 +39,7 @@ void bsal_input_command_destroy(struct bsal_input_command *self)
     while (bsal_vector_iterator_has_next(&iterator)) {
         bsal_vector_iterator_next(&iterator, (void **)&sequence);
 
-        bsal_dna_sequence_destroy(sequence);
+        bsal_dna_sequence_destroy(sequence, memory);
     }
 
     bsal_vector_iterator_destroy(&iterator);
@@ -54,21 +54,21 @@ int bsal_input_command_store_name(struct bsal_input_command *self)
 
 int bsal_input_command_pack_size(struct bsal_input_command *self)
 {
-    return bsal_input_command_pack_unpack(self, NULL, BSAL_PACKER_OPERATION_DRY_RUN);
+    return bsal_input_command_pack_unpack(self, NULL, BSAL_PACKER_OPERATION_DRY_RUN, NULL);
 }
 
 int bsal_input_command_pack(struct bsal_input_command *self, void *buffer)
 {
-    return bsal_input_command_pack_unpack(self, buffer, BSAL_PACKER_OPERATION_PACK);
+    return bsal_input_command_pack_unpack(self, buffer, BSAL_PACKER_OPERATION_PACK, NULL);
 }
 
-int bsal_input_command_unpack(struct bsal_input_command *self, void *buffer)
+int bsal_input_command_unpack(struct bsal_input_command *self, void *buffer, struct bsal_memory_pool *memory)
 {
 #ifdef BSAL_INPUT_COMMAND_DEBUG
     printf("DEBUG bsal_input_command_unpack %p\n", buffer);
 #endif
 
-    return bsal_input_command_pack_unpack(self, buffer, BSAL_PACKER_OPERATION_UNPACK);
+    return bsal_input_command_pack_unpack(self, buffer, BSAL_PACKER_OPERATION_UNPACK, memory);
 }
 
 uint64_t bsal_input_command_store_first(struct bsal_input_command *self)
@@ -82,7 +82,7 @@ uint64_t bsal_input_command_store_last(struct bsal_input_command *self)
 }
 
 int bsal_input_command_pack_unpack(struct bsal_input_command *self, void *buffer,
-                int operation)
+                int operation, struct bsal_memory_pool *memory)
 {
     struct bsal_packer packer;
     int offset;
@@ -156,7 +156,8 @@ int bsal_input_command_pack_unpack(struct bsal_input_command *self, void *buffer
 
         while (entries--) {
             bytes = bsal_dna_sequence_unpack(&dna_sequence,
-                            (char *) buffer + offset);
+                            (char *) buffer + offset,
+                            memory);
 
 #ifdef BSAL_INPUT_COMMAND_DEBUG
             printf("DEBUG unpacking DNA sequence, used %d bytes\n",
@@ -231,7 +232,7 @@ int bsal_input_command_entry_count(struct bsal_input_command *self)
 
 void bsal_input_command_add_entry(struct bsal_input_command *self,
                 struct bsal_dna_sequence *sequence,
-                struct bsal_dna_codec *codec)
+                struct bsal_dna_codec *codec, struct bsal_memory_pool *memory)
 {
     struct bsal_vector *entries;
     struct bsal_dna_sequence copy;
@@ -239,6 +240,6 @@ void bsal_input_command_add_entry(struct bsal_input_command *self,
     entries = bsal_input_command_entries(self);
 
     bsal_dna_sequence_init_copy(&copy,
-                sequence, codec);
+                sequence, codec, memory);
     bsal_vector_push_back(entries, &copy);
 }

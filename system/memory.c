@@ -113,7 +113,7 @@ uint64_t bsal_get_heap_size()
                         && strcmp(buffer, "VmData:") == 0) {
             actual = fscanf(descriptor, "%d", &heap_size);
 
-#ifdef BSAL_MEMORY_DEBUG
+#ifdef BSAL_MEMORY_DEBUG_HEAP
             printf("Scanned %d\n", heap_size);
 #endif
 
