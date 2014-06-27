@@ -66,10 +66,14 @@ void *bsal_memory_pool_allocate(struct bsal_memory_pool *self, int size)
      */
     if (queue != NULL && bsal_queue_dequeue(queue, &pointer)) {
         bsal_map_add_value(&self->allocated_blocks, &pointer, &size);
+
+#ifdef BSAL_MEMORY_POOL_DISCARD_EMPTY_QUEUES
         if (bsal_queue_empty(queue)) {
             bsal_queue_destroy(queue);
             bsal_map_delete(&self->recycle_bin, &size);
         }
+#endif
+
         return pointer;
     }
 

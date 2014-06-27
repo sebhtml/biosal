@@ -29,6 +29,10 @@
  */
 #define BSAL_MEMORY_MAXIMUM 1000000000000
 
+/*
+#define BSAL_MEMORY_DEBUG_DETAIL
+*/
+
 void *bsal_allocate_private(size_t size, const char *function, const char *file, int line)
 {
     void *pointer;
@@ -39,8 +43,11 @@ void *bsal_allocate_private(size_t size, const char *function, const char *file,
 
     if (size < BSAL_MEMORY_MINIMUM) {
         printf("DEBUG Error bsal_allocate received a number below the minimum: %zu bytes\n", size);
-        printf("BSAL_MEMORY_DEBUG bsal_allocate %d bytes %p %s %s %d\n",
+
+        if (file != NULL) {
+            printf("BSAL_MEMORY_DEBUG bsal_allocate %d bytes %p %s %s %d\n",
                     (int)size, pointer, function, file, line);
+        }
         bsal_tracer_print_stack_backtrace();
         exit(1);
     }
@@ -48,17 +55,29 @@ void *bsal_allocate_private(size_t size, const char *function, const char *file,
     if (size > BSAL_MEMORY_MAXIMUM) {
         printf("DEBUG Error bsal_allocate received a number above the maximum: %zu bytes (int value: %d)\n", size,
                         (int)size);
-        printf("BSAL_MEMORY_DEBUG bsal_allocate %d bytes %p %s %s %d\n",
+        if (file != NULL) {
+            printf("BSAL_MEMORY_DEBUG bsal_allocate %d bytes %p %s %s %d\n",
                     (int)size, pointer, function, file, line);
+        }
         bsal_tracer_print_stack_backtrace();
         exit(1);
     }
 
+#ifdef BSAL_MEMORY_DEBUG_TRACK_TARGET
+    char target[] = "bsal_vector_reserve";
+    if (strcmp(function, target) == 0) {
+        printf("TRACER: call to bsal_allocate in %s\n", function);
+        bsal_tracer_print_stack_backtrace();
+    }
+#endif
+
     pointer = malloc(size);
 
 #ifdef BSAL_MEMORY_DEBUG_DETAIL
-    printf("BSAL_MEMORY_DEBUG bsal_allocate %d bytes %p %s %s %d\n",
+    if (file != NULL) {
+        printf("BSAL_MEMORY_DEBUG bsal_allocate %d bytes %p %s %s %d\n",
                     (int)size, pointer, function, file, line);
+    }
 #endif
 
     if (pointer == NULL) {
