@@ -33,7 +33,7 @@ struct bsal_input_stream {
     struct bsal_vector mega_blocks;
 
     uint64_t starting_offset;
-    struct bsal_memory_pool memory;
+    struct bsal_memory_pool ephemeral_memory;
 };
 
 #define BSAL_INPUT_OPEN 0x000075fa
