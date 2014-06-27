@@ -30,7 +30,7 @@ struct bsal_dna_kmer_counter_kernel {
     int notification_source;
     int bytes_per_kmer;
 
-    struct bsal_memory_pool memory;
+    struct bsal_memory_pool ephemeral_memory;
 };
 
 #define BSAL_SET_KMER_LENGTH 0x0000702b

@@ -24,5 +24,3 @@ Product team (alphabetical order):
 # Tests
 
 - Sébastien Boisvert
-
-

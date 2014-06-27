@@ -170,7 +170,7 @@ void bsal_memory_pool_free_all(struct bsal_memory_pool *self)
 
     size = bsal_queue_size(&self->ready_blocks);
     i = 0;
-    while (i < size 
+    while (i < size
                    && bsal_queue_dequeue(&self->ready_blocks, &block)) {
         bsal_memory_block_free_all(block);
         bsal_queue_enqueue(&self->ready_blocks, &block);

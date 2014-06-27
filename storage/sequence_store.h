@@ -21,7 +21,8 @@ struct bsal_sequence_store {
     int reservation_producer;
     struct bsal_vector_iterator iterator;
 
-    struct bsal_memory_pool memory;
+    struct bsal_memory_pool persistent_memory;
+    struct bsal_memory_pool ephemeral_memory;
 };
 
 #define BSAL_RESERVE 0x00000d3c
