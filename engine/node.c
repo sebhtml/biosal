@@ -1284,7 +1284,9 @@ void bsal_node_add_script(struct bsal_node *node, int name,
         bsal_map_add_value(&node->scripts, &name, &script);
     }
 
+#ifdef BSAL_NODE_DEBUG_SCRIPT_SYSTEM
     printf("DEBUG added script %x %p\n", name, (void *)script);
+#endif
 
     bsal_lock_unlock(&node->script_lock);
 }

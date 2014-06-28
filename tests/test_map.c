@@ -17,10 +17,10 @@ int main(int argc, char **argv)
         struct bsal_map_iterator iterator;
         int key_size;
         int value_size;
-        int i;
+        uint64_t i;
         int j;
-        int buckets;
-        int inserted;
+        uint64_t buckets;
+        uint64_t inserted;
         int key;
         int *key_bucket;
         int *value_bucket;
@@ -42,7 +42,7 @@ int main(int argc, char **argv)
 
             *value_bucket = i;
 
-            TEST_INT_EQUALS(bsal_map_size(&table), inserted);
+            TEST_UINT64_T_EQUALS(bsal_map_size(&table), inserted);
 
             value_bucket = bsal_map_get(&table, &key);
 
@@ -68,7 +68,7 @@ int main(int argc, char **argv)
                                 (int)bsal_map_size(&table), inserted);
                                 */
 
-                TEST_INT_EQUALS(bsal_map_size(&table), inserted);
+                TEST_UINT64_T_EQUALS(bsal_map_size(&table), inserted);
 
                 value_bucket = bsal_map_get(&table, &key);
 
@@ -95,7 +95,7 @@ int main(int argc, char **argv)
             i++;
         }
 
-        TEST_INT_EQUALS(i, bsal_map_size(&table));
+        TEST_UINT64_T_EQUALS(i, bsal_map_size(&table));
         TEST_INT_EQUALS(found, 1);
 
         bsal_map_iterator_destroy(&iterator);
@@ -135,8 +135,8 @@ int main(int argc, char **argv)
     {
         struct bsal_map map;
         int key;
-        int elements;
-        int i;
+        uint64_t elements;
+        uint64_t i;
         void *buffer;
         int count;
         struct bsal_map map2;
@@ -150,9 +150,9 @@ int main(int argc, char **argv)
 
             key = i;
 
-            TEST_INT_EQUALS(bsal_map_size(&map), i);
+            TEST_UINT64_T_EQUALS(bsal_map_size(&map), i);
             bucket = bsal_map_add(&map, &key);
-            TEST_INT_EQUALS(bsal_map_size(&map), i + 1);
+            TEST_UINT64_T_EQUALS(bsal_map_size(&map), i + 1);
 
             (*bucket) = i * i;
         }
@@ -178,15 +178,15 @@ int main(int argc, char **argv)
 
             value = *bucket;
 
-            TEST_INT_EQUALS(value, i * i);
+            TEST_INT_EQUALS(value, (int)(i * i));
         }
 
         /*
         printf("actual %d expected %d\n", (int)bsal_map_size(&map2), (int)bsal_map_size(&map));
         */
 
-        TEST_INT_EQUALS(bsal_map_size(&map2), bsal_map_size(&map));
-        TEST_INT_EQUALS(bsal_map_size(&map2), elements);
+        TEST_UINT64_T_EQUALS(bsal_map_size(&map2), bsal_map_size(&map));
+        TEST_UINT64_T_EQUALS(bsal_map_size(&map2), elements);
 
         bsal_free(buffer);
 

@@ -33,15 +33,21 @@ void bsal_worker_init(struct bsal_worker *worker, int name, struct bsal_node *no
 #ifdef BSAL_WORKER_HAS_OWN_QUEUES
     /*worker->work_queue = &worker->works;*/
 
+#ifdef BSAL_WORKER_USE_FAST_RINGS
     /* There are two options:
      * 1. enable atomic operations for change visibility
      * 2. Use volatile head and tail.
      */
-    bsal_ring_init(&worker->work_queue, capacity, sizeof(struct bsal_work));
+    bsal_fast_ring_init(&worker->work_queue, capacity, sizeof(struct bsal_work));
     /*bsal_ring_enable_atomicity(&worker->work_queue);*/
 
-    bsal_ring_init(&worker->message_queue, capacity, sizeof(struct bsal_message));
+    bsal_fast_ring_init(&worker->message_queue, capacity, sizeof(struct bsal_message));
     /*bsal_ring_enable_atomicity(&worker->message_queue);*/
+#else
+
+    bsal_ring_init(&worker->work_queue, capacity, sizeof(struct bsal_work));
+    bsal_ring_init(&worker->message_queue, capacity, sizeof(struct bsal_message));
+#endif
 
     bsal_ring_queue_init(&worker->local_message_queue, sizeof(struct bsal_message));
 
@@ -65,8 +71,15 @@ void bsal_worker_init(struct bsal_worker *worker, int name, struct bsal_node *no
 void bsal_worker_destroy(struct bsal_worker *worker)
 {
 #ifdef BSAL_WORKER_HAS_OWN_QUEUES
+
+#ifdef BSAL_WORKER_USE_FAST_RINGS
+    bsal_fast_ring_destroy(&worker->work_queue);
+    bsal_fast_ring_destroy(&worker->message_queue);
+#else
     bsal_ring_destroy(&worker->work_queue);
     bsal_ring_destroy(&worker->message_queue);
+
+#endif
     bsal_ring_queue_destroy(&worker->local_message_queue);
 #endif
 
@@ -371,7 +384,7 @@ void bsal_worker_send(struct bsal_worker *worker, struct bsal_message *message)
 
         bsal_work_init(&work, actor, new_message);
 
-        works = bsal_ring_size(worker->work_queue);
+        works = bsal_ring_size(worker->wor1k_queue);
 
 #ifdef BSAL_WORKER_DEBUG_SCHEDULING
         if (works > 0) {
@@ -481,11 +494,16 @@ int bsal_worker_push_work(struct bsal_worker *worker, struct bsal_work *work)
     if (tag == BSAL_ACTOR_ASK_TO_STOP) {
         printf("DEBUG worker/%d before queuing work BSAL_ACTOR_ASK_TO_STOP for actor %d, %d works\n",
                         worker->name,
-                        destination, bsal_work_queue_size(worker->work_queue));
+                        destination, bsal_work_queue_size(worker->1work_queue));
     }
 #endif
 
+#ifdef BSAL_WORKER_USE_FAST_RINGS
+    return bsal_fast_ring_push_from_producer(&worker->work_queue, work);
+#else
     return bsal_ring_push(&worker->work_queue, work);
+
+#endif
 
 #ifdef BSAL_WORKER_DEBUG
     if (tag == BSAL_ACTOR_ASK_TO_STOP) {
@@ -499,7 +517,11 @@ int bsal_worker_push_work(struct bsal_worker *worker, struct bsal_work *work)
 
 int bsal_worker_pull_work(struct bsal_worker *worker, struct bsal_work *work)
 {
+#ifdef BSAL_WORKER_USE_FAST_RINGS
+    return bsal_fast_ring_pop_from_consumer(&worker->work_queue, work);
+#else
     return bsal_ring_pop(&worker->work_queue, work);
+#endif
 }
 
 void bsal_worker_push_message(struct bsal_worker *worker, struct bsal_message *message)
@@ -507,15 +529,27 @@ void bsal_worker_push_message(struct bsal_worker *worker, struct bsal_message *m
     /* if the message can not be queued in the ring,
      * queue it in the queue
      */
+
+#ifdef BSAL_WORKER_USE_FAST_RINGS
+    if (!bsal_fast_ring_push_from_producer(&worker->message_queue, message)) {
+        bsal_ring_queue_enqueue(&worker->local_message_queue, message);
+    }
+#else
     if (!bsal_ring_push(&worker->message_queue, message)) {
         bsal_ring_queue_enqueue(&worker->local_message_queue, message);
     }
+
+#endif
 }
 
 #ifdef BSAL_WORKER_HAS_OWN_QUEUES
 int bsal_worker_pull_message(struct bsal_worker *worker, struct bsal_message *message)
 {
+#ifdef BSAL_WORKER_USE_FAST_RINGS
+    return bsal_fast_ring_pop_from_consumer(&worker->message_queue, message);
+#else
     return bsal_ring_pop(&worker->message_queue, message);
+#endif
 }
 #endif
 
@@ -525,15 +559,6 @@ int bsal_worker_is_busy(struct bsal_worker *self)
 }
 
 #ifdef BSAL_WORKER_HAS_OWN_QUEUES
-int bsal_worker_enqueued_work_count(struct bsal_worker *self)
-{
-    return bsal_ring_size(&self->work_queue);
-}
-
-int bsal_worker_enqueued_message_count(struct bsal_worker *self)
-{
-    return bsal_ring_size(&self->message_queue);
-}
 
 int bsal_worker_get_work_scheduling_score(struct bsal_worker *self)
 {
@@ -545,7 +570,11 @@ int bsal_worker_get_work_scheduling_score(struct bsal_worker *self)
         score++;
     }
 
-    score += bsal_worker_enqueued_work_count(self);
+#ifdef BSAL_WORKER_USE_FAST_RINGS
+    score += bsal_fast_ring_size_from_consumer(&self->work_queue);
+#else
+    score += bsal_ring_size(&self->work_queue);
+#endif
 
     return score;
 }
@@ -553,7 +582,11 @@ int bsal_worker_get_work_scheduling_score(struct bsal_worker *self)
 
 int bsal_worker_get_message_production_score(struct bsal_worker *self)
 {
-    return bsal_worker_enqueued_message_count(self);
+#ifdef BSAL_WORKER_USE_FAST_RINGS
+    return bsal_fast_ring_size_from_producer(&self->message_queue);
+#else
+    return bsal_ring_size(&self->message_queue);
+#endif
 }
 
 float bsal_worker_get_epoch_load(struct bsal_worker *self)

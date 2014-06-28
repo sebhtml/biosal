@@ -10,8 +10,8 @@ int main(int argc, char **argv)
 
     {
         struct bsal_dynamic_hash_table table;
-        int i;
-        int elements;
+        uint64_t i;
+        uint64_t elements;
 
         elements = 900;
         bsal_dynamic_hash_table_init(&table, 1140, sizeof(int), 0);
@@ -22,30 +22,30 @@ int main(int argc, char **argv)
 
             printf("before actual %d expected %d\n", (int)bsal_dynamic_hash_table_size(&table), i);
             */
-            TEST_INT_EQUALS(bsal_dynamic_hash_table_size(&table), i);
+            TEST_UINT64_T_EQUALS(bsal_dynamic_hash_table_size(&table), i);
 
             bsal_dynamic_hash_table_add(&table, &i);
 
             /*
             printf("after1 actual %d expected %d\n", (int)bsal_dynamic_hash_table_size(&table), i + 1);
             */
-            TEST_INT_EQUALS(bsal_dynamic_hash_table_size(&table), i + 1);
+            TEST_UINT64_T_EQUALS(bsal_dynamic_hash_table_size(&table), i + 1);
             /*
             printf("after2 actual %d expected %d\n", (int)bsal_dynamic_hash_table_size(&table), i + 1);
             */
-            TEST_INT_EQUALS(bsal_dynamic_hash_table_size(&table), i + 1);
+            TEST_UINT64_T_EQUALS(bsal_dynamic_hash_table_size(&table), i + 1);
             /*
             printf("after3 actual %d expected %d\n", (int)bsal_dynamic_hash_table_size(&table), i + 1);
             */
-            TEST_INT_EQUALS(bsal_dynamic_hash_table_size(&table), i + 1);
+            TEST_UINT64_T_EQUALS(bsal_dynamic_hash_table_size(&table), i + 1);
             /*
             printf("after4 actual %d expected %d\n", (int)bsal_dynamic_hash_table_size(&table), i + 1);
             */
-            TEST_INT_EQUALS(bsal_dynamic_hash_table_size(&table), i + 1);
+            TEST_UINT64_T_EQUALS(bsal_dynamic_hash_table_size(&table), i + 1);
             /*
             printf("after5 actual %d expected %d\n", (int)bsal_dynamic_hash_table_size(&table), i + 1);
             */
-            TEST_INT_EQUALS(bsal_dynamic_hash_table_size(&table), i + 1);
+            TEST_UINT64_T_EQUALS(bsal_dynamic_hash_table_size(&table), i + 1);
             /*
             printf("after6 actual %d expected %d\n", (int)bsal_dynamic_hash_table_size(&table), i + 1);
             */
@@ -59,10 +59,10 @@ int main(int argc, char **argv)
         struct bsal_dynamic_hash_table_iterator iterator;
         int key_size;
         int value_size;
-        int buckets;
-        int i;
+        uint64_t buckets;
+        uint64_t i;
         int j;
-        int inserted;
+        uint64_t inserted;
         int key;
         int *key_bucket;
         int *value_bucket;
@@ -84,7 +84,7 @@ int main(int argc, char **argv)
 
             *value_bucket = i;
 
-            TEST_INT_EQUALS(bsal_dynamic_hash_table_size(&table), inserted);
+            TEST_UINT64_T_EQUALS(bsal_dynamic_hash_table_size(&table), inserted);
 
             value_bucket = bsal_dynamic_hash_table_get(&table, &key);
 
@@ -110,7 +110,7 @@ int main(int argc, char **argv)
                                 (int)bsal_dynamic_hash_table_size(&table), inserted);
                                 */
 
-                TEST_INT_EQUALS(bsal_dynamic_hash_table_size(&table), inserted);
+                TEST_UINT64_T_EQUALS(bsal_dynamic_hash_table_size(&table), inserted);
 
                 value_bucket = bsal_dynamic_hash_table_get(&table, &key);
 
@@ -137,7 +137,7 @@ int main(int argc, char **argv)
             i++;
         }
 
-        TEST_INT_EQUALS(i, bsal_dynamic_hash_table_size(&table));
+        TEST_UINT64_T_EQUALS(i, bsal_dynamic_hash_table_size(&table));
         TEST_INT_EQUALS(found, 1);
 
         bsal_dynamic_hash_table_iterator_destroy(&iterator);
@@ -176,7 +176,7 @@ int main(int argc, char **argv)
 
     {
         struct bsal_dynamic_hash_table table;
-        int i;
+        uint64_t i;
 
         bsal_dynamic_hash_table_init(&table, 2, sizeof(int), sizeof(int));
 
@@ -184,7 +184,7 @@ int main(int argc, char **argv)
 
             bsal_dynamic_hash_table_add(&table, &i);
 
-            TEST_INT_EQUALS(bsal_dynamic_hash_table_size(&table), i + 1);
+            TEST_UINT64_T_EQUALS(bsal_dynamic_hash_table_size(&table), i + 1);
         }
 
         bsal_dynamic_hash_table_destroy(&table);
@@ -192,7 +192,7 @@ int main(int argc, char **argv)
 
     {
         struct bsal_dynamic_hash_table table;
-        int i;
+        uint64_t i;
         void *bucket;
 
         bsal_dynamic_hash_table_init(&table, 2, sizeof(int), 128);
@@ -201,7 +201,7 @@ int main(int argc, char **argv)
 
             bsal_dynamic_hash_table_add(&table, &i);
 
-            TEST_INT_EQUALS(bsal_dynamic_hash_table_size(&table), i + 1);
+            TEST_UINT64_T_EQUALS(bsal_dynamic_hash_table_size(&table), i + 1);
         }
 
         for (i = 0; i < 999; i++) {

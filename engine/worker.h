@@ -2,8 +2,7 @@
 #ifndef BSAL_WORKER_H
 #define BSAL_WORKER_H
 
-#include "message_queue.h"
-#include <structures/ring.h>
+#include <structures/fast_ring.h>
 #include <structures/ring_queue.h>
 
 #include <stdint.h>
@@ -18,13 +17,20 @@ struct bsal_message;
 */
 #define BSAL_WORKER_HAS_OWN_QUEUES
 
+#define BSAL_WORKER_USE_FAST_RINGS
+
 /* this is similar to worker threads in linux ([kworker/0] [kworker/1])
  */
 struct bsal_worker {
     struct bsal_node *node;
 
+#ifdef BSAL_WORKER_USE_FAST_RINGS
+    struct bsal_fast_ring work_queue;
+    struct bsal_fast_ring message_queue;
+#else
     struct bsal_ring work_queue;
     struct bsal_ring message_queue;
+#endif
 
     struct bsal_ring_queue local_message_queue;
     pthread_t thread;
@@ -37,12 +43,6 @@ struct bsal_worker {
     /* this is read by 2 threads, but written by 1 thread
      */
     int dead;
-
-#ifdef BSAL_WORKER_HAS_OWN_QUEUES
-    /*struct bsal_work_queue works;*/
-    struct bsal_message_queue messages;
-
-#endif
 
     int debug;
 
@@ -87,9 +87,6 @@ float bsal_worker_get_epoch_load(struct bsal_worker *self);
 float bsal_worker_get_loop_load(struct bsal_worker *self);
 
 #ifdef BSAL_WORKER_HAS_OWN_QUEUES
-
-int bsal_worker_enqueued_work_count(struct bsal_worker *self);
-int bsal_worker_enqueued_message_count(struct bsal_worker *self);
 
 int bsal_worker_get_work_scheduling_score(struct bsal_worker *self);
 int bsal_worker_get_message_production_score(struct bsal_worker *self);

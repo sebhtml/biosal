@@ -2,17 +2,12 @@
 #include "ring.h"
 
 #include <system/memory.h>
-#include <system/atomic.h>
 
 #include <string.h>
 
 void bsal_ring_init(struct bsal_ring *self, int capacity, int cell_size)
 {
-    /* +1 because an empty cell is needed
-     */
-    self->number_of_cells = bsal_ring_get_next_power_of_two(capacity + 1);
-    self->mask = self->number_of_cells - 1;
-
+    self->number_of_cells = capacity + 1;
     self->cell_size = cell_size;
     self->head = 0;
     self->tail = 0;
@@ -40,9 +35,9 @@ int bsal_ring_push(struct bsal_ring *self, void *element)
         return 0;
     }
 
-    cell = bsal_ring_get_cell(self, bsal_ring_get_tail(self));
+    cell = bsal_ring_get_cell(self, self->tail);
     memcpy(cell, element, self->cell_size);
-    bsal_ring_increment_tail(self);
+    self->tail = bsal_ring_increment(self, self->tail);
 
     return 1;
 }
@@ -55,36 +50,34 @@ int bsal_ring_pop(struct bsal_ring *self, void *element)
         return 0;
     }
 
-    cell = bsal_ring_get_cell(self, bsal_ring_get_head(self));
+    cell = bsal_ring_get_cell(self, self->head);
     memcpy(element, cell, self->cell_size);
-    bsal_ring_increment_head(self);
+    self->head = bsal_ring_increment(self, self->head);
 
     return 1;
 }
 
 int bsal_ring_is_full(struct bsal_ring *self)
 {
-    return bsal_ring_increment(self, bsal_ring_get_tail(self)) == bsal_ring_get_head(self);
+    return bsal_ring_increment(self, self->tail) == self->head;
 }
 
 int bsal_ring_is_empty(struct bsal_ring *self)
 {
-    return bsal_ring_get_tail(self) == bsal_ring_get_head(self);
+    return self->head == self->tail;
 }
 
 int bsal_ring_size(struct bsal_ring *self)
 {
     int tail;
-    int head;
 
-    head = bsal_ring_get_head(self);
-    tail = bsal_ring_get_tail(self);
+    tail = self->tail;
 
-    if (tail < head) {
+    if (tail < self->head) {
         tail += self->number_of_cells;
     }
 
-    return tail - head;
+    return tail - self->head;
 }
 
 int bsal_ring_capacity(struct bsal_ring *self)
@@ -94,67 +87,10 @@ int bsal_ring_capacity(struct bsal_ring *self)
 
 int bsal_ring_increment(struct bsal_ring *self, int index)
 {
-    return  (index + 1) & self->mask;
+    return  (index + 1) % self->number_of_cells;
 }
 
 void *bsal_ring_get_cell(struct bsal_ring *self, int index)
 {
     return ((char *)self->cells) + index * self->cell_size;
-}
-
-int bsal_ring_get_head(struct bsal_ring *self)
-{
-#ifdef BSAL_RING_ATOMIC
-    return bsal_atomic_read_int(&self->head);
-#else
-    return self->head;
-#endif
-}
-
-int bsal_ring_get_tail(struct bsal_ring *self)
-{
-#ifdef BSAL_RING_ATOMIC
-    return bsal_atomic_read_int(&self->tail);
-#else
-    return self->tail;
-#endif
-}
-
-void bsal_ring_increment_head(struct bsal_ring *self)
-{
-    int new_value;
-
-    new_value = bsal_ring_increment(self, self->head);
-
-#ifdef BSAL_RING_ATOMIC
-        bsal_atomic_compare_and_swap_int(&self->head, self->head, new_value);
-#else
-        self->head = new_value;
-#endif
-}
-
-void bsal_ring_increment_tail(struct bsal_ring *self)
-{
-    int new_value;
-
-    new_value = bsal_ring_increment(self, self->tail);
-
-#ifdef BSAL_RING_ATOMIC
-        bsal_atomic_compare_and_swap_int(&self->tail, self->tail, new_value);
-#else
-        self->tail = new_value;
-#endif
-}
-
-int bsal_ring_get_next_power_of_two(int value)
-{
-    int power_of_two;
-
-    power_of_two = 2;
-
-    while (power_of_two < value) {
-        power_of_two *= 2;
-    }
-
-    return power_of_two;
 }

@@ -6,11 +6,11 @@
 
 int main(int argc, char **argv)
 {
-    int64_t i;
+    uint64_t i;
     struct bsal_hash_table table;
     int key_size;
     int value_size;
-    int64_t buckets;
+    uint64_t buckets;
     uint64_t key;
 
     int *value;
@@ -23,9 +23,9 @@ int main(int argc, char **argv)
         bsal_hash_table_init(&table, 900, sizeof(int), 0);
 
         for (i = 0; i < 500; i++) {
-            TEST_INT_EQUALS(bsal_hash_table_size(&table), i);
+            TEST_UINT64_T_EQUALS(bsal_hash_table_size(&table), i);
             bsal_hash_table_add(&table, &i);
-            TEST_INT_EQUALS(bsal_hash_table_size(&table), i + 1);
+            TEST_UINT64_T_EQUALS(bsal_hash_table_size(&table), i + 1);
         }
 
         bsal_hash_table_destroy(&table);
@@ -84,11 +84,11 @@ int main(int argc, char **argv)
         for (i = 0; i < buckets; i++) {
             key = i;
 
-            TEST_INT_EQUALS(bsal_hash_table_size(&table), i);
+            TEST_UINT64_T_EQUALS(bsal_hash_table_size(&table), i);
             /*printf("before adding %i\n", i);*/
             /*printf("add %i DEBUG ", i); */
             TEST_POINTER_NOT_EQUALS(bsal_hash_table_add(&table, &key), NULL);
-            TEST_INT_EQUALS(bsal_hash_table_size(&table), i + 1);
+            TEST_UINT64_T_EQUALS(bsal_hash_table_size(&table), i + 1);
 
             TEST_POINTER_NOT_EQUALS(bsal_hash_table_get(&table, &key), NULL);
             TEST_POINTER_NOT_EQUALS(bsal_hash_table_get(&table, &key), NULL);
@@ -118,7 +118,7 @@ int main(int argc, char **argv)
         key = 9999;
         /* try to add something to a full table */
         TEST_POINTER_EQUALS(bsal_hash_table_add(&table, &key), NULL);
-        TEST_INT_EQUALS(bsal_hash_table_size(&table), buckets);
+        TEST_UINT64_T_EQUALS(bsal_hash_table_size(&table), buckets);
 
         for (i = 0; i < buckets; i++) {
 
@@ -147,8 +147,8 @@ int main(int argc, char **argv)
             }
         }
 
-        TEST_INT_EQUALS(bsal_hash_table_size(&table), 0);
-        TEST_INT_EQUALS(bsal_hash_table_buckets(&table), buckets);
+        TEST_UINT64_T_EQUALS(bsal_hash_table_size(&table), 0);
+        TEST_UINT64_T_EQUALS(bsal_hash_table_buckets(&table), buckets);
 
         bsal_hash_table_destroy(&table);
     }
@@ -161,7 +161,7 @@ int main(int argc, char **argv)
         int *bucket;
 
         bsal_hash_table_init(&table, 16, sizeof(int), sizeof(int));
-        TEST_INT_EQUALS(bsal_hash_table_size(&table), 0);
+        TEST_UINT64_T_EQUALS(bsal_hash_table_size(&table), 0);
 
         key = 1231243213;
         value = 1;
@@ -189,7 +189,7 @@ int main(int argc, char **argv)
         int i;
 
         bsal_hash_table_init(&table, 30000, sizeof(int), sizeof(int));
-        TEST_INT_EQUALS(bsal_hash_table_size(&table), 0);
+        TEST_UINT64_T_EQUALS(bsal_hash_table_size(&table), 0);
 
         for (i = 0; i < 1000; i++) {
             bsal_hash_table_add(&table, &i);
@@ -199,7 +199,7 @@ int main(int argc, char **argv)
             *value_bucket = i;
         }
 
-        TEST_INT_EQUALS(bsal_hash_table_size(&table), 1000);
+        TEST_UINT64_T_EQUALS(bsal_hash_table_size(&table), 1000);
 
         bsal_hash_table_iterator_init(&iterator, &table);
 

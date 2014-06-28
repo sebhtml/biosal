@@ -3,7 +3,6 @@
 #define BSAL_WORKER_POOL_H
 
 #include "worker.h"
-#include "message_queue.h"
 
 #include <structures/ring_queue.h>
 
