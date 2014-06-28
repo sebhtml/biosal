@@ -77,8 +77,10 @@ void bsal_worker_pool_delete_workers(struct bsal_worker_pool *pool)
     for (i = 0; i < pool->workers; i++) {
         worker = bsal_worker_pool_get_worker(pool, i);
 
+#if 0
         printf("worker/%d loop_load %f\n", bsal_worker_name(worker),
                     bsal_worker_get_loop_load(worker));
+#endif
 
         bsal_worker_destroy(worker);
     }
