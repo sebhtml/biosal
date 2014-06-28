@@ -39,6 +39,9 @@ struct bsal_worker_pool {
     time_t starting_time;
 };
 
+#define BSAL_WORKER_POOL_LOAD_LOOP 0
+#define BSAL_WORKER_POOL_LOAD_EPOCH 1
+
 void bsal_worker_pool_init(struct bsal_worker_pool *pool, int workers, struct bsal_node *node);
 void bsal_worker_pool_destroy(struct bsal_worker_pool *pool);
 
@@ -72,7 +75,7 @@ struct bsal_worker *bsal_worker_pool_select_worker_least_busy(
                 struct bsal_worker_pool *pool, struct bsal_work *work,
                 int *start);
 
-void bsal_worker_pool_print_load(struct bsal_worker_pool *self);
+void bsal_worker_pool_print_load(struct bsal_worker_pool *self, int type);
 
 #ifdef BSAL_WORKER_HAS_OWN_QUEUES
 int bsal_worker_pool_pull_classic(struct bsal_worker_pool *pool, struct bsal_message *message);

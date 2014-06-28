@@ -592,6 +592,9 @@ void bsal_node_run(struct bsal_node *node)
 
     bsal_node_run_loop(node);
 
+    if (node->print_load) {
+        bsal_worker_pool_print_load(&node->worker_pool, BSAL_WORKER_POOL_LOAD_LOOP);
+    }
 #ifdef BSAL_NODE_DEBUG
     printf("BSAL_NODE_DEBUG after loop in bsal_node_run\n");
 #endif
@@ -686,8 +689,8 @@ void bsal_node_run_loop(struct bsal_node *node)
 
             if (current_time - node->last_report_time >= period) {
                 if (node->print_load) {
-                    bsal_worker_pool_print_load(&node->worker_pool);
-                    printf("LOAD node %d has %d active actors\n", node->name,
+                    bsal_worker_pool_print_load(&node->worker_pool, BSAL_WORKER_POOL_LOAD_EPOCH);
+                    printf("ACTORS node %d has %d active actors\n", node->name,
                                     node->alive_actors);
                 }
 

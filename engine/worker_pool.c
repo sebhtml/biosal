@@ -404,14 +404,14 @@ int bsal_worker_pool_has_messages(struct bsal_worker_pool *pool)
     return 1;
 }
 
-void bsal_worker_pool_print_load(struct bsal_worker_pool *self)
+void bsal_worker_pool_print_load(struct bsal_worker_pool *self, int type)
 {
     int count;
     int i;
     float epoch_load;
     struct bsal_worker *worker;
-    /*
     float loop_load;
+    /*
     int scheduling_score;
     */
     int node_name;
@@ -421,6 +421,20 @@ void bsal_worker_pool_print_load(struct bsal_worker_pool *self)
     int extra;
     clock_t current_time;
     int elapsed;
+    float selected_load;
+    char loop[] = "LOOP";
+    char epoch[] = "EPOCH";
+    char *description;
+
+    description = NULL;
+
+    if (type == BSAL_WORKER_POOL_LOAD_LOOP) {
+        description = loop;
+    } else if (type == BSAL_WORKER_POOL_LOAD_EPOCH) {
+        description = epoch;
+    } else {
+        return;
+    }
 
     current_time = time(NULL);
     elapsed = current_time - self->starting_time;
@@ -439,16 +453,21 @@ void bsal_worker_pool_print_load(struct bsal_worker_pool *self)
 
         worker = bsal_worker_pool_get_worker(self, i);
         epoch_load = bsal_worker_get_epoch_load(worker);
-        /*
         loop_load = bsal_worker_get_loop_load(worker);
-        scheduling_score = bsal_worker_get_scheduling_score(worker);
-        */
+        /*scheduling_score = bsal_worker_get_scheduling_score(worker);*/
 
-        offset += sprintf(buffer + offset, " %.2f", epoch_load);
+        selected_load = epoch_load;
+
+        if (type == BSAL_WORKER_POOL_LOAD_EPOCH) {
+            selected_load = epoch_load;
+        } else if (type == BSAL_WORKER_POOL_LOAD_LOOP) {
+            selected_load = loop_load;
+        }
+        offset += sprintf(buffer + offset, " %.2f", selected_load);
         i++;
     }
 
-    printf("LOAD %d s node/%d%s\n", elapsed, node_name, buffer);
+    printf("LOAD %s %d s node/%d%s\n", description, elapsed, node_name, buffer);
 
     bsal_free(buffer);
 }
