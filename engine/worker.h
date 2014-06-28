@@ -6,8 +6,6 @@
 #include <structures/ring.h>
 #include <structures/ring_queue.h>
 
-#include <system/lock.h>
-
 #include <stdint.h>
 
 struct bsal_work;

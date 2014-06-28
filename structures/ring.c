@@ -14,7 +14,6 @@ void bsal_ring_init(struct bsal_ring *self, int capacity, int cell_size)
     self->tail = 0;
 
     self->cells = bsal_allocate(self->number_of_cells * self->cell_size);
-    self->atomic = 0;
 }
 
 void bsal_ring_destroy(struct bsal_ring *self)
@@ -99,32 +98,22 @@ void *bsal_ring_get_cell(struct bsal_ring *self, int index)
     return ((char *)self->cells) + index * self->cell_size;
 }
 
-void bsal_ring_enable_atomicity(struct bsal_ring *self)
-{
-    self->atomic = 1;
-}
-
-void bsal_ring_disable_atomicity(struct bsal_ring *self)
-{
-    self->atomic = 0;
-}
-
 int bsal_ring_get_head(struct bsal_ring *self)
 {
-    if (self->atomic) {
-        return bsal_atomic_read_int(&self->head);
-    }
-
+#ifdef BSAL_RING_ATOMIC
+    return bsal_atomic_read_int(&self->head);
+#else
     return self->head;
+#endif
 }
 
 int bsal_ring_get_tail(struct bsal_ring *self)
 {
-    if (self->atomic) {
-        return bsal_atomic_read_int(&self->tail);
-    }
-
+#ifdef BSAL_RING_ATOMIC
+    return bsal_atomic_read_int(&self->tail);
+#else
     return self->tail;
+#endif
 }
 
 void bsal_ring_increment_head(struct bsal_ring *self)
@@ -133,11 +122,11 @@ void bsal_ring_increment_head(struct bsal_ring *self)
 
     new_value = bsal_ring_increment(self, self->head);
 
-    if (self->atomic) {
+#ifdef BSAL_RING_ATOMIC
         bsal_atomic_compare_and_swap_int(&self->head, self->head, new_value);
-    } else {
+#else
         self->head = new_value;
-    }
+#endif
 }
 
 void bsal_ring_increment_tail(struct bsal_ring *self)
@@ -146,9 +135,9 @@ void bsal_ring_increment_tail(struct bsal_ring *self)
 
     new_value = bsal_ring_increment(self, self->tail);
 
-    if (self->atomic) {
+#ifdef BSAL_RING_ATOMIC
         bsal_atomic_compare_and_swap_int(&self->tail, self->tail, new_value);
-    } else {
+#else
         self->tail = new_value;
-    }
+#endif
 }
