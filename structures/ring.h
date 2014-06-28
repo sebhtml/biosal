@@ -18,6 +18,7 @@ struct bsal_ring;
 struct bsal_ring {
     void *cells;
     int number_of_cells;
+    int mask;
     int cell_size;
 
     /*

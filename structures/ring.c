@@ -11,6 +11,8 @@ void bsal_ring_init(struct bsal_ring *self, int capacity, int cell_size)
     /* +1 because an empty cell is needed
      */
     self->number_of_cells = bsal_ring_get_next_power_of_two(capacity + 1);
+    self->mask = self->number_of_cells - 1;
+
     self->cell_size = cell_size;
     self->head = 0;
     self->tail = 0;
@@ -92,7 +94,7 @@ int bsal_ring_capacity(struct bsal_ring *self)
 
 int bsal_ring_increment(struct bsal_ring *self, int index)
 {
-    return  (index + 1) % self->number_of_cells;
+    return  (index + 1) & self->mask;
 }
 
 void *bsal_ring_get_cell(struct bsal_ring *self, int index)
