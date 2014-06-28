@@ -56,5 +56,6 @@ int bsal_ring_get_head(struct bsal_ring *self);
 int bsal_ring_get_tail(struct bsal_ring *self);
 void bsal_ring_increment_head(struct bsal_ring *self);
 void bsal_ring_increment_tail(struct bsal_ring *self);
+int bsal_ring_get_next_power_of_two(int value);
 
 #endif

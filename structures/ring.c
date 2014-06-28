@@ -8,7 +8,9 @@
 
 void bsal_ring_init(struct bsal_ring *self, int capacity, int cell_size)
 {
-    self->number_of_cells = capacity + 1;
+    /* +1 because an empty cell is needed
+     */
+    self->number_of_cells = bsal_ring_get_next_power_of_two(capacity + 1);
     self->cell_size = cell_size;
     self->head = 0;
     self->tail = 0;
@@ -140,4 +142,17 @@ void bsal_ring_increment_tail(struct bsal_ring *self)
 #else
         self->tail = new_value;
 #endif
+}
+
+int bsal_ring_get_next_power_of_two(int value)
+{
+    int power_of_two;
+
+    power_of_two = 2;
+
+    while (power_of_two < value) {
+        power_of_two *= 2;
+    }
+
+    return power_of_two;
 }
