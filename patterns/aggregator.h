@@ -26,7 +26,8 @@ struct bsal_aggregator {
     int flushed;
 
     struct bsal_dna_codec codec;
-    struct bsal_memory_pool persistent_memory;
+    struct bsal_vector persistent_memory_pools;
+    struct bsal_memory_pool ephemeral_memory;
 };
 
 /* message tags
