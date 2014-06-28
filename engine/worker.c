@@ -33,8 +33,14 @@ void bsal_worker_init(struct bsal_worker *worker, int name, struct bsal_node *no
 #ifdef BSAL_WORKER_HAS_OWN_QUEUES
     /*worker->work_queue = &worker->works;*/
 
+    /* enable atomic operations for change visibility
+     */
     bsal_ring_init(&worker->work_queue, capacity, sizeof(struct bsal_work));
+    bsal_ring_enable_atomicity(&worker->work_queue);
+
     bsal_ring_init(&worker->message_queue, capacity, sizeof(struct bsal_message));
+    bsal_ring_enable_atomicity(&worker->message_queue);
+
     bsal_ring_queue_init(&worker->local_message_queue, sizeof(struct bsal_message));
 
 #endif
