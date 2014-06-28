@@ -11,7 +11,8 @@ struct ring {
     int senders;
     int first;
     int last;
-    int ready;
+    int ready_rings;
+    int ready_senders;
     int step;
 };
 
@@ -19,6 +20,7 @@ struct ring {
 #define RING_KILL 0x00004cfe
 #define RING_SET_NEXT 0x00003833
 #define RING_PUSH_NEXT 0x0000153c
+#define RING_SPAWN 0x00001bd7
 
 extern struct bsal_script ring_script;
 

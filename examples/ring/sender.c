@@ -42,6 +42,9 @@ void sender_receive(struct bsal_actor *actor, struct bsal_message *message)
 
         sender1->next = *(int *)buffer;
 
+#if 0
+        printf("receive SENDER_SET_NEXT\n");
+#endif
         bsal_actor_helper_send_reply_empty(actor, SENDER_SET_NEXT_REPLY);
 
     } else if (tag == SENDER_HELLO) {
@@ -71,3 +74,4 @@ void sender_receive(struct bsal_actor *actor, struct bsal_message *message)
         bsal_actor_helper_send_to_self_empty(actor, BSAL_ACTOR_STOP);
     }
 }
+
