@@ -12,6 +12,7 @@ void bsal_mega_block_init(struct bsal_mega_block *self, int file, uint64_t offse
     self->entries = entries;
     self->entries_from_start = entries_from_start;
 
+    bsal_mega_block_print(self);
 }
 
 void bsal_mega_block_destroy(struct bsal_mega_block *self)
@@ -45,4 +46,9 @@ int bsal_mega_block_get_file(struct bsal_mega_block *self)
 uint64_t bsal_mega_block_get_entries(struct bsal_mega_block *self)
 {
     return self->entries;
+}
+
+void bsal_mega_block_set_file(struct bsal_mega_block *block, int file)
+{
+    block->file = file;
 }

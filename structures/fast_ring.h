@@ -40,10 +40,10 @@ struct bsal_fast_ring {
      * \see http://stackoverflow.com/questions/4557979/when-to-use-volatile-with-multi-threading/4558031#4558031
      */
 
-    volatile struct bsal_padded_uint64_t head;
-    volatile struct bsal_padded_uint64_t tail;
-    volatile struct bsal_padded_uint64_t head_cache;
-    volatile struct bsal_padded_uint64_t tail_cache;
+    struct bsal_padded_uint64_t head;
+    struct bsal_padded_uint64_t tail;
+    struct bsal_padded_uint64_t head_cache;
+    struct bsal_padded_uint64_t tail_cache;
 
     void *cells;
     uint64_t number_of_cells;

@@ -373,18 +373,11 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
 
         bsal_vector_push_back(&controller->counting_streams, &stream);
 
-        new_count = sizeof(file_index) + strlen(local_file) + 1;
-        new_buffer = bsal_allocate(new_count);
-        memcpy(new_buffer, &file_index, sizeof(file_index));
-        memcpy(new_buffer + sizeof(file_index), local_file, strlen(local_file) + 1);
-
 #ifdef BSAL_INPUT_CONTROLLER_DEBUG_READING_STREAMS
         printf("asking stream/%d to open %s\n", stream, local_file);
 #endif
-        bsal_message_init(&new_message, BSAL_INPUT_OPEN, new_count, new_buffer);
+        bsal_message_init(&new_message, BSAL_INPUT_OPEN, strlen(local_file) + 1, local_file);
         bsal_actor_send(actor, stream, &new_message);
-        bsal_free(new_buffer);
-        new_buffer = NULL;
         bsal_message_destroy(&new_message);
 
         if (bsal_vector_size(&controller->counting_streams) != bsal_vector_size(&controller->files)) {
@@ -470,21 +463,29 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
 
         bsal_vector_unpack(&mega_blocks, buffer);
 
+        printf("DEBUG receive mega blocks from %d\n", source);
+        /*
+         * Update the file index for every mega block.
+         */
         bsal_vector_iterator_init(&vector_iterator, &mega_blocks);
-
-        vector_bucket = (struct bsal_vector *)bsal_map_add(&concrete_actor->mega_blocks, &stream_index);
-
-        bsal_vector_init_copy(vector_bucket, &mega_blocks);
 
         while (bsal_vector_iterator_has_next(&vector_iterator)) {
             bsal_vector_iterator_next(&vector_iterator, (void **)&mega_block);
 
+            printf("SETTING setting file to %d for mega block\n", stream_index);
+            bsal_mega_block_set_file(mega_block, stream_index);
+
+            /*
             entries = bsal_mega_block_get_entries_from_start(mega_block);
 
-            /*bsal_mega_block_print(mega_block);*/
+            bsal_mega_block_print(mega_block);*/
         }
 
         bsal_vector_iterator_destroy(&vector_iterator);
+
+        vector_bucket = (struct bsal_vector *)bsal_map_add(&concrete_actor->mega_blocks, &stream_index);
+        bsal_vector_init_copy(vector_bucket, &mega_blocks);
+
         bsal_vector_destroy(&mega_blocks);
 
         bucket = (int64_t*)bsal_vector_at(&controller->counts, stream_index);
@@ -1202,8 +1203,6 @@ void bsal_input_controller_set_offset_reply(struct bsal_actor *self, struct bsal
     struct bsal_input_controller *concrete_actor;
     int file_index;
     char *file_name;
-    char *new_buffer;
-    int new_count;
     struct bsal_message new_message;
 
     source = bsal_message_source(message);
@@ -1224,19 +1223,11 @@ void bsal_input_controller_set_offset_reply(struct bsal_actor *self, struct bsal
     file_index = bsal_mega_block_get_file(block);
     file_name = *(char **)bsal_vector_at(&concrete_actor->files, file_index);
 
-    new_count = sizeof(file_index) + strlen(file_name) + 1;
-
-    new_buffer = bsal_allocate(new_count);
-
-    memcpy(new_buffer, &file_index, sizeof(file_index));
-    memcpy(new_buffer + sizeof(file_index), file_name, strlen(file_name) + 1);
-
-    bsal_message_init(&new_message, BSAL_INPUT_OPEN, new_count, new_buffer);
+    bsal_message_init(&new_message, BSAL_INPUT_OPEN, strlen(file_name) + 1, file_name);
 
     bsal_actor_send_reply(self, &new_message);
 
     bsal_message_destroy(&new_message);
-    bsal_free(new_buffer);
 }
 
 void bsal_input_controller_verify_requests(struct bsal_actor *self, struct bsal_message *message)

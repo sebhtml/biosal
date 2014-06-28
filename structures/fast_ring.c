@@ -113,12 +113,6 @@ int bsal_fast_ring_size_from_consumer(struct bsal_fast_ring *self)
     int head;
     int tail;
 
-    /* update the cache
-     */
-    if (self->tail_cache.value == self->head.value) {
-        self->tail_cache.value = self->tail.value;
-    }
-
     /* TODO: remove me
      */
     self->tail_cache.value = self->tail.value;

@@ -28,7 +28,6 @@ struct bsal_input_stream {
     int64_t last_entries;
 
     char *file_name;
-    int file_index;
 
     struct bsal_vector mega_blocks;
 

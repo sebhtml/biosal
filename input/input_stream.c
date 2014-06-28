@@ -53,8 +53,6 @@ void bsal_input_stream_init(struct bsal_actor *actor)
     input->last_offset = 0;
     input->last_entries = 0;
 
-    input->file_index = -1;
-
     input->starting_offset = 0;
 
     bsal_vector_init(&input->mega_blocks, sizeof(struct bsal_mega_block));
@@ -159,8 +157,8 @@ void bsal_input_stream_receive(struct bsal_actor *actor, struct bsal_message *me
                         buffer);
 #endif
 
-        memcpy(&concrete_actor->file_index, buffer, sizeof(concrete_actor->file_index));
-        file_name_in_buffer = buffer + sizeof(concrete_actor->file_index);
+        /*memcpy(&concrete_actor->file_index, buffer, sizeof(concrete_actor->file_index));*/
+        file_name_in_buffer = buffer;
 
         printf("stream/%d (node/%d) opens file %s offset %" PRIu64 "\n", bsal_actor_name(actor),
                         bsal_actor_node_name(actor), file_name_in_buffer,
@@ -225,7 +223,7 @@ void bsal_input_stream_receive(struct bsal_actor *actor, struct bsal_message *me
 
         if (!has_sequence || sequences % concrete_actor->mega_block_size == 0) {
 
-            bsal_mega_block_init(&mega_block, concrete_actor->file_index, concrete_actor->last_offset,
+            bsal_mega_block_init(&mega_block, -1, concrete_actor->last_offset,
                             sequences - concrete_actor->last_entries, sequences);
 
             bsal_vector_push_back(&concrete_actor->mega_blocks, &mega_block);
