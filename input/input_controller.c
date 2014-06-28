@@ -427,7 +427,7 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
 
 #ifdef BSAL_INPUT_CONTROLLER_DEBUG_LEVEL_2
 #endif
-            printf("DEBUG %d: all streams failed.\n",
+            printf("DEBUG %d: Error all streams failed.\n",
                             bsal_actor_name(actor));
             bsal_actor_helper_send_to_supervisor_empty(actor, BSAL_INPUT_DISTRIBUTE_REPLY);
         }
@@ -469,16 +469,22 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
          */
         bsal_vector_iterator_init(&vector_iterator, &mega_blocks);
 
+        bucket = (int64_t*)bsal_vector_at(&controller->counts, stream_index);
+        (*bucket) = 0;
+
         while (bsal_vector_iterator_has_next(&vector_iterator)) {
             bsal_vector_iterator_next(&vector_iterator, (void **)&mega_block);
 
             printf("SETTING setting file to %d for mega block\n", stream_index);
             bsal_mega_block_set_file(mega_block, stream_index);
 
-            /*
             entries = bsal_mega_block_get_entries_from_start(mega_block);
 
-            bsal_mega_block_print(mega_block);*/
+            printf("Cataloging %d ENTRIES\n", (int)entries);
+
+            (*bucket) += entries;
+
+            bsal_mega_block_print(mega_block);
         }
 
         bsal_vector_iterator_destroy(&vector_iterator);
@@ -487,9 +493,6 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
         bsal_vector_init_copy(vector_bucket, &mega_blocks);
 
         bsal_vector_destroy(&mega_blocks);
-
-        bucket = (int64_t*)bsal_vector_at(&controller->counts, stream_index);
-        *bucket = entries;
 
         controller->counted++;
 
@@ -512,6 +515,8 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
         /* no files, return immediately
          */
         if (bsal_vector_size(&concrete_actor->files) == 0) {
+
+            printf("Error: no file to distribute...\n");
             bsal_actor_helper_send_reply_empty(actor, BSAL_INPUT_DISTRIBUTE_REPLY);
             return;
         }
@@ -746,6 +751,7 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
         if (concrete_actor->filled_consumers == bsal_vector_size(&concrete_actor->consumers)) {
             concrete_actor->filled_consumers = 0;
 
+            printf("DEBUG: all consumers filled,  sending BSAL_INPUT_DISTRIBUTE_REPLY\n");
             bsal_actor_helper_send_to_supervisor_empty(actor, BSAL_INPUT_DISTRIBUTE_REPLY);
         }
     }
@@ -913,6 +919,7 @@ void bsal_input_controller_create_stores(struct bsal_actor *actor, struct bsal_m
     /* no sequences at all !
      */
     if (total == 0) {
+        printf("Error, total is 0, can not distribute\n");
         bsal_actor_helper_send_to_supervisor_empty(actor, BSAL_INPUT_DISTRIBUTE_REPLY);
         return;
     } else {
@@ -1151,7 +1158,7 @@ void bsal_input_controller_spawn_streams(struct bsal_actor *actor, struct bsal_m
      */
 
     block_index = 0;
-    printf("DEBUG MEGA BLOCKS\n");
+    printf("DEBUG received MEGA BLOCKS\n");
     for (i = 0; i < bsal_vector_size(&concrete_actor->files); i++) {
 
         vector = (struct bsal_vector *)bsal_map_get(&concrete_actor->mega_blocks, &i);

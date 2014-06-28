@@ -47,6 +47,7 @@ void bsal_sequence_store_init(struct bsal_actor *actor)
                     bsal_sequence_store_ask);
 
     concrete_actor->iterator_started = 0;
+    concrete_actor->reservation_producer = -1;
 
     /* 2^26 */
     bsal_memory_pool_init(&concrete_actor->persistent_memory, 67108864);
@@ -315,9 +316,10 @@ void bsal_sequence_store_ask(struct bsal_actor *self, struct bsal_message *messa
     concrete_actor = (struct bsal_sequence_store *)bsal_actor_concrete_actor(self);
 
     if (concrete_actor->received != concrete_actor->expected) {
-        printf("Error: sequence store %d is not ready %" PRIu64 "/%" PRIu64 "\n",
+        printf("Error: sequence store %d is not ready %" PRIu64 "/%" PRIu64 " (reservation producer %d)\n",
                         name,
-                        concrete_actor->received, concrete_actor->expected);
+                        concrete_actor->received, concrete_actor->expected,
+                        concrete_actor->reservation_producer);
     }
     block_size = 512;
 
