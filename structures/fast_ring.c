@@ -70,7 +70,7 @@ int bsal_fast_ring_is_full_from_producer(struct bsal_fast_ring *self)
     /* check if the head cache must be updated
      */
     if (self->head_cache.value == bsal_fast_ring_increment(self, self->tail.value)) {
-        self->head_cache.value = self->head.value;
+        bsal_fast_ring_update_head_cache(self);
         return self->head_cache.value == bsal_fast_ring_increment(self, self->tail.value);
     }
     return 0;
@@ -101,7 +101,7 @@ int bsal_fast_ring_pop_from_consumer(struct bsal_fast_ring *self, void *element)
 int bsal_fast_ring_is_empty_from_consumer(struct bsal_fast_ring *self)
 {
     if (self->tail_cache.value == self->head.value) {
-        self->tail_cache.value = self->tail.value;
+        bsal_fast_ring_update_tail_cache(self);
         return self->tail_cache.value == self->head.value;
     }
 
@@ -115,7 +115,7 @@ int bsal_fast_ring_size_from_consumer(struct bsal_fast_ring *self)
 
     /* TODO: remove me
      */
-    self->tail_cache.value = self->tail.value;
+    bsal_fast_ring_update_tail_cache(self);
 
     head = self->head.value;
     tail = self->tail_cache.value;
@@ -138,7 +138,7 @@ int bsal_fast_ring_size_from_producer(struct bsal_fast_ring *self)
 
     /* TODO: remove me
      */
-    self->head_cache.value = self->head.value;
+    bsal_fast_ring_update_head_cache(self);
 
     head = self->head_cache.value;
     tail = self->tail.value;
@@ -180,4 +180,14 @@ int bsal_fast_ring_get_next_power_of_two(int value)
     }
 
     return power_of_two;
+}
+
+void bsal_fast_ring_update_head_cache(struct bsal_fast_ring *self)
+{
+    self->head_cache.value = self->head.value;
+}
+
+void bsal_fast_ring_update_tail_cache(struct bsal_fast_ring *self)
+{
+    self->tail_cache.value = self->tail.value;
 }
