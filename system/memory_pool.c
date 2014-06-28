@@ -16,6 +16,8 @@ void bsal_memory_pool_init(struct bsal_memory_pool *self, int block_size)
 
     self->block_size = block_size;
     self->tracking_is_enabled = 1;
+
+    self->disabled = 0;
 }
 
 void bsal_memory_pool_destroy(struct bsal_memory_pool *self)
@@ -65,6 +67,10 @@ void *bsal_memory_pool_allocate(struct bsal_memory_pool *self, int size)
 {
     struct bsal_queue *queue;
     void *pointer;
+
+    if (self->disabled) {
+        return bsal_allocate(size);
+    }
 
     queue = NULL;
 
@@ -122,6 +128,11 @@ void bsal_memory_pool_free(struct bsal_memory_pool *self, void *pointer)
 {
     struct bsal_queue *queue;
     int size;
+
+    if (self->disabled) {
+        bsal_free(pointer);
+        return;
+    }
 
     if (!self->tracking_is_enabled) {
         return;
@@ -183,4 +194,9 @@ void bsal_memory_pool_free_all(struct bsal_memory_pool *self)
         bsal_memory_block_free_all(block);
         bsal_queue_enqueue(&self->ready_blocks, &block);
     }
+}
+
+void bsal_memory_pool_disable(struct bsal_memory_pool *self)
+{
+    self->disabled = 1;
 }

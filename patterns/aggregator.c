@@ -58,6 +58,7 @@ void bsal_aggregator_init(struct bsal_actor *self)
     bsal_dna_codec_init(&concrete_actor->codec);
 
     bsal_memory_pool_init(&concrete_actor->persistent_memory, 1048576);
+    bsal_memory_pool_disable(&concrete_actor->persistent_memory);
 }
 
 void bsal_aggregator_destroy(struct bsal_actor *self)

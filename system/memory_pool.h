@@ -19,6 +19,7 @@ struct bsal_memory_pool {
     struct bsal_queue dried_blocks;
     int block_size;
     int tracking_is_enabled;
+    int disabled;
 };
 
 void bsal_memory_pool_init(struct bsal_memory_pool *self, int block_size);
@@ -30,5 +31,6 @@ void bsal_memory_pool_enable_tracking(struct bsal_memory_pool *self);
 void bsal_memory_pool_disable_tracking(struct bsal_memory_pool *self);
 
 void bsal_memory_pool_free_all(struct bsal_memory_pool *self);
+void bsal_memory_pool_disable(struct bsal_memory_pool *self);
 
 #endif

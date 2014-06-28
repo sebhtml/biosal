@@ -12,7 +12,8 @@
 #include <stdio.h>
 
 #define BSAL_WORKER_POOL_USE_LEAST_BUSY
-#define BSAL_WORKER_POOL_ATTEMPT_COUNT 4
+#define BSAL_WORKER_POOL_WORK_SCHEDULING_WINDOW 6
+#define BSAL_WORKER_POOL_MESSAGE_SCHEDULING_WINDOW 6
 
 /*
 #define BSAL_WORKER_POOL_DEBUG
@@ -67,13 +68,19 @@ void bsal_worker_pool_destroy(struct bsal_worker_pool *pool)
 void bsal_worker_pool_delete_workers(struct bsal_worker_pool *pool)
 {
     int i = 0;
+    struct bsal_worker *worker;
 
     if (pool->workers <= 0) {
         return;
     }
 
     for (i = 0; i < pool->workers; i++) {
-        bsal_worker_destroy(bsal_worker_pool_get_worker(pool, i));
+        worker = bsal_worker_pool_get_worker(pool, i);
+
+        printf("worker/%d loop_load %f\n", bsal_worker_name(worker),
+                    bsal_worker_get_loop_load(worker));
+
+        bsal_worker_destroy(worker);
     }
 
     bsal_free(pool->worker_array);
@@ -162,7 +169,7 @@ int bsal_worker_pool_pull_classic(struct bsal_worker_pool *pool, struct bsal_mes
 
     i = 0;
     answer = 0;
-    attempts = BSAL_WORKER_POOL_ATTEMPT_COUNT;
+    attempts = BSAL_WORKER_POOL_MESSAGE_SCHEDULING_WINDOW;
 
     while (answer == 0 && i < attempts) {
         worker = bsal_worker_pool_select_worker_for_message(pool);
@@ -255,7 +262,7 @@ struct bsal_worker *bsal_worker_pool_select_worker_least_busy(
     best_worker = NULL;
     best_score = 99;
 
-    to_check = BSAL_WORKER_POOL_ATTEMPT_COUNT;
+    to_check = BSAL_WORKER_POOL_WORK_SCHEDULING_WINDOW;
 
     while (to_check--) {
 
