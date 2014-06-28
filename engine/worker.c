@@ -522,7 +522,12 @@ int bsal_worker_enqueued_work_count(struct bsal_worker *self)
     return bsal_ring_size(&self->work_queue);
 }
 
-int bsal_worker_get_scheduling_score(struct bsal_worker *self)
+int bsal_worker_enqueued_message_count(struct bsal_worker *self)
+{
+    return bsal_ring_size(&self->message_queue);
+}
+
+int bsal_worker_get_work_scheduling_score(struct bsal_worker *self)
 {
     int score;
 
@@ -537,6 +542,11 @@ int bsal_worker_get_scheduling_score(struct bsal_worker *self)
     return score;
 }
 #endif
+
+int bsal_worker_get_message_production_score(struct bsal_worker *self)
+{
+    return bsal_worker_enqueued_message_count(self);
+}
 
 float bsal_worker_get_epoch_load(struct bsal_worker *self)
 {

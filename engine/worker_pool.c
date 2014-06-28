@@ -12,8 +12,8 @@
 #include <stdio.h>
 
 #define BSAL_WORKER_POOL_USE_LEAST_BUSY
-#define BSAL_WORKER_POOL_WORK_SCHEDULING_WINDOW 6
-#define BSAL_WORKER_POOL_MESSAGE_SCHEDULING_WINDOW 6
+#define BSAL_WORKER_POOL_WORK_SCHEDULING_WINDOW 4
+#define BSAL_WORKER_POOL_MESSAGE_SCHEDULING_WINDOW 4
 
 /*
 #define BSAL_WORKER_POOL_DEBUG
@@ -164,18 +164,9 @@ int bsal_worker_pool_pull_classic(struct bsal_worker_pool *pool, struct bsal_mes
 {
     struct bsal_worker *worker;
     int answer;
-    int attempts;
-    int i;
 
-    i = 0;
-    answer = 0;
-    attempts = BSAL_WORKER_POOL_MESSAGE_SCHEDULING_WINDOW;
-
-    while (answer == 0 && i < attempts) {
-        worker = bsal_worker_pool_select_worker_for_message(pool);
-        answer = bsal_worker_pull_message(worker, message);
-        i++;
-    }
+    worker = bsal_worker_pool_select_worker_for_message(pool);
+    answer = bsal_worker_pull_message(worker, message);
 
     return answer;
 }
@@ -184,10 +175,36 @@ int bsal_worker_pool_pull_classic(struct bsal_worker_pool *pool, struct bsal_mes
 struct bsal_worker *bsal_worker_pool_select_worker_for_message(struct bsal_worker_pool *pool)
 {
     int index;
+    int i;
+    int best_score;
+    int score;
+    struct bsal_worker *worker;
+    struct bsal_worker *best_worker;
+    int attempts;
 
-    index = pool->worker_for_message;
-    pool->worker_for_message = bsal_worker_pool_next_worker(pool, index);
-    return bsal_worker_pool_get_worker(pool, index);
+    best_score = 0;
+    best_worker = NULL;
+    i = 0;
+    attempts = BSAL_WORKER_POOL_MESSAGE_SCHEDULING_WINDOW;
+
+    /* select thet worker with the most messages in the window.
+     */
+    while (i < attempts) {
+
+        index = pool->worker_for_message;
+        pool->worker_for_message = bsal_worker_pool_next_worker(pool, index);
+        worker = bsal_worker_pool_get_worker(pool, index);
+        score = bsal_worker_get_message_production_score(worker);
+
+        if (best_worker == NULL || score > best_score) {
+            best_worker = worker;
+            best_score = score;
+        }
+
+        i++;
+    }
+
+    return best_worker;
 }
 
 int bsal_worker_pool_next_worker(struct bsal_worker_pool *pool, int worker)
@@ -271,7 +288,7 @@ struct bsal_worker *bsal_worker_pool_select_worker_least_busy(
          */
         worker = bsal_worker_pool_get_worker(self, *start);
 
-        score = bsal_worker_get_scheduling_score(worker);
+        score = bsal_worker_get_work_scheduling_score(worker);
 
         /* if the worker is not busy and it has no work to do,
          * select it right away...

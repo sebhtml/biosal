@@ -91,8 +91,10 @@ float bsal_worker_get_loop_load(struct bsal_worker *self);
 #ifdef BSAL_WORKER_HAS_OWN_QUEUES
 
 int bsal_worker_enqueued_work_count(struct bsal_worker *self);
+int bsal_worker_enqueued_message_count(struct bsal_worker *self);
 
-int bsal_worker_get_scheduling_score(struct bsal_worker *self);
+int bsal_worker_get_work_scheduling_score(struct bsal_worker *self);
+int bsal_worker_get_message_production_score(struct bsal_worker *self);
 
 int bsal_worker_pull_message(struct bsal_worker *worker, struct bsal_message *message);
 int bsal_worker_push_work(struct bsal_worker *worker, struct bsal_work *work);
