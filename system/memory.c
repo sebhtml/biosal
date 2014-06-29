@@ -40,6 +40,7 @@ void *bsal_memory_allocate_private(size_t size, const char *function, const char
     /*
     printf("DEBUG bsal_memory_allocate size: %zu (as int: %d)\n", size, (int)size);
     */
+    pointer = NULL;
 
     if (size < BSAL_MEMORY_MINIMUM) {
         printf("DEBUG Error bsal_memory_allocate received a number below the minimum: %zu bytes\n", size);

@@ -222,6 +222,24 @@ struct bsal_worker *bsal_worker_pool_select_worker_for_work(
                 struct bsal_worker_pool *pool, struct bsal_work *work,
                 int *start)
 {
+    /* check first if the actor is active.
+     * If it is active, just enqueue the work at the same
+     * place (on the same worker).
+     * This avoids contention.
+     */
+    struct bsal_actor *actor;
+    struct bsal_worker *current_worker;
+
+    actor = bsal_work_actor(work);
+    current_worker = bsal_actor_worker(actor);
+
+    if (current_worker != NULL) {
+#if 0
+        printf("USING current worker\n");
+#endif
+        return current_worker;
+    }
+
 #ifdef BSAL_WORKER_POOL_USE_LEAST_BUSY
     return bsal_worker_pool_select_worker_least_busy(pool, work, start);
 
