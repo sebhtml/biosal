@@ -85,7 +85,7 @@ void bsal_actor_init(struct bsal_actor *actor, void *state,
     bsal_queue_init(&actor->queued_messages_for_migration, sizeof(struct bsal_message));
     bsal_queue_init(&actor->forwarding_queue, sizeof(struct bsal_message));
 
-    bsal_dynamic_hash_table_init(&actor->acquaintance_map, 4, sizeof(int), sizeof(int));
+    bsal_map_init(&actor->acquaintance_map, sizeof(int), sizeof(int));
 
     bsal_actor_register(actor, BSAL_ACTOR_FORWARD_MESSAGES, bsal_actor_forward_messages);
 
@@ -120,7 +120,7 @@ void bsal_actor_destroy(struct bsal_actor *actor)
     bsal_queue_destroy(&actor->queued_messages_for_clone);
     bsal_queue_destroy(&actor->queued_messages_for_migration);
     bsal_queue_destroy(&actor->forwarding_queue);
-    bsal_dynamic_hash_table_destroy(&actor->acquaintance_map);
+    bsal_map_destroy(&actor->acquaintance_map);
 
     bsal_map_destroy(&actor->received_messages);
     bsal_map_destroy(&actor->sent_messages);
@@ -1639,7 +1639,7 @@ int bsal_actor_add_acquaintance(struct bsal_actor *actor, int name)
 
     index = bsal_vector_size(bsal_actor_acquaintance_vector(actor)) - 1;
 
-    bucket = bsal_dynamic_hash_table_add(&actor->acquaintance_map, &name);
+    bucket = bsal_map_add(&actor->acquaintance_map, &name);
     *bucket = index;
 
     return index;
@@ -1663,7 +1663,7 @@ int bsal_actor_get_acquaintance_index(struct bsal_actor *actor, int name)
     return bsal_vector_index_of(&actor->acquaintance_vector, &name);
 #endif
 
-    bucket = bsal_dynamic_hash_table_get(&actor->acquaintance_map, &name);
+    bucket = bsal_map_get(&actor->acquaintance_map, &name);
 
     if (bucket == NULL) {
         return -1;

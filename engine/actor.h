@@ -7,7 +7,6 @@
 
 #include <structures/vector.h>
 #include <structures/map.h>
-#include <structures/dynamic_hash_table.h>
 #include <structures/queue.h>
 
 #include <engine/dispatcher.h>
@@ -165,7 +164,7 @@ struct bsal_actor {
 
     struct bsal_vector acquaintance_vector;
     struct bsal_vector children;
-    struct bsal_dynamic_hash_table acquaintance_map;
+    struct bsal_map acquaintance_map;
 
     struct bsal_queue enqueued_messages;
 
