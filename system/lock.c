@@ -3,10 +3,16 @@
 
 #include "atomic.h"
 
+#define BSAL_LOCK_UNLOCKED 0
+#define BSAL_LOCK_LOCKED 1
+/*#define BSAL_LOCK_READS_BETWEEN_WRITE_ATTEMPT 1024*/
+#define BSAL_LOCK_READS_BETWEEN_WRITE_ATTEMPT 8
+
 void bsal_lock_init(struct bsal_lock *self)
 {
 #if defined(BSAL_LOCK_USE_COMPARE_AND_SWAP)
-    self->lock = 0;
+    self->lock = BSAL_LOCK_UNLOCKED;
+
 #elif defined(BSAL_LOCK_USE_SPIN_LOCK)
     pthread_spin_init(&self->lock, 0);
 #elif defined(BSAL_LOCK_USE_MUTEX)
@@ -17,15 +23,9 @@ void bsal_lock_init(struct bsal_lock *self)
 int bsal_lock_lock(struct bsal_lock *self)
 {
 #if defined(BSAL_LOCK_USE_COMPARE_AND_SWAP)
-    int old_value = 0;
-    int new_value = 1;
 
-    while (bsal_atomic_compare_and_swap_int(&self->lock, old_value, new_value) != old_value) {
-        /* spin */
-    }
+    return bsal_lock_lock_private(&self->lock);
 
-    /* successful */
-    return 0;
 #elif defined(BSAL_LOCK_USE_SPIN_LOCK)
     return pthread_spin_lock(&self->lock);
 #elif defined(BSAL_LOCK_USE_MUTEX)
@@ -36,15 +36,14 @@ int bsal_lock_lock(struct bsal_lock *self)
 int bsal_lock_unlock(struct bsal_lock *self)
 {
 #if defined(BSAL_LOCK_USE_COMPARE_AND_SWAP)
-    int old_value = 1;
-    int new_value = 0;
-
-    while (bsal_atomic_compare_and_swap_int(&self->lock, old_value, new_value) != old_value) {
-        /* spin */
+    if (bsal_atomic_compare_and_swap_int(&self->lock, BSAL_LOCK_LOCKED, BSAL_LOCK_UNLOCKED) == BSAL_LOCK_LOCKED) {
+        /* successful */
+        return 0;
     }
 
-    /* successful */
-    return 0;
+    /* not successful
+     */
+    return -1;
 
 #elif defined(BSAL_LOCK_USE_SPIN_LOCK)
     return pthread_spin_unlock(&self->lock);
@@ -77,11 +76,37 @@ int bsal_lock_trylock(struct bsal_lock *self)
 
 void bsal_lock_destroy(struct bsal_lock *self)
 {
-#ifdef BSAL_LOCK_USE_SPIN_LOCK
+#if defined(BSAL_LOCK_USE_COMPARE_AND_SWAP)
+    self->lock = 0;
+#elif defined(BSAL_LOCK_USE_SPIN_LOCK)
     pthread_spin_destroy(&self->lock);
 #elif defined(BSAL_LOCK_USE_MUTEX)
     pthread_mutex_destroy(&self->lock);
 #endif
 }
 
+int bsal_lock_lock_private(int *lock)
+{
+    int reads;
 
+    /* read the lock a number of times before actually trying to write
+     * it.
+     */
+    while (bsal_atomic_compare_and_swap_int(lock, BSAL_LOCK_UNLOCKED, BSAL_LOCK_LOCKED) != BSAL_LOCK_UNLOCKED) {
+
+        if (BSAL_LOCK_READS_BETWEEN_WRITE_ATTEMPT > 0) {
+            reads = BSAL_LOCK_READS_BETWEEN_WRITE_ATTEMPT;
+
+            while (*lock != BSAL_LOCK_UNLOCKED && reads > 0) {
+                --reads;
+            }
+        } else {
+            while (*lock != BSAL_LOCK_UNLOCKED) {
+
+            }
+        }
+    }
+
+    /* successful */
+    return 0;
+}
