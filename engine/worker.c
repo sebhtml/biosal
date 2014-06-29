@@ -580,6 +580,8 @@ int bsal_worker_get_work_scheduling_score(struct bsal_worker *self)
 }
 #endif
 
+/* Just return the number of queued messages.
+ */
 int bsal_worker_get_message_production_score(struct bsal_worker *self)
 {
 #ifdef BSAL_WORKER_USE_FAST_RINGS

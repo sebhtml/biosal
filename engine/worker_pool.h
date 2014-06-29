@@ -5,6 +5,7 @@
 #include "worker.h"
 
 #include <structures/ring_queue.h>
+#include <structures/vector.h>
 
 #include <time.h>
 
@@ -24,13 +25,14 @@ struct bsal_worker_pool {
 
     struct bsal_ring_queue local_work_queue;
 
-    struct bsal_worker *worker_array;
+    int workers;
+    struct bsal_vector worker_array;
+    struct bsal_vector message_count_cache;
     struct bsal_node *node;
 
     int worker_for_message;
     int worker_for_run;
 
-    int workers;
     int debug_mode;
 
     int ticks_without_messages;

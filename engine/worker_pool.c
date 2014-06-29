@@ -6,6 +6,7 @@
 #include "worker.h"
 #include "node.h"
 
+#include <helpers/vector_helper.h>
 #include <system/memory.h>
 
 #include <stdlib.h>
@@ -24,9 +25,9 @@ void bsal_worker_pool_init(struct bsal_worker_pool *pool, int workers,
 {
     pool->debug_mode = 0;
     pool->node = node;
-    pool->workers = workers;
-    pool->worker_array = NULL;
     pool->ticks_without_messages = 0;
+
+    pool->workers = workers;
 
     /* with only one thread,  the main thread
      * handles everything.
@@ -85,24 +86,27 @@ void bsal_worker_pool_delete_workers(struct bsal_worker_pool *pool)
         bsal_worker_destroy(worker);
     }
 
-    bsal_memory_free(pool->worker_array);
-    pool->worker_array = NULL;
+    bsal_vector_destroy(&pool->worker_array);
+    bsal_vector_destroy(&pool->message_count_cache);
 }
 
 void bsal_worker_pool_create_workers(struct bsal_worker_pool *pool)
 {
-    int bytes;
     int i;
 
     if (pool->workers <= 0) {
         return;
     }
 
-    bytes = pool->workers * sizeof(struct bsal_worker);
-    pool->worker_array = (struct bsal_worker *)bsal_memory_allocate(bytes);
+    bsal_vector_init(&pool->worker_array, sizeof(struct bsal_worker));
+    bsal_vector_init(&pool->message_count_cache, sizeof(int));
+
+    bsal_vector_resize(&pool->worker_array, pool->workers);
+    bsal_vector_resize(&pool->message_count_cache, pool->workers);
 
     for (i = 0; i < pool->workers; i++) {
         bsal_worker_init(bsal_worker_pool_get_worker(pool, i), i, pool->node);
+        bsal_vector_helper_set_int(&pool->message_count_cache, i, 0);
     }
 }
 
@@ -178,14 +182,17 @@ struct bsal_worker *bsal_worker_pool_select_worker_for_message(struct bsal_worke
 {
     int index;
     int i;
-    int best_score;
     int score;
     struct bsal_worker *worker;
-    struct bsal_worker *best_worker;
     int attempts;
+    struct bsal_worker *best_worker;
+    int best_score;
+    int best_index;
 
+    best_index = -1;
     best_score = 0;
     best_worker = NULL;
+
     i = 0;
     attempts = BSAL_WORKER_POOL_MESSAGE_SCHEDULING_WINDOW;
 
@@ -196,15 +203,35 @@ struct bsal_worker *bsal_worker_pool_select_worker_for_message(struct bsal_worke
         index = pool->worker_for_message;
         pool->worker_for_message = bsal_worker_pool_next_worker(pool, index);
         worker = bsal_worker_pool_get_worker(pool, index);
-        score = bsal_worker_get_message_production_score(worker);
+        score = bsal_vector_helper_at_as_int(&pool->message_count_cache, index);
+
+        /* Update the cache.
+         * This is expensive because it will touch the cache line.
+         * Only the worker is increasing the number of messages, and
+         * only the worker pool is decreasing it.
+         * As long as the cached value is greater than 0, then there is
+         * definitely something to pull without the need
+         * to break the CPU cache line
+         *
+         */
+        if (score == 0) {
+            score = bsal_worker_get_message_production_score(worker);
+            bsal_vector_helper_set_int(&pool->message_count_cache, index, score);
+        }
 
         if (best_worker == NULL || score > best_score) {
             best_worker = worker;
             best_score = score;
+            best_index = index;
         }
 
         ++i;
     }
+
+    /* Update the cached value for the winning worker to have an
+     * accurate value for this worker.
+     */
+    bsal_vector_helper_set_int(&pool->message_count_cache, best_index, best_score - 1);
 
     return best_worker;
 }
@@ -275,11 +302,7 @@ struct bsal_worker *bsal_worker_pool_select_worker_round_robin(
 struct bsal_worker *bsal_worker_pool_get_worker(
                 struct bsal_worker_pool *self, int index)
 {
-    if (index < 0 || index >= self->workers) {
-        return NULL;
-    }
-
-    return self->worker_array + index;
+    return (struct bsal_worker *)bsal_vector_at(&self->worker_array, index);
 }
 
 #ifdef BSAL_WORKER_HAS_OWN_QUEUES
