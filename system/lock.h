@@ -4,6 +4,8 @@
 
 #include <pthread.h>
 
+#include "atomic.h"
+
 #if defined(__linux__)
 #define BSAL_LOCK_USE_SPIN_LOCK
 
@@ -32,9 +34,17 @@ Uncomment this to force mutexes
 #endif
 #endif
 
+/*
+#ifdef BSAL_ATOMIC_HAS_COMPARE_AND_SWAP
+#define BSAL_LOCK_USE_COMPARE_AND_SWAP
+#endif
+*/
+
 struct bsal_lock {
 
-#if defined(BSAL_LOCK_USE_SPIN_LOCK)
+#if defined(BSAL_LOCK_USE_COMPARE_AND_SWAP)
+    int lock;
+#elif defined(BSAL_LOCK_USE_SPIN_LOCK)
     pthread_spinlock_t lock;
 #elif defined(BSAL_LOCK_USE_MUTEX)
     pthread_mutex_t lock;

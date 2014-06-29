@@ -2,6 +2,8 @@
 #ifndef BSAL_ATOMIC_H
 #define BSAL_ATOMIC_H
 
+#define BSAL_ATOMIC_HAS_COMPARE_AND_SWAP
+
 /*
  *
  * \see http://stackoverflow.com/questions/5534145/is-gccs-atomic-test-and-set-builtin-the-same-as-an-atomic-fetch-and-store-opera
@@ -65,6 +67,10 @@
 
 #else
 
+/* no atomic built in is available
+ */
+#undef BSAL_ATOMIC_HAS_COMPARE_AND_SWAP
+
 /* Otherwise, just return the value
  */
 #define bsal_atomic_read_int(pointer) \
@@ -73,6 +79,7 @@
 #define bsal_atomic_compare_and_swap_int(pointer, old_value, new_value) \
         bsal_atomic_compare_and_swap_int_mock(pointer, old_value, new_value)
 
+#error "No atomic features found for this system"
 #endif
 
 int bsal_atomic_read_int_mock(int *pointer);
