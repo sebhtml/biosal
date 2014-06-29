@@ -104,6 +104,9 @@ void bsal_worker_pool_create_workers(struct bsal_worker_pool *pool)
     bsal_vector_resize(&pool->worker_array, pool->workers);
     bsal_vector_resize(&pool->message_count_cache, pool->workers);
 
+    pool->worker_cache = (struct bsal_worker *)bsal_vector_at(&pool->worker_array, 0);
+    pool->message_cache = (int *)bsal_vector_at(&pool->message_count_cache, 0);
+
     for (i = 0; i < pool->workers; i++) {
         bsal_worker_init(bsal_worker_pool_get_worker(pool, i), i, pool->node);
         bsal_vector_helper_set_int(&pool->message_count_cache, i, 0);
@@ -203,7 +206,7 @@ struct bsal_worker *bsal_worker_pool_select_worker_for_message(struct bsal_worke
         index = pool->worker_for_message;
         pool->worker_for_message = bsal_worker_pool_next_worker(pool, index);
         worker = bsal_worker_pool_get_worker(pool, index);
-        score = bsal_vector_helper_at_as_int(&pool->message_count_cache, index);
+        score = bsal_worker_pool_get_cached_value(pool, index);
 
         /* Update the cache.
          * This is expensive because it will touch the cache line.
@@ -216,7 +219,7 @@ struct bsal_worker *bsal_worker_pool_select_worker_for_message(struct bsal_worke
          */
         if (score == 0) {
             score = bsal_worker_get_message_production_score(worker);
-            bsal_vector_helper_set_int(&pool->message_count_cache, index, score);
+            bsal_worker_pool_set_cached_value(pool, index, score);
         }
 
         if (best_worker == NULL || score > best_score) {
@@ -302,7 +305,7 @@ struct bsal_worker *bsal_worker_pool_select_worker_round_robin(
 struct bsal_worker *bsal_worker_pool_get_worker(
                 struct bsal_worker_pool *self, int index)
 {
-    return (struct bsal_worker *)bsal_vector_at(&self->worker_array, index);
+    return self->worker_cache + index;
 }
 
 #ifdef BSAL_WORKER_HAS_OWN_QUEUES
@@ -539,4 +542,14 @@ void bsal_worker_pool_print_load(struct bsal_worker_pool *self, int type)
 void bsal_worker_pool_toggle_debug_mode(struct bsal_worker_pool *self)
 {
     self->debug_mode = !self->debug_mode;
+}
+
+int bsal_worker_pool_get_cached_value(struct bsal_worker_pool *self, int index)
+{
+    return self->message_cache[index];
+}
+
+void bsal_worker_pool_set_cached_value(struct bsal_worker_pool *self, int index, int value)
+{
+    self->message_cache[index] = value;
 }

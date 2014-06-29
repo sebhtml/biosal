@@ -27,7 +27,11 @@ struct bsal_worker_pool {
 
     int workers;
     struct bsal_vector worker_array;
+    struct bsal_worker *worker_cache;
+
     struct bsal_vector message_count_cache;
+    int *message_cache;
+
     struct bsal_node *node;
 
     int worker_for_message;
@@ -86,5 +90,7 @@ void bsal_worker_pool_schedule_work_classic(struct bsal_worker_pool *pool, struc
 #endif
 
 void bsal_worker_pool_toggle_debug_mode(struct bsal_worker_pool *self);
+void bsal_worker_pool_set_cached_value(struct bsal_worker_pool *self, int index, int value);
+int bsal_worker_pool_get_cached_value(struct bsal_worker_pool *self, int index);
 
 #endif
