@@ -344,13 +344,13 @@ void bsal_aggregator_flush(struct bsal_actor *self, int customer_index, int forc
     }
 
     count = bsal_dna_kmer_block_pack_size(customer_block_pointer);
-    buffer = bsal_allocate(count);
+    buffer = bsal_memory_allocate(count);
     bsal_dna_kmer_block_pack(customer_block_pointer, buffer);
 
     bsal_message_init(&message, BSAL_PUSH_KMER_BLOCK, count, buffer);
     bsal_actor_send(self, customer, &message);
     bsal_message_destroy(&message);
-    bsal_free(buffer);
+    bsal_memory_free(buffer);
 
     bsal_dna_kmer_block_destroy(customer_block_pointer, persistent_memory);
 

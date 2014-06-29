@@ -69,7 +69,7 @@ void *bsal_memory_pool_allocate(struct bsal_memory_pool *self, int size)
     void *pointer;
 
     if (self->disabled) {
-        return bsal_allocate(size);
+        return bsal_memory_allocate(size);
     }
 
     queue = NULL;
@@ -102,7 +102,7 @@ void *bsal_memory_pool_allocate(struct bsal_memory_pool *self, int size)
          * Otherwise, create one on-demand today.
          */
         if (!bsal_queue_dequeue(&self->ready_blocks, &self->current_block)) {
-            self->current_block = bsal_allocate(sizeof(struct bsal_memory_block));
+            self->current_block = bsal_memory_allocate(sizeof(struct bsal_memory_block));
             bsal_memory_block_init(self->current_block, self->block_size);
         }
     }
@@ -130,7 +130,7 @@ void bsal_memory_pool_free(struct bsal_memory_pool *self, void *pointer)
     int size;
 
     if (self->disabled) {
-        bsal_free(pointer);
+        bsal_memory_free(pointer);
         return;
     }
 

@@ -116,7 +116,7 @@ int bsal_transport_receive(struct bsal_transport *self, struct bsal_message *mes
     MPI_Get_count(&status, self->datatype, &count);
 
     /* TODO actually allocate (slab allocator) a buffer with count bytes ! */
-    buffer = (char *)bsal_allocate(count * sizeof(char));
+    buffer = (char *)bsal_memory_allocate(count * sizeof(char));
 
     source = status.MPI_SOURCE;
     tag = status.MPI_TAG;
@@ -186,7 +186,7 @@ void bsal_transport_test_requests(struct bsal_transport *self)
 
             /* TODO use an allocator
              */
-            bsal_free(buffer);
+            bsal_memory_free(buffer);
 
             bsal_active_buffer_destroy(&active_buffer);
 

@@ -30,7 +30,7 @@ void test_allocator(struct bsal_memory_pool *memory)
         if (memory != NULL) {
             pointer = bsal_memory_pool_allocate(memory, size);
         } else {
-            pointer = bsal_allocate(size);
+            pointer = bsal_memory_allocate(size);
         }
 
         bsal_vector_push_back(&vector, &pointer);

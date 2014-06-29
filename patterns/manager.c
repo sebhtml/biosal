@@ -261,14 +261,14 @@ void bsal_manager_receive(struct bsal_actor *actor, struct bsal_message *message
                 bsal_vector_iterator_destroy(&iterator);
 
                 new_count = bsal_vector_pack_size(&all_stores);
-                new_buffer = bsal_allocate(new_count);
+                new_buffer = bsal_memory_allocate(new_count);
                 bsal_vector_pack(&all_stores, new_buffer);
                 bsal_vector_destroy(&all_stores);
 
                 bsal_message_init(&new_message, BSAL_ACTOR_START_REPLY, new_count, new_buffer);
                 bsal_actor_send_to_supervisor(actor, &new_message);
 
-                bsal_free(new_buffer);
+                bsal_memory_free(new_buffer);
 
                 bsal_message_destroy(&new_message);
             }

@@ -350,7 +350,7 @@ void bsal_sequence_store_ask(struct bsal_actor *self, struct bsal_message *messa
 
     if (bsal_input_command_entry_count(&payload) > 0) {
         new_count = bsal_input_command_pack_size(&payload);
-        new_buffer = bsal_allocate(new_count);
+        new_buffer = bsal_memory_allocate(new_count);
 
         bsal_input_command_pack(&payload, new_buffer);
 
@@ -363,7 +363,7 @@ void bsal_sequence_store_ask(struct bsal_actor *self, struct bsal_message *messa
         printf("store/%d fulfill order\n", name);
 #endif
 
-        bsal_free(new_buffer);
+        bsal_memory_free(new_buffer);
     } else {
         bsal_actor_helper_send_reply_empty(self, BSAL_SEQUENCE_STORE_ASK_REPLY);
 #ifdef BSAL_SEQUENCE_STORE_DEBUG

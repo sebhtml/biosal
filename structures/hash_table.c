@@ -72,7 +72,7 @@ void bsal_hash_table_init(struct bsal_hash_table *table, uint64_t buckets,
     table->group_count = (buckets / buckets_per_group);
 
     table->groups = (struct bsal_hash_table_group *)
-            bsal_allocate(table->group_count * sizeof(struct bsal_hash_table_group));
+            bsal_memory_allocate(table->group_count * sizeof(struct bsal_hash_table_group));
 
 #ifdef BSAL_HASH_TABLE_DEBUG_INIT
     printf("DEBUG bsal_hash_table_init group_count %d\n",
@@ -93,7 +93,7 @@ void bsal_hash_table_destroy(struct bsal_hash_table *table)
         bsal_hash_table_group_destroy(table->groups + i);
     }
 
-    bsal_free(table->groups);
+    bsal_memory_free(table->groups);
     table->groups = NULL;
     table->debug = 0;
 }

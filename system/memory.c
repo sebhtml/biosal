@@ -33,19 +33,19 @@
 #define BSAL_MEMORY_DEBUG_DETAIL
 */
 
-void *bsal_allocate_private(size_t size, const char *function, const char *file, int line)
+void *bsal_memory_allocate_private(size_t size, const char *function, const char *file, int line)
 {
     void *pointer;
 
     /*
-    printf("DEBUG bsal_allocate size: %zu (as int: %d)\n", size, (int)size);
+    printf("DEBUG bsal_memory_allocate size: %zu (as int: %d)\n", size, (int)size);
     */
 
     if (size < BSAL_MEMORY_MINIMUM) {
-        printf("DEBUG Error bsal_allocate received a number below the minimum: %zu bytes\n", size);
+        printf("DEBUG Error bsal_memory_allocate received a number below the minimum: %zu bytes\n", size);
 
         if (file != NULL) {
-            printf("BSAL_MEMORY_DEBUG bsal_allocate %d bytes %p %s %s %d\n",
+            printf("BSAL_MEMORY_DEBUG bsal_memory_allocate %d bytes %p %s %s %d\n",
                     (int)size, pointer, function, file, line);
         }
         bsal_tracer_print_stack_backtrace();
@@ -53,10 +53,10 @@ void *bsal_allocate_private(size_t size, const char *function, const char *file,
     }
 
     if (size > BSAL_MEMORY_MAXIMUM) {
-        printf("DEBUG Error bsal_allocate received a number above the maximum: %zu bytes (int value: %d)\n", size,
+        printf("DEBUG Error bsal_memory_allocate received a number above the maximum: %zu bytes (int value: %d)\n", size,
                         (int)size);
         if (file != NULL) {
-            printf("BSAL_MEMORY_DEBUG bsal_allocate %d bytes %p %s %s %d\n",
+            printf("BSAL_MEMORY_DEBUG bsal_memory_allocate %d bytes %p %s %s %d\n",
                     (int)size, pointer, function, file, line);
         }
         bsal_tracer_print_stack_backtrace();
@@ -66,7 +66,7 @@ void *bsal_allocate_private(size_t size, const char *function, const char *file,
 #ifdef BSAL_MEMORY_DEBUG_TRACK_TARGET
     char target[] = "bsal_vector_reserve";
     if (strcmp(function, target) == 0) {
-        printf("TRACER: call to bsal_allocate in %s\n", function);
+        printf("TRACER: call to bsal_memory_allocate in %s\n", function);
         bsal_tracer_print_stack_backtrace();
     }
 #endif
@@ -75,13 +75,13 @@ void *bsal_allocate_private(size_t size, const char *function, const char *file,
 
 #ifdef BSAL_MEMORY_DEBUG_DETAIL
     if (file != NULL) {
-        printf("BSAL_MEMORY_DEBUG bsal_allocate %d bytes %p %s %s %d\n",
+        printf("BSAL_MEMORY_DEBUG bsal_memory_allocate %d bytes %p %s %s %d\n",
                     (int)size, pointer, function, file, line);
     }
 #endif
 
     if (pointer == NULL) {
-        printf("DEBUG Error bsal_allocate returned %p, %zu bytes\n", pointer, size);
+        printf("DEBUG Error bsal_memory_allocate returned %p, %zu bytes\n", pointer, size);
         bsal_tracer_print_stack_backtrace();
         exit(1);
     }
@@ -89,10 +89,10 @@ void *bsal_allocate_private(size_t size, const char *function, const char *file,
     return pointer;
 }
 
-void bsal_free_private(void *pointer, const char *function, const char *file, int line)
+void bsal_memory_free_private(void *pointer, const char *function, const char *file, int line)
 {
 #ifdef BSAL_MEMORY_DEBUG_DETAIL
-    printf("BSAL_MEMORY_DEBUG bsal_free %p %s %s %d\n",
+    printf("BSAL_MEMORY_DEBUG bsal_memory_free %p %s %s %d\n",
                    pointer, function, file, line);
 #endif
 
@@ -149,7 +149,7 @@ uint64_t bsal_get_heap_size()
     return bytes;
 }
 
-int bsal_align(int unaligned, int alignment)
+int bsal_memory_align(int unaligned, int alignment)
 {
     int aligned;
 

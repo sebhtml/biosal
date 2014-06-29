@@ -185,7 +185,7 @@ void bsal_coverage_distribution_write_distribution(struct bsal_actor *self)
         }
     }
 
-    canonical_file_name = bsal_allocate(strlen(file_name) + 100);
+    canonical_file_name = bsal_memory_allocate(strlen(file_name) + 100);
     strcpy(canonical_file_name, file_name);
     strcat(canonical_file_name, "-canonical");
 
@@ -258,7 +258,7 @@ void bsal_coverage_distribution_write_distribution(struct bsal_actor *self)
     descriptor = NULL;
     fclose(descriptor_canonical);
 
-    bsal_free(canonical_file_name);
+    bsal_memory_free(canonical_file_name);
     descriptor_canonical = NULL;
     canonical_file_name = NULL;
 }

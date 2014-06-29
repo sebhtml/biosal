@@ -66,11 +66,11 @@ void bsal_dna_codec_generate_blocks(struct bsal_dna_codec *self)
 {
     char *block;
 
-    block = bsal_allocate(self->block_length + 1);
+    block = bsal_memory_allocate(self->block_length + 1);
 
     bsal_dna_codec_generate_block(self, -1, 'X', block);
 
-    bsal_free(block);
+    bsal_memory_free(block);
 }
 
 void bsal_dna_codec_generate_block(struct bsal_dna_codec *self, int position, char symbol,

@@ -26,7 +26,7 @@ void bsal_fast_ring_init(struct bsal_fast_ring *self, int capacity, int cell_siz
     self->head_cache.value = 0;
     self->tail_cache.value = 0;
 
-    self->cells = bsal_allocate(self->number_of_cells * self->cell_size);
+    self->cells = bsal_memory_allocate(self->number_of_cells * self->cell_size);
 }
 
 void bsal_fast_ring_destroy(struct bsal_fast_ring *self)
@@ -38,7 +38,7 @@ void bsal_fast_ring_destroy(struct bsal_fast_ring *self)
     self->head_cache.value = 0;
     self->tail_cache.value = 0;
 
-    bsal_free(self->cells);
+    bsal_memory_free(self->cells);
 
     self->cells = NULL;
 }

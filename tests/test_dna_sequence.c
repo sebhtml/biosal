@@ -24,7 +24,7 @@ int main(int argc, char **argv)
     struct bsal_memory_pool memory;
 
     bsal_memory_pool_init(&memory, 4194304);
-    buffer = bsal_allocate(101);
+    buffer = bsal_memory_allocate(101);
     strcpy((char *)buffer, "TCCCGAGCGCAGGTAGGCCTCGGGATCGATGTCCGGGGTGTTGAGGATGTTGGACGTGTATTCGTGGTTGTACTGGGTCCAGTCCGCCACCGGGCGCCGC");
     bsal_dna_codec_init(&codec);
 
@@ -41,7 +41,7 @@ int main(int argc, char **argv)
 
     TEST_INT_IS_GREATER_THAN(required, 0);
 
-    buffer_for_pack = bsal_allocate(required);
+    buffer_for_pack = bsal_memory_allocate(required);
 
     /*
     printf("DEBUG buffer %p size for pack/unpack has %d bytes\n",

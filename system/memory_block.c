@@ -18,7 +18,7 @@ void bsal_memory_block_destroy(struct bsal_memory_block *self)
     self->offset = 0;
 
     if (self->memory != NULL) {
-        bsal_free(self->memory);
+        bsal_memory_free(self->memory);
         self->memory = NULL;
     }
 }
@@ -28,7 +28,7 @@ void *bsal_memory_block_allocate(struct bsal_memory_block *self, int size)
     void *pointer;
 
     if (self->memory == NULL) {
-        self->memory = bsal_allocate(self->total_bytes);
+        self->memory = bsal_memory_allocate(self->total_bytes);
     }
 
     if (self->offset + size >= self->total_bytes) {

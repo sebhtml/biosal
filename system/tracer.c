@@ -49,7 +49,7 @@ void bsal_tracer_print_stack_backtrace()
     /*
      * Free the string pointers
      */
-    bsal_free(function_names);
+    bsal_memory_free(function_names);
 
 #endif
 }

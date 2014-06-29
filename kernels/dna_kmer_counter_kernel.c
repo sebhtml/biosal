@@ -188,7 +188,7 @@ void bsal_dna_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_
 
         bsal_dna_kmer_block_init(&block, concrete_actor->kmer_length, source_index, to_reserve);
 
-        sequence_data = bsal_allocate(maximum_length + 1);
+        sequence_data = bsal_memory_allocate(maximum_length + 1);
 
         /* extract kmers
          */
@@ -227,7 +227,7 @@ void bsal_dna_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_
             }
         }
 
-        bsal_free(sequence_data);
+        bsal_memory_free(sequence_data);
         sequence_data = NULL;
 
 #ifdef BSAL_KMER_COUNTER_KERNEL_DEBUG
@@ -250,7 +250,7 @@ void bsal_dna_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_
 #endif
 
         new_count = bsal_dna_kmer_block_pack_size(&block);
-        new_buffer = bsal_allocate(new_count);
+        new_buffer = bsal_memory_allocate(new_count);
         bsal_dna_kmer_block_pack(&block, new_buffer);
 
 #ifdef BSAL_KMER_COUNTER_KERNEL_DEBUG
@@ -271,7 +271,7 @@ void bsal_dna_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_
                         */
 
         bsal_actor_send(actor, consumer, &new_message);
-        bsal_free(new_buffer);
+        bsal_memory_free(new_buffer);
 
         bsal_actor_helper_send_empty(actor,
                         bsal_actor_get_acquaintance(actor, source_index),

@@ -132,7 +132,7 @@ void bsal_sequence_partitioner_receive(struct bsal_actor *actor, struct bsal_mes
             printf("DEBUG partitioner has command, packing %d bytes!\n", bytes);
             */
 
-            buffer = bsal_allocate(bytes);
+            buffer = bsal_memory_allocate(bytes);
             bsal_partition_command_pack(&command, buffer);
 
             bsal_message_init(&response, BSAL_SEQUENCE_PARTITIONER_GET_COMMAND_REPLY,
@@ -146,7 +146,7 @@ void bsal_sequence_partitioner_receive(struct bsal_actor *actor, struct bsal_mes
                             &command_number);
             *command_bucket = command;
 
-            bsal_free(buffer);
+            bsal_memory_free(buffer);
 
             /* there may be other command available too !
              */
@@ -346,14 +346,14 @@ void bsal_sequence_partitioner_verify(struct bsal_actor *actor)
 #endif
 
     bytes = bsal_vector_pack_size(&concrete_actor->store_entries);
-    buffer = bsal_allocate(bytes);
+    buffer = bsal_memory_allocate(bytes);
     bsal_vector_pack(&concrete_actor->store_entries, buffer);
 
     bsal_message_init(&message, BSAL_SEQUENCE_PARTITIONER_PROVIDE_STORE_ENTRY_COUNTS,
                     bytes, buffer);
     bsal_actor_send_reply(actor, &message);
 
-    bsal_free(buffer);
+    bsal_memory_free(buffer);
 }
 
 uint64_t bsal_sequence_partitioner_get_index_in_store(uint64_t index, int block_size, int store_count)

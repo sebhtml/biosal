@@ -113,7 +113,7 @@ void bsal_kmer_store_receive(struct bsal_actor *self, struct bsal_message *messa
 
         bsal_dna_kmer_block_unpack(&block, buffer, &concrete_actor->ephemeral_memory);
 
-        key = bsal_allocate(concrete_actor->key_length_in_bytes);
+        key = bsal_memory_allocate(concrete_actor->key_length_in_bytes);
 
 #ifdef BSAL_KMER_STORE_DEBUG
         printf("Allocating key %d bytes\n", concrete_actor->key_length_in_bytes);
@@ -161,7 +161,7 @@ void bsal_kmer_store_receive(struct bsal_actor *self, struct bsal_message *messa
             concrete_actor->received++;
         }
 
-        bsal_free(key);
+        bsal_memory_free(key);
 
         bsal_vector_iterator_destroy(&iterator);
         bsal_dna_kmer_block_destroy(&block, &concrete_actor->ephemeral_memory);
@@ -239,7 +239,7 @@ void bsal_kmer_store_print(struct bsal_actor *self)
     printf("MAx length %d\n", maximum_length);
     */
 
-    sequence = bsal_allocate(maximum_length + 1);
+    sequence = bsal_memory_allocate(maximum_length + 1);
     sequence[0] = '\0';
     bsal_map_iterator_destroy(&iterator);
     bsal_map_iterator_init(&iterator, &concrete_actor->table);
@@ -260,7 +260,7 @@ void bsal_kmer_store_print(struct bsal_actor *self)
     }
 
     bsal_map_iterator_destroy(&iterator);
-    bsal_free(sequence);
+    bsal_memory_free(sequence);
 }
 
 void bsal_kmer_store_push_data(struct bsal_actor *self, struct bsal_message *message)
@@ -319,7 +319,7 @@ void bsal_kmer_store_push_data(struct bsal_actor *self, struct bsal_message *mes
     bsal_map_iterator_destroy(&iterator);
 
     new_count = bsal_map_pack_size(&coverage_distribution);
-    new_buffer = bsal_allocate(new_count);
+    new_buffer = bsal_memory_allocate(new_count);
 
     bsal_map_pack(&coverage_distribution, new_buffer);
 
@@ -331,7 +331,7 @@ void bsal_kmer_store_push_data(struct bsal_actor *self, struct bsal_message *mes
     bsal_message_init(&new_message, BSAL_PUSH_DATA, new_count, new_buffer);
 
     bsal_actor_send(self, customer, &new_message);
-    bsal_free(new_buffer);
+    bsal_memory_free(new_buffer);
 
     bsal_map_destroy(&coverage_distribution);
 

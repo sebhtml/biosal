@@ -29,7 +29,7 @@ void bsal_buffered_reader_init(struct bsal_buffered_reader *reader,
     printf("DEBUG fseek %" PRIu64 "\n", offset);
 #endif
 
-    reader->buffer = (char *)bsal_allocate(BSAL_BUFFERED_READER_BUFFER_SIZE * sizeof(char));
+    reader->buffer = (char *)bsal_memory_allocate(BSAL_BUFFERED_READER_BUFFER_SIZE * sizeof(char));
     reader->buffer_capacity = BSAL_BUFFERED_READER_BUFFER_SIZE;
     reader->position_in_buffer = 0;
     reader->buffer_size = 0;
@@ -39,7 +39,7 @@ void bsal_buffered_reader_init(struct bsal_buffered_reader *reader,
 
 void bsal_buffered_reader_destroy(struct bsal_buffered_reader *reader)
 {
-    bsal_free(reader->buffer);
+    bsal_memory_free(reader->buffer);
 
     reader->buffer = NULL;
     reader->buffer_capacity = 0;

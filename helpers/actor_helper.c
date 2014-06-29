@@ -20,14 +20,14 @@ void bsal_actor_helper_send_vector(struct bsal_actor *actor, int destination,
     void *buffer;
 
     count = bsal_vector_pack_size(vector);
-    buffer = bsal_allocate(count);
+    buffer = bsal_memory_allocate(count);
     bsal_vector_pack(vector, buffer);
 
     bsal_message_init(&message, tag, count, buffer);
 
     bsal_actor_send(actor, destination, &message);
 
-    bsal_free(buffer);
+    bsal_memory_free(buffer);
 
     bsal_message_destroy(&message);
 }
@@ -286,10 +286,10 @@ void bsal_actor_helper_send_range_binomial_tree(struct bsal_actor *actor, struct
 
         /* TODO use slab allocator */
         new_count = count + sizeof(source) + sizeof(tag) + bsal_vector_pack_size(&left_part) + sizeof(magic_offset);
-        new_buffer = bsal_allocate(new_count);
+        new_buffer = bsal_memory_allocate(new_count);
 
 #ifdef BSAL_ACTOR_DEBUG_BINOMIAL_TREE
-        printf("DEBUG12 bsal_allocate %p (send_binomial_range)\n",
+        printf("DEBUG12 bsal_memory_allocate %p (send_binomial_range)\n",
                     new_buffer);
 #endif
 
@@ -320,7 +320,7 @@ void bsal_actor_helper_send_range_binomial_tree(struct bsal_actor *actor, struct
         bsal_actor_send(actor, left_actor, &new_message);
 
         /* restore the buffer for the user */
-        bsal_free(new_buffer);
+        bsal_memory_free(new_buffer);
         bsal_vector_destroy(&left_part);
     }
 
@@ -332,7 +332,7 @@ void bsal_actor_helper_send_range_binomial_tree(struct bsal_actor *actor, struct
     if (bsal_vector_size(&right_part) > 0) {
 
         new_count = count + sizeof(source) + sizeof(tag) + bsal_vector_pack_size(&right_part) + sizeof(magic_offset);
-        new_buffer = bsal_allocate(new_count);
+        new_buffer = bsal_memory_allocate(new_count);
 
         memcpy(new_buffer, buffer, count);
         offset = count;
@@ -361,7 +361,7 @@ void bsal_actor_helper_send_range_binomial_tree(struct bsal_actor *actor, struct
         bsal_actor_send(actor, right_actor, &new_message);
 
         bsal_vector_destroy(&right_part);
-        bsal_free(new_buffer);
+        bsal_memory_free(new_buffer);
         new_buffer = NULL;
     }
 }
@@ -396,14 +396,14 @@ void bsal_actor_helper_send_range_vector(struct bsal_actor *actor, struct bsal_v
     void *buffer;
 
     count = bsal_vector_pack_size(vector);
-    buffer = bsal_allocate(count);
+    buffer = bsal_memory_allocate(count);
     bsal_vector_pack(vector, buffer);
     bsal_message_init(&message, tag, count, buffer);
     bsal_actor_helper_send_range(actor, actors, &message);
 
     bsal_message_destroy(&message);
 
-    bsal_free(buffer);
+    bsal_memory_free(buffer);
 }
 
 void bsal_actor_helper_receive_binomial_tree_send(struct bsal_actor *actor, struct bsal_message *message)

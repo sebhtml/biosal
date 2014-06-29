@@ -85,7 +85,7 @@ void bsal_worker_pool_delete_workers(struct bsal_worker_pool *pool)
         bsal_worker_destroy(worker);
     }
 
-    bsal_free(pool->worker_array);
+    bsal_memory_free(pool->worker_array);
     pool->worker_array = NULL;
 }
 
@@ -99,7 +99,7 @@ void bsal_worker_pool_create_workers(struct bsal_worker_pool *pool)
     }
 
     bytes = pool->workers * sizeof(struct bsal_worker);
-    pool->worker_array = (struct bsal_worker *)bsal_allocate(bytes);
+    pool->worker_array = (struct bsal_worker *)bsal_memory_allocate(bytes);
 
     for (i = 0; i < pool->workers; i++) {
         bsal_worker_init(bsal_worker_pool_get_worker(pool, i), i, pool->node);
@@ -463,7 +463,7 @@ void bsal_worker_pool_print_load(struct bsal_worker_pool *self, int type)
     count = bsal_worker_pool_worker_count(self);
     allocated = count * 20 + 20 + extra;
 
-    buffer = bsal_allocate(allocated);
+    buffer = bsal_memory_allocate(allocated);
     node_name = bsal_node_name(self->node);
     offset = 0;
     i = 0;
@@ -488,7 +488,7 @@ void bsal_worker_pool_print_load(struct bsal_worker_pool *self, int type)
 
     printf("LOAD %s %d s node/%d%s\n", description, elapsed, node_name, buffer);
 
-    bsal_free(buffer);
+    bsal_memory_free(buffer);
 }
 
 void bsal_worker_pool_toggle_debug_mode(struct bsal_worker_pool *self)

@@ -136,7 +136,7 @@ void bsal_input_controller_destroy(struct bsal_actor *actor)
 
     for (i = 0; i < bsal_vector_size(&controller->files); i++) {
         pointer = *(char **)bsal_vector_at(&controller->files, i);
-        bsal_free(pointer);
+        bsal_memory_free(pointer);
     }
 
     bsal_vector_destroy(&controller->mega_block_vector);
@@ -243,7 +243,7 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
 
         file = (char *)buffer;
 
-        local_file = bsal_allocate(strlen(file) + 1);
+        local_file = bsal_memory_allocate(strlen(file) + 1);
         strcpy(local_file, file);
 
         bsal_vector_push_back(&controller->files, &local_file);
@@ -314,7 +314,7 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
             }
 
             new_count = bsal_vector_pack_size(&block_counts);
-            new_buffer = bsal_allocate(new_count);
+            new_buffer = bsal_memory_allocate(new_count);
 
 #ifdef BSAL_INPUT_CONTROLLER_DEBUG
             printf("DEBUG packed counts, %d bytes\n", count);
@@ -324,7 +324,7 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
             bsal_message_init(&new_message, BSAL_SEQUENCE_PARTITIONER_SET_ENTRY_VECTOR,
                             new_count, new_buffer);
             bsal_actor_send(actor, destination, &new_message);
-            bsal_free(new_buffer);
+            bsal_memory_free(new_buffer);
             bsal_vector_destroy(&block_counts);
 
             return;
@@ -1095,7 +1095,7 @@ void bsal_input_controller_receive_command(struct bsal_actor *actor, struct bsal
                     bytes);
 #endif
 
-    new_buffer = bsal_allocate(bytes);
+    new_buffer = bsal_memory_allocate(bytes);
     bsal_input_command_pack(&input_command, new_buffer);
 
     bsal_message_init(&new_message, BSAL_INPUT_PUSH_SEQUENCES, bytes,
@@ -1111,7 +1111,7 @@ void bsal_input_controller_receive_command(struct bsal_actor *actor, struct bsal
 
     bsal_actor_send(actor, stream_name, &new_message);
 
-    bsal_free(new_buffer);
+    bsal_memory_free(new_buffer);
 
     command_name = bsal_partition_command_name(&command);
 

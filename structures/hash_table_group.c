@@ -26,9 +26,9 @@ void bsal_hash_table_group_init(struct bsal_hash_table_group *group,
     array_bytes = buckets_per_group * (key_size + value_size);
 
     /* TODO: use slab allocator */
-    group->array = bsal_allocate(array_bytes);
-    group->occupancy_bitmap = bsal_allocate(bitmap_bytes);
-    group->deletion_bitmap = bsal_allocate(bitmap_bytes);
+    group->array = bsal_memory_allocate(array_bytes);
+    group->occupancy_bitmap = bsal_memory_allocate(bitmap_bytes);
+    group->deletion_bitmap = bsal_memory_allocate(bitmap_bytes);
 
     /* mark all buckets as not occupied */
     memset(group->occupancy_bitmap, BSAL_BIT_ZERO, bitmap_bytes);
@@ -38,13 +38,13 @@ void bsal_hash_table_group_init(struct bsal_hash_table_group *group,
 void bsal_hash_table_group_destroy(struct bsal_hash_table_group *group)
 {
     /* TODO use slab allocator */
-    bsal_free(group->occupancy_bitmap);
+    bsal_memory_free(group->occupancy_bitmap);
     group->occupancy_bitmap = NULL;
 
-    bsal_free(group->deletion_bitmap);
+    bsal_memory_free(group->deletion_bitmap);
     group->deletion_bitmap = NULL;
 
-    bsal_free(group->array);
+    bsal_memory_free(group->array);
     group->array = NULL;
 }
 
