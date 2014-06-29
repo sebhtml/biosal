@@ -22,7 +22,6 @@ struct bsal_sequence_store {
     struct bsal_vector_iterator iterator;
 
     struct bsal_memory_pool persistent_memory;
-    struct bsal_memory_pool ephemeral_memory;
 };
 
 #define BSAL_RESERVE 0x00000d3c

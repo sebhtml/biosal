@@ -67,12 +67,6 @@ void bsal_dna_kmer_counter_kernel_init(struct bsal_actor *actor)
 
     concrete_actor->kmers = 0;
 
-    bsal_memory_pool_init(&concrete_actor->ephemeral_memory, 2097152);
-
-#ifdef BSAL_DNA_KMER_COUNTER_KERNEL_DISABLE_TRACKING
-    bsal_memory_pool_disable_tracking(&concrete_actor->ephemeral_memory);
-#endif
-
     bsal_dna_codec_init(&concrete_actor->codec);
 }
 
@@ -87,8 +81,6 @@ void bsal_dna_kmer_counter_kernel_destroy(struct bsal_actor *actor)
     concrete_actor->producer_source =-1;
 
     bsal_dna_codec_destroy(&concrete_actor->codec);
-
-    bsal_memory_pool_destroy(&concrete_actor->ephemeral_memory);
 }
 
 void bsal_dna_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_message *message)
@@ -132,8 +124,9 @@ void bsal_dna_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_
 #ifdef BSAL_DNA_KMER_COUNTER_KERNEL_DISABLE_TRACKING
     /* Release all memory allocations before doing anything.
      * Tracking is disabled anyway.
+     * Update: this is no longer necessary, the worker does it.
      */
-    bsal_memory_pool_free_all(&concrete_actor->ephemeral_memory);
+    /*bsal_memory_pool_free_all(bsal_actor_get_ephemeral_memory(actor));*/
 #endif
 
     if (tag == BSAL_PUSH_SEQUENCE_DATA_BLOCK) {
@@ -154,7 +147,7 @@ void bsal_dna_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_
         consumer = bsal_actor_get_acquaintance(actor, concrete_actor->consumer);
         source_index = bsal_actor_add_acquaintance(actor, source);
 
-        bsal_input_command_unpack(&payload, buffer, &concrete_actor->ephemeral_memory);
+        bsal_input_command_unpack(&payload, buffer, bsal_actor_get_ephemeral_memory(actor));
 
         command_entries = bsal_input_command_entries(&payload);
 
@@ -208,7 +201,7 @@ void bsal_dna_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_
                 sequence_data[j + concrete_actor->kmer_length] = '\0';
 
                 bsal_dna_kmer_init(&kmer, sequence_data + j,
-                                &concrete_actor->codec, &concrete_actor->ephemeral_memory);
+                                &concrete_actor->codec, bsal_actor_get_ephemeral_memory(actor));
 
 #ifdef BSAL_KMER_COUNTER_KERNEL_DEBUG_LEVEL_2
                 printf("KERNEL kmer %d,%d %s\n", i, j, sequence_data + j);
@@ -217,9 +210,9 @@ void bsal_dna_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_
                 /*
                  * add kmer in block
                  */
-                bsal_dna_kmer_block_add_kmer(&block, &kmer, &concrete_actor->ephemeral_memory);
+                bsal_dna_kmer_block_add_kmer(&block, &kmer, bsal_actor_get_ephemeral_memory(actor));
 
-                bsal_dna_kmer_destroy(&kmer, &concrete_actor->ephemeral_memory);
+                bsal_dna_kmer_destroy(&kmer, bsal_actor_get_ephemeral_memory(actor));
 
                 sequence_data[j + concrete_actor->kmer_length] = saved;
 
@@ -237,7 +230,7 @@ void bsal_dna_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_
         concrete_actor->actual += entries;
         concrete_actor->blocks++;
 
-        bsal_input_command_destroy(&payload, &concrete_actor->ephemeral_memory);
+        bsal_input_command_destroy(&payload, bsal_actor_get_ephemeral_memory(actor));
 
 #ifdef BSAL_KMER_COUNTER_KERNEL_DEBUG
         printf("consumer%d\n", consumer);
@@ -298,7 +291,7 @@ void bsal_dna_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_
 
         bsal_timer_destroy(&timer);
 
-        bsal_dna_kmer_block_destroy(&block, &concrete_actor->ephemeral_memory);
+        bsal_dna_kmer_block_destroy(&block, bsal_actor_get_ephemeral_memory(actor));
 
 #ifdef BSAL_KMER_COUNTER_KERNEL_DEBUG
         BSAL_DEBUG_MARKER("leaving call.\n");
@@ -366,9 +359,9 @@ void bsal_dna_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_
         bsal_message_helper_unpack_int(message, 0, &concrete_actor->kmer_length);
 
         bsal_dna_kmer_init_mock(&kmer, concrete_actor->kmer_length, &concrete_actor->codec,
-                        &concrete_actor->ephemeral_memory);
+                        bsal_actor_get_ephemeral_memory(actor));
         concrete_actor->bytes_per_kmer = bsal_dna_kmer_pack_size(&kmer, concrete_actor->kmer_length);
-        bsal_dna_kmer_destroy(&kmer, &concrete_actor->ephemeral_memory);
+        bsal_dna_kmer_destroy(&kmer, bsal_actor_get_ephemeral_memory(actor));
 
         bsal_actor_helper_send_reply_empty(actor, BSAL_SET_KMER_LENGTH_REPLY);
 

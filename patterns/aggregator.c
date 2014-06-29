@@ -64,13 +64,6 @@ void bsal_aggregator_init(struct bsal_actor *self)
     bsal_dna_codec_init(&concrete_actor->codec);
 
     bsal_vector_init(&concrete_actor->persistent_memory_pools, sizeof(struct bsal_memory_pool));
-    bsal_memory_pool_init(&concrete_actor->ephemeral_memory, 2097152);
-
-#ifdef BSAL_AGGREGATOR_DISABLE_TRACKING
-    bsal_memory_pool_disable_tracking(&concrete_actor->ephemeral_memory);
-#else
-    bsal_memory_pool_disable(&concrete_actor->ephemeral_memory);
-#endif
 }
 
 void bsal_aggregator_destroy(struct bsal_actor *self)
@@ -115,8 +108,6 @@ void bsal_aggregator_destroy(struct bsal_actor *self)
 
     bsal_vector_destroy(&concrete_actor->customers);
     bsal_vector_destroy(&concrete_actor->persistent_memory_pools);
-
-    bsal_memory_pool_destroy(&concrete_actor->ephemeral_memory);
 }
 
 void bsal_aggregator_receive(struct bsal_actor *self, struct bsal_message *message)
@@ -142,8 +133,6 @@ void bsal_aggregator_receive(struct bsal_actor *self, struct bsal_message *messa
     tag = bsal_message_tag(message);
     source = bsal_message_source(message);
 
-    bsal_memory_pool_free_all(&concrete_actor->ephemeral_memory);
-
     if (tag == BSAL_AGGREGATE_KERNEL_OUTPUT) {
 
         if (bsal_vector_size(&concrete_actor->buffers) == 0) {
@@ -160,7 +149,7 @@ void bsal_aggregator_receive(struct bsal_actor *self, struct bsal_message *messa
 
         concrete_actor->received++;
 
-        bsal_dna_kmer_block_unpack(&block, buffer, &concrete_actor->ephemeral_memory);
+        bsal_dna_kmer_block_unpack(&block, buffer, bsal_actor_get_ephemeral_memory(self));
 
 #ifdef BSAL_AGGREGATOR_DEBUG
         BSAL_DEBUG_MARKER("aggregator before loop");
@@ -184,7 +173,7 @@ void bsal_aggregator_receive(struct bsal_actor *self, struct bsal_message *messa
             */
 
             customer_index = bsal_dna_kmer_store_index(kmer, customer_count, concrete_actor->kmer_length,
-                            &concrete_actor->codec, &concrete_actor->ephemeral_memory);
+                            &concrete_actor->codec, bsal_actor_get_ephemeral_memory(self));
 
             persistent_memory = (struct bsal_memory_pool*)bsal_vector_at(&concrete_actor->persistent_memory_pools, customer_index);
             customer_block_pointer = (struct bsal_dna_kmer_block *)bsal_vector_at(&concrete_actor->buffers,
@@ -236,7 +225,7 @@ void bsal_aggregator_receive(struct bsal_actor *self, struct bsal_message *messa
 
         /* destroy the local copy of the block
          */
-        bsal_dna_kmer_block_destroy(&block, &concrete_actor->ephemeral_memory);
+        bsal_dna_kmer_block_destroy(&block, bsal_actor_get_ephemeral_memory(self));
 
 #ifdef BSAL_AGGREGATOR_DEBUG
         BSAL_DEBUG_MARKER("aggregator marker EXIT");

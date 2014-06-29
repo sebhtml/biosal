@@ -1750,3 +1750,16 @@ struct bsal_map *bsal_actor_get_sent_messages(struct bsal_actor *self)
 {
     return &self->sent_messages;
 }
+
+struct bsal_memory_pool *bsal_actor_get_ephemeral_memory(struct bsal_actor *actor)
+{
+    struct bsal_worker *worker;
+
+    worker = bsal_actor_worker(actor);
+
+    if (worker == NULL) {
+        return NULL;
+    }
+
+    return bsal_worker_get_ephemeral_memory(worker);
+}

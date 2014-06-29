@@ -149,6 +149,7 @@ new name.
 
 struct bsal_node;
 struct bsal_worker;
+struct bsal_memory_pool;
 
 /*
  * the actor attribute is a void *
@@ -334,5 +335,7 @@ int bsal_actor_enqueued_message_count(struct bsal_actor *actor);
 
 struct bsal_map *bsal_actor_get_received_messages(struct bsal_actor *self);
 struct bsal_map *bsal_actor_get_sent_messages(struct bsal_actor *self);
+
+struct bsal_memory_pool *bsal_actor_get_ephemeral_memory(struct bsal_actor *actor);
 
 #endif

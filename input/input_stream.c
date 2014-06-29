@@ -58,9 +58,6 @@ void bsal_input_stream_init(struct bsal_actor *actor)
     bsal_vector_init(&input->mega_blocks, sizeof(struct bsal_mega_block));
 
     bsal_actor_register(actor, BSAL_INPUT_STREAM_SET_OFFSET, bsal_input_stream_set_offset);
-
-    bsal_memory_pool_init(&input->ephemeral_memory, 2097152);
-    bsal_memory_pool_disable_tracking(&input->ephemeral_memory);
 }
 
 void bsal_input_stream_destroy(struct bsal_actor *actor)
@@ -91,8 +88,6 @@ void bsal_input_stream_destroy(struct bsal_actor *actor)
     bsal_dna_codec_destroy(&input->codec);
 
     bsal_vector_destroy(&input->mega_blocks);
-
-    bsal_memory_pool_destroy(&input->ephemeral_memory);
 }
 
 void bsal_input_stream_receive(struct bsal_actor *actor, struct bsal_message *message)
@@ -125,8 +120,6 @@ void bsal_input_stream_receive(struct bsal_actor *actor, struct bsal_message *me
     }
 
     */
-
-    bsal_memory_pool_free_all(&concrete_actor->ephemeral_memory);
 
     if (tag == BSAL_INPUT_OPEN) {
 
@@ -462,7 +455,7 @@ void bsal_input_stream_push_sequences(struct bsal_actor *actor,
     buffer = bsal_message_buffer(message);
 
     concrete_actor = (struct bsal_input_stream *)bsal_actor_concrete_actor(actor);
-    bsal_input_command_unpack(&command, buffer, &concrete_actor->ephemeral_memory);
+    bsal_input_command_unpack(&command, buffer, bsal_actor_get_ephemeral_memory(actor));
 
 #ifdef BSAL_INPUT_STREAM_DEBUG
     count = bsal_message_count(message);
@@ -500,12 +493,12 @@ void bsal_input_stream_push_sequences(struct bsal_actor *actor,
                             buffer_for_sequence);
 
         bsal_dna_sequence_init(&dna_sequence, buffer_for_sequence,
-                        &concrete_actor->codec, &concrete_actor->ephemeral_memory);
+                        &concrete_actor->codec, bsal_actor_get_ephemeral_memory(actor));
 
         bsal_input_command_add_entry(&command, &dna_sequence, &concrete_actor->codec,
-                        &concrete_actor->ephemeral_memory);
+                        bsal_actor_get_ephemeral_memory(actor));
 
-        bsal_dna_sequence_destroy(&dna_sequence, &concrete_actor->ephemeral_memory);
+        bsal_dna_sequence_destroy(&dna_sequence, bsal_actor_get_ephemeral_memory(actor));
 
         i++;
     }
@@ -555,13 +548,13 @@ void bsal_input_stream_push_sequences(struct bsal_actor *actor,
                     (int)bsal_vector_size(command_entries));
 #endif
 
-    bsal_input_command_destroy(&command, &concrete_actor->ephemeral_memory);
+    bsal_input_command_destroy(&command, bsal_actor_get_ephemeral_memory(actor));
 
 #if 0
     for (i = 0; i < bsal_vector_size(command_entries); i++) {
         a_sequence = (struct bsal_dna_sequence *)bsal_vector_at(command_entries, i);
 
-        bsal_dna_sequence_destroy(a_sequence, &concrete_actor->ephemeral_memory);
+        bsal_dna_sequence_destroy(a_sequence, bsal_actor_get_ephemeral_memory(actor));
     }
 
     bsal_vector_destroy(command_entries);

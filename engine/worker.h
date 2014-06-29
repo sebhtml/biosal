@@ -5,6 +5,8 @@
 #include <structures/fast_ring.h>
 #include <structures/ring_queue.h>
 
+#include <system/memory_pool.h>
+
 #include <stdint.h>
 
 struct bsal_work;
@@ -58,6 +60,8 @@ struct bsal_worker {
     uint64_t loop_start_in_nanoseconds;
     uint64_t loop_used_nanoseconds;
     float loop_load;
+
+    struct bsal_memory_pool ephemeral_memory;
 };
 
 void bsal_worker_init(struct bsal_worker *worker, int name, struct bsal_node *node);
@@ -95,5 +99,7 @@ int bsal_worker_pull_message(struct bsal_worker *worker, struct bsal_message *me
 int bsal_worker_push_work(struct bsal_worker *worker, struct bsal_work *work);
 
 #endif
+
+struct bsal_memory_pool *bsal_worker_get_ephemeral_memory(struct bsal_worker *worker);
 
 #endif

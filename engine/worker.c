@@ -66,6 +66,13 @@ void bsal_worker_init(struct bsal_worker *worker, int name, struct bsal_node *no
     worker->loop_used_nanoseconds = 0;
     worker->loop_load = 0;
     worker->start = 0;
+
+/* 2 MiB is the default size for Linux huge pages.
+ * \see https://wiki.debian.org/Hugepages
+ * \see http://lwn.net/Articles/376606/
+ */
+    bsal_memory_pool_init(&worker->ephemeral_memory, 2097152);
+    bsal_memory_pool_disable_tracking(&worker->ephemeral_memory);
 }
 
 void bsal_worker_destroy(struct bsal_worker *worker)
@@ -87,6 +94,8 @@ void bsal_worker_destroy(struct bsal_worker *worker)
 
     worker->name = -1;
     worker->dead = 1;
+
+    bsal_memory_pool_destroy(&worker->ephemeral_memory);
 }
 
 void bsal_worker_run(struct bsal_worker *worker)
@@ -253,6 +262,11 @@ void bsal_worker_work(struct bsal_worker *worker, struct bsal_work *work)
     bsal_actor_receive(actor, message);
 
     bsal_actor_set_worker(actor, NULL);
+
+    /* Free ephemeral memory
+     */
+    bsal_memory_pool_free_all(&worker->ephemeral_memory);
+
     dead = bsal_actor_dead(actor);
 
     if (dead) {
@@ -599,4 +613,9 @@ float bsal_worker_get_epoch_load(struct bsal_worker *self)
 float bsal_worker_get_loop_load(struct bsal_worker *self)
 {
     return self->loop_load;
+}
+
+struct bsal_memory_pool *bsal_worker_get_ephemeral_memory(struct bsal_worker *worker)
+{
+    return &worker->ephemeral_memory;
 }

@@ -52,12 +52,6 @@ void bsal_sequence_store_init(struct bsal_actor *actor)
     /* 2^26 */
     bsal_memory_pool_init(&concrete_actor->persistent_memory, 67108864);
     bsal_memory_pool_disable_tracking(&concrete_actor->persistent_memory);
-
-    /*
-     * a typical huge page size is 2046 KiB
-     */
-    bsal_memory_pool_init(&concrete_actor->ephemeral_memory, 2097152);
-    bsal_memory_pool_disable_tracking(&concrete_actor->ephemeral_memory);
 }
 
 void bsal_sequence_store_destroy(struct bsal_actor *actor)
@@ -85,16 +79,13 @@ void bsal_sequence_store_destroy(struct bsal_actor *actor)
     }
 
     bsal_memory_pool_destroy(&concrete_actor->persistent_memory);
-    bsal_memory_pool_destroy(&concrete_actor->ephemeral_memory);
 }
 
 void bsal_sequence_store_receive(struct bsal_actor *actor, struct bsal_message *message)
 {
     int tag;
-    struct bsal_sequence_store *concrete_actor;
 
     tag = bsal_message_tag(message);
-    concrete_actor = (struct bsal_sequence_store *)bsal_actor_concrete_actor(actor);
 
     if (tag == BSAL_PUSH_SEQUENCE_DATA_BLOCK) {
 
@@ -113,8 +104,6 @@ void bsal_sequence_store_receive(struct bsal_actor *actor, struct bsal_message *
 
         bsal_actor_helper_ask_to_stop(actor, message);
     }
-
-    bsal_memory_pool_free_all(&concrete_actor->ephemeral_memory);
 }
 
 void bsal_sequence_store_push_sequence_data_block(struct bsal_actor *actor, struct bsal_message *message)
@@ -145,7 +134,7 @@ void bsal_sequence_store_push_sequence_data_block(struct bsal_actor *actor, stru
                     count);
 #endif
 
-    bsal_input_command_unpack(&payload, buffer, &concrete_actor->ephemeral_memory);
+    bsal_input_command_unpack(&payload, buffer, bsal_actor_get_ephemeral_memory(actor));
 
 #ifdef BSAL_SEQUENCE_STORE_DEBUG
     printf("DEBUG store %d bsal_sequence_store_receive command:\n",
@@ -225,7 +214,7 @@ void bsal_sequence_store_push_sequence_data_block(struct bsal_actor *actor, stru
      */
     /* free payload
      */
-    bsal_input_command_destroy(&payload, &concrete_actor->ephemeral_memory);
+    bsal_input_command_destroy(&payload, bsal_actor_get_ephemeral_memory(actor));
 
     bsal_actor_helper_send_reply_empty(actor, BSAL_PUSH_SEQUENCE_DATA_BLOCK_REPLY);
 }
@@ -343,7 +332,7 @@ void bsal_sequence_store_ask(struct bsal_actor *self, struct bsal_message *messa
 
         /*printf("ADDING %d\n", i);*/
         bsal_input_command_add_entry(&payload, sequence, &concrete_actor->codec,
-                        &concrete_actor->ephemeral_memory);
+                        bsal_actor_get_ephemeral_memory(self));
 
         i++;
     }
@@ -371,7 +360,5 @@ void bsal_sequence_store_ask(struct bsal_actor *self, struct bsal_message *messa
 #endif
     }
 
-    bsal_input_command_destroy(&payload, &concrete_actor->ephemeral_memory);
-
-    bsal_memory_pool_free_all(&concrete_actor->ephemeral_memory);
+    bsal_input_command_destroy(&payload, bsal_actor_get_ephemeral_memory(self));
 }

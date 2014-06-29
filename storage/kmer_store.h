@@ -27,7 +27,6 @@ struct bsal_kmer_store {
     uint64_t received;
     uint64_t last_received;
 
-    struct bsal_memory_pool ephemeral_memory;
     struct bsal_memory_pool persistent_memory;
 };
 
