@@ -42,6 +42,7 @@ int bsal_dna_kmer_store_index(struct bsal_dna_kmer *self, int stores, int kmer_l
         struct bsal_dna_codec *codec, struct bsal_memory_pool *memory);
 int bsal_dna_kmer_pack_store_key(struct bsal_dna_kmer *sequence,
                 void *buffer, int kmer_length, struct bsal_dna_codec *codec, struct bsal_memory_pool *memory);
+int bsal_dna_kmer_pack_store_key_size(struct bsal_dna_kmer *sequence, int kmer_length);
 
 uint64_t bsal_dna_kmer_hash(struct bsal_dna_kmer *self, int kmer_length);
 

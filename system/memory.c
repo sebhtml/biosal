@@ -148,3 +148,17 @@ uint64_t bsal_get_heap_size()
 
     return bytes;
 }
+
+int bsal_align(int unaligned, int alignment)
+{
+    int aligned;
+
+    aligned = unaligned + (alignment - (unaligned % alignment));
+
+#ifdef BSAL_DNA_KMER_DEBUG_ALIGNMENT
+    printf("ALIGNMENT %d unaligned %d aligned %d\n",
+                    alignment, unaligned, aligned);
+#endif
+
+    return aligned;
+}

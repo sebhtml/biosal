@@ -65,6 +65,10 @@ int bsal_dna_kmer_pack_store_key(struct bsal_dna_kmer *self,
 {
     struct bsal_dna_kmer kmer2;
     int bytes;
+    int total;
+
+    total = bsal_dna_kmer_pack_size(self, kmer_length);
+    memset(buffer, 0, total);
 
     bsal_dna_kmer_init_copy(&kmer2, self, kmer_length, memory);
     bsal_dna_kmer_reverse_complement_self(&kmer2, kmer_length, codec, memory);
@@ -123,7 +127,7 @@ int bsal_dna_kmer_pack_unpack(struct bsal_dna_kmer *sequence,
 
     bsal_packer_destroy(&packer);
 
-    return offset;
+    return bsal_align(offset, sizeof(uint64_t));
 }
 
 void bsal_dna_kmer_init_random(struct bsal_dna_kmer *sequence, int kmer_length,
@@ -342,3 +346,4 @@ int bsal_dna_kmer_compare(struct bsal_dna_kmer *self, struct bsal_dna_kmer *othe
     return result;
 #endif
 }
+

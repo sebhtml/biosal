@@ -38,4 +38,6 @@ void bsal_free_private(void *pointer, const char *function, const char *file, in
 
 uint64_t bsal_get_heap_size();
 
+int bsal_align(int unaligned, int alignment);
+
 #endif
