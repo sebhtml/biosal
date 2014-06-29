@@ -212,7 +212,10 @@ struct bsal_worker *bsal_worker_pool_select_worker_for_message(struct bsal_worke
 int bsal_worker_pool_next_worker(struct bsal_worker_pool *pool, int worker)
 {
     worker++;
-    worker %= pool->workers;
+
+    if (worker >= pool->workers) {
+        worker -= pool->workers;
+    }
 
     return worker;
 }
