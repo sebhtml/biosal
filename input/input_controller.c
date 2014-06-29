@@ -482,7 +482,7 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
 
             printf("Cataloging %d ENTRIES\n", (int)entries);
 
-            (*bucket) += entries;
+            (*bucket) = entries;
 
             bsal_mega_block_print(mega_block);
         }

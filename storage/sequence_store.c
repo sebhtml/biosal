@@ -321,7 +321,7 @@ void bsal_sequence_store_ask(struct bsal_actor *self, struct bsal_message *messa
                         concrete_actor->received, concrete_actor->expected,
                         concrete_actor->reservation_producer);
     }
-    block_size = 512;
+    block_size = 256;
 
     if (!concrete_actor->iterator_started) {
         bsal_vector_iterator_init(&concrete_actor->iterator, &concrete_actor->sequences);

@@ -58,13 +58,13 @@ void bsal_aggregator_init(struct bsal_actor *self)
     bsal_vector_init(&concrete_actor->customers, sizeof(int));
     bsal_vector_init(&concrete_actor->buffers, sizeof(struct bsal_dna_kmer_block));
 
-    concrete_actor->customer_block_size = 2048;
+    concrete_actor->customer_block_size = 512;
     concrete_actor->flushed = 0;
 
     bsal_dna_codec_init(&concrete_actor->codec);
 
     bsal_vector_init(&concrete_actor->persistent_memory_pools, sizeof(struct bsal_memory_pool));
-    bsal_memory_pool_init(&concrete_actor->ephemeral_memory, 1048576);
+    bsal_memory_pool_init(&concrete_actor->ephemeral_memory, 2097152);
 
 #ifdef BSAL_AGGREGATOR_DISABLE_TRACKING
     bsal_memory_pool_disable_tracking(&concrete_actor->ephemeral_memory);
