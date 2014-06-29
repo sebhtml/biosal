@@ -52,6 +52,7 @@ struct bsal_node {
     struct bsal_map scripts;
     int available_scripts;
     int maximum_scripts;
+    int use_mpi;
 
     pthread_t thread;
     struct bsal_transport transport;
