@@ -203,7 +203,7 @@ struct bsal_worker *bsal_worker_pool_select_worker_for_message(struct bsal_worke
             best_score = score;
         }
 
-        i++;
+        ++i;
     }
 
     return best_worker;
@@ -504,7 +504,8 @@ void bsal_worker_pool_print_load(struct bsal_worker_pool *self, int type)
             selected_load = loop_load;
         }
         offset += sprintf(buffer + offset, " %.2f", selected_load);
-        i++;
+
+        ++i;
     }
 
     printf("LOAD %s %d s node/%d%s\n", description, elapsed, node_name, buffer);

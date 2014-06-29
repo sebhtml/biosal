@@ -63,8 +63,22 @@ void bsal_dna_helper_reverse_complement(char *sequence1, char *sequence2)
 #endif
 }
 
+#define BSAL_DNA_HELPER_FAST
+
 char bsal_dna_helper_complement_nucleotide(char nucleotide)
 {
+#ifdef BSAL_DNA_HELPER_FAST
+    if (nucleotide == 'A') {
+        return 'T';
+    } else if (nucleotide == 'G') {
+        return 'C';
+    } else if (nucleotide == 'T') {
+        return 'A';
+    } else /* if (nucleotide == 'C') */ {
+        return 'G';
+    }
+    return nucleotide;
+#else
     switch (nucleotide) {
         case 'A':
             return 'T';
@@ -79,6 +93,7 @@ char bsal_dna_helper_complement_nucleotide(char nucleotide)
     }
 
     return nucleotide;
+#endif
 }
 
 void bsal_dna_helper_normalize(char *sequence)
