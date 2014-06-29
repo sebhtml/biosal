@@ -33,6 +33,12 @@
 #define BSAL_MEMORY_ALIGNMENT_INTEL_L3_CACHE_LINE_SIZE 64
 
 /*
+ * \see http://bmagic.sourceforge.net/bmsse2opt.html
+ * \see http://www.songho.ca/misc/alignment/dataalign.html
+ */
+#define BSAL_MEMORY_ALIGNMENT_INTEL_SSE2 16
+
+/*
  * The AMD Opteron architecture also seems to use
  * cache lines of 64 bytes
  *
@@ -61,9 +67,10 @@
  */
 
 #define BSAL_MEMORY_ALIGNMENT_NONE 0
-#define BSAL_MEMORY_ALIGNMENT_WORD 4
+#define BSAL_MEMORY_ALIGNMENT_32_BITS 4
+#define BSAL_MEMORY_ALIGNMENT_64_BITS 8
 
-#define BSAL_MEMORY_ALIGNMENT_DEFAULT BSAL_MEMORY_ALIGNMENT_WORD
+#define BSAL_MEMORY_ALIGNMENT_DEFAULT BSAL_MEMORY_ALIGNMENT_32_BITS
 
 #ifdef BSAL_MEMORY_DEBUG
 
