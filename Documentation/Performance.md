@@ -26,3 +26,7 @@ This is a good read: http://disruptor.googlecode.com/files/Disruptor-1.0.pdf
 
 If any variable has only one writer, then mutual exclusion is enforced
 without doing anything.
+
+# Profiling
+
+Tools used: perf, valgrind, gprof, gdb
