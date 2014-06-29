@@ -70,6 +70,7 @@ void argonnite_init(struct bsal_actor *actor)
                     &bsal_coverage_distribution_script);
 
     concrete_actor->kmer_length = ARGONNITE_DEFAULT_KMER_LENGTH;
+    concrete_actor->not_ready_warnings = 0;
 
     /* the number of input sequences per I/O block
      *
@@ -703,9 +704,12 @@ void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message)
 
             } else {
 
-                printf("argonnite %d: stores are not ready, %" PRIu64 "/%" PRIu64 " kmers\n",
+                if (concrete_actor->not_ready_warnings % 100 == 0) {
+                    printf("argonnite %d: stores are not ready, %" PRIu64 "/%" PRIu64 " kmers\n",
                                 name, concrete_actor->actual_kmers, concrete_actor->total_kmers);
+                }
 
+                concrete_actor->not_ready_warnings++;
                 bsal_actor_helper_send_to_self_empty(actor, ARGONNITE_PROBE_KMER_STORES);
             }
         }

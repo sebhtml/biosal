@@ -42,6 +42,8 @@ struct argonnite {
     int state;
     uint64_t total_kmers;
     uint64_t actual_kmers;
+
+    int not_ready_warnings;
 };
 
 extern struct bsal_script argonnite_script;
