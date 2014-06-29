@@ -127,7 +127,7 @@ int bsal_dna_kmer_pack_unpack(struct bsal_dna_kmer *sequence,
 
     bsal_packer_destroy(&packer);
 
-    return bsal_memory_align(offset, sizeof(uint64_t));
+    return bsal_memory_align(offset, BSAL_MEMORY_ALIGNMENT_DEFAULT);
 }
 
 void bsal_dna_kmer_init_random(struct bsal_dna_kmer *sequence, int kmer_length,

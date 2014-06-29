@@ -68,6 +68,11 @@ void *bsal_memory_pool_allocate(struct bsal_memory_pool *self, int size)
     struct bsal_queue *queue;
     void *pointer;
 
+    /* Align memory to avoid problems with performance and/or
+     * Bus errors...
+     */
+    size = bsal_memory_align(size, BSAL_MEMORY_ALIGNMENT_DEFAULT);
+
     if (self->disabled) {
         return bsal_memory_allocate(size);
     }
