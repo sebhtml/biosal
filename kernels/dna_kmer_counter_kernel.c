@@ -121,14 +121,6 @@ void bsal_dna_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_
     source = bsal_message_source(message);
     buffer = bsal_message_buffer(message);
 
-#ifdef BSAL_DNA_KMER_COUNTER_KERNEL_DISABLE_TRACKING
-    /* Release all memory allocations before doing anything.
-     * Tracking is disabled anyway.
-     * Update: this is no longer necessary, the worker does it.
-     */
-    /*bsal_memory_pool_free_all(bsal_actor_get_ephemeral_memory(actor));*/
-#endif
-
     if (tag == BSAL_PUSH_SEQUENCE_DATA_BLOCK) {
 
         if (concrete_actor->kmer_length == -1) {

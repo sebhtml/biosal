@@ -2,7 +2,8 @@
 
 # \see http://wiki.gentoo.org/wiki/GCC_optimization
 # \see https://wiki.calculquebec.ca/w/GCC/en
-CFLAGS="-O3 -march=x86-64 -fomit-frame-pointer -I. -static -m64 -flto -ffast-math "
+# in gcc 4.6 and later, -Ofast is -O3 + other goodies
+CFLAGS="-Ofast -march=x86-64 -fomit-frame-pointer -I. -static -flto"
 
 clear
 echo "CFLAGS: $CFLAGS"

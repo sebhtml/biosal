@@ -51,6 +51,7 @@ struct bsal_lock {
     int lock;
 
 #elif defined(BSAL_LOCK_USE_SPIN_LOCK)
+/*#error "SPIN LOCK"*/
     pthread_spinlock_t lock;
 #elif defined(BSAL_LOCK_USE_MUTEX)
     pthread_mutex_t lock;

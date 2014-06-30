@@ -19,6 +19,9 @@
 /*
 #define BSAL_WORKER_POOL_DEBUG
 */
+/*
+#ifdef BSAL_WORKER_POOL_PUSH_WORK_ON_SAME_WORKER
+*/
 
 void bsal_worker_pool_init(struct bsal_worker_pool *pool, int workers,
                 struct bsal_node *node)
@@ -217,7 +220,10 @@ struct bsal_worker *bsal_worker_pool_select_worker_for_message(struct bsal_worke
          * to break the CPU cache line
          *
          */
-        if (score == 0) {
+        /* always update cache because otherwise there will be
+         * starvation
+         */
+        if (1 || score == 0) {
             score = bsal_worker_get_message_production_score(worker);
             bsal_worker_pool_set_cached_value(pool, index, score);
         }
@@ -243,8 +249,10 @@ int bsal_worker_pool_next_worker(struct bsal_worker_pool *pool, int worker)
 {
     worker++;
 
-    if (worker >= pool->workers) {
-        worker -= pool->workers;
+    /* wrap the counter
+     */
+    if (worker == pool->workers) {
+        worker = 0;
     }
 
     return worker;
@@ -255,6 +263,9 @@ struct bsal_worker *bsal_worker_pool_select_worker_for_work(
                 struct bsal_worker_pool *pool, struct bsal_work *work,
                 int *start)
 {
+#ifdef BSAL_WORKER_POOL_PUSH_WORK_ON_SAME_WORKER
+
+#error "BAD"
     /* check first if the actor is active.
      * If it is active, just enqueue the work at the same
      * place (on the same worker).
@@ -272,6 +283,7 @@ struct bsal_worker *bsal_worker_pool_select_worker_for_work(
 #endif
         return current_worker;
     }
+#endif
 
 #ifdef BSAL_WORKER_POOL_USE_LEAST_BUSY
     return bsal_worker_pool_select_worker_least_busy(pool, work, start);

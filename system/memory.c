@@ -152,7 +152,12 @@ uint64_t bsal_get_heap_size()
 
 int bsal_memory_align(int unaligned, int alignment)
 {
+#ifdef BSAL_MEMORY_ALIGNMENT_ENABLED
     int aligned;
+
+    if (alignment == 0) {
+        return unaligned;
+    }
 
     aligned = unaligned + (alignment - (unaligned % alignment));
 
@@ -162,4 +167,7 @@ int bsal_memory_align(int unaligned, int alignment)
 #endif
 
     return aligned;
+#else
+    return unaligned;
+#endif
 }

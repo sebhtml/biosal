@@ -66,7 +66,9 @@ void bsal_node_init(struct bsal_node *node, int *argc, char ***argv)
     node->name = bsal_transport_get_rank(&node->transport);
     node->nodes = bsal_transport_get_size(&node->transport);
 
+#ifdef BSAL_NODE_CHECK_MPI
     node->use_mpi = 1;
+#endif
 
     node->debug = 0;
 
@@ -723,8 +725,11 @@ void bsal_node_run_loop(struct bsal_node *node)
          * this code path will call lock if
          * there is a message received.
          */
-        if (node->use_mpi
-                        && bsal_transport_receive(&node->transport, &message)) {
+        if (
+#ifdef BSAL_NODE_CHECK_MPI
+            node->use_mpi &&
+#endif
+            bsal_transport_receive(&node->transport, &message)) {
 
             bsal_counter_add(&node->counter, BSAL_COUNTER_RECEIVED_MESSAGES_NOT_FROM_SELF, 1);
             bsal_counter_add(&node->counter, BSAL_COUNTER_RECEIVED_BYTES_NOT_FROM_SELF,
@@ -785,11 +790,16 @@ void bsal_node_send_message(struct bsal_node *node)
 {
     struct bsal_message message;
 
+#ifdef BSAL_NODE_CHECK_MPI
     /* Free buffers of active requests
      */
     if (node->use_mpi) {
+#endif
         bsal_transport_test_requests(&node->transport);
+
+#ifdef BSAL_NODE_CHECK_MPI
     }
+#endif
 
     /* check for messages to send from from threads */
     /* this call lock only if there is at least
@@ -909,11 +919,13 @@ int bsal_node_receive_system(struct bsal_node *node, struct bsal_message *messag
 
     } else if (tag == BSAL_NODE_START) {
 
+#ifdef BSAL_NODE_CHECK_MPI
         /* disable MPI if there is only one node
          */
         if (node->nodes == 1) {
             node->use_mpi = 0;
         }
+#endif
 
 #ifdef BSAL_NODE_DEBUG_RECEIVE_SYSTEM
         printf("DEBUG node %d starts its initial actor\n",
