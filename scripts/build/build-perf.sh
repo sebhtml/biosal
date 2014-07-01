@@ -1,6 +1,6 @@
 #!/bin/bash
 
-CFLAGS="-fno-omit-frame-pointer -O3 -march=x86-64 -g -I"
+CFLAGS="-fno-omit-frame-pointer -O3 -march=x86-64 -g -I."
 
 clear
 echo "CFLAGS: $CFLAGS"
