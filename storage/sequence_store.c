@@ -137,7 +137,8 @@ void bsal_sequence_store_push_sequence_data_block(struct bsal_actor *actor, stru
                     count);
 #endif
 
-    bsal_input_command_unpack(&payload, buffer, bsal_actor_get_ephemeral_memory(actor));
+    bsal_input_command_unpack(&payload, buffer, bsal_actor_get_ephemeral_memory(actor),
+                    &concrete_actor->codec);
 
 #ifdef BSAL_SEQUENCE_STORE_DEBUG
     printf("DEBUG store %d bsal_sequence_store_receive command:\n",
@@ -348,10 +349,12 @@ void bsal_sequence_store_ask(struct bsal_actor *self, struct bsal_message *messa
     entry_count = bsal_input_command_entry_count(&payload);
 
     if (entry_count > 0) {
-        new_count = bsal_input_command_pack_size(&payload);
+        new_count = bsal_input_command_pack_size(&payload,
+                        &concrete_actor->codec);
         new_buffer = bsal_memory_allocate(new_count);
 
-        bsal_input_command_pack(&payload, new_buffer);
+        bsal_input_command_pack(&payload, new_buffer,
+                        &concrete_actor->codec);
 
         bsal_message_init(&new_message, BSAL_PUSH_SEQUENCE_DATA_BLOCK, new_count, new_buffer);
 

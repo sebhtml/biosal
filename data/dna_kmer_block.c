@@ -47,37 +47,39 @@ void bsal_dna_kmer_block_destroy(struct bsal_dna_kmer_block *self,
 }
 
 void bsal_dna_kmer_block_add_kmer(struct bsal_dna_kmer_block *self, struct bsal_dna_kmer *kmer,
-                struct bsal_memory_pool *memory)
+                struct bsal_memory_pool *memory, struct bsal_dna_codec *codec)
 {
     struct bsal_dna_kmer copy;
 
-    bsal_dna_kmer_init_copy(&copy, kmer, self->kmer_length, memory);
+    bsal_dna_kmer_init_copy(&copy, kmer, self->kmer_length, memory, codec);
 
     bsal_vector_push_back(&self->kmers, &copy);
 }
 
-int bsal_dna_kmer_block_pack_size(struct bsal_dna_kmer_block *self)
+int bsal_dna_kmer_block_pack_size(struct bsal_dna_kmer_block *self, struct bsal_dna_codec *codec)
 {
-    return bsal_dna_kmer_block_pack_unpack(self, NULL, BSAL_PACKER_OPERATION_DRY_RUN, NULL);
+    return bsal_dna_kmer_block_pack_unpack(self, NULL, BSAL_PACKER_OPERATION_DRY_RUN, NULL, codec);
 }
 
-int bsal_dna_kmer_block_pack(struct bsal_dna_kmer_block *self, void *buffer)
+int bsal_dna_kmer_block_pack(struct bsal_dna_kmer_block *self, void *buffer,
+                struct bsal_dna_codec *codec)
 {
-    return bsal_dna_kmer_block_pack_unpack(self, buffer, BSAL_PACKER_OPERATION_PACK, NULL);
+    return bsal_dna_kmer_block_pack_unpack(self, buffer, BSAL_PACKER_OPERATION_PACK, NULL, codec);
 }
 
-int bsal_dna_kmer_block_unpack(struct bsal_dna_kmer_block *self, void *buffer, struct bsal_memory_pool *memory)
+int bsal_dna_kmer_block_unpack(struct bsal_dna_kmer_block *self, void *buffer, struct bsal_memory_pool *memory,
+                struct bsal_dna_codec *codec)
 {
 
 #ifdef BSAL_DNA_KMER_BLOCK_DEBUG
     BSAL_DEBUG_MARKER("unpacking block");
 #endif
 
-    return bsal_dna_kmer_block_pack_unpack(self, buffer, BSAL_PACKER_OPERATION_UNPACK, memory);
+    return bsal_dna_kmer_block_pack_unpack(self, buffer, BSAL_PACKER_OPERATION_UNPACK, memory, codec);
 }
 
 int bsal_dna_kmer_block_pack_unpack(struct bsal_dna_kmer_block *self, void *buffer,
-                int operation, struct bsal_memory_pool *memory)
+                int operation, struct bsal_memory_pool *memory, struct bsal_dna_codec *codec)
 {
     struct bsal_packer packer;
     int offset;
@@ -129,9 +131,9 @@ int bsal_dna_kmer_block_pack_unpack(struct bsal_dna_kmer_block *self, void *buff
 
         for (i = 0; i < elements; i++) {
             offset += bsal_dna_kmer_pack_unpack(&new_kmer, (char *)buffer + offset, operation,
-                            self->kmer_length, memory);
+                            self->kmer_length, memory, codec);
 
-            bsal_dna_kmer_block_add_kmer(self, &new_kmer, memory);
+            bsal_dna_kmer_block_add_kmer(self, &new_kmer, memory, codec);
 
             bsal_dna_kmer_destroy(&new_kmer, memory);
         }
@@ -140,7 +142,7 @@ int bsal_dna_kmer_block_pack_unpack(struct bsal_dna_kmer_block *self, void *buff
             kmer = (struct bsal_dna_kmer *)bsal_vector_at(&self->kmers, i);
 
             offset += bsal_dna_kmer_pack_unpack(kmer, (char *)buffer + offset, operation,
-                            self->kmer_length, memory);
+                            self->kmer_length, memory, codec);
         }
     }
 

@@ -76,6 +76,8 @@ void bsal_input_controller_init(struct bsal_actor *actor)
     bsal_vector_init(&controller->consumers, sizeof(int));
     bsal_vector_init(&controller->stores_per_spawner, sizeof(int));
 
+    bsal_dna_codec_init(&controller->codec);
+
     bsal_queue_init(&controller->unprepared_spawners, sizeof(int));
 
     controller->opened_streams = 0;
@@ -133,6 +135,8 @@ void bsal_input_controller_destroy(struct bsal_actor *actor)
     struct bsal_vector *vector;
 
     controller = (struct bsal_input_controller *)bsal_actor_concrete_actor(actor);
+
+    bsal_dna_codec_destroy(&controller->codec);
 
     for (i = 0; i < bsal_vector_size(&controller->files); i++) {
         pointer = *(char **)bsal_vector_at(&controller->files, i);
@@ -1085,7 +1089,8 @@ void bsal_input_controller_receive_command(struct bsal_actor *actor, struct bsal
 
     bsal_input_command_init(&input_command, store_name, store_first, store_last);
 
-    bytes = bsal_input_command_pack_size(&input_command);
+    bytes = bsal_input_command_pack_size(&input_command,
+                    &concrete_actor->codec);
 
 #ifdef BSAL_INPUT_CONTROLLER_DEBUG_COMMANDS
     printf("DEBUG input command\n");
@@ -1096,7 +1101,8 @@ void bsal_input_controller_receive_command(struct bsal_actor *actor, struct bsal
 #endif
 
     new_buffer = bsal_memory_allocate(bytes);
-    bsal_input_command_pack(&input_command, new_buffer);
+    bsal_input_command_pack(&input_command, new_buffer,
+                    &concrete_actor->codec);
 
     bsal_message_init(&new_message, BSAL_INPUT_PUSH_SEQUENCES, bytes,
                     new_buffer);

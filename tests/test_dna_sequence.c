@@ -37,7 +37,7 @@ int main(int argc, char **argv)
 */
     TEST_INT_EQUALS(actual, expected);
 
-    required = bsal_dna_sequence_pack_size(&sequence);
+    required = bsal_dna_sequence_pack_size(&sequence, &codec);
 
     TEST_INT_IS_GREATER_THAN(required, 0);
 
@@ -48,8 +48,8 @@ int main(int argc, char **argv)
                     buffer_for_pack, required);
                     */
 
-    bsal_dna_sequence_pack(&sequence, buffer_for_pack);
-    bsal_dna_sequence_unpack(&sequence2, buffer_for_pack, &memory);
+    bsal_dna_sequence_pack(&sequence, buffer_for_pack, &codec);
+    bsal_dna_sequence_unpack(&sequence2, buffer_for_pack, &memory, &codec);
 
     actual = bsal_dna_sequence_length(&sequence2);
 

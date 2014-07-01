@@ -38,7 +38,7 @@ void bsal_dna_sequence_init(struct bsal_dna_sequence *sequence, char *data,
 
         sequence->length_in_nucleotides = strlen(data);
 
-        encoded_length = bsal_dna_codec_encoded_length(sequence->length_in_nucleotides);
+        encoded_length = bsal_dna_codec_encoded_length(codec, sequence->length_in_nucleotides);
         sequence->encoded_data = bsal_memory_pool_allocate(memory, encoded_length);
 
         bsal_dna_codec_encode(codec, sequence->length_in_nucleotides, data, sequence->encoded_data);
@@ -59,25 +59,26 @@ void bsal_dna_sequence_destroy(struct bsal_dna_sequence *sequence, struct bsal_m
     sequence->pair = -1;
 }
 
-int bsal_dna_sequence_pack_size(struct bsal_dna_sequence *sequence)
+int bsal_dna_sequence_pack_size(struct bsal_dna_sequence *sequence, struct bsal_dna_codec *codec)
 {
-    return bsal_dna_sequence_pack_unpack(sequence, NULL, BSAL_PACKER_OPERATION_DRY_RUN, NULL);
+    return bsal_dna_sequence_pack_unpack(sequence, NULL, BSAL_PACKER_OPERATION_DRY_RUN, NULL, codec);
 }
 
 int bsal_dna_sequence_unpack(struct bsal_dna_sequence *sequence,
-                void *buffer, struct bsal_memory_pool *memory)
+                void *buffer, struct bsal_memory_pool *memory, struct bsal_dna_codec *codec)
 {
-    return bsal_dna_sequence_pack_unpack(sequence, buffer, BSAL_PACKER_OPERATION_UNPACK, memory);
+    return bsal_dna_sequence_pack_unpack(sequence, buffer, BSAL_PACKER_OPERATION_UNPACK, memory, codec);
 }
 
 int bsal_dna_sequence_pack(struct bsal_dna_sequence *sequence,
-                void *buffer)
+                void *buffer, struct bsal_dna_codec *codec)
 {
-    return bsal_dna_sequence_pack_unpack(sequence, buffer, BSAL_PACKER_OPERATION_PACK, NULL);
+    return bsal_dna_sequence_pack_unpack(sequence, buffer, BSAL_PACKER_OPERATION_PACK, NULL, codec);
 }
 
 int bsal_dna_sequence_pack_unpack(struct bsal_dna_sequence *sequence,
-                void *buffer, int operation, struct bsal_memory_pool *memory)
+                void *buffer, int operation, struct bsal_memory_pool *memory,
+                struct bsal_dna_codec *codec)
 {
     struct bsal_packer packer;
     int offset;
@@ -99,7 +100,7 @@ int bsal_dna_sequence_pack_unpack(struct bsal_dna_sequence *sequence,
 */
     bsal_packer_work(&packer, &sequence->length_in_nucleotides, sizeof(sequence->length_in_nucleotides));
 
-    encoded_length = bsal_dna_codec_encoded_length(sequence->length_in_nucleotides);
+    encoded_length = bsal_dna_codec_encoded_length(codec, sequence->length_in_nucleotides);
 
 #ifdef BSAL_DNA_SEQUENCE_DEBUG
     if (operation == BSAL_PACKER_OPERATION_UNPACK) {

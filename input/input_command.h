@@ -28,14 +28,15 @@ int bsal_input_command_store_name(struct bsal_input_command *self);
 uint64_t bsal_input_command_store_first(struct bsal_input_command *self);
 uint64_t bsal_input_command_store_last(struct bsal_input_command *self);
 
-int bsal_input_command_pack_size(struct bsal_input_command *self);
-int bsal_input_command_pack(struct bsal_input_command *self, void *buffer);
+int bsal_input_command_pack_size(struct bsal_input_command *self, struct bsal_dna_codec *codec);
+int bsal_input_command_pack(struct bsal_input_command *self, void *buffer, struct bsal_dna_codec *codec);
 int bsal_input_command_unpack(struct bsal_input_command *self, void *buffer,
-                struct bsal_memory_pool *memory);
+                struct bsal_memory_pool *memory, struct bsal_dna_codec *codec);
 
 int bsal_input_command_pack_unpack(struct bsal_input_command *self, void *buffer,
-                int operation, struct bsal_memory_pool *memory);
-void bsal_input_command_print(struct bsal_input_command *self);
+                int operation, struct bsal_memory_pool *memory,
+                struct bsal_dna_codec *codec);
+void bsal_input_command_print(struct bsal_input_command *self, struct bsal_dna_codec *codec);
 
 struct bsal_vector *bsal_input_command_entries(struct bsal_input_command *self);
 int bsal_input_command_entry_count(struct bsal_input_command *self);

@@ -88,7 +88,7 @@ void bsal_kmer_store_receive(struct bsal_actor *self, struct bsal_message *messa
         bsal_dna_kmer_init_mock(&kmer, concrete_actor->kmer_length,
                         &concrete_actor->codec, bsal_actor_get_ephemeral_memory(self));
         concrete_actor->key_length_in_bytes = bsal_dna_kmer_pack_size(&kmer,
-                        concrete_actor->kmer_length);
+                        concrete_actor->kmer_length, &concrete_actor->codec);
         bsal_dna_kmer_destroy(&kmer, bsal_actor_get_ephemeral_memory(self));
 
 #ifdef BSAL_KMER_STORE_DEBUG
@@ -105,7 +105,8 @@ void bsal_kmer_store_receive(struct bsal_actor *self, struct bsal_message *messa
 
     } else if (tag == BSAL_PUSH_KMER_BLOCK) {
 
-        bsal_dna_kmer_block_unpack(&block, buffer, bsal_actor_get_ephemeral_memory(self));
+        bsal_dna_kmer_block_unpack(&block, buffer, bsal_actor_get_ephemeral_memory(self),
+                        &concrete_actor->codec);
 
         key = bsal_memory_allocate(concrete_actor->key_length_in_bytes);
 
@@ -216,7 +217,8 @@ void bsal_kmer_store_print(struct bsal_actor *self)
     while (bsal_map_iterator_has_next(&iterator)) {
         bsal_map_iterator_next(&iterator, (void **)&key, (void **)&value);
         bsal_dna_kmer_unpack(&kmer, key, concrete_actor->kmer_length,
-                        bsal_actor_get_ephemeral_memory(self));
+                        bsal_actor_get_ephemeral_memory(self),
+                        &concrete_actor->codec);
 
         length = bsal_dna_kmer_length(&kmer, concrete_actor->kmer_length);
 
@@ -242,7 +244,8 @@ void bsal_kmer_store_print(struct bsal_actor *self)
         bsal_map_iterator_next(&iterator, (void **)&key, (void **)&value);
 
         bsal_dna_kmer_unpack(&kmer, key, concrete_actor->kmer_length,
-                        bsal_actor_get_ephemeral_memory(self));
+                        bsal_actor_get_ephemeral_memory(self),
+                        &concrete_actor->codec);
 
         bsal_dna_kmer_get_sequence(&kmer, sequence, concrete_actor->kmer_length,
                         &concrete_actor->codec);
@@ -291,7 +294,8 @@ void bsal_kmer_store_push_data(struct bsal_actor *self, struct bsal_message *mes
         bsal_map_iterator_next(&iterator, (void **)&key, (void **)&value);
 
         bsal_dna_kmer_unpack(&kmer, key, concrete_actor->kmer_length,
-                        bsal_actor_get_ephemeral_memory(self));
+                        bsal_actor_get_ephemeral_memory(self),
+                        &concrete_actor->codec);
 
         coverage = *value;
 

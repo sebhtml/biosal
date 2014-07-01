@@ -455,7 +455,8 @@ void bsal_input_stream_push_sequences(struct bsal_actor *actor,
     buffer = bsal_message_buffer(message);
 
     concrete_actor = (struct bsal_input_stream *)bsal_actor_concrete_actor(actor);
-    bsal_input_command_unpack(&command, buffer, bsal_actor_get_ephemeral_memory(actor));
+    bsal_input_command_unpack(&command, buffer, bsal_actor_get_ephemeral_memory(actor),
+                    &concrete_actor->codec);
 
 #ifdef BSAL_INPUT_STREAM_DEBUG
     count = bsal_message_count(message);
@@ -509,11 +510,12 @@ void bsal_input_stream_push_sequences(struct bsal_actor *actor,
     bsal_input_command_print(&command);
 #endif
 
-    new_count = bsal_input_command_pack_size(&command);
+    new_count = bsal_input_command_pack_size(&command,
+                    &concrete_actor->codec);
 
     new_buffer = bsal_memory_allocate(new_count);
 
-    bsal_input_command_pack(&command, new_buffer);
+    bsal_input_command_pack(&command, new_buffer, &concrete_actor->codec);
 
 #ifdef BSAL_INPUT_STREAM_DEBUG
     actual_count = bsal_input_command_pack(&command, new_buffer);

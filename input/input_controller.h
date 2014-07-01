@@ -3,6 +3,8 @@
 #define BSAL_INPUT_CONTROLLER_H
 
 #include <engine/actor.h>
+
+#include <data/dna_codec.h>
 #include <structures/vector.h>
 #include <structures/map.h>
 #include <structures/queue.h>
@@ -12,6 +14,7 @@
 struct bsal_input_controller {
     struct bsal_vector consumers;
 
+    struct bsal_dna_codec codec;
     struct bsal_vector files;
 
     struct bsal_vector counting_streams;

@@ -37,7 +37,7 @@ int main(int argc, char **argv)
         printf("STRESS TEST\n");
 
         bsal_dna_kmer_init_mock(&kmer, kmer_length, &codec, &memory);
-        key_length = bsal_dna_kmer_pack_size(&kmer, kmer_length);
+        key_length = bsal_dna_kmer_pack_size(&kmer, kmer_length, &codec);
         bsal_dna_kmer_destroy(&kmer, &memory);
 
         bsal_map_init(&big_map, key_length, sizeof(coverage));

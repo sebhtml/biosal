@@ -27,7 +27,7 @@ int main(int argc, char **argv)
     bsal_dna_codec_init(&codec);
     sequence_length = strlen(dna);
 
-    encoded_length = bsal_dna_codec_encoded_length(sequence_length);
+    encoded_length = bsal_dna_codec_encoded_length(&codec, sequence_length);
 
     /*TEST_INT_IS_LOWER_THAN(encoded_length, sequence_length);*/
     TEST_INT_IS_GREATER_THAN(encoded_length, 0);

@@ -139,7 +139,8 @@ void bsal_dna_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_
         consumer = bsal_actor_get_acquaintance(actor, concrete_actor->consumer);
         source_index = bsal_actor_add_acquaintance(actor, source);
 
-        bsal_input_command_unpack(&payload, buffer, bsal_actor_get_ephemeral_memory(actor));
+        bsal_input_command_unpack(&payload, buffer, bsal_actor_get_ephemeral_memory(actor),
+                        &concrete_actor->codec);
 
         command_entries = bsal_input_command_entries(&payload);
 
@@ -202,7 +203,8 @@ void bsal_dna_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_
                 /*
                  * add kmer in block
                  */
-                bsal_dna_kmer_block_add_kmer(&block, &kmer, bsal_actor_get_ephemeral_memory(actor));
+                bsal_dna_kmer_block_add_kmer(&block, &kmer, bsal_actor_get_ephemeral_memory(actor),
+                                &concrete_actor->codec);
 
                 bsal_dna_kmer_destroy(&kmer, bsal_actor_get_ephemeral_memory(actor));
 
@@ -234,9 +236,11 @@ void bsal_dna_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_
         printf("consumer is %d\n", consumer);
 #endif
 
-        new_count = bsal_dna_kmer_block_pack_size(&block);
+        new_count = bsal_dna_kmer_block_pack_size(&block,
+                        &concrete_actor->codec);
         new_buffer = bsal_memory_allocate(new_count);
-        bsal_dna_kmer_block_pack(&block, new_buffer);
+        bsal_dna_kmer_block_pack(&block, new_buffer,
+                        &concrete_actor->codec);
 
 #ifdef BSAL_KMER_COUNTER_KERNEL_DEBUG
         printf("name %d destination %d PACK with %d bytes\n", name,
@@ -351,7 +355,8 @@ void bsal_dna_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_
 
         bsal_dna_kmer_init_mock(&kmer, concrete_actor->kmer_length, &concrete_actor->codec,
                         bsal_actor_get_ephemeral_memory(actor));
-        concrete_actor->bytes_per_kmer = bsal_dna_kmer_pack_size(&kmer, concrete_actor->kmer_length);
+        concrete_actor->bytes_per_kmer = bsal_dna_kmer_pack_size(&kmer, concrete_actor->kmer_length,
+                        &concrete_actor->codec);
         bsal_dna_kmer_destroy(&kmer, bsal_actor_get_ephemeral_memory(actor));
 
         bsal_actor_helper_send_reply_empty(actor, BSAL_SET_KMER_LENGTH_REPLY);

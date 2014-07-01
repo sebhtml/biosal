@@ -18,12 +18,13 @@ void bsal_dna_sequence_init(struct bsal_dna_sequence *sequence,
 void bsal_dna_sequence_destroy(struct bsal_dna_sequence *sequence, struct bsal_memory_pool *memory);
 
 int bsal_dna_sequence_unpack(struct bsal_dna_sequence *sequence,
-                void *buffer, struct bsal_memory_pool *memory);
+                void *buffer, struct bsal_memory_pool *memory, struct bsal_dna_codec *codec);
 int bsal_dna_sequence_pack(struct bsal_dna_sequence *sequence,
-                void *buffer);
-int bsal_dna_sequence_pack_size(struct bsal_dna_sequence *sequence);
+                void *buffer, struct bsal_dna_codec *codec);
+int bsal_dna_sequence_pack_size(struct bsal_dna_sequence *sequence, struct bsal_dna_codec *codec);
 int bsal_dna_sequence_pack_unpack(struct bsal_dna_sequence *sequence,
-                void *buffer, int operation, struct bsal_memory_pool *memory);
+                void *buffer, int operation, struct bsal_memory_pool *memory,
+                struct bsal_dna_codec *codec);
 
 void bsal_dna_sequence_print(struct bsal_dna_sequence *sequence, struct bsal_dna_codec *codec,
                 struct bsal_memory_pool *memory);

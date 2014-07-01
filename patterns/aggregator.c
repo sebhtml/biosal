@@ -148,7 +148,8 @@ void bsal_aggregator_receive(struct bsal_actor *self, struct bsal_message *messa
 
         concrete_actor->received++;
 
-        bsal_dna_kmer_block_unpack(&block, buffer, bsal_actor_get_ephemeral_memory(self));
+        bsal_dna_kmer_block_unpack(&block, buffer, bsal_actor_get_ephemeral_memory(self),
+                        &concrete_actor->codec);
 
 #ifdef BSAL_AGGREGATOR_DEBUG
         BSAL_DEBUG_MARKER("aggregator before loop");
@@ -189,7 +190,8 @@ void bsal_aggregator_receive(struct bsal_actor *self, struct bsal_message *messa
              * add kmer to buffer and try to flush
              */
 
-            bsal_dna_kmer_block_add_kmer(customer_block_pointer, kmer, persistent_memory);
+            bsal_dna_kmer_block_add_kmer(customer_block_pointer, kmer, persistent_memory,
+                            &concrete_actor->codec);
 
 #ifdef BSAL_AGGREGATOR_DEBUG
             BSAL_DEBUG_MARKER("aggregator before flush");
@@ -328,9 +330,11 @@ void bsal_aggregator_flush(struct bsal_actor *self, int customer_index, int forc
         return;
     }
 
-    count = bsal_dna_kmer_block_pack_size(customer_block_pointer);
+    count = bsal_dna_kmer_block_pack_size(customer_block_pointer,
+                    &concrete_actor->codec);
     buffer = bsal_memory_allocate(count);
-    bsal_dna_kmer_block_pack(customer_block_pointer, buffer);
+    bsal_dna_kmer_block_pack(customer_block_pointer, buffer,
+                    &concrete_actor->codec);
 
     bsal_message_init(&message, BSAL_PUSH_KMER_BLOCK, count, buffer);
     bsal_actor_send(self, customer, &message);
