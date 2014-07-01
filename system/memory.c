@@ -154,8 +154,8 @@ int bsal_memory_align(int unaligned)
 {
 /* enable alignment only if alignment is greater than 0
  */
-#if BSAL_MEMORY_ALIGNMENT_DEFAULT > 0
-    return bsal_memory_allocate_private(unaligned, BSAL_MEMORY_ALIGNMENT_DEFAULT);
+#ifdef BSAL_MEMORY_ALIGNMENT_ENABLED
+    return bsal_memory_align_private(unaligned, BSAL_MEMORY_ALIGNMENT_DEFAULT);
 #else
     return unaligned;
 #endif

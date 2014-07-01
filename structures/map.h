@@ -4,7 +4,22 @@
 
 #include "dynamic_hash_table.h"
 
+#include <system/memory.h>
+
+/*
+ * This is a hash table with built-in
+ * alignment, auto-resize, and super
+ * efficiency
+ */
 struct bsal_map {
+
+#ifdef BSAL_MEMORY_ALIGNMENT_ENABLED
+    int original_key_size;
+    int original_value_size;
+    void *key_buffer;
+    int key_padding;
+#endif
+
     struct bsal_dynamic_hash_table table;
 };
 
@@ -15,7 +30,8 @@ void *bsal_map_add(struct bsal_map *self, void *key);
 void *bsal_map_get(struct bsal_map *self, void *key);
 int bsal_map_get_value(struct bsal_map *self, void *key, void *value);
 void bsal_map_delete(struct bsal_map *self, void *key);
-void bsal_map_add_value(struct bsal_map *self, void *key, void *value);
+void *bsal_map_add_value(struct bsal_map *self, void *key, void *value);
+void *bsal_map_update_value(struct bsal_map *self, void *key, void *value);
 
 uint64_t bsal_map_size(struct bsal_map *self);
 int bsal_map_get_key_size(struct bsal_map *self);
@@ -28,5 +44,7 @@ int bsal_map_pack(struct bsal_map *self, void *buffer);
 int bsal_map_unpack(struct bsal_map *self, void *buffer);
 
 int bsal_map_empty(struct bsal_map *self);
+int bsal_map_pack_unpack(struct bsal_map *self, int operation, void *buffer);
+void *bsal_map_pad_key(struct bsal_map *self, void *key);
 
 #endif
