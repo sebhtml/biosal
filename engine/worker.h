@@ -113,5 +113,6 @@ int bsal_worker_push_work(struct bsal_worker *worker, struct bsal_work *work);
 #endif
 
 struct bsal_memory_pool *bsal_worker_get_ephemeral_memory(struct bsal_worker *worker);
+void bsal_worker_queue_work(struct bsal_worker *worker, struct bsal_work *work);
 
 #endif

@@ -88,12 +88,7 @@ int bsal_map_unpack(struct bsal_map *self, void *buffer)
     return bsal_map_pack_unpack(self, BSAL_PACKER_OPERATION_UNPACK, buffer);
 }
 
-void *bsal_map_update_value(struct bsal_map *self, void *key, void *value)
-{
-    return bsal_map_add_value(self, key, value);
-}
-
-void *bsal_map_add_value(struct bsal_map *self, void *key, void *value)
+int bsal_map_update_value(struct bsal_map *self, void *key, void *value)
 {
     void *bucket;
     int value_size;
@@ -101,6 +96,40 @@ void *bsal_map_add_value(struct bsal_map *self, void *key, void *value)
 #ifdef BSAL_MEMORY_ALIGNMENT_ENABLED
     key = bsal_map_pad_key(self, key);
 #endif
+
+    bucket = bsal_map_get(self, key);
+
+    if (bucket == NULL) {
+        return 0;
+    }
+
+#ifdef BSAL_MEMORY_ALIGNMENT_ENABLED
+    value_size = self->original_value_size;
+#else
+    value_size = bsal_map_get_value_size(self);
+#endif
+
+    memcpy(bucket, value, value_size);
+
+    return 1;
+}
+
+int bsal_map_add_value(struct bsal_map *self, void *key, void *value)
+{
+    void *bucket;
+    int value_size;
+
+#ifdef BSAL_MEMORY_ALIGNMENT_ENABLED
+    key = bsal_map_pad_key(self, key);
+#endif
+
+    bucket = bsal_map_get(self, key);
+
+    /* it's already there...
+     */
+    if (bucket != NULL) {
+        return 0;
+    }
 
     bucket = bsal_map_add(self, key);
 
@@ -112,7 +141,7 @@ void *bsal_map_add_value(struct bsal_map *self, void *key, void *value)
 
     memcpy(bucket, value, value_size);
 
-    return bucket;
+    return 1;
 }
 
 int bsal_map_get_key_size(struct bsal_map *self)
@@ -213,3 +242,4 @@ void *bsal_map_pad_key(struct bsal_map *self, void *key)
 
     return self->key_buffer;
 }
+

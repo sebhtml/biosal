@@ -5,6 +5,12 @@
 #include "message.h"
 #include "node.h"
 
+#include <structures/map.h>
+#include <structures/vector.h>
+#include <structures/vector_iterator.h>
+#include <structures/map_iterator.h>
+
+#include <helpers/vector_helper.h>
 #include <system/memory.h>
 #include <system/timer.h>
 
@@ -209,7 +215,6 @@ void bsal_worker_work(struct bsal_worker *worker, struct bsal_work *work)
     struct bsal_message *message;
     int dead;
     char *buffer;
-    int count;
 
 #ifdef BSAL_WORKER_DEBUG
     int tag;
@@ -252,25 +257,7 @@ void bsal_worker_work(struct bsal_worker *worker, struct bsal_work *work)
      */
     if (bsal_actor_trylock(actor) != BSAL_LOCK_SUCCESS) {
 
-        /* just put it back
-         */
-
-        bsal_ring_queue_enqueue(&worker->local_work_queue, work);
-
-        count = bsal_ring_queue_size(&worker->local_work_queue);
-
-        if (count >= BSAL_WORKER_WARNING_THRESHOLD
-                       && (worker->last_warning == 0
-                               || count >= worker->last_warning + BSAL_WORKER_WARNING_THRESHOLD_STRIDE)) {
-
-            printf("Warning: node %d, worker %d has %d works in its local queue.\n",
-                            bsal_node_name(worker->node),
-                            bsal_worker_name(worker),
-                            count);
-
-            worker->last_warning = count;
-        }
-
+        bsal_worker_queue_work(worker, work);
         return;
     }
 
@@ -664,4 +651,96 @@ float bsal_worker_get_loop_load(struct bsal_worker *self)
 struct bsal_memory_pool *bsal_worker_get_ephemeral_memory(struct bsal_worker *worker)
 {
     return &worker->ephemeral_memory;
+}
+
+void bsal_worker_queue_work(struct bsal_worker *worker, struct bsal_work *work)
+{
+    int count;
+    struct bsal_work local_work;
+    struct bsal_actor *actor;
+    int i;
+    struct bsal_map frequencies;
+    struct bsal_map_iterator iterator;
+    int actor_name;
+    struct bsal_vector counts;
+    struct bsal_vector_iterator vector_iterator;
+
+    /* just put it in the local queue.
+     */
+    bsal_ring_queue_enqueue(&worker->local_work_queue, work);
+
+    count = bsal_ring_queue_size(&worker->local_work_queue);
+
+    if (count >= BSAL_WORKER_WARNING_THRESHOLD
+                   && (worker->last_warning == 0
+                           || count >= worker->last_warning + BSAL_WORKER_WARNING_THRESHOLD_STRIDE)) {
+
+        bsal_map_init(&frequencies, sizeof(int), sizeof(int));
+
+        printf("Warning: node %d, worker %d has %d works in its local queue.\n",
+                        bsal_node_name(worker->node),
+                        bsal_worker_name(worker),
+                        count);
+
+        worker->last_warning = count;
+
+        printf("List: \n");
+
+        i = 0;
+
+        while (i < count && bsal_ring_queue_dequeue(&worker->local_work_queue,
+                                &local_work)) {
+
+            actor = bsal_work_actor(&local_work);
+
+            actor_name = bsal_actor_name(actor);
+
+            printf("WORK node %d worker %d work %d/%d actor %d\n",
+                            bsal_node_name(worker->node),
+                            bsal_worker_name(worker),
+                            i,
+                            count,
+                            actor_name);
+
+            bsal_ring_queue_enqueue(&worker->local_work_queue, &local_work);
+
+            if (!bsal_map_get_value(&frequencies, &actor_name, &count)) {
+                count = 0;
+                bsal_map_add_value(&frequencies, &actor_name, &count);
+            }
+
+            ++count;
+            bsal_map_update_value(&frequencies, &actor_name, &count);
+
+            ++i;
+        }
+
+        bsal_map_iterator_init(&iterator, &frequencies);
+        bsal_vector_init(&counts, sizeof(int) * 2);
+
+        while (bsal_map_iterator_get_next_key_and_value(&iterator, &actor_name, &count)) {
+
+            printf("actor %d ... %d messages\n",
+                            actor_name, count);
+
+            bsal_vector_push_back(&counts, &count);
+        }
+
+        bsal_map_iterator_destroy(&iterator);
+
+        bsal_vector_helper_sort_int(&counts);
+
+        bsal_vector_iterator_init(&vector_iterator, &counts);
+
+        printf("Sorted counts:\n");
+        while (bsal_vector_iterator_get_next_value(&vector_iterator, &count)) {
+
+            printf(" %d\n", count);
+        }
+
+        bsal_vector_iterator_destroy(&vector_iterator);
+
+        bsal_vector_destroy(&counts);
+        bsal_map_destroy(&frequencies);
+    }
 }

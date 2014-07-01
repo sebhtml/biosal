@@ -30,8 +30,8 @@ void *bsal_map_add(struct bsal_map *self, void *key);
 void *bsal_map_get(struct bsal_map *self, void *key);
 int bsal_map_get_value(struct bsal_map *self, void *key, void *value);
 void bsal_map_delete(struct bsal_map *self, void *key);
-void *bsal_map_add_value(struct bsal_map *self, void *key, void *value);
-void *bsal_map_update_value(struct bsal_map *self, void *key, void *value);
+int bsal_map_add_value(struct bsal_map *self, void *key, void *value);
+int bsal_map_update_value(struct bsal_map *self, void *key, void *value);
 
 uint64_t bsal_map_size(struct bsal_map *self);
 int bsal_map_get_key_size(struct bsal_map *self);

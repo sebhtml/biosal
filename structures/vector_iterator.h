@@ -15,6 +15,7 @@ void bsal_vector_iterator_init(struct bsal_vector_iterator *self, struct bsal_ve
 void bsal_vector_iterator_destroy(struct bsal_vector_iterator *self);
 
 int bsal_vector_iterator_has_next(struct bsal_vector_iterator *self);
-void bsal_vector_iterator_next(struct bsal_vector_iterator *self, void **value);
+int bsal_vector_iterator_next(struct bsal_vector_iterator *self, void **value);
+int bsal_vector_iterator_get_next_value(struct bsal_vector_iterator *self, void *value);
 
 #endif

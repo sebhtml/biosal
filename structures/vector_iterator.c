@@ -2,6 +2,7 @@
 #include "vector_iterator.h"
 
 #include <stdlib.h>
+#include <string.h>
 
 void bsal_vector_iterator_init(struct bsal_vector_iterator *self, struct bsal_vector *list)
 {
@@ -20,10 +21,10 @@ int bsal_vector_iterator_has_next(struct bsal_vector_iterator *self)
     return self->index < bsal_vector_size(self->list);
 }
 
-void bsal_vector_iterator_next(struct bsal_vector_iterator *self, void **value)
+int bsal_vector_iterator_next(struct bsal_vector_iterator *self, void **value)
 {
     if (!bsal_vector_iterator_has_next(self)) {
-        return;
+        return 0;
     }
 
     if (value != NULL) {
@@ -31,5 +32,23 @@ void bsal_vector_iterator_next(struct bsal_vector_iterator *self, void **value)
     }
 
     self->index++;
+
+    return 1;
 }
 
+int bsal_vector_iterator_get_next_value(struct bsal_vector_iterator *self, void *value)
+{
+    void *bucket;
+    int size;
+
+    if (!bsal_vector_iterator_has_next(self)) {
+        return 0;
+    }
+
+    bsal_vector_iterator_next(self, (void **)&value);
+    size = bsal_vector_element_size(self->list);
+
+    memcpy(value, bucket, size);
+
+    return 1;
+}
