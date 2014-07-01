@@ -15,20 +15,6 @@ struct bsal_fast_ring;
 */
 
 /*
- * Pad to 64 bytes
- */
-struct bsal_padded_uint64_t {
-    uint64_t value;
-    uint64_t padding0;
-    uint64_t padding1;
-    uint64_t padding2;
-    uint64_t padding3;
-    uint64_t padding4;
-    uint64_t padding5;
-    uint64_t padding7;
-};
-
-/*
  * \see http://www.codeproject.com/Articles/43510/Lock-Free-Single-Producer-Single-Consumer-Circular
  */
 struct bsal_fast_ring {
@@ -44,10 +30,23 @@ struct bsal_fast_ring {
      * None of these variable is volatile
      * because volatile gives bad performance overall
      */
-    struct bsal_padded_uint64_t head;
-    struct bsal_padded_uint64_t tail;
-    struct bsal_padded_uint64_t head_cache;
-    struct bsal_padded_uint64_t tail_cache;
+    uint64_t head;
+    uint64_t tail_cache;
+    uint64_t consumer_padding_0;
+    uint64_t consumer_padding_1;
+    uint64_t consumer_padding_2;
+    uint64_t consumer_padding_3;
+    uint64_t consumer_padding_4;
+    uint64_t consumer_padding_5;
+
+    uint64_t tail;
+    uint64_t head_cache;
+    uint64_t producer_padding_0;
+    uint64_t producer_padding_1;
+    uint64_t producer_padding_2;
+    uint64_t producer_padding_3;
+    uint64_t producer_padding_4;
+    uint64_t producer_padding_5;
 
     void *cells;
     uint64_t number_of_cells;
@@ -75,5 +74,7 @@ int bsal_fast_ring_size_from_producer(struct bsal_fast_ring *self);
 
 void bsal_fast_ring_update_head_cache(struct bsal_fast_ring *self);
 void bsal_fast_ring_update_tail_cache(struct bsal_fast_ring *self);
+
+uint64_t bsal_fast_ring_mock(struct bsal_fast_ring *self);
 
 #endif

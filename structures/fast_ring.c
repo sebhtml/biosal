@@ -21,22 +21,40 @@ void bsal_fast_ring_init(struct bsal_fast_ring *self, int capacity, int cell_siz
 #endif
 
     self->cell_size = cell_size;
-    self->head.value = 0;
-    self->tail.value = 0;
-    self->head_cache.value = 0;
-    self->tail_cache.value = 0;
+
+    self->head = 0;
+    self->tail = 0;
+
+    self->head_cache = 0;
+    self->tail_cache = 0;
 
     self->cells = bsal_memory_allocate(self->number_of_cells * self->cell_size);
+
+    /* assign values to the padding
+     */
+    self->consumer_padding_0 = 0;
+    self->consumer_padding_1 = 0;
+    self->consumer_padding_2 = 0;
+    self->consumer_padding_3 = 0;
+    self->consumer_padding_4 = 0;
+    self->consumer_padding_5 = 0;
+
+    self->producer_padding_0 = 0;
+    self->producer_padding_1 = 0;
+    self->producer_padding_2 = 0;
+    self->producer_padding_3 = 0;
+    self->producer_padding_4 = 0;
+    self->producer_padding_5 = 0;
 }
 
 void bsal_fast_ring_destroy(struct bsal_fast_ring *self)
 {
     self->number_of_cells = 0;
     self->cell_size = 0;
-    self->head.value = 0;
-    self->tail.value = 0;
-    self->head_cache.value = 0;
-    self->tail_cache.value = 0;
+    self->head = 0;
+    self->tail = 0;
+    self->head_cache = 0;
+    self->tail_cache = 0;
 
     bsal_memory_free(self->cells);
 
@@ -58,9 +76,9 @@ int bsal_fast_ring_push_from_producer(struct bsal_fast_ring *self, void *element
         return 0;
     }
 
-    cell = bsal_fast_ring_get_cell(self, self->tail.value);
+    cell = bsal_fast_ring_get_cell(self, self->tail);
     memcpy(cell, element, self->cell_size);
-    self->tail.value = bsal_fast_ring_increment(self, self->tail.value);
+    self->tail = bsal_fast_ring_increment(self, self->tail);
 
     return 1;
 }
@@ -69,9 +87,9 @@ int bsal_fast_ring_is_full_from_producer(struct bsal_fast_ring *self)
 {
     /* check if the head cache must be updated
      */
-    if (self->head_cache.value == bsal_fast_ring_increment(self, self->tail.value)) {
+    if (self->head_cache == bsal_fast_ring_increment(self, self->tail)) {
         bsal_fast_ring_update_head_cache(self);
-        return self->head_cache.value == bsal_fast_ring_increment(self, self->tail.value);
+        return self->head_cache == bsal_fast_ring_increment(self, self->tail);
     }
     return 0;
 }
@@ -91,18 +109,18 @@ int bsal_fast_ring_pop_from_consumer(struct bsal_fast_ring *self, void *element)
         return 0;
     }
 
-    cell = bsal_fast_ring_get_cell(self, self->head.value);
+    cell = bsal_fast_ring_get_cell(self, self->head);
     memcpy(element, cell, self->cell_size);
-    self->head.value = bsal_fast_ring_increment(self, self->head.value);
+    self->head = bsal_fast_ring_increment(self, self->head);
 
     return 1;
 }
 
 int bsal_fast_ring_is_empty_from_consumer(struct bsal_fast_ring *self)
 {
-    if (self->tail_cache.value == self->head.value) {
+    if (self->tail_cache == self->head) {
         bsal_fast_ring_update_tail_cache(self);
-        return self->tail_cache.value == self->head.value;
+        return self->tail_cache == self->head;
     }
 
     return 0;
@@ -117,8 +135,8 @@ int bsal_fast_ring_size_from_consumer(struct bsal_fast_ring *self)
      */
     bsal_fast_ring_update_tail_cache(self);
 
-    head = self->head.value;
-    tail = self->tail_cache.value;
+    head = self->head;
+    tail = self->tail_cache;
 
     if (tail < head) {
         tail += self->number_of_cells;
@@ -140,8 +158,8 @@ int bsal_fast_ring_size_from_producer(struct bsal_fast_ring *self)
      */
     bsal_fast_ring_update_head_cache(self);
 
-    head = self->head_cache.value;
-    tail = self->tail.value;
+    head = self->head_cache;
+    tail = self->tail;
 
     if (tail < head) {
         tail += self->number_of_cells;
@@ -184,10 +202,36 @@ int bsal_fast_ring_get_next_power_of_two(int value)
 
 void bsal_fast_ring_update_head_cache(struct bsal_fast_ring *self)
 {
-    self->head_cache.value = self->head.value;
+    self->head_cache = self->head;
 }
 
 void bsal_fast_ring_update_tail_cache(struct bsal_fast_ring *self)
 {
-    self->tail_cache.value = self->tail.value;
+    self->tail_cache = self->tail;
+}
+
+/*
+ * Use the padding to avoid the losing that with optimizations
+ */
+uint64_t bsal_fast_ring_mock(struct bsal_fast_ring *self)
+{
+    uint64_t sum;
+
+    sum = 0;
+
+    sum += self->consumer_padding_0;
+    sum += self->consumer_padding_1;
+    sum += self->consumer_padding_2;
+    sum += self->consumer_padding_3;
+    sum += self->consumer_padding_4;
+    sum += self->consumer_padding_5;
+
+    sum += self->producer_padding_0;
+    sum += self->producer_padding_1;
+    sum += self->producer_padding_2;
+    sum += self->producer_padding_3;
+    sum += self->producer_padding_4;
+    sum += self->producer_padding_5;
+
+    return sum;
 }
