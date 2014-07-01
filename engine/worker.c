@@ -623,6 +623,8 @@ int bsal_worker_get_work_scheduling_score(struct bsal_worker *self)
     score += bsal_ring_size(&self->work_queue);
 #endif
 
+    score += bsal_ring_queue_size(&self->local_work_queue);
+
     return score;
 }
 #endif
@@ -631,11 +633,19 @@ int bsal_worker_get_work_scheduling_score(struct bsal_worker *self)
  */
 int bsal_worker_get_message_production_score(struct bsal_worker *self)
 {
+    int score;
+
+    score = 0;
+
 #ifdef BSAL_WORKER_USE_FAST_RINGS
-    return bsal_fast_ring_size_from_producer(&self->message_queue);
+    score += bsal_fast_ring_size_from_producer(&self->message_queue);
 #else
-    return bsal_ring_size(&self->message_queue);
+    score += bsal_ring_size(&self->message_queue);
 #endif
+
+    score += bsal_ring_queue_size(&self->local_message_queue);
+
+    return score;
 }
 
 float bsal_worker_get_epoch_load(struct bsal_worker *self)
