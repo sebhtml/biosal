@@ -19,6 +19,7 @@
 struct bsal_kmer_store {
     struct bsal_map table;
     struct bsal_dna_codec codec;
+    struct bsal_dna_codec two_bit_codec;
     int kmer_length;
     int key_length_in_bytes;
 
