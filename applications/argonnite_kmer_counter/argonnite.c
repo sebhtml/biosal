@@ -28,6 +28,8 @@
 
 #define ARGONNITE_DEFAULT_KMER_LENGTH 41
 
+#define ARGONNITE_WORKERS_PER_AGGREGATOR 4
+
 #define ARGONNITE_STATE_NONE 0
 #define ARGONNITE_STATE_PREPARE_SEQUENCE_STORES 1
 
@@ -151,6 +153,8 @@ void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message)
     int sequence_store;
     int other_kernel;
     int print_stuff;
+    int workers_per_aggregator;
+    int aggregator_index_index;
 
     concrete_actor = (struct argonnite *)bsal_actor_concrete_actor(actor);
     tag = bsal_message_tag(message);
@@ -237,6 +241,9 @@ void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message)
         bsal_actor_helper_get_acquaintances(actor, &concrete_actor->initial_actors, &initial_actors);
 
         spawner_index = bsal_vector_index_of(&initial_actors, &source);
+
+        printf("MANY_AGGREGATORS argonnite %d: spawner %d is on a node with %d workers\n",
+                        name, source, workers);
 
         bsal_vector_helper_set_int(&concrete_actor->worker_counts, spawner_index, workers);
 
@@ -373,13 +380,15 @@ void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message)
             BSAL_DEBUG_MARKER("set actors per spawner ");
 #endif
 
-        printf("argonnite %d sets count per spawner to 1 for manager %d\n",
-                        bsal_actor_name(actor), manager_for_aggregators);
+        workers_per_aggregator = ARGONNITE_WORKERS_PER_AGGREGATOR;
+        printf("MANY_AGGREGATORS argonnite %d sets count per spawner to %d for aggregator manager %d\n",
+                        bsal_actor_name(actor),
+                        workers_per_aggregator, manager_for_aggregators);
 
         bsal_actor_helper_send_reply_int(actor,
-                            BSAL_MANAGER_SET_ACTORS_PER_SPAWNER, 1);
+                            BSAL_MANAGER_SET_WORKERS_PER_ACTOR, workers_per_aggregator);
 
-    } else if (tag == BSAL_MANAGER_SET_ACTORS_PER_SPAWNER_REPLY
+    } else if (tag == BSAL_MANAGER_SET_WORKERS_PER_ACTOR_REPLY
                     && source == bsal_actor_get_acquaintance(actor,
                             concrete_actor->manager_for_aggregators)) {
 
@@ -419,29 +428,50 @@ void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message)
                         (int)bsal_vector_size(&concrete_actor->aggregators));
 
         kernel_index_index = 0;
+        aggregator_index_index = 0;
 
         for (spawner_index = 0; spawner_index < bsal_vector_size(&concrete_actor->initial_actors); spawner_index++) {
 
             workers = bsal_vector_helper_at_as_int(&concrete_actor->worker_counts, spawner_index);
+            workers_per_aggregator = ARGONNITE_WORKERS_PER_AGGREGATOR;
 
 #ifdef ARGONNITE_DEBUG_WIRING
             printf("Wiring %d, %d kernels\n", spawner_index, workers);
 #endif
 
-            while (workers--) {
+            while (workers > 0) {
                 kernel_index = bsal_vector_helper_at_as_int(&concrete_actor->kernels, kernel_index_index);
-                aggregator_index = bsal_vector_helper_at_as_int(&concrete_actor->aggregators, spawner_index);
+                aggregator_index = bsal_vector_helper_at_as_int(&concrete_actor->aggregators, aggregator_index_index);
 
                 kernel = bsal_actor_get_acquaintance(actor, kernel_index);
                 aggregator = bsal_actor_get_acquaintance(actor, aggregator_index);
 
-#ifdef ARGONNITE_DEBUG_WIRING
                 printf("wiring kernel %d to aggregator %d\n", kernel, aggregator);
+#ifdef ARGONNITE_DEBUG_WIRING
 #endif
 
                 bsal_actor_helper_send_int(actor, kernel, BSAL_ACTOR_SET_CONSUMER, aggregator);
 
                 kernel_index_index++;
+
+                --workers;
+                --workers_per_aggregator;
+
+                if (workers_per_aggregator == 0) {
+                    workers_per_aggregator = ARGONNITE_WORKERS_PER_AGGREGATOR;
+                    aggregator_index_index++;
+                }
+            }
+
+            workers = bsal_vector_helper_at_as_int(&concrete_actor->worker_counts, spawner_index);
+            workers_per_aggregator = ARGONNITE_WORKERS_PER_AGGREGATOR;
+
+            /* increment the aggregator if the number of workers is not a multiple of
+             * the number of workers per aggregator (for this spawner).
+             * This is required to avoid between-node transfers.
+             */
+            if (workers % workers_per_aggregator != 0) {
+                ++aggregator_index_index;
             }
         }
 

@@ -42,6 +42,7 @@ struct bsal_manager {
 
     int actors_per_spawner;
     int actors_per_worker;
+    int workers_per_actor;
 };
 
 #define BSAL_MANAGER_SET_SCRIPT 0x00007595
@@ -50,6 +51,8 @@ struct bsal_manager {
 #define BSAL_MANAGER_SET_ACTORS_PER_SPAWNER_REPLY 0x00005b4c
 #define BSAL_MANAGER_SET_ACTORS_PER_WORKER 0x000000c9
 #define BSAL_MANAGER_SET_ACTORS_PER_WORKER_REPLY 0x00007b37
+#define BSAL_MANAGER_SET_WORKERS_PER_ACTOR 0x0000322a
+#define BSAL_MANAGER_SET_WORKERS_PER_ACTOR_REPLY 0x00007b74
 
 extern struct bsal_script bsal_manager_script;
 

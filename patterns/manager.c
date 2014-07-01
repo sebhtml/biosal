@@ -43,6 +43,7 @@ void bsal_manager_init(struct bsal_actor *actor)
     concrete_actor->spawners = 0;
     concrete_actor->actors_per_spawner = BSAL_ACTOR_NO_VALUE;
     concrete_actor->actors_per_worker = BSAL_ACTOR_NO_VALUE;
+    concrete_actor->workers_per_actor = BSAL_ACTOR_NO_VALUE;
     concrete_actor->script = BSAL_ACTOR_NO_VALUE;
 }
 
@@ -82,7 +83,6 @@ void bsal_manager_receive(struct bsal_actor *actor, struct bsal_message *message
     struct bsal_vector *stores;
     int spawner;
     int workers;
-    int actors_per_worker;
     void *buffer;
     int source;
     int store;
@@ -177,16 +177,15 @@ void bsal_manager_receive(struct bsal_actor *actor, struct bsal_message *message
     } else if (tag == BSAL_MANAGER_SET_ACTORS_PER_SPAWNER) {
         concrete_actor->actors_per_spawner = *(int *)buffer;
 
+        if (concrete_actor->actors_per_spawner <= 0) {
+            concrete_actor->actors_per_spawner = BSAL_ACTOR_NO_VALUE;
+        }
+
         bsal_actor_helper_send_reply_empty(actor, BSAL_MANAGER_SET_ACTORS_PER_SPAWNER_REPLY);
 
     } else if (tag == BSAL_ACTOR_GET_NODE_WORKER_COUNT_REPLY) {
 
         workers = *(int *)buffer;
-        actors_per_worker = 1;
-
-        if (concrete_actor->actors_per_worker != BSAL_ACTOR_NO_VALUE) {
-            actors_per_worker = concrete_actor->actors_per_worker;
-        }
 
         index = bsal_actor_get_acquaintance_index(actor, source);
 
@@ -204,12 +203,39 @@ void bsal_manager_receive(struct bsal_actor *actor, struct bsal_message *message
         bsal_vector_helper_print_int(bsal_actor_acquaintance_vector(actor));
 #endif
 
-        /* set the number of actors desired for each spawner
+        /* Option 1: Use a number of actors for each spawner. This number
+         * is the same for all spawner.
          */
-        if (concrete_actor->actors_per_spawner == BSAL_ACTOR_NO_VALUE) {
-            *bucket = workers * actors_per_worker;
+        if (concrete_actor->actors_per_spawner != BSAL_ACTOR_NO_VALUE) {
+            (*bucket) = concrete_actor->actors_per_spawner;
+
+        /* Otherwise, the number of actors is either a number of actors per worker
+         * or a number of workers per actor (one of the two options).
+         */
+
+        /* Option 2: spawn 1 actor for each N workers
+         */
+        } else if (concrete_actor->workers_per_actor != BSAL_ACTOR_NO_VALUE) {
+
+            (*bucket) = workers / concrete_actor->workers_per_actor;
+
+            if (workers % concrete_actor->workers_per_actor != 0) {
+                ++(*bucket);
+            }
+
+        /* Option 3: Otherwise, multiply the number of workers by a number of actors
+         * per worker.
+         */
+        } else if (concrete_actor->actors_per_worker != BSAL_ACTOR_NO_VALUE) {
+
+            (*bucket) = workers * concrete_actor->actors_per_worker;
+
+        /* Option 4: Otherwise, spawn 1 actor per worker for each spawner.
+         */
         } else {
-            *bucket = concrete_actor->actors_per_spawner;
+
+            (*bucket) = workers * 1;
+
         }
 
         bsal_actor_helper_send_reply_int(actor, BSAL_ACTOR_SPAWN, concrete_actor->script);
@@ -287,6 +313,21 @@ void bsal_manager_receive(struct bsal_actor *actor, struct bsal_message *message
 
         bsal_message_helper_unpack_int(message, 0, &concrete_actor->actors_per_worker);
 
+        if (concrete_actor->actors_per_worker <= 0) {
+            concrete_actor->actors_per_worker = BSAL_ACTOR_NO_VALUE;
+        }
+
         bsal_actor_helper_send_reply_empty(actor, BSAL_MANAGER_SET_ACTORS_PER_WORKER_REPLY);
+
+    } else if (tag == BSAL_MANAGER_SET_WORKERS_PER_ACTOR) {
+
+        bsal_message_helper_unpack_int(message, 0, &concrete_actor->workers_per_actor);
+
+        if (concrete_actor->workers_per_actor <= 0) {
+            concrete_actor->workers_per_actor = BSAL_ACTOR_NO_VALUE;
+        }
+
+        bsal_actor_helper_send_reply_empty(actor, BSAL_MANAGER_SET_WORKERS_PER_ACTOR_REPLY);
+
     }
 }
