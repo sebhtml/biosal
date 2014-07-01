@@ -36,6 +36,7 @@ struct bsal_worker_pool {
 
     int worker_for_message;
     int worker_for_run;
+    int worker_for_work;
 
     int debug_mode;
 
@@ -63,12 +64,11 @@ int bsal_worker_pool_pull(struct bsal_worker_pool *pool, struct bsal_message *me
 
 struct bsal_worker *bsal_worker_pool_select_worker_for_run(struct bsal_worker_pool *pool);
 struct bsal_worker *bsal_worker_pool_select_worker_for_work(
-                struct bsal_worker_pool *node, struct bsal_work *work, int *start);
+                struct bsal_worker_pool *node, struct bsal_work *work);
 struct bsal_worker *bsal_worker_pool_select_worker_for_message(struct bsal_worker_pool *pool);
 int bsal_worker_pool_next_worker(struct bsal_worker_pool *node, int thread);
 
-void bsal_worker_pool_schedule_work(struct bsal_worker_pool *pool, struct bsal_work *work,
-                int *start);
+void bsal_worker_pool_schedule_work(struct bsal_worker_pool *pool, struct bsal_work *work);
 
 int bsal_worker_pool_worker_count(struct bsal_worker_pool *pool);
 int bsal_worker_pool_has_messages(struct bsal_worker_pool *pool);
@@ -79,15 +79,13 @@ struct bsal_worker *bsal_worker_pool_get_worker(
 struct bsal_worker *bsal_worker_pool_select_worker_round_robin(
                 struct bsal_worker_pool *pool, struct bsal_work *work);
 struct bsal_worker *bsal_worker_pool_select_worker_least_busy(
-                struct bsal_worker_pool *pool, struct bsal_work *work,
-                int *start);
+                struct bsal_worker_pool *pool, struct bsal_work *work, int *worker_score);
 
 void bsal_worker_pool_print_load(struct bsal_worker_pool *self, int type);
 
 #ifdef BSAL_WORKER_HAS_OWN_QUEUES
 int bsal_worker_pool_pull_classic(struct bsal_worker_pool *pool, struct bsal_message *message);
-void bsal_worker_pool_schedule_work_classic(struct bsal_worker_pool *pool, struct bsal_work *work,
-                int *start);
+void bsal_worker_pool_schedule_work_classic(struct bsal_worker_pool *pool, struct bsal_work *work);
 
 #endif
 

@@ -70,7 +70,6 @@ struct bsal_node {
     int nodes;
     int threads;
 
-    int start;
     int worker_in_main_thread;
     int send_in_thread;
     int workers_in_threads;

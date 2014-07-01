@@ -43,6 +43,7 @@ void bsal_worker_pool_init(struct bsal_worker_pool *pool, int workers,
     if (pool->workers >= 1) {
         pool->worker_for_run = 0;
         pool->worker_for_message = 0;
+        pool->worker_for_work = 0;
     } else {
         printf("Error: the number of workers must be at least 1.\n");
         exit(1);
@@ -265,8 +266,7 @@ int bsal_worker_pool_next_worker(struct bsal_worker_pool *pool, int worker)
 
 /* select the worker to push work to */
 struct bsal_worker *bsal_worker_pool_select_worker_for_work(
-                struct bsal_worker_pool *pool, struct bsal_work *work,
-                int *start)
+                struct bsal_worker_pool *pool, struct bsal_work *work)
 {
 #ifdef BSAL_WORKER_POOL_PUSH_WORK_ON_SAME_WORKER
 
@@ -282,6 +282,8 @@ struct bsal_worker *bsal_worker_pool_select_worker_for_work(
      */
     struct bsal_actor *actor;
     struct bsal_worker *current_worker;
+    int best_score;
+    struct bsal_worker *last_worker;
 
     actor = bsal_work_actor(work);
     current_worker = bsal_actor_worker(actor);
@@ -304,7 +306,26 @@ struct bsal_worker *bsal_worker_pool_select_worker_for_work(
 #endif
 
 #ifdef BSAL_WORKER_POOL_USE_LEAST_BUSY
-    return bsal_worker_pool_select_worker_least_busy(pool, work, start);
+    current_worker = bsal_worker_pool_select_worker_least_busy(pool, work, &best_score);
+
+    /* if the best score is not 0, try the last worker
+     */
+    if (best_score != 0) {
+        actor = bsal_work_actor(work);
+        last_worker = bsal_actor_get_last_worker(actor);
+
+        if (last_worker != NULL) {
+
+            return last_worker;
+/*
+            last_worker_score = bsal_worker_get_work_scheduling_score(last_worker);
+        */
+        }
+    }
+
+    /* return the worker with the lowest load
+     */
+    return current_worker;
 
 #else
     return bsal_worker_pool_select_worker_round_robin(pool, work);
@@ -340,14 +361,17 @@ struct bsal_worker *bsal_worker_pool_get_worker(
 
 #ifdef BSAL_WORKER_HAS_OWN_QUEUES
 struct bsal_worker *bsal_worker_pool_select_worker_least_busy(
-                struct bsal_worker_pool *self, struct bsal_work *work,
-                int *start)
+                struct bsal_worker_pool *self, struct bsal_work *work, int *worker_score)
 {
     int to_check;
     int score;
     int best_score;
     struct bsal_worker *worker;
     struct bsal_worker *best_worker;
+
+#if 0
+    int last_worker_score;
+#endif
 
 #ifdef BSAL_WORKER_DEBUG
     int tag;
@@ -365,7 +389,7 @@ struct bsal_worker *bsal_worker_pool_select_worker_least_busy(
         /*
          * get the worker to test for this iteration.
          */
-        worker = bsal_worker_pool_get_worker(self, *start);
+        worker = bsal_worker_pool_get_worker(self, self->worker_for_work);
 
         score = bsal_worker_get_work_scheduling_score(worker);
 
@@ -375,7 +399,7 @@ struct bsal_worker *bsal_worker_pool_select_worker_least_busy(
                              || score >= self->last_scheduling_warning + BSAL_WORKER_WARNING_THRESHOLD_STRIDE)) {
             printf("Warning: node %d worker %d has a scheduling score of %d\n",
                             bsal_node_name(self->node),
-                            *start, score);
+                            self->worker_for_work, score);
 
             self->last_scheduling_warning = score;
         }
@@ -400,7 +424,7 @@ struct bsal_worker *bsal_worker_pool_select_worker_least_busy(
         /*
          * assign the next worker
          */
-        *start = bsal_worker_pool_next_worker(self, *start);
+        self->worker_for_work = bsal_worker_pool_next_worker(self, self->worker_for_work);
     }
 
 #ifdef BSAL_WORKER_POOL_DEBUG
@@ -419,9 +443,9 @@ struct bsal_worker *bsal_worker_pool_select_worker_least_busy(
     /*
      * assign the next worker
      */
-    *start = bsal_worker_pool_next_worker(self, *start);
+    self->worker_for_work = bsal_worker_pool_next_worker(self, self->worker_for_work);
 
-
+    *worker_score = best_score;
     /* This is a best effort algorithm
      */
     return best_worker;
@@ -437,8 +461,7 @@ struct bsal_worker *bsal_worker_pool_select_worker_for_run(struct bsal_worker_po
     return bsal_worker_pool_get_worker(pool, index);
 }
 
-void bsal_worker_pool_schedule_work(struct bsal_worker_pool *pool, struct bsal_work *work,
-                int *start)
+void bsal_worker_pool_schedule_work(struct bsal_worker_pool *pool, struct bsal_work *work)
 {
     struct bsal_work other_work;
 
@@ -462,10 +485,10 @@ void bsal_worker_pool_schedule_work(struct bsal_worker_pool *pool, struct bsal_w
 #endif
 
 #ifdef BSAL_WORKER_HAS_OWN_QUEUES
-    bsal_worker_pool_schedule_work_classic(pool, work, start);
+    bsal_worker_pool_schedule_work_classic(pool, work);
 
     if (bsal_ring_queue_dequeue(&pool->local_work_queue, &other_work)) {
-        bsal_worker_pool_schedule_work_classic(pool, &other_work, start);
+        bsal_worker_pool_schedule_work_classic(pool, &other_work);
     }
 #else
     bsal_work_queue_enqueue(&pool->work_queue, work);
@@ -478,13 +501,12 @@ void bsal_worker_pool_schedule_work(struct bsal_worker_pool *pool, struct bsal_w
  * \see http://lxr.free-electrons.com/source/include/linux/workqueue.h
  * \see http://lxr.free-electrons.com/source/kernel/workqueue.c
  */
-void bsal_worker_pool_schedule_work_classic(struct bsal_worker_pool *pool, struct bsal_work *work,
-                int *start)
+void bsal_worker_pool_schedule_work_classic(struct bsal_worker_pool *pool, struct bsal_work *work)
 {
     struct bsal_worker *worker;
     int count;
 
-    worker = bsal_worker_pool_select_worker_for_work(pool, work, start);
+    worker = bsal_worker_pool_select_worker_for_work(pool, work);
 
     /* if the work can not be queued,
      * it will be queued later
