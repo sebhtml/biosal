@@ -1,12 +1,17 @@
 
 #include "map.h"
 
+#include <system/memory.h>
+
 #include <stdio.h>
 #include <string.h>
 
 void bsal_map_init(struct bsal_map *self, int key_size, int value_size)
 {
     uint64_t buckets = 2;
+
+    key_size = bsal_memory_align(key_size);
+    value_size = bsal_memory_align(value_size);
 
     bsal_dynamic_hash_table_init(&self->table, buckets, key_size, value_size);
 }

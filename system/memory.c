@@ -150,9 +150,19 @@ uint64_t bsal_get_heap_size()
     return bytes;
 }
 
-int bsal_memory_align(int unaligned, int alignment)
+int bsal_memory_align(int unaligned)
 {
-#ifdef BSAL_MEMORY_ALIGNMENT_ENABLED
+/* enable alignment only if alignment is greater than 0
+ */
+#if BSAL_MEMORY_ALIGNMENT_DEFAULT > 0
+    return bsal_memory_allocate_private(unaligned, BSAL_MEMORY_ALIGNMENT_DEFAULT);
+#else
+    return unaligned;
+#endif
+}
+
+int bsal_memory_align_private(int unaligned, int alignment)
+{
     int aligned;
 
     if (alignment == 0) {
@@ -167,7 +177,4 @@ int bsal_memory_align(int unaligned, int alignment)
 #endif
 
     return aligned;
-#else
-    return unaligned;
-#endif
 }

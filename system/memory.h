@@ -76,16 +76,7 @@
 #define BSAL_MEMORY_ZERO 0
 
 #define BSAL_MEMORY_ALIGNMENT_DEFAULT BSAL_MEMORY_ALIGNMENT_NONE
-#define BSAL_MEMORY_DEFAULT_ALIGNMENT BSAL_MEMORY_ALIGNMENT_DEFAULT
 #define BSAL_MEMORY_DEFAULT_VALUE BSAL_MEMORY_ZERO
-
-/* enable alignment only if alignment is greater than 0
- */
-#if BSAL_MEMORY_ALIGNMENT_DEFAULT > 0
-
-#define BSAL_MEMORY_ALIGNMENT_ENABLED
-
-#endif
 
 #ifdef BSAL_MEMORY_DEBUG
 
@@ -110,6 +101,7 @@ void bsal_memory_free_private(void *pointer, const char *function, const char *f
 
 uint64_t bsal_get_heap_size();
 
-int bsal_memory_align(int unaligned, int alignment);
+int bsal_memory_align(int unaligned);
+int bsal_memory_align_private(int unaligned, int alignment);
 
 #endif

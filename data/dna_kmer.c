@@ -95,11 +95,6 @@ int bsal_dna_kmer_pack_unpack(struct bsal_dna_kmer *sequence,
     int offset;
     int encoded_length;
 
-#if BSAL_MEMORY_ALIGNMENT_ENABLED
-    int aligned;
-    int to_set;
-#endif
-
     bsal_packer_init(&packer, operation, buffer);
 
     /* don't pack the kmer length...
@@ -129,23 +124,7 @@ int bsal_dna_kmer_pack_unpack(struct bsal_dna_kmer *sequence,
 
     bsal_packer_destroy(&packer);
 
-#ifdef BSAL_MEMORY_ALIGNMENT_ENABLED
-    aligned = bsal_memory_align(offset, BSAL_MEMORY_DEFAULT_ALIGNMENT);
-
-    /* set at most BSAL_MEMORY_ALIGNMENT_DEFAULT bytes to 0
-     */
-    if (aligned != offset) {
-        to_set = aligned - offset;
-
-        /* set the remainding bits to 0
-         */
-        memset((char*)buffer + offset, BSAL_MEMORY_DEFAULT_VALUE, to_set);
-    }
-
-    return aligned;
-#else
     return offset;
-#endif
 }
 
 void bsal_dna_kmer_init_random(struct bsal_dna_kmer *sequence, int kmer_length,
