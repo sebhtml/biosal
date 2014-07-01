@@ -26,6 +26,26 @@
 #define BSAL_NODE_ADD_INITIAL_ACTORS_REPLY 0x00003ad3
 #define BSAL_NODE_START 0x0000082c
 
+/*
+ * Compilation options:
+ */
+
+/*
+ * Enable load reporting with -print-load and memory reporting with
+ * -print-memory-usage
+ */
+/*
+#define BSAL_NODE_ENABLE_LOAD_REPORTING
+ */
+
+/*
+ * Enable a check to avoid calling MPI probing function
+ * when running on one single node.
+ */
+/*
+#define BSAL_NODE_CHECK_MPI
+*/
+
 struct bsal_script;
 
 /*

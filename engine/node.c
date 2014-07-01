@@ -670,9 +670,13 @@ int bsal_node_running(struct bsal_node *node)
 void bsal_node_run_loop(struct bsal_node *node)
 {
     struct bsal_message message;
+    int credits;
+    const int starting_credits = 100000;
+
+#ifdef BSAL_NODE_ENABLE_LOAD_REPORTING
     int ticks;
-    clock_t current_time;
     int period;
+    clock_t current_time;
     char print_information = 0;
 
     if (node->print_load || node->print_memory_usage) {
@@ -681,9 +685,13 @@ void bsal_node_run_loop(struct bsal_node *node)
 
     period = 10;
     ticks = 0;
+#endif
 
-    while (bsal_node_running(node)) {
+    credits = starting_credits;
 
+    while (credits > 0) {
+
+#ifdef BSAL_NODE_ENABLE_LOAD_REPORTING
         if (print_information) {
             current_time = time(NULL);
 
@@ -703,6 +711,7 @@ void bsal_node_run_loop(struct bsal_node *node)
                 node->last_report_time = current_time;
             }
         }
+#endif
 
 #ifdef BSAL_NODE_DEBUG_LOOP
         if (ticks % 1000000 == 0) {
@@ -748,7 +757,20 @@ void bsal_node_run_loop(struct bsal_node *node)
             bsal_node_send_message(node);
         }
 
+#ifdef BSAL_NODE_ENABLE_LOAD_REPORTING
         ticks++;
+#endif
+
+        --credits;
+
+        /* if the node is still running, allocate new credits
+         * to the engine loop
+         */
+        if (credits == 0) {
+            if (bsal_node_running(node)) {
+                credits = starting_credits;
+            }
+        }
     }
 
 #ifdef BSAL_NODE_DEBUG_20140601_8

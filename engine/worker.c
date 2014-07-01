@@ -104,6 +104,9 @@ void bsal_worker_destroy(struct bsal_worker *worker)
 void bsal_worker_run(struct bsal_worker *worker)
 {
     struct bsal_work work;
+    struct bsal_message other_message;
+
+#ifdef BSAL_NODE_ENABLE_LOAD_REPORTING
     clock_t current_time;
     clock_t elapsed;
     int period;
@@ -112,7 +115,7 @@ void bsal_worker_run(struct bsal_worker *worker)
     uint64_t end_time;
     uint64_t elapsed_nanoseconds;
     uint64_t elapsed_from_start;
-    struct bsal_message other_message;
+#endif
 
 #ifdef BSAL_WORKER_DEBUG
     int tag;
@@ -120,6 +123,7 @@ void bsal_worker_run(struct bsal_worker *worker)
     struct bsal_message *message;
 #endif
 
+#ifdef BSAL_NODE_ENABLE_LOAD_REPORTING
     period = 1;
     current_time = time(NULL);
 
@@ -152,6 +156,7 @@ void bsal_worker_run(struct bsal_worker *worker)
             worker->last_report = current_time;
         }
     }
+#endif
 
 #ifdef BSAL_WORKER_DEBUG
     if (worker->debug) {
@@ -174,16 +179,20 @@ void bsal_worker_run(struct bsal_worker *worker)
         }
 #endif
 
+#ifdef BSAL_NODE_ENABLE_LOAD_REPORTING
         start_time = bsal_timer_get_nanoseconds();
+#endif
 
         /* dispatch message to a worker */
         bsal_worker_work(worker, &work);
 
+#ifdef BSAL_NODE_ENABLE_LOAD_REPORTING
         end_time = bsal_timer_get_nanoseconds();
 
         elapsed_nanoseconds = end_time - start_time;
         worker->epoch_used_nanoseconds += elapsed_nanoseconds;
         worker->loop_used_nanoseconds += elapsed_nanoseconds;
+#endif
     }
 
     /* queue buffered message
