@@ -41,14 +41,14 @@ int bsal_vector_iterator_get_next_value(struct bsal_vector_iterator *self, void 
     void *bucket;
     int size;
 
-    if (!bsal_vector_iterator_has_next(self)) {
+    if (!bsal_vector_iterator_next(self, (void **)&bucket)) {
         return 0;
     }
 
-    bsal_vector_iterator_next(self, (void **)&value);
-    size = bsal_vector_element_size(self->list);
-
-    memcpy(value, bucket, size);
+    if (value != NULL) {
+        size = bsal_vector_element_size(self->list);
+        memcpy(value, bucket, size);
+    }
 
     return 1;
 }

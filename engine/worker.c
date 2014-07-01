@@ -664,6 +664,7 @@ void bsal_worker_queue_work(struct bsal_worker *worker, struct bsal_work *work)
     int actor_name;
     struct bsal_vector counts;
     struct bsal_vector_iterator vector_iterator;
+    int actor_works;
 
     /* just put it in the local queue.
      */
@@ -704,26 +705,26 @@ void bsal_worker_queue_work(struct bsal_worker *worker, struct bsal_work *work)
 
             bsal_ring_queue_enqueue(&worker->local_work_queue, &local_work);
 
-            if (!bsal_map_get_value(&frequencies, &actor_name, &count)) {
-                count = 0;
-                bsal_map_add_value(&frequencies, &actor_name, &count);
+            if (!bsal_map_get_value(&frequencies, &actor_name, &actor_works)) {
+                actor_works = 0;
+                bsal_map_add_value(&frequencies, &actor_name, &actor_works);
             }
 
-            ++count;
-            bsal_map_update_value(&frequencies, &actor_name, &count);
+            ++actor_works;
+            bsal_map_update_value(&frequencies, &actor_name, &actor_works);
 
             ++i;
         }
 
         bsal_map_iterator_init(&iterator, &frequencies);
-        bsal_vector_init(&counts, sizeof(int) * 2);
+        bsal_vector_init(&counts, sizeof(int));
 
-        while (bsal_map_iterator_get_next_key_and_value(&iterator, &actor_name, &count)) {
+        while (bsal_map_iterator_get_next_key_and_value(&iterator, &actor_name, &actor_works)) {
 
             printf("actor %d ... %d messages\n",
-                            actor_name, count);
+                            actor_name, actor_works);
 
-            bsal_vector_push_back(&counts, &count);
+            bsal_vector_push_back(&counts, &actor_works);
         }
 
         bsal_map_iterator_destroy(&iterator);
@@ -733,9 +734,9 @@ void bsal_worker_queue_work(struct bsal_worker *worker, struct bsal_work *work)
         bsal_vector_iterator_init(&vector_iterator, &counts);
 
         printf("Sorted counts:\n");
-        while (bsal_vector_iterator_get_next_value(&vector_iterator, &count)) {
+        while (bsal_vector_iterator_get_next_value(&vector_iterator, &actor_works)) {
 
-            printf(" %d\n", count);
+            printf(" %d\n", actor_works);
         }
 
         bsal_vector_iterator_destroy(&vector_iterator);
