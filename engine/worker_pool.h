@@ -39,6 +39,8 @@ struct bsal_worker_pool {
 
     int debug_mode;
 
+    int last_warning;
+    int last_scheduling_warning;
     int ticks_without_messages;
 
     time_t starting_time;

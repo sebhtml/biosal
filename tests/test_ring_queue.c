@@ -13,17 +13,24 @@ int main(int argc, char **argv)
         struct bsal_ring_queue ring_queue;
         int i;
         bsal_ring_queue_init(&ring_queue, sizeof(int));
+        int size;
+
+        size = 0;
 
         TEST_INT_EQUALS(bsal_ring_queue_empty(&ring_queue), 1);
 
         i = 16;
         while (i--) {
             TEST_INT_EQUALS(bsal_ring_queue_enqueue(&ring_queue, &i), 1);
+            ++size;
+            TEST_INT_EQUALS(bsal_ring_queue_size(&ring_queue), size);
         }
 
         i = 16;
         while (i--) {
             TEST_INT_EQUALS(bsal_ring_queue_enqueue(&ring_queue, &i), 1);
+            ++size;
+            TEST_INT_EQUALS(bsal_ring_queue_size(&ring_queue), size);
         }
 
         TEST_INT_EQUALS(bsal_ring_queue_full(&ring_queue), 0);
@@ -32,12 +39,16 @@ int main(int argc, char **argv)
         while (i--) {
             int item;
             TEST_INT_EQUALS(bsal_ring_queue_dequeue(&ring_queue, &item), 1);
+            --size;
+            TEST_INT_EQUALS(bsal_ring_queue_size(&ring_queue), size);
         }
 
         i = 16;
         while (i--) {
             int item;
             TEST_INT_EQUALS(bsal_ring_queue_dequeue(&ring_queue, &item), 1);
+            --size;
+            TEST_INT_EQUALS(bsal_ring_queue_size(&ring_queue), size);
         }
 
         bsal_ring_queue_destroy(&ring_queue);
@@ -49,6 +60,9 @@ int main(int argc, char **argv)
 
         struct bsal_ring_queue ring_queue;
         int i;
+        int size;
+
+        size = 0;
         bsal_ring_queue_init(&ring_queue, sizeof(int));
 
         TEST_INT_EQUALS(bsal_ring_queue_empty(&ring_queue), 1);
@@ -56,6 +70,8 @@ int main(int argc, char **argv)
         i = 1000;
         while (i--) {
             TEST_INT_EQUALS(bsal_ring_queue_enqueue(&ring_queue, &i), 1);
+            ++size;
+            TEST_INT_EQUALS(bsal_ring_queue_size(&ring_queue), size);
         }
 
         TEST_INT_EQUALS(bsal_ring_queue_full(&ring_queue), 0);
@@ -64,6 +80,8 @@ int main(int argc, char **argv)
         while (i--) {
             int item;
             TEST_INT_EQUALS(bsal_ring_queue_dequeue(&ring_queue, &item), 1);
+            --size;
+            TEST_INT_EQUALS(bsal_ring_queue_size(&ring_queue), size);
             TEST_INT_EQUALS(item, i);
             /* printf("%i %i\n", item, i); */
         }

@@ -218,7 +218,7 @@ void bsal_dna_codec_encode_default(int length_in_nucleotides, char *dna_sequence
     int encoded_length;
 
     encoded_length = bsal_dna_codec_encoded_length(length_in_nucleotides);
-    memset(encoded_sequence, 0, encoded_length);
+    memset(encoded_sequence, BSAL_MEMORY_DEFAULT_VALUE, encoded_length);
 
     i = 0;
 

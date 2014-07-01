@@ -158,6 +158,7 @@ struct bsal_actor {
     struct bsal_worker *worker;
     struct bsal_node *node;
     struct bsal_worker *affinity_worker;
+    struct bsal_worker *last_worker;
 
     struct bsal_map received_messages;
     struct bsal_map sent_messages;
@@ -257,6 +258,7 @@ int bsal_actor_node_worker_count(struct bsal_actor *actor);
 int bsal_actor_spawn(struct bsal_actor *actor, int script);
 
 void bsal_actor_lock(struct bsal_actor *actor);
+int bsal_actor_trylock(struct bsal_actor *actor);
 void bsal_actor_unlock(struct bsal_actor *actor);
 
 int bsal_actor_argc(struct bsal_actor *actor);
@@ -336,5 +338,6 @@ struct bsal_map *bsal_actor_get_received_messages(struct bsal_actor *self);
 struct bsal_map *bsal_actor_get_sent_messages(struct bsal_actor *self);
 
 struct bsal_memory_pool *bsal_actor_get_ephemeral_memory(struct bsal_actor *actor);
+struct bsal_worker *bsal_actor_get_last_worker(struct bsal_actor *actor);
 
 #endif

@@ -65,7 +65,7 @@ void bsal_actor_init(struct bsal_actor *actor, void *state,
     actor->synchronization_responses = 0;
 
     bsal_lock_init(&actor->receive_lock);
-    actor->locked = 0;
+    actor->locked = BSAL_LOCK_UNLOCKED;
 
     bsal_actor_unpin_from_worker(actor);
     actor->can_pack = BSAL_ACTOR_STATUS_NOT_SUPPORTED;
@@ -206,6 +206,7 @@ bsal_actor_destroy_fn_t bsal_actor_get_destroy(struct bsal_actor *actor)
 void bsal_actor_set_worker(struct bsal_actor *actor, struct bsal_worker *worker)
 {
     actor->worker = worker;
+    actor->last_worker = actor->worker;
 }
 
 int bsal_actor_send_system_self(struct bsal_actor *actor, struct bsal_message *message)
@@ -214,6 +215,7 @@ int bsal_actor_send_system_self(struct bsal_actor *actor, struct bsal_message *m
 
     tag = bsal_message_tag(message);
 
+#if 0
     if (tag == BSAL_ACTOR_PIN_TO_WORKER) {
         bsal_actor_pin_to_worker(actor);
         return 1;
@@ -222,7 +224,7 @@ int bsal_actor_send_system_self(struct bsal_actor *actor, struct bsal_message *m
         bsal_actor_unpin_from_worker(actor);
         return 1;
 
-    } else if (tag == BSAL_ACTOR_PIN_TO_NODE) {
+    if (tag == BSAL_ACTOR_PIN_TO_NODE) {
         bsal_actor_pin_to_node(actor);
         return 1;
 
@@ -230,7 +232,9 @@ int bsal_actor_send_system_self(struct bsal_actor *actor, struct bsal_message *m
         bsal_actor_unpin_from_node(actor);
         return 1;
 
-    } else if (tag == BSAL_ACTOR_PACK_ENABLE) {
+#endif
+
+    if (tag == BSAL_ACTOR_PACK_ENABLE) {
 
             /*
         printf("DEBUG actor %d enabling can_pack\n",
@@ -404,10 +408,26 @@ struct bsal_node *bsal_actor_node(struct bsal_actor *actor)
     return bsal_worker_node(bsal_actor_worker(actor));
 }
 
+/* return 0 if successful
+ */
+int bsal_actor_trylock(struct bsal_actor *actor)
+{
+    int result;
+
+    result = bsal_lock_trylock(&actor->receive_lock);
+
+    if (result == BSAL_LOCK_SUCCESS) {
+        actor->locked = BSAL_LOCK_LOCKED;
+        return result;
+    }
+
+    return result;
+}
+
 void bsal_actor_lock(struct bsal_actor *actor)
 {
     bsal_lock_lock(&actor->receive_lock);
-    actor->locked = 1;
+    actor->locked = BSAL_LOCK_LOCKED;
 }
 
 void bsal_actor_unlock(struct bsal_actor *actor)
@@ -416,7 +436,7 @@ void bsal_actor_unlock(struct bsal_actor *actor)
         return;
     }
 
-    actor->locked = 0;
+    actor->locked = BSAL_LOCK_UNLOCKED;
     bsal_lock_unlock(&actor->receive_lock);
 }
 
@@ -1763,3 +1783,10 @@ struct bsal_memory_pool *bsal_actor_get_ephemeral_memory(struct bsal_actor *acto
 
     return bsal_worker_get_ephemeral_memory(worker);
 }
+
+struct bsal_worker *bsal_actor_get_last_worker(struct bsal_actor *actor)
+{
+    return actor->last_worker;
+}
+
+

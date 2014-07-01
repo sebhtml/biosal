@@ -11,6 +11,9 @@
  * \see http://stackoverflow.com/questions/15884793/how-to-get-the-name-or-file-and-line-of-caller-method
  */
 
+#define BSAL_TRUE 1
+#define BSAL_FALSE 0
+
 /*
  */
 #define BSAL_MEMORY_DEBUG

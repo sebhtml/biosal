@@ -119,7 +119,7 @@ void bsal_kmer_store_receive(struct bsal_actor *self, struct bsal_message *messa
         kmers = bsal_dna_kmer_block_kmers(&block);
         bsal_vector_iterator_init(&iterator, kmers);
 
-        period = 250000;
+        period = 2500000;
 
         while (bsal_vector_iterator_has_next(&iterator)) {
 

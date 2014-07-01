@@ -6,6 +6,12 @@
 
 #include "atomic.h"
 
+#define BSAL_LOCK_SUCCESS 0
+#define BSAL_LOCK_ERROR -1
+
+#define BSAL_LOCK_UNLOCKED 0
+#define BSAL_LOCK_LOCKED 1
+
 #if defined(__linux__)
 #define BSAL_LOCK_USE_SPIN_LOCK
 

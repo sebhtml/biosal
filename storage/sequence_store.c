@@ -52,6 +52,9 @@ void bsal_sequence_store_init(struct bsal_actor *actor)
     /* 2^26 */
     bsal_memory_pool_init(&concrete_actor->persistent_memory, 67108864);
     bsal_memory_pool_disable_tracking(&concrete_actor->persistent_memory);
+
+    concrete_actor->left = -1;
+    concrete_actor->last = -1;
 }
 
 void bsal_sequence_store_destroy(struct bsal_actor *actor)
@@ -202,6 +205,9 @@ void bsal_sequence_store_push_sequence_data_block(struct bsal_actor *actor, stru
 
         if (concrete_actor->received == concrete_actor->expected) {
             bsal_sequence_store_show_progress(actor, message);
+
+            concrete_actor->left = concrete_actor->received;
+            concrete_actor->last = 0;
         }
     }
 
@@ -295,8 +301,10 @@ void bsal_sequence_store_ask(struct bsal_actor *self, struct bsal_message *messa
     int new_count;
     void *new_buffer;
     struct bsal_message new_message;
-
+    int entry_count;
+    float completion;
     int name;
+    int period;
 
     name = bsal_actor_name(self);
 #ifdef BSAL_SEQUENCE_STORE_DEBUG
@@ -337,7 +345,9 @@ void bsal_sequence_store_ask(struct bsal_actor *self, struct bsal_message *messa
         i++;
     }
 
-    if (bsal_input_command_entry_count(&payload) > 0) {
+    entry_count = bsal_input_command_entry_count(&payload);
+
+    if (entry_count > 0) {
         new_count = bsal_input_command_pack_size(&payload);
         new_buffer = bsal_memory_allocate(new_count);
 
@@ -353,11 +363,34 @@ void bsal_sequence_store_ask(struct bsal_actor *self, struct bsal_message *messa
 #endif
 
         bsal_memory_free(new_buffer);
+
+        concrete_actor->left -= entry_count;
+
     } else {
         bsal_actor_helper_send_reply_empty(self, BSAL_SEQUENCE_STORE_ASK_REPLY);
 #ifdef BSAL_SEQUENCE_STORE_DEBUG
         printf("store/%d can not fulfill order\n", name);
 #endif
+    }
+
+    period = 100000;
+    if (concrete_actor->last >= 0
+                    && (concrete_actor->last == 0
+                    || concrete_actor->left < concrete_actor->last - period
+                    || concrete_actor->left == 0)) {
+
+        completion = (concrete_actor->left + 0.0) / concrete_actor->received;
+
+        printf("sequence store %d has %" PRId64 "/%" PRId64 " (%.2f) entries left to produce\n",
+                        name,
+                        concrete_actor->left, concrete_actor->received,
+                        completion);
+
+        concrete_actor->last = concrete_actor->left;
+
+        if (concrete_actor->last == 0) {
+            concrete_actor->last = -1;
+        }
     }
 
     bsal_input_command_destroy(&payload, bsal_actor_get_ephemeral_memory(self));

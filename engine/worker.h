@@ -13,7 +13,16 @@ struct bsal_work;
 struct bsal_node;
 struct bsal_message;
 
+/*
 #define BSAL_WORKER_USE_LOCK
+*/
+
+/*
+ * Configuration of the buffering system of biosal
+ */
+#define BSAL_WORKER_RING_CAPACITY 512
+#define BSAL_WORKER_WARNING_THRESHOLD 256
+#define BSAL_WORKER_WARNING_THRESHOLD_STRIDE 128
 
 /*
 */
@@ -34,11 +43,14 @@ struct bsal_worker {
     struct bsal_ring message_queue;
 #endif
 
+    struct bsal_ring_queue local_work_queue;
     struct bsal_ring_queue local_message_queue;
     pthread_t thread;
 
     int work_count;
     int start;
+
+    int last_warning;
 
     int name;
 

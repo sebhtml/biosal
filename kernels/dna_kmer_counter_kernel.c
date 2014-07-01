@@ -263,12 +263,11 @@ void bsal_dna_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_
                         BSAL_PUSH_SEQUENCE_DATA_BLOCK_REPLY);
 
         if (concrete_actor->actual == concrete_actor->expected
-                        || concrete_actor->actual >= concrete_actor->last + 10000
+                        || concrete_actor->actual >= concrete_actor->last + 100000
                         || concrete_actor->last == 0) {
 
-            printf("kernel %d processed %" PRIu64 "/%" PRIu64 " entries (%d blocks) so far\n",
+            printf("kernel %d processed %" PRIu64 " entries (%d blocks) so far\n",
                             name, concrete_actor->actual,
-                            concrete_actor->expected,
                             concrete_actor->blocks);
 
             concrete_actor->last = concrete_actor->actual;
@@ -291,8 +290,6 @@ void bsal_dna_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_
 
         bsal_dna_kmer_counter_kernel_verify(actor, message);
 
-        bsal_dna_kmer_counter_kernel_ask(actor, message);
-
     } else if (tag == BSAL_AGGREGATE_KERNEL_OUTPUT_REPLY) {
 
 #ifdef BSAL_KMER_COUNTER_KERNEL_DEBUG
@@ -305,6 +302,8 @@ void bsal_dna_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_
                         bsal_actor_get_acquaintance(actor, source_index),
                         BSAL_PUSH_SEQUENCE_DATA_BLOCK_REPLY);
                         */
+
+        bsal_dna_kmer_counter_kernel_ask(actor, message);
 
     } else if (tag == BSAL_ACTOR_START) {
 

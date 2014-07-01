@@ -12,7 +12,9 @@ void bsal_mega_block_init(struct bsal_mega_block *self, int file, uint64_t offse
     self->entries = entries;
     self->entries_from_start = entries_from_start;
 
+#if 0
     bsal_mega_block_print(self);
+#endif
 }
 
 void bsal_mega_block_destroy(struct bsal_mega_block *self)

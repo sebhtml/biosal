@@ -32,14 +32,14 @@ int bsal_ring_push(struct bsal_ring *self, void *element)
     void *cell;
 
     if (bsal_ring_is_full(self)) {
-        return 0;
+        return BSAL_FALSE;
     }
 
     cell = bsal_ring_get_cell(self, self->tail);
     memcpy(cell, element, self->cell_size);
     self->tail = bsal_ring_increment(self, self->tail);
 
-    return 1;
+    return BSAL_TRUE;
 }
 
 int bsal_ring_pop(struct bsal_ring *self, void *element)
@@ -47,14 +47,14 @@ int bsal_ring_pop(struct bsal_ring *self, void *element)
     void *cell;
 
     if (bsal_ring_is_empty(self)) {
-        return 0;
+        return BSAL_FALSE;
     }
 
     cell = bsal_ring_get_cell(self, self->head);
     memcpy(element, cell, self->cell_size);
     self->head = bsal_ring_increment(self, self->head);
 
-    return 1;
+    return BSAL_TRUE;
 }
 
 int bsal_ring_is_full(struct bsal_ring *self)

@@ -16,12 +16,14 @@
 #define BSAL_WORKER_POOL_WORK_SCHEDULING_WINDOW 4
 #define BSAL_WORKER_POOL_MESSAGE_SCHEDULING_WINDOW 4
 
+#define BSAL_WORKER_POOL_DEBUG_ISSUE_334
+
 /*
 #define BSAL_WORKER_POOL_DEBUG
 */
 /*
-#ifdef BSAL_WORKER_POOL_PUSH_WORK_ON_SAME_WORKER
 */
+#define BSAL_WORKER_POOL_PUSH_WORK_ON_SAME_WORKER
 
 void bsal_worker_pool_init(struct bsal_worker_pool *pool, int workers,
                 struct bsal_node *node)
@@ -29,6 +31,9 @@ void bsal_worker_pool_init(struct bsal_worker_pool *pool, int workers,
     pool->debug_mode = 0;
     pool->node = node;
     pool->ticks_without_messages = 0;
+
+    pool->last_warning = 0;
+    pool->last_scheduling_warning = 0;
 
     pool->workers = workers;
 
@@ -265,11 +270,15 @@ struct bsal_worker *bsal_worker_pool_select_worker_for_work(
 {
 #ifdef BSAL_WORKER_POOL_PUSH_WORK_ON_SAME_WORKER
 
-#error "BAD"
+/*#error "BAD"*/
     /* check first if the actor is active.
      * If it is active, just enqueue the work at the same
      * place (on the same worker).
      * This avoids contention.
+     * This is only required for important actors...
+     * Important actors are those who receive a lot of messages.
+     * This is roughly equivalent to have a dedicated worker for
+     * an important worker.
      */
     struct bsal_actor *actor;
     struct bsal_worker *current_worker;
@@ -281,6 +290,15 @@ struct bsal_worker *bsal_worker_pool_select_worker_for_work(
 #if 0
         printf("USING current worker\n");
 #endif
+
+#ifdef BSAL_WORKER_POOL_DEBUG_SCHEDULING_SAME_WORKER
+        if (bsal_actor_script(actor) == (int)0x82673850) {
+            printf("DEBUG7890 node %d scheduling work for aggregator on worker %d\n",
+                            bsal_node_name(pool->node),
+                            bsal_worker_name(current_worker));
+        }
+#endif
+
         return current_worker;
     }
 #endif
@@ -350,6 +368,18 @@ struct bsal_worker *bsal_worker_pool_select_worker_least_busy(
         worker = bsal_worker_pool_get_worker(self, *start);
 
         score = bsal_worker_get_work_scheduling_score(worker);
+
+#ifdef BSAL_WORKER_POOL_DEBUG_ISSUE_334
+        if (score >= BSAL_WORKER_WARNING_THRESHOLD
+                        && (self->last_scheduling_warning == 0
+                             || score >= self->last_scheduling_warning + BSAL_WORKER_WARNING_THRESHOLD_STRIDE)) {
+            printf("Warning: node %d worker %d has a scheduling score of %d\n",
+                            bsal_node_name(self->node),
+                            *start, score);
+
+            self->last_scheduling_warning = score;
+        }
+#endif
 
         /* if the worker is not busy and it has no work to do,
          * select it right away...
@@ -452,6 +482,7 @@ void bsal_worker_pool_schedule_work_classic(struct bsal_worker_pool *pool, struc
                 int *start)
 {
     struct bsal_worker *worker;
+    int count;
 
     worker = bsal_worker_pool_select_worker_for_work(pool, work, start);
 
@@ -460,6 +491,17 @@ void bsal_worker_pool_schedule_work_classic(struct bsal_worker_pool *pool, struc
      */
     if (!bsal_worker_push_work(worker, work)) {
         bsal_ring_queue_enqueue(&pool->local_work_queue, work);
+
+        count = bsal_ring_queue_size(&pool->local_work_queue);
+
+        if (count >= BSAL_WORKER_WARNING_THRESHOLD
+                        && (pool->last_warning == 0
+                                || count >= pool->last_warning + BSAL_WORKER_WARNING_THRESHOLD_STRIDE)) {
+            printf("Warning node %d has %d works in its local queue\n",
+                            bsal_node_name(pool->node), count);
+
+            pool->last_warning = count;
+        }
     }
 }
 #endif

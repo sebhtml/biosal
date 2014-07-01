@@ -117,7 +117,6 @@ void bsal_aggregator_receive(struct bsal_actor *self, struct bsal_message *messa
     void *buffer;
     int source;
     struct bsal_dna_kmer_block block;
-    int source_index;
     struct bsal_vector *kmers;
     struct bsal_dna_kmer *kmer;
     int entries;
@@ -136,7 +135,7 @@ void bsal_aggregator_receive(struct bsal_actor *self, struct bsal_message *messa
     if (tag == BSAL_AGGREGATE_KERNEL_OUTPUT) {
 
         if (bsal_vector_size(&concrete_actor->buffers) == 0) {
-            printf("aggregator %d: Error, no configured buffers\n",
+            printf("Error: aggregator %d has no configured buffers\n",
                             bsal_actor_name(self));
             return;
         }
@@ -206,10 +205,8 @@ void bsal_aggregator_receive(struct bsal_actor *self, struct bsal_message *messa
         BSAL_DEBUG_MARKER("aggregator after loop");
 #endif
 
-        source_index = bsal_dna_kmer_block_source_index(&block);
-
         if (concrete_actor->last == 0
-                        || concrete_actor->received >= concrete_actor->last + 1000) {
+                        || concrete_actor->received >= concrete_actor->last + 10000) {
 
             printf("aggregator/%d received %" PRIu64 " kernel outputs so far\n",
                             bsal_actor_name(self),
@@ -218,11 +215,6 @@ void bsal_aggregator_receive(struct bsal_actor *self, struct bsal_message *messa
             concrete_actor->last = concrete_actor->received;
         }
 
-        /* answer immediately
-         */
-        bsal_actor_helper_send_reply_int(self, BSAL_AGGREGATE_KERNEL_OUTPUT_REPLY,
-                        source_index);
-
         /* destroy the local copy of the block
          */
         bsal_dna_kmer_block_destroy(&block, bsal_actor_get_ephemeral_memory(self));
@@ -230,6 +222,10 @@ void bsal_aggregator_receive(struct bsal_actor *self, struct bsal_message *messa
 #ifdef BSAL_AGGREGATOR_DEBUG
         BSAL_DEBUG_MARKER("aggregator marker EXIT");
 #endif
+
+        /* answer immediately
+         */
+        bsal_actor_helper_send_reply_empty(self, BSAL_AGGREGATE_KERNEL_OUTPUT_REPLY);
 
     } else if (tag == BSAL_ACTOR_ASK_TO_STOP
                     && source == bsal_actor_supervisor(self)) {
@@ -347,7 +343,7 @@ void bsal_aggregator_flush(struct bsal_actor *self, int customer_index, int forc
                             concrete_actor->customer_block_size);
     buffer = NULL;
 
-    if (concrete_actor->flushed % 1000 == 0) {
+    if (concrete_actor->flushed % 10000 == 0) {
         printf("aggregator %d flushed %d blocks so far\n",
                         bsal_actor_name(self), concrete_actor->flushed);
     }

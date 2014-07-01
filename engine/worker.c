@@ -24,11 +24,12 @@ void bsal_worker_init(struct bsal_worker *worker, int name, struct bsal_node *no
 {
     int capacity;
 
-    capacity = 256;
+    capacity = BSAL_WORKER_RING_CAPACITY;
     /*worker->work_queue = work_queue;*/
     worker->node = node;
     worker->name = name;
     worker->dead = 0;
+    worker->last_warning = 0;
 
 #ifdef BSAL_WORKER_HAS_OWN_QUEUES
     /*worker->work_queue = &worker->works;*/
@@ -50,6 +51,7 @@ void bsal_worker_init(struct bsal_worker *worker, int name, struct bsal_node *no
 #endif
 
     bsal_ring_queue_init(&worker->local_message_queue, sizeof(struct bsal_message));
+    bsal_ring_queue_init(&worker->local_work_queue, sizeof(struct bsal_work));
 
 #endif
 
@@ -88,6 +90,7 @@ void bsal_worker_destroy(struct bsal_worker *worker)
 
 #endif
     bsal_ring_queue_destroy(&worker->local_message_queue);
+    bsal_ring_queue_destroy(&worker->local_work_queue);
 #endif
 
     worker->node = NULL;
@@ -197,6 +200,7 @@ void bsal_worker_work(struct bsal_worker *worker, struct bsal_work *work)
     struct bsal_message *message;
     int dead;
     char *buffer;
+    int count;
 
 #ifdef BSAL_WORKER_DEBUG
     int tag;
@@ -237,7 +241,29 @@ void bsal_worker_work(struct bsal_worker *worker, struct bsal_work *work)
     /* lock the actor to prevent another worker from making work
      * on the same actor at the same time
      */
-    bsal_actor_lock(actor);
+    if (bsal_actor_trylock(actor) != BSAL_LOCK_SUCCESS) {
+
+        /* just put it back
+         */
+
+        bsal_ring_queue_enqueue(&worker->local_work_queue, work);
+
+        count = bsal_ring_queue_size(&worker->local_work_queue);
+
+        if (count >= BSAL_WORKER_WARNING_THRESHOLD
+                       && (worker->last_warning == 0
+                               || count >= worker->last_warning + BSAL_WORKER_WARNING_THRESHOLD_STRIDE)) {
+
+            printf("Warning: node %d, worker %d has %d works in its local queue.\n",
+                            bsal_node_name(worker->node),
+                            bsal_worker_name(worker),
+                            count);
+
+            worker->last_warning = count;
+        }
+
+        return;
+    }
 
     /* the actor died while this worker was waiting for the lock
      */
@@ -532,7 +558,18 @@ int bsal_worker_push_work(struct bsal_worker *worker, struct bsal_work *work)
 int bsal_worker_pull_work(struct bsal_worker *worker, struct bsal_work *work)
 {
 #ifdef BSAL_WORKER_USE_FAST_RINGS
-    return bsal_fast_ring_pop_from_consumer(&worker->work_queue, work);
+    int result;
+
+    /* first, pull from the ring.
+     * If that fails, pull from the local queue
+     */
+    result = bsal_fast_ring_pop_from_consumer(&worker->work_queue, work);
+    if (result) {
+        return result;
+    }
+
+    return bsal_ring_queue_dequeue(&worker->local_work_queue, work);
+
 #else
     return bsal_ring_pop(&worker->work_queue, work);
 #endif

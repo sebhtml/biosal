@@ -3,8 +3,6 @@
 
 #include "atomic.h"
 
-#define BSAL_LOCK_UNLOCKED 0
-#define BSAL_LOCK_LOCKED 1
 /*#define BSAL_LOCK_READS_BETWEEN_WRITE_ATTEMPT 1024*/
 #define BSAL_LOCK_READS_BETWEEN_WRITE_ATTEMPT 8
 
@@ -38,12 +36,12 @@ int bsal_lock_unlock(struct bsal_lock *self)
 #if defined(BSAL_LOCK_USE_COMPARE_AND_SWAP)
     if (bsal_atomic_compare_and_swap_int(&self->lock, BSAL_LOCK_LOCKED, BSAL_LOCK_UNLOCKED) == BSAL_LOCK_LOCKED) {
         /* successful */
-        return 0;
+        return BSAL_LOCK_SUCCESS;
     }
 
     /* not successful
      */
-    return -1;
+    return BSAL_LOCK_ERROR;
 
 #elif defined(BSAL_LOCK_USE_SPIN_LOCK)
     return pthread_spin_unlock(&self->lock);
@@ -60,12 +58,12 @@ int bsal_lock_trylock(struct bsal_lock *self)
 
     if (bsal_atomic_compare_and_swap_int(&self->lock, old_value, new_value) == old_value) {
         /* successful */
-        return 0;
+        return BSAL_LOCK_SUCCESS;
     }
 
     /* not successful
      */
-    return -1;
+    return BSAL_LOCK_ERROR;
 
 #elif defined(BSAL_LOCK_USE_SPIN_LOCK)
     return pthread_spin_trylock(&self->lock);
@@ -77,7 +75,7 @@ int bsal_lock_trylock(struct bsal_lock *self)
 void bsal_lock_destroy(struct bsal_lock *self)
 {
 #if defined(BSAL_LOCK_USE_COMPARE_AND_SWAP)
-    self->lock = 0;
+    self->lock = BSAL_LOCK_UNLOCKED;
 #elif defined(BSAL_LOCK_USE_SPIN_LOCK)
     pthread_spin_destroy(&self->lock);
 #elif defined(BSAL_LOCK_USE_MUTEX)
