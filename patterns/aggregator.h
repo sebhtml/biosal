@@ -7,6 +7,7 @@
 #include <data/dna_codec.h>
 
 #include <structures/vector.h>
+#include <structures/ring_queue.h>
 
 #include <system/memory_pool.h>
 
@@ -22,8 +23,14 @@ struct bsal_aggregator {
     struct bsal_vector customers;
     struct bsal_vector buffers;
 
+    struct bsal_ring_queue stalled_producers;
+
+    int active_messages;
+
     int customer_block_size;
     int flushed;
+
+    int forced;
 
     struct bsal_dna_codec codec;
     struct bsal_vector persistent_memory_pools;
@@ -43,5 +50,6 @@ void bsal_aggregator_destroy(struct bsal_actor *actor);
 void bsal_aggregator_receive(struct bsal_actor *actor, struct bsal_message *message);
 
 void bsal_aggregator_flush(struct bsal_actor *self, int customer_index, int forced_flush);
+void bsal_aggregator_verify(struct bsal_actor *self, struct bsal_message *message);
 
 #endif

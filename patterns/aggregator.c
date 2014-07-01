@@ -29,8 +29,8 @@
 /* aggregator runtime constants
  */
 
-#define BSAL_AGGREGATOR_FORCED_FLUSH_NO 0
-#define BSAL_AGGREGATOR_FORCED_FLUSH_YES 1
+#define BSAL_FALSE 0
+#define BSAL_TRUE 1
 
 /*
  * Disable memory tracking for increased
@@ -64,6 +64,11 @@ void bsal_aggregator_init(struct bsal_actor *self)
     bsal_dna_codec_init(&concrete_actor->codec);
 
     bsal_vector_init(&concrete_actor->persistent_memory_pools, sizeof(struct bsal_memory_pool));
+
+    bsal_ring_queue_init(&concrete_actor->stalled_producers, sizeof(int));
+    concrete_actor->active_messages = 0;
+
+    concrete_actor->forced = BSAL_FALSE;
 }
 
 void bsal_aggregator_destroy(struct bsal_actor *self)
@@ -78,6 +83,8 @@ void bsal_aggregator_destroy(struct bsal_actor *self)
     concrete_actor->received = 0;
     concrete_actor->last = 0;
     bsal_dna_codec_destroy(&concrete_actor->codec);
+
+    bsal_ring_queue_destroy(&concrete_actor->stalled_producers);
 
     bsal_vector_iterator_init(&iterator, &concrete_actor->buffers);
 
@@ -126,6 +133,7 @@ void bsal_aggregator_receive(struct bsal_actor *self, struct bsal_message *messa
     int customer_index;
     int customer_count;
     struct bsal_memory_pool *persistent_memory;
+    int producer_index;
 
     concrete_actor = (struct bsal_aggregator *)bsal_actor_concrete_actor(self);
     buffer = bsal_message_buffer(message);
@@ -139,6 +147,12 @@ void bsal_aggregator_receive(struct bsal_actor *self, struct bsal_message *messa
                             bsal_actor_name(self));
             return;
         }
+
+        /* enqueue the producer
+         */
+        producer_index = bsal_actor_add_acquaintance(self, source);
+        bsal_ring_queue_enqueue(&concrete_actor->stalled_producers, &producer_index);
+
 
 #ifdef BSAL_AGGREGATOR_DEBUG
         BSAL_DEBUG_MARKER("aggregator receives");
@@ -197,7 +211,7 @@ void bsal_aggregator_receive(struct bsal_actor *self, struct bsal_message *messa
             BSAL_DEBUG_MARKER("aggregator before flush");
 #endif
 
-            bsal_aggregator_flush(self, customer_index, BSAL_AGGREGATOR_FORCED_FLUSH_NO);
+            bsal_aggregator_flush(self, customer_index, BSAL_FALSE);
 
             /* classify the kmer and put it in the good buffer.
              */
@@ -225,9 +239,7 @@ void bsal_aggregator_receive(struct bsal_actor *self, struct bsal_message *messa
         BSAL_DEBUG_MARKER("aggregator marker EXIT");
 #endif
 
-        /* answer immediately
-         */
-        bsal_actor_helper_send_reply_empty(self, BSAL_AGGREGATE_KERNEL_OUTPUT_REPLY);
+        bsal_aggregator_verify(self, message);
 
     } else if (tag == BSAL_ACTOR_ASK_TO_STOP
                     && source == bsal_actor_supervisor(self)) {
@@ -287,12 +299,22 @@ void bsal_aggregator_receive(struct bsal_actor *self, struct bsal_message *messa
 
         customer_count = bsal_vector_size(&concrete_actor->customers);
 
+        concrete_actor->forced = BSAL_TRUE;
+
         for (customer_index = 0; customer_index < customer_count; customer_index++) {
 
-            bsal_aggregator_flush(self, customer_index, BSAL_AGGREGATOR_FORCED_FLUSH_YES);
+            bsal_aggregator_flush(self, customer_index, BSAL_TRUE);
         }
 
         bsal_actor_helper_send_reply_empty(self, BSAL_AGGREGATOR_FLUSH_REPLY);
+
+    } else if (tag == BSAL_PUSH_KMER_BLOCK_REPLY) {
+
+        concrete_actor->active_messages--;
+
+        if (!concrete_actor->forced) {
+            bsal_aggregator_verify(self, message);
+        }
     }
 }
 
@@ -325,7 +347,7 @@ void bsal_aggregator_flush(struct bsal_actor *self, int customer_index, int forc
      * Don't flush anything, the actual value is below
      * the threshold.
      */
-    if (forced_flush == BSAL_AGGREGATOR_FORCED_FLUSH_NO
+    if (forced_flush == BSAL_FALSE
                     && actual < threshold) {
         return;
     }
@@ -338,6 +360,11 @@ void bsal_aggregator_flush(struct bsal_actor *self, int customer_index, int forc
 
     bsal_message_init(&message, BSAL_PUSH_KMER_BLOCK, count, buffer);
     bsal_actor_send(self, customer, &message);
+
+    if (forced_flush == BSAL_FALSE) {
+        concrete_actor->active_messages++;
+    }
+
     bsal_message_destroy(&message);
     bsal_memory_free(buffer);
 
@@ -353,4 +380,28 @@ void bsal_aggregator_flush(struct bsal_actor *self, int customer_index, int forc
     }
 
     concrete_actor->flushed++;
+}
+
+void bsal_aggregator_verify(struct bsal_actor *self, struct bsal_message *message)
+{
+    struct bsal_aggregator *concrete_actor;
+    int wait_threshold;
+    int producer_index;
+    int producer;
+    int multiplier;
+
+    multiplier = 4;
+
+    concrete_actor = (struct bsal_aggregator *)bsal_actor_concrete_actor(self);
+    wait_threshold = bsal_vector_size(&concrete_actor->customers) * multiplier;
+
+    if (concrete_actor->active_messages < wait_threshold) {
+
+        while (bsal_ring_queue_dequeue(&concrete_actor->stalled_producers, &producer_index)) {
+            /* tell the producer to continue...
+             */
+            producer = bsal_actor_get_acquaintance(self, producer_index);
+            bsal_actor_helper_send_empty(self, producer, BSAL_AGGREGATE_KERNEL_OUTPUT_REPLY);
+        }
+    }
 }
