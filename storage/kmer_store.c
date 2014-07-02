@@ -21,6 +21,11 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+/* This option enables 2-bit encoding
+ * for kmers.
+ */
+#define BSAL_KMER_STORE_ENABLE_TWO_BIT_ENCODING
+
 struct bsal_script bsal_kmer_store_script = {
     .name = BSAL_KMER_STORE_SCRIPT,
     .init = bsal_kmer_store_init,
