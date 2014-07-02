@@ -660,9 +660,11 @@ int bsal_node_running(struct bsal_node *node)
         return 1;
     }
 
+#if 0
     if (bsal_worker_pool_has_messages(&node->worker_pool)) {
         return 1;
     }
+#endif
 
     return 0;
 }
@@ -671,7 +673,7 @@ void bsal_node_run_loop(struct bsal_node *node)
 {
     struct bsal_message message;
     int credits;
-    const int starting_credits = 100000;
+    const int starting_credits = 1000;
 
 #ifdef BSAL_NODE_ENABLE_LOAD_REPORTING
     int ticks;

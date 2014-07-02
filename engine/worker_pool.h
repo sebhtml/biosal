@@ -42,7 +42,10 @@ struct bsal_worker_pool {
 
     int last_warning;
     int last_scheduling_warning;
+
+#if 0
     int ticks_without_messages;
+#endif
 
     time_t starting_time;
 };
@@ -71,7 +74,10 @@ int bsal_worker_pool_next_worker(struct bsal_worker_pool *node, int thread);
 void bsal_worker_pool_schedule_work(struct bsal_worker_pool *pool, struct bsal_work *work);
 
 int bsal_worker_pool_worker_count(struct bsal_worker_pool *pool);
+
+#if 0
 int bsal_worker_pool_has_messages(struct bsal_worker_pool *pool);
+#endif
 
 struct bsal_worker *bsal_worker_pool_get_worker(
                 struct bsal_worker_pool *self, int index);

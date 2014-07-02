@@ -35,9 +35,9 @@
  * -print-memory-usage
  */
 /*
-#define BSAL_NODE_ENABLE_LOAD_REPORTING
-#define BSAL_NODE_LOAD_PERIOD 1
  */
+#define BSAL_NODE_ENABLE_LOAD_REPORTING
+#define BSAL_NODE_LOAD_PERIOD 5
 
 /*
  * Enable a check to avoid calling MPI probing function
