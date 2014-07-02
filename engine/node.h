@@ -36,6 +36,7 @@
  */
 /*
 #define BSAL_NODE_ENABLE_LOAD_REPORTING
+#define BSAL_NODE_LOAD_PERIOD 1
  */
 
 /*

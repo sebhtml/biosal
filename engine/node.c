@@ -683,7 +683,7 @@ void bsal_node_run_loop(struct bsal_node *node)
         print_information = 1;
     }
 
-    period = 10;
+    period = BSAL_NODE_LOAD_PERIOD;
     ticks = 0;
 #endif
 

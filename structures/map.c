@@ -197,12 +197,17 @@ int bsal_map_pack_unpack(struct bsal_map *self, int operation, void *buffer)
 {
     struct bsal_packer packer;
     int offset;
+
+#ifdef BSAL_MEMORY_ALIGNMENT_ENABLED
     int key_size;
+#endif
 
     bsal_packer_init(&packer, operation, buffer);
 
+#ifdef BSAL_MEMORY_ALIGNMENT_ENABLED
     bsal_packer_work(&packer, &self->original_key_size, sizeof(self->original_key_size));
     bsal_packer_work(&packer, &self->original_value_size, sizeof(self->original_value_size));
+#endif
 
     offset = bsal_packer_worked_bytes(&packer);
     bsal_packer_destroy(&packer);
@@ -216,16 +221,19 @@ int bsal_map_pack_unpack(struct bsal_map *self, int operation, void *buffer)
     } else if (operation == BSAL_PACKER_OPERATION_UNPACK) {
         offset += bsal_dynamic_hash_table_unpack(&self->table, (char *)buffer + offset);
 
+#ifdef BSAL_MEMORY_ALIGNMENT_ENABLED
         key_size = bsal_dynamic_hash_table_get_key_size(&self->table);
 
         self->key_padding = key_size - self->original_key_size;
 
         self->key_buffer = bsal_memory_allocate(key_size);
+#endif
     }
 
     return offset;
 }
 
+#ifdef BSAL_MEMORY_ALIGNMENT_ENABLED
 void *bsal_map_pad_key(struct bsal_map *self, void *key)
 {
     if (self->key_padding == 0) {
@@ -242,4 +250,4 @@ void *bsal_map_pad_key(struct bsal_map *self, void *key)
 
     return self->key_buffer;
 }
-
+#endif

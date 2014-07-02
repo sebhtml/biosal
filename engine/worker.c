@@ -130,7 +130,7 @@ void bsal_worker_run(struct bsal_worker *worker)
 #endif
 
 #ifdef BSAL_NODE_ENABLE_LOAD_REPORTING
-    period = 1;
+    period = BSAL_NODE_LOAD_PERIOD;
     current_time = time(NULL);
 
     elapsed = current_time - worker->last_report;

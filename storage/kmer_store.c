@@ -40,7 +40,10 @@ void bsal_kmer_store_init(struct bsal_actor *self)
 
     bsal_dna_codec_init(&concrete_actor->codec);
     bsal_dna_codec_init(&concrete_actor->two_bit_codec);
+
+#ifdef BSAL_KMER_STORE_ENABLE_TWO_BIT_ENCODING
     bsal_dna_codec_enable_two_bit_encoding(&concrete_actor->two_bit_codec);
+#endif
 
     concrete_actor->last_received = 0;
 }
