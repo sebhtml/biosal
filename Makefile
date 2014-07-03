@@ -1,5 +1,5 @@
 CC=mpicc
-CFLAGS=-O2 -g -I.
+CFLAGS=-O3 -g -I.
 LD=$(CC)
 Q=@
 ECHO=echo
@@ -7,13 +7,12 @@ ECHO=echo
 # first target
 all:
 
+LIBRARY_HOT_CODE=
+
+include order.mk
+
 LIBRARY_OBJECTS=
-
-include core/Makefile.mk
-LIBRARY_OBJECTS += $(CORE_OBJECTS)
-
-include genomics/Makefile.mk
-LIBRARY_OBJECTS += $(GENOMICS)
+LIBRARY_OBJECTS += $(LIBRARY_HOT_CODE)
 
 # generic build rule
 %.o: %.c

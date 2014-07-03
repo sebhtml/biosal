@@ -68,19 +68,6 @@ int64_t bsal_vector_size(struct bsal_vector *self)
     return self->size;
 }
 
-void *bsal_vector_at(struct bsal_vector *self, int64_t index)
-{
-    if (index >= self->size) {
-        return NULL;
-    }
-
-    if (index < 0) {
-        return NULL;
-    }
-
-    return ((char *)self->data) + index * self->element_size;
-}
-
 void bsal_vector_push_back(struct bsal_vector *self, void *data)
 {
     int64_t index;
@@ -217,14 +204,6 @@ void bsal_vector_update(struct bsal_vector *self, void *old_item, void *new_item
 void bsal_vector_push_back_vector(struct bsal_vector *self, struct bsal_vector *other_vector)
 {
     bsal_vector_copy_range(other_vector, 0, bsal_vector_size(other_vector) - 1, self);
-}
-
-void bsal_vector_set(struct bsal_vector *self, int64_t index, void *data)
-{
-    void *bucket;
-
-    bucket = bsal_vector_at(self, index);
-    memcpy(bucket, data, self->element_size);
 }
 
 int bsal_vector_pack_unpack(struct bsal_vector *self, void *buffer, int operation)

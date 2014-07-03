@@ -161,11 +161,6 @@ int bsal_actor_name(struct bsal_actor *actor)
     return actor->name;
 }
 
-void *bsal_actor_concrete_actor(struct bsal_actor *actor)
-{
-    return actor->state;
-}
-
 bsal_actor_receive_fn_t bsal_actor_get_receive(struct bsal_actor *actor)
 {
     return bsal_script_get_receive(actor->script);
@@ -374,16 +369,6 @@ int bsal_actor_spawn_real(struct bsal_actor *actor, int script)
     return name;
 }
 
-struct bsal_worker *bsal_actor_worker(struct bsal_actor *actor)
-{
-    return actor->worker;
-}
-
-int bsal_actor_dead(struct bsal_actor *actor)
-{
-    return actor->dead;
-}
-
 void bsal_actor_die(struct bsal_actor *actor)
 {
     bsal_counter_add(&actor->counter, BSAL_COUNTER_KILLED_ACTORS, 1);
@@ -406,22 +391,6 @@ struct bsal_node *bsal_actor_node(struct bsal_actor *actor)
     }
 
     return bsal_worker_node(bsal_actor_worker(actor));
-}
-
-/* return 0 if successful
- */
-int bsal_actor_trylock(struct bsal_actor *actor)
-{
-    int result;
-
-    result = bsal_lock_trylock(&actor->receive_lock);
-
-    if (result == BSAL_LOCK_SUCCESS) {
-        actor->locked = BSAL_LOCK_LOCKED;
-        return result;
-    }
-
-    return result;
 }
 
 void bsal_actor_lock(struct bsal_actor *actor)
@@ -1418,11 +1387,6 @@ void bsal_actor_notify_name_change(struct bsal_actor *actor, struct bsal_message
     bsal_actor_helper_send_reply_empty(actor, BSAL_ACTOR_NOTIFY_NAME_CHANGE_REPLY);
 }
 
-struct bsal_vector *bsal_actor_acquaintance_vector(struct bsal_actor *actor)
-{
-    return &actor->acquaintance_vector;
-}
-
 void bsal_actor_migrate_notify_acquaintances(struct bsal_actor *actor, struct bsal_message *message)
 {
     struct bsal_vector *acquaintance_vector;
@@ -1665,16 +1629,6 @@ int bsal_actor_add_acquaintance(struct bsal_actor *actor, int name)
     return index;
 }
 
-int bsal_actor_get_acquaintance(struct bsal_actor *actor, int index)
-{
-    if (index < bsal_vector_size(bsal_actor_acquaintance_vector(actor))) {
-        return bsal_vector_helper_at_as_int(bsal_actor_acquaintance_vector(actor),
-                        index);
-    }
-
-    return BSAL_ACTOR_NOBODY;
-}
-
 int bsal_actor_get_acquaintance_index(struct bsal_actor *actor, int name)
 {
     int *bucket;
@@ -1769,19 +1723,6 @@ struct bsal_map *bsal_actor_get_received_messages(struct bsal_actor *self)
 struct bsal_map *bsal_actor_get_sent_messages(struct bsal_actor *self)
 {
     return &self->sent_messages;
-}
-
-struct bsal_memory_pool *bsal_actor_get_ephemeral_memory(struct bsal_actor *actor)
-{
-    struct bsal_worker *worker;
-
-    worker = bsal_actor_worker(actor);
-
-    if (worker == NULL) {
-        return NULL;
-    }
-
-    return bsal_worker_get_ephemeral_memory(worker);
 }
 
 struct bsal_worker *bsal_actor_get_last_worker(struct bsal_actor *actor)
