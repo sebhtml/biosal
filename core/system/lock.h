@@ -12,10 +12,10 @@
 #define BSAL_LOCK_UNLOCKED 0
 #define BSAL_LOCK_LOCKED 1
 
-#if defined(__linux__)
+#if defined(__linux__) && _POSIX_C_SOURCE == 200112L
 #define BSAL_LOCK_USE_SPIN_LOCK
 
-#elif defined(__bgq__) || defined(__sparc__) || defined(__sun__) || defined(__sgi)
+#elif defined(__bgq__) || defined(__sparc__) || defined(__sun__) || defined(__sgi) && _POSIX_C_SOURCE == 200112L
 #define BSAL_LOCK_USE_SPIN_LOCK
 
 #elif defined(__APPLE__) || defined(MACOSX) || defined(__unix__)

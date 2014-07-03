@@ -128,6 +128,7 @@ void bsal_worker_pool_create_workers(struct bsal_worker_pool *pool)
 void bsal_worker_pool_start(struct bsal_worker_pool *pool)
 {
     int i;
+    int processor;
 
     /* start workers
      *
@@ -135,7 +136,13 @@ void bsal_worker_pool_start(struct bsal_worker_pool *pool)
      * used by the main thread...
      */
     for (i = 0; i < pool->workers; i++) {
-        bsal_worker_start(bsal_worker_pool_get_worker(pool, i));
+        processor = i;
+
+        if (bsal_node_nodes(pool->node) != 1) {
+            processor = -1;
+        }
+
+        bsal_worker_start(bsal_worker_pool_get_worker(pool, i), processor);
     }
 }
 

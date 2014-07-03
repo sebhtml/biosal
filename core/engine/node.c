@@ -1,4 +1,10 @@
 
+/* Must be defined before any header is included.
+ * Used for setting affinity.
+ *
+ * \see http://lists.mcs.anl.gov/pipermail/petsc-dev/2012-May/008453.html
+ */
+
 #include "node.h"
 
 #include <core/structures/vector.h>
@@ -52,6 +58,7 @@ void bsal_node_init(struct bsal_node *node, int *argc, char ***argv)
     int detected;
     int actor_capacity;
     char *argument;
+    int processor;
 
     node->print_load = 0;
     node->print_structure = 0;
@@ -255,6 +262,14 @@ void bsal_node_init(struct bsal_node *node, int *argc, char ***argv)
 
     node->start_time = time(NULL);
     node->last_report_time = node->start_time;
+
+    processor = workers;
+
+    if (node->nodes != 1) {
+        processor = -1;
+    }
+
+    bsal_set_affinity(processor);
 }
 
 void bsal_node_destroy(struct bsal_node *node)
@@ -604,7 +619,7 @@ void bsal_node_run(struct bsal_node *node)
     }
 
     if (node->send_in_thread) {
-        pthread_join(node->thread, NULL);
+        bsal_thread_join(&node->thread);
     }
 
     if (node->print_counters) {
@@ -784,8 +799,8 @@ void bsal_node_run_loop(struct bsal_node *node)
 /* TODO, this needs MPI_THREAD_MULTIPLE, this has not been tested */
 void bsal_node_start_send_thread(struct bsal_node *node)
 {
-    pthread_create(bsal_node_thread(node), NULL, bsal_node_main,
-                    node);
+    bsal_thread_init(&node->thread, bsal_node_main, node);
+    bsal_thread_start(&node->thread);
 }
 
 void *bsal_node_main(void *node1)
@@ -799,11 +814,6 @@ void *bsal_node_main(void *node1)
     }
 
     return NULL;
-}
-
-pthread_t *bsal_node_thread(struct bsal_node *node)
-{
-    return &node->thread;
 }
 
 void bsal_node_send_message(struct bsal_node *node)
@@ -1511,3 +1521,5 @@ void bsal_node_toggle_debug_mode(struct bsal_node *self)
     self->debug = !self->debug_mode;
     bsal_worker_pool_toggle_debug_mode(&self->worker_pool);
 }
+
+

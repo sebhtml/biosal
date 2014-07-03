@@ -14,8 +14,6 @@
 #include <core/system/lock.h>
 #include <core/system/counter.h>
 
-#include <pthread.h>
-
 /*
  * \see http://pubs.opengroup.org/onlinepubs/009696699/basedefs/signal.h.html
  */
@@ -78,7 +76,7 @@ struct bsal_node {
     int use_mpi;
 #endif
 
-    pthread_t thread;
+    struct bsal_thread thread;
     struct bsal_transport transport;
     struct bsal_lock spawn_and_death_lock;
     struct bsal_lock script_lock;
@@ -106,6 +104,9 @@ struct bsal_node {
 
     struct bsal_counter counter;
 
+    /*
+     * Requires -D_POSIX_C_SOURCE=200112L
+     */
     struct sigaction action;
 
     time_t start_time;
@@ -151,7 +152,6 @@ int bsal_node_thread_count(struct bsal_node *node);
 
 int bsal_node_argc(struct bsal_node *node);
 char **bsal_node_argv(struct bsal_node *node);
-pthread_t *bsal_node_thread(struct bsal_node *node);
 void *bsal_node_main(void *node1);
 int bsal_node_running(struct bsal_node *node);
 void bsal_node_start_send_thread(struct bsal_node *node);
@@ -182,5 +182,6 @@ int bsal_node_has_actor(struct bsal_node *self, int name);
 struct bsal_worker_pool *bsal_node_get_worker_pool(struct bsal_node *self);
 
 void bsal_node_toggle_debug_mode(struct bsal_node *self);
+void bsal_node_set_affinity(struct bsal_node *node);
 
 #endif

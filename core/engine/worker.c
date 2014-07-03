@@ -451,14 +451,11 @@ void bsal_worker_send(struct bsal_worker *worker, struct bsal_message *message)
 #endif
 }
 
-void bsal_worker_start(struct bsal_worker *worker)
+void bsal_worker_start(struct bsal_worker *worker, int processor)
 {
-    /*
-     * http://pubs.opengroup.org/onlinepubs/7908799/xsh/pthread_create.html
-     */
-
-    pthread_create(bsal_worker_thread(worker), NULL, bsal_worker_main,
-                    worker);
+    bsal_thread_init(&worker->thread, bsal_worker_main, worker);
+    bsal_thread_set_affinity(&worker->thread, processor);
+    bsal_thread_start(&worker->thread);
 }
 
 void *bsal_worker_main(void *worker1)
@@ -505,14 +502,7 @@ void bsal_worker_stop(struct bsal_worker *worker)
      */
     worker->dead = 1;
 
-    /* http://man7.org/linux/man-pages/man3/pthread_join.3.html
-     */
-    pthread_join(worker->thread, NULL);
-}
-
-pthread_t *bsal_worker_thread(struct bsal_worker *worker)
-{
-    return &worker->thread;
+    bsal_thread_join(&worker->thread);
 }
 
 #ifdef BSAL_WORKER_HAS_OWN_QUEUES

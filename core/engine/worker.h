@@ -6,6 +6,7 @@
 #include <core/structures/ring_queue.h>
 
 #include <core/system/memory_pool.h>
+#include <core/system/thread.h>
 
 #include <stdint.h>
 
@@ -45,7 +46,8 @@ struct bsal_worker {
 
     struct bsal_ring_queue local_work_queue;
     struct bsal_ring_queue local_message_queue;
-    pthread_t thread;
+
+    struct bsal_thread thread;
 
     int work_count;
     int start;
@@ -79,9 +81,8 @@ struct bsal_worker {
 void bsal_worker_init(struct bsal_worker *worker, int name, struct bsal_node *node);
 void bsal_worker_destroy(struct bsal_worker *worker);
 
-void bsal_worker_start(struct bsal_worker *worker);
+void bsal_worker_start(struct bsal_worker *worker, int processor);
 void bsal_worker_stop(struct bsal_worker *worker);
-pthread_t *bsal_worker_thread(struct bsal_worker *worker);
 
 void bsal_worker_run(struct bsal_worker *worker);
 void bsal_worker_work(struct bsal_worker *worker, struct bsal_work *work);
