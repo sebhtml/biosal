@@ -9,49 +9,11 @@ all:
 
 LIBRARY_OBJECTS=
 
-# actor engine
-include engine/Makefile.mk
-LIBRARY_OBJECTS += $(ENGINE)
+include core/Makefile.mk
+LIBRARY_OBJECTS += $(CORE_OBJECTS)
 
-# patterns
-include patterns/Makefile.mk
-LIBRARY_OBJECTS += $(PATTERNS)
-
-# helpers
-include helpers/Makefile.mk
-LIBRARY_OBJECTS += $(HELPERS)
-
-# kernels for genomics
-include kernels/Makefile.mk
-LIBRARY_OBJECTS += $(KERNELS)
-
-# system stuff
-include system/Makefile.mk
-LIBRARY_OBJECTS += $(SYSTEM)
-
-# storage
-include storage/Makefile.mk
-LIBRARY_OBJECTS += $(STORAGE)
-
-# data structures
-include structures/Makefile.mk
-LIBRARY_OBJECTS += $(STRUCTURES)
-
-# hash functions
-include hash/Makefile.mk
-LIBRARY_OBJECTS += $(HASH)
-
-# inputs for actors
-include input/Makefile.mk
-LIBRARY_OBJECTS += $(INPUT)
-
-# data storage
-include data/Makefile.mk
-LIBRARY_OBJECTS += $(DATA)
-
-# formats
-include formats/Makefile.mk
-LIBRARY_OBJECTS += $(FORMATS)
+include genomics/Makefile.mk
+LIBRARY_OBJECTS += $(GENOMICS)
 
 # generic build rule
 %.o: %.c

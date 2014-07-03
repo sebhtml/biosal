@@ -1,9 +1,9 @@
 
-#include <structures/vector.h>
-#include <structures/vector_iterator.h>
+#include <core/structures/vector.h>
+#include <core/structures/vector_iterator.h>
 
-#include <helpers/vector_helper.h>
-#include <system/memory.h>
+#include <core/helpers/vector_helper.h>
+#include <core/system/memory.h>
 
 #include "test.h"
 

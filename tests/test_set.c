@@ -1,6 +1,6 @@
 
-#include <structures/set.h>
-#include <structures/set_iterator.h>
+#include <core/structures/set.h>
+#include <core/structures/set_iterator.h>
 
 #include "test.h"
 

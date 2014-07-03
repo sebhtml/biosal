@@ -1,5 +1,5 @@
 
-#include <structures/ring.h>
+#include <core/structures/ring.h>
 
 #include "test.h"
 

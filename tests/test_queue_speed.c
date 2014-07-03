@@ -1,5 +1,5 @@
 
-#include <structures/queue.h>
+#include <core/structures/queue.h>
 
 #include "test.h"
 

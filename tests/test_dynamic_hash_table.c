@@ -1,6 +1,6 @@
 
-#include <structures/dynamic_hash_table.h>
-#include <structures/dynamic_hash_table_iterator.h>
+#include <core/structures/dynamic_hash_table.h>
+#include <core/structures/dynamic_hash_table_iterator.h>
 
 #include "test.h"
 

@@ -1,10 +1,10 @@
 
 #include "test.h"
 
-#include <structures/vector.h>
+#include <core/structures/vector.h>
 
-#include <system/timer.h>
-#include <system/memory_pool.h>
+#include <core/system/timer.h>
+#include <core/system/memory_pool.h>
 
 #include <stdint.h>
 #include <inttypes.h>

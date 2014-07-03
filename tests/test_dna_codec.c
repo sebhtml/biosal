@@ -1,9 +1,10 @@
 
 #include "test.h"
 
-#include <helpers/dna_helper.h>
-#include <data/dna_codec.h>
-#include <system/memory.h>
+#include <genomics/helpers/dna_helper.h>
+#include <genomics/data/dna_codec.h>
+
+#include <core/system/memory.h>
 
 #include <stdlib.h>
 #include <stdio.h>

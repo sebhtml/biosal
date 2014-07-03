@@ -1,5 +1,5 @@
 
-#include <structures/fast_ring.h>
+#include <core/structures/fast_ring.h>
 
 #include "test.h"
 

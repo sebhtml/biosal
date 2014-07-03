@@ -1,7 +1,7 @@
 
 #include "test.h"
 
-#include <engine/node.h>
+#include <core/engine/node.h>
 
 #include <string.h>
 

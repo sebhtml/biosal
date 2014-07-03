@@ -1,10 +1,10 @@
 
 #include "test.h"
 
-#include <data/dna_sequence.h>
-#include <data/dna_codec.h>
-#include <system/memory.h>
-#include <system/memory_pool.h>
+#include <genomics/data/dna_sequence.h>
+#include <genomics/data/dna_codec.h>
+#include <core/system/memory.h>
+#include <core/system/memory_pool.h>
 
 #include <stdio.h>
 #include <string.h>

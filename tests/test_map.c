@@ -1,8 +1,8 @@
 
-#include <data/dna_kmer.h>
-#include <structures/map.h>
-#include <structures/map_iterator.h>
-#include <system/memory.h>
+#include <genomics/data/dna_kmer.h>
+#include <core/structures/map.h>
+#include <core/structures/map_iterator.h>
+#include <core/system/memory.h>
 
 #include "test.h"
 

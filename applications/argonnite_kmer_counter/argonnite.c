@@ -1,21 +1,17 @@
 
 #include "argonnite.h"
 
-#include <data/coverage_distribution.h>
+#include <genomics/data/coverage_distribution.h>
+#include <genomics/kernels/dna_kmer_counter_kernel.h>
+#include <genomics/kernels/aggregator.h>
+#include <genomics/storage/kmer_store.h>
 
-#include <structures/vector.h>
-#include <structures/vector_iterator.h>
-
-#include <kernels/dna_kmer_counter_kernel.h>
-
-#include <patterns/manager.h>
-#include <patterns/aggregator.h>
-
-#include <helpers/set_helper.h>
-#include <storage/kmer_store.h>
-
-#include <system/memory.h>
-#include <system/debugger.h>
+#include <core/structures/vector.h>
+#include <core/helpers/set_helper.h>
+#include <core/structures/vector_iterator.h>
+#include <core/patterns/manager.h>
+#include <core/system/memory.h>
+#include <core/system/debugger.h>
 
 #include <stdio.h>
 #include <string.h>

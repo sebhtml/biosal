@@ -1,10 +1,10 @@
 
-#include <data/dna_kmer.h>
-#include <data/dna_codec.h>
-#include <structures/map.h>
-#include <structures/map_iterator.h>
-#include <system/memory.h>
-#include <system/memory_pool.h>
+#include <genomics/data/dna_kmer.h>
+#include <genomics/data/dna_codec.h>
+#include <core/structures/map.h>
+#include <core/structures/map_iterator.h>
+#include <core/system/memory.h>
+#include <core/system/memory_pool.h>
 
 #include "test.h"
 

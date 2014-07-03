@@ -1,5 +1,5 @@
 
-#include <structures/ring_queue.h>
+#include <core/structures/ring_queue.h>
 
 #include "test.h"
 

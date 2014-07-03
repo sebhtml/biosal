@@ -1,6 +1,6 @@
 
-#include <structures/hash_table.h>
-#include <structures/hash_table_iterator.h>
+#include <core/structures/hash_table.h>
+#include <core/structures/hash_table_iterator.h>
 
 #include "test.h"
 

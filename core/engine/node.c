@@ -1,0 +1,1513 @@
+
+#include "node.h"
+
+#include <core/structures/vector.h>
+#include <core/structures/map_iterator.h>
+#include <core/structures/vector_iterator.h>
+#include <core/helpers/vector_helper.h>
+
+#include <core/system/memory.h>
+#include <core/system/tracer.h>
+
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+
+#include <unistd.h>
+
+#include <inttypes.h>
+
+/* options */
+/*
+#define BSAL_NODE_DEBUG_ACTOR_COUNTERS
+*/
+#define BSAL_NODE_REUSE_DEAD_INDICES
+
+/* debugging options */
+/*
+#define BSAL_NODE_DEBUG
+
+#define BSAL_NODE_DEBUG_RECEIVE_SYSTEM
+*/
+
+/*
+#define BSAL_NODE_SIMPLE_INITIAL_ACTOR_NAMES
+#define BSAL_NODE_DEBUG_SPAWN
+
+#define BSAL_NODE_DEBUG_ACTOR_COUNTERS
+#define BSAL_NODE_DEBUG_SUPERVISOR
+#define BSAL_NODE_DEBUG_LOOP
+
+#define BSAL_NODE_DEBUG_SPAWN_KILL
+*/
+
+static struct bsal_node *bsal_node_global_self;
+
+void bsal_node_init(struct bsal_node *node, int *argc, char ***argv)
+{
+    int i;
+    int workers;
+    int threads;
+    char *required_threads;
+    int detected;
+    int actor_capacity;
+    char *argument;
+
+    node->print_load = 0;
+    node->print_structure = 0;
+    node->debug_mode = 0;
+
+    bsal_node_global_self = node;
+
+    srand(time(NULL) * getpid());
+
+    bsal_transport_init(&node->transport, node, argc, argv);
+    node->provided = bsal_transport_get_provided(&node->transport);
+    node->name = bsal_transport_get_rank(&node->transport);
+    node->nodes = bsal_transport_get_size(&node->transport);
+
+#ifdef BSAL_NODE_CHECK_MPI
+    node->use_mpi = 1;
+#endif
+
+    node->debug = 0;
+
+#ifdef BSAL_NODE_DEBUG_LOOP
+    node->debug = 1;
+#endif
+
+    node->print_counters = 0;
+    bsal_map_init(&node->scripts, sizeof(int), sizeof(struct bsal_script *));
+
+    /* the rank number is needed to decide on
+     * the number of threads
+     */
+
+    /* the default is 1 thread */
+    threads = 1;
+
+    node->threads = threads;
+    node->print_memory_usage = 0;
+    node->argc = *argc;
+    node->argv = *argv;
+
+    for (i = 0; i < node->argc; i++) {
+        argument = node->argv[i];
+        if (strcmp(argument, "-print-counters") == 0) {
+            node->print_counters = 1;
+        } else if (strcmp(argument, "-print-load") == 0) {
+            node->print_load = 1;
+        } else if (strcmp(argument, "-print-structure") == 0) {
+            node->print_structure = 1;
+        } else if (strcmp(argument, "-print-memory-usage") == 0) {
+            node->print_memory_usage = 1;
+        }
+    }
+
+    for (i = 0; i < *argc; i++) {
+        if (strcmp((*argv)[i], "-threads-per-node") == 0 && i + 1 < *argc) {
+            /*printf("bsal_node_init threads: %s\n",
+                            (*argv)[i + 1]);*/
+
+            required_threads = (*argv)[i + 1];
+
+            /* -threads-per-node all
+             *
+             * \see http://stackoverflow.com/questions/4586405/get-number-of-cpus-in-linux-using-c
+             */
+#ifdef _SC_NPROCESSORS_ONLN
+            if (strcmp(required_threads, "all") == 0) {
+                node->threads = sysconf(_SC_NPROCESSORS_ONLN);
+#ifdef BSAL_NODE_DEBUG
+                printf("DEBUG using all threads: %d\n", node->threads);
+#endif
+                continue;
+            }
+#endif
+
+            /* -threads-per-node 5,6,9
+             */
+            detected = bsal_node_threads_from_string(node, required_threads, node->name);
+
+            if (detected > 0) {
+                node->threads = detected;
+
+#ifdef BSAL_NODE_DEBUG
+                printf("DEBUG %s node %d : %d threads\n", required_threads,
+                                node_name, detected);
+#endif
+
+                continue;
+            }
+
+            /* -threads-per-node 99
+             */
+            node->threads = atoi(required_threads);
+
+#ifdef BSAL_NODE_DEBUG
+            printf("DEBUG using %d threads\n", node->threads);
+#endif
+        }
+    }
+
+    if (node->threads < 1) {
+        node->threads = 1;
+    }
+
+    node->worker_in_main_thread = 1;
+
+    if (node->threads >= 2) {
+        node->worker_in_main_thread = 0;
+    }
+
+    node->workers_in_threads = 0;
+    /* with 2 threads, one of them runs a worker */
+    if (node->threads >= 2) {
+        node->workers_in_threads = 1;
+    }
+
+	/*
+     * 3 cases with T threads using MPI_Init_thread:
+     *
+     * Case 0: T is 1, ask for MPI_THREAD_SINGLE
+     * Design: receive, run, and send in main thread
+     *
+     * Case 1: if T is 2, ask for MPI_THREAD_FUNNELED
+     * Design: receive and send in main thread, workers in (T-1) thread
+     *
+     * Case 2: if T is 3 or more, ask for MPI_THREAD_MULTIPLE
+     *
+     * Design: if MPI_THREAD_MULTIPLE is provided, receive in main thread, send in 1 thread,
+     * workers in (T - 2) threads, otherwise delegate the case to Case 1
+     */
+    workers = 1;
+
+    if (node->threads == 1) {
+        workers = node->threads - 0;
+
+    } else if (node->threads == 2) {
+        workers = node->threads - 1;
+
+    } else if (node->threads >= 3) {
+
+        /* the number of workers depends on whether or not
+         * MPI_THREAD_MULTIPLE is provided
+         */
+    }
+
+    node->send_in_thread = 0;
+
+    if (node->threads >= 3) {
+
+#ifdef BSAL_NODE_DEBUG
+        printf("DEBUG= threads: %i\n", node->threads);
+#endif
+        if (node->provided == MPI_THREAD_MULTIPLE) {
+            node->send_in_thread = 1;
+            workers = node->threads - 2;
+
+        /* assume MPI_THREAD_FUNNELED
+         */
+        } else {
+
+#ifdef BSAL_NODE_DEBUG
+            printf("DEBUG= MPI_THREAD_MULTIPLE was not provided...\n");
+#endif
+            workers = node->threads - 1;
+        }
+    }
+
+#ifdef BSAL_NODE_DEBUG
+    printf("DEBUG threads: %i workers: %i send_in_thread: %i\n",
+                    node->threads, workers, node->send_in_thread);
+#endif
+
+    bsal_worker_pool_init(&node->worker_pool, workers, node);
+
+    actor_capacity = 1048576;
+    node->dead_actors = 0;
+    node->alive_actors = 0;
+
+    bsal_vector_init(&node->actors, sizeof(struct bsal_actor));
+
+    /* it is necessary to reserve because work units will point
+     * to actors so their addresses can not be changed
+     */
+    bsal_vector_reserve(&node->actors, actor_capacity);
+
+    bsal_dynamic_hash_table_init(&node->actor_names, actor_capacity, sizeof(int), sizeof(int));
+
+    bsal_vector_init(&node->initial_actors, sizeof(int));
+    bsal_vector_resize(&node->initial_actors, bsal_node_nodes(node));
+    node->received_initial_actors = 0;
+    node->ready = 0;
+
+    bsal_lock_init(&node->spawn_and_death_lock);
+    bsal_lock_init(&node->script_lock);
+
+    bsal_queue_init(&node->dead_indices, sizeof(int));
+
+    bsal_counter_init(&node->counter);
+
+    /* register signal handlers
+     */
+    bsal_node_register_signal_handlers(node);
+
+    node->start_time = time(NULL);
+    node->last_report_time = node->start_time;
+}
+
+void bsal_node_destroy(struct bsal_node *node)
+{
+    bsal_dynamic_hash_table_destroy(&node->actor_names);
+    bsal_vector_destroy(&node->initial_actors);
+
+    bsal_map_destroy(&node->scripts);
+    bsal_lock_destroy(&node->spawn_and_death_lock);
+    bsal_lock_destroy(&node->script_lock);
+
+    bsal_vector_destroy(&node->actors);
+
+    bsal_queue_destroy(&node->dead_indices);
+
+    bsal_worker_pool_destroy(&node->worker_pool);
+
+    bsal_transport_destroy(&node->transport);
+    bsal_counter_destroy(&node->counter);
+
+}
+
+int bsal_node_threads_from_string(struct bsal_node *node,
+                char *required_threads, int index)
+{
+    int j;
+    int commas = 0;
+    int start;
+    int value;
+    int length;
+
+
+    start = 0;
+    length = strlen(required_threads);
+
+    /* first, count commas to change the index
+     */
+    for (j = 0; j < length; j++) {
+        if (required_threads[j] == ',') {
+            commas++;
+        }
+    }
+
+    index %= (commas + 1);
+
+    commas = 0;
+
+    for (j = 0; j < length; j++) {
+        if (required_threads[j] == ',') {
+            if (index == commas) {
+                required_threads[j] = '\0';
+                value = atoi(required_threads + start);
+                required_threads[j] = ',';
+                return value;
+            }
+            commas++;
+            start = j + 1;
+        }
+    }
+
+    if (commas == 0) {
+        return -1;
+    }
+
+    /* the last integer is not followed
+     * by a comma
+     */
+    if (index == commas) {
+        value = atoi(required_threads + start);
+        return value;
+    } else {
+        /* recursive call...
+         * this never happens because the index is changed at the beginning
+         * of the function.
+         */
+        return bsal_node_threads_from_string(node, required_threads, index - commas -1);
+    }
+
+    return -1;
+}
+
+void bsal_node_set_supervisor(struct bsal_node *node, int name, int supervisor)
+{
+    struct bsal_actor *actor;
+
+    if (name == BSAL_ACTOR_NOBODY) {
+        return;
+    }
+
+#ifdef BSAL_NODE_DEBUG_SUPERVISOR
+    printf("DEBUG bsal_node_set_supervisor %d %d\n", name, supervisor);
+#endif
+
+    actor = bsal_node_get_actor_from_name(node, name);
+
+#ifdef BSAL_NODE_DEBUG_SUPERVISOR
+    printf("DEBUG set supervisor %d %d %p\n", name, supervisor, (void *)actor);
+#endif
+
+    bsal_actor_set_supervisor(actor, supervisor);
+}
+
+int bsal_node_actors(struct bsal_node *node)
+{
+    return bsal_vector_size(&node->actors);
+}
+
+int bsal_node_spawn(struct bsal_node *node, int script)
+{
+    struct bsal_script *script1;
+    int size;
+    void *state;
+    int name;
+    struct bsal_actor *actor;
+
+    /* in the current implementation, there can only be one initial
+     * actor on each node
+     */
+    if (node->started == 0 && bsal_node_actors(node) > 0) {
+        return -1;
+    }
+
+    script1 = bsal_node_find_script(node, script);
+
+    if (script1 == NULL) {
+        return -1;
+    }
+
+    size = bsal_script_size(script1);
+
+    state = bsal_memory_allocate(size);
+
+    name = bsal_node_spawn_state(node, state, script1);
+
+    /* send the initial actor to the master node
+     */
+    if (bsal_node_actors(node) == 1) {
+        struct bsal_message message;
+        bsal_message_init(&message, BSAL_NODE_ADD_INITIAL_ACTOR, sizeof(name), &name);
+        bsal_node_send_to_node(node, 0, &message);
+
+        /* initial actors are their own spawners.
+         */
+        actor = bsal_node_get_actor_from_name(node, name);
+
+        bsal_counter_add(bsal_actor_counter(actor), BSAL_COUNTER_SPAWNED_ACTORS, 1);
+    }
+
+    bsal_counter_add(&node->counter, BSAL_COUNTER_SPAWNED_ACTORS, 1);
+
+#ifdef BSAL_NODE_DEBUG_SPAWN_KILL
+    printf("DEBUG node/%d bsal_node_spawn actor/%d script/%x\n",
+                    bsal_node_name(node),
+                    name, script);
+#endif
+
+    return name;
+}
+
+int bsal_node_spawn_state(struct bsal_node *node, void *state,
+                struct bsal_script *script)
+{
+    struct bsal_actor *actor;
+    int name;
+    int *bucket;
+    int index;
+
+    /* can not spawn any more actor
+     */
+    if (bsal_vector_size(&node->actors) == bsal_vector_capacity(&node->actors)) {
+        return BSAL_ACTOR_NOBODY;
+    }
+
+#ifdef BSAL_NODE_DEBUG
+    printf("DEBUG bsal_node_spawn_state\n");
+#endif
+
+    bsal_lock_lock(&node->spawn_and_death_lock);
+
+    /* add an actor in the vector of actors
+     */
+    index = bsal_node_allocate_actor_index(node);
+    actor = (struct bsal_actor *)bsal_vector_at(&node->actors, index);
+
+    /* actors have random names to enforce
+     * the acquaintance paradigm
+     */
+    name = bsal_node_generate_name(node);
+
+    bsal_actor_init(actor, state, script, name, node);
+
+    /* register the actor name
+     */
+    bucket = bsal_dynamic_hash_table_add(&node->actor_names, &name);
+    *bucket = index;
+
+#ifdef BSAL_NODE_DEBUG_SPAWN
+    printf("DEBUG added Actor %d, index is %d, bucket: %p\n", name, index,
+                    (void *)bucket);
+#endif
+
+    node->alive_actors++;
+
+    bsal_lock_unlock(&node->spawn_and_death_lock);
+
+    return name;
+}
+
+int bsal_node_allocate_actor_index(struct bsal_node *node)
+{
+    int index;
+
+#ifdef BSAL_NODE_REUSE_DEAD_INDICES
+    if (bsal_queue_dequeue(&node->dead_indices, &index)) {
+
+#ifdef BSAL_NODE_DEBUG_SPAWN
+        printf("DEBUG node/%d bsal_node_allocate_actor_index using an old index %d, size %d\n",
+                        bsal_node_name(node),
+                        index, bsal_vector_size(&node->actors));
+#endif
+
+        return index;
+    }
+#endif
+
+    index = (int)bsal_vector_size(&node->actors);
+    bsal_vector_resize(&node->actors, bsal_vector_size(&node->actors) + 1);
+
+    return index;
+}
+
+int bsal_node_generate_name(struct bsal_node *node)
+{
+    int minimal_value;
+    int maximum_value;
+    int name;
+    int range;
+    struct bsal_actor *actor;
+    int node_name;
+    int difference;
+    int nodes;
+
+#ifdef BSAL_NODE_DEBUG
+    printf("DEBUG bsal_node_generate_name\n");
+#endif
+
+#ifdef BSAL_NODE_SIMPLE_INITIAL_ACTOR_NAMES
+    if (bsal_node_actors(node) == 0) {
+        return bsal_node_name(node);
+    }
+#endif
+
+    node_name = bsal_node_name(node);
+    actor = NULL;
+
+    /* reserve  the first numbers
+     */
+    minimal_value = 4* bsal_node_nodes(node);
+    name = -1;
+    maximum_value = 2000000000;
+    range = maximum_value - minimal_value;
+
+#ifdef BSAL_NODE_DEBUG
+    printf("DEBUG assigning name\n");
+#endif
+
+    nodes = bsal_node_nodes(node);
+
+    while (actor != NULL || name < 0) {
+        name = rand() % range + minimal_value;
+
+        difference = node_name - name % node->nodes;
+        /* add the difference */
+        name += difference;
+
+        /* disallow names between 0 and nodes - 1
+         */
+        if (name < nodes) {
+            continue;
+        }
+
+        actor = bsal_node_get_actor_from_name(node, name);
+
+        /*printf("DEBUG trying %d... %p\n", name, (void *)actor);*/
+
+    }
+
+#ifdef BSAL_NODE_DEBUG_SPAWN
+    printf("DEBUG node %d assigned name %d\n", node->name, name);
+#endif
+
+    /*return node->name + node->nodes * bsal_node_actors(node);*/
+
+    return name;
+}
+
+void bsal_node_set_initial_actor(struct bsal_node *node, int node_name, int actor)
+{
+    int *bucket;
+
+    bucket = bsal_vector_at(&node->initial_actors, node_name);
+    *bucket = actor;
+
+#ifdef BSAL_NODE_DEBUG_INITIAL_ACTORS
+    printf("DEBUG bsal_node_set_initial_actor node %d actor %d, %d actors\n",
+                    node_name, actor, bsal_vector_size(&node->initial_actors));
+#endif
+}
+
+void bsal_node_run(struct bsal_node *node)
+{
+    if (node->print_counters) {
+        printf("----------------------------------------------\n");
+        printf("biosal> node/%d: %d threads, %d workers\n", bsal_node_name(node),
+                    bsal_node_thread_count(node),
+                    bsal_node_worker_count(node));
+    }
+
+    node->started = 1;
+
+    if (node->workers_in_threads) {
+#ifdef BSAL_NODE_DEBUG
+        printf("DEBUG starting %i worker threads\n",
+                        bsal_worker_pool_worker_count(&node->worker_pool));
+#endif
+        bsal_worker_pool_start(&node->worker_pool);
+    }
+
+    if (node->send_in_thread) {
+#ifdef BSAL_NODE_DEBUG
+        printf("DEBUG starting send thread\n");
+#endif
+        bsal_node_start_send_thread(node);
+    }
+
+    bsal_node_run_loop(node);
+
+    if (node->print_load) {
+        bsal_worker_pool_print_load(&node->worker_pool, BSAL_WORKER_POOL_LOAD_LOOP);
+    }
+#ifdef BSAL_NODE_DEBUG
+    printf("BSAL_NODE_DEBUG after loop in bsal_node_run\n");
+#endif
+
+    if (node->workers_in_threads) {
+        bsal_worker_pool_stop(&node->worker_pool);
+    }
+
+    if (node->send_in_thread) {
+        pthread_join(node->thread, NULL);
+    }
+
+    if (node->print_counters) {
+        bsal_node_print_counters(node);
+    }
+}
+
+void bsal_node_start_initial_actor(struct bsal_node *node)
+{
+    int actors;
+    int bytes;
+    void *buffer;
+    struct bsal_actor *actor;
+    int source;
+    int i;
+    int name;
+    struct bsal_message message;
+
+    actors = bsal_vector_size(&node->actors);
+
+    bytes = bsal_vector_pack_size(&node->initial_actors);
+
+#ifdef BSAL_NODE_DEBUG_INITIAL_ACTORS
+    printf("DEBUG packing %d initial actors\n",
+                    bsal_vector_size(&node->initial_actors));
+#endif
+
+    buffer = bsal_memory_allocate(bytes);
+    bsal_vector_pack(&node->initial_actors, buffer);
+
+    for (i = 0; i < actors; ++i) {
+        actor = (struct bsal_actor *)bsal_vector_at(&node->actors, i);
+        name = bsal_actor_name(actor);
+
+        /* initial actors are supervised by themselves... */
+        bsal_actor_set_supervisor(actor, name);
+        source = name;
+
+        bsal_message_init(&message, BSAL_ACTOR_START, bytes, buffer);
+        bsal_message_set_source(&message, source);
+        bsal_message_set_destination(&message, name);
+
+        bsal_node_send(node, &message);
+
+        bsal_message_destroy(&message);
+    }
+}
+
+int bsal_node_running(struct bsal_node *node)
+{
+    /* wait until all actors are dead... */
+    if (node->alive_actors > 0) {
+        return 1;
+    }
+
+#if 0
+    if (bsal_worker_pool_has_messages(&node->worker_pool)) {
+        return 1;
+    }
+#endif
+
+    return 0;
+}
+
+void bsal_node_run_loop(struct bsal_node *node)
+{
+    struct bsal_message message;
+    int credits;
+    const int starting_credits = 1000;
+
+#ifdef BSAL_NODE_ENABLE_LOAD_REPORTING
+    int ticks;
+    int period;
+    clock_t current_time;
+    char print_information = 0;
+
+    if (node->print_load || node->print_memory_usage) {
+        print_information = 1;
+    }
+
+    period = BSAL_NODE_LOAD_PERIOD;
+    ticks = 0;
+#endif
+
+    credits = starting_credits;
+
+    while (credits > 0) {
+
+#ifdef BSAL_NODE_ENABLE_LOAD_REPORTING
+        if (print_information) {
+            current_time = time(NULL);
+
+            if (current_time - node->last_report_time >= period) {
+                if (node->print_load) {
+                    bsal_worker_pool_print_load(&node->worker_pool, BSAL_WORKER_POOL_LOAD_EPOCH);
+                    printf("ACTORS node %d has %d active actors\n", node->name,
+                                    node->alive_actors);
+                }
+
+                if (node->print_memory_usage) {
+                    printf("MEMORY %d s node/%d %" PRIu64 " bytes\n",
+                                    (int)(current_time - node->start_time),
+                                    bsal_node_name(node),
+                                    bsal_get_heap_size());
+                }
+                node->last_report_time = current_time;
+            }
+        }
+#endif
+
+#ifdef BSAL_NODE_DEBUG_LOOP
+        if (ticks % 1000000 == 0) {
+            bsal_node_print_counters(node);
+        }
+#endif
+
+#ifdef BSAL_NODE_DEBUG_LOOP1
+        if (node->debug) {
+            printf("DEBUG node/%d is running\n",
+                            bsal_node_name(node));
+        }
+#endif
+
+        /* pull message from network and assign the message to a thread.
+         * this code path will call lock if
+         * there is a message received.
+         */
+        if (
+#ifdef BSAL_NODE_CHECK_MPI
+            node->use_mpi &&
+#endif
+            bsal_transport_receive(&node->transport, &message)) {
+
+            bsal_counter_add(&node->counter, BSAL_COUNTER_RECEIVED_MESSAGES_NOT_FROM_SELF, 1);
+            bsal_counter_add(&node->counter, BSAL_COUNTER_RECEIVED_BYTES_NOT_FROM_SELF,
+                    bsal_message_count(&message));
+
+
+            bsal_node_dispatch_message(node, &message);
+        }
+
+        /* the one worker works here if there is only
+         * one thread
+         */
+        if (node->worker_in_main_thread) {
+            bsal_worker_pool_run(&node->worker_pool);
+        }
+
+        /* with 3 or more threads, the sending operations are
+         * in another thread */
+        if (!node->send_in_thread) {
+            bsal_node_send_message(node);
+        }
+
+#ifdef BSAL_NODE_ENABLE_LOAD_REPORTING
+        ticks++;
+#endif
+
+        --credits;
+
+        /* if the node is still running, allocate new credits
+         * to the engine loop
+         */
+        if (credits == 0) {
+            if (bsal_node_running(node)) {
+                credits = starting_credits;
+            }
+        }
+    }
+
+#ifdef BSAL_NODE_DEBUG_20140601_8
+    printf("DEBUG node/%d exited loop\n",
+                    bsal_node_name(node));
+#endif
+}
+
+/* TODO, this needs MPI_THREAD_MULTIPLE, this has not been tested */
+void bsal_node_start_send_thread(struct bsal_node *node)
+{
+    pthread_create(bsal_node_thread(node), NULL, bsal_node_main,
+                    node);
+}
+
+void *bsal_node_main(void *node1)
+{
+    struct bsal_node *node;
+
+    node = (struct bsal_node*)node1;
+
+    while (bsal_node_running(node)) {
+        bsal_node_send_message(node);
+    }
+
+    return NULL;
+}
+
+pthread_t *bsal_node_thread(struct bsal_node *node)
+{
+    return &node->thread;
+}
+
+void bsal_node_send_message(struct bsal_node *node)
+{
+    struct bsal_message message;
+
+#ifdef BSAL_NODE_CHECK_MPI
+    /* Free buffers of active requests
+     */
+    if (node->use_mpi) {
+#endif
+        bsal_transport_test_requests(&node->transport);
+
+#ifdef BSAL_NODE_CHECK_MPI
+    }
+#endif
+
+    /* check for messages to send from from threads */
+    /* this call lock only if there is at least
+     * a message in the FIFO
+     */
+    if (bsal_node_pull(node, &message)) {
+
+#ifdef BSAL_NODE_DEBUG
+        printf("bsal_node_run pulled tag %i buffer %p\n",
+                        bsal_message_tag(&message),
+                        bsal_message_buffer(&message));
+#endif
+
+        /* send it locally or over the network */
+        bsal_node_send(node, &message);
+    }
+}
+
+int bsal_node_pull(struct bsal_node *node, struct bsal_message *message)
+{
+    return bsal_worker_pool_pull(&node->worker_pool, message);
+}
+
+int bsal_node_receive_system(struct bsal_node *node, struct bsal_message *message)
+{
+    int tag;
+    void *buffer;
+    int name;
+    int bytes;
+    int i;
+    int nodes;
+    int source;
+    struct bsal_message new_message;
+
+#ifdef BSAL_NODE_DEBUG_RECEIVE_SYSTEM
+    int count;
+
+    printf("DEBUG bsal_node_receive_system\n");
+#endif
+
+    tag = bsal_message_tag(message);
+
+    if (tag == BSAL_NODE_ADD_INITIAL_ACTOR) {
+
+#ifdef BSAL_NODE_DEBUG_RECEIVE_SYSTEM
+        printf("DEBUG BSAL_NODE_ADD_INITIAL_ACTOR received\n");
+#endif
+
+        source = bsal_message_source(message);
+        buffer = bsal_message_buffer(message);
+        name = *(int *)buffer;
+        bsal_node_set_initial_actor(node, source, name);
+
+        nodes = bsal_node_nodes(node);
+        node->received_initial_actors++;
+
+        if (node->received_initial_actors == nodes) {
+
+#ifdef BSAL_NODE_DEBUG_RECEIVE_SYSTEM
+            printf("DEBUG send BSAL_NODE_ADD_INITIAL_ACTOR to all nodes\n");
+#endif
+
+            bytes = bsal_vector_pack_size(&node->initial_actors);
+            buffer = bsal_memory_allocate(bytes);
+            bsal_vector_pack(&node->initial_actors, buffer);
+
+            bsal_message_init(&new_message, BSAL_NODE_ADD_INITIAL_ACTORS, bytes, buffer);
+
+            for (i = 0; i < nodes; i++) {
+                bsal_node_send_to_node(node, i, &new_message);
+            }
+
+            bsal_memory_free(buffer);
+        }
+
+        return 1;
+
+    } else if (tag == BSAL_NODE_ADD_INITIAL_ACTORS) {
+
+#ifdef BSAL_NODE_DEBUG_RECEIVE_SYSTEM
+        printf("DEBUG BSAL_NODE_ADD_INITIAL_ACTORS received\n");
+#endif
+
+        buffer = bsal_message_buffer(message);
+        source = bsal_message_source_node(message);
+        bsal_vector_unpack(&node->initial_actors, buffer);
+
+#ifdef BSAL_NODE_DEBUG_RECEIVE_SYSTEM
+        count = bsal_message_count(message);
+        printf("DEBUG buffer size: %d, unpacked %d actor names from node/%d\n",
+                        count, bsal_vector_size(&node->initial_actors),
+                        source);
+#endif
+
+        bsal_node_send_to_node_empty(node, source, BSAL_NODE_ADD_INITIAL_ACTORS_REPLY);
+        return 1;
+
+    } else if (tag == BSAL_NODE_ADD_INITIAL_ACTORS_REPLY) {
+
+        node->ready++;
+        nodes = bsal_node_nodes(node);
+        source = bsal_message_source_node(message);
+
+#ifdef BSAL_NODE_DEBUG_RECEIVE_SYSTEM
+        printf("node/%d DEBUG BSAL_NODE_ADD_INITIAL_ACTORS_REPLY received from"
+                        " %d, %d/%d ready\n", bsal_node_name(node),
+                        source, node->ready, nodes);
+#endif
+        if (node->ready == nodes) {
+
+            for (i = 0; i < nodes; i++) {
+                bsal_node_send_to_node_empty(node, i, BSAL_NODE_START);
+            }
+        }
+
+        return 1;
+
+    } else if (tag == BSAL_NODE_START) {
+
+#ifdef BSAL_NODE_CHECK_MPI
+        /* disable MPI if there is only one node
+         */
+        if (node->nodes == 1) {
+            node->use_mpi = 0;
+        }
+#endif
+
+#ifdef BSAL_NODE_DEBUG_RECEIVE_SYSTEM
+        printf("DEBUG node %d starts its initial actor\n",
+                        bsal_node_name(node));
+#endif
+
+        /* send BSAL_ACTOR_START to initial actor
+         * on this node
+         */
+        bsal_node_start_initial_actor(node);
+
+        return 1;
+    }
+
+    return 0;
+}
+
+void bsal_node_send_to_node_empty(struct bsal_node *node, int destination, int tag)
+{
+    struct bsal_message message;
+    bsal_message_init(&message, tag, 0, NULL);
+    bsal_node_send_to_node(node, destination, &message);
+}
+
+void bsal_node_send_to_node(struct bsal_node *node, int destination,
+                struct bsal_message *message)
+{
+    void *new_buffer;
+    int count;
+    size_t new_count;
+    void *buffer;
+    struct bsal_message new_message;
+    int tag;
+
+    tag = bsal_message_tag(message);
+    count = bsal_message_count(message);
+    buffer = bsal_message_buffer(message);
+    new_count = sizeof(int) * 2 + count;
+
+    /* the runtime system always needs at least
+     * 2 int in the buffer for actor names
+     * Since we are sending messages between
+     * nodes, these names are faked...
+     */
+    new_buffer = bsal_memory_allocate(new_count);
+    memcpy(new_buffer, buffer, count);
+
+    /* the metadata size is added by the runtime
+     * this is why the value is count and not new_count
+     */
+    bsal_message_init(&new_message, tag, count, new_buffer);
+    bsal_message_set_source(&new_message, bsal_node_name(node));
+    bsal_message_set_destination(&new_message, destination);
+    bsal_message_write_metadata(&new_message);
+
+#ifdef BSAL_NODE_DEBUG
+    printf("DEBUG bsal_node_send_to_node %d\n", destination);
+#endif
+
+    bsal_node_send(node, &new_message);
+}
+
+int bsal_node_has_actor(struct bsal_node *self, int name)
+{
+    int node_name;
+
+    node_name = bsal_node_actor_node(self, name);
+
+    if (node_name == self->name) {
+        /* maybe the actor is dead already !
+         */
+        if (bsal_node_get_actor_from_name(self, name) != NULL) {
+            return 1;
+        }
+    }
+
+    return 0;
+}
+
+void bsal_node_send(struct bsal_node *node, struct bsal_message *message)
+{
+    int name;
+
+    name = bsal_message_destination(message);
+    bsal_transport_resolve(&node->transport, message);
+
+    if (bsal_node_has_actor(node, name)) {
+        /* dispatch locally */
+        bsal_node_dispatch_message(node, message);
+
+#ifdef BSAL_NODE_DEBUG_20140601_8
+        if (bsal_message_tag(message) == 1100) {
+            printf("DEBUG local message 1100\n");
+        }
+#endif
+        bsal_counter_add(&node->counter, BSAL_COUNTER_SENT_MESSAGES_TO_SELF, 1);
+        bsal_counter_add(&node->counter, BSAL_COUNTER_SENT_BYTES_TO_SELF,
+                        bsal_message_count(message));
+
+        bsal_counter_add(&node->counter, BSAL_COUNTER_RECEIVED_MESSAGES_FROM_SELF, 1);
+        bsal_counter_add(&node->counter, BSAL_COUNTER_RECEIVED_BYTES_FROM_SELF,
+                        bsal_message_count(message));
+
+    } else {
+        /* If MPI is disable, this will never be reached anyway
+         */
+        /* send messages over the network */
+        bsal_transport_send(&node->transport, message);
+
+#ifdef BSAL_NODE_DEBUG_20140601_8
+        if (bsal_message_tag(message) == 1100) {
+            printf("DEBUG outbound message 1100\n");
+
+            node->debug = 1;
+        }
+#endif
+
+        bsal_counter_add(&node->counter, BSAL_COUNTER_SENT_MESSAGES_NOT_TO_SELF, 1);
+        bsal_counter_add(&node->counter, BSAL_COUNTER_SENT_BYTES_NOT_TO_SELF,
+                        bsal_message_count(message));
+    }
+}
+
+struct bsal_actor *bsal_node_get_actor_from_name(struct bsal_node *node,
+                int name)
+{
+    struct bsal_actor *actor;
+    int index;
+
+#ifdef BSAL_NODE_DEBUG
+    printf("DEBUG bsal_node_get_actor_from_name %d\n", name);
+#endif
+
+    if (name < 0) {
+        return NULL;
+    }
+
+    index = bsal_node_actor_index(node, name);
+
+    if (index < 0) {
+        return NULL;
+    }
+
+    actor = (struct bsal_actor *)bsal_vector_at(&node->actors, index);
+
+    return actor;
+}
+
+void bsal_node_dispatch_message(struct bsal_node *node, struct bsal_message *message)
+{
+    if (bsal_node_receive_system(node, message)) {
+        return;
+    }
+
+    /* otherwise, create work and dispatch work to a worker via
+     * the worker pool
+     */
+    bsal_node_create_work(node, message);
+}
+
+void bsal_node_create_work(struct bsal_node *node, struct bsal_message *message)
+{
+    struct bsal_message *new_message;
+    struct bsal_actor *actor;
+    struct bsal_work work;
+    int name;
+    int dead;
+
+#ifdef BSAL_NODE_DEBUG
+    int tag;
+    int source;
+#endif
+
+    name = bsal_message_destination(message);
+
+#ifdef BSAL_NODE_DEBUG
+    source = bsal_message_source(message);
+    tag = bsal_message_tag(message);
+
+    printf("[DEBUG %s %s %i] actor%i (node%i) : actor%i (node%i)"
+                    "(tag %i) %i bytes\n",
+                    __FILE__, __func__, __LINE__,
+                   source, bsal_message_source_node(message),
+                   name, bsal_message_destination_node(message),
+                   tag, bsal_message_count(message));
+#endif
+
+    actor = bsal_node_get_actor_from_name(node, name);
+
+    if (actor == NULL) {
+
+#ifdef BSAL_NODE_DEBUG_NULL_ACTOR
+        printf("DEBUG node/%d: actor/%d does not exist\n", node->name,
+                        name);
+#endif
+
+        return;
+    }
+
+    dead = bsal_actor_dead(actor);
+
+    if (dead) {
+#ifdef BSAL_NODE_DEBUG_NULL_ACTOR
+        printf("DEBUG node/%d: actor/%d is dead\n", node->name,
+                        name);
+#endif
+        return;
+    }
+
+    /* we need to do a copy of the message */
+    /* TODO replace with slab allocator */
+    new_message = (struct bsal_message *)bsal_memory_allocate(sizeof(struct bsal_message));
+    memcpy(new_message, message, sizeof(struct bsal_message));
+
+    bsal_work_init(&work, actor, new_message);
+
+    bsal_worker_pool_schedule_work(&node->worker_pool, &work);
+}
+
+int bsal_node_actor_index(struct bsal_node *node, int name)
+{
+    int *bucket;
+    int index;
+
+#ifdef BSAL_NODE_DEBUG
+    printf("DEBUG calling bsal_dynamic_hash_table_get with pointer to %d, entries %d\n",
+                    name, (int)bsal_dynamic_hash_table_size(&node->actor_names));
+#endif
+
+    bucket = bsal_dynamic_hash_table_get(&node->actor_names, &name);
+
+#ifdef BSAL_NODE_DEBUG
+    printf("DEBUG bsal_node_actor_index %d %p\n", name, (void *)bucket);
+#endif
+
+    if (bucket == NULL) {
+        return -1;
+    }
+
+    index = *bucket;
+    return index;
+}
+
+int bsal_node_actor_node(struct bsal_node *node, int name)
+{
+    return name % node->nodes;
+}
+
+int bsal_node_name(struct bsal_node *node)
+{
+    return node->name;
+}
+
+int bsal_node_nodes(struct bsal_node *node)
+{
+    return node->nodes;
+}
+
+void bsal_node_notify_death(struct bsal_node *node, struct bsal_actor *actor)
+{
+    void *state;
+    int name;
+
+#ifdef BSAL_NODE_REUSE_DEAD_INDICES
+    int index;
+#endif
+
+    /* int name; */
+    /*int index;*/
+
+    /*
+    node_name = node->name;
+    name = bsal_actor_name(actor);
+    */
+
+    if (node->print_structure) {
+        bsal_node_print_structure(node, actor);
+    }
+
+    name = bsal_actor_name(actor);
+
+#ifdef BSAL_NODE_DEBUG_SPAWN_KILL
+    printf("DEBUG bsal_node_notify_death node/%d actor/%d script/%x\n",
+                    bsal_node_name(node),
+                    name,
+                    bsal_actor_script(actor));
+#endif
+
+#ifdef BSAL_NODE_REUSE_DEAD_INDICES
+    index = bsal_node_actor_index(node, name);
+
+#ifdef BSAL_NODE_DEBUG_SPAWN
+    printf("DEBUG node/%d BSAL_NODE_REUSE_DEAD_INDICES push index %d\n",
+                   bsal_node_name(node), index);
+#endif
+
+#endif
+
+    state = bsal_actor_concrete_actor(actor);
+
+#ifdef BSAL_NODE_DEBUG_ACTOR_COUNTERS
+    printf("----------------------------------------------\n");
+    printf("Counters for actor/%d\n",
+                    name);
+    bsal_counter_print(bsal_actor_counter(actor));
+    printf("----------------------------------------------\n");
+#endif
+
+    /* destroy the abstract actor.
+     * this calls destroy on the concrete actor
+     * too
+     */
+    bsal_actor_destroy(actor);
+
+    /* free the bytes of the concrete actor */
+    bsal_memory_free(state);
+    state = NULL;
+
+    /* remove the name from the registry */
+    /* maybe a lock is needed for this
+     * because spawn also access this attribute
+     */
+
+    bsal_lock_lock(&node->spawn_and_death_lock);
+
+    bsal_dynamic_hash_table_delete(&node->actor_names, &name);
+
+#ifdef BSAL_NODE_REUSE_DEAD_INDICES
+    bsal_queue_enqueue(&node->dead_indices, &index);
+#endif
+
+#ifdef BSAL_NODE_DEBUG_20140601_8
+    printf("DEBUG bsal_node_notify_death\n");
+#endif
+
+    node->alive_actors--;
+    node->dead_actors++;
+    bsal_lock_unlock(&node->spawn_and_death_lock);
+
+    bsal_counter_add(&node->counter, BSAL_COUNTER_KILLED_ACTORS, 1);
+
+#ifdef BSAL_NODE_DEBUG_20140601_8
+    printf("DEBUG exiting bsal_node_notify_death\n");
+#endif
+}
+
+int bsal_node_worker_count(struct bsal_node *node)
+{
+    return bsal_worker_pool_worker_count(&node->worker_pool);
+}
+
+int bsal_node_argc(struct bsal_node *node)
+{
+    return node->argc;
+}
+
+char **bsal_node_argv(struct bsal_node *node)
+{
+    return node->argv;
+}
+
+int bsal_node_thread_count(struct bsal_node *node)
+{
+    return node->threads;
+}
+
+void bsal_node_add_script(struct bsal_node *node, int name,
+                struct bsal_script *script)
+{
+    int can_add;
+
+    bsal_lock_lock(&node->script_lock);
+
+    can_add = 1;
+    if (bsal_node_has_script(node, script)) {
+        can_add = 0;
+    }
+
+    if (can_add) {
+        bsal_map_add_value(&node->scripts, &name, &script);
+    }
+
+#ifdef BSAL_NODE_DEBUG_SCRIPT_SYSTEM
+    printf("DEBUG added script %x %p\n", name, (void *)script);
+#endif
+
+    bsal_lock_unlock(&node->script_lock);
+}
+
+int bsal_node_has_script(struct bsal_node *node, struct bsal_script *script)
+{
+    if (bsal_node_find_script(node, script->name) != NULL) {
+        return 1;
+    }
+    return 0;
+}
+
+struct bsal_script *bsal_node_find_script(struct bsal_node *node, int name)
+{
+    struct bsal_script **script;
+
+    script = bsal_map_get(&node->scripts, &name);
+
+    if (script == NULL) {
+        return NULL;
+    }
+
+    return *script;
+}
+
+void bsal_node_print_counters(struct bsal_node *node)
+{
+    printf("----------------------------------------------\n");
+    printf("biosal> Counters for node/%d\n", bsal_node_name(node));
+    bsal_counter_print(&node->counter);
+}
+
+/*
+ * TODO: on segmentation fault, kill the actor and continue
+ * computation
+ */
+void bsal_node_handle_signal(int signal)
+{
+    int node;
+    struct bsal_node *self;
+
+    self = bsal_node_global_self;
+
+    node = bsal_node_name(self);
+
+    if (signal == SIGSEGV) {
+        printf("Error, node/%d received signal SIGSEGV\n", node);
+
+    } else if (signal == SIGUSR1) {
+        bsal_node_toggle_debug_mode(bsal_node_global_self);
+        return;
+    } else {
+        printf("Error, node/%d received signal %d\n", node, signal);
+    }
+
+    bsal_tracer_print_stack_backtrace();
+
+    fflush(stdout);
+
+    /* remove handler
+     * \see http://stackoverflow.com/questions/9302464/how-do-i-remove-a-signal-handler
+     */
+
+    self->action.sa_handler = SIG_DFL;
+    sigaction(signal, &self->action, NULL);
+}
+
+void bsal_node_register_signal_handlers(struct bsal_node *self)
+{
+    struct bsal_vector signals;
+    struct bsal_vector_iterator iterator;
+    bsal_vector_init(&signals, sizeof(int));
+    int *signal;
+
+    /*
+     * \see http://unixhelp.ed.ac.uk/CGI/man-cgi?signal+7
+     */
+    /* segmentation fault */
+    bsal_vector_helper_push_back_int(&signals, SIGSEGV);
+    /* division by 0 */
+    bsal_vector_helper_push_back_int(&signals, SIGFPE);
+    /* bus error (alignment issue */
+    bsal_vector_helper_push_back_int(&signals, SIGBUS);
+    /* abort */
+    bsal_vector_helper_push_back_int(&signals, SIGABRT);
+
+    bsal_vector_helper_push_back_int(&signals, SIGUSR1);
+
+#if 0
+    /* interruption */
+    bsal_vector_helper_push_back_int(&signals, SIGINT);
+    /* kill */
+    bsal_vector_helper_push_back_int(&signals, SIGKILL);
+    /* termination*/
+    bsal_vector_helper_push_back_int(&signals, SIGTERM);
+    /* hang up */
+    bsal_vector_helper_push_back_int(&signals, SIGHUP);
+    /* illegal instruction */
+    bsal_vector_helper_push_back_int(&signals, SIGILL);
+#endif
+
+    /*
+     * \see http://pubs.opengroup.org/onlinepubs/7908799/xsh/sigaction.html
+     * \see http://stackoverflow.com/questions/10202941/segmentation-fault-handling
+     */
+    self->action.sa_handler = bsal_node_handle_signal;
+    sigemptyset(&self->action.sa_mask);
+    self->action.sa_flags = 0;
+
+    bsal_vector_iterator_init(&iterator, &signals);
+
+    while (bsal_vector_iterator_has_next(&iterator)) {
+
+        bsal_vector_iterator_next(&iterator, (void **)&signal);
+        sigaction(*signal, &self->action, NULL);
+    }
+
+    bsal_vector_iterator_destroy(&iterator);
+    bsal_vector_destroy(&signals);
+
+        /* generate SIGSEGV
+    *((int *)NULL) = 0;
+     */
+}
+
+void bsal_node_print_structure(struct bsal_node *node, struct bsal_actor *actor)
+{
+    struct bsal_map *structure;
+    struct bsal_map_iterator iterator;
+    int *source;
+    int *count;
+    int name;
+    int script;
+    struct bsal_script *actual_script;
+    char color[32];
+    int node_name;
+
+    node_name = bsal_node_name(node);
+    name = bsal_actor_name(actor);
+    script = bsal_actor_script(actor);
+    actual_script = bsal_node_find_script(node, script);
+
+    if (node_name == 0) {
+        strcpy(color, "red");
+    } else if (node_name == 1) {
+        strcpy(color, "green");
+    } else if (node_name == 2) {
+        strcpy(color, "blue");
+    } else if (node_name == 3) {
+        strcpy(color, "pink");
+    }
+
+    structure = bsal_actor_get_received_messages(actor);
+
+    printf("    a%d [label=\"%s/%d\", color=\"%s\"]; /* STRUCTURE vertex */\n", name,
+                    bsal_script_description(actual_script), name, color);
+
+    bsal_map_iterator_init(&iterator, structure);
+
+    while (bsal_map_iterator_has_next(&iterator)) {
+        bsal_map_iterator_next(&iterator, (void **)&source, (void **)&count);
+
+        printf("    a%d -> a%d [label=\"%d\"]; /* STRUCTURE edge */\n", *source, name, *count);
+    }
+
+    printf(" /* STRUCTURE */\n");
+
+    bsal_map_iterator_destroy(&iterator);
+}
+
+struct bsal_worker_pool *bsal_node_get_worker_pool(struct bsal_node *self)
+{
+    return &self->worker_pool;
+}
+
+void bsal_node_toggle_debug_mode(struct bsal_node *self)
+{
+    self->debug = !self->debug_mode;
+    bsal_worker_pool_toggle_debug_mode(&self->worker_pool);
+}

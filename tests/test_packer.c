@@ -1,6 +1,6 @@
 
-#include <system/packer.h>
-#include <system/memory.h>
+#include <core/system/packer.h>
+#include <core/system/memory.h>
 
 #include <stdio.h>
 #include <stdlib.h>

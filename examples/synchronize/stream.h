@@ -4,7 +4,7 @@
 
 #include <biosal.h>
 
-#include <structures/vector.h>
+#include <core/structures/vector.h>
 
 #define STREAM_SCRIPT 0xb9b19139
 
