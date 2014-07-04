@@ -19,6 +19,8 @@ void *bsal_vector_helper_at_as_void_pointer(struct bsal_vector *self, int64_t in
 
 void bsal_vector_helper_sort_int(struct bsal_vector *self);
 int bsal_vector_helper_compare_int(const void *a, const void *b);
+void bsal_vector_helper_sort_int_reverse(struct bsal_vector *self);
+int bsal_vector_helper_compare_int_reverse(const void *a, const void *b);
 
 typedef int (*bsal_compare_fn_t)(
     const void *value1,
@@ -40,6 +42,5 @@ int64_t bsal_vector_helper_partition(struct bsal_vector *self,
                 void *saved_pivot_value);
 void bsal_vector_helper_swap(struct bsal_vector *self,
                 int64_t index1, int64_t index2);
-void bsal_vector_helper_sort_int(struct bsal_vector *self);
 
 #endif

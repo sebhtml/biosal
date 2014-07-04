@@ -157,8 +157,6 @@ struct bsal_actor {
     struct bsal_script *script;
     struct bsal_worker *worker;
     struct bsal_node *node;
-    struct bsal_worker *affinity_worker;
-    struct bsal_worker *last_worker;
 
     struct bsal_map received_messages;
     struct bsal_map sent_messages;
@@ -220,7 +218,6 @@ void bsal_actor_set_name(struct bsal_actor *actor, int name);
 
 void bsal_actor_set_worker(struct bsal_actor *actor, struct bsal_worker *worker);
 struct bsal_worker *bsal_actor_worker(struct bsal_actor *actor);
-struct bsal_worker *bsal_actor_affinity_worker(struct bsal_actor *actor);
 
 void bsal_actor_print(struct bsal_actor *actor);
 int bsal_actor_dead(struct bsal_actor *actor);
@@ -263,17 +260,6 @@ void bsal_actor_unlock(struct bsal_actor *actor);
 
 int bsal_actor_argc(struct bsal_actor *actor);
 char **bsal_actor_argv(struct bsal_actor *actor);
-
-/* an actor can be pinned to a worker
- * so that the next message is processed
- * on the same worker.
- * this has implications for memory affinity in
- * NUMA systems
- */
-void bsal_actor_pin_to_worker(struct bsal_actor *actor);
-void bsal_actor_unpin_from_worker(struct bsal_actor *actor);
-void bsal_actor_pin_to_node(struct bsal_actor *actor);
-void bsal_actor_unpin_from_node(struct bsal_actor *actor);
 
 int bsal_actor_supervisor(struct bsal_actor *actor);
 void bsal_actor_set_supervisor(struct bsal_actor *actor, int supervisor);

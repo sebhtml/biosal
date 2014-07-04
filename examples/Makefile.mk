@@ -29,39 +29,39 @@ EXAMPLE_OBJECTS+=$(EXAMPLE_MIGRATION)
 
 examples/example_remote_spawn: $(EXAMPLE_REMOTE_SPAWN) $(LIBRARY_OBJECTS)
 	$(Q)$(ECHO) "  LD $@"
-	$(Q)$(CC) $(CFLAGS) $^ -o $@
+	$(Q)$(CC) $(CFLAGS) $^ -o $@ $(LDFLAGS)
 
 examples/example_ring: $(EXAMPLE_RING) $(LIBRARY_OBJECTS)
 	$(Q)$(ECHO) "  LD $@"
-	$(Q)$(CC) $(CFLAGS) $^ -o $@
+	$(Q)$(CC) $(CFLAGS) $^ -o $@ $(LDFLAGS)
 
 examples/example_mock: $(EXAMPLE_MOCK) $(LIBRARY_OBJECTS)
 	$(Q)$(ECHO) "  LD $@"
-	$(Q)$(CC) $(CFLAGS) $^ -o $@
+	$(Q)$(CC) $(CFLAGS) $^ -o $@ $(LDFLAGS)
 
 examples/example_reader: $(EXAMPLE_READER) $(LIBRARY_OBJECTS)
 	$(Q)$(ECHO) "  LD $@"
-	$(Q)$(CC) $(CFLAGS) $^ -o $@
+	$(Q)$(CC) $(CFLAGS) $^ -o $@ $(LDFLAGS)
 
 examples/example_synchronize: $(EXAMPLE_SYNCHRONIZE) $(LIBRARY_OBJECTS)
 	$(Q)$(ECHO) "  LD $@"
-	$(Q)$(CC) $(CFLAGS) $^ -o $@
+	$(Q)$(CC) $(CFLAGS) $^ -o $@ $(LDFLAGS)
 
 examples/example_controller: $(EXAMPLE_CONTROLLER) $(LIBRARY_OBJECTS)
 	$(Q)$(ECHO) "  LD $@"
-	$(Q)$(CC) $(CFLAGS) $^ -o $@
+	$(Q)$(CC) $(CFLAGS) $^ -o $@ $(LDFLAGS)
 
 examples/example_hello_world: $(EXAMPLE_HELLO_WORLD) $(LIBRARY_OBJECTS)
 	$(Q)$(ECHO) "  LD $@"
-	$(Q)$(CC) $(CFLAGS) $^ -o $@
+	$(Q)$(CC) $(CFLAGS) $^ -o $@ $(LDFLAGS)
 
 examples/example_clone: $(EXAMPLE_CLONE) $(LIBRARY_OBJECTS)
 	$(Q)$(ECHO) "  LD $@"
-	$(Q)$(CC) $(CFLAGS) $^ -o $@
+	$(Q)$(CC) $(CFLAGS) $^ -o $@ $(LDFLAGS)
 
 examples/example_migration: $(EXAMPLE_MIGRATION) $(LIBRARY_OBJECTS)
 	$(Q)$(ECHO) "  LD $@"
-	$(Q)$(CC) $(CFLAGS) $^ -o $@
+	$(Q)$(CC) $(CFLAGS) $^ -o $@ $(LDFLAGS)
 
 ring: examples/example_ring
 	mpiexec -n 2 $< -threads-per-node 8

@@ -4,6 +4,7 @@
 
 #include <core/structures/fast_ring.h>
 #include <core/structures/ring_queue.h>
+#include <core/structures/set.h>
 
 #include <core/system/memory_pool.h>
 #include <core/system/thread.h>
@@ -22,7 +23,11 @@ struct bsal_message;
  * Configuration of the buffering system of biosal
  */
 #define BSAL_WORKER_RING_CAPACITY 512
-#define BSAL_WORKER_WARNING_THRESHOLD 256
+
+/* Warning options for local work queue and
+ * local message queue.
+ */
+#define BSAL_WORKER_WARNING_THRESHOLD 1
 #define BSAL_WORKER_WARNING_THRESHOLD_STRIDE 128
 
 /*
@@ -48,6 +53,11 @@ struct bsal_worker {
     struct bsal_ring_queue local_message_queue;
 
     struct bsal_thread thread;
+
+#ifdef BSAL_WORKER_EVICTION
+    struct bsal_lock eviction_lock;
+    struct bsal_set actors_to_evict;
+#endif
 
     int work_count;
     int start;
@@ -115,5 +125,10 @@ int bsal_worker_push_work(struct bsal_worker *worker, struct bsal_work *work);
 
 struct bsal_memory_pool *bsal_worker_get_ephemeral_memory(struct bsal_worker *worker);
 void bsal_worker_queue_work(struct bsal_worker *worker, struct bsal_work *work);
+
+int bsal_worker_dequeue_work(struct bsal_worker *worker, struct bsal_work *work);
+int bsal_worker_enqueue_work(struct bsal_worker *worker, struct bsal_work *work);
+void bsal_worker_evict_actors(struct bsal_worker *worker);
+void bsal_worker_evict_actor(struct bsal_worker *worker, int actor_name);
 
 #endif

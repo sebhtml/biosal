@@ -31,8 +31,9 @@ LIBRARY_HOT_CODE += genomics/helpers/dna_helper.o
 
 LIBRARY_HOT_CODE += core/helpers/map_helper.o
 LIBRARY_HOT_CODE += core/helpers/set_helper.o
+LIBRARY_HOT_CODE += core/helpers/pair.o
 
-
+LIBRARY_HOT_CODE += core/helpers/statistics.o
 
 LIBRARY_HOT_CODE += genomics/kernels/dna_kmer_counter_kernel.o
 

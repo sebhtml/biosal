@@ -57,7 +57,7 @@ int bsal_worker_pull_work(struct bsal_worker *worker, struct bsal_work *work)
         return result;
     }
 
-    return bsal_ring_queue_dequeue(&worker->local_work_queue, work);
+    return bsal_worker_dequeue_work(worker, work);
 
 #else
     return bsal_ring_pop(&worker->work_queue, work);
@@ -181,17 +181,22 @@ void bsal_worker_queue_work(struct bsal_worker *worker, struct bsal_work *work)
 
     /* just put it in the local queue.
      */
-    bsal_ring_queue_enqueue(&worker->local_work_queue, work);
+    bsal_worker_enqueue_work(worker, work);
 
     count = bsal_ring_queue_size(&worker->local_work_queue);
+
+    /* evict actors too, if any...
+    bsal_worker_evict_actors(worker);
+     */
 
     if (count >= BSAL_WORKER_WARNING_THRESHOLD
                    && (worker->last_warning == 0
                            || count >= worker->last_warning + BSAL_WORKER_WARNING_THRESHOLD_STRIDE)) {
 
+
         bsal_map_init(&frequencies, sizeof(int), sizeof(int));
 
-        printf("Warning: node %d, worker %d has %d works in its local queue.\n",
+        printf("Warning: CONTENTION node %d, worker %d has %d works in its local queue.\n",
                         bsal_node_name(worker->node),
                         bsal_worker_name(worker),
                         count);
@@ -202,7 +207,7 @@ void bsal_worker_queue_work(struct bsal_worker *worker, struct bsal_work *work)
 
         i = 0;
 
-        while (i < count && bsal_ring_queue_dequeue(&worker->local_work_queue,
+        while (i < count && bsal_worker_dequeue_work(worker,
                                 &local_work)) {
 
             actor = bsal_work_actor(&local_work);
@@ -216,7 +221,7 @@ void bsal_worker_queue_work(struct bsal_worker *worker, struct bsal_work *work)
                             count,
                             actor_name);
 
-            bsal_ring_queue_enqueue(&worker->local_work_queue, &local_work);
+            bsal_worker_enqueue_work(worker, &local_work);
 
             if (!bsal_map_get_value(&frequencies, &actor_name, &actor_works)) {
                 actor_works = 0;
@@ -267,6 +272,7 @@ void bsal_worker_work(struct bsal_worker *worker, struct bsal_work *work)
     char *buffer;
 
 #ifdef BSAL_WORKER_DEBUG
+    int actor_name;
     int tag;
     int destination;
 #endif
@@ -307,7 +313,26 @@ void bsal_worker_work(struct bsal_worker *worker, struct bsal_work *work)
      */
     if (bsal_actor_trylock(actor) != BSAL_LOCK_SUCCESS) {
 
-        bsal_worker_queue_work(worker, work);
+        /*
+        actor_name = bsal_actor_name(actor);
+
+        printf("Warning: CONTENTION worker %d could not lock actor %d, returning the message...\n",
+                        bsal_worker_name(worker),
+                        actor_name);
+                        */
+
+        /* Send the message back to the
+         * source.
+         */
+        bsal_worker_push_message(worker, message);
+
+        /* do some eviction too right now.
+         */
+
+        /*bsal_worker_evict_actor(worker, actor_name);
+        bsal_worker_evict_actors(worker);
+        */
+
         return;
     }
 

@@ -67,7 +67,6 @@ void bsal_actor_init(struct bsal_actor *actor, void *state,
     bsal_lock_init(&actor->receive_lock);
     actor->locked = BSAL_LOCK_UNLOCKED;
 
-    bsal_actor_unpin_from_worker(actor);
     actor->can_pack = BSAL_ACTOR_STATUS_NOT_SUPPORTED;
 
     actor->cloning_status = BSAL_ACTOR_STATUS_NOT_STARTED;
@@ -138,8 +137,6 @@ void bsal_actor_destroy(struct bsal_actor *actor)
     actor->name = -1;
     actor->dead = 1;
 
-    bsal_actor_unpin_from_worker(actor);
-
     actor->script = NULL;
     actor->worker = NULL;
     actor->state = NULL;
@@ -201,7 +198,6 @@ bsal_actor_destroy_fn_t bsal_actor_get_destroy(struct bsal_actor *actor)
 void bsal_actor_set_worker(struct bsal_actor *actor, struct bsal_worker *worker)
 {
     actor->worker = worker;
-    actor->last_worker = actor->worker;
 }
 
 int bsal_actor_send_system_self(struct bsal_actor *actor, struct bsal_message *message)
@@ -417,21 +413,6 @@ int bsal_actor_argc(struct bsal_actor *actor)
 char **bsal_actor_argv(struct bsal_actor *actor)
 {
     return bsal_node_argv(bsal_actor_node(actor));
-}
-
-void bsal_actor_pin_to_worker(struct bsal_actor *actor)
-{
-    actor->affinity_worker = actor->worker;
-}
-
-struct bsal_worker *bsal_actor_affinity_worker(struct bsal_actor *actor)
-{
-    return actor->affinity_worker;
-}
-
-void bsal_actor_unpin_from_worker(struct bsal_actor *actor)
-{
-    actor->affinity_worker = NULL;
 }
 
 int bsal_actor_supervisor(struct bsal_actor *actor)
@@ -1723,11 +1704,6 @@ struct bsal_map *bsal_actor_get_received_messages(struct bsal_actor *self)
 struct bsal_map *bsal_actor_get_sent_messages(struct bsal_actor *self)
 {
     return &self->sent_messages;
-}
-
-struct bsal_worker *bsal_actor_get_last_worker(struct bsal_actor *actor)
-{
-    return actor->last_worker;
 }
 
 

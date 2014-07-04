@@ -259,3 +259,18 @@ void bsal_vector_init_copy(struct bsal_vector *self, struct bsal_vector *other)
 
     bsal_vector_push_back_vector(self, other);
 }
+
+int bsal_vector_get_value(struct bsal_vector *self, int64_t index, void *value)
+{
+    void *bucket;
+
+    bucket = bsal_vector_at(self, index);
+
+    if (bucket == NULL) {
+        return 0;
+    }
+
+    memcpy(value, bucket, self->element_size);
+
+    return 1;
+}

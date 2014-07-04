@@ -22,6 +22,7 @@ void bsal_vector_reserve(struct bsal_vector *self, int64_t size);
 int64_t bsal_vector_capacity(struct bsal_vector *self);
 
 void *bsal_vector_at(struct bsal_vector *self, int64_t index);
+int bsal_vector_get_value(struct bsal_vector *self, int64_t index, void *value);
 void bsal_vector_set(struct bsal_vector *self, int64_t index, void *data);
 
 void bsal_vector_push_back(struct bsal_vector *self, void *data);

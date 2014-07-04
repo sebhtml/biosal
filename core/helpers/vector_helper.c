@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+
 char bsal_vector_helper_at_as_char(struct bsal_vector *self, int64_t index)
 {
     char *bucket;
@@ -125,6 +126,16 @@ int bsal_vector_helper_compare_int(const void *a, const void *b)
     }
 
     return 0;
+}
+
+int bsal_vector_helper_compare_int_reverse(const void *a, const void *b)
+{
+    return bsal_vector_helper_compare_int(b, a);
+}
+
+void bsal_vector_helper_sort_int_reverse(struct bsal_vector *self)
+{
+    bsal_vector_helper_sort(self, bsal_vector_helper_compare_int_reverse);
 }
 
 void bsal_vector_helper_sort_int(struct bsal_vector *self)
@@ -280,3 +291,4 @@ void bsal_vector_helper_swap(struct bsal_vector *self,
         ((char *)value2)[i] = saved;
     }
 }
+

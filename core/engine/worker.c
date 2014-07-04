@@ -81,6 +81,11 @@ void bsal_worker_init(struct bsal_worker *worker, int name, struct bsal_node *no
  */
     bsal_memory_pool_init(&worker->ephemeral_memory, 2097152);
     bsal_memory_pool_disable_tracking(&worker->ephemeral_memory);
+
+#ifdef BSAL_WORKER_EVICTION
+    bsal_lock_init(&worker->eviction_lock);
+    bsal_set_init(&worker->actors_to_evict, sizeof(int));
+#endif
 }
 
 void bsal_worker_destroy(struct bsal_worker *worker)
@@ -105,6 +110,11 @@ void bsal_worker_destroy(struct bsal_worker *worker)
     worker->dead = 1;
 
     bsal_memory_pool_destroy(&worker->ephemeral_memory);
+
+#ifdef BSAL_WORKER_EVICTION
+    bsal_lock_destroy(&worker->eviction_lock);
+    bsal_set_destroy(&worker->actors_to_evict);
+#endif
 }
 
 struct bsal_node *bsal_worker_node(struct bsal_worker *worker)
@@ -326,9 +336,16 @@ void bsal_worker_push_message(struct bsal_worker *worker, struct bsal_message *m
 
 #ifdef BSAL_WORKER_USE_FAST_RINGS
     if (!bsal_fast_ring_push_from_producer(&worker->message_queue, message)) {
+
+        printf("Warning: CONTENTION worker %d on node %d buffered a message\n",
+                        bsal_worker_name(worker),
+                        bsal_node_name(worker->node));
+
         bsal_ring_queue_enqueue(&worker->local_message_queue, message);
     }
 #else
+    /*This code is not enabled because fast rings are used.
+     */
     if (!bsal_ring_push(&worker->message_queue, message)) {
         bsal_ring_queue_enqueue(&worker->local_message_queue, message);
     }
@@ -380,4 +397,114 @@ struct bsal_memory_pool *bsal_worker_get_ephemeral_memory(struct bsal_worker *wo
     return &worker->ephemeral_memory;
 }
 
+#ifdef BSAL_WORKER_EVICTION
+void bsal_worker_evict_actor(struct bsal_worker *worker, int actor_name)
+{
+    bsal_lock_lock(&worker->eviction_lock);
 
+    bsal_set_add(&worker->actors_to_evict, &actor_name);
+
+#if 0
+    printf("EVICTION will evict %d\n", actor_name);
+#endif
+
+    bsal_lock_unlock(&worker->eviction_lock);
+}
+
+void bsal_worker_evict_actors(struct bsal_worker *worker)
+{
+    struct bsal_message *message;
+    struct bsal_actor *actor;
+    struct bsal_work work;
+    int name;
+    int local_works;
+
+    bsal_lock_lock(&worker->eviction_lock);
+
+    local_works = bsal_ring_queue_size(&worker->local_work_queue);
+
+    printf("EVICTION worker %d evicts actors, %d actors to evict, %d local works\n",
+                    worker->name, (int)bsal_set_size(&worker->actors_to_evict),
+                    local_works);
+
+    /* evict the actor from the fast ring for works
+     */
+    while (bsal_fast_ring_pop_from_consumer(&worker->work_queue, &work)) {
+        actor = bsal_work_actor(&work);
+        name = bsal_actor_name(actor);
+
+        /* This message will be returned to the source.
+         */
+        if (bsal_set_find(&worker->actors_to_evict, &name)) {
+            message = bsal_work_message(&work);
+            bsal_worker_push_message(worker, message);
+
+            printf("EVICTION %d was evicted from worker %d FAST RING\n",
+                            name, bsal_worker_name(worker));
+        } else {
+
+            /* Otherwise, it is kept.
+             */
+            bsal_worker_enqueue_work(worker, &work);
+        }
+    }
+
+    /* evict the actor from the local work queue
+     */
+    while (local_works-- && bsal_worker_dequeue_work(worker, &work)) {
+
+        actor = bsal_work_actor(&work);
+        name = bsal_actor_name(actor);
+
+        /* This message will be returned to the source.
+         */
+        if (bsal_set_find(&worker->actors_to_evict, &name)) {
+            message = bsal_work_message(&work);
+            bsal_worker_push_message(worker, message);
+
+            printf("EVICTION %d was evicted from worker %d LOCAL WORK QUEUE\n",
+                            name, bsal_worker_name(worker));
+        } else {
+
+            /* Otherwise, it is kept.
+             */
+            bsal_worker_enqueue_work(worker, &work);
+        }
+    }
+
+    bsal_set_destroy(&worker->actors_to_evict);
+    bsal_set_init(&worker->actors_to_evict, sizeof(int));
+
+    bsal_lock_unlock(&worker->eviction_lock);
+}
+#endif
+
+int bsal_worker_enqueue_work(struct bsal_worker *worker, struct bsal_work *work)
+{
+    int value;
+
+#ifdef BSAL_WORKER_EVICTION
+    bsal_lock_lock(&worker->eviction_lock);
+#endif
+    value = bsal_ring_queue_enqueue(&worker->local_work_queue, work);
+#ifdef BSAL_WORKER_EVICTION
+    bsal_lock_unlock(&worker->eviction_lock);
+#endif
+
+    return value;
+}
+
+int bsal_worker_dequeue_work(struct bsal_worker *worker, struct bsal_work *work)
+{
+    int value;
+
+#ifdef BSAL_WORKER_EVICTION
+    bsal_lock_lock(&worker->eviction_lock);
+#endif
+    value = bsal_ring_queue_dequeue(&worker->local_work_queue, work);
+#ifdef BSAL_WORKER_EVICTION
+    bsal_lock_unlock(&worker->eviction_lock);
+#endif
+
+    return value;
+}

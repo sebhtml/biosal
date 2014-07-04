@@ -23,6 +23,10 @@ struct bsal_worker_pool {
     struct bsal_message_queue message_queue;
 #endif
 
+    struct bsal_map actor_affinities;
+    struct bsal_map actor_inbound_messages;
+    struct bsal_vector worker_actors;
+
     struct bsal_ring_queue local_work_queue;
 
     int workers;
@@ -42,6 +46,9 @@ struct bsal_worker_pool {
 
     int last_warning;
     int last_scheduling_warning;
+
+    int received_works;
+    int balance_period;
 
 #if 0
     int ticks_without_messages;
@@ -84,7 +91,7 @@ struct bsal_worker *bsal_worker_pool_get_worker(
 
 struct bsal_worker *bsal_worker_pool_select_worker_round_robin(
                 struct bsal_worker_pool *pool, struct bsal_work *work);
-struct bsal_worker *bsal_worker_pool_select_worker_least_busy(
+int bsal_worker_pool_select_worker_least_busy(
                 struct bsal_worker_pool *pool, struct bsal_work *work, int *worker_score);
 
 void bsal_worker_pool_print_load(struct bsal_worker_pool *self, int type);
@@ -98,5 +105,7 @@ void bsal_worker_pool_schedule_work_classic(struct bsal_worker_pool *pool, struc
 void bsal_worker_pool_toggle_debug_mode(struct bsal_worker_pool *self);
 void bsal_worker_pool_set_cached_value(struct bsal_worker_pool *self, int index, int value);
 int bsal_worker_pool_get_cached_value(struct bsal_worker_pool *self, int index);
+
+void bsal_worker_pool_balance(struct bsal_worker_pool *pool);
 
 #endif
