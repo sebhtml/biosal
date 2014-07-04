@@ -8,7 +8,7 @@
 
 int bsal_node_pull(struct bsal_node *node, struct bsal_message *message)
 {
-    return bsal_worker_pool_pull(&node->worker_pool, message);
+    return bsal_worker_pool_dequeue_message(&node->worker_pool, message);
 }
 
 void bsal_node_run_loop(struct bsal_node *node)

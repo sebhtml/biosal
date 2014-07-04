@@ -2,7 +2,6 @@
 #include "worker_pool.h"
 
 #include "actor.h"
-#include "work.h"
 #include "worker.h"
 #include "node.h"
 
@@ -33,7 +32,9 @@
 #define BSAL_WORKER_POOL_USE_LEAST_BUSY
 #define BSAL_WORKER_POOL_WORK_SCHEDULING_WINDOW 1024
 
+/*
 #define BSAL_WORKER_POOL_BALANCE
+*/
 
 void bsal_worker_pool_init(struct bsal_worker_pool *pool, int workers,
                 struct bsal_node *node)
@@ -74,10 +75,10 @@ void bsal_worker_pool_init(struct bsal_worker_pool *pool, int workers,
 
     pool->starting_time = time(NULL);
 
-    bsal_ring_queue_init(&pool->local_work_queue, sizeof(struct bsal_work));
+    bsal_ring_queue_init(&pool->scheduled_actor_queue_buffer, sizeof(struct bsal_actor *));
+    bsal_ring_queue_init(&pool->inbound_message_queue_buffer, sizeof(struct bsal_message));
 
     bsal_map_init(&pool->actor_affinities, sizeof(int), sizeof(int));
-    bsal_map_init(&pool->actor_inbound_messages, sizeof(int), sizeof(int));
     bsal_vector_init(&pool->worker_actors, sizeof(struct bsal_set));
 
     bsal_vector_resize(&pool->worker_actors, pool->workers);
@@ -91,7 +92,7 @@ void bsal_worker_pool_init(struct bsal_worker_pool *pool, int workers,
 
     pool->received_works = 0;
 
-    pool->balance_period = pool->workers * 8192 * 2;
+    pool->balance_period = pool->workers * 1024;
 }
 
 void bsal_worker_pool_destroy(struct bsal_worker_pool *pool)
@@ -109,15 +110,10 @@ void bsal_worker_pool_destroy(struct bsal_worker_pool *pool)
 
     pool->node = NULL;
 
-#ifdef BSAL_WORKER_POOL_HAS_SPECIAL_QUEUES
-    bsal_work_queue_destroy(&pool->work_queue);
-    bsal_message_queue_destroy(&pool->message_queue);
-#endif
-
-    bsal_ring_queue_destroy(&pool->local_work_queue);
+    bsal_ring_queue_destroy(&pool->inbound_message_queue_buffer);
+    bsal_ring_queue_destroy(&pool->scheduled_actor_queue_buffer);
 
     bsal_map_destroy(&pool->actor_affinities);
-    bsal_map_destroy(&pool->actor_inbound_messages);
     bsal_vector_destroy(&pool->worker_actors);
 }
 
@@ -211,137 +207,9 @@ void bsal_worker_pool_stop(struct bsal_worker_pool *pool)
     }
 }
 
-/* select the worker to push work to */
-struct bsal_worker *bsal_worker_pool_select_worker_for_work(
-                struct bsal_worker_pool *pool, struct bsal_work *work)
-{
-#ifdef BSAL_WORKER_POOL_PUSH_WORK_ON_SAME_WORKER
-
-/*#error "BAD"*/
-    /* check first if the actor is active.
-     * If it is active, just enqueue the work at the same
-     * place (on the same worker).
-     * This avoids contention.
-     * This is only required for important actors...
-     * Important actors are those who receive a lot of messages.
-     * This is roughly equivalent to have a dedicated worker for
-     * an important worker.
-     */
-    struct bsal_actor *actor;
-    struct bsal_worker *worker;
-    struct bsal_worker *affinity_worker;
-    int best_score;
-    int name;
-    int worker_index;
-    struct bsal_set *set;
-
-    actor = bsal_work_actor(work);
-    name = bsal_actor_name(actor);
-
-
-#ifdef BSAL_WORKER_POOL_USE_CURRENT_WORKER
-    worker = bsal_actor_worker(actor);
-
-    if (worker != NULL) {
-#if 0
-        printf("USING current worker\n");
-#endif
-
-#ifdef BSAL_WORKER_POOL_DEBUG_SCHEDULING_SAME_WORKER
-        if (bsal_actor_script(actor) == (int)0x82673850) {
-            printf("DEBUG7890 node %d scheduling work for aggregator on worker %d\n",
-                            bsal_node_name(pool->node),
-                            bsal_worker_name(worker));
-        }
-#endif
-
-        return worker;
-    }
-#endif
-#endif
-
-    /* Check if the affinity worker has a score lower than a certain
-     * value.
-     */
-
-    affinity_worker = NULL;
-
-    /* Use the affinity worker if any.
-     */
-    if (bsal_map_get_value(&pool->actor_affinities, &name, &worker_index)) {
-
-        affinity_worker = bsal_worker_pool_get_worker(pool, worker_index);
-
-        if (bsal_worker_get_work_scheduling_score(affinity_worker) <= 4) {
-            return affinity_worker;
-        }
-    }
-
-
-    /* Use the least busy worker (use a idle worker).
-     */
-
-#ifdef BSAL_WORKER_POOL_USE_LEAST_BUSY
-    worker_index = bsal_worker_pool_select_worker_least_busy(pool, work, &best_score);
-
-    worker = bsal_worker_pool_get_worker(pool, worker_index);
-
-    if (best_score == 0) {
-        return worker;
-    }
-
-    if (affinity_worker != NULL) {
-        return affinity_worker;
-    }
-
-    /* Otherwise, assign the worker
-     */
-    /*
-     * Assign the actor to the worker.
-     */
-    bsal_map_add_value(&pool->actor_affinities, &name, &worker_index);
-    set = (struct bsal_set *)bsal_vector_at(&pool->worker_actors, worker_index);
-    bsal_set_add(set, &name);
-
-    printf("SCHEDULER scheduling actor %d on node %d, worker %d\n", name,
-                    bsal_node_name(pool->node),
-                    bsal_worker_name(worker));
-
-    /* return the worker with the lowest load
-     */
-    return worker;
-
-#else
-    return bsal_worker_pool_select_worker_round_robin(pool, work);
-#endif
-}
-
-struct bsal_worker *bsal_worker_pool_select_worker_round_robin(
-                struct bsal_worker_pool *pool, struct bsal_work *work)
-{
-    int index;
-
-#if 0
-    struct bsal_worker *worker;
-
-    /* check if actor has an affinity worker */
-    worker = bsal_actor_affinity_worker(bsal_work_actor(work));
-
-    if (worker != NULL) {
-        return worker;
-    }
-#endif
-
-    /* otherwise, pick a worker with round robin */
-    index = pool->worker_for_message;
-    pool->worker_for_message = bsal_worker_pool_next_worker(pool, pool->worker_for_message);
-
-    return bsal_worker_pool_get_worker(pool, index);
-}
-
 #ifdef BSAL_WORKER_HAS_OWN_QUEUES
 int bsal_worker_pool_select_worker_least_busy(
-                struct bsal_worker_pool *self, struct bsal_work *work, int *worker_score)
+                struct bsal_worker_pool *self, struct bsal_message *message, int *worker_score)
 {
     int to_check;
     int score;
@@ -444,30 +312,20 @@ struct bsal_worker *bsal_worker_pool_select_worker_for_run(struct bsal_worker_po
     return bsal_worker_pool_get_worker(pool, index);
 }
 
-void bsal_worker_pool_schedule_work(struct bsal_worker_pool *pool, struct bsal_work *work)
+int bsal_worker_pool_enqueue_message(struct bsal_worker_pool *pool, struct bsal_message *message)
 {
-    struct bsal_work other_work;
+    struct bsal_message other_message;
     struct bsal_actor *actor;
+    int worker_index;
+    struct bsal_worker *worker;
     int name;
-    int value;
-
-#ifdef BSAL_WORKER_POOL_DEBUG
-    if (pool->debug_mode) {
-        printf("DEBUG bsal_worker_pool_schedule_work called\n");
-    }
-
-    int tag;
     int destination;
-    struct bsal_message *message;
 
-    message = bsal_work_message(work);
-    tag = bsal_message_tag(message);
     destination = bsal_message_destination(message);
 
-    if (tag == BSAL_ACTOR_ASK_TO_STOP) {
-        printf("DEBUG bsal_worker_pool_schedule_work tag BSAL_ACTOR_ASK_TO_STOP actor %d\n",
-                        destination);
-    }
+#if 0
+    printf("DEBUG pool receives message for actor %d\n",
+                    destination);
 #endif
 
 #ifdef BSAL_WORKER_POOL_BALANCE
@@ -480,63 +338,35 @@ void bsal_worker_pool_schedule_work(struct bsal_worker_pool *pool, struct bsal_w
 
     pool->received_works++;
 
-    actor = bsal_work_actor(work);
-    name = bsal_actor_name(actor);
-    value = 1;
+    name = destination;
+    actor = bsal_node_get_actor_from_name(pool->node, name);
 
-    if (!bsal_map_get_value(&pool->actor_inbound_messages, &name, &value)) {
-        bsal_map_add_value(&pool->actor_inbound_messages, &name, &value);
-    } else {
-        ++value;
-        bsal_map_update_value(&pool->actor_inbound_messages, &name, &value);
-    }
+    bsal_worker_pool_give_message_to_actor(pool, message);
 
-#ifdef BSAL_WORKER_HAS_OWN_QUEUES
-    bsal_worker_pool_schedule_work_classic(pool, work);
-
-    if (bsal_ring_queue_dequeue(&pool->local_work_queue, &other_work)) {
-        bsal_worker_pool_schedule_work_classic(pool, &other_work);
-    }
-#else
-    bsal_work_queue_enqueue(&pool->work_queue, work);
-#endif
-}
-
-#ifdef BSAL_WORKER_HAS_OWN_QUEUES
-/*
- * names are based on names found in:
- * \see http://lxr.free-electrons.com/source/include/linux/workqueue.h
- * \see http://lxr.free-electrons.com/source/kernel/workqueue.c
- */
-void bsal_worker_pool_schedule_work_classic(struct bsal_worker_pool *pool, struct bsal_work *work)
-{
-    struct bsal_worker *worker;
-    int count;
-
-    worker = bsal_worker_pool_select_worker_for_work(pool, work);
-
-    /* if the work can not be queued,
-     * it will be queued later
+    /* If there are messages in the inbound message buffer,
+     * Try to give  them too.
      */
-    if (!bsal_worker_push_work(worker, work)) {
+    if (bsal_ring_queue_dequeue(&pool->inbound_message_queue_buffer, &other_message)) {
+        bsal_worker_pool_give_message_to_actor(pool, &other_message);
+    }
 
-        printf("Warning: CONTENTION detected on node %d, worker %d\n",
-                        bsal_node_name(pool->node), bsal_worker_name(worker));
-        bsal_ring_queue_enqueue(&pool->local_work_queue, work);
+    /* Try to dequeue an actor for scheduling
+     */
 
-        count = bsal_ring_queue_size(&pool->local_work_queue);
+    if (bsal_ring_queue_dequeue(&pool->scheduled_actor_queue_buffer, &actor)) {
 
-        if (count >= BSAL_WORKER_WARNING_THRESHOLD
-                        && (pool->last_warning == 0
-                                || count >= pool->last_warning + BSAL_WORKER_WARNING_THRESHOLD_STRIDE)) {
-            printf("Warning node %d has %d works in its local queue\n",
-                            bsal_node_name(pool->node), count);
+        name = bsal_actor_name(actor);
+        bsal_map_get_value(&pool->actor_affinities, &name, &worker_index);
 
-            pool->last_warning = count;
+        worker = bsal_worker_pool_get_worker(pool, worker_index);
+
+        if (!bsal_worker_enqueue_actor(worker, &actor)) {
+            bsal_ring_queue_enqueue(&pool->scheduled_actor_queue_buffer, &actor);
         }
     }
+
+    return 1;
 }
-#endif
 
 int bsal_worker_pool_worker_count(struct bsal_worker_pool *pool)
 {
@@ -654,24 +484,7 @@ void bsal_worker_pool_balance(struct bsal_worker_pool *pool)
     int value;
     struct bsal_worker *worker;
     struct bsal_set *set;
-    int actor_name;
-    struct bsal_set_iterator iterator;
-    struct bsal_map_iterator map_iterator;
-    struct bsal_vector_iterator vector_iterator;
-    struct bsal_vector_iterator vector_iterator2;
-    int score;
-    int transfers;
     struct bsal_pair pair;
-    struct bsal_vector sorted_actors;
-    struct bsal_vector global_sorted_actors;
-    int transfers_per_worker;
-    int actor_index;
-    int worker_index;
-    int stalled_index;
-    int stalled_count;
-    int new_worker;
-    int average_actor_score;
-    int median;
     int multiplier;
     int minimum;
     float load;
@@ -679,7 +492,6 @@ void bsal_worker_pool_balance(struct bsal_worker_pool *pool)
     printf("BALANCING\n");
 
     bsal_vector_init(&burdened_workers, sizeof(struct bsal_pair));
-    bsal_vector_init(&global_sorted_actors, sizeof(struct bsal_pair));
     bsal_vector_init(&stalled_workers, sizeof(struct bsal_pair));
     bsal_vector_init(&scheduling_scores, sizeof(int));
 
@@ -727,166 +539,84 @@ void bsal_worker_pool_balance(struct bsal_worker_pool *pool)
         } else {
             printf("\n");
         }
+        bsal_worker_print_actors(worker);
     }
 
-    transfers = bsal_vector_size(&stalled_workers);
-
-    if (bsal_vector_size(&burdened_workers) > transfers) {
-        transfers = bsal_vector_size(&burdened_workers);
-    }
-
-    transfers_per_worker = 0;
-
-    if (bsal_vector_size(&burdened_workers) > 0) {
-        transfers_per_worker = transfers / bsal_vector_size(&burdened_workers);
-    }
-
-    printf("SUMMARY: stalled: %d, burdened: %d, required transfers: %d, transfers_per_worker: %d\n",
-                    (int)bsal_vector_size(&stalled_workers),
-                    (int)bsal_vector_size(&burdened_workers),
-                    transfers, transfers_per_worker);
-
-    bsal_vector_helper_sort_int_reverse(&burdened_workers);
-
-    bsal_vector_iterator_init(&vector_iterator, &burdened_workers);
-
-    while (bsal_vector_iterator_get_next_value(&vector_iterator, &pair)) {
-
-        value = bsal_pair_get_first(&pair);
-        i = bsal_pair_get_second(&pair);
-
-        printf("SORTED burden %d worker %d\n", value, i);
-
-        /*
-         * Pop an actor from this worker.
-         * The scheduler will schedule this actor on another worker next time.
-         */
-
-        worker = bsal_worker_pool_get_worker(pool, i);
-        set = (struct bsal_set *)bsal_vector_at(&pool->worker_actors, i);
-
-        bsal_set_iterator_init(&iterator, set);
-        bsal_vector_init(&sorted_actors, sizeof(struct bsal_pair));
-        while (bsal_set_iterator_get_next_value(&iterator, &actor_name)) {
-
-            score = 0;
-            bsal_map_get_value(&pool->actor_inbound_messages, &actor_name, &score);
-
-            bsal_pair_init(&pair, score, actor_name);
-
-            bsal_vector_push_back(&sorted_actors, &pair);
-        }
-        bsal_set_iterator_destroy(&iterator);
-        bsal_vector_helper_sort_int_reverse(&sorted_actors);
-
-        bsal_vector_iterator_init(&vector_iterator2, &sorted_actors);
-
-        actor_index = 0;
-
-        while (bsal_vector_iterator_get_next_value(&vector_iterator2, &pair)) {
-
-            score = bsal_pair_get_first(&pair);
-            actor_name = bsal_pair_get_second(&pair);
-
-            printf(" ----> SCORE %d ACTOR %d", score, actor_name);
-
-            /*
-             * Skip the largest one because it is fine on this
-             * worker.
-             */
-            if (actor_index != 0) {
-                printf(" CANDIDATE for MIGRATION\n");
-
-                bsal_vector_push_back(&global_sorted_actors, &pair);
-            } else {
-                printf("\n");
-            }
-
-            ++actor_index;
-        }
-
-        bsal_vector_iterator_destroy(&vector_iterator2);
-        bsal_vector_destroy(&sorted_actors);
-    }
-
-    bsal_vector_iterator_destroy(&vector_iterator);
-
-    /*
-     * move @transfers actors
-     */
-
-    bsal_vector_helper_sort_int_reverse(&global_sorted_actors);
-
-    average_actor_score = bsal_statistics_get_mean_int(&global_sorted_actors);
-    bsal_vector_helper_sort_int(&stalled_workers);
-    stalled_count = bsal_vector_size(&stalled_workers);
-    median = bsal_statistics_get_median_int(&global_sorted_actors);
-
-    printf("AVERAGE %d MEDIAN %d\n", average_actor_score, median);
-
-    bsal_vector_iterator_init(&vector_iterator, &global_sorted_actors);
-
-    stalled_index = 0;
-
-    while (transfers
-                    && bsal_vector_iterator_get_next_value(&vector_iterator, &pair)) {
-
-        score = bsal_pair_get_first(&pair);
-
-        if (!stalled_count) {
-            break;
-        }
-        if (score < average_actor_score) {
-            break;
-        }
-
-        actor_name = bsal_pair_get_second(&pair);
-        bsal_map_get_value(&pool->actor_affinities, &actor_name, &worker_index);
-
-        /*
-         * Remove the actor from the affinity
-         * table.
-         */
-        set = (struct bsal_set *)bsal_vector_at(&pool->worker_actors, worker_index);
-        bsal_set_delete(set, &actor_name);
-
-        bsal_vector_get_value(&stalled_workers, stalled_index, &pair);
-        value = bsal_pair_get_first(&pair);
-        new_worker = bsal_pair_get_second(&pair);
-
-        printf("MIGRATING actor %d (%d) from worker %d to worker %d (%d, index %d/%d)\n",
-                        actor_name, score, worker_index, new_worker, value,
-                        stalled_index, stalled_count);
-
-        set = (struct bsal_set *)bsal_vector_at(&pool->worker_actors, new_worker);
-        bsal_set_add(set, &actor_name);
-
-        bsal_map_update_value(&pool->actor_affinities, &actor_name, &new_worker);
-
-        --transfers;
-        ++stalled_index;
-
-        if (stalled_index >= stalled_count) {
-            stalled_index -= stalled_count;
-        }
-    }
-
-    bsal_vector_iterator_destroy(&vector_iterator);
 
     bsal_vector_destroy(&stalled_workers);
     bsal_vector_destroy(&scheduling_scores);
     bsal_vector_destroy(&burdened_workers);
-    bsal_vector_destroy(&global_sorted_actors);
-
-    printf("Update metrics\n");
-    /*
-     * Update metrics
-     */
-    bsal_map_iterator_init(&map_iterator, &pool->actor_inbound_messages);
-
-    while (bsal_map_iterator_get_next_key_and_value(&map_iterator, &actor_name, &value)) {
-        value /= 2;
-        bsal_map_update_value(&pool->actor_inbound_messages, &actor_name, &value);
-    }
-    bsal_map_iterator_destroy(&map_iterator);
 }
+
+void bsal_worker_pool_give_message_to_actor(struct bsal_worker_pool *pool, struct bsal_message *message)
+{
+    int destination;
+    struct bsal_actor *actor;
+    struct bsal_worker *affinity_worker;
+    int worker_index;
+    int score;
+    int name;
+    struct bsal_set *set;
+
+    destination = bsal_message_destination(message);
+    actor = bsal_node_get_actor_from_name(pool->node, destination);
+
+#if 0
+    printf("DEBUG bsal_worker_pool_give_message_to_actor %d\n", destination);
+#endif
+
+    if (actor == NULL) {
+        printf("DEAD LETTER CHANNEL...\n");
+        return;
+    }
+
+    name = bsal_actor_name(actor);
+
+    /* give the message to the actor
+     */
+    if (!bsal_actor_enqueue_mailbox_message(actor, message)) {
+        bsal_ring_queue_enqueue(&pool->inbound_message_queue_buffer, message);
+
+    /* Check if the actor is assigned to a worker
+     */
+    } else {
+/*
+        printf("DEBUG message was enqueued in actor mailbox\n");
+        */
+
+        if (bsal_map_get_value(&pool->actor_affinities, &name, &worker_index)) {
+
+            affinity_worker = bsal_worker_pool_get_worker(pool, worker_index);
+
+            /*
+            printf("DEBUG actor has an assigned worker\n");
+            */
+
+            if (!bsal_worker_enqueue_actor(affinity_worker, &actor)) {
+                bsal_ring_queue_enqueue(&pool->scheduled_actor_queue_buffer, &actor);
+            }
+
+        } else {
+
+                /*
+            printf("DEBUG Needs to do actor placement\n");
+            */
+            /* assign this actor to the least busy actor
+             */
+            worker_index = bsal_worker_pool_select_worker_least_busy(pool, message, &score);
+
+
+            bsal_map_add_value(&pool->actor_affinities, &name, &worker_index);
+            set = (struct bsal_set *)bsal_vector_at(&pool->worker_actors, worker_index);
+            bsal_set_add(set, &name);
+
+            affinity_worker = bsal_worker_pool_get_worker(pool, worker_index);
+
+            if (!bsal_worker_enqueue_actor(affinity_worker, &actor)) {
+                bsal_ring_queue_enqueue(&pool->scheduled_actor_queue_buffer, &actor);
+            }
+        }
+    }
+}
+
+

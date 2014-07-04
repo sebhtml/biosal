@@ -8,6 +8,7 @@
 #include <core/structures/vector.h>
 #include <core/structures/map.h>
 #include <core/structures/queue.h>
+#include <core/structures/fast_ring.h>
 
 #include <core/engine/dispatcher.h>
 #include <core/system/lock.h>
@@ -157,6 +158,8 @@ struct bsal_actor {
     struct bsal_script *script;
     struct bsal_worker *worker;
     struct bsal_node *node;
+
+    struct bsal_fast_ring mailbox;
 
     struct bsal_map received_messages;
     struct bsal_map sent_messages;
@@ -325,5 +328,9 @@ struct bsal_map *bsal_actor_get_sent_messages(struct bsal_actor *self);
 
 struct bsal_memory_pool *bsal_actor_get_ephemeral_memory(struct bsal_actor *actor);
 struct bsal_worker *bsal_actor_get_last_worker(struct bsal_actor *actor);
+
+int bsal_actor_enqueue_mailbox_message(struct bsal_actor *actor, struct bsal_message *message);
+int bsal_actor_dequeue_mailbox_message(struct bsal_actor *actor, struct bsal_message *message);
+void bsal_actor_work(struct bsal_actor *actor);
 
 #endif

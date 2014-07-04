@@ -18,16 +18,11 @@ struct bsal_worker;
 
 struct bsal_worker_pool {
 
-#ifdef BSAL_WORKER_POOL_HAS_SPECIAL_QUEUES
-    struct bsal_work_queue work_queue;
-    struct bsal_message_queue message_queue;
-#endif
-
     struct bsal_map actor_affinities;
-    struct bsal_map actor_inbound_messages;
     struct bsal_vector worker_actors;
 
-    struct bsal_ring_queue local_work_queue;
+    struct bsal_ring_queue scheduled_actor_queue_buffer;
+    struct bsal_ring_queue inbound_message_queue_buffer;
 
     int workers;
     struct bsal_vector worker_array;
@@ -70,15 +65,9 @@ void bsal_worker_pool_run(struct bsal_worker_pool *pool);
 void bsal_worker_pool_start(struct bsal_worker_pool *pool);
 void bsal_worker_pool_stop(struct bsal_worker_pool *pool);
 
-int bsal_worker_pool_pull(struct bsal_worker_pool *pool, struct bsal_message *message);
-
 struct bsal_worker *bsal_worker_pool_select_worker_for_run(struct bsal_worker_pool *pool);
-struct bsal_worker *bsal_worker_pool_select_worker_for_work(
-                struct bsal_worker_pool *node, struct bsal_work *work);
 struct bsal_worker *bsal_worker_pool_select_worker_for_message(struct bsal_worker_pool *pool);
 int bsal_worker_pool_next_worker(struct bsal_worker_pool *node, int thread);
-
-void bsal_worker_pool_schedule_work(struct bsal_worker_pool *pool, struct bsal_work *work);
 
 int bsal_worker_pool_worker_count(struct bsal_worker_pool *pool);
 
@@ -89,10 +78,8 @@ int bsal_worker_pool_has_messages(struct bsal_worker_pool *pool);
 struct bsal_worker *bsal_worker_pool_get_worker(
                 struct bsal_worker_pool *self, int index);
 
-struct bsal_worker *bsal_worker_pool_select_worker_round_robin(
-                struct bsal_worker_pool *pool, struct bsal_work *work);
 int bsal_worker_pool_select_worker_least_busy(
-                struct bsal_worker_pool *pool, struct bsal_work *work, int *worker_score);
+                struct bsal_worker_pool *pool, struct bsal_message *message, int *worker_score);
 
 void bsal_worker_pool_print_load(struct bsal_worker_pool *self, int type);
 
@@ -107,5 +94,10 @@ void bsal_worker_pool_set_cached_value(struct bsal_worker_pool *self, int index,
 int bsal_worker_pool_get_cached_value(struct bsal_worker_pool *self, int index);
 
 void bsal_worker_pool_balance(struct bsal_worker_pool *pool);
+
+int bsal_worker_pool_enqueue_message(struct bsal_worker_pool *pool, struct bsal_message *message);
+int bsal_worker_pool_dequeue_message(struct bsal_worker_pool *pool, struct bsal_message *message);
+
+void bsal_worker_pool_give_message_to_actor(struct bsal_worker_pool *pool, struct bsal_message *message);
 
 #endif

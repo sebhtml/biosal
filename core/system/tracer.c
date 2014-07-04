@@ -51,5 +51,8 @@ void bsal_tracer_print_stack_backtrace()
      */
     bsal_memory_free(function_names);
 
+#else
+    printf("TRACE IS NOT AVAILABLE.\n");
 #endif
+
 }

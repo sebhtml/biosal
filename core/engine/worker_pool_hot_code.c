@@ -103,13 +103,13 @@ int bsal_worker_pool_pull_classic(struct bsal_worker_pool *pool, struct bsal_mes
     int answer;
 
     worker = bsal_worker_pool_select_worker_for_message(pool);
-    answer = bsal_worker_pull_message(worker, message);
+    answer = bsal_worker_dequeue_message(worker, message);
 
     return answer;
 }
 #endif
 
-int bsal_worker_pool_pull(struct bsal_worker_pool *pool, struct bsal_message *message)
+int bsal_worker_pool_dequeue_message(struct bsal_worker_pool *pool, struct bsal_message *message)
 {
     int answer;
 

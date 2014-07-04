@@ -3,7 +3,6 @@
 #define BSAL_NODE_H
 
 #include "actor.h"
-#include "work.h"
 #include "transport.h"
 #include "worker_pool.h"
 

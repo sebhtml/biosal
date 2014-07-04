@@ -47,6 +47,7 @@ void bsal_actor_init(struct bsal_actor *actor, void *state,
                 struct bsal_script *script, int name, struct bsal_node *node)
 {
     bsal_actor_init_fn_t init;
+    int capacity;
 
     /* initialize the dispatcher before calling
      * the concrete initializer
@@ -95,6 +96,9 @@ void bsal_actor_init(struct bsal_actor *actor, void *state,
     bsal_map_init(&actor->received_messages, sizeof(int), sizeof(int));
     bsal_map_init(&actor->sent_messages, sizeof(int), sizeof(int));
 
+    capacity = 256;
+    bsal_fast_ring_init(&actor->mailbox, capacity, sizeof(struct bsal_message));
+
     /* call the concrete initializer
      * this must be the last call.
      */
@@ -134,6 +138,14 @@ void bsal_actor_destroy(struct bsal_actor *actor)
 
     bsal_queue_destroy(&actor->enqueued_messages);
 
+    while (bsal_actor_dequeue_mailbox_message(actor, &message)) {
+        buffer = bsal_message_buffer(&message);
+
+        if (buffer != NULL) {
+            bsal_memory_free(buffer);
+        }
+    }
+
     actor->name = -1;
     actor->dead = 1;
 
@@ -151,6 +163,8 @@ void bsal_actor_destroy(struct bsal_actor *actor)
     /* when exiting the destructor, the actor is unlocked
      * and destroyed too
      */
+
+    bsal_fast_ring_destroy(&actor->mailbox);
 }
 
 int bsal_actor_name(struct bsal_actor *actor)
@@ -1706,4 +1720,27 @@ struct bsal_map *bsal_actor_get_sent_messages(struct bsal_actor *self)
     return &self->sent_messages;
 }
 
+int bsal_actor_enqueue_mailbox_message(struct bsal_actor *actor, struct bsal_message *message)
+{
+    return bsal_fast_ring_push_from_producer(&actor->mailbox, message);
+}
 
+int bsal_actor_dequeue_mailbox_message(struct bsal_actor *actor, struct bsal_message *message)
+{
+    return bsal_fast_ring_pop_from_consumer(&actor->mailbox, message);
+}
+
+void bsal_actor_work(struct bsal_actor *actor)
+{
+    struct bsal_message message;
+    void *buffer;
+
+    if (!bsal_actor_dequeue_mailbox_message(actor, &message)) {
+        return;
+    }
+
+    buffer = bsal_message_buffer(&message);
+    bsal_actor_receive(actor, &message);
+
+    bsal_memory_free(buffer);
+}

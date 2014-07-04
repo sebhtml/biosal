@@ -969,9 +969,7 @@ void bsal_node_dispatch_message(struct bsal_node *node, struct bsal_message *mes
 
 void bsal_node_create_work(struct bsal_node *node, struct bsal_message *message)
 {
-    struct bsal_message *new_message;
     struct bsal_actor *actor;
-    struct bsal_work work;
     int name;
     int dead;
 
@@ -1016,14 +1014,10 @@ void bsal_node_create_work(struct bsal_node *node, struct bsal_message *message)
         return;
     }
 
-    /* we need to do a copy of the message */
-    /* TODO replace with slab allocator */
-    new_message = (struct bsal_message *)bsal_memory_allocate(sizeof(struct bsal_message));
-    memcpy(new_message, message, sizeof(struct bsal_message));
-
-    bsal_work_init(&work, actor, new_message);
-
-    bsal_worker_pool_schedule_work(&node->worker_pool, &work);
+#if 0
+    printf("DEBUG node enqueue message\n");
+#endif
+    bsal_worker_pool_enqueue_message(&node->worker_pool, message);
 }
 
 int bsal_node_actor_index(struct bsal_node *node, int name)
