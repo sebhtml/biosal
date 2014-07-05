@@ -13,6 +13,6 @@ void bsal_dynamic_hash_table_iterator_init(struct bsal_dynamic_hash_table_iterat
 void bsal_dynamic_hash_table_iterator_destroy(struct bsal_dynamic_hash_table_iterator *self);
 
 int bsal_dynamic_hash_table_iterator_has_next(struct bsal_dynamic_hash_table_iterator *self);
-void bsal_dynamic_hash_table_iterator_next(struct bsal_dynamic_hash_table_iterator *self, void **key, void **value);
+int bsal_dynamic_hash_table_iterator_next(struct bsal_dynamic_hash_table_iterator *self, void **key, void **value);
 
 #endif

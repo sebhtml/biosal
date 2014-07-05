@@ -92,6 +92,8 @@ void bsal_worker_run(struct bsal_worker *worker)
     }
 #endif
 
+    bsal_worker_lock(worker);
+
     /* check for messages in inbound FIFO */
     if (bsal_worker_dequeue_actor(worker, &actor)) {
 
@@ -110,8 +112,11 @@ void bsal_worker_run(struct bsal_worker *worker)
         start_time = bsal_timer_get_nanoseconds();
 #endif
 
+        worker->busy = 1;
         /* dispatch message to a worker */
         bsal_worker_work(worker, actor);
+
+        worker->busy = 0;
 
 #ifdef BSAL_NODE_ENABLE_LOAD_REPORTING
         end_time = bsal_timer_get_nanoseconds();
@@ -121,6 +126,8 @@ void bsal_worker_run(struct bsal_worker *worker)
         worker->loop_used_nanoseconds += elapsed_nanoseconds;
 #endif
     }
+
+    bsal_worker_unlock(worker);
 
     /* queue buffered message
      */
@@ -143,6 +150,12 @@ void bsal_worker_work(struct bsal_worker *worker, struct bsal_actor *actor)
     int destination;
 #endif
 
+    actor_name = bsal_actor_name(actor);
+
+#ifdef BSAL_WORKER_DEBUG_SCHEDULER
+    printf("WORK actor %d\n", actor_name);
+#endif
+
     /* the actor died while the work was queued.
      */
     if (bsal_actor_dead(actor)) {
@@ -156,8 +169,6 @@ void bsal_worker_work(struct bsal_worker *worker, struct bsal_actor *actor)
      * on the same actor at the same time
      */
     if (bsal_actor_trylock(actor) != BSAL_LOCK_SUCCESS) {
-
-        actor_name = bsal_actor_name(actor);
 
         printf("Warning: CONTENTION worker %d could not lock actor %d, returning the message...\n",
                         bsal_worker_name(worker),
@@ -180,6 +191,7 @@ void bsal_worker_work(struct bsal_worker *worker, struct bsal_actor *actor)
     /* call the actor receive code
      */
     bsal_actor_set_worker(actor, worker);
+
     bsal_actor_work(actor);
 
     bsal_actor_set_worker(actor, NULL);
@@ -191,6 +203,9 @@ void bsal_worker_work(struct bsal_worker *worker, struct bsal_actor *actor)
     dead = bsal_actor_dead(actor);
 
     if (dead) {
+
+        bsal_set_delete(&worker->actors, &actor_name);
+
         bsal_node_notify_death(worker->node, actor);
     }
 

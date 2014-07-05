@@ -1367,4 +1367,19 @@ void bsal_node_toggle_debug_mode(struct bsal_node *self)
     bsal_worker_pool_toggle_debug_mode(&self->worker_pool);
 }
 
+void bsal_node_reset_actor_counters(struct bsal_node *node)
+{
+    struct bsal_dynamic_hash_table_iterator iterator;
+    int *name;
+    struct bsal_actor *actor;
 
+    bsal_dynamic_hash_table_iterator_init(&iterator, &node->actor_names);
+
+    while (bsal_dynamic_hash_table_iterator_next(&iterator, (void **)&name, NULL)) {
+
+        actor = bsal_node_get_actor_from_name(node, *name);
+
+        bsal_actor_reset_counters(actor);
+    }
+    bsal_dynamic_hash_table_iterator_destroy(&iterator);
+}

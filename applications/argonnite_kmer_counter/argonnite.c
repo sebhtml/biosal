@@ -25,6 +25,7 @@
 #define ARGONNITE_DEFAULT_KMER_LENGTH 41
 
 #define ARGONNITE_WORKERS_PER_AGGREGATOR 4
+#define ARGONNITE_KMER_STORES_PER_WORKER 1
 
 #define ARGONNITE_STATE_NONE 0
 #define ARGONNITE_STATE_PREPARE_SEQUENCE_STORES 1
@@ -541,7 +542,7 @@ void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message)
                             concrete_actor->manager_for_kmer_stores)) {
 
         bsal_actor_helper_send_reply_int(actor, BSAL_MANAGER_SET_ACTORS_PER_WORKER,
-                        1);
+                        ARGONNITE_KMER_STORES_PER_WORKER);
 
     } else if (tag == BSAL_MANAGER_SET_ACTORS_PER_WORKER_REPLY
                     && source == bsal_actor_get_acquaintance(actor,

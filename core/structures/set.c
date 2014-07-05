@@ -16,9 +16,17 @@ void bsal_set_destroy(struct bsal_set *self)
     bsal_map_destroy(&self->map);
 }
 
-void bsal_set_add(struct bsal_set *self, void *key)
+int bsal_set_add(struct bsal_set *self, void *key)
 {
+    /* It is already in the set
+     */
+    if (bsal_set_find(self, key)) {
+        return 0;
+    }
+
     bsal_map_add(&self->map, key);
+
+    return 1;
 }
 
 int bsal_set_find(struct bsal_set *self, void *key)
@@ -41,9 +49,15 @@ int bsal_set_find(struct bsal_set *self, void *key)
     return 0;
 }
 
-void bsal_set_delete(struct bsal_set *self, void *key)
+int bsal_set_delete(struct bsal_set *self, void *key)
 {
+    if (!bsal_set_find(self, key)) {
+        return 0;
+    }
+
     bsal_map_delete(&self->map, key);
+
+    return 1;
 }
 
 uint64_t bsal_set_size(struct bsal_set *self)

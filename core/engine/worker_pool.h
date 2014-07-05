@@ -11,6 +11,7 @@
 
 struct bsal_node;
 struct bsal_worker;
+struct bsal_migration;
 
 /*
 #define BSAL_WORKER_POOL_HAS_SPECIAL_QUEUES
@@ -99,5 +100,6 @@ int bsal_worker_pool_enqueue_message(struct bsal_worker_pool *pool, struct bsal_
 int bsal_worker_pool_dequeue_message(struct bsal_worker_pool *pool, struct bsal_message *message);
 
 void bsal_worker_pool_give_message_to_actor(struct bsal_worker_pool *pool, struct bsal_message *message);
+void bsal_worker_pool_migrate(struct bsal_worker_pool *pool, struct bsal_migration *migration);
 
 #endif

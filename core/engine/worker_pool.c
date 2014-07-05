@@ -4,6 +4,7 @@
 #include "actor.h"
 #include "worker.h"
 #include "node.h"
+#include "migration.h"
 
 #include <core/helpers/vector_helper.h>
 #include <core/helpers/statistics.h>
@@ -33,8 +34,19 @@
 #define BSAL_WORKER_POOL_WORK_SCHEDULING_WINDOW 1024
 
 /*
-#define BSAL_WORKER_POOL_BALANCE
 */
+#define BSAL_WORKER_POOL_BALANCE
+
+/*
+ * Definitions for scheduling classes
+ * See bsal_worker_pool_balance for classification requirements.
+ */
+
+#define BSAL_CLASS_STALLED_STRING "BSAL_CLASS_STALLED"
+#define BSAL_CLASS_OPERATING_AT_FULL_CAPACITY_STRING "BSAL_CLASS_OPERATING_AT_FULL_CAPACITY"
+#define BSAL_CLASS_NORMAL_STRING "BSAL_CLASS_NORMAL"
+#define BSAL_CLASS_HUB_STRING "BSAL_CLASS_HUB"
+#define BSAL_CLASS_BURDENED_STRING "BSAL_CLASS_BURDENED"
 
 void bsal_worker_pool_init(struct bsal_worker_pool *pool, int workers,
                 struct bsal_node *node)
@@ -92,7 +104,7 @@ void bsal_worker_pool_init(struct bsal_worker_pool *pool, int workers,
 
     pool->received_works = 0;
 
-    pool->balance_period = pool->workers * 1024;
+    pool->balance_period = pool->workers * 4096;
 }
 
 void bsal_worker_pool_destroy(struct bsal_worker_pool *pool)
@@ -240,7 +252,7 @@ int bsal_worker_pool_select_worker_least_busy(
          */
         worker = bsal_worker_pool_get_worker(self, self->worker_for_work);
 
-        score = bsal_worker_get_work_scheduling_score(worker);
+        score = bsal_worker_get_queued_messages(worker);
 
 #ifdef BSAL_WORKER_POOL_DEBUG_ISSUE_334
         if (score >= BSAL_WORKER_WARNING_THRESHOLD
@@ -438,9 +450,6 @@ void bsal_worker_pool_print_load(struct bsal_worker_pool *self, int type)
         worker = bsal_worker_pool_get_worker(self, i);
         epoch_load = bsal_worker_get_epoch_load(worker);
         loop_load = bsal_worker_get_loop_load(worker);
-        /*
-        scheduling_score = bsal_worker_get_work_scheduling_score(worker);
-        */
 
         selected_load = epoch_load;
 
@@ -473,79 +482,305 @@ void bsal_worker_pool_toggle_debug_mode(struct bsal_worker_pool *self)
 
 void bsal_worker_pool_balance(struct bsal_worker_pool *pool)
 {
-    double mean;
-    double standard_deviation;
-    double coefficient_of_variation;
+    /*
+     * The 95th percentile is useful:
+     * \see http://en.wikipedia.org/wiki/Burstable_billing
+     * \see http://www.init7.net/en/backbone/95-percent-rule
+     */
+    int load_percentile_5;
+    int load_percentile_30;
+    int load_percentile_95;
 
     int i;
     struct bsal_vector scheduling_scores;
+    struct bsal_vector loads;
+    struct bsal_vector loads_unsorted;
+    struct bsal_vector scheduling_scores_unsorted;
     struct bsal_vector burdened_workers;
     struct bsal_vector stalled_workers;
     int value;
     struct bsal_worker *worker;
-    struct bsal_set *set;
+    /*struct bsal_set *set;*/
     struct bsal_pair pair;
-    int multiplier;
-    int minimum;
+    struct bsal_vector_iterator vector_iterator;
+    int old_worker;
+    int actor_name;
+    int messages;
+    int new_score;
+    int maximum;
+    int with_maximum;
+    struct bsal_set *set;
+    struct bsal_set_iterator set_iterator;
+    int stalled_index;
+    int stalled_count;
+    int new_worker_index;
+    int new_worker_old_score;
+    int new_worker_new_score;
+    struct bsal_worker *new_worker;
+    struct bsal_vector migrations;
+    struct bsal_migration migration;
+    struct bsal_migration *migration_to_do;
+    struct bsal_actor *actor;
+    int candidates;
     float load;
+    int load_value;
+    int remaining_load;
+    int projected_load;
+    struct bsal_vector actors_to_migrate;
 
+    bsal_vector_init(&migrations, sizeof(struct bsal_migration));
     printf("BALANCING\n");
 
     bsal_vector_init(&burdened_workers, sizeof(struct bsal_pair));
     bsal_vector_init(&stalled_workers, sizeof(struct bsal_pair));
     bsal_vector_init(&scheduling_scores, sizeof(int));
+    bsal_vector_init(&scheduling_scores_unsorted, sizeof(int));
+    bsal_vector_init(&loads, sizeof(int));
+    bsal_vector_init(&loads_unsorted, sizeof(int));
+    bsal_vector_init(&actors_to_migrate, sizeof(struct bsal_pair));
 
     for (i = 0; i < pool->workers; i++) {
         worker = bsal_worker_pool_get_worker(pool, i);
-        value = bsal_worker_get_work_scheduling_score(worker);
-
-        bsal_vector_push_back(&scheduling_scores, &value);
-    }
-
-    multiplier = 1;
-    minimum = 16;
-    mean = bsal_statistics_get_mean_int(&scheduling_scores);
-    standard_deviation = bsal_statistics_get_standard_deviation_int(&scheduling_scores);
-    coefficient_of_variation = 0;
-    if (standard_deviation != 0) {
-        coefficient_of_variation = standard_deviation / mean;
-    }
-
-    printf("Mean: %f Standard deviation: %f Coefficient %f\n", mean, standard_deviation,
-                    coefficient_of_variation);
-
-    for (i = 0; i < pool->workers; i++) {
-        value = bsal_vector_helper_at_as_int(&scheduling_scores, i);
-        worker = bsal_worker_pool_get_worker(pool, i);
+        /*map = bsal_worker_get_actors(worker);*/
         load = bsal_worker_get_epoch_load(worker);
 
-        set = (struct bsal_set *)bsal_vector_at(&pool->worker_actors, i);
+        load_value = (100 * load);
 
-        printf(" worker %i messages... %d (%d actors)", i, value,
-                        (int)bsal_set_size(set));
+        bsal_worker_lock(worker);
 
-        if (value == 0 || value < mean - multiplier * standard_deviation) {
-            printf(" STALLED !\n");
+        value = bsal_worker_get_queued_messages(worker);
 
-            bsal_pair_init(&pair, value, i);
-            bsal_vector_push_back(&stalled_workers, &pair);
+        bsal_worker_unlock(worker);
 
-        } else if (value >= minimum && load >= 0.50
-                       && value > mean + multiplier * standard_deviation) {
-            printf(" BURDENED...\n");
-
-            bsal_pair_init(&pair, value, i);
-            bsal_vector_push_back(&burdened_workers, &pair);
-        } else {
-            printf("\n");
-        }
-        bsal_worker_print_actors(worker);
+        bsal_vector_push_back(&scheduling_scores, &value);
+        bsal_vector_push_back(&scheduling_scores_unsorted, &value);
+        bsal_vector_push_back(&loads, &load_value);
+        bsal_vector_push_back(&loads_unsorted, &load_value);
     }
 
+    bsal_vector_helper_sort_int(&scheduling_scores);
+    bsal_vector_helper_sort_int(&loads);
+
+    load_percentile_5 = bsal_statistics_get_percentile_int(&loads, 5);
+    load_percentile_30 = bsal_statistics_get_percentile_int(&loads, 30);
+    load_percentile_95 = bsal_statistics_get_percentile_int(&loads, 95);
+
+    printf("Percentiles for total numbers of queued messages: ");
+    bsal_statistics_get_print_percentiles_int(&scheduling_scores);
+
+    printf("Percentiles for epoch loads: ");
+    bsal_statistics_get_print_percentiles_int(&loads);
+
+    for (i = 0; i < pool->workers; i++) {
+        value = bsal_vector_helper_at_as_int(&scheduling_scores_unsorted, i);
+        worker = bsal_worker_pool_get_worker(pool, i);
+        load_value = bsal_vector_helper_at_as_int(&loads_unsorted, i);
+
+        set = bsal_worker_get_actors(worker);
+
+        if (load_value <= load_percentile_30) {
+
+            printf("scheduling_class:%s ",
+                            BSAL_CLASS_STALLED_STRING);
+            bsal_pair_init(&pair, load_value, i);
+            bsal_vector_push_back(&stalled_workers, &pair);
+
+        } else if (load_value >= load_percentile_95) {
+
+            if (value > 0) {
+
+                printf("scheduling_class:%s ",
+                                BSAL_CLASS_BURDENED_STRING);
+
+                bsal_pair_init(&pair, value, i);
+                bsal_vector_push_back(&burdened_workers, &pair);
+
+            } else if (bsal_set_size(set) == 1) {
+                printf("scheduling_class:%s ",
+                                BSAL_CLASS_HUB_STRING);
+
+            } else {
+                printf("scheduling_class:%s ",
+                                BSAL_CLASS_OPERATING_AT_FULL_CAPACITY_STRING);
+            }
+        } else {
+            printf("scheduling_class:%s ",
+                            BSAL_CLASS_NORMAL_STRING);
+        }
+
+        bsal_worker_lock(worker);
+        bsal_worker_print_actors(worker);
+        bsal_worker_unlock(worker);
+
+    }
+
+    bsal_vector_helper_sort_int_reverse(&burdened_workers);
+    bsal_vector_helper_sort_int(&stalled_workers);
+
+    stalled_count = bsal_vector_size(&stalled_workers);
+    printf("MIGRATIONS:\n");
+
+    stalled_index = 0;
+    bsal_vector_iterator_init(&vector_iterator, &burdened_workers);
+
+    while (stalled_count > 0
+                    && bsal_vector_iterator_get_next_value(&vector_iterator, &pair)) {
+
+        old_worker = bsal_pair_get_second(&pair);
+
+        worker = bsal_worker_pool_get_worker(pool, old_worker);
+        set = bsal_worker_get_actors(worker);
+
+        bsal_worker_lock(worker);
+        value = bsal_worker_get_queued_messages(worker);
+
+        /*
+        bsal_worker_print_actors(worker);
+        printf("\n");
+        */
+        bsal_set_iterator_init(&set_iterator, set);
+
+        maximum = -1;
+        with_maximum = 0;
+
+        while (bsal_set_iterator_get_next_value(&set_iterator, &actor_name)) {
+
+            actor = bsal_node_get_actor_from_name(worker->node, actor_name);
+            messages = bsal_actor_get_mailbox_size(actor);
+
+            if (maximum == -1 || messages > maximum) {
+                maximum = messages;
+                with_maximum = 1;
+            } else if (messages == maximum) {
+                with_maximum++;
+            }
+        }
+        bsal_set_iterator_destroy(&set_iterator);
+
+        bsal_set_iterator_init(&set_iterator, set);
+
+        --with_maximum;
+
+        candidates = 0;
+        new_score = value;
+        load = bsal_worker_get_epoch_load(worker);
+
+        load_value = load * 100;
+        remaining_load = load_value;
+
+#if 0
+        printf("maximum %d with_maximum %d\n", maximum, with_maximum);
+#endif
+
+        while (bsal_set_iterator_get_next_value(&set_iterator, &actor_name)) {
+
+            actor = bsal_node_get_actor_from_name(worker->node, actor_name);
+            messages = bsal_actor_get_mailbox_size(actor);
+
+            /* Simulate the remaining load
+             */
+            projected_load = remaining_load;
+            projected_load -= ((0.0 + messages) / value) * load_value;
+
+            /* An actor without any queued messages should not be migrated
+             */
+            if (messages > 0
+                            && ((with_maximum > 0 && messages == maximum) || messages < maximum)
+                            /* && (((new_score - messages) >= percentile_5) ||*/
+                    && projected_load >= load_percentile_5 ) {
+
+                new_score -= messages;
+                remaining_load = projected_load;
+
+                candidates++;
+
+                if (messages == maximum) {
+                    --with_maximum;
+                }
+
+
+                bsal_pair_init(&pair, messages, actor_name);
+                bsal_vector_push_back(&actors_to_migrate, &pair);
+
+                printf("early CANDIDATE for migration: actor %d, worker %d\n",
+                                actor_name, old_worker);
+            }
+        }
+        bsal_set_iterator_destroy(&set_iterator);
+
+        bsal_worker_unlock(worker);
+    }
+
+    bsal_vector_iterator_destroy(&vector_iterator);
+
+    /* Sort the candidates
+     */
+
+    bsal_vector_helper_sort_int(&actors_to_migrate);
+
+    printf("Percentiles for queued messages: ");
+    bsal_statistics_get_print_percentiles_int(&actors_to_migrate);
+
+    /* Sort them in reverse order.
+     */
+    bsal_vector_helper_sort_int_reverse(&actors_to_migrate);
+
+    bsal_vector_iterator_init(&vector_iterator, &actors_to_migrate);
+
+    while (bsal_vector_iterator_get_next_value(&vector_iterator, &pair)) {
+
+         actor_name = bsal_pair_get_second(&pair);
+         bsal_map_get_value(&pool->actor_affinities, &actor_name, &old_worker);
+
+         bsal_vector_get_value(&stalled_workers, stalled_index, &pair);
+         ++stalled_index;
+
+         if (stalled_index == stalled_count) {
+             stalled_index = 0;
+         }
+
+         new_worker_index = bsal_pair_get_second(&pair);
+         new_worker = bsal_worker_pool_get_worker(pool, new_worker_index);
+
+         bsal_worker_lock(new_worker);
+         new_worker_old_score = bsal_worker_get_queued_messages(new_worker);
+         bsal_worker_unlock(new_worker);
+
+         new_worker_new_score = new_worker_old_score + messages;
+
+         printf(" CANDIDATE: actor %d old worker %d (%d - %d = %d) new worker %d (%d + %d = %d)\n",
+                         actor_name,
+                         old_worker, value, messages, new_score,
+                         new_worker_index, new_worker_old_score, messages, new_worker_new_score);
+
+         bsal_migration_init(&migration, actor_name, old_worker, new_worker_index);
+         bsal_vector_push_back(&migrations, &migration);
+         bsal_migration_destroy(&migration);
+
+    }
+
+    bsal_vector_iterator_destroy(&vector_iterator);
 
     bsal_vector_destroy(&stalled_workers);
     bsal_vector_destroy(&scheduling_scores);
+    bsal_vector_destroy(&scheduling_scores_unsorted);
     bsal_vector_destroy(&burdened_workers);
+    bsal_vector_destroy(&loads);
+    bsal_vector_destroy(&loads_unsorted);
+    bsal_vector_destroy(&actors_to_migrate);
+
+    /* Actually do the migrations
+     */
+    bsal_vector_iterator_init(&vector_iterator, &migrations);
+
+    while (bsal_vector_iterator_next(&vector_iterator, (void **)&migration_to_do)) {
+
+        bsal_worker_pool_migrate(pool, migration_to_do);
+    }
+
+    bsal_vector_iterator_destroy(&vector_iterator);
+
+    bsal_vector_destroy(&migrations);
 }
 
 void bsal_worker_pool_give_message_to_actor(struct bsal_worker_pool *pool, struct bsal_message *message)
@@ -617,6 +852,51 @@ void bsal_worker_pool_give_message_to_actor(struct bsal_worker_pool *pool, struc
             }
         }
     }
+}
+
+void bsal_worker_pool_migrate(struct bsal_worker_pool *pool, struct bsal_migration *migration)
+{
+    struct bsal_worker *old_worker_object;
+    struct bsal_worker *new_worker_object;
+    int old_worker;
+    int new_worker;
+    int actor_name;
+    struct bsal_actor *actor;
+
+    old_worker = bsal_migration_get_old_worker(migration);
+    new_worker = bsal_migration_get_new_worker(migration);
+    actor_name = bsal_migration_get_actor(migration);
+    actor = bsal_node_get_actor_from_name(pool->node, actor_name);
+
+    printf("MIGRATION node %d migrated actor %d from worker %d to worker %d\n",
+                    bsal_node_name(pool->node), actor_name,
+                    old_worker, new_worker);
+
+    bsal_actor_lock(actor);
+
+    old_worker_object = bsal_worker_pool_get_worker(pool, old_worker);
+    new_worker_object = bsal_worker_pool_get_worker(pool, new_worker);
+
+    /* evict the actor from the old worker
+     */
+    bsal_worker_lock(old_worker_object);
+    bsal_worker_evict_actor(old_worker_object, actor_name);
+    bsal_worker_unlock(old_worker_object);
+
+    /* Redirect messages for this actor to the
+     * new worker
+     */
+    bsal_map_update_value(&pool->actor_affinities, &actor_name, &new_worker);
+
+#ifdef BSAL_WORKER_POOL_DEBUG_MIGRATION
+    printf("ROUTE actor %d ->  worker %d\n", actor_name, new_worker);
+#endif
+
+    bsal_worker_lock(new_worker_object);
+    bsal_worker_enqueue_actor_special(new_worker_object, &actor);
+    bsal_worker_unlock(new_worker_object);
+
+    bsal_actor_unlock(actor);
 }
 
 

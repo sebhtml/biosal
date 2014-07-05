@@ -13,6 +13,7 @@ LIBRARY_HOT_CODE += core/engine/node.o
 LIBRARY_HOT_CODE += core/engine/actor.o
 LIBRARY_HOT_CODE += core/engine/script.o
 LIBRARY_HOT_CODE += core/engine/worker.o
+LIBRARY_HOT_CODE += core/engine/migration.o
 LIBRARY_HOT_CODE += core/engine/worker_pool.o
 LIBRARY_HOT_CODE += core/engine/active_buffer.o
 LIBRARY_HOT_CODE += core/engine/dispatcher.o

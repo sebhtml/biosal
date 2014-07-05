@@ -331,6 +331,11 @@ struct bsal_worker *bsal_actor_get_last_worker(struct bsal_actor *actor);
 
 int bsal_actor_enqueue_mailbox_message(struct bsal_actor *actor, struct bsal_message *message);
 int bsal_actor_dequeue_mailbox_message(struct bsal_actor *actor, struct bsal_message *message);
+int bsal_actor_get_mailbox_size(struct bsal_actor *actor);
+
+int bsal_actor_get_sum_of_received_messages(struct bsal_actor *actor);
 void bsal_actor_work(struct bsal_actor *actor);
+char *bsal_actor_get_description(struct bsal_actor *actor);
+void bsal_actor_reset_counters(struct bsal_actor *actor);
 
 #endif

@@ -4,6 +4,7 @@
 #include "node.h"
 
 #include <core/structures/vector_iterator.h>
+#include <core/structures/map_iterator.h>
 
 #include <core/helpers/actor_helper.h>
 #include <core/helpers/vector_helper.h>
@@ -804,6 +805,7 @@ void bsal_actor_receive(struct bsal_actor *actor, struct bsal_message *message)
 
     if (bucket == NULL) {
         bucket = (int *)bsal_map_add(&actor->received_messages, &source);
+        (*bucket) = 0;
     }
 
     (*bucket)++;
@@ -1743,4 +1745,66 @@ void bsal_actor_work(struct bsal_actor *actor)
     bsal_actor_receive(actor, &message);
 
     bsal_memory_free(buffer);
+}
+
+int bsal_actor_get_mailbox_size(struct bsal_actor *actor)
+{
+    if (actor->dead) {
+        return 0;
+    }
+    return bsal_fast_ring_size_from_producer(&actor->mailbox);
+}
+
+int bsal_actor_get_sum_of_received_messages(struct bsal_actor *actor)
+{
+    struct bsal_map_iterator map_iterator;
+    struct bsal_map *map;
+    int value;
+    int messages;
+
+    if (actor->dead) {
+        return 0;
+    }
+    map = bsal_actor_get_received_messages(actor);
+
+    value = 0;
+
+    bsal_map_iterator_init(&map_iterator, map);
+
+    while (bsal_map_iterator_get_next_key_and_value(&map_iterator, NULL, &messages)) {
+        value += messages;
+    }
+
+    bsal_map_iterator_destroy(&map_iterator);
+
+    return value;
+}
+
+char *bsal_actor_get_description(struct bsal_actor *actor)
+{
+    return bsal_script_description(actor->script);
+}
+
+void bsal_actor_reset_counters(struct bsal_actor *actor)
+{
+#if 0
+    struct bsal_map_iterator map_iterator;
+    struct bsal_map *map;
+    int name;
+    int messages;
+
+    map = bsal_actor_get_received_messages(actor);
+
+    bsal_map_iterator_init(&map_iterator, map);
+
+    while (bsal_map_iterator_get_next_key_and_value(&map_iterator, &name, &messages)) {
+        messages = 0;
+        bsal_map_update_value(map, &name, &messages);
+    }
+
+    bsal_map_iterator_destroy(&map_iterator);
+#endif
+
+    bsal_map_destroy(&actor->received_messages);
+    bsal_map_init(&actor->received_messages, sizeof(int), sizeof(int));
 }

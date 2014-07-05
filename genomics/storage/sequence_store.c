@@ -23,7 +23,8 @@ struct bsal_script bsal_sequence_store_script = {
     .init = bsal_sequence_store_init,
     .destroy = bsal_sequence_store_destroy,
     .receive = bsal_sequence_store_receive,
-    .size = sizeof(struct bsal_sequence_store)
+    .size = sizeof(struct bsal_sequence_store),
+    .description = "sequence_store"
 };
 
 void bsal_sequence_store_init(struct bsal_actor *actor)

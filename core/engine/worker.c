@@ -8,6 +8,7 @@
 #include <core/structures/vector.h>
 #include <core/structures/vector_iterator.h>
 #include <core/structures/map_iterator.h>
+#include <core/structures/set_iterator.h>
 
 #include <core/helpers/vector_helper.h>
 #include <core/system/memory.h>
@@ -39,8 +40,9 @@ void bsal_worker_init(struct bsal_worker *worker, int name, struct bsal_node *no
      * 2. Use volatile head and tail.
      */
     bsal_fast_ring_init(&worker->scheduled_actor_queue, capacity, sizeof(struct bsal_actor *));
-    bsal_ring_queue_init(&worker->scheduled_actor_queue_real, sizeof(struct bsal_message));
-    bsal_map_init(&worker->actors, sizeof(int), sizeof(int));
+    bsal_ring_queue_init(&worker->scheduled_actor_queue_real, sizeof(struct bsal_actor *));
+    bsal_set_init(&worker->actors, sizeof(int));
+    bsal_set_init(&worker->queued_actors, sizeof(int));
 
     bsal_fast_ring_init(&worker->outbound_message_queue, capacity, sizeof(struct bsal_message));
 
@@ -69,21 +71,23 @@ void bsal_worker_init(struct bsal_worker *worker, int name, struct bsal_node *no
     bsal_memory_pool_init(&worker->ephemeral_memory, 2097152);
     bsal_memory_pool_disable_tracking(&worker->ephemeral_memory);
 
-#ifdef BSAL_WORKER_EVICTION
-    bsal_lock_init(&worker->eviction_lock);
-    bsal_set_init(&worker->actors_to_evict, sizeof(int));
-#endif
+    bsal_lock_init(&worker->lock);
+    bsal_set_init(&worker->evicted_actors, sizeof(int));
 }
 
 void bsal_worker_destroy(struct bsal_worker *worker)
 {
+
+    bsal_lock_destroy(&worker->lock);
 
     bsal_fast_ring_destroy(&worker->scheduled_actor_queue);
     bsal_ring_queue_destroy(&worker->scheduled_actor_queue_real);
     bsal_fast_ring_destroy(&worker->outbound_message_queue);
     bsal_ring_queue_destroy(&worker->outbound_message_queue_buffer);
 
-    bsal_map_destroy(&worker->actors);
+    bsal_set_destroy(&worker->actors);
+    bsal_set_destroy(&worker->queued_actors);
+    bsal_set_destroy(&worker->evicted_actors);
 
     worker->node = NULL;
 
@@ -92,10 +96,6 @@ void bsal_worker_destroy(struct bsal_worker *worker)
 
     bsal_memory_pool_destroy(&worker->ephemeral_memory);
 
-#ifdef BSAL_WORKER_EVICTION
-    bsal_lock_destroy(&worker->eviction_lock);
-    bsal_set_destroy(&worker->actors_to_evict);
-#endif
 }
 
 struct bsal_node *bsal_worker_node(struct bsal_worker *worker)
@@ -218,23 +218,29 @@ int bsal_worker_is_busy(struct bsal_worker *self)
     return self->busy;
 }
 
-#ifdef BSAL_WORKER_HAS_OWN_QUEUES
 
-int bsal_worker_get_work_scheduling_score(struct bsal_worker *self)
+int bsal_worker_get_scheduled_message_count(struct bsal_worker *self)
 {
-    int score;
+    int value;
+    struct bsal_set_iterator set_iterator;
+    int actor_name;
+    int messages;
+    struct bsal_actor *actor;
 
-    score = 0;
+    bsal_set_iterator_init(&set_iterator, &self->actors);
 
-    if (bsal_worker_is_busy(self)) {
-        score++;
+    value = 0;
+    while (bsal_set_iterator_get_next_value(&set_iterator, &actor_name)) {
+
+        actor = bsal_node_get_actor_from_name(self->node, actor_name);
+        messages = bsal_actor_get_mailbox_size(actor);
+        value += messages;
     }
 
-    score += bsal_fast_ring_size_from_consumer(&self->scheduled_actor_queue);
+    bsal_set_iterator_destroy(&set_iterator);
 
-    return score;
+    return value;
 }
-#endif
 
 float bsal_worker_get_epoch_load(struct bsal_worker *self)
 {
@@ -251,95 +257,12 @@ struct bsal_memory_pool *bsal_worker_get_ephemeral_memory(struct bsal_worker *wo
     return &worker->ephemeral_memory;
 }
 
-#ifdef BSAL_WORKER_EVICTION
-void bsal_worker_evict_actor(struct bsal_worker *worker, int actor_name)
-{
-    bsal_lock_lock(&worker->eviction_lock);
-
-    bsal_set_add(&worker->actors_to_evict, &actor_name);
-
-#if 0
-    printf("EVICTION will evict %d\n", actor_name);
-#endif
-
-    bsal_lock_unlock(&worker->eviction_lock);
-}
-
-void bsal_worker_evict_actors(struct bsal_worker *worker)
-{
-    struct bsal_message *message;
-    struct bsal_actor *actor;
-    struct bsal_work work;
-    int name;
-    int local_works;
-
-    bsal_lock_lock(&worker->eviction_lock);
-
-    local_works = bsal_ring_queue_size(&worker->local_work_queue);
-
-    printf("EVICTION worker %d evicts actors, %d actors to evict, %d local works\n",
-                    worker->name, (int)bsal_set_size(&worker->actors_to_evict),
-                    local_works);
-
-    /* evict the actor from the fast ring for works
-     */
-    while (bsal_fast_ring_pop_from_consumer(&worker->work_queue, &work)) {
-        actor = bsal_work_actor(&work);
-        name = bsal_actor_name(actor);
-
-        /* This message will be returned to the source.
-         */
-        if (bsal_set_find(&worker->actors_to_evict, &name)) {
-            message = bsal_work_message(&work);
-            bsal_worker_push_message(worker, message);
-
-            printf("EVICTION %d was evicted from worker %d FAST RING\n",
-                            name, bsal_worker_name(worker));
-        } else {
-
-            /* Otherwise, it is kept.
-             */
-            bsal_worker_enqueue_work(worker, &work);
-        }
-    }
-
-    /* evict the actor from the local work queue
-     */
-    while (local_works-- && bsal_worker_dequeue_work(worker, &work)) {
-
-        actor = bsal_work_actor(&work);
-        name = bsal_actor_name(actor);
-
-        /* This message will be returned to the source.
-         */
-        if (bsal_set_find(&worker->actors_to_evict, &name)) {
-            message = bsal_work_message(&work);
-            bsal_worker_push_message(worker, message);
-
-            printf("EVICTION %d was evicted from worker %d LOCAL WORK QUEUE\n",
-                            name, bsal_worker_name(worker));
-        } else {
-
-            /* Otherwise, it is kept.
-             */
-            bsal_worker_enqueue_work(worker, &work);
-        }
-    }
-
-    bsal_set_destroy(&worker->actors_to_evict);
-    bsal_set_init(&worker->actors_to_evict, sizeof(int));
-
-    bsal_lock_unlock(&worker->eviction_lock);
-}
-#endif
-
 /* This can only be called from the CONSUMER
  */
 int bsal_worker_dequeue_actor(struct bsal_worker *worker, struct bsal_actor **actor)
 {
     int value;
     int name;
-    int count;
     struct bsal_actor *other_actor;
     int other_name;
     int operations;
@@ -353,46 +276,33 @@ int bsal_worker_dequeue_actor(struct bsal_worker *worker, struct bsal_actor **ac
 
         other_name = bsal_actor_name(other_actor);
 
-        /* This is the first time this actor is
-         * provided
-         */
-        if (!bsal_map_get_value(&worker->actors, &other_name, &count)) {
-
-            bsal_ring_queue_enqueue(&worker->scheduled_actor_queue_real, &other_actor);
-
-            count = 1;
-            bsal_map_add_value(&worker->actors, &other_name, &count);
-
-#ifdef BSAL_WORKER_DEBUG_ACTOR_SCHEDULING_QUEUE
-            printf("ENQUEUE ACTOR %d MESSAGES %d (first)\n", other_name, count);
+#ifdef BSAL_WORKER_DEBUG_SCHEDULER
+        printf("ring.DEQUEUE %d\n", other_name);
 #endif
 
-        /* This actor was seen before, but it is not scheduled
-         * to run
-         */
-        } else if (count == 0) {
+        if (bsal_set_find(&worker->evicted_actors, &other_name)) {
 
-#ifdef BSAL_WORKER_DEBUG_ACTOR_SCHEDULING_QUEUE
-            printf("ENQUEUE ACTOR %d MESSAGES %d + 1 (adding to scheduling queue)\n", other_name, count);
+#ifdef BSAL_WORKER_DEBUG_SCHEDULER
+            printf("ALREADY EVICTED\n");
 #endif
+            continue;
+        }
 
-            bsal_ring_queue_enqueue(&worker->scheduled_actor_queue_real, &other_actor);
-            ++count;
-            bsal_map_update_value(&worker->actors, &other_name, &count);
-
-
-        /* Otherwise, this actor is already in the scheduling queue.
-         * Just update the scheduling value.
+        /* Add the actor to the list of actors.
+         * This does nothing if it is already in the list.
          */
+        bsal_set_add(&worker->actors, &other_name);
+
+        /* If the actor is not queued, queue it
+         */
+        if (bsal_set_add(&worker->queued_actors, &other_name)) {
+            bsal_ring_queue_enqueue(&worker->scheduled_actor_queue_real, &other_actor);
         } else {
 
-#ifdef BSAL_WORKER_DEBUG_ACTOR_SCHEDULING_QUEUE
-            printf("ENQUEUE ACTOR %d MESSAGES %d + 1 (already in scheduling queue)\n", other_name, count);
+#ifdef BSAL_WORKER_DEBUG_SCHEDULER
+            printf("SCHEDULER %d already scheduled to run, scheduled: %d\n", other_name,
+                            (int)bsal_set_size(&worker->queued_actors));
 #endif
-
-            ++count;
-            bsal_map_update_value(&worker->actors, &other_name, &count);
-
         }
     }
 
@@ -402,31 +312,30 @@ int bsal_worker_dequeue_actor(struct bsal_worker *worker, struct bsal_actor **ac
     value = bsal_ring_queue_dequeue(&worker->scheduled_actor_queue_real, actor);
 
     if (value) {
-
-        /*
-         * Decrement the number of messages
-         */
         name = bsal_actor_name(*actor);
-        bsal_map_get_value(&worker->actors, &name, &count);
 
-#ifdef BSAL_WORKER_DEBUG_ACTOR_SCHEDULING_QUEUE
-        printf("DEQUEUE ACTOR %d MESSAGES %d - 1\n", name, count);
+#ifdef BSAL_WORKER_DEBUG_SCHEDULER
+        printf("scheduler.DEQUEUE actor %d, removed from queued actors...\n", name);
 #endif
 
-        --count;
-        bsal_map_update_value(&worker->actors, &name, &count);
-
-        /* Enqueue it again if it has one message or more
+        /* Add the actor to the scheduling queue if it
+         * still has messages
          */
-        if (count > 0) {
-            bsal_ring_queue_enqueue(&worker->scheduled_actor_queue_real, actor);
-        }
-
-#if 0
-        if (count < 0) {
-            printf("Error: count is %d for actor %d (DEQUEUE)\n", count, name);
-        }
+        if (bsal_actor_get_mailbox_size(*actor) >= 2) {
+#ifdef BSAL_WORKER_DEBUG_SCHEDULER
+            printf("Scheduling actor %d again, messages: %d\n",
+                        name,
+                        bsal_actor_get_mailbox_size(*actor));
 #endif
+
+            bsal_ring_queue_enqueue(&worker->scheduled_actor_queue_real, actor);
+
+        } else {
+#ifdef BSAL_WORKER_DEBUG_SCHEDULER
+            printf("SCHEDULER %d has no message to schedule...\n", name);
+#endif
+            bsal_set_delete(&worker->queued_actors, &name);
+        }
     }
 
     return value;
@@ -462,20 +371,174 @@ int bsal_worker_dequeue_message(struct bsal_worker *worker, struct bsal_message 
 
 void bsal_worker_print_actors(struct bsal_worker *worker)
 {
-    struct bsal_map_iterator iterator;
+    struct bsal_set_iterator iterator;
     int name;
     int count;
+    struct bsal_actor *actor;
+    int producers;
+    int consumers;
+    int received;
 
-    bsal_map_iterator_init(&iterator, &worker->actors);
+    bsal_set_iterator_init(&iterator, &worker->actors);
 
-    printf("INFO worker: %d, busy: %d, actors in ring: %d scheduled actors: %d\n",
+    printf(" worker/%d (%d messages, received: %d) (state %d %.2f) ring: %d scheduled: %d/%d\n",
                     bsal_worker_name(worker),
+                    bsal_worker_get_scheduled_message_count(worker),
+                    bsal_worker_get_sum_of_received_actor_messages(worker),
                     bsal_worker_is_busy(worker),
+                    bsal_worker_get_epoch_load(worker),
                     bsal_fast_ring_size_from_producer(&worker->scheduled_actor_queue),
-                    bsal_ring_queue_size(&worker->scheduled_actor_queue_real));
+                    bsal_ring_queue_size(&worker->scheduled_actor_queue_real),
+                    (int)bsal_set_size(&worker->actors));
 
-    while (bsal_map_iterator_get_next_key_and_value(&iterator, &name, &count)) {
-        printf("  ACTOR %d  MESSAGES %d\n", name, count);
+    while (bsal_set_iterator_get_next_value(&iterator, &name)) {
+
+        actor = bsal_node_get_actor_from_name(worker->node, name);
+
+        if (actor == NULL) {
+            printf(" [DEAD!/%d]\n", name);
+            continue;
+        }
+        count = bsal_actor_get_mailbox_size(actor);
+        received = bsal_actor_get_sum_of_received_messages(actor);
+        producers = bsal_map_size(bsal_actor_get_received_messages(actor));
+        consumers = bsal_map_size(bsal_actor_get_sent_messages(actor));
+
+        printf(" [%s/%d %d %d/%d %d]\n",
+                        bsal_actor_get_description(actor),
+                        name, count, received, producers, consumers);
     }
-    bsal_map_iterator_destroy(&iterator);
+
+
+    /*printf("\n");*/
+    bsal_set_iterator_destroy(&iterator);
+}
+
+void bsal_worker_evict_actor(struct bsal_worker *worker, int actor_name)
+{
+    int count;
+    struct bsal_actor *actor;
+    int name;
+
+    bsal_set_add(&worker->evicted_actors, &actor_name);
+    bsal_set_delete(&worker->actors, &actor_name);
+    bsal_set_delete(&worker->queued_actors, &actor_name);
+
+    count = bsal_ring_queue_size(&worker->scheduled_actor_queue_real);
+
+    /* evict the actor from the scheduling queue
+     */
+    while (count--
+                    && bsal_ring_queue_dequeue(&worker->scheduled_actor_queue_real, &actor)) {
+
+        name = bsal_actor_name(actor);
+
+        if (name != actor_name) {
+
+            bsal_ring_queue_enqueue(&worker->scheduled_actor_queue_real,
+                            &actor);
+        }
+    }
+
+    /* Evict the actor from the ring
+     */
+
+    count = bsal_fast_ring_size_from_consumer(&worker->scheduled_actor_queue);
+
+    while (count-- && bsal_fast_ring_pop_from_consumer(&worker->scheduled_actor_queue,
+                            &actor)) {
+
+        name = bsal_actor_name(actor);
+
+        if (name != actor_name) {
+
+            bsal_fast_ring_push_from_producer(&worker->scheduled_actor_queue,
+                            &actor);
+        }
+    }
+}
+
+void bsal_worker_lock(struct bsal_worker *worker)
+{
+    bsal_lock_lock(&worker->lock);
+}
+
+void bsal_worker_unlock(struct bsal_worker *worker)
+{
+    bsal_lock_unlock(&worker->lock);
+}
+
+struct bsal_set *bsal_worker_get_actors(struct bsal_worker *worker)
+{
+    return &worker->actors;
+}
+
+int bsal_worker_enqueue_actor_special(struct bsal_worker *worker, struct bsal_actor **actor)
+{
+    int name;
+
+    name = bsal_actor_name(*actor);
+
+    bsal_set_delete(&worker->evicted_actors, &name);
+
+    return bsal_worker_enqueue_actor(worker, actor);
+}
+
+int bsal_worker_get_sum_of_received_actor_messages(struct bsal_worker *self)
+{
+    int value;
+    struct bsal_set_iterator set_iterator;
+    int actor_name;
+    int messages;
+    struct bsal_actor *actor;
+
+    bsal_set_iterator_init(&set_iterator, &self->actors);
+
+    value = 0;
+    while (bsal_set_iterator_get_next_value(&set_iterator, &actor_name)) {
+
+        actor = bsal_node_get_actor_from_name(self->node, actor_name);
+
+        if (actor == NULL) {
+            continue;
+        }
+
+        messages = bsal_actor_get_sum_of_received_messages(actor);
+
+        value += messages;
+    }
+
+    bsal_set_iterator_destroy(&set_iterator);
+
+    return value;
+}
+
+int bsal_worker_get_queued_messages(struct bsal_worker *self)
+{
+    int value;
+    struct bsal_set_iterator set_iterator;
+    int actor_name;
+    int messages;
+    struct bsal_actor *actor;
+
+    bsal_set_iterator_init(&set_iterator, &self->actors);
+
+    value = 0;
+    while (bsal_set_iterator_get_next_value(&set_iterator, &actor_name)) {
+
+        actor = bsal_node_get_actor_from_name(self->node, actor_name);
+
+        if (actor == NULL) {
+            continue;
+        }
+
+        messages = bsal_actor_get_mailbox_size(actor);
+
+        value += messages;
+    }
+
+    bsal_set_iterator_destroy(&set_iterator);
+
+    return value;
+
 }
