@@ -43,8 +43,7 @@ struct bsal_message;
 struct bsal_worker {
     struct bsal_node *node;
 
-    struct bsal_set actors;
-    struct bsal_set queued_actors;
+    struct bsal_map actors;
 
     struct bsal_fast_ring scheduled_actor_queue;
     struct bsal_ring_queue scheduled_actor_queue_real;
@@ -125,7 +124,7 @@ void bsal_worker_print_actors(struct bsal_worker *worker);
 void bsal_worker_evict_actor(struct bsal_worker *worker, int actor_name);
 void bsal_worker_lock(struct bsal_worker *worker);
 void bsal_worker_unlock(struct bsal_worker *worker);
-struct bsal_set *bsal_worker_get_actors(struct bsal_worker *worker);
+struct bsal_map *bsal_worker_get_actors(struct bsal_worker *worker);
 
 int bsal_worker_get_sum_of_received_actor_messages(struct bsal_worker *self);
 int bsal_worker_get_queued_messages(struct bsal_worker *self);

@@ -21,6 +21,9 @@
 /*#define BSAL_WORKER_DEBUG
   */
 
+#define STATUS_IDLE 0
+#define STATUS_QUEUED 1
+
 void bsal_worker_init(struct bsal_worker *worker, int name, struct bsal_node *node)
 {
     int capacity;
@@ -41,8 +44,7 @@ void bsal_worker_init(struct bsal_worker *worker, int name, struct bsal_node *no
      */
     bsal_fast_ring_init(&worker->scheduled_actor_queue, capacity, sizeof(struct bsal_actor *));
     bsal_ring_queue_init(&worker->scheduled_actor_queue_real, sizeof(struct bsal_actor *));
-    bsal_set_init(&worker->actors, sizeof(int));
-    bsal_set_init(&worker->queued_actors, sizeof(int));
+    bsal_map_init(&worker->actors, sizeof(int), sizeof(int));
 
     bsal_fast_ring_init(&worker->outbound_message_queue, capacity, sizeof(struct bsal_message));
 
@@ -85,8 +87,7 @@ void bsal_worker_destroy(struct bsal_worker *worker)
     bsal_fast_ring_destroy(&worker->outbound_message_queue);
     bsal_ring_queue_destroy(&worker->outbound_message_queue_buffer);
 
-    bsal_set_destroy(&worker->actors);
-    bsal_set_destroy(&worker->queued_actors);
+    bsal_map_destroy(&worker->actors);
     bsal_set_destroy(&worker->evicted_actors);
 
     worker->node = NULL;
@@ -222,22 +223,22 @@ int bsal_worker_is_busy(struct bsal_worker *self)
 int bsal_worker_get_scheduled_message_count(struct bsal_worker *self)
 {
     int value;
-    struct bsal_set_iterator set_iterator;
+    struct bsal_map_iterator map_iterator;
     int actor_name;
     int messages;
     struct bsal_actor *actor;
 
-    bsal_set_iterator_init(&set_iterator, &self->actors);
+    bsal_map_iterator_init(&map_iterator, &self->actors);
 
     value = 0;
-    while (bsal_set_iterator_get_next_value(&set_iterator, &actor_name)) {
+    while (bsal_map_iterator_get_next_key_and_value(&map_iterator, &actor_name, NULL)) {
 
         actor = bsal_node_get_actor_from_name(self->node, actor_name);
         messages = bsal_actor_get_mailbox_size(actor);
         value += messages;
     }
 
-    bsal_set_iterator_destroy(&set_iterator);
+    bsal_map_iterator_destroy(&map_iterator);
 
     return value;
 }
@@ -266,6 +267,7 @@ int bsal_worker_dequeue_actor(struct bsal_worker *worker, struct bsal_actor **ac
     struct bsal_actor *other_actor;
     int other_name;
     int operations;
+    int status;
 
     operations = 4;
 
@@ -288,14 +290,22 @@ int bsal_worker_dequeue_actor(struct bsal_worker *worker, struct bsal_actor **ac
             continue;
         }
 
-        /* Add the actor to the list of actors.
-         * This does nothing if it is already in the list.
-         */
-        bsal_set_add(&worker->actors, &other_name);
+        if (!bsal_map_get_value(&worker->actors, &other_name, &status)) {
+            /* Add the actor to the list of actors.
+             * This does nothing if it is already in the list.
+             */
+
+            status = STATUS_IDLE;
+            bsal_map_add_value(&worker->actors, &other_name, &status);
+        }
 
         /* If the actor is not queued, queue it
          */
-        if (bsal_set_add(&worker->queued_actors, &other_name)) {
+        if (status == STATUS_IDLE) {
+            status = STATUS_QUEUED;
+
+            bsal_map_update_value(&worker->actors, &other_name, &status);
+
             bsal_ring_queue_enqueue(&worker->scheduled_actor_queue_real, &other_actor);
         } else {
 
@@ -328,13 +338,18 @@ int bsal_worker_dequeue_actor(struct bsal_worker *worker, struct bsal_actor **ac
                         bsal_actor_get_mailbox_size(*actor));
 #endif
 
+            /* The status is still STATUS_QUEUED
+             */
             bsal_ring_queue_enqueue(&worker->scheduled_actor_queue_real, actor);
 
         } else {
 #ifdef BSAL_WORKER_DEBUG_SCHEDULER
             printf("SCHEDULER %d has no message to schedule...\n", name);
 #endif
-            bsal_set_delete(&worker->queued_actors, &name);
+            /* Set the status of the worker to STATUS_IDLE
+             */
+            status = STATUS_IDLE;
+            bsal_map_update_value(&worker->actors, &name, &status);
         }
     }
 
@@ -371,7 +386,7 @@ int bsal_worker_dequeue_message(struct bsal_worker *worker, struct bsal_message 
 
 void bsal_worker_print_actors(struct bsal_worker *worker)
 {
-    struct bsal_set_iterator iterator;
+    struct bsal_map_iterator iterator;
     int name;
     int count;
     struct bsal_actor *actor;
@@ -379,7 +394,7 @@ void bsal_worker_print_actors(struct bsal_worker *worker)
     int consumers;
     int received;
 
-    bsal_set_iterator_init(&iterator, &worker->actors);
+    bsal_map_iterator_init(&iterator, &worker->actors);
 
     printf(" worker/%d (%d messages, received: %d) (state %d %.2f) ring: %d scheduled: %d/%d\n",
                     bsal_worker_name(worker),
@@ -389,9 +404,9 @@ void bsal_worker_print_actors(struct bsal_worker *worker)
                     bsal_worker_get_epoch_load(worker),
                     bsal_fast_ring_size_from_producer(&worker->scheduled_actor_queue),
                     bsal_ring_queue_size(&worker->scheduled_actor_queue_real),
-                    (int)bsal_set_size(&worker->actors));
+                    (int)bsal_map_size(&worker->actors));
 
-    while (bsal_set_iterator_get_next_value(&iterator, &name)) {
+    while (bsal_map_iterator_get_next_key_and_value(&iterator, &name, NULL)) {
 
         actor = bsal_node_get_actor_from_name(worker->node, name);
 
@@ -411,7 +426,7 @@ void bsal_worker_print_actors(struct bsal_worker *worker)
 
 
     /*printf("\n");*/
-    bsal_set_iterator_destroy(&iterator);
+    bsal_map_iterator_destroy(&iterator);
 }
 
 void bsal_worker_evict_actor(struct bsal_worker *worker, int actor_name)
@@ -421,8 +436,7 @@ void bsal_worker_evict_actor(struct bsal_worker *worker, int actor_name)
     int name;
 
     bsal_set_add(&worker->evicted_actors, &actor_name);
-    bsal_set_delete(&worker->actors, &actor_name);
-    bsal_set_delete(&worker->queued_actors, &actor_name);
+    bsal_map_delete(&worker->actors, &actor_name);
 
     count = bsal_ring_queue_size(&worker->scheduled_actor_queue_real);
 
@@ -468,7 +482,7 @@ void bsal_worker_unlock(struct bsal_worker *worker)
     bsal_lock_unlock(&worker->lock);
 }
 
-struct bsal_set *bsal_worker_get_actors(struct bsal_worker *worker)
+struct bsal_map *bsal_worker_get_actors(struct bsal_worker *worker)
 {
     return &worker->actors;
 }
@@ -487,15 +501,15 @@ int bsal_worker_enqueue_actor_special(struct bsal_worker *worker, struct bsal_ac
 int bsal_worker_get_sum_of_received_actor_messages(struct bsal_worker *self)
 {
     int value;
-    struct bsal_set_iterator set_iterator;
+    struct bsal_map_iterator iterator;
     int actor_name;
     int messages;
     struct bsal_actor *actor;
 
-    bsal_set_iterator_init(&set_iterator, &self->actors);
+    bsal_map_iterator_init(&iterator, &self->actors);
 
     value = 0;
-    while (bsal_set_iterator_get_next_value(&set_iterator, &actor_name)) {
+    while (bsal_map_iterator_get_next_key_and_value(&iterator, &actor_name, NULL)) {
 
         actor = bsal_node_get_actor_from_name(self->node, actor_name);
 
@@ -508,7 +522,7 @@ int bsal_worker_get_sum_of_received_actor_messages(struct bsal_worker *self)
         value += messages;
     }
 
-    bsal_set_iterator_destroy(&set_iterator);
+    bsal_map_iterator_destroy(&iterator);
 
     return value;
 }
@@ -516,15 +530,15 @@ int bsal_worker_get_sum_of_received_actor_messages(struct bsal_worker *self)
 int bsal_worker_get_queued_messages(struct bsal_worker *self)
 {
     int value;
-    struct bsal_set_iterator set_iterator;
+    struct bsal_map_iterator map_iterator;
     int actor_name;
     int messages;
     struct bsal_actor *actor;
 
-    bsal_set_iterator_init(&set_iterator, &self->actors);
+    bsal_map_iterator_init(&map_iterator, &self->actors);
 
     value = 0;
-    while (bsal_set_iterator_get_next_value(&set_iterator, &actor_name)) {
+    while (bsal_map_iterator_get_next_key_and_value(&map_iterator, &actor_name, NULL)) {
 
         actor = bsal_node_get_actor_from_name(self->node, actor_name);
 
@@ -537,7 +551,7 @@ int bsal_worker_get_queued_messages(struct bsal_worker *self)
         value += messages;
     }
 
-    bsal_set_iterator_destroy(&set_iterator);
+    bsal_map_iterator_destroy(&map_iterator);
 
     return value;
 

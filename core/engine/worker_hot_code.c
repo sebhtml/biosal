@@ -204,7 +204,7 @@ void bsal_worker_work(struct bsal_worker *worker, struct bsal_actor *actor)
 
     if (dead) {
 
-        bsal_set_delete(&worker->actors, &actor_name);
+        bsal_map_delete(&worker->actors, &actor_name);
 
         bsal_node_notify_death(worker->node, actor);
     }

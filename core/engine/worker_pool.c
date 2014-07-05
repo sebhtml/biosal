@@ -509,8 +509,8 @@ void bsal_worker_pool_balance(struct bsal_worker_pool *pool)
     int new_score;
     int maximum;
     int with_maximum;
-    struct bsal_set *set;
-    struct bsal_set_iterator set_iterator;
+    struct bsal_map *set;
+    struct bsal_map_iterator set_iterator;
     int stalled_index;
     int stalled_count;
     int new_worker_index;
@@ -595,7 +595,7 @@ void bsal_worker_pool_balance(struct bsal_worker_pool *pool)
                 bsal_pair_init(&pair, value, i);
                 bsal_vector_push_back(&burdened_workers, &pair);
 
-            } else if (bsal_set_size(set) == 1) {
+            } else if (bsal_map_size(set) == 1) {
                 printf("scheduling_class:%s ",
                                 BSAL_CLASS_HUB_STRING);
 
@@ -638,12 +638,12 @@ void bsal_worker_pool_balance(struct bsal_worker_pool *pool)
         bsal_worker_print_actors(worker);
         printf("\n");
         */
-        bsal_set_iterator_init(&set_iterator, set);
+        bsal_map_iterator_init(&set_iterator, set);
 
         maximum = -1;
         with_maximum = 0;
 
-        while (bsal_set_iterator_get_next_value(&set_iterator, &actor_name)) {
+        while (bsal_map_iterator_get_next_key_and_value(&set_iterator, &actor_name, NULL)) {
 
             actor = bsal_node_get_actor_from_name(worker->node, actor_name);
             messages = bsal_actor_get_mailbox_size(actor);
@@ -655,9 +655,9 @@ void bsal_worker_pool_balance(struct bsal_worker_pool *pool)
                 with_maximum++;
             }
         }
-        bsal_set_iterator_destroy(&set_iterator);
+        bsal_map_iterator_destroy(&set_iterator);
 
-        bsal_set_iterator_init(&set_iterator, set);
+        bsal_map_iterator_init(&set_iterator, set);
 
         --with_maximum;
 
@@ -672,7 +672,7 @@ void bsal_worker_pool_balance(struct bsal_worker_pool *pool)
         printf("maximum %d with_maximum %d\n", maximum, with_maximum);
 #endif
 
-        while (bsal_set_iterator_get_next_value(&set_iterator, &actor_name)) {
+        while (bsal_map_iterator_get_next_key_and_value(&set_iterator, &actor_name, NULL)) {
 
             actor = bsal_node_get_actor_from_name(worker->node, actor_name);
             messages = bsal_actor_get_mailbox_size(actor);
@@ -706,7 +706,7 @@ void bsal_worker_pool_balance(struct bsal_worker_pool *pool)
                                 actor_name, old_worker);
             }
         }
-        bsal_set_iterator_destroy(&set_iterator);
+        bsal_map_iterator_destroy(&set_iterator);
 
         bsal_worker_unlock(worker);
     }
