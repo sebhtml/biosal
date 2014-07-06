@@ -93,9 +93,11 @@ void bsal_statistics_get_print_percentiles_int(struct bsal_vector *vector)
     int percentile_0;
     int percentile_5;
     int percentile_25;
+    int percentile_30;
     int percentile_40;
     int percentile_50;
     int percentile_60;
+    int percentile_70;
     int percentile_75;
     int percentile_95;
     int percentile_100;
@@ -112,20 +114,94 @@ void bsal_statistics_get_print_percentiles_int(struct bsal_vector *vector)
     percentile_0 = bsal_statistics_get_percentile_int(vector, 0);
     percentile_5 = bsal_statistics_get_percentile_int(vector, 5);
     percentile_25 = bsal_statistics_get_percentile_int(vector, 25);
+    percentile_30 = bsal_statistics_get_percentile_int(vector, 30);
     percentile_40 = bsal_statistics_get_percentile_int(vector, 40);
     percentile_50 = bsal_statistics_get_percentile_int(vector, 50);
     percentile_60 = bsal_statistics_get_percentile_int(vector, 60);
+    percentile_70 = bsal_statistics_get_percentile_int(vector, 70);
     percentile_75 = bsal_statistics_get_percentile_int(vector, 75);
     percentile_95 = bsal_statistics_get_percentile_int(vector, 95);
     percentile_100 = bsal_statistics_get_percentile_int(vector, 100);
 
-    printf("%d%%: %d, %d%%: %d, %d%%: %d, %d%%: %d, %d%%: %d, %d%%: %d, %d%%: %d, %d%%: %d, %d%%: %d\n",
+    printf("%d%%: %d, %d%%: %d, %d%%: %d, %d%%: %d, %d%%: %d, %d%%: %d, %d%%: %d, %d%%: %d, %d%%: %d, %d%%: %d, %d%%: %d\n",
                     0, percentile_0,
                     5, percentile_5,
                     25, percentile_25,
+                    30, percentile_30,
                     40, percentile_40,
                     50, percentile_50,
                     60, percentile_60,
+                    70, percentile_70,
+                    75, percentile_75,
+                    95, percentile_95,
+                    100, percentile_100);
+}
+
+float bsal_statistics_get_percentile_float(struct bsal_vector *vector, int p)
+{
+    int index;
+    int size;
+
+    size = bsal_vector_size(vector);
+
+    if (size == 0) {
+        return 0;
+    }
+
+    index = ((0.0 + p) / 100 ) * (size - 1);
+
+    /*
+    printf("percentile %d size %d\n", p, size);
+    bsal_vector_helper_print_int(vector);
+    */
+
+    return bsal_vector_helper_at_as_float(vector, index);
+}
+
+void bsal_statistics_get_print_percentiles_float(struct bsal_vector *vector)
+{
+    float percentile_0;
+    float percentile_5;
+    float percentile_25;
+    float percentile_30;
+    float percentile_40;
+    float percentile_50;
+    float percentile_60;
+    float percentile_70;
+    float percentile_75;
+    float percentile_95;
+    float percentile_100;
+
+    int size;
+
+    size = bsal_vector_size(vector);
+
+    if (size == 0) {
+        printf("empty\n");
+        return;
+    }
+
+    percentile_0 = bsal_statistics_get_percentile_float(vector, 0);
+    percentile_5 = bsal_statistics_get_percentile_float(vector, 5);
+    percentile_25 = bsal_statistics_get_percentile_float(vector, 25);
+    percentile_30 = bsal_statistics_get_percentile_float(vector, 30);
+    percentile_40 = bsal_statistics_get_percentile_float(vector, 40);
+    percentile_50 = bsal_statistics_get_percentile_float(vector, 50);
+    percentile_60 = bsal_statistics_get_percentile_float(vector, 60);
+    percentile_70 = bsal_statistics_get_percentile_float(vector, 70);
+    percentile_75 = bsal_statistics_get_percentile_float(vector, 75);
+    percentile_95 = bsal_statistics_get_percentile_float(vector, 95);
+    percentile_100 = bsal_statistics_get_percentile_float(vector, 100);
+
+    printf("%d%%: %f, %d%%: %f, %d%%: %f, %d%%: %f, %d%%: %f, %d%%: %f, %d%%: %f, %d%%: %f, %d%%: %f, %d%%: %f, %d%%: %f\n",
+                    0, percentile_0,
+                    5, percentile_5,
+                    25, percentile_25,
+                    30, percentile_30,
+                    40, percentile_40,
+                    50, percentile_50,
+                    60, percentile_60,
+                    70, percentile_70,
                     75, percentile_75,
                     95, percentile_95,
                     100, percentile_100);

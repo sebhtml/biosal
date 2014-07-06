@@ -81,6 +81,9 @@ struct bsal_worker {
 
     uint64_t loop_start_in_nanoseconds;
     uint64_t loop_used_nanoseconds;
+
+    uint64_t scheduling_epoch_start_in_nanoseconds;
+    uint64_t scheduling_epoch_used_nanoseconds;
     float loop_load;
 
     struct bsal_memory_pool ephemeral_memory;
@@ -106,6 +109,8 @@ int bsal_worker_is_busy(struct bsal_worker *self);
 
 float bsal_worker_get_epoch_load(struct bsal_worker *self);
 float bsal_worker_get_loop_load(struct bsal_worker *self);
+float bsal_worker_get_scheduling_epoch_load(struct bsal_worker *worker);
+void bsal_worker_reset_scheduling_epoch(struct bsal_worker *worker);
 
 int bsal_worker_get_scheduled_message_count(struct bsal_worker *self);
 int bsal_worker_get_message_production_score(struct bsal_worker *self);

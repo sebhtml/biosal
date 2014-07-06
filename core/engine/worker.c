@@ -64,6 +64,10 @@ void bsal_worker_init(struct bsal_worker *worker, int name, struct bsal_node *no
     worker->loop_start_in_nanoseconds = worker->epoch_start_in_nanoseconds;
     worker->loop_used_nanoseconds = 0;
     worker->loop_load = 0;
+
+    worker->scheduling_epoch_start_in_nanoseconds = worker->epoch_start_in_nanoseconds;
+    worker->scheduling_epoch_used_nanoseconds = 0;
+
     worker->start = 0;
 
 /* 2 MiB is the default size for Linux huge pages.
@@ -234,6 +238,11 @@ int bsal_worker_get_scheduled_message_count(struct bsal_worker *self)
     while (bsal_map_iterator_get_next_key_and_value(&map_iterator, &actor_name, NULL)) {
 
         actor = bsal_node_get_actor_from_name(self->node, actor_name);
+
+        if (actor == NULL) {
+            continue;
+        }
+
         messages = bsal_actor_get_mailbox_size(actor);
         value += messages;
     }
@@ -393,15 +402,16 @@ void bsal_worker_print_actors(struct bsal_worker *worker)
     int producers;
     int consumers;
     int received;
+    int difference;
 
     bsal_map_iterator_init(&iterator, &worker->actors);
 
-    printf(" worker/%d (%d messages, received: %d) (state %d %.2f) ring: %d scheduled: %d/%d\n",
+    printf("worker/%d %d queued messages, received: %d busy: %d load: %f ring: %d scheduled actors: %d/%d\n",
                     bsal_worker_name(worker),
                     bsal_worker_get_scheduled_message_count(worker),
                     bsal_worker_get_sum_of_received_actor_messages(worker),
                     bsal_worker_is_busy(worker),
-                    bsal_worker_get_epoch_load(worker),
+                    bsal_worker_get_scheduling_epoch_load(worker),
                     bsal_fast_ring_size_from_producer(&worker->scheduled_actor_queue),
                     bsal_ring_queue_size(&worker->scheduled_actor_queue_real),
                     (int)bsal_map_size(&worker->actors));
@@ -414,14 +424,18 @@ void bsal_worker_print_actors(struct bsal_worker *worker)
             printf(" [DEAD!/%d]\n", name);
             continue;
         }
+
         count = bsal_actor_get_mailbox_size(actor);
         received = bsal_actor_get_sum_of_received_messages(actor);
         producers = bsal_map_size(bsal_actor_get_received_messages(actor));
         consumers = bsal_map_size(bsal_actor_get_sent_messages(actor));
+        difference = bsal_worker_pool_get_actor_production(bsal_node_get_worker_pool(worker->node), actor);
 
-        printf(" [%s/%d %d %d/%d %d]\n",
+        printf("  [%s/%d] mailbox: %d received: %d (+%d) producers: %d consumers: %d\n",
                         bsal_actor_get_description(actor),
-                        name, count, received, producers, consumers);
+                        name, count, received,
+                       difference,
+                       producers, consumers);
     }
 
 
@@ -555,4 +569,27 @@ int bsal_worker_get_queued_messages(struct bsal_worker *self)
 
     return value;
 
+}
+
+float bsal_worker_get_scheduling_epoch_load(struct bsal_worker *worker)
+{
+    uint64_t end_time;
+    uint64_t period;
+
+    end_time = bsal_timer_get_nanoseconds();
+
+    period = end_time - worker->scheduling_epoch_start_in_nanoseconds;
+
+    if (period == 0) {
+        return 0;
+    }
+
+    return (0.0 + worker->scheduling_epoch_used_nanoseconds) / period;
+}
+
+void bsal_worker_reset_scheduling_epoch(struct bsal_worker *worker)
+{
+    worker->scheduling_epoch_start_in_nanoseconds = bsal_timer_get_nanoseconds();
+
+    worker->scheduling_epoch_used_nanoseconds = 0;
 }

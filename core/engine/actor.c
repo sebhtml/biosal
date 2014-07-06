@@ -50,6 +50,9 @@ void bsal_actor_init(struct bsal_actor *actor, void *state,
     bsal_actor_init_fn_t init;
     int capacity;
 
+    bsal_map_init(&actor->received_messages, sizeof(int), sizeof(int));
+    bsal_map_init(&actor->sent_messages, sizeof(int), sizeof(int));
+
     /* initialize the dispatcher before calling
      * the concrete initializer
      */
@@ -94,8 +97,6 @@ void bsal_actor_init(struct bsal_actor *actor, void *state,
     bsal_actor_helper_send_to_self_empty(actor, BSAL_ACTOR_PIN_TO_NODE);
 
     bsal_queue_init(&actor->enqueued_messages, sizeof(struct bsal_message));
-    bsal_map_init(&actor->received_messages, sizeof(int), sizeof(int));
-    bsal_map_init(&actor->sent_messages, sizeof(int), sizeof(int));
 
     capacity = 256;
     bsal_fast_ring_init(&actor->mailbox, capacity, sizeof(struct bsal_message));
@@ -292,6 +293,19 @@ int bsal_actor_send_system(struct bsal_actor *actor, int name, struct bsal_messa
 void bsal_actor_send(struct bsal_actor *actor, int name, struct bsal_message *message)
 {
     int source;
+    int *bucket;
+
+    /* Update counter
+     */
+    bucket = (int *)bsal_map_get(&actor->sent_messages, &name);
+
+    if (bucket == NULL) {
+        bucket = (int *)bsal_map_add(&actor->sent_messages, &name);
+        (*bucket) = 0;
+    }
+
+    (*bucket)++;
+
     source = bsal_actor_name(actor);
 
     /* update counters
@@ -798,6 +812,8 @@ void bsal_actor_receive(struct bsal_actor *actor, struct bsal_message *message)
                     bsal_actor_name(actor));
 #endif
 
+    /* Update counter
+     */
     source = bsal_message_source(message);
 
     actor->current_source = source;

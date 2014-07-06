@@ -50,6 +50,8 @@ void bsal_worker_run(struct bsal_worker *worker)
     struct bsal_message *message;
 #endif
 
+    bsal_worker_lock(worker);
+
 #ifdef BSAL_NODE_ENABLE_LOAD_REPORTING
     period = BSAL_NODE_LOAD_PERIOD;
     current_time = time(NULL);
@@ -92,8 +94,6 @@ void bsal_worker_run(struct bsal_worker *worker)
     }
 #endif
 
-    bsal_worker_lock(worker);
-
     /* check for messages in inbound FIFO */
     if (bsal_worker_dequeue_actor(worker, &actor)) {
 
@@ -122,12 +122,12 @@ void bsal_worker_run(struct bsal_worker *worker)
         end_time = bsal_timer_get_nanoseconds();
 
         elapsed_nanoseconds = end_time - start_time;
+
         worker->epoch_used_nanoseconds += elapsed_nanoseconds;
         worker->loop_used_nanoseconds += elapsed_nanoseconds;
+        worker->scheduling_epoch_used_nanoseconds += elapsed_nanoseconds;
 #endif
     }
-
-    bsal_worker_unlock(worker);
 
     /* queue buffered message
      */
@@ -138,6 +138,8 @@ void bsal_worker_run(struct bsal_worker *worker)
             bsal_ring_queue_enqueue(&worker->outbound_message_queue_buffer, &other_message);
         }
     }
+
+    bsal_worker_unlock(worker);
 }
 
 void bsal_worker_work(struct bsal_worker *worker, struct bsal_actor *actor)

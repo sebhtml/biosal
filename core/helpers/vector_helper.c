@@ -305,4 +305,36 @@ float bsal_vector_helper_at_as_float(struct bsal_vector *self, int64_t index)
     return *bucket;
 }
 
+void bsal_vector_helper_sort_float_reverse(struct bsal_vector *self)
+{
+    bsal_vector_helper_sort(self, bsal_vector_helper_compare_float_reverse);
+}
+
+void bsal_vector_helper_sort_float(struct bsal_vector *self)
+{
+    bsal_vector_helper_sort(self, bsal_vector_helper_compare_float);
+}
+
+int bsal_vector_helper_compare_float(const void *a, const void *b)
+{
+    float a_value;
+    float b_value;
+
+    a_value = *(float *)a;
+    b_value = *(float *)b;
+
+    if (a_value < b_value) {
+        return -1;
+    } else if (a_value > b_value) {
+        return 1;
+    }
+
+    return 0;
+}
+
+int bsal_vector_helper_compare_float_reverse(const void *a, const void *b)
+{
+    return bsal_vector_helper_compare_float(b, a);
+}
+
 

@@ -22,6 +22,8 @@ struct bsal_worker_pool {
     struct bsal_map actor_affinities;
     struct bsal_vector worker_actors;
 
+    struct bsal_map last_actor_received_messages;
+
     struct bsal_ring_queue scheduled_actor_queue_buffer;
     struct bsal_ring_queue inbound_message_queue_buffer;
 
@@ -103,5 +105,7 @@ void bsal_worker_pool_give_message_to_actor(struct bsal_worker_pool *pool, struc
 void bsal_worker_pool_migrate(struct bsal_worker_pool *pool, struct bsal_migration *migration);
 
 void bsal_worker_pool_print_efficiency(struct bsal_worker_pool *pool);
+int bsal_worker_pool_get_actor_production(struct bsal_worker_pool *pool, struct bsal_actor *actor);
+void bsal_worker_pool_update_actor_production(struct bsal_worker_pool *pool, struct bsal_actor *actor);
 
 #endif
