@@ -6,7 +6,12 @@ LIBRARY_HOT_CODE += core/engine/worker_pool_hot_code.o
 LIBRARY_HOT_CODE += core/engine/transport_hot_code.o
 LIBRARY_HOT_CODE += core/engine/actor_hot_code.o
 LIBRARY_HOT_CODE += core/structures/vector_hot_code.o
+LIBRARY_HOT_CODE += core/structures/hash_table_hot_code.o
 LIBRARY_HOT_CODE += core/engine/worker_hot_code.o
+LIBRARY_HOT_CODE += core/hash/murmur_hash_2_64_a.o
+
+# hot code above
+# cold code below
 
 LIBRARY_HOT_CODE += core/engine/message.o
 LIBRARY_HOT_CODE += core/engine/node.o
@@ -78,8 +83,6 @@ LIBRARY_HOT_CODE += core/structures/ring_queue.o
 LIBRARY_HOT_CODE += core/structures/fast_ring.o
 
 
-
-LIBRARY_HOT_CODE += core/hash/murmur_hash_2_64_a.o
 
 LIBRARY_HOT_CODE += genomics/input/input_stream.o
 LIBRARY_HOT_CODE += genomics/input/input_proxy.o

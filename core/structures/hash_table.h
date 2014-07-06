@@ -6,6 +6,21 @@
 
 #include <stdint.h>
 
+#define BSAL_HASH_TABLE_KEY_NOT_FOUND 0
+#define BSAL_HASH_TABLE_KEY_FOUND 1
+#define BSAL_HASH_TABLE_FULL 2
+
+#define BSAL_HASH_TABLE_OPERATION_ADD 0x000000ff
+#define BSAL_HASH_TABLE_OPERATION_GET 0x0000ff00
+#define BSAL_HASH_TABLE_OPERATION_DELETE 0x00ff0000
+
+#define BSAL_HASH_TABLE_MATCH 0
+
+/* only use a single group
+ */
+#define BSAL_HASH_TABLE_USE_ONE_GROUP
+
+
 /**
  * features:
  *
@@ -14,7 +29,7 @@
  *
  * - [ ] sparsity (important)
  * - [ ] smart pointers (?)
- * - [ ] incremental resizing (?)
+ * - [x] incremental resizing (see struct bsal_dynamic_hash_table)
  *
  * for deletion, see http://webdocs.cs.ualberta.ca/~holte/T26/open-addr.html
  */
