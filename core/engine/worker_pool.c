@@ -104,13 +104,15 @@ void bsal_worker_pool_init(struct bsal_worker_pool *pool, int workers,
 
     pool->received_works = 0;
 
-    pool->balance_period = pool->workers * 4096;
+    pool->balance_period = pool->workers * 4096 * 4;
 }
 
 void bsal_worker_pool_destroy(struct bsal_worker_pool *pool)
 {
     int i;
     struct bsal_set *set;
+
+    bsal_worker_pool_print_efficiency(pool);
 
     for (i = 0; i < pool->workers; i++) {
         set= (struct bsal_set *)bsal_vector_at(&pool->worker_actors, i);
@@ -418,9 +420,11 @@ void bsal_worker_pool_print_load(struct bsal_worker_pool *self, int type)
     clock_t current_time;
     int elapsed;
     float selected_load;
+    float sum;
     char loop[] = "LOOP";
     char epoch[] = "EPOCH";
     char *description;
+    float efficiency;
 
     description = NULL;
 
@@ -444,6 +448,7 @@ void bsal_worker_pool_print_load(struct bsal_worker_pool *self, int type)
     node_name = bsal_node_name(self->node);
     offset = 0;
     i = 0;
+    sum = 0;
 
     while (i < count && offset + extra < allocated) {
 
@@ -467,10 +472,17 @@ void bsal_worker_pool_print_load(struct bsal_worker_pool *self, int type)
         offset += sprintf(buffer + offset, " %.2f",
                         selected_load);
 
+        sum += epoch_load;
+
         ++i;
     }
 
-    printf("LOAD %s %d s node/%d%s\n", description, elapsed, node_name, buffer);
+    efficiency = sum / count;
+
+    printf("LOAD %s %d s node/%d %.2f/%d (%.2f)%s\n",
+                    description, elapsed, node_name,
+                    sum, count, efficiency, buffer);
+
 
     bsal_memory_free(buffer);
 }
@@ -899,4 +911,23 @@ void bsal_worker_pool_migrate(struct bsal_worker_pool *pool, struct bsal_migrati
     bsal_actor_unlock(actor);
 }
 
+void bsal_worker_pool_print_efficiency(struct bsal_worker_pool *pool)
+{
+    double efficiency;
+    struct bsal_worker *worker;
+    int i;
 
+    efficiency = 0;
+
+    for (i = 0; i < pool->workers; i++) {
+        worker = bsal_worker_pool_get_worker(pool, i);
+        efficiency += bsal_worker_get_loop_load(worker);
+    }
+
+    efficiency /= pool->workers;
+
+    printf("node %d efficiency: %.2f\n",
+                    bsal_node_name(pool->node),
+                    efficiency);
+
+}

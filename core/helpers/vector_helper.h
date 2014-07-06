@@ -12,6 +12,7 @@ void bsal_vector_helper_push_back_int(struct bsal_vector *self, int value);
 void bsal_vector_helper_push_back_uint64_t(struct bsal_vector *self, uint64_t value);
 void bsal_vector_helper_push_back_char(struct bsal_vector *self, char value);
 int bsal_vector_helper_at_as_int(struct bsal_vector *self, int64_t index);
+float bsal_vector_helper_at_as_float(struct bsal_vector *self, int64_t index);
 uint64_t bsal_vector_helper_at_as_uint64_t(struct bsal_vector *self, int64_t index);
 char bsal_vector_helper_at_as_char(struct bsal_vector *self, int64_t index);
 char *bsal_vector_helper_at_as_char_pointer(struct bsal_vector *self, int64_t index);

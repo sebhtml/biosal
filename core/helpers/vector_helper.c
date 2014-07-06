@@ -292,3 +292,17 @@ void bsal_vector_helper_swap(struct bsal_vector *self,
     }
 }
 
+float bsal_vector_helper_at_as_float(struct bsal_vector *self, int64_t index)
+{
+    float *bucket;
+
+    bucket = (float *)bsal_vector_at(self, index);
+
+    if (bucket == NULL) {
+        return -1;
+    }
+
+    return *bucket;
+}
+
+

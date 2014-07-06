@@ -102,4 +102,6 @@ int bsal_worker_pool_dequeue_message(struct bsal_worker_pool *pool, struct bsal_
 void bsal_worker_pool_give_message_to_actor(struct bsal_worker_pool *pool, struct bsal_message *message);
 void bsal_worker_pool_migrate(struct bsal_worker_pool *pool, struct bsal_migration *migration);
 
+void bsal_worker_pool_print_efficiency(struct bsal_worker_pool *pool);
+
 #endif
