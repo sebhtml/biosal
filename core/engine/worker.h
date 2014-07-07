@@ -133,5 +133,7 @@ struct bsal_map *bsal_worker_get_actors(struct bsal_worker *worker);
 
 int bsal_worker_get_sum_of_received_actor_messages(struct bsal_worker *self);
 int bsal_worker_get_queued_messages(struct bsal_worker *self);
+int bsal_worker_get_production(struct bsal_worker *worker);
+int bsal_worker_get_producer_count(struct bsal_worker *worker);
 
 #endif

@@ -495,6 +495,8 @@ void bsal_worker_pool_toggle_debug_mode(struct bsal_worker_pool *self)
     self->debug_mode = !self->debug_mode;
 }
 
+#define SCHEDULER_PRECISION 1000000
+#define SCHEDULER_WINDOW 10
 void bsal_worker_pool_balance(struct bsal_worker_pool *pool)
 {
     /*
@@ -502,11 +504,7 @@ void bsal_worker_pool_balance(struct bsal_worker_pool *pool)
      * \see http://en.wikipedia.org/wiki/Burstable_billing
      * \see http://www.init7.net/en/backbone/95-percent-rule
      */
-    int load_percentile_5;
-    /*int load_percentile_25;*/
     int load_percentile_50;
-    /*int load_percentile_75;*/
-    int load_percentile_95;
 
     int i;
     struct bsal_vector loads;
@@ -544,6 +542,19 @@ void bsal_worker_pool_balance(struct bsal_worker_pool *pool)
     int stalled_percentile;
     int burdened_percentile;
 
+    int old_total;
+    int old_load;
+    int new_load;
+    int predicted_new_load;
+    struct bsal_pair *pair_pointer;
+    struct bsal_worker *new_worker;
+    /*int new_total;*/
+    int actor_load;
+
+    int test_stalled_index;
+    int tests;
+    int found_match;
+
     /* Lock all workers first
      */
     for (i = 0; i < pool->workers; i++) {
@@ -565,7 +576,7 @@ void bsal_worker_pool_balance(struct bsal_worker_pool *pool)
 
     for (i = 0; i < pool->workers; i++) {
         worker = bsal_worker_pool_get_worker(pool, i);
-        load_value = bsal_worker_get_scheduling_epoch_load(worker) * 100;
+        load_value = bsal_worker_get_scheduling_epoch_load(worker) * SCHEDULER_PRECISION;
 
 #if 0
         printf("DEBUG LOAD %d %d\n", i, load_value);
@@ -577,14 +588,11 @@ void bsal_worker_pool_balance(struct bsal_worker_pool *pool)
 
     bsal_vector_helper_sort_int(&loads);
 
-    load_percentile_5 = bsal_statistics_get_percentile_int(&loads, 5);
+    stalled_percentile = bsal_statistics_get_percentile_int(&loads, SCHEDULER_WINDOW);
     /*load_percentile_25 = bsal_statistics_get_percentile_int(&loads, 25);*/
     load_percentile_50 = bsal_statistics_get_percentile_int(&loads, 50);
     /*load_percentile_75 = bsal_statistics_get_percentile_int(&loads, 75);*/
-    load_percentile_95 = bsal_statistics_get_percentile_int(&loads, 95);
-
-    stalled_percentile = load_percentile_5;
-    burdened_percentile = load_percentile_95;
+    burdened_percentile = bsal_statistics_get_percentile_int(&loads, 100 - SCHEDULER_WINDOW);
 
     printf("Percentiles for epoch loads: ");
     bsal_statistics_get_print_percentiles_int(&loads);
@@ -682,7 +690,7 @@ void bsal_worker_pool_balance(struct bsal_worker_pool *pool)
         --with_maximum;
 
         candidates = 0;
-        load_value = bsal_worker_get_scheduling_epoch_load(worker) * 100;
+        load_value = bsal_worker_get_scheduling_epoch_load(worker) * SCHEDULER_PRECISION;
 
         remaining_load = load_value;
 
@@ -747,8 +755,10 @@ void bsal_worker_pool_balance(struct bsal_worker_pool *pool)
 
     bsal_vector_helper_sort_int(&actors_to_migrate);
 
+    /*
     printf("Percentiles for production: ");
     bsal_statistics_get_print_percentiles_int(&actors_to_migrate);
+    */
 
     /* Sort them in reverse order.
      */
@@ -758,29 +768,98 @@ void bsal_worker_pool_balance(struct bsal_worker_pool *pool)
 
     while (bsal_vector_iterator_get_next_value(&vector_iterator, &pair)) {
 
-         actor_name = bsal_pair_get_second(&pair);
-         bsal_map_get_value(&pool->actor_affinities, &actor_name, &old_worker);
+        actor_name = bsal_pair_get_second(&pair);
 
-         bsal_vector_get_value(&stalled_workers, stalled_index, &pair);
-         ++stalled_index;
+        actor = bsal_node_get_actor_from_name(pool->node, actor_name);
 
-         if (stalled_index == stalled_count) {
-             stalled_index = 0;
-         }
+        if (actor == NULL) {
+           continue;
+        }
 
-         new_worker_index = bsal_pair_get_second(&pair);
+        messages = bsal_worker_pool_get_actor_production(pool, actor);
+        bsal_map_get_value(&pool->actor_affinities, &actor_name, &old_worker);
+
+        worker = bsal_worker_pool_get_worker(pool, old_worker);
+
+        /* old_total can not be 0 because otherwise the would not
+         * be burdened.
+         */
+        old_total = bsal_worker_get_production(worker);
+        with_messages = bsal_worker_get_producer_count(worker);
+        old_load = bsal_worker_get_scheduling_epoch_load(worker) * SCHEDULER_PRECISION;
+        actor_load = ((0.0 + messages) / old_total) * old_load;
+
+        /* Try to find a stalled worker that can take it.
+         */
+
+        test_stalled_index = stalled_index;
+        tests = 0;
+        predicted_new_load = 0;
+
+        found_match = 0;
+        while (tests < stalled_count) {
+
+            bsal_vector_get_value(&stalled_workers, test_stalled_index, &pair);
+            new_worker_index = bsal_pair_get_second(&pair);
+
+            new_worker = bsal_worker_pool_get_worker(pool, new_worker_index);
+            new_load = bsal_worker_get_scheduling_epoch_load(new_worker) * SCHEDULER_PRECISION;
+        /*new_total = bsal_worker_get_production(new_worker);*/
+
+            predicted_new_load = new_load + actor_load;
+
+            if (predicted_new_load > SCHEDULER_PRECISION /* && with_messages != 2 */) {
+                printf("Scheduler: skipping actor %d, predicted load is %d >= 100\n",
+                           actor_name, predicted_new_load);
+
+                ++tests;
+                ++test_stalled_index;
+
+                if (test_stalled_index == stalled_count) {
+                    test_stalled_index = 0;
+                }
+                continue;
+            }
+
+            /* Otherwise, this stalled worker is fine...
+             */
+            stalled_index = test_stalled_index;
+            found_match = 1;
+
+            break;
+        }
+
+        /* This actor can not be migrated to any stalled worker.
+         */
+        if (!found_match) {
+            continue;
+        }
+
+        /* Otherwise, update the load of the stalled one and go forward with the change.
+         */
+        
+        pair_pointer = (struct bsal_pair *)bsal_vector_at(&stalled_workers, stalled_index);
+
+        bsal_pair_set_first(pair_pointer, predicted_new_load);
+
+        ++stalled_index;
+
+        if (stalled_index == stalled_count) {
+            stalled_index = 0;
+        }
+
 
 #if 0
-         new_worker = bsal_worker_pool_get_worker(pool, new_worker_index);
-         printf(" CANDIDATE: actor %d old worker %d (%d - %d = %d) new worker %d (%d + %d = %d)\n",
-                         actor_name,
-                         old_worker, value, messages, 2new_score,
-                         new_worker_index, new_worker_old_score, messages, new_worker_new_score);
+        new_worker = bsal_worker_pool_get_worker(pool, new_worker_index);
+        printf(" CANDIDATE: actor %d old worker %d (%d - %d = %d) new worker %d (%d + %d = %d)\n",
+                        actor_name,
+                        old_worker, value, messages, 2new_score,
+                        new_worker_index, new_worker_old_score, messages, new_worker_new_score);
 #endif
 
-         bsal_migration_init(&migration, actor_name, old_worker, new_worker_index);
-         bsal_vector_push_back(&migrations, &migration);
-         bsal_migration_destroy(&migration);
+        bsal_migration_init(&migration, actor_name, old_worker, new_worker_index);
+        bsal_vector_push_back(&migrations, &migration);
+        bsal_migration_destroy(&migration);
 
     }
 

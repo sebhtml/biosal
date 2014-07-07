@@ -22,3 +22,13 @@ int bsal_pair_get_second(struct bsal_pair *pair)
 {
     return pair->second;
 }
+
+void bsal_pair_set_first(struct bsal_pair *pair, int value)
+{
+    pair->first = value;
+}
+
+void bsal_pair_set_second(struct bsal_pair *pair, int value)
+{
+    pair->second = value;
+}

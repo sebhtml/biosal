@@ -421,7 +421,6 @@ void bsal_worker_print_actors(struct bsal_worker *worker)
         actor = bsal_node_get_actor_from_name(worker->node, name);
 
         if (actor == NULL) {
-            printf(" [DEAD!/%d]\n", name);
             continue;
         }
 
@@ -593,3 +592,60 @@ void bsal_worker_reset_scheduling_epoch(struct bsal_worker *worker)
 
     worker->scheduling_epoch_used_nanoseconds = 0;
 }
+
+int bsal_worker_get_production(struct bsal_worker *worker)
+{
+    struct bsal_map_iterator iterator;
+    int name;
+    struct bsal_actor *actor;
+    int production;
+
+    production = 0;
+    bsal_map_iterator_init(&iterator, &worker->actors);
+
+    while (bsal_map_iterator_get_next_key_and_value(&iterator, &name, NULL)) {
+
+        actor = bsal_node_get_actor_from_name(worker->node, name);
+
+        if (actor == NULL) {
+            continue;
+        }
+
+        production += bsal_worker_pool_get_actor_production(bsal_node_get_worker_pool(worker->node), actor);
+
+    }
+
+    bsal_map_iterator_destroy(&iterator);
+
+    return production;
+}
+
+int bsal_worker_get_producer_count(struct bsal_worker *worker)
+{
+    struct bsal_map_iterator iterator;
+    int name;
+    struct bsal_actor *actor;
+    int count;
+
+    count = 0;
+    bsal_map_iterator_init(&iterator, &worker->actors);
+
+    while (bsal_map_iterator_get_next_key_and_value(&iterator, &name, NULL)) {
+
+        actor = bsal_node_get_actor_from_name(worker->node, name);
+
+        if (actor == NULL) {
+            continue;
+        }
+
+        if (bsal_worker_pool_get_actor_production(bsal_node_get_worker_pool(worker->node), actor) > 0) {
+            ++count;
+        }
+
+    }
+
+    bsal_map_iterator_destroy(&iterator);
+    return count;
+}
+
+

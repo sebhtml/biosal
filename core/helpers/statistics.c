@@ -71,6 +71,12 @@ int bsal_statistics_get_percentile_int(struct bsal_vector *vector, int p)
 {
     int index;
     int size;
+    int count;
+
+    int other_p;
+    int other_count;
+#if 0
+#endif
 
     size = bsal_vector_size(vector);
 
@@ -78,10 +84,42 @@ int bsal_statistics_get_percentile_int(struct bsal_vector *vector, int p)
         return 0;
     }
 
-    index = ((0.0 + p) / 100 ) * (size - 1);
+    count = ((0.0 + p) / 100 ) * size;
+
+#if 0
+    /*
+    other_count = size;
+    other_count -= count;
+    */
+
+    if (count < other_count) {
+        ++count;
+    }
+#endif
+
+    index = 0;
+    
+    /* make it symmetric: it's logical that the number of
+     * elements with a value <= percentile 5% be the same as the number of
+     * elements with a value >= percentile 95%
+     */
+    if (p < 50) {
+        index = count - 1;
+    } else {
+        /* P = 95, P' = 5 */
+        other_p = 100 - p;
+
+        /* size = 27, other_p = 5, other_count = 1 */
+        other_count = ((0.0 + other_p) / 100 ) * size;
+        index = size - other_count;
+    }
+
+#if 0
+    printf("percentile %d size %d index %d counts: %d %d\n", p, size, index,
+                    count, other_count);
+#endif
 
     /*
-    printf("percentile %d size %d\n", p, size);
     bsal_vector_helper_print_int(vector);
     */
 
@@ -90,7 +128,6 @@ int bsal_statistics_get_percentile_int(struct bsal_vector *vector, int p)
 
 void bsal_statistics_get_print_percentiles_int(struct bsal_vector *vector)
 {
-    int percentile_0;
     int percentile_5;
     int percentile_25;
     int percentile_30;
@@ -100,7 +137,6 @@ void bsal_statistics_get_print_percentiles_int(struct bsal_vector *vector)
     int percentile_70;
     int percentile_75;
     int percentile_95;
-    int percentile_100;
 
     int size;
 
@@ -111,7 +147,6 @@ void bsal_statistics_get_print_percentiles_int(struct bsal_vector *vector)
         return;
     }
 
-    percentile_0 = bsal_statistics_get_percentile_int(vector, 0);
     percentile_5 = bsal_statistics_get_percentile_int(vector, 5);
     percentile_25 = bsal_statistics_get_percentile_int(vector, 25);
     percentile_30 = bsal_statistics_get_percentile_int(vector, 30);
@@ -121,10 +156,8 @@ void bsal_statistics_get_print_percentiles_int(struct bsal_vector *vector)
     percentile_70 = bsal_statistics_get_percentile_int(vector, 70);
     percentile_75 = bsal_statistics_get_percentile_int(vector, 75);
     percentile_95 = bsal_statistics_get_percentile_int(vector, 95);
-    percentile_100 = bsal_statistics_get_percentile_int(vector, 100);
 
-    printf("%d%%: %d, %d%%: %d, %d%%: %d, %d%%: %d, %d%%: %d, %d%%: %d, %d%%: %d, %d%%: %d, %d%%: %d, %d%%: %d, %d%%: %d\n",
-                    0, percentile_0,
+    printf("%d%%: %d, %d%%: %d, %d%%: %d, %d%%: %d, %d%%: %d, %d%%: %d, %d%%: %d, %d%%: %d, %d%%: %d\n",
                     5, percentile_5,
                     25, percentile_25,
                     30, percentile_30,
@@ -133,8 +166,7 @@ void bsal_statistics_get_print_percentiles_int(struct bsal_vector *vector)
                     60, percentile_60,
                     70, percentile_70,
                     75, percentile_75,
-                    95, percentile_95,
-                    100, percentile_100);
+                    95, percentile_95);
 }
 
 float bsal_statistics_get_percentile_float(struct bsal_vector *vector, int p)
@@ -160,7 +192,6 @@ float bsal_statistics_get_percentile_float(struct bsal_vector *vector, int p)
 
 void bsal_statistics_get_print_percentiles_float(struct bsal_vector *vector)
 {
-    float percentile_0;
     float percentile_5;
     float percentile_25;
     float percentile_30;
@@ -170,7 +201,6 @@ void bsal_statistics_get_print_percentiles_float(struct bsal_vector *vector)
     float percentile_70;
     float percentile_75;
     float percentile_95;
-    float percentile_100;
 
     int size;
 
@@ -181,7 +211,6 @@ void bsal_statistics_get_print_percentiles_float(struct bsal_vector *vector)
         return;
     }
 
-    percentile_0 = bsal_statistics_get_percentile_float(vector, 0);
     percentile_5 = bsal_statistics_get_percentile_float(vector, 5);
     percentile_25 = bsal_statistics_get_percentile_float(vector, 25);
     percentile_30 = bsal_statistics_get_percentile_float(vector, 30);
@@ -191,10 +220,8 @@ void bsal_statistics_get_print_percentiles_float(struct bsal_vector *vector)
     percentile_70 = bsal_statistics_get_percentile_float(vector, 70);
     percentile_75 = bsal_statistics_get_percentile_float(vector, 75);
     percentile_95 = bsal_statistics_get_percentile_float(vector, 95);
-    percentile_100 = bsal_statistics_get_percentile_float(vector, 100);
 
-    printf("%d%%: %f, %d%%: %f, %d%%: %f, %d%%: %f, %d%%: %f, %d%%: %f, %d%%: %f, %d%%: %f, %d%%: %f, %d%%: %f, %d%%: %f\n",
-                    0, percentile_0,
+    printf("%d%%: %f, %d%%: %f, %d%%: %f, %d%%: %f, %d%%: %f, %d%%: %f, %d%%: %f, %d%%: %f, %d%%: %f\n",
                     5, percentile_5,
                     25, percentile_25,
                     30, percentile_30,
@@ -203,6 +230,5 @@ void bsal_statistics_get_print_percentiles_float(struct bsal_vector *vector)
                     60, percentile_60,
                     70, percentile_70,
                     75, percentile_75,
-                    95, percentile_95,
-                    100, percentile_100);
+                    95, percentile_95);
 }
