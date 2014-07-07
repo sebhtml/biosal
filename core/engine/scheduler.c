@@ -27,7 +27,7 @@
  */
 #define SCHEDULER_WINDOW 10
 
-#define BSAL_SCHEDULER_WORK_SCHEDULING_WINDOW 8192
+#define BSAL_SCHEDULER_WORK_SCHEDULING_WINDOW 8192 * 4
 
 /*
  * Definitions for scheduling classes
@@ -40,6 +40,8 @@
 #define BSAL_CLASS_HUB_STRING "BSAL_CLASS_HUB"
 #define BSAL_CLASS_BURDENED_STRING "BSAL_CLASS_BURDENED"
 
+/*
+*/
 #define BSAL_SCHEDULER_ENABLE_SYMMETRIC_SCHEDULING
 
 void bsal_scheduler_init(struct bsal_scheduler *scheduler, struct bsal_worker_pool *pool)
@@ -111,17 +113,19 @@ void bsal_scheduler_balance(struct bsal_scheduler *scheduler)
     struct bsal_worker *new_worker;
     /*int new_total;*/
     int actor_load;
-    int script;
 
     int test_stalled_index;
     int tests;
     int found_match;
 
+#ifdef BSAL_SCHEDULER_ENABLE_SYMMETRIC_SCHEDULING
     struct bsal_map symmetric_actor_scripts;
+    int script;
 
     bsal_map_init(&symmetric_actor_scripts, sizeof(int), sizeof(int));
 
     bsal_scheduler_detect_symmetric_scripts(scheduler, &symmetric_actor_scripts);
+#endif
 
     /* Lock all workers first
      */
@@ -271,22 +275,27 @@ void bsal_scheduler_balance(struct bsal_scheduler *scheduler)
             actor = bsal_node_get_actor_from_name(bsal_worker_pool_get_node(scheduler->pool), actor_name);
             messages = bsal_scheduler_get_actor_production(scheduler, actor);
 
+#ifdef BSAL_SCHEDULER_ENABLE_SYMMETRIC_SCHEDULING
             script = bsal_actor_script(actor);
+
 
             /* symmetric actors are migrated elsewhere.
              */
             if (bsal_map_get_value(&symmetric_actor_scripts, &script, NULL)) {
                 continue;
             }
+#endif
 
             /* Simulate the remaining load
              */
             projected_load = remaining_load;
             projected_load -= ((0.0 + messages) / total) * load_value;
 
+#ifdef BSAL_SCHEDULER_DEBUG
             printf(" TESTING actor %d, production was %d, projected_load is %d (- %d * (1 - %d/%d)\n",
                             actor_name, messages, projected_load,
                             load_value, messages, total);
+#endif
 
             /* An actor without any queued messages should not be migrated
              */
@@ -316,8 +325,10 @@ void bsal_scheduler_balance(struct bsal_scheduler *scheduler)
                 bsal_pair_init(&pair, messages, actor_name);
                 bsal_vector_push_back(&actors_to_migrate, &pair);
 
+#ifdef BSAL_SCHEDULER_DEBUG
                 printf("early CANDIDATE for migration: actor %d, worker %d\n",
                                 actor_name, old_worker);
+#endif
             }
         }
         bsal_map_iterator_destroy(&set_iterator);
@@ -385,8 +396,10 @@ void bsal_scheduler_balance(struct bsal_scheduler *scheduler)
             predicted_new_load = new_load + actor_load;
 
             if (predicted_new_load > SCHEDULER_PRECISION /* && with_messages != 2 */) {
+#ifdef BSAL_SCHEDULER_DEBUG
                 printf("Scheduler: skipping actor %d, predicted load is %d >= 100\n",
                            actor_name, predicted_new_load);
+#endif
 
                 ++tests;
                 ++test_stalled_index;
@@ -466,10 +479,12 @@ void bsal_scheduler_balance(struct bsal_scheduler *scheduler)
         bsal_worker_reset_scheduling_epoch(worker);
     }
 
+#ifdef BSAL_SCHEDULER_ENABLE_SYMMETRIC_SCHEDULING
     /* Generate migrations for symmetric actors.
      */
 
     bsal_scheduler_generate_symmetric_migrations(scheduler, &symmetric_actor_scripts, &migrations);
+#endif
 
     /* Actually do the migrations
      */
@@ -492,7 +507,9 @@ void bsal_scheduler_balance(struct bsal_scheduler *scheduler)
         bsal_worker_unlock(worker);
     }
 
+#ifdef BSAL_SCHEDULER_ENABLE_SYMMETRIC_SCHEDULING
     bsal_map_destroy(&symmetric_actor_scripts);
+#endif
 }
 
 void bsal_scheduler_migrate(struct bsal_scheduler *scheduler, struct bsal_migration *migration)
