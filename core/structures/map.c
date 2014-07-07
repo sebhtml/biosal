@@ -188,7 +188,9 @@ int bsal_map_get_value(struct bsal_map *self, void *key, void *value)
     size = bsal_map_get_value_size(self);
 #endif
 
-    memcpy(value, bucket, size);
+    if (value != NULL) {
+        memcpy(value, bucket, size);
+    }
 
     return 1;
 }

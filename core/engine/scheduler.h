@@ -4,6 +4,7 @@
 
 #include <core/structures/map.h>
 
+struct bsal_vector;
 struct bsal_worker_pool;
 struct bsal_message;
 struct bsal_actor;
@@ -33,5 +34,8 @@ void bsal_scheduler_set_actor_worker(struct bsal_scheduler *scheduler, int name,
 
 int bsal_scheduler_select_worker_least_busy(
                 struct bsal_scheduler *scheduler, struct bsal_message *message, int *worker_score);
+void bsal_scheduler_detect_symmetric_scripts(struct bsal_scheduler *scheduler, struct bsal_map *symmetric_actors);
+void bsal_scheduler_generate_symmetric_migrations(struct bsal_scheduler *scheduler, struct bsal_map *symmetric_actor_scripts,
+                struct bsal_vector *migrations);
 
 #endif

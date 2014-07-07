@@ -40,14 +40,14 @@
 #define BSAL_CLASS_HUB_STRING "BSAL_CLASS_HUB"
 #define BSAL_CLASS_BURDENED_STRING "BSAL_CLASS_BURDENED"
 
-
+#define BSAL_SCHEDULER_ENABLE_SYMMETRIC_SCHEDULING
 
 void bsal_scheduler_init(struct bsal_scheduler *scheduler, struct bsal_worker_pool *pool)
 {
     scheduler->pool = pool;
     bsal_map_init(&scheduler->actor_affinities, sizeof(int), sizeof(int));
     bsal_map_init(&scheduler->last_actor_received_messages, sizeof(int), sizeof(int));
-    
+
     scheduler->worker_for_work = 0;
 }
 
@@ -111,10 +111,17 @@ void bsal_scheduler_balance(struct bsal_scheduler *scheduler)
     struct bsal_worker *new_worker;
     /*int new_total;*/
     int actor_load;
+    int script;
 
     int test_stalled_index;
     int tests;
     int found_match;
+
+    struct bsal_map symmetric_actor_scripts;
+
+    bsal_map_init(&symmetric_actor_scripts, sizeof(int), sizeof(int));
+
+    bsal_scheduler_detect_symmetric_scripts(scheduler, &symmetric_actor_scripts);
 
     /* Lock all workers first
      */
@@ -263,6 +270,14 @@ void bsal_scheduler_balance(struct bsal_scheduler *scheduler)
 
             actor = bsal_node_get_actor_from_name(bsal_worker_pool_get_node(scheduler->pool), actor_name);
             messages = bsal_scheduler_get_actor_production(scheduler, actor);
+
+            script = bsal_actor_script(actor);
+
+            /* symmetric actors are migrated elsewhere.
+             */
+            if (bsal_map_get_value(&symmetric_actor_scripts, &script, NULL)) {
+                continue;
+            }
 
             /* Simulate the remaining load
              */
@@ -451,6 +466,11 @@ void bsal_scheduler_balance(struct bsal_scheduler *scheduler)
         bsal_worker_reset_scheduling_epoch(worker);
     }
 
+    /* Generate migrations for symmetric actors.
+     */
+
+    bsal_scheduler_generate_symmetric_migrations(scheduler, &symmetric_actor_scripts, &migrations);
+
     /* Actually do the migrations
      */
     bsal_vector_iterator_init(&vector_iterator, &migrations);
@@ -472,6 +492,7 @@ void bsal_scheduler_balance(struct bsal_scheduler *scheduler)
         bsal_worker_unlock(worker);
     }
 
+    bsal_map_destroy(&symmetric_actor_scripts);
 }
 
 void bsal_scheduler_migrate(struct bsal_scheduler *scheduler, struct bsal_migration *migration)
@@ -665,4 +686,199 @@ int bsal_scheduler_select_worker_least_busy(
 
 #endif
 
+void bsal_scheduler_detect_symmetric_scripts(struct bsal_scheduler *scheduler, struct bsal_map *symmetric_actor_scripts)
+{
+    int i;
+    struct bsal_worker *worker;
+    struct bsal_actor *actor;
+    struct bsal_map_iterator iterator;
+    struct bsal_map *set;
+    int actor_name;
+    struct bsal_node *node;
+    int script;
+    int frequency;
+    struct bsal_map frequencies;
+    int worker_count;
+    int population_per_worker;
+    struct bsal_script *actual_script;
 
+    worker_count = bsal_worker_pool_worker_count(scheduler->pool);
+    bsal_map_init(&frequencies, sizeof(int), sizeof(int));
+
+    node = bsal_worker_pool_get_node(scheduler->pool);
+
+    /* Gather frequencies
+     */
+    for (i = 0; i < worker_count; i++) {
+
+        worker = bsal_worker_pool_get_worker(scheduler->pool, i);
+
+        set = bsal_worker_get_actors(worker);
+
+        bsal_map_iterator_init(&iterator, set);
+
+        while (bsal_map_iterator_get_next_key_and_value(&iterator, &actor_name, NULL)) {
+            actor = bsal_node_get_actor_from_name(node, actor_name);
+
+            script = bsal_actor_script(actor);
+
+            frequency = 0;
+
+            if (!bsal_map_get_value(&frequencies, &script, &frequency)) {
+                bsal_map_add_value(&frequencies, &script, &frequency);
+            }
+
+            ++frequency;
+
+            bsal_map_update_value(&frequencies, &script, &frequency);
+        }
+
+        bsal_map_iterator_destroy(&iterator);
+    }
+
+    /*
+     * Detect symmetric scripts
+     */
+    bsal_map_iterator_init(&iterator, &frequencies);
+
+    while (bsal_map_iterator_get_next_key_and_value(&iterator, &script, &frequency)) {
+
+        actual_script = bsal_node_find_script(node, script);
+
+        printf("SCHEDULER test symmetry %s %d\n",
+                        bsal_script_description(actual_script),
+                        frequency);
+
+        if (frequency % worker_count == 0) {
+            population_per_worker = frequency / worker_count;
+
+            bsal_map_add_value(symmetric_actor_scripts, &script, &population_per_worker);
+
+            printf("SCHEDULER: script %s is symmetric, worker_count: %d, population_per_worker: %d\n",
+                            bsal_script_description(actual_script),
+                            worker_count,
+                            population_per_worker);
+        }
+    }
+
+    bsal_map_iterator_destroy(&iterator);
+
+    bsal_map_destroy(&frequencies);
+}
+
+void bsal_scheduler_generate_symmetric_migrations(struct bsal_scheduler *scheduler, struct bsal_map *symmetric_actor_scripts,
+                struct bsal_vector *migrations)
+{
+    int i;
+    int worker_count;
+    struct bsal_worker *worker;
+    struct bsal_map *set;
+    struct bsal_map_iterator iterator;
+    struct bsal_migration migration;
+    struct bsal_map script_current_worker;
+    struct bsal_map script_current_worker_actor_count;
+    int frequency;
+    int current_worker;
+    int current_worker_actor_count;
+    int old_worker;
+    struct bsal_script *actual_script;
+    struct bsal_node *node;
+    int actor_name;
+    int script;
+    int new_worker;
+    struct bsal_actor *actor;
+    int enabled;
+
+    /* Gather symmetric actors:
+     */
+
+#ifdef BSAL_SCHEDULER_ENABLE_SYMMETRIC_SCHEDULING
+    enabled = 1;
+#else
+    enabled = 0;
+#endif
+
+    bsal_map_init(&script_current_worker, sizeof(int), sizeof(int));
+    bsal_map_init(&script_current_worker_actor_count, sizeof(int), sizeof(int));
+
+    node = bsal_worker_pool_get_node(scheduler->pool);
+    worker_count = bsal_worker_pool_worker_count(scheduler->pool);
+
+    for (i = 0; i < worker_count; i++) {
+
+        worker = bsal_worker_pool_get_worker(scheduler->pool, i);
+
+        set = bsal_worker_get_actors(worker);
+
+        bsal_map_iterator_init(&iterator, set);
+
+        while (bsal_map_iterator_get_next_key_and_value(&iterator, &actor_name, NULL)) {
+            actor = bsal_node_get_actor_from_name(node, actor_name);
+
+            if (actor == NULL) {
+                continue;
+            }
+
+            script = bsal_actor_script(actor);
+
+            /*
+             * Check if the actor is symmetric
+             */
+            if (bsal_map_get_value(symmetric_actor_scripts, &script, &frequency)) {
+
+                current_worker = 0;
+                if (!bsal_map_get_value(&script_current_worker, &script, &current_worker)) {
+                    bsal_map_add_value(&script_current_worker, &script, &current_worker);
+                }
+                current_worker_actor_count = 0;
+                if (!bsal_map_get_value(&script_current_worker_actor_count, &script, &current_worker_actor_count)) {
+                    bsal_map_add_value(&script_current_worker_actor_count, &script, &current_worker_actor_count);
+                }
+
+                /*
+                 * Emit migration instruction
+                 */
+
+                old_worker = bsal_scheduler_get_actor_worker(scheduler, actor_name);
+                new_worker = current_worker;
+                actual_script = bsal_node_find_script(node, script);
+
+                if (enabled && old_worker != new_worker) {
+                    bsal_migration_init(&migration, actor_name, old_worker, new_worker);
+                    bsal_vector_push_back(migrations, &migration);
+                    bsal_migration_destroy(&migration);
+
+                    printf("[EMIT] ");
+                } else {
+                    printf("[MOCK] ");
+                }
+
+                printf("SCHEDULER -> symmetric placement... %s/%d scheduled for execution on worker/%d of node/%d\n",
+                                bsal_script_description(actual_script),
+                                actor_name,
+                                new_worker,
+                                bsal_node_name(node));
+
+                ++current_worker_actor_count;
+                bsal_map_update_value(&script_current_worker_actor_count, &script, &current_worker_actor_count);
+
+                /* The current worker is full.
+                 * Increment the current worker and set the
+                 * worker actor count to 0.
+                 */
+                if (current_worker_actor_count == frequency) {
+                    ++current_worker;
+                    bsal_map_update_value(&script_current_worker, &script, &current_worker);
+                    current_worker_actor_count = 0;
+                    bsal_map_update_value(&script_current_worker_actor_count, &script, &current_worker_actor_count);
+                }
+            }
+
+        }
+
+        bsal_map_iterator_destroy(&iterator);
+    }
+
+    bsal_map_destroy(&script_current_worker);
+    bsal_map_destroy(&script_current_worker_actor_count);
+}
