@@ -1383,3 +1383,8 @@ void bsal_node_reset_actor_counters(struct bsal_node *node)
     }
     bsal_dynamic_hash_table_iterator_destroy(&iterator);
 }
+
+int64_t bsal_node_get_counter(struct bsal_node *node, int counter)
+{
+    return bsal_counter_get(&node->counter, counter);
+}

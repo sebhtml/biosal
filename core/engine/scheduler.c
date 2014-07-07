@@ -16,6 +16,8 @@
 #include <core/structures/map.h>
 #include <core/structures/map_iterator.h>
 
+#include <core/system/timer.h>
+
 #include <stdio.h>
 
 /* Parameters for the scheduler
@@ -51,6 +53,9 @@ void bsal_scheduler_init(struct bsal_scheduler *scheduler, struct bsal_worker_po
     bsal_map_init(&scheduler->last_actor_received_messages, sizeof(int), sizeof(int));
 
     scheduler->worker_for_work = 0;
+    scheduler->last_migrations = 0;
+    scheduler->last_killed_actors = -1;
+    scheduler->last_spawned_actors = -1;
 }
 
 void bsal_scheduler_destroy(struct bsal_scheduler *scheduler)
@@ -68,6 +73,7 @@ void bsal_scheduler_balance(struct bsal_scheduler *scheduler)
      * \see http://www.init7.net/en/backbone/95-percent-rule
      */
     int load_percentile_50;
+    struct bsal_timer timer;
 
     int i;
     struct bsal_vector loads;
@@ -75,6 +81,7 @@ void bsal_scheduler_balance(struct bsal_scheduler *scheduler)
     struct bsal_vector burdened_workers;
     struct bsal_vector stalled_workers;
     struct bsal_worker *worker;
+    struct bsal_node *node;
 
     /*struct bsal_set *set;*/
     struct bsal_pair pair;
@@ -117,11 +124,71 @@ void bsal_scheduler_balance(struct bsal_scheduler *scheduler)
     int test_stalled_index;
     int tests;
     int found_match;
+    int spawned_actors;
+    int killed_actors;
+    int perfect;
 
 #ifdef BSAL_SCHEDULER_ENABLE_SYMMETRIC_SCHEDULING
     struct bsal_map symmetric_actor_scripts;
     int script;
+#endif
 
+    node = bsal_worker_pool_get_node(scheduler->pool);
+
+    spawned_actors = bsal_node_get_counter(node, BSAL_COUNTER_SPAWNED_ACTORS);
+
+    /* There is nothing to balance...
+     */
+    if (spawned_actors == 0) {
+        return;
+    }
+
+    killed_actors = bsal_node_get_counter(node, BSAL_COUNTER_KILLED_ACTORS);
+
+    /*
+     * The system can probably not be balanced to get in
+     * a better shape anyway.
+     */
+    if (spawned_actors == scheduler->last_spawned_actors
+                    && killed_actors == scheduler->last_killed_actors
+                    && scheduler->last_migrations == 0) {
+
+        printf("SCHEDULER: balance can not be improved because nothing changed.\n");
+        return;
+    }
+
+    /* Check if we have perfection
+     */
+
+    perfect = 1;
+    for (i = 0; i < bsal_worker_pool_worker_count(scheduler->pool); i++) {
+        worker = bsal_worker_pool_get_worker(scheduler->pool, i);
+
+        load_value = bsal_worker_get_epoch_load(worker) * 100;
+
+        if (load_value != 100) {
+            perfect = 0;
+            break;
+        }
+    }
+
+    if (perfect) {
+        printf("SCHEDULER: perfect balance can not be improved.\n");
+        return;
+    }
+
+    /* update counters
+     */
+    scheduler->last_spawned_actors = spawned_actors;
+    scheduler->last_killed_actors = killed_actors;
+
+    /* Otherwise, try to balance things
+     */
+    bsal_timer_init(&timer);
+
+    bsal_timer_start(&timer);
+
+#ifdef BSAL_SCHEDULER_ENABLE_SYMMETRIC_SCHEDULING
     bsal_map_init(&symmetric_actor_scripts, sizeof(int), sizeof(int));
 
     bsal_scheduler_detect_symmetric_scripts(scheduler, &symmetric_actor_scripts);
@@ -340,9 +407,9 @@ void bsal_scheduler_balance(struct bsal_scheduler *scheduler)
     /* Sort the candidates
      */
 
+    /*
     bsal_vector_helper_sort_int(&actors_to_migrate);
 
-    /*
     printf("Percentiles for production: ");
     bsal_statistics_get_print_percentiles_int(&actors_to_migrate);
     */
@@ -353,6 +420,9 @@ void bsal_scheduler_balance(struct bsal_scheduler *scheduler)
 
     bsal_vector_iterator_init(&vector_iterator, &actors_to_migrate);
 
+    /* For each highly active actor,
+     * try to match it with a stalled worker
+     */
     while (bsal_vector_iterator_get_next_value(&vector_iterator, &pair)) {
 
         actor_name = bsal_pair_get_second(&pair);
@@ -497,6 +567,8 @@ void bsal_scheduler_balance(struct bsal_scheduler *scheduler)
 
     bsal_vector_iterator_destroy(&vector_iterator);
 
+    scheduler->last_migrations = bsal_vector_size(&migrations);
+
     bsal_vector_destroy(&migrations);
 
     /* Unlock all workers
@@ -510,6 +582,12 @@ void bsal_scheduler_balance(struct bsal_scheduler *scheduler)
 #ifdef BSAL_SCHEDULER_ENABLE_SYMMETRIC_SCHEDULING
     bsal_map_destroy(&symmetric_actor_scripts);
 #endif
+
+    bsal_timer_stop(&timer);
+
+    printf("SCHEDULER: elapsed time for balancing: %d us, %d migrations performed\n",
+                    (int)(bsal_timer_get_elapsed_nanoseconds(&timer) / 1000),
+                    scheduler->last_migrations);
 }
 
 void bsal_scheduler_migrate(struct bsal_scheduler *scheduler, struct bsal_migration *migration)

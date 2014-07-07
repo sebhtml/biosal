@@ -82,10 +82,10 @@ struct bsal_worker {
 
     uint64_t loop_start_in_nanoseconds;
     uint64_t loop_used_nanoseconds;
+    uint64_t loop_end_in_nanoseconds;
 
     uint64_t scheduling_epoch_start_in_nanoseconds;
     uint64_t scheduling_epoch_used_nanoseconds;
-    float loop_load;
 
     struct bsal_memory_pool ephemeral_memory;
 };

@@ -44,7 +44,7 @@ struct bsal_worker_pool {
     int last_warning;
     int last_scheduling_warning;
 
-    int received_works;
+    time_t last_balancing;
     int balance_period;
 
 #if 0

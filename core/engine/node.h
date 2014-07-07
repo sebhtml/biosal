@@ -185,4 +185,6 @@ void bsal_node_set_affinity(struct bsal_node *node);
 
 void bsal_node_reset_actor_counters(struct bsal_node *node);
 
+int64_t bsal_node_get_counter(struct bsal_node *node, int counter);
+
 #endif

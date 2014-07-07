@@ -56,17 +56,8 @@ void bsal_worker_init(struct bsal_worker *worker, int name, struct bsal_node *no
     worker->debug = 0;
     worker->busy = 0;
 
-    worker->last_report = time(NULL);
-
-    worker->epoch_start_in_nanoseconds = bsal_timer_get_nanoseconds();
     worker->epoch_used_nanoseconds = 0;
-    worker->epoch_load = 0;
-
-    worker->loop_start_in_nanoseconds = worker->epoch_start_in_nanoseconds;
     worker->loop_used_nanoseconds = 0;
-    worker->loop_load = 0;
-
-    worker->scheduling_epoch_start_in_nanoseconds = worker->epoch_start_in_nanoseconds;
     worker->scheduling_epoch_used_nanoseconds = 0;
 
     worker->start = 0;
@@ -170,6 +161,11 @@ void bsal_worker_start(struct bsal_worker *worker, int processor)
     bsal_thread_init(&worker->thread, bsal_worker_main, worker);
     bsal_thread_set_affinity(&worker->thread, processor);
     bsal_thread_start(&worker->thread);
+
+    worker->last_report = time(NULL);
+    worker->epoch_start_in_nanoseconds = bsal_timer_get_nanoseconds();
+    worker->loop_start_in_nanoseconds = worker->epoch_start_in_nanoseconds;
+    worker->scheduling_epoch_start_in_nanoseconds = worker->epoch_start_in_nanoseconds;
 }
 
 void *bsal_worker_main(void *worker1)
@@ -217,6 +213,8 @@ void bsal_worker_stop(struct bsal_worker *worker)
     worker->dead = 1;
 
     bsal_thread_join(&worker->thread);
+
+    worker->loop_start_in_nanoseconds = bsal_timer_get_nanoseconds();
 }
 
 int bsal_worker_is_busy(struct bsal_worker *self)
@@ -260,7 +258,22 @@ float bsal_worker_get_epoch_load(struct bsal_worker *self)
 
 float bsal_worker_get_loop_load(struct bsal_worker *self)
 {
-    return self->loop_load;
+    float loop_load;
+    uint64_t elapsed_from_start;
+    uint64_t current_nanoseconds;
+
+    current_nanoseconds = self->loop_end_in_nanoseconds;
+    elapsed_from_start = current_nanoseconds - self->loop_start_in_nanoseconds;
+
+    loop_load = (0.0 + self->loop_used_nanoseconds) / elapsed_from_start;
+
+    /* Avoid negative zeros
+     */
+    if (loop_load == 0) {
+        loop_load = 0;
+    }
+
+    return loop_load;
 }
 
 struct bsal_memory_pool *bsal_worker_get_ephemeral_memory(struct bsal_worker *worker)

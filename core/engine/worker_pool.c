@@ -90,9 +90,9 @@ void bsal_worker_pool_init(struct bsal_worker_pool *pool, int workers,
         bsal_set_init(set, sizeof(int));
     }
 
-    pool->received_works = 0;
+    pool->last_balancing = pool->starting_time;
 
-    pool->balance_period = pool->workers * BSAL_SCHEDULER_REDUCTIONS_PER_WORKER;
+    pool->balance_period = BSAL_SCHEDULER_PERIOD_IN_SECONDS;
 }
 
 void bsal_worker_pool_destroy(struct bsal_worker_pool *pool)
@@ -228,6 +228,7 @@ int bsal_worker_pool_enqueue_message(struct bsal_worker_pool *pool, struct bsal_
     struct bsal_worker *worker;
     int name;
     int destination;
+    time_t current_time;
 
     destination = bsal_message_destination(message);
 
@@ -239,12 +240,15 @@ int bsal_worker_pool_enqueue_message(struct bsal_worker_pool *pool, struct bsal_
 #ifdef BSAL_WORKER_POOL_BALANCE
     /* balance the pool regularly
      */
-    if (pool->received_works % pool->balance_period == 0) {
+
+    current_time = time(NULL);
+
+    if (current_time - pool->last_balancing >= pool->balance_period) {
         bsal_scheduler_balance(&pool->scheduler);
+
+        pool->last_balancing = current_time;
     }
 #endif
-
-    pool->received_works++;
 
     name = destination;
     actor = bsal_node_get_actor_from_name(pool->node, name);
@@ -366,7 +370,7 @@ void bsal_worker_pool_print_load(struct bsal_worker_pool *self, int type)
         offset += sprintf(buffer + offset, " %.2f",
                         selected_load);
 
-        sum += epoch_load;
+        sum += selected_load;
 
         ++i;
     }

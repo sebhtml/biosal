@@ -10,7 +10,7 @@ struct bsal_message;
 struct bsal_actor;
 struct bsal_migration;
 
-#define BSAL_SCHEDULER_REDUCTIONS_PER_WORKER 1024
+#define BSAL_SCHEDULER_PERIOD_IN_SECONDS 30
 
 struct bsal_scheduler {
     struct bsal_worker_pool *pool;
@@ -19,6 +19,9 @@ struct bsal_scheduler {
 
     int worker_for_work;
 
+    int last_migrations;
+    int last_spawned_actors;
+    int last_killed_actors;
 };
 
 void bsal_scheduler_init(struct bsal_scheduler *scheduler, struct bsal_worker_pool *pool);
