@@ -98,7 +98,7 @@ int bsal_statistics_get_percentile_int(struct bsal_vector *vector, int p)
 #endif
 
     index = 0;
-    
+
     /* make it symmetric: it's logical that the number of
      * elements with a value <= percentile 5% be the same as the number of
      * elements with a value >= percentile 95%

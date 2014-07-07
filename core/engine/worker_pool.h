@@ -4,6 +4,8 @@
 
 #include "worker.h"
 
+#include "scheduler.h"
+
 #include <core/structures/ring_queue.h>
 #include <core/structures/vector.h>
 
@@ -19,10 +21,9 @@ struct bsal_migration;
 
 struct bsal_worker_pool {
 
-    struct bsal_map actor_affinities;
-    struct bsal_vector worker_actors;
+    struct bsal_scheduler scheduler;
 
-    struct bsal_map last_actor_received_messages;
+    struct bsal_vector worker_actors;
 
     struct bsal_ring_queue scheduled_actor_queue_buffer;
     struct bsal_ring_queue inbound_message_queue_buffer;
@@ -96,16 +97,12 @@ void bsal_worker_pool_toggle_debug_mode(struct bsal_worker_pool *self);
 void bsal_worker_pool_set_cached_value(struct bsal_worker_pool *self, int index, int value);
 int bsal_worker_pool_get_cached_value(struct bsal_worker_pool *self, int index);
 
-void bsal_worker_pool_balance(struct bsal_worker_pool *pool);
-
 int bsal_worker_pool_enqueue_message(struct bsal_worker_pool *pool, struct bsal_message *message);
 int bsal_worker_pool_dequeue_message(struct bsal_worker_pool *pool, struct bsal_message *message);
 
-void bsal_worker_pool_give_message_to_actor(struct bsal_worker_pool *pool, struct bsal_message *message);
-void bsal_worker_pool_migrate(struct bsal_worker_pool *pool, struct bsal_migration *migration);
-
 void bsal_worker_pool_print_efficiency(struct bsal_worker_pool *pool);
-int bsal_worker_pool_get_actor_production(struct bsal_worker_pool *pool, struct bsal_actor *actor);
-void bsal_worker_pool_update_actor_production(struct bsal_worker_pool *pool, struct bsal_actor *actor);
+
+struct bsal_node *bsal_worker_pool_get_node(struct bsal_worker_pool *pool);
+void bsal_worker_pool_give_message_to_actor(struct bsal_worker_pool *pool, struct bsal_message *message);
 
 #endif

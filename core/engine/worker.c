@@ -3,6 +3,7 @@
 
 #include "message.h"
 #include "node.h"
+#include "scheduler.h"
 
 #include <core/structures/map.h>
 #include <core/structures/vector.h>
@@ -393,7 +394,7 @@ int bsal_worker_dequeue_message(struct bsal_worker *worker, struct bsal_message 
     return bsal_fast_ring_pop_from_consumer(&worker->outbound_message_queue, message);
 }
 
-void bsal_worker_print_actors(struct bsal_worker *worker)
+void bsal_worker_print_actors(struct bsal_worker *worker, struct bsal_scheduler *scheduler)
 {
     struct bsal_map_iterator iterator;
     int name;
@@ -428,7 +429,7 @@ void bsal_worker_print_actors(struct bsal_worker *worker)
         received = bsal_actor_get_sum_of_received_messages(actor);
         producers = bsal_map_size(bsal_actor_get_received_messages(actor));
         consumers = bsal_map_size(bsal_actor_get_sent_messages(actor));
-        difference = bsal_worker_pool_get_actor_production(bsal_node_get_worker_pool(worker->node), actor);
+        difference = bsal_scheduler_get_actor_production(scheduler, actor);
 
         printf("  [%s/%d] mailbox: %d received: %d (+%d) producers: %d consumers: %d\n",
                         bsal_actor_get_description(actor),
@@ -593,7 +594,7 @@ void bsal_worker_reset_scheduling_epoch(struct bsal_worker *worker)
     worker->scheduling_epoch_used_nanoseconds = 0;
 }
 
-int bsal_worker_get_production(struct bsal_worker *worker)
+int bsal_worker_get_production(struct bsal_worker *worker, struct bsal_scheduler *scheduler)
 {
     struct bsal_map_iterator iterator;
     int name;
@@ -611,7 +612,7 @@ int bsal_worker_get_production(struct bsal_worker *worker)
             continue;
         }
 
-        production += bsal_worker_pool_get_actor_production(bsal_node_get_worker_pool(worker->node), actor);
+        production += bsal_scheduler_get_actor_production(scheduler, actor);
 
     }
 
@@ -620,7 +621,7 @@ int bsal_worker_get_production(struct bsal_worker *worker)
     return production;
 }
 
-int bsal_worker_get_producer_count(struct bsal_worker *worker)
+int bsal_worker_get_producer_count(struct bsal_worker *worker, struct bsal_scheduler *scheduler)
 {
     struct bsal_map_iterator iterator;
     int name;
@@ -638,7 +639,7 @@ int bsal_worker_get_producer_count(struct bsal_worker *worker)
             continue;
         }
 
-        if (bsal_worker_pool_get_actor_production(bsal_node_get_worker_pool(worker->node), actor) > 0) {
+        if (bsal_scheduler_get_actor_production(scheduler, actor) > 0) {
             ++count;
         }
 
