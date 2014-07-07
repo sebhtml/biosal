@@ -30,14 +30,14 @@
 #define BSAL_DNA_CODEC_USE_TWO_BIT_ENCODING_DEFAULT
 
 /*
- * use block encoder (faster)
- */
+ * use block encoder (faster or not ?)
 #define BSAL_DNA_CODEC_USE_TWO_BIT_BLOCK_ENCODER
+ */
 
 /*
- * use block decoder (faster)
- */
+ * use block decoder (faster or not ?)
 #define BSAL_DNA_CODEC_USE_TWO_BIT_BLOCK_DECODER
+ */
 
 /*
 */
@@ -53,9 +53,7 @@ void bsal_dna_codec_init(struct bsal_dna_codec *self)
     bsal_map_init(&self->encoding_lookup_table, self->block_length, 1);
     bsal_map_init(&self->decoding_lookup_table, 1, self->block_length);
 
-#ifdef BSAL_DNA_CODEC_USE_TWO_BIT_BLOCK_ENCODER
     bsal_dna_codec_generate_blocks(self);
-#endif
 
 #ifdef BSAL_DNA_CODEC_FORCE_TWO_BIT_ENCODING
     bsal_dna_codec_enable_two_bit_encoding(self);
@@ -155,7 +153,12 @@ void bsal_dna_codec_encode(struct bsal_dna_codec *self,
                 int length_in_nucleotides, char *dna_sequence, void *encoded_sequence)
 {
     if (self->use_two_bit_encoding) {
+
+#ifdef BSAL_DNA_CODEC_USE_TWO_BIT_BLOCK_ENCODER
         bsal_dna_codec_encode_with_blocks(self, length_in_nucleotides, dna_sequence, encoded_sequence);
+#else
+        bsal_dna_codec_encode_default(self, length_in_nucleotides, dna_sequence, encoded_sequence);
+#endif
     } else {
         strcpy(encoded_sequence, dna_sequence);
     }
@@ -246,7 +249,12 @@ void bsal_dna_codec_decode(struct bsal_dna_codec *codec,
                 int length_in_nucleotides, void *encoded_sequence, char *dna_sequence)
 {
     if (codec->use_two_bit_encoding) {
+#ifdef BSAL_DNA_CODEC_USE_TWO_BIT_BLOCK_DECODER
         bsal_dna_codec_decode_with_blocks(codec, length_in_nucleotides, encoded_sequence, dna_sequence);
+#else
+        bsal_dna_codec_decode_default(codec, length_in_nucleotides, encoded_sequence, dna_sequence);
+
+#endif
     } else {
         strcpy(dna_sequence, encoded_sequence);
     }
