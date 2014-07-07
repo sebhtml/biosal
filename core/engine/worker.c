@@ -214,7 +214,7 @@ void bsal_worker_stop(struct bsal_worker *worker)
 
     bsal_thread_join(&worker->thread);
 
-    worker->loop_start_in_nanoseconds = bsal_timer_get_nanoseconds();
+    worker->loop_end_in_nanoseconds = bsal_timer_get_nanoseconds();
 }
 
 int bsal_worker_is_busy(struct bsal_worker *self)

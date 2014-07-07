@@ -607,15 +607,16 @@ void bsal_node_run(struct bsal_node *node)
 
     bsal_node_run_loop(node);
 
-    if (node->print_load) {
-        bsal_worker_pool_print_load(&node->worker_pool, BSAL_WORKER_POOL_LOAD_LOOP);
-    }
 #ifdef BSAL_NODE_DEBUG
     printf("BSAL_NODE_DEBUG after loop in bsal_node_run\n");
 #endif
 
     if (node->workers_in_threads) {
         bsal_worker_pool_stop(&node->worker_pool);
+    }
+
+    if (node->print_load) {
+        bsal_worker_pool_print_load(&node->worker_pool, BSAL_WORKER_POOL_LOAD_LOOP);
     }
 
     if (node->send_in_thread) {
