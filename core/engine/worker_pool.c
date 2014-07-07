@@ -31,12 +31,10 @@
 #define BSAL_WORKER_POOL_PUSH_WORK_ON_SAME_WORKER
 #define BSAL_WORKER_POOL_FORCE_LAST_WORKER 1
 #define BSAL_WORKER_POOL_USE_LEAST_BUSY
-#define BSAL_WORKER_POOL_WORK_SCHEDULING_WINDOW 8192
 
 /*
 */
 #define BSAL_WORKER_POOL_BALANCE
-#define BSAL_BALANCER_REDUCTIONS_PER_WORKER 1024
 
 void bsal_worker_pool_init(struct bsal_worker_pool *pool, int workers,
                 struct bsal_node *node)
@@ -64,7 +62,6 @@ void bsal_worker_pool_init(struct bsal_worker_pool *pool, int workers,
     if (pool->workers >= 1) {
         pool->worker_for_run = 0;
         pool->worker_for_message = 0;
-        pool->worker_for_work = 0;
     } else {
         printf("Error: the number of workers must be at least 1.\n");
         exit(1);
@@ -95,7 +92,7 @@ void bsal_worker_pool_init(struct bsal_worker_pool *pool, int workers,
 
     pool->received_works = 0;
 
-    pool->balance_period = pool->workers * BSAL_BALANCER_REDUCTIONS_PER_WORKER;
+    pool->balance_period = pool->workers * BSAL_SCHEDULER_REDUCTIONS_PER_WORKER;
 }
 
 void bsal_worker_pool_destroy(struct bsal_worker_pool *pool)
@@ -212,103 +209,6 @@ void bsal_worker_pool_stop(struct bsal_worker_pool *pool)
         bsal_worker_stop(bsal_worker_pool_get_worker(pool, i));
     }
 }
-
-#ifdef BSAL_WORKER_HAS_OWN_QUEUES
-int bsal_worker_pool_select_worker_least_busy(
-                struct bsal_worker_pool *self, struct bsal_message *message, int *worker_score)
-{
-    int to_check;
-    int score;
-    int best_score;
-    struct bsal_worker *worker;
-    struct bsal_worker *best_worker;
-    int selected_worker;
-
-#if 0
-    int last_worker_score;
-#endif
-
-#ifdef BSAL_WORKER_DEBUG
-    int tag;
-    int destination;
-    struct bsal_message *message;
-#endif
-
-    best_worker = NULL;
-    best_score = 99;
-
-    to_check = BSAL_WORKER_POOL_WORK_SCHEDULING_WINDOW;
-
-    while (to_check--) {
-
-        /*
-         * get the worker to test for this iteration.
-         */
-        worker = bsal_worker_pool_get_worker(self, self->worker_for_work);
-
-        score = bsal_worker_get_queued_messages(worker);
-
-#ifdef BSAL_WORKER_POOL_DEBUG_ISSUE_334
-        if (score >= BSAL_WORKER_WARNING_THRESHOLD
-                        && (self->last_scheduling_warning == 0
-                             || score >= self->last_scheduling_warning + BSAL_WORKER_WARNING_THRESHOLD_STRIDE)) {
-            printf("Warning: node %d worker %d has a scheduling score of %d\n",
-                            bsal_node_name(self->node),
-                            self->worker_for_work, score);
-
-            self->last_scheduling_warning = score;
-        }
-#endif
-
-        /* if the worker is not busy and it has no work to do,
-         * select it right away...
-         */
-        if (score == 0) {
-            best_worker = worker;
-            best_score = 0;
-            break;
-        }
-
-        /* Otherwise, test the worker
-         */
-        if (best_worker == NULL || score < best_score) {
-            best_worker = worker;
-            best_score = score;
-        }
-
-        /*
-         * assign the next worker
-         */
-        self->worker_for_work = bsal_worker_pool_next_worker(self, self->worker_for_work);
-    }
-
-#ifdef BSAL_WORKER_POOL_DEBUG
-    message = bsal_work_message(work);
-    tag = bsal_message_tag(message);
-    destination = bsal_message_destination(message);
-
-    if (tag == BSAL_ACTOR_ASK_TO_STOP) {
-        printf("DEBUG dispatching BSAL_ACTOR_ASK_TO_STOP for actor %d to worker %d\n",
-                        destination, *start);
-    }
-
-
-#endif
-
-    selected_worker = self->worker_for_work;
-
-    /*
-     * assign the next worker
-     */
-    self->worker_for_work = bsal_worker_pool_next_worker(self, self->worker_for_work);
-
-    *worker_score = best_score;
-    /* This is a best effort algorithm
-     */
-    return selected_worker;
-}
-
-#endif
 
 struct bsal_worker *bsal_worker_pool_select_worker_for_run(struct bsal_worker_pool *pool)
 {
@@ -569,7 +469,7 @@ void bsal_worker_pool_give_message_to_actor(struct bsal_worker_pool *pool, struc
             */
             /* assign this actor to the least busy actor
              */
-            worker_index = bsal_worker_pool_select_worker_least_busy(pool, message, &score);
+            worker_index = bsal_scheduler_select_worker_least_busy(&pool->scheduler, message, &score);
 
             bsal_scheduler_set_actor_worker(&pool->scheduler, name, worker_index);
             set = (struct bsal_set *)bsal_vector_at(&pool->worker_actors, worker_index);

@@ -27,6 +27,7 @@
  */
 #define SCHEDULER_WINDOW 10
 
+#define BSAL_SCHEDULER_WORK_SCHEDULING_WINDOW 8192
 
 /*
  * Definitions for scheduling classes
@@ -46,6 +47,8 @@ void bsal_scheduler_init(struct bsal_scheduler *scheduler, struct bsal_worker_po
     scheduler->pool = pool;
     bsal_map_init(&scheduler->actor_affinities, sizeof(int), sizeof(int));
     bsal_map_init(&scheduler->last_actor_received_messages, sizeof(int), sizeof(int));
+    
+    scheduler->worker_for_work = 0;
 }
 
 void bsal_scheduler_destroy(struct bsal_scheduler *scheduler)
@@ -564,3 +567,102 @@ void bsal_scheduler_set_actor_worker(struct bsal_scheduler *scheduler, int name,
 {
     bsal_map_add_value(&scheduler->actor_affinities, &name, &worker_index);
 }
+
+#ifdef BSAL_WORKER_HAS_OWN_QUEUES
+int bsal_scheduler_select_worker_least_busy(
+                struct bsal_scheduler *scheduler, struct bsal_message *message, int *worker_score)
+{
+    int to_check;
+    int score;
+    int best_score;
+    struct bsal_worker *worker;
+    struct bsal_worker *best_worker;
+    int selected_worker;
+
+#if 0
+    int last_worker_score;
+#endif
+
+#ifdef BSAL_WORKER_DEBUG
+    int tag;
+    int destination;
+    struct bsal_message *message;
+#endif
+
+    best_worker = NULL;
+    best_score = 99;
+
+    to_check = BSAL_SCHEDULER_WORK_SCHEDULING_WINDOW;
+
+    while (to_check--) {
+
+        /*
+         * get the worker to test for this iteration.
+         */
+        worker = bsal_worker_pool_get_worker(scheduler->pool, scheduler->worker_for_work);
+
+        score = bsal_worker_get_queued_messages(worker);
+
+#ifdef BSAL_WORKER_POOL_DEBUG_ISSUE_334
+        if (score >= BSAL_WORKER_WARNING_THRESHOLD
+                        && (self->last_scheduling_warning == 0
+                             || score >= self->last_scheduling_warning + BSAL_WORKER_WARNING_THRESHOLD_STRIDE)) {
+            printf("Warning: node %d worker %d has a scheduling score of %d\n",
+                            bsal_node_name(bsal_worker_pool_get_node(scheduler->pool)),
+                            scheduler->worker_for_work, score);
+
+            self->last_scheduling_warning = score;
+        }
+#endif
+
+        /* if the worker is not busy and it has no work to do,
+         * select it right away...
+         */
+        if (score == 0) {
+            best_worker = worker;
+            best_score = 0;
+            break;
+        }
+
+        /* Otherwise, test the worker
+         */
+        if (best_worker == NULL || score < best_score) {
+            best_worker = worker;
+            best_score = score;
+        }
+
+        /*
+         * assign the next worker
+         */
+        scheduler->worker_for_work = bsal_worker_pool_next_worker(scheduler->pool, scheduler->worker_for_work);
+    }
+
+#ifdef BSAL_WORKER_POOL_DEBUG
+    message = bsal_work_message(work);
+    tag = bsal_message_tag(message);
+    destination = bsal_message_destination(message);
+
+    if (tag == BSAL_ACTOR_ASK_TO_STOP) {
+        printf("DEBUG dispatching BSAL_ACTOR_ASK_TO_STOP for actor %d to worker %d\n",
+                        destination, *start);
+    }
+
+
+#endif
+
+    selected_worker = scheduler->worker_for_work;
+
+    /*
+     * assign the next worker
+     */
+    scheduler->worker_for_work = bsal_worker_pool_next_worker(scheduler->pool, scheduler->worker_for_work);
+
+    *worker_score = best_score;
+    /* This is a best effort algorithm
+     */
+    return selected_worker;
+}
+
+#endif
+
+

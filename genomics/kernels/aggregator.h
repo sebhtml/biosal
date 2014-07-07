@@ -43,6 +43,8 @@ struct bsal_aggregator {
 #define BSAL_AGGREGATOR_FLUSH 0x00007305
 #define BSAL_AGGREGATOR_FLUSH_REPLY 0x000029fe
 
+#define BSAL_AGGREGATOR_BLOCK_SIZE 512
+
 extern struct bsal_script bsal_aggregator_script;
 
 void bsal_aggregator_init(struct bsal_actor *actor);

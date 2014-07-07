@@ -58,7 +58,7 @@ void bsal_aggregator_init(struct bsal_actor *self)
     bsal_vector_init(&concrete_actor->customers, sizeof(int));
     bsal_vector_init(&concrete_actor->buffers, sizeof(struct bsal_dna_kmer_block));
 
-    concrete_actor->customer_block_size = 512;
+    concrete_actor->customer_block_size = BSAL_AGGREGATOR_BLOCK_SIZE;
     concrete_actor->flushed = 0;
 
     bsal_dna_codec_init(&concrete_actor->codec);

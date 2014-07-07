@@ -37,6 +37,10 @@ struct bsal_sequence_store {
 #define BSAL_SEQUENCE_STORE_ASK 0x00006b99
 #define BSAL_SEQUENCE_STORE_ASK_REPLY 0x00007b13
 
+
+#define BSAL_SEQUENCE_STORE_PRODUCT_BLOCK_SIZE 256
+
+
 extern struct bsal_script bsal_sequence_store_script;
 
 void bsal_sequence_store_init(struct bsal_actor *actor);

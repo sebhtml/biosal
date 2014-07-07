@@ -39,8 +39,6 @@ struct bsal_worker_pool {
 
     int worker_for_message;
     int worker_for_run;
-    int worker_for_work;
-
     int debug_mode;
 
     int last_warning;
@@ -81,9 +79,6 @@ int bsal_worker_pool_has_messages(struct bsal_worker_pool *pool);
 
 struct bsal_worker *bsal_worker_pool_get_worker(
                 struct bsal_worker_pool *self, int index);
-
-int bsal_worker_pool_select_worker_least_busy(
-                struct bsal_worker_pool *pool, struct bsal_message *message, int *worker_score);
 
 void bsal_worker_pool_print_load(struct bsal_worker_pool *self, int type);
 
