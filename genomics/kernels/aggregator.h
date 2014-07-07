@@ -21,7 +21,6 @@ struct bsal_aggregator {
     int kmer_length;
 
     struct bsal_vector customers;
-    struct bsal_vector buffers;
 
     struct bsal_ring_queue stalled_producers;
 
@@ -33,7 +32,6 @@ struct bsal_aggregator {
     int forced;
 
     struct bsal_dna_codec codec;
-    struct bsal_vector persistent_memory_pools;
 };
 
 /* message tags
@@ -43,15 +41,14 @@ struct bsal_aggregator {
 #define BSAL_AGGREGATOR_FLUSH 0x00007305
 #define BSAL_AGGREGATOR_FLUSH_REPLY 0x000029fe
 
-#define BSAL_AGGREGATOR_BLOCK_SIZE 512
-
 extern struct bsal_script bsal_aggregator_script;
 
 void bsal_aggregator_init(struct bsal_actor *actor);
 void bsal_aggregator_destroy(struct bsal_actor *actor);
 void bsal_aggregator_receive(struct bsal_actor *actor, struct bsal_message *message);
 
-void bsal_aggregator_flush(struct bsal_actor *self, int customer_index, int forced_flush);
+void bsal_aggregator_flush(struct bsal_actor *self, int customer_index, struct bsal_vector *buffers);
 void bsal_aggregator_verify(struct bsal_actor *self, struct bsal_message *message);
+void bsal_aggregator_aggregate_kernel_output(struct bsal_actor *self, struct bsal_message *message);
 
 #endif

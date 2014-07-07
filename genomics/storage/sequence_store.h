@@ -38,7 +38,7 @@ struct bsal_sequence_store {
 #define BSAL_SEQUENCE_STORE_ASK_REPLY 0x00007b13
 
 
-#define BSAL_SEQUENCE_STORE_PRODUCT_BLOCK_SIZE 256
+#define BSAL_SEQUENCE_STORE_PRODUCT_BLOCK_SIZE 512
 
 
 extern struct bsal_script bsal_sequence_store_script;

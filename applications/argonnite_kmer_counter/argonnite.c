@@ -24,7 +24,10 @@
 
 #define ARGONNITE_DEFAULT_KMER_LENGTH 41
 
+/*
 #define ARGONNITE_WORKERS_PER_AGGREGATOR 4
+*/
+
 #define ARGONNITE_KMER_STORES_PER_WORKER 1
 
 #define ARGONNITE_STATE_NONE 0
@@ -150,7 +153,6 @@ void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message)
     int sequence_store;
     int other_kernel;
     int print_stuff;
-    int workers_per_aggregator;
     int aggregator_index_index;
 
     concrete_actor = (struct argonnite *)bsal_actor_concrete_actor(actor);
@@ -377,6 +379,7 @@ void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message)
             BSAL_DEBUG_MARKER("set actors per spawner ");
 #endif
 
+        /*
         workers_per_aggregator = ARGONNITE_WORKERS_PER_AGGREGATOR;
         printf("MANY_AGGREGATORS argonnite %d sets count per spawner to %d for aggregator manager %d\n",
                         bsal_actor_name(actor),
@@ -384,8 +387,11 @@ void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message)
 
         bsal_actor_helper_send_reply_int(actor,
                             BSAL_MANAGER_SET_WORKERS_PER_ACTOR, workers_per_aggregator);
+*/
+        bsal_actor_helper_send_reply_int(actor,
+                            BSAL_MANAGER_SET_ACTORS_PER_WORKER, 1);
 
-    } else if (tag == BSAL_MANAGER_SET_WORKERS_PER_ACTOR_REPLY
+    } else if (tag == BSAL_MANAGER_SET_ACTORS_PER_WORKER_REPLY
                     && source == bsal_actor_get_acquaintance(actor,
                             concrete_actor->manager_for_aggregators)) {
 
@@ -427,10 +433,25 @@ void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message)
         kernel_index_index = 0;
         aggregator_index_index = 0;
 
+        while (kernel_index_index < bsal_vector_size(&concrete_actor->kernels)) {
+            kernel_index = bsal_vector_helper_at_as_int(&concrete_actor->kernels, kernel_index_index);
+            aggregator_index = bsal_vector_helper_at_as_int(&concrete_actor->aggregators, aggregator_index_index);
+            kernel = bsal_actor_get_acquaintance(actor, kernel_index);
+            aggregator = bsal_actor_get_acquaintance(actor, aggregator_index);
+
+            bsal_actor_helper_send_int(actor, kernel, BSAL_ACTOR_SET_CONSUMER, aggregator);
+
+            ++kernel_index_index;
+            ++aggregator_index_index;
+        }
+
+#if 0
         for (spawner_index = 0; spawner_index < bsal_vector_size(&concrete_actor->initial_actors); spawner_index++) {
 
             workers = bsal_vector_helper_at_as_int(&concrete_actor->worker_counts, spawner_index);
+            /*
             workers_per_aggregator = ARGONNITE_WORKERS_PER_AGGREGATOR;
+            */
 
 #ifdef ARGONNITE_DEBUG_WIRING
             printf("Wiring %d, %d kernels\n", spawner_index, workers);
@@ -450,14 +471,16 @@ void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message)
                 bsal_actor_helper_send_int(actor, kernel, BSAL_ACTOR_SET_CONSUMER, aggregator);
 
                 kernel_index_index++;
-
+                aggregator
                 --workers;
+                /*
                 --workers_per_aggregator;
 
                 if (workers_per_aggregator == 0) {
                     workers_per_aggregator = ARGONNITE_WORKERS_PER_AGGREGATOR;
                     aggregator_index_index++;
                 }
+                */
             }
 
             workers = bsal_vector_helper_at_as_int(&concrete_actor->worker_counts, spawner_index);
@@ -471,6 +494,7 @@ void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message)
                 ++aggregator_index_index;
             }
         }
+#endif
 
     } else if (tag == BSAL_ACTOR_SET_CONSUMER_REPLY
                     && concrete_actor->wiring_distribution) {
