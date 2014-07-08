@@ -6,6 +6,9 @@
 
 #include <genomics/data/dna_codec.h>
 
+#include <genomics/data/coverage_distribution.h>
+
+#include <core/structures/map_iterator.h>
 #include <core/structures/map.h>
 
 #include <core/system/memory_pool.h>
@@ -29,6 +32,10 @@ struct bsal_kmer_store {
     uint64_t last_received;
 
     struct bsal_memory_pool persistent_memory;
+
+    struct bsal_map coverage_distribution;
+    struct bsal_map_iterator iterator;
+    int source;
 };
 
 #define BSAL_PUSH_KMER_BLOCK 0x00004f09
@@ -44,5 +51,6 @@ void bsal_kmer_store_receive(struct bsal_actor *actor, struct bsal_message *mess
 
 void bsal_kmer_store_print(struct bsal_actor *self);
 void bsal_kmer_store_push_data(struct bsal_actor *self, struct bsal_message *message);
+void bsal_kmer_store_yield_reply(struct bsal_actor *self, struct bsal_message *message);
 
 #endif

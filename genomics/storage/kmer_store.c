@@ -4,7 +4,6 @@
 #include <genomics/kernels/dna_kmer_counter_kernel.h>
 
 #include <genomics/data/dna_kmer_block.h>
-#include <genomics/data/coverage_distribution.h>
 
 #include <core/helpers/message_helper.h>
 #include <core/helpers/actor_helper.h>
@@ -12,7 +11,6 @@
 #include <genomics/data/dna_kmer.h>
 #include <core/system/memory.h>
 
-#include <core/structures/map_iterator.h>
 #include <core/structures/vector.h>
 #include <core/structures/vector_iterator.h>
 
@@ -51,6 +49,8 @@ void bsal_kmer_store_init(struct bsal_actor *self)
 #endif
 
     concrete_actor->last_received = 0;
+
+    bsal_actor_register(self, BSAL_ACTOR_YIELD_REPLY, bsal_kmer_store_yield_reply);
 }
 
 void bsal_kmer_store_destroy(struct bsal_actor *self)
@@ -291,48 +291,73 @@ void bsal_kmer_store_print(struct bsal_actor *self)
 
 void bsal_kmer_store_push_data(struct bsal_actor *self, struct bsal_message *message)
 {
-    struct bsal_map_iterator iterator;
+    struct bsal_kmer_store *concrete_actor;
+    int name;
+    int source;
+
+    concrete_actor = (struct bsal_kmer_store *)bsal_actor_concrete_actor(self);
+    source = bsal_message_source(message);
+    concrete_actor->source = bsal_actor_add_acquaintance(self, source);
+    name = bsal_actor_name(self);
+
+    bsal_map_init(&concrete_actor->coverage_distribution, sizeof(int), sizeof(uint64_t));
+
+    printf("kmer store %d: local table has %" PRIu64" canonical kmers (%" PRIu64 " kmers)\n",
+                    name, bsal_map_size(&concrete_actor->table),
+                    2 * bsal_map_size(&concrete_actor->table));
+
+    bsal_map_iterator_init(&concrete_actor->iterator, &concrete_actor->table);
+
+#ifdef BSAL_KMER_STORE_DEBUG
+    printf("yield 1\n");
+#endif
+
+    bsal_actor_helper_send_to_self_empty(self, BSAL_ACTOR_YIELD);
+}
+
+void bsal_kmer_store_yield_reply(struct bsal_actor *self, struct bsal_message *message)
+{
     struct bsal_dna_kmer kmer;
     void *key;
     int *value;
     int coverage;
     struct bsal_kmer_store *concrete_actor;
     int customer;
-    struct bsal_map coverage_distribution;
     uint64_t *count;
     int new_count;
     void *new_buffer;
     struct bsal_message new_message;
-    int name;
+    struct bsal_memory_pool *ephemeral_memory;
+    int i;
+    int max;
 
+    ephemeral_memory = bsal_actor_get_ephemeral_memory(self);
     concrete_actor = (struct bsal_kmer_store *)bsal_actor_concrete_actor(self);
     customer = bsal_actor_get_acquaintance(self, concrete_actor->customer);
-    name = bsal_actor_name(self);
 
-    bsal_map_init(&coverage_distribution, sizeof(int), sizeof(uint64_t));
-
-    printf("kmer store %d: local table has %" PRIu64" canonical kmers (%" PRIu64 " kmers)\n",
-                    name, bsal_map_size(&concrete_actor->table),
-                    2 * bsal_map_size(&concrete_actor->table));
-#ifdef BSAL_KMER_STORE_DEBUG
+#if 0
+    printf("YIELD REPLY\n");
 #endif
 
-    bsal_map_iterator_init(&iterator, &concrete_actor->table);
+    i = 0;
+    max = 1024;
 
-    while (bsal_map_iterator_has_next(&iterator)) {
-        bsal_map_iterator_next(&iterator, (void **)&key, (void **)&value);
+    while (i < max
+                    && bsal_map_iterator_has_next(&concrete_actor->iterator)) {
+
+        bsal_map_iterator_next(&concrete_actor->iterator, (void **)&key, (void **)&value);
 
         bsal_dna_kmer_unpack(&kmer, key, concrete_actor->kmer_length,
-                        bsal_actor_get_ephemeral_memory(self),
+                        ephemeral_memory,
                         &concrete_actor->two_bit_codec);
 
         coverage = *value;
 
-        count = (uint64_t *)bsal_map_get(&coverage_distribution, &coverage);
+        count = (uint64_t *)bsal_map_get(&concrete_actor->coverage_distribution, &coverage);
 
         if (count == NULL) {
 
-            count = (uint64_t *)bsal_map_add(&coverage_distribution, &coverage);
+            count = (uint64_t *)bsal_map_add(&concrete_actor->coverage_distribution, &coverage);
 
             (*count) = 0;
         }
@@ -340,27 +365,47 @@ void bsal_kmer_store_push_data(struct bsal_actor *self, struct bsal_message *mes
         /* increment for the lowest kmer (canonical) */
         (*count)++;
 
-        bsal_dna_kmer_destroy(&kmer, bsal_actor_get_ephemeral_memory(self));
+        bsal_dna_kmer_destroy(&kmer, ephemeral_memory);
+
+        ++i;
     }
 
-    bsal_map_iterator_destroy(&iterator);
+    /* yield again if the iterator is not at the end
+     */
+    if (bsal_map_iterator_has_next(&concrete_actor->iterator)) {
 
-    new_count = bsal_map_pack_size(&coverage_distribution);
-    new_buffer = bsal_memory_allocate(new_count);
+#if 0
+        printf("yield ! %d\n", i);
+#endif
 
-    bsal_map_pack(&coverage_distribution, new_buffer);
+        bsal_actor_helper_send_to_self_empty(self, BSAL_ACTOR_YIELD);
+
+        return;
+    }
+
+    /*
+    printf("ready...\n");
+    */
+
+    bsal_map_iterator_destroy(&concrete_actor->iterator);
+
+    new_count = bsal_map_pack_size(&concrete_actor->coverage_distribution);
+
+    new_buffer = bsal_memory_pool_allocate(ephemeral_memory, new_count);
+
+    bsal_map_pack(&concrete_actor->coverage_distribution, new_buffer);
 
 #ifdef BSAL_KMER_STORE_DEBUG
     printf("SENDING map to %d, %d bytes / %d entries\n", customer, new_count,
-                    (int)bsal_map_size(&coverage_distribution));
+                    (int)bsal_map_size(&concrete_actor->coverage_distribution));
 #endif
 
     bsal_message_init(&new_message, BSAL_PUSH_DATA, new_count, new_buffer);
 
     bsal_actor_send(self, customer, &new_message);
-    bsal_memory_free(new_buffer);
 
-    bsal_map_destroy(&coverage_distribution);
+    bsal_map_destroy(&concrete_actor->coverage_distribution);
 
-    bsal_actor_helper_send_reply_empty(self, BSAL_PUSH_DATA_REPLY);
+    bsal_actor_helper_send_empty(self, bsal_actor_get_acquaintance(self, concrete_actor->source),
+                            BSAL_PUSH_DATA_REPLY);
 }
