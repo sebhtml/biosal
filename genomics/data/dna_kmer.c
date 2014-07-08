@@ -281,6 +281,10 @@ int bsal_dna_kmer_length(struct bsal_dna_kmer *self, int kmer_length)
 void bsal_dna_kmer_reverse_complement_self(struct bsal_dna_kmer *self, int kmer_length,
                 struct bsal_dna_codec *codec, struct bsal_memory_pool *memory)
 {
+#ifdef BSAL_DNA_CODEC_HAS_REVERSE_COMPLEMENT_IMPLEMENTATION
+    bsal_dna_codec_reverse_complement_in_place(codec, kmer_length, self->encoded_data);
+
+#else
     char *sequence;
 
     sequence = bsal_memory_pool_allocate(memory, kmer_length + 1);
@@ -301,6 +305,7 @@ void bsal_dna_kmer_reverse_complement_self(struct bsal_dna_kmer *self, int kmer_
 
     bsal_memory_pool_free(memory, sequence);
     sequence = NULL;
+#endif
 }
 
 int bsal_dna_kmer_is_lower(struct bsal_dna_kmer *self, struct bsal_dna_kmer *other, int kmer_length,

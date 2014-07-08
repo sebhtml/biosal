@@ -6,6 +6,8 @@
 
 #include <core/structures/map.h>
 
+#define BSAL_DNA_CODEC_HAS_REVERSE_COMPLEMENT_IMPLEMENTATION
+
 struct bsal_dna_codec {
     struct bsal_map encoding_lookup_table;
     struct bsal_map decoding_lookup_table;

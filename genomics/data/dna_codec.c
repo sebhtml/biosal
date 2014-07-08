@@ -1,6 +1,8 @@
 
 #include "dna_codec.h"
 
+#include <genomics/helpers/dna_helper.h>
+
 #include <core/structures/vector.h>
 
 #include <core/helpers/vector_helper.h>
@@ -25,11 +27,6 @@
 #include <stdint.h>
 
 /*
- * enable 2-bit encoding
- */
-#define BSAL_DNA_CODEC_USE_TWO_BIT_ENCODING_DEFAULT
-
-/*
  * use block encoder (faster or not ?)
 #define BSAL_DNA_CODEC_USE_TWO_BIT_BLOCK_ENCODER
  */
@@ -40,7 +37,10 @@
  */
 
 /*
-*/
+ * Fast implemention of reverse complement in place
+ * in 2-bit format.
+ */
+#define FAST_REVERSE_COMPLEMENT
 
 void bsal_dna_codec_init(struct bsal_dna_codec *self)
 {
@@ -224,6 +224,7 @@ void bsal_dna_codec_encode_default(struct bsal_dna_codec *codec,
                 int length_in_nucleotides, char *dna_sequence, void *encoded_sequence)
 {
     int i;
+
     int encoded_length;
 
     encoded_length = bsal_dna_codec_encoded_length(codec, length_in_nucleotides);
@@ -233,9 +234,12 @@ void bsal_dna_codec_encode_default(struct bsal_dna_codec *codec,
                     encoded_length);
 #endif
 
-    memset(encoded_sequence, 0, encoded_length);
-
     i = 0;
+
+    /*
+     * Set the tail to 0
+     */
+    ((uint8_t*)encoded_sequence)[encoded_length - 1] = 0;
 
     while (i < length_in_nucleotides) {
 
@@ -331,6 +335,20 @@ void bsal_dna_codec_set_nucleotide(void *encoded_sequence, int index, char nucle
 
     old_byte_value = ((uint8_t*)encoded_sequence)[byte_index];
 
+    new_byte_value = old_byte_value;
+
+    /*
+     * Remove the bits set to 1
+     */
+
+    mask = BSAL_NUCLEOTIDE_CODE_T;
+    mask <<= bit_index_in_byte;
+    mask = ~mask;
+
+    new_byte_value &= mask;
+
+    /* Now, apply the real mask
+     */
     mask = bsal_dna_codec_get_code(nucleotide);
 
 #ifdef BSAL_DNA_CODEC_DEBUG
@@ -341,7 +359,7 @@ void bsal_dna_codec_set_nucleotide(void *encoded_sequence, int index, char nucle
 
     mask <<= bit_index_in_byte;
 
-    new_byte_value = old_byte_value | mask;
+    new_byte_value |= mask;
 
 #ifdef BSAL_DNA_CODEC_DEBUG
     printf("old: %d new: %d\n", (int)old_byte_value, (int)new_byte_value);
@@ -413,9 +431,118 @@ char bsal_dna_codec_get_nucleotide_from_code(uint64_t code)
 /* this would be diccult to do because the padding at the end is not
  * always a multiple of block_length
  */
-void bsal_dna_codec_reverse_complement_in_place(struct bsal_dna_codec *self,
+void bsal_dna_codec_reverse_complement_in_place(struct bsal_dna_codec *codec,
                 int length_in_nucleotides, void *encoded_sequence)
 {
+#ifdef FAST_REVERSE_COMPLEMENT
+    int encoded_length;
+    int i;
+    uint64_t byte_value;
+    int middle;
+    char left_nucleotide;
+    int left;
+    int right;
+    char right_nucleotide;
+    int tail;
+    char blank;
+
+    /* Abort if the 2 bit encoding is not being used.
+     */
+    if (!codec->use_two_bit_encoding) {
+        bsal_dna_helper_reverse_complement_in_place(encoded_sequence);
+        return;
+    }
+
+
+#if 0
+    char *sequence;
+
+    sequence = bsal_memory_allocate(length_in_nucleotides + 1);
+    bsal_dna_codec_decode(codec, length_in_nucleotides, encoded_sequence, sequence);
+    printf("INPUT: %s\n", sequence);
+    bsal_memory_free(sequence);
+#endif
+
+    encoded_length = bsal_dna_codec_encoded_length(codec, length_in_nucleotides);
+
+    i = 0;
+
+    /* Complement all the nucleotides
+     */
+    while (i < encoded_length) {
+        byte_value = ((uint8_t*)encoded_sequence)[i];
+
+        /*
+         * \see http://stackoverflow.com/questions/6508585/how-to-use-inverse-in-c
+         */
+        byte_value = ~byte_value;
+        ((uint8_t*)encoded_sequence)[i] = byte_value;
+
+        ++i;
+    }
+#if 0
+#endif
+
+    /*
+     * Reverse the order
+     */
+    i = 0;
+    middle = length_in_nucleotides / 2;
+    while (i < middle) {
+        left = i;
+        left_nucleotide = bsal_dna_codec_get_nucleotide(encoded_sequence, left);
+
+#if 0
+        printf("%i %c\n", i, left_nucleotide);
+#endif
+
+        right = length_in_nucleotides - 1 - i;
+        right_nucleotide = bsal_dna_codec_get_nucleotide(encoded_sequence, right);
+/*
+        printf("left %d %c right %d %c\n", left, left_nucleotide,
+                        right, right_nucleotide);
+*/
+        bsal_dna_codec_set_nucleotide(encoded_sequence, left, right_nucleotide);
+        bsal_dna_codec_set_nucleotide(encoded_sequence, right, left_nucleotide);
+
+        ++i;
+    }
+
+    /*
+     * Fix the tail.
+     */
+
+    tail = length_in_nucleotides % 4;
+    if (tail != 0) {
+        i = 0;
+        blank = BSAL_NUCLEOTIDE_SYMBOL_A;
+        while (i < tail) {
+            bsal_dna_codec_set_nucleotide(encoded_sequence, length_in_nucleotides + i, blank);
+            ++i;
+        }
+    }
+
+#if 0
+    sequence = bsal_memory_allocate(length_in_nucleotides + 1);
+    bsal_dna_codec_decode(codec, length_in_nucleotides, encoded_sequence, sequence);
+    printf("INPUT after: %s\n", sequence);
+    bsal_memory_free(sequence);
+#endif
+
+
+#else
+    char *sequence;
+
+    sequence = bsal_memory_allocate(length_in_nucleotides + 1);
+
+    bsal_dna_codec_decode(codec, length_in_nucleotides, encoded_sequence, sequence);
+
+    bsal_dna_helper_reverse_complement_in_place(sequence);
+
+    bsal_dna_codec_encode(codec, length_in_nucleotides, sequence, encoded_sequence);
+
+    bsal_memory_free(sequence);
+#endif
 }
 
 void bsal_dna_codec_enable_two_bit_encoding(struct bsal_dna_codec *codec)

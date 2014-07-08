@@ -26,6 +26,8 @@ int main(int argc, char **argv)
     char *expected_sequence;
 
     bsal_dna_codec_init(&codec);
+
+    bsal_dna_codec_enable_two_bit_encoding(&codec);
     sequence_length = strlen(dna);
 
     encoded_length = bsal_dna_codec_encoded_length(&codec, sequence_length);
@@ -60,20 +62,31 @@ int main(int argc, char **argv)
 
     bsal_dna_codec_decode(&codec, sequence_length, encoded_sequence, sequence2);
 
-#if 0
     if (strcmp(sequence2, expected_sequence) != 0) {
+        printf("Origin   %s\n", dna);
         printf("Actual   %s\n", sequence2);
         printf("Expected %s\n", expected_sequence);
     }
 
-    TEST_BOOLEAN_EQUALS(strcmp(sequence2, expected_sequence) == 0, 1);
+#if 0
 #endif
+    TEST_BOOLEAN_EQUALS(strcmp(sequence2, expected_sequence) == 0, 1);
+
+    bsal_dna_codec_set_nucleotide(encoded_sequence, 3, 'T');
+    bsal_dna_codec_set_nucleotide(encoded_sequence, 2, 'T');
+    bsal_dna_codec_set_nucleotide(encoded_sequence, 1, 'T');
+    bsal_dna_codec_set_nucleotide(encoded_sequence, 4, 'T');
+    bsal_dna_codec_set_nucleotide(encoded_sequence, 3, 'A');
+
+    TEST_BOOLEAN_EQUALS(bsal_dna_codec_get_nucleotide(encoded_sequence, 3) == 'A', 1);
+
 
     bsal_memory_free(encoded_sequence);
     bsal_memory_free(sequence2);
     bsal_memory_free(expected_sequence);
 
     bsal_dna_codec_destroy(&codec);
+
     END_TESTS();
 
     return 0;
