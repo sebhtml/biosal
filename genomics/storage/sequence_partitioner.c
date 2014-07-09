@@ -4,9 +4,12 @@
 #include "partition_command.h"
 
 #include <core/structures/vector_iterator.h>
+
 #include <core/helpers/message_helper.h>
 #include <core/helpers/actor_helper.h>
+
 #include <core/system/memory.h>
+#include <core/system/memory_pool.h>
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -79,7 +82,9 @@ void bsal_sequence_partitioner_receive(struct bsal_actor *actor, struct bsal_mes
     int stream_index;
     struct bsal_partition_command *command_bucket;
     int i;
+    struct bsal_memory_pool *ephemeral_memory;
 
+    ephemeral_memory = bsal_actor_get_ephemeral_memory(actor);
     bsal_message_helper_get_all(message, &tag, &count, &buffer, &source);
 
     concrete_actor = (struct bsal_sequence_partitioner *)bsal_actor_concrete_actor(actor);
@@ -132,7 +137,7 @@ void bsal_sequence_partitioner_receive(struct bsal_actor *actor, struct bsal_mes
             printf("DEBUG partitioner has command, packing %d bytes!\n", bytes);
             */
 
-            buffer = bsal_memory_allocate(bytes);
+            buffer = bsal_memory_pool_allocate(ephemeral_memory, bytes);
             bsal_partition_command_pack(&command, buffer);
 
             bsal_message_init(&response, BSAL_SEQUENCE_PARTITIONER_GET_COMMAND_REPLY,
@@ -146,7 +151,7 @@ void bsal_sequence_partitioner_receive(struct bsal_actor *actor, struct bsal_mes
                             &command_number);
             *command_bucket = command;
 
-            bsal_memory_free(buffer);
+            bsal_memory_pool_free(ephemeral_memory, buffer);
 
             /* there may be other command available too !
              */
@@ -215,7 +220,9 @@ void bsal_sequence_partitioner_verify(struct bsal_actor *actor)
     int remainder;
     uint64_t *bucket_for_store_count;
     struct bsal_vector_iterator iterator;
+    struct bsal_memory_pool *ephemeral_memory;
 
+    ephemeral_memory = bsal_actor_get_ephemeral_memory(actor);
     concrete_actor = (struct bsal_sequence_partitioner *)bsal_actor_concrete_actor(actor);
 
     /*
@@ -346,14 +353,14 @@ void bsal_sequence_partitioner_verify(struct bsal_actor *actor)
 #endif
 
     bytes = bsal_vector_pack_size(&concrete_actor->store_entries);
-    buffer = bsal_memory_allocate(bytes);
+    buffer = bsal_memory_pool_allocate(ephemeral_memory, bytes);
     bsal_vector_pack(&concrete_actor->store_entries, buffer);
 
     bsal_message_init(&message, BSAL_SEQUENCE_PARTITIONER_PROVIDE_STORE_ENTRY_COUNTS,
                     bytes, buffer);
     bsal_actor_send_reply(actor, &message);
 
-    bsal_memory_free(buffer);
+    bsal_memory_pool_free(ephemeral_memory, buffer);
 }
 
 uint64_t bsal_sequence_partitioner_get_index_in_store(uint64_t index, int block_size, int store_count)

@@ -153,9 +153,11 @@ void bsal_aggregator_flush(struct bsal_actor *self, int customer_index, struct b
     void *buffer;
     struct bsal_message message;
     int customer;
+    struct bsal_memory_pool *ephemeral_memory;
 
     concrete_actor = (struct bsal_aggregator *)bsal_actor_concrete_actor(self);
 
+    ephemeral_memory = bsal_actor_get_ephemeral_memory(self);
     customer = bsal_actor_helper_get_acquaintance(self, &concrete_actor->customers, customer_index);
     customer_block_pointer = (struct bsal_dna_kmer_block *)bsal_vector_at(buffers, customer_index);
 
@@ -166,7 +168,7 @@ void bsal_aggregator_flush(struct bsal_actor *self, int customer_index, struct b
 
     count = bsal_dna_kmer_block_pack_size(customer_block_pointer,
                     &concrete_actor->codec);
-    buffer = bsal_memory_allocate(count);
+    buffer = bsal_memory_pool_allocate(ephemeral_memory, count);
     bsal_dna_kmer_block_pack(customer_block_pointer, buffer,
                     &concrete_actor->codec);
 
@@ -176,7 +178,7 @@ void bsal_aggregator_flush(struct bsal_actor *self, int customer_index, struct b
     concrete_actor->active_messages++;
 
     bsal_message_destroy(&message);
-    bsal_memory_free(buffer);
+    bsal_memory_pool_free(ephemeral_memory, buffer);
 
     buffer = NULL;
 

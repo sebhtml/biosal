@@ -307,11 +307,13 @@ void bsal_sequence_store_ask(struct bsal_actor *self, struct bsal_message *messa
     float completion;
     int name;
     int period;
+    struct bsal_memory_pool *ephemeral_memory;
 
     name = bsal_actor_name(self);
 #ifdef BSAL_SEQUENCE_STORE_DEBUG
 #endif
 
+    ephemeral_memory = bsal_actor_get_ephemeral_memory(self);
     concrete_actor = (struct bsal_sequence_store *)bsal_actor_concrete_actor(self);
 
     if (concrete_actor->received != concrete_actor->expected) {
@@ -352,7 +354,7 @@ void bsal_sequence_store_ask(struct bsal_actor *self, struct bsal_message *messa
     if (entry_count > 0) {
         new_count = bsal_input_command_pack_size(&payload,
                         &concrete_actor->codec);
-        new_buffer = bsal_memory_allocate(new_count);
+        new_buffer = bsal_memory_pool_allocate(ephemeral_memory, new_count);
 
         bsal_input_command_pack(&payload, new_buffer,
                         &concrete_actor->codec);
@@ -366,7 +368,7 @@ void bsal_sequence_store_ask(struct bsal_actor *self, struct bsal_message *messa
         printf("store/%d fulfill order\n", name);
 #endif
 
-        bsal_memory_free(new_buffer);
+        bsal_memory_pool_free(ephemeral_memory, new_buffer);
 
         concrete_actor->left -= entry_count;
 

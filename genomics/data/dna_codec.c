@@ -457,7 +457,7 @@ void bsal_dna_codec_reverse_complement_in_place(struct bsal_dna_codec *codec,
 #if 0
     char *sequence;
 
-    sequence = bsal_memory_allocate(length_in_nucleotides + 1);
+    sequence = b212sal_memory_allocate(length_in_nucleotides + 1);
     bsal_dna_codec_decode(codec, length_in_nucleotides, encoded_sequence, sequence);
     printf("INPUT: %s\n", sequence);
     bsal_memory_free(sequence);
@@ -523,7 +523,7 @@ void bsal_dna_codec_reverse_complement_in_place(struct bsal_dna_codec *codec,
     }
 
 #if 0
-    sequence = bsal_memory_allocate(length_in_nucleotides + 1);
+    sequence = bs2al_memory_allocate(length_in_nucleotides + 1);
     bsal_dna_codec_decode(codec, length_in_nucleotides, encoded_sequence, sequence);
     printf("INPUT after: %s\n", sequence);
     bsal_memory_free(sequence);

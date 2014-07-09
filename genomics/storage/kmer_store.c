@@ -81,6 +81,7 @@ void bsal_kmer_store_receive(struct bsal_actor *self, struct bsal_message *messa
     struct bsal_vector_iterator iterator;
     struct bsal_dna_kmer *kmer_pointer;
     int *bucket;
+    struct bsal_memory_pool *ephemeral_memory;
     int customer;
     int period;
     struct bsal_dna_kmer encoded_kmer;
@@ -90,6 +91,7 @@ void bsal_kmer_store_receive(struct bsal_actor *self, struct bsal_message *messa
     int name;
 #endif
 
+    ephemeral_memory = bsal_actor_get_ephemeral_memory(self);
     concrete_actor = (struct bsal_kmer_store *)bsal_actor_concrete_actor(self);
     tag = bsal_message_tag(message);
     buffer = bsal_message_buffer(message);
@@ -121,7 +123,7 @@ void bsal_kmer_store_receive(struct bsal_actor *self, struct bsal_message *messa
         bsal_dna_kmer_block_unpack(&block, buffer, bsal_actor_get_ephemeral_memory(self),
                         &concrete_actor->codec);
 
-        key = bsal_memory_allocate(concrete_actor->key_length_in_bytes);
+        key = bsal_memory_pool_allocate(ephemeral_memory, concrete_actor->key_length_in_bytes);
 
 #ifdef BSAL_KMER_STORE_DEBUG
         printf("Allocating key %d bytes\n", concrete_actor->key_length_in_bytes);
@@ -184,7 +186,7 @@ void bsal_kmer_store_receive(struct bsal_actor *self, struct bsal_message *messa
             concrete_actor->received++;
         }
 
-        bsal_memory_free(key);
+        bsal_memory_pool_free(ephemeral_memory, key);
 
         bsal_vector_iterator_destroy(&iterator);
         bsal_dna_kmer_block_destroy(&block, bsal_actor_get_ephemeral_memory(self));
@@ -234,7 +236,9 @@ void bsal_kmer_store_print(struct bsal_actor *self)
     struct bsal_kmer_store *concrete_actor;
     int maximum_length;
     int length;
+    struct bsal_memory_pool *ephemeral_memory;
 
+    ephemeral_memory = bsal_actor_get_ephemeral_memory(self);
     concrete_actor = (struct bsal_kmer_store *)bsal_actor_concrete_actor(self);
     bsal_map_iterator_init(&iterator, &concrete_actor->table);
 
@@ -264,7 +268,7 @@ void bsal_kmer_store_print(struct bsal_actor *self)
     printf("MAx length %d\n", maximum_length);
     */
 
-    sequence = bsal_memory_allocate(maximum_length + 1);
+    sequence = bsal_memory_pool_allocate(ephemeral_memory, maximum_length + 1);
     sequence[0] = '\0';
     bsal_map_iterator_destroy(&iterator);
     bsal_map_iterator_init(&iterator, &concrete_actor->table);
@@ -286,7 +290,7 @@ void bsal_kmer_store_print(struct bsal_actor *self)
     }
 
     bsal_map_iterator_destroy(&iterator);
-    bsal_memory_free(sequence);
+    bsal_memory_pool_free(ephemeral_memory, sequence);
 }
 
 void bsal_kmer_store_push_data(struct bsal_actor *self, struct bsal_message *message)

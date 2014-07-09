@@ -434,6 +434,7 @@ void bsal_input_stream_push_sequences(struct bsal_actor *actor,
     int has_sequence;
     int i;
     struct bsal_input_stream *concrete_actor;
+    struct bsal_memory_pool *ephemeral_memory;
 
 #ifdef BSAL_INPUT_STREAM_DEBUG
     int count;
@@ -443,7 +444,7 @@ void bsal_input_stream_push_sequences(struct bsal_actor *actor,
     /* answer immediately
      */
     bsal_actor_helper_send_reply_empty(actor, BSAL_INPUT_PUSH_SEQUENCES_READY);
-
+    ephemeral_memory = (struct bsal_memory_pool *)bsal_actor_get_ephemeral_memory(actor);
     has_sequence = 1;
 
 #ifdef BSAL_INPUT_STREAM_DEBUG
@@ -513,7 +514,7 @@ void bsal_input_stream_push_sequences(struct bsal_actor *actor,
     new_count = bsal_input_command_pack_size(&command,
                     &concrete_actor->codec);
 
-    new_buffer = bsal_memory_allocate(new_count);
+    new_buffer = bsal_memory_pool_allocate(ephemeral_memory, new_count);
 
     bsal_input_command_pack(&command, new_buffer, &concrete_actor->codec);
 
@@ -543,7 +544,7 @@ void bsal_input_stream_push_sequences(struct bsal_actor *actor,
 
     /* free memory
      */
-    bsal_memory_free(new_buffer);
+    bsal_memory_pool_free(ephemeral_memory, new_buffer);
 
 #ifdef BSAL_INPUT_STREAM_DEBUG
     printf("DEBUG freeing %d entries\n",

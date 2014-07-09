@@ -112,7 +112,9 @@ void bsal_dna_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_
     int to_reserve;
     int maximum_length;
     int producer;
+    struct bsal_memory_pool *ephemeral_memory;
 
+    ephemeral_memory = bsal_actor_get_ephemeral_memory(actor);
     count = bsal_message_count(message);
 
     concrete_actor = (struct bsal_dna_kmer_counter_kernel *)bsal_actor_concrete_actor(actor);
@@ -174,7 +176,7 @@ void bsal_dna_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_
 
         bsal_dna_kmer_block_init(&block, concrete_actor->kmer_length, source_index, to_reserve);
 
-        sequence_data = bsal_memory_allocate(maximum_length + 1);
+        sequence_data = bsal_memory_pool_allocate(ephemeral_memory, maximum_length + 1);
 
         /* extract kmers
          */
@@ -214,7 +216,7 @@ void bsal_dna_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_
             }
         }
 
-        bsal_memory_free(sequence_data);
+        bsal_memory_pool_free(ephemeral_memory, sequence_data);
         sequence_data = NULL;
 
 #ifdef BSAL_KMER_COUNTER_KERNEL_DEBUG
@@ -238,7 +240,7 @@ void bsal_dna_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_
 
         new_count = bsal_dna_kmer_block_pack_size(&block,
                         &concrete_actor->codec);
-        new_buffer = bsal_memory_allocate(new_count);
+        new_buffer = bsal_memory_pool_allocate(ephemeral_memory, new_count);
         bsal_dna_kmer_block_pack(&block, new_buffer,
                         &concrete_actor->codec);
 
@@ -260,7 +262,7 @@ void bsal_dna_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_
                         */
 
         bsal_actor_send(actor, consumer, &new_message);
-        bsal_memory_free(new_buffer);
+        bsal_memory_pool_free(ephemeral_memory, new_buffer);
 
         bsal_actor_helper_send_empty(actor,
                         bsal_actor_get_acquaintance(actor, source_index),
