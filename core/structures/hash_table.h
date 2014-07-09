@@ -87,5 +87,6 @@ int bsal_hash_table_pack(struct bsal_hash_table *self, void *buffer);
 int bsal_hash_table_unpack(struct bsal_hash_table *self, void *buffer);
 
 int bsal_hash_table_pack_unpack(struct bsal_hash_table *self, void *buffer, int operation);
+void bsal_hash_table_start_groups(struct bsal_hash_table *table);
 
 #endif

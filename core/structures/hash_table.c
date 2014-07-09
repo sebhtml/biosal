@@ -25,7 +25,6 @@
 void bsal_hash_table_init(struct bsal_hash_table *table, uint64_t buckets,
                 int key_size, int value_size)
 {
-    int i;
     uint64_t buckets_per_group;
 
 #ifdef BSAL_HASH_TABLE_DEBUG_INIT
@@ -57,31 +56,23 @@ void bsal_hash_table_init(struct bsal_hash_table *table, uint64_t buckets,
     table->elements = 0;
     table->group_count = (buckets / buckets_per_group);
 
-    table->groups = (struct bsal_hash_table_group *)
-            bsal_memory_allocate(table->group_count * sizeof(struct bsal_hash_table_group));
-
-#ifdef BSAL_HASH_TABLE_DEBUG_INIT
-    printf("DEBUG bsal_hash_table_init group_count %d\n",
-                    table->group_count);
-#endif
-
-    for (i = 0; i < table->group_count; i++) {
-        bsal_hash_table_group_init(table->groups + i, buckets_per_group,
-                        key_size, value_size);
-    }
+    table->groups = NULL;
 }
 
 void bsal_hash_table_destroy(struct bsal_hash_table *table)
 {
     int i;
 
-    for (i = 0; i < table->group_count; i++) {
-        bsal_hash_table_group_destroy(table->groups + i);
+    table->debug = 0;
+
+    if (table->groups != NULL) {
+        for (i = 0; i < table->group_count; i++) {
+            bsal_hash_table_group_destroy(table->groups + i);
+        }
     }
 
     bsal_memory_free(table->groups);
     table->groups = NULL;
-    table->debug = 0;
 }
 
 void bsal_hash_table_delete(struct bsal_hash_table *table, void *key)
@@ -90,6 +81,10 @@ void bsal_hash_table_delete(struct bsal_hash_table *table, void *key)
     int bucket_in_group;
     int code;
     uint64_t last_stride;
+
+    if (table->groups == NULL) {
+        return;
+    }
 
     code = bsal_hash_table_find_bucket(table, key, &group, &bucket_in_group,
                     BSAL_HASH_TABLE_OPERATION_DELETE, &last_stride);
@@ -184,6 +179,10 @@ int bsal_hash_table_state(struct bsal_hash_table *self, uint64_t bucket)
     int group;
     int bucket_in_group;
     struct bsal_hash_table_group *table_group;
+
+    if (self->groups == NULL) {
+        return BSAL_HASH_TABLE_BUCKET_EMPTY;
+    }
 
     if (bucket >= bsal_hash_table_buckets(self)) {
         return BSAL_HASH_TABLE_BUCKET_EMPTY;
@@ -306,6 +305,10 @@ int bsal_hash_table_pack_unpack(struct bsal_hash_table *self, void *buffer, int 
         elements = self->elements;
         bsal_hash_table_init(self, self->buckets, self->key_size, self->value_size);
         self->elements = elements;
+
+        if (self->groups == NULL) {
+            bsal_hash_table_start_groups(self);
+        }
     }
 
     for (i = 0; i < self->group_count; i++) {
@@ -319,5 +322,20 @@ int bsal_hash_table_pack_unpack(struct bsal_hash_table *self, void *buffer, int 
     return offset;
 }
 
+void bsal_hash_table_start_groups(struct bsal_hash_table *table)
+{
+    int i;
 
+    table->groups = (struct bsal_hash_table_group *)
+            bsal_memory_allocate(table->group_count * sizeof(struct bsal_hash_table_group));
 
+#ifdef BSAL_HASH_TABLE_DEBUG_INIT
+    printf("DEBUG bsal_hash_table_init group_count %d\n",
+                    table->group_count);
+#endif
+
+    for (i = 0; i < table->group_count; i++) {
+        bsal_hash_table_group_init(table->groups + i, table->buckets_per_group,
+                        table->key_size, table->value_size);
+    }
+}

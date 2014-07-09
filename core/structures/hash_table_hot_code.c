@@ -20,6 +20,10 @@ void *bsal_hash_table_add(struct bsal_hash_table *table, void *key)
     }
 #endif
 
+    if (table->groups == NULL) {
+        bsal_hash_table_start_groups(table);
+    }
+
     code = bsal_hash_table_find_bucket(table, key, &group, &bucket_in_group,
                     BSAL_HASH_TABLE_OPERATION_ADD, &last_stride);
 
@@ -106,6 +110,10 @@ void *bsal_hash_table_get(struct bsal_hash_table *table, void *key)
     int bucket_in_group;
     int code;
     uint64_t last_stride;
+
+    if (table->groups == NULL) {
+        return NULL;
+    }
 
     code = bsal_hash_table_find_bucket(table, key, &group, &bucket_in_group,
                     BSAL_HASH_TABLE_OPERATION_GET, &last_stride);
