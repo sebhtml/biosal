@@ -66,7 +66,7 @@ void bsal_transport_test_requests(struct bsal_transport *self)
     struct bsal_active_buffer active_buffer;
     void *buffer;
 
-    if (bsal_queue_dequeue(&self->active_buffers, &active_buffer)) {
+    if (bsal_ring_queue_dequeue(&self->active_buffers, &active_buffer)) {
 
         if (bsal_active_buffer_test(&active_buffer)) {
             buffer = bsal_active_buffer_buffer(&active_buffer);
@@ -79,7 +79,7 @@ void bsal_transport_test_requests(struct bsal_transport *self)
 
         /* Just put it back in the FIFO for later */
         } else {
-            bsal_queue_enqueue(&self->active_buffers, &active_buffer);
+            bsal_ring_queue_enqueue(&self->active_buffers, &active_buffer);
         }
     }
 }

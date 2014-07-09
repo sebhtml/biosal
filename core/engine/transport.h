@@ -4,14 +4,14 @@
 
 #include <mpi.h>
 
-#include <core/structures/queue.h>
+#include <core/structures/ring_queue.h>
 
 struct bsal_node;
 struct bsal_message;
 
 struct bsal_transport {
     struct bsal_node *node;
-    struct bsal_queue active_buffers;
+    struct bsal_ring_queue active_buffers;
     MPI_Comm comm;
     MPI_Datatype datatype;
     int provided;

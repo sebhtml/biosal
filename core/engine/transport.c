@@ -32,7 +32,7 @@ void bsal_transport_init(struct bsal_transport *self, struct bsal_node *node, in
     MPI_Comm_size(self->comm, &self->size);
 
     self->datatype = MPI_BYTE;
-    bsal_queue_init(&self->active_buffers, sizeof(struct bsal_active_buffer));
+    bsal_ring_queue_init(&self->active_buffers, sizeof(struct bsal_active_buffer));
 
 }
 
@@ -40,11 +40,11 @@ void bsal_transport_destroy(struct bsal_transport *self)
 {
     struct bsal_active_buffer active_buffer;
 
-    while (bsal_queue_dequeue(&self->active_buffers, &active_buffer)) {
+    while (bsal_ring_queue_dequeue(&self->active_buffers, &active_buffer)) {
         bsal_active_buffer_destroy(&active_buffer);
     }
 
-    bsal_queue_destroy(&self->active_buffers);
+    bsal_ring_queue_destroy(&self->active_buffers);
 
     self->node = NULL;
     MPI_Finalize();
@@ -84,7 +84,7 @@ void bsal_transport_send(struct bsal_transport *self, struct bsal_message *messa
      */
     /*MPI_Request_free(&request);*/
 
-    bsal_queue_enqueue(&self->active_buffers, &active_buffer);
+    bsal_ring_queue_enqueue(&self->active_buffers, &active_buffer);
 }
 
 void bsal_transport_resolve(struct bsal_transport *self, struct bsal_message *message)
