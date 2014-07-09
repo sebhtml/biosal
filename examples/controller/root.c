@@ -67,7 +67,9 @@ void root_receive(struct bsal_actor *actor, struct bsal_message *message)
     struct bsal_message new_message;
     struct bsal_vector stores;
     int count;
+    struct bsal_memory_pool *ephemeral_memory;
 
+    ephemeral_memory = bsal_actor_get_ephemeral_memory(actor);
     root1 = (struct root *)bsal_actor_concrete_actor(actor);
     concrete_actor = root1;
     source = bsal_message_source(message);
@@ -165,13 +167,13 @@ void root_receive(struct bsal_actor *actor, struct bsal_message *message)
         bsal_vector_push_back_vector(&spawners, &concrete_actor->spawners);
 
         new_count = bsal_vector_pack_size(&spawners);
-        new_buffer = bsal_memory_allocate(new_count);
+        new_buffer = bsal_memory_pool_allocate(ephemeral_memory, new_count);
         bsal_vector_pack(&spawners, new_buffer);
 
         bsal_message_init(&new_message, BSAL_ACTOR_START, new_count, new_buffer);
         bsal_actor_send(actor, manager, &new_message);
 
-        bsal_memory_free(new_buffer);
+        bsal_memory_pool_free(ephemeral_memory, new_buffer);
 
         bsal_vector_destroy(&spawners);
 
@@ -191,12 +193,12 @@ void root_receive(struct bsal_actor *actor, struct bsal_message *message)
     } else if (tag == BSAL_ACTOR_SET_CONSUMERS_REPLY) {
 
         bytes = bsal_vector_pack_size(&root1->spawners);
-        buffer = bsal_memory_allocate(bytes);
+        buffer = bsal_memory_pool_allocate(ephemeral_memory, bytes);
         bsal_vector_pack(&root1->spawners, buffer);
 
         bsal_message_init(message, BSAL_INPUT_CONTROLLER_START, bytes, buffer);
         bsal_actor_send(actor, root1->controller, message);
-        bsal_memory_free(buffer);
+        bsal_memory_pool_free(ephemeral_memory, buffer);
         buffer = NULL;
 
         printf("root actor/%d starts controller actor/%d\n", name,
