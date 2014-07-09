@@ -767,6 +767,7 @@ int bsal_node_receive_system(struct bsal_node *node, struct bsal_message *messag
 
         buffer = bsal_message_buffer(message);
         source = bsal_message_source_node(message);
+        bsal_vector_init(&node->initial_actors, 0);
         bsal_vector_unpack(&node->initial_actors, buffer);
 
 #ifdef BSAL_NODE_DEBUG_RECEIVE_SYSTEM

@@ -426,6 +426,7 @@ void bsal_actor_helper_receive_binomial_tree_send(struct bsal_actor *actor, stru
     offset = count - 1 - sizeof(magic_offset);
 
     magic_offset = *(int *)(char *)buffer + offset;
+    bsal_vector_init(&actors, 0);
     bsal_vector_unpack(&actors, (char *)buffer + magic_offset);
 
     new_count = magic_offset;

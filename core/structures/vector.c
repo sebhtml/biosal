@@ -3,6 +3,7 @@
 
 #include <core/system/packer.h>
 #include <core/system/memory.h>
+#include <core/system/memory_pool.h>
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -18,12 +19,14 @@ void bsal_vector_init(struct bsal_vector *self, int element_size)
     self->maximum_size = 0;
     self->size = 0;
     self->data = NULL;
+
+    bsal_vector_set_memory_pool(self, NULL);
 }
 
 void bsal_vector_destroy(struct bsal_vector *self)
 {
     if (self->data != NULL) {
-        bsal_memory_free(self->data);
+        bsal_vector_free(self, self->data);
         self->data = NULL;
     }
 
@@ -31,6 +34,8 @@ void bsal_vector_destroy(struct bsal_vector *self)
     self->maximum_size = 0;
     self->size = 0;
     self->data = NULL;
+
+    bsal_vector_set_memory_pool(self, NULL);
 }
 
 void bsal_vector_resize(struct bsal_vector *self, int64_t size)
@@ -167,12 +172,12 @@ void bsal_vector_reserve(struct bsal_vector *self, int64_t size)
                     old_byte_count, new_byte_count);
 #endif
 
-    new_data = bsal_memory_allocate(new_byte_count);
+    new_data = bsal_vector_allocate(self, new_byte_count);
 
     /* copy old data */
     if (self->size > 0) {
         memcpy(new_data, self->data, old_byte_count);
-        bsal_memory_free(self->data);
+        bsal_vector_free(self, self->data);
     }
 
     self->data = new_data;
@@ -210,6 +215,8 @@ int bsal_vector_pack_unpack(struct bsal_vector *self, void *buffer, int operatio
 {
     struct bsal_packer packer;
     int64_t bytes;
+    int size;
+    struct bsal_memory_pool *memory;
 
     bsal_packer_init(&packer, operation, buffer);
 
@@ -228,10 +235,17 @@ int bsal_vector_pack_unpack(struct bsal_vector *self, void *buffer, int operatio
 #endif
 
     if (operation == BSAL_PACKER_OPERATION_UNPACK) {
+
+        size = self->size;
+        memory = self->memory;
+        bsal_vector_init(self, self->element_size);
+
+        self->size = size;
         self->maximum_size = self->size;
+        self->memory = memory;
 
         if (self->size > 0) {
-            self->data = bsal_memory_allocate(self->maximum_size * self->element_size);
+            self->data = bsal_vector_allocate(self, self->maximum_size * self->element_size);
         } else {
             self->data = NULL;
         }
@@ -273,4 +287,29 @@ int bsal_vector_get_value(struct bsal_vector *self, int64_t index, void *value)
     memcpy(value, bucket, self->element_size);
 
     return 1;
+}
+
+void bsal_vector_set_memory_pool(struct bsal_vector *vector, struct bsal_memory_pool *memory)
+{
+    vector->memory = NULL;
+}
+
+void *bsal_vector_allocate(struct bsal_vector *vector, int size)
+{
+    if (vector->memory != NULL) {
+        return bsal_memory_pool_allocate(vector->memory, size);
+    }
+
+    return bsal_memory_allocate(size);
+}
+
+void bsal_vector_free(struct bsal_vector *vector, void *pointer)
+{
+    if (vector->memory != NULL) {
+        bsal_memory_pool_free(vector->memory, pointer);
+        return;
+    }
+
+    bsal_memory_free(pointer);
+
 }

@@ -52,6 +52,7 @@ void table_receive(struct bsal_actor *actor, struct bsal_message *message)
         printf("Actor %i receives BSAL_ACTOR_START from actor %i\n",
                         name,  source);
 
+        bsal_vector_init(&table1->spawners, 0);
         bsal_vector_unpack(&table1->spawners, buffer);
 
         remote = bsal_vector_index_of(&table1->spawners, &name) + 1;

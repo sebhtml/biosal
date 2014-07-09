@@ -48,6 +48,7 @@ void process_receive(struct bsal_actor *actor, struct bsal_message *message)
 
     if (tag == BSAL_ACTOR_START) {
 
+        bsal_vector_init(&process1->initial_processes, 0);
         bsal_vector_unpack(&process1->initial_processes, buffer);
 
         for (i = 0; i < bsal_vector_size(&process1->initial_processes); i++) {

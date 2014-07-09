@@ -154,7 +154,9 @@ void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message)
     int other_kernel;
     int print_stuff;
     int aggregator_index_index;
+    struct bsal_memory_pool *ephemeral_memory;
 
+    ephemeral_memory = bsal_actor_get_ephemeral_memory(actor);
     concrete_actor = (struct argonnite *)bsal_actor_concrete_actor(actor);
     tag = bsal_message_tag(message);
     buffer = bsal_message_buffer(message);
@@ -176,6 +178,8 @@ void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message)
         BSAL_DEBUG_MARKER("foo_marker");
 #endif
 
+        bsal_vector_init(&initial_actors, 0);
+        bsal_vector_set_memory_pool(&initial_actors, ephemeral_memory);
         bsal_vector_unpack(&initial_actors, buffer);
 
         is_boss = 0;
@@ -310,6 +314,7 @@ void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message)
 
         /* make sure that customers are unpacking correctly
          */
+        bsal_vector_init(&customers, 0);
         bsal_vector_unpack(&customers, buffer);
 
         controller = bsal_actor_get_acquaintance(actor, concrete_actor->controller);
@@ -415,6 +420,7 @@ void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message)
 
         concrete_actor->wired_kernels= 0;
 
+        bsal_vector_init(&aggregators, 0);
         bsal_vector_unpack(&aggregators, buffer);
 
         bsal_actor_helper_add_acquaintances(actor, &aggregators, &concrete_actor->aggregators);
@@ -585,6 +591,7 @@ void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message)
         printf("DEBUG kmer stores READY\n");
         concrete_actor->spawned_stores = 1;
 
+        bsal_vector_init(&kmer_stores, 0);
         bsal_vector_unpack(&kmer_stores, buffer);
         bsal_actor_helper_add_acquaintances(actor, &kmer_stores, &concrete_actor->kmer_stores);
 
@@ -927,6 +934,7 @@ void argonnite_prepare_sequence_stores(struct bsal_actor *self, struct bsal_mess
     } else if (tag == BSAL_ACTOR_START_REPLY) {
 
         printf("DEBUGY got sequence stores !\n");
+        bsal_vector_init(&stores, 0);
         bsal_vector_unpack(&stores, buffer);
 
         controller = bsal_actor_get_acquaintance(self, concrete_actor->controller);

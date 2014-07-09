@@ -1754,6 +1754,7 @@ void bsal_actor_work(struct bsal_actor *actor)
     void *buffer;
 
     if (!bsal_actor_dequeue_mailbox_message(actor, &message)) {
+        printf("Error, no message...\n");
         return;
     }
 

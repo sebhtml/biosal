@@ -219,6 +219,7 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
 
     if (tag == BSAL_INPUT_CONTROLLER_START) {
 
+        bsal_vector_init(&controller->spawners, 0);
         bsal_vector_unpack(&controller->spawners, buffer);
 
         bsal_vector_resize(&controller->stores_per_spawner,
@@ -467,6 +468,7 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
         stream_index = bsal_vector_index_of(&controller->counting_streams, &source);
         local_file = bsal_vector_helper_at_as_char_pointer(&controller->files, stream_index);
 
+        bsal_vector_init(&mega_blocks, 0);
         bsal_vector_unpack(&mega_blocks, buffer);
 
         printf("DEBUG receive mega blocks from %d\n", source);
@@ -725,7 +727,9 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
 
     } else if (tag == BSAL_ACTOR_SET_CONSUMERS) {
 
+        bsal_vector_init(&concrete_actor->consumers, 0);
         bsal_vector_unpack(&concrete_actor->consumers, buffer);
+
         printf("controller %d receives %d consumers\n",
                         bsal_actor_name(actor),
                         (int)bsal_vector_size(&concrete_actor->consumers));
@@ -785,6 +789,7 @@ void bsal_input_controller_receive_store_entry_counts(struct bsal_actor *actor, 
     printf("DEBUG bsal_input_controller_receive_store_entry_counts unpacking entries\n");
 #endif
 
+    bsal_vector_init(&store_entries, 0);
     bsal_vector_unpack(&store_entries, buffer);
 
     for (i = 0; i < bsal_vector_size(&store_entries); i++) {
@@ -802,6 +807,8 @@ void bsal_input_controller_receive_store_entry_counts(struct bsal_actor *actor, 
 #ifdef BSAL_INPUT_CONTROLLER_DEBUG
     printf("DEBUG bsal_input_controller_receive_store_entry_counts will wait for replies\n");
 #endif
+
+    bsal_vector_destroy(&store_entries);
 }
 
 void bsal_input_controller_create_stores(struct bsal_actor *actor, struct bsal_message *message)

@@ -56,6 +56,7 @@ void stream_receive(struct bsal_actor *actor, struct bsal_message *message)
 
     if (tag == BSAL_ACTOR_START) {
 
+        bsal_vector_init(&stream1->spawners, 0);
         bsal_vector_unpack(&stream1->spawners, buffer);
         king = *(int *)bsal_vector_at(&stream1->spawners, bsal_vector_size(&stream1->spawners) / 2);
 

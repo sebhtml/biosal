@@ -132,6 +132,8 @@ int main(int argc, char **argv)
         buffer = bsal_memory_allocate(count);
 
         bsal_vector_pack(&vector1, buffer);
+
+        bsal_vector_init(&vector2, 0);
         bsal_vector_unpack(&vector2, buffer);
 
         for (i = 0; i < bsal_vector_size(&vector1); i++) {

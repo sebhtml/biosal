@@ -114,7 +114,9 @@ void bsal_aggregator_receive(struct bsal_actor *self, struct bsal_message *messa
         /*
          * receive customer list
          */
+        bsal_vector_init(&customers, 0);
         bsal_vector_unpack(&customers, buffer);
+
         bsal_actor_helper_add_acquaintances(self, &customers, &concrete_actor->customers);
 
         printf("DEBUG45 preparing %d buffers, kmer_length %d\n",
@@ -127,6 +129,8 @@ void bsal_aggregator_receive(struct bsal_actor *self, struct bsal_message *messa
 #endif
 
         bsal_actor_helper_send_reply_empty(self, BSAL_ACTOR_SET_CONSUMERS_REPLY);
+
+        bsal_vector_destroy(&customers);
 
     } else if (tag == BSAL_AGGREGATOR_FLUSH) {
 

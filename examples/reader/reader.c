@@ -64,6 +64,7 @@ void reader_receive(struct bsal_actor *actor, struct bsal_message *message)
 
     if (tag == BSAL_ACTOR_START) {
 
+        bsal_vector_init(&reader1->spawners, 0);
         bsal_vector_unpack(&reader1->spawners, buffer);
 
         argc = bsal_actor_argc(actor);

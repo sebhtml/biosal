@@ -82,6 +82,7 @@ void root_receive(struct bsal_actor *actor, struct bsal_message *message)
 */
     if (tag == BSAL_ACTOR_START) {
 
+        bsal_vector_init(&root1->spawners, 0);
         bsal_vector_unpack(&root1->spawners, buffer);
 
 
@@ -177,6 +178,7 @@ void root_receive(struct bsal_actor *actor, struct bsal_message *message)
     } else if (tag == BSAL_ACTOR_START_REPLY
                     && source == bsal_actor_get_child(actor, concrete_actor->manager)) {
 
+        bsal_vector_init(&stores, 0);
         bsal_vector_unpack(&stores, buffer);
 
         printf("DEBUG root actor/%d received stores from manager actor/%d\n",

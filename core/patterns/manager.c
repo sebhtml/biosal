@@ -90,7 +90,9 @@ void bsal_manager_receive(struct bsal_actor *actor, struct bsal_message *message
     int new_count;
     void *new_buffer;
     struct bsal_message new_message;
+    struct bsal_memory_pool *ephemeral_memory;
 
+    ephemeral_memory = bsal_actor_get_ephemeral_memory(actor);
     source = bsal_message_source(message);
     buffer = bsal_message_buffer(message);
     concrete_actor = (struct bsal_manager *)bsal_actor_concrete_actor(actor);
@@ -113,6 +115,8 @@ void bsal_manager_receive(struct bsal_actor *actor, struct bsal_message *message
                         bsal_actor_name(actor));
 #endif
 
+        bsal_vector_init(&spawners, 0);
+        bsal_vector_set_memory_pool(&spawners, ephemeral_memory);
         bsal_vector_unpack(&spawners, buffer);
 
         concrete_actor->spawners = bsal_vector_size(&spawners);

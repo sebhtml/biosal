@@ -4,11 +4,14 @@
 
 #include <stdint.h>
 
+struct bsal_memory_pool;
+
 struct bsal_vector{
     void *data;
     int64_t maximum_size;
     int64_t size;
     int element_size;
+    struct bsal_memory_pool *memory;
 };
 
 void bsal_vector_init(struct bsal_vector *self, int element_size);
@@ -42,5 +45,8 @@ void bsal_vector_copy_range(struct bsal_vector *self, int64_t first, int64_t las
 int64_t bsal_vector_index_of(struct bsal_vector *self, void *data);
 void bsal_vector_update(struct bsal_vector *self, void *old_item, void *new_item);
 int bsal_vector_element_size(struct bsal_vector *self);
+void bsal_vector_set_memory_pool(struct bsal_vector *vector, struct bsal_memory_pool *memory);
+void *bsal_vector_allocate(struct bsal_vector *vector, int size);
+void bsal_vector_free(struct bsal_vector *vector, void *pointer);
 
 #endif

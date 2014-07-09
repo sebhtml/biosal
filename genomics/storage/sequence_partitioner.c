@@ -104,6 +104,7 @@ void bsal_sequence_partitioner_receive(struct bsal_actor *actor, struct bsal_mes
                         count);
                         */
 
+        bsal_vector_init(&concrete_actor->stream_entries, 0);
         bsal_vector_unpack(&concrete_actor->stream_entries, buffer);
 
         /*
