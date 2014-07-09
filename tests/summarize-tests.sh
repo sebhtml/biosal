@@ -18,7 +18,14 @@ function main()
     echo "Summary:"
     echo "PASSED: $passed_tests/$total_tests"
     echo "FAILED: $failed_tests/$total_tests"
-    echo "****"
+    echo ""
+
+    if test $failed_tests -eq 0
+    then
+        echo "Result: perfect score (no action is required)"
+    else
+        echo "Result: some tests failed, see above"
+    fi
 }
 
 main $1

@@ -8,7 +8,7 @@
 
 #include <core/structures/vector.h>
 #include <core/structures/queue.h>
-#include <core/structures/dynamic_hash_table.h>
+#include <core/structures/map.h>
 
 #include <core/system/lock.h>
 #include <core/system/counter.h>
@@ -59,7 +59,7 @@ struct bsal_script;
 struct bsal_node {
     struct bsal_vector actors;
     struct bsal_worker_pool worker_pool;
-    struct bsal_dynamic_hash_table actor_names;
+    struct bsal_map actor_names;
     struct bsal_vector initial_actors;
     int received_initial_actors;
     int ready;

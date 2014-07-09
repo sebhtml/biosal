@@ -33,8 +33,8 @@
  *
  */
 struct bsal_manager {
-    struct bsal_dynamic_hash_table spawner_children;
-    struct bsal_dynamic_hash_table spawner_child_count;
+    struct bsal_map spawner_children;
+    struct bsal_map spawner_child_count;
     int ready_spawners;
     int spawners;
     struct bsal_vector indices;

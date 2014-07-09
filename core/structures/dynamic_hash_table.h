@@ -9,6 +9,7 @@ struct bsal_memory_pool;
 
 /*
  * This is a dynamic hash table with no size limit.
+ * Note: Don't use this class. Instead, use bsal_map.
  */
 struct bsal_dynamic_hash_table {
     struct bsal_hash_table table1;

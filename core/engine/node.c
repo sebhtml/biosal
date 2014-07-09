@@ -242,7 +242,7 @@ void bsal_node_init(struct bsal_node *node, int *argc, char ***argv)
      */
     bsal_vector_reserve(&node->actors, actor_capacity);
 
-    bsal_dynamic_hash_table_init(&node->actor_names, actor_capacity, sizeof(int), sizeof(int));
+    bsal_map_init_with_capacity(&node->actor_names, sizeof(int), sizeof(int), actor_capacity);
 
     bsal_vector_init(&node->initial_actors, sizeof(int));
     bsal_vector_resize(&node->initial_actors, bsal_node_nodes(node));
@@ -274,7 +274,7 @@ void bsal_node_init(struct bsal_node *node, int *argc, char ***argv)
 
 void bsal_node_destroy(struct bsal_node *node)
 {
-    bsal_dynamic_hash_table_destroy(&node->actor_names);
+    bsal_map_destroy(&node->actor_names);
     bsal_vector_destroy(&node->initial_actors);
 
     bsal_map_destroy(&node->scripts);
@@ -463,7 +463,7 @@ int bsal_node_spawn_state(struct bsal_node *node, void *state,
 
     /* register the actor name
      */
-    bucket = bsal_dynamic_hash_table_add(&node->actor_names, &name);
+    bucket = bsal_map_add(&node->actor_names, &name);
     *bucket = index;
 
 #ifdef BSAL_NODE_DEBUG_SPAWN
@@ -1028,11 +1028,11 @@ int bsal_node_actor_index(struct bsal_node *node, int name)
     int index;
 
 #ifdef BSAL_NODE_DEBUG
-    printf("DEBUG calling bsal_dynamic_hash_table_get with pointer to %d, entries %d\n",
-                    name, (int)bsal_dynamic_hash_table_size(&node->actor_names));
+    printf("DEBUG calling bsal_map with pointer to %d, entries %d\n",
+                    name, (int)bsal_map_table_size(&node->actor_names));
 #endif
 
-    bucket = bsal_dynamic_hash_table_get(&node->actor_names, &name);
+    bucket = bsal_map_get(&node->actor_names, &name);
 
 #ifdef BSAL_NODE_DEBUG
     printf("DEBUG bsal_node_actor_index %d %p\n", name, (void *)bucket);
@@ -1128,7 +1128,7 @@ void bsal_node_notify_death(struct bsal_node *node, struct bsal_actor *actor)
 
     bsal_lock_lock(&node->spawn_and_death_lock);
 
-    bsal_dynamic_hash_table_delete(&node->actor_names, &name);
+    bsal_map_delete(&node->actor_names, &name);
 
 #ifdef BSAL_NODE_REUSE_DEAD_INDICES
     bsal_queue_enqueue(&node->dead_indices, &index);
@@ -1371,19 +1371,19 @@ void bsal_node_toggle_debug_mode(struct bsal_node *self)
 
 void bsal_node_reset_actor_counters(struct bsal_node *node)
 {
-    struct bsal_dynamic_hash_table_iterator iterator;
+    struct bsal_map_iterator iterator;
     int *name;
     struct bsal_actor *actor;
 
-    bsal_dynamic_hash_table_iterator_init(&iterator, &node->actor_names);
+    bsal_map_iterator_init(&iterator, &node->actor_names);
 
-    while (bsal_dynamic_hash_table_iterator_next(&iterator, (void **)&name, NULL)) {
+    while (bsal_map_iterator_next(&iterator, (void **)&name, NULL)) {
 
         actor = bsal_node_get_actor_from_name(node, *name);
 
         bsal_actor_reset_counters(actor);
     }
-    bsal_dynamic_hash_table_iterator_destroy(&iterator);
+    bsal_map_iterator_destroy(&iterator);
 }
 
 int64_t bsal_node_get_counter(struct bsal_node *node, int counter)

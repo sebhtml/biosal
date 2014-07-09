@@ -12,6 +12,11 @@ void bsal_map_init(struct bsal_map *self, int key_size, int value_size)
 {
     uint64_t buckets = 2;
 
+    bsal_map_init_with_capacity(self, key_size, value_size, buckets);
+}
+
+void bsal_map_init_with_capacity(struct bsal_map *self, int key_size, int value_size, uint64_t buckets)
+{
 #ifdef BSAL_MEMORY_ALIGNMENT_ENABLED
     self->original_key_size = key_size;
     self->original_value_size = value_size;

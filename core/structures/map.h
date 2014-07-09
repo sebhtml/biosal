@@ -26,6 +26,8 @@ struct bsal_map {
 };
 
 void bsal_map_init(struct bsal_map *self, int key_size, int value_size);
+void bsal_map_init_with_capacity(struct bsal_map *self, int key_size, int value_size, uint64_t buckets);
+
 void bsal_map_destroy(struct bsal_map *self);
 
 void *bsal_map_add(struct bsal_map *self, void *key);

@@ -24,6 +24,7 @@ struct bsal_memory_pool;
 
 /**
  * A hash table implementation.
+ * Note: Don't use this class. Instead, use bsal_map.
  *
  * features:
  *

@@ -5,7 +5,7 @@
 #include <core/helpers/message_helper.h>
 
 #include <core/structures/vector_iterator.h>
-#include <core/structures/dynamic_hash_table_iterator.h>
+#include <core/structures/map_iterator.h>
 
 #include <core/system/debugger.h>
 #include <core/system/memory.h>
@@ -35,8 +35,8 @@ void bsal_manager_init(struct bsal_actor *actor)
 
     concrete_actor = (struct bsal_manager *)bsal_actor_concrete_actor(actor);
 
-    bsal_dynamic_hash_table_init(&concrete_actor->spawner_child_count, 128, sizeof(int), sizeof(int));
-    bsal_dynamic_hash_table_init(&concrete_actor->spawner_children, 128, sizeof(int), sizeof(struct bsal_vector));
+    bsal_map_init(&concrete_actor->spawner_child_count, sizeof(int), sizeof(int));
+    bsal_map_init(&concrete_actor->spawner_children, sizeof(int), sizeof(struct bsal_vector));
     bsal_vector_init(&concrete_actor->indices, sizeof(int));
 
     concrete_actor->ready_spawners = 0;
@@ -50,24 +50,24 @@ void bsal_manager_init(struct bsal_actor *actor)
 void bsal_manager_destroy(struct bsal_actor *actor)
 {
     struct bsal_manager *concrete_actor;
-    struct bsal_dynamic_hash_table_iterator iterator;
+    struct bsal_map_iterator iterator;
     struct bsal_vector *vector;
 
     concrete_actor = (struct bsal_manager *)bsal_actor_concrete_actor(actor);
 
-    bsal_dynamic_hash_table_destroy(&concrete_actor->spawner_child_count);
+    bsal_map_destroy(&concrete_actor->spawner_child_count);
 
-    bsal_dynamic_hash_table_iterator_init(&iterator, &concrete_actor->spawner_children);
+    bsal_map_iterator_init(&iterator, &concrete_actor->spawner_children);
 
-    while (bsal_dynamic_hash_table_iterator_has_next(&iterator)) {
-        bsal_dynamic_hash_table_iterator_next(&iterator, NULL, (void **)&vector);
+    while (bsal_map_iterator_has_next(&iterator)) {
+        bsal_map_iterator_next(&iterator, NULL, (void **)&vector);
 
         bsal_vector_destroy(vector);
     }
 
-    bsal_dynamic_hash_table_iterator_destroy(&iterator);
+    bsal_map_iterator_destroy(&iterator);
 
-    bsal_dynamic_hash_table_destroy(&concrete_actor->spawner_children);
+    bsal_map_destroy(&concrete_actor->spawner_children);
 
     bsal_vector_destroy(&concrete_actor->indices);
 }
@@ -139,13 +139,13 @@ void bsal_manager_receive(struct bsal_actor *actor, struct bsal_message *message
             printf("DEBUG manager %d add spawned processes for spawner %d\n",
                             bsal_actor_name(actor), spawner);
 
-            stores = (struct bsal_vector *)bsal_dynamic_hash_table_add(&concrete_actor->spawner_children, &index);
+            stores = (struct bsal_vector *)bsal_map_add(&concrete_actor->spawner_children, &index);
 
 #ifdef BSAL_MANAGER_DEBUG
             printf("DEBUG adding %d to table\n", index);
 #endif
 
-            bucket = (int *)bsal_dynamic_hash_table_add(&concrete_actor->spawner_child_count, &index);
+            bucket = (int *)bsal_map_add(&concrete_actor->spawner_child_count, &index);
             *bucket = 0;
 
 #ifdef BSAL_MANAGER_DEBUG
@@ -200,7 +200,7 @@ void bsal_manager_receive(struct bsal_actor *actor, struct bsal_message *message
         printf("DEBUG getting table index %d\n", index);
 #endif
 
-        bucket = (int *)bsal_dynamic_hash_table_get(&concrete_actor->spawner_child_count, &index);
+        bucket = (int *)bsal_map_get(&concrete_actor->spawner_child_count, &index);
 
 #ifdef BSAL_MANAGER_DEBUG
         printf("DEBUG685-2 spawner %d index %d bucket %p\n", source, index, (void *)bucket);
@@ -249,8 +249,8 @@ void bsal_manager_receive(struct bsal_actor *actor, struct bsal_message *message
         store = *(int *)buffer;
         index = bsal_actor_get_acquaintance_index(actor, source);
 
-        stores = (struct bsal_vector *)bsal_dynamic_hash_table_get(&concrete_actor->spawner_children, &index);
-        bucket = (int *)bsal_dynamic_hash_table_get(&concrete_actor->spawner_child_count, &index);
+        stores = (struct bsal_vector *)bsal_map_get(&concrete_actor->spawner_children, &index);
+        bucket = (int *)bsal_map_get(&concrete_actor->spawner_child_count, &index);
 
         bsal_vector_push_back(stores, &store);
 
@@ -282,7 +282,7 @@ void bsal_manager_receive(struct bsal_actor *actor, struct bsal_message *message
 
                     index = *bucket;
 
-                    stores = (struct bsal_vector *)bsal_dynamic_hash_table_get(&concrete_actor->spawner_children,
+                    stores = (struct bsal_vector *)bsal_map_get(&concrete_actor->spawner_children,
                                     &index);
 
                     bsal_vector_push_back_vector(&all_stores, stores);

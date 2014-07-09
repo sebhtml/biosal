@@ -43,7 +43,7 @@ void bsal_sequence_partitioner_init(struct bsal_actor *actor)
     bsal_vector_init(&concrete_actor->store_entries, sizeof(uint64_t));
 
     bsal_queue_init(&concrete_actor->available_commands, sizeof(struct bsal_partition_command));
-    bsal_dynamic_hash_table_init(&concrete_actor->active_commands, 128, sizeof(int),
+    bsal_map_init(&concrete_actor->active_commands, sizeof(int),
                     sizeof(struct bsal_partition_command));
 
     concrete_actor->store_count = -1;
@@ -64,7 +64,7 @@ void bsal_sequence_partitioner_destroy(struct bsal_actor *actor)
     bsal_vector_destroy(&concrete_actor->store_entries);
 
     bsal_queue_destroy(&concrete_actor->available_commands);
-    bsal_dynamic_hash_table_destroy(&concrete_actor->active_commands);
+    bsal_map_destroy(&concrete_actor->active_commands);
 }
 
 void bsal_sequence_partitioner_receive(struct bsal_actor *actor, struct bsal_message *message)
@@ -148,7 +148,7 @@ void bsal_sequence_partitioner_receive(struct bsal_actor *actor, struct bsal_mes
             /* store the active command
              */
             command_number = bsal_partition_command_name(&command);
-            command_bucket = (struct bsal_partition_command *)bsal_dynamic_hash_table_add(&concrete_actor->active_commands,
+            command_bucket = (struct bsal_partition_command *)bsal_map_add(&concrete_actor->active_commands,
                             &command_number);
             *command_bucket = command;
 
@@ -167,7 +167,7 @@ void bsal_sequence_partitioner_receive(struct bsal_actor *actor, struct bsal_mes
 
         bsal_message_helper_unpack_int(message, 0, &command_number);
 
-        active_command = bsal_dynamic_hash_table_get(&concrete_actor->active_commands,
+        active_command = bsal_map_get(&concrete_actor->active_commands,
                         &command_number);
 
         if (active_command == NULL) {
@@ -176,12 +176,12 @@ void bsal_sequence_partitioner_receive(struct bsal_actor *actor, struct bsal_mes
 
         stream_index = bsal_partition_command_stream_index(active_command);
         active_command = NULL;
-        bsal_dynamic_hash_table_delete(&concrete_actor->active_commands,
+        bsal_map_delete(&concrete_actor->active_commands,
                         &command_number);
 
         bsal_sequence_partitioner_generate_command(actor, stream_index);
 
-        if (bsal_dynamic_hash_table_size(&concrete_actor->active_commands) == 0
+        if (bsal_map_size(&concrete_actor->active_commands) == 0
                         && bsal_queue_size(&concrete_actor->available_commands) == 0) {
 
             bsal_actor_helper_send_reply_empty(actor, BSAL_SEQUENCE_PARTITIONER_FINISHED);

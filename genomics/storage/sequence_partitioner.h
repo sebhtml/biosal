@@ -26,7 +26,7 @@ struct bsal_sequence_partitioner {
 
     int block_size;
     int store_count;
-    struct bsal_dynamic_hash_table active_commands;
+    struct bsal_map active_commands;
     struct bsal_queue available_commands;
 
     int command_number;

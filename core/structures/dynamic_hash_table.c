@@ -32,7 +32,6 @@ void bsal_dynamic_hash_table_init(struct bsal_dynamic_hash_table *self, uint64_t
 #endif
 
     bsal_hash_table_init(self->current, buckets, key_size, value_size);
-
 }
 
 void bsal_dynamic_hash_table_destroy(struct bsal_dynamic_hash_table *self)
