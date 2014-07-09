@@ -64,7 +64,9 @@ void bsal_coverage_distribution_receive(struct bsal_actor *self, struct bsal_mes
     struct bsal_coverage_distribution *concrete_actor;
     int name;
     int source;
+    struct bsal_memory_pool *ephemeral_memory;
 
+    ephemeral_memory = bsal_actor_get_ephemeral_memory(self);
     name = bsal_actor_name(self);
     source = bsal_message_source(message);
     concrete_actor = (struct bsal_coverage_distribution *)bsal_actor_concrete_actor(self);
@@ -74,6 +76,8 @@ void bsal_coverage_distribution_receive(struct bsal_actor *self, struct bsal_mes
 
     if (tag == BSAL_PUSH_DATA) {
 
+        bsal_map_init(&map, 0, 0);
+        bsal_map_set_memory_pool(&map, ephemeral_memory);
         bsal_map_unpack(&map, buffer);
 
         bsal_map_iterator_init(&iterator, &map);

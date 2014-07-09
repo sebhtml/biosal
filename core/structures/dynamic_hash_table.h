@@ -5,6 +5,11 @@
 #include "hash_table.h"
 #include "hash_table_iterator.h"
 
+struct bsal_memory_pool;
+
+/*
+ * This is a dynamic hash table with no size limit.
+ */
 struct bsal_dynamic_hash_table {
     struct bsal_hash_table table1;
     struct bsal_hash_table table2;
@@ -49,4 +54,6 @@ void bsal_dynamic_hash_table_reset(struct bsal_dynamic_hash_table *self);
 int bsal_dynamic_hash_table_get_key_size(struct bsal_dynamic_hash_table *self);
 int bsal_dynamic_hash_table_get_value_size(struct bsal_dynamic_hash_table *self);
 
+void bsal_dynamic_hash_table_set_memory_pool(struct bsal_dynamic_hash_table *table,
+                struct bsal_memory_pool *memory);
 #endif

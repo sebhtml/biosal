@@ -4,6 +4,7 @@
 #include <core/hash/murmur_hash_2_64_a.h>
 
 #include <core/system/memory.h>
+#include <core/system/memory_pool.h>
 
 #include <core/system/packer.h>
 
@@ -57,6 +58,8 @@ void bsal_hash_table_init(struct bsal_hash_table *table, uint64_t buckets,
     table->group_count = (buckets / buckets_per_group);
 
     table->groups = NULL;
+
+    bsal_hash_table_set_memory_pool(table, NULL);
 }
 
 void bsal_hash_table_destroy(struct bsal_hash_table *table)
@@ -67,12 +70,14 @@ void bsal_hash_table_destroy(struct bsal_hash_table *table)
 
     if (table->groups != NULL) {
         for (i = 0; i < table->group_count; i++) {
-            bsal_hash_table_group_destroy(table->groups + i);
+            bsal_hash_table_group_destroy(table->groups + i,
+                            table->memory);
         }
+
+        bsal_memory_pool_free(table->memory, table->groups);
+        table->groups = NULL;
     }
 
-    bsal_memory_free(table->groups);
-    table->groups = NULL;
 }
 
 void bsal_hash_table_delete(struct bsal_hash_table *table, void *key)
@@ -316,7 +321,7 @@ int bsal_hash_table_pack_unpack(struct bsal_hash_table *self, void *buffer, int 
         offset += bsal_hash_table_group_pack_unpack(self->groups + i,
                         (char *)buffer + offset, operation,
                         self->buckets_per_group, self->key_size,
-                        self->value_size);
+                        self->value_size, self->memory);
     }
 
     return offset;
@@ -327,7 +332,8 @@ void bsal_hash_table_start_groups(struct bsal_hash_table *table)
     int i;
 
     table->groups = (struct bsal_hash_table_group *)
-            bsal_memory_allocate(table->group_count * sizeof(struct bsal_hash_table_group));
+            bsal_memory_pool_allocate(table->memory,
+                            table->group_count * sizeof(struct bsal_hash_table_group));
 
 #ifdef BSAL_HASH_TABLE_DEBUG_INIT
     printf("DEBUG bsal_hash_table_init group_count %d\n",
@@ -336,6 +342,13 @@ void bsal_hash_table_start_groups(struct bsal_hash_table *table)
 
     for (i = 0; i < table->group_count; i++) {
         bsal_hash_table_group_init(table->groups + i, table->buckets_per_group,
-                        table->key_size, table->value_size);
+                        table->key_size, table->value_size, table->memory);
     }
 }
+
+void bsal_hash_table_set_memory_pool(struct bsal_hash_table *table, struct bsal_memory_pool *memory)
+{
+    table->memory = memory;
+}
+
+

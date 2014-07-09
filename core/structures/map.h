@@ -6,6 +6,8 @@
 
 #include <core/system/memory.h>
 
+struct bsal_memory_pool;
+
 /*
  * This is a hash table with built-in
  * alignment, auto-resize, and super
@@ -49,5 +51,7 @@ int bsal_map_pack_unpack(struct bsal_map *self, int operation, void *buffer);
 #ifdef BSAL_MEMORY_ALIGNMENT_ENABLED
 void *bsal_map_pad_key(struct bsal_map *self, void *key);
 #endif
+
+void bsal_map_set_memory_pool(struct bsal_map *map, struct bsal_memory_pool *memory);
 
 #endif

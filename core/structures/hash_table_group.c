@@ -3,6 +3,7 @@
 
 #include <core/system/packer.h>
 #include <core/system/memory.h>
+#include <core/system/memory_pool.h>
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -17,7 +18,8 @@
 #define BSAL_BITS_PER_BYTE 8
 
 void bsal_hash_table_group_init(struct bsal_hash_table_group *group,
-                uint64_t buckets_per_group, int key_size, int value_size)
+                uint64_t buckets_per_group, int key_size, int value_size,
+                struct bsal_memory_pool *memory)
 {
     size_t bitmap_bytes;
     size_t array_bytes;
@@ -25,26 +27,27 @@ void bsal_hash_table_group_init(struct bsal_hash_table_group *group,
     bitmap_bytes = buckets_per_group / BSAL_BITS_PER_BYTE;
     array_bytes = buckets_per_group * (key_size + value_size);
 
-    /* TODO: use slab allocator */
-    group->array = bsal_memory_allocate(array_bytes);
-    group->occupancy_bitmap = bsal_memory_allocate(bitmap_bytes);
-    group->deletion_bitmap = bsal_memory_allocate(bitmap_bytes);
+    /* use slab allocator */
+    group->array = bsal_memory_pool_allocate(memory, array_bytes);
+    group->occupancy_bitmap = bsal_memory_pool_allocate(memory, bitmap_bytes);
+    group->deletion_bitmap = bsal_memory_pool_allocate(memory, bitmap_bytes);
 
     /* mark all buckets as not occupied */
     memset(group->occupancy_bitmap, BSAL_BIT_ZERO, bitmap_bytes);
     memset(group->deletion_bitmap, BSAL_BIT_ZERO, bitmap_bytes);
 }
 
-void bsal_hash_table_group_destroy(struct bsal_hash_table_group *group)
+void bsal_hash_table_group_destroy(struct bsal_hash_table_group *group,
+                struct bsal_memory_pool *memory)
 {
-    /* TODO use slab allocator */
-    bsal_memory_free(group->occupancy_bitmap);
+    /* use slab allocator */
+    bsal_memory_pool_free(memory, group->occupancy_bitmap);
     group->occupancy_bitmap = NULL;
 
-    bsal_memory_free(group->deletion_bitmap);
+    bsal_memory_pool_free(memory, group->deletion_bitmap);
     group->deletion_bitmap = NULL;
 
-    bsal_memory_free(group->array);
+    bsal_memory_pool_free(memory, group->array);
     group->array = NULL;
 }
 
@@ -180,7 +183,8 @@ void *bsal_hash_table_group_value(struct bsal_hash_table_group *group, uint64_t 
 }
 
 int bsal_hash_table_group_pack_unpack(struct bsal_hash_table_group *self, void *buffer, int operation,
-                uint64_t buckets_per_group, int key_size, int value_size)
+                uint64_t buckets_per_group, int key_size, int value_size,
+                struct bsal_memory_pool *memory)
 {
 
     struct bsal_packer packer;
@@ -190,7 +194,7 @@ int bsal_hash_table_group_pack_unpack(struct bsal_hash_table_group *self, void *
 
     if (operation == BSAL_PACKER_OPERATION_UNPACK) {
 
-        bsal_hash_table_group_init(self, buckets_per_group, key_size, value_size);
+        bsal_hash_table_group_init(self, buckets_per_group, key_size, value_size, memory);
     }
 
     bitmap_bytes = buckets_per_group / BSAL_BITS_PER_BYTE;

@@ -75,7 +75,7 @@ void *bsal_memory_pool_allocate(struct bsal_memory_pool *self, int size)
     size = bsal_memory_align(size);
 #endif
 
-    if (self->disabled) {
+    if (self == NULL || self->disabled) {
         return bsal_memory_allocate(size);
     }
 
@@ -136,7 +136,7 @@ void bsal_memory_pool_free(struct bsal_memory_pool *self, void *pointer)
     struct bsal_queue *queue;
     int size;
 
-    if (self->disabled) {
+    if (self == NULL || self->disabled) {
         bsal_memory_free(pointer);
         return;
     }

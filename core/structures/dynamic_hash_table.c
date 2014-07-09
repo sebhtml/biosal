@@ -393,3 +393,15 @@ int bsal_dynamic_hash_table_get_value_size(struct bsal_dynamic_hash_table *self)
 {
     return bsal_hash_table_value_size(self->current);
 }
+
+void bsal_dynamic_hash_table_set_memory_pool(struct bsal_dynamic_hash_table *table,
+                struct bsal_memory_pool *memory)
+{
+    if (table->current != NULL) {
+        bsal_hash_table_set_memory_pool(table->current, memory);
+    }
+
+    if (table->next != NULL) {
+        bsal_hash_table_set_memory_pool(table->next, memory);
+    }
+}

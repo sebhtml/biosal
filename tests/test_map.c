@@ -164,6 +164,7 @@ int main(int argc, char **argv)
         /*
         printf("before unpacking %d bytes %p\n", count, buffer);
         */
+        bsal_map_init(&map2, 0, 0);
         bsal_map_unpack(&map2, buffer);
 
         /*

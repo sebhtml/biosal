@@ -20,8 +20,11 @@
  */
 #define BSAL_HASH_TABLE_USE_ONE_GROUP
 
+struct bsal_memory_pool;
 
 /**
+ * A hash table implementation.
+ *
  * features:
  *
  * - [x] open addressing
@@ -44,6 +47,8 @@ struct bsal_hash_table {
     int value_size;
 
     int debug;
+
+    struct bsal_memory_pool *memory;
 };
 
 /*
@@ -88,5 +93,7 @@ int bsal_hash_table_unpack(struct bsal_hash_table *self, void *buffer);
 
 int bsal_hash_table_pack_unpack(struct bsal_hash_table *self, void *buffer, int operation);
 void bsal_hash_table_start_groups(struct bsal_hash_table *table);
+
+void bsal_hash_table_set_memory_pool(struct bsal_hash_table *table, struct bsal_memory_pool *memory);
 
 #endif

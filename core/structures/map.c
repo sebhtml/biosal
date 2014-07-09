@@ -253,3 +253,8 @@ void *bsal_map_pad_key(struct bsal_map *self, void *key)
     return self->key_buffer;
 }
 #endif
+
+void bsal_map_set_memory_pool(struct bsal_map *map, struct bsal_memory_pool *memory)
+{
+    bsal_dynamic_hash_table_set_memory_pool(&map->table, memory);
+}
