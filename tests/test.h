@@ -15,7 +15,7 @@
 
 #define END_TESTS() \
     int all = correct_tests + incorrect_tests; \
-    printf("PASS: %i/%i\nFAIL: %i/%i\n", correct_tests, all, incorrect_tests, all);
+    printf("PASSED: %i/%i\nFAILED: %i/%i\n", correct_tests, all, incorrect_tests, all);
 
 #define TEST_INT_IS_LOWER_THAN(a, b) \
 if ((a) < (b)) { \

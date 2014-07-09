@@ -2,8 +2,13 @@ CC=mpicc
 CFLAGS=-O3 -g -I.
 LDFLAGS=-lm
 LD=$(CC)
+
+# Run in quiet mode
 Q=@
+
 ECHO=echo
+MAKE=make
+RM=rm
 
 # first target
 all:
