@@ -247,7 +247,7 @@ void bsal_node_init(struct bsal_node *node, int *argc, char ***argv)
 
     bsal_worker_pool_init(&node->worker_pool, workers, node);
 
-    actor_capacity = 1048576;
+    actor_capacity = 8192;
     node->dead_actors = 0;
     node->alive_actors = 0;
 
@@ -258,7 +258,10 @@ void bsal_node_init(struct bsal_node *node, int *argc, char ***argv)
      */
     bsal_vector_reserve(&node->actors, actor_capacity);
 
-    bsal_map_init_with_capacity(&node->actor_names, sizeof(int), sizeof(int), actor_capacity);
+    /*
+     * Multiply by 2 to avoid resizing
+     */
+    bsal_map_init_with_capacity(&node->actor_names, sizeof(int), sizeof(int), actor_capacity * 2);
 
     bsal_vector_init(&node->initial_actors, sizeof(int));
     bsal_vector_resize(&node->initial_actors, bsal_node_nodes(node));
@@ -277,7 +280,7 @@ void bsal_node_init(struct bsal_node *node, int *argc, char ***argv)
     bsal_node_register_signal_handlers(node);
 
     node->start_time = time(NULL);
-    node->last_report_time = node->start_time;
+    node->last_report_time = 0;
 
     processor = workers;
 
@@ -461,6 +464,7 @@ int bsal_node_spawn_state(struct bsal_node *node, void *state,
     /* can not spawn any more actor
      */
     if (bsal_vector_size(&node->actors) == bsal_vector_capacity(&node->actors)) {
+        printf("Error: can not spawn more actors, capacity was reached...\n");
         return BSAL_ACTOR_NOBODY;
     }
 
