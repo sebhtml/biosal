@@ -237,7 +237,7 @@ void bsal_dna_codec_encode_default(struct bsal_dna_codec *codec,
     i = 0;
 
     /*
-     * Set the tail to 0
+     * Set the tail to 0 before doing anything.
      */
     ((uint8_t*)encoded_sequence)[encoded_length - 1] = 0;
 
