@@ -98,7 +98,7 @@ void bsal_actor_init(struct bsal_actor *actor, void *state,
 
     bsal_queue_init(&actor->enqueued_messages, sizeof(struct bsal_message));
 
-    capacity = 256;
+    capacity = BSAL_ACTOR_MAILBOX_SIZE;
     bsal_fast_ring_init(&actor->mailbox, capacity, sizeof(struct bsal_message));
 
     /* call the concrete initializer

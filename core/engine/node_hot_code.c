@@ -15,7 +15,7 @@ void bsal_node_run_loop(struct bsal_node *node)
 {
     struct bsal_message message;
     int credits;
-    const int starting_credits = 1000;
+    const int starting_credits = 256;
 
 #ifdef BSAL_NODE_ENABLE_LOAD_REPORTING
     int ticks;
@@ -104,6 +104,13 @@ void bsal_node_run_loop(struct bsal_node *node)
 #ifdef BSAL_NODE_ENABLE_LOAD_REPORTING
         ticks++;
 #endif
+
+        /* Flush queue buffers in the worker pool
+         */
+
+        bsal_worker_pool_work(&node->worker_pool);
+
+
 
         --credits;
 

@@ -222,60 +222,8 @@ struct bsal_worker *bsal_worker_pool_select_worker_for_run(struct bsal_worker_po
  */
 int bsal_worker_pool_enqueue_message(struct bsal_worker_pool *pool, struct bsal_message *message)
 {
-    struct bsal_message other_message;
-    struct bsal_actor *actor;
-    int worker_index;
-    struct bsal_worker *worker;
-    int name;
-    int destination;
-    time_t current_time;
-
-    destination = bsal_message_destination(message);
-
-#if 0
-    printf("DEBUG pool receives message for actor %d\n",
-                    destination);
-#endif
-
-#ifdef BSAL_WORKER_POOL_BALANCE
-    /* balance the pool regularly
-     */
-
-    current_time = time(NULL);
-
-    if (current_time - pool->last_balancing >= pool->balance_period) {
-        bsal_scheduler_balance(&pool->scheduler);
-
-        pool->last_balancing = current_time;
-    }
-#endif
-
-    name = destination;
-    actor = bsal_node_get_actor_from_name(pool->node, name);
 
     bsal_worker_pool_give_message_to_actor(pool, message);
-
-    /* If there are messages in the inbound message buffer,
-     * Try to give  them too.
-     */
-    if (bsal_ring_queue_dequeue(&pool->inbound_message_queue_buffer, &other_message)) {
-        bsal_worker_pool_give_message_to_actor(pool, &other_message);
-    }
-
-    /* Try to dequeue an actor for scheduling
-     */
-
-    if (bsal_ring_queue_dequeue(&pool->scheduled_actor_queue_buffer, &actor)) {
-
-        name = bsal_actor_get_name(actor);
-        worker_index = bsal_scheduler_get_actor_worker(&pool->scheduler, name);
-
-        worker = bsal_worker_pool_get_worker(pool, worker_index);
-
-        if (!bsal_worker_enqueue_actor(worker, &actor)) {
-            bsal_ring_queue_enqueue(&pool->scheduled_actor_queue_buffer, &actor);
-        }
-    }
 
     return 1;
 }
@@ -444,6 +392,11 @@ void bsal_worker_pool_give_message_to_actor(struct bsal_worker_pool *pool, struc
     /* give the message to the actor
      */
     if (!bsal_actor_enqueue_mailbox_message(actor, message)) {
+
+#ifdef BSAL_WORKER_POOL_DEBUG_MESSAGE_BUFFERING
+        printf("DEBUG897 could not enqueue message, buffering...\n");
+#endif
+
         bsal_ring_queue_enqueue(&pool->inbound_message_queue_buffer, message);
 
     /* Check if the actor is assigned to a worker
@@ -488,4 +441,55 @@ void bsal_worker_pool_give_message_to_actor(struct bsal_worker_pool *pool, struc
     }
 }
 
+void bsal_worker_pool_work(struct bsal_worker_pool *pool)
+{
+    struct bsal_message other_message;
+    struct bsal_actor *actor;
+    int worker_index;
+    struct bsal_worker *worker;
+    time_t current_time;
+    int name;
 
+    /* If there are messages in the inbound message buffer,
+     * Try to give  them too.
+     */
+    if (bsal_ring_queue_dequeue(&pool->inbound_message_queue_buffer, &other_message)) {
+        bsal_worker_pool_give_message_to_actor(pool, &other_message);
+    }
+
+    /* Try to dequeue an actor for scheduling
+     */
+
+    if (bsal_ring_queue_dequeue(&pool->scheduled_actor_queue_buffer, &actor)) {
+
+        name = bsal_actor_get_name(actor);
+        worker_index = bsal_scheduler_get_actor_worker(&pool->scheduler, name);
+
+        worker = bsal_worker_pool_get_worker(pool, worker_index);
+
+        if (!bsal_worker_enqueue_actor(worker, &actor)) {
+            bsal_ring_queue_enqueue(&pool->scheduled_actor_queue_buffer, &actor);
+        }
+    }
+
+
+#if 0
+    printf("DEBUG pool receives message for actor %d\n",
+                    destination);
+#endif
+
+#ifdef BSAL_WORKER_POOL_BALANCE
+    /* balance the pool regularly
+     */
+
+    current_time = time(NULL);
+
+    if (current_time - pool->last_balancing >= pool->balance_period) {
+        bsal_scheduler_balance(&pool->scheduler);
+
+        pool->last_balancing = current_time;
+    }
+#endif
+
+
+}

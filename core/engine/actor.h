@@ -152,6 +152,15 @@ struct bsal_worker;
 struct bsal_memory_pool;
 
 /*
+ * The mailbox size of an actor.
+ * When it is full, messages are buffered upstream.
+ */
+/*
+#define BSAL_ACTOR_MAILBOX_SIZE 4
+*/
+#define BSAL_ACTOR_MAILBOX_SIZE 256
+
+/*
  * the actor attribute is a void *
  */
 struct bsal_actor {
