@@ -206,6 +206,13 @@ void bsal_dynamic_hash_table_start_resizing(struct bsal_dynamic_hash_table *self
                     bsal_hash_table_key_size(self->current),
                     bsal_hash_table_value_size(self->current));
 
+    /*
+     * Disable the deletion support if necessary
+     */
+    if (!bsal_hash_table_deletion_support_is_enabled(self->current)) {
+        bsal_hash_table_disable_deletion_support(self->next);
+    }
+
     bsal_hash_table_iterator_init(&self->iterator, self->current);
 
 #ifdef BSAL_DYNAMIC_HASH_TABLE_DEBUG

@@ -48,7 +48,7 @@ void bsal_hash_table_group_init(struct bsal_hash_table_group *group,
     /* mark all buckets as not occupied */
     memset(group->occupancy_bitmap, BSAL_BIT_ZERO, bitmap_bytes);
 
-    if (deletion_is_enabled) {
+    if (group->deletion_bitmap != NULL) {
         memset(group->deletion_bitmap, BSAL_BIT_ZERO, bitmap_bytes);
     }
 }

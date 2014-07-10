@@ -101,5 +101,6 @@ void bsal_hash_table_set_memory_pool(struct bsal_hash_table *table, struct bsal_
 
 void bsal_hash_table_disable_deletion_support(struct bsal_hash_table *table);
 void bsal_hash_table_enable_deletion_support(struct bsal_hash_table *table);
+int bsal_hash_table_deletion_support_is_enabled(struct bsal_hash_table *table);
 
 #endif

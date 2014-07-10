@@ -381,3 +381,8 @@ void bsal_hash_table_enable_deletion_support(struct bsal_hash_table *table)
 
     table->deletion_is_enabled = 1;
 }
+
+int bsal_hash_table_deletion_support_is_enabled(struct bsal_hash_table *table)
+{
+    return table->deletion_is_enabled;
+}

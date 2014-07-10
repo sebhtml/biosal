@@ -116,7 +116,9 @@ void bsal_kmer_store_receive(struct bsal_actor *self, struct bsal_message *messa
         bsal_map_init(&concrete_actor->table, concrete_actor->key_length_in_bytes,
                         sizeof(int));
 
+        /*
         bsal_map_disable_deletion_support(&concrete_actor->table);
+        */
 
         bsal_actor_helper_send_reply_empty(self, BSAL_SET_KMER_LENGTH_REPLY);
 
