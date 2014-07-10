@@ -815,6 +815,9 @@ void bsal_scheduler_detect_symmetric_scripts(struct bsal_scheduler *scheduler, s
         while (bsal_map_iterator_get_next_key_and_value(&iterator, &actor_name, NULL)) {
             actor = bsal_node_get_actor_from_name(node, actor_name);
 
+            if (actor == NULL) {
+                continue;
+            }
             script = bsal_actor_script(actor);
 
             frequency = 0;
