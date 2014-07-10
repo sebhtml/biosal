@@ -29,6 +29,8 @@
 #define BSAL_WORKER_DEBUG_MEMORY
 */
 
+#define BSAL_WORKER_UNPRODUCTIVE_TICK_LIMIT 256
+
 void bsal_worker_init(struct bsal_worker *worker, int name, struct bsal_node *node)
 {
     int capacity;
@@ -87,6 +89,8 @@ void bsal_worker_init(struct bsal_worker *worker, int name, struct bsal_node *no
      * directly.
      */
     bsal_memory_pool_disable(&worker->outbound_message_memory_pool);
+
+    worker->ticks_without_production = 0;
 }
 
 void bsal_worker_destroy(struct bsal_worker *worker)
@@ -428,6 +432,9 @@ int bsal_worker_dequeue_actor(struct bsal_worker *worker, struct bsal_actor **ac
          */
         } else /* if (mailbox_size == 0) */ {
 
+            status = STATUS_IDLE;
+            bsal_map_update_value(&worker->actors, &name, &status);
+
             value = 0;
         }
 
@@ -440,6 +447,13 @@ int bsal_worker_dequeue_actor(struct bsal_worker *worker, struct bsal_actor **ac
      * So, here, an actor is poked for inactivity
      */
     if (!value) {
+        ++worker->ticks_without_production;
+    } else {
+        worker->ticks_without_production = 0;
+    }
+
+    if (worker->ticks_without_production >= BSAL_WORKER_UNPRODUCTIVE_TICK_LIMIT) {
+
         if (bsal_map_iterator_get_next_key_and_value(&worker->actor_iterator, &name, NULL)) {
 
             other_actor = bsal_node_get_actor_from_name(worker->node, name);
@@ -451,6 +465,9 @@ int bsal_worker_dequeue_actor(struct bsal_worker *worker, struct bsal_actor **ac
 
             if (mailbox_size > 0) {
                 bsal_ring_queue_enqueue(&worker->scheduled_actor_queue_real, &other_actor);
+
+                status = STATUS_QUEUED;
+                bsal_map_update_value(&worker->actors, &name, &status);
             }
         } else {
 
@@ -458,6 +475,8 @@ int bsal_worker_dequeue_actor(struct bsal_worker *worker, struct bsal_actor **ac
              */
             bsal_map_iterator_destroy(&worker->actor_iterator);
             bsal_map_iterator_init(&worker->actor_iterator, &worker->actors);
+
+            worker->ticks_without_production = 0;
         }
     }
 

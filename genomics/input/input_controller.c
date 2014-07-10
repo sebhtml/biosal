@@ -675,7 +675,12 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
         bsal_input_controller_receive_store_entry_counts(actor, message);
 
     } else if (tag == BSAL_RESERVE_REPLY) {
+
         concrete_actor->ready_consumers++;
+
+        printf("DEBUG marker BSAL_RESERVE_REPLY %d/%d\n",
+                        concrete_actor->ready_consumers,
+                        (int)bsal_vector_size(&concrete_actor->consumers));
 
         if (concrete_actor->ready_consumers == bsal_vector_size(&concrete_actor->consumers)) {
 

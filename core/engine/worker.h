@@ -48,6 +48,7 @@ struct bsal_worker {
 
     struct bsal_map actors;
     struct bsal_map_iterator actor_iterator;
+    int ticks_without_production;
 
     /*
      * The worker pool push actors to schedule on this
