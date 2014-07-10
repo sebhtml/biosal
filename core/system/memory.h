@@ -108,7 +108,7 @@ void bsal_memory_free_private(void *pointer, const char *function, const char *f
 
 uint64_t bsal_get_heap_size();
 
-int bsal_memory_align(int unaligned);
-int bsal_memory_align_private(int unaligned, int alignment);
+size_t bsal_memory_align(size_t unaligned);
+size_t bsal_memory_align_private(size_t unaligned, size_t alignment);
 
 #endif

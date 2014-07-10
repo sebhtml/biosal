@@ -63,10 +63,14 @@ void bsal_memory_pool_destroy(struct bsal_memory_pool *self)
     }
 }
 
-void *bsal_memory_pool_allocate(struct bsal_memory_pool *self, int size)
+void *bsal_memory_pool_allocate(struct bsal_memory_pool *self, size_t size)
 {
     struct bsal_queue *queue;
     void *pointer;
+
+    if (size == 0) {
+        return NULL;
+    }
 
 #ifdef BSAL_MEMORY_ALIGNMENT_ENABLED
     /* Align memory to avoid problems with performance and/or
@@ -135,6 +139,10 @@ void bsal_memory_pool_free(struct bsal_memory_pool *self, void *pointer)
 {
     struct bsal_queue *queue;
     int size;
+
+    if (pointer == NULL) {
+        return;
+    }
 
     if (self == NULL || self->disabled) {
         bsal_memory_free(pointer);

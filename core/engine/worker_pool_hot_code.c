@@ -96,7 +96,6 @@ struct bsal_worker *bsal_worker_pool_select_worker_for_message(struct bsal_worke
     return best_worker;
 }
 
-#ifdef BSAL_WORKER_HAS_OWN_QUEUES
 int bsal_worker_pool_pull_classic(struct bsal_worker_pool *pool, struct bsal_message *message)
 {
     struct bsal_worker *worker;
@@ -107,17 +106,12 @@ int bsal_worker_pool_pull_classic(struct bsal_worker_pool *pool, struct bsal_mes
 
     return answer;
 }
-#endif
 
 int bsal_worker_pool_dequeue_message(struct bsal_worker_pool *pool, struct bsal_message *message)
 {
     int answer;
 
-#ifdef BSAL_WORKER_HAS_OWN_QUEUES
     answer = bsal_worker_pool_pull_classic(pool, message);
-#else
-    answer = bsal_message_queue_dequeue(&pool->message_queue, message);
-#endif
 
 #if 0
     if (!answer) {

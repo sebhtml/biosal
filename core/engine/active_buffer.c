@@ -3,10 +3,11 @@
 
 #include <stdlib.h>
 
-void bsal_active_buffer_init(struct bsal_active_buffer *self, void *buffer)
+void bsal_active_buffer_init(struct bsal_active_buffer *self, void *buffer, int worker)
 {
     self->buffer = buffer;
     self->request = MPI_REQUEST_NULL;
+    self->worker = worker;
 }
 
 /* \see http://blogs.cisco.com/performance/mpi_request_free-is-evil/
@@ -56,4 +57,9 @@ void *bsal_active_buffer_buffer(struct bsal_active_buffer *self)
 MPI_Request *bsal_active_buffer_request(struct bsal_active_buffer *self)
 {
     return &self->request;
+}
+
+int bsal_active_buffer_get_worker(struct bsal_active_buffer *self)
+{
+    return self->worker;
 }

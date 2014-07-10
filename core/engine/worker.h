@@ -46,7 +46,20 @@ struct bsal_worker {
 
     struct bsal_map actors;
 
+    /*
+     * The worker pool push actors to schedule on this
+     * ring
+     */
     struct bsal_fast_ring scheduled_actor_queue;
+
+
+#ifdef BSAL_NODE_USE_MESSAGE_RECYCLING
+    /*
+     * The node pushes buffers to release on this ring
+     */
+    struct bsal_fast_ring outbound_buffers;
+#endif
+
     struct bsal_ring_queue scheduled_actor_queue_real;
 
     struct bsal_fast_ring outbound_message_queue;
@@ -88,6 +101,7 @@ struct bsal_worker {
     uint64_t scheduling_epoch_used_nanoseconds;
 
     struct bsal_memory_pool ephemeral_memory;
+    struct bsal_memory_pool outbound_message_memory_pool;
 };
 
 void bsal_worker_init(struct bsal_worker *worker, int name, struct bsal_node *node);
@@ -136,5 +150,8 @@ int bsal_worker_get_sum_of_received_actor_messages(struct bsal_worker *self);
 int bsal_worker_get_queued_messages(struct bsal_worker *self);
 int bsal_worker_get_production(struct bsal_worker *worker, struct bsal_scheduler *scheduler);
 int bsal_worker_get_producer_count(struct bsal_worker *worker, struct bsal_scheduler *scheduler);
+int bsal_worker_free_buffer(struct bsal_worker *worker, void *buffer);
+
+void bsal_worker_free_message(struct bsal_worker *worker, struct bsal_message *message);
 
 #endif

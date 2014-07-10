@@ -24,7 +24,7 @@ struct bsal_memory_pool {
 
 void bsal_memory_pool_init(struct bsal_memory_pool *self, int block_size);
 void bsal_memory_pool_destroy(struct bsal_memory_pool *self);
-void *bsal_memory_pool_allocate(struct bsal_memory_pool *self, int size);
+void *bsal_memory_pool_allocate(struct bsal_memory_pool *self, size_t size);
 void bsal_memory_pool_free(struct bsal_memory_pool *self, void *pointer);
 
 void bsal_memory_pool_enable_tracking(struct bsal_memory_pool *self);

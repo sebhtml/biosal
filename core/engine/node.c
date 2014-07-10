@@ -6,6 +6,7 @@
  */
 
 #include "node.h"
+#include "active_buffer.h"
 
 #include <core/structures/vector.h>
 #include <core/structures/map_iterator.h>
@@ -72,6 +73,10 @@ void bsal_node_init(struct bsal_node *node, int *argc, char ***argv)
     node->provided = bsal_transport_get_provided(&node->transport);
     node->name = bsal_transport_get_rank(&node->transport);
     node->nodes = bsal_transport_get_size(&node->transport);
+
+#ifdef BSAL_NODE_USE_MESSAGE_RECYCLING
+    bsal_ring_queue_init(&node->outbound_buffers, sizeof(struct bsal_active_buffer));
+#endif
 
 #ifdef BSAL_NODE_CHECK_MPI
     node->use_mpi = 1;
@@ -892,10 +897,48 @@ void bsal_node_send(struct bsal_node *node, struct bsal_message *message)
 {
     int name;
 
+#ifdef BSAL_NODE_USE_MESSAGE_RECYCLING
+    int worker_name;
+    struct bsal_worker *worker;
+    struct bsal_active_buffer recycled_buffer;
+    void *buffer;
+#endif
+
     name = bsal_message_destination(message);
     bsal_transport_resolve(&node->transport, message);
 
+#ifdef BSAL_NODE_USE_MESSAGE_RECYCLING
+    /* First, verify if this is a recycled message
+     */
+    if (bsal_message_is_recycled(message)) {
+
+        worker_name = bsal_message_get_worker(message);
+        buffer = bsal_message_buffer(message);
+
+        if (worker_name >= 0) {
+            worker = bsal_worker_pool_get_worker(&node->worker_pool, worker_name);
+            if (!bsal_worker_free_buffer(worker, buffer)) {
+
+                bsal_active_buffer_init(&recycled_buffer, buffer, worker_name);
+                bsal_ring_queue_enqueue(&node->outbound_buffers, &recycled_buffer);
+                bsal_active_buffer_destroy(&recycled_buffer);
+            }
+        } else {
+
+            /* This is a buffer allocated during the reception
+             * from another BIOSAL node
+             */
+
+            bsal_memory_free(buffer);
+        }
+        return;
+    }
+#endif
+
+    /* If the actor is local, dispatch the message locally
+     */
     if (bsal_node_has_actor(node, name)) {
+
         /* dispatch locally */
         bsal_node_dispatch_message(node, message);
 
@@ -912,6 +955,9 @@ void bsal_node_send(struct bsal_node *node, struct bsal_message *message)
         bsal_counter_add(&node->counter, BSAL_COUNTER_RECEIVED_BYTES_FROM_SELF,
                         bsal_message_count(message));
 
+    /* Otherwise, the message must be sent to another BIOSAL
+     * node
+     */
     } else {
         /* If MPI is disable, this will never be reached anyway
          */

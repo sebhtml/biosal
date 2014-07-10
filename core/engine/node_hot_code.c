@@ -132,7 +132,7 @@ void bsal_node_send_message(struct bsal_node *node)
      */
     if (node->use_mpi) {
 #endif
-        bsal_transport_test_requests(&node->transport);
+        bsal_node_test_requests(node);
 
 #ifdef BSAL_NODE_CHECK_MPI
     }
@@ -153,4 +153,69 @@ void bsal_node_send_message(struct bsal_node *node)
         /* send it locally or over the network */
         bsal_node_send(node, &message);
     }
+}
+
+void bsal_node_test_requests(struct bsal_node *node)
+{
+    struct bsal_active_buffer active_buffer;
+
+    /* Test active buffer requests
+     */
+    if (bsal_transport_test_requests(&node->transport,
+                            &active_buffer)) {
+
+        bsal_node_free_active_buffer(node, &active_buffer);
+
+        bsal_active_buffer_destroy(&active_buffer);
+    }
+
+#ifdef BSAL_NODE_USE_MESSAGE_RECYCLING
+    /* Check if there are queued buffers to give to workers
+     */
+    if (bsal_ring_queue_dequeue(&node->outbound_buffers, &active_buffer)) {
+
+        bsal_node_free_active_buffer(node, &active_buffer);
+    }
+#endif
+}
+
+void bsal_node_free_active_buffer(struct bsal_node *node,
+                struct bsal_active_buffer *active_buffer)
+{
+    void *buffer;
+
+#ifdef BSAL_NODE_USE_MESSAGE_RECYCLING
+    int worker_name;
+    struct bsal_worker *worker;
+#endif
+
+    buffer = bsal_active_buffer_buffer(active_buffer);
+
+
+#ifdef BSAL_NODE_USE_MESSAGE_RECYCLING
+    worker_name = bsal_active_buffer_get_worker(active_buffer);
+
+    /* This an worker buffer
+     */
+    if (worker_name >= 0) {
+        worker = bsal_worker_pool_get_worker(&node->worker_pool, worker_name);
+
+        /* Push the buffer in the ring of the worker
+         */
+        if (!bsal_worker_free_buffer(worker, buffer)) {
+
+            /* If the ring is full, queue it locally
+             * and try again later
+             */
+            bsal_ring_queue_enqueue(&node->outbound_buffers, &active_buffer);
+        }
+
+    /* This is a node buffer
+     * (for startup)
+     */
+    }
+
+#endif
+
+    bsal_memory_free(buffer);
 }

@@ -25,6 +25,10 @@
 #define STATUS_IDLE 0
 #define STATUS_QUEUED 1
 
+/*
+#define BSAL_WORKER_DEBUG_MEMORY
+*/
+
 void bsal_worker_init(struct bsal_worker *worker, int name, struct bsal_node *node)
 {
     int capacity;
@@ -36,7 +40,6 @@ void bsal_worker_init(struct bsal_worker *worker, int name, struct bsal_node *no
     worker->dead = 0;
     worker->last_warning = 0;
 
-#ifdef BSAL_WORKER_HAS_OWN_QUEUES
     /*worker->work_queue = &worker->works;*/
 
     /* There are two options:
@@ -44,6 +47,11 @@ void bsal_worker_init(struct bsal_worker *worker, int name, struct bsal_node *no
      * 2. Use volatile head and tail.
      */
     bsal_fast_ring_init(&worker->scheduled_actor_queue, capacity, sizeof(struct bsal_actor *));
+
+#ifdef BSAL_NODE_USE_MESSAGE_RECYCLING
+    bsal_fast_ring_init(&worker->outbound_buffers, capacity, sizeof(void *));
+#endif
+
     bsal_ring_queue_init(&worker->scheduled_actor_queue_real, sizeof(struct bsal_actor *));
     bsal_map_init(&worker->actors, sizeof(int), sizeof(int));
 
@@ -51,7 +59,6 @@ void bsal_worker_init(struct bsal_worker *worker, int name, struct bsal_node *no
 
     bsal_ring_queue_init(&worker->outbound_message_queue_buffer, sizeof(struct bsal_message));
 
-#endif
 
     worker->debug = 0;
     worker->busy = 0;
@@ -71,6 +78,14 @@ void bsal_worker_init(struct bsal_worker *worker, int name, struct bsal_node *no
 
     bsal_lock_init(&worker->lock);
     bsal_set_init(&worker->evicted_actors, sizeof(int));
+
+    bsal_memory_pool_init(&worker->outbound_message_memory_pool, 2097152);
+
+    /*
+     * Disable the pool so that it uses allocate and free
+     * directly.
+     */
+    bsal_memory_pool_disable(&worker->outbound_message_memory_pool);
 }
 
 void bsal_worker_destroy(struct bsal_worker *worker)
@@ -79,6 +94,10 @@ void bsal_worker_destroy(struct bsal_worker *worker)
     bsal_lock_destroy(&worker->lock);
 
     bsal_fast_ring_destroy(&worker->scheduled_actor_queue);
+
+#ifdef BSAL_NODE_USE_MESSAGE_RECYCLING
+    bsal_fast_ring_destroy(&worker->outbound_buffers);
+#endif
     bsal_ring_queue_destroy(&worker->scheduled_actor_queue_real);
     bsal_fast_ring_destroy(&worker->outbound_message_queue);
     bsal_ring_queue_destroy(&worker->outbound_message_queue_buffer);
@@ -92,6 +111,7 @@ void bsal_worker_destroy(struct bsal_worker *worker)
     worker->dead = 1;
 
     bsal_memory_pool_destroy(&worker->ephemeral_memory);
+    bsal_memory_pool_destroy(&worker->outbound_message_memory_pool);
 
 }
 
@@ -114,8 +134,13 @@ void bsal_worker_send(struct bsal_worker *worker, struct bsal_message *message)
     metadata_size = bsal_message_metadata_size(message);
     all = count + metadata_size;
 
-    /* TODO use slab allocator to allocate buffer... */
-    buffer = (char *)bsal_memory_allocate(all * sizeof(char));
+    /* use slab allocator to allocate buffer... */
+    buffer = (char *)bsal_memory_pool_allocate(&worker->outbound_message_memory_pool,
+                    all * sizeof(char));
+
+#ifdef BSAL_WORKER_DEBUG_MEMORY
+    printf("ALLOCATE %p\n", buffer);
+#endif
 
 #ifdef BSAL_WORKER_DEBUG
     printf("[bsal_worker_send] allocated %i bytes (%i + %i) for buffer %p\n",
@@ -404,7 +429,15 @@ int bsal_worker_enqueue_message(struct bsal_worker *worker, struct bsal_message 
 
 int bsal_worker_dequeue_message(struct bsal_worker *worker, struct bsal_message *message)
 {
-    return bsal_fast_ring_pop_from_consumer(&worker->outbound_message_queue, message);
+    int answer;
+
+    answer = bsal_fast_ring_pop_from_consumer(&worker->outbound_message_queue, message);
+
+    if (answer) {
+        bsal_message_set_worker(message, worker->name);
+    }
+
+    return answer;
 }
 
 void bsal_worker_print_actors(struct bsal_worker *worker, struct bsal_scheduler *scheduler)
@@ -662,4 +695,50 @@ int bsal_worker_get_producer_count(struct bsal_worker *worker, struct bsal_sched
     return count;
 }
 
+int bsal_worker_free_buffer(struct bsal_worker *worker, void *buffer)
+{
+#ifdef BSAL_WORKER_DEBUG_MEMORY
+    printf("FREE %p\n", buffer);
+#endif
 
+#ifdef BSAL_NODE_USE_MESSAGE_RECYCLING
+    return bsal_fast_ring_push_from_producer(&worker->outbound_buffers, &buffer);
+#else
+    bsal_memory_pool_free(&worker->outbound_message_memory_pool, buffer);
+
+    return 1;
+#endif
+}
+
+void bsal_worker_free_message(struct bsal_worker *worker, struct bsal_message *message)
+{
+    int source_worker;
+    void *buffer;
+
+    buffer = bsal_message_buffer(message);
+    source_worker = bsal_message_get_worker(message);
+
+    if (1 || source_worker == worker->name) {
+
+        /* This is from the current worker
+         */
+        bsal_memory_pool_free(&worker->outbound_message_memory_pool, buffer);
+
+#if 0
+    } else if (source_worker >= 0) {
+
+        bsal_message_recycle(message);
+
+        bsal_worker_enqueue_message(worker, message);
+#endif
+
+    } else {
+
+        /* This is from another fellow local worker
+         * or from another BIOSAL node altogether.
+         */
+        bsal_message_recycle(message);
+
+        bsal_worker_enqueue_message(worker, message);
+    }
+}

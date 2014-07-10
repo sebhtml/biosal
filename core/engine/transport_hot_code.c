@@ -61,27 +61,23 @@ int bsal_transport_receive(struct bsal_transport *self, struct bsal_message *mes
     return 1;
 }
 
-void bsal_transport_test_requests(struct bsal_transport *self)
+int bsal_transport_test_requests(struct bsal_transport *self, struct bsal_active_buffer *active_buffer)
 {
-    struct bsal_active_buffer active_buffer;
-    void *buffer;
+    if (bsal_ring_queue_dequeue(&self->active_buffers, active_buffer)) {
 
-    if (bsal_ring_queue_dequeue(&self->active_buffers, &active_buffer)) {
+        if (bsal_active_buffer_test(active_buffer)) {
 
-        if (bsal_active_buffer_test(&active_buffer)) {
-            buffer = bsal_active_buffer_buffer(&active_buffer);
-
-            /* TODO use an allocator
-             */
-            bsal_memory_free(buffer);
-
-            bsal_active_buffer_destroy(&active_buffer);
+            return 1;
 
         /* Just put it back in the FIFO for later */
         } else {
-            bsal_ring_queue_enqueue(&self->active_buffers, &active_buffer);
+            bsal_ring_queue_enqueue(&self->active_buffers, active_buffer);
+
+            return 0;
         }
     }
+
+    return 0;
 }
 
 

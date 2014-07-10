@@ -65,6 +65,10 @@ struct bsal_node {
     int ready;
     char print_structure;
 
+#ifdef BSAL_NODE_USE_MESSAGE_RECYCLING
+    struct bsal_ring_queue outbound_buffers;
+#endif
+
     int started;
 
     struct bsal_map scripts;
@@ -186,5 +190,9 @@ void bsal_node_set_affinity(struct bsal_node *node);
 void bsal_node_reset_actor_counters(struct bsal_node *node);
 
 int64_t bsal_node_get_counter(struct bsal_node *node, int counter);
+void bsal_node_test_requests(struct bsal_node *node);
+
+void bsal_node_free_active_buffer(struct bsal_node *node,
+                struct bsal_active_buffer *active_buffer);
 
 #endif

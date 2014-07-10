@@ -62,7 +62,9 @@ void bsal_transport_send(struct bsal_transport *self, struct bsal_message *messa
     MPI_Request *request;
     int all;
     struct bsal_active_buffer active_buffer;
+    int worker;
 
+    worker = bsal_message_get_worker(message);
     buffer = bsal_message_buffer(message);
     count = bsal_message_count(message);
     metadata_size = bsal_message_metadata_size(message);
@@ -70,7 +72,7 @@ void bsal_transport_send(struct bsal_transport *self, struct bsal_message *messa
     destination = bsal_message_destination_node(message);
     tag = bsal_message_tag(message);
 
-    bsal_active_buffer_init(&active_buffer, buffer);
+    bsal_active_buffer_init(&active_buffer, buffer, worker);
     request = bsal_active_buffer_request(&active_buffer);
 
     /* TODO get return value */

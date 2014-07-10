@@ -1752,16 +1752,34 @@ void bsal_actor_work(struct bsal_actor *actor)
 {
     struct bsal_message message;
     void *buffer;
+    int source_worker;
 
     if (!bsal_actor_dequeue_mailbox_message(actor, &message)) {
         printf("Error, no message...\n");
         return;
     }
 
+    /* Make a copy of the buffer and of the worker
+     * because actors can not be trusted.
+     */
     buffer = bsal_message_buffer(&message);
+    source_worker = bsal_message_get_worker(&message);
+
+    /*
+     * Receive the message !
+     */
     bsal_actor_receive(actor, &message);
 
-    bsal_memory_free(buffer);
+    /* Restore the important stuff
+     */
+
+    bsal_message_set_buffer(&message, buffer);
+    bsal_message_set_worker(&message, source_worker);
+
+    /*
+     * Send the buffer back to the source to be recycled.
+     */
+    bsal_worker_free_message(actor->worker, &message);
 }
 
 int bsal_actor_get_mailbox_size(struct bsal_actor *actor)

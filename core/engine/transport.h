@@ -2,9 +2,11 @@
 #ifndef BSAL_TRANSPORT_H
 #define BSAL_TRANSPORT_H
 
-#include <mpi.h>
+#include "active_buffer.h"
 
 #include <core/structures/ring_queue.h>
+
+#include <mpi.h>
 
 struct bsal_node;
 struct bsal_message;
@@ -30,6 +32,6 @@ int bsal_transport_get_provided(struct bsal_transport *self);
 int bsal_transport_get_rank(struct bsal_transport *self);
 int bsal_transport_get_size(struct bsal_transport *self);
 
-void bsal_transport_test_requests(struct bsal_transport *self);
+int bsal_transport_test_requests(struct bsal_transport *self, struct bsal_active_buffer *active_buffer);
 
 #endif

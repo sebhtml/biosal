@@ -33,6 +33,10 @@ void bsal_worker_run(struct bsal_worker *worker)
     struct bsal_actor *actor;
     struct bsal_message other_message;
 
+#ifdef BSAL_NODE_USE_MESSAGE_RECYCLING
+    void *buffer;
+#endif
+
 #ifdef BSAL_NODE_ENABLE_LOAD_REPORTING
     clock_t current_time;
     clock_t elapsed;
@@ -133,6 +137,16 @@ void bsal_worker_run(struct bsal_worker *worker)
             bsal_ring_queue_enqueue(&worker->outbound_message_queue_buffer, &other_message);
         }
     }
+
+#ifdef BSAL_NODE_USE_MESSAGE_RECYCLING
+    /* free outbound buffers, if any
+     */
+
+    if (bsal_fast_ring_pop_from_consumer(&worker->outbound_buffers, &buffer)) {
+
+        bsal_memory_pool_free(&worker->outbound_message_memory_pool, buffer);
+    }
+#endif
 
     bsal_worker_unlock(worker);
 }

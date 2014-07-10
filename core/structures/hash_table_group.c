@@ -10,6 +10,8 @@
 #include <stdint.h>
 #include <string.h>
 
+#include <inttypes.h>
+
 /*#define BSAL_HASH_TABLE_GROUP_DEBUG */
 
 #define BSAL_BIT_ZERO 0
@@ -24,8 +26,14 @@ void bsal_hash_table_group_init(struct bsal_hash_table_group *group,
     size_t bitmap_bytes;
     size_t array_bytes;
 
-    bitmap_bytes = buckets_per_group / BSAL_BITS_PER_BYTE;
     array_bytes = buckets_per_group * (key_size + value_size);
+    bitmap_bytes = buckets_per_group / BSAL_BITS_PER_BYTE;
+
+#ifdef BSAL_HASH_TABLE_GROUP_DEBUG
+    printf("DEBUG buckets_per_group %" PRIu64 " key_size %d value_size %d\n",
+                    buckets_per_group, key_size, value_size);
+    printf("array_bytes %zu bitmap_bytes %zu\n", bitmap_bytes, array_bytes);
+#endif
 
     /* use slab allocator */
     group->array = bsal_memory_pool_allocate(memory, array_bytes);
