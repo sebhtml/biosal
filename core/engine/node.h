@@ -12,6 +12,7 @@
 
 #include <core/system/lock.h>
 #include <core/system/counter.h>
+#include <core/system/memory_pool.h>
 
 /*
  * \see http://pubs.opengroup.org/onlinepubs/009696699/basedefs/signal.h.html
@@ -83,6 +84,10 @@ struct bsal_node {
     struct bsal_transport transport;
     struct bsal_lock spawn_and_death_lock;
     struct bsal_lock script_lock;
+
+    struct bsal_memory_pool actor_memory_pool;
+    struct bsal_memory_pool inbound_message_memory_pool;
+    struct bsal_memory_pool node_message_memory_pool;
 
     struct bsal_queue dead_indices;
 
