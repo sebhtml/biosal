@@ -55,5 +55,7 @@ int bsal_dna_kmer_is_lower(struct bsal_dna_kmer *self, struct bsal_dna_kmer *oth
                 struct bsal_dna_codec *codec);
 int bsal_dna_kmer_compare(struct bsal_dna_kmer *self, struct bsal_dna_kmer *other, int kmer_length,
                 struct bsal_dna_codec *codec);
+int bsal_dna_kmer_is_canonical(struct bsal_dna_kmer *self, int kmer_length,
+                struct bsal_dna_codec *codec);
 
 #endif

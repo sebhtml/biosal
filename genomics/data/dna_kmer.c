@@ -67,16 +67,16 @@ int bsal_dna_kmer_pack_store_key(struct bsal_dna_kmer *self,
     struct bsal_dna_kmer kmer2;
     int bytes;
 
-    bsal_dna_kmer_init_copy(&kmer2, self, kmer_length, memory, codec);
-    bsal_dna_kmer_reverse_complement_self(&kmer2, kmer_length, codec, memory);
-
-    if (bsal_dna_kmer_is_lower(&kmer2, self, kmer_length, codec)) {
-        bytes = bsal_dna_kmer_pack(&kmer2, buffer, kmer_length, codec);
-    } else {
+    if (bsal_dna_kmer_is_canonical(self, kmer_length, codec)) {
         bytes = bsal_dna_kmer_pack(self, buffer, kmer_length, codec);
-    }
 
-    bsal_dna_kmer_destroy(&kmer2, memory);
+    } else {
+        bsal_dna_kmer_init_copy(&kmer2, self, kmer_length, memory, codec);
+        bsal_dna_kmer_reverse_complement_self(&kmer2, kmer_length, codec, memory);
+
+        bytes = bsal_dna_kmer_pack(&kmer2, buffer, kmer_length, codec);
+        bsal_dna_kmer_destroy(&kmer2, memory);
+    }
 
     return bytes;
 }
@@ -245,18 +245,18 @@ int bsal_dna_kmer_store_index(struct bsal_dna_kmer *self, int stores, int kmer_l
     int store_index;
     struct bsal_dna_kmer kmer2;
 
-    bsal_dna_kmer_init_copy(&kmer2, self, kmer_length, memory, codec);
-    bsal_dna_kmer_reverse_complement_self(&kmer2, kmer_length, codec, memory);
-
-    if (bsal_dna_kmer_is_lower(&kmer2, self, kmer_length, codec)) {
-        hash = bsal_dna_kmer_hash(&kmer2, kmer_length, codec);
-    } else {
+    if (bsal_dna_kmer_is_canonical(self, kmer_length, codec)) {
         hash = bsal_dna_kmer_hash(self, kmer_length, codec);
+
+    } else {
+        bsal_dna_kmer_init_copy(&kmer2, self, kmer_length, memory, codec);
+        bsal_dna_kmer_reverse_complement_self(&kmer2, kmer_length, codec, memory);
+
+        hash = bsal_dna_kmer_hash(&kmer2, kmer_length, codec);
+        bsal_dna_kmer_destroy(&kmer2, memory);
     }
 
     store_index = hash % stores;
-
-    bsal_dna_kmer_destroy(&kmer2, memory);
 
     return store_index;
 }
@@ -350,3 +350,8 @@ int bsal_dna_kmer_compare(struct bsal_dna_kmer *self, struct bsal_dna_kmer *othe
 #endif
 }
 
+int bsal_dna_kmer_is_canonical(struct bsal_dna_kmer *self, int kmer_length,
+                struct bsal_dna_codec *codec)
+{
+    return bsal_dna_codec_is_canonical(codec, kmer_length, self->encoded_data);
+}

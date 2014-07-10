@@ -296,7 +296,7 @@ void bsal_dna_codec_decode_with_blocks(struct bsal_dna_codec *self,
     dna_sequence[length_in_nucleotides] = '\0';
 }
 
-void bsal_dna_codec_decode_default(struct bsal_dna_codec *self, int length_in_nucleotides, void *encoded_sequence, char *dna_sequence)
+void bsal_dna_codec_decode_default(struct bsal_dna_codec *codec, int length_in_nucleotides, void *encoded_sequence, char *dna_sequence)
 {
     int i;
 
@@ -304,7 +304,7 @@ void bsal_dna_codec_decode_default(struct bsal_dna_codec *self, int length_in_nu
 
     while (i < length_in_nucleotides) {
 
-        dna_sequence[i] = bsal_dna_codec_get_nucleotide(encoded_sequence, i);
+        dna_sequence[i] = bsal_dna_codec_get_nucleotide(codec, encoded_sequence, i);
 
         i++;
     }
@@ -389,13 +389,17 @@ uint64_t bsal_dna_codec_get_code(char nucleotide)
     return BSAL_NUCLEOTIDE_CODE_A;
 }
 
-char bsal_dna_codec_get_nucleotide(void *encoded_sequence, int index)
+char bsal_dna_codec_get_nucleotide(struct bsal_dna_codec *codec, void *encoded_sequence, int index)
 {
     int bit_index;
     int byte_index;
     int bit_index_in_byte;
     uint64_t byte_value;
     uint64_t code;
+
+    if (!codec->use_two_bit_encoding) {
+        return ((char *)encoded_sequence)[index];
+    }
 
     bit_index = index * BITS_PER_NUCLEOTIDE;
     byte_index = bit_index / BITS_PER_BYTE;
@@ -490,14 +494,14 @@ void bsal_dna_codec_reverse_complement_in_place(struct bsal_dna_codec *codec,
     middle = length_in_nucleotides / 2;
     while (i < middle) {
         left = i;
-        left_nucleotide = bsal_dna_codec_get_nucleotide(encoded_sequence, left);
+        left_nucleotide = bsal_dna_codec_get_nucleotide(codec, encoded_sequence, left);
 
 #if 0
         printf("%i %c\n", i, left_nucleotide);
 #endif
 
         right = length_in_nucleotides - 1 - i;
-        right_nucleotide = bsal_dna_codec_get_nucleotide(encoded_sequence, right);
+        right_nucleotide = bsal_dna_codec_get_nucleotide(codec, encoded_sequence, right);
 /*
         printf("left %d %c right %d %c\n", left, left_nucleotide,
                         right, right_nucleotide);
@@ -553,4 +557,45 @@ void bsal_dna_codec_enable_two_bit_encoding(struct bsal_dna_codec *codec)
 void bsal_dna_codec_disable_two_bit_encoding(struct bsal_dna_codec *codec)
 {
     codec->use_two_bit_encoding = 0;
+}
+
+int bsal_dna_codec_is_canonical(struct bsal_dna_codec *codec,
+                int length_in_nucleotides, void *encoded_sequence)
+{
+    int i;
+    char nucleotide;
+    char other_nucleotide;
+
+    i = 0;
+
+    while (i < length_in_nucleotides) {
+
+        nucleotide = bsal_dna_codec_get_nucleotide(codec, encoded_sequence, i);
+
+        other_nucleotide = bsal_dna_codec_get_nucleotide(codec, encoded_sequence,
+                        length_in_nucleotides - 1 - i);
+
+        other_nucleotide = bsal_dna_helper_complement_nucleotide(other_nucleotide);
+
+        /* It is canonical
+         */
+        if (nucleotide < other_nucleotide) {
+            return 1;
+        }
+
+        /* It is not canonical
+         */
+        if (other_nucleotide < nucleotide) {
+            return 0;
+        }
+
+        /* So far, the sequence is identical to its
+         * reverse complement.
+         */
+        ++i;
+    }
+
+    /* The sequences are equal, so it is canonical.
+     */
+    return 1;
 }

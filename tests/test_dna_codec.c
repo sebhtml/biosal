@@ -78,7 +78,7 @@ int main(int argc, char **argv)
     bsal_dna_codec_set_nucleotide(encoded_sequence, 4, 'T');
     bsal_dna_codec_set_nucleotide(encoded_sequence, 3, 'A');
 
-    TEST_BOOLEAN_EQUALS(bsal_dna_codec_get_nucleotide(encoded_sequence, 3) == 'A', 1);
+    TEST_BOOLEAN_EQUALS(bsal_dna_codec_get_nucleotide(&codec, encoded_sequence, 3) == 'A', 1);
 
 
     bsal_memory_free(encoded_sequence);
