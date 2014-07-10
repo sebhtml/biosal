@@ -193,6 +193,10 @@ void bsal_actor_print(struct bsal_actor *actor)
     int received = (int)bsal_counter_get(&actor->counter, BSAL_COUNTER_RECEIVED_MESSAGES);
     int sent = (int)bsal_counter_get(&actor->counter, BSAL_COUNTER_SENT_MESSAGES);
 
+    printf("INSPECT actor: %s/%d\n",
+                        bsal_actor_get_description(actor),
+                        bsal_actor_get_name(actor));
+
     printf("[bsal_actor_print] Name: %i Supervisor %i Node: %i, Thread: %i"
                     " received %i sent %i\n", bsal_actor_get_name(actor),
                     bsal_actor_supervisor(actor),
@@ -1750,7 +1754,7 @@ int bsal_actor_dequeue_mailbox_message(struct bsal_actor *actor, struct bsal_mes
     return bsal_fast_ring_pop_from_consumer(&actor->mailbox, message);
 }
 
-void bsal_actor_work(struct bsal_actor *actor)
+int bsal_actor_work(struct bsal_actor *actor)
 {
     struct bsal_message message;
     void *buffer;
@@ -1758,10 +1762,9 @@ void bsal_actor_work(struct bsal_actor *actor)
 
     if (!bsal_actor_dequeue_mailbox_message(actor, &message)) {
         printf("Error, no message...\n");
-        printf("actor: %s/%d\n",
-                        bsal_actor_get_description(actor),
-                        bsal_actor_get_name(actor));
-        return;
+        bsal_actor_print(actor);
+
+        return 0;
     }
 
     /* Make a copy of the buffer and of the worker
@@ -1785,6 +1788,8 @@ void bsal_actor_work(struct bsal_actor *actor)
      * Send the buffer back to the source to be recycled.
      */
     bsal_worker_free_message(actor->worker, &message);
+
+    return 1;
 }
 
 int bsal_actor_get_mailbox_size(struct bsal_actor *actor)

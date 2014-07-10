@@ -316,6 +316,7 @@ int bsal_worker_dequeue_actor(struct bsal_worker *worker, struct bsal_actor **ac
     int other_name;
     int operations;
     int status;
+    int mailbox_size;
 
     operations = 4;
 
@@ -376,10 +377,33 @@ int bsal_worker_dequeue_actor(struct bsal_worker *worker, struct bsal_actor **ac
         printf("scheduler.DEQUEUE actor %d, removed from queued actors...\n", name);
 #endif
 
-        /* Add the actor to the scheduling queue if it
-         * still has messages
+        mailbox_size = bsal_actor_get_mailbox_size(*actor);
+
+
+        /* The actor has only one message and it is going to
+         * be processed now.
          */
-        if (bsal_actor_get_mailbox_size(*actor) >= 2) {
+        if (mailbox_size == 1) {
+#ifdef BSAL_WORKER_DEBUG_SCHEDULER
+            printf("SCHEDULER %d has no message to schedule...\n", name);
+#endif
+            /* Set the status of the worker to STATUS_IDLE
+             *
+             * TODO: the ring new tail might not be visible too.
+             * That could possibly be a problem...
+             */
+            status = STATUS_IDLE;
+            bsal_map_update_value(&worker->actors, &name, &status);
+
+        /* The actor still has a lot of messages
+         * to process. Keep them coming.
+         */
+        } else if (mailbox_size >= 2) {
+
+            /* Add the actor to the scheduling queue if it
+             * still has messages
+             */
+
 #ifdef BSAL_WORKER_DEBUG_SCHEDULER
             printf("Scheduling actor %d again, messages: %d\n",
                         name,
@@ -390,15 +414,19 @@ int bsal_worker_dequeue_actor(struct bsal_worker *worker, struct bsal_actor **ac
              */
             bsal_ring_queue_enqueue(&worker->scheduled_actor_queue_real, actor);
 
-        } else {
-#ifdef BSAL_WORKER_DEBUG_SCHEDULER
-            printf("SCHEDULER %d has no message to schedule...\n", name);
-#endif
-            /* Set the status of the worker to STATUS_IDLE
-             */
-            status = STATUS_IDLE;
-            bsal_map_update_value(&worker->actors, &name, &status);
+
+        /* The actor is scheduled to run, but the new tail is not
+         * yet visible apparently.
+         *
+         * Solution, push back the actor in the scheduler queue, it can take a few cycles to see cache changes across cores. (MESIF protocol)
+         */
+        } else /* if (mailbox_size == 0) */ {
+
+            bsal_ring_queue_enqueue(&worker->scheduled_actor_queue_real, actor);
+
+            return 0;
         }
+
     }
 
     return value;
