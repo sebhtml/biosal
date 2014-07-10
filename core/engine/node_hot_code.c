@@ -110,8 +110,6 @@ void bsal_node_run_loop(struct bsal_node *node)
 
         bsal_worker_pool_work(&node->worker_pool);
 
-
-
         --credits;
 
         /* if the node is still running, allocate new credits

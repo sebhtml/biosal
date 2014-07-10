@@ -42,8 +42,8 @@
  * when running on one single node.
  */
 /*
-#define BSAL_NODE_CHECK_MPI
 */
+#define BSAL_NODE_CHECK_MPI
 
 struct bsal_script;
 
