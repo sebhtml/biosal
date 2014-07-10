@@ -527,7 +527,9 @@ int bsal_actor_receive_system(struct bsal_actor *actor, struct bsal_message *mes
     struct bsal_message new_message;
     int offset;
     int bytes;
+    struct bsal_memory_pool *ephemeral_memory;
 
+    ephemeral_memory = bsal_actor_get_ephemeral_memory(actor);
     tag = bsal_message_tag(message);
 
     /* the concrete actor must catch these otherwise.
@@ -604,7 +606,7 @@ int bsal_actor_receive_system(struct bsal_actor *actor, struct bsal_message *mes
         spawned = bsal_actor_spawn_real(actor, script);
         bsal_node_set_supervisor(bsal_actor_node(actor), spawned, source);
 
-        new_buffer = bsal_memory_allocate(2 * sizeof(int));
+        new_buffer = bsal_memory_pool_allocate(ephemeral_memory, 2 * sizeof(int));
         offset = 0;
 
         bytes = sizeof(spawned);
@@ -619,7 +621,7 @@ int bsal_actor_receive_system(struct bsal_actor *actor, struct bsal_message *mes
         bsal_actor_send(actor, source, &new_message);
 
         bsal_message_destroy(&new_message);
-        bsal_memory_free(new_buffer);
+        bsal_memory_pool_free(ephemeral_memory, new_buffer);
 
         return 1;
 
@@ -1014,7 +1016,7 @@ void bsal_actor_pack_proxy_message(struct bsal_actor *actor, struct bsal_message
     new_buffer = bsal_memory_allocate(new_count);
 
 #ifdef BSAL_ACTOR_DEBUG
-    printf("DEBUG12 bsal_memory_allocate %p (pack proxy message)\n",
+    printf("DEBUG12 bsal_memory_pool_allocate %p (pack proxy message)\n",
                     new_buffer);
 #endif
 
