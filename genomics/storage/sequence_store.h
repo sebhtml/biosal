@@ -25,6 +25,8 @@ struct bsal_sequence_store {
     int64_t last;
 
     struct bsal_memory_pool persistent_memory;
+
+    int progress_supervisor;
 };
 
 #define BSAL_RESERVE 0x00000d3c
@@ -37,6 +39,8 @@ struct bsal_sequence_store {
 #define BSAL_SEQUENCE_STORE_ASK 0x00006b99
 #define BSAL_SEQUENCE_STORE_ASK_REPLY 0x00007b13
 
+#define BSAL_SEQUENCE_STORE_REQUEST_PROGRESS 0x0000648a
+#define BSAL_SEQUENCE_STORE_REQUEST_PROGRESS_REPLY 0x000074a5
 
 #define BSAL_SEQUENCE_STORE_PRODUCT_BLOCK_SIZE 512
 

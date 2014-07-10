@@ -56,6 +56,8 @@ void bsal_sequence_store_init(struct bsal_actor *actor)
 
     concrete_actor->left = -1;
     concrete_actor->last = -1;
+
+    concrete_actor->progress_supervisor = BSAL_ACTOR_NOBODY;
 }
 
 void bsal_sequence_store_destroy(struct bsal_actor *actor)
@@ -88,8 +90,12 @@ void bsal_sequence_store_destroy(struct bsal_actor *actor)
 void bsal_sequence_store_receive(struct bsal_actor *actor, struct bsal_message *message)
 {
     int tag;
+    int source;
+    struct bsal_sequence_store *concrete_actor;
 
     tag = bsal_message_tag(message);
+    source = bsal_message_source(message);
+    concrete_actor = (struct bsal_sequence_store *)bsal_actor_concrete_actor(actor);
 
     if (tag == BSAL_PUSH_SEQUENCE_DATA_BLOCK) {
 
@@ -107,6 +113,10 @@ void bsal_sequence_store_receive(struct bsal_actor *actor, struct bsal_message *
 #endif
 
         bsal_actor_helper_ask_to_stop(actor, message);
+
+    } else if (tag == BSAL_SEQUENCE_STORE_REQUEST_PROGRESS) {
+
+        concrete_actor->progress_supervisor = bsal_actor_add_acquaintance(actor, source);
     }
 }
 
