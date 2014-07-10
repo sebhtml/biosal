@@ -81,6 +81,12 @@ void *bsal_memory_allocate_private(size_t size, const char *function, const char
     }
 #endif
 
+    /*
+     * On Linux, this does not happen.
+     *
+     * \see http://www.win.tue.nl/~aeb/linux/lk/lk-9.html
+     * \see http://stackoverflow.com/questions/16674370/why-does-malloc-or-new-never-return-null
+     */
     if (pointer == NULL) {
         printf("DEBUG Error bsal_memory_allocate returned %p, %zu bytes\n", pointer, size);
         bsal_tracer_print_stack_backtrace();
