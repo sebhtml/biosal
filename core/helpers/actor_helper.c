@@ -47,7 +47,7 @@ void bsal_actor_helper_send_reply_empty(struct bsal_actor *actor, int tag)
 
 void bsal_actor_helper_send_to_self_empty(struct bsal_actor *actor, int tag)
 {
-    bsal_actor_helper_send_empty(actor, bsal_actor_name(actor), tag);
+    bsal_actor_helper_send_empty(actor, bsal_actor_get_name(actor), tag);
 }
 
 void bsal_actor_helper_send_empty(struct bsal_actor *actor, int destination, int tag)
@@ -70,7 +70,7 @@ void bsal_actor_helper_send_to_supervisor_int(struct bsal_actor *actor, int tag,
 
 void bsal_actor_helper_send_to_self_int(struct bsal_actor *actor, int tag, int value)
 {
-    bsal_actor_helper_send_int(actor, bsal_actor_name(actor), tag, value);
+    bsal_actor_helper_send_int(actor, bsal_actor_get_name(actor), tag, value);
 }
 
 void bsal_actor_helper_send_reply_int(struct bsal_actor *actor, int tag, int value)
@@ -176,7 +176,7 @@ void bsal_actor_helper_send_range(struct bsal_actor *actor, struct bsal_vector *
         /*
     int real_source;
 
-    real_source = bsal_actor_name(actor);
+    real_source = bsal_actor_get_name(actor);
     */
 
     bsal_actor_helper_send_range_standard(actor, actors, message);
@@ -258,10 +258,10 @@ void bsal_actor_helper_send_range_binomial_tree(struct bsal_actor *actor, struct
 #ifdef BSAL_ACTOR_DEBUG_BINOMIAL_TREE
     int name;
 
-    name = bsal_actor_name(actor);
+    name = bsal_actor_get_name(actor);
 #endif
 
-    source = bsal_actor_name(actor);
+    source = bsal_actor_get_name(actor);
     bsal_message_set_source(message, source);
 
     first = 0;
@@ -450,7 +450,7 @@ void bsal_actor_helper_receive_binomial_tree_send(struct bsal_actor *actor, stru
 #ifdef BSAL_ACTOR_DEBUG
     printf("DEBUG78 actor %i received BSAL_ACTOR_BINOMIAL_TREE_SEND "
                     "real_source: %i real_tag: %i first: %i last: %i\n",
-                    bsal_actor_name(actor), real_source, real_tag, first,
+                    bsal_actor_get_name(actor), real_source, real_tag, first,
                     last);
 #endif
 
@@ -474,14 +474,14 @@ void bsal_actor_helper_ask_to_stop(struct bsal_actor *actor, struct bsal_message
      */
 
     int source = bsal_message_source(message);
-    int name = bsal_actor_name(actor);
+    int name = bsal_actor_get_name(actor);
     int supervisor = bsal_actor_supervisor(actor);
     int i;
     int child;
 
     if (source != name && source != supervisor) {
         printf("actor/%d: permission denied, will not stop\n",
-                        bsal_actor_name(actor));
+                        bsal_actor_get_name(actor));
         return;
     }
 
@@ -491,7 +491,7 @@ void bsal_actor_helper_ask_to_stop(struct bsal_actor *actor, struct bsal_message
 
 #ifdef BSAL_ACTOR_HELPER_DEBUG_STOP
         printf("actor/%d tells actor %d to stop\n",
-                            bsal_actor_name(actor), child);
+                            bsal_actor_get_name(actor), child);
 #endif
 
         bsal_actor_helper_send_empty(actor, child, BSAL_ACTOR_ASK_TO_STOP);
@@ -499,10 +499,10 @@ void bsal_actor_helper_ask_to_stop(struct bsal_actor *actor, struct bsal_message
 
 #ifdef BSAL_ACTOR_HELPER_DEBUG_STOP
     printf("DEBUG121212 actor/%d dies\n",
-                    bsal_actor_name(actor));
+                    bsal_actor_get_name(actor));
 
     printf("DEBUG actor/%d send BSAL_ACTOR_STOP to self\n",
-                    bsal_actor_name(actor));
+                    bsal_actor_get_name(actor));
 #endif
 
     bsal_actor_helper_send_to_self_empty(actor, BSAL_ACTOR_STOP);

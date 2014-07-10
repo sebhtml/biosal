@@ -162,7 +162,7 @@ void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message)
     buffer = bsal_message_buffer(message);
     argc = bsal_actor_argc(actor);
     argv = bsal_actor_argv(actor);
-    name = bsal_actor_name(actor);
+    name = bsal_actor_get_name(actor);
     source = bsal_message_source(message);
 
     if (tag == BSAL_ACTOR_START) {
@@ -359,7 +359,7 @@ void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message)
                             BSAL_MANAGER_SCRIPT);
 
             printf("argonnite %d spawns manager %d for aggregators\n",
-                            bsal_actor_name(actor), manager_for_aggregators);
+                            bsal_actor_get_name(actor), manager_for_aggregators);
 
             concrete_actor->manager_for_aggregators = bsal_actor_get_acquaintance_index(actor,
                             manager_for_aggregators);
@@ -387,7 +387,7 @@ void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message)
         /*
         workers_per_aggregator = ARGONNITE_WORKERS_PER_AGGREGATOR;
         printf("MANY_AGGREGATORS argonnite %d sets count per spawner to %d for aggregator manager %d\n",
-                        bsal_actor_name(actor),
+                        bsal_actor_get_name(actor),
                         workers_per_aggregator, manager_for_aggregators);
 
         bsal_actor_helper_send_reply_int(actor,
@@ -411,7 +411,7 @@ void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message)
                         &spawners);
 
         printf("argonnite %d ask manager %d to spawn children for work\n",
-                        bsal_actor_name(actor), manager_for_aggregators);
+                        bsal_actor_get_name(actor), manager_for_aggregators);
 
         bsal_vector_destroy(&spawners);
 
@@ -432,7 +432,7 @@ void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message)
          */
 
         printf("argonnite %d wires the brain, %d kernels, %d aggregators\n",
-                        bsal_actor_name(actor),
+                        bsal_actor_get_name(actor),
                         (int)bsal_vector_size(&concrete_actor->kernels),
                         (int)bsal_vector_size(&concrete_actor->aggregators));
 
@@ -525,7 +525,7 @@ void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message)
         if (concrete_actor->wired_kernels == (int)bsal_vector_size(&concrete_actor->kernels)) {
 
             printf("argonnite %d completed the wiring of the brain\n",
-                bsal_actor_name(actor));
+                bsal_actor_get_name(actor));
 
             concrete_actor->configured_actors = 0;
 
@@ -702,7 +702,7 @@ void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message)
 
             if (print_stuff) {
                 printf("argonnite %d tells kernel %d to steal work from kernel %d (%d), producer is sequence store %d\n",
-                            bsal_actor_name(actor),
+                            bsal_actor_get_name(actor),
                             kernel,
                             other_kernel,
                             sequence_store_index_index,
@@ -976,7 +976,7 @@ void argonnite_connect_kernels_with_stores(struct bsal_actor *self, struct bsal_
 
     bsal_actor_helper_send_reply_empty(self, BSAL_ACTOR_ASK_TO_STOP);
 
-    name = bsal_actor_name(self);
+    name = bsal_actor_get_name(self);
     concrete_actor = (struct argonnite *)bsal_actor_concrete_actor(self);
 
     printf("argonnite %d receives BSAL_INPUT_DISTRIBUTE_REPLY\n",

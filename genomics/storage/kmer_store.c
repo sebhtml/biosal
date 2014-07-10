@@ -107,7 +107,7 @@ void bsal_kmer_store_receive(struct bsal_actor *self, struct bsal_message *messa
         bsal_dna_kmer_destroy(&kmer, bsal_actor_get_ephemeral_memory(self));
 
 #ifdef BSAL_KMER_STORE_DEBUG
-        name = bsal_actor_name(self);
+        name = bsal_actor_get_name(self);
         printf("kmer store %d will use %d bytes for canonical kmers (k is %d)\n",
                         name, concrete_actor->key_length_in_bytes,
                         concrete_actor->kmer_length);
@@ -179,7 +179,7 @@ void bsal_kmer_store_receive(struct bsal_actor *self, struct bsal_message *messa
             if (concrete_actor->received >= concrete_actor->last_received + period) {
                 printf("kmer store %d received %" PRIu64 " kmers so far,"
                                 " store has %" PRIu64 " canonical kmers, %" PRIu64 " kmers\n",
-                                bsal_actor_name(self), concrete_actor->received,
+                                bsal_actor_get_name(self), concrete_actor->received,
                                 bsal_map_size(&concrete_actor->table),
                                 2 * bsal_map_size(&concrete_actor->table));
 
@@ -208,7 +208,7 @@ void bsal_kmer_store_receive(struct bsal_actor *self, struct bsal_message *messa
         bsal_message_helper_unpack_int(message, 0, &customer);
 
         printf("kmer store %d will use coverage distribution %d\n",
-                        bsal_actor_name(self), customer);
+                        bsal_actor_get_name(self), customer);
 #ifdef BSAL_KMER_STORE_DEBUG
 #endif
 
@@ -304,7 +304,7 @@ void bsal_kmer_store_push_data(struct bsal_actor *self, struct bsal_message *mes
     concrete_actor = (struct bsal_kmer_store *)bsal_actor_concrete_actor(self);
     source = bsal_message_source(message);
     concrete_actor->source = bsal_actor_add_acquaintance(self, source);
-    name = bsal_actor_name(self);
+    name = bsal_actor_get_name(self);
 
     bsal_map_init(&concrete_actor->coverage_distribution, sizeof(int), sizeof(uint64_t));
 

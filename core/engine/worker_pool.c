@@ -267,7 +267,7 @@ int bsal_worker_pool_enqueue_message(struct bsal_worker_pool *pool, struct bsal_
 
     if (bsal_ring_queue_dequeue(&pool->scheduled_actor_queue_buffer, &actor)) {
 
-        name = bsal_actor_name(actor);
+        name = bsal_actor_get_name(actor);
         worker_index = bsal_scheduler_get_actor_worker(&pool->scheduler, name);
 
         worker = bsal_worker_pool_get_worker(pool, worker_index);
@@ -439,7 +439,7 @@ void bsal_worker_pool_give_message_to_actor(struct bsal_worker_pool *pool, struc
         return;
     }
 
-    name = bsal_actor_name(actor);
+    name = bsal_actor_get_name(actor);
 
     /* give the message to the actor
      */

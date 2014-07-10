@@ -324,7 +324,7 @@ int bsal_worker_dequeue_actor(struct bsal_worker *worker, struct bsal_actor **ac
     while (operations--
                     && bsal_fast_ring_pop_from_consumer(&worker->scheduled_actor_queue, &other_actor)) {
 
-        other_name = bsal_actor_name(other_actor);
+        other_name = bsal_actor_get_name(other_actor);
 
 #ifdef BSAL_WORKER_DEBUG_SCHEDULER
         printf("ring.DEQUEUE %d\n", other_name);
@@ -370,7 +370,7 @@ int bsal_worker_dequeue_actor(struct bsal_worker *worker, struct bsal_actor **ac
     value = bsal_ring_queue_dequeue(&worker->scheduled_actor_queue_real, actor);
 
     if (value) {
-        name = bsal_actor_name(*actor);
+        name = bsal_actor_get_name(*actor);
 
 #ifdef BSAL_WORKER_DEBUG_SCHEDULER
         printf("scheduler.DEQUEUE actor %d, removed from queued actors...\n", name);
@@ -505,7 +505,7 @@ void bsal_worker_evict_actor(struct bsal_worker *worker, int actor_name)
     while (count--
                     && bsal_ring_queue_dequeue(&worker->scheduled_actor_queue_real, &actor)) {
 
-        name = bsal_actor_name(actor);
+        name = bsal_actor_get_name(actor);
 
         if (name != actor_name) {
 
@@ -522,7 +522,7 @@ void bsal_worker_evict_actor(struct bsal_worker *worker, int actor_name)
     while (count-- && bsal_fast_ring_pop_from_consumer(&worker->scheduled_actor_queue,
                             &actor)) {
 
-        name = bsal_actor_name(actor);
+        name = bsal_actor_get_name(actor);
 
         if (name != actor_name) {
 
@@ -551,7 +551,7 @@ int bsal_worker_enqueue_actor_special(struct bsal_worker *worker, struct bsal_ac
 {
     int name;
 
-    name = bsal_actor_name(*actor);
+    name = bsal_actor_get_name(*actor);
 
     bsal_set_delete(&worker->evicted_actors, &name);
 

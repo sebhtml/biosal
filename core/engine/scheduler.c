@@ -642,7 +642,7 @@ int bsal_scheduler_get_actor_production(struct bsal_scheduler *scheduler, struct
     messages = bsal_actor_get_sum_of_received_messages(actor);
 
     last_messages = 0;
-    name = bsal_actor_name(actor);
+    name = bsal_actor_get_name(actor);
     bsal_map_get_value(&scheduler->last_actor_received_messages, &name, &last_messages);
 
     result = messages - last_messages;
@@ -660,7 +660,7 @@ void bsal_scheduler_update_actor_production(struct bsal_scheduler *scheduler, st
     }
 
     messages = bsal_actor_get_sum_of_received_messages(actor);
-    name = bsal_actor_name(actor);
+    name = bsal_actor_get_name(actor);
 
     if (!bsal_map_update_value(&scheduler->last_actor_received_messages, &name, &messages)) {
         bsal_map_add_value(&scheduler->last_actor_received_messages, &name, &messages);

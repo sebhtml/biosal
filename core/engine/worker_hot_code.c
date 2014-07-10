@@ -161,7 +161,7 @@ void bsal_worker_work(struct bsal_worker *worker, struct bsal_actor *actor)
     int destination;
 #endif
 
-    actor_name = bsal_actor_name(actor);
+    actor_name = bsal_actor_get_name(actor);
 
 #ifdef BSAL_WORKER_DEBUG_SCHEDULER
     printf("WORK actor %d\n", actor_name);

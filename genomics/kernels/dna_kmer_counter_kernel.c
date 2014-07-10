@@ -119,7 +119,7 @@ void bsal_dna_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_
 
     concrete_actor = (struct bsal_dna_kmer_counter_kernel *)bsal_actor_concrete_actor(actor);
     tag = bsal_message_tag(message);
-    name = bsal_actor_name(actor);
+    name = bsal_actor_get_name(actor);
     source = bsal_message_source(message);
     buffer = bsal_message_buffer(message);
 
@@ -328,7 +328,7 @@ void bsal_dna_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_
     } else if (tag == BSAL_ACTOR_ASK_TO_STOP) {
 
         printf("kernel/%d generated %" PRIu64 " kmers from %" PRIu64 " entries (%d blocks)\n",
-                        bsal_actor_name(actor), concrete_actor->kmers,
+                        bsal_actor_get_name(actor), concrete_actor->kmers,
                         concrete_actor->expected, concrete_actor->blocks);
 
 #ifdef BSAL_KMER_COUNTER_KERNEL_DEBUG
@@ -345,7 +345,7 @@ void bsal_dna_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_
 
 #ifdef BSAL_KMER_COUNTER_KERNEL_DEBUG
         printf("kernel %d BSAL_ACTOR_SET_CONSUMER consumer %d index %d\n",
-                        bsal_actor_name(actor), consumer,
+                        bsal_actor_get_name(actor), consumer,
                         concrete_actor->consumer);
 #endif
 

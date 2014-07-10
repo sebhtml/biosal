@@ -153,7 +153,7 @@ void bsal_input_stream_receive(struct bsal_actor *actor, struct bsal_message *me
         /*memcpy(&concrete_actor->file_index, buffer, sizeof(concrete_actor->file_index));*/
         file_name_in_buffer = buffer;
 
-        printf("stream/%d (node/%d) opens file %s offset %" PRIu64 "\n", bsal_actor_name(actor),
+        printf("stream/%d (node/%d) opens file %s offset %" PRIu64 "\n", bsal_actor_get_name(actor),
                         bsal_actor_node_name(actor), file_name_in_buffer,
                         concrete_actor->starting_offset);
         concrete_actor->file_name = bsal_memory_allocate(strlen(file_name_in_buffer) + 1);
@@ -269,7 +269,7 @@ void bsal_input_stream_receive(struct bsal_actor *actor, struct bsal_message *me
                         &concrete_actor->mega_blocks);
 
         printf("input_stream/%d on node/%d counted entries in %s, %" PRIu64 "\n",
-                        bsal_actor_name(actor), bsal_actor_node_name(actor),
+                        bsal_actor_get_name(actor), bsal_actor_node_name(actor),
                         concrete_actor->file_name, count);
 
     } else if (tag == BSAL_ACTOR_ASK_TO_STOP) {
@@ -302,7 +302,7 @@ void bsal_input_stream_receive(struct bsal_actor *actor, struct bsal_message *me
 
 #ifdef BSAL_INPUT_STREAM_DEBUG
         printf("actor %d sending BSAL_INPUT_CLOSE_REPLY to %d\n",
-                        bsal_actor_name(actor), source);
+                        bsal_actor_get_name(actor), source);
 #endif
 
     } else if (tag == BSAL_INPUT_GET_SEQUENCE) {
@@ -449,7 +449,7 @@ void bsal_input_stream_push_sequences(struct bsal_actor *actor,
 
 #ifdef BSAL_INPUT_STREAM_DEBUG
     printf("DEBUG stream/%d bsal_input_stream_push_sequences entering...\n",
-                    bsal_actor_name(actor));
+                    bsal_actor_get_name(actor));
 #endif
 
 

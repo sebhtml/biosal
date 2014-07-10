@@ -554,7 +554,7 @@ void bsal_sequence_partitioner_generate_command(struct bsal_actor *actor, int st
 
     if (command_name % 1000 == 0) {
         printf("partitioner/%d generated partition command # %d (total %" PRIu64 ", block_size %d, blocks %d)\n",
-                    bsal_actor_name(actor),
+                    bsal_actor_get_name(actor),
                     command_name,
                     concrete_actor->total, concrete_actor->block_size,
                     (int)(concrete_actor->total / concrete_actor->block_size));

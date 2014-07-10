@@ -67,7 +67,7 @@ void ring_receive(struct bsal_actor *actor, struct bsal_message *message)
     ring1 = (struct ring *)bsal_actor_concrete_actor(actor);
     tag = bsal_message_tag(message);
     buffer = bsal_message_buffer(message);
-    name = bsal_actor_name(actor);
+    name = bsal_actor_get_name(actor);
 
     if (tag == BSAL_ACTOR_START) {
 
@@ -93,7 +93,7 @@ void ring_receive(struct bsal_actor *actor, struct bsal_message *message)
         i = 0;
 
         printf("actor/%d is spawning %d senders\n",
-                        bsal_actor_name(actor), ring1->senders);
+                        bsal_actor_get_name(actor), ring1->senders);
 
         ring1->step = RING_STEP_SPAWN;
 
@@ -104,7 +104,7 @@ void ring_receive(struct bsal_actor *actor, struct bsal_message *message)
             if (i % 10000 == 0) {
 
                 printf("actor/%d spawned %d/%d senders\n",
-                        bsal_actor_name(actor), i, ring1->senders);
+                        bsal_actor_get_name(actor), i, ring1->senders);
             }
 
             if (i > 0) {

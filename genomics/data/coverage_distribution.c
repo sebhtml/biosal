@@ -67,7 +67,7 @@ void bsal_coverage_distribution_receive(struct bsal_actor *self, struct bsal_mes
     struct bsal_memory_pool *ephemeral_memory;
 
     ephemeral_memory = bsal_actor_get_ephemeral_memory(self);
-    name = bsal_actor_name(self);
+    name = bsal_actor_get_name(self);
     source = bsal_message_source(message);
     concrete_actor = (struct bsal_coverage_distribution *)bsal_actor_concrete_actor(self);
     tag = bsal_message_tag(message);
@@ -152,7 +152,7 @@ void bsal_coverage_distribution_receive(struct bsal_actor *self, struct bsal_mes
         bsal_message_helper_unpack_int(message, 0, &concrete_actor->expected);
 
         printf("distribution %d expects %d messages\n",
-                        bsal_actor_name(self),
+                        bsal_actor_get_name(self),
                         concrete_actor->expected);
     }
 }
@@ -176,7 +176,7 @@ void bsal_coverage_distribution_write_distribution(struct bsal_actor *self)
     int name;
     char default_file_name[] = BSAL_COVERAGE_DISTRIBUTION_DEFAULT_OUTPUT;
 
-    name = bsal_actor_name(self);
+    name = bsal_actor_get_name(self);
     argc = bsal_actor_argc(self);
     argv = bsal_actor_argv(self);
 

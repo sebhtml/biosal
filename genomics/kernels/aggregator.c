@@ -188,7 +188,7 @@ void bsal_aggregator_flush(struct bsal_actor *self, int customer_index, struct b
 
     if (concrete_actor->flushed % 10000 == 0) {
         printf("aggregator %d flushed %d blocks so far\n",
-                        bsal_actor_name(self), concrete_actor->flushed);
+                        bsal_actor_get_name(self), concrete_actor->flushed);
     }
 
     concrete_actor->flushed++;
@@ -237,7 +237,7 @@ void bsal_aggregator_aggregate_kernel_output(struct bsal_actor *self, struct bsa
 
     if (bsal_vector_size(&concrete_actor->customers) == 0) {
         printf("Error: aggregator %d has no configured buffers\n",
-                        bsal_actor_name(self));
+                        bsal_actor_get_name(self));
         return;
     }
 
@@ -261,7 +261,7 @@ void bsal_aggregator_aggregate_kernel_output(struct bsal_actor *self, struct bsa
 #ifdef BSAL_AGGREGATOR_DEBUG
     BSAL_DEBUG_MARKER("aggregator receives");
     printf("name %d source %d UNPACK ON %d bytes\n",
-                        bsal_actor_name(self), source, bsal_message_count(message));
+                        bsal_actor_get_name(self), source, bsal_message_count(message));
 #endif
 
     concrete_actor->received++;
@@ -343,7 +343,7 @@ void bsal_aggregator_aggregate_kernel_output(struct bsal_actor *self, struct bsa
                     || concrete_actor->received >= concrete_actor->last + 10000) {
 
         printf("aggregator/%d received %" PRIu64 " kernel outputs so far\n",
-                        bsal_actor_name(self),
+                        bsal_actor_get_name(self),
                         concrete_actor->received);
 
         concrete_actor->last = concrete_actor->received;

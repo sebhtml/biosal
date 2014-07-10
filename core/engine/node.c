@@ -674,7 +674,7 @@ void bsal_node_start_initial_actor(struct bsal_node *node)
 
     for (i = 0; i < actors; ++i) {
         actor = (struct bsal_actor *)bsal_vector_at(&node->actors, i);
-        name = bsal_actor_name(actor);
+        name = bsal_actor_get_name(actor);
 
         /* initial actors are supervised by themselves... */
         bsal_actor_set_supervisor(actor, name);
@@ -1153,14 +1153,14 @@ void bsal_node_notify_death(struct bsal_node *node, struct bsal_actor *actor)
 
     /*
     node_name = node->name;
-    name = bsal_actor_name(actor);
+    name = bsal_actor_get_name(actor);
     */
 
     if (node->print_structure) {
         bsal_node_print_structure(node, actor);
     }
 
-    name = bsal_actor_name(actor);
+    name = bsal_actor_get_name(actor);
 
 #ifdef BSAL_NODE_DEBUG_SPAWN_KILL
     printf("DEBUG bsal_node_notify_death node/%d actor/%d script/%x\n",
@@ -1404,7 +1404,7 @@ void bsal_node_print_structure(struct bsal_node *node, struct bsal_actor *actor)
     int node_name;
 
     node_name = bsal_node_name(node);
-    name = bsal_actor_name(actor);
+    name = bsal_actor_get_name(actor);
     script = bsal_actor_script(actor);
     actual_script = bsal_node_find_script(node, script);
 

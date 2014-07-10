@@ -215,7 +215,7 @@ void bsal_actor_init(struct bsal_actor *actor, void *state,
                 struct bsal_script *script, int name, struct bsal_node *node);
 void bsal_actor_destroy(struct bsal_actor *actor);
 
-int bsal_actor_name(struct bsal_actor *actor);
+int bsal_actor_get_name(struct bsal_actor *actor);
 void *bsal_actor_concrete_actor(struct bsal_actor *actor);
 void bsal_actor_set_name(struct bsal_actor *actor, int name);
 
