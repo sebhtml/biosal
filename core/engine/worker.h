@@ -7,6 +7,8 @@
 #include <core/structures/fast_ring.h>
 #include <core/structures/ring_queue.h>
 #include <core/structures/set.h>
+#include <core/structures/map.h>
+#include <core/structures/map_iterator.h>
 
 #include <core/system/memory_pool.h>
 #include <core/system/thread.h>
@@ -45,6 +47,7 @@ struct bsal_worker {
     struct bsal_node *node;
 
     struct bsal_map actors;
+    struct bsal_map_iterator actor_iterator;
 
     /*
      * The worker pool push actors to schedule on this

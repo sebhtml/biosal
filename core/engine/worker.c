@@ -54,6 +54,7 @@ void bsal_worker_init(struct bsal_worker *worker, int name, struct bsal_node *no
 
     bsal_ring_queue_init(&worker->scheduled_actor_queue_real, sizeof(struct bsal_actor *));
     bsal_map_init(&worker->actors, sizeof(int), sizeof(int));
+    bsal_map_iterator_init(&worker->actor_iterator, &worker->actors);
 
     bsal_fast_ring_init(&worker->outbound_message_queue, capacity, sizeof(struct bsal_message));
 
@@ -103,6 +104,7 @@ void bsal_worker_destroy(struct bsal_worker *worker)
     bsal_ring_queue_destroy(&worker->outbound_message_queue_buffer);
 
     bsal_map_destroy(&worker->actors);
+    bsal_map_iterator_destroy(&worker->actor_iterator);
     bsal_set_destroy(&worker->evicted_actors);
 
     worker->node = NULL;
@@ -346,6 +348,9 @@ int bsal_worker_dequeue_actor(struct bsal_worker *worker, struct bsal_actor **ac
 
             status = STATUS_IDLE;
             bsal_map_add_value(&worker->actors, &other_name, &status);
+
+            bsal_map_iterator_destroy(&worker->actor_iterator);
+            bsal_map_iterator_init(&worker->actor_iterator, &worker->actors);
         }
 
         /* If the actor is not queued, queue it
@@ -378,7 +383,6 @@ int bsal_worker_dequeue_actor(struct bsal_worker *worker, struct bsal_actor **ac
 #endif
 
         mailbox_size = bsal_actor_get_mailbox_size(*actor);
-
 
         /* The actor has only one message and it is going to
          * be processed now.
@@ -419,14 +423,42 @@ int bsal_worker_dequeue_actor(struct bsal_worker *worker, struct bsal_actor **ac
          * yet visible apparently.
          *
          * Solution, push back the actor in the scheduler queue, it can take a few cycles to see cache changes across cores. (MESIF protocol)
+         *
+         * This is done below.
          */
         } else /* if (mailbox_size == 0) */ {
 
-            bsal_ring_queue_enqueue(&worker->scheduled_actor_queue_real, actor);
-
-            return 0;
+            value = 0;
         }
 
+    }
+
+    /*
+     * If no actor is scheduled to run, things are getting out of hand
+     * and this is bad for business.
+     *
+     * So, here, an actor is poked for inactivity
+     */
+    if (!value) {
+        if (bsal_map_iterator_get_next_key_and_value(&worker->actor_iterator, &name, NULL)) {
+
+            other_actor = bsal_node_get_actor_from_name(worker->node, name);
+
+            mailbox_size = 0;
+            if (other_actor != NULL) {
+                mailbox_size = bsal_actor_get_mailbox_size(other_actor);
+            }
+
+            if (mailbox_size > 0) {
+                bsal_ring_queue_enqueue(&worker->scheduled_actor_queue_real, &other_actor);
+            }
+        } else {
+
+            /* Rewind the iterator.
+             */
+            bsal_map_iterator_destroy(&worker->actor_iterator);
+            bsal_map_iterator_init(&worker->actor_iterator, &worker->actors);
+        }
     }
 
     return value;
@@ -558,6 +590,9 @@ void bsal_worker_evict_actor(struct bsal_worker *worker, int actor_name)
                             &actor);
         }
     }
+
+    bsal_map_iterator_destroy(&worker->actor_iterator);
+    bsal_map_iterator_init(&worker->actor_iterator, &worker->actors);
 }
 
 void bsal_worker_lock(struct bsal_worker *worker)
