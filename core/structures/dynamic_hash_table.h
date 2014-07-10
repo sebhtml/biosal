@@ -22,6 +22,7 @@ struct bsal_dynamic_hash_table {
     struct bsal_hash_table *next;
 
     int resize_in_progress;
+    uint64_t resize_current_size;
 };
 
 void bsal_dynamic_hash_table_init(struct bsal_dynamic_hash_table *self, uint64_t buckets,
