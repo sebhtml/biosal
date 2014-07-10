@@ -23,7 +23,7 @@ struct bsal_hash_table_group {
 
 void bsal_hash_table_group_init(struct bsal_hash_table_group *group,
                 uint64_t buckets_per_group, int key_size, int value_size,
-                struct bsal_memory_pool *memory);
+                struct bsal_memory_pool *memory, int deletion_is_enabled);
 void bsal_hash_table_group_destroy(struct bsal_hash_table_group *group,
                 struct bsal_memory_pool *memory);
 
@@ -46,6 +46,6 @@ void bsal_hash_table_group_set_bit(void *bitmap, uint64_t bucket, int value);
 
 int bsal_hash_table_group_pack_unpack(struct bsal_hash_table_group *self, void *buffer, int operation,
                 uint64_t buckets_per_group, int key_size, int value_size,
-                struct bsal_memory_pool *memory);
+                struct bsal_memory_pool *memory, int deletion_is_enabled);
 
 #endif

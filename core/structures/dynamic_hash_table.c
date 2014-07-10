@@ -404,3 +404,26 @@ void bsal_dynamic_hash_table_set_memory_pool(struct bsal_dynamic_hash_table *tab
         bsal_hash_table_set_memory_pool(table->next, memory);
     }
 }
+
+void bsal_dynamic_hash_table_disable_deletion_support(struct bsal_dynamic_hash_table *table)
+{
+    if (table->current != NULL) {
+        bsal_hash_table_disable_deletion_support(table->current);
+    }
+
+    if (table->next != NULL) {
+        bsal_hash_table_disable_deletion_support(table->next);
+    }
+
+}
+
+void bsal_dynamic_hash_table_enable_deletion_support(struct bsal_dynamic_hash_table *table)
+{
+    if (table->current != NULL) {
+        bsal_hash_table_enable_deletion_support(table->current);
+    }
+
+    if (table->next != NULL) {
+        bsal_hash_table_enable_deletion_support(table->next);
+    }
+}

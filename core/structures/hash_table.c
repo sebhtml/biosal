@@ -72,6 +72,8 @@ void bsal_hash_table_init(struct bsal_hash_table *table, uint64_t buckets,
     table->groups = NULL;
 
     bsal_hash_table_set_memory_pool(table, NULL);
+
+    bsal_hash_table_enable_deletion_support(table);
 }
 
 void bsal_hash_table_destroy(struct bsal_hash_table *table)
@@ -100,6 +102,10 @@ void bsal_hash_table_delete(struct bsal_hash_table *table, void *key)
     uint64_t last_stride;
 
     if (table->groups == NULL) {
+        return;
+    }
+
+    if (!table->deletion_is_enabled) {
         return;
     }
 
@@ -304,6 +310,7 @@ int bsal_hash_table_pack_unpack(struct bsal_hash_table *self, void *buffer, int 
     bsal_packer_work(&packer, &self->value_size, sizeof(self->value_size));
 
     bsal_packer_work(&packer, &self->debug, sizeof(self->debug));
+    bsal_packer_work(&packer, &self->deletion_is_enabled, sizeof(self->deletion_is_enabled));
 
     offset = bsal_packer_worked_bytes(&packer);
 
@@ -333,7 +340,8 @@ int bsal_hash_table_pack_unpack(struct bsal_hash_table *self, void *buffer, int 
         offset += bsal_hash_table_group_pack_unpack(self->groups + i,
                         (char *)buffer + offset, operation,
                         self->buckets_per_group, self->key_size,
-                        self->value_size, self->memory);
+                        self->value_size, self->memory,
+                        self->deletion_is_enabled);
     }
 
     return offset;
@@ -354,7 +362,7 @@ void bsal_hash_table_start_groups(struct bsal_hash_table *table)
 
     for (i = 0; i < table->group_count; i++) {
         bsal_hash_table_group_init(table->groups + i, table->buckets_per_group,
-                        table->key_size, table->value_size, table->memory);
+                        table->key_size, table->value_size, table->memory, table->deletion_is_enabled);
     }
 }
 
@@ -363,4 +371,13 @@ void bsal_hash_table_set_memory_pool(struct bsal_hash_table *table, struct bsal_
     table->memory = memory;
 }
 
+void bsal_hash_table_disable_deletion_support(struct bsal_hash_table *table)
+{
+    table->deletion_is_enabled = 0;
+}
 
+void bsal_hash_table_enable_deletion_support(struct bsal_hash_table *table)
+{
+
+    table->deletion_is_enabled = 1;
+}

@@ -56,4 +56,8 @@ void *bsal_map_pad_key(struct bsal_map *self, void *key);
 
 void bsal_map_set_memory_pool(struct bsal_map *map, struct bsal_memory_pool *memory);
 
+void bsal_map_disable_deletion_support(struct bsal_map *map);
+void bsal_map_enable_deletion_support(struct bsal_map *map);
+
+
 #endif

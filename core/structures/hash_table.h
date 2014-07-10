@@ -50,6 +50,8 @@ struct bsal_hash_table {
     int debug;
 
     struct bsal_memory_pool *memory;
+
+    int deletion_is_enabled;
 };
 
 /*
@@ -96,5 +98,8 @@ int bsal_hash_table_pack_unpack(struct bsal_hash_table *self, void *buffer, int 
 void bsal_hash_table_start_groups(struct bsal_hash_table *table);
 
 void bsal_hash_table_set_memory_pool(struct bsal_hash_table *table, struct bsal_memory_pool *memory);
+
+void bsal_hash_table_disable_deletion_support(struct bsal_hash_table *table);
+void bsal_hash_table_enable_deletion_support(struct bsal_hash_table *table);
 
 #endif

@@ -263,3 +263,14 @@ void bsal_map_set_memory_pool(struct bsal_map *map, struct bsal_memory_pool *mem
 {
     bsal_dynamic_hash_table_set_memory_pool(&map->table, memory);
 }
+
+void bsal_map_disable_deletion_support(struct bsal_map *map)
+{
+    bsal_dynamic_hash_table_disable_deletion_support(&map->table);
+}
+
+void bsal_map_enable_deletion_support(struct bsal_map *map)
+{
+    bsal_dynamic_hash_table_enable_deletion_support(&map->table);
+
+}

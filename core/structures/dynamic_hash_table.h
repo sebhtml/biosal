@@ -57,4 +57,8 @@ int bsal_dynamic_hash_table_get_value_size(struct bsal_dynamic_hash_table *self)
 
 void bsal_dynamic_hash_table_set_memory_pool(struct bsal_dynamic_hash_table *table,
                 struct bsal_memory_pool *memory);
+
+void bsal_dynamic_hash_table_disable_deletion_support(struct bsal_dynamic_hash_table *table);
+void bsal_dynamic_hash_table_enable_deletion_support(struct bsal_dynamic_hash_table *table);
+
 #endif
