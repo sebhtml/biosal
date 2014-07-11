@@ -45,6 +45,7 @@ void bsal_memory_pool_destroy(struct bsal_memory_pool *self)
      */
     while (bsal_queue_dequeue(&self->dried_blocks, &block)) {
         bsal_memory_block_destroy(block);
+        bsal_memory_free(block);
     }
     bsal_queue_destroy(&self->dried_blocks);
 
@@ -52,6 +53,7 @@ void bsal_memory_pool_destroy(struct bsal_memory_pool *self)
      */
     while (bsal_queue_dequeue(&self->ready_blocks, &block)) {
         bsal_memory_block_destroy(block);
+        bsal_memory_free(block);
     }
     bsal_queue_destroy(&self->ready_blocks);
 
@@ -59,6 +61,7 @@ void bsal_memory_pool_destroy(struct bsal_memory_pool *self)
      */
     if (self->current_block != NULL) {
         bsal_memory_block_destroy(self->current_block);
+        bsal_memory_free(self->current_block);
         self->current_block = NULL;
     }
 }
@@ -109,13 +112,7 @@ void *bsal_memory_pool_allocate(struct bsal_memory_pool *self, size_t size)
 
     if (self->current_block == NULL) {
 
-        /* Try to pick a block in the ready block list.
-         * Otherwise, create one on-demand today.
-         */
-        if (!bsal_queue_dequeue(&self->ready_blocks, &self->current_block)) {
-            self->current_block = bsal_memory_allocate(sizeof(struct bsal_memory_block));
-            bsal_memory_block_init(self->current_block, self->block_size);
-        }
+        bsal_memory_pool_add_block(self);
     }
 
     pointer = bsal_memory_block_allocate(self->current_block, size);
@@ -125,7 +122,10 @@ void *bsal_memory_pool_allocate(struct bsal_memory_pool *self, size_t size)
     if (pointer == NULL) {
         bsal_queue_enqueue(&self->dried_blocks, &self->current_block);
         self->current_block = NULL;
-        return bsal_memory_pool_allocate(self, size);
+
+        bsal_memory_pool_add_block(self);
+
+        pointer = bsal_memory_block_allocate(self->current_block, size);
     }
 
     if (self->tracking_is_enabled) {
@@ -133,6 +133,17 @@ void *bsal_memory_pool_allocate(struct bsal_memory_pool *self, size_t size)
     }
 
     return pointer;
+}
+
+void bsal_memory_pool_add_block(struct bsal_memory_pool *self)
+{
+    /* Try to pick a block in the ready block list.
+     * Otherwise, create one on-demand today.
+     */
+    if (!bsal_queue_dequeue(&self->ready_blocks, &self->current_block)) {
+        self->current_block = bsal_memory_allocate(sizeof(struct bsal_memory_block));
+        bsal_memory_block_init(self->current_block, self->block_size);
+    }
 }
 
 void bsal_memory_pool_free(struct bsal_memory_pool *self, void *pointer)

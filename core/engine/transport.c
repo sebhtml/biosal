@@ -121,4 +121,7 @@ int bsal_transport_get_size(struct bsal_transport *self)
     return self->size;
 }
 
-
+int bsal_transport_dequeue_active_buffer(struct bsal_transport *self, struct bsal_active_buffer *active_buffer)
+{
+    return bsal_ring_queue_dequeue(&self->active_buffers, active_buffer);
+}

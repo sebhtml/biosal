@@ -293,6 +293,8 @@ void bsal_node_init(struct bsal_node *node, int *argc, char ***argv)
 
 void bsal_node_destroy(struct bsal_node *node)
 {
+    struct bsal_active_buffer active_buffer;
+    void *buffer;
 
     bsal_memory_pool_destroy(&node->actor_memory_pool);
     bsal_memory_pool_destroy(&node->inbound_message_memory_pool);
@@ -310,6 +312,13 @@ void bsal_node_destroy(struct bsal_node *node)
     bsal_queue_destroy(&node->dead_indices);
 
     bsal_worker_pool_destroy(&node->worker_pool);
+
+    while (bsal_transport_dequeue_active_buffer(&node->transport, &active_buffer)) {
+        buffer = bsal_active_buffer_buffer(&active_buffer);
+
+        bsal_memory_free(buffer);
+        bsal_active_buffer_destroy(&active_buffer);
+    }
 
     bsal_transport_destroy(&node->transport);
     bsal_counter_destroy(&node->counter);
@@ -807,6 +816,7 @@ int bsal_node_receive_system(struct bsal_node *node, struct bsal_message *messag
 #endif
 
         bsal_node_send_to_node_empty(node, source, BSAL_NODE_ADD_INITIAL_ACTORS_REPLY);
+
         return 1;
 
     } else if (tag == BSAL_NODE_ADD_INITIAL_ACTORS_REPLY) {
@@ -1341,9 +1351,9 @@ void bsal_node_register_signal_handlers(struct bsal_node *self)
 {
     struct bsal_vector signals;
     struct bsal_vector_iterator iterator;
-    bsal_vector_init(&signals, sizeof(int));
     int *signal;
 
+    bsal_vector_init(&signals, sizeof(int));
     /*
      * \see http://unixhelp.ed.ac.uk/CGI/man-cgi?signal+7
      */

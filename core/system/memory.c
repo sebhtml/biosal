@@ -30,8 +30,9 @@
 #define BSAL_MEMORY_MAXIMUM 1000000000000
 
 /*
+ * Show memory allocation events.
 #define BSAL_MEMORY_DEBUG_DETAIL
-*/
+ */
 
 void *bsal_memory_allocate_private(size_t size, const char *function, const char *file, int line)
 {
@@ -79,6 +80,15 @@ void *bsal_memory_allocate_private(size_t size, const char *function, const char
         printf("BSAL_MEMORY_DEBUG bsal_memory_allocate %d bytes %p %s %s %d\n",
                     (int)size, pointer, function, file, line);
     }
+
+    /*
+     * Ask the tracer to print a stack
+     */
+    if (size == 16) {
+        bsal_tracer_print_stack_backtrace();
+    }
+
+
 #endif
 
     /*
@@ -99,8 +109,10 @@ void *bsal_memory_allocate_private(size_t size, const char *function, const char
 void bsal_memory_free_private(void *pointer, const char *function, const char *file, int line)
 {
 #ifdef BSAL_MEMORY_DEBUG_DETAIL
-    printf("BSAL_MEMORY_DEBUG bsal_memory_free %p %s %s %d\n",
+    if (file != NULL) {
+        printf("BSAL_MEMORY_DEBUG bsal_memory_free %p %s %s %d\n",
                    pointer, function, file, line);
+    }
 #endif
 
     if (pointer == NULL) {

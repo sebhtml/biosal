@@ -33,4 +33,6 @@ void bsal_memory_pool_disable_tracking(struct bsal_memory_pool *self);
 void bsal_memory_pool_free_all(struct bsal_memory_pool *self);
 void bsal_memory_pool_disable(struct bsal_memory_pool *self);
 
+void bsal_memory_pool_add_block(struct bsal_memory_pool *self);
+
 #endif

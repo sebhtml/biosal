@@ -28,12 +28,14 @@ void bsal_ring_queue_destroy(struct bsal_ring_queue *self)
     while (self->head != NULL) {
         next = bsal_linked_ring_get_next(self->head);
         bsal_linked_ring_destroy(self->head);
+        bsal_memory_free(self->head);
         self->head = next;
     }
 
     while (self->recycle_bin != NULL) {
         next = bsal_linked_ring_get_next(self->recycle_bin);
         bsal_linked_ring_destroy(self->recycle_bin);
+        bsal_memory_free(self->recycle_bin);
         self->recycle_bin = next;
     }
 

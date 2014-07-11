@@ -87,6 +87,7 @@ int main(int argc, char **argv)
         }
 
         TEST_INT_EQUALS(bsal_ring_queue_empty(&ring_queue), 1);
+        bsal_ring_queue_destroy(&ring_queue);
     }
 
     {
@@ -114,6 +115,7 @@ int main(int argc, char **argv)
         }
 
         TEST_INT_EQUALS(bsal_ring_queue_empty(&ring_queue), 1);
+        bsal_ring_queue_destroy(&ring_queue);
     }
 
     {
@@ -136,6 +138,7 @@ int main(int argc, char **argv)
         }
 
         TEST_INT_EQUALS(bsal_ring_queue_full(&ring_queue), 0);
+        bsal_ring_queue_destroy(&ring_queue);
     }
 
     {
@@ -154,6 +157,7 @@ int main(int argc, char **argv)
             TEST_INT_EQUALS(bsal_ring_queue_dequeue(&ring_queue, &value), 1);
         }
 
+        bsal_ring_queue_destroy(&ring_queue);
     }
 
 

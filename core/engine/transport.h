@@ -34,4 +34,6 @@ int bsal_transport_get_size(struct bsal_transport *self);
 
 int bsal_transport_test_requests(struct bsal_transport *self, struct bsal_active_buffer *active_buffer);
 
+int bsal_transport_dequeue_active_buffer(struct bsal_transport *self, struct bsal_active_buffer *active_buffer);
+
 #endif
