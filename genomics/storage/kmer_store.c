@@ -1,16 +1,15 @@
 
 #include "kmer_store.h"
 
-#include <genomics/kernels/dna_kmer_counter_kernel.h>
+#include "sequence_store.h"
 
+#include <genomics/kernels/dna_kmer_counter_kernel.h>
+#include <genomics/data/dna_kmer.h>
 #include <genomics/data/dna_kmer_block.h>
 
 #include <core/helpers/message_helper.h>
 #include <core/helpers/actor_helper.h>
-
-#include <genomics/data/dna_kmer.h>
 #include <core/system/memory.h>
-
 #include <core/structures/vector.h>
 #include <core/structures/vector_iterator.h>
 
@@ -79,6 +78,7 @@ void bsal_kmer_store_receive(struct bsal_actor *self, struct bsal_message *messa
     void *key;
     struct bsal_vector *kmers;
     struct bsal_vector_iterator iterator;
+    double value;
     struct bsal_dna_kmer *kmer_pointer;
     int *bucket;
     struct bsal_memory_pool *ephemeral_memory;
@@ -196,6 +196,12 @@ void bsal_kmer_store_receive(struct bsal_actor *self, struct bsal_message *messa
         bsal_dna_kmer_block_destroy(&block, bsal_actor_get_ephemeral_memory(self));
 
         bsal_actor_helper_send_reply_empty(self, BSAL_PUSH_KMER_BLOCK_REPLY);
+
+    } else if (tag == BSAL_SEQUENCE_STORE_REQUEST_PROGRESS_REPLY) {
+
+        bsal_message_helper_unpack_double(message, 0, &value);
+
+        bsal_map_set_current_size_estimate(&concrete_actor->table, value);
 
     } else if (tag == BSAL_ACTOR_ASK_TO_STOP) {
 

@@ -10,6 +10,7 @@ struct bsal_message;
 
 void bsal_actor_helper_send_empty(struct bsal_actor *actor, int destination, int tag);
 void bsal_actor_helper_send_int(struct bsal_actor *actor, int destination, int tag, int value);
+void bsal_actor_helper_send_double(struct bsal_actor *actor, int destination, int tag, double value);
 void bsal_actor_helper_send_uint64_t(struct bsal_actor *actor, int destination, int tag, uint64_t value);
 void bsal_actor_helper_send_int64_t(struct bsal_actor *actor, int destination, int tag, int64_t value);
 void bsal_actor_helper_send_vector(struct bsal_actor *actor, int destination, int tag, struct bsal_vector *vector);

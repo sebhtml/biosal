@@ -32,6 +32,8 @@ void bsal_dynamic_hash_table_init(struct bsal_dynamic_hash_table *self, uint64_t
 #endif
 
     bsal_hash_table_init(self->current, buckets, key_size, value_size);
+    buckets = bsal_hash_table_buckets(self->current);
+    self->resize_next_size = 2 * buckets;
 }
 
 void bsal_dynamic_hash_table_destroy(struct bsal_dynamic_hash_table *self)
@@ -221,7 +223,7 @@ uint64_t bsal_dynamic_hash_table_buckets(struct bsal_dynamic_hash_table *self)
 
 void bsal_dynamic_hash_table_start_resizing(struct bsal_dynamic_hash_table *self)
 {
-    uint64_t old_size;
+    /*uint64_t old_size;*/
     uint64_t new_size;
 
     /* already resizing
@@ -230,10 +232,12 @@ void bsal_dynamic_hash_table_start_resizing(struct bsal_dynamic_hash_table *self
         return;
     }
 
-    old_size = bsal_hash_table_buckets(self->current);
-    new_size = 2 * old_size;
+    new_size = self->resize_next_size;
+    /*printf("NEW SIZE %" PRIu64 "\n", new_size);*/
+    self->resize_next_size = 2 * new_size;
 
 #ifdef BSAL_DYNAMIC_HASH_TABLE_DEBUG_RESIZING
+    old_size = bsal_hash_table_buckets(self->current);
     printf("DEBUG bsal_dynamic_hash_table_start_resizing start resizing %d ... %d\n",
                     (int)old_size, (int)new_size);
 #endif
@@ -310,6 +314,7 @@ int bsal_dynamic_hash_table_resize(struct bsal_dynamic_hash_table *self)
                 new_value = bsal_hash_table_add(self->next, key);
 
                 if (new_value == NULL) {
+                    printf("Error, it is full\n");
                     printf("current %" PRIu64 "/%" PRIu64 "\n", bsal_hash_table_size(self->current), bsal_hash_table_buckets(self->current));
                     printf("next %" PRIu64 "/%" PRIu64 "\n", bsal_hash_table_size(self->next), bsal_hash_table_buckets(self->next));
                 }
@@ -493,3 +498,48 @@ void bsal_dynamic_hash_table_enable_deletion_support(struct bsal_dynamic_hash_ta
         bsal_hash_table_enable_deletion_support(table->next);
     }
 }
+
+void bsal_dynamic_hash_table_set_current_size_estimate(struct bsal_dynamic_hash_table *table,
+                double value)
+{
+    uint64_t current_size;
+    double threshold;
+    uint64_t size_estimate;
+    uint64_t next_size;
+    uint64_t required;
+    int avoided_resizing_operations;
+    uint64_t current_buckets;
+
+    current_size = bsal_dynamic_hash_table_size(table);
+    threshold = BSAL_DYNAMIC_HASH_TABLE_THRESHOLD;
+    current_buckets = bsal_hash_table_buckets(table->current);
+
+    size_estimate = current_size * (1 / value);
+
+    next_size = 2;
+    required = size_estimate / (threshold - 0.05);
+
+    while (next_size < required) {
+        next_size *= 2;
+    }
+
+    printf("ESTIMATE estimate %f current_size %" PRIu64 "/%" PRIu64 " size_estimate %" PRIu64 " threshold %f required %" PRIu64 " next_size %" PRIu64 "\n",
+                    value, current_size, current_buckets,
+                    size_estimate, threshold, required, next_size);
+
+    if (next_size > table->resize_next_size) {
+        avoided_resizing_operations = 0;
+
+        while (current_buckets < next_size) {
+            current_buckets *= 2;
+            ++avoided_resizing_operations;
+        }
+
+        avoided_resizing_operations -= 1;
+        printf("OPTIMIZATION resize_next_size... old value %" PRIu64 " new value %" PRIu64 " (avoided resizing operations: %d)\n",
+                    table->resize_next_size, next_size, avoided_resizing_operations);
+
+        table->resize_next_size = next_size;
+    }
+}
+

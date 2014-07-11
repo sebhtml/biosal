@@ -524,4 +524,14 @@ int bsal_actor_helper_get_acquaintance(struct bsal_actor *actor, struct bsal_vec
     return bsal_actor_get_acquaintance(actor, index2);
 }
 
+void bsal_actor_helper_send_double(struct bsal_actor *actor, int destination, int tag, double value)
+{
+    struct bsal_message message;
+
+    bsal_message_init(&message, tag, sizeof(value), &value);
+    bsal_actor_send(actor, destination, &message);
+
+    bsal_message_destroy(&message);
+}
+
 

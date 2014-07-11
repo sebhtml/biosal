@@ -23,6 +23,7 @@ struct bsal_dynamic_hash_table {
 
     int resize_in_progress;
     uint64_t resize_current_size;
+    uint64_t resize_next_size;
 };
 
 void bsal_dynamic_hash_table_init(struct bsal_dynamic_hash_table *self, uint64_t buckets,
@@ -61,5 +62,7 @@ void bsal_dynamic_hash_table_set_memory_pool(struct bsal_dynamic_hash_table *tab
 
 void bsal_dynamic_hash_table_disable_deletion_support(struct bsal_dynamic_hash_table *table);
 void bsal_dynamic_hash_table_enable_deletion_support(struct bsal_dynamic_hash_table *table);
+void bsal_dynamic_hash_table_set_current_size_estimate(struct bsal_dynamic_hash_table *table,
+                double value);
 
 #endif

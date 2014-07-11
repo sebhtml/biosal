@@ -79,4 +79,26 @@ int bsal_message_helper_unpack_int64_t(struct bsal_message *message, int offset,
     return offset;
 }
 
+int bsal_message_helper_unpack_double(struct bsal_message *message, int offset, double *value)
+{
+    int bytes;
+    void *buffer;
+    double *pointer;
+
+    if (offset >= bsal_message_count(message)) {
+        return -1;
+    }
+
+    bytes = sizeof(value);
+    buffer = bsal_message_buffer(message);
+
+    pointer = (double *)((char *)buffer + offset);
+
+    *value = *pointer;
+
+    offset += bytes;
+
+    return offset;
+}
+
 

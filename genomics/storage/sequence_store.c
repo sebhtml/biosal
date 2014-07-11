@@ -318,6 +318,7 @@ void bsal_sequence_store_ask(struct bsal_actor *self, struct bsal_message *messa
     int name;
     int period;
     struct bsal_memory_pool *ephemeral_memory;
+    double ratio;
 
     name = bsal_actor_get_name(self);
 #ifdef BSAL_SEQUENCE_STORE_DEBUG
@@ -410,4 +411,20 @@ void bsal_sequence_store_ask(struct bsal_actor *self, struct bsal_message *messa
     }
 
     bsal_input_command_destroy(&payload, bsal_actor_get_ephemeral_memory(self));
+
+    /*
+     * Send a progress report to the supervisor of progression
+     */
+    if (concrete_actor->progress_supervisor != BSAL_ACTOR_NOBODY) {
+        ratio = (concrete_actor->received - concrete_actor->left + 0.0) / concrete_actor->received;
+
+        if (ratio >= 0.100) {
+
+            bsal_actor_helper_send_double(self, bsal_actor_get_acquaintance(self,
+                                    concrete_actor->progress_supervisor),
+                            BSAL_SEQUENCE_STORE_REQUEST_PROGRESS_REPLY,
+                            ratio);
+            concrete_actor->progress_supervisor = BSAL_ACTOR_NOBODY;
+        }
+    }
 }

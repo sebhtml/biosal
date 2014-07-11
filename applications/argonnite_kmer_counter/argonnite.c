@@ -93,6 +93,8 @@ void argonnite_init(struct bsal_actor *actor)
                     argonnite_prepare_sequence_stores);
     bsal_actor_register(actor, BSAL_INPUT_DISTRIBUTE_REPLY,
                     argonnite_connect_kernels_with_stores);
+    bsal_actor_register(actor, BSAL_SEQUENCE_STORE_REQUEST_PROGRESS_REPLY,
+                    argonnite_request_progress_reply);
 
     concrete_actor->state = ARGONNITE_STATE_NONE;
 }
@@ -954,6 +956,10 @@ void argonnite_prepare_sequence_stores(struct bsal_actor *self, struct bsal_mess
 
             bucket = bsal_map_add(&concrete_actor->plentiful_stores, &i);
             *bucket = 1;
+
+            bsal_actor_helper_send_empty(self, bsal_actor_helper_get_acquaintance(self,
+                                    &concrete_actor->sequence_stores, i),
+                            BSAL_SEQUENCE_STORE_REQUEST_PROGRESS);
         }
 
         bsal_vector_destroy(&stores);
@@ -1003,4 +1009,28 @@ void argonnite_connect_kernels_with_stores(struct bsal_actor *self, struct bsal_
     bsal_vector_destroy(&kernels);
     bsal_vector_destroy(&sequence_stores);
 
+}
+
+void argonnite_request_progress_reply(struct bsal_actor *actor, struct bsal_message *message)
+{
+    double value;
+    int source;
+    int store_index;
+    int store_index_index;
+    int kmer_store;
+    struct argonnite *concrete_actor;
+
+    concrete_actor = (struct argonnite *)bsal_actor_concrete_actor(actor);
+    bsal_message_helper_unpack_double(message, 0, &value);
+    source = bsal_message_source(message);
+
+    store_index = bsal_actor_get_acquaintance_index(actor, source);
+    store_index_index = bsal_vector_index_of(&concrete_actor->sequence_stores, &store_index);
+    kmer_store = bsal_actor_helper_get_acquaintance(actor, &concrete_actor->kmer_stores, store_index_index);
+
+    printf("sequence store %d has a completion of %f, sending notice to kmer store %d\n",
+                    source, value, kmer_store);
+
+    bsal_actor_helper_send_double(actor, kmer_store, BSAL_SEQUENCE_STORE_REQUEST_PROGRESS_REPLY,
+                    value);
 }

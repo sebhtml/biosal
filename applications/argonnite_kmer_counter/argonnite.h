@@ -61,5 +61,6 @@ void argonnite_help(struct bsal_actor *actor);
 void argonnite_prepare_sequence_stores_reply(struct bsal_actor *self, struct bsal_message *message);
 void argonnite_prepare_sequence_stores(struct bsal_actor *self, struct bsal_message *message);
 void argonnite_connect_kernels_with_stores(struct bsal_actor *self, struct bsal_message *message);
+void argonnite_request_progress_reply(struct bsal_actor *actor, struct bsal_message *message);
 
 #endif

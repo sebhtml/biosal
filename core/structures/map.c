@@ -274,3 +274,8 @@ void bsal_map_enable_deletion_support(struct bsal_map *map)
     bsal_dynamic_hash_table_enable_deletion_support(&map->table);
 
 }
+
+void bsal_map_set_current_size_estimate(struct bsal_map *map, double value)
+{
+    bsal_dynamic_hash_table_set_current_size_estimate(&map->table, value);
+}
