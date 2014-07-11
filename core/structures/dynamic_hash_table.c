@@ -15,7 +15,8 @@
 /* options */
 /*#define BSAL_DYNAMIC_HASH_TABLE_THRESHOLD 0.90*/
 /*#define BSAL_DYNAMIC_HASH_TABLE_THRESHOLD 0.75*/
-#define BSAL_DYNAMIC_HASH_TABLE_THRESHOLD 0.75
+
+#define BSAL_DYNAMIC_HASH_TABLE_THRESHOLD 0.70
 
 void bsal_dynamic_hash_table_init(struct bsal_dynamic_hash_table *self, uint64_t buckets,
                 int key_size, int value_size)
@@ -34,6 +35,8 @@ void bsal_dynamic_hash_table_init(struct bsal_dynamic_hash_table *self, uint64_t
     bsal_hash_table_init(self->current, buckets, key_size, value_size);
     buckets = bsal_hash_table_buckets(self->current);
     self->resize_next_size = 2 * buckets;
+
+    bsal_dynamic_hash_table_set_threshold(self, BSAL_DYNAMIC_HASH_TABLE_THRESHOLD);
 }
 
 void bsal_dynamic_hash_table_destroy(struct bsal_dynamic_hash_table *self)
@@ -68,7 +71,7 @@ void *bsal_dynamic_hash_table_add(struct bsal_dynamic_hash_table *self, void *ke
      */
     if (!self->resize_in_progress) {
 
-        threshold = BSAL_DYNAMIC_HASH_TABLE_THRESHOLD;
+        threshold = self->resize_load_threshold;
         ratio = (0.0 + bsal_hash_table_size(self->current)) / bsal_hash_table_buckets(self->current);
 
         if (ratio < threshold) {
@@ -511,13 +514,13 @@ void bsal_dynamic_hash_table_set_current_size_estimate(struct bsal_dynamic_hash_
     uint64_t current_buckets;
 
     current_size = bsal_dynamic_hash_table_size(table);
-    threshold = BSAL_DYNAMIC_HASH_TABLE_THRESHOLD;
+    threshold = table->resize_load_threshold;
     current_buckets = bsal_hash_table_buckets(table->current);
 
     size_estimate = current_size * (1 / value);
 
     next_size = 2;
-    required = size_estimate / (threshold - 0.05);
+    required = size_estimate / (threshold - 0.01);
 
     while (next_size < required) {
         next_size *= 2;
@@ -543,3 +546,7 @@ void bsal_dynamic_hash_table_set_current_size_estimate(struct bsal_dynamic_hash_
     }
 }
 
+void bsal_dynamic_hash_table_set_threshold(struct bsal_dynamic_hash_table *table, double threshold)
+{
+    table->resize_load_threshold = threshold;
+}

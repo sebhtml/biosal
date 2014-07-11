@@ -418,7 +418,7 @@ void bsal_sequence_store_ask(struct bsal_actor *self, struct bsal_message *messa
     if (concrete_actor->progress_supervisor != BSAL_ACTOR_NOBODY) {
         ratio = (concrete_actor->received - concrete_actor->left + 0.0) / concrete_actor->received;
 
-        if (ratio >= 0.100) {
+        if (ratio >= 0.16) {
 
             bsal_actor_helper_send_double(self, bsal_actor_get_acquaintance(self,
                                     concrete_actor->progress_supervisor),

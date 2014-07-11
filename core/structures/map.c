@@ -279,3 +279,8 @@ void bsal_map_set_current_size_estimate(struct bsal_map *map, double value)
 {
     bsal_dynamic_hash_table_set_current_size_estimate(&map->table, value);
 }
+
+void bsal_map_set_threshold(struct bsal_map *map, double threshold)
+{
+    bsal_dynamic_hash_table_set_threshold(&map->table, threshold);
+}

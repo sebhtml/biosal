@@ -59,5 +59,6 @@ void bsal_map_set_memory_pool(struct bsal_map *map, struct bsal_memory_pool *mem
 void bsal_map_disable_deletion_support(struct bsal_map *map);
 void bsal_map_enable_deletion_support(struct bsal_map *map);
 void bsal_map_set_current_size_estimate(struct bsal_map *map, double value);
+void bsal_map_set_threshold(struct bsal_map *map, double threshold);
 
 #endif

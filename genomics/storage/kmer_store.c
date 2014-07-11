@@ -117,8 +117,16 @@ void bsal_kmer_store_receive(struct bsal_actor *self, struct bsal_message *messa
                         sizeof(int));
 
         /*
-        */
+         * Configure the map for better performance.
+         */
         bsal_map_disable_deletion_support(&concrete_actor->table);
+
+        /*
+         * The threshold of the map is not very important because
+         * requests that hit the map have to first arrive as messages,
+         * which are slow.
+         */
+        bsal_map_set_threshold(&concrete_actor->table, 0.95);
 
         bsal_actor_helper_send_reply_empty(self, BSAL_SET_KMER_LENGTH_REPLY);
 
