@@ -18,6 +18,8 @@
 #define BSAL_SEQUENCE_STORE_DEBUG
 */
 
+#define MINIMUM_PERIOD 4096
+
 struct bsal_script bsal_sequence_store_script = {
     .name = BSAL_SEQUENCE_STORE_SCRIPT,
     .init = bsal_sequence_store_init,
@@ -390,7 +392,14 @@ void bsal_sequence_store_ask(struct bsal_actor *self, struct bsal_message *messa
 #endif
     }
 
-    period = 100000;
+    /* Show something every 0.05
+     */
+    period = concrete_actor->received / 20;
+
+    if (period < MINIMUM_PERIOD) {
+        period = MINIMUM_PERIOD;
+    }
+
     if (concrete_actor->last >= 0
                     && (concrete_actor->last == 0
                     || concrete_actor->left < concrete_actor->last - period

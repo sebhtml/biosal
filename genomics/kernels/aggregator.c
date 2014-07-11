@@ -186,7 +186,7 @@ void bsal_aggregator_flush(struct bsal_actor *self, int customer_index, struct b
 
     buffer = NULL;
 
-    if (concrete_actor->flushed % 10000 == 0) {
+    if (concrete_actor->flushed % 50000 == 0) {
         printf("aggregator %d flushed %d blocks so far\n",
                         bsal_actor_get_name(self), concrete_actor->flushed);
     }

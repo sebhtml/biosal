@@ -269,7 +269,7 @@ void bsal_dna_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_
                         BSAL_PUSH_SEQUENCE_DATA_BLOCK_REPLY);
 
         if (concrete_actor->actual == concrete_actor->expected
-                        || concrete_actor->actual >= concrete_actor->last + 100000
+                        || concrete_actor->actual >= concrete_actor->last + 300000
                         || concrete_actor->last == 0) {
 
             printf("kernel %d processed %" PRIu64 " entries (%d blocks) so far\n",
