@@ -13,6 +13,6 @@ test_private: $(TEST_RUNS)
 
 tests: mock_test_target
 	$(Q)$(MAKE) test_private | tee tests.log
-	./tests/summarize-tests.sh tests.log
+	tests/summarize-tests.sh tests.log
 
 mock_test_target:
