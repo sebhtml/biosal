@@ -9,7 +9,8 @@ struct bsal_script mock_script = {
     .init = mock_init,
     .destroy = mock_destroy,
     .receive = mock_receive,
-    .size = sizeof(struct mock)
+    .size = sizeof(struct mock),
+    .description = "mock"
 };
 
 void mock_init(struct bsal_actor *actor)

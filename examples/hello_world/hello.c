@@ -8,7 +8,8 @@ struct bsal_script hello_script = {
     .init = hello_init,
     .destroy = hello_destroy,
     .receive = hello_receive,
-    .size = sizeof(struct hello)
+    .size = sizeof(struct hello),
+    .description = "hello"
 };
 
 void hello_init(struct bsal_actor *actor)

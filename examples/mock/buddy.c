@@ -9,7 +9,8 @@ struct bsal_script buddy_script = {
     .init = buddy_init,
     .destroy = buddy_destroy,
     .receive = buddy_receive,
-    .size = sizeof(struct buddy)
+    .size = sizeof(struct buddy),
+    .description = "buddy"
 };
 
 void buddy_init(struct bsal_actor *actor)

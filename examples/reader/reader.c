@@ -12,7 +12,8 @@ struct bsal_script reader_script = {
     .init = reader_init,
     .destroy = reader_destroy,
     .receive = reader_receive,
-    .size = sizeof(struct reader)
+    .size = sizeof(struct reader),
+    .description = "reader"
 };
 
 void reader_init(struct bsal_actor *actor)

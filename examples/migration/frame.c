@@ -9,7 +9,8 @@ struct bsal_script frame_script = {
     .init = frame_init,
     .destroy = frame_destroy,
     .receive = frame_receive,
-    .size = sizeof(struct frame)
+    .size = sizeof(struct frame),
+    .description = "frame"
 };
 
 void frame_init(struct bsal_actor *actor)

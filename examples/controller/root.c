@@ -12,7 +12,8 @@ struct bsal_script root_script = {
     .init = root_init,
     .destroy = root_destroy,
     .receive = root_receive,
-    .size = sizeof(struct root)
+    .size = sizeof(struct root),
+    .description = "root"
 };
 
 void root_init(struct bsal_actor *actor)

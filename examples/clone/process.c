@@ -8,7 +8,8 @@ struct bsal_script process_script = {
     .init = process_init,
     .destroy = process_destroy,
     .receive = process_receive,
-    .size = sizeof(struct process)
+    .size = sizeof(struct process),
+    .description = "process"
 };
 
 void process_init(struct bsal_actor *actor)

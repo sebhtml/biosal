@@ -46,6 +46,13 @@
 */
 #define BSAL_SCHEDULER_ENABLE_SYMMETRIC_SCHEDULING
 
+/*
+ * Scheduler verbosity
+ */
+/*
+#define BSAL_SCHEDULER_ENABLE_VERBOSITY
+*/
+
 void bsal_scheduler_init(struct bsal_scheduler *scheduler, struct bsal_worker_pool *pool)
 {
     scheduler->pool = pool;
@@ -204,7 +211,10 @@ void bsal_scheduler_balance(struct bsal_scheduler *scheduler)
 
 
     bsal_vector_init(&migrations, sizeof(struct bsal_migration));
+
+#ifdef BSAL_SCHEDULER_ENABLE_VERBOSITY
     printf("BALANCING\n");
+#endif
 
     bsal_vector_init(&loads, sizeof(int));
     bsal_vector_init(&loads_unsorted, sizeof(int));
@@ -233,8 +243,10 @@ void bsal_scheduler_balance(struct bsal_scheduler *scheduler)
     /*load_percentile_75 = bsal_statistics_get_percentile_int(&loads, 75);*/
     burdened_percentile = bsal_statistics_get_percentile_int(&loads, 100 - SCHEDULER_WINDOW);
 
+#ifdef BSAL_SCHEDULER_ENABLE_VERBOSITY
     printf("Percentiles for epoch loads: ");
     bsal_statistics_get_print_percentiles_int(&loads);
+#endif
 
     for (i = 0; i < bsal_worker_pool_worker_count(scheduler->pool); i++) {
         worker = bsal_worker_pool_get_worker(scheduler->pool, i);
@@ -244,29 +256,40 @@ void bsal_scheduler_balance(struct bsal_scheduler *scheduler)
 
         if (stalled_percentile == burdened_percentile) {
 
+#ifdef BSAL_SCHEDULER_ENABLE_VERBOSITY
             printf("scheduling_class:%s ",
                             BSAL_CLASS_NORMAL_STRING);
+#endif
 
         } else if (load_value <= stalled_percentile) {
 
+#ifdef BSAL_SCHEDULER_ENABLE_VERBOSITY
             printf("scheduling_class:%s ",
                             BSAL_CLASS_STALLED_STRING);
+#endif
+
             bsal_pair_init(&pair, load_value, i);
             bsal_vector_push_back(&stalled_workers, &pair);
 
         } else if (load_value >= burdened_percentile) {
 
+#ifdef BSAL_SCHEDULER_ENABLE_VERBOSITY
             printf("scheduling_class:%s ",
                             BSAL_CLASS_BURDENED_STRING);
+#endif
 
             bsal_pair_init(&pair, load_value, i);
             bsal_vector_push_back(&burdened_workers, &pair);
         } else {
+#ifdef BSAL_SCHEDULER_ENABLE_VERBOSITY
             printf("scheduling_class:%s ",
                             BSAL_CLASS_NORMAL_STRING);
+#endif
         }
 
+#ifdef BSAL_SCHEDULER_ENABLE_VERBOSITY
         bsal_worker_print_actors(worker, scheduler);
+#endif
 
     }
 
@@ -274,8 +297,11 @@ void bsal_scheduler_balance(struct bsal_scheduler *scheduler)
     bsal_vector_helper_sort_int(&stalled_workers);
 
     stalled_count = bsal_vector_size(&stalled_workers);
+
+#ifdef BSAL_SCHEDULER_ENABLE_VERBOSITY
     printf("MIGRATIONS (stalled: %d, burdened: %d)\n", (int)bsal_vector_size(&stalled_workers),
                     (int)bsal_vector_size(&burdened_workers));
+#endif
 
     stalled_index = 0;
     bsal_vector_iterator_init(&vector_iterator, &burdened_workers);
@@ -608,9 +634,11 @@ void bsal_scheduler_migrate(struct bsal_scheduler *scheduler, struct bsal_migrat
     actor_name = bsal_migration_get_actor(migration);
     actor = bsal_node_get_actor_from_name(bsal_worker_pool_get_node(scheduler->pool), actor_name);
 
+#ifdef BSAL_SCHEDULER_ENABLE_VERBOSITY
     printf("MIGRATION node %d migrated actor %d from worker %d to worker %d\n",
                     bsal_node_name(bsal_worker_pool_get_node(scheduler->pool)), actor_name,
                     old_worker, new_worker);
+#endif
 
     old_worker_object = bsal_worker_pool_get_worker(scheduler->pool, old_worker);
     new_worker_object = bsal_worker_pool_get_worker(scheduler->pool, new_worker);
@@ -799,7 +827,9 @@ void bsal_scheduler_detect_symmetric_scripts(struct bsal_scheduler *scheduler, s
     struct bsal_map frequencies;
     int worker_count;
     int population_per_worker;
+#ifdef BSAL_SCHEDULER_ENABLE_VERBOSITY
     struct bsal_script *actual_script;
+#endif
 
     worker_count = bsal_worker_pool_worker_count(scheduler->pool);
     bsal_map_init(&frequencies, sizeof(int), sizeof(int));
@@ -845,21 +875,27 @@ void bsal_scheduler_detect_symmetric_scripts(struct bsal_scheduler *scheduler, s
 
     while (bsal_map_iterator_get_next_key_and_value(&iterator, &script, &frequency)) {
 
+#ifdef BSAL_SCHEDULER_ENABLE_VERBOSITY
         actual_script = bsal_node_find_script(node, script);
+#endif
 
+#ifdef BSAL_SCHEDULER_ENABLE_VERBOSITY
         printf("SCHEDULER test symmetry %s %d\n",
                         bsal_script_description(actual_script),
                         frequency);
+#endif
 
         if (frequency % worker_count == 0) {
             population_per_worker = frequency / worker_count;
 
             bsal_map_add_value(symmetric_actor_scripts, &script, &population_per_worker);
 
+#ifdef BSAL_SCHEDULER_ENABLE_VERBOSITY
             printf("SCHEDULER: script %s is symmetric, worker_count: %d, population_per_worker: %d\n",
                             bsal_script_description(actual_script),
                             worker_count,
                             population_per_worker);
+#endif
         }
     }
 
@@ -883,7 +919,9 @@ void bsal_scheduler_generate_symmetric_migrations(struct bsal_scheduler *schedul
     int current_worker;
     int current_worker_actor_count;
     int old_worker;
+#ifdef BSAL_SCHEDULER_ENABLE_VERBOSITY
     struct bsal_script *actual_script;
+#endif
     struct bsal_node *node;
     int actor_name;
     int script;
@@ -943,23 +981,31 @@ void bsal_scheduler_generate_symmetric_migrations(struct bsal_scheduler *schedul
 
                 old_worker = bsal_scheduler_get_actor_worker(scheduler, actor_name);
                 new_worker = current_worker;
+#ifdef BSAL_SCHEDULER_ENABLE_VERBOSITY
                 actual_script = bsal_node_find_script(node, script);
+#endif
 
                 if (enabled && old_worker != new_worker) {
                     bsal_migration_init(&migration, actor_name, old_worker, new_worker);
                     bsal_vector_push_back(migrations, &migration);
                     bsal_migration_destroy(&migration);
 
+#ifdef BSAL_SCHEDULER_ENABLE_VERBOSITY
                     printf("[EMIT] ");
+#endif
                 } else {
+#ifdef BSAL_SCHEDULER_ENABLE_VERBOSITY
                     printf("[MOCK] ");
+#endif
                 }
 
+#ifdef BSAL_SCHEDULER_ENABLE_VERBOSITY
                 printf("SCHEDULER -> symmetric placement... %s/%d scheduled for execution on worker/%d of node/%d\n",
                                 bsal_script_description(actual_script),
                                 actor_name,
                                 new_worker,
                                 bsal_node_name(node));
+#endif
 
                 ++current_worker_actor_count;
                 bsal_map_update_value(&script_current_worker_actor_count, &script, &current_worker_actor_count);

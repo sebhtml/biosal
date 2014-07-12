@@ -14,6 +14,8 @@ struct ring {
     int ready_rings;
     int ready_senders;
     int step;
+    int spawned_senders;
+    int previous;
 };
 
 #define RING_READY 0x000067db

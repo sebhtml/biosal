@@ -8,7 +8,8 @@ struct bsal_script table_script = {
     .init = table_init,
     .destroy = table_destroy,
     .receive = table_receive,
-    .size = sizeof(struct table)
+    .size = sizeof(struct table),
+    .description = "table"
 };
 
 void table_init(struct bsal_actor *actor)

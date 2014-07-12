@@ -8,7 +8,8 @@ struct bsal_script stream_script = {
     .init = stream_init,
     .destroy = stream_destroy,
     .receive = stream_receive,
-    .size = sizeof(struct stream)
+    .size = sizeof(struct stream),
+    .description = "stream"
 };
 
 void stream_init(struct bsal_actor *actor)
