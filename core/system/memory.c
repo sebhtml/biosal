@@ -79,7 +79,7 @@ void *bsal_memory_allocate_private(size_t size, const char *function, const char
     /*
      * Ask the tracer to print a stack
      */
-    if (size == 16) {
+    if (size == 4) {
         bsal_tracer_print_stack_backtrace();
     }
 

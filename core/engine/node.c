@@ -265,7 +265,11 @@ void bsal_node_init(struct bsal_node *node, int *argc, char ***argv)
     bsal_map_init_with_capacity(&node->actor_names, sizeof(int), sizeof(int), actor_capacity * 2);
 
     bsal_vector_init(&node->initial_actors, sizeof(int));
+
+    /*printf("BEFORE\n");*/
     bsal_vector_resize(&node->initial_actors, bsal_node_nodes(node));
+    /*printf("AFTER\n");*/
+
     node->received_initial_actors = 0;
     node->ready = 0;
 
@@ -302,7 +306,10 @@ void bsal_node_destroy(struct bsal_node *node)
     bsal_memory_pool_destroy(&node->node_message_memory_pool);
 
     bsal_map_destroy(&node->actor_names);
+
+    /*printf("BEFORE DESTROY\n");*/
     bsal_vector_destroy(&node->initial_actors);
+    /*printf("AFTER DESTROY\n");*/
 
     bsal_map_destroy(&node->scripts);
     bsal_lock_destroy(&node->spawn_and_death_lock);
@@ -806,6 +813,8 @@ int bsal_node_receive_system(struct bsal_node *node, struct bsal_message *messag
 
         buffer = bsal_message_buffer(message);
         source = bsal_message_source_node(message);
+
+        bsal_vector_destroy(&node->initial_actors);
         bsal_vector_init(&node->initial_actors, 0);
         bsal_vector_unpack(&node->initial_actors, buffer);
 

@@ -29,6 +29,10 @@ void bsal_hash_table_init(struct bsal_hash_table *table, uint64_t buckets,
     uint64_t buckets_per_group;
     uint64_t provided_buckets;
 
+#ifdef BSAL_HASH_TABLE_DEBUG_INIT
+    printf("DEBUG bsal_hash_table_init\n");
+#endif
+
     /*
      * Make sure the number of buckets is a multiple of 2
      */
@@ -69,10 +73,10 @@ void bsal_hash_table_init(struct bsal_hash_table *table, uint64_t buckets,
     table->elements = 0;
     table->group_count = (buckets / buckets_per_group);
 
+    /* Use a lazy table
+     */
     table->groups = NULL;
-
     bsal_hash_table_set_memory_pool(table, NULL);
-
     bsal_hash_table_enable_deletion_support(table);
 }
 
@@ -293,7 +297,7 @@ int bsal_hash_table_pack_unpack(struct bsal_hash_table *self, void *buffer, int 
     struct bsal_packer packer;
     int offset;
     int i;
-    uint64_t elements;
+    /*uint64_t elements;*/
 
 #ifdef BSAL_HASH_TABLE_DEBUG
     printf("hash pack/unpack %p\n", buffer);
@@ -326,13 +330,14 @@ int bsal_hash_table_pack_unpack(struct bsal_hash_table *self, void *buffer, int 
         printf("hash init, buckets key_size value_size %d %d %d\n",
                          (int)self->buckets, self->key_size, self->value_size);
 #endif
+        /*
         elements = self->elements;
-        bsal_hash_table_init(self, self->buckets, self->key_size, self->value_size);
         self->elements = elements;
+        */
+        self->groups = NULL;
+        bsal_hash_table_set_memory_pool(self, NULL);
 
-        if (self->groups == NULL) {
-            bsal_hash_table_start_groups(self);
-        }
+        bsal_hash_table_start_groups(self);
     }
 
     for (i = 0; i < self->group_count; i++) {
@@ -350,6 +355,10 @@ int bsal_hash_table_pack_unpack(struct bsal_hash_table *self, void *buffer, int 
 void bsal_hash_table_start_groups(struct bsal_hash_table *table)
 {
     int i;
+
+#ifdef BSAL_HASH_TABLE_DEBUG_INIT
+    printf("DEBUG bsal_hash_table_start_groups %p\n", (void *)table);
+#endif
 
     table->groups = (struct bsal_hash_table_group *)
             bsal_memory_pool_allocate(table->memory,

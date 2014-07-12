@@ -191,6 +191,7 @@ int main(int argc, char **argv)
 
         bsal_memory_free(buffer);
 
+        bsal_map_destroy(&map2);
         bsal_map_destroy(&map);
     }
 

@@ -26,6 +26,10 @@ void bsal_hash_table_group_init(struct bsal_hash_table_group *group,
     size_t bitmap_bytes;
     size_t array_bytes;
 
+#ifdef BSAL_HASH_TABLE_GROUP_DEBUG
+    printf("DEBUG init group\n");
+#endif
+
     array_bytes = buckets_per_group * (key_size + value_size);
     bitmap_bytes = buckets_per_group / BSAL_BITS_PER_BYTE;
 
@@ -219,8 +223,12 @@ int bsal_hash_table_group_pack_unpack(struct bsal_hash_table_group *self, void *
 
     if (operation == BSAL_PACKER_OPERATION_UNPACK) {
 
+            /*
+             * The unpack is not required, this is done by the bsal_hash_table.
+             *
         bsal_hash_table_group_init(self, buckets_per_group, key_size, value_size, memory,
                         deletion_is_enabled);
+                        */
     }
 
     bitmap_bytes = buckets_per_group / BSAL_BITS_PER_BYTE;

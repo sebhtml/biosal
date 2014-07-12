@@ -33,7 +33,6 @@ void bsal_vector_destroy(struct bsal_vector *self)
     self->element_size = 0;
     self->maximum_size = 0;
     self->size = 0;
-    self->data = NULL;
 
     bsal_vector_set_memory_pool(self, NULL);
 }
@@ -173,6 +172,11 @@ void bsal_vector_reserve(struct bsal_vector *self, int64_t size)
 #endif
 
     new_data = bsal_memory_pool_allocate(self->memory, new_byte_count);
+
+#ifdef BSAL_VECTOR_DEBUG
+    printf("DEBUG size %d old %p new %p\n", (int)self->size,
+                    (void *)self->data, (void *)new_data);
+#endif
 
     /* copy old data */
     if (self->size > 0) {

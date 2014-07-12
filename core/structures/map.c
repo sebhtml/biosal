@@ -90,7 +90,19 @@ int bsal_map_pack(struct bsal_map *self, void *buffer)
 
 int bsal_map_unpack(struct bsal_map *self, void *buffer)
 {
-    return bsal_map_pack_unpack(self, BSAL_PACKER_OPERATION_UNPACK, buffer);
+    int value;
+
+#ifdef BSAL_MAP_DEBUG
+    printf("DEBUG map_unpack\n");
+#endif
+
+    value = bsal_map_pack_unpack(self, BSAL_PACKER_OPERATION_UNPACK, buffer);
+
+#ifdef BSAL_MAP_DEBUG
+    printf("DEBUG map_unpack after\n");
+#endif
+
+    return value;
 }
 
 int bsal_map_update_value(struct bsal_map *self, void *key, void *value)

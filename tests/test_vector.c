@@ -144,6 +144,8 @@ int main(int argc, char **argv)
         }
 
         bsal_memory_free(buffer);
+        bsal_vector_destroy(&vector1);
+        bsal_vector_destroy(&vector2);
     }
 
     {
