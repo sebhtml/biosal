@@ -366,8 +366,6 @@ void bsal_aggregator_aggregate_kernel_output(struct bsal_actor *self, struct bsa
         BSAL_DEBUG_MARKER("aggregator marker EXIT");
 #endif
 
-    bsal_aggregator_verify(self, message);
-
     bsal_vector_iterator_init(&iterator, &buffers);
 
     /* Flush blocks.
@@ -399,4 +397,8 @@ void bsal_aggregator_aggregate_kernel_output(struct bsal_actor *self, struct bsa
 
     bsal_vector_iterator_destroy(&iterator);
     bsal_vector_destroy(&buffers);
+
+    bsal_aggregator_verify(self, message);
+
+
 }
