@@ -61,6 +61,7 @@ void bsal_node_init(struct bsal_node *node, int *argc, char ***argv)
     char *argument;
     int processor;
 
+    node->started = 0;
     node->print_load = 0;
     node->print_structure = 0;
     node->debug_mode = 0;

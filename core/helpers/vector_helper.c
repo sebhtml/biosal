@@ -13,6 +13,7 @@ char bsal_vector_helper_at_as_char(struct bsal_vector *self, int64_t index)
 {
     char *bucket;
 
+    bucket = NULL;
     bucket = (char *)bsal_vector_at(self, index);
 
     if (bucket == NULL) {
@@ -29,6 +30,7 @@ int bsal_vector_helper_at_as_int(struct bsal_vector *self, int64_t index)
 {
     int *bucket;
 
+    bucket = NULL;
     bucket = (int *)bsal_vector_at(self, index);
 
     if (bucket == NULL) {
@@ -42,6 +44,7 @@ uint64_t bsal_vector_helper_at_as_uint64_t(struct bsal_vector *self, int64_t ind
 {
     uint64_t *bucket;
 
+    bucket = NULL;
     bucket = (uint64_t *)bsal_vector_at(self, index);
 
     if (bucket == NULL) {
