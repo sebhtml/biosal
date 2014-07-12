@@ -47,6 +47,12 @@ void bsal_transport_destroy(struct bsal_transport *self)
     bsal_ring_queue_destroy(&self->active_buffers);
 
     self->node = NULL;
+
+    /*
+     * \see http://www.mpich.org/static/docs/v3.1/www3/MPI_Comm_free.html
+     */
+    MPI_Comm_free(&self->comm);
+
     MPI_Finalize();
 }
 
