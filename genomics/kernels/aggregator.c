@@ -119,6 +119,8 @@ void bsal_aggregator_receive(struct bsal_actor *self, struct bsal_message *messa
 
         bsal_actor_helper_add_acquaintances(self, &customers, &concrete_actor->customers);
 
+        concrete_actor->maximum_active_messages = bsal_vector_size(&concrete_actor->customers) * 4;
+
         printf("DEBUG45 preparing %d buffers, kmer_length %d\n",
                         (int)bsal_vector_size(&concrete_actor->customers),
                         concrete_actor->kmer_length);
@@ -209,7 +211,7 @@ void bsal_aggregator_verify(struct bsal_actor *self, struct bsal_message *messag
     /* Only continue if there are not too many
      * active messages.
      */
-    if (concrete_actor->active_messages <= 16) {
+    if (concrete_actor->active_messages <= concrete_actor->maximum_active_messages) {
 
         while (bsal_ring_queue_dequeue(&concrete_actor->stalled_producers, &producer_index)) {
             /* tell the producer to continue...

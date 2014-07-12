@@ -24,6 +24,7 @@ struct bsal_aggregator {
 
     struct bsal_ring_queue stalled_producers;
 
+    int maximum_active_messages;
     int active_messages;
 
     int customer_block_size;
