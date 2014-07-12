@@ -29,11 +29,6 @@
  */
 #define BSAL_MEMORY_MAXIMUM 1000000000000
 
-/*
- * Show memory allocation events.
- */
-#define BSAL_MEMORY_DEBUG_DETAIL
-
 void *bsal_memory_allocate_private(size_t size, const char *function, const char *file, int line)
 {
     void *pointer;

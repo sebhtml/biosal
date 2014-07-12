@@ -1,5 +1,5 @@
 #!/bin/bash
 
 #valgrind --tool=memcheck --leak-check=yes -v \
-valgrind --leak-check=full \
-        applications/argonnite -k 43 -threads-per-node 32 ~/dropbox/medium-2.fastq
+valgrind --tool=memcheck --leak-check=full --show-leak-kinds=all --undef-value-errors=no \
+        applications/argonnite -k 43 -threads-per-node 1 ~/dropbox/mini.fastq &> valgrind.log

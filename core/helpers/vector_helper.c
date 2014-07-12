@@ -33,11 +33,11 @@ int bsal_vector_helper_at_as_int(struct bsal_vector *self, int64_t index)
     bucket = NULL;
     bucket = (int *)bsal_vector_at(self, index);
 
-    if (bucket == NULL) {
-        return -1;
+    if (bucket != NULL) {
+        return *bucket;
     }
 
-    return *bucket;
+    return -1;
 }
 
 uint64_t bsal_vector_helper_at_as_uint64_t(struct bsal_vector *self, int64_t index)
