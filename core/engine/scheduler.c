@@ -340,6 +340,10 @@ void bsal_scheduler_balance(struct bsal_scheduler *scheduler)
         while (bsal_map_iterator_get_next_key_and_value(&set_iterator, &actor_name, NULL)) {
 
             actor = bsal_node_get_actor_from_name(bsal_worker_pool_get_node(scheduler->pool), actor_name);
+
+            if (actor == NULL) {
+                continue;
+            }
             messages = bsal_scheduler_get_actor_production(scheduler, actor);
 
 #ifdef BSAL_SCHEDULER_ENABLE_SYMMETRIC_SCHEDULING

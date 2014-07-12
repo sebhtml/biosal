@@ -10,6 +10,10 @@
 #define BSAL_RING_QUEUE_THREAD_SAFE
 */
 
+/*
+ * This is a linked list of ring that offers
+ * the interface of a queue (enqueue/dequeue)
+ */
 struct bsal_ring_queue {
     struct bsal_linked_ring *head;
     struct bsal_linked_ring *tail;

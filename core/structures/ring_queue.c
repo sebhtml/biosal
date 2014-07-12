@@ -77,7 +77,8 @@ struct bsal_linked_ring *bsal_ring_queue_get_ring(struct bsal_ring_queue *self)
     }
 
     ring = self->recycle_bin;
-    self->recycle_bin = bsal_linked_ring_get_next(self->recycle_bin);
+    self->recycle_bin = bsal_linked_ring_get_next(ring);
+    bsal_linked_ring_set_next(ring, NULL);
 
     return ring;
 }

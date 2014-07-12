@@ -144,17 +144,24 @@ int main(int argc, char **argv)
     {
         struct bsal_ring_queue ring_queue;
         int i;
+        int j;
         int value;
         bsal_ring_queue_init(&ring_queue, sizeof(int));
 
         TEST_INT_EQUALS(bsal_ring_queue_empty(&ring_queue), 1);
 
-        i = 3000;
-        while (i--) {
-            value = i;
-            TEST_INT_EQUALS(bsal_ring_queue_enqueue(&ring_queue, &value), 1);
-            TEST_INT_EQUALS(bsal_ring_queue_enqueue(&ring_queue, &value), 1);
-            TEST_INT_EQUALS(bsal_ring_queue_dequeue(&ring_queue, &value), 1);
+        for (j = 0; j < 4; j++) {
+            i = 3000;
+            while (i--) {
+                value = i;
+                TEST_INT_EQUALS(bsal_ring_queue_enqueue(&ring_queue, &value), 1);
+                TEST_INT_EQUALS(bsal_ring_queue_enqueue(&ring_queue, &value), 1);
+                TEST_INT_EQUALS(bsal_ring_queue_dequeue(&ring_queue, &value), 1);
+            }
+
+            while (bsal_ring_queue_dequeue(&ring_queue, &value)) {
+
+            }
         }
 
         bsal_ring_queue_destroy(&ring_queue);
