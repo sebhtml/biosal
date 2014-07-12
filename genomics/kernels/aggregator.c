@@ -141,6 +141,10 @@ void bsal_aggregator_receive(struct bsal_actor *self, struct bsal_message *messa
 
     } else if (tag == BSAL_PUSH_KMER_BLOCK_REPLY) {
 
+#ifdef BSAL_AGGREGATOR_DEBUG
+        printf("BEFORE BSAL_PUSH_KMER_BLOCK_REPLY %d\n", concrete_actor->active_messages);
+#endif
+
         concrete_actor->active_messages--;
 
         if (!concrete_actor->forced) {
@@ -202,7 +206,10 @@ void bsal_aggregator_verify(struct bsal_actor *self, struct bsal_message *messag
 
     concrete_actor = (struct bsal_aggregator *)bsal_actor_concrete_actor(self);
 
-    if (concrete_actor->active_messages != 0) {
+    /* Only continue if there are not too many
+     * active messages.
+     */
+    if (concrete_actor->active_messages <= 16) {
 
         while (bsal_ring_queue_dequeue(&concrete_actor->stalled_producers, &producer_index)) {
             /* tell the producer to continue...
@@ -361,8 +368,9 @@ void bsal_aggregator_aggregate_kernel_output(struct bsal_actor *self, struct bsa
 
     bsal_vector_iterator_init(&iterator, &buffers);
 
-    /* destroy blocks and
-     * destroy persistent memory pools
+    /* Flush blocks.
+     * Destroy blocks and
+     * Destroy persistent memory pools, if any.
      */
 
     i = 0;
@@ -371,6 +379,10 @@ void bsal_aggregator_aggregate_kernel_output(struct bsal_actor *self, struct bsa
         bsal_vector_iterator_next(&iterator, (void **)&output_block);
 
         customer_index = i;
+
+#ifdef BSAL_AGGREGATOR_DEBUG
+        printf("aggregator flushing %d\n", customer_index);
+#endif
 
         bsal_aggregator_flush(self, customer_index, &buffers);
 

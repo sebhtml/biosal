@@ -17,13 +17,13 @@ void bsal_node_run_loop(struct bsal_node *node)
     int credits;
     const int starting_credits = 256;
 
-#ifdef BSAL_NODE_ENABLE_LOAD_REPORTING
+#ifdef BSAL_NODE_ENABLE_INSTRUMENTATION
     int ticks;
     int period;
     clock_t current_time;
     char print_information = 0;
 
-    if (node->print_load || node->print_memory_usage) {
+    if (node->print_load || node->print_memory_usage || node->print_counters) {
         print_information = 1;
     }
 
@@ -35,7 +35,7 @@ void bsal_node_run_loop(struct bsal_node *node)
 
     while (credits > 0) {
 
-#ifdef BSAL_NODE_ENABLE_LOAD_REPORTING
+#ifdef BSAL_NODE_ENABLE_INSTRUMENTATION
         if (print_information) {
             current_time = time(NULL);
 
@@ -52,6 +52,11 @@ void bsal_node_run_loop(struct bsal_node *node)
                                     bsal_node_name(node),
                                     bsal_get_heap_size());
                 }
+
+                if (node->print_counters) {
+                    bsal_node_print_counters(node);
+                }
+
                 node->last_report_time = current_time;
             }
         }
@@ -101,7 +106,7 @@ void bsal_node_run_loop(struct bsal_node *node)
             bsal_node_send_message(node);
         }
 
-#ifdef BSAL_NODE_ENABLE_LOAD_REPORTING
+#ifdef BSAL_NODE_ENABLE_INSTRUMENTATION
         ticks++;
 #endif
 

@@ -151,6 +151,7 @@ void bsal_dna_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_
         if (entries == 0) {
             printf("Error: kernel received empty payload...\n");
         }
+
 #ifdef BSAL_KMER_COUNTER_KERNEL_DEBUG
         printf("DEBUG kernel receives %d entries (%d bytes), kmer length: %d, bytes per object: %d\n",
                         entries, count, concrete_actor->kmer_length,
