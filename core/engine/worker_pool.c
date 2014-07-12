@@ -351,7 +351,9 @@ void bsal_worker_pool_print_efficiency(struct bsal_worker_pool *pool)
         efficiency += bsal_worker_get_loop_load(worker);
     }
 
-    efficiency /= pool->workers;
+    if (pool->workers != 0) {
+        efficiency /= pool->workers;
+    }
 
     printf("node %d efficiency: %.2f\n",
                     bsal_node_name(pool->node),

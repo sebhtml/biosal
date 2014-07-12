@@ -196,6 +196,7 @@ void bsal_worker_start(struct bsal_worker *worker, int processor)
     worker->last_report = time(NULL);
     worker->epoch_start_in_nanoseconds = bsal_timer_get_nanoseconds();
     worker->loop_start_in_nanoseconds = worker->epoch_start_in_nanoseconds;
+    worker->loop_end_in_nanoseconds = worker->loop_start_in_nanoseconds;
     worker->scheduling_epoch_start_in_nanoseconds = worker->epoch_start_in_nanoseconds;
 }
 
@@ -295,6 +296,13 @@ float bsal_worker_get_loop_load(struct bsal_worker *self)
 
     current_nanoseconds = self->loop_end_in_nanoseconds;
     elapsed_from_start = current_nanoseconds - self->loop_start_in_nanoseconds;
+
+    /* This code path is currently not implemented when using
+     * only 1 thread
+     */
+    if (elapsed_from_start == 0) {
+        return 0;
+    }
 
     loop_load = (0.0 + self->loop_used_nanoseconds) / elapsed_from_start;
 

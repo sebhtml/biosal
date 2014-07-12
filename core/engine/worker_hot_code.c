@@ -37,7 +37,7 @@ void bsal_worker_run(struct bsal_worker *worker)
     void *buffer;
 #endif
 
-#ifdef BSAL_NODE_ENABLE_LOAD_REPORTING
+#ifdef BSAL_NODE_ENABLE_INSTRUMENTATION
     clock_t current_time;
     clock_t elapsed;
     int period;
@@ -55,7 +55,7 @@ void bsal_worker_run(struct bsal_worker *worker)
 
     bsal_worker_lock(worker);
 
-#ifdef BSAL_NODE_ENABLE_LOAD_REPORTING
+#ifdef BSAL_NODE_ENABLE_INSTRUMENTATION
     period = BSAL_NODE_LOAD_PERIOD;
     current_time = time(NULL);
 
@@ -107,7 +107,7 @@ void bsal_worker_run(struct bsal_worker *worker)
         }
 #endif
 
-#ifdef BSAL_NODE_ENABLE_LOAD_REPORTING
+#ifdef BSAL_NODE_ENABLE_INSTRUMENTATION
         start_time = bsal_timer_get_nanoseconds();
 #endif
 
@@ -117,7 +117,7 @@ void bsal_worker_run(struct bsal_worker *worker)
 
         worker->busy = 0;
 
-#ifdef BSAL_NODE_ENABLE_LOAD_REPORTING
+#ifdef BSAL_NODE_ENABLE_INSTRUMENTATION
         end_time = bsal_timer_get_nanoseconds();
 
         elapsed_nanoseconds = end_time - start_time;
