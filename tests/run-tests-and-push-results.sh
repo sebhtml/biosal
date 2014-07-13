@@ -69,7 +69,8 @@ function main()
     echo "Uploading log to the cloud at $bucket/$object"
     ) &> $log
 
-    aws s3 cp $log $bucket"/"$object
+    # this is not an interactive session
+    /usr/local/bin/aws s3 cp $log $bucket"/"$object &> s3.log
 }
 
 main $1
