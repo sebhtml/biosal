@@ -19,7 +19,7 @@ function main()
 
     test_name=$(date +%Y-%m-%d-%H:%M:%S)
 
-    bucket="s3://biosal/"
+    bucket="s3://biosal"
     log=$test_name".txt"
     object="quality-assurance-department/"$log
 
@@ -69,7 +69,7 @@ function main()
     echo "Uploading log to the cloud at $bucket/$object"
     ) &> $log
 
-    aws s3 cp $log $bucket/$object
+    aws s3 cp $log $bucket"/"$object
 }
 
 main $1
