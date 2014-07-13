@@ -40,8 +40,8 @@ function main()
     echo ""
     echo "Hardware"
     head -n 2 /proc/meminfo
-    grep "model" /proc/cpuinfo | head -n 1
-    echo "Processor core count: "$(grep "model" /proc/cpuinfo | wc -l)
+    grep "model name" /proc/cpuinfo | head -n 1
+    echo "Processor core count: "$(grep "model name" /proc/cpuinfo | wc -l)
 
     echo ""
     echo "Versions"
