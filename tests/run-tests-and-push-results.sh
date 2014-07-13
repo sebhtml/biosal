@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # crontab:
-# # everyday at 00:01
-#1 0 * * * /home/boisvert/biosal/tests/run-tests-and-push-results.sh /space/boisvert/automated-tests
+## everyday at 03:01 UTC-5 (8:01 UTC)
+#1 8 * * * /space/boisvert/automated-tests/biosal/tests/run-tests-and-push-results.sh /space/boisvert/automated-tests
 
 function main()
 {
