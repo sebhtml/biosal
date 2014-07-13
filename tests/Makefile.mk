@@ -16,3 +16,11 @@ tests: mock_test_target
 	tests/summarize-tests.sh tests.log
 
 mock_test_target:
+
+quality-assurance: qa
+
+
+qa:
+	tests/perform-quality-assurance.sh
+
+
