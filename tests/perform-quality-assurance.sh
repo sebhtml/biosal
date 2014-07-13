@@ -6,11 +6,14 @@ function run_tests()
 
     echo ""
     echo "Building products, please wait."
-    scripts/build/build.sh &> /dev/null
+    scripts/build/build.sh &> build.log
+    echo "see build.log"
 
     echo ""
     echo "Unit tests (make tests)"
-    make -s tests | tail -n2
+    make -s tests > unit-tests.log
+    tail -n 2 unit-tests.log
+    echo "see unit-tests.log"
 
     echo ""
     echo "Real use cases (tests/run-integration-tests.sh)"
