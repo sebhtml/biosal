@@ -20,9 +20,8 @@ function main()
     test_name=$(date +%Y-%m-%d-%H:%M:%S)
 
     bucket="s3://biosal/"
-    object="quality-assurance-department/"$log
-
     log=$test_name".txt"
+    object="quality-assurance-department/"$log
 
     mkdir $test_name
     cd $test_name
