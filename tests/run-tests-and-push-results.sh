@@ -4,6 +4,9 @@
 ## everyday at 03:01 UTC-5 (8:01 UTC)
 #1 8 * * * /space/boisvert/automated-tests/biosal/tests/run-tests-and-push-results.sh /space/boisvert/automated-tests
 
+# this is not an interactive session
+export PATH=/usr/local/bin/:$PATH
+
 function main()
 {
     local bucket
@@ -12,6 +15,9 @@ function main()
     local log
     local test_name
     local repository
+    local topic
+    local bucket_name
+    local address
 
     directory=$1
     mkdir -p $directory
@@ -19,7 +25,8 @@ function main()
 
     test_name=$(date +%Y-%m-%d-%H:%M:%S)
 
-    bucket="s3://biosal"
+    bucket_name="biosal"
+    bucket="s3://$bucket_name"
     log=$test_name".txt"
     object="quality-assurance-department/"$log
 
@@ -69,8 +76,12 @@ function main()
     echo "Uploading log to the cloud at $bucket/$object"
     ) &> $log
 
-    # this is not an interactive session
-    /usr/local/bin/aws s3 cp $log $bucket"/"$object &> s3.log
+    aws s3 cp $log $bucket"/"$object &> s3.log
+
+    topic="arn:aws:sns:us-east-1:584851907886:biosal-tests"
+    address=" http://$bucket_name.s3.amazonaws.com/$object"
+
+    aws sns publish --topic-arn $topic --subject "[SNS] biosal quality assurance" --message "Quality assurance result is available at $address"
 }
 
 main $1
