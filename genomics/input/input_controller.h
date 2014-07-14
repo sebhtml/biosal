@@ -4,10 +4,14 @@
 
 #include <core/engine/actor.h>
 
-#include <genomics/data/dna_codec.h>
 #include <core/structures/vector.h>
 #include <core/structures/map.h>
 #include <core/structures/queue.h>
+
+#include <core/system/timer.h>
+
+#include <genomics/data/dna_codec.h>
+
 
 #define BSAL_INPUT_CONTROLLER_SCRIPT 0x985607aa
 
@@ -43,6 +47,7 @@ struct bsal_input_controller {
     struct bsal_vector stores_per_spawner;
     int stores_per_worker_per_spawner;
 
+    struct bsal_timer timer;
     struct bsal_vector consumer_active_requests;
 };
 

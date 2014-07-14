@@ -2,7 +2,6 @@
 
 function run_tests()
 {
-    echo "The whole quality assurance should take around 17 minutes"
 
     echo ""
     echo "Building products, please wait."

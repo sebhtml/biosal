@@ -19,6 +19,12 @@
 #define BIOSAL_DISABLE_CLOCK_GETTIME
 #endif
 
+
+#define NANOSECONDS_IN_MICROSECOND 1000
+#define NANOSECONDS_IN_MILLISECOND (1000 * 1000)
+#define NANOSECONDS_IN_SECOND (1000 * 1000 * 1000)
+#define SECONDS_IN_MINUTE 60
+
 void bsal_timer_init(struct bsal_timer *self)
 {
     self->start = 0;
@@ -90,12 +96,67 @@ void bsal_timer_print(struct bsal_timer *self)
 {
     uint64_t nanoseconds;
     float microseconds;
+    float milliseconds;
+    int seconds;
+    float float_seconds;
+    int minutes;
 
     nanoseconds = bsal_timer_get_elapsed_nanoseconds(self);
-    microseconds = nanoseconds / 1000.0;
 
-    printf("TIMER ELAPSED TIME: %f microseconds\n",
+    printf("TIMER ELAPSED TIME: ");
+
+    /* Show nanoseconds
+     */
+    if (nanoseconds < NANOSECONDS_IN_MICROSECOND) {
+        printf("%d nanoseconds\n",
+                    (int)nanoseconds);
+
+    /* Show microseconds
+     */
+    } else if (nanoseconds < NANOSECONDS_IN_MILLISECOND) {
+        microseconds = (0.0 + nanoseconds) / NANOSECONDS_IN_MICROSECOND;
+
+        printf("%f microseconds\n",
                     microseconds);
+
+    /* Show milliseconds
+     */
+    } else if (nanoseconds < NANOSECONDS_IN_SECOND) {
+        milliseconds = (0.0 + nanoseconds) / NANOSECONDS_IN_MILLISECOND;
+
+        printf("%f milliseconds\n",
+                    milliseconds);
+
+    /* Show minutes and seconds
+     */
+    } else {
+
+        /* example: 121.2 s */
+        float_seconds = (nanoseconds + 0.0) / NANOSECONDS_IN_SECOND;
+
+        /* example: 121 s */
+        seconds = float_seconds;
+
+        /* example: 2 min */
+        minutes = seconds / SECONDS_IN_MINUTE;
+
+        /* example: 1.2s */
+        float_seconds -= minutes * SECONDS_IN_MINUTE;
+
+        if (minutes != 0) {
+            printf("%d minutes", minutes);
+        }
+
+        if (seconds != 0) {
+            if (minutes != 0) {
+                printf(", ");
+            }
+
+            printf("%f seconds", float_seconds);
+        }
+
+        printf("\n");
+    }
 }
 
 uint64_t bsal_timer_get_elapsed_nanoseconds(struct bsal_timer *self)
