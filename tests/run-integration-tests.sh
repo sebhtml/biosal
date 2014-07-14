@@ -33,7 +33,7 @@ function main()
             result="PASSED"
         fi
 
-        echo "Test: $real_test Result: $result Time: $wall_time"
+        echo "Test: $real_test Result: $result Time: $wall_time (see $real_test.log)"
 
     done | tee real.log
 
