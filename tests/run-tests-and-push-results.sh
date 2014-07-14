@@ -80,7 +80,7 @@ function main()
 
     ) &> $log
 
-    tar -c *.log | xz -9 > $archive
+    tar -c *.log */*.log | xz -9 > $archive
 
     (
     aws s3 cp $log "$bucket/$object_prefix/$log"
