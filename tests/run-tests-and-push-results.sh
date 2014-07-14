@@ -11,13 +11,14 @@ function main()
 {
     local bucket
     local directory
-    local object
+    local object_prefix
     local log
     local test_name
     local repository
     local topic
     local bucket_name
     local address
+    local archive
 
     directory=$1
     mkdir -p $directory
@@ -27,8 +28,10 @@ function main()
 
     bucket_name="biosal"
     bucket="s3://$bucket_name"
-    log=$test_name".txt"
-    object="quality-assurance-department/"$log
+    object_prefix="quality-assurance-department"
+
+    log=$test_name".log"
+    archive=$test_name".tar.xz"
 
     mkdir $test_name
     cd $test_name
@@ -73,13 +76,19 @@ function main()
     echo ""
     echo "Completed program"
 
-    echo "Uploading log to the cloud at $bucket/$object"
+    echo "Uploading $log and $archive to the cloud at $bucket/$object_prefix"
+
     ) &> $log
 
-    aws s3 cp $log $bucket"/"$object &> s3.log
+    tar -c *.log | xz -9 > $archive
+
+    (
+    aws s3 cp $log "$bucket/$object_prefix/$log"
+    aws s3 cp $archive "$bucket/$object_prefix/$archive"
+    )&> s3.log
 
     topic="arn:aws:sns:us-east-1:584851907886:biosal-tests"
-    address=" http://$bucket_name.s3.amazonaws.com/$object"
+    address=" http://$bucket_name.s3.amazonaws.com/$object_prefix/$log"
 
     aws sns publish --topic-arn $topic --subject "[SNS] biosal quality assurance" --message "Quality assurance result is available at $address"
 }
