@@ -1192,6 +1192,11 @@ int bsal_actor_node_name(struct bsal_actor *actor)
     return bsal_node_name(bsal_actor_node(actor));
 }
 
+int bsal_actor_get_node_count(struct bsal_actor *actor)
+{
+    return bsal_node_nodes(bsal_actor_node(actor));
+}
+
 int bsal_actor_node_worker_count(struct bsal_actor *actor)
 {
     return bsal_node_worker_count(bsal_actor_node(actor));

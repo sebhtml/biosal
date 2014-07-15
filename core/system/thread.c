@@ -13,11 +13,21 @@
 /* for getpid */
 #include <unistd.h>
 
+/*
+ * Enable thread affinity by uncommenting this option.
+ */
+/*
+#define BSAL_THREAD_SET_AFFINITY
+*/
 void bsal_thread_init(struct bsal_thread *self, void *(*function)(void *), void *argument)
 {
     self->function = function;
     self->argument = argument;
+
+    /* A negative processor disables the affinity code.
+     */
     self->processor = -1;
+
     self->affinity = 0;
 
     pthread_attr_init(&self->attributes);
@@ -32,10 +42,18 @@ void bsal_thread_destroy(struct bsal_thread *self)
 
 void bsal_thread_start(struct bsal_thread *self)
 {
+    int set_affinity;
+
+    set_affinity = 0;
+
+#ifdef BSAL_THREAD_SET_AFFINITY
+    set_affinity = 1;
+#endif
+
 #if defined(__linux__) || defined(__bgq__)
     cpu_set_t mask;
 
-    if (self->processor >= 0) {
+    if (set_affinity && self->processor >= 0) {
         CPU_ZERO(&mask);
         CPU_SET(self->processor, &mask);
 
@@ -80,7 +98,13 @@ void bsal_thread_start(struct bsal_thread *self)
 
 void bsal_thread_set_affinity(struct bsal_thread *self, int processor)
 {
+    /*
+     * Keep the processor value to -1
+     * if affinity is not enabled.
+     */
+#ifdef BSAL_THREAD_SET_AFFINITY
     self->processor = processor;
+#endif
 }
 
 void bsal_thread_join(struct bsal_thread *self)
@@ -92,6 +116,20 @@ void bsal_thread_join(struct bsal_thread *self)
 
 void bsal_set_affinity(int processor)
 {
+    int set_affinity;
+
+    set_affinity = 0;
+
+#ifdef BSAL_THREAD_SET_AFFINITY
+    set_affinity = 1;
+#endif
+
+    /* Don't set affinity if it is disabled...
+     */
+    if (!set_affinity) {
+        return;
+    }
+
 #if defined(__linux__) || defined(__bgq__)
     cpu_set_t mask;
     pid_t process;

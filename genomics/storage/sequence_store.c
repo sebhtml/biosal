@@ -335,7 +335,12 @@ void bsal_sequence_store_ask(struct bsal_actor *self, struct bsal_message *messa
                         concrete_actor->received, concrete_actor->expected,
                         concrete_actor->reservation_producer);
     }
-    block_size = BSAL_SEQUENCE_STORE_PRODUCT_BLOCK_SIZE;
+
+    block_size = BSAL_SEQUENCE_STORE_PRODUCT_BLOCK_SIZE_DISTRIBUTED;
+
+    if (bsal_actor_get_node_count(self) == 1) {
+        block_size = BSAL_SEQUENCE_STORE_PRODUCT_BLOCK_SIZE_ONE_NODE;
+    }
 
     if (!concrete_actor->iterator_started) {
         bsal_vector_iterator_init(&concrete_actor->iterator, &concrete_actor->sequences);

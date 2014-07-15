@@ -259,6 +259,7 @@ int bsal_actor_receive_system_no_pack(struct bsal_actor *actor, struct bsal_mess
 
 struct bsal_node *bsal_actor_node(struct bsal_actor *actor);
 int bsal_actor_node_name(struct bsal_actor *actor);
+int bsal_actor_get_node_count(struct bsal_actor *actor);
 int bsal_actor_node_worker_count(struct bsal_actor *actor);
 
 /*

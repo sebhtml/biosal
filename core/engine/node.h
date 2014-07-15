@@ -190,7 +190,6 @@ int bsal_node_has_actor(struct bsal_node *self, int name);
 struct bsal_worker_pool *bsal_node_get_worker_pool(struct bsal_node *self);
 
 void bsal_node_toggle_debug_mode(struct bsal_node *self);
-void bsal_node_set_affinity(struct bsal_node *node);
 
 void bsal_node_reset_actor_counters(struct bsal_node *node);
 

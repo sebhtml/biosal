@@ -34,6 +34,7 @@
 void bsal_worker_init(struct bsal_worker *worker, int name, struct bsal_node *node)
 {
     int capacity;
+    int ephemeral_memory_block_size;
 
     capacity = BSAL_WORKER_RING_CAPACITY;
     /*worker->work_queue = work_queue;*/
@@ -76,7 +77,12 @@ void bsal_worker_init(struct bsal_worker *worker, int name, struct bsal_node *no
  * \see https://wiki.debian.org/Hugepages
  * \see http://lwn.net/Articles/376606/
  */
-    bsal_memory_pool_init(&worker->ephemeral_memory, 2097152);
+
+    /*
+     * 8 MiB
+     */
+    ephemeral_memory_block_size = 8388608;
+    bsal_memory_pool_init(&worker->ephemeral_memory, ephemeral_memory_block_size);
     bsal_memory_pool_disable_tracking(&worker->ephemeral_memory);
 
     bsal_lock_init(&worker->lock);
@@ -190,7 +196,9 @@ void bsal_worker_send(struct bsal_worker *worker, struct bsal_message *message)
 void bsal_worker_start(struct bsal_worker *worker, int processor)
 {
     bsal_thread_init(&worker->thread, bsal_worker_main, worker);
+
     bsal_thread_set_affinity(&worker->thread, processor);
+
     bsal_thread_start(&worker->thread);
 
     worker->last_report = time(NULL);

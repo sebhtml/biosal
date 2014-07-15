@@ -41,6 +41,7 @@ struct bsal_scheduler;
 
 #define BSAL_WORKER_USE_FAST_RINGS
 
+
 /* this is similar to worker threads in linux ([kworker/0] [kworker/1])
  */
 struct bsal_worker {

@@ -12,6 +12,7 @@ void bsal_memory_pool_init(struct bsal_memory_pool *self, int block_size)
 {
     bsal_map_init(&self->recycle_bin, sizeof(int), sizeof(struct bsal_queue));
     bsal_map_init(&self->allocated_blocks, sizeof(void *), sizeof(int));
+    bsal_set_init(&self->large_blocks, sizeof(void *));
 
     self->current_block = NULL;
 
@@ -68,6 +69,8 @@ void bsal_memory_pool_destroy(struct bsal_memory_pool *self)
         bsal_memory_free(self->current_block);
         self->current_block = NULL;
     }
+
+    bsal_set_destroy(&self->large_blocks);
 }
 
 void *bsal_memory_pool_allocate(struct bsal_memory_pool *self, size_t size)
@@ -106,6 +109,20 @@ void *bsal_memory_pool_allocate_private(struct bsal_memory_pool *self, size_t si
 
     if (self == NULL || self->disabled) {
         return bsal_memory_allocate(size);
+    }
+
+    /*
+     * First, check if the size is larger than the maximum size.
+     * If memory blocks can not fulfil the need, use the memory system
+     * directly.
+     */
+
+    if (size >= (size_t)self->block_size) {
+        pointer = bsal_memory_allocate(size);
+
+        bsal_set_add(&self->large_blocks, &pointer);
+
+        return pointer;
     }
 
     queue = NULL;
@@ -182,6 +199,24 @@ void bsal_memory_pool_free(struct bsal_memory_pool *self, void *pointer)
         return;
     }
 
+    /* Verify if the pointer is a large block not managed by one of the memory
+     * blocks
+     */
+
+    if (bsal_set_find(&self->large_blocks, &pointer)) {
+
+        bsal_memory_free(pointer);
+        bsal_set_delete(&self->large_blocks, &pointer);
+        return;
+    }
+
+    /*
+     * Return immediately if memory allocation tracking is disabled.
+     * For example, the ephemeral memory component of a worker
+     * disable tracking (tracking_is_enabled = 0). To free memory,
+     * for the ephemeral memory, bsal_memory_pool_free_all is
+     * used.
+     */
     if (!self->tracking_is_enabled) {
         return;
     }
