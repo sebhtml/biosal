@@ -1,8 +1,12 @@
 
 #include "memory_pool.h"
 
+#include <core/system/tracer.h>
+
 #include <core/structures/queue.h>
 #include <core/structures/map_iterator.h>
+
+#include <stdio.h>
 
 void bsal_memory_pool_init(struct bsal_memory_pool *self, int block_size)
 {
@@ -67,6 +71,24 @@ void bsal_memory_pool_destroy(struct bsal_memory_pool *self)
 }
 
 void *bsal_memory_pool_allocate(struct bsal_memory_pool *self, size_t size)
+{
+    void *pointer;
+
+    pointer = bsal_memory_pool_allocate_private(self, size);
+
+    if (pointer == NULL) {
+        printf("Error, requested %zu bytes, returned pointer is NULL\n",
+                        size);
+
+        bsal_tracer_print_stack_backtrace();
+
+        exit(1);
+    }
+
+    return pointer;
+}
+
+void *bsal_memory_pool_allocate_private(struct bsal_memory_pool *self, size_t size)
 {
     struct bsal_queue *queue;
     void *pointer;

@@ -34,5 +34,6 @@ void bsal_memory_pool_free_all(struct bsal_memory_pool *self);
 void bsal_memory_pool_disable(struct bsal_memory_pool *self);
 
 void bsal_memory_pool_add_block(struct bsal_memory_pool *self);
+void *bsal_memory_pool_allocate_private(struct bsal_memory_pool *self, size_t size);
 
 #endif
