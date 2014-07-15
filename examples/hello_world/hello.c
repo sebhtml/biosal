@@ -56,5 +56,7 @@ void hello_receive(struct bsal_actor *actor, struct bsal_message *message)
         printf("\n");
 
         bsal_actor_helper_send_to_self_empty(actor, BSAL_ACTOR_STOP);
+
+        bsal_vector_destroy(&hello1->initial_helloes);
     }
 }
