@@ -459,12 +459,14 @@ void bsal_dynamic_hash_table_finish_resizing(struct bsal_dynamic_hash_table *sel
         return;
     }
 
+#ifdef BSAL_DYNAMIC_HASH_TABLE_DEBUG_RESIZING
     if (bsal_hash_table_size(self->current) == 0) {
         bsal_tracer_print_stack_backtrace();
     }
     printf("DEBUG finish resizing current %" PRIu64 "/%" PRIu64 " next %" PRIu64 "/%" PRIu64 "\n",
                     bsal_hash_table_size(self->current), bsal_hash_table_buckets(self->current),
         bsal_hash_table_size(self->next), bsal_hash_table_buckets(self->next));
+#endif
 
     while (self->resize_in_progress) {
         bsal_dynamic_hash_table_resize(self);
