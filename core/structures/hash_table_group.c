@@ -161,7 +161,7 @@ void bsal_hash_table_group_set_bit(void *bitmap, uint64_t bucket, int value1)
         bits &= filter;
     }
 
-    ((char *)bitmap)[unit] = bits;
+    (((char *)bitmap)[unit]) = bits;
 }
 
 int bsal_hash_table_group_get_bit(void *bitmap, uint64_t bucket)
@@ -176,7 +176,7 @@ int bsal_hash_table_group_get_bit(void *bitmap, uint64_t bucket)
 
     /*printf("bsal_hash_table_group_get_bit %p %i\n", group->bitmap, unit);*/
 
-    bits = (uint64_t)((char *)bitmap)[unit];
+    bits = (uint64_t)(((char *)bitmap)[unit]);
     bitValue = (bits<<(63 - bit))>>63;
 
     return bitValue;

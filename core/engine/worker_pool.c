@@ -373,9 +373,7 @@ void bsal_worker_pool_give_message_to_actor(struct bsal_worker_pool *pool, struc
     struct bsal_actor *actor;
     struct bsal_worker *affinity_worker;
     int worker_index;
-    int score;
     int name;
-    struct bsal_set *set;
 
     destination = bsal_message_destination(message);
     actor = bsal_node_get_actor_from_name(pool->node, destination);
@@ -385,7 +383,9 @@ void bsal_worker_pool_give_message_to_actor(struct bsal_worker_pool *pool, struc
 #endif
 
     if (actor == NULL) {
+#ifdef BSAL_WORKER_POOL_DEBUG_DEAD_CHANNEL
         printf("DEAD LETTER CHANNEL...\n");
+#endif
         return;
     }
 
@@ -401,44 +401,39 @@ void bsal_worker_pool_give_message_to_actor(struct bsal_worker_pool *pool, struc
 
         bsal_ring_queue_enqueue(&pool->inbound_message_queue_buffer, message);
 
-    /* Check if the actor is assigned to a worker
-     */
     } else {
+        /*
+         * At this point, the message has been pushed to the actor.
+         * Now, the actor must be scheduled on a worker.
+         */
 /*
         printf("DEBUG message was enqueued in actor mailbox\n");
         */
 
+        /* Check if the actor is already assigned to a worker
+         */
         worker_index = bsal_scheduler_get_actor_worker(&pool->scheduler, name);
-        if (worker_index >= 0) {
 
-            affinity_worker = bsal_worker_pool_get_worker(pool, worker_index);
+        /* If not, ask the scheduler to assign the actor to a worker
+         */
+        if (worker_index < 0) {
 
-            /*
-            printf("DEBUG actor has an assigned worker\n");
-            */
+            bsal_worker_pool_assign_worker_to_actor(pool, name);
+            worker_index = bsal_scheduler_get_actor_worker(&pool->scheduler, name);
+        }
 
-            if (!bsal_worker_enqueue_actor(affinity_worker, &actor)) {
-                bsal_ring_queue_enqueue(&pool->scheduled_actor_queue_buffer, &actor);
-            }
+        affinity_worker = bsal_worker_pool_get_worker(pool, worker_index);
 
-        } else {
+        /*
+        printf("DEBUG actor has an assigned worker\n");
+        */
 
-                /*
-            printf("DEBUG Needs to do actor placement\n");
-            */
-            /* assign this actor to the least busy actor
-             */
-            worker_index = bsal_scheduler_select_worker_least_busy(&pool->scheduler, message, &score);
-
-            bsal_scheduler_set_actor_worker(&pool->scheduler, name, worker_index);
-            set = (struct bsal_set *)bsal_vector_at(&pool->worker_actors, worker_index);
-            bsal_set_add(set, &name);
-
-            affinity_worker = bsal_worker_pool_get_worker(pool, worker_index);
-
-            if (!bsal_worker_enqueue_actor(affinity_worker, &actor)) {
-                bsal_ring_queue_enqueue(&pool->scheduled_actor_queue_buffer, &actor);
-            }
+        /*
+         * Push the actor on the scheduling queue of the worker.
+         * If that fails, queue the actor.
+         */
+        if (!bsal_worker_enqueue_actor(affinity_worker, &actor)) {
+            bsal_ring_queue_enqueue(&pool->scheduled_actor_queue_buffer, &actor);
         }
     }
 }
@@ -467,6 +462,26 @@ void bsal_worker_pool_work(struct bsal_worker_pool *pool)
         name = bsal_actor_get_name(actor);
         worker_index = bsal_scheduler_get_actor_worker(&pool->scheduler, name);
 
+        if (worker_index < 0) {
+            /*
+             * This case is very rare, but will happen since the number of
+             * messages and the number of actors are both very large.
+             *
+             * This case will happen if these 3 conditions are satisfied:
+             *
+             * A message was not queued in the mailbox of the actor X because its mailbox was full.
+             * The message, in that case, will be queued in the actor mailbox at a later time.
+             * But this code path will not queue the actor on any worker since the actor has yet.
+             * But the actor do have messages, but the problem is that all the actor scheduling queue
+             * on every worker are full.
+             */
+#ifdef BSAL_WORKER_POOL_DEBUG_ACTOR_ASSIGNMENT_PROBLEM
+            printf("Notice: actor %d has no assigned worker\n", name);
+#endif
+            bsal_worker_pool_assign_worker_to_actor(pool, name);
+            worker_index = bsal_scheduler_get_actor_worker(&pool->scheduler, name);
+        }
+
         worker = bsal_worker_pool_get_worker(pool, worker_index);
 
         if (!bsal_worker_enqueue_actor(worker, &actor)) {
@@ -493,5 +508,24 @@ void bsal_worker_pool_work(struct bsal_worker_pool *pool)
     }
 #endif
 
+
+}
+
+void bsal_worker_pool_assign_worker_to_actor(struct bsal_worker_pool *pool, int name)
+{
+    int worker_index;
+    int score;
+    struct bsal_set *set;
+
+                /*
+    printf("DEBUG Needs to do actor placement\n");
+    */
+    /* assign this actor to the least busy actor
+     */
+    worker_index = bsal_scheduler_select_worker_least_busy(&pool->scheduler, &score);
+
+    bsal_scheduler_set_actor_worker(&pool->scheduler, name, worker_index);
+    set = (struct bsal_set *)bsal_vector_at(&pool->worker_actors, worker_index);
+    bsal_set_add(set, &name);
 
 }

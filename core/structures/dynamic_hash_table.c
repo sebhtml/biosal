@@ -1,6 +1,8 @@
 
 #include "dynamic_hash_table.h"
 
+#include <core/system/tracer.h>
+
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -35,6 +37,7 @@ void bsal_dynamic_hash_table_init(struct bsal_dynamic_hash_table *self, uint64_t
     bsal_hash_table_init(self->current, buckets, key_size, value_size);
     buckets = bsal_hash_table_buckets(self->current);
     self->resize_next_size = 2 * buckets;
+    self->resize_in_progress = 0;
 
     bsal_dynamic_hash_table_set_threshold(self, BSAL_DYNAMIC_HASH_TABLE_THRESHOLD);
 }
@@ -452,6 +455,17 @@ int bsal_dynamic_hash_table_unpack(struct bsal_dynamic_hash_table *self, void *b
 
 void bsal_dynamic_hash_table_finish_resizing(struct bsal_dynamic_hash_table *self)
 {
+    if (!self->resize_in_progress) {
+        return;
+    }
+
+    if (bsal_hash_table_size(self->current) == 0) {
+        bsal_tracer_print_stack_backtrace();
+    }
+    printf("DEBUG finish resizing current %" PRIu64 "/%" PRIu64 " next %" PRIu64 "/%" PRIu64 "\n",
+                    bsal_hash_table_size(self->current), bsal_hash_table_buckets(self->current),
+        bsal_hash_table_size(self->next), bsal_hash_table_buckets(self->next));
+
     while (self->resize_in_progress) {
         bsal_dynamic_hash_table_resize(self);
     }
@@ -549,4 +563,9 @@ void bsal_dynamic_hash_table_set_current_size_estimate(struct bsal_dynamic_hash_
 void bsal_dynamic_hash_table_set_threshold(struct bsal_dynamic_hash_table *table, double threshold)
 {
     table->resize_load_threshold = threshold;
+}
+
+int bsal_dynamic_hash_table_is_currently_resizing(struct bsal_dynamic_hash_table *table)
+{
+    return table->resize_in_progress;
 }

@@ -60,5 +60,6 @@ void bsal_map_disable_deletion_support(struct bsal_map *map);
 void bsal_map_enable_deletion_support(struct bsal_map *map);
 void bsal_map_set_current_size_estimate(struct bsal_map *map, double value);
 void bsal_map_set_threshold(struct bsal_map *map, double threshold);
+int bsal_map_is_currently_resizing(struct bsal_map *map);
 
 #endif

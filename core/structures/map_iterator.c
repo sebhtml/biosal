@@ -8,8 +8,8 @@
 
 void bsal_map_iterator_init(struct bsal_map_iterator *self, struct bsal_map *list)
 {
-    bsal_dynamic_hash_table_iterator_init(&self->iterator, bsal_map_table(list));
     self->list = list;
+    bsal_dynamic_hash_table_iterator_init(&self->iterator, bsal_map_table(self->list));
 }
 
 void bsal_map_iterator_destroy(struct bsal_map_iterator *self)

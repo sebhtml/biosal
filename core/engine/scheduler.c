@@ -718,7 +718,7 @@ void bsal_scheduler_set_actor_worker(struct bsal_scheduler *scheduler, int name,
 
 #ifdef BSAL_WORKER_HAS_OWN_QUEUES
 int bsal_scheduler_select_worker_least_busy(
-                struct bsal_scheduler *scheduler, struct bsal_message *message, int *worker_score)
+                struct bsal_scheduler *scheduler, int *worker_score)
 {
     int to_check;
     int score;
@@ -749,7 +749,7 @@ int bsal_scheduler_select_worker_least_busy(
          */
         worker = bsal_worker_pool_get_worker(scheduler->pool, scheduler->worker_for_work);
 
-        score = bsal_worker_get_queued_messages(worker);
+        score = bsal_worker_get_epoch_load(worker);
 
 #ifdef BSAL_WORKER_POOL_DEBUG_ISSUE_334
         if (score >= BSAL_WORKER_WARNING_THRESHOLD

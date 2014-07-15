@@ -229,6 +229,10 @@ void *bsal_hash_table_key(struct bsal_hash_table *self, uint64_t bucket)
     int bucket_in_group;
     struct bsal_hash_table_group *table_group;
 
+    if (self->groups == NULL) {
+        return NULL;
+    }
+
     if (bucket >= bsal_hash_table_buckets(self)) {
         return NULL;
     }
@@ -247,6 +251,10 @@ void *bsal_hash_table_value(struct bsal_hash_table *self, uint64_t bucket)
     int group;
     int bucket_in_group;
     struct bsal_hash_table_group *table_group;
+
+    if (self->groups == NULL) {
+        return NULL;
+    }
 
     if (bucket >= bsal_hash_table_buckets(self)) {
         return NULL;

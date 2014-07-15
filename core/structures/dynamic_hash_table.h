@@ -66,5 +66,6 @@ void bsal_dynamic_hash_table_enable_deletion_support(struct bsal_dynamic_hash_ta
 void bsal_dynamic_hash_table_set_current_size_estimate(struct bsal_dynamic_hash_table *table,
                 double value);
 void bsal_dynamic_hash_table_set_threshold(struct bsal_dynamic_hash_table *table, double threshold);
+int bsal_dynamic_hash_table_is_currently_resizing(struct bsal_dynamic_hash_table *table);
 
 #endif

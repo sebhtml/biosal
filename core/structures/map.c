@@ -296,3 +296,8 @@ void bsal_map_set_threshold(struct bsal_map *map, double threshold)
 {
     bsal_dynamic_hash_table_set_threshold(&map->table, threshold);
 }
+
+int bsal_map_is_currently_resizing(struct bsal_map *map)
+{
+    return bsal_dynamic_hash_table_is_currently_resizing(&map->table);
+}

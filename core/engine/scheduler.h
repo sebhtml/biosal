@@ -36,7 +36,7 @@ int bsal_scheduler_get_actor_worker(struct bsal_scheduler *scheduler, int name);
 void bsal_scheduler_set_actor_worker(struct bsal_scheduler *scheduler, int name, int worker_index);
 
 int bsal_scheduler_select_worker_least_busy(
-                struct bsal_scheduler *scheduler, struct bsal_message *message, int *worker_score);
+                struct bsal_scheduler *scheduler, int *worker_score);
 void bsal_scheduler_detect_symmetric_scripts(struct bsal_scheduler *scheduler, struct bsal_map *symmetric_actors);
 void bsal_scheduler_generate_symmetric_migrations(struct bsal_scheduler *scheduler, struct bsal_map *symmetric_actor_scripts,
                 struct bsal_vector *migrations);

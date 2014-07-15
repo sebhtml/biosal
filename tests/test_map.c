@@ -6,6 +6,7 @@
 
 #include "test.h"
 
+#include <string.h>
 #include <inttypes.h>
 
 int main(int argc, char **argv)
@@ -195,6 +196,38 @@ int main(int argc, char **argv)
         bsal_map_destroy(&map);
     }
 
+    {
+        struct bsal_map map;
+        struct bsal_map_iterator iterator;
+        int i;
+        int key;
+        int value;
+        int count;
+
+        memset(&map, 1, sizeof(struct bsal_map));
+
+        bsal_map_init(&map, sizeof(int), sizeof(int));
+
+        count = 30000;
+
+        for (i = 0; i < count; ++i) {
+            bsal_map_add_value(&map, &i, &i);
+
+            TEST_POINTER_NOT_EQUALS(bsal_map_get(&map, &i), NULL);
+
+        }
+
+        bsal_map_iterator_init(&iterator, &map);
+
+        while (bsal_map_iterator_get_next_key_and_value(&iterator, &key, &value)) {
+
+        }
+
+        bsal_map_iterator_destroy(&iterator);
+
+        bsal_map_destroy(&map);
+
+    }
     END_TESTS();
 
     return 0;
