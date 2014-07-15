@@ -48,6 +48,22 @@
 struct bsal_script;
 
 /*
+ * This is the Thorium distributed actor engine developed
+ * at Argonne National Laboratory.
+ *
+ * BIOSAL applications are developed by creating actors
+ * and by running them in Thorium.
+ *
+ * Thorium has these components:
+ *
+ * - Runtime node (struct bsal_node)
+ * - Actor scheduler (struct bsal_scheduler)
+ * - Actor (struct bsal_actor)
+ * - Message (struct bsal_message)
+ * - Worker pool (struct bsal_worker_pool)
+ * - Worker (struct bsal_worker)
+ * - Actor script (struct bsal_script)
+ *
  * - message reception: one queue per thread
  * - the queue has variables for its heads
  * - queue is implemented as linked list of arrays
