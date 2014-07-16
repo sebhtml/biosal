@@ -6,6 +6,7 @@
 # C++ 2011
 
 - http://www.theron-library.com/
+- https://github.com/Neverlord/libcppa
 
 
 # C++ 2011, MPI
