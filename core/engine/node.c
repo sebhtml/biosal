@@ -11,6 +11,8 @@
 #include <core/structures/vector.h>
 #include <core/structures/map_iterator.h>
 #include <core/structures/vector_iterator.h>
+#include <core/structures/set_iterator.h>
+
 #include <core/helpers/vector_helper.h>
 
 #include <core/system/memory.h>
@@ -60,6 +62,8 @@ void bsal_node_init(struct bsal_node *node, int *argc, char ***argv)
     int actor_capacity;
     char *argument;
     int processor;
+
+    bsal_set_init(&node->auto_scaling_actors, sizeof(int));
 
     node->started = 0;
     node->print_load = 0;
@@ -300,6 +304,8 @@ void bsal_node_destroy(struct bsal_node *node)
 {
     struct bsal_active_buffer active_buffer;
     void *buffer;
+
+    bsal_set_destroy(&node->auto_scaling_actors);
 
     bsal_memory_pool_destroy(&node->actor_memory_pool);
     bsal_memory_pool_destroy(&node->inbound_message_memory_pool);
@@ -702,10 +708,8 @@ void bsal_node_start_initial_actor(struct bsal_node *node)
         source = name;
 
         bsal_message_init(&message, BSAL_ACTOR_START, bytes, buffer);
-        bsal_message_set_source(&message, source);
-        bsal_message_set_destination(&message, name);
 
-        bsal_node_send(node, &message);
+        bsal_node_send_to_actor(node, name, &message);
 
         bsal_message_destroy(&message);
     }
@@ -947,6 +951,11 @@ void bsal_node_send(struct bsal_node *node, struct bsal_message *message)
     struct bsal_active_buffer recycled_buffer;
     void *buffer;
 #endif
+
+    /* Check the message to see
+     * if it is a special message
+     */
+    bsal_node_send_special(node, message);
 
     name = bsal_message_destination(message);
     bsal_transport_resolve(&node->transport, message);
@@ -1240,6 +1249,12 @@ void bsal_node_notify_death(struct bsal_node *node, struct bsal_actor *actor)
     printf("DEBUG bsal_node_notify_death\n");
 #endif
 
+    /* Remove the actor from the list of auto-scaling
+     * actors
+     */
+
+    bsal_set_delete(&node->auto_scaling_actors, &name);
+
     node->alive_actors--;
     node->dead_actors++;
     bsal_lock_unlock(&node->spawn_and_death_lock);
@@ -1491,4 +1506,65 @@ void bsal_node_reset_actor_counters(struct bsal_node *node)
 int64_t bsal_node_get_counter(struct bsal_node *node, int counter)
 {
     return bsal_counter_get(&node->counter, counter);
+}
+
+void bsal_node_send_special(struct bsal_node *node, struct bsal_message *message)
+{
+    int destination;
+    int tag;
+    int source;
+
+    tag = bsal_message_tag(message);
+    destination = bsal_message_destination(message);
+    source = bsal_message_source(message);
+
+    if (source == destination
+            && tag == BSAL_ACTOR_ENABLE_AUTO_SCALING) {
+
+        printf("AUTO-SCALING node/%d enables auto-scaling for actor %d (BSAL_ACTOR_ENABLE_AUTO_SCALING)\n",
+                       bsal_node_name(node),
+                       source);
+
+        bsal_set_add(&node->auto_scaling_actors, &source);
+    }
+}
+
+
+void bsal_node_send_to_actor(struct bsal_node *node, int name, struct bsal_message *message)
+{
+    bsal_message_set_source(message, name);
+    bsal_message_set_destination(message, name);
+
+    bsal_node_send(node, message);
+}
+
+
+void bsal_node_check_efficiency(struct bsal_node *node)
+{
+    const float efficiency_threshold = 0.90;
+    struct bsal_set_iterator iterator;
+    struct bsal_message message;
+    int name;
+
+    /* Check efficiency to see if auto-scaling is needed
+     */
+
+    if (bsal_worker_pool_get_current_efficiency(&node->worker_pool)
+                    <= efficiency_threshold) {
+
+
+        bsal_set_iterator_init(&iterator, &node->auto_scaling_actors);
+
+        while (bsal_set_iterator_get_next_value(&iterator, &name)) {
+
+            bsal_message_init(&message, BSAL_ACTOR_DO_AUTO_SCALING,
+                            0, NULL);
+
+            bsal_node_send_to_actor(node, name, &message);
+
+            bsal_message_destroy(&message);
+        }
+
+        bsal_set_iterator_destroy(&iterator);
+    }
 }

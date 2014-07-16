@@ -44,6 +44,8 @@ struct argonnite {
     uint64_t actual_kmers;
 
     int not_ready_warnings;
+
+    int auto_scaled;
 };
 
 extern struct bsal_script argonnite_script;
@@ -62,5 +64,6 @@ void argonnite_prepare_sequence_stores_reply(struct bsal_actor *self, struct bsa
 void argonnite_prepare_sequence_stores(struct bsal_actor *self, struct bsal_message *message);
 void argonnite_connect_kernels_with_stores(struct bsal_actor *self, struct bsal_message *message);
 void argonnite_request_progress_reply(struct bsal_actor *actor, struct bsal_message *message);
+void argonnite_do_auto_scaling(struct bsal_actor *actor, struct bsal_message *message);
 
 #endif

@@ -1,6 +1,8 @@
 
 #include "node.h"
 
+#include <core/structures/set_iterator.h>
+
 #include <time.h>
 #include <stdio.h>
 #include <inttypes.h>
@@ -44,6 +46,7 @@ void bsal_node_run_loop(struct bsal_node *node)
                     bsal_worker_pool_print_load(&node->worker_pool, BSAL_WORKER_POOL_LOAD_EPOCH);
                     printf("ACTORS node %d has %d active actors\n", node->name,
                                     node->alive_actors);
+
                 }
 
                 if (node->print_memory_usage) {
@@ -124,6 +127,8 @@ void bsal_node_run_loop(struct bsal_node *node)
             if (bsal_node_running(node)) {
                 credits = starting_credits;
             }
+
+            bsal_node_check_efficiency(node);
         }
     }
 
@@ -229,3 +234,4 @@ void bsal_node_free_active_buffer(struct bsal_node *node,
 
     bsal_memory_free(buffer);
 }
+

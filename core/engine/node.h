@@ -75,6 +75,7 @@ struct bsal_script;
  */
 struct bsal_node {
     struct bsal_vector actors;
+    struct bsal_set auto_scaling_actors;
     struct bsal_worker_pool worker_pool;
     struct bsal_map actor_names;
     struct bsal_vector initial_actors;
@@ -214,5 +215,9 @@ void bsal_node_test_requests(struct bsal_node *node);
 
 void bsal_node_free_active_buffer(struct bsal_node *node,
                 struct bsal_active_buffer *active_buffer);
+
+void bsal_node_send_to_actor(struct bsal_node *node, int name, struct bsal_message *message);
+void bsal_node_check_efficiency(struct bsal_node *node);
+void bsal_node_send_special(struct bsal_node *node, struct bsal_message *message);
 
 #endif

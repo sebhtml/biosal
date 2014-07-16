@@ -129,6 +129,12 @@ new name.
 #define BSAL_ACTOR_PING 0x000040b3
 #define BSAL_ACTOR_PING_REPLY 0x00006eda
 
+/* Auto-scaling stuff
+ */
+
+#define BSAL_ACTOR_ENABLE_AUTO_SCALING 0x00000ede
+#define BSAL_ACTOR_DO_AUTO_SCALING 0x000064de
+
 /*
  * some actor constants
  */

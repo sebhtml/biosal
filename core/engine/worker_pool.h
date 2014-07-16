@@ -52,6 +52,7 @@ struct bsal_worker_pool {
 #endif
 
     time_t starting_time;
+
 };
 
 #define BSAL_WORKER_POOL_LOAD_LOOP 0
@@ -102,5 +103,6 @@ void bsal_worker_pool_give_message_to_actor(struct bsal_worker_pool *pool, struc
 
 void bsal_worker_pool_work(struct bsal_worker_pool *pool);
 void bsal_worker_pool_assign_worker_to_actor(struct bsal_worker_pool *pool, int name);
+float bsal_worker_pool_get_current_efficiency(struct bsal_worker_pool *pool);
 
 #endif

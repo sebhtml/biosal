@@ -93,6 +93,7 @@ void bsal_worker_pool_init(struct bsal_worker_pool *pool, int workers,
     pool->last_balancing = pool->starting_time;
 
     pool->balance_period = BSAL_SCHEDULER_PERIOD_IN_SECONDS;
+
 }
 
 void bsal_worker_pool_destroy(struct bsal_worker_pool *pool)
@@ -331,6 +332,7 @@ void bsal_worker_pool_print_load(struct bsal_worker_pool *self, int type)
 
 
     bsal_memory_free(buffer);
+
 }
 
 void bsal_worker_pool_toggle_debug_mode(struct bsal_worker_pool *self)
@@ -528,4 +530,27 @@ void bsal_worker_pool_assign_worker_to_actor(struct bsal_worker_pool *pool, int 
     set = (struct bsal_set *)bsal_vector_at(&pool->worker_actors, worker_index);
     bsal_set_add(set, &name);
 
+}
+
+float bsal_worker_pool_get_current_efficiency(struct bsal_worker_pool *pool)
+{
+    float efficiency;
+    int workers;
+    int i;
+
+    workers = bsal_worker_pool_worker_count(pool);
+
+    efficiency = 0;
+    i = 0;
+
+    while (i < workers) {
+
+        efficiency += bsal_worker_get_epoch_load(bsal_worker_pool_get_worker(pool, i));
+
+        ++i;
+    }
+
+    efficiency /= workers;
+
+    return efficiency;
 }
