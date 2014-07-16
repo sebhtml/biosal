@@ -28,6 +28,9 @@
 void bsal_timer_init(struct bsal_timer *self)
 {
     self->start = 0;
+
+    self->started = 0;
+    self->stopped = 0;
 }
 
 void bsal_timer_destroy(struct bsal_timer *self)
@@ -38,12 +41,15 @@ void bsal_timer_destroy(struct bsal_timer *self)
 void bsal_timer_start(struct bsal_timer *self)
 {
     self->start = bsal_timer_get_nanoseconds();
+    self->started = 1;
 }
 
 void bsal_timer_stop(struct bsal_timer *self)
 {
 
     self->stop = bsal_timer_get_nanoseconds();
+
+    self->stopped = 1;
 
 #ifdef BSAL_TIMER_DEBUG
     printf("TIMER start %" PRIu64 " stop %" PRIu64 "\n", stop, self->start);
@@ -103,7 +109,10 @@ void bsal_timer_print(struct bsal_timer *self)
 
     nanoseconds = bsal_timer_get_elapsed_nanoseconds(self);
 
-    printf("TIMER ELAPSED TIME: ");
+    if (!self->started || !self->stopped) {
+        printf("timer error\n");
+        return;
+    }
 
     /* Show nanoseconds
      */
@@ -162,4 +171,11 @@ void bsal_timer_print(struct bsal_timer *self)
 uint64_t bsal_timer_get_elapsed_nanoseconds(struct bsal_timer *self)
 {
     return self->stop - self->start;
+}
+
+void bsal_timer_print_with_description(struct bsal_timer *self, const char *description)
+{
+    printf("TIMER <%s> ", description);
+
+    bsal_timer_print(self);
 }

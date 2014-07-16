@@ -76,7 +76,10 @@ void bsal_input_controller_init(struct bsal_actor *actor)
     bsal_vector_init(&concrete_actor->consumers, sizeof(int));
     bsal_vector_init(&concrete_actor->stores_per_spawner, sizeof(int));
 
-    bsal_timer_init(&concrete_actor->timer);
+    bsal_timer_init(&concrete_actor->input_timer);
+    bsal_timer_init(&concrete_actor->counting_timer);
+    bsal_timer_init(&concrete_actor->distribution_timer);
+
     bsal_dna_codec_init(&concrete_actor->codec);
 
     bsal_queue_init(&concrete_actor->unprepared_spawners, sizeof(int));
@@ -137,7 +140,9 @@ void bsal_input_controller_destroy(struct bsal_actor *actor)
 
     concrete_actor = (struct bsal_input_controller *)bsal_actor_concrete_actor(actor);
 
-    bsal_timer_destroy(&concrete_actor->timer);
+    bsal_timer_destroy(&concrete_actor->input_timer);
+    bsal_timer_destroy(&concrete_actor->counting_timer);
+    bsal_timer_destroy(&concrete_actor->distribution_timer);
 
     bsal_dna_codec_destroy(&concrete_actor->codec);
 
@@ -521,7 +526,8 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
 
     } else if (tag == BSAL_INPUT_DISTRIBUTE) {
 
-        bsal_timer_start(&concrete_actor->timer);
+        bsal_timer_start(&concrete_actor->input_timer);
+        bsal_timer_start(&concrete_actor->counting_timer);
 
         /* for each file, spawn a stream to count */
 
@@ -773,10 +779,14 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
 
             printf("DEBUG: all consumers are filled,  sending BSAL_INPUT_DISTRIBUTE_REPLY\n");
 
-            bsal_timer_stop(&concrete_actor->timer);
+            bsal_timer_stop(&concrete_actor->input_timer);
+            bsal_timer_stop(&concrete_actor->distribution_timer);
 
-            printf("ELAPSED time to distributed input data:\n");
-            bsal_timer_print(&concrete_actor->timer);
+            bsal_timer_print_with_description(&concrete_actor->distribution_timer,
+                            "Distributing entries");
+
+            bsal_timer_print_with_description(&concrete_actor->input_timer,
+                            "Counting entries and distributing entries");
 
             bsal_actor_helper_send_to_supervisor_empty(actor, BSAL_INPUT_DISTRIBUTE_REPLY);
         }
@@ -931,6 +941,12 @@ void bsal_input_controller_create_stores(struct bsal_actor *actor, struct bsal_m
     if (total % block_size != 0) {
         blocks++;
     }
+
+    bsal_timer_stop(&concrete_actor->counting_timer);
+    bsal_timer_start(&concrete_actor->distribution_timer);
+
+    bsal_timer_print_with_description(&concrete_actor->counting_timer,
+                    "Counting entries");
 
     printf("DEBUG controller %d: Partition Total: %" PRIu64 ", block_size: %d, blocks: %d\n",
                     bsal_actor_get_name(actor),

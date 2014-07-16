@@ -47,7 +47,10 @@ struct bsal_input_controller {
     struct bsal_vector stores_per_spawner;
     int stores_per_worker_per_spawner;
 
-    struct bsal_timer timer;
+    struct bsal_timer input_timer;
+    struct bsal_timer counting_timer;
+    struct bsal_timer distribution_timer;
+
     struct bsal_vector consumer_active_requests;
 };
 
