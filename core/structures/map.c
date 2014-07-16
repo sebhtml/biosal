@@ -289,7 +289,9 @@ void bsal_map_enable_deletion_support(struct bsal_map *map)
 
 void bsal_map_set_current_size_estimate(struct bsal_map *map, double value)
 {
+#ifdef BSAL_MAP_ENABLE_ESTIMATION
     bsal_dynamic_hash_table_set_current_size_estimate(&map->table, value);
+#endif
 }
 
 void bsal_map_set_threshold(struct bsal_map *map, double threshold)
