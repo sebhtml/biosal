@@ -290,6 +290,7 @@ void bsal_node_init(struct bsal_node *node, int *argc, char ***argv)
 
     node->start_time = time(NULL);
     node->last_report_time = 0;
+    node->last_auto_scaling = node->start_time;
 
     processor = workers;
 
@@ -960,9 +961,13 @@ void bsal_node_send(struct bsal_node *node, struct bsal_message *message)
 #endif
 
     /* Check the message to see
-     * if it is a special message
+     * if it is a special message.
+     *
+     * System message have no buffer to free because they have no buffer.
      */
-    bsal_node_send_special(node, message);
+    if (bsal_node_send_system(node, message)) {
+        return;
+    }
 
     name = bsal_message_destination(message);
     bsal_transport_resolve(&node->transport, message);
@@ -1515,7 +1520,7 @@ int64_t bsal_node_get_counter(struct bsal_node *node, int counter)
     return bsal_counter_get(&node->counter, counter);
 }
 
-void bsal_node_send_special(struct bsal_node *node, struct bsal_message *message)
+int bsal_node_send_system(struct bsal_node *node, struct bsal_message *message)
 {
     int destination;
     int tag;
@@ -1533,7 +1538,11 @@ void bsal_node_send_special(struct bsal_node *node, struct bsal_message *message
                        source);
 
         bsal_set_add(&node->auto_scaling_actors, &source);
+
+        return 1;
     }
+
+    return 0;
 }
 
 
@@ -1552,6 +1561,18 @@ void bsal_node_check_efficiency(struct bsal_node *node)
     struct bsal_set_iterator iterator;
     struct bsal_message message;
     int name;
+    time_t current_time;
+
+    current_time = time(NULL);
+
+    /* Do the auto-scaling thing one time m aximum
+     * for each second
+     */
+    if (current_time == node->last_auto_scaling) {
+        return;
+    }
+
+    node->last_auto_scaling = current_time;
 
     /* Check efficiency to see if auto-scaling is needed
      */

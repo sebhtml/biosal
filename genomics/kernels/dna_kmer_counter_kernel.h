@@ -26,6 +26,8 @@ struct bsal_dna_kmer_counter_kernel {
 
     int producer_source;
 
+    int scaled_operations;
+
     int notified;
     int notification_source;
     int bytes_per_kmer;

@@ -397,6 +397,24 @@ void bsal_dna_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_
         bsal_actor_helper_send_empty(actor, bsal_actor_get_acquaintance(actor,
                                 concrete_actor->producer_source),
                         BSAL_ACTOR_SET_PRODUCER_REPLY);
+
+    } else if (tag == BSAL_ACTOR_ENABLE_AUTO_SCALING) {
+
+        printf("AUTO-SCALING kernel %d enables auto-scaling (BSAL_ACTOR_ENABLE_AUTO_SCALING) via actor %d\n",
+                        name, source);
+
+        bsal_actor_helper_send_to_self_empty(actor, BSAL_ACTOR_ENABLE_AUTO_SCALING);
+
+    } else if (tag == BSAL_ACTOR_DO_AUTO_SCALING) {
+
+        printf("AUTO-SCALING kernel %d receives auto-scale message (BSAL_ACTOR_DO_AUTO_SCALING) via actor %d\n",
+                        name, source);
+
+        bsal_actor_helper_send_empty(actor, bsal_actor_get_acquaintance(actor,
+                                concrete_actor->producer_source),
+                        BSAL_ACTOR_DO_AUTO_SCALING);
+
+        concrete_actor->scaled_operations++;
     }
 }
 

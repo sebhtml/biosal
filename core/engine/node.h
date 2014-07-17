@@ -136,6 +136,7 @@ struct bsal_node {
 
     time_t start_time;
     time_t last_report_time;
+    time_t last_auto_scaling;
     char print_load;
     char print_memory_usage;
     char print_counters;
@@ -218,6 +219,6 @@ void bsal_node_free_active_buffer(struct bsal_node *node,
 
 void bsal_node_send_to_actor(struct bsal_node *node, int name, struct bsal_message *message);
 void bsal_node_check_efficiency(struct bsal_node *node);
-void bsal_node_send_special(struct bsal_node *node, struct bsal_message *message);
+int bsal_node_send_system(struct bsal_node *node, struct bsal_message *message);
 
 #endif
