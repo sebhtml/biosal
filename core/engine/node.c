@@ -682,9 +682,11 @@ void bsal_node_run(struct bsal_node *node)
         bsal_thread_join(&node->thread);
     }
 
-    /* Alwaysa print counters at the end, this is useful.
+    /* Always print counters at the end, this is useful.
      */
-    bsal_node_print_counters(node);
+    if (node->print_counters) {
+        bsal_node_print_counters(node);
+    }
 
     /* Print global efficiency for this node... */
 

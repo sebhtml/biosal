@@ -1421,7 +1421,13 @@ void bsal_actor_notify_name_change(struct bsal_actor *actor, struct bsal_message
     index = bsal_actor_get_acquaintance_index(actor, old_name);
 
     bucket = bsal_vector_at(&actor->acquaintance_vector, index);
-    *bucket = new_name;
+
+    /*
+     * Change it only if it exists
+     */
+    if (bucket != NULL) {
+        *bucket = new_name;
+    }
 
     /* update userland queued messages
      */
