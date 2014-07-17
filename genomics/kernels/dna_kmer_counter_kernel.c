@@ -58,9 +58,9 @@ void bsal_dna_kmer_counter_kernel_init(struct bsal_actor *actor)
     concrete_actor->blocks = 0;
 
     concrete_actor->kmer_length = -1;
-    concrete_actor->consumer = -1;
-    concrete_actor->producer = -1;
-    concrete_actor->producer_source =-1;
+    concrete_actor->consumer = BSAL_ACTOR_NOBODY;
+    concrete_actor->producer = BSAL_ACTOR_NOBODY;
+    concrete_actor->producer_source = BSAL_ACTOR_NOBODY;
 
     concrete_actor->notified = 0;
     concrete_actor->notification_source = 0;
@@ -395,7 +395,14 @@ void bsal_dna_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_
 
         if (count == 0) {
             printf("Error: kernel needs producer\n");
+            return;
         }
+
+        if (concrete_actor->consumer == BSAL_ACTOR_NOBODY) {
+            printf("Error: kernel needs a consumer\n");
+            return;
+        }
+
         bsal_message_helper_unpack_int(message, 0, &producer);
 
         concrete_actor->producer = bsal_actor_add_acquaintance(actor, producer);

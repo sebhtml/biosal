@@ -5,12 +5,13 @@
 #include <genomics/data/dna_kmer.h>
 
 #include <genomics/kernels/dna_kmer_counter_kernel.h>
+#include <genomics/storage/kmer_store.h>
 
 #include <core/helpers/actor_helper.h>
 #include <core/helpers/message_helper.h>
 #include <core/helpers/vector_helper.h>
 
-#include <genomics/storage/kmer_store.h>
+#include <core/system/packer.h>
 
 #include <core/structures/vector_iterator.h>
 
@@ -74,9 +75,9 @@ void bsal_aggregator_init(struct bsal_actor *self)
     bsal_actor_helper_send_to_self_empty(self, BSAL_ACTOR_PACK_ENABLE);
 
     bsal_actor_register(self, BSAL_ACTOR_PACK,
-                    bsal_aggregator_pack);
+                    bsal_aggregator_pack_message);
     bsal_actor_register(self, BSAL_ACTOR_UNPACK,
-                    bsal_aggregator_unpack);
+                    bsal_aggregator_unpack_message);
 
     printf("aggregator %d is online\n", bsal_actor_get_name(self));
 }
@@ -102,7 +103,6 @@ void bsal_aggregator_receive(struct bsal_actor *self, struct bsal_message *messa
     struct bsal_aggregator *concrete_actor;
     void *buffer;
     int source;
-    struct bsal_vector customers;
 
     concrete_actor = (struct bsal_aggregator *)bsal_actor_concrete_actor(self);
     buffer = bsal_message_buffer(message);
@@ -121,28 +121,9 @@ void bsal_aggregator_receive(struct bsal_actor *self, struct bsal_message *messa
 
     } else if (tag == BSAL_ACTOR_SET_CONSUMERS) {
 
-        /*
-         * receive customer list
-         */
-        bsal_vector_init(&customers, 0);
-        bsal_vector_unpack(&customers, buffer);
-
-        bsal_actor_helper_add_acquaintances(self, &customers, &concrete_actor->customers);
-
-        concrete_actor->maximum_active_messages = bsal_vector_size(&concrete_actor->customers) * 4;
-
-        printf("DEBUG45 preparing %d buffers, kmer_length %d\n",
-                        (int)bsal_vector_size(&concrete_actor->customers),
-                        concrete_actor->kmer_length);
-
-#ifdef BSAL_AGGREGATOR_DEBUG
-        printf("DEBUG aggregator configured %d customers\n",
-                        (int)bsal_vector_size(&concrete_actor->customers));
-#endif
+        bsal_aggregator_set_consumers(self, buffer);
 
         bsal_actor_helper_send_reply_empty(self, BSAL_ACTOR_SET_CONSUMERS_REPLY);
-
-        bsal_vector_destroy(&customers);
 
     } else if (tag == BSAL_AGGREGATOR_FLUSH) {
 
@@ -351,7 +332,6 @@ void bsal_aggregator_aggregate_kernel_output(struct bsal_actor *self, struct bsa
         BSAL_DEBUG_MARKER("aggregator before flush");
 #endif
 
-
     }
 
 #ifdef BSAL_AGGREGATOR_DEBUG
@@ -413,12 +393,136 @@ void bsal_aggregator_aggregate_kernel_output(struct bsal_actor *self, struct bsa
 
 }
 
-void bsal_aggregator_pack(struct bsal_actor *actor, struct bsal_message *message)
+void bsal_aggregator_pack_message(struct bsal_actor *actor, struct bsal_message *message)
 {
-    bsal_actor_helper_send_reply_empty(actor, BSAL_ACTOR_PACK_REPLY);
+    void *new_buffer;
+    int new_count;
+    struct bsal_memory_pool *ephemeral_memory;
+    struct bsal_message new_message;
+
+    ephemeral_memory = bsal_actor_get_ephemeral_memory(actor);
+    new_count = bsal_aggregator_pack_size(actor);
+    new_buffer = bsal_memory_pool_allocate(ephemeral_memory, new_count);
+
+    bsal_aggregator_pack(actor, new_buffer);
+
+    bsal_message_init(&new_message, BSAL_ACTOR_PACK_REPLY, new_count, new_buffer);
+    bsal_actor_send_reply(actor, &new_message);
+    bsal_message_destroy(&new_message);
+
+    bsal_memory_pool_free(ephemeral_memory, new_buffer);
+    new_buffer = NULL;
 }
 
-void bsal_aggregator_unpack(struct bsal_actor *actor, struct bsal_message *message)
+void bsal_aggregator_unpack_message(struct bsal_actor *actor, struct bsal_message *message)
 {
+    void *buffer;
+
+    buffer = bsal_message_buffer(message);
+
+    bsal_aggregator_unpack(actor, buffer);
+
     bsal_actor_helper_send_reply_empty(actor, BSAL_ACTOR_UNPACK_REPLY);
 }
+
+int bsal_aggregator_set_consumers(struct bsal_actor *actor, void *buffer)
+{
+    struct bsal_vector customers;
+    struct bsal_aggregator *concrete_actor;
+    int bytes;
+
+    concrete_actor = (struct bsal_aggregator *)bsal_actor_concrete_actor(actor);
+
+    /*
+     * receive customer list
+     */
+    bsal_vector_init(&customers, 0);
+    bytes = bsal_vector_unpack(&customers, buffer);
+
+    bsal_actor_helper_add_acquaintances(actor, &customers, &concrete_actor->customers);
+
+    concrete_actor->maximum_active_messages = bsal_vector_size(&concrete_actor->customers) * 4;
+
+    printf("DEBUG45 aggregator %d preparing %d buffers, kmer_length %d\n",
+                    bsal_actor_get_name(actor),
+                        (int)bsal_vector_size(&concrete_actor->customers),
+                        concrete_actor->kmer_length);
+
+#ifdef BSAL_AGGREGATOR_DEBUG
+    printf("DEBUG aggregator configured %d customers\n",
+                        (int)bsal_vector_size(&concrete_actor->customers));
+#endif
+
+    bsal_vector_destroy(&customers);
+
+    return bytes;
+}
+
+int bsal_aggregator_pack_unpack(struct bsal_actor *actor, int operation, void *buffer)
+{
+    struct bsal_packer packer;
+    int bytes;
+    struct bsal_aggregator *concrete_actor;
+    struct bsal_vector consumers;
+
+    concrete_actor = (struct bsal_aggregator *)bsal_actor_concrete_actor(actor);
+
+    bytes = 0;
+
+    bsal_packer_init(&packer, operation, buffer);
+
+    /*
+     * Pack the kmer length
+     */
+    bsal_packer_work(&packer, &concrete_actor->kmer_length, sizeof(concrete_actor->kmer_length));
+
+    bytes += bsal_packer_worked_bytes(&packer);
+
+    if (operation == BSAL_PACKER_OPERATION_UNPACK) {
+        printf("aggregator %d unpacked kmer length %d\n",
+                        bsal_actor_get_name(actor),
+                        concrete_actor->kmer_length);
+    }
+
+    /* Pack the consumers
+     */
+
+    if (operation == BSAL_PACKER_OPERATION_UNPACK) {
+        bsal_aggregator_set_consumers(actor,
+                        ((char *)buffer) + bytes);
+
+    } else {
+
+        bsal_vector_init(&consumers, sizeof(int));
+        bsal_actor_helper_get_acquaintances(actor,
+                        &concrete_actor->customers,
+                        &consumers);
+
+        bytes += bsal_vector_pack_unpack(&consumers,
+                        (char *)buffer + bytes,
+                        operation);
+
+        bsal_vector_destroy(&consumers);
+    }
+
+    bsal_packer_destroy(&packer);
+
+    return bytes;
+}
+
+int bsal_aggregator_pack(struct bsal_actor *actor, void *buffer)
+{
+    return bsal_aggregator_pack_unpack(actor, BSAL_PACKER_OPERATION_PACK, buffer);
+}
+
+int bsal_aggregator_unpack(struct bsal_actor *actor, void *buffer)
+{
+    return bsal_aggregator_pack_unpack(actor, BSAL_PACKER_OPERATION_UNPACK, buffer);
+}
+
+int bsal_aggregator_pack_size(struct bsal_actor *actor)
+{
+    return bsal_aggregator_pack_unpack(actor, BSAL_PACKER_OPERATION_DRY_RUN, NULL);
+}
+
+

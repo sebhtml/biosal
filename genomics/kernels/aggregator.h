@@ -52,7 +52,13 @@ void bsal_aggregator_flush(struct bsal_actor *self, int customer_index, struct b
 void bsal_aggregator_verify(struct bsal_actor *self, struct bsal_message *message);
 void bsal_aggregator_aggregate_kernel_output(struct bsal_actor *self, struct bsal_message *message);
 
-void bsal_aggregator_unpack(struct bsal_actor *actor, struct bsal_message *message);
-void bsal_aggregator_pack(struct bsal_actor *actor, struct bsal_message *message);
+void bsal_aggregator_unpack_message(struct bsal_actor *actor, struct bsal_message *message);
+void bsal_aggregator_pack_message(struct bsal_actor *actor, struct bsal_message *message);
+int bsal_aggregator_set_consumers(struct bsal_actor *actor, void *buffer);
+
+int bsal_aggregator_pack_unpack(struct bsal_actor *actor, int operation, void *buffer);
+int bsal_aggregator_pack(struct bsal_actor *actor, void *buffer);
+int bsal_aggregator_unpack(struct bsal_actor *actor, void *buffer);
+int bsal_aggregator_pack_size(struct bsal_actor *actor);
 
 #endif
