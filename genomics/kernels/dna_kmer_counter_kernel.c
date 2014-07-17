@@ -70,6 +70,8 @@ void bsal_dna_kmer_counter_kernel_init(struct bsal_actor *actor)
 
     bsal_dna_codec_init(&concrete_actor->codec);
 
+    bsal_vector_init(&concrete_actor->kernels, sizeof(int));
+
     concrete_actor->auto_scaling_in_progress = 0;
 
     bsal_actor_register(actor, BSAL_ACTOR_PACK,
@@ -78,6 +80,10 @@ void bsal_dna_kmer_counter_kernel_init(struct bsal_actor *actor)
                     bsal_dna_kmer_counter_kernel_unpack_message);
     bsal_actor_register(actor, BSAL_ACTOR_CLONE_REPLY,
                     bsal_dna_kmer_counter_kernel_clone_reply);
+    bsal_actor_register(actor, BSAL_KERNEL_NOTIFY,
+                    bsal_dna_kmer_counter_kernel_notify);
+    bsal_actor_register(actor, BSAL_KERNEL_NOTIFY_REPLY,
+                    bsal_dna_kmer_counter_kernel_notify_reply);
 
     printf("kernel %d is online !!!\n",
                     bsal_actor_get_name(actor));
@@ -86,6 +92,9 @@ void bsal_dna_kmer_counter_kernel_init(struct bsal_actor *actor)
      */
 
     bsal_actor_helper_send_to_self_empty(actor, BSAL_ACTOR_PACK_ENABLE);
+    concrete_actor->auto_scaling_clone = BSAL_ACTOR_NOBODY;
+
+    concrete_actor->scaling_operations = 0;
 }
 
 void bsal_dna_kmer_counter_kernel_destroy(struct bsal_actor *actor)
@@ -99,6 +108,7 @@ void bsal_dna_kmer_counter_kernel_destroy(struct bsal_actor *actor)
     concrete_actor->producer_source =-1;
 
     bsal_dna_codec_destroy(&concrete_actor->codec);
+    bsal_vector_destroy(&concrete_actor->kernels);
 }
 
 void bsal_dna_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_message *message)
@@ -389,14 +399,6 @@ void bsal_dna_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_
 
         bsal_actor_helper_send_reply_empty(actor, BSAL_SET_KMER_LENGTH_REPLY);
 
-    } else if (tag == BSAL_KERNEL_NOTIFY) {
-
-        concrete_actor->notified = 1;
-
-        concrete_actor->notification_source = bsal_actor_add_acquaintance(actor, source);
-
-        bsal_dna_kmer_counter_kernel_verify(actor, message);
-
     } else if (tag == BSAL_ACTOR_SET_PRODUCER) {
 
         if (count == 0) {
@@ -429,6 +431,13 @@ void bsal_dna_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_
         bsal_actor_helper_send_empty(actor, bsal_actor_get_acquaintance(actor,
                                 concrete_actor->producer_source),
                         BSAL_ACTOR_SET_PRODUCER_REPLY);
+
+    } else if (tag == BSAL_ACTOR_SET_PRODUCER_REPLY
+                    && source == concrete_actor->auto_scaling_clone) {
+
+        concrete_actor->auto_scaling_in_progress = 0;
+        concrete_actor->scaling_operations++;
+        concrete_actor->auto_scaling_clone = BSAL_ACTOR_NOBODY;
 
     } else if (tag == BSAL_ACTOR_ENABLE_AUTO_SCALING) {
 
@@ -555,12 +564,15 @@ void bsal_dna_kmer_counter_kernel_clone_reply(struct bsal_actor *actor, struct b
     int clone;
     int source;
     int consumer;
+    int producer;
+    int clone_index;
 
     source = bsal_message_source(message);
     concrete_actor = (struct bsal_dna_kmer_counter_kernel *)bsal_actor_concrete_actor(actor);
     name = bsal_actor_get_name(actor);
     bsal_message_helper_unpack_int(message, 0, &clone);
     consumer = bsal_actor_get_acquaintance(actor, concrete_actor->consumer);
+    producer = bsal_actor_get_acquaintance(actor, concrete_actor->producer);
 
     if (source == name) {
         printf("kernel %d cloned itself !!! clone name is %d\n",
@@ -568,12 +580,18 @@ void bsal_dna_kmer_counter_kernel_clone_reply(struct bsal_actor *actor, struct b
 
         bsal_actor_helper_send_int(actor, consumer, BSAL_ACTOR_CLONE, name);
 
+        concrete_actor->auto_scaling_clone = clone;
+
+        clone_index = bsal_actor_add_acquaintance(actor, clone);
+
+        bsal_vector_push_back(&concrete_actor->kernels, &clone_index);
+
     } else if (source == consumer) {
         printf("kernel %d cloned aggregator %d, clone name is %d\n",
                         name, consumer, clone);
 
-        concrete_actor->auto_scaling_in_progress = 0;
-        concrete_actor->scaling_operations++;
+        bsal_actor_helper_send_int(actor, concrete_actor->auto_scaling_clone,
+                        BSAL_ACTOR_SET_PRODUCER, producer);
     }
 }
 
@@ -635,4 +653,69 @@ int bsal_dna_kmer_counter_kernel_pack_unpack(struct bsal_actor *actor, int opera
     bsal_packer_destroy(&packer);
 
     return bytes;
+}
+
+void bsal_dna_kmer_counter_kernel_notify(struct bsal_actor *actor, struct bsal_message *message)
+{
+    struct bsal_dna_kmer_counter_kernel *concrete_actor;
+    struct bsal_vector kernels;
+    struct bsal_vector_iterator iterator;
+    int kernel;
+    int source;
+
+    concrete_actor = (struct bsal_dna_kmer_counter_kernel *)bsal_actor_concrete_actor(actor);
+
+    source = bsal_message_source(message);
+    concrete_actor->notified = 1;
+    concrete_actor->notification_source = bsal_actor_add_acquaintance(actor, source);
+
+    if (concrete_actor->scaling_operations > 0) {
+
+        concrete_actor->sum_of_kmers = 0;
+        concrete_actor->sum_of_kmers += concrete_actor->kmers;
+        concrete_actor->notified_children = 0;
+
+        bsal_vector_init(&kernels, sizeof(int));
+
+        bsal_actor_helper_get_acquaintances(actor, &concrete_actor->kernels,
+                        &kernels);
+
+        bsal_vector_iterator_init(&iterator, &kernels);
+
+        while (bsal_vector_iterator_get_next_value(&iterator, &kernel)) {
+
+            bsal_actor_helper_send_empty(actor, kernel, BSAL_KERNEL_NOTIFY);
+        }
+
+        bsal_vector_iterator_destroy(&iterator);
+
+        bsal_vector_destroy(&kernels);
+
+    } else {
+        bsal_dna_kmer_counter_kernel_verify(actor, message);
+    }
+}
+
+void bsal_dna_kmer_counter_kernel_notify_reply(struct bsal_actor *actor, struct bsal_message *message)
+{
+    struct bsal_dna_kmer_counter_kernel *concrete_actor;
+    uint64_t kmers;
+
+    concrete_actor = (struct bsal_dna_kmer_counter_kernel *)bsal_actor_concrete_actor(actor);
+
+    bsal_message_helper_unpack_uint64_t(message, 0, &kmers);
+
+    concrete_actor->sum_of_kmers += kmers;
+
+    concrete_actor->notified_children++;
+
+    if (concrete_actor->notified_children == bsal_vector_size(&concrete_actor->kernels)) {
+
+
+        bsal_actor_helper_send_uint64_t(actor, bsal_actor_get_acquaintance(actor,
+                            concrete_actor->notification_source),
+                    BSAL_KERNEL_NOTIFY_REPLY, concrete_actor->sum_of_kmers);
+
+    }
+
 }
