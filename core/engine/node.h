@@ -19,10 +19,21 @@
  */
 #include <signal.h>
 
+
+/* Some message tags at the node level instead of the actor level
+ */
+
 #define BSAL_NODE_ADD_INITIAL_ACTOR 0x00002438
 #define BSAL_NODE_ADD_INITIAL_ACTORS 0x00004c19
 #define BSAL_NODE_ADD_INITIAL_ACTORS_REPLY 0x00003ad3
 #define BSAL_NODE_START 0x0000082c
+
+
+/*
+ * Thorium product branding.
+ */
+
+#define BSAL_NODE_THORIUM_PREFIX "<Thorium>"
 
 /*
  * Compilation options:

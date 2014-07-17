@@ -324,7 +324,8 @@ void bsal_worker_pool_print_load(struct bsal_worker_pool *self, int type)
 
     efficiency = sum / count;
 
-    printf("LOAD %s %d s node/%d %.2f/%d (%.2f)%s\n",
+    printf("%s LOAD %s %d s node/%d %.2f/%d (%.2f)%s\n",
+                    BSAL_NODE_THORIUM_PREFIX,
                     description, elapsed, node_name,
                     sum, count, efficiency, buffer);
 

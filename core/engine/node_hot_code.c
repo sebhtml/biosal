@@ -44,13 +44,15 @@ void bsal_node_run_loop(struct bsal_node *node)
             if (current_time - node->last_report_time >= period) {
                 if (node->print_load) {
                     bsal_worker_pool_print_load(&node->worker_pool, BSAL_WORKER_POOL_LOAD_EPOCH);
-                    printf("ACTORS node %d has %d active actors\n", node->name,
+                    printf("%s ACTORS node %d has %d active actors\n", BSAL_NODE_THORIUM_PREFIX,
+                                    node->name,
                                     node->alive_actors);
 
                 }
 
                 if (node->print_memory_usage) {
-                    printf("MEMORY %d s node/%d %" PRIu64 " bytes\n",
+                    printf("%s MEMORY %d s node/%d %" PRIu64 " bytes\n",
+                                    BSAL_NODE_THORIUM_PREFIX,
                                     (int)(current_time - node->start_time),
                                     bsal_node_name(node),
                                     bsal_get_heap_size());

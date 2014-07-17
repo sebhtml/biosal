@@ -299,6 +299,14 @@ void bsal_node_init(struct bsal_node *node, int *argc, char ***argv)
     }
 
     bsal_set_affinity(processor);
+
+    printf("%s booted node %d (%d nodes), threads: %d, workers: %d, pacing: %d\n",
+                BSAL_NODE_THORIUM_PREFIX,
+                    node->name,
+            node->nodes,
+            node->threads,
+            bsal_worker_pool_worker_count(&node->worker_pool),
+            1);
 }
 
 void bsal_node_destroy(struct bsal_node *node)
@@ -681,7 +689,8 @@ void bsal_node_run(struct bsal_node *node)
     /* Print global efficiency for this node... */
 
     efficiency = bsal_worker_pool_get_efficiency(&node->worker_pool);
-    printf("node %d efficiency: %.2f\n",
+    printf("%s node %d efficiency: %.2f\n",
+                    BSAL_NODE_THORIUM_PREFIX,
                     bsal_node_name(node),
                     efficiency);
 }
@@ -1354,7 +1363,8 @@ struct bsal_script *bsal_node_find_script(struct bsal_node *node, int name)
 void bsal_node_print_counters(struct bsal_node *node)
 {
     printf("----------------------------------------------\n");
-    printf("biosal> Counters for node/%d\n", bsal_node_name(node));
+    printf("%s Counters for node/%d\n", BSAL_NODE_THORIUM_PREFIX,
+                    bsal_node_name(node));
     bsal_counter_print(&node->counter);
 }
 
