@@ -68,6 +68,17 @@ void bsal_aggregator_init(struct bsal_actor *self)
 
     bsal_actor_register(self, BSAL_AGGREGATE_KERNEL_OUTPUT,
                     bsal_aggregator_aggregate_kernel_output);
+
+    /* Enable cloning stuff
+     */
+    bsal_actor_helper_send_to_self_empty(self, BSAL_ACTOR_PACK_ENABLE);
+
+    bsal_actor_register(self, BSAL_ACTOR_PACK,
+                    bsal_aggregator_pack);
+    bsal_actor_register(self, BSAL_ACTOR_UNPACK,
+                    bsal_aggregator_unpack);
+
+    printf("aggregator %d is online\n", bsal_actor_get_name(self));
 }
 
 void bsal_aggregator_destroy(struct bsal_actor *self)
@@ -98,10 +109,9 @@ void bsal_aggregator_receive(struct bsal_actor *self, struct bsal_message *messa
     tag = bsal_message_tag(message);
     source = bsal_message_source(message);
 
-    if (tag == BSAL_ACTOR_ASK_TO_STOP
-                    && source == bsal_actor_supervisor(self)) {
+    if (tag == BSAL_ACTOR_ASK_TO_STOP) {
 
-        bsal_actor_helper_send_to_self_empty(self, BSAL_ACTOR_STOP);
+        bsal_actor_helper_ask_to_stop(self, message);
 
     } else if (tag == BSAL_SET_KMER_LENGTH) {
 
@@ -401,4 +411,14 @@ void bsal_aggregator_aggregate_kernel_output(struct bsal_actor *self, struct bsa
     bsal_aggregator_verify(self, message);
 
 
+}
+
+void bsal_aggregator_pack(struct bsal_actor *actor, struct bsal_message *message)
+{
+    bsal_actor_helper_send_reply_empty(actor, BSAL_ACTOR_PACK_REPLY);
+}
+
+void bsal_aggregator_unpack(struct bsal_actor *actor, struct bsal_message *message)
+{
+    bsal_actor_helper_send_reply_empty(actor, BSAL_ACTOR_UNPACK_REPLY);
 }

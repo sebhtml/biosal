@@ -504,6 +504,8 @@ void bsal_dna_kmer_counter_kernel_do_auto_scaling(struct bsal_actor *actor, stru
 
 void bsal_dna_kmer_counter_kernel_pack(struct bsal_actor *actor, struct bsal_message *message)
 {
+
+    /*
     struct bsal_dna_kmer_counter_kernel *concrete_actor;
     int name;
 
@@ -511,11 +513,14 @@ void bsal_dna_kmer_counter_kernel_pack(struct bsal_actor *actor, struct bsal_mes
     name = bsal_actor_get_name(actor);
 
     printf("kernel %d is packing\n", name);
+    */
     bsal_actor_helper_send_reply_empty(actor, BSAL_ACTOR_PACK_REPLY);
 }
 
 void bsal_dna_kmer_counter_kernel_unpack(struct bsal_actor *actor, struct bsal_message *message)
 {
+
+    /*
     struct bsal_dna_kmer_counter_kernel *concrete_actor;
     int name;
 
@@ -523,6 +528,7 @@ void bsal_dna_kmer_counter_kernel_unpack(struct bsal_actor *actor, struct bsal_m
     name = bsal_actor_get_name(actor);
 
     printf("kernel %d is unpacking\n", name);
+    */
 
     bsal_actor_helper_send_reply_empty(actor, BSAL_ACTOR_UNPACK_REPLY);
 }
@@ -532,15 +538,27 @@ void bsal_dna_kmer_counter_kernel_clone_reply(struct bsal_actor *actor, struct b
     struct bsal_dna_kmer_counter_kernel *concrete_actor;
     int name;
     int clone;
+    int source;
+    int consumer;
 
+    source = bsal_message_source(message);
     concrete_actor = (struct bsal_dna_kmer_counter_kernel *)bsal_actor_concrete_actor(actor);
     name = bsal_actor_get_name(actor);
     bsal_message_helper_unpack_int(message, 0, &clone);
+    consumer = bsal_actor_get_acquaintance(actor, concrete_actor->consumer);
 
-    printf("kernel %d cloned itself !!! clone name is %d\n",
+    if (source == name) {
+        printf("kernel %d cloned itself !!! clone name is %d\n",
                     name, clone);
 
-    concrete_actor->auto_scaling_in_progress = 0;
-    concrete_actor->scaling_operations++;
+        bsal_actor_helper_send_int(actor, consumer, BSAL_ACTOR_CLONE, name);
+
+    } else if (source == consumer) {
+        printf("kernel %d cloned aggregator %d, clone name is %d\n",
+                        name, consumer, clone);
+
+        concrete_actor->auto_scaling_in_progress = 0;
+        concrete_actor->scaling_operations++;
+    }
 }
 

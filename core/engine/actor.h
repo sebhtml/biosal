@@ -95,7 +95,13 @@ BSAL_ACTOR_PACK to self
 forward BSAL_ACTOR_PACK_REPLY to new spawnee as UNPACK
 reply BSAL_ CLONE_REPLY with newly spawned actor
 */
+
+/*
+ * CLONE takes one int (the spawner) and returns CLONE_REPLY
+ *
+ */
 #define BSAL_ACTOR_CLONE 0x00000d60
+/* CLONE_REPLY returns one int: the clone name */
 #define BSAL_ACTOR_CLONE_REPLY 0x00006881
 
 /* for migration */

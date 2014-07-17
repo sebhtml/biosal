@@ -52,4 +52,7 @@ void bsal_aggregator_flush(struct bsal_actor *self, int customer_index, struct b
 void bsal_aggregator_verify(struct bsal_actor *self, struct bsal_message *message);
 void bsal_aggregator_aggregate_kernel_output(struct bsal_actor *self, struct bsal_message *message);
 
+void bsal_aggregator_unpack(struct bsal_actor *actor, struct bsal_message *message);
+void bsal_aggregator_pack(struct bsal_actor *actor, struct bsal_message *message);
+
 #endif
