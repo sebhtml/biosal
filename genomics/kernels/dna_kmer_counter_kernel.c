@@ -12,6 +12,7 @@
 #include <core/helpers/actor_helper.h>
 #include <core/helpers/message_helper.h>
 
+#include <core/system/packer.h>
 #include <core/system/memory.h>
 #include <core/system/timer.h>
 #include <core/system/debugger.h>
@@ -72,9 +73,9 @@ void bsal_dna_kmer_counter_kernel_init(struct bsal_actor *actor)
     concrete_actor->auto_scaling_in_progress = 0;
 
     bsal_actor_register(actor, BSAL_ACTOR_PACK,
-                    bsal_dna_kmer_counter_kernel_pack);
+                    bsal_dna_kmer_counter_kernel_pack_message);
     bsal_actor_register(actor, BSAL_ACTOR_UNPACK,
-                    bsal_dna_kmer_counter_kernel_unpack);
+                    bsal_dna_kmer_counter_kernel_unpack_message);
     bsal_actor_register(actor, BSAL_ACTOR_CLONE_REPLY,
                     bsal_dna_kmer_counter_kernel_clone_reply);
 
@@ -142,13 +143,18 @@ void bsal_dna_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_
 
     if (tag == BSAL_PUSH_SEQUENCE_DATA_BLOCK) {
 
-        if (concrete_actor->kmer_length == -1) {
+        if (concrete_actor->kmer_length == BSAL_ACTOR_NOBODY) {
             printf("Error no kmer length set in kernel\n");
             return;
         }
 
-        if (concrete_actor->consumer == -1) {
+        if (concrete_actor->consumer == BSAL_ACTOR_NOBODY) {
             printf("Error no consumer set in kernel\n");
+            return;
+        }
+
+        if (concrete_actor->producer_source == BSAL_ACTOR_NOBODY) {
+            printf("Error, no producer_source set\n");
             return;
         }
 
@@ -509,33 +515,35 @@ void bsal_dna_kmer_counter_kernel_do_auto_scaling(struct bsal_actor *actor, stru
     bsal_actor_helper_send_to_self_int(actor, BSAL_ACTOR_CLONE, name);
 }
 
-void bsal_dna_kmer_counter_kernel_pack(struct bsal_actor *actor, struct bsal_message *message)
+void bsal_dna_kmer_counter_kernel_pack_message(struct bsal_actor *actor, struct bsal_message *message)
 {
+    int *new_buffer;
+    int new_count;
+    struct bsal_message new_message;
+    struct bsal_memory_pool *ephemeral_memory;
 
-    /*
-    struct bsal_dna_kmer_counter_kernel *concrete_actor;
-    int name;
+    ephemeral_memory = bsal_actor_get_ephemeral_memory(actor);
+    new_count = bsal_dna_kmer_counter_kernel_pack_size(actor);
+    new_buffer = bsal_memory_pool_allocate(ephemeral_memory, new_count);
 
-    concrete_actor = (struct bsal_dna_kmer_counter_kernel *)bsal_actor_concrete_actor(actor);
-    name = bsal_actor_get_name(actor);
+    bsal_dna_kmer_counter_kernel_pack(actor, new_buffer);
 
-    printf("kernel %d is packing\n", name);
-    */
-    bsal_actor_helper_send_reply_empty(actor, BSAL_ACTOR_PACK_REPLY);
+    bsal_message_init(&new_message, BSAL_ACTOR_PACK_REPLY, new_count, new_buffer);
+
+    bsal_actor_send_reply(actor, &new_message);
+
+    bsal_message_destroy(&new_message);
+    bsal_memory_pool_free(ephemeral_memory, new_buffer);
+    new_buffer = NULL;
 }
 
-void bsal_dna_kmer_counter_kernel_unpack(struct bsal_actor *actor, struct bsal_message *message)
+void bsal_dna_kmer_counter_kernel_unpack_message(struct bsal_actor *actor, struct bsal_message *message)
 {
+    void *buffer;
 
-    /*
-    struct bsal_dna_kmer_counter_kernel *concrete_actor;
-    int name;
+    buffer = bsal_message_buffer(message);
 
-    concrete_actor = (struct bsal_dna_kmer_counter_kernel *)bsal_actor_concrete_actor(actor);
-    name = bsal_actor_get_name(actor);
-
-    printf("kernel %d is unpacking\n", name);
-    */
+    bsal_dna_kmer_counter_kernel_unpack(actor, buffer);
 
     bsal_actor_helper_send_reply_empty(actor, BSAL_ACTOR_UNPACK_REPLY);
 }
@@ -569,3 +577,62 @@ void bsal_dna_kmer_counter_kernel_clone_reply(struct bsal_actor *actor, struct b
     }
 }
 
+
+int bsal_dna_kmer_counter_kernel_pack(struct bsal_actor *actor, void *buffer)
+{
+    return bsal_dna_kmer_counter_kernel_pack_unpack(actor, BSAL_PACKER_OPERATION_PACK, buffer);
+}
+
+int bsal_dna_kmer_counter_kernel_unpack(struct bsal_actor *actor, void *buffer)
+{
+    return bsal_dna_kmer_counter_kernel_pack_unpack(actor, BSAL_PACKER_OPERATION_UNPACK, buffer);
+}
+
+int bsal_dna_kmer_counter_kernel_pack_size(struct bsal_actor *actor)
+{
+    return bsal_dna_kmer_counter_kernel_pack_unpack(actor, BSAL_PACKER_OPERATION_DRY_RUN, NULL);
+}
+
+/*
+ * Copy these:
+ *
+ * - kmer length
+ * - consumer
+ * - producer
+ */
+int bsal_dna_kmer_counter_kernel_pack_unpack(struct bsal_actor *actor, int operation, void *buffer)
+{
+    int bytes;
+    struct bsal_packer packer;
+    struct bsal_dna_kmer_counter_kernel *concrete_actor;
+    int producer;
+    int consumer;
+
+    concrete_actor = (struct bsal_dna_kmer_counter_kernel *)bsal_actor_concrete_actor(actor);
+    producer = BSAL_ACTOR_NOBODY;
+    consumer = BSAL_ACTOR_NOBODY;
+
+    if (operation != BSAL_PACKER_OPERATION_UNPACK) {
+        producer = bsal_actor_get_acquaintance(actor, concrete_actor->producer);
+        consumer = bsal_actor_get_acquaintance(actor, concrete_actor->consumer);
+    }
+
+    bytes = 0;
+
+    bsal_packer_init(&packer, operation, buffer);
+
+    bsal_packer_work(&packer, &concrete_actor->kmer_length, sizeof(concrete_actor->kmer_length));
+    bsal_packer_work(&packer, &producer, sizeof(producer));
+    bsal_packer_work(&packer, &consumer, sizeof(consumer));
+
+    if (operation == BSAL_PACKER_OPERATION_UNPACK) {
+
+        concrete_actor->producer = bsal_actor_add_acquaintance(actor, producer);
+        concrete_actor->consumer = bsal_actor_add_acquaintance(actor, consumer);
+    }
+
+    bytes += bsal_packer_worked_bytes(&packer);
+    bsal_packer_destroy(&packer);
+
+    return bytes;
+}

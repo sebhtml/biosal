@@ -56,8 +56,13 @@ void bsal_dna_kmer_counter_kernel_ask(struct bsal_actor *self, struct bsal_messa
 
 void bsal_dna_kmer_counter_kernel_do_auto_scaling(struct bsal_actor *self, struct bsal_message *message);
 
-void bsal_dna_kmer_counter_kernel_pack(struct bsal_actor *actor, struct bsal_message *message);
-void bsal_dna_kmer_counter_kernel_unpack(struct bsal_actor *actor, struct bsal_message *message);
+void bsal_dna_kmer_counter_kernel_pack_message(struct bsal_actor *actor, struct bsal_message *message);
+void bsal_dna_kmer_counter_kernel_unpack_message(struct bsal_actor *actor, struct bsal_message *message);
 void bsal_dna_kmer_counter_kernel_clone_reply(struct bsal_actor *actor, struct bsal_message *message);
+
+int bsal_dna_kmer_counter_kernel_pack(struct bsal_actor *actor, void *buffer);
+int bsal_dna_kmer_counter_kernel_unpack(struct bsal_actor *actor, void *buffer);
+int bsal_dna_kmer_counter_kernel_pack_size(struct bsal_actor *actor);
+int bsal_dna_kmer_counter_kernel_pack_unpack(struct bsal_actor *actor, int operation, void *buffer);
 
 #endif
