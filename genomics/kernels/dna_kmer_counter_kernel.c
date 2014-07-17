@@ -68,6 +68,8 @@ void bsal_dna_kmer_counter_kernel_init(struct bsal_actor *actor)
     concrete_actor->kmers = 0;
 
     bsal_dna_codec_init(&concrete_actor->codec);
+
+    concrete_actor->auto_scaling_in_progress = 0;
 }
 
 void bsal_dna_kmer_counter_kernel_destroy(struct bsal_actor *actor)
@@ -407,14 +409,7 @@ void bsal_dna_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_
 
     } else if (tag == BSAL_ACTOR_DO_AUTO_SCALING) {
 
-        printf("AUTO-SCALING kernel %d receives auto-scale message (BSAL_ACTOR_DO_AUTO_SCALING) via actor %d\n",
-                        name, source);
-
-        bsal_actor_helper_send_empty(actor, bsal_actor_get_acquaintance(actor,
-                                concrete_actor->producer_source),
-                        BSAL_ACTOR_DO_AUTO_SCALING);
-
-        concrete_actor->scaled_operations++;
+        bsal_dna_kmer_counter_kernel_do_auto_scaling(actor, message);
     }
 }
 
@@ -454,4 +449,28 @@ void bsal_dna_kmer_counter_kernel_ask(struct bsal_actor *self, struct bsal_messa
 #ifdef BSAL_DNA_KMER_COUNTER_KERNEL_DEBUG
     printf("DEBUG kernel asks producer\n");
 #endif
+}
+
+void bsal_dna_kmer_counter_kernel_do_auto_scaling(struct bsal_actor *actor, struct bsal_message *message)
+{
+    struct bsal_dna_kmer_counter_kernel *concrete_actor;
+    int name;
+    int source;
+
+    name = bsal_actor_get_name(actor);
+    source = bsal_message_source(message);
+
+    concrete_actor = (struct bsal_dna_kmer_counter_kernel *)bsal_actor_concrete_actor(actor);
+
+    /* - spawn a kernel
+     * - spawn an aggregator
+     * - set the aggregator as the consumer of the kernel
+     * - set the kmer stores as the consumers of the aggregator
+     * - set a sequence store as the producer of the kernel (BSAL_ACTOR_SET_PRODUCER)
+     */
+
+    printf("AUTO-SCALING kernel %d receives auto-scale message (BSAL_ACTOR_DO_AUTO_SCALING) via actor %d\n",
+                    name, source);
+
+    concrete_actor->scaled_operations++;
 }

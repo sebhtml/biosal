@@ -95,12 +95,9 @@ void argonnite_init(struct bsal_actor *actor)
                     argonnite_connect_kernels_with_stores);
     bsal_actor_register(actor, BSAL_SEQUENCE_STORE_REQUEST_PROGRESS_REPLY,
                     argonnite_request_progress_reply);
-    bsal_actor_register(actor, BSAL_ACTOR_DO_AUTO_SCALING,
-                    argonnite_do_auto_scaling);
 
     concrete_actor->state = ARGONNITE_STATE_NONE;
 
-    concrete_actor->auto_scaled = 0;
 }
 
 void argonnite_destroy(struct bsal_actor *actor)
@@ -1051,22 +1048,3 @@ void argonnite_request_progress_reply(struct bsal_actor *actor, struct bsal_mess
                     value);
 }
 
-void argonnite_do_auto_scaling(struct bsal_actor *actor, struct bsal_message *message)
-{
-    struct argonnite *concrete_actor;
-    int source;
-
-    source = bsal_message_source(message);
-    concrete_actor = (struct argonnite *)bsal_actor_concrete_actor(actor);
-
-    if (concrete_actor->auto_scaled >= 128) {
-        return;
-    }
-
-    printf("AUTO-SCALING argonnite %d <argonnite_do_auto_scaling> %d (BSAL_ACTOR_DO_AUTO_SCALING) from kernel %d\n",
-                    bsal_actor_get_name(actor),
-                    concrete_actor->auto_scaled,
-                    source);
-
-    ++concrete_actor->auto_scaled;
-}
