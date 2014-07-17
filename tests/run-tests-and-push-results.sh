@@ -4,9 +4,6 @@
 ## everyday at 03:01 UTC-5 (8:01 UTC)
 #1 8 * * * /space/boisvert/automated-tests/biosal/tests/run-tests-and-push-results.sh /space/boisvert/automated-tests
 
-# this is not an interactive session
-export PATH=/usr/local/bin/:$PATH
-
 function main()
 {
     local bucket
