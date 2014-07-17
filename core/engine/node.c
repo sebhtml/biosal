@@ -931,11 +931,18 @@ int bsal_node_has_actor(struct bsal_node *self, int name)
     node_name = bsal_node_actor_node(self, name);
 
     if (node_name == self->name) {
+
+            return 1;
+
+        /* The block below is disabled.
+         */
+#ifdef BSAL_NODE_CHECK_DEAD_ACTOR
         /* maybe the actor is dead already !
          */
         if (bsal_node_get_actor_from_name(self, name) != NULL) {
             return 1;
         }
+#endif
     }
 
     return 0;
