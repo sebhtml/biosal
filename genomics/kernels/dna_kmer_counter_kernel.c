@@ -84,6 +84,8 @@ void bsal_dna_kmer_counter_kernel_init(struct bsal_actor *actor)
                     bsal_dna_kmer_counter_kernel_notify);
     bsal_actor_register(actor, BSAL_KERNEL_NOTIFY_REPLY,
                     bsal_dna_kmer_counter_kernel_notify_reply);
+    bsal_actor_register(actor, BSAL_ACTOR_DO_AUTO_SCALING,
+                    bsal_dna_kmer_counter_kernel_do_auto_scaling);
 
     printf("kernel %d is online !!!\n",
                     bsal_actor_get_name(actor));
@@ -435,6 +437,9 @@ void bsal_dna_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_
     } else if (tag == BSAL_ACTOR_SET_PRODUCER_REPLY
                     && source == concrete_actor->auto_scaling_clone) {
 
+        printf("kernel %d completed auto-scaling\n",
+                        bsal_actor_get_name(actor));
+
         concrete_actor->auto_scaling_in_progress = 0;
         concrete_actor->scaling_operations++;
         concrete_actor->auto_scaling_clone = BSAL_ACTOR_NOBODY;
@@ -445,10 +450,6 @@ void bsal_dna_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_
                         name, source);
 
         bsal_actor_helper_send_to_self_empty(actor, BSAL_ACTOR_ENABLE_AUTO_SCALING);
-
-    } else if (tag == BSAL_ACTOR_DO_AUTO_SCALING) {
-
-        bsal_dna_kmer_counter_kernel_do_auto_scaling(actor, message);
 
     }
 }

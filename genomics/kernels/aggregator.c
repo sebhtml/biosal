@@ -478,12 +478,13 @@ int bsal_aggregator_pack_unpack(struct bsal_actor *actor, int operation, void *b
 
     bytes += bsal_packer_worked_bytes(&packer);
 
+    /*
     if (operation == BSAL_PACKER_OPERATION_UNPACK) {
         printf("aggregator %d unpacked kmer length %d\n",
                         bsal_actor_get_name(actor),
                         concrete_actor->kmer_length);
     }
-
+*/
     /* Pack the consumers
      */
 
