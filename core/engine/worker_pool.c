@@ -103,8 +103,6 @@ void bsal_worker_pool_destroy(struct bsal_worker_pool *pool)
 
     bsal_scheduler_destroy(&pool->scheduler);
 
-    bsal_worker_pool_print_efficiency(pool);
-
     for (i = 0; i < pool->workers; i++) {
         set= (struct bsal_set *)bsal_vector_at(&pool->worker_actors, i);
 
@@ -340,7 +338,7 @@ void bsal_worker_pool_toggle_debug_mode(struct bsal_worker_pool *self)
     self->debug_mode = !self->debug_mode;
 }
 
-void bsal_worker_pool_print_efficiency(struct bsal_worker_pool *pool)
+float bsal_worker_pool_get_efficiency(struct bsal_worker_pool *pool)
 {
     double efficiency;
     struct bsal_worker *worker;
@@ -357,10 +355,7 @@ void bsal_worker_pool_print_efficiency(struct bsal_worker_pool *pool)
         efficiency /= pool->workers;
     }
 
-    printf("node %d efficiency: %.2f\n",
-                    bsal_node_name(pool->node),
-                    efficiency);
-
+    return efficiency;
 }
 
 struct bsal_node *bsal_worker_pool_get_node(struct bsal_worker_pool *pool)

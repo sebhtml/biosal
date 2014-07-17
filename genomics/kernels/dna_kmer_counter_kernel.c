@@ -70,6 +70,21 @@ void bsal_dna_kmer_counter_kernel_init(struct bsal_actor *actor)
     bsal_dna_codec_init(&concrete_actor->codec);
 
     concrete_actor->auto_scaling_in_progress = 0;
+
+    bsal_actor_register(actor, BSAL_ACTOR_PACK,
+                    bsal_dna_kmer_counter_kernel_pack);
+    bsal_actor_register(actor, BSAL_ACTOR_UNPACK,
+                    bsal_dna_kmer_counter_kernel_unpack);
+    bsal_actor_register(actor, BSAL_ACTOR_CLONE_REPLY,
+                    bsal_dna_kmer_counter_kernel_clone_reply);
+
+    printf("kernel %d is online !!!\n",
+                    bsal_actor_get_name(actor));
+
+    /* Enable packing for this actor. Maybe this is already enabled, but who knows.
+     */
+
+    bsal_actor_helper_send_to_self_empty(actor, BSAL_ACTOR_PACK_ENABLE);
 }
 
 void bsal_dna_kmer_counter_kernel_destroy(struct bsal_actor *actor)
@@ -332,14 +347,16 @@ void bsal_dna_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_
 
         printf("kernel/%d generated %" PRIu64 " kmers from %" PRIu64 " entries (%d blocks)\n",
                         bsal_actor_get_name(actor), concrete_actor->kmers,
-                        concrete_actor->expected, concrete_actor->blocks);
+                        concrete_actor->actual, concrete_actor->blocks);
 
 #ifdef BSAL_KMER_COUNTER_KERNEL_DEBUG
         printf("kernel %d receives request to stop from %d, supervisor is %d\n",
                         name, source, bsal_actor_supervisor(actor));
 #endif
 
-        bsal_actor_helper_send_to_self_empty(actor, BSAL_ACTOR_STOP);
+        /*bsal_actor_helper_send_to_self_empty(actor, BSAL_ACTOR_STOP);*/
+
+        bsal_actor_helper_ask_to_stop(actor, message);
 
     } else if (tag == BSAL_ACTOR_SET_CONSUMER) {
 
@@ -410,6 +427,7 @@ void bsal_dna_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_
     } else if (tag == BSAL_ACTOR_DO_AUTO_SCALING) {
 
         bsal_dna_kmer_counter_kernel_do_auto_scaling(actor, message);
+
     }
 }
 
@@ -462,6 +480,13 @@ void bsal_dna_kmer_counter_kernel_do_auto_scaling(struct bsal_actor *actor, stru
 
     concrete_actor = (struct bsal_dna_kmer_counter_kernel *)bsal_actor_concrete_actor(actor);
 
+    /*
+     * Don't do auto-scaling while doing auto-scaling...
+     */
+    if (concrete_actor->auto_scaling_in_progress) {
+        return;
+    }
+
     /* - spawn a kernel
      * - spawn an aggregator
      * - set the aggregator as the consumer of the kernel
@@ -472,5 +497,50 @@ void bsal_dna_kmer_counter_kernel_do_auto_scaling(struct bsal_actor *actor, stru
     printf("AUTO-SCALING kernel %d receives auto-scale message (BSAL_ACTOR_DO_AUTO_SCALING) via actor %d\n",
                     name, source);
 
-    concrete_actor->scaled_operations++;
+    concrete_actor->auto_scaling_in_progress = 1;
+
+    bsal_actor_helper_send_to_self_int(actor, BSAL_ACTOR_CLONE, name);
 }
+
+void bsal_dna_kmer_counter_kernel_pack(struct bsal_actor *actor, struct bsal_message *message)
+{
+    struct bsal_dna_kmer_counter_kernel *concrete_actor;
+    int name;
+
+    concrete_actor = (struct bsal_dna_kmer_counter_kernel *)bsal_actor_concrete_actor(actor);
+    name = bsal_actor_get_name(actor);
+
+    printf("kernel %d is packing\n", name);
+    bsal_actor_helper_send_reply_empty(actor, BSAL_ACTOR_PACK_REPLY);
+}
+
+void bsal_dna_kmer_counter_kernel_unpack(struct bsal_actor *actor, struct bsal_message *message)
+{
+    struct bsal_dna_kmer_counter_kernel *concrete_actor;
+    int name;
+
+    concrete_actor = (struct bsal_dna_kmer_counter_kernel *)bsal_actor_concrete_actor(actor);
+    name = bsal_actor_get_name(actor);
+
+    printf("kernel %d is unpacking\n", name);
+
+    bsal_actor_helper_send_reply_empty(actor, BSAL_ACTOR_UNPACK_REPLY);
+}
+
+void bsal_dna_kmer_counter_kernel_clone_reply(struct bsal_actor *actor, struct bsal_message *message)
+{
+    struct bsal_dna_kmer_counter_kernel *concrete_actor;
+    int name;
+    int clone;
+
+    concrete_actor = (struct bsal_dna_kmer_counter_kernel *)bsal_actor_concrete_actor(actor);
+    name = bsal_actor_get_name(actor);
+    bsal_message_helper_unpack_int(message, 0, &clone);
+
+    printf("kernel %d cloned itself !!! clone name is %d\n",
+                    name, clone);
+
+    concrete_actor->auto_scaling_in_progress = 0;
+    concrete_actor->scaling_operations++;
+}
+

@@ -26,13 +26,18 @@ struct bsal_dna_kmer_counter_kernel {
 
     int producer_source;
 
-    int scaled_operations;
+    int scaling_operations;
 
     int notified;
     int notification_source;
     int bytes_per_kmer;
 
+    /*
+     * Auto-scaling stuff
+     */
     int auto_scaling_in_progress;
+
+    struct bsal_vector children;
 };
 
 #define BSAL_SET_KMER_LENGTH 0x0000702b
@@ -50,5 +55,9 @@ void bsal_dna_kmer_counter_kernel_verify(struct bsal_actor *actor, struct bsal_m
 void bsal_dna_kmer_counter_kernel_ask(struct bsal_actor *self, struct bsal_message *message);
 
 void bsal_dna_kmer_counter_kernel_do_auto_scaling(struct bsal_actor *self, struct bsal_message *message);
+
+void bsal_dna_kmer_counter_kernel_pack(struct bsal_actor *actor, struct bsal_message *message);
+void bsal_dna_kmer_counter_kernel_unpack(struct bsal_actor *actor, struct bsal_message *message);
+void bsal_dna_kmer_counter_kernel_clone_reply(struct bsal_actor *actor, struct bsal_message *message);
 
 #endif

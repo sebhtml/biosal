@@ -29,10 +29,10 @@
 
 #define BSAL_ACTOR_DEBUG_SPAWN
 #define BSAL_ACTOR_DEBUG_10335
-#define BSAL_ACTOR_DEBUG_CLONE
 
 #define BSAL_ACTOR_DEBUG_MIGRATE
 #define BSAL_ACTOR_DEBUG_FORWARDING
+#define BSAL_ACTOR_DEBUG_CLONE
 */
 
 
@@ -93,8 +93,10 @@ void bsal_actor_init(struct bsal_actor *actor, void *state,
 
     bsal_actor_register(actor, BSAL_ACTOR_FORWARD_MESSAGES, bsal_actor_forward_messages);
 
+    /*
     bsal_actor_helper_send_to_self_empty(actor, BSAL_ACTOR_UNPIN_FROM_WORKER);
     bsal_actor_helper_send_to_self_empty(actor, BSAL_ACTOR_PIN_TO_NODE);
+    */
 
     bsal_queue_init(&actor->enqueued_messages, sizeof(struct bsal_message));
 
@@ -253,8 +255,11 @@ int bsal_actor_send_system_self(struct bsal_actor *actor, struct bsal_message *m
                         */
 
         actor->can_pack = BSAL_ACTOR_STATUS_SUPPORTED;
+
+        /*
         bsal_actor_helper_send_to_self_empty(actor, BSAL_ACTOR_UNPIN_FROM_WORKER);
         bsal_actor_helper_send_to_self_empty(actor, BSAL_ACTOR_UNPIN_FROM_NODE);
+        */
 
         return 1;
 
@@ -334,6 +339,9 @@ void bsal_actor_send(struct bsal_actor *actor, int name, struct bsal_message *me
 void bsal_actor_send_with_source(struct bsal_actor *actor, int name, struct bsal_message *message,
                 int source)
 {
+    int tag;
+
+    tag = bsal_message_tag(message);
     bsal_message_set_source(message, source);
     bsal_message_set_destination(message, name);
 
@@ -347,6 +355,10 @@ void bsal_actor_send_with_source(struct bsal_actor *actor, int name, struct bsal
      * at all !
      */
     if (actor->worker == NULL) {
+
+        printf("Error, message was lost because it was sent in *_init() or *_destroy(), which is not allowed (tag: %d)\n",
+                        tag);
+
         return;
     }
 
@@ -532,6 +544,7 @@ int bsal_actor_receive_system(struct bsal_actor *actor, struct bsal_message *mes
     int offset;
     int bytes;
     struct bsal_memory_pool *ephemeral_memory;
+    int new_actor;
 
     ephemeral_memory = bsal_actor_get_ephemeral_memory(actor);
     tag = bsal_message_tag(message);
@@ -550,6 +563,15 @@ int bsal_actor_receive_system(struct bsal_actor *actor, struct bsal_message *mes
     source =bsal_message_source(message);
     buffer = bsal_message_buffer(message);
     count = bsal_message_count(message);
+
+    /* For any remote spawning operation, add the new actor in the list of
+     * children
+     */
+    if (tag == BSAL_ACTOR_SPAWN_REPLY) {
+
+        new_actor = *(int *)buffer;
+        bsal_actor_add_child(actor, new_actor);
+    }
 
     /* check message tags that are required for migration
      * before attempting to queue messages during hot actor
@@ -628,11 +650,6 @@ int bsal_actor_receive_system(struct bsal_actor *actor, struct bsal_message *mes
         bsal_memory_pool_free(ephemeral_memory, new_buffer);
 
         return 1;
-
-    } else if (tag == BSAL_ACTOR_SPAWN_REPLY) {
-
-        name = *(int *)buffer;
-        bsal_actor_add_child(actor, name);
 
     } else if (tag == BSAL_ACTOR_FORWARD_MESSAGES) {
 
@@ -714,6 +731,8 @@ int bsal_actor_receive_system(struct bsal_actor *actor, struct bsal_message *mes
      * because they can only be sent by an actor
      * to itself.
      */
+
+        /*
     } else if (tag == BSAL_ACTOR_PIN_TO_WORKER) {
         return 1;
 
@@ -725,7 +744,7 @@ int bsal_actor_receive_system(struct bsal_actor *actor, struct bsal_message *mes
 
     } else if (tag == BSAL_ACTOR_UNPIN_FROM_NODE) {
         return 1;
-
+*/
     } else if (tag == BSAL_ACTOR_SET_SUPERVISOR
                     /*&& source == bsal_actor_supervisor(actor)*/) {
 
@@ -884,6 +903,7 @@ void bsal_actor_receive_proxy_message(struct bsal_actor *actor,
 void bsal_actor_receive_synchronize(struct bsal_actor *actor,
                 struct bsal_message *message)
 {
+
 #ifdef BSAL_ACTOR_DEBUG
     printf("DEBUG56 replying to %i with BSAL_ACTOR_PRIVATE_SYNCHRONIZE_REPLY\n",
                     bsal_message_source(message));
@@ -891,6 +911,8 @@ void bsal_actor_receive_synchronize(struct bsal_actor *actor,
 
     bsal_message_init(message, BSAL_ACTOR_SYNCHRONIZE_REPLY, 0, NULL);
     bsal_actor_send(actor, bsal_message_source(message), message);
+
+    bsal_message_destroy(message);
 }
 
 void bsal_actor_receive_synchronize_reply(struct bsal_actor *actor,
@@ -1115,11 +1137,14 @@ void bsal_actor_continue_clone(struct bsal_actor *actor, struct bsal_message *me
 
     if (tag == BSAL_ACTOR_SPAWN_REPLY && source == actor->cloning_spawner) {
 
+        actor->cloning_new_actor = *(int *)buffer;
+
 #ifdef BSAL_ACTOR_DEBUG_CLONE
-        printf("DEBUG bsal_actor_continue_clone BSAL_ACTOR_SPAWN_REPLY\n");
+        printf("DEBUG bsal_actor_continue_clone BSAL_ACTOR_SPAWN_REPLY NEW ACTOR IS %d\n",
+                        actor->cloning_new_actor);
 #endif
 
-        actor->cloning_new_actor = *(int *)buffer;
+
         bsal_actor_helper_send_to_self_empty(actor, BSAL_ACTOR_PACK);
 
         actor->cloning_progressed = 1;
@@ -1127,7 +1152,8 @@ void bsal_actor_continue_clone(struct bsal_actor *actor, struct bsal_message *me
     } else if (tag == BSAL_ACTOR_PACK_REPLY && source == self) {
 
 #ifdef BSAL_ACTOR_DEBUG_CLONE
-        printf("DEBUG bsal_actor_continue_clone BSAL_ACTOR_PACK_REPLY\n");
+        printf("DEBUG bsal_actor_continue_clone BSAL_ACTOR_PACK_REPLY sending UNPACK to %d\n",
+                         actor->cloning_new_actor);
 #endif
 
         /* forward the buffer to the new actor */
@@ -1135,6 +1161,8 @@ void bsal_actor_continue_clone(struct bsal_actor *actor, struct bsal_message *me
         bsal_actor_send(actor, actor->cloning_new_actor, &new_message);
 
         actor->cloning_progressed = 1;
+
+        bsal_message_destroy(&new_message);
 
     } else if (tag == BSAL_ACTOR_UNPACK_REPLY && source == actor->cloning_new_actor) {
 

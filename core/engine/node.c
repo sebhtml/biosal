@@ -630,6 +630,8 @@ void bsal_node_set_initial_actor(struct bsal_node *node, int node_name, int acto
 
 void bsal_node_run(struct bsal_node *node)
 {
+    float efficiency;
+
     if (node->print_counters) {
         printf("----------------------------------------------\n");
         printf("biosal> node/%d: %d threads, %d workers\n", bsal_node_name(node),
@@ -672,9 +674,16 @@ void bsal_node_run(struct bsal_node *node)
         bsal_thread_join(&node->thread);
     }
 
-    if (node->print_counters) {
-        bsal_node_print_counters(node);
-    }
+    /* Alwaysa print counters at the end, this is useful.
+     */
+    bsal_node_print_counters(node);
+
+    /* Print global efficiency for this node... */
+
+    efficiency = bsal_worker_pool_get_efficiency(&node->worker_pool);
+    printf("node %d efficiency: %.2f\n",
+                    bsal_node_name(node),
+                    efficiency);
 }
 
 void bsal_node_start_initial_actor(struct bsal_node *node)
