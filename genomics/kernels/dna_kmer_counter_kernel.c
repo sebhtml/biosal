@@ -510,6 +510,20 @@ void bsal_dna_kmer_counter_kernel_do_auto_scaling(struct bsal_actor *actor, stru
         return;
     }
 
+    /*
+     * Avoid cloning too many actors
+     */
+    if (concrete_actor->scaling_operations >= 64) {
+        return;
+    }
+
+    /*
+     * Can't scale now because there is no producer
+     */
+    if (concrete_actor->producer == BSAL_ACTOR_NOBODY) {
+        return;
+    }
+
     /* - spawn a kernel
      * - spawn an aggregator
      * - set the aggregator as the consumer of the kernel
