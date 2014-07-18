@@ -434,6 +434,25 @@ void bsal_dna_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_
                                 concrete_actor->producer_source),
                         BSAL_ACTOR_SET_PRODUCER_REPLY);
 
+    } else if (tag == BSAL_ACTOR_SET_CONSUMER_REPLY) {
+
+        /* Set the producer for the new kernel
+         */
+        producer = bsal_actor_get_acquaintance(actor, concrete_actor->producer);
+
+        bsal_actor_helper_send_int(actor, concrete_actor->auto_scaling_clone,
+                        BSAL_ACTOR_SET_PRODUCER, producer);
+
+        concrete_actor->auto_scaling_in_progress = 0;
+        concrete_actor->scaling_operations++;
+        concrete_actor->auto_scaling_clone = BSAL_ACTOR_NOBODY;
+
+        printf("kernel %d completed auto-scaling # %d\n",
+                        bsal_actor_get_name(actor),
+                        concrete_actor->scaling_operations);
+
+
+
     } else if (tag == BSAL_ACTOR_SET_PRODUCER_REPLY
                     && source == concrete_actor->auto_scaling_clone) {
 
@@ -506,7 +525,7 @@ void bsal_dna_kmer_counter_kernel_do_auto_scaling(struct bsal_actor *actor, stru
     /*
      * Avoid cloning too many actors
      */
-    if (concrete_actor->scaling_operations >= 64) {
+    if (concrete_actor->scaling_operations >= 4) {
         return;
     }
 
@@ -599,21 +618,13 @@ void bsal_dna_kmer_counter_kernel_clone_reply(struct bsal_actor *actor, struct b
                         name, consumer, clone);
 
         bsal_actor_helper_send_int(actor, concrete_actor->auto_scaling_clone,
-                        BSAL_ACTOR_SET_PRODUCER, producer);
+                        BSAL_ACTOR_SET_CONSUMER, clone);
 
         /*
         printf("kernel %d sending SET_PRODUCER to %d with value %d\n",
                         name, concrete_actor->auto_scaling_clone,
                         producer);
                         */
-
-        concrete_actor->auto_scaling_in_progress = 0;
-        concrete_actor->scaling_operations++;
-        concrete_actor->auto_scaling_clone = BSAL_ACTOR_NOBODY;
-
-        printf("kernel %d completed auto-scaling # %d\n",
-                        bsal_actor_get_name(actor),
-                        concrete_actor->scaling_operations);
 
     }
 }
