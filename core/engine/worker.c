@@ -49,13 +49,13 @@ void bsal_worker_init(struct bsal_worker *worker, int name, struct bsal_node *no
      * 1. enable atomic operations for change visibility
      * 2. Use volatile head and tail.
      */
-    bsal_fast_ring_init(&worker->scheduled_actor_queue, capacity, sizeof(struct bsal_actor *));
+    bsal_fast_ring_init(&worker->actors_to_schedule, capacity, sizeof(struct bsal_actor *));
 
 #ifdef BSAL_NODE_USE_MESSAGE_RECYCLING
     bsal_fast_ring_init(&worker->outbound_buffers, capacity, sizeof(void *));
 #endif
 
-    bsal_ring_queue_init(&worker->scheduled_actor_queue_real, sizeof(struct bsal_actor *));
+    bsal_ring_queue_init(&worker->scheduling_queue, sizeof(struct bsal_actor *));
     bsal_map_init(&worker->actors, sizeof(int), sizeof(int));
     bsal_map_iterator_init(&worker->actor_iterator, &worker->actors);
 
@@ -104,12 +104,12 @@ void bsal_worker_destroy(struct bsal_worker *worker)
 
     bsal_lock_destroy(&worker->lock);
 
-    bsal_fast_ring_destroy(&worker->scheduled_actor_queue);
+    bsal_fast_ring_destroy(&worker->actors_to_schedule);
 
 #ifdef BSAL_NODE_USE_MESSAGE_RECYCLING
     bsal_fast_ring_destroy(&worker->outbound_buffers);
 #endif
-    bsal_ring_queue_destroy(&worker->scheduled_actor_queue_real);
+    bsal_ring_queue_destroy(&worker->scheduling_queue);
     bsal_fast_ring_destroy(&worker->outbound_message_queue);
     bsal_ring_queue_destroy(&worker->outbound_message_queue_buffer);
 
@@ -345,7 +345,7 @@ int bsal_worker_dequeue_actor(struct bsal_worker *worker, struct bsal_actor **ac
     /* Move an actor from the ring to the real actor scheduling queue
      */
     while (operations--
-                    && bsal_fast_ring_pop_from_consumer(&worker->scheduled_actor_queue, &other_actor)) {
+                    && bsal_fast_ring_pop_from_consumer(&worker->actors_to_schedule, &other_actor)) {
 
         other_name = bsal_actor_get_name(other_actor);
 
@@ -380,7 +380,7 @@ int bsal_worker_dequeue_actor(struct bsal_worker *worker, struct bsal_actor **ac
 
             bsal_map_update_value(&worker->actors, &other_name, &status);
 
-            bsal_ring_queue_enqueue(&worker->scheduled_actor_queue_real, &other_actor);
+            bsal_ring_queue_enqueue(&worker->scheduling_queue, &other_actor);
         } else {
 
 #ifdef BSAL_WORKER_DEBUG_SCHEDULER
@@ -393,7 +393,7 @@ int bsal_worker_dequeue_actor(struct bsal_worker *worker, struct bsal_actor **ac
     /* Now, dequeue an actor from the real queue.
      * If it has more than 1 message, re-enqueue it
      */
-    value = bsal_ring_queue_dequeue(&worker->scheduled_actor_queue_real, actor);
+    value = bsal_ring_queue_dequeue(&worker->scheduling_queue, actor);
 
     if (value) {
         name = bsal_actor_get_name(*actor);
@@ -436,7 +436,7 @@ int bsal_worker_dequeue_actor(struct bsal_worker *worker, struct bsal_actor **ac
 
             /* The status is still STATUS_QUEUED
              */
-            bsal_ring_queue_enqueue(&worker->scheduled_actor_queue_real, actor);
+            bsal_ring_queue_enqueue(&worker->scheduling_queue, actor);
 
 
         /* The actor is scheduled to run, but the new tail is not
@@ -480,7 +480,7 @@ int bsal_worker_dequeue_actor(struct bsal_worker *worker, struct bsal_actor **ac
             }
 
             if (mailbox_size > 0) {
-                bsal_ring_queue_enqueue(&worker->scheduled_actor_queue_real, &other_actor);
+                bsal_ring_queue_enqueue(&worker->scheduling_queue, &other_actor);
 
                 status = STATUS_QUEUED;
                 bsal_map_update_value(&worker->actors, &name, &status);
@@ -503,7 +503,7 @@ int bsal_worker_dequeue_actor(struct bsal_worker *worker, struct bsal_actor **ac
  */
 int bsal_worker_enqueue_actor(struct bsal_worker *worker, struct bsal_actor **actor)
 {
-    return bsal_fast_ring_push_from_producer(&worker->scheduled_actor_queue, actor);
+    return bsal_fast_ring_push_from_producer(&worker->actors_to_schedule, actor);
 }
 
 int bsal_worker_enqueue_message(struct bsal_worker *worker, struct bsal_message *message)
@@ -554,8 +554,8 @@ void bsal_worker_print_actors(struct bsal_worker *worker, struct bsal_scheduler 
                     bsal_worker_get_sum_of_received_actor_messages(worker),
                     bsal_worker_is_busy(worker),
                     bsal_worker_get_scheduling_epoch_load(worker),
-                    bsal_fast_ring_size_from_producer(&worker->scheduled_actor_queue),
-                    bsal_ring_queue_size(&worker->scheduled_actor_queue_real),
+                    bsal_fast_ring_size_from_producer(&worker->actors_to_schedule),
+                    bsal_ring_queue_size(&worker->scheduling_queue),
                     (int)bsal_map_size(&worker->actors));
 
     while (bsal_map_iterator_get_next_key_and_value(&iterator, &name, NULL)) {
@@ -593,18 +593,18 @@ void bsal_worker_evict_actor(struct bsal_worker *worker, int actor_name)
     bsal_set_add(&worker->evicted_actors, &actor_name);
     bsal_map_delete(&worker->actors, &actor_name);
 
-    count = bsal_ring_queue_size(&worker->scheduled_actor_queue_real);
+    count = bsal_ring_queue_size(&worker->scheduling_queue);
 
     /* evict the actor from the scheduling queue
      */
     while (count--
-                    && bsal_ring_queue_dequeue(&worker->scheduled_actor_queue_real, &actor)) {
+                    && bsal_ring_queue_dequeue(&worker->scheduling_queue, &actor)) {
 
         name = bsal_actor_get_name(actor);
 
         if (name != actor_name) {
 
-            bsal_ring_queue_enqueue(&worker->scheduled_actor_queue_real,
+            bsal_ring_queue_enqueue(&worker->scheduling_queue,
                             &actor);
         }
     }
@@ -612,16 +612,16 @@ void bsal_worker_evict_actor(struct bsal_worker *worker, int actor_name)
     /* Evict the actor from the ring
      */
 
-    count = bsal_fast_ring_size_from_consumer(&worker->scheduled_actor_queue);
+    count = bsal_fast_ring_size_from_consumer(&worker->actors_to_schedule);
 
-    while (count-- && bsal_fast_ring_pop_from_consumer(&worker->scheduled_actor_queue,
+    while (count-- && bsal_fast_ring_pop_from_consumer(&worker->actors_to_schedule,
                             &actor)) {
 
         name = bsal_actor_get_name(actor);
 
         if (name != actor_name) {
 
-            bsal_fast_ring_push_from_producer(&worker->scheduled_actor_queue,
+            bsal_fast_ring_push_from_producer(&worker->actors_to_schedule,
                             &actor);
         }
     }

@@ -55,7 +55,7 @@ struct bsal_worker {
      * The worker pool push actors to schedule on this
      * ring
      */
-    struct bsal_fast_ring scheduled_actor_queue;
+    struct bsal_fast_ring actors_to_schedule;
 
 
 #ifdef BSAL_NODE_USE_MESSAGE_RECYCLING
@@ -65,7 +65,7 @@ struct bsal_worker {
     struct bsal_fast_ring outbound_buffers;
 #endif
 
-    struct bsal_ring_queue scheduled_actor_queue_real;
+    struct bsal_ring_queue scheduling_queue;
 
     struct bsal_fast_ring outbound_message_queue;
     struct bsal_ring_queue outbound_message_queue_buffer;
