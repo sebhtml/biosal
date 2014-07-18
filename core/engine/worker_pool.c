@@ -430,7 +430,7 @@ void bsal_worker_pool_give_message_to_actor(struct bsal_worker_pool *pool, struc
          * Push the actor on the scheduling queue of the worker.
          * If that fails, queue the actor.
          */
-        if (!bsal_worker_enqueue_actor(affinity_worker, &actor)) {
+        if (!bsal_worker_enqueue_actor(affinity_worker, actor)) {
             bsal_ring_queue_enqueue(&pool->scheduled_actor_queue_buffer, &actor);
         }
     }
@@ -482,7 +482,7 @@ void bsal_worker_pool_work(struct bsal_worker_pool *pool)
 
         worker = bsal_worker_pool_get_worker(pool, worker_index);
 
-        if (!bsal_worker_enqueue_actor(worker, &actor)) {
+        if (!bsal_worker_enqueue_actor(worker, actor)) {
             bsal_ring_queue_enqueue(&pool->scheduled_actor_queue_buffer, &actor);
         }
     }

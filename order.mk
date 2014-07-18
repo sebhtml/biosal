@@ -14,6 +14,7 @@ LIBRARY_HOT_CODE += core/hash/murmur_hash_2_64_a.o
 # cold code below
 
 LIBRARY_HOT_CODE += core/engine/scheduler.o
+LIBRARY_HOT_CODE += core/engine/scheduling_queue.o
 LIBRARY_HOT_CODE += core/engine/message.o
 LIBRARY_HOT_CODE += core/engine/node.o
 LIBRARY_HOT_CODE += core/engine/actor.o

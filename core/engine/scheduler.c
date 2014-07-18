@@ -656,7 +656,7 @@ void bsal_scheduler_migrate(struct bsal_scheduler *scheduler, struct bsal_migrat
     printf("ROUTE actor %d ->  worker %d\n", actor_name, new_worker);
 #endif
 
-    bsal_worker_enqueue_actor_special(new_worker_object, &actor);
+    bsal_worker_enqueue_actor_special(new_worker_object, actor);
 
 }
 

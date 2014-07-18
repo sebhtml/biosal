@@ -55,7 +55,7 @@ void bsal_worker_init(struct bsal_worker *worker, int name, struct bsal_node *no
     bsal_fast_ring_init(&worker->outbound_buffers, capacity, sizeof(void *));
 #endif
 
-    bsal_ring_queue_init(&worker->scheduling_queue, sizeof(struct bsal_actor *));
+    bsal_scheduling_queue_init(&worker->scheduling_queue);
     bsal_map_init(&worker->actors, sizeof(int), sizeof(int));
     bsal_map_iterator_init(&worker->actor_iterator, &worker->actors);
 
@@ -109,7 +109,7 @@ void bsal_worker_destroy(struct bsal_worker *worker)
 #ifdef BSAL_NODE_USE_MESSAGE_RECYCLING
     bsal_fast_ring_destroy(&worker->outbound_buffers);
 #endif
-    bsal_ring_queue_destroy(&worker->scheduling_queue);
+    bsal_scheduling_queue_destroy(&worker->scheduling_queue);
     bsal_fast_ring_destroy(&worker->outbound_message_queue);
     bsal_ring_queue_destroy(&worker->outbound_message_queue_buffer);
 
@@ -380,7 +380,7 @@ int bsal_worker_dequeue_actor(struct bsal_worker *worker, struct bsal_actor **ac
 
             bsal_map_update_value(&worker->actors, &other_name, &status);
 
-            bsal_ring_queue_enqueue(&worker->scheduling_queue, &other_actor);
+            bsal_scheduling_queue_enqueue(&worker->scheduling_queue, other_actor);
         } else {
 
 #ifdef BSAL_WORKER_DEBUG_SCHEDULER
@@ -393,7 +393,7 @@ int bsal_worker_dequeue_actor(struct bsal_worker *worker, struct bsal_actor **ac
     /* Now, dequeue an actor from the real queue.
      * If it has more than 1 message, re-enqueue it
      */
-    value = bsal_ring_queue_dequeue(&worker->scheduling_queue, actor);
+    value = bsal_scheduling_queue_dequeue(&worker->scheduling_queue, actor);
 
     if (value) {
         name = bsal_actor_get_name(*actor);
@@ -436,7 +436,7 @@ int bsal_worker_dequeue_actor(struct bsal_worker *worker, struct bsal_actor **ac
 
             /* The status is still STATUS_QUEUED
              */
-            bsal_ring_queue_enqueue(&worker->scheduling_queue, actor);
+            bsal_scheduling_queue_enqueue(&worker->scheduling_queue, *actor);
 
 
         /* The actor is scheduled to run, but the new tail is not
@@ -480,7 +480,7 @@ int bsal_worker_dequeue_actor(struct bsal_worker *worker, struct bsal_actor **ac
             }
 
             if (mailbox_size > 0) {
-                bsal_ring_queue_enqueue(&worker->scheduling_queue, &other_actor);
+                bsal_scheduling_queue_enqueue(&worker->scheduling_queue, other_actor);
 
                 status = STATUS_QUEUED;
                 bsal_map_update_value(&worker->actors, &name, &status);
@@ -501,9 +501,9 @@ int bsal_worker_dequeue_actor(struct bsal_worker *worker, struct bsal_actor **ac
 
 /* This can only be called from the PRODUCER
  */
-int bsal_worker_enqueue_actor(struct bsal_worker *worker, struct bsal_actor **actor)
+int bsal_worker_enqueue_actor(struct bsal_worker *worker, struct bsal_actor *actor)
 {
-    return bsal_fast_ring_push_from_producer(&worker->actors_to_schedule, actor);
+    return bsal_fast_ring_push_from_producer(&worker->actors_to_schedule, &actor);
 }
 
 int bsal_worker_enqueue_message(struct bsal_worker *worker, struct bsal_message *message)
@@ -555,7 +555,7 @@ void bsal_worker_print_actors(struct bsal_worker *worker, struct bsal_scheduler 
                     bsal_worker_is_busy(worker),
                     bsal_worker_get_scheduling_epoch_load(worker),
                     bsal_fast_ring_size_from_producer(&worker->actors_to_schedule),
-                    bsal_ring_queue_size(&worker->scheduling_queue),
+                    bsal_scheduling_queue_size(&worker->scheduling_queue),
                     (int)bsal_map_size(&worker->actors));
 
     while (bsal_map_iterator_get_next_key_and_value(&iterator, &name, NULL)) {
@@ -586,28 +586,33 @@ void bsal_worker_print_actors(struct bsal_worker *worker, struct bsal_scheduler 
 
 void bsal_worker_evict_actor(struct bsal_worker *worker, int actor_name)
 {
-    int count;
     struct bsal_actor *actor;
     int name;
+    struct bsal_ring_queue saved_actors;
+    int count;
 
     bsal_set_add(&worker->evicted_actors, &actor_name);
     bsal_map_delete(&worker->actors, &actor_name);
-
-    count = bsal_ring_queue_size(&worker->scheduling_queue);
+    bsal_ring_queue_init(&saved_actors, sizeof(struct bsal_actor *));
 
     /* evict the actor from the scheduling queue
      */
-    while (count--
-                    && bsal_ring_queue_dequeue(&worker->scheduling_queue, &actor)) {
+    while (bsal_scheduling_queue_dequeue(&worker->scheduling_queue, &actor)) {
 
         name = bsal_actor_get_name(actor);
 
         if (name != actor_name) {
 
-            bsal_ring_queue_enqueue(&worker->scheduling_queue,
+            bsal_ring_queue_enqueue(&saved_actors,
                             &actor);
         }
     }
+
+    while (bsal_ring_queue_dequeue(&saved_actors, &actor)) {
+        bsal_scheduling_queue_enqueue(&worker->scheduling_queue, actor);
+    }
+
+    bsal_ring_queue_destroy(&saved_actors);
 
     /* Evict the actor from the ring
      */
@@ -645,11 +650,11 @@ struct bsal_map *bsal_worker_get_actors(struct bsal_worker *worker)
     return &worker->actors;
 }
 
-int bsal_worker_enqueue_actor_special(struct bsal_worker *worker, struct bsal_actor **actor)
+int bsal_worker_enqueue_actor_special(struct bsal_worker *worker, struct bsal_actor *actor)
 {
     int name;
 
-    name = bsal_actor_get_name(*actor);
+    name = bsal_actor_get_name(actor);
 
     bsal_set_delete(&worker->evicted_actors, &name);
 
