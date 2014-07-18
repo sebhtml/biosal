@@ -437,13 +437,6 @@ void bsal_dna_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_
     } else if (tag == BSAL_ACTOR_SET_PRODUCER_REPLY
                     && source == concrete_actor->auto_scaling_clone) {
 
-        printf("kernel %d completed auto-scaling\n",
-                        bsal_actor_get_name(actor));
-
-        concrete_actor->auto_scaling_in_progress = 0;
-        concrete_actor->scaling_operations++;
-        concrete_actor->auto_scaling_clone = BSAL_ACTOR_NOBODY;
-
     } else if (tag == BSAL_ACTOR_ENABLE_AUTO_SCALING) {
 
         printf("AUTO-SCALING kernel %d enables auto-scaling (BSAL_ACTOR_ENABLE_AUTO_SCALING) via actor %d\n",
@@ -607,6 +600,21 @@ void bsal_dna_kmer_counter_kernel_clone_reply(struct bsal_actor *actor, struct b
 
         bsal_actor_helper_send_int(actor, concrete_actor->auto_scaling_clone,
                         BSAL_ACTOR_SET_PRODUCER, producer);
+
+        /*
+        printf("kernel %d sending SET_PRODUCER to %d with value %d\n",
+                        name, concrete_actor->auto_scaling_clone,
+                        producer);
+                        */
+
+        concrete_actor->auto_scaling_in_progress = 0;
+        concrete_actor->scaling_operations++;
+        concrete_actor->auto_scaling_clone = BSAL_ACTOR_NOBODY;
+
+        printf("kernel %d completed auto-scaling # %d\n",
+                        bsal_actor_get_name(actor),
+                        concrete_actor->scaling_operations);
+
     }
 }
 
