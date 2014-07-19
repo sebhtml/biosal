@@ -178,6 +178,7 @@ struct bsal_memory_pool;
  * the actor attribute is a void *
  */
 struct bsal_actor {
+    int priority;
     struct bsal_script *script;
     struct bsal_worker *worker;
     struct bsal_node *node;
@@ -210,7 +211,6 @@ struct bsal_actor {
     int synchronization_expected_responses;
 
     int can_pack;
-
 
     int forwarding_selector;
     struct bsal_queue forwarding_queue;
@@ -361,5 +361,9 @@ int bsal_actor_get_sum_of_received_messages(struct bsal_actor *actor);
 int bsal_actor_work(struct bsal_actor *actor);
 char *bsal_actor_get_description(struct bsal_actor *actor);
 void bsal_actor_reset_counters(struct bsal_actor *actor);
+
+int bsal_actor_get_priority(struct bsal_actor *actor);
+void bsal_actor_set_priority(struct bsal_actor *actor, int priority);
+int bsal_actor_get_source_count(struct bsal_actor *actor);
 
 #endif

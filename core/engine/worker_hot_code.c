@@ -107,6 +107,12 @@ void bsal_worker_run(struct bsal_worker *worker)
         }
 #endif
 
+        /* Update the priority of the actor
+         * before starting the timer because this is part of the
+         * runtime system (RTS).
+         */
+        bsal_priority_scheduler_update(&worker->scheduler, actor);
+
 #ifdef BSAL_NODE_ENABLE_INSTRUMENTATION
         start_time = bsal_timer_get_nanoseconds();
 #endif
@@ -246,5 +252,4 @@ void bsal_worker_work(struct bsal_worker *worker, struct bsal_actor *actor)
     }
 #endif
 }
-
 

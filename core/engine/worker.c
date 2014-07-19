@@ -97,6 +97,8 @@ void bsal_worker_init(struct bsal_worker *worker, int name, struct bsal_node *no
     bsal_memory_pool_disable(&worker->outbound_message_memory_pool);
 
     worker->ticks_without_production = 0;
+
+    bsal_priority_scheduler_init(&worker->scheduler);
 }
 
 void bsal_worker_destroy(struct bsal_worker *worker)
@@ -125,6 +127,7 @@ void bsal_worker_destroy(struct bsal_worker *worker)
     bsal_memory_pool_destroy(&worker->ephemeral_memory);
     bsal_memory_pool_destroy(&worker->outbound_message_memory_pool);
 
+    bsal_priority_scheduler_destroy(&worker->scheduler);
 }
 
 struct bsal_node *bsal_worker_node(struct bsal_worker *worker)
@@ -845,3 +848,5 @@ void bsal_worker_free_message(struct bsal_worker *worker, struct bsal_message *m
         bsal_worker_enqueue_message(worker, message);
     }
 }
+
+

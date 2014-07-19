@@ -1,6 +1,8 @@
 
 #include "scheduling_queue.h"
 
+#include "actor.h"
+
 #include <core/system/debugger.h>
 
 void bsal_scheduling_queue_init(struct bsal_scheduling_queue *queue)
@@ -38,7 +40,10 @@ int bsal_scheduling_queue_enqueue(struct bsal_scheduling_queue *queue, struct bs
     int priority;
     struct bsal_ring_queue *selected_queue;
 
-    priority = BSAL_PRIORITY_NORMAL;
+    BSAL_DEBUGGER_ASSERT(actor != NULL);
+
+    priority = bsal_actor_get_priority(actor);
+
     selected_queue = bsal_scheduling_queue_select_queue(queue, priority);
 
     return bsal_ring_queue_enqueue(selected_queue, &actor);

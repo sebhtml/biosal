@@ -5,6 +5,7 @@
 #include "actor.h"
 
 #include "scheduling_queue.h"
+#include "priority_scheduler.h"
 
 #include <core/structures/fast_ring.h>
 #include <core/structures/ring_queue.h>
@@ -109,6 +110,8 @@ struct bsal_worker {
 
     struct bsal_memory_pool ephemeral_memory;
     struct bsal_memory_pool outbound_message_memory_pool;
+
+    struct bsal_priority_scheduler scheduler;
 };
 
 void bsal_worker_init(struct bsal_worker *worker, int name, struct bsal_node *node);

@@ -487,7 +487,6 @@ void bsal_worker_pool_work(struct bsal_worker_pool *pool)
         }
     }
 
-
 #if 0
     printf("DEBUG pool receives message for actor %d\n",
                     destination);

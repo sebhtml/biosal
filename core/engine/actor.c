@@ -1,7 +1,9 @@
 
 #include "actor.h"
+
 #include "worker.h"
 #include "node.h"
+#include "scheduling_queue.h"
 
 #include <core/structures/vector_iterator.h>
 #include <core/structures/map_iterator.h>
@@ -50,6 +52,8 @@ void bsal_actor_init(struct bsal_actor *actor, void *state,
 {
     bsal_actor_init_fn_t init;
     int capacity;
+
+    bsal_actor_set_priority(actor, BSAL_PRIORITY_NORMAL);
 
     bsal_map_init(&actor->received_messages, sizeof(int), sizeof(int));
     bsal_map_init(&actor->sent_messages, sizeof(int), sizeof(int));
@@ -1894,4 +1898,19 @@ void bsal_actor_reset_counters(struct bsal_actor *actor)
 
     bsal_map_destroy(&actor->received_messages);
     bsal_map_init(&actor->received_messages, sizeof(int), sizeof(int));
+}
+
+int bsal_actor_get_priority(struct bsal_actor *actor)
+{
+    return actor->priority;
+}
+
+int bsal_actor_get_source_count(struct bsal_actor *actor)
+{
+    return bsal_map_size(&actor->received_messages);
+}
+
+void bsal_actor_set_priority(struct bsal_actor *actor, int priority)
+{
+    actor->priority = priority;
 }
