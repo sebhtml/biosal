@@ -5,7 +5,7 @@ function run_tests()
 
     echo ""
     echo "Building products, please wait."
-    scripts/build/build.sh &> build.log
+    make &> build.log
     echo "see build.log"
 
     echo ""
