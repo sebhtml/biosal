@@ -11,6 +11,7 @@
 #include <core/helpers/message_helper.h>
 
 #include <core/system/memory.h>
+#include <core/system/debugger.h>
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -108,6 +109,8 @@ void bsal_actor_init(struct bsal_actor *actor, void *state,
      */
     init = bsal_actor_get_init(actor);
     init(actor);
+
+    BSAL_DEBUGGER_ASSERT(actor->name != BSAL_ACTOR_NOBODY);
 }
 
 void bsal_actor_destroy(struct bsal_actor *actor)
