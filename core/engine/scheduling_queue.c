@@ -1,53 +1,47 @@
 
 #include "scheduling_queue.h"
 
+#include <core/system/debugger.h>
+
 void bsal_scheduling_queue_init(struct bsal_scheduling_queue *queue)
 {
-    bsal_ring_queue_init(&queue->max_priority_queue, sizeof(struct bsal_actor *));
-    bsal_ring_queue_init(&queue->high_priority_queue, sizeof(struct bsal_actor *));
-    bsal_ring_queue_init(&queue->normal_priority_queue, sizeof(struct bsal_actor *));
-    bsal_ring_queue_init(&queue->low_priority_queue, sizeof(struct bsal_actor *));
+    bsal_ring_queue_init(bsal_scheduling_queue_select_queue(queue, BSAL_PRIORITY_MAX),
+                    sizeof(struct bsal_actor *));
+    bsal_ring_queue_init(bsal_scheduling_queue_select_queue(queue, BSAL_PRIORITY_HIGH),
+                    sizeof(struct bsal_actor *));
+    bsal_ring_queue_init(bsal_scheduling_queue_select_queue(queue, BSAL_PRIORITY_NORMAL),
+                    sizeof(struct bsal_actor *));
+    bsal_ring_queue_init(bsal_scheduling_queue_select_queue(queue, BSAL_PRIORITY_LOW),
+                    sizeof(struct bsal_actor *));
 
-    queue->max_priority_dequeue_operations = 0;
-    queue->high_priority_dequeue_operations = 0;
-    queue->normal_priority_dequeue_operations = 0;
-    queue->low_priority_dequeue_operations = 0;
+    bsal_scheduling_queue_reset_counter(queue, BSAL_PRIORITY_MAX);
+    bsal_scheduling_queue_reset_counter(queue, BSAL_PRIORITY_HIGH);
+    bsal_scheduling_queue_reset_counter(queue, BSAL_PRIORITY_NORMAL);
+    bsal_scheduling_queue_reset_counter(queue, BSAL_PRIORITY_LOW);
 }
 
 void bsal_scheduling_queue_destroy(struct bsal_scheduling_queue *queue)
 {
-    bsal_ring_queue_destroy(&queue->max_priority_queue);
-    bsal_ring_queue_destroy(&queue->high_priority_queue);
-    bsal_ring_queue_destroy(&queue->normal_priority_queue);
-    bsal_ring_queue_destroy(&queue->low_priority_queue);
+    bsal_ring_queue_destroy(bsal_scheduling_queue_select_queue(queue, BSAL_PRIORITY_MAX));
+    bsal_ring_queue_destroy(bsal_scheduling_queue_select_queue(queue, BSAL_PRIORITY_HIGH));
+    bsal_ring_queue_destroy(bsal_scheduling_queue_select_queue(queue, BSAL_PRIORITY_NORMAL));
+    bsal_ring_queue_destroy(bsal_scheduling_queue_select_queue(queue, BSAL_PRIORITY_LOW));
 
-    queue->max_priority_dequeue_operations = 0;
-    queue->high_priority_dequeue_operations = 0;
-    queue->normal_priority_dequeue_operations = 0;
-    queue->low_priority_dequeue_operations = 0;
+    bsal_scheduling_queue_reset_counter(queue, BSAL_PRIORITY_MAX);
+    bsal_scheduling_queue_reset_counter(queue, BSAL_PRIORITY_HIGH);
+    bsal_scheduling_queue_reset_counter(queue, BSAL_PRIORITY_NORMAL);
+    bsal_scheduling_queue_reset_counter(queue, BSAL_PRIORITY_LOW);
 }
 
 int bsal_scheduling_queue_enqueue(struct bsal_scheduling_queue *queue, struct bsal_actor *actor)
 {
     int priority;
+    struct bsal_ring_queue *selected_queue;
 
-    priority = BSAL_SCHEDULING_QUEUE_PRIORITY_NORMAL;
+    priority = BSAL_PRIORITY_NORMAL;
+    selected_queue = bsal_scheduling_queue_select_queue(queue, priority);
 
-    if (priority == BSAL_SCHEDULING_QUEUE_PRIORITY_NORMAL) {
-        return bsal_ring_queue_enqueue(&queue->normal_priority_queue, &actor);
-
-    } else if (priority == BSAL_SCHEDULING_QUEUE_PRIORITY_MAX) {
-        return bsal_ring_queue_enqueue(&queue->max_priority_queue, &actor);
-
-    } else if (priority == BSAL_SCHEDULING_QUEUE_PRIORITY_HIGH) {
-        return bsal_ring_queue_enqueue(&queue->high_priority_queue, &actor);
-
-    } else /* if (priority == BSAL_SCHEDULING_QUEUE_PRIORITY_LOW) */ {
-
-        return bsal_ring_queue_enqueue(&queue->low_priority_queue, &actor);
-    }
-
-    return 0;
+    return bsal_ring_queue_enqueue(selected_queue, &actor);
 }
 
 int bsal_scheduling_queue_dequeue(struct bsal_scheduling_queue *queue, struct bsal_actor **actor)
@@ -56,26 +50,32 @@ int bsal_scheduling_queue_dequeue(struct bsal_scheduling_queue *queue, struct bs
     int normal_size;
     int high_size;
     int max_size;
+    int normal_limit_reached;
+    int low_limit_reached;
+
+    uint64_t high_priority_operations;
+    uint64_t normal_priority_operations;
+    uint64_t low_priority_operations;
+
     uint64_t allowed_normal_operations;
     uint64_t allowed_low_operations;
 
-    max_size = bsal_ring_queue_size(&queue->max_priority_queue);
+    max_size = bsal_scheduling_queue_get_size_with_priority(queue, BSAL_PRIORITY_MAX);
 
     /*
      * If the max priority queue has stuff
      * it wins right away, regardless of anything else.
      */
     if (max_size > 0) {
-        ++queue->max_priority_dequeue_operations;
-        return bsal_ring_queue_dequeue(&queue->max_priority_queue, actor);
+        return bsal_scheduling_queue_dequeue_with_priority(queue, BSAL_PRIORITY_MAX, actor);
     }
 
     /* Otherwise, the multiplier is used.
      */
 
-    low_size = bsal_ring_queue_size(&queue->low_priority_queue);
-    normal_size = bsal_ring_queue_size(&queue->normal_priority_queue);
-    high_size = bsal_ring_queue_size(&queue->high_priority_queue);
+    low_size = bsal_scheduling_queue_get_size_with_priority(queue, BSAL_PRIORITY_LOW);
+    normal_size = bsal_scheduling_queue_get_size_with_priority(queue, BSAL_PRIORITY_NORMAL);
+    high_size = bsal_scheduling_queue_get_size_with_priority(queue, BSAL_PRIORITY_HIGH);
 
     /*
      * If the high priority queue has stuff
@@ -83,8 +83,7 @@ int bsal_scheduling_queue_dequeue(struct bsal_scheduling_queue *queue, struct bs
      * high queue wins right away.
      */
     if (high_size > 0 && low_size == 0 && normal_size == 0) {
-        ++queue->high_priority_dequeue_operations;
-        return bsal_ring_queue_dequeue(&queue->high_priority_queue, actor);
+        return bsal_scheduling_queue_dequeue_with_priority(queue, BSAL_PRIORITY_HIGH, actor);
     }
 
     /*
@@ -92,15 +91,30 @@ int bsal_scheduling_queue_dequeue(struct bsal_scheduling_queue *queue, struct bs
      * high priority queue.
      */
 
-    allowed_normal_operations = queue->high_priority_dequeue_operations / BSAL_SCHEDULING_QUEUE_RATIO;
+    high_priority_operations = bsal_scheduling_queue_get_counter(queue, BSAL_PRIORITY_HIGH);
+    normal_priority_operations = bsal_scheduling_queue_get_counter(queue, BSAL_PRIORITY_NORMAL);
+    low_priority_operations = bsal_scheduling_queue_get_counter(queue, BSAL_PRIORITY_LOW);
+
+    allowed_normal_operations = high_priority_operations / BSAL_SCHEDULING_QUEUE_RATIO;
     allowed_low_operations = allowed_normal_operations / BSAL_SCHEDULING_QUEUE_RATIO;
 
-    if (high_size > 0
-             && queue->normal_priority_dequeue_operations >= allowed_normal_operations
-             && queue->low_priority_dequeue_operations >= allowed_low_operations) {
+    normal_limit_reached = 0;
 
-        ++queue->high_priority_dequeue_operations;
-        return bsal_ring_queue_dequeue(&queue->high_priority_queue, actor);
+    if (normal_priority_operations >= allowed_normal_operations) {
+        normal_limit_reached = 1;
+    }
+
+    low_limit_reached = 0;
+
+    if (low_priority_operations >= allowed_low_operations) {
+        low_limit_reached = 1;
+    }
+
+    if (high_size > 0
+             && normal_limit_reached
+             && low_limit_reached) {
+
+        return bsal_scheduling_queue_dequeue_with_priority(queue, BSAL_PRIORITY_HIGH, actor);
     }
 
     /* At this point, it is know that:
@@ -131,8 +145,7 @@ int bsal_scheduling_queue_dequeue(struct bsal_scheduling_queue *queue, struct bs
 
     if (normal_size > 0 && low_size == 0) {
 
-        ++queue->normal_priority_dequeue_operations;
-        return bsal_ring_queue_dequeue(&queue->normal_priority_queue, actor);
+        return bsal_scheduling_queue_dequeue_with_priority(queue, BSAL_PRIORITY_NORMAL, actor);
     }
 
     /* Otherwise, if the low priority queue has stuff, but the normal
@@ -141,8 +154,7 @@ int bsal_scheduling_queue_dequeue(struct bsal_scheduling_queue *queue, struct bs
 
     if (normal_size == 0 && low_size > 0) {
 
-        ++queue->low_priority_dequeue_operations;
-        return bsal_ring_queue_dequeue(&queue->low_priority_queue, actor);
+        return bsal_scheduling_queue_dequeue_with_priority(queue, BSAL_PRIORITY_LOW, actor);
     }
 
     /* At this point, the low priority queue and the normal priority queue
@@ -161,24 +173,31 @@ int bsal_scheduling_queue_dequeue(struct bsal_scheduling_queue *queue, struct bs
      * normal priority queue.
      */
 
-    allowed_low_operations = queue->normal_priority_dequeue_operations / BSAL_SCHEDULING_QUEUE_RATIO;
+    allowed_low_operations = normal_priority_operations / BSAL_SCHEDULING_QUEUE_RATIO;
+
+    low_limit_reached = 0;
+
+    if (low_priority_operations >= allowed_low_operations) {
+        low_limit_reached = 1;
+    }
 
     /*
      * Use the low priority queue if it has not exceeded the limit
      * allowed.
+     *
+     * @low_limit_reached is either in comparison with the high priority or with the
+     * low priority.
+     *
      */
-    if (queue->low_priority_dequeue_operations < allowed_low_operations) {
+    if (!low_limit_reached) {
 
-        ++queue->low_priority_dequeue_operations;
-        return bsal_ring_queue_dequeue(&queue->low_priority_queue, actor);
+        return bsal_scheduling_queue_dequeue_with_priority(queue, BSAL_PRIORITY_LOW, actor);
     }
 
     /* Otherwise, use the normal priority queue directly.
      */
 
-    ++queue->normal_priority_dequeue_operations;
-    return bsal_ring_queue_dequeue(&queue->normal_priority_queue, actor);
-
+    return bsal_scheduling_queue_dequeue_with_priority(queue, BSAL_PRIORITY_NORMAL, actor);
 }
 
 int bsal_scheduling_queue_size(struct bsal_scheduling_queue *queue)
@@ -186,10 +205,105 @@ int bsal_scheduling_queue_size(struct bsal_scheduling_queue *queue)
     int size;
 
     size = 0;
-    size += bsal_ring_queue_size(&queue->max_priority_queue);
-    size += bsal_ring_queue_size(&queue->high_priority_queue);
-    size += bsal_ring_queue_size(&queue->normal_priority_queue);
-    size += bsal_ring_queue_size(&queue->low_priority_queue);
+
+    size += bsal_scheduling_queue_get_size_with_priority(queue, BSAL_PRIORITY_LOW);
+    size += bsal_scheduling_queue_get_size_with_priority(queue, BSAL_PRIORITY_NORMAL);
+    size += bsal_scheduling_queue_get_size_with_priority(queue, BSAL_PRIORITY_HIGH);
+    size += bsal_scheduling_queue_get_size_with_priority(queue, BSAL_PRIORITY_MAX);
 
     return size;
+}
+
+int bsal_scheduling_queue_get_size_with_priority(struct bsal_scheduling_queue *queue, int priority)
+{
+    struct bsal_ring_queue *selected_queue;
+
+    selected_queue = bsal_scheduling_queue_select_queue(queue, priority);
+
+    return bsal_ring_queue_size(selected_queue);
+}
+
+int bsal_scheduling_queue_dequeue_with_priority(struct bsal_scheduling_queue *queue, int priority,
+                struct bsal_actor **actor)
+{
+    int value;
+    struct bsal_ring_queue *selected_queue;
+    uint64_t *selected_counter;
+
+    selected_queue = bsal_scheduling_queue_select_queue(queue, priority);
+
+    selected_counter = bsal_scheduling_queue_select_counter(queue, priority);
+    value = bsal_ring_queue_dequeue(selected_queue, actor);
+
+    if (value) {
+        (*selected_counter)++;
+    }
+
+    return value;
+}
+
+struct bsal_ring_queue *bsal_scheduling_queue_select_queue(struct bsal_scheduling_queue *queue, int priority)
+{
+    struct bsal_ring_queue *selection;
+
+    selection = NULL;
+
+    if (priority == BSAL_PRIORITY_MAX) {
+        selection = &queue->max_priority_queue;
+
+    } else if (priority == BSAL_PRIORITY_HIGH) {
+        selection = &queue->high_priority_queue;
+
+    } else if (priority == BSAL_PRIORITY_NORMAL) {
+        selection = &queue->normal_priority_queue;
+
+    } else if (priority == BSAL_PRIORITY_LOW) {
+        selection = &queue->low_priority_queue;
+    }
+
+    BSAL_DEBUGGER_ASSERT(selection != NULL);
+
+    return selection;
+}
+
+uint64_t *bsal_scheduling_queue_select_counter(struct bsal_scheduling_queue *queue, int priority)
+{
+    uint64_t *selection;
+
+    selection = NULL;
+
+    if (priority == BSAL_PRIORITY_MAX) {
+        selection = &queue->max_priority_dequeue_operations;
+
+    } else if (priority == BSAL_PRIORITY_HIGH) {
+        selection = &queue->high_priority_dequeue_operations;
+
+    } else if (priority == BSAL_PRIORITY_NORMAL) {
+        selection = &queue->normal_priority_dequeue_operations;
+
+    } else if (priority == BSAL_PRIORITY_LOW) {
+        selection = &queue->low_priority_dequeue_operations;
+    }
+
+    BSAL_DEBUGGER_ASSERT(selection != NULL);
+
+    return selection;
+}
+
+uint64_t bsal_scheduling_queue_get_counter(struct bsal_scheduling_queue *queue, int priority)
+{
+    uint64_t *counter;
+
+    counter = bsal_scheduling_queue_select_counter(queue, priority);
+
+    return *counter;
+}
+
+void bsal_scheduling_queue_reset_counter(struct bsal_scheduling_queue *queue, int priority)
+{
+    uint64_t *counter;
+
+    counter = bsal_scheduling_queue_select_counter(queue, priority);
+
+    *counter = 0;
 }
