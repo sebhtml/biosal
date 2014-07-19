@@ -120,7 +120,10 @@ void bsal_actor_helper_get_acquaintances(struct bsal_actor *actor, struct bsal_v
     int *bucket;
     int name;
 
+#if 0 /* The caller must call the constructor first.
+         */
     bsal_vector_init(names, sizeof(int));
+#endif
 
     bsal_vector_iterator_init(&iterator, indices);
 
