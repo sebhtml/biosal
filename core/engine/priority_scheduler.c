@@ -140,8 +140,10 @@ void bsal_priority_scheduler_update_thresholds(struct bsal_priority_scheduler *s
     int value;
     int frequency;
 
+#ifdef BSAL_PRIORITY_SCHEDULER_DEBUG
     printf("DEBUG bsal_priority_scheduler_update_thresholds: calls %d changes %d\n",
                     scheduler->calls, scheduler->changes);
+#endif
 
     bsal_map_iterator_init(&iterator, &scheduler->actor_source_frequencies);
 

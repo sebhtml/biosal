@@ -525,7 +525,7 @@ void bsal_dna_kmer_counter_kernel_do_auto_scaling(struct bsal_actor *actor, stru
     /*
      * Avoid cloning too many actors
      */
-    if (concrete_actor->scaling_operations >= 4) {
+    if (concrete_actor->scaling_operations >= 64) {
         return;
     }
 

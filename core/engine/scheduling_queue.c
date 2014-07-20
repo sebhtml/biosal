@@ -312,3 +312,45 @@ void bsal_scheduling_queue_reset_counter(struct bsal_scheduling_queue *queue, in
 
     *counter = 0;
 }
+
+void bsal_scheduling_queue_print(struct bsal_scheduling_queue *queue, int node, int worker)
+{
+    printf("SchedulingQueue, Node: %d, Worker: %d Levels: %d\n",
+                    node, worker, 4);
+
+    bsal_scheduling_queue_print_with_priority(queue, BSAL_PRIORITY_MAX, "BSAL_PRIORITY_MAX");
+    bsal_scheduling_queue_print_with_priority(queue, BSAL_PRIORITY_HIGH, "BSAL_PRIORITY_HIGH");
+    bsal_scheduling_queue_print_with_priority(queue, BSAL_PRIORITY_NORMAL, "BSAL_PRIORITY_NORMAL");
+    bsal_scheduling_queue_print_with_priority(queue, BSAL_PRIORITY_LOW, "BSAL_PRIORITY_LOW");
+
+    printf("SchedulingQueue... completed report !\n");
+}
+
+void bsal_scheduling_queue_print_with_priority(struct bsal_scheduling_queue *queue, int priority, const char *name)
+{
+    struct bsal_ring_queue *selection;
+    struct bsal_actor *actor;
+    int size;
+    int i;
+
+    selection = bsal_scheduling_queue_select_queue(queue, priority);
+    size = bsal_ring_queue_size(selection);
+
+    printf("scheduling_queue: Priority Queue %d (%s), actors: %d\n",
+                    priority, name, size);
+
+    i = 0;
+
+    while (i < size) {
+        bsal_ring_queue_dequeue(selection, &actor);
+        bsal_ring_queue_enqueue(selection, &actor);
+
+        printf(" [%i] actor %s/%d (%d messages)\n",
+                        i,
+                        bsal_actor_get_description(actor),
+                        bsal_actor_get_name(actor),
+                        bsal_actor_get_mailbox_size(actor));
+
+        ++i;
+    }
+}
