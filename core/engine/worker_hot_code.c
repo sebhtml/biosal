@@ -18,6 +18,8 @@
  */
 #define BSAL_WORKER_PRINT_SCHEDULING_QUEUE
 
+#define BSAL_WORKER_DEBUG_SYMMETRIC_PLACEMENT
+
 /* Just return the number of queued messages.
  */
 int bsal_worker_get_message_production_score(struct bsal_worker *self)
@@ -91,13 +93,17 @@ void bsal_worker_run(struct bsal_worker *worker)
 
 #ifdef BSAL_WORKER_PRINT_SCHEDULING_QUEUE
 
+        /*
         if (bsal_node_name(worker->node) == 0
                         && worker->name == 0) {
+                        */
 
-            bsal_scheduling_queue_print(&worker->scheduling_queue,
+        bsal_scheduling_queue_print(&worker->scheduling_queue,
                         bsal_node_name(worker->node),
                         worker->name);
+        /*
         }
+        */
 #endif
 
 #ifdef BSAL_WORKER_DEBUG_SYMMETRIC_PLACEMENT
