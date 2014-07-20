@@ -63,6 +63,10 @@ void bsal_scheduler_init(struct bsal_scheduler *scheduler, struct bsal_worker_po
     scheduler->last_migrations = 0;
     scheduler->last_killed_actors = -1;
     scheduler->last_spawned_actors = -1;
+
+    bsal_map_init(&scheduler->current_script_workers, sizeof(int), sizeof(int));
+
+    scheduler->first_worker = 0;
 }
 
 void bsal_scheduler_destroy(struct bsal_scheduler *scheduler)
@@ -70,6 +74,8 @@ void bsal_scheduler_destroy(struct bsal_scheduler *scheduler)
     scheduler->pool = NULL;
     bsal_map_destroy(&scheduler->actor_affinities);
     bsal_map_destroy(&scheduler->last_actor_received_messages);
+
+    bsal_map_destroy(&scheduler->current_script_workers);
 }
 
 void bsal_scheduler_balance(struct bsal_scheduler *scheduler)
@@ -1029,4 +1035,35 @@ void bsal_scheduler_generate_symmetric_migrations(struct bsal_scheduler *schedul
 
     bsal_map_destroy(&script_current_worker);
     bsal_map_destroy(&script_current_worker_actor_count);
+}
+
+int bsal_scheduler_select_worker_script_round_robin(struct bsal_scheduler *scheduler, int script)
+{
+    int worker;
+    int worker_count;
+    int next_worker;
+    int *bucket;
+
+    bucket = bsal_map_get(&scheduler->current_script_workers, &script);
+
+    worker_count = bsal_worker_pool_worker_count(scheduler->pool);
+
+    /* First time for this script
+     */
+    if (bucket == NULL) {
+
+        bucket = bsal_map_add(&scheduler->current_script_workers, &script);
+
+        *bucket = scheduler->first_worker;
+
+        scheduler->first_worker = (scheduler->first_worker + 1) % worker_count;
+    }
+
+    worker = *bucket;
+
+    next_worker = (worker + 1) % worker_count;
+
+    *bucket = next_worker;
+
+    return worker;
 }

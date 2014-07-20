@@ -14,6 +14,7 @@
 #include <core/helpers/vector_helper.h>
 #include <core/system/memory.h>
 #include <core/system/timer.h>
+#include <core/system/debugger.h>
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -548,6 +549,11 @@ void bsal_worker_print_actors(struct bsal_worker *worker, struct bsal_scheduler 
     int consumers;
     int received;
     int difference;
+    int script;
+    struct bsal_map distribution;
+    int frequency;
+    struct bsal_script *script_object;
+    int dead;
 
     bsal_map_iterator_init(&iterator, &worker->actors);
 
@@ -561,6 +567,8 @@ void bsal_worker_print_actors(struct bsal_worker *worker, struct bsal_scheduler 
                     bsal_scheduling_queue_size(&worker->scheduling_queue),
                     (int)bsal_map_size(&worker->actors));
 
+    bsal_map_init(&distribution, sizeof(int), sizeof(int));
+
     while (bsal_map_iterator_get_next_key_and_value(&iterator, &name, NULL)) {
 
         actor = bsal_node_get_actor_from_name(worker->node, name);
@@ -569,22 +577,60 @@ void bsal_worker_print_actors(struct bsal_worker *worker, struct bsal_scheduler 
             continue;
         }
 
+        dead = bsal_actor_dead(actor);
+
+        if (dead) {
+            continue;
+        }
+
         count = bsal_actor_get_mailbox_size(actor);
         received = bsal_actor_get_sum_of_received_messages(actor);
         producers = bsal_map_size(bsal_actor_get_received_messages(actor));
         consumers = bsal_map_size(bsal_actor_get_sent_messages(actor));
-        difference = bsal_scheduler_get_actor_production(scheduler, actor);
+        difference = 0;
+
+        if (scheduler != NULL) {
+            difference = bsal_scheduler_get_actor_production(scheduler, actor);
+        }
 
         printf("  [%s/%d] mailbox: %d received: %d (+%d) producers: %d consumers: %d\n",
                         bsal_actor_get_description(actor),
                         name, count, received,
                        difference,
                        producers, consumers);
-    }
 
+        script = bsal_actor_script(actor);
+
+        if (bsal_map_get_value(&distribution, &script, &frequency)) {
+            ++frequency;
+            bsal_map_update_value(&distribution, &script, &frequency);
+        } else {
+            frequency = 1;
+            bsal_map_add_value(&distribution, &script, &frequency);
+        }
+    }
 
     /*printf("\n");*/
     bsal_map_iterator_destroy(&iterator);
+
+    bsal_map_iterator_init(&iterator, &distribution);
+
+    printf("worker/%d Frequency list\n", worker->name);
+
+    while (bsal_map_iterator_get_next_key_and_value(&iterator, &script, &frequency)) {
+
+        script_object = bsal_node_find_script(worker->node, script);
+
+        BSAL_DEBUGGER_ASSERT(script_object != NULL);
+
+        printf("worker/%d Frequency %s => %d\n",
+                        worker->name,
+                        bsal_script_description(script_object),
+                        frequency);
+    }
+
+    bsal_map_iterator_destroy(&iterator);
+    bsal_map_destroy(&distribution);
 }
 
 void bsal_worker_evict_actor(struct bsal_worker *worker, int actor_name)

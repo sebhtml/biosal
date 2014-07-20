@@ -22,6 +22,13 @@ struct bsal_scheduler {
     int last_migrations;
     int last_spawned_actors;
     int last_killed_actors;
+
+    /*
+     * For initial placement using round-robin policy for every script.
+     */
+
+    struct bsal_map current_script_workers;
+    int first_worker;
 };
 
 void bsal_scheduler_init(struct bsal_scheduler *scheduler, struct bsal_worker_pool *pool);
@@ -40,5 +47,7 @@ int bsal_scheduler_select_worker_least_busy(
 void bsal_scheduler_detect_symmetric_scripts(struct bsal_scheduler *scheduler, struct bsal_map *symmetric_actors);
 void bsal_scheduler_generate_symmetric_migrations(struct bsal_scheduler *scheduler, struct bsal_map *symmetric_actor_scripts,
                 struct bsal_vector *migrations);
+
+int bsal_scheduler_select_worker_script_round_robin(struct bsal_scheduler *scheduler, int script);
 
 #endif

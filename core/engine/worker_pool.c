@@ -13,6 +13,7 @@
 #include <core/structures/set_iterator.h>
 #include <core/structures/vector_iterator.h>
 
+#include <core/system/debugger.h>
 #include <core/system/memory.h>
 
 #include <stdlib.h>
@@ -22,7 +23,6 @@
 /*
 #define BSAL_WORKER_POOL_DEBUG
 #define BSAL_WORKER_POOL_DEBUG_ISSUE_334
-#define BSAL_WORKER_POOL_USE_CURRENT_WORKER
 */
 
 /*
@@ -30,7 +30,14 @@
  */
 #define BSAL_WORKER_POOL_PUSH_WORK_ON_SAME_WORKER
 #define BSAL_WORKER_POOL_FORCE_LAST_WORKER 1
+
+/*
+ * Configuration for initial placement.
+ */
+/*
 #define BSAL_WORKER_POOL_USE_LEAST_BUSY
+*/
+#define BSAL_WORKER_POOL_USE_SCRIPT_ROUND_ROBIN
 
 /*
  * Enable the load balancer.
@@ -521,15 +528,42 @@ void bsal_worker_pool_work(struct bsal_worker_pool *pool)
 void bsal_worker_pool_assign_worker_to_actor(struct bsal_worker_pool *pool, int name)
 {
     int worker_index;
-    int score;
     struct bsal_set *set;
+
+#ifdef BSAL_WORKER_POOL_USE_LEAST_BUSY
+    int score;
+#endif
+
+#ifdef BSAL_WORKER_POOL_USE_SCRIPT_ROUND_ROBIN
+    int script;
+    struct bsal_actor *actor;
+#endif
 
                 /*
     printf("DEBUG Needs to do actor placement\n");
     */
     /* assign this actor to the least busy actor
      */
+
+    worker_index = -1;
+
+#ifdef BSAL_WORKER_POOL_USE_LEAST_BUSY
     worker_index = bsal_scheduler_select_worker_least_busy(&pool->scheduler, &score);
+
+#elif defined(BSAL_WORKER_POOL_USE_SCRIPT_ROUND_ROBIN)
+    actor = bsal_node_get_actor_from_name(pool->node, name);
+
+    /* The actor can't be dead if it does not have an initial
+     * placement...
+     */
+    BSAL_DEBUGGER_ASSERT(actor != NULL);
+
+    script = bsal_actor_script(actor);
+
+    worker_index = bsal_scheduler_select_worker_script_round_robin(&pool->scheduler, script);
+#endif
+
+    BSAL_DEBUGGER_ASSERT(worker_index >= 0);
 
     bsal_scheduler_set_actor_worker(&pool->scheduler, name, worker_index);
     set = (struct bsal_set *)bsal_vector_at(&pool->worker_actors, worker_index);

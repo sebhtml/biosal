@@ -100,6 +100,9 @@ void bsal_worker_run(struct bsal_worker *worker)
         }
 #endif
 
+#ifdef BSAL_WORKER_DEBUG_SYMMETRIC_PLACEMENT
+        bsal_worker_print_actors(worker, NULL);
+#endif
     }
 #endif
 
