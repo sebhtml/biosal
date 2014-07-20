@@ -33,8 +33,15 @@
 #define BSAL_WORKER_POOL_USE_LEAST_BUSY
 
 /*
-*/
+ * Enable the load balancer.
+ * The implementation needs to lock everything up,
+ * so it is not very good for performance.
+ * The next-generation load balancing will use an eviction approach
+ * instead.
+ */
+/*
 #define BSAL_WORKER_POOL_BALANCE
+*/
 
 void bsal_worker_pool_init(struct bsal_worker_pool *pool, int workers,
                 struct bsal_node *node)
@@ -442,8 +449,11 @@ void bsal_worker_pool_work(struct bsal_worker_pool *pool)
     struct bsal_actor *actor;
     int worker_index;
     struct bsal_worker *worker;
-    time_t current_time;
     int name;
+
+#ifdef BSAL_WORKER_POOL_BALANCE
+    time_t current_time;
+#endif
 
     /* If there are messages in the inbound message buffer,
      * Try to give  them too.
