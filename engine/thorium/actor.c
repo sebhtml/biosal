@@ -180,6 +180,8 @@ void bsal_actor_destroy(struct bsal_actor *actor)
 
 int bsal_actor_get_name(struct bsal_actor *actor)
 {
+    BSAL_DEBUGGER_ASSERT(actor != NULL);
+
     return actor->name;
 }
 

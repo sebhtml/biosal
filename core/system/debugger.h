@@ -9,6 +9,8 @@
 #define BSAL_DEBUGGER_ENABLE_ASSERT
 */
 
+#include "tracer.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -23,6 +25,7 @@
 #define BSAL_DEBUGGER_ASSERT(condition) \
     if (!(condition)) { \
         BSAL_DEBUG_MARKER("BSAL_DEBUGGER_ASSERT catched a bug !"); \
+        bsal_tracer_print_stack_backtrace(); \
         exit(1); \
     }
 

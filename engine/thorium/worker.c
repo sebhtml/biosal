@@ -35,11 +35,15 @@
 /*
  * Print scheduling queue for debugging purposes
  */
+/*
 #define BSAL_WORKER_PRINT_SCHEDULING_QUEUE
+*/
 
 /* Debug symmetric actor placement
  */
+/*
 #define BSAL_WORKER_DEBUG_SYMMETRIC_PLACEMENT
+*/
 
 void bsal_worker_init(struct bsal_worker *worker, int name, struct bsal_node *node)
 {
@@ -516,6 +520,8 @@ int bsal_worker_dequeue_actor(struct bsal_worker *worker, struct bsal_actor **ac
  */
 int bsal_worker_enqueue_actor(struct bsal_worker *worker, struct bsal_actor *actor)
 {
+    BSAL_DEBUGGER_ASSERT(actor != NULL);
+
     return bsal_fast_ring_push_from_producer(&worker->actors_to_schedule, &actor);
 }
 
