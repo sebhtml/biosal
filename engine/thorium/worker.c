@@ -358,11 +358,14 @@ int bsal_worker_dequeue_actor(struct bsal_worker *worker, struct bsal_actor **ac
     int mailbox_size;
 
     operations = 4;
+    other_actor = NULL;
 
     /* Move an actor from the ring to the real actor scheduling queue
      */
     while (operations--
                     && bsal_fast_ring_pop_from_consumer(&worker->actors_to_schedule, &other_actor)) {
+
+        BSAL_DEBUGGER_ASSERT(other_actor != NULL);
 
         other_name = bsal_actor_get_name(other_actor);
 

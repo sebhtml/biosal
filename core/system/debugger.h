@@ -26,6 +26,8 @@
     if (!(condition)) { \
         BSAL_DEBUG_MARKER("BSAL_DEBUGGER_ASSERT catched a bug !"); \
         bsal_tracer_print_stack_backtrace(); \
+        fflush(stdout); \
+        fflush(stderr); \
         exit(1); \
     }
 
