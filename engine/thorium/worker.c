@@ -37,7 +37,9 @@
  */
 #define BSAL_WORKER_PRINT_SCHEDULING_QUEUE
 
-
+/* Debug symmetric actor placement
+ */
+#define BSAL_WORKER_DEBUG_SYMMETRIC_PLACEMENT
 
 void bsal_worker_init(struct bsal_worker *worker, int name, struct bsal_node *node)
 {
@@ -561,11 +563,17 @@ void bsal_worker_print_actors(struct bsal_worker *worker, struct bsal_scheduler 
     int frequency;
     struct bsal_script *script_object;
     int dead;
+    int node_name;
+    int worker_name;
+
+
+    node_name = bsal_node_name(worker->node);
+    worker_name = worker->name;
 
     bsal_map_iterator_init(&iterator, &worker->actors);
 
-    printf("worker/%d %d queued messages, received: %d busy: %d load: %f ring: %d scheduled actors: %d/%d\n",
-                    bsal_worker_name(worker),
+    printf("node/%d worker/%d %d queued messages, received: %d busy: %d load: %f ring: %d scheduled actors: %d/%d\n",
+                    node_name, worker_name,
                     bsal_worker_get_scheduled_message_count(worker),
                     bsal_worker_get_sum_of_received_actor_messages(worker),
                     bsal_worker_is_busy(worker),
@@ -598,13 +606,13 @@ void bsal_worker_print_actors(struct bsal_worker *worker, struct bsal_scheduler 
 
         if (scheduler != NULL) {
             difference = bsal_scheduler_get_actor_production(scheduler, actor);
-        }
 
-        printf("  [%s/%d] mailbox: %d received: %d (+%d) producers: %d consumers: %d\n",
+            printf("  [%s/%d] mailbox: %d received: %d (+%d) producers: %d consumers: %d\n",
                         bsal_actor_get_description(actor),
                         name, count, received,
                        difference,
                        producers, consumers);
+        }
 
         script = bsal_actor_script(actor);
 
@@ -622,7 +630,7 @@ void bsal_worker_print_actors(struct bsal_worker *worker, struct bsal_scheduler 
 
     bsal_map_iterator_init(&iterator, &distribution);
 
-    printf("worker/%d Frequency list\n", worker->name);
+    printf("node/%d worker/%d Frequency list\n", node_name, worker_name);
 
     while (bsal_map_iterator_get_next_key_and_value(&iterator, &script, &frequency)) {
 
@@ -630,7 +638,8 @@ void bsal_worker_print_actors(struct bsal_worker *worker, struct bsal_scheduler 
 
         BSAL_DEBUGGER_ASSERT(script_object != NULL);
 
-        printf("worker/%d Frequency %s => %d\n",
+        printf("node/%d worker/%d Frequency %s => %d\n",
+                        node_name,
                         worker->name,
                         bsal_script_description(script_object),
                         frequency);
@@ -975,13 +984,17 @@ void bsal_worker_run(struct bsal_worker *worker)
 
 #ifdef BSAL_WORKER_PRINT_SCHEDULING_QUEUE
 
+        /*
         if (bsal_node_name(worker->node) == 0
                         && worker->name == 0) {
+                        */
 
-            bsal_scheduling_queue_print(&worker->scheduling_queue,
+        bsal_scheduling_queue_print(&worker->scheduling_queue,
                         bsal_node_name(worker->node),
                         worker->name);
+            /*
         }
+        */
 #endif
 
 #ifdef BSAL_WORKER_DEBUG_SYMMETRIC_PLACEMENT

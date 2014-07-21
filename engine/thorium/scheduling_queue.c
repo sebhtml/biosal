@@ -315,18 +315,20 @@ void bsal_scheduling_queue_reset_counter(struct bsal_scheduling_queue *queue, in
 
 void bsal_scheduling_queue_print(struct bsal_scheduling_queue *queue, int node, int worker)
 {
-    printf("SchedulingQueue, Node: %d, Worker: %d Levels: %d\n",
+    printf("node/%d worker/%d SchedulingQueue Levels: %d\n",
                     node, worker, 4);
 
-    bsal_scheduling_queue_print_with_priority(queue, BSAL_PRIORITY_MAX, "BSAL_PRIORITY_MAX");
-    bsal_scheduling_queue_print_with_priority(queue, BSAL_PRIORITY_HIGH, "BSAL_PRIORITY_HIGH");
-    bsal_scheduling_queue_print_with_priority(queue, BSAL_PRIORITY_NORMAL, "BSAL_PRIORITY_NORMAL");
-    bsal_scheduling_queue_print_with_priority(queue, BSAL_PRIORITY_LOW, "BSAL_PRIORITY_LOW");
+    bsal_scheduling_queue_print_with_priority(queue, BSAL_PRIORITY_MAX, "BSAL_PRIORITY_MAX", node, worker);
+    bsal_scheduling_queue_print_with_priority(queue, BSAL_PRIORITY_HIGH, "BSAL_PRIORITY_HIGH", node, worker);
+    bsal_scheduling_queue_print_with_priority(queue, BSAL_PRIORITY_NORMAL, "BSAL_PRIORITY_NORMAL", node, worker);
+    bsal_scheduling_queue_print_with_priority(queue, BSAL_PRIORITY_LOW, "BSAL_PRIORITY_LOW", node, worker);
 
-    printf("SchedulingQueue... completed report !\n");
+    printf("node/%d worker/%d SchedulingQueue... completed report !\n",
+                    node, worker);
 }
 
-void bsal_scheduling_queue_print_with_priority(struct bsal_scheduling_queue *queue, int priority, const char *name)
+void bsal_scheduling_queue_print_with_priority(struct bsal_scheduling_queue *queue, int priority, const char *name,
+                int node, int worker)
 {
     struct bsal_ring_queue *selection;
     struct bsal_actor *actor;
@@ -336,7 +338,8 @@ void bsal_scheduling_queue_print_with_priority(struct bsal_scheduling_queue *que
     selection = bsal_scheduling_queue_select_queue(queue, priority);
     size = bsal_ring_queue_size(selection);
 
-    printf("scheduling_queue: Priority Queue %d (%s), actors: %d\n",
+    printf("node/%d worker/%d scheduling_queue: Priority Queue %d (%s), actors: %d\n",
+                    node, worker,
                     priority, name, size);
 
     i = 0;
@@ -345,7 +348,8 @@ void bsal_scheduling_queue_print_with_priority(struct bsal_scheduling_queue *que
         bsal_ring_queue_dequeue(selection, &actor);
         bsal_ring_queue_enqueue(selection, &actor);
 
-        printf(" [%i] actor %s/%d (%d messages)\n",
+        printf("node/%d worker/%d [%i] actor %s/%d (%d messages)\n",
+                        node, worker,
                         i,
                         bsal_actor_get_description(actor),
                         bsal_actor_get_name(actor),

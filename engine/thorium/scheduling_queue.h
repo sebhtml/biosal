@@ -55,6 +55,7 @@ void bsal_scheduling_queue_reset_counter(struct bsal_scheduling_queue *queue, in
 uint64_t bsal_scheduling_queue_get_counter(struct bsal_scheduling_queue *queue, int priority);
 
 void bsal_scheduling_queue_print(struct bsal_scheduling_queue *queue, int node, int worker);
-void bsal_scheduling_queue_print_with_priority(struct bsal_scheduling_queue *queue, int priority, const char *name);
+void bsal_scheduling_queue_print_with_priority(struct bsal_scheduling_queue *queue, int priority, const char *name,
+                int node, int worker);
 
 #endif
