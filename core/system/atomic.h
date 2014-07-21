@@ -79,7 +79,7 @@
 #define bsal_atomic_compare_and_swap_int(pointer, old_value, new_value) \
         bsal_atomic_compare_and_swap_int_mock(pointer, old_value, new_value)
 
-#error "No atomic features found for this system"
+#warning "No atomic features found for this system"
 #endif
 
 int bsal_atomic_read_int_mock(int *pointer);
