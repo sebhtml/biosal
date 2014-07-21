@@ -1,18 +1,19 @@
 biosal is a distributed BIOlogical Sequence Analysis Library.
 
-This is a work in progress.
-
-Looking for the Application Programming Interface (API) ? Look no further !
-
-===> [biosal API](Documentation/API.md) <===
+biosal applications are written in the form of actors which send each other messages,
+change their state, spawn other actors and eventually die of old age.
+These actors run on top
+of biosal runtime system (BRTS) called "The Thorium Engine". Thorium is a distributed actor machine.
+Thorium uses script-wise symmetric actor placement and is targeted for high-performance computing.
+Thorium is a general purpose actor model implementation.
 
 # Technologies
 
 | Key | Value |
 | --- | --- |
 | Name | biosal |
+| Computation model | actor model (Hewitt & Baker 1977) |
 | Programming language | C99 (ISO/IEC 9899:1999) |
-| Computation model | actor model |
 | Message passing | MPI 2.2 |
 | Threads | Pthreads |
 | License | [The BSD 2-Clause License](LICENSE.md) |
@@ -100,9 +101,11 @@ Key concepts
 | Queue | Each worker has a work queue and a message queue | struct bsal_fifo |
 | Worker Pool | A set of available workers inside a node | struct bsal_worker_pool |
 
-## Implementation of the runtime system
+# Implementation of the runtime system
 
 The code has to be formulated in term of actors.
+Actors are executes inside a controlled environment managed by the Thorium
+engine, which is a runtime system.
 An actor has a name, and does something when it receives a message.
 A message is however first received by a node. The node
 prepares a work and gives it to a worker_pool. The worker pool
@@ -117,6 +120,8 @@ a worker directly on the same node.
 
 ## Runtime
 
+Each biosal node is managed by an instance of the Thorium engine. These Thorium instances
+speak to each other.
 The number of nodes is set by mpiexec -n @number_of_bsal_nodes ./a.out.
 The number of threads on each node is set with -threads-per-node.
 
@@ -132,7 +137,9 @@ Because the whole thing is event-driven by inbound and outbound messages,
 a single node can run much more actors than the number of
 threads it has.
 
-The runtime also supports asymmetric numbers of threads:
+The runtime also supports asymmetric numbers of threads, but most platforms
+have identical compute nodes (examples: IBM Blue Gene/Q, Cray XC30)
+so this is not very useful. Example:
 
 ```bash
 # launch 32 nodes with 32 threads, 244 threads, 32 threads, 244 threads, and so on
@@ -152,3 +159,14 @@ mpiexec -n 32 ./a.out -threads-per-node 32,244
 - l := Library or Lift
 
 Alternative name: BIOlogy Scalable Actor Library
+
+
+# Tested platforms
+
+- Cray XE6
+- IBM Blue Gene/Q
+- XPS 13 with Fedora
+- Xeon E7-4830 with CentOS 6.5
+- Apple Mavericks
+
+
