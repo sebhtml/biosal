@@ -47,9 +47,7 @@ struct bsal_worker_pool {
     time_t last_balancing;
     int balance_period;
 
-#if 0
     int ticks_without_messages;
-#endif
 
     time_t starting_time;
 

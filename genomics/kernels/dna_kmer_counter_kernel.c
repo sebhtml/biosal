@@ -702,6 +702,9 @@ void bsal_dna_kmer_counter_kernel_notify(struct bsal_actor *actor, struct bsal_m
 
     source = bsal_message_source(message);
     concrete_actor->notified = 1;
+
+    bsal_actor_helper_send_to_self_empty(actor, BSAL_ACTOR_DISABLE_AUTO_SCALING);
+
     concrete_actor->notification_source = bsal_actor_add_acquaintance(actor, source);
 
     if (concrete_actor->scaling_operations > 0) {

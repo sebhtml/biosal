@@ -63,9 +63,7 @@ void bsal_worker_pool_init(struct bsal_worker_pool *pool, int workers,
 
     bsal_scheduler_init(&pool->scheduler, pool);
 
-#if 0
     pool->ticks_without_messages = 0;
-#endif
 
     pool->last_warning = 0;
     pool->last_scheduling_warning = 0;
@@ -248,7 +246,6 @@ int bsal_worker_pool_worker_count(struct bsal_worker_pool *pool)
     return pool->workers;
 }
 
-#if 0
 int bsal_worker_pool_has_messages(struct bsal_worker_pool *pool)
 {
     int threshold;
@@ -261,7 +258,6 @@ int bsal_worker_pool_has_messages(struct bsal_worker_pool *pool)
 
     return 1;
 }
-#endif
 
 void bsal_worker_pool_print_load(struct bsal_worker_pool *self, int type)
 {
@@ -705,13 +701,11 @@ int bsal_worker_pool_dequeue_message(struct bsal_worker_pool *pool, struct bsal_
 
     answer = bsal_worker_pool_pull_classic(pool, message);
 
-#if 0
     if (!answer) {
         pool->ticks_without_messages++;
     } else {
         pool->ticks_without_messages = 0;
     }
-#endif
 
     return answer;
 }

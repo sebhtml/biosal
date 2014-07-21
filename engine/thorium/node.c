@@ -747,11 +747,9 @@ int bsal_node_running(struct bsal_node *node)
         return 1;
     }
 
-#if 0
     if (bsal_worker_pool_has_messages(&node->worker_pool)) {
         return 1;
     }
-#endif
 
     return 0;
 }
@@ -1559,6 +1557,13 @@ int bsal_node_send_system(struct bsal_node *node, struct bsal_message *message)
                        source);
 
         bsal_set_add(&node->auto_scaling_actors, &source);
+
+        return 1;
+
+    } else if (source == destination
+           && tag == BSAL_ACTOR_DISABLE_AUTO_SCALING) {
+
+        bsal_set_delete(&node->auto_scaling_actors, &source);
 
         return 1;
     }
