@@ -6,9 +6,9 @@
 
 /* engine */
 
-#include "core/engine/actor.h"
-#include "core/engine/message.h"
-#include "core/engine/node.h"
+#include "engine/thorium/actor.h"
+#include "engine/thorium/message.h"
+#include "engine/thorium/node.h"
 
 /* actor patterns */
 

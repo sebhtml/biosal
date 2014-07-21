@@ -1,7 +1,7 @@
 
 #include "test.h"
 
-#include <core/engine/node.h>
+#include <engine/thorium/node.h>
 
 #include <string.h>
 

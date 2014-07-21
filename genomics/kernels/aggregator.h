@@ -2,7 +2,7 @@
 #ifndef BSAL_AGGREGATOR_H
 #define BSAL_AGGREGATOR_H
 
-#include <core/engine/actor.h>
+#include <engine/thorium/actor.h>
 
 #include <genomics/data/dna_codec.h>
 

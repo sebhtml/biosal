@@ -6,7 +6,7 @@
 
 #include <genomics/data/dna_codec.h>
 
-#include <core/engine/actor.h>
+#include <engine/thorium/actor.h>
 
 #include <core/system/memory_pool.h>
 

@@ -2,7 +2,7 @@
 #ifndef BSAL_SEQUENCE_STORE_H
 #define BSAL_SEQUENCE_STORE_H
 
-#include <core/engine/actor.h>
+#include <engine/thorium/actor.h>
 #include <genomics/data/dna_codec.h>
 #include <core/structures/vector.h>
 #include <core/structures/vector_iterator.h>

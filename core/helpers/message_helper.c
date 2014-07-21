@@ -1,7 +1,7 @@
 
 #include "message_helper.h"
 
-#include <core/engine/message.h>
+#include <engine/thorium/message.h>
 
 #include <stdint.h>
 

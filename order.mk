@@ -4,19 +4,19 @@ LIBRARY_HOT_CODE += core/hash/murmur_hash_2_64_a.o
 # hot code above
 # cold code below
 
-LIBRARY_HOT_CODE += core/engine/scheduler.o
-LIBRARY_HOT_CODE += core/engine/scheduling_queue.o
-LIBRARY_HOT_CODE += core/engine/priority_scheduler.o
-LIBRARY_HOT_CODE += core/engine/message.o
-LIBRARY_HOT_CODE += core/engine/node.o
-LIBRARY_HOT_CODE += core/engine/actor.o
-LIBRARY_HOT_CODE += core/engine/script.o
-LIBRARY_HOT_CODE += core/engine/worker.o
-LIBRARY_HOT_CODE += core/engine/migration.o
-LIBRARY_HOT_CODE += core/engine/worker_pool.o
-LIBRARY_HOT_CODE += core/engine/active_buffer.o
-LIBRARY_HOT_CODE += core/engine/dispatcher.o
-LIBRARY_HOT_CODE += core/engine/transport.o
+LIBRARY_HOT_CODE += engine/thorium/scheduler.o
+LIBRARY_HOT_CODE += engine/thorium/scheduling_queue.o
+LIBRARY_HOT_CODE += engine/thorium/priority_scheduler.o
+LIBRARY_HOT_CODE += engine/thorium/message.o
+LIBRARY_HOT_CODE += engine/thorium/node.o
+LIBRARY_HOT_CODE += engine/thorium/actor.o
+LIBRARY_HOT_CODE += engine/thorium/script.o
+LIBRARY_HOT_CODE += engine/thorium/worker.o
+LIBRARY_HOT_CODE += engine/thorium/migration.o
+LIBRARY_HOT_CODE += engine/thorium/worker_pool.o
+LIBRARY_HOT_CODE += engine/thorium/active_buffer.o
+LIBRARY_HOT_CODE += engine/thorium/dispatcher.o
+LIBRARY_HOT_CODE += engine/thorium/transport.o
 
 LIBRARY_HOT_CODE += core/patterns/manager.o
 LIBRARY_HOT_CODE += genomics/kernels/aggregator.o

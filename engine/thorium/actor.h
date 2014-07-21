@@ -10,7 +10,7 @@
 #include <core/structures/queue.h>
 #include <core/structures/fast_ring.h>
 
-#include <core/engine/dispatcher.h>
+#include <engine/thorium/dispatcher.h>
 #include <core/system/lock.h>
 #include <core/system/counter.h>
 

@@ -2,7 +2,7 @@
 #ifndef BSAL_INPUT_CONTROLLER_H
 #define BSAL_INPUT_CONTROLLER_H
 
-#include <core/engine/actor.h>
+#include <engine/thorium/actor.h>
 
 #include <core/structures/vector.h>
 #include <core/structures/map.h>

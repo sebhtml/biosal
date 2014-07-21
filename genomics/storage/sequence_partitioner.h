@@ -2,7 +2,7 @@
 #ifndef BSAL_SEQUENCE_PARTITIONER_H
 #define BSAL_SEQUENCE_PARTITIONER_H
 
-#include <core/engine/actor.h>
+#include <engine/thorium/actor.h>
 
 #include <core/structures/vector.h>
 #include <core/structures/dynamic_hash_table.h>

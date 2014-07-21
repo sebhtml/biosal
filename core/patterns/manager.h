@@ -2,7 +2,7 @@
 #ifndef BSAL_MANAGER_H
 #define BSAL_MANAGER_H
 
-#include <core/engine/actor.h>
+#include <engine/thorium/actor.h>
 
 #include <core/structures/dynamic_hash_table.h>
 #include <core/structures/vector.h>

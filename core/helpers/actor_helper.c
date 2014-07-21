@@ -3,8 +3,8 @@
 #include "vector_helper.h"
 
 #include <core/structures/vector_iterator.h>
-#include <core/engine/actor.h>
-#include <core/engine/message.h>
+#include <engine/thorium/actor.h>
+#include <engine/thorium/message.h>
 
 #include <core/system/memory.h>
 #include <core/system/memory_pool.h>

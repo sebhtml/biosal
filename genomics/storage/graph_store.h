@@ -2,7 +2,7 @@
 #ifndef BSAL_GRAPH_STORE_H
 #define BSAL_GRAPH_STORE_H
 
-#include <core/engine/actor.h>
+#include <engine/thorium/actor.h>
 
 #define BSAL_GRAPH_STORE_SCRIPT 0xc81a1596
 

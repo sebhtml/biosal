@@ -2,7 +2,7 @@
 #ifndef BSAL_DISPATCHER_H
 #define BSAL_DISPATCHER_H
 
-#include <core/engine/script.h>
+#include <engine/thorium/script.h>
 #include <core/structures/map.h>
 
 struct bsal_dispatcher {

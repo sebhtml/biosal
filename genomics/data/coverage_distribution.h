@@ -2,7 +2,7 @@
 #ifndef BSAL_COVERAGE_DISTRIBUTION_H
 #define BSAL_COVERAGE_DISTRIBUTION_H
 
-#include <core/engine/actor.h>
+#include <engine/thorium/actor.h>
 
 #include <core/structures/map.h>
 
