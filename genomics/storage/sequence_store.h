@@ -42,13 +42,6 @@ struct bsal_sequence_store {
 #define BSAL_SEQUENCE_STORE_REQUEST_PROGRESS 0x0000648a
 #define BSAL_SEQUENCE_STORE_REQUEST_PROGRESS_REPLY 0x000074a5
 
-/*
- * The block size is difference depending on the nature of the work.
- */
-#define BSAL_SEQUENCE_STORE_PRODUCT_BLOCK_SIZE 32
-#define BSAL_SEQUENCE_STORE_PRODUCT_BLOCK_SIZE_DISTRIBUTED BSAL_SEQUENCE_STORE_PRODUCT_BLOCK_SIZE
-#define BSAL_SEQUENCE_STORE_PRODUCT_BLOCK_SIZE_ONE_NODE BSAL_SEQUENCE_STORE_PRODUCT_BLOCK_SIZE
-
 extern struct bsal_script bsal_sequence_store_script;
 
 void bsal_sequence_store_init(struct bsal_actor *actor);

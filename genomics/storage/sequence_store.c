@@ -1,11 +1,12 @@
 
 #include "sequence_store.h"
 
-#include <core/structures/vector_iterator.h>
 #include <genomics/input/input_command.h>
 #include <genomics/data/dna_sequence.h>
-#include <core/helpers/actor_helper.h>
 
+#include <core/structures/vector_iterator.h>
+#include <core/helpers/actor_helper.h>
+#include <core/helpers/message_helper.h>
 #include <core/system/memory.h>
 
 #include <stdlib.h>
@@ -307,8 +308,6 @@ void bsal_sequence_store_show_progress(struct bsal_actor *actor, struct bsal_mes
 
 void bsal_sequence_store_ask(struct bsal_actor *self, struct bsal_message *message)
 {
-    int block_size;
-    int i;
     struct bsal_sequence_store *concrete_actor;
     struct bsal_input_command payload;
     struct bsal_dna_sequence *sequence;
@@ -321,6 +320,35 @@ void bsal_sequence_store_ask(struct bsal_actor *self, struct bsal_message *messa
     int period;
     struct bsal_memory_pool *ephemeral_memory;
     double ratio;
+    int workers;
+    int nodes;
+    int total_workers;
+    int total_kmer_stores;
+    int kmer_length;
+    int minimum_end_buffer_size_in_bytes;
+    int minimum_end_buffer_size_in_ascii_kmers;
+    int required_kmers;
+    int kmers;
+    int length;
+    int sequence_kmers;
+
+    workers = bsal_actor_node_worker_count(self);
+    nodes = bsal_actor_get_node_count(self);
+    total_workers = nodes * workers;
+    total_kmer_stores = total_workers * 1;
+    bsal_message_helper_unpack_int(message, 0, &kmer_length);
+
+    /* 8 KiB */
+    minimum_end_buffer_size_in_bytes = 8192;
+
+    /* Assume 1 byte per nucleotide since transportation does not use 2-bit encoding in the
+     * DNA codec.
+     *
+     * However, the 2-bit DNA codec is used for the graph.
+     */
+    minimum_end_buffer_size_in_ascii_kmers = minimum_end_buffer_size_in_bytes / kmer_length;
+
+    required_kmers = minimum_end_buffer_size_in_ascii_kmers * total_kmer_stores;
 
     name = bsal_actor_get_name(self);
 #ifdef BSAL_SEQUENCE_STORE_DEBUG
@@ -336,11 +364,7 @@ void bsal_sequence_store_ask(struct bsal_actor *self, struct bsal_message *messa
                         concrete_actor->reservation_producer);
     }
 
-    block_size = BSAL_SEQUENCE_STORE_PRODUCT_BLOCK_SIZE_DISTRIBUTED;
 
-    if (bsal_actor_get_node_count(self) == 1) {
-        block_size = BSAL_SEQUENCE_STORE_PRODUCT_BLOCK_SIZE_ONE_NODE;
-    }
 
     if (!concrete_actor->iterator_started) {
         bsal_vector_iterator_init(&concrete_actor->iterator, &concrete_actor->sequences);
@@ -353,10 +377,10 @@ void bsal_sequence_store_ask(struct bsal_actor *self, struct bsal_message *messa
      */
     bsal_input_command_init(&payload, -1, 0, 0);
 
-    i = 0;
+    kmers = 0;
 
     while ( bsal_vector_iterator_has_next(&concrete_actor->iterator)
-                    && i < block_size) {
+                    && kmers < required_kmers) {
 
         bsal_vector_iterator_next(&concrete_actor->iterator, (void **)&sequence);
 
@@ -364,7 +388,15 @@ void bsal_sequence_store_ask(struct bsal_actor *self, struct bsal_message *messa
         bsal_input_command_add_entry(&payload, sequence, &concrete_actor->codec,
                         bsal_actor_get_ephemeral_memory(self));
 
-        i++;
+        length = bsal_dna_sequence_length(sequence);
+
+        sequence_kmers = length - kmer_length + 1;
+        kmers += sequence_kmers;
+
+        /*
+        printf("Yielded %d kmers... %d/%d\n",
+                        sequence_kmers, kmers, required_kmers);
+                        */
     }
 
     entry_count = bsal_input_command_entry_count(&payload);

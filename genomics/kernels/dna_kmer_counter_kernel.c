@@ -497,7 +497,8 @@ void bsal_dna_kmer_counter_kernel_ask(struct bsal_actor *self, struct bsal_messa
 
     producer = bsal_actor_get_acquaintance(self, concrete_actor->producer);
 
-    bsal_actor_helper_send_empty(self, producer, BSAL_SEQUENCE_STORE_ASK);
+    bsal_actor_helper_send_int(self, producer, BSAL_SEQUENCE_STORE_ASK,
+                    concrete_actor->kmer_length);
 
 #ifdef BSAL_DNA_KMER_COUNTER_KERNEL_DEBUG
     printf("DEBUG kernel asks producer\n");
