@@ -22,9 +22,15 @@ int main(int argc, char **argv)
 
     elements = 900;
 
-    key = 0;
     sum = 0;
     bsal_set_init(&set, sizeof(key));
+
+    key = 9;
+    bsal_set_add(&set, &key);
+    bsal_set_delete(&set, &key);
+    bsal_set_delete(&set, &key);
+
+    key = 0;
 
     for (i = 0; i < elements; i++) {
 

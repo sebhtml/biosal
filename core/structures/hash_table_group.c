@@ -5,6 +5,8 @@
 #include <core/system/memory.h>
 #include <core/system/memory_pool.h>
 
+#include <core/system/debugger.h>
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdint.h>
@@ -125,6 +127,8 @@ void *bsal_hash_table_group_get(struct bsal_hash_table_group *group,
  */
 int bsal_hash_table_group_state(struct bsal_hash_table_group *group, uint64_t bucket)
 {
+    BSAL_DEBUGGER_ASSERT(group != NULL);
+
     if (bsal_hash_table_group_get_bit(group->occupancy_bitmap, bucket) == 1) {
         return BSAL_HASH_TABLE_BUCKET_OCCUPIED;
     }
