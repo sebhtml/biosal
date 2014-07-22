@@ -35,7 +35,8 @@
 #define bsal_atomic_compare_and_swap_int(pointer, old_value, new_value) \
         __sync_val_compare_and_swap(pointer, old_value, new_value)
 
-#elif defined(CRAY) || defined(_CRAY)
+/* \see http://docs.cray.com/cgi-bin/craydoc.cgi?mode=View;id=S-2179-74 */
+#elif defined(_CRAYC)
 
 /* Cray
  * \see https://fs.hlrs.de/projects/craydoc/docs_merged/man/xt_libintm/74/cat3/amo.3i.html
