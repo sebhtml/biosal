@@ -86,4 +86,6 @@
 int bsal_atomic_read_int_mock(int *pointer);
 int bsal_atomic_compare_and_swap_int_mock(int *pointer, int old_value, int new_value);
 
+void bsal_memory_fence();
+
 #endif

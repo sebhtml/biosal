@@ -30,6 +30,7 @@ void bsal_fast_ring_init(struct bsal_fast_ring *self, int capacity, int cell_siz
 
     self->cells = bsal_memory_allocate(self->number_of_cells * self->cell_size);
 
+#ifdef BSAL_FAST_RING_USE_PADDING
     /* assign values to the padding
      */
     self->consumer_padding_0 = 0;
@@ -45,6 +46,7 @@ void bsal_fast_ring_init(struct bsal_fast_ring *self, int capacity, int cell_siz
     self->producer_padding_3 = 0;
     self->producer_padding_4 = 0;
     self->producer_padding_5 = 0;
+#endif
 }
 
 void bsal_fast_ring_destroy(struct bsal_fast_ring *self)
@@ -78,6 +80,9 @@ int bsal_fast_ring_push_from_producer(struct bsal_fast_ring *self, void *element
 
     cell = bsal_fast_ring_get_cell(self, self->tail);
     memcpy(cell, element, self->cell_size);
+
+    bsal_memory_fence();
+
     self->tail = bsal_fast_ring_increment(self, self->tail);
 
     return 1;
@@ -154,6 +159,7 @@ uint64_t bsal_fast_ring_mock(struct bsal_fast_ring *self)
 
     sum = 0;
 
+#ifdef BSAL_FAST_RING_USE_PADDING
     sum += self->consumer_padding_0;
     sum += self->consumer_padding_1;
     sum += self->consumer_padding_2;
@@ -167,6 +173,7 @@ uint64_t bsal_fast_ring_mock(struct bsal_fast_ring *self)
     sum += self->producer_padding_3;
     sum += self->producer_padding_4;
     sum += self->producer_padding_5;
+#endif
 
     return sum;
 }
@@ -216,6 +223,9 @@ int bsal_fast_ring_pop_from_consumer(struct bsal_fast_ring *self, void *element)
 
     cell = bsal_fast_ring_get_cell(self, self->head);
     memcpy(element, cell, self->cell_size);
+
+    bsal_memory_fence();
+
     self->head = bsal_fast_ring_increment(self, self->head);
 
     return 1;

@@ -365,6 +365,13 @@ int bsal_worker_dequeue_actor(struct bsal_worker *worker, struct bsal_actor **ac
     while (operations--
                     && bsal_fast_ring_pop_from_consumer(&worker->actors_to_schedule, &other_actor)) {
 
+#ifdef BSAL_DEBUGGER_ENABLE_ASSERT
+        if (other_actor == NULL) {
+            printf("NULL pointer pulled from ring (???), operations %d ring size %d\n",
+                            operations, bsal_fast_ring_size_from_consumer(&worker->actors_to_schedule));
+        }
+#endif
+
         BSAL_DEBUGGER_ASSERT(other_actor != NULL);
 
         other_name = bsal_actor_get_name(other_actor);

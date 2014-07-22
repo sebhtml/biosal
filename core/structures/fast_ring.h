@@ -7,15 +7,22 @@ struct bsal_fast_ring;
 #include <stdint.h>
 
 /*
-*/
 #define BSAL_FAST_RING_VOLATILE
+*/
 
 /*
 #define BSAL_FAST_RING_ATOMIC
 */
 
 /*
+BSAL_FAST_RING_USE_PADDING
+*/
+/*
  * \see http://www.codeproject.com/Articles/43510/Lock-Free-Single-Producer-Single-Consumer-Circular
+ *
+ * \see http://mechanitis.blogspot.com/2011/08/dissecting-disruptor-why-its-so-fast.html
+ *
+ * \see http://stackoverflow.com/questions/17327095/how-does-disruptor-barriers-work
  */
 struct bsal_fast_ring {
     /*
@@ -30,23 +37,40 @@ struct bsal_fast_ring {
      * None of these variable is volatile
      * because volatile gives bad performance overall
      */
+
+    /*
+     * For consumer
+     */
     uint64_t head;
     uint64_t tail_cache;
+
+    /* PowerPC A2 has L1 cache line length of 64 bytes and L2 cache line length of
+     * 128 bytes
+     */
+
+#ifdef BSAL_FAST_RING_USE_PADDING
     uint64_t consumer_padding_0;
     uint64_t consumer_padding_1;
     uint64_t consumer_padding_2;
     uint64_t consumer_padding_3;
     uint64_t consumer_padding_4;
     uint64_t consumer_padding_5;
+#endif
 
+    /*
+     * For producer
+     */
     uint64_t tail;
     uint64_t head_cache;
+
+#ifdef BSAL_FAST_RING_USE_PADDING
     uint64_t producer_padding_0;
     uint64_t producer_padding_1;
     uint64_t producer_padding_2;
     uint64_t producer_padding_3;
     uint64_t producer_padding_4;
     uint64_t producer_padding_5;
+#endif
 
     void *cells;
     uint64_t number_of_cells;
