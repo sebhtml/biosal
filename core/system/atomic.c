@@ -23,6 +23,52 @@ int bsal_atomic_compare_and_swap_int_mock(int *pointer, int old_value, int new_v
 
 void bsal_memory_fence()
 {
+    bsal_fence();
+}
+
+void bsal_l_fence()
+{
+#if defined(__bgq__)
+
+    /* I am not sure if  __eieio  is a load fence */
+    bsal_fence();
+
+#elif defined(__GNUC__)
+
+    bsal_fence();
+
+#elif defined(_CRAYC)
+    __builtin_ia32_lfence();
+
+#else
+
+    bsal_fence();
+
+#endif
+
+}
+
+void bsal_s_fence()
+{
+#if defined(__bgq__)
+    __lwsync();
+
+#elif defined(__GNUC__)
+
+    bsal_fence();
+
+#elif defined(_CRAYC)
+    __builtin_ia32_sfence();
+
+#else
+
+    bsal_fence();
+
+#endif
+}
+
+void bsal_fence()
+{
 #ifdef __bgq__
 
     /*
@@ -42,6 +88,34 @@ void bsal_memory_fence()
      * writes outside the processor are not reordered. Reads are reordered, however, so mb() will be slower than wmb().
      */
 
+    /*
+     * \see https://gcc.gnu.org/onlinedocs/gcc-4.4.5/gcc/Atomic-Builtins.html
+     */
     __sync_synchronize();
+
+
+#elif defined(_CRAYC)
+
+    /*
+     * \see http://docs.cray.com/books/004-2179-001/html-004-2179-001/imwlrwh.html
+     */
+    /*
+    _memory_barrier();
+    */
+
+    /*
+     * \see http://docs.cray.com/books/S-2179-52/html-S-2179-52/fixedcdw3qe3i7.html
+     * _gsync();
+     *
+     */
+
+    /*
+     * \see http://docs.cray.com/books/S-2179-81/S-2179-81.pdf
+     */
+    __builtin_ia32_mfence();
+
+#else
+
+    /* Do nothing... */
 #endif
 }
