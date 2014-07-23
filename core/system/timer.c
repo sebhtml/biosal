@@ -78,20 +78,29 @@ uint64_t bsal_timer_get_nanoseconds(struct bsal_timer *timer)
 uint64_t bsal_timer_get_nanoseconds_blue_gene_q(struct bsal_timer *timer)
 {
     uint64_t cycles;
-    uint64_t time;
-    uint64_t microseconds_per_cycle;
+    uint64_t picoseconds_per_cycle;
+    uint64_t nanoseconds;
 
     cycles = 0;
-    time = 0;
 
 #ifdef __bgq__
     cycles = GetTimeBase();
 #endif
 
-    microseconds_per_cycle = (1000 * 1000) / timer->frequency;
-    time = cycles * microseconds_per_cycle;
+    /*
+     * Get the number of picoseconds per cycle.
+     */
+    picoseconds_per_cycle = 1;
+    picoseconds_per_cycle *= 1000;
+    picoseconds_per_cycle *= 1000;
+    picoseconds_per_cycle *= 1000;
+    picoseconds_per_cycle *= 1000;
 
-    return time * 1000;
+    picoseconds_per_cycle /= timer->frequency;
+
+    nanoseconds = (cycles * picoseconds_per_cycle) / 1000;
+
+    return nanoseconds;
 }
 
 uint64_t bsal_timer_get_nanoseconds_gettimeofday(struct bsal_timer *timer)
