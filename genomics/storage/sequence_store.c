@@ -338,8 +338,8 @@ void bsal_sequence_store_ask(struct bsal_actor *self, struct bsal_message *messa
     total_kmer_stores = total_workers * 1;
     bsal_message_helper_unpack_int(message, 0, &kmer_length);
 
-    /* 8 KiB */
-    minimum_end_buffer_size_in_bytes = 8192;
+    /* 4 KiB */
+    minimum_end_buffer_size_in_bytes = 4096;
 
     /* Assume 1 byte per nucleotide since transportation does not use 2-bit encoding in the
      * DNA codec.

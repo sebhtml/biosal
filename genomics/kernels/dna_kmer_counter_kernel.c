@@ -38,6 +38,8 @@
  */
 #define BSAL_DNA_KMER_COUNTER_KERNEL_DISABLE_TRACKING
 
+#define MAXIMUM_AUTO_SCALING_KERNEL_COUNT 0
+
 struct bsal_script bsal_dna_kmer_counter_kernel_script = {
     .name = BSAL_DNA_KMER_COUNTER_KERNEL_SCRIPT,
     .init = bsal_dna_kmer_counter_kernel_init,
@@ -526,7 +528,7 @@ void bsal_dna_kmer_counter_kernel_do_auto_scaling(struct bsal_actor *actor, stru
     /*
      * Avoid cloning too many actors
      */
-    if (concrete_actor->scaling_operations >= 64) {
+    if (concrete_actor->scaling_operations >= MAXIMUM_AUTO_SCALING_KERNEL_COUNT) {
         return;
     }
 

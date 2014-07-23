@@ -430,7 +430,9 @@ int bsal_aggregator_set_consumers(struct bsal_actor *actor, void *buffer)
     struct bsal_vector customers;
     struct bsal_aggregator *concrete_actor;
     int bytes;
+    int active_message_multiplier;
 
+    active_message_multiplier = 2;
     concrete_actor = (struct bsal_aggregator *)bsal_actor_concrete_actor(actor);
 
     /*
@@ -441,7 +443,7 @@ int bsal_aggregator_set_consumers(struct bsal_actor *actor, void *buffer)
 
     bsal_actor_helper_add_acquaintances(actor, &customers, &concrete_actor->customers);
 
-    concrete_actor->maximum_active_messages = bsal_vector_size(&concrete_actor->customers) * 4;
+    concrete_actor->maximum_active_messages = bsal_vector_size(&concrete_actor->customers) * active_message_multiplier;
 
     printf("DEBUG45 aggregator %d preparing %d buffers, kmer_length %d\n",
                     bsal_actor_get_name(actor),
