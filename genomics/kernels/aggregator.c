@@ -4,6 +4,7 @@
 #include <genomics/data/dna_kmer_block.h>
 #include <genomics/data/dna_kmer.h>
 
+#include <genomics/storage/sequence_store.h>
 #include <genomics/kernels/dna_kmer_counter_kernel.h>
 #include <genomics/storage/kmer_store.h>
 
@@ -38,6 +39,10 @@
  * performance
  */
 #define BSAL_AGGREGATOR_DISABLE_TRACKING
+
+/*
+#define BSAL_AGGREGATOR_DEBUG_FLUSHING
+*/
 
 struct bsal_script bsal_aggregator_script = {
     .name = BSAL_AGGREGATOR_SCRIPT,
@@ -146,7 +151,8 @@ void bsal_aggregator_receive(struct bsal_actor *self, struct bsal_message *messa
     }
 }
 
-void bsal_aggregator_flush(struct bsal_actor *self, int customer_index, struct bsal_vector *buffers)
+void bsal_aggregator_flush(struct bsal_actor *self, int customer_index, struct bsal_vector *buffers,
+                int force)
 {
     struct bsal_dna_kmer_block *customer_block_pointer;
     struct bsal_aggregator *concrete_actor;
@@ -155,20 +161,36 @@ void bsal_aggregator_flush(struct bsal_actor *self, int customer_index, struct b
     struct bsal_message message;
     int customer;
     struct bsal_memory_pool *ephemeral_memory;
+    int threshold;
+
+    /*
+     * Only flush when required
+     */
+    threshold = BSAL_SEQUENCE_STORE_FINAL_BLOCK_SIZE * 3;
 
     concrete_actor = (struct bsal_aggregator *)bsal_actor_concrete_actor(self);
 
     ephemeral_memory = bsal_actor_get_ephemeral_memory(self);
     customer = bsal_actor_helper_get_acquaintance(self, &concrete_actor->customers, customer_index);
     customer_block_pointer = (struct bsal_dna_kmer_block *)bsal_vector_at(buffers, customer_index);
+    count = bsal_dna_kmer_block_pack_size(customer_block_pointer,
+                    &concrete_actor->codec);
 
-#ifdef BSAL_AGGREGATOR_DEBUG
-    printf("DEBUG bsal_aggregator_flush actual %d threshold %d\n", actual,
+    /*
+     * Don't flush if the force parameter is not set and there are not enough
+     * bytes.
+     */
+    if (!force && count < threshold) {
+        return;
+
+    }
+
+
+#ifdef BSAL_AGGREGATOR_DEBUG_FLUSHING
+    printf("DEBUG bsal_aggregator_flush actual %d threshold %d\n", count,
                     threshold);
 #endif
 
-    count = bsal_dna_kmer_block_pack_size(customer_block_pointer,
-                    &concrete_actor->codec);
     buffer = bsal_memory_pool_allocate(ephemeral_memory, count);
     bsal_dna_kmer_block_pack(customer_block_pointer, buffer,
                     &concrete_actor->codec);
@@ -187,6 +209,14 @@ void bsal_aggregator_flush(struct bsal_actor *self, int customer_index, struct b
         printf("aggregator %d flushed %d blocks so far\n",
                         bsal_actor_get_name(self), concrete_actor->flushed);
     }
+
+    /* Reset the buffer
+     */
+
+    bsal_dna_kmer_block_destroy(customer_block_pointer, ephemeral_memory);
+
+    bsal_dna_kmer_block_init(customer_block_pointer, concrete_actor->kmer_length, -1,
+                        concrete_actor->customer_block_size);
 
     concrete_actor->flushed++;
 }
@@ -231,7 +261,6 @@ void bsal_aggregator_aggregate_kernel_output(struct bsal_actor *self, struct bsa
     void *buffer;
     int customer_index;
     struct bsal_vector_iterator iterator;
-    int customer_block_size;
 
     concrete_actor = (struct bsal_aggregator *)bsal_actor_concrete_actor(self);
 
@@ -282,7 +311,7 @@ void bsal_aggregator_aggregate_kernel_output(struct bsal_actor *self, struct bsa
 
     customer_count = bsal_vector_size(&concrete_actor->customers);
 
-    customer_block_size = (entries / customer_count) * 2;
+    concrete_actor->customer_block_size = (entries / customer_count) * 2;
 
     /*
      * Reserve entries
@@ -293,7 +322,7 @@ void bsal_aggregator_aggregate_kernel_output(struct bsal_actor *self, struct bsa
         customer_block_pointer = (struct bsal_dna_kmer_block *)bsal_vector_at(&buffers,
                         i);
         bsal_dna_kmer_block_init(customer_block_pointer, concrete_actor->kmer_length, -1,
-                        customer_block_size);
+                        concrete_actor->customer_block_size);
 
     }
 
@@ -327,6 +356,12 @@ void bsal_aggregator_aggregate_kernel_output(struct bsal_actor *self, struct bsa
          */
         bsal_dna_kmer_block_add_kmer(customer_block_pointer, kmer, ephemeral_memory,
                         &concrete_actor->codec);
+
+        /* Flush if necessary to avoid having very big buffers
+         */
+        if (i % 32 == 0) {
+            bsal_aggregator_flush(self, customer_index, &buffers, 0);
+        }
 
 #ifdef BSAL_AGGREGATOR_DEBUG
         BSAL_DEBUG_MARKER("aggregator before flush");
@@ -374,7 +409,7 @@ void bsal_aggregator_aggregate_kernel_output(struct bsal_actor *self, struct bsa
         printf("aggregator flushing %d\n", customer_index);
 #endif
 
-        bsal_aggregator_flush(self, customer_index, &buffers);
+        bsal_aggregator_flush(self, customer_index, &buffers, 1);
 
         /*
          * Destroy block

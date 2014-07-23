@@ -2,12 +2,14 @@
 #ifndef BSAL_SEQUENCE_STORE_H
 #define BSAL_SEQUENCE_STORE_H
 
-#include <engine/thorium/actor.h>
 #include <genomics/data/dna_codec.h>
+
 #include <core/structures/vector.h>
 #include <core/structures/vector_iterator.h>
 
 #include <core/system/memory_pool.h>
+
+#include <engine/thorium/actor.h>
 
 #define BSAL_SEQUENCE_STORE_SCRIPT 0x47e2e424
 
@@ -41,6 +43,8 @@ struct bsal_sequence_store {
 
 #define BSAL_SEQUENCE_STORE_REQUEST_PROGRESS 0x0000648a
 #define BSAL_SEQUENCE_STORE_REQUEST_PROGRESS_REPLY 0x000074a5
+
+#define BSAL_SEQUENCE_STORE_FINAL_BLOCK_SIZE 4096
 
 extern struct bsal_script bsal_sequence_store_script;
 

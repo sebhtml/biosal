@@ -48,7 +48,8 @@ void bsal_aggregator_init(struct bsal_actor *actor);
 void bsal_aggregator_destroy(struct bsal_actor *actor);
 void bsal_aggregator_receive(struct bsal_actor *actor, struct bsal_message *message);
 
-void bsal_aggregator_flush(struct bsal_actor *self, int customer_index, struct bsal_vector *buffers);
+void bsal_aggregator_flush(struct bsal_actor *self, int customer_index, struct bsal_vector *buffers,
+                int force);
 void bsal_aggregator_verify(struct bsal_actor *self, struct bsal_message *message);
 void bsal_aggregator_aggregate_kernel_output(struct bsal_actor *self, struct bsal_message *message);
 
