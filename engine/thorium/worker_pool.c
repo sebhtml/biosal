@@ -377,14 +377,17 @@ struct bsal_node *bsal_worker_pool_get_node(struct bsal_worker_pool *pool)
 }
 
 
-void bsal_worker_pool_give_message_to_actor(struct bsal_worker_pool *pool, struct bsal_message *message)
+int bsal_worker_pool_give_message_to_actor(struct bsal_worker_pool *pool, struct bsal_message *message)
 {
     int destination;
     struct bsal_actor *actor;
     struct bsal_worker *affinity_worker;
     int worker_index;
     int name;
+    int dead;
+    void *buffer;
 
+    buffer = bsal_message_buffer(message);
     destination = bsal_message_destination(message);
     actor = bsal_node_get_actor_from_name(pool->node, destination);
 
@@ -396,7 +399,23 @@ void bsal_worker_pool_give_message_to_actor(struct bsal_worker_pool *pool, struc
 #ifdef BSAL_WORKER_POOL_DEBUG_DEAD_CHANNEL
         printf("DEAD LETTER CHANNEL...\n");
 #endif
-        return;
+        if (buffer != NULL) {
+            bsal_memory_free(buffer);
+        }
+
+        return 0;
+    }
+
+    dead = bsal_actor_dead(actor);
+
+    /* If the actor is dead, don't use it.
+     */
+    if (dead) {
+        if (buffer != NULL) {
+            bsal_memory_free(buffer);
+        }
+
+        return 0;
     }
 
     name = bsal_actor_get_name(actor);
@@ -446,6 +465,8 @@ void bsal_worker_pool_give_message_to_actor(struct bsal_worker_pool *pool, struc
             bsal_ring_queue_enqueue(&pool->scheduled_actor_queue_buffer, &actor);
         }
     }
+
+    return 1;
 }
 
 void bsal_worker_pool_work(struct bsal_worker_pool *pool)

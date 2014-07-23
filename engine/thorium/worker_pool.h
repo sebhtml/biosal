@@ -95,7 +95,7 @@ int bsal_worker_pool_dequeue_message(struct bsal_worker_pool *pool, struct bsal_
 float bsal_worker_pool_get_efficiency(struct bsal_worker_pool *pool);
 
 struct bsal_node *bsal_worker_pool_get_node(struct bsal_worker_pool *pool);
-void bsal_worker_pool_give_message_to_actor(struct bsal_worker_pool *pool, struct bsal_message *message);
+int bsal_worker_pool_give_message_to_actor(struct bsal_worker_pool *pool, struct bsal_message *message);
 
 void bsal_worker_pool_work(struct bsal_worker_pool *pool);
 void bsal_worker_pool_assign_worker_to_actor(struct bsal_worker_pool *pool, int name);

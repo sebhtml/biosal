@@ -128,6 +128,13 @@ void bsal_actor_destroy(struct bsal_actor *actor)
     destroy = bsal_actor_get_destroy(actor);
     destroy(actor);
 
+    /*
+     * Make sure that everyone see that this actor is
+     * dead.
+     */
+    actor->dead = 1;
+    bsal_memory_fence();
+
     bsal_dispatcher_destroy(&actor->dispatcher);
     bsal_vector_destroy(&actor->acquaintance_vector);
     bsal_vector_destroy(&actor->children);
@@ -158,7 +165,6 @@ void bsal_actor_destroy(struct bsal_actor *actor)
     }
 
     actor->name = -1;
-    actor->dead = 1;
 
     actor->script = NULL;
     actor->worker = NULL;
@@ -1075,6 +1081,8 @@ void bsal_actor_pack_proxy_message(struct bsal_actor *actor, struct bsal_message
 int bsal_actor_script(struct bsal_actor *actor)
 {
     BSAL_DEBUGGER_ASSERT(actor != NULL);
+
+    BSAL_DEBUGGER_ASSERT(actor->script != NULL);
 
     return bsal_script_name(actor->script);
 }
