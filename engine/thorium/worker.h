@@ -14,6 +14,7 @@
 #include <core/structures/map_iterator.h>
 
 #include <core/system/memory_pool.h>
+#include <core/system/timer.h>
 #include <core/system/thread.h>
 
 #include <stdint.h>
@@ -50,6 +51,7 @@ struct bsal_scheduler;
 struct bsal_worker {
     struct bsal_node *node;
 
+    struct bsal_timer timer;
     struct bsal_map actors;
     struct bsal_map_iterator actor_iterator;
     int ticks_without_production;

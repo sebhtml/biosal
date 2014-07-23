@@ -50,6 +50,7 @@ void bsal_worker_init(struct bsal_worker *worker, int name, struct bsal_node *no
     int capacity;
     int ephemeral_memory_block_size;
 
+    bsal_timer_init(&worker->timer);
     capacity = BSAL_WORKER_RING_CAPACITY;
     /*worker->work_queue = work_queue;*/
     worker->node = node;
@@ -118,6 +119,7 @@ void bsal_worker_init(struct bsal_worker *worker, int name, struct bsal_node *no
 void bsal_worker_destroy(struct bsal_worker *worker)
 {
 
+    bsal_timer_destroy(&worker->timer);
     bsal_lock_destroy(&worker->lock);
 
     bsal_fast_ring_destroy(&worker->actors_to_schedule);
@@ -212,6 +214,8 @@ void bsal_worker_send(struct bsal_worker *worker, struct bsal_message *message)
 
 void bsal_worker_start(struct bsal_worker *worker, int processor)
 {
+
+
     bsal_thread_init(&worker->thread, bsal_worker_main, worker);
 
     bsal_thread_set_affinity(&worker->thread, processor);
@@ -219,10 +223,11 @@ void bsal_worker_start(struct bsal_worker *worker, int processor)
     bsal_thread_start(&worker->thread);
 
     worker->last_report = time(NULL);
-    worker->epoch_start_in_nanoseconds = bsal_timer_get_nanoseconds();
+    worker->epoch_start_in_nanoseconds = bsal_timer_get_nanoseconds(&worker->timer);
     worker->loop_start_in_nanoseconds = worker->epoch_start_in_nanoseconds;
     worker->loop_end_in_nanoseconds = worker->loop_start_in_nanoseconds;
     worker->scheduling_epoch_start_in_nanoseconds = worker->epoch_start_in_nanoseconds;
+
 }
 
 void *bsal_worker_main(void *worker1)
@@ -271,7 +276,7 @@ void bsal_worker_stop(struct bsal_worker *worker)
 
     bsal_thread_join(&worker->thread);
 
-    worker->loop_end_in_nanoseconds = bsal_timer_get_nanoseconds();
+    worker->loop_end_in_nanoseconds = bsal_timer_get_nanoseconds(&worker->timer);
 }
 
 int bsal_worker_is_busy(struct bsal_worker *self)
@@ -367,7 +372,7 @@ int bsal_worker_dequeue_actor(struct bsal_worker *worker, struct bsal_actor **ac
 
 #ifdef BSAL_DEBUGGER_ENABLE_ASSERT
         if (other_actor == NULL) {
-            printf("NULL pointer pulled from ring (???), operations %d ring size %d\n",
+            printf("NULL pointer pulled from ring, operations %d ring size %d\n",
                             operations, bsal_fast_ring_size_from_consumer(&worker->actors_to_schedule));
         }
 #endif
@@ -806,7 +811,7 @@ float bsal_worker_get_scheduling_epoch_load(struct bsal_worker *worker)
     uint64_t end_time;
     uint64_t period;
 
-    end_time = bsal_timer_get_nanoseconds();
+    end_time = bsal_timer_get_nanoseconds(&worker->timer);
 
     period = end_time - worker->scheduling_epoch_start_in_nanoseconds;
 
@@ -819,7 +824,7 @@ float bsal_worker_get_scheduling_epoch_load(struct bsal_worker *worker)
 
 void bsal_worker_reset_scheduling_epoch(struct bsal_worker *worker)
 {
-    worker->scheduling_epoch_start_in_nanoseconds = bsal_timer_get_nanoseconds();
+    worker->scheduling_epoch_start_in_nanoseconds = bsal_timer_get_nanoseconds(&worker->timer);
 
     worker->scheduling_epoch_used_nanoseconds = 0;
 }
@@ -956,8 +961,6 @@ void bsal_worker_run(struct bsal_worker *worker)
     clock_t elapsed;
     int period;
     uint64_t current_nanoseconds;
-    uint64_t start_time;
-    uint64_t end_time;
     uint64_t elapsed_nanoseconds;
 #endif
 
@@ -977,7 +980,7 @@ void bsal_worker_run(struct bsal_worker *worker)
 
     if (elapsed >= period) {
 
-        current_nanoseconds = bsal_timer_get_nanoseconds();
+        current_nanoseconds = bsal_timer_get_nanoseconds(&worker->timer);
 
 #ifdef BSAL_WORKER_DEBUG_LOAD
         printf("DEBUG Updating load report\n");
@@ -1047,7 +1050,7 @@ void bsal_worker_run(struct bsal_worker *worker)
         bsal_priority_scheduler_update(&worker->scheduler, actor);
 
 #ifdef BSAL_NODE_ENABLE_INSTRUMENTATION
-        start_time = bsal_timer_get_nanoseconds();
+        bsal_timer_start(&worker->timer);
 #endif
 
         worker->busy = 1;
@@ -1057,9 +1060,9 @@ void bsal_worker_run(struct bsal_worker *worker)
         worker->busy = 0;
 
 #ifdef BSAL_NODE_ENABLE_INSTRUMENTATION
-        end_time = bsal_timer_get_nanoseconds();
+        bsal_timer_stop(&worker->timer);
 
-        elapsed_nanoseconds = end_time - start_time;
+        elapsed_nanoseconds = bsal_timer_get_elapsed_nanoseconds(&worker->timer);
 
         worker->epoch_used_nanoseconds += elapsed_nanoseconds;
         worker->loop_used_nanoseconds += elapsed_nanoseconds;
