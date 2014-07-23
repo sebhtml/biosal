@@ -11,6 +11,10 @@
  */
 #define BSAL_TRACER_AVAILABLE
 
+#else
+
+#warning "GNU backtrace is not available"
+
 #endif
 
 #ifdef BSAL_TRACER_AVAILABLE
