@@ -1074,6 +1074,8 @@ void bsal_actor_pack_proxy_message(struct bsal_actor *actor, struct bsal_message
 
 int bsal_actor_script(struct bsal_actor *actor)
 {
+    BSAL_DEBUGGER_ASSERT(actor != NULL);
+
     return bsal_script_name(actor->script);
 }
 
