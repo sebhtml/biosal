@@ -4,7 +4,7 @@ import sys
 import os
 
 def print_context(frame, assembly_file, address):
-    address_without_0x = address.replace("0x", "")
+    address_without_0x = address.replace("0x", "").replace("[", "").replace("]", "")
 
     function = "NULL"
     instruction = "NULL"
