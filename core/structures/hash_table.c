@@ -346,6 +346,14 @@ int bsal_hash_table_pack_unpack(struct bsal_hash_table *self, void *buffer, int 
         bsal_hash_table_set_memory_pool(self, NULL);
 
         bsal_hash_table_start_groups(self);
+    } else {
+
+        /* The code does not support an empty map with
+         * no groups.
+         */
+        if (self->groups == NULL) {
+            bsal_hash_table_start_groups(self);
+        }
     }
 
     for (i = 0; i < self->group_count; i++) {
@@ -363,6 +371,10 @@ int bsal_hash_table_pack_unpack(struct bsal_hash_table *self, void *buffer, int 
 void bsal_hash_table_start_groups(struct bsal_hash_table *table)
 {
     int i;
+
+    if (table->groups != NULL) {
+        return;
+    }
 
 #ifdef BSAL_HASH_TABLE_DEBUG_INIT
     printf("DEBUG bsal_hash_table_start_groups %p\n", (void *)table);

@@ -90,6 +90,7 @@ LIBRARY_HOT_CODE += genomics/input/mega_block.o
 LIBRARY_HOT_CODE += genomics/data/dna_sequence.o
 LIBRARY_HOT_CODE += genomics/data/dna_kmer.o
 LIBRARY_HOT_CODE += genomics/data/dna_kmer_block.o
+LIBRARY_HOT_CODE += genomics/data/dna_kmer_frequency_block.o
 LIBRARY_HOT_CODE += genomics/data/coverage_distribution.o
 LIBRARY_HOT_CODE += genomics/data/dna_codec.o
 

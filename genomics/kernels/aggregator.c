@@ -2,6 +2,7 @@
 #include "aggregator.h"
 
 #include <genomics/data/dna_kmer_block.h>
+#include <genomics/data/dna_kmer_frequency_block.h>
 #include <genomics/data/dna_kmer.h>
 
 #include <genomics/storage/sequence_store.h>
@@ -162,7 +163,7 @@ void bsal_aggregator_receive(struct bsal_actor *self, struct bsal_message *messa
 void bsal_aggregator_flush(struct bsal_actor *self, int customer_index, struct bsal_vector *buffers,
                 int force)
 {
-    struct bsal_dna_kmer_block *customer_block_pointer;
+    struct bsal_dna_kmer_frequency_block *customer_block_pointer;
     struct bsal_aggregator *concrete_actor;
     int count;
     void *buffer;
@@ -181,8 +182,11 @@ void bsal_aggregator_flush(struct bsal_actor *self, int customer_index, struct b
 
     ephemeral_memory = bsal_actor_get_ephemeral_memory(self);
     customer = bsal_actor_helper_get_acquaintance(self, &concrete_actor->customers, customer_index);
-    customer_block_pointer = (struct bsal_dna_kmer_block *)bsal_vector_at(buffers, customer_index);
-    count = bsal_dna_kmer_block_pack_size(customer_block_pointer,
+    customer_block_pointer = (struct bsal_dna_kmer_frequency_block *)bsal_vector_at(buffers, customer_index);
+
+    BSAL_DEBUGGER_ASSERT(customer_block_pointer != NULL);
+
+    count = bsal_dna_kmer_frequency_block_pack_size(customer_block_pointer,
                     &concrete_actor->codec);
 
     /*
@@ -201,7 +205,7 @@ void bsal_aggregator_flush(struct bsal_actor *self, int customer_index, struct b
 #endif
 
     buffer = bsal_memory_pool_allocate(ephemeral_memory, count);
-    bsal_dna_kmer_block_pack(customer_block_pointer, buffer,
+    bsal_dna_kmer_frequency_block_pack(customer_block_pointer, buffer,
                     &concrete_actor->codec);
 
     bsal_message_init(&message, BSAL_PUSH_KMER_BLOCK, count, buffer);
@@ -223,9 +227,10 @@ void bsal_aggregator_flush(struct bsal_actor *self, int customer_index, struct b
     /* Reset the buffer
      */
 
-    bsal_dna_kmer_block_destroy(customer_block_pointer, ephemeral_memory);
+    bsal_dna_kmer_frequency_block_destroy(customer_block_pointer, ephemeral_memory);
 
-    bsal_dna_kmer_block_init(customer_block_pointer, concrete_actor->kmer_length, -1,
+    bsal_dna_kmer_frequency_block_init(customer_block_pointer, concrete_actor->kmer_length,
+                    ephemeral_memory, &concrete_actor->codec,
                         concrete_actor->customer_block_size);
 
     concrete_actor->flushed++;
@@ -274,10 +279,10 @@ void bsal_aggregator_aggregate_kernel_output(struct bsal_actor *self, struct bsa
     struct bsal_vector buffers;
     int producer_index;
     int customer_count;
-    struct bsal_dna_kmer_block *customer_block_pointer;
+    struct bsal_dna_kmer_frequency_block *customer_block_pointer;
     int entries;
     struct bsal_dna_kmer_block input_block;
-    struct bsal_dna_kmer_block *output_block;
+    struct bsal_dna_kmer_frequency_block *output_block;
     struct bsal_vector *kmers;
     struct bsal_memory_pool *ephemeral_memory;
     struct bsal_dna_kmer *kmer;
@@ -298,12 +303,10 @@ void bsal_aggregator_aggregate_kernel_output(struct bsal_actor *self, struct bsa
     source = bsal_message_source(message);
     buffer = bsal_message_buffer(message);
 
-    bsal_vector_init(&buffers, sizeof(struct bsal_dna_kmer_block));
+    bsal_vector_init(&buffers, sizeof(struct bsal_dna_kmer_frequency_block));
 
     bsal_vector_resize(&buffers,
                     bsal_vector_size(&concrete_actor->customers));
-
-
 
     /* enqueue the producer
      */
@@ -343,9 +346,10 @@ void bsal_aggregator_aggregate_kernel_output(struct bsal_actor *self, struct bsa
 
     for (i = 0; i < bsal_vector_size(&concrete_actor->customers); i++) {
 
-        customer_block_pointer = (struct bsal_dna_kmer_block *)bsal_vector_at(&buffers,
+        customer_block_pointer = (struct bsal_dna_kmer_frequency_block *)bsal_vector_at(&buffers,
                         i);
-        bsal_dna_kmer_block_init(customer_block_pointer, concrete_actor->kmer_length, -1,
+        bsal_dna_kmer_frequency_block_init(customer_block_pointer, concrete_actor->kmer_length,
+                        ephemeral_memory, &concrete_actor->codec,
                         concrete_actor->customer_block_size);
 
     }
@@ -362,7 +366,7 @@ void bsal_aggregator_aggregate_kernel_output(struct bsal_actor *self, struct bsa
         customer_index = bsal_dna_kmer_store_index(kmer, customer_count, concrete_actor->kmer_length,
                         &concrete_actor->codec, bsal_actor_get_ephemeral_memory(self));
 
-        customer_block_pointer = (struct bsal_dna_kmer_block *)bsal_vector_at(&buffers,
+        customer_block_pointer = (struct bsal_dna_kmer_frequency_block *)bsal_vector_at(&buffers,
                         customer_index);
 
 #ifdef BSAL_AGGREGATOR_DEBUG
@@ -378,14 +382,23 @@ void bsal_aggregator_aggregate_kernel_output(struct bsal_actor *self, struct bsa
 
         /* classify the kmer and put it in the good buffer.
          */
-        bsal_dna_kmer_block_add_kmer(customer_block_pointer, kmer, ephemeral_memory,
+        bsal_dna_kmer_frequency_block_add_kmer(customer_block_pointer, kmer, ephemeral_memory,
                         &concrete_actor->codec);
 
+
+        /*
+         * The Flush() action below is only required when using
+         * bsal_dna_kmer_block.
+         * bsal_dna_kmer_frequency_block does not require this
+         * flush operation.
+         */
+#if 0
         /* Flush if necessary to avoid having very big buffers
          */
-        if (i % 32 == 0) {
+        if (0 && i % 32 == 0) {
             bsal_aggregator_flush(self, customer_index, &buffers, 0);
         }
+#endif
 
 #ifdef BSAL_AGGREGATOR_DEBUG
         BSAL_DEBUG_MARKER("aggregator before flush");
@@ -438,7 +451,7 @@ void bsal_aggregator_aggregate_kernel_output(struct bsal_actor *self, struct bsa
         /*
          * Destroy block
          */
-        bsal_dna_kmer_block_destroy(output_block, ephemeral_memory);
+        bsal_dna_kmer_frequency_block_destroy(output_block, ephemeral_memory);
 
 
         i++;

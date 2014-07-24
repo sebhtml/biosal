@@ -355,3 +355,8 @@ int bsal_dna_kmer_is_canonical(struct bsal_dna_kmer *self, int kmer_length,
 {
     return bsal_dna_codec_is_canonical(codec, kmer_length, self->encoded_data);
 }
+
+void bsal_dna_kmer_init_empty(struct bsal_dna_kmer *sequence)
+{
+    sequence->encoded_data = NULL;
+}

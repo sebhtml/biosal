@@ -4,6 +4,7 @@
 #include <core/system/memory.h>
 
 #include <core/system/packer.h>
+#include <core/system/debugger.h>
 
 #include <stdio.h>
 #include <string.h>
@@ -220,6 +221,8 @@ int bsal_map_pack_unpack(struct bsal_map *self, int operation, void *buffer)
 #ifdef BSAL_MEMORY_ALIGNMENT_ENABLED
     int key_size;
 #endif
+
+    BSAL_DEBUGGER_ASSERT(self != NULL);
 
     bsal_packer_init(&packer, operation, buffer);
 

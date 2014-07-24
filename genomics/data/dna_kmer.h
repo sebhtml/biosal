@@ -17,6 +17,8 @@ void bsal_dna_kmer_init(struct bsal_dna_kmer *sequence,
                 struct bsal_memory_pool *memory);
 void bsal_dna_kmer_destroy(struct bsal_dna_kmer *sequence, struct bsal_memory_pool *memory);
 
+void bsal_dna_kmer_init_empty(struct bsal_dna_kmer *sequence);
+
 int bsal_dna_kmer_unpack(struct bsal_dna_kmer *sequence,
                 void *buffer, int kmer_length, struct bsal_memory_pool *memory, struct bsal_dna_codec *codec);
 int bsal_dna_kmer_pack(struct bsal_dna_kmer *sequence,

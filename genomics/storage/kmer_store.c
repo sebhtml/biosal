@@ -6,6 +6,7 @@
 #include <genomics/kernels/dna_kmer_counter_kernel.h>
 #include <genomics/data/dna_kmer.h>
 #include <genomics/data/dna_kmer_block.h>
+#include <genomics/data/dna_kmer_frequency_block.h>
 
 #include <core/helpers/message_helper.h>
 #include <core/helpers/actor_helper.h>
@@ -73,13 +74,15 @@ void bsal_kmer_store_receive(struct bsal_actor *self, struct bsal_message *messa
     int tag;
     void *buffer;
     struct bsal_kmer_store *concrete_actor;
-    struct bsal_dna_kmer kmer;
-    struct bsal_dna_kmer_block block;
+    struct bsal_dna_kmer_frequency_block block;
     void *key;
-    struct bsal_vector *kmers;
-    struct bsal_vector_iterator iterator;
+    struct bsal_map *kmers;
+    struct bsal_map_iterator iterator;
     double value;
+    struct bsal_dna_kmer kmer;
     struct bsal_dna_kmer *kmer_pointer;
+    void *packed_kmer;
+    int *frequency;
     int *bucket;
     struct bsal_memory_pool *ephemeral_memory;
     int customer;
@@ -132,7 +135,10 @@ void bsal_kmer_store_receive(struct bsal_actor *self, struct bsal_message *messa
 
     } else if (tag == BSAL_PUSH_KMER_BLOCK) {
 
-        bsal_dna_kmer_block_unpack(&block, buffer, bsal_actor_get_ephemeral_memory(self),
+        bsal_dna_kmer_frequency_block_init(&block, concrete_actor->kmer_length,
+                        ephemeral_memory, &concrete_actor->codec, 0);
+
+        bsal_dna_kmer_frequency_block_unpack(&block, buffer, bsal_actor_get_ephemeral_memory(self),
                         &concrete_actor->codec);
 
         key = bsal_memory_pool_allocate(ephemeral_memory, concrete_actor->key_length_in_bytes);
@@ -144,26 +150,35 @@ void bsal_kmer_store_receive(struct bsal_actor *self, struct bsal_message *messa
                         bsal_map_size(&concrete_actor->table));
 #endif
 
-        kmers = bsal_dna_kmer_block_kmers(&block);
-        bsal_vector_iterator_init(&iterator, kmers);
+        kmers = bsal_dna_kmer_frequency_block_kmers(&block);
+        bsal_map_iterator_init(&iterator, kmers);
 
         period = 2500000;
 
         raw_kmer = bsal_memory_pool_allocate(bsal_actor_get_ephemeral_memory(self),
                         concrete_actor->kmer_length + 1);
 
-        while (bsal_vector_iterator_has_next(&iterator)) {
+        while (bsal_map_iterator_has_next(&iterator)) {
 
             /*
              * add kmers to store
              */
-            bsal_vector_iterator_next(&iterator, (void **)&kmer_pointer);
+            bsal_map_iterator_next(&iterator, (void **)&packed_kmer, (void **)&frequency);
 
             /* Store the kmer in 2 bit encoding
              */
 
+            bsal_dna_kmer_init_empty(&kmer);
+            bsal_dna_kmer_unpack(&kmer, packed_kmer, concrete_actor->kmer_length,
+                        ephemeral_memory,
+                        &concrete_actor->codec);
+
+            kmer_pointer = &kmer;
+
             bsal_dna_kmer_get_sequence(kmer_pointer, raw_kmer, concrete_actor->kmer_length,
                             &concrete_actor->codec);
+
+            bsal_dna_kmer_destroy(&kmer, ephemeral_memory);
 
             bsal_dna_kmer_init(&encoded_kmer, raw_kmer, &concrete_actor->two_bit_codec,
                             bsal_actor_get_ephemeral_memory(self));
@@ -184,7 +199,7 @@ void bsal_kmer_store_receive(struct bsal_actor *self, struct bsal_message *messa
                 *bucket = 0;
             }
 
-            (*bucket)++;
+            (*bucket) += *frequency;
 
             if (concrete_actor->received >= concrete_actor->last_received + period) {
                 printf("kmer store %d received %" PRIu64 " kmers so far,"
@@ -195,13 +210,15 @@ void bsal_kmer_store_receive(struct bsal_actor *self, struct bsal_message *messa
 
                 concrete_actor->last_received = concrete_actor->received;
             }
-            concrete_actor->received++;
+
+            concrete_actor->received += *frequency;
         }
 
         bsal_memory_pool_free(ephemeral_memory, key);
+        bsal_memory_pool_free(ephemeral_memory, raw_kmer);
 
-        bsal_vector_iterator_destroy(&iterator);
-        bsal_dna_kmer_block_destroy(&block, bsal_actor_get_ephemeral_memory(self));
+        bsal_map_iterator_destroy(&iterator);
+        bsal_dna_kmer_frequency_block_destroy(&block, bsal_actor_get_ephemeral_memory(self));
 
         bsal_actor_helper_send_reply_empty(self, BSAL_PUSH_KMER_BLOCK_REPLY);
 
@@ -267,6 +284,7 @@ void bsal_kmer_store_print(struct bsal_actor *self)
     while (bsal_map_iterator_has_next(&iterator)) {
         bsal_map_iterator_next(&iterator, (void **)&key, (void **)&value);
 
+        bsal_dna_kmer_init_empty(&kmer);
         bsal_dna_kmer_unpack(&kmer, key, concrete_actor->kmer_length,
                         bsal_actor_get_ephemeral_memory(self),
                         &concrete_actor->two_bit_codec);
@@ -294,6 +312,7 @@ void bsal_kmer_store_print(struct bsal_actor *self)
     while (bsal_map_iterator_has_next(&iterator)) {
         bsal_map_iterator_next(&iterator, (void **)&key, (void **)&value);
 
+        bsal_dna_kmer_init_empty(&kmer);
         bsal_dna_kmer_unpack(&kmer, key, concrete_actor->kmer_length,
                         bsal_actor_get_ephemeral_memory(self),
                         &concrete_actor->two_bit_codec);
@@ -369,6 +388,7 @@ void bsal_kmer_store_yield_reply(struct bsal_actor *self, struct bsal_message *m
 
         bsal_map_iterator_next(&concrete_actor->iterator, (void **)&key, (void **)&value);
 
+        bsal_dna_kmer_init_empty(&kmer);
         bsal_dna_kmer_unpack(&kmer, key, concrete_actor->kmer_length,
                         ephemeral_memory,
                         &concrete_actor->two_bit_codec);
