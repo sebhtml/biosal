@@ -45,7 +45,7 @@ int64_t bsal_counter_get(struct bsal_counter *self, int counter);
 void bsal_counter_increment(struct bsal_counter *self, int counter);
 void bsal_counter_add(struct bsal_counter *self, int counter, int quantity);
 void bsal_counter_reset(struct bsal_counter *self);
-void bsal_counter_print(struct bsal_counter *self);
+void bsal_counter_print(struct bsal_counter *self, int name);
 int64_t bsal_counter_difference(struct bsal_counter *self, int counter1, int counter2);
 int64_t bsal_counter_sum(struct bsal_counter *self, int counter1, int counter2);
 

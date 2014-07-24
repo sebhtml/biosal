@@ -158,6 +158,7 @@ void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message)
     int print_stuff;
     int aggregator_index_index;
     struct bsal_memory_pool *ephemeral_memory;
+    int enable_work_stealing;
 
     ephemeral_memory = bsal_actor_get_ephemeral_memory(actor);
     concrete_actor = (struct argonnite *)bsal_actor_concrete_actor(actor);
@@ -690,6 +691,9 @@ void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message)
         kernel_index = bsal_actor_get_acquaintance_index(actor, source);
         kernel_index_index = bsal_vector_index_of(&concrete_actor->kernels, &kernel_index);
 
+        BSAL_DEBUGGER_ASSERT(kernel_index >= 0);
+        BSAL_DEBUGGER_ASSERT(kernel_index_index >= 0);
+
         sequence_store_index = bsal_vector_helper_at_as_int(&concrete_actor->sequence_stores, kernel_index_index);
 
         bucket = bsal_map_get(&concrete_actor->plentiful_stores, &kernel_index_index);
@@ -699,6 +703,7 @@ void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message)
         concrete_actor->finished_kernels++;
 
         print_stuff = 0;
+        enable_work_stealing = 0;
 
         if (bucket != NULL) {
 
@@ -711,17 +716,29 @@ void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message)
 
         /* CONSTRUCTION SITE */
 
-        if (!bsal_map_empty(&concrete_actor->plentiful_stores)) {
+        /* If there are still stores with data
+         */
+        if (enable_work_stealing && !bsal_map_empty(&concrete_actor->plentiful_stores)) {
 
+            /* Find a store now with data.
+             * There is at least one.
+             */
             sequence_store_index_index = kernel_index_index;
 
-            while (bsal_map_get(&concrete_actor->plentiful_stores, &sequence_store_index_index) == NULL) {
-                sequence_store_index_index++;
+            bucket = bsal_map_get(&concrete_actor->plentiful_stores, &sequence_store_index_index);
 
+            while (bucket == NULL) {
+
+                sequence_store_index_index++;
                 sequence_store_index_index %= (int)bsal_vector_size(&concrete_actor->sequence_stores);
+
+                bucket = bsal_map_get(&concrete_actor->plentiful_stores, &sequence_store_index_index);
             }
 
-            bucket = bsal_map_get(&concrete_actor->plentiful_stores, &sequence_store_index_index);
+            /* Make sure the bucket is not NULL...
+             */
+            BSAL_DEBUGGER_ASSERT(bucket != NULL);
+
             (*bucket)++;
 
             sequence_store_index = bsal_vector_helper_at_as_int(&concrete_actor->sequence_stores,
@@ -752,6 +769,8 @@ void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message)
             bsal_vector_init(&kernels, sizeof(int));
             bsal_vector_set_memory_pool(&kernels, ephemeral_memory);
             bsal_actor_helper_get_acquaintances(actor, &concrete_actor->kernels, &kernels);
+
+            printf("sending BSAL_KERNEL_NOTIFY\n");
             bsal_actor_helper_send_range_empty(actor, &kernels, BSAL_KERNEL_NOTIFY);
 
             concrete_actor->finished_kernels = 0;
@@ -1008,9 +1027,15 @@ void argonnite_prepare_sequence_stores(struct bsal_actor *self, struct bsal_mess
             bucket = bsal_map_add(&concrete_actor->plentiful_stores, &i);
             *bucket = 1;
 
+            /*
+             * Don't subscribe for these notification
+             * about progress
+             */
+#if 0
             bsal_actor_helper_send_empty(self, bsal_actor_helper_get_acquaintance(self,
                                     &concrete_actor->sequence_stores, i),
                             BSAL_SEQUENCE_STORE_REQUEST_PROGRESS);
+#endif
         }
 
         bsal_vector_destroy(&stores);

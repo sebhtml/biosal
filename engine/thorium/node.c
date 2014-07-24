@@ -1365,7 +1365,7 @@ void bsal_node_print_counters(struct bsal_node *node)
     printf("----------------------------------------------\n");
     printf("%s Counters for node/%d\n", BSAL_NODE_THORIUM_PREFIX,
                     bsal_node_name(node));
-    bsal_counter_print(&node->counter);
+    bsal_counter_print(&node->counter, bsal_node_name(node));
 }
 
 /*
