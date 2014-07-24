@@ -594,7 +594,7 @@ void bsal_dna_kmer_counter_kernel_clone_reply(struct bsal_actor *actor, struct b
     int clone;
     int source;
     int consumer;
-    int producer;
+    /*int producer;*/
     int clone_index;
 
     source = bsal_message_source(message);
@@ -602,7 +602,7 @@ void bsal_dna_kmer_counter_kernel_clone_reply(struct bsal_actor *actor, struct b
     name = bsal_actor_get_name(actor);
     bsal_message_helper_unpack_int(message, 0, &clone);
     consumer = bsal_actor_get_acquaintance(actor, concrete_actor->consumer);
-    producer = bsal_actor_get_acquaintance(actor, concrete_actor->producer);
+    /*producer = bsal_actor_get_acquaintance(actor, concrete_actor->producer);*/
 
     if (source == name) {
         printf("kernel %d cloned itself !!! clone name is %d\n",

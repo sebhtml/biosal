@@ -107,12 +107,12 @@ void bsal_aggregator_receive(struct bsal_actor *self, struct bsal_message *messa
     int tag;
     struct bsal_aggregator *concrete_actor;
     void *buffer;
-    int source;
+    /*int source;*/
 
     concrete_actor = (struct bsal_aggregator *)bsal_actor_concrete_actor(self);
     buffer = bsal_message_buffer(message);
     tag = bsal_message_tag(message);
-    source = bsal_message_source(message);
+    /*source = bsal_message_source(message);*/
 
     if (tag == BSAL_ACTOR_ASK_TO_STOP) {
 

@@ -703,7 +703,6 @@ void bsal_node_start_initial_actor(struct bsal_node *node)
     int bytes;
     void *buffer;
     struct bsal_actor *actor;
-    int source;
     int i;
     int name;
     struct bsal_message message;
@@ -726,7 +725,6 @@ void bsal_node_start_initial_actor(struct bsal_node *node)
 
         /* initial actors are supervised by themselves... */
         bsal_actor_set_supervisor(actor, name);
-        source = name;
 
         bsal_message_init(&message, BSAL_ACTOR_START, bytes, buffer);
 
