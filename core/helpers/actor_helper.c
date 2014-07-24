@@ -537,4 +537,25 @@ void bsal_actor_helper_send_double(struct bsal_actor *actor, int destination, in
     bsal_message_destroy(&message);
 }
 
+int bsal_actor_helper_get_acquaintance_index(struct bsal_actor *actor, struct bsal_vector *indices,
+                int name)
+{
+    int i;
+    int index;
+    int actor_name;
+    int size;
 
+    size = bsal_vector_size(indices);
+
+
+    for (i = 0; i < size; ++i) {
+        index = bsal_vector_helper_at_as_int(indices, i);
+        actor_name = bsal_actor_get_acquaintance(actor, index);
+
+        if (actor_name == name) {
+            return i;
+        }
+    }
+
+    return -1;
+}

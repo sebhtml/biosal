@@ -35,6 +35,8 @@ void bsal_actor_helper_get_acquaintances(struct bsal_actor *actor, struct bsal_v
                 struct bsal_vector *names);
 int bsal_actor_helper_get_acquaintance(struct bsal_actor *actor, struct bsal_vector *indices,
                 int index);
+int bsal_actor_helper_get_acquaintance_index(struct bsal_actor *actor, struct bsal_vector *indices,
+                int name);
 void bsal_actor_helper_add_acquaintances(struct bsal_actor *actor,
                 struct bsal_vector *names, struct bsal_vector *indices);
 
