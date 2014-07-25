@@ -23,6 +23,13 @@
 #define BIOSAL_DISABLE_CLOCK_GETTIME
 #endif
 
+/*
+ * Disable clock_gettime on Mac
+ */
+#ifdef __APPLE__
+#define BIOSAL_DISABLE_CLOCK_GETTIME
+#endif
+
 
 #define NANOSECONDS_IN_MICROSECOND 1000
 #define NANOSECONDS_IN_MILLISECOND (1000 * 1000)
