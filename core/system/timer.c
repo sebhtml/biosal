@@ -20,14 +20,14 @@
  * \see http://sourceforge.net/p/x10/mailman/message/32206231/
  */
 #if defined(__bgp__) || defined(__bgq__) || defined(__bg__)
-#define BIOSAL_DISABLE_CLOCK_GETTIME
+#define BSAL_DISABLE_CLOCK_GETTIME
 #endif
 
 /*
  * Disable clock_gettime on Mac
  */
 #ifdef __APPLE__
-#define BIOSAL_DISABLE_CLOCK_GETTIME
+#define BSAL_DISABLE_CLOCK_GETTIME
 #endif
 
 
@@ -75,7 +75,7 @@ uint64_t bsal_timer_get_nanoseconds(struct bsal_timer *timer)
 #if defined(__bgq__)
     return bsal_timer_get_nanoseconds_blue_gene_q(timer);
 
-#elif defined(BIOSAL_DISABLE_CLOCK_GETTIME)
+#elif defined(BSAL_DISABLE_CLOCK_GETTIME)
     return bsal_timer_get_nanoseconds_gettimeofday(timer);
 #else
     return bsal_timer_get_nanoseconds_clock_gettime(timer);
@@ -130,6 +130,10 @@ uint64_t bsal_timer_get_nanoseconds_gettimeofday(struct bsal_timer *timer)
 uint64_t bsal_timer_get_nanoseconds_clock_gettime(struct bsal_timer *timer)
 {
     uint64_t value;
+
+    value = 0;
+
+#ifndef BSAL_DISABLE_CLOCK_GETTIME
     struct timespec time_value;
     clockid_t clock;
 
@@ -138,6 +142,7 @@ uint64_t bsal_timer_get_nanoseconds_clock_gettime(struct bsal_timer *timer)
     clock_gettime(clock, &time_value);
 
     value = (uint64_t)time_value.tv_sec * 1000000000 + (uint64_t)time_value.tv_nsec;
+#endif
 
     return value;
 }
