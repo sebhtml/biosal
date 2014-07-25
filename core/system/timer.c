@@ -13,6 +13,12 @@
 #include <spi/include/kernel/location.h>
 #endif
 
+#ifdef __APPLE__
+#include <mach/clock.h>
+#include <mach/mach.h>
+#endif
+
+
 /*
  * clock_gettime is defective on IBM Blue Gene/Q according
  * to the tests that we did.
@@ -74,6 +80,8 @@ uint64_t bsal_timer_get_nanoseconds(struct bsal_timer *timer)
 {
 #if defined(__bgq__)
     return bsal_timer_get_nanoseconds_blue_gene_q(timer);
+#elif defined(__APPLE__)
+    return bsal_timer_get_nanoseconds_apple(timer);
 
 #elif defined(BSAL_DISABLE_CLOCK_GETTIME)
     return bsal_timer_get_nanoseconds_gettimeofday(timer);
@@ -144,6 +152,29 @@ uint64_t bsal_timer_get_nanoseconds_clock_gettime(struct bsal_timer *timer)
     value = (uint64_t)time_value.tv_sec * 1000000000 + (uint64_t)time_value.tv_nsec;
 #endif
 
+    return value;
+}
+
+/*
+ * \see http://stackoverflow.com/questions/5167269/clock-gettime-alternative-in-mac-os-x
+ */
+uint64_t bsal_timer_get_nanoseconds_apple(struct bsal_timer *timer)
+{
+    uint64_t value;
+
+    value = 0;
+
+#ifdef __APPLE__
+    clock_serv_t cclock;
+    mach_timespec_t mts;
+
+    host_get_clock_service(mach_host_self(), CALENDAR_CLOCK, &cclock);
+    clock_get_time(cclock, &mts);
+    mach_port_deallocate(mach_task_self(), cclock);
+
+    value = (uint64_t)mts.tv_sec * 1000000000 + (uint64_t)mts.tv_nsec;
+#endif
+    
     return value;
 }
 
