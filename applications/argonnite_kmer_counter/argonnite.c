@@ -707,7 +707,11 @@ void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message)
         concrete_actor->finished_kernels++;
 
         print_stuff = 0;
-        enable_work_stealing = 1;
+
+        /* The work stealing code does not work very well on the IBM Blue Gene/Q
+         * because the victim selection is not good enough.
+         */
+        enable_work_stealing = 0;
 
         if (bucket != NULL) {
 
