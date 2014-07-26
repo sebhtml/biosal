@@ -114,8 +114,13 @@ void bsal_fence()
      */
     __builtin_ia32_mfence();
 
+#elif defined(__APPLE__)
+
+#error "Memory fence is not implemented for __APPLE__ systems"
+
 #else
 
+#error "Memory fence is not implemented for unknown systems"
     /* Do nothing... */
 #endif
 }
