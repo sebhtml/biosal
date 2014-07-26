@@ -81,7 +81,10 @@ void bsal_input_controller_init(struct bsal_actor *actor)
     bsal_timer_init(&concrete_actor->distribution_timer);
 
     bsal_dna_codec_init(&concrete_actor->codec);
-    bsal_dna_codec_enable_two_bit_encoding(&concrete_actor->codec);
+
+    if (bsal_actor_get_node_count(actor) > 1) {
+        bsal_dna_codec_enable_two_bit_encoding(&concrete_actor->codec);
+    }
 
     bsal_queue_init(&concrete_actor->unprepared_spawners, sizeof(int));
 

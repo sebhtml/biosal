@@ -47,7 +47,10 @@ void bsal_input_stream_init(struct bsal_actor *actor)
     input->file_name = NULL;
 
     bsal_dna_codec_init(&input->codec);
-    bsal_dna_codec_enable_two_bit_encoding(&concrete_actor->codec);
+
+    if (bsal_actor_get_node_count(actor) > 1) {
+        bsal_dna_codec_enable_two_bit_encoding(&concrete_actor->codec);
+    }
 
     /*input->mega_block_size = 2097152*/
     input->mega_block_size = 2097152;

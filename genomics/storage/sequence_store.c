@@ -46,7 +46,9 @@ void bsal_sequence_store_init(struct bsal_actor *actor)
     concrete_actor->received = 0;
 
     bsal_dna_codec_init(&concrete_actor->codec);
-    bsal_dna_codec_enable_two_bit_encoding(&concrete_actor->codec);
+    if (bsal_actor_get_node_count(actor) > 1) {
+        bsal_dna_codec_enable_two_bit_encoding(&concrete_actor->codec);
+    }
 
     bsal_actor_register(actor, BSAL_SEQUENCE_STORE_ASK,
                     bsal_sequence_store_ask);
@@ -351,7 +353,12 @@ void bsal_sequence_store_ask(struct bsal_actor *self, struct bsal_message *messa
      * Update: use 2-bit encoding everywhere.
      */
 
-    minimum_end_buffer_size_in_nucleotides = minimum_end_buffer_size_in_bytes * 4;
+    minimum_end_buffer_size_in_nucleotides = minimum_end_buffer_size_in_bytes;
+
+    if (bsal_actor_get_node_count(self) > 1) {
+        minimum_end_buffer_size_in_nucleotides *= 4;
+    }
+
     minimum_end_buffer_size_in_ascii_kmers = minimum_end_buffer_size_in_nucleotides / kmer_length;
 
     required_kmers = minimum_end_buffer_size_in_ascii_kmers * total_kmer_stores;

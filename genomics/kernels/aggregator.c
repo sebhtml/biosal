@@ -67,7 +67,9 @@ void bsal_aggregator_init(struct bsal_actor *self)
     concrete_actor->flushed = 0;
 
     bsal_dna_codec_init(&concrete_actor->codec);
-    bsal_dna_codec_enable_two_bit_encoding(&concrete_actor->codec);
+    if (bsal_actor_get_node_count(self) > 1) {
+        bsal_dna_codec_enable_two_bit_encoding(&concrete_actor->codec);
+    }
 
     bsal_ring_queue_init(&concrete_actor->stalled_producers, sizeof(int));
     bsal_vector_init(&concrete_actor->active_messages, sizeof(int));
