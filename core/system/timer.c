@@ -174,7 +174,7 @@ uint64_t bsal_timer_get_nanoseconds_apple(struct bsal_timer *timer)
 
     value = (uint64_t)mts.tv_sec * 1000000000 + (uint64_t)mts.tv_nsec;
 #endif
-    
+
     return value;
 }
 
