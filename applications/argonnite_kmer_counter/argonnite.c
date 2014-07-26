@@ -148,7 +148,6 @@ void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message)
     int manager_for_kmer_stores;
     struct bsal_vector kmer_stores;
     int spawner;
-    int is_boss;
     uint64_t produced;
     int workers;
     int kernel_index_index;
@@ -196,10 +195,10 @@ void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message)
         bsal_vector_set_memory_pool(&initial_actors, ephemeral_memory);
         bsal_vector_unpack(&initial_actors, buffer);
 
-        is_boss = 0;
+        concrete_actor->is_boss = 0;
 
         if (bsal_vector_helper_at_as_int(&initial_actors, 0) == name) {
-            is_boss = 1;
+            concrete_actor->is_boss = 1;
         }
 
         /* help page
@@ -207,7 +206,7 @@ void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message)
         if (argc == 1
                         || (argc == 2 && strstr(argv[1], "help") != NULL)) {
 
-            if (is_boss) {
+            if (concrete_actor->is_boss) {
                 argonnite_help(actor);
             }
 
@@ -222,7 +221,7 @@ void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message)
         /*
          * Run only one argonnite actor
          */
-        if (!is_boss) {
+        if (!concrete_actor->is_boss) {
             return;
         }
 
@@ -888,8 +887,11 @@ void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message)
 
     } else if (tag == BSAL_ACTOR_ASK_TO_STOP) {
 
-        bsal_timer_stop(&concrete_actor->timer);
-        bsal_timer_print_with_description(&concrete_actor->timer, "Actor computation");
+        if (concrete_actor->is_boss) {
+            bsal_timer_stop(&concrete_actor->timer);
+            bsal_timer_print_with_description(&concrete_actor->timer, "Actor computation");
+        }
+
         printf("argonnite %d stops\n", name);
 
         bsal_actor_helper_ask_to_stop(actor, message);

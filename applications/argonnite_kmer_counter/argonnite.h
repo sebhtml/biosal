@@ -18,6 +18,7 @@ struct argonnite {
 
     struct bsal_vector worker_counts;
 
+    int is_boss;
     int wired_kernels;
     int ready_kernels;
     int ready_stores;
