@@ -46,6 +46,7 @@ void bsal_sequence_store_init(struct bsal_actor *actor)
     concrete_actor->received = 0;
 
     bsal_dna_codec_init(&concrete_actor->codec);
+    bsal_dna_codec_enable_two_bit_encoding(&concrete_actor->codec);
 
     bsal_actor_register(actor, BSAL_SEQUENCE_STORE_ASK,
                     bsal_sequence_store_ask);

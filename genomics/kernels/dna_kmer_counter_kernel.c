@@ -71,6 +71,7 @@ void bsal_dna_kmer_counter_kernel_init(struct bsal_actor *actor)
     concrete_actor->kmers = 0;
 
     bsal_dna_codec_init(&concrete_actor->codec);
+    bsal_dna_codec_enable_two_bit_encoding(&concrete_actor->codec);
 
     bsal_vector_init(&concrete_actor->kernels, sizeof(int));
 

@@ -34,8 +34,10 @@ struct bsal_script bsal_input_stream_script = {
 void bsal_input_stream_init(struct bsal_actor *actor)
 {
     struct bsal_input_stream *input;
+    struct bsal_input_stream *concrete_actor;
 
     input = (struct bsal_input_stream *)bsal_actor_concrete_actor(actor);
+    concrete_actor = input;
     input->proxy_ready = 0;
     input->buffer_for_sequence = NULL;
     input->maximum_sequence_length = 0;
@@ -45,6 +47,7 @@ void bsal_input_stream_init(struct bsal_actor *actor)
     input->file_name = NULL;
 
     bsal_dna_codec_init(&input->codec);
+    bsal_dna_codec_enable_two_bit_encoding(&concrete_actor->codec);
 
     /*input->mega_block_size = 2097152*/
     input->mega_block_size = 2097152;
