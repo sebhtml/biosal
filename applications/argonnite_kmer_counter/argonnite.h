@@ -14,6 +14,7 @@ struct argonnite {
     struct bsal_vector sequence_stores;
 
     struct bsal_timer timer;
+    struct bsal_timer timer_for_kmers;
     struct bsal_map plentiful_stores;
 
     struct bsal_vector worker_counts;

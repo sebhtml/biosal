@@ -55,6 +55,7 @@ void argonnite_init(struct bsal_actor *actor)
     bsal_vector_init(&concrete_actor->worker_counts, sizeof(int));
 
     bsal_timer_init(&concrete_actor->timer);
+    bsal_timer_init(&concrete_actor->timer_for_kmers);
     bsal_map_init(&concrete_actor->plentiful_stores, sizeof(int), sizeof(int));
 
     bsal_actor_add_script(actor, BSAL_INPUT_CONTROLLER_SCRIPT,
@@ -115,6 +116,7 @@ void argonnite_destroy(struct bsal_actor *actor)
     bsal_vector_destroy(&concrete_actor->worker_counts);
 
     bsal_timer_destroy(&concrete_actor->timer);
+    bsal_timer_destroy(&concrete_actor->timer_for_kmers);
     bsal_map_destroy(&concrete_actor->plentiful_stores);
 }
 
@@ -888,6 +890,9 @@ void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message)
     } else if (tag == BSAL_ACTOR_ASK_TO_STOP) {
 
         if (concrete_actor->is_boss) {
+            bsal_timer_stop(&concrete_actor->timer_for_kmers);
+            bsal_timer_print_with_description(&concrete_actor->timer_for_kmers, "Input streaming and classification");
+
             bsal_timer_stop(&concrete_actor->timer);
             bsal_timer_print_with_description(&concrete_actor->timer, "Actor computation");
         }
@@ -1080,6 +1085,8 @@ void argonnite_connect_kernels_with_stores(struct bsal_actor *self, struct bsal_
 
     name = bsal_actor_get_name(self);
     concrete_actor = (struct argonnite *)bsal_actor_concrete_actor(self);
+
+    bsal_timer_start(&concrete_actor->timer_for_kmers);
 
     printf("argonnite %d receives BSAL_INPUT_DISTRIBUTE_REPLY\n",
                         name);
