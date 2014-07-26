@@ -40,6 +40,7 @@ LIBRARY_HOT_CODE += core/system/lock.o
 LIBRARY_HOT_CODE += core/system/counter.o
 LIBRARY_HOT_CODE += core/system/packer.o
 
+LIBRARY_HOT_CODE += core/system/directory.o
 LIBRARY_HOT_CODE += core/system/memory.o
 LIBRARY_HOT_CODE += core/system/timer.o
 LIBRARY_HOT_CODE += core/system/tracer.o
@@ -62,6 +63,7 @@ LIBRARY_HOT_CODE += core/structures/hash_table.o
 LIBRARY_HOT_CODE += core/structures/hash_table_group.o
 LIBRARY_HOT_CODE += core/structures/queue.o
 LIBRARY_HOT_CODE += core/structures/vector.o
+LIBRARY_HOT_CODE += core/structures/string.o
 LIBRARY_HOT_CODE += core/structures/hash_table_group_iterator.o
 LIBRARY_HOT_CODE += core/structures/hash_table_iterator.o
 LIBRARY_HOT_CODE += core/structures/dynamic_hash_table.o

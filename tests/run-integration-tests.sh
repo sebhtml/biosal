@@ -13,16 +13,17 @@ function main()
 
     for real_test in mini medium medium-2 run-argonnite-1
     do
-        rm -f coverage_distribution.txt-canonical &> /dev/null
+        rm -rf output &> /dev/null
+
         tests/run-integration-test.sh $real_test > $real_test.log
 
         wall_time=$(tail -n 3 $real_test.log | grep real | awk '{print $2}')
 
         actual_sum="foo"
 
-        if test -f "coverage_distribution.txt-canonical"
+        if test -f "output/coverage_distribution.txt-canonical"
         then
-            actual_sum=$(sha1sum coverage_distribution.txt-canonical | awk '{print $1}')
+            actual_sum=$(sha1sum output/coverage_distribution.txt-canonical | awk '{print $1}')
         fi
         expected_sum=$(grep "$real_test sha1sum" Documentation/Quality_Assurance.md | grep sha1sum | awk '{print $3}')
 

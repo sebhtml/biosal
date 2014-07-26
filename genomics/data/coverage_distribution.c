@@ -7,8 +7,10 @@
 
 #include <core/structures/map_iterator.h>
 #include <core/structures/vector_iterator.h>
+#include <core/structures/string.h>
 
 #include <core/system/memory.h>
+#include <core/system/directory.h>
 
 #include <stdio.h>
 #include <stdint.h>
@@ -168,33 +170,48 @@ void bsal_coverage_distribution_write_distribution(struct bsal_actor *self)
     struct bsal_vector_iterator vector_iterator;
     FILE *descriptor;
     FILE *descriptor_canonical;
-    char *file_name;
-    char *canonical_file_name;
+    struct bsal_string file_name;
+    struct bsal_string canonical_file_name;
     int argc;
     char **argv;
     int i;
     int name;
-    char default_file_name[] = BSAL_COVERAGE_DISTRIBUTION_DEFAULT_OUTPUT;
+    char default_directory[] = BSAL_COVERAGE_DISTRIBUTION_DEFAULT_OUTPUT;
+    char *directory_name;
 
     name = bsal_actor_get_name(self);
     argc = bsal_actor_argc(self);
     argv = bsal_actor_argv(self);
 
-    file_name = default_file_name;
+    directory_name = default_directory;
 
     for (i = 0; i < argc; i++) {
         if (strcmp(argv[i], "-o") == 0 && i + 1 < argc) {
-            file_name = argv[i + 1];
+            directory_name = argv[i + 1];
             break;
         }
     }
 
-    canonical_file_name = bsal_memory_allocate(strlen(file_name) + 100);
-    strcpy(canonical_file_name, file_name);
-    strcat(canonical_file_name, "-canonical");
+    /* Create the directory if it does not exist
+     */
 
-    descriptor = fopen(file_name, "w");
-    descriptor_canonical = fopen(canonical_file_name, "w");
+    if (!bsal_directory_verify_existence(directory_name)) {
+
+        bsal_directory_create(directory_name);
+    }
+
+    bsal_string_init(&file_name, "");
+    bsal_string_append(&file_name, directory_name);
+    bsal_string_append(&file_name, "/");
+    bsal_string_append(&file_name, BSAL_COVERAGE_DISTRIBUTION_DEFAULT_OUTPUT_FILE);
+
+    bsal_string_init(&canonical_file_name, "");
+    bsal_string_append(&canonical_file_name, directory_name);
+    bsal_string_append(&canonical_file_name, "/");
+    bsal_string_append(&canonical_file_name, BSAL_COVERAGE_DISTRIBUTION_DEFAULT_OUTPUT_FILE_CANONICAL);
+
+    descriptor = fopen(bsal_string_get(&file_name), "w");
+    descriptor_canonical = fopen(bsal_string_get(&canonical_file_name), "w");
 
     concrete_actor = (struct bsal_coverage_distribution *)bsal_actor_concrete_actor(self);
 
@@ -255,16 +272,17 @@ void bsal_coverage_distribution_write_distribution(struct bsal_actor *self)
     bsal_vector_destroy(&coverage_values);
     bsal_vector_iterator_destroy(&vector_iterator);
 
-    printf("distribution %d wrote %s\n", name, file_name);
-    printf("distribution %d wrote %s\n", name, canonical_file_name);
+    printf("distribution %d wrote %s\n", name, bsal_string_get(&file_name));
+    printf("distribution %d wrote %s\n", name, bsal_string_get(&canonical_file_name));
 
     fclose(descriptor);
     descriptor = NULL;
     fclose(descriptor_canonical);
 
-    bsal_memory_free(canonical_file_name);
     descriptor_canonical = NULL;
-    canonical_file_name = NULL;
+
+    bsal_string_destroy(&file_name);
+    bsal_string_destroy(&canonical_file_name);
 }
 
 

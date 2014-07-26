@@ -941,6 +941,11 @@ void argonnite_help(struct bsal_actor *actor)
     printf("-print-memory-usage                 print memory usage\n");
     printf("\n");
 
+    printf("Output\n");
+    printf(" %s\n", BSAL_COVERAGE_DISTRIBUTION_DEFAULT_OUTPUT_FILE);
+    printf(" %s\n", BSAL_COVERAGE_DISTRIBUTION_DEFAULT_OUTPUT_FILE_CANONICAL);
+    printf("\n");
+
     printf("Example\n");
     printf("\n");
     printf("mpiexec -n 64 argonnite -threads-per-node 32 -k 47 -o output \\\n");
