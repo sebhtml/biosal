@@ -29,6 +29,8 @@ struct bsal_sequence_store {
     struct bsal_memory_pool persistent_memory;
 
     int progress_supervisor;
+
+    int required_kmers;
 };
 
 #define BSAL_RESERVE 0x00000d3c
@@ -62,5 +64,7 @@ void bsal_sequence_store_reserve(struct bsal_actor *actor, struct bsal_message *
 void bsal_sequence_store_show_progress(struct bsal_actor *actor, struct bsal_message *message);
 
 void bsal_sequence_store_ask(struct bsal_actor *self, struct bsal_message *message);
+
+int bsal_sequence_store_get_required_kmers(struct bsal_actor *actor, struct bsal_message *message);
 
 #endif

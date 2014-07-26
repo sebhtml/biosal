@@ -37,6 +37,8 @@ void bsal_sequence_store_init(struct bsal_actor *actor)
     concrete_actor = (struct bsal_sequence_store *)bsal_actor_concrete_actor(actor);
     bsal_vector_init(&concrete_actor->sequences, sizeof(struct bsal_dna_sequence));
 
+    concrete_actor->required_kmers = -1;
+
     printf("DEBUG sequence store %d is online on node %d\n",
                     bsal_actor_get_name(actor),
                     bsal_actor_node_name(actor));
@@ -323,45 +325,14 @@ void bsal_sequence_store_ask(struct bsal_actor *self, struct bsal_message *messa
     int period;
     struct bsal_memory_pool *ephemeral_memory;
     double ratio;
-    int workers;
-    int nodes;
-    int total_workers;
-    int total_kmer_stores;
     int kmer_length;
-    int minimum_end_buffer_size_in_bytes;
-    int minimum_end_buffer_size_in_nucleotides;
-    int minimum_end_buffer_size_in_ascii_kmers;
     int required_kmers;
     int kmers;
     int length;
     int sequence_kmers;
 
-    workers = bsal_actor_node_worker_count(self);
-    nodes = bsal_actor_get_node_count(self);
-    total_workers = nodes * workers;
-    total_kmer_stores = total_workers * 1;
+    required_kmers = bsal_sequence_store_get_required_kmers(self, message);
     bsal_message_helper_unpack_int(message, 0, &kmer_length);
-
-    /* 4 KiB */
-    minimum_end_buffer_size_in_bytes = BSAL_SEQUENCE_STORE_FINAL_BLOCK_SIZE;
-
-    /* Assume 1 byte per nucleotide since transportation does not use 2-bit encoding in the
-     * DNA codec.
-     *
-     * However, the 2-bit DNA codec is used for the graph.
-     *
-     * Update: use 2-bit encoding everywhere.
-     */
-
-    minimum_end_buffer_size_in_nucleotides = minimum_end_buffer_size_in_bytes;
-
-    if (bsal_actor_get_node_count(self) > 1) {
-        minimum_end_buffer_size_in_nucleotides *= 4;
-    }
-
-    minimum_end_buffer_size_in_ascii_kmers = minimum_end_buffer_size_in_nucleotides / kmer_length;
-
-    required_kmers = minimum_end_buffer_size_in_ascii_kmers * total_kmer_stores;
 
     name = bsal_actor_get_name(self);
 #ifdef BSAL_SEQUENCE_STORE_DEBUG
@@ -486,4 +457,75 @@ void bsal_sequence_store_ask(struct bsal_actor *self, struct bsal_message *messa
             concrete_actor->progress_supervisor = BSAL_ACTOR_NOBODY;
         }
     }
+}
+
+int bsal_sequence_store_get_required_kmers(struct bsal_actor *actor, struct bsal_message *message)
+{
+
+    size_t maximum_number_of_bytes;
+    size_t maximum_number_of_bytes_per_worker;
+    size_t sum_of_buffer_sizes;
+    int minimum_end_buffer_size_in_bytes;
+    int minimum_end_buffer_size_in_nucleotides;
+    int minimum_end_buffer_size_in_ascii_kmers;
+    int total_workers;
+    int total_kmer_stores;
+    int nodes;
+    int workers;
+    struct bsal_sequence_store *concrete_actor;
+    int kmer_length;
+
+    concrete_actor = (struct bsal_sequence_store *)bsal_actor_concrete_actor(actor);
+
+    if (concrete_actor->required_kmers != -1) {
+        return concrete_actor->required_kmers;
+    }
+
+    workers = bsal_actor_node_worker_count(actor);
+    nodes = bsal_actor_get_node_count(actor);
+    total_workers = nodes * workers;
+    total_kmer_stores = total_workers * 1;
+    bsal_message_helper_unpack_int(message, 0, &kmer_length);
+
+    /* 4 KiB */
+    minimum_end_buffer_size_in_bytes = BSAL_SEQUENCE_STORE_FINAL_BLOCK_SIZE;
+
+    /* Maximum number of bytes for a node
+     */
+    maximum_number_of_bytes = 2147483648;
+    maximum_number_of_bytes_per_worker = maximum_number_of_bytes / workers;
+
+    sum_of_buffer_sizes = minimum_end_buffer_size_in_bytes * total_kmer_stores;
+
+    if (sum_of_buffer_sizes > maximum_number_of_bytes_per_worker) {
+        minimum_end_buffer_size_in_bytes = maximum_number_of_bytes_per_worker / total_kmer_stores;
+    }
+
+    sum_of_buffer_sizes = minimum_end_buffer_size_in_bytes * total_kmer_stores;
+
+    printf("INFO Workers: %d Consumers: %d BufferSizeForConsumer: %d BufferSizeForWorker: %zu\n",
+                    workers,
+                    total_kmer_stores,
+                    minimum_end_buffer_size_in_bytes,
+                    sum_of_buffer_sizes);
+
+    /* Assume 1 byte per nucleotide since transportation does not use 2-bit encoding in the
+     * DNA codec.
+     *
+     * However, the 2-bit DNA codec is used for the graph.
+     *
+     * Update: use 2-bit encoding everywhere.
+     */
+
+    minimum_end_buffer_size_in_nucleotides = minimum_end_buffer_size_in_bytes;
+
+    if (bsal_actor_get_node_count(actor) > 1) {
+        minimum_end_buffer_size_in_nucleotides *= 4;
+    }
+
+    minimum_end_buffer_size_in_ascii_kmers = minimum_end_buffer_size_in_nucleotides / kmer_length;
+
+    concrete_actor->required_kmers = minimum_end_buffer_size_in_ascii_kmers * total_kmer_stores;
+
+    return concrete_actor->required_kmers;
 }
