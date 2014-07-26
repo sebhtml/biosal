@@ -707,7 +707,7 @@ void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message)
         concrete_actor->finished_kernels++;
 
         print_stuff = 0;
-        enable_work_stealing = 0;
+        enable_work_stealing = 1;
 
         if (bucket != NULL) {
 
