@@ -30,3 +30,9 @@ without doing anything.
 # Profiling
 
 Tools used: perf, valgrind, gprof, gdb
+
+
+# Stateless actors
+
+Stateless actors are more predictable in their performance and should be selected
+whenever possible.
