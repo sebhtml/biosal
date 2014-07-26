@@ -260,9 +260,10 @@ void bsal_aggregator_verify(struct bsal_actor *self, struct bsal_message *messag
         bucket = (int *)bsal_vector_at(&concrete_actor->active_messages, consumer_index);
 
         /*
-         * Not ready yet
+         * Not ready yet because the maximum is still 
+         * being used.
          */
-        if (*bucket > concrete_actor->maximum_active_messages) {
+        if (*bucket >= concrete_actor->maximum_active_messages) {
             return;
         }
     }
@@ -529,7 +530,11 @@ int bsal_aggregator_set_consumers(struct bsal_actor *actor, void *buffer)
         bsal_vector_set(&concrete_actor->active_messages, i, &zero);
     }
 
-    concrete_actor->maximum_active_messages = 4;
+    /*
+     * The maximum number of active messages for any consumer is 
+     * set here.
+     */
+    concrete_actor->maximum_active_messages = 2;
 
     printf("DEBUG45 aggregator %d preparing %d buffers, kmer_length %d\n",
                     bsal_actor_get_name(actor),
