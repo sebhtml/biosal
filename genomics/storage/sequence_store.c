@@ -327,6 +327,7 @@ void bsal_sequence_store_ask(struct bsal_actor *self, struct bsal_message *messa
     int total_kmer_stores;
     int kmer_length;
     int minimum_end_buffer_size_in_bytes;
+    int minimum_end_buffer_size_in_nucleotides;
     int minimum_end_buffer_size_in_ascii_kmers;
     int required_kmers;
     int kmers;
@@ -346,8 +347,12 @@ void bsal_sequence_store_ask(struct bsal_actor *self, struct bsal_message *messa
      * DNA codec.
      *
      * However, the 2-bit DNA codec is used for the graph.
+     *
+     * Update: use 2-bit encoding everywhere.
      */
-    minimum_end_buffer_size_in_ascii_kmers = minimum_end_buffer_size_in_bytes / kmer_length;
+
+    minimum_end_buffer_size_in_nucleotides = minimum_end_buffer_size_in_bytes * 4;
+    minimum_end_buffer_size_in_ascii_kmers = minimum_end_buffer_size_in_nucleotides / kmer_length;
 
     required_kmers = minimum_end_buffer_size_in_ascii_kmers * total_kmer_stores;
 
