@@ -9,6 +9,8 @@
 #include <stdio.h>
 #include <string.h>
 
+#define BSAL_MAP_ENABLE_ESTIMATION
+
 void bsal_map_init(struct bsal_map *self, int key_size, int value_size)
 {
     uint64_t buckets = 2;

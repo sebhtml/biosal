@@ -1034,10 +1034,10 @@ void argonnite_prepare_sequence_stores(struct bsal_actor *self, struct bsal_mess
             *bucket = 1;
 
             /*
-             * Don't subscribe for these notification
+             * Subscribe for these notification
              * about progress
              */
-#if 0
+#if 1
             bsal_actor_helper_send_empty(self, bsal_actor_helper_get_acquaintance(self,
                                     &concrete_actor->sequence_stores, i),
                             BSAL_SEQUENCE_STORE_REQUEST_PROGRESS);
@@ -1125,7 +1125,9 @@ void argonnite_request_progress_reply(struct bsal_actor *actor, struct bsal_mess
     printf("sequence store %d has a completion of %f, sending notice to kmer store %d\n",
                     source, value, kmer_store);
 
-    bsal_actor_helper_send_double(actor, kmer_store, BSAL_SEQUENCE_STORE_REQUEST_PROGRESS_REPLY,
+    if (bsal_actor_get_node_count(actor) == 1) {
+        bsal_actor_helper_send_double(actor, kmer_store, BSAL_SEQUENCE_STORE_REQUEST_PROGRESS_REPLY,
                     value);
+    }
 }
 
