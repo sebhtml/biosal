@@ -6,7 +6,8 @@
  */
 
 #include "node.h"
-#include "active_buffer.h"
+
+#include "transport/active_buffer.h"
 
 #include <core/structures/vector.h>
 #include <core/structures/map_iterator.h>
@@ -244,6 +245,7 @@ void bsal_node_init(struct bsal_node *node, int *argc, char ***argv)
             workers = node->threads - 1;
         }
     }
+
 
 #ifdef BSAL_NODE_DEBUG
     printf("DEBUG threads: %i workers: %i send_in_thread: %i\n",

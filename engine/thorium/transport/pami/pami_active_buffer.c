@@ -1,7 +1,7 @@
 
 #include "pami_active_buffer.h"
 
-#include "active_buffer.h"
+#include <engine/thorium/transport/active_buffer.h>
 
 void bsal_pami_active_buffer_init(struct bsal_active_buffer *active_buffer)
 {

@@ -5,12 +5,13 @@
 #include "message.h"
 #include "script.h"
 
+#include "dispatcher.h"
+
 #include <core/structures/vector.h>
 #include <core/structures/map.h>
 #include <core/structures/queue.h>
 #include <core/structures/fast_ring.h>
 
-#include <engine/thorium/dispatcher.h>
 #include <core/system/lock.h>
 #include <core/system/counter.h>
 

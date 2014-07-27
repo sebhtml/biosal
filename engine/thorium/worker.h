@@ -4,8 +4,8 @@
 
 #include "actor.h"
 
-#include "scheduling_queue.h"
-#include "priority_scheduler.h"
+#include "scheduler/scheduling_queue.h"
+#include "scheduler/priority_scheduler.h"
 
 #include <core/structures/fast_ring.h>
 #include <core/structures/ring_queue.h>

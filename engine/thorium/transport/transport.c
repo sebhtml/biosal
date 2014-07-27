@@ -1,10 +1,10 @@
 
 #include "transport.h"
 
-#include "message.h"
-#include "node.h"
-
 #include "active_buffer.h"
+
+#include <engine/thorium/message.h>
+#include <engine/thorium/node.h>
 
 #include <core/system/debugger.h>
 

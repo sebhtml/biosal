@@ -3,7 +3,8 @@
 
 #include "message.h"
 #include "node.h"
-#include "scheduler.h"
+
+#include "scheduler/scheduler.h"
 
 #include <core/structures/map.h>
 #include <core/structures/vector.h>
@@ -12,6 +13,7 @@
 #include <core/structures/set_iterator.h>
 
 #include <core/helpers/vector_helper.h>
+
 #include <core/system/memory.h>
 #include <core/system/timer.h>
 #include <core/system/debugger.h>

@@ -1,7 +1,7 @@
 
 #include "mpi_active_buffer.h"
 
-#include "active_buffer.h"
+#include <engine/thorium/transport/active_buffer.h>
 
 #include <stdlib.h>
 

@@ -1,7 +1,7 @@
 
 #include "scheduling_queue.h"
 
-#include "actor.h"
+#include <engine/thorium/actor.h>
 
 #include <core/system/debugger.h>
 

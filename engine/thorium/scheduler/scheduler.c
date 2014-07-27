@@ -1,11 +1,12 @@
 
 #include "scheduler.h"
 
-#include "worker_pool.h"
 #include "migration.h"
-#include "worker.h"
-#include "actor.h"
-#include "node.h"
+
+#include <engine/thorium/worker_pool.h>
+#include <engine/thorium/worker.h>
+#include <engine/thorium/actor.h>
+#include <engine/thorium/node.h>
 
 #include <core/helpers/pair.h>
 #include <core/helpers/vector_helper.h>

@@ -3,8 +3,9 @@
 #define BSAL_NODE_H
 
 #include "actor.h"
-#include "transport.h"
 #include "worker_pool.h"
+
+#include "transport/transport.h"
 
 #include <core/structures/vector.h>
 #include <core/structures/queue.h>

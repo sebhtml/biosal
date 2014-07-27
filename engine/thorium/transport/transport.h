@@ -2,8 +2,8 @@
 #ifndef BSAL_TRANSPORT_H
 #define BSAL_TRANSPORT_H
 
-#include "pami_transport.h"
-#include "mpi_transport.h"
+#include "pami/pami_transport.h"
+#include "mpi/mpi_transport.h"
 
 #define BSAL_TRANSPORT_IMPLEMENTATION_MOCK 0
 

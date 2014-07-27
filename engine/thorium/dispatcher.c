@@ -1,6 +1,6 @@
 
-#include "dispatcher.h"
 #include "message.h"
+#include "dispatcher.h"
 
 #include <core/structures/map_iterator.h>
 

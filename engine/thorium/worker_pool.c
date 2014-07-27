@@ -4,7 +4,8 @@
 #include "actor.h"
 #include "worker.h"
 #include "node.h"
-#include "migration.h"
+
+#include "scheduler/migration.h"
 
 #include <core/helpers/vector_helper.h>
 #include <core/helpers/statistics.h>

@@ -3,7 +3,8 @@
 
 #include "worker.h"
 #include "node.h"
-#include "scheduling_queue.h"
+
+#include "scheduler/scheduling_queue.h"
 
 #include <core/structures/vector_iterator.h>
 #include <core/structures/map_iterator.h>

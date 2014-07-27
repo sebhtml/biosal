@@ -2,7 +2,8 @@
 #include "priority_scheduler.h"
 
 #include "scheduling_queue.h"
-#include "actor.h"
+
+#include <engine/thorium/actor.h>
 
 #include <core/structures/map_iterator.h>
 

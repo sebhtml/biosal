@@ -4,8 +4,8 @@
 
 #include "transport.h"
 
-#include "mpi_active_buffer.h"
-#include "pami_active_buffer.h"
+#include "pami/pami_active_buffer.h"
+#include "mpi/mpi_active_buffer.h"
 
 struct bsal_active_buffer {
 

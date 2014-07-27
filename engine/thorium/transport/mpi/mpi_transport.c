@@ -1,7 +1,10 @@
 
-#include "transport.h"
-#include "message.h"
-#include "active_buffer.h"
+#include "mpi_transport.h"
+
+#include <engine/thorium/transport/transport.h>
+#include <engine/thorium/transport/active_buffer.h>
+
+#include <engine/thorium/message.h>
 
 #include <core/system/memory.h>
 #include <core/system/debugger.h>

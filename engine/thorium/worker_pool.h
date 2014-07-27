@@ -4,7 +4,7 @@
 
 #include "worker.h"
 
-#include "scheduler.h"
+#include "scheduler/scheduler.h"
 
 #include <core/structures/ring_queue.h>
 #include <core/structures/vector.h>

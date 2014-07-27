@@ -1,8 +1,8 @@
 
 #include "migration.h"
 
-#include "worker_pool.h"
-#include "worker.h"
+#include <engine/thorium/worker_pool.h>
+#include <engine/thorium/worker.h>
 
 void bsal_migration_init(struct bsal_migration *migration, int actor_name,
                 int old_worker, int new_worker)

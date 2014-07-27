@@ -1,8 +1,8 @@
 
 #include "pami_transport.h"
 
-#include "transport.h"
-#include "message.h"
+#include <engine/thorium/transport/transport.h>
+#include <engine/thorium/message.h>
 
 void bsal_pami_transport_init(struct bsal_transport *transport, int *argc, char ***argv)
 {

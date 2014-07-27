@@ -3,8 +3,8 @@
 
 #include "transport.h"
 
-#include "pami_active_buffer.h"
-#include "mpi_active_buffer.h"
+#include "pami/pami_active_buffer.h"
+#include "mpi/mpi_active_buffer.h"
 
 void bsal_active_buffer_init(struct bsal_active_buffer *active_buffer, void *buffer, int worker)
 {
