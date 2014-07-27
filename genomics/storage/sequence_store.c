@@ -492,7 +492,9 @@ int bsal_sequence_store_get_required_kmers(struct bsal_actor *actor, struct bsal
 
     /* Maximum number of bytes for a node
      */
-    maximum_number_of_bytes = 2147483648;
+    /*maximum_number_of_bytes = 2147483648;*/
+    /*maximum_number_of_bytes = 1073741824;*/
+    maximum_number_of_bytes = 536870912;
     maximum_number_of_bytes_per_worker = maximum_number_of_bytes / workers;
 
     sum_of_buffer_sizes = minimum_end_buffer_size_in_bytes * total_kmer_stores;
