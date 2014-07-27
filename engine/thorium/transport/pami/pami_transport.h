@@ -12,7 +12,7 @@
  * This variable is set to 1 if PAMI support is ready to be
  * used
  */
-#define BSAL_TRANSPORT_PAMI_IS_READY 1
+#define BSAL_TRANSPORT_PAMI_IS_READY 0
 
 /*
  * Use IBM PAMI on IBM Blue Gene/Q
