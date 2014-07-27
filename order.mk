@@ -17,10 +17,13 @@ LIBRARY_HOT_CODE += engine/thorium/worker_pool.o
 LIBRARY_HOT_CODE += engine/thorium/dispatcher.o
 
 LIBRARY_HOT_CODE += engine/thorium/transport.o
-LIBRARY_HOT_CODE += engine/thorium/mpi_transport.o
-LIBRARY_HOT_CODE += engine/thorium/pami_transport.o
 LIBRARY_HOT_CODE += engine/thorium/active_buffer.o
+
+LIBRARY_HOT_CODE += engine/thorium/mpi_transport.o
 LIBRARY_HOT_CODE += engine/thorium/mpi_active_buffer.o
+
+LIBRARY_HOT_CODE += engine/thorium/pami_transport.o
+LIBRARY_HOT_CODE += engine/thorium/pami_active_buffer.o
 
 LIBRARY_HOT_CODE += core/patterns/manager.o
 LIBRARY_HOT_CODE += genomics/kernels/aggregator.o

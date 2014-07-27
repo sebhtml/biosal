@@ -5,15 +5,13 @@
 
 #include <stdlib.h>
 
-void bsal_mpi_active_buffer_init(struct bsal_active_buffer *active_buffer, void *buffer, int worker)
+void bsal_mpi_active_buffer_init(struct bsal_active_buffer *active_buffer)
 {
     struct bsal_mpi_active_buffer *concrete_object;
 
     concrete_object = bsal_active_buffer_get_concrete_object(active_buffer);
 
-    concrete_object->buffer = buffer;
     concrete_object->request = MPI_REQUEST_NULL;
-    concrete_object->worker = worker;
 }
 
 /* \see http://blogs.cisco.com/performance/mpi_request_free-is-evil/
@@ -30,7 +28,6 @@ void bsal_mpi_active_buffer_destroy(struct bsal_active_buffer *active_buffer)
         concrete_object->request = MPI_REQUEST_NULL;
     }
 
-    concrete_object->buffer = NULL;
 }
 
 /* \see http://www.mpich.org/static/docs/v3.1/www3/MPI_Test.html
@@ -52,10 +49,13 @@ int bsal_mpi_active_buffer_test(struct bsal_active_buffer *active_buffer)
 
     /* TODO do something with this error
      */
-    if (error) {
+    if (error != MPI_SUCCESS) {
         return 0;
     }
 
+    /*
+     * The request is ready
+     */
     if (flag) {
         concrete_object->request = MPI_REQUEST_NULL;
         return 1;
@@ -63,16 +63,8 @@ int bsal_mpi_active_buffer_test(struct bsal_active_buffer *active_buffer)
 
     return 0;
 }
-void *bsal_mpi_active_buffer_buffer(struct bsal_active_buffer *active_buffer)
-{
-    struct bsal_mpi_active_buffer *concrete_object;
 
-    concrete_object = bsal_active_buffer_get_concrete_object(active_buffer);
-
-    return concrete_object->buffer;
-}
-
-MPI_Request *bsal_mpi_active_buffer_request(struct bsal_active_buffer *active_buffer)
+void *bsal_mpi_active_buffer_request(struct bsal_active_buffer *active_buffer)
 {
     struct bsal_mpi_active_buffer *concrete_object;
 
@@ -81,11 +73,3 @@ MPI_Request *bsal_mpi_active_buffer_request(struct bsal_active_buffer *active_bu
     return &concrete_object->request;
 }
 
-int bsal_mpi_active_buffer_get_worker(struct bsal_active_buffer *active_buffer)
-{
-    struct bsal_mpi_active_buffer *concrete_object;
-
-    concrete_object = bsal_active_buffer_get_concrete_object(active_buffer);
-
-    return concrete_object->worker;
-}
