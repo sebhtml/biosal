@@ -12,7 +12,7 @@
  * This variable is set to 1 if PAMI support is ready to be
  * used
  */
-#define BSAL_TRANSPORT_PAMI_IS_READY 0
+#define BSAL_TRANSPORT_PAMI_IS_READY 1
 
 /*
  * Use IBM PAMI on IBM Blue Gene/Q
@@ -37,7 +37,9 @@ struct bsal_active_buffer;
 struct bsal_transport;
 
 struct bsal_pami_transport {
-    int mock;
+#ifdef BSAL_TRANSPORT_USE_PAMI
+    pami_client_t client;
+#endif
 };
 
 void bsal_pami_transport_init(struct bsal_transport *transport, int *argc, char ***argv);

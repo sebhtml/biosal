@@ -33,6 +33,16 @@ void bsal_transport_init(struct bsal_transport *transport, struct bsal_node *nod
     BSAL_DEBUGGER_ASSERT(transport->rank >= 0);
     BSAL_DEBUGGER_ASSERT(transport->size >= 1);
     BSAL_DEBUGGER_ASSERT(transport->node != NULL);
+
+    if (transport->implementation == BSAL_TRANSPORT_IMPLEMENTATION_PAMI) {
+        printf("TRANSPORT rank: %d size: %d implementation: PAMI\n",
+                        transport->rank, transport->size);
+
+    } else if (transport->implementation == BSAL_TRANSPORT_IMPLEMENTATION_MPI) {
+
+        printf("TRANSPORT rank: %d size: %d implementation: MPI\n",
+                        transport->rank, transport->size);
+    }
 }
 
 void bsal_transport_destroy(struct bsal_transport *transport)
