@@ -40,6 +40,7 @@ struct bsal_pami_transport {
 #ifdef BSAL_TRANSPORT_USE_PAMI
     pami_client_t client;
 #endif
+    int mock;
 };
 
 void bsal_pami_transport_init(struct bsal_transport *transport, int *argc, char ***argv);
