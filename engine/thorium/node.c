@@ -95,7 +95,7 @@ void bsal_node_init(struct bsal_node *node, int *argc, char ***argv)
     bsal_ring_queue_init(&node->outbound_buffers, sizeof(struct bsal_active_buffer));
 #endif
 
-#ifdef BSAL_NODE_CHECK_MPI
+#ifdef BSAL_NODE_CHECK_TRANSPORT
     node->use_mpi = 1;
 #endif
 
@@ -196,17 +196,17 @@ void bsal_node_init(struct bsal_node *node, int *argc, char ***argv)
     }
 
 	/*
-     * 3 cases with T threads using MPI_Init_thread:
+     * 3 cases with T threads using transport_init:
      *
-     * Case 0: T is 1, ask for MPI_THREAD_SINGLE
+     * Case 0: T is 1, ask for BSAL_THREAD_SINGLE
      * Design: receive, run, and send in main thread
      *
-     * Case 1: if T is 2, ask for MPI_THREAD_FUNNELED
+     * Case 1: if T is 2, ask for BSAL_THREAD_FUNNELED
      * Design: receive and send in main thread, workers in (T-1) thread
      *
-     * Case 2: if T is 3 or more, ask for MPI_THREAD_MULTIPLE
+     * Case 2: if T is 3 or more, ask for BSAL_THREAD_MULTIPLE
      *
-     * Design: if MPI_THREAD_MULTIPLE is provided, receive in main thread, send in 1 thread,
+     * Design: if BSAL_THREAD_MULTIPLE is provided, receive in main thread, send in 1 thread,
      * workers in (T - 2) threads, otherwise delegate the case to Case 1
      */
     workers = 1;
@@ -220,7 +220,7 @@ void bsal_node_init(struct bsal_node *node, int *argc, char ***argv)
     } else if (node->threads >= 3) {
 
         /* the number of workers depends on whether or not
-         * MPI_THREAD_MULTIPLE is provided
+         * BSAL_THREAD_MULTIPLE is provided
          */
     }
 
@@ -231,16 +231,16 @@ void bsal_node_init(struct bsal_node *node, int *argc, char ***argv)
 #ifdef BSAL_NODE_DEBUG
         printf("DEBUG= threads: %i\n", node->threads);
 #endif
-        if (node->provided == MPI_THREAD_MULTIPLE) {
+        if (node->provided == BSAL_THREAD_MULTIPLE) {
             node->send_in_thread = 1;
             workers = node->threads - 2;
 
-        /* assume MPI_THREAD_FUNNELED
+        /* assume BSAL_THREAD_FUNNELED
          */
         } else {
 
 #ifdef BSAL_NODE_DEBUG
-            printf("DEBUG= MPI_THREAD_MULTIPLE was not provided...\n");
+            printf("DEBUG= BSAL_THREAD_MULTIPLE was not provided...\n");
 #endif
             workers = node->threads - 1;
         }
@@ -754,7 +754,7 @@ int bsal_node_running(struct bsal_node *node)
     return 0;
 }
 
-/* TODO, this needs MPI_THREAD_MULTIPLE, this has not been tested */
+/* TODO, this needs BSAL_THREAD_MULTIPLE, this has not been tested */
 void bsal_node_start_send_thread(struct bsal_node *node)
 {
     bsal_thread_init(&node->thread, bsal_node_main, node);
@@ -874,8 +874,9 @@ int bsal_node_receive_system(struct bsal_node *node, struct bsal_message *messag
 
     } else if (tag == BSAL_NODE_START) {
 
-#ifdef BSAL_NODE_CHECK_MPI
-        /* disable MPI if there is only one node
+#ifdef BSAL_NODE_CHECK_TRANSPORT
+        /* disable transport layer
+         * if there is only one node
          */
         if (node->nodes == 1) {
             node->use_mpi = 0;
@@ -1042,7 +1043,8 @@ void bsal_node_send(struct bsal_node *node, struct bsal_message *message)
      * node
      */
     } else {
-        /* If MPI is disable, this will never be reached anyway
+        /* If transport layer
+         * is disable, this will never be reached anyway
          */
         /* send messages over the network */
         bsal_transport_send(&node->transport, message);
@@ -1700,7 +1702,7 @@ void bsal_node_run_loop(struct bsal_node *node)
          * there is a message received.
          */
         if (
-#ifdef BSAL_NODE_CHECK_MPI
+#ifdef BSAL_NODE_CHECK_TRANSPORT
             node->use_mpi &&
 #endif
             bsal_transport_receive(&node->transport, &message)) {
@@ -1759,14 +1761,14 @@ void bsal_node_send_message(struct bsal_node *node)
 {
     struct bsal_message message;
 
-#ifdef BSAL_NODE_CHECK_MPI
+#ifdef BSAL_NODE_CHECK_TRANSPORT
     /* Free buffers of active requests
      */
     if (node->use_mpi) {
 #endif
         bsal_node_test_requests(node);
 
-#ifdef BSAL_NODE_CHECK_MPI
+#ifdef BSAL_NODE_CHECK_TRANSPORT
     }
 #endif
 

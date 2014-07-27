@@ -20,6 +20,7 @@ void bsal_mpi_transport_init(struct bsal_transport *transport, int *argc, char *
     int required;
     struct bsal_mpi_transport *mpi_transport;
     int result;
+    int provided;
 
     mpi_transport = bsal_transport_get_concrete_transport(transport);
 
@@ -28,10 +29,26 @@ void bsal_mpi_transport_init(struct bsal_transport *transport, int *argc, char *
     */
     required = MPI_THREAD_FUNNELED;
 
-    result = MPI_Init_thread(argc, argv, required, &transport->provided);
+    result = MPI_Init_thread(argc, argv, required, &provided);
 
     if (result != MPI_SUCCESS) {
         return;
+    }
+
+    /*
+     * Set the provided level of thread support
+     */
+    if (provided == MPI_THREAD_SINGLE) {
+        transport->provided = BSAL_THREAD_SINGLE;
+
+    } else if (provided == MPI_THREAD_FUNNELED) {
+        transport->provided = BSAL_THREAD_FUNNELED;
+
+    } else if (provided == MPI_THREAD_SERIALIZED) {
+        transport->provided = BSAL_THREAD_SERIALIZED;
+
+    } else if (provided == MPI_THREAD_MULTIPLE) {
+        transport->provided = BSAL_THREAD_MULTIPLE;
     }
 
     /* make a new communicator for the library and don't use MPI_COMM_WORLD later */

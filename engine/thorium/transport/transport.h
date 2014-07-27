@@ -7,6 +7,11 @@
 
 #define BSAL_TRANSPORT_IMPLEMENTATION_MOCK 0
 
+#define BSAL_THREAD_SINGLE 0
+#define BSAL_THREAD_FUNNELED 1
+#define BSAL_THREAD_SERIALIZED 2
+#define BSAL_THREAD_MULTIPLE 3
+
 struct bsal_transport {
 
     /* Common stuff

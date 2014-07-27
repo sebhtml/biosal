@@ -14,7 +14,7 @@ void bsal_message_init(struct bsal_message *message, int tag, int count,
     message->source_actor = -1;
     message->destination_actor = -1;
 
-    /* MPI ranks are set with bsal_node_resolve */
+    /* ranks are set with bsal_node_resolve */
     message->source_node = -1;
     message->destination_node = -1;
 

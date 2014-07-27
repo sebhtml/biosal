@@ -50,12 +50,12 @@
 #define BSAL_NODE_LOAD_PERIOD 5
 
 /*
- * Enable a check to avoid calling MPI probing function
+ * Enable a check to avoid calling transport probing function
  * when running on one single node.
  */
 /*
 */
-#define BSAL_NODE_CHECK_MPI
+#define BSAL_NODE_CHECK_TRANSPORT
 
 struct bsal_script;
 
@@ -105,7 +105,7 @@ struct bsal_node {
     int available_scripts;
     int maximum_scripts;
 
-#ifdef BSAL_NODE_CHECK_MPI
+#ifdef BSAL_NODE_CHECK_TRANSPORT
     int use_mpi;
 #endif
 
