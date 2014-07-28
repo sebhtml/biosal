@@ -69,7 +69,7 @@ void bsal_node_init(struct bsal_node *node, int *argc, char ***argv)
     node->started = 0;
     node->print_load = 0;
     node->print_structure = 0;
-    node->debug_mode = 0;
+    node->debug = 0;
 
     bsal_node_global_self = node;
 
@@ -116,7 +116,6 @@ void bsal_node_init(struct bsal_node *node, int *argc, char ***argv)
     threads = 1;
 
     node->threads = threads;
-    node->print_memory_usage = 0;
     node->argc = *argc;
     node->argv = *argv;
 
@@ -128,8 +127,6 @@ void bsal_node_init(struct bsal_node *node, int *argc, char ***argv)
             node->print_load = 1;
         } else if (strcmp(argument, "-print-structure") == 0) {
             node->print_structure = 1;
-        } else if (strcmp(argument, "-print-memory-usage") == 0) {
-            node->print_memory_usage = 1;
         }
     }
 
@@ -1515,7 +1512,7 @@ struct bsal_worker_pool *bsal_node_get_worker_pool(struct bsal_node *self)
 
 void bsal_node_toggle_debug_mode(struct bsal_node *self)
 {
-    self->debug = !self->debug_mode;
+    self->debug = !self->debug;
     bsal_worker_pool_toggle_debug_mode(&self->worker_pool);
 }
 
@@ -1642,7 +1639,7 @@ void bsal_node_run_loop(struct bsal_node *node)
     clock_t current_time;
     char print_information = 0;
 
-    if (node->print_load || node->print_memory_usage || node->print_counters) {
+    if (node->print_load || node->print_counters) {
         print_information = 1;
     }
 
@@ -1661,18 +1658,19 @@ void bsal_node_run_loop(struct bsal_node *node)
             if (current_time - node->last_report_time >= period) {
                 if (node->print_load) {
                     bsal_worker_pool_print_load(&node->worker_pool, BSAL_WORKER_POOL_LOAD_EPOCH);
-                    printf("%s ACTORS node %d has %d active actors\n", BSAL_NODE_THORIUM_PREFIX,
-                                    node->name,
-                                    node->alive_actors);
 
-                }
-
-                if (node->print_memory_usage) {
-                    printf("%s MEMORY %d s node/%d %" PRIu64 " bytes\n",
+                    /* Display the number of actors,
+                     * the number of active buffers/requests/messages,
+                     * and
+                     * the heap size.
+                     */
+                    printf("%s METRICS node/%d AliveActorCount: %d ActiveRequestCount: %d HeapByteCount: %" PRIu64 "\n",
                                     BSAL_NODE_THORIUM_PREFIX,
-                                    (int)(current_time - node->start_time),
-                                    bsal_node_name(node),
-                                    bsal_get_heap_size());
+                                    node->name,
+                                    node->alive_actors,
+                                    bsal_transport_get_active_buffer_count(&node->transport),
+                                    bsal_memory_get_heap_size()
+                                    );
                 }
 
                 if (node->print_counters) {

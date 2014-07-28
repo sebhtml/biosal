@@ -8,6 +8,6 @@
 cd $PBS_O_WORKDIR
 
 aprun -n 16 -N 1 -d 24 \
-              argonnite -threads-per-node all -print-load -print-memory-usage \
+              argonnite -threads-per-node 24 -print-load \
               -k 43 Iowa_Continuous_Corn/GPIC.1424-1.1371.fastq > argonnite-2014-07-10-2.stdout
 

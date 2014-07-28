@@ -120,7 +120,7 @@ void bsal_memory_free_private(void *pointer, const char *function, const char *f
     free(pointer);
 }
 
-uint64_t bsal_get_heap_size()
+uint64_t bsal_memory_get_heap_size()
 {
     uint64_t bytes;
     bytes = 0;

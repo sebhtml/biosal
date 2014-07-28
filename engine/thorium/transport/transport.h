@@ -50,6 +50,7 @@ int bsal_transport_get_rank(struct bsal_transport *transport);
 int bsal_transport_get_size(struct bsal_transport *transport);
 
 int bsal_transport_test_requests(struct bsal_transport *transport, struct bsal_active_buffer *active_buffer);
+int bsal_transport_get_active_buffer_count(struct bsal_transport *transport);
 
 int bsal_transport_dequeue_active_buffer(struct bsal_transport *transport, struct bsal_active_buffer *active_buffer);
 

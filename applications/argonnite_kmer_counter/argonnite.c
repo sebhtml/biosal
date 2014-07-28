@@ -943,13 +943,12 @@ void argonnite_help(struct bsal_actor *actor)
     printf("\n");
 
     printf("Options\n");
-    printf("-thread-per-node thread_count       threads per biosal node\n");
+    printf("-threads-per-node thread_count       threads per biosal node\n");
     printf("-k kmer_length                      kmer length (default: %d, no limit, no compilation option)\n",
                     ARGONNITE_DEFAULT_KMER_LENGTH);
-    printf("-o output                           output (default: %s)\n", BSAL_COVERAGE_DISTRIBUTION_DEFAULT_OUTPUT);
+    printf("-o output                           output directory (default: %s)\n", BSAL_COVERAGE_DISTRIBUTION_DEFAULT_OUTPUT);
+    printf("-print-load                         display load, memory usage, actor count, active requests\n");
     printf("-print-counters                     print node-level biosal counters\n");
-    printf("-print-load                         print load\n");
-    printf("-print-memory-usage                 print memory usage\n");
     printf("\n");
 
     printf("Output\n");

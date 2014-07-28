@@ -136,8 +136,7 @@ struct bsal_node {
     int argc;
     char **argv;
 
-    int debug;
-    int debug_mode;
+    char debug;
 
     struct bsal_counter counter;
 
@@ -150,7 +149,6 @@ struct bsal_node {
     time_t last_report_time;
     time_t last_auto_scaling;
     char print_load;
-    char print_memory_usage;
     char print_counters;
 };
 

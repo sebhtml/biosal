@@ -113,7 +113,12 @@
 void *bsal_memory_allocate_private(size_t size, const char *function, const char *file, int line);
 void bsal_memory_free_private(void *pointer, const char *function, const char *file, int line);
 
-uint64_t bsal_get_heap_size();
+/*
+ * Get size of the data segment (also called heap)
+ *
+ * \see http://www.hep.wisc.edu/~pinghc/Process_Memory.htm
+ */
+uint64_t bsal_memory_get_heap_size();
 
 size_t bsal_memory_align(size_t unaligned);
 size_t bsal_memory_align_private(size_t unaligned, size_t alignment);

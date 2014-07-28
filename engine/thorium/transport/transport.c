@@ -205,3 +205,8 @@ void bsal_transport_prepare_received_message(struct bsal_transport *transport, s
     bsal_transport_resolve(transport, message);
 
 }
+
+int bsal_transport_get_active_buffer_count(struct bsal_transport *transport)
+{
+    return bsal_ring_queue_size(&transport->active_buffers);
+}
