@@ -279,10 +279,10 @@ void bsal_worker_pool_print_load(struct bsal_worker_pool *self, int type)
     int elapsed;
     float selected_load;
     float sum;
-    char loop[] = "LOOP";
-    char epoch[] = "EPOCH";
+    char loop[] = "COMPUTATION_LOAD";
+    char epoch[] = "EPOCH_LOAD";
     char *description;
-    float efficiency;
+    float load;
 
     description = NULL;
 
@@ -335,13 +335,13 @@ void bsal_worker_pool_print_load(struct bsal_worker_pool *self, int type)
         ++i;
     }
 
-    efficiency = sum / count;
+    load = sum / count;
 
-    printf("%s LOAD %s %d s node/%d %.2f/%d (%.2f)%s\n",
+    printf("%s node/%d %s %d s %.2f/%d (%.2f)%s\n",
                     BSAL_NODE_THORIUM_PREFIX,
-                    description, elapsed, node_name,
-                    sum, count, efficiency, buffer);
-
+                    node_name,
+                    description, elapsed,
+                    sum, count, load, buffer);
 
     bsal_memory_free(buffer);
 
@@ -352,24 +352,24 @@ void bsal_worker_pool_toggle_debug_mode(struct bsal_worker_pool *self)
     self->debug_mode = !self->debug_mode;
 }
 
-float bsal_worker_pool_get_efficiency(struct bsal_worker_pool *pool)
+float bsal_worker_pool_get_computation_load(struct bsal_worker_pool *pool)
 {
-    double efficiency;
+    double load;
     struct bsal_worker *worker;
     int i;
 
-    efficiency = 0;
+    load = 0;
 
     for (i = 0; i < pool->workers; i++) {
         worker = bsal_worker_pool_get_worker(pool, i);
-        efficiency += bsal_worker_get_loop_load(worker);
+        load += bsal_worker_get_loop_load(worker);
     }
 
     if (pool->workers != 0) {
-        efficiency /= pool->workers;
+        load /= pool->workers;
     }
 
-    return efficiency;
+    return load;
 }
 
 struct bsal_node *bsal_worker_pool_get_node(struct bsal_worker_pool *pool)
@@ -591,29 +591,28 @@ void bsal_worker_pool_assign_worker_to_actor(struct bsal_worker_pool *pool, int 
 
 }
 
-float bsal_worker_pool_get_current_efficiency(struct bsal_worker_pool *pool)
+float bsal_worker_pool_get_current_load(struct bsal_worker_pool *pool)
 {
-    float efficiency;
+    float load;
     int workers;
     int i;
 
     workers = bsal_worker_pool_worker_count(pool);
 
-    efficiency = 0;
+    load = 0;
     i = 0;
 
     while (i < workers) {
 
-        efficiency += bsal_worker_get_epoch_load(bsal_worker_pool_get_worker(pool, i));
+        load += bsal_worker_get_epoch_load(bsal_worker_pool_get_worker(pool, i));
 
         ++i;
     }
 
-    efficiency /= workers;
+    load /= workers;
 
-    return efficiency;
+    return load;
 }
-
 
 int bsal_worker_pool_next_worker(struct bsal_worker_pool *pool, int worker)
 {

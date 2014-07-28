@@ -34,7 +34,7 @@
  * Thorium product branding.
  */
 
-#define BSAL_NODE_THORIUM_PREFIX "<Thorium>"
+#define BSAL_NODE_THORIUM_PREFIX "[thorium]"
 
 /*
  * Compilation options:

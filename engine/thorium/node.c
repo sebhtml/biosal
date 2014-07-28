@@ -637,7 +637,7 @@ void bsal_node_set_initial_actor(struct bsal_node *node, int node_name, int acto
 
 void bsal_node_run(struct bsal_node *node)
 {
-    float efficiency;
+    float load;
 
     if (node->print_counters) {
         printf("----------------------------------------------\n");
@@ -687,13 +687,13 @@ void bsal_node_run(struct bsal_node *node)
         bsal_node_print_counters(node);
     }
 
-    /* Print global efficiency for this node... */
+    /* Print global load for this node... */
 
-    efficiency = bsal_worker_pool_get_efficiency(&node->worker_pool);
-    printf("%s node %d efficiency: %.2f\n",
+    load = bsal_worker_pool_get_computation_load(&node->worker_pool);
+    printf("%s node/%d COMPUTATION_LOAD %.2f\n",
                     BSAL_NODE_THORIUM_PREFIX,
                     bsal_node_name(node),
-                    efficiency);
+                    load);
 }
 
 void bsal_node_start_initial_actor(struct bsal_node *node)
@@ -1580,9 +1580,9 @@ void bsal_node_send_to_actor(struct bsal_node *node, int name, struct bsal_messa
 }
 
 
-void bsal_node_check_efficiency(struct bsal_node *node)
+void bsal_node_check_load(struct bsal_node *node)
 {
-    const float efficiency_threshold = 0.90;
+    const float load_threshold = 0.90;
     struct bsal_set_iterator iterator;
     struct bsal_message message;
     int name;
@@ -1599,11 +1599,11 @@ void bsal_node_check_efficiency(struct bsal_node *node)
 
     node->last_auto_scaling = current_time;
 
-    /* Check efficiency to see if auto-scaling is needed
+    /* Check load to see if auto-scaling is needed
      */
 
-    if (bsal_worker_pool_get_current_efficiency(&node->worker_pool)
-                    <= efficiency_threshold) {
+    if (bsal_worker_pool_get_current_load(&node->worker_pool)
+                    <= load_threshold) {
 
 
         bsal_set_iterator_init(&iterator, &node->auto_scaling_actors);
@@ -1664,7 +1664,7 @@ void bsal_node_run_loop(struct bsal_node *node)
                      * and
                      * the heap size.
                      */
-                    printf("%s METRICS node/%d AliveActorCount: %d ActiveRequestCount: %d HeapByteCount: %" PRIu64 "\n",
+                    printf("%s node/%d METRICS AliveActorCount: %d ActiveRequestCount: %d HeapByteCount: %" PRIu64 "\n",
                                     BSAL_NODE_THORIUM_PREFIX,
                                     node->name,
                                     node->alive_actors,
@@ -1745,7 +1745,7 @@ void bsal_node_run_loop(struct bsal_node *node)
                 credits = starting_credits;
             }
 
-            bsal_node_check_efficiency(node);
+            bsal_node_check_load(node);
         }
     }
 
