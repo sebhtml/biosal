@@ -23,11 +23,11 @@ LIBRARY_HOT_CODE += engine/thorium/scheduler/priority_scheduler.o
 
 # transport system
 LIBRARY_HOT_CODE += engine/thorium/transport/transport.o
-LIBRARY_HOT_CODE += engine/thorium/transport/active_buffer.o
+LIBRARY_HOT_CODE += engine/thorium/transport/active_request.o
 LIBRARY_HOT_CODE += engine/thorium/transport/mpi/mpi_transport.o
-LIBRARY_HOT_CODE += engine/thorium/transport/mpi/mpi_active_buffer.o
+LIBRARY_HOT_CODE += engine/thorium/transport/mpi/mpi_active_request.o
 LIBRARY_HOT_CODE += engine/thorium/transport/pami/pami_transport.o
-LIBRARY_HOT_CODE += engine/thorium/transport/pami/pami_active_buffer.o
+LIBRARY_HOT_CODE += engine/thorium/transport/pami/pami_active_request.o
 
 # core stuff
 LIBRARY_HOT_CODE += core/patterns/manager.o

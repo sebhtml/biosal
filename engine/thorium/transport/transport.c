@@ -1,7 +1,7 @@
 
 #include "transport.h"
 
-#include "active_buffer.h"
+#include "active_request.h"
 
 #include <engine/thorium/message.h>
 #include <engine/thorium/node.h>
@@ -24,7 +24,7 @@ void bsal_transport_init(struct bsal_transport *transport, struct bsal_node *nod
     bsal_transport_set_functions(transport);
 
     transport->node = node;
-    bsal_ring_queue_init(&transport->active_buffers, sizeof(struct bsal_active_buffer));
+    bsal_ring_queue_init(&transport->active_requests, sizeof(struct bsal_active_request));
 
     transport->rank = -1;
     transport->size = -1;
@@ -43,15 +43,15 @@ void bsal_transport_init(struct bsal_transport *transport, struct bsal_node *nod
 
 void bsal_transport_destroy(struct bsal_transport *transport)
 {
-    struct bsal_active_buffer active_buffer;
+    struct bsal_active_request active_request;
 
     transport->transport_destroy(transport);
 
-    while (bsal_ring_queue_dequeue(&transport->active_buffers, &active_buffer)) {
-        bsal_active_buffer_destroy(&active_buffer);
+    while (bsal_ring_queue_dequeue(&transport->active_requests, &active_request)) {
+        bsal_active_request_destroy(&active_request);
     }
 
-    bsal_ring_queue_destroy(&transport->active_buffers);
+    bsal_ring_queue_destroy(&transport->active_requests);
 
     transport->node = NULL;
     transport->rank = -1;
@@ -103,17 +103,17 @@ int bsal_transport_get_size(struct bsal_transport *transport)
     return transport->size;
 }
 
-int bsal_transport_test_requests(struct bsal_transport *transport, struct bsal_active_buffer *active_buffer)
+int bsal_transport_test_requests(struct bsal_transport *transport, struct bsal_active_request *active_request)
 {
-    if (bsal_ring_queue_dequeue(&transport->active_buffers, active_buffer)) {
+    if (bsal_ring_queue_dequeue(&transport->active_requests, active_request)) {
 
-        if (bsal_active_buffer_test(active_buffer)) {
+        if (bsal_active_request_test(active_request)) {
 
             return 1;
 
         /* Just put it back in the FIFO for later */
         } else {
-            bsal_ring_queue_enqueue(&transport->active_buffers, active_buffer);
+            bsal_ring_queue_enqueue(&transport->active_requests, active_request);
 
             return 0;
         }
@@ -122,9 +122,9 @@ int bsal_transport_test_requests(struct bsal_transport *transport, struct bsal_a
     return 0;
 }
 
-int bsal_transport_dequeue_active_buffer(struct bsal_transport *transport, struct bsal_active_buffer *active_buffer)
+int bsal_transport_dequeue_active_request(struct bsal_transport *transport, struct bsal_active_request *active_request)
 {
-    return bsal_ring_queue_dequeue(&transport->active_buffers, active_buffer);
+    return bsal_ring_queue_dequeue(&transport->active_requests, active_request);
 }
 
 int bsal_transport_get_implementation(struct bsal_transport *transport)
@@ -208,9 +208,9 @@ void bsal_transport_prepare_received_message(struct bsal_transport *transport, s
 
 }
 
-int bsal_transport_get_active_buffer_count(struct bsal_transport *transport)
+int bsal_transport_get_active_request_count(struct bsal_transport *transport)
 {
-    return bsal_ring_queue_size(&transport->active_buffers);
+    return bsal_ring_queue_size(&transport->active_requests);
 }
 
 int bsal_transport_get_identifier(struct bsal_transport *transport)

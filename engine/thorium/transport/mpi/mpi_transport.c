@@ -2,7 +2,7 @@
 #include "mpi_transport.h"
 
 #include <engine/thorium/transport/transport.h>
-#include <engine/thorium/transport/active_buffer.h>
+#include <engine/thorium/transport/active_request.h>
 
 #include <engine/thorium/message.h>
 
@@ -109,7 +109,7 @@ int bsal_mpi_transport_send(struct bsal_transport *transport, struct bsal_messag
     int metadata_size;
     MPI_Request *request;
     int all;
-    struct bsal_active_buffer active_buffer;
+    struct bsal_active_request active_request;
     int worker;
     int result;
 
@@ -123,8 +123,8 @@ int bsal_mpi_transport_send(struct bsal_transport *transport, struct bsal_messag
     destination = bsal_message_destination_node(message);
     tag = bsal_message_tag(message);
 
-    bsal_active_buffer_init(&active_buffer, buffer, worker);
-    request = bsal_active_buffer_request(&active_buffer);
+    bsal_active_request_init(&active_request, buffer, worker);
+    request = bsal_active_request_request(&active_request);
 
     /* get return value */
     result = MPI_Isend(buffer, all, mpi_transport->datatype, destination, tag,
@@ -141,7 +141,7 @@ int bsal_mpi_transport_send(struct bsal_transport *transport, struct bsal_messag
      */
     /*MPI_Request_free(&request);*/
 
-    bsal_ring_queue_enqueue(&transport->active_buffers, &active_buffer);
+    bsal_ring_queue_enqueue(&transport->active_requests, &active_request);
 
     return 1;
 }

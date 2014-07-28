@@ -224,8 +224,8 @@ void bsal_node_reset_actor_counters(struct bsal_node *node);
 int64_t bsal_node_get_counter(struct bsal_node *node, int counter);
 void bsal_node_test_requests(struct bsal_node *node);
 
-void bsal_node_free_active_buffer(struct bsal_node *node,
-                struct bsal_active_buffer *active_buffer);
+void bsal_node_free_active_request(struct bsal_node *node,
+                struct bsal_active_request *active_request);
 
 void bsal_node_send_to_actor(struct bsal_node *node, int name, struct bsal_message *message);
 void bsal_node_check_efficiency(struct bsal_node *node);

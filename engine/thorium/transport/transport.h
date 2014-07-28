@@ -14,6 +14,8 @@
 
 #define BSAL_TRANSPORT_MOCK_IDENTIFIER (-1)
 
+struct bsal_active_request;
+
 /*
  * This is the transport layer in
  * the thorium actor engine
@@ -23,7 +25,7 @@ struct bsal_transport {
     /* Common stuff
      */
     struct bsal_node *node;
-    struct bsal_ring_queue active_buffers;
+    struct bsal_ring_queue active_requests;
     int provided;
     int rank;
     int size;
@@ -61,10 +63,10 @@ int bsal_transport_get_size(struct bsal_transport *transport);
 int bsal_transport_get_identifier(struct bsal_transport *transport);
 const char *bsal_transport_get_name(struct bsal_transport *transport);
 
-int bsal_transport_test_requests(struct bsal_transport *transport, struct bsal_active_buffer *active_buffer);
-int bsal_transport_get_active_buffer_count(struct bsal_transport *transport);
+int bsal_transport_test_requests(struct bsal_transport *transport, struct bsal_active_request *active_request);
+int bsal_transport_get_active_request_count(struct bsal_transport *transport);
 
-int bsal_transport_dequeue_active_buffer(struct bsal_transport *transport, struct bsal_active_buffer *active_buffer);
+int bsal_transport_dequeue_active_request(struct bsal_transport *transport, struct bsal_active_request *active_request);
 
 int bsal_transport_get_implementation(struct bsal_transport *transport);
 

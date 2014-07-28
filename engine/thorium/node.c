@@ -7,7 +7,7 @@
 
 #include "node.h"
 
-#include "transport/active_buffer.h"
+#include "transport/active_request.h"
 
 #include <core/structures/vector.h>
 #include <core/structures/map_iterator.h>
@@ -100,7 +100,7 @@ void bsal_node_init(struct bsal_node *node, int *argc, char ***argv)
     node->nodes = bsal_transport_get_size(&node->transport);
 
 #ifdef BSAL_NODE_USE_MESSAGE_RECYCLING
-    bsal_ring_queue_init(&node->outbound_buffers, sizeof(struct bsal_active_buffer));
+    bsal_ring_queue_init(&node->outbound_buffers, sizeof(struct bsal_active_request));
 #endif
 
 #ifdef BSAL_NODE_CHECK_TRANSPORT
@@ -314,7 +314,7 @@ void bsal_node_init(struct bsal_node *node, int *argc, char ***argv)
 
 void bsal_node_destroy(struct bsal_node *node)
 {
-    struct bsal_active_buffer active_buffer;
+    struct bsal_active_request active_request;
     void *buffer;
 
     bsal_set_destroy(&node->auto_scaling_actors);
@@ -339,11 +339,11 @@ void bsal_node_destroy(struct bsal_node *node)
 
     bsal_worker_pool_destroy(&node->worker_pool);
 
-    while (bsal_transport_dequeue_active_buffer(&node->transport, &active_buffer)) {
-        buffer = bsal_active_buffer_buffer(&active_buffer);
+    while (bsal_transport_dequeue_active_request(&node->transport, &active_request)) {
+        buffer = bsal_active_request_buffer(&active_request);
 
         bsal_memory_free(buffer);
-        bsal_active_buffer_destroy(&active_buffer);
+        bsal_active_request_destroy(&active_request);
     }
 
     bsal_transport_destroy(&node->transport);
@@ -976,7 +976,7 @@ void bsal_node_send(struct bsal_node *node, struct bsal_message *message)
 #ifdef BSAL_NODE_USE_MESSAGE_RECYCLING
     int worker_name;
     struct bsal_worker *worker;
-    struct bsal_active_buffer recycled_buffer;
+    struct bsal_active_request recycled_buffer;
     void *buffer;
 #endif
 
@@ -1004,9 +1004,9 @@ void bsal_node_send(struct bsal_node *node, struct bsal_message *message)
             worker = bsal_worker_pool_get_worker(&node->worker_pool, worker_name);
             if (!bsal_worker_free_buffer(worker, buffer)) {
 
-                bsal_active_buffer_init(&recycled_buffer, buffer, worker_name);
+                bsal_active_request_init(&recycled_buffer, buffer, worker_name);
                 bsal_ring_queue_enqueue(&node->outbound_buffers, &recycled_buffer);
-                bsal_active_buffer_destroy(&recycled_buffer);
+                bsal_active_request_destroy(&recycled_buffer);
             }
         } else {
 
@@ -1672,7 +1672,7 @@ void bsal_node_run_loop(struct bsal_node *node)
                                     BSAL_NODE_THORIUM_PREFIX,
                                     node->name,
                                     node->alive_actors,
-                                    bsal_transport_get_active_buffer_count(&node->transport),
+                                    bsal_transport_get_active_request_count(&node->transport),
                                     bsal_memory_get_heap_size()
                                     );
                 }
@@ -1793,30 +1793,42 @@ void bsal_node_send_message(struct bsal_node *node)
 
 void bsal_node_test_requests(struct bsal_node *node)
 {
-    struct bsal_active_buffer active_buffer;
+    struct bsal_active_request active_request;
+    int requests;
+    int requests_to_test;
+    int i;
+
+    requests = bsal_transport_get_active_request_count(&node->transport);
+    requests_to_test = requests / 8;
 
     /* Test active buffer requests
      */
-    if (bsal_transport_test_requests(&node->transport,
-                            &active_buffer)) {
 
-        bsal_node_free_active_buffer(node, &active_buffer);
+    i = 0;
+    while (i < requests_to_test) {
+        if (bsal_transport_test_requests(&node->transport,
+                            &active_request)) {
 
-        bsal_active_buffer_destroy(&active_buffer);
+            bsal_node_free_active_request(node, &active_request);
+
+            bsal_active_request_destroy(&active_request);
+        }
+
+        ++i;
     }
 
 #ifdef BSAL_NODE_USE_MESSAGE_RECYCLING
     /* Check if there are queued buffers to give to workers
      */
-    if (bsal_ring_queue_dequeue(&node->outbound_buffers, &active_buffer)) {
+    if (bsal_ring_queue_dequeue(&node->outbound_buffers, &active_request)) {
 
-        bsal_node_free_active_buffer(node, &active_buffer);
+        bsal_node_free_active_request(node, &active_request);
     }
 #endif
 }
 
-void bsal_node_free_active_buffer(struct bsal_node *node,
-                struct bsal_active_buffer *active_buffer)
+void bsal_node_free_active_request(struct bsal_node *node,
+                struct bsal_active_request *active_request)
 {
     void *buffer;
 
@@ -1825,11 +1837,11 @@ void bsal_node_free_active_buffer(struct bsal_node *node,
     struct bsal_worker *worker;
 #endif
 
-    buffer = bsal_active_buffer_buffer(active_buffer);
+    buffer = bsal_active_request_buffer(active_request);
 
 
 #ifdef BSAL_NODE_USE_MESSAGE_RECYCLING
-    worker_name = bsal_active_buffer_get_worker(active_buffer);
+    worker_name = bsal_active_request_get_worker(active_request);
 
     /* This an worker buffer
      */
@@ -1843,7 +1855,7 @@ void bsal_node_free_active_buffer(struct bsal_node *node,
             /* If the ring is full, queue it locally
              * and try again later
              */
-            bsal_ring_queue_enqueue(&node->outbound_buffers, &active_buffer);
+            bsal_ring_queue_enqueue(&node->outbound_buffers, &active_request);
         }
 
     /* This is a node buffer
