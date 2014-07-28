@@ -87,4 +87,12 @@ int bsal_pami_transport_receive(struct bsal_transport *transport, struct bsal_me
     return 0;
 }
 
+int bsal_pami_transport_get_identifier(struct bsal_transport *transport)
+{
+    return BSAL_TRANSPORT_PAMI_IDENTIFIER;
+}
 
+const char *bsal_pami_transport_get_name(struct bsal_transport *transport)
+{
+    return BSAL_TRANSPORT_PAMI_NAME;
+}

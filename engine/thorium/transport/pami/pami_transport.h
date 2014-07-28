@@ -2,8 +2,6 @@
 #ifndef BSAL_PAMI_TRANSPORT_H
 #define BSAL_PAMI_TRANSPORT_H
 
-#define BSAL_TRANSPORT_IMPLEMENTATION_PAMI 2000
-
 /*
  * Decide if the code will use PAMI or MPI
  */
@@ -13,6 +11,9 @@
  * used
  */
 #define BSAL_TRANSPORT_PAMI_IS_READY 0
+
+#define BSAL_TRANSPORT_PAMI_IDENTIFIER 2000
+#define BSAL_TRANSPORT_PAMI_NAME "PAMI: Parallel Active Message Interface"
 
 /*
  * Use IBM PAMI on IBM Blue Gene/Q
@@ -48,5 +49,8 @@ void bsal_pami_transport_destroy(struct bsal_transport *transport);
 
 int bsal_pami_transport_send(struct bsal_transport *transport, struct bsal_message *message);
 int bsal_pami_transport_receive(struct bsal_transport *transport, struct bsal_message *message);
+
+int bsal_pami_transport_get_identifier(struct bsal_transport *transport);
+const char *bsal_pami_transport_get_name(struct bsal_transport *transport);
 
 #endif

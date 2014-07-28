@@ -205,3 +205,12 @@ int bsal_mpi_transport_receive(struct bsal_transport *transport, struct bsal_mes
     return 1;
 }
 
+int bsal_mpi_transport_get_identifier(struct bsal_transport *transport)
+{
+    return BSAL_TRANSPORT_MPI_IDENTIFIER;
+}
+
+const char *bsal_mpi_transport_get_name(struct bsal_transport *transport)
+{
+    return BSAL_TRANSPORT_MPI_NAME;
+}

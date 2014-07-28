@@ -64,6 +64,14 @@ void bsal_node_init(struct bsal_node *node, int *argc, char ***argv)
     char *argument;
     int processor;
 
+    /*
+    printf("Booting node\n");
+    */
+    /* register signal handlers
+     */
+    bsal_node_register_signal_handlers(node);
+
+
     bsal_set_init(&node->auto_scaling_actors, sizeof(int));
 
     node->started = 0;
@@ -282,10 +290,6 @@ void bsal_node_init(struct bsal_node *node, int *argc, char ***argv)
     bsal_queue_init(&node->dead_indices, sizeof(int));
 
     bsal_counter_init(&node->counter);
-
-    /* register signal handlers
-     */
-    bsal_node_register_signal_handlers(node);
 
     node->start_time = time(NULL);
     node->last_report_time = 0;

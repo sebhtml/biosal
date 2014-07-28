@@ -11,26 +11,26 @@ void bsal_active_buffer_init(struct bsal_active_buffer *active_buffer, void *buf
     int implementation;
 
 #if defined(BSAL_TRANSPORT_USE_PAMI)
-    implementation = BSAL_TRANSPORT_IMPLEMENTATION_PAMI;
+    implementation = BSAL_TRANSPORT_PAMI_IDENTIFIER;
 
 #elif defined(BSAL_TRANSPORT_USE_MPI)
-    implementation = BSAL_TRANSPORT_IMPLEMENTATION_MPI;
+    implementation = BSAL_TRANSPORT_MPI_IDENTIFIER;
 
 #else
 
-    implementation = BSAL_TRANSPORT_IMPLEMENTATION_MOCK;
+    implementation = BSAL_TRANSPORT_MOCK_IDENTIFIER;
 #endif
 
     active_buffer->buffer = buffer;
     active_buffer->worker = worker;
 
-    if (implementation == BSAL_TRANSPORT_IMPLEMENTATION_PAMI) {
+    if (implementation == BSAL_TRANSPORT_PAMI_IDENTIFIER) {
         active_buffer->active_buffer_init = bsal_pami_active_buffer_init;
         active_buffer->active_buffer_destroy = bsal_pami_active_buffer_destroy;
         active_buffer->active_buffer_test = bsal_pami_active_buffer_test;
         active_buffer->active_buffer_request = bsal_pami_active_buffer_request;
 
-    } else if (implementation == BSAL_TRANSPORT_IMPLEMENTATION_MPI) {
+    } else if (implementation == BSAL_TRANSPORT_MPI_IDENTIFIER) {
         active_buffer->active_buffer_init = bsal_mpi_active_buffer_init;
         active_buffer->active_buffer_destroy = bsal_mpi_active_buffer_destroy;
         active_buffer->active_buffer_test = bsal_mpi_active_buffer_test;

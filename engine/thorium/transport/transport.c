@@ -11,20 +11,21 @@
 void bsal_transport_init(struct bsal_transport *transport, struct bsal_node *node,
                 int *argc, char ***argv)
 {
-#ifdef BSAL_TRANSPORT_USE_PAMI
-    transport->implementation = BSAL_TRANSPORT_IMPLEMENTATION_PAMI;
+        /*
+    printf("DEBUG Initiating transport\n");
+    */
+    /* Select the transport layer
+     */
+    bsal_transport_select(transport);
 
-#elif defined(BSAL_TRANSPORT_USE_MPI)
-    transport->implementation = BSAL_TRANSPORT_IMPLEMENTATION_MPI;
-
-#else
-    transport->implementation = BSAL_TRANSPORT_IMPLEMENTATION_MOCK;
-#endif
-
+    /*
+     * Assign functions
+     */
     bsal_transport_set_functions(transport);
 
     transport->node = node;
     bsal_ring_queue_init(&transport->active_buffers, sizeof(struct bsal_active_buffer));
+
     transport->rank = -1;
     transport->size = -1;
 
@@ -34,15 +35,10 @@ void bsal_transport_init(struct bsal_transport *transport, struct bsal_node *nod
     BSAL_DEBUGGER_ASSERT(transport->size >= 1);
     BSAL_DEBUGGER_ASSERT(transport->node != NULL);
 
-    if (transport->implementation == BSAL_TRANSPORT_IMPLEMENTATION_PAMI) {
-        printf("TRANSPORT rank: %d size: %d implementation: PAMI\n",
-                        transport->rank, transport->size);
-
-    } else if (transport->implementation == BSAL_TRANSPORT_IMPLEMENTATION_MPI) {
-
-        printf("TRANSPORT rank: %d size: %d implementation: MPI\n",
-                        transport->rank, transport->size);
-    }
+    printf("%s TRANSPORT Rank: %d RankCount: %d Implementation: %s\n",
+                    BSAL_NODE_THORIUM_PREFIX,
+                transport->rank, transport->size,
+                bsal_transport_get_name(transport));
 }
 
 void bsal_transport_destroy(struct bsal_transport *transport)
@@ -143,10 +139,10 @@ void *bsal_transport_get_concrete_transport(struct bsal_transport *transport)
 
 void bsal_transport_set_functions(struct bsal_transport *transport)
 {
-    if (transport->implementation == BSAL_TRANSPORT_IMPLEMENTATION_PAMI) {
+    if (transport->implementation == BSAL_TRANSPORT_PAMI_IDENTIFIER) {
         bsal_transport_configure_pami(transport);
 
-    } else if (transport->implementation == BSAL_TRANSPORT_IMPLEMENTATION_MPI) {
+    } else if (transport->implementation == BSAL_TRANSPORT_MPI_IDENTIFIER) {
 
         bsal_transport_configure_mpi(transport);
 
@@ -165,6 +161,8 @@ void bsal_transport_configure_pami(struct bsal_transport *transport)
     transport->transport_destroy = bsal_pami_transport_destroy;
     transport->transport_send = bsal_pami_transport_send;
     transport->transport_receive = bsal_pami_transport_receive;
+    transport->transport_get_identifier = bsal_pami_transport_get_identifier;
+    transport->transport_get_name = bsal_pami_transport_get_name;
 }
 
 void bsal_transport_configure_mpi(struct bsal_transport *transport)
@@ -173,6 +171,8 @@ void bsal_transport_configure_mpi(struct bsal_transport *transport)
     transport->transport_destroy = bsal_mpi_transport_destroy;
     transport->transport_send = bsal_mpi_transport_send;
     transport->transport_receive = bsal_mpi_transport_receive;
+    transport->transport_get_identifier = bsal_mpi_transport_get_identifier;
+    transport->transport_get_name = bsal_mpi_transport_get_name;
 }
 
 void bsal_transport_configure_mock(struct bsal_transport *transport)
@@ -181,6 +181,8 @@ void bsal_transport_configure_mock(struct bsal_transport *transport)
     transport->transport_destroy = NULL;
     transport->transport_send = NULL;
     transport->transport_receive = NULL;
+    transport->transport_get_identifier = NULL;
+    transport->transport_get_name = NULL;
 }
 
 void bsal_transport_prepare_received_message(struct bsal_transport *transport, struct bsal_message *message,
@@ -209,4 +211,36 @@ void bsal_transport_prepare_received_message(struct bsal_transport *transport, s
 int bsal_transport_get_active_buffer_count(struct bsal_transport *transport)
 {
     return bsal_ring_queue_size(&transport->active_buffers);
+}
+
+int bsal_transport_get_identifier(struct bsal_transport *transport)
+{
+    return transport->transport_get_identifier(transport);
+}
+
+const char *bsal_transport_get_name(struct bsal_transport *transport)
+{
+    return transport->transport_get_name(transport);
+}
+
+void bsal_transport_select(struct bsal_transport *transport)
+{
+    transport->implementation = BSAL_TRANSPORT_MOCK_IDENTIFIER;
+
+#if defined(BSAL_TRANSPORT_USE_PAMI)
+    transport->implementation = BSAL_TRANSPORT_PAMI_IDENTIFIER;
+
+#elif defined(BSAL_TRANSPORT_USE_MPI)
+    transport->implementation = BSAL_TRANSPORT_MPI_IDENTIFIER;
+#endif
+
+    if (transport->implementation == BSAL_TRANSPORT_MOCK_IDENTIFIER) {
+        printf("Error: no transport implementation is available.\n");
+        exit(1);
+    }
+
+    /*
+    printf("DEBUG Transport is %d\n",
+                    transport->implementation);
+                    */
 }
