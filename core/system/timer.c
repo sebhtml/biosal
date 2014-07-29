@@ -255,7 +255,7 @@ uint64_t bsal_timer_get_elapsed_nanoseconds(struct bsal_timer *timer)
 
 void bsal_timer_print_with_description(struct bsal_timer *timer, const char *description)
 {
-    printf("TIMER <%s> ", description);
+    printf("TIMER [%s] ", description);
 
     bsal_timer_print(timer);
 }
