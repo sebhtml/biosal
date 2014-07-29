@@ -678,6 +678,7 @@ void bsal_node_run(struct bsal_node *node)
     }
 
     if (node->print_load) {
+        bsal_worker_pool_print_load(&node->worker_pool, BSAL_WORKER_POOL_LOAD_EPOCH);
         bsal_worker_pool_print_load(&node->worker_pool, BSAL_WORKER_POOL_LOAD_LOOP);
     }
 

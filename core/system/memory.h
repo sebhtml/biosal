@@ -123,4 +123,9 @@ uint64_t bsal_memory_get_heap_size();
 size_t bsal_memory_align(size_t unaligned);
 size_t bsal_memory_align_private(size_t unaligned, size_t alignment);
 
+void bsal_memory_fence();
+void bsal_l_fence();
+void bsal_s_fence();
+void bsal_fence();
+
 #endif

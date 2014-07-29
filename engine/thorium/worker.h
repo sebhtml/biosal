@@ -25,6 +25,14 @@ struct bsal_message;
 struct bsal_scheduler;
 
 /*
+ * Enable wait and signal for workers
+ */
+/*
+#define BSAL_WORKER_ENABLE_WAIT
+*/
+
+
+/*
 #define BSAL_WORKER_USE_LOCK
 */
 
@@ -114,6 +122,8 @@ struct bsal_worker {
     struct bsal_memory_pool outbound_message_memory_pool;
 
     struct bsal_priority_scheduler scheduler;
+
+    uint64_t last_wake_up_count;
 };
 
 void bsal_worker_init(struct bsal_worker *worker, int name, struct bsal_node *node);
@@ -165,5 +175,11 @@ int bsal_worker_get_producer_count(struct bsal_worker *worker, struct bsal_sched
 int bsal_worker_free_buffer(struct bsal_worker *worker, void *buffer);
 
 void bsal_worker_free_message(struct bsal_worker *worker, struct bsal_message *message);
+
+void bsal_worker_wait(struct bsal_worker *worker);
+void bsal_worker_signal(struct bsal_worker *worker);
+
+uint64_t bsal_worker_get_epoch_wake_up_count(struct bsal_worker *worker);
+uint64_t bsal_worker_get_loop_wake_up_count(struct bsal_worker *worker);
 
 #endif

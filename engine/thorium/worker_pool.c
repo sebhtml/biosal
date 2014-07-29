@@ -19,6 +19,8 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <stdint.h>
+#include <inttypes.h>
 
 
 /*
@@ -106,6 +108,7 @@ void bsal_worker_pool_init(struct bsal_worker_pool *pool, int workers,
     }
 
     pool->last_balancing = pool->starting_time;
+    pool->last_signal_check = pool->starting_time;
 
     pool->balance_period = BSAL_SCHEDULER_PERIOD_IN_SECONDS;
 
@@ -267,20 +270,26 @@ void bsal_worker_pool_print_load(struct bsal_worker_pool *self, int type)
     float epoch_load;
     struct bsal_worker *worker;
     float loop_load;
+
+    uint64_t epoch_wake_up_count;
+    uint64_t loop_wake_up_count;
     /*
     int scheduling_score;
     */
     int node_name;
     char *buffer;
+    char *buffer_for_wake_up_events;
     int allocated;
     int offset;
+    int offset_for_wake_up;
     int extra;
     clock_t current_time;
     int elapsed;
     float selected_load;
+    uint64_t selected_wake_up_count;
     float sum;
-    char loop[] = "COMPUTATION_LOAD";
-    char epoch[] = "EPOCH_LOAD";
+    char loop[] = "COMPUTATION";
+    char epoch[] = "EPOCH";
     char *description;
     float load;
 
@@ -303,23 +312,32 @@ void bsal_worker_pool_print_load(struct bsal_worker_pool *self, int type)
     allocated = count * 20 + 20 + extra;
 
     buffer = bsal_memory_allocate(allocated);
+    buffer_for_wake_up_events = bsal_memory_allocate(allocated);
     node_name = bsal_node_name(self->node);
     offset = 0;
+    offset_for_wake_up = 0;
     i = 0;
     sum = 0;
 
     while (i < count && offset + extra < allocated) {
 
         worker = bsal_worker_pool_get_worker(self, i);
+
         epoch_load = bsal_worker_get_epoch_load(worker);
         loop_load = bsal_worker_get_loop_load(worker);
+        epoch_wake_up_count = bsal_worker_get_epoch_wake_up_count(worker);
+        loop_wake_up_count = bsal_worker_get_loop_wake_up_count(worker);
 
         selected_load = epoch_load;
+        selected_wake_up_count = epoch_wake_up_count;
 
         if (type == BSAL_WORKER_POOL_LOAD_EPOCH) {
             selected_load = epoch_load;
+            selected_wake_up_count = epoch_wake_up_count;
+
         } else if (type == BSAL_WORKER_POOL_LOAD_LOOP) {
             selected_load = loop_load;
+            selected_wake_up_count = loop_wake_up_count;
         }
 
         /*
@@ -330,6 +348,9 @@ void bsal_worker_pool_print_load(struct bsal_worker_pool *self, int type)
         offset += sprintf(buffer + offset, " %.2f",
                         selected_load);
 
+        offset_for_wake_up += sprintf(buffer_for_wake_up_events + offset_for_wake_up, " %" PRIu64 "",
+                        selected_wake_up_count);
+
         sum += selected_load;
 
         ++i;
@@ -337,14 +358,20 @@ void bsal_worker_pool_print_load(struct bsal_worker_pool *self, int type)
 
     load = sum / count;
 
-    printf("%s node/%d %s %d s %.2f/%d (%.2f)%s\n",
+    printf("%s node/%d %s LOAD %d s %.2f/%d (%.2f)%s\n",
                     BSAL_NODE_THORIUM_PREFIX,
                     node_name,
                     description, elapsed,
                     sum, count, load, buffer);
 
-    bsal_memory_free(buffer);
+    printf("%s node/%d %s WAKE_UP_COUNT %d s %s\n",
+                    BSAL_NODE_THORIUM_PREFIX,
+                    node_name,
+                    description, elapsed,
+                    buffer_for_wake_up_events);
 
+    bsal_memory_free(buffer);
+    bsal_memory_free(buffer_for_wake_up_events);
 }
 
 void bsal_worker_pool_toggle_debug_mode(struct bsal_worker_pool *self)
@@ -478,8 +505,13 @@ void bsal_worker_pool_work(struct bsal_worker_pool *pool)
     struct bsal_worker *worker;
     int name;
 
-#ifdef BSAL_WORKER_POOL_BALANCE
+#ifdef BSAL_WORKER_ENABLE_WAIT
+    float load;
+    int i;
     time_t current_time;
+#endif
+
+#ifdef BSAL_WORKER_POOL_BALANCE
 #endif
 
     /* If there are messages in the inbound message buffer,
@@ -533,7 +565,6 @@ void bsal_worker_pool_work(struct bsal_worker_pool *pool)
     /* balance the pool regularly
      */
 
-    current_time = time(NULL);
 
     if (current_time - pool->last_balancing >= pool->balance_period) {
         bsal_scheduler_balance(&pool->scheduler);
@@ -542,7 +573,32 @@ void bsal_worker_pool_work(struct bsal_worker_pool *pool)
     }
 #endif
 
+#ifdef BSAL_WORKER_ENABLE_WAIT
+    current_time = time(NULL);
 
+    /*
+     * Send a signal to any worker without activity.
+     * This is required because a thread can go to sleep after the signal was sent
+     * (the first signal).
+     */
+
+    i = 0;
+
+    if (current_time - pool->last_signal_check >= 1) {
+        while (i < pool->workers) {
+
+            worker = bsal_worker_pool_get_worker(pool, i);
+            load = bsal_worker_get_epoch_load(worker);
+
+            if (load < 0.1) {
+                bsal_worker_signal(worker);
+            }
+
+            ++i;
+        }
+        pool->last_signal_check = current_time;
+    }
+#endif
 }
 
 void bsal_worker_pool_assign_worker_to_actor(struct bsal_worker_pool *pool, int name)

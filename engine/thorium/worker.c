@@ -34,6 +34,8 @@
 
 #define BSAL_WORKER_UNPRODUCTIVE_TICK_LIMIT 256
 
+#define BSAL_WORKER_UNPRODUCTIVE_TIC_COUNT_FOR_WAIT 4096
+
 /*
  * Print scheduling queue for debugging purposes
  */
@@ -59,6 +61,8 @@ void bsal_worker_init(struct bsal_worker *worker, int name, struct bsal_node *no
     worker->name = name;
     worker->dead = 0;
     worker->last_warning = 0;
+
+    worker->last_wake_up_count = 0;
 
     /*worker->work_queue = &worker->works;*/
 
@@ -265,6 +269,13 @@ int bsal_worker_name(struct bsal_worker *worker)
 
 void bsal_worker_stop(struct bsal_worker *worker)
 {
+#ifdef BSAL_WORKER_ENABLE_WAIT
+    /*
+     * Wake up if necessary
+     */
+    bsal_worker_signal(worker);
+#endif
+
 #ifdef BSAL_WORKER_DEBUG
     bsal_worker_display(worker);
     printf("stopping worker!\n");
@@ -429,6 +440,8 @@ int bsal_worker_dequeue_actor(struct bsal_worker *worker, struct bsal_actor **ac
      */
     value = bsal_scheduling_queue_dequeue(&worker->scheduling_queue, actor);
 
+    /* an actor is ready to be run and it was dequeued from the scheduling queue.
+     */
     if (value) {
         name = bsal_actor_get_name(*actor);
 
@@ -502,6 +515,14 @@ int bsal_worker_dequeue_actor(struct bsal_worker *worker, struct bsal_actor **ac
         worker->ticks_without_production = 0;
     }
 
+    /*
+     * If too many cycles were spent doing nothing,
+     * check the fast ring since there could be issue in the
+     * cache coherency of the CPU, even with the memory fences.
+     *
+     * This should not happen theoretically.
+     *
+     */
     if (worker->ticks_without_production >= BSAL_WORKER_UNPRODUCTIVE_TICK_LIMIT) {
 
         if (bsal_map_iterator_get_next_key_and_value(&worker->actor_iterator, &name, NULL)) {
@@ -526,9 +547,29 @@ int bsal_worker_dequeue_actor(struct bsal_worker *worker, struct bsal_actor **ac
             bsal_map_iterator_destroy(&worker->actor_iterator);
             bsal_map_iterator_init(&worker->actor_iterator, &worker->actors);
 
-            worker->ticks_without_production = 0;
+            /*worker->ticks_without_production = 0;*/
         }
     }
+
+#ifdef BSAL_WORKER_ENABLE_WAIT
+    /*
+     * If there is still nothing, tell the operating system that the thread
+     * needs to sleep.
+     *
+     * The operating system is:
+     * - Linux on Cray XE6,
+     * - Linux on Cray XC30,
+     * - IBM Compute Node Kernel (CNK) on IBM Blue Gene/Q),
+     */
+    if (worker->ticks_without_production >= BSAL_WORKER_UNPRODUCTIVE_TIC_COUNT_FOR_WAIT) {
+
+        /*
+         * Here, the worker will wait until it receives a signal.
+         * Such a signal will mean that something is ready to be consumed.
+         */
+        bsal_worker_wait(worker);
+    }
+#endif
 
     return value;
 }
@@ -537,9 +578,29 @@ int bsal_worker_dequeue_actor(struct bsal_worker *worker, struct bsal_actor **ac
  */
 int bsal_worker_enqueue_actor(struct bsal_worker *worker, struct bsal_actor *actor)
 {
+    int value;
+
     BSAL_DEBUGGER_ASSERT(actor != NULL);
 
-    return bsal_fast_ring_push_from_producer(&worker->actors_to_schedule, &actor);
+    value = bsal_fast_ring_push_from_producer(&worker->actors_to_schedule, &actor);
+
+#ifdef BSAL_WORKER_ENABLE_WAIT
+    /*
+     * Do a wake up if necessary.
+     */
+    if (value) {
+
+        /*
+         * This call checks if the thread is currently waiting.
+         * If it is currently waiting, then a signal is sent
+         * to tell the operating system to wake up the thread so that
+         * it continues its good work for the actor computation in thorium.
+         */
+        bsal_worker_signal(worker);
+    }
+#endif
+
+    return value;
 }
 
 int bsal_worker_enqueue_message(struct bsal_worker *worker, struct bsal_message *message)
@@ -992,6 +1053,7 @@ void bsal_worker_run(struct bsal_worker *worker)
         if (elapsed_nanoseconds > 0) {
             worker->epoch_load = (0.0 + worker->epoch_used_nanoseconds) / elapsed_nanoseconds;
             worker->epoch_used_nanoseconds = 0;
+            worker->last_wake_up_count = bsal_thread_get_wake_up_count(&worker->thread);
 
             /* \see http://stackoverflow.com/questions/9657993/negative-zero-in-c
              */
@@ -1045,7 +1107,8 @@ void bsal_worker_run(struct bsal_worker *worker)
         }
 #endif
 
-        /* Update the priority of the actor
+        /*
+         * Update the priority of the actor
          * before starting the timer because this is part of the
          * runtime system (RTS).
          */
@@ -1191,3 +1254,23 @@ void bsal_worker_work(struct bsal_worker *worker, struct bsal_actor *actor)
 #endif
 }
 
+void bsal_worker_wait(struct bsal_worker *worker)
+{
+
+    bsal_thread_wait(&worker->thread);
+}
+
+void bsal_worker_signal(struct bsal_worker *worker)
+{
+    bsal_thread_signal(&worker->thread);
+}
+
+uint64_t bsal_worker_get_epoch_wake_up_count(struct bsal_worker *worker)
+{
+    return bsal_thread_get_wake_up_count(&worker->thread) - worker->last_wake_up_count;
+}
+
+uint64_t bsal_worker_get_loop_wake_up_count(struct bsal_worker *worker)
+{
+    return bsal_thread_get_wake_up_count(&worker->thread);
+}
