@@ -536,6 +536,15 @@ int bsal_aggregator_set_consumers(struct bsal_actor *actor, void *buffer)
      */
     concrete_actor->maximum_active_messages = 1;
 
+    if (bsal_actor_get_node_count(actor) == 1) {
+
+        /*
+         * If the thing runs on one single node, there is no transport
+         * calls so everything should be regular.
+         */
+        concrete_actor->maximum_active_messages = 4;
+    }
+
     printf("DEBUG45 aggregator %d preparing %d buffers, kmer_length %d\n",
                     bsal_actor_get_name(actor),
                         (int)bsal_vector_size(&concrete_actor->customers),
