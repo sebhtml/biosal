@@ -21,7 +21,7 @@ void bsal_transport_init(struct bsal_transport *transport, struct bsal_node *nod
     /*
      * Assign functions
      */
-    bsal_transport_set_functions(transport);
+    bsal_transport_set(transport);
 
     transport->node = node;
     bsal_ring_queue_init(&transport->active_requests, sizeof(struct bsal_active_request));
@@ -58,7 +58,7 @@ void bsal_transport_destroy(struct bsal_transport *transport)
     transport->size = -1;
     transport->implementation = BSAL_TRANSPORT_IMPLEMENTATION_MOCK;
 
-    bsal_transport_set_functions(transport);
+    bsal_transport_set(transport);
 }
 
 int bsal_transport_send(struct bsal_transport *transport, struct bsal_message *message)
@@ -134,10 +134,10 @@ int bsal_transport_get_implementation(struct bsal_transport *transport)
 
 void *bsal_transport_get_concrete_transport(struct bsal_transport *transport)
 {
-    return (void *)&transport->concrete_object;
+    return transport->concrete_transport;
 }
 
-void bsal_transport_set_functions(struct bsal_transport *transport)
+void bsal_transport_set(struct bsal_transport *transport)
 {
     if (transport->implementation == BSAL_TRANSPORT_PAMI_IDENTIFIER) {
         bsal_transport_configure_pami(transport);
@@ -157,6 +157,8 @@ void bsal_transport_set_functions(struct bsal_transport *transport)
 
 void bsal_transport_configure_pami(struct bsal_transport *transport)
 {
+    transport->concrete_transport = &transport->pami_transport;
+
     transport->transport_init = bsal_pami_transport_init;
     transport->transport_destroy = bsal_pami_transport_destroy;
     transport->transport_send = bsal_pami_transport_send;
@@ -167,6 +169,8 @@ void bsal_transport_configure_pami(struct bsal_transport *transport)
 
 void bsal_transport_configure_mpi(struct bsal_transport *transport)
 {
+    transport->concrete_transport = &transport->mpi_transport;
+
     transport->transport_init = bsal_mpi_transport_init;
     transport->transport_destroy = bsal_mpi_transport_destroy;
     transport->transport_send = bsal_mpi_transport_send;
@@ -177,6 +181,8 @@ void bsal_transport_configure_mpi(struct bsal_transport *transport)
 
 void bsal_transport_configure_mock(struct bsal_transport *transport)
 {
+    transport->concrete_transport = NULL;
+
     transport->transport_init = NULL;
     transport->transport_destroy = NULL;
     transport->transport_send = NULL;
@@ -205,7 +211,6 @@ void bsal_transport_prepare_received_message(struct bsal_transport *transport, s
     bsal_message_set_destination(message, destination);
     bsal_message_read_metadata(message);
     bsal_transport_resolve(transport, message);
-
 }
 
 int bsal_transport_get_active_request_count(struct bsal_transport *transport)
@@ -243,4 +248,5 @@ void bsal_transport_select(struct bsal_transport *transport)
     printf("DEBUG Transport is %d\n",
                     transport->implementation);
                     */
+
 }

@@ -30,14 +30,11 @@ struct bsal_transport {
     int rank;
     int size;
 
+    struct bsal_pami_transport pami_transport;
+    struct bsal_mpi_transport mpi_transport;
+
     int implementation;
-
-#if defined(BSAL_TRANSPORT_USE_PAMI)
-    struct bsal_pami_transport concrete_object;
-
-#elif defined(BSAL_TRANSPORT_USE_MPI)
-    struct bsal_mpi_transport concrete_object;
-#endif
+    void *concrete_transport;
 
     void (*transport_init)(struct bsal_transport *transport, int *argc, char ***argv);
     void (*transport_destroy)(struct bsal_transport *transport);
@@ -72,7 +69,7 @@ int bsal_transport_get_implementation(struct bsal_transport *transport);
 
 
 void *bsal_transport_get_concrete_transport(struct bsal_transport *transport);
-void bsal_transport_set_functions(struct bsal_transport *transport);
+void bsal_transport_set(struct bsal_transport *transport);
 
 void bsal_transport_configure_mpi(struct bsal_transport *transport);
 void bsal_transport_configure_pami(struct bsal_transport *transport);
