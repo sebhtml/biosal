@@ -4,7 +4,7 @@ function run_example()
 {
     local example
     local result
-    local efficiency_lines
+    local load_lines
 
     example=$1
 
@@ -14,10 +14,10 @@ function run_example()
     time make $example
     ) &> $example.log
 
-    efficiency_lines=$(grep "efficiency" $example.log | grep node | wc -l)
+    load_lines=$(grep "COMPUTATION_LOAD" $example.log | grep node | wc -l)
     result="FAILED"
 
-    if test $efficiency_lines -gt 0
+    if test $load_lines -gt 0
     then
         result="PASSED"
     fi

@@ -573,6 +573,13 @@ void bsal_worker_pool_assign_worker_to_actor(struct bsal_worker_pool *pool, int 
 #elif defined(BSAL_WORKER_POOL_USE_SCRIPT_ROUND_ROBIN)
     actor = bsal_node_get_actor_from_name(pool->node, name);
 
+    /*
+     * Somehow this actor dead a while ago.
+     */
+    if (actor == NULL) {
+        return;
+    }
+
     /* The actor can't be dead if it does not have an initial
      * placement...
      */
