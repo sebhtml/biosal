@@ -1798,8 +1798,11 @@ void bsal_node_test_requests(struct bsal_node *node)
     int requests_to_test;
     int i;
 
+    /*
+     * Use a half-life approach
+     */
     requests = bsal_transport_get_active_request_count(&node->transport);
-    requests_to_test = requests / 8;
+    requests_to_test = requests / 2;
 
     /* Test active buffer requests
      */
