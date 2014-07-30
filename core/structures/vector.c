@@ -13,6 +13,8 @@
 #define BSAL_VECTOR_DEBUG
 */
 
+#define BSAL_VECTOR_INITIAL_BUCKET_COUNT 1
+
 void bsal_vector_init(struct bsal_vector *self, int element_size)
 {
     self->element_size = element_size;
@@ -88,7 +90,7 @@ void bsal_vector_push_back(struct bsal_vector *self, void *data)
         new_maximum_size = 2 * self->maximum_size;
 
         if (new_maximum_size == 0) {
-            new_maximum_size = 4;
+            new_maximum_size = BSAL_VECTOR_INITIAL_BUCKET_COUNT;
         }
 
         bsal_vector_reserve(self, new_maximum_size);
