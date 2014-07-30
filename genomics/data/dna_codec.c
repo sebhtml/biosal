@@ -55,7 +55,7 @@ void bsal_dna_codec_init(struct bsal_dna_codec *self)
 
     bsal_dna_codec_generate_blocks(self);
 
-#ifdef BSAL_DNA_CODEC_FORCE_TWO_BIT_ENCODING
+#ifdef BSAL_DNA_CODEC_FORCE_TWO_BIT_ENCODING_DISABLE_000
     bsal_dna_codec_enable_two_bit_encoding(self);
 #endif
 }

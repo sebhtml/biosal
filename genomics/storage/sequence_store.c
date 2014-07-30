@@ -48,8 +48,11 @@ void bsal_sequence_store_init(struct bsal_actor *actor)
     concrete_actor->received = 0;
 
     bsal_dna_codec_init(&concrete_actor->codec);
-    if (bsal_actor_get_node_count(actor) > 1) {
+
+    if (bsal_actor_get_node_count(actor) >= BSAL_DNA_CODEC_MINIMUM_NODE_COUNT_FOR_TWO_BIT) {
+#ifdef BSAL_DNA_CODEC_USE_TWO_BIT_ENCODING_FOR_TRANSPORT
         bsal_dna_codec_enable_two_bit_encoding(&concrete_actor->codec);
+#endif
     }
 
     bsal_actor_register(actor, BSAL_SEQUENCE_STORE_ASK,
@@ -521,7 +524,10 @@ int bsal_sequence_store_get_required_kmers(struct bsal_actor *actor, struct bsal
 
     minimum_end_buffer_size_in_nucleotides = minimum_end_buffer_size_in_bytes;
 
-    if (bsal_actor_get_node_count(actor) > 1) {
+    /*
+     * Check if two-bit encoding is being used.
+     */
+    if (bsal_actor_get_node_count(actor) >= BSAL_DNA_CODEC_MINIMUM_NODE_COUNT_FOR_TWO_BIT) {
         minimum_end_buffer_size_in_nucleotides *= 4;
     }
 

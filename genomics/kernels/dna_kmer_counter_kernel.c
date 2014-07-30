@@ -71,8 +71,11 @@ void bsal_dna_kmer_counter_kernel_init(struct bsal_actor *actor)
     concrete_actor->kmers = 0;
 
     bsal_dna_codec_init(&concrete_actor->codec);
-    if (bsal_actor_get_node_count(actor) > 1) {
+
+    if (bsal_actor_get_node_count(actor) >= BSAL_DNA_CODEC_MINIMUM_NODE_COUNT_FOR_TWO_BIT) {
+#ifdef BSAL_DNA_CODEC_USE_TWO_BIT_ENCODING_FOR_TRANSPORT
         bsal_dna_codec_enable_two_bit_encoding(&concrete_actor->codec);
+#endif
     }
 
     bsal_vector_init(&concrete_actor->kernels, sizeof(int));
@@ -124,28 +127,10 @@ void bsal_dna_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_
     int source;
     struct bsal_dna_kmer kmer;
     int name;
-    struct bsal_input_command payload;
     void *buffer;
-    int entries;
     struct bsal_dna_kmer_counter_kernel *concrete_actor;
-    int source_index;
     int consumer;
-    int i;
-    struct bsal_dna_sequence *sequence;
-    char *sequence_data;
-    struct bsal_vector *command_entries;
-    int sequence_length;
-    int new_count;
-    void *new_buffer;
-    struct bsal_message new_message;
-    int j;
-    int limit;
     int count;
-    char saved;
-    struct bsal_timer timer;
-    struct bsal_dna_kmer_block block;
-    int to_reserve;
-    int maximum_length;
     int producer;
     struct bsal_memory_pool *ephemeral_memory;
 
@@ -159,183 +144,7 @@ void bsal_dna_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_
     buffer = bsal_message_buffer(message);
 
     if (tag == BSAL_PUSH_SEQUENCE_DATA_BLOCK) {
-
-        if (concrete_actor->kmer_length == BSAL_ACTOR_NOBODY) {
-            printf("Error no kmer length set in kernel\n");
-            return;
-        }
-
-        if (concrete_actor->consumer == BSAL_ACTOR_NOBODY) {
-            printf("Error no consumer set in kernel\n");
-            return;
-        }
-
-        if (concrete_actor->producer_source == BSAL_ACTOR_NOBODY) {
-            printf("Error, no producer_source set\n");
-            return;
-        }
-
-        bsal_timer_init(&timer);
-        bsal_timer_start(&timer);
-
-        consumer = bsal_actor_get_acquaintance(actor, concrete_actor->consumer);
-        source_index = bsal_actor_add_acquaintance(actor, source);
-
-        bsal_input_command_unpack(&payload, buffer, bsal_actor_get_ephemeral_memory(actor),
-                        &concrete_actor->codec);
-
-        command_entries = bsal_input_command_entries(&payload);
-
-        entries = bsal_vector_size(command_entries);
-
-        if (entries == 0) {
-            printf("Error: kernel received empty payload...\n");
-        }
-
-#ifdef BSAL_KMER_COUNTER_KERNEL_DEBUG
-        printf("DEBUG kernel receives %d entries (%d bytes), kmer length: %d, bytes per object: %d\n",
-                        entries, count, concrete_actor->kmer_length,
-                        concrete_actor->bytes_per_kmer);
-#endif
-
-        to_reserve = 0;
-
-        maximum_length = 0;
-
-        for (i = 0; i < entries; i++) {
-
-            sequence = (struct bsal_dna_sequence *)bsal_vector_at(command_entries, i);
-
-            sequence_length = bsal_dna_sequence_length(sequence);
-
-            if (sequence_length > maximum_length) {
-                maximum_length = sequence_length;
-            }
-
-            to_reserve += (sequence_length - concrete_actor->kmer_length + 1);
-        }
-
-        bsal_dna_kmer_block_init(&block, concrete_actor->kmer_length, source_index, to_reserve);
-
-        sequence_data = bsal_memory_pool_allocate(ephemeral_memory, maximum_length + 1);
-
-        /* extract kmers
-         */
-        for (i = 0; i < entries; i++) {
-
-            /* TODO improve this */
-            sequence = (struct bsal_dna_sequence *)bsal_vector_at(command_entries, i);
-
-            bsal_dna_sequence_get_sequence(sequence, sequence_data,
-                            &concrete_actor->codec);
-
-            sequence_length = bsal_dna_sequence_length(sequence);
-            limit = sequence_length - concrete_actor->kmer_length + 1;
-
-            for (j = 0; j < limit; j++) {
-                saved = sequence_data[j + concrete_actor->kmer_length];
-                sequence_data[j + concrete_actor->kmer_length] = '\0';
-
-                bsal_dna_kmer_init(&kmer, sequence_data + j,
-                                &concrete_actor->codec, bsal_actor_get_ephemeral_memory(actor));
-
-#ifdef BSAL_KMER_COUNTER_KERNEL_DEBUG_LEVEL_2
-                printf("KERNEL kmer %d,%d %s\n", i, j, sequence_data + j);
-#endif
-
-                /*
-                 * add kmer in block
-                 */
-                bsal_dna_kmer_block_add_kmer(&block, &kmer, bsal_actor_get_ephemeral_memory(actor),
-                                &concrete_actor->codec);
-
-                bsal_dna_kmer_destroy(&kmer, bsal_actor_get_ephemeral_memory(actor));
-
-                sequence_data[j + concrete_actor->kmer_length] = saved;
-
-                concrete_actor->kmers++;
-            }
-        }
-
-        bsal_memory_pool_free(ephemeral_memory, sequence_data);
-        sequence_data = NULL;
-
-#ifdef BSAL_KMER_COUNTER_KERNEL_DEBUG
-        BSAL_DEBUG_MARKER("after generating kmers\n");
-#endif
-
-        concrete_actor->actual += entries;
-        concrete_actor->blocks++;
-
-        bsal_input_command_destroy(&payload, bsal_actor_get_ephemeral_memory(actor));
-
-#ifdef BSAL_KMER_COUNTER_KERNEL_DEBUG
-        printf("consumer%d\n", consumer);
-#endif
-
-
-#ifdef BSAL_KMER_COUNTER_KERNEL_DEBUG
-        BSAL_DEBUG_MARKER("kernel sends to consumer\n");
-        printf("consumer is %d\n", consumer);
-#endif
-
-        new_count = bsal_dna_kmer_block_pack_size(&block,
-                        &concrete_actor->codec);
-        new_buffer = bsal_memory_pool_allocate(ephemeral_memory, new_count);
-        bsal_dna_kmer_block_pack(&block, new_buffer,
-                        &concrete_actor->codec);
-
-#ifdef BSAL_KMER_COUNTER_KERNEL_DEBUG
-        printf("name %d destination %d PACK with %d bytes\n", name,
-                       consumer, new_count);
-#endif
-
-#ifdef BSAL_KMER_COUNTER_KERNEL_DEBUG
-        BSAL_DEBUG_MARKER("kernel sends to aggregator");
-#endif
-
-        bsal_message_init(&new_message, BSAL_AGGREGATE_KERNEL_OUTPUT,
-                        new_count, new_buffer);
-
-        /*
-        bsal_message_init(&new_message, BSAL_AGGREGATE_KERNEL_OUTPUT,
-                        sizeof(source_index), &source_index);
-                        */
-
-        bsal_actor_send(actor, consumer, &new_message);
-        bsal_memory_pool_free(ephemeral_memory, new_buffer);
-
-        bsal_actor_helper_send_empty(actor,
-                        bsal_actor_get_acquaintance(actor, source_index),
-                        BSAL_PUSH_SEQUENCE_DATA_BLOCK_REPLY);
-
-        if (concrete_actor->actual == concrete_actor->expected
-                        || concrete_actor->actual >= concrete_actor->last + 300000
-                        || concrete_actor->last == 0) {
-
-            printf("kernel %d processed %" PRIu64 " entries (%d blocks) so far\n",
-                            name, concrete_actor->actual,
-                            concrete_actor->blocks);
-
-            concrete_actor->last = concrete_actor->actual;
-        }
-
-        bsal_timer_stop(&timer);
-
-#ifdef BSAL_KMER_COUNTER_KERNEL_DEBUG
-
-        bsal_timer_print(&timer);
-#endif
-
-        bsal_timer_destroy(&timer);
-
-        bsal_dna_kmer_block_destroy(&block, bsal_actor_get_ephemeral_memory(actor));
-
-#ifdef BSAL_KMER_COUNTER_KERNEL_DEBUG
-        BSAL_DEBUG_MARKER("leaving call.\n");
-#endif
-
-        bsal_dna_kmer_counter_kernel_verify(actor, message);
+        bsal_dna_kmer_counter_kernel_push_sequence_data_block(actor, message);
 
     } else if (tag == BSAL_AGGREGATE_KERNEL_OUTPUT_REPLY) {
 
@@ -760,5 +569,230 @@ void bsal_dna_kmer_counter_kernel_notify_reply(struct bsal_actor *actor, struct 
                     BSAL_KERNEL_NOTIFY_REPLY, concrete_actor->sum_of_kmers);
 
     }
+
+}
+
+void bsal_dna_kmer_counter_kernel_push_sequence_data_block(struct bsal_actor *actor, struct bsal_message *message)
+{
+    int source;
+    struct bsal_dna_kmer kmer;
+    int name;
+    struct bsal_input_command payload;
+    void *buffer;
+    int entries;
+    struct bsal_dna_kmer_counter_kernel *concrete_actor;
+    int source_index;
+    int consumer;
+    int i;
+    struct bsal_dna_sequence *sequence;
+    char *sequence_data;
+    struct bsal_vector *command_entries;
+    int sequence_length;
+    int new_count;
+    void *new_buffer;
+    struct bsal_message new_message;
+    int j;
+    int limit;
+    char saved;
+    struct bsal_timer timer;
+    struct bsal_dna_kmer_block block;
+    int to_reserve;
+    int maximum_length;
+    struct bsal_memory_pool *ephemeral_memory;
+    int kmers_for_sequence;
+
+
+    concrete_actor = (struct bsal_dna_kmer_counter_kernel *)bsal_actor_concrete_actor(actor);
+    ephemeral_memory = bsal_actor_get_ephemeral_memory(actor);
+    name = bsal_actor_get_name(actor);
+    source = bsal_message_source(message);
+    buffer = bsal_message_buffer(message);
+
+    if (concrete_actor->kmer_length == BSAL_ACTOR_NOBODY) {
+        printf("Error no kmer length set in kernel\n");
+        return;
+    }
+
+    if (concrete_actor->consumer == BSAL_ACTOR_NOBODY) {
+        printf("Error no consumer set in kernel\n");
+        return;
+    }
+
+    if (concrete_actor->producer_source == BSAL_ACTOR_NOBODY) {
+        printf("Error, no producer_source set\n");
+        return;
+    }
+
+    bsal_timer_init(&timer);
+    bsal_timer_start(&timer);
+
+    consumer = bsal_actor_get_acquaintance(actor, concrete_actor->consumer);
+    source_index = bsal_actor_add_acquaintance(actor, source);
+
+    bsal_input_command_unpack(&payload, buffer, bsal_actor_get_ephemeral_memory(actor),
+                    &concrete_actor->codec);
+
+    command_entries = bsal_input_command_entries(&payload);
+
+    entries = bsal_vector_size(command_entries);
+
+    if (entries == 0) {
+        printf("Error: kernel received empty payload...\n");
+    }
+
+#ifdef BSAL_KMER_COUNTER_KERNEL_DEBUG
+    printf("DEBUG kernel receives %d entries (%d bytes), kmer length: %d, bytes per object: %d\n",
+                        entries, count, concrete_actor->kmer_length,
+                        concrete_actor->bytes_per_kmer);
+#endif
+
+    to_reserve = 0;
+
+    maximum_length = 0;
+
+    for (i = 0; i < entries; i++) {
+
+        sequence = (struct bsal_dna_sequence *)bsal_vector_at(command_entries, i);
+
+        sequence_length = bsal_dna_sequence_length(sequence);
+
+        if (sequence_length > maximum_length) {
+            maximum_length = sequence_length;
+        }
+
+        to_reserve += (sequence_length - concrete_actor->kmer_length + 1);
+    }
+
+    bsal_dna_kmer_block_init(&block, concrete_actor->kmer_length, source_index, to_reserve);
+
+    sequence_data = bsal_memory_pool_allocate(ephemeral_memory, maximum_length + 1);
+
+    /* extract kmers
+     */
+    for (i = 0; i < entries; i++) {
+
+        /* TODO improve this */
+        sequence = (struct bsal_dna_sequence *)bsal_vector_at(command_entries, i);
+
+        bsal_dna_sequence_get_sequence(sequence, sequence_data,
+                        &concrete_actor->codec);
+
+        sequence_length = bsal_dna_sequence_length(sequence);
+        limit = sequence_length - concrete_actor->kmer_length + 1;
+
+        kmers_for_sequence = 0;
+
+        for (j = 0; j < limit; j++) {
+            saved = sequence_data[j + concrete_actor->kmer_length];
+            sequence_data[j + concrete_actor->kmer_length] = '\0';
+
+            bsal_dna_kmer_init(&kmer, sequence_data + j,
+                            &concrete_actor->codec, bsal_actor_get_ephemeral_memory(actor));
+
+#ifdef BSAL_KMER_COUNTER_KERNEL_DEBUG_LEVEL_2
+            printf("KERNEL kmer %d,%d %s\n", i, j, sequence_data + j);
+#endif
+
+            /*
+             * add kmer in block
+             */
+            bsal_dna_kmer_block_add_kmer(&block, &kmer, bsal_actor_get_ephemeral_memory(actor),
+                            &concrete_actor->codec);
+
+            bsal_dna_kmer_destroy(&kmer, bsal_actor_get_ephemeral_memory(actor));
+
+            sequence_data[j + concrete_actor->kmer_length] = saved;
+
+            ++kmers_for_sequence;
+        }
+
+#ifdef BSAL_PRIVATE_DEBUG_EMIT
+        printf("DEBUG EMIT KMERS INPUT: %d nucleotides, k: %d output %d kmers\n",
+                        sequence_length, concrete_actor->kmer_length,
+                        kmers_for_sequence);
+#endif
+
+        concrete_actor->kmers += kmers_for_sequence;
+    }
+
+    bsal_memory_pool_free(ephemeral_memory, sequence_data);
+    sequence_data = NULL;
+
+#ifdef BSAL_KMER_COUNTER_KERNEL_DEBUG
+    BSAL_DEBUG_MARKER("after generating kmers\n");
+#endif
+
+    concrete_actor->actual += entries;
+    concrete_actor->blocks++;
+
+    bsal_input_command_destroy(&payload, bsal_actor_get_ephemeral_memory(actor));
+
+#ifdef BSAL_KMER_COUNTER_KERNEL_DEBUG
+    printf("consumer%d\n", consumer);
+#endif
+
+
+#ifdef BSAL_KMER_COUNTER_KERNEL_DEBUG
+    BSAL_DEBUG_MARKER("kernel sends to consumer\n");
+        printf("consumer is %d\n", consumer);
+#endif
+
+    new_count = bsal_dna_kmer_block_pack_size(&block,
+                    &concrete_actor->codec);
+    new_buffer = bsal_memory_pool_allocate(ephemeral_memory, new_count);
+    bsal_dna_kmer_block_pack(&block, new_buffer,
+                        &concrete_actor->codec);
+
+#ifdef BSAL_KMER_COUNTER_KERNEL_DEBUG
+    printf("name %d destination %d PACK with %d bytes\n", name,
+                       consumer, new_count);
+#endif
+
+#ifdef BSAL_KMER_COUNTER_KERNEL_DEBUG
+    BSAL_DEBUG_MARKER("kernel sends to aggregator");
+#endif
+
+    bsal_message_init(&new_message, BSAL_AGGREGATE_KERNEL_OUTPUT,
+                    new_count, new_buffer);
+
+    /*
+    bsal_message_init(&new_message, BSAL_AGGREGATE_KERNEL_OUTPUT,
+                    sizeof(source_index), &source_index);
+                    */
+
+    bsal_actor_send(actor, consumer, &new_message);
+    bsal_memory_pool_free(ephemeral_memory, new_buffer);
+
+    bsal_actor_helper_send_empty(actor,
+                    bsal_actor_get_acquaintance(actor, source_index),
+                    BSAL_PUSH_SEQUENCE_DATA_BLOCK_REPLY);
+
+    if (concrete_actor->actual == concrete_actor->expected
+                    || concrete_actor->actual >= concrete_actor->last + 300000
+                    || concrete_actor->last == 0) {
+
+        printf("kernel %d processed %" PRIu64 " entries (%d blocks) so far\n",
+                        name, concrete_actor->actual,
+                        concrete_actor->blocks);
+
+        concrete_actor->last = concrete_actor->actual;
+    }
+
+    bsal_timer_stop(&timer);
+
+#ifdef BSAL_KMER_COUNTER_KERNEL_DEBUG
+
+        bsal_timer_print(&timer);
+#endif
+
+    bsal_timer_destroy(&timer);
+
+    bsal_dna_kmer_block_destroy(&block, bsal_actor_get_ephemeral_memory(actor));
+
+#ifdef BSAL_KMER_COUNTER_KERNEL_DEBUG
+    BSAL_DEBUG_MARKER("leaving call.\n");
+#endif
+
+    bsal_dna_kmer_counter_kernel_verify(actor, message);
 
 }

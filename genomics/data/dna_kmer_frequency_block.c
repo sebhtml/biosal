@@ -17,9 +17,9 @@ void bsal_dna_kmer_frequency_block_init(struct bsal_dna_kmer_frequency_block *se
     bsal_dna_kmer_init_mock(&kmer, kmer_length, codec, memory);
     key_size = bsal_dna_kmer_pack_size(&kmer, kmer_length, codec);
 
-    bsal_map_init(&self->kmers, key_size, sizeof(int));
-
     bsal_dna_kmer_destroy(&kmer, memory);
+
+    bsal_map_init(&self->kmers, key_size, sizeof(int));
 
     self->kmer_length = kmer_length;
 }

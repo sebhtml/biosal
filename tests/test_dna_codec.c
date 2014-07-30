@@ -10,6 +10,10 @@
 #include <stdio.h>
 #include <string.h>
 
+/*
+#define USE_TWO_BIT_ENCODING
+*/
+
 int main(int argc, char **argv)
 {
     BEGIN_TESTS();
@@ -27,7 +31,10 @@ int main(int argc, char **argv)
 
     bsal_dna_codec_init(&codec);
 
+#ifdef USE_TWO_BIT_ENCODING
     bsal_dna_codec_enable_two_bit_encoding(&codec);
+#endif
+
     sequence_length = strlen(dna);
 
     encoded_length = bsal_dna_codec_encoded_length(&codec, sequence_length);
@@ -78,7 +85,9 @@ int main(int argc, char **argv)
     bsal_dna_codec_set_nucleotide(encoded_sequence, 4, 'T');
     bsal_dna_codec_set_nucleotide(encoded_sequence, 3, 'A');
 
+#ifdef USE_TWO_BIT_ENCODING
     TEST_BOOLEAN_EQUALS(bsal_dna_codec_get_nucleotide(&codec, encoded_sequence, 3) == 'A', 1);
+#endif
 
 
     bsal_memory_free(encoded_sequence);

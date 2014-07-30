@@ -36,18 +36,22 @@ void bsal_kmer_store_init(struct bsal_actor *self)
     concrete_actor->kmer_length = -1;
     concrete_actor->received = 0;
 
-    bsal_dna_codec_init(&concrete_actor->codec);
+    bsal_dna_codec_init(&concrete_actor->transport_codec);
 
-    if (bsal_actor_get_node_count(self) > 1) {
-        bsal_dna_codec_enable_two_bit_encoding(&concrete_actor->codec);
+    if (bsal_actor_get_node_count(self) >= BSAL_DNA_CODEC_MINIMUM_NODE_COUNT_FOR_TWO_BIT) {
+#ifdef BSAL_DNA_CODEC_USE_TWO_BIT_ENCODING_FOR_TRANSPORT
+        bsal_dna_codec_enable_two_bit_encoding(&concrete_actor->transport_codec);
+#endif
     }
 
-    bsal_dna_codec_init(&concrete_actor->two_bit_codec);
+    bsal_dna_codec_init(&concrete_actor->storage_codec);
 
 /* This option enables 2-bit encoding
  * for kmers.
  */
-    bsal_dna_codec_enable_two_bit_encoding(&concrete_actor->two_bit_codec);
+#ifdef BSAL_DNA_CODEC_USE_TWO_BIT_ENCODING_FOR_STORAGE
+    bsal_dna_codec_enable_two_bit_encoding(&concrete_actor->storage_codec);
+#endif
 
     concrete_actor->last_received = 0;
 
@@ -64,8 +68,8 @@ void bsal_kmer_store_destroy(struct bsal_actor *self)
         bsal_map_destroy(&concrete_actor->table);
     }
 
-    bsal_dna_codec_destroy(&concrete_actor->codec);
-    bsal_dna_codec_destroy(&concrete_actor->two_bit_codec);
+    bsal_dna_codec_destroy(&concrete_actor->transport_codec);
+    bsal_dna_codec_destroy(&concrete_actor->storage_codec);
 
     concrete_actor->kmer_length = -1;
 }
@@ -105,9 +109,9 @@ void bsal_kmer_store_receive(struct bsal_actor *self, struct bsal_message *messa
         bsal_message_helper_unpack_int(message, 0, &concrete_actor->kmer_length);
 
         bsal_dna_kmer_init_mock(&kmer, concrete_actor->kmer_length,
-                        &concrete_actor->two_bit_codec, bsal_actor_get_ephemeral_memory(self));
+                        &concrete_actor->storage_codec, bsal_actor_get_ephemeral_memory(self));
         concrete_actor->key_length_in_bytes = bsal_dna_kmer_pack_size(&kmer,
-                        concrete_actor->kmer_length, &concrete_actor->two_bit_codec);
+                        concrete_actor->kmer_length, &concrete_actor->storage_codec);
         bsal_dna_kmer_destroy(&kmer, bsal_actor_get_ephemeral_memory(self));
 
 #ifdef BSAL_KMER_STORE_DEBUG
@@ -137,10 +141,10 @@ void bsal_kmer_store_receive(struct bsal_actor *self, struct bsal_message *messa
     } else if (tag == BSAL_PUSH_KMER_BLOCK) {
 
         bsal_dna_kmer_frequency_block_init(&block, concrete_actor->kmer_length,
-                        ephemeral_memory, &concrete_actor->codec, 0);
+                        ephemeral_memory, &concrete_actor->transport_codec, 0);
 
         bsal_dna_kmer_frequency_block_unpack(&block, buffer, bsal_actor_get_ephemeral_memory(self),
-                        &concrete_actor->codec);
+                        &concrete_actor->transport_codec);
 
         key = bsal_memory_pool_allocate(ephemeral_memory, concrete_actor->key_length_in_bytes);
 
@@ -172,20 +176,27 @@ void bsal_kmer_store_receive(struct bsal_actor *self, struct bsal_message *messa
             bsal_dna_kmer_init_empty(&kmer);
             bsal_dna_kmer_unpack(&kmer, packed_kmer, concrete_actor->kmer_length,
                         ephemeral_memory,
-                        &concrete_actor->codec);
+                        &concrete_actor->transport_codec);
 
             kmer_pointer = &kmer;
 
+            /*
+             * Get a copy of the sequence
+             */
             bsal_dna_kmer_get_sequence(kmer_pointer, raw_kmer, concrete_actor->kmer_length,
-                            &concrete_actor->codec);
+                            &concrete_actor->transport_codec);
+
+#if 0
+            printf("DEBUG raw_kmer %s\n", raw_kmer);
+#endif
 
             bsal_dna_kmer_destroy(&kmer, ephemeral_memory);
 
-            bsal_dna_kmer_init(&encoded_kmer, raw_kmer, &concrete_actor->two_bit_codec,
+            bsal_dna_kmer_init(&encoded_kmer, raw_kmer, &concrete_actor->storage_codec,
                             bsal_actor_get_ephemeral_memory(self));
 
             bsal_dna_kmer_pack_store_key(&encoded_kmer, key,
-                            concrete_actor->kmer_length, &concrete_actor->two_bit_codec,
+                            concrete_actor->kmer_length, &concrete_actor->storage_codec,
                             bsal_actor_get_ephemeral_memory(self));
 
             bsal_dna_kmer_destroy(&encoded_kmer,
@@ -288,7 +299,7 @@ void bsal_kmer_store_print(struct bsal_actor *self)
         bsal_dna_kmer_init_empty(&kmer);
         bsal_dna_kmer_unpack(&kmer, key, concrete_actor->kmer_length,
                         bsal_actor_get_ephemeral_memory(self),
-                        &concrete_actor->two_bit_codec);
+                        &concrete_actor->storage_codec);
 
         length = bsal_dna_kmer_length(&kmer, concrete_actor->kmer_length);
 
@@ -316,10 +327,10 @@ void bsal_kmer_store_print(struct bsal_actor *self)
         bsal_dna_kmer_init_empty(&kmer);
         bsal_dna_kmer_unpack(&kmer, key, concrete_actor->kmer_length,
                         bsal_actor_get_ephemeral_memory(self),
-                        &concrete_actor->two_bit_codec);
+                        &concrete_actor->storage_codec);
 
         bsal_dna_kmer_get_sequence(&kmer, sequence, concrete_actor->kmer_length,
-                        &concrete_actor->codec);
+                        &concrete_actor->storage_codec);
         coverage = *value;
 
         printf("Sequence %s Coverage %d\n", sequence, coverage);
@@ -384,6 +395,9 @@ void bsal_kmer_store_yield_reply(struct bsal_actor *self, struct bsal_message *m
     i = 0;
     max = 1024;
 
+    key = NULL;
+    value = NULL;
+
     while (i < max
                     && bsal_map_iterator_has_next(&concrete_actor->iterator)) {
 
@@ -392,7 +406,7 @@ void bsal_kmer_store_yield_reply(struct bsal_actor *self, struct bsal_message *m
         bsal_dna_kmer_init_empty(&kmer);
         bsal_dna_kmer_unpack(&kmer, key, concrete_actor->kmer_length,
                         ephemeral_memory,
-                        &concrete_actor->two_bit_codec);
+                        &concrete_actor->storage_codec);
 
         coverage = *value;
 

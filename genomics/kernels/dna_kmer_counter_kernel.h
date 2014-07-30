@@ -74,5 +74,6 @@ int bsal_dna_kmer_counter_kernel_pack_unpack(struct bsal_actor *actor, int opera
 
 void bsal_dna_kmer_counter_kernel_notify(struct bsal_actor *actor, struct bsal_message *message);
 void bsal_dna_kmer_counter_kernel_notify_reply(struct bsal_actor *actor, struct bsal_message *message);
+void bsal_dna_kmer_counter_kernel_push_sequence_data_block(struct bsal_actor *actor, struct bsal_message *message);
 
 #endif

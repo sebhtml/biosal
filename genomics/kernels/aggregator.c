@@ -67,8 +67,10 @@ void bsal_aggregator_init(struct bsal_actor *self)
     concrete_actor->flushed = 0;
 
     bsal_dna_codec_init(&concrete_actor->codec);
-    if (bsal_actor_get_node_count(self) > 1) {
+    if (bsal_actor_get_node_count(self) >= BSAL_DNA_CODEC_MINIMUM_NODE_COUNT_FOR_TWO_BIT) {
+#ifdef BSAL_DNA_CODEC_USE_TWO_BIT_ENCODING_FOR_TRANSPORT
         bsal_dna_codec_enable_two_bit_encoding(&concrete_actor->codec);
+#endif
     }
 
     bsal_ring_queue_init(&concrete_actor->stalled_producers, sizeof(int));
@@ -536,6 +538,7 @@ int bsal_aggregator_set_consumers(struct bsal_actor *actor, void *buffer)
      */
     concrete_actor->maximum_active_messages = 1;
 
+    /* Increase the active message count if running on one node */
     if (bsal_actor_get_node_count(actor) == 1) {
 
         /*

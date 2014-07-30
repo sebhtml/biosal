@@ -48,8 +48,10 @@ void bsal_input_stream_init(struct bsal_actor *actor)
 
     bsal_dna_codec_init(&input->codec);
 
-    if (bsal_actor_get_node_count(actor) > 1) {
+    if (bsal_actor_get_node_count(actor) >= BSAL_DNA_CODEC_MINIMUM_NODE_COUNT_FOR_TWO_BIT) {
+#ifdef BSAL_DNA_CODEC_USE_TWO_BIT_ENCODING_FOR_TRANSPORT
         bsal_dna_codec_enable_two_bit_encoding(&concrete_actor->codec);
+#endif
     }
 
     /*input->mega_block_size = 2097152*/
