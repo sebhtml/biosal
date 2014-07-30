@@ -452,17 +452,20 @@ void bsal_kmer_store_yield_reply(struct bsal_actor *self, struct bsal_message *m
 
     bsal_map_pack(&concrete_actor->coverage_distribution, new_buffer);
 
-#ifdef BSAL_KMER_STORE_DEBUG
-    printf("SENDING map to %d, %d bytes / %d entries\n", customer, new_count,
+    printf("SENDING kmer store %d sends map to %d, %d bytes / %d entries\n", customer, new_count,
+                    bsal_actor_get_name(self),
                     (int)bsal_map_size(&concrete_actor->coverage_distribution));
+#ifdef BSAL_KMER_STORE_DEBUG
 #endif
 
     bsal_message_init(&new_message, BSAL_PUSH_DATA, new_count, new_buffer);
 
     bsal_actor_send(self, customer, &new_message);
+    bsal_message_destroy(&new_message);
 
     bsal_map_destroy(&concrete_actor->coverage_distribution);
 
     bsal_actor_helper_send_empty(self, bsal_actor_get_acquaintance(self, concrete_actor->source),
                             BSAL_PUSH_DATA_REPLY);
+
 }
