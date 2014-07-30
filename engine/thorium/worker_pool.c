@@ -63,6 +63,7 @@ void bsal_worker_pool_init(struct bsal_worker_pool *pool, int workers,
 
     pool->debug_mode = 0;
     pool->node = node;
+    pool->waiting_is_enabled = 0;
 
     bsal_scheduler_init(&pool->scheduler, pool);
 
@@ -112,6 +113,9 @@ void bsal_worker_pool_init(struct bsal_worker_pool *pool, int workers,
 
     pool->balance_period = BSAL_SCHEDULER_PERIOD_IN_SECONDS;
 
+    if (bsal_node_nodes(pool->node) >= 2) {
+        pool->waiting_is_enabled = 1;
+    }
 }
 
 void bsal_worker_pool_destroy(struct bsal_worker_pool *pool)
@@ -164,6 +168,7 @@ void bsal_worker_pool_delete_workers(struct bsal_worker_pool *pool)
 void bsal_worker_pool_create_workers(struct bsal_worker_pool *pool)
 {
     int i;
+    struct bsal_worker *worker;
 
     if (pool->workers <= 0) {
         return;
@@ -179,7 +184,11 @@ void bsal_worker_pool_create_workers(struct bsal_worker_pool *pool)
     pool->message_cache = (int *)bsal_vector_at(&pool->message_count_cache, 0);
 
     for (i = 0; i < pool->workers; i++) {
-        bsal_worker_init(bsal_worker_pool_get_worker(pool, i), i, pool->node);
+
+        worker = bsal_worker_pool_get_worker(pool, i);
+        bsal_worker_init(worker, i, pool->node);
+
+        bsal_worker_enable_waiting(worker);
         bsal_vector_helper_set_int(&pool->message_count_cache, i, 0);
     }
 }
@@ -505,12 +514,6 @@ void bsal_worker_pool_work(struct bsal_worker_pool *pool)
     struct bsal_worker *worker;
     int name;
 
-#ifdef BSAL_WORKER_ENABLE_WAIT
-    float load;
-    int i;
-    time_t current_time;
-#endif
-
 #ifdef BSAL_WORKER_POOL_BALANCE
 #endif
 
@@ -573,32 +576,14 @@ void bsal_worker_pool_work(struct bsal_worker_pool *pool)
     }
 #endif
 
-#ifdef BSAL_WORKER_ENABLE_WAIT
-    current_time = time(NULL);
-
     /*
-     * Send a signal to any worker without activity.
-     * This is required because a thread can go to sleep after the signal was sent
-     * (the first signal).
+     * If waiting is enabled, it is required to wake up workers
+     * once in a while because of the ordering
+     * of events for the actor scheduling queue
      */
-
-    i = 0;
-
-    if (current_time - pool->last_signal_check >= 1) {
-        while (i < pool->workers) {
-
-            worker = bsal_worker_pool_get_worker(pool, i);
-            load = bsal_worker_get_epoch_load(worker);
-
-            if (load < 0.1) {
-                bsal_worker_signal(worker);
-            }
-
-            ++i;
-        }
-        pool->last_signal_check = current_time;
+    if (pool->waiting_is_enabled) {
+        bsal_worker_pool_wake_up_workers(pool);
     }
-#endif
 }
 
 void bsal_worker_pool_assign_worker_to_actor(struct bsal_worker_pool *pool, int name)
@@ -794,4 +779,42 @@ int bsal_worker_pool_dequeue_message(struct bsal_worker_pool *pool, struct bsal_
     return answer;
 }
 
+void bsal_worker_pool_wake_up_workers(struct bsal_worker_pool *pool)
+{
+    float load;
+    int i;
+    time_t current_time;
+    int period;
+    struct bsal_worker *worker;
 
+    period = 16;
+
+    /*
+     * Send a signal to any worker without activity.
+     * This is required because a thread can go to sleep after the signal was sent
+     * (the first signal).
+     */
+
+    i = 0;
+
+    current_time = time(NULL);
+
+    if (current_time - pool->last_signal_check >= period) {
+        while (i < pool->workers) {
+
+            worker = bsal_worker_pool_get_worker(pool, i);
+            load = bsal_worker_get_epoch_load(worker);
+
+            /*
+             * Wake up the worker (for instance, worker/8)
+             * so that it pulls something.
+             */
+            if (load < 0.1) {
+                bsal_worker_signal(worker);
+            }
+
+            ++i;
+        }
+        pool->last_signal_check = current_time;
+    }
+}

@@ -28,8 +28,8 @@ struct bsal_scheduler;
  * Enable wait and signal for workers
  */
 /*
-#define BSAL_WORKER_ENABLE_WAIT
 */
+#define BSAL_WORKER_ENABLE_WAIT
 
 
 /*
@@ -63,6 +63,8 @@ struct bsal_worker {
     struct bsal_map actors;
     struct bsal_map_iterator actor_iterator;
     int ticks_without_production;
+
+    char waiting_is_enabled;
 
     /*
      * The worker pool push actors to schedule on this
@@ -181,5 +183,7 @@ void bsal_worker_signal(struct bsal_worker *worker);
 
 uint64_t bsal_worker_get_epoch_wake_up_count(struct bsal_worker *worker);
 uint64_t bsal_worker_get_loop_wake_up_count(struct bsal_worker *worker);
+
+void bsal_worker_enable_waiting(struct bsal_worker *worker);
 
 #endif

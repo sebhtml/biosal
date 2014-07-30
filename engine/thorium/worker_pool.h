@@ -31,6 +31,7 @@ struct bsal_worker_pool {
     int workers;
     struct bsal_vector worker_array;
     struct bsal_worker *worker_cache;
+    char waiting_is_enabled;
 
     struct bsal_vector message_count_cache;
     int *message_cache;
@@ -101,5 +102,6 @@ int bsal_worker_pool_give_message_to_actor(struct bsal_worker_pool *pool, struct
 void bsal_worker_pool_work(struct bsal_worker_pool *pool);
 void bsal_worker_pool_assign_worker_to_actor(struct bsal_worker_pool *pool, int name);
 float bsal_worker_pool_get_current_load(struct bsal_worker_pool *pool);
+void bsal_worker_pool_wake_up_workers(struct bsal_worker_pool *pool);
 
 #endif

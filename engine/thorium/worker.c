@@ -34,7 +34,7 @@
 
 #define BSAL_WORKER_UNPRODUCTIVE_TICK_LIMIT 256
 
-#define BSAL_WORKER_UNPRODUCTIVE_TIC_COUNT_FOR_WAIT 4096
+#define BSAL_WORKER_UNPRODUCTIVE_TIC_COUNT_FOR_WAIT 512
 
 /*
  * Print scheduling queue for debugging purposes
@@ -53,6 +53,8 @@ void bsal_worker_init(struct bsal_worker *worker, int name, struct bsal_node *no
 {
     int capacity;
     int ephemeral_memory_block_size;
+
+    worker->waiting_is_enabled = 0;
 
     bsal_timer_init(&worker->timer);
     capacity = BSAL_WORKER_RING_CAPACITY;
@@ -269,12 +271,14 @@ int bsal_worker_name(struct bsal_worker *worker)
 
 void bsal_worker_stop(struct bsal_worker *worker)
 {
-#ifdef BSAL_WORKER_ENABLE_WAIT
-    /*
-     * Wake up if necessary
-     */
-    bsal_worker_signal(worker);
-#endif
+    if (worker->waiting_is_enabled) {
+        /*
+         * Wake up if necessary because the worker might be
+         * waiting for something...
+         */
+        bsal_worker_signal(worker);
+    }
+
 
 #ifdef BSAL_WORKER_DEBUG
     bsal_worker_display(worker);
@@ -551,7 +555,6 @@ int bsal_worker_dequeue_actor(struct bsal_worker *worker, struct bsal_actor **ac
         }
     }
 
-#ifdef BSAL_WORKER_ENABLE_WAIT
     /*
      * If there is still nothing, tell the operating system that the thread
      * needs to sleep.
@@ -561,7 +564,8 @@ int bsal_worker_dequeue_actor(struct bsal_worker *worker, struct bsal_actor **ac
      * - Linux on Cray XC30,
      * - IBM Compute Node Kernel (CNK) on IBM Blue Gene/Q),
      */
-    if (worker->ticks_without_production >= BSAL_WORKER_UNPRODUCTIVE_TIC_COUNT_FOR_WAIT) {
+    if (worker->waiting_is_enabled
+                    && worker->ticks_without_production >= BSAL_WORKER_UNPRODUCTIVE_TIC_COUNT_FOR_WAIT) {
 
         /*
          * Here, the worker will wait until it receives a signal.
@@ -569,7 +573,6 @@ int bsal_worker_dequeue_actor(struct bsal_worker *worker, struct bsal_actor **ac
          */
         bsal_worker_wait(worker);
     }
-#endif
 
     return value;
 }
@@ -584,11 +587,11 @@ int bsal_worker_enqueue_actor(struct bsal_worker *worker, struct bsal_actor *act
 
     value = bsal_fast_ring_push_from_producer(&worker->actors_to_schedule, &actor);
 
-#ifdef BSAL_WORKER_ENABLE_WAIT
     /*
-     * Do a wake up if necessary.
+     * Do a wake up if necessary when scheduling an actor in
+     * the scheduling queue.
      */
-    if (value) {
+    if (value && worker->waiting_is_enabled) {
 
         /*
          * This call checks if the thread is currently waiting.
@@ -598,7 +601,6 @@ int bsal_worker_enqueue_actor(struct bsal_worker *worker, struct bsal_actor *act
          */
         bsal_worker_signal(worker);
     }
-#endif
 
     return value;
 }
@@ -1273,4 +1275,9 @@ uint64_t bsal_worker_get_epoch_wake_up_count(struct bsal_worker *worker)
 uint64_t bsal_worker_get_loop_wake_up_count(struct bsal_worker *worker)
 {
     return bsal_thread_get_wake_up_count(&worker->thread);
+}
+
+void bsal_worker_enable_waiting(struct bsal_worker *worker)
+{
+    worker->waiting_is_enabled = 1;
 }
