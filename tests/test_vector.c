@@ -31,8 +31,8 @@ int main(int argc, char **argv)
             TEST_POINTER_EQUALS(bsal_vector_at(&vector, i), NULL);
 
             /* Simulate an issue
-            TEST_POINTER_EQUALS(bsal_vector_at(&vector, i), (void *)0x1);
              */
+            TEST_POINTER_EQUALS(bsal_vector_at(&vector, i), (void *)0x1);
 
             bsal_vector_push_back(&vector, &i);
             TEST_INT_EQUALS(bsal_vector_size(&vector), i + 1);

@@ -17,6 +17,9 @@ function main()
     local address
     local archive
     local branch
+    local detected_failures
+    local subject
+    local state
 
     branch="master"
 
@@ -92,7 +95,18 @@ function main()
     topic="arn:aws:sns:us-east-1:584851907886:biosal-tests"
     address=" http://$bucket_name.s3.amazonaws.com/$object_prefix/$log"
 
-    aws sns publish --topic-arn $topic --subject "[SNS] biosal quality assurance" --message "Quality assurance result is available at $address"
+    detected_failures=$(cat $log | grep FAILED | wc -l)
+
+    if test $detected_failures -gt 0
+    then
+        state="FAILED"
+    else
+        state="PASSED"
+    fi
+
+    subject="[SNS] biosal quality assurance ($state)"
+
+    aws sns publish --topic-arn $topic --subject "$subject" --message "Quality assurance result is available at $address"
 }
 
 main $1
