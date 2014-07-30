@@ -16,6 +16,9 @@ function main()
     local bucket_name
     local address
     local archive
+    local branch
+
+    branch="master"
 
     directory=$1
     mkdir -p $directory
@@ -63,6 +66,8 @@ function main()
     echo "Repository: $repository"
     git clone $repository
     cd biosal
+    git checkout $branch
+    echo "Branch: $branch"
     echo "Commit: $(git log | head -n1 | awk '{print $2}')"
 
     echo ""

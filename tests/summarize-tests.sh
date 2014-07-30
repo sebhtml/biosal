@@ -1,32 +1,30 @@
 #!/bin/bash
 
+source tests/test_library.sh
+
 function main()
 {
     local file
     local passed_tests
     local failed_tests
-    local total_tests
+    local failed_lines
 
     file=$1
 
-    passed_tests=$(grep ^PASSED $file | sed 's=/= =g' | awk '{print $2}' | awk '{ sum += $1} END {print sum}')
-    failed_tests=$(grep ^FAILED $file | sed 's=/= =g' | awk '{print $2}' | awk '{ sum += $1} END {print sum}')
-    total_tests=$(grep ^FAILED $file | sed 's=/= =g' | awk '{print $3}' | awk '{ sum += $1} END {print sum}')
+    passed_tests=$(grep PASSED $file | sed 's=/= =g' | awk '{print $4}' | awk '{ sum += $1} END {print sum}')
 
-    echo ""
-    #echo "****"
-    #echo "Summary:"
-    echo "PASSED: $passed_tests/$total_tests"
-    echo "FAILED: $failed_tests/$total_tests"
+    failed_tests=0
 
-    #echo ""
+    failed_lines=$(cat $file | grep FAILED | wc -l)
 
-    #if test $failed_tests -eq 0
-    #then
-        #echo "Result: perfect score (no action is required)"
-    #else
-        #echo "Result: some tests failed, see above"
-    #fi
+    #echo "DEBUG failed_lines $failed_lines"
+
+    if test $failed_lines -gt 0
+    then
+        failed_tests=$(grep FAILED $file | sed 's=/= =g' | awk '{print $6}' | awk '{ sum += $1} END {print sum}')
+    fi
+
+    bsal_shell_summarize_test_result "UnitTests" $passed_tests $failed_tests
 }
 
 main $1

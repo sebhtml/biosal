@@ -1,5 +1,7 @@
 #!/bin/bash
 
+source tests/test_library.sh
+
 function run_example()
 {
     local example
@@ -8,7 +10,7 @@ function run_example()
 
     example=$1
 
-    echo -n "Running test case example:$example ..."
+    echo -n "ExampleTest $example "
 
     (
     time make $example
@@ -21,7 +23,7 @@ function run_example()
     then
         result="PASSED"
     fi
-    echo " result: $result, see $example.log"
+    echo " result: $result (see $example.log)"
 }
 
 function main()
@@ -31,18 +33,15 @@ function main()
     local failed
     local total
 
-    for example in mock mock1 ring reader not_found remote_spawn synchronize controller hello_world clone migration
+    for example in mock # mock1 ring not_found remote_spawn synchronize controller hello_world clone migration reader
     do
         run_example $example
     done | tee examples.log
 
     passed=$(grep PASSED examples.log | wc -l)
     failed=$(grep FAILED examples.log | wc -l)
-    total=$(($passed + $failed))
 
-    echo ""
-    echo "PASSED: $passed/$total"
-    echo "FAILED: $failed/$total"
+    bsal_shell_summarize_test_result "ExampleTestSuite" $passed $failed
 }
 
 main

@@ -1,5 +1,7 @@
 #!/bin/bash
 
+source tests/test_library.sh
+
 function main()
 {
     local real_test
@@ -11,7 +13,7 @@ function main()
     local failed
     local wall_time
 
-    for real_test in mini medium medium-2 run-argonnite-1
+    for real_test in mini # medium medium-2 run-argonnite-1
     do
         rm -rf output &> /dev/null
 
@@ -38,14 +40,10 @@ function main()
 
     done | tee real.log
 
-
     passed=$(grep PASSED real.log | wc -l)
     failed=$(grep FAILED real.log | wc -l)
-    total=$(($passed + $failed))
 
-    echo "PASSED: $passed/$total"
-    echo "FAILED: $failed/$total"
-
+    bsal_shell_summarize_test_result "IntegrationTests" $passed $failed
 }
 
 main
