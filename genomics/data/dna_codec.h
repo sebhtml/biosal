@@ -13,7 +13,7 @@
 #define BSAL_DNA_CODEC_USE_TWO_BIT_ENCODING_FOR_TRANSPORT
 #define BSAL_DNA_CODEC_USE_TWO_BIT_ENCODING_FOR_STORAGE
 
-#define BSAL_DNA_CODEC_MINIMUM_NODE_COUNT_FOR_TWO_BIT (1)
+#define BSAL_DNA_CODEC_MINIMUM_NODE_COUNT_FOR_TWO_BIT (2)
 
 struct bsal_dna_codec {
     struct bsal_map encoding_lookup_table;
