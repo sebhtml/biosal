@@ -33,7 +33,7 @@ function main()
     local failed
     local total
 
-    for example in mock # mock1 ring not_found remote_spawn synchronize controller hello_world clone migration reader
+    for example in mock mock1 ring not_found remote_spawn synchronize controller hello_world clone migration reader
     do
         run_example $example
     done | tee examples.log

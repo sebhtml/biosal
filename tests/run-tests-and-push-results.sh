@@ -67,9 +67,12 @@ function main()
     echo "Cloning blueprints"
     repository="https://github.com/sebhtml/biosal.git"
     echo "Repository: $repository"
+    (
     git clone $repository
-    cd biosal
     git checkout $branch
+    ) &>git-clone-checkout.log
+
+    cd biosal
     echo "Branch: $branch"
     echo "Commit: $(git log | head -n1 | awk '{print $2}')"
 
@@ -104,9 +107,9 @@ function main()
         state="PASSED"
     fi
 
-    subject="[SNS] biosal quality assurance ($state)"
+    subject="[biosal_bot][state=$state] biosal quality assurance report"
 
-    aws sns publish --topic-arn $topic --subject "$subject" --message "Quality assurance result is available at $address"
+    aws sns publish --topic-arn $topic --subject "$subject" --message "A quality assurance report (state=$state) is available at $address"
 }
 
 main $1
