@@ -30,6 +30,8 @@ struct bsal_sequence_partitioner {
     struct bsal_queue available_commands;
 
     int command_number;
+
+    float last_progress;
 };
 
 #define BSAL_SEQUENCE_PARTITIONER_SET_BLOCK_SIZE 0x000020ef

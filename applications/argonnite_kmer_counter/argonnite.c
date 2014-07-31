@@ -76,10 +76,13 @@ void argonnite_init(struct bsal_actor *actor)
     concrete_actor->kmer_length = ARGONNITE_DEFAULT_KMER_LENGTH;
     concrete_actor->not_ready_warnings = 0;
 
-    /* the number of input sequences per I/O block
+    /* The number of input sequences per I/O block.
+     *
      *
      */
-    concrete_actor->block_size = 4096;
+    concrete_actor->block_size = 16 * 4096;
+    /*concrete_actor->block_size = 4096;*/
+
     /*concrete_actor->block_size = 2048;*/
 
     concrete_actor->configured_actors = 0;
