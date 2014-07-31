@@ -273,14 +273,6 @@ int bsal_worker_name(struct bsal_worker *worker)
 
 void bsal_worker_stop(struct bsal_worker *worker)
 {
-    if (worker->waiting_is_enabled) {
-        /*
-         * Wake up if necessary because the worker might be
-         * waiting for something...
-         */
-        bsal_worker_signal(worker);
-    }
-
 
 #ifdef BSAL_WORKER_DEBUG
     bsal_worker_display(worker);
@@ -296,6 +288,19 @@ void bsal_worker_stop(struct bsal_worker *worker)
     /* Make the change visible to other threads too
      */
     bsal_memory_fence();
+
+    /* Wake the worker **after** killing it.
+     * So basically, there is a case where the worker is killed
+     * while sleeping. But since threads are cool, the worker will
+     * wake up, and die for real this time.
+     */
+    if (worker->waiting_is_enabled) {
+        /*
+         * Wake up if necessary because the worker might be
+         * waiting for something...
+         */
+        bsal_worker_signal(worker);
+    }
 
     bsal_thread_join(&worker->thread);
 
