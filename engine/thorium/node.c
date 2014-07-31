@@ -39,6 +39,10 @@
 
 #define BSAL_NODE_DEBUG_RECEIVE_SYSTEM
 */
+/*
+#define BSAL_NODE_DEBUG_RUN "Yes"
+*/
+
 
 /*
 #define BSAL_NODE_SIMPLE_INITIAL_ACTOR_NAMES
@@ -81,7 +85,12 @@ void bsal_node_init(struct bsal_node *node, int *argc, char ***argv)
 
     bsal_node_global_self = node;
 
-    srand(time(NULL) * getpid());
+    node->start_time = time(NULL);
+    node->last_transport_event_time = node->start_time;
+    node->last_report_time = 0;
+    node->last_auto_scaling = node->start_time;
+
+    srand(node->start_time * getpid());
 
     /*
      * Build memory pools
@@ -104,7 +113,7 @@ void bsal_node_init(struct bsal_node *node, int *argc, char ***argv)
 #endif
 
 #ifdef BSAL_NODE_CHECK_TRANSPORT
-    node->use_mpi = 1;
+    node->use_transport = 1;
 #endif
 
     node->debug = 0;
@@ -291,9 +300,6 @@ void bsal_node_init(struct bsal_node *node, int *argc, char ***argv)
 
     bsal_counter_init(&node->counter);
 
-    node->start_time = time(NULL);
-    node->last_report_time = 0;
-    node->last_auto_scaling = node->start_time;
 
     processor = workers;
 
@@ -526,6 +532,12 @@ int bsal_node_spawn_state(struct bsal_node *node, void *state,
     bucket = bsal_map_add(&node->actor_names, &name);
     *bucket = index;
 
+    /*
+     * Make the name visible to all threads
+     */
+
+    bsal_memory_fence();
+
 #ifdef BSAL_NODE_DEBUG_SPAWN
     printf("DEBUG added Actor %d, index is %d, bucket: %p\n", name, index,
                     (void *)bucket);
@@ -653,24 +665,29 @@ void bsal_node_run(struct bsal_node *node)
     node->started = 1;
 
     if (node->workers_in_threads) {
-#ifdef BSAL_NODE_DEBUG
-        printf("DEBUG starting %i worker threads\n",
+#ifdef BSAL_NODE_DEBUG_RUN
+        printf("BSAL_NODE_DEBUG_RUN DEBUG starting %i worker threads\n",
                         bsal_worker_pool_worker_count(&node->worker_pool));
 #endif
         bsal_worker_pool_start(&node->worker_pool);
     }
 
+
     if (node->send_in_thread) {
-#ifdef BSAL_NODE_DEBUG
-        printf("DEBUG starting send thread\n");
+#ifdef BSAL_NODE_DEBUG_RUN
+        printf("BSAL_NODE_DEBUG_RUN starting send thread\n");
 #endif
         bsal_node_start_send_thread(node);
     }
 
+#ifdef BSAL_NODE_DEBUG_RUN
+    printf("BSAL_NODE_DEBUG_RUN entering loop in bsal_node_run\n");
+#endif
+
     bsal_node_run_loop(node);
 
-#ifdef BSAL_NODE_DEBUG
-    printf("BSAL_NODE_DEBUG after loop in bsal_node_run\n");
+#ifdef BSAL_NODE_DEBUG_RUN
+    printf("BSAL_NODE_DEBUG_RUN after loop in bsal_node_run\n");
 #endif
 
     if (node->workers_in_threads) {
@@ -744,12 +761,33 @@ void bsal_node_start_initial_actor(struct bsal_node *node)
 
 int bsal_node_running(struct bsal_node *node)
 {
+    time_t current_time;
+    int elapsed;
+
     /* wait until all actors are dead... */
     if (node->alive_actors > 0) {
+
+#ifdef BSAL_NODE_DEBUG_RUN
+        printf("BSAL_NODE_DEBUG_RUN alive workers > 0\n");
+#endif
         return 1;
     }
 
-    if (bsal_worker_pool_has_messages(&node->worker_pool)) {
+    current_time = time(NULL);
+
+    elapsed = current_time - node->last_transport_event_time;
+
+    /*
+     * Shut down if there is no actor and
+     * if no message were pulled for a duration of at least
+     * 4 seconds.
+     */
+    if (node->use_transport
+                    && elapsed < 4) {
+#ifdef BSAL_NODE_DEBUG_RUN
+        printf("BSAL_NODE_DEBUG_RUN a message was received in the last period %d %d\n",
+                        (int)current_time, (int)node->last_transport_event_time);
+#endif
         return 1;
     }
 
@@ -881,7 +919,7 @@ int bsal_node_receive_system(struct bsal_node *node, struct bsal_message *messag
          * if there is only one node
          */
         if (node->nodes == 1) {
-            node->use_mpi = 0;
+            node->use_transport = 0;
         }
 #endif
 
@@ -1275,6 +1313,11 @@ void bsal_node_notify_death(struct bsal_node *node, struct bsal_actor *actor)
 
     bsal_map_delete(&node->actor_names, &name);
 
+    /*
+     * Make this change visible
+     */
+    bsal_memory_fence();
+
 #ifdef BSAL_NODE_REUSE_DEAD_INDICES
     bsal_queue_enqueue(&node->dead_indices, &index);
 #endif
@@ -1287,10 +1330,25 @@ void bsal_node_notify_death(struct bsal_node *node, struct bsal_actor *actor)
      * actors
      */
 
-    bsal_set_delete(&node->auto_scaling_actors, &name);
+    if (bsal_set_find(&node->auto_scaling_actors, &name)) {
+        bsal_set_delete(&node->auto_scaling_actors, &name);
+
+        /* This fence is not required.
+         */
+        /*
+        bsal_memory_fence();
+        */
+    }
 
     node->alive_actors--;
     node->dead_actors++;
+
+    if (node->alive_actors == 0) {
+        printf("%s all local actors are dead now, %d alive actors, %d dead actors\n",
+                        BSAL_NODE_THORIUM_PREFIX,
+                        node->alive_actors, node->dead_actors);
+    }
+
     bsal_lock_unlock(&node->spawn_and_death_lock);
 
     bsal_counter_add(&node->counter, BSAL_COUNTER_KILLED_ACTORS, 1);
@@ -1706,7 +1764,7 @@ void bsal_node_run_loop(struct bsal_node *node)
          */
         if (
 #ifdef BSAL_NODE_CHECK_TRANSPORT
-            node->use_mpi &&
+            node->use_transport &&
 #endif
             bsal_transport_receive(&node->transport, &message)) {
 
@@ -1728,6 +1786,12 @@ void bsal_node_run_loop(struct bsal_node *node)
         /* with 3 or more threads, the sending operations are
          * in another thread */
         if (!node->send_in_thread) {
+
+#ifdef BSAL_NODE_DEBUG_RUN
+            if (node->alive_actors == 0) {
+                printf("BSAL_NODE_DEBUG_RUN sending messages, no local actors\n");
+            }
+#endif
             bsal_node_send_message(node);
         }
 
@@ -1748,10 +1812,19 @@ void bsal_node_run_loop(struct bsal_node *node)
         if (credits == 0) {
             if (bsal_node_running(node)) {
                 credits = starting_credits;
+#ifdef BSAL_NODE_DEBUG_RUN
+                printf("BSAL_NODE_DEBUG_RUN here are some credits\n");
+#endif
             }
 
             bsal_node_check_load(node);
         }
+
+#ifdef BSAL_NODE_DEBUG_RUN
+        if (node->alive_actors == 0) {
+            printf("BSAL_NODE_DEBUG_RUN credits: %d\n", credits);
+        }
+#endif
     }
 
 #ifdef BSAL_NODE_DEBUG_20140601_8
@@ -1767,7 +1840,7 @@ void bsal_node_send_message(struct bsal_node *node)
 #ifdef BSAL_NODE_CHECK_TRANSPORT
     /* Free buffers of active requests
      */
-    if (node->use_mpi) {
+    if (node->use_transport) {
 #endif
         bsal_node_test_requests(node);
 
@@ -1781,14 +1854,30 @@ void bsal_node_send_message(struct bsal_node *node)
      */
     if (bsal_node_pull(node, &message)) {
 
+        node->last_transport_event_time = time(NULL);
+
 #ifdef BSAL_NODE_DEBUG
         printf("bsal_node_run pulled tag %i buffer %p\n",
                         bsal_message_tag(&message),
                         bsal_message_buffer(&message));
 #endif
 
+#ifdef BSAL_NODE_DEBUG_RUN
+        if (node->alive_actors == 0) {
+            printf("BSAL_NODE_DEBUG_RUN bsal_node_send_message pulled a message, tag %d\n",
+                            bsal_message_tag(&message));
+        }
+#endif
+
         /* send it locally or over the network */
         bsal_node_send(node, &message);
+    } else {
+#ifdef BSAL_NODE_DEBUG_RUN
+        if (node->alive_actors == 0) {
+            printf("BSAL_NODE_DEBUG_RUN bsal_node_send_message no message\n");
+        }
+#endif
+
     }
 }
 

@@ -134,6 +134,7 @@ void bsal_actor_destroy(struct bsal_actor *actor)
      * dead.
      */
     actor->dead = 1;
+
     bsal_memory_fence();
 
     bsal_dispatcher_destroy(&actor->dispatcher);

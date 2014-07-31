@@ -267,19 +267,6 @@ int bsal_worker_pool_worker_count(struct bsal_worker_pool *pool)
     return pool->workers;
 }
 
-int bsal_worker_pool_has_messages(struct bsal_worker_pool *pool)
-{
-    int threshold;
-
-    threshold = 200000;
-
-    if (pool->ticks_without_messages > threshold) {
-        return 0;
-    }
-
-    return 1;
-}
-
 void bsal_worker_pool_print_load(struct bsal_worker_pool *self, int type)
 {
     int count;
@@ -589,9 +576,13 @@ void bsal_worker_pool_work(struct bsal_worker_pool *pool)
      * once in a while because of the ordering
      * of events for the actor scheduling queue
      */
+    /* This is not required...
+     */
+#if 0
     if (pool->waiting_is_enabled) {
         bsal_worker_pool_wake_up_workers(pool);
     }
+#endif
 }
 
 void bsal_worker_pool_assign_worker_to_actor(struct bsal_worker_pool *pool, int name)
@@ -777,12 +768,6 @@ int bsal_worker_pool_dequeue_message(struct bsal_worker_pool *pool, struct bsal_
     int answer;
 
     answer = bsal_worker_pool_pull_classic(pool, message);
-
-    if (!answer) {
-        pool->ticks_without_messages++;
-    } else {
-        pool->ticks_without_messages = 0;
-    }
 
     return answer;
 }

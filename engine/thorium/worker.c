@@ -94,7 +94,7 @@ void bsal_worker_init(struct bsal_worker *worker, int name, struct bsal_node *no
     worker->loop_used_nanoseconds = 0;
     worker->scheduling_epoch_used_nanoseconds = 0;
 
-    worker->start = 0;
+    worker->started_in_thread = 0;
 
 /* 2 MiB is the default size for Linux huge pages.
  * \see https://wiki.debian.org/Hugepages
@@ -228,6 +228,8 @@ void bsal_worker_start(struct bsal_worker *worker, int processor)
 
     bsal_thread_set_affinity(&worker->thread, processor);
 
+    worker->started_in_thread = 1;
+
     bsal_thread_start(&worker->thread);
 
     worker->last_report = time(NULL);
@@ -290,6 +292,10 @@ void bsal_worker_stop(struct bsal_worker *worker)
      * by the running thread.
      */
     worker->dead = 1;
+
+    /* Make the change visible to other threads too
+     */
+    bsal_memory_fence();
 
     bsal_thread_join(&worker->thread);
 
@@ -1264,11 +1270,19 @@ void bsal_worker_work(struct bsal_worker *worker, struct bsal_actor *actor)
 void bsal_worker_wait(struct bsal_worker *worker)
 {
 
+    if (!worker->started_in_thread) {
+        return;
+    }
+
     bsal_thread_wait(&worker->thread);
 }
 
 void bsal_worker_signal(struct bsal_worker *worker)
 {
+    if (!worker->started_in_thread) {
+        return;
+    }
+
     bsal_thread_signal(&worker->thread);
 }
 

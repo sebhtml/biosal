@@ -106,7 +106,7 @@ struct bsal_node {
     int maximum_scripts;
 
 #ifdef BSAL_NODE_CHECK_TRANSPORT
-    int use_mpi;
+    int use_transport;
 #endif
 
     struct bsal_thread thread;
@@ -145,9 +145,13 @@ struct bsal_node {
      */
     struct sigaction action;
 
+    /*
+     * Some time variables
+     */
     time_t start_time;
     time_t last_report_time;
     time_t last_auto_scaling;
+    time_t last_transport_event_time;
     char print_load;
     char print_counters;
 };

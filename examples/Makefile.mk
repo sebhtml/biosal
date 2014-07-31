@@ -73,7 +73,7 @@ mock: examples/example_mock
 	mpiexec -n 3 $< -threads-per-node 7
 
 mock1: examples/example_mock
-	mpiexec -n 3 $< -threads-per-node 1
+	mpiexec -n 3 $< -print-load -threads-per-node 1
 
 reader: examples/example_reader
 	mpiexec -n 2 $< -threads-per-node 13 -read ~/dropbox/GPIC.1424-1.1371.fastq

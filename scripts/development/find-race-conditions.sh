@@ -4,6 +4,6 @@ echo "check loop-log"
 while true
 do
     (
-    time ./scripts/development/medium-4-8.sh
+    time make mock1
     )
 done &> loop-log

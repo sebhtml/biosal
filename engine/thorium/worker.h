@@ -92,7 +92,7 @@ struct bsal_worker {
     struct bsal_thread thread;
 
     int work_count;
-    int start;
+    char started_in_thread;
 
     int last_warning;
 
