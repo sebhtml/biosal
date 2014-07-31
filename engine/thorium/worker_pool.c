@@ -576,13 +576,14 @@ void bsal_worker_pool_work(struct bsal_worker_pool *pool)
      * once in a while because of the ordering
      * of events for the actor scheduling queue
      */
-    /* This is not required...
+    /* Example, bsal_worker_signal is called just a bit before
+     * bsal_worker_wait.
+     *
      */
-#if 0
+
     if (pool->waiting_is_enabled) {
         bsal_worker_pool_wake_up_workers(pool);
     }
-#endif
 }
 
 void bsal_worker_pool_assign_worker_to_actor(struct bsal_worker_pool *pool, int name)
