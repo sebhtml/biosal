@@ -41,7 +41,9 @@ run-argonnite-1-28 sha1sum 71deaa88265222cd8c27c88980eb5c4f29c966af
 # Fields to fill for tests on big machines
 
 ```
-Name:
+JobName:
+Machine:
+Path:
 Commit:
 Toolchain:
 Script:
