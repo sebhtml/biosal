@@ -10,6 +10,7 @@
 #include <core/structures/string.h>
 
 #include <core/system/memory.h>
+#include <core/system/debugger.h>
 #include <core/system/directory.h>
 
 #include <stdio.h>
@@ -58,11 +59,9 @@ void bsal_coverage_distribution_receive(struct bsal_actor *self, struct bsal_mes
     struct bsal_map_iterator iterator;
     int *coverage_from_message;
     uint64_t *count_from_message;
-    int *coverage;
     uint64_t *frequency;
     int count;
     void *buffer;
-    struct bsal_vector coverage_values;
     struct bsal_coverage_distribution *concrete_actor;
     int name;
     int source;
@@ -129,25 +128,7 @@ void bsal_coverage_distribution_receive(struct bsal_actor *self, struct bsal_mes
 
     } else if (tag == BSAL_ACTOR_ASK_TO_STOP) {
 
-        bsal_map_iterator_init(&iterator, &concrete_actor->distribution);
-
-        bsal_vector_init(&coverage_values, sizeof(int));
-
-        while (bsal_map_iterator_has_next(&iterator)) {
-
-            bsal_map_iterator_next(&iterator, (void **)&coverage,
-                            (void **)&count);
-
-            bsal_vector_push_back(&coverage_values, coverage);
-        }
-
-        bsal_vector_helper_sort_int(&coverage_values);
-
-        bsal_map_iterator_destroy(&iterator);
-
-        bsal_vector_destroy(&coverage_values);
-
-        bsal_actor_helper_ask_to_stop(self, message);
+        bsal_coverage_distribution_ask_to_stop(self, message);
 
     } else if (tag == BSAL_SET_EXPECTED_MESSAGES) {
 
@@ -285,4 +266,43 @@ void bsal_coverage_distribution_write_distribution(struct bsal_actor *self)
     bsal_string_destroy(&canonical_file_name);
 }
 
+void bsal_coverage_distribution_ask_to_stop(struct bsal_actor *self, struct bsal_message *message)
+{
+    struct bsal_map_iterator iterator;
+    struct bsal_vector coverage_values;
+    struct bsal_coverage_distribution *concrete_actor;
 
+    uint64_t *frequency;
+    int *coverage;
+
+    concrete_actor = (struct bsal_coverage_distribution *)bsal_actor_concrete_actor(self);
+    bsal_map_iterator_init(&iterator, &concrete_actor->distribution);
+
+    bsal_vector_init(&coverage_values, sizeof(int));
+
+    while (bsal_map_iterator_has_next(&iterator)) {
+
+#if 0
+        printf("DEBUG EMIT iterator\n");
+#endif
+        bsal_map_iterator_next(&iterator, (void **)&coverage,
+                        (void **)&frequency);
+
+#ifdef BSAL_DEBUGGER_ENABLE_ASSERT
+        if (coverage == NULL) {
+            printf("DEBUG map has %d buckets\n", (int)bsal_map_size(&concrete_actor->distribution));
+        }
+#endif
+        BSAL_DEBUGGER_ASSERT(coverage != NULL);
+
+        bsal_vector_push_back(&coverage_values, coverage);
+    }
+
+    bsal_vector_helper_sort_int(&coverage_values);
+
+    bsal_map_iterator_destroy(&iterator);
+
+    bsal_vector_destroy(&coverage_values);
+
+    bsal_actor_helper_ask_to_stop(self, message);
+}

@@ -43,5 +43,9 @@ int bsal_directory_create(const char *directory)
      */
     status = mkdir(directory, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
 
-    return 1;
+    if (status == 0) {
+        return 1;
+    }
+
+    return 0;
 }

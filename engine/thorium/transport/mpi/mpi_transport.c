@@ -155,7 +155,7 @@ int bsal_mpi_transport_receive(struct bsal_transport *transport, struct bsal_mes
     char *buffer;
     int count;
     int source;
-    int destination;
+    /*int destination;*/
     int tag;
     int flag;
     MPI_Status status;
@@ -164,7 +164,7 @@ int bsal_mpi_transport_receive(struct bsal_transport *transport, struct bsal_mes
     mpi_transport = bsal_transport_get_concrete_transport(transport);
     source = MPI_ANY_SOURCE;
     tag = MPI_ANY_TAG;
-    destination = transport->rank;
+    /*destination = transport->rank;*/
 
     /* get return value */
     result = MPI_Iprobe(source, tag, mpi_transport->comm, &flag, &status);

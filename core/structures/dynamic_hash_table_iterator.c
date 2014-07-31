@@ -1,6 +1,8 @@
 
 #include "dynamic_hash_table_iterator.h"
 
+#include <core/system/debugger.h>
+
 #include <stdlib.h>
 
 void bsal_dynamic_hash_table_iterator_init(struct bsal_dynamic_hash_table_iterator *self, struct bsal_dynamic_hash_table *list)
@@ -43,6 +45,11 @@ int bsal_dynamic_hash_table_iterator_has_next(struct bsal_dynamic_hash_table_ite
         return 0;
     }
 
+    /* Make sure that the pointed bucket is occupied
+     */
+    BSAL_DEBUGGER_ASSERT(bsal_dynamic_hash_table_state(self->list, self->index) ==
+                    BSAL_HASH_TABLE_BUCKET_OCCUPIED);
+
     return 1;
 }
 
@@ -52,12 +59,23 @@ int bsal_dynamic_hash_table_iterator_next(struct bsal_dynamic_hash_table_iterato
         return 0;
     }
 
+    BSAL_DEBUGGER_ASSERT(bsal_dynamic_hash_table_state(self->list, self->index) ==
+                    BSAL_HASH_TABLE_BUCKET_OCCUPIED);
+
     if (key != NULL) {
         *key = bsal_dynamic_hash_table_key(self->list, self->index);
+
+#ifdef BSAL_DEBUGGER_ASSERT
+        BSAL_DEBUGGER_ASSERT(*key != NULL);
+#endif
     }
 
     if (value != NULL) {
         *value = bsal_dynamic_hash_table_value(self->list, self->index);
+
+#ifdef BSAL_DEBUGGER_ASSERT
+        BSAL_DEBUGGER_ASSERT(*value != NULL);
+#endif
     }
 
     self->index++;

@@ -68,13 +68,15 @@ int bsal_pami_transport_send(struct bsal_transport *transport, struct bsal_messa
     /*
      * Based on this example: http://code.google.com/p/pami-examples/source/browse/trunk/function/send.c
      */
+
+#if 0
     int destination_node;
     void *buffer;
 
     destination_node = bsal_message_destination_node(message);
     buffer = bsal_message_buffer(message);
 
-
+#endif
     /*
      * Send the data to the destination with PAMI
      */

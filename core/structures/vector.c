@@ -4,6 +4,7 @@
 #include <core/system/packer.h>
 #include <core/system/memory.h>
 #include <core/system/memory_pool.h>
+#include <core/system/debugger.h>
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -79,6 +80,8 @@ void bsal_vector_push_back(struct bsal_vector *self, void *data)
     int64_t index;
     int64_t new_maximum_size;
     void *bucket;
+
+    BSAL_DEBUGGER_ASSERT(data != NULL);
 
 #ifdef BSAL_VECTOR_DEBUG
     printf("DEBUG bsal_vector_push_back size %d max %d\n",

@@ -132,9 +132,7 @@ void bsal_dna_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_
     int consumer;
     int count;
     int producer;
-    struct bsal_memory_pool *ephemeral_memory;
 
-    ephemeral_memory = bsal_actor_get_ephemeral_memory(actor);
     count = bsal_message_count(message);
 
     concrete_actor = (struct bsal_dna_kmer_counter_kernel *)bsal_actor_concrete_actor(actor);
