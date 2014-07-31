@@ -257,7 +257,7 @@ void bsal_kmer_store_receive(struct bsal_actor *self, struct bsal_message *messa
 #ifdef BSAL_KMER_STORE_DEBUG
 #endif
 
-        concrete_actor->customer = bsal_actor_add_acquaintance(self, customer);
+        concrete_actor->customer = customer;
 
         bsal_actor_helper_send_reply_empty(self, BSAL_ACTOR_SET_CONSUMER_REPLY);
 
@@ -353,7 +353,7 @@ void bsal_kmer_store_push_data(struct bsal_actor *self, struct bsal_message *mes
 
     concrete_actor = (struct bsal_kmer_store *)bsal_actor_concrete_actor(self);
     source = bsal_message_source(message);
-    concrete_actor->source = bsal_actor_add_acquaintance(self, source);
+    concrete_actor->source = source;
     name = bsal_actor_get_name(self);
 
     bsal_map_init(&concrete_actor->coverage_distribution, sizeof(int), sizeof(uint64_t));
@@ -389,7 +389,7 @@ void bsal_kmer_store_yield_reply(struct bsal_actor *self, struct bsal_message *m
 
     ephemeral_memory = bsal_actor_get_ephemeral_memory(self);
     concrete_actor = (struct bsal_kmer_store *)bsal_actor_concrete_actor(self);
-    customer = bsal_actor_get_acquaintance(self, concrete_actor->customer);
+    customer = concrete_actor->customer;
 
 #if 0
     printf("YIELD REPLY\n");
@@ -469,7 +469,7 @@ void bsal_kmer_store_yield_reply(struct bsal_actor *self, struct bsal_message *m
 
     bsal_map_destroy(&concrete_actor->coverage_distribution);
 
-    bsal_actor_helper_send_empty(self, bsal_actor_get_acquaintance(self, concrete_actor->source),
+    bsal_actor_helper_send_empty(self, concrete_actor->source,
                             BSAL_PUSH_DATA_REPLY);
 
 }

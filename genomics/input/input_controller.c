@@ -310,13 +310,10 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
 #endif
 
             bsal_message_helper_unpack_int(message, 0, &concrete_actor->partitioner);
-            concrete_actor->partitioner = bsal_actor_add_acquaintance(actor,
-                            concrete_actor->partitioner);
 
             /* configure the partitioner
              */
-            destination = bsal_actor_get_acquaintance(actor,
-                                    concrete_actor->partitioner);
+            destination = concrete_actor->partitioner;
             bsal_actor_helper_send_int(actor, destination,
                             BSAL_SEQUENCE_PARTITIONER_SET_BLOCK_SIZE,
                             concrete_actor->block_size);
@@ -354,7 +351,7 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
 
             bsal_message_helper_unpack_int(message, 0, &stream);
 
-            stream_index = bsal_actor_add_acquaintance(actor, stream);
+            stream_index = stream;
 
             mega_block_index = bsal_vector_size(&concrete_actor->reading_streams);
 
@@ -628,8 +625,8 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
          */
 
         if (concrete_actor->partitioner > 0) {
-            bsal_actor_helper_send_empty(actor, bsal_actor_get_acquaintance(actor,
-                                concrete_actor->partitioner),
+            bsal_actor_helper_send_empty(actor,
+                                concrete_actor->partitioner,
                         BSAL_ACTOR_ASK_TO_STOP);
 
 #ifdef BSAL_INPUT_CONTROLLER_DEBUG
@@ -681,8 +678,8 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
 
     } else if (tag == BSAL_SEQUENCE_PARTITIONER_FINISHED) {
 
-        bsal_actor_helper_send_empty(actor, bsal_actor_get_acquaintance(actor,
-                                concrete_actor->partitioner),
+        bsal_actor_helper_send_empty(actor,
+                                concrete_actor->partitioner,
                         BSAL_ACTOR_ASK_TO_STOP);
 
         bsal_input_controller_verify_requests(actor, message);
@@ -704,7 +701,7 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
             concrete_actor->ready_consumers = 0;
             printf("DEBUG all consumers are ready\n");
             bsal_actor_helper_send_empty(actor,
-                            bsal_actor_get_acquaintance(actor, concrete_actor->partitioner),
+                            concrete_actor->partitioner,
                             BSAL_SEQUENCE_PARTITIONER_PROVIDE_STORE_ENTRY_COUNTS_REPLY);
         }
 
@@ -716,13 +713,13 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
 
         stream_name = source;
 
-        acquaintance_index = bsal_actor_get_acquaintance_index(actor, stream_name);
+        acquaintance_index = stream_name;
         stream_index = bsal_vector_index_of(&concrete_actor->reading_streams, &acquaintance_index);
         command_name = *(int *)bsal_vector_at(&concrete_actor->partition_commands,
                         stream_index);
 
-        bsal_actor_helper_send_int(actor, bsal_actor_get_acquaintance(actor,
-                                concrete_actor->partitioner),
+        bsal_actor_helper_send_int(actor,
+                                concrete_actor->partitioner,
                         BSAL_SEQUENCE_PARTITIONER_GET_COMMAND_REPLY_REPLY,
                         command_name);
 
@@ -1125,7 +1122,7 @@ void bsal_input_controller_receive_command(struct bsal_actor *actor, struct bsal
     bucket_for_consumer = (int *)bsal_vector_at(&concrete_actor->stream_consumers,
                     stream_index);
 
-    stream_name = bsal_actor_helper_get_acquaintance(actor, &concrete_actor->reading_streams,
+    stream_name = bsal_vector_helper_at_as_int(&concrete_actor->reading_streams,
                     stream_index);
 
 #ifdef BSAL_INPUT_CONTROLLER_DEBUG_COMMANDS
@@ -1268,7 +1265,7 @@ void bsal_input_controller_set_offset_reply(struct bsal_actor *self, struct bsal
     struct bsal_message new_message;
 
     source = bsal_message_source(message);
-    acquaintance_index = bsal_actor_get_acquaintance_index(self, source);
+    acquaintance_index = source;
     concrete_actor = (struct bsal_input_controller *)bsal_actor_concrete_actor(self);
     stream_index = bsal_vector_index_of(&concrete_actor->reading_streams, &acquaintance_index);
 

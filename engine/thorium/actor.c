@@ -1439,7 +1439,7 @@ void bsal_actor_notify_name_change(struct bsal_actor *actor, struct bsal_message
 
     /* update the acquaintance vector
      */
-    index = bsal_actor_get_acquaintance_index(actor, old_name);
+    index = bsal_actor_get_acquaintance_index_private(actor, old_name);
 
     bucket = bsal_vector_at(&actor->acquaintance_vector, index);
 
@@ -1471,7 +1471,7 @@ void bsal_actor_migrate_notify_acquaintances(struct bsal_actor *actor, struct bs
     struct bsal_vector *acquaintance_vector;
     int acquaintance;
 
-    acquaintance_vector = bsal_actor_acquaintance_vector(actor);
+    acquaintance_vector = bsal_actor_acquaintance_vector_private(actor);
 
     if (actor->acquaintance_index < bsal_vector_size(acquaintance_vector)) {
 
@@ -1661,7 +1661,7 @@ int bsal_actor_get_child(struct bsal_actor *actor, int index)
 
     if (index < bsal_vector_size(&actor->children)) {
         index2 = *(int *)bsal_vector_at(&actor->children, index);
-        return bsal_actor_get_acquaintance(actor, index2);
+        return bsal_actor_get_acquaintance_private(actor, index2);
     }
 
     return BSAL_ACTOR_NOBODY;
@@ -1676,18 +1676,18 @@ int bsal_actor_add_child(struct bsal_actor *actor, int name)
 {
     int index;
 
-    index = bsal_actor_add_acquaintance(actor, name);
+    index = bsal_actor_add_acquaintance_private(actor, name);
     bsal_vector_push_back(&actor->children, &index);
 
     return index;
 }
 
-int bsal_actor_add_acquaintance(struct bsal_actor *actor, int name)
+int bsal_actor_add_acquaintance_private(struct bsal_actor *actor, int name)
 {
     int index;
     int *bucket;
 
-    index = bsal_actor_get_acquaintance_index(actor, name);
+    index = bsal_actor_get_acquaintance_index_private(actor, name);
 
     if (index >= 0) {
         return index;
@@ -1697,10 +1697,10 @@ int bsal_actor_add_acquaintance(struct bsal_actor *actor, int name)
         return -1;
     }
 
-    bsal_vector_helper_push_back_int(bsal_actor_acquaintance_vector(actor),
+    bsal_vector_helper_push_back_int(bsal_actor_acquaintance_vector_private(actor),
                     name);
 
-    index = bsal_vector_size(bsal_actor_acquaintance_vector(actor)) - 1;
+    index = bsal_vector_size(bsal_actor_acquaintance_vector_private(actor)) - 1;
 
     bucket = bsal_map_add(&actor->acquaintance_map, &name);
     *bucket = index;
@@ -1708,7 +1708,7 @@ int bsal_actor_add_acquaintance(struct bsal_actor *actor, int name)
     return index;
 }
 
-int bsal_actor_get_acquaintance_index(struct bsal_actor *actor, int name)
+int bsal_actor_get_acquaintance_index_private(struct bsal_actor *actor, int name)
 {
     int *bucket;
 
@@ -1742,7 +1742,7 @@ int bsal_actor_get_child_index(struct bsal_actor *actor, int name)
         printf("DEBUG index %d\n", index);
 #endif
 
-        child = bsal_actor_get_acquaintance(actor, index);
+        child = bsal_actor_get_acquaintance_private(actor, index);
 
         if (child == name) {
             return i;
@@ -1960,15 +1960,15 @@ int bsal_actor_trylock(struct bsal_actor *actor)
     return result;
 }
 
-struct bsal_vector *bsal_actor_acquaintance_vector(struct bsal_actor *actor)
+struct bsal_vector *bsal_actor_acquaintance_vector_private(struct bsal_actor *actor)
 {
     return &actor->acquaintance_vector;
 }
 
-int bsal_actor_get_acquaintance(struct bsal_actor *actor, int index)
+int bsal_actor_get_acquaintance_private(struct bsal_actor *actor, int index)
 {
-    if (index < bsal_vector_size(bsal_actor_acquaintance_vector(actor))) {
-        return bsal_vector_helper_at_as_int(bsal_actor_acquaintance_vector(actor),
+    if (index < bsal_vector_size(bsal_actor_acquaintance_vector_private(actor))) {
+        return bsal_vector_helper_at_as_int(bsal_actor_acquaintance_vector_private(actor),
                         index);
     }
 

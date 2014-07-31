@@ -112,6 +112,7 @@ void bsal_actor_helper_send_int64_t(struct bsal_actor *actor, int destination, i
     bsal_actor_send(actor, destination, &message);
 }
 
+#ifdef BSAL_ACTOR_EXPOSE_ACQUAINTANCE_VECTOR
 void bsal_actor_helper_get_acquaintances(struct bsal_actor *actor, struct bsal_vector *indices,
                 struct bsal_vector *names)
 {
@@ -139,6 +140,9 @@ void bsal_actor_helper_get_acquaintances(struct bsal_actor *actor, struct bsal_v
     bsal_vector_iterator_destroy(&iterator);
 }
 
+#endif
+
+#ifdef BSAL_ACTOR_EXPOSE_ACQUAINTANCE_VECTOR
 void bsal_actor_helper_add_acquaintances(struct bsal_actor *actor,
                 struct bsal_vector *names, struct bsal_vector *indices)
 {
@@ -172,6 +176,7 @@ void bsal_actor_helper_add_acquaintances(struct bsal_actor *actor,
     printf("\n");
 #endif
 }
+#endif
 
 void bsal_actor_helper_send_range(struct bsal_actor *actor, struct bsal_vector *actors,
                 struct bsal_message *message)
@@ -513,6 +518,7 @@ void bsal_actor_helper_ask_to_stop(struct bsal_actor *actor, struct bsal_message
     bsal_actor_helper_send_reply_empty(actor, BSAL_ACTOR_ASK_TO_STOP_REPLY);
 }
 
+#ifdef BSAL_ACTOR_EXPOSE_ACQUAINTANCE_VECTOR
 int bsal_actor_helper_get_acquaintance(struct bsal_actor *actor, struct bsal_vector *indices,
                 int index)
 {
@@ -526,6 +532,7 @@ int bsal_actor_helper_get_acquaintance(struct bsal_actor *actor, struct bsal_vec
 
     return bsal_actor_get_acquaintance(actor, index2);
 }
+#endif
 
 void bsal_actor_helper_send_double(struct bsal_actor *actor, int destination, int tag, double value)
 {
@@ -537,6 +544,7 @@ void bsal_actor_helper_send_double(struct bsal_actor *actor, int destination, in
     bsal_message_destroy(&message);
 }
 
+#ifdef BSAL_ACTOR_EXPOSE_ACQUAINTANCE_VECTOR
 int bsal_actor_helper_get_acquaintance_index(struct bsal_actor *actor, struct bsal_vector *indices,
                 int name)
 {
@@ -559,3 +567,4 @@ int bsal_actor_helper_get_acquaintance_index(struct bsal_actor *actor, struct bs
 
     return -1;
 }
+#endif

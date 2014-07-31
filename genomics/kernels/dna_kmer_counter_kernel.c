@@ -153,7 +153,7 @@ void bsal_dna_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_
         /*
         source_index = *(int *)buffer;
         bsal_actor_helper_send_empty(actor,
-                        bsal_actor_get_acquaintance(actor, source_index),
+                        source_index,
                         BSAL_PUSH_SEQUENCE_DATA_BLOCK_REPLY);
                         */
 
@@ -191,7 +191,7 @@ void bsal_dna_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_
     } else if (tag == BSAL_ACTOR_SET_CONSUMER) {
 
         consumer = *(int *)buffer;
-        concrete_actor->consumer = bsal_actor_add_acquaintance(actor, consumer);
+        concrete_actor->consumer = consumer;
 
 #ifdef BSAL_KMER_COUNTER_KERNEL_DEBUG
         printf("kernel %d BSAL_ACTOR_SET_CONSUMER consumer %d index %d\n",
@@ -227,11 +227,11 @@ void bsal_dna_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_
 
         bsal_message_helper_unpack_int(message, 0, &producer);
 
-        concrete_actor->producer = bsal_actor_add_acquaintance(actor, producer);
+        concrete_actor->producer = producer;
 
         bsal_dna_kmer_counter_kernel_ask(actor, message);
 
-        concrete_actor->producer_source = bsal_actor_add_acquaintance(actor, source);
+        concrete_actor->producer_source = source;
 
     } else if (tag == BSAL_SEQUENCE_STORE_ASK_REPLY) {
 
@@ -242,15 +242,15 @@ void bsal_dna_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_
         printf("DEBUG kernel was told by producer that nothing is left to do\n");
 #endif
 
-        bsal_actor_helper_send_empty(actor, bsal_actor_get_acquaintance(actor,
-                                concrete_actor->producer_source),
+        bsal_actor_helper_send_empty(actor, 
+                                concrete_actor->producer_source,
                         BSAL_ACTOR_SET_PRODUCER_REPLY);
 
     } else if (tag == BSAL_ACTOR_SET_CONSUMER_REPLY) {
 
         /* Set the producer for the new kernel
          */
-        producer = bsal_actor_get_acquaintance(actor, concrete_actor->producer);
+        producer = concrete_actor->producer;
 
         bsal_actor_helper_send_int(actor, concrete_actor->auto_scaling_clone,
                         BSAL_ACTOR_SET_PRODUCER, producer);
@@ -295,8 +295,8 @@ void bsal_dna_kmer_counter_kernel_verify(struct bsal_actor *actor, struct bsal_m
     }
 #endif
 
-    bsal_actor_helper_send_uint64_t(actor, bsal_actor_get_acquaintance(actor,
-                            concrete_actor->notification_source),
+    bsal_actor_helper_send_uint64_t(actor,
+                            concrete_actor->notification_source,
                     BSAL_KERNEL_NOTIFY_REPLY, concrete_actor->kmers);
 }
 
@@ -307,7 +307,7 @@ void bsal_dna_kmer_counter_kernel_ask(struct bsal_actor *self, struct bsal_messa
 
     concrete_actor = (struct bsal_dna_kmer_counter_kernel *)bsal_actor_concrete_actor(self);
 
-    producer = bsal_actor_get_acquaintance(self, concrete_actor->producer);
+    producer = concrete_actor->producer;
 
     bsal_actor_helper_send_int(self, producer, BSAL_SEQUENCE_STORE_ASK,
                     concrete_actor->kmer_length);
@@ -411,8 +411,8 @@ void bsal_dna_kmer_counter_kernel_clone_reply(struct bsal_actor *actor, struct b
     concrete_actor = (struct bsal_dna_kmer_counter_kernel *)bsal_actor_concrete_actor(actor);
     name = bsal_actor_get_name(actor);
     bsal_message_helper_unpack_int(message, 0, &clone);
-    consumer = bsal_actor_get_acquaintance(actor, concrete_actor->consumer);
-    /*producer = bsal_actor_get_acquaintance(actor, concrete_actor->producer);*/
+    consumer = concrete_actor->consumer;
+    /*producer = concrete_actor->producer);*/
 
     if (source == name) {
         printf("kernel %d cloned itself !!! clone name is %d\n",
@@ -422,7 +422,7 @@ void bsal_dna_kmer_counter_kernel_clone_reply(struct bsal_actor *actor, struct b
 
         concrete_actor->auto_scaling_clone = clone;
 
-        clone_index = bsal_actor_add_acquaintance(actor, clone);
+        clone_index = clone;
 
         bsal_vector_push_back(&concrete_actor->kernels, &clone_index);
 
@@ -478,8 +478,8 @@ int bsal_dna_kmer_counter_kernel_pack_unpack(struct bsal_actor *actor, int opera
     consumer = BSAL_ACTOR_NOBODY;
 
     if (operation != BSAL_PACKER_OPERATION_UNPACK) {
-        producer = bsal_actor_get_acquaintance(actor, concrete_actor->producer);
-        consumer = bsal_actor_get_acquaintance(actor, concrete_actor->consumer);
+        producer = concrete_actor->producer;
+        consumer = concrete_actor->consumer;
     }
 
     bytes = 0;
@@ -492,8 +492,8 @@ int bsal_dna_kmer_counter_kernel_pack_unpack(struct bsal_actor *actor, int opera
 
     if (operation == BSAL_PACKER_OPERATION_UNPACK) {
 
-        concrete_actor->producer = bsal_actor_add_acquaintance(actor, producer);
-        concrete_actor->consumer = bsal_actor_add_acquaintance(actor, consumer);
+        concrete_actor->producer = producer;
+        concrete_actor->consumer = consumer;
     }
 
     bytes += bsal_packer_worked_bytes(&packer);
@@ -505,7 +505,6 @@ int bsal_dna_kmer_counter_kernel_pack_unpack(struct bsal_actor *actor, int opera
 void bsal_dna_kmer_counter_kernel_notify(struct bsal_actor *actor, struct bsal_message *message)
 {
     struct bsal_dna_kmer_counter_kernel *concrete_actor;
-    struct bsal_vector kernels;
     struct bsal_vector_iterator iterator;
     int kernel;
     int source;
@@ -517,7 +516,7 @@ void bsal_dna_kmer_counter_kernel_notify(struct bsal_actor *actor, struct bsal_m
 
     bsal_actor_helper_send_to_self_empty(actor, BSAL_ACTOR_DISABLE_AUTO_SCALING);
 
-    concrete_actor->notification_source = bsal_actor_add_acquaintance(actor, source);
+    concrete_actor->notification_source = source;
 
     if (concrete_actor->scaling_operations > 0) {
 
@@ -525,12 +524,7 @@ void bsal_dna_kmer_counter_kernel_notify(struct bsal_actor *actor, struct bsal_m
         concrete_actor->sum_of_kmers += concrete_actor->kmers;
         concrete_actor->notified_children = 0;
 
-        bsal_vector_init(&kernels, sizeof(int));
-
-        bsal_actor_helper_get_acquaintances(actor, &concrete_actor->kernels,
-                        &kernels);
-
-        bsal_vector_iterator_init(&iterator, &kernels);
+        bsal_vector_iterator_init(&iterator, &concrete_actor->kernels);
 
         while (bsal_vector_iterator_get_next_value(&iterator, &kernel)) {
 
@@ -539,7 +533,6 @@ void bsal_dna_kmer_counter_kernel_notify(struct bsal_actor *actor, struct bsal_m
 
         bsal_vector_iterator_destroy(&iterator);
 
-        bsal_vector_destroy(&kernels);
 
     } else {
         bsal_dna_kmer_counter_kernel_verify(actor, message);
@@ -562,8 +555,8 @@ void bsal_dna_kmer_counter_kernel_notify_reply(struct bsal_actor *actor, struct 
     if (concrete_actor->notified_children == bsal_vector_size(&concrete_actor->kernels)) {
 
 
-        bsal_actor_helper_send_uint64_t(actor, bsal_actor_get_acquaintance(actor,
-                            concrete_actor->notification_source),
+        bsal_actor_helper_send_uint64_t(actor,
+                            concrete_actor->notification_source,
                     BSAL_KERNEL_NOTIFY_REPLY, concrete_actor->sum_of_kmers);
 
     }
@@ -624,8 +617,8 @@ void bsal_dna_kmer_counter_kernel_push_sequence_data_block(struct bsal_actor *ac
     bsal_timer_init(&timer);
     bsal_timer_start(&timer);
 
-    consumer = bsal_actor_get_acquaintance(actor, concrete_actor->consumer);
-    source_index = bsal_actor_add_acquaintance(actor, source);
+    consumer = concrete_actor->consumer;
+    source_index = source;
 
     bsal_input_command_unpack(&payload, buffer, bsal_actor_get_ephemeral_memory(actor),
                     &concrete_actor->codec);
@@ -762,7 +755,7 @@ void bsal_dna_kmer_counter_kernel_push_sequence_data_block(struct bsal_actor *ac
     bsal_memory_pool_free(ephemeral_memory, new_buffer);
 
     bsal_actor_helper_send_empty(actor,
-                    bsal_actor_get_acquaintance(actor, source_index),
+                    source_index,
                     BSAL_PUSH_SEQUENCE_DATA_BLOCK_REPLY);
 
     if (concrete_actor->actual == concrete_actor->expected

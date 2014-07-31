@@ -20,7 +20,7 @@ struct bsal_aggregator {
     uint64_t last;
     int kmer_length;
 
-    struct bsal_vector customers;
+    struct bsal_vector consumers;
 
     struct bsal_ring_queue stalled_producers;
 

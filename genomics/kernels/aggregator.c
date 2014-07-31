@@ -62,7 +62,7 @@ void bsal_aggregator_init(struct bsal_actor *self)
     concrete_actor->received = 0;
     concrete_actor->last = 0;
 
-    bsal_vector_init(&concrete_actor->customers, sizeof(int));
+    bsal_vector_init(&concrete_actor->consumers, sizeof(int));
 
     concrete_actor->flushed = 0;
 
@@ -106,7 +106,7 @@ void bsal_aggregator_destroy(struct bsal_actor *self)
 
     bsal_ring_queue_destroy(&concrete_actor->stalled_producers);
 
-    bsal_vector_destroy(&concrete_actor->customers);
+    bsal_vector_destroy(&concrete_actor->consumers);
 
 }
 
@@ -153,7 +153,7 @@ void bsal_aggregator_receive(struct bsal_actor *self, struct bsal_message *messa
         printf("BEFORE BSAL_PUSH_KMER_BLOCK_REPLY %d\n", concrete_actor->active_messages);
 #endif
 
-        consumer_index_index = bsal_actor_helper_get_acquaintance_index(self, &concrete_actor->customers, source);
+        consumer_index_index = bsal_vector_index_of(&concrete_actor->consumers, &source);
 
         bucket = (int *)bsal_vector_at(&concrete_actor->active_messages, consumer_index_index);
 
@@ -186,7 +186,7 @@ void bsal_aggregator_flush(struct bsal_actor *self, int customer_index, struct b
     concrete_actor = (struct bsal_aggregator *)bsal_actor_concrete_actor(self);
 
     ephemeral_memory = bsal_actor_get_ephemeral_memory(self);
-    customer = bsal_actor_helper_get_acquaintance(self, &concrete_actor->customers, customer_index);
+    customer = bsal_vector_helper_at_as_int(&concrete_actor->consumers, customer_index);
     customer_block_pointer = (struct bsal_dna_kmer_frequency_block *)bsal_vector_at(buffers, customer_index);
 
     BSAL_DEBUGGER_ASSERT(customer_block_pointer != NULL);
@@ -273,7 +273,7 @@ void bsal_aggregator_verify(struct bsal_actor *self, struct bsal_message *messag
     while (bsal_ring_queue_dequeue(&concrete_actor->stalled_producers, &producer_index)) {
         /* tell the producer to continue...
          */
-        producer = bsal_actor_get_acquaintance(self, producer_index);
+        producer = producer_index;
         bsal_actor_helper_send_empty(self, producer, BSAL_AGGREGATE_KERNEL_OUTPUT_REPLY);
     }
 }
@@ -299,7 +299,7 @@ void bsal_aggregator_aggregate_kernel_output(struct bsal_actor *self, struct bsa
 
     concrete_actor = (struct bsal_aggregator *)bsal_actor_concrete_actor(self);
 
-    if (bsal_vector_size(&concrete_actor->customers) == 0) {
+    if (bsal_vector_size(&concrete_actor->consumers) == 0) {
         printf("Error: aggregator %d has no configured buffers\n",
                         bsal_actor_get_name(self));
         return;
@@ -312,11 +312,11 @@ void bsal_aggregator_aggregate_kernel_output(struct bsal_actor *self, struct bsa
     bsal_vector_init(&buffers, sizeof(struct bsal_dna_kmer_frequency_block));
 
     bsal_vector_resize(&buffers,
-                    bsal_vector_size(&concrete_actor->customers));
+                    bsal_vector_size(&concrete_actor->consumers));
 
     /* enqueue the producer
      */
-    producer_index = bsal_actor_add_acquaintance(self, source);
+    producer_index = source;
     bsal_ring_queue_enqueue(&concrete_actor->stalled_producers, &producer_index);
 
 
@@ -342,7 +342,7 @@ void bsal_aggregator_aggregate_kernel_output(struct bsal_actor *self, struct bsa
     kmers = bsal_dna_kmer_block_kmers(&input_block);
     entries = bsal_vector_size(kmers);
 
-    customer_count = bsal_vector_size(&concrete_actor->customers);
+    customer_count = bsal_vector_size(&concrete_actor->consumers);
 
     concrete_actor->customer_block_size = (entries / customer_count) * 2;
 
@@ -350,7 +350,7 @@ void bsal_aggregator_aggregate_kernel_output(struct bsal_actor *self, struct bsa
      * Reserve entries
      */
 
-    for (i = 0; i < bsal_vector_size(&concrete_actor->customers); i++) {
+    for (i = 0; i < bsal_vector_size(&concrete_actor->consumers); i++) {
 
         customer_block_pointer = (struct bsal_dna_kmer_frequency_block *)bsal_vector_at(&buffers,
                         i);
@@ -505,7 +505,6 @@ void bsal_aggregator_unpack_message(struct bsal_actor *actor, struct bsal_messag
 
 int bsal_aggregator_set_consumers(struct bsal_actor *actor, void *buffer)
 {
-    struct bsal_vector customers;
     struct bsal_aggregator *concrete_actor;
     int bytes;
     int size;
@@ -517,12 +516,10 @@ int bsal_aggregator_set_consumers(struct bsal_actor *actor, void *buffer)
     /*
      * receive customer list
      */
-    bsal_vector_init(&customers, 0);
-    bytes = bsal_vector_unpack(&customers, buffer);
+    bsal_vector_init(&concrete_actor->consumers, 0);
+    bytes = bsal_vector_unpack(&concrete_actor->consumers, buffer);
 
-    bsal_actor_helper_add_acquaintances(actor, &customers, &concrete_actor->customers);
-
-    size = bsal_vector_size(&customers);
+    size = bsal_vector_size(&concrete_actor->consumers);
 
     bsal_vector_resize(&concrete_actor->active_messages, size);
 
@@ -550,15 +547,13 @@ int bsal_aggregator_set_consumers(struct bsal_actor *actor, void *buffer)
 
     printf("DEBUG45 aggregator %d preparing %d buffers, kmer_length %d\n",
                     bsal_actor_get_name(actor),
-                        (int)bsal_vector_size(&concrete_actor->customers),
+                        (int)bsal_vector_size(&concrete_actor->consumers),
                         concrete_actor->kmer_length);
 
 #ifdef BSAL_AGGREGATOR_DEBUG
-    printf("DEBUG aggregator configured %d customers\n",
-                        (int)bsal_vector_size(&concrete_actor->customers));
+    printf("DEBUG aggregator configured %d consumers\n",
+                        (int)bsal_vector_size(&concrete_actor->consumers));
 #endif
-
-    bsal_vector_destroy(&customers);
 
     return bytes;
 }
@@ -568,7 +563,6 @@ int bsal_aggregator_pack_unpack(struct bsal_actor *actor, int operation, void *b
     struct bsal_packer packer;
     int bytes;
     struct bsal_aggregator *concrete_actor;
-    struct bsal_vector consumers;
 
     concrete_actor = (struct bsal_aggregator *)bsal_actor_concrete_actor(actor);
 
@@ -599,16 +593,9 @@ int bsal_aggregator_pack_unpack(struct bsal_actor *actor, int operation, void *b
 
     } else {
 
-        bsal_vector_init(&consumers, sizeof(int));
-        bsal_actor_helper_get_acquaintances(actor,
-                        &concrete_actor->customers,
-                        &consumers);
-
-        bytes += bsal_vector_pack_unpack(&consumers,
+        bytes += bsal_vector_pack_unpack(&concrete_actor->consumers,
                         (char *)buffer + bytes,
                         operation);
-
-        bsal_vector_destroy(&consumers);
     }
 
     bsal_packer_destroy(&packer);

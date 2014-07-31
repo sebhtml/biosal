@@ -127,7 +127,7 @@ void bsal_sequence_store_receive(struct bsal_actor *actor, struct bsal_message *
 
     } else if (tag == BSAL_SEQUENCE_STORE_REQUEST_PROGRESS) {
 
-        concrete_actor->progress_supervisor = bsal_actor_add_acquaintance(actor, source);
+        concrete_actor->progress_supervisor = source;
     }
 }
 
@@ -264,7 +264,7 @@ void bsal_sequence_store_reserve(struct bsal_actor *actor, struct bsal_message *
 
     concrete_actor->expected = amount;
 
-    concrete_actor->reservation_producer = bsal_actor_add_acquaintance(actor, source);
+    concrete_actor->reservation_producer = source;
     printf("DEBUG store %d reserves %" PRIu64 " buckets\n",
                     bsal_actor_get_name(actor),
                     amount);
@@ -308,8 +308,8 @@ void bsal_sequence_store_show_progress(struct bsal_actor *actor, struct bsal_mes
 
     if (concrete_actor->received == concrete_actor->expected) {
 
-        bsal_actor_helper_send_empty(actor, bsal_actor_get_acquaintance(actor,
-                                concrete_actor->reservation_producer),
+        bsal_actor_helper_send_empty(actor,
+                                concrete_actor->reservation_producer,
                         BSAL_SEQUENCE_STORE_READY);
     }
 }
@@ -453,8 +453,8 @@ void bsal_sequence_store_ask(struct bsal_actor *self, struct bsal_message *messa
 
         if (ratio >= 0.16) {
 
-            bsal_actor_helper_send_double(self, bsal_actor_get_acquaintance(self,
-                                    concrete_actor->progress_supervisor),
+            bsal_actor_helper_send_double(self,
+                                    concrete_actor->progress_supervisor,
                             BSAL_SEQUENCE_STORE_REQUEST_PROGRESS_REPLY,
                             ratio);
             concrete_actor->progress_supervisor = BSAL_ACTOR_NOBODY;

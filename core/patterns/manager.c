@@ -132,7 +132,7 @@ void bsal_manager_receive(struct bsal_actor *actor, struct bsal_message *message
             bsal_vector_iterator_next(&iterator, (void **)&bucket);
 
             spawner = *bucket;
-            index = bsal_actor_add_acquaintance(actor, spawner);
+            index = spawner;
 
             bsal_vector_push_back(&concrete_actor->indices, &index);
 
@@ -191,7 +191,7 @@ void bsal_manager_receive(struct bsal_actor *actor, struct bsal_message *message
 
         workers = *(int *)buffer;
 
-        index = bsal_actor_get_acquaintance_index(actor, source);
+        index = source;
 
         printf("DEBUG manager %d says that spawner %d is on a node with %d workers\n",
                         bsal_actor_get_name(actor), source, workers);
@@ -247,7 +247,7 @@ void bsal_manager_receive(struct bsal_actor *actor, struct bsal_message *message
     } else if (tag == BSAL_ACTOR_SPAWN_REPLY) {
 
         store = *(int *)buffer;
-        index = bsal_actor_get_acquaintance_index(actor, source);
+        index = source;
 
         stores = (struct bsal_vector *)bsal_map_get(&concrete_actor->spawner_children, &index);
         bucket = (int *)bsal_map_get(&concrete_actor->spawner_child_count, &index);

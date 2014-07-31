@@ -18,6 +18,14 @@
 #include <pthread.h>
 #include <stdint.h>
 
+/*
+ * Expose the actor acquaintance API.
+ *
+ * This is not a good thing to do.
+ */
+/*
+*/
+#define BSAL_ACTOR_EXPOSE_ACQUAINTANCE_VECTOR
 
 /* for control */
 #define BSAL_ACTOR_START 0x00000885
@@ -193,6 +201,7 @@ struct bsal_actor {
     struct bsal_vector acquaintance_vector;
     struct bsal_vector children;
     struct bsal_map acquaintance_map;
+    int acquaintance_index;
 
     struct bsal_queue enqueued_messages;
 
@@ -233,7 +242,6 @@ struct bsal_actor {
     int migration_progressed;
     int migration_forwarded_messages;
 
-    int acquaintance_index;
 };
 
 void bsal_actor_init(struct bsal_actor *actor, void *state,
@@ -329,12 +337,12 @@ void bsal_actor_set_node(struct bsal_actor *actor, struct bsal_node *node);
 void bsal_actor_migrate(struct bsal_actor *actor, struct bsal_message *message);
 void bsal_actor_notify_name_change(struct bsal_actor *actor, struct bsal_message *message);
 
-struct bsal_vector *bsal_actor_acquaintance_vector(struct bsal_actor *actor);
-int bsal_actor_add_acquaintance(struct bsal_actor *actor, int name);
-int bsal_actor_get_acquaintance(struct bsal_actor *actor, int index);
+struct bsal_vector *bsal_actor_acquaintance_vector_private(struct bsal_actor *actor);
+int bsal_actor_add_acquaintance_private(struct bsal_actor *actor, int name);
+int bsal_actor_get_acquaintance_private(struct bsal_actor *actor, int index);
 
-int bsal_actor_get_acquaintance_index(struct bsal_actor *actor, int name);
-int bsal_actor_acquaintance_count(struct bsal_actor *actor);
+int bsal_actor_get_acquaintance_index_private(struct bsal_actor *actor, int name);
+int bsal_actor_acquaintance_count_private(struct bsal_actor *actor);
 int bsal_actor_add_child(struct bsal_actor *actor, int name);
 int bsal_actor_get_child(struct bsal_actor *actor, int index);
 int bsal_actor_get_child_index(struct bsal_actor *actor, int name);
@@ -367,5 +375,19 @@ void bsal_actor_reset_counters(struct bsal_actor *actor);
 int bsal_actor_get_priority(struct bsal_actor *actor);
 void bsal_actor_set_priority(struct bsal_actor *actor, int priority);
 int bsal_actor_get_source_count(struct bsal_actor *actor);
+
+/*
+ * Expose the acquaintance API if required.
+ */
+#ifdef BSAL_ACTOR_EXPOSE_ACQUAINTANCE_VECTOR
+
+#define bsal_actor_acquaintance_vector bsal_actor_acquaintance_vector_private
+#define bsal_actor_add_acquaintance bsal_actor_add_acquaintance_private
+#define bsal_actor_get_acquaintance bsal_actor_get_acquaintance_private
+
+#define bsal_actor_get_acquaintance_index bsal_actor_get_acquaintance_index_private
+#define bsal_actor_acquaintance_count bsal_actor_acquaintance_count_private
+
+#endif
 
 #endif

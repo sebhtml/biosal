@@ -2,6 +2,8 @@
 #ifndef BSAL_ACTOR_HELPER_H
 #define BSAL_ACTOR_HELPER_H
 
+#include <engine/thorium/actor.h>
+
 #include <stdint.h>
 
 struct bsal_actor;
@@ -27,6 +29,7 @@ void bsal_actor_helper_send_to_self_int(struct bsal_actor *actor, int tag, int v
 void bsal_actor_helper_send_to_supervisor_empty(struct bsal_actor *actor, int tag);
 void bsal_actor_helper_send_to_supervisor_int(struct bsal_actor *actor, int tag, int value);
 
+#ifdef BSAL_ACTOR_EXPOSE_ACQUAINTANCE_VECTOR
 /*
  * initialize avector and push actor names using a vector
  * of acquaintance indices
@@ -39,6 +42,7 @@ int bsal_actor_helper_get_acquaintance_index(struct bsal_actor *actor, struct bs
                 int name);
 void bsal_actor_helper_add_acquaintances(struct bsal_actor *actor,
                 struct bsal_vector *names, struct bsal_vector *indices);
+#endif
 
 void bsal_actor_helper_send_range_standard(struct bsal_actor *actor, struct bsal_vector *actors,
                 struct bsal_message *message);
