@@ -34,7 +34,20 @@
 
 #define BSAL_WORKER_UNPRODUCTIVE_TICK_LIMIT 256
 
-#define BSAL_WORKER_UNPRODUCTIVE_TIC_COUNT_FOR_WAIT 512
+/*
+ * The amount required idle time to go to sleep
+ * for a worker.
+ *
+ * The current value is high because it is assumed
+ * that they are usually busy.
+ *
+ * TODO lower this value.
+ */
+#define BSAL_WORKER_UNPRODUCTIVE_MICROSECONDS_FOR_WAIT (64 * 1000)
+
+/*
+#define BSAL_WORKER_DEBUG_WAIT_SIGNAL
+*/
 
 /*
  * Print scheduling queue for debugging purposes
@@ -55,6 +68,7 @@ void bsal_worker_init(struct bsal_worker *worker, int name, struct bsal_node *no
     int ephemeral_memory_block_size;
 
     worker->waiting_is_enabled = 0;
+    worker->waiting_start_time = 0;
 
     bsal_timer_init(&worker->timer);
     capacity = BSAL_WORKER_RING_CAPACITY;
@@ -523,72 +537,7 @@ int bsal_worker_dequeue_actor(struct bsal_worker *worker, struct bsal_actor **ac
 
     }
 
-    /*
-     * If no actor is scheduled to run, things are getting out of hand
-     * and this is bad for business.
-     *
-     * So, here, an actor is poked for inactivity
-     */
-    if (!value) {
-        ++worker->ticks_without_production;
-    } else {
-        worker->ticks_without_production = 0;
-    }
-
-    /*
-     * If too many cycles were spent doing nothing,
-     * check the fast ring since there could be issue in the
-     * cache coherency of the CPU, even with the memory fences.
-     *
-     * This should not happen theoretically.
-     *
-     */
-    if (worker->ticks_without_production >= BSAL_WORKER_UNPRODUCTIVE_TICK_LIMIT) {
-
-        if (bsal_map_iterator_get_next_key_and_value(&worker->actor_iterator, &name, NULL)) {
-
-            other_actor = bsal_node_get_actor_from_name(worker->node, name);
-
-            mailbox_size = 0;
-            if (other_actor != NULL) {
-                mailbox_size = bsal_actor_get_mailbox_size(other_actor);
-            }
-
-            if (mailbox_size > 0) {
-                bsal_scheduling_queue_enqueue(&worker->scheduling_queue, other_actor);
-
-                status = STATUS_QUEUED;
-                bsal_map_update_value(&worker->actors, &name, &status);
-            }
-        } else {
-
-            /* Rewind the iterator.
-             */
-            bsal_map_iterator_destroy(&worker->actor_iterator);
-            bsal_map_iterator_init(&worker->actor_iterator, &worker->actors);
-
-            /*worker->ticks_without_production = 0;*/
-        }
-    }
-
-    /*
-     * If there is still nothing, tell the operating system that the thread
-     * needs to sleep.
-     *
-     * The operating system is:
-     * - Linux on Cray XE6,
-     * - Linux on Cray XC30,
-     * - IBM Compute Node Kernel (CNK) on IBM Blue Gene/Q),
-     */
-    if (worker->waiting_is_enabled
-                    && worker->ticks_without_production >= BSAL_WORKER_UNPRODUCTIVE_TIC_COUNT_FOR_WAIT) {
-
-        /*
-         * Here, the worker will wait until it receives a signal.
-         * Such a signal will mean that something is ready to be consumed.
-         */
-        bsal_worker_wait(worker);
-    }
+    bsal_worker_check_production(worker, value, name);
 
     return value;
 }
@@ -1304,4 +1253,108 @@ uint64_t bsal_worker_get_loop_wake_up_count(struct bsal_worker *worker)
 void bsal_worker_enable_waiting(struct bsal_worker *worker)
 {
     worker->waiting_is_enabled = 1;
+}
+
+void bsal_worker_check_production(struct bsal_worker *worker, int value, int name)
+{
+    uint64_t time;
+    uint64_t elapsed;
+    struct bsal_actor *other_actor;
+    int mailbox_size;
+    int status;
+
+    /*
+     * If no actor is scheduled to run, things are getting out of hand
+     * and this is bad for business.
+     *
+     * So, here, an actor is poked for inactivity
+     */
+    if (!value) {
+        ++worker->ticks_without_production;
+    } else {
+        worker->ticks_without_production = 0;
+    }
+
+    /*
+     * If too many cycles were spent doing nothing,
+     * check the fast ring since there could be issue in the
+     * cache coherency of the CPU, even with the memory fences.
+     *
+     * This should not happen theoretically.
+     *
+     */
+    if (worker->ticks_without_production >= BSAL_WORKER_UNPRODUCTIVE_TICK_LIMIT) {
+
+        if (bsal_map_iterator_get_next_key_and_value(&worker->actor_iterator, &name, NULL)) {
+
+            other_actor = bsal_node_get_actor_from_name(worker->node, name);
+
+            mailbox_size = 0;
+            if (other_actor != NULL) {
+                mailbox_size = bsal_actor_get_mailbox_size(other_actor);
+            }
+
+            if (mailbox_size > 0) {
+                bsal_scheduling_queue_enqueue(&worker->scheduling_queue, other_actor);
+
+                status = STATUS_QUEUED;
+                bsal_map_update_value(&worker->actors, &name, &status);
+            }
+        } else {
+
+            /* Rewind the iterator.
+             */
+            bsal_map_iterator_destroy(&worker->actor_iterator);
+            bsal_map_iterator_init(&worker->actor_iterator, &worker->actors);
+
+            /*worker->ticks_without_production = 0;*/
+        }
+
+    /*
+     * If there is still nothing, tell the operating system that the thread
+     * needs to sleep.
+     *
+     * The operating system is:
+     * - Linux on Cray XE6,
+     * - Linux on Cray XC30,
+     * - IBM Compute Node Kernel (CNK) on IBM Blue Gene/Q),
+     */
+        if (worker->waiting_is_enabled) {
+
+            /* This is a first warning
+             */
+            if (worker->waiting_start_time == 0) {
+                worker->waiting_start_time = bsal_timer_get_nanoseconds(&worker->timer);
+
+            } else {
+
+                time = bsal_timer_get_nanoseconds(&worker->timer);
+
+                elapsed = time - worker->waiting_start_time;
+
+                /* Verify the elapsed time.
+                 * There are 1000 nanoseconds in 1 microsecond.
+                 */
+                if (elapsed >= BSAL_WORKER_UNPRODUCTIVE_MICROSECONDS_FOR_WAIT * 1000) {
+                    /*
+                     * Here, the worker will wait until it receives a signal.
+                     * Such a signal will mean that something is ready to be consumed.
+                     */
+
+                    /* Reset the time
+                     */
+                    worker->waiting_start_time = 0;
+
+#ifdef BSAL_WORKER_DEBUG_WAIT_SIGNAL
+                    printf("DEBUG worker/%d will wait, elapsed %d\n",
+                                    worker->name, (int)elapsed);
+#endif
+
+                    /*
+                     */
+                    bsal_worker_wait(worker);
+                }
+            }
+        }
+    }
 }

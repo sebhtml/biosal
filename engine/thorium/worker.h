@@ -126,6 +126,8 @@ struct bsal_worker {
     struct bsal_priority_scheduler scheduler;
 
     uint64_t last_wake_up_count;
+
+    uint64_t waiting_start_time;
 };
 
 void bsal_worker_init(struct bsal_worker *worker, int name, struct bsal_node *node);
@@ -186,5 +188,6 @@ uint64_t bsal_worker_get_loop_wake_up_count(struct bsal_worker *worker);
 
 void bsal_worker_enable_waiting(struct bsal_worker *worker);
 time_t bsal_worker_get_last_report_time(struct bsal_worker *worker);
+void bsal_worker_check_production(struct bsal_worker *worker, int value, int name);
 
 #endif

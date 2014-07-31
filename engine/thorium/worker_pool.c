@@ -782,7 +782,7 @@ void bsal_worker_pool_wake_up_workers(struct bsal_worker_pool *pool)
     struct bsal_worker *worker;
     int elapsed;
 
-    period = 16;
+    period = 1;
 
     /*
      * Send a signal to any worker without activity.
