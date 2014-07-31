@@ -24,8 +24,8 @@
  * This is not a good thing to do.
  */
 /*
-*/
 #define BSAL_ACTOR_EXPOSE_ACQUAINTANCE_VECTOR
+*/
 
 /* for control */
 #define BSAL_ACTOR_START 0x00000885

@@ -10,6 +10,8 @@ struct frame {
     int value;
     int migrated_other;
     int pings;
+
+    struct bsal_vector acquaintance_vector;
 };
 
 extern struct bsal_script frame_script;

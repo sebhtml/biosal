@@ -24,6 +24,7 @@ void frame_init(struct bsal_actor *actor)
 
     concrete_actor->migrated_other = 0;
     concrete_actor->pings = 0;
+    bsal_vector_init(&concrete_actor->acquaintance_vector, sizeof(int));
 }
 
 void frame_destroy(struct bsal_actor *actor)
@@ -32,6 +33,8 @@ void frame_destroy(struct bsal_actor *actor)
 
     concrete_actor = (struct frame *)bsal_actor_concrete_actor(actor);
     concrete_actor->value = -1;
+
+    bsal_vector_destroy(&concrete_actor->acquaintance_vector);
 }
 
 void frame_receive(struct bsal_actor *actor, struct bsal_message *message)
@@ -50,7 +53,8 @@ void frame_receive(struct bsal_actor *actor, struct bsal_message *message)
     tag = bsal_message_tag(message);
     name = bsal_actor_get_name(actor);
     buffer = bsal_message_buffer(message);
-    acquaintance_vector = bsal_actor_acquaintance_vector(actor);
+    acquaintance_vector = &concrete_actor->acquaintance_vector;
+
 
     if (tag == BSAL_ACTOR_START) {
 
