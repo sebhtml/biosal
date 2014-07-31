@@ -296,13 +296,13 @@ void bsal_worker_stop(struct bsal_worker *worker)
     worker->loop_end_in_nanoseconds = bsal_timer_get_nanoseconds(&worker->timer);
 }
 
-int bsal_worker_is_busy(struct bsal_worker *self)
+int bsal_worker_is_busy(struct bsal_worker *worker)
 {
-    return self->busy;
+    return worker->busy;
 }
 
 
-int bsal_worker_get_scheduled_message_count(struct bsal_worker *self)
+int bsal_worker_get_scheduled_message_count(struct bsal_worker *worker)
 {
     int value;
     struct bsal_map_iterator map_iterator;
@@ -310,12 +310,12 @@ int bsal_worker_get_scheduled_message_count(struct bsal_worker *self)
     int messages;
     struct bsal_actor *actor;
 
-    bsal_map_iterator_init(&map_iterator, &self->actors);
+    bsal_map_iterator_init(&map_iterator, &worker->actors);
 
     value = 0;
     while (bsal_map_iterator_get_next_key_and_value(&map_iterator, &actor_name, NULL)) {
 
-        actor = bsal_node_get_actor_from_name(self->node, actor_name);
+        actor = bsal_node_get_actor_from_name(worker->node, actor_name);
 
         if (actor == NULL) {
             continue;
@@ -330,19 +330,24 @@ int bsal_worker_get_scheduled_message_count(struct bsal_worker *self)
     return value;
 }
 
-float bsal_worker_get_epoch_load(struct bsal_worker *self)
+float bsal_worker_get_epoch_load(struct bsal_worker *worker)
 {
-    return self->epoch_load;
+    return worker->epoch_load;
 }
 
-float bsal_worker_get_loop_load(struct bsal_worker *self)
+time_t bsal_worker_get_last_report_time(struct bsal_worker *worker)
+{
+    return worker->last_report;
+}
+
+float bsal_worker_get_loop_load(struct bsal_worker *worker)
 {
     float loop_load;
     uint64_t elapsed_from_start;
     uint64_t current_nanoseconds;
 
-    current_nanoseconds = self->loop_end_in_nanoseconds;
-    elapsed_from_start = current_nanoseconds - self->loop_start_in_nanoseconds;
+    current_nanoseconds = worker->loop_end_in_nanoseconds;
+    elapsed_from_start = current_nanoseconds - worker->loop_start_in_nanoseconds;
 
     /* This code path is currently not implemented when using
      * only 1 thread
@@ -351,7 +356,7 @@ float bsal_worker_get_loop_load(struct bsal_worker *self)
         return 0;
     }
 
-    loop_load = (0.0 + self->loop_used_nanoseconds) / elapsed_from_start;
+    loop_load = (0.0 + worker->loop_used_nanoseconds) / elapsed_from_start;
 
     /* Avoid negative zeros
      */
@@ -812,7 +817,7 @@ int bsal_worker_enqueue_actor_special(struct bsal_worker *worker, struct bsal_ac
     return bsal_worker_enqueue_actor(worker, actor);
 }
 
-int bsal_worker_get_sum_of_received_actor_messages(struct bsal_worker *self)
+int bsal_worker_get_sum_of_received_actor_messages(struct bsal_worker *worker)
 {
     int value;
     struct bsal_map_iterator iterator;
@@ -820,12 +825,12 @@ int bsal_worker_get_sum_of_received_actor_messages(struct bsal_worker *self)
     int messages;
     struct bsal_actor *actor;
 
-    bsal_map_iterator_init(&iterator, &self->actors);
+    bsal_map_iterator_init(&iterator, &worker->actors);
 
     value = 0;
     while (bsal_map_iterator_get_next_key_and_value(&iterator, &actor_name, NULL)) {
 
-        actor = bsal_node_get_actor_from_name(self->node, actor_name);
+        actor = bsal_node_get_actor_from_name(worker->node, actor_name);
 
         if (actor == NULL) {
             continue;
@@ -841,7 +846,7 @@ int bsal_worker_get_sum_of_received_actor_messages(struct bsal_worker *self)
     return value;
 }
 
-int bsal_worker_get_queued_messages(struct bsal_worker *self)
+int bsal_worker_get_queued_messages(struct bsal_worker *worker)
 {
     int value;
     struct bsal_map_iterator map_iterator;
@@ -849,12 +854,12 @@ int bsal_worker_get_queued_messages(struct bsal_worker *self)
     int messages;
     struct bsal_actor *actor;
 
-    bsal_map_iterator_init(&map_iterator, &self->actors);
+    bsal_map_iterator_init(&map_iterator, &worker->actors);
 
     value = 0;
     while (bsal_map_iterator_get_next_key_and_value(&map_iterator, &actor_name, NULL)) {
 
-        actor = bsal_node_get_actor_from_name(self->node, actor_name);
+        actor = bsal_node_get_actor_from_name(worker->node, actor_name);
 
         if (actor == NULL) {
             continue;
@@ -999,15 +1004,15 @@ void bsal_worker_free_message(struct bsal_worker *worker, struct bsal_message *m
 
 /* Just return the number of queued messages.
  */
-int bsal_worker_get_message_production_score(struct bsal_worker *self)
+int bsal_worker_get_message_production_score(struct bsal_worker *worker)
 {
     int score;
 
     score = 0;
 
-    score += bsal_fast_ring_size_from_producer(&self->outbound_message_queue);
+    score += bsal_fast_ring_size_from_producer(&worker->outbound_message_queue);
 
-    score += bsal_ring_queue_size(&self->outbound_message_queue_buffer);
+    score += bsal_ring_queue_size(&worker->outbound_message_queue_buffer);
 
     return score;
 }
@@ -1022,8 +1027,8 @@ void bsal_worker_run(struct bsal_worker *worker)
 #endif
 
 #ifdef BSAL_NODE_ENABLE_INSTRUMENTATION
-    clock_t current_time;
-    clock_t elapsed;
+    time_t current_time;
+    int elapsed;
     int period;
     uint64_t current_nanoseconds;
     uint64_t elapsed_nanoseconds;

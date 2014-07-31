@@ -188,7 +188,10 @@ void bsal_worker_pool_create_workers(struct bsal_worker_pool *pool)
         worker = bsal_worker_pool_get_worker(pool, i);
         bsal_worker_init(worker, i, pool->node);
 
-        bsal_worker_enable_waiting(worker);
+        if (pool->waiting_is_enabled) {
+            bsal_worker_enable_waiting(worker);
+        }
+
         bsal_vector_helper_set_int(&pool->message_count_cache, i, 0);
     }
 }
@@ -786,6 +789,7 @@ void bsal_worker_pool_wake_up_workers(struct bsal_worker_pool *pool)
     time_t current_time;
     int period;
     struct bsal_worker *worker;
+    int elapsed;
 
     period = 16;
 
@@ -804,12 +808,13 @@ void bsal_worker_pool_wake_up_workers(struct bsal_worker_pool *pool)
 
             worker = bsal_worker_pool_get_worker(pool, i);
             load = bsal_worker_get_epoch_load(worker);
+            elapsed = current_time - bsal_worker_get_last_report_time(worker);
 
             /*
              * Wake up the worker (for instance, worker/8)
              * so that it pulls something.
              */
-            if (load < 0.1) {
+            if (load < 0.1 || elapsed >= 1) {
                 bsal_worker_signal(worker);
             }
 

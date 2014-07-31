@@ -825,6 +825,10 @@ void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message)
 
                 bsal_actor_helper_send_int(actor, distribution, BSAL_SET_EXPECTED_MESSAGES, bsal_vector_size(&kmer_stores));
 
+                printf("ISSUE_481 argonnite %d sends BSAL_PUSH_DATA to %d stores\n",
+                                bsal_actor_get_name(actor),
+                                (int)bsal_vector_size(&kmer_stores));
+
                 bsal_actor_helper_send_range_empty(actor, &kmer_stores, BSAL_PUSH_DATA);
                 bsal_vector_destroy(&kmer_stores);
 

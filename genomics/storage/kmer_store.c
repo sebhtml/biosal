@@ -263,6 +263,9 @@ void bsal_kmer_store_receive(struct bsal_actor *self, struct bsal_message *messa
 
     } else if (tag == BSAL_PUSH_DATA) {
 
+        printf("DEBUG kmer store %d receives BSAL_PUSH_DATA\n",
+                        bsal_actor_get_name(self));
+
         bsal_kmer_store_push_data(self, message);
 
     } else if (tag == BSAL_STORE_GET_ENTRY_COUNT) {

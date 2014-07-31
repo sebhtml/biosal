@@ -108,7 +108,7 @@ struct bsal_worker {
      */
     int busy;
 
-    uint64_t last_report;
+    time_t last_report;
     uint64_t epoch_start_in_nanoseconds;
     uint64_t epoch_used_nanoseconds;
     float epoch_load;
@@ -185,5 +185,6 @@ uint64_t bsal_worker_get_epoch_wake_up_count(struct bsal_worker *worker);
 uint64_t bsal_worker_get_loop_wake_up_count(struct bsal_worker *worker);
 
 void bsal_worker_enable_waiting(struct bsal_worker *worker);
+time_t bsal_worker_get_last_report_time(struct bsal_worker *worker);
 
 #endif
