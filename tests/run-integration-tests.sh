@@ -13,7 +13,7 @@ function main()
     local failed
     local wall_time
 
-    for real_test in mini medium medium-2 run-argonnite-1
+    for real_test in $(cat tests/integration-tests.txt)
     do
         rm -rf output &> /dev/null
 
