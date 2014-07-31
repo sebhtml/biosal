@@ -90,6 +90,14 @@ void bsal_worker_pool_init(struct bsal_worker_pool *pool, int workers,
     bsal_message_queue_init(&pool->message_queue);
 #endif
 
+    /*
+     * Enable the wait/notify algorithm if running on more than
+     * one node.
+     */
+    if (bsal_node_nodes(pool->node) >= 2) {
+        pool->waiting_is_enabled = 1;
+    }
+
     bsal_worker_pool_create_workers(pool);
 
     pool->starting_time = time(NULL);
@@ -113,9 +121,6 @@ void bsal_worker_pool_init(struct bsal_worker_pool *pool, int workers,
 
     pool->balance_period = BSAL_SCHEDULER_PERIOD_IN_SECONDS;
 
-    if (bsal_node_nodes(pool->node) >= 2) {
-        pool->waiting_is_enabled = 1;
-    }
 }
 
 void bsal_worker_pool_destroy(struct bsal_worker_pool *pool)
