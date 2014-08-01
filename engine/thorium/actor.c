@@ -874,11 +874,13 @@ void bsal_actor_receive(struct bsal_actor *actor, struct bsal_message *message)
     if (bsal_actor_receive_system(actor, message)) {
         return;
 
+#ifdef BSAL_ACTOR_DO_DISPATCH_IN_ABSTRACT_ACTOR
     /* otherwise, verify if the actor registered a
      * handler for this tag
      */
     } else if (bsal_actor_dispatch(actor, message)) {
         return;
+#endif
     }
 
     /* Otherwise, this is a message for the actor itself.

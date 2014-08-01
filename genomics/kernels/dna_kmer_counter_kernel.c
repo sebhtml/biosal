@@ -133,6 +133,10 @@ void bsal_dna_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_
     int count;
     int producer;
 
+    if (bsal_actor_dispatch(actor, message)) {
+        return;
+    }
+
     count = bsal_message_count(message);
 
     concrete_actor = (struct bsal_dna_kmer_counter_kernel *)bsal_actor_concrete_actor(actor);

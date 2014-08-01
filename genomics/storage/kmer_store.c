@@ -99,6 +99,10 @@ void bsal_kmer_store_receive(struct bsal_actor *self, struct bsal_message *messa
     int name;
 #endif
 
+    if (bsal_actor_dispatch(self, message)) {
+        return;
+    }
+
     ephemeral_memory = bsal_actor_get_ephemeral_memory(self);
     concrete_actor = (struct bsal_kmer_store *)bsal_actor_concrete_actor(self);
     tag = bsal_message_tag(message);

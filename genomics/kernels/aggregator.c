@@ -119,6 +119,10 @@ void bsal_aggregator_receive(struct bsal_actor *self, struct bsal_message *messa
     int consumer_index_index;
     int *bucket;
 
+    if (bsal_actor_dispatch(self, message)) {
+        return;
+    }
+
     concrete_actor = (struct bsal_aggregator *)bsal_actor_concrete_actor(self);
     buffer = bsal_message_buffer(message);
     tag = bsal_message_tag(message);

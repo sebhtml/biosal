@@ -104,6 +104,10 @@ void bsal_sequence_store_receive(struct bsal_actor *actor, struct bsal_message *
     int source;
     struct bsal_sequence_store *concrete_actor;
 
+    if (bsal_actor_dispatch(actor, message)) {
+        return;
+    }
+
     tag = bsal_message_tag(message);
     source = bsal_message_source(message);
     concrete_actor = (struct bsal_sequence_store *)bsal_actor_concrete_actor(actor);

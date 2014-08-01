@@ -224,6 +224,10 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
     int acquaintance_index;
     struct bsal_memory_pool *ephemeral_memory;
 
+    if (bsal_actor_dispatch(actor, message)) {
+        return;
+    }
+
     bsal_message_helper_get_all(message, &tag, &count, &buffer, &source);
 
     ephemeral_memory = (struct bsal_memory_pool *)bsal_actor_get_ephemeral_memory(actor);

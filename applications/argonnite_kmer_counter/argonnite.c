@@ -161,6 +161,10 @@ void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message)
     struct bsal_memory_pool *ephemeral_memory;
     int enable_work_stealing;
 
+    if (bsal_actor_dispatch(actor, message)) {
+        return;
+    }
+
     ephemeral_memory = bsal_actor_get_ephemeral_memory(actor);
     concrete_actor = (struct argonnite *)bsal_actor_concrete_actor(actor);
     tag = bsal_message_tag(message);

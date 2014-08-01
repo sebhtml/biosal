@@ -114,6 +114,10 @@ void bsal_input_stream_receive(struct bsal_actor *actor, struct bsal_message *me
     struct bsal_mega_block mega_block;
     char *file_name_in_buffer;
 
+    if (bsal_actor_dispatch(actor, message)) {
+        return;
+    }
+
     concrete_actor = (struct bsal_input_stream *)bsal_actor_concrete_actor(actor);
     tag = bsal_message_tag(message);
     source = bsal_message_source(message);
