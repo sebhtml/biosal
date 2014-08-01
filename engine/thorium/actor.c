@@ -725,6 +725,7 @@ int bsal_actor_receive_system(struct bsal_actor *actor, struct bsal_message *mes
         return 1;
 
     } else if (tag == BSAL_ACTOR_MIGRATE) {
+
         bsal_actor_migrate(actor, message);
         return 1;
 
@@ -1306,6 +1307,15 @@ void bsal_actor_migrate(struct bsal_actor *actor, struct bsal_message *message)
     tag = bsal_message_tag(message);
     source = bsal_message_source(message);
     name = bsal_actor_get_name(actor);
+
+    /*
+     * For migration, the same name is kept
+     */
+
+    bsal_actor_helper_send_reply_int(actor, BSAL_ACTOR_MIGRATE_REPLY,
+                    bsal_actor_get_name(actor));
+
+    return;
 
     if (actor->migration_cloned == 0) {
 
