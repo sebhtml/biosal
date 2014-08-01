@@ -287,7 +287,7 @@ void bsal_worker_pool_print_load(struct bsal_worker_pool *self, int type)
     int offset;
     int offset_for_wake_up;
     int extra;
-    clock_t current_time;
+    time_t current_time;
     int elapsed;
     float selected_load;
     uint64_t selected_wake_up_count;
