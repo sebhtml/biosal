@@ -6,8 +6,12 @@
 
 #define GC_RATIO_CALCULATOR_SCRIPT 0x74c20114
 
+#define GC_HELLO 0x00003fa8
+#define GC_HELLO_REPLY 0x00004790
+
 struct gc_ratio_calculator {
     struct bsal_vector spawners;
+    int completed;
 };
 
 extern struct bsal_script gc_ratio_calculator_script;
