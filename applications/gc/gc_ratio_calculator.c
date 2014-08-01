@@ -42,7 +42,6 @@ void gc_ratio_calculator_receive(struct bsal_actor *actor, struct bsal_message *
 
 void gc_ratio_calculator_start(struct bsal_actor *actor, struct bsal_message *message)
 {
-    struct bsal_message new_message;
     int name;
     int tag;
     int source;
@@ -50,7 +49,6 @@ void gc_ratio_calculator_start(struct bsal_actor *actor, struct bsal_message *me
     int size;
     int neighbor_index;
     int neighbor_name;
-    int boss;
     void * buffer;
 
     struct gc_ratio_calculator *concrete_actor;
@@ -66,7 +64,7 @@ void gc_ratio_calculator_start(struct bsal_actor *actor, struct bsal_message *me
     size = bsal_vector_size(spawners);
 
     printf("received BSAL_ACTOR_START\n");
-        
+
     bsal_vector_unpack(spawners, buffer);
     size = bsal_vector_size(spawners);
     index = bsal_vector_index_of(spawners, &name);
@@ -82,29 +80,6 @@ void gc_ratio_calculator_start(struct bsal_actor *actor, struct bsal_message *me
 
 void gc_ratio_calculator_hello(struct bsal_actor *actor, struct bsal_message *message)
 {
-    struct bsal_message new_message;
-    int name;
-    int tag;
-    int source;
-    int index;
-    int size;
-    int neighbor_index;
-    int neighbor_name;
-    int boss;
-    void * buffer;
-
-    struct gc_ratio_calculator *concrete_actor;
-    struct bsal_vector *spawners;
-
-    concrete_actor = bsal_actor_concrete_actor(actor);
-
-    name = bsal_actor_get_name(actor);
-    tag = bsal_message_tag(message);
-    buffer = bsal_message_buffer(message);
-    source = bsal_message_source(message);
-    spawners = &concrete_actor->spawners;
-    size = bsal_vector_size(spawners);
-
     printf("received GC_HELLO\n");
 
     bsal_actor_helper_send_reply_empty(actor, GC_HELLO_REPLY);
@@ -114,14 +89,8 @@ void gc_ratio_calculator_hello_reply(struct bsal_actor *actor, struct bsal_messa
 {
     struct bsal_message new_message;
     int name;
-    int tag;
     int source;
-    int index;
-    int size;
-    int neighbor_index;
-    int neighbor_name;
     int boss;
-    void * buffer;
 
     struct gc_ratio_calculator *concrete_actor;
     struct bsal_vector *spawners;
@@ -129,11 +98,8 @@ void gc_ratio_calculator_hello_reply(struct bsal_actor *actor, struct bsal_messa
     concrete_actor = bsal_actor_concrete_actor(actor);
 
     name = bsal_actor_get_name(actor);
-    tag = bsal_message_tag(message);
-    buffer = bsal_message_buffer(message);
     source = bsal_message_source(message);
     spawners = &concrete_actor->spawners;
-    size = bsal_vector_size(spawners);
 
     printf("Actor %d is satisfied with a reply from the neighbor %d.\n", name, source);
 
@@ -145,26 +111,13 @@ void gc_ratio_calculator_hello_reply(struct bsal_actor *actor, struct bsal_messa
 
 void gc_ratio_calculator_notify(struct bsal_actor *actor, struct bsal_message *message)
 {
-    struct bsal_message new_message;
-    int name;
-    int tag;
-    int source;
-    int index;
     int size;
-    int neighbor_index;
-    int neighbor_name;
-    int boss;
-    void * buffer;
 
     struct gc_ratio_calculator *concrete_actor;
     struct bsal_vector *spawners;
 
     concrete_actor = bsal_actor_concrete_actor(actor);
 
-    name = bsal_actor_get_name(actor);
-    tag = bsal_message_tag(message);
-    buffer = bsal_message_buffer(message);
-    source = bsal_message_source(message);
     spawners = &concrete_actor->spawners;
     size = bsal_vector_size(spawners);
 
@@ -174,36 +127,11 @@ void gc_ratio_calculator_notify(struct bsal_actor *actor, struct bsal_message *m
     if (concrete_actor->completed == size) {
         bsal_actor_helper_send_range_empty(actor, spawners, BSAL_ACTOR_ASK_TO_STOP);
     }
-    
 }
 
 void gc_ratio_calculator_ask_to_stop(struct bsal_actor *actor, struct bsal_message *message)
 {
-    struct bsal_message new_message;
-    int name;
-    int tag;
-    int source;
-    int index;
-    int size;
-    int neighbor_index;
-    int neighbor_name;
-    int boss;
-    void * buffer;
-
-    struct gc_ratio_calculator *concrete_actor;
-    struct bsal_vector *spawners;
-
-    concrete_actor = bsal_actor_concrete_actor(actor);
-
-    name = bsal_actor_get_name(actor);
-    tag = bsal_message_tag(message);
-    buffer = bsal_message_buffer(message);
-    source = bsal_message_source(message);
-    spawners = &concrete_actor->spawners;
-    size = bsal_vector_size(spawners);
-
     printf("received ASK_TO_STOP\n");
-
     bsal_actor_helper_send_to_self_empty(actor, BSAL_ACTOR_STOP);
 }
 
