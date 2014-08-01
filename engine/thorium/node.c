@@ -1699,7 +1699,7 @@ void bsal_node_run_loop(struct bsal_node *node)
 #ifdef BSAL_NODE_ENABLE_INSTRUMENTATION
     int ticks;
     int period;
-    clock_t current_time;
+    time_t current_time;
     char print_information = 0;
 
     if (node->print_load || node->print_counters) {
