@@ -97,8 +97,6 @@ void bsal_actor_init(struct bsal_actor *actor, void *state,
 
     bsal_map_init(&actor->acquaintance_map, sizeof(int), sizeof(int));
 
-    bsal_actor_register(actor, BSAL_ACTOR_FORWARD_MESSAGES, bsal_actor_forward_messages);
-
     /*
     bsal_actor_helper_send_to_self_empty(actor, BSAL_ACTOR_UNPIN_FROM_WORKER);
     bsal_actor_helper_send_to_self_empty(actor, BSAL_ACTOR_PIN_TO_NODE);
@@ -668,12 +666,6 @@ int bsal_actor_receive_system(struct bsal_actor *actor, struct bsal_message *mes
 
         return 1;
 
-    } else if (tag == BSAL_ACTOR_FORWARD_MESSAGES) {
-
-        /* the dispatcher can handle this one
-         */
-        return 0;
-
     } else if (tag == BSAL_ACTOR_MIGRATE_NOTIFY_ACQUAINTANCES) {
         bsal_actor_migrate_notify_acquaintances(actor, message);
         return 1;
@@ -828,7 +820,15 @@ int bsal_actor_receive_system(struct bsal_actor *actor, struct bsal_message *mes
         bsal_actor_helper_send_reply_int(actor, BSAL_ACTOR_GET_NODE_WORKER_COUNT_REPLY,
                         bsal_actor_node_worker_count(actor));
         return 1;
+
+    } else  if (tag == BSAL_ACTOR_FORWARD_MESSAGES) {
+
+        bsal_actor_forward_messages(actor, message);
+        return 1;
+
     }
+
+
 
     return 0;
 }
@@ -883,9 +883,12 @@ void bsal_actor_receive(struct bsal_actor *actor, struct bsal_message *message)
 #endif
     }
 
+
     /* Otherwise, this is a message for the actor itself.
      */
     receive = bsal_actor_get_receive(actor);
+
+    BSAL_DEBUGGER_ASSERT(receive != NULL);
 
 #ifdef BSAL_ACTOR_DEBUG_SYNC
     printf("DEBUG bsal_actor_receive calls concrete receive tag %d\n",
