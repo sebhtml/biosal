@@ -201,7 +201,7 @@ void bsal_priority_scheduler_increment(struct bsal_priority_scheduler *scheduler
     if (bsal_map_get_value(&scheduler->actor_source_frequencies, &new_source_count,
                             &new_source_count_old_frequency)) {
 
-        new_source_count_new_frequency = new_source_count_new_frequency + 1;
+        new_source_count_new_frequency = new_source_count_old_frequency + 1;
         bsal_map_update_value(&scheduler->actor_source_frequencies, &new_source_count,
                         &new_source_count_new_frequency);
 
