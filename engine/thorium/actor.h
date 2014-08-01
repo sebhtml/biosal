@@ -146,6 +146,11 @@ new name.
 #define BSAL_ACTOR_PING 0x000040b3
 #define BSAL_ACTOR_PING_REPLY 0x00006eda
 
+/* The notify messages can be used freely
+ */
+#define BSAL_ACTOR_NOTIFY 0x0000710b
+#define BSAL_ACTOR_NOTIFY_REPLY 0x00005f82
+
 /* Auto-scaling stuff
  */
 

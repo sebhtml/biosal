@@ -56,6 +56,7 @@ void bsal_actor_helper_send_empty(struct bsal_actor *actor, int destination, int
 
     bsal_message_init(&message, tag, 0, NULL);
     bsal_actor_send(actor, destination, &message);
+    bsal_message_destroy(&message);
 }
 
 void bsal_actor_helper_send_to_supervisor_empty(struct bsal_actor *actor, int tag)
@@ -94,6 +95,7 @@ void bsal_actor_helper_send_int(struct bsal_actor *actor, int destination, int t
 
     bsal_message_init(&message, tag, sizeof(value), &value);
     bsal_actor_send(actor, destination, &message);
+    bsal_message_destroy(&message);
 }
 
 void bsal_actor_helper_send_uint64_t(struct bsal_actor *actor, int destination, int tag, uint64_t value)
@@ -102,6 +104,7 @@ void bsal_actor_helper_send_uint64_t(struct bsal_actor *actor, int destination, 
 
     bsal_message_init(&message, tag, sizeof(value), &value);
     bsal_actor_send(actor, destination, &message);
+    bsal_message_destroy(&message);
 }
 
 void bsal_actor_helper_send_int64_t(struct bsal_actor *actor, int destination, int tag, int64_t value)
@@ -110,6 +113,7 @@ void bsal_actor_helper_send_int64_t(struct bsal_actor *actor, int destination, i
 
     bsal_message_init(&message, tag, sizeof(value), &value);
     bsal_actor_send(actor, destination, &message);
+    bsal_message_destroy(&message);
 }
 
 #ifdef BSAL_ACTOR_EXPOSE_ACQUAINTANCE_VECTOR
@@ -386,7 +390,6 @@ void bsal_actor_helper_send_range_empty(struct bsal_actor *actor, struct bsal_ve
 
     bsal_message_init(&message, tag, 0, NULL);
     bsal_actor_helper_send_range(actor, actors, &message);
-
     bsal_message_destroy(&message);
 }
 
@@ -397,7 +400,6 @@ void bsal_actor_helper_send_range_int(struct bsal_actor *actor, struct bsal_vect
 
     bsal_message_init(&message, tag, sizeof(value), &value);
     bsal_actor_helper_send_range(actor, actors, &message);
-
     bsal_message_destroy(&message);
 }
 
@@ -415,7 +417,6 @@ void bsal_actor_helper_send_range_vector(struct bsal_actor *actor, struct bsal_v
     bsal_vector_pack(vector, buffer);
     bsal_message_init(&message, tag, count, buffer);
     bsal_actor_helper_send_range(actor, actors, &message);
-
     bsal_message_destroy(&message);
 
     bsal_memory_pool_free(ephemeral_memory, buffer);
@@ -540,7 +541,6 @@ void bsal_actor_helper_send_double(struct bsal_actor *actor, int destination, in
 
     bsal_message_init(&message, tag, sizeof(value), &value);
     bsal_actor_send(actor, destination, &message);
-
     bsal_message_destroy(&message);
 }
 

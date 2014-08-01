@@ -474,6 +474,12 @@ int bsal_worker_dequeue_actor(struct bsal_worker *worker, struct bsal_actor **ac
      */
     value = bsal_scheduling_queue_dequeue(&worker->scheduling_queue, actor);
 
+    /* Setting name to nobody;
+     * check_production at the end uses the value and the name;
+     * if value is false, check_production is not using name anyway.
+     */
+    name = BSAL_ACTOR_NOBODY;
+
     /* an actor is ready to be run and it was dequeued from the scheduling queue.
      */
     if (value) {

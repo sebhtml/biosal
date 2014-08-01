@@ -44,7 +44,6 @@ void hello_receive(struct bsal_actor *actor, struct bsal_message *message)
 
     if (tag == BSAL_ACTOR_START) {
 
-        bsal_vector_init(&hello1->initial_helloes, 0);
         bsal_vector_unpack(&hello1->initial_helloes, buffer);
 
         printf("Hello world ! my name is actor:%d and I have %d acquaintances:",
@@ -56,7 +55,5 @@ void hello_receive(struct bsal_actor *actor, struct bsal_message *message)
         printf("\n");
 
         bsal_actor_helper_send_to_self_empty(actor, BSAL_ACTOR_STOP);
-
-        bsal_vector_destroy(&hello1->initial_helloes);
     }
 }
