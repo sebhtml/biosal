@@ -17,8 +17,8 @@ struct reader {
 
 extern struct bsal_script reader_script;
 
-void reader_init(struct bsal_actor *actor);
-void reader_destroy(struct bsal_actor *actor);
-void reader_receive(struct bsal_actor *actor, struct bsal_message *message);
+void reader_init(struct bsal_actor *self);
+void reader_destroy(struct bsal_actor *self);
+void reader_receive(struct bsal_actor *self, struct bsal_message *message);
 
 #endif

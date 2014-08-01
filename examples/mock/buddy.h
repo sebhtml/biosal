@@ -17,8 +17,8 @@ struct buddy {
 
 extern struct bsal_script buddy_script;
 
-void buddy_init(struct bsal_actor *actor);
-void buddy_destroy(struct bsal_actor *actor);
-void buddy_receive(struct bsal_actor *actor, struct bsal_message *message);
+void buddy_init(struct bsal_actor *self);
+void buddy_destroy(struct bsal_actor *self);
+void buddy_receive(struct bsal_actor *self, struct bsal_message *message);
 
 #endif

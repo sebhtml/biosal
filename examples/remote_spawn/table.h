@@ -18,8 +18,8 @@ struct table {
 
 extern struct bsal_script table_script;
 
-void table_init(struct bsal_actor *actor);
-void table_destroy(struct bsal_actor *actor);
-void table_receive(struct bsal_actor *actor, struct bsal_message *message);
+void table_init(struct bsal_actor *self);
+void table_destroy(struct bsal_actor *self);
+void table_receive(struct bsal_actor *self, struct bsal_message *message);
 
 #endif

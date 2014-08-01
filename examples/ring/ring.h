@@ -26,8 +26,8 @@ struct ring {
 
 extern struct bsal_script ring_script;
 
-void ring_init(struct bsal_actor *actor);
-void ring_destroy(struct bsal_actor *actor);
-void ring_receive(struct bsal_actor *actor, struct bsal_message *message);
+void ring_init(struct bsal_actor *self);
+void ring_destroy(struct bsal_actor *self);
+void ring_receive(struct bsal_actor *self, struct bsal_message *message);
 
 #endif

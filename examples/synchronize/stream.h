@@ -22,8 +22,8 @@ struct stream {
 
 extern struct bsal_script stream_script;
 
-void stream_init(struct bsal_actor *actor);
-void stream_destroy(struct bsal_actor *actor);
-void stream_receive(struct bsal_actor *actor, struct bsal_message *message);
+void stream_init(struct bsal_actor *self);
+void stream_destroy(struct bsal_actor *self);
+void stream_receive(struct bsal_actor *self, struct bsal_message *message);
 
 #endif

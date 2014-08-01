@@ -18,8 +18,8 @@ struct sender {
 
 extern struct bsal_script sender_script;
 
-void sender_init(struct bsal_actor *actor);
-void sender_destroy(struct bsal_actor *actor);
-void sender_receive(struct bsal_actor *actor, struct bsal_message *message);
+void sender_init(struct bsal_actor *self);
+void sender_destroy(struct bsal_actor *self);
+void sender_receive(struct bsal_actor *self, struct bsal_message *message);
 
 #endif

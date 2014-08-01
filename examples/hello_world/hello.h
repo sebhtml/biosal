@@ -12,8 +12,8 @@ struct hello {
 
 extern struct bsal_script hello_script;
 
-void hello_init(struct bsal_actor *actor);
-void hello_destroy(struct bsal_actor *actor);
-void hello_receive(struct bsal_actor *actor, struct bsal_message *message);
+void hello_init(struct bsal_actor *self);
+void hello_destroy(struct bsal_actor *self);
+void hello_receive(struct bsal_actor *self, struct bsal_message *message);
 
 #endif

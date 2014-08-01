@@ -16,8 +16,8 @@ struct process {
 
 extern struct bsal_script process_script;
 
-void process_init(struct bsal_actor *actor);
-void process_destroy(struct bsal_actor *actor);
-void process_receive(struct bsal_actor *actor, struct bsal_message *message);
+void process_init(struct bsal_actor *self);
+void process_destroy(struct bsal_actor *self);
+void process_receive(struct bsal_actor *self, struct bsal_message *message);
 
 #endif

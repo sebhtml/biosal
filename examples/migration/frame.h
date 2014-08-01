@@ -16,8 +16,8 @@ struct frame {
 
 extern struct bsal_script frame_script;
 
-void frame_init(struct bsal_actor *actor);
-void frame_destroy(struct bsal_actor *actor);
-void frame_receive(struct bsal_actor *actor, struct bsal_message *message);
+void frame_init(struct bsal_actor *self);
+void frame_destroy(struct bsal_actor *self);
+void frame_receive(struct bsal_actor *self, struct bsal_message *message);
 
 #endif

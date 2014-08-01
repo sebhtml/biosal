@@ -21,15 +21,15 @@ struct mock {
 
 extern struct bsal_script mock_script;
 
-void mock_init(struct bsal_actor *actor);
-void mock_destroy(struct bsal_actor *actor);
-void mock_receive(struct bsal_actor *actor, struct bsal_message *message);
+void mock_init(struct bsal_actor *self);
+void mock_destroy(struct bsal_actor *self);
+void mock_receive(struct bsal_actor *self, struct bsal_message *message);
 
-void mock_start(struct bsal_actor *actor, struct bsal_message *message);
-void mock_spawn_children(struct bsal_actor *actor);
-void mock_die(struct bsal_actor *actor, struct bsal_message *message);
+void mock_start(struct bsal_actor *self, struct bsal_message *message);
+void mock_spawn_children(struct bsal_actor *self);
+void mock_die(struct bsal_actor *self, struct bsal_message *message);
 
-void mock_add_contacts(struct bsal_actor *actor, struct bsal_message *message);
-void mock_share(struct bsal_actor *actor, struct bsal_message *message);
+void mock_add_contacts(struct bsal_actor *self, struct bsal_message *message);
+void mock_share(struct bsal_actor *self, struct bsal_message *message);
 
 #endif

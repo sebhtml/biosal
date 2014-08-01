@@ -21,8 +21,8 @@ struct root {
 
 extern struct bsal_script root_script;
 
-void root_init(struct bsal_actor *actor);
-void root_destroy(struct bsal_actor *actor);
-void root_receive(struct bsal_actor *actor, struct bsal_message *message);
+void root_init(struct bsal_actor *self);
+void root_destroy(struct bsal_actor *self);
+void root_receive(struct bsal_actor *self, struct bsal_message *message);
 
 #endif
