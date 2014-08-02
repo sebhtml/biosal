@@ -22,12 +22,12 @@
 #define MINIMUM_PERIOD 4096
 
 struct bsal_script bsal_sequence_store_script = {
-    .name = BSAL_SEQUENCE_STORE_SCRIPT,
+    .identifier = BSAL_SEQUENCE_STORE_SCRIPT,
     .init = bsal_sequence_store_init,
     .destroy = bsal_sequence_store_destroy,
     .receive = bsal_sequence_store_receive,
     .size = sizeof(struct bsal_sequence_store),
-    .description = "sequence_store"
+    .name = "sequence_store"
 };
 
 void bsal_sequence_store_init(struct bsal_actor *actor)

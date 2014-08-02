@@ -371,7 +371,7 @@ int bsal_actor_get_mailbox_size(struct bsal_actor *self);
 
 int bsal_actor_get_sum_of_received_messages(struct bsal_actor *self);
 int bsal_actor_work(struct bsal_actor *self);
-char *bsal_actor_get_description(struct bsal_actor *self);
+char *bsal_actor_script_name(struct bsal_actor *self);
 void bsal_actor_reset_counters(struct bsal_actor *self);
 
 int bsal_actor_get_priority(struct bsal_actor *self);

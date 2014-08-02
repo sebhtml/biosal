@@ -7,12 +7,12 @@
 #include <string.h>
 
 struct bsal_script ring_script = {
-    .name = RING_SCRIPT,
+    .identifier = RING_SCRIPT,
     .init = ring_init,
     .destroy = ring_destroy,
     .receive = ring_receive,
     .size = sizeof(struct ring),
-    .description = "ring"
+    .name = "ring"
 };
 
 #define RING_STEP_RECEIVE_SPAWNERS 0

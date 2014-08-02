@@ -8,12 +8,12 @@
 #include <string.h>
 
 struct bsal_script bsal_graph_store_script = {
-    .name = BSAL_GRAPH_STORE_SCRIPT,
+    .identifier = BSAL_GRAPH_STORE_SCRIPT,
     .init = bsal_graph_store_init,
     .destroy = bsal_graph_store_destroy,
     .receive = bsal_graph_store_receive,
     .size = sizeof(struct bsal_graph_store),
-    .description = "graph_store"
+    .name = "graph_store"
 };
 
 void bsal_graph_store_init(struct bsal_actor *actor)

@@ -4,12 +4,15 @@
 #include <stdio.h>
 
 struct bsal_script gc_ratio_calculator_script = {
-    .name = GC_RATIO_CALCULATOR_SCRIPT,
+    .identifier = GC_RATIO_CALCULATOR_SCRIPT,
     .init = gc_ratio_calculator_init,
     .destroy = gc_ratio_calculator_destroy,
     .receive = gc_ratio_calculator_receive,
     .size = sizeof(struct gc_ratio_calculator),
-    .description = "gc_ratio_calculator"
+    .name = "gc_ratio_calculator",
+    .author = "Fangfang Xia",
+    .version = "",
+    .description = ""
 };
 
 void gc_ratio_calculator_init(struct bsal_actor *actor)

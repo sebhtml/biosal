@@ -34,12 +34,12 @@
 #define ARGONNITE_STATE_PREPARE_SEQUENCE_STORES 1
 
 struct bsal_script argonnite_script = {
-    .name = ARGONNITE_SCRIPT,
+    .identifier = ARGONNITE_SCRIPT,
     .init = argonnite_init,
     .destroy = argonnite_destroy,
     .receive = argonnite_receive,
     .size = sizeof(struct argonnite),
-    .description = "argonnite"
+    .name = "argonnite"
 };
 
 void argonnite_init(struct bsal_actor *actor)

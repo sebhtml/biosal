@@ -45,13 +45,17 @@
 #define BSAL_AGGREGATOR_DEBUG_FLUSHING
 */
 
+
 struct bsal_script bsal_aggregator_script = {
-    .name = BSAL_AGGREGATOR_SCRIPT,
+    .identifier = BSAL_AGGREGATOR_SCRIPT,
+    .name = "aggregator",
+    .description = "",
+    .version = "",
+    .author = "Sebastien Boisvert",
+    .size = sizeof(struct bsal_aggregator),
     .init = bsal_aggregator_init,
     .destroy = bsal_aggregator_destroy,
-    .receive = bsal_aggregator_receive,
-    .size = sizeof(struct bsal_aggregator),
-    .description = "aggregator"
+    .receive = bsal_aggregator_receive
 };
 
 void bsal_aggregator_init(struct bsal_actor *self)

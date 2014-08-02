@@ -6,12 +6,12 @@
 #include <string.h>
 
 struct bsal_script sender_script = {
-    .name = SENDER_SCRIPT,
+    .identifier = SENDER_SCRIPT,
     .init = sender_init,
     .destroy = sender_destroy,
     .receive = sender_receive,
     .size = sizeof(struct sender),
-    .description = "sender"
+    .name = "sender"
 };
 
 void sender_init(struct bsal_actor *actor)

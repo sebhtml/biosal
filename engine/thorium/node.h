@@ -199,7 +199,7 @@ int bsal_node_threads_from_string(struct bsal_node *node,
                 char *required_threads, int index);
 
 void bsal_node_add_script(struct bsal_node *node, int name, struct bsal_script *script);
-struct bsal_script *bsal_node_find_script(struct bsal_node *node, int name);
+struct bsal_script *bsal_node_find_script(struct bsal_node *node, int identifier);
 int bsal_node_has_script(struct bsal_node *node, struct bsal_script *script);
 
 void bsal_node_send_to_node(struct bsal_node *node, int destination,

@@ -23,12 +23,12 @@
 */
 
 struct bsal_script bsal_sequence_partitioner_script = {
-    .name = BSAL_SEQUENCE_PARTITIONER_SCRIPT,
+    .identifier = BSAL_SEQUENCE_PARTITIONER_SCRIPT,
     .init = bsal_sequence_partitioner_init,
     .destroy = bsal_sequence_partitioner_destroy,
     .receive = bsal_sequence_partitioner_receive,
     .size = sizeof(struct bsal_sequence_partitioner),
-    .description = "sequence_partitioner"
+    .name = "sequence_partitioner"
 };
 
 void bsal_sequence_partitioner_init(struct bsal_actor *actor)

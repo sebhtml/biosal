@@ -4,12 +4,12 @@
 #include <stdio.h>
 
 struct bsal_script process_script = {
-    .name = PROCESS_SCRIPT,
+    .identifier = PROCESS_SCRIPT,
     .init = process_init,
     .destroy = process_destroy,
     .receive = process_receive,
     .size = sizeof(struct process),
-    .description = "process"
+    .name = "process"
 };
 
 void process_init(struct bsal_actor *actor)

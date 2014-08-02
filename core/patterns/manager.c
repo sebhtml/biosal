@@ -21,12 +21,15 @@
 */
 
 struct bsal_script bsal_manager_script = {
-    .name = BSAL_MANAGER_SCRIPT,
+    .identifier = BSAL_MANAGER_SCRIPT,
+    .name = "manager",
+    .description = "Manager",
+    .author = "Sebastien Boisvert",
+    .version = "",
+    .size = sizeof(struct bsal_manager),
     .init = bsal_manager_init,
     .destroy = bsal_manager_destroy,
-    .receive = bsal_manager_receive,
-    .size = sizeof(struct bsal_manager),
-    .description = "manager"
+    .receive = bsal_manager_receive
 };
 
 void bsal_manager_init(struct bsal_actor *actor)

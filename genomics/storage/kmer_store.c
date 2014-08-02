@@ -20,12 +20,12 @@
 #include <stdio.h>
 
 struct bsal_script bsal_kmer_store_script = {
-    .name = BSAL_KMER_STORE_SCRIPT,
+    .identifier = BSAL_KMER_STORE_SCRIPT,
     .init = bsal_kmer_store_init,
     .destroy = bsal_kmer_store_destroy,
     .receive = bsal_kmer_store_receive,
     .size = sizeof(struct bsal_kmer_store),
-    .description = "kmer_store"
+    .name = "kmer_store"
 };
 
 void bsal_kmer_store_init(struct bsal_actor *self)

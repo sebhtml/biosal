@@ -5,12 +5,12 @@
 #include <stdio.h>
 
 struct bsal_script mock_script = {
-    .name = MOCK_SCRIPT,
+    .identifier = MOCK_SCRIPT,
     .init = mock_init,
     .destroy = mock_destroy,
     .receive = mock_receive,
     .size = sizeof(struct mock),
-    .description = "mock"
+    .name = "mock"
 };
 
 void mock_init(struct bsal_actor *actor)

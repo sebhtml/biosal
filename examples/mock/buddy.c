@@ -5,12 +5,12 @@
 
 /* this script is required */
 struct bsal_script buddy_script = {
-    .name = BUDDY_SCRIPT,
+    .identifier = BUDDY_SCRIPT,
     .init = buddy_init,
     .destroy = buddy_destroy,
     .receive = buddy_receive,
     .size = sizeof(struct buddy),
-    .description = "buddy"
+    .name = "buddy"
 };
 
 void buddy_init(struct bsal_actor *actor)

@@ -665,7 +665,7 @@ void bsal_worker_print_actors(struct bsal_worker *worker, struct bsal_scheduler 
             difference = bsal_scheduler_get_actor_production(scheduler, actor);
 
             printf("  [%s/%d] mailbox: %d received: %d (+%d) producers: %d consumers: %d\n",
-                        bsal_actor_get_description(actor),
+                        bsal_actor_script_name(actor),
                         name, count, received,
                        difference,
                        producers, consumers);

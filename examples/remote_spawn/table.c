@@ -4,12 +4,12 @@
 #include <stdio.h>
 
 struct bsal_script table_script = {
-    .name = TABLE_SCRIPT,
+    .identifier = TABLE_SCRIPT,
     .init = table_init,
     .destroy = table_destroy,
     .receive = table_receive,
     .size = sizeof(struct table),
-    .description = "table"
+    .name = "table"
 };
 
 void table_init(struct bsal_actor *actor)

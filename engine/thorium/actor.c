@@ -211,7 +211,7 @@ void bsal_actor_print(struct bsal_actor *self)
     int sent = (int)bsal_counter_get(&self->counter, BSAL_COUNTER_SENT_MESSAGES);
 
     printf("INSPECT actor: %s/%d\n",
-                        bsal_actor_get_description(self),
+                        bsal_actor_script_name(self),
                         bsal_actor_name(self));
 
     printf("[bsal_actor_print] Name: %i Supervisor %i Node: %i, Thread: %i"
@@ -1092,7 +1092,7 @@ int bsal_actor_script(struct bsal_actor *self)
 
     BSAL_DEBUGGER_ASSERT(self->script != NULL);
 
-    return bsal_script_name(self->script);
+    return bsal_script_identifier(self->script);
 }
 
 void bsal_actor_add_script(struct bsal_actor *self, int name, struct bsal_script *script)
@@ -1875,9 +1875,9 @@ int bsal_actor_get_sum_of_received_messages(struct bsal_actor *self)
     return value;
 }
 
-char *bsal_actor_get_description(struct bsal_actor *self)
+char *bsal_actor_script_name(struct bsal_actor *self)
 {
-    return bsal_script_description(self->script);
+    return bsal_script_name(self->script);
 }
 
 void bsal_actor_reset_counters(struct bsal_actor *self)

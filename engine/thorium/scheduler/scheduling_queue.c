@@ -351,7 +351,7 @@ void bsal_scheduling_queue_print_with_priority(struct bsal_scheduling_queue *que
         printf("node/%d worker/%d [%i] actor %s/%d (%d messages)\n",
                         node, worker,
                         i,
-                        bsal_actor_get_description(actor),
+                        bsal_actor_script_name(actor),
                         bsal_actor_name(actor),
                         bsal_actor_get_mailbox_size(actor));
 

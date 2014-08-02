@@ -5,12 +5,12 @@
 #include <stdlib.h>
 
 struct bsal_script frame_script = {
-    .name = FRAME_SCRIPT,
+    .identifier = FRAME_SCRIPT,
     .init = frame_init,
     .destroy = frame_destroy,
     .receive = frame_receive,
     .size = sizeof(struct frame),
-    .description = "frame"
+    .name = "frame"
 };
 
 void frame_init(struct bsal_actor *actor)

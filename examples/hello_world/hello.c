@@ -4,12 +4,12 @@
 #include <stdio.h>
 
 struct bsal_script hello_script = {
-    .name = HELLO_SCRIPT,
+    .identifier = HELLO_SCRIPT,
     .init = hello_init,
     .destroy = hello_destroy,
     .receive = hello_receive,
     .size = sizeof(struct hello),
-    .description = "hello"
+    .name = "hello"
 };
 
 void hello_init(struct bsal_actor *actor)

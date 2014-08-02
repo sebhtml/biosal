@@ -1403,17 +1403,17 @@ void bsal_node_add_script(struct bsal_node *node, int name,
 
 int bsal_node_has_script(struct bsal_node *node, struct bsal_script *script)
 {
-    if (bsal_node_find_script(node, script->name) != NULL) {
+    if (bsal_node_find_script(node, bsal_script_identifier(script)) != NULL) {
         return 1;
     }
     return 0;
 }
 
-struct bsal_script *bsal_node_find_script(struct bsal_node *node, int name)
+struct bsal_script *bsal_node_find_script(struct bsal_node *node, int identifier)
 {
     struct bsal_script **script;
 
-    script = bsal_map_get(&node->scripts, &name);
+    script = bsal_map_get(&node->scripts, &identifier);
 
     if (script == NULL) {
         return NULL;

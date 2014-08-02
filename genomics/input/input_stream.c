@@ -23,12 +23,12 @@
 */
 
 struct bsal_script bsal_input_stream_script = {
-    .name = BSAL_INPUT_STREAM_SCRIPT,
+    .identifier = BSAL_INPUT_STREAM_SCRIPT,
     .init = bsal_input_stream_init,
     .destroy = bsal_input_stream_destroy,
     .receive = bsal_input_stream_receive,
     .size = sizeof(struct bsal_input_stream),
-    .description = "input_stream"
+    .name = "input_stream"
 };
 
 void bsal_input_stream_init(struct bsal_actor *actor)

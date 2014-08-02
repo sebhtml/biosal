@@ -8,12 +8,12 @@
 #include <inttypes.h>
 
 struct bsal_script reader_script = {
-    .name = READER_SCRIPT,
+    .identifier = READER_SCRIPT,
     .init = reader_init,
     .destroy = reader_destroy,
     .receive = reader_receive,
     .size = sizeof(struct reader),
-    .description = "reader"
+    .name = "reader"
 };
 
 void reader_init(struct bsal_actor *actor)

@@ -8,12 +8,12 @@
 #include <string.h>
 
 struct bsal_script root_script = {
-    .name = ROOT_SCRIPT,
+    .identifier = ROOT_SCRIPT,
     .init = root_init,
     .destroy = root_destroy,
     .receive = root_receive,
     .size = sizeof(struct root),
-    .description = "root"
+    .name = "root"
 };
 
 void root_init(struct bsal_actor *actor)

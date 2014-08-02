@@ -4,12 +4,12 @@
 #include <stdio.h>
 
 struct bsal_script stream_script = {
-    .name = STREAM_SCRIPT,
+    .identifier = STREAM_SCRIPT,
     .init = stream_init,
     .destroy = stream_destroy,
     .receive = stream_receive,
     .size = sizeof(struct stream),
-    .description = "stream"
+    .name = "stream"
 };
 
 void stream_init(struct bsal_actor *actor)
