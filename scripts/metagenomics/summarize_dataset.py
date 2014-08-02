@@ -99,7 +99,7 @@ for file in files:
             reads += 1
             bases += sequence_bases
 
-            if reads % progress_period == 0:
+            if reads % progress_period == 0 and debug:
                 print("PROGRESS " + str(reads))
                 sys.stdout.flush()
 
