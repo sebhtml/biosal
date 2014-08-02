@@ -2,7 +2,27 @@
 
 import os
 import sys
-import gzip
+import subprocess
+from cStringIO import StringIO
+from subprocess import Popen, PIPE
+
+
+# \see http://bugs.python.org/issue7471
+#import gzip
+
+def open_file2(file):
+
+    if file.find(".gz") >= 0:
+        #return os.popen("cat " + file + " | zcat", "r", 8388608)
+        process = subprocess.Popen(["zcat", file], stdout = subprocess.PIPE)
+        descriptor = StringIO(process.communicate()[0])
+        return descriptor
+
+# \see http://spyced.blogspot.com/2006/12/wow-gzip-module-kinda-sucks.html
+def open_file(fname):
+    f = Popen(['zcat', fname], stdout=PIPE)
+    for line in f.stdout:
+        yield line
 
 if len(sys.argv) == 1:
     print("A dataset directory with sequence files (.fastq.gz) is required")
@@ -31,12 +51,14 @@ for file in files:
     # check if the file contains paired reads
     paired_status = "No"
 
-    descriptor = gzip.open(dataset + "/" + file)
+    #descriptor = gzip.open(dataset + "/" + file)
+
+
     i = 0
     line0 = ""
     line4 = ""
 
-    for line in descriptor:
+    for line in open_file(dataset + "/" + file):
         if i == 0:
             line0 = line.split()[0]
         elif i == 4:
@@ -47,8 +69,8 @@ for file in files:
 
         i += 1
 
-    descriptor.close()
 
+    progress_period = 1000000
     difference = 0
 
     i = 0
@@ -64,13 +86,12 @@ for file in files:
 
     distribution = {}
 
-    descriptor = gzip.open(dataset + "/" + file)
     i = 0
 
     reads = 0
     bases = 0
 
-    for line in descriptor:
+    for line in open_file(dataset + "/" + file):
         if i % 4 == 1:
             sequence = line.strip()
             sequence_bases = len(sequence)
@@ -78,7 +99,7 @@ for file in files:
             reads += 1
             bases += sequence_bases
 
-            if reads % 1000000 == 0:
+            if reads % progress_period == 0:
                 print("PROGRESS " + str(reads))
                 sys.stdout.flush()
 
@@ -91,7 +112,6 @@ for file in files:
 
         i += 1
 
-    descriptor.close()
 
     keys = distribution.keys()
 
