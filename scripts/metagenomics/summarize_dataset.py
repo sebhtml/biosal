@@ -24,7 +24,8 @@ dataset_bases = 0
 debug = 0
 
 print("Dataset: " + dataset)
-print()
+print("")
+
 for file in files:
 
     # check if the file contains paired reads
@@ -76,6 +77,9 @@ for file in files:
 
             reads += 1
             bases += sequence_bases
+
+            if reads % 10000 == 0:
+                print("PROGRESS " + str(reads))
 
             if sequence_bases not in distribution:
                 distribution[sequence_bases] = 0
