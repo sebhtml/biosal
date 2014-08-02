@@ -249,15 +249,15 @@ struct bsal_actor {
 
 };
 
-void bsal_actor_init(struct bsal_actor *actor, void *state,
+void bsal_actor_init(struct bsal_actor *self, void *state,
                 struct bsal_script *script, int name, struct bsal_node *node);
 void bsal_actor_destroy(struct bsal_actor *self);
 
 int bsal_actor_name(struct bsal_actor *self);
 void *bsal_actor_concrete_actor(struct bsal_actor *self);
-void bsal_actor_set_name(struct bsal_actor *actor, int name);
+void bsal_actor_set_name(struct bsal_actor *self, int name);
 
-void bsal_actor_set_worker(struct bsal_actor *actor, struct bsal_worker *worker);
+void bsal_actor_set_worker(struct bsal_actor *self, struct bsal_worker *worker);
 struct bsal_worker *bsal_actor_worker(struct bsal_actor *self);
 
 void bsal_actor_print(struct bsal_actor *self);
@@ -270,18 +270,18 @@ bsal_actor_receive_fn_t bsal_actor_get_receive(struct bsal_actor *self);
 
 /* send functions
  */
-void bsal_actor_send(struct bsal_actor *actor, int destination, struct bsal_message *message);
+void bsal_actor_send(struct bsal_actor *self, int destination, struct bsal_message *message);
 
-void bsal_actor_send_with_source(struct bsal_actor *actor, int name, struct bsal_message *message,
+void bsal_actor_send_with_source(struct bsal_actor *self, int name, struct bsal_message *message,
                 int source);
-int bsal_actor_send_system(struct bsal_actor *actor, int name, struct bsal_message *message);
-int bsal_actor_send_system_self(struct bsal_actor *actor, struct bsal_message *message);
+int bsal_actor_send_system(struct bsal_actor *self, int name, struct bsal_message *message);
+int bsal_actor_send_system_self(struct bsal_actor *self, struct bsal_message *message);
 
 int bsal_actor_source(struct bsal_actor *self);
 
-void bsal_actor_receive(struct bsal_actor *actor, struct bsal_message *message);
-int bsal_actor_receive_system(struct bsal_actor *actor, struct bsal_message *message);
-int bsal_actor_receive_system_no_pack(struct bsal_actor *actor, struct bsal_message *message);
+void bsal_actor_receive(struct bsal_actor *self, struct bsal_message *message);
+int bsal_actor_receive_system(struct bsal_actor *self, struct bsal_message *message);
+int bsal_actor_receive_system_no_pack(struct bsal_actor *self, struct bsal_message *message);
 
 struct bsal_node *bsal_actor_node(struct bsal_actor *self);
 int bsal_actor_node_name(struct bsal_actor *self);
@@ -291,7 +291,7 @@ int bsal_actor_node_worker_count(struct bsal_actor *self);
 /*
  * \return This function returns the name of the spawned actor.
  */
-int bsal_actor_spawn(struct bsal_actor *actor, int script);
+int bsal_actor_spawn(struct bsal_actor *self, int script);
 
 void bsal_actor_lock(struct bsal_actor *self);
 int bsal_actor_trylock(struct bsal_actor *self);
@@ -301,62 +301,62 @@ int bsal_actor_argc(struct bsal_actor *self);
 char **bsal_actor_argv(struct bsal_actor *self);
 
 int bsal_actor_supervisor(struct bsal_actor *self);
-void bsal_actor_set_supervisor(struct bsal_actor *actor, int supervisor);
+void bsal_actor_set_supervisor(struct bsal_actor *self, int supervisor);
 
 /* synchronization functions
  */
-void bsal_actor_receive_synchronize(struct bsal_actor *actor,
+void bsal_actor_receive_synchronize(struct bsal_actor *self,
                 struct bsal_message *message);
-void bsal_actor_receive_synchronize_reply(struct bsal_actor *actor,
+void bsal_actor_receive_synchronize_reply(struct bsal_actor *self,
                 struct bsal_message *message);
 int bsal_actor_synchronization_completed(struct bsal_actor *self);
-void bsal_actor_synchronize(struct bsal_actor *actor, struct bsal_vector *actors);
+void bsal_actor_synchronize(struct bsal_actor *self, struct bsal_vector *actors);
 
-void bsal_actor_receive_proxy_message(struct bsal_actor *actor,
+void bsal_actor_receive_proxy_message(struct bsal_actor *self,
                 struct bsal_message *message);
-void bsal_actor_pack_proxy_message(struct bsal_actor *actor,
+void bsal_actor_pack_proxy_message(struct bsal_actor *self,
                 struct bsal_message *message, int real_source);
-int bsal_actor_unpack_proxy_message(struct bsal_actor *actor,
+int bsal_actor_unpack_proxy_message(struct bsal_actor *self,
                 struct bsal_message *message);
-void bsal_actor_send_proxy(struct bsal_actor *actor, int destination,
+void bsal_actor_send_proxy(struct bsal_actor *self, int destination,
                 struct bsal_message *message, int real_source);
 
-void bsal_actor_forward_messages(struct bsal_actor *actor, struct bsal_message *message);
+void bsal_actor_forward_messages(struct bsal_actor *self, struct bsal_message *message);
 
 int bsal_actor_script(struct bsal_actor *self);
-void bsal_actor_add_script(struct bsal_actor *actor, int name, struct bsal_script *script);
+void bsal_actor_add_script(struct bsal_actor *self, int name, struct bsal_script *script);
 
 /* actor cloning */
-void bsal_actor_clone(struct bsal_actor *actor, struct bsal_message *message);
-void bsal_actor_continue_clone(struct bsal_actor *actor, struct bsal_message *message);
+void bsal_actor_clone(struct bsal_actor *self, struct bsal_message *message);
+void bsal_actor_continue_clone(struct bsal_actor *self, struct bsal_message *message);
 
 struct bsal_counter *bsal_actor_counter(struct bsal_actor *self);
-int bsal_actor_dispatch(struct bsal_actor *actor, struct bsal_message *message);
-void bsal_actor_register(struct bsal_actor *actor, int tag, bsal_actor_receive_fn_t handler);
+int bsal_actor_dispatch(struct bsal_actor *self, struct bsal_message *message);
+void bsal_actor_register(struct bsal_actor *self, int tag, bsal_actor_receive_fn_t handler);
 struct bsal_dispatcher *bsal_actor_dispatcher(struct bsal_actor *self);
-void bsal_actor_set_node(struct bsal_actor *actor, struct bsal_node *node);
+void bsal_actor_set_node(struct bsal_actor *self, struct bsal_node *node);
 
-void bsal_actor_migrate(struct bsal_actor *actor, struct bsal_message *message);
-void bsal_actor_notify_name_change(struct bsal_actor *actor, struct bsal_message *message);
+void bsal_actor_migrate(struct bsal_actor *self, struct bsal_message *message);
+void bsal_actor_notify_name_change(struct bsal_actor *self, struct bsal_message *message);
 
 struct bsal_vector *bsal_actor_acquaintance_vector_private(struct bsal_actor *self);
-int bsal_actor_add_acquaintance_private(struct bsal_actor *actor, int name);
-int bsal_actor_get_acquaintance_private(struct bsal_actor *actor, int index);
+int bsal_actor_add_acquaintance_private(struct bsal_actor *self, int name);
+int bsal_actor_get_acquaintance_private(struct bsal_actor *self, int index);
 
-int bsal_actor_get_acquaintance_index_private(struct bsal_actor *actor, int name);
+int bsal_actor_get_acquaintance_index_private(struct bsal_actor *self, int name);
 int bsal_actor_acquaintance_count_private(struct bsal_actor *self);
-int bsal_actor_add_child(struct bsal_actor *actor, int name);
-int bsal_actor_get_child(struct bsal_actor *actor, int index);
-int bsal_actor_get_child_index(struct bsal_actor *actor, int name);
+int bsal_actor_add_child(struct bsal_actor *self, int name);
+int bsal_actor_get_child(struct bsal_actor *self, int index);
+int bsal_actor_get_child_index(struct bsal_actor *self, int name);
 int bsal_actor_child_count(struct bsal_actor *self);
 
-void bsal_actor_migrate_notify_acquaintances(struct bsal_actor *actor, struct bsal_message *message);
-void bsal_actor_queue_message(struct bsal_actor *actor,
+void bsal_actor_migrate_notify_acquaintances(struct bsal_actor *self, struct bsal_message *message);
+void bsal_actor_queue_message(struct bsal_actor *self,
                 struct bsal_message *message);
-int bsal_actor_spawn_real(struct bsal_actor *actor, int script);
+int bsal_actor_spawn_real(struct bsal_actor *self, int script);
 
-void bsal_actor_enqueue_message(struct bsal_actor *actor, struct bsal_message *message);
-void bsal_actor_dequeue_message(struct bsal_actor *actor, struct bsal_message *message);
+void bsal_actor_enqueue_message(struct bsal_actor *self, struct bsal_message *message);
+void bsal_actor_dequeue_message(struct bsal_actor *self, struct bsal_message *message);
 int bsal_actor_enqueued_message_count(struct bsal_actor *self);
 
 struct bsal_map *bsal_actor_get_received_messages(struct bsal_actor *self);
@@ -365,8 +365,8 @@ struct bsal_map *bsal_actor_get_sent_messages(struct bsal_actor *self);
 struct bsal_memory_pool *bsal_actor_get_ephemeral_memory(struct bsal_actor *self);
 struct bsal_worker *bsal_actor_get_last_worker(struct bsal_actor *self);
 
-int bsal_actor_enqueue_mailbox_message(struct bsal_actor *actor, struct bsal_message *message);
-int bsal_actor_dequeue_mailbox_message(struct bsal_actor *actor, struct bsal_message *message);
+int bsal_actor_enqueue_mailbox_message(struct bsal_actor *self, struct bsal_message *message);
+int bsal_actor_dequeue_mailbox_message(struct bsal_actor *self, struct bsal_message *message);
 int bsal_actor_get_mailbox_size(struct bsal_actor *self);
 
 int bsal_actor_get_sum_of_received_messages(struct bsal_actor *self);
@@ -375,7 +375,7 @@ char *bsal_actor_script_name(struct bsal_actor *self);
 void bsal_actor_reset_counters(struct bsal_actor *self);
 
 int bsal_actor_get_priority(struct bsal_actor *self);
-void bsal_actor_set_priority(struct bsal_actor *actor, int priority);
+void bsal_actor_set_priority(struct bsal_actor *self, int priority);
 int bsal_actor_get_source_count(struct bsal_actor *self);
 
 /*

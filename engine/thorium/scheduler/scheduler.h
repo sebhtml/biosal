@@ -31,23 +31,23 @@ struct bsal_scheduler {
     int first_worker;
 };
 
-void bsal_scheduler_init(struct bsal_scheduler *scheduler, struct bsal_worker_pool *pool);
-void bsal_scheduler_destroy(struct bsal_scheduler *scheduler);
+void bsal_scheduler_init(struct bsal_scheduler *self, struct bsal_worker_pool *pool);
+void bsal_scheduler_destroy(struct bsal_scheduler *self);
 
-void bsal_scheduler_balance(struct bsal_scheduler *scheduler);
-void bsal_scheduler_migrate(struct bsal_scheduler *scheduler, struct bsal_migration *migration);
+void bsal_scheduler_balance(struct bsal_scheduler *self);
+void bsal_scheduler_migrate(struct bsal_scheduler *self, struct bsal_migration *migration);
 
-int bsal_scheduler_get_actor_production(struct bsal_scheduler *scheduler, struct bsal_actor *actor);
-void bsal_scheduler_update_actor_production(struct bsal_scheduler *scheduler, struct bsal_actor *actor);
-int bsal_scheduler_get_actor_worker(struct bsal_scheduler *scheduler, int name);
-void bsal_scheduler_set_actor_worker(struct bsal_scheduler *scheduler, int name, int worker_index);
+int bsal_scheduler_get_actor_production(struct bsal_scheduler *self, struct bsal_actor *actor);
+void bsal_scheduler_update_actor_production(struct bsal_scheduler *self, struct bsal_actor *actor);
+int bsal_scheduler_get_actor_worker(struct bsal_scheduler *self, int name);
+void bsal_scheduler_set_actor_worker(struct bsal_scheduler *self, int name, int worker_index);
 
 int bsal_scheduler_select_worker_least_busy(
-                struct bsal_scheduler *scheduler, int *worker_score);
-void bsal_scheduler_detect_symmetric_scripts(struct bsal_scheduler *scheduler, struct bsal_map *symmetric_actors);
-void bsal_scheduler_generate_symmetric_migrations(struct bsal_scheduler *scheduler, struct bsal_map *symmetric_actor_scripts,
+                struct bsal_scheduler *self, int *worker_score);
+void bsal_scheduler_detect_symmetric_scripts(struct bsal_scheduler *self, struct bsal_map *symmetric_actors);
+void bsal_scheduler_generate_symmetric_migrations(struct bsal_scheduler *self, struct bsal_map *symmetric_actor_scripts,
                 struct bsal_vector *migrations);
 
-int bsal_scheduler_select_worker_script_round_robin(struct bsal_scheduler *scheduler, int script);
+int bsal_scheduler_select_worker_script_round_robin(struct bsal_scheduler *self, int script);
 
 #endif

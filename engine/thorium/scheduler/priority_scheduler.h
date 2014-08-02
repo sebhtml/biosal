@@ -23,16 +23,16 @@ struct bsal_priority_scheduler {
     int changes;
 };
 
-void bsal_priority_scheduler_init(struct bsal_priority_scheduler *scheduler);
-void bsal_priority_scheduler_destroy(struct bsal_priority_scheduler *scheduler);
+void bsal_priority_scheduler_init(struct bsal_priority_scheduler *self);
+void bsal_priority_scheduler_destroy(struct bsal_priority_scheduler *self);
 
-void bsal_priority_scheduler_update(struct bsal_priority_scheduler *scheduler, struct bsal_actor *actor);
-void bsal_priority_scheduler_update_thresholds(struct bsal_priority_scheduler *scheduler);
+void bsal_priority_scheduler_update(struct bsal_priority_scheduler *self, struct bsal_actor *actor);
+void bsal_priority_scheduler_update_thresholds(struct bsal_priority_scheduler *self);
 
-void bsal_priority_scheduler_increment(struct bsal_priority_scheduler *scheduler,
+void bsal_priority_scheduler_increment(struct bsal_priority_scheduler *self,
                 int new_source_count);
 
-void bsal_priority_scheduler_decrement(struct bsal_priority_scheduler *scheduler,
+void bsal_priority_scheduler_decrement(struct bsal_priority_scheduler *self,
                 int old_source_count);
 
 #endif

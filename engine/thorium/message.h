@@ -22,41 +22,41 @@ struct bsal_message {
     int is_recycled;
 };
 
-void bsal_message_init(struct bsal_message *message, int tag, int count, void *buffer);
-void bsal_message_init_copy(struct bsal_message *message, struct bsal_message *old_message);
-void bsal_message_destroy(struct bsal_message *message);
+void bsal_message_init(struct bsal_message *self, int tag, int count, void *buffer);
+void bsal_message_init_copy(struct bsal_message *self, struct bsal_message *old_message);
+void bsal_message_destroy(struct bsal_message *self);
 
-int bsal_message_source(struct bsal_message *message);
-void bsal_message_set_source(struct bsal_message *message, int source);
+int bsal_message_source(struct bsal_message *self);
+void bsal_message_set_source(struct bsal_message *self, int source);
 
-int bsal_message_destination(struct bsal_message *message);
-void bsal_message_set_destination(struct bsal_message *message, int destination);
+int bsal_message_destination(struct bsal_message *self);
+void bsal_message_set_destination(struct bsal_message *self, int destination);
 
-int bsal_message_tag(struct bsal_message *message);
-void bsal_message_set_tag(struct bsal_message *message, int tag);
+int bsal_message_tag(struct bsal_message *self);
+void bsal_message_set_tag(struct bsal_message *self, int tag);
 
-void *bsal_message_buffer(struct bsal_message *message);
-void bsal_message_set_buffer(struct bsal_message *message, void *buffer);
+void *bsal_message_buffer(struct bsal_message *self);
+void bsal_message_set_buffer(struct bsal_message *self, void *buffer);
 
-int bsal_message_count(struct bsal_message *message);
-void bsal_message_set_count(struct bsal_message *message, int count);
+int bsal_message_count(struct bsal_message *self);
+void bsal_message_set_count(struct bsal_message *self, int count);
 
-int bsal_message_source_node(struct bsal_message *message);
-void bsal_message_set_source_node(struct bsal_message *message, int source);
+int bsal_message_source_node(struct bsal_message *self);
+void bsal_message_set_source_node(struct bsal_message *self, int source);
 
-int bsal_message_destination_node(struct bsal_message *message);
-void bsal_message_set_destination_node(struct bsal_message *message, int destination);
+int bsal_message_destination_node(struct bsal_message *self);
+void bsal_message_set_destination_node(struct bsal_message *self, int destination);
 
-int bsal_message_metadata_size(struct bsal_message *message);
-void bsal_message_read_metadata(struct bsal_message *message);
-void bsal_message_write_metadata(struct bsal_message *message);
+int bsal_message_metadata_size(struct bsal_message *self);
+void bsal_message_read_metadata(struct bsal_message *self);
+void bsal_message_write_metadata(struct bsal_message *self);
 
-void bsal_message_print(struct bsal_message *message);
+void bsal_message_print(struct bsal_message *self);
 
-void bsal_message_set_worker(struct bsal_message *message, int worker);
-int bsal_message_get_worker(struct bsal_message *message);
+void bsal_message_set_worker(struct bsal_message *self, int worker);
+int bsal_message_get_worker(struct bsal_message *self);
 
-int bsal_message_is_recycled(struct bsal_message *message);
-void bsal_message_recycle(struct bsal_message *message);
+int bsal_message_is_recycled(struct bsal_message *self);
+void bsal_message_recycle(struct bsal_message *self);
 
 #endif

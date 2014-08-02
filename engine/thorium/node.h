@@ -156,83 +156,83 @@ struct bsal_node {
     char print_counters;
 };
 
-void bsal_node_init(struct bsal_node *node, int *argc, char ***argv);
-void bsal_node_destroy(struct bsal_node *node);
-int bsal_node_run(struct bsal_node *node);
-void bsal_node_start_initial_actor(struct bsal_node *node);
+void bsal_node_init(struct bsal_node *self, int *argc, char ***argv);
+void bsal_node_destroy(struct bsal_node *self);
+int bsal_node_run(struct bsal_node *self);
+void bsal_node_start_initial_actor(struct bsal_node *self);
 
-int bsal_node_spawn_state(struct bsal_node *node, void *state,
+int bsal_node_spawn_state(struct bsal_node *self, void *state,
                 struct bsal_script *script);
-int bsal_node_spawn(struct bsal_node *node, int script);
-void bsal_node_send(struct bsal_node *node, struct bsal_message *message);
+int bsal_node_spawn(struct bsal_node *self, int script);
+void bsal_node_send(struct bsal_node *self, struct bsal_message *message);
 
-int bsal_node_generate_name(struct bsal_node *node);
+int bsal_node_generate_name(struct bsal_node *self);
 
-int bsal_node_actor_node(struct bsal_node *node, int name);
-int bsal_node_actor_index(struct bsal_node *node, int name);
-struct bsal_actor *bsal_node_get_actor_from_name(struct bsal_node *node,
+int bsal_node_actor_node(struct bsal_node *self, int name);
+int bsal_node_actor_index(struct bsal_node *self, int name);
+struct bsal_actor *bsal_node_get_actor_from_name(struct bsal_node *self,
                 int name);
 
-int bsal_node_name(struct bsal_node *node);
-int bsal_node_nodes(struct bsal_node *node);
-int bsal_node_actors(struct bsal_node *node);
+int bsal_node_name(struct bsal_node *self);
+int bsal_node_nodes(struct bsal_node *self);
+int bsal_node_actors(struct bsal_node *self);
 
-void bsal_node_set_supervisor(struct bsal_node *node, int name, int supervisor);
+void bsal_node_set_supervisor(struct bsal_node *self, int name, int supervisor);
 
-void bsal_node_run_loop(struct bsal_node *node);
+void bsal_node_run_loop(struct bsal_node *self);
 
-void bsal_node_send_message(struct bsal_node *node);
-void bsal_node_notify_death(struct bsal_node *node, struct bsal_actor *actor);
+void bsal_node_send_message(struct bsal_node *self);
+void bsal_node_notify_death(struct bsal_node *self, struct bsal_actor *actor);
 
-void bsal_node_create_work(struct bsal_node *node, struct bsal_message *message);
-int bsal_node_pull(struct bsal_node *node, struct bsal_message *message);
+void bsal_node_create_work(struct bsal_node *self, struct bsal_message *message);
+int bsal_node_pull(struct bsal_node *self, struct bsal_message *message);
 
-int bsal_node_worker_count(struct bsal_node *node);
-int bsal_node_thread_count(struct bsal_node *node);
+int bsal_node_worker_count(struct bsal_node *self);
+int bsal_node_thread_count(struct bsal_node *self);
 
-int bsal_node_argc(struct bsal_node *node);
-char **bsal_node_argv(struct bsal_node *node);
+int bsal_node_argc(struct bsal_node *self);
+char **bsal_node_argv(struct bsal_node *self);
 void *bsal_node_main(void *node1);
-int bsal_node_running(struct bsal_node *node);
-void bsal_node_start_send_thread(struct bsal_node *node);
-int bsal_node_threads_from_string(struct bsal_node *node,
+int bsal_node_running(struct bsal_node *self);
+void bsal_node_start_send_thread(struct bsal_node *self);
+int bsal_node_threads_from_string(struct bsal_node *self,
                 char *required_threads, int index);
 
-void bsal_node_add_script(struct bsal_node *node, int name, struct bsal_script *script);
-struct bsal_script *bsal_node_find_script(struct bsal_node *node, int identifier);
-int bsal_node_has_script(struct bsal_node *node, struct bsal_script *script);
+void bsal_node_add_script(struct bsal_node *self, int name, struct bsal_script *script);
+struct bsal_script *bsal_node_find_script(struct bsal_node *self, int identifier);
+int bsal_node_has_script(struct bsal_node *self, struct bsal_script *script);
 
-void bsal_node_send_to_node(struct bsal_node *node, int destination,
+void bsal_node_send_to_node(struct bsal_node *self, int destination,
                 struct bsal_message *message);
-void bsal_node_send_to_node_empty(struct bsal_node *node, int destination, int tag);
-int bsal_node_receive_system(struct bsal_node *node, struct bsal_message *message);
-void bsal_node_dispatch_message(struct bsal_node *node, struct bsal_message *message);
-void bsal_node_set_initial_actor(struct bsal_node *node, int node_name, int actor);
-int bsal_node_allocate_actor_index(struct bsal_node *node);
+void bsal_node_send_to_node_empty(struct bsal_node *self, int destination, int tag);
+int bsal_node_receive_system(struct bsal_node *self, struct bsal_message *message);
+void bsal_node_dispatch_message(struct bsal_node *self, struct bsal_message *message);
+void bsal_node_set_initial_actor(struct bsal_node *self, int node_name, int actor);
+int bsal_node_allocate_actor_index(struct bsal_node *self);
 
-void bsal_node_print_event_counters(struct bsal_node *node);
-void bsal_node_print_counters(struct bsal_node *node);
+void bsal_node_print_event_counters(struct bsal_node *self);
+void bsal_node_print_counters(struct bsal_node *self);
 
 void bsal_node_handle_signal(int signal);
 void bsal_node_register_signal_handlers(struct bsal_node *self);
 
-void bsal_node_print_structure(struct bsal_node *node, struct bsal_actor *actor);
+void bsal_node_print_structure(struct bsal_node *self, struct bsal_actor *actor);
 int bsal_node_has_actor(struct bsal_node *self, int name);
 
 struct bsal_worker_pool *bsal_node_get_worker_pool(struct bsal_node *self);
 
 void bsal_node_toggle_debug_mode(struct bsal_node *self);
 
-void bsal_node_reset_actor_counters(struct bsal_node *node);
+void bsal_node_reset_actor_counters(struct bsal_node *self);
 
-int64_t bsal_node_get_counter(struct bsal_node *node, int counter);
-void bsal_node_test_requests(struct bsal_node *node);
+int64_t bsal_node_get_counter(struct bsal_node *self, int counter);
+void bsal_node_test_requests(struct bsal_node *self);
 
-void bsal_node_free_active_request(struct bsal_node *node,
+void bsal_node_free_active_request(struct bsal_node *self,
                 struct bsal_active_request *active_request);
 
-void bsal_node_send_to_actor(struct bsal_node *node, int name, struct bsal_message *message);
-void bsal_node_check_efficiency(struct bsal_node *node);
-int bsal_node_send_system(struct bsal_node *node, struct bsal_message *message);
+void bsal_node_send_to_actor(struct bsal_node *self, int name, struct bsal_message *message);
+void bsal_node_check_efficiency(struct bsal_node *self);
+int bsal_node_send_system(struct bsal_node *self, struct bsal_message *message);
 
 #endif

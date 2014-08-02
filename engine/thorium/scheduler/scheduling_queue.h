@@ -35,27 +35,27 @@ struct bsal_scheduling_queue {
     struct bsal_ring_queue low_priority_queue;
 };
 
-void bsal_scheduling_queue_init(struct bsal_scheduling_queue *queue);
-void bsal_scheduling_queue_destroy(struct bsal_scheduling_queue *queue);
+void bsal_scheduling_queue_init(struct bsal_scheduling_queue *self);
+void bsal_scheduling_queue_destroy(struct bsal_scheduling_queue *self);
 
-int bsal_scheduling_queue_enqueue(struct bsal_scheduling_queue *queue, struct bsal_actor *actor);
-int bsal_scheduling_queue_dequeue(struct bsal_scheduling_queue *queue, struct bsal_actor **actor);
+int bsal_scheduling_queue_enqueue(struct bsal_scheduling_queue *self, struct bsal_actor *actor);
+int bsal_scheduling_queue_dequeue(struct bsal_scheduling_queue *self, struct bsal_actor **actor);
 
-int bsal_scheduling_queue_size(struct bsal_scheduling_queue *queue);
+int bsal_scheduling_queue_size(struct bsal_scheduling_queue *self);
 
-int bsal_scheduling_queue_get_size_with_priority(struct bsal_scheduling_queue *queue, int priority);
+int bsal_scheduling_queue_get_size_with_priority(struct bsal_scheduling_queue *self, int priority);
 
-struct bsal_ring_queue *bsal_scheduling_queue_select_queue(struct bsal_scheduling_queue *queue, int priority);
-uint64_t *bsal_scheduling_queue_select_counter(struct bsal_scheduling_queue *queue, int priority);
+struct bsal_ring_queue *bsal_scheduling_queue_select_queue(struct bsal_scheduling_queue *self, int priority);
+uint64_t *bsal_scheduling_queue_select_counter(struct bsal_scheduling_queue *self, int priority);
 
-int bsal_scheduling_queue_dequeue_with_priority(struct bsal_scheduling_queue *queue, int priority,
+int bsal_scheduling_queue_dequeue_with_priority(struct bsal_scheduling_queue *self, int priority,
                 struct bsal_actor **actor);
 
-void bsal_scheduling_queue_reset_counter(struct bsal_scheduling_queue *queue, int priority);
-uint64_t bsal_scheduling_queue_get_counter(struct bsal_scheduling_queue *queue, int priority);
+void bsal_scheduling_queue_reset_counter(struct bsal_scheduling_queue *self, int priority);
+uint64_t bsal_scheduling_queue_get_counter(struct bsal_scheduling_queue *self, int priority);
 
-void bsal_scheduling_queue_print(struct bsal_scheduling_queue *queue, int node, int worker);
-void bsal_scheduling_queue_print_with_priority(struct bsal_scheduling_queue *queue, int priority, const char *name,
+void bsal_scheduling_queue_print(struct bsal_scheduling_queue *self, int node, int worker);
+void bsal_scheduling_queue_print_with_priority(struct bsal_scheduling_queue *self, int priority, const char *name,
                 int node, int worker);
 
 #endif

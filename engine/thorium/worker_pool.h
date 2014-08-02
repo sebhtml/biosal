@@ -58,21 +58,21 @@ struct bsal_worker_pool {
 #define BSAL_WORKER_POOL_LOAD_LOOP 0
 #define BSAL_WORKER_POOL_LOAD_EPOCH 1
 
-void bsal_worker_pool_init(struct bsal_worker_pool *pool, int workers, struct bsal_node *node);
-void bsal_worker_pool_destroy(struct bsal_worker_pool *pool);
+void bsal_worker_pool_init(struct bsal_worker_pool *self, int workers, struct bsal_node *node);
+void bsal_worker_pool_destroy(struct bsal_worker_pool *self);
 
-void bsal_worker_pool_create_workers(struct bsal_worker_pool *pool);
-void bsal_worker_pool_delete_workers(struct bsal_worker_pool *pool);
-void bsal_worker_pool_run(struct bsal_worker_pool *pool);
+void bsal_worker_pool_create_workers(struct bsal_worker_pool *self);
+void bsal_worker_pool_delete_workers(struct bsal_worker_pool *self);
+void bsal_worker_pool_run(struct bsal_worker_pool *self);
 
-void bsal_worker_pool_start(struct bsal_worker_pool *pool);
-void bsal_worker_pool_stop(struct bsal_worker_pool *pool);
+void bsal_worker_pool_start(struct bsal_worker_pool *self);
+void bsal_worker_pool_stop(struct bsal_worker_pool *self);
 
-struct bsal_worker *bsal_worker_pool_select_worker_for_run(struct bsal_worker_pool *pool);
-struct bsal_worker *bsal_worker_pool_select_worker_for_message(struct bsal_worker_pool *pool);
+struct bsal_worker *bsal_worker_pool_select_worker_for_run(struct bsal_worker_pool *self);
+struct bsal_worker *bsal_worker_pool_select_worker_for_message(struct bsal_worker_pool *self);
 int bsal_worker_pool_next_worker(struct bsal_worker_pool *node, int thread);
 
-int bsal_worker_pool_worker_count(struct bsal_worker_pool *pool);
+int bsal_worker_pool_worker_count(struct bsal_worker_pool *self);
 
 struct bsal_worker *bsal_worker_pool_get_worker(
                 struct bsal_worker_pool *self, int index);
@@ -80,8 +80,8 @@ struct bsal_worker *bsal_worker_pool_get_worker(
 void bsal_worker_pool_print_load(struct bsal_worker_pool *self, int type);
 
 #ifdef BSAL_WORKER_HAS_OWN_QUEUES
-int bsal_worker_pool_pull_classic(struct bsal_worker_pool *pool, struct bsal_message *message);
-void bsal_worker_pool_schedule_work_classic(struct bsal_worker_pool *pool, struct bsal_work *work);
+int bsal_worker_pool_pull_classic(struct bsal_worker_pool *self, struct bsal_message *message);
+void bsal_worker_pool_schedule_work_classic(struct bsal_worker_pool *self, struct bsal_work *work);
 
 #endif
 
@@ -89,17 +89,17 @@ void bsal_worker_pool_toggle_debug_mode(struct bsal_worker_pool *self);
 void bsal_worker_pool_set_cached_value(struct bsal_worker_pool *self, int index, int value);
 int bsal_worker_pool_get_cached_value(struct bsal_worker_pool *self, int index);
 
-int bsal_worker_pool_enqueue_message(struct bsal_worker_pool *pool, struct bsal_message *message);
-int bsal_worker_pool_dequeue_message(struct bsal_worker_pool *pool, struct bsal_message *message);
+int bsal_worker_pool_enqueue_message(struct bsal_worker_pool *self, struct bsal_message *message);
+int bsal_worker_pool_dequeue_message(struct bsal_worker_pool *self, struct bsal_message *message);
 
-float bsal_worker_pool_get_computation_load(struct bsal_worker_pool *pool);
+float bsal_worker_pool_get_computation_load(struct bsal_worker_pool *self);
 
-struct bsal_node *bsal_worker_pool_get_node(struct bsal_worker_pool *pool);
-int bsal_worker_pool_give_message_to_actor(struct bsal_worker_pool *pool, struct bsal_message *message);
+struct bsal_node *bsal_worker_pool_get_node(struct bsal_worker_pool *self);
+int bsal_worker_pool_give_message_to_actor(struct bsal_worker_pool *self, struct bsal_message *message);
 
-void bsal_worker_pool_work(struct bsal_worker_pool *pool);
-void bsal_worker_pool_assign_worker_to_actor(struct bsal_worker_pool *pool, int name);
-float bsal_worker_pool_get_current_load(struct bsal_worker_pool *pool);
-void bsal_worker_pool_wake_up_workers(struct bsal_worker_pool *pool);
+void bsal_worker_pool_work(struct bsal_worker_pool *self);
+void bsal_worker_pool_assign_worker_to_actor(struct bsal_worker_pool *self, int name);
+float bsal_worker_pool_get_current_load(struct bsal_worker_pool *self);
+void bsal_worker_pool_wake_up_workers(struct bsal_worker_pool *self);
 
 #endif
