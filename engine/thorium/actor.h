@@ -212,7 +212,7 @@ struct bsal_actor {
 
     struct bsal_dispatcher dispatcher;
     int current_source;
-    void *state;
+    void *concrete_actor;
 
     struct bsal_lock receive_lock;
 
