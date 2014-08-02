@@ -11,7 +11,7 @@ void bsal_thorium_engine_destroy(struct bsal_thorium_engine *self)
     bsal_node_destroy(&self->node);
 }
 
-int bsal_thorium_engine_boot_initial_actor(struct bsal_thorium_engine *self, int script_identifier,
+int bsal_thorium_engine_boot(struct bsal_thorium_engine *self, int script_identifier,
                 struct bsal_script *script)
 {
     /*
@@ -31,13 +31,19 @@ int bsal_thorium_engine_boot_initial_actor(struct bsal_thorium_engine *self, int
 }
 
 
-int bsal_thorium_boot_initial_actor(int *argc, char ***argv, int script_identifier, struct bsal_script *script)
+int bsal_thorium_engine_boot_initial_actor(int *argc, char ***argv, int script_identifier, struct bsal_script *script)
 {
     struct bsal_thorium_engine thorium_engine;
     int return_value;
 
+#if 0
+    int script_identifier;
+
+    script_identifier = bsal_script_identifier(script);
+#endif
+
     bsal_thorium_engine_init(&thorium_engine, argc, argv);
-    return_value = bsal_thorium_engine_boot_initial_actor(&thorium_engine, script_identifier, script);
+    return_value = bsal_thorium_engine_boot(&thorium_engine, script_identifier, script);
     bsal_thorium_engine_destroy(&thorium_engine);
 
     return return_value;

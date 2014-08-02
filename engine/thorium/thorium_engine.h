@@ -19,12 +19,15 @@ struct bsal_thorium_engine {
 void bsal_thorium_engine_init(struct bsal_thorium_engine *self, int *argc, char ***argv);
 void bsal_thorium_engine_destroy(struct bsal_thorium_engine *self);
 
-int bsal_thorium_engine_boot_initial_actor(struct bsal_thorium_engine *self, int script_identifier,
+int bsal_thorium_engine_boot(struct bsal_thorium_engine *self, int script_identifier,
                 struct bsal_script *script);
 
 /*
  * Use this function in main() to boot an actor system.
+ *
+ * The script_identifier can be obtained from the script, but it is easier to
+ * read if the script_identifier is provided.
  */
-int bsal_thorium_boot_initial_actor(int *argc, char ***argv, int script_identifier, struct bsal_script *script);
+int bsal_thorium_engine_boot_initial_actor(int *argc, char ***argv, int script_identifier, struct bsal_script *script);
 
 #endif
