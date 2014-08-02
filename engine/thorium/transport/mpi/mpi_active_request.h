@@ -14,9 +14,9 @@ struct bsal_mpi_active_request {
 #endif
 };
 
-void bsal_mpi_active_request_init(struct bsal_active_request *active_request);
-void bsal_mpi_active_request_destroy(struct bsal_active_request *active_request);
-int bsal_mpi_active_request_test(struct bsal_active_request *active_request);
-void *bsal_mpi_active_request_request(struct bsal_active_request *active_request);
+void bsal_mpi_active_request_init(struct bsal_active_request *self);
+void bsal_mpi_active_request_destroy(struct bsal_active_request *self);
+int bsal_mpi_active_request_test(struct bsal_active_request *self);
+void *bsal_mpi_active_request_request(struct bsal_active_request *self);
 
 #endif

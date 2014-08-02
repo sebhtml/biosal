@@ -6,11 +6,11 @@
 
 #include <core/system/debugger.h>
 
-void bsal_pami_transport_init(struct bsal_transport *transport, int *argc, char ***argv)
+void bsal_pami_transport_init(struct bsal_transport *self, int *argc, char ***argv)
 {
 #ifdef BSAL_TRANSPORT_USE_PAMI
     const char client_name[] = "biosal/thorium";
-    struct bsal_pami_transport *pami_transport;
+    struct bsal_pami_transport *concrete_self;
     int configuration_count;
     pami_result_t result;
     pami_configuration_t *configurations;
@@ -47,10 +47,10 @@ void bsal_pami_transport_init(struct bsal_transport *transport, int *argc, char 
 #endif
 }
 
-void bsal_pami_transport_destroy(struct bsal_transport *transport)
+void bsal_pami_transport_destroy(struct bsal_transport *self)
 {
 #ifdef BSAL_TRANSPORT_USE_PAMI
-    struct bsal_pami_transport *pami_transport;
+    struct bsal_pami_transport *concrete_self;
     pami_result_t result;
 
     pami_transport = bsal_transport_get_concrete_transport(transport);
@@ -63,7 +63,7 @@ void bsal_pami_transport_destroy(struct bsal_transport *transport)
 #endif
 }
 
-int bsal_pami_transport_send(struct bsal_transport *transport, struct bsal_message *message)
+int bsal_pami_transport_send(struct bsal_transport *self, struct bsal_message *message)
 {
     /*
      * Based on this example: http://code.google.com/p/pami-examples/source/browse/trunk/function/send.c
@@ -84,17 +84,17 @@ int bsal_pami_transport_send(struct bsal_transport *transport, struct bsal_messa
     return 0;
 }
 
-int bsal_pami_transport_receive(struct bsal_transport *transport, struct bsal_message *message)
+int bsal_pami_transport_receive(struct bsal_transport *self, struct bsal_message *message)
 {
     return 0;
 }
 
-int bsal_pami_transport_get_identifier(struct bsal_transport *transport)
+int bsal_pami_transport_get_identifier(struct bsal_transport *self)
 {
     return BSAL_TRANSPORT_PAMI_IDENTIFIER;
 }
 
-const char *bsal_pami_transport_get_name(struct bsal_transport *transport)
+const char *bsal_pami_transport_get_name(struct bsal_transport *self)
 {
     return BSAL_TRANSPORT_PAMI_NAME;
 }

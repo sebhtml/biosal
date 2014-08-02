@@ -24,21 +24,21 @@ struct bsal_active_request {
     /*
      * Interface
      */
-    void (*active_request_init)(struct bsal_active_request *active_request);
-    void (*active_request_destroy)(struct bsal_active_request *active_request);
-    int (*active_request_test)(struct bsal_active_request *active_request);
-    void *(*active_request_request)(struct bsal_active_request *active_request);
+    void (*active_request_init)(struct bsal_active_request *self);
+    void (*active_request_destroy)(struct bsal_active_request *self);
+    int (*active_request_test)(struct bsal_active_request *self);
+    void *(*active_request_request)(struct bsal_active_request *self);
 
 };
 
-void bsal_active_request_init(struct bsal_active_request *active_request, void *buffer, int worker);
-void bsal_active_request_destroy(struct bsal_active_request *active_request);
-int bsal_active_request_test(struct bsal_active_request *active_request);
-void *bsal_active_request_request(struct bsal_active_request *active_request);
-void *bsal_active_request_buffer(struct bsal_active_request *active_request);
-int bsal_active_request_get_worker(struct bsal_active_request *active_request);
+void bsal_active_request_init(struct bsal_active_request *self, void *buffer, int worker);
+void bsal_active_request_destroy(struct bsal_active_request *self);
+int bsal_active_request_test(struct bsal_active_request *self);
+void *bsal_active_request_request(struct bsal_active_request *self);
+void *bsal_active_request_buffer(struct bsal_active_request *self);
+int bsal_active_request_get_worker(struct bsal_active_request *self);
 
-void *bsal_active_request_get_concrete_object(struct bsal_active_request *active_request);
+void *bsal_active_request_get_concrete_object(struct bsal_active_request *self);
 
 
 #endif

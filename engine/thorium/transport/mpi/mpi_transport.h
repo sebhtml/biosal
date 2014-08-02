@@ -21,13 +21,13 @@ struct bsal_mpi_transport {
     MPI_Datatype datatype;
 };
 
-void bsal_mpi_transport_init(struct bsal_transport *transport, int *argc, char ***argv);
-void bsal_mpi_transport_destroy(struct bsal_transport *transport);
+void bsal_mpi_transport_init(struct bsal_transport *self, int *argc, char ***argv);
+void bsal_mpi_transport_destroy(struct bsal_transport *self);
 
-int bsal_mpi_transport_send(struct bsal_transport *transport, struct bsal_message *message);
-int bsal_mpi_transport_receive(struct bsal_transport *transport, struct bsal_message *message);
+int bsal_mpi_transport_send(struct bsal_transport *self, struct bsal_message *message);
+int bsal_mpi_transport_receive(struct bsal_transport *self, struct bsal_message *message);
 
-int bsal_mpi_transport_get_identifier(struct bsal_transport *transport);
-const char *bsal_mpi_transport_get_name(struct bsal_transport *transport);
+int bsal_mpi_transport_get_identifier(struct bsal_transport *self);
+const char *bsal_mpi_transport_get_name(struct bsal_transport *self);
 
 #endif

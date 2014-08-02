@@ -15,14 +15,14 @@
  * \see https://github.com/GeneAssembly/kiki/blob/master/ki.c#L960
  * \see http://mpi.deino.net/mpi_functions/MPI_Comm_create.html
  */
-void bsal_mpi_transport_init(struct bsal_transport *transport, int *argc, char ***argv)
+void bsal_mpi_transport_init(struct bsal_transport *self, int *argc, char ***argv)
 {
     int required;
-    struct bsal_mpi_transport *mpi_transport;
+    struct bsal_mpi_transport *concrete_self;
     int result;
     int provided;
 
-    mpi_transport = bsal_transport_get_concrete_transport(transport);
+    concrete_self = bsal_transport_get_concrete_transport(self);
 
     /*
     required = MPI_THREAD_MULTIPLE;
@@ -39,51 +39,51 @@ void bsal_mpi_transport_init(struct bsal_transport *transport, int *argc, char *
      * Set the provided level of thread support
      */
     if (provided == MPI_THREAD_SINGLE) {
-        transport->provided = BSAL_THREAD_SINGLE;
+        self->provided = BSAL_THREAD_SINGLE;
 
     } else if (provided == MPI_THREAD_FUNNELED) {
-        transport->provided = BSAL_THREAD_FUNNELED;
+        self->provided = BSAL_THREAD_FUNNELED;
 
     } else if (provided == MPI_THREAD_SERIALIZED) {
-        transport->provided = BSAL_THREAD_SERIALIZED;
+        self->provided = BSAL_THREAD_SERIALIZED;
 
     } else if (provided == MPI_THREAD_MULTIPLE) {
-        transport->provided = BSAL_THREAD_MULTIPLE;
+        self->provided = BSAL_THREAD_MULTIPLE;
     }
 
     /* make a new communicator for the library and don't use MPI_COMM_WORLD later */
-    result = MPI_Comm_dup(MPI_COMM_WORLD, &mpi_transport->comm);
+    result = MPI_Comm_dup(MPI_COMM_WORLD, &concrete_self->comm);
 
     if (result != MPI_SUCCESS) {
         return;
     }
 
-    result = MPI_Comm_rank(mpi_transport->comm, &transport->rank);
+    result = MPI_Comm_rank(concrete_self->comm, &self->rank);
 
     if (result != MPI_SUCCESS) {
         return;
     }
 
-    result = MPI_Comm_size(mpi_transport->comm, &transport->size);
+    result = MPI_Comm_size(concrete_self->comm, &self->size);
 
     if (result != MPI_SUCCESS) {
         return;
     }
 
-    mpi_transport->datatype = MPI_BYTE;
+    concrete_self->datatype = MPI_BYTE;
 }
 
-void bsal_mpi_transport_destroy(struct bsal_transport *transport)
+void bsal_mpi_transport_destroy(struct bsal_transport *self)
 {
-    struct bsal_mpi_transport *mpi_transport;
+    struct bsal_mpi_transport *concrete_self;
     int result;
 
-    mpi_transport = bsal_transport_get_concrete_transport(transport);
+    concrete_self = bsal_transport_get_concrete_transport(self);
 
     /*
      * \see http://www.mpich.org/static/docs/v3.1/www3/MPI_Comm_free.html
      */
-    result = MPI_Comm_free(&mpi_transport->comm);
+    result = MPI_Comm_free(&concrete_self->comm);
 
     if (result != MPI_SUCCESS) {
         return;
@@ -97,9 +97,9 @@ void bsal_mpi_transport_destroy(struct bsal_transport *transport)
 }
 
 /* \see http://www.mpich.org/static/docs/v3.1/www3/MPI_Isend.html */
-int bsal_mpi_transport_send(struct bsal_transport *transport, struct bsal_message *message)
+int bsal_mpi_transport_send(struct bsal_transport *self, struct bsal_message *message)
 {
-    struct bsal_mpi_transport *mpi_transport;
+    struct bsal_mpi_transport *concrete_self;
 
     char *buffer;
     int count;
@@ -113,7 +113,7 @@ int bsal_mpi_transport_send(struct bsal_transport *transport, struct bsal_messag
     int worker;
     int result;
 
-    mpi_transport = bsal_transport_get_concrete_transport(transport);
+    concrete_self = bsal_transport_get_concrete_transport(self);
 
     worker = bsal_message_get_worker(message);
     buffer = bsal_message_buffer(message);
@@ -127,8 +127,8 @@ int bsal_mpi_transport_send(struct bsal_transport *transport, struct bsal_messag
     request = bsal_active_request_request(&active_request);
 
     /* get return value */
-    result = MPI_Isend(buffer, all, mpi_transport->datatype, destination, tag,
-                    mpi_transport->comm, request);
+    result = MPI_Isend(buffer, all, concrete_self->datatype, destination, tag,
+                    concrete_self->comm, request);
 
     if (result != MPI_SUCCESS) {
         return 0;
@@ -141,7 +141,7 @@ int bsal_mpi_transport_send(struct bsal_transport *transport, struct bsal_messag
      */
     /*MPI_Request_free(&request);*/
 
-    bsal_ring_queue_enqueue(&transport->active_requests, &active_request);
+    bsal_ring_queue_enqueue(&self->active_requests, &active_request);
 
     return 1;
 }
@@ -149,9 +149,9 @@ int bsal_mpi_transport_send(struct bsal_transport *transport, struct bsal_messag
 /* \see http://www.mpich.org/static/docs/v3.1/www3/MPI_Iprobe.html */
 /* \see http://www.mpich.org/static/docs/v3.1/www3/MPI_Recv.html */
 /* \see http://www.malcolmmclean.site11.com/www/MpiTutorial/MPIStatus.html */
-int bsal_mpi_transport_receive(struct bsal_transport *transport, struct bsal_message *message)
+int bsal_mpi_transport_receive(struct bsal_transport *self, struct bsal_message *message)
 {
-    struct bsal_mpi_transport *mpi_transport;
+    struct bsal_mpi_transport *concrete_self;
     char *buffer;
     int count;
     int source;
@@ -161,13 +161,13 @@ int bsal_mpi_transport_receive(struct bsal_transport *transport, struct bsal_mes
     MPI_Status status;
     int result;
 
-    mpi_transport = bsal_transport_get_concrete_transport(transport);
+    concrete_self = bsal_transport_get_concrete_transport(self);
     source = MPI_ANY_SOURCE;
     tag = MPI_ANY_TAG;
-    /*destination = transport->rank;*/
+    /*destination = self->rank;*/
 
     /* get return value */
-    result = MPI_Iprobe(source, tag, mpi_transport->comm, &flag, &status);
+    result = MPI_Iprobe(source, tag, concrete_self->comm, &flag, &status);
 
     if (result != MPI_SUCCESS) {
         return 0;
@@ -178,7 +178,7 @@ int bsal_mpi_transport_receive(struct bsal_transport *transport, struct bsal_mes
     }
 
     /* get return value */
-    result = MPI_Get_count(&status, mpi_transport->datatype, &count);
+    result = MPI_Get_count(&status, concrete_self->datatype, &count);
 
     if (result != MPI_SUCCESS) {
         return 0;
@@ -191,26 +191,26 @@ int bsal_mpi_transport_receive(struct bsal_transport *transport, struct bsal_mes
     tag = status.MPI_TAG;
 
     /* TODO get return value */
-    result = MPI_Recv(buffer, count, mpi_transport->datatype, source, tag,
-                    mpi_transport->comm, &status);
+    result = MPI_Recv(buffer, count, concrete_self->datatype, source, tag,
+                    concrete_self->comm, &status);
 
     if (result != MPI_SUCCESS) {
         return 0;
     }
 
-    bsal_transport_prepare_received_message(transport, message, source, tag, count, buffer);
+    bsal_transport_prepare_received_message(self, message, source, tag, count, buffer);
 
     BSAL_DEBUGGER_ASSERT(result == MPI_SUCCESS);
 
     return 1;
 }
 
-int bsal_mpi_transport_get_identifier(struct bsal_transport *transport)
+int bsal_mpi_transport_get_identifier(struct bsal_transport *self)
 {
     return BSAL_TRANSPORT_MPI_IDENTIFIER;
 }
 
-const char *bsal_mpi_transport_get_name(struct bsal_transport *transport)
+const char *bsal_mpi_transport_get_name(struct bsal_transport *self)
 {
     return BSAL_TRANSPORT_MPI_NAME;
 }
