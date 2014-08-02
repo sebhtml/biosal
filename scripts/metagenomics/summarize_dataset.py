@@ -80,6 +80,7 @@ for file in files:
 
             if reads % 10000 == 0:
                 print("PROGRESS " + str(reads))
+                sys.stdout.flush()
 
             if sequence_bases not in distribution:
                 distribution[sequence_bases] = 0
@@ -115,6 +116,7 @@ for file in files:
     dataset_bases += bases
 
     print("")
+    sys.stdout.flush()
 
 print("")
 print("Summary")
