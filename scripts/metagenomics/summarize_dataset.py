@@ -78,7 +78,7 @@ for file in files:
             reads += 1
             bases += sequence_bases
 
-            if reads % 10000 == 0:
+            if reads % 1000000 == 0:
                 print("PROGRESS " + str(reads))
                 sys.stdout.flush()
 
