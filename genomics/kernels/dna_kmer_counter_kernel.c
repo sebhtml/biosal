@@ -96,7 +96,7 @@ void bsal_dna_kmer_counter_kernel_init(struct bsal_actor *actor)
                     bsal_dna_kmer_counter_kernel_do_auto_scaling);
 
     printf("kernel %d is online !!!\n",
-                    bsal_actor_get_name(actor));
+                    bsal_actor_name(actor));
 
     /* Enable packing for this actor. Maybe this is already enabled, but who knows.
      */
@@ -141,7 +141,7 @@ void bsal_dna_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_
 
     concrete_actor = (struct bsal_dna_kmer_counter_kernel *)bsal_actor_concrete_actor(actor);
     tag = bsal_message_tag(message);
-    name = bsal_actor_get_name(actor);
+    name = bsal_actor_name(actor);
     source = bsal_message_source(message);
     buffer = bsal_message_buffer(message);
 
@@ -180,7 +180,7 @@ void bsal_dna_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_
     } else if (tag == BSAL_ACTOR_ASK_TO_STOP) {
 
         printf("kernel/%d generated %" PRIu64 " kmers from %" PRIu64 " entries (%d blocks)\n",
-                        bsal_actor_get_name(actor), concrete_actor->kmers,
+                        bsal_actor_name(actor), concrete_actor->kmers,
                         concrete_actor->actual, concrete_actor->blocks);
 
 #ifdef BSAL_KMER_COUNTER_KERNEL_DEBUG
@@ -199,7 +199,7 @@ void bsal_dna_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_
 
 #ifdef BSAL_KMER_COUNTER_KERNEL_DEBUG
         printf("kernel %d BSAL_ACTOR_SET_CONSUMER consumer %d index %d\n",
-                        bsal_actor_get_name(actor), consumer,
+                        bsal_actor_name(actor), consumer,
                         concrete_actor->consumer);
 #endif
 
@@ -264,7 +264,7 @@ void bsal_dna_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_
         concrete_actor->auto_scaling_clone = BSAL_ACTOR_NOBODY;
 
         printf("kernel %d completed auto-scaling # %d\n",
-                        bsal_actor_get_name(actor),
+                        bsal_actor_name(actor),
                         concrete_actor->scaling_operations);
 
 
@@ -327,7 +327,7 @@ void bsal_dna_kmer_counter_kernel_do_auto_scaling(struct bsal_actor *actor, stru
     int name;
     int source;
 
-    name = bsal_actor_get_name(actor);
+    name = bsal_actor_name(actor);
     source = bsal_message_source(message);
 
     concrete_actor = (struct bsal_dna_kmer_counter_kernel *)bsal_actor_concrete_actor(actor);
@@ -383,7 +383,7 @@ void bsal_dna_kmer_counter_kernel_pack_message(struct bsal_actor *actor, struct 
 
     bsal_message_init(&new_message, BSAL_ACTOR_PACK_REPLY, new_count, new_buffer);
 
-    bsal_actor_send_reply(actor, &new_message);
+    bsal_actor_helper_send_reply(actor, &new_message);
 
     bsal_message_destroy(&new_message);
     bsal_memory_pool_free(ephemeral_memory, new_buffer);
@@ -413,7 +413,7 @@ void bsal_dna_kmer_counter_kernel_clone_reply(struct bsal_actor *actor, struct b
 
     source = bsal_message_source(message);
     concrete_actor = (struct bsal_dna_kmer_counter_kernel *)bsal_actor_concrete_actor(actor);
-    name = bsal_actor_get_name(actor);
+    name = bsal_actor_name(actor);
     bsal_message_helper_unpack_int(message, 0, &clone);
     consumer = concrete_actor->consumer;
     /*producer = concrete_actor->producer);*/
@@ -599,7 +599,7 @@ void bsal_dna_kmer_counter_kernel_push_sequence_data_block(struct bsal_actor *ac
 
     concrete_actor = (struct bsal_dna_kmer_counter_kernel *)bsal_actor_concrete_actor(actor);
     ephemeral_memory = bsal_actor_get_ephemeral_memory(actor);
-    name = bsal_actor_get_name(actor);
+    name = bsal_actor_name(actor);
     source = bsal_message_source(message);
     buffer = bsal_message_buffer(message);
 

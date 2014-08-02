@@ -60,7 +60,7 @@ void bsal_priority_scheduler_update(struct bsal_priority_scheduler *scheduler, s
 
     BSAL_DEBUGGER_ASSERT(actor != NULL);
 
-    name = bsal_actor_get_name(actor);
+    name = bsal_actor_name(actor);
     new_source_count = bsal_actor_get_source_count(actor);
 
     /*

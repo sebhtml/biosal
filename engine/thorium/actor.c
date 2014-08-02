@@ -87,7 +87,7 @@ void bsal_actor_init(struct bsal_actor *actor, void *state,
 
 /*
     printf("DEBUG actor %d init can_pack %d\n",
-                    bsal_actor_get_name(actor), actor->can_pack);
+                    bsal_actor_name(actor), actor->can_pack);
 */
     bsal_vector_init(&actor->acquaintance_vector, sizeof(int));
     bsal_vector_init(&actor->children, sizeof(int));
@@ -184,7 +184,7 @@ void bsal_actor_destroy(struct bsal_actor *actor)
     bsal_fast_ring_destroy(&actor->mailbox);
 }
 
-int bsal_actor_get_name(struct bsal_actor *actor)
+int bsal_actor_name(struct bsal_actor *actor)
 {
     BSAL_DEBUGGER_ASSERT(actor != NULL);
 
@@ -212,10 +212,10 @@ void bsal_actor_print(struct bsal_actor *actor)
 
     printf("INSPECT actor: %s/%d\n",
                         bsal_actor_get_description(actor),
-                        bsal_actor_get_name(actor));
+                        bsal_actor_name(actor));
 
     printf("[bsal_actor_print] Name: %i Supervisor %i Node: %i, Thread: %i"
-                    " received %i sent %i\n", bsal_actor_get_name(actor),
+                    " received %i sent %i\n", bsal_actor_name(actor),
                     bsal_actor_supervisor(actor),
                     bsal_node_name(bsal_actor_node(actor)),
                     bsal_worker_name(bsal_actor_worker(actor)),
@@ -266,7 +266,7 @@ int bsal_actor_send_system_self(struct bsal_actor *actor, struct bsal_message *m
 
             /*
         printf("DEBUG actor %d enabling can_pack\n",
-                        bsal_actor_get_name(actor));
+                        bsal_actor_name(actor));
                         */
 
         actor->can_pack = BSAL_ACTOR_STATUS_SUPPORTED;
@@ -299,7 +299,7 @@ int bsal_actor_send_system(struct bsal_actor *actor, int name, struct bsal_messa
 {
     int self;
 
-    self = bsal_actor_get_name(actor);
+    self = bsal_actor_name(actor);
 
     /* Verify if the message is a special message.
      * For instance, it is important to pin an
@@ -330,7 +330,7 @@ void bsal_actor_send(struct bsal_actor *actor, int name, struct bsal_message *me
 
     (*bucket)++;
 
-    source = bsal_actor_get_name(actor);
+    source = bsal_actor_name(actor);
 
     /* update counters
      */
@@ -400,7 +400,7 @@ int bsal_actor_spawn(struct bsal_actor *actor, int script)
 int bsal_actor_spawn_real(struct bsal_actor *actor, int script)
 {
     int name;
-    int self_name = bsal_actor_get_name(actor);
+    int self_name = bsal_actor_name(actor);
 
 #ifdef BSAL_ACTOR_DEBUG_SPAWN
     printf("DEBUG bsal_actor_spawn script %d\n", script);
@@ -517,7 +517,7 @@ int bsal_actor_receive_system_no_pack(struct bsal_actor *actor, struct bsal_mess
          */
 
             /*
-        printf("DEBUG actor %d BSAL_ACTOR_CLONE not supported can_pack %d\n", bsal_actor_get_name(actor),
+        printf("DEBUG actor %d BSAL_ACTOR_CLONE not supported can_pack %d\n", bsal_actor_name(actor),
                         actor->can_pack);
                         */
 
@@ -574,7 +574,7 @@ int bsal_actor_receive_system(struct bsal_actor *actor, struct bsal_message *mes
         }
     }
 
-    name = bsal_actor_get_name(actor);
+    name = bsal_actor_name(actor);
     source =bsal_message_source(message);
     buffer = bsal_message_buffer(message);
     count = bsal_message_count(message);
@@ -773,7 +773,7 @@ int bsal_actor_receive_system(struct bsal_actor *actor, struct bsal_message *mes
 
 #ifdef BSAL_ACTOR_DEBUG_MIGRATE
         printf("DEBUG bsal_actor_receive_system actor %d receives BSAL_ACTOR_SET_SUPERVISOR old supervisor %d (provided %d), new supervisor %d\n",
-                        bsal_actor_get_name(actor),
+                        bsal_actor_name(actor),
                         bsal_actor_supervisor(actor), old_supervisor,
                         supervisor);
 #endif
@@ -852,7 +852,7 @@ void bsal_actor_receive(struct bsal_actor *actor, struct bsal_message *message)
 
     printf("DEBUG bsal_actor_receive tag %d for %d\n",
                     bsal_message_tag(message),
-                    bsal_actor_get_name(actor));
+                    bsal_actor_name(actor));
 #endif
 
     /* Update counter
@@ -896,7 +896,7 @@ void bsal_actor_receive(struct bsal_actor *actor, struct bsal_message *message)
                     bsal_message_tag(message));
 #endif
 
-    name = bsal_actor_get_name(actor);
+    name = bsal_actor_name(actor);
 
     /* update counters
      */
@@ -919,7 +919,7 @@ void bsal_actor_receive_proxy_message(struct bsal_actor *actor,
     int source;
 
     source = bsal_actor_unpack_proxy_message(actor, message);
-    bsal_actor_send_with_source(actor, bsal_actor_get_name(actor),
+    bsal_actor_send_with_source(actor, bsal_actor_name(actor),
                     message, source);
 }
 
@@ -965,7 +965,7 @@ void bsal_actor_receive_synchronize_reply(struct bsal_actor *actor,
                             sizeof(actor->synchronization_responses),
                             &actor->synchronization_responses);
 
-            name = bsal_actor_get_name(actor);
+            name = bsal_actor_name(actor);
 
             bsal_actor_send(actor, name, &new_message);
             actor->synchronization_started = 0;
@@ -986,7 +986,7 @@ void bsal_actor_synchronize(struct bsal_actor *actor, struct bsal_vector *actors
 
 #ifdef BSAL_ACTOR_DEBUG
     printf("DEBUG actor %i emit synchronization %i-%i, expected: %i\n",
-                    bsal_actor_get_name(actor), first, last,
+                    bsal_actor_name(actor), first, last,
                     actor->synchronization_expected_responses);
 #endif
 
@@ -1005,7 +1005,7 @@ int bsal_actor_synchronization_completed(struct bsal_actor *actor)
 
 #ifdef BSAL_ACTOR_DEBUG
     printf("DEBUG32 actor %i bsal_actor_synchronization_completed %i/%i\n",
-                    bsal_actor_get_name(actor),
+                    bsal_actor_name(actor),
                     actor->synchronization_responses,
                     actor->synchronization_expected_responses);
 #endif
@@ -1100,21 +1100,6 @@ void bsal_actor_add_script(struct bsal_actor *actor, int name, struct bsal_scrip
     bsal_node_add_script(bsal_actor_node(actor), name, script);
 }
 
-void bsal_actor_send_reply(struct bsal_actor *actor, struct bsal_message *message)
-{
-    bsal_actor_send(actor, bsal_actor_source(actor), message);
-}
-
-void bsal_actor_send_to_self(struct bsal_actor *actor, struct bsal_message *message)
-{
-    bsal_actor_send(actor, bsal_actor_get_name(actor), message);
-}
-
-void bsal_actor_send_to_supervisor(struct bsal_actor *actor, struct bsal_message *message)
-{
-    bsal_actor_send(actor, bsal_actor_supervisor(actor), message);
-}
-
 void bsal_actor_clone(struct bsal_actor *actor, struct bsal_message *message)
 {
     int spawner;
@@ -1132,7 +1117,7 @@ void bsal_actor_clone(struct bsal_actor *actor, struct bsal_message *message)
 
 #ifdef BSAL_ACTOR_DEBUG_CLONE
     int name;
-    name = bsal_actor_get_name(actor);
+    name = bsal_actor_name(actor);
     printf("DEBUG %d sending BSAL_ACTOR_SPAWN to spawner %d for client %d\n", name, spawner,
                     source);
 #endif
@@ -1154,7 +1139,7 @@ void bsal_actor_continue_clone(struct bsal_actor *actor, struct bsal_message *me
 
     count = bsal_message_count(message);
     buffer = bsal_message_buffer(message);
-    self = bsal_actor_get_name(actor);
+    self = bsal_actor_name(actor);
     tag = bsal_message_tag(message);
     source = bsal_message_source(message);
 
@@ -1210,7 +1195,7 @@ void bsal_actor_continue_clone(struct bsal_actor *actor, struct bsal_message *me
         actor->cloning_status = BSAL_ACTOR_STATUS_NOT_STARTED;
 
 #ifdef BSAL_ACTOR_DEBUG_CLONE
-        printf("actor:%d sends clone %d to client %d\n", bsal_actor_get_name(actor),
+        printf("actor:%d sends clone %d to client %d\n", bsal_actor_name(actor),
                         actor->cloning_new_actor, actor->cloning_client);
 #endif
 
@@ -1218,7 +1203,7 @@ void bsal_actor_continue_clone(struct bsal_actor *actor, struct bsal_message *me
 
 #ifdef BSAL_ACTOR_DEBUG_CLONE
         printf("DEBUG clone finished, forwarding queued messages (if any) to %d, queue/%d\n",
-                        bsal_actor_get_name(actor), actor->forwarding_selector);
+                        bsal_actor_name(actor), actor->forwarding_selector);
 #endif
 
         bsal_actor_helper_send_to_self_empty(actor, BSAL_ACTOR_FORWARD_MESSAGES);
@@ -1230,16 +1215,6 @@ void bsal_actor_continue_clone(struct bsal_actor *actor, struct bsal_message *me
 int bsal_actor_source(struct bsal_actor *actor)
 {
     return actor->current_source;
-}
-
-void bsal_actor_send_to_supervisor_int(struct bsal_actor *actor, int tag, int value)
-{
-    bsal_actor_helper_send_int(actor, bsal_actor_supervisor(actor), tag, value);
-}
-
-void bsal_actor_send_to_self_int(struct bsal_actor *actor, int tag, int value)
-{
-    bsal_actor_helper_send_int(actor, bsal_actor_get_name(actor), tag, value);
 }
 
 int bsal_actor_node_name(struct bsal_actor *actor)
@@ -1263,7 +1238,7 @@ int bsal_actor_dispatch(struct bsal_actor *actor, struct bsal_message *message)
 #ifdef BSAL_ACTOR_DEBUG_10335
     if (bsal_message_tag(message) == 10335) {
         printf("DEBUG actor %d bsal_actor_dispatch 10335\n",
-                        bsal_actor_get_name(actor));
+                        bsal_actor_name(actor));
     }
 #endif
 
@@ -1276,7 +1251,7 @@ void bsal_actor_register(struct bsal_actor *actor, int tag, bsal_actor_receive_f
 #ifdef BSAL_ACTOR_DEBUG_10335
     if (tag == 10335) {
         printf("DEBUG actor %d bsal_actor_register 10335\n",
-                        bsal_actor_get_name(actor));
+                        bsal_actor_name(actor));
     }
 #endif
 
@@ -1306,14 +1281,14 @@ void bsal_actor_migrate(struct bsal_actor *actor, struct bsal_message *message)
 
     tag = bsal_message_tag(message);
     source = bsal_message_source(message);
-    name = bsal_actor_get_name(actor);
+    name = bsal_actor_name(actor);
 
     /*
      * For migration, the same name is kept
      */
 
     bsal_actor_helper_send_reply_int(actor, BSAL_ACTOR_MIGRATE_REPLY,
-                    bsal_actor_get_name(actor));
+                    bsal_actor_name(actor));
 
     return;
 
@@ -1328,12 +1303,12 @@ void bsal_actor_migrate(struct bsal_actor *actor, struct bsal_message *message)
         source = bsal_message_source(message);
         buffer = bsal_message_buffer(message);
         spawner = *(int *)buffer;
-        name = bsal_actor_get_name(actor);
+        name = bsal_actor_name(actor);
 
         actor->migration_spawner = spawner;
         actor->migration_client = source;
 
-        bsal_actor_send_to_self_int(actor, BSAL_ACTOR_CLONE, spawner);
+        bsal_actor_helper_send_to_self_int(actor, BSAL_ACTOR_CLONE, spawner);
 
         actor->migration_status = BSAL_ACTOR_STATUS_STARTED;
         actor->migration_cloned = 1;
@@ -1370,12 +1345,12 @@ void bsal_actor_migrate(struct bsal_actor *actor, struct bsal_message *message)
          */
 #ifdef BSAL_ACTOR_DEBUG_MIGRATE
         printf("DEBUG bsal_actor_migrate actor %d setting supervisor of %d to %d\n",
-                        bsal_actor_get_name(actor),
+                        bsal_actor_name(actor),
                         actor->migration_new_actor,
                         bsal_actor_supervisor(actor));
 #endif
 
-        data[0] = bsal_actor_get_name(actor);
+        data[0] = bsal_actor_name(actor);
         data[1] = bsal_actor_supervisor(actor);
 
         bsal_message_init(&new_message, BSAL_ACTOR_SET_SUPERVISOR,
@@ -1413,7 +1388,7 @@ void bsal_actor_migrate(struct bsal_actor *actor, struct bsal_message *message)
 
 #ifdef BSAL_ACTOR_DEBUG_MIGRATE
             printf("DEBUG bsal_actor_migrate %d forwarding queued messages to actor %d, queue/%d (forwarding system ready.)\n",
-                        bsal_actor_get_name(actor),
+                        bsal_actor_name(actor),
                         actor->migration_new_actor, actor->forwarding_selector);
 #endif
 
@@ -1501,12 +1476,12 @@ void bsal_actor_migrate_notify_acquaintances(struct bsal_actor *actor, struct bs
     }
 }
 
-void bsal_actor_send_to_self_proxy(struct bsal_actor *actor,
+void bsal_actor_helper_send_to_self_proxy(struct bsal_actor *actor,
                 struct bsal_message *message, int real_source)
 {
     int destination;
 
-    destination = bsal_actor_get_name(actor);
+    destination = bsal_actor_name(actor);
     bsal_actor_send_proxy(actor, destination, message, real_source);
 }
 
@@ -1583,7 +1558,7 @@ void bsal_actor_forward_messages(struct bsal_actor *actor, struct bsal_message *
 
     if (actor->forwarding_selector == BSAL_ACTOR_FORWARDING_CLONE) {
         queue = &actor->queued_messages_for_clone;
-        destination = bsal_actor_get_name(actor);
+        destination = bsal_actor_name(actor);
 
     } else if (actor->forwarding_selector == BSAL_ACTOR_FORWARDING_MIGRATE) {
 
@@ -1604,7 +1579,7 @@ void bsal_actor_forward_messages(struct bsal_actor *actor, struct bsal_message *
 #ifdef BSAL_ACTOR_DEBUG_FORWARDING
         printf("DEBUG bsal_actor_forward_messages actor %d forwarding message to actor %d tag is %d,"
                             " real source is %d\n",
-                            bsal_actor_get_name(actor),
+                            bsal_actor_name(actor),
                             destination,
                             bsal_message_tag(&new_message),
                             bsal_message_source(&new_message));
@@ -1624,7 +1599,7 @@ void bsal_actor_forward_messages(struct bsal_actor *actor, struct bsal_message *
 
 #ifdef BSAL_ACTOR_DEBUG_FORWARDING
         printf("DEBUG bsal_actor_forward_messages actor %d has no more messages to forward in queue/%d\n",
-                        bsal_actor_get_name(actor), actor->forwarding_selector);
+                        bsal_actor_name(actor), actor->forwarding_selector);
 #endif
 
         if (bsal_queue_dequeue(&actor->forwarding_queue, &actor->forwarding_selector)) {

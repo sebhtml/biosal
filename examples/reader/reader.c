@@ -61,7 +61,7 @@ void reader_receive(struct bsal_actor *actor, struct bsal_message *message)
     tag = bsal_message_tag(message);
     source = bsal_message_source(message);
     buffer = bsal_message_buffer(message);
-    name = bsal_actor_get_name(actor);
+    name = bsal_actor_name(actor);
 
     if (tag == BSAL_ACTOR_START) {
 
@@ -70,7 +70,7 @@ void reader_receive(struct bsal_actor *actor, struct bsal_message *message)
 
         argc = bsal_actor_argc(actor);
         argv = bsal_actor_argv(actor);
-        name = bsal_actor_get_name(actor);
+        name = bsal_actor_name(actor);
         reader1->last_report = 0;
 
         /*

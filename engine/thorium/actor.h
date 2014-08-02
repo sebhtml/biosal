@@ -253,7 +253,7 @@ void bsal_actor_init(struct bsal_actor *actor, void *state,
                 struct bsal_script *script, int name, struct bsal_node *node);
 void bsal_actor_destroy(struct bsal_actor *self);
 
-int bsal_actor_get_name(struct bsal_actor *self);
+int bsal_actor_name(struct bsal_actor *self);
 void *bsal_actor_concrete_actor(struct bsal_actor *self);
 void bsal_actor_set_name(struct bsal_actor *actor, int name);
 
@@ -271,9 +271,6 @@ bsal_actor_receive_fn_t bsal_actor_get_receive(struct bsal_actor *self);
 /* send functions
  */
 void bsal_actor_send(struct bsal_actor *actor, int destination, struct bsal_message *message);
-void bsal_actor_send_reply(struct bsal_actor *actor, struct bsal_message *message);
-void bsal_actor_send_to_self(struct bsal_actor *actor, struct bsal_message *message);
-void bsal_actor_send_to_supervisor(struct bsal_actor *actor, struct bsal_message *message);
 
 void bsal_actor_send_with_source(struct bsal_actor *actor, int name, struct bsal_message *message,
                 int source);

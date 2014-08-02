@@ -28,7 +28,7 @@ void table_destroy(struct bsal_actor *actor)
     table1 = (struct table *)bsal_actor_concrete_actor(actor);
 
     bsal_vector_destroy(&table1->spawners);
-    printf("actor %d dies\n", bsal_actor_get_name(actor));
+    printf("actor %d dies\n", bsal_actor_name(actor));
 }
 
 void table_receive(struct bsal_actor *actor, struct bsal_message *message)
@@ -46,7 +46,7 @@ void table_receive(struct bsal_actor *actor, struct bsal_message *message)
     table1 = (struct table *)bsal_actor_concrete_actor(actor);
     source = bsal_message_source(message);
     tag = bsal_message_tag(message);
-    name = bsal_actor_get_name(actor);
+    name = bsal_actor_name(actor);
     buffer = bsal_message_buffer(message);
 
     if (tag == BSAL_ACTOR_START) {

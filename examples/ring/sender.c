@@ -37,7 +37,7 @@ void sender_receive(struct bsal_actor *actor, struct bsal_message *message)
     tag = bsal_message_tag(message);
     buffer = bsal_message_buffer(message);
     concrete_actor = (struct sender *)bsal_actor_concrete_actor(actor);
-    name = bsal_actor_get_name(actor);
+    name = bsal_actor_name(actor);
 
     if (tag == SENDER_SET_NEXT) {
 

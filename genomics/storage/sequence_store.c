@@ -40,7 +40,7 @@ void bsal_sequence_store_init(struct bsal_actor *actor)
     concrete_actor->required_kmers = -1;
 
     printf("DEBUG sequence store %d is online on node %d\n",
-                    bsal_actor_get_name(actor),
+                    bsal_actor_name(actor),
                     bsal_actor_node_name(actor));
 #ifdef BSAL_SEQUENCE_STORE_DEBUG
 #endif
@@ -124,7 +124,7 @@ void bsal_sequence_store_receive(struct bsal_actor *actor, struct bsal_message *
 
 #ifdef BSAL_SEQUENCE_STORE_DEBUG
         printf("DEBUG store %d dies\n",
-                        bsal_actor_get_name(actor));
+                        bsal_actor_name(actor));
 #endif
 
         bsal_actor_helper_ask_to_stop(actor, message);
@@ -168,7 +168,7 @@ void bsal_sequence_store_push_sequence_data_block(struct bsal_actor *actor, stru
 
 #ifdef BSAL_SEQUENCE_STORE_DEBUG
     printf("DEBUG store %d bsal_sequence_store_receive command:\n",
-                    bsal_actor_get_name(actor));
+                    bsal_actor_name(actor));
 
     bsal_input_command_print(&payload);
 #endif
@@ -181,7 +181,7 @@ void bsal_sequence_store_push_sequence_data_block(struct bsal_actor *actor, stru
 
 #ifdef BSAL_SEQUENCE_STORE_DEBUG
     printf("DEBUG store %d bsal_sequence_store_push_sequence_data_block entries %d\n",
-                    bsal_actor_get_name(actor),
+                    bsal_actor_name(actor),
                     (int)bsal_vector_size(new_entries));
 #endif
 
@@ -270,14 +270,14 @@ void bsal_sequence_store_reserve(struct bsal_actor *actor, struct bsal_message *
 
     concrete_actor->reservation_producer = source;
     printf("DEBUG store %d reserves %" PRIu64 " buckets\n",
-                    bsal_actor_get_name(actor),
+                    bsal_actor_name(actor),
                     amount);
 
     bsal_vector_resize(&concrete_actor->sequences, amount);
 
 #ifdef BSAL_SEQUENCE_STORE_DEBUG
     printf("DEBUG store %d now has %d buckets\n",
-                    bsal_actor_get_name(actor),
+                    bsal_actor_name(actor),
                     (int)bsal_vector_size(&concrete_actor->sequences));
 #endif
 
@@ -306,7 +306,7 @@ void bsal_sequence_store_show_progress(struct bsal_actor *actor, struct bsal_mes
     concrete_actor = (struct bsal_sequence_store *)bsal_actor_concrete_actor(actor);
 
     printf("sequence store %d has %" PRId64 "/%" PRId64 " entries\n",
-                    bsal_actor_get_name(actor),
+                    bsal_actor_name(actor),
                     concrete_actor->received,
                     bsal_vector_size(&concrete_actor->sequences));
 
@@ -341,7 +341,7 @@ void bsal_sequence_store_ask(struct bsal_actor *self, struct bsal_message *messa
     required_kmers = bsal_sequence_store_get_required_kmers(self, message);
     bsal_message_helper_unpack_int(message, 0, &kmer_length);
 
-    name = bsal_actor_get_name(self);
+    name = bsal_actor_name(self);
 #ifdef BSAL_SEQUENCE_STORE_DEBUG
 #endif
 
@@ -402,7 +402,7 @@ void bsal_sequence_store_ask(struct bsal_actor *self, struct bsal_message *messa
 
         bsal_message_init(&new_message, BSAL_PUSH_SEQUENCE_DATA_BLOCK, new_count, new_buffer);
 
-        bsal_actor_send_reply(self, &new_message);
+        bsal_actor_helper_send_reply(self, &new_message);
         bsal_message_destroy(&new_message);
 
 #ifdef BSAL_SEQUENCE_STORE_DEBUG

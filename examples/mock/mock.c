@@ -100,7 +100,7 @@ void mock_receive(struct bsal_actor *actor, struct bsal_message *message)
     } else if (tag == MOCK_PREPARE_DEATH) {
         bsal_message_init(message, BSAL_ACTOR_ASK_TO_STOP, 0, NULL);
 
-        name = bsal_actor_get_name(actor);
+        name = bsal_actor_name(actor);
         bsal_actor_send(actor, name, message);
 
         bsal_message_init(message, BSAL_ACTOR_ASK_TO_STOP, 0, NULL);
@@ -140,7 +140,7 @@ void mock_die(struct bsal_actor *actor, struct bsal_message *message)
     int name;
     int source;
 
-    name = bsal_actor_get_name(actor);
+    name = bsal_actor_name(actor);
     source = bsal_message_source(message);
 
     printf("mock_die actor %i dies (MOCK_DIE from %i)\n", name, source);
@@ -153,7 +153,7 @@ void mock_start(struct bsal_actor *actor, struct bsal_message *message)
 {
     int name;
 
-    name = bsal_actor_get_name(actor);
+    name = bsal_actor_name(actor);
 
     printf("actor %i spawn a child\n", name);
 
@@ -171,7 +171,7 @@ void mock_share(struct bsal_actor *actor, struct bsal_message *message)
     int index;
 
     mock1 = (struct mock *)bsal_actor_concrete_actor(actor);
-    name = bsal_actor_get_name(actor);
+    name = bsal_actor_name(actor);
     index = bsal_vector_index_of(&mock1->spawners, &name);
 
     /* get the next mock actor

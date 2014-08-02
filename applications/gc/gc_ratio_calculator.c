@@ -56,7 +56,7 @@ void gc_ratio_calculator_start(struct bsal_actor *actor, struct bsal_message *me
 
     concrete_actor = bsal_actor_concrete_actor(actor);
 
-    name = bsal_actor_get_name(actor);
+    name = bsal_actor_name(actor);
     tag = bsal_message_tag(message);
     buffer = bsal_message_buffer(message);
     source = bsal_message_source(message);
@@ -97,7 +97,7 @@ void gc_ratio_calculator_hello_reply(struct bsal_actor *actor, struct bsal_messa
 
     concrete_actor = bsal_actor_concrete_actor(actor);
 
-    name = bsal_actor_get_name(actor);
+    name = bsal_actor_name(actor);
     source = bsal_message_source(message);
     spawners = &concrete_actor->spawners;
 

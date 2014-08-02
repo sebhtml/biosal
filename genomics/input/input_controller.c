@@ -95,7 +95,7 @@ void bsal_input_controller_init(struct bsal_actor *actor)
 
 #ifdef BSAL_INPUT_CONTROLLER_DEBUG_10355
     printf("DEBUG actor %d register BSAL_INPUT_CONTROLLER_CREATE_STORES\n",
-                    bsal_actor_get_name(actor));
+                    bsal_actor_name(actor));
 #endif
 
     bsal_actor_register(actor, BSAL_INPUT_CONTROLLER_CREATE_STORES,
@@ -125,7 +125,7 @@ void bsal_input_controller_init(struct bsal_actor *actor)
 
 #ifdef BSAL_INPUT_CONTROLLER_DEBUG
     printf("DEBUG %d init controller\n",
-                    bsal_actor_get_name(actor));
+                    bsal_actor_name(actor));
 #endif
 
     concrete_actor->ready_spawners = 0;
@@ -231,7 +231,7 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
     bsal_message_helper_get_all(message, &tag, &count, &buffer, &source);
 
     ephemeral_memory = (struct bsal_memory_pool *)bsal_actor_get_ephemeral_memory(actor);
-    name = bsal_actor_get_name(actor);
+    name = bsal_actor_name(actor);
     controller = (struct bsal_input_controller *)bsal_actor_concrete_actor(actor);
     concrete_actor = controller;
 
@@ -450,7 +450,7 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
 #ifdef BSAL_INPUT_CONTROLLER_DEBUG_LEVEL_2
 #endif
             printf("DEBUG %d: Error all streams failed.\n",
-                            bsal_actor_get_name(actor));
+                            bsal_actor_name(actor));
             bsal_actor_helper_send_to_supervisor_empty(actor, BSAL_INPUT_DISTRIBUTE_REPLY);
         }
 
@@ -603,7 +603,7 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
         /* also, spawn 4 stores on each node */
 
     } else if (tag == BSAL_ACTOR_ASK_TO_STOP && ( source == bsal_actor_supervisor(actor)
-                            || source == bsal_actor_get_name(actor))) {
+                            || source == bsal_actor_name(actor))) {
 
 #ifdef BSAL_INPUT_CONTROLLER_DEBUG_LEVEL_2
 #endif
@@ -635,7 +635,7 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
 
 #ifdef BSAL_INPUT_CONTROLLER_DEBUG
             printf("DEBUG controller %d sends BSAL_ACTOR_ASK_TO_STOP_REPLY to %d\n",
-                        bsal_actor_get_name(actor),
+                        bsal_actor_name(actor),
                         bsal_message_source(message));
 #endif
 
@@ -754,7 +754,7 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
         bsal_vector_unpack(&concrete_actor->consumers, buffer);
 
         printf("controller %d receives %d consumers\n",
-                        bsal_actor_get_name(actor),
+                        bsal_actor_name(actor),
                         (int)bsal_vector_size(&concrete_actor->consumers));
 
         for (i = 0; i < bsal_vector_size(&concrete_actor->consumers); i++) {
@@ -815,7 +815,7 @@ void bsal_input_controller_receive_store_entry_counts(struct bsal_actor *actor, 
 
     concrete_actor = (struct bsal_input_controller *)bsal_actor_concrete_actor(actor);
     buffer = bsal_message_buffer(message);
-    name = bsal_actor_get_name(actor);
+    name = bsal_actor_name(actor);
     concrete_actor->ready_consumers = 0;
 
 #ifdef BSAL_INPUT_CONTROLLER_DEBUG
@@ -914,18 +914,18 @@ void bsal_input_controller_create_stores(struct bsal_actor *actor, struct bsal_m
     }
 
     printf("DEBUG controller %d: consumers are ready (%d)\n",
-                    bsal_actor_get_name(actor),
+                    bsal_actor_name(actor),
                     (int)bsal_vector_size(&concrete_actor->consumers));
 
     for (i = 0; i < bsal_vector_size(&concrete_actor->consumers); i++) {
         value = bsal_vector_helper_at_as_int(&concrete_actor->consumers, i);
 
         printf("DEBUG controller %d: consumer %i is %d\n",
-                        bsal_actor_get_name(actor), i, value);
+                        bsal_actor_name(actor), i, value);
     }
 
     printf("DEBUG controller %d: streams are\n",
-                    bsal_actor_get_name(actor));
+                    bsal_actor_name(actor));
 
     total = 0;
     block_size = concrete_actor->block_size;
@@ -956,12 +956,12 @@ void bsal_input_controller_create_stores(struct bsal_actor *actor, struct bsal_m
                     "Counting entries");
 
     printf("DEBUG controller %d: Partition Total: %" PRIu64 ", block_size: %d, blocks: %d\n",
-                    bsal_actor_get_name(actor),
+                    bsal_actor_name(actor),
                     total, block_size, blocks);
 
 #ifdef BSAL_INPUT_CONTROLLER_DEBUG_10355
     printf("DEBUG send BSAL_INPUT_CONTROLLER_CREATE_STORES to self %d\n",
-                            bsal_actor_get_name(actor));
+                            bsal_actor_name(actor));
 #endif
 
 #ifdef BSAL_INPUT_CONTROLLER_DEBUG
@@ -1172,7 +1172,7 @@ void bsal_input_controller_receive_command(struct bsal_actor *actor, struct bsal
     command_name = bsal_partition_command_name(&command);
 
 #ifdef BSAL_INPUT_CONTROLLER_DEBUG_COMMANDS
-    printf("controller/%d processed input command %d %p\n", bsal_actor_get_name(actor), command_name,
+    printf("controller/%d processed input command %d %p\n", bsal_actor_name(actor), command_name,
                     (void *)bucket_for_command_name);
 #endif
 
@@ -1288,7 +1288,7 @@ void bsal_input_controller_set_offset_reply(struct bsal_actor *self, struct bsal
 
     bsal_message_init(&new_message, BSAL_INPUT_OPEN, strlen(file_name) + 1, file_name);
 
-    bsal_actor_send_reply(self, &new_message);
+    bsal_actor_helper_send_reply(self, &new_message);
 
     bsal_message_destroy(&new_message);
 }

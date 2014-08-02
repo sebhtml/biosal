@@ -51,7 +51,7 @@ void frame_receive(struct bsal_actor *actor, struct bsal_message *message)
     source = bsal_message_source(message);
     concrete_actor = (struct frame *)bsal_actor_concrete_actor(actor);
     tag = bsal_message_tag(message);
-    name = bsal_actor_get_name(actor);
+    name = bsal_actor_name(actor);
     buffer = bsal_message_buffer(message);
     acquaintance_vector = &concrete_actor->acquaintance_vector;
 

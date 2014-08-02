@@ -352,7 +352,7 @@ void bsal_scheduling_queue_print_with_priority(struct bsal_scheduling_queue *que
                         node, worker,
                         i,
                         bsal_actor_get_description(actor),
-                        bsal_actor_get_name(actor),
+                        bsal_actor_name(actor),
                         bsal_actor_get_mailbox_size(actor));
 
         ++i;

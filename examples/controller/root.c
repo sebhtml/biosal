@@ -76,7 +76,7 @@ void root_receive(struct bsal_actor *actor, struct bsal_message *message)
     source = bsal_message_source(message);
     tag = bsal_message_tag(message);
     buffer = bsal_message_buffer(message);
-    name = bsal_actor_get_name(actor);
+    name = bsal_actor_name(actor);
     count = bsal_message_count(message);
 
     /*
@@ -156,7 +156,7 @@ void root_receive(struct bsal_actor *actor, struct bsal_message *message)
         bsal_actor_helper_send_int(actor, manager, BSAL_MANAGER_SET_SCRIPT, BSAL_SEQUENCE_STORE_SCRIPT);
 
         printf("DEBUG root actor/%d spawned manager actor/%d\n",
-                        bsal_actor_get_name(actor), manager);
+                        bsal_actor_name(actor), manager);
         concrete_actor->manager = bsal_actor_get_child_index(actor, manager);
 
     } else if (tag == BSAL_MANAGER_SET_SCRIPT_REPLY) {
@@ -185,7 +185,7 @@ void root_receive(struct bsal_actor *actor, struct bsal_message *message)
         bsal_vector_unpack(&stores, buffer);
 
         printf("DEBUG root actor/%d received stores from manager actor/%d\n",
-                        bsal_actor_get_name(actor),
+                        bsal_actor_name(actor),
                         source);
 
         bsal_message_init(&new_message, BSAL_ACTOR_SET_CONSUMERS, count, buffer);
@@ -223,7 +223,7 @@ void root_receive(struct bsal_actor *actor, struct bsal_message *message)
             file = argv[i];
 
             bsal_message_init(message, BSAL_ADD_FILE, strlen(file) + 1, file);
-            bsal_actor_send_reply(actor, message);
+            bsal_actor_helper_send_reply(actor, message);
 
             printf("root actor/%d add file %s to controller actor/%d\n", name,
                             file, source);
@@ -267,7 +267,7 @@ void root_receive(struct bsal_actor *actor, struct bsal_message *message)
         if (source == root1->controller) {
 
             printf("DEBUG root actor/%d sending to self ROOT_STOP_ALL\n",
-                            bsal_actor_get_name(actor));
+                            bsal_actor_name(actor));
 
             bsal_actor_helper_send_to_self_empty(actor, ROOT_STOP_ALL);
         }
@@ -282,7 +282,7 @@ void root_receive(struct bsal_actor *actor, struct bsal_message *message)
         bsal_actor_helper_send_empty(actor, bsal_actor_get_child(actor,
                                 concrete_actor->manager), BSAL_ACTOR_ASK_TO_STOP);
 
-        printf("DEBUG stopping root actor/%d (source: %d)\n", bsal_actor_get_name(actor),
+        printf("DEBUG stopping root actor/%d (source: %d)\n", bsal_actor_name(actor),
                         source);
         bsal_actor_helper_send_to_self_empty(actor, BSAL_ACTOR_STOP);
     }

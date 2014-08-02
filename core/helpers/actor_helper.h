@@ -63,4 +63,8 @@ void bsal_actor_helper_receive_binomial_tree_send(struct bsal_actor *actor,
                 struct bsal_message *message);
 void bsal_actor_helper_ask_to_stop(struct bsal_actor *actor, struct bsal_message *message);
 
+void bsal_actor_helper_send_reply(struct bsal_actor *actor, struct bsal_message *message);
+void bsal_actor_helper_send_to_self(struct bsal_actor *actor, struct bsal_message *message);
+void bsal_actor_helper_send_to_supervisor(struct bsal_actor *actor, struct bsal_message *message);
+
 #endif

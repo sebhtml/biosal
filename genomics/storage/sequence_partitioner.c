@@ -145,7 +145,7 @@ void bsal_sequence_partitioner_receive(struct bsal_actor *actor, struct bsal_mes
 
             bsal_message_init(&response, BSAL_SEQUENCE_PARTITIONER_GET_COMMAND_REPLY,
                             bytes, buffer);
-            bsal_actor_send_reply(actor, &response);
+            bsal_actor_helper_send_reply(actor, &response);
 
             /* store the active command
              */
@@ -361,7 +361,7 @@ void bsal_sequence_partitioner_verify(struct bsal_actor *actor)
 
     bsal_message_init(&message, BSAL_SEQUENCE_PARTITIONER_PROVIDE_STORE_ENTRY_COUNTS,
                     bytes, buffer);
-    bsal_actor_send_reply(actor, &message);
+    bsal_actor_helper_send_reply(actor, &message);
 
     bsal_memory_pool_free(ephemeral_memory, buffer);
 }
@@ -570,7 +570,7 @@ void bsal_sequence_partitioner_generate_command(struct bsal_actor *actor, int st
                     || command_name == blocks - 1) {
 
         printf("partitioner/%d generated partition command # %d (total %" PRIu64 ", block_size %d, blocks %d, progress %.2f)\n",
-                    bsal_actor_get_name(actor),
+                    bsal_actor_name(actor),
                     command_name,
                     concrete_actor->total, concrete_actor->block_size,
                     blocks, progress);

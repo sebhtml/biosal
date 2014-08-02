@@ -450,7 +450,7 @@ int bsal_worker_pool_give_message_to_actor(struct bsal_worker_pool *pool, struct
         return 0;
     }
 
-    name = bsal_actor_get_name(actor);
+    name = bsal_actor_name(actor);
 
     /* give the message to the actor
      */
@@ -524,7 +524,7 @@ void bsal_worker_pool_work(struct bsal_worker_pool *pool)
 
     if (bsal_ring_queue_dequeue(&pool->scheduled_actor_queue_buffer, &actor)) {
 
-        name = bsal_actor_get_name(actor);
+        name = bsal_actor_name(actor);
         worker_index = bsal_scheduler_get_actor_worker(&pool->scheduler, name);
 
         if (worker_index < 0) {

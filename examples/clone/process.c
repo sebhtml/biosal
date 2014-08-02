@@ -44,7 +44,7 @@ void process_receive(struct bsal_actor *actor, struct bsal_message *message)
 
     process1 = (struct process *)bsal_actor_concrete_actor(actor);
     tag = bsal_message_tag(message);
-    name = bsal_actor_get_name(actor);
+    name = bsal_actor_name(actor);
     buffer = bsal_message_buffer(message);
 
     if (tag == BSAL_ACTOR_START) {
@@ -61,7 +61,7 @@ void process_receive(struct bsal_actor *actor, struct bsal_message *message)
             }
         }
 
-        process1->value = 89 * bsal_actor_get_name(actor);
+        process1->value = 89 * bsal_actor_name(actor);
         printf("Hi, I am actor:%d and my value is %d. I will clone myself using %d as the spawner\n",
                         name, process1->value, other);
 
@@ -71,8 +71,8 @@ void process_receive(struct bsal_actor *actor, struct bsal_message *message)
          * to test the capacity of the runtime to queue messages
          * during cloning
          */
-        bsal_actor_send_to_self(actor, &new_message);
-        bsal_actor_send_to_self(actor, &new_message);
+        bsal_actor_helper_send_to_self(actor, &new_message);
+        bsal_actor_helper_send_to_self(actor, &new_message);
 
     } else if (tag == BSAL_ACTOR_CLONE_REPLY) {
 
@@ -115,7 +115,7 @@ void process_receive(struct bsal_actor *actor, struct bsal_message *message)
     } else if (tag == BSAL_ACTOR_PACK) {
 
         bsal_message_init(&new_message, BSAL_ACTOR_PACK_REPLY, sizeof(process1->value), &process1->value);
-        bsal_actor_send_reply(actor, &new_message);
+        bsal_actor_helper_send_reply(actor, &new_message);
 
     } else if (tag == BSAL_ACTOR_UNPACK) {
 

@@ -35,7 +35,7 @@ void buddy_receive(struct bsal_actor *actor, struct bsal_message *message)
     int source;
     int name;
 
-    name = bsal_actor_get_name(actor);
+    name = bsal_actor_name(actor);
     source = bsal_message_source(message);
     tag = bsal_message_tag(message);
 

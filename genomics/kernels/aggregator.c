@@ -90,7 +90,7 @@ void bsal_aggregator_init(struct bsal_actor *self)
     bsal_actor_register(self, BSAL_ACTOR_UNPACK,
                     bsal_aggregator_unpack_message);
 
-    printf("aggregator %d is online\n", bsal_actor_get_name(self));
+    printf("aggregator %d is online\n", bsal_actor_name(self));
 }
 
 void bsal_aggregator_destroy(struct bsal_actor *self)
@@ -230,7 +230,7 @@ void bsal_aggregator_flush(struct bsal_actor *self, int customer_index, struct b
 
     if (concrete_actor->flushed % 50000 == 0) {
         printf("aggregator %d flushed %d blocks so far\n",
-                        bsal_actor_get_name(self), concrete_actor->flushed);
+                        bsal_actor_name(self), concrete_actor->flushed);
     }
 
     /* Reset the buffer
@@ -305,7 +305,7 @@ void bsal_aggregator_aggregate_kernel_output(struct bsal_actor *self, struct bsa
 
     if (bsal_vector_size(&concrete_actor->consumers) == 0) {
         printf("Error: aggregator %d has no configured buffers\n",
-                        bsal_actor_get_name(self));
+                        bsal_actor_name(self));
         return;
     }
 
@@ -327,7 +327,7 @@ void bsal_aggregator_aggregate_kernel_output(struct bsal_actor *self, struct bsa
 #ifdef BSAL_AGGREGATOR_DEBUG
     BSAL_DEBUG_MARKER("aggregator receives");
     printf("name %d source %d UNPACK ON %d bytes\n",
-                        bsal_actor_get_name(self), source, bsal_message_count(message));
+                        bsal_actor_name(self), source, bsal_message_count(message));
 #endif
 
     concrete_actor->received++;
@@ -424,7 +424,7 @@ void bsal_aggregator_aggregate_kernel_output(struct bsal_actor *self, struct bsa
                     || concrete_actor->received >= concrete_actor->last + 10000) {
 
         printf("aggregator/%d received %" PRIu64 " kernel outputs so far\n",
-                        bsal_actor_get_name(self),
+                        bsal_actor_name(self),
                         concrete_actor->received);
 
         concrete_actor->last = concrete_actor->received;
@@ -489,7 +489,7 @@ void bsal_aggregator_pack_message(struct bsal_actor *actor, struct bsal_message 
     bsal_aggregator_pack(actor, new_buffer);
 
     bsal_message_init(&new_message, BSAL_ACTOR_PACK_REPLY, new_count, new_buffer);
-    bsal_actor_send_reply(actor, &new_message);
+    bsal_actor_helper_send_reply(actor, &new_message);
     bsal_message_destroy(&new_message);
 
     bsal_memory_pool_free(ephemeral_memory, new_buffer);
@@ -550,7 +550,7 @@ int bsal_aggregator_set_consumers(struct bsal_actor *actor, void *buffer)
     }
 
     printf("DEBUG45 aggregator %d preparing %d buffers, kmer_length %d\n",
-                    bsal_actor_get_name(actor),
+                    bsal_actor_name(actor),
                         (int)bsal_vector_size(&concrete_actor->consumers),
                         concrete_actor->kmer_length);
 
@@ -584,7 +584,7 @@ int bsal_aggregator_pack_unpack(struct bsal_actor *actor, int operation, void *b
     /*
     if (operation == BSAL_PACKER_OPERATION_UNPACK) {
         printf("aggregator %d unpacked kmer length %d\n",
-                        bsal_actor_get_name(actor),
+                        bsal_actor_name(actor),
                         concrete_actor->kmer_length);
     }
 */
