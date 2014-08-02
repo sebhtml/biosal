@@ -158,7 +158,7 @@ struct bsal_node {
 
 void bsal_node_init(struct bsal_node *node, int *argc, char ***argv);
 void bsal_node_destroy(struct bsal_node *node);
-void bsal_node_run(struct bsal_node *node);
+int bsal_node_run(struct bsal_node *node);
 void bsal_node_start_initial_actor(struct bsal_node *node);
 
 int bsal_node_spawn_state(struct bsal_node *node, void *state,

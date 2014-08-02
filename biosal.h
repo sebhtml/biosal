@@ -2,13 +2,9 @@
 #ifndef BSAL_H
 #define BSAL_H
 
-#define BSAL_VERSION "/dev/null"
-
 /* engine */
 
-#include "engine/thorium/actor.h"
-#include "engine/thorium/message.h"
-#include "engine/thorium/node.h"
+#include "engine/thorium/thorium_engine.h"
 
 /* actor patterns */
 
@@ -32,7 +28,6 @@
 #include <core/structures/map_iterator.h>
 #include <core/structures/set.h>
 #include <core/structures/set_iterator.h>
-
 
 /* input */
 

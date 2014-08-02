@@ -651,7 +651,7 @@ void bsal_node_set_initial_actor(struct bsal_node *node, int node_name, int acto
 #endif
 }
 
-void bsal_node_run(struct bsal_node *node)
+int bsal_node_run(struct bsal_node *node)
 {
     float load;
 
@@ -716,6 +716,8 @@ void bsal_node_run(struct bsal_node *node)
                     BSAL_NODE_THORIUM_PREFIX,
                     bsal_node_name(node),
                     load);
+
+    return 0;
 }
 
 void bsal_node_start_initial_actor(struct bsal_node *node)
