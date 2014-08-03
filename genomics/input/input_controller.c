@@ -235,7 +235,7 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
     controller = (struct bsal_input_controller *)bsal_actor_concrete_actor(actor);
     concrete_actor = controller;
 
-    if (tag == BSAL_INPUT_CONTROLLER_START) {
+    if (tag == BSAL_ACTOR_START) {
 
         bsal_vector_init(&concrete_actor->spawners, 0);
         bsal_vector_unpack(&concrete_actor->spawners, buffer);
@@ -302,7 +302,7 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
 #ifdef BSAL_INPUT_CONTROLLER_DEBUG
                 printf("DEBUG all spawners are prepared\n");
 #endif
-                bsal_actor_helper_send_to_supervisor_empty(actor, BSAL_INPUT_CONTROLLER_START_REPLY);
+                bsal_actor_helper_send_to_supervisor_empty(actor, BSAL_ACTOR_START_REPLY);
             }
 
             return;

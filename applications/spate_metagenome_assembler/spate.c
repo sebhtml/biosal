@@ -208,6 +208,21 @@ void spate_set_script_reply(struct bsal_actor *self, struct bsal_message *messag
 
 void spate_start_reply(struct bsal_actor *self, struct bsal_message *message)
 {
+    int source = bsal_message_source(message);
+    struct spate *concrete_self;
+
+    concrete_self = (struct spate *)bsal_actor_concrete_actor(self);
+
+    if (source == concrete_self->manager_for_sequence_stores) {
+        spate_start_reply_manager(self, message);
+
+    } else if (source == concrete_self->input_controller) {
+        spate_start_reply_controller(self, message);
+    }
+}
+
+void spate_start_reply_manager(struct bsal_actor *self, struct bsal_message *message)
+{
     struct bsal_vector consumers;
     struct spate *concrete_self;
     void *buffer;
@@ -234,11 +249,26 @@ void spate_set_consumers_reply(struct bsal_actor *self, struct bsal_message *mes
 {
     struct spate *concrete_self;
 
+    concrete_self = (struct spate *)bsal_actor_concrete_actor(self);
+
+    printf("spate %d sends %d spawners to controller %d\n",
+                    bsal_actor_name(self),
+                    (int)bsal_vector_size(&concrete_self->initial_actors),
+                    concrete_self->input_controller);
+
+    bsal_actor_helper_send_reply_vector(self, BSAL_ACTOR_START, &concrete_self->initial_actors);
+}
+
+void spate_start_reply_controller(struct bsal_actor *self, struct bsal_message *message)
+{
+    struct spate *concrete_self;
+
+    concrete_self = (struct spate *)bsal_actor_concrete_actor(self);
+
     /*
      * Stop the actor computation
      */
 
 
-    concrete_self = (struct spate *)bsal_actor_concrete_actor(self);
     bsal_actor_helper_send_range_empty(self, &concrete_self->initial_actors, BSAL_ACTOR_ASK_TO_STOP);
 }

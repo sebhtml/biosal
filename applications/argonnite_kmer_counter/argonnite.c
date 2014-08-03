@@ -333,10 +333,10 @@ void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message)
                     && source == concrete_actor->controller) {
 
 
-        bsal_actor_helper_send_reply_vector(actor, BSAL_INPUT_CONTROLLER_START, &concrete_actor->initial_actors);
+        bsal_actor_helper_send_reply_vector(actor, BSAL_ACTOR_START, &concrete_actor->initial_actors);
 
 
-    } else if (tag == BSAL_INPUT_CONTROLLER_START_REPLY) {
+    } else if (tag == BSAL_ACTOR_START_REPLY) {
 
         /* add files */
         concrete_actor->argument_iterator = 0;

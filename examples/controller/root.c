@@ -197,7 +197,7 @@ void root_receive(struct bsal_actor *actor, struct bsal_message *message)
         buffer = bsal_memory_pool_allocate(ephemeral_memory, bytes);
         bsal_vector_pack(&root1->spawners, buffer);
 
-        bsal_message_init(message, BSAL_INPUT_CONTROLLER_START, bytes, buffer);
+        bsal_message_init(message, BSAL_ACTOR_START, bytes, buffer);
         bsal_actor_send(actor, root1->controller, message);
         bsal_memory_pool_free(ephemeral_memory, buffer);
         buffer = NULL;
@@ -205,7 +205,7 @@ void root_receive(struct bsal_actor *actor, struct bsal_message *message)
         printf("root actor/%d starts controller actor/%d\n", name,
                         root1->controller);
 
-    } else if (tag == BSAL_INPUT_CONTROLLER_START_REPLY) {
+    } else if (tag == BSAL_ACTOR_START_REPLY) {
 
         if (!root1->is_king) {
             printf("root actor/%d stops controller actor/%d\n", name, source);
