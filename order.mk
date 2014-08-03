@@ -11,6 +11,7 @@ LIBRARY_HOT_CODE += engine/thorium/message.o
 LIBRARY_HOT_CODE += engine/thorium/node.o
 LIBRARY_HOT_CODE += engine/thorium/actor.o
 LIBRARY_HOT_CODE += engine/thorium/dispatcher.o
+LIBRARY_HOT_CODE += engine/thorium/route.o
 LIBRARY_HOT_CODE += engine/thorium/script.o
 LIBRARY_HOT_CODE += engine/thorium/worker.o
 LIBRARY_HOT_CODE += engine/thorium/worker_pool.o

@@ -35,8 +35,11 @@ void spate_init(struct bsal_actor *self)
     bsal_actor_register(self, BSAL_ACTOR_ASK_TO_STOP, spate_ask_to_stop);
     bsal_actor_register(self, BSAL_ACTOR_SPAWN_REPLY, spate_spawn_reply);
     bsal_actor_register(self, BSAL_MANAGER_SET_SCRIPT_REPLY, spate_set_script_reply);
-    bsal_actor_register(self, BSAL_ACTOR_START_REPLY, spate_start_reply);
     bsal_actor_register(self, BSAL_ACTOR_SET_CONSUMERS_REPLY, spate_set_consumers_reply);
+
+    bsal_actor_register(self, BSAL_ACTOR_START_REPLY, spate_start_reply);
+    bsal_actor_register_with_source(self, BSAL_ACTOR_START_REPLY, &concrete_self->manager_for_sequence_stores, spate_start_reply_manager);
+    bsal_actor_register_with_source(self, BSAL_ACTOR_START_REPLY, &concrete_self->input_controller, spate_start_reply_controller);
 
     /*
      * Register required actor scripts now
@@ -208,17 +211,6 @@ void spate_set_script_reply(struct bsal_actor *self, struct bsal_message *messag
 
 void spate_start_reply(struct bsal_actor *self, struct bsal_message *message)
 {
-    int source = bsal_message_source(message);
-    struct spate *concrete_self;
-
-    concrete_self = (struct spate *)bsal_actor_concrete_actor(self);
-
-    if (source == concrete_self->manager_for_sequence_stores) {
-        spate_start_reply_manager(self, message);
-
-    } else if (source == concrete_self->input_controller) {
-        spate_start_reply_controller(self, message);
-    }
 }
 
 void spate_start_reply_manager(struct bsal_actor *self, struct bsal_message *message)
@@ -263,6 +255,7 @@ void spate_start_reply_controller(struct bsal_actor *self, struct bsal_message *
 {
     struct spate *concrete_self;
 
+    printf("received reply from controller\n");
     concrete_self = (struct spate *)bsal_actor_concrete_actor(self);
 
     /*
