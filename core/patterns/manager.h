@@ -56,8 +56,8 @@ struct bsal_manager {
 
 extern struct bsal_script bsal_manager_script;
 
-void bsal_manager_init(struct bsal_actor *actor);
-void bsal_manager_destroy(struct bsal_actor *actor);
-void bsal_manager_receive(struct bsal_actor *actor, struct bsal_message *message);
+void bsal_manager_init(struct bsal_actor *self);
+void bsal_manager_destroy(struct bsal_actor *self);
+void bsal_manager_receive(struct bsal_actor *self, struct bsal_message *message);
 
 #endif
