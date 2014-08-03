@@ -75,13 +75,13 @@ for file in files:
 
     i = 0
 
-    while i < len(line0):
+    while i < len(line0) and i < len(line4):
         if line0[i] != line4[i]:
             difference += 1
 
         i += 1
 
-    if difference == 1:
+    if difference == 1 and len(line0) == len(line4):
         paired_status = "Yes"
 
     distribution = {}
