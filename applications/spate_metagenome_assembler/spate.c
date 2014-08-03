@@ -31,15 +31,15 @@ void spate_init(struct bsal_actor *self)
     concrete_self->assembly_graph = BSAL_ACTOR_NOBODY;
     concrete_self->assembly_graph_builder = BSAL_ACTOR_NOBODY;
 
-    bsal_actor_register(self, BSAL_ACTOR_START, spate_start);
-    bsal_actor_register(self, BSAL_ACTOR_ASK_TO_STOP, spate_ask_to_stop);
-    bsal_actor_register(self, BSAL_ACTOR_SPAWN_REPLY, spate_spawn_reply);
-    bsal_actor_register(self, BSAL_MANAGER_SET_SCRIPT_REPLY, spate_set_script_reply);
-    bsal_actor_register(self, BSAL_ACTOR_SET_CONSUMERS_REPLY, spate_set_consumers_reply);
+    bsal_actor_register_handler(self, BSAL_ACTOR_START, spate_start);
+    bsal_actor_register_handler(self, BSAL_ACTOR_ASK_TO_STOP, spate_ask_to_stop);
+    bsal_actor_register_handler(self, BSAL_ACTOR_SPAWN_REPLY, spate_spawn_reply);
+    bsal_actor_register_handler(self, BSAL_MANAGER_SET_SCRIPT_REPLY, spate_set_script_reply);
+    bsal_actor_register_handler(self, BSAL_ACTOR_SET_CONSUMERS_REPLY, spate_set_consumers_reply);
 
-    bsal_actor_register(self, BSAL_ACTOR_START_REPLY, spate_start_reply);
-    bsal_actor_register_with_source(self, BSAL_ACTOR_START_REPLY, &concrete_self->manager_for_sequence_stores, spate_start_reply_manager);
-    bsal_actor_register_with_source(self, BSAL_ACTOR_START_REPLY, &concrete_self->input_controller, spate_start_reply_controller);
+    bsal_actor_register_handler(self, BSAL_ACTOR_START_REPLY, spate_start_reply);
+    bsal_actor_register_handler_with_source(self, BSAL_ACTOR_START_REPLY, &concrete_self->manager_for_sequence_stores, spate_start_reply_manager);
+    bsal_actor_register_handler_with_source(self, BSAL_ACTOR_START_REPLY, &concrete_self->input_controller, spate_start_reply_controller);
 
     /*
      * Register required actor scripts now
@@ -79,7 +79,7 @@ void spate_destroy(struct bsal_actor *self)
 
 void spate_receive(struct bsal_actor *self, struct bsal_message *message)
 {
-    bsal_actor_dispatch(self, message);
+    bsal_actor_call_handler(self, message);
 }
 
 void spate_start(struct bsal_actor *self, struct bsal_message *message)

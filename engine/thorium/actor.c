@@ -878,7 +878,7 @@ void bsal_actor_receive(struct bsal_actor *self, struct bsal_message *message)
     /* otherwise, verify if the actor registered a
      * handler for this tag
      */
-    } else if (bsal_actor_dispatch(self, message)) {
+    } else if (bsal_actor_call_handler(self, message)) {
         return;
 #endif
     }
@@ -1231,7 +1231,7 @@ int bsal_actor_node_worker_count(struct bsal_actor *self)
     return bsal_node_worker_count(bsal_actor_node(self));
 }
 
-int bsal_actor_dispatch(struct bsal_actor *self, struct bsal_message *message)
+int bsal_actor_call_handler(struct bsal_actor *self, struct bsal_message *message)
 {
 
 #ifdef BSAL_ACTOR_DEBUG_10335
@@ -1244,7 +1244,7 @@ int bsal_actor_dispatch(struct bsal_actor *self, struct bsal_message *message)
     return bsal_dispatcher_dispatch(&self->dispatcher, self, message);
 }
 
-void bsal_actor_register(struct bsal_actor *self, int tag, bsal_actor_receive_fn_t handler)
+void bsal_actor_register_handler(struct bsal_actor *self, int tag, bsal_actor_receive_fn_t handler)
 {
 
 #ifdef BSAL_ACTOR_DEBUG_10335
@@ -1254,10 +1254,10 @@ void bsal_actor_register(struct bsal_actor *self, int tag, bsal_actor_receive_fn
     }
 #endif
 
-    bsal_actor_register_with_source(self, tag, NULL, handler);
+    bsal_actor_register_handler_with_source(self, tag, NULL, handler);
 }
 
-void bsal_actor_register_with_source(struct bsal_actor *self, int tag, int *source, bsal_actor_receive_fn_t handler)
+void bsal_actor_register_handler_with_source(struct bsal_actor *self, int tag, int *source, bsal_actor_receive_fn_t handler)
 {
     bsal_dispatcher_register_with_source(&self->dispatcher, tag, source, handler);
 }

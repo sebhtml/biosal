@@ -82,17 +82,17 @@ void bsal_dna_kmer_counter_kernel_init(struct bsal_actor *actor)
 
     concrete_actor->auto_scaling_in_progress = 0;
 
-    bsal_actor_register(actor, BSAL_ACTOR_PACK,
+    bsal_actor_register_handler(actor, BSAL_ACTOR_PACK,
                     bsal_dna_kmer_counter_kernel_pack_message);
-    bsal_actor_register(actor, BSAL_ACTOR_UNPACK,
+    bsal_actor_register_handler(actor, BSAL_ACTOR_UNPACK,
                     bsal_dna_kmer_counter_kernel_unpack_message);
-    bsal_actor_register(actor, BSAL_ACTOR_CLONE_REPLY,
+    bsal_actor_register_handler(actor, BSAL_ACTOR_CLONE_REPLY,
                     bsal_dna_kmer_counter_kernel_clone_reply);
-    bsal_actor_register(actor, BSAL_KERNEL_NOTIFY,
+    bsal_actor_register_handler(actor, BSAL_KERNEL_NOTIFY,
                     bsal_dna_kmer_counter_kernel_notify);
-    bsal_actor_register(actor, BSAL_KERNEL_NOTIFY_REPLY,
+    bsal_actor_register_handler(actor, BSAL_KERNEL_NOTIFY_REPLY,
                     bsal_dna_kmer_counter_kernel_notify_reply);
-    bsal_actor_register(actor, BSAL_ACTOR_DO_AUTO_SCALING,
+    bsal_actor_register_handler(actor, BSAL_ACTOR_DO_AUTO_SCALING,
                     bsal_dna_kmer_counter_kernel_do_auto_scaling);
 
     printf("kernel %d is online !!!\n",
@@ -133,7 +133,7 @@ void bsal_dna_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_
     int count;
     int producer;
 
-    if (bsal_actor_dispatch(actor, message)) {
+    if (bsal_actor_call_handler(actor, message)) {
         return;
     }
 

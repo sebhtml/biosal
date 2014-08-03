@@ -94,11 +94,11 @@ void argonnite_init(struct bsal_actor *actor)
     concrete_actor->finished_kernels = 0;
     concrete_actor->total_kmers = 0;
 
-    bsal_actor_register(actor, ARGONNITE_PREPARE_SEQUENCE_STORES,
+    bsal_actor_register_handler(actor, ARGONNITE_PREPARE_SEQUENCE_STORES,
                     argonnite_prepare_sequence_stores);
-    bsal_actor_register(actor, BSAL_INPUT_DISTRIBUTE_REPLY,
+    bsal_actor_register_handler(actor, BSAL_INPUT_DISTRIBUTE_REPLY,
                     argonnite_connect_kernels_with_stores);
-    bsal_actor_register(actor, BSAL_SEQUENCE_STORE_REQUEST_PROGRESS_REPLY,
+    bsal_actor_register_handler(actor, BSAL_SEQUENCE_STORE_REQUEST_PROGRESS_REPLY,
                     argonnite_request_progress_reply);
 
     concrete_actor->state = ARGONNITE_STATE_NONE;
@@ -161,7 +161,7 @@ void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message)
     struct bsal_memory_pool *ephemeral_memory;
     int enable_work_stealing;
 
-    if (bsal_actor_dispatch(actor, message)) {
+    if (bsal_actor_call_handler(actor, message)) {
         return;
     }
 

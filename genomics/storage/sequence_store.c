@@ -55,7 +55,7 @@ void bsal_sequence_store_init(struct bsal_actor *actor)
 #endif
     }
 
-    bsal_actor_register(actor, BSAL_SEQUENCE_STORE_ASK,
+    bsal_actor_register_handler(actor, BSAL_SEQUENCE_STORE_ASK,
                     bsal_sequence_store_ask);
 
     concrete_actor->iterator_started = 0;
@@ -104,7 +104,7 @@ void bsal_sequence_store_receive(struct bsal_actor *actor, struct bsal_message *
     int source;
     struct bsal_sequence_store *concrete_actor;
 
-    if (bsal_actor_dispatch(actor, message)) {
+    if (bsal_actor_call_handler(actor, message)) {
         return;
     }
 

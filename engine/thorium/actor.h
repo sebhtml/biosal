@@ -346,9 +346,14 @@ void bsal_actor_clone(struct bsal_actor *self, struct bsal_message *message);
 void bsal_actor_continue_clone(struct bsal_actor *self, struct bsal_message *message);
 
 struct bsal_counter *bsal_actor_counter(struct bsal_actor *self);
-int bsal_actor_dispatch(struct bsal_actor *self, struct bsal_message *message);
-void bsal_actor_register(struct bsal_actor *self, int tag, bsal_actor_receive_fn_t handler);
-void bsal_actor_register_with_source(struct bsal_actor *self, int tag, int *source, bsal_actor_receive_fn_t handler);
+
+/*
+ * Functions to use and register handlers
+ */
+int bsal_actor_call_handler(struct bsal_actor *self, struct bsal_message *message);
+void bsal_actor_register_handler(struct bsal_actor *self, int tag, bsal_actor_receive_fn_t handler);
+void bsal_actor_register_handler_with_source(struct bsal_actor *self, int tag, int *source, bsal_actor_receive_fn_t handler);
+
 struct bsal_dispatcher *bsal_actor_dispatcher(struct bsal_actor *self);
 void bsal_actor_set_node(struct bsal_actor *self, struct bsal_node *node);
 

@@ -18,7 +18,7 @@ struct bsal_script bsal_assembly_graph_builder_script = {
 
 void bsal_assembly_graph_builder_init(struct bsal_actor *self)
 {
-    bsal_actor_register(self, BSAL_ACTOR_ASK_TO_STOP, bsal_assembly_graph_builder_ask_to_stop);
+    bsal_actor_register_handler(self, BSAL_ACTOR_ASK_TO_STOP, bsal_assembly_graph_builder_ask_to_stop);
 }
 
 void bsal_assembly_graph_builder_destroy(struct bsal_actor *self)
@@ -27,7 +27,7 @@ void bsal_assembly_graph_builder_destroy(struct bsal_actor *self)
 
 void bsal_assembly_graph_builder_receive(struct bsal_actor *self, struct bsal_message *message)
 {
-    bsal_actor_dispatch(self, message);
+    bsal_actor_call_handler(self, message);
 }
 
 void bsal_assembly_graph_builder_ask_to_stop(struct bsal_actor *self, struct bsal_message *message)
