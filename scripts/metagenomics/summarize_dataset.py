@@ -117,7 +117,7 @@ for file in files:
 
     keys.sort()
 
-    
+
     # Display a report
     print(file)
     print("  Paired: " + paired_status)
