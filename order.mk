@@ -86,10 +86,11 @@ LIBRARY_HOT_CODE += genomics/kernels/aggregator.o
 LIBRARY_HOT_CODE += genomics/kernels/dna_kmer_counter_kernel.o
 
 LIBRARY_HOT_CODE += genomics/storage/sequence_store.o
-LIBRARY_HOT_CODE += genomics/storage/graph_store.o
 LIBRARY_HOT_CODE += genomics/storage/partition_command.o
 LIBRARY_HOT_CODE += genomics/storage/sequence_partitioner.o
 LIBRARY_HOT_CODE += genomics/storage/kmer_store.o
+
+LIBRARY_HOT_CODE += genomics/assembly/graph_store.o
 
 LIBRARY_HOT_CODE += genomics/input/input_stream.o
 LIBRARY_HOT_CODE += genomics/input/input_proxy.o
