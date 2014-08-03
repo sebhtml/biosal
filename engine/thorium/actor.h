@@ -151,6 +151,10 @@ new name.
 #define BSAL_ACTOR_NOTIFY 0x0000710b
 #define BSAL_ACTOR_NOTIFY_REPLY 0x00005f82
 
+/*
+ * Messages for actors that are data stores
+ */
+
 /* Auto-scaling stuff
  */
 
@@ -217,7 +221,18 @@ struct bsal_actor {
     struct bsal_lock receive_lock;
 
     int locked;
+
+    /*
+     * The name of the actor
+     */
     int name;
+
+    /*
+     * The name of the supervisor for this
+     * actor.
+     */
+    int supervisor;
+
     int dead;
 
     struct bsal_counter counter;

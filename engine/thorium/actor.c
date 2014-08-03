@@ -477,18 +477,12 @@ char **bsal_actor_argv(struct bsal_actor *self)
 
 int bsal_actor_supervisor(struct bsal_actor *self)
 {
-    return bsal_vector_helper_at_as_int(&self->acquaintance_vector,
-                    BSAL_ACTOR_ACQUAINTANCE_SUPERVISOR);
+    return self->supervisor;
 }
 
 void bsal_actor_set_supervisor(struct bsal_actor *self, int supervisor)
 {
-    if (bsal_vector_size(&self->acquaintance_vector) == 0) {
-        bsal_vector_push_back(&self->acquaintance_vector, &supervisor);
-    } else {
-        bsal_vector_helper_set_int(&self->acquaintance_vector, BSAL_ACTOR_ACQUAINTANCE_SUPERVISOR,
-                        supervisor);
-    }
+    self->supervisor = supervisor;
 }
 
 int bsal_actor_receive_system_no_pack(struct bsal_actor *self, struct bsal_message *message)
@@ -645,6 +639,11 @@ int bsal_actor_receive_system(struct bsal_actor *self, struct bsal_message *mess
     if (tag == BSAL_ACTOR_SPAWN) {
         script = *(int *)buffer;
         spawned = bsal_actor_spawn_real(self, script);
+
+#ifdef BSAL_ACTOR_DEBUG_SPAWN
+        printf("DEBUG setting supervisor of %d to %d\n", spawned, source);
+#endif
+
         bsal_node_set_supervisor(bsal_actor_node(self), spawned, source);
 
         new_buffer = bsal_memory_pool_allocate(ephemeral_memory, 2 * sizeof(int));

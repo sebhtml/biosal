@@ -90,7 +90,9 @@ LIBRARY_HOT_CODE += genomics/storage/partition_command.o
 LIBRARY_HOT_CODE += genomics/storage/sequence_partitioner.o
 LIBRARY_HOT_CODE += genomics/storage/kmer_store.o
 
-LIBRARY_HOT_CODE += genomics/assembly/graph_store.o
+LIBRARY_HOT_CODE += genomics/assembly/assembly_graph_store.o
+LIBRARY_HOT_CODE += genomics/assembly/assembly_graph.o
+LIBRARY_HOT_CODE += genomics/assembly/assembly_graph_builder.o
 
 LIBRARY_HOT_CODE += genomics/input/input_stream.o
 LIBRARY_HOT_CODE += genomics/input/input_proxy.o

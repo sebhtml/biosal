@@ -34,6 +34,17 @@
 #include "genomics/input/input_stream.h"
 #include "genomics/input/input_controller.h"
 
+/*
+ * Assembly
+ */
+
+#include "genomics/assembly/assembly_graph_builder.h"
+
+#include "genomics/kernels/dna_kmer_counter_kernel.h"
+#include "genomics/kernels/aggregator.h"
+#include "genomics/data/coverage_distribution.h"
+#include "genomics/storage/kmer_store.h"
+
 /* storage */
 
 #include "genomics/storage/sequence_store.h"
