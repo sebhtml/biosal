@@ -1,5 +1,5 @@
 
-APPLICATION_ARGONNITE_PRODUCT=applications/argonnite
+APPLICATION_ARGONNITE_PRODUCT=applications/argonnite_kmer_counter/argonnite
 APPLICATION_ARGONNITE_OBJECTS=applications/argonnite_kmer_counter/argonnite.o applications/argonnite_kmer_counter/main.o
 
 APPLICATION_EXECUTABLES+=$(APPLICATION_ARGONNITE_PRODUCT)
