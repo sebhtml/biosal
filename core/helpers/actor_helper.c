@@ -489,8 +489,10 @@ void bsal_actor_helper_ask_to_stop(struct bsal_actor *actor, struct bsal_message
     int child;
 
     if (source != name && source != supervisor) {
+#ifdef BSAL_ACTOR_HELPER_DEBUG_STOP
         printf("actor/%d: permission denied, will not stop (source: %d, name: %d, supervisor: %d\n",
                         bsal_actor_name(actor), source, name, supervisor);
+#endif
         return;
     }
 
