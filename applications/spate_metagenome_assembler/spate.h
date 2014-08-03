@@ -49,5 +49,8 @@ void spate_ask_to_stop(struct bsal_actor *self, struct bsal_message *message);
 void spate_spawn_reply(struct bsal_actor *self, struct bsal_message *message);
 
 int spate_get_spawner(struct bsal_actor *self);
+void spate_set_consumers_reply(struct bsal_actor *self, struct bsal_message *message);
+void spate_start_reply(struct bsal_actor *self, struct bsal_message *message);
+void spate_set_script_reply(struct bsal_actor *self, struct bsal_message *message);
 
 #endif

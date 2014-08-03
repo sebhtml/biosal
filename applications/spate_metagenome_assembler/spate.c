@@ -34,6 +34,9 @@ void spate_init(struct bsal_actor *self)
     bsal_actor_register(self, BSAL_ACTOR_START, spate_start);
     bsal_actor_register(self, BSAL_ACTOR_ASK_TO_STOP, spate_ask_to_stop);
     bsal_actor_register(self, BSAL_ACTOR_SPAWN_REPLY, spate_spawn_reply);
+    bsal_actor_register(self, BSAL_MANAGER_SET_SCRIPT_REPLY, spate_set_script_reply);
+    bsal_actor_register(self, BSAL_ACTOR_START_REPLY, spate_start_reply);
+    bsal_actor_register(self, BSAL_ACTOR_SET_CONSUMERS_REPLY, spate_set_consumers_reply);
 
     /*
      * Register required actor scripts now
@@ -171,18 +174,14 @@ void spate_spawn_reply(struct bsal_actor *self, struct bsal_message *message)
         printf("spate %d spawned graph builder %d\n", bsal_actor_name(self),
                         new_actor);
 
-        /*
-         * Stop the actor computation
-         */
-
-        bsal_actor_helper_send_range_empty(self, &concrete_self->initial_actors, BSAL_ACTOR_ASK_TO_STOP);
+        bsal_actor_helper_send_int(self, concrete_self->manager_for_sequence_stores, BSAL_MANAGER_SET_SCRIPT,
+                        BSAL_SEQUENCE_STORE_SCRIPT);
     }
 }
 
 int spate_get_spawner(struct bsal_actor *self)
 {
     int actor;
-
     struct spate *concrete_self;
 
     concrete_self = (struct spate *)bsal_actor_concrete_actor(self);
@@ -196,4 +195,50 @@ int spate_get_spawner(struct bsal_actor *self)
     }
 
     return actor;
+}
+
+void spate_set_script_reply(struct bsal_actor *self, struct bsal_message *message)
+{
+    struct spate *concrete_self;
+
+    concrete_self = (struct spate *)bsal_actor_concrete_actor(self);
+
+    bsal_actor_helper_send_reply_vector(self, BSAL_ACTOR_START, &concrete_self->initial_actors);
+}
+
+void spate_start_reply(struct bsal_actor *self, struct bsal_message *message)
+{
+    struct bsal_vector consumers;
+    struct spate *concrete_self;
+    void *buffer;
+
+    concrete_self = (struct spate *)bsal_actor_concrete_actor(self);
+    bsal_vector_init(&consumers, sizeof(int));
+
+    buffer = bsal_message_buffer(message);
+
+    bsal_vector_unpack(&consumers, buffer);
+
+    printf("spate %d sends the names of %d consumers to controller %d\n",
+                    bsal_actor_name(self),
+                    (int)bsal_vector_size(&consumers),
+                    concrete_self->input_controller);
+
+    bsal_actor_helper_send_vector(self, concrete_self->input_controller, BSAL_ACTOR_SET_CONSUMERS, &consumers);
+
+    bsal_vector_destroy(&consumers);
+
+}
+
+void spate_set_consumers_reply(struct bsal_actor *self, struct bsal_message *message)
+{
+    struct spate *concrete_self;
+
+    /*
+     * Stop the actor computation
+     */
+
+
+    concrete_self = (struct spate *)bsal_actor_concrete_actor(self);
+    bsal_actor_helper_send_range_empty(self, &concrete_self->initial_actors, BSAL_ACTOR_ASK_TO_STOP);
 }
