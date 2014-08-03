@@ -267,9 +267,10 @@ void bsal_manager_receive(struct bsal_actor *actor, struct bsal_message *message
 
             concrete_actor->ready_spawners++;
 
-            printf("DEBUG manager %d says that spawner %d is ready, %d/%d\n",
+            printf("DEBUG manager %d says that spawner %d is ready, %d/%d (spawned %d actors)\n",
                         bsal_actor_name(actor), source,
-                        concrete_actor->ready_spawners, concrete_actor->spawners);
+                        concrete_actor->ready_spawners, concrete_actor->spawners,
+                        (int)bsal_vector_size(stores));
 
             if (concrete_actor->ready_spawners == concrete_actor->spawners) {
 
