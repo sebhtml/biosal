@@ -21,24 +21,24 @@ struct bsal_hash_table_group {
     void *deletion_bitmap;
 };
 
-void bsal_hash_table_group_init(struct bsal_hash_table_group *group,
+void bsal_hash_table_group_init(struct bsal_hash_table_group *self,
                 uint64_t buckets_per_group, int key_size, int value_size,
                 struct bsal_memory_pool *memory, int deletion_is_enabled);
-void bsal_hash_table_group_destroy(struct bsal_hash_table_group *group,
+void bsal_hash_table_group_destroy(struct bsal_hash_table_group *self,
                 struct bsal_memory_pool *memory);
 
-int bsal_hash_table_group_buckets(struct bsal_hash_table_group *group);
-void *bsal_hash_table_group_add(struct bsal_hash_table_group *group, uint64_t bucket,
+int bsal_hash_table_group_buckets(struct bsal_hash_table_group *self);
+void *bsal_hash_table_group_add(struct bsal_hash_table_group *self, uint64_t bucket,
                 int key_size, int value_size);
-void *bsal_hash_table_group_get(struct bsal_hash_table_group *group, uint64_t bucket,
+void *bsal_hash_table_group_get(struct bsal_hash_table_group *self, uint64_t bucket,
                 int key_size, int value_size);
-void bsal_hash_table_group_delete(struct bsal_hash_table_group *group, uint64_t bucket);
+void bsal_hash_table_group_delete(struct bsal_hash_table_group *self, uint64_t bucket);
 
-int bsal_hash_table_group_state(struct bsal_hash_table_group *group, uint64_t bucket);
+int bsal_hash_table_group_state(struct bsal_hash_table_group *self, uint64_t bucket);
 
-void *bsal_hash_table_group_key(struct bsal_hash_table_group *group, uint64_t bucket,
+void *bsal_hash_table_group_key(struct bsal_hash_table_group *self, uint64_t bucket,
                int key_size, int value_size);
-void *bsal_hash_table_group_value(struct bsal_hash_table_group *group, uint64_t bucket,
+void *bsal_hash_table_group_value(struct bsal_hash_table_group *self, uint64_t bucket,
                int key_size, int value_size);
 
 int bsal_hash_table_group_get_bit(void *bitmap, uint64_t bucket);

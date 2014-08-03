@@ -2,6 +2,7 @@
 #include "string.h"
 
 #include <core/system/memory.h>
+#include <core/system/packer.h>
 
 #include <string.h>
 #include <stdlib.h>
@@ -97,4 +98,51 @@ void bsal_string_combine(struct bsal_string *string, const char *data, int opera
     string->data = new_data;
 }
 
+int bsal_string_pack_size(struct bsal_string *self)
+{
+    return bsal_string_pack_unpack(self, BSAL_PACKER_OPERATION_DRY_RUN, NULL);
+}
 
+int bsal_string_pack(struct bsal_string *self, void *buffer)
+{
+    return bsal_string_pack_unpack(self, BSAL_PACKER_OPERATION_PACK, buffer);
+}
+
+int bsal_string_unpack(struct bsal_string *self, void *buffer)
+{
+    return bsal_string_pack_unpack(self, BSAL_PACKER_OPERATION_UNPACK, buffer);
+}
+
+int bsal_string_pack_unpack(struct bsal_string *self, int operation, void *buffer)
+{
+    struct bsal_packer packer;
+    int bytes;
+    int length;
+
+    length = bsal_string_length(self);
+
+    bsal_packer_init(&packer, operation, buffer);
+
+    bsal_packer_work(&packer, &length, sizeof(length));
+
+    if (operation == BSAL_PACKER_OPERATION_UNPACK) {
+        self->data = bsal_memory_allocate(length + 1);
+    }
+
+    bsal_packer_work(&packer, self->data, length + 1);
+
+    bytes = bsal_packer_worked_bytes(&packer);
+
+    bsal_packer_destroy(&packer);
+
+    return bytes;
+}
+
+int bsal_string_length(struct bsal_string *self)
+{
+    if (self->data == NULL) {
+        return 0;
+    }
+
+    return strlen(self->data);
+}

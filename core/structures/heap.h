@@ -7,7 +7,7 @@
  */
 struct bsal_heap {
 
-    root;
+    int root;
 };
 
 #endif

@@ -36,7 +36,7 @@ int bsal_ring_queue_dequeue(struct bsal_ring_queue *self, void *item);
 
 int bsal_ring_queue_empty(struct bsal_ring_queue *self);
 int bsal_ring_queue_full(struct bsal_ring_queue *self);
-int bsal_ring_queue_size(struct bsal_ring_queue *queue);
+int bsal_ring_queue_size(struct bsal_ring_queue *self);
 
 #ifdef BSAL_RING_QUEUE_THREAD_SAFE
 void bsal_ring_queue_lock(struct bsal_ring_queue *self);

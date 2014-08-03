@@ -54,12 +54,12 @@ int bsal_map_pack_unpack(struct bsal_map *self, int operation, void *buffer);
 void *bsal_map_pad_key(struct bsal_map *self, void *key);
 #endif
 
-void bsal_map_set_memory_pool(struct bsal_map *map, struct bsal_memory_pool *memory);
+void bsal_map_set_memory_pool(struct bsal_map *self, struct bsal_memory_pool *memory);
 
-void bsal_map_disable_deletion_support(struct bsal_map *map);
-void bsal_map_enable_deletion_support(struct bsal_map *map);
-void bsal_map_set_current_size_estimate(struct bsal_map *map, double value);
-void bsal_map_set_threshold(struct bsal_map *map, double threshold);
-int bsal_map_is_currently_resizing(struct bsal_map *map);
+void bsal_map_disable_deletion_support(struct bsal_map *self);
+void bsal_map_enable_deletion_support(struct bsal_map *self);
+void bsal_map_set_current_size_estimate(struct bsal_map *self, double value);
+void bsal_map_set_threshold(struct bsal_map *self, double threshold);
+int bsal_map_is_currently_resizing(struct bsal_map *self);
 
 #endif

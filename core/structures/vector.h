@@ -45,6 +45,6 @@ void bsal_vector_copy_range(struct bsal_vector *self, int64_t first, int64_t las
 int64_t bsal_vector_index_of(struct bsal_vector *self, void *data);
 void bsal_vector_update(struct bsal_vector *self, void *old_item, void *new_item);
 int bsal_vector_element_size(struct bsal_vector *self);
-void bsal_vector_set_memory_pool(struct bsal_vector *vector, struct bsal_memory_pool *memory);
+void bsal_vector_set_memory_pool(struct bsal_vector *self, struct bsal_memory_pool *memory);
 
 #endif
