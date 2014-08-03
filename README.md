@@ -3,9 +3,17 @@ biosal is a distributed BIOlogical Sequence Analysis Library.
 biosal applications are written in the form of actors which send each other messages,
 change their state, spawn other actors and eventually die of old age.
 These actors run on top
-of biosal runtime system (BRTS) called "The Thorium Engine". Thorium is a distributed actor machine.
+of biosal runtime system called "The Thorium Engine". Thorium is a distributed actor machine.
 Thorium uses script-wise symmetric actor placement and is targeted for high-performance computing.
 Thorium is a general purpose actor model implementation.
+
+# Exciting actor applications for genomics
+
+| Name | Description |
+| --- | --- |
+| argonnite | k-mer counter |
+| gc | Guanine-cytosine counter |
+| spate | Exact, convenient, and scalable metagenome assembly and genome isolation for everyone (with emphasis on low-abundance species too) |
 
 # Technologies
 
@@ -94,12 +102,12 @@ Key concepts
 | --- | --- | --- |
 | Message | Information with a source and a destination | struct bsal_message |
 | Actor | Something that receives messages and behaves according to a script | struct bsal_actor |
+| Actor mailbox | Messages for an actor are buffered there | bsal_fast_ring |
 | Script | Describes the behavior of an actor ([Hewitt, Bishop, Steiger 1973](http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.77.7898))| struct bsal_script |
-| Work | 2-tuple with an actor and a message | struct bsal_work |
 | Node | A runtime system that can be connected to other nodes (see [Erlang's definition](http://www.erlang.org/doc/reference_manual/distributed.html)) | struct bsal_node |
-| Worker | An object that performs work for a living | bsal_worker |
-| Queue | Each worker has a work queue and a message queue | struct bsal_fifo |
-| Worker Pool | A set of available workers inside a node | struct bsal_worker_pool |
+| Worker pool | A set of available workers inside a node | struct bsal_worker_pool |
+| Worker | A instance that has a actor scheduling queue | struct bsal_worker |
+| Scheduling queue | Each worker has a actor scheduling queue and an outbound message queue | struct bsal_scheduling_queue |
 
 # Implementation of the runtime system
 
@@ -108,15 +116,14 @@ Actors are executes inside a controlled environment managed by the Thorium
 engine, which is a runtime system.
 An actor has a name, and does something when it receives a message.
 A message is however first received by a node. The node
-prepares a work and gives it to a worker_pool. The worker pool
-assigns the work to a worker. Finally, worker eventually calls
-the corresponding receive function using the actor and message presented inside
-the work.
+gives it to a worker_pool. The worker pool
+assigns the actor to a worker. Finally, worker eventually calls
+the corresponding receive function using the actor and message presented.
 
 When an actor sends a message, the destination is either an actor on the
 same node or an actor on another node. The runtime sends messages for actors
-on other nodes with MPI. Otherwise, a work is prepared and assigned to
-a worker directly on the same node.
+on other nodes with MPI. Otherwise, the message is prepared and given to
+a actor directly on the same node.
 
 ## Runtime
 
