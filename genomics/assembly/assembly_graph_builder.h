@@ -60,4 +60,10 @@ void bsal_assembly_graph_builder_start_reply_classifier_manager(struct bsal_acto
 void bsal_assembly_graph_builder_configure(struct bsal_actor *self);
 void bsal_assembly_graph_builder_set_kmer_reply(struct bsal_actor *self, struct bsal_message *message);
 
+void bsal_assembly_graph_builder_connect_actors(struct bsal_actor *self);
+
+void bsal_assembly_graph_builder_set_consumers_reply(struct bsal_actor *self, struct bsal_message *message);
+void bsal_assembly_graph_builder_verify(struct bsal_actor *self);
+void bsal_assembly_graph_builder_set_consumer_reply(struct bsal_actor *self, struct bsal_message *message);
+
 #endif

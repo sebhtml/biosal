@@ -3,6 +3,7 @@
 
 #include "assembly_graph_store.h"
 #include "assembly_sliding_window.h"
+#include "assembly_block_classifier.h"
 
 #include <core/helpers/actor_helper.h>
 
@@ -12,11 +13,11 @@
 
 struct bsal_script bsal_assembly_graph_builder_script = {
     .identifier = BSAL_ASSEMBLY_GRAPH_BUILDER_SCRIPT,
+    .name = "assembly_graph_builder",
     .init = bsal_assembly_graph_builder_init,
     .destroy = bsal_assembly_graph_builder_destroy,
     .receive = bsal_assembly_graph_builder_receive,
-    .size = sizeof(struct bsal_assembly_graph_builder),
-    .name = "assembly_graph_builder"
+    .size = sizeof(struct bsal_assembly_graph_builder)
 };
 
 void bsal_assembly_graph_builder_init(struct bsal_actor *self)
@@ -35,6 +36,9 @@ void bsal_assembly_graph_builder_init(struct bsal_actor *self)
     bsal_actor_register_handler(self, BSAL_ACTOR_ASK_TO_STOP, bsal_assembly_graph_builder_ask_to_stop);
     bsal_actor_register_handler(self, BSAL_ACTOR_SPAWN_REPLY, bsal_assembly_graph_builder_spawn_reply);
     bsal_actor_register_handler(self, BSAL_SET_KMER_LENGTH_REPLY, bsal_assembly_graph_builder_set_kmer_reply);
+
+    bsal_actor_register_handler(self, BSAL_ACTOR_SET_CONSUMER_REPLY, bsal_assembly_graph_builder_set_consumer_reply);
+    bsal_actor_register_handler(self, BSAL_ACTOR_SET_CONSUMERS_REPLY, bsal_assembly_graph_builder_set_consumers_reply);
 
     concrete_self->manager_for_graph_stores = BSAL_ACTOR_NOBODY;
     bsal_vector_init(&concrete_self->graph_stores, sizeof(int));
@@ -126,6 +130,9 @@ void bsal_assembly_graph_builder_spawn_reply(struct bsal_actor *self, struct bsa
 
     concrete_self = bsal_actor_concrete_actor(self);
 
+    /*
+     * Configure the manager for graph stores
+     */
     if (concrete_self->manager_for_graph_stores == BSAL_ACTOR_NOBODY) {
         bsal_message_helper_unpack_int(message, 0, &concrete_self->manager_for_graph_stores);
 
@@ -140,6 +147,10 @@ void bsal_assembly_graph_builder_spawn_reply(struct bsal_actor *self, struct bsa
         bsal_actor_helper_send_int(self, concrete_self->manager_for_graph_stores, BSAL_MANAGER_SET_SCRIPT,
                         BSAL_ASSEMBLY_GRAPH_STORE_SCRIPT);
 
+    /*
+     * Configure the manager
+     * for sliding windows
+     */
     } else if (concrete_self->manager_for_windows == BSAL_ACTOR_NOBODY) {
 
         bsal_message_helper_unpack_int(message, 0, &concrete_self->manager_for_windows);
@@ -155,6 +166,9 @@ void bsal_assembly_graph_builder_spawn_reply(struct bsal_actor *self, struct bsa
         bsal_actor_helper_send_int(self, concrete_self->manager_for_windows, BSAL_MANAGER_SET_SCRIPT,
                         BSAL_ASSEMBLY_SLIDING_WINDOW_SCRIPT);
 
+    /*
+     * Configure the manager for block classifiers
+     */
     } else if (concrete_self->manager_for_classifiers == BSAL_ACTOR_NOBODY) {
 
         bsal_message_helper_unpack_int(message, 0, &concrete_self->manager_for_classifiers);
@@ -168,7 +182,7 @@ void bsal_assembly_graph_builder_spawn_reply(struct bsal_actor *self, struct bsa
                         bsal_assembly_graph_builder_start_reply_classifier_manager);
 
         bsal_actor_helper_send_int(self, concrete_self->manager_for_classifiers, BSAL_MANAGER_SET_SCRIPT,
-                        BSAL_ASSEMBLY_SLIDING_WINDOW_SCRIPT);
+                        BSAL_ASSEMBLY_BLOCK_CLASSIFIER_SCRIPT);
     }
 }
 
@@ -250,6 +264,10 @@ void bsal_assembly_graph_builder_start_reply_window_manager(struct bsal_actor *s
 
     buffer = bsal_message_buffer(message);
 
+    /*
+     * Unpack the actor names for the sliding
+     * windows
+     */
     bsal_vector_unpack(&concrete_self->sliding_windows, buffer);
 
     printf("%s/%d has %d sliding windows for assembly\n",
@@ -288,6 +306,9 @@ void bsal_assembly_graph_builder_start_reply_classifier_manager(struct bsal_acto
                     bsal_actor_name(self),
                     (int)bsal_vector_size(&concrete_self->block_classifiers));
 
+    /*
+     * Configure the graph builder now.
+     */
     bsal_assembly_graph_builder_configure(self);
 
 }
@@ -313,12 +334,12 @@ void bsal_assembly_graph_builder_configure(struct bsal_actor *self)
         }
     }
 
-    /* 
+    /*
      * set the kmer length for graph stores, sliding windows, and block classifiers
      */
 
     for (i = 0; i < bsal_vector_size(&concrete_self->graph_stores); i++) {
-    
+
         destination = bsal_vector_helper_at_as_int(&concrete_self->graph_stores, i);
 
         bsal_actor_helper_send_int(self, destination, BSAL_SET_KMER_LENGTH,
@@ -326,7 +347,7 @@ void bsal_assembly_graph_builder_configure(struct bsal_actor *self)
     }
 
     for (i = 0; i < bsal_vector_size(&concrete_self->sliding_windows); i++) {
-    
+
         destination = bsal_vector_helper_at_as_int(&concrete_self->sliding_windows, i);
 
         bsal_actor_helper_send_int(self, destination, BSAL_SET_KMER_LENGTH,
@@ -334,7 +355,7 @@ void bsal_assembly_graph_builder_configure(struct bsal_actor *self)
     }
 
     for (i = 0; i < bsal_vector_size(&concrete_self->block_classifiers); i++) {
-    
+
         destination = bsal_vector_helper_at_as_int(&concrete_self->block_classifiers, i);
 
         bsal_actor_helper_send_int(self, destination, BSAL_SET_KMER_LENGTH,
@@ -363,15 +384,118 @@ void bsal_assembly_graph_builder_set_kmer_reply(struct bsal_actor *self, struct 
     expected += bsal_vector_size(&concrete_self->sliding_windows);
     expected += bsal_vector_size(&concrete_self->block_classifiers);
 
+    /*
+     * Verify if all actors are properly configured
+     */
     if (concrete_self->actors_with_kmer_length == expected) {
 
         printf("%s/%d configured the kmer length value for sliding windows, block classifiers and graph stores\n",
                         bsal_actor_script_name(self),
                         bsal_actor_name(self));
 
-        bsal_timer_stop(&concrete_self->timer);
-        bsal_timer_print_with_description(&concrete_self->timer, "Build assembly graph");
-
-        bsal_actor_helper_send_empty(self, concrete_self->source, BSAL_ACTOR_START_REPLY);
+        bsal_assembly_graph_builder_connect_actors(self);
     }
 }
+
+void bsal_assembly_graph_builder_connect_actors(struct bsal_actor *self)
+{
+    int i;
+    int producer;
+    int consumer;
+    struct bsal_assembly_graph_builder *concrete_self;
+
+    concrete_self = bsal_actor_concrete_actor(self);
+
+    /*
+     * sequence store ===> sliding window ===> block classifier ===> graph store
+     */
+
+    printf("%s/%d connects actors\n",
+            bsal_actor_script_name(self),
+            bsal_actor_name(self));
+
+
+    for (i = 0; i < bsal_vector_size(&concrete_self->sliding_windows); i++) {
+
+        producer = bsal_vector_helper_at_as_int(&concrete_self->sliding_windows, i);
+        consumer = bsal_vector_helper_at_as_int(&concrete_self->block_classifiers, i);
+
+        /* set the consumer for sliding window
+         */
+        bsal_actor_helper_send_int(self, producer, BSAL_ACTOR_SET_CONSUMER,
+                        consumer);
+
+        printf("DEBUG neural LINK %d -> %d\n",
+                        producer, consumer);
+
+        /*
+         * set the consumers for each classifier
+         */
+
+        printf("DEBUG sending %d store names to classifier %d\n",
+                        (int)bsal_vector_size(&concrete_self->graph_stores),
+                        consumer);
+
+        bsal_actor_helper_send_vector(self, consumer, BSAL_ACTOR_SET_CONSUMERS,
+                        &concrete_self->graph_stores);
+    }
+}
+
+void bsal_assembly_graph_builder_set_consumer_reply(struct bsal_actor *self, struct bsal_message *message)
+{
+    struct bsal_assembly_graph_builder *concrete_self;
+
+    concrete_self = bsal_actor_concrete_actor(self);
+
+    ++concrete_self->configured_sliding_windows;
+
+#ifdef BSAL_ASSEMBLY_GRAPH_BUILDER_DEBUG
+    printf("DEBUG windows UP %d\n",
+        concrete_self->configured_sliding_windows);
+#endif
+
+    bsal_assembly_graph_builder_verify(self);
+}
+
+void bsal_assembly_graph_builder_verify(struct bsal_actor *self)
+{
+    struct bsal_assembly_graph_builder *concrete_self;
+
+    concrete_self = bsal_actor_concrete_actor(self);
+
+    /* Verify if the system is ready to roll
+     */
+    if (concrete_self->configured_sliding_windows < bsal_vector_size(&concrete_self->sliding_windows)) {
+        return;
+    }
+
+    if (concrete_self->configured_block_classifiers < bsal_vector_size(&concrete_self->block_classifiers)) {
+        return;
+    }
+
+    printf("%s/%d is ready to build the graph\n",
+            bsal_actor_script_name(self),
+            bsal_actor_name(self));
+
+    bsal_timer_stop(&concrete_self->timer);
+    bsal_timer_print_with_description(&concrete_self->timer, "Build assembly graph");
+
+    bsal_actor_helper_send_empty(self, concrete_self->source, BSAL_ACTOR_START_REPLY);
+}
+
+void bsal_assembly_graph_builder_set_consumers_reply(struct bsal_actor *self, struct bsal_message *message)
+{
+    struct bsal_assembly_graph_builder *concrete_self;
+
+    concrete_self = bsal_actor_concrete_actor(self);
+
+    ++concrete_self->configured_block_classifiers;
+
+#ifdef BSAL_ASSEMBLY_GRAPH_BUILDER_DEBUG
+    printf("DEBUG classifiers UP %d\n", concrete_self->configured_block_classifiers);
+#endif
+
+    bsal_assembly_graph_builder_verify(self);
+}
+
+

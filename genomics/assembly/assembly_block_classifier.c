@@ -76,18 +76,18 @@ void bsal_assembly_block_classifier_init(struct bsal_actor *self)
     concrete_actor->forced = 0;
 
     bsal_actor_register_handler(self, BSAL_AGGREGATE_KERNEL_OUTPUT,
-                    bsal_aggregator_aggregate_kernel_output);
+                    bsal_assembly_block_classifier_aggregate_kernel_output);
 
     /* Enable cloning stuff
      */
     bsal_actor_helper_send_to_self_empty(self, BSAL_ACTOR_PACK_ENABLE);
 
     bsal_actor_register_handler(self, BSAL_ACTOR_PACK,
-                    bsal_aggregator_pack_message);
+                    bsal_assembly_block_classifier_pack_message);
     bsal_actor_register_handler(self, BSAL_ACTOR_UNPACK,
-                    bsal_aggregator_unpack_message);
+                    bsal_assembly_block_classifier_unpack_message);
 
-    printf("aggregator %d is online\n", bsal_actor_name(self));
+    printf("assembly_block_classifier %d is online\n", bsal_actor_name(self));
 }
 
 void bsal_assembly_block_classifier_destroy(struct bsal_actor *self)
@@ -137,7 +137,7 @@ void bsal_assembly_block_classifier_receive(struct bsal_actor *self, struct bsal
 
     } else if (tag == BSAL_ACTOR_SET_CONSUMERS) {
 
-        bsal_aggregator_set_consumers(self, buffer);
+        bsal_assembly_block_classifier_set_consumers(self, buffer);
 
         bsal_actor_helper_send_reply_empty(self, BSAL_ACTOR_SET_CONSUMERS_REPLY);
 
@@ -161,7 +161,7 @@ void bsal_assembly_block_classifier_receive(struct bsal_actor *self, struct bsal
         (*bucket)--;
 
         if (!concrete_actor->forced) {
-            bsal_aggregator_verify(self, message);
+            bsal_assembly_block_classifier_verify(self, message);
         }
     }
 }
@@ -206,7 +206,7 @@ void bsal_assembly_block_classifier_flush(struct bsal_actor *self, int customer_
 
 
 #ifdef BSAL_ASSEMBLY_BLOCK_CLASSIFIER_DEBUG_FLUSHING
-    printf("DEBUG bsal_aggregator_flush actual %d threshold %d\n", count,
+    printf("DEBUG bsal_assembly_block_classifier_flush actual %d threshold %d\n", count,
                     threshold);
 #endif
 
@@ -226,7 +226,7 @@ void bsal_assembly_block_classifier_flush(struct bsal_actor *self, int customer_
     buffer = NULL;
 
     if (concrete_actor->flushed % 50000 == 0) {
-        printf("aggregator %d flushed %d blocks so far\n",
+        printf("assembly_block_classifier %d flushed %d blocks so far\n",
                         bsal_actor_name(self), concrete_actor->flushed);
     }
 
@@ -322,7 +322,7 @@ void bsal_assembly_block_classifier_aggregate_kernel_output(struct bsal_actor *s
 
 
 #ifdef BSAL_ASSEMBLY_BLOCK_CLASSIFIER_DEBUG
-    BSAL_DEBUG_MARKER("aggregator receives");
+    BSAL_DEBUG_MARKER("assembly_block_classifier receives");
     printf("name %d source %d UNPACK ON %d bytes\n",
                         bsal_actor_name(self), source, bsal_message_count(message));
 #endif
@@ -333,7 +333,7 @@ void bsal_assembly_block_classifier_aggregate_kernel_output(struct bsal_actor *s
                         &concrete_actor->codec);
 
 #ifdef BSAL_ASSEMBLY_BLOCK_CLASSIFIER_DEBUG
-        BSAL_DEBUG_MARKER("aggregator before loop");
+        BSAL_DEBUG_MARKER("assembly_block_classifier before loop");
 #endif
 
     /*
@@ -380,7 +380,7 @@ void bsal_assembly_block_classifier_aggregate_kernel_output(struct bsal_actor *s
         printf("DEBUG customer_index %d block pointer %p\n",
                         customer_index, (void *)customer_block_pointer);
 
-        BSAL_DEBUG_MARKER("aggregator before add");
+        BSAL_DEBUG_MARKER("assembly_block_classifier before add");
 #endif
 
         /*
@@ -403,24 +403,24 @@ void bsal_assembly_block_classifier_aggregate_kernel_output(struct bsal_actor *s
         /* Flush if necessary to avoid having very big buffers
          */
         if (0 && i % 32 == 0) {
-            bsal_aggregator_flush(self, customer_index, &buffers, 0);
+            bsal_assembly_block_classifier_flush(self, customer_index, &buffers, 0);
         }
 #endif
 
 #ifdef BSAL_ASSEMBLY_BLOCK_CLASSIFIER_DEBUG
-        BSAL_DEBUG_MARKER("aggregator before flush");
+        BSAL_DEBUG_MARKER("assembly_block_classifier before flush");
 #endif
 
     }
 
 #ifdef BSAL_ASSEMBLY_BLOCK_CLASSIFIER_DEBUG
-    BSAL_DEBUG_MARKER("aggregator after loop");
+    BSAL_DEBUG_MARKER("assembly_block_classifier after loop");
 #endif
 
     if (concrete_actor->last == 0
                     || concrete_actor->received >= concrete_actor->last + 10000) {
 
-        printf("aggregator/%d received %" PRIu64 " kernel outputs so far\n",
+        printf("assembly_block_classifier/%d received %" PRIu64 " kernel outputs so far\n",
                         bsal_actor_name(self),
                         concrete_actor->received);
 
@@ -432,7 +432,7 @@ void bsal_assembly_block_classifier_aggregate_kernel_output(struct bsal_actor *s
     bsal_dna_kmer_block_destroy(&input_block, bsal_actor_get_ephemeral_memory(self));
 
 #ifdef BSAL_ASSEMBLY_BLOCK_CLASSIFIER_DEBUG
-        BSAL_DEBUG_MARKER("aggregator marker EXIT");
+        BSAL_DEBUG_MARKER("assembly_block_classifier marker EXIT");
 #endif
 
     bsal_vector_iterator_init(&iterator, &buffers);
@@ -450,10 +450,10 @@ void bsal_assembly_block_classifier_aggregate_kernel_output(struct bsal_actor *s
         customer_index = i;
 
 #ifdef BSAL_ASSEMBLY_BLOCK_CLASSIFIER_DEBUG
-        printf("aggregator flushing %d\n", customer_index);
+        printf("assembly_block_classifier flushing %d\n", customer_index);
 #endif
 
-        bsal_aggregator_flush(self, customer_index, &buffers, 1);
+        bsal_assembly_block_classifier_flush(self, customer_index, &buffers, 1);
 
         /*
          * Destroy block
@@ -467,7 +467,7 @@ void bsal_assembly_block_classifier_aggregate_kernel_output(struct bsal_actor *s
     bsal_vector_iterator_destroy(&iterator);
     bsal_vector_destroy(&buffers);
 
-    bsal_aggregator_verify(self, message);
+    bsal_assembly_block_classifier_verify(self, message);
 
 
 }
@@ -480,10 +480,10 @@ void bsal_assembly_block_classifier_pack_message(struct bsal_actor *actor, struc
     struct bsal_message new_message;
 
     ephemeral_memory = bsal_actor_get_ephemeral_memory(actor);
-    new_count = bsal_aggregator_pack_size(actor);
+    new_count = bsal_assembly_block_classifier_pack_size(actor);
     new_buffer = bsal_memory_pool_allocate(ephemeral_memory, new_count);
 
-    bsal_aggregator_pack(actor, new_buffer);
+    bsal_assembly_block_classifier_pack(actor, new_buffer);
 
     bsal_message_init(&new_message, BSAL_ACTOR_PACK_REPLY, new_count, new_buffer);
     bsal_actor_helper_send_reply(actor, &new_message);
@@ -499,7 +499,7 @@ void bsal_assembly_block_classifier_unpack_message(struct bsal_actor *actor, str
 
     buffer = bsal_message_buffer(message);
 
-    bsal_aggregator_unpack(actor, buffer);
+    bsal_assembly_block_classifier_unpack(actor, buffer);
 
     bsal_actor_helper_send_reply_empty(actor, BSAL_ACTOR_UNPACK_REPLY);
 }
@@ -580,7 +580,7 @@ int bsal_assembly_block_classifier_pack_unpack(struct bsal_actor *actor, int ope
 
     /*
     if (operation == BSAL_PACKER_OPERATION_UNPACK) {
-        printf("aggregator %d unpacked kmer length %d\n",
+        printf("assembly_block_classifier %d unpacked kmer length %d\n",
                         bsal_actor_name(actor),
                         concrete_actor->kmer_length);
     }
@@ -589,7 +589,7 @@ int bsal_assembly_block_classifier_pack_unpack(struct bsal_actor *actor, int ope
      */
 
     if (operation == BSAL_PACKER_OPERATION_UNPACK) {
-        bsal_aggregator_set_consumers(actor,
+        bsal_assembly_block_classifier_set_consumers(actor,
                         ((char *)buffer) + bytes);
 
     } else {
@@ -606,17 +606,17 @@ int bsal_assembly_block_classifier_pack_unpack(struct bsal_actor *actor, int ope
 
 int bsal_assembly_block_classifier_pack(struct bsal_actor *actor, void *buffer)
 {
-    return bsal_aggregator_pack_unpack(actor, BSAL_PACKER_OPERATION_PACK, buffer);
+    return bsal_assembly_block_classifier_pack_unpack(actor, BSAL_PACKER_OPERATION_PACK, buffer);
 }
 
 int bsal_assembly_block_classifier_unpack(struct bsal_actor *actor, void *buffer)
 {
-    return bsal_aggregator_pack_unpack(actor, BSAL_PACKER_OPERATION_UNPACK, buffer);
+    return bsal_assembly_block_classifier_pack_unpack(actor, BSAL_PACKER_OPERATION_UNPACK, buffer);
 }
 
 int bsal_assembly_block_classifier_pack_size(struct bsal_actor *actor)
 {
-    return bsal_aggregator_pack_unpack(actor, BSAL_PACKER_OPERATION_DRY_RUN, NULL);
+    return bsal_assembly_block_classifier_pack_unpack(actor, BSAL_PACKER_OPERATION_DRY_RUN, NULL);
 }
 
 
