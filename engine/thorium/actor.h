@@ -236,6 +236,12 @@ struct bsal_actor {
      */
     int supervisor;
 
+    /*
+     * The inder of the initial actor to use
+     * for spawning new colleagues in the company.
+     */
+    int spawner_index;
+
     int dead;
 
     struct bsal_counter counter;
@@ -401,6 +407,8 @@ void bsal_actor_reset_counters(struct bsal_actor *self);
 int bsal_actor_get_priority(struct bsal_actor *self);
 void bsal_actor_set_priority(struct bsal_actor *self, int priority);
 int bsal_actor_get_source_count(struct bsal_actor *self);
+
+int bsal_actor_get_spawner(struct bsal_actor *self, struct bsal_vector *spawners);
 
 /*
  * Expose the acquaintance API if required.

@@ -71,6 +71,8 @@ void bsal_actor_init(struct bsal_actor *self, void *concrete_actor,
     self->script = script;
     self->worker = NULL;
 
+    self->spawner_index = BSAL_ACTOR_NO_VALUE;
+
     self->synchronization_started = 0;
     self->synchronization_expected_responses = 0;
     self->synchronization_responses = 0;
@@ -1980,6 +1982,30 @@ struct bsal_memory_pool *bsal_actor_get_ephemeral_memory(struct bsal_actor *self
     }
 
     return bsal_worker_get_ephemeral_memory(worker);
+}
+
+int bsal_actor_get_spawner(struct bsal_actor *self, struct bsal_vector *spawners)
+{
+    int actor;
+
+    if (bsal_vector_size(spawners) == 0) {
+        return BSAL_ACTOR_NOBODY;
+    }
+
+    if (self->spawner_index == BSAL_ACTOR_NO_VALUE) {
+        self->spawner_index = bsal_vector_size(spawners) - 1;
+    }
+
+    actor = bsal_vector_helper_at_as_int(spawners, self->spawner_index);
+
+    --self->spawner_index;
+
+    if (self->spawner_index < 0) {
+
+        self->spawner_index = bsal_vector_size(spawners) - 1;
+    }
+
+    return actor;
 }
 
 

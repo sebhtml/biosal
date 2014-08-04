@@ -1,6 +1,8 @@
 
 #include "spate.h"
 
+#include <genomics/assembly/assembly_graph_store.h>
+
 #include <genomics/input/input_controller.h>
 
 #include <stdio.h>
@@ -78,6 +80,9 @@ void spate_init(struct bsal_actor *self)
     bsal_actor_add_script(self, BSAL_ASSEMBLY_GRAPH_BUILDER_SCRIPT,
                     &bsal_assembly_graph_builder_script);
 
+    bsal_actor_add_script(self, BSAL_ASSEMBLY_GRAPH_STORE_SCRIPT,
+                    &bsal_assembly_graph_store_script);
+
     concrete_self->block_size = 16 * 4096;
 
     concrete_self->file_index = 0;
@@ -119,8 +124,6 @@ void spate_start(struct bsal_actor *self, struct bsal_message *message)
      */
     bsal_vector_unpack(&concrete_self->initial_actors, buffer);
 
-    concrete_self->spawner_index = bsal_vector_size(&concrete_self->initial_actors) - 1;
-
     printf("spate/%d starts\n", name);
 
     if (bsal_vector_index_of(&concrete_self->initial_actors, &name) == 0) {
@@ -134,7 +137,7 @@ void spate_start(struct bsal_actor *self, struct bsal_message *message)
         return;
     }
 
-    spawner = spate_get_spawner(self);
+    spawner = bsal_actor_get_spawner(self, &concrete_self->initial_actors);
 
     bsal_actor_helper_send_int(self, spawner, BSAL_ACTOR_SPAWN, BSAL_INPUT_CONTROLLER_SCRIPT);
 }
@@ -182,7 +185,8 @@ void spate_spawn_reply(struct bsal_actor *self, struct bsal_message *message)
         printf("spate %d spawned controller %d\n", bsal_actor_name(self),
                         new_actor);
 
-        spawner = spate_get_spawner(self);
+        spawner = bsal_actor_get_spawner(self, &concrete_self->initial_actors);
+
         bsal_actor_helper_send_int(self, spawner, BSAL_ACTOR_SPAWN, BSAL_MANAGER_SCRIPT);
 
     } else if (concrete_self->manager_for_sequence_stores == BSAL_ACTOR_NOBODY) {
@@ -196,7 +200,8 @@ void spate_spawn_reply(struct bsal_actor *self, struct bsal_message *message)
         printf("spate %d spawned manager %d\n", bsal_actor_name(self),
                         new_actor);
 
-        spawner = spate_get_spawner(self);
+        spawner = bsal_actor_get_spawner(self, &concrete_self->initial_actors);
+
         bsal_actor_helper_send_int(self, spawner, BSAL_ACTOR_SPAWN, BSAL_ASSEMBLY_GRAPH_BUILDER_SCRIPT);
 
     } else if (concrete_self->assembly_graph_builder == BSAL_ACTOR_NOBODY) {
@@ -217,24 +222,6 @@ void spate_spawn_reply(struct bsal_actor *self, struct bsal_message *message)
         bsal_actor_helper_send_int(self, concrete_self->manager_for_sequence_stores, BSAL_MANAGER_SET_SCRIPT,
                         BSAL_SEQUENCE_STORE_SCRIPT);
     }
-}
-
-int spate_get_spawner(struct bsal_actor *self)
-{
-    int actor;
-    struct spate *concrete_self;
-
-    concrete_self = (struct spate *)bsal_actor_concrete_actor(self);
-    actor = bsal_vector_helper_at_as_int(&concrete_self->initial_actors, concrete_self->spawner_index);
-
-    --concrete_self->spawner_index;
-
-    if (concrete_self->spawner_index < 0) {
-
-        concrete_self->spawner_index = bsal_vector_size(&concrete_self->initial_actors) - 1;
-    }
-
-    return actor;
 }
 
 void spate_set_script_reply(struct bsal_actor *self, struct bsal_message *message)
