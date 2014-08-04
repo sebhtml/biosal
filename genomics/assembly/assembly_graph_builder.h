@@ -34,6 +34,8 @@ struct bsal_assembly_graph_builder {
     int actors_with_kmer_length;
 
     int kmer_length;
+
+    int completed_sliding_windows;
 };
 
 extern struct bsal_script bsal_assembly_graph_builder_script;
@@ -65,5 +67,8 @@ void bsal_assembly_graph_builder_connect_actors(struct bsal_actor *self);
 void bsal_assembly_graph_builder_set_consumers_reply(struct bsal_actor *self, struct bsal_message *message);
 void bsal_assembly_graph_builder_verify(struct bsal_actor *self);
 void bsal_assembly_graph_builder_set_consumer_reply(struct bsal_actor *self, struct bsal_message *message);
+
+void bsal_assembly_graph_builder_tell_source(struct bsal_actor *self);
+void bsal_assembly_graph_builder_set_producer_reply(struct bsal_actor *self, struct bsal_message *message);
 
 #endif

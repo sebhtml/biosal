@@ -28,11 +28,14 @@ void bsal_assembly_graph_builder_init(struct bsal_actor *self)
 
     bsal_timer_init(&concrete_self->timer);
 
+    concrete_self->completed_sliding_windows = 0;
+
     bsal_vector_init(&concrete_self->spawners, sizeof(int));
     bsal_vector_init(&concrete_self->sequence_stores, sizeof(int));
 
     bsal_actor_register_handler(self, BSAL_ACTOR_START, bsal_assembly_graph_builder_start);
     bsal_actor_register_handler(self, BSAL_ACTOR_SET_PRODUCERS, bsal_assembly_graph_builder_set_producers);
+    bsal_actor_register_handler(self, BSAL_ACTOR_SET_PRODUCER_REPLY, bsal_assembly_graph_builder_set_producer_reply);
     bsal_actor_register_handler(self, BSAL_ACTOR_ASK_TO_STOP, bsal_assembly_graph_builder_ask_to_stop);
     bsal_actor_register_handler(self, BSAL_ACTOR_SPAWN_REPLY, bsal_assembly_graph_builder_spawn_reply);
     bsal_actor_register_handler(self, BSAL_SET_KMER_LENGTH_REPLY, bsal_assembly_graph_builder_set_kmer_reply);
@@ -460,6 +463,9 @@ void bsal_assembly_graph_builder_set_consumer_reply(struct bsal_actor *self, str
 void bsal_assembly_graph_builder_verify(struct bsal_actor *self)
 {
     struct bsal_assembly_graph_builder *concrete_self;
+    int i;
+    int producer;
+    int consumer;
 
     concrete_self = bsal_actor_concrete_actor(self);
 
@@ -477,10 +483,23 @@ void bsal_assembly_graph_builder_verify(struct bsal_actor *self)
             bsal_actor_script_name(self),
             bsal_actor_name(self));
 
-    bsal_timer_stop(&concrete_self->timer);
-    bsal_timer_print_with_description(&concrete_self->timer, "Build assembly graph");
 
-    bsal_actor_helper_send_empty(self, concrete_self->source, BSAL_ACTOR_START_REPLY);
+    /* Set the producer for every sliding window.
+     */
+
+    bsal_assembly_graph_builder_tell_source(self);
+
+    return;
+
+    for (i = 0; i < bsal_vector_size(&concrete_self->sliding_windows); i++) {
+
+        producer = bsal_vector_helper_at_as_int(&concrete_self->sequence_stores, i);
+        consumer = bsal_vector_helper_at_as_int(&concrete_self->sliding_windows, i);
+
+        bsal_actor_helper_send_int(self, consumer, BSAL_ACTOR_SET_PRODUCER,
+                        producer);
+    }
+
 }
 
 void bsal_assembly_graph_builder_set_consumers_reply(struct bsal_actor *self, struct bsal_message *message)
@@ -498,4 +517,29 @@ void bsal_assembly_graph_builder_set_consumers_reply(struct bsal_actor *self, st
     bsal_assembly_graph_builder_verify(self);
 }
 
+void bsal_assembly_graph_builder_set_producer_reply(struct bsal_actor *self, struct bsal_message *message)
+{
+    struct bsal_assembly_graph_builder *concrete_self;
 
+    concrete_self = bsal_actor_concrete_actor(self);
+
+    ++concrete_self->completed_sliding_windows;
+
+    /*
+     * Tell the source that the graph is ready now.
+     */
+    if (concrete_self->completed_sliding_windows == bsal_vector_size(&concrete_self->sliding_windows)) {
+        bsal_assembly_graph_builder_tell_source(self);
+    }
+}
+
+void bsal_assembly_graph_builder_tell_source(struct bsal_actor *self)
+{
+    struct bsal_assembly_graph_builder *concrete_self;
+
+    concrete_self = bsal_actor_concrete_actor(self);
+
+    bsal_timer_stop(&concrete_self->timer);
+    bsal_timer_print_with_description(&concrete_self->timer, "Build assembly graph");
+    bsal_actor_helper_send_empty(self, concrete_self->source, BSAL_ACTOR_START_REPLY);
+}
