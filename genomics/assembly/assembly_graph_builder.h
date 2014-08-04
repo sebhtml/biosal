@@ -12,6 +12,8 @@
 
 #define BSAL_ASSEMBLY_GRAPH_BUILDER_DEFAULT_KMER_LENGTH 49
 
+#define BSAL_ASSEMBLY_GRAPH_BUILDER_CONTROL_COMPLEXITY 0x00006439
+
 /*
  * This actor builds an assembly graph.
  * It needs a list of sequence stores and returns basically a list of
@@ -43,6 +45,9 @@ struct bsal_assembly_graph_builder {
 
     uint64_t total_kmer_count;
     int notified_windows;
+
+    uint64_t actual_kmer_count;
+    int synchronized_graph_stores;
 
     int completed_sliding_windows;
 };
@@ -91,5 +96,7 @@ void bsal_assembly_graph_builder_tell_source(struct bsal_actor *self);
 void bsal_assembly_graph_builder_set_producer_reply(struct bsal_actor *self, struct bsal_message *message);
 int bsal_assembly_graph_builder_get_kmer_length(struct bsal_actor *self);
 void bsal_assembly_graph_builder_notify_reply(struct bsal_actor *self, struct bsal_message *message);
+void bsal_assembly_graph_builder_control_complexity(struct bsal_actor *self, struct bsal_message *message);
+void bsal_assembly_graph_builder_get_entry_count_reply(struct bsal_actor *self, struct bsal_message *message);
 
 #endif

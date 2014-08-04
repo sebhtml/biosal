@@ -45,9 +45,13 @@ void bsal_assembly_graph_builder_init(struct bsal_actor *self)
     bsal_actor_register_handler(self, BSAL_ACTOR_SPAWN_REPLY, bsal_assembly_graph_builder_spawn_reply);
     bsal_actor_register_handler(self, BSAL_SET_KMER_LENGTH_REPLY, bsal_assembly_graph_builder_set_kmer_reply);
     bsal_actor_register_handler(self, BSAL_ACTOR_NOTIFY_REPLY, bsal_assembly_graph_builder_notify_reply);
+    bsal_actor_register_handler(self, BSAL_ASSEMBLY_GRAPH_BUILDER_CONTROL_COMPLEXITY,
+                    bsal_assembly_graph_builder_control_complexity);
 
     bsal_actor_register_handler(self, BSAL_ACTOR_SET_CONSUMER_REPLY, bsal_assembly_graph_builder_set_consumer_reply);
     bsal_actor_register_handler(self, BSAL_ACTOR_SET_CONSUMERS_REPLY, bsal_assembly_graph_builder_set_consumers_reply);
+    bsal_actor_register_handler(self, BSAL_STORE_GET_ENTRY_COUNT_REPLY,
+                    bsal_assembly_graph_builder_get_entry_count_reply);
 
     concrete_self->manager_for_graph_stores = BSAL_ACTOR_NOBODY;
     bsal_vector_init(&concrete_self->graph_stores, sizeof(int));
@@ -65,6 +69,9 @@ void bsal_assembly_graph_builder_init(struct bsal_actor *self)
 
     concrete_self->total_kmer_count = 0;
     concrete_self->notified_windows = 0;
+
+    concrete_self->synchronized_graph_stores = 0;
+    concrete_self->actual_kmer_count = 0;
 }
 
 void bsal_assembly_graph_builder_destroy(struct bsal_actor *self)
@@ -605,6 +612,55 @@ void bsal_assembly_graph_builder_notify_reply(struct bsal_actor *self, struct bs
             bsal_actor_name(self),
             concrete_self->total_kmer_count);
 
-        bsal_assembly_graph_builder_tell_source(self);
+        bsal_actor_helper_send_to_self_empty(self, BSAL_ASSEMBLY_GRAPH_BUILDER_CONTROL_COMPLEXITY);
+
+
+    }
+}
+
+void bsal_assembly_graph_builder_control_complexity(struct bsal_actor *self, struct bsal_message *message)
+{
+    struct bsal_assembly_graph_builder *concrete_self;
+
+    concrete_self = bsal_actor_concrete_actor(self);
+
+    concrete_self->actual_kmer_count = 0;
+    concrete_self->synchronized_graph_stores = 0;
+
+    bsal_actor_helper_send_range_empty(self, &concrete_self->graph_stores,
+                    BSAL_STORE_GET_ENTRY_COUNT);
+}
+
+void bsal_assembly_graph_builder_get_entry_count_reply(struct bsal_actor *self, struct bsal_message *message)
+{
+    uint64_t kmer_count;
+    struct bsal_assembly_graph_builder *concrete_self;
+
+    concrete_self = bsal_actor_concrete_actor(self);
+
+    bsal_message_helper_unpack_uint64_t(message, 0, &kmer_count);
+
+    concrete_self->actual_kmer_count += kmer_count;
+
+    ++concrete_self->synchronized_graph_stores;
+
+    if (concrete_self->synchronized_graph_stores == bsal_vector_size(&concrete_self->graph_stores)) {
+
+        if (concrete_self->actual_kmer_count == concrete_self->total_kmer_count) {
+
+            printf("%s/%d synchronized with %d graph stores\n",
+                            bsal_actor_script_name(self),
+                            bsal_actor_name(self),
+                            (int)bsal_vector_size(&concrete_self->graph_stores));
+
+            bsal_assembly_graph_builder_tell_source(self);
+
+        } else {
+            /*
+             * Otherwise, there are still some messages in transit.
+             */
+
+            bsal_actor_helper_send_to_self_empty(self, BSAL_ASSEMBLY_GRAPH_BUILDER_CONTROL_COMPLEXITY);
+        }
     }
 }
