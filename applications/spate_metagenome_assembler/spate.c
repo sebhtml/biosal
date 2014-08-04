@@ -407,11 +407,18 @@ void spate_help(struct bsal_actor *self)
     printf("mpiexec -n <ranks> spate -threads-per-node <threads> [-k <kmer_length>] [-i <file>] [-p <file1> <file2>] [-s <file>] -o <output>\n");
 
     printf("\n");
+    printf("Default values: -k %d -threads-per-node %d -o %s\n",
+                    BSAL_ASSEMBLY_GRAPH_BUILDER_DEFAULT_KMER_LENGTH,
+                    1,
+                    BSAL_COVERAGE_DISTRIBUTION_DEFAULT_OUTPUT);
+
+    printf("\n");
     printf("Example:\n");
     printf("mpiexec -n 128 spate -threads-per-node 24 -k 51 -i interleaved_file_1.fastq -i interleaved_file_2.fastq -o my-assembly\n");
 
     printf("\n");
     printf("Supported input formats: .fastq (upcoming: .fasta, .fastq.gz)\n");
+
 }
 
 void spate_stop(struct bsal_actor *self)

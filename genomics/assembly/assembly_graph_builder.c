@@ -25,6 +25,8 @@ void bsal_assembly_graph_builder_init(struct bsal_actor *self)
 
     concrete_self = bsal_actor_concrete_actor(self);
 
+    bsal_timer_init(&concrete_self->timer);
+
     bsal_vector_init(&concrete_self->spawners, sizeof(int));
     bsal_vector_init(&concrete_self->sequence_stores, sizeof(int));
 
@@ -32,6 +34,7 @@ void bsal_assembly_graph_builder_init(struct bsal_actor *self)
     bsal_actor_register_handler(self, BSAL_ACTOR_SET_PRODUCERS, bsal_assembly_graph_builder_set_producers);
     bsal_actor_register_handler(self, BSAL_ACTOR_ASK_TO_STOP, bsal_assembly_graph_builder_ask_to_stop);
     bsal_actor_register_handler(self, BSAL_ACTOR_SPAWN_REPLY, bsal_assembly_graph_builder_spawn_reply);
+    bsal_actor_register_handler(self, BSAL_SET_KMER_LENGTH_REPLY, bsal_assembly_graph_builder_set_kmer_reply);
 
     concrete_self->manager_for_graph_stores = BSAL_ACTOR_NOBODY;
     bsal_vector_init(&concrete_self->graph_stores, sizeof(int));
@@ -40,6 +43,12 @@ void bsal_assembly_graph_builder_init(struct bsal_actor *self)
 
     concrete_self->manager_for_windows = BSAL_ACTOR_NOBODY;
     bsal_vector_init(&concrete_self->sliding_windows, sizeof(int));
+
+    concrete_self->configured_graph_stores = 0;
+    concrete_self->configured_sliding_windows = 0;
+    concrete_self->configured_block_classifiers = 0;
+
+    concrete_self->actors_with_kmer_length = 0;
 }
 
 void bsal_assembly_graph_builder_destroy(struct bsal_actor *self)
@@ -55,9 +64,12 @@ void bsal_assembly_graph_builder_destroy(struct bsal_actor *self)
     bsal_vector_destroy(&concrete_self->graph_stores);
 
     concrete_self->manager_for_classifiers = BSAL_ACTOR_NOBODY;
+    bsal_vector_destroy(&concrete_self->block_classifiers);
 
     concrete_self->manager_for_windows= BSAL_ACTOR_NOBODY;
     bsal_vector_destroy(&concrete_self->sliding_windows);
+
+    bsal_timer_destroy(&concrete_self->timer);
 }
 
 void bsal_assembly_graph_builder_receive(struct bsal_actor *self, struct bsal_message *message)
@@ -89,6 +101,8 @@ void bsal_assembly_graph_builder_start(struct bsal_actor *self, struct bsal_mess
     if (source != concrete_self->source) {
         return;
     }
+
+    bsal_timer_start(&concrete_self->timer);
 
     buffer = bsal_message_buffer(message);
 
@@ -274,7 +288,90 @@ void bsal_assembly_graph_builder_start_reply_classifier_manager(struct bsal_acto
                     bsal_actor_name(self),
                     (int)bsal_vector_size(&concrete_self->block_classifiers));
 
+    bsal_assembly_graph_builder_configure(self);
 
-    bsal_actor_helper_send_empty(self, concrete_self->source, BSAL_ACTOR_START_REPLY);
 }
 
+void bsal_assembly_graph_builder_configure(struct bsal_actor *self)
+{
+    struct bsal_assembly_graph_builder *concrete_self;
+    int argc;
+    int i;
+    char **argv;
+    int destination;
+
+    concrete_self = bsal_actor_concrete_actor(self);
+    argc = bsal_actor_argc(self);
+    argv = bsal_actor_argv(self);
+
+    /* get kmer length
+     */
+    for (i = 0; i < argc; i++) {
+        if (strcmp(argv[i], "-k") == 0) {
+            concrete_self->kmer_length = atoi(argv[i]);
+            break;
+        }
+    }
+
+    /* 
+     * set the kmer length for graph stores, sliding windows, and block classifiers
+     */
+
+    for (i = 0; i < bsal_vector_size(&concrete_self->graph_stores); i++) {
+    
+        destination = bsal_vector_helper_at_as_int(&concrete_self->graph_stores, i);
+
+        bsal_actor_helper_send_int(self, destination, BSAL_SET_KMER_LENGTH,
+                        concrete_self->kmer_length);
+    }
+
+    for (i = 0; i < bsal_vector_size(&concrete_self->sliding_windows); i++) {
+    
+        destination = bsal_vector_helper_at_as_int(&concrete_self->sliding_windows, i);
+
+        bsal_actor_helper_send_int(self, destination, BSAL_SET_KMER_LENGTH,
+                        concrete_self->kmer_length);
+    }
+
+    for (i = 0; i < bsal_vector_size(&concrete_self->block_classifiers); i++) {
+    
+        destination = bsal_vector_helper_at_as_int(&concrete_self->block_classifiers, i);
+
+        bsal_actor_helper_send_int(self, destination, BSAL_SET_KMER_LENGTH,
+                        concrete_self->kmer_length);
+    }
+
+    printf("%s/%d configures the kmer length (%d) for the actor computation\n",
+                    bsal_actor_script_name(self),
+                    concrete_self->kmer_length,
+                    bsal_actor_name(self));
+
+}
+
+void bsal_assembly_graph_builder_set_kmer_reply(struct bsal_actor *self, struct bsal_message *message)
+{
+    int expected;
+    struct bsal_assembly_graph_builder *concrete_self;
+
+    concrete_self = bsal_actor_concrete_actor(self);
+
+    ++concrete_self->actors_with_kmer_length;
+
+    expected = 0;
+
+    expected += bsal_vector_size(&concrete_self->graph_stores);
+    expected += bsal_vector_size(&concrete_self->sliding_windows);
+    expected += bsal_vector_size(&concrete_self->block_classifiers);
+
+    if (concrete_self->actors_with_kmer_length == expected) {
+
+        printf("%s/%d configured the kmer length value for sliding windows, block classifiers and graph stores\n",
+                        bsal_actor_script_name(self),
+                        bsal_actor_name(self));
+
+        bsal_timer_stop(&concrete_self->timer);
+        bsal_timer_print_with_description(&concrete_self->timer, "Build assembly graph");
+
+        bsal_actor_helper_send_empty(self, concrete_self->source, BSAL_ACTOR_START_REPLY);
+    }
+}
