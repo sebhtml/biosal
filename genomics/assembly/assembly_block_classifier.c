@@ -1,12 +1,17 @@
 
-#include "assembly_classifier.h"
+#include "assembly_block_classifier.h"
 
 #include <genomics/data/dna_kmer_block.h>
 #include <genomics/data/dna_kmer_frequency_block.h>
 #include <genomics/data/dna_kmer.h>
 
-#include <genomics/storage/sequence_store.h>
+/*
+ * For the message tags
+ */
+#include <genomics/kernels/aggregator.h>
 #include <genomics/kernels/dna_kmer_counter_kernel.h>
+
+#include <genomics/storage/sequence_store.h>
 #include <genomics/storage/kmer_store.h>
 
 #include <core/helpers/actor_helper.h>
@@ -23,46 +28,34 @@
 #include <stdio.h>
 #include <inttypes.h>
 
-/* debugging options
- */
-/*
-#define BSAL_AGGREGATOR_DEBUG
-*/
-
-/* aggregator runtime constants
- */
-
-#define BSAL_FALSE 0
-#define BSAL_TRUE 1
-
 /*
  * Disable memory tracking for increased
  * performance
  */
-#define BSAL_AGGREGATOR_DISABLE_TRACKING
+#define BSAL_ASSEMBLY_BLOCK_CLASSIFIER_DISABLE_TRACKING
 
 /*
-#define BSAL_AGGREGATOR_DEBUG_FLUSHING
+#define BSAL_ASSEMBLY_BLOCK_CLASSIFIER_DEBUG_FLUSHING
 */
 
 
-struct bsal_script bsal_assembly_classifier_script = {
-    .identifier = BSAL_ASSEMBLY_CLASSIFIER_SCRIPT,
-    .name = "aggregator",
+struct bsal_script bsal_assembly_block_classifier_script = {
+    .identifier = BSAL_ASSEMBLY_BLOCK_CLASSIFIER_SCRIPT,
+    .name = "bsal_assembly_block_classifier",
     .description = "",
     .version = "",
     .author = "Sebastien Boisvert",
-    .size = sizeof(struct bsal_aggregator),
-    .init = bsal_aggregator_init,
-    .destroy = bsal_aggregator_destroy,
-    .receive = bsal_aggregator_receive
+    .size = sizeof(struct bsal_assembly_block_classifier),
+    .init = bsal_assembly_block_classifier_init,
+    .destroy = bsal_assembly_block_classifier_destroy,
+    .receive = bsal_assembly_block_classifier_receive
 };
 
-void bsal_assembly_classifier_init(struct bsal_actor *self)
+void bsal_assembly_block_classifier_init(struct bsal_actor *self)
 {
-    struct bsal_aggregator *concrete_actor;
+    struct bsal_assembly_block_classifier *concrete_actor;
 
-    concrete_actor = (struct bsal_aggregator *)bsal_actor_concrete_actor(self);
+    concrete_actor = (struct bsal_assembly_block_classifier *)bsal_actor_concrete_actor(self);
     concrete_actor->received = 0;
     concrete_actor->last = 0;
 
@@ -80,7 +73,7 @@ void bsal_assembly_classifier_init(struct bsal_actor *self)
     bsal_ring_queue_init(&concrete_actor->stalled_producers, sizeof(int));
     bsal_vector_init(&concrete_actor->active_messages, sizeof(int));
 
-    concrete_actor->forced = BSAL_FALSE;
+    concrete_actor->forced = 0;
 
     bsal_actor_register_handler(self, BSAL_AGGREGATE_KERNEL_OUTPUT,
                     bsal_aggregator_aggregate_kernel_output);
@@ -97,11 +90,11 @@ void bsal_assembly_classifier_init(struct bsal_actor *self)
     printf("aggregator %d is online\n", bsal_actor_name(self));
 }
 
-void bsal_assembly_classifier_destroy(struct bsal_actor *self)
+void bsal_assembly_block_classifier_destroy(struct bsal_actor *self)
 {
-    struct bsal_aggregator *concrete_actor;
+    struct bsal_assembly_block_classifier *concrete_actor;
 
-    concrete_actor = (struct bsal_aggregator *)bsal_actor_concrete_actor(self);
+    concrete_actor = (struct bsal_assembly_block_classifier *)bsal_actor_concrete_actor(self);
 
     bsal_vector_destroy(&concrete_actor->active_messages);
     concrete_actor->received = 0;
@@ -114,10 +107,10 @@ void bsal_assembly_classifier_destroy(struct bsal_actor *self)
 
 }
 
-void bsal_assembly_classifier_receive(struct bsal_actor *self, struct bsal_message *message)
+void bsal_assembly_block_classifier_receive(struct bsal_actor *self, struct bsal_message *message)
 {
     int tag;
-    struct bsal_aggregator *concrete_actor;
+    struct bsal_assembly_block_classifier *concrete_actor;
     void *buffer;
     int source;
     int consumer_index_index;
@@ -127,7 +120,7 @@ void bsal_assembly_classifier_receive(struct bsal_actor *self, struct bsal_messa
         return;
     }
 
-    concrete_actor = (struct bsal_aggregator *)bsal_actor_concrete_actor(self);
+    concrete_actor = (struct bsal_assembly_block_classifier *)bsal_actor_concrete_actor(self);
     buffer = bsal_message_buffer(message);
     tag = bsal_message_tag(message);
     source = bsal_message_source(message);
@@ -151,13 +144,13 @@ void bsal_assembly_classifier_receive(struct bsal_actor *self, struct bsal_messa
     } else if (tag == BSAL_AGGREGATOR_FLUSH) {
 
 
-        concrete_actor->forced = BSAL_TRUE;
+        concrete_actor->forced = 1;
 
         bsal_actor_helper_send_reply_empty(self, BSAL_AGGREGATOR_FLUSH_REPLY);
 
     } else if (tag == BSAL_PUSH_KMER_BLOCK_REPLY) {
 
-#ifdef BSAL_AGGREGATOR_DEBUG
+#ifdef BSAL_ASSEMBLY_BLOCK_CLASSIFIER_DEBUG
         printf("BEFORE BSAL_PUSH_KMER_BLOCK_REPLY %d\n", concrete_actor->active_messages);
 #endif
 
@@ -173,11 +166,11 @@ void bsal_assembly_classifier_receive(struct bsal_actor *self, struct bsal_messa
     }
 }
 
-void bsal_assembly_classifier_flush(struct bsal_actor *self, int customer_index, struct bsal_vector *buffers,
+void bsal_assembly_block_classifier_flush(struct bsal_actor *self, int customer_index, struct bsal_vector *buffers,
                 int force)
 {
     struct bsal_dna_kmer_frequency_block *customer_block_pointer;
-    struct bsal_aggregator *concrete_actor;
+    struct bsal_assembly_block_classifier *concrete_actor;
     int count;
     void *buffer;
     struct bsal_message message;
@@ -191,7 +184,7 @@ void bsal_assembly_classifier_flush(struct bsal_actor *self, int customer_index,
      */
     threshold = BSAL_SEQUENCE_STORE_FINAL_BLOCK_SIZE * 3;
 
-    concrete_actor = (struct bsal_aggregator *)bsal_actor_concrete_actor(self);
+    concrete_actor = (struct bsal_assembly_block_classifier *)bsal_actor_concrete_actor(self);
 
     ephemeral_memory = bsal_actor_get_ephemeral_memory(self);
     customer = bsal_vector_helper_at_as_int(&concrete_actor->consumers, customer_index);
@@ -212,7 +205,7 @@ void bsal_assembly_classifier_flush(struct bsal_actor *self, int customer_index,
     }
 
 
-#ifdef BSAL_AGGREGATOR_DEBUG_FLUSHING
+#ifdef BSAL_ASSEMBLY_BLOCK_CLASSIFIER_DEBUG_FLUSHING
     printf("DEBUG bsal_aggregator_flush actual %d threshold %d\n", count,
                     threshold);
 #endif
@@ -249,16 +242,16 @@ void bsal_assembly_classifier_flush(struct bsal_actor *self, int customer_index,
     concrete_actor->flushed++;
 }
 
-void bsal_assembly_classifier_verify(struct bsal_actor *self, struct bsal_message *message)
+void bsal_assembly_block_classifier_verify(struct bsal_actor *self, struct bsal_message *message)
 {
-    struct bsal_aggregator *concrete_actor;
+    struct bsal_assembly_block_classifier *concrete_actor;
     int producer_index;
     int producer;
     int consumer_index;
     int size;
     int *bucket;
 
-    concrete_actor = (struct bsal_aggregator *)bsal_actor_concrete_actor(self);
+    concrete_actor = (struct bsal_assembly_block_classifier *)bsal_actor_concrete_actor(self);
 
     /* Only continue if there are not too many
      * active messages.
@@ -286,10 +279,10 @@ void bsal_assembly_classifier_verify(struct bsal_actor *self, struct bsal_messag
     }
 }
 
-void bsal_assembly_classifier_aggregate_kernel_output(struct bsal_actor *self, struct bsal_message *message)
+void bsal_assembly_block_classifier_aggregate_kernel_output(struct bsal_actor *self, struct bsal_message *message)
 {
     int i;
-    struct bsal_aggregator *concrete_actor;
+    struct bsal_assembly_block_classifier *concrete_actor;
     struct bsal_vector buffers;
     int producer_index;
     int customer_count;
@@ -305,10 +298,10 @@ void bsal_assembly_classifier_aggregate_kernel_output(struct bsal_actor *self, s
     int customer_index;
     struct bsal_vector_iterator iterator;
 
-    concrete_actor = (struct bsal_aggregator *)bsal_actor_concrete_actor(self);
+    concrete_actor = (struct bsal_assembly_block_classifier *)bsal_actor_concrete_actor(self);
 
     if (bsal_vector_size(&concrete_actor->consumers) == 0) {
-        printf("Error: aggregator %d has no configured buffers\n",
+        printf("Error: classifier %d has no configured buffers\n",
                         bsal_actor_name(self));
         return;
     }
@@ -328,7 +321,7 @@ void bsal_assembly_classifier_aggregate_kernel_output(struct bsal_actor *self, s
     bsal_ring_queue_enqueue(&concrete_actor->stalled_producers, &producer_index);
 
 
-#ifdef BSAL_AGGREGATOR_DEBUG
+#ifdef BSAL_ASSEMBLY_BLOCK_CLASSIFIER_DEBUG
     BSAL_DEBUG_MARKER("aggregator receives");
     printf("name %d source %d UNPACK ON %d bytes\n",
                         bsal_actor_name(self), source, bsal_message_count(message));
@@ -339,7 +332,7 @@ void bsal_assembly_classifier_aggregate_kernel_output(struct bsal_actor *self, s
     bsal_dna_kmer_block_unpack(&input_block, buffer, bsal_actor_get_ephemeral_memory(self),
                         &concrete_actor->codec);
 
-#ifdef BSAL_AGGREGATOR_DEBUG
+#ifdef BSAL_ASSEMBLY_BLOCK_CLASSIFIER_DEBUG
         BSAL_DEBUG_MARKER("aggregator before loop");
 #endif
 
@@ -383,7 +376,7 @@ void bsal_assembly_classifier_aggregate_kernel_output(struct bsal_actor *self, s
         customer_block_pointer = (struct bsal_dna_kmer_frequency_block *)bsal_vector_at(&buffers,
                         customer_index);
 
-#ifdef BSAL_AGGREGATOR_DEBUG
+#ifdef BSAL_ASSEMBLY_BLOCK_CLASSIFIER_DEBUG
         printf("DEBUG customer_index %d block pointer %p\n",
                         customer_index, (void *)customer_block_pointer);
 
@@ -414,13 +407,13 @@ void bsal_assembly_classifier_aggregate_kernel_output(struct bsal_actor *self, s
         }
 #endif
 
-#ifdef BSAL_AGGREGATOR_DEBUG
+#ifdef BSAL_ASSEMBLY_BLOCK_CLASSIFIER_DEBUG
         BSAL_DEBUG_MARKER("aggregator before flush");
 #endif
 
     }
 
-#ifdef BSAL_AGGREGATOR_DEBUG
+#ifdef BSAL_ASSEMBLY_BLOCK_CLASSIFIER_DEBUG
     BSAL_DEBUG_MARKER("aggregator after loop");
 #endif
 
@@ -438,7 +431,7 @@ void bsal_assembly_classifier_aggregate_kernel_output(struct bsal_actor *self, s
      */
     bsal_dna_kmer_block_destroy(&input_block, bsal_actor_get_ephemeral_memory(self));
 
-#ifdef BSAL_AGGREGATOR_DEBUG
+#ifdef BSAL_ASSEMBLY_BLOCK_CLASSIFIER_DEBUG
         BSAL_DEBUG_MARKER("aggregator marker EXIT");
 #endif
 
@@ -456,7 +449,7 @@ void bsal_assembly_classifier_aggregate_kernel_output(struct bsal_actor *self, s
 
         customer_index = i;
 
-#ifdef BSAL_AGGREGATOR_DEBUG
+#ifdef BSAL_ASSEMBLY_BLOCK_CLASSIFIER_DEBUG
         printf("aggregator flushing %d\n", customer_index);
 #endif
 
@@ -479,7 +472,7 @@ void bsal_assembly_classifier_aggregate_kernel_output(struct bsal_actor *self, s
 
 }
 
-void bsal_assembly_classifier_pack_message(struct bsal_actor *actor, struct bsal_message *message)
+void bsal_assembly_block_classifier_pack_message(struct bsal_actor *actor, struct bsal_message *message)
 {
     void *new_buffer;
     int new_count;
@@ -500,7 +493,7 @@ void bsal_assembly_classifier_pack_message(struct bsal_actor *actor, struct bsal
     new_buffer = NULL;
 }
 
-void bsal_assembly_classifier_unpack_message(struct bsal_actor *actor, struct bsal_message *message)
+void bsal_assembly_block_classifier_unpack_message(struct bsal_actor *actor, struct bsal_message *message)
 {
     void *buffer;
 
@@ -511,15 +504,15 @@ void bsal_assembly_classifier_unpack_message(struct bsal_actor *actor, struct bs
     bsal_actor_helper_send_reply_empty(actor, BSAL_ACTOR_UNPACK_REPLY);
 }
 
-int bsal_aggregator_set_consumers(struct bsal_actor *actor, void *buffer)
+int bsal_assembly_block_classifier_set_consumers(struct bsal_actor *actor, void *buffer)
 {
-    struct bsal_aggregator *concrete_actor;
+    struct bsal_assembly_block_classifier *concrete_actor;
     int bytes;
     int size;
     int i;
     int zero;
 
-    concrete_actor = (struct bsal_aggregator *)bsal_actor_concrete_actor(actor);
+    concrete_actor = (struct bsal_assembly_block_classifier *)bsal_actor_concrete_actor(actor);
 
     /*
      * receive customer list
@@ -553,26 +546,26 @@ int bsal_aggregator_set_consumers(struct bsal_actor *actor, void *buffer)
         concrete_actor->maximum_active_messages = 4;
     }
 
-    printf("DEBUG45 aggregator %d preparing %d buffers, kmer_length %d\n",
+    printf("DEBUG45 classifier %d preparing %d buffers, kmer_length %d\n",
                     bsal_actor_name(actor),
                         (int)bsal_vector_size(&concrete_actor->consumers),
                         concrete_actor->kmer_length);
 
-#ifdef BSAL_AGGREGATOR_DEBUG
-    printf("DEBUG aggregator configured %d consumers\n",
+#ifdef BSAL_ASSEMBLY_BLOCK_CLASSIFIER_DEBUG
+    printf("DEBUG classifier configured %d consumers\n",
                         (int)bsal_vector_size(&concrete_actor->consumers));
 #endif
 
     return bytes;
 }
 
-int bsal_aggregator_pack_unpack(struct bsal_actor *actor, int operation, void *buffer)
+int bsal_assembly_block_classifier_pack_unpack(struct bsal_actor *actor, int operation, void *buffer)
 {
     struct bsal_packer packer;
     int bytes;
-    struct bsal_aggregator *concrete_actor;
+    struct bsal_assembly_block_classifier *concrete_actor;
 
-    concrete_actor = (struct bsal_aggregator *)bsal_actor_concrete_actor(actor);
+    concrete_actor = (struct bsal_assembly_block_classifier *)bsal_actor_concrete_actor(actor);
 
     bytes = 0;
 
@@ -611,17 +604,17 @@ int bsal_aggregator_pack_unpack(struct bsal_actor *actor, int operation, void *b
     return bytes;
 }
 
-int bsal_aggregator_pack(struct bsal_actor *actor, void *buffer)
+int bsal_assembly_block_classifier_pack(struct bsal_actor *actor, void *buffer)
 {
     return bsal_aggregator_pack_unpack(actor, BSAL_PACKER_OPERATION_PACK, buffer);
 }
 
-int bsal_aggregator_unpack(struct bsal_actor *actor, void *buffer)
+int bsal_assembly_block_classifier_unpack(struct bsal_actor *actor, void *buffer)
 {
     return bsal_aggregator_pack_unpack(actor, BSAL_PACKER_OPERATION_UNPACK, buffer);
 }
 
-int bsal_aggregator_pack_size(struct bsal_actor *actor)
+int bsal_assembly_block_classifier_pack_size(struct bsal_actor *actor)
 {
     return bsal_aggregator_pack_unpack(actor, BSAL_PACKER_OPERATION_DRY_RUN, NULL);
 }
