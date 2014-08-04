@@ -13,12 +13,15 @@ RM=rm
 # first target
 all:
 
-LIBRARY_HOT_CODE=
 
-include Makefile.mk
+include engine/thorium/Makefile.mk
+include genomics/Makefile.mk
+include core/Makefile.mk
 
 LIBRARY_OBJECTS=
-LIBRARY_OBJECTS += $(LIBRARY_HOT_CODE)
+LIBRARY_OBJECTS += $(THORIUM_OBJECTS)
+LIBRARY_OBJECTS += $(GENOMICS_OBJECTS)
+LIBRARY_OBJECTS += $(CORE_OBJECTS)
 
 # generic build rule
 %.o: %.c
