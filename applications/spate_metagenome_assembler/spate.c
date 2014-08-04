@@ -4,6 +4,7 @@
 #include <genomics/input/input_controller.h>
 
 #include <stdio.h>
+#include <string.h>
 
 struct bsal_script spate_script = {
     .identifier = SPATE_SCRIPT,
@@ -31,15 +32,35 @@ void spate_init(struct bsal_actor *self)
     concrete_self->assembly_graph = BSAL_ACTOR_NOBODY;
     concrete_self->assembly_graph_builder = BSAL_ACTOR_NOBODY;
 
-    bsal_actor_register_handler(self, BSAL_ACTOR_START, spate_start);
-    bsal_actor_register_handler(self, BSAL_ACTOR_ASK_TO_STOP, spate_ask_to_stop);
-    bsal_actor_register_handler(self, BSAL_ACTOR_SPAWN_REPLY, spate_spawn_reply);
-    bsal_actor_register_handler(self, BSAL_MANAGER_SET_SCRIPT_REPLY, spate_set_script_reply);
-    bsal_actor_register_handler(self, BSAL_ACTOR_SET_CONSUMERS_REPLY, spate_set_consumers_reply);
+    bsal_actor_register_handler(self,
+                    BSAL_ACTOR_START, spate_start);
+    bsal_actor_register_handler(self,
+                    BSAL_ACTOR_ASK_TO_STOP, spate_ask_to_stop);
+    bsal_actor_register_handler(self,
+                    BSAL_ACTOR_SPAWN_REPLY, spate_spawn_reply);
+    bsal_actor_register_handler(self,
+                    BSAL_MANAGER_SET_SCRIPT_REPLY, spate_set_script_reply);
+    bsal_actor_register_handler(self,
+                    BSAL_ACTOR_SET_CONSUMERS_REPLY, spate_set_consumers_reply);
+    bsal_actor_register_handler(self,
+                    BSAL_SET_BLOCK_SIZE_REPLY, spate_set_block_size_reply);
+    bsal_actor_register_handler(self,
+                    BSAL_INPUT_DISTRIBUTE_REPLY, spate_distribute_reply);
+    bsal_actor_register_handler(self,
+                    SPATE_ADD_FILES, spate_add_files);
+    bsal_actor_register_handler(self,
+                    SPATE_ADD_FILES_REPLY, spate_add_files_reply);
+    bsal_actor_register_handler(self,
+                    BSAL_ADD_FILE_REPLY, spate_add_file_reply);
 
-    bsal_actor_register_handler(self, BSAL_ACTOR_START_REPLY, spate_start_reply);
-    bsal_actor_register_handler_with_source(self, BSAL_ACTOR_START_REPLY, &concrete_self->manager_for_sequence_stores, spate_start_reply_manager);
-    bsal_actor_register_handler_with_source(self, BSAL_ACTOR_START_REPLY, &concrete_self->input_controller, spate_start_reply_controller);
+    bsal_actor_register_handler(self,
+                    BSAL_ACTOR_START_REPLY, spate_start_reply);
+    bsal_actor_register_handler_with_source(self,
+                    BSAL_ACTOR_START_REPLY,
+                    &concrete_self->manager_for_sequence_stores, spate_start_reply_manager);
+    bsal_actor_register_handler_with_source(self,
+                    BSAL_ACTOR_START_REPLY,
+                    &concrete_self->input_controller, spate_start_reply_controller);
 
     /*
      * Register required actor scripts now
@@ -61,6 +82,10 @@ void spate_init(struct bsal_actor *self)
                     &bsal_coverage_distribution_script);
     bsal_actor_add_script(self, BSAL_ASSEMBLY_GRAPH_BUILDER_SCRIPT,
                     &bsal_assembly_graph_builder_script);
+
+    concrete_self->block_size = 16 * 4096;
+
+    concrete_self->file_index = 0;
 }
 
 void spate_destroy(struct bsal_actor *self)
@@ -262,6 +287,74 @@ void spate_start_reply_controller(struct bsal_actor *self, struct bsal_message *
      * Stop the actor computation
      */
 
+    bsal_actor_helper_send_reply_int(self, BSAL_SET_BLOCK_SIZE, concrete_self->block_size);
+}
+
+void spate_set_block_size_reply(struct bsal_actor *self, struct bsal_message *message)
+{
+
+    bsal_actor_helper_send_to_self_empty(self, SPATE_ADD_FILES);
+}
+
+void spate_add_files(struct bsal_actor *self, struct bsal_message *message)
+{
+    if (!spate_add_file(self)) {
+        bsal_actor_helper_send_to_self_empty(self, SPATE_ADD_FILES_REPLY);
+    }
+}
+
+void spate_add_files_reply(struct bsal_actor *self, struct bsal_message *message)
+{
+    struct spate *concrete_self;
+
+    concrete_self = (struct spate *)bsal_actor_concrete_actor(self);
+
+    bsal_actor_helper_send_empty(self, concrete_self->input_controller,
+                    BSAL_INPUT_DISTRIBUTE);
+}
+
+void spate_distribute_reply(struct bsal_actor *self, struct bsal_message *message)
+{
+    struct spate *concrete_self;
+
+    concrete_self = (struct spate *)bsal_actor_concrete_actor(self);
+
+    printf("spate %d: all sequence stores are ready\n",
+                    bsal_actor_name(self));
 
     bsal_actor_helper_send_range_empty(self, &concrete_self->initial_actors, BSAL_ACTOR_ASK_TO_STOP);
+}
+
+int spate_add_file(struct bsal_actor *self)
+{
+    char *file;
+    int argc;
+    char **argv;
+    struct bsal_message message;
+    struct spate *concrete_self;
+
+    concrete_self = (struct spate *)bsal_actor_concrete_actor(self);
+    argc = bsal_actor_argc(self);
+    argv = bsal_actor_argv(self);
+
+    if (concrete_self->file_index < argc) {
+        file = argv[concrete_self->file_index];
+
+        bsal_message_init(&message, BSAL_ADD_FILE, strlen(file) + 1, file);
+
+        bsal_actor_send(self, concrete_self->input_controller, &message);
+
+        bsal_message_destroy(&message);
+
+        ++concrete_self->file_index;
+
+        return 1;
+    }
+
+    return 0;
+}
+
+void spate_add_file_reply(struct bsal_actor *self, struct bsal_message *message)
+{
+    bsal_actor_helper_send_to_self_empty(self, SPATE_ADD_FILES);
 }

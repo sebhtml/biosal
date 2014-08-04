@@ -6,6 +6,9 @@
 
 #define SPATE_SCRIPT 0xaefe198b
 
+#define SPATE_ADD_FILES 0x00004eff
+#define SPATE_ADD_FILES_REPLY 0x00001b3a
+
 /*
  * A really cool metagenome assembler.
  *
@@ -36,6 +39,13 @@ struct spate {
     int manager_for_sequence_stores;
     int assembly_graph_builder;
     int assembly_graph;
+
+    /*
+     * Block size for distribution
+     */
+    int block_size;
+
+    int file_index;
 };
 
 extern struct bsal_script spate_script;
@@ -54,5 +64,13 @@ void spate_start_reply(struct bsal_actor *self, struct bsal_message *message);
 void spate_set_script_reply(struct bsal_actor *self, struct bsal_message *message);
 void spate_start_reply_manager(struct bsal_actor *self, struct bsal_message *message);
 void spate_start_reply_controller(struct bsal_actor *self, struct bsal_message *message);
+void spate_distribute_reply(struct bsal_actor *self, struct bsal_message *message);
+void spate_set_block_size_reply(struct bsal_actor *self, struct bsal_message *message);
+
+void spate_add_files(struct bsal_actor *self, struct bsal_message *message);
+void spate_add_files_reply(struct bsal_actor *self, struct bsal_message *message);
+
+int spate_add_file(struct bsal_actor *self);
+void spate_add_file_reply(struct bsal_actor *self, struct bsal_message *message);
 
 #endif
