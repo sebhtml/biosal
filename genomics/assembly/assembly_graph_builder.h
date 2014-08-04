@@ -21,7 +21,8 @@ struct bsal_assembly_graph_builder {
     int manager_for_windows;
     struct bsal_vector sliding_windows;
 
-    int manager_for_classifier;
+    int manager_for_classifiers;
+    struct bsal_vector block_classifiers;
 };
 
 extern struct bsal_script bsal_assembly_graph_builder_script;
@@ -41,5 +42,8 @@ void bsal_assembly_graph_builder_start_reply_store_manager(struct bsal_actor *se
 
 void bsal_assembly_graph_builder_set_script_reply_window_manager(struct bsal_actor *self, struct bsal_message *message);
 void bsal_assembly_graph_builder_start_reply_window_manager(struct bsal_actor *self, struct bsal_message *message);
+
+void bsal_assembly_graph_builder_set_script_reply_classifier_manager(struct bsal_actor *self, struct bsal_message *message);
+void bsal_assembly_graph_builder_start_reply_classifier_manager(struct bsal_actor *self, struct bsal_message *message);
 
 #endif

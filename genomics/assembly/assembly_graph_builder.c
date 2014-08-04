@@ -36,7 +36,7 @@ void bsal_assembly_graph_builder_init(struct bsal_actor *self)
     concrete_self->manager_for_graph_stores = BSAL_ACTOR_NOBODY;
     bsal_vector_init(&concrete_self->graph_stores, sizeof(int));
 
-    concrete_self->manager_for_classifier = BSAL_ACTOR_NOBODY;
+    concrete_self->manager_for_classifiers = BSAL_ACTOR_NOBODY;
 
     concrete_self->manager_for_windows = BSAL_ACTOR_NOBODY;
     bsal_vector_init(&concrete_self->sliding_windows, sizeof(int));
@@ -54,7 +54,7 @@ void bsal_assembly_graph_builder_destroy(struct bsal_actor *self)
     concrete_self->manager_for_graph_stores = BSAL_ACTOR_NOBODY;
     bsal_vector_destroy(&concrete_self->graph_stores);
 
-    concrete_self->manager_for_classifier = BSAL_ACTOR_NOBODY;
+    concrete_self->manager_for_classifiers = BSAL_ACTOR_NOBODY;
 
     concrete_self->manager_for_windows= BSAL_ACTOR_NOBODY;
     bsal_vector_destroy(&concrete_self->sliding_windows);
@@ -141,6 +141,20 @@ void bsal_assembly_graph_builder_spawn_reply(struct bsal_actor *self, struct bsa
         bsal_actor_helper_send_int(self, concrete_self->manager_for_windows, BSAL_MANAGER_SET_SCRIPT,
                         BSAL_ASSEMBLY_SLIDING_WINDOW_SCRIPT);
 
+    } else if (concrete_self->manager_for_classifiers == BSAL_ACTOR_NOBODY) {
+
+        bsal_message_helper_unpack_int(message, 0, &concrete_self->manager_for_classifiers);
+
+        bsal_actor_register_handler_with_source(self, BSAL_MANAGER_SET_SCRIPT_REPLY,
+                        concrete_self->manager_for_classifiers,
+                        bsal_assembly_graph_builder_set_script_reply_classifier_manager);
+
+        bsal_actor_register_handler_with_source(self, BSAL_ACTOR_START_REPLY,
+                        concrete_self->manager_for_classifiers,
+                        bsal_assembly_graph_builder_start_reply_classifier_manager);
+
+        bsal_actor_helper_send_int(self, concrete_self->manager_for_classifiers, BSAL_MANAGER_SET_SCRIPT,
+                        BSAL_ASSEMBLY_SLIDING_WINDOW_SCRIPT);
     }
 }
 
@@ -230,6 +244,35 @@ void bsal_assembly_graph_builder_start_reply_window_manager(struct bsal_actor *s
                     (int)bsal_vector_size(&concrete_self->sliding_windows));
 
     spawner = bsal_actor_get_spawner(self, &concrete_self->spawners);
+
+    bsal_actor_helper_send_int(self, spawner, BSAL_ACTOR_SPAWN,
+                    BSAL_MANAGER_SCRIPT);
+}
+
+void bsal_assembly_graph_builder_set_script_reply_classifier_manager(struct bsal_actor *self, struct bsal_message *message)
+{
+    struct bsal_assembly_graph_builder *concrete_self;
+
+    concrete_self = bsal_actor_concrete_actor(self);
+
+    bsal_actor_helper_send_reply_vector(self, BSAL_ACTOR_START, &concrete_self->spawners);
+}
+
+void bsal_assembly_graph_builder_start_reply_classifier_manager(struct bsal_actor *self, struct bsal_message *message)
+{
+    void *buffer;
+    struct bsal_assembly_graph_builder *concrete_self;
+
+    concrete_self = bsal_actor_concrete_actor(self);
+
+    buffer = bsal_message_buffer(message);
+
+    bsal_vector_unpack(&concrete_self->block_classifiers, buffer);
+
+    printf("%s/%d has %d block classifiers for assembly\n",
+                    bsal_actor_script_name(self),
+                    bsal_actor_name(self),
+                    (int)bsal_vector_size(&concrete_self->block_classifiers));
 
 
     bsal_actor_helper_send_empty(self, concrete_self->source, BSAL_ACTOR_START_REPLY);
