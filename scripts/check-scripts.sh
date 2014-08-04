@@ -7,10 +7,14 @@
 echo -n "Script names: "
 grep "_SCRIPT " * -R|grep define|grep -v check-scripts.sh|awk '{print $2}'|sort | uniq -c|awk '{print $1}'|sort -n|uniq -c
 
+grep "_SCRIPT " * -R|grep define|grep -v check-scripts.sh|awk '{print $2}'|sort | uniq -c| grep -v " 1 "
+
+
+
 echo -n "Script values: "
 grep "_SCRIPT " * -R|grep define|grep -v check-scripts.sh|awk '{print $3}'|sort | uniq -c|awk '{print $1}'|sort -n|uniq -c
 
-#echo "Actor scripts: "
-#grep _SCRIPT * -R|grep define|grep -v check-scripts.sh|awk '{print $2" "$3}'
+grep "_SCRIPT " * -R|grep define|grep -v check-scripts.sh|awk '{print $3}'|sort | uniq -c | grep -v " 1 "
+
 echo ""
 
