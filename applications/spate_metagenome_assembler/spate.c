@@ -55,12 +55,6 @@ void spate_init(struct bsal_actor *self)
 
     bsal_actor_register_handler(self,
                     BSAL_ACTOR_START_REPLY, spate_start_reply);
-    bsal_actor_register_handler_with_source(self,
-                    BSAL_ACTOR_START_REPLY,
-                    &concrete_self->manager_for_sequence_stores, spate_start_reply_manager);
-    bsal_actor_register_handler_with_source(self,
-                    BSAL_ACTOR_START_REPLY,
-                    &concrete_self->input_controller, spate_start_reply_controller);
 
     /*
      * Register required actor scripts now
@@ -179,6 +173,10 @@ void spate_spawn_reply(struct bsal_actor *self, struct bsal_message *message)
 
         concrete_self->input_controller = new_actor;
 
+        bsal_actor_register_handler_with_source(self,
+                    BSAL_ACTOR_START_REPLY,
+                    concrete_self->input_controller, spate_start_reply_controller);
+
         printf("spate %d spawned controller %d\n", bsal_actor_name(self),
                         new_actor);
 
@@ -188,6 +186,10 @@ void spate_spawn_reply(struct bsal_actor *self, struct bsal_message *message)
     } else if (concrete_self->manager_for_sequence_stores == BSAL_ACTOR_NOBODY) {
 
         concrete_self->manager_for_sequence_stores = new_actor;
+
+        bsal_actor_register_handler_with_source(self,
+                    BSAL_ACTOR_START_REPLY,
+                    concrete_self->manager_for_sequence_stores, spate_start_reply_manager);
 
         printf("spate %d spawned manager %d\n", bsal_actor_name(self),
                         new_actor);

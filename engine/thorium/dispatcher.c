@@ -3,6 +3,7 @@
 
 #include "message.h"
 #include "route.h"
+#include "actor.h"
 
 #include <core/structures/vector.h>
 
@@ -35,7 +36,7 @@ void bsal_dispatcher_destroy(struct bsal_dispatcher *self)
 }
 
 void bsal_dispatcher_register_with_source(struct bsal_dispatcher *self, int tag,
-               int *source, bsal_actor_receive_fn_t handler)
+               int source, bsal_actor_receive_fn_t handler)
 {
     int i;
     int size;
@@ -133,7 +134,7 @@ bsal_actor_receive_fn_t bsal_dispatcher_get(struct bsal_dispatcher *self, int ta
 
         if (callback != NULL) {
 
-            if (bsal_route_source(route) == NULL) {
+            if (bsal_route_source(route) == BSAL_ACTOR_ANYBODY) {
                 callback_without_source = callback;
                 callback_without_source_index = i;
             } else {

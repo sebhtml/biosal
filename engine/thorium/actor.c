@@ -1254,10 +1254,10 @@ void bsal_actor_register_handler(struct bsal_actor *self, int tag, bsal_actor_re
     }
 #endif
 
-    bsal_actor_register_handler_with_source(self, tag, NULL, handler);
+    bsal_actor_register_handler_with_source(self, tag, BSAL_ACTOR_ANYBODY, handler);
 }
 
-void bsal_actor_register_handler_with_source(struct bsal_actor *self, int tag, int *source, bsal_actor_receive_fn_t handler)
+void bsal_actor_register_handler_with_source(struct bsal_actor *self, int tag, int source, bsal_actor_receive_fn_t handler)
 {
     bsal_dispatcher_register_with_source(&self->dispatcher, tag, source, handler);
 }

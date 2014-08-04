@@ -1,11 +1,13 @@
 
 #include "route.h"
 
+#include "actor.h"
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 
-void bsal_route_init(struct bsal_route *self, int tag, int *source, bsal_actor_receive_fn_t callback)
+void bsal_route_init(struct bsal_route *self, int tag, int source, bsal_actor_receive_fn_t callback)
 {
     self->tag = tag;
     self->source = source;
@@ -15,7 +17,7 @@ void bsal_route_init(struct bsal_route *self, int tag, int *source, bsal_actor_r
 void bsal_route_destroy(struct bsal_route *self)
 {
     self->tag = -1;
-    self->source = NULL;
+    self->source = -1;
     self->callback = NULL;
 }
 
@@ -27,8 +29,8 @@ bsal_actor_receive_fn_t bsal_route_test(struct bsal_route *self, int tag, int so
         return NULL;
     }
 
-    if (self->source != NULL) {
-        route_source = *(self->source);
+    if (self->source != BSAL_ACTOR_ANYBODY) {
+        route_source = self->source;
 
         if (route_source != source) {
 
@@ -66,17 +68,17 @@ void bsal_route_print(struct bsal_route *self)
 
     route_source = -1;
 
-    if (self->source != NULL) {
-        route_source = *(self->source);
+    if (self->source != BSAL_ACTOR_ANYBODY) {
+        route_source = self->source;
     }
-    printf("ROUTE Tag %d Source %p (current %d) Handler %p\n",
+
+    printf("ROUTE Tag %d Source %d Handler %p\n",
                     self->tag,
-                    (void *)self->source,
                     route_source,
                     callback);
 }
 
-int *bsal_route_source(struct bsal_route *self)
+int bsal_route_source(struct bsal_route *self)
 {
     return self->source;
 }
