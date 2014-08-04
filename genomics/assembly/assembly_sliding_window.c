@@ -1,9 +1,11 @@
 
-#include "dna_kmer_counter_kernel.h"
+#include "assembly_sliding_window.h"
 
 #include <genomics/storage/sequence_store.h>
 
 #include <genomics/kernels/aggregator.h>
+#include <genomics/kernels/dna_kmer_counter_kernel.h>
+
 #include <genomics/data/dna_kmer.h>
 #include <genomics/data/dna_kmer_block.h>
 #include <genomics/data/dna_sequence.h>
@@ -36,24 +38,24 @@
 /* Disable memory tracking in memory pool
  * for performance purposes.
  */
-#define BSAL_DNA_KMER_COUNTER_KERNEL_DISABLE_TRACKING
+#define BSAL_ASSEMBLY_SLIDING_WINDOW_DISABLE_TRACKING
 
 #define MAXIMUM_AUTO_SCALING_KERNEL_COUNT 0
 
-struct bsal_script bsal_dna_kmer_counter_kernel_script = {
-    .identifier = BSAL_DNA_KMER_COUNTER_KERNEL_SCRIPT,
-    .init = bsal_dna_kmer_counter_kernel_init,
-    .destroy = bsal_dna_kmer_counter_kernel_destroy,
-    .receive = bsal_dna_kmer_counter_kernel_receive,
-    .size = sizeof(struct bsal_dna_kmer_counter_kernel),
-    .name = "dna_kmer_counter_kernel"
+struct bsal_script bsal_assembly_sliding_window_script = {
+    .identifier = BSAL_ASSEMBLY_SLIDING_WINDOW_SCRIPT,
+    .init = bsal_assembly_sliding_window_init,
+    .destroy = bsal_assembly_sliding_window_destroy,
+    .receive = bsal_assembly_sliding_window_receive,
+    .size = sizeof(struct bsal_assembly_sliding_window),
+    .name = "assembly_sliding_window"
 };
 
-void bsal_dna_kmer_counter_kernel_init(struct bsal_actor *actor)
+void bsal_assembly_sliding_window_init(struct bsal_actor *actor)
 {
-    struct bsal_dna_kmer_counter_kernel *concrete_actor;
+    struct bsal_assembly_sliding_window *concrete_actor;
 
-    concrete_actor = (struct bsal_dna_kmer_counter_kernel *)bsal_actor_concrete_actor(actor);
+    concrete_actor = (struct bsal_assembly_sliding_window *)bsal_actor_concrete_actor(actor);
 
     concrete_actor->expected = 0;
     concrete_actor->actual = 0;
@@ -83,17 +85,17 @@ void bsal_dna_kmer_counter_kernel_init(struct bsal_actor *actor)
     concrete_actor->auto_scaling_in_progress = 0;
 
     bsal_actor_register_handler(actor, BSAL_ACTOR_PACK,
-                    bsal_dna_kmer_counter_kernel_pack_message);
+                    bsal_assembly_sliding_window_pack_message);
     bsal_actor_register_handler(actor, BSAL_ACTOR_UNPACK,
-                    bsal_dna_kmer_counter_kernel_unpack_message);
+                    bsal_assembly_sliding_window_unpack_message);
     bsal_actor_register_handler(actor, BSAL_ACTOR_CLONE_REPLY,
-                    bsal_dna_kmer_counter_kernel_clone_reply);
+                    bsal_assembly_sliding_window_clone_reply);
     bsal_actor_register_handler(actor, BSAL_KERNEL_NOTIFY,
-                    bsal_dna_kmer_counter_kernel_notify);
+                    bsal_assembly_sliding_window_notify);
     bsal_actor_register_handler(actor, BSAL_KERNEL_NOTIFY_REPLY,
-                    bsal_dna_kmer_counter_kernel_notify_reply);
+                    bsal_assembly_sliding_window_notify_reply);
     bsal_actor_register_handler(actor, BSAL_ACTOR_DO_AUTO_SCALING,
-                    bsal_dna_kmer_counter_kernel_do_auto_scaling);
+                    bsal_assembly_sliding_window_do_auto_scaling);
 
     printf("kernel %d is online !!!\n",
                     bsal_actor_name(actor));
@@ -107,11 +109,11 @@ void bsal_dna_kmer_counter_kernel_init(struct bsal_actor *actor)
     concrete_actor->scaling_operations = 0;
 }
 
-void bsal_dna_kmer_counter_kernel_destroy(struct bsal_actor *actor)
+void bsal_assembly_sliding_window_destroy(struct bsal_actor *actor)
 {
-    struct bsal_dna_kmer_counter_kernel *concrete_actor;
+    struct bsal_assembly_sliding_window *concrete_actor;
 
-    concrete_actor = (struct bsal_dna_kmer_counter_kernel *)bsal_actor_concrete_actor(actor);
+    concrete_actor = (struct bsal_assembly_sliding_window *)bsal_actor_concrete_actor(actor);
 
     concrete_actor->consumer = -1;
     concrete_actor->producer = -1;
@@ -121,14 +123,14 @@ void bsal_dna_kmer_counter_kernel_destroy(struct bsal_actor *actor)
     bsal_vector_destroy(&concrete_actor->kernels);
 }
 
-void bsal_dna_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_message *message)
+void bsal_assembly_sliding_window_receive(struct bsal_actor *actor, struct bsal_message *message)
 {
     int tag;
     int source;
     struct bsal_dna_kmer kmer;
     int name;
     void *buffer;
-    struct bsal_dna_kmer_counter_kernel *concrete_actor;
+    struct bsal_assembly_sliding_window *concrete_actor;
     int consumer;
     int count;
     int producer;
@@ -139,14 +141,14 @@ void bsal_dna_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_
 
     count = bsal_message_count(message);
 
-    concrete_actor = (struct bsal_dna_kmer_counter_kernel *)bsal_actor_concrete_actor(actor);
+    concrete_actor = (struct bsal_assembly_sliding_window *)bsal_actor_concrete_actor(actor);
     tag = bsal_message_tag(message);
     name = bsal_actor_name(actor);
     source = bsal_message_source(message);
     buffer = bsal_message_buffer(message);
 
     if (tag == BSAL_PUSH_SEQUENCE_DATA_BLOCK) {
-        bsal_dna_kmer_counter_kernel_push_sequence_data_block(actor, message);
+        bsal_assembly_sliding_window_push_sequence_data_block(actor, message);
 
     } else if (tag == BSAL_AGGREGATE_KERNEL_OUTPUT_REPLY) {
 
@@ -161,7 +163,7 @@ void bsal_dna_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_
                         BSAL_PUSH_SEQUENCE_DATA_BLOCK_REPLY);
                         */
 
-        bsal_dna_kmer_counter_kernel_ask(actor, message);
+        bsal_assembly_sliding_window_ask(actor, message);
 
     } else if (tag == BSAL_ACTOR_START) {
 
@@ -233,7 +235,7 @@ void bsal_dna_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_
 
         concrete_actor->producer = producer;
 
-        bsal_dna_kmer_counter_kernel_ask(actor, message);
+        bsal_assembly_sliding_window_ask(actor, message);
 
         concrete_actor->producer_source = source;
 
@@ -242,7 +244,7 @@ void bsal_dna_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_
         /* the store has no more sequence...
          */
 
-#ifdef BSAL_DNA_KMER_COUNTER_KERNEL_DEBUG
+#ifdef BSAL_ASSEMBLY_SLIDING_WINDOW_DEBUG
         printf("DEBUG kernel was told by producer that nothing is left to do\n");
 #endif
 
@@ -282,11 +284,11 @@ void bsal_dna_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_
     }
 }
 
-void bsal_dna_kmer_counter_kernel_verify(struct bsal_actor *actor, struct bsal_message *message)
+void bsal_assembly_sliding_window_verify(struct bsal_actor *actor, struct bsal_message *message)
 {
-    struct bsal_dna_kmer_counter_kernel *concrete_actor;
+    struct bsal_assembly_sliding_window *concrete_actor;
 
-    concrete_actor = (struct bsal_dna_kmer_counter_kernel *)bsal_actor_concrete_actor(actor);
+    concrete_actor = (struct bsal_assembly_sliding_window *)bsal_actor_concrete_actor(actor);
 
     if (!concrete_actor->notified) {
 
@@ -304,33 +306,33 @@ void bsal_dna_kmer_counter_kernel_verify(struct bsal_actor *actor, struct bsal_m
                     BSAL_KERNEL_NOTIFY_REPLY, concrete_actor->kmers);
 }
 
-void bsal_dna_kmer_counter_kernel_ask(struct bsal_actor *self, struct bsal_message *message)
+void bsal_assembly_sliding_window_ask(struct bsal_actor *self, struct bsal_message *message)
 {
-    struct bsal_dna_kmer_counter_kernel *concrete_actor;
+    struct bsal_assembly_sliding_window *concrete_actor;
     int producer;
 
-    concrete_actor = (struct bsal_dna_kmer_counter_kernel *)bsal_actor_concrete_actor(self);
+    concrete_actor = (struct bsal_assembly_sliding_window *)bsal_actor_concrete_actor(self);
 
     producer = concrete_actor->producer;
 
     bsal_actor_helper_send_int(self, producer, BSAL_SEQUENCE_STORE_ASK,
                     concrete_actor->kmer_length);
 
-#ifdef BSAL_DNA_KMER_COUNTER_KERNEL_DEBUG
+#ifdef BSAL_ASSEMBLY_SLIDING_WINDOW_DEBUG
     printf("DEBUG kernel asks producer\n");
 #endif
 }
 
-void bsal_dna_kmer_counter_kernel_do_auto_scaling(struct bsal_actor *actor, struct bsal_message *message)
+void bsal_assembly_sliding_window_do_auto_scaling(struct bsal_actor *actor, struct bsal_message *message)
 {
-    struct bsal_dna_kmer_counter_kernel *concrete_actor;
+    struct bsal_assembly_sliding_window *concrete_actor;
     int name;
     int source;
 
     name = bsal_actor_name(actor);
     source = bsal_message_source(message);
 
-    concrete_actor = (struct bsal_dna_kmer_counter_kernel *)bsal_actor_concrete_actor(actor);
+    concrete_actor = (struct bsal_assembly_sliding_window *)bsal_actor_concrete_actor(actor);
 
     /*
      * Don't do auto-scaling while doing auto-scaling...
@@ -368,7 +370,7 @@ void bsal_dna_kmer_counter_kernel_do_auto_scaling(struct bsal_actor *actor, stru
     bsal_actor_helper_send_to_self_int(actor, BSAL_ACTOR_CLONE, name);
 }
 
-void bsal_dna_kmer_counter_kernel_pack_message(struct bsal_actor *actor, struct bsal_message *message)
+void bsal_assembly_sliding_window_pack_message(struct bsal_actor *actor, struct bsal_message *message)
 {
     int *new_buffer;
     int new_count;
@@ -376,10 +378,10 @@ void bsal_dna_kmer_counter_kernel_pack_message(struct bsal_actor *actor, struct 
     struct bsal_memory_pool *ephemeral_memory;
 
     ephemeral_memory = bsal_actor_get_ephemeral_memory(actor);
-    new_count = bsal_dna_kmer_counter_kernel_pack_size(actor);
+    new_count = bsal_assembly_sliding_window_pack_size(actor);
     new_buffer = bsal_memory_pool_allocate(ephemeral_memory, new_count);
 
-    bsal_dna_kmer_counter_kernel_pack(actor, new_buffer);
+    bsal_assembly_sliding_window_pack(actor, new_buffer);
 
     bsal_message_init(&new_message, BSAL_ACTOR_PACK_REPLY, new_count, new_buffer);
 
@@ -390,20 +392,20 @@ void bsal_dna_kmer_counter_kernel_pack_message(struct bsal_actor *actor, struct 
     new_buffer = NULL;
 }
 
-void bsal_dna_kmer_counter_kernel_unpack_message(struct bsal_actor *actor, struct bsal_message *message)
+void bsal_assembly_sliding_window_unpack_message(struct bsal_actor *actor, struct bsal_message *message)
 {
     void *buffer;
 
     buffer = bsal_message_buffer(message);
 
-    bsal_dna_kmer_counter_kernel_unpack(actor, buffer);
+    bsal_assembly_sliding_window_unpack(actor, buffer);
 
     bsal_actor_helper_send_reply_empty(actor, BSAL_ACTOR_UNPACK_REPLY);
 }
 
-void bsal_dna_kmer_counter_kernel_clone_reply(struct bsal_actor *actor, struct bsal_message *message)
+void bsal_assembly_sliding_window_clone_reply(struct bsal_actor *actor, struct bsal_message *message)
 {
-    struct bsal_dna_kmer_counter_kernel *concrete_actor;
+    struct bsal_assembly_sliding_window *concrete_actor;
     int name;
     int clone;
     int source;
@@ -412,7 +414,7 @@ void bsal_dna_kmer_counter_kernel_clone_reply(struct bsal_actor *actor, struct b
     int clone_index;
 
     source = bsal_message_source(message);
-    concrete_actor = (struct bsal_dna_kmer_counter_kernel *)bsal_actor_concrete_actor(actor);
+    concrete_actor = (struct bsal_assembly_sliding_window *)bsal_actor_concrete_actor(actor);
     name = bsal_actor_name(actor);
     bsal_message_helper_unpack_int(message, 0, &clone);
     consumer = concrete_actor->consumer;
@@ -447,19 +449,19 @@ void bsal_dna_kmer_counter_kernel_clone_reply(struct bsal_actor *actor, struct b
 }
 
 
-int bsal_dna_kmer_counter_kernel_pack(struct bsal_actor *actor, void *buffer)
+int bsal_assembly_sliding_window_pack(struct bsal_actor *actor, void *buffer)
 {
-    return bsal_dna_kmer_counter_kernel_pack_unpack(actor, BSAL_PACKER_OPERATION_PACK, buffer);
+    return bsal_assembly_sliding_window_pack_unpack(actor, BSAL_PACKER_OPERATION_PACK, buffer);
 }
 
-int bsal_dna_kmer_counter_kernel_unpack(struct bsal_actor *actor, void *buffer)
+int bsal_assembly_sliding_window_unpack(struct bsal_actor *actor, void *buffer)
 {
-    return bsal_dna_kmer_counter_kernel_pack_unpack(actor, BSAL_PACKER_OPERATION_UNPACK, buffer);
+    return bsal_assembly_sliding_window_pack_unpack(actor, BSAL_PACKER_OPERATION_UNPACK, buffer);
 }
 
-int bsal_dna_kmer_counter_kernel_pack_size(struct bsal_actor *actor)
+int bsal_assembly_sliding_window_pack_size(struct bsal_actor *actor)
 {
-    return bsal_dna_kmer_counter_kernel_pack_unpack(actor, BSAL_PACKER_OPERATION_DRY_RUN, NULL);
+    return bsal_assembly_sliding_window_pack_unpack(actor, BSAL_PACKER_OPERATION_DRY_RUN, NULL);
 }
 
 /*
@@ -469,15 +471,15 @@ int bsal_dna_kmer_counter_kernel_pack_size(struct bsal_actor *actor)
  * - consumer
  * - producer
  */
-int bsal_dna_kmer_counter_kernel_pack_unpack(struct bsal_actor *actor, int operation, void *buffer)
+int bsal_assembly_sliding_window_pack_unpack(struct bsal_actor *actor, int operation, void *buffer)
 {
     int bytes;
     struct bsal_packer packer;
-    struct bsal_dna_kmer_counter_kernel *concrete_actor;
+    struct bsal_assembly_sliding_window *concrete_actor;
     int producer;
     int consumer;
 
-    concrete_actor = (struct bsal_dna_kmer_counter_kernel *)bsal_actor_concrete_actor(actor);
+    concrete_actor = (struct bsal_assembly_sliding_window *)bsal_actor_concrete_actor(actor);
     producer = BSAL_ACTOR_NOBODY;
     consumer = BSAL_ACTOR_NOBODY;
 
@@ -506,14 +508,14 @@ int bsal_dna_kmer_counter_kernel_pack_unpack(struct bsal_actor *actor, int opera
     return bytes;
 }
 
-void bsal_dna_kmer_counter_kernel_notify(struct bsal_actor *actor, struct bsal_message *message)
+void bsal_assembly_sliding_window_notify(struct bsal_actor *actor, struct bsal_message *message)
 {
-    struct bsal_dna_kmer_counter_kernel *concrete_actor;
+    struct bsal_assembly_sliding_window *concrete_actor;
     struct bsal_vector_iterator iterator;
     int kernel;
     int source;
 
-    concrete_actor = (struct bsal_dna_kmer_counter_kernel *)bsal_actor_concrete_actor(actor);
+    concrete_actor = (struct bsal_assembly_sliding_window *)bsal_actor_concrete_actor(actor);
 
     source = bsal_message_source(message);
     concrete_actor->notified = 1;
@@ -539,16 +541,16 @@ void bsal_dna_kmer_counter_kernel_notify(struct bsal_actor *actor, struct bsal_m
 
 
     } else {
-        bsal_dna_kmer_counter_kernel_verify(actor, message);
+        bsal_assembly_sliding_window_verify(actor, message);
     }
 }
 
-void bsal_dna_kmer_counter_kernel_notify_reply(struct bsal_actor *actor, struct bsal_message *message)
+void bsal_assembly_sliding_window_notify_reply(struct bsal_actor *actor, struct bsal_message *message)
 {
-    struct bsal_dna_kmer_counter_kernel *concrete_actor;
+    struct bsal_assembly_sliding_window *concrete_actor;
     uint64_t kmers;
 
-    concrete_actor = (struct bsal_dna_kmer_counter_kernel *)bsal_actor_concrete_actor(actor);
+    concrete_actor = (struct bsal_assembly_sliding_window *)bsal_actor_concrete_actor(actor);
 
     bsal_message_helper_unpack_uint64_t(message, 0, &kmers);
 
@@ -567,7 +569,7 @@ void bsal_dna_kmer_counter_kernel_notify_reply(struct bsal_actor *actor, struct 
 
 }
 
-void bsal_dna_kmer_counter_kernel_push_sequence_data_block(struct bsal_actor *actor, struct bsal_message *message)
+void bsal_assembly_sliding_window_push_sequence_data_block(struct bsal_actor *actor, struct bsal_message *message)
 {
     int source;
     struct bsal_dna_kmer kmer;
@@ -575,7 +577,7 @@ void bsal_dna_kmer_counter_kernel_push_sequence_data_block(struct bsal_actor *ac
     struct bsal_input_command payload;
     void *buffer;
     int entries;
-    struct bsal_dna_kmer_counter_kernel *concrete_actor;
+    struct bsal_assembly_sliding_window *concrete_actor;
     int source_index;
     int consumer;
     int i;
@@ -597,7 +599,7 @@ void bsal_dna_kmer_counter_kernel_push_sequence_data_block(struct bsal_actor *ac
     int kmers_for_sequence;
 
 
-    concrete_actor = (struct bsal_dna_kmer_counter_kernel *)bsal_actor_concrete_actor(actor);
+    concrete_actor = (struct bsal_assembly_sliding_window *)bsal_actor_concrete_actor(actor);
     ephemeral_memory = bsal_actor_get_ephemeral_memory(actor);
     name = bsal_actor_name(actor);
     source = bsal_message_source(message);
@@ -788,6 +790,6 @@ void bsal_dna_kmer_counter_kernel_push_sequence_data_block(struct bsal_actor *ac
     BSAL_DEBUG_MARKER("leaving call.\n");
 #endif
 
-    bsal_dna_kmer_counter_kernel_verify(actor, message);
+    bsal_assembly_sliding_window_verify(actor, message);
 
 }
