@@ -1996,6 +1996,10 @@ int bsal_actor_get_spawner(struct bsal_actor *self, struct bsal_vector *spawners
         self->spawner_index = bsal_vector_size(spawners) - 1;
     }
 
+    if (self->spawner_index >= bsal_vector_size(spawners)) {
+        self->spawner_index = bsal_vector_size(spawners) - 1;
+    }
+
     actor = bsal_vector_helper_at_as_int(spawners, self->spawner_index);
 
     --self->spawner_index;
