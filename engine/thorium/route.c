@@ -32,8 +32,11 @@ bsal_actor_receive_fn_t bsal_route_test(struct bsal_route *self, int tag, int so
 
         if (route_source != source) {
 
+#ifdef BSAL_ROUTE_DEBUG
             printf("DEBUG bsal_route_test: route_source %d, source %d\n",
                             route_source, source);
+#endif
+
             return NULL;
         }
     }

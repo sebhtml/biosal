@@ -20,6 +20,17 @@ void bsal_dispatcher_init(struct bsal_dispatcher *self)
 
 void bsal_dispatcher_destroy(struct bsal_dispatcher *self)
 {
+    int i;
+    int size;
+    struct bsal_route *route;
+
+    size = bsal_vector_size(&self->routes);
+
+    for (i = 0; i < size; i++) {
+        route = bsal_vector_at(&self->routes, i);
+
+        bsal_route_destroy(route);
+    }
     bsal_vector_destroy(&self->routes);
 }
 
