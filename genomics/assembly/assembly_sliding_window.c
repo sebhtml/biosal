@@ -24,15 +24,13 @@
 #include <inttypes.h>
 #include <string.h>
 
-/* options for this kernel
- */
 /*
 */
 
 /* debugging options
  */
 /*
-#define BSAL_KMER_COUNTER_KERNEL_DEBUG
+#define BSAL_WINDOW_DEBUG
 */
 
 /* Disable memory tracking in memory pool
@@ -97,8 +95,10 @@ void bsal_assembly_sliding_window_init(struct bsal_actor *actor)
     bsal_actor_register_handler(actor, BSAL_ACTOR_DO_AUTO_SCALING,
                     bsal_assembly_sliding_window_do_auto_scaling);
 
-    printf("kernel %d is online !!!\n",
-                    bsal_actor_name(actor));
+    printf("%s/%d is online on node node/%d\n",
+                    bsal_actor_script_name(actor),
+                    bsal_actor_name(actor),
+                    bsal_actor_node_name(actor));
 
     /* Enable packing for this actor. Maybe this is already enabled, but who knows.
      */
@@ -152,7 +152,7 @@ void bsal_assembly_sliding_window_receive(struct bsal_actor *actor, struct bsal_
 
     } else if (tag == BSAL_AGGREGATE_KERNEL_OUTPUT_REPLY) {
 
-#ifdef BSAL_KMER_COUNTER_KERNEL_DEBUG
+#ifdef BSAL_WINDOW_DEBUG
         BSAL_DEBUG_MARKER("kernel receives reply from aggregator\n");
 #endif
 
@@ -171,9 +171,8 @@ void bsal_assembly_sliding_window_receive(struct bsal_actor *actor, struct bsal_
 
     } else if (tag == BSAL_RESERVE) {
 
-#ifdef BSAL_KMER_COUNTER_KERNEL_DEBUG
-        printf("kmer counter kernel %d is online !\n", name);
-#endif
+        printf("%s/%d is online !\n",
+                        bsal_actor_script_name(actor), name);
 
         concrete_actor->expected = *(uint64_t *)buffer;
 
@@ -181,12 +180,12 @@ void bsal_assembly_sliding_window_receive(struct bsal_actor *actor, struct bsal_
 
     } else if (tag == BSAL_ACTOR_ASK_TO_STOP) {
 
-        printf("kernel/%d generated %" PRIu64 " kmers from %" PRIu64 " entries (%d blocks)\n",
+        printf("window/%d generated %" PRIu64 " kmers from %" PRIu64 " entries (%d blocks)\n",
                         bsal_actor_name(actor), concrete_actor->kmers,
                         concrete_actor->actual, concrete_actor->blocks);
 
-#ifdef BSAL_KMER_COUNTER_KERNEL_DEBUG
-        printf("kernel %d receives request to stop from %d, supervisor is %d\n",
+#ifdef BSAL_WINDOW_DEBUG
+        printf("window %d receives request to stop from %d, supervisor is %d\n",
                         name, source, bsal_actor_supervisor(actor));
 #endif
 
@@ -199,8 +198,8 @@ void bsal_assembly_sliding_window_receive(struct bsal_actor *actor, struct bsal_
         consumer = *(int *)buffer;
         concrete_actor->consumer = consumer;
 
-#ifdef BSAL_KMER_COUNTER_KERNEL_DEBUG
-        printf("kernel %d BSAL_ACTOR_SET_CONSUMER consumer %d index %d\n",
+#ifdef BSAL_WINDOW_DEBUG
+        printf("window %d BSAL_ACTOR_SET_CONSUMER consumer %d index %d\n",
                         bsal_actor_name(actor), consumer,
                         concrete_actor->consumer);
 #endif
@@ -222,12 +221,12 @@ void bsal_assembly_sliding_window_receive(struct bsal_actor *actor, struct bsal_
     } else if (tag == BSAL_ACTOR_SET_PRODUCER) {
 
         if (count == 0) {
-            printf("Error: kernel needs producer\n");
+            printf("Error: window needs producer\n");
             return;
         }
 
         if (concrete_actor->consumer == BSAL_ACTOR_NOBODY) {
-            printf("Error: kernel needs a consumer\n");
+            printf("Error: window needs a consumer\n");
             return;
         }
 
@@ -245,7 +244,7 @@ void bsal_assembly_sliding_window_receive(struct bsal_actor *actor, struct bsal_
          */
 
 #ifdef BSAL_ASSEMBLY_SLIDING_WINDOW_DEBUG
-        printf("DEBUG kernel was told by producer that nothing is left to do\n");
+        printf("DEBUG window was told by producer that nothing is left to do\n");
 #endif
 
         bsal_actor_helper_send_empty(actor,
@@ -254,7 +253,7 @@ void bsal_assembly_sliding_window_receive(struct bsal_actor *actor, struct bsal_
 
     } else if (tag == BSAL_ACTOR_SET_CONSUMER_REPLY) {
 
-        /* Set the producer for the new kernel
+        /* Set the producer for the new window
          */
         producer = concrete_actor->producer;
 
@@ -265,7 +264,7 @@ void bsal_assembly_sliding_window_receive(struct bsal_actor *actor, struct bsal_
         concrete_actor->scaling_operations++;
         concrete_actor->auto_scaling_clone = BSAL_ACTOR_NOBODY;
 
-        printf("kernel %d completed auto-scaling # %d\n",
+        printf("window %d completed auto-scaling # %d\n",
                         bsal_actor_name(actor),
                         concrete_actor->scaling_operations);
 
@@ -276,7 +275,7 @@ void bsal_assembly_sliding_window_receive(struct bsal_actor *actor, struct bsal_
 
     } else if (tag == BSAL_ACTOR_ENABLE_AUTO_SCALING) {
 
-        printf("AUTO-SCALING kernel %d enables auto-scaling (BSAL_ACTOR_ENABLE_AUTO_SCALING) via actor %d\n",
+        printf("AUTO-SCALING window %d enables auto-scaling (BSAL_ACTOR_ENABLE_AUTO_SCALING) via actor %d\n",
                         name, source);
 
         bsal_actor_helper_send_to_self_empty(actor, BSAL_ACTOR_ENABLE_AUTO_SCALING);
@@ -319,7 +318,7 @@ void bsal_assembly_sliding_window_ask(struct bsal_actor *self, struct bsal_messa
                     concrete_actor->kmer_length);
 
 #ifdef BSAL_ASSEMBLY_SLIDING_WINDOW_DEBUG
-    printf("DEBUG kernel asks producer\n");
+    printf("DEBUG window asks producer\n");
 #endif
 }
 
@@ -362,7 +361,7 @@ void bsal_assembly_sliding_window_do_auto_scaling(struct bsal_actor *actor, stru
      * - set a sequence store as the producer of the kernel (BSAL_ACTOR_SET_PRODUCER)
      */
 
-    printf("AUTO-SCALING kernel %d receives auto-scale message (BSAL_ACTOR_DO_AUTO_SCALING) via actor %d\n",
+    printf("AUTO-SCALING window %d receives auto-scale message (BSAL_ACTOR_DO_AUTO_SCALING) via actor %d\n",
                     name, source);
 
     concrete_actor->auto_scaling_in_progress = 1;
@@ -421,7 +420,7 @@ void bsal_assembly_sliding_window_clone_reply(struct bsal_actor *actor, struct b
     /*producer = concrete_actor->producer);*/
 
     if (source == name) {
-        printf("kernel %d cloned itself !!! clone name is %d\n",
+        printf("window %d cloned itself !!! clone name is %d\n",
                     name, clone);
 
         bsal_actor_helper_send_int(actor, consumer, BSAL_ACTOR_CLONE, name);
@@ -433,17 +432,11 @@ void bsal_assembly_sliding_window_clone_reply(struct bsal_actor *actor, struct b
         bsal_vector_push_back(&concrete_actor->kernels, &clone_index);
 
     } else if (source == consumer) {
-        printf("kernel %d cloned aggregator %d, clone name is %d\n",
+        printf("window %d cloned aggregator %d, clone name is %d\n",
                         name, consumer, clone);
 
         bsal_actor_helper_send_int(actor, concrete_actor->auto_scaling_clone,
                         BSAL_ACTOR_SET_CONSUMER, clone);
-
-        /*
-        printf("kernel %d sending SET_PRODUCER to %d with value %d\n",
-                        name, concrete_actor->auto_scaling_clone,
-                        producer);
-                        */
 
     }
 }
@@ -606,12 +599,12 @@ void bsal_assembly_sliding_window_push_sequence_data_block(struct bsal_actor *ac
     buffer = bsal_message_buffer(message);
 
     if (concrete_actor->kmer_length == BSAL_ACTOR_NOBODY) {
-        printf("Error no kmer length set in kernel\n");
+        printf("Error no kmer length set\n");
         return;
     }
 
     if (concrete_actor->consumer == BSAL_ACTOR_NOBODY) {
-        printf("Error no consumer set in kernel\n");
+        printf("Error no consumer set\n");
         return;
     }
 
@@ -634,14 +627,8 @@ void bsal_assembly_sliding_window_push_sequence_data_block(struct bsal_actor *ac
     entries = bsal_vector_size(command_entries);
 
     if (entries == 0) {
-        printf("Error: kernel received empty payload...\n");
+        printf("Error: received empty payload...\n");
     }
-
-#ifdef BSAL_KMER_COUNTER_KERNEL_DEBUG
-    printf("DEBUG kernel receives %d entries (%d bytes), kmer length: %d, bytes per object: %d\n",
-                        entries, count, concrete_actor->kmer_length,
-                        concrete_actor->bytes_per_kmer);
-#endif
 
     to_reserve = 0;
 
@@ -686,7 +673,7 @@ void bsal_assembly_sliding_window_push_sequence_data_block(struct bsal_actor *ac
             bsal_dna_kmer_init(&kmer, sequence_data + j,
                             &concrete_actor->codec, bsal_actor_get_ephemeral_memory(actor));
 
-#ifdef BSAL_KMER_COUNTER_KERNEL_DEBUG_LEVEL_2
+#ifdef BSAL_WINDOW_DEBUG_LEVEL_2
             printf("KERNEL kmer %d,%d %s\n", i, j, sequence_data + j);
 #endif
 
@@ -715,7 +702,7 @@ void bsal_assembly_sliding_window_push_sequence_data_block(struct bsal_actor *ac
     bsal_memory_pool_free(ephemeral_memory, sequence_data);
     sequence_data = NULL;
 
-#ifdef BSAL_KMER_COUNTER_KERNEL_DEBUG
+#ifdef BSAL_WINDOW_DEBUG
     BSAL_DEBUG_MARKER("after generating kmers\n");
 #endif
 
@@ -724,30 +711,17 @@ void bsal_assembly_sliding_window_push_sequence_data_block(struct bsal_actor *ac
 
     bsal_input_command_destroy(&payload, bsal_actor_get_ephemeral_memory(actor));
 
-#ifdef BSAL_KMER_COUNTER_KERNEL_DEBUG
-    printf("consumer%d\n", consumer);
-#endif
-
-
-#ifdef BSAL_KMER_COUNTER_KERNEL_DEBUG
-    BSAL_DEBUG_MARKER("kernel sends to consumer\n");
-        printf("consumer is %d\n", consumer);
-#endif
-
     new_count = bsal_dna_kmer_block_pack_size(&block,
                     &concrete_actor->codec);
     new_buffer = bsal_memory_pool_allocate(ephemeral_memory, new_count);
     bsal_dna_kmer_block_pack(&block, new_buffer,
                         &concrete_actor->codec);
 
-#ifdef BSAL_KMER_COUNTER_KERNEL_DEBUG
+#ifdef BSAL_WINDOW_DEBUG
     printf("name %d destination %d PACK with %d bytes\n", name,
                        consumer, new_count);
 #endif
 
-#ifdef BSAL_KMER_COUNTER_KERNEL_DEBUG
-    BSAL_DEBUG_MARKER("kernel sends to aggregator");
-#endif
 
     bsal_message_init(&new_message, BSAL_AGGREGATE_KERNEL_OUTPUT,
                     new_count, new_buffer);
@@ -768,7 +742,7 @@ void bsal_assembly_sliding_window_push_sequence_data_block(struct bsal_actor *ac
                     || concrete_actor->actual >= concrete_actor->last + 300000
                     || concrete_actor->last == 0) {
 
-        printf("kernel %d processed %" PRIu64 " entries (%d blocks) so far\n",
+        printf("sliding window %d processed %" PRIu64 " entries (%d blocks) so far\n",
                         name, concrete_actor->actual,
                         concrete_actor->blocks);
 
@@ -777,7 +751,7 @@ void bsal_assembly_sliding_window_push_sequence_data_block(struct bsal_actor *ac
 
     bsal_timer_stop(&timer);
 
-#ifdef BSAL_KMER_COUNTER_KERNEL_DEBUG
+#ifdef BSAL_WINDOW_DEBUG
 
         bsal_timer_print(&timer);
 #endif
@@ -786,7 +760,7 @@ void bsal_assembly_sliding_window_push_sequence_data_block(struct bsal_actor *ac
 
     bsal_dna_kmer_block_destroy(&block, bsal_actor_get_ephemeral_memory(actor));
 
-#ifdef BSAL_KMER_COUNTER_KERNEL_DEBUG
+#ifdef BSAL_WINDOW_DEBUG
     BSAL_DEBUG_MARKER("leaving call.\n");
 #endif
 

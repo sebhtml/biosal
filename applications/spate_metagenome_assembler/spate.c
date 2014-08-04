@@ -2,6 +2,8 @@
 #include "spate.h"
 
 #include <genomics/assembly/assembly_graph_store.h>
+#include <genomics/assembly/assembly_sliding_window.h>
+#include <genomics/assembly/assembly_graph_builder.h>
 
 #include <genomics/input/input_controller.h>
 
@@ -82,6 +84,8 @@ void spate_init(struct bsal_actor *self)
 
     bsal_actor_add_script(self, BSAL_ASSEMBLY_GRAPH_STORE_SCRIPT,
                     &bsal_assembly_graph_store_script);
+    bsal_actor_add_script(self, BSAL_ASSEMBLY_SLIDING_WINDOW_SCRIPT,
+                    &bsal_assembly_sliding_window_script);
 
     concrete_self->block_size = 16 * 4096;
 

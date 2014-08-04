@@ -12,13 +12,16 @@
 struct bsal_assembly_graph_builder {
     struct bsal_vector spawners;
     struct bsal_vector sequence_stores;
-    struct bsal_vector graph_stores;
+
     int source;
 
     int manager_for_graph_stores;
-    int manager_for_classifier;
-    int manager_for_windows;
+    struct bsal_vector graph_stores;
 
+    int manager_for_windows;
+    struct bsal_vector sliding_windows;
+
+    int manager_for_classifier;
 };
 
 extern struct bsal_script bsal_assembly_graph_builder_script;
@@ -35,5 +38,8 @@ void bsal_assembly_graph_builder_spawn_reply(struct bsal_actor *self, struct bsa
 
 void bsal_assembly_graph_builder_set_script_reply_store_manager(struct bsal_actor *self, struct bsal_message *message);
 void bsal_assembly_graph_builder_start_reply_store_manager(struct bsal_actor *self, struct bsal_message *message);
+
+void bsal_assembly_graph_builder_set_script_reply_window_manager(struct bsal_actor *self, struct bsal_message *message);
+void bsal_assembly_graph_builder_start_reply_window_manager(struct bsal_actor *self, struct bsal_message *message);
 
 #endif
