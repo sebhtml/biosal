@@ -5,11 +5,17 @@
 #include <biosal.h>
 
 #define BSAL_ASSEMBLY_GRAPH_BUILDER_SCRIPT 0xc0b1a2b3
+#define BSAL_ASSEMBLY_GRAPH_BUILDER_NAME "bsal_assembly_graph_builder"
+#define BSAL_ASSEMBLY_GRAPH_BUILDER_DESCRIPTION "This builder implements a distributed actor algorithm for building an assembly graph"
+#define BSAL_ASSEMBLY_GRAPH_BUILDER_VERSION "Cool version"
+#define BSAL_ASSEMBLY_GRAPH_BUILDER_AUTHOR "Sébastien Boisvert, Argonne National Laboratory"
 
 #define BSAL_ASSEMBLY_GRAPH_BUILDER_DEFAULT_KMER_LENGTH 49
 
 /*
- * This actor builds an assembly graph
+ * This actor builds an assembly graph.
+ * It needs a list of sequence stores and returns basically a list of
+ * graph stores.
  */
 struct bsal_assembly_graph_builder {
     struct bsal_vector spawners;
@@ -40,10 +46,20 @@ struct bsal_assembly_graph_builder {
 
 extern struct bsal_script bsal_assembly_graph_builder_script;
 
+/*
+ * Constructor and destructor
+ */
 void bsal_assembly_graph_builder_init(struct bsal_actor *self);
 void bsal_assembly_graph_builder_destroy(struct bsal_actor *self);
+
+/*
+ * The main handler
+ */
 void bsal_assembly_graph_builder_receive(struct bsal_actor *self, struct bsal_message *message);
 
+/*
+ * Other handlers
+ */
 void bsal_assembly_graph_builder_ask_to_stop(struct bsal_actor *self, struct bsal_message *message);
 
 void bsal_assembly_graph_builder_start(struct bsal_actor *self, struct bsal_message *message);
@@ -70,5 +86,6 @@ void bsal_assembly_graph_builder_set_consumer_reply(struct bsal_actor *self, str
 
 void bsal_assembly_graph_builder_tell_source(struct bsal_actor *self);
 void bsal_assembly_graph_builder_set_producer_reply(struct bsal_actor *self, struct bsal_message *message);
+int bsal_assembly_graph_builder_get_kmer_length(struct bsal_actor *self);
 
 #endif

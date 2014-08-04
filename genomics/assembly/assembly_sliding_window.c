@@ -210,6 +210,11 @@ void bsal_assembly_sliding_window_receive(struct bsal_actor *actor, struct bsal_
 
         bsal_message_helper_unpack_int(message, 0, &concrete_actor->kmer_length);
 
+        printf("%s/%d kmer length is %d\n",
+                        bsal_actor_script_name(actor),
+                        bsal_actor_name(actor),
+                        concrete_actor->kmer_length);
+
         bsal_dna_kmer_init_mock(&kmer, concrete_actor->kmer_length, &concrete_actor->codec,
                         bsal_actor_get_ephemeral_memory(actor));
         concrete_actor->bytes_per_kmer = bsal_dna_kmer_pack_size(&kmer, concrete_actor->kmer_length,
@@ -227,6 +232,15 @@ void bsal_assembly_sliding_window_receive(struct bsal_actor *actor, struct bsal_
 
         if (concrete_actor->consumer == BSAL_ACTOR_NOBODY) {
             printf("Error: window needs a consumer\n");
+            return;
+        }
+
+        if (concrete_actor->kmer_length <= 0) {
+
+            printf("%s/%d Error: invalid kmer length, %d\n",
+                            bsal_actor_script_name(actor),
+                            bsal_actor_name(actor),
+                            concrete_actor->kmer_length);
             return;
         }
 

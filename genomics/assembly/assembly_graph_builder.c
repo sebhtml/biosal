@@ -13,7 +13,10 @@
 
 struct bsal_script bsal_assembly_graph_builder_script = {
     .identifier = BSAL_ASSEMBLY_GRAPH_BUILDER_SCRIPT,
-    .name = "assembly_graph_builder",
+    .name = BSAL_ASSEMBLY_GRAPH_BUILDER_NAME,
+    .description = BSAL_ASSEMBLY_GRAPH_BUILDER_DESCRIPTION,
+    .version = BSAL_ASSEMBLY_GRAPH_BUILDER_VERSION,
+    .author = BSAL_ASSEMBLY_GRAPH_BUILDER_AUTHOR,
     .init = bsal_assembly_graph_builder_init,
     .destroy = bsal_assembly_graph_builder_destroy,
     .receive = bsal_assembly_graph_builder_receive,
@@ -319,23 +322,22 @@ void bsal_assembly_graph_builder_start_reply_classifier_manager(struct bsal_acto
 void bsal_assembly_graph_builder_configure(struct bsal_actor *self)
 {
     struct bsal_assembly_graph_builder *concrete_self;
-    int argc;
-    int i;
-    char **argv;
     int destination;
+    int i;
 
     concrete_self = bsal_actor_concrete_actor(self);
-    argc = bsal_actor_argc(self);
-    argv = bsal_actor_argv(self);
 
-    /* get kmer length
+    /*
+     * Set the default kmer length
      */
-    for (i = 0; i < argc; i++) {
-        if (strcmp(argv[i], "-k") == 0) {
-            concrete_self->kmer_length = atoi(argv[i]);
-            break;
-        }
-    }
+    concrete_self->kmer_length = bsal_assembly_graph_builder_get_kmer_length(self);
+
+
+    printf("%s/%d configures the kmer length (%d) for the actor computation\n",
+                    bsal_actor_script_name(self),
+                    bsal_actor_name(self),
+                    concrete_self->kmer_length);
+
 
     /*
      * set the kmer length for graph stores, sliding windows, and block classifiers
@@ -365,11 +367,6 @@ void bsal_assembly_graph_builder_configure(struct bsal_actor *self)
                         concrete_self->kmer_length);
     }
 
-    printf("%s/%d configures the kmer length (%d) for the actor computation\n",
-                    bsal_actor_script_name(self),
-                    concrete_self->kmer_length,
-                    bsal_actor_name(self));
-
 }
 
 void bsal_assembly_graph_builder_set_kmer_reply(struct bsal_actor *self, struct bsal_message *message)
@@ -392,9 +389,10 @@ void bsal_assembly_graph_builder_set_kmer_reply(struct bsal_actor *self, struct 
      */
     if (concrete_self->actors_with_kmer_length == expected) {
 
-        printf("%s/%d configured the kmer length value for sliding windows, block classifiers and graph stores\n",
+        printf("%s/%d configured (%d actors) the kmer length value for sliding windows, block classifiers and graph stores\n",
                         bsal_actor_script_name(self),
-                        bsal_actor_name(self));
+                        bsal_actor_name(self),
+                        expected);
 
         bsal_assembly_graph_builder_connect_actors(self);
     }
@@ -487,14 +485,19 @@ void bsal_assembly_graph_builder_verify(struct bsal_actor *self)
     /* Set the producer for every sliding window.
      */
 
+#if 0
     bsal_assembly_graph_builder_tell_source(self);
 
     return;
+#endif
 
     for (i = 0; i < bsal_vector_size(&concrete_self->sliding_windows); i++) {
 
         producer = bsal_vector_helper_at_as_int(&concrete_self->sequence_stores, i);
         consumer = bsal_vector_helper_at_as_int(&concrete_self->sliding_windows, i);
+
+        printf("CONFIGURE neural LINK %d -> %d\n",
+                        producer, consumer);
 
         bsal_actor_helper_send_int(self, consumer, BSAL_ACTOR_SET_PRODUCER,
                         producer);
@@ -542,4 +545,35 @@ void bsal_assembly_graph_builder_tell_source(struct bsal_actor *self)
     bsal_timer_stop(&concrete_self->timer);
     bsal_timer_print_with_description(&concrete_self->timer, "Build assembly graph");
     bsal_actor_helper_send_empty(self, concrete_self->source, BSAL_ACTOR_START_REPLY);
+}
+
+int bsal_assembly_graph_builder_get_kmer_length(struct bsal_actor *self)
+{
+    int kmer_length;
+    int i;
+    int argc;
+    char **argv;
+
+    argc = bsal_actor_argc(self);
+    argv = bsal_actor_argv(self);
+
+    kmer_length = BSAL_ASSEMBLY_GRAPH_BUILDER_DEFAULT_KMER_LENGTH;
+
+    /* get kmer length
+     */
+    for (i = 0; i < argc; i++) {
+        if (strcmp(argv[i], "-k") == 0 && i + 1 < argc) {
+            kmer_length = atoi(argv[i + 1]);
+            break;
+        }
+    }
+
+    /*
+     * Use a odd kmer length
+     */
+    if (kmer_length % 2 == 0) {
+        ++kmer_length;
+    }
+
+    return kmer_length;
 }

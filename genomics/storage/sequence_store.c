@@ -494,6 +494,14 @@ int bsal_sequence_store_get_required_kmers(struct bsal_actor *actor, struct bsal
     total_kmer_stores = total_workers * 1;
     bsal_message_helper_unpack_int(message, 0, &kmer_length);
 
+    if (kmer_length <= 0) {
+        printf("%s/%d Error, invalid kmer length: %d\n",
+                        bsal_actor_script_name(actor),
+                        bsal_actor_name(actor),
+                        kmer_length);
+        return 0;
+
+    }
     /* 4 KiB */
     minimum_end_buffer_size_in_bytes = BSAL_SEQUENCE_STORE_FINAL_BLOCK_SIZE;
 
@@ -512,7 +520,8 @@ int bsal_sequence_store_get_required_kmers(struct bsal_actor *actor, struct bsal
 
     sum_of_buffer_sizes = minimum_end_buffer_size_in_bytes * total_kmer_stores;
 
-    printf("INFO Workers: %d Consumers: %d BufferSizeForConsumer: %d BufferSizeForWorker: %zu\n",
+    printf("INFO KmerLength %d Workers: %d Consumers: %d BufferSizeForConsumer: %d BufferSizeForWorker: %zu\n",
+                    kmer_length,
                     workers,
                     total_kmer_stores,
                     minimum_end_buffer_size_in_bytes,
