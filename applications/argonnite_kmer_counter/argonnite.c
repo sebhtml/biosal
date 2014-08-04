@@ -704,13 +704,13 @@ void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message)
         if (concrete_actor->finished_kernels == bsal_vector_size(&concrete_actor->kernels)) {
 
 
-            printf("sending BSAL_KERNEL_NOTIFY\n");
-            bsal_actor_helper_send_range_empty(actor, &concrete_actor->kernels, BSAL_KERNEL_NOTIFY);
+            printf("sending BSAL_ACTOR_NOTIFY\n");
+            bsal_actor_helper_send_range_empty(actor, &concrete_actor->kernels, BSAL_ACTOR_NOTIFY);
 
             concrete_actor->finished_kernels = 0;
         }
 
-    } else if (tag == BSAL_KERNEL_NOTIFY_REPLY) {
+    } else if (tag == BSAL_ACTOR_NOTIFY_REPLY) {
 
         bsal_message_helper_unpack_uint64_t(message, 0, &produced);
 

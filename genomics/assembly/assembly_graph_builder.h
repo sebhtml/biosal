@@ -41,6 +41,9 @@ struct bsal_assembly_graph_builder {
 
     int kmer_length;
 
+    uint64_t total_kmer_count;
+    int notified_windows;
+
     int completed_sliding_windows;
 };
 
@@ -87,5 +90,6 @@ void bsal_assembly_graph_builder_set_consumer_reply(struct bsal_actor *self, str
 void bsal_assembly_graph_builder_tell_source(struct bsal_actor *self);
 void bsal_assembly_graph_builder_set_producer_reply(struct bsal_actor *self, struct bsal_message *message);
 int bsal_assembly_graph_builder_get_kmer_length(struct bsal_actor *self);
+void bsal_assembly_graph_builder_notify_reply(struct bsal_actor *self, struct bsal_message *message);
 
 #endif

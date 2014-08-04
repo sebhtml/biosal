@@ -88,9 +88,9 @@ void bsal_assembly_sliding_window_init(struct bsal_actor *actor)
                     bsal_assembly_sliding_window_unpack_message);
     bsal_actor_register_handler(actor, BSAL_ACTOR_CLONE_REPLY,
                     bsal_assembly_sliding_window_clone_reply);
-    bsal_actor_register_handler(actor, BSAL_KERNEL_NOTIFY,
+    bsal_actor_register_handler(actor, BSAL_ACTOR_NOTIFY,
                     bsal_assembly_sliding_window_notify);
-    bsal_actor_register_handler(actor, BSAL_KERNEL_NOTIFY_REPLY,
+    bsal_actor_register_handler(actor, BSAL_ACTOR_NOTIFY_REPLY,
                     bsal_assembly_sliding_window_notify_reply);
     bsal_actor_register_handler(actor, BSAL_ACTOR_DO_AUTO_SCALING,
                     bsal_assembly_sliding_window_do_auto_scaling);
@@ -316,7 +316,7 @@ void bsal_assembly_sliding_window_verify(struct bsal_actor *actor, struct bsal_m
 
     bsal_actor_helper_send_uint64_t(actor,
                             concrete_actor->notification_source,
-                    BSAL_KERNEL_NOTIFY_REPLY, concrete_actor->kmers);
+                    BSAL_ACTOR_NOTIFY_REPLY, concrete_actor->kmers);
 }
 
 void bsal_assembly_sliding_window_ask(struct bsal_actor *self, struct bsal_message *message)
@@ -541,7 +541,7 @@ void bsal_assembly_sliding_window_notify(struct bsal_actor *actor, struct bsal_m
 
         while (bsal_vector_iterator_get_next_value(&iterator, &kernel)) {
 
-            bsal_actor_helper_send_empty(actor, kernel, BSAL_KERNEL_NOTIFY);
+            bsal_actor_helper_send_empty(actor, kernel, BSAL_ACTOR_NOTIFY);
         }
 
         bsal_vector_iterator_destroy(&iterator);
@@ -570,7 +570,7 @@ void bsal_assembly_sliding_window_notify_reply(struct bsal_actor *actor, struct 
 
         bsal_actor_helper_send_uint64_t(actor,
                             concrete_actor->notification_source,
-                    BSAL_KERNEL_NOTIFY_REPLY, concrete_actor->sum_of_kmers);
+                    BSAL_ACTOR_NOTIFY_REPLY, concrete_actor->sum_of_kmers);
 
     }
 

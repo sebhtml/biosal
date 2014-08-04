@@ -49,8 +49,6 @@ struct bsal_dna_kmer_counter_kernel {
 
 #define BSAL_SET_KMER_LENGTH 0x0000702b
 #define BSAL_SET_KMER_LENGTH_REPLY 0x00005162
-#define BSAL_KERNEL_NOTIFY 0x00005098
-#define BSAL_KERNEL_NOTIFY_REPLY 0x00001d2b
 
 extern struct bsal_script bsal_dna_kmer_counter_kernel_script;
 

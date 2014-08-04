@@ -10,6 +10,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdint.h>
+#include <inttypes.h>
 
 struct bsal_script bsal_assembly_graph_builder_script = {
     .identifier = BSAL_ASSEMBLY_GRAPH_BUILDER_SCRIPT,
@@ -42,6 +44,7 @@ void bsal_assembly_graph_builder_init(struct bsal_actor *self)
     bsal_actor_register_handler(self, BSAL_ACTOR_ASK_TO_STOP, bsal_assembly_graph_builder_ask_to_stop);
     bsal_actor_register_handler(self, BSAL_ACTOR_SPAWN_REPLY, bsal_assembly_graph_builder_spawn_reply);
     bsal_actor_register_handler(self, BSAL_SET_KMER_LENGTH_REPLY, bsal_assembly_graph_builder_set_kmer_reply);
+    bsal_actor_register_handler(self, BSAL_ACTOR_NOTIFY_REPLY, bsal_assembly_graph_builder_notify_reply);
 
     bsal_actor_register_handler(self, BSAL_ACTOR_SET_CONSUMER_REPLY, bsal_assembly_graph_builder_set_consumer_reply);
     bsal_actor_register_handler(self, BSAL_ACTOR_SET_CONSUMERS_REPLY, bsal_assembly_graph_builder_set_consumers_reply);
@@ -59,6 +62,9 @@ void bsal_assembly_graph_builder_init(struct bsal_actor *self)
     concrete_self->configured_block_classifiers = 0;
 
     concrete_self->actors_with_kmer_length = 0;
+
+    concrete_self->total_kmer_count = 0;
+    concrete_self->notified_windows = 0;
 }
 
 void bsal_assembly_graph_builder_destroy(struct bsal_actor *self)
@@ -532,7 +538,8 @@ void bsal_assembly_graph_builder_set_producer_reply(struct bsal_actor *self, str
      * Tell the source that the graph is ready now.
      */
     if (concrete_self->completed_sliding_windows == bsal_vector_size(&concrete_self->sliding_windows)) {
-        bsal_assembly_graph_builder_tell_source(self);
+
+        bsal_actor_helper_send_range_empty(self, &concrete_self->sliding_windows, BSAL_ACTOR_NOTIFY);
     }
 }
 
@@ -576,4 +583,28 @@ int bsal_assembly_graph_builder_get_kmer_length(struct bsal_actor *self)
     }
 
     return kmer_length;
+}
+
+void bsal_assembly_graph_builder_notify_reply(struct bsal_actor *self, struct bsal_message *message)
+{
+    uint64_t produced_kmer_count;
+    struct bsal_assembly_graph_builder *concrete_self;
+
+    concrete_self = bsal_actor_concrete_actor(self);
+
+    bsal_message_helper_unpack_uint64_t(message, 0, &produced_kmer_count);
+
+    concrete_self->total_kmer_count += produced_kmer_count;
+
+    ++concrete_self->notified_windows;
+
+    if (concrete_self->notified_windows == bsal_vector_size(&concrete_self->sliding_windows)) {
+
+        printf("%s/%d : %" PRIu64 " kmers were generated during the actor computation.\n",
+            bsal_actor_script_name(self),
+            bsal_actor_name(self),
+            concrete_self->total_kmer_count);
+
+        bsal_assembly_graph_builder_tell_source(self);
+    }
 }

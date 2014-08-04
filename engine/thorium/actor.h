@@ -145,10 +145,15 @@ new name.
 #define BSAL_ACTOR_NOTIFY_NAME_CHANGE 0x000068b9
 #define BSAL_ACTOR_NOTIFY_NAME_CHANGE_REPLY 0x00003100
 
+/*
+ * ACTOR_PING can be used by concrete actors, it is
+ * not being used by biosal systems.
+ */
 #define BSAL_ACTOR_PING 0x000040b3
 #define BSAL_ACTOR_PING_REPLY 0x00006eda
 
-/* The notify messages can be used freely
+/*
+ * The notify messages can be used freely.
  */
 #define BSAL_ACTOR_NOTIFY 0x0000710b
 #define BSAL_ACTOR_NOTIFY_REPLY 0x00005f82
