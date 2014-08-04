@@ -18,7 +18,7 @@ struct bsal_script spate_script = {
     .receive = spate_receive,
     .size = sizeof(struct spate),
     .name = "spate",
-    .version = "Project Thor",
+    .version = "0.0.1-development",
     .author = "Sébastien Boisvert",
     .description = "Exact, convenient, and scalable metagenome assembly and genome isolation for everyone"
 };
@@ -131,7 +131,9 @@ void spate_start(struct bsal_actor *self, struct bsal_message *message)
      */
     bsal_vector_unpack(&concrete_self->initial_actors, buffer);
 
-    printf("spate/%d starts\n", name);
+    if (!spate_must_print_help(self)) {
+        printf("spate/%d starts\n", name);
+    }
 
     if (bsal_vector_index_of(&concrete_self->initial_actors, &name) == 0) {
         concrete_self->is_leader = 1;
@@ -141,6 +143,13 @@ void spate_start(struct bsal_actor *self, struct bsal_message *message)
      * Abort if the actor is not the leader of the tribe.
      */
     if (!concrete_self->is_leader) {
+        return;
+    }
+
+    if (spate_must_print_help(self)) {
+        spate_help(self);
+
+        spate_stop(self);
         return;
     }
 
@@ -157,7 +166,9 @@ void spate_ask_to_stop(struct bsal_actor *self, struct bsal_message *message)
     concrete_self = (struct spate *)bsal_actor_concrete_actor(self);
     source = bsal_message_source(message);
 
-    printf("spate %d stops\n", bsal_actor_name(self));
+    if (!spate_must_print_help(self)) {
+        printf("spate %d stops\n", bsal_actor_name(self));
+    }
 
     bsal_actor_helper_ask_to_stop(self, message);
 
@@ -345,10 +356,7 @@ void spate_set_producers_reply(struct bsal_actor *self, struct bsal_message *mes
 
 void spate_start_reply_builder(struct bsal_actor *self, struct bsal_message *message)
 {
-    struct spate *concrete_self;
-
-    concrete_self = (struct spate *)bsal_actor_concrete_actor(self);
-    bsal_actor_helper_send_range_empty(self, &concrete_self->initial_actors, BSAL_ACTOR_ASK_TO_STOP);
+    spate_stop(self);
 }
 
 int spate_add_file(struct bsal_actor *self)
@@ -383,4 +391,57 @@ int spate_add_file(struct bsal_actor *self)
 void spate_add_file_reply(struct bsal_actor *self, struct bsal_message *message)
 {
     bsal_actor_helper_send_to_self_empty(self, SPATE_ADD_FILES);
+}
+
+void spate_help(struct bsal_actor *self)
+{
+    printf("Name: %s\n", bsal_actor_script_name(self));
+    printf("Description: %s\n", bsal_script_description(bsal_actor_get_script(self)));
+    printf("Version: %s\n", bsal_script_version(bsal_actor_get_script(self)));
+    printf("Library: biosal (biological sequence actor library)\n");
+    printf("Engine: thorium (distributed event-driven native actor machine emulator)\n");
+
+    printf("\n");
+    printf("Usage:\n");
+
+    printf("mpiexec -n <ranks> spate -threads-per-node <threads> [-k <kmer_length>] [-i <file>] [-p <file1> <file2>] [-s <file>] -o <output>\n");
+
+    printf("\n");
+    printf("Example:\n");
+    printf("mpiexec -n 128 spate -threads-per-node 24 -k 51 -i interleaved_file_1.fastq -i interleaved_file_2.fastq -o my-assembly\n");
+
+    printf("\n");
+    printf("Supported input formats: .fastq (upcoming: .fasta, .fastq.gz)\n");
+}
+
+void spate_stop(struct bsal_actor *self)
+{
+    struct spate *concrete_self;
+
+    concrete_self = (struct spate *)bsal_actor_concrete_actor(self);
+    bsal_actor_helper_send_range_empty(self, &concrete_self->initial_actors, BSAL_ACTOR_ASK_TO_STOP);
+}
+
+int spate_must_print_help(struct bsal_actor *self)
+{
+    int argc;
+    char **argv;
+    int i;
+
+    argc = bsal_actor_argc(self);
+
+    if (argc == 1) {
+        return 1;
+    }
+
+    argv = bsal_actor_argv(self);
+
+    for (i = 0; i < argc; i++) {
+        if (strstr(argv[i], "help") != NULL
+                        || strstr(argv[i], "version") != NULL) {
+            return 1;
+        }
+    }
+
+    return 0;
 }

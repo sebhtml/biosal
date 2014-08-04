@@ -348,6 +348,7 @@ void bsal_actor_send_proxy(struct bsal_actor *self, int destination,
 void bsal_actor_forward_messages(struct bsal_actor *self, struct bsal_message *message);
 
 int bsal_actor_script(struct bsal_actor *self);
+struct bsal_script *bsal_actor_get_script(struct bsal_actor *self);
 void bsal_actor_add_script(struct bsal_actor *self, int name, struct bsal_script *script);
 
 /* actor cloning */

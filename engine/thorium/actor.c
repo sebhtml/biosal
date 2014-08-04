@@ -2012,4 +2012,7 @@ int bsal_actor_get_spawner(struct bsal_actor *self, struct bsal_vector *spawners
     return actor;
 }
 
-
+struct bsal_script *bsal_actor_get_script(struct bsal_actor *self)
+{
+    return self->script;
+}

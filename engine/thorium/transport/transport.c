@@ -34,11 +34,6 @@ void bsal_transport_init(struct bsal_transport *self, struct bsal_node *node,
     BSAL_DEBUGGER_ASSERT(self->rank >= 0);
     BSAL_DEBUGGER_ASSERT(self->size >= 1);
     BSAL_DEBUGGER_ASSERT(self->node != NULL);
-
-    printf("%s TRANSPORT Rank: %d RankCount: %d Implementation: %s\n",
-                    BSAL_NODE_THORIUM_PREFIX,
-                self->rank, self->size,
-                bsal_transport_get_name(self));
 }
 
 void bsal_transport_destroy(struct bsal_transport *self)
@@ -249,4 +244,12 @@ void bsal_transport_select(struct bsal_transport *self)
                     self->implementation);
                     */
 
+}
+
+void bsal_transport_print(struct bsal_transport *self)
+{
+    printf("%s TRANSPORT Rank: %d RankCount: %d Implementation: %s\n",
+                    BSAL_NODE_THORIUM_PREFIX,
+                self->rank, self->size,
+                bsal_transport_get_name(self));
 }

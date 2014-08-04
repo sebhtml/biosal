@@ -309,13 +309,17 @@ void bsal_node_init(struct bsal_node *node, int *argc, char ***argv)
 
     bsal_set_affinity(processor);
 
-    printf("%s booted node %d (%d nodes), threads: %d, workers: %d, pacing: %d\n",
+    if (node->print_load) {
+        printf("%s booted node %d (%d nodes), threads: %d, workers: %d, pacing: %d\n",
                 BSAL_NODE_THORIUM_PREFIX,
                     node->name,
             node->nodes,
             node->threads,
             bsal_worker_pool_worker_count(&node->worker_pool),
             1);
+
+        bsal_transport_print(&node->transport);
+    }
 }
 
 void bsal_node_destroy(struct bsal_node *node)
@@ -711,11 +715,14 @@ int bsal_node_run(struct bsal_node *node)
 
     /* Print global load for this node... */
 
-    load = bsal_worker_pool_get_computation_load(&node->worker_pool);
-    printf("%s node/%d COMPUTATION_LOAD %.2f\n",
+    if (node->print_load) {
+        load = bsal_worker_pool_get_computation_load(&node->worker_pool);
+
+        printf("%s node/%d COMPUTATION_LOAD %.2f\n",
                     BSAL_NODE_THORIUM_PREFIX,
                     bsal_node_name(node),
                     load);
+    }
 
     return 0;
 }
@@ -1345,7 +1352,7 @@ void bsal_node_notify_death(struct bsal_node *node, struct bsal_actor *actor)
     node->alive_actors--;
     node->dead_actors++;
 
-    if (node->alive_actors == 0) {
+    if (node->alive_actors == 0 && node->print_load) {
         printf("%s all local actors are dead now, %d alive actors, %d dead actors\n",
                         BSAL_NODE_THORIUM_PREFIX,
                         node->alive_actors, node->dead_actors);

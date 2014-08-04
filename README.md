@@ -1,4 +1,4 @@
-biosal is a distributed BIOlogical Sequence Analysis Library.
+biosal is a distributed BIOlogical Sequence Actor Library.
 
 biosal applications are written in the form of actors which send each other messages,
 change their state, spawn other actors and eventually die of old age.

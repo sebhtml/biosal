@@ -80,4 +80,6 @@ void bsal_transport_prepare_received_message(struct bsal_transport *self, struct
 
 void bsal_transport_select(struct bsal_transport *self);
 
+void bsal_transport_print(struct bsal_transport *self);
+
 #endif
