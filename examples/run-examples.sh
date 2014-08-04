@@ -16,7 +16,7 @@ function run_example()
     time make $example
     ) &> $example.log
 
-    load_lines=$(grep "COMPUTATION_LOAD" $example.log | grep node | wc -l)
+    load_lines=$(grep "COMPUTATION LOAD" $example.log | grep node | wc -l)
     result="FAILED"
 
     if test $load_lines -gt 0

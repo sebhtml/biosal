@@ -715,10 +715,10 @@ int bsal_node_run(struct bsal_node *node)
 
     /* Print global load for this node... */
 
-    if (node->print_load) {
+    if (node->print_load || 1) {
         load = bsal_worker_pool_get_computation_load(&node->worker_pool);
 
-        printf("%s node/%d COMPUTATION_LOAD %.2f\n",
+        printf("%s node/%d COMPUTATION LOAD %.2f\n",
                     BSAL_NODE_THORIUM_PREFIX,
                     bsal_node_name(node),
                     load);
