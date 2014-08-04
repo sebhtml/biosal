@@ -15,7 +15,7 @@ all:
 
 LIBRARY_HOT_CODE=
 
-include order.mk
+include Makefile.mk
 
 LIBRARY_OBJECTS=
 LIBRARY_OBJECTS += $(LIBRARY_HOT_CODE)
