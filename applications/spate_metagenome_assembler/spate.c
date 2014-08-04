@@ -24,6 +24,7 @@ void spate_init(struct bsal_actor *self)
 
     concrete_self = (struct spate *)bsal_actor_concrete_actor(self);
     bsal_vector_init(&concrete_self->initial_actors, sizeof(int));
+    bsal_vector_init(&concrete_self->sequence_stores, sizeof(int));
 
     concrete_self->is_leader = 0;
 
@@ -94,6 +95,7 @@ void spate_destroy(struct bsal_actor *self)
     concrete_self->assembly_graph_builder = BSAL_ACTOR_NOBODY;
 
     bsal_vector_destroy(&concrete_self->initial_actors);
+    bsal_vector_destroy(&concrete_self->sequence_stores);
 }
 
 void spate_receive(struct bsal_actor *self, struct bsal_message *message)
@@ -201,6 +203,14 @@ void spate_spawn_reply(struct bsal_actor *self, struct bsal_message *message)
 
         concrete_self->assembly_graph_builder = new_actor;
 
+        bsal_actor_register_handler_with_source(self,
+                    BSAL_ACTOR_START_REPLY,
+                    concrete_self->assembly_graph_builder, spate_start_reply_builder);
+
+        bsal_actor_register_handler_with_source(self,
+                    BSAL_ACTOR_SET_PRODUCERS_REPLY,
+                    concrete_self->assembly_graph_builder, spate_set_producers_reply);
+
         printf("spate %d spawned graph builder %d\n", bsal_actor_name(self),
                         new_actor);
 
@@ -260,8 +270,9 @@ void spate_start_reply_manager(struct bsal_actor *self, struct bsal_message *mes
 
     bsal_actor_helper_send_vector(self, concrete_self->input_controller, BSAL_ACTOR_SET_CONSUMERS, &consumers);
 
-    bsal_vector_destroy(&consumers);
+    bsal_vector_push_back_vector(&concrete_self->sequence_stores, &consumers);
 
+    bsal_vector_destroy(&consumers);
 }
 
 void spate_set_consumers_reply(struct bsal_actor *self, struct bsal_message *message)
@@ -324,6 +335,25 @@ void spate_distribute_reply(struct bsal_actor *self, struct bsal_message *messag
     printf("spate %d: all sequence stores are ready\n",
                     bsal_actor_name(self));
 
+    bsal_actor_helper_send_vector(self, concrete_self->assembly_graph_builder,
+                    BSAL_ACTOR_SET_PRODUCERS, &concrete_self->sequence_stores);
+
+}
+
+void spate_set_producers_reply(struct bsal_actor *self, struct bsal_message *message)
+{
+    struct spate *concrete_self;
+
+    concrete_self = (struct spate *)bsal_actor_concrete_actor(self);
+
+    bsal_actor_helper_send_reply_vector(self, BSAL_ACTOR_START, &concrete_self->initial_actors);
+}
+
+void spate_start_reply_builder(struct bsal_actor *self, struct bsal_message *message)
+{
+    struct spate *concrete_self;
+
+    concrete_self = (struct spate *)bsal_actor_concrete_actor(self);
     bsal_actor_helper_send_range_empty(self, &concrete_self->initial_actors, BSAL_ACTOR_ASK_TO_STOP);
 }
 

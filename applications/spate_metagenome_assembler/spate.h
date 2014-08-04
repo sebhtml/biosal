@@ -46,6 +46,8 @@ struct spate {
     int block_size;
 
     int file_index;
+
+    struct bsal_vector sequence_stores;
 };
 
 extern struct bsal_script spate_script;
@@ -72,5 +74,7 @@ void spate_add_files_reply(struct bsal_actor *self, struct bsal_message *message
 
 int spate_add_file(struct bsal_actor *self);
 void spate_add_file_reply(struct bsal_actor *self, struct bsal_message *message);
+void spate_start_reply_builder(struct bsal_actor *self, struct bsal_message *message);
+void spate_set_producers_reply(struct bsal_actor *self, struct bsal_message *message);
 
 #endif
