@@ -1,6 +1,5 @@
 #include "manager.h"
 
-#include <core/helpers/actor_helper.h>
 #include <core/helpers/vector_helper.h>
 #include <core/helpers/message_helper.h>
 

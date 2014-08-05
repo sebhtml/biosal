@@ -9,7 +9,6 @@
 #include <genomics/kernels/dna_kmer_counter_kernel.h>
 #include <genomics/storage/kmer_store.h>
 
-#include <core/helpers/actor_helper.h>
 #include <core/helpers/message_helper.h>
 #include <core/helpers/vector_helper.h>
 

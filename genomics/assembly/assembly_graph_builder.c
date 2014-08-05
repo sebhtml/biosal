@@ -5,7 +5,6 @@
 #include "assembly_sliding_window.h"
 #include "assembly_block_classifier.h"
 
-#include <core/helpers/actor_helper.h>
 
 #include <stdlib.h>
 #include <stdio.h>

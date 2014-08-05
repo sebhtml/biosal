@@ -9,7 +9,6 @@
 #include <core/structures/vector_iterator.h>
 #include <core/structures/map_iterator.h>
 
-#include <core/helpers/actor_helper.h>
 #include <core/helpers/vector_helper.h>
 #include <core/helpers/message_helper.h>
 
@@ -1246,26 +1245,6 @@ int bsal_actor_call_handler(struct bsal_actor *self, struct bsal_message *messag
     return bsal_dispatcher_dispatch(&self->dispatcher, self, message);
 }
 
-void bsal_actor_add_route(struct bsal_actor *self, int tag, bsal_actor_receive_fn_t handler)
-{
-
-#ifdef BSAL_ACTOR_DEBUG_10335
-    if (tag == 10335) {
-        printf("DEBUG actor %d bsal_actor_register 10335\n",
-                        bsal_actor_name(self));
-    }
-#endif
-
-    bsal_actor_add_route_with_source(self, tag, handler, BSAL_ACTOR_ANYBODY);
-}
-
-void bsal_actor_add_route_with_source(struct bsal_actor *self, int tag, bsal_actor_receive_fn_t handler,
-                int source)
-{
-    bsal_actor_add_route_with_source_and_condition(self, tag,
-                    handler, source, NULL, -1);
-}
-
 struct bsal_dispatcher *bsal_actor_dispatcher(struct bsal_actor *self)
 {
     return &self->dispatcher;
@@ -2017,29 +1996,6 @@ int bsal_actor_get_spawner(struct bsal_actor *self, struct bsal_vector *spawners
 struct bsal_script *bsal_actor_get_script(struct bsal_actor *self)
 {
     return self->script;
-}
-
-void bsal_actor_add_route_with_sources(struct bsal_actor *self, int tag,
-                bsal_actor_receive_fn_t handler, struct bsal_vector *sources)
-{
-    int i;
-    int source;
-    int size;
-
-    size = bsal_vector_size(sources);
-
-    for (i = 0; i < size; i++) {
-
-        source = bsal_vector_helper_at_as_int(sources, i);
-
-        bsal_actor_add_route_with_source(self, tag, handler, source);
-    }
-}
-
-void bsal_actor_add_route_with_condition(struct bsal_actor *self, int tag, bsal_actor_receive_fn_t handler, int *actual,
-                int expected)
-{
-    bsal_actor_add_route_with_source_and_condition(self, tag, handler, BSAL_ACTOR_ANYBODY, actual, expected);
 }
 
 void bsal_actor_add_route_with_source_and_condition(struct bsal_actor *self, int tag, bsal_actor_receive_fn_t handler, int source,

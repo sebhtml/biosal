@@ -5,7 +5,6 @@
 #include <genomics/data/dna_sequence.h>
 
 #include <core/structures/vector_iterator.h>
-#include <core/helpers/actor_helper.h>
 #include <core/helpers/message_helper.h>
 #include <core/system/memory.h>
 

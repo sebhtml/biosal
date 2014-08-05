@@ -4,13 +4,15 @@
 #include "sequence_store.h"
 
 #include <genomics/kernels/dna_kmer_counter_kernel.h>
+
 #include <genomics/data/dna_kmer.h>
 #include <genomics/data/dna_kmer_block.h>
 #include <genomics/data/dna_kmer_frequency_block.h>
 
 #include <core/helpers/message_helper.h>
-#include <core/helpers/actor_helper.h>
+
 #include <core/system/memory.h>
+
 #include <core/structures/vector.h>
 #include <core/structures/vector_iterator.h>
 
@@ -25,7 +27,7 @@ struct bsal_script bsal_kmer_store_script = {
     .destroy = bsal_kmer_store_destroy,
     .receive = bsal_kmer_store_receive,
     .size = sizeof(struct bsal_kmer_store),
-    .name = "kmer_store"
+    .name = "bsal_kmer_store"
 };
 
 void bsal_kmer_store_init(struct bsal_actor *self)

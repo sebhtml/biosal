@@ -1,8 +1,6 @@
 
 #include "assembly_graph.h"
 
-#include <core/helpers/actor_helper.h>
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>

@@ -7,7 +7,6 @@
 #include <genomics/data/dna_sequence.h>
 #include <genomics/storage/sequence_store.h>
 
-#include <core/helpers/actor_helper.h>
 #include <core/helpers/message_helper.h>
 
 #include <core/system/memory.h>

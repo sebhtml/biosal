@@ -11,7 +11,6 @@
 #include <genomics/data/dna_sequence.h>
 #include <genomics/input/input_command.h>
 
-#include <core/helpers/actor_helper.h>
 #include <core/helpers/message_helper.h>
 
 #include <core/system/packer.h>
@@ -46,7 +45,7 @@ struct bsal_script bsal_assembly_sliding_window_script = {
     .destroy = bsal_assembly_sliding_window_destroy,
     .receive = bsal_assembly_sliding_window_receive,
     .size = sizeof(struct bsal_assembly_sliding_window),
-    .name = "assembly_sliding_window"
+    .name = "bsal_assembly_sliding_window"
 };
 
 void bsal_assembly_sliding_window_init(struct bsal_actor *actor)

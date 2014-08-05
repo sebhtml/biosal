@@ -15,6 +15,8 @@
 #include <core/system/lock.h>
 #include <core/system/counter.h>
 
+#include <core/helpers/actor_helper.h>
+
 #include <pthread.h>
 #include <stdint.h>
 
@@ -380,13 +382,6 @@ struct bsal_counter *bsal_actor_counter(struct bsal_actor *self);
  */
 int bsal_actor_call_handler(struct bsal_actor *self, struct bsal_message *message);
 
-void bsal_actor_add_route(struct bsal_actor *self, int tag, bsal_actor_receive_fn_t handler);
-void bsal_actor_add_route_with_source(struct bsal_actor *self, int tag, bsal_actor_receive_fn_t handler,
-                int source);
-void bsal_actor_add_route_with_sources(struct bsal_actor *self, int tag,
-                bsal_actor_receive_fn_t handler, struct bsal_vector *sources);
-void bsal_actor_add_route_with_condition(struct bsal_actor *self, int tag, bsal_actor_receive_fn_t handler, int *actual,
-                int expected);
 void bsal_actor_add_route_with_source_and_condition(struct bsal_actor *self, int tag, bsal_actor_receive_fn_t handler,
                 int source, int *actual, int expected);
 

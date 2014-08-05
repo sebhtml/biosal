@@ -6,6 +6,11 @@
 
 #include <stdint.h>
 
+/*
+ * Actor helpers are function that work on a bsal_actor but that do not access attributes
+ * with self->attribute_name
+ */
+
 struct bsal_actor;
 struct bsal_vector;
 struct bsal_message;
@@ -66,5 +71,15 @@ void bsal_actor_ask_to_stop(struct bsal_actor *actor, struct bsal_message *messa
 void bsal_actor_send_reply(struct bsal_actor *actor, struct bsal_message *message);
 void bsal_actor_send_to_self(struct bsal_actor *actor, struct bsal_message *message);
 void bsal_actor_send_to_supervisor(struct bsal_actor *actor, struct bsal_message *message);
+
+
+void bsal_actor_add_route_with_sources(struct bsal_actor *self, int tag,
+                bsal_actor_receive_fn_t handler, struct bsal_vector *sources);
+void bsal_actor_add_route(struct bsal_actor *self, int tag, bsal_actor_receive_fn_t handler);
+void bsal_actor_add_route_with_source(struct bsal_actor *self, int tag, bsal_actor_receive_fn_t handler,
+                int source);
+void bsal_actor_add_route_with_condition(struct bsal_actor *self, int tag, bsal_actor_receive_fn_t handler, int *actual,
+                int expected);
+
 
 #endif
