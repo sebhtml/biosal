@@ -21,11 +21,11 @@
 
 struct bsal_script bsal_coverage_distribution_script = {
     .identifier = BSAL_COVERAGE_DISTRIBUTION_SCRIPT,
+    .name = "bsal_coverage_distribution",
     .init = bsal_coverage_distribution_init,
     .destroy = bsal_coverage_distribution_destroy,
     .receive = bsal_coverage_distribution_receive,
-    .size = sizeof(struct bsal_coverage_distribution),
-    .name = "coverage_distribution"
+    .size = sizeof(struct bsal_coverage_distribution)
 };
 
 void bsal_coverage_distribution_init(struct bsal_actor *self)
@@ -121,7 +121,8 @@ void bsal_coverage_distribution_receive(struct bsal_actor *self, struct bsal_mes
 
             bsal_coverage_distribution_write_distribution(self);
 
-            bsal_actor_helper_send_to_supervisor_empty(self, BSAL_SET_EXPECTED_MESSAGES_REPLY);
+            bsal_actor_helper_send_empty(self, concrete_actor->source,
+                            BSAL_ACTOR_NOTIFY);
         }
 
         bsal_map_destroy(&map);
@@ -130,13 +131,16 @@ void bsal_coverage_distribution_receive(struct bsal_actor *self, struct bsal_mes
 
         bsal_coverage_distribution_ask_to_stop(self, message);
 
-    } else if (tag == BSAL_SET_EXPECTED_MESSAGES) {
+    } else if (tag == BSAL_SET_EXPECTED_MESSAGE_COUNT) {
 
+        concrete_actor->source = source;
         bsal_message_helper_unpack_int(message, 0, &concrete_actor->expected);
 
         printf("distribution %d expects %d messages\n",
                         bsal_actor_name(self),
                         concrete_actor->expected);
+
+        bsal_actor_helper_send_reply_empty(self, BSAL_SET_EXPECTED_MESSAGE_COUNT_REPLY);
     }
 }
 

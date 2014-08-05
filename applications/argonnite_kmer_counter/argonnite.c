@@ -744,7 +744,7 @@ void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message)
 
 
 
-                bsal_actor_helper_send_int(actor, distribution, BSAL_SET_EXPECTED_MESSAGES,
+                bsal_actor_helper_send_int(actor, distribution, BSAL_SET_EXPECTED_MESSAGE_COUNT,
                                 bsal_vector_size(&concrete_actor->kmer_stores));
 
                 printf("ISSUE_481 argonnite %d sends BSAL_PUSH_DATA to %d stores\n",
@@ -781,7 +781,7 @@ void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message)
         concrete_actor->actual_kmers = 0;
 
 
-    } else if (tag == BSAL_SET_EXPECTED_MESSAGES_REPLY) {
+    } else if (tag == BSAL_ACTOR_NOTIFY && source == concrete_actor->distribution) {
 
 
         bsal_vector_iterator_init(&iterator, &concrete_actor->initial_actors);

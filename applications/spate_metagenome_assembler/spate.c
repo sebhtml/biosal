@@ -89,6 +89,8 @@ void spate_init(struct bsal_actor *self)
                     &bsal_assembly_sliding_window_script);
     bsal_actor_add_script(self, BSAL_ASSEMBLY_BLOCK_CLASSIFIER_SCRIPT,
                     &bsal_assembly_block_classifier_script);
+    bsal_actor_add_script(self, BSAL_COVERAGE_DISTRIBUTION_SCRIPT,
+                    &bsal_coverage_distribution_script);
 
     concrete_self->block_size = 16 * 4096;
 

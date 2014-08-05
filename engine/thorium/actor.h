@@ -146,19 +146,6 @@ new name.
 #define BSAL_ACTOR_NOTIFY_NAME_CHANGE_REPLY 0x00003100
 
 /*
- * ACTOR_PING can be used by concrete actors, it is
- * not being used by biosal systems.
- */
-#define BSAL_ACTOR_PING 0x000040b3
-#define BSAL_ACTOR_PING_REPLY 0x00006eda
-
-/*
- * The notify messages can be used freely.
- */
-#define BSAL_ACTOR_NOTIFY 0x0000710b
-#define BSAL_ACTOR_NOTIFY_REPLY 0x00005f82
-
-/*
  * Messages for actors that are data stores
  */
 
@@ -187,6 +174,31 @@ new name.
 #define BSAL_ACTOR_ANYBODY -2
 
 #define BSAL_ACTOR_NO_VALUE -1
+
+
+/*
+ ********************************************
+ * In this section are listed some message tags that are available for use
+ * by concrete actors.
+ *
+ */
+
+/*
+ * ACTOR_PING can be used by concrete actors, it is
+ * not being used by biosal systems.
+ */
+#define BSAL_ACTOR_PING 0x000040b3
+#define BSAL_ACTOR_PING_REPLY 0x00006eda
+
+/*
+ * The notify messages can be used freely.
+ */
+#define BSAL_ACTOR_NOTIFY 0x0000710b
+#define BSAL_ACTOR_NOTIFY_REPLY 0x00005f82
+
+/*
+ ********************************************
+ */
 
 struct bsal_node;
 struct bsal_worker;
@@ -368,6 +380,8 @@ struct bsal_counter *bsal_actor_counter(struct bsal_actor *self);
 int bsal_actor_call_handler(struct bsal_actor *self, struct bsal_message *message);
 void bsal_actor_register_handler(struct bsal_actor *self, int tag, bsal_actor_receive_fn_t handler);
 void bsal_actor_register_handler_with_source(struct bsal_actor *self, int tag, int source, bsal_actor_receive_fn_t handler);
+void bsal_actor_register_handler_with_sources(struct bsal_actor *self, int tag, struct bsal_vector *sources,
+                bsal_actor_receive_fn_t handler);
 
 struct bsal_dispatcher *bsal_actor_dispatcher(struct bsal_actor *self);
 void bsal_actor_set_node(struct bsal_actor *self, struct bsal_node *node);

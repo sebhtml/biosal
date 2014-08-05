@@ -36,8 +36,10 @@ struct bsal_assembly_graph_builder {
     struct bsal_vector block_classifiers;
 
     int configured_sliding_windows;
-    int configured_graph_stores;
     int configured_block_classifiers;
+    int configured_graph_stores;
+
+    int coverage_distribution;
 
     int actors_with_kmer_length;
 
@@ -98,5 +100,10 @@ int bsal_assembly_graph_builder_get_kmer_length(struct bsal_actor *self);
 void bsal_assembly_graph_builder_notify_reply(struct bsal_actor *self, struct bsal_message *message);
 void bsal_assembly_graph_builder_control_complexity(struct bsal_actor *self, struct bsal_message *message);
 void bsal_assembly_graph_builder_get_entry_count_reply(struct bsal_actor *self, struct bsal_message *message);
+
+void bsal_assembly_graph_builder_set_consumer_reply_graph_stores(struct bsal_actor *self, struct bsal_message *message);
+void bsal_assembly_graph_builder_set_consumer_reply_windows(struct bsal_actor *self, struct bsal_message *message);
+void bsal_assembly_graph_builder_set_expected_message_count_reply(struct bsal_actor *self, struct bsal_message *message);
+void bsal_assembly_graph_builder_notify_from_distribution(struct bsal_actor *self, struct bsal_message *message);
 
 #endif

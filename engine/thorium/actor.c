@@ -2016,3 +2016,20 @@ struct bsal_script *bsal_actor_get_script(struct bsal_actor *self)
 {
     return self->script;
 }
+
+void bsal_actor_register_handler_with_sources(struct bsal_actor *self, int tag, struct bsal_vector *sources,
+                bsal_actor_receive_fn_t handler)
+{
+    int i;
+    int source;
+    int size;
+
+    size = bsal_vector_size(sources);
+
+    for (i = 0; i < size; i++) {
+
+        source = bsal_vector_helper_at_as_int(sources, i);
+
+        bsal_actor_register_handler_with_source(self, tag, source, handler);
+    }
+}

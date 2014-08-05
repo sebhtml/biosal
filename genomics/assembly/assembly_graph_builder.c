@@ -62,6 +62,8 @@ void bsal_assembly_graph_builder_init(struct bsal_actor *self)
     concrete_self->manager_for_windows = BSAL_ACTOR_NOBODY;
     bsal_vector_init(&concrete_self->sliding_windows, sizeof(int));
 
+    concrete_self->coverage_distribution = BSAL_ACTOR_NOBODY;
+
     concrete_self->configured_graph_stores = 0;
     concrete_self->configured_sliding_windows = 0;
     concrete_self->configured_block_classifiers = 0;
@@ -144,6 +146,10 @@ void bsal_assembly_graph_builder_start(struct bsal_actor *self, struct bsal_mess
     bsal_actor_helper_send_int(self, spawner, BSAL_ACTOR_SPAWN, BSAL_MANAGER_SCRIPT);
 }
 
+/*
+ * TODO: find some sort of way to reduce the number of lines here
+ * using a new Thorium API call.
+ */
 void bsal_assembly_graph_builder_spawn_reply(struct bsal_actor *self, struct bsal_message *message)
 {
     struct bsal_assembly_graph_builder *concrete_self;
@@ -203,7 +209,40 @@ void bsal_assembly_graph_builder_spawn_reply(struct bsal_actor *self, struct bsa
 
         bsal_actor_helper_send_int(self, concrete_self->manager_for_classifiers, BSAL_MANAGER_SET_SCRIPT,
                         BSAL_ASSEMBLY_BLOCK_CLASSIFIER_SCRIPT);
+
+    } else if (concrete_self->coverage_distribution == BSAL_ACTOR_NOBODY) {
+
+        bsal_message_helper_unpack_int(message, 0, &concrete_self->coverage_distribution);
+
+        bsal_actor_register_handler_with_source(self, BSAL_SET_EXPECTED_MESSAGE_COUNT_REPLY,
+                        concrete_self->coverage_distribution,
+                            bsal_assembly_graph_builder_set_expected_message_count_reply);
+
+        bsal_actor_register_handler_with_source(self, BSAL_ACTOR_NOTIFY,
+                        concrete_self->coverage_distribution,
+                        bsal_assembly_graph_builder_notify_from_distribution);
+
+        bsal_actor_helper_send_int(self, concrete_self->coverage_distribution,
+                        BSAL_SET_EXPECTED_MESSAGE_COUNT, (int)bsal_vector_size(&concrete_self->graph_stores));
+
     }
+}
+
+void bsal_assembly_graph_builder_set_expected_message_count_reply(struct bsal_actor *self, struct bsal_message *message)
+{
+    struct bsal_assembly_graph_builder *concrete_self;
+
+    concrete_self = bsal_actor_concrete_actor(self);
+
+    bsal_actor_register_handler_with_sources(self, BSAL_ACTOR_SET_CONSUMER_REPLY,
+                    &concrete_self->graph_stores, bsal_assembly_graph_builder_set_consumer_reply_graph_stores);
+
+    /*
+     * Link the graph stores to the coverage distribution
+     */
+    bsal_actor_helper_send_range_int(self, &concrete_self->graph_stores,
+                    BSAL_ACTOR_SET_CONSUMER,
+                    concrete_self->coverage_distribution);
 }
 
 void bsal_assembly_graph_builder_set_script_reply_store_manager(struct bsal_actor *self, struct bsal_message *message)
@@ -289,6 +328,9 @@ void bsal_assembly_graph_builder_start_reply_window_manager(struct bsal_actor *s
      * windows
      */
     bsal_vector_unpack(&concrete_self->sliding_windows, buffer);
+
+    bsal_actor_register_handler_with_sources(self, BSAL_ACTOR_SET_CONSUMER_REPLY,
+                    &concrete_self->sliding_windows, bsal_assembly_graph_builder_set_consumer_reply_windows);
 
     printf("%s/%d has %d sliding windows for assembly\n",
                     bsal_actor_script_name(self),
@@ -458,6 +500,30 @@ void bsal_assembly_graph_builder_connect_actors(struct bsal_actor *self)
 
 void bsal_assembly_graph_builder_set_consumer_reply(struct bsal_actor *self, struct bsal_message *message)
 {
+
+}
+
+void bsal_assembly_graph_builder_set_consumer_reply_graph_stores(struct bsal_actor *self, struct bsal_message *message)
+{
+    struct bsal_assembly_graph_builder *concrete_self;
+
+    concrete_self = bsal_actor_concrete_actor(self);
+
+    ++concrete_self->configured_graph_stores;
+
+    if (concrete_self->configured_graph_stores == bsal_vector_size(&concrete_self->graph_stores)) {
+
+        /*
+         * ABCD
+         */
+
+        bsal_actor_helper_send_range_empty(self, &concrete_self->graph_stores,
+                        BSAL_PUSH_DATA);
+    }
+}
+
+void bsal_assembly_graph_builder_set_consumer_reply_windows(struct bsal_actor *self, struct bsal_message *message)
+{
     struct bsal_assembly_graph_builder *concrete_self;
 
     concrete_self = bsal_actor_concrete_actor(self);
@@ -614,8 +680,6 @@ void bsal_assembly_graph_builder_notify_reply(struct bsal_actor *self, struct bs
             concrete_self->total_kmer_count);
 
         bsal_actor_helper_send_to_self_empty(self, BSAL_ASSEMBLY_GRAPH_BUILDER_CONTROL_COMPLEXITY);
-
-
     }
 }
 
@@ -636,6 +700,7 @@ void bsal_assembly_graph_builder_get_entry_count_reply(struct bsal_actor *self, 
 {
     uint64_t kmer_count;
     struct bsal_assembly_graph_builder *concrete_self;
+    int spawner;
 
     concrete_self = bsal_actor_concrete_actor(self);
 
@@ -654,7 +719,13 @@ void bsal_assembly_graph_builder_get_entry_count_reply(struct bsal_actor *self, 
                             bsal_actor_name(self),
                             (int)bsal_vector_size(&concrete_self->graph_stores));
 
-            bsal_assembly_graph_builder_tell_source(self);
+            /* Generate coverage distribution
+             */
+
+            spawner = bsal_actor_get_spawner(self, &concrete_self->spawners);
+
+            bsal_actor_helper_send_int(self, spawner, BSAL_ACTOR_SPAWN,
+                            BSAL_COVERAGE_DISTRIBUTION_SCRIPT);
 
         } else {
             /*
@@ -664,4 +735,9 @@ void bsal_assembly_graph_builder_get_entry_count_reply(struct bsal_actor *self, 
             bsal_actor_helper_send_to_self_empty(self, BSAL_ASSEMBLY_GRAPH_BUILDER_CONTROL_COMPLEXITY);
         }
     }
+}
+
+void bsal_assembly_graph_builder_notify_from_distribution(struct bsal_actor *self, struct bsal_message *message)
+{
+    bsal_assembly_graph_builder_tell_source(self);
 }
