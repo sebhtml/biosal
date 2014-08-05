@@ -15,6 +15,7 @@ CORE_OBJECTS += core/helpers/map_helper.o
 CORE_OBJECTS += core/helpers/set_helper.o
 CORE_OBJECTS += core/helpers/pair.o
 CORE_OBJECTS += core/helpers/statistics.o
+CORE_OBJECTS += core/helpers/bitmap.o
 
 # system stuff
 CORE_OBJECTS += core/system/lock.o

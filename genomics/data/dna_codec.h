@@ -15,6 +15,20 @@
 
 #define BSAL_DNA_CODEC_MINIMUM_NODE_COUNT_FOR_TWO_BIT (2)
 
+#define BSAL_NUCLEOTIDE_CODE_A 0 /* ~00 == 11 */
+#define BSAL_NUCLEOTIDE_CODE_C 1 /* ~01 == 10 */
+#define BSAL_NUCLEOTIDE_CODE_G 2 /* ~10 == 01 */
+#define BSAL_NUCLEOTIDE_CODE_T 3 /* ~11 == 00 */
+
+#define BSAL_NUCLEOTIDE_SYMBOL_A 'A'
+#define BSAL_NUCLEOTIDE_SYMBOL_C 'C'
+#define BSAL_NUCLEOTIDE_SYMBOL_G 'G'
+#define BSAL_NUCLEOTIDE_SYMBOL_T 'T'
+
+
+/*
+ * A class to encode and decode DNA data.
+ */
 struct bsal_dna_codec {
     struct bsal_map encoding_lookup_table;
     struct bsal_map decoding_lookup_table;

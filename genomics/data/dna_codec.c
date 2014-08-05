@@ -14,16 +14,6 @@
 #define BITS_PER_NUCLEOTIDE 2
 #define BITS_PER_BYTE 8
 
-#define BSAL_NUCLEOTIDE_CODE_A 0 /* ~00 == 11 */
-#define BSAL_NUCLEOTIDE_CODE_C 1 /* ~01 == 10 */
-#define BSAL_NUCLEOTIDE_CODE_G 2 /* ~10 == 01 */
-#define BSAL_NUCLEOTIDE_CODE_T 3 /* ~11 == 00 */
-
-#define BSAL_NUCLEOTIDE_SYMBOL_A 'A'
-#define BSAL_NUCLEOTIDE_SYMBOL_C 'C'
-#define BSAL_NUCLEOTIDE_SYMBOL_G 'G'
-#define BSAL_NUCLEOTIDE_SYMBOL_T 'T'
-
 #include <stdint.h>
 
 /*

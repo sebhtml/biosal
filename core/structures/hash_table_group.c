@@ -7,6 +7,8 @@
 
 #include <core/system/debugger.h>
 
+#include <core/helpers/bitmap.h>
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdint.h>
@@ -15,11 +17,6 @@
 #include <inttypes.h>
 
 /*#define BSAL_HASH_TABLE_GROUP_DEBUG */
-
-#define BSAL_BIT_ZERO 0
-#define BSAL_BIT_ONE 1
-
-#define BSAL_BITS_PER_BYTE 8
 
 void bsal_hash_table_group_init(struct bsal_hash_table_group *group,
                 uint64_t buckets_per_group, int key_size, int value_size,
@@ -147,6 +144,7 @@ void bsal_hash_table_group_set_bit(void *bitmap, uint64_t bucket, int value1)
     int bit;
     uint64_t bits;
     uint64_t value;
+    uint64_t filter;
 
     value = value1;
     unit = bucket / BSAL_BITS_PER_BYTE;
@@ -157,9 +155,9 @@ void bsal_hash_table_group_set_bit(void *bitmap, uint64_t bucket, int value1)
     if (value == BSAL_BIT_ONE){
         bits |= (value << bit);
 
-        /* set bit to 0 */
+    /* set bit to 0 */
     } else if (value == BSAL_BIT_ZERO) {
-        uint64_t filter = BSAL_BIT_ONE;
+        filter = BSAL_BIT_ONE;
         filter <<= bit;
         filter =~ filter;
         bits &= filter;
@@ -173,7 +171,7 @@ int bsal_hash_table_group_get_bit(void *bitmap, uint64_t bucket)
     int unit;
     int bit;
     uint64_t bits;
-    int bitValue;
+    int bit_value;
 
     unit = bucket / BSAL_BITS_PER_BYTE;
     bit = bucket % BSAL_BITS_PER_BYTE;
@@ -181,9 +179,9 @@ int bsal_hash_table_group_get_bit(void *bitmap, uint64_t bucket)
     /*printf("bsal_hash_table_group_get_bit %p %i\n", group->bitmap, unit);*/
 
     bits = (uint64_t)(((char *)bitmap)[unit]);
-    bitValue = (bits<<(63 - bit))>>63;
+    bit_value = (bits << (63 - bit)) >> 63;
 
-    return bitValue;
+    return bit_value;
 }
 
 void *bsal_hash_table_group_key(struct bsal_hash_table_group *group, uint64_t bucket,
