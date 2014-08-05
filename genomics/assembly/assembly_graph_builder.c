@@ -197,6 +197,7 @@ void bsal_assembly_graph_builder_spawn_reply(struct bsal_actor *self, struct bsa
 
     concrete_self = bsal_actor_concrete_actor(self);
 
+    printf("DEBUG bsal_assembly_graph_builder_spawn_reply\n");
 
     /*
      * Configure the manager for block classifiers
@@ -232,6 +233,9 @@ void bsal_assembly_graph_builder_spawn_reply(struct bsal_actor *self, struct bsa
         bsal_actor_send_int(self, concrete_self->coverage_distribution,
                         BSAL_SET_EXPECTED_MESSAGE_COUNT, (int)bsal_vector_size(&concrete_self->graph_stores));
 
+    } else {
+
+        printf("Warning: unknown state when receiveing BSAL_ACTOR_SPAWN_REPLY\n");
     }
 }
 
@@ -313,6 +317,11 @@ void bsal_assembly_graph_builder_spawn_reply_window_manager(struct bsal_actor *s
      */
 
     bsal_message_unpack_int(message, 0, &concrete_self->manager_for_windows);
+
+    printf("%s/%d says that the manager for windows is %d\n",
+                    bsal_actor_script_name(self),
+                    bsal_actor_name(self),
+                    concrete_self->manager_for_windows);
 
     bsal_actor_add_route_with_source(self, BSAL_MANAGER_SET_SCRIPT_REPLY,
                     bsal_assembly_graph_builder_set_script_reply_window_manager,

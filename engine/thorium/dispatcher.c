@@ -139,10 +139,34 @@ int bsal_dispatcher_dispatch(struct bsal_dispatcher *self, struct bsal_actor *ac
     }
 #endif
 
+    /*
+     * First try to get a route using
+     * the tag and the source.
+     *
+     * If that does not work, try with the tag and
+     * with the source wildcard BSAL_ACTOR_ANYBODY
+     */
     handler = bsal_dispatcher_get(self, tag, source);
+
+    /*
+     * If there is no route for this source,
+     * try with the wild card BSAL_ACTOR_ANYBODY to see
+     * if this is registered.
+     *
+     */
+    if (handler == NULL) {
+
+        handler = bsal_dispatcher_get(self, tag, BSAL_ACTOR_ANYBODY);
+    }
 
     if (handler == NULL) {
 
+        /*
+         * There is no default route for this tag and this source.
+         * In fact, there is no route for this tag and
+         * BSAL_ACTOR_ANYBODY.
+         *
+         */
 #ifdef BSAL_DISPATCHER_DEBUG_10335
         if (tag == 10335) {
             printf("DEBUG 10335 is not registered.\n");
@@ -165,7 +189,6 @@ bsal_actor_receive_fn_t bsal_dispatcher_get(struct bsal_dispatcher *self, int ta
     struct bsal_map *map;
     struct bsal_vector *vector;
     struct bsal_route *route;
-    int any_source;
     int i;
     int size;
     bsal_actor_receive_fn_t handler_with_condition;
@@ -191,16 +214,6 @@ bsal_actor_receive_fn_t bsal_dispatcher_get(struct bsal_dispatcher *self, int ta
      */
     if (vector == NULL) {
 
-        /*
-         * Check if a wildcard was registered
-         */
-        any_source = BSAL_ACTOR_ANYBODY;
-        vector = bsal_map_get(map, &any_source);
-    }
-
-    /* BSAL_ACTOR_ANYBODY is not registered.
-     */
-    if (vector == NULL) {
         return NULL;
     }
 
