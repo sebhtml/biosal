@@ -37,6 +37,7 @@ void bsal_assembly_graph_builder_init(struct bsal_actor *self)
 
     bsal_vector_init(&concrete_self->spawners, sizeof(int));
     bsal_vector_init(&concrete_self->sequence_stores, sizeof(int));
+    bsal_vector_init(&concrete_self->block_classifiers, sizeof(int));
 
     bsal_actor_register_handler(self, BSAL_ACTOR_START, bsal_assembly_graph_builder_start);
     bsal_actor_register_handler(self, BSAL_ACTOR_SET_PRODUCERS, bsal_assembly_graph_builder_set_producers);
