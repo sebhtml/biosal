@@ -87,7 +87,7 @@ void bsal_aggregator_init(struct bsal_actor *self)
 
     /* Enable cloning stuff
      */
-    bsal_actor_helper_send_to_self_empty(self, BSAL_ACTOR_PACK_ENABLE);
+    bsal_actor_send_to_self_empty(self, BSAL_ACTOR_PACK_ENABLE);
 
     bsal_actor_add_route(self, BSAL_ACTOR_PACK,
                     bsal_aggregator_pack_message);
@@ -134,26 +134,26 @@ void bsal_aggregator_receive(struct bsal_actor *self, struct bsal_message *messa
 
     if (tag == BSAL_ACTOR_ASK_TO_STOP) {
 
-        bsal_actor_helper_ask_to_stop(self, message);
+        bsal_actor_ask_to_stop(self, message);
 
     } else if (tag == BSAL_SET_KMER_LENGTH) {
 
         bsal_message_helper_unpack_int(message, 0, &concrete_actor->kmer_length);
 
-        bsal_actor_helper_send_reply_empty(self, BSAL_SET_KMER_LENGTH_REPLY);
+        bsal_actor_send_reply_empty(self, BSAL_SET_KMER_LENGTH_REPLY);
 
     } else if (tag == BSAL_ACTOR_SET_CONSUMERS) {
 
         bsal_aggregator_set_consumers(self, buffer);
 
-        bsal_actor_helper_send_reply_empty(self, BSAL_ACTOR_SET_CONSUMERS_REPLY);
+        bsal_actor_send_reply_empty(self, BSAL_ACTOR_SET_CONSUMERS_REPLY);
 
     } else if (tag == BSAL_AGGREGATOR_FLUSH) {
 
 
         concrete_actor->forced = BSAL_TRUE;
 
-        bsal_actor_helper_send_reply_empty(self, BSAL_AGGREGATOR_FLUSH_REPLY);
+        bsal_actor_send_reply_empty(self, BSAL_AGGREGATOR_FLUSH_REPLY);
 
     } else if (tag == BSAL_PUSH_KMER_BLOCK_REPLY) {
 
@@ -282,7 +282,7 @@ void bsal_aggregator_verify(struct bsal_actor *self, struct bsal_message *messag
         /* tell the producer to continue...
          */
         producer = producer_index;
-        bsal_actor_helper_send_empty(self, producer, BSAL_AGGREGATE_KERNEL_OUTPUT_REPLY);
+        bsal_actor_send_empty(self, producer, BSAL_AGGREGATE_KERNEL_OUTPUT_REPLY);
     }
 }
 
@@ -493,7 +493,7 @@ void bsal_aggregator_pack_message(struct bsal_actor *actor, struct bsal_message 
     bsal_aggregator_pack(actor, new_buffer);
 
     bsal_message_init(&new_message, BSAL_ACTOR_PACK_REPLY, new_count, new_buffer);
-    bsal_actor_helper_send_reply(actor, &new_message);
+    bsal_actor_send_reply(actor, &new_message);
     bsal_message_destroy(&new_message);
 
     bsal_memory_pool_free(ephemeral_memory, new_buffer);
@@ -508,7 +508,7 @@ void bsal_aggregator_unpack_message(struct bsal_actor *actor, struct bsal_messag
 
     bsal_aggregator_unpack(actor, buffer);
 
-    bsal_actor_helper_send_reply_empty(actor, BSAL_ACTOR_UNPACK_REPLY);
+    bsal_actor_send_reply_empty(actor, BSAL_ACTOR_UNPACK_REPLY);
 }
 
 int bsal_aggregator_set_consumers(struct bsal_actor *actor, void *buffer)

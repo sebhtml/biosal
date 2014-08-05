@@ -20,7 +20,7 @@ void frame_init(struct bsal_actor *actor)
     concrete_actor = (struct frame *)bsal_actor_concrete_actor(actor);
     concrete_actor->value = rand() % 12345;
 
-    bsal_actor_helper_send_to_self_empty(actor, BSAL_ACTOR_PACK_ENABLE);
+    bsal_actor_send_to_self_empty(actor, BSAL_ACTOR_PACK_ENABLE);
 
     concrete_actor->migrated_other = 0;
     concrete_actor->pings = 0;
@@ -66,7 +66,7 @@ void frame_receive(struct bsal_actor *actor, struct bsal_message *message)
         other = bsal_actor_spawn(actor, bsal_actor_script(actor));
         bsal_vector_helper_push_back_int(acquaintance_vector, other);
 
-        bsal_actor_helper_send_empty(actor, other, BSAL_ACTOR_PING);
+        bsal_actor_send_empty(actor, other, BSAL_ACTOR_PING);
 
         printf("actor %d sends BSAL_ACTOR_PING to new actor %d\n",
                         name, other);
@@ -83,7 +83,7 @@ void frame_receive(struct bsal_actor *actor, struct bsal_message *message)
         bsal_vector_helper_print_int(acquaintance_vector);
         printf("\n");
 
-        bsal_actor_helper_send_reply_empty(actor, BSAL_ACTOR_PING_REPLY);
+        bsal_actor_send_reply_empty(actor, BSAL_ACTOR_PING_REPLY);
 
     } else if (tag == BSAL_ACTOR_PING_REPLY) {
 
@@ -96,8 +96,8 @@ void frame_receive(struct bsal_actor *actor, struct bsal_message *message)
          */
         if (concrete_actor->migrated_other && concrete_actor->pings == 2) {
 
-            bsal_actor_helper_send_reply_empty(actor, BSAL_ACTOR_ASK_TO_STOP);
-            bsal_actor_helper_send_to_self_empty(actor, BSAL_ACTOR_ASK_TO_STOP);
+            bsal_actor_send_reply_empty(actor, BSAL_ACTOR_ASK_TO_STOP);
+            bsal_actor_send_to_self_empty(actor, BSAL_ACTOR_ASK_TO_STOP);
 
             return;
         }
@@ -112,14 +112,14 @@ void frame_receive(struct bsal_actor *actor, struct bsal_message *message)
         bsal_vector_helper_print_int(acquaintance_vector);
         printf("\n");
 
-        bsal_actor_helper_send_reply_int(actor, BSAL_ACTOR_MIGRATE, name);
+        bsal_actor_send_reply_int(actor, BSAL_ACTOR_MIGRATE, name);
 
         /* send a message to other while it is migrating.
          * this is supposed to work !
          */
         printf("actor %d sends BSAL_ACTOR_PING to %d while it is migrating\n",
                         name, source);
-        bsal_actor_helper_send_reply_empty(actor, BSAL_ACTOR_PING);
+        bsal_actor_send_reply_empty(actor, BSAL_ACTOR_PING);
 
         concrete_actor->migrated_other = 1;
 
@@ -135,18 +135,18 @@ void frame_receive(struct bsal_actor *actor, struct bsal_message *message)
          * before the migration
          */
         if (concrete_actor->pings == 2) {
-            bsal_actor_helper_send_reply_empty(actor, BSAL_ACTOR_ASK_TO_STOP);
-            bsal_actor_helper_send_to_self_empty(actor, BSAL_ACTOR_ASK_TO_STOP);
+            bsal_actor_send_reply_empty(actor, BSAL_ACTOR_ASK_TO_STOP);
+            bsal_actor_send_to_self_empty(actor, BSAL_ACTOR_ASK_TO_STOP);
         }
 
     } else if (tag == BSAL_ACTOR_PACK) {
 
-        bsal_actor_helper_send_reply_int(actor, BSAL_ACTOR_PACK_REPLY, concrete_actor->value);
+        bsal_actor_send_reply_int(actor, BSAL_ACTOR_PACK_REPLY, concrete_actor->value);
 
     } else if (tag == BSAL_ACTOR_UNPACK) {
 
         bsal_message_helper_unpack_int(message, 0, &concrete_actor->value);
-        bsal_actor_helper_send_reply_empty(actor, BSAL_ACTOR_UNPACK_REPLY);
+        bsal_actor_send_reply_empty(actor, BSAL_ACTOR_UNPACK_REPLY);
 
     } else if (tag == BSAL_ACTOR_ASK_TO_STOP) {
 
@@ -156,6 +156,6 @@ void frame_receive(struct bsal_actor *actor, struct bsal_message *message)
         bsal_vector_helper_print_int(acquaintance_vector);
         printf("\n");
 
-        bsal_actor_helper_send_to_self_empty(actor, BSAL_ACTOR_STOP);
+        bsal_actor_send_to_self_empty(actor, BSAL_ACTOR_STOP);
     }
 }

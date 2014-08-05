@@ -107,7 +107,7 @@ void bsal_coverage_distribution_receive(struct bsal_actor *self, struct bsal_mes
 
         bsal_map_iterator_destroy(&iterator);
 
-        bsal_actor_helper_send_reply_empty(self, BSAL_PUSH_DATA_REPLY);
+        bsal_actor_send_reply_empty(self, BSAL_PUSH_DATA_REPLY);
 
         concrete_actor->actual++;
 
@@ -121,7 +121,7 @@ void bsal_coverage_distribution_receive(struct bsal_actor *self, struct bsal_mes
 
             bsal_coverage_distribution_write_distribution(self);
 
-            bsal_actor_helper_send_empty(self, concrete_actor->source,
+            bsal_actor_send_empty(self, concrete_actor->source,
                             BSAL_ACTOR_NOTIFY);
         }
 
@@ -140,7 +140,7 @@ void bsal_coverage_distribution_receive(struct bsal_actor *self, struct bsal_mes
                         bsal_actor_name(self),
                         concrete_actor->expected);
 
-        bsal_actor_helper_send_reply_empty(self, BSAL_SET_EXPECTED_MESSAGE_COUNT_REPLY);
+        bsal_actor_send_reply_empty(self, BSAL_SET_EXPECTED_MESSAGE_COUNT_REPLY);
     }
 }
 
@@ -308,5 +308,5 @@ void bsal_coverage_distribution_ask_to_stop(struct bsal_actor *self, struct bsal
 
     bsal_vector_destroy(&coverage_values);
 
-    bsal_actor_helper_ask_to_stop(self, message);
+    bsal_actor_ask_to_stop(self, message);
 }

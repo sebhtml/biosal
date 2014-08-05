@@ -108,7 +108,7 @@ void bsal_manager_receive(struct bsal_actor *actor, struct bsal_message *message
         if (concrete_actor->script == BSAL_ACTOR_NO_VALUE) {
 
             bsal_vector_init(&all_stores, sizeof(int));
-            bsal_actor_helper_send_reply_vector(actor, BSAL_ACTOR_START_REPLY, &all_stores);
+            bsal_actor_send_reply_vector(actor, BSAL_ACTOR_START_REPLY, &all_stores);
             bsal_vector_destroy(&all_stores);
             return;
         }
@@ -158,7 +158,7 @@ void bsal_manager_receive(struct bsal_actor *actor, struct bsal_message *message
 
             bsal_vector_init(stores, sizeof(int));
 
-            bsal_actor_helper_send_empty(actor, spawner, BSAL_ACTOR_GET_NODE_WORKER_COUNT);
+            bsal_actor_send_empty(actor, spawner, BSAL_ACTOR_GET_NODE_WORKER_COUNT);
         }
 
         bsal_vector_iterator_destroy(&iterator);
@@ -175,7 +175,7 @@ void bsal_manager_receive(struct bsal_actor *actor, struct bsal_message *message
         printf("manager %d sets script to script %x\n",
                         bsal_actor_name(actor), concrete_actor->script);
 
-        bsal_actor_helper_send_reply_empty(actor, BSAL_MANAGER_SET_SCRIPT_REPLY);
+        bsal_actor_send_reply_empty(actor, BSAL_MANAGER_SET_SCRIPT_REPLY);
 
 #ifdef BSAL_MANAGER_DEBUG
         BSAL_DEBUG_MARKER("manager sends reply");
@@ -188,7 +188,7 @@ void bsal_manager_receive(struct bsal_actor *actor, struct bsal_message *message
             concrete_actor->actors_per_spawner = BSAL_ACTOR_NO_VALUE;
         }
 
-        bsal_actor_helper_send_reply_empty(actor, BSAL_MANAGER_SET_ACTORS_PER_SPAWNER_REPLY);
+        bsal_actor_send_reply_empty(actor, BSAL_MANAGER_SET_ACTORS_PER_SPAWNER_REPLY);
 
     } else if (tag == BSAL_ACTOR_GET_NODE_WORKER_COUNT_REPLY) {
 
@@ -245,7 +245,7 @@ void bsal_manager_receive(struct bsal_actor *actor, struct bsal_message *message
 
         }
 
-        bsal_actor_helper_send_reply_int(actor, BSAL_ACTOR_SPAWN, concrete_actor->script);
+        bsal_actor_send_reply_int(actor, BSAL_ACTOR_SPAWN, concrete_actor->script);
 
     } else if (tag == BSAL_ACTOR_SPAWN_REPLY) {
 
@@ -300,7 +300,7 @@ void bsal_manager_receive(struct bsal_actor *actor, struct bsal_message *message
                 bsal_vector_destroy(&all_stores);
 
                 bsal_message_init(&new_message, BSAL_ACTOR_START_REPLY, new_count, new_buffer);
-                bsal_actor_helper_send_to_supervisor(actor, &new_message);
+                bsal_actor_send_to_supervisor(actor, &new_message);
 
                 bsal_memory_free(new_buffer);
 
@@ -308,14 +308,14 @@ void bsal_manager_receive(struct bsal_actor *actor, struct bsal_message *message
             }
         } else {
 
-            bsal_actor_helper_send_reply_int(actor, BSAL_ACTOR_SPAWN, concrete_actor->script);
+            bsal_actor_send_reply_int(actor, BSAL_ACTOR_SPAWN, concrete_actor->script);
         }
 
     } else if (tag == BSAL_ACTOR_ASK_TO_STOP) {
 
         printf("manager %d dies\n", bsal_actor_name(actor));
 
-        bsal_actor_helper_ask_to_stop(actor, message);
+        bsal_actor_ask_to_stop(actor, message);
 
     } else if (tag == BSAL_MANAGER_SET_ACTORS_PER_WORKER) {
 
@@ -325,7 +325,7 @@ void bsal_manager_receive(struct bsal_actor *actor, struct bsal_message *message
             concrete_actor->actors_per_worker = BSAL_ACTOR_NO_VALUE;
         }
 
-        bsal_actor_helper_send_reply_empty(actor, BSAL_MANAGER_SET_ACTORS_PER_WORKER_REPLY);
+        bsal_actor_send_reply_empty(actor, BSAL_MANAGER_SET_ACTORS_PER_WORKER_REPLY);
 
     } else if (tag == BSAL_MANAGER_SET_WORKERS_PER_ACTOR) {
 
@@ -335,7 +335,7 @@ void bsal_manager_receive(struct bsal_actor *actor, struct bsal_message *message
             concrete_actor->workers_per_actor = BSAL_ACTOR_NO_VALUE;
         }
 
-        bsal_actor_helper_send_reply_empty(actor, BSAL_MANAGER_SET_WORKERS_PER_ACTOR_REPLY);
+        bsal_actor_send_reply_empty(actor, BSAL_MANAGER_SET_WORKERS_PER_ACTOR_REPLY);
 
     }
 }

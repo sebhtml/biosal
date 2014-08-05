@@ -13,7 +13,7 @@
 #include <stdio.h>
 #include <string.h>
 
-void bsal_actor_helper_send_vector(struct bsal_actor *actor, int destination,
+void bsal_actor_send_vector(struct bsal_actor *actor, int destination,
                 int tag, struct bsal_vector *vector)
 {
     int count;
@@ -35,22 +35,22 @@ void bsal_actor_helper_send_vector(struct bsal_actor *actor, int destination,
     bsal_message_destroy(&message);
 }
 
-void bsal_actor_helper_send_reply_vector(struct bsal_actor *actor, int tag, struct bsal_vector *vector)
+void bsal_actor_send_reply_vector(struct bsal_actor *actor, int tag, struct bsal_vector *vector)
 {
-    bsal_actor_helper_send_vector(actor, bsal_actor_source(actor), tag, vector);
+    bsal_actor_send_vector(actor, bsal_actor_source(actor), tag, vector);
 }
 
-void bsal_actor_helper_send_reply_empty(struct bsal_actor *actor, int tag)
+void bsal_actor_send_reply_empty(struct bsal_actor *actor, int tag)
 {
-    bsal_actor_helper_send_empty(actor, bsal_actor_source(actor), tag);
+    bsal_actor_send_empty(actor, bsal_actor_source(actor), tag);
 }
 
-void bsal_actor_helper_send_to_self_empty(struct bsal_actor *actor, int tag)
+void bsal_actor_send_to_self_empty(struct bsal_actor *actor, int tag)
 {
-    bsal_actor_helper_send_empty(actor, bsal_actor_name(actor), tag);
+    bsal_actor_send_empty(actor, bsal_actor_name(actor), tag);
 }
 
-void bsal_actor_helper_send_empty(struct bsal_actor *actor, int destination, int tag)
+void bsal_actor_send_empty(struct bsal_actor *actor, int destination, int tag)
 {
     struct bsal_message message;
 
@@ -59,46 +59,37 @@ void bsal_actor_helper_send_empty(struct bsal_actor *actor, int destination, int
     bsal_message_destroy(&message);
 }
 
-void bsal_actor_helper_send_to_supervisor_empty(struct bsal_actor *actor, int tag)
+void bsal_actor_send_to_supervisor_empty(struct bsal_actor *actor, int tag)
 {
-    bsal_actor_helper_send_empty(actor, bsal_actor_supervisor(actor), tag);
+    bsal_actor_send_empty(actor, bsal_actor_supervisor(actor), tag);
 }
 
-void bsal_actor_helper_send_to_supervisor_int(struct bsal_actor *actor, int tag, int value)
+void bsal_actor_send_to_supervisor_int(struct bsal_actor *actor, int tag, int value)
 {
-    bsal_actor_helper_send_int(actor, bsal_actor_supervisor(actor), tag, value);
+    bsal_actor_send_int(actor, bsal_actor_supervisor(actor), tag, value);
 }
 
-void bsal_actor_helper_send_to_self_int(struct bsal_actor *actor, int tag, int value)
+void bsal_actor_send_to_self_int(struct bsal_actor *actor, int tag, int value)
 {
-    bsal_actor_helper_send_int(actor, bsal_actor_name(actor), tag, value);
+    bsal_actor_send_int(actor, bsal_actor_name(actor), tag, value);
 }
 
-void bsal_actor_helper_send_reply_int(struct bsal_actor *actor, int tag, int value)
+void bsal_actor_send_reply_int(struct bsal_actor *actor, int tag, int value)
 {
-    bsal_actor_helper_send_int(actor, bsal_actor_source(actor), tag, value);
+    bsal_actor_send_int(actor, bsal_actor_source(actor), tag, value);
 }
 
-void bsal_actor_helper_send_reply_int64_t(struct bsal_actor *actor, int tag, int64_t value)
+void bsal_actor_send_reply_int64_t(struct bsal_actor *actor, int tag, int64_t value)
 {
-    bsal_actor_helper_send_int64_t(actor, bsal_actor_source(actor), tag, value);
+    bsal_actor_send_int64_t(actor, bsal_actor_source(actor), tag, value);
 }
 
-void bsal_actor_helper_send_reply_uint64_t(struct bsal_actor *actor, int tag, uint64_t value)
+void bsal_actor_send_reply_uint64_t(struct bsal_actor *actor, int tag, uint64_t value)
 {
-    bsal_actor_helper_send_uint64_t(actor, bsal_actor_source(actor), tag, value);
+    bsal_actor_send_uint64_t(actor, bsal_actor_source(actor), tag, value);
 }
 
-void bsal_actor_helper_send_int(struct bsal_actor *actor, int destination, int tag, int value)
-{
-    struct bsal_message message;
-
-    bsal_message_init(&message, tag, sizeof(value), &value);
-    bsal_actor_send(actor, destination, &message);
-    bsal_message_destroy(&message);
-}
-
-void bsal_actor_helper_send_uint64_t(struct bsal_actor *actor, int destination, int tag, uint64_t value)
+void bsal_actor_send_int(struct bsal_actor *actor, int destination, int tag, int value)
 {
     struct bsal_message message;
 
@@ -107,7 +98,16 @@ void bsal_actor_helper_send_uint64_t(struct bsal_actor *actor, int destination, 
     bsal_message_destroy(&message);
 }
 
-void bsal_actor_helper_send_int64_t(struct bsal_actor *actor, int destination, int tag, int64_t value)
+void bsal_actor_send_uint64_t(struct bsal_actor *actor, int destination, int tag, uint64_t value)
+{
+    struct bsal_message message;
+
+    bsal_message_init(&message, tag, sizeof(value), &value);
+    bsal_actor_send(actor, destination, &message);
+    bsal_message_destroy(&message);
+}
+
+void bsal_actor_send_int64_t(struct bsal_actor *actor, int destination, int tag, int64_t value)
 {
     struct bsal_message message;
 
@@ -117,7 +117,7 @@ void bsal_actor_helper_send_int64_t(struct bsal_actor *actor, int destination, i
 }
 
 #ifdef BSAL_ACTOR_EXPOSE_ACQUAINTANCE_VECTOR
-void bsal_actor_helper_get_acquaintances(struct bsal_actor *actor, struct bsal_vector *indices,
+void bsal_actor_get_acquaintances(struct bsal_actor *actor, struct bsal_vector *indices,
                 struct bsal_vector *names)
 {
     struct bsal_vector_iterator iterator;
@@ -147,7 +147,7 @@ void bsal_actor_helper_get_acquaintances(struct bsal_actor *actor, struct bsal_v
 #endif
 
 #ifdef BSAL_ACTOR_EXPOSE_ACQUAINTANCE_VECTOR
-void bsal_actor_helper_add_acquaintances(struct bsal_actor *actor,
+void bsal_actor_add_acquaintances(struct bsal_actor *actor,
                 struct bsal_vector *names, struct bsal_vector *indices)
 {
     struct bsal_vector_iterator iterator;
@@ -164,7 +164,7 @@ void bsal_actor_helper_add_acquaintances(struct bsal_actor *actor,
         index = bsal_actor_add_acquaintance(actor, name);
 
 #ifdef BSAL_ACTOR_HELPER_DEBUG
-        printf("DEBUG bsal_actor_helper_add_acquaintances name %d index %d\n",
+        printf("DEBUG bsal_actor_add_acquaintances name %d index %d\n",
                         name, index);
 #endif
 
@@ -182,7 +182,7 @@ void bsal_actor_helper_add_acquaintances(struct bsal_actor *actor,
 }
 #endif
 
-void bsal_actor_helper_send_range(struct bsal_actor *actor, struct bsal_vector *actors,
+void bsal_actor_send_range(struct bsal_actor *actor, struct bsal_vector *actors,
                 struct bsal_message *message)
 {
         /*
@@ -191,14 +191,14 @@ void bsal_actor_helper_send_range(struct bsal_actor *actor, struct bsal_vector *
     real_source = bsal_actor_name(actor);
     */
 
-    bsal_actor_helper_send_range_standard(actor, actors, message);
+    bsal_actor_send_range_standard(actor, actors, message);
 /*
     bsal_actor_pack_proxy_message(actor, message, real_source);
     bsal_actor_send_range_binomial_tree(actor, actors, message);
     */
 }
 
-void bsal_actor_helper_send_range_standard(struct bsal_actor *actor, struct bsal_vector *actors,
+void bsal_actor_send_range_standard(struct bsal_actor *actor, struct bsal_vector *actors,
                 struct bsal_message *message)
 {
     int i;
@@ -210,7 +210,7 @@ void bsal_actor_helper_send_range_standard(struct bsal_actor *actor, struct bsal
     last = bsal_vector_size(actors) - 1;
 
 #ifdef BSAL_ACTOR_DEBUG1
-    printf("DEBUG bsal_actor_helper_send_range_standard %i-%i\n",
+    printf("DEBUG bsal_actor_send_range_standard %i-%i\n",
                     first, last);
 #endif
 
@@ -228,7 +228,7 @@ void bsal_actor_helper_send_range_standard(struct bsal_actor *actor, struct bsal
     }
 }
 
-void bsal_actor_helper_send_range_binomial_tree(struct bsal_actor *actor, struct bsal_vector *actors,
+void bsal_actor_send_range_binomial_tree(struct bsal_actor *actor, struct bsal_vector *actors,
                 struct bsal_message *message)
 {
     int middle;
@@ -260,7 +260,7 @@ void bsal_actor_helper_send_range_binomial_tree(struct bsal_actor *actor, struct
     limit = 0;
 
     if (bsal_vector_size(actors) < limit) {
-        bsal_actor_helper_send_range_standard(actor, actors, message);
+        bsal_actor_send_range_standard(actor, actors, message);
         return;
     }
 
@@ -383,27 +383,27 @@ void bsal_actor_helper_send_range_binomial_tree(struct bsal_actor *actor, struct
     }
 }
 
-void bsal_actor_helper_send_range_empty(struct bsal_actor *actor, struct bsal_vector *actors,
+void bsal_actor_send_range_empty(struct bsal_actor *actor, struct bsal_vector *actors,
                 int tag)
 {
     struct bsal_message message;
 
     bsal_message_init(&message, tag, 0, NULL);
-    bsal_actor_helper_send_range(actor, actors, &message);
+    bsal_actor_send_range(actor, actors, &message);
     bsal_message_destroy(&message);
 }
 
-void bsal_actor_helper_send_range_int(struct bsal_actor *actor, struct bsal_vector *actors,
+void bsal_actor_send_range_int(struct bsal_actor *actor, struct bsal_vector *actors,
                 int tag, int value)
 {
     struct bsal_message message;
 
     bsal_message_init(&message, tag, sizeof(value), &value);
-    bsal_actor_helper_send_range(actor, actors, &message);
+    bsal_actor_send_range(actor, actors, &message);
     bsal_message_destroy(&message);
 }
 
-void bsal_actor_helper_send_range_vector(struct bsal_actor *actor, struct bsal_vector *actors,
+void bsal_actor_send_range_vector(struct bsal_actor *actor, struct bsal_vector *actors,
                 int tag, struct bsal_vector *vector)
 {
     struct bsal_message message;
@@ -416,13 +416,13 @@ void bsal_actor_helper_send_range_vector(struct bsal_actor *actor, struct bsal_v
     buffer = bsal_memory_pool_allocate(ephemeral_memory, count);
     bsal_vector_pack(vector, buffer);
     bsal_message_init(&message, tag, count, buffer);
-    bsal_actor_helper_send_range(actor, actors, &message);
+    bsal_actor_send_range(actor, actors, &message);
     bsal_message_destroy(&message);
 
     bsal_memory_pool_free(ephemeral_memory, buffer);
 }
 
-void bsal_actor_helper_receive_binomial_tree_send(struct bsal_actor *actor, struct bsal_message *message)
+void bsal_actor_receive_binomial_tree_send(struct bsal_actor *actor, struct bsal_message *message)
 {
     int real_tag;
     void *buffer;
@@ -468,15 +468,15 @@ void bsal_actor_helper_receive_binomial_tree_send(struct bsal_actor *actor, stru
     bsal_message_init(message, real_tag, new_count, buffer);
 
     if (amount < limit) {
-        bsal_actor_helper_send_range_standard(actor, &actors, message);
+        bsal_actor_send_range_standard(actor, &actors, message);
     } else {
-        bsal_actor_helper_send_range_binomial_tree(actor, &actors, message);
+        bsal_actor_send_range_binomial_tree(actor, &actors, message);
     }
 
     bsal_vector_destroy(&actors);
 }
 
-void bsal_actor_helper_ask_to_stop(struct bsal_actor *actor, struct bsal_message *message)
+void bsal_actor_ask_to_stop(struct bsal_actor *actor, struct bsal_message *message)
 {
     /* only the supervisor or self can
      * call this.
@@ -505,7 +505,7 @@ void bsal_actor_helper_ask_to_stop(struct bsal_actor *actor, struct bsal_message
                             bsal_actor_name(actor), child);
 #endif
 
-        bsal_actor_helper_send_empty(actor, child, BSAL_ACTOR_ASK_TO_STOP);
+        bsal_actor_send_empty(actor, child, BSAL_ACTOR_ASK_TO_STOP);
     }
 
 #ifdef BSAL_ACTOR_HELPER_DEBUG_STOP
@@ -516,13 +516,13 @@ void bsal_actor_helper_ask_to_stop(struct bsal_actor *actor, struct bsal_message
                     bsal_actor_name(actor));
 #endif
 
-    bsal_actor_helper_send_to_self_empty(actor, BSAL_ACTOR_STOP);
+    bsal_actor_send_to_self_empty(actor, BSAL_ACTOR_STOP);
 
-    bsal_actor_helper_send_reply_empty(actor, BSAL_ACTOR_ASK_TO_STOP_REPLY);
+    bsal_actor_send_reply_empty(actor, BSAL_ACTOR_ASK_TO_STOP_REPLY);
 }
 
 #ifdef BSAL_ACTOR_EXPOSE_ACQUAINTANCE_VECTOR
-int bsal_actor_helper_get_acquaintance(struct bsal_actor *actor, struct bsal_vector *indices,
+int bsal_actor_get_acquaintance(struct bsal_actor *actor, struct bsal_vector *indices,
                 int index)
 {
     int index2;
@@ -537,7 +537,7 @@ int bsal_actor_helper_get_acquaintance(struct bsal_actor *actor, struct bsal_vec
 }
 #endif
 
-void bsal_actor_helper_send_double(struct bsal_actor *actor, int destination, int tag, double value)
+void bsal_actor_send_double(struct bsal_actor *actor, int destination, int tag, double value)
 {
     struct bsal_message message;
 
@@ -547,7 +547,7 @@ void bsal_actor_helper_send_double(struct bsal_actor *actor, int destination, in
 }
 
 #ifdef BSAL_ACTOR_EXPOSE_ACQUAINTANCE_VECTOR
-int bsal_actor_helper_get_acquaintance_index(struct bsal_actor *actor, struct bsal_vector *indices,
+int bsal_actor_get_acquaintance_index(struct bsal_actor *actor, struct bsal_vector *indices,
                 int name)
 {
     int i;
@@ -571,17 +571,17 @@ int bsal_actor_helper_get_acquaintance_index(struct bsal_actor *actor, struct bs
 }
 #endif
 
-void bsal_actor_helper_send_reply(struct bsal_actor *actor, struct bsal_message *message)
+void bsal_actor_send_reply(struct bsal_actor *actor, struct bsal_message *message)
 {
     bsal_actor_send(actor, bsal_actor_source(actor), message);
 }
 
-void bsal_actor_helper_send_to_self(struct bsal_actor *actor, struct bsal_message *message)
+void bsal_actor_send_to_self(struct bsal_actor *actor, struct bsal_message *message)
 {
     bsal_actor_send(actor, bsal_actor_name(actor), message);
 }
 
-void bsal_actor_helper_send_to_supervisor(struct bsal_actor *actor, struct bsal_message *message)
+void bsal_actor_send_to_supervisor(struct bsal_actor *actor, struct bsal_message *message)
 {
     bsal_actor_send(actor, bsal_actor_supervisor(actor), message);
 }

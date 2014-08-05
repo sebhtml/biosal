@@ -100,8 +100,8 @@ void bsal_actor_init(struct bsal_actor *self, void *concrete_actor,
     bsal_map_init(&self->acquaintance_map, sizeof(int), sizeof(int));
 
     /*
-    bsal_actor_helper_send_to_self_empty(self, BSAL_ACTOR_UNPIN_FROM_WORKER);
-    bsal_actor_helper_send_to_self_empty(self, BSAL_ACTOR_PIN_TO_NODE);
+    bsal_actor_send_to_self_empty(self, BSAL_ACTOR_UNPIN_FROM_WORKER);
+    bsal_actor_send_to_self_empty(self, BSAL_ACTOR_PIN_TO_NODE);
     */
 
     bsal_queue_init(&self->enqueued_messages, sizeof(struct bsal_message));
@@ -274,8 +274,8 @@ int bsal_actor_send_system_self(struct bsal_actor *self, struct bsal_message *me
         self->can_pack = BSAL_ACTOR_STATUS_SUPPORTED;
 
         /*
-        bsal_actor_helper_send_to_self_empty(self, BSAL_ACTOR_UNPIN_FROM_WORKER);
-        bsal_actor_helper_send_to_self_empty(self, BSAL_ACTOR_UNPIN_FROM_NODE);
+        bsal_actor_send_to_self_empty(self, BSAL_ACTOR_UNPIN_FROM_WORKER);
+        bsal_actor_send_to_self_empty(self, BSAL_ACTOR_UNPIN_FROM_NODE);
         */
 
         return 1;
@@ -285,7 +285,7 @@ int bsal_actor_send_system_self(struct bsal_actor *self, struct bsal_message *me
         return 1;
 
     } else if (tag == BSAL_ACTOR_YIELD) {
-        bsal_actor_helper_send_to_self_empty(self, BSAL_ACTOR_YIELD_REPLY);
+        bsal_actor_send_to_self_empty(self, BSAL_ACTOR_YIELD_REPLY);
         return 1;
 
     } else if (tag == BSAL_ACTOR_STOP) {
@@ -495,15 +495,15 @@ int bsal_actor_receive_system_no_pack(struct bsal_actor *self, struct bsal_messa
 
     if (tag == BSAL_ACTOR_PACK) {
 
-        bsal_actor_helper_send_reply_empty(self, BSAL_ACTOR_PACK_REPLY);
+        bsal_actor_send_reply_empty(self, BSAL_ACTOR_PACK_REPLY);
         return 1;
 
     } else if (tag == BSAL_ACTOR_PACK_SIZE) {
-        bsal_actor_helper_send_reply_int(self, BSAL_ACTOR_PACK_SIZE_REPLY, 0);
+        bsal_actor_send_reply_int(self, BSAL_ACTOR_PACK_SIZE_REPLY, 0);
         return 1;
 
     } else if (tag == BSAL_ACTOR_UNPACK) {
-        bsal_actor_helper_send_reply_empty(self, BSAL_ACTOR_PACK_REPLY);
+        bsal_actor_send_reply_empty(self, BSAL_ACTOR_PACK_REPLY);
         return 1;
 
     } else if (tag == BSAL_ACTOR_CLONE) {
@@ -517,7 +517,7 @@ int bsal_actor_receive_system_no_pack(struct bsal_actor *self, struct bsal_messa
                         self->can_pack);
                         */
 
-        bsal_actor_helper_send_reply_int(self, BSAL_ACTOR_CLONE_REPLY, BSAL_ACTOR_NOBODY);
+        bsal_actor_send_reply_int(self, BSAL_ACTOR_CLONE_REPLY, BSAL_ACTOR_NOBODY);
         return 1;
 
     } else if (tag == BSAL_ACTOR_MIGRATE) {
@@ -530,7 +530,7 @@ int bsal_actor_receive_system_no_pack(struct bsal_actor *self, struct bsal_messa
         printf("DEBUG bsal_actor_migrate: pack not supported\n");
 #endif
 
-        bsal_actor_helper_send_reply_int(self, BSAL_ACTOR_MIGRATE_REPLY, BSAL_ACTOR_NOBODY);
+        bsal_actor_send_reply_int(self, BSAL_ACTOR_MIGRATE_REPLY, BSAL_ACTOR_NOBODY);
 
         return 1;
     }
@@ -678,7 +678,7 @@ int bsal_actor_receive_system(struct bsal_actor *self, struct bsal_message *mess
 
     } else if (tag == BSAL_ACTOR_NOTIFY_NAME_CHANGE_REPLY) {
 
-        bsal_actor_helper_send_to_self_empty(self, BSAL_ACTOR_MIGRATE_NOTIFY_ACQUAINTANCES);
+        bsal_actor_send_to_self_empty(self, BSAL_ACTOR_MIGRATE_NOTIFY_ACQUAINTANCES);
 
         return 1;
 
@@ -722,7 +722,7 @@ int bsal_actor_receive_system(struct bsal_actor *self, struct bsal_message *mess
     /* Perform binomial routing.
      */
     if (tag == BSAL_ACTOR_BINOMIAL_TREE_SEND) {
-        bsal_actor_helper_receive_binomial_tree_send(self, message);
+        bsal_actor_receive_binomial_tree_send(self, message);
         return 1;
 
     } else if (tag == BSAL_ACTOR_MIGRATE) {
@@ -787,7 +787,7 @@ int bsal_actor_receive_system(struct bsal_actor *self, struct bsal_message *mess
             bsal_actor_set_supervisor(self, supervisor);
         }
 
-        bsal_actor_helper_send_reply_empty(self, BSAL_ACTOR_SET_SUPERVISOR_REPLY);
+        bsal_actor_send_reply_empty(self, BSAL_ACTOR_SET_SUPERVISOR_REPLY);
 
         return 1;
 
@@ -813,13 +813,13 @@ int bsal_actor_receive_system(struct bsal_actor *self, struct bsal_message *mess
 
     } else if (tag == BSAL_ACTOR_GET_NODE_NAME) {
 
-        bsal_actor_helper_send_reply_int(self, BSAL_ACTOR_GET_NODE_NAME_REPLY,
+        bsal_actor_send_reply_int(self, BSAL_ACTOR_GET_NODE_NAME_REPLY,
                         bsal_actor_node_name(self));
         return 1;
 
     } else if (tag == BSAL_ACTOR_GET_NODE_WORKER_COUNT) {
 
-        bsal_actor_helper_send_reply_int(self, BSAL_ACTOR_GET_NODE_WORKER_COUNT_REPLY,
+        bsal_actor_send_reply_int(self, BSAL_ACTOR_GET_NODE_WORKER_COUNT_REPLY,
                         bsal_actor_node_worker_count(self));
         return 1;
 
@@ -994,7 +994,7 @@ void bsal_actor_synchronize(struct bsal_actor *self, struct bsal_vector *actors)
     bsal_message_init(&message, BSAL_ACTOR_SYNCHRONIZE, 0, NULL);
 
     /* TODO bsal_actor_send_range_binomial_tree is broken */
-    bsal_actor_helper_send_range(self, actors, &message);
+    bsal_actor_send_range(self, actors, &message);
     bsal_message_destroy(&message);
 }
 
@@ -1158,7 +1158,7 @@ void bsal_actor_continue_clone(struct bsal_actor *self, struct bsal_message *mes
 #endif
 
 
-        bsal_actor_helper_send_to_self_empty(self, BSAL_ACTOR_PACK);
+        bsal_actor_send_to_self_empty(self, BSAL_ACTOR_PACK);
 
         self->cloning_progressed = 1;
 
@@ -1207,7 +1207,7 @@ void bsal_actor_continue_clone(struct bsal_actor *self, struct bsal_message *mes
                         bsal_actor_name(self), self->forwarding_selector);
 #endif
 
-        bsal_actor_helper_send_to_self_empty(self, BSAL_ACTOR_FORWARD_MESSAGES);
+        bsal_actor_send_to_self_empty(self, BSAL_ACTOR_FORWARD_MESSAGES);
 
         self->cloning_progressed = 1;
     }
@@ -1295,7 +1295,7 @@ void bsal_actor_migrate(struct bsal_actor *self, struct bsal_message *message)
      * For migration, the same name is kept
      */
 
-    bsal_actor_helper_send_reply_int(self, BSAL_ACTOR_MIGRATE_REPLY,
+    bsal_actor_send_reply_int(self, BSAL_ACTOR_MIGRATE_REPLY,
                     bsal_actor_name(self));
 
     return;
@@ -1316,7 +1316,7 @@ void bsal_actor_migrate(struct bsal_actor *self, struct bsal_message *message)
         self->migration_spawner = spawner;
         self->migration_client = source;
 
-        bsal_actor_helper_send_to_self_int(self, BSAL_ACTOR_CLONE, spawner);
+        bsal_actor_send_to_self_int(self, BSAL_ACTOR_CLONE, spawner);
 
         self->migration_status = BSAL_ACTOR_STATUS_STARTED;
         self->migration_cloned = 1;
@@ -1334,7 +1334,7 @@ void bsal_actor_migrate(struct bsal_actor *self, struct bsal_message *message)
         bsal_message_helper_unpack_int(message, 0, &self->migration_new_actor);
 
         self->acquaintance_index = 0;
-        bsal_actor_helper_send_to_self_empty(self, BSAL_ACTOR_MIGRATE_NOTIFY_ACQUAINTANCES);
+        bsal_actor_send_to_self_empty(self, BSAL_ACTOR_MIGRATE_NOTIFY_ACQUAINTANCES);
 
 #ifdef BSAL_ACTOR_DEBUG_MIGRATE
         printf("DEBUG bsal_actor_migrate: notify acquaintance of name change.\n");
@@ -1372,10 +1372,10 @@ void bsal_actor_migrate(struct bsal_actor *self, struct bsal_message *message)
 
         /* send the name of the new copy and die of a peaceful death.
          */
-        bsal_actor_helper_send_int(self, self->migration_client, BSAL_ACTOR_MIGRATE_REPLY,
+        bsal_actor_send_int(self, self->migration_client, BSAL_ACTOR_MIGRATE_REPLY,
                         self->migration_new_actor);
 
-        bsal_actor_helper_send_to_self_empty(self, BSAL_ACTOR_STOP);
+        bsal_actor_send_to_self_empty(self, BSAL_ACTOR_STOP);
 
         self->migration_status = BSAL_ACTOR_STATUS_NOT_STARTED;
 
@@ -1400,7 +1400,7 @@ void bsal_actor_migrate(struct bsal_actor *self, struct bsal_message *message)
                         self->migration_new_actor, self->forwarding_selector);
 #endif
 
-            bsal_actor_helper_send_to_self_empty(self, BSAL_ACTOR_FORWARD_MESSAGES);
+            bsal_actor_send_to_self_empty(self, BSAL_ACTOR_FORWARD_MESSAGES);
             self->migration_forwarded_messages = 1;
 
         /* wait for the clone queue to be empty.
@@ -1461,7 +1461,7 @@ void bsal_actor_notify_name_change(struct bsal_actor *self, struct bsal_message 
         bsal_actor_enqueue_message(self, &new_message);
     }
 
-    bsal_actor_helper_send_reply_empty(self, BSAL_ACTOR_NOTIFY_NAME_CHANGE_REPLY);
+    bsal_actor_send_reply_empty(self, BSAL_ACTOR_NOTIFY_NAME_CHANGE_REPLY);
 }
 
 void bsal_actor_migrate_notify_acquaintances(struct bsal_actor *self, struct bsal_message *message)
@@ -1474,17 +1474,17 @@ void bsal_actor_migrate_notify_acquaintances(struct bsal_actor *self, struct bsa
     if (self->acquaintance_index < bsal_vector_size(acquaintance_vector)) {
 
         acquaintance = bsal_vector_helper_at_as_int(acquaintance_vector, self->acquaintance_index);
-        bsal_actor_helper_send_int(self, acquaintance, BSAL_ACTOR_NOTIFY_NAME_CHANGE,
+        bsal_actor_send_int(self, acquaintance, BSAL_ACTOR_NOTIFY_NAME_CHANGE,
                         self->migration_new_actor);
         self->acquaintance_index++;
 
     } else {
 
-        bsal_actor_helper_send_to_self_empty(self, BSAL_ACTOR_MIGRATE_NOTIFY_ACQUAINTANCES_REPLY);
+        bsal_actor_send_to_self_empty(self, BSAL_ACTOR_MIGRATE_NOTIFY_ACQUAINTANCES_REPLY);
     }
 }
 
-void bsal_actor_helper_send_to_self_proxy(struct bsal_actor *self,
+void bsal_actor_send_to_self_proxy(struct bsal_actor *self,
                 struct bsal_message *message, int real_source)
 {
     int destination;
@@ -1602,7 +1602,7 @@ void bsal_actor_forward_messages(struct bsal_actor *self, struct bsal_message *m
 
         /* recursive actor call
          */
-        bsal_actor_helper_send_to_self_empty(self, BSAL_ACTOR_FORWARD_MESSAGES);
+        bsal_actor_send_to_self_empty(self, BSAL_ACTOR_FORWARD_MESSAGES);
     } else {
 
 #ifdef BSAL_ACTOR_DEBUG_FORWARDING
@@ -1622,7 +1622,7 @@ void bsal_actor_forward_messages(struct bsal_actor *self, struct bsal_message *m
 
             /* do a recursive call
              */
-            bsal_actor_helper_send_to_self_empty(self, BSAL_ACTOR_FORWARD_MESSAGES);
+            bsal_actor_send_to_self_empty(self, BSAL_ACTOR_FORWARD_MESSAGES);
         } else {
 
 #ifdef BSAL_ACTOR_DEBUG_FORWARDING
@@ -1632,7 +1632,7 @@ void bsal_actor_forward_messages(struct bsal_actor *self, struct bsal_message *m
             self->forwarding_selector = BSAL_ACTOR_FORWARDING_NONE;
             /* this is finished
              */
-            bsal_actor_helper_send_to_self_empty(self, BSAL_ACTOR_FORWARD_MESSAGES_REPLY);
+            bsal_actor_send_to_self_empty(self, BSAL_ACTOR_FORWARD_MESSAGES_REPLY);
 
         }
     }

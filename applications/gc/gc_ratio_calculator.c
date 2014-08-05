@@ -75,7 +75,7 @@ void gc_ratio_calculator_start(struct bsal_actor *actor, struct bsal_message *me
     neighbor_name = bsal_vector_helper_at_as_int(spawners, neighbor_index);
 
     printf("about to send to neighbor\n");
-    bsal_actor_helper_send_empty(actor, neighbor_name, GC_HELLO);
+    bsal_actor_send_empty(actor, neighbor_name, GC_HELLO);
     /* bsal_message_init(&new_message, GC_HELLO, 0, NULL); */
     /* bsal_actor_send(actor, neighbor_name, &new_message); */
     /* bsal_message_destroy(&new_message); */
@@ -85,7 +85,7 @@ void gc_ratio_calculator_hello(struct bsal_actor *actor, struct bsal_message *me
 {
     printf("received GC_HELLO\n");
 
-    bsal_actor_helper_send_reply_empty(actor, GC_HELLO_REPLY);
+    bsal_actor_send_reply_empty(actor, GC_HELLO_REPLY);
 }
 
 void gc_ratio_calculator_hello_reply(struct bsal_actor *actor, struct bsal_message *message)
@@ -128,14 +128,14 @@ void gc_ratio_calculator_notify(struct bsal_actor *actor, struct bsal_message *m
 
     ++concrete_actor->completed;
     if (concrete_actor->completed == size) {
-        bsal_actor_helper_send_range_empty(actor, spawners, BSAL_ACTOR_ASK_TO_STOP);
+        bsal_actor_send_range_empty(actor, spawners, BSAL_ACTOR_ASK_TO_STOP);
     }
 }
 
 void gc_ratio_calculator_ask_to_stop(struct bsal_actor *actor, struct bsal_message *message)
 {
     printf("received ASK_TO_STOP\n");
-    bsal_actor_helper_send_to_self_empty(actor, BSAL_ACTOR_STOP);
+    bsal_actor_send_to_self_empty(actor, BSAL_ACTOR_STOP);
 }
 
 

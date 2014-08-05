@@ -55,7 +55,7 @@ void buddy_receive(struct bsal_actor *actor, struct bsal_message *message)
          */
 
         /*
-        bsal_actor_helper_send_to_self_empty(actor, BSAL_ACTOR_PIN_TO_WORKER);
+        bsal_actor_send_to_self_empty(actor, BSAL_ACTOR_PIN_TO_WORKER);
         */
 
         bsal_message_init(message, BUDDY_HELLO_REPLY, 0, NULL);
@@ -69,7 +69,7 @@ void buddy_receive(struct bsal_actor *actor, struct bsal_message *message)
                         name, tag, source);
 
         /*
-        bsal_actor_helper_send_to_self_empty(actor, BSAL_ACTOR_UNPIN_FROM_WORKER);
+        bsal_actor_send_to_self_empty(actor, BSAL_ACTOR_UNPIN_FROM_WORKER);
         */
 
         bsal_message_init(message, BSAL_ACTOR_STOP, 0, NULL);

@@ -111,7 +111,7 @@ void root_receive(struct bsal_actor *actor, struct bsal_message *message)
 
         if (root1->ready == 2) {
 
-            bsal_actor_helper_send_empty(actor, king, BSAL_ACTOR_SYNCHRONIZE_REPLY);
+            bsal_actor_send_empty(actor, king, BSAL_ACTOR_SYNCHRONIZE_REPLY);
         }
 
     } else if (tag == BSAL_ACTOR_SYNCHRONIZE) {
@@ -133,7 +133,7 @@ void root_receive(struct bsal_actor *actor, struct bsal_message *message)
         if (root1->ready == 2) {
 
             king = *(int *)bsal_vector_at(&root1->spawners, 0);
-            bsal_actor_helper_send_empty(actor, king, BSAL_ACTOR_SYNCHRONIZE_REPLY);
+            bsal_actor_send_empty(actor, king, BSAL_ACTOR_SYNCHRONIZE_REPLY);
         }
 
     } else if (tag == BSAL_ACTOR_SYNCHRONIZED) {
@@ -147,13 +147,13 @@ void root_receive(struct bsal_actor *actor, struct bsal_message *message)
         /*
         printf("actor %d receives BSAL_ACTOR_SYNCHRONIZED, sending BSAL_ACTOR_YIELD\n", name);
         */
-        bsal_actor_helper_send_to_self_empty(actor, BSAL_ACTOR_YIELD);
+        bsal_actor_send_to_self_empty(actor, BSAL_ACTOR_YIELD);
 
     } else if (tag == BSAL_ACTOR_YIELD_REPLY) {
 
         manager = bsal_actor_spawn(actor, BSAL_MANAGER_SCRIPT);
 
-        bsal_actor_helper_send_int(actor, manager, BSAL_MANAGER_SET_SCRIPT, BSAL_SEQUENCE_STORE_SCRIPT);
+        bsal_actor_send_int(actor, manager, BSAL_MANAGER_SET_SCRIPT, BSAL_SEQUENCE_STORE_SCRIPT);
 
         printf("DEBUG root actor/%d spawned manager actor/%d\n",
                         bsal_actor_name(actor), manager);
@@ -210,7 +210,7 @@ void root_receive(struct bsal_actor *actor, struct bsal_message *message)
         if (!root1->is_king) {
             printf("root actor/%d stops controller actor/%d\n", name, source);
 
-            bsal_actor_helper_send_reply_empty(actor, BSAL_ACTOR_ASK_TO_STOP);
+            bsal_actor_send_reply_empty(actor, BSAL_ACTOR_ASK_TO_STOP);
             return;
         }
 /*
@@ -223,7 +223,7 @@ void root_receive(struct bsal_actor *actor, struct bsal_message *message)
             file = argv[i];
 
             bsal_message_init(message, BSAL_ADD_FILE, strlen(file) + 1, file);
-            bsal_actor_helper_send_reply(actor, message);
+            bsal_actor_send_reply(actor, message);
 
             printf("root actor/%d add file %s to controller actor/%d\n", name,
                             file, source);
@@ -237,7 +237,7 @@ void root_receive(struct bsal_actor *actor, struct bsal_message *message)
         if (root1->events == 0) {
             root1->events++;
 
-            bsal_actor_helper_send_to_self_empty(actor, BSAL_ADD_FILE_REPLY);
+            bsal_actor_send_to_self_empty(actor, BSAL_ADD_FILE_REPLY);
         }
 
         printf("root actor/%d has no more files to add\n", name);
@@ -251,7 +251,7 @@ void root_receive(struct bsal_actor *actor, struct bsal_message *message)
             printf("root actor/%d asks controller actor/%d to distribute data\n",
                             name, source);
 
-            bsal_actor_helper_send_empty(actor, root1->controller,
+            bsal_actor_send_empty(actor, root1->controller,
                             BSAL_INPUT_DISTRIBUTE);
         }
     } else if (tag == BSAL_INPUT_DISTRIBUTE_REPLY) {
@@ -259,7 +259,7 @@ void root_receive(struct bsal_actor *actor, struct bsal_message *message)
         printf("root actor/%d is notified by controller actor/%d that the distribution is complete\n",
                         name, source);
 
-        bsal_actor_helper_send_reply_empty(actor, BSAL_ACTOR_ASK_TO_STOP);
+        bsal_actor_send_reply_empty(actor, BSAL_ACTOR_ASK_TO_STOP);
 
     } else if (tag == BSAL_ACTOR_ASK_TO_STOP_REPLY) {
 
@@ -269,22 +269,22 @@ void root_receive(struct bsal_actor *actor, struct bsal_message *message)
             printf("DEBUG root actor/%d sending to self ROOT_STOP_ALL\n",
                             bsal_actor_name(actor));
 
-            bsal_actor_helper_send_to_self_empty(actor, ROOT_STOP_ALL);
+            bsal_actor_send_to_self_empty(actor, ROOT_STOP_ALL);
         }
     } else if (tag == ROOT_STOP_ALL) {
 
         printf("root actor/%d stops all other actors\n", name);
 
-        bsal_actor_helper_send_range_empty(actor, &root1->spawners, BSAL_ACTOR_ASK_TO_STOP);
+        bsal_actor_send_range_empty(actor, &root1->spawners, BSAL_ACTOR_ASK_TO_STOP);
 
     } else if (tag == BSAL_ACTOR_ASK_TO_STOP) {
 
-        bsal_actor_helper_send_empty(actor, bsal_actor_get_child(actor,
+        bsal_actor_send_empty(actor, bsal_actor_get_child(actor,
                                 concrete_actor->manager), BSAL_ACTOR_ASK_TO_STOP);
 
         printf("DEBUG stopping root actor/%d (source: %d)\n", bsal_actor_name(actor),
                         source);
-        bsal_actor_helper_send_to_self_empty(actor, BSAL_ACTOR_STOP);
+        bsal_actor_send_to_self_empty(actor, BSAL_ACTOR_STOP);
     }
 }
 

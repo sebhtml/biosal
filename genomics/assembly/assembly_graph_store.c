@@ -145,7 +145,7 @@ void bsal_assembly_graph_store_receive(struct bsal_actor *self, struct bsal_mess
          */
         bsal_map_set_threshold(&concrete_actor->table, 0.95);
 
-        bsal_actor_helper_send_reply_empty(self, BSAL_SET_KMER_LENGTH_REPLY);
+        bsal_actor_send_reply_empty(self, BSAL_SET_KMER_LENGTH_REPLY);
 
     } else if (tag == BSAL_PUSH_KMER_BLOCK) {
 
@@ -241,7 +241,7 @@ void bsal_assembly_graph_store_receive(struct bsal_actor *self, struct bsal_mess
         bsal_map_iterator_destroy(&iterator);
         bsal_dna_kmer_frequency_block_destroy(&block, bsal_actor_get_ephemeral_memory(self));
 
-        bsal_actor_helper_send_reply_empty(self, BSAL_PUSH_KMER_BLOCK_REPLY);
+        bsal_actor_send_reply_empty(self, BSAL_PUSH_KMER_BLOCK_REPLY);
 
     } else if (tag == BSAL_SEQUENCE_STORE_REQUEST_PROGRESS_REPLY) {
 
@@ -255,7 +255,7 @@ void bsal_assembly_graph_store_receive(struct bsal_actor *self, struct bsal_mess
         bsal_assembly_graph_store_print(self);
 #endif
 
-        bsal_actor_helper_ask_to_stop(self, message);
+        bsal_actor_ask_to_stop(self, message);
 
     } else if (tag == BSAL_ACTOR_SET_CONSUMER) {
 
@@ -268,7 +268,7 @@ void bsal_assembly_graph_store_receive(struct bsal_actor *self, struct bsal_mess
 
         concrete_actor->customer = customer;
 
-        bsal_actor_helper_send_reply_empty(self, BSAL_ACTOR_SET_CONSUMER_REPLY);
+        bsal_actor_send_reply_empty(self, BSAL_ACTOR_SET_CONSUMER_REPLY);
 
     } else if (tag == BSAL_PUSH_DATA) {
 
@@ -279,7 +279,7 @@ void bsal_assembly_graph_store_receive(struct bsal_actor *self, struct bsal_mess
 
     } else if (tag == BSAL_STORE_GET_ENTRY_COUNT) {
 
-        bsal_actor_helper_send_reply_uint64_t(self, BSAL_STORE_GET_ENTRY_COUNT_REPLY,
+        bsal_actor_send_reply_uint64_t(self, BSAL_STORE_GET_ENTRY_COUNT_REPLY,
                         concrete_actor->received);
     }
 }
@@ -377,7 +377,7 @@ void bsal_assembly_graph_store_push_data(struct bsal_actor *self, struct bsal_me
     printf("yield 1\n");
 #endif
 
-    bsal_actor_helper_send_to_self_empty(self, BSAL_ACTOR_YIELD);
+    bsal_actor_send_to_self_empty(self, BSAL_ACTOR_YIELD);
 }
 
 void bsal_assembly_graph_store_yield_reply(struct bsal_actor *self, struct bsal_message *message)
@@ -447,7 +447,7 @@ void bsal_assembly_graph_store_yield_reply(struct bsal_actor *self, struct bsal_
         printf("yield ! %d\n", i);
 #endif
 
-        bsal_actor_helper_send_to_self_empty(self, BSAL_ACTOR_YIELD);
+        bsal_actor_send_to_self_empty(self, BSAL_ACTOR_YIELD);
 
         return;
     }
@@ -478,7 +478,7 @@ void bsal_assembly_graph_store_yield_reply(struct bsal_actor *self, struct bsal_
 
     bsal_map_destroy(&concrete_actor->coverage_distribution);
 
-    bsal_actor_helper_send_empty(self, concrete_actor->source,
+    bsal_actor_send_empty(self, concrete_actor->source,
                             BSAL_PUSH_DATA_REPLY);
 
 }

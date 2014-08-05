@@ -127,7 +127,7 @@ void bsal_sequence_store_receive(struct bsal_actor *actor, struct bsal_message *
                         bsal_actor_name(actor));
 #endif
 
-        bsal_actor_helper_ask_to_stop(actor, message);
+        bsal_actor_ask_to_stop(actor, message);
 
     } else if (tag == BSAL_SEQUENCE_STORE_REQUEST_PROGRESS) {
 
@@ -249,7 +249,7 @@ void bsal_sequence_store_push_sequence_data_block(struct bsal_actor *actor, stru
      */
     bsal_input_command_destroy(&payload, bsal_actor_get_ephemeral_memory(actor));
 
-    bsal_actor_helper_send_reply_empty(actor, BSAL_PUSH_SEQUENCE_DATA_BLOCK_REPLY);
+    bsal_actor_send_reply_empty(actor, BSAL_PUSH_SEQUENCE_DATA_BLOCK_REPLY);
 }
 
 void bsal_sequence_store_reserve(struct bsal_actor *actor, struct bsal_message *message)
@@ -291,7 +291,7 @@ void bsal_sequence_store_reserve(struct bsal_actor *actor, struct bsal_message *
         bsal_dna_sequence_init(dna_sequence, NULL, &concrete_actor->codec, &concrete_actor->persistent_memory);
     }
 
-    bsal_actor_helper_send_reply_empty(actor, BSAL_RESERVE_REPLY);
+    bsal_actor_send_reply_empty(actor, BSAL_RESERVE_REPLY);
 
     if (concrete_actor->expected == 0) {
 
@@ -312,7 +312,7 @@ void bsal_sequence_store_show_progress(struct bsal_actor *actor, struct bsal_mes
 
     if (concrete_actor->received == concrete_actor->expected) {
 
-        bsal_actor_helper_send_empty(actor,
+        bsal_actor_send_empty(actor,
                                 concrete_actor->reservation_producer,
                         BSAL_SEQUENCE_STORE_READY);
     }
@@ -402,7 +402,7 @@ void bsal_sequence_store_ask(struct bsal_actor *self, struct bsal_message *messa
 
         bsal_message_init(&new_message, BSAL_PUSH_SEQUENCE_DATA_BLOCK, new_count, new_buffer);
 
-        bsal_actor_helper_send_reply(self, &new_message);
+        bsal_actor_send_reply(self, &new_message);
         bsal_message_destroy(&new_message);
 
 #ifdef BSAL_SEQUENCE_STORE_DEBUG
@@ -414,7 +414,7 @@ void bsal_sequence_store_ask(struct bsal_actor *self, struct bsal_message *messa
         concrete_actor->left -= entry_count;
 
     } else {
-        bsal_actor_helper_send_reply_empty(self, BSAL_SEQUENCE_STORE_ASK_REPLY);
+        bsal_actor_send_reply_empty(self, BSAL_SEQUENCE_STORE_ASK_REPLY);
 #ifdef BSAL_SEQUENCE_STORE_DEBUG
         printf("store/%d can not fulfill order\n", name);
 #endif
@@ -457,7 +457,7 @@ void bsal_sequence_store_ask(struct bsal_actor *self, struct bsal_message *messa
 
         if (ratio >= 0.16) {
 
-            bsal_actor_helper_send_double(self,
+            bsal_actor_send_double(self,
                                     concrete_actor->progress_supervisor,
                             BSAL_SEQUENCE_STORE_REQUEST_PROGRESS_REPLY,
                             ratio);

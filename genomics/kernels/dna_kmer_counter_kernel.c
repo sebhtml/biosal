@@ -101,7 +101,7 @@ void bsal_dna_kmer_counter_kernel_init(struct bsal_actor *actor)
     /* Enable packing for this actor. Maybe this is already enabled, but who knows.
      */
 
-    bsal_actor_helper_send_to_self_empty(actor, BSAL_ACTOR_PACK_ENABLE);
+    bsal_actor_send_to_self_empty(actor, BSAL_ACTOR_PACK_ENABLE);
     concrete_actor->auto_scaling_clone = BSAL_ACTOR_NOBODY;
 
     concrete_actor->scaling_operations = 0;
@@ -156,7 +156,7 @@ void bsal_dna_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_
 
         /*
         source_index = *(int *)buffer;
-        bsal_actor_helper_send_empty(actor,
+        bsal_actor_send_empty(actor,
                         source_index,
                         BSAL_PUSH_SEQUENCE_DATA_BLOCK_REPLY);
                         */
@@ -165,7 +165,7 @@ void bsal_dna_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_
 
     } else if (tag == BSAL_ACTOR_START) {
 
-        bsal_actor_helper_send_reply_empty(actor, BSAL_ACTOR_START_REPLY);
+        bsal_actor_send_reply_empty(actor, BSAL_ACTOR_START_REPLY);
 
     } else if (tag == BSAL_RESERVE) {
 
@@ -175,7 +175,7 @@ void bsal_dna_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_
 
         concrete_actor->expected = *(uint64_t *)buffer;
 
-        bsal_actor_helper_send_reply_empty(actor, BSAL_RESERVE_REPLY);
+        bsal_actor_send_reply_empty(actor, BSAL_RESERVE_REPLY);
 
     } else if (tag == BSAL_ACTOR_ASK_TO_STOP) {
 
@@ -188,9 +188,9 @@ void bsal_dna_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_
                         name, source, bsal_actor_supervisor(actor));
 #endif
 
-        /*bsal_actor_helper_send_to_self_empty(actor, BSAL_ACTOR_STOP);*/
+        /*bsal_actor_send_to_self_empty(actor, BSAL_ACTOR_STOP);*/
 
-        bsal_actor_helper_ask_to_stop(actor, message);
+        bsal_actor_ask_to_stop(actor, message);
 
     } else if (tag == BSAL_ACTOR_SET_CONSUMER) {
 
@@ -203,7 +203,7 @@ void bsal_dna_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_
                         concrete_actor->consumer);
 #endif
 
-        bsal_actor_helper_send_reply_empty(actor, BSAL_ACTOR_SET_CONSUMER_REPLY);
+        bsal_actor_send_reply_empty(actor, BSAL_ACTOR_SET_CONSUMER_REPLY);
 
     } else if (tag == BSAL_SET_KMER_LENGTH) {
 
@@ -215,7 +215,7 @@ void bsal_dna_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_
                         &concrete_actor->codec);
         bsal_dna_kmer_destroy(&kmer, bsal_actor_get_ephemeral_memory(actor));
 
-        bsal_actor_helper_send_reply_empty(actor, BSAL_SET_KMER_LENGTH_REPLY);
+        bsal_actor_send_reply_empty(actor, BSAL_SET_KMER_LENGTH_REPLY);
 
     } else if (tag == BSAL_ACTOR_SET_PRODUCER) {
 
@@ -246,7 +246,7 @@ void bsal_dna_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_
         printf("DEBUG kernel was told by producer that nothing is left to do\n");
 #endif
 
-        bsal_actor_helper_send_empty(actor,
+        bsal_actor_send_empty(actor,
                                 concrete_actor->producer_source,
                         BSAL_ACTOR_SET_PRODUCER_REPLY);
 
@@ -256,7 +256,7 @@ void bsal_dna_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_
          */
         producer = concrete_actor->producer;
 
-        bsal_actor_helper_send_int(actor, concrete_actor->auto_scaling_clone,
+        bsal_actor_send_int(actor, concrete_actor->auto_scaling_clone,
                         BSAL_ACTOR_SET_PRODUCER, producer);
 
         concrete_actor->auto_scaling_in_progress = 0;
@@ -277,7 +277,7 @@ void bsal_dna_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_
         printf("AUTO-SCALING kernel %d enables auto-scaling (BSAL_ACTOR_ENABLE_AUTO_SCALING) via actor %d\n",
                         name, source);
 
-        bsal_actor_helper_send_to_self_empty(actor, BSAL_ACTOR_ENABLE_AUTO_SCALING);
+        bsal_actor_send_to_self_empty(actor, BSAL_ACTOR_ENABLE_AUTO_SCALING);
 
     }
 }
@@ -299,7 +299,7 @@ void bsal_dna_kmer_counter_kernel_verify(struct bsal_actor *actor, struct bsal_m
     }
 #endif
 
-    bsal_actor_helper_send_uint64_t(actor,
+    bsal_actor_send_uint64_t(actor,
                             concrete_actor->notification_source,
                     BSAL_ACTOR_NOTIFY_REPLY, concrete_actor->kmers);
 }
@@ -313,7 +313,7 @@ void bsal_dna_kmer_counter_kernel_ask(struct bsal_actor *self, struct bsal_messa
 
     producer = concrete_actor->producer;
 
-    bsal_actor_helper_send_int(self, producer, BSAL_SEQUENCE_STORE_ASK,
+    bsal_actor_send_int(self, producer, BSAL_SEQUENCE_STORE_ASK,
                     concrete_actor->kmer_length);
 
 #ifdef BSAL_DNA_KMER_COUNTER_KERNEL_DEBUG
@@ -365,7 +365,7 @@ void bsal_dna_kmer_counter_kernel_do_auto_scaling(struct bsal_actor *actor, stru
 
     concrete_actor->auto_scaling_in_progress = 1;
 
-    bsal_actor_helper_send_to_self_int(actor, BSAL_ACTOR_CLONE, name);
+    bsal_actor_send_to_self_int(actor, BSAL_ACTOR_CLONE, name);
 }
 
 void bsal_dna_kmer_counter_kernel_pack_message(struct bsal_actor *actor, struct bsal_message *message)
@@ -383,7 +383,7 @@ void bsal_dna_kmer_counter_kernel_pack_message(struct bsal_actor *actor, struct 
 
     bsal_message_init(&new_message, BSAL_ACTOR_PACK_REPLY, new_count, new_buffer);
 
-    bsal_actor_helper_send_reply(actor, &new_message);
+    bsal_actor_send_reply(actor, &new_message);
 
     bsal_message_destroy(&new_message);
     bsal_memory_pool_free(ephemeral_memory, new_buffer);
@@ -398,7 +398,7 @@ void bsal_dna_kmer_counter_kernel_unpack_message(struct bsal_actor *actor, struc
 
     bsal_dna_kmer_counter_kernel_unpack(actor, buffer);
 
-    bsal_actor_helper_send_reply_empty(actor, BSAL_ACTOR_UNPACK_REPLY);
+    bsal_actor_send_reply_empty(actor, BSAL_ACTOR_UNPACK_REPLY);
 }
 
 void bsal_dna_kmer_counter_kernel_clone_reply(struct bsal_actor *actor, struct bsal_message *message)
@@ -422,7 +422,7 @@ void bsal_dna_kmer_counter_kernel_clone_reply(struct bsal_actor *actor, struct b
         printf("kernel %d cloned itself !!! clone name is %d\n",
                     name, clone);
 
-        bsal_actor_helper_send_int(actor, consumer, BSAL_ACTOR_CLONE, name);
+        bsal_actor_send_int(actor, consumer, BSAL_ACTOR_CLONE, name);
 
         concrete_actor->auto_scaling_clone = clone;
 
@@ -434,7 +434,7 @@ void bsal_dna_kmer_counter_kernel_clone_reply(struct bsal_actor *actor, struct b
         printf("kernel %d cloned aggregator %d, clone name is %d\n",
                         name, consumer, clone);
 
-        bsal_actor_helper_send_int(actor, concrete_actor->auto_scaling_clone,
+        bsal_actor_send_int(actor, concrete_actor->auto_scaling_clone,
                         BSAL_ACTOR_SET_CONSUMER, clone);
 
         /*
@@ -518,7 +518,7 @@ void bsal_dna_kmer_counter_kernel_notify(struct bsal_actor *actor, struct bsal_m
     source = bsal_message_source(message);
     concrete_actor->notified = 1;
 
-    bsal_actor_helper_send_to_self_empty(actor, BSAL_ACTOR_DISABLE_AUTO_SCALING);
+    bsal_actor_send_to_self_empty(actor, BSAL_ACTOR_DISABLE_AUTO_SCALING);
 
     concrete_actor->notification_source = source;
 
@@ -532,7 +532,7 @@ void bsal_dna_kmer_counter_kernel_notify(struct bsal_actor *actor, struct bsal_m
 
         while (bsal_vector_iterator_get_next_value(&iterator, &kernel)) {
 
-            bsal_actor_helper_send_empty(actor, kernel, BSAL_ACTOR_NOTIFY);
+            bsal_actor_send_empty(actor, kernel, BSAL_ACTOR_NOTIFY);
         }
 
         bsal_vector_iterator_destroy(&iterator);
@@ -559,7 +559,7 @@ void bsal_dna_kmer_counter_kernel_notify_reply(struct bsal_actor *actor, struct 
     if (concrete_actor->notified_children == bsal_vector_size(&concrete_actor->kernels)) {
 
 
-        bsal_actor_helper_send_uint64_t(actor,
+        bsal_actor_send_uint64_t(actor,
                             concrete_actor->notification_source,
                     BSAL_ACTOR_NOTIFY_REPLY, concrete_actor->sum_of_kmers);
 
@@ -758,7 +758,7 @@ void bsal_dna_kmer_counter_kernel_push_sequence_data_block(struct bsal_actor *ac
     bsal_actor_send(actor, consumer, &new_message);
     bsal_memory_pool_free(ephemeral_memory, new_buffer);
 
-    bsal_actor_helper_send_empty(actor,
+    bsal_actor_send_empty(actor,
                     source_index,
                     BSAL_PUSH_SEQUENCE_DATA_BLOCK_REPLY);
 

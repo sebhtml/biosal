@@ -111,7 +111,7 @@ void bsal_assembly_graph_builder_ask_to_stop(struct bsal_actor *self, struct bsa
 
     printf("builder/%d dies\n", name);
 
-    bsal_actor_helper_ask_to_stop(self, message);
+    bsal_actor_ask_to_stop(self, message);
 }
 
 void bsal_assembly_graph_builder_start(struct bsal_actor *self, struct bsal_message *message)
@@ -155,7 +155,7 @@ void bsal_assembly_graph_builder_start(struct bsal_actor *self, struct bsal_mess
                     &(concrete_self->manager_for_graph_stores),
                     BSAL_ACTOR_SPAWNING_IN_PROGRESS);
 
-    bsal_actor_helper_send_int(self, spawner, BSAL_ACTOR_SPAWN, BSAL_MANAGER_SCRIPT);
+    bsal_actor_send_int(self, spawner, BSAL_ACTOR_SPAWN, BSAL_MANAGER_SCRIPT);
 }
 
 void bsal_assembly_graph_builder_spawn_reply_graph_store_manager(struct bsal_actor *self, struct bsal_message *message)
@@ -178,7 +178,7 @@ void bsal_assembly_graph_builder_spawn_reply_graph_store_manager(struct bsal_act
                     bsal_assembly_graph_builder_start_reply_store_manager,
                     concrete_self->manager_for_graph_stores);
 
-    bsal_actor_helper_send_int(self, concrete_self->manager_for_graph_stores, BSAL_MANAGER_SET_SCRIPT,
+    bsal_actor_send_int(self, concrete_self->manager_for_graph_stores, BSAL_MANAGER_SET_SCRIPT,
                         BSAL_ASSEMBLY_GRAPH_STORE_SCRIPT);
 }
 
@@ -215,7 +215,7 @@ void bsal_assembly_graph_builder_spawn_reply(struct bsal_actor *self, struct bsa
                         bsal_assembly_graph_builder_start_reply_classifier_manager,
                         concrete_self->manager_for_classifiers);
 
-        bsal_actor_helper_send_int(self, concrete_self->manager_for_classifiers, BSAL_MANAGER_SET_SCRIPT,
+        bsal_actor_send_int(self, concrete_self->manager_for_classifiers, BSAL_MANAGER_SET_SCRIPT,
                         BSAL_ASSEMBLY_BLOCK_CLASSIFIER_SCRIPT);
 
     } else if (concrete_self->coverage_distribution == BSAL_ACTOR_NOBODY) {
@@ -230,7 +230,7 @@ void bsal_assembly_graph_builder_spawn_reply(struct bsal_actor *self, struct bsa
                         bsal_assembly_graph_builder_notify_from_distribution,
                         concrete_self->coverage_distribution);
 
-        bsal_actor_helper_send_int(self, concrete_self->coverage_distribution,
+        bsal_actor_send_int(self, concrete_self->coverage_distribution,
                         BSAL_SET_EXPECTED_MESSAGE_COUNT, (int)bsal_vector_size(&concrete_self->graph_stores));
 
     }
@@ -249,7 +249,7 @@ void bsal_assembly_graph_builder_set_expected_message_count_reply(struct bsal_ac
     /*
      * Link the graph stores to the coverage distribution
      */
-    bsal_actor_helper_send_range_int(self, &concrete_self->graph_stores,
+    bsal_actor_send_range_int(self, &concrete_self->graph_stores,
                     BSAL_ACTOR_SET_CONSUMER,
                     concrete_self->coverage_distribution);
 }
@@ -260,7 +260,7 @@ void bsal_assembly_graph_builder_set_script_reply_store_manager(struct bsal_acto
 
     concrete_self = bsal_actor_concrete_actor(self);
 
-    bsal_actor_helper_send_reply_vector(self, BSAL_ACTOR_START, &concrete_self->spawners);
+    bsal_actor_send_reply_vector(self, BSAL_ACTOR_START, &concrete_self->spawners);
 }
 
 void bsal_assembly_graph_builder_start_reply_store_manager(struct bsal_actor *self, struct bsal_message *message)
@@ -297,7 +297,7 @@ void bsal_assembly_graph_builder_start_reply_store_manager(struct bsal_actor *se
                     &concrete_self->manager_for_windows,
                     BSAL_ACTOR_SPAWNING_IN_PROGRESS);
 
-    bsal_actor_helper_send_int(self, spawner, BSAL_ACTOR_SPAWN,
+    bsal_actor_send_int(self, spawner, BSAL_ACTOR_SPAWN,
                     BSAL_MANAGER_SCRIPT);
 
 }
@@ -323,7 +323,7 @@ void bsal_assembly_graph_builder_spawn_reply_window_manager(struct bsal_actor *s
                     bsal_assembly_graph_builder_start_reply_window_manager,
                     concrete_self->manager_for_windows);
 
-    bsal_actor_helper_send_int(self, concrete_self->manager_for_windows, BSAL_MANAGER_SET_SCRIPT,
+    bsal_actor_send_int(self, concrete_self->manager_for_windows, BSAL_MANAGER_SET_SCRIPT,
                     BSAL_ASSEMBLY_SLIDING_WINDOW_SCRIPT);
 
 }
@@ -350,7 +350,7 @@ void bsal_assembly_graph_builder_set_producers(struct bsal_actor *self, struct b
 
     bsal_vector_unpack(&concrete_self->sequence_stores, buffer);
 
-    bsal_actor_helper_send_reply_empty(self, BSAL_ACTOR_SET_PRODUCERS_REPLY);
+    bsal_actor_send_reply_empty(self, BSAL_ACTOR_SET_PRODUCERS_REPLY);
 
 }
 
@@ -360,7 +360,7 @@ void bsal_assembly_graph_builder_set_script_reply_window_manager(struct bsal_act
 
     concrete_self = bsal_actor_concrete_actor(self);
 
-    bsal_actor_helper_send_reply_vector(self, BSAL_ACTOR_START, &concrete_self->spawners);
+    bsal_actor_send_reply_vector(self, BSAL_ACTOR_START, &concrete_self->spawners);
 }
 
 void bsal_assembly_graph_builder_start_reply_window_manager(struct bsal_actor *self, struct bsal_message *message)
@@ -390,7 +390,7 @@ void bsal_assembly_graph_builder_start_reply_window_manager(struct bsal_actor *s
 
     spawner = bsal_actor_get_spawner(self, &concrete_self->spawners);
 
-    bsal_actor_helper_send_int(self, spawner, BSAL_ACTOR_SPAWN,
+    bsal_actor_send_int(self, spawner, BSAL_ACTOR_SPAWN,
                     BSAL_MANAGER_SCRIPT);
 }
 
@@ -400,7 +400,7 @@ void bsal_assembly_graph_builder_set_script_reply_classifier_manager(struct bsal
 
     concrete_self = bsal_actor_concrete_actor(self);
 
-    bsal_actor_helper_send_reply_vector(self, BSAL_ACTOR_START, &concrete_self->spawners);
+    bsal_actor_send_reply_vector(self, BSAL_ACTOR_START, &concrete_self->spawners);
 }
 
 void bsal_assembly_graph_builder_start_reply_classifier_manager(struct bsal_actor *self, struct bsal_message *message)
@@ -454,7 +454,7 @@ void bsal_assembly_graph_builder_configure(struct bsal_actor *self)
 
         destination = bsal_vector_helper_at_as_int(&concrete_self->graph_stores, i);
 
-        bsal_actor_helper_send_int(self, destination, BSAL_SET_KMER_LENGTH,
+        bsal_actor_send_int(self, destination, BSAL_SET_KMER_LENGTH,
                         concrete_self->kmer_length);
     }
 
@@ -462,7 +462,7 @@ void bsal_assembly_graph_builder_configure(struct bsal_actor *self)
 
         destination = bsal_vector_helper_at_as_int(&concrete_self->sliding_windows, i);
 
-        bsal_actor_helper_send_int(self, destination, BSAL_SET_KMER_LENGTH,
+        bsal_actor_send_int(self, destination, BSAL_SET_KMER_LENGTH,
                         concrete_self->kmer_length);
     }
 
@@ -470,7 +470,7 @@ void bsal_assembly_graph_builder_configure(struct bsal_actor *self)
 
         destination = bsal_vector_helper_at_as_int(&concrete_self->block_classifiers, i);
 
-        bsal_actor_helper_send_int(self, destination, BSAL_SET_KMER_LENGTH,
+        bsal_actor_send_int(self, destination, BSAL_SET_KMER_LENGTH,
                         concrete_self->kmer_length);
     }
 
@@ -530,7 +530,7 @@ void bsal_assembly_graph_builder_connect_actors(struct bsal_actor *self)
 
         /* set the consumer for sliding window
          */
-        bsal_actor_helper_send_int(self, producer, BSAL_ACTOR_SET_CONSUMER,
+        bsal_actor_send_int(self, producer, BSAL_ACTOR_SET_CONSUMER,
                         consumer);
 
         printf("DEBUG neural LINK %d -> %d\n",
@@ -544,7 +544,7 @@ void bsal_assembly_graph_builder_connect_actors(struct bsal_actor *self)
                         (int)bsal_vector_size(&concrete_self->graph_stores),
                         consumer);
 
-        bsal_actor_helper_send_vector(self, consumer, BSAL_ACTOR_SET_CONSUMERS,
+        bsal_actor_send_vector(self, consumer, BSAL_ACTOR_SET_CONSUMERS,
                         &concrete_self->graph_stores);
     }
 }
@@ -568,7 +568,7 @@ void bsal_assembly_graph_builder_set_consumer_reply_graph_stores(struct bsal_act
          * ABCD
          */
 
-        bsal_actor_helper_send_range_empty(self, &concrete_self->graph_stores,
+        bsal_actor_send_range_empty(self, &concrete_self->graph_stores,
                         BSAL_PUSH_DATA);
     }
 }
@@ -630,7 +630,7 @@ void bsal_assembly_graph_builder_verify(struct bsal_actor *self)
         printf("CONFIGURE neural LINK %d -> %d\n",
                         producer, consumer);
 
-        bsal_actor_helper_send_int(self, consumer, BSAL_ACTOR_SET_PRODUCER,
+        bsal_actor_send_int(self, consumer, BSAL_ACTOR_SET_PRODUCER,
                         producer);
     }
 
@@ -664,7 +664,7 @@ void bsal_assembly_graph_builder_set_producer_reply(struct bsal_actor *self, str
      */
     if (concrete_self->completed_sliding_windows == bsal_vector_size(&concrete_self->sliding_windows)) {
 
-        bsal_actor_helper_send_range_empty(self, &concrete_self->sliding_windows, BSAL_ACTOR_NOTIFY);
+        bsal_actor_send_range_empty(self, &concrete_self->sliding_windows, BSAL_ACTOR_NOTIFY);
     }
 }
 
@@ -676,7 +676,7 @@ void bsal_assembly_graph_builder_tell_source(struct bsal_actor *self)
 
     bsal_timer_stop(&concrete_self->timer);
     bsal_timer_print_with_description(&concrete_self->timer, "Build assembly graph");
-    bsal_actor_helper_send_empty(self, concrete_self->source, BSAL_ACTOR_START_REPLY);
+    bsal_actor_send_empty(self, concrete_self->source, BSAL_ACTOR_START_REPLY);
 }
 
 int bsal_assembly_graph_builder_get_kmer_length(struct bsal_actor *self)
@@ -730,7 +730,7 @@ void bsal_assembly_graph_builder_notify_reply(struct bsal_actor *self, struct bs
             bsal_actor_name(self),
             concrete_self->total_kmer_count);
 
-        bsal_actor_helper_send_to_self_empty(self, BSAL_ASSEMBLY_GRAPH_BUILDER_CONTROL_COMPLEXITY);
+        bsal_actor_send_to_self_empty(self, BSAL_ASSEMBLY_GRAPH_BUILDER_CONTROL_COMPLEXITY);
     }
 }
 
@@ -743,7 +743,7 @@ void bsal_assembly_graph_builder_control_complexity(struct bsal_actor *self, str
     concrete_self->actual_kmer_count = 0;
     concrete_self->synchronized_graph_stores = 0;
 
-    bsal_actor_helper_send_range_empty(self, &concrete_self->graph_stores,
+    bsal_actor_send_range_empty(self, &concrete_self->graph_stores,
                     BSAL_STORE_GET_ENTRY_COUNT);
 }
 
@@ -775,7 +775,7 @@ void bsal_assembly_graph_builder_get_entry_count_reply(struct bsal_actor *self, 
 
             spawner = bsal_actor_get_spawner(self, &concrete_self->spawners);
 
-            bsal_actor_helper_send_int(self, spawner, BSAL_ACTOR_SPAWN,
+            bsal_actor_send_int(self, spawner, BSAL_ACTOR_SPAWN,
                             BSAL_COVERAGE_DISTRIBUTION_SCRIPT);
 
         } else {
@@ -783,7 +783,7 @@ void bsal_assembly_graph_builder_get_entry_count_reply(struct bsal_actor *self, 
              * Otherwise, there are still some messages in transit.
              */
 
-            bsal_actor_helper_send_to_self_empty(self, BSAL_ASSEMBLY_GRAPH_BUILDER_CONTROL_COMPLEXITY);
+            bsal_actor_send_to_self_empty(self, BSAL_ASSEMBLY_GRAPH_BUILDER_CONTROL_COMPLEXITY);
         }
     }
 }

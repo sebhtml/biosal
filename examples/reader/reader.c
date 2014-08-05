@@ -126,17 +126,17 @@ void reader_receive(struct bsal_actor *actor, struct bsal_message *message)
 
         if (error == BSAL_INPUT_ERROR_NO_ERROR) {
             printf("Successfully opened file.\n");
-            bsal_actor_helper_send_reply_empty(actor, BSAL_INPUT_COUNT);
+            bsal_actor_send_reply_empty(actor, BSAL_INPUT_COUNT);
 
         } else if (error == BSAL_INPUT_ERROR_FILE_NOT_FOUND) {
 
             printf("Error, file not found! \n");
-            bsal_actor_helper_send_to_self_empty(actor, BSAL_ACTOR_STOP);
+            bsal_actor_send_to_self_empty(actor, BSAL_ACTOR_STOP);
 
         } else if (error == BSAL_INPUT_ERROR_FORMAT_NOT_SUPPORTED) {
 
             printf("Error, format not supported! \n");
-            bsal_actor_helper_send_to_self_empty(actor, BSAL_ACTOR_STOP);
+            bsal_actor_send_to_self_empty(actor, BSAL_ACTOR_STOP);
 
         }
     } else if (tag == BSAL_INPUT_COUNT_REPLY) {
@@ -152,7 +152,7 @@ void reader_receive(struct bsal_actor *actor, struct bsal_message *message)
     } else if (tag == BSAL_INPUT_CLOSE_REPLY && !reader1->pulled) {
 
         /* not necessary, it is already dead. */
-        bsal_actor_helper_send_reply_empty(actor, BSAL_ACTOR_ASK_TO_STOP);
+        bsal_actor_send_reply_empty(actor, BSAL_ACTOR_ASK_TO_STOP);
 
         printf("actor %d received BSAL_INPUT_CLOSE_REPLY from actor %d, asking it to stop"
                         " with BSAL_ACTOR_ASK_TO_STOP\n", name, source);
@@ -170,9 +170,9 @@ void reader_receive(struct bsal_actor *actor, struct bsal_message *message)
 
     } else if (tag == BSAL_INPUT_CLOSE_REPLY && reader1->pulled) {
 
-        bsal_actor_helper_send_reply_empty(actor, BSAL_ACTOR_ASK_TO_STOP);
+        bsal_actor_send_reply_empty(actor, BSAL_ACTOR_ASK_TO_STOP);
 
-        bsal_actor_helper_send_to_self_empty(actor, BSAL_ACTOR_STOP);
+        bsal_actor_send_to_self_empty(actor, BSAL_ACTOR_STOP);
 
     } else if (tag == BSAL_ACTOR_ASK_TO_STOP_REPLY && reader1->pulled) {
 

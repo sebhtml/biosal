@@ -95,11 +95,11 @@ void stream_receive(struct bsal_actor *actor, struct bsal_message *message)
         stream1->ready = 0;
         stream1->initial_synchronization = 0;
 
-        bsal_actor_helper_send_range_empty(actor, &stream1->spawners, STREAM_SYNC);
+        bsal_actor_send_range_empty(actor, &stream1->spawners, STREAM_SYNC);
 
     } else if (tag == BSAL_ACTOR_SYNCHRONIZE) {
 
-        bsal_actor_helper_send_reply_empty(actor, BSAL_ACTOR_SYNCHRONIZE_REPLY);
+        bsal_actor_send_reply_empty(actor, BSAL_ACTOR_SYNCHRONIZE_REPLY);
 
     } else if (tag == BSAL_ACTOR_SYNCHRONIZE_REPLY && stream1->initial_synchronization == 0) {
 
@@ -113,7 +113,7 @@ void stream_receive(struct bsal_actor *actor, struct bsal_message *message)
         if (stream1->ready == bsal_vector_size(&stream1->children)) {
 
             printf("READY\n");
-            bsal_actor_helper_send_range_empty(actor, &stream1->spawners, STREAM_DIE);
+            bsal_actor_send_range_empty(actor, &stream1->spawners, STREAM_DIE);
         }
 
     } else if (tag == STREAM_SYNC) {
@@ -132,7 +132,7 @@ void stream_receive(struct bsal_actor *actor, struct bsal_message *message)
             }
             new_actor = *(int *)bsal_vector_at(&stream1->children, i);
 
-            bsal_actor_helper_send_empty(actor, new_actor, BSAL_ACTOR_SYNCHRONIZE);
+            bsal_actor_send_empty(actor, new_actor, BSAL_ACTOR_SYNCHRONIZE);
         }
 
         printf("done...\n");
@@ -141,10 +141,10 @@ void stream_receive(struct bsal_actor *actor, struct bsal_message *message)
         for (i = 0 ; i < bsal_vector_size(&stream1->children); i++) {
             new_actor = *(int *)bsal_vector_at(&stream1->children, i);
 
-            bsal_actor_helper_send_empty(actor, new_actor, STREAM_DIE);
+            bsal_actor_send_empty(actor, new_actor, STREAM_DIE);
         }
 
-        bsal_actor_helper_send_to_self_empty(actor, BSAL_ACTOR_STOP);
+        bsal_actor_send_to_self_empty(actor, BSAL_ACTOR_STOP);
     }
 }
 

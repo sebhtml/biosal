@@ -142,8 +142,8 @@ void bsal_input_stream_receive(struct bsal_actor *actor, struct bsal_message *me
         if (concrete_actor->open) {
 
             concrete_actor->error = BSAL_INPUT_ERROR_ALREADY_OPEN;
-            bsal_actor_helper_send_reply_int(actor, BSAL_INPUT_OPEN_REPLY, concrete_actor->error);
-            bsal_actor_helper_send_to_self_empty(actor, BSAL_ACTOR_STOP);
+            bsal_actor_send_reply_int(actor, BSAL_INPUT_OPEN_REPLY, concrete_actor->error);
+            bsal_actor_send_to_self_empty(actor, BSAL_ACTOR_STOP);
 
             return;
         }
@@ -183,8 +183,8 @@ void bsal_input_stream_receive(struct bsal_actor *actor, struct bsal_message *me
             printf("DEBUG has error\n");
 #endif
 
-            bsal_actor_helper_send_reply_int(actor, BSAL_INPUT_OPEN_REPLY, concrete_actor->error);
-            bsal_actor_helper_send_to_self_empty(actor, BSAL_ACTOR_STOP);
+            bsal_actor_send_reply_int(actor, BSAL_INPUT_OPEN_REPLY, concrete_actor->error);
+            bsal_actor_send_to_self_empty(actor, BSAL_ACTOR_STOP);
 
             return;
         }
@@ -192,15 +192,15 @@ void bsal_input_stream_receive(struct bsal_actor *actor, struct bsal_message *me
         concrete_actor->controller = source;
 
         /* no error here... */
-        bsal_actor_helper_send_reply_int(actor, BSAL_INPUT_OPEN_REPLY, concrete_actor->error);
+        bsal_actor_send_reply_int(actor, BSAL_INPUT_OPEN_REPLY, concrete_actor->error);
 
     } else if (tag == BSAL_INPUT_COUNT) {
         /* count a little bit and yield the worker */
 
         if (bsal_input_stream_check_open_error(actor, message)) {
 
-            bsal_actor_helper_send_reply_int64_t(actor, BSAL_INPUT_COUNT_REPLY, concrete_actor->error);
-            bsal_actor_helper_send_to_self_empty(actor, BSAL_ACTOR_STOP);
+            bsal_actor_send_reply_int64_t(actor, BSAL_INPUT_COUNT_REPLY, concrete_actor->error);
+            bsal_actor_send_to_self_empty(actor, BSAL_ACTOR_STOP);
 
             return;
         }
@@ -236,14 +236,14 @@ void bsal_input_stream_receive(struct bsal_actor *actor, struct bsal_message *me
             concrete_actor->last_entries = sequences;
             concrete_actor->last_offset = bsal_input_proxy_offset(&concrete_actor->proxy);
 
-            bsal_actor_helper_send_int64_t(actor, concrete_actor->controller, BSAL_INPUT_COUNT_PROGRESS, sequences);
+            bsal_actor_send_int64_t(actor, concrete_actor->controller, BSAL_INPUT_COUNT_PROGRESS, sequences);
         }
 
         if (has_sequence) {
 
             /*printf("DEBUG yield\n");*/
 
-            bsal_actor_helper_send_to_self_empty(actor, BSAL_ACTOR_YIELD);
+            bsal_actor_send_to_self_empty(actor, BSAL_ACTOR_YIELD);
 
             /* notify the controller of our progress...
              */
@@ -251,7 +251,7 @@ void bsal_input_stream_receive(struct bsal_actor *actor, struct bsal_message *me
 
         } else {
 
-            bsal_actor_helper_send_to_self_empty(actor, BSAL_INPUT_COUNT_READY);
+            bsal_actor_send_to_self_empty(actor, BSAL_INPUT_COUNT_READY);
         }
 
     } else if (tag == BSAL_ACTOR_YIELD_REPLY) {
@@ -260,14 +260,14 @@ void bsal_input_stream_receive(struct bsal_actor *actor, struct bsal_message *me
                 /*
                  * it is not clear that there can be an error when receiving YIELD.
             error = concrete_actor->error;
-            bsal_actor_helper_send_reply_int(actor, BSAL_INPUT_COUNT_REPLY, error);
-            bsal_actor_helper_send_to_self(actor, BSAL_ACTOR_STOP);
+            bsal_actor_send_reply_int(actor, BSAL_INPUT_COUNT_REPLY, error);
+            bsal_actor_send_to_self(actor, BSAL_ACTOR_STOP);
 
                  */
             return;
         }
 
-        bsal_actor_helper_send_to_self_empty(actor, BSAL_INPUT_COUNT);
+        bsal_actor_send_to_self_empty(actor, BSAL_INPUT_COUNT);
 
     } else if (tag == BSAL_INPUT_COUNT_READY) {
 
@@ -277,7 +277,7 @@ void bsal_input_stream_receive(struct bsal_actor *actor, struct bsal_message *me
 
         count = bsal_input_proxy_size(&concrete_actor->proxy);
 
-        bsal_actor_helper_send_vector(actor, concrete_actor->controller, BSAL_INPUT_COUNT_REPLY,
+        bsal_actor_send_vector(actor, concrete_actor->controller, BSAL_INPUT_COUNT_REPLY,
                         &concrete_actor->mega_blocks);
 
         printf("input_stream/%d on node/%d counted entries in %s, %" PRIu64 "\n",
@@ -286,7 +286,7 @@ void bsal_input_stream_receive(struct bsal_actor *actor, struct bsal_message *me
 
     } else if (tag == BSAL_ACTOR_ASK_TO_STOP) {
 
-        bsal_actor_helper_send_to_self_empty(actor, BSAL_INPUT_CLOSE);
+        bsal_actor_send_to_self_empty(actor, BSAL_INPUT_CLOSE);
 
     } else if (tag == BSAL_INPUT_CLOSE) {
 
@@ -302,7 +302,7 @@ void bsal_input_stream_receive(struct bsal_actor *actor, struct bsal_message *me
                 &concrete_actor->error);
             bsal_actor_send(actor, source, message);
 
-            bsal_actor_helper_send_to_self_empty(actor, BSAL_ACTOR_STOP);
+            bsal_actor_send_to_self_empty(actor, BSAL_ACTOR_STOP);
             return;
         }
 
@@ -310,7 +310,7 @@ void bsal_input_stream_receive(struct bsal_actor *actor, struct bsal_message *me
                 &concrete_actor->error);
         bsal_actor_send(actor, source, message);
 
-        bsal_actor_helper_send_to_self_empty(actor, BSAL_ACTOR_STOP);
+        bsal_actor_send_to_self_empty(actor, BSAL_ACTOR_STOP);
 
 #ifdef BSAL_INPUT_STREAM_DEBUG
         printf("actor %d sending BSAL_INPUT_CLOSE_REPLY to %d\n",
@@ -359,15 +359,15 @@ void bsal_input_stream_receive(struct bsal_actor *actor, struct bsal_message *me
         bsal_input_stream_push_sequences(actor, message);
     } else if (tag == BSAL_ACTOR_ASK_TO_STOP) {
 
-        bsal_actor_helper_send_to_self_empty(actor, BSAL_ACTOR_STOP);
-        bsal_actor_helper_send_reply_empty(actor, BSAL_ACTOR_ASK_TO_STOP_REPLY);
+        bsal_actor_send_to_self_empty(actor, BSAL_ACTOR_STOP);
+        bsal_actor_send_reply_empty(actor, BSAL_ACTOR_ASK_TO_STOP_REPLY);
 
     } else if (tag == BSAL_INPUT_STREAM_RESET) {
 
         /* fail silently
          */
         if (!concrete_actor->open) {
-            bsal_actor_helper_send_reply_empty(actor, BSAL_INPUT_STREAM_RESET_REPLY);
+            bsal_actor_send_reply_empty(actor, BSAL_INPUT_STREAM_RESET_REPLY);
             return;
         }
 
@@ -379,11 +379,11 @@ void bsal_input_stream_receive(struct bsal_actor *actor, struct bsal_message *me
         bsal_input_proxy_init(&concrete_actor->proxy, concrete_actor->file_name,
                         concrete_actor->starting_offset);
 
-        bsal_actor_helper_send_reply_empty(actor, BSAL_INPUT_STREAM_RESET_REPLY);
+        bsal_actor_send_reply_empty(actor, BSAL_INPUT_STREAM_RESET_REPLY);
 
     } else if (tag == BSAL_PUSH_SEQUENCE_DATA_BLOCK_REPLY) {
 
-        bsal_actor_helper_send_to_supervisor_int(actor, BSAL_INPUT_PUSH_SEQUENCES_REPLY,
+        bsal_actor_send_to_supervisor_int(actor, BSAL_INPUT_PUSH_SEQUENCES_REPLY,
                         source);
     }
 }
@@ -455,7 +455,7 @@ void bsal_input_stream_push_sequences(struct bsal_actor *actor,
 
     /* answer immediately
      */
-    bsal_actor_helper_send_reply_empty(actor, BSAL_INPUT_PUSH_SEQUENCES_READY);
+    bsal_actor_send_reply_empty(actor, BSAL_INPUT_PUSH_SEQUENCES_READY);
     ephemeral_memory = (struct bsal_memory_pool *)bsal_actor_get_ephemeral_memory(actor);
     has_sequence = 1;
 
@@ -551,7 +551,7 @@ void bsal_input_stream_push_sequences(struct bsal_actor *actor,
      * The required information is the input command
      */
     /*
-    bsal_actor_helper_send_reply_empty(actor, BSAL_INPUT_PUSH_SEQUENCES_REPLY);
+    bsal_actor_send_reply_empty(actor, BSAL_INPUT_PUSH_SEQUENCES_REPLY);
     */
 
     /* free memory
@@ -587,5 +587,5 @@ void bsal_input_stream_set_offset(struct bsal_actor *self, struct bsal_message *
 
     concrete_actor = (struct bsal_input_stream *)bsal_actor_concrete_actor(self);
     bsal_message_helper_unpack_uint64_t(message, 0, &concrete_actor->starting_offset);
-    bsal_actor_helper_send_reply_empty(self, BSAL_INPUT_STREAM_SET_OFFSET_REPLY);
+    bsal_actor_send_reply_empty(self, BSAL_INPUT_STREAM_SET_OFFSET_REPLY);
 }

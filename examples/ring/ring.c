@@ -78,14 +78,14 @@ void ring_receive(struct bsal_actor *actor, struct bsal_message *message)
                         (int)bsal_vector_size(&concrete_actor->spawners));
 
         destination = *(int *)bsal_vector_at(&concrete_actor->spawners, 0);
-        bsal_actor_helper_send_empty(actor, destination, RING_READY);
+        bsal_actor_send_empty(actor, destination, RING_READY);
 
     } else if (tag == RING_READY && concrete_actor->step == RING_STEP_RECEIVE_SPAWNERS) {
 
         concrete_actor->ready_rings++;
 
         if (concrete_actor->ready_rings == (int)bsal_vector_size(&concrete_actor->spawners)) {
-            bsal_actor_helper_send_range_empty(actor, &concrete_actor->spawners, RING_SPAWN);
+            bsal_actor_send_range_empty(actor, &concrete_actor->spawners, RING_SPAWN);
             concrete_actor->step = RING_STEP_SPAWN;
             concrete_actor->ready_rings = 0;
         }
@@ -118,7 +118,7 @@ void ring_receive(struct bsal_actor *actor, struct bsal_message *message)
 
         if (concrete_actor->ready_rings == bsal_vector_size(&concrete_actor->spawners)) {
 
-            bsal_actor_helper_send_range_empty(actor, &concrete_actor->spawners, RING_PUSH_NEXT);
+            bsal_actor_send_range_empty(actor, &concrete_actor->spawners, RING_PUSH_NEXT);
             concrete_actor->ready_rings = 0;
             concrete_actor->step = RING_STEP_PUSH_NEXT;
         }
@@ -157,7 +157,7 @@ void ring_receive(struct bsal_actor *actor, struct bsal_message *message)
         if (concrete_actor->spawned_senders == concrete_actor->senders) {
 
             printf("RING_STEP_SPAWN completed.\n");
-            bsal_actor_helper_send_empty(actor, *(int *)bsal_vector_at(&concrete_actor->spawners, 0), RING_READY);
+            bsal_actor_send_empty(actor, *(int *)bsal_vector_at(&concrete_actor->spawners, 0), RING_READY);
             concrete_actor->ready_senders = 0;
 
             concrete_actor->last = concrete_actor->previous;
@@ -181,7 +181,7 @@ void ring_receive(struct bsal_actor *actor, struct bsal_message *message)
                         1);
 
         if (concrete_actor->ready_senders == 1) {
-            bsal_actor_helper_send_empty(actor, *(int *)bsal_vector_at(&concrete_actor->spawners, 0), RING_READY);
+            bsal_actor_send_empty(actor, *(int *)bsal_vector_at(&concrete_actor->spawners, 0), RING_READY);
             printf("RING_STEP_PUSH_NEXT completed.\n");
             concrete_actor->ready_senders = 0;
         }
@@ -201,11 +201,11 @@ void ring_receive(struct bsal_actor *actor, struct bsal_message *message)
         }
     } else if (tag == SENDER_HELLO_REPLY) {
 
-        bsal_actor_helper_send_range_empty(actor, &concrete_actor->spawners, RING_KILL);
-        bsal_actor_helper_send_empty(actor, concrete_actor->first, SENDER_KILL);
+        bsal_actor_send_range_empty(actor, &concrete_actor->spawners, RING_KILL);
+        bsal_actor_send_empty(actor, concrete_actor->first, SENDER_KILL);
 
     } else if (tag == RING_KILL) {
 
-        bsal_actor_helper_send_to_self_empty(actor, BSAL_ACTOR_STOP);
+        bsal_actor_send_to_self_empty(actor, BSAL_ACTOR_STOP);
     }
 }
