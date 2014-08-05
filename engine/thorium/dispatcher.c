@@ -24,12 +24,24 @@ void bsal_dispatcher_init(struct bsal_dispatcher *self)
 void bsal_dispatcher_destroy(struct bsal_dispatcher *self)
 {
     struct bsal_map_iterator iterator;
+    struct bsal_map_iterator iterator2;
     struct bsal_map *map;
+    struct bsal_vector *vector;
+
 
     bsal_map_iterator_init(&iterator, &self->routes);
 
     while (bsal_map_iterator_has_next(&iterator)) {
         bsal_map_iterator_next(&iterator, NULL, (void **)&map);
+
+        bsal_map_iterator_init(&iterator2, map);
+
+        while (bsal_map_iterator_has_next(&iterator2)) {
+            bsal_map_iterator_next(&iterator2, NULL, (void **)&vector);
+
+            bsal_vector_destroy(vector);
+        }
+        bsal_map_iterator_destroy(&iterator2);
 
         bsal_map_destroy(map);
     }
