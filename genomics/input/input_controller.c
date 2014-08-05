@@ -1272,7 +1272,7 @@ void bsal_input_controller_set_offset_reply(struct bsal_actor *self, struct bsal
     concrete_actor = (struct bsal_input_controller *)bsal_actor_concrete_actor(self);
     stream_index = bsal_vector_index_of(&concrete_actor->reading_streams, &acquaintance_index);
 
-    block_index = bsal_map_helper_get_int(&concrete_actor->assigned_blocks, &stream_index);
+    block_index = bsal_map_get_int(&concrete_actor->assigned_blocks, &stream_index);
 
 #ifdef BSAL_INPUT_CONTROLLER_DEBUG_READING_STREAMS
     printf("DEBUG got reply from stream/%d for offset, stream_index %d block_index %d\n", source,

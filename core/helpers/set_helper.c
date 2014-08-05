@@ -3,7 +3,7 @@
 
 #include <core/structures/set_iterator.h>
 
-int bsal_set_helper_get_any_int(struct bsal_set *self)
+int bsal_set_get_any_int(struct bsal_set *self)
 {
     int value;
     int *bucket;

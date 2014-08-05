@@ -2,6 +2,7 @@
 #include "statistics.h"
 
 #include "vector_helper.h"
+#include <core/structures/vector.h>
 
 #include <math.h>
 #include <stdio.h>

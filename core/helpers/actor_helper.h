@@ -2,7 +2,7 @@
 #ifndef BSAL_ACTOR_HELPER_H
 #define BSAL_ACTOR_HELPER_H
 
-#include <engine/thorium/actor.h>
+#include <engine/thorium/script.h>
 
 #include <stdint.h>
 

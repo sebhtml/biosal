@@ -2,7 +2,7 @@
 #ifndef BSAL_STATISTICS_H
 #define BSAL_STATISTICS_H
 
-#include <core/structures/vector.h>
+struct bsal_vector;
 
 double bsal_statistics_get_mean_int(struct bsal_vector *vector);
 int bsal_statistics_get_median_int(struct bsal_vector *vector);
