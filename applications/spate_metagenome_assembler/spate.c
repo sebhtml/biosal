@@ -192,7 +192,7 @@ void spate_spawn_reply(struct bsal_actor *self, struct bsal_message *message)
 
     concrete_self = (struct spate *)bsal_actor_concrete_actor(self);
 
-    bsal_message_helper_unpack_int(message, 0, &new_actor);
+    bsal_message_unpack_int(message, 0, &new_actor);
 
     if (concrete_self->input_controller == BSAL_ACTOR_NOBODY) {
 

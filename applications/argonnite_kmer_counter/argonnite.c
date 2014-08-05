@@ -251,7 +251,7 @@ void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message)
 
     } else if (tag == BSAL_ACTOR_GET_NODE_WORKER_COUNT_REPLY) {
 
-        bsal_message_helper_unpack_int(message, 0, &workers);
+        bsal_message_unpack_int(message, 0, &workers);
 
         concrete_actor->configured_actors++;
 
@@ -275,7 +275,7 @@ void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message)
             return;
         }
 
-        bsal_message_helper_unpack_int(message, 0, &distribution);
+        bsal_message_unpack_int(message, 0, &distribution);
 
         concrete_actor->distribution = distribution;
 
@@ -712,7 +712,7 @@ void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message)
 
     } else if (tag == BSAL_ACTOR_NOTIFY_REPLY) {
 
-        bsal_message_helper_unpack_uint64_t(message, 0, &produced);
+        bsal_message_unpack_uint64_t(message, 0, &produced);
 
         printf("kernel/%d generated %" PRIu64 " kmers\n",
                         source, produced);
@@ -730,7 +730,7 @@ void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message)
     } else if (tag == BSAL_STORE_GET_ENTRY_COUNT_REPLY) {
 
         concrete_actor->ready_stores++;
-        bsal_message_helper_unpack_uint64_t(message, 0, &produced);
+        bsal_message_unpack_uint64_t(message, 0, &produced);
         concrete_actor->actual_kmers += produced;
 
         if (concrete_actor->ready_stores == bsal_vector_size(&concrete_actor->kmer_stores)) {
@@ -919,7 +919,7 @@ void argonnite_prepare_sequence_stores(struct bsal_actor *self, struct bsal_mess
     } else if (tag == BSAL_ACTOR_SPAWN_REPLY) {
 
         printf("DEBUGY got manager for stores\n");
-        bsal_message_helper_unpack_int(message, 0, &manager_for_sequence_stores);
+        bsal_message_unpack_int(message, 0, &manager_for_sequence_stores);
         concrete_actor->manager_for_sequence_stores = manager_for_sequence_stores;
 
         bsal_actor_send_int(self, manager_for_sequence_stores, BSAL_MANAGER_SET_SCRIPT,
@@ -1026,7 +1026,7 @@ void argonnite_request_progress_reply(struct bsal_actor *actor, struct bsal_mess
     struct argonnite *concrete_actor;
 
     concrete_actor = (struct argonnite *)bsal_actor_concrete_actor(actor);
-    bsal_message_helper_unpack_double(message, 0, &value);
+    bsal_message_unpack_double(message, 0, &value);
     source = bsal_message_source(message);
 
     store_index = source;

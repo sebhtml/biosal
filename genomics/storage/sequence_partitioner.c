@@ -86,12 +86,12 @@ void bsal_sequence_partitioner_receive(struct bsal_actor *actor, struct bsal_mes
     struct bsal_memory_pool *ephemeral_memory;
 
     ephemeral_memory = bsal_actor_get_ephemeral_memory(actor);
-    bsal_message_helper_get_all(message, &tag, &count, &buffer, &source);
+    bsal_message_get_all(message, &tag, &count, &buffer, &source);
 
     concrete_actor = (struct bsal_sequence_partitioner *)bsal_actor_concrete_actor(actor);
 
     if (tag == BSAL_SEQUENCE_PARTITIONER_SET_BLOCK_SIZE) {
-        bsal_message_helper_unpack_int(message, 0, &concrete_actor->block_size);
+        bsal_message_unpack_int(message, 0, &concrete_actor->block_size);
         bsal_actor_send_reply_empty(actor, BSAL_SEQUENCE_PARTITIONER_SET_BLOCK_SIZE_REPLY);
 
         bsal_sequence_partitioner_verify(actor);
@@ -121,7 +121,7 @@ void bsal_sequence_partitioner_receive(struct bsal_actor *actor, struct bsal_mes
 
     } else if (tag == BSAL_SEQUENCE_PARTITIONER_SET_ACTOR_COUNT) {
 
-        bsal_message_helper_unpack_int(message, 0, &concrete_actor->store_count);
+        bsal_message_unpack_int(message, 0, &concrete_actor->store_count);
         bsal_actor_send_reply_empty(actor, BSAL_SEQUENCE_PARTITIONER_SET_ACTOR_COUNT_REPLY);
 
         bsal_sequence_partitioner_verify(actor);
@@ -166,7 +166,7 @@ void bsal_sequence_partitioner_receive(struct bsal_actor *actor, struct bsal_mes
          * as a reply
          */
 
-        bsal_message_helper_unpack_int(message, 0, &command_number);
+        bsal_message_unpack_int(message, 0, &command_number);
 
         active_command = bsal_map_get(&concrete_actor->active_commands,
                         &command_number);

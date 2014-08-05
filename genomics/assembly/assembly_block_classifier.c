@@ -130,7 +130,7 @@ void bsal_assembly_block_classifier_receive(struct bsal_actor *self, struct bsal
 
     } else if (tag == BSAL_SET_KMER_LENGTH) {
 
-        bsal_message_helper_unpack_int(message, 0, &concrete_actor->kmer_length);
+        bsal_message_unpack_int(message, 0, &concrete_actor->kmer_length);
 
         bsal_actor_send_reply_empty(self, BSAL_SET_KMER_LENGTH_REPLY);
 

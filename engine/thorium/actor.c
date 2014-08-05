@@ -768,8 +768,8 @@ int bsal_actor_receive_system(struct bsal_actor *self, struct bsal_message *mess
             return 1;
         }
 
-        bsal_message_helper_unpack_int(message, 0, &old_supervisor);
-        bsal_message_helper_unpack_int(message, sizeof(old_supervisor), &supervisor);
+        bsal_message_unpack_int(message, 0, &old_supervisor);
+        bsal_message_unpack_int(message, sizeof(old_supervisor), &supervisor);
 
 #ifdef BSAL_ACTOR_DEBUG_MIGRATE
         printf("DEBUG bsal_actor_receive_system actor %d receives BSAL_ACTOR_SET_SUPERVISOR old supervisor %d (provided %d), new supervisor %d\n",
@@ -1310,7 +1310,7 @@ void bsal_actor_migrate(struct bsal_actor *self, struct bsal_message *message)
 
         /* tell acquaintances that the clone is the new original.
          */
-        bsal_message_helper_unpack_int(message, 0, &self->migration_new_actor);
+        bsal_message_unpack_int(message, 0, &self->migration_new_actor);
 
         self->acquaintance_index = 0;
         bsal_actor_send_to_self_empty(self, BSAL_ACTOR_MIGRATE_NOTIFY_ACQUAINTANCES);
@@ -1412,7 +1412,7 @@ void bsal_actor_notify_name_change(struct bsal_actor *self, struct bsal_message 
 
     source = bsal_message_source(message);
     old_name = source;
-    bsal_message_helper_unpack_int(message, 0, &new_name);
+    bsal_message_unpack_int(message, 0, &new_name);
 
     /* update the acquaintance vector
      */
@@ -1496,7 +1496,7 @@ void bsal_actor_queue_message(struct bsal_actor *self,
     int tag;
     int source;
 
-    bsal_message_helper_get_all(message, &tag, &count, &buffer, &source);
+    bsal_message_get_all(message, &tag, &count, &buffer, &source);
 
     new_buffer = NULL;
 
@@ -1739,7 +1739,7 @@ void bsal_actor_enqueue_message(struct bsal_actor *self, struct bsal_message *me
     struct bsal_message new_message;
     int destination;
 
-    bsal_message_helper_get_all(message, &tag, &count, &buffer, &source);
+    bsal_message_get_all(message, &tag, &count, &buffer, &source);
     destination = bsal_message_destination(message);
 
     new_buffer = NULL;

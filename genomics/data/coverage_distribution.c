@@ -133,7 +133,7 @@ void bsal_coverage_distribution_receive(struct bsal_actor *self, struct bsal_mes
     } else if (tag == BSAL_SET_EXPECTED_MESSAGE_COUNT) {
 
         concrete_actor->source = source;
-        bsal_message_helper_unpack_int(message, 0, &concrete_actor->expected);
+        bsal_message_unpack_int(message, 0, &concrete_actor->expected);
 
         printf("distribution %d expects %d messages\n",
                         bsal_actor_name(self),

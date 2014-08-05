@@ -167,7 +167,7 @@ void bsal_assembly_graph_builder_spawn_reply_graph_store_manager(struct bsal_act
      * Configure the manager for graph stores
      */
 
-    bsal_message_helper_unpack_int(message, 0, &concrete_self->manager_for_graph_stores);
+    bsal_message_unpack_int(message, 0, &concrete_self->manager_for_graph_stores);
 
     bsal_actor_add_route_with_source(self, BSAL_MANAGER_SET_SCRIPT_REPLY,
                     bsal_assembly_graph_builder_set_script_reply_store_manager,
@@ -204,7 +204,7 @@ void bsal_assembly_graph_builder_spawn_reply(struct bsal_actor *self, struct bsa
 
     if (concrete_self->manager_for_classifiers == BSAL_ACTOR_NOBODY) {
 
-        bsal_message_helper_unpack_int(message, 0, &concrete_self->manager_for_classifiers);
+        bsal_message_unpack_int(message, 0, &concrete_self->manager_for_classifiers);
 
         bsal_actor_add_route_with_source(self, BSAL_MANAGER_SET_SCRIPT_REPLY,
                         bsal_assembly_graph_builder_set_script_reply_classifier_manager,
@@ -219,7 +219,7 @@ void bsal_assembly_graph_builder_spawn_reply(struct bsal_actor *self, struct bsa
 
     } else if (concrete_self->coverage_distribution == BSAL_ACTOR_NOBODY) {
 
-        bsal_message_helper_unpack_int(message, 0, &concrete_self->coverage_distribution);
+        bsal_message_unpack_int(message, 0, &concrete_self->coverage_distribution);
 
         bsal_actor_add_route_with_source(self, BSAL_SET_EXPECTED_MESSAGE_COUNT_REPLY,
                             bsal_assembly_graph_builder_set_expected_message_count_reply,
@@ -312,7 +312,7 @@ void bsal_assembly_graph_builder_spawn_reply_window_manager(struct bsal_actor *s
      * for sliding windows
      */
 
-    bsal_message_helper_unpack_int(message, 0, &concrete_self->manager_for_windows);
+    bsal_message_unpack_int(message, 0, &concrete_self->manager_for_windows);
 
     bsal_actor_add_route_with_source(self, BSAL_MANAGER_SET_SCRIPT_REPLY,
                     bsal_assembly_graph_builder_set_script_reply_window_manager,
@@ -716,7 +716,7 @@ void bsal_assembly_graph_builder_notify_reply(struct bsal_actor *self, struct bs
 
     concrete_self = bsal_actor_concrete_actor(self);
 
-    bsal_message_helper_unpack_uint64_t(message, 0, &produced_kmer_count);
+    bsal_message_unpack_uint64_t(message, 0, &produced_kmer_count);
 
     concrete_self->total_kmer_count += produced_kmer_count;
 
@@ -754,7 +754,7 @@ void bsal_assembly_graph_builder_get_entry_count_reply(struct bsal_actor *self, 
 
     concrete_self = bsal_actor_concrete_actor(self);
 
-    bsal_message_helper_unpack_uint64_t(message, 0, &kmer_count);
+    bsal_message_unpack_uint64_t(message, 0, &kmer_count);
 
     concrete_self->actual_kmer_count += kmer_count;
 

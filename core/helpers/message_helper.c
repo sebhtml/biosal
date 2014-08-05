@@ -5,7 +5,7 @@
 
 #include <stdint.h>
 
-int bsal_message_helper_unpack_int(struct bsal_message *message, int offset, int *value)
+int bsal_message_unpack_int(struct bsal_message *message, int offset, int *value)
 {
     int bytes;
     void *buffer;
@@ -27,7 +27,7 @@ int bsal_message_helper_unpack_int(struct bsal_message *message, int offset, int
     return offset;
 }
 
-int bsal_message_helper_unpack_uint64_t(struct bsal_message *message, int offset, uint64_t *value)
+int bsal_message_unpack_uint64_t(struct bsal_message *message, int offset, uint64_t *value)
 {
     int bytes;
     void *buffer;
@@ -49,7 +49,7 @@ int bsal_message_helper_unpack_uint64_t(struct bsal_message *message, int offset
     return offset;
 }
 
-void bsal_message_helper_get_all(struct bsal_message *message, int *tag, int *count, void **buffer, int *source)
+void bsal_message_get_all(struct bsal_message *message, int *tag, int *count, void **buffer, int *source)
 {
     *tag = bsal_message_tag(message);
     *count = bsal_message_count(message);
@@ -57,7 +57,7 @@ void bsal_message_helper_get_all(struct bsal_message *message, int *tag, int *co
     *source = bsal_message_source(message);
 }
 
-int bsal_message_helper_unpack_int64_t(struct bsal_message *message, int offset, int64_t *value)
+int bsal_message_unpack_int64_t(struct bsal_message *message, int offset, int64_t *value)
 {
     int bytes;
     void *buffer;
@@ -79,7 +79,7 @@ int bsal_message_helper_unpack_int64_t(struct bsal_message *message, int offset,
     return offset;
 }
 
-int bsal_message_helper_unpack_double(struct bsal_message *message, int offset, double *value)
+int bsal_message_unpack_double(struct bsal_message *message, int offset, double *value)
 {
     int bytes;
     void *buffer;

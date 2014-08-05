@@ -585,6 +585,6 @@ void bsal_input_stream_set_offset(struct bsal_actor *self, struct bsal_message *
     struct bsal_input_stream *concrete_actor;
 
     concrete_actor = (struct bsal_input_stream *)bsal_actor_concrete_actor(self);
-    bsal_message_helper_unpack_uint64_t(message, 0, &concrete_actor->starting_offset);
+    bsal_message_unpack_uint64_t(message, 0, &concrete_actor->starting_offset);
     bsal_actor_send_reply_empty(self, BSAL_INPUT_STREAM_SET_OFFSET_REPLY);
 }

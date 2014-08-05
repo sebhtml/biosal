@@ -338,7 +338,7 @@ void bsal_sequence_store_ask(struct bsal_actor *self, struct bsal_message *messa
     int sequence_kmers;
 
     required_kmers = bsal_sequence_store_get_required_kmers(self, message);
-    bsal_message_helper_unpack_int(message, 0, &kmer_length);
+    bsal_message_unpack_int(message, 0, &kmer_length);
 
     name = bsal_actor_name(self);
 #ifdef BSAL_SEQUENCE_STORE_DEBUG
@@ -491,7 +491,7 @@ int bsal_sequence_store_get_required_kmers(struct bsal_actor *actor, struct bsal
     nodes = bsal_actor_get_node_count(actor);
     total_workers = nodes * workers;
     total_kmer_stores = total_workers * 1;
-    bsal_message_helper_unpack_int(message, 0, &kmer_length);
+    bsal_message_unpack_int(message, 0, &kmer_length);
 
     if (kmer_length <= 0) {
         printf("%s/%d Error, invalid kmer length: %d\n",

@@ -207,7 +207,7 @@ void bsal_assembly_sliding_window_receive(struct bsal_actor *actor, struct bsal_
 
     } else if (tag == BSAL_SET_KMER_LENGTH) {
 
-        bsal_message_helper_unpack_int(message, 0, &concrete_actor->kmer_length);
+        bsal_message_unpack_int(message, 0, &concrete_actor->kmer_length);
 
         printf("%s/%d kmer length is %d\n",
                         bsal_actor_script_name(actor),
@@ -243,7 +243,7 @@ void bsal_assembly_sliding_window_receive(struct bsal_actor *actor, struct bsal_
             return;
         }
 
-        bsal_message_helper_unpack_int(message, 0, &producer);
+        bsal_message_unpack_int(message, 0, &producer);
 
         concrete_actor->producer = producer;
 
@@ -428,7 +428,7 @@ void bsal_assembly_sliding_window_clone_reply(struct bsal_actor *actor, struct b
     source = bsal_message_source(message);
     concrete_actor = (struct bsal_assembly_sliding_window *)bsal_actor_concrete_actor(actor);
     name = bsal_actor_name(actor);
-    bsal_message_helper_unpack_int(message, 0, &clone);
+    bsal_message_unpack_int(message, 0, &clone);
     consumer = concrete_actor->consumer;
     /*producer = concrete_actor->producer);*/
 
@@ -558,7 +558,7 @@ void bsal_assembly_sliding_window_notify_reply(struct bsal_actor *actor, struct 
 
     concrete_actor = (struct bsal_assembly_sliding_window *)bsal_actor_concrete_actor(actor);
 
-    bsal_message_helper_unpack_uint64_t(message, 0, &kmers);
+    bsal_message_unpack_uint64_t(message, 0, &kmers);
 
     concrete_actor->sum_of_kmers += kmers;
 

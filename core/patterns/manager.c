@@ -318,7 +318,7 @@ void bsal_manager_receive(struct bsal_actor *actor, struct bsal_message *message
 
     } else if (tag == BSAL_MANAGER_SET_ACTORS_PER_WORKER) {
 
-        bsal_message_helper_unpack_int(message, 0, &concrete_actor->actors_per_worker);
+        bsal_message_unpack_int(message, 0, &concrete_actor->actors_per_worker);
 
         if (concrete_actor->actors_per_worker <= 0) {
             concrete_actor->actors_per_worker = BSAL_ACTOR_NO_VALUE;
@@ -328,7 +328,7 @@ void bsal_manager_receive(struct bsal_actor *actor, struct bsal_message *message
 
     } else if (tag == BSAL_MANAGER_SET_WORKERS_PER_ACTOR) {
 
-        bsal_message_helper_unpack_int(message, 0, &concrete_actor->workers_per_actor);
+        bsal_message_unpack_int(message, 0, &concrete_actor->workers_per_actor);
 
         if (concrete_actor->workers_per_actor <= 0) {
             concrete_actor->workers_per_actor = BSAL_ACTOR_NO_VALUE;

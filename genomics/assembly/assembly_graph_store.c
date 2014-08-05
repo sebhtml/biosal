@@ -114,7 +114,7 @@ void bsal_assembly_graph_store_receive(struct bsal_actor *self, struct bsal_mess
 
     if (tag == BSAL_SET_KMER_LENGTH) {
 
-        bsal_message_helper_unpack_int(message, 0, &concrete_actor->kmer_length);
+        bsal_message_unpack_int(message, 0, &concrete_actor->kmer_length);
 
         bsal_dna_kmer_init_mock(&kmer, concrete_actor->kmer_length,
                         &concrete_actor->storage_codec, bsal_actor_get_ephemeral_memory(self));
@@ -244,7 +244,7 @@ void bsal_assembly_graph_store_receive(struct bsal_actor *self, struct bsal_mess
 
     } else if (tag == BSAL_SEQUENCE_STORE_REQUEST_PROGRESS_REPLY) {
 
-        bsal_message_helper_unpack_double(message, 0, &value);
+        bsal_message_unpack_double(message, 0, &value);
 
         bsal_map_set_current_size_estimate(&concrete_actor->table, value);
 
@@ -258,7 +258,7 @@ void bsal_assembly_graph_store_receive(struct bsal_actor *self, struct bsal_mess
 
     } else if (tag == BSAL_ACTOR_SET_CONSUMER) {
 
-        bsal_message_helper_unpack_int(message, 0, &customer);
+        bsal_message_unpack_int(message, 0, &customer);
 
         printf("kmer store %d will use coverage distribution %d\n",
                         bsal_actor_name(self), customer);

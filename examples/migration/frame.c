@@ -125,7 +125,7 @@ void frame_receive(struct bsal_actor *actor, struct bsal_message *message)
 
     } else if (tag == BSAL_ACTOR_MIGRATE_REPLY) {
 
-        bsal_message_helper_unpack_int(message, 0, &other);
+        bsal_message_unpack_int(message, 0, &other);
         printf("actor %d received migrated actor %d\n", name, other);
         printf("Acquaintances of actor %d: ", name);
         bsal_vector_print_int(acquaintance_vector);
@@ -145,7 +145,7 @@ void frame_receive(struct bsal_actor *actor, struct bsal_message *message)
 
     } else if (tag == BSAL_ACTOR_UNPACK) {
 
-        bsal_message_helper_unpack_int(message, 0, &concrete_actor->value);
+        bsal_message_unpack_int(message, 0, &concrete_actor->value);
         bsal_actor_send_reply_empty(actor, BSAL_ACTOR_UNPACK_REPLY);
 
     } else if (tag == BSAL_ACTOR_ASK_TO_STOP) {
