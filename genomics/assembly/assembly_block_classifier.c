@@ -186,7 +186,7 @@ void bsal_assembly_block_classifier_flush(struct bsal_actor *self, int customer_
     concrete_actor = (struct bsal_assembly_block_classifier *)bsal_actor_concrete_actor(self);
 
     ephemeral_memory = bsal_actor_get_ephemeral_memory(self);
-    customer = bsal_vector_helper_at_as_int(&concrete_actor->consumers, customer_index);
+    customer = bsal_vector_at_as_int(&concrete_actor->consumers, customer_index);
     customer_block_pointer = (struct bsal_dna_kmer_frequency_block *)bsal_vector_at(buffers, customer_index);
 
     BSAL_DEBUGGER_ASSERT(customer_block_pointer != NULL);

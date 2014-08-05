@@ -391,7 +391,7 @@ int bsal_actor_spawn(struct bsal_actor *self, int script)
 
 #ifdef BSAL_ACTOR_DEBUG_SPAWN
     printf("acquaintances after spawning\n");
-    bsal_vector_helper_print_int(&self->acquaintance_vector);
+    bsal_vector_print_int(&self->acquaintance_vector);
     printf("\n");
 #endif
 
@@ -1452,7 +1452,7 @@ void bsal_actor_migrate_notify_acquaintances(struct bsal_actor *self, struct bsa
 
     if (self->acquaintance_index < bsal_vector_size(acquaintance_vector)) {
 
-        acquaintance = bsal_vector_helper_at_as_int(acquaintance_vector, self->acquaintance_index);
+        acquaintance = bsal_vector_at_as_int(acquaintance_vector, self->acquaintance_index);
         bsal_actor_send_int(self, acquaintance, BSAL_ACTOR_NOTIFY_NAME_CHANGE,
                         self->migration_new_actor);
         self->acquaintance_index++;
@@ -1674,7 +1674,7 @@ int bsal_actor_add_acquaintance_private(struct bsal_actor *self, int name)
         return -1;
     }
 
-    bsal_vector_helper_push_back_int(bsal_actor_acquaintance_vector_private(self),
+    bsal_vector_push_back_int(bsal_actor_acquaintance_vector_private(self),
                     name);
 
     index = bsal_vector_size(bsal_actor_acquaintance_vector_private(self)) - 1;
@@ -1945,7 +1945,7 @@ struct bsal_vector *bsal_actor_acquaintance_vector_private(struct bsal_actor *se
 int bsal_actor_get_acquaintance_private(struct bsal_actor *self, int index)
 {
     if (index < bsal_vector_size(bsal_actor_acquaintance_vector_private(self))) {
-        return bsal_vector_helper_at_as_int(bsal_actor_acquaintance_vector_private(self),
+        return bsal_vector_at_as_int(bsal_actor_acquaintance_vector_private(self),
                         index);
     }
 
@@ -1981,7 +1981,7 @@ int bsal_actor_get_spawner(struct bsal_actor *self, struct bsal_vector *spawners
         self->spawner_index = bsal_vector_size(spawners) - 1;
     }
 
-    actor = bsal_vector_helper_at_as_int(spawners, self->spawner_index);
+    actor = bsal_vector_at_as_int(spawners, self->spawner_index);
 
     --self->spawner_index;
 

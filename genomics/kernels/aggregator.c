@@ -193,7 +193,7 @@ void bsal_aggregator_flush(struct bsal_actor *self, int customer_index, struct b
     concrete_actor = (struct bsal_aggregator *)bsal_actor_concrete_actor(self);
 
     ephemeral_memory = bsal_actor_get_ephemeral_memory(self);
-    customer = bsal_vector_helper_at_as_int(&concrete_actor->consumers, customer_index);
+    customer = bsal_vector_at_as_int(&concrete_actor->consumers, customer_index);
     customer_block_pointer = (struct bsal_dna_kmer_frequency_block *)bsal_vector_at(buffers, customer_index);
 
     BSAL_DEBUGGER_ASSERT(customer_block_pointer != NULL);

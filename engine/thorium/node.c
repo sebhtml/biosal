@@ -1485,27 +1485,27 @@ void bsal_node_register_signal_handlers(struct bsal_node *self)
      * \see http://unixhelp.ed.ac.uk/CGI/man-cgi?signal+7
      */
     /* segmentation fault */
-    bsal_vector_helper_push_back_int(&signals, SIGSEGV);
+    bsal_vector_push_back_int(&signals, SIGSEGV);
     /* division by 0 */
-    bsal_vector_helper_push_back_int(&signals, SIGFPE);
+    bsal_vector_push_back_int(&signals, SIGFPE);
     /* bus error (alignment issue */
-    bsal_vector_helper_push_back_int(&signals, SIGBUS);
+    bsal_vector_push_back_int(&signals, SIGBUS);
     /* abort */
-    bsal_vector_helper_push_back_int(&signals, SIGABRT);
+    bsal_vector_push_back_int(&signals, SIGABRT);
 
-    bsal_vector_helper_push_back_int(&signals, SIGUSR1);
+    bsal_vector_push_back_int(&signals, SIGUSR1);
 
 #if 0
     /* interruption */
-    bsal_vector_helper_push_back_int(&signals, SIGINT);
+    bsal_vector_push_back_int(&signals, SIGINT);
     /* kill */
-    bsal_vector_helper_push_back_int(&signals, SIGKILL);
+    bsal_vector_push_back_int(&signals, SIGKILL);
     /* termination*/
-    bsal_vector_helper_push_back_int(&signals, SIGTERM);
+    bsal_vector_push_back_int(&signals, SIGTERM);
     /* hang up */
-    bsal_vector_helper_push_back_int(&signals, SIGHUP);
+    bsal_vector_push_back_int(&signals, SIGHUP);
     /* illegal instruction */
-    bsal_vector_helper_push_back_int(&signals, SIGILL);
+    bsal_vector_push_back_int(&signals, SIGILL);
 #endif
 
     /*

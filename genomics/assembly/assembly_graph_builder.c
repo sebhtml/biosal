@@ -451,7 +451,7 @@ void bsal_assembly_graph_builder_configure(struct bsal_actor *self)
 
     for (i = 0; i < bsal_vector_size(&concrete_self->graph_stores); i++) {
 
-        destination = bsal_vector_helper_at_as_int(&concrete_self->graph_stores, i);
+        destination = bsal_vector_at_as_int(&concrete_self->graph_stores, i);
 
         bsal_actor_send_int(self, destination, BSAL_SET_KMER_LENGTH,
                         concrete_self->kmer_length);
@@ -459,7 +459,7 @@ void bsal_assembly_graph_builder_configure(struct bsal_actor *self)
 
     for (i = 0; i < bsal_vector_size(&concrete_self->sliding_windows); i++) {
 
-        destination = bsal_vector_helper_at_as_int(&concrete_self->sliding_windows, i);
+        destination = bsal_vector_at_as_int(&concrete_self->sliding_windows, i);
 
         bsal_actor_send_int(self, destination, BSAL_SET_KMER_LENGTH,
                         concrete_self->kmer_length);
@@ -467,7 +467,7 @@ void bsal_assembly_graph_builder_configure(struct bsal_actor *self)
 
     for (i = 0; i < bsal_vector_size(&concrete_self->block_classifiers); i++) {
 
-        destination = bsal_vector_helper_at_as_int(&concrete_self->block_classifiers, i);
+        destination = bsal_vector_at_as_int(&concrete_self->block_classifiers, i);
 
         bsal_actor_send_int(self, destination, BSAL_SET_KMER_LENGTH,
                         concrete_self->kmer_length);
@@ -524,8 +524,8 @@ void bsal_assembly_graph_builder_connect_actors(struct bsal_actor *self)
 
     for (i = 0; i < bsal_vector_size(&concrete_self->sliding_windows); i++) {
 
-        producer = bsal_vector_helper_at_as_int(&concrete_self->sliding_windows, i);
-        consumer = bsal_vector_helper_at_as_int(&concrete_self->block_classifiers, i);
+        producer = bsal_vector_at_as_int(&concrete_self->sliding_windows, i);
+        consumer = bsal_vector_at_as_int(&concrete_self->block_classifiers, i);
 
         /* set the consumer for sliding window
          */
@@ -623,8 +623,8 @@ void bsal_assembly_graph_builder_verify(struct bsal_actor *self)
 
     for (i = 0; i < bsal_vector_size(&concrete_self->sliding_windows); i++) {
 
-        producer = bsal_vector_helper_at_as_int(&concrete_self->sequence_stores, i);
-        consumer = bsal_vector_helper_at_as_int(&concrete_self->sliding_windows, i);
+        producer = bsal_vector_at_as_int(&concrete_self->sequence_stores, i);
+        consumer = bsal_vector_at_as_int(&concrete_self->sliding_windows, i);
 
         printf("CONFIGURE neural LINK %d -> %d\n",
                         producer, consumer);

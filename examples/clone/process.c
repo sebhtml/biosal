@@ -54,7 +54,7 @@ void process_receive(struct bsal_actor *actor, struct bsal_message *message)
 
         for (i = 0; i < bsal_vector_size(&process1->initial_processes); i++) {
 
-            other = bsal_vector_helper_at_as_int(&process1->initial_processes, i);
+            other = bsal_vector_at_as_int(&process1->initial_processes, i);
 
             if (other != name) {
                 break;
@@ -90,12 +90,12 @@ void process_receive(struct bsal_actor *actor, struct bsal_message *message)
             return;
         }
 
-        if (bsal_vector_helper_at_as_int(&process1->initial_processes, 0) == name) {
+        if (bsal_vector_at_as_int(&process1->initial_processes, 0) == name) {
             bsal_actor_synchronize(actor, &process1->initial_processes);
         }
 
         if (process1->ready) {
-            bsal_actor_send_empty(actor, bsal_vector_helper_at_as_int(&process1->initial_processes, 0),
+            bsal_actor_send_empty(actor, bsal_vector_at_as_int(&process1->initial_processes, 0),
                             BSAL_ACTOR_SYNCHRONIZE_REPLY);
         }
         process1->ready = 1;
@@ -103,7 +103,7 @@ void process_receive(struct bsal_actor *actor, struct bsal_message *message)
     } else if (tag == BSAL_ACTOR_SYNCHRONIZE) {
 
         if (process1->ready) {
-            bsal_actor_send_empty(actor, bsal_vector_helper_at_as_int(&process1->initial_processes, 0),
+            bsal_actor_send_empty(actor, bsal_vector_at_as_int(&process1->initial_processes, 0),
                             BSAL_ACTOR_SYNCHRONIZE_REPLY);
         }
         process1->ready = 1;

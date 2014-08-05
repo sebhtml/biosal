@@ -10,11 +10,6 @@
 
 #include "core/patterns/manager.h"
 
-/* helpers */
-
-#include "core/helpers/vector_helper.h"
-#include "core/helpers/message_helper.h"
-
 /* system */
 
 #include <core/system/memory.h>

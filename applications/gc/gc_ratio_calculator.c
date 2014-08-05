@@ -72,7 +72,7 @@ void gc_ratio_calculator_start(struct bsal_actor *actor, struct bsal_message *me
     size = bsal_vector_size(spawners);
     index = bsal_vector_index_of(spawners, &name);
     neighbor_index = (index + 1) % size;
-    neighbor_name = bsal_vector_helper_at_as_int(spawners, neighbor_index);
+    neighbor_name = bsal_vector_at_as_int(spawners, neighbor_index);
 
     printf("about to send to neighbor\n");
     bsal_actor_send_empty(actor, neighbor_name, GC_HELLO);
@@ -106,7 +106,7 @@ void gc_ratio_calculator_hello_reply(struct bsal_actor *actor, struct bsal_messa
 
     printf("Actor %d is satisfied with a reply from the neighbor %d.\n", name, source);
 
-    boss = bsal_vector_helper_at_as_int(spawners, 0);
+    boss = bsal_vector_at_as_int(spawners, 0);
     bsal_message_init(&new_message, BSAL_ACTOR_NOTIFY, 0, NULL);
     bsal_actor_send(actor, boss, &new_message);
     bsal_message_destroy(&new_message);

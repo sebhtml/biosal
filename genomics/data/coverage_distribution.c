@@ -218,11 +218,11 @@ void bsal_coverage_distribution_write_distribution(struct bsal_actor *self)
 
     bsal_map_iterator_destroy(&iterator);
 
-    bsal_vector_helper_sort_int(&coverage_values);
+    bsal_vector_sort_int(&coverage_values);
 
 #ifdef BSAL_COVERAGE_DISTRIBUTION_DEBUG
     printf("after sort ");
-    bsal_vector_helper_print_int(&coverage_values);
+    bsal_vector_print_int(&coverage_values);
     printf("\n");
 #endif
 
@@ -301,7 +301,7 @@ void bsal_coverage_distribution_ask_to_stop(struct bsal_actor *self, struct bsal
         bsal_vector_push_back(&coverage_values, coverage);
     }
 
-    bsal_vector_helper_sort_int(&coverage_values);
+    bsal_vector_sort_int(&coverage_values);
 
     bsal_map_iterator_destroy(&iterator);
 

@@ -197,7 +197,7 @@ void bsal_worker_pool_create_workers(struct bsal_worker_pool *pool)
             bsal_worker_enable_waiting(worker);
         }
 
-        bsal_vector_helper_set_int(&pool->message_count_cache, i, 0);
+        bsal_vector_set_int(&pool->message_count_cache, i, 0);
     }
 }
 
@@ -748,7 +748,7 @@ struct bsal_worker *bsal_worker_pool_select_worker_for_message(struct bsal_worke
     /* Update the cached value for the winning worker to have an
      * accurate value for this worker.
      */
-    bsal_vector_helper_set_int(&pool->message_count_cache, best_index, best_score - 1);
+    bsal_vector_set_int(&pool->message_count_cache, best_index, best_score - 1);
 
     return best_worker;
 }

@@ -174,9 +174,9 @@ void bsal_actor_add_acquaintances(struct bsal_actor *actor,
     bsal_vector_iterator_destroy(&iterator);
 
 #ifdef BSAL_ACTOR_HELPER_DEBUG
-    bsal_vector_helper_print_int(names);
+    bsal_vector_print_int(names);
     printf("\n");
-    bsal_vector_helper_print_int(indices);
+    bsal_vector_print_int(indices);
     printf("\n");
 #endif
 }
@@ -531,7 +531,7 @@ int bsal_actor_get_acquaintance(struct bsal_actor *actor, struct bsal_vector *in
         return BSAL_ACTOR_NOBODY;
     }
 
-    index2 = bsal_vector_helper_at_as_int(indices, index);
+    index2 = bsal_vector_at_as_int(indices, index);
 
     return bsal_actor_get_acquaintance(actor, index2);
 }
@@ -559,7 +559,7 @@ int bsal_actor_get_acquaintance_index(struct bsal_actor *actor, struct bsal_vect
 
 
     for (i = 0; i < size; ++i) {
-        index = bsal_vector_helper_at_as_int(indices, i);
+        index = bsal_vector_at_as_int(indices, i);
         actor_name = bsal_actor_get_acquaintance(actor, index);
 
         if (actor_name == name) {
@@ -597,7 +597,7 @@ void bsal_actor_add_route_with_sources(struct bsal_actor *self, int tag,
 
     for (i = 0; i < size; i++) {
 
-        source = bsal_vector_helper_at_as_int(sources, i);
+        source = bsal_vector_at_as_int(sources, i);
 
         bsal_actor_add_route_with_source(self, tag, handler, source);
     }

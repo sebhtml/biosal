@@ -2,7 +2,15 @@
 #ifndef BSAL_MESSAGE_H
 #define BSAL_MESSAGE_H
 
-/* tags have a value from 0 to MPI_TAB_UB.
+/* helpers */
+
+#include "core/helpers/message_helper.h"
+
+
+/*
+ * This is a message.
+ *
+ * tags have a value from 0 to MPI_TAB_UB.
  * MPI_TAB_UB is at least 32767 (MPI 1.3, 2.0, 2.1, 2.2, 3.0)
  */
 struct bsal_message {

@@ -246,7 +246,7 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
             int_bucket = (int *)bsal_vector_at(&concrete_actor->stores_per_spawner, i);
             *int_bucket = 0;
 
-            spawner = bsal_vector_helper_at_as_int(&concrete_actor->spawners, i);
+            spawner = bsal_vector_at_as_int(&concrete_actor->spawners, i);
 
             bsal_queue_enqueue(&concrete_actor->unprepared_spawners, &spawner);
         }
@@ -331,7 +331,7 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
                 block = (struct bsal_mega_block *)bsal_vector_at(&concrete_actor->mega_block_vector, i);
                 block_entries = bsal_mega_block_get_entries(block);
 
-                bsal_vector_helper_push_back_uint64_t(&block_counts, block_entries);
+                bsal_vector_push_back_uint64_t(&block_counts, block_entries);
             }
 
             new_count = bsal_vector_pack_size(&block_counts);
@@ -358,9 +358,9 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
 
             mega_block_index = bsal_vector_size(&concrete_actor->reading_streams);
 
-            bsal_vector_helper_push_back_int(&concrete_actor->reading_streams, stream_index);
-            bsal_vector_helper_push_back_int(&concrete_actor->partition_commands, -1);
-            bsal_vector_helper_push_back_int(&concrete_actor->stream_consumers, -1);
+            bsal_vector_push_back_int(&concrete_actor->reading_streams, stream_index);
+            bsal_vector_push_back_int(&concrete_actor->partition_commands, -1);
+            bsal_vector_push_back_int(&concrete_actor->stream_consumers, -1);
 
             stream_index = bsal_vector_size(&concrete_actor->reading_streams) - 1;
             mega_block = (struct bsal_mega_block *)bsal_vector_at(&concrete_actor->mega_block_vector,
@@ -468,7 +468,7 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
     } else if (tag == BSAL_INPUT_COUNT_PROGRESS) {
 
         stream_index = bsal_vector_index_of(&concrete_actor->counting_streams, &source);
-        local_file = bsal_vector_helper_at_as_char_pointer(&concrete_actor->files, stream_index);
+        local_file = bsal_vector_at_as_char_pointer(&concrete_actor->files, stream_index);
         bsal_message_helper_unpack_int64_t(message, 0, &entries);
 
         bucket = (int64_t *)bsal_vector_at(&concrete_actor->counts, stream_index);
@@ -480,7 +480,7 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
     } else if (tag == BSAL_INPUT_COUNT_REPLY) {
 
         stream_index = bsal_vector_index_of(&concrete_actor->counting_streams, &source);
-        local_file = bsal_vector_helper_at_as_char_pointer(&concrete_actor->files, stream_index);
+        local_file = bsal_vector_at_as_char_pointer(&concrete_actor->files, stream_index);
 
         bsal_vector_init(&mega_blocks, 0);
         bsal_vector_unpack(&mega_blocks, buffer);
@@ -619,7 +619,7 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
         /* stop data stores
          */
         for (i = 0; i < bsal_vector_size(&concrete_actor->consumers); i++) {
-            store = bsal_vector_helper_at_as_int(&concrete_actor->consumers, i);
+            store = bsal_vector_at_as_int(&concrete_actor->consumers, i);
 
             bsal_actor_send_empty(actor, store, BSAL_ACTOR_ASK_TO_STOP);
         }
@@ -757,11 +757,11 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
                         (int)bsal_vector_size(&concrete_actor->consumers));
 
         for (i = 0; i < bsal_vector_size(&concrete_actor->consumers); i++) {
-            bsal_vector_helper_push_back_int(&concrete_actor->consumer_active_requests, 0);
+            bsal_vector_push_back_int(&concrete_actor->consumer_active_requests, 0);
         }
 
 #ifdef BSAL_INPUT_CONTROLLER_DEBUG
-        bsal_vector_helper_print_int(&concrete_actor->consumers);
+        bsal_vector_print_int(&concrete_actor->consumers);
         printf("\n");
 #endif
         bsal_actor_send_reply_empty(actor, BSAL_ACTOR_SET_CONSUMERS_REPLY);
@@ -868,7 +868,7 @@ void bsal_input_controller_create_stores(struct bsal_actor *actor, struct bsal_m
     */
 
     for (i = 0; i < bsal_vector_size(&concrete_actor->stores_per_spawner); i++) {
-        value = bsal_vector_helper_at_as_int(&concrete_actor->stores_per_spawner, i);
+        value = bsal_vector_at_as_int(&concrete_actor->stores_per_spawner, i);
 
         if (value == -1) {
 
@@ -877,7 +877,7 @@ void bsal_input_controller_create_stores(struct bsal_actor *actor, struct bsal_m
                             i);
                             */
 
-            spawner = bsal_vector_helper_at_as_int(&concrete_actor->spawners, i);
+            spawner = bsal_vector_at_as_int(&concrete_actor->spawners, i);
 
             bsal_actor_send_empty(actor, spawner, BSAL_ACTOR_GET_NODE_NAME);
             return;
@@ -895,11 +895,11 @@ void bsal_input_controller_create_stores(struct bsal_actor *actor, struct bsal_m
         printf("DEBUG polling spawner %i/%d\n", i,
                         bsal_vector_size(&concrete_actor->stores_per_spawner));
 */
-        value = bsal_vector_helper_at_as_int(&concrete_actor->stores_per_spawner, i);
+        value = bsal_vector_at_as_int(&concrete_actor->stores_per_spawner, i);
 
         if (value != 0) {
 
-            spawner = bsal_vector_helper_at_as_int(&concrete_actor->spawners, i);
+            spawner = bsal_vector_at_as_int(&concrete_actor->spawners, i);
 /*
             printf("DEBUG spawner %d is %d\n", i, spawner);
 */
@@ -917,7 +917,7 @@ void bsal_input_controller_create_stores(struct bsal_actor *actor, struct bsal_m
                     (int)bsal_vector_size(&concrete_actor->consumers));
 
     for (i = 0; i < bsal_vector_size(&concrete_actor->consumers); i++) {
-        value = bsal_vector_helper_at_as_int(&concrete_actor->consumers, i);
+        value = bsal_vector_at_as_int(&concrete_actor->consumers, i);
 
         printf("DEBUG controller %d: consumer %i is %d\n",
                         bsal_actor_name(actor), i, value);
@@ -931,7 +931,7 @@ void bsal_input_controller_create_stores(struct bsal_actor *actor, struct bsal_m
 
     for (i = 0; i < bsal_vector_size(&concrete_actor->files); i++) {
         entries = *(uint64_t*)bsal_vector_at(&concrete_actor->counts, i);
-        local_file = bsal_vector_helper_at_as_char_pointer(&concrete_actor->files, i);
+        local_file = bsal_vector_at_as_char_pointer(&concrete_actor->files, i);
         name = *(int *)bsal_vector_at(&concrete_actor->counting_streams, i);
 
         printf("stream %d, %d/%d %s %" PRIu64 "\n",
@@ -1125,7 +1125,7 @@ void bsal_input_controller_receive_command(struct bsal_actor *actor, struct bsal
     bucket_for_consumer = (int *)bsal_vector_at(&concrete_actor->stream_consumers,
                     stream_index);
 
-    stream_name = bsal_vector_helper_at_as_int(&concrete_actor->reading_streams,
+    stream_name = bsal_vector_at_as_int(&concrete_actor->reading_streams,
                     stream_index);
 
 #ifdef BSAL_INPUT_CONTROLLER_DEBUG_COMMANDS
@@ -1238,7 +1238,7 @@ void bsal_input_controller_spawn_streams(struct bsal_actor *actor, struct bsal_m
 
     while (bsal_vector_iterator_has_next(&iterator)) {
         bsal_vector_iterator_next(&iterator, NULL);
-        spawner = bsal_vector_helper_at_as_int(&concrete_actor->spawners, concrete_actor->spawner);
+        spawner = bsal_vector_at_as_int(&concrete_actor->spawners, concrete_actor->spawner);
 
         concrete_actor->spawner++;
         concrete_actor->spawner %= bsal_vector_size(&concrete_actor->spawners);
@@ -1302,7 +1302,7 @@ void bsal_input_controller_verify_requests(struct bsal_actor *self, struct bsal_
     concrete_actor = (struct bsal_input_controller *)bsal_actor_concrete_actor(self);
 
     for (i = 0; i < bsal_vector_size(&concrete_actor->consumer_active_requests); i++) {
-        if (bsal_vector_helper_at_as_int(&concrete_actor->consumer_active_requests, i) != 0) {
+        if (bsal_vector_at_as_int(&concrete_actor->consumer_active_requests, i) != 0) {
             active++;
         }
     }

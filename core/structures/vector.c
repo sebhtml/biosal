@@ -127,16 +127,6 @@ int bsal_vector_unpack(struct bsal_vector *self, void *buffer)
     return bsal_vector_pack_unpack(self, buffer, BSAL_PACKER_OPERATION_UNPACK);
 }
 
-void bsal_vector_copy_range(struct bsal_vector *self, int64_t first, int64_t last, struct bsal_vector *destination)
-{
-    int64_t i;
-
-    for (i = first; i <= last; i++) {
-
-        bsal_vector_push_back(destination, bsal_vector_at(self, i));
-    }
-}
-
 int64_t bsal_vector_index_of(struct bsal_vector *self, void *data)
 {
     int64_t i;
@@ -213,11 +203,6 @@ void bsal_vector_update(struct bsal_vector *self, void *old_item, void *new_item
             bsal_vector_set(self, i, new_item);
         }
     }
-}
-
-void bsal_vector_push_back_vector(struct bsal_vector *self, struct bsal_vector *other_vector)
-{
-    bsal_vector_copy_range(other_vector, 0, bsal_vector_size(other_vector) - 1, self);
 }
 
 int bsal_vector_pack_unpack(struct bsal_vector *self, void *buffer, int operation)
@@ -298,9 +283,9 @@ int bsal_vector_get_value(struct bsal_vector *self, int64_t index, void *value)
     return 1;
 }
 
-void bsal_vector_set_memory_pool(struct bsal_vector *vector, struct bsal_memory_pool *memory)
+void bsal_vector_set_memory_pool(struct bsal_vector *self, struct bsal_memory_pool *memory)
 {
-    vector->memory = NULL;
+    self->memory = NULL;
 }
 
 void *bsal_vector_at(struct bsal_vector *self, int64_t index)

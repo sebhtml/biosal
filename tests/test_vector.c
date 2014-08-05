@@ -172,20 +172,20 @@ int main(int argc, char **argv)
         }
 
         /*
-        bsal_vector_helper_print_int(&vector);
+        bsal_vector_print_int(&vector);
         printf("\n");
         */
 
-        bsal_vector_helper_sort_int(&vector);
+        bsal_vector_sort_int(&vector);
 
         /*
-        bsal_vector_helper_print_int(&vector);
+        bsal_vector_print_int(&vector);
         printf("\n");
         */
 
         for (i = 0; i < bsal_vector_size(&vector) - 1; i++) {
-            value1 = bsal_vector_helper_at_as_int(&vector, i);
-            value2 = bsal_vector_helper_at_as_int(&vector, i + 1);
+            value1 = bsal_vector_at_as_int(&vector, i);
+            value2 = bsal_vector_at_as_int(&vector, i + 1);
 
             if (value2 < value1) {
                 printf("%d %d\n", value1, value2);

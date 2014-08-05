@@ -242,7 +242,7 @@ void bsal_scheduler_balance(struct bsal_scheduler *scheduler)
         bsal_vector_push_back(&loads_unsorted, &load_value);
     }
 
-    bsal_vector_helper_sort_int(&loads);
+    bsal_vector_sort_int(&loads);
 
     stalled_percentile = bsal_statistics_get_percentile_int(&loads, SCHEDULER_WINDOW);
     /*load_percentile_25 = bsal_statistics_get_percentile_int(&loads, 25);*/
@@ -257,7 +257,7 @@ void bsal_scheduler_balance(struct bsal_scheduler *scheduler)
 
     for (i = 0; i < bsal_worker_pool_worker_count(scheduler->pool); i++) {
         worker = bsal_worker_pool_get_worker(scheduler->pool, i);
-        load_value = bsal_vector_helper_at_as_int(&loads_unsorted, i);
+        load_value = bsal_vector_at_as_int(&loads_unsorted, i);
 
         set = bsal_worker_get_actors(worker);
 
@@ -300,8 +300,8 @@ void bsal_scheduler_balance(struct bsal_scheduler *scheduler)
 
     }
 
-    bsal_vector_helper_sort_int_reverse(&burdened_workers);
-    bsal_vector_helper_sort_int(&stalled_workers);
+    bsal_vector_sort_int_reverse(&burdened_workers);
+    bsal_vector_sort_int(&stalled_workers);
 
     stalled_count = bsal_vector_size(&stalled_workers);
 
@@ -445,7 +445,7 @@ void bsal_scheduler_balance(struct bsal_scheduler *scheduler)
      */
 
     /*
-    bsal_vector_helper_sort_int(&actors_to_migrate);
+    bsal_vector_sort_int(&actors_to_migrate);
 
     printf("Percentiles for production: ");
     bsal_statistics_get_print_percentiles_int(&actors_to_migrate);
@@ -453,7 +453,7 @@ void bsal_scheduler_balance(struct bsal_scheduler *scheduler)
 
     /* Sort them in reverse order.
      */
-    bsal_vector_helper_sort_int_reverse(&actors_to_migrate);
+    bsal_vector_sort_int_reverse(&actors_to_migrate);
 
     bsal_vector_iterator_init(&vector_iterator, &actors_to_migrate);
 
