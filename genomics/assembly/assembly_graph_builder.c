@@ -39,19 +39,19 @@ void bsal_assembly_graph_builder_init(struct bsal_actor *self)
     bsal_vector_init(&concrete_self->sequence_stores, sizeof(int));
     bsal_vector_init(&concrete_self->block_classifiers, sizeof(int));
 
-    bsal_actor_register_handler(self, BSAL_ACTOR_START, bsal_assembly_graph_builder_start);
-    bsal_actor_register_handler(self, BSAL_ACTOR_SET_PRODUCERS, bsal_assembly_graph_builder_set_producers);
-    bsal_actor_register_handler(self, BSAL_ACTOR_SET_PRODUCER_REPLY, bsal_assembly_graph_builder_set_producer_reply);
-    bsal_actor_register_handler(self, BSAL_ACTOR_ASK_TO_STOP, bsal_assembly_graph_builder_ask_to_stop);
-    bsal_actor_register_handler(self, BSAL_ACTOR_SPAWN_REPLY, bsal_assembly_graph_builder_spawn_reply);
-    bsal_actor_register_handler(self, BSAL_SET_KMER_LENGTH_REPLY, bsal_assembly_graph_builder_set_kmer_reply);
-    bsal_actor_register_handler(self, BSAL_ACTOR_NOTIFY_REPLY, bsal_assembly_graph_builder_notify_reply);
-    bsal_actor_register_handler(self, BSAL_ASSEMBLY_GRAPH_BUILDER_CONTROL_COMPLEXITY,
+    bsal_actor_register_route(self, BSAL_ACTOR_START, bsal_assembly_graph_builder_start);
+    bsal_actor_register_route(self, BSAL_ACTOR_SET_PRODUCERS, bsal_assembly_graph_builder_set_producers);
+    bsal_actor_register_route(self, BSAL_ACTOR_SET_PRODUCER_REPLY, bsal_assembly_graph_builder_set_producer_reply);
+    bsal_actor_register_route(self, BSAL_ACTOR_ASK_TO_STOP, bsal_assembly_graph_builder_ask_to_stop);
+    bsal_actor_register_route(self, BSAL_ACTOR_SPAWN_REPLY, bsal_assembly_graph_builder_spawn_reply);
+    bsal_actor_register_route(self, BSAL_SET_KMER_LENGTH_REPLY, bsal_assembly_graph_builder_set_kmer_reply);
+    bsal_actor_register_route(self, BSAL_ACTOR_NOTIFY_REPLY, bsal_assembly_graph_builder_notify_reply);
+    bsal_actor_register_route(self, BSAL_ASSEMBLY_GRAPH_BUILDER_CONTROL_COMPLEXITY,
                     bsal_assembly_graph_builder_control_complexity);
 
-    bsal_actor_register_handler(self, BSAL_ACTOR_SET_CONSUMER_REPLY, bsal_assembly_graph_builder_set_consumer_reply);
-    bsal_actor_register_handler(self, BSAL_ACTOR_SET_CONSUMERS_REPLY, bsal_assembly_graph_builder_set_consumers_reply);
-    bsal_actor_register_handler(self, BSAL_STORE_GET_ENTRY_COUNT_REPLY,
+    bsal_actor_register_route(self, BSAL_ACTOR_SET_CONSUMER_REPLY, bsal_assembly_graph_builder_set_consumer_reply);
+    bsal_actor_register_route(self, BSAL_ACTOR_SET_CONSUMERS_REPLY, bsal_assembly_graph_builder_set_consumers_reply);
+    bsal_actor_register_route(self, BSAL_STORE_GET_ENTRY_COUNT_REPLY,
                     bsal_assembly_graph_builder_get_entry_count_reply);
 
     concrete_self->manager_for_graph_stores = BSAL_ACTOR_NOBODY;
@@ -143,14 +143,22 @@ void bsal_assembly_graph_builder_start(struct bsal_actor *self, struct bsal_mess
 
     spawner = bsal_actor_get_spawner(self, &concrete_self->spawners);
 
+    /*
+     * Spawn the manager for graph stores
+     */
+    concrete_self->manager_for_graph_stores = BSAL_ACTOR_SPAWNING_IN_PROGRESS;
+
+    bsal_actor_register_route_with_source_and_condition(self,
+                    BSAL_ACTOR_SPAWN_REPLY,
+                    bsal_assembly_graph_builder_spawn_reply_graph_store_manager,
+                    spawner,
+                    &(concrete_self->manager_for_graph_stores),
+                    BSAL_ACTOR_SPAWNING_IN_PROGRESS);
+
     bsal_actor_helper_send_int(self, spawner, BSAL_ACTOR_SPAWN, BSAL_MANAGER_SCRIPT);
 }
 
-/*
- * TODO: find some sort of way to reduce the number of lines here
- * using a new Thorium API call.
- */
-void bsal_assembly_graph_builder_spawn_reply(struct bsal_actor *self, struct bsal_message *message)
+void bsal_assembly_graph_builder_spawn_reply_graph_store_manager(struct bsal_actor *self, struct bsal_message *message)
 {
     struct bsal_assembly_graph_builder *concrete_self;
 
@@ -159,53 +167,53 @@ void bsal_assembly_graph_builder_spawn_reply(struct bsal_actor *self, struct bsa
     /*
      * Configure the manager for graph stores
      */
-    if (concrete_self->manager_for_graph_stores == BSAL_ACTOR_NOBODY) {
-        bsal_message_helper_unpack_int(message, 0, &concrete_self->manager_for_graph_stores);
 
-        bsal_actor_register_handler_with_source(self, BSAL_MANAGER_SET_SCRIPT_REPLY,
-                        concrete_self->manager_for_graph_stores,
-                        bsal_assembly_graph_builder_set_script_reply_store_manager);
+    bsal_message_helper_unpack_int(message, 0, &concrete_self->manager_for_graph_stores);
 
-        bsal_actor_register_handler_with_source(self, BSAL_ACTOR_START_REPLY,
-                        concrete_self->manager_for_graph_stores,
-                        bsal_assembly_graph_builder_start_reply_store_manager);
+    bsal_actor_register_route_with_source(self, BSAL_MANAGER_SET_SCRIPT_REPLY,
+                    bsal_assembly_graph_builder_set_script_reply_store_manager,
+                    concrete_self->manager_for_graph_stores);
 
-        bsal_actor_helper_send_int(self, concrete_self->manager_for_graph_stores, BSAL_MANAGER_SET_SCRIPT,
+    bsal_actor_register_route_with_source(self, BSAL_ACTOR_START_REPLY,
+                    bsal_assembly_graph_builder_start_reply_store_manager,
+                    concrete_self->manager_for_graph_stores);
+
+    bsal_actor_helper_send_int(self, concrete_self->manager_for_graph_stores, BSAL_MANAGER_SET_SCRIPT,
                         BSAL_ASSEMBLY_GRAPH_STORE_SCRIPT);
+}
 
-    /*
-     * Configure the manager
-     * for sliding windows
-     */
-    } else if (concrete_self->manager_for_windows == BSAL_ACTOR_NOBODY) {
 
-        bsal_message_helper_unpack_int(message, 0, &concrete_self->manager_for_windows);
+/*
+ * find some sort of way to reduce the number of lines here
+ * using a new Thorium API call.
+ *
+ * Solutions:
+ *
+ * bsal_actor_register_route_with_condition
+ * bsal_actor_register_route_with_source_and_condition
+ */
+void bsal_assembly_graph_builder_spawn_reply(struct bsal_actor *self, struct bsal_message *message)
+{
+    struct bsal_assembly_graph_builder *concrete_self;
 
-        bsal_actor_register_handler_with_source(self, BSAL_MANAGER_SET_SCRIPT_REPLY,
-                        concrete_self->manager_for_windows,
-                        bsal_assembly_graph_builder_set_script_reply_window_manager);
+    concrete_self = bsal_actor_concrete_actor(self);
 
-        bsal_actor_register_handler_with_source(self, BSAL_ACTOR_START_REPLY,
-                        concrete_self->manager_for_windows,
-                        bsal_assembly_graph_builder_start_reply_window_manager);
-
-        bsal_actor_helper_send_int(self, concrete_self->manager_for_windows, BSAL_MANAGER_SET_SCRIPT,
-                        BSAL_ASSEMBLY_SLIDING_WINDOW_SCRIPT);
 
     /*
      * Configure the manager for block classifiers
      */
-    } else if (concrete_self->manager_for_classifiers == BSAL_ACTOR_NOBODY) {
+
+    if (concrete_self->manager_for_classifiers == BSAL_ACTOR_NOBODY) {
 
         bsal_message_helper_unpack_int(message, 0, &concrete_self->manager_for_classifiers);
 
-        bsal_actor_register_handler_with_source(self, BSAL_MANAGER_SET_SCRIPT_REPLY,
-                        concrete_self->manager_for_classifiers,
-                        bsal_assembly_graph_builder_set_script_reply_classifier_manager);
+        bsal_actor_register_route_with_source(self, BSAL_MANAGER_SET_SCRIPT_REPLY,
+                        bsal_assembly_graph_builder_set_script_reply_classifier_manager,
+                        concrete_self->manager_for_classifiers);
 
-        bsal_actor_register_handler_with_source(self, BSAL_ACTOR_START_REPLY,
-                        concrete_self->manager_for_classifiers,
-                        bsal_assembly_graph_builder_start_reply_classifier_manager);
+        bsal_actor_register_route_with_source(self, BSAL_ACTOR_START_REPLY,
+                        bsal_assembly_graph_builder_start_reply_classifier_manager,
+                        concrete_self->manager_for_classifiers);
 
         bsal_actor_helper_send_int(self, concrete_self->manager_for_classifiers, BSAL_MANAGER_SET_SCRIPT,
                         BSAL_ASSEMBLY_BLOCK_CLASSIFIER_SCRIPT);
@@ -214,13 +222,13 @@ void bsal_assembly_graph_builder_spawn_reply(struct bsal_actor *self, struct bsa
 
         bsal_message_helper_unpack_int(message, 0, &concrete_self->coverage_distribution);
 
-        bsal_actor_register_handler_with_source(self, BSAL_SET_EXPECTED_MESSAGE_COUNT_REPLY,
-                        concrete_self->coverage_distribution,
-                            bsal_assembly_graph_builder_set_expected_message_count_reply);
+        bsal_actor_register_route_with_source(self, BSAL_SET_EXPECTED_MESSAGE_COUNT_REPLY,
+                            bsal_assembly_graph_builder_set_expected_message_count_reply,
+                        concrete_self->coverage_distribution);
 
-        bsal_actor_register_handler_with_source(self, BSAL_ACTOR_NOTIFY,
-                        concrete_self->coverage_distribution,
-                        bsal_assembly_graph_builder_notify_from_distribution);
+        bsal_actor_register_route_with_source(self, BSAL_ACTOR_NOTIFY,
+                        bsal_assembly_graph_builder_notify_from_distribution,
+                        concrete_self->coverage_distribution);
 
         bsal_actor_helper_send_int(self, concrete_self->coverage_distribution,
                         BSAL_SET_EXPECTED_MESSAGE_COUNT, (int)bsal_vector_size(&concrete_self->graph_stores));
@@ -234,8 +242,9 @@ void bsal_assembly_graph_builder_set_expected_message_count_reply(struct bsal_ac
 
     concrete_self = bsal_actor_concrete_actor(self);
 
-    bsal_actor_register_handler_with_sources(self, BSAL_ACTOR_SET_CONSUMER_REPLY,
-                    &concrete_self->graph_stores, bsal_assembly_graph_builder_set_consumer_reply_graph_stores);
+    bsal_actor_register_route_with_sources(self, BSAL_ACTOR_SET_CONSUMER_REPLY,
+                    bsal_assembly_graph_builder_set_consumer_reply_graph_stores,
+                    &concrete_self->graph_stores);
 
     /*
      * Link the graph stores to the coverage distribution
@@ -257,8 +266,8 @@ void bsal_assembly_graph_builder_set_script_reply_store_manager(struct bsal_acto
 void bsal_assembly_graph_builder_start_reply_store_manager(struct bsal_actor *self, struct bsal_message *message)
 {
     void *buffer;
-    struct bsal_assembly_graph_builder *concrete_self;
     int spawner;
+    struct bsal_assembly_graph_builder *concrete_self;
 
     concrete_self = bsal_actor_concrete_actor(self);
 
@@ -271,10 +280,51 @@ void bsal_assembly_graph_builder_start_reply_store_manager(struct bsal_actor *se
                     bsal_actor_name(self),
                     (int)bsal_vector_size(&concrete_self->graph_stores));
 
+    /* Spawn the manager for the sliding windows manager
+     */
+
     spawner = bsal_actor_get_spawner(self, &concrete_self->spawners);
+
+    /*
+     * Register event to happen before
+     * sending message (which generates an event)
+     */
+    concrete_self->manager_for_windows = BSAL_ACTOR_SPAWNING_IN_PROGRESS;
+
+    bsal_actor_register_route_with_condition(self,
+                    BSAL_ACTOR_SPAWN_REPLY,
+                    bsal_assembly_graph_builder_spawn_reply_window_manager,
+                    &concrete_self->manager_for_windows,
+                    BSAL_ACTOR_SPAWNING_IN_PROGRESS);
 
     bsal_actor_helper_send_int(self, spawner, BSAL_ACTOR_SPAWN,
                     BSAL_MANAGER_SCRIPT);
+
+}
+
+void bsal_assembly_graph_builder_spawn_reply_window_manager(struct bsal_actor *self, struct bsal_message *message)
+{
+    struct bsal_assembly_graph_builder *concrete_self;
+
+    concrete_self = bsal_actor_concrete_actor(self);
+
+    /*
+     * Configure the manager
+     * for sliding windows
+     */
+
+    bsal_message_helper_unpack_int(message, 0, &concrete_self->manager_for_windows);
+
+    bsal_actor_register_route_with_source(self, BSAL_MANAGER_SET_SCRIPT_REPLY,
+                    bsal_assembly_graph_builder_set_script_reply_window_manager,
+                    concrete_self->manager_for_windows);
+
+    bsal_actor_register_route_with_source(self, BSAL_ACTOR_START_REPLY,
+                    bsal_assembly_graph_builder_start_reply_window_manager,
+                    concrete_self->manager_for_windows);
+
+    bsal_actor_helper_send_int(self, concrete_self->manager_for_windows, BSAL_MANAGER_SET_SCRIPT,
+                    BSAL_ASSEMBLY_SLIDING_WINDOW_SCRIPT);
 
 }
 
@@ -329,8 +379,9 @@ void bsal_assembly_graph_builder_start_reply_window_manager(struct bsal_actor *s
      */
     bsal_vector_unpack(&concrete_self->sliding_windows, buffer);
 
-    bsal_actor_register_handler_with_sources(self, BSAL_ACTOR_SET_CONSUMER_REPLY,
-                    &concrete_self->sliding_windows, bsal_assembly_graph_builder_set_consumer_reply_windows);
+    bsal_actor_register_route_with_sources(self, BSAL_ACTOR_SET_CONSUMER_REPLY,
+                    bsal_assembly_graph_builder_set_consumer_reply_windows,
+                    &concrete_self->sliding_windows);
 
     printf("%s/%d has %d sliding windows for assembly\n",
                     bsal_actor_script_name(self),

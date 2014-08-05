@@ -55,7 +55,7 @@ void bsal_kmer_store_init(struct bsal_actor *self)
 
     concrete_actor->last_received = 0;
 
-    bsal_actor_register_handler(self, BSAL_ACTOR_YIELD_REPLY, bsal_kmer_store_yield_reply);
+    bsal_actor_register_route(self, BSAL_ACTOR_YIELD_REPLY, bsal_kmer_store_yield_reply);
 }
 
 void bsal_kmer_store_destroy(struct bsal_actor *self)

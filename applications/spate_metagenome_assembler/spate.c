@@ -38,28 +38,28 @@ void spate_init(struct bsal_actor *self)
     concrete_self->assembly_graph = BSAL_ACTOR_NOBODY;
     concrete_self->assembly_graph_builder = BSAL_ACTOR_NOBODY;
 
-    bsal_actor_register_handler(self,
+    bsal_actor_register_route(self,
                     BSAL_ACTOR_START, spate_start);
-    bsal_actor_register_handler(self,
+    bsal_actor_register_route(self,
                     BSAL_ACTOR_ASK_TO_STOP, spate_ask_to_stop);
-    bsal_actor_register_handler(self,
+    bsal_actor_register_route(self,
                     BSAL_ACTOR_SPAWN_REPLY, spate_spawn_reply);
-    bsal_actor_register_handler(self,
+    bsal_actor_register_route(self,
                     BSAL_MANAGER_SET_SCRIPT_REPLY, spate_set_script_reply);
-    bsal_actor_register_handler(self,
+    bsal_actor_register_route(self,
                     BSAL_ACTOR_SET_CONSUMERS_REPLY, spate_set_consumers_reply);
-    bsal_actor_register_handler(self,
+    bsal_actor_register_route(self,
                     BSAL_SET_BLOCK_SIZE_REPLY, spate_set_block_size_reply);
-    bsal_actor_register_handler(self,
+    bsal_actor_register_route(self,
                     BSAL_INPUT_DISTRIBUTE_REPLY, spate_distribute_reply);
-    bsal_actor_register_handler(self,
+    bsal_actor_register_route(self,
                     SPATE_ADD_FILES, spate_add_files);
-    bsal_actor_register_handler(self,
+    bsal_actor_register_route(self,
                     SPATE_ADD_FILES_REPLY, spate_add_files_reply);
-    bsal_actor_register_handler(self,
+    bsal_actor_register_route(self,
                     BSAL_ADD_FILE_REPLY, spate_add_file_reply);
 
-    bsal_actor_register_handler(self,
+    bsal_actor_register_route(self,
                     BSAL_ACTOR_START_REPLY, spate_start_reply);
 
     /*
@@ -198,9 +198,10 @@ void spate_spawn_reply(struct bsal_actor *self, struct bsal_message *message)
 
         concrete_self->input_controller = new_actor;
 
-        bsal_actor_register_handler_with_source(self,
+        bsal_actor_register_route_with_source(self,
                     BSAL_ACTOR_START_REPLY,
-                    concrete_self->input_controller, spate_start_reply_controller);
+                    spate_start_reply_controller,
+                    concrete_self->input_controller);
 
         printf("spate %d spawned controller %d\n", bsal_actor_name(self),
                         new_actor);
@@ -213,9 +214,10 @@ void spate_spawn_reply(struct bsal_actor *self, struct bsal_message *message)
 
         concrete_self->manager_for_sequence_stores = new_actor;
 
-        bsal_actor_register_handler_with_source(self,
+        bsal_actor_register_route_with_source(self,
                     BSAL_ACTOR_START_REPLY,
-                    concrete_self->manager_for_sequence_stores, spate_start_reply_manager);
+                    spate_start_reply_manager,
+                    concrete_self->manager_for_sequence_stores);
 
         printf("spate %d spawned manager %d\n", bsal_actor_name(self),
                         new_actor);
@@ -228,13 +230,15 @@ void spate_spawn_reply(struct bsal_actor *self, struct bsal_message *message)
 
         concrete_self->assembly_graph_builder = new_actor;
 
-        bsal_actor_register_handler_with_source(self,
+        bsal_actor_register_route_with_source(self,
                     BSAL_ACTOR_START_REPLY,
-                    concrete_self->assembly_graph_builder, spate_start_reply_builder);
+                    spate_start_reply_builder,
+                concrete_self->assembly_graph_builder);
 
-        bsal_actor_register_handler_with_source(self,
+        bsal_actor_register_route_with_source(self,
                     BSAL_ACTOR_SET_PRODUCERS_REPLY,
-                    concrete_self->assembly_graph_builder, spate_set_producers_reply);
+                    spate_set_producers_reply,
+                    concrete_self->assembly_graph_builder);
 
         printf("spate %d spawned graph builder %d\n", bsal_actor_name(self),
                         new_actor);

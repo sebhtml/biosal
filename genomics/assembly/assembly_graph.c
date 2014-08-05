@@ -18,7 +18,7 @@ struct bsal_script bsal_assembly_graph_script = {
 
 void bsal_assembly_graph_init(struct bsal_actor *self)
 {
-    bsal_actor_register_handler(self, BSAL_ACTOR_ASK_TO_STOP, bsal_assembly_graph_ask_to_stop);
+    bsal_actor_register_route(self, BSAL_ACTOR_ASK_TO_STOP, bsal_assembly_graph_ask_to_stop);
 }
 
 void bsal_assembly_graph_destroy(struct bsal_actor *self)

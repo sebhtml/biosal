@@ -65,7 +65,7 @@ void bsal_input_stream_init(struct bsal_actor *actor)
 
     bsal_vector_init(&input->mega_blocks, sizeof(struct bsal_mega_block));
 
-    bsal_actor_register_handler(actor, BSAL_INPUT_STREAM_SET_OFFSET, bsal_input_stream_set_offset);
+    bsal_actor_register_route(actor, BSAL_INPUT_STREAM_SET_OFFSET, bsal_input_stream_set_offset);
 }
 
 void bsal_input_stream_destroy(struct bsal_actor *actor)

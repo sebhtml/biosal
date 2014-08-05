@@ -75,6 +75,8 @@ void bsal_assembly_graph_builder_ask_to_stop(struct bsal_actor *self, struct bsa
 void bsal_assembly_graph_builder_start(struct bsal_actor *self, struct bsal_message *message);
 void bsal_assembly_graph_builder_set_producers(struct bsal_actor *self, struct bsal_message *message);
 void bsal_assembly_graph_builder_spawn_reply(struct bsal_actor *self, struct bsal_message *message);
+void bsal_assembly_graph_builder_spawn_reply_graph_store_manager(struct bsal_actor *self, struct bsal_message *message);
+void bsal_assembly_graph_builder_spawn_reply_window_manager(struct bsal_actor *self, struct bsal_message *message);
 
 void bsal_assembly_graph_builder_set_script_reply_store_manager(struct bsal_actor *self, struct bsal_message *message);
 void bsal_assembly_graph_builder_start_reply_store_manager(struct bsal_actor *self, struct bsal_message *message);

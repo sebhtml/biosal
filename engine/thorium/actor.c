@@ -1246,7 +1246,7 @@ int bsal_actor_call_handler(struct bsal_actor *self, struct bsal_message *messag
     return bsal_dispatcher_dispatch(&self->dispatcher, self, message);
 }
 
-void bsal_actor_register_handler(struct bsal_actor *self, int tag, bsal_actor_receive_fn_t handler)
+void bsal_actor_register_route(struct bsal_actor *self, int tag, bsal_actor_receive_fn_t handler)
 {
 
 #ifdef BSAL_ACTOR_DEBUG_10335
@@ -1256,12 +1256,14 @@ void bsal_actor_register_handler(struct bsal_actor *self, int tag, bsal_actor_re
     }
 #endif
 
-    bsal_actor_register_handler_with_source(self, tag, BSAL_ACTOR_ANYBODY, handler);
+    bsal_actor_register_route_with_source(self, tag, handler, BSAL_ACTOR_ANYBODY);
 }
 
-void bsal_actor_register_handler_with_source(struct bsal_actor *self, int tag, int source, bsal_actor_receive_fn_t handler)
+void bsal_actor_register_route_with_source(struct bsal_actor *self, int tag, bsal_actor_receive_fn_t handler,
+                int source)
 {
-    bsal_dispatcher_register_with_source(&self->dispatcher, tag, source, handler);
+    bsal_actor_register_route_with_source_and_condition(self, tag,
+                    handler, source, NULL, -1);
 }
 
 struct bsal_dispatcher *bsal_actor_dispatcher(struct bsal_actor *self)
@@ -2017,8 +2019,8 @@ struct bsal_script *bsal_actor_get_script(struct bsal_actor *self)
     return self->script;
 }
 
-void bsal_actor_register_handler_with_sources(struct bsal_actor *self, int tag, struct bsal_vector *sources,
-                bsal_actor_receive_fn_t handler)
+void bsal_actor_register_route_with_sources(struct bsal_actor *self, int tag,
+                bsal_actor_receive_fn_t handler, struct bsal_vector *sources)
 {
     int i;
     int source;
@@ -2030,6 +2032,18 @@ void bsal_actor_register_handler_with_sources(struct bsal_actor *self, int tag, 
 
         source = bsal_vector_helper_at_as_int(sources, i);
 
-        bsal_actor_register_handler_with_source(self, tag, source, handler);
+        bsal_actor_register_route_with_source(self, tag, handler, source);
     }
+}
+
+void bsal_actor_register_route_with_condition(struct bsal_actor *self, int tag, bsal_actor_receive_fn_t handler, int *actual,
+                int expected)
+{
+    bsal_actor_register_route_with_source_and_condition(self, tag, handler, BSAL_ACTOR_ANYBODY, actual, expected);
+}
+
+void bsal_actor_register_route_with_source_and_condition(struct bsal_actor *self, int tag, bsal_actor_receive_fn_t handler, int source,
+        int *actual, int expected)
+{
+    bsal_dispatcher_register_route(&self->dispatcher, tag, handler, source, actual, expected);
 }

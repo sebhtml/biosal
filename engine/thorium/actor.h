@@ -170,8 +170,9 @@ new name.
 #define BSAL_ACTOR_SELF 0
 #define BSAL_ACTOR_SUPERVISOR 1
 #define BSAL_ACTOR_SOURCE 2
-#define BSAL_ACTOR_NOBODY -1
-#define BSAL_ACTOR_ANYBODY -2
+#define BSAL_ACTOR_NOBODY (-1)
+#define BSAL_ACTOR_ANYBODY (-2)
+#define BSAL_ACTOR_SPAWNING_IN_PROGRESS (-3)
 
 #define BSAL_ACTOR_NO_VALUE -1
 
@@ -378,10 +379,16 @@ struct bsal_counter *bsal_actor_counter(struct bsal_actor *self);
  * Functions to use and register handlers
  */
 int bsal_actor_call_handler(struct bsal_actor *self, struct bsal_message *message);
-void bsal_actor_register_handler(struct bsal_actor *self, int tag, bsal_actor_receive_fn_t handler);
-void bsal_actor_register_handler_with_source(struct bsal_actor *self, int tag, int source, bsal_actor_receive_fn_t handler);
-void bsal_actor_register_handler_with_sources(struct bsal_actor *self, int tag, struct bsal_vector *sources,
-                bsal_actor_receive_fn_t handler);
+
+void bsal_actor_register_route(struct bsal_actor *self, int tag, bsal_actor_receive_fn_t handler);
+void bsal_actor_register_route_with_source(struct bsal_actor *self, int tag, bsal_actor_receive_fn_t handler,
+                int source);
+void bsal_actor_register_route_with_sources(struct bsal_actor *self, int tag,
+                bsal_actor_receive_fn_t handler, struct bsal_vector *sources);
+void bsal_actor_register_route_with_condition(struct bsal_actor *self, int tag, bsal_actor_receive_fn_t handler, int *actual,
+                int expected);
+void bsal_actor_register_route_with_source_and_condition(struct bsal_actor *self, int tag, bsal_actor_receive_fn_t handler,
+                int source, int *actual, int expected);
 
 struct bsal_dispatcher *bsal_actor_dispatcher(struct bsal_actor *self);
 void bsal_actor_set_node(struct bsal_actor *self, struct bsal_node *node);

@@ -5,11 +5,12 @@ THORIUM_OBJECTS=
 THORIUM_OBJECTS += engine/thorium/message.o
 THORIUM_OBJECTS += engine/thorium/node.o
 THORIUM_OBJECTS += engine/thorium/actor.o
-THORIUM_OBJECTS += engine/thorium/dispatcher.o
 THORIUM_OBJECTS += engine/thorium/script.o
 THORIUM_OBJECTS += engine/thorium/worker.o
 THORIUM_OBJECTS += engine/thorium/worker_pool.o
 THORIUM_OBJECTS += engine/thorium/thorium_engine.o
+THORIUM_OBJECTS += engine/thorium/dispatcher.o
+THORIUM_OBJECTS += engine/thorium/route.o
 
 #  scheduler system
 THORIUM_OBJECTS += engine/thorium/scheduler/migration.o

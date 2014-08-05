@@ -55,7 +55,7 @@ void bsal_sequence_store_init(struct bsal_actor *actor)
 #endif
     }
 
-    bsal_actor_register_handler(actor, BSAL_SEQUENCE_STORE_ASK,
+    bsal_actor_register_route(actor, BSAL_SEQUENCE_STORE_ASK,
                     bsal_sequence_store_ask);
 
     concrete_actor->iterator_started = 0;

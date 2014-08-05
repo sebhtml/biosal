@@ -98,19 +98,19 @@ void bsal_input_controller_init(struct bsal_actor *actor)
                     bsal_actor_name(actor));
 #endif
 
-    bsal_actor_register_handler(actor, BSAL_INPUT_CONTROLLER_CREATE_STORES,
+    bsal_actor_register_route(actor, BSAL_INPUT_CONTROLLER_CREATE_STORES,
                     bsal_input_controller_create_stores);
-    bsal_actor_register_handler(actor, BSAL_ACTOR_GET_NODE_NAME_REPLY,
+    bsal_actor_register_route(actor, BSAL_ACTOR_GET_NODE_NAME_REPLY,
                     bsal_input_controller_get_node_name_reply);
-    bsal_actor_register_handler(actor, BSAL_ACTOR_GET_NODE_WORKER_COUNT_REPLY,
+    bsal_actor_register_route(actor, BSAL_ACTOR_GET_NODE_WORKER_COUNT_REPLY,
                     bsal_input_controller_get_node_worker_count_reply);
 
-    bsal_actor_register_handler(actor, BSAL_INPUT_CONTROLLER_PREPARE_SPAWNERS,
+    bsal_actor_register_route(actor, BSAL_INPUT_CONTROLLER_PREPARE_SPAWNERS,
                     bsal_input_controller_prepare_spawners);
-    bsal_actor_register_handler(actor, BSAL_INPUT_CONTROLLER_SPAWN_READING_STREAMS,
+    bsal_actor_register_route(actor, BSAL_INPUT_CONTROLLER_SPAWN_READING_STREAMS,
                     bsal_input_controller_spawn_streams);
 
-    bsal_actor_register_handler(actor, BSAL_INPUT_STREAM_SET_OFFSET_REPLY,
+    bsal_actor_register_route(actor, BSAL_INPUT_STREAM_SET_OFFSET_REPLY,
                     bsal_input_controller_set_offset_reply);
     bsal_actor_add_script(actor, BSAL_INPUT_STREAM_SCRIPT, &bsal_input_stream_script);
     bsal_actor_add_script(actor, BSAL_SEQUENCE_STORE_SCRIPT, &bsal_sequence_store_script);

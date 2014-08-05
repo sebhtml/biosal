@@ -75,16 +75,16 @@ void bsal_assembly_block_classifier_init(struct bsal_actor *self)
 
     concrete_actor->forced = 0;
 
-    bsal_actor_register_handler(self, BSAL_AGGREGATE_KERNEL_OUTPUT,
+    bsal_actor_register_route(self, BSAL_AGGREGATE_KERNEL_OUTPUT,
                     bsal_assembly_block_classifier_aggregate_kernel_output);
 
     /* Enable cloning stuff
      */
     bsal_actor_helper_send_to_self_empty(self, BSAL_ACTOR_PACK_ENABLE);
 
-    bsal_actor_register_handler(self, BSAL_ACTOR_PACK,
+    bsal_actor_register_route(self, BSAL_ACTOR_PACK,
                     bsal_assembly_block_classifier_pack_message);
-    bsal_actor_register_handler(self, BSAL_ACTOR_UNPACK,
+    bsal_actor_register_route(self, BSAL_ACTOR_UNPACK,
                     bsal_assembly_block_classifier_unpack_message);
 
     printf("assembly_block_classifier %d is online\n", bsal_actor_name(self));
