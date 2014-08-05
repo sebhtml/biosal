@@ -16,6 +16,9 @@
 #define BSAL_ASSEMBLY_GRAPH_STORE_SCRIPT 0xc81a1596
 
 /*
+ * This is a graph store
+ * for assembling sequences.
+ *
  * For ephemeral storage, see
  * http://docs.openstack.org/openstack-ops/content/storage_decision.html
  */
@@ -47,5 +50,7 @@ void bsal_assembly_graph_store_receive(struct bsal_actor *actor, struct bsal_mes
 void bsal_assembly_graph_store_print(struct bsal_actor *self);
 void bsal_assembly_graph_store_push_data(struct bsal_actor *self, struct bsal_message *message);
 void bsal_assembly_graph_store_yield_reply(struct bsal_actor *self, struct bsal_message *message);
+
+void bsal_assembly_graph_store_push_kmer_block(struct bsal_actor *self, struct bsal_message *message);
 
 #endif
