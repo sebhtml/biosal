@@ -1,6 +1,8 @@
 
 #include "assembly_graph_store.h"
 
+#include "assembly_vertex.h"
+
 /*
  * Include storage actors for message
  * tags.
@@ -121,7 +123,7 @@ void bsal_assembly_graph_store_receive(struct bsal_actor *self, struct bsal_mess
 #endif
 
         bsal_map_init(&concrete_actor->table, concrete_actor->key_length_in_bytes,
-                        sizeof(int));
+                        sizeof(struct bsal_assembly_vertex));
 
         /*
          * Configure the map for better performance.
@@ -183,7 +185,7 @@ void bsal_assembly_graph_store_print(struct bsal_actor *self)
     struct bsal_map_iterator iterator;
     struct bsal_dna_kmer kmer;
     void *key;
-    int *value;
+    struct bsal_assembly_vertex *value;
     int coverage;
     char *sequence;
     struct bsal_assembly_graph_store *concrete_actor;
@@ -237,7 +239,8 @@ void bsal_assembly_graph_store_print(struct bsal_actor *self)
 
         bsal_dna_kmer_get_sequence(&kmer, sequence, concrete_actor->kmer_length,
                         &concrete_actor->storage_codec);
-        coverage = *value;
+
+        coverage = bsal_assembly_vertex_coverage_depth(value);
 
         printf("Sequence %s Coverage %d\n", sequence, coverage);
 
@@ -278,7 +281,7 @@ void bsal_assembly_graph_store_yield_reply(struct bsal_actor *self, struct bsal_
 {
     struct bsal_dna_kmer kmer;
     void *key;
-    int *value;
+    struct bsal_assembly_vertex *value;
     int coverage;
     int customer;
     uint64_t *count;
@@ -314,7 +317,7 @@ void bsal_assembly_graph_store_yield_reply(struct bsal_actor *self, struct bsal_
                         ephemeral_memory,
                         &concrete_actor->storage_codec);
 
-        coverage = *value;
+        coverage = bsal_assembly_vertex_coverage_depth(value);
 
         count = (uint64_t *)bsal_map_get(&concrete_actor->coverage_distribution, &coverage);
 
@@ -381,7 +384,7 @@ void bsal_assembly_graph_store_push_kmer_block(struct bsal_actor *self, struct b
 {
     struct bsal_memory_pool *ephemeral_memory;
     struct bsal_dna_kmer_frequency_block block;
-    int *bucket;
+    struct bsal_assembly_vertex *bucket;
     void *packed_kmer;
     struct bsal_map_iterator iterator;
     struct bsal_assembly_graph_store *concrete_actor;
@@ -457,16 +460,18 @@ void bsal_assembly_graph_store_push_kmer_block(struct bsal_actor *self, struct b
         bsal_dna_kmer_destroy(&encoded_kmer,
                         bsal_actor_get_ephemeral_memory(self));
 
-        bucket = (int *)bsal_map_get(&concrete_actor->table, key);
+        bucket = bsal_map_get(&concrete_actor->table, key);
 
         if (bucket == NULL) {
             /* This is the first time that this kmer is seen.
              */
-            bucket = (int *)bsal_map_add(&concrete_actor->table, key);
-            *bucket = 0;
+            bucket = bsal_map_add(&concrete_actor->table, key);
+
+            bsal_assembly_vertex_init(bucket);
         }
 
-        (*bucket) += *frequency;
+
+        bsal_assembly_vertex_increase_coverage_depth(bucket, *frequency);
 
         if (concrete_actor->received >= concrete_actor->last_received + period) {
             printf("kmer store %d received %" PRIu64 " kmers so far,"

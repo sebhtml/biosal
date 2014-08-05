@@ -42,13 +42,14 @@ int bsal_assembly_vertex_coverage_depth(struct bsal_assembly_vertex *self)
     return self->coverage_depth;
 }
 
-void bsal_assembly_vertex_increase_coverage_depth(struct bsal_assembly_vertex *self)
+void bsal_assembly_vertex_increase_coverage_depth(struct bsal_assembly_vertex *self,
+                int value)
 {
     int old_depth;
 
     old_depth = self->coverage_depth;
 
-    ++self->coverage_depth;
+    self->coverage_depth += value;
 
     /*
      * Avoid integer overflow
