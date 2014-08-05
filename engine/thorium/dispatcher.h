@@ -4,13 +4,20 @@
 
 #include "script.h"
 
-#include <core/structures/vector.h>
+#include <core/structures/map.h>
 
 /*
  * A message dispatcher.
+ *
+ * A route is selected like this:
+ *
+ * Check tag
+ * Check source
+ * return handler
+ *
  */
 struct bsal_dispatcher {
-    struct bsal_vector routes;
+    struct bsal_map routes;
 };
 
 void bsal_dispatcher_init(struct bsal_dispatcher *self);

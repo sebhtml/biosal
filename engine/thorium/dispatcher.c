@@ -2,10 +2,10 @@
 #include "dispatcher.h"
 
 #include "message.h"
-#include "route.h"
 #include "actor.h"
 
-#include <core/structures/vector.h>
+#include <core/structures/map.h>
+#include <core/structures/map_iterator.h>
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -16,56 +16,54 @@
 
 void bsal_dispatcher_init(struct bsal_dispatcher *self)
 {
-    bsal_vector_init(&self->routes, sizeof(struct bsal_route));
+    bsal_map_init(&self->routes, sizeof(int), sizeof(struct bsal_map));
 }
 
 void bsal_dispatcher_destroy(struct bsal_dispatcher *self)
 {
-    int i;
-    int size;
-    struct bsal_route *route;
+    struct bsal_map_iterator iterator;
+    struct bsal_map *map;
 
-    size = bsal_vector_size(&self->routes);
+    bsal_map_iterator_init(&iterator, &self->routes);
 
-    for (i = 0; i < size; i++) {
-        route = bsal_vector_at(&self->routes, i);
+    while (bsal_map_iterator_has_next(&iterator)) {
+        bsal_map_iterator_next(&iterator, NULL, (void **)&map);
 
-        bsal_route_destroy(route);
+        bsal_map_destroy(map);
     }
-    bsal_vector_destroy(&self->routes);
+
+    bsal_map_iterator_destroy(&iterator);
+
+    bsal_map_destroy(&self->routes);
 }
 
 void bsal_dispatcher_register_with_source(struct bsal_dispatcher *self, int tag,
                int source, bsal_actor_receive_fn_t handler)
 {
-    int i;
-    int size;
-    struct bsal_route *route;
-    struct bsal_route new_route;
-    int found;
+    struct bsal_map *map;
+    bsal_actor_receive_fn_t *bucket;
+
+    map = bsal_map_get(&self->routes, &tag);
 
     /*
-     * Check if it is already registered
+     * Initialize the map if it does not exist
      */
+    if (map == NULL) {
+        map = bsal_map_add(&self->routes, &tag);
 
-    found = 0;
-    bsal_route_init(&new_route, tag, source, handler);
-
-    size = bsal_vector_size(&self->routes);
-
-    for (i = 0; i < size; i++) {
-        route = bsal_vector_at(&self->routes, i);
-
-        if (bsal_route_equals(route, &new_route)) {
-            found = 1;
-        }
+        bsal_map_init(map, sizeof(int), sizeof(bsal_actor_receive_fn_t));
     }
 
-    if (!found) {
-        bsal_vector_push_back(&self->routes, &new_route);
+    bucket = bsal_map_get(map, &source);
+
+    /*
+     * Create the bucket if it is not there.
+     */
+    if (bucket == NULL) {
+        bucket = bsal_map_add(map, &source);
     }
 
-    bsal_route_destroy(&new_route);
+    *bucket = handler;
 }
 
 int bsal_dispatcher_dispatch(struct bsal_dispatcher *self, struct bsal_actor *actor,
@@ -112,71 +110,49 @@ int bsal_dispatcher_dispatch(struct bsal_dispatcher *self, struct bsal_actor *ac
     return 1;
 }
 
+
+
 bsal_actor_receive_fn_t bsal_dispatcher_get(struct bsal_dispatcher *self, int tag, int source)
 {
-    int i;
-    int size;
-    bsal_actor_receive_fn_t callback;
-    bsal_actor_receive_fn_t callback_without_source;
-    int callback_without_source_index;
-    struct bsal_route *route;
+    struct bsal_map *map;
+    bsal_actor_receive_fn_t *bucket;
+    bsal_actor_receive_fn_t handler;
+    int any_source;
 
-    size = bsal_vector_size(&self->routes);
+    map = bsal_map_get(&self->routes, &tag);
 
-    callback = NULL;
-    callback_without_source = NULL;
-    callback_without_source_index = -1;
-
-    for (i = 0; i < size; i++) {
-        route = bsal_vector_at(&self->routes, i);
-
-        callback = bsal_route_test(route, tag, source);
-
-        if (callback != NULL) {
-
-            if (bsal_route_source(route) == BSAL_ACTOR_ANYBODY) {
-                callback_without_source = callback;
-                callback_without_source_index = i;
-            } else {
-#ifdef BSAL_DISPATCHER_DEBUG_GET
-                printf("Got callback %d\n", i);
-#endif
-                return callback;
-            }
-        }
+    /*
+     * This tag is not configured
+     */
+    if (map == NULL) {
+        return NULL;
     }
 
-    if (callback_without_source != NULL) {
+    bucket = bsal_map_get(map, &source);
 
-#ifdef BSAL_DISPATCHER_DEBUG_GET
-        printf("Got callback %d\n", callback_without_source_index);
-#endif
-        return callback_without_source;
+    /*
+     * This source is not
+     * configured
+     */
+    if (bucket == NULL) {
+
+        /* 
+         * Check if a wildcard was registered
+         */
+        any_source = BSAL_ACTOR_ANYBODY;
+        bucket = bsal_map_get(map, &any_source);
     }
 
-#ifdef BSAL_DISPATCHER_DEBUG_GET
-    printf("No callback matched.\n");
-#endif
+    /* BSAL_ACTOR_ANYBODY is not registered.
+     */
+    if (bucket == NULL) {
+        return NULL;
+    }
+    handler = *bucket;
 
-    return NULL;
+    return handler;
 }
 
 void bsal_dispatcher_print(struct bsal_dispatcher *self)
 {
-    int i;
-    int size;
-    struct bsal_route *route;
-
-    printf("DEBUG Dispatcher handlers (%d):",
-                    (int)bsal_vector_size(&self->routes));
-
-    size = bsal_vector_size(&self->routes);
-
-    for (i = 0; i < size; i++) {
-        route = bsal_vector_at(&self->routes, i);
-
-        printf("# %d ", i);
-        bsal_route_print(route);
-
-    }
 }

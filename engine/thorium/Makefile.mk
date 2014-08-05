@@ -6,7 +6,6 @@ THORIUM_OBJECTS += engine/thorium/message.o
 THORIUM_OBJECTS += engine/thorium/node.o
 THORIUM_OBJECTS += engine/thorium/actor.o
 THORIUM_OBJECTS += engine/thorium/dispatcher.o
-THORIUM_OBJECTS += engine/thorium/route.o
 THORIUM_OBJECTS += engine/thorium/script.o
 THORIUM_OBJECTS += engine/thorium/worker.o
 THORIUM_OBJECTS += engine/thorium/worker_pool.o
