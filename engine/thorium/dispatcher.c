@@ -39,7 +39,7 @@ void bsal_dispatcher_destroy(struct bsal_dispatcher *self)
     bsal_map_destroy(&self->routes);
 }
 
-void bsal_dispatcher_register_route(struct bsal_dispatcher *self, int tag,
+void bsal_dispatcher_add_route(struct bsal_dispatcher *self, int tag,
                bsal_actor_receive_fn_t handler,
                int source,
                int *actual,

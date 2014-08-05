@@ -94,11 +94,11 @@ void argonnite_init(struct bsal_actor *actor)
     concrete_actor->finished_kernels = 0;
     concrete_actor->total_kmers = 0;
 
-    bsal_actor_register_route(actor, ARGONNITE_PREPARE_SEQUENCE_STORES,
+    bsal_actor_add_route(actor, ARGONNITE_PREPARE_SEQUENCE_STORES,
                     argonnite_prepare_sequence_stores);
-    bsal_actor_register_route(actor, BSAL_INPUT_DISTRIBUTE_REPLY,
+    bsal_actor_add_route(actor, BSAL_INPUT_DISTRIBUTE_REPLY,
                     argonnite_connect_kernels_with_stores);
-    bsal_actor_register_route(actor, BSAL_SEQUENCE_STORE_REQUEST_PROGRESS_REPLY,
+    bsal_actor_add_route(actor, BSAL_SEQUENCE_STORE_REQUEST_PROGRESS_REPLY,
                     argonnite_request_progress_reply);
 
     concrete_actor->state = ARGONNITE_STATE_NONE;

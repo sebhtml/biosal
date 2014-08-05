@@ -82,17 +82,17 @@ void bsal_assembly_sliding_window_init(struct bsal_actor *actor)
 
     concrete_actor->auto_scaling_in_progress = 0;
 
-    bsal_actor_register_route(actor, BSAL_ACTOR_PACK,
+    bsal_actor_add_route(actor, BSAL_ACTOR_PACK,
                     bsal_assembly_sliding_window_pack_message);
-    bsal_actor_register_route(actor, BSAL_ACTOR_UNPACK,
+    bsal_actor_add_route(actor, BSAL_ACTOR_UNPACK,
                     bsal_assembly_sliding_window_unpack_message);
-    bsal_actor_register_route(actor, BSAL_ACTOR_CLONE_REPLY,
+    bsal_actor_add_route(actor, BSAL_ACTOR_CLONE_REPLY,
                     bsal_assembly_sliding_window_clone_reply);
-    bsal_actor_register_route(actor, BSAL_ACTOR_NOTIFY,
+    bsal_actor_add_route(actor, BSAL_ACTOR_NOTIFY,
                     bsal_assembly_sliding_window_notify);
-    bsal_actor_register_route(actor, BSAL_ACTOR_NOTIFY_REPLY,
+    bsal_actor_add_route(actor, BSAL_ACTOR_NOTIFY_REPLY,
                     bsal_assembly_sliding_window_notify_reply);
-    bsal_actor_register_route(actor, BSAL_ACTOR_DO_AUTO_SCALING,
+    bsal_actor_add_route(actor, BSAL_ACTOR_DO_AUTO_SCALING,
                     bsal_assembly_sliding_window_do_auto_scaling);
 
     printf("%s/%d is online on node node/%d\n",

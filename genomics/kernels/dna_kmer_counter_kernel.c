@@ -82,17 +82,17 @@ void bsal_dna_kmer_counter_kernel_init(struct bsal_actor *actor)
 
     concrete_actor->auto_scaling_in_progress = 0;
 
-    bsal_actor_register_route(actor, BSAL_ACTOR_PACK,
+    bsal_actor_add_route(actor, BSAL_ACTOR_PACK,
                     bsal_dna_kmer_counter_kernel_pack_message);
-    bsal_actor_register_route(actor, BSAL_ACTOR_UNPACK,
+    bsal_actor_add_route(actor, BSAL_ACTOR_UNPACK,
                     bsal_dna_kmer_counter_kernel_unpack_message);
-    bsal_actor_register_route(actor, BSAL_ACTOR_CLONE_REPLY,
+    bsal_actor_add_route(actor, BSAL_ACTOR_CLONE_REPLY,
                     bsal_dna_kmer_counter_kernel_clone_reply);
-    bsal_actor_register_route(actor, BSAL_ACTOR_NOTIFY,
+    bsal_actor_add_route(actor, BSAL_ACTOR_NOTIFY,
                     bsal_dna_kmer_counter_kernel_notify);
-    bsal_actor_register_route(actor, BSAL_ACTOR_NOTIFY_REPLY,
+    bsal_actor_add_route(actor, BSAL_ACTOR_NOTIFY_REPLY,
                     bsal_dna_kmer_counter_kernel_notify_reply);
-    bsal_actor_register_route(actor, BSAL_ACTOR_DO_AUTO_SCALING,
+    bsal_actor_add_route(actor, BSAL_ACTOR_DO_AUTO_SCALING,
                     bsal_dna_kmer_counter_kernel_do_auto_scaling);
 
     printf("kernel %d is online !!!\n",

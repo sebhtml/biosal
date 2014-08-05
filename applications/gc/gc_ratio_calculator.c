@@ -22,11 +22,11 @@ void gc_ratio_calculator_init(struct bsal_actor *actor)
     bsal_vector_init(&concrete_actor->spawners, sizeof(int));
     concrete_actor->completed = 0;
 
-    bsal_actor_register_route(actor, BSAL_ACTOR_START, gc_ratio_calculator_start);
-    bsal_actor_register_route(actor, GC_HELLO, gc_ratio_calculator_hello);
-    bsal_actor_register_route(actor, GC_HELLO_REPLY, gc_ratio_calculator_hello_reply);
-    bsal_actor_register_route(actor, BSAL_ACTOR_NOTIFY, gc_ratio_calculator_notify);
-    bsal_actor_register_route(actor, BSAL_ACTOR_ASK_TO_STOP, gc_ratio_calculator_ask_to_stop);
+    bsal_actor_add_route(actor, BSAL_ACTOR_START, gc_ratio_calculator_start);
+    bsal_actor_add_route(actor, GC_HELLO, gc_ratio_calculator_hello);
+    bsal_actor_add_route(actor, GC_HELLO_REPLY, gc_ratio_calculator_hello_reply);
+    bsal_actor_add_route(actor, BSAL_ACTOR_NOTIFY, gc_ratio_calculator_notify);
+    bsal_actor_add_route(actor, BSAL_ACTOR_ASK_TO_STOP, gc_ratio_calculator_ask_to_stop);
 }
 
 void gc_ratio_calculator_destroy(struct bsal_actor *actor)

@@ -39,19 +39,19 @@ void bsal_assembly_graph_builder_init(struct bsal_actor *self)
     bsal_vector_init(&concrete_self->sequence_stores, sizeof(int));
     bsal_vector_init(&concrete_self->block_classifiers, sizeof(int));
 
-    bsal_actor_register_route(self, BSAL_ACTOR_START, bsal_assembly_graph_builder_start);
-    bsal_actor_register_route(self, BSAL_ACTOR_SET_PRODUCERS, bsal_assembly_graph_builder_set_producers);
-    bsal_actor_register_route(self, BSAL_ACTOR_SET_PRODUCER_REPLY, bsal_assembly_graph_builder_set_producer_reply);
-    bsal_actor_register_route(self, BSAL_ACTOR_ASK_TO_STOP, bsal_assembly_graph_builder_ask_to_stop);
-    bsal_actor_register_route(self, BSAL_ACTOR_SPAWN_REPLY, bsal_assembly_graph_builder_spawn_reply);
-    bsal_actor_register_route(self, BSAL_SET_KMER_LENGTH_REPLY, bsal_assembly_graph_builder_set_kmer_reply);
-    bsal_actor_register_route(self, BSAL_ACTOR_NOTIFY_REPLY, bsal_assembly_graph_builder_notify_reply);
-    bsal_actor_register_route(self, BSAL_ASSEMBLY_GRAPH_BUILDER_CONTROL_COMPLEXITY,
+    bsal_actor_add_route(self, BSAL_ACTOR_START, bsal_assembly_graph_builder_start);
+    bsal_actor_add_route(self, BSAL_ACTOR_SET_PRODUCERS, bsal_assembly_graph_builder_set_producers);
+    bsal_actor_add_route(self, BSAL_ACTOR_SET_PRODUCER_REPLY, bsal_assembly_graph_builder_set_producer_reply);
+    bsal_actor_add_route(self, BSAL_ACTOR_ASK_TO_STOP, bsal_assembly_graph_builder_ask_to_stop);
+    bsal_actor_add_route(self, BSAL_ACTOR_SPAWN_REPLY, bsal_assembly_graph_builder_spawn_reply);
+    bsal_actor_add_route(self, BSAL_SET_KMER_LENGTH_REPLY, bsal_assembly_graph_builder_set_kmer_reply);
+    bsal_actor_add_route(self, BSAL_ACTOR_NOTIFY_REPLY, bsal_assembly_graph_builder_notify_reply);
+    bsal_actor_add_route(self, BSAL_ASSEMBLY_GRAPH_BUILDER_CONTROL_COMPLEXITY,
                     bsal_assembly_graph_builder_control_complexity);
 
-    bsal_actor_register_route(self, BSAL_ACTOR_SET_CONSUMER_REPLY, bsal_assembly_graph_builder_set_consumer_reply);
-    bsal_actor_register_route(self, BSAL_ACTOR_SET_CONSUMERS_REPLY, bsal_assembly_graph_builder_set_consumers_reply);
-    bsal_actor_register_route(self, BSAL_STORE_GET_ENTRY_COUNT_REPLY,
+    bsal_actor_add_route(self, BSAL_ACTOR_SET_CONSUMER_REPLY, bsal_assembly_graph_builder_set_consumer_reply);
+    bsal_actor_add_route(self, BSAL_ACTOR_SET_CONSUMERS_REPLY, bsal_assembly_graph_builder_set_consumers_reply);
+    bsal_actor_add_route(self, BSAL_STORE_GET_ENTRY_COUNT_REPLY,
                     bsal_assembly_graph_builder_get_entry_count_reply);
 
     concrete_self->manager_for_graph_stores = BSAL_ACTOR_NOBODY;
@@ -148,7 +148,7 @@ void bsal_assembly_graph_builder_start(struct bsal_actor *self, struct bsal_mess
      */
     concrete_self->manager_for_graph_stores = BSAL_ACTOR_SPAWNING_IN_PROGRESS;
 
-    bsal_actor_register_route_with_source_and_condition(self,
+    bsal_actor_add_route_with_source_and_condition(self,
                     BSAL_ACTOR_SPAWN_REPLY,
                     bsal_assembly_graph_builder_spawn_reply_graph_store_manager,
                     spawner,
@@ -170,11 +170,11 @@ void bsal_assembly_graph_builder_spawn_reply_graph_store_manager(struct bsal_act
 
     bsal_message_helper_unpack_int(message, 0, &concrete_self->manager_for_graph_stores);
 
-    bsal_actor_register_route_with_source(self, BSAL_MANAGER_SET_SCRIPT_REPLY,
+    bsal_actor_add_route_with_source(self, BSAL_MANAGER_SET_SCRIPT_REPLY,
                     bsal_assembly_graph_builder_set_script_reply_store_manager,
                     concrete_self->manager_for_graph_stores);
 
-    bsal_actor_register_route_with_source(self, BSAL_ACTOR_START_REPLY,
+    bsal_actor_add_route_with_source(self, BSAL_ACTOR_START_REPLY,
                     bsal_assembly_graph_builder_start_reply_store_manager,
                     concrete_self->manager_for_graph_stores);
 
@@ -189,8 +189,8 @@ void bsal_assembly_graph_builder_spawn_reply_graph_store_manager(struct bsal_act
  *
  * Solutions:
  *
- * bsal_actor_register_route_with_condition
- * bsal_actor_register_route_with_source_and_condition
+ * bsal_actor_add_route_with_condition
+ * bsal_actor_add_route_with_source_and_condition
  */
 void bsal_assembly_graph_builder_spawn_reply(struct bsal_actor *self, struct bsal_message *message)
 {
@@ -207,11 +207,11 @@ void bsal_assembly_graph_builder_spawn_reply(struct bsal_actor *self, struct bsa
 
         bsal_message_helper_unpack_int(message, 0, &concrete_self->manager_for_classifiers);
 
-        bsal_actor_register_route_with_source(self, BSAL_MANAGER_SET_SCRIPT_REPLY,
+        bsal_actor_add_route_with_source(self, BSAL_MANAGER_SET_SCRIPT_REPLY,
                         bsal_assembly_graph_builder_set_script_reply_classifier_manager,
                         concrete_self->manager_for_classifiers);
 
-        bsal_actor_register_route_with_source(self, BSAL_ACTOR_START_REPLY,
+        bsal_actor_add_route_with_source(self, BSAL_ACTOR_START_REPLY,
                         bsal_assembly_graph_builder_start_reply_classifier_manager,
                         concrete_self->manager_for_classifiers);
 
@@ -222,11 +222,11 @@ void bsal_assembly_graph_builder_spawn_reply(struct bsal_actor *self, struct bsa
 
         bsal_message_helper_unpack_int(message, 0, &concrete_self->coverage_distribution);
 
-        bsal_actor_register_route_with_source(self, BSAL_SET_EXPECTED_MESSAGE_COUNT_REPLY,
+        bsal_actor_add_route_with_source(self, BSAL_SET_EXPECTED_MESSAGE_COUNT_REPLY,
                             bsal_assembly_graph_builder_set_expected_message_count_reply,
                         concrete_self->coverage_distribution);
 
-        bsal_actor_register_route_with_source(self, BSAL_ACTOR_NOTIFY,
+        bsal_actor_add_route_with_source(self, BSAL_ACTOR_NOTIFY,
                         bsal_assembly_graph_builder_notify_from_distribution,
                         concrete_self->coverage_distribution);
 
@@ -242,7 +242,7 @@ void bsal_assembly_graph_builder_set_expected_message_count_reply(struct bsal_ac
 
     concrete_self = bsal_actor_concrete_actor(self);
 
-    bsal_actor_register_route_with_sources(self, BSAL_ACTOR_SET_CONSUMER_REPLY,
+    bsal_actor_add_route_with_sources(self, BSAL_ACTOR_SET_CONSUMER_REPLY,
                     bsal_assembly_graph_builder_set_consumer_reply_graph_stores,
                     &concrete_self->graph_stores);
 
@@ -291,7 +291,7 @@ void bsal_assembly_graph_builder_start_reply_store_manager(struct bsal_actor *se
      */
     concrete_self->manager_for_windows = BSAL_ACTOR_SPAWNING_IN_PROGRESS;
 
-    bsal_actor_register_route_with_condition(self,
+    bsal_actor_add_route_with_condition(self,
                     BSAL_ACTOR_SPAWN_REPLY,
                     bsal_assembly_graph_builder_spawn_reply_window_manager,
                     &concrete_self->manager_for_windows,
@@ -315,11 +315,11 @@ void bsal_assembly_graph_builder_spawn_reply_window_manager(struct bsal_actor *s
 
     bsal_message_helper_unpack_int(message, 0, &concrete_self->manager_for_windows);
 
-    bsal_actor_register_route_with_source(self, BSAL_MANAGER_SET_SCRIPT_REPLY,
+    bsal_actor_add_route_with_source(self, BSAL_MANAGER_SET_SCRIPT_REPLY,
                     bsal_assembly_graph_builder_set_script_reply_window_manager,
                     concrete_self->manager_for_windows);
 
-    bsal_actor_register_route_with_source(self, BSAL_ACTOR_START_REPLY,
+    bsal_actor_add_route_with_source(self, BSAL_ACTOR_START_REPLY,
                     bsal_assembly_graph_builder_start_reply_window_manager,
                     concrete_self->manager_for_windows);
 
@@ -379,7 +379,7 @@ void bsal_assembly_graph_builder_start_reply_window_manager(struct bsal_actor *s
      */
     bsal_vector_unpack(&concrete_self->sliding_windows, buffer);
 
-    bsal_actor_register_route_with_sources(self, BSAL_ACTOR_SET_CONSUMER_REPLY,
+    bsal_actor_add_route_with_sources(self, BSAL_ACTOR_SET_CONSUMER_REPLY,
                     bsal_assembly_graph_builder_set_consumer_reply_windows,
                     &concrete_self->sliding_windows);
 
