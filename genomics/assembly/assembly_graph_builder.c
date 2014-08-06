@@ -35,6 +35,7 @@ void bsal_assembly_graph_builder_init(struct bsal_actor *self)
     bsal_timer_init(&concrete_self->timer);
 
     concrete_self->completed_sliding_windows = 0;
+    concrete_self->doing_arcs = 0;
 
     bsal_vector_init(&concrete_self->spawners, sizeof(int));
     bsal_vector_init(&concrete_self->sequence_stores, sizeof(int));
@@ -960,13 +961,47 @@ void bsal_assembly_graph_builder_set_script_reply_arc_classifier_manager(struct 
 
 void bsal_assembly_graph_builder_start_reply_arc_classifier_manager(struct bsal_actor *self, struct bsal_message *message)
 {
-    struct bsal_assembly_graph_builder *concrete_self;
     void *buffer;
+    struct bsal_assembly_graph_builder *concrete_self;
 
     concrete_self = bsal_actor_concrete_actor(self);
 
     buffer = bsal_message_buffer(message);
     bsal_vector_unpack(&concrete_self->arc_classifiers, buffer);
 
-    bsal_assembly_graph_builder_tell_source(self);
+    /*
+     * Configure the kmer length.
+     */
+    concrete_self->doing_arcs = 1;
+
+    bsal_actor_add_route_with_condition(self, BSAL_SET_KMER_LENGTH_REPLY,
+                    bsal_assembly_graph_builder_set_kmer_reply_arcs,
+                    &concrete_self->doing_arcs, 1);
+
+    concrete_self->configured_actors_for_arcs = 0;
+
+    bsal_actor_send_range_int(self, &concrete_self->arc_kernels, BSAL_SET_KMER_LENGTH,
+                    concrete_self->kmer_length);
+    bsal_actor_send_range_int(self, &concrete_self->arc_classifiers, BSAL_SET_KMER_LENGTH,
+                    concrete_self->kmer_length);
+}
+
+void bsal_assembly_graph_builder_set_kmer_reply_arcs(struct bsal_actor *self, struct bsal_message *message)
+{
+    int expected;
+    struct bsal_assembly_graph_builder *concrete_self;
+    
+    concrete_self = bsal_actor_concrete_actor(self);
+
+    ++concrete_self->configured_actors_for_arcs;
+
+    expected = 0;
+    expected += bsal_vector_size(&concrete_self->arc_kernels);
+    expected += bsal_vector_size(&concrete_self->arc_classifiers);
+
+    if (concrete_self->configured_actors_for_arcs == expected) {
+
+        
+        bsal_assembly_graph_builder_tell_source(self);
+    }
 }

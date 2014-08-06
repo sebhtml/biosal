@@ -58,6 +58,11 @@ struct bsal_assembly_graph_builder {
     int synchronized_graph_stores;
 
     int completed_sliding_windows;
+
+    int doing_arcs;
+
+    int configured_actors_for_arcs;
+
 };
 
 extern struct bsal_script bsal_assembly_graph_builder_script;
@@ -125,4 +130,10 @@ void bsal_assembly_graph_builder_set_script_reply_arc_kernel_manager(struct bsal
 void bsal_assembly_graph_builder_start_reply_arc_classifier_manager(struct bsal_actor *self, struct bsal_message *message);
 void bsal_assembly_graph_builder_set_script_reply_arc_classifier_manager(struct bsal_actor *self, struct bsal_message *message);
 void bsal_assembly_graph_builder_spawn_reply_arc_classifier_manager(struct bsal_actor *self, struct bsal_message *message);
+
+/*
+ * Configure kmer length for arcs.
+ */
+
+void bsal_assembly_graph_builder_set_kmer_reply_arcs(struct bsal_actor *self, struct bsal_message *message);
 #endif
