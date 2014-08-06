@@ -199,6 +199,9 @@ new name.
 #define BSAL_ACTOR_NOTIFY 0x0000710b
 #define BSAL_ACTOR_NOTIFY_REPLY 0x00005f82
 
+#define BSAL_ACTOR_RESET 0x00005045
+#define BSAL_ACTOR_RESET_REPLY 0x0000056d
+
 /*
  ********************************************
  */

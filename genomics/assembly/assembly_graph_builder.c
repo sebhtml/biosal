@@ -83,6 +83,8 @@ void bsal_assembly_graph_builder_init(struct bsal_actor *self)
 
     concrete_self->synchronized_graph_stores = 0;
     concrete_self->actual_kmer_count = 0;
+
+    concrete_self->expected_arc_count = 0;
 }
 
 void bsal_assembly_graph_builder_destroy(struct bsal_actor *self)
@@ -1049,6 +1051,17 @@ void bsal_assembly_graph_builder_set_kmer_reply_arcs(struct bsal_actor *self, st
         bsal_actor_send_range_vector(self, &concrete_self->arc_classifiers,
                         BSAL_ACTOR_SET_CONSUMERS,
                         &concrete_self->graph_stores);
+
+        /*
+         * Reset the sequence stores now.
+         */
+
+        bsal_actor_add_route(self,
+                        BSAL_ACTOR_RESET_REPLY,
+                        bsal_assembly_graph_builder_configure_arc_actors);
+
+        bsal_actor_send_range_empty(self, &concrete_self->sequence_stores,
+                        BSAL_ACTOR_RESET);
     }
 }
 
@@ -1068,6 +1081,7 @@ void bsal_assembly_graph_builder_configure_arc_actors(struct bsal_actor *self, s
     expected = 0;
     expected += bsal_vector_size(&concrete_self->arc_kernels);
     expected += bsal_vector_size(&concrete_self->arc_classifiers);
+    expected += bsal_vector_size(&concrete_self->sequence_stores);
 
     if (expected == concrete_self->configured_actors_for_arcs) {
 
@@ -1110,6 +1124,43 @@ void bsal_assembly_graph_builder_verify_arc_kernels(struct bsal_actor *self, str
 
     if (concrete_self->completed_arc_kernels == expected) {
 
+        concrete_self->completed_arc_kernels = 0;
+
+        bsal_actor_add_route_with_condition(self,
+                        BSAL_ACTOR_NOTIFY_REPLY,
+                        bsal_assembly_graph_builder_notify_reply_arc_kernels,
+                        &concrete_self->doing_arcs, 1);
+        /*
+         * Ask each kernel the amount of produced arcs
+         */
+        bsal_actor_send_range_empty(self, &concrete_self->arc_kernels,
+                        BSAL_ACTOR_NOTIFY);
+    }
+}
+
+void bsal_assembly_graph_builder_notify_reply_arc_kernels(struct bsal_actor *self, struct bsal_message *message)
+{
+    struct bsal_assembly_graph_builder *concrete_self;
+    int expected;
+    uint64_t arcs;
+
+    concrete_self = bsal_actor_concrete_actor(self);
+
+    bsal_message_unpack_uint64_t(message, 0, &arcs);
+
+    concrete_self->expected_arc_count += arcs;
+
+    ++concrete_self->completed_arc_kernels;
+
+    expected = bsal_vector_size(&concrete_self->arc_kernels);
+
+    if (concrete_self->completed_arc_kernels == expected) {
+
+        printf("%s/%d %" PRIu64 " arcs were extracted from raw data by arc actors\n",
+                        bsal_actor_script_name(self),
+                        bsal_actor_name(self),
+                        concrete_self->expected_arc_count);
+
         bsal_actor_add_route(self, BSAL_VERIFY_ARCS,
                         bsal_assembly_graph_builder_verify_arcs);
 
@@ -1119,6 +1170,5 @@ void bsal_assembly_graph_builder_verify_arc_kernels(struct bsal_actor *self, str
 
 void bsal_assembly_graph_builder_verify_arcs(struct bsal_actor *self, struct bsal_message *message)
 {
-
     bsal_assembly_graph_builder_tell_source(self);
 }

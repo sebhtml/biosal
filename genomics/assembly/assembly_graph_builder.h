@@ -67,8 +67,10 @@ struct bsal_assembly_graph_builder {
     int doing_arcs;
 
     int configured_actors_for_arcs;
-
     int completed_arc_kernels;
+    int configured_sequence_stores;
+
+    uint64_t expected_arc_count;
 };
 
 extern struct bsal_script bsal_assembly_graph_builder_script;
@@ -145,7 +147,11 @@ void bsal_assembly_graph_builder_set_kmer_reply_arcs(struct bsal_actor *self, st
 void bsal_assembly_graph_builder_configure_arc_actors(struct bsal_actor *self, struct bsal_message *message);
 
 
+/*
+ * Functions to verify arcs for high quality.
+ */
 void bsal_assembly_graph_builder_verify_arcs(struct bsal_actor *self, struct bsal_message *message);
 void bsal_assembly_graph_builder_verify_arc_kernels(struct bsal_actor *self, struct bsal_message *message);
+void bsal_assembly_graph_builder_notify_reply_arc_kernels(struct bsal_actor *self, struct bsal_message *message);
 
 #endif

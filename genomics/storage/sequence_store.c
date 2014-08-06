@@ -133,6 +133,17 @@ void bsal_sequence_store_receive(struct bsal_actor *actor, struct bsal_message *
     } else if (tag == BSAL_SEQUENCE_STORE_REQUEST_PROGRESS) {
 
         concrete_actor->progress_supervisor = source;
+
+    } else if (tag == BSAL_ACTOR_RESET) {
+
+        /* Destroy iterator if it is started.
+         */
+        if (concrete_actor->iterator_started) {
+            bsal_vector_iterator_destroy(&concrete_actor->iterator);
+            concrete_actor->iterator_started = 0;
+        }
+
+        bsal_actor_send_reply_empty(actor, BSAL_ACTOR_RESET_REPLY);
     }
 }
 
