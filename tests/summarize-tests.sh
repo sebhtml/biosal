@@ -24,7 +24,7 @@ function main()
         failed_tests=$(grep FAILED $file | sed 's=/= =g' | awk '{print $6}' | awk '{ sum += $1} END {print sum}')
     fi
 
-    bsal_shell_summarize_test_result "UnitTests" $passed_tests $failed_tests
+    bsal_shell_summarize_test_result "UnitTestSuite " $passed_tests $failed_tests
 }
 
 main $1

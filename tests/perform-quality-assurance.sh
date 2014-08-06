@@ -13,8 +13,9 @@ function run_tests_private()
 
     echo ""
     echo "Unit tests (make tests)"
+
     make -s tests > unit-tests.log
-    tail -n 1 unit-tests.log
+    grep ^UnitTestSuite unit-tests.log
     echo "see unit-tests.log"
 
     echo ""
