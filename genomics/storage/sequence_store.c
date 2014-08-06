@@ -90,6 +90,11 @@ void bsal_sequence_store_destroy(struct bsal_actor *actor)
     bsal_dna_codec_destroy(&concrete_actor->codec);
 
     if (concrete_actor->iterator_started) {
+
+        printf("%s/%d starts iterator for production\n",
+                        bsal_actor_script_name(actor),
+                        bsal_actor_name(actor));
+
         bsal_vector_iterator_destroy(&concrete_actor->iterator);
         concrete_actor->iterator_started = 0;
     }
@@ -136,12 +141,16 @@ void bsal_sequence_store_receive(struct bsal_actor *actor, struct bsal_message *
 
     } else if (tag == BSAL_ACTOR_RESET) {
 
+        printf("RESET\n");
         /* Destroy iterator if it is started.
          */
         if (concrete_actor->iterator_started) {
             bsal_vector_iterator_destroy(&concrete_actor->iterator);
             concrete_actor->iterator_started = 0;
         }
+
+        concrete_actor->left = concrete_actor->received;
+        concrete_actor->last = 0;
 
         bsal_actor_send_reply_empty(actor, BSAL_ACTOR_RESET_REPLY);
     }

@@ -2,8 +2,12 @@
 #include "assembly_arc_kernel.h"
 
 #include <genomics/kernels/dna_kmer_counter_kernel.h>
+#include <genomics/storage/sequence_store.h>
 
 #include <stdio.h>
+
+#include <stdint.h>
+#include <inttypes.h>
 
 struct bsal_script bsal_assembly_arc_kernel_script = {
     .identifier = BSAL_ASSEMBLY_ARC_KERNEL_SCRIPT,
@@ -21,9 +25,6 @@ void bsal_assembly_arc_kernel_init(struct bsal_actor *self)
     concrete_self = (struct bsal_assembly_arc_kernel *)bsal_actor_concrete_actor(self);
 
     concrete_self->kmer_length = -1;
-
-    bsal_actor_add_route(self, BSAL_ACTOR_ASK_TO_STOP,
-                    bsal_actor_ask_to_stop);
 
     bsal_actor_add_route(self, BSAL_SET_KMER_LENGTH,
                     bsal_assembly_arc_kernel_set_kmer_length);
@@ -48,6 +49,11 @@ void bsal_assembly_arc_kernel_init(struct bsal_actor *self)
     }
 
     concrete_self->produced_arcs = 0;
+
+    bsal_actor_add_route(self, BSAL_PUSH_SEQUENCE_DATA_BLOCK,
+                    bsal_assembly_arc_kernel_push_sequence_data_block);
+
+    concrete_self->received_blocks = 0;
 }
 
 void bsal_assembly_arc_kernel_destroy(struct bsal_actor *self)
@@ -67,6 +73,7 @@ void bsal_assembly_arc_kernel_destroy(struct bsal_actor *self)
 void bsal_assembly_arc_kernel_receive(struct bsal_actor *self, struct bsal_message *message)
 {
     int tag;
+    int source;
     struct bsal_assembly_arc_kernel *concrete_self;
 
     if (bsal_actor_use_route(self, message)) {
@@ -75,12 +82,15 @@ void bsal_assembly_arc_kernel_receive(struct bsal_actor *self, struct bsal_messa
 
     concrete_self = (struct bsal_assembly_arc_kernel *)bsal_actor_concrete_actor(self);
     tag = bsal_message_tag(message);
+    source = bsal_message_source(message);
 
     if (tag == BSAL_ACTOR_SET_PRODUCER) {
 
         bsal_message_unpack_int(message, 0, &concrete_self->producer);
 
-        bsal_actor_send_reply_empty(self, BSAL_ACTOR_SET_PRODUCER_REPLY);
+        concrete_self->source = source;
+
+        bsal_assembly_arc_kernel_ask(self, message);
 
     } else if (tag == BSAL_ACTOR_SET_CONSUMER) {
 
@@ -92,6 +102,21 @@ void bsal_assembly_arc_kernel_receive(struct bsal_actor *self, struct bsal_messa
 
         bsal_actor_send_reply_uint64_t(self, BSAL_ACTOR_NOTIFY_REPLY,
                         concrete_self->produced_arcs);
+
+    } else if (tag == BSAL_SEQUENCE_STORE_ASK_REPLY) {
+
+        bsal_actor_send_empty(self, concrete_self->source,
+                        BSAL_ACTOR_SET_PRODUCER_REPLY);
+
+    } else if (tag == BSAL_ACTOR_ASK_TO_STOP) {
+
+        printf("%s/%d generated %" PRIu64 " arcs from %d sequence blocks\n",
+                        bsal_actor_script_name(self),
+                        bsal_actor_name(self),
+                        concrete_self->produced_arcs,
+                        concrete_self->received_blocks);
+
+        bsal_actor_ask_to_stop(self, message);
     }
 }
 
@@ -105,3 +130,50 @@ void bsal_assembly_arc_kernel_set_kmer_length(struct bsal_actor *self, struct bs
 
     bsal_actor_send_reply_empty(self, BSAL_SET_KMER_LENGTH_REPLY);
 }
+
+void bsal_assembly_arc_kernel_ask(struct bsal_actor *self, struct bsal_message *message)
+{
+    struct bsal_assembly_arc_kernel *concrete_self;
+
+    concrete_self = (struct bsal_assembly_arc_kernel *)bsal_actor_concrete_actor(self);
+
+    if (concrete_self->consumer == BSAL_ACTOR_NOBODY) {
+        printf("Error: no consumer in arc kernel\n");
+        return;
+    }
+
+    if (concrete_self->producer == BSAL_ACTOR_NOBODY) {
+        printf("Error: no producer in arc kernel\n");
+        return;
+    }
+
+    /*
+     * Send BSAL_SEQUENCE_STORE_ASK to producer. This message needs
+     * a kmer length.
+     *
+     * There are 2 possible answers:
+     *
+     * 1. BSAL_SEQUENCE_STORE_ASK_REPLY which means there is nothing available.
+     * 2. BSAL_PUSH_SEQUENCE_DATA_BLOCK which contains sequences.
+     */
+
+    bsal_actor_send_int(self, concrete_self->producer,
+                    BSAL_SEQUENCE_STORE_ASK, concrete_self->kmer_length);
+}
+
+void bsal_assembly_arc_kernel_push_sequence_data_block(struct bsal_actor *self, struct bsal_message *message)
+{
+    struct bsal_assembly_arc_kernel *concrete_self;
+
+    concrete_self = (struct bsal_assembly_arc_kernel *)bsal_actor_concrete_actor(self);
+
+    ++concrete_self->received_blocks;
+
+    /*
+     * Ask for more !
+     */
+    bsal_assembly_arc_kernel_ask(self, message);
+
+}
+
+
