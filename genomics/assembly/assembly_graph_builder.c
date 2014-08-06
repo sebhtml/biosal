@@ -990,7 +990,7 @@ void bsal_assembly_graph_builder_set_kmer_reply_arcs(struct bsal_actor *self, st
 {
     int expected;
     struct bsal_assembly_graph_builder *concrete_self;
-    
+
     concrete_self = bsal_actor_concrete_actor(self);
 
     ++concrete_self->configured_actors_for_arcs;
@@ -1001,7 +1001,7 @@ void bsal_assembly_graph_builder_set_kmer_reply_arcs(struct bsal_actor *self, st
 
     if (concrete_self->configured_actors_for_arcs == expected) {
 
-        
+
         bsal_assembly_graph_builder_tell_source(self);
     }
 }

@@ -92,9 +92,6 @@ void bsal_assembly_graph_store_receive(struct bsal_actor *self, struct bsal_mess
     struct bsal_memory_pool *ephemeral_memory;
     int customer;
 
-#ifdef BSAL_KMER_STORE_DEBUG
-    int name;
-#endif
 
     if (bsal_actor_use_route(self, message)) {
         return;
@@ -115,12 +112,6 @@ void bsal_assembly_graph_store_receive(struct bsal_actor *self, struct bsal_mess
                         concrete_actor->kmer_length, &concrete_actor->storage_codec);
         bsal_dna_kmer_destroy(&kmer, bsal_actor_get_ephemeral_memory(self));
 
-#ifdef BSAL_KMER_STORE_DEBUG
-        name = bsal_actor_name(self);
-        printf("kmer store %d will use %d bytes for canonical kmers (k is %d)\n",
-                        name, concrete_actor->key_length_in_bytes,
-                        concrete_actor->kmer_length);
-#endif
 
         bsal_map_init(&concrete_actor->table, concrete_actor->key_length_in_bytes,
                         sizeof(struct bsal_assembly_vertex));
@@ -147,9 +138,6 @@ void bsal_assembly_graph_store_receive(struct bsal_actor *self, struct bsal_mess
 
     } else if (tag == BSAL_ACTOR_ASK_TO_STOP) {
 
-#ifdef BSAL_KMER_STORE_DEBUG
-        bsal_assembly_graph_store_print(self);
-#endif
 
         bsal_actor_ask_to_stop(self, message);
 
@@ -157,10 +145,9 @@ void bsal_assembly_graph_store_receive(struct bsal_actor *self, struct bsal_mess
 
         bsal_message_unpack_int(message, 0, &customer);
 
-        printf("kmer store %d will use coverage distribution %d\n",
+        printf("%s/%d will use coverage distribution %d\n",
+                        bsal_actor_script_name(self),
                         bsal_actor_name(self), customer);
-#ifdef BSAL_KMER_STORE_DEBUG
-#endif
 
         concrete_actor->customer = customer;
 
@@ -168,7 +155,8 @@ void bsal_assembly_graph_store_receive(struct bsal_actor *self, struct bsal_mess
 
     } else if (tag == BSAL_PUSH_DATA) {
 
-        printf("DEBUG kmer store %d receives BSAL_PUSH_DATA\n",
+        printf("%s/%d receives BSAL_PUSH_DATA\n",
+                        bsal_actor_script_name(self),
                         bsal_actor_name(self));
 
         bsal_assembly_graph_store_push_data(self, message);
@@ -264,15 +252,13 @@ void bsal_assembly_graph_store_push_data(struct bsal_actor *self, struct bsal_me
 
     bsal_map_init(&concrete_actor->coverage_distribution, sizeof(int), sizeof(uint64_t));
 
-    printf("kmer store %d: local table has %" PRIu64" canonical kmers (%" PRIu64 " kmers)\n",
+    printf("%s/%d: local table has %" PRIu64" canonical kmers (%" PRIu64 " kmers)\n",
+                        bsal_actor_script_name(self),
                     name, bsal_map_size(&concrete_actor->table),
                     2 * bsal_map_size(&concrete_actor->table));
 
     bsal_map_iterator_init(&concrete_actor->iterator, &concrete_actor->table);
 
-#ifdef BSAL_KMER_STORE_DEBUG
-    printf("yield 1\n");
-#endif
 
     bsal_actor_send_to_self_empty(self, BSAL_ACTOR_YIELD);
 }
@@ -361,12 +347,11 @@ void bsal_assembly_graph_store_yield_reply(struct bsal_actor *self, struct bsal_
 
     bsal_map_pack(&concrete_actor->coverage_distribution, new_buffer);
 
-    printf("SENDING kmer store %d sends map to %d, %d bytes / %d entries\n",
+    printf("SENDING %s/%d sends map to %d, %d bytes / %d entries\n",
+                        bsal_actor_script_name(self),
                     bsal_actor_name(self),
                     customer, new_count,
                     (int)bsal_map_size(&concrete_actor->coverage_distribution));
-#ifdef BSAL_KMER_STORE_DEBUG
-#endif
 
     bsal_message_init(&new_message, BSAL_PUSH_DATA, new_count, new_buffer);
 
@@ -474,8 +459,9 @@ void bsal_assembly_graph_store_push_kmer_block(struct bsal_actor *self, struct b
         bsal_assembly_vertex_increase_coverage_depth(bucket, *frequency);
 
         if (concrete_actor->received >= concrete_actor->last_received + period) {
-            printf("kmer store %d received %" PRIu64 " kmers so far,"
+            printf("%s/%d received %" PRIu64 " kmers so far,"
                             " store has %" PRIu64 " canonical kmers, %" PRIu64 " kmers\n",
+                        bsal_actor_script_name(self),
                             bsal_actor_name(self), concrete_actor->received,
                             bsal_map_size(&concrete_actor->table),
                             2 * bsal_map_size(&concrete_actor->table));
