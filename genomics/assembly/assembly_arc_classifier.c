@@ -31,6 +31,21 @@ void bsal_assembly_arc_classifier_init(struct bsal_actor *self)
     printf("%s/%d is now active\n",
                     bsal_actor_script_name(self),
                     bsal_actor_name(self));
+
+    /*
+     *
+     * Configure the codec.
+     */
+
+    bsal_dna_codec_init(&concrete_self->codec);
+
+    if (bsal_actor_get_node_count(self) >= BSAL_DNA_CODEC_MINIMUM_NODE_COUNT_FOR_TWO_BIT) {
+#ifdef BSAL_DNA_CODEC_USE_TWO_BIT_ENCODING_FOR_TRANSPORT
+        bsal_dna_codec_enable_two_bit_encoding(&concrete_self->codec);
+#endif
+    }
+
+    bsal_vector_init(&concrete_self->consumers, sizeof(int));
 }
 
 void bsal_assembly_arc_classifier_destroy(struct bsal_actor *self)
@@ -40,11 +55,32 @@ void bsal_assembly_arc_classifier_destroy(struct bsal_actor *self)
     concrete_self = (struct bsal_assembly_arc_classifier *)bsal_actor_concrete_actor(self);
 
     concrete_self->kmer_length = -1;
+
+    bsal_vector_destroy(&concrete_self->consumers);
+
+    bsal_dna_codec_destroy(&concrete_self->codec);
 }
 
 void bsal_assembly_arc_classifier_receive(struct bsal_actor *self, struct bsal_message *message)
 {
-    bsal_actor_use_route(self, message);
+    int tag;
+    void *buffer;
+    struct bsal_assembly_arc_classifier *concrete_self;
+
+    if (bsal_actor_use_route(self, message)) {
+        return;
+    }
+
+    concrete_self = (struct bsal_assembly_arc_classifier *)bsal_actor_concrete_actor(self);
+    tag = bsal_message_tag(message);
+    buffer = bsal_message_buffer(message);
+
+    if (tag == BSAL_ACTOR_SET_CONSUMERS) {
+
+        bsal_vector_unpack(&concrete_self->consumers, buffer);
+
+        bsal_actor_send_reply_empty(self, BSAL_ACTOR_SET_CONSUMERS_REPLY);
+    }
 }
 
 void bsal_assembly_arc_classifier_set_kmer_length(struct bsal_actor *self, struct bsal_message *message)

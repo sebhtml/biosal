@@ -11,8 +11,17 @@
 
 #define BSAL_ASSEMBLY_ARC_KERNEL_SCRIPT 0xe4c41672
 
+/*
+ * Arc generator for the assembly graph.
+ */
 struct bsal_assembly_arc_kernel {
     int kmer_length;
+
+    int producer;
+
+    int consumer;
+
+    struct bsal_dna_codec codec;
 };
 
 extern struct bsal_script bsal_assembly_arc_kernel_script;

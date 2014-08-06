@@ -11,8 +11,15 @@
 
 #define BSAL_ASSEMBLY_ARC_CLASSIFIER_SCRIPT 0x115b87ed
 
+/*
+ * This actor classifies arcs.
+ */
 struct bsal_assembly_arc_classifier {
     int kmer_length;
+
+    struct bsal_vector consumers;
+
+    struct bsal_dna_codec codec;
 };
 
 extern struct bsal_script bsal_assembly_arc_classifier_script;
