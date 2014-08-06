@@ -122,7 +122,7 @@ void bsal_aggregator_receive(struct bsal_actor *self, struct bsal_message *messa
     int consumer_index_index;
     int *bucket;
 
-    if (bsal_actor_call_handler(self, message)) {
+    if (bsal_actor_use_route(self, message)) {
         return;
     }
 

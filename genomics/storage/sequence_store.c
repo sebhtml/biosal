@@ -103,7 +103,7 @@ void bsal_sequence_store_receive(struct bsal_actor *actor, struct bsal_message *
     int source;
     struct bsal_sequence_store *concrete_actor;
 
-    if (bsal_actor_call_handler(actor, message)) {
+    if (bsal_actor_use_route(actor, message)) {
         return;
     }
 

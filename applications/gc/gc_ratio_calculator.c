@@ -38,7 +38,7 @@ void gc_ratio_calculator_destroy(struct bsal_actor *actor)
 
 void gc_ratio_calculator_receive(struct bsal_actor *actor, struct bsal_message *message)
 {
-    bsal_actor_call_handler(actor, message);
+    bsal_actor_use_route(actor, message);
 }
 
 /* dispatch handlers */

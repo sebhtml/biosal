@@ -96,7 +96,7 @@ void bsal_assembly_graph_store_receive(struct bsal_actor *self, struct bsal_mess
     int name;
 #endif
 
-    if (bsal_actor_call_handler(self, message)) {
+    if (bsal_actor_use_route(self, message)) {
         return;
     }
 

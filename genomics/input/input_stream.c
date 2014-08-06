@@ -113,7 +113,7 @@ void bsal_input_stream_receive(struct bsal_actor *actor, struct bsal_message *me
     struct bsal_mega_block mega_block;
     char *file_name_in_buffer;
 
-    if (bsal_actor_call_handler(actor, message)) {
+    if (bsal_actor_use_route(actor, message)) {
         return;
     }
 

@@ -906,7 +906,7 @@ void bsal_actor_receive(struct bsal_actor *self, struct bsal_message *message)
     /* otherwise, verify if the actor registered a
      * handler for this tag
      */
-    } else if (bsal_actor_call_handler(self, message)) {
+    } else if (bsal_actor_use_route(self, message)) {
         return;
 #endif
     }
@@ -1259,7 +1259,7 @@ int bsal_actor_node_worker_count(struct bsal_actor *self)
     return bsal_node_worker_count(bsal_actor_node(self));
 }
 
-int bsal_actor_call_handler(struct bsal_actor *self, struct bsal_message *message)
+int bsal_actor_use_route(struct bsal_actor *self, struct bsal_message *message)
 {
 
 #ifdef BSAL_ACTOR_DEBUG_10335

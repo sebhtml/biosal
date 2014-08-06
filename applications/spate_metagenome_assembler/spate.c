@@ -114,7 +114,7 @@ void spate_destroy(struct bsal_actor *self)
 
 void spate_receive(struct bsal_actor *self, struct bsal_message *message)
 {
-    bsal_actor_call_handler(self, message);
+    bsal_actor_use_route(self, message);
 }
 
 void spate_start(struct bsal_actor *self, struct bsal_message *message)

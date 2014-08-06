@@ -384,7 +384,7 @@ struct bsal_counter *bsal_actor_counter(struct bsal_actor *self);
 /*
  * Functions to use and register handlers
  */
-int bsal_actor_call_handler(struct bsal_actor *self, struct bsal_message *message);
+int bsal_actor_use_route(struct bsal_actor *self, struct bsal_message *message);
 
 void bsal_actor_add_route_with_source_and_condition(struct bsal_actor *self, int tag, bsal_actor_receive_fn_t handler,
                 int source, int *actual, int expected);

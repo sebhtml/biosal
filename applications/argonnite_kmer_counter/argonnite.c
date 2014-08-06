@@ -161,7 +161,7 @@ void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message)
     struct bsal_memory_pool *ephemeral_memory;
     int enable_work_stealing;
 
-    if (bsal_actor_call_handler(actor, message)) {
+    if (bsal_actor_use_route(actor, message)) {
         return;
     }
 

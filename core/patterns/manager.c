@@ -105,7 +105,7 @@ void bsal_manager_receive(struct bsal_actor *actor, struct bsal_message *message
     struct bsal_message new_message;
     struct bsal_memory_pool *ephemeral_memory;
 
-    if (bsal_actor_call_handler(actor, message)) {
+    if (bsal_actor_use_route(actor, message)) {
         return;
     }
 

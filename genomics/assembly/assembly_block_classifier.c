@@ -115,7 +115,7 @@ void bsal_assembly_block_classifier_receive(struct bsal_actor *self, struct bsal
     int consumer_index_index;
     int *bucket;
 
-    if (bsal_actor_call_handler(self, message)) {
+    if (bsal_actor_use_route(self, message)) {
         return;
     }
 

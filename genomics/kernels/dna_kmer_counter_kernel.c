@@ -132,7 +132,7 @@ void bsal_dna_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_
     int count;
     int producer;
 
-    if (bsal_actor_call_handler(actor, message)) {
+    if (bsal_actor_use_route(actor, message)) {
         return;
     }
 

@@ -25,7 +25,7 @@ void bsal_assembly_graph_destroy(struct bsal_actor *self)
 
 void bsal_assembly_graph_receive(struct bsal_actor *self, struct bsal_message *message)
 {
-    bsal_actor_call_handler(self, message);
+    bsal_actor_use_route(self, message);
 }
 
 void bsal_assembly_graph_ask_to_stop(struct bsal_actor *self, struct bsal_message *message)
