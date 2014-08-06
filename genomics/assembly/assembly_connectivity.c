@@ -1,13 +1,11 @@
 
 #include "assembly_connectivity.h"
 
+#include "assembly_arc.h"
+
 #include <core/helpers/bitmap.h>
 
 #include <genomics/data/dna_codec.h>
-
-
-#define TYPE_PARENT 0
-#define TYPE_CHILD 1
 
 void bsal_assembly_connectivity_init(struct bsal_assembly_connectivity *self)
 {
@@ -37,7 +35,7 @@ void bsal_assembly_connectivity_destroy(struct bsal_assembly_connectivity *self)
 
 int bsal_assembly_connectivity_child_count(struct bsal_assembly_connectivity *self)
 {
-    return bsal_assembly_connectivity_get_count(self, TYPE_CHILD);
+    return bsal_assembly_connectivity_get_count(self, BSAL_ARC_TYPE_CHILD);
 }
 
 int bsal_assembly_connectivity_get_count(struct bsal_assembly_connectivity *self, int type)
@@ -53,10 +51,10 @@ int bsal_assembly_connectivity_get_count(struct bsal_assembly_connectivity *self
 
         offset = 0;
 
-        if (type == TYPE_PARENT) {
+        if (type == BSAL_ARC_TYPE_PARENT) {
             offset = bsal_assembly_connectivity_parent_offset(i);
 
-        } else if (type == TYPE_CHILD) {
+        } else if (type == BSAL_ARC_TYPE_CHILD) {
 
             offset = bsal_assembly_connectivity_child_offset(i);
         }
@@ -100,10 +98,10 @@ int bsal_assembly_connectivity_get_element(struct bsal_assembly_connectivity *se
 
         offset = 0;
 
-        if (type == TYPE_CHILD) {
+        if (type == BSAL_ARC_TYPE_CHILD) {
             offset = bsal_assembly_connectivity_child_offset(i);
 
-        } else if (type == TYPE_PARENT) {
+        } else if (type == BSAL_ARC_TYPE_PARENT) {
 
             offset = bsal_assembly_connectivity_parent_offset(i);
         }
@@ -124,13 +122,13 @@ int bsal_assembly_connectivity_get_element(struct bsal_assembly_connectivity *se
 
 int bsal_assembly_connectivity_get_child(struct bsal_assembly_connectivity *self, int index)
 {
-    return bsal_assembly_connectivity_get_element(self, index, TYPE_CHILD);
+    return bsal_assembly_connectivity_get_element(self, index, BSAL_ARC_TYPE_CHILD);
 }
 
 
 int bsal_assembly_connectivity_parent_count(struct bsal_assembly_connectivity *self)
 {
-    return bsal_assembly_connectivity_get_count(self, TYPE_PARENT);
+    return bsal_assembly_connectivity_get_count(self, BSAL_ARC_TYPE_PARENT);
 }
 
 void bsal_assembly_connectivity_add_parent(struct bsal_assembly_connectivity *self, int symbol_code)
@@ -151,7 +149,7 @@ void bsal_assembly_connectivity_delete_parent(struct bsal_assembly_connectivity 
 
 int bsal_assembly_connectivity_get_parent(struct bsal_assembly_connectivity *self, int index)
 {
-    return bsal_assembly_connectivity_get_element(self, index, TYPE_PARENT);
+    return bsal_assembly_connectivity_get_element(self, index, BSAL_ARC_TYPE_PARENT);
 }
 
 int bsal_assembly_connectivity_parent_offset(int code)

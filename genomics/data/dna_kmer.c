@@ -360,3 +360,26 @@ void bsal_dna_kmer_init_empty(struct bsal_dna_kmer *sequence)
 {
     sequence->encoded_data = NULL;
 }
+
+int bsal_dna_kmer_equals(struct bsal_dna_kmer *self, struct bsal_dna_kmer *kmer,
+                int kmer_length, struct bsal_dna_codec *codec)
+{
+    int encoded_length;
+    int result;
+
+    encoded_length = bsal_dna_codec_encoded_length(codec, kmer_length);
+
+    result = memcmp(self->encoded_data, kmer->encoded_data, encoded_length);
+
+#if 0
+    printf("DEBUG bsal_dna_kmer_equals %d %s %s\n", encoded_length,
+                    (char *)self->encoded_data,
+                    (char *)kmer->encoded_data);
+#endif
+
+    if (result == 0) {
+        return 1;
+    }
+
+    return 0;
+}

@@ -18,6 +18,7 @@ GENOMICS_OBJECTS += genomics/assembly/assembly_sliding_window.o
 GENOMICS_OBJECTS += genomics/assembly/assembly_block_classifier.o
 GENOMICS_OBJECTS += genomics/assembly/assembly_vertex.o
 GENOMICS_OBJECTS += genomics/assembly/assembly_connectivity.o
+GENOMICS_OBJECTS += genomics/assembly/assembly_arc.o
 
 GENOMICS_OBJECTS += genomics/input/input_stream.o
 GENOMICS_OBJECTS += genomics/input/input_proxy.o
