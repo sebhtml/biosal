@@ -1,6 +1,8 @@
 
 #include "assembly_arc_classifier.h"
 
+#include "assembly_arc_kernel.h"
+
 #include <genomics/kernels/dna_kmer_counter_kernel.h>
 
 #include <stdio.h>
@@ -46,6 +48,11 @@ void bsal_assembly_arc_classifier_init(struct bsal_actor *self)
     }
 
     bsal_vector_init(&concrete_self->consumers, sizeof(int));
+
+    bsal_actor_add_route(self, BSAL_ASSEMBLY_PUSH_ARC_BLOCK,
+                    bsal_assembly_arc_classifier_push_arc_block);
+
+    concrete_self->received_blocks = 0;
 }
 
 void bsal_assembly_arc_classifier_destroy(struct bsal_actor *self)
@@ -80,6 +87,7 @@ void bsal_assembly_arc_classifier_receive(struct bsal_actor *self, struct bsal_m
         bsal_vector_unpack(&concrete_self->consumers, buffer);
 
         bsal_actor_send_reply_empty(self, BSAL_ACTOR_SET_CONSUMERS_REPLY);
+
     }
 }
 
@@ -92,4 +100,29 @@ void bsal_assembly_arc_classifier_set_kmer_length(struct bsal_actor *self, struc
     bsal_message_unpack_int(message, 0, &concrete_self->kmer_length);
 
     bsal_actor_send_reply_empty(self, BSAL_SET_KMER_LENGTH_REPLY);
+}
+
+void bsal_assembly_arc_classifier_push_arc_block(struct bsal_actor *self, struct bsal_message *message)
+{
+    struct bsal_assembly_arc_classifier *concrete_self;
+    int source;
+
+    concrete_self = (struct bsal_assembly_arc_classifier *)bsal_actor_concrete_actor(self);
+    source = bsal_message_source(message);
+
+    concrete_self->source = source;
+
+    ++concrete_self->received_blocks;
+
+    /*
+     * TODO
+     *
+     * Classify every arc in the input block
+     * and put them in output blocks.
+     *
+     * Finally, send these output blocks to consumers.
+     */
+
+    bsal_actor_send_empty(self, concrete_self->source,
+                    BSAL_ASSEMBLY_PUSH_ARC_BLOCK_REPLY);
 }

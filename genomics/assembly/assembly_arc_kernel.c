@@ -117,6 +117,13 @@ void bsal_assembly_arc_kernel_receive(struct bsal_actor *self, struct bsal_messa
                         concrete_self->received_blocks);
 
         bsal_actor_ask_to_stop(self, message);
+
+    } else if (tag == BSAL_ASSEMBLY_PUSH_ARC_BLOCK_REPLY) {
+
+        /*
+         * Ask for more !
+         */
+        bsal_assembly_arc_kernel_ask(self, message);
     }
 }
 
@@ -170,10 +177,13 @@ void bsal_assembly_arc_kernel_push_sequence_data_block(struct bsal_actor *self, 
     ++concrete_self->received_blocks;
 
     /*
-     * Ask for more !
+     * TODO
+     *
+     * Extract arcs from sequences.
      */
-    bsal_assembly_arc_kernel_ask(self, message);
 
+    bsal_actor_send_empty(self, concrete_self->consumer,
+                    BSAL_ASSEMBLY_PUSH_ARC_BLOCK);
 }
 
 

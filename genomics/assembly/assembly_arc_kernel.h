@@ -11,6 +11,9 @@
 
 #define BSAL_ASSEMBLY_ARC_KERNEL_SCRIPT 0xe4c41672
 
+#define BSAL_ASSEMBLY_PUSH_ARC_BLOCK 0x0000688b
+#define BSAL_ASSEMBLY_PUSH_ARC_BLOCK_REPLY 0x00004c03
+
 /*
  * Arc generator for the assembly graph.
  */

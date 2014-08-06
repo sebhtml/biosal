@@ -44,6 +44,8 @@ struct bsal_assembly_graph_store {
     int source;
 
     uint64_t received_arc_count;
+
+    int received_arc_block_count;
 };
 
 extern struct bsal_script bsal_assembly_graph_store_script;
@@ -57,5 +59,6 @@ void bsal_assembly_graph_store_push_data(struct bsal_actor *self, struct bsal_me
 void bsal_assembly_graph_store_yield_reply(struct bsal_actor *self, struct bsal_message *message);
 
 void bsal_assembly_graph_store_push_kmer_block(struct bsal_actor *self, struct bsal_message *message);
+void bsal_assembly_graph_store_push_arc_block(struct bsal_actor *self, struct bsal_message *message);
 
 #endif
