@@ -46,6 +46,8 @@ void bsal_assembly_arc_kernel_init(struct bsal_actor *self)
         bsal_dna_codec_enable_two_bit_encoding(&concrete_self->codec);
 #endif
     }
+
+    concrete_self->produced_arcs = 0;
 }
 
 void bsal_assembly_arc_kernel_destroy(struct bsal_actor *self)
@@ -85,6 +87,11 @@ void bsal_assembly_arc_kernel_receive(struct bsal_actor *self, struct bsal_messa
         bsal_message_unpack_int(message, 0, &concrete_self->consumer);
 
         bsal_actor_send_reply_empty(self, BSAL_ACTOR_SET_CONSUMER_REPLY);
+
+    } else if (tag == BSAL_ACTOR_NOTIFY) {
+
+        bsal_actor_send_reply_uint64_t(self, BSAL_ACTOR_NOTIFY_REPLY,
+                        concrete_self->produced_arcs);
     }
 }
 

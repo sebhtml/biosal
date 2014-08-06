@@ -64,6 +64,8 @@ void bsal_assembly_graph_store_init(struct bsal_actor *self)
     bsal_actor_add_route(self, BSAL_ACTOR_YIELD_REPLY, bsal_assembly_graph_store_yield_reply);
     bsal_actor_add_route(self, BSAL_PUSH_KMER_BLOCK,
                     bsal_assembly_graph_store_push_kmer_block);
+
+    concrete_actor->received_arc_count = 0;
 }
 
 void bsal_assembly_graph_store_destroy(struct bsal_actor *self)
@@ -165,6 +167,11 @@ void bsal_assembly_graph_store_receive(struct bsal_actor *self, struct bsal_mess
 
         bsal_actor_send_reply_uint64_t(self, BSAL_STORE_GET_ENTRY_COUNT_REPLY,
                         concrete_actor->received);
+
+    } else if (tag == BSAL_GET_RECEIVED_ARC_COUNT) {
+
+        bsal_actor_send_reply_uint64_t(self, BSAL_GET_RECEIVED_ARC_COUNT_REPLY,
+                        concrete_actor->received_arc_count);
     }
 }
 

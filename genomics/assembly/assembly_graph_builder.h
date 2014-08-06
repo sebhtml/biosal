@@ -15,6 +15,11 @@
 #define BSAL_ASSEMBLY_GRAPH_BUILDER_CONTROL_COMPLEXITY 0x00006439
 
 /*
+ * Message tags for the graph builder.
+ */
+#define BSAL_VERIFY_ARCS 0x000032be
+
+/*
  * This actor builds an assembly graph.
  * It needs a list of sequence stores and returns basically a list of
  * graph stores.
@@ -63,6 +68,7 @@ struct bsal_assembly_graph_builder {
 
     int configured_actors_for_arcs;
 
+    int completed_arc_kernels;
 };
 
 extern struct bsal_script bsal_assembly_graph_builder_script;
@@ -137,5 +143,9 @@ void bsal_assembly_graph_builder_spawn_reply_arc_classifier_manager(struct bsal_
 
 void bsal_assembly_graph_builder_set_kmer_reply_arcs(struct bsal_actor *self, struct bsal_message *message);
 void bsal_assembly_graph_builder_configure_arc_actors(struct bsal_actor *self, struct bsal_message *message);
+
+
+void bsal_assembly_graph_builder_verify_arcs(struct bsal_actor *self, struct bsal_message *message);
+void bsal_assembly_graph_builder_verify_arc_kernels(struct bsal_actor *self, struct bsal_message *message);
 
 #endif

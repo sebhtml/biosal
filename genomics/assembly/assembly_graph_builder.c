@@ -1055,6 +1055,10 @@ void bsal_assembly_graph_builder_set_kmer_reply_arcs(struct bsal_actor *self, st
 void bsal_assembly_graph_builder_configure_arc_actors(struct bsal_actor *self, struct bsal_message *message)
 {
     int expected;
+    int i;
+    int size;
+    int producer;
+    int consumer;
     struct bsal_assembly_graph_builder *concrete_self;
 
     concrete_self = bsal_actor_concrete_actor(self);
@@ -1071,6 +1075,50 @@ void bsal_assembly_graph_builder_configure_arc_actors(struct bsal_actor *self, s
                         bsal_actor_script_name(self),
                         bsal_actor_name(self));
 
-        bsal_assembly_graph_builder_tell_source(self);
+        concrete_self->completed_arc_kernels = 0;
+
+        /*
+         * Start arc computation
+         */
+
+        size = bsal_vector_size(&concrete_self->arc_kernels);
+
+        bsal_actor_add_route_with_condition(self, BSAL_ACTOR_SET_PRODUCER_REPLY,
+                        bsal_assembly_graph_builder_verify_arc_kernels,
+                        &concrete_self->doing_arcs, 1);
+
+        for (i = 0; i < size; i++) {
+            producer = bsal_vector_at_as_int(&concrete_self->sequence_stores, i);
+            consumer = bsal_vector_at_as_int(&concrete_self->arc_kernels, i);
+
+            bsal_actor_send_int(self, consumer, BSAL_ACTOR_SET_PRODUCER,
+                            producer);
+        }
     }
+}
+
+void bsal_assembly_graph_builder_verify_arc_kernels(struct bsal_actor *self, struct bsal_message *message)
+{
+    struct bsal_assembly_graph_builder *concrete_self;
+    int expected;
+
+    concrete_self = bsal_actor_concrete_actor(self);
+
+    ++concrete_self->completed_arc_kernels;
+
+    expected = bsal_vector_size(&concrete_self->arc_kernels);
+
+    if (concrete_self->completed_arc_kernels == expected) {
+
+        bsal_actor_add_route(self, BSAL_VERIFY_ARCS,
+                        bsal_assembly_graph_builder_verify_arcs);
+
+        bsal_actor_send_to_self_empty(self, BSAL_VERIFY_ARCS);
+    }
+}
+
+void bsal_assembly_graph_builder_verify_arcs(struct bsal_actor *self, struct bsal_message *message)
+{
+
+    bsal_assembly_graph_builder_tell_source(self);
 }

@@ -22,6 +22,8 @@ struct bsal_assembly_arc_kernel {
     int consumer;
 
     struct bsal_dna_codec codec;
+
+    uint64_t produced_arcs;
 };
 
 extern struct bsal_script bsal_assembly_arc_kernel_script;

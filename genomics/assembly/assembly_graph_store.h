@@ -15,6 +15,9 @@
 
 #define BSAL_ASSEMBLY_GRAPH_STORE_SCRIPT 0xc81a1596
 
+#define BSAL_GET_RECEIVED_ARC_COUNT 0x00004f17
+#define BSAL_GET_RECEIVED_ARC_COUNT_REPLY 0x00001cd9
+
 /*
  * This is a graph store
  * for assembling sequences.
@@ -39,6 +42,8 @@ struct bsal_assembly_graph_store {
     struct bsal_map coverage_distribution;
     struct bsal_map_iterator iterator;
     int source;
+
+    uint64_t received_arc_count;
 };
 
 extern struct bsal_script bsal_assembly_graph_store_script;
