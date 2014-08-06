@@ -295,6 +295,7 @@ void bsal_node_init(struct bsal_node *node, int *argc, char ***argv)
 
     bsal_lock_init(&node->spawn_and_death_lock);
     bsal_lock_init(&node->script_lock);
+    bsal_lock_init(&node->auto_scaling_lock);
 
     bsal_queue_init(&node->dead_indices, sizeof(int));
 
@@ -341,6 +342,7 @@ void bsal_node_destroy(struct bsal_node *node)
 
     bsal_map_destroy(&node->scripts);
     bsal_lock_destroy(&node->spawn_and_death_lock);
+    bsal_lock_destroy(&node->auto_scaling_lock);
     bsal_lock_destroy(&node->script_lock);
 
     bsal_vector_destroy(&node->actors);
@@ -1339,6 +1341,8 @@ void bsal_node_notify_death(struct bsal_node *node, struct bsal_actor *actor)
      * actors
      */
 
+    bsal_lock_lock(&node->auto_scaling_lock);
+
     if (bsal_set_find(&node->auto_scaling_actors, &name)) {
         bsal_set_delete(&node->auto_scaling_actors, &name);
 
@@ -1348,6 +1352,8 @@ void bsal_node_notify_death(struct bsal_node *node, struct bsal_actor *actor)
         bsal_memory_fence();
         */
     }
+
+    bsal_lock_unlock(&node->auto_scaling_lock);
 
     node->alive_actors--;
     node->dead_actors++;
@@ -1627,14 +1633,22 @@ int bsal_node_send_system(struct bsal_node *node, struct bsal_message *message)
                        bsal_node_name(node),
                        source);
 
+        bsal_lock_lock(&node->auto_scaling_lock);
+
         bsal_set_add(&node->auto_scaling_actors, &source);
+
+        bsal_lock_unlock(&node->auto_scaling_lock);
 
         return 1;
 
     } else if (source == destination
            && tag == BSAL_ACTOR_DISABLE_AUTO_SCALING) {
 
+        bsal_lock_lock(&node->auto_scaling_lock);
+
         bsal_set_delete(&node->auto_scaling_actors, &source);
+
+        bsal_lock_unlock(&node->auto_scaling_lock);
 
         return 1;
     }
@@ -1662,6 +1676,7 @@ void bsal_node_check_load(struct bsal_node *node)
 
     current_time = time(NULL);
 
+
     /* Do the auto-scaling thing one time m aximum
      * for each second
      */
@@ -1673,6 +1688,8 @@ void bsal_node_check_load(struct bsal_node *node)
 
     /* Check load to see if auto-scaling is needed
      */
+
+    bsal_lock_lock(&node->auto_scaling_lock);
 
     if (bsal_worker_pool_get_current_load(&node->worker_pool)
                     <= load_threshold) {
@@ -1692,6 +1709,8 @@ void bsal_node_check_load(struct bsal_node *node)
 
         bsal_set_iterator_destroy(&iterator);
     }
+
+    bsal_lock_unlock(&node->auto_scaling_lock);
 }
 
 int bsal_node_pull(struct bsal_node *node, struct bsal_message *message)

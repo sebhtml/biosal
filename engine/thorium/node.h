@@ -111,8 +111,38 @@ struct bsal_node {
 
     struct bsal_thread thread;
     struct bsal_transport transport;
+
+    /*
+     * This lock can not be removed because
+     * of the function bsal_actor_spawn.
+     * The message BSAL_ACTOR_SPAWN however does not
+     * requires locking.
+     *
+     * If bsal_actor_spawn is removed from the API, then
+     * this lock might be removed.
+     */
     struct bsal_lock spawn_and_death_lock;
+
+    /*
+     * This lock is required because of the
+     * function bsal_actor_add_script.
+     *
+     * A message tag BSAL_ACTOR_ADD_SCRIPT could be added
+     * in order to remove this lock.
+     */
     struct bsal_lock script_lock;
+
+    /*
+     * This lock is required because it is accessed when
+     * bsal_node_notify_death is called from bsal_actor_die.
+     *
+     * This could be fixed by changing the semantics of BSAL_ACTOR_STOP.
+     * Instead of catching it inside an actor, the actor could just send it to itself
+     * and the Thorium engine could catch it and kill the actor
+     * (the Thorium pacing thread would call bsal_node_notify_death
+     * instead of the worker thread).
+     */
+    struct bsal_lock auto_scaling_lock;
 
     struct bsal_memory_pool actor_memory_pool;
     struct bsal_memory_pool inbound_message_memory_pool;

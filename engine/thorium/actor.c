@@ -450,6 +450,12 @@ void bsal_actor_die(struct bsal_actor *self)
 {
     bsal_counter_add(&self->counter, BSAL_COUNTER_KILLED_ACTORS, 1);
     self->dead = 1;
+
+    /*
+     * Publish the memory transaction so that other threads see it
+     * too.
+     */
+    bsal_memory_fence();
 }
 
 struct bsal_counter *bsal_actor_counter(struct bsal_actor *self)
