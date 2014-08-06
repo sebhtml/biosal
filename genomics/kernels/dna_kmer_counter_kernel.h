@@ -6,7 +6,7 @@
 
 #include <genomics/data/dna_codec.h>
 #include <core/structures/vector.h>
-#include <core/structures/dynamic_hash_table.h>
+#include <core/structures/map.h>
 
 #include <core/system/memory_pool.h>
 

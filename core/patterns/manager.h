@@ -4,7 +4,7 @@
 
 #include <engine/thorium/actor.h>
 
-#include <core/structures/dynamic_hash_table.h>
+#include <core/structures/map.h>
 #include <core/structures/vector.h>
 
 #define BSAL_MANAGER_SCRIPT 0xe41954c7

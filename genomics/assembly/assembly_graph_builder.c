@@ -5,6 +5,8 @@
 #include "assembly_sliding_window.h"
 #include "assembly_block_classifier.h"
 
+#include "assembly_arc_kernel.h"
+
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -63,6 +65,9 @@ void bsal_assembly_graph_builder_init(struct bsal_actor *self)
 
     concrete_self->coverage_distribution = BSAL_ACTOR_NOBODY;
 
+    concrete_self->manager_for_arc_kernels = BSAL_ACTOR_NOBODY;
+    bsal_vector_init(&concrete_self->arc_kernels, sizeof(int));
+
     concrete_self->configured_graph_stores = 0;
     concrete_self->configured_sliding_windows = 0;
     concrete_self->configured_block_classifiers = 0;
@@ -93,6 +98,9 @@ void bsal_assembly_graph_builder_destroy(struct bsal_actor *self)
 
     concrete_self->manager_for_windows= BSAL_ACTOR_NOBODY;
     bsal_vector_destroy(&concrete_self->sliding_windows);
+
+    concrete_self->manager_for_arc_kernels = BSAL_ACTOR_NOBODY;
+    bsal_vector_destroy(&concrete_self->arc_kernels);
 
     bsal_timer_destroy(&concrete_self->timer);
 }
@@ -633,12 +641,6 @@ void bsal_assembly_graph_builder_verify(struct bsal_actor *self)
     /* Set the producer for every sliding window.
      */
 
-#if 0
-    bsal_assembly_graph_builder_tell_source(self);
-
-    return;
-#endif
-
     for (i = 0; i < bsal_vector_size(&concrete_self->sliding_windows); i++) {
 
         producer = bsal_vector_at_as_int(&concrete_self->sequence_stores, i);
@@ -695,18 +697,6 @@ void bsal_assembly_graph_builder_tell_source(struct bsal_actor *self)
     bsal_timer_print_with_description(&concrete_self->timer, "Build assembly graph");
     bsal_actor_send_empty(self, concrete_self->source, BSAL_ACTOR_START_REPLY);
 
-    /*
-     * Kill windows and classifiers
-     */
-
-    bsal_actor_send_empty(self, concrete_self->manager_for_windows,
-                    BSAL_ACTOR_ASK_TO_STOP);
-
-    bsal_actor_send_empty(self, concrete_self->manager_for_classifiers,
-                    BSAL_ACTOR_ASK_TO_STOP);
-
-    bsal_actor_send_empty(self, concrete_self->coverage_distribution,
-                    BSAL_ACTOR_ASK_TO_STOP);
 }
 
 int bsal_assembly_graph_builder_get_kmer_length(struct bsal_actor *self)
@@ -820,5 +810,90 @@ void bsal_assembly_graph_builder_get_entry_count_reply(struct bsal_actor *self, 
 
 void bsal_assembly_graph_builder_notify_from_distribution(struct bsal_actor *self, struct bsal_message *message)
 {
+    int spawner;
+    struct bsal_assembly_graph_builder *concrete_self;
+
+    concrete_self = bsal_actor_concrete_actor(self);
+
+    /*
+     * Kill windows and classifiers
+     */
+
+    bsal_actor_send_empty(self, concrete_self->manager_for_windows,
+                    BSAL_ACTOR_ASK_TO_STOP);
+
+    bsal_actor_send_empty(self, concrete_self->manager_for_classifiers,
+                    BSAL_ACTOR_ASK_TO_STOP);
+
+    bsal_actor_send_empty(self, concrete_self->coverage_distribution,
+                    BSAL_ACTOR_ASK_TO_STOP);
+
+    /*
+     * Spawn manager for arc kernels
+     */
+
+    spawner = bsal_actor_get_spawner(self, &concrete_self->spawners);
+
+    concrete_self->manager_for_arc_kernels = BSAL_ACTOR_SPAWNING_IN_PROGRESS;
+
+    bsal_actor_add_route_with_condition(self, BSAL_ACTOR_SPAWN_REPLY,
+                    bsal_assembly_graph_builder_spawn_reply_arc_kernel_manager,
+                    &concrete_self->manager_for_arc_kernels,
+                    BSAL_ACTOR_SPAWNING_IN_PROGRESS);
+
+    bsal_actor_send_int(self, spawner, BSAL_ACTOR_SPAWN,
+                    BSAL_MANAGER_SCRIPT);
+}
+
+void bsal_assembly_graph_builder_spawn_reply_arc_kernel_manager(struct bsal_actor *self, struct bsal_message *message)
+{
+    struct bsal_assembly_graph_builder *concrete_self;
+
+    concrete_self = bsal_actor_concrete_actor(self);
+
+    bsal_message_unpack_int(message, 0, &concrete_self->manager_for_arc_kernels);
+
+    bsal_actor_add_route_with_source(self, BSAL_MANAGER_SET_SCRIPT_REPLY,
+                    bsal_assembly_graph_builder_set_script_reply_arc_kernel_manager,
+                    concrete_self->manager_for_arc_kernels);
+
+    bsal_actor_send_int(self, concrete_self->manager_for_arc_kernels, BSAL_MANAGER_SET_SCRIPT,
+                    BSAL_ASSEMBLY_ARC_KERNEL_SCRIPT);
+}
+
+void bsal_assembly_graph_builder_set_script_reply_arc_kernel_manager(struct bsal_actor *self, struct bsal_message *message)
+{
+    struct bsal_assembly_graph_builder *concrete_self;
+
+    concrete_self = bsal_actor_concrete_actor(self);
+
+    bsal_actor_add_route_with_source(self, BSAL_ACTOR_START_REPLY,
+                    bsal_assembly_graph_builder_start_reply_arc_kernel_manager,
+                    concrete_self->manager_for_arc_kernels);
+
+    bsal_actor_send_reply_vector(self, BSAL_ACTOR_START, &concrete_self->spawners);
+}
+
+void bsal_assembly_graph_builder_start_reply_arc_kernel_manager(struct bsal_actor *self, struct bsal_message *message)
+{
+    struct bsal_assembly_graph_builder *concrete_self;
+    void *buffer;
+
+    concrete_self = bsal_actor_concrete_actor(self);
+    buffer = bsal_message_buffer(message);
+
+    bsal_vector_unpack(&concrete_self->arc_kernels, buffer);
+
+    /*
+    bsal_actor_send_range_empty(self, &concrete_self->arc_kernels, BSAL_ACTOR_ASK_TO_STOP);
+    */
+    /*
+     * We need to stop the arc supervisor to stop
+     * arc kernels.
+     * The current actor can not stop arc kernels directly.
+     */
+
+    bsal_actor_send_empty(self, concrete_self->manager_for_arc_kernels, BSAL_ACTOR_ASK_TO_STOP);
+
     bsal_assembly_graph_builder_tell_source(self);
 }

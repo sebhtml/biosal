@@ -5,6 +5,7 @@
 #include <genomics/assembly/assembly_sliding_window.h>
 #include <genomics/assembly/assembly_block_classifier.h>
 #include <genomics/assembly/assembly_graph_builder.h>
+#include <genomics/assembly/assembly_arc_kernel.h>
 
 #include <genomics/input/input_controller.h>
 
@@ -91,6 +92,9 @@ void spate_init(struct bsal_actor *self)
                     &bsal_assembly_block_classifier_script);
     bsal_actor_add_script(self, BSAL_COVERAGE_DISTRIBUTION_SCRIPT,
                     &bsal_coverage_distribution_script);
+
+    bsal_actor_add_script(self, BSAL_ASSEMBLY_ARC_KERNEL_SCRIPT,
+                    &bsal_assembly_arc_kernel_script);
 
     concrete_self->block_size = 16 * 4096;
 

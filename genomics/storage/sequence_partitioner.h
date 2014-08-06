@@ -5,7 +5,7 @@
 #include <engine/thorium/actor.h>
 
 #include <core/structures/vector.h>
-#include <core/structures/dynamic_hash_table.h>
+#include <core/structures/map.h>
 #include <core/structures/queue.h>
 
 #define BSAL_SEQUENCE_PARTITIONER_SCRIPT 0x3c0e30a4
