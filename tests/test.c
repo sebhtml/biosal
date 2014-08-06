@@ -41,10 +41,17 @@ void bsal_test_print_result(int argc, char **argv, int passed_tests, int failed_
 
     printf("UnitTestSuite %24s", test_name + start);
 
+    if (passed_tests > 0) {
+        printf("   PASSED: %" PADDING "i", passed_tests);
+    } else {
+        printf("   passed: %" PADDING "i", passed_tests);
+    }
 
-    printf("   PASSED: %" PADDING "i", passed_tests);
-
-    printf("   FAILED: %" PADDING "i", failed_tests);
+    if (failed_tests > 0) {
+        printf("   FAILED: %" PADDING "i", failed_tests);
+    } else {
+        printf("   failed: %" PADDING "i", failed_tests);
+    }
 
     printf("   TOTAL: %" PADDING "i", all);
 
