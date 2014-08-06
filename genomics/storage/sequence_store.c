@@ -121,9 +121,11 @@ void bsal_sequence_store_receive(struct bsal_actor *actor, struct bsal_message *
 
     } else if (tag == BSAL_ACTOR_ASK_TO_STOP) {
 
-#ifdef BSAL_SEQUENCE_STORE_DEBUG
-        printf("DEBUG store %d dies\n",
+        printf("%s/%d %d dies\n",
+                        bsal_actor_script_name(actor),
+                        bsal_actor_name(actor),
                         bsal_actor_name(actor));
+#ifdef BSAL_SEQUENCE_STORE_DEBUG
 #endif
 
         bsal_actor_ask_to_stop(actor, message);

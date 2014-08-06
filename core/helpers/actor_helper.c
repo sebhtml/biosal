@@ -485,17 +485,21 @@ void bsal_actor_ask_to_stop(struct bsal_actor *actor, struct bsal_message *messa
     int source = bsal_message_source(message);
     int name = bsal_actor_name(actor);
     int supervisor = bsal_actor_supervisor(actor);
+
+#ifdef BSAL_ACTOR_STORE_CHILDREN
     int i;
     int child;
+#endif
 
     if (source != name && source != supervisor) {
-#ifdef BSAL_ACTOR_HELPER_DEBUG_STOP
         printf("actor/%d: permission denied, will not stop (source: %d, name: %d, supervisor: %d\n",
                         bsal_actor_name(actor), source, name, supervisor);
+#ifdef BSAL_ACTOR_HELPER_DEBUG_STOP
 #endif
         return;
     }
 
+#ifdef BSAL_ACTOR_STORE_CHILDREN
     for (i = 0; i < bsal_actor_child_count(actor); i++) {
 
         child = bsal_actor_get_child(actor, i);
@@ -516,6 +520,13 @@ void bsal_actor_ask_to_stop(struct bsal_actor *actor, struct bsal_message *messa
                     bsal_actor_name(actor));
 #endif
 
+#endif
+
+    /*
+     * Stop self only if the message was sent by supervisor or self.
+     * This is the default behavior and can be overwritten by
+     * the concrete actor
+     */
     bsal_actor_send_to_self_empty(actor, BSAL_ACTOR_STOP);
 
     bsal_actor_send_reply_empty(actor, BSAL_ACTOR_ASK_TO_STOP_REPLY);

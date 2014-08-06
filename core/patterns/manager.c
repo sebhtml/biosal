@@ -37,6 +37,15 @@ void bsal_manager_init(struct bsal_actor *actor)
 
     concrete_actor = (struct bsal_manager *)bsal_actor_concrete_actor(actor);
 
+    bsal_vector_init(&concrete_actor->children, sizeof(int));
+
+    /*
+     * Register the route for stopping
+     */
+
+    bsal_actor_add_route(actor, BSAL_ACTOR_ASK_TO_STOP,
+                    bsal_manager_ask_to_stop);
+
     bsal_map_init(&concrete_actor->spawner_child_count, sizeof(int), sizeof(int));
     bsal_map_init(&concrete_actor->spawner_children, sizeof(int), sizeof(struct bsal_vector));
     bsal_vector_init(&concrete_actor->indices, sizeof(int));
@@ -56,6 +65,8 @@ void bsal_manager_destroy(struct bsal_actor *actor)
     struct bsal_vector *vector;
 
     concrete_actor = (struct bsal_manager *)bsal_actor_concrete_actor(actor);
+
+    bsal_vector_destroy(&concrete_actor->children);
 
     bsal_map_destroy(&concrete_actor->spawner_child_count);
 
@@ -93,6 +104,10 @@ void bsal_manager_receive(struct bsal_actor *actor, struct bsal_message *message
     void *new_buffer;
     struct bsal_message new_message;
     struct bsal_memory_pool *ephemeral_memory;
+
+    if (bsal_actor_call_handler(actor, message)) {
+        return;
+    }
 
     ephemeral_memory = bsal_actor_get_ephemeral_memory(actor);
     source = bsal_message_source(message);
@@ -296,6 +311,13 @@ void bsal_manager_receive(struct bsal_actor *actor, struct bsal_message *message
                 new_count = bsal_vector_pack_size(&all_stores);
                 new_buffer = bsal_memory_allocate(new_count);
                 bsal_vector_pack(&all_stores, new_buffer);
+
+                /*
+                 * Save the list of actors for later
+                 */
+                bsal_vector_push_back_vector(&concrete_actor->children,
+                                &all_stores);
+
                 bsal_vector_destroy(&all_stores);
 
                 bsal_message_init(&new_message, BSAL_ACTOR_START_REPLY, new_count, new_buffer);
@@ -310,11 +332,6 @@ void bsal_manager_receive(struct bsal_actor *actor, struct bsal_message *message
             bsal_actor_send_reply_int(actor, BSAL_ACTOR_SPAWN, concrete_actor->script);
         }
 
-    } else if (tag == BSAL_ACTOR_ASK_TO_STOP) {
-
-        printf("manager %d dies\n", bsal_actor_name(actor));
-
-        bsal_actor_ask_to_stop(actor, message);
 
     } else if (tag == BSAL_MANAGER_SET_ACTORS_PER_WORKER) {
 
@@ -336,5 +353,34 @@ void bsal_manager_receive(struct bsal_actor *actor, struct bsal_message *message
 
         bsal_actor_send_reply_empty(actor, BSAL_MANAGER_SET_WORKERS_PER_ACTOR_REPLY);
 
+    }
+}
+
+void bsal_manager_ask_to_stop(struct bsal_actor *actor, struct bsal_message *message)
+{
+
+    struct bsal_manager *concrete_actor;
+    int i;
+    int size;
+    int child;
+
+    printf("%s/%d dies\n",
+                    bsal_actor_script_name(actor),
+                    bsal_actor_name(actor));
+
+    concrete_actor = (struct bsal_manager *)bsal_actor_concrete_actor(actor);
+    bsal_actor_ask_to_stop(actor, message);
+
+    /*
+     * Stop children too
+     */
+
+    size = bsal_vector_size(&concrete_actor->children);
+
+    for (i = 0; i < size; i++) {
+
+        child = bsal_vector_at_as_int(&concrete_actor->children, i);
+
+        bsal_actor_send_empty(actor, child, BSAL_ACTOR_ASK_TO_STOP);
     }
 }

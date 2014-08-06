@@ -182,6 +182,14 @@ void spate_ask_to_stop(struct bsal_actor *self, struct bsal_message *message)
     if (bsal_vector_index_of(&concrete_self->initial_actors, &source) >= 0) {
         bsal_actor_send_to_self_empty(self, BSAL_ACTOR_STOP);
     }
+
+    if (concrete_self->is_leader) {
+
+        bsal_actor_send_empty(self, concrete_self->assembly_graph_builder,
+                        BSAL_ACTOR_ASK_TO_STOP);
+        bsal_actor_send_empty(self, concrete_self->manager_for_sequence_stores,
+                        BSAL_ACTOR_ASK_TO_STOP);
+    }
 }
 
 void spate_spawn_reply(struct bsal_actor *self, struct bsal_message *message)
@@ -349,6 +357,10 @@ void spate_distribute_reply(struct bsal_actor *self, struct bsal_message *messag
     bsal_actor_send_vector(self, concrete_self->assembly_graph_builder,
                     BSAL_ACTOR_SET_PRODUCERS, &concrete_self->sequence_stores);
 
+    /* kill the controller
+     */
+
+    bsal_actor_send_reply_empty(self, BSAL_ACTOR_ASK_TO_STOP);
 }
 
 void spate_set_producers_reply(struct bsal_actor *self, struct bsal_message *message)

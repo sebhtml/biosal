@@ -90,13 +90,21 @@ void bsal_actor_init(struct bsal_actor *self, void *concrete_actor,
     printf("DEBUG actor %d init can_pack %d\n",
                     bsal_actor_name(self), self->can_pack);
 */
+#ifdef BSAL_ACTOR_STORE_CHILDREN
     bsal_vector_init(&self->acquaintance_vector, sizeof(int));
+#endif
+
+#ifdef BSAL_ACTOR_STORE_CHILDREN
     bsal_vector_init(&self->children, sizeof(int));
+#endif
+
     bsal_queue_init(&self->queued_messages_for_clone, sizeof(struct bsal_message));
     bsal_queue_init(&self->queued_messages_for_migration, sizeof(struct bsal_message));
     bsal_queue_init(&self->forwarding_queue, sizeof(struct bsal_message));
 
+#ifdef BSAL_ACTOR_STORE_CHILDREN
     bsal_map_init(&self->acquaintance_map, sizeof(int), sizeof(int));
+#endif
 
     /*
     bsal_actor_send_to_self_empty(self, BSAL_ACTOR_UNPIN_FROM_WORKER);
@@ -137,12 +145,22 @@ void bsal_actor_destroy(struct bsal_actor *self)
     bsal_memory_fence();
 
     bsal_dispatcher_destroy(&self->dispatcher);
+
+#ifdef BSAL_ACTOR_STORE_CHILDREN
     bsal_vector_destroy(&self->acquaintance_vector);
+#endif
+
+#ifdef BSAL_ACTOR_STORE_CHILDREN
     bsal_vector_destroy(&self->children);
+#endif
+
     bsal_queue_destroy(&self->queued_messages_for_clone);
     bsal_queue_destroy(&self->queued_messages_for_migration);
     bsal_queue_destroy(&self->forwarding_queue);
+
+#ifdef BSAL_ACTOR_STORE_CHILDREN
     bsal_map_destroy(&self->acquaintance_map);
+#endif
 
     bsal_map_destroy(&self->received_messages);
     bsal_map_destroy(&self->sent_messages);
@@ -387,7 +405,9 @@ int bsal_actor_spawn(struct bsal_actor *self, int script)
 
     name = bsal_actor_spawn_real(self, script);
 
+#ifdef BSAL_ACTOR_STORE_CHILDREN
     bsal_actor_add_child(self, name);
+#endif
 
 #ifdef BSAL_ACTOR_DEBUG_SPAWN
     printf("acquaintances after spawning\n");
@@ -554,7 +574,10 @@ int bsal_actor_receive_system(struct bsal_actor *self, struct bsal_message *mess
     int offset;
     int bytes;
     struct bsal_memory_pool *ephemeral_memory;
+
+#ifdef BSAL_ACTOR_STORE_CHILDREN
     int new_actor;
+#endif
 
     ephemeral_memory = bsal_actor_get_ephemeral_memory(self);
     tag = bsal_message_tag(message);
@@ -574,6 +597,7 @@ int bsal_actor_receive_system(struct bsal_actor *self, struct bsal_message *mess
     buffer = bsal_message_buffer(message);
     count = bsal_message_count(message);
 
+#ifdef BSAL_ACTOR_STORE_CHILDREN
     /* For any remote spawning operation, add the new actor in the list of
      * children
      */
@@ -582,6 +606,7 @@ int bsal_actor_receive_system(struct bsal_actor *self, struct bsal_message *mess
         new_actor = *(int *)buffer;
         bsal_actor_add_child(self, new_actor);
     }
+#endif
 
     /* check message tags that are required for migration
      * before attempting to queue messages during hot actor
@@ -666,6 +691,7 @@ int bsal_actor_receive_system(struct bsal_actor *self, struct bsal_message *mess
 
         return 1;
 
+#ifdef BSAL_ACTOR_STORE_CHILDREN
     } else if (tag == BSAL_ACTOR_MIGRATE_NOTIFY_ACQUAINTANCES) {
         bsal_actor_migrate_notify_acquaintances(self, message);
         return 1;
@@ -674,6 +700,7 @@ int bsal_actor_receive_system(struct bsal_actor *self, struct bsal_message *mess
 
         bsal_actor_notify_name_change(self, message);
         return 1;
+#endif
 
     } else if (tag == BSAL_ACTOR_NOTIFY_NAME_CHANGE_REPLY) {
 
@@ -1400,6 +1427,7 @@ void bsal_actor_migrate(struct bsal_actor *self, struct bsal_message *message)
     }
 }
 
+#ifdef BSAL_ACTOR_STORE_CHILDREN
 void bsal_actor_notify_name_change(struct bsal_actor *self, struct bsal_message *message)
 {
     int old_name;
@@ -1442,7 +1470,9 @@ void bsal_actor_notify_name_change(struct bsal_actor *self, struct bsal_message 
 
     bsal_actor_send_reply_empty(self, BSAL_ACTOR_NOTIFY_NAME_CHANGE_REPLY);
 }
+#endif
 
+#ifdef BSAL_ACTOR_STORE_CHILDREN
 void bsal_actor_migrate_notify_acquaintances(struct bsal_actor *self, struct bsal_message *message)
 {
     struct bsal_vector *acquaintance_vector;
@@ -1462,6 +1492,7 @@ void bsal_actor_migrate_notify_acquaintances(struct bsal_actor *self, struct bsa
         bsal_actor_send_to_self_empty(self, BSAL_ACTOR_MIGRATE_NOTIFY_ACQUAINTANCES_REPLY);
     }
 }
+#endif
 
 void bsal_actor_send_to_self_proxy(struct bsal_actor *self,
                 struct bsal_message *message, int real_source)
@@ -1627,11 +1658,14 @@ void bsal_actor_unpin_from_node(struct bsal_actor *self)
 
 }
 
+#ifdef BSAL_ACTOR_STORE_CHILDREN
 int bsal_actor_acquaintance_count(struct bsal_actor *self)
 {
     return bsal_vector_size(&self->acquaintance_vector);
 }
+#endif
 
+#ifdef BSAL_ACTOR_STORE_CHILDREN
 int bsal_actor_get_child(struct bsal_actor *self, int index)
 {
     int index2;
@@ -1658,7 +1692,9 @@ int bsal_actor_add_child(struct bsal_actor *self, int name)
 
     return index;
 }
+#endif
 
+#ifdef BSAL_ACTOR_STORE_CHILDREN
 int bsal_actor_add_acquaintance_private(struct bsal_actor *self, int name)
 {
     int index;
@@ -1684,7 +1720,9 @@ int bsal_actor_add_acquaintance_private(struct bsal_actor *self, int name)
 
     return index;
 }
+#endif
 
+#ifdef BSAL_ACTOR_STORE_CHILDREN
 int bsal_actor_get_acquaintance_index_private(struct bsal_actor *self, int name)
 {
     int *bucket;
@@ -1701,7 +1739,9 @@ int bsal_actor_get_acquaintance_index_private(struct bsal_actor *self, int name)
 
     return *bucket;
 }
+#endif
 
+#ifdef BSAL_ACTOR_STORE_CHILDREN
 int bsal_actor_get_child_index(struct bsal_actor *self, int name)
 {
     int i;
@@ -1728,6 +1768,7 @@ int bsal_actor_get_child_index(struct bsal_actor *self, int name)
 
     return -1;
 }
+#endif
 
 void bsal_actor_enqueue_message(struct bsal_actor *self, struct bsal_message *message)
 {
@@ -1937,6 +1978,7 @@ int bsal_actor_trylock(struct bsal_actor *self)
     return result;
 }
 
+#ifdef BSAL_ACTOR_STORE_CHILDREN
 struct bsal_vector *bsal_actor_acquaintance_vector_private(struct bsal_actor *self)
 {
     return &self->acquaintance_vector;
@@ -1951,6 +1993,7 @@ int bsal_actor_get_acquaintance_private(struct bsal_actor *self, int index)
 
     return BSAL_ACTOR_NOBODY;
 }
+#endif
 
 struct bsal_memory_pool *bsal_actor_get_ephemeral_memory(struct bsal_actor *self)
 {

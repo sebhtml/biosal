@@ -812,8 +812,22 @@ void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message)
 
         printf("argonnite %d stops\n", name);
 
-        bsal_actor_ask_to_stop(actor, message);
+        /*
+         * STOP everything
+         */
 
+        bsal_actor_send_empty(actor, concrete_actor->manager_for_sequence_stores,
+                        BSAL_ACTOR_ASK_TO_STOP);
+        bsal_actor_send_empty(actor, concrete_actor->manager_for_kmer_stores,
+                        BSAL_ACTOR_ASK_TO_STOP);
+        bsal_actor_send_empty(actor, concrete_actor->manager_for_kernels,
+                        BSAL_ACTOR_ASK_TO_STOP);
+        bsal_actor_send_empty(actor, concrete_actor->manager_for_aggregators,
+                        BSAL_ACTOR_ASK_TO_STOP);
+        bsal_actor_send_empty(actor, concrete_actor->distribution,
+                        BSAL_ACTOR_ASK_TO_STOP);
+
+        bsal_actor_ask_to_stop(actor, message);
 
         bsal_actor_send_to_self_empty(actor, BSAL_ACTOR_STOP);
     }

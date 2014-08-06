@@ -43,6 +43,8 @@ struct bsal_manager {
     int actors_per_spawner;
     int actors_per_worker;
     int workers_per_actor;
+
+    struct bsal_vector children;
 };
 
 #define BSAL_MANAGER_SET_SCRIPT 0x00007595
@@ -59,5 +61,7 @@ extern struct bsal_script bsal_manager_script;
 void bsal_manager_init(struct bsal_actor *self);
 void bsal_manager_destroy(struct bsal_actor *self);
 void bsal_manager_receive(struct bsal_actor *self, struct bsal_message *message);
+
+void bsal_manager_ask_to_stop(struct bsal_actor *actor, struct bsal_message *message);
 
 #endif

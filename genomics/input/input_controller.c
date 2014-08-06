@@ -129,7 +129,7 @@ void bsal_input_controller_init(struct bsal_actor *actor)
 
     concrete_actor->ready_spawners = 0;
     concrete_actor->ready_consumers = 0;
-    concrete_actor->partitioner = -1;
+    concrete_actor->partitioner = BSAL_ACTOR_NOBODY;
     concrete_actor->filled_consumers = 0;
 
     concrete_actor->counted = 0;
@@ -607,7 +607,6 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
 #ifdef BSAL_INPUT_CONTROLLER_DEBUG_LEVEL_2
 #endif
 
-#if 0
         /* stop streams
          */
         for (i = 0; i < bsal_vector_size(&concrete_actor->counting_streams); i++) {
@@ -615,7 +614,15 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
 
             bsal_actor_send_empty(actor, stream, BSAL_ACTOR_ASK_TO_STOP);
         }
+        for (i = 0; i < bsal_vector_size(&concrete_actor->reading_streams); i++) {
+            stream = *(int *)bsal_vector_at(&concrete_actor->reading_streams, i);
 
+            bsal_actor_send_empty(actor, stream, BSAL_ACTOR_ASK_TO_STOP);
+        }
+
+
+
+#if 0
         /* stop data stores
          */
         for (i = 0; i < bsal_vector_size(&concrete_actor->consumers); i++) {
@@ -623,11 +630,11 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
 
             bsal_actor_send_empty(actor, store, BSAL_ACTOR_ASK_TO_STOP);
         }
-
+#endif
         /* stop partitioner
          */
 
-        if (concrete_actor->partitioner > 0) {
+        if (concrete_actor->partitioner != BSAL_ACTOR_NOBODY) {
             bsal_actor_send_empty(actor,
                                 concrete_actor->partitioner,
                         BSAL_ACTOR_ASK_TO_STOP);
@@ -645,7 +652,6 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
         /* stop self
          */
         bsal_actor_send_to_self_empty(actor, BSAL_ACTOR_STOP);
-#endif
 
         bsal_actor_ask_to_stop(actor, message);
 

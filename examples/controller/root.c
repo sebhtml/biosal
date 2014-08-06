@@ -18,15 +18,15 @@ struct bsal_script root_script = {
 
 void root_init(struct bsal_actor *actor)
 {
-    struct root *root1;
+    struct root *concrete_self;
 
-    root1 = (struct root *)bsal_actor_concrete_actor(actor);
-    root1->controller = -1;
-    root1->events = 0;
-    root1->synchronized = 0;
-    bsal_vector_init(&root1->spawners, sizeof(int));
-    root1->is_king = 0;
-    root1->ready = 0;
+    concrete_self = (struct root *)bsal_actor_concrete_actor(actor);
+    concrete_self->controller = -1;
+    concrete_self->events = 0;
+    concrete_self->synchronized = 0;
+    bsal_vector_init(&concrete_self->spawners, sizeof(int));
+    concrete_self->is_king = 0;
+    concrete_self->ready = 0;
 
     bsal_actor_add_script(actor, BSAL_INPUT_CONTROLLER_SCRIPT,
                         &bsal_input_controller_script);
@@ -41,10 +41,10 @@ bsal_actor_add_script(actor, BSAL_SEQUENCE_STORE_SCRIPT,
 
 void root_destroy(struct bsal_actor *actor)
 {
-    struct root *root1;
+    struct root *concrete_self;
 
-    root1 = (struct root *)bsal_actor_concrete_actor(actor);
-    bsal_vector_destroy(&root1->spawners);
+    concrete_self = (struct root *)bsal_actor_concrete_actor(actor);
+    bsal_vector_destroy(&concrete_self->spawners);
 }
 
 void root_receive(struct bsal_actor *actor, struct bsal_message *message)
@@ -57,7 +57,7 @@ void root_receive(struct bsal_actor *actor, struct bsal_message *message)
     char **argv;
     int i;
     char *file;
-    struct root *root1;
+    struct root *concrete_self;
     struct root *concrete_actor;
     char *buffer;
     int bytes;
@@ -71,8 +71,8 @@ void root_receive(struct bsal_actor *actor, struct bsal_message *message)
     struct bsal_memory_pool *ephemeral_memory;
 
     ephemeral_memory = bsal_actor_get_ephemeral_memory(actor);
-    root1 = (struct root *)bsal_actor_concrete_actor(actor);
-    concrete_actor = root1;
+    concrete_self = (struct root *)bsal_actor_concrete_actor(actor);
+    concrete_actor = concrete_self;
     source = bsal_message_source(message);
     tag = bsal_message_tag(message);
     buffer = bsal_message_buffer(message);
@@ -85,31 +85,31 @@ void root_receive(struct bsal_actor *actor, struct bsal_message *message)
 */
     if (tag == BSAL_ACTOR_START) {
 
-        bsal_vector_init(&root1->spawners, 0);
-        bsal_vector_unpack(&root1->spawners, buffer);
+        bsal_vector_init(&concrete_self->spawners, 0);
+        bsal_vector_unpack(&concrete_self->spawners, buffer);
 
 
-        king = *(int *)bsal_vector_at(&root1->spawners, 0);
+        king = *(int *)bsal_vector_at(&concrete_self->spawners, 0);
 
         if (name == king) {
-            root1->is_king = 1;
+            concrete_self->is_king = 1;
         }
 
-        if (root1->is_king) {
+        if (concrete_self->is_king) {
 /*
             printf("is king\n");
             */
-            root1->controller = bsal_actor_spawn(actor, BSAL_INPUT_CONTROLLER_SCRIPT);
-            printf("root actor/%d spawned controller actor/%d\n", name, root1->controller);
-            bsal_actor_synchronize(actor, &root1->spawners);
+            concrete_self->controller = bsal_actor_spawn(actor, BSAL_INPUT_CONTROLLER_SCRIPT);
+            printf("root actor/%d spawned controller actor/%d\n", name, concrete_self->controller);
+            bsal_actor_synchronize(actor, &concrete_self->spawners);
             /*
             printf("actor %d synchronizes\n", name);
             */
         }
 
-        root1->ready++;
+        concrete_self->ready++;
 
-        if (root1->ready == 2) {
+        if (concrete_self->ready == 2) {
 
             bsal_actor_send_empty(actor, king, BSAL_ACTOR_SYNCHRONIZE_REPLY);
         }
@@ -128,22 +128,22 @@ void root_receive(struct bsal_actor *actor, struct bsal_message *message)
         bsal_actor_add_script(actor, BSAL_INPUT_STREAM_SCRIPT,
                         &bsal_input_stream_script);
 
-        root1->ready++;
+        concrete_self->ready++;
 
-        if (root1->ready == 2) {
+        if (concrete_self->ready == 2) {
 
-            king = *(int *)bsal_vector_at(&root1->spawners, 0);
+            king = *(int *)bsal_vector_at(&concrete_self->spawners, 0);
             bsal_actor_send_empty(actor, king, BSAL_ACTOR_SYNCHRONIZE_REPLY);
         }
 
     } else if (tag == BSAL_ACTOR_SYNCHRONIZED) {
 
-        if (root1->synchronized) {
+        if (concrete_self->synchronized) {
             printf("Error already received BSAL_ACTOR_SYNCHRONIZED\n");
             return;
         }
 
-        root1->synchronized = 1;
+        concrete_self->synchronized = 1;
         /*
         printf("actor %d receives BSAL_ACTOR_SYNCHRONIZED, sending BSAL_ACTOR_YIELD\n", name);
         */
@@ -153,11 +153,12 @@ void root_receive(struct bsal_actor *actor, struct bsal_message *message)
 
         manager = bsal_actor_spawn(actor, BSAL_MANAGER_SCRIPT);
 
+        concrete_actor->manager = manager;
+
         bsal_actor_send_int(actor, manager, BSAL_MANAGER_SET_SCRIPT, BSAL_SEQUENCE_STORE_SCRIPT);
 
         printf("DEBUG root actor/%d spawned manager actor/%d\n",
                         bsal_actor_name(actor), manager);
-        concrete_actor->manager = bsal_actor_get_child_index(actor, manager);
 
     } else if (tag == BSAL_MANAGER_SET_SCRIPT_REPLY) {
 
@@ -179,7 +180,7 @@ void root_receive(struct bsal_actor *actor, struct bsal_message *message)
         bsal_vector_destroy(&spawners);
 
     } else if (tag == BSAL_ACTOR_START_REPLY
-                    && source == bsal_actor_get_child(actor, concrete_actor->manager)) {
+                    && source == concrete_actor->manager) {
 
         bsal_vector_init(&stores, 0);
         bsal_vector_unpack(&stores, buffer);
@@ -189,25 +190,25 @@ void root_receive(struct bsal_actor *actor, struct bsal_message *message)
                         source);
 
         bsal_message_init(&new_message, BSAL_ACTOR_SET_CONSUMERS, count, buffer);
-        bsal_actor_send(actor, root1->controller, &new_message);
+        bsal_actor_send(actor, concrete_self->controller, &new_message);
 
     } else if (tag == BSAL_ACTOR_SET_CONSUMERS_REPLY) {
 
-        bytes = bsal_vector_pack_size(&root1->spawners);
+        bytes = bsal_vector_pack_size(&concrete_self->spawners);
         buffer = bsal_memory_pool_allocate(ephemeral_memory, bytes);
-        bsal_vector_pack(&root1->spawners, buffer);
+        bsal_vector_pack(&concrete_self->spawners, buffer);
 
         bsal_message_init(message, BSAL_ACTOR_START, bytes, buffer);
-        bsal_actor_send(actor, root1->controller, message);
+        bsal_actor_send(actor, concrete_self->controller, message);
         bsal_memory_pool_free(ephemeral_memory, buffer);
         buffer = NULL;
 
         printf("root actor/%d starts controller actor/%d\n", name,
-                        root1->controller);
+                        concrete_self->controller);
 
     } else if (tag == BSAL_ACTOR_START_REPLY) {
 
-        if (!root1->is_king) {
+        if (!concrete_self->is_king) {
             printf("root actor/%d stops controller actor/%d\n", name, source);
 
             bsal_actor_send_reply_empty(actor, BSAL_ACTOR_ASK_TO_STOP);
@@ -228,14 +229,14 @@ void root_receive(struct bsal_actor *actor, struct bsal_message *message)
             printf("root actor/%d add file %s to controller actor/%d\n", name,
                             file, source);
 
-            root1->events++;
+            concrete_self->events++;
         }
 
         /* if there are no files,
          * simulate a mock file
          */
-        if (root1->events == 0) {
-            root1->events++;
+        if (concrete_self->events == 0) {
+            concrete_self->events++;
 
             bsal_actor_send_to_self_empty(actor, BSAL_ADD_FILE_REPLY);
         }
@@ -244,14 +245,14 @@ void root_receive(struct bsal_actor *actor, struct bsal_message *message)
 
     } else if (tag == BSAL_ADD_FILE_REPLY) {
 
-        root1->events--;
+        concrete_self->events--;
 
-        if (root1->events == 0) {
+        if (concrete_self->events == 0) {
 
             printf("root actor/%d asks controller actor/%d to distribute data\n",
                             name, source);
 
-            bsal_actor_send_empty(actor, root1->controller,
+            bsal_actor_send_empty(actor, concrete_self->controller,
                             BSAL_INPUT_DISTRIBUTE);
         }
     } else if (tag == BSAL_INPUT_DISTRIBUTE_REPLY) {
@@ -264,23 +265,31 @@ void root_receive(struct bsal_actor *actor, struct bsal_message *message)
     } else if (tag == BSAL_ACTOR_ASK_TO_STOP_REPLY) {
 
         printf("DEBUG root receives BSAL_ACTOR_ASK_TO_STOP_REPLY\n");
-        if (source == root1->controller) {
+        if (source == concrete_self->controller) {
 
             printf("DEBUG root actor/%d sending to self ROOT_STOP_ALL\n",
                             bsal_actor_name(actor));
 
             bsal_actor_send_to_self_empty(actor, ROOT_STOP_ALL);
+
+            /* Stop manager and controller
+             */
+
+            bsal_actor_send_empty(actor, concrete_self->manager,
+                            BSAL_ACTOR_ASK_TO_STOP);
+            bsal_actor_send_empty(actor, concrete_self->controller,
+                            BSAL_ACTOR_ASK_TO_STOP);
+
         }
     } else if (tag == ROOT_STOP_ALL) {
 
         printf("root actor/%d stops all other actors\n", name);
 
-        bsal_actor_send_range_empty(actor, &root1->spawners, BSAL_ACTOR_ASK_TO_STOP);
+        bsal_actor_send_range_empty(actor, &concrete_self->spawners, BSAL_ACTOR_ASK_TO_STOP);
 
     } else if (tag == BSAL_ACTOR_ASK_TO_STOP) {
 
-        bsal_actor_send_empty(actor, bsal_actor_get_child(actor,
-                                concrete_actor->manager), BSAL_ACTOR_ASK_TO_STOP);
+        bsal_actor_send_empty(actor, concrete_actor->manager, BSAL_ACTOR_ASK_TO_STOP);
 
         printf("DEBUG stopping root actor/%d (source: %d)\n", bsal_actor_name(actor),
                         source);

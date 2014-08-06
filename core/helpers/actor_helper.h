@@ -66,6 +66,7 @@ void bsal_actor_send_range_binomial_tree(struct bsal_actor *actor, struct bsal_v
                 struct bsal_message *message);
 void bsal_actor_receive_binomial_tree_send(struct bsal_actor *actor,
                 struct bsal_message *message);
+
 void bsal_actor_ask_to_stop(struct bsal_actor *actor, struct bsal_message *message);
 
 void bsal_actor_send_reply(struct bsal_actor *actor, struct bsal_message *message);

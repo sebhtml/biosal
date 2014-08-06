@@ -105,12 +105,21 @@ void bsal_assembly_graph_builder_receive(struct bsal_actor *self, struct bsal_me
 void bsal_assembly_graph_builder_ask_to_stop(struct bsal_actor *self, struct bsal_message *message)
 {
     int name;
+    struct bsal_assembly_graph_builder *concrete_self;
 
     name = bsal_actor_name(self);
+    concrete_self = bsal_actor_concrete_actor(self);
 
     printf("builder/%d dies\n", name);
 
     bsal_actor_ask_to_stop(self, message);
+
+    /*
+     * Stop graph stores
+     */
+
+    bsal_actor_send_empty(self, concrete_self->manager_for_graph_stores,
+                    BSAL_ACTOR_ASK_TO_STOP);
 }
 
 void bsal_assembly_graph_builder_start(struct bsal_actor *self, struct bsal_message *message)
@@ -685,6 +694,19 @@ void bsal_assembly_graph_builder_tell_source(struct bsal_actor *self)
     bsal_timer_stop(&concrete_self->timer);
     bsal_timer_print_with_description(&concrete_self->timer, "Build assembly graph");
     bsal_actor_send_empty(self, concrete_self->source, BSAL_ACTOR_START_REPLY);
+
+    /*
+     * Kill windows and classifiers
+     */
+
+    bsal_actor_send_empty(self, concrete_self->manager_for_windows,
+                    BSAL_ACTOR_ASK_TO_STOP);
+
+    bsal_actor_send_empty(self, concrete_self->manager_for_classifiers,
+                    BSAL_ACTOR_ASK_TO_STOP);
+
+    bsal_actor_send_empty(self, concrete_self->coverage_distribution,
+                    BSAL_ACTOR_ASK_TO_STOP);
 }
 
 int bsal_assembly_graph_builder_get_kmer_length(struct bsal_actor *self)

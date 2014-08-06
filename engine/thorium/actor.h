@@ -230,9 +230,13 @@ struct bsal_actor {
     struct bsal_map received_messages;
     struct bsal_map sent_messages;
 
+#ifdef BSAL_ACTOR_STORE_CHILDREN
     struct bsal_vector acquaintance_vector;
-    struct bsal_vector children;
     struct bsal_map acquaintance_map;
+
+    struct bsal_vector children;
+#endif
+
     int acquaintance_index;
 
     struct bsal_queue enqueued_messages;
@@ -389,8 +393,8 @@ struct bsal_dispatcher *bsal_actor_dispatcher(struct bsal_actor *self);
 void bsal_actor_set_node(struct bsal_actor *self, struct bsal_node *node);
 
 void bsal_actor_migrate(struct bsal_actor *self, struct bsal_message *message);
-void bsal_actor_notify_name_change(struct bsal_actor *self, struct bsal_message *message);
 
+#ifdef BSAL_ACTOR_STORE_CHILDREN
 struct bsal_vector *bsal_actor_acquaintance_vector_private(struct bsal_actor *self);
 int bsal_actor_add_acquaintance_private(struct bsal_actor *self, int name);
 int bsal_actor_get_acquaintance_private(struct bsal_actor *self, int index);
@@ -403,6 +407,9 @@ int bsal_actor_get_child_index(struct bsal_actor *self, int name);
 int bsal_actor_child_count(struct bsal_actor *self);
 
 void bsal_actor_migrate_notify_acquaintances(struct bsal_actor *self, struct bsal_message *message);
+void bsal_actor_notify_name_change(struct bsal_actor *self, struct bsal_message *message);
+#endif
+
 void bsal_actor_queue_message(struct bsal_actor *self,
                 struct bsal_message *message);
 int bsal_actor_spawn_real(struct bsal_actor *self, int script);
