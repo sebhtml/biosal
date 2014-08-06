@@ -13,7 +13,6 @@ GENOMICS_OBJECTS += genomics/storage/sequence_partitioner.o
 GENOMICS_OBJECTS += genomics/storage/kmer_store.o
 
 GENOMICS_OBJECTS += genomics/assembly/assembly_graph_store.o
-GENOMICS_OBJECTS += genomics/assembly/assembly_graph.o
 GENOMICS_OBJECTS += genomics/assembly/assembly_graph_builder.o
 GENOMICS_OBJECTS += genomics/assembly/assembly_sliding_window.o
 GENOMICS_OBJECTS += genomics/assembly/assembly_block_classifier.o
