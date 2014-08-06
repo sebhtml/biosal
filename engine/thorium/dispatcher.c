@@ -28,9 +28,12 @@ void bsal_dispatcher_destroy(struct bsal_dispatcher *self)
     struct bsal_map *map;
     struct bsal_vector *vector;
 
-
     bsal_map_iterator_init(&iterator, &self->routes);
 
+    /*
+     * For each tag, iterate over each source and destroy each vector
+     * of routes.
+     */
     while (bsal_map_iterator_has_next(&iterator)) {
         bsal_map_iterator_next(&iterator, NULL, (void **)&map);
 
@@ -39,8 +42,12 @@ void bsal_dispatcher_destroy(struct bsal_dispatcher *self)
         while (bsal_map_iterator_has_next(&iterator2)) {
             bsal_map_iterator_next(&iterator2, NULL, (void **)&vector);
 
+            /*
+             * Destroy routes
+             */
             bsal_vector_destroy(vector);
         }
+
         bsal_map_iterator_destroy(&iterator2);
 
         bsal_map_destroy(map);

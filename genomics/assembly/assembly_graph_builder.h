@@ -38,6 +38,9 @@ struct bsal_assembly_graph_builder {
     int manager_for_arc_kernels;
     struct bsal_vector arc_kernels;
 
+    int manager_for_arc_classifiers;
+    struct bsal_vector arc_classifiers;
+
     int configured_sliding_windows;
     int configured_block_classifiers;
     int configured_graph_stores;
@@ -102,6 +105,7 @@ void bsal_assembly_graph_builder_set_consumer_reply(struct bsal_actor *self, str
 void bsal_assembly_graph_builder_tell_source(struct bsal_actor *self);
 void bsal_assembly_graph_builder_set_producer_reply(struct bsal_actor *self, struct bsal_message *message);
 int bsal_assembly_graph_builder_get_kmer_length(struct bsal_actor *self);
+
 void bsal_assembly_graph_builder_notify_reply(struct bsal_actor *self, struct bsal_message *message);
 void bsal_assembly_graph_builder_control_complexity(struct bsal_actor *self, struct bsal_message *message);
 void bsal_assembly_graph_builder_get_entry_count_reply(struct bsal_actor *self, struct bsal_message *message);
@@ -115,4 +119,10 @@ void bsal_assembly_graph_builder_spawn_reply_arc_kernel_manager(struct bsal_acto
 void bsal_assembly_graph_builder_start_reply_arc_kernel_manager(struct bsal_actor *self, struct bsal_message *message);
 void bsal_assembly_graph_builder_set_script_reply_arc_kernel_manager(struct bsal_actor *self, struct bsal_message *message);
 
+/*
+ * For the manager of arc classifiers.
+ */
+void bsal_assembly_graph_builder_start_reply_arc_classifier_manager(struct bsal_actor *self, struct bsal_message *message);
+void bsal_assembly_graph_builder_set_script_reply_arc_classifier_manager(struct bsal_actor *self, struct bsal_message *message);
+void bsal_assembly_graph_builder_spawn_reply_arc_classifier_manager(struct bsal_actor *self, struct bsal_message *message);
 #endif
