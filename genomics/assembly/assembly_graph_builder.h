@@ -136,4 +136,6 @@ void bsal_assembly_graph_builder_spawn_reply_arc_classifier_manager(struct bsal_
  */
 
 void bsal_assembly_graph_builder_set_kmer_reply_arcs(struct bsal_actor *self, struct bsal_message *message);
+void bsal_assembly_graph_builder_configure_arc_actors(struct bsal_actor *self, struct bsal_message *message);
+
 #endif

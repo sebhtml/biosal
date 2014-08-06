@@ -990,6 +990,10 @@ void bsal_assembly_graph_builder_set_kmer_reply_arcs(struct bsal_actor *self, st
 {
     int expected;
     struct bsal_assembly_graph_builder *concrete_self;
+    int i;
+    int producer;
+    int consumer;
+    int size;
 
     concrete_self = bsal_actor_concrete_actor(self);
 
@@ -999,8 +1003,73 @@ void bsal_assembly_graph_builder_set_kmer_reply_arcs(struct bsal_actor *self, st
     expected += bsal_vector_size(&concrete_self->arc_kernels);
     expected += bsal_vector_size(&concrete_self->arc_classifiers);
 
+    /*
+     * All arc actors not have a kmer length configured.
+     */
     if (concrete_self->configured_actors_for_arcs == expected) {
 
+        printf("%s/%d configured the kmer length for arc actors\n",
+                        bsal_actor_script_name(self),
+                        bsal_actor_name(self));
+        concrete_self->configured_actors_for_arcs = 0;
+
+        bsal_actor_add_route_with_condition(self, BSAL_ACTOR_SET_CONSUMER_REPLY,
+                        bsal_assembly_graph_builder_configure_arc_actors,
+                        &concrete_self->doing_arcs, 1);
+
+        size = bsal_vector_size(&concrete_self->arc_kernels);
+
+        /*
+         * Design:
+         *
+         * sequence_store => arc_kernel => arc_classifier => graph_store/0 graph_store/1 graph_store/2
+         */
+
+        /*
+         * Link kernels and classifiers
+         */
+        for (i = 0; i < size; i++) {
+
+            producer = bsal_vector_at_as_int(&concrete_self->arc_kernels, i);
+            consumer = bsal_vector_at_as_int(&concrete_self->arc_classifiers, i);
+
+            bsal_actor_send_int(self, producer, BSAL_ACTOR_SET_CONSUMER,
+                            consumer);
+        }
+
+        /*
+         * Link classifiers and graph stores
+         */
+
+        bsal_actor_add_route_with_condition(self,
+                        BSAL_ACTOR_SET_CONSUMERS_REPLY,
+                        bsal_assembly_graph_builder_configure_arc_actors,
+                        &concrete_self->doing_arcs, 1);
+
+        bsal_actor_send_range_vector(self, &concrete_self->arc_classifiers,
+                        BSAL_ACTOR_SET_CONSUMERS,
+                        &concrete_self->graph_stores);
+    }
+}
+
+void bsal_assembly_graph_builder_configure_arc_actors(struct bsal_actor *self, struct bsal_message *message)
+{
+    int expected;
+    struct bsal_assembly_graph_builder *concrete_self;
+
+    concrete_self = bsal_actor_concrete_actor(self);
+
+    ++concrete_self->configured_actors_for_arcs;
+
+    expected = 0;
+    expected += bsal_vector_size(&concrete_self->arc_kernels);
+    expected += bsal_vector_size(&concrete_self->arc_classifiers);
+
+    if (expected == concrete_self->configured_actors_for_arcs) {
+
+        printf("%s/%d configured the neural links for arc actors\n",
+                        bsal_actor_script_name(self),
+                        bsal_actor_name(self));
 
         bsal_assembly_graph_builder_tell_source(self);
     }
