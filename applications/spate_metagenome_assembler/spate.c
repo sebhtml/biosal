@@ -179,7 +179,9 @@ void spate_ask_to_stop(struct bsal_actor *self, struct bsal_message *message)
         printf("spate %d stops\n", bsal_actor_name(self));
     }
 
+#if 0
     bsal_actor_ask_to_stop(self, message);
+#endif
 
     /*
      * Check if the source is an initial actor because each initial actor
