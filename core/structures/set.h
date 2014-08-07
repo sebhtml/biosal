@@ -4,6 +4,14 @@
 
 #include "map.h"
 
+/*
+ * This is a set with only keys.
+ * Supported operations are:
+ *
+ * - add
+ * - find
+ * - delete
+ */
 struct bsal_set {
     struct bsal_map map;
 };
@@ -19,5 +27,6 @@ uint64_t bsal_set_size(struct bsal_set *self);
 int bsal_set_empty(struct bsal_set *self);
 
 struct bsal_map *bsal_set_map(struct bsal_set *self);
+void bsal_set_set_memory_pool(struct bsal_set *self, struct bsal_memory_pool *pool);
 
 #endif

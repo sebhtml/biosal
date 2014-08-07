@@ -4,9 +4,11 @@
 #include <genomics/storage/sequence_store.h>
 
 #include <genomics/kernels/aggregator.h>
+
 #include <genomics/data/dna_kmer.h>
 #include <genomics/data/dna_kmer_block.h>
 #include <genomics/data/dna_sequence.h>
+
 #include <genomics/input/input_command.h>
 
 #include <core/helpers/message_helper.h>

@@ -105,3 +105,37 @@ int bsal_assembly_arc_equals(struct bsal_assembly_arc *self, struct bsal_assembl
 
     return bsal_dna_kmer_equals(&self->source, &arc->source, kmer_length, codec);
 }
+
+void bsal_assembly_arc_init_mock(struct bsal_assembly_arc *self,
+                int kmer_length, struct bsal_memory_pool *memory,
+                struct bsal_dna_codec *codec)
+{
+    int type;
+    int destination;
+    struct bsal_dna_kmer kmer;
+
+    type = BSAL_ARC_TYPE_PARENT;
+    destination = BSAL_NUCLEOTIDE_CODE_A;
+    bsal_dna_kmer_init_mock(&kmer, kmer_length, codec, memory);
+
+    bsal_assembly_arc_init(self, type, &kmer, destination, kmer_length, memory, codec);
+
+    bsal_dna_kmer_destroy(&kmer, memory);
+}
+
+void bsal_assembly_arc_init_copy(struct bsal_assembly_arc *self,
+                struct bsal_assembly_arc *arc,
+                int kmer_length, struct bsal_memory_pool *memory,
+                struct bsal_dna_codec *codec)
+{
+    int type;
+    int destination;
+    struct bsal_dna_kmer *source;
+
+    type = arc->type;
+    destination = arc->destination;
+    source = &arc->source;
+
+    bsal_assembly_arc_init(self, type, source, destination, kmer_length, memory, codec);
+}
+

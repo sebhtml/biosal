@@ -1,7 +1,12 @@
 
 #include "assembly_arc_kernel.h"
 
+#include "assembly_arc_block.h"
+
 #include <genomics/kernels/dna_kmer_counter_kernel.h>
+
+#include <genomics/input/input_command.h>
+
 #include <genomics/storage/sequence_store.h>
 
 #include <stdio.h>
@@ -171,16 +176,57 @@ void bsal_assembly_arc_kernel_ask(struct bsal_actor *self, struct bsal_message *
 void bsal_assembly_arc_kernel_push_sequence_data_block(struct bsal_actor *self, struct bsal_message *message)
 {
     struct bsal_assembly_arc_kernel *concrete_self;
+    struct bsal_input_command input_block;
+    void *buffer;
+    struct bsal_memory_pool *ephemeral_memory;
+    struct bsal_vector *command_entries;
+    struct bsal_assembly_arc_block output_block;
+    int entries;
+    int i;
 
+    ephemeral_memory = bsal_actor_get_ephemeral_memory(self);
     concrete_self = (struct bsal_assembly_arc_kernel *)bsal_actor_concrete_actor(self);
+    buffer = bsal_message_buffer(message);
 
     ++concrete_self->received_blocks;
+
+    if (concrete_self->kmer_length == BSAL_ACTOR_NOBODY) {
+        printf("Error no kmer length set in kernel\n");
+        return;
+    }
+
+    if (concrete_self->consumer == BSAL_ACTOR_NOBODY) {
+        printf("Error no consumer set in kernel\n");
+        return;
+    }
+
+    if (concrete_self->source == BSAL_ACTOR_NOBODY || concrete_self->producer == BSAL_ACTOR_NOBODY) {
+        printf("Error, no producer_source set\n");
+        return;
+    }
+
+    bsal_input_command_unpack(&input_block, buffer, ephemeral_memory,
+                    &concrete_self->codec);
+
+    command_entries = bsal_input_command_entries(&input_block);
+
+    entries = bsal_vector_size(command_entries);
+
+    bsal_assembly_arc_block_init(&output_block, ephemeral_memory,
+                    concrete_self->kmer_length, &concrete_self->codec);
 
     /*
      * TODO
      *
      * Extract arcs from sequences.
      */
+
+    for (i = 0 ; i < entries ; i++) {
+
+    }
+
+    bsal_assembly_arc_block_destroy(&output_block,
+                    ephemeral_memory);
 
     bsal_actor_send_empty(self, concrete_self->consumer,
                     BSAL_ASSEMBLY_PUSH_ARC_BLOCK);

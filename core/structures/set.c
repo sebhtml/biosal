@@ -74,3 +74,8 @@ int bsal_set_empty(struct bsal_set *self)
 {
     return bsal_set_size(self) == 0;
 }
+
+void bsal_set_set_memory_pool(struct bsal_set *self, struct bsal_memory_pool *pool)
+{
+    bsal_map_set_memory_pool(&self->map, pool);
+}

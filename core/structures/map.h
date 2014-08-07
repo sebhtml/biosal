@@ -9,6 +9,8 @@
 struct bsal_memory_pool;
 
 /*
+ * This is map with keys and values.
+ *
  * This is a hash table with built-in
  * alignment, auto-resize, and super
  * efficiency

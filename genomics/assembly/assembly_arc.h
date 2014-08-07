@@ -32,6 +32,14 @@ void bsal_assembly_arc_init(struct bsal_assembly_arc *self, int type,
                 int destination,
                 int kmer_length, struct bsal_memory_pool *memory,
                 struct bsal_dna_codec *codec);
+void bsal_assembly_arc_init_copy(struct bsal_assembly_arc *self,
+                struct bsal_assembly_arc *arc,
+                int kmer_length, struct bsal_memory_pool *memory,
+                struct bsal_dna_codec *codec);
+void bsal_assembly_arc_init_mock(struct bsal_assembly_arc *self,
+                int kmer_length, struct bsal_memory_pool *memory,
+                struct bsal_dna_codec *codec);
+
 void bsal_assembly_arc_init_empty(struct bsal_assembly_arc *self);
 void bsal_assembly_arc_destroy(struct bsal_assembly_arc *self, struct bsal_memory_pool *memory);
 
