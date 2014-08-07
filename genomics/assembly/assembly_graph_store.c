@@ -460,9 +460,6 @@ void bsal_assembly_graph_store_push_kmer_block(struct bsal_actor *self, struct b
                         concrete_self->kmer_length, &concrete_self->storage_codec,
                         bsal_actor_get_ephemeral_memory(self));
 
-        bsal_dna_kmer_destroy(&encoded_kmer,
-                        bsal_actor_get_ephemeral_memory(self));
-
         bucket = bsal_map_get(&concrete_self->table, key);
 
         if (bucket == NULL) {
@@ -471,8 +468,16 @@ void bsal_assembly_graph_store_push_kmer_block(struct bsal_actor *self, struct b
             bucket = bsal_map_add(&concrete_self->table, key);
 
             bsal_assembly_vertex_init(bucket);
+
+#if 0
+            printf("DEBUG303 ADD_KEY");
+            bsal_dna_kmer_print(&encoded_kmer, concrete_self->kmer_length,
+                            &concrete_self->storage_codec, ephemeral_memory);
+#endif
         }
 
+        bsal_dna_kmer_destroy(&encoded_kmer,
+                        bsal_actor_get_ephemeral_memory(self));
 
         bsal_assembly_vertex_increase_coverage_depth(bucket, *frequency);
 
@@ -532,11 +537,11 @@ void bsal_assembly_graph_store_push_arc_block(struct bsal_actor *self, struct bs
     for (i = 0; i < size; i++) {
         arc = bsal_vector_at(input_arcs, i);
 
-        ++concrete_self->received_arc_count;
-
-#if BSAL_ASSEMBLY_ADD_ARCS
+#ifdef BSAL_ASSEMBLY_ADD_ARCS
         bsal_assembly_graph_store_add_arc(self, arc);
 #endif
+
+        ++concrete_self->received_arc_count;
     }
 
     bsal_assembly_arc_block_destroy(&input_block, ephemeral_memory);
@@ -560,14 +565,28 @@ void bsal_assembly_graph_store_add_arc(struct bsal_actor *self,
     void *key;
     struct bsal_memory_pool *ephemeral_memory;
 
+#ifdef BSAL_ASSEMBLY_GRAPH_STORE_DEBUG_ARC
+    int verbose;
+#endif
+
     ephemeral_memory = bsal_actor_get_ephemeral_memory(self);
     concrete_self = (struct bsal_assembly_graph_store *)bsal_actor_concrete_actor(self);
     key = bsal_memory_pool_allocate(ephemeral_memory, concrete_self->key_length_in_bytes);
 
-    printf("DEBUG BioSAL::GraphStore::AddArc\n");
+#ifdef BSAL_ASSEMBLY_GRAPH_STORE_DEBUG_ARC
+    verbose = 0;
 
-    bsal_assembly_arc_print(arc, concrete_self->kmer_length, &concrete_self->storage_codec,
+    if (concrete_self->received_arc_count == 0) {
+        verbose = 1;
+    }
+
+    if (verbose) {
+        printf("DEBUG BioSAL::GraphStore::AddArc\n");
+
+        bsal_assembly_arc_print(arc, concrete_self->kmer_length, &concrete_self->storage_codec,
                     ephemeral_memory);
+    }
+#endif
 
     source = bsal_assembly_arc_source(arc);
     destination = bsal_assembly_arc_destination(arc);
@@ -579,10 +598,22 @@ void bsal_assembly_graph_store_add_arc(struct bsal_actor *self,
 
     vertex = bsal_map_get(&concrete_self->table, key);
 
+#ifdef BSAL_DEBUGGER_ENABLE_ASSERT
+    if (vertex == NULL) {
+        printf("Error: vertex is NULL, key_length_in_bytes %d size %" PRIu64 "\n",
+                        concrete_self->key_length_in_bytes,
+                        bsal_map_size(&concrete_self->table));
+    }
+#endif
+
     BSAL_DEBUGGER_ASSERT(vertex != NULL);
 
-    printf("DEBUG BEFORE:\n");
-    bsal_assembly_vertex_print(vertex);
+#ifdef BSAL_ASSEMBLY_GRAPH_STORE_DEBUG_ARC
+    if (verbose) {
+        printf("DEBUG BEFORE:\n");
+        bsal_assembly_vertex_print(vertex);
+    }
+#endif
 
     if (type == BSAL_ARC_TYPE_PARENT) {
 
@@ -593,8 +624,12 @@ void bsal_assembly_graph_store_add_arc(struct bsal_actor *self,
         bsal_assembly_vertex_add_child(vertex, destination);
     }
 
-    printf("DEBUG AFTER:\n");
-    bsal_assembly_vertex_print(vertex);
+#ifdef BSAL_ASSEMBLY_GRAPH_STORE_DEBUG_ARC
+    if (verbose) {
+        printf("DEBUG AFTER:\n");
+        bsal_assembly_vertex_print(vertex);
+    }
+#endif
 
     bsal_memory_pool_free(ephemeral_memory, key);
 }

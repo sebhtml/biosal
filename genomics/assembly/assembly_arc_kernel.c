@@ -286,6 +286,11 @@ void bsal_assembly_arc_kernel_push_sequence_data_block(struct bsal_actor *self, 
                             ephemeral_memory);
 
             /*
+             * Restore the data
+             */
+            kmer_sequence[concrete_self->kmer_length] = saved;
+
+            /*
              * Is this not the first one ?
              */
             if (position > 0) {
@@ -304,7 +309,7 @@ void bsal_assembly_arc_kernel_push_sequence_data_block(struct bsal_actor *self, 
 
                 bsal_assembly_arc_block_add_arc(&output_block, &arc, concrete_self->kmer_length,
                                 &concrete_self->codec, ephemeral_memory);
-#if BSAL_ASSEMBLY_ADD_ARCS
+#ifdef BSAL_ASSEMBLY_ADD_ARCS
                 ++concrete_self->produced_arcs;
 #endif
 
@@ -323,7 +328,7 @@ void bsal_assembly_arc_kernel_push_sequence_data_block(struct bsal_actor *self, 
 
                 bsal_assembly_arc_block_add_arc(&output_block, &arc, concrete_self->kmer_length,
                                 &concrete_self->codec, ephemeral_memory);
-#if BSAL_ASSEMBLY_ADD_ARCS
+#ifdef BSAL_ASSEMBLY_ADD_ARCS
                 ++concrete_self->produced_arcs;
 #endif
 

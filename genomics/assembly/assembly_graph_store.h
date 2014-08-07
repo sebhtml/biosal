@@ -19,8 +19,9 @@
 #define BSAL_GET_RECEIVED_ARC_COUNT_REPLY 0x00001cd9
 
 /*
+ * Enable arc registration with arc actors
+ */
 #define BSAL_ASSEMBLY_ADD_ARCS
-*/
 
 struct bsal_assembly_arc;
 
