@@ -454,7 +454,11 @@ void bsal_sequence_store_ask(struct bsal_actor *self, struct bsal_message *messa
                     || concrete_actor->left < concrete_actor->last - period
                     || concrete_actor->left == 0)) {
 
-        completion = (concrete_actor->left + 0.0) / concrete_actor->received;
+        completion = 1.0;
+
+        if (concrete_actor->received != 0) {
+            completion = (concrete_actor->left + 0.0) / concrete_actor->received;
+        }
 
         printf("sequence store %d has %" PRId64 "/%" PRId64 " (%.2f) entries left to produce\n",
                         name,

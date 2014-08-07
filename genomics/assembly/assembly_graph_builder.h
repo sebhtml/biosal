@@ -71,6 +71,15 @@ struct bsal_assembly_graph_builder {
     int configured_sequence_stores;
 
     uint64_t expected_arc_count;
+
+    /*
+     * Summary data
+     */
+
+    uint64_t vertex_count;
+    uint64_t vertex_observation_count;
+    uint64_t arc_count;
+    int ready_graph_store_count;
 };
 
 extern struct bsal_script bsal_assembly_graph_builder_script;
@@ -153,5 +162,7 @@ void bsal_assembly_graph_builder_configure_arc_actors(struct bsal_actor *self, s
 void bsal_assembly_graph_builder_verify_arcs(struct bsal_actor *self, struct bsal_message *message);
 void bsal_assembly_graph_builder_verify_arc_kernels(struct bsal_actor *self, struct bsal_message *message);
 void bsal_assembly_graph_builder_notify_reply_arc_kernels(struct bsal_actor *self, struct bsal_message *message);
+
+void bsal_assembly_graph_builder_get_summary_reply(struct bsal_actor *self, struct bsal_message *message);
 
 #endif

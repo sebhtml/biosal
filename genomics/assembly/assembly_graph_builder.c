@@ -8,6 +8,8 @@
 #include "assembly_arc_kernel.h"
 #include "assembly_arc_classifier.h"
 
+#include <core/system/debugger.h>
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -85,6 +87,10 @@ void bsal_assembly_graph_builder_init(struct bsal_actor *self)
     concrete_self->actual_kmer_count = 0;
 
     concrete_self->expected_arc_count = 0;
+
+    concrete_self->vertex_count = 0;
+    concrete_self->vertex_observation_count = 0;
+    concrete_self->arc_count = 0;
 }
 
 void bsal_assembly_graph_builder_destroy(struct bsal_actor *self)
@@ -1140,9 +1146,9 @@ void bsal_assembly_graph_builder_verify_arc_kernels(struct bsal_actor *self, str
 
 void bsal_assembly_graph_builder_notify_reply_arc_kernels(struct bsal_actor *self, struct bsal_message *message)
 {
-    struct bsal_assembly_graph_builder *concrete_self;
     int expected;
     uint64_t arcs;
+    struct bsal_assembly_graph_builder *concrete_self;
 
     concrete_self = bsal_actor_concrete_actor(self);
 
@@ -1170,5 +1176,87 @@ void bsal_assembly_graph_builder_notify_reply_arc_kernels(struct bsal_actor *sel
 
 void bsal_assembly_graph_builder_verify_arcs(struct bsal_actor *self, struct bsal_message *message)
 {
-    bsal_assembly_graph_builder_tell_source(self);
+    struct bsal_assembly_graph_builder *concrete_self;
+
+    concrete_self = bsal_actor_concrete_actor(self);
+
+    bsal_actor_add_route(self, BSAL_ASSEMBLY_GET_SUMMARY_REPLY,
+                    bsal_assembly_graph_builder_get_summary_reply);
+
+    concrete_self->ready_graph_store_count = 0;
+
+    bsal_actor_send_range_empty(self, &concrete_self->graph_stores,
+                    BSAL_ASSEMBLY_GET_SUMMARY);
+}
+
+void bsal_assembly_graph_builder_get_summary_reply(struct bsal_actor *self, struct bsal_message *message)
+{
+    int expected;
+    struct bsal_assembly_graph_builder *concrete_self;
+    struct bsal_vector vector;
+    void *buffer;
+    uint64_t vertex_count;
+    uint64_t vertex_observation_count;
+    uint64_t arc_count;
+    int position;
+
+    concrete_self = bsal_actor_concrete_actor(self);
+    buffer = bsal_message_buffer(message);
+
+    bsal_vector_init(&vector, sizeof(int));
+
+    bsal_vector_unpack(&vector, buffer);
+
+    BSAL_DEBUGGER_ASSERT(bsal_vector_size(&vector) == 3);
+
+    position = 0;
+    vertex_count = bsal_vector_at_as_uint64_t(&vector, position);
+    ++position;
+    vertex_observation_count = bsal_vector_at_as_uint64_t(&vector, position);
+    ++position;
+    arc_count = bsal_vector_at_as_uint64_t(&vector, position);
+    ++position;
+
+    concrete_self->vertex_count += vertex_count;
+    concrete_self->vertex_observation_count += vertex_observation_count;
+    concrete_self->arc_count += arc_count;
+
+    ++concrete_self->ready_graph_store_count;
+
+    expected = bsal_vector_size(&concrete_self->graph_stores);
+
+    printf("PROGRESS %d/%d\n", concrete_self->ready_graph_store_count,
+                    expected);
+
+    if (concrete_self->ready_graph_store_count == expected) {
+
+        printf("GRAPH %s/%d ->",
+                        bsal_actor_script_name(self),
+                        bsal_actor_name(self));
+
+        printf(" %" PRIu64 " canonical vertices,",
+                        concrete_self->vertex_count);
+        printf(" %" PRIu64 " canonical vertex observations,",
+                        concrete_self->vertex_observation_count);
+        printf(" and %" PRIu64 " canonical arcs.",
+                        concrete_self->arc_count);
+
+        printf("\n");
+
+        printf("GRAPH %s/%d ->",
+                        bsal_actor_script_name(self),
+                        bsal_actor_name(self));
+
+
+        printf(" %" PRIu64 " vertices,",
+                        2 * concrete_self->vertex_count);
+        printf(" %" PRIu64 " vertex observations,",
+                        2 * concrete_self->vertex_observation_count);
+        printf(" and %" PRIu64 " arcs.",
+                        2 * concrete_self->arc_count);
+
+        printf("\n");
+
+        bsal_assembly_graph_builder_tell_source(self);
+    }
 }

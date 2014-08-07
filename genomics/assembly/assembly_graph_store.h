@@ -18,6 +18,9 @@
 #define BSAL_GET_RECEIVED_ARC_COUNT 0x00004f17
 #define BSAL_GET_RECEIVED_ARC_COUNT_REPLY 0x00001cd9
 
+#define BSAL_ASSEMBLY_GET_SUMMARY 0x00000f4c
+#define BSAL_ASSEMBLY_GET_SUMMARY_REPLY 0x00003991
+
 /*
  * Enable arc registration with arc actors
  */
@@ -53,6 +56,16 @@ struct bsal_assembly_graph_store {
     uint64_t received_arc_count;
 
     int received_arc_block_count;
+
+    /*
+     * Summary stuff.
+     */
+
+    int source_for_summary;
+    int summary_in_progress;
+    uint64_t vertex_count;
+    uint64_t vertex_observation_count;
+    uint64_t arc_count;
 };
 
 extern struct bsal_script bsal_assembly_graph_store_script;
@@ -70,5 +83,9 @@ void bsal_assembly_graph_store_push_arc_block(struct bsal_actor *self, struct bs
 
 void bsal_assembly_graph_store_add_arc(struct bsal_actor *self,
                 struct bsal_assembly_arc *arc);
+
+void bsal_assembly_graph_store_get_summary(struct bsal_actor *self, struct bsal_message *message);
+
+void bsal_assembly_graph_store_yield_reply_summary(struct bsal_actor *self, struct bsal_message *message);
 
 #endif
