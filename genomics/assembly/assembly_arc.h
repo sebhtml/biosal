@@ -57,4 +57,11 @@ int bsal_assembly_arc_pack_unpack(struct bsal_assembly_arc *self, int operation,
 int bsal_assembly_arc_equals(struct bsal_assembly_arc *self, struct bsal_assembly_arc *arc,
                 int kmer_length, struct bsal_dna_codec *codec);
 
+struct bsal_dna_kmer *bsal_assembly_arc_source(struct bsal_assembly_arc *self);
+int bsal_assembly_arc_type(struct bsal_assembly_arc *self);
+int bsal_assembly_arc_destination(struct bsal_assembly_arc *self);
+
+void bsal_assembly_arc_print(struct bsal_assembly_arc *self, int kmer_length, struct bsal_dna_codec *codec,
+                struct bsal_memory_pool *pool);
+
 #endif

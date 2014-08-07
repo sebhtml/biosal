@@ -63,5 +63,10 @@ int bsal_dna_kmer_is_canonical(struct bsal_dna_kmer *self, int kmer_length,
 int bsal_dna_kmer_equals(struct bsal_dna_kmer *self, struct bsal_dna_kmer *kmer,
                 int kmer_length, struct bsal_dna_codec *codec);
 
+int bsal_dna_kmer_first_symbol(struct bsal_dna_kmer *self,
+                int kmer_length, struct bsal_dna_codec *codec);
+int bsal_dna_kmer_last_symbol(struct bsal_dna_kmer *self,
+                int kmer_length, struct bsal_dna_codec *codec);
+
 
 #endif

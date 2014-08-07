@@ -1,6 +1,7 @@
 
 #include "assembly_arc_kernel.h"
 
+#include "assembly_graph_store.h"
 #include "assembly_arc_block.h"
 
 #include <genomics/kernels/dna_kmer_counter_kernel.h>
@@ -20,7 +21,10 @@ struct bsal_script bsal_assembly_arc_kernel_script = {
     .init = bsal_assembly_arc_kernel_init,
     .destroy = bsal_assembly_arc_kernel_destroy,
     .receive = bsal_assembly_arc_kernel_receive,
-    .size = sizeof(struct bsal_assembly_arc_kernel)
+    .size = sizeof(struct bsal_assembly_arc_kernel),
+    .author = "Sébastien Boisvert",
+    .description = "Isolate assembly arcs from entries in an input block",
+    .version = "AlphaOmegaCool"
 };
 
 void bsal_assembly_arc_kernel_init(struct bsal_actor *self)
@@ -179,10 +183,26 @@ void bsal_assembly_arc_kernel_push_sequence_data_block(struct bsal_actor *self, 
     struct bsal_input_command input_block;
     void *buffer;
     struct bsal_memory_pool *ephemeral_memory;
-    struct bsal_vector *command_entries;
+    struct bsal_vector *sequences;
     struct bsal_assembly_arc_block output_block;
     int entries;
     int i;
+    struct bsal_dna_sequence *dna_sequence;
+    char *sequence;
+    int maximum_length;
+    int length;
+    struct bsal_dna_kmer previous_kmer;
+    struct bsal_dna_kmer current_kmer;
+    int position;
+    char saved;
+    char *kmer_sequence;
+    int limit;
+    struct bsal_assembly_arc arc;
+    int first_symbol;
+    int last_symbol;
+    struct bsal_message new_message;
+    int new_count;
+    void *new_buffer;
 
     ephemeral_memory = bsal_actor_get_ephemeral_memory(self);
     concrete_self = (struct bsal_assembly_arc_kernel *)bsal_actor_concrete_actor(self);
@@ -208,28 +228,141 @@ void bsal_assembly_arc_kernel_push_sequence_data_block(struct bsal_actor *self, 
     bsal_input_command_unpack(&input_block, buffer, ephemeral_memory,
                     &concrete_self->codec);
 
-    command_entries = bsal_input_command_entries(&input_block);
+    sequences = bsal_input_command_entries(&input_block);
 
-    entries = bsal_vector_size(command_entries);
+    entries = bsal_vector_size(sequences);
 
     bsal_assembly_arc_block_init(&output_block, ephemeral_memory,
                     concrete_self->kmer_length, &concrete_self->codec);
 
     /*
-     * TODO
+     *
      *
      * Extract arcs from sequences.
      */
 
+    maximum_length = 0;
+
+    /*
+     * Get maximum length
+     */
     for (i = 0 ; i < entries ; i++) {
 
+        dna_sequence = bsal_vector_at(sequences, i);
+
+        length = bsal_dna_sequence_length(dna_sequence);
+
+        if (length > maximum_length) {
+            maximum_length = length;
+        }
     }
+
+    sequence = bsal_memory_pool_allocate(ephemeral_memory, maximum_length + 1);
+
+    /*
+     * Generate arcs.
+     *
+     * This code needs to be fast.
+     */
+    for (i = 0 ; i < entries ; i++) {
+
+        dna_sequence = bsal_vector_at(sequences, i);
+
+        length = bsal_dna_sequence_length(dna_sequence);
+
+        bsal_dna_sequence_get_sequence(dna_sequence, sequence, &concrete_self->codec);
+
+        limit = length - concrete_self->kmer_length + 1;
+
+        for (position = 0; position < limit; position++) {
+
+            kmer_sequence = sequence + position;
+
+            saved = kmer_sequence[concrete_self->kmer_length];
+
+            kmer_sequence[concrete_self->kmer_length] = '\0';
+
+            bsal_dna_kmer_init(&current_kmer, kmer_sequence, &concrete_self->codec,
+                            ephemeral_memory);
+
+            /*
+             * Is this not the first one ?
+             */
+            if (position > 0) {
+
+                /*
+                 * previous_kmer -> current_kmer (BSAL_ARC_TYPE_CHILD)
+                 */
+
+                last_symbol = bsal_dna_kmer_last_symbol(&current_kmer, concrete_self->kmer_length,
+                                        &concrete_self->codec);
+
+                bsal_assembly_arc_init(&arc, BSAL_ARC_TYPE_CHILD, &previous_kmer,
+                                last_symbol,
+                                concrete_self->kmer_length, ephemeral_memory,
+                                &concrete_self->codec);
+
+                bsal_assembly_arc_block_add_arc(&output_block, &arc, concrete_self->kmer_length,
+                                &concrete_self->codec, ephemeral_memory);
+#if BSAL_ASSEMBLY_ADD_ARCS
+                ++concrete_self->produced_arcs;
+#endif
+
+                bsal_assembly_arc_destroy(&arc, ephemeral_memory);
+
+                /*
+                 * previous_kmer -> current_kmer (BSAL_ARC_TYPE_PARENT)
+                 */
+                first_symbol = bsal_dna_kmer_first_symbol(&previous_kmer, concrete_self->kmer_length,
+                                        &concrete_self->codec);
+
+                bsal_assembly_arc_init(&arc, BSAL_ARC_TYPE_PARENT, &current_kmer,
+                                first_symbol,
+                                concrete_self->kmer_length, ephemeral_memory,
+                                &concrete_self->codec);
+
+                bsal_assembly_arc_block_add_arc(&output_block, &arc, concrete_self->kmer_length,
+                                &concrete_self->codec, ephemeral_memory);
+#if BSAL_ASSEMBLY_ADD_ARCS
+                ++concrete_self->produced_arcs;
+#endif
+
+                bsal_assembly_arc_destroy(&arc, ephemeral_memory);
+            }
+
+            bsal_dna_kmer_init_copy(&previous_kmer, &current_kmer, concrete_self->kmer_length,
+                            ephemeral_memory, &concrete_self->codec);
+
+            bsal_dna_kmer_destroy(&current_kmer, ephemeral_memory);
+
+            /* Previous is not needed anymore
+             */
+            if (position == limit - 1) {
+
+                bsal_dna_kmer_destroy(&previous_kmer, ephemeral_memory);
+            }
+        }
+    }
+
+    new_count = bsal_assembly_arc_block_pack_size(&output_block, concrete_self->kmer_length,
+                    &concrete_self->codec);
+    new_buffer = bsal_memory_pool_allocate(ephemeral_memory, new_count);
+
+    bsal_assembly_arc_block_pack(&output_block, new_buffer, concrete_self->kmer_length,
+                    &concrete_self->codec);
 
     bsal_assembly_arc_block_destroy(&output_block,
                     ephemeral_memory);
 
-    bsal_actor_send_empty(self, concrete_self->consumer,
-                    BSAL_ASSEMBLY_PUSH_ARC_BLOCK);
+    bsal_message_init(&new_message, BSAL_ASSEMBLY_PUSH_ARC_BLOCK,
+                    new_count, new_buffer);
+    bsal_actor_send(self, concrete_self->consumer, &new_message);
+
+    bsal_message_destroy(&new_message);
+
+    bsal_memory_pool_free(ephemeral_memory, sequence);
+
+    bsal_memory_pool_free(ephemeral_memory, new_buffer);
 }
 
 

@@ -35,4 +35,6 @@ void bsal_assembly_vertex_add_parent(struct bsal_assembly_vertex *self, int symb
 void bsal_assembly_vertex_delete_parent(struct bsal_assembly_vertex *self, int symbol_code);
 int bsal_assembly_vertex_get_parent(struct bsal_assembly_vertex *self, int index);
 
+void bsal_assembly_vertex_print(struct bsal_assembly_vertex *self);
+
 #endif

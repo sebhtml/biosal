@@ -7,6 +7,8 @@
 
 #include <genomics/data/dna_codec.h>
 
+#include <stdio.h>
+
 void bsal_assembly_connectivity_init(struct bsal_assembly_connectivity *self)
 {
     bsal_assembly_connectivity_delete_parent(self, BSAL_NUCLEOTIDE_CODE_A);
@@ -162,4 +164,44 @@ int bsal_assembly_connectivity_child_offset(int code)
     return BSAL_ASSEMBLY_CONNECTIVITY_OFFSET_CHILDREN + code;
 }
 
+void bsal_assembly_connectivity_print(struct bsal_assembly_connectivity *self)
+{
+    int size;
+    int code;
+    int i;
+    char nucleotide;
 
+    size = bsal_assembly_connectivity_parent_count(self);
+
+    printf("Parents: %d", size);
+
+    printf("[");
+
+    for (i = 0; i < size; i++) {
+
+        code = bsal_assembly_connectivity_get_parent(self, i);
+
+        nucleotide = bsal_dna_codec_get_nucleotide_from_code(code);
+
+        printf("%c", nucleotide);
+    }
+
+    printf("] ");
+
+    size = bsal_assembly_connectivity_child_count(self);
+
+    printf("Children: %d", size);
+
+    printf("[");
+
+    for (i = 0; i < size; i++) {
+
+        code = bsal_assembly_connectivity_get_child(self, i);
+
+        nucleotide = bsal_dna_codec_get_nucleotide_from_code(code);
+
+        printf("%c", nucleotide);
+    }
+
+    printf("]");
+}

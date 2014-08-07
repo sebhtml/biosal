@@ -49,4 +49,6 @@ int bsal_assembly_connectivity_child_offset(int code);
 int bsal_assembly_connectivity_get_count(struct bsal_assembly_connectivity *self, int type);
 int bsal_assembly_connectivity_get_element(struct bsal_assembly_connectivity *self, int index, int type);
 
+void bsal_assembly_connectivity_print(struct bsal_assembly_connectivity *self);
+
 #endif

@@ -381,6 +381,15 @@ uint64_t bsal_dna_codec_get_code(char nucleotide)
 
 char bsal_dna_codec_get_nucleotide(struct bsal_dna_codec *codec, void *encoded_sequence, int index)
 {
+    int code;
+
+    code = bsal_dna_codec_get_nucleotide_code(codec, encoded_sequence, index);
+
+    return bsal_dna_codec_get_nucleotide_from_code(code);
+}
+
+int bsal_dna_codec_get_nucleotide_code(struct bsal_dna_codec *codec, void *encoded_sequence, int index)
+{
     int bit_index;
     int byte_index;
     int bit_index_in_byte;
@@ -403,7 +412,7 @@ char bsal_dna_codec_get_nucleotide(struct bsal_dna_codec *codec, void *encoded_s
     printf("code %d\n", (int)code);
 #endif
 
-    return bsal_dna_codec_get_nucleotide_from_code(code);
+    return code;
 }
 
 char bsal_dna_codec_get_nucleotide_from_code(uint64_t code)

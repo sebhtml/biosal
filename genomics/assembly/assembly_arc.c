@@ -139,3 +139,40 @@ void bsal_assembly_arc_init_copy(struct bsal_assembly_arc *self,
     bsal_assembly_arc_init(self, type, source, destination, kmer_length, memory, codec);
 }
 
+struct bsal_dna_kmer *bsal_assembly_arc_source(struct bsal_assembly_arc *self)
+{
+    return &self->source;
+}
+
+int bsal_assembly_arc_type(struct bsal_assembly_arc *self)
+{
+    return self->type;
+}
+
+int bsal_assembly_arc_destination(struct bsal_assembly_arc *self)
+{
+    return self->destination;
+}
+
+void bsal_assembly_arc_print(struct bsal_assembly_arc *self, int kmer_length, struct bsal_dna_codec *codec,
+                struct bsal_memory_pool *pool)
+{
+    printf("object, class: BioSAL/AssemblyArc, type: ");
+
+    if (bsal_assembly_arc_type(self) == BSAL_ARC_TYPE_PARENT) {
+        printf("BSAL_ARC_TYPE_PARENT");
+
+    } else if (bsal_assembly_arc_type(self) == BSAL_ARC_TYPE_CHILD) {
+
+        printf("BSAL_ARC_TYPE_CHILD");
+    }
+
+    printf(" source: ");
+    bsal_dna_kmer_print(bsal_assembly_arc_source(self),
+                    kmer_length, codec, pool);
+
+    printf(" destination: %c",
+                    bsal_dna_codec_get_nucleotide_from_code(self->destination));
+
+    printf("\n");
+}

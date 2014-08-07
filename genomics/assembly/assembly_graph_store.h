@@ -19,6 +19,12 @@
 #define BSAL_GET_RECEIVED_ARC_COUNT_REPLY 0x00001cd9
 
 /*
+#define BSAL_ASSEMBLY_ADD_ARCS
+*/
+
+struct bsal_assembly_arc;
+
+/*
  * This is a graph store
  * for assembling sequences.
  *
@@ -60,5 +66,8 @@ void bsal_assembly_graph_store_yield_reply(struct bsal_actor *self, struct bsal_
 
 void bsal_assembly_graph_store_push_kmer_block(struct bsal_actor *self, struct bsal_message *message);
 void bsal_assembly_graph_store_push_arc_block(struct bsal_actor *self, struct bsal_message *message);
+
+void bsal_assembly_graph_store_add_arc(struct bsal_actor *self,
+                struct bsal_assembly_arc *arc);
 
 #endif

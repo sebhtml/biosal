@@ -1,6 +1,8 @@
 
 #include "assembly_vertex.h"
 
+#include <stdio.h>
+
 void bsal_assembly_vertex_init(struct bsal_assembly_vertex *self)
 {
     self->coverage_depth = 0;
@@ -76,4 +78,12 @@ int bsal_assembly_vertex_get_parent(struct bsal_assembly_vertex *self, int index
     return bsal_assembly_connectivity_get_parent(&self->connectivity, index);
 }
 
+void bsal_assembly_vertex_print(struct bsal_assembly_vertex *self)
+{
+    printf("BioSAL::AssemblyVertex coverage_depth: %d connectivity: ",
+                    self->coverage_depth);
 
+    bsal_assembly_connectivity_print(&self->connectivity);
+
+    printf("\n");
+}

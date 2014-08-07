@@ -45,6 +45,8 @@ void bsal_dna_codec_encode(struct bsal_dna_codec *self, int length_in_nucleotide
 void bsal_dna_codec_decode(struct bsal_dna_codec *self, int length_in_nucleotides, void *encoded_sequence, char*dna_sequence);
 
 char bsal_dna_codec_get_nucleotide(struct bsal_dna_codec *codec, void *encoded_sequence, int index);
+int bsal_dna_codec_get_nucleotide_code(struct bsal_dna_codec *codec, void *encoded_sequence, int index);
+
 void bsal_dna_codec_set_nucleotide(void *encoded_sequence, int index, char nucleotide);
 uint64_t bsal_dna_codec_get_code(char nucleotide);
 char bsal_dna_codec_get_nucleotide_from_code(uint64_t code);

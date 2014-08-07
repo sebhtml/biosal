@@ -2,6 +2,7 @@
 #include "assembly_graph_store.h"
 
 #include "assembly_arc_kernel.h"
+#include "assembly_arc_block.h"
 
 #include "assembly_vertex.h"
 
@@ -13,14 +14,18 @@
 #include <genomics/storage/kmer_store.h>
 
 #include <genomics/kernels/dna_kmer_counter_kernel.h>
+
 #include <genomics/data/dna_kmer.h>
 #include <genomics/data/dna_kmer_block.h>
 #include <genomics/data/dna_kmer_frequency_block.h>
 
 #include <core/helpers/message_helper.h>
 #include <core/system/memory.h>
+
 #include <core/structures/vector.h>
 #include <core/structures/vector_iterator.h>
+
+#include <core/system/debugger.h>
 
 #include <inttypes.h>
 #include <stdint.h>
@@ -415,7 +420,6 @@ void bsal_assembly_graph_store_push_kmer_block(struct bsal_actor *self, struct b
 
     key = bsal_memory_pool_allocate(ephemeral_memory, concrete_self->key_length_in_bytes);
 
-
     kmers = bsal_dna_kmer_frequency_block_kmers(&block);
     bsal_map_iterator_init(&iterator, kmers);
 
@@ -498,15 +502,99 @@ void bsal_assembly_graph_store_push_kmer_block(struct bsal_actor *self, struct b
 void bsal_assembly_graph_store_push_arc_block(struct bsal_actor *self, struct bsal_message *message)
 {
     struct bsal_assembly_graph_store *concrete_self;
+    int size;
+    int i;
+    void *buffer;
+    int count;
+    struct bsal_assembly_arc_block input_block;
+    struct bsal_assembly_arc *arc;
+    struct bsal_memory_pool *ephemeral_memory;
+    struct bsal_vector *input_arcs;
 
     concrete_self = (struct bsal_assembly_graph_store *)bsal_actor_concrete_actor(self);
+    ephemeral_memory = bsal_actor_get_ephemeral_memory(self);
 
     ++concrete_self->received_arc_block_count;
 
+    count = bsal_message_count(message);
+    buffer = bsal_message_buffer(message);
+
+    bsal_assembly_arc_block_init(&input_block, ephemeral_memory, concrete_self->kmer_length,
+                    &concrete_self->storage_codec);
+
+    bsal_assembly_arc_block_unpack(&input_block, buffer, concrete_self->kmer_length,
+                    &concrete_self->storage_codec, ephemeral_memory);
+
+    input_arcs = bsal_assembly_arc_block_get_arcs(&input_block);
+
+    size = bsal_vector_size(input_arcs);
+
+    for (i = 0; i < size; i++) {
+        arc = bsal_vector_at(input_arcs, i);
+
+        ++concrete_self->received_arc_count;
+
+#if BSAL_ASSEMBLY_ADD_ARCS
+        bsal_assembly_graph_store_add_arc(self, arc);
+#endif
+    }
+
+    bsal_assembly_arc_block_destroy(&input_block, ephemeral_memory);
+
     /*
-     * TODO
+     *
      * Add the arcs to the graph
      */
 
     bsal_actor_send_reply_empty(self, BSAL_ASSEMBLY_PUSH_ARC_BLOCK_REPLY);
+}
+
+void bsal_assembly_graph_store_add_arc(struct bsal_actor *self,
+                struct bsal_assembly_arc *arc)
+{
+    struct bsal_assembly_graph_store *concrete_self;
+    struct bsal_dna_kmer *source;
+    int destination;
+    int type;
+    struct bsal_assembly_vertex *vertex;
+    void *key;
+    struct bsal_memory_pool *ephemeral_memory;
+
+    ephemeral_memory = bsal_actor_get_ephemeral_memory(self);
+    concrete_self = (struct bsal_assembly_graph_store *)bsal_actor_concrete_actor(self);
+    key = bsal_memory_pool_allocate(ephemeral_memory, concrete_self->key_length_in_bytes);
+
+    printf("DEBUG BioSAL::GraphStore::AddArc\n");
+
+    bsal_assembly_arc_print(arc, concrete_self->kmer_length, &concrete_self->storage_codec,
+                    ephemeral_memory);
+
+    source = bsal_assembly_arc_source(arc);
+    destination = bsal_assembly_arc_destination(arc);
+    type = bsal_assembly_arc_type(arc);
+
+    bsal_dna_kmer_pack_store_key(source, key,
+                        concrete_self->kmer_length, &concrete_self->storage_codec,
+                        ephemeral_memory);
+
+    vertex = bsal_map_get(&concrete_self->table, key);
+
+    BSAL_DEBUGGER_ASSERT(vertex != NULL);
+
+    printf("DEBUG BEFORE:\n");
+    bsal_assembly_vertex_print(vertex);
+
+    if (type == BSAL_ARC_TYPE_PARENT) {
+
+        bsal_assembly_vertex_add_parent(vertex, destination);
+
+    } else if (type == BSAL_ARC_TYPE_CHILD) {
+
+        bsal_assembly_vertex_add_child(vertex, destination);
+    }
+
+    printf("DEBUG AFTER:\n");
+    bsal_assembly_vertex_print(vertex);
+
+    bsal_memory_pool_free(ephemeral_memory, key);
 }

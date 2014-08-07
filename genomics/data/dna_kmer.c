@@ -383,3 +383,15 @@ int bsal_dna_kmer_equals(struct bsal_dna_kmer *self, struct bsal_dna_kmer *kmer,
 
     return 0;
 }
+
+int bsal_dna_kmer_first_symbol(struct bsal_dna_kmer *self,
+                int kmer_length, struct bsal_dna_codec *codec)
+{
+    return bsal_dna_codec_get_nucleotide_code(codec, self->encoded_data, 0);
+}
+
+int bsal_dna_kmer_last_symbol(struct bsal_dna_kmer *self,
+                int kmer_length, struct bsal_dna_codec *codec)
+{
+    return bsal_dna_codec_get_nucleotide_code(codec, self->encoded_data, kmer_length - 1);
+}

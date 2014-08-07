@@ -23,6 +23,10 @@ struct bsal_assembly_arc_classifier {
     struct bsal_dna_codec codec;
 
     int received_blocks;
+
+    struct bsal_vector pending_requests;
+    int producer_is_waiting;
+    int maximum_pending_request_count;
 };
 
 extern struct bsal_script bsal_assembly_arc_classifier_script;
