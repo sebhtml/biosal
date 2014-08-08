@@ -1,6 +1,8 @@
 
 #include "assembly_vertex.h"
 
+#include <core/system/packer.h>
+
 #include <stdio.h>
 
 void bsal_assembly_vertex_init(struct bsal_assembly_vertex *self)
@@ -86,4 +88,51 @@ void bsal_assembly_vertex_print(struct bsal_assembly_vertex *self)
     bsal_assembly_connectivity_print(&self->connectivity);
 
     printf("\n");
+}
+
+int bsal_assembly_vertex_pack_size(struct bsal_assembly_vertex *self)
+{
+    return bsal_assembly_vertex_pack_unpack(self, BSAL_PACKER_OPERATION_DRY_RUN, NULL);
+}
+
+int bsal_assembly_vertex_pack(struct bsal_assembly_vertex *self, void *buffer)
+{
+    return bsal_assembly_vertex_pack_unpack(self, BSAL_PACKER_OPERATION_PACK, buffer);
+}
+
+int bsal_assembly_vertex_unpack(struct bsal_assembly_vertex *self, void *buffer)
+{
+    return bsal_assembly_vertex_pack_unpack(self, BSAL_PACKER_OPERATION_UNPACK, buffer);
+}
+
+int bsal_assembly_vertex_pack_unpack(struct bsal_assembly_vertex *self, int operation, void *buffer)
+{
+    struct bsal_packer packer;
+    int bytes;
+
+    bytes = 0;
+
+    bsal_packer_init(&packer, operation, buffer);
+
+    bytes += bsal_packer_work(&packer, &self->coverage_depth, sizeof(self->coverage_depth));
+
+    bsal_packer_destroy(&packer);
+
+    bytes += bsal_assembly_connectivity_pack_unpack(&self->connectivity, operation,
+                    (char *)buffer + bytes);
+
+    return bytes;
+}
+
+void bsal_assembly_vertex_init_copy(struct bsal_assembly_vertex *self,
+                struct bsal_assembly_vertex *vertex)
+{
+    self->coverage_depth = vertex->coverage_depth;
+
+    bsal_assembly_connectivity_init_copy(&self->connectivity, &vertex->connectivity);
+}
+
+void bsal_assembly_vertex_invert_arcs(struct bsal_assembly_vertex *self)
+{
+    bsal_assembly_connectivity_invert_arcs(&self->connectivity);
 }

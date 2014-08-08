@@ -86,6 +86,12 @@ void bsal_assembly_graph_store_init(struct bsal_actor *self)
                     bsal_assembly_graph_store_get_summary);
 
     concrete_self->summary_in_progress = 0;
+
+    bsal_actor_add_route(self, BSAL_ASSEMBLY_GET_VERTEX,
+                    bsal_assembly_graph_store_get_vertex);
+
+    bsal_actor_add_route(self, BSAL_ASSEMBLY_GET_STARTING_VERTEX,
+                    bsal_assembly_graph_store_get_starting_vertex);
 }
 
 void bsal_assembly_graph_store_destroy(struct bsal_actor *self)
@@ -151,6 +157,11 @@ void bsal_assembly_graph_store_receive(struct bsal_actor *self, struct bsal_mess
         bsal_map_set_threshold(&concrete_self->table, 0.95);
 
         bsal_actor_send_reply_empty(self, BSAL_SET_KMER_LENGTH_REPLY);
+
+    } else if (tag == BSAL_ASSEMBLY_GET_KMER_LENGTH) {
+
+        bsal_actor_send_reply_int(self, BSAL_ASSEMBLY_GET_KMER_LENGTH_REPLY,
+                        concrete_self->kmer_length);
 
     } else if (tag == BSAL_SEQUENCE_STORE_REQUEST_PROGRESS_REPLY) {
 
@@ -699,7 +710,6 @@ void bsal_assembly_graph_store_get_summary(struct bsal_actor *self, struct bsal_
     bsal_actor_send_to_self_empty(self, BSAL_ACTOR_YIELD);
 }
 
-
 void bsal_assembly_graph_store_yield_reply_summary(struct bsal_actor *self, struct bsal_message *message)
 {
     struct bsal_assembly_graph_store *concrete_self;
@@ -759,5 +769,138 @@ void bsal_assembly_graph_store_yield_reply_summary(struct bsal_actor *self, stru
                         BSAL_ASSEMBLY_GET_SUMMARY_REPLY, &vector);
 
         bsal_vector_destroy(&vector);
+
+        /*
+         * Rest the iterator.
+         */
+
+        bsal_map_iterator_destroy(&concrete_self->iterator);
+        bsal_map_iterator_init(&concrete_self->iterator, &concrete_self->table);
+    }
+}
+
+void bsal_assembly_graph_store_get_vertex(struct bsal_actor *self, struct bsal_message *message)
+{
+    struct bsal_assembly_vertex vertex;
+    struct bsal_dna_kmer kmer;
+    struct bsal_dna_kmer storage_kmer;
+    void *buffer;
+    struct bsal_assembly_graph_store *concrete_self;
+    struct bsal_memory_pool *ephemeral_memory;
+    struct bsal_message new_message;
+    int new_count;
+    void *new_buffer;
+    char *sequence;
+    struct bsal_assembly_vertex *canonical_vertex;
+    void *key;
+    int is_canonical;
+
+    ephemeral_memory = bsal_actor_get_ephemeral_memory(self);
+    concrete_self = (struct bsal_assembly_graph_store *)bsal_actor_concrete_actor(self);
+
+    buffer = bsal_message_buffer(message);
+
+    bsal_dna_kmer_init_empty(&kmer);
+    bsal_dna_kmer_unpack(&kmer, buffer, concrete_self->kmer_length,
+                ephemeral_memory,
+                &concrete_self->transport_codec);
+
+    sequence = bsal_memory_pool_allocate(ephemeral_memory, concrete_self->kmer_length + 1);
+
+    bsal_dna_kmer_get_sequence(&kmer, sequence, concrete_self->kmer_length,
+                        &concrete_self->transport_codec);
+
+    bsal_dna_kmer_init(&storage_kmer, sequence, &concrete_self->storage_codec,
+                        ephemeral_memory);
+
+    is_canonical = bsal_dna_kmer_is_canonical(&storage_kmer, concrete_self->kmer_length,
+                    &concrete_self->storage_codec);
+
+    key = bsal_memory_pool_allocate(ephemeral_memory, concrete_self->key_length_in_bytes);
+
+    bsal_dna_kmer_pack_store_key(&storage_kmer, key,
+                        concrete_self->kmer_length, &concrete_self->storage_codec,
+                        ephemeral_memory);
+
+    canonical_vertex = bsal_map_get(&concrete_self->table, key);
+
+    bsal_assembly_vertex_init_copy(&vertex, canonical_vertex);
+
+    if (!is_canonical) {
+
+        bsal_assembly_vertex_invert_arcs(&vertex);
+    }
+
+    bsal_memory_pool_free(ephemeral_memory, sequence);
+    bsal_memory_pool_free(ephemeral_memory, key);
+
+    bsal_dna_kmer_destroy(&kmer, ephemeral_memory);
+
+    new_count = bsal_assembly_vertex_pack_size(&vertex);
+    new_buffer = bsal_memory_pool_allocate(ephemeral_memory, new_count);
+
+    bsal_assembly_vertex_pack(&vertex, new_buffer);
+
+    bsal_message_init(&new_message, BSAL_ASSEMBLY_GET_VERTEX_REPLY,
+                    new_count, new_buffer);
+
+    bsal_actor_send_reply(self, &new_message);
+
+    bsal_message_destroy(&new_message);
+    bsal_memory_pool_free(ephemeral_memory, new_buffer);
+}
+
+void bsal_assembly_graph_store_get_starting_vertex(struct bsal_actor *self, struct bsal_message *message)
+{
+    struct bsal_assembly_graph_store *concrete_self;
+    struct bsal_dna_kmer transport_kmer;
+    struct bsal_dna_kmer storage_kmer;
+    struct bsal_memory_pool *ephemeral_memory;
+    struct bsal_message new_message;
+    int new_count;
+    void *new_buffer;
+    char *sequence;
+    void *storage_key;
+
+    ephemeral_memory = bsal_actor_get_ephemeral_memory(self);
+    concrete_self = (struct bsal_assembly_graph_store *)bsal_actor_concrete_actor(self);
+
+    if (bsal_map_iterator_has_next(&concrete_self->iterator)) {
+
+        bsal_map_iterator_next(&concrete_self->iterator, (void **)&storage_key,
+                        NULL);
+
+        bsal_dna_kmer_init_empty(&storage_kmer);
+        bsal_dna_kmer_unpack(&storage_kmer, storage_key, concrete_self->kmer_length,
+                        ephemeral_memory,
+                        &concrete_self->storage_codec);
+
+        sequence = bsal_memory_pool_allocate(ephemeral_memory, concrete_self->kmer_length + 1);
+
+        bsal_dna_kmer_init(&transport_kmer, sequence, &concrete_self->storage_codec,
+                        ephemeral_memory);
+
+        new_count = bsal_dna_kmer_pack_size(&transport_kmer, concrete_self->kmer_length,
+                        &concrete_self->transport_codec);
+        new_buffer = bsal_memory_pool_allocate(ephemeral_memory, new_count);
+
+        bsal_dna_kmer_pack(&transport_kmer, new_buffer, concrete_self->kmer_length,
+                        &concrete_self->transport_codec);
+
+        bsal_message_init(&new_message, BSAL_ASSEMBLY_GET_STARTING_VERTEX_REPLY,
+                        new_count, new_buffer);
+
+        bsal_actor_send_reply(self, &new_message);
+
+        bsal_message_destroy(&new_message);
+
+        bsal_dna_kmer_destroy(&transport_kmer, ephemeral_memory);
+
+        bsal_memory_pool_free(ephemeral_memory, sequence);
+
+        bsal_dna_kmer_destroy(&storage_kmer, ephemeral_memory);
+        bsal_memory_pool_free(ephemeral_memory, new_buffer);
+    } else {
+        bsal_actor_send_reply_empty(self, BSAL_ASSEMBLY_GET_STARTING_VERTEX_REPLY);
     }
 }

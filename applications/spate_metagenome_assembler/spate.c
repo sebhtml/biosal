@@ -7,6 +7,7 @@
 #include <genomics/assembly/assembly_graph_builder.h>
 #include <genomics/assembly/assembly_arc_kernel.h>
 #include <genomics/assembly/assembly_arc_classifier.h>
+#include <genomics/assembly/assembly_dummy_walker.h>
 
 #include <genomics/input/input_controller.h>
 
@@ -32,6 +33,7 @@ void spate_init(struct bsal_actor *self)
     concrete_self = (struct spate *)bsal_actor_concrete_actor(self);
     bsal_vector_init(&concrete_self->initial_actors, sizeof(int));
     bsal_vector_init(&concrete_self->sequence_stores, sizeof(int));
+    bsal_vector_init(&concrete_self->graph_stores, sizeof(int));
 
     concrete_self->is_leader = 0;
 
@@ -100,6 +102,8 @@ void spate_init(struct bsal_actor *self)
                     &bsal_assembly_arc_kernel_script);
     bsal_actor_add_script(self, BSAL_ASSEMBLY_ARC_CLASSIFIER_SCRIPT,
                     &bsal_assembly_arc_classifier_script);
+    bsal_actor_add_script(self, BSAL_ASSEMBLY_DUMMY_WALKER_SCRIPT,
+                    &bsal_assembly_dummy_walker_script);
 
     concrete_self->block_size = 16 * 4096;
 
@@ -121,6 +125,7 @@ void spate_destroy(struct bsal_actor *self)
 
     bsal_vector_destroy(&concrete_self->initial_actors);
     bsal_vector_destroy(&concrete_self->sequence_stores);
+    bsal_vector_destroy(&concrete_self->graph_stores);
 }
 
 void spate_receive(struct bsal_actor *self, struct bsal_message *message)
@@ -392,6 +397,53 @@ void spate_set_producers_reply(struct bsal_actor *self, struct bsal_message *mes
 
 void spate_start_reply_builder(struct bsal_actor *self, struct bsal_message *message)
 {
+    void *buffer;
+    int spawner;
+    struct spate *concrete_self;
+
+    concrete_self = (struct spate *)bsal_actor_concrete_actor(self);
+    buffer = bsal_message_buffer(message);
+
+    bsal_vector_unpack(&concrete_self->graph_stores, buffer);
+
+    printf("%s/%d has %d graph stores\n",
+                    bsal_actor_script_name(self),
+                    bsal_actor_name(self),
+                    (int)bsal_vector_size(&concrete_self->graph_stores));
+
+    spawner = bsal_actor_get_spawner(self, &concrete_self->initial_actors);
+
+    concrete_self->dummy_walker = BSAL_ACTOR_SPAWNING_IN_PROGRESS;
+
+    bsal_actor_add_route_with_condition(self, BSAL_ACTOR_SPAWN_REPLY,
+                    spate_spawn_reply_dummy_walker,
+                    &concrete_self->dummy_walker, BSAL_ACTOR_SPAWNING_IN_PROGRESS);
+
+    bsal_actor_send_int(self, spawner, BSAL_ACTOR_SPAWN, BSAL_ASSEMBLY_DUMMY_WALKER_SCRIPT);
+
+}
+
+void spate_spawn_reply_dummy_walker(struct bsal_actor *self, struct bsal_message *message)
+{
+    struct spate *concrete_self;
+
+    concrete_self = (struct spate *)bsal_actor_concrete_actor(self);
+
+    bsal_message_unpack_int(message, 0, &concrete_self->dummy_walker);
+
+    bsal_actor_add_route_with_source(self, BSAL_ACTOR_START_REPLY,
+                    spate_start_reply_dummy_walker,
+                    concrete_self->dummy_walker);
+
+    bsal_actor_send_vector(self, concrete_self->dummy_walker,
+                    BSAL_ACTOR_START,
+                    &concrete_self->graph_stores);
+}
+
+void spate_start_reply_dummy_walker(struct bsal_actor *self, struct bsal_message *message)
+{
+    bsal_actor_send_reply_empty(self, BSAL_ACTOR_ASK_TO_STOP);
+
     spate_stop(self);
 }
 

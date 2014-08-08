@@ -21,10 +21,19 @@
 #define BSAL_ASSEMBLY_GET_SUMMARY 0x00000f4c
 #define BSAL_ASSEMBLY_GET_SUMMARY_REPLY 0x00003991
 
+#define BSAL_ASSEMBLY_GET_KMER_LENGTH 0x00005d66
+#define BSAL_ASSEMBLY_GET_KMER_LENGTH_REPLY 0x00000d22
+
 /*
  * Enable arc registration with arc actors
  */
 #define BSAL_ASSEMBLY_ADD_ARCS
+
+#define BSAL_ASSEMBLY_GET_STARTING_VERTEX 0x000019bb
+#define BSAL_ASSEMBLY_GET_STARTING_VERTEX_REPLY 0x00006957
+
+#define BSAL_ASSEMBLY_GET_VERTEX 0x0000491e
+#define BSAL_ASSEMBLY_GET_VERTEX_REPLY 0x00007724
 
 struct bsal_assembly_arc;
 
@@ -87,5 +96,12 @@ void bsal_assembly_graph_store_add_arc(struct bsal_actor *self,
 void bsal_assembly_graph_store_get_summary(struct bsal_actor *self, struct bsal_message *message);
 
 void bsal_assembly_graph_store_yield_reply_summary(struct bsal_actor *self, struct bsal_message *message);
+
+/*
+ * This is the route for BSAL_ASSEMBLY_GET_VERTEX.
+ * It returns a packed bsal_assembly_vertex.
+ */
+void bsal_assembly_graph_store_get_vertex(struct bsal_actor *self, struct bsal_message *message);
+void bsal_assembly_graph_store_get_starting_vertex(struct bsal_actor *self, struct bsal_message *message);
 
 #endif

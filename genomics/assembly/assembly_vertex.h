@@ -20,6 +20,8 @@ struct bsal_assembly_vertex {
 };
 
 void bsal_assembly_vertex_init(struct bsal_assembly_vertex *self);
+void bsal_assembly_vertex_init_copy(struct bsal_assembly_vertex *self,
+                struct bsal_assembly_vertex *vertex);
 void bsal_assembly_vertex_destroy(struct bsal_assembly_vertex *self);
 
 int bsal_assembly_vertex_coverage_depth(struct bsal_assembly_vertex *self);
@@ -36,5 +38,12 @@ void bsal_assembly_vertex_delete_parent(struct bsal_assembly_vertex *self, int s
 int bsal_assembly_vertex_get_parent(struct bsal_assembly_vertex *self, int index);
 
 void bsal_assembly_vertex_print(struct bsal_assembly_vertex *self);
+
+int bsal_assembly_vertex_pack_size(struct bsal_assembly_vertex *self);
+int bsal_assembly_vertex_pack(struct bsal_assembly_vertex *self, void *buffer);
+int bsal_assembly_vertex_unpack(struct bsal_assembly_vertex *self, void *buffer);
+int bsal_assembly_vertex_pack_unpack(struct bsal_assembly_vertex *self, int operation, void *buffer);
+
+void bsal_assembly_vertex_invert_arcs(struct bsal_assembly_vertex *self);
 
 #endif

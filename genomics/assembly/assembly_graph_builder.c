@@ -739,7 +739,8 @@ void bsal_assembly_graph_builder_tell_source(struct bsal_actor *self)
     /*
      * Tell somebody about it
      */
-    bsal_actor_send_empty(self, concrete_self->source, BSAL_ACTOR_START_REPLY);
+    bsal_actor_send_vector(self, concrete_self->source, BSAL_ACTOR_START_REPLY,
+                    &concrete_self->graph_stores);
 }
 
 int bsal_assembly_graph_builder_get_kmer_length(struct bsal_actor *self)

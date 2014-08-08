@@ -51,4 +51,13 @@ int bsal_assembly_connectivity_get_element(struct bsal_assembly_connectivity *se
 
 void bsal_assembly_connectivity_print(struct bsal_assembly_connectivity *self);
 
+int bsal_assembly_connectivity_pack_size(struct bsal_assembly_connectivity *self);
+int bsal_assembly_connectivity_pack(struct bsal_assembly_connectivity *self, void *buffer);
+int bsal_assembly_connectivity_unpack(struct bsal_assembly_connectivity *self, void *buffer);
+int bsal_assembly_connectivity_pack_unpack(struct bsal_assembly_connectivity *self, int operation, void *buffer);
+
+void bsal_assembly_connectivity_init_copy(struct bsal_assembly_connectivity *self,
+                struct bsal_assembly_connectivity *connectivity);
+void bsal_assembly_connectivity_invert_arcs(struct bsal_assembly_connectivity *self);
+
 #endif

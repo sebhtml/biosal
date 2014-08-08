@@ -23,6 +23,9 @@
  */
 struct spate {
     struct bsal_vector initial_actors;
+    struct bsal_vector graph_stores;
+
+    int dummy_walker;
 
     int is_leader;
     struct bsal_timer timer;
@@ -74,5 +77,8 @@ void spate_set_producers_reply(struct bsal_actor *self, struct bsal_message *mes
 void spate_help(struct bsal_actor *self);
 void spate_stop(struct bsal_actor *self);
 int spate_must_print_help(struct bsal_actor *self);
+
+void spate_spawn_reply_dummy_walker(struct bsal_actor *self, struct bsal_message *message);
+void spate_start_reply_dummy_walker(struct bsal_actor *self, struct bsal_message *message);
 
 #endif

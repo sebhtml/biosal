@@ -4,6 +4,7 @@
 #include "assembly_arc.h"
 
 #include <core/helpers/bitmap.h>
+#include <core/system/packer.h>
 
 #include <genomics/data/dna_codec.h>
 
@@ -204,4 +205,87 @@ void bsal_assembly_connectivity_print(struct bsal_assembly_connectivity *self)
     }
 
     printf("]");
+}
+
+int bsal_assembly_connectivity_pack_size(struct bsal_assembly_connectivity *self)
+{
+    return bsal_assembly_connectivity_pack_unpack(self, BSAL_PACKER_OPERATION_DRY_RUN, NULL);
+}
+
+int bsal_assembly_connectivity_pack(struct bsal_assembly_connectivity *self, void *buffer)
+{
+    return bsal_assembly_connectivity_pack_unpack(self, BSAL_PACKER_OPERATION_PACK, buffer);
+}
+
+int bsal_assembly_connectivity_unpack(struct bsal_assembly_connectivity *self, void *buffer)
+{
+    return bsal_assembly_connectivity_pack_unpack(self, BSAL_PACKER_OPERATION_UNPACK, buffer);
+}
+
+int bsal_assembly_connectivity_pack_unpack(struct bsal_assembly_connectivity *self, int operation, void *buffer)
+{
+    int bytes;
+    struct bsal_packer packer;
+
+    bsal_packer_init(&packer, operation, buffer);
+
+    bsal_packer_work(&packer, &self->bitmap, sizeof(self->bitmap));
+
+    bytes = bsal_packer_worked_bytes(&packer);
+
+    bsal_packer_destroy(&packer);
+
+    return bytes;
+}
+
+void bsal_assembly_connectivity_init_copy(struct bsal_assembly_connectivity *self,
+                struct bsal_assembly_connectivity *connectivity)
+{
+    self->bitmap = connectivity->bitmap;
+}
+
+void bsal_assembly_connectivity_invert_arcs(struct bsal_assembly_connectivity *self)
+{
+    struct bsal_assembly_connectivity copy;
+    int parents;
+    int children;
+    int i;
+    int code;
+    int new_code;
+
+    bsal_assembly_connectivity_init_copy(&copy, self);
+
+    /*
+     * Remove all links
+     */
+    bsal_assembly_connectivity_destroy(self);
+    bsal_assembly_connectivity_init(self);
+
+    /*
+     * Parents become children
+     */
+    parents = bsal_assembly_connectivity_parent_count(&copy);
+
+    for (i = 0; i < parents; i++) {
+        code = bsal_assembly_connectivity_get_parent(&copy, i);
+
+        new_code = bsal_dna_codec_get_complement(code);
+
+        bsal_assembly_connectivity_add_child(self, new_code);
+    }
+
+    /*
+     * Children become parents.
+     */
+    children = bsal_assembly_connectivity_child_count(&copy);
+
+    for (i = 0; i < children; i++) {
+        code = bsal_assembly_connectivity_get_child(&copy, i);
+
+        new_code = bsal_dna_codec_get_complement(code);
+
+        bsal_assembly_connectivity_add_parent(self, new_code);
+    }
+
+    bsal_assembly_connectivity_destroy(&copy);
 }
