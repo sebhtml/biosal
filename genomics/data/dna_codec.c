@@ -395,9 +395,12 @@ int bsal_dna_codec_get_nucleotide_code(struct bsal_dna_codec *codec, void *encod
     int bit_index_in_byte;
     uint64_t byte_value;
     uint64_t code;
+    char symbol;
 
     if (!codec->use_two_bit_encoding) {
-        return ((char *)encoded_sequence)[index];
+        symbol = ((char *)encoded_sequence)[index];
+
+        return bsal_dna_codec_get_code(symbol);
     }
 
     bit_index = index * BITS_PER_NUCLEOTIDE;

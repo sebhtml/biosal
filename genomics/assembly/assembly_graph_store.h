@@ -82,7 +82,7 @@ void bsal_assembly_graph_store_push_kmer_block(struct bsal_actor *self, struct b
 void bsal_assembly_graph_store_push_arc_block(struct bsal_actor *self, struct bsal_message *message);
 
 void bsal_assembly_graph_store_add_arc(struct bsal_actor *self,
-                struct bsal_assembly_arc *arc);
+                struct bsal_assembly_arc *arc, char *sequence);
 
 void bsal_assembly_graph_store_get_summary(struct bsal_actor *self, struct bsal_message *message);
 

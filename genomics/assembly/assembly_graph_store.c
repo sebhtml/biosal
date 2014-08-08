@@ -523,9 +523,12 @@ void bsal_assembly_graph_store_push_arc_block(struct bsal_actor *self, struct bs
     struct bsal_assembly_arc *arc;
     struct bsal_memory_pool *ephemeral_memory;
     struct bsal_vector *input_arcs;
+    char *sequence;
 
     concrete_self = (struct bsal_assembly_graph_store *)bsal_actor_concrete_actor(self);
     ephemeral_memory = bsal_actor_get_ephemeral_memory(self);
+
+    sequence = bsal_memory_pool_allocate(ephemeral_memory, concrete_self->kmer_length + 1);
 
     ++concrete_self->received_arc_block_count;
 
@@ -533,10 +536,10 @@ void bsal_assembly_graph_store_push_arc_block(struct bsal_actor *self, struct bs
     buffer = bsal_message_buffer(message);
 
     bsal_assembly_arc_block_init(&input_block, ephemeral_memory, concrete_self->kmer_length,
-                    &concrete_self->storage_codec);
+                    &concrete_self->transport_codec);
 
     bsal_assembly_arc_block_unpack(&input_block, buffer, concrete_self->kmer_length,
-                    &concrete_self->storage_codec, ephemeral_memory);
+                    &concrete_self->transport_codec, ephemeral_memory);
 
     input_arcs = bsal_assembly_arc_block_get_arcs(&input_block);
 
@@ -546,7 +549,7 @@ void bsal_assembly_graph_store_push_arc_block(struct bsal_actor *self, struct bs
         arc = bsal_vector_at(input_arcs, i);
 
 #ifdef BSAL_ASSEMBLY_ADD_ARCS
-        bsal_assembly_graph_store_add_arc(self, arc);
+        bsal_assembly_graph_store_add_arc(self, arc, sequence);
 #endif
 
         ++concrete_self->received_arc_count;
@@ -560,13 +563,16 @@ void bsal_assembly_graph_store_push_arc_block(struct bsal_actor *self, struct bs
      */
 
     bsal_actor_send_reply_empty(self, BSAL_ASSEMBLY_PUSH_ARC_BLOCK_REPLY);
+
+    bsal_memory_pool_free(ephemeral_memory, sequence);
 }
 
 void bsal_assembly_graph_store_add_arc(struct bsal_actor *self,
-                struct bsal_assembly_arc *arc)
+                struct bsal_assembly_arc *arc, char *sequence)
 {
     struct bsal_assembly_graph_store *concrete_self;
     struct bsal_dna_kmer *source;
+    struct bsal_dna_kmer real_source;
     int destination;
     int type;
     struct bsal_assembly_vertex *vertex;
@@ -591,7 +597,7 @@ void bsal_assembly_graph_store_add_arc(struct bsal_actor *self,
     if (verbose) {
         printf("DEBUG BioSAL::GraphStore::AddArc\n");
 
-        bsal_assembly_arc_print(arc, concrete_self->kmer_length, &concrete_self->storage_codec,
+        bsal_assembly_arc_print(arc, concrete_self->kmer_length, &concrete_self->transport_codec,
                     ephemeral_memory);
     }
 #endif
@@ -600,7 +606,13 @@ void bsal_assembly_graph_store_add_arc(struct bsal_actor *self,
     destination = bsal_assembly_arc_destination(arc);
     type = bsal_assembly_arc_type(arc);
 
-    bsal_dna_kmer_pack_store_key(source, key,
+    bsal_dna_kmer_get_sequence(source, sequence, concrete_self->kmer_length,
+                        &concrete_self->transport_codec);
+
+    bsal_dna_kmer_init(&real_source, sequence, &concrete_self->storage_codec,
+                        ephemeral_memory);
+
+    bsal_dna_kmer_pack_store_key(&real_source, key,
                         concrete_self->kmer_length, &concrete_self->storage_codec,
                         ephemeral_memory);
 
@@ -640,6 +652,8 @@ void bsal_assembly_graph_store_add_arc(struct bsal_actor *self,
 #endif
 
     bsal_memory_pool_free(ephemeral_memory, key);
+
+    bsal_dna_kmer_destroy(&real_source, ephemeral_memory);
 }
 
 void bsal_assembly_graph_store_get_summary(struct bsal_actor *self, struct bsal_message *message)
