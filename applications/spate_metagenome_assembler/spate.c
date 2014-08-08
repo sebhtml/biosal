@@ -40,6 +40,8 @@ void spate_init(struct bsal_actor *self)
     concrete_self->assembly_graph = BSAL_ACTOR_NOBODY;
     concrete_self->assembly_graph_builder = BSAL_ACTOR_NOBODY;
 
+    bsal_timer_init(&concrete_self->timer);
+
     bsal_actor_add_route(self,
                     BSAL_ACTOR_START, spate_start);
     bsal_actor_add_route(self,
@@ -110,6 +112,8 @@ void spate_destroy(struct bsal_actor *self)
 
     concrete_self = (struct spate *)bsal_actor_concrete_actor(self);
 
+    bsal_timer_destroy(&concrete_self->timer);
+
     concrete_self->input_controller = BSAL_ACTOR_NOBODY;
     concrete_self->manager_for_sequence_stores = BSAL_ACTOR_NOBODY;
     concrete_self->assembly_graph = BSAL_ACTOR_NOBODY;
@@ -162,6 +166,8 @@ void spate_start(struct bsal_actor *self, struct bsal_message *message)
         return;
     }
 
+    bsal_timer_start(&concrete_self->timer);
+
     spawner = bsal_actor_get_spawner(self, &concrete_self->initial_actors);
 
     bsal_actor_send_int(self, spawner, BSAL_ACTOR_SPAWN, BSAL_INPUT_CONTROLLER_SCRIPT);
@@ -198,6 +204,9 @@ void spate_ask_to_stop(struct bsal_actor *self, struct bsal_message *message)
                         BSAL_ACTOR_ASK_TO_STOP);
         bsal_actor_send_empty(self, concrete_self->manager_for_sequence_stores,
                         BSAL_ACTOR_ASK_TO_STOP);
+
+        bsal_timer_stop(&concrete_self->timer);
+        bsal_timer_print_with_description(&concrete_self->timer, "Actor computation");
     }
 }
 

@@ -25,7 +25,7 @@ struct spate {
     struct bsal_vector initial_actors;
 
     int is_leader;
-
+    struct bsal_timer timer;
 
     /*
      * Children
