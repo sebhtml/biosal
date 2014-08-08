@@ -80,13 +80,9 @@ struct bsal_worker {
 
 #ifdef BSAL_NODE_INJECT_CLEAN_WORKER_BUFFERS
     struct bsal_fast_ring injected_clean_outbound_buffers;
-#endif
 
-#ifdef BSAL_NODE_USE_MESSAGE_RECYCLING
-    /*
-     * The node pushes buffers to release on this ring
-     */
-    struct bsal_fast_ring outbound_buffers;
+    struct bsal_fast_ring clean_message_ring_for_triage;
+    struct bsal_ring_queue clean_message_queue_for_triage;
 #endif
 
     struct bsal_scheduling_queue scheduling_queue;
@@ -203,5 +199,7 @@ void bsal_worker_check_production(struct bsal_worker *self, int value, int name)
  */
 int bsal_worker_inject_clean_outbound_buffer(struct bsal_worker *self, void *buffer);
 int bsal_worker_fetch_clean_outbound_buffer(struct bsal_worker *self, void **buffer);
+int bsal_worker_enqueue_message_for_triage(struct bsal_worker *worker, struct bsal_message *message);
+int bsal_worker_dequeue_message_for_triage(struct bsal_worker *worker, struct bsal_message *message);
 
 #endif

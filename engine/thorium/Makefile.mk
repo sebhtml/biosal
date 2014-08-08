@@ -11,6 +11,7 @@ THORIUM_OBJECTS += engine/thorium/worker_pool.o
 THORIUM_OBJECTS += engine/thorium/thorium_engine.o
 THORIUM_OBJECTS += engine/thorium/dispatcher.o
 THORIUM_OBJECTS += engine/thorium/route.o
+THORIUM_OBJECTS += engine/thorium/worker_buffer.o
 
 #  scheduler system
 THORIUM_OBJECTS += engine/thorium/scheduler/migration.o

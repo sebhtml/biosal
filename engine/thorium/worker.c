@@ -90,14 +90,18 @@ void bsal_worker_init(struct bsal_worker *worker, int name, struct bsal_node *no
     bsal_fast_ring_init(&worker->actors_to_schedule, capacity, sizeof(struct bsal_actor *));
 
 #ifdef BSAL_NODE_INJECT_CLEAN_WORKER_BUFFERS
-    injected_buffer_ring_size = 1;
+    injected_buffer_ring_size = capacity;
     bsal_fast_ring_init(&worker->injected_clean_outbound_buffers,
                     injected_buffer_ring_size, sizeof(void *));
+
+    bsal_fast_ring_init(&worker->clean_message_ring_for_triage,
+                    injected_buffer_ring_size,
+                    sizeof(struct bsal_message));
+
+    bsal_ring_queue_init(&worker->clean_message_queue_for_triage,
+                    sizeof(struct bsal_message));
 #endif
 
-#ifdef BSAL_NODE_USE_MESSAGE_RECYCLING
-    bsal_fast_ring_init(&worker->outbound_buffers, capacity, sizeof(void *));
-#endif
 
     bsal_scheduling_queue_init(&worker->scheduling_queue);
     bsal_map_init(&worker->actors, sizeof(int), sizeof(int));
@@ -155,11 +159,11 @@ void bsal_worker_destroy(struct bsal_worker *worker)
 
 #ifdef BSAL_NODE_INJECT_CLEAN_WORKER_BUFFERS
     bsal_fast_ring_destroy(&worker->injected_clean_outbound_buffers);
+
+    bsal_fast_ring_destroy(&worker->clean_message_ring_for_triage);
+    bsal_ring_queue_destroy(&worker->clean_message_queue_for_triage);
 #endif
 
-#ifdef BSAL_NODE_USE_MESSAGE_RECYCLING
-    bsal_fast_ring_destroy(&worker->outbound_buffers);
-#endif
     bsal_scheduling_queue_destroy(&worker->scheduling_queue);
     bsal_fast_ring_destroy(&worker->outbound_message_queue);
     bsal_ring_queue_destroy(&worker->outbound_message_queue_buffer);
@@ -634,7 +638,6 @@ void bsal_worker_print_actors(struct bsal_worker *worker, struct bsal_scheduler 
     int node_name;
     int worker_name;
 
-
     node_name = bsal_node_name(worker->node);
     worker_name = worker->name;
 
@@ -939,29 +942,35 @@ void bsal_worker_free_message(struct bsal_worker *worker, struct bsal_message *m
     buffer = bsal_message_buffer(message);
     source_worker = bsal_message_get_worker(message);
 
-    if (1 || source_worker == worker->name) {
+    if (source_worker == worker->name) {
 
         /* This is from the current worker
          */
         bsal_memory_pool_free(&worker->outbound_message_memory_pool, buffer);
-
-#if 0
-    } else if (source_worker >= 0) {
-
-        bsal_message_recycle(message);
-
-        bsal_worker_enqueue_message(worker, message);
-#endif
 
     } else {
 
         /* This is from another fellow local worker
          * or from another BIOSAL node altogether.
          */
-        bsal_message_recycle(message);
 
-        bsal_worker_enqueue_message(worker, message);
+        bsal_worker_enqueue_message_for_triage(worker, message);
     }
+}
+
+int bsal_worker_enqueue_message_for_triage(struct bsal_worker *worker, struct bsal_message *message)
+{
+    if (!bsal_fast_ring_push_from_producer(&worker->clean_message_ring_for_triage, message)) {
+
+        bsal_ring_queue_enqueue(&worker->clean_message_queue_for_triage, message);
+    }
+
+    return 1;
+}
+
+int bsal_worker_dequeue_message_for_triage(struct bsal_worker *worker, struct bsal_message *message)
+{
+    return bsal_fast_ring_pop_from_consumer(&worker->clean_message_ring_for_triage, message);
 }
 
 /* Just return the number of queued messages.
@@ -1124,6 +1133,18 @@ void bsal_worker_run(struct bsal_worker *worker)
     }
 #endif
 
+    /*
+     * Transfer messages for triage
+     */
+
+    if (bsal_ring_queue_dequeue(&worker->clean_message_queue_for_triage, &other_message)) {
+
+        if (!bsal_fast_ring_push_from_producer(&worker->clean_message_ring_for_triage, &other_message)) {
+
+            bsal_ring_queue_enqueue(&worker->clean_message_queue_for_triage, &other_message);
+        }
+    }
+
     bsal_worker_unlock(worker);
 }
 
@@ -1181,8 +1202,6 @@ void bsal_worker_work(struct bsal_worker *worker, struct bsal_actor *actor)
 
     bsal_actor_work(actor);
 
-    bsal_actor_set_worker(actor, NULL);
-
     /* Free ephemeral memory
      */
     bsal_memory_pool_free_all(&worker->ephemeral_memory);
@@ -1195,6 +1214,8 @@ void bsal_worker_work(struct bsal_worker *worker, struct bsal_actor *actor)
 
         bsal_node_notify_death(worker->node, actor);
     }
+
+    bsal_actor_set_worker(actor, NULL);
 
 #ifdef BSAL_WORKER_DEBUG_20140601
     if (worker->debug) {

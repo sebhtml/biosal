@@ -22,7 +22,6 @@ void bsal_message_init(struct bsal_message *message, int tag, int count,
     message->routing_destination = -1;
 
     message->worker = -1;
-    message->is_recycled = 0;
 }
 
 void bsal_message_destroy(struct bsal_message *message)
@@ -161,12 +160,4 @@ int bsal_message_get_worker(struct bsal_message *message)
     return message->worker;
 }
 
-int bsal_message_is_recycled(struct bsal_message *message)
-{
-    return message->is_recycled;
-}
 
-void bsal_message_recycle(struct bsal_message *message)
-{
-    message->is_recycled = 1;
-}

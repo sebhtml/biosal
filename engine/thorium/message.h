@@ -27,7 +27,6 @@ struct bsal_message {
     int routing_source;
     int routing_destination;
     int worker;
-    int is_recycled;
 };
 
 void bsal_message_init(struct bsal_message *self, int tag, int count, void *buffer);
@@ -65,6 +64,5 @@ void bsal_message_set_worker(struct bsal_message *self, int worker);
 int bsal_message_get_worker(struct bsal_message *self);
 
 int bsal_message_is_recycled(struct bsal_message *self);
-void bsal_message_recycle(struct bsal_message *self);
 
 #endif

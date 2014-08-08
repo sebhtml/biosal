@@ -7,6 +7,8 @@
 
 #include "node.h"
 
+#include "worker_buffer.h"
+
 #include "transport/active_request.h"
 
 #include <core/structures/vector.h>
@@ -69,6 +71,8 @@ void bsal_node_init(struct bsal_node *node, int *argc, char ***argv)
     char *argument;
     int processor;
 
+    node->worker_for_triage = 0;
+
     /*
     printf("Booting node\n");
     */
@@ -110,7 +114,7 @@ void bsal_node_init(struct bsal_node *node, int *argc, char ***argv)
     node->nodes = bsal_transport_get_size(&node->transport);
 
 #ifdef BSAL_NODE_INJECT_CLEAN_WORKER_BUFFERS
-    bsal_ring_queue_init(&node->clean_outbound_buffers_to_inject, sizeof(struct bsal_active_request));
+    bsal_ring_queue_init(&node->clean_outbound_buffers_to_inject, sizeof(struct bsal_worker_buffer));
 #endif
 
     node->use_transport = 1;
@@ -1823,6 +1827,8 @@ void bsal_node_run_loop(struct bsal_node *node)
             bsal_node_test_requests(node);
         }
 
+        bsal_node_do_message_triage(node);
+
 #ifdef BSAL_NODE_DEBUG_RUN
         if (node->alive_actors == 0) {
             printf("BSAL_NODE_DEBUG_RUN credits: %d\n", credits);
@@ -1875,7 +1881,7 @@ void bsal_node_send_message(struct bsal_node *node)
 
 void bsal_node_test_requests(struct bsal_node *node)
 {
-    struct bsal_active_request active_request;
+    struct bsal_worker_buffer worker_buffer;
     int requests;
     int requests_to_test;
     int i;
@@ -1896,11 +1902,9 @@ void bsal_node_test_requests(struct bsal_node *node)
     i = 0;
     while (i < requests_to_test) {
         if (bsal_transport_test_requests(&node->transport,
-                            &active_request)) {
+                            &worker_buffer)) {
 
-            bsal_node_free_active_request(node, &active_request);
-
-            bsal_active_request_destroy(&active_request);
+            bsal_node_free_worker_buffer(node, &worker_buffer);
         }
 
         ++i;
@@ -1909,18 +1913,18 @@ void bsal_node_test_requests(struct bsal_node *node)
 #ifdef BSAL_NODE_INJECT_CLEAN_WORKER_BUFFERS
     /* Check if there are queued buffers to give to workers
      */
-    if (bsal_ring_queue_dequeue(&node->clean_outbound_buffers_to_inject, &active_request)) {
+    if (bsal_ring_queue_dequeue(&node->clean_outbound_buffers_to_inject, &worker_buffer)) {
 
             /*
         printf("INJECT Dequeued buffer to inject\n");
         */
-        bsal_node_free_active_request(node, &active_request);
+        bsal_node_free_worker_buffer(node, &worker_buffer);
     }
 #endif
 }
 
-void bsal_node_free_active_request(struct bsal_node *node,
-                struct bsal_active_request *active_request)
+void bsal_node_free_worker_buffer(struct bsal_node *node,
+                struct bsal_worker_buffer *worker_buffer)
 {
     void *buffer;
 
@@ -1929,11 +1933,10 @@ void bsal_node_free_active_request(struct bsal_node *node,
     struct bsal_worker *worker;
 #endif
 
-    buffer = bsal_active_request_buffer(active_request);
-
+    buffer = bsal_worker_buffer_get_buffer(worker_buffer);
 
 #ifdef BSAL_NODE_INJECT_CLEAN_WORKER_BUFFERS
-    worker_name = bsal_active_request_get_worker(active_request);
+    worker_name = bsal_worker_buffer_get_worker(worker_buffer);
 
     /* This a worker buffer.
      * Otherwise, this is a Thorium node for startup.
@@ -1954,7 +1957,7 @@ void bsal_node_free_active_request(struct bsal_node *node,
             /* If the ring is full, queue it locally
              * and try again later
              */
-            bsal_ring_queue_enqueue(&node->clean_outbound_buffers_to_inject, active_request);
+            bsal_ring_queue_enqueue(&node->clean_outbound_buffers_to_inject, worker_buffer);
         }
 
         return;
@@ -1972,3 +1975,35 @@ void bsal_node_free_active_request(struct bsal_node *node,
     bsal_memory_free(buffer);
 }
 
+void bsal_node_do_message_triage(struct bsal_node *self)
+{
+    int worker_count;
+    struct bsal_worker *worker;
+    struct bsal_message message;
+    void *buffer;
+    int worker_name;
+    struct bsal_worker_buffer worker_buffer;
+
+    worker_count = bsal_worker_pool_worker_count(&self->worker_pool);
+
+    worker = bsal_worker_pool_get_worker(&self->worker_pool, self->worker_for_triage);
+
+    ++self->worker_for_triage;
+
+    if (self->worker_for_triage == worker_count) {
+        self->worker_for_triage = 0;
+    }
+
+    if (!bsal_worker_dequeue_message_for_triage(worker, &message)) {
+        return;
+    }
+
+    worker_name = bsal_message_get_worker(&message);
+    buffer = bsal_message_buffer(&message);
+
+    bsal_worker_buffer_init(&worker_buffer, worker_name, buffer);
+
+    bsal_node_free_worker_buffer(self, &worker_buffer);
+
+    bsal_worker_buffer_destroy(&worker_buffer);
+}

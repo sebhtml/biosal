@@ -15,6 +15,7 @@
 #define BSAL_TRANSPORT_MOCK_IDENTIFIER (-1)
 
 struct bsal_active_request;
+struct bsal_worker_buffer;
 
 /*
  * This is the transport layer in
@@ -60,7 +61,7 @@ int bsal_transport_get_size(struct bsal_transport *self);
 int bsal_transport_get_identifier(struct bsal_transport *self);
 const char *bsal_transport_get_name(struct bsal_transport *self);
 
-int bsal_transport_test_requests(struct bsal_transport *self, struct bsal_active_request *active_request);
+int bsal_transport_test_requests(struct bsal_transport *self, struct bsal_worker_buffer *worker_buffer);
 int bsal_transport_get_active_request_count(struct bsal_transport *self);
 
 int bsal_transport_dequeue_active_request(struct bsal_transport *self, struct bsal_active_request *active_request);

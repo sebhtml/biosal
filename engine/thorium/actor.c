@@ -165,12 +165,11 @@ void bsal_actor_destroy(struct bsal_actor *self)
     bsal_map_destroy(&self->received_messages);
     bsal_map_destroy(&self->sent_messages);
 
-    while (bsal_queue_dequeue(&self->enqueued_messages, &message)) {
-        buffer = bsal_message_buffer(&message);
+    BSAL_DEBUGGER_ASSERT(self->worker != NULL);
 
-        if (buffer != NULL) {
-            bsal_memory_free(buffer);
-        }
+    while (bsal_queue_dequeue(&self->enqueued_messages, &message)) {
+
+        bsal_worker_free_message(self->worker, &message);
     }
 
     bsal_queue_destroy(&self->enqueued_messages);

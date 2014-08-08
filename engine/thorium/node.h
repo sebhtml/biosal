@@ -52,6 +52,7 @@
 */
 
 struct bsal_script;
+struct bsal_worker_buffer;
 
 /*
  * This is the Thorium distributed actor engine developed
@@ -91,6 +92,8 @@ struct bsal_node {
 
 #ifdef BSAL_NODE_INJECT_CLEAN_WORKER_BUFFERS
     struct bsal_ring_queue clean_outbound_buffers_to_inject;
+
+    int worker_for_triage;
 #endif
 
     int started;
@@ -254,11 +257,13 @@ void bsal_node_reset_actor_counters(struct bsal_node *self);
 int64_t bsal_node_get_counter(struct bsal_node *self, int counter);
 void bsal_node_test_requests(struct bsal_node *self);
 
-void bsal_node_free_active_request(struct bsal_node *self,
-                struct bsal_active_request *active_request);
+void bsal_node_free_worker_buffer(struct bsal_node *self,
+                struct bsal_worker_buffer *worker_buffer);
 
 void bsal_node_send_to_actor(struct bsal_node *self, int name, struct bsal_message *message);
 void bsal_node_check_efficiency(struct bsal_node *self);
 int bsal_node_send_system(struct bsal_node *self, struct bsal_message *message);
+
+void bsal_node_do_message_triage(struct bsal_node *self);
 
 #endif

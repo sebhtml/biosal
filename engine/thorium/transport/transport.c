@@ -3,6 +3,7 @@
 
 #include "active_request.h"
 
+#include <engine/thorium/worker_buffer.h>
 #include <engine/thorium/message.h>
 #include <engine/thorium/node.h>
 
@@ -98,17 +99,26 @@ int bsal_transport_get_size(struct bsal_transport *self)
     return self->size;
 }
 
-int bsal_transport_test_requests(struct bsal_transport *self, struct bsal_active_request *active_request)
+int bsal_transport_test_requests(struct bsal_transport *self, struct bsal_worker_buffer *worker_buffer)
 {
-    if (bsal_ring_queue_dequeue(&self->active_requests, active_request)) {
+    struct bsal_active_request active_request;
+    void *buffer;
+    int worker;
 
-        if (bsal_active_request_test(active_request)) {
+    if (bsal_ring_queue_dequeue(&self->active_requests, &active_request)) {
+
+        if (bsal_active_request_test(&active_request)) {
+
+            worker = bsal_active_request_get_worker(&active_request);
+            buffer = bsal_active_request_buffer(&active_request);
+
+            bsal_worker_buffer_init(worker_buffer, worker, buffer);
 
             return 1;
 
         /* Just put it back in the FIFO for later */
         } else {
-            bsal_ring_queue_enqueue(&self->active_requests, active_request);
+            bsal_ring_queue_enqueue(&self->active_requests, &active_request);
 
             return 0;
         }
