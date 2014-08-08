@@ -2,6 +2,7 @@
 #include "assembly_dummy_walker.h"
 
 #include "assembly_graph_store.h"
+#include "assembly_vertex.h"
 
 #include <genomics/data/dna_kmer.h>
 #include <genomics/data/dna_codec.h>
@@ -31,6 +32,8 @@ void bsal_assembly_dummy_walker_init(struct bsal_actor *self)
     bsal_actor_add_route(self, BSAL_ACTOR_START,
                     bsal_assembly_dummy_walker_start);
 
+    bsal_actor_add_route(self, BSAL_ASSEMBLY_GET_VERTEX_REPLY,
+                    bsal_assembly_dummy_walker_get_vertex_reply);
     /*
      * Configure the codec.
      */
@@ -106,6 +109,7 @@ void bsal_assembly_dummy_walker_get_starting_vertex_reply(struct bsal_actor *sel
     void *buffer;
     struct bsal_memory_pool *ephemeral_memory;
     int count;
+    struct bsal_message new_message;
 
     count = bsal_message_count(message);
     buffer = bsal_message_buffer(message);
@@ -123,6 +127,28 @@ void bsal_assembly_dummy_walker_get_starting_vertex_reply(struct bsal_actor *sel
     bsal_dna_kmer_print(&kmer, concrete_self->kmer_length, &concrete_self->codec,
                     ephemeral_memory);
     bsal_dna_kmer_destroy(&kmer, ephemeral_memory);
+
+    bsal_message_init(&new_message, BSAL_ASSEMBLY_GET_VERTEX, count, buffer);
+    bsal_actor_send_reply(self, &new_message);
+    bsal_message_destroy(&new_message);
+}
+
+void bsal_assembly_dummy_walker_get_vertex_reply(struct bsal_actor *self, struct bsal_message *message)
+{
+    void *buffer;
+    struct bsal_assembly_dummy_walker *concrete_self;
+    struct bsal_memory_pool *ephemeral_memory;
+    struct bsal_assembly_vertex vertex;
+
+    buffer = bsal_message_buffer(message);
+    concrete_self = (struct bsal_assembly_dummy_walker *)bsal_actor_concrete_actor(self);
+    ephemeral_memory = bsal_actor_get_ephemeral_memory(self);
+
+    bsal_assembly_vertex_unpack(&vertex, buffer);
+
+    printf("Connectivity: \n");
+
+    bsal_assembly_vertex_print(&vertex);
 
     bsal_actor_send_to_supervisor_empty(self, BSAL_ACTOR_START_REPLY);
 }

@@ -25,5 +25,6 @@ void bsal_assembly_dummy_walker_receive(struct bsal_actor *self, struct bsal_mes
 
 void bsal_assembly_dummy_walker_get_starting_vertex_reply(struct bsal_actor *self, struct bsal_message *message);
 void bsal_assembly_dummy_walker_start(struct bsal_actor *self, struct bsal_message *message);
+void bsal_assembly_dummy_walker_get_vertex_reply(struct bsal_actor *self, struct bsal_message *message);
 
 #endif

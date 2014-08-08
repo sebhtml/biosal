@@ -176,7 +176,7 @@ void bsal_assembly_connectivity_print(struct bsal_assembly_connectivity *self)
 
     printf("Parents: %d", size);
 
-    printf("[");
+    printf(" [");
 
     for (i = 0; i < size; i++) {
 
@@ -193,7 +193,7 @@ void bsal_assembly_connectivity_print(struct bsal_assembly_connectivity *self)
 
     printf("Children: %d", size);
 
-    printf("[");
+    printf(" [");
 
     for (i = 0; i < size; i++) {
 
