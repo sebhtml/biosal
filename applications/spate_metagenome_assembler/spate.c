@@ -206,7 +206,7 @@ void spate_ask_to_stop(struct bsal_actor *self, struct bsal_message *message)
                         BSAL_ACTOR_ASK_TO_STOP);
 
         bsal_timer_stop(&concrete_self->timer);
-        bsal_timer_print_with_description(&concrete_self->timer, "Actor computation");
+        bsal_timer_print_with_description(&concrete_self->timer, "Run actor computation");
     }
 }
 

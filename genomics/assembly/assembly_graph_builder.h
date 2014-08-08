@@ -29,6 +29,7 @@ struct bsal_assembly_graph_builder {
     struct bsal_vector sequence_stores;
     struct bsal_timer timer;
     struct bsal_timer vertex_timer;
+    struct bsal_timer arc_timer;
 
     int source;
 

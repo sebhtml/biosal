@@ -795,10 +795,10 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
             bsal_timer_stop(&concrete_actor->distribution_timer);
 
             bsal_timer_print_with_description(&concrete_actor->distribution_timer,
-                            "Input / Distributing input data");
+                            "Load input / Distribute input data");
 
             bsal_timer_print_with_description(&concrete_actor->input_timer,
-                            "Input");
+                            "Load input");
 
             bsal_actor_send_to_supervisor_empty(actor, BSAL_INPUT_DISTRIBUTE_REPLY);
         }
@@ -958,7 +958,7 @@ void bsal_input_controller_create_stores(struct bsal_actor *actor, struct bsal_m
     bsal_timer_start(&concrete_actor->distribution_timer);
 
     bsal_timer_print_with_description(&concrete_actor->counting_timer,
-                    "Input / Counting input data");
+                    "Load input / Count input data");
 
     printf("DEBUG controller %d: Partition Total: %" PRIu64 ", block_size: %d, blocks: %d\n",
                     bsal_actor_name(actor),
