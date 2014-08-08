@@ -31,6 +31,8 @@ struct bsal_transport {
     int rank;
     int size;
 
+    struct bsal_memory_pool *inbound_message_memory_pool;
+
     struct bsal_pami_transport pami_transport;
     struct bsal_mpi_transport mpi_transport;
 
@@ -48,7 +50,8 @@ struct bsal_transport {
 };
 
 void bsal_transport_init(struct bsal_transport *self, struct bsal_node *node,
-                int *argc, char ***argv);
+                int *argc, char ***argv,
+                struct bsal_memory_pool *inbound_message_memory_pool);
 void bsal_transport_destroy(struct bsal_transport *self);
 int bsal_transport_send(struct bsal_transport *self, struct bsal_message *message);
 int bsal_transport_receive(struct bsal_transport *self, struct bsal_message *message);

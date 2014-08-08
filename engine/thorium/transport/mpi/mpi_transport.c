@@ -7,6 +7,7 @@
 #include <engine/thorium/message.h>
 
 #include <core/system/memory.h>
+#include <core/system/memory_pool.h>
 #include <core/system/debugger.h>
 
 /*
@@ -184,13 +185,14 @@ int bsal_mpi_transport_receive(struct bsal_transport *self, struct bsal_message 
         return 0;
     }
 
-    /* TODO actually allocate (slab allocator) a buffer with count bytes ! */
-    buffer = (char *)bsal_memory_allocate(count * sizeof(char));
+    /* actually allocate (slab allocator) a buffer with count bytes ! */
+    buffer = bsal_memory_pool_allocate(self->inbound_message_memory_pool,
+                    count * sizeof(char));
 
     source = status.MPI_SOURCE;
     tag = status.MPI_TAG;
 
-    /* TODO get return value */
+    /* get return value */
     result = MPI_Recv(buffer, count, concrete_self->datatype, source, tag,
                     concrete_self->comm, &status);
 

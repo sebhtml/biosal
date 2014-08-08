@@ -143,9 +143,22 @@ struct bsal_node {
      */
     struct bsal_lock auto_scaling_lock;
 
+    /*
+     * Memory pool for concrete actors.
+     */
     struct bsal_memory_pool actor_memory_pool;
+
+    /*
+     * Memory pool for inbound messages using the transport
+     * system.
+     */
     struct bsal_memory_pool inbound_message_memory_pool;
-    struct bsal_memory_pool node_message_memory_pool;
+
+    /*
+     * Memory pool for outboud messages that are not allocated by
+     * workers.
+     */
+    struct bsal_memory_pool outbound_message_memory_pool;
 
     struct bsal_queue dead_indices;
 
@@ -213,7 +226,7 @@ void bsal_node_run_loop(struct bsal_node *self);
 void bsal_node_send_message(struct bsal_node *self);
 void bsal_node_notify_death(struct bsal_node *self, struct bsal_actor *actor);
 
-void bsal_node_create_work(struct bsal_node *self, struct bsal_message *message);
+void bsal_node_inject_message_in_pool(struct bsal_node *self, struct bsal_message *message);
 int bsal_node_pull(struct bsal_node *self, struct bsal_message *message);
 
 int bsal_node_worker_count(struct bsal_node *self);

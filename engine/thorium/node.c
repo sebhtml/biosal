@@ -103,12 +103,16 @@ void bsal_node_init(struct bsal_node *node, int *argc, char ***argv)
 
     bsal_memory_pool_init(&node->actor_memory_pool, 2097152);
     bsal_memory_pool_disable(&node->actor_memory_pool);
+
     bsal_memory_pool_init(&node->inbound_message_memory_pool, 2097152);
     bsal_memory_pool_disable(&node->inbound_message_memory_pool);
-    bsal_memory_pool_init(&node->node_message_memory_pool, 2097152);
-    bsal_memory_pool_disable(&node->node_message_memory_pool);
 
-    bsal_transport_init(&node->transport, node, argc, argv);
+    bsal_memory_pool_init(&node->outbound_message_memory_pool, 2097152);
+    bsal_memory_pool_disable(&node->outbound_message_memory_pool);
+
+    bsal_transport_init(&node->transport, node, argc, argv,
+                    &node->inbound_message_memory_pool);
+
     node->provided = bsal_transport_get_provided(&node->transport);
     node->name = bsal_transport_get_rank(&node->transport);
     node->nodes = bsal_transport_get_size(&node->transport);
@@ -332,7 +336,7 @@ void bsal_node_destroy(struct bsal_node *node)
 
     bsal_memory_pool_destroy(&node->actor_memory_pool);
     bsal_memory_pool_destroy(&node->inbound_message_memory_pool);
-    bsal_memory_pool_destroy(&node->node_message_memory_pool);
+    bsal_memory_pool_destroy(&node->outbound_message_memory_pool);
 
     bsal_map_destroy(&node->actor_names);
 
@@ -875,7 +879,7 @@ int bsal_node_receive_system(struct bsal_node *node, struct bsal_message *messag
 #endif
 
             bytes = bsal_vector_pack_size(&node->initial_actors);
-            buffer = bsal_memory_pool_allocate(&node->node_message_memory_pool, bytes);
+            buffer = bsal_memory_pool_allocate(&node->outbound_message_memory_pool, bytes);
             bsal_vector_pack(&node->initial_actors, buffer);
 
             bsal_message_init(&new_message, BSAL_NODE_ADD_INITIAL_ACTORS, bytes, buffer);
@@ -884,7 +888,10 @@ int bsal_node_receive_system(struct bsal_node *node, struct bsal_message *messag
                 bsal_node_send_to_node(node, i, &new_message);
             }
 
-            bsal_memory_pool_free(&node->node_message_memory_pool, buffer);
+            /*
+             * bsal_node_send_to_node does a copy.
+             */
+            bsal_memory_pool_free(&node->outbound_message_memory_pool, buffer);
         }
 
         return 1;
@@ -985,7 +992,7 @@ void bsal_node_send_to_node(struct bsal_node *node, int destination,
      * Since we are sending messages between
      * nodes, these names are faked...
      */
-    new_buffer = bsal_memory_pool_allocate(&node->node_message_memory_pool, new_count);
+    new_buffer = bsal_memory_pool_allocate(&node->outbound_message_memory_pool, new_count);
     memcpy(new_buffer, buffer, count);
 
     /* the metadata size is added by the runtime
@@ -1124,7 +1131,12 @@ void bsal_node_dispatch_message(struct bsal_node *node, struct bsal_message *mes
         buffer = bsal_message_buffer(message);
 
         if (buffer != NULL) {
-            bsal_memory_pool_free(&node->node_message_memory_pool, buffer);
+
+            /*
+             * This is a Thorium core buffer since the workers are not authorized to talk to
+             * the Thorium core.
+             */
+            bsal_memory_pool_free(&node->inbound_message_memory_pool, buffer);
         }
 
         return;
@@ -1133,10 +1145,10 @@ void bsal_node_dispatch_message(struct bsal_node *node, struct bsal_message *mes
     /* otherwise, create work and dispatch work to a worker via
      * the worker pool
      */
-    bsal_node_create_work(node, message);
+    bsal_node_inject_message_in_pool(node, message);
 }
 
-void bsal_node_create_work(struct bsal_node *node, struct bsal_message *message)
+void bsal_node_inject_message_in_pool(struct bsal_node *node, struct bsal_message *message)
 {
     struct bsal_actor *actor;
     int name;
@@ -1885,6 +1897,8 @@ void bsal_node_test_requests(struct bsal_node *node)
     int requests;
     int requests_to_test;
     int i;
+    int worker;
+    void *buffer;
 
     /*
      * Use a half-life approach
@@ -1904,7 +1918,26 @@ void bsal_node_test_requests(struct bsal_node *node)
         if (bsal_transport_test_requests(&node->transport,
                             &worker_buffer)) {
 
-            bsal_node_free_worker_buffer(node, &worker_buffer);
+            worker = bsal_worker_buffer_get_worker(&worker_buffer);
+
+            /*
+             * This buffer was allocated by the Thorium core and not by
+             * a worker.
+             */
+            if (worker < 0) {
+
+                buffer = bsal_worker_buffer_get_buffer(&worker_buffer);
+
+                bsal_memory_pool_free(&node->outbound_message_memory_pool,
+                                buffer);
+            } else {
+
+                /*
+                 * The buffer was allocated by a worker.
+                 */
+
+                bsal_node_free_worker_buffer(node, &worker_buffer);
+            }
         }
 
         ++i;
@@ -1938,41 +1971,33 @@ void bsal_node_free_worker_buffer(struct bsal_node *node,
 #ifdef BSAL_NODE_INJECT_CLEAN_WORKER_BUFFERS
     worker_name = bsal_worker_buffer_get_worker(worker_buffer);
 
+    BSAL_DEBUGGER_ASSERT(worker_name >= 0);
+
     /* This a worker buffer.
      * Otherwise, this is a Thorium node for startup.
      */
-    if (worker_name >= 0) {
-        worker = bsal_worker_pool_get_worker(&node->worker_pool, worker_name);
+    worker = bsal_worker_pool_get_worker(&node->worker_pool, worker_name);
 
-        BSAL_DEBUGGER_ASSERT(worker != NULL);
-
-        /*
-        printf("INJECT Injecting buffer into worker\n");
-        */
-
-        /* Push the buffer in the ring of the worker
-         */
-        if (!bsal_worker_inject_clean_outbound_buffer(worker, buffer)) {
-
-            /* If the ring is full, queue it locally
-             * and try again later
-             */
-            bsal_ring_queue_enqueue(&node->clean_outbound_buffers_to_inject, worker_buffer);
-        }
-
-        return;
-    /* This is a node buffer
-     * (for startup)
-     */
-    }
-
-#endif
+    BSAL_DEBUGGER_ASSERT(worker != NULL);
 
     /*
-     * Otherwise, free the buffer here directly since this is a Thorium core
-     * buffer for startup.
+    printf("INJECT Injecting buffer into worker\n");
+    */
+
+    /* Push the buffer in the ring of the worker
      */
-    bsal_memory_free(buffer);
+    if (!bsal_worker_inject_clean_outbound_buffer(worker, buffer)) {
+
+        /* If the ring is full, queue it locally
+         * and try again later
+         */
+        bsal_ring_queue_enqueue(&node->clean_outbound_buffers_to_inject, worker_buffer);
+    }
+
+/* This is a node buffer
+ * (for startup)
+ */
+#endif
 }
 
 void bsal_node_do_message_triage(struct bsal_node *self)
@@ -2001,6 +2026,20 @@ void bsal_node_do_message_triage(struct bsal_node *self)
     worker_name = bsal_message_get_worker(&message);
     buffer = bsal_message_buffer(&message);
 
+    /*
+     * Otherwise, free the buffer here directly since this is a Thorium core
+     * buffer for startup.
+     */
+    if (worker_name < 0) {
+
+        bsal_memory_pool_free(&self->inbound_message_memory_pool, buffer);
+
+        return;
+    }
+
+    /*
+     * Otherwise, this is a worker buffer.
+     */
     bsal_worker_buffer_init(&worker_buffer, worker_name, buffer);
 
     bsal_node_free_worker_buffer(self, &worker_buffer);

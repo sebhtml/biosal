@@ -10,7 +10,8 @@
 #include <core/system/debugger.h>
 
 void bsal_transport_init(struct bsal_transport *self, struct bsal_node *node,
-                int *argc, char ***argv)
+                int *argc, char ***argv,
+                struct bsal_memory_pool *inbound_message_memory_pool)
 {
         /*
     printf("DEBUG Initiating transport\n");
@@ -35,6 +36,8 @@ void bsal_transport_init(struct bsal_transport *self, struct bsal_node *node,
     BSAL_DEBUGGER_ASSERT(self->rank >= 0);
     BSAL_DEBUGGER_ASSERT(self->size >= 1);
     BSAL_DEBUGGER_ASSERT(self->node != NULL);
+
+    self->inbound_message_memory_pool = inbound_message_memory_pool;
 }
 
 void bsal_transport_destroy(struct bsal_transport *self)
