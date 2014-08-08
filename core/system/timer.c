@@ -178,7 +178,12 @@ uint64_t bsal_timer_get_nanoseconds_apple(struct bsal_timer *timer)
     return value;
 }
 
-void bsal_timer_print(struct bsal_timer *timer)
+uint64_t bsal_timer_get_elapsed_nanoseconds(struct bsal_timer *timer)
+{
+    return timer->stop - timer->start;
+}
+
+void bsal_timer_print_with_description(struct bsal_timer *timer, const char *description)
 {
     uint64_t nanoseconds;
     float microseconds;
@@ -186,6 +191,8 @@ void bsal_timer_print(struct bsal_timer *timer)
     int seconds;
     float float_seconds;
     int minutes;
+
+    printf("TIMER [%s] ", description);
 
     nanoseconds = bsal_timer_get_elapsed_nanoseconds(timer);
 
@@ -246,18 +253,8 @@ void bsal_timer_print(struct bsal_timer *timer)
 
         printf("\n");
     }
-}
 
-uint64_t bsal_timer_get_elapsed_nanoseconds(struct bsal_timer *timer)
-{
-    return timer->stop - timer->start;
-}
-
-void bsal_timer_print_with_description(struct bsal_timer *timer, const char *description)
-{
-    printf("TIMER [%s] ", description);
-
-    bsal_timer_print(timer);
+    fflush(stdout);
 }
 
 double bsal_timer_fetch_frequency(struct bsal_timer *timer)

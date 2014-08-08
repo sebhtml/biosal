@@ -22,7 +22,6 @@ void bsal_timer_stop(struct bsal_timer *self);
 uint64_t bsal_timer_get_nanoseconds(struct bsal_timer *self);
 uint64_t bsal_timer_get_elapsed_nanoseconds(struct bsal_timer *self);
 
-void bsal_timer_print(struct bsal_timer *self);
 void bsal_timer_print_with_description(struct bsal_timer *self, const char *description);
 
 uint64_t bsal_timer_get_nanoseconds_clock_gettime(struct bsal_timer *self);

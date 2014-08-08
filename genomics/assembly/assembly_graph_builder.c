@@ -35,6 +35,7 @@ void bsal_assembly_graph_builder_init(struct bsal_actor *self)
     concrete_self = bsal_actor_concrete_actor(self);
 
     bsal_timer_init(&concrete_self->timer);
+    bsal_timer_init(&concrete_self->vertex_timer);
 
     concrete_self->completed_sliding_windows = 0;
     concrete_self->doing_arcs = 0;
@@ -118,6 +119,7 @@ void bsal_assembly_graph_builder_destroy(struct bsal_actor *self)
     bsal_vector_destroy(&concrete_self->arc_classifiers);
 
     bsal_timer_destroy(&concrete_self->timer);
+    bsal_timer_destroy(&concrete_self->vertex_timer);
 }
 
 void bsal_assembly_graph_builder_receive(struct bsal_actor *self, struct bsal_message *message)
@@ -160,6 +162,7 @@ void bsal_assembly_graph_builder_start(struct bsal_actor *self, struct bsal_mess
     }
 
     bsal_timer_start(&concrete_self->timer);
+    bsal_timer_start(&concrete_self->vertex_timer);
 
     buffer = bsal_message_buffer(message);
 
@@ -863,6 +866,10 @@ void bsal_assembly_graph_builder_notify_from_distribution(struct bsal_actor *sel
 
     bsal_actor_send_empty(self, concrete_self->coverage_distribution,
                     BSAL_ACTOR_ASK_TO_STOP);
+
+    bsal_timer_stop(&concrete_self->vertex_timer);
+    bsal_timer_print_with_description(&concrete_self->vertex_timer,
+                    "Build assembly graph / Distributing graph vertices");
 
     /*
      * Spawn manager for arc kernels
