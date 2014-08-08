@@ -105,14 +105,17 @@ void bsal_assembly_dummy_walker_get_starting_vertex_reply(struct bsal_actor *sel
     struct bsal_assembly_dummy_walker *concrete_self;
     void *buffer;
     struct bsal_memory_pool *ephemeral_memory;
+    int count;
 
+    count = bsal_message_count(message);
     buffer = bsal_message_buffer(message);
     concrete_self = (struct bsal_assembly_dummy_walker *)bsal_actor_concrete_actor(self);
     ephemeral_memory = bsal_actor_get_ephemeral_memory(self);
 
-    printf("%s/%d received starting vertex\n",
+    printf("%s/%d received starting vertex (%d bytes)\n",
                     bsal_actor_script_name(self),
-                    bsal_actor_name(self));
+                    bsal_actor_name(self),
+                    count);
 
     bsal_dna_kmer_init_empty(&kmer);
     bsal_dna_kmer_unpack(&kmer, buffer, concrete_self->kmer_length, ephemeral_memory,

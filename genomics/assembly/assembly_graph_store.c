@@ -875,9 +875,23 @@ void bsal_assembly_graph_store_get_starting_vertex(struct bsal_actor *self, stru
                         ephemeral_memory,
                         &concrete_self->storage_codec);
 
+#ifdef BSAL_ASSEMBLY_GRAPH_STORE_DEBUG_GET_STARTING_VERTEX
+        printf("Storage kmer\n");
+
+        bsal_dna_kmer_print(&storage_kmer, concrete_self->kmer_length, &concrete_self->storage_codec,
+                    ephemeral_memory);
+#endif
+
         sequence = bsal_memory_pool_allocate(ephemeral_memory, concrete_self->kmer_length + 1);
 
-        bsal_dna_kmer_init(&transport_kmer, sequence, &concrete_self->storage_codec,
+        bsal_dna_kmer_get_sequence(&storage_kmer, sequence, concrete_self->kmer_length,
+                        &concrete_self->storage_codec);
+
+#ifdef BSAL_ASSEMBLY_GRAPH_STORE_DEBUG_GET_STARTING_VERTEX
+        printf("SEQUENCE %s\n", sequence);
+#endif
+
+        bsal_dna_kmer_init(&transport_kmer, sequence, &concrete_self->transport_codec,
                         ephemeral_memory);
 
         new_count = bsal_dna_kmer_pack_size(&transport_kmer, concrete_self->kmer_length,
@@ -886,6 +900,13 @@ void bsal_assembly_graph_store_get_starting_vertex(struct bsal_actor *self, stru
 
         bsal_dna_kmer_pack(&transport_kmer, new_buffer, concrete_self->kmer_length,
                         &concrete_self->transport_codec);
+
+#ifdef BSAL_ASSEMBLY_GRAPH_STORE_DEBUG_GET_STARTING_VERTEX
+        printf("TRANSPORT Kmer\n");
+
+        bsal_dna_kmer_print(&transport_kmer, concrete_self->kmer_length, &concrete_self->transport_codec,
+                    ephemeral_memory);
+#endif
 
         bsal_message_init(&new_message, BSAL_ASSEMBLY_GET_STARTING_VERTEX_REPLY,
                         new_count, new_buffer);
@@ -900,6 +921,7 @@ void bsal_assembly_graph_store_get_starting_vertex(struct bsal_actor *self, stru
 
         bsal_dna_kmer_destroy(&storage_kmer, ephemeral_memory);
         bsal_memory_pool_free(ephemeral_memory, new_buffer);
+
     } else {
         bsal_actor_send_reply_empty(self, BSAL_ASSEMBLY_GET_STARTING_VERTEX_REPLY);
     }
