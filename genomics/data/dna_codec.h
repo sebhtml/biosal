@@ -74,6 +74,7 @@ void bsal_dna_codec_disable_two_bit_encoding(struct bsal_dna_codec *codec);
 
 int bsal_dna_codec_is_canonical(struct bsal_dna_codec *codec,
                 int length_in_nucleotides, void *encoded_sequence);
+int bsal_dna_codec_get_complement(int code);
 
 
 #endif

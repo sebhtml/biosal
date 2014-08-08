@@ -578,6 +578,7 @@ void bsal_assembly_graph_store_add_arc(struct bsal_actor *self,
     struct bsal_assembly_vertex *vertex;
     void *key;
     struct bsal_memory_pool *ephemeral_memory;
+    int is_canonical;
 
 #ifdef BSAL_ASSEMBLY_GRAPH_STORE_DEBUG_ARC
     int verbose;
@@ -634,6 +635,25 @@ void bsal_assembly_graph_store_add_arc(struct bsal_actor *self,
         bsal_assembly_vertex_print(vertex);
     }
 #endif
+
+    /*
+     * Inverse the arc if the source is not canonical
+     */
+    is_canonical = bsal_dna_kmer_is_canonical(&real_source, concrete_self->kmer_length,
+                    &concrete_self->storage_codec);
+
+    if (!is_canonical) {
+
+        if (type == BSAL_ARC_TYPE_PARENT) {
+            type = BSAL_ARC_TYPE_CHILD;
+
+        } else if (type == BSAL_ARC_TYPE_CHILD) {
+
+            type = BSAL_ARC_TYPE_PARENT;
+        }
+
+        destination = bsal_dna_codec_get_complement(destination);
+    }
 
     if (type == BSAL_ARC_TYPE_PARENT) {
 

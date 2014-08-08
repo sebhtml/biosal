@@ -601,3 +601,24 @@ int bsal_dna_codec_is_canonical(struct bsal_dna_codec *codec,
      */
     return 1;
 }
+
+int bsal_dna_codec_get_complement(int code)
+{
+    if (code == BSAL_NUCLEOTIDE_CODE_A) {
+        return BSAL_NUCLEOTIDE_CODE_T;
+
+    } else if (code == BSAL_NUCLEOTIDE_CODE_C) {
+        return BSAL_NUCLEOTIDE_CODE_G;
+
+    } else if (code == BSAL_NUCLEOTIDE_CODE_G) {
+        return BSAL_NUCLEOTIDE_CODE_C;
+
+    } else if (code == BSAL_NUCLEOTIDE_CODE_T) {
+        return BSAL_NUCLEOTIDE_CODE_A;
+    }
+
+    /*
+     * This statement is not reachable.
+     */
+    return -1;
+}
