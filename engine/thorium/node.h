@@ -29,7 +29,6 @@
 #define BSAL_NODE_ADD_INITIAL_ACTORS_REPLY 0x00003ad3
 #define BSAL_NODE_START 0x0000082c
 
-
 /*
  * Thorium product branding.
  */
@@ -50,12 +49,7 @@
 #define BSAL_NODE_LOAD_PERIOD 5
 
 /*
- * Enable a check to avoid calling transport probing function
- * when running on one single node.
- */
-/*
 */
-#define BSAL_NODE_CHECK_TRANSPORT
 
 struct bsal_script;
 
@@ -95,8 +89,8 @@ struct bsal_node {
     int ready;
     char print_structure;
 
-#ifdef BSAL_NODE_USE_MESSAGE_RECYCLING
-    struct bsal_ring_queue outbound_buffers;
+#ifdef BSAL_NODE_INJECT_CLEAN_WORKER_BUFFERS
+    struct bsal_ring_queue clean_outbound_buffers_to_inject;
 #endif
 
     int started;
@@ -105,9 +99,11 @@ struct bsal_node {
     int available_scripts;
     int maximum_scripts;
 
-#ifdef BSAL_NODE_CHECK_TRANSPORT
+/*
+ * Enable a check to avoid calling transport probing function
+ * when running on one single node.
+ */
     int use_transport;
-#endif
 
     struct bsal_thread thread;
     struct bsal_transport transport;

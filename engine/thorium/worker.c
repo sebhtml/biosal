@@ -66,6 +66,7 @@ void bsal_worker_init(struct bsal_worker *worker, int name, struct bsal_node *no
 {
     int capacity;
     int ephemeral_memory_block_size;
+    int injected_buffer_ring_size;
 
     worker->waiting_is_enabled = 0;
     worker->waiting_start_time = 0;
@@ -87,6 +88,12 @@ void bsal_worker_init(struct bsal_worker *worker, int name, struct bsal_node *no
      * 2. Use volatile head and tail.
      */
     bsal_fast_ring_init(&worker->actors_to_schedule, capacity, sizeof(struct bsal_actor *));
+
+#ifdef BSAL_NODE_INJECT_CLEAN_WORKER_BUFFERS
+    injected_buffer_ring_size = 1;
+    bsal_fast_ring_init(&worker->injected_clean_outbound_buffers,
+                    injected_buffer_ring_size, sizeof(void *));
+#endif
 
 #ifdef BSAL_NODE_USE_MESSAGE_RECYCLING
     bsal_fast_ring_init(&worker->outbound_buffers, capacity, sizeof(void *));
@@ -145,6 +152,10 @@ void bsal_worker_destroy(struct bsal_worker *worker)
     bsal_lock_destroy(&worker->lock);
 
     bsal_fast_ring_destroy(&worker->actors_to_schedule);
+
+#ifdef BSAL_NODE_INJECT_CLEAN_WORKER_BUFFERS
+    bsal_fast_ring_destroy(&worker->injected_clean_outbound_buffers);
+#endif
 
 #ifdef BSAL_NODE_USE_MESSAGE_RECYCLING
     bsal_fast_ring_destroy(&worker->outbound_buffers);
@@ -920,21 +931,6 @@ int bsal_worker_get_producer_count(struct bsal_worker *worker, struct bsal_sched
     return count;
 }
 
-int bsal_worker_free_buffer(struct bsal_worker *worker, void *buffer)
-{
-#ifdef BSAL_WORKER_DEBUG_MEMORY
-    printf("FREE %p\n", buffer);
-#endif
-
-#ifdef BSAL_NODE_USE_MESSAGE_RECYCLING
-    return bsal_fast_ring_push_from_producer(&worker->outbound_buffers, &buffer);
-#else
-    bsal_memory_pool_free(&worker->outbound_message_memory_pool, buffer);
-
-    return 1;
-#endif
-}
-
 void bsal_worker_free_message(struct bsal_worker *worker, struct bsal_message *message)
 {
     int source_worker;
@@ -988,7 +984,7 @@ void bsal_worker_run(struct bsal_worker *worker)
     struct bsal_actor *actor;
     struct bsal_message other_message;
 
-#ifdef BSAL_NODE_USE_MESSAGE_RECYCLING
+#ifdef BSAL_NODE_INJECT_CLEAN_WORKER_BUFFERS
     void *buffer;
 #endif
 
@@ -1118,11 +1114,11 @@ void bsal_worker_run(struct bsal_worker *worker)
         }
     }
 
-#ifdef BSAL_NODE_USE_MESSAGE_RECYCLING
+#ifdef BSAL_NODE_INJECT_CLEAN_WORKER_BUFFERS
     /* free outbound buffers, if any
      */
 
-    if (bsal_fast_ring_pop_from_consumer(&worker->outbound_buffers, &buffer)) {
+    if (bsal_fast_ring_pop_from_consumer(&worker->injected_clean_outbound_buffers, &buffer)) {
 
         bsal_memory_pool_free(&worker->outbound_message_memory_pool, buffer);
     }
@@ -1363,4 +1359,16 @@ void bsal_worker_check_production(struct bsal_worker *worker, int value, int nam
             }
         }
     }
+}
+
+int bsal_worker_inject_clean_outbound_buffer(struct bsal_worker *self, void *buffer)
+{
+    return bsal_fast_ring_push_from_producer(&self->injected_clean_outbound_buffers,
+                    &buffer);
+}
+
+int bsal_worker_fetch_clean_outbound_buffer(struct bsal_worker *self, void **buffer)
+{
+    return bsal_fast_ring_pop_from_consumer(&self->injected_clean_outbound_buffers,
+                    buffer);
 }

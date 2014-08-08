@@ -18,6 +18,7 @@
 
 #include <core/system/memory.h>
 #include <core/system/tracer.h>
+#include <core/system/debugger.h>
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -108,13 +109,11 @@ void bsal_node_init(struct bsal_node *node, int *argc, char ***argv)
     node->name = bsal_transport_get_rank(&node->transport);
     node->nodes = bsal_transport_get_size(&node->transport);
 
-#ifdef BSAL_NODE_USE_MESSAGE_RECYCLING
-    bsal_ring_queue_init(&node->outbound_buffers, sizeof(struct bsal_active_request));
+#ifdef BSAL_NODE_INJECT_CLEAN_WORKER_BUFFERS
+    bsal_ring_queue_init(&node->clean_outbound_buffers_to_inject, sizeof(struct bsal_active_request));
 #endif
 
-#ifdef BSAL_NODE_CHECK_TRANSPORT
     node->use_transport = 1;
-#endif
 
     node->debug = 0;
 
@@ -325,9 +324,6 @@ void bsal_node_init(struct bsal_node *node, int *argc, char ***argv)
 
 void bsal_node_destroy(struct bsal_node *node)
 {
-    struct bsal_active_request active_request;
-    void *buffer;
-
     bsal_set_destroy(&node->auto_scaling_actors);
 
     bsal_memory_pool_destroy(&node->actor_memory_pool);
@@ -351,16 +347,12 @@ void bsal_node_destroy(struct bsal_node *node)
 
     bsal_worker_pool_destroy(&node->worker_pool);
 
-    while (bsal_transport_dequeue_active_request(&node->transport, &active_request)) {
-        buffer = bsal_active_request_buffer(&active_request);
-
-        bsal_memory_free(buffer);
-        bsal_active_request_destroy(&active_request);
-    }
+    BSAL_DEBUGGER_ASSERT(bsal_transport_get_active_request_count(&node->transport) == 0);
 
     bsal_transport_destroy(&node->transport);
     bsal_counter_destroy(&node->counter);
 
+    bsal_ring_queue_destroy(&node->clean_outbound_buffers_to_inject);
 }
 
 int bsal_node_threads_from_string(struct bsal_node *node,
@@ -774,6 +766,7 @@ int bsal_node_running(struct bsal_node *node)
 {
     time_t current_time;
     int elapsed;
+    int active_requests;
 
     /* wait until all actors are dead... */
     if (node->alive_actors > 0) {
@@ -781,6 +774,19 @@ int bsal_node_running(struct bsal_node *node)
 #ifdef BSAL_NODE_DEBUG_RUN
         printf("BSAL_NODE_DEBUG_RUN alive workers > 0\n");
 #endif
+        return 1;
+    }
+
+    /*
+     * wait for the requests to complete.
+     */
+    active_requests = bsal_transport_get_active_request_count(&node->transport);
+    if (active_requests > 0) {
+
+            /*
+        printf("ACTIVE %d\n", active_requests);
+        */
+
         return 1;
     }
 
@@ -925,14 +931,12 @@ int bsal_node_receive_system(struct bsal_node *node, struct bsal_message *messag
 
     } else if (tag == BSAL_NODE_START) {
 
-#ifdef BSAL_NODE_CHECK_TRANSPORT
         /* disable transport layer
          * if there is only one node
          */
         if (node->nodes == 1) {
             node->use_transport = 0;
         }
-#endif
 
 #ifdef BSAL_NODE_DEBUG_RECEIVE_SYSTEM
         printf("DEBUG node %d starts its initial actor\n",
@@ -1023,13 +1027,6 @@ void bsal_node_send(struct bsal_node *node, struct bsal_message *message)
 {
     int name;
 
-#ifdef BSAL_NODE_USE_MESSAGE_RECYCLING
-    int worker_name;
-    struct bsal_worker *worker;
-    struct bsal_active_request recycled_buffer;
-    void *buffer;
-#endif
-
     /* Check the message to see
      * if it is a special message.
      *
@@ -1041,34 +1038,6 @@ void bsal_node_send(struct bsal_node *node, struct bsal_message *message)
 
     name = bsal_message_destination(message);
     bsal_transport_resolve(&node->transport, message);
-
-#ifdef BSAL_NODE_USE_MESSAGE_RECYCLING
-    /* First, verify if this is a recycled message
-     */
-    if (bsal_message_is_recycled(message)) {
-
-        worker_name = bsal_message_get_worker(message);
-        buffer = bsal_message_buffer(message);
-
-        if (worker_name >= 0) {
-            worker = bsal_worker_pool_get_worker(&node->worker_pool, worker_name);
-            if (!bsal_worker_free_buffer(worker, buffer)) {
-
-                bsal_active_request_init(&recycled_buffer, buffer, worker_name);
-                bsal_ring_queue_enqueue(&node->outbound_buffers, &recycled_buffer);
-                bsal_active_request_destroy(&recycled_buffer);
-            }
-        } else {
-
-            /* This is a buffer allocated during the reception
-             * from another BIOSAL node
-             */
-
-            bsal_memory_pool_free(&node->inbound_message_memory_pool, buffer);
-        }
-        return;
-    }
-#endif
 
     /* If the actor is local, dispatch the message locally
      */
@@ -1791,9 +1760,8 @@ void bsal_node_run_loop(struct bsal_node *node)
          * there is a message received.
          */
         if (
-#ifdef BSAL_NODE_CHECK_TRANSPORT
             node->use_transport &&
-#endif
+
             bsal_transport_receive(&node->transport, &message)) {
 
             bsal_counter_add(&node->counter, BSAL_COUNTER_RECEIVED_MESSAGES_NOT_FROM_SELF, 1);
@@ -1848,6 +1816,13 @@ void bsal_node_run_loop(struct bsal_node *node)
             bsal_node_check_load(node);
         }
 
+        /* Free buffers of active requests
+         */
+        if (node->use_transport) {
+
+            bsal_node_test_requests(node);
+        }
+
 #ifdef BSAL_NODE_DEBUG_RUN
         if (node->alive_actors == 0) {
             printf("BSAL_NODE_DEBUG_RUN credits: %d\n", credits);
@@ -1864,17 +1839,6 @@ void bsal_node_run_loop(struct bsal_node *node)
 void bsal_node_send_message(struct bsal_node *node)
 {
     struct bsal_message message;
-
-#ifdef BSAL_NODE_CHECK_TRANSPORT
-    /* Free buffers of active requests
-     */
-    if (node->use_transport) {
-#endif
-        bsal_node_test_requests(node);
-
-#ifdef BSAL_NODE_CHECK_TRANSPORT
-    }
-#endif
 
     /* check for messages to send from from threads */
     /* this call lock only if there is at least
@@ -1922,6 +1886,10 @@ void bsal_node_test_requests(struct bsal_node *node)
     requests = bsal_transport_get_active_request_count(&node->transport);
     requests_to_test = requests / 2;
 
+    if (requests == 1) {
+        requests_to_test = 1;
+    }
+
     /* Test active buffer requests
      */
 
@@ -1938,11 +1906,14 @@ void bsal_node_test_requests(struct bsal_node *node)
         ++i;
     }
 
-#ifdef BSAL_NODE_USE_MESSAGE_RECYCLING
+#ifdef BSAL_NODE_INJECT_CLEAN_WORKER_BUFFERS
     /* Check if there are queued buffers to give to workers
      */
-    if (bsal_ring_queue_dequeue(&node->outbound_buffers, &active_request)) {
+    if (bsal_ring_queue_dequeue(&node->clean_outbound_buffers_to_inject, &active_request)) {
 
+            /*
+        printf("INJECT Dequeued buffer to inject\n");
+        */
         bsal_node_free_active_request(node, &active_request);
     }
 #endif
@@ -1953,7 +1924,7 @@ void bsal_node_free_active_request(struct bsal_node *node,
 {
     void *buffer;
 
-#ifdef BSAL_NODE_USE_MESSAGE_RECYCLING
+#ifdef BSAL_NODE_INJECT_CLEAN_WORKER_BUFFERS
     int worker_name;
     struct bsal_worker *worker;
 #endif
@@ -1961,24 +1932,32 @@ void bsal_node_free_active_request(struct bsal_node *node,
     buffer = bsal_active_request_buffer(active_request);
 
 
-#ifdef BSAL_NODE_USE_MESSAGE_RECYCLING
+#ifdef BSAL_NODE_INJECT_CLEAN_WORKER_BUFFERS
     worker_name = bsal_active_request_get_worker(active_request);
 
-    /* This an worker buffer
+    /* This a worker buffer.
+     * Otherwise, this is a Thorium node for startup.
      */
     if (worker_name >= 0) {
         worker = bsal_worker_pool_get_worker(&node->worker_pool, worker_name);
 
+        BSAL_DEBUGGER_ASSERT(worker != NULL);
+
+        /*
+        printf("INJECT Injecting buffer into worker\n");
+        */
+
         /* Push the buffer in the ring of the worker
          */
-        if (!bsal_worker_free_buffer(worker, buffer)) {
+        if (!bsal_worker_inject_clean_outbound_buffer(worker, buffer)) {
 
             /* If the ring is full, queue it locally
              * and try again later
              */
-            bsal_ring_queue_enqueue(&node->outbound_buffers, &active_request);
+            bsal_ring_queue_enqueue(&node->clean_outbound_buffers_to_inject, active_request);
         }
 
+        return;
     /* This is a node buffer
      * (for startup)
      */
@@ -1986,6 +1965,10 @@ void bsal_node_free_active_request(struct bsal_node *node,
 
 #endif
 
+    /*
+     * Otherwise, free the buffer here directly since this is a Thorium core
+     * buffer for startup.
+     */
     bsal_memory_free(buffer);
 }
 

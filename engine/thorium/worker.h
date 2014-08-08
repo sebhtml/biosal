@@ -25,12 +25,18 @@ struct bsal_message;
 struct bsal_scheduler;
 
 /*
+ * Inject clean worker buffers into the worker rings
+ */
+#define BSAL_NODE_INJECT_CLEAN_WORKER_BUFFERS
+
+/*
  * Enable wait and signal for workers
  */
 /*
 */
 #define BSAL_WORKER_ENABLE_WAIT
 
+#define BSAL_WORKER_NONE (-99)
 
 /*
 #define BSAL_WORKER_USE_LOCK
@@ -72,6 +78,9 @@ struct bsal_worker {
      */
     struct bsal_fast_ring actors_to_schedule;
 
+#ifdef BSAL_NODE_INJECT_CLEAN_WORKER_BUFFERS
+    struct bsal_fast_ring injected_clean_outbound_buffers;
+#endif
 
 #ifdef BSAL_NODE_USE_MESSAGE_RECYCLING
     /*
@@ -176,7 +185,6 @@ int bsal_worker_get_sum_of_received_actor_messages(struct bsal_worker *self);
 int bsal_worker_get_queued_messages(struct bsal_worker *self);
 int bsal_worker_get_production(struct bsal_worker *self, struct bsal_scheduler *scheduler);
 int bsal_worker_get_producer_count(struct bsal_worker *self, struct bsal_scheduler *scheduler);
-int bsal_worker_free_buffer(struct bsal_worker *self, void *buffer);
 
 void bsal_worker_free_message(struct bsal_worker *self, struct bsal_message *message);
 
@@ -189,5 +197,11 @@ uint64_t bsal_worker_get_loop_wake_up_count(struct bsal_worker *self);
 void bsal_worker_enable_waiting(struct bsal_worker *self);
 time_t bsal_worker_get_last_report_time(struct bsal_worker *self);
 void bsal_worker_check_production(struct bsal_worker *self, int value, int name);
+
+/*
+ * Inject a clean buffer into the worker
+ */
+int bsal_worker_inject_clean_outbound_buffer(struct bsal_worker *self, void *buffer);
+int bsal_worker_fetch_clean_outbound_buffer(struct bsal_worker *self, void **buffer);
 
 #endif
