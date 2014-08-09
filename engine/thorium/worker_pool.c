@@ -69,6 +69,8 @@ void bsal_worker_pool_init(struct bsal_worker_pool *pool, int workers,
 
     pool->ticks_without_messages = 0;
 
+    bsal_ring_queue_init(&pool->messages_for_triage, sizeof(struct bsal_message));
+
     pool->last_warning = 0;
     pool->last_scheduling_warning = 0;
 
@@ -142,6 +144,7 @@ void bsal_worker_pool_destroy(struct bsal_worker_pool *pool)
 
     bsal_ring_queue_destroy(&pool->inbound_message_queue_buffer);
     bsal_ring_queue_destroy(&pool->scheduled_actor_queue_buffer);
+    bsal_ring_queue_destroy(&pool->messages_for_triage);
 
     bsal_vector_destroy(&pool->worker_actors);
 }
@@ -257,9 +260,7 @@ struct bsal_worker *bsal_worker_pool_select_worker_for_run(struct bsal_worker_po
 int bsal_worker_pool_enqueue_message(struct bsal_worker_pool *pool, struct bsal_message *message)
 {
 
-    bsal_worker_pool_give_message_to_actor(pool, message);
-
-    return 1;
+    return bsal_worker_pool_give_message_to_actor(pool, message);
 }
 
 int bsal_worker_pool_worker_count(struct bsal_worker_pool *pool)
@@ -423,17 +424,12 @@ int bsal_worker_pool_give_message_to_actor(struct bsal_worker_pool *pool, struct
     destination = bsal_message_destination(message);
     actor = bsal_node_get_actor_from_name(pool->node, destination);
 
-#if 0
-    printf("DEBUG bsal_worker_pool_give_message_to_actor %d\n", destination);
-#endif
-
     if (actor == NULL) {
 #ifdef BSAL_WORKER_POOL_DEBUG_DEAD_CHANNEL
         printf("DEAD LETTER CHANNEL...\n");
 #endif
-        if (buffer != NULL) {
-            bsal_memory_free(buffer);
-        }
+
+        bsal_ring_queue_enqueue(&pool->messages_for_triage, message);
 
         return 0;
     }
@@ -443,9 +439,8 @@ int bsal_worker_pool_give_message_to_actor(struct bsal_worker_pool *pool, struct
     /* If the actor is dead, don't use it.
      */
     if (dead) {
-        if (buffer != NULL) {
-            bsal_memory_free(buffer);
-        }
+
+        bsal_ring_queue_enqueue(&pool->messages_for_triage, message);
 
         return 0;
     }
@@ -813,4 +808,10 @@ void bsal_worker_pool_wake_up_workers(struct bsal_worker_pool *pool)
         }
         pool->last_signal_check = current_time;
     }
+}
+
+int bsal_worker_pool_dequeue_message_for_triage(struct bsal_worker_pool *self,
+                struct bsal_message *message)
+{
+    return bsal_ring_queue_dequeue(&self->messages_for_triage, message);
 }

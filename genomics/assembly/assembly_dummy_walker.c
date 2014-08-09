@@ -426,7 +426,7 @@ void bsal_assembly_dummy_walker_get_vertices_and_select_reply(struct bsal_actor 
 
     bsal_assembly_dummy_walker_dump_path(self);
 
-    if (concrete_self->path_index < 200000) {
+    if (concrete_self->path_index < 1024) {
 
         bsal_actor_send_to_self_empty(self, BSAL_ACTOR_BEGIN);
 

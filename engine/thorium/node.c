@@ -2005,9 +2005,15 @@ void bsal_node_do_message_triage(struct bsal_node *self)
     int worker_count;
     struct bsal_worker *worker;
     struct bsal_message message;
-    void *buffer;
-    int worker_name;
-    struct bsal_worker_buffer worker_buffer;
+
+    /*
+     * First, verify if any message needs to be processed from
+     * the worker pool.
+     */
+    if (bsal_worker_pool_dequeue_message_for_triage(&self->worker_pool, &message)) {
+
+        bsal_node_recycle_inbound_message(self, &message);
+    }
 
     worker_count = bsal_worker_pool_worker_count(&self->worker_pool);
 
@@ -2019,12 +2025,20 @@ void bsal_node_do_message_triage(struct bsal_node *self)
         self->worker_for_triage = 0;
     }
 
-    if (!bsal_worker_dequeue_message_for_triage(worker, &message)) {
-        return;
-    }
+    if (bsal_worker_dequeue_message_for_triage(worker, &message)) {
 
-    worker_name = bsal_message_get_worker(&message);
-    buffer = bsal_message_buffer(&message);
+        bsal_node_recycle_inbound_message(self, &message);
+    }
+}
+
+void bsal_node_recycle_inbound_message(struct bsal_node *self, struct bsal_message *message)
+{
+    int worker_name;
+    void *buffer;
+    struct bsal_worker_buffer worker_buffer;
+
+    worker_name = bsal_message_get_worker(message);
+    buffer = bsal_message_buffer(message);
 
     /*
      * Otherwise, free the buffer here directly since this is a Thorium core

@@ -28,6 +28,8 @@ struct bsal_worker_pool {
     struct bsal_ring_queue scheduled_actor_queue_buffer;
     struct bsal_ring_queue inbound_message_queue_buffer;
 
+    struct bsal_ring_queue messages_for_triage;
+
     int workers;
     struct bsal_vector worker_array;
     struct bsal_worker *worker_cache;
@@ -101,5 +103,8 @@ void bsal_worker_pool_work(struct bsal_worker_pool *self);
 void bsal_worker_pool_assign_worker_to_actor(struct bsal_worker_pool *self, int name);
 float bsal_worker_pool_get_current_load(struct bsal_worker_pool *self);
 void bsal_worker_pool_wake_up_workers(struct bsal_worker_pool *self);
+
+int bsal_worker_pool_dequeue_message_for_triage(struct bsal_worker_pool *self,
+                struct bsal_message *message);
 
 #endif
