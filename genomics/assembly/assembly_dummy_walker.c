@@ -34,6 +34,17 @@ void bsal_assembly_dummy_walker_init(struct bsal_actor *self)
 
     bsal_actor_add_route(self, BSAL_ASSEMBLY_GET_VERTEX_REPLY,
                     bsal_assembly_dummy_walker_get_vertex_reply);
+
+    bsal_actor_add_route(self, BSAL_ASSEMBLY_PUSH_AND_FETCH,
+                    bsal_assembly_dummy_walker_push_and_fetch);
+
+    bsal_actor_add_route(self, BSAL_ASSEMBLY_PUSH_AND_FETCH_REPLY,
+                    bsal_assembly_dummy_walker_push_and_fetch_reply);
+
+    bsal_memory_pool_init(&concrete_self->memory_pool, 32768);
+
+    bsal_vector_init(&concrete_self->path, sizeof(int));
+
     /*
      * Configure the codec.
      */
@@ -54,6 +65,8 @@ void bsal_assembly_dummy_walker_destroy(struct bsal_actor *self)
     concrete_self = (struct bsal_assembly_dummy_walker *)bsal_actor_concrete_actor(self);
 
     bsal_vector_destroy(&concrete_self->graph_stores);
+
+    bsal_vector_destroy(&concrete_self->path);
 }
 
 void bsal_assembly_dummy_walker_receive(struct bsal_actor *self, struct bsal_message *message)
@@ -104,12 +117,10 @@ void bsal_assembly_dummy_walker_start(struct bsal_actor *self, struct bsal_messa
 
 void bsal_assembly_dummy_walker_get_starting_vertex_reply(struct bsal_actor *self, struct bsal_message *message)
 {
-    struct bsal_dna_kmer kmer;
     struct bsal_assembly_dummy_walker *concrete_self;
     void *buffer;
     struct bsal_memory_pool *ephemeral_memory;
     int count;
-    struct bsal_message new_message;
 
     count = bsal_message_count(message);
     buffer = bsal_message_buffer(message);
@@ -121,16 +132,18 @@ void bsal_assembly_dummy_walker_get_starting_vertex_reply(struct bsal_actor *sel
                     bsal_actor_name(self),
                     count);
 
-    bsal_dna_kmer_init_empty(&kmer);
-    bsal_dna_kmer_unpack(&kmer, buffer, concrete_self->kmer_length, ephemeral_memory,
+    bsal_dna_kmer_init_empty(&concrete_self->current_kmer);
+    bsal_dna_kmer_unpack(&concrete_self->current_kmer, buffer, concrete_self->kmer_length,
+                    &concrete_self->memory_pool,
                     &concrete_self->codec);
-    bsal_dna_kmer_print(&kmer, concrete_self->kmer_length, &concrete_self->codec,
+    bsal_dna_kmer_print(&concrete_self->current_kmer, concrete_self->kmer_length, &concrete_self->codec,
                     ephemeral_memory);
-    bsal_dna_kmer_destroy(&kmer, ephemeral_memory);
 
-    bsal_message_init(&new_message, BSAL_ASSEMBLY_GET_VERTEX, count, buffer);
-    bsal_actor_send_reply(self, &new_message);
-    bsal_message_destroy(&new_message);
+    bsal_dna_kmer_init_copy(&concrete_self->first_kmer, &concrete_self->current_kmer,
+                    concrete_self->kmer_length, &concrete_self->memory_pool,
+                    &concrete_self->codec);
+
+    bsal_actor_send_to_self_empty(self, BSAL_ASSEMBLY_PUSH_AND_FETCH);
 }
 
 void bsal_assembly_dummy_walker_get_vertex_reply(struct bsal_actor *self, struct bsal_message *message)
@@ -138,17 +151,59 @@ void bsal_assembly_dummy_walker_get_vertex_reply(struct bsal_actor *self, struct
     void *buffer;
     struct bsal_assembly_dummy_walker *concrete_self;
     struct bsal_memory_pool *ephemeral_memory;
-    struct bsal_assembly_vertex vertex;
 
     buffer = bsal_message_buffer(message);
     concrete_self = (struct bsal_assembly_dummy_walker *)bsal_actor_concrete_actor(self);
     ephemeral_memory = bsal_actor_get_ephemeral_memory(self);
 
-    bsal_assembly_vertex_unpack(&vertex, buffer);
+    bsal_assembly_vertex_init(&concrete_self->current_vertex);
+    bsal_assembly_vertex_unpack(&concrete_self->current_vertex, buffer);
 
     printf("Connectivity: \n");
 
-    bsal_assembly_vertex_print(&vertex);
+    bsal_assembly_vertex_print(&concrete_self->current_vertex);
 
+    concrete_self->current_child = 0;
+
+    bsal_actor_send_to_self_empty(self, BSAL_ASSEMBLY_PUSH_AND_FETCH_REPLY);
+}
+
+void bsal_assembly_dummy_walker_push_and_fetch(struct bsal_actor *self, struct bsal_message *message)
+{
+    struct bsal_assembly_dummy_walker *concrete_self;
+    struct bsal_message new_message;
+    int new_count;
+    void *new_buffer;
+    struct bsal_memory_pool *ephemeral_memory;
+    int store_index;
+    int store;
+
+    concrete_self = (struct bsal_assembly_dummy_walker *)bsal_actor_concrete_actor(self);
+    ephemeral_memory = bsal_actor_get_ephemeral_memory(self);
+
+    new_count = bsal_dna_kmer_pack_size(&concrete_self->current_kmer, concrete_self->kmer_length,
+                    &concrete_self->codec);
+    new_buffer = bsal_memory_pool_allocate(ephemeral_memory, new_count);
+
+    bsal_dna_kmer_pack(&concrete_self->current_kmer, new_buffer,
+                    concrete_self->kmer_length,
+                    &concrete_self->codec);
+
+    store_index = bsal_dna_kmer_store_index(&concrete_self->current_kmer,
+                    bsal_vector_size(&concrete_self->graph_stores),
+                    concrete_self->kmer_length,
+                    &concrete_self->codec, ephemeral_memory);
+
+    store = bsal_vector_at_as_int(&concrete_self->graph_stores, store_index);
+
+    bsal_message_init(&new_message, BSAL_ASSEMBLY_GET_VERTEX, new_count, new_buffer);
+    bsal_actor_send(self, store, &new_message);
+    bsal_message_destroy(&new_message);
+
+    bsal_memory_pool_free(ephemeral_memory, new_buffer);
+}
+
+void bsal_assembly_dummy_walker_push_and_fetch_reply(struct bsal_actor *self, struct bsal_message *message)
+{
     bsal_actor_send_to_supervisor_empty(self, BSAL_ACTOR_START_REPLY);
 }
