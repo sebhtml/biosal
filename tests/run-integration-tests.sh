@@ -27,7 +27,7 @@ function main()
         then
             actual_sum=$(sha1sum output/coverage_distribution.txt-canonical | awk '{print $1}')
         fi
-        expected_sum=$(grep "$real_test sha1sum" Documentation/Quality_Assurance.md | grep sha1sum | awk '{print $3}')
+        expected_sum=$(grep "$real_test sha1sum" tests/checksums.txt | grep sha1sum | awk '{print $3}')
 
         result="FAILED"
 

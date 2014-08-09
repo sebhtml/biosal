@@ -1,5 +1,13 @@
+spate-mini-1x1
+spate-mini-1x2
+spate-mini-1x3
+spate-mini-1x4
+spate-mini-2x1
+spate-mini-8x1
+spate-mini-8x2
 mini
 medium
 medium-2
 run-argonnite-1
 run-argonnite-1-28
+
