@@ -202,6 +202,9 @@ new name.
 #define BSAL_ACTOR_RESET 0x00005045
 #define BSAL_ACTOR_RESET_REPLY 0x0000056d
 
+#define BSAL_ACTOR_BEGIN 0x0000125f
+#define BSAL_ACTOR_BEGIN_REPLY 0x0000214a
+
 /*
  ********************************************
  */

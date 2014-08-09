@@ -571,3 +571,10 @@ int bsal_dynamic_hash_table_is_currently_resizing(struct bsal_dynamic_hash_table
 {
     return table->resize_in_progress;
 }
+
+void bsal_dynamic_hash_table_clear(struct bsal_dynamic_hash_table *self)
+{
+    bsal_dynamic_hash_table_finish_resizing(self);
+
+    bsal_hash_table_clear(self->current);
+}

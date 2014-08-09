@@ -309,3 +309,12 @@ void bsal_vector_set(struct bsal_vector *self, int64_t index, void *data)
     memcpy(bucket, data, self->element_size);
 }
 
+int bsal_vector_empty(struct bsal_vector *self)
+{
+    return bsal_vector_size(self) == 0;
+}
+
+void bsal_vector_clear(struct bsal_vector *self)
+{
+    bsal_vector_resize(self, 0);
+}

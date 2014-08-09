@@ -68,4 +68,6 @@ void bsal_dynamic_hash_table_set_current_size_estimate(struct bsal_dynamic_hash_
 void bsal_dynamic_hash_table_set_threshold(struct bsal_dynamic_hash_table *self, double threshold);
 int bsal_dynamic_hash_table_is_currently_resizing(struct bsal_dynamic_hash_table *self);
 
+void bsal_dynamic_hash_table_clear(struct bsal_dynamic_hash_table *self);
+
 #endif

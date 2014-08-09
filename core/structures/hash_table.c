@@ -799,4 +799,23 @@ int bsal_hash_table_find_bucket(struct bsal_hash_table *table, void *key,
     return BSAL_HASH_TABLE_FULL;
 }
 
+void bsal_hash_table_clear(struct bsal_hash_table *self)
+{
+    int key_size;
+    int value_size;
+    struct bsal_memory_pool *pool;
+    uint64_t buckets;
 
+    key_size = self->key_size;
+    value_size = self->value_size;
+    pool = self->memory;
+    buckets = self->buckets;
+
+    bsal_hash_table_destroy(self);
+
+    bsal_hash_table_init(self, key_size, value_size, buckets);
+
+    if (pool != NULL) {
+        bsal_hash_table_set_memory_pool(self, pool);
+    }
+}

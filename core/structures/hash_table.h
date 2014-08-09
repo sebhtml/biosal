@@ -103,4 +103,6 @@ void bsal_hash_table_disable_deletion_support(struct bsal_hash_table *self);
 void bsal_hash_table_enable_deletion_support(struct bsal_hash_table *self);
 int bsal_hash_table_deletion_support_is_enabled(struct bsal_hash_table *self);
 
+void bsal_hash_table_clear(struct bsal_hash_table *self);
+
 #endif

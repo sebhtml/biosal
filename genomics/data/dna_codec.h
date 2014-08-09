@@ -47,7 +47,8 @@ void bsal_dna_codec_decode(struct bsal_dna_codec *self, int length_in_nucleotide
 char bsal_dna_codec_get_nucleotide(struct bsal_dna_codec *codec, void *encoded_sequence, int index);
 int bsal_dna_codec_get_nucleotide_code(struct bsal_dna_codec *codec, void *encoded_sequence, int index);
 
-void bsal_dna_codec_set_nucleotide(void *encoded_sequence, int index, char nucleotide);
+void bsal_dna_codec_set_nucleotide(struct bsal_dna_codec *self,
+                void *encoded_sequence, int index, char nucleotide);
 uint64_t bsal_dna_codec_get_code(char nucleotide);
 char bsal_dna_codec_get_nucleotide_from_code(uint64_t code);
 
@@ -76,5 +77,7 @@ int bsal_dna_codec_is_canonical(struct bsal_dna_codec *codec,
                 int length_in_nucleotides, void *encoded_sequence);
 int bsal_dna_codec_get_complement(int code);
 
+void bsal_dna_codec_mutate_as_child(struct bsal_dna_codec *self,
+                int length_in_nucleotides, void *encoded_sequence, int last_code);
 
 #endif

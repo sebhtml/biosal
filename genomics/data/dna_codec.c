@@ -233,7 +233,7 @@ void bsal_dna_codec_encode_default(struct bsal_dna_codec *codec,
 
     while (i < length_in_nucleotides) {
 
-        bsal_dna_codec_set_nucleotide(encoded_sequence, i, dna_sequence[i]);
+        bsal_dna_codec_set_nucleotide(codec, encoded_sequence, i, dna_sequence[i]);
 
         i++;
     }
@@ -302,7 +302,8 @@ void bsal_dna_codec_decode_default(struct bsal_dna_codec *codec, int length_in_n
     dna_sequence[length_in_nucleotides] = '\0';
 }
 
-void bsal_dna_codec_set_nucleotide(void *encoded_sequence, int index, char nucleotide)
+void bsal_dna_codec_set_nucleotide(struct bsal_dna_codec *self,
+                void *encoded_sequence, int index, char nucleotide)
 {
     int bit_index;
     int byte_index;
@@ -310,6 +311,16 @@ void bsal_dna_codec_set_nucleotide(void *encoded_sequence, int index, char nucle
     uint64_t old_byte_value;
     uint64_t mask;
     uint64_t new_byte_value;
+    char *sequence;
+
+    if (!self->use_two_bit_encoding) {
+
+        sequence = encoded_sequence;
+
+        sequence[index] = nucleotide;
+
+        return;
+    }
 
     bit_index = index * BITS_PER_NUCLEOTIDE;
     byte_index = bit_index / BITS_PER_BYTE;
@@ -508,8 +519,8 @@ void bsal_dna_codec_reverse_complement_in_place(struct bsal_dna_codec *codec,
         printf("left %d %c right %d %c\n", left, left_nucleotide,
                         right, right_nucleotide);
 */
-        bsal_dna_codec_set_nucleotide(encoded_sequence, left, right_nucleotide);
-        bsal_dna_codec_set_nucleotide(encoded_sequence, right, left_nucleotide);
+        bsal_dna_codec_set_nucleotide(codec, encoded_sequence, left, right_nucleotide);
+        bsal_dna_codec_set_nucleotide(codec, encoded_sequence, right, left_nucleotide);
 
         ++i;
     }
@@ -523,7 +534,7 @@ void bsal_dna_codec_reverse_complement_in_place(struct bsal_dna_codec *codec,
         i = 0;
         blank = BSAL_NUCLEOTIDE_SYMBOL_A;
         while (i < tail) {
-            bsal_dna_codec_set_nucleotide(encoded_sequence, length_in_nucleotides + i, blank);
+            bsal_dna_codec_set_nucleotide(codec, encoded_sequence, length_in_nucleotides + i, blank);
             ++i;
         }
     }
@@ -622,3 +633,27 @@ int bsal_dna_codec_get_complement(int code)
      */
     return -1;
 }
+
+void bsal_dna_codec_mutate_as_child(struct bsal_dna_codec *self,
+                int length_in_nucleotides, void *encoded_sequence, int last_code)
+{
+    int i;
+    char nucleotide;
+    int limit;
+
+    limit = length_in_nucleotides - 1;
+
+    for (i = 0 ; i < limit ; i++) {
+
+        nucleotide = bsal_dna_codec_get_nucleotide(self, encoded_sequence, i + 1);
+
+        bsal_dna_codec_set_nucleotide(self, encoded_sequence, i, nucleotide);
+    }
+
+    nucleotide = bsal_dna_codec_get_nucleotide_from_code(last_code);
+
+    bsal_dna_codec_set_nucleotide(self, encoded_sequence, length_in_nucleotides - 1,
+                    nucleotide);
+}
+
+

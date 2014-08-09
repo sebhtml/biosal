@@ -29,4 +29,6 @@ int bsal_set_empty(struct bsal_set *self);
 struct bsal_map *bsal_set_map(struct bsal_set *self);
 void bsal_set_set_memory_pool(struct bsal_set *self, struct bsal_memory_pool *pool);
 
+void bsal_set_clear(struct bsal_set *self);
+
 #endif

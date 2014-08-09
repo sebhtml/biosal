@@ -79,3 +79,8 @@ void bsal_set_set_memory_pool(struct bsal_set *self, struct bsal_memory_pool *po
 {
     bsal_map_set_memory_pool(&self->map, pool);
 }
+
+void bsal_set_clear(struct bsal_set *self)
+{
+    bsal_map_clear(&self->map);
+}

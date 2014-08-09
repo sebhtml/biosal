@@ -79,11 +79,11 @@ int main(int argc, char **argv)
 #endif
     TEST_BOOLEAN_EQUALS(strcmp(sequence2, expected_sequence) == 0, 1);
 
-    bsal_dna_codec_set_nucleotide(encoded_sequence, 3, 'T');
-    bsal_dna_codec_set_nucleotide(encoded_sequence, 2, 'T');
-    bsal_dna_codec_set_nucleotide(encoded_sequence, 1, 'T');
-    bsal_dna_codec_set_nucleotide(encoded_sequence, 4, 'T');
-    bsal_dna_codec_set_nucleotide(encoded_sequence, 3, 'A');
+    bsal_dna_codec_set_nucleotide(&codec, encoded_sequence, 3, 'T');
+    bsal_dna_codec_set_nucleotide(&codec, encoded_sequence, 2, 'T');
+    bsal_dna_codec_set_nucleotide(&codec, encoded_sequence, 1, 'T');
+    bsal_dna_codec_set_nucleotide(&codec, encoded_sequence, 4, 'T');
+    bsal_dna_codec_set_nucleotide(&codec, encoded_sequence, 3, 'A');
 
 #ifdef USE_TWO_BIT_ENCODING
     TEST_BOOLEAN_EQUALS(bsal_dna_codec_get_nucleotide(&codec, encoded_sequence, 3) == 'A', 1);

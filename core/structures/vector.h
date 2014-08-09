@@ -46,4 +46,7 @@ void bsal_vector_update(struct bsal_vector *self, void *old_item, void *new_item
 int bsal_vector_element_size(struct bsal_vector *self);
 void bsal_vector_set_memory_pool(struct bsal_vector *self, struct bsal_memory_pool *memory);
 
+int bsal_vector_empty(struct bsal_vector *self);
+void bsal_vector_clear(struct bsal_vector *self);
+
 #endif

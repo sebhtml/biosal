@@ -308,3 +308,17 @@ int bsal_map_is_currently_resizing(struct bsal_map *map)
 {
     return bsal_dynamic_hash_table_is_currently_resizing(&map->table);
 }
+
+void bsal_map_clear(struct bsal_map *self)
+{
+    int key_size;
+    int value_size;
+
+    key_size = bsal_map_get_key_size(self);
+    value_size = bsal_map_get_value_size(self);
+
+    bsal_map_destroy(self);
+
+    bsal_map_init(self, key_size, value_size);
+    /*bsal_dynamic_hash_table_clear(&self->table);*/
+}
