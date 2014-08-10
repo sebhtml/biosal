@@ -30,6 +30,8 @@
  * Fast implemention of reverse complement in place
  * in 2-bit format.
  */
+/*
+*/
 #define FAST_REVERSE_COMPLEMENT
 
 void bsal_dna_codec_init(struct bsal_dna_codec *self)
@@ -462,6 +464,7 @@ void bsal_dna_codec_reverse_complement_in_place(struct bsal_dna_codec *codec,
     char right_nucleotide;
     int tail;
     char blank;
+    int total_length;
 
     /* Abort if the 2 bit encoding is not being used.
      */
@@ -529,7 +532,16 @@ void bsal_dna_codec_reverse_complement_in_place(struct bsal_dna_codec *codec,
      * Fix the tail.
      */
 
-    tail = length_in_nucleotides % 4;
+    total_length = encoded_length * 4;
+
+    tail = total_length - length_in_nucleotides;
+
+#if 0
+    printf("length_in_nucleotides %d\n", length_in_nucleotides);
+
+    printf("Padding tail %d\n", tail);
+#endif
+
     if (tail != 0) {
         i = 0;
         blank = BSAL_NUCLEOTIDE_SYMBOL_A;
