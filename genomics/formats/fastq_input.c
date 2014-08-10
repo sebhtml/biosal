@@ -105,6 +105,12 @@ int bsal_fastq_input_detect(struct bsal_input *input)
     if (bsal_input_has_suffix(input, ".fasta-with-qualities")) {
         return 1;
     }
+    if (bsal_input_has_suffix(input, ".fastq.gz")) {
+        return 1;
+    }
+    if (bsal_input_has_suffix(input, ".fq.gz")) {
+        return 1;
+    }
 
     return 0;
 }
