@@ -1,5 +1,5 @@
 
-#include "raw_buffered_reader.h"
+#include "gzip_buffered_reader.h"
 
 #include "buffered_reader.h"
 
@@ -25,18 +25,18 @@
 
 /*#define BSAL_BUFFERED_READER_BUFFER_SIZE 4194304*/
 
-void bsal_raw_buffered_reader_init(struct bsal_buffered_reader *self,
+void bsal_gzip_buffered_reader_init(struct bsal_buffered_reader *self,
                 const char *file, uint64_t offset)
 {
-    struct bsal_raw_buffered_reader *reader;
+    struct bsal_gzip_buffered_reader *reader;
 
     reader = bsal_buffered_reader_get_concrete_self(self);
 
-    reader->descriptor = fopen(file, "r");
+    reader->descriptor = gzopen(file, "r");
 
     /* seek- in the file
      */
-    fseek(reader->descriptor, offset, SEEK_SET);
+    gzseek(reader->descriptor, offset, SEEK_SET);
 
 #ifdef BSAL_BUFFERED_READER_DEBUG
     printf("DEBUG fseek %" PRIu64 "\n", offset);
@@ -48,9 +48,9 @@ void bsal_raw_buffered_reader_init(struct bsal_buffered_reader *self,
     reader->buffer_size = 0;
 }
 
-void bsal_raw_buffered_reader_destroy(struct bsal_buffered_reader *self)
+void bsal_gzip_buffered_reader_destroy(struct bsal_buffered_reader *self)
 {
-    struct bsal_raw_buffered_reader *reader;
+    struct bsal_gzip_buffered_reader *reader;
 
     reader = bsal_buffered_reader_get_concrete_self(self);
 
@@ -61,14 +61,14 @@ void bsal_raw_buffered_reader_destroy(struct bsal_buffered_reader *self)
     reader->buffer_size = 0;
     reader->position_in_buffer = 0;
 
-    fclose(reader->descriptor);
+    gzclose(reader->descriptor);
     reader->descriptor = NULL;
 }
 
-int bsal_raw_buffered_reader_read_line(struct bsal_buffered_reader *self,
+int bsal_gzip_buffered_reader_read_line(struct bsal_buffered_reader *self,
                 char *buffer, int length)
 {
-    struct bsal_raw_buffered_reader *reader;
+    struct bsal_gzip_buffered_reader *reader;
 
     reader = bsal_buffered_reader_get_concrete_self(self);
 
@@ -121,7 +121,7 @@ int bsal_raw_buffered_reader_read_line(struct bsal_buffered_reader *self,
     } else {
         /* try to pull some data and do a recursive call
          */
-        if (bsal_raw_buffered_reader_pull(self)) {
+        if (bsal_gzip_buffered_reader_pull(self)) {
             return bsal_buffered_reader_read_line(self, buffer, length);
         } else {
             return 0;
@@ -133,14 +133,14 @@ int bsal_raw_buffered_reader_read_line(struct bsal_buffered_reader *self,
     return 0;
 }
 
-int bsal_raw_buffered_reader_pull(struct bsal_buffered_reader *self)
+int bsal_gzip_buffered_reader_pull(struct bsal_buffered_reader *self)
 {
     int source;
     int destination;
     int count;
     int available;
     int read;
-    struct bsal_raw_buffered_reader *reader;
+    struct bsal_gzip_buffered_reader *reader;
 
     reader = bsal_buffered_reader_get_concrete_self(self);
 
@@ -172,10 +172,11 @@ int bsal_raw_buffered_reader_pull(struct bsal_buffered_reader *self)
 
     available = reader->buffer_capacity - reader->buffer_size;
 
-    /* \see http://www.cplusplus.com/reference/cstdio/fread/
+    /*
+     * \see http://www.lemoda.net/c/gzfile-read/
+     * \see http://www.zlib.net/manual.html
      */
-    read = fread(reader->buffer + reader->buffer_size, 1, available,
-                    reader->descriptor);
+    read = gzread(reader->descriptor, reader->buffer + reader->buffer_size, available);
 
 #ifdef BSAL_BUFFERED_READER_DEBUG
     printf("DEBUG bsal_buffered_reader_pull available %i, read %i\n",

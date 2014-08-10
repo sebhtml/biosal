@@ -19,12 +19,12 @@ int main(int argc, char **argv)
     int kmer_length;
     char sequence[] = "ATGATCTGCAGTACTGAC";
 
-
     BEGIN_TESTS();
-
 
     kmer_length = strlen(sequence);
     bsal_dna_codec_init(&codec);
+    bsal_dna_codec_enable_two_bit_encoding(&codec);
+
     bsal_memory_pool_init(&pool, 1000000);
 
     bsal_dna_kmer_init(&kmer, sequence, &codec, &pool);
@@ -49,6 +49,10 @@ int main(int argc, char **argv)
     TEST_BOOLEAN_EQUALS(bsal_dna_kmer_equals(&kmer, &kmer2, kmer_length, &codec), 1);
     TEST_BOOLEAN_EQUALS(bsal_dna_kmer_equals(&kmer2, &kmer, kmer_length, &codec), 1);
 
+    bsal_dna_kmer_reverse_complement_self(&kmer2, kmer_length, &codec, &pool);
+    bsal_dna_kmer_reverse_complement_self(&kmer2, kmer_length, &codec, &pool);
+
+    TEST_BOOLEAN_EQUALS(bsal_dna_kmer_equals(&kmer, &kmer2, kmer_length, &codec), 1);
 
     bsal_dna_kmer_destroy(&kmer, &pool);
     bsal_dna_kmer_destroy(&kmer2, &pool);

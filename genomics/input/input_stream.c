@@ -216,6 +216,9 @@ void bsal_input_stream_receive(struct bsal_actor *actor, struct bsal_message *me
             has_sequence = bsal_input_proxy_get_sequence(&concrete_actor->proxy,
                             concrete_actor->buffer_for_sequence);
 
+#if 0
+            printf("Sequence= %s\n", concrete_actor->buffer_for_sequence);
+#endif
             i++;
         }
 

@@ -2,8 +2,6 @@
 #ifndef BSAL_BUFFERED_READER_H
 #define BSAL_BUFFERED_READER_H
 
-#include "raw_buffered_reader.h"
-
 #include <stdio.h>
 #include <stdint.h>
 
@@ -32,5 +30,6 @@ int bsal_buffered_reader_read_line(struct bsal_buffered_reader *self,
                 char *buffer, int length);
 
 void *bsal_buffered_reader_get_concrete_self(struct bsal_buffered_reader *self);
+void bsal_buffered_reader_select(struct bsal_buffered_reader *self, const char *file);
 
 #endif

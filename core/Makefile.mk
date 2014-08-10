@@ -20,6 +20,7 @@ CORE_OBJECTS += core/helpers/bitmap.o
 # system stuff
 CORE_OBJECTS += core/system/lock.o
 CORE_OBJECTS += core/system/counter.o
+CORE_OBJECTS += core/system/debugger.o
 CORE_OBJECTS += core/system/packer.o
 CORE_OBJECTS += core/system/directory.o
 CORE_OBJECTS += core/system/memory.o

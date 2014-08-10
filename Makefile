@@ -1,6 +1,6 @@
 CC=mpicc
 CFLAGS=-O3 -g -I.
-LDFLAGS=-lm
+LDFLAGS=-lm -lz
 LD=$(CC)
 
 # Run in quiet mode

@@ -10,6 +10,9 @@
 #include <stdio.h>
 #include <string.h>
 
+#include <inttypes.h>
+#include <stdint.h>
+
 /*
  * Debug the walker.
  */
@@ -198,14 +201,17 @@ void bsal_assembly_dummy_walker_get_starting_vertex_reply(struct bsal_actor *sel
                     &concrete_self->memory_pool,
                     &concrete_self->codec);
 
-#ifdef BSAL_ASSEMBLY_DUMMY_WALKER_DEBUG
-    printf("%s/%d received starting vertex (%d bytes)\n",
+    printf("%s/%d received starting vertex (%d bytes) from source %d hash %" PRIu64 "\n",
                     bsal_actor_script_name(self),
                     bsal_actor_name(self),
-                    count);
+                    count,
+                    bsal_message_source(message),
+                    bsal_dna_kmer_hash(&concrete_self->current_kmer, concrete_self->kmer_length,
+                            &concrete_self->codec));
 
     bsal_dna_kmer_print(&concrete_self->current_kmer, concrete_self->kmer_length, &concrete_self->codec,
                     ephemeral_memory);
+#ifdef BSAL_ASSEMBLY_DUMMY_WALKER_DEBUG
 #endif
 
     /*

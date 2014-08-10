@@ -1,6 +1,9 @@
 
 #include "buffered_reader.h"
 
+#include "raw_buffered_reader.h"
+#include "gzip_buffered_reader.h"
+
 #include <core/system/memory.h>
 
 #include <stdio.h>
@@ -28,27 +31,7 @@
 void bsal_buffered_reader_init(struct bsal_buffered_reader *self,
                 const char *file, uint64_t offset)
 {
-    const char *pointer;
-
-    pointer = strstr(file, GZ_FILE_EXTENSION);
-
-    /*
-     * Compressed file with gzip.
-     */
-    if (pointer != NULL
-                    && strlen(pointer) == strlen(GZ_FILE_EXTENSION)) {
-
-
-    } else {
-        /*
-         * Uncompressed file.
-         */
-        self->concrete_self = bsal_memory_allocate(sizeof(struct bsal_raw_buffered_reader));
-
-        self->init =bsal_raw_buffered_reader_init;
-        self->destroy = bsal_raw_buffered_reader_destroy;
-        self->read_line = bsal_raw_buffered_reader_read_line;
-    }
+    bsal_buffered_reader_select(self, file);
 
     self->init(self, file, offset);
 }
@@ -77,4 +60,32 @@ int bsal_buffered_reader_read_line(struct bsal_buffered_reader *self,
 void *bsal_buffered_reader_get_concrete_self(struct bsal_buffered_reader *self)
 {
     return self->concrete_self;
+}
+
+void bsal_buffered_reader_select(struct bsal_buffered_reader *self, const char *file)
+{
+    const char *pointer;
+
+    pointer = strstr(file, GZ_FILE_EXTENSION);
+
+    /*
+     * Compressed file with gzip.
+     */
+    if (pointer != NULL
+                    && strlen(pointer) == strlen(GZ_FILE_EXTENSION)) {
+
+        self->concrete_self = bsal_memory_allocate(sizeof(struct bsal_gzip_buffered_reader));
+        self->init =bsal_gzip_buffered_reader_init;
+        self->destroy = bsal_gzip_buffered_reader_destroy;
+        self->read_line = bsal_gzip_buffered_reader_read_line;
+
+    } else {
+        /*
+         * Uncompressed file.
+         */
+        self->concrete_self = bsal_memory_allocate(sizeof(struct bsal_raw_buffered_reader));
+        self->init =bsal_raw_buffered_reader_init;
+        self->destroy = bsal_raw_buffered_reader_destroy;
+        self->read_line = bsal_raw_buffered_reader_read_line;
+    }
 }

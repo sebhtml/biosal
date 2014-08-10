@@ -28,11 +28,13 @@ GENOMICS_OBJECTS += genomics/input/input_stream.o
 GENOMICS_OBJECTS += genomics/input/input_proxy.o
 GENOMICS_OBJECTS += genomics/input/input.o
 GENOMICS_OBJECTS += genomics/input/input_operations.o
-GENOMICS_OBJECTS += genomics/input/buffered_reader.o
-GENOMICS_OBJECTS += genomics/input/raw_buffered_reader.o
 GENOMICS_OBJECTS += genomics/input/input_controller.o
 GENOMICS_OBJECTS += genomics/input/input_command.o
 GENOMICS_OBJECTS += genomics/input/mega_block.o
+
+GENOMICS_OBJECTS += genomics/input/buffered_reader.o
+GENOMICS_OBJECTS += genomics/input/raw_buffered_reader.o
+GENOMICS_OBJECTS += genomics/input/gzip_buffered_reader.o
 
 GENOMICS_OBJECTS += genomics/data/dna_sequence.o
 GENOMICS_OBJECTS += genomics/data/dna_kmer.o

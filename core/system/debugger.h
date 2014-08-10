@@ -39,4 +39,7 @@
 #define BSAL_DEBUGGER_ASSERT(condition)
 
 #endif
+
+void bsal_debugger_examine(void *pointer, int bytes);
+
 #endif

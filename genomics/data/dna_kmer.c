@@ -193,8 +193,9 @@ void bsal_dna_kmer_print(struct bsal_dna_kmer *self, int kmer_length,
 
     bsal_dna_codec_decode(codec, kmer_length, self->encoded_data, dna_sequence);
 
-    printf("KMER length: %d nucleotides, sequence: %s\n", kmer_length,
-                   dna_sequence);
+    printf("KMER length: %d nucleotides, sequence: %s hash %" PRIu64 "\n", kmer_length,
+                   dna_sequence,
+                   bsal_dna_kmer_hash(self, kmer_length, codec));
 
     bsal_memory_pool_free(memory, dna_sequence);
     dna_sequence = NULL;

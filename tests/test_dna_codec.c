@@ -5,6 +5,7 @@
 #include <genomics/data/dna_codec.h>
 
 #include <core/system/memory.h>
+#include <core/system/debugger.h>
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -95,6 +96,56 @@ int main(int argc, char **argv)
     bsal_memory_free(expected_sequence);
 
     bsal_dna_codec_destroy(&codec);
+
+    {
+        struct bsal_dna_codec codec;
+        char sequence2[] = "CGCGATCTGTTGCTGGGCCTAACGTGGTA";
+        char sequence[] = "TACCACGTTAGGCCCAGCAACAGATCGCG";
+        int kmer_length;
+        void *encoded_data;
+        void *encoded_data2;
+        int encoded_length;
+
+        bsal_dna_codec_init(&codec);
+        bsal_dna_codec_enable_two_bit_encoding(&codec);
+
+        kmer_length = strlen(sequence);
+
+        encoded_length = bsal_dna_codec_encoded_length(&codec, kmer_length);
+
+        encoded_data = bsal_memory_allocate(encoded_length);
+        encoded_data2 = bsal_memory_allocate(encoded_length);
+
+        memset(encoded_data, 0xff, encoded_length);
+
+        bsal_dna_codec_encode(&codec, kmer_length, sequence, encoded_data);
+        bsal_dna_codec_encode(&codec, kmer_length, sequence2, encoded_data2);
+
+#if 0
+        printf("Seq= %s\n", sequence);
+        bsal_debugger_examine(encoded_data, encoded_length);
+#endif
+
+#if 0
+        printf("after rev comp\n");
+#endif
+        bsal_dna_codec_reverse_complement_in_place(&codec, kmer_length, encoded_data);
+
+#if 0
+        bsal_debugger_examine(encoded_data, encoded_length);
+
+        printf("Seq2 %s\n", sequence2);
+        bsal_debugger_examine(encoded_data2, encoded_length);
+#endif
+
+        TEST_INT_EQUALS(memcmp(encoded_data, encoded_data2, encoded_length), 0);
+
+        bsal_memory_free(encoded_data);
+        bsal_memory_free(encoded_data2);
+
+        bsal_dna_codec_destroy(&codec);
+
+    }
 
     END_TESTS();
 
