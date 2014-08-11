@@ -43,4 +43,6 @@ void bsal_coverage_distribution_receive(struct bsal_actor *actor, struct bsal_me
 void bsal_coverage_distribution_write_distribution(struct bsal_actor *self);
 void bsal_coverage_distribution_ask_to_stop(struct bsal_actor *self, struct bsal_message *message);
 
+char *bsal_get_output_directory(int argc, char **argv);
+
 #endif

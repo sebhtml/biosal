@@ -4,6 +4,7 @@
 #include "assembly_graph_store.h"
 #include "assembly_vertex.h"
 
+#include <genomics/data/coverage_distribution.h>
 #include <genomics/data/dna_kmer.h>
 #include <genomics/data/dna_codec.h>
 
@@ -32,8 +33,15 @@ struct bsal_script bsal_assembly_dummy_walker_script = {
 void bsal_assembly_dummy_walker_init(struct bsal_actor *self)
 {
     struct bsal_assembly_dummy_walker *concrete_self;
+    char *directory_name;
+    char *path;
+    int argc;
+    char **argv;
 
     concrete_self = (struct bsal_assembly_dummy_walker *)bsal_actor_concrete_actor(self);
+
+    argc = bsal_actor_argc(self);
+    argv = bsal_actor_argv(self);
 
     bsal_vector_init(&concrete_self->graph_stores, sizeof(int));
 
@@ -82,6 +90,15 @@ void bsal_assembly_dummy_walker_init(struct bsal_actor *self)
     bsal_assembly_vertex_init(&concrete_self->current_vertex);
 
     concrete_self->path_index = 0;
+
+    directory_name = bsal_get_output_directory(argc, argv);
+
+    bsal_string_init(&concrete_self->file_path, directory_name);
+    bsal_string_append(&concrete_self->file_path, "/dummy_walks.fasta");
+
+    path = bsal_string_get(&concrete_self->file_path);
+
+    bsal_buffered_file_writer_init(&concrete_self->writer, path);
 }
 
 void bsal_assembly_dummy_walker_destroy(struct bsal_actor *self)
@@ -89,6 +106,10 @@ void bsal_assembly_dummy_walker_destroy(struct bsal_actor *self)
     struct bsal_assembly_dummy_walker *concrete_self;
 
     concrete_self = (struct bsal_assembly_dummy_walker *)bsal_actor_concrete_actor(self);
+
+    bsal_string_destroy(&concrete_self->file_path);
+
+    bsal_buffered_file_writer_destroy(&concrete_self->writer);
 
     bsal_set_destroy(&concrete_self->visited);
 
@@ -201,6 +222,7 @@ void bsal_assembly_dummy_walker_get_starting_vertex_reply(struct bsal_actor *sel
                     &concrete_self->memory_pool,
                     &concrete_self->codec);
 
+#ifdef BSAL_ASSEMBLY_DUMMY_WALKER_DEBUG
     printf("%s/%d received starting vertex (%d bytes) from source %d hash %" PRIu64 "\n",
                     bsal_actor_script_name(self),
                     bsal_actor_name(self),
@@ -211,7 +233,6 @@ void bsal_assembly_dummy_walker_get_starting_vertex_reply(struct bsal_actor *sel
 
     bsal_dna_kmer_print(&concrete_self->current_kmer, concrete_self->kmer_length, &concrete_self->codec,
                     ephemeral_memory);
-#ifdef BSAL_ASSEMBLY_DUMMY_WALKER_DEBUG
 #endif
 
     /*
@@ -432,7 +453,7 @@ void bsal_assembly_dummy_walker_get_vertices_and_select_reply(struct bsal_actor 
 
     bsal_assembly_dummy_walker_dump_path(self);
 
-    if (concrete_self->path_index < 1) {
+    if (concrete_self->path_index < 100) {
 
         bsal_actor_send_to_self_empty(self, BSAL_ACTOR_BEGIN);
 
@@ -674,7 +695,10 @@ void bsal_assembly_dummy_walker_write(struct bsal_actor *self, char *sequence,
 
     i = 0;
 
-    printf(">%s-%d-%d length=%d\n",
+    printf("LENGTH=%d\n", sequence_length);
+
+    bsal_buffered_file_writer_printf(&concrete_self->writer,
+                    ">%s-%d-%d length=%d\n",
                     bsal_actor_script_name(self),
                     bsal_actor_name(self),
                     concrete_self->path_index,
@@ -691,7 +715,11 @@ void bsal_assembly_dummy_walker_write(struct bsal_actor *self, char *sequence,
         memcpy(buffer, sequence + i, block_length);
         buffer[block_length] = '\0';
 
-        printf("%s\n", buffer);
+        printf("BLOCK %d <<%s>>\n",
+                        block_length, buffer);
+
+        bsal_buffered_file_writer_printf(&concrete_self->writer,
+                        "%s\n", buffer);
 
         i += block_length;
     }

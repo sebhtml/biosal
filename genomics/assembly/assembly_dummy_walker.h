@@ -4,10 +4,14 @@
 
 #include <engine/thorium/actor.h>
 
+#include <core/system/buffered_file_writer.h>
+
 #include <genomics/data/dna_codec.h>
 #include <genomics/data/dna_kmer.h>
 
 #include <genomics/assembly/assembly_vertex.h>
+
+#include <core/structures/string.h>
 
 #include <core/system/memory_pool.h>
 
@@ -24,6 +28,9 @@ struct bsal_assembly_dummy_walker {
     int kmer_length;
     struct bsal_dna_codec codec;
     struct bsal_memory_pool memory_pool;
+
+    struct bsal_buffered_file_writer writer;
+    struct bsal_string file_path;
 
     int has_starting_vertex;
 

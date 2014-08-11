@@ -902,23 +902,25 @@ void bsal_assembly_graph_store_get_starting_vertex(struct bsal_actor *self, stru
 
         BSAL_DEBUGGER_ASSERT(storage_key != NULL);
 
+#ifdef BSAL_ASSEMBLY_GRAPH_STORE_DEBUG_GET_STARTING_VERTEX
         printf("From storage\n");
         bsal_assembly_vertex_print(vertex);
 
         bsal_debugger_examine(storage_key, concrete_self->key_length_in_bytes);
+#endif
 
         bsal_dna_kmer_init_empty(&storage_kmer);
         bsal_dna_kmer_unpack(&storage_kmer, storage_key, concrete_self->kmer_length,
                         ephemeral_memory,
                         &concrete_self->storage_codec);
 
+#ifdef BSAL_ASSEMBLY_GRAPH_STORE_DEBUG_GET_STARTING_VERTEX
         printf("DEBUG starting kmer Storage kmer hash %" PRIu64 "\n",
                         bsal_dna_kmer_hash(&storage_kmer, concrete_self->kmer_length,
                                 &concrete_self->storage_codec));
 
         bsal_dna_kmer_print(&storage_kmer, concrete_self->kmer_length, &concrete_self->storage_codec,
                     ephemeral_memory);
-#ifdef BSAL_ASSEMBLY_GRAPH_STORE_DEBUG_GET_STARTING_VERTEX
 #endif
 
         sequence = bsal_memory_pool_allocate(ephemeral_memory, concrete_self->kmer_length + 1);
@@ -926,8 +928,8 @@ void bsal_assembly_graph_store_get_starting_vertex(struct bsal_actor *self, stru
         bsal_dna_kmer_get_sequence(&storage_kmer, sequence, concrete_self->kmer_length,
                         &concrete_self->storage_codec);
 
-        printf("SEQUENCE %s\n", sequence);
 #ifdef BSAL_ASSEMBLY_GRAPH_STORE_DEBUG_GET_STARTING_VERTEX
+        printf("SEQUENCE %s\n", sequence);
 #endif
 
         bsal_dna_kmer_init(&transport_kmer, sequence, &concrete_self->transport_codec,
@@ -940,6 +942,7 @@ void bsal_assembly_graph_store_get_starting_vertex(struct bsal_actor *self, stru
         bsal_dna_kmer_pack(&transport_kmer, new_buffer, concrete_self->kmer_length,
                         &concrete_self->transport_codec);
 
+#ifdef BSAL_ASSEMBLY_GRAPH_STORE_DEBUG_GET_STARTING_VERTEX
         printf("Packed version:\n");
 
         bsal_debugger_examine(new_buffer, new_count);
@@ -948,7 +951,6 @@ void bsal_assembly_graph_store_get_starting_vertex(struct bsal_actor *self, stru
 
         bsal_dna_kmer_print(&transport_kmer, concrete_self->kmer_length, &concrete_self->transport_codec,
                     ephemeral_memory);
-#ifdef BSAL_ASSEMBLY_GRAPH_STORE_DEBUG_GET_STARTING_VERTEX
 #endif
 
         bsal_message_init(&new_message, BSAL_ASSEMBLY_GET_STARTING_VERTEX_REPLY,

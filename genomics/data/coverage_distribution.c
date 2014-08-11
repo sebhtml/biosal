@@ -158,23 +158,14 @@ void bsal_coverage_distribution_write_distribution(struct bsal_actor *self)
     struct bsal_string canonical_file_name;
     int argc;
     char **argv;
-    int i;
     int name;
-    char default_directory[] = BSAL_COVERAGE_DISTRIBUTION_DEFAULT_OUTPUT;
     char *directory_name;
 
     name = bsal_actor_name(self);
     argc = bsal_actor_argc(self);
     argv = bsal_actor_argv(self);
 
-    directory_name = default_directory;
-
-    for (i = 0; i < argc; i++) {
-        if (strcmp(argv[i], "-o") == 0 && i + 1 < argc) {
-            directory_name = argv[i + 1];
-            break;
-        }
-    }
+    directory_name = bsal_get_output_directory(argc, argv);
 
     /* Create the directory if it does not exist
      */
@@ -309,3 +300,22 @@ void bsal_coverage_distribution_ask_to_stop(struct bsal_actor *self, struct bsal
 
     bsal_actor_ask_to_stop(self, message);
 }
+
+char *bsal_get_output_directory(int argc, char **argv)
+{
+    int i;
+    char default_directory[] = BSAL_COVERAGE_DISTRIBUTION_DEFAULT_OUTPUT;
+    char *directory_name;
+
+    directory_name = default_directory;
+
+    for (i = 0; i < argc; i++) {
+        if (strcmp(argv[i], "-o") == 0 && i + 1 < argc) {
+            directory_name = argv[i + 1];
+            break;
+        }
+    }
+
+    return directory_name;
+}
+
