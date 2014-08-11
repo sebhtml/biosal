@@ -695,7 +695,9 @@ void bsal_assembly_dummy_walker_write(struct bsal_actor *self, char *sequence,
 
     i = 0;
 
+#if 0
     printf("LENGTH=%d\n", sequence_length);
+#endif
 
     bsal_buffered_file_writer_printf(&concrete_self->writer,
                     ">%s-%d-%d length=%d\n",
@@ -715,8 +717,10 @@ void bsal_assembly_dummy_walker_write(struct bsal_actor *self, char *sequence,
         memcpy(buffer, sequence + i, block_length);
         buffer[block_length] = '\0';
 
+#if 0
         printf("BLOCK %d <<%s>>\n",
                         block_length, buffer);
+#endif
 
         bsal_buffered_file_writer_printf(&concrete_self->writer,
                         "%s\n", buffer);

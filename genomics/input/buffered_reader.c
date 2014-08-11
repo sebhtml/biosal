@@ -54,7 +54,15 @@ void bsal_buffered_reader_destroy(struct bsal_buffered_reader *self)
 int bsal_buffered_reader_read_line(struct bsal_buffered_reader *self,
                 char *buffer, int length)
 {
-    return self->read_line(self, buffer, length);
+    int return_value;
+
+    return_value = self->read_line(self, buffer, length);
+
+#if 0
+    printf("DEBUG READ_LINE %d %s\n", return_value, buffer);
+#endif
+
+    return return_value;
 }
 
 void *bsal_buffered_reader_get_concrete_self(struct bsal_buffered_reader *self)

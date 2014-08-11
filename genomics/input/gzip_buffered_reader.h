@@ -9,6 +9,13 @@ struct bsal_buffered_reader;
 #include <stdint.h>
 
 /*
+ * inflate/inflateInit is faster than gzopen/gzread/gzclose.
+ */
+/*
+#define BSAL_GZIP_BUFFERED_READER_USE_INFLATE
+*/
+
+/*
  * A buffered reader for compressed files
  * with gzip.
  *
@@ -20,7 +27,25 @@ struct bsal_gzip_buffered_reader {
     int buffer_capacity;
     int buffer_size;
     int position_in_buffer;
+
+#ifdef BSAL_GZIP_BUFFERED_READER_USE_INFLATE
+    /*
+     * \see http://www.ncbi.nlm.nih.gov/IEB/ToolBox/CPP_DOC/lxr/source/src/util/compress/zlib/example.c
+     */
+
+    FILE *raw_descriptor;
+
+    char *input_buffer;
+    int input_buffer_capacity;
+    int input_buffer_size;
+    int input_buffer_position;
+    int got_header;
+    z_stream decompression_stream;
+#else
+
     gzFile descriptor;
+#endif
+
 };
 
 void bsal_gzip_buffered_reader_init(struct bsal_buffered_reader *reader,
@@ -37,5 +62,18 @@ int bsal_gzip_buffered_reader_read_line(struct bsal_buffered_reader *reader,
 /* \return number of bytes copied in buffer
  */
 int bsal_gzip_buffered_reader_pull(struct bsal_buffered_reader *reader);
+
+void bsal_gzip_buffered_reader_open(struct bsal_buffered_reader *self,
+                const char *file, uint64_t offset);
+
+int bsal_gzip_buffered_reader_read(struct bsal_buffered_reader *self,
+                char *buffer, int length);
+
+#ifdef BSAL_GZIP_BUFFERED_READER_USE_INFLATE
+int bsal_gzip_buffered_reader_pull_raw(struct bsal_buffered_reader *self);
+
+int bsal_gzip_buffered_reader_read_with_inflate(struct bsal_buffered_reader *self,
+                char *buffer, int length);
+#endif
 
 #endif

@@ -100,8 +100,8 @@ int bsal_buffered_file_writer_printf(struct bsal_buffered_file_writer *self, con
     int actual_byte_count;
     va_list arguments;
 
-    printf("DEBUG bsal_buffered_file_writer_printf %s\n", format);
 #if 0
+    printf("DEBUG bsal_buffered_file_writer_printf %s\n", format);
 #endif
 
     /*
@@ -144,7 +144,9 @@ int bsal_buffered_file_writer_flush(struct bsal_buffered_file_writer *self)
 {
     int value;
 
+#if 0
     printf("FLUSH !\n");
+#endif
 
     /*
      * \see http://www.cplusplus.com/reference/cstdio/fwrite/
