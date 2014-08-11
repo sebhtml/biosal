@@ -12,6 +12,8 @@
 #include <core/system/debugger.h>
 #include <core/system/directory.h>
 
+#include <core/system/buffered_file_writer.h>
+
 #include <stdio.h>
 #include <stdint.h>
 #include <string.h>
@@ -152,8 +154,8 @@ void bsal_coverage_distribution_write_distribution(struct bsal_actor *self)
     struct bsal_coverage_distribution *concrete_actor;
     struct bsal_vector coverage_values;
     struct bsal_vector_iterator vector_iterator;
-    FILE *descriptor;
-    FILE *descriptor_canonical;
+    struct bsal_buffered_file_writer descriptor;
+    struct bsal_buffered_file_writer descriptor_canonical;
     struct bsal_string file_name;
     struct bsal_string canonical_file_name;
     int argc;
@@ -185,8 +187,8 @@ void bsal_coverage_distribution_write_distribution(struct bsal_actor *self)
     bsal_string_append(&canonical_file_name, "/");
     bsal_string_append(&canonical_file_name, BSAL_COVERAGE_DISTRIBUTION_DEFAULT_OUTPUT_FILE_CANONICAL);
 
-    descriptor = fopen(bsal_string_get(&file_name), "w");
-    descriptor_canonical = fopen(bsal_string_get(&canonical_file_name), "w");
+    bsal_buffered_file_writer_init(&descriptor, bsal_string_get(&file_name));
+    bsal_buffered_file_writer_init(&descriptor_canonical, bsal_string_get(&canonical_file_name));
 
     concrete_actor = (struct bsal_coverage_distribution *)bsal_actor_concrete_actor(self);
 
@@ -219,7 +221,11 @@ void bsal_coverage_distribution_write_distribution(struct bsal_actor *self)
 
     bsal_vector_iterator_init(&vector_iterator, &coverage_values);
 
-    fprintf(descriptor, "Coverage\tFrequency\n");
+#if 0
+    bsal_buffered_file_writer_printf(&descriptor_canonical, "Coverage\tFrequency\n");
+#endif
+
+    bsal_buffered_file_writer_printf(&descriptor, "Coverage\tFrequency\n");
 #ifdef BSAL_COVERAGE_DISTRIBUTION_DEBUG
 #endif
 
@@ -227,19 +233,15 @@ void bsal_coverage_distribution_write_distribution(struct bsal_actor *self)
 
         bsal_vector_iterator_next(&vector_iterator, (void **)&coverage);
 
-        /*
-        printf("ITERATED COVERAGE %d\n", *coverage);
-        */
-
         canonical_frequency = (uint64_t *)bsal_map_get(&concrete_actor->distribution, coverage);
 
         frequency = 2 * *canonical_frequency;
 
-        fprintf(descriptor_canonical, "%d %" PRIu64 "\n",
+        bsal_buffered_file_writer_printf(&descriptor_canonical, "%d %" PRIu64 "\n",
                         *coverage,
                         *canonical_frequency);
 
-        fprintf(descriptor, "%d\t%" PRIu64 "\n",
+        bsal_buffered_file_writer_printf(&descriptor, "%d\t%" PRIu64 "\n",
                         *coverage,
                         frequency);
     }
@@ -250,11 +252,8 @@ void bsal_coverage_distribution_write_distribution(struct bsal_actor *self)
     printf("distribution %d wrote %s\n", name, bsal_string_get(&file_name));
     printf("distribution %d wrote %s\n", name, bsal_string_get(&canonical_file_name));
 
-    fclose(descriptor);
-    descriptor = NULL;
-    fclose(descriptor_canonical);
-
-    descriptor_canonical = NULL;
+    bsal_buffered_file_writer_destroy(&descriptor);
+    bsal_buffered_file_writer_destroy(&descriptor_canonical);
 
     bsal_string_destroy(&file_name);
     bsal_string_destroy(&canonical_file_name);
