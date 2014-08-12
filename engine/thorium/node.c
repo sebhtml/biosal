@@ -660,6 +660,8 @@ void bsal_node_set_initial_actor(struct bsal_node *node, int node_name, int acto
 int bsal_node_run(struct bsal_node *node)
 {
     float load;
+    int print_final_load;
+    int i;
 
     if (node->print_counters) {
         printf("----------------------------------------------\n");
@@ -717,7 +719,15 @@ int bsal_node_run(struct bsal_node *node)
 
     /* Print global load for this node... */
 
-    if (node->print_load || 1) {
+    print_final_load = 1;
+
+    for (i = 0; i < node->argc; i++) {
+        if (strstr(node->argv[i], "-help") != NULL
+                        || strstr(node->argv[i], "-version") != NULL) {
+            print_final_load = 0;
+        }
+    }
+    if (node->print_load || print_final_load) {
         load = bsal_worker_pool_get_computation_load(&node->worker_pool);
 
         printf("%s node/%d COMPUTATION LOAD %.2f\n",

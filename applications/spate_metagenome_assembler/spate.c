@@ -210,8 +210,10 @@ void spate_ask_to_stop(struct bsal_actor *self, struct bsal_message *message)
         bsal_actor_send_empty(self, concrete_self->manager_for_sequence_stores,
                         BSAL_ACTOR_ASK_TO_STOP);
 
-        bsal_timer_stop(&concrete_self->timer);
-        bsal_timer_print_with_description(&concrete_self->timer, "Run actor computation");
+        if (!spate_must_print_help(self)) {
+            bsal_timer_stop(&concrete_self->timer);
+            bsal_timer_print_with_description(&concrete_self->timer, "Run actor computation");
+        }
     }
 }
 
@@ -483,29 +485,33 @@ void spate_add_file_reply(struct bsal_actor *self, struct bsal_message *message)
 
 void spate_help(struct bsal_actor *self)
 {
-    printf("Name: %s\n", bsal_actor_script_name(self));
-    printf("Description: %s\n", bsal_script_description(bsal_actor_get_script(self)));
-    printf("Version: %s\n", bsal_script_version(bsal_actor_get_script(self)));
-    printf("Library: biosal (biological sequence actor library)\n");
-    printf("Engine: thorium (distributed event-driven native actor machine emulator)\n");
+    printf("Application: %s\n", bsal_actor_script_name(self));
+    printf("    Version: %s\n", bsal_script_version(bsal_actor_get_script(self)));
+    printf("    Description: %s\n", bsal_script_description(bsal_actor_get_script(self)));
+    printf("    Library: biosal (biological sequence actor library)\n");
+    printf("    Engine: thorium (distributed event-driven native actor machine emulator)\n");
 
     printf("\n");
     printf("Usage:\n");
 
-    printf("mpiexec -n <ranks> spate -threads-per-node <threads> [-k <kmer_length>] [-i <file>] [-p <file1> <file2>] [-s <file>] -o <output>\n");
+    printf("    mpiexec -n <ranks> spate -threads-per-node <threads> [-k <kmer_length>] [-i <file>] [-p <file1> <file2>] [-s <file>] -o <output>\n");
 
     printf("\n");
-    printf("Default values: -k %d -threads-per-node %d -o %s\n",
-                    BSAL_ASSEMBLY_GRAPH_BUILDER_DEFAULT_KMER_LENGTH,
-                    1,
+    printf("Default values:\n");
+    printf("    -k %d (no limit and no recompilation is required)\n", BSAL_ASSEMBLY_GRAPH_BUILDER_DEFAULT_KMER_LENGTH);
+    printf("    -threads-per-node %d\n", 1);
+    printf("    -o %s\n",
                     BSAL_COVERAGE_DISTRIBUTION_DEFAULT_OUTPUT);
 
     printf("\n");
     printf("Example:\n");
-    printf("mpiexec -n 128 spate -threads-per-node 24 -k 51 -i interleaved_file_1.fastq -i interleaved_file_2.fastq -o my-assembly\n");
+    printf("    mpiexec -n 128 spate -threads-per-node 24 -k 51 -i interleaved_file_1.fastq -i interleaved_file_2.fastq -o my-assembly\n");
 
     printf("\n");
-    printf("Supported input formats: .fastq (upcoming: .fasta, .fastq.gz)\n");
+    printf("Supported input formats:\n");
+
+    printf("    .fastq, .fastq.gz, .fasta, .fasta.gz\n");
+    printf("    .fastq can be named .fq, fasta can be named .fa, and .fasta can be multiline.\n");
 
 }
 
@@ -532,8 +538,8 @@ int spate_must_print_help(struct bsal_actor *self)
     argv = bsal_actor_argv(self);
 
     for (i = 0; i < argc; i++) {
-        if (strstr(argv[i], "help") != NULL
-                        || strstr(argv[i], "version") != NULL) {
+        if (strstr(argv[i], "-help") != NULL
+                        || strstr(argv[i], "-version") != NULL) {
             return 1;
         }
     }
