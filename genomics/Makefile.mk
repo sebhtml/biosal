@@ -44,5 +44,6 @@ GENOMICS_OBJECTS += genomics/data/coverage_distribution.o
 GENOMICS_OBJECTS += genomics/data/dna_codec.o
 
 GENOMICS_OBJECTS += genomics/formats/fastq_input.o
+GENOMICS_OBJECTS += genomics/formats/fasta_input.o
 
 

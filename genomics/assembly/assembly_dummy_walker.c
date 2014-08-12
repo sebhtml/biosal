@@ -94,7 +94,7 @@ void bsal_assembly_dummy_walker_init(struct bsal_actor *self)
     directory_name = bsal_get_output_directory(argc, argv);
 
     bsal_string_init(&concrete_self->file_path, directory_name);
-    bsal_string_append(&concrete_self->file_path, "/dummy_walks.fasta");
+    bsal_string_append(&concrete_self->file_path, "/dummy_walker.fasta");
 
     path = bsal_string_get(&concrete_self->file_path);
 
@@ -213,6 +213,16 @@ void bsal_assembly_dummy_walker_get_starting_vertex_reply(struct bsal_actor *sel
     struct bsal_message new_message;
 
     count = bsal_message_count(message);
+
+    /*
+     * No more vertices to consume.
+     */
+    if (count == 0) {
+
+        bsal_actor_send_to_supervisor_empty(self, BSAL_ACTOR_START_REPLY);
+        return;
+    }
+
     buffer = bsal_message_buffer(message);
     concrete_self = (struct bsal_assembly_dummy_walker *)bsal_actor_concrete_actor(self);
     ephemeral_memory = bsal_actor_get_ephemeral_memory(self);

@@ -24,6 +24,9 @@ void bsal_input_proxy_init(struct bsal_input_proxy *proxy,
 
     bsal_input_proxy_try(proxy, &proxy->input, &proxy->fastq,
                     &bsal_fastq_input_operations, file, offset);
+
+    bsal_input_proxy_try(proxy, &proxy->input, &proxy->fasta,
+                    &bsal_fasta_input_operations, file, offset);
 }
 
 int bsal_input_proxy_get_sequence(struct bsal_input_proxy *proxy,

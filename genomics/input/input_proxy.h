@@ -3,10 +3,16 @@
 #define BSAL_INPUT_PROXY_H
 
 #include <genomics/formats/fastq_input.h>
+#include <genomics/formats/fasta_input.h>
 
+/*
+ * An input proxy for input files.
+ */
 struct bsal_input_proxy {
     struct bsal_input input;
+
     struct bsal_fastq_input fastq;
+    struct bsal_fasta_input fasta;
 
     int not_found;
     int not_supported;
