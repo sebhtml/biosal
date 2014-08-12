@@ -23,6 +23,15 @@
  * lock 8-MiB blocks when reading or writing
  */
 #define BSAL_BUFFERED_READER_BUFFER_SIZE 8388608
+#define GZ_FILE_EXTENSION ".gz"
+
+struct bsal_buffered_reader_interface bsal_gzip_buffered_reader_implementation = {
+    .init = bsal_gzip_buffered_reader_init,
+    .destroy = bsal_gzip_buffered_reader_destroy,
+    .read_line = bsal_gzip_buffered_reader_read_line,
+    .detect = bsal_gzip_buffered_reader_detect,
+    .size = sizeof(struct bsal_gzip_buffered_reader)
+};
 
 /*#define BSAL_BUFFERED_READER_BUFFER_SIZE 4194304*/
 
@@ -463,3 +472,22 @@ int bsal_gzip_buffered_reader_read_with_inflate(struct bsal_buffered_reader *sel
 }
 
 #endif
+
+int bsal_gzip_buffered_reader_detect(struct bsal_buffered_reader *self,
+                const char *file)
+{
+    const char *pointer;
+
+    pointer = strstr(file, GZ_FILE_EXTENSION);
+
+    /*
+     * Compressed file with gzip.
+     */
+    if (pointer != NULL
+                    && strlen(pointer) == strlen(GZ_FILE_EXTENSION)) {
+
+        return 1;
+    }
+
+    return 0;
+}

@@ -5,6 +5,8 @@
 #include <stdio.h>
 #include <stdint.h>
 
+struct bsal_buffered_reader_interface;
+
 /*
  * An interface for a buffered
  * reader.
@@ -13,9 +15,7 @@ struct bsal_buffered_reader {
 
     void *concrete_self;
 
-    void (*init)(struct bsal_buffered_reader *self, const char *file, uint64_t offset);
-    void (*destroy)(struct bsal_buffered_reader *self);
-    int (*read_line)(struct bsal_buffered_reader *self, char *buffer, int length);
+    struct bsal_buffered_reader_interface *interface;
 };
 
 void bsal_buffered_reader_init(struct bsal_buffered_reader *self,

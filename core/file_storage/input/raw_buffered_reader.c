@@ -11,6 +11,14 @@
 
 #include <inttypes.h>
 
+struct bsal_buffered_reader_interface bsal_raw_buffered_reader_implementation = {
+    .init = bsal_raw_buffered_reader_init,
+    .destroy = bsal_raw_buffered_reader_destroy,
+    .read_line = bsal_raw_buffered_reader_read_line,
+    .detect = bsal_raw_buffered_reader_detect,
+    .size = sizeof(struct bsal_raw_buffered_reader)
+};
+
 /*
 #define BSAL_BUFFERED_READER_DEBUG
 */
@@ -193,3 +201,8 @@ int bsal_raw_buffered_reader_pull(struct bsal_buffered_reader *self)
     return read;
 }
 
+int bsal_raw_buffered_reader_detect(struct bsal_buffered_reader *self,
+                const char *file)
+{
+    return 1;
+}

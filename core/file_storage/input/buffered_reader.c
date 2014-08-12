@@ -24,30 +24,32 @@
  */
 #define BSAL_BUFFERED_READER_BUFFER_SIZE 8388608
 
-#define GZ_FILE_EXTENSION ".gz"
-
 /*#define BSAL_BUFFERED_READER_BUFFER_SIZE 4194304*/
 
 void bsal_buffered_reader_init(struct bsal_buffered_reader *self,
                 const char *file, uint64_t offset)
 {
+    self->concrete_self = NULL;
+    self->interface = NULL;
+
     bsal_buffered_reader_select(self, file);
 
-    self->init(self, file, offset);
+    if (self->interface != NULL) {
+        self->concrete_self = bsal_memory_allocate(self->interface->size);
+        self->interface->init(self, file, offset);
+    }
 }
 
 void bsal_buffered_reader_destroy(struct bsal_buffered_reader *self)
 {
-    self->destroy(self);
+    self->interface->destroy(self);
 
     if (self->concrete_self != NULL) {
 
         bsal_memory_free(self->concrete_self);
         self->concrete_self = NULL;
 
-        self->init = NULL;
-        self->destroy = NULL;
-        self->read_line = NULL;
+        self->interface = NULL;
     }
 }
 
@@ -56,7 +58,7 @@ int bsal_buffered_reader_read_line(struct bsal_buffered_reader *self,
 {
     int return_value;
 
-    return_value = self->read_line(self, buffer, length);
+    return_value = self->interface->read_line(self, buffer, length);
 
 #if 0
     printf("DEBUG READ_LINE %d %s\n", return_value, buffer);
@@ -72,28 +74,11 @@ void *bsal_buffered_reader_get_concrete_self(struct bsal_buffered_reader *self)
 
 void bsal_buffered_reader_select(struct bsal_buffered_reader *self, const char *file)
 {
-    const char *pointer;
+    if (bsal_gzip_buffered_reader_implementation.detect(self, file)) {
 
-    pointer = strstr(file, GZ_FILE_EXTENSION);
-
-    /*
-     * Compressed file with gzip.
-     */
-    if (pointer != NULL
-                    && strlen(pointer) == strlen(GZ_FILE_EXTENSION)) {
-
-        self->concrete_self = bsal_memory_allocate(sizeof(struct bsal_gzip_buffered_reader));
-        self->init =bsal_gzip_buffered_reader_init;
-        self->destroy = bsal_gzip_buffered_reader_destroy;
-        self->read_line = bsal_gzip_buffered_reader_read_line;
-
+        self->interface = &bsal_gzip_buffered_reader_implementation;
     } else {
-        /*
-         * Uncompressed file.
-         */
-        self->concrete_self = bsal_memory_allocate(sizeof(struct bsal_raw_buffered_reader));
-        self->init =bsal_raw_buffered_reader_init;
-        self->destroy = bsal_raw_buffered_reader_destroy;
-        self->read_line = bsal_raw_buffered_reader_read_line;
+
+        self->interface = &bsal_raw_buffered_reader_implementation;
     }
 }

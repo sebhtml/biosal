@@ -2,11 +2,14 @@
 #ifndef BSAL_GZIP_BUFFERED_READER_H
 #define BSAL_GZIP_BUFFERED_READER_H
 
-struct bsal_buffered_reader;
+
+#include "buffered_reader_interface.h"
 
 #include <zlib.h>
 #include <stdio.h>
 #include <stdint.h>
+
+struct bsal_buffered_reader;
 
 /*
  * inflate/inflateInit is faster than gzopen/gzread/gzclose.
@@ -48,6 +51,8 @@ struct bsal_gzip_buffered_reader {
 
 };
 
+extern struct bsal_buffered_reader_interface bsal_gzip_buffered_reader_implementation;
+
 void bsal_gzip_buffered_reader_init(struct bsal_buffered_reader *reader,
                 const char *file, uint64_t offset);
 void bsal_gzip_buffered_reader_destroy(struct bsal_buffered_reader *reader);
@@ -75,5 +80,8 @@ int bsal_gzip_buffered_reader_pull_raw(struct bsal_buffered_reader *self);
 int bsal_gzip_buffered_reader_read_with_inflate(struct bsal_buffered_reader *self,
                 char *buffer, int length);
 #endif
+
+int bsal_gzip_buffered_reader_detect(struct bsal_buffered_reader *self,
+                const char *file);
 
 #endif
