@@ -355,4 +355,17 @@ void bsal_vector_push_back_vector(struct bsal_vector *self, struct bsal_vector *
     bsal_vector_copy_range(other_vector, 0, bsal_vector_size(other_vector) - 1, self);
 }
 
+void *bsal_vector_at_first(struct bsal_vector *self)
+{
+    return bsal_vector_at(self, 0);
+}
 
+void *bsal_vector_at_middle(struct bsal_vector *self)
+{
+    return bsal_vector_at(self, bsal_vector_size(self) - 1);
+}
+
+void *bsal_vector_at_last(struct bsal_vector *self)
+{
+    return bsal_vector_at(self, bsal_vector_size(self) / 2);
+}

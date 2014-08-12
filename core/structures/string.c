@@ -54,6 +54,9 @@ void bsal_string_combine(struct bsal_string *string, const char *data, int opera
     int new_length;
     char *new_data;
 
+    /*
+     * Nothing to do.
+     */
     if (data == NULL) {
         return;
     }
@@ -72,7 +75,6 @@ void bsal_string_combine(struct bsal_string *string, const char *data, int opera
         old_length = strlen(string->data);
     }
 
-
     new_length = old_length + length;
 
     new_data = (char *)bsal_memory_allocate(new_length + 1);
@@ -80,10 +82,11 @@ void bsal_string_combine(struct bsal_string *string, const char *data, int opera
     strcpy(new_data, "");
 
     if (operation == BSAL_STRING_APPEND) {
-        strcat(new_data, string->data);
         if (string->data != NULL) {
-            strcat(new_data, data);
+            strcat(new_data, string->data);
         }
+        strcat(new_data, data);
+
     } else if (operation == BSAL_STRING_PREPEND) {
         strcat(new_data, data);
         if (string->data != NULL) {

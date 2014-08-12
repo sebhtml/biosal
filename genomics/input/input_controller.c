@@ -109,7 +109,7 @@ void bsal_input_controller_init(struct bsal_actor *actor)
     bsal_actor_add_route(actor, BSAL_INPUT_CONTROLLER_SPAWN_READING_STREAMS,
                     bsal_input_controller_spawn_streams);
 
-    bsal_actor_add_route(actor, BSAL_INPUT_STREAM_SET_OFFSET_REPLY,
+    bsal_actor_add_route(actor, BSAL_INPUT_STREAM_SET_START_OFFSET_REPLY,
                     bsal_input_controller_set_offset_reply);
     bsal_actor_add_script(actor, BSAL_INPUT_STREAM_SCRIPT, &bsal_input_stream_script);
     bsal_actor_add_script(actor, BSAL_SEQUENCE_STORE_SCRIPT, &bsal_sequence_store_script);
@@ -376,7 +376,7 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
                             offset, stream);
 #endif
 
-            bsal_actor_send_uint64_t(actor, stream, BSAL_INPUT_STREAM_SET_OFFSET, offset);
+            bsal_actor_send_uint64_t(actor, stream, BSAL_INPUT_STREAM_SET_START_OFFSET, offset);
 
             return;
         }
@@ -431,10 +431,10 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
         if (error == BSAL_INPUT_ERROR_NO_ERROR) {
 
 #ifdef BSAL_INPUT_CONTROLLER_DEBUG_LEVEL_2
-            printf("DEBUG actor %d asks %d BSAL_INPUT_COUNT\n", name, stream);
+            printf("DEBUG actor %d asks %d BSAL_INPUT_COUNT_IN_PARALLEL\n", name, stream);
 #endif
 
-            bsal_actor_send_empty(actor, stream, BSAL_INPUT_COUNT);
+            bsal_actor_send_empty(actor, stream, BSAL_INPUT_COUNT_IN_PARALLEL);
         } else {
 
 #ifdef BSAL_INPUT_CONTROLLER_DEBUG_LEVEL_2
@@ -477,7 +477,7 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
                         name, source, local_file, entries);
         *bucket = entries;
 
-    } else if (tag == BSAL_INPUT_COUNT_REPLY) {
+    } else if (tag == BSAL_INPUT_COUNT_IN_PARALLEL_REPLY) {
 
         stream_index = bsal_vector_index_of(&concrete_actor->counting_streams, &source);
         local_file = bsal_vector_at_as_char_pointer(&concrete_actor->files, stream_index);

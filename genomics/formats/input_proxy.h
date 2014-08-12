@@ -20,7 +20,7 @@ struct bsal_input_proxy {
 };
 
 void bsal_input_proxy_init(struct bsal_input_proxy *proxy,
-                char *file, uint64_t offset);
+                char *file, uint64_t offset, uint64_t maximum_offset);
 int bsal_input_proxy_get_sequence(struct bsal_input_proxy *proxy,
                 char *sequence);
 void bsal_input_proxy_destroy(struct bsal_input_proxy *proxy);
@@ -31,6 +31,6 @@ int bsal_input_proxy_error(struct bsal_input_proxy *proxy);
 void bsal_input_proxy_try(struct bsal_input_proxy *proxy,
                 struct bsal_input_format *input, void *implementation,
                 struct bsal_input_format_interface *operations, char *file,
-                uint64_t offset);
+                uint64_t offset, uint64_t maximum_offset);
 
 #endif

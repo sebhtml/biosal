@@ -8,7 +8,7 @@
 
 void bsal_input_format_init(struct bsal_input_format *input, void *implementation,
                 struct bsal_input_format_interface *operations, char *file,
-                uint64_t offset)
+                uint64_t offset, uint64_t maximum_offset)
 {
     bsal_input_format_interface_init_fn_t handler;
     FILE *descriptor;
@@ -18,7 +18,11 @@ void bsal_input_format_init(struct bsal_input_format *input, void *implementatio
     input->sequences = 0;
     input->file = file;
     input->error = BSAL_INPUT_ERROR_NO_ERROR;
-    input->offset = offset;
+
+    input->start_offset = offset;
+    input->end_offset = maximum_offset;
+
+    input->offset = input->start_offset;
 
     descriptor = fopen(input->file, "r");
 
@@ -56,6 +60,14 @@ int bsal_input_format_get_sequence(struct bsal_input_format *input,
     int value;
 
     if (!bsal_input_format_valid(input)) {
+        return 0;
+    }
+
+    /*
+     * Check if the end offset has been reached.
+     */
+
+    if (input->offset >= input->end_offset) {
         return 0;
     }
 
@@ -142,4 +154,14 @@ int bsal_input_format_has_suffix(struct bsal_input_format *input, const char *su
 uint64_t bsal_input_format_offset(struct bsal_input_format *input)
 {
     return input->offset;
+}
+
+uint64_t bsal_input_format_start_offset(struct bsal_input_format *input)
+{
+    return input->start_offset;
+}
+
+uint64_t bsal_input_format_end_offset(struct bsal_input_format *input)
+{
+    return input->end_offset;
 }

@@ -2,6 +2,9 @@
 #ifndef BSAL_STRING_H
 #define BSAL_STRING_H
 
+/*
+ * A string of characters (bytes).
+ */
 struct bsal_string {
 
     char *data;

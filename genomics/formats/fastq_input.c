@@ -26,7 +26,7 @@ void bsal_fastq_input_init(struct bsal_input_format *input)
     uint64_t offset;
 
     file = bsal_input_format_file(input);
-    offset = bsal_input_format_offset(input);
+    offset = bsal_input_format_start_offset(input);
 
 #ifdef BSAL_FASTQ_INPUT_DEBUG
     printf("DEBUG bsal_fastq_input_init %s\n",

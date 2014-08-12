@@ -62,9 +62,24 @@ void bsal_input_stream_init(struct bsal_actor *actor)
 
     input->starting_offset = 0;
 
+    /*
+     * Use a large ending offset.
+     */
+    input->ending_offset = 0;
+    --input->ending_offset;
+
     bsal_vector_init(&input->mega_blocks, sizeof(struct bsal_mega_block));
 
-    bsal_actor_add_route(actor, BSAL_INPUT_STREAM_SET_OFFSET, bsal_input_stream_set_offset);
+    bsal_actor_add_route(actor, BSAL_INPUT_STREAM_SET_START_OFFSET, bsal_input_stream_set_start_offset);
+    bsal_actor_add_route(actor, BSAL_INPUT_STREAM_SET_END_OFFSET, bsal_input_stream_set_end_offset);
+    bsal_actor_add_route(actor, BSAL_INPUT_COUNT_IN_PARALLEL, bsal_input_stream_count_in_parallel);
+    bsal_actor_add_route(actor, BSAL_INPUT_COUNT_REPLY, bsal_input_stream_count_reply);
+
+    concrete_actor->count_customer = BSAL_ACTOR_NOBODY;
+
+#if 0
+    bsal_string_init(&concrete_actor->file_for_parallel_counting, NULL);
+#endif
 }
 
 void bsal_input_stream_destroy(struct bsal_actor *actor)
@@ -72,6 +87,10 @@ void bsal_input_stream_destroy(struct bsal_actor *actor)
     struct bsal_input_stream *input;
 
     input = (struct bsal_input_stream *)bsal_actor_concrete_actor(actor);
+
+#if 0
+    bsal_string_destroy(&input->file_for_parallel_counting);
+#endif
 
     if (input->buffer_for_sequence != NULL) {
         bsal_memory_free(input->buffer_for_sequence);
@@ -171,7 +190,7 @@ void bsal_input_stream_receive(struct bsal_actor *actor, struct bsal_message *me
         strcpy(concrete_actor->file_name, file_name_in_buffer);
 
         bsal_input_proxy_init(&concrete_actor->proxy, concrete_actor->file_name,
-                        concrete_actor->starting_offset);
+                        concrete_actor->starting_offset, concrete_actor->ending_offset);
         concrete_actor->proxy_ready = 1;
 
         /* Die if there is an error...
@@ -195,6 +214,10 @@ void bsal_input_stream_receive(struct bsal_actor *actor, struct bsal_message *me
 
     } else if (tag == BSAL_INPUT_COUNT) {
         /* count a little bit and yield the worker */
+
+        if (concrete_actor->count_customer == BSAL_ACTOR_NOBODY) {
+            concrete_actor->count_customer = source;
+        }
 
         if (bsal_input_stream_check_open_error(actor, message)) {
 
@@ -279,7 +302,7 @@ void bsal_input_stream_receive(struct bsal_actor *actor, struct bsal_message *me
 
         count = bsal_input_proxy_size(&concrete_actor->proxy);
 
-        bsal_actor_send_vector(actor, concrete_actor->controller, BSAL_INPUT_COUNT_REPLY,
+        bsal_actor_send_vector(actor, concrete_actor->count_customer, BSAL_INPUT_COUNT_REPLY,
                         &concrete_actor->mega_blocks);
 
         printf("input_stream/%d on node/%d counted entries in %s, %" PRIu64 "\n",
@@ -379,7 +402,8 @@ void bsal_input_stream_receive(struct bsal_actor *actor, struct bsal_message *me
 
         bsal_input_proxy_destroy(&concrete_actor->proxy);
         bsal_input_proxy_init(&concrete_actor->proxy, concrete_actor->file_name,
-                        concrete_actor->starting_offset);
+                        concrete_actor->starting_offset,
+                        concrete_actor->ending_offset);
 
         bsal_actor_send_reply_empty(actor, BSAL_INPUT_STREAM_RESET_REPLY);
 
@@ -583,11 +607,85 @@ void bsal_input_stream_push_sequences(struct bsal_actor *actor,
 
 }
 
-void bsal_input_stream_set_offset(struct bsal_actor *self, struct bsal_message *message)
+void bsal_input_stream_set_start_offset(struct bsal_actor *self, struct bsal_message *message)
 {
     struct bsal_input_stream *concrete_actor;
 
     concrete_actor = (struct bsal_input_stream *)bsal_actor_concrete_actor(self);
     bsal_message_unpack_uint64_t(message, 0, &concrete_actor->starting_offset);
-    bsal_actor_send_reply_empty(self, BSAL_INPUT_STREAM_SET_OFFSET_REPLY);
+    bsal_actor_send_reply_empty(self, BSAL_INPUT_STREAM_SET_START_OFFSET_REPLY);
+}
+
+void bsal_input_stream_set_end_offset(struct bsal_actor *self, struct bsal_message *message)
+{
+    struct bsal_input_stream *concrete_actor;
+
+    concrete_actor = (struct bsal_input_stream *)bsal_actor_concrete_actor(self);
+
+    bsal_message_unpack_uint64_t(message, 0, &concrete_actor->ending_offset);
+    bsal_actor_send_reply_empty(self, BSAL_INPUT_STREAM_SET_END_OFFSET_REPLY);
+}
+
+void bsal_input_stream_count_in_parallel(struct bsal_actor *self, struct bsal_message *message)
+{
+    struct bsal_input_stream *concrete_actor;
+    void *buffer;
+    int count;
+    char *file;
+
+    concrete_actor = (struct bsal_input_stream *)bsal_actor_concrete_actor(self);
+
+    buffer = bsal_message_buffer(message);
+    count = bsal_message_count(message);
+
+    file = concrete_actor->file_name;
+
+    printf("%s/%d receives BSAL_INPUT_COUNT_IN_PARALLEL file %s\n",
+                    bsal_actor_script_name(self),
+                    bsal_actor_name(self),
+                    file);
+
+    bsal_actor_send_to_self_buffer(self, BSAL_INPUT_COUNT, count, buffer);
+}
+
+void bsal_input_stream_count_reply(struct bsal_actor *self, struct bsal_message *message)
+{
+    struct bsal_input_stream *concrete_actor;
+    void *buffer;
+    int count;
+    struct bsal_vector mega_blocks;
+    char *file;
+    struct bsal_memory_pool *ephemeral_memory;
+    uint64_t result;
+    struct bsal_mega_block *block;
+
+    concrete_actor = (struct bsal_input_stream *)bsal_actor_concrete_actor(self);
+    buffer = bsal_message_buffer(message);
+    count = bsal_message_count(message);
+    ephemeral_memory = bsal_actor_get_ephemeral_memory(self);
+
+    bsal_vector_init(&mega_blocks, 0);
+    bsal_vector_set_memory_pool(&mega_blocks, ephemeral_memory);
+    bsal_vector_unpack(&mega_blocks, buffer);
+
+    block = bsal_vector_at_last(&mega_blocks);
+
+    result = bsal_mega_block_get_entries(block);
+
+#if 0
+    file = bsal_string_get(&concrete_actor->file_for_parallel_counting);
+#endif
+
+    file = concrete_actor->file_name;
+
+    printf("%s/%d COUNT_IN_PARALLEL result for %s is %" PRIu64 "\n",
+                    bsal_actor_script_name(self),
+                    bsal_actor_name(self),
+                    file,
+                    result);
+
+    bsal_vector_destroy(&mega_blocks);
+
+    bsal_actor_send_buffer(self, concrete_actor->controller,
+                    BSAL_INPUT_COUNT_IN_PARALLEL_REPLY, count, buffer);
 }

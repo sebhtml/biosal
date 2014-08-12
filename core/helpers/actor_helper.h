@@ -15,6 +15,7 @@ struct bsal_actor;
 struct bsal_vector;
 struct bsal_message;
 
+void bsal_actor_send_buffer(struct bsal_actor *actor, int destination, int tag, int count, void *buffer);
 void bsal_actor_send_empty(struct bsal_actor *actor, int destination, int tag);
 void bsal_actor_send_int(struct bsal_actor *actor, int destination, int tag, int value);
 void bsal_actor_send_double(struct bsal_actor *actor, int destination, int tag, double value);
@@ -30,6 +31,7 @@ void bsal_actor_send_reply_vector(struct bsal_actor *actor, int tag, struct bsal
 
 void bsal_actor_send_to_self_empty(struct bsal_actor *actor, int tag);
 void bsal_actor_send_to_self_int(struct bsal_actor *actor, int tag, int value);
+void bsal_actor_send_to_self_buffer(struct bsal_actor *actor, int tag, int count, void *buffer);
 
 void bsal_actor_send_to_supervisor_empty(struct bsal_actor *actor, int tag);
 void bsal_actor_send_to_supervisor_int(struct bsal_actor *actor, int tag, int value);
@@ -81,6 +83,5 @@ void bsal_actor_add_route_with_source(struct bsal_actor *self, int tag, bsal_act
                 int source);
 void bsal_actor_add_route_with_condition(struct bsal_actor *self, int tag, bsal_actor_receive_fn_t handler, int *actual,
                 int expected);
-
 
 #endif

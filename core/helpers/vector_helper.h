@@ -56,6 +56,8 @@ void bsal_vector_copy_range(struct bsal_vector *self, int64_t first, int64_t las
  */
 void bsal_vector_push_back_vector(struct bsal_vector *self, struct bsal_vector *other_vector);
 
-
+void *bsal_vector_at_first(struct bsal_vector *self);
+void *bsal_vector_at_middle(struct bsal_vector *self);
+void *bsal_vector_at_last(struct bsal_vector *self);
 
 #endif

@@ -640,4 +640,18 @@ void bsal_actor_add_route_with_condition(struct bsal_actor *self, int tag, bsal_
     bsal_actor_add_route_with_source_and_condition(self, tag, handler, BSAL_ACTOR_ANYBODY, actual, expected);
 }
 
+void bsal_actor_send_to_self_buffer(struct bsal_actor *actor, int tag, int count, void *buffer)
+{
+    bsal_actor_send_buffer(actor, bsal_actor_name(actor),
+                    tag, count, buffer);
+}
 
+void bsal_actor_send_buffer(struct bsal_actor *actor, int destination, int tag,
+                int count, void *buffer)
+{
+    struct bsal_message message;
+
+    bsal_message_init(&message, tag, count, buffer);
+    bsal_actor_send(actor, destination, &message);
+    bsal_message_destroy(&message);
+}
