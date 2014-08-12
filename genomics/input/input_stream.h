@@ -2,7 +2,7 @@
 #ifndef BSAL_INPUT_STREAM_H
 #define BSAL_INPUT_STREAM_H
 
-#include "input_proxy.h"
+#include <genomics/formats/input_proxy.h>
 
 #include <genomics/data/dna_codec.h>
 

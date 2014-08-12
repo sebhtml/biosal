@@ -7,23 +7,23 @@
 #include <string.h>
 #include <stdlib.h>
 
-struct bsal_input_operations bsal_fasta_input_operations = {
+struct bsal_input_format_interface bsal_fasta_input_operations = {
     .init = bsal_fasta_input_init,
     .destroy = bsal_fasta_input_destroy,
     .get_sequence = bsal_fasta_input_get_sequence,
     .detect = bsal_fasta_input_detect
 };
 
-void bsal_fasta_input_init(struct bsal_input *input)
+void bsal_fasta_input_init(struct bsal_input_format *input)
 {
     char *file;
     struct bsal_fasta_input *fasta;
     uint64_t offset;
 
-    file = bsal_input_file(input);
-    offset = bsal_input_offset(input);
+    file = bsal_input_format_file(input);
+    offset = bsal_input_format_offset(input);
 
-    fasta = (struct bsal_fasta_input *)bsal_input_implementation(input);
+    fasta = (struct bsal_fasta_input *)bsal_input_format_implementation(input);
 
     bsal_buffered_reader_init(&fasta->reader, file, offset);
     fasta->buffer = NULL;
@@ -31,11 +31,11 @@ void bsal_fasta_input_init(struct bsal_input *input)
     fasta->has_header = 0;
 }
 
-void bsal_fasta_input_destroy(struct bsal_input *input)
+void bsal_fasta_input_destroy(struct bsal_input_format *input)
 {
     struct bsal_fasta_input *fasta;
 
-    fasta = (struct bsal_fasta_input *)bsal_input_implementation(input);
+    fasta = (struct bsal_fasta_input *)bsal_input_format_implementation(input);
     bsal_buffered_reader_destroy(&fasta->reader);
 
     if (fasta->buffer != NULL) {
@@ -49,7 +49,7 @@ void bsal_fasta_input_destroy(struct bsal_input *input)
     }
 }
 
-uint64_t bsal_fasta_input_get_sequence(struct bsal_input *input,
+uint64_t bsal_fasta_input_get_sequence(struct bsal_input_format *input,
                 char *sequence)
 {
     struct bsal_fasta_input *fasta;
@@ -63,7 +63,7 @@ uint64_t bsal_fasta_input_get_sequence(struct bsal_input *input,
     int is_header;
     int block_length;
 
-    fasta = (struct bsal_fasta_input *)bsal_input_implementation(input);
+    fasta = (struct bsal_fasta_input *)bsal_input_format_implementation(input);
 
     if (fasta->buffer == NULL) {
         fasta->buffer = bsal_memory_allocate(maximum_sequence_length + 1);
@@ -167,15 +167,15 @@ uint64_t bsal_fasta_input_get_sequence(struct bsal_input *input,
     return total;
 }
 
-int bsal_fasta_input_detect(struct bsal_input *input)
+int bsal_fasta_input_detect(struct bsal_input_format *input)
 {
-    if (bsal_input_has_suffix(input, ".fasta")) {
+    if (bsal_input_format_has_suffix(input, ".fasta")) {
         return 1;
-    } else if (bsal_input_has_suffix(input, ".fa")) {
+    } else if (bsal_input_format_has_suffix(input, ".fa")) {
         return 1;
-    } else if (bsal_input_has_suffix(input, ".fa.gz")) {
+    } else if (bsal_input_format_has_suffix(input, ".fa.gz")) {
         return 1;
-    } else if (bsal_input_has_suffix(input, ".fasta.gz")) {
+    } else if (bsal_input_format_has_suffix(input, ".fasta.gz")) {
         return 1;
     }
 

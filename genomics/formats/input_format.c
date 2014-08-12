@@ -1,16 +1,16 @@
 
-#include "input.h"
-#include "input_operations.h"
+#include "input_format.h"
+#include "input_format_interface.h"
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 
-void bsal_input_init(struct bsal_input *input, void *implementation,
-                struct bsal_input_operations *operations, char *file,
+void bsal_input_format_init(struct bsal_input_format *input, void *implementation,
+                struct bsal_input_format_interface *operations, char *file,
                 uint64_t offset)
 {
-    bsal_input_init_fn_t handler;
+    bsal_input_format_interface_init_fn_t handler;
     FILE *descriptor;
 
     input->implementation = implementation;
@@ -29,16 +29,16 @@ void bsal_input_init(struct bsal_input *input, void *implementation,
         fclose(descriptor);
     }
 
-    handler = bsal_input_operations_get_init(input->operations);
+    handler = bsal_input_format_interface_get_init(input->operations);
     handler(input);
 }
 
-void bsal_input_destroy(struct bsal_input *input)
+void bsal_input_format_destroy(struct bsal_input_format *input)
 {
-    bsal_input_destroy_fn_t handler;
+    bsal_input_format_interface_destroy_fn_t handler;
 
-    if (bsal_input_valid(input)) {
-        handler = bsal_input_operations_get_destroy(input->operations);
+    if (bsal_input_format_valid(input)) {
+        handler = bsal_input_format_interface_get_destroy(input->operations);
         handler(input);
     }
 
@@ -49,17 +49,17 @@ void bsal_input_destroy(struct bsal_input *input)
     input->offset = 0;
 }
 
-int bsal_input_get_sequence(struct bsal_input *input,
+int bsal_input_format_get_sequence(struct bsal_input_format *input,
                 char *sequence)
 {
-    bsal_input_get_sequence_fn_t handler;
+    bsal_input_format_interface_get_sequence_fn_t handler;
     int value;
 
-    if (!bsal_input_valid(input)) {
+    if (!bsal_input_format_valid(input)) {
         return 0;
     }
 
-    handler = bsal_input_operations_get_get_sequence(input->operations);
+    handler = bsal_input_format_interface_get_sequence(input->operations);
     value = handler(input, sequence);
 
     if (value) {
@@ -78,44 +78,44 @@ int bsal_input_get_sequence(struct bsal_input *input,
     return value;
 }
 
-uint64_t bsal_input_size(struct bsal_input *input)
+uint64_t bsal_input_format_size(struct bsal_input_format *input)
 {
     return input->sequences;
 }
 
-char *bsal_input_file(struct bsal_input *input)
+char *bsal_input_format_file(struct bsal_input_format *input)
 {
     return input->file;
 }
 
-void *bsal_input_implementation(struct bsal_input *input)
+void *bsal_input_format_implementation(struct bsal_input_format *input)
 {
     return input->implementation;
 }
 
-int bsal_input_valid(struct bsal_input *input)
+int bsal_input_format_valid(struct bsal_input_format *input)
 {
-    return bsal_input_error(input) == BSAL_INPUT_ERROR_NO_ERROR;
+    return bsal_input_format_error(input) == BSAL_INPUT_ERROR_NO_ERROR;
 }
 
-int bsal_input_error(struct bsal_input *input)
+int bsal_input_format_error(struct bsal_input_format *input)
 {
     return input->error;
 }
 
-int bsal_input_detect(struct bsal_input *input)
+int bsal_input_format_detect(struct bsal_input_format *input)
 {
-    bsal_input_detect_fn_t handler;
+    bsal_input_format_interface_detect_fn_t handler;
 
-    if (!bsal_input_valid(input)) {
+    if (!bsal_input_format_valid(input)) {
         return 0;
     }
 
-    handler = bsal_input_operations_get_detect(input->operations);
+    handler = bsal_input_format_interface_get_detect(input->operations);
     return handler(input);
 }
 
-int bsal_input_has_suffix(struct bsal_input *input, const char *suffix)
+int bsal_input_format_has_suffix(struct bsal_input_format *input, const char *suffix)
 {
     int position_in_file;
     int position_in_suffix;
@@ -139,7 +139,7 @@ int bsal_input_has_suffix(struct bsal_input *input, const char *suffix)
     return 0;
 }
 
-uint64_t bsal_input_offset(struct bsal_input *input)
+uint64_t bsal_input_format_offset(struct bsal_input_format *input)
 {
     return input->offset;
 }

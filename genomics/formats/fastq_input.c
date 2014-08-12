@@ -12,38 +12,38 @@
 #define BSAL_FASTQ_INPUT_DEBUG2
 */
 
-struct bsal_input_operations bsal_fastq_input_operations = {
+struct bsal_input_format_interface bsal_fastq_input_operations = {
     .init = bsal_fastq_input_init,
     .destroy = bsal_fastq_input_destroy,
     .get_sequence = bsal_fastq_input_get_sequence,
     .detect = bsal_fastq_input_detect
 };
 
-void bsal_fastq_input_init(struct bsal_input *input)
+void bsal_fastq_input_init(struct bsal_input_format *input)
 {
     char *file;
     struct bsal_fastq_input *fastq;
     uint64_t offset;
 
-    file = bsal_input_file(input);
-    offset = bsal_input_offset(input);
+    file = bsal_input_format_file(input);
+    offset = bsal_input_format_offset(input);
 
 #ifdef BSAL_FASTQ_INPUT_DEBUG
     printf("DEBUG bsal_fastq_input_init %s\n",
                     file);
 #endif
 
-    fastq = (struct bsal_fastq_input *)bsal_input_implementation(input);
+    fastq = (struct bsal_fastq_input *)bsal_input_format_implementation(input);
 
     bsal_buffered_reader_init(&fastq->reader, file, offset);
     fastq->buffer = NULL;
 }
 
-void bsal_fastq_input_destroy(struct bsal_input *input)
+void bsal_fastq_input_destroy(struct bsal_input_format *input)
 {
     struct bsal_fastq_input *fastq;
 
-    fastq = (struct bsal_fastq_input *)bsal_input_implementation(input);
+    fastq = (struct bsal_fastq_input *)bsal_input_format_implementation(input);
     bsal_buffered_reader_destroy(&fastq->reader);
 
     if (fastq->buffer != NULL) {
@@ -52,7 +52,7 @@ void bsal_fastq_input_destroy(struct bsal_input *input)
     }
 }
 
-uint64_t bsal_fastq_input_get_sequence(struct bsal_input *input,
+uint64_t bsal_fastq_input_get_sequence(struct bsal_input_format *input,
                 char *sequence)
 {
     struct bsal_fastq_input *fastq;
@@ -66,7 +66,7 @@ uint64_t bsal_fastq_input_get_sequence(struct bsal_input *input,
     int maximum_sequence_length = BSAL_INPUT_MAXIMUM_SEQUENCE_LENGTH;
     int value;
 
-    fastq = (struct bsal_fastq_input *)bsal_input_implementation(input);
+    fastq = (struct bsal_fastq_input *)bsal_input_format_implementation(input);
 
     if (fastq->buffer == NULL) {
         fastq->buffer = (char *)bsal_memory_allocate(maximum_sequence_length + 1);
@@ -112,21 +112,21 @@ uint64_t bsal_fastq_input_get_sequence(struct bsal_input *input,
     return value;
 }
 
-int bsal_fastq_input_detect(struct bsal_input *input)
+int bsal_fastq_input_detect(struct bsal_input_format *input)
 {
-    if (bsal_input_has_suffix(input, ".fastq")) {
+    if (bsal_input_format_has_suffix(input, ".fastq")) {
         return 1;
     }
-    if (bsal_input_has_suffix(input, ".fq")) {
+    if (bsal_input_format_has_suffix(input, ".fq")) {
         return 1;
     }
-    if (bsal_input_has_suffix(input, ".fasta-with-qualities")) {
+    if (bsal_input_format_has_suffix(input, ".fasta-with-qualities")) {
         return 1;
     }
-    if (bsal_input_has_suffix(input, ".fastq.gz")) {
+    if (bsal_input_format_has_suffix(input, ".fastq.gz")) {
         return 1;
     }
-    if (bsal_input_has_suffix(input, ".fq.gz")) {
+    if (bsal_input_format_has_suffix(input, ".fq.gz")) {
         return 1;
     }
 
