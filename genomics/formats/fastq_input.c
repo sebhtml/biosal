@@ -57,8 +57,12 @@ uint64_t bsal_fastq_input_get_sequence(struct bsal_input *input,
 {
     struct bsal_fastq_input *fastq;
 
+    /*
+     * Input sequence has at least BSAL_INPUT_MAXIMUM_SEQUENCE_LENGTH
+     * which is currently 512k
+     */
+
     /* TODO use a dynamic buffer to accept long reads... */
-    char *buffer = sequence;
     int maximum_sequence_length = BSAL_INPUT_MAXIMUM_SEQUENCE_LENGTH;
     int value;
 
@@ -70,17 +74,31 @@ uint64_t bsal_fastq_input_get_sequence(struct bsal_input *input,
 
     value = 0;
 
+    /*
+     * Read name
+     */
     value += bsal_buffered_reader_read_line(&fastq->reader, fastq->buffer,
                     maximum_sequence_length);
-    value += bsal_buffered_reader_read_line(&fastq->reader, buffer,
+
+    /*
+     * Read DNA sequence
+     */
+    value += bsal_buffered_reader_read_line(&fastq->reader, sequence,
                     maximum_sequence_length);
 
 #ifdef BSAL_FASTQ_INPUT_DEBUG2
     printf("DEBUG bsal_fastq_input_get_sequence %s\n", buffer);
 #endif
 
+    /*
+     * Read the + symbol
+     */
     value += bsal_buffered_reader_read_line(&fastq->reader, fastq->buffer,
                     maximum_sequence_length);
+
+    /*
+     * Read quality string.
+     */
     value += bsal_buffered_reader_read_line(&fastq->reader, fastq->buffer,
                     maximum_sequence_length);
 
