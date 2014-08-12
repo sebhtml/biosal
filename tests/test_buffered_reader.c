@@ -1,7 +1,7 @@
 
 #include "test.h"
 
-#include <genomics/input/buffered_reader.h>
+#include <core/file_storage/input/buffered_reader.h>
 
 #define BUFFER_SIZE 128000
 

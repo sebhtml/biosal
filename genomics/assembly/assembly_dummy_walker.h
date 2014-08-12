@@ -4,7 +4,7 @@
 
 #include <engine/thorium/actor.h>
 
-#include <core/system/buffered_file_writer.h>
+#include <core/file_storage/output/buffered_file_writer.h>
 
 #include <genomics/data/dna_codec.h>
 #include <genomics/data/dna_kmer.h>

@@ -4,7 +4,8 @@
 
 #include <genomics/input/input.h>
 #include <genomics/input/input_operations.h>
-#include <genomics/input/buffered_reader.h>
+
+#include <core/file_storage/input/buffered_reader.h>
 
 #include <stdio.h>
 #include <inttypes.h>

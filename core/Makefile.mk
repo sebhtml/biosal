@@ -31,7 +31,13 @@ CORE_OBJECTS += core/system/memory_pool.o
 CORE_OBJECTS += core/system/memory_block.o
 CORE_OBJECTS += core/system/atomic.o
 CORE_OBJECTS += core/system/thread.o
-CORE_OBJECTS += core/system/buffered_file_writer.o
+
+# file storage
+
+CORE_OBJECTS += core/file_storage/output/buffered_file_writer.o
+CORE_OBJECTS += core/file_storage/input/buffered_reader.o
+CORE_OBJECTS += core/file_storage/input/raw_buffered_reader.o
+CORE_OBJECTS += core/file_storage/input/gzip_buffered_reader.o
 
 # structures
 CORE_OBJECTS += core/structures/hash_table.o
