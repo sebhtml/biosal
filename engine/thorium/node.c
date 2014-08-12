@@ -353,8 +353,6 @@ void bsal_node_destroy(struct bsal_node *node)
 
     bsal_worker_pool_destroy(&node->worker_pool);
 
-    BSAL_DEBUGGER_ASSERT(bsal_transport_get_active_request_count(&node->transport) == 0);
-
     bsal_transport_destroy(&node->transport);
     bsal_counter_destroy(&node->counter);
 

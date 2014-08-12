@@ -51,6 +51,8 @@ void bsal_transport_destroy(struct bsal_transport *self)
 {
     struct bsal_active_request active_request;
 
+    BSAL_DEBUGGER_ASSERT(bsal_transport_get_active_request_count(self) == 0);
+
     if (self->transport_interface != NULL) {
         self->transport_interface->destroy(self);
 
