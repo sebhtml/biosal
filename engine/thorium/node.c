@@ -9,8 +9,6 @@
 
 #include "worker_buffer.h"
 
-#include "transport/active_request.h"
-
 #include <core/structures/vector.h>
 #include <core/structures/map_iterator.h>
 #include <core/structures/vector_iterator.h>
