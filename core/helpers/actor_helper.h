@@ -60,6 +60,8 @@ void bsal_actor_send_range(struct bsal_actor *actor, struct bsal_vector *actors,
                 struct bsal_message *message);
 void bsal_actor_send_range_int(struct bsal_actor *actor, struct bsal_vector *actors,
                 int tag, int value);
+void bsal_actor_send_range_buffer(struct bsal_actor *actor, struct bsal_vector *destinations,
+                int tag, int count, void *buffer);
 void bsal_actor_send_range_vector(struct bsal_actor *actor, struct bsal_vector *actors,
                 int tag, struct bsal_vector *vector);
 void bsal_actor_send_range_empty(struct bsal_actor *actor, struct bsal_vector *actors,

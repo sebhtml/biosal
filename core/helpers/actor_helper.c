@@ -403,6 +403,16 @@ void bsal_actor_send_range_int(struct bsal_actor *actor, struct bsal_vector *act
     bsal_message_destroy(&message);
 }
 
+void bsal_actor_send_range_buffer(struct bsal_actor *actor, struct bsal_vector *destinations,
+                int tag, int count, void *buffer)
+{
+    struct bsal_message message;
+
+    bsal_message_init(&message, tag, count, buffer);
+    bsal_actor_send_range(actor, destinations, &message);
+    bsal_message_destroy(&message);
+}
+
 void bsal_actor_send_range_vector(struct bsal_actor *actor, struct bsal_vector *actors,
                 int tag, struct bsal_vector *vector)
 {
@@ -655,3 +665,5 @@ void bsal_actor_send_buffer(struct bsal_actor *actor, int destination, int tag,
     bsal_actor_send(actor, destination, &message);
     bsal_message_destroy(&message);
 }
+
+

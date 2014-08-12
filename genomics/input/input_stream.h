@@ -48,7 +48,6 @@ struct bsal_input_stream {
 
     uint64_t total_entries;
     int finished_parallel_stream_count;
-    int parallel_block_size;
     struct bsal_vector spawners;
     struct bsal_vector parallel_streams;
     struct bsal_vector start_offsets;
@@ -110,5 +109,6 @@ void bsal_input_stream_count_reply(struct bsal_actor *self, struct bsal_message 
 void bsal_input_stream_count_reply_mock(struct bsal_actor *self, struct bsal_message *message);
 void bsal_input_stream_count_in_parallel_mock(struct bsal_actor *self, struct bsal_message *message);
 void bsal_input_stream_spawn_reply(struct bsal_actor *self, struct bsal_message *message);
+void bsal_input_stream_open_reply(struct bsal_actor *self, struct bsal_message *message);
 
 #endif
