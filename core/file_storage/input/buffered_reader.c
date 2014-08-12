@@ -18,12 +18,6 @@
 
 /*#define BSAL_BUFFERED_READER_BUFFER_SIZE 1048576*/
 
-/*
- * On Mira (Blue Gene/Q with GPFS file system), I/O nodes
- * lock 8-MiB blocks when reading or writing
- */
-#define BSAL_BUFFERED_READER_BUFFER_SIZE 8388608
-
 /*#define BSAL_BUFFERED_READER_BUFFER_SIZE 4194304*/
 
 void bsal_buffered_reader_init(struct bsal_buffered_reader *self,

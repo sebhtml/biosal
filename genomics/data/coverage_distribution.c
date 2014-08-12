@@ -10,8 +10,8 @@
 
 #include <core/system/memory.h>
 #include <core/system/debugger.h>
-#include <core/system/directory.h>
 
+#include <core/file_storage/directory.h>
 #include <core/file_storage/output/buffered_file_writer.h>
 
 #include <stdio.h>

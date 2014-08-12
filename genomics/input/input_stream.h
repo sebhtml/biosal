@@ -41,6 +41,19 @@ struct bsal_input_stream {
 #if 0
     struct bsal_string file_for_parallel_counting;
 #endif
+
+    /*
+     * Parallel counting.
+     */
+
+    uint64_t total_entries;
+    int finished_parallel_stream_count;
+    int parallel_block_size;
+    struct bsal_vector spawners;
+    struct bsal_vector parallel_streams;
+    struct bsal_vector start_offsets;
+    struct bsal_vector end_offsets;
+    struct bsal_vector parallel_mega_blocks;
 };
 
 #define BSAL_INPUT_OPEN 0x000075fa
@@ -93,5 +106,9 @@ void bsal_input_stream_set_end_offset(struct bsal_actor *actor, struct bsal_mess
 
 void bsal_input_stream_count_in_parallel(struct bsal_actor *self, struct bsal_message *message);
 void bsal_input_stream_count_reply(struct bsal_actor *self, struct bsal_message *message);
+
+void bsal_input_stream_count_reply_mock(struct bsal_actor *self, struct bsal_message *message);
+void bsal_input_stream_count_in_parallel_mock(struct bsal_actor *self, struct bsal_message *message);
+void bsal_input_stream_spawn_reply(struct bsal_actor *self, struct bsal_message *message);
 
 #endif

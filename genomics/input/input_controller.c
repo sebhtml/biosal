@@ -434,7 +434,8 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
             printf("DEBUG actor %d asks %d BSAL_INPUT_COUNT_IN_PARALLEL\n", name, stream);
 #endif
 
-            bsal_actor_send_empty(actor, stream, BSAL_INPUT_COUNT_IN_PARALLEL);
+            bsal_actor_send_vector(actor, stream, BSAL_INPUT_COUNT_IN_PARALLEL,
+                            &concrete_actor->spawners);
         } else {
 
 #ifdef BSAL_INPUT_CONTROLLER_DEBUG_LEVEL_2

@@ -22,7 +22,6 @@ CORE_OBJECTS += core/system/lock.o
 CORE_OBJECTS += core/system/counter.o
 CORE_OBJECTS += core/system/debugger.o
 CORE_OBJECTS += core/system/packer.o
-CORE_OBJECTS += core/system/directory.o
 CORE_OBJECTS += core/system/memory.o
 CORE_OBJECTS += core/system/timer.o
 CORE_OBJECTS += core/system/tracer.o
@@ -38,6 +37,8 @@ CORE_OBJECTS += core/file_storage/output/buffered_file_writer.o
 CORE_OBJECTS += core/file_storage/input/buffered_reader.o
 CORE_OBJECTS += core/file_storage/input/raw_buffered_reader.o
 CORE_OBJECTS += core/file_storage/input/gzip_buffered_reader.o
+CORE_OBJECTS += core/file_storage/directory.o
+CORE_OBJECTS += core/file_storage/file.o
 
 # structures
 CORE_OBJECTS += core/structures/hash_table.o

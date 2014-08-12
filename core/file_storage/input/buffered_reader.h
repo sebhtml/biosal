@@ -8,6 +8,12 @@
 struct bsal_buffered_reader_interface;
 
 /*
+ * On Mira (Blue Gene/Q with GPFS file system), I/O nodes
+ * lock 8-MiB blocks when reading or writing
+ */
+#define BSAL_BUFFERED_READER_BUFFER_SIZE 8388608
+
+/*
  * An interface for a buffered
  * reader.
  */
