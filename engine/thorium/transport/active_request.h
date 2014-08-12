@@ -28,7 +28,6 @@ struct bsal_active_request {
     void (*active_request_destroy)(struct bsal_active_request *self);
     int (*active_request_test)(struct bsal_active_request *self);
     void *(*active_request_request)(struct bsal_active_request *self);
-
 };
 
 void bsal_active_request_init(struct bsal_active_request *self, void *buffer, int worker);

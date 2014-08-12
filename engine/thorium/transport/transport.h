@@ -2,6 +2,8 @@
 #ifndef BSAL_TRANSPORT_H
 #define BSAL_TRANSPORT_H
 
+#include "transport_interface.h"
+
 #include "pami/pami_transport.h"
 #include "mpi/mpi_transport.h"
 
@@ -37,16 +39,9 @@ struct bsal_transport {
     struct bsal_mpi_transport mpi_transport;
 
     int implementation;
+
     void *concrete_transport;
-
-    void (*transport_init)(struct bsal_transport *self, int *argc, char ***argv);
-    void (*transport_destroy)(struct bsal_transport *self);
-
-    int (*transport_send)(struct bsal_transport *self, struct bsal_message *message);
-    int (*transport_receive)(struct bsal_transport *self, struct bsal_message *message);
-
-    int (*transport_get_identifier)(struct bsal_transport *self);
-    const char *(*transport_get_name)(struct bsal_transport *self);
+    struct bsal_transport_interface *transport_interface;
 };
 
 void bsal_transport_init(struct bsal_transport *self, struct bsal_node *node,
@@ -74,10 +69,6 @@ int bsal_transport_get_implementation(struct bsal_transport *self);
 
 void *bsal_transport_get_concrete_transport(struct bsal_transport *self);
 void bsal_transport_set(struct bsal_transport *self);
-
-void bsal_transport_configure_mpi(struct bsal_transport *self);
-void bsal_transport_configure_pami(struct bsal_transport *self);
-void bsal_transport_configure_mock(struct bsal_transport *self);
 
 void bsal_transport_prepare_received_message(struct bsal_transport *self, struct bsal_message *message,
                 int source, int tag, int count, void *buffer);

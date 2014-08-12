@@ -6,6 +6,18 @@
 
 #include <core/system/debugger.h>
 
+#define BSAL_TRANSPORT_PAMI_NAME "PAMI: Parallel Active Message Interface"
+
+struct bsal_transport_interface bsal_pami_transport_implementation = {
+    .identifier = BSAL_TRANSPORT_PAMI_IDENTIFIER,
+    .name = BSAL_TRANSPORT_PAMI_NAME,
+    .size = sizeof(struct bsal_pami_transport),
+    .init = bsal_pami_transport_init,
+    .destroy = bsal_pami_transport_destroy,
+    .send = bsal_pami_transport_send,
+    .receive = bsal_pami_transport_receive
+};
+
 void bsal_pami_transport_init(struct bsal_transport *self, int *argc, char ***argv)
 {
 #ifdef BSAL_TRANSPORT_USE_PAMI
@@ -89,12 +101,3 @@ int bsal_pami_transport_receive(struct bsal_transport *self, struct bsal_message
     return 0;
 }
 
-int bsal_pami_transport_get_identifier(struct bsal_transport *self)
-{
-    return BSAL_TRANSPORT_PAMI_IDENTIFIER;
-}
-
-const char *bsal_pami_transport_get_name(struct bsal_transport *self)
-{
-    return BSAL_TRANSPORT_PAMI_NAME;
-}

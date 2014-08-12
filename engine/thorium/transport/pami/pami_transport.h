@@ -2,18 +2,19 @@
 #ifndef BSAL_PAMI_TRANSPORT_H
 #define BSAL_PAMI_TRANSPORT_H
 
+#include <engine/thorium/transport/transport_interface.h>
+
 /*
  * Decide if the code will use PAMI or MPI
  */
+
+#define BSAL_TRANSPORT_PAMI_IDENTIFIER 2000
 
 /*
  * This variable is set to 1 if PAMI support is ready to be
  * used
  */
 #define BSAL_TRANSPORT_PAMI_IS_READY 0
-
-#define BSAL_TRANSPORT_PAMI_IDENTIFIER 2000
-#define BSAL_TRANSPORT_PAMI_NAME "PAMI: Parallel Active Message Interface"
 
 /*
  * Use IBM PAMI on IBM Blue Gene/Q
@@ -43,6 +44,8 @@ struct bsal_pami_transport {
 #endif
     int mock;
 };
+
+extern struct bsal_transport_interface bsal_pami_transport_implementation;
 
 void bsal_pami_transport_init(struct bsal_transport *self, int *argc, char ***argv);
 void bsal_pami_transport_destroy(struct bsal_transport *self);

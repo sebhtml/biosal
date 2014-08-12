@@ -13,7 +13,10 @@ void bsal_transport_init(struct bsal_transport *self, struct bsal_node *node,
                 int *argc, char ***argv,
                 struct bsal_memory_pool *inbound_message_memory_pool)
 {
-        /*
+    self->transport_interface = NULL;
+    self->concrete_transport = NULL;
+
+    /*
     printf("DEBUG Initiating transport\n");
     */
     /* Select the transport layer
@@ -31,7 +34,11 @@ void bsal_transport_init(struct bsal_transport *self, struct bsal_node *node,
     self->rank = -1;
     self->size = -1;
 
-    self->transport_init(self, argc, argv);
+    if (self->transport_interface != NULL) {
+
+        self->concrete_transport = bsal_memory_allocate(self->transport_interface->size);
+        self->transport_interface->init(self, argc, argv);
+    }
 
     BSAL_DEBUGGER_ASSERT(self->rank >= 0);
     BSAL_DEBUGGER_ASSERT(self->size >= 1);
@@ -44,7 +51,12 @@ void bsal_transport_destroy(struct bsal_transport *self)
 {
     struct bsal_active_request active_request;
 
-    self->transport_destroy(self);
+    if (self->transport_interface != NULL) {
+        self->transport_interface->destroy(self);
+
+        bsal_memory_free(self->concrete_transport);
+        self->concrete_transport = NULL;
+    }
 
     while (bsal_ring_queue_dequeue(&self->active_requests, &active_request)) {
         bsal_active_request_destroy(&active_request);
@@ -55,19 +67,24 @@ void bsal_transport_destroy(struct bsal_transport *self)
     self->node = NULL;
     self->rank = -1;
     self->size = -1;
-    self->implementation = BSAL_TRANSPORT_IMPLEMENTATION_MOCK;
-
-    bsal_transport_set(self);
 }
 
 int bsal_transport_send(struct bsal_transport *self, struct bsal_message *message)
 {
-    return self->transport_send(self, message);
+    if (self->transport_interface == NULL) {
+        return 0;
+    }
+
+    return self->transport_interface->send(self, message);
 }
 
 int bsal_transport_receive(struct bsal_transport *self, struct bsal_message *message)
 {
-    return self->transport_receive(self, message);
+    if (self->transport_interface == NULL) {
+        return 0;
+    }
+
+    return self->transport_interface->receive(self, message);
 }
 
 void bsal_transport_resolve(struct bsal_transport *self, struct bsal_message *message)
@@ -147,56 +164,15 @@ void *bsal_transport_get_concrete_transport(struct bsal_transport *self)
 
 void bsal_transport_set(struct bsal_transport *self)
 {
-    if (self->implementation == BSAL_TRANSPORT_PAMI_IDENTIFIER) {
-        bsal_transport_configure_pami(self);
+    self->transport_interface = NULL;
 
-    } else if (self->implementation == BSAL_TRANSPORT_MPI_IDENTIFIER) {
+    if (self->implementation == bsal_pami_transport_implementation.identifier) {
+        self->transport_interface = &bsal_pami_transport_implementation;
 
-        bsal_transport_configure_mpi(self);
+    } else if (self->implementation == bsal_mpi_transport_implementation.identifier) {
 
-    } else if (self->implementation == BSAL_TRANSPORT_IMPLEMENTATION_MOCK) {
-
-        bsal_transport_configure_mock(self);
-
-    } else {
-        bsal_transport_configure_mock(self);
+        self->transport_interface = &bsal_mpi_transport_implementation;
     }
-}
-
-void bsal_transport_configure_pami(struct bsal_transport *self)
-{
-    self->concrete_transport = &self->pami_transport;
-
-    self->transport_init = bsal_pami_transport_init;
-    self->transport_destroy = bsal_pami_transport_destroy;
-    self->transport_send = bsal_pami_transport_send;
-    self->transport_receive = bsal_pami_transport_receive;
-    self->transport_get_identifier = bsal_pami_transport_get_identifier;
-    self->transport_get_name = bsal_pami_transport_get_name;
-}
-
-void bsal_transport_configure_mpi(struct bsal_transport *self)
-{
-    self->concrete_transport = &self->mpi_transport;
-
-    self->transport_init = bsal_mpi_transport_init;
-    self->transport_destroy = bsal_mpi_transport_destroy;
-    self->transport_send = bsal_mpi_transport_send;
-    self->transport_receive = bsal_mpi_transport_receive;
-    self->transport_get_identifier = bsal_mpi_transport_get_identifier;
-    self->transport_get_name = bsal_mpi_transport_get_name;
-}
-
-void bsal_transport_configure_mock(struct bsal_transport *self)
-{
-    self->concrete_transport = NULL;
-
-    self->transport_init = NULL;
-    self->transport_destroy = NULL;
-    self->transport_send = NULL;
-    self->transport_receive = NULL;
-    self->transport_get_identifier = NULL;
-    self->transport_get_name = NULL;
 }
 
 void bsal_transport_prepare_received_message(struct bsal_transport *self, struct bsal_message *message,
@@ -228,12 +204,20 @@ int bsal_transport_get_active_request_count(struct bsal_transport *self)
 
 int bsal_transport_get_identifier(struct bsal_transport *self)
 {
-    return self->transport_get_identifier(self);
+    if (self->transport_interface == NULL) {
+        return -1;
+    }
+
+    return self->transport_interface->identifier;
 }
 
 const char *bsal_transport_get_name(struct bsal_transport *self)
 {
-    return self->transport_get_name(self);
+    if (self->transport_interface == NULL) {
+        return NULL;
+    }
+
+    return self->transport_interface->name;
 }
 
 void bsal_transport_select(struct bsal_transport *self)

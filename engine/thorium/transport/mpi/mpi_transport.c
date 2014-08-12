@@ -10,6 +10,18 @@
 #include <core/system/memory_pool.h>
 #include <core/system/debugger.h>
 
+#define BSAL_TRANSPORT_MPI_NAME "MPI: Message Passing Interface"
+
+struct bsal_transport_interface bsal_mpi_transport_implementation = {
+    .identifier = BSAL_TRANSPORT_MPI_IDENTIFIER,
+    .name = BSAL_TRANSPORT_MPI_NAME,
+    .size = sizeof(struct bsal_mpi_transport),
+    .init = bsal_mpi_transport_init,
+    .destroy = bsal_mpi_transport_destroy,
+    .send = bsal_mpi_transport_send,
+    .receive = bsal_mpi_transport_receive
+};
+
 /*
  * \see http://www.mpich.org/static/docs/v3.1/www3/MPI_Comm_dup.html
  * \see http://www.dartmouth.edu/~rc/classes/intro_mpi/hello_world_ex.html
@@ -207,12 +219,3 @@ int bsal_mpi_transport_receive(struct bsal_transport *self, struct bsal_message 
     return 1;
 }
 
-int bsal_mpi_transport_get_identifier(struct bsal_transport *self)
-{
-    return BSAL_TRANSPORT_MPI_IDENTIFIER;
-}
-
-const char *bsal_mpi_transport_get_name(struct bsal_transport *self)
-{
-    return BSAL_TRANSPORT_MPI_NAME;
-}
