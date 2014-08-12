@@ -93,7 +93,11 @@ void bsal_input_stream_init(struct bsal_actor *actor)
      */
 
     concrete_self->total_entries = 0;
-    concrete_self->parallel_block_size = BSAL_BUFFERED_READER_BUFFER_SIZE;
+
+    /*
+     * 1 GiB.
+     */
+    concrete_self->parallel_block_size = 1073741824;
 
     concrete_self->finished_parallel_stream_count = 0;
 
