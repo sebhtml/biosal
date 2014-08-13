@@ -101,15 +101,7 @@ int bsal_gzip_buffered_reader_read_line(struct bsal_buffered_reader *self,
     reader = bsal_buffered_reader_get_concrete_self(self);
     read = bsal_gzip_buffered_reader_read_line_private(self, buffer, length);
 
-    if (read) {
-
-        reader->offset += read;
-
-        /*
-         * Add new line too.
-         */
-        reader->offset++;
-    }
+    reader->offset += read;
 
     return read;
 }
@@ -171,7 +163,7 @@ int bsal_gzip_buffered_reader_read_line_private(struct bsal_buffered_reader *sel
         /* try to pull some data and do a recursive call
          */
         if (bsal_gzip_buffered_reader_pull(self)) {
-            return bsal_buffered_reader_read_line(self, buffer, length);
+            return bsal_gzip_buffered_reader_read_line_private(self, buffer, length);
         } else {
             return 0;
         }

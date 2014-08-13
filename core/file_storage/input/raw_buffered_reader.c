@@ -86,14 +86,12 @@ int bsal_raw_buffered_reader_read_line(struct bsal_buffered_reader *self,
 
     read = bsal_raw_buffered_reader_read_line_private(self, buffer, length);
 
-    if (read) {
-        reader->offset += read;
+    reader->offset += read;
 
-        /* Add the new line too.
-         */
-
-        reader->offset++;
-    }
+#if 0
+    printf("OFFSET <%s> read %d new offset %" PRIu64 "\n",
+                    buffer, read, reader->offset);
+#endif
 
     return read;
 }
@@ -167,7 +165,7 @@ int bsal_raw_buffered_reader_read_line_private(struct bsal_buffered_reader *self
         /* try to pull some data and do a recursive call
          */
         if (bsal_raw_buffered_reader_pull(self)) {
-            return bsal_buffered_reader_read_line(self, buffer, length);
+            return bsal_raw_buffered_reader_read_line_private(self, buffer, length);
         } else {
             return 0;
         }
