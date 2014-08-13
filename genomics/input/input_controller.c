@@ -431,10 +431,10 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
         if (error == BSAL_INPUT_ERROR_NO_ERROR) {
 
 #ifdef BSAL_INPUT_CONTROLLER_DEBUG_LEVEL_2
-            printf("DEBUG actor %d asks %d BSAL_INPUT_COUNT_IN_PARALLEL\n", name, stream);
+            printf("DEBUG actor %d asks %d BSAL_INPUT_COUNT\n", name, stream);
 #endif
 
-            bsal_actor_send_vector(actor, stream, BSAL_INPUT_COUNT_IN_PARALLEL,
+            bsal_actor_send_vector(actor, stream, BSAL_INPUT_COUNT,
                             &concrete_actor->spawners);
         } else {
 
@@ -478,7 +478,7 @@ void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message
                         name, source, local_file, entries);
         *bucket = entries;
 
-    } else if (tag == BSAL_INPUT_COUNT_IN_PARALLEL_REPLY) {
+    } else if (tag == BSAL_INPUT_COUNT_REPLY) {
 
         stream_index = bsal_vector_index_of(&concrete_actor->counting_streams, &source);
         local_file = bsal_vector_at_as_char_pointer(&concrete_actor->files, stream_index);

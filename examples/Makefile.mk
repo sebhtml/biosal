@@ -82,7 +82,7 @@ synchronize: examples/example_synchronize
 	mpiexec -n 3 $< -threads-per-node 9
 
 controller: examples/example_controller
-	mpiexec -n 3 $< -threads-per-node 9 ~/dropbox/*.fastq
+	mpiexec -n 3 $< -threads-per-node 9 ~/dropbox/GPIC.1424-1.1371.fastq
 
 mini: examples/example_controller
 	mpiexec -n 3 $< -threads-per-node 9 ~/mini.fastq

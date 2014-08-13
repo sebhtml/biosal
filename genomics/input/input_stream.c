@@ -688,8 +688,8 @@ void bsal_input_stream_count_in_parallel(struct bsal_actor *self, struct bsal_me
 
     /*
      * 1 GiB.
-     */
     parallel_block_size = 1073741824;
+     */
 
     parallel_block_size = 0;
     --parallel_block_size;
