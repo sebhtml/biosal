@@ -114,6 +114,8 @@ uint64_t bsal_fasta_input_get_sequence(struct bsal_input_format *input,
 
     /*
      * Read sequence.
+     *
+     * Discard any new line symbol too.
      */
 
     position_in_sequence = 0;
@@ -151,27 +153,20 @@ uint64_t bsal_fasta_input_get_sequence(struct bsal_input_format *input,
         }
 
         block_length = strlen(fasta->buffer);
+
+        /*
+         * Remove the new line.
+         */
+        if (fasta->buffer[block_length - 1] == '\n') {
+            --block_length;
+        }
+
         memcpy(sequence + position_in_sequence,
                         fasta->buffer,
                         block_length);
 
         position_in_sequence += block_length;
     }
-
-    /* add the new lines if a sequence was
-     * found.
-     *
-     * This is required because bsal_buffered_reader_read_line does not give
-     * the new line.
-     */
-
-    if (value) {
-        total += lines;
-    }
-
-#if 0
-    printf("FASTA_DEBUG SEQ= %s\n", sequence);
-#endif
 
     return total;
 }

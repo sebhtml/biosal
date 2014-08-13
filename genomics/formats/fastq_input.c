@@ -66,6 +66,7 @@ uint64_t bsal_fastq_input_get_sequence(struct bsal_input_format *input,
     /* TODO use a dynamic buffer to accept long reads... */
     int maximum_sequence_length = BSAL_INPUT_MAXIMUM_SEQUENCE_LENGTH;
     int value;
+    int length;
 
     fastq = (struct bsal_fastq_input *)bsal_input_format_implementation(input);
 
@@ -84,8 +85,21 @@ uint64_t bsal_fastq_input_get_sequence(struct bsal_input_format *input,
     /*
      * Read DNA sequence
      */
-    value += bsal_buffered_reader_read_line(&fastq->reader, sequence,
+    length = bsal_buffered_reader_read_line(&fastq->reader, sequence,
                     maximum_sequence_length);
+
+#ifdef BSAL_FASTQ_INPUT_DEBUG_READ_LINE
+    printf("FASTQ ReadLine <<%s>>\n", sequence);
+#endif
+
+    if (sequence[length - 1] == '\n') {
+        /*
+         * Remove new line symbol.
+         */
+        sequence[length - 1] = '\0';
+    }
+
+    value += length;
 
 #ifdef BSAL_FASTQ_INPUT_DEBUG2
     printf("DEBUG bsal_fastq_input_get_sequence %s\n", buffer);
@@ -103,13 +117,6 @@ uint64_t bsal_fastq_input_get_sequence(struct bsal_input_format *input,
     value += bsal_buffered_reader_read_line(&fastq->reader, fastq->buffer,
                     maximum_sequence_length);
 
-    /* add the 4 new lines if a sequence was
-     * found
-     */
-    if (value) {
-        value += 4;
-    }
-
     return value;
 }
 
@@ -118,15 +125,15 @@ int bsal_fastq_input_detect(struct bsal_input_format *input)
     if (bsal_input_format_has_suffix(input, ".fastq")) {
         return 1;
     }
+
     if (bsal_input_format_has_suffix(input, ".fq")) {
         return 1;
     }
-    if (bsal_input_format_has_suffix(input, ".fasta-with-qualities")) {
-        return 1;
-    }
+
     if (bsal_input_format_has_suffix(input, ".fastq.gz")) {
         return 1;
     }
+
     if (bsal_input_format_has_suffix(input, ".fq.gz")) {
         return 1;
     }

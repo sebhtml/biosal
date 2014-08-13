@@ -29,7 +29,7 @@ void bsal_buffered_reader_destroy(struct bsal_buffered_reader *self);
 
 /*
  * \return number of bytes copied in buffer
- * This does not include the discarded \n, if any
+ * This does include the \n, if any
  */
 int bsal_buffered_reader_read_line(struct bsal_buffered_reader *self,
                 char *buffer, int length);

@@ -109,6 +109,7 @@ int bsal_raw_buffered_reader_read_line_private(struct bsal_buffered_reader *self
     int position;
     int has_new_line;
     int read;
+    int end_of_file;
 
     /* the last character in the buffer is '\n'
      * discard everything
@@ -130,18 +131,29 @@ int bsal_raw_buffered_reader_read_line_private(struct bsal_buffered_reader *self
         position++;
     }
 
+    /*
+     * Keep the new line if any
+     */
+
     if (has_new_line) {
+        ++position;
+    }
+
+    end_of_file = feof(reader->descriptor);
+
+    /*
+     * Return the line
+     */
+    if (has_new_line || end_of_file) {
 
         read = position - reader->position_in_buffer;
         memcpy(buffer, reader->buffer + reader->position_in_buffer,
                         read);
         buffer[read] = '\0';
 
-        reader->position_in_buffer += read;
-
-        /* skip '\n'
+        /* skip the line and '\n' if any
          */
-        reader->position_in_buffer++;
+        reader->position_in_buffer += read;
 
 #ifdef BSAL_BUFFERED_READER_DEBUG9
         printf("DEBUG bsal_buffered_reader_read_line has line"

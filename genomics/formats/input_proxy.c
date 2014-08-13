@@ -40,7 +40,16 @@ void bsal_input_proxy_init(struct bsal_input_proxy *proxy,
 int bsal_input_proxy_get_sequence(struct bsal_input_proxy *proxy,
                 char *sequence)
 {
-    return bsal_input_format_get_sequence(&proxy->input, sequence);
+    int value;
+
+    value = bsal_input_format_get_sequence(&proxy->input, sequence);
+
+#if 0
+    printf("DEBUG bsal_input_format_get_sequence %s\n",
+                    sequence);
+#endif
+
+    return value;
 }
 
 void bsal_input_proxy_destroy(struct bsal_input_proxy *proxy)
