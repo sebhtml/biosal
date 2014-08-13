@@ -28,7 +28,6 @@ struct bsal_input_format {
     void *implementation;
     char *file;
     uint64_t sequences;
-    uint64_t offset;
 
     uint64_t start_offset;
     uint64_t end_offset;

@@ -2,6 +2,8 @@
 #include "input_format.h"
 #include "input_format_interface.h"
 
+#include <core/system/debugger.h>
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -13,7 +15,14 @@ void bsal_input_format_init(struct bsal_input_format *input, void *implementatio
     bsal_input_format_interface_init_fn_t handler;
     FILE *descriptor;
 
+#if 0
+    printf("DEBUG bsal_input_format_init\n");
+#endif
+
     input->implementation = implementation;
+
+    BSAL_DEBUGGER_ASSERT(operations != NULL);
+
     input->operations = operations;
     input->sequences = 0;
     input->file = file;
@@ -21,8 +30,6 @@ void bsal_input_format_init(struct bsal_input_format *input, void *implementatio
 
     input->start_offset = offset;
     input->end_offset = maximum_offset;
-
-    input->offset = input->start_offset;
 
     descriptor = fopen(input->file, "r");
 
@@ -35,6 +42,10 @@ void bsal_input_format_init(struct bsal_input_format *input, void *implementatio
 
     handler = bsal_input_format_interface_get_init(input->operations);
     handler(input);
+
+#if 0
+    printf("DEBUG after concrete init\n");
+#endif
 }
 
 void bsal_input_format_destroy(struct bsal_input_format *input)
@@ -50,7 +61,6 @@ void bsal_input_format_destroy(struct bsal_input_format *input)
     input->operations = NULL;
     input->sequences = -1;
     input->file = NULL;
-    input->offset = 0;
 }
 
 int bsal_input_format_get_sequence(struct bsal_input_format *input,
@@ -67,7 +77,8 @@ int bsal_input_format_get_sequence(struct bsal_input_format *input,
      * Check if the end offset has been reached.
      */
 
-    if (input->offset >= input->end_offset) {
+    if (input->operations->get_offset(input) >= input->end_offset) {
+
         return 0;
     }
 
@@ -84,8 +95,6 @@ int bsal_input_format_get_sequence(struct bsal_input_format *input,
                         input->sequences);
     }
 #endif
-
-    input->offset += value;
 
     return value;
 }
@@ -153,7 +162,9 @@ int bsal_input_format_has_suffix(struct bsal_input_format *input, const char *su
 
 uint64_t bsal_input_format_offset(struct bsal_input_format *input)
 {
-    return input->offset;
+    BSAL_DEBUGGER_ASSERT(input->operations != NULL);
+
+    return input->operations->get_offset(input);
 }
 
 uint64_t bsal_input_format_start_offset(struct bsal_input_format *input)

@@ -16,7 +16,8 @@ struct bsal_input_format_interface bsal_fastq_input_operations = {
     .init = bsal_fastq_input_init,
     .destroy = bsal_fastq_input_destroy,
     .get_sequence = bsal_fastq_input_get_sequence,
-    .detect = bsal_fastq_input_detect
+    .detect = bsal_fastq_input_detect,
+    .get_offset = bsal_fastq_input_get_offset
 };
 
 void bsal_fastq_input_init(struct bsal_input_format *input)
@@ -131,4 +132,13 @@ int bsal_fastq_input_detect(struct bsal_input_format *input)
     }
 
     return 0;
+}
+
+uint64_t bsal_fastq_input_get_offset(struct bsal_input_format *self)
+{
+    struct bsal_fastq_input *fastq;
+
+    fastq = (struct bsal_fastq_input *)bsal_input_format_implementation(self);
+
+    return bsal_buffered_reader_get_offset(&fastq->reader);
 }

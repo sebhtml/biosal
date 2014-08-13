@@ -31,6 +31,8 @@ struct bsal_gzip_buffered_reader {
     int buffer_size;
     int position_in_buffer;
 
+    uint64_t offset;
+
 #ifdef BSAL_GZIP_BUFFERED_READER_USE_INFLATE
     /*
      * \see http://www.ncbi.nlm.nih.gov/IEB/ToolBox/CPP_DOC/lxr/source/src/util/compress/zlib/example.c
@@ -83,5 +85,10 @@ int bsal_gzip_buffered_reader_read_with_inflate(struct bsal_buffered_reader *sel
 
 int bsal_gzip_buffered_reader_detect(struct bsal_buffered_reader *self,
                 const char *file);
+
+uint64_t bsal_gzip_buffered_reader_get_offset(struct bsal_buffered_reader *self);
+
+int bsal_gzip_buffered_reader_read_line_private(struct bsal_buffered_reader *self,
+                char *buffer, int length);
 
 #endif

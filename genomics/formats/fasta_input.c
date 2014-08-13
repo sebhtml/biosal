@@ -2,6 +2,7 @@
 #include "fasta_input.h"
 
 #include <core/system/memory.h>
+#include <core/system/debugger.h>
 
 #include <stdio.h>
 #include <string.h>
@@ -11,7 +12,8 @@ struct bsal_input_format_interface bsal_fasta_input_operations = {
     .init = bsal_fasta_input_init,
     .destroy = bsal_fasta_input_destroy,
     .get_sequence = bsal_fasta_input_get_sequence,
-    .detect = bsal_fasta_input_detect
+    .detect = bsal_fasta_input_detect,
+    .get_offset = bsal_fasta_input_get_offset
 };
 
 void bsal_fasta_input_init(struct bsal_input_format *input)
@@ -20,12 +22,19 @@ void bsal_fasta_input_init(struct bsal_input_format *input)
     struct bsal_fasta_input *fasta;
     uint64_t offset;
 
-    file = bsal_input_format_file(input);
-    offset = bsal_input_format_offset(input);
-
     fasta = (struct bsal_fasta_input *)bsal_input_format_implementation(input);
 
+    file = bsal_input_format_file(input);
+
+    BSAL_DEBUGGER_ASSERT(input->operations != NULL);
+
+#if 0
+    printf("DEBUG BEFORE faulty call.\n");
+#endif
+    offset = bsal_input_format_start_offset(input);
+
     bsal_buffered_reader_init(&fasta->reader, file, offset);
+
     fasta->buffer = NULL;
     fasta->next_header = NULL;
     fasta->has_header = 0;
@@ -180,4 +189,13 @@ int bsal_fasta_input_detect(struct bsal_input_format *input)
     }
 
     return 0;
+}
+
+uint64_t bsal_fasta_input_get_offset(struct bsal_input_format *self)
+{
+    struct bsal_fasta_input *fasta;
+
+    fasta = (struct bsal_fasta_input *)bsal_input_format_implementation(self);
+
+    return bsal_buffered_reader_get_offset(&fasta->reader);
 }

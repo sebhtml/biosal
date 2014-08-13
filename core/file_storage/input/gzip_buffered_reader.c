@@ -30,6 +30,7 @@ struct bsal_buffered_reader_interface bsal_gzip_buffered_reader_implementation =
     .destroy = bsal_gzip_buffered_reader_destroy,
     .read_line = bsal_gzip_buffered_reader_read_line,
     .detect = bsal_gzip_buffered_reader_detect,
+    .get_offset = bsal_gzip_buffered_reader_get_offset,
     .size = sizeof(struct bsal_gzip_buffered_reader)
 };
 
@@ -52,6 +53,8 @@ void bsal_gzip_buffered_reader_init(struct bsal_buffered_reader *self,
     reader->buffer_capacity = BSAL_BUFFERED_READER_BUFFER_SIZE;
     reader->position_in_buffer = 0;
     reader->buffer_size = 0;
+
+    reader->offset = offset;
 }
 
 void bsal_gzip_buffered_reader_destroy(struct bsal_buffered_reader *self)
@@ -90,6 +93,28 @@ void bsal_gzip_buffered_reader_destroy(struct bsal_buffered_reader *self)
 }
 
 int bsal_gzip_buffered_reader_read_line(struct bsal_buffered_reader *self,
+                char *buffer, int length)
+{
+    int read;
+    struct bsal_gzip_buffered_reader *reader;
+
+    reader = bsal_buffered_reader_get_concrete_self(self);
+    read = bsal_gzip_buffered_reader_read_line_private(self, buffer, length);
+
+    if (read) {
+
+        reader->offset += read;
+
+        /*
+         * Add new line too.
+         */
+        reader->offset++;
+    }
+
+    return read;
+}
+
+int bsal_gzip_buffered_reader_read_line_private(struct bsal_buffered_reader *self,
                 char *buffer, int length)
 {
     struct bsal_gzip_buffered_reader *reader;
@@ -490,4 +515,13 @@ int bsal_gzip_buffered_reader_detect(struct bsal_buffered_reader *self,
     }
 
     return 0;
+}
+
+uint64_t bsal_gzip_buffered_reader_get_offset(struct bsal_buffered_reader *self)
+{
+    struct bsal_gzip_buffered_reader *reader;
+
+    reader = bsal_buffered_reader_get_concrete_self(self);
+
+    return reader->offset;
 }

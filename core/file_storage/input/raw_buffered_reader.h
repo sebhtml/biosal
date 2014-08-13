@@ -19,26 +19,32 @@ struct bsal_raw_buffered_reader {
     int buffer_size;
     int position_in_buffer;
     FILE *descriptor;
+
+    uint64_t offset;
 };
 
 extern struct bsal_buffered_reader_interface bsal_raw_buffered_reader_implementation;
 
-void bsal_raw_buffered_reader_init(struct bsal_buffered_reader *reader,
+void bsal_raw_buffered_reader_init(struct bsal_buffered_reader *self,
                 const char *file, uint64_t offset);
-void bsal_raw_buffered_reader_destroy(struct bsal_buffered_reader *reader);
+void bsal_raw_buffered_reader_destroy(struct bsal_buffered_reader *self);
 
 /*
  * \return number of bytes copied in buffer
  * This does not include the discarded \n, if any
  */
-int bsal_raw_buffered_reader_read_line(struct bsal_buffered_reader *reader,
+int bsal_raw_buffered_reader_read_line(struct bsal_buffered_reader *self,
                 char *buffer, int length);
 
 /* \return number of bytes copied in buffer
  */
-int bsal_raw_buffered_reader_pull(struct bsal_buffered_reader *reader);
+int bsal_raw_buffered_reader_pull(struct bsal_buffered_reader *self);
 
 int bsal_raw_buffered_reader_detect(struct bsal_buffered_reader *self,
                 const char *file);
+uint64_t bsal_raw_buffered_reader_get_offset(struct bsal_buffered_reader *self);
+
+int bsal_raw_buffered_reader_read_line_private(struct bsal_buffered_reader *self,
+                char *buffer, int length);
 
 #endif

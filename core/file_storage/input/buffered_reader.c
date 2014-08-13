@@ -5,6 +5,7 @@
 #include "gzip_buffered_reader.h"
 
 #include <core/system/memory.h>
+#include <core/system/debugger.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -75,4 +76,12 @@ void bsal_buffered_reader_select(struct bsal_buffered_reader *self, const char *
 
         self->interface = &bsal_raw_buffered_reader_implementation;
     }
+}
+
+uint64_t bsal_buffered_reader_get_offset(struct bsal_buffered_reader *self)
+{
+    BSAL_DEBUGGER_ASSERT(self != NULL);
+    BSAL_DEBUGGER_ASSERT(self->interface != NULL);
+
+    return self->interface->get_offset(self);
 }

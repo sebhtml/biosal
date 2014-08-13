@@ -20,7 +20,6 @@ struct bsal_buffered_reader_interface;
 struct bsal_buffered_reader {
 
     void *concrete_self;
-
     struct bsal_buffered_reader_interface *interface;
 };
 
@@ -37,5 +36,6 @@ int bsal_buffered_reader_read_line(struct bsal_buffered_reader *self,
 
 void *bsal_buffered_reader_get_concrete_self(struct bsal_buffered_reader *self);
 void bsal_buffered_reader_select(struct bsal_buffered_reader *self, const char *file);
+uint64_t bsal_buffered_reader_get_offset(struct bsal_buffered_reader *self);
 
 #endif

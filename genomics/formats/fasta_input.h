@@ -24,10 +24,11 @@ struct bsal_fasta_input {
 
 extern struct bsal_input_format_interface bsal_fasta_input_operations;
 
-void bsal_fasta_input_init(struct bsal_input_format *input);
-void bsal_fasta_input_destroy(struct bsal_input_format *input);
-uint64_t bsal_fasta_input_get_sequence(struct bsal_input_format *input,
+void bsal_fasta_input_init(struct bsal_input_format *self);
+void bsal_fasta_input_destroy(struct bsal_input_format *self);
+uint64_t bsal_fasta_input_get_sequence(struct bsal_input_format *self,
                 char *sequence);
-int bsal_fasta_input_detect(struct bsal_input_format *input);
+int bsal_fasta_input_detect(struct bsal_input_format *self);
+uint64_t bsal_fasta_input_get_offset(struct bsal_input_format *self);
 
 #endif

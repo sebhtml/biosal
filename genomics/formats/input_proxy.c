@@ -23,8 +23,15 @@ void bsal_input_proxy_init(struct bsal_input_proxy *proxy,
     /* Try to open the input with various formats
      */
 
+#ifdef BSAL_INPUT_PROXY_DEBUG
+    printf("Trying fastq\n");
+#endif
     bsal_input_proxy_try(proxy, &proxy->input, &proxy->fastq,
                     &bsal_fastq_input_operations, file, offset, maximum_offset);
+
+#ifdef BSAL_INPUT_PROXY_DEBUG
+    printf("Trying fasta\n");
+#endif
 
     bsal_input_proxy_try(proxy, &proxy->input, &proxy->fasta,
                     &bsal_fasta_input_operations, file, offset, maximum_offset);
