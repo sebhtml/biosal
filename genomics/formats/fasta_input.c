@@ -38,6 +38,8 @@ void bsal_fasta_input_init(struct bsal_input_format *input)
     fasta->buffer = NULL;
     fasta->next_header = NULL;
     fasta->has_header = 0;
+
+    fasta->has_first = 0;
 }
 
 void bsal_fasta_input_destroy(struct bsal_input_format *input)
@@ -101,6 +103,19 @@ uint64_t bsal_fasta_input_get_sequence(struct bsal_input_format *input,
     } else {
         value = bsal_buffered_reader_read_line(&fasta->reader, fasta->buffer,
                     maximum_sequence_length);
+
+        /* Make sure that this is an identifier.
+         */
+        if (!fasta->has_first) {
+
+            while (!bsal_fasta_input_check_header(input, fasta->buffer)) {
+
+                value = bsal_buffered_reader_read_line(&fasta->reader, fasta->buffer,
+                    maximum_sequence_length);
+            }
+
+            fasta->has_first = 1;
+        }
     }
 
     /*
@@ -193,4 +208,31 @@ uint64_t bsal_fasta_input_get_offset(struct bsal_input_format *self)
     fasta = (struct bsal_fasta_input *)bsal_input_format_implementation(self);
 
     return bsal_buffered_reader_get_offset(&fasta->reader);
+}
+
+int bsal_fasta_input_check_header(struct bsal_input_format *self, const char *line)
+{
+    int length;
+    char character;
+
+    length = strlen(line);
+
+    if (length == 0) {
+        return 0;
+    }
+
+    character = line[0];
+
+    if (character != '>') {
+        return 0;
+    }
+
+    /*
+     * Assume that the identifier line can not contain the >
+     * symbol after the first > symbol.
+     */
+
+    printf("DEBUG is FASTA header.\n");
+
+    return 1;
 }

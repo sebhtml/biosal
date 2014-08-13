@@ -20,6 +20,8 @@ struct bsal_fasta_input {
     char *buffer;
     char *next_header;
     int has_header;
+
+    int has_first;
 };
 
 extern struct bsal_input_format_interface bsal_fasta_input_operations;
@@ -30,5 +32,7 @@ uint64_t bsal_fasta_input_get_sequence(struct bsal_input_format *self,
                 char *sequence);
 int bsal_fasta_input_detect(struct bsal_input_format *self);
 uint64_t bsal_fasta_input_get_offset(struct bsal_input_format *self);
+
+int bsal_fasta_input_check_header(struct bsal_input_format *self, const char *line);
 
 #endif
