@@ -37,5 +37,6 @@ int bsal_buffered_reader_read_line(struct bsal_buffered_reader *self,
 void *bsal_buffered_reader_get_concrete_self(struct bsal_buffered_reader *self);
 void bsal_buffered_reader_select(struct bsal_buffered_reader *self, const char *file);
 uint64_t bsal_buffered_reader_get_offset(struct bsal_buffered_reader *self);
+int bsal_buffered_reader_get_previous_bytes(struct bsal_buffered_reader *self, char *buffer, int length);
 
 #endif

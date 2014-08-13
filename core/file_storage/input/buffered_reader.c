@@ -85,3 +85,8 @@ uint64_t bsal_buffered_reader_get_offset(struct bsal_buffered_reader *self)
 
     return self->interface->get_offset(self);
 }
+
+int bsal_buffered_reader_get_previous_bytes(struct bsal_buffered_reader *self, char *buffer, int length)
+{
+    return self->interface->get_previous_bytes(self, buffer, length);
+}

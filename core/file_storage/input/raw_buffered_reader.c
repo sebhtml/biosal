@@ -17,6 +17,7 @@ struct bsal_buffered_reader_interface bsal_raw_buffered_reader_implementation = 
     .read_line = bsal_raw_buffered_reader_read_line,
     .detect = bsal_raw_buffered_reader_detect,
     .get_offset = bsal_raw_buffered_reader_get_offset,
+    .get_previous_bytes = bsal_raw_buffered_reader_get_previous_bytes,
     .size = sizeof(struct bsal_raw_buffered_reader)
 };
 
@@ -249,4 +250,41 @@ uint64_t bsal_raw_buffered_reader_get_offset(struct bsal_buffered_reader *self)
     reader = bsal_buffered_reader_get_concrete_self(self);
 
     return reader->offset;
+}
+
+int bsal_raw_buffered_reader_get_previous_bytes(struct bsal_buffered_reader *self,
+                char *buffer, int length)
+{
+#ifdef CHECK_PREVIOUS
+    uint64_t saved_offset;
+    uint64_t offset;
+    struct bsal_raw_buffered_reader *reader;
+    int bytes;
+    uint64_t to_read;
+
+    reader = bsal_buffered_reader_get_concrete_self(self);
+    saved_offset = ftell(reader->descriptor);
+
+    offset = saved_offset;
+
+    if ((uint64_t)length < offset) {
+
+        to_read = offset;
+        offset = 0;
+
+    } else {
+
+        to_read = length;
+        offset -= length;
+    }
+
+    bytes = fread(buffer, 1, to_read, reader->descriptor);
+
+    fseek(reader->descriptor, saved_offset, SEEK_SET);
+
+    return bytes;
+#else
+
+    return -1;
+#endif
 }

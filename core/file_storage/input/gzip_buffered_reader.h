@@ -90,5 +90,7 @@ uint64_t bsal_gzip_buffered_reader_get_offset(struct bsal_buffered_reader *self)
 
 int bsal_gzip_buffered_reader_read_line_private(struct bsal_buffered_reader *self,
                 char *buffer, int length);
+int bsal_gzip_buffered_reader_get_previous_bytes(struct bsal_buffered_reader *self,
+                char *buffer, int length);
 
 #endif

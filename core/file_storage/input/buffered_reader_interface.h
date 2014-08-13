@@ -16,6 +16,7 @@ struct bsal_buffered_reader_interface {
     int size;
     int (*detect)(struct bsal_buffered_reader *self, const char *file);
     uint64_t (*get_offset)(struct bsal_buffered_reader *self);
+    int (*get_previous_bytes)(struct bsal_buffered_reader *self, char *buffer, int length);
 };
 
 #endif

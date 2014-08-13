@@ -77,7 +77,7 @@ int bsal_input_format_get_sequence(struct bsal_input_format *input,
      * Check if the end offset has been reached.
      */
 
-    if (input->operations->get_offset(input) >= input->end_offset) {
+    if (input->operations->get_offset(input) > input->end_offset) {
 
         return 0;
     }

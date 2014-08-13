@@ -31,6 +31,7 @@ struct bsal_buffered_reader_interface bsal_gzip_buffered_reader_implementation =
     .read_line = bsal_gzip_buffered_reader_read_line,
     .detect = bsal_gzip_buffered_reader_detect,
     .get_offset = bsal_gzip_buffered_reader_get_offset,
+    .get_previous_bytes = bsal_gzip_buffered_reader_get_previous_bytes,
     .size = sizeof(struct bsal_gzip_buffered_reader)
 };
 
@@ -516,4 +517,13 @@ uint64_t bsal_gzip_buffered_reader_get_offset(struct bsal_buffered_reader *self)
     reader = bsal_buffered_reader_get_concrete_self(self);
 
     return reader->offset;
+}
+
+int bsal_gzip_buffered_reader_get_previous_bytes(struct bsal_buffered_reader *self,
+                char *buffer, int length)
+{
+    /* TODO:
+     * implement this
+     */
+    return -1;
 }

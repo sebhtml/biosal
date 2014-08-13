@@ -17,6 +17,8 @@
 struct bsal_fastq_input {
     struct bsal_buffered_reader reader;
     char *buffer;
+
+    int has_first;
 };
 
 extern struct bsal_input_format_interface bsal_fastq_input_operations;
@@ -27,5 +29,8 @@ uint64_t bsal_fastq_input_get_sequence(struct bsal_input_format *self,
                 char *sequence);
 int bsal_fastq_input_detect(struct bsal_input_format *self);
 uint64_t bsal_fastq_input_get_offset(struct bsal_input_format *self);
+
+int bsal_fastq_input_is_identifier(struct bsal_input_format *self, const char *line);
+int bsal_fastq_input_is_identifier_mock(struct bsal_input_format *self, const char *line);
 
 #endif
