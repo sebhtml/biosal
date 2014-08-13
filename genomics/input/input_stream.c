@@ -237,6 +237,7 @@ void bsal_input_stream_receive(struct bsal_actor *actor, struct bsal_message *me
 
         bsal_input_proxy_init(&concrete_self->proxy, concrete_self->file_name,
                         concrete_self->starting_offset, concrete_self->ending_offset);
+
         concrete_self->proxy_ready = 1;
 
         /* Die if there is an error...
@@ -757,6 +758,10 @@ void bsal_input_stream_spawn_reply(struct bsal_actor *self, struct bsal_message 
 {
     int stream;
     struct bsal_input_stream *concrete_self;
+    int i;
+    int size;
+    uint64_t start_offset;
+    uint64_t end_offset;
 
     concrete_self = (struct bsal_input_stream *)bsal_actor_concrete_actor(self);
 
@@ -767,20 +772,29 @@ void bsal_input_stream_spawn_reply(struct bsal_actor *self, struct bsal_message 
     if (bsal_vector_size(&concrete_self->parallel_streams) ==
                     bsal_vector_size(&concrete_self->start_offsets)) {
 
-        /*
-         * Assign files to input streams
+        /* Set offsets
          */
 
-        bsal_actor_add_route(self, BSAL_INPUT_OPEN_REPLY,
-                        bsal_input_stream_open_reply);
+        bsal_actor_add_route(self, BSAL_INPUT_STREAM_SET_START_OFFSET_REPLY,
+                            bsal_input_stream_set_offset_reply);
+        bsal_actor_add_route(self, BSAL_INPUT_STREAM_SET_END_OFFSET_REPLY,
+                            bsal_input_stream_set_offset_reply);
 
         concrete_self->finished_parallel_stream_count = 0;
 
-        bsal_actor_send_range_buffer(self,
-                        &concrete_self->parallel_streams,
-                        BSAL_INPUT_OPEN,
-                        strlen(concrete_self->file_name) + 1,
-                        concrete_self->file_name);
+        size = bsal_vector_size(&concrete_self->parallel_streams);
+
+        for (i = 0; i < size; i++) {
+
+            start_offset = bsal_vector_at_as_uint64_t(&concrete_self->start_offsets, i);
+            end_offset = bsal_vector_at_as_uint64_t(&concrete_self->end_offsets, i);
+            stream = bsal_vector_at_as_int(&concrete_self->parallel_streams, i);
+
+            bsal_actor_send_uint64_t(self, stream, BSAL_INPUT_STREAM_SET_START_OFFSET,
+                            start_offset);
+            bsal_actor_send_uint64_t(self, stream, BSAL_INPUT_STREAM_SET_END_OFFSET,
+                            end_offset);
+        }
     }
 }
 
@@ -976,3 +990,29 @@ void bsal_input_stream_count_reply_mock(struct bsal_actor *self, struct bsal_mes
                     BSAL_INPUT_COUNT_IN_PARALLEL_REPLY, count, buffer);
 }
 
+void bsal_input_stream_set_offset_reply(struct bsal_actor *self, struct bsal_message *message)
+{
+    struct bsal_input_stream *concrete_self;
+
+    concrete_self = (struct bsal_input_stream *)bsal_actor_concrete_actor(self);
+
+    ++concrete_self->finished_parallel_stream_count;
+
+    if (concrete_self->finished_parallel_stream_count ==
+                    2 * bsal_vector_size(&concrete_self->parallel_streams)) {
+        /*
+         * Assign files to input streams
+         */
+
+        bsal_actor_add_route(self, BSAL_INPUT_OPEN_REPLY,
+                        bsal_input_stream_open_reply);
+
+        concrete_self->finished_parallel_stream_count = 0;
+
+        bsal_actor_send_range_buffer(self,
+                        &concrete_self->parallel_streams,
+                        BSAL_INPUT_OPEN,
+                        strlen(concrete_self->file_name) + 1,
+                        concrete_self->file_name);
+    }
+}

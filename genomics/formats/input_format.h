@@ -35,22 +35,22 @@ struct bsal_input_format {
     int error;
 };
 
-void bsal_input_format_init(struct bsal_input_format *input, void *implementation,
+void bsal_input_format_init(struct bsal_input_format *self, void *implementation,
                 struct bsal_input_format_interface *operations, char *file,
-                uint64_t offset, uint64_t maximum_offset);
-void bsal_input_format_destroy(struct bsal_input_format *input);
+                uint64_t start_offset, uint64_t end_offset);
+void bsal_input_format_destroy(struct bsal_input_format *self);
 
-int bsal_input_format_get_sequence(struct bsal_input_format *input,
+int bsal_input_format_get_sequence(struct bsal_input_format *self,
                 char *sequence);
-char *bsal_input_format_file(struct bsal_input_format *input);
-uint64_t bsal_input_format_size(struct bsal_input_format *input);
-uint64_t bsal_input_format_start_offset(struct bsal_input_format *input);
-uint64_t bsal_input_format_end_offset(struct bsal_input_format *input);
-uint64_t bsal_input_format_offset(struct bsal_input_format *input);
-void *bsal_input_format_implementation(struct bsal_input_format *input);
-int bsal_input_format_detect(struct bsal_input_format *input);
-int bsal_input_format_has_suffix(struct bsal_input_format *input, const char *suffix);
-int bsal_input_format_valid(struct bsal_input_format *input);
-int bsal_input_format_error(struct bsal_input_format *input);
+char *bsal_input_format_file(struct bsal_input_format *self);
+uint64_t bsal_input_format_size(struct bsal_input_format *self);
+uint64_t bsal_input_format_start_offset(struct bsal_input_format *self);
+uint64_t bsal_input_format_end_offset(struct bsal_input_format *self);
+uint64_t bsal_input_format_offset(struct bsal_input_format *self);
+void *bsal_input_format_implementation(struct bsal_input_format *self);
+int bsal_input_format_detect(struct bsal_input_format *self);
+int bsal_input_format_has_suffix(struct bsal_input_format *self, const char *suffix);
+int bsal_input_format_valid(struct bsal_input_format *self);
+int bsal_input_format_error(struct bsal_input_format *self);
 
 #endif

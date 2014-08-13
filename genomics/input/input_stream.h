@@ -110,5 +110,6 @@ void bsal_input_stream_count_reply_mock(struct bsal_actor *self, struct bsal_mes
 void bsal_input_stream_count_in_parallel_mock(struct bsal_actor *self, struct bsal_message *message);
 void bsal_input_stream_spawn_reply(struct bsal_actor *self, struct bsal_message *message);
 void bsal_input_stream_open_reply(struct bsal_actor *self, struct bsal_message *message);
+void bsal_input_stream_set_offset_reply(struct bsal_actor *self, struct bsal_message *message);
 
 #endif

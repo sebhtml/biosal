@@ -8,9 +8,11 @@
 #include <stdio.h>
 #include <string.h>
 
+#include <inttypes.h>
+
 void bsal_input_format_init(struct bsal_input_format *input, void *implementation,
                 struct bsal_input_format_interface *operations, char *file,
-                uint64_t offset, uint64_t maximum_offset)
+                uint64_t start_offset, uint64_t end_offset)
 {
     bsal_input_format_interface_init_fn_t handler;
     FILE *descriptor;
@@ -28,8 +30,8 @@ void bsal_input_format_init(struct bsal_input_format *input, void *implementatio
     input->file = file;
     input->error = BSAL_INPUT_ERROR_NO_ERROR;
 
-    input->start_offset = offset;
-    input->end_offset = maximum_offset;
+    input->start_offset = start_offset;
+    input->end_offset = end_offset;
 
     descriptor = fopen(input->file, "r");
 
@@ -39,6 +41,9 @@ void bsal_input_format_init(struct bsal_input_format *input, void *implementatio
     } else {
         fclose(descriptor);
     }
+
+    printf("DEBUG INPUT_FORMAT %s from %" PRIu64 " to %" PRIu64 "\n",
+                    file, start_offset, end_offset);
 
     handler = bsal_input_format_interface_get_init(input->operations);
     handler(input);
