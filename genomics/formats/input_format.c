@@ -42,8 +42,10 @@ void bsal_input_format_init(struct bsal_input_format *input, void *implementatio
         fclose(descriptor);
     }
 
+#if 0
     printf("DEBUG INPUT_FORMAT %s from %" PRIu64 " to %" PRIu64 "\n",
                     file, start_offset, end_offset);
+#endif
 
     handler = bsal_input_format_interface_get_init(input->operations);
     handler(input);

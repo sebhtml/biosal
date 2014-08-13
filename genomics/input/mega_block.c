@@ -54,3 +54,9 @@ void bsal_mega_block_set_file(struct bsal_mega_block *block, int file)
 {
     block->file = file;
 }
+
+void bsal_mega_block_set_entries_from_start(struct bsal_mega_block *self,
+                uint64_t entries)
+{
+    self->entries_from_start = entries;
+}

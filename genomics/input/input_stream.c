@@ -662,6 +662,8 @@ void bsal_input_stream_set_start_offset(struct bsal_actor *self, struct bsal_mes
     concrete_self = (struct bsal_input_stream *)bsal_actor_concrete_actor(self);
     bsal_message_unpack_uint64_t(message, 0, &concrete_self->starting_offset);
     bsal_actor_send_reply_empty(self, BSAL_INPUT_STREAM_SET_START_OFFSET_REPLY);
+
+    concrete_self->last_offset = concrete_self->starting_offset;
 }
 
 void bsal_input_stream_set_end_offset(struct bsal_actor *self, struct bsal_message *message)
@@ -689,11 +691,13 @@ void bsal_input_stream_count_in_parallel(struct bsal_actor *self, struct bsal_me
 
     /*
      * 1 GiB.
-    parallel_block_size = 1073741824;
      */
+    parallel_block_size = 1073741824;
 
+    /*
     parallel_block_size = 0;
     --parallel_block_size;
+     */
 
     /*
      * Approach:
@@ -848,6 +852,8 @@ void bsal_input_stream_count_reply(struct bsal_actor *self, struct bsal_message 
     struct bsal_vector *vector;
     int source_index;
     int source;
+    int j;
+    uint64_t total;
 
     concrete_self = (struct bsal_input_stream *)bsal_actor_concrete_actor(self);
 
@@ -899,8 +905,31 @@ void bsal_input_stream_count_reply(struct bsal_actor *self, struct bsal_message 
             vector = bsal_vector_at(&concrete_self->parallel_mega_blocks,
                             i);
 
+            printf("ParallelStream %d\n", i);
+
+            for (j = 0; j < bsal_vector_size(vector); j++) {
+
+                block = bsal_vector_at(vector, j);
+                bsal_mega_block_print(block);
+            }
+
             bsal_vector_push_back_vector(&concrete_self->mega_blocks,
                             vector);
+        }
+
+        /*
+         * Update total
+         */
+
+        total = 0;
+
+        for (i = 0; i < bsal_vector_size(&concrete_self->mega_blocks); i++) {
+
+            block = bsal_vector_at(&concrete_self->mega_blocks, i);
+
+            total += bsal_mega_block_get_entries(block);
+
+            bsal_mega_block_set_entries_from_start(block, total);
         }
 
         /*
