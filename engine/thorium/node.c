@@ -1905,16 +1905,44 @@ void bsal_node_test_requests(struct bsal_node *node)
     int i;
     int worker;
     void *buffer;
+    int difference;
+    int minimum;
+    int maximum;
 
     /*
      * Use a half-life approach
      */
     requests = bsal_transport_get_active_request_count(&node->transport);
-    requests_to_test = requests / 2;
 
-    if (requests == 1) {
-        requests_to_test = 1;
+
+    difference = requests - node->last_active_request_count;
+
+    requests_to_test = difference;
+
+    minimum = 8;
+    maximum = 64;
+
+    /*
+     * Make sure the amount is within the bounds.
+     */
+    if (requests_to_test < minimum) {
+        requests_to_test = minimum;
     }
+
+    if (requests_to_test > maximum) {
+
+        requests_to_test = maximum;
+    }
+
+    if (requests_to_test > requests) {
+
+        requests_to_test = requests;
+    }
+
+    /*
+     * Assign the last active request count.
+     */
+    node->last_active_request_count = requests;
 
     /* Test active buffer requests
      */

@@ -90,6 +90,11 @@ struct bsal_node {
     int ready;
     char print_structure;
 
+    /*
+     * Last number of active requests.
+     */
+    int last_active_request_count;
+
 #ifdef BSAL_NODE_INJECT_CLEAN_WORKER_BUFFERS
     struct bsal_ring_queue clean_outbound_buffers_to_inject;
 
