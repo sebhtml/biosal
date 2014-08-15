@@ -167,6 +167,11 @@ void bsal_worker_init(struct bsal_worker *worker, int name, struct bsal_node *no
 
 void bsal_worker_destroy(struct bsal_worker *worker)
 {
+    void *buffer;
+
+    while (bsal_worker_fetch_clean_outbound_buffer(worker, &buffer)) {
+        bsal_memory_pool_free(&worker->outbound_message_memory_pool, buffer);
+    }
 
     bsal_timer_destroy(&worker->timer);
     bsal_lock_destroy(&worker->lock);
@@ -1134,8 +1139,7 @@ void bsal_worker_run(struct bsal_worker *worker)
     /* free outbound buffers, if any
      */
 
-    if (bsal_fast_ring_pop_from_consumer(&worker->injected_clean_outbound_buffers, &buffer)) {
-
+    if (bsal_worker_fetch_clean_outbound_buffer(worker, &buffer)) {
         bsal_memory_pool_free(&worker->outbound_message_memory_pool, buffer);
     }
 #endif

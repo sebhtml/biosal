@@ -15,7 +15,7 @@ struct bsal_script bsal_assembly_arc_classifier_script = {
     .destroy = bsal_assembly_arc_classifier_destroy,
     .receive = bsal_assembly_arc_classifier_receive,
     .size = sizeof(struct bsal_assembly_arc_classifier),
-    .author = "Sébastien Boisvert",
+    .author = "Sebastien Boisvert",
     .description = "Arc classifier for metagenomics"
 };
 
@@ -118,20 +118,14 @@ void bsal_assembly_arc_classifier_receive(struct bsal_actor *self, struct bsal_m
 
     } else if (tag == BSAL_ASSEMBLY_PUSH_ARC_BLOCK_REPLY){
 
+        /*
+         * Decrease counter now.
+         */
         source_index = bsal_vector_index_of(&concrete_self->consumers, &source);
-
         bucket = bsal_vector_at(&concrete_self->pending_requests, source_index);
-
         --(*bucket);
 
-        if (*bucket <= concrete_self->maximum_pending_request_count
-                        && concrete_self->producer_is_waiting) {
-
-            bsal_actor_send_empty(self, concrete_self->source,
-                    BSAL_ASSEMBLY_PUSH_ARC_BLOCK_REPLY);
-
-            concrete_self->producer_is_waiting = 0;
-        }
+        bsal_assembly_arc_classifier_verify_counters(self);
     }
 }
 
@@ -171,6 +165,7 @@ void bsal_assembly_arc_classifier_push_arc_block(struct bsal_actor *self, struct
     void *new_buffer;
     int *bucket;
     int maximum_pending_requests;
+    int maximum_buffer_length;
 
     count = bsal_message_count(message);
     buffer = bsal_message_buffer(message);
@@ -249,13 +244,28 @@ void bsal_assembly_arc_classifier_push_arc_block(struct bsal_actor *self, struct
      */
 
     maximum_pending_requests = 0;
+    maximum_buffer_length = 0;
+
+    /*
+     * Figure out the maximum buffer length.
+     */
+    for (i = 0; i < consumer_count; i++) {
+
+        output_block = bsal_vector_at(&output_blocks, i);
+        new_count = bsal_assembly_arc_block_pack_size(output_block, concrete_self->kmer_length,
+                    &concrete_self->codec);
+
+        if (new_count > maximum_buffer_length) {
+            maximum_buffer_length = new_count;
+        }
+    }
+
+    new_buffer = bsal_memory_pool_allocate(ephemeral_memory, maximum_buffer_length);
 
     for (i = 0; i < consumer_count; i++) {
 
         output_block = bsal_vector_at(&output_blocks, i);
-
         output_arcs = bsal_assembly_arc_block_get_arcs(output_block);
-
         arc_count = bsal_vector_size(output_arcs);
 
         /*
@@ -265,10 +275,11 @@ void bsal_assembly_arc_classifier_push_arc_block(struct bsal_actor *self, struct
             continue;
         }
 
+        /*
+         * Allocation is not required because new_count <= maximum_buffer_length
+         */
         new_count = bsal_assembly_arc_block_pack_size(output_block, concrete_self->kmer_length,
                     &concrete_self->codec);
-        new_buffer = bsal_memory_pool_allocate(ephemeral_memory, new_count);
-
         bsal_assembly_arc_block_pack(output_block, new_buffer, concrete_self->kmer_length,
                     &concrete_self->codec);
 
@@ -288,7 +299,6 @@ void bsal_assembly_arc_classifier_push_arc_block(struct bsal_actor *self, struct
          * Send the message.
          */
         bsal_actor_send(self, consumer, &new_message);
-
         bsal_message_destroy(&new_message);
 
         bucket = bsal_vector_at(&concrete_self->pending_requests, i);
@@ -299,8 +309,8 @@ void bsal_assembly_arc_classifier_push_arc_block(struct bsal_actor *self, struct
         }
     }
 
+    bsal_memory_pool_free(ephemeral_memory, new_buffer);
     bsal_vector_destroy(&output_blocks);
-
     bsal_assembly_arc_block_destroy(&input_block, ephemeral_memory);
 
     /*
@@ -308,7 +318,6 @@ void bsal_assembly_arc_classifier_push_arc_block(struct bsal_actor *self, struct
      */
 
     ++concrete_self->received_blocks;
-
     concrete_self->source = source;
 
     if (maximum_pending_requests  <= concrete_self->maximum_pending_request_count) {
@@ -319,4 +328,44 @@ void bsal_assembly_arc_classifier_push_arc_block(struct bsal_actor *self, struct
 
         concrete_self->producer_is_waiting = 1;
     }
+}
+
+void bsal_assembly_arc_classifier_verify_counters(struct bsal_actor *self)
+{
+    int i;
+    int size;
+    int active_count;
+    struct bsal_assembly_arc_classifier *concrete_self;
+    int *bucket;
+
+    concrete_self = (struct bsal_assembly_arc_classifier *)bsal_actor_concrete_actor(self);
+    size = bsal_vector_size(&concrete_self->consumers);
+
+    /*
+     * Don't do anything if the producer is not waiting anyway.
+     */
+    if (!concrete_self->producer_is_waiting) {
+        return;
+    }
+
+    /*
+     * Abort if at least one counter is above the threshold.
+     */
+    for (i = 0; i < size; i++) {
+        bucket = bsal_vector_at(&concrete_self->pending_requests, i);
+        active_count = *bucket;
+
+        if (active_count > concrete_self->maximum_pending_request_count) {
+
+            return;
+        }
+    }
+
+    /*
+     * Trigger an actor event now.
+     */
+    bsal_actor_send_empty(self, concrete_self->source,
+             BSAL_ASSEMBLY_PUSH_ARC_BLOCK_REPLY);
+
+    concrete_self->producer_is_waiting = 0;
 }

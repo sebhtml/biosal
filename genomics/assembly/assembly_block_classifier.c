@@ -37,7 +37,6 @@
 #define BSAL_ASSEMBLY_BLOCK_CLASSIFIER_DEBUG_FLUSHING
 */
 
-
 struct bsal_script bsal_assembly_block_classifier_script = {
     .identifier = BSAL_ASSEMBLY_BLOCK_CLASSIFIER_SCRIPT,
     .name = "bsal_assembly_block_classifier",
@@ -103,7 +102,6 @@ void bsal_assembly_block_classifier_destroy(struct bsal_actor *self)
     bsal_ring_queue_destroy(&concrete_actor->stalled_producers);
 
     bsal_vector_destroy(&concrete_actor->consumers);
-
 }
 
 void bsal_assembly_block_classifier_receive(struct bsal_actor *self, struct bsal_message *message)
@@ -203,7 +201,6 @@ void bsal_assembly_block_classifier_flush(struct bsal_actor *self, int customer_
 
     }
 
-
 #ifdef BSAL_ASSEMBLY_BLOCK_CLASSIFIER_DEBUG_FLUSHING
     printf("DEBUG bsal_assembly_block_classifier_flush actual %d threshold %d\n", count,
                     threshold);
@@ -216,7 +213,7 @@ void bsal_assembly_block_classifier_flush(struct bsal_actor *self, int customer_
     bsal_message_init(&message, BSAL_PUSH_KMER_BLOCK, count, buffer);
     bsal_actor_send(self, customer, &message);
 
-    bucket = (int *)bsal_vector_at(&concrete_actor->active_messages, customer_index);
+    bucket = bsal_vector_at(&concrete_actor->active_messages, customer_index);
     (*bucket)++;
 
     bsal_message_destroy(&message);
@@ -328,7 +325,8 @@ void bsal_assembly_block_classifier_aggregate_kernel_output(struct bsal_actor *s
 
     concrete_actor->received++;
 
-    bsal_dna_kmer_block_unpack(&input_block, buffer, bsal_actor_get_ephemeral_memory(self),
+    bsal_dna_kmer_block_init_empty(&input_block);
+    bsal_dna_kmer_block_unpack(&input_block, buffer, ephemeral_memory,
                         &concrete_actor->codec);
 
 #ifdef BSAL_ASSEMBLY_BLOCK_CLASSIFIER_DEBUG
@@ -359,7 +357,6 @@ void bsal_assembly_block_classifier_aggregate_kernel_output(struct bsal_actor *s
                         concrete_actor->customer_block_size);
 
     }
-
 
     for (i = 0; i < entries; i++) {
         kmer = (struct bsal_dna_kmer *)bsal_vector_at(kmers, i);
@@ -459,7 +456,6 @@ void bsal_assembly_block_classifier_aggregate_kernel_output(struct bsal_actor *s
          */
         bsal_dna_kmer_frequency_block_destroy(output_block, ephemeral_memory);
 
-
         i++;
     }
 
@@ -467,8 +463,6 @@ void bsal_assembly_block_classifier_aggregate_kernel_output(struct bsal_actor *s
     bsal_vector_destroy(&buffers);
 
     bsal_assembly_block_classifier_verify(self, message);
-
-
 }
 
 void bsal_assembly_block_classifier_pack_message(struct bsal_actor *actor, struct bsal_message *message)

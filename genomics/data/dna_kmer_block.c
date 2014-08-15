@@ -167,3 +167,8 @@ int bsal_dna_kmer_block_size(struct bsal_dna_kmer_block *self)
 {
     return bsal_vector_size(&self->kmers);
 }
+
+void bsal_dna_kmer_block_init_empty(struct bsal_dna_kmer_block *self)
+{
+    bsal_dna_kmer_block_init(self, -1, -1, -1);
+}

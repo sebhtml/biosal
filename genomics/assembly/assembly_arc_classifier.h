@@ -38,5 +38,6 @@ void bsal_assembly_arc_classifier_receive(struct bsal_actor *self, struct bsal_m
 void bsal_assembly_arc_classifier_set_kmer_length(struct bsal_actor *self, struct bsal_message *message);
 
 void bsal_assembly_arc_classifier_push_arc_block(struct bsal_actor *self, struct bsal_message *message);
+void bsal_assembly_arc_classifier_verify_counters(struct bsal_actor *self);
 
 #endif
