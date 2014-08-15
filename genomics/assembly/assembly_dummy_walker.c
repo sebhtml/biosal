@@ -107,6 +107,9 @@ void bsal_assembly_dummy_walker_destroy(struct bsal_actor *self)
 
     concrete_self = (struct bsal_assembly_dummy_walker *)bsal_actor_concrete_actor(self);
 
+    bsal_memory_pool_destroy(&concrete_self->memory_pool);
+    bsal_dna_codec_destroy(&concrete_self->codec);
+
     bsal_string_destroy(&concrete_self->file_path);
 
     bsal_buffered_file_writer_destroy(&concrete_self->writer);

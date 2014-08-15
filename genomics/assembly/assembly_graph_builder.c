@@ -1213,11 +1213,14 @@ void bsal_assembly_graph_builder_get_summary_reply(struct bsal_actor *self, stru
     uint64_t vertex_observation_count;
     uint64_t arc_count;
     int position;
+    struct bsal_memory_pool *ephemeral_memory;
 
+    ephemeral_memory = bsal_actor_get_ephemeral_memory(self);
     concrete_self = bsal_actor_concrete_actor(self);
     buffer = bsal_message_buffer(message);
 
     bsal_vector_init(&vector, sizeof(int));
+    bsal_vector_set_memory_pool(&vector, ephemeral_memory);
 
     bsal_vector_unpack(&vector, buffer);
 
@@ -1273,4 +1276,6 @@ void bsal_assembly_graph_builder_get_summary_reply(struct bsal_actor *self, stru
 
         bsal_assembly_graph_builder_tell_source(self);
     }
+
+    bsal_vector_destroy(&vector);
 }
