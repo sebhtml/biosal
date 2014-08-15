@@ -1033,6 +1033,7 @@ void bsal_assembly_graph_builder_set_kmer_reply_arcs(struct bsal_actor *self, st
         printf("%s/%d configured the kmer length for arc actors\n",
                         bsal_actor_script_name(self),
                         bsal_actor_name(self));
+
         concrete_self->configured_actors_for_arcs = 0;
 
         bsal_actor_add_route_with_condition(self, BSAL_ACTOR_SET_CONSUMER_REPLY,
@@ -1103,7 +1104,14 @@ void bsal_assembly_graph_builder_configure_arc_actors(struct bsal_actor *self, s
     expected += bsal_vector_size(&concrete_self->arc_classifiers);
     expected += bsal_vector_size(&concrete_self->sequence_stores);
 
-    if (expected == concrete_self->configured_actors_for_arcs) {
+    printf("PROGRESS ARC configuration %d/%d %d %d %d\n",
+                    concrete_self->configured_actors_for_arcs,
+                    expected,
+                    (int)bsal_vector_size(&concrete_self->arc_kernels),
+                    (int)bsal_vector_size(&concrete_self->arc_classifiers),
+                    (int)bsal_vector_size(&concrete_self->sequence_stores));
+
+    if (concrete_self->configured_actors_for_arcs == expected) {
 
         printf("%s/%d configured the neural links for arc actors\n",
                         bsal_actor_script_name(self),
