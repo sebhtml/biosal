@@ -78,7 +78,6 @@ void bsal_node_init(struct bsal_node *node, int *argc, char ***argv)
      */
     bsal_node_register_signal_handlers(node);
 
-
     bsal_set_init(&node->auto_scaling_actors, sizeof(int));
 
     node->started = 0;
@@ -264,7 +263,6 @@ void bsal_node_init(struct bsal_node *node, int *argc, char ***argv)
             workers = node->threads - 1;
         }
     }
-
 
 #ifdef BSAL_NODE_DEBUG
     printf("DEBUG threads: %i workers: %i send_in_thread: %i\n",
@@ -1656,7 +1654,6 @@ void bsal_node_send_to_actor(struct bsal_node *node, int name, struct bsal_messa
     bsal_node_send(node, message);
 }
 
-
 void bsal_node_check_load(struct bsal_node *node)
 {
     const float load_threshold = 0.90;
@@ -1666,7 +1663,6 @@ void bsal_node_check_load(struct bsal_node *node)
     time_t current_time;
 
     current_time = time(NULL);
-
 
     /* Do the auto-scaling thing one time m aximum
      * for each second
@@ -1772,8 +1768,7 @@ void bsal_node_run_loop(struct bsal_node *node)
 
 #ifdef BSAL_NODE_DEBUG_LOOP1
         if (node->debug) {
-            printf("DEBUG node/%d is running\n",
-                            bsal_node_name(node));
+            printf("DEBUG node/%d is running\n", bsal_node_name(node));
         }
 #endif
 
@@ -1781,9 +1776,7 @@ void bsal_node_run_loop(struct bsal_node *node)
          * this code path will call lock if
          * there is a message received.
          */
-        if (
-            node->use_transport &&
-
+        if (node->use_transport &&
             bsal_transport_receive(&node->transport, &message)) {
 
             bsal_counter_add(&node->counter, BSAL_COUNTER_RECEIVED_MESSAGES_NOT_FROM_SELF, 1);
@@ -1949,8 +1942,7 @@ void bsal_node_test_requests(struct bsal_node *node)
 
     i = 0;
     while (i < requests_to_test) {
-        if (bsal_transport_test_requests(&node->transport,
-                            &worker_buffer)) {
+        if (bsal_transport_test_requests(&node->transport, &worker_buffer)) {
 
             worker = bsal_worker_buffer_get_worker(&worker_buffer);
 
