@@ -8,7 +8,7 @@
 #define BSAL_ASSEMBLY_GRAPH_BUILDER_NAME "bsal_assembly_graph_builder"
 #define BSAL_ASSEMBLY_GRAPH_BUILDER_DESCRIPTION "This builder implements a distributed actor algorithm for building an assembly graph"
 #define BSAL_ASSEMBLY_GRAPH_BUILDER_VERSION "Cool version"
-#define BSAL_ASSEMBLY_GRAPH_BUILDER_AUTHOR "Sébastien Boisvert, Argonne National Laboratory"
+#define BSAL_ASSEMBLY_GRAPH_BUILDER_AUTHOR "Sebastien Boisvert, Argonne National Laboratory"
 
 #define BSAL_ASSEMBLY_GRAPH_BUILDER_DEFAULT_KMER_LENGTH 49
 

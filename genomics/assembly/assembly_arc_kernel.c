@@ -22,7 +22,7 @@ struct bsal_script bsal_assembly_arc_kernel_script = {
     .destroy = bsal_assembly_arc_kernel_destroy,
     .receive = bsal_assembly_arc_kernel_receive,
     .size = sizeof(struct bsal_assembly_arc_kernel),
-    .author = "Sébastien Boisvert",
+    .author = "Sebastien Boisvert",
     .description = "Isolate assembly arcs from entries in an input block",
     .version = "AlphaOmegaCool"
 };

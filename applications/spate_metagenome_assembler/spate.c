@@ -22,7 +22,7 @@ struct bsal_script spate_script = {
     .size = sizeof(struct spate),
     .name = "spate",
     .version = "0.0.1-development",
-    .author = "Sébastien Boisvert",
+    .author = "Sebastien Boisvert",
     .description = "Exact, convenient, and scalable metagenome assembly and genome isolation for everyone"
 };
 

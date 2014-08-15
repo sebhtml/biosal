@@ -42,7 +42,7 @@ struct bsal_script bsal_assembly_graph_store_script = {
     .destroy = bsal_assembly_graph_store_destroy,
     .receive = bsal_assembly_graph_store_receive,
     .size = sizeof(struct bsal_assembly_graph_store),
-    .author = "Sébastien Boisvert",
+    .author = "Sebastien Boisvert",
     .description = "Build a distributed assembly graph with actors and active messages",
     .version = "Stable"
 };
