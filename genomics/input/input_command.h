@@ -21,6 +21,7 @@ struct bsal_input_command {
 
 void bsal_input_command_init(struct bsal_input_command *self, int store_name,
                 uint64_t store_first, uint64_t store_last);
+void bsal_input_command_init_empty(struct bsal_input_command *self);
 
 void bsal_input_command_destroy(struct bsal_input_command *self, struct bsal_memory_pool *memory);
 

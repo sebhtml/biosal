@@ -79,10 +79,7 @@ void *bsal_memory_allocate_private(size_t size, const char *function, const char
     /*
      * Ask the tracer to print a stack
      */
-    if (size == 4) {
-        bsal_tracer_print_stack_backtrace();
-    }
-
+    bsal_tracer_print_stack_backtrace();
 
 #endif
 
@@ -118,6 +115,10 @@ void bsal_memory_free_private(void *pointer, const char *function, const char *f
 #endif
 
     free(pointer);
+
+    /*
+     * Nothing else to do.
+     */
 }
 
 uint64_t bsal_memory_get_heap_size()

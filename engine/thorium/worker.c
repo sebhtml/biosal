@@ -147,6 +147,22 @@ void bsal_worker_init(struct bsal_worker *worker, int name, struct bsal_node *no
     worker->ticks_without_production = 0;
 
     bsal_priority_scheduler_init(&worker->scheduler);
+
+    /*
+     * This variables should be set in
+     * bsal_worker_start, but when running on 1 process with 1 thread,
+     * bsal_worker_start is never called...
+     */
+    worker->last_report = time(NULL);
+    worker->epoch_start_in_nanoseconds = bsal_timer_get_nanoseconds(&worker->timer);
+    worker->loop_start_in_nanoseconds = worker->epoch_start_in_nanoseconds;
+    worker->loop_end_in_nanoseconds = worker->loop_start_in_nanoseconds;
+    worker->scheduling_epoch_start_in_nanoseconds = worker->epoch_start_in_nanoseconds;
+
+    /*
+     * Avoid valgrind warnings.
+     */
+    worker->epoch_load = 0;
 }
 
 void bsal_worker_destroy(struct bsal_worker *worker)
@@ -251,8 +267,6 @@ void bsal_worker_send(struct bsal_worker *worker, struct bsal_message *message)
 
 void bsal_worker_start(struct bsal_worker *worker, int processor)
 {
-
-
     bsal_thread_init(&worker->thread, bsal_worker_main, worker);
 
     bsal_thread_set_affinity(&worker->thread, processor);
@@ -260,13 +274,6 @@ void bsal_worker_start(struct bsal_worker *worker, int processor)
     worker->started_in_thread = 1;
 
     bsal_thread_start(&worker->thread);
-
-    worker->last_report = time(NULL);
-    worker->epoch_start_in_nanoseconds = bsal_timer_get_nanoseconds(&worker->timer);
-    worker->loop_start_in_nanoseconds = worker->epoch_start_in_nanoseconds;
-    worker->loop_end_in_nanoseconds = worker->loop_start_in_nanoseconds;
-    worker->scheduling_epoch_start_in_nanoseconds = worker->epoch_start_in_nanoseconds;
-
 }
 
 void *bsal_worker_main(void *worker1)

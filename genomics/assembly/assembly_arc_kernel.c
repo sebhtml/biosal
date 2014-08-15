@@ -225,6 +225,7 @@ void bsal_assembly_arc_kernel_push_sequence_data_block(struct bsal_actor *self, 
         return;
     }
 
+    bsal_input_command_init_empty(&input_block);
     bsal_input_command_unpack(&input_block, buffer, ephemeral_memory,
                     &concrete_self->codec);
 
@@ -358,6 +359,8 @@ void bsal_assembly_arc_kernel_push_sequence_data_block(struct bsal_actor *self, 
 
     bsal_assembly_arc_block_destroy(&output_block,
                     ephemeral_memory);
+
+    bsal_input_command_destroy(&input_block, ephemeral_memory);
 
     bsal_message_init(&new_message, BSAL_ASSEMBLY_PUSH_ARC_BLOCK,
                     new_count, new_buffer);

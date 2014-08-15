@@ -139,6 +139,8 @@ int bsal_input_command_pack_unpack(struct bsal_input_command *self, void *buffer
     } else if (operation == BSAL_PACKER_OPERATION_UNPACK) {
 
         bsal_vector_init(&self->entries, sizeof(struct bsal_dna_sequence));
+
+        bsal_vector_set_memory_pool(&self->entries, memory);
     }
 
     /* 1. entries
@@ -247,4 +249,9 @@ void bsal_input_command_add_entry(struct bsal_input_command *self,
     bsal_dna_sequence_init_copy(&copy,
                 sequence, codec, memory);
     bsal_vector_push_back(entries, &copy);
+}
+
+void bsal_input_command_init_empty(struct bsal_input_command *self)
+{
+    bsal_input_command_init(self, 0, 0, 0);
 }

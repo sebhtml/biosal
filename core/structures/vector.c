@@ -2,7 +2,6 @@
 #include "vector.h"
 
 #include <core/system/packer.h>
-#include <core/system/memory.h>
 #include <core/system/memory_pool.h>
 #include <core/system/debugger.h>
 
@@ -88,7 +87,7 @@ void bsal_vector_push_back(struct bsal_vector *self, void *data)
                     (int)self->size, (int)self->maximum_size);
 #endif
 
-    if (self->size + 1 >= self->maximum_size) {
+    if (self->size + 1 > self->maximum_size) {
 
         new_maximum_size = 2 * self->maximum_size;
 
@@ -150,8 +149,10 @@ void bsal_vector_reserve(struct bsal_vector *self, int64_t size)
     int64_t new_byte_count;
 
 #ifdef BSAL_VECTOR_DEBUG
-    printf("DEBUG bsal_vector_reserve %d buckets current_size %d\n", size,
-                    self->size);
+    printf("DEBUG bsal_vector_reserve %p %d buckets current_size %d\n",
+                    (void *)self,
+                    (int)size,
+                    (int)self->size);
 #endif
 
     if (size <= self->maximum_size) {
@@ -173,10 +174,14 @@ void bsal_vector_reserve(struct bsal_vector *self, int64_t size)
                     (void *)self->data, (void *)new_data);
 #endif
 
-    /* copy old data */
+    /*
+     * copy old data
+     */
     if (self->size > 0) {
         memcpy(new_data, self->data, old_byte_count);
         bsal_memory_pool_free(self->memory, self->data);
+
+        self->data = NULL;
     }
 
     self->data = new_data;

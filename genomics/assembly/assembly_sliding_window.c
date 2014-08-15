@@ -632,6 +632,7 @@ void bsal_assembly_sliding_window_push_sequence_data_block(struct bsal_actor *ac
     consumer = concrete_actor->consumer;
     source_index = source;
 
+    bsal_input_command_init_empty(&payload);
     bsal_input_command_unpack(&payload, buffer, bsal_actor_get_ephemeral_memory(actor),
                     &concrete_actor->codec);
 

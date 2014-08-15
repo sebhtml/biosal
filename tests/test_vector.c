@@ -24,6 +24,19 @@ int main(int argc, char **argv)
         int actual;
         int j;
 
+#if 0
+        struct bsal_vector vector2;
+
+        bsal_vector_init(&vector2, sizeof(int));
+        j = 9;
+        printf("Pushback, before\n");
+        bsal_vector_push_back(&vector2, &j);
+        printf("Pushback, after\n");
+        bsal_vector_destroy(&vector2);
+        return 0;
+#endif
+
+
         bsal_vector_init(&vector, sizeof(int));
         TEST_INT_EQUALS(bsal_vector_size(&vector), 0);
 

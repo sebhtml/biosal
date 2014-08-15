@@ -542,6 +542,8 @@ void bsal_input_stream_push_sequences(struct bsal_actor *actor,
     buffer = bsal_message_buffer(message);
 
     concrete_self = (struct bsal_input_stream *)bsal_actor_concrete_actor(actor);
+
+    bsal_input_command_init_empty(&command);
     bsal_input_command_unpack(&command, buffer, bsal_actor_get_ephemeral_memory(actor),
                     &concrete_self->codec);
 

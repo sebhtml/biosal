@@ -184,6 +184,7 @@ void bsal_sequence_store_push_sequence_data_block(struct bsal_actor *actor, stru
                     count);
 #endif
 
+    bsal_input_command_init_empty(&payload);
     bsal_input_command_unpack(&payload, buffer, bsal_actor_get_ephemeral_memory(actor),
                     &concrete_actor->codec);
 
@@ -268,6 +269,7 @@ void bsal_sequence_store_push_sequence_data_block(struct bsal_actor *actor, stru
      */
     /* free payload
      */
+
     bsal_input_command_destroy(&payload, bsal_actor_get_ephemeral_memory(actor));
 
     bsal_actor_send_reply_empty(actor, BSAL_PUSH_SEQUENCE_DATA_BLOCK_REPLY);
