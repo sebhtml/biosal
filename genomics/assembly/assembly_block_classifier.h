@@ -38,6 +38,8 @@ struct bsal_assembly_block_classifier {
     int forced;
 
     struct bsal_dna_codec codec;
+
+    int consumer_count_above_threshold;
 };
 
 

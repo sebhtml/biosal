@@ -86,6 +86,8 @@ void bsal_assembly_block_classifier_init(struct bsal_actor *self)
                     bsal_assembly_block_classifier_unpack_message);
 
     printf("assembly_block_classifier %d is online\n", bsal_actor_name(self));
+
+    concrete_actor->consumer_count_above_threshold = 0;
 }
 
 void bsal_assembly_block_classifier_destroy(struct bsal_actor *self)
@@ -154,8 +156,16 @@ void bsal_assembly_block_classifier_receive(struct bsal_actor *self, struct bsal
         consumer_index_index = bsal_vector_index_of(&concrete_actor->consumers, &source);
 
         bucket = (int *)bsal_vector_at(&concrete_actor->active_messages, consumer_index_index);
-
         (*bucket)--;
+
+        if (*bucket == concrete_actor->maximum_active_messages) {
+
+            /*
+             * The count was maximum_active_messages + 1
+             * before removing 1 from it.
+             */
+            --concrete_actor->consumer_count_above_threshold;
+        }
 
         if (!concrete_actor->forced) {
             bsal_assembly_block_classifier_verify(self, message);
@@ -216,6 +226,13 @@ void bsal_assembly_block_classifier_flush(struct bsal_actor *self, int customer_
     bucket = bsal_vector_at(&concrete_actor->active_messages, customer_index);
     (*bucket)++;
 
+    /*
+     * Increment event counter
+     */
+    if (*bucket > concrete_actor->maximum_active_messages) {
+        ++concrete_actor->consumer_count_above_threshold;
+    }
+
     bsal_message_destroy(&message);
     bsal_memory_pool_free(ephemeral_memory, buffer);
 
@@ -243,9 +260,9 @@ void bsal_assembly_block_classifier_verify(struct bsal_actor *self, struct bsal_
     struct bsal_assembly_block_classifier *concrete_actor;
     int producer_index;
     int producer;
+#if 0
     int consumer_index;
-    int size;
-    int *bucket;
+#endif
 
     concrete_actor = (struct bsal_assembly_block_classifier *)bsal_actor_concrete_actor(self);
 
@@ -253,6 +270,7 @@ void bsal_assembly_block_classifier_verify(struct bsal_actor *self, struct bsal_
      * active messages.
      */
 
+#if 0
     size = bsal_vector_size(&concrete_actor->active_messages);
 
     for (consumer_index = 0; consumer_index < size; consumer_index++) {
@@ -265,6 +283,11 @@ void bsal_assembly_block_classifier_verify(struct bsal_actor *self, struct bsal_
         if (*bucket >= concrete_actor->maximum_active_messages) {
             return;
         }
+    }
+#endif
+
+    if (concrete_actor->consumer_count_above_threshold > 0) {
+        return;
     }
 
     while (bsal_ring_queue_dequeue(&concrete_actor->stalled_producers, &producer_index)) {
