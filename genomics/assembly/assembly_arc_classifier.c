@@ -66,6 +66,8 @@ void bsal_assembly_arc_classifier_init(struct bsal_actor *self)
 
         concrete_self->maximum_pending_request_count = 4;
     }
+
+    concrete_self->consumer_count_above_threshold = 0;
 }
 
 void bsal_assembly_arc_classifier_destroy(struct bsal_actor *self)
@@ -124,6 +126,14 @@ void bsal_assembly_arc_classifier_receive(struct bsal_actor *self, struct bsal_m
         source_index = bsal_vector_index_of(&concrete_self->consumers, &source);
         bucket = bsal_vector_at(&concrete_self->pending_requests, source_index);
         --(*bucket);
+
+        /*
+         * The previous value was maximum_pending_request_count + 1
+         */
+        if (*bucket == concrete_self->maximum_pending_request_count) {
+
+            --concrete_self->consumer_count_above_threshold;
+        }
 
         bsal_assembly_arc_classifier_verify_counters(self);
     }
@@ -307,6 +317,10 @@ void bsal_assembly_arc_classifier_push_arc_block(struct bsal_actor *self, struct
         if (*bucket > maximum_pending_requests) {
             maximum_pending_requests = *bucket;
         }
+
+        if (*bucket > concrete_self->maximum_pending_request_count) {
+            ++concrete_self->consumer_count_above_threshold;
+        }
     }
 
     bsal_memory_pool_free(ephemeral_memory, new_buffer);
@@ -332,14 +346,13 @@ void bsal_assembly_arc_classifier_push_arc_block(struct bsal_actor *self, struct
 
 void bsal_assembly_arc_classifier_verify_counters(struct bsal_actor *self)
 {
-    int i;
-    int size;
-    int active_count;
     struct bsal_assembly_arc_classifier *concrete_self;
-    int *bucket;
 
     concrete_self = (struct bsal_assembly_arc_classifier *)bsal_actor_concrete_actor(self);
+
+#if 0
     size = bsal_vector_size(&concrete_self->consumers);
+#endif
 
     /*
      * Don't do anything if the producer is not waiting anyway.
@@ -348,6 +361,11 @@ void bsal_assembly_arc_classifier_verify_counters(struct bsal_actor *self)
         return;
     }
 
+    if (concrete_self->consumer_count_above_threshold > 0) {
+        return;
+    }
+
+#if 0
     /*
      * Abort if at least one counter is above the threshold.
      */
@@ -360,7 +378,7 @@ void bsal_assembly_arc_classifier_verify_counters(struct bsal_actor *self)
             return;
         }
     }
-
+#endif
     /*
      * Trigger an actor event now.
      */

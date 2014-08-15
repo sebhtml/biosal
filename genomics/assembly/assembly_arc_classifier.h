@@ -27,6 +27,8 @@ struct bsal_assembly_arc_classifier {
     struct bsal_vector pending_requests;
     int producer_is_waiting;
     int maximum_pending_request_count;
+
+    int consumer_count_above_threshold;
 };
 
 extern struct bsal_script bsal_assembly_arc_classifier_script;
