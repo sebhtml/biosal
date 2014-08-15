@@ -106,6 +106,8 @@ void bsal_assembly_sliding_window_init(struct bsal_actor *actor)
     concrete_actor->auto_scaling_clone = BSAL_ACTOR_NOBODY;
 
     concrete_actor->scaling_operations = 0;
+
+    concrete_actor->flushed_payloads = 0;
 }
 
 void bsal_assembly_sliding_window_destroy(struct bsal_actor *actor)
@@ -179,9 +181,11 @@ void bsal_assembly_sliding_window_receive(struct bsal_actor *actor, struct bsal_
 
     } else if (tag == BSAL_ACTOR_ASK_TO_STOP) {
 
-        printf("window/%d generated %" PRIu64 " kmers from %" PRIu64 " entries (%d blocks)\n",
+        printf("window/%d generated %" PRIu64 " kmers from %" PRIu64
+                        " entries (%d blocks), sent %d messages to consumer \n",
                         bsal_actor_name(actor), concrete_actor->kmers,
-                        concrete_actor->actual, concrete_actor->blocks);
+                        concrete_actor->actual, concrete_actor->blocks,
+                        concrete_actor->flushed_payloads);
 
 #ifdef BSAL_WINDOW_DEBUG
         printf("window %d receives request to stop from %d, supervisor is %d\n",
@@ -604,7 +608,6 @@ void bsal_assembly_sliding_window_push_sequence_data_block(struct bsal_actor *ac
     struct bsal_memory_pool *ephemeral_memory;
     int kmers_for_sequence;
 
-
     concrete_actor = (struct bsal_assembly_sliding_window *)bsal_actor_concrete_actor(actor);
     ephemeral_memory = bsal_actor_get_ephemeral_memory(actor);
     name = bsal_actor_name(actor);
@@ -645,7 +648,6 @@ void bsal_assembly_sliding_window_push_sequence_data_block(struct bsal_actor *ac
     }
 
     to_reserve = 0;
-
     maximum_length = 0;
 
     for (i = 0; i < entries; i++) {
@@ -747,6 +749,8 @@ void bsal_assembly_sliding_window_push_sequence_data_block(struct bsal_actor *ac
 
     bsal_actor_send(actor, consumer, &new_message);
     bsal_memory_pool_free(ephemeral_memory, new_buffer);
+
+    ++concrete_actor->flushed_payloads;
 
     bsal_actor_send_empty(actor,
                     source_index,

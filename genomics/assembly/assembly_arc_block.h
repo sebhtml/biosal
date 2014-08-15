@@ -27,6 +27,7 @@ struct bsal_assembly_arc_block {
 
 void bsal_assembly_arc_block_init(struct bsal_assembly_arc_block *self, struct bsal_memory_pool *pool,
                 int kmer_length, struct bsal_dna_codec *codec);
+void bsal_assembly_arc_block_reserve(struct bsal_assembly_arc_block *self, int size);
 void bsal_assembly_arc_block_destroy(struct bsal_assembly_arc_block *self, struct bsal_memory_pool *pool);
 void bsal_assembly_arc_block_add_arc(struct bsal_assembly_arc_block *self, struct bsal_assembly_arc *arc,
                 int kmer_length, struct bsal_dna_codec *codec,

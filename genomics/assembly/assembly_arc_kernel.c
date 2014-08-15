@@ -63,6 +63,8 @@ void bsal_assembly_arc_kernel_init(struct bsal_actor *self)
                     bsal_assembly_arc_kernel_push_sequence_data_block);
 
     concrete_self->received_blocks = 0;
+
+    concrete_self->flushed_messages = 0;
 }
 
 void bsal_assembly_arc_kernel_destroy(struct bsal_actor *self)
@@ -119,11 +121,12 @@ void bsal_assembly_arc_kernel_receive(struct bsal_actor *self, struct bsal_messa
 
     } else if (tag == BSAL_ACTOR_ASK_TO_STOP) {
 
-        printf("%s/%d generated %" PRIu64 " arcs from %d sequence blocks\n",
+        printf("%s/%d generated %" PRIu64 " arcs from %d sequence blocks, generated %d messages for consumer\n",
                         bsal_actor_script_name(self),
                         bsal_actor_name(self),
                         concrete_self->produced_arcs,
-                        concrete_self->received_blocks);
+                        concrete_self->received_blocks,
+                        concrete_self->flushed_messages);
 
         bsal_actor_ask_to_stop(self, message);
 
@@ -203,6 +206,7 @@ void bsal_assembly_arc_kernel_push_sequence_data_block(struct bsal_actor *self, 
     struct bsal_message new_message;
     int new_count;
     void *new_buffer;
+    int to_reserve;
 
     ephemeral_memory = bsal_actor_get_ephemeral_memory(self);
     concrete_self = (struct bsal_assembly_arc_kernel *)bsal_actor_concrete_actor(self);
@@ -243,6 +247,7 @@ void bsal_assembly_arc_kernel_push_sequence_data_block(struct bsal_actor *self, 
      */
 
     maximum_length = 0;
+    to_reserve = 0;
 
     /*
      * Get maximum length
@@ -256,7 +261,14 @@ void bsal_assembly_arc_kernel_push_sequence_data_block(struct bsal_actor *self, 
         if (length > maximum_length) {
             maximum_length = length;
         }
+
+        /*
+         * The number of edges is bounded by twice the length
+         */
+        to_reserve += 3 * length;
     }
+
+    bsal_assembly_arc_block_reserve(&output_block, to_reserve);
 
     sequence = bsal_memory_pool_allocate(ephemeral_memory, maximum_length + 1);
 
@@ -365,6 +377,8 @@ void bsal_assembly_arc_kernel_push_sequence_data_block(struct bsal_actor *self, 
     bsal_message_init(&new_message, BSAL_ASSEMBLY_PUSH_ARC_BLOCK,
                     new_count, new_buffer);
     bsal_actor_send(self, concrete_self->consumer, &new_message);
+
+    ++concrete_self->flushed_messages;
 
     bsal_message_destroy(&new_message);
 

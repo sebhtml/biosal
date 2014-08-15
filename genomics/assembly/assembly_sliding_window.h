@@ -45,6 +45,8 @@ struct bsal_assembly_sliding_window {
     int auto_scaling_clone;
 
     struct bsal_vector children;
+
+    int flushed_payloads;
 };
 
 extern struct bsal_script bsal_assembly_sliding_window_script;

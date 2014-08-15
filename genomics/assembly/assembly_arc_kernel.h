@@ -31,6 +31,7 @@ struct bsal_assembly_arc_kernel {
     int source;
 
     int received_blocks;
+    int flushed_messages;
 };
 
 extern struct bsal_script bsal_assembly_arc_kernel_script;

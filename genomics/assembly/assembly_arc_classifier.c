@@ -176,6 +176,7 @@ void bsal_assembly_arc_classifier_push_arc_block(struct bsal_actor *self, struct
     int *bucket;
     int maximum_pending_requests;
     int maximum_buffer_length;
+    int reservation;
 
     count = bsal_message_count(message);
     buffer = bsal_message_buffer(message);
@@ -209,6 +210,12 @@ void bsal_assembly_arc_classifier_push_arc_block(struct bsal_actor *self, struct
 
     input_arcs = bsal_assembly_arc_block_get_arcs(&input_block);
 
+    /*
+     * Configure the ephemeral memory reservation.
+     */
+    arc_count = bsal_vector_size(input_arcs);
+    reservation = (arc_count / consumer_count) * 2;
+
     bsal_vector_resize(&output_blocks, consumer_count);
 
     /*
@@ -220,6 +227,8 @@ void bsal_assembly_arc_classifier_push_arc_block(struct bsal_actor *self, struct
 
         bsal_assembly_arc_block_init(output_block, ephemeral_memory, concrete_self->kmer_length,
                         &concrete_self->codec);
+
+        bsal_assembly_arc_block_reserve(output_block, reservation);
     }
 
     size = bsal_vector_size(input_arcs);

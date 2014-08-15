@@ -159,3 +159,8 @@ struct bsal_vector *bsal_assembly_arc_block_get_arcs(struct bsal_assembly_arc_bl
 {
     return &self->arcs;
 }
+
+void bsal_assembly_arc_block_reserve(struct bsal_assembly_arc_block *self, int size)
+{
+    bsal_vector_reserve(&self->arcs, size);
+}
