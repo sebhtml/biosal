@@ -48,10 +48,9 @@ void bsal_sequence_store_init(struct bsal_actor *actor)
 
     bsal_dna_codec_init(&concrete_actor->codec);
 
-    if (bsal_actor_get_node_count(actor) >= BSAL_DNA_CODEC_MINIMUM_NODE_COUNT_FOR_TWO_BIT) {
-#ifdef BSAL_DNA_CODEC_USE_TWO_BIT_ENCODING_FOR_TRANSPORT
+    if (bsal_dna_codec_must_use_two_bit_encoding(&concrete_actor->codec,
+                            bsal_actor_get_node_count(actor))) {
         bsal_dna_codec_enable_two_bit_encoding(&concrete_actor->codec);
-#endif
     }
 
     bsal_actor_add_route(actor, BSAL_SEQUENCE_STORE_ASK,
@@ -69,7 +68,15 @@ void bsal_sequence_store_init(struct bsal_actor *actor)
 
     concrete_actor->progress_supervisor = BSAL_ACTOR_NOBODY;
 
-    concrete_actor->production_block_size = BSAL_SEQUENCE_STORE_FINAL_BLOCK_SIZE;
+    /*
+     * Payload for the first production round is
+     * 2 KiB.
+     * The next round is half of that, so that's
+     * 1 KiB. This reduction is required because arcs generation
+     * generates twice the amount of bytes in the deliveries.
+     */
+
+    concrete_actor->production_block_size = 2048;
 }
 
 void bsal_sequence_store_destroy(struct bsal_actor *actor)
@@ -157,7 +164,7 @@ void bsal_sequence_store_receive(struct bsal_actor *actor, struct bsal_message *
              * that the ACTOR_RESET payload contains a desired final
              * message buffer size.
              */
-            concrete_actor->production_block_size /= 2;
+            concrete_actor->production_block_size = 512;
         }
 
         concrete_actor->left = concrete_actor->received;
@@ -537,7 +544,6 @@ int bsal_sequence_store_get_required_kmers(struct bsal_actor *actor, struct bsal
                         bsal_actor_name(actor),
                         kmer_length);
         return 0;
-
     }
 
     minimum_end_buffer_size_in_bytes = concrete_actor->production_block_size;
@@ -574,12 +580,14 @@ int bsal_sequence_store_get_required_kmers(struct bsal_actor *actor, struct bsal
 
     minimum_end_buffer_size_in_nucleotides = minimum_end_buffer_size_in_bytes;
 
+#if 0
     /*
      * Check if two-bit encoding is being used.
      */
     if (bsal_actor_get_node_count(actor) >= BSAL_DNA_CODEC_MINIMUM_NODE_COUNT_FOR_TWO_BIT) {
         minimum_end_buffer_size_in_nucleotides *= 4;
     }
+#endif
 
     minimum_end_buffer_size_in_ascii_kmers = minimum_end_buffer_size_in_nucleotides / kmer_length;
 

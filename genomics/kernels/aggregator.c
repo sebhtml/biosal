@@ -47,7 +47,7 @@
 
 struct bsal_script bsal_aggregator_script = {
     .identifier = BSAL_AGGREGATOR_SCRIPT,
-    .name = "aggregator",
+    .name = "bsal_aggregator",
     .description = "",
     .version = "",
     .author = "Sebastien Boisvert",
@@ -70,10 +70,9 @@ void bsal_aggregator_init(struct bsal_actor *self)
     concrete_actor->flushed = 0;
 
     bsal_dna_codec_init(&concrete_actor->codec);
-    if (bsal_actor_get_node_count(self) >= BSAL_DNA_CODEC_MINIMUM_NODE_COUNT_FOR_TWO_BIT) {
-#ifdef BSAL_DNA_CODEC_USE_TWO_BIT_ENCODING_FOR_TRANSPORT
+    if (bsal_dna_codec_must_use_two_bit_encoding(&concrete_actor->codec,
+                            bsal_actor_get_node_count(self))) {
         bsal_dna_codec_enable_two_bit_encoding(&concrete_actor->codec);
-#endif
     }
 
     bsal_ring_queue_init(&concrete_actor->stalled_producers, sizeof(int));
@@ -186,9 +185,10 @@ void bsal_aggregator_flush(struct bsal_actor *self, int customer_index, struct b
     int *bucket;
 
     /*
-     * Only flush when required
+     * Only flush when required.
+     * The force parameter is always 1 anyway.
      */
-    threshold = BSAL_SEQUENCE_STORE_FINAL_BLOCK_SIZE * 3;
+    threshold = -1;
 
     concrete_actor = (struct bsal_aggregator *)bsal_actor_concrete_actor(self);
 

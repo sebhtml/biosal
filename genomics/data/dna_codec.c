@@ -11,10 +11,12 @@
 #include <string.h>
 #include <stdio.h>
 
+#include <stdint.h>
+
 #define BITS_PER_NUCLEOTIDE 2
 #define BITS_PER_BYTE 8
 
-#include <stdint.h>
+#define BSAL_DNA_CODEC_MINIMUM_NODE_COUNT_FOR_TWO_BIT 2
 
 /*
  * use block encoder (faster or not ?)
@@ -668,4 +670,8 @@ void bsal_dna_codec_mutate_as_child(struct bsal_dna_codec *self,
                     nucleotide);
 }
 
-
+int bsal_dna_codec_must_use_two_bit_encoding(struct bsal_dna_codec *self,
+                int node_count)
+{
+    return node_count >= BSAL_DNA_CODEC_MINIMUM_NODE_COUNT_FOR_TWO_BIT;
+}

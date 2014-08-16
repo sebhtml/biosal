@@ -75,6 +75,10 @@ struct bsal_assembly_graph_store {
     uint64_t vertex_count;
     uint64_t vertex_observation_count;
     uint64_t arc_count;
+
+    int printed_vertex_size;
+    int printed_arc_size;
+    int codec_are_different;
 };
 
 extern struct bsal_script bsal_assembly_graph_store_script;
@@ -91,7 +95,7 @@ void bsal_assembly_graph_store_push_kmer_block(struct bsal_actor *self, struct b
 void bsal_assembly_graph_store_push_arc_block(struct bsal_actor *self, struct bsal_message *message);
 
 void bsal_assembly_graph_store_add_arc(struct bsal_actor *self,
-                struct bsal_assembly_arc *arc, char *sequence);
+                struct bsal_assembly_arc *arc, char *sequence, void *key);
 
 void bsal_assembly_graph_store_get_summary(struct bsal_actor *self, struct bsal_message *message);
 

@@ -62,19 +62,16 @@ void bsal_assembly_block_classifier_init(struct bsal_actor *self)
     concrete_actor->flushed = 0;
 
     bsal_dna_codec_init(&concrete_actor->codec);
-    if (bsal_actor_get_node_count(self) >= BSAL_DNA_CODEC_MINIMUM_NODE_COUNT_FOR_TWO_BIT) {
-#ifdef BSAL_DNA_CODEC_USE_TWO_BIT_ENCODING_FOR_TRANSPORT
+
+    if (bsal_dna_codec_must_use_two_bit_encoding(&concrete_actor->codec,
+                            bsal_actor_get_node_count(self))) {
         bsal_dna_codec_enable_two_bit_encoding(&concrete_actor->codec);
-#endif
     }
 
     bsal_ring_queue_init(&concrete_actor->stalled_producers, sizeof(int));
     bsal_vector_init(&concrete_actor->active_messages, sizeof(int));
 
     concrete_actor->forced = 0;
-
-    bsal_actor_add_route(self, BSAL_AGGREGATE_KERNEL_OUTPUT,
-                    bsal_assembly_block_classifier_aggregate_kernel_output);
 
     /* Enable cloning stuff
      */
@@ -84,6 +81,8 @@ void bsal_assembly_block_classifier_init(struct bsal_actor *self)
                     bsal_assembly_block_classifier_pack_message);
     bsal_actor_add_route(self, BSAL_ACTOR_UNPACK,
                     bsal_assembly_block_classifier_unpack_message);
+    bsal_actor_add_route(self, BSAL_AGGREGATE_KERNEL_OUTPUT,
+                    bsal_assembly_block_classifier_aggregate_kernel_output);
 
     printf("assembly_block_classifier %d is online\n", bsal_actor_name(self));
 
@@ -187,9 +186,9 @@ void bsal_assembly_block_classifier_flush(struct bsal_actor *self, int customer_
     int *bucket;
 
     /*
-     * Only flush when required
+     * Only flush when required.
      */
-    threshold = BSAL_SEQUENCE_STORE_FINAL_BLOCK_SIZE * 3;
+    threshold = -1;
 
     concrete_actor = (struct bsal_assembly_block_classifier *)bsal_actor_concrete_actor(self);
 
@@ -364,7 +363,6 @@ void bsal_assembly_block_classifier_aggregate_kernel_output(struct bsal_actor *s
     entries = bsal_vector_size(kmers);
 
     customer_count = bsal_vector_size(&concrete_actor->consumers);
-
     concrete_actor->customer_block_size = (entries / customer_count) * 2;
 
     /*

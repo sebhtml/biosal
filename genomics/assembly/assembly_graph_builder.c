@@ -733,8 +733,10 @@ void bsal_assembly_graph_builder_tell_source(struct bsal_actor *self)
      */
     bsal_timer_stop(&concrete_self->arc_timer);
     bsal_timer_stop(&concrete_self->timer);
-    bsal_timer_print_with_description(&concrete_self->timer, "Build assembly graph / Distribute arcs");
-    bsal_timer_print_with_description(&concrete_self->timer, "Build assembly graph");
+    bsal_timer_print_with_description(&concrete_self->arc_timer,
+                    "Build assembly graph / Distribute arcs");
+    bsal_timer_print_with_description(&concrete_self->timer,
+                    "Build assembly graph");
 
     /*
      * Tell somebody about it

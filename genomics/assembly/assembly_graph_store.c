@@ -57,10 +57,17 @@ void bsal_assembly_graph_store_init(struct bsal_actor *self)
 
     bsal_dna_codec_init(&concrete_self->transport_codec);
 
-    if (bsal_actor_get_node_count(self) >= BSAL_DNA_CODEC_MINIMUM_NODE_COUNT_FOR_TWO_BIT) {
-#ifdef BSAL_DNA_CODEC_USE_TWO_BIT_ENCODING_FOR_TRANSPORT
+    /*
+     * When running with only 1 node, the transport codec and storage codec
+     * are different.
+     */
+
+    concrete_self->codec_are_different = 1;
+
+    if (bsal_dna_codec_must_use_two_bit_encoding(&concrete_self->transport_codec,
+                            bsal_actor_get_node_count(self))) {
+        concrete_self->codec_are_different = 0;
         bsal_dna_codec_enable_two_bit_encoding(&concrete_self->transport_codec);
-#endif
     }
 
     bsal_dna_codec_init(&concrete_self->storage_codec);
@@ -68,9 +75,7 @@ void bsal_assembly_graph_store_init(struct bsal_actor *self)
 /* This option enables 2-bit encoding
  * for kmers.
  */
-#ifdef BSAL_DNA_CODEC_USE_TWO_BIT_ENCODING_FOR_STORAGE
     bsal_dna_codec_enable_two_bit_encoding(&concrete_self->storage_codec);
-#endif
 
     concrete_self->last_received = 0;
 
@@ -95,6 +100,10 @@ void bsal_assembly_graph_store_init(struct bsal_actor *self)
 
     bsal_actor_add_route(self, BSAL_ASSEMBLY_GET_STARTING_VERTEX,
                     bsal_assembly_graph_store_get_starting_vertex);
+
+    concrete_self->printed_vertex_size = 0;
+    concrete_self->printed_arc_size = 0;
+
 }
 
 void bsal_assembly_graph_store_destroy(struct bsal_actor *self)
@@ -174,6 +183,10 @@ void bsal_assembly_graph_store_receive(struct bsal_actor *self, struct bsal_mess
 
     } else if (tag == BSAL_ACTOR_ASK_TO_STOP) {
 
+        printf("%s/%d received %d arc blocks\n",
+                        bsal_actor_script_name(self),
+                        bsal_actor_name(self),
+                        concrete_self->received_arc_block_count);
 
         bsal_actor_ask_to_stop(self, message);
 
@@ -419,6 +432,7 @@ void bsal_assembly_graph_store_push_kmer_block(struct bsal_actor *self, struct b
     struct bsal_map *kmers;
     struct bsal_dna_kmer kmer;
     void *buffer;
+    int count;
     struct bsal_dna_kmer encoded_kmer;
     char *raw_kmer;
     int period;
@@ -429,6 +443,7 @@ void bsal_assembly_graph_store_push_kmer_block(struct bsal_actor *self, struct b
     concrete_self = (struct bsal_assembly_graph_store *)bsal_actor_concrete_actor(self);
     tag = bsal_message_tag(message);
     buffer = bsal_message_buffer(message);
+    count = bsal_message_count(message);
 
     /*
      * Handler for PUSH_DATA
@@ -450,6 +465,12 @@ void bsal_assembly_graph_store_push_kmer_block(struct bsal_actor *self, struct b
     raw_kmer = bsal_memory_pool_allocate(bsal_actor_get_ephemeral_memory(self),
                     concrete_self->kmer_length + 1);
 
+    if (!concrete_self->printed_vertex_size) {
+        printf("DEBUG VERTEX DELIVERY %d bytes\n", count);
+
+        concrete_self->printed_vertex_size = 1;
+    }
+
     while (bsal_map_iterator_has_next(&iterator)) {
 
         /*
@@ -467,18 +488,20 @@ void bsal_assembly_graph_store_push_kmer_block(struct bsal_actor *self, struct b
 
         kmer_pointer = &kmer;
 
-        /*
-         * Get a copy of the sequence
-         */
-        bsal_dna_kmer_get_sequence(kmer_pointer, raw_kmer, concrete_self->kmer_length,
+        if (concrete_self->codec_are_different) {
+            /*
+             * Get a copy of the sequence
+             */
+            bsal_dna_kmer_get_sequence(kmer_pointer, raw_kmer, concrete_self->kmer_length,
                         &concrete_self->transport_codec);
 
-        bsal_dna_kmer_destroy(&kmer, ephemeral_memory);
 
-        bsal_dna_kmer_init(&encoded_kmer, raw_kmer, &concrete_self->storage_codec,
+            bsal_dna_kmer_init(&encoded_kmer, raw_kmer, &concrete_self->storage_codec,
                         bsal_actor_get_ephemeral_memory(self));
+            kmer_pointer = &encoded_kmer;
+        }
 
-        bsal_dna_kmer_pack_store_key(&encoded_kmer, key,
+        bsal_dna_kmer_pack_store_key(kmer_pointer, key,
                         concrete_self->kmer_length, &concrete_self->storage_codec,
                         bsal_actor_get_ephemeral_memory(self));
 
@@ -508,8 +531,12 @@ void bsal_assembly_graph_store_push_kmer_block(struct bsal_actor *self, struct b
 #endif
         }
 
-        bsal_dna_kmer_destroy(&encoded_kmer,
+        if (concrete_self->codec_are_different) {
+            bsal_dna_kmer_destroy(&encoded_kmer,
                         bsal_actor_get_ephemeral_memory(self));
+        }
+
+        bsal_dna_kmer_destroy(&kmer, ephemeral_memory);
 
         bsal_assembly_vertex_increase_coverage_depth(bucket, *frequency);
 
@@ -548,13 +575,13 @@ void bsal_assembly_graph_store_push_arc_block(struct bsal_actor *self, struct bs
     struct bsal_memory_pool *ephemeral_memory;
     struct bsal_vector *input_arcs;
     char *sequence;
+    void *key;
 
 #if 0
     /*
      * Don't do anything to rule out that this is the problem.
      */
     bsal_actor_send_reply_empty(self, BSAL_ASSEMBLY_PUSH_ARC_BLOCK_REPLY);
-
     return;
 #endif
 
@@ -578,15 +605,27 @@ void bsal_assembly_graph_store_push_arc_block(struct bsal_actor *self, struct bs
 
     size = bsal_vector_size(input_arcs);
 
+    if (!concrete_self->printed_arc_size) {
+        printf("DEBUG ARC DELIVERY %d bytes, %d arcs\n",
+                    count, size);
+
+        concrete_self->printed_arc_size = 1;
+    }
+
+    key = bsal_memory_pool_allocate(ephemeral_memory, concrete_self->key_length_in_bytes);
+
     for (i = 0; i < size; i++) {
+
         arc = bsal_vector_at(input_arcs, i);
 
 #ifdef BSAL_ASSEMBLY_ADD_ARCS
-        bsal_assembly_graph_store_add_arc(self, arc, sequence);
+        bsal_assembly_graph_store_add_arc(self, arc, sequence, key);
 #endif
 
         ++concrete_self->received_arc_count;
     }
+
+    bsal_memory_pool_free(ephemeral_memory, key);
 
     bsal_assembly_arc_block_destroy(&input_block, ephemeral_memory);
 
@@ -601,7 +640,8 @@ void bsal_assembly_graph_store_push_arc_block(struct bsal_actor *self, struct bs
 }
 
 void bsal_assembly_graph_store_add_arc(struct bsal_actor *self,
-                struct bsal_assembly_arc *arc, char *sequence)
+                struct bsal_assembly_arc *arc, char *sequence,
+                void *key)
 {
     struct bsal_assembly_graph_store *concrete_self;
     struct bsal_dna_kmer *source;
@@ -609,7 +649,6 @@ void bsal_assembly_graph_store_add_arc(struct bsal_actor *self,
     int destination;
     int type;
     struct bsal_assembly_vertex *vertex;
-    void *key;
     struct bsal_memory_pool *ephemeral_memory;
     int is_canonical;
 
@@ -628,7 +667,6 @@ void bsal_assembly_graph_store_add_arc(struct bsal_actor *self,
 
     ephemeral_memory = bsal_actor_get_ephemeral_memory(self);
     concrete_self = (struct bsal_assembly_graph_store *)bsal_actor_concrete_actor(self);
-    key = bsal_memory_pool_allocate(ephemeral_memory, concrete_self->key_length_in_bytes);
 
 #ifdef BSAL_ASSEMBLY_GRAPH_STORE_DEBUG_ARC
     verbose = 0;
@@ -649,13 +687,20 @@ void bsal_assembly_graph_store_add_arc(struct bsal_actor *self,
     destination = bsal_assembly_arc_destination(arc);
     type = bsal_assembly_arc_type(arc);
 
-    bsal_dna_kmer_get_sequence(source, sequence, concrete_self->kmer_length,
+    /*
+     * Don't convert the data if the transport codec and the
+     * storage codec are the same.
+     */
+    if (concrete_self->codec_are_different) {
+        bsal_dna_kmer_get_sequence(source, sequence, concrete_self->kmer_length,
                         &concrete_self->transport_codec);
-
-    bsal_dna_kmer_init(&real_source, sequence, &concrete_self->storage_codec,
+        bsal_dna_kmer_init(&real_source, sequence, &concrete_self->storage_codec,
                         ephemeral_memory);
 
-    bsal_dna_kmer_pack_store_key(&real_source, key,
+        source = &real_source;
+    }
+
+    bsal_dna_kmer_pack_store_key(source, key,
                         concrete_self->kmer_length, &concrete_self->storage_codec,
                         ephemeral_memory);
 
@@ -681,7 +726,7 @@ void bsal_assembly_graph_store_add_arc(struct bsal_actor *self,
     /*
      * Inverse the arc if the source is not canonical
      */
-    is_canonical = bsal_dna_kmer_is_canonical(&real_source, concrete_self->kmer_length,
+    is_canonical = bsal_dna_kmer_is_canonical(source, concrete_self->kmer_length,
                     &concrete_self->storage_codec);
 
     if (!is_canonical) {
@@ -713,9 +758,9 @@ void bsal_assembly_graph_store_add_arc(struct bsal_actor *self,
     }
 #endif
 
-    bsal_memory_pool_free(ephemeral_memory, key);
-
-    bsal_dna_kmer_destroy(&real_source, ephemeral_memory);
+    if (concrete_self->codec_are_different) {
+        bsal_dna_kmer_destroy(&real_source, ephemeral_memory);
+    }
 }
 
 void bsal_assembly_graph_store_get_summary(struct bsal_actor *self, struct bsal_message *message)

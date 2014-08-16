@@ -51,10 +51,9 @@ void bsal_assembly_arc_kernel_init(struct bsal_actor *self)
 
     bsal_dna_codec_init(&concrete_self->codec);
 
-    if (bsal_actor_get_node_count(self) >= BSAL_DNA_CODEC_MINIMUM_NODE_COUNT_FOR_TWO_BIT) {
-#ifdef BSAL_DNA_CODEC_USE_TWO_BIT_ENCODING_FOR_TRANSPORT
+    if (bsal_dna_codec_must_use_two_bit_encoding(&concrete_self->codec,
+                            bsal_actor_get_node_count(self))) {
         bsal_dna_codec_enable_two_bit_encoding(&concrete_self->codec);
-#endif
     }
 
     concrete_self->produced_arcs = 0;

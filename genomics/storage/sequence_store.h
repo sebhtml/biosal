@@ -48,15 +48,6 @@ struct bsal_sequence_store {
 #define BSAL_SEQUENCE_STORE_REQUEST_PROGRESS 0x0000648a
 #define BSAL_SEQUENCE_STORE_REQUEST_PROGRESS_REPLY 0x000074a5
 
-/*
- * Payload for the first production round is
- * 2 KiB.
- * The next round is half of that, so that's
- * 1 KiB. This reduction is required because arcs generation
- * generates twice the amount of bytes in the deliveries.
- */
-#define BSAL_SEQUENCE_STORE_FINAL_BLOCK_SIZE 2048
-
 extern struct bsal_script bsal_sequence_store_script;
 
 void bsal_sequence_store_init(struct bsal_actor *actor);

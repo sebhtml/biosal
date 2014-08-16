@@ -10,10 +10,6 @@
 
 /*
 */
-#define BSAL_DNA_CODEC_USE_TWO_BIT_ENCODING_FOR_TRANSPORT
-#define BSAL_DNA_CODEC_USE_TWO_BIT_ENCODING_FOR_STORAGE
-
-#define BSAL_DNA_CODEC_MINIMUM_NODE_COUNT_FOR_TWO_BIT (2)
 
 #define BSAL_NUCLEOTIDE_CODE_A 0 /* ~00 == 11 */
 #define BSAL_NUCLEOTIDE_CODE_C 1 /* ~01 == 10 */
@@ -24,7 +20,6 @@
 #define BSAL_NUCLEOTIDE_SYMBOL_C 'C'
 #define BSAL_NUCLEOTIDE_SYMBOL_G 'G'
 #define BSAL_NUCLEOTIDE_SYMBOL_T 'T'
-
 
 /*
  * A class to encode and decode DNA data.
@@ -79,5 +74,7 @@ int bsal_dna_codec_get_complement(int code);
 
 void bsal_dna_codec_mutate_as_child(struct bsal_dna_codec *self,
                 int length_in_nucleotides, void *encoded_sequence, int last_code);
+int bsal_dna_codec_must_use_two_bit_encoding(struct bsal_dna_codec *self,
+                int node_count);
 
 #endif
