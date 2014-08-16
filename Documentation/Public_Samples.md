@@ -49,5 +49,5 @@ Total                           164  18 417 788 499  1 907 888 691 039
 
 ```
 Sample                   File count   Read count       Base count
-SMarTFor_1                     106    8 515 920 210
+SMarTFor_1                     212   8 515 920 210
 ```
