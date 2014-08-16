@@ -602,7 +602,6 @@ void bsal_assembly_graph_store_push_arc_block(struct bsal_actor *self, struct bs
                     &concrete_self->transport_codec, ephemeral_memory);
 
     input_arcs = bsal_assembly_arc_block_get_arcs(&input_block);
-
     size = bsal_vector_size(input_arcs);
 
     if (!concrete_self->printed_arc_size) {

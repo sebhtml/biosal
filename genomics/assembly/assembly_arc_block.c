@@ -119,7 +119,6 @@ int bsal_assembly_arc_block_pack_unpack(struct bsal_assembly_arc_block *self, in
     struct bsal_packer packer;
     int bytes;
     int i;
-    struct bsal_assembly_arc new_arc;
     struct bsal_assembly_arc *arc;
 
     bytes = 0;
@@ -130,7 +129,7 @@ int bsal_assembly_arc_block_pack_unpack(struct bsal_assembly_arc_block *self, in
 
     if (operation == BSAL_PACKER_OPERATION_UNPACK) {
 
-        bsal_assembly_arc_block_reserve(self, size);
+        bsal_vector_resize(&self->arcs, size);
     }
 
     bytes = bsal_packer_worked_bytes(&packer);
@@ -139,26 +138,16 @@ int bsal_assembly_arc_block_pack_unpack(struct bsal_assembly_arc_block *self, in
 
     for (i = 0; i < size; i++) {
 
+        arc = bsal_vector_at(&self->arcs, i);
+
         if (operation == BSAL_PACKER_OPERATION_UNPACK) {
 
-            bsal_assembly_arc_init_empty(&new_arc);
-
-            bytes += bsal_assembly_arc_pack_unpack(&new_arc, operation,
-                        (char *)buffer + bytes,
-                        kmer_length, pool, codec);
-
-            bsal_assembly_arc_block_add_arc(self, &new_arc, kmer_length, codec, pool);
-
-            bsal_assembly_arc_destroy(&new_arc, pool);
-
-        } else {
-
-            arc = bsal_vector_at(&self->arcs, i);
-
-            bytes += bsal_assembly_arc_pack_unpack(arc, operation,
-                        (char *)buffer + bytes,
-                        kmer_length, pool, codec);
+            bsal_assembly_arc_init_empty(arc);
         }
+
+        bytes += bsal_assembly_arc_pack_unpack(arc, operation,
+                    (char *)buffer + bytes,
+                    kmer_length, pool, codec);
     }
 
     return bytes;
