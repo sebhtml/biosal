@@ -53,15 +53,30 @@ void bsal_assembly_arc_block_destroy(struct bsal_assembly_arc_block *self, struc
     bsal_vector_destroy(&self->arcs);
 }
 
-void bsal_assembly_arc_block_add_arc(struct bsal_assembly_arc_block *self, struct bsal_assembly_arc *arc,
+void bsal_assembly_arc_block_add_arc(struct bsal_assembly_arc_block *self,
+                int type, struct bsal_dna_kmer *source,
+                int destination,
                 int kmer_length, struct bsal_dna_codec *codec,
                 struct bsal_memory_pool *pool)
 {
     int key_length;
     void *buffer;
     int found;
-    struct bsal_assembly_arc copy;
+    struct bsal_assembly_arc *arc;
+    int size;
 
+    size = bsal_vector_size(&self->arcs);
+    bsal_vector_resize(&self->arcs, size + 1);
+
+    arc = bsal_vector_at(&self->arcs, size);
+
+    bsal_assembly_arc_init(arc, type, source,
+                                destination,
+                                kmer_length, pool, codec);
+
+    /*
+     * Verify if it is accepted.
+     */
     if (self->enable_redundancy_check) {
 
         key_length = bsal_assembly_arc_pack_size(arc, kmer_length, codec);
@@ -81,13 +96,9 @@ void bsal_assembly_arc_block_add_arc(struct bsal_assembly_arc_block *self, struc
          * Don't append it if the arc is there already
          */
         if (found) {
-            return;
+            bsal_vector_resize(&self->arcs, size);
         }
     }
-
-    bsal_assembly_arc_init_copy(&copy, arc, kmer_length, pool, codec);
-
-    bsal_vector_push_back(&self->arcs, &copy);
 }
 
 int bsal_assembly_arc_block_pack_size(struct bsal_assembly_arc_block *self, int kmer_length, struct bsal_dna_codec *codec)

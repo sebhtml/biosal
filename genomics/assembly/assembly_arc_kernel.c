@@ -199,7 +199,6 @@ void bsal_assembly_arc_kernel_push_sequence_data_block(struct bsal_actor *self, 
     char saved;
     char *kmer_sequence;
     int limit;
-    struct bsal_assembly_arc arc;
     int first_symbol;
     int last_symbol;
     struct bsal_message new_message;
@@ -238,6 +237,10 @@ void bsal_assembly_arc_kernel_push_sequence_data_block(struct bsal_actor *self, 
 
     bsal_assembly_arc_block_init(&output_block, ephemeral_memory,
                     concrete_self->kmer_length, &concrete_self->codec);
+
+    /*
+     * Avoid sending repetitions.
+     */
     bsal_assembly_arc_block_enable_redundancy_check(&output_block);
 
     /*
@@ -280,9 +283,7 @@ void bsal_assembly_arc_kernel_push_sequence_data_block(struct bsal_actor *self, 
     for (i = 0 ; i < entries ; i++) {
 
         dna_sequence = bsal_vector_at(sequences, i);
-
         length = bsal_dna_sequence_length(dna_sequence);
-
         bsal_dna_sequence_get_sequence(dna_sequence, sequence, &concrete_self->codec);
 
         limit = length - concrete_self->kmer_length + 1;
@@ -290,9 +291,7 @@ void bsal_assembly_arc_kernel_push_sequence_data_block(struct bsal_actor *self, 
         for (position = 0; position < limit; position++) {
 
             kmer_sequence = sequence + position;
-
             saved = kmer_sequence[concrete_self->kmer_length];
-
             kmer_sequence[concrete_self->kmer_length] = '\0';
 
             bsal_dna_kmer_init(&current_kmer, kmer_sequence, &concrete_self->codec,
@@ -315,18 +314,13 @@ void bsal_assembly_arc_kernel_push_sequence_data_block(struct bsal_actor *self, 
                 last_symbol = bsal_dna_kmer_last_symbol(&current_kmer, concrete_self->kmer_length,
                                         &concrete_self->codec);
 
-                bsal_assembly_arc_init(&arc, BSAL_ARC_TYPE_CHILD, &previous_kmer,
-                                last_symbol,
-                                concrete_self->kmer_length, ephemeral_memory,
-                                &concrete_self->codec);
-
-                bsal_assembly_arc_block_add_arc(&output_block, &arc, concrete_self->kmer_length,
+                bsal_assembly_arc_block_add_arc(&output_block, BSAL_ARC_TYPE_CHILD,
+                                &previous_kmer,
+                                last_symbol, concrete_self->kmer_length,
                                 &concrete_self->codec, ephemeral_memory);
 #ifdef BSAL_ASSEMBLY_ADD_ARCS
                 ++concrete_self->produced_arcs;
 #endif
-
-                bsal_assembly_arc_destroy(&arc, ephemeral_memory);
 
                 /*
                  * previous_kmer -> current_kmer (BSAL_ARC_TYPE_PARENT)
@@ -334,18 +328,13 @@ void bsal_assembly_arc_kernel_push_sequence_data_block(struct bsal_actor *self, 
                 first_symbol = bsal_dna_kmer_first_symbol(&previous_kmer, concrete_self->kmer_length,
                                         &concrete_self->codec);
 
-                bsal_assembly_arc_init(&arc, BSAL_ARC_TYPE_PARENT, &current_kmer,
-                                first_symbol,
-                                concrete_self->kmer_length, ephemeral_memory,
-                                &concrete_self->codec);
-
-                bsal_assembly_arc_block_add_arc(&output_block, &arc, concrete_self->kmer_length,
+                bsal_assembly_arc_block_add_arc(&output_block, BSAL_ARC_TYPE_PARENT,
+                                &current_kmer, first_symbol,
+                                concrete_self->kmer_length,
                                 &concrete_self->codec, ephemeral_memory);
 #ifdef BSAL_ASSEMBLY_ADD_ARCS
                 ++concrete_self->produced_arcs;
 #endif
-
-                bsal_assembly_arc_destroy(&arc, ephemeral_memory);
             }
 
             bsal_dna_kmer_init_copy(&previous_kmer, &current_kmer, concrete_self->kmer_length,

@@ -253,9 +253,9 @@ void bsal_assembly_arc_classifier_push_arc_block(struct bsal_actor *self, struct
                         ephemeral_memory);
 
         output_block = bsal_vector_at(&output_blocks, consumer_index);
+        output_arcs = bsal_assembly_arc_block_get_arcs(output_block);
 
-        bsal_assembly_arc_block_add_arc(output_block, arc, concrete_self->kmer_length,
-                        &concrete_self->codec, ephemeral_memory);
+        bsal_vector_push_back(output_arcs, arc);
     }
 
     /*

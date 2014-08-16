@@ -176,3 +176,5 @@ void bsal_assembly_arc_print(struct bsal_assembly_arc *self, int kmer_length, st
 
     printf("\n");
 }
+
+
