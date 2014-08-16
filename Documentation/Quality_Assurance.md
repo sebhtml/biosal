@@ -44,6 +44,7 @@ scripts/development/run-argonnite-1-28.sh
 **MachineUtilization**
 **ComputationLoad**
 **RunningTime**
+**MemoryUtilization**
 **Checksum**
 **GoodComments**
 **BadComments**
