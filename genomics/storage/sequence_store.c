@@ -68,6 +68,8 @@ void bsal_sequence_store_init(struct bsal_actor *actor)
     concrete_actor->last = -1;
 
     concrete_actor->progress_supervisor = BSAL_ACTOR_NOBODY;
+
+    concrete_actor->production_block_size = BSAL_SEQUENCE_STORE_FINAL_BLOCK_SIZE;
 }
 
 void bsal_sequence_store_destroy(struct bsal_actor *actor)
@@ -147,6 +149,15 @@ void bsal_sequence_store_receive(struct bsal_actor *actor, struct bsal_message *
         if (concrete_actor->iterator_started) {
             bsal_vector_iterator_destroy(&concrete_actor->iterator);
             concrete_actor->iterator_started = 0;
+
+            /*
+             * Assume that the second round will be for
+             * arcs.
+             * TODO: don't assume that, instead, add a requirement
+             * that the ACTOR_RESET payload contains a desired final
+             * message buffer size.
+             */
+            concrete_actor->production_block_size /= 2;
         }
 
         concrete_actor->left = concrete_actor->received;
@@ -495,7 +506,6 @@ void bsal_sequence_store_ask(struct bsal_actor *self, struct bsal_message *messa
 
 int bsal_sequence_store_get_required_kmers(struct bsal_actor *actor, struct bsal_message *message)
 {
-
     size_t maximum_number_of_bytes;
     size_t maximum_number_of_bytes_per_worker;
     size_t sum_of_buffer_sizes;
@@ -529,8 +539,8 @@ int bsal_sequence_store_get_required_kmers(struct bsal_actor *actor, struct bsal
         return 0;
 
     }
-    /* 4 KiB */
-    minimum_end_buffer_size_in_bytes = BSAL_SEQUENCE_STORE_FINAL_BLOCK_SIZE;
+
+    minimum_end_buffer_size_in_bytes = concrete_actor->production_block_size;
 
     /* Maximum number of bytes for a node
      */

@@ -60,6 +60,7 @@ void bsal_assembly_arc_classifier_init(struct bsal_actor *self)
     bsal_vector_init(&concrete_self->pending_requests, sizeof(int));
 
     concrete_self->producer_is_waiting = 0;
+
     concrete_self->maximum_pending_request_count = 1;
 
     if (bsal_actor_get_node_count(self) == 1) {

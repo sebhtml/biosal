@@ -23,6 +23,7 @@ struct bsal_assembly_arc;
 struct bsal_assembly_arc_block {
     struct bsal_set set;
     struct bsal_vector arcs;
+    int enable_redundancy_check;
 };
 
 void bsal_assembly_arc_block_init(struct bsal_assembly_arc_block *self, struct bsal_memory_pool *pool,
@@ -44,5 +45,7 @@ int bsal_assembly_arc_block_pack_unpack(struct bsal_assembly_arc_block *self, in
                 struct bsal_memory_pool *pool);
 
 struct bsal_vector *bsal_assembly_arc_block_get_arcs(struct bsal_assembly_arc_block *self);
+
+void bsal_assembly_arc_block_enable_redundancy_check(struct bsal_assembly_arc_block *self);
 
 #endif

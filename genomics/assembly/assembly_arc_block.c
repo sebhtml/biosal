@@ -26,6 +26,8 @@ void bsal_assembly_arc_block_init(struct bsal_assembly_arc_block *self, struct b
      */
     bsal_set_set_memory_pool(&self->set, pool);
     bsal_vector_set_memory_pool(&self->arcs, pool);
+
+    self->enable_redundancy_check = 0;
 }
 
 void bsal_assembly_arc_block_destroy(struct bsal_assembly_arc_block *self, struct bsal_memory_pool *pool)
@@ -60,24 +62,27 @@ void bsal_assembly_arc_block_add_arc(struct bsal_assembly_arc_block *self, struc
     int found;
     struct bsal_assembly_arc copy;
 
-    key_length = bsal_assembly_arc_pack_size(arc, kmer_length, codec);
-    buffer = bsal_memory_pool_allocate(pool, key_length);
+    if (self->enable_redundancy_check) {
 
-    /*
-     * Generate a key to verify if this arc is already in the block.
-     * Duplicates are not required anyway.
-     */
-    bsal_assembly_arc_pack(arc, buffer, kmer_length, codec);
+        key_length = bsal_assembly_arc_pack_size(arc, kmer_length, codec);
+        buffer = bsal_memory_pool_allocate(pool, key_length);
 
-    found = bsal_set_find(&self->set, buffer);
+        /*
+         * Generate a key to verify if this arc is already in the block.
+         * Duplicates are not required anyway.
+         */
+        bsal_assembly_arc_pack(arc, buffer, kmer_length, codec);
 
-    bsal_memory_pool_free(pool, buffer);
+        found = bsal_set_find(&self->set, buffer);
 
-    /*
-     * Don't append it if the arc is there already
-     */
-    if (found) {
-        return;
+        bsal_memory_pool_free(pool, buffer);
+
+        /*
+         * Don't append it if the arc is there already
+         */
+        if (found) {
+            return;
+        }
     }
 
     bsal_assembly_arc_init_copy(&copy, arc, kmer_length, pool, codec);
@@ -123,6 +128,11 @@ int bsal_assembly_arc_block_pack_unpack(struct bsal_assembly_arc_block *self, in
     size = bsal_vector_size(&self->arcs);
     bsal_packer_work(&packer, &size, sizeof(size));
 
+    if (operation == BSAL_PACKER_OPERATION_UNPACK) {
+
+        bsal_assembly_arc_block_reserve(self, size);
+    }
+
     bytes = bsal_packer_worked_bytes(&packer);
 
     bsal_packer_destroy(&packer);
@@ -148,7 +158,6 @@ int bsal_assembly_arc_block_pack_unpack(struct bsal_assembly_arc_block *self, in
             bytes += bsal_assembly_arc_pack_unpack(arc, operation,
                         (char *)buffer + bytes,
                         kmer_length, pool, codec);
-
         }
     }
 
@@ -163,4 +172,9 @@ struct bsal_vector *bsal_assembly_arc_block_get_arcs(struct bsal_assembly_arc_bl
 void bsal_assembly_arc_block_reserve(struct bsal_assembly_arc_block *self, int size)
 {
     bsal_vector_reserve(&self->arcs, size);
+}
+
+void bsal_assembly_arc_block_enable_redundancy_check(struct bsal_assembly_arc_block *self)
+{
+    self->enable_redundancy_check = 1;
 }

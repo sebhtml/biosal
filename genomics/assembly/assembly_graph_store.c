@@ -549,6 +549,15 @@ void bsal_assembly_graph_store_push_arc_block(struct bsal_actor *self, struct bs
     struct bsal_vector *input_arcs;
     char *sequence;
 
+#if 0
+    /*
+     * Don't do anything to rule out that this is the problem.
+     */
+    bsal_actor_send_reply_empty(self, BSAL_ASSEMBLY_PUSH_ARC_BLOCK_REPLY);
+
+    return;
+#endif
+
     concrete_self = (struct bsal_assembly_graph_store *)bsal_actor_concrete_actor(self);
     ephemeral_memory = bsal_actor_get_ephemeral_memory(self);
 
@@ -603,6 +612,15 @@ void bsal_assembly_graph_store_add_arc(struct bsal_actor *self,
     void *key;
     struct bsal_memory_pool *ephemeral_memory;
     int is_canonical;
+
+#if 0
+    /*
+     * Don't do anything just to see if this code
+     * is buggy.
+     */
+
+    return;
+#endif
 
 #ifdef BSAL_ASSEMBLY_GRAPH_STORE_DEBUG_ARC
     int verbose;

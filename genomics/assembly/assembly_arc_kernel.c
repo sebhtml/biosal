@@ -239,6 +239,7 @@ void bsal_assembly_arc_kernel_push_sequence_data_block(struct bsal_actor *self, 
 
     bsal_assembly_arc_block_init(&output_block, ephemeral_memory,
                     concrete_self->kmer_length, &concrete_self->codec);
+    bsal_assembly_arc_block_enable_redundancy_check(&output_block);
 
     /*
      *

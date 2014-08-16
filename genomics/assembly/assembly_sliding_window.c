@@ -671,7 +671,6 @@ void bsal_assembly_sliding_window_push_sequence_data_block(struct bsal_actor *ac
      */
     for (i = 0; i < entries; i++) {
 
-        /* TODO improve this */
         sequence = (struct bsal_dna_sequence *)bsal_vector_at(command_entries, i);
 
         bsal_dna_sequence_get_sequence(sequence, sequence_data,
