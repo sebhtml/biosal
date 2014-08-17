@@ -5,51 +5,51 @@
 
 #include <core/system/debugger.h>
 
-void bsal_scheduling_queue_init(struct bsal_scheduling_queue *queue)
+void thorium_scheduling_queue_init(struct thorium_scheduling_queue *queue)
 {
-    bsal_ring_queue_init(bsal_scheduling_queue_select_queue(queue, BSAL_PRIORITY_MAX),
-                    sizeof(struct bsal_actor *));
-    bsal_ring_queue_init(bsal_scheduling_queue_select_queue(queue, BSAL_PRIORITY_HIGH),
-                    sizeof(struct bsal_actor *));
-    bsal_ring_queue_init(bsal_scheduling_queue_select_queue(queue, BSAL_PRIORITY_NORMAL),
-                    sizeof(struct bsal_actor *));
-    bsal_ring_queue_init(bsal_scheduling_queue_select_queue(queue, BSAL_PRIORITY_LOW),
-                    sizeof(struct bsal_actor *));
+    bsal_ring_queue_init(thorium_scheduling_queue_select_queue(queue, BSAL_PRIORITY_MAX),
+                    sizeof(struct thorium_actor *));
+    bsal_ring_queue_init(thorium_scheduling_queue_select_queue(queue, BSAL_PRIORITY_HIGH),
+                    sizeof(struct thorium_actor *));
+    bsal_ring_queue_init(thorium_scheduling_queue_select_queue(queue, BSAL_PRIORITY_NORMAL),
+                    sizeof(struct thorium_actor *));
+    bsal_ring_queue_init(thorium_scheduling_queue_select_queue(queue, BSAL_PRIORITY_LOW),
+                    sizeof(struct thorium_actor *));
 
-    bsal_scheduling_queue_reset_counter(queue, BSAL_PRIORITY_MAX);
-    bsal_scheduling_queue_reset_counter(queue, BSAL_PRIORITY_HIGH);
-    bsal_scheduling_queue_reset_counter(queue, BSAL_PRIORITY_NORMAL);
-    bsal_scheduling_queue_reset_counter(queue, BSAL_PRIORITY_LOW);
+    thorium_scheduling_queue_reset_counter(queue, BSAL_PRIORITY_MAX);
+    thorium_scheduling_queue_reset_counter(queue, BSAL_PRIORITY_HIGH);
+    thorium_scheduling_queue_reset_counter(queue, BSAL_PRIORITY_NORMAL);
+    thorium_scheduling_queue_reset_counter(queue, BSAL_PRIORITY_LOW);
 }
 
-void bsal_scheduling_queue_destroy(struct bsal_scheduling_queue *queue)
+void thorium_scheduling_queue_destroy(struct thorium_scheduling_queue *queue)
 {
-    bsal_ring_queue_destroy(bsal_scheduling_queue_select_queue(queue, BSAL_PRIORITY_MAX));
-    bsal_ring_queue_destroy(bsal_scheduling_queue_select_queue(queue, BSAL_PRIORITY_HIGH));
-    bsal_ring_queue_destroy(bsal_scheduling_queue_select_queue(queue, BSAL_PRIORITY_NORMAL));
-    bsal_ring_queue_destroy(bsal_scheduling_queue_select_queue(queue, BSAL_PRIORITY_LOW));
+    bsal_ring_queue_destroy(thorium_scheduling_queue_select_queue(queue, BSAL_PRIORITY_MAX));
+    bsal_ring_queue_destroy(thorium_scheduling_queue_select_queue(queue, BSAL_PRIORITY_HIGH));
+    bsal_ring_queue_destroy(thorium_scheduling_queue_select_queue(queue, BSAL_PRIORITY_NORMAL));
+    bsal_ring_queue_destroy(thorium_scheduling_queue_select_queue(queue, BSAL_PRIORITY_LOW));
 
-    bsal_scheduling_queue_reset_counter(queue, BSAL_PRIORITY_MAX);
-    bsal_scheduling_queue_reset_counter(queue, BSAL_PRIORITY_HIGH);
-    bsal_scheduling_queue_reset_counter(queue, BSAL_PRIORITY_NORMAL);
-    bsal_scheduling_queue_reset_counter(queue, BSAL_PRIORITY_LOW);
+    thorium_scheduling_queue_reset_counter(queue, BSAL_PRIORITY_MAX);
+    thorium_scheduling_queue_reset_counter(queue, BSAL_PRIORITY_HIGH);
+    thorium_scheduling_queue_reset_counter(queue, BSAL_PRIORITY_NORMAL);
+    thorium_scheduling_queue_reset_counter(queue, BSAL_PRIORITY_LOW);
 }
 
-int bsal_scheduling_queue_enqueue(struct bsal_scheduling_queue *queue, struct bsal_actor *actor)
+int thorium_scheduling_queue_enqueue(struct thorium_scheduling_queue *queue, struct thorium_actor *actor)
 {
     int priority;
     struct bsal_ring_queue *selected_queue;
 
     BSAL_DEBUGGER_ASSERT(actor != NULL);
 
-    priority = bsal_actor_get_priority(actor);
+    priority = thorium_actor_get_priority(actor);
 
-    selected_queue = bsal_scheduling_queue_select_queue(queue, priority);
+    selected_queue = thorium_scheduling_queue_select_queue(queue, priority);
 
     return bsal_ring_queue_enqueue(selected_queue, &actor);
 }
 
-int bsal_scheduling_queue_dequeue(struct bsal_scheduling_queue *queue, struct bsal_actor **actor)
+int thorium_scheduling_queue_dequeue(struct thorium_scheduling_queue *queue, struct thorium_actor **actor)
 {
     int low_size;
     int normal_size;
@@ -65,22 +65,22 @@ int bsal_scheduling_queue_dequeue(struct bsal_scheduling_queue *queue, struct bs
     uint64_t allowed_normal_operations;
     uint64_t allowed_low_operations;
 
-    max_size = bsal_scheduling_queue_get_size_with_priority(queue, BSAL_PRIORITY_MAX);
+    max_size = thorium_scheduling_queue_get_size_with_priority(queue, BSAL_PRIORITY_MAX);
 
     /*
      * If the max priority queue has stuff
      * it wins right away, regardless of anything else.
      */
     if (max_size > 0) {
-        return bsal_scheduling_queue_dequeue_with_priority(queue, BSAL_PRIORITY_MAX, actor);
+        return thorium_scheduling_queue_dequeue_with_priority(queue, BSAL_PRIORITY_MAX, actor);
     }
 
     /* Otherwise, the multiplier is used.
      */
 
-    low_size = bsal_scheduling_queue_get_size_with_priority(queue, BSAL_PRIORITY_LOW);
-    normal_size = bsal_scheduling_queue_get_size_with_priority(queue, BSAL_PRIORITY_NORMAL);
-    high_size = bsal_scheduling_queue_get_size_with_priority(queue, BSAL_PRIORITY_HIGH);
+    low_size = thorium_scheduling_queue_get_size_with_priority(queue, BSAL_PRIORITY_LOW);
+    normal_size = thorium_scheduling_queue_get_size_with_priority(queue, BSAL_PRIORITY_NORMAL);
+    high_size = thorium_scheduling_queue_get_size_with_priority(queue, BSAL_PRIORITY_HIGH);
 
     /*
      * If the high priority queue has stuff
@@ -88,7 +88,7 @@ int bsal_scheduling_queue_dequeue(struct bsal_scheduling_queue *queue, struct bs
      * high queue wins right away.
      */
     if (high_size > 0 && low_size == 0 && normal_size == 0) {
-        return bsal_scheduling_queue_dequeue_with_priority(queue, BSAL_PRIORITY_HIGH, actor);
+        return thorium_scheduling_queue_dequeue_with_priority(queue, BSAL_PRIORITY_HIGH, actor);
     }
 
     /*
@@ -96,9 +96,9 @@ int bsal_scheduling_queue_dequeue(struct bsal_scheduling_queue *queue, struct bs
      * high priority queue.
      */
 
-    high_priority_operations = bsal_scheduling_queue_get_counter(queue, BSAL_PRIORITY_HIGH);
-    normal_priority_operations = bsal_scheduling_queue_get_counter(queue, BSAL_PRIORITY_NORMAL);
-    low_priority_operations = bsal_scheduling_queue_get_counter(queue, BSAL_PRIORITY_LOW);
+    high_priority_operations = thorium_scheduling_queue_get_counter(queue, BSAL_PRIORITY_HIGH);
+    normal_priority_operations = thorium_scheduling_queue_get_counter(queue, BSAL_PRIORITY_NORMAL);
+    low_priority_operations = thorium_scheduling_queue_get_counter(queue, BSAL_PRIORITY_LOW);
 
     allowed_normal_operations = high_priority_operations / BSAL_SCHEDULING_QUEUE_RATIO;
     allowed_low_operations = allowed_normal_operations / BSAL_SCHEDULING_QUEUE_RATIO;
@@ -119,7 +119,7 @@ int bsal_scheduling_queue_dequeue(struct bsal_scheduling_queue *queue, struct bs
              && normal_limit_reached
              && low_limit_reached) {
 
-        return bsal_scheduling_queue_dequeue_with_priority(queue, BSAL_PRIORITY_HIGH, actor);
+        return thorium_scheduling_queue_dequeue_with_priority(queue, BSAL_PRIORITY_HIGH, actor);
     }
 
     /* At this point, it is know that:
@@ -150,7 +150,7 @@ int bsal_scheduling_queue_dequeue(struct bsal_scheduling_queue *queue, struct bs
 
     if (normal_size > 0 && low_size == 0) {
 
-        return bsal_scheduling_queue_dequeue_with_priority(queue, BSAL_PRIORITY_NORMAL, actor);
+        return thorium_scheduling_queue_dequeue_with_priority(queue, BSAL_PRIORITY_NORMAL, actor);
     }
 
     /* Otherwise, if the low priority queue has stuff, but the normal
@@ -159,7 +159,7 @@ int bsal_scheduling_queue_dequeue(struct bsal_scheduling_queue *queue, struct bs
 
     if (normal_size == 0 && low_size > 0) {
 
-        return bsal_scheduling_queue_dequeue_with_priority(queue, BSAL_PRIORITY_LOW, actor);
+        return thorium_scheduling_queue_dequeue_with_priority(queue, BSAL_PRIORITY_LOW, actor);
     }
 
     /* At this point, the low priority queue and the normal priority queue
@@ -196,48 +196,48 @@ int bsal_scheduling_queue_dequeue(struct bsal_scheduling_queue *queue, struct bs
      */
     if (!low_limit_reached) {
 
-        return bsal_scheduling_queue_dequeue_with_priority(queue, BSAL_PRIORITY_LOW, actor);
+        return thorium_scheduling_queue_dequeue_with_priority(queue, BSAL_PRIORITY_LOW, actor);
     }
 
     /* Otherwise, use the normal priority queue directly.
      */
 
-    return bsal_scheduling_queue_dequeue_with_priority(queue, BSAL_PRIORITY_NORMAL, actor);
+    return thorium_scheduling_queue_dequeue_with_priority(queue, BSAL_PRIORITY_NORMAL, actor);
 }
 
-int bsal_scheduling_queue_size(struct bsal_scheduling_queue *queue)
+int thorium_scheduling_queue_size(struct thorium_scheduling_queue *queue)
 {
     int size;
 
     size = 0;
 
-    size += bsal_scheduling_queue_get_size_with_priority(queue, BSAL_PRIORITY_LOW);
-    size += bsal_scheduling_queue_get_size_with_priority(queue, BSAL_PRIORITY_NORMAL);
-    size += bsal_scheduling_queue_get_size_with_priority(queue, BSAL_PRIORITY_HIGH);
-    size += bsal_scheduling_queue_get_size_with_priority(queue, BSAL_PRIORITY_MAX);
+    size += thorium_scheduling_queue_get_size_with_priority(queue, BSAL_PRIORITY_LOW);
+    size += thorium_scheduling_queue_get_size_with_priority(queue, BSAL_PRIORITY_NORMAL);
+    size += thorium_scheduling_queue_get_size_with_priority(queue, BSAL_PRIORITY_HIGH);
+    size += thorium_scheduling_queue_get_size_with_priority(queue, BSAL_PRIORITY_MAX);
 
     return size;
 }
 
-int bsal_scheduling_queue_get_size_with_priority(struct bsal_scheduling_queue *queue, int priority)
+int thorium_scheduling_queue_get_size_with_priority(struct thorium_scheduling_queue *queue, int priority)
 {
     struct bsal_ring_queue *selected_queue;
 
-    selected_queue = bsal_scheduling_queue_select_queue(queue, priority);
+    selected_queue = thorium_scheduling_queue_select_queue(queue, priority);
 
     return bsal_ring_queue_size(selected_queue);
 }
 
-int bsal_scheduling_queue_dequeue_with_priority(struct bsal_scheduling_queue *queue, int priority,
-                struct bsal_actor **actor)
+int thorium_scheduling_queue_dequeue_with_priority(struct thorium_scheduling_queue *queue, int priority,
+                struct thorium_actor **actor)
 {
     int value;
     struct bsal_ring_queue *selected_queue;
     uint64_t *selected_counter;
 
-    selected_queue = bsal_scheduling_queue_select_queue(queue, priority);
+    selected_queue = thorium_scheduling_queue_select_queue(queue, priority);
 
-    selected_counter = bsal_scheduling_queue_select_counter(queue, priority);
+    selected_counter = thorium_scheduling_queue_select_counter(queue, priority);
     value = bsal_ring_queue_dequeue(selected_queue, actor);
 
     if (value) {
@@ -247,7 +247,7 @@ int bsal_scheduling_queue_dequeue_with_priority(struct bsal_scheduling_queue *qu
     return value;
 }
 
-struct bsal_ring_queue *bsal_scheduling_queue_select_queue(struct bsal_scheduling_queue *queue, int priority)
+struct bsal_ring_queue *thorium_scheduling_queue_select_queue(struct thorium_scheduling_queue *queue, int priority)
 {
     struct bsal_ring_queue *selection;
 
@@ -271,7 +271,7 @@ struct bsal_ring_queue *bsal_scheduling_queue_select_queue(struct bsal_schedulin
     return selection;
 }
 
-uint64_t *bsal_scheduling_queue_select_counter(struct bsal_scheduling_queue *queue, int priority)
+uint64_t *thorium_scheduling_queue_select_counter(struct thorium_scheduling_queue *queue, int priority)
 {
     uint64_t *selection;
 
@@ -295,47 +295,47 @@ uint64_t *bsal_scheduling_queue_select_counter(struct bsal_scheduling_queue *que
     return selection;
 }
 
-uint64_t bsal_scheduling_queue_get_counter(struct bsal_scheduling_queue *queue, int priority)
+uint64_t thorium_scheduling_queue_get_counter(struct thorium_scheduling_queue *queue, int priority)
 {
     uint64_t *counter;
 
-    counter = bsal_scheduling_queue_select_counter(queue, priority);
+    counter = thorium_scheduling_queue_select_counter(queue, priority);
 
     return *counter;
 }
 
-void bsal_scheduling_queue_reset_counter(struct bsal_scheduling_queue *queue, int priority)
+void thorium_scheduling_queue_reset_counter(struct thorium_scheduling_queue *queue, int priority)
 {
     uint64_t *counter;
 
-    counter = bsal_scheduling_queue_select_counter(queue, priority);
+    counter = thorium_scheduling_queue_select_counter(queue, priority);
 
     *counter = 0;
 }
 
-void bsal_scheduling_queue_print(struct bsal_scheduling_queue *queue, int node, int worker)
+void thorium_scheduling_queue_print(struct thorium_scheduling_queue *queue, int node, int worker)
 {
     printf("node/%d worker/%d SchedulingQueue Levels: %d\n",
                     node, worker, 4);
 
-    bsal_scheduling_queue_print_with_priority(queue, BSAL_PRIORITY_MAX, "BSAL_PRIORITY_MAX", node, worker);
-    bsal_scheduling_queue_print_with_priority(queue, BSAL_PRIORITY_HIGH, "BSAL_PRIORITY_HIGH", node, worker);
-    bsal_scheduling_queue_print_with_priority(queue, BSAL_PRIORITY_NORMAL, "BSAL_PRIORITY_NORMAL", node, worker);
-    bsal_scheduling_queue_print_with_priority(queue, BSAL_PRIORITY_LOW, "BSAL_PRIORITY_LOW", node, worker);
+    thorium_scheduling_queue_print_with_priority(queue, BSAL_PRIORITY_MAX, "BSAL_PRIORITY_MAX", node, worker);
+    thorium_scheduling_queue_print_with_priority(queue, BSAL_PRIORITY_HIGH, "BSAL_PRIORITY_HIGH", node, worker);
+    thorium_scheduling_queue_print_with_priority(queue, BSAL_PRIORITY_NORMAL, "BSAL_PRIORITY_NORMAL", node, worker);
+    thorium_scheduling_queue_print_with_priority(queue, BSAL_PRIORITY_LOW, "BSAL_PRIORITY_LOW", node, worker);
 
     printf("node/%d worker/%d SchedulingQueue... completed report !\n",
                     node, worker);
 }
 
-void bsal_scheduling_queue_print_with_priority(struct bsal_scheduling_queue *queue, int priority, const char *name,
+void thorium_scheduling_queue_print_with_priority(struct thorium_scheduling_queue *queue, int priority, const char *name,
                 int node, int worker)
 {
     struct bsal_ring_queue *selection;
-    struct bsal_actor *actor;
+    struct thorium_actor *actor;
     int size;
     int i;
 
-    selection = bsal_scheduling_queue_select_queue(queue, priority);
+    selection = thorium_scheduling_queue_select_queue(queue, priority);
     size = bsal_ring_queue_size(selection);
 
     printf("node/%d worker/%d scheduling_queue: Priority Queue %d (%s), actors: %d\n",
@@ -351,9 +351,9 @@ void bsal_scheduling_queue_print_with_priority(struct bsal_scheduling_queue *que
         printf("node/%d worker/%d [%i] actor %s/%d (%d messages)\n",
                         node, worker,
                         i,
-                        bsal_actor_script_name(actor),
-                        bsal_actor_name(actor),
-                        bsal_actor_get_mailbox_size(actor));
+                        thorium_actor_script_name(actor),
+                        thorium_actor_name(actor),
+                        thorium_actor_get_mailbox_size(actor));
 
         ++i;
     }

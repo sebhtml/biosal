@@ -4,9 +4,9 @@
 
 #include "mpi_transport.h"
 
-struct bsal_active_request;
+struct thorium_active_request;
 
-struct bsal_mpi_active_request {
+struct thorium_mpi_active_request {
 #ifdef BSAL_TRANSPORT_USE_MPI
     MPI_Request request;
 #else
@@ -14,9 +14,9 @@ struct bsal_mpi_active_request {
 #endif
 };
 
-void bsal_mpi_active_request_init(struct bsal_active_request *self);
-void bsal_mpi_active_request_destroy(struct bsal_active_request *self);
-int bsal_mpi_active_request_test(struct bsal_active_request *self);
-void *bsal_mpi_active_request_request(struct bsal_active_request *self);
+void thorium_mpi_active_request_init(struct thorium_active_request *self);
+void thorium_mpi_active_request_destroy(struct thorium_active_request *self);
+int thorium_mpi_active_request_test(struct thorium_active_request *self);
+void *thorium_mpi_active_request_request(struct thorium_active_request *self);
 
 #endif

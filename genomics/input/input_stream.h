@@ -83,33 +83,33 @@ struct bsal_input_stream {
 #define BSAL_INPUT_COUNT_IN_PARALLEL 0x00001ce9
 #define BSAL_INPUT_COUNT_IN_PARALLEL_REPLY 0x000058ea
 
-extern struct bsal_script bsal_input_stream_script;
+extern struct thorium_script bsal_input_stream_script;
 
-void bsal_input_stream_init(struct bsal_actor *actor);
-void bsal_input_stream_destroy(struct bsal_actor *actor);
-void bsal_input_stream_receive(struct bsal_actor *actor, struct bsal_message *message);
+void bsal_input_stream_init(struct thorium_actor *actor);
+void bsal_input_stream_destroy(struct thorium_actor *actor);
+void bsal_input_stream_receive(struct thorium_actor *actor, struct thorium_message *message);
 
-void bsal_input_stream_send_sequences_to(struct bsal_actor *actor,
-                struct bsal_message *message);
+void bsal_input_stream_send_sequences_to(struct thorium_actor *actor,
+                struct thorium_message *message);
 
-int bsal_input_stream_has_error(struct bsal_actor *actor,
-                struct bsal_message *message);
+int bsal_input_stream_has_error(struct thorium_actor *actor,
+                struct thorium_message *message);
 
-int bsal_input_stream_check_open_error(struct bsal_actor *actor,
-                struct bsal_message *message);
-void bsal_input_stream_push_sequences(struct bsal_actor *actor,
-                struct bsal_message *message);
+int bsal_input_stream_check_open_error(struct thorium_actor *actor,
+                struct thorium_message *message);
+void bsal_input_stream_push_sequences(struct thorium_actor *actor,
+                struct thorium_message *message);
 
-void bsal_input_stream_set_start_offset(struct bsal_actor *actor, struct bsal_message *message);
-void bsal_input_stream_set_end_offset(struct bsal_actor *actor, struct bsal_message *message);
+void bsal_input_stream_set_start_offset(struct thorium_actor *actor, struct thorium_message *message);
+void bsal_input_stream_set_end_offset(struct thorium_actor *actor, struct thorium_message *message);
 
-void bsal_input_stream_count_in_parallel(struct bsal_actor *self, struct bsal_message *message);
-void bsal_input_stream_count_reply(struct bsal_actor *self, struct bsal_message *message);
+void bsal_input_stream_count_in_parallel(struct thorium_actor *self, struct thorium_message *message);
+void bsal_input_stream_count_reply(struct thorium_actor *self, struct thorium_message *message);
 
-void bsal_input_stream_count_reply_mock(struct bsal_actor *self, struct bsal_message *message);
-void bsal_input_stream_count_in_parallel_mock(struct bsal_actor *self, struct bsal_message *message);
-void bsal_input_stream_spawn_reply(struct bsal_actor *self, struct bsal_message *message);
-void bsal_input_stream_open_reply(struct bsal_actor *self, struct bsal_message *message);
-void bsal_input_stream_set_offset_reply(struct bsal_actor *self, struct bsal_message *message);
+void bsal_input_stream_count_reply_mock(struct thorium_actor *self, struct thorium_message *message);
+void bsal_input_stream_count_in_parallel_mock(struct thorium_actor *self, struct thorium_message *message);
+void bsal_input_stream_spawn_reply(struct thorium_actor *self, struct thorium_message *message);
+void bsal_input_stream_open_reply(struct thorium_actor *self, struct thorium_message *message);
+void bsal_input_stream_set_offset_reply(struct thorium_actor *self, struct thorium_message *message);
 
 #endif

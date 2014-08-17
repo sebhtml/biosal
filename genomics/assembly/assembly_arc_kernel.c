@@ -15,7 +15,7 @@
 #include <stdint.h>
 #include <inttypes.h>
 
-struct bsal_script bsal_assembly_arc_kernel_script = {
+struct thorium_script bsal_assembly_arc_kernel_script = {
     .identifier = BSAL_ASSEMBLY_ARC_KERNEL_SCRIPT,
     .name = "bsal_assembly_arc_kernel",
     .init = bsal_assembly_arc_kernel_init,
@@ -27,20 +27,20 @@ struct bsal_script bsal_assembly_arc_kernel_script = {
     .version = "AlphaOmegaCool"
 };
 
-void bsal_assembly_arc_kernel_init(struct bsal_actor *self)
+void bsal_assembly_arc_kernel_init(struct thorium_actor *self)
 {
     struct bsal_assembly_arc_kernel *concrete_self;
 
-    concrete_self = (struct bsal_assembly_arc_kernel *)bsal_actor_concrete_actor(self);
+    concrete_self = (struct bsal_assembly_arc_kernel *)thorium_actor_concrete_actor(self);
 
     concrete_self->kmer_length = -1;
 
-    bsal_actor_add_route(self, BSAL_SET_KMER_LENGTH,
+    thorium_actor_add_route(self, BSAL_SET_KMER_LENGTH,
                     bsal_assembly_arc_kernel_set_kmer_length);
 
     printf("%s/%d is now active\n",
-                    bsal_actor_script_name(self),
-                    bsal_actor_name(self));
+                    thorium_actor_script_name(self),
+                    thorium_actor_name(self));
 
     concrete_self->producer = BSAL_ACTOR_NOBODY;
     concrete_self->consumer = BSAL_ACTOR_NOBODY;
@@ -52,13 +52,13 @@ void bsal_assembly_arc_kernel_init(struct bsal_actor *self)
     bsal_dna_codec_init(&concrete_self->codec);
 
     if (bsal_dna_codec_must_use_two_bit_encoding(&concrete_self->codec,
-                            bsal_actor_get_node_count(self))) {
+                            thorium_actor_get_node_count(self))) {
         bsal_dna_codec_enable_two_bit_encoding(&concrete_self->codec);
     }
 
     concrete_self->produced_arcs = 0;
 
-    bsal_actor_add_route(self, BSAL_PUSH_SEQUENCE_DATA_BLOCK,
+    thorium_actor_add_route(self, BSAL_PUSH_SEQUENCE_DATA_BLOCK,
                     bsal_assembly_arc_kernel_push_sequence_data_block);
 
     concrete_self->received_blocks = 0;
@@ -66,11 +66,11 @@ void bsal_assembly_arc_kernel_init(struct bsal_actor *self)
     concrete_self->flushed_messages = 0;
 }
 
-void bsal_assembly_arc_kernel_destroy(struct bsal_actor *self)
+void bsal_assembly_arc_kernel_destroy(struct thorium_actor *self)
 {
     struct bsal_assembly_arc_kernel *concrete_self;
 
-    concrete_self = (struct bsal_assembly_arc_kernel *)bsal_actor_concrete_actor(self);
+    concrete_self = (struct bsal_assembly_arc_kernel *)thorium_actor_concrete_actor(self);
 
     concrete_self->kmer_length = -1;
 
@@ -80,23 +80,23 @@ void bsal_assembly_arc_kernel_destroy(struct bsal_actor *self)
     concrete_self->consumer = BSAL_ACTOR_NOBODY;
 }
 
-void bsal_assembly_arc_kernel_receive(struct bsal_actor *self, struct bsal_message *message)
+void bsal_assembly_arc_kernel_receive(struct thorium_actor *self, struct thorium_message *message)
 {
     int tag;
     int source;
     struct bsal_assembly_arc_kernel *concrete_self;
 
-    if (bsal_actor_use_route(self, message)) {
+    if (thorium_actor_use_route(self, message)) {
         return;
     }
 
-    concrete_self = (struct bsal_assembly_arc_kernel *)bsal_actor_concrete_actor(self);
-    tag = bsal_message_tag(message);
-    source = bsal_message_source(message);
+    concrete_self = (struct bsal_assembly_arc_kernel *)thorium_actor_concrete_actor(self);
+    tag = thorium_message_tag(message);
+    source = thorium_message_source(message);
 
     if (tag == BSAL_ACTOR_SET_PRODUCER) {
 
-        bsal_message_unpack_int(message, 0, &concrete_self->producer);
+        thorium_message_unpack_int(message, 0, &concrete_self->producer);
 
         concrete_self->source = source;
 
@@ -104,30 +104,30 @@ void bsal_assembly_arc_kernel_receive(struct bsal_actor *self, struct bsal_messa
 
     } else if (tag == BSAL_ACTOR_SET_CONSUMER) {
 
-        bsal_message_unpack_int(message, 0, &concrete_self->consumer);
+        thorium_message_unpack_int(message, 0, &concrete_self->consumer);
 
-        bsal_actor_send_reply_empty(self, BSAL_ACTOR_SET_CONSUMER_REPLY);
+        thorium_actor_send_reply_empty(self, BSAL_ACTOR_SET_CONSUMER_REPLY);
 
     } else if (tag == BSAL_ACTOR_NOTIFY) {
 
-        bsal_actor_send_reply_uint64_t(self, BSAL_ACTOR_NOTIFY_REPLY,
+        thorium_actor_send_reply_uint64_t(self, BSAL_ACTOR_NOTIFY_REPLY,
                         concrete_self->produced_arcs);
 
     } else if (tag == BSAL_SEQUENCE_STORE_ASK_REPLY) {
 
-        bsal_actor_send_empty(self, concrete_self->source,
+        thorium_actor_send_empty(self, concrete_self->source,
                         BSAL_ACTOR_SET_PRODUCER_REPLY);
 
     } else if (tag == BSAL_ACTOR_ASK_TO_STOP) {
 
         printf("%s/%d generated %" PRIu64 " arcs from %d sequence blocks, generated %d messages for consumer\n",
-                        bsal_actor_script_name(self),
-                        bsal_actor_name(self),
+                        thorium_actor_script_name(self),
+                        thorium_actor_name(self),
                         concrete_self->produced_arcs,
                         concrete_self->received_blocks,
                         concrete_self->flushed_messages);
 
-        bsal_actor_ask_to_stop(self, message);
+        thorium_actor_ask_to_stop(self, message);
 
     } else if (tag == BSAL_ASSEMBLY_PUSH_ARC_BLOCK_REPLY) {
 
@@ -138,22 +138,22 @@ void bsal_assembly_arc_kernel_receive(struct bsal_actor *self, struct bsal_messa
     }
 }
 
-void bsal_assembly_arc_kernel_set_kmer_length(struct bsal_actor *self, struct bsal_message *message)
+void bsal_assembly_arc_kernel_set_kmer_length(struct thorium_actor *self, struct thorium_message *message)
 {
     struct bsal_assembly_arc_kernel *concrete_self;
 
-    concrete_self = (struct bsal_assembly_arc_kernel *)bsal_actor_concrete_actor(self);
+    concrete_self = (struct bsal_assembly_arc_kernel *)thorium_actor_concrete_actor(self);
 
-    bsal_message_unpack_int(message, 0, &concrete_self->kmer_length);
+    thorium_message_unpack_int(message, 0, &concrete_self->kmer_length);
 
-    bsal_actor_send_reply_empty(self, BSAL_SET_KMER_LENGTH_REPLY);
+    thorium_actor_send_reply_empty(self, BSAL_SET_KMER_LENGTH_REPLY);
 }
 
-void bsal_assembly_arc_kernel_ask(struct bsal_actor *self, struct bsal_message *message)
+void bsal_assembly_arc_kernel_ask(struct thorium_actor *self, struct thorium_message *message)
 {
     struct bsal_assembly_arc_kernel *concrete_self;
 
-    concrete_self = (struct bsal_assembly_arc_kernel *)bsal_actor_concrete_actor(self);
+    concrete_self = (struct bsal_assembly_arc_kernel *)thorium_actor_concrete_actor(self);
 
     if (concrete_self->consumer == BSAL_ACTOR_NOBODY) {
         printf("Error: no consumer in arc kernel\n");
@@ -175,11 +175,11 @@ void bsal_assembly_arc_kernel_ask(struct bsal_actor *self, struct bsal_message *
      * 2. BSAL_PUSH_SEQUENCE_DATA_BLOCK which contains sequences.
      */
 
-    bsal_actor_send_int(self, concrete_self->producer,
+    thorium_actor_send_int(self, concrete_self->producer,
                     BSAL_SEQUENCE_STORE_ASK, concrete_self->kmer_length);
 }
 
-void bsal_assembly_arc_kernel_push_sequence_data_block(struct bsal_actor *self, struct bsal_message *message)
+void bsal_assembly_arc_kernel_push_sequence_data_block(struct thorium_actor *self, struct thorium_message *message)
 {
     struct bsal_assembly_arc_kernel *concrete_self;
     struct bsal_input_command input_block;
@@ -201,14 +201,14 @@ void bsal_assembly_arc_kernel_push_sequence_data_block(struct bsal_actor *self, 
     int limit;
     int first_symbol;
     int last_symbol;
-    struct bsal_message new_message;
+    struct thorium_message new_message;
     int new_count;
     void *new_buffer;
     int to_reserve;
 
-    ephemeral_memory = bsal_actor_get_ephemeral_memory(self);
-    concrete_self = (struct bsal_assembly_arc_kernel *)bsal_actor_concrete_actor(self);
-    buffer = bsal_message_buffer(message);
+    ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
+    concrete_self = (struct bsal_assembly_arc_kernel *)thorium_actor_concrete_actor(self);
+    buffer = thorium_message_buffer(message);
 
     ++concrete_self->received_blocks;
 
@@ -363,13 +363,13 @@ void bsal_assembly_arc_kernel_push_sequence_data_block(struct bsal_actor *self, 
 
     bsal_input_command_destroy(&input_block, ephemeral_memory);
 
-    bsal_message_init(&new_message, BSAL_ASSEMBLY_PUSH_ARC_BLOCK,
+    thorium_message_init(&new_message, BSAL_ASSEMBLY_PUSH_ARC_BLOCK,
                     new_count, new_buffer);
-    bsal_actor_send(self, concrete_self->consumer, &new_message);
+    thorium_actor_send(self, concrete_self->consumer, &new_message);
 
     ++concrete_self->flushed_messages;
 
-    bsal_message_destroy(&new_message);
+    thorium_message_destroy(&new_message);
 
     bsal_memory_pool_free(ephemeral_memory, sequence);
 

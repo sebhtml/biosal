@@ -34,14 +34,14 @@ struct bsal_coverage_distribution {
 #define BSAL_COVERAGE_DISTRIBUTION_DEFAULT_OUTPUT_FILE "coverage_distribution.txt"
 #define BSAL_COVERAGE_DISTRIBUTION_DEFAULT_OUTPUT_FILE_CANONICAL "coverage_distribution.txt-canonical"
 
-extern struct bsal_script bsal_coverage_distribution_script;
+extern struct thorium_script bsal_coverage_distribution_script;
 
-void bsal_coverage_distribution_init(struct bsal_actor *actor);
-void bsal_coverage_distribution_destroy(struct bsal_actor *actor);
-void bsal_coverage_distribution_receive(struct bsal_actor *actor, struct bsal_message *message);
+void bsal_coverage_distribution_init(struct thorium_actor *actor);
+void bsal_coverage_distribution_destroy(struct thorium_actor *actor);
+void bsal_coverage_distribution_receive(struct thorium_actor *actor, struct thorium_message *message);
 
-void bsal_coverage_distribution_write_distribution(struct bsal_actor *self);
-void bsal_coverage_distribution_ask_to_stop(struct bsal_actor *self, struct bsal_message *message);
+void bsal_coverage_distribution_write_distribution(struct thorium_actor *self);
+void bsal_coverage_distribution_ask_to_stop(struct thorium_actor *self, struct thorium_message *message);
 
 char *bsal_get_output_directory(int argc, char **argv);
 

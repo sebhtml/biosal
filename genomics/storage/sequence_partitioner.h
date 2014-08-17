@@ -52,16 +52,16 @@ struct bsal_sequence_partitioner {
 
 #define BSAL_SEQUENCE_PARTITIONER_FINISHED 0x00005db5
 
-extern struct bsal_script bsal_sequence_partitioner_script;
+extern struct thorium_script bsal_sequence_partitioner_script;
 
-void bsal_sequence_partitioner_init(struct bsal_actor *actor);
-void bsal_sequence_partitioner_destroy(struct bsal_actor *actor);
-void bsal_sequence_partitioner_receive(struct bsal_actor *actor, struct bsal_message *message);
+void bsal_sequence_partitioner_init(struct thorium_actor *actor);
+void bsal_sequence_partitioner_destroy(struct thorium_actor *actor);
+void bsal_sequence_partitioner_receive(struct thorium_actor *actor, struct thorium_message *message);
 
-void bsal_sequence_partitioner_verify(struct bsal_actor *actor);
+void bsal_sequence_partitioner_verify(struct thorium_actor *actor);
 
 int bsal_sequence_partitioner_get_store(uint64_t index, int block_size, int store_count);
 uint64_t bsal_sequence_partitioner_get_index_in_store(uint64_t index, int block_size, int store_count);
-void bsal_sequence_partitioner_generate_command(struct bsal_actor *actor, int stream_index);
+void bsal_sequence_partitioner_generate_command(struct thorium_actor *actor, int stream_index);
 
 #endif

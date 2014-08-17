@@ -62,7 +62,7 @@
 #define BSAL_WORKER_DEBUG_SYMMETRIC_PLACEMENT
 */
 
-void bsal_worker_init(struct bsal_worker *worker, int name, struct bsal_node *node)
+void thorium_worker_init(struct thorium_worker *worker, int name, struct thorium_node *node)
 {
     int capacity;
     int ephemeral_memory_block_size;
@@ -87,7 +87,7 @@ void bsal_worker_init(struct bsal_worker *worker, int name, struct bsal_node *no
      * 1. enable atomic operations for change visibility
      * 2. Use volatile head and tail.
      */
-    bsal_fast_ring_init(&worker->actors_to_schedule, capacity, sizeof(struct bsal_actor *));
+    bsal_fast_ring_init(&worker->actors_to_schedule, capacity, sizeof(struct thorium_actor *));
 
 #ifdef BSAL_NODE_INJECT_CLEAN_WORKER_BUFFERS
     injected_buffer_ring_size = capacity;
@@ -96,20 +96,20 @@ void bsal_worker_init(struct bsal_worker *worker, int name, struct bsal_node *no
 
     bsal_fast_ring_init(&worker->clean_message_ring_for_triage,
                     injected_buffer_ring_size,
-                    sizeof(struct bsal_message));
+                    sizeof(struct thorium_message));
 
     bsal_ring_queue_init(&worker->clean_message_queue_for_triage,
-                    sizeof(struct bsal_message));
+                    sizeof(struct thorium_message));
 #endif
 
 
-    bsal_scheduling_queue_init(&worker->scheduling_queue);
+    thorium_scheduling_queue_init(&worker->scheduling_queue);
     bsal_map_init(&worker->actors, sizeof(int), sizeof(int));
     bsal_map_iterator_init(&worker->actor_iterator, &worker->actors);
 
-    bsal_fast_ring_init(&worker->outbound_message_queue, capacity, sizeof(struct bsal_message));
+    bsal_fast_ring_init(&worker->outbound_message_queue, capacity, sizeof(struct thorium_message));
 
-    bsal_ring_queue_init(&worker->outbound_message_queue_buffer, sizeof(struct bsal_message));
+    bsal_ring_queue_init(&worker->outbound_message_queue_buffer, sizeof(struct thorium_message));
 
 
     worker->debug = 0;
@@ -146,12 +146,12 @@ void bsal_worker_init(struct bsal_worker *worker, int name, struct bsal_node *no
 
     worker->ticks_without_production = 0;
 
-    bsal_priority_scheduler_init(&worker->scheduler);
+    thorium_priority_scheduler_init(&worker->scheduler);
 
     /*
      * This variables should be set in
-     * bsal_worker_start, but when running on 1 process with 1 thread,
-     * bsal_worker_start is never called...
+     * thorium_worker_start, but when running on 1 process with 1 thread,
+     * thorium_worker_start is never called...
      */
     worker->last_report = time(NULL);
     worker->epoch_start_in_nanoseconds = bsal_timer_get_nanoseconds(&worker->timer);
@@ -165,11 +165,11 @@ void bsal_worker_init(struct bsal_worker *worker, int name, struct bsal_node *no
     worker->epoch_load = 0;
 }
 
-void bsal_worker_destroy(struct bsal_worker *worker)
+void thorium_worker_destroy(struct thorium_worker *worker)
 {
     void *buffer;
 
-    while (bsal_worker_fetch_clean_outbound_buffer(worker, &buffer)) {
+    while (thorium_worker_fetch_clean_outbound_buffer(worker, &buffer)) {
         bsal_memory_pool_free(&worker->outbound_message_memory_pool, buffer);
     }
 
@@ -185,7 +185,7 @@ void bsal_worker_destroy(struct bsal_worker *worker)
     bsal_ring_queue_destroy(&worker->clean_message_queue_for_triage);
 #endif
 
-    bsal_scheduling_queue_destroy(&worker->scheduling_queue);
+    thorium_scheduling_queue_destroy(&worker->scheduling_queue);
     bsal_fast_ring_destroy(&worker->outbound_message_queue);
     bsal_ring_queue_destroy(&worker->outbound_message_queue_buffer);
 
@@ -201,26 +201,26 @@ void bsal_worker_destroy(struct bsal_worker *worker)
     bsal_memory_pool_destroy(&worker->ephemeral_memory);
     bsal_memory_pool_destroy(&worker->outbound_message_memory_pool);
 
-    bsal_priority_scheduler_destroy(&worker->scheduler);
+    thorium_priority_scheduler_destroy(&worker->scheduler);
 }
 
-struct bsal_node *bsal_worker_node(struct bsal_worker *worker)
+struct thorium_node *thorium_worker_node(struct thorium_worker *worker)
 {
     return worker->node;
 }
 
-void bsal_worker_send(struct bsal_worker *worker, struct bsal_message *message)
+void thorium_worker_send(struct thorium_worker *worker, struct thorium_message *message)
 {
-    struct bsal_message copy;
+    struct thorium_message copy;
     void *buffer;
     int count;
     int metadata_size;
     int all;
     void *old_buffer;
 
-    memcpy(&copy, message, sizeof(struct bsal_message));
-    count = bsal_message_count(&copy);
-    metadata_size = bsal_message_metadata_size(message);
+    memcpy(&copy, message, sizeof(struct thorium_message));
+    count = thorium_message_count(&copy);
+    metadata_size = thorium_message_metadata_size(message);
     all = count + metadata_size;
 
     /* use slab allocator to allocate buffer... */
@@ -232,11 +232,11 @@ void bsal_worker_send(struct bsal_worker *worker, struct bsal_message *message)
 #endif
 
 #ifdef BSAL_WORKER_DEBUG
-    printf("[bsal_worker_send] allocated %i bytes (%i + %i) for buffer %p\n",
+    printf("[thorium_worker_send] allocated %i bytes (%i + %i) for buffer %p\n",
                     all, count, metadata_size, buffer);
 
-    printf("bsal_worker_send old buffer: %p\n",
-                    bsal_message_buffer(message));
+    printf("thorium_worker_send old buffer: %p\n",
+                    thorium_message_buffer(message));
 #endif
 
     /* according to
@@ -247,18 +247,18 @@ void bsal_worker_send(struct bsal_worker *worker, struct bsal_message *message)
      * Copy the message data.
      */
     if (count > 0) {
-        old_buffer = bsal_message_buffer(message);
+        old_buffer = thorium_message_buffer(message);
         memcpy(buffer, old_buffer, count);
 
         /* TODO use slab allocator */
     }
 
-    bsal_message_set_buffer(&copy, buffer);
-    bsal_message_write_metadata(&copy);
+    thorium_message_set_buffer(&copy, buffer);
+    thorium_message_write_metadata(&copy);
 
 #ifdef BSAL_WORKER_DEBUG_20140601
-    if (bsal_message_tag(message) == 1100) {
-        printf("DEBUG bsal_worker_send 1100\n");
+    if (thorium_message_tag(message) == 1100) {
+        printf("DEBUG thorium_worker_send 1100\n");
     }
 #endif
 
@@ -267,12 +267,12 @@ void bsal_worker_send(struct bsal_worker *worker, struct bsal_message *message)
      * with the node.
      */
 
-    bsal_worker_enqueue_message(worker, &copy);
+    thorium_worker_enqueue_message(worker, &copy);
 }
 
-void bsal_worker_start(struct bsal_worker *worker, int processor)
+void thorium_worker_start(struct thorium_worker *worker, int processor)
 {
-    bsal_thread_init(&worker->thread, bsal_worker_main, worker);
+    bsal_thread_init(&worker->thread, thorium_worker_main, worker);
 
     bsal_thread_set_affinity(&worker->thread, processor);
 
@@ -281,42 +281,42 @@ void bsal_worker_start(struct bsal_worker *worker, int processor)
     bsal_thread_start(&worker->thread);
 }
 
-void *bsal_worker_main(void *worker1)
+void *thorium_worker_main(void *worker1)
 {
-    struct bsal_worker *worker;
+    struct thorium_worker *worker;
 
-    worker = (struct bsal_worker*)worker1;
+    worker = (struct thorium_worker*)worker1;
 
 #ifdef BSAL_WORKER_DEBUG
-    bsal_worker_display(worker);
+    thorium_worker_display(worker);
     printf("Starting worker thread\n");
 #endif
 
     while (!worker->dead) {
 
-        bsal_worker_run(worker);
+        thorium_worker_run(worker);
     }
 
     return NULL;
 }
 
-void bsal_worker_display(struct bsal_worker *worker)
+void thorium_worker_display(struct thorium_worker *worker)
 {
-    printf("[bsal_worker_main] node %i worker %i\n",
-                    bsal_node_name(worker->node),
-                    bsal_worker_name(worker));
+    printf("[thorium_worker_main] node %i worker %i\n",
+                    thorium_node_name(worker->node),
+                    thorium_worker_name(worker));
 }
 
-int bsal_worker_name(struct bsal_worker *worker)
+int thorium_worker_name(struct thorium_worker *worker)
 {
     return worker->name;
 }
 
-void bsal_worker_stop(struct bsal_worker *worker)
+void thorium_worker_stop(struct thorium_worker *worker)
 {
 
 #ifdef BSAL_WORKER_DEBUG
-    bsal_worker_display(worker);
+    thorium_worker_display(worker);
     printf("stopping worker!\n");
 #endif
 
@@ -340,7 +340,7 @@ void bsal_worker_stop(struct bsal_worker *worker)
          * Wake up if necessary because the worker might be
          * waiting for something...
          */
-        bsal_worker_signal(worker);
+        thorium_worker_signal(worker);
     }
 
     bsal_thread_join(&worker->thread);
@@ -348,32 +348,32 @@ void bsal_worker_stop(struct bsal_worker *worker)
     worker->loop_end_in_nanoseconds = bsal_timer_get_nanoseconds(&worker->timer);
 }
 
-int bsal_worker_is_busy(struct bsal_worker *worker)
+int thorium_worker_is_busy(struct thorium_worker *worker)
 {
     return worker->busy;
 }
 
 
-int bsal_worker_get_scheduled_message_count(struct bsal_worker *worker)
+int thorium_worker_get_scheduled_message_count(struct thorium_worker *worker)
 {
     int value;
     struct bsal_map_iterator map_iterator;
     int actor_name;
     int messages;
-    struct bsal_actor *actor;
+    struct thorium_actor *actor;
 
     bsal_map_iterator_init(&map_iterator, &worker->actors);
 
     value = 0;
     while (bsal_map_iterator_get_next_key_and_value(&map_iterator, &actor_name, NULL)) {
 
-        actor = bsal_node_get_actor_from_name(worker->node, actor_name);
+        actor = thorium_node_get_actor_from_name(worker->node, actor_name);
 
         if (actor == NULL) {
             continue;
         }
 
-        messages = bsal_actor_get_mailbox_size(actor);
+        messages = thorium_actor_get_mailbox_size(actor);
         value += messages;
     }
 
@@ -382,17 +382,17 @@ int bsal_worker_get_scheduled_message_count(struct bsal_worker *worker)
     return value;
 }
 
-float bsal_worker_get_epoch_load(struct bsal_worker *worker)
+float thorium_worker_get_epoch_load(struct thorium_worker *worker)
 {
     return worker->epoch_load;
 }
 
-time_t bsal_worker_get_last_report_time(struct bsal_worker *worker)
+time_t thorium_worker_get_last_report_time(struct thorium_worker *worker)
 {
     return worker->last_report;
 }
 
-float bsal_worker_get_loop_load(struct bsal_worker *worker)
+float thorium_worker_get_loop_load(struct thorium_worker *worker)
 {
     float loop_load;
     uint64_t elapsed_from_start;
@@ -419,18 +419,18 @@ float bsal_worker_get_loop_load(struct bsal_worker *worker)
     return loop_load;
 }
 
-struct bsal_memory_pool *bsal_worker_get_ephemeral_memory(struct bsal_worker *worker)
+struct bsal_memory_pool *thorium_worker_get_ephemeral_memory(struct thorium_worker *worker)
 {
     return &worker->ephemeral_memory;
 }
 
 /* This can only be called from the CONSUMER
  */
-int bsal_worker_dequeue_actor(struct bsal_worker *worker, struct bsal_actor **actor)
+int thorium_worker_dequeue_actor(struct thorium_worker *worker, struct thorium_actor **actor)
 {
     int value;
     int name;
-    struct bsal_actor *other_actor;
+    struct thorium_actor *other_actor;
     int other_name;
     int operations;
     int status;
@@ -453,7 +453,7 @@ int bsal_worker_dequeue_actor(struct bsal_worker *worker, struct bsal_actor **ac
 
         BSAL_DEBUGGER_ASSERT(other_actor != NULL);
 
-        other_name = bsal_actor_name(other_actor);
+        other_name = thorium_actor_name(other_actor);
 
 #ifdef BSAL_WORKER_DEBUG_SCHEDULER
         printf("ring.DEQUEUE %d\n", other_name);
@@ -486,7 +486,7 @@ int bsal_worker_dequeue_actor(struct bsal_worker *worker, struct bsal_actor **ac
 
             bsal_map_update_value(&worker->actors, &other_name, &status);
 
-            bsal_scheduling_queue_enqueue(&worker->scheduling_queue, other_actor);
+            thorium_scheduling_queue_enqueue(&worker->scheduling_queue, other_actor);
         } else {
 
 #ifdef BSAL_WORKER_DEBUG_SCHEDULER
@@ -499,7 +499,7 @@ int bsal_worker_dequeue_actor(struct bsal_worker *worker, struct bsal_actor **ac
     /* Now, dequeue an actor from the real queue.
      * If it has more than 1 message, re-enqueue it
      */
-    value = bsal_scheduling_queue_dequeue(&worker->scheduling_queue, actor);
+    value = thorium_scheduling_queue_dequeue(&worker->scheduling_queue, actor);
 
     /* Setting name to nobody;
      * check_production at the end uses the value and the name;
@@ -510,13 +510,13 @@ int bsal_worker_dequeue_actor(struct bsal_worker *worker, struct bsal_actor **ac
     /* an actor is ready to be run and it was dequeued from the scheduling queue.
      */
     if (value) {
-        name = bsal_actor_name(*actor);
+        name = thorium_actor_name(*actor);
 
 #ifdef BSAL_WORKER_DEBUG_SCHEDULER
         printf("scheduler.DEQUEUE actor %d, removed from queued actors...\n", name);
 #endif
 
-        mailbox_size = bsal_actor_get_mailbox_size(*actor);
+        mailbox_size = thorium_actor_get_mailbox_size(*actor);
 
         /* The actor has only one message and it is going to
          * be processed now.
@@ -545,12 +545,12 @@ int bsal_worker_dequeue_actor(struct bsal_worker *worker, struct bsal_actor **ac
 #ifdef BSAL_WORKER_DEBUG_SCHEDULER
             printf("Scheduling actor %d again, messages: %d\n",
                         name,
-                        bsal_actor_get_mailbox_size(*actor));
+                        thorium_actor_get_mailbox_size(*actor));
 #endif
 
             /* The status is still STATUS_QUEUED
              */
-            bsal_scheduling_queue_enqueue(&worker->scheduling_queue, *actor);
+            thorium_scheduling_queue_enqueue(&worker->scheduling_queue, *actor);
 
 
         /* The actor is scheduled to run, but the new tail is not
@@ -570,14 +570,14 @@ int bsal_worker_dequeue_actor(struct bsal_worker *worker, struct bsal_actor **ac
 
     }
 
-    bsal_worker_check_production(worker, value, name);
+    thorium_worker_check_production(worker, value, name);
 
     return value;
 }
 
 /* This can only be called from the PRODUCER
  */
-int bsal_worker_enqueue_actor(struct bsal_worker *worker, struct bsal_actor *actor)
+int thorium_worker_enqueue_actor(struct thorium_worker *worker, struct thorium_actor *actor)
 {
     int value;
 
@@ -597,13 +597,13 @@ int bsal_worker_enqueue_actor(struct bsal_worker *worker, struct bsal_actor *act
          * to tell the operating system to wake up the thread so that
          * it continues its good work for the actor computation in thorium.
          */
-        bsal_worker_signal(worker);
+        thorium_worker_signal(worker);
     }
 
     return value;
 }
 
-int bsal_worker_enqueue_message(struct bsal_worker *worker, struct bsal_message *message)
+int thorium_worker_enqueue_message(struct thorium_worker *worker, struct thorium_message *message)
 {
 
     /* Try to push the message in the output ring
@@ -619,25 +619,25 @@ int bsal_worker_enqueue_message(struct bsal_worker *worker, struct bsal_message 
     return 1;
 }
 
-int bsal_worker_dequeue_message(struct bsal_worker *worker, struct bsal_message *message)
+int thorium_worker_dequeue_message(struct thorium_worker *worker, struct thorium_message *message)
 {
     int answer;
 
     answer = bsal_fast_ring_pop_from_consumer(&worker->outbound_message_queue, message);
 
     if (answer) {
-        bsal_message_set_worker(message, worker->name);
+        thorium_message_set_worker(message, worker->name);
     }
 
     return answer;
 }
 
-void bsal_worker_print_actors(struct bsal_worker *worker, struct bsal_scheduler *scheduler)
+void thorium_worker_print_actors(struct thorium_worker *worker, struct thorium_scheduler *scheduler)
 {
     struct bsal_map_iterator iterator;
     int name;
     int count;
-    struct bsal_actor *actor;
+    struct thorium_actor *actor;
     int producers;
     int consumers;
     int received;
@@ -645,59 +645,59 @@ void bsal_worker_print_actors(struct bsal_worker *worker, struct bsal_scheduler 
     int script;
     struct bsal_map distribution;
     int frequency;
-    struct bsal_script *script_object;
+    struct thorium_script *script_object;
     int dead;
     int node_name;
     int worker_name;
 
-    node_name = bsal_node_name(worker->node);
+    node_name = thorium_node_name(worker->node);
     worker_name = worker->name;
 
     bsal_map_iterator_init(&iterator, &worker->actors);
 
     printf("node/%d worker/%d %d queued messages, received: %d busy: %d load: %f ring: %d scheduled actors: %d/%d\n",
                     node_name, worker_name,
-                    bsal_worker_get_scheduled_message_count(worker),
-                    bsal_worker_get_sum_of_received_actor_messages(worker),
-                    bsal_worker_is_busy(worker),
-                    bsal_worker_get_scheduling_epoch_load(worker),
+                    thorium_worker_get_scheduled_message_count(worker),
+                    thorium_worker_get_sum_of_received_actor_messages(worker),
+                    thorium_worker_is_busy(worker),
+                    thorium_worker_get_scheduling_epoch_load(worker),
                     bsal_fast_ring_size_from_producer(&worker->actors_to_schedule),
-                    bsal_scheduling_queue_size(&worker->scheduling_queue),
+                    thorium_scheduling_queue_size(&worker->scheduling_queue),
                     (int)bsal_map_size(&worker->actors));
 
     bsal_map_init(&distribution, sizeof(int), sizeof(int));
 
     while (bsal_map_iterator_get_next_key_and_value(&iterator, &name, NULL)) {
 
-        actor = bsal_node_get_actor_from_name(worker->node, name);
+        actor = thorium_node_get_actor_from_name(worker->node, name);
 
         if (actor == NULL) {
             continue;
         }
 
-        dead = bsal_actor_dead(actor);
+        dead = thorium_actor_dead(actor);
 
         if (dead) {
             continue;
         }
 
-        count = bsal_actor_get_mailbox_size(actor);
-        received = bsal_actor_get_sum_of_received_messages(actor);
-        producers = bsal_map_size(bsal_actor_get_received_messages(actor));
-        consumers = bsal_map_size(bsal_actor_get_sent_messages(actor));
+        count = thorium_actor_get_mailbox_size(actor);
+        received = thorium_actor_get_sum_of_received_messages(actor);
+        producers = bsal_map_size(thorium_actor_get_received_messages(actor));
+        consumers = bsal_map_size(thorium_actor_get_sent_messages(actor));
         difference = 0;
 
         if (scheduler != NULL) {
-            difference = bsal_scheduler_get_actor_production(scheduler, actor);
+            difference = thorium_scheduler_get_actor_production(scheduler, actor);
 
             printf("  [%s/%d] mailbox: %d received: %d (+%d) producers: %d consumers: %d\n",
-                        bsal_actor_script_name(actor),
+                        thorium_actor_script_name(actor),
                         name, count, received,
                        difference,
                        producers, consumers);
         }
 
-        script = bsal_actor_script(actor);
+        script = thorium_actor_script(actor);
 
         if (bsal_map_get_value(&distribution, &script, &frequency)) {
             ++frequency;
@@ -717,14 +717,14 @@ void bsal_worker_print_actors(struct bsal_worker *worker, struct bsal_scheduler 
 
     while (bsal_map_iterator_get_next_key_and_value(&iterator, &script, &frequency)) {
 
-        script_object = bsal_node_find_script(worker->node, script);
+        script_object = thorium_node_find_script(worker->node, script);
 
         BSAL_DEBUGGER_ASSERT(script_object != NULL);
 
         printf("node/%d worker/%d Frequency %s => %d\n",
                         node_name,
                         worker->name,
-                        bsal_script_description(script_object),
+                        thorium_script_description(script_object),
                         frequency);
     }
 
@@ -732,22 +732,22 @@ void bsal_worker_print_actors(struct bsal_worker *worker, struct bsal_scheduler 
     bsal_map_destroy(&distribution);
 }
 
-void bsal_worker_evict_actor(struct bsal_worker *worker, int actor_name)
+void thorium_worker_evict_actor(struct thorium_worker *worker, int actor_name)
 {
-    struct bsal_actor *actor;
+    struct thorium_actor *actor;
     int name;
     struct bsal_ring_queue saved_actors;
     int count;
 
     bsal_set_add(&worker->evicted_actors, &actor_name);
     bsal_map_delete(&worker->actors, &actor_name);
-    bsal_ring_queue_init(&saved_actors, sizeof(struct bsal_actor *));
+    bsal_ring_queue_init(&saved_actors, sizeof(struct thorium_actor *));
 
     /* evict the actor from the scheduling queue
      */
-    while (bsal_scheduling_queue_dequeue(&worker->scheduling_queue, &actor)) {
+    while (thorium_scheduling_queue_dequeue(&worker->scheduling_queue, &actor)) {
 
-        name = bsal_actor_name(actor);
+        name = thorium_actor_name(actor);
 
         if (name != actor_name) {
 
@@ -757,7 +757,7 @@ void bsal_worker_evict_actor(struct bsal_worker *worker, int actor_name)
     }
 
     while (bsal_ring_queue_dequeue(&saved_actors, &actor)) {
-        bsal_scheduling_queue_enqueue(&worker->scheduling_queue, actor);
+        thorium_scheduling_queue_enqueue(&worker->scheduling_queue, actor);
     }
 
     bsal_ring_queue_destroy(&saved_actors);
@@ -770,7 +770,7 @@ void bsal_worker_evict_actor(struct bsal_worker *worker, int actor_name)
     while (count-- && bsal_fast_ring_pop_from_consumer(&worker->actors_to_schedule,
                             &actor)) {
 
-        name = bsal_actor_name(actor);
+        name = thorium_actor_name(actor);
 
         if (name != actor_name) {
 
@@ -783,52 +783,52 @@ void bsal_worker_evict_actor(struct bsal_worker *worker, int actor_name)
     bsal_map_iterator_init(&worker->actor_iterator, &worker->actors);
 }
 
-void bsal_worker_lock(struct bsal_worker *worker)
+void thorium_worker_lock(struct thorium_worker *worker)
 {
     bsal_lock_lock(&worker->lock);
 }
 
-void bsal_worker_unlock(struct bsal_worker *worker)
+void thorium_worker_unlock(struct thorium_worker *worker)
 {
     bsal_lock_unlock(&worker->lock);
 }
 
-struct bsal_map *bsal_worker_get_actors(struct bsal_worker *worker)
+struct bsal_map *thorium_worker_get_actors(struct thorium_worker *worker)
 {
     return &worker->actors;
 }
 
-int bsal_worker_enqueue_actor_special(struct bsal_worker *worker, struct bsal_actor *actor)
+int thorium_worker_enqueue_actor_special(struct thorium_worker *worker, struct thorium_actor *actor)
 {
     int name;
 
-    name = bsal_actor_name(actor);
+    name = thorium_actor_name(actor);
 
     bsal_set_delete(&worker->evicted_actors, &name);
 
-    return bsal_worker_enqueue_actor(worker, actor);
+    return thorium_worker_enqueue_actor(worker, actor);
 }
 
-int bsal_worker_get_sum_of_received_actor_messages(struct bsal_worker *worker)
+int thorium_worker_get_sum_of_received_actor_messages(struct thorium_worker *worker)
 {
     int value;
     struct bsal_map_iterator iterator;
     int actor_name;
     int messages;
-    struct bsal_actor *actor;
+    struct thorium_actor *actor;
 
     bsal_map_iterator_init(&iterator, &worker->actors);
 
     value = 0;
     while (bsal_map_iterator_get_next_key_and_value(&iterator, &actor_name, NULL)) {
 
-        actor = bsal_node_get_actor_from_name(worker->node, actor_name);
+        actor = thorium_node_get_actor_from_name(worker->node, actor_name);
 
         if (actor == NULL) {
             continue;
         }
 
-        messages = bsal_actor_get_sum_of_received_messages(actor);
+        messages = thorium_actor_get_sum_of_received_messages(actor);
 
         value += messages;
     }
@@ -838,26 +838,26 @@ int bsal_worker_get_sum_of_received_actor_messages(struct bsal_worker *worker)
     return value;
 }
 
-int bsal_worker_get_queued_messages(struct bsal_worker *worker)
+int thorium_worker_get_queued_messages(struct thorium_worker *worker)
 {
     int value;
     struct bsal_map_iterator map_iterator;
     int actor_name;
     int messages;
-    struct bsal_actor *actor;
+    struct thorium_actor *actor;
 
     bsal_map_iterator_init(&map_iterator, &worker->actors);
 
     value = 0;
     while (bsal_map_iterator_get_next_key_and_value(&map_iterator, &actor_name, NULL)) {
 
-        actor = bsal_node_get_actor_from_name(worker->node, actor_name);
+        actor = thorium_node_get_actor_from_name(worker->node, actor_name);
 
         if (actor == NULL) {
             continue;
         }
 
-        messages = bsal_actor_get_mailbox_size(actor);
+        messages = thorium_actor_get_mailbox_size(actor);
 
         value += messages;
     }
@@ -868,7 +868,7 @@ int bsal_worker_get_queued_messages(struct bsal_worker *worker)
 
 }
 
-float bsal_worker_get_scheduling_epoch_load(struct bsal_worker *worker)
+float thorium_worker_get_scheduling_epoch_load(struct thorium_worker *worker)
 {
     uint64_t end_time;
     uint64_t period;
@@ -884,18 +884,18 @@ float bsal_worker_get_scheduling_epoch_load(struct bsal_worker *worker)
     return (0.0 + worker->scheduling_epoch_used_nanoseconds) / period;
 }
 
-void bsal_worker_reset_scheduling_epoch(struct bsal_worker *worker)
+void thorium_worker_reset_scheduling_epoch(struct thorium_worker *worker)
 {
     worker->scheduling_epoch_start_in_nanoseconds = bsal_timer_get_nanoseconds(&worker->timer);
 
     worker->scheduling_epoch_used_nanoseconds = 0;
 }
 
-int bsal_worker_get_production(struct bsal_worker *worker, struct bsal_scheduler *scheduler)
+int thorium_worker_get_production(struct thorium_worker *worker, struct thorium_scheduler *scheduler)
 {
     struct bsal_map_iterator iterator;
     int name;
-    struct bsal_actor *actor;
+    struct thorium_actor *actor;
     int production;
 
     production = 0;
@@ -903,13 +903,13 @@ int bsal_worker_get_production(struct bsal_worker *worker, struct bsal_scheduler
 
     while (bsal_map_iterator_get_next_key_and_value(&iterator, &name, NULL)) {
 
-        actor = bsal_node_get_actor_from_name(worker->node, name);
+        actor = thorium_node_get_actor_from_name(worker->node, name);
 
         if (actor == NULL) {
             continue;
         }
 
-        production += bsal_scheduler_get_actor_production(scheduler, actor);
+        production += thorium_scheduler_get_actor_production(scheduler, actor);
 
     }
 
@@ -918,11 +918,11 @@ int bsal_worker_get_production(struct bsal_worker *worker, struct bsal_scheduler
     return production;
 }
 
-int bsal_worker_get_producer_count(struct bsal_worker *worker, struct bsal_scheduler *scheduler)
+int thorium_worker_get_producer_count(struct thorium_worker *worker, struct thorium_scheduler *scheduler)
 {
     struct bsal_map_iterator iterator;
     int name;
-    struct bsal_actor *actor;
+    struct thorium_actor *actor;
     int count;
 
     count = 0;
@@ -930,13 +930,13 @@ int bsal_worker_get_producer_count(struct bsal_worker *worker, struct bsal_sched
 
     while (bsal_map_iterator_get_next_key_and_value(&iterator, &name, NULL)) {
 
-        actor = bsal_node_get_actor_from_name(worker->node, name);
+        actor = thorium_node_get_actor_from_name(worker->node, name);
 
         if (actor == NULL) {
             continue;
         }
 
-        if (bsal_scheduler_get_actor_production(scheduler, actor) > 0) {
+        if (thorium_scheduler_get_actor_production(scheduler, actor) > 0) {
             ++count;
         }
 
@@ -946,13 +946,13 @@ int bsal_worker_get_producer_count(struct bsal_worker *worker, struct bsal_sched
     return count;
 }
 
-void bsal_worker_free_message(struct bsal_worker *worker, struct bsal_message *message)
+void thorium_worker_free_message(struct thorium_worker *worker, struct thorium_message *message)
 {
     int source_worker;
     void *buffer;
 
-    buffer = bsal_message_buffer(message);
-    source_worker = bsal_message_get_worker(message);
+    buffer = thorium_message_buffer(message);
+    source_worker = thorium_message_get_worker(message);
 
     if (source_worker == worker->name) {
 
@@ -966,11 +966,11 @@ void bsal_worker_free_message(struct bsal_worker *worker, struct bsal_message *m
          * or from another BIOSAL node altogether.
          */
 
-        bsal_worker_enqueue_message_for_triage(worker, message);
+        thorium_worker_enqueue_message_for_triage(worker, message);
     }
 }
 
-int bsal_worker_enqueue_message_for_triage(struct bsal_worker *worker, struct bsal_message *message)
+int thorium_worker_enqueue_message_for_triage(struct thorium_worker *worker, struct thorium_message *message)
 {
     if (!bsal_fast_ring_push_from_producer(&worker->clean_message_ring_for_triage, message)) {
 
@@ -980,14 +980,14 @@ int bsal_worker_enqueue_message_for_triage(struct bsal_worker *worker, struct bs
     return 1;
 }
 
-int bsal_worker_dequeue_message_for_triage(struct bsal_worker *worker, struct bsal_message *message)
+int thorium_worker_dequeue_message_for_triage(struct thorium_worker *worker, struct thorium_message *message)
 {
     return bsal_fast_ring_pop_from_consumer(&worker->clean_message_ring_for_triage, message);
 }
 
 /* Just return the number of queued messages.
  */
-int bsal_worker_get_message_production_score(struct bsal_worker *worker)
+int thorium_worker_get_message_production_score(struct thorium_worker *worker)
 {
     int score;
 
@@ -1000,10 +1000,10 @@ int bsal_worker_get_message_production_score(struct bsal_worker *worker)
     return score;
 }
 
-void bsal_worker_run(struct bsal_worker *worker)
+void thorium_worker_run(struct thorium_worker *worker)
 {
-    struct bsal_actor *actor;
-    struct bsal_message other_message;
+    struct thorium_actor *actor;
+    struct thorium_message other_message;
 
 #ifdef BSAL_NODE_INJECT_CLEAN_WORKER_BUFFERS
     void *buffer;
@@ -1020,10 +1020,10 @@ void bsal_worker_run(struct bsal_worker *worker)
 #ifdef BSAL_WORKER_DEBUG
     int tag;
     int destination;
-    struct bsal_message *message;
+    struct thorium_message *message;
 #endif
 
-    bsal_worker_lock(worker);
+    thorium_worker_lock(worker);
 
 #ifdef BSAL_NODE_ENABLE_INSTRUMENTATION
     period = BSAL_NODE_LOAD_PERIOD;
@@ -1058,12 +1058,12 @@ void bsal_worker_run(struct bsal_worker *worker)
 #ifdef BSAL_WORKER_PRINT_SCHEDULING_QUEUE
 
         /*
-        if (bsal_node_name(worker->node) == 0
+        if (thorium_node_name(worker->node) == 0
                         && worker->name == 0) {
                         */
 
-        bsal_scheduling_queue_print(&worker->scheduling_queue,
-                        bsal_node_name(worker->node),
+        thorium_scheduling_queue_print(&worker->scheduling_queue,
+                        thorium_node_name(worker->node),
                         worker->name);
             /*
         }
@@ -1071,25 +1071,25 @@ void bsal_worker_run(struct bsal_worker *worker)
 #endif
 
 #ifdef BSAL_WORKER_DEBUG_SYMMETRIC_PLACEMENT
-        bsal_worker_print_actors(worker, NULL);
+        thorium_worker_print_actors(worker, NULL);
 #endif
     }
 #endif
 
 #ifdef BSAL_WORKER_DEBUG
     if (worker->debug) {
-        printf("DEBUG worker/%d bsal_worker_run\n",
-                        bsal_worker_name(worker));
+        printf("DEBUG worker/%d thorium_worker_run\n",
+                        thorium_worker_name(worker));
     }
 #endif
 
     /* check for messages in inbound FIFO */
-    if (bsal_worker_dequeue_actor(worker, &actor)) {
+    if (thorium_worker_dequeue_actor(worker, &actor)) {
 
 #ifdef BSAL_WORKER_DEBUG
         message = bsal_work_message(&work);
-        tag = bsal_message_tag(message);
-        destination = bsal_message_destination(message);
+        tag = thorium_message_tag(message);
+        destination = thorium_message_destination(message);
 
         if (tag == BSAL_ACTOR_ASK_TO_STOP) {
             printf("DEBUG pulled BSAL_ACTOR_ASK_TO_STOP for %d\n",
@@ -1102,7 +1102,7 @@ void bsal_worker_run(struct bsal_worker *worker)
          * before starting the timer because this is part of the
          * runtime system (RTS).
          */
-        bsal_priority_scheduler_update(&worker->scheduler, actor);
+        thorium_priority_scheduler_update(&worker->scheduler, actor);
 
 #ifdef BSAL_NODE_ENABLE_INSTRUMENTATION
         bsal_timer_start(&worker->timer);
@@ -1110,7 +1110,7 @@ void bsal_worker_run(struct bsal_worker *worker)
 
         worker->busy = 1;
         /* dispatch message to a worker */
-        bsal_worker_work(worker, actor);
+        thorium_worker_work(worker, actor);
 
         worker->busy = 0;
 
@@ -1139,7 +1139,7 @@ void bsal_worker_run(struct bsal_worker *worker)
     /* free outbound buffers, if any
      */
 
-    if (bsal_worker_fetch_clean_outbound_buffer(worker, &buffer)) {
+    if (thorium_worker_fetch_clean_outbound_buffer(worker, &buffer)) {
         bsal_memory_pool_free(&worker->outbound_message_memory_pool, buffer);
     }
 #endif
@@ -1156,10 +1156,10 @@ void bsal_worker_run(struct bsal_worker *worker)
         }
     }
 
-    bsal_worker_unlock(worker);
+    thorium_worker_unlock(worker);
 }
 
-void bsal_worker_work(struct bsal_worker *worker, struct bsal_actor *actor)
+void thorium_worker_work(struct thorium_worker *worker, struct thorium_actor *actor)
 {
     int dead;
     int actor_name;
@@ -1169,7 +1169,7 @@ void bsal_worker_work(struct bsal_worker *worker, struct bsal_actor *actor)
     int destination;
 #endif
 
-    actor_name = bsal_actor_name(actor);
+    actor_name = thorium_actor_name(actor);
 
 #ifdef BSAL_WORKER_DEBUG_SCHEDULER
     printf("WORK actor %d\n", actor_name);
@@ -1177,9 +1177,9 @@ void bsal_worker_work(struct bsal_worker *worker, struct bsal_actor *actor)
 
     /* the actor died while the work was queued.
      */
-    if (bsal_actor_dead(actor)) {
+    if (thorium_actor_dead(actor)) {
 
-        printf("NOTICE actor is dead already (bsal_worker_work)\n");
+        printf("NOTICE actor is dead already (thorium_worker_work)\n");
 
         return;
     }
@@ -1187,10 +1187,10 @@ void bsal_worker_work(struct bsal_worker *worker, struct bsal_actor *actor)
     /* lock the actor to prevent another worker from making work
      * on the same actor at the same time
      */
-    if (bsal_actor_trylock(actor) != BSAL_LOCK_SUCCESS) {
+    if (thorium_actor_trylock(actor) != BSAL_LOCK_SUCCESS) {
 
         printf("Warning: CONTENTION worker %d could not lock actor %d, returning the message...\n",
-                        bsal_worker_name(worker),
+                        thorium_worker_name(worker),
                         actor_name);
 
         return;
@@ -1198,40 +1198,40 @@ void bsal_worker_work(struct bsal_worker *worker, struct bsal_actor *actor)
 
     /* the actor died while this worker was waiting for the lock
      */
-    if (bsal_actor_dead(actor)) {
+    if (thorium_actor_dead(actor)) {
 
-        printf("DEBUG bsal_worker_work actor died while the worker was waiting for the lock.\n");
+        printf("DEBUG thorium_worker_work actor died while the worker was waiting for the lock.\n");
 #ifdef BSAL_WORKER_DEBUG
 #endif
-        /*bsal_actor_unlock(actor);*/
+        /*thorium_actor_unlock(actor);*/
         return;
     }
 
     /* call the actor receive code
      */
-    bsal_actor_set_worker(actor, worker);
+    thorium_actor_set_worker(actor, worker);
 
-    bsal_actor_work(actor);
+    thorium_actor_work(actor);
 
     /* Free ephemeral memory
      */
     bsal_memory_pool_free_all(&worker->ephemeral_memory);
 
-    dead = bsal_actor_dead(actor);
+    dead = thorium_actor_dead(actor);
 
     if (dead) {
 
         bsal_map_delete(&worker->actors, &actor_name);
 
-        bsal_node_notify_death(worker->node, actor);
+        thorium_node_notify_death(worker->node, actor);
     }
 
-    bsal_actor_set_worker(actor, NULL);
+    thorium_actor_set_worker(actor, NULL);
 
 #ifdef BSAL_WORKER_DEBUG_20140601
     if (worker->debug) {
         printf("DEBUG worker/%d after dead call\n",
-                        bsal_worker_name(worker));
+                        thorium_worker_name(worker));
     }
 #endif
 
@@ -1239,23 +1239,23 @@ void bsal_worker_work(struct bsal_worker *worker, struct bsal_actor *actor)
      * This does not do anything if a death notification
      * was sent to the node
      */
-    bsal_actor_unlock(actor);
+    thorium_actor_unlock(actor);
 
 #ifdef BSAL_WORKER_DEBUG
-    printf("bsal_worker_work Freeing buffer %p %i tag %i\n",
-                    buffer, bsal_message_count(message),
-                    bsal_message_tag(message));
+    printf("thorium_worker_work Freeing buffer %p %i tag %i\n",
+                    buffer, thorium_message_count(message),
+                    thorium_message_tag(message));
 #endif
 
 #ifdef BSAL_WORKER_DEBUG_20140601
     if (worker->debug) {
-        printf("DEBUG worker/%d exiting bsal_worker_work\n",
-                        bsal_worker_name(worker));
+        printf("DEBUG worker/%d exiting thorium_worker_work\n",
+                        thorium_worker_name(worker));
     }
 #endif
 }
 
-void bsal_worker_wait(struct bsal_worker *worker)
+void thorium_worker_wait(struct thorium_worker *worker)
 {
 
     if (!worker->started_in_thread) {
@@ -1265,7 +1265,7 @@ void bsal_worker_wait(struct bsal_worker *worker)
     bsal_thread_wait(&worker->thread);
 }
 
-void bsal_worker_signal(struct bsal_worker *worker)
+void thorium_worker_signal(struct thorium_worker *worker)
 {
     if (!worker->started_in_thread) {
         return;
@@ -1274,26 +1274,26 @@ void bsal_worker_signal(struct bsal_worker *worker)
     bsal_thread_signal(&worker->thread);
 }
 
-uint64_t bsal_worker_get_epoch_wake_up_count(struct bsal_worker *worker)
+uint64_t thorium_worker_get_epoch_wake_up_count(struct thorium_worker *worker)
 {
     return bsal_thread_get_wake_up_count(&worker->thread) - worker->last_wake_up_count;
 }
 
-uint64_t bsal_worker_get_loop_wake_up_count(struct bsal_worker *worker)
+uint64_t thorium_worker_get_loop_wake_up_count(struct thorium_worker *worker)
 {
     return bsal_thread_get_wake_up_count(&worker->thread);
 }
 
-void bsal_worker_enable_waiting(struct bsal_worker *worker)
+void thorium_worker_enable_waiting(struct thorium_worker *worker)
 {
     worker->waiting_is_enabled = 1;
 }
 
-void bsal_worker_check_production(struct bsal_worker *worker, int value, int name)
+void thorium_worker_check_production(struct thorium_worker *worker, int value, int name)
 {
     uint64_t time;
     uint64_t elapsed;
-    struct bsal_actor *other_actor;
+    struct thorium_actor *other_actor;
     int mailbox_size;
     int status;
 
@@ -1321,15 +1321,15 @@ void bsal_worker_check_production(struct bsal_worker *worker, int value, int nam
 
         if (bsal_map_iterator_get_next_key_and_value(&worker->actor_iterator, &name, NULL)) {
 
-            other_actor = bsal_node_get_actor_from_name(worker->node, name);
+            other_actor = thorium_node_get_actor_from_name(worker->node, name);
 
             mailbox_size = 0;
             if (other_actor != NULL) {
-                mailbox_size = bsal_actor_get_mailbox_size(other_actor);
+                mailbox_size = thorium_actor_get_mailbox_size(other_actor);
             }
 
             if (mailbox_size > 0) {
-                bsal_scheduling_queue_enqueue(&worker->scheduling_queue, other_actor);
+                thorium_scheduling_queue_enqueue(&worker->scheduling_queue, other_actor);
 
                 status = STATUS_QUEUED;
                 bsal_map_update_value(&worker->actors, &name, &status);
@@ -1386,20 +1386,20 @@ void bsal_worker_check_production(struct bsal_worker *worker, int value, int nam
 
                     /*
                      */
-                    bsal_worker_wait(worker);
+                    thorium_worker_wait(worker);
                 }
             }
         }
     }
 }
 
-int bsal_worker_inject_clean_outbound_buffer(struct bsal_worker *self, void *buffer)
+int thorium_worker_inject_clean_outbound_buffer(struct thorium_worker *self, void *buffer)
 {
     return bsal_fast_ring_push_from_producer(&self->injected_clean_outbound_buffers,
                     &buffer);
 }
 
-int bsal_worker_fetch_clean_outbound_buffer(struct bsal_worker *self, void **buffer)
+int thorium_worker_fetch_clean_outbound_buffer(struct thorium_worker *self, void **buffer)
 {
     return bsal_fast_ring_pop_from_consumer(&self->injected_clean_outbound_buffers,
                     buffer);

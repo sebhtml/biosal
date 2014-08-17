@@ -3,7 +3,7 @@
 
 #include <stdio.h>
 
-struct bsal_script hello_script = {
+struct thorium_script hello_script = {
     .identifier = HELLO_SCRIPT,
     .init = hello_init,
     .destroy = hello_destroy,
@@ -12,24 +12,24 @@ struct bsal_script hello_script = {
     .name = "hello"
 };
 
-void hello_init(struct bsal_actor *actor)
+void hello_init(struct thorium_actor *actor)
 {
     struct hello *hello1;
 
-    hello1 = (struct hello *)bsal_actor_concrete_actor(actor);
+    hello1 = (struct hello *)thorium_actor_concrete_actor(actor);
     bsal_vector_init(&hello1->initial_helloes, sizeof(int));
 }
 
-void hello_destroy(struct bsal_actor *actor)
+void hello_destroy(struct thorium_actor *actor)
 {
     struct hello *hello1;
 
-    hello1 = (struct hello *)bsal_actor_concrete_actor(actor);
+    hello1 = (struct hello *)thorium_actor_concrete_actor(actor);
 
     bsal_vector_destroy(&hello1->initial_helloes);
 }
 
-void hello_receive(struct bsal_actor *actor, struct bsal_message *message)
+void hello_receive(struct thorium_actor *actor, struct thorium_message *message)
 {
     int tag;
     int name;
@@ -37,10 +37,10 @@ void hello_receive(struct bsal_actor *actor, struct bsal_message *message)
     struct hello *hello1;
     int i;
 
-    hello1 = (struct hello *)bsal_actor_concrete_actor(actor);
-    tag = bsal_message_tag(message);
-    name = bsal_actor_name(actor);
-    buffer = bsal_message_buffer(message);
+    hello1 = (struct hello *)thorium_actor_concrete_actor(actor);
+    tag = thorium_message_tag(message);
+    name = thorium_actor_name(actor);
+    buffer = thorium_message_buffer(message);
 
     if (tag == BSAL_ACTOR_START) {
 
@@ -54,6 +54,6 @@ void hello_receive(struct bsal_actor *actor, struct bsal_message *message)
         }
         printf("\n");
 
-        bsal_actor_send_to_self_empty(actor, BSAL_ACTOR_STOP);
+        thorium_actor_send_to_self_empty(actor, BSAL_ACTOR_STOP);
     }
 }

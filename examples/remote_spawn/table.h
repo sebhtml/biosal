@@ -16,10 +16,10 @@ struct table {
 #define TABLE_DIE2 0x000005e0
 #define TABLE_NOTIFY 0x000026ea
 
-extern struct bsal_script table_script;
+extern struct thorium_script table_script;
 
-void table_init(struct bsal_actor *self);
-void table_destroy(struct bsal_actor *self);
-void table_receive(struct bsal_actor *self, struct bsal_message *message);
+void table_init(struct thorium_actor *self);
+void table_destroy(struct thorium_actor *self);
+void table_receive(struct thorium_actor *self, struct thorium_message *message);
 
 #endif

@@ -1,7 +1,7 @@
 
 #include "gc_ratio_calculator.h"
 
-struct bsal_script gc_ratio_calculator_script;
+struct thorium_script gc_ratio_calculator_script;
 
 int main(int argc, char *argv[])
 {

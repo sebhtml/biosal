@@ -19,17 +19,17 @@ struct mock {
 #define MOCK_NEW_CONTACTS 0x00003f75
 #define MOCK_NEW_CONTACTS_REPLY 0x000071a1
 
-extern struct bsal_script mock_script;
+extern struct thorium_script mock_script;
 
-void mock_init(struct bsal_actor *self);
-void mock_destroy(struct bsal_actor *self);
-void mock_receive(struct bsal_actor *self, struct bsal_message *message);
+void mock_init(struct thorium_actor *self);
+void mock_destroy(struct thorium_actor *self);
+void mock_receive(struct thorium_actor *self, struct thorium_message *message);
 
-void mock_start(struct bsal_actor *self, struct bsal_message *message);
-void mock_spawn_children(struct bsal_actor *self);
-void mock_die(struct bsal_actor *self, struct bsal_message *message);
+void mock_start(struct thorium_actor *self, struct thorium_message *message);
+void mock_spawn_children(struct thorium_actor *self);
+void mock_die(struct thorium_actor *self, struct thorium_message *message);
 
-void mock_add_contacts(struct bsal_actor *self, struct bsal_message *message);
-void mock_share(struct bsal_actor *self, struct bsal_message *message);
+void mock_add_contacts(struct thorium_actor *self, struct thorium_message *message);
+void mock_share(struct thorium_actor *self, struct thorium_message *message);
 
 #endif

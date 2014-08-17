@@ -48,37 +48,37 @@ struct spate {
     struct bsal_vector sequence_stores;
 };
 
-extern struct bsal_script spate_script;
+extern struct thorium_script spate_script;
 
-void spate_init(struct bsal_actor *self);
-void spate_destroy(struct bsal_actor *self);
-void spate_receive(struct bsal_actor *self, struct bsal_message *message);
+void spate_init(struct thorium_actor *self);
+void spate_destroy(struct thorium_actor *self);
+void spate_receive(struct thorium_actor *self, struct thorium_message *message);
 
-void spate_start(struct bsal_actor *self, struct bsal_message *message);
-void spate_ask_to_stop(struct bsal_actor *self, struct bsal_message *message);
-void spate_spawn_reply(struct bsal_actor *self, struct bsal_message *message);
+void spate_start(struct thorium_actor *self, struct thorium_message *message);
+void spate_ask_to_stop(struct thorium_actor *self, struct thorium_message *message);
+void spate_spawn_reply(struct thorium_actor *self, struct thorium_message *message);
 
-void spate_set_consumers_reply(struct bsal_actor *self, struct bsal_message *message);
-void spate_start_reply(struct bsal_actor *self, struct bsal_message *message);
-void spate_set_script_reply(struct bsal_actor *self, struct bsal_message *message);
-void spate_start_reply_manager(struct bsal_actor *self, struct bsal_message *message);
-void spate_start_reply_controller(struct bsal_actor *self, struct bsal_message *message);
-void spate_distribute_reply(struct bsal_actor *self, struct bsal_message *message);
-void spate_set_block_size_reply(struct bsal_actor *self, struct bsal_message *message);
+void spate_set_consumers_reply(struct thorium_actor *self, struct thorium_message *message);
+void spate_start_reply(struct thorium_actor *self, struct thorium_message *message);
+void spate_set_script_reply(struct thorium_actor *self, struct thorium_message *message);
+void spate_start_reply_manager(struct thorium_actor *self, struct thorium_message *message);
+void spate_start_reply_controller(struct thorium_actor *self, struct thorium_message *message);
+void spate_distribute_reply(struct thorium_actor *self, struct thorium_message *message);
+void spate_set_block_size_reply(struct thorium_actor *self, struct thorium_message *message);
 
-void spate_add_files(struct bsal_actor *self, struct bsal_message *message);
-void spate_add_files_reply(struct bsal_actor *self, struct bsal_message *message);
+void spate_add_files(struct thorium_actor *self, struct thorium_message *message);
+void spate_add_files_reply(struct thorium_actor *self, struct thorium_message *message);
 
-int spate_add_file(struct bsal_actor *self);
-void spate_add_file_reply(struct bsal_actor *self, struct bsal_message *message);
-void spate_start_reply_builder(struct bsal_actor *self, struct bsal_message *message);
-void spate_set_producers_reply(struct bsal_actor *self, struct bsal_message *message);
+int spate_add_file(struct thorium_actor *self);
+void spate_add_file_reply(struct thorium_actor *self, struct thorium_message *message);
+void spate_start_reply_builder(struct thorium_actor *self, struct thorium_message *message);
+void spate_set_producers_reply(struct thorium_actor *self, struct thorium_message *message);
 
-void spate_help(struct bsal_actor *self);
-void spate_stop(struct bsal_actor *self);
-int spate_must_print_help(struct bsal_actor *self);
+void spate_help(struct thorium_actor *self);
+void spate_stop(struct thorium_actor *self);
+int spate_must_print_help(struct thorium_actor *self);
 
-void spate_spawn_reply_dummy_walker(struct bsal_actor *self, struct bsal_message *message);
-void spate_start_reply_dummy_walker(struct bsal_actor *self, struct bsal_message *message);
+void spate_spawn_reply_dummy_walker(struct thorium_actor *self, struct thorium_message *message);
+void spate_start_reply_dummy_walker(struct thorium_actor *self, struct thorium_message *message);
 
 #endif

@@ -62,14 +62,14 @@ void thorium_transport_profiler_print_report(struct thorium_transport_profiler *
 }
 
 void thorium_transport_profiler_send_mock(struct thorium_transport_profiler *self,
-                struct bsal_message *message)
+                struct thorium_message *message)
 {
     int rank;
     int size;
     int *bucket;
 
-    size = bsal_message_count(message);
-    rank = bsal_message_source_node(message);
+    size = thorium_message_count(message);
+    rank = thorium_message_source_node(message);
 
     if (self->rank < 0) {
         self->rank = rank;

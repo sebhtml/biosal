@@ -31,15 +31,15 @@ struct bsal_assembly_arc_classifier {
     int consumer_count_above_threshold;
 };
 
-extern struct bsal_script bsal_assembly_arc_classifier_script;
+extern struct thorium_script bsal_assembly_arc_classifier_script;
 
-void bsal_assembly_arc_classifier_init(struct bsal_actor *self);
-void bsal_assembly_arc_classifier_destroy(struct bsal_actor *self);
-void bsal_assembly_arc_classifier_receive(struct bsal_actor *self, struct bsal_message *message);
+void bsal_assembly_arc_classifier_init(struct thorium_actor *self);
+void bsal_assembly_arc_classifier_destroy(struct thorium_actor *self);
+void bsal_assembly_arc_classifier_receive(struct thorium_actor *self, struct thorium_message *message);
 
-void bsal_assembly_arc_classifier_set_kmer_length(struct bsal_actor *self, struct bsal_message *message);
+void bsal_assembly_arc_classifier_set_kmer_length(struct thorium_actor *self, struct thorium_message *message);
 
-void bsal_assembly_arc_classifier_push_arc_block(struct bsal_actor *self, struct bsal_message *message);
-void bsal_assembly_arc_classifier_verify_counters(struct bsal_actor *self);
+void bsal_assembly_arc_classifier_push_arc_block(struct thorium_actor *self, struct thorium_message *message);
+void bsal_assembly_arc_classifier_verify_counters(struct thorium_actor *self);
 
 #endif

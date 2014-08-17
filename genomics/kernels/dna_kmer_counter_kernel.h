@@ -50,28 +50,28 @@ struct bsal_dna_kmer_counter_kernel {
 #define BSAL_SET_KMER_LENGTH 0x0000702b
 #define BSAL_SET_KMER_LENGTH_REPLY 0x00005162
 
-extern struct bsal_script bsal_dna_kmer_counter_kernel_script;
+extern struct thorium_script bsal_dna_kmer_counter_kernel_script;
 
-void bsal_dna_kmer_counter_kernel_init(struct bsal_actor *actor);
-void bsal_dna_kmer_counter_kernel_destroy(struct bsal_actor *actor);
-void bsal_dna_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_message *message);
+void bsal_dna_kmer_counter_kernel_init(struct thorium_actor *actor);
+void bsal_dna_kmer_counter_kernel_destroy(struct thorium_actor *actor);
+void bsal_dna_kmer_counter_kernel_receive(struct thorium_actor *actor, struct thorium_message *message);
 
-void bsal_dna_kmer_counter_kernel_verify(struct bsal_actor *actor, struct bsal_message *message);
-void bsal_dna_kmer_counter_kernel_ask(struct bsal_actor *self, struct bsal_message *message);
+void bsal_dna_kmer_counter_kernel_verify(struct thorium_actor *actor, struct thorium_message *message);
+void bsal_dna_kmer_counter_kernel_ask(struct thorium_actor *self, struct thorium_message *message);
 
-void bsal_dna_kmer_counter_kernel_do_auto_scaling(struct bsal_actor *self, struct bsal_message *message);
+void bsal_dna_kmer_counter_kernel_do_auto_scaling(struct thorium_actor *self, struct thorium_message *message);
 
-void bsal_dna_kmer_counter_kernel_pack_message(struct bsal_actor *actor, struct bsal_message *message);
-void bsal_dna_kmer_counter_kernel_unpack_message(struct bsal_actor *actor, struct bsal_message *message);
-void bsal_dna_kmer_counter_kernel_clone_reply(struct bsal_actor *actor, struct bsal_message *message);
+void bsal_dna_kmer_counter_kernel_pack_message(struct thorium_actor *actor, struct thorium_message *message);
+void bsal_dna_kmer_counter_kernel_unpack_message(struct thorium_actor *actor, struct thorium_message *message);
+void bsal_dna_kmer_counter_kernel_clone_reply(struct thorium_actor *actor, struct thorium_message *message);
 
-int bsal_dna_kmer_counter_kernel_pack(struct bsal_actor *actor, void *buffer);
-int bsal_dna_kmer_counter_kernel_unpack(struct bsal_actor *actor, void *buffer);
-int bsal_dna_kmer_counter_kernel_pack_size(struct bsal_actor *actor);
-int bsal_dna_kmer_counter_kernel_pack_unpack(struct bsal_actor *actor, int operation, void *buffer);
+int bsal_dna_kmer_counter_kernel_pack(struct thorium_actor *actor, void *buffer);
+int bsal_dna_kmer_counter_kernel_unpack(struct thorium_actor *actor, void *buffer);
+int bsal_dna_kmer_counter_kernel_pack_size(struct thorium_actor *actor);
+int bsal_dna_kmer_counter_kernel_pack_unpack(struct thorium_actor *actor, int operation, void *buffer);
 
-void bsal_dna_kmer_counter_kernel_notify(struct bsal_actor *actor, struct bsal_message *message);
-void bsal_dna_kmer_counter_kernel_notify_reply(struct bsal_actor *actor, struct bsal_message *message);
-void bsal_dna_kmer_counter_kernel_push_sequence_data_block(struct bsal_actor *actor, struct bsal_message *message);
+void bsal_dna_kmer_counter_kernel_notify(struct thorium_actor *actor, struct thorium_message *message);
+void bsal_dna_kmer_counter_kernel_notify_reply(struct thorium_actor *actor, struct thorium_message *message);
+void bsal_dna_kmer_counter_kernel_push_sequence_data_block(struct thorium_actor *actor, struct thorium_message *message);
 
 #endif

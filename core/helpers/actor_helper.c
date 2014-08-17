@@ -13,111 +13,111 @@
 #include <stdio.h>
 #include <string.h>
 
-void bsal_actor_send_vector(struct bsal_actor *actor, int destination,
+void thorium_actor_send_vector(struct thorium_actor *actor, int destination,
                 int tag, struct bsal_vector *vector)
 {
     int count;
-    struct bsal_message message;
+    struct thorium_message message;
     void *buffer;
     struct bsal_memory_pool *ephemeral_memory;
 
-    ephemeral_memory = bsal_actor_get_ephemeral_memory(actor);
+    ephemeral_memory = thorium_actor_get_ephemeral_memory(actor);
     count = bsal_vector_pack_size(vector);
     buffer = bsal_memory_pool_allocate(ephemeral_memory, count);
     bsal_vector_pack(vector, buffer);
 
-    bsal_message_init(&message, tag, count, buffer);
+    thorium_message_init(&message, tag, count, buffer);
 
-    bsal_actor_send(actor, destination, &message);
+    thorium_actor_send(actor, destination, &message);
 
     bsal_memory_pool_free(ephemeral_memory, buffer);
 
-    bsal_message_destroy(&message);
+    thorium_message_destroy(&message);
 }
 
-void bsal_actor_send_reply_vector(struct bsal_actor *actor, int tag, struct bsal_vector *vector)
+void thorium_actor_send_reply_vector(struct thorium_actor *actor, int tag, struct bsal_vector *vector)
 {
-    bsal_actor_send_vector(actor, bsal_actor_source(actor), tag, vector);
+    thorium_actor_send_vector(actor, thorium_actor_source(actor), tag, vector);
 }
 
-void bsal_actor_send_reply_empty(struct bsal_actor *actor, int tag)
+void thorium_actor_send_reply_empty(struct thorium_actor *actor, int tag)
 {
-    bsal_actor_send_empty(actor, bsal_actor_source(actor), tag);
+    thorium_actor_send_empty(actor, thorium_actor_source(actor), tag);
 }
 
-void bsal_actor_send_to_self_empty(struct bsal_actor *actor, int tag)
+void thorium_actor_send_to_self_empty(struct thorium_actor *actor, int tag)
 {
-    bsal_actor_send_empty(actor, bsal_actor_name(actor), tag);
+    thorium_actor_send_empty(actor, thorium_actor_name(actor), tag);
 }
 
-void bsal_actor_send_empty(struct bsal_actor *actor, int destination, int tag)
+void thorium_actor_send_empty(struct thorium_actor *actor, int destination, int tag)
 {
-    struct bsal_message message;
+    struct thorium_message message;
 
-    bsal_message_init(&message, tag, 0, NULL);
-    bsal_actor_send(actor, destination, &message);
-    bsal_message_destroy(&message);
+    thorium_message_init(&message, tag, 0, NULL);
+    thorium_actor_send(actor, destination, &message);
+    thorium_message_destroy(&message);
 }
 
-void bsal_actor_send_to_supervisor_empty(struct bsal_actor *actor, int tag)
+void thorium_actor_send_to_supervisor_empty(struct thorium_actor *actor, int tag)
 {
-    bsal_actor_send_empty(actor, bsal_actor_supervisor(actor), tag);
+    thorium_actor_send_empty(actor, thorium_actor_supervisor(actor), tag);
 }
 
-void bsal_actor_send_to_supervisor_int(struct bsal_actor *actor, int tag, int value)
+void thorium_actor_send_to_supervisor_int(struct thorium_actor *actor, int tag, int value)
 {
-    bsal_actor_send_int(actor, bsal_actor_supervisor(actor), tag, value);
+    thorium_actor_send_int(actor, thorium_actor_supervisor(actor), tag, value);
 }
 
-void bsal_actor_send_to_self_int(struct bsal_actor *actor, int tag, int value)
+void thorium_actor_send_to_self_int(struct thorium_actor *actor, int tag, int value)
 {
-    bsal_actor_send_int(actor, bsal_actor_name(actor), tag, value);
+    thorium_actor_send_int(actor, thorium_actor_name(actor), tag, value);
 }
 
-void bsal_actor_send_reply_int(struct bsal_actor *actor, int tag, int value)
+void thorium_actor_send_reply_int(struct thorium_actor *actor, int tag, int value)
 {
-    bsal_actor_send_int(actor, bsal_actor_source(actor), tag, value);
+    thorium_actor_send_int(actor, thorium_actor_source(actor), tag, value);
 }
 
-void bsal_actor_send_reply_int64_t(struct bsal_actor *actor, int tag, int64_t value)
+void thorium_actor_send_reply_int64_t(struct thorium_actor *actor, int tag, int64_t value)
 {
-    bsal_actor_send_int64_t(actor, bsal_actor_source(actor), tag, value);
+    thorium_actor_send_int64_t(actor, thorium_actor_source(actor), tag, value);
 }
 
-void bsal_actor_send_reply_uint64_t(struct bsal_actor *actor, int tag, uint64_t value)
+void thorium_actor_send_reply_uint64_t(struct thorium_actor *actor, int tag, uint64_t value)
 {
-    bsal_actor_send_uint64_t(actor, bsal_actor_source(actor), tag, value);
+    thorium_actor_send_uint64_t(actor, thorium_actor_source(actor), tag, value);
 }
 
-void bsal_actor_send_int(struct bsal_actor *actor, int destination, int tag, int value)
+void thorium_actor_send_int(struct thorium_actor *actor, int destination, int tag, int value)
 {
-    struct bsal_message message;
+    struct thorium_message message;
 
-    bsal_message_init(&message, tag, sizeof(value), &value);
-    bsal_actor_send(actor, destination, &message);
-    bsal_message_destroy(&message);
+    thorium_message_init(&message, tag, sizeof(value), &value);
+    thorium_actor_send(actor, destination, &message);
+    thorium_message_destroy(&message);
 }
 
-void bsal_actor_send_uint64_t(struct bsal_actor *actor, int destination, int tag, uint64_t value)
+void thorium_actor_send_uint64_t(struct thorium_actor *actor, int destination, int tag, uint64_t value)
 {
-    struct bsal_message message;
+    struct thorium_message message;
 
-    bsal_message_init(&message, tag, sizeof(value), &value);
-    bsal_actor_send(actor, destination, &message);
-    bsal_message_destroy(&message);
+    thorium_message_init(&message, tag, sizeof(value), &value);
+    thorium_actor_send(actor, destination, &message);
+    thorium_message_destroy(&message);
 }
 
-void bsal_actor_send_int64_t(struct bsal_actor *actor, int destination, int tag, int64_t value)
+void thorium_actor_send_int64_t(struct thorium_actor *actor, int destination, int tag, int64_t value)
 {
-    struct bsal_message message;
+    struct thorium_message message;
 
-    bsal_message_init(&message, tag, sizeof(value), &value);
-    bsal_actor_send(actor, destination, &message);
-    bsal_message_destroy(&message);
+    thorium_message_init(&message, tag, sizeof(value), &value);
+    thorium_actor_send(actor, destination, &message);
+    thorium_message_destroy(&message);
 }
 
 #ifdef BSAL_ACTOR_EXPOSE_ACQUAINTANCE_VECTOR
-void bsal_actor_get_acquaintances(struct bsal_actor *actor, struct bsal_vector *indices,
+void thorium_actor_get_acquaintances(struct thorium_actor *actor, struct bsal_vector *indices,
                 struct bsal_vector *names)
 {
     struct bsal_vector_iterator iterator;
@@ -136,7 +136,7 @@ void bsal_actor_get_acquaintances(struct bsal_actor *actor, struct bsal_vector *
         bsal_vector_iterator_next(&iterator, (void **)&bucket);
 
         index = *bucket;
-        name = bsal_actor_get_acquaintance(actor, index);
+        name = thorium_actor_get_acquaintance(actor, index);
 
         bsal_vector_push_back(names, &name);
     }
@@ -147,7 +147,7 @@ void bsal_actor_get_acquaintances(struct bsal_actor *actor, struct bsal_vector *
 #endif
 
 #ifdef BSAL_ACTOR_EXPOSE_ACQUAINTANCE_VECTOR
-void bsal_actor_add_acquaintances(struct bsal_actor *actor,
+void thorium_actor_add_acquaintances(struct thorium_actor *actor,
                 struct bsal_vector *names, struct bsal_vector *indices)
 {
     struct bsal_vector_iterator iterator;
@@ -161,10 +161,10 @@ void bsal_actor_add_acquaintances(struct bsal_actor *actor,
         bsal_vector_iterator_next(&iterator, (void **)&bucket);
 
         name = *bucket;
-        index = bsal_actor_add_acquaintance(actor, name);
+        index = thorium_actor_add_acquaintance(actor, name);
 
 #ifdef BSAL_ACTOR_HELPER_DEBUG
-        printf("DEBUG bsal_actor_add_acquaintances name %d index %d\n",
+        printf("DEBUG thorium_actor_add_acquaintances name %d index %d\n",
                         name, index);
 #endif
 
@@ -182,24 +182,24 @@ void bsal_actor_add_acquaintances(struct bsal_actor *actor,
 }
 #endif
 
-void bsal_actor_send_range(struct bsal_actor *actor, struct bsal_vector *actors,
-                struct bsal_message *message)
+void thorium_actor_send_range(struct thorium_actor *actor, struct bsal_vector *actors,
+                struct thorium_message *message)
 {
         /*
     int real_source;
 
-    real_source = bsal_actor_name(actor);
+    real_source = thorium_actor_name(actor);
     */
 
-    bsal_actor_send_range_standard(actor, actors, message);
+    thorium_actor_send_range_standard(actor, actors, message);
 /*
-    bsal_actor_pack_proxy_message(actor, message, real_source);
-    bsal_actor_send_range_binomial_tree(actor, actors, message);
+    thorium_actor_pack_proxy_message(actor, message, real_source);
+    thorium_actor_send_range_binomial_tree(actor, actors, message);
     */
 }
 
-void bsal_actor_send_range_standard(struct bsal_actor *actor, struct bsal_vector *actors,
-                struct bsal_message *message)
+void thorium_actor_send_range_standard(struct thorium_actor *actor, struct bsal_vector *actors,
+                struct thorium_message *message)
 {
     int i;
     int first;
@@ -210,7 +210,7 @@ void bsal_actor_send_range_standard(struct bsal_actor *actor, struct bsal_vector
     last = bsal_vector_size(actors) - 1;
 
 #ifdef BSAL_ACTOR_DEBUG1
-    printf("DEBUG bsal_actor_send_range_standard %i-%i\n",
+    printf("DEBUG thorium_actor_send_range_standard %i-%i\n",
                     first, last);
 #endif
 
@@ -220,16 +220,16 @@ void bsal_actor_send_range_standard(struct bsal_actor *actor, struct bsal_vector
 
 #ifdef BSAL_ACTOR_DEBUG_20140601_1
         printf("DEBUG sending %d to %d\n",
-                       bsal_message_tag(message), i);
+                       thorium_message_tag(message), i);
 #endif
         the_actor = *(int *)bsal_vector_at(actors, i);
-        bsal_actor_send(actor, the_actor, message);
+        thorium_actor_send(actor, the_actor, message);
         i++;
     }
 }
 
-void bsal_actor_send_range_binomial_tree(struct bsal_actor *actor, struct bsal_vector *actors,
-                struct bsal_message *message)
+void thorium_actor_send_range_binomial_tree(struct thorium_actor *actor, struct bsal_vector *actors,
+                struct thorium_message *message)
 {
     int middle;
     int first1;
@@ -251,16 +251,16 @@ void bsal_actor_send_range_binomial_tree(struct bsal_actor *actor, struct bsal_v
     struct bsal_vector right_part;
     int left_actor;
     int right_actor;
-    struct bsal_message new_message;
+    struct thorium_message new_message;
     int magic_offset;
     int limit;
     struct bsal_memory_pool *ephemeral_memory;
 
-    ephemeral_memory = bsal_actor_get_ephemeral_memory(actor);
+    ephemeral_memory = thorium_actor_get_ephemeral_memory(actor);
     limit = 0;
 
     if (bsal_vector_size(actors) < limit) {
-        bsal_actor_send_range_standard(actor, actors, message);
+        thorium_actor_send_range_standard(actor, actors, message);
         return;
     }
 
@@ -270,18 +270,18 @@ void bsal_actor_send_range_binomial_tree(struct bsal_actor *actor, struct bsal_v
 #ifdef BSAL_ACTOR_DEBUG_BINOMIAL_TREE
     int name;
 
-    name = bsal_actor_name(actor);
+    name = thorium_actor_name(actor);
 #endif
 
-    source = bsal_actor_name(actor);
-    bsal_message_set_source(message, source);
+    source = thorium_actor_name(actor);
+    thorium_message_set_source(message, source);
 
     first = 0;
     last = bsal_vector_size(actors) - 1;
     middle = first + (last - first) / 2;
 
 #ifdef BSAL_ACTOR_DEBUG_BINOMIAL_TREE
-    printf("DEBUG %i bsal_actor_send_range_binomial_tree\n", name);
+    printf("DEBUG %i thorium_actor_send_range_binomial_tree\n", name);
     printf("DEBUG %i first: %i last: %i middle: %i\n", name, first, last, middle);
 #endif
 
@@ -292,9 +292,9 @@ void bsal_actor_send_range_binomial_tree(struct bsal_actor *actor, struct bsal_v
     middle1 = first1 + (last1 - first1) / 2;
     middle2 = first2 + (last2 - first2) / 2;
 
-    tag = bsal_message_tag(message);
-    buffer = bsal_message_buffer(message);
-    count = bsal_message_count(message);
+    tag = thorium_message_tag(message);
+    buffer = thorium_message_buffer(message);
+    count = thorium_message_count(message);
 
     magic_offset = count + sizeof(source) + sizeof(tag);
 
@@ -324,7 +324,7 @@ void bsal_actor_send_range_binomial_tree(struct bsal_actor *actor, struct bsal_v
         memcpy((char *)new_buffer + offset, &magic_offset, sizeof(magic_offset));
         offset += sizeof(magic_offset);
 
-        bsal_message_init(&new_message, BSAL_ACTOR_BINOMIAL_TREE_SEND, new_count, new_buffer);
+        thorium_message_init(&new_message, BSAL_ACTOR_BINOMIAL_TREE_SEND, new_count, new_buffer);
 
     #ifdef BSAL_ACTOR_DEBUG_BINOMIAL_TREE
         printf("DEBUG111111 actor %i sending BSAL_ACTOR_BINOMIAL_TREE_SEND to %i, range is %i-%i\n",
@@ -334,7 +334,7 @@ void bsal_actor_send_range_binomial_tree(struct bsal_actor *actor, struct bsal_v
         printf("DEBUG left part size: %d\n", (int)bsal_vector_size(&left_part));
 
         left_actor = *(int *)bsal_vector_at(&left_part, middle1);
-        bsal_actor_send(actor, left_actor, &new_message);
+        thorium_actor_send(actor, left_actor, &new_message);
 
         /* restore the buffer for the user */
         bsal_memory_pool_free(ephemeral_memory, new_buffer);
@@ -367,7 +367,7 @@ void bsal_actor_send_range_binomial_tree(struct bsal_actor *actor, struct bsal_v
                     name, source, tag);
 #endif
 
-        bsal_message_init(&new_message, BSAL_ACTOR_BINOMIAL_TREE_SEND, new_count, new_buffer);
+        thorium_message_init(&new_message, BSAL_ACTOR_BINOMIAL_TREE_SEND, new_count, new_buffer);
 
 #ifdef BSAL_ACTOR_DEBUG_BINOMIAL_TREE
         printf("DEBUG %i sending BSAL_ACTOR_BINOMIAL_TREE_SEND to %i, range is %i-%i\n",
@@ -375,7 +375,7 @@ void bsal_actor_send_range_binomial_tree(struct bsal_actor *actor, struct bsal_v
 #endif
 
         right_actor = *(int *)bsal_vector_at(&right_part, middle2);
-        bsal_actor_send(actor, right_actor, &new_message);
+        thorium_actor_send(actor, right_actor, &new_message);
 
         bsal_vector_destroy(&right_part);
         bsal_memory_pool_free(ephemeral_memory, new_buffer);
@@ -383,56 +383,56 @@ void bsal_actor_send_range_binomial_tree(struct bsal_actor *actor, struct bsal_v
     }
 }
 
-void bsal_actor_send_range_empty(struct bsal_actor *actor, struct bsal_vector *actors,
+void thorium_actor_send_range_empty(struct thorium_actor *actor, struct bsal_vector *actors,
                 int tag)
 {
-    struct bsal_message message;
+    struct thorium_message message;
 
-    bsal_message_init(&message, tag, 0, NULL);
-    bsal_actor_send_range(actor, actors, &message);
-    bsal_message_destroy(&message);
+    thorium_message_init(&message, tag, 0, NULL);
+    thorium_actor_send_range(actor, actors, &message);
+    thorium_message_destroy(&message);
 }
 
-void bsal_actor_send_range_int(struct bsal_actor *actor, struct bsal_vector *actors,
+void thorium_actor_send_range_int(struct thorium_actor *actor, struct bsal_vector *actors,
                 int tag, int value)
 {
-    struct bsal_message message;
+    struct thorium_message message;
 
-    bsal_message_init(&message, tag, sizeof(value), &value);
-    bsal_actor_send_range(actor, actors, &message);
-    bsal_message_destroy(&message);
+    thorium_message_init(&message, tag, sizeof(value), &value);
+    thorium_actor_send_range(actor, actors, &message);
+    thorium_message_destroy(&message);
 }
 
-void bsal_actor_send_range_buffer(struct bsal_actor *actor, struct bsal_vector *destinations,
+void thorium_actor_send_range_buffer(struct thorium_actor *actor, struct bsal_vector *destinations,
                 int tag, int count, void *buffer)
 {
-    struct bsal_message message;
+    struct thorium_message message;
 
-    bsal_message_init(&message, tag, count, buffer);
-    bsal_actor_send_range(actor, destinations, &message);
-    bsal_message_destroy(&message);
+    thorium_message_init(&message, tag, count, buffer);
+    thorium_actor_send_range(actor, destinations, &message);
+    thorium_message_destroy(&message);
 }
 
-void bsal_actor_send_range_vector(struct bsal_actor *actor, struct bsal_vector *actors,
+void thorium_actor_send_range_vector(struct thorium_actor *actor, struct bsal_vector *actors,
                 int tag, struct bsal_vector *vector)
 {
-    struct bsal_message message;
+    struct thorium_message message;
     int count;
     void *buffer;
     struct bsal_memory_pool *ephemeral_memory;
 
-    ephemeral_memory = bsal_actor_get_ephemeral_memory(actor);
+    ephemeral_memory = thorium_actor_get_ephemeral_memory(actor);
     count = bsal_vector_pack_size(vector);
     buffer = bsal_memory_pool_allocate(ephemeral_memory, count);
     bsal_vector_pack(vector, buffer);
-    bsal_message_init(&message, tag, count, buffer);
-    bsal_actor_send_range(actor, actors, &message);
-    bsal_message_destroy(&message);
+    thorium_message_init(&message, tag, count, buffer);
+    thorium_actor_send_range(actor, actors, &message);
+    thorium_message_destroy(&message);
 
     bsal_memory_pool_free(ephemeral_memory, buffer);
 }
 
-void bsal_actor_receive_binomial_tree_send(struct bsal_actor *actor, struct bsal_message *message)
+void thorium_actor_receive_binomial_tree_send(struct thorium_actor *actor, struct thorium_message *message)
 {
     int real_tag;
     void *buffer;
@@ -446,8 +446,8 @@ void bsal_actor_receive_binomial_tree_send(struct bsal_actor *actor, struct bsal
     int magic_offset;
 
     limit = 42;
-    count = bsal_message_count(message);
-    buffer = bsal_message_buffer(message);
+    count = thorium_message_count(message);
+    buffer = thorium_message_buffer(message);
 
     offset = count - 1 - sizeof(magic_offset);
 
@@ -469,32 +469,32 @@ void bsal_actor_receive_binomial_tree_send(struct bsal_actor *actor, struct bsal
 #ifdef BSAL_ACTOR_DEBUG
     printf("DEBUG78 actor %i received BSAL_ACTOR_BINOMIAL_TREE_SEND "
                     "real_source: %i real_tag: %i first: %i last: %i\n",
-                    bsal_actor_name(actor), real_source, real_tag, first,
+                    thorium_actor_name(actor), real_source, real_tag, first,
                     last);
 #endif
 
     amount = bsal_vector_size(&actors);
 
-    bsal_message_init(message, real_tag, new_count, buffer);
+    thorium_message_init(message, real_tag, new_count, buffer);
 
     if (amount < limit) {
-        bsal_actor_send_range_standard(actor, &actors, message);
+        thorium_actor_send_range_standard(actor, &actors, message);
     } else {
-        bsal_actor_send_range_binomial_tree(actor, &actors, message);
+        thorium_actor_send_range_binomial_tree(actor, &actors, message);
     }
 
     bsal_vector_destroy(&actors);
 }
 
-void bsal_actor_ask_to_stop(struct bsal_actor *actor, struct bsal_message *message)
+void thorium_actor_ask_to_stop(struct thorium_actor *actor, struct thorium_message *message)
 {
     /* only the supervisor or self can
      * call this.
      */
 
-    int source = bsal_message_source(message);
-    int name = bsal_actor_name(actor);
-    int supervisor = bsal_actor_supervisor(actor);
+    int source = thorium_message_source(message);
+    int name = thorium_actor_name(actor);
+    int supervisor = thorium_actor_supervisor(actor);
 
 #ifdef BSAL_ACTOR_STORE_CHILDREN
     int i;
@@ -503,31 +503,31 @@ void bsal_actor_ask_to_stop(struct bsal_actor *actor, struct bsal_message *messa
 
     if (source != name && source != supervisor) {
         printf("actor/%d: permission denied, will not stop (source: %d, name: %d, supervisor: %d\n",
-                        bsal_actor_name(actor), source, name, supervisor);
+                        thorium_actor_name(actor), source, name, supervisor);
 #ifdef BSAL_ACTOR_HELPER_DEBUG_STOP
 #endif
         return;
     }
 
 #ifdef BSAL_ACTOR_STORE_CHILDREN
-    for (i = 0; i < bsal_actor_child_count(actor); i++) {
+    for (i = 0; i < thorium_actor_child_count(actor); i++) {
 
-        child = bsal_actor_get_child(actor, i);
+        child = thorium_actor_get_child(actor, i);
 
 #ifdef BSAL_ACTOR_HELPER_DEBUG_STOP
         printf("actor/%d tells actor %d to stop\n",
-                            bsal_actor_name(actor), child);
+                            thorium_actor_name(actor), child);
 #endif
 
-        bsal_actor_send_empty(actor, child, BSAL_ACTOR_ASK_TO_STOP);
+        thorium_actor_send_empty(actor, child, BSAL_ACTOR_ASK_TO_STOP);
     }
 
 #ifdef BSAL_ACTOR_HELPER_DEBUG_STOP
     printf("DEBUG121212 actor/%d dies\n",
-                    bsal_actor_name(actor));
+                    thorium_actor_name(actor));
 
     printf("DEBUG actor/%d send BSAL_ACTOR_STOP to self\n",
-                    bsal_actor_name(actor));
+                    thorium_actor_name(actor));
 #endif
 
 #endif
@@ -537,13 +537,13 @@ void bsal_actor_ask_to_stop(struct bsal_actor *actor, struct bsal_message *messa
      * This is the default behavior and can be overwritten by
      * the concrete actor
      */
-    bsal_actor_send_to_self_empty(actor, BSAL_ACTOR_STOP);
+    thorium_actor_send_to_self_empty(actor, BSAL_ACTOR_STOP);
 
-    bsal_actor_send_reply_empty(actor, BSAL_ACTOR_ASK_TO_STOP_REPLY);
+    thorium_actor_send_reply_empty(actor, BSAL_ACTOR_ASK_TO_STOP_REPLY);
 }
 
 #ifdef BSAL_ACTOR_EXPOSE_ACQUAINTANCE_VECTOR
-int bsal_actor_get_acquaintance(struct bsal_actor *actor, struct bsal_vector *indices,
+int thorium_actor_get_acquaintance(struct thorium_actor *actor, struct bsal_vector *indices,
                 int index)
 {
     int index2;
@@ -554,21 +554,21 @@ int bsal_actor_get_acquaintance(struct bsal_actor *actor, struct bsal_vector *in
 
     index2 = bsal_vector_at_as_int(indices, index);
 
-    return bsal_actor_get_acquaintance(actor, index2);
+    return thorium_actor_get_acquaintance(actor, index2);
 }
 #endif
 
-void bsal_actor_send_double(struct bsal_actor *actor, int destination, int tag, double value)
+void thorium_actor_send_double(struct thorium_actor *actor, int destination, int tag, double value)
 {
-    struct bsal_message message;
+    struct thorium_message message;
 
-    bsal_message_init(&message, tag, sizeof(value), &value);
-    bsal_actor_send(actor, destination, &message);
-    bsal_message_destroy(&message);
+    thorium_message_init(&message, tag, sizeof(value), &value);
+    thorium_actor_send(actor, destination, &message);
+    thorium_message_destroy(&message);
 }
 
 #ifdef BSAL_ACTOR_EXPOSE_ACQUAINTANCE_VECTOR
-int bsal_actor_get_acquaintance_index(struct bsal_actor *actor, struct bsal_vector *indices,
+int thorium_actor_get_acquaintance_index(struct thorium_actor *actor, struct bsal_vector *indices,
                 int name)
 {
     int i;
@@ -581,7 +581,7 @@ int bsal_actor_get_acquaintance_index(struct bsal_actor *actor, struct bsal_vect
 
     for (i = 0; i < size; ++i) {
         index = bsal_vector_at_as_int(indices, i);
-        actor_name = bsal_actor_get_acquaintance(actor, index);
+        actor_name = thorium_actor_get_acquaintance(actor, index);
 
         if (actor_name == name) {
             return i;
@@ -592,23 +592,23 @@ int bsal_actor_get_acquaintance_index(struct bsal_actor *actor, struct bsal_vect
 }
 #endif
 
-void bsal_actor_send_reply(struct bsal_actor *actor, struct bsal_message *message)
+void thorium_actor_send_reply(struct thorium_actor *actor, struct thorium_message *message)
 {
-    bsal_actor_send(actor, bsal_actor_source(actor), message);
+    thorium_actor_send(actor, thorium_actor_source(actor), message);
 }
 
-void bsal_actor_send_to_self(struct bsal_actor *actor, struct bsal_message *message)
+void thorium_actor_send_to_self(struct thorium_actor *actor, struct thorium_message *message)
 {
-    bsal_actor_send(actor, bsal_actor_name(actor), message);
+    thorium_actor_send(actor, thorium_actor_name(actor), message);
 }
 
-void bsal_actor_send_to_supervisor(struct bsal_actor *actor, struct bsal_message *message)
+void thorium_actor_send_to_supervisor(struct thorium_actor *actor, struct thorium_message *message)
 {
-    bsal_actor_send(actor, bsal_actor_supervisor(actor), message);
+    thorium_actor_send(actor, thorium_actor_supervisor(actor), message);
 }
 
-void bsal_actor_add_route_with_sources(struct bsal_actor *self, int tag,
-                bsal_actor_receive_fn_t handler, struct bsal_vector *sources)
+void thorium_actor_add_route_with_sources(struct thorium_actor *self, int tag,
+                thorium_actor_receive_fn_t handler, struct bsal_vector *sources)
 {
     int i;
     int source;
@@ -620,50 +620,50 @@ void bsal_actor_add_route_with_sources(struct bsal_actor *self, int tag,
 
         source = bsal_vector_at_as_int(sources, i);
 
-        bsal_actor_add_route_with_source(self, tag, handler, source);
+        thorium_actor_add_route_with_source(self, tag, handler, source);
     }
 }
 
-void bsal_actor_add_route(struct bsal_actor *self, int tag, bsal_actor_receive_fn_t handler)
+void thorium_actor_add_route(struct thorium_actor *self, int tag, thorium_actor_receive_fn_t handler)
 {
 
 #ifdef BSAL_ACTOR_DEBUG_10335
     if (tag == 10335) {
-        printf("DEBUG actor %d bsal_actor_register 10335\n",
-                        bsal_actor_name(self));
+        printf("DEBUG actor %d thorium_actor_register 10335\n",
+                        thorium_actor_name(self));
     }
 #endif
 
-    bsal_actor_add_route_with_source(self, tag, handler, BSAL_ACTOR_ANYBODY);
+    thorium_actor_add_route_with_source(self, tag, handler, BSAL_ACTOR_ANYBODY);
 }
 
-void bsal_actor_add_route_with_source(struct bsal_actor *self, int tag, bsal_actor_receive_fn_t handler,
+void thorium_actor_add_route_with_source(struct thorium_actor *self, int tag, thorium_actor_receive_fn_t handler,
                 int source)
 {
-    bsal_actor_add_route_with_source_and_condition(self, tag,
+    thorium_actor_add_route_with_source_and_condition(self, tag,
                     handler, source, NULL, -1);
 }
 
-void bsal_actor_add_route_with_condition(struct bsal_actor *self, int tag, bsal_actor_receive_fn_t handler, int *actual,
+void thorium_actor_add_route_with_condition(struct thorium_actor *self, int tag, thorium_actor_receive_fn_t handler, int *actual,
                 int expected)
 {
-    bsal_actor_add_route_with_source_and_condition(self, tag, handler, BSAL_ACTOR_ANYBODY, actual, expected);
+    thorium_actor_add_route_with_source_and_condition(self, tag, handler, BSAL_ACTOR_ANYBODY, actual, expected);
 }
 
-void bsal_actor_send_to_self_buffer(struct bsal_actor *actor, int tag, int count, void *buffer)
+void thorium_actor_send_to_self_buffer(struct thorium_actor *actor, int tag, int count, void *buffer)
 {
-    bsal_actor_send_buffer(actor, bsal_actor_name(actor),
+    thorium_actor_send_buffer(actor, thorium_actor_name(actor),
                     tag, count, buffer);
 }
 
-void bsal_actor_send_buffer(struct bsal_actor *actor, int destination, int tag,
+void thorium_actor_send_buffer(struct thorium_actor *actor, int destination, int tag,
                 int count, void *buffer)
 {
-    struct bsal_message message;
+    struct thorium_message message;
 
-    bsal_message_init(&message, tag, count, buffer);
-    bsal_actor_send(actor, destination, &message);
-    bsal_message_destroy(&message);
+    thorium_message_init(&message, tag, count, buffer);
+    thorium_actor_send(actor, destination, &message);
+    thorium_message_destroy(&message);
 }
 
 

@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-void bsal_message_init(struct bsal_message *message, int tag, int count,
+void thorium_message_init(struct thorium_message *message, int tag, int count,
                 void *buffer)
 {
     message->tag = tag;
@@ -14,7 +14,7 @@ void bsal_message_init(struct bsal_message *message, int tag, int count,
     message->source_actor = -1;
     message->destination_actor = -1;
 
-    /* ranks are set with bsal_node_resolve */
+    /* ranks are set with thorium_node_resolve */
     message->source_node = -1;
     message->destination_node = -1;
 
@@ -24,7 +24,7 @@ void bsal_message_init(struct bsal_message *message, int tag, int count,
     message->worker = -1;
 }
 
-void bsal_message_destroy(struct bsal_message *message)
+void thorium_message_destroy(struct thorium_message *message)
 {
     message->source_actor = -1;
     message->destination_actor = -1;
@@ -33,81 +33,81 @@ void bsal_message_destroy(struct bsal_message *message)
     message->count= 0;
 }
 
-int bsal_message_source(struct bsal_message *message)
+int thorium_message_source(struct thorium_message *message)
 {
     return message->source_actor;
 }
 
-int bsal_message_destination(struct bsal_message *message)
+int thorium_message_destination(struct thorium_message *message)
 {
     return message->destination_actor;
 }
 
-int bsal_message_source_node(struct bsal_message *message)
+int thorium_message_source_node(struct thorium_message *message)
 {
     return message->source_node;
 }
 
-int bsal_message_destination_node(struct bsal_message *message)
+int thorium_message_destination_node(struct thorium_message *message)
 {
     return message->destination_node;
 }
 
-int bsal_message_tag(struct bsal_message *message)
+int thorium_message_tag(struct thorium_message *message)
 {
     return message->tag;
 }
 
-void bsal_message_set_source(struct bsal_message *message, int source)
+void thorium_message_set_source(struct thorium_message *message, int source)
 {
     message->source_actor = source;
 }
 
-void bsal_message_set_destination(struct bsal_message *message, int destination)
+void thorium_message_set_destination(struct thorium_message *message, int destination)
 {
     message->destination_actor = destination;
 }
 
-void bsal_message_print(struct bsal_message *message)
+void thorium_message_print(struct thorium_message *message)
 {
 }
 
-void *bsal_message_buffer(struct bsal_message *message)
+void *thorium_message_buffer(struct thorium_message *message)
 {
     return message->buffer;
 }
 
-int bsal_message_count(struct bsal_message *message)
+int thorium_message_count(struct thorium_message *message)
 {
     return message->count;
 }
 
-void bsal_message_set_source_node(struct bsal_message *message, int source)
+void thorium_message_set_source_node(struct thorium_message *message, int source)
 {
     message->source_node = source;
 }
 
-void bsal_message_set_destination_node(struct bsal_message *message, int destination)
+void thorium_message_set_destination_node(struct thorium_message *message, int destination)
 {
     message->destination_node = destination;
 }
 
-void bsal_message_set_buffer(struct bsal_message *message, void *buffer)
+void thorium_message_set_buffer(struct thorium_message *message, void *buffer)
 {
     message->buffer = buffer;
 }
 
-void bsal_message_set_tag(struct bsal_message *message, int tag)
+void thorium_message_set_tag(struct thorium_message *message, int tag)
 {
     message->tag = tag;
 }
 
-int bsal_message_metadata_size(struct bsal_message *message)
+int thorium_message_metadata_size(struct thorium_message *message)
 {
     return sizeof(message->source_actor) + sizeof(message->destination_actor);
 }
 
-void bsal_message_write_metadata(struct bsal_message *message)
+void thorium_message_write_metadata(struct thorium_message *message)
 {
     /* TODO this could be a single memcpy with 2 *sizeof(int)
      * because source_actor and destination_actor are consecutive
@@ -119,7 +119,7 @@ void bsal_message_write_metadata(struct bsal_message *message)
             &message->destination_actor, sizeof(message->destination_actor));
 }
 
-void bsal_message_read_metadata(struct bsal_message *message)
+void thorium_message_read_metadata(struct thorium_message *message)
 {
     /* TODO this could be a single memcpy with 2 *sizeof(int)
      * because source_actor and destination_actor are consecutive
@@ -132,38 +132,38 @@ void bsal_message_read_metadata(struct bsal_message *message)
             sizeof(message->destination_actor));
 }
 
-void bsal_message_set_count(struct bsal_message *message, int count)
+void thorium_message_set_count(struct thorium_message *message, int count)
 {
     message->count = count;
 }
 
-void bsal_message_init_copy(struct bsal_message *message, struct bsal_message *old_message)
+void thorium_message_init_copy(struct thorium_message *message, struct thorium_message *old_message)
 {
-    bsal_message_init(message,
-                    bsal_message_tag(old_message),
-                    bsal_message_count(old_message),
-                    bsal_message_buffer(old_message));
+    thorium_message_init(message,
+                    thorium_message_tag(old_message),
+                    thorium_message_count(old_message),
+                    thorium_message_buffer(old_message));
 
-    bsal_message_set_source(message,
-                    bsal_message_source(old_message));
-    bsal_message_set_destination(message,
-                    bsal_message_destination(old_message));
+    thorium_message_set_source(message,
+                    thorium_message_source(old_message));
+    thorium_message_set_destination(message,
+                    thorium_message_destination(old_message));
 }
 
-void bsal_message_set_worker(struct bsal_message *message, int worker)
+void thorium_message_set_worker(struct thorium_message *message, int worker)
 {
     message->worker = worker;
 }
 
-int bsal_message_get_worker(struct bsal_message *message)
+int thorium_message_get_worker(struct thorium_message *message)
 {
     return message->worker;
 }
 
-void bsal_message_init_with_nodes(struct bsal_message *self, int tag, int count, void *buffer, int source,
+void thorium_message_init_with_nodes(struct thorium_message *self, int tag, int count, void *buffer, int source,
                 int destination)
 {
-    bsal_message_init(self, tag, count, buffer);
+    thorium_message_init(self, tag, count, buffer);
 
     /*
      * Initially assign the MPI source rank and MPI destination
@@ -172,6 +172,6 @@ void bsal_message_init_with_nodes(struct bsal_message *self, int tag, int count,
      * that. The resolved MPI ranks should be the same in all cases
      */
 
-    bsal_message_set_source(self, source);
-    bsal_message_set_destination(self, destination);
+    thorium_message_set_source(self, source);
+    thorium_message_set_destination(self, destination);
 }

@@ -49,25 +49,25 @@ struct bsal_assembly_dummy_walker {
     struct bsal_set visited;
 };
 
-extern struct bsal_script bsal_assembly_dummy_walker_script;
+extern struct thorium_script bsal_assembly_dummy_walker_script;
 
-void bsal_assembly_dummy_walker_init(struct bsal_actor *self);
-void bsal_assembly_dummy_walker_destroy(struct bsal_actor *self);
-void bsal_assembly_dummy_walker_receive(struct bsal_actor *self, struct bsal_message *message);
+void bsal_assembly_dummy_walker_init(struct thorium_actor *self);
+void bsal_assembly_dummy_walker_destroy(struct thorium_actor *self);
+void bsal_assembly_dummy_walker_receive(struct thorium_actor *self, struct thorium_message *message);
 
-void bsal_assembly_dummy_walker_get_starting_vertex_reply(struct bsal_actor *self, struct bsal_message *message);
-void bsal_assembly_dummy_walker_start(struct bsal_actor *self, struct bsal_message *message);
-void bsal_assembly_dummy_walker_get_vertex_reply(struct bsal_actor *self, struct bsal_message *message);
+void bsal_assembly_dummy_walker_get_starting_vertex_reply(struct thorium_actor *self, struct thorium_message *message);
+void bsal_assembly_dummy_walker_start(struct thorium_actor *self, struct thorium_message *message);
+void bsal_assembly_dummy_walker_get_vertex_reply(struct thorium_actor *self, struct thorium_message *message);
 
-void bsal_assembly_dummy_walker_get_vertices_and_select(struct bsal_actor *self, struct bsal_message *message);
-void bsal_assembly_dummy_walker_get_vertices_and_select_reply(struct bsal_actor *self, struct bsal_message *message);
-void bsal_assembly_dummy_walker_get_vertex_reply_starting_vertex(struct bsal_actor *self, struct bsal_message *message);
+void bsal_assembly_dummy_walker_get_vertices_and_select(struct thorium_actor *self, struct thorium_message *message);
+void bsal_assembly_dummy_walker_get_vertices_and_select_reply(struct thorium_actor *self, struct thorium_message *message);
+void bsal_assembly_dummy_walker_get_vertex_reply_starting_vertex(struct thorium_actor *self, struct thorium_message *message);
 
-void bsal_assembly_dummy_walker_clean_children(struct bsal_actor *self);
-void bsal_assembly_dummy_walker_dump_path(struct bsal_actor *self);
-void bsal_assembly_dummy_walker_begin(struct bsal_actor *self, struct bsal_message *message);
+void bsal_assembly_dummy_walker_clean_children(struct thorium_actor *self);
+void bsal_assembly_dummy_walker_dump_path(struct thorium_actor *self);
+void bsal_assembly_dummy_walker_begin(struct thorium_actor *self, struct thorium_message *message);
 
-int bsal_assembly_dummy_walker_select(struct bsal_actor *self);
-void bsal_assembly_dummy_walker_write(struct bsal_actor *self, char *sequence, int sequence_length);
+int bsal_assembly_dummy_walker_select(struct thorium_actor *self);
+void bsal_assembly_dummy_walker_write(struct thorium_actor *self, char *sequence, int sequence_length);
 
 #endif

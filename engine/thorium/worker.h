@@ -20,9 +20,9 @@
 #include <stdint.h>
 
 struct bsal_work;
-struct bsal_node;
-struct bsal_message;
-struct bsal_scheduler;
+struct thorium_node;
+struct thorium_message;
+struct thorium_scheduler;
 
 /*
  * Inject clean worker buffers into the worker rings
@@ -62,8 +62,8 @@ struct bsal_scheduler;
 
 /* this is similar to worker threads in linux ([kworker/0] [kworker/1])
  */
-struct bsal_worker {
-    struct bsal_node *node;
+struct thorium_worker {
+    struct thorium_node *node;
 
     struct bsal_timer timer;
     struct bsal_map actors;
@@ -85,7 +85,7 @@ struct bsal_worker {
     struct bsal_ring_queue clean_message_queue_for_triage;
 #endif
 
-    struct bsal_scheduling_queue scheduling_queue;
+    struct thorium_scheduling_queue scheduling_queue;
 
     struct bsal_fast_ring outbound_message_queue;
     struct bsal_ring_queue outbound_message_queue_buffer;
@@ -128,78 +128,78 @@ struct bsal_worker {
     struct bsal_memory_pool ephemeral_memory;
     struct bsal_memory_pool outbound_message_memory_pool;
 
-    struct bsal_priority_scheduler scheduler;
+    struct thorium_priority_scheduler scheduler;
 
     uint64_t last_wake_up_count;
 
     uint64_t waiting_start_time;
 };
 
-void bsal_worker_init(struct bsal_worker *self, int name, struct bsal_node *node);
-void bsal_worker_destroy(struct bsal_worker *self);
+void thorium_worker_init(struct thorium_worker *self, int name, struct thorium_node *node);
+void thorium_worker_destroy(struct thorium_worker *self);
 
-void bsal_worker_start(struct bsal_worker *self, int processor);
-void bsal_worker_stop(struct bsal_worker *self);
+void thorium_worker_start(struct thorium_worker *self, int processor);
+void thorium_worker_stop(struct thorium_worker *self);
 
-void bsal_worker_run(struct bsal_worker *self);
-void bsal_worker_work(struct bsal_worker *self, struct bsal_actor *actor);
-struct bsal_node *bsal_worker_node(struct bsal_worker *self);
+void thorium_worker_run(struct thorium_worker *self);
+void thorium_worker_work(struct thorium_worker *self, struct thorium_actor *actor);
+struct thorium_node *thorium_worker_node(struct thorium_worker *self);
 
-void bsal_worker_send(struct bsal_worker *self, struct bsal_message *message);
+void thorium_worker_send(struct thorium_worker *self, struct thorium_message *message);
 
-void *bsal_worker_main(void *worker1);
-int bsal_worker_name(struct bsal_worker *self);
-void bsal_worker_display(struct bsal_worker *self);
+void *thorium_worker_main(void *worker1);
+int thorium_worker_name(struct thorium_worker *self);
+void thorium_worker_display(struct thorium_worker *self);
 
-int bsal_worker_is_busy(struct bsal_worker *self);
+int thorium_worker_is_busy(struct thorium_worker *self);
 
-float bsal_worker_get_epoch_load(struct bsal_worker *self);
-float bsal_worker_get_loop_load(struct bsal_worker *self);
-float bsal_worker_get_scheduling_epoch_load(struct bsal_worker *self);
-void bsal_worker_reset_scheduling_epoch(struct bsal_worker *self);
+float thorium_worker_get_epoch_load(struct thorium_worker *self);
+float thorium_worker_get_loop_load(struct thorium_worker *self);
+float thorium_worker_get_scheduling_epoch_load(struct thorium_worker *self);
+void thorium_worker_reset_scheduling_epoch(struct thorium_worker *self);
 
-int bsal_worker_get_scheduled_message_count(struct bsal_worker *self);
-int bsal_worker_get_message_production_score(struct bsal_worker *self);
+int thorium_worker_get_scheduled_message_count(struct thorium_worker *self);
+int thorium_worker_get_message_production_score(struct thorium_worker *self);
 
-struct bsal_memory_pool *bsal_worker_get_ephemeral_memory(struct bsal_worker *self);
+struct bsal_memory_pool *thorium_worker_get_ephemeral_memory(struct thorium_worker *self);
 
-int bsal_worker_dequeue_actor(struct bsal_worker *self, struct bsal_actor **actor);
-int bsal_worker_enqueue_actor(struct bsal_worker *self, struct bsal_actor *actor);
-int bsal_worker_enqueue_actor_special(struct bsal_worker *self, struct bsal_actor *actor);
+int thorium_worker_dequeue_actor(struct thorium_worker *self, struct thorium_actor **actor);
+int thorium_worker_enqueue_actor(struct thorium_worker *self, struct thorium_actor *actor);
+int thorium_worker_enqueue_actor_special(struct thorium_worker *self, struct thorium_actor *actor);
 
-int bsal_worker_enqueue_message(struct bsal_worker *self, struct bsal_message *message);
-int bsal_worker_dequeue_message(struct bsal_worker *self, struct bsal_message *message);
+int thorium_worker_enqueue_message(struct thorium_worker *self, struct thorium_message *message);
+int thorium_worker_dequeue_message(struct thorium_worker *self, struct thorium_message *message);
 
-void bsal_worker_print_actors(struct bsal_worker *self, struct bsal_scheduler *scheduler);
+void thorium_worker_print_actors(struct thorium_worker *self, struct thorium_scheduler *scheduler);
 
-void bsal_worker_evict_actor(struct bsal_worker *self, int actor_name);
-void bsal_worker_lock(struct bsal_worker *self);
-void bsal_worker_unlock(struct bsal_worker *self);
-struct bsal_map *bsal_worker_get_actors(struct bsal_worker *self);
+void thorium_worker_evict_actor(struct thorium_worker *self, int actor_name);
+void thorium_worker_lock(struct thorium_worker *self);
+void thorium_worker_unlock(struct thorium_worker *self);
+struct bsal_map *thorium_worker_get_actors(struct thorium_worker *self);
 
-int bsal_worker_get_sum_of_received_actor_messages(struct bsal_worker *self);
-int bsal_worker_get_queued_messages(struct bsal_worker *self);
-int bsal_worker_get_production(struct bsal_worker *self, struct bsal_scheduler *scheduler);
-int bsal_worker_get_producer_count(struct bsal_worker *self, struct bsal_scheduler *scheduler);
+int thorium_worker_get_sum_of_received_actor_messages(struct thorium_worker *self);
+int thorium_worker_get_queued_messages(struct thorium_worker *self);
+int thorium_worker_get_production(struct thorium_worker *self, struct thorium_scheduler *scheduler);
+int thorium_worker_get_producer_count(struct thorium_worker *self, struct thorium_scheduler *scheduler);
 
-void bsal_worker_free_message(struct bsal_worker *self, struct bsal_message *message);
+void thorium_worker_free_message(struct thorium_worker *self, struct thorium_message *message);
 
-void bsal_worker_wait(struct bsal_worker *self);
-void bsal_worker_signal(struct bsal_worker *self);
+void thorium_worker_wait(struct thorium_worker *self);
+void thorium_worker_signal(struct thorium_worker *self);
 
-uint64_t bsal_worker_get_epoch_wake_up_count(struct bsal_worker *self);
-uint64_t bsal_worker_get_loop_wake_up_count(struct bsal_worker *self);
+uint64_t thorium_worker_get_epoch_wake_up_count(struct thorium_worker *self);
+uint64_t thorium_worker_get_loop_wake_up_count(struct thorium_worker *self);
 
-void bsal_worker_enable_waiting(struct bsal_worker *self);
-time_t bsal_worker_get_last_report_time(struct bsal_worker *self);
-void bsal_worker_check_production(struct bsal_worker *self, int value, int name);
+void thorium_worker_enable_waiting(struct thorium_worker *self);
+time_t thorium_worker_get_last_report_time(struct thorium_worker *self);
+void thorium_worker_check_production(struct thorium_worker *self, int value, int name);
 
 /*
  * Inject a clean buffer into the worker
  */
-int bsal_worker_inject_clean_outbound_buffer(struct bsal_worker *self, void *buffer);
-int bsal_worker_fetch_clean_outbound_buffer(struct bsal_worker *self, void **buffer);
-int bsal_worker_enqueue_message_for_triage(struct bsal_worker *worker, struct bsal_message *message);
-int bsal_worker_dequeue_message_for_triage(struct bsal_worker *worker, struct bsal_message *message);
+int thorium_worker_inject_clean_outbound_buffer(struct thorium_worker *self, void *buffer);
+int thorium_worker_fetch_clean_outbound_buffer(struct thorium_worker *self, void **buffer);
+int thorium_worker_enqueue_message_for_triage(struct thorium_worker *worker, struct thorium_message *message);
+int thorium_worker_dequeue_message_for_triage(struct thorium_worker *worker, struct thorium_message *message);
 
 #endif

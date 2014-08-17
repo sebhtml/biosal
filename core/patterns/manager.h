@@ -56,12 +56,12 @@ struct bsal_manager {
 #define BSAL_MANAGER_SET_WORKERS_PER_ACTOR 0x0000322a
 #define BSAL_MANAGER_SET_WORKERS_PER_ACTOR_REPLY 0x00007b74
 
-extern struct bsal_script bsal_manager_script;
+extern struct thorium_script bsal_manager_script;
 
-void bsal_manager_init(struct bsal_actor *self);
-void bsal_manager_destroy(struct bsal_actor *self);
-void bsal_manager_receive(struct bsal_actor *self, struct bsal_message *message);
+void bsal_manager_init(struct thorium_actor *self);
+void bsal_manager_destroy(struct thorium_actor *self);
+void bsal_manager_receive(struct thorium_actor *self, struct thorium_message *message);
 
-void bsal_manager_ask_to_stop(struct bsal_actor *actor, struct bsal_message *message);
+void bsal_manager_ask_to_stop(struct thorium_actor *actor, struct thorium_message *message);
 
 #endif

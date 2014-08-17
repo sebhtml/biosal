@@ -81,31 +81,31 @@ struct bsal_assembly_graph_store {
     int codec_are_different;
 };
 
-extern struct bsal_script bsal_assembly_graph_store_script;
+extern struct thorium_script bsal_assembly_graph_store_script;
 
-void bsal_assembly_graph_store_init(struct bsal_actor *actor);
-void bsal_assembly_graph_store_destroy(struct bsal_actor *actor);
-void bsal_assembly_graph_store_receive(struct bsal_actor *actor, struct bsal_message *message);
+void bsal_assembly_graph_store_init(struct thorium_actor *actor);
+void bsal_assembly_graph_store_destroy(struct thorium_actor *actor);
+void bsal_assembly_graph_store_receive(struct thorium_actor *actor, struct thorium_message *message);
 
-void bsal_assembly_graph_store_print(struct bsal_actor *self);
-void bsal_assembly_graph_store_push_data(struct bsal_actor *self, struct bsal_message *message);
-void bsal_assembly_graph_store_yield_reply(struct bsal_actor *self, struct bsal_message *message);
+void bsal_assembly_graph_store_print(struct thorium_actor *self);
+void bsal_assembly_graph_store_push_data(struct thorium_actor *self, struct thorium_message *message);
+void bsal_assembly_graph_store_yield_reply(struct thorium_actor *self, struct thorium_message *message);
 
-void bsal_assembly_graph_store_push_kmer_block(struct bsal_actor *self, struct bsal_message *message);
-void bsal_assembly_graph_store_push_arc_block(struct bsal_actor *self, struct bsal_message *message);
+void bsal_assembly_graph_store_push_kmer_block(struct thorium_actor *self, struct thorium_message *message);
+void bsal_assembly_graph_store_push_arc_block(struct thorium_actor *self, struct thorium_message *message);
 
-void bsal_assembly_graph_store_add_arc(struct bsal_actor *self,
+void bsal_assembly_graph_store_add_arc(struct thorium_actor *self,
                 struct bsal_assembly_arc *arc, char *sequence, void *key);
 
-void bsal_assembly_graph_store_get_summary(struct bsal_actor *self, struct bsal_message *message);
+void bsal_assembly_graph_store_get_summary(struct thorium_actor *self, struct thorium_message *message);
 
-void bsal_assembly_graph_store_yield_reply_summary(struct bsal_actor *self, struct bsal_message *message);
+void bsal_assembly_graph_store_yield_reply_summary(struct thorium_actor *self, struct thorium_message *message);
 
 /*
  * This is the route for BSAL_ASSEMBLY_GET_VERTEX.
  * It returns a packed bsal_assembly_vertex.
  */
-void bsal_assembly_graph_store_get_vertex(struct bsal_actor *self, struct bsal_message *message);
-void bsal_assembly_graph_store_get_starting_vertex(struct bsal_actor *self, struct bsal_message *message);
+void bsal_assembly_graph_store_get_vertex(struct thorium_actor *self, struct thorium_message *message);
+void bsal_assembly_graph_store_get_starting_vertex(struct thorium_actor *self, struct thorium_message *message);
 
 #endif

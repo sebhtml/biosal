@@ -10,10 +10,10 @@ struct hello {
     struct bsal_vector initial_helloes;
 };
 
-extern struct bsal_script hello_script;
+extern struct thorium_script hello_script;
 
-void hello_init(struct bsal_actor *self);
-void hello_destroy(struct bsal_actor *self);
-void hello_receive(struct bsal_actor *self, struct bsal_message *message);
+void hello_init(struct thorium_actor *self);
+void hello_destroy(struct thorium_actor *self);
+void hello_receive(struct thorium_actor *self, struct thorium_message *message);
 
 #endif

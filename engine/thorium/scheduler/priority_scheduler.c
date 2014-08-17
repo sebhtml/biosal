@@ -13,7 +13,7 @@
 
 #define CALL_COUNT_THRESHOLD 1024
 
-void bsal_priority_scheduler_init(struct bsal_priority_scheduler *scheduler)
+void thorium_priority_scheduler_init(struct thorium_priority_scheduler *scheduler)
 {
     bsal_map_init(&scheduler->actor_sources, sizeof(int), sizeof(int));
     bsal_map_init(&scheduler->actor_source_frequencies, sizeof(int), sizeof(int));
@@ -26,7 +26,7 @@ void bsal_priority_scheduler_init(struct bsal_priority_scheduler *scheduler)
     scheduler->changes = 0;
 }
 
-void bsal_priority_scheduler_destroy(struct bsal_priority_scheduler *scheduler)
+void thorium_priority_scheduler_destroy(struct thorium_priority_scheduler *scheduler)
 {
 
     bsal_map_destroy(&scheduler->actor_sources);
@@ -49,7 +49,7 @@ void bsal_priority_scheduler_destroy(struct bsal_priority_scheduler *scheduler)
  * Assign BSAL_PRIORITY_LOW to <= P30
  * Assign BSAL_PRIORITY_NORMAL otherwise.
  */
-void bsal_priority_scheduler_update(struct bsal_priority_scheduler *scheduler, struct bsal_actor *actor)
+void thorium_priority_scheduler_update(struct thorium_priority_scheduler *scheduler, struct thorium_actor *actor)
 {
     int old_priority;
     int new_priority;
@@ -60,8 +60,8 @@ void bsal_priority_scheduler_update(struct bsal_priority_scheduler *scheduler, s
 
     BSAL_DEBUGGER_ASSERT(actor != NULL);
 
-    name = bsal_actor_name(actor);
-    new_source_count = bsal_actor_get_source_count(actor);
+    name = thorium_actor_name(actor);
+    new_source_count = thorium_actor_get_source_count(actor);
 
     /*
      * If this actor is already registered, check if its source count changed.
@@ -76,8 +76,8 @@ void bsal_priority_scheduler_update(struct bsal_priority_scheduler *scheduler, s
              */
             bsal_map_update_value(&scheduler->actor_sources, &name, &new_source_count);
 
-            bsal_priority_scheduler_decrement(scheduler, old_source_count);
-            bsal_priority_scheduler_increment(scheduler, new_source_count);
+            thorium_priority_scheduler_decrement(scheduler, old_source_count);
+            thorium_priority_scheduler_increment(scheduler, new_source_count);
 
             ++scheduler->changes;
         }
@@ -88,7 +88,7 @@ void bsal_priority_scheduler_update(struct bsal_priority_scheduler *scheduler, s
          */
         bsal_map_add_value(&scheduler->actor_sources, &name, &new_source_count);
 
-        bsal_priority_scheduler_increment(scheduler, new_source_count);
+        thorium_priority_scheduler_increment(scheduler, new_source_count);
 
         ++scheduler->changes;
     }
@@ -98,7 +98,7 @@ void bsal_priority_scheduler_update(struct bsal_priority_scheduler *scheduler, s
 
     if (scheduler->max_priority_minimum_value != -1) {
 
-        old_priority = bsal_actor_get_priority(actor);
+        old_priority = thorium_actor_get_priority(actor);
 
         new_priority = BSAL_PRIORITY_NORMAL;
 
@@ -114,7 +114,7 @@ void bsal_priority_scheduler_update(struct bsal_priority_scheduler *scheduler, s
         }
 
         if (new_priority != old_priority) {
-            bsal_actor_set_priority(actor, new_priority);
+            thorium_actor_set_priority(actor, new_priority);
         }
     }
 
@@ -127,7 +127,7 @@ void bsal_priority_scheduler_update(struct bsal_priority_scheduler *scheduler, s
     if (scheduler->calls >= CALL_COUNT_THRESHOLD) {
 
         if (scheduler->changes > 0) {
-            bsal_priority_scheduler_update_thresholds(scheduler);
+            thorium_priority_scheduler_update_thresholds(scheduler);
         }
 
         scheduler->calls = 0;
@@ -135,14 +135,14 @@ void bsal_priority_scheduler_update(struct bsal_priority_scheduler *scheduler, s
     }
 }
 
-void bsal_priority_scheduler_update_thresholds(struct bsal_priority_scheduler *scheduler)
+void thorium_priority_scheduler_update_thresholds(struct thorium_priority_scheduler *scheduler)
 {
     struct bsal_map_iterator iterator;
     int value;
     int frequency;
 
 #ifdef BSAL_PRIORITY_SCHEDULER_DEBUG
-    printf("DEBUG bsal_priority_scheduler_update_thresholds: calls %d changes %d\n",
+    printf("DEBUG thorium_priority_scheduler_update_thresholds: calls %d changes %d\n",
                     scheduler->calls, scheduler->changes);
 #endif
 
@@ -167,7 +167,7 @@ void bsal_priority_scheduler_update_thresholds(struct bsal_priority_scheduler *s
 }
 
 
-void bsal_priority_scheduler_decrement(struct bsal_priority_scheduler *scheduler,
+void thorium_priority_scheduler_decrement(struct thorium_priority_scheduler *scheduler,
                 int old_source_count)
 {
     int old_source_count_old_frequency;
@@ -187,7 +187,7 @@ void bsal_priority_scheduler_decrement(struct bsal_priority_scheduler *scheduler
     }
 }
 
-void bsal_priority_scheduler_increment(struct bsal_priority_scheduler *scheduler,
+void thorium_priority_scheduler_increment(struct thorium_priority_scheduler *scheduler,
                 int new_source_count)
 {
     int new_source_count_old_frequency;

@@ -4,7 +4,7 @@
 
 #include <core/structures/map.h>
 
-struct bsal_message;
+struct thorium_message;
 
 /*
  * A profiler for the Thorium transport
@@ -19,6 +19,6 @@ void thorium_transport_profiler_init(struct thorium_transport_profiler *self);
 void thorium_transport_profiler_destroy(struct thorium_transport_profiler *self);
 void thorium_transport_profiler_print_report(struct thorium_transport_profiler *self);
 void thorium_transport_profiler_send_mock(struct thorium_transport_profiler *self,
-                struct bsal_message *message);
+                struct thorium_message *message);
 
 #endif

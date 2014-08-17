@@ -16,20 +16,20 @@
  * return handler
  *
  */
-struct bsal_dispatcher {
+struct thorium_dispatcher {
     struct bsal_map routes;
 };
 
-void bsal_dispatcher_init(struct bsal_dispatcher *self);
-void bsal_dispatcher_destroy(struct bsal_dispatcher *self);
+void thorium_dispatcher_init(struct thorium_dispatcher *self);
+void thorium_dispatcher_destroy(struct thorium_dispatcher *self);
 
-void bsal_dispatcher_add_route(struct bsal_dispatcher *self, int tag, bsal_actor_receive_fn_t handler,
+void thorium_dispatcher_add_route(struct thorium_dispatcher *self, int tag, thorium_actor_receive_fn_t handler,
                 int source, int *actual, int expected);
 
-int bsal_dispatcher_dispatch(struct bsal_dispatcher *self, struct bsal_actor *actor,
-                struct bsal_message *message);
-bsal_actor_receive_fn_t bsal_dispatcher_get(struct bsal_dispatcher *self, int tag, int source);
+int thorium_dispatcher_dispatch(struct thorium_dispatcher *self, struct thorium_actor *actor,
+                struct thorium_message *message);
+thorium_actor_receive_fn_t thorium_dispatcher_get(struct thorium_dispatcher *self, int tag, int source);
 
-void bsal_dispatcher_print(struct bsal_dispatcher *self);
+void thorium_dispatcher_print(struct thorium_dispatcher *self);
 
 #endif

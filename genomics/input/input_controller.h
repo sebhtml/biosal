@@ -72,22 +72,22 @@ struct bsal_input_controller {
 #define BSAL_INPUT_CONTROLLER_PREPARE_SPAWNERS 0x00004a85
 #define BSAL_INPUT_CONTROLLER_CREATE_PARTITION 0x00005b68
 
-extern struct bsal_script bsal_input_controller_script;
+extern struct thorium_script bsal_input_controller_script;
 
-void bsal_input_controller_init(struct bsal_actor *actor);
-void bsal_input_controller_destroy(struct bsal_actor *actor);
-void bsal_input_controller_receive(struct bsal_actor *actor, struct bsal_message *message);
+void bsal_input_controller_init(struct thorium_actor *actor);
+void bsal_input_controller_destroy(struct thorium_actor *actor);
+void bsal_input_controller_receive(struct thorium_actor *actor, struct thorium_message *message);
 
-void bsal_input_controller_create_stores(struct bsal_actor *actor, struct bsal_message *message);
-void bsal_input_controller_get_node_name_reply(struct bsal_actor *actor, struct bsal_message *message);
-void bsal_input_controller_get_node_worker_count_reply(struct bsal_actor *actor, struct bsal_message *message);
-void bsal_input_controller_add_store(struct bsal_actor *actor, struct bsal_message *message);
-void bsal_input_controller_prepare_spawners(struct bsal_actor *actor, struct bsal_message *message);
-void bsal_input_controller_receive_store_entry_counts(struct bsal_actor *actor, struct bsal_message *message);
-void bsal_input_controller_receive_command(struct bsal_actor *actor, struct bsal_message *message);
+void bsal_input_controller_create_stores(struct thorium_actor *actor, struct thorium_message *message);
+void bsal_input_controller_get_node_name_reply(struct thorium_actor *actor, struct thorium_message *message);
+void bsal_input_controller_get_node_worker_count_reply(struct thorium_actor *actor, struct thorium_message *message);
+void bsal_input_controller_add_store(struct thorium_actor *actor, struct thorium_message *message);
+void bsal_input_controller_prepare_spawners(struct thorium_actor *actor, struct thorium_message *message);
+void bsal_input_controller_receive_store_entry_counts(struct thorium_actor *actor, struct thorium_message *message);
+void bsal_input_controller_receive_command(struct thorium_actor *actor, struct thorium_message *message);
 
-void bsal_input_controller_spawn_streams(struct bsal_actor *actor, struct bsal_message *message);
-void bsal_input_controller_set_offset_reply(struct bsal_actor *self, struct bsal_message *message);
-void bsal_input_controller_verify_requests(struct bsal_actor *self, struct bsal_message *message);
+void bsal_input_controller_spawn_streams(struct thorium_actor *actor, struct thorium_message *message);
+void bsal_input_controller_set_offset_reply(struct thorium_actor *self, struct thorium_message *message);
+void bsal_input_controller_verify_requests(struct thorium_actor *self, struct thorium_message *message);
 
 #endif

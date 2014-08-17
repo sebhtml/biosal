@@ -16,12 +16,12 @@
 #define BSAL_DISPATCHER_DEBUG_10335
 */
 
-void bsal_dispatcher_init(struct bsal_dispatcher *self)
+void thorium_dispatcher_init(struct thorium_dispatcher *self)
 {
     bsal_map_init(&self->routes, sizeof(int), sizeof(struct bsal_map));
 }
 
-void bsal_dispatcher_destroy(struct bsal_dispatcher *self)
+void thorium_dispatcher_destroy(struct thorium_dispatcher *self)
 {
     struct bsal_map_iterator iterator;
     struct bsal_map_iterator iterator2;
@@ -58,16 +58,16 @@ void bsal_dispatcher_destroy(struct bsal_dispatcher *self)
     bsal_map_destroy(&self->routes);
 }
 
-void bsal_dispatcher_add_route(struct bsal_dispatcher *self, int tag,
-               bsal_actor_receive_fn_t handler,
+void thorium_dispatcher_add_route(struct thorium_dispatcher *self, int tag,
+               thorium_actor_receive_fn_t handler,
                int source,
                int *actual,
                int expected)
 {
     struct bsal_map *map;
     struct bsal_vector *vector;
-    struct bsal_route *route;
-    struct bsal_route new_route;
+    struct thorium_route *route;
+    struct thorium_route new_route;
     int size;
     int i;
     int found;
@@ -91,13 +91,13 @@ void bsal_dispatcher_add_route(struct bsal_dispatcher *self, int tag,
     if (vector == NULL) {
         vector = bsal_map_add(map, &source);
 
-        bsal_vector_init(vector, sizeof(struct bsal_route));
+        bsal_vector_init(vector, sizeof(struct thorium_route));
     }
 
     /* Add the route in the vector
      */
 
-    bsal_route_init(&new_route, actual, expected, handler);
+    thorium_route_init(&new_route, actual, expected, handler);
 
     /* Check if it is there already
      */
@@ -108,7 +108,7 @@ void bsal_dispatcher_add_route(struct bsal_dispatcher *self, int tag,
     for (i = 0; i < size; i++) {
         route = bsal_vector_at(vector, i);
 
-        if (bsal_route_equals(route, &new_route)) {
+        if (thorium_route_equals(route, &new_route)) {
             found = 1;
             break;
         }
@@ -118,31 +118,31 @@ void bsal_dispatcher_add_route(struct bsal_dispatcher *self, int tag,
         bsal_vector_push_back(vector, &new_route);
     }
 
-    bsal_route_destroy(&new_route);
+    thorium_route_destroy(&new_route);
 }
 
-int bsal_dispatcher_dispatch(struct bsal_dispatcher *self, struct bsal_actor *actor,
-                struct bsal_message *message)
+int thorium_dispatcher_dispatch(struct thorium_dispatcher *self, struct thorium_actor *actor,
+                struct thorium_message *message)
 {
-    bsal_actor_receive_fn_t handler;
+    thorium_actor_receive_fn_t handler;
     int tag;
     int source;
 
-    tag = bsal_message_tag(message);
-    source = bsal_message_source(message);
+    tag = thorium_message_tag(message);
+    source = thorium_message_source(message);
 
 #ifdef BSAL_DISPATCHER_DEBUG_GET
-    printf("DEBUG bsal_dispatcher_dispatch Tag %d Source %d\n",
+    printf("DEBUG thorium_dispatcher_dispatch Tag %d Source %d\n",
                     tag, source);
 
-    bsal_dispatcher_print(self);
+    thorium_dispatcher_print(self);
 #endif
 
 #ifdef BSAL_DISPATCHER_DEBUG_10335
     if (tag == 10335) {
-        printf("DEBUG bsal_dispatcher_dispatch 10335, available %d\n",
+        printf("DEBUG thorium_dispatcher_dispatch 10335, available %d\n",
                         bsal_vector_size(&self->tags));
-        bsal_dispatcher_print(self);
+        thorium_dispatcher_print(self);
     }
 #endif
 
@@ -153,7 +153,7 @@ int bsal_dispatcher_dispatch(struct bsal_dispatcher *self, struct bsal_actor *ac
      * If that does not work, try with the tag and
      * with the source wildcard BSAL_ACTOR_ANYBODY
      */
-    handler = bsal_dispatcher_get(self, tag, source);
+    handler = thorium_dispatcher_get(self, tag, source);
 
     /*
      * If there is no route for this source,
@@ -163,7 +163,7 @@ int bsal_dispatcher_dispatch(struct bsal_dispatcher *self, struct bsal_actor *ac
      */
     if (handler == NULL) {
 
-        handler = bsal_dispatcher_get(self, tag, BSAL_ACTOR_ANYBODY);
+        handler = thorium_dispatcher_get(self, tag, BSAL_ACTOR_ANYBODY);
     }
 
     if (handler == NULL) {
@@ -177,7 +177,7 @@ int bsal_dispatcher_dispatch(struct bsal_dispatcher *self, struct bsal_actor *ac
 #ifdef BSAL_DISPATCHER_DEBUG_10335
         if (tag == 10335) {
             printf("DEBUG 10335 is not registered.\n");
-            bsal_dispatcher_print(self);
+            thorium_dispatcher_print(self);
         }
 #endif
 
@@ -191,15 +191,15 @@ int bsal_dispatcher_dispatch(struct bsal_dispatcher *self, struct bsal_actor *ac
 
 
 
-bsal_actor_receive_fn_t bsal_dispatcher_get(struct bsal_dispatcher *self, int tag, int source)
+thorium_actor_receive_fn_t thorium_dispatcher_get(struct thorium_dispatcher *self, int tag, int source)
 {
     struct bsal_map *map;
     struct bsal_vector *vector;
-    struct bsal_route *route;
+    struct thorium_route *route;
     int i;
     int size;
-    bsal_actor_receive_fn_t handler_with_condition;
-    bsal_actor_receive_fn_t handler_without_condition;
+    thorium_actor_receive_fn_t handler_with_condition;
+    thorium_actor_receive_fn_t handler_without_condition;
 
     handler_with_condition = NULL;
     handler_without_condition = NULL;
@@ -234,10 +234,10 @@ bsal_actor_receive_fn_t bsal_dispatcher_get(struct bsal_dispatcher *self, int ta
 
         route = bsal_vector_at(vector, i);
 
-        if (bsal_route_test(route) == BSAL_ROUTE_CONDITION_TRUE) {
-            handler_with_condition = bsal_route_handler(route);
-        } else if (bsal_route_test(route) == BSAL_ROUTE_CONDITION_NONE) {
-            handler_without_condition = bsal_route_handler(route);
+        if (thorium_route_test(route) == BSAL_ROUTE_CONDITION_TRUE) {
+            handler_with_condition = thorium_route_handler(route);
+        } else if (thorium_route_test(route) == BSAL_ROUTE_CONDITION_NONE) {
+            handler_without_condition = thorium_route_handler(route);
         }
 
         /* Otherwise it is BSAL_ROUTE_CONDITION_FALSE
@@ -260,6 +260,6 @@ bsal_actor_receive_fn_t bsal_dispatcher_get(struct bsal_dispatcher *self, int ta
     return NULL;
 }
 
-void bsal_dispatcher_print(struct bsal_dispatcher *self)
+void thorium_dispatcher_print(struct thorium_dispatcher *self)
 {
 }

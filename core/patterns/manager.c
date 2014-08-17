@@ -19,7 +19,7 @@
 #define BSAL_MANAGER_DEBUG
 */
 
-struct bsal_script bsal_manager_script = {
+struct thorium_script bsal_manager_script = {
     .identifier = BSAL_MANAGER_SCRIPT,
     .name = "manager",
     .description = "Manager",
@@ -31,11 +31,11 @@ struct bsal_script bsal_manager_script = {
     .receive = bsal_manager_receive
 };
 
-void bsal_manager_init(struct bsal_actor *actor)
+void bsal_manager_init(struct thorium_actor *actor)
 {
     struct bsal_manager *concrete_actor;
 
-    concrete_actor = (struct bsal_manager *)bsal_actor_concrete_actor(actor);
+    concrete_actor = (struct bsal_manager *)thorium_actor_concrete_actor(actor);
 
     bsal_vector_init(&concrete_actor->children, sizeof(int));
 
@@ -43,7 +43,7 @@ void bsal_manager_init(struct bsal_actor *actor)
      * Register the route for stopping
      */
 
-    bsal_actor_add_route(actor, BSAL_ACTOR_ASK_TO_STOP,
+    thorium_actor_add_route(actor, BSAL_ACTOR_ASK_TO_STOP,
                     bsal_manager_ask_to_stop);
 
     bsal_map_init(&concrete_actor->spawner_child_count, sizeof(int), sizeof(int));
@@ -58,13 +58,13 @@ void bsal_manager_init(struct bsal_actor *actor)
     concrete_actor->script = BSAL_ACTOR_NO_VALUE;
 }
 
-void bsal_manager_destroy(struct bsal_actor *actor)
+void bsal_manager_destroy(struct thorium_actor *actor)
 {
     struct bsal_manager *concrete_actor;
     struct bsal_map_iterator iterator;
     struct bsal_vector *vector;
 
-    concrete_actor = (struct bsal_manager *)bsal_actor_concrete_actor(actor);
+    concrete_actor = (struct bsal_manager *)thorium_actor_concrete_actor(actor);
 
     bsal_vector_destroy(&concrete_actor->children);
 
@@ -85,7 +85,7 @@ void bsal_manager_destroy(struct bsal_actor *actor)
     bsal_vector_destroy(&concrete_actor->indices);
 }
 
-void bsal_manager_receive(struct bsal_actor *actor, struct bsal_message *message)
+void bsal_manager_receive(struct thorium_actor *actor, struct thorium_message *message)
 {
     int tag;
     struct bsal_vector spawners;
@@ -102,18 +102,18 @@ void bsal_manager_receive(struct bsal_actor *actor, struct bsal_message *message
     struct bsal_vector all_stores;
     int new_count;
     void *new_buffer;
-    struct bsal_message new_message;
+    struct thorium_message new_message;
     struct bsal_memory_pool *ephemeral_memory;
 
-    if (bsal_actor_use_route(actor, message)) {
+    if (thorium_actor_use_route(actor, message)) {
         return;
     }
 
-    ephemeral_memory = bsal_actor_get_ephemeral_memory(actor);
-    source = bsal_message_source(message);
-    buffer = bsal_message_buffer(message);
-    concrete_actor = (struct bsal_manager *)bsal_actor_concrete_actor(actor);
-    tag = bsal_message_tag(message);
+    ephemeral_memory = thorium_actor_get_ephemeral_memory(actor);
+    source = thorium_message_source(message);
+    buffer = thorium_message_buffer(message);
+    concrete_actor = (struct bsal_manager *)thorium_actor_concrete_actor(actor);
+    tag = thorium_message_tag(message);
 
     if (tag == BSAL_ACTOR_START) {
 
@@ -122,14 +122,14 @@ void bsal_manager_receive(struct bsal_actor *actor, struct bsal_message *message
         if (concrete_actor->script == BSAL_ACTOR_NO_VALUE) {
 
             bsal_vector_init(&all_stores, sizeof(int));
-            bsal_actor_send_reply_vector(actor, BSAL_ACTOR_START_REPLY, &all_stores);
+            thorium_actor_send_reply_vector(actor, BSAL_ACTOR_START_REPLY, &all_stores);
             bsal_vector_destroy(&all_stores);
             return;
         }
 
 #ifdef BSAL_MANAGER_DEBUG
         printf("DEBUG manager %d starts\n",
-                        bsal_actor_name(actor));
+                        thorium_actor_name(actor));
 #endif
 
         bsal_vector_init(&spawners, 0);
@@ -139,7 +139,7 @@ void bsal_manager_receive(struct bsal_actor *actor, struct bsal_message *message
         concrete_actor->spawners = bsal_vector_size(&spawners);
 
         printf("DEBUG manager %d starts, supervisor is %d, %d spawners provided\n",
-                        bsal_actor_name(actor), bsal_actor_supervisor(actor),
+                        thorium_actor_name(actor), thorium_actor_supervisor(actor),
                         (int)bsal_vector_size(&spawners));
 
         bsal_vector_iterator_init(&iterator, &spawners);
@@ -154,7 +154,7 @@ void bsal_manager_receive(struct bsal_actor *actor, struct bsal_message *message
             bsal_vector_push_back(&concrete_actor->indices, &index);
 
             printf("DEBUG manager %d add spawned processes for spawner %d\n",
-                            bsal_actor_name(actor), spawner);
+                            thorium_actor_name(actor), spawner);
 
             stores = (struct bsal_vector *)bsal_map_add(&concrete_actor->spawner_children, &index);
 
@@ -167,12 +167,12 @@ void bsal_manager_receive(struct bsal_actor *actor, struct bsal_message *message
 
 #ifdef BSAL_MANAGER_DEBUG
             printf("DEBUG685-1 spawner %d index %d bucket %p\n", spawner, index, (void *)bucket);
-            bsal_vector_print_int(bsal_actor_acquaintance_vector(actor));
+            bsal_vector_print_int(thorium_actor_acquaintance_vector(actor));
 #endif
 
             bsal_vector_init(stores, sizeof(int));
 
-            bsal_actor_send_empty(actor, spawner, BSAL_ACTOR_GET_NODE_WORKER_COUNT);
+            thorium_actor_send_empty(actor, spawner, BSAL_ACTOR_GET_NODE_WORKER_COUNT);
         }
 
         bsal_vector_iterator_destroy(&iterator);
@@ -187,9 +187,9 @@ void bsal_manager_receive(struct bsal_actor *actor, struct bsal_message *message
 #endif
 
         printf("manager %d sets script to script %x\n",
-                        bsal_actor_name(actor), concrete_actor->script);
+                        thorium_actor_name(actor), concrete_actor->script);
 
-        bsal_actor_send_reply_empty(actor, BSAL_MANAGER_SET_SCRIPT_REPLY);
+        thorium_actor_send_reply_empty(actor, BSAL_MANAGER_SET_SCRIPT_REPLY);
 
 #ifdef BSAL_MANAGER_DEBUG
         BSAL_DEBUG_MARKER("manager sends reply");
@@ -202,7 +202,7 @@ void bsal_manager_receive(struct bsal_actor *actor, struct bsal_message *message
             concrete_actor->actors_per_spawner = BSAL_ACTOR_NO_VALUE;
         }
 
-        bsal_actor_send_reply_empty(actor, BSAL_MANAGER_SET_ACTORS_PER_SPAWNER_REPLY);
+        thorium_actor_send_reply_empty(actor, BSAL_MANAGER_SET_ACTORS_PER_SPAWNER_REPLY);
 
     } else if (tag == BSAL_ACTOR_GET_NODE_WORKER_COUNT_REPLY) {
 
@@ -211,7 +211,7 @@ void bsal_manager_receive(struct bsal_actor *actor, struct bsal_message *message
         index = source;
 
         printf("DEBUG manager %d says that spawner %d is on a node with %d workers\n",
-                        bsal_actor_name(actor), source, workers);
+                        thorium_actor_name(actor), source, workers);
 
 #ifdef BSAL_MANAGER_DEBUG
         printf("DEBUG getting table index %d\n", index);
@@ -221,7 +221,7 @@ void bsal_manager_receive(struct bsal_actor *actor, struct bsal_message *message
 
 #ifdef BSAL_MANAGER_DEBUG
         printf("DEBUG685-2 spawner %d index %d bucket %p\n", source, index, (void *)bucket);
-        bsal_vector_print_int(bsal_actor_acquaintance_vector(actor));
+        bsal_vector_print_int(thorium_actor_acquaintance_vector(actor));
 #endif
 
         /* Option 1: Use a number of actors for each spawner. This number
@@ -259,7 +259,7 @@ void bsal_manager_receive(struct bsal_actor *actor, struct bsal_message *message
 
         }
 
-        bsal_actor_send_reply_int(actor, BSAL_ACTOR_SPAWN, concrete_actor->script);
+        thorium_actor_send_reply_int(actor, BSAL_ACTOR_SPAWN, concrete_actor->script);
 
     } else if (tag == BSAL_ACTOR_SPAWN_REPLY) {
 
@@ -273,7 +273,7 @@ void bsal_manager_receive(struct bsal_actor *actor, struct bsal_message *message
 
 #ifdef BSAL_MANAGER_DEBUG
         printf("DEBUG manager %d receives %d from spawner %d, now %d/%d\n",
-                        bsal_actor_name(actor), store, source,
+                        thorium_actor_name(actor), store, source,
                         (int)bsal_vector_size(stores), *bucket);
 #endif
 
@@ -282,14 +282,14 @@ void bsal_manager_receive(struct bsal_actor *actor, struct bsal_message *message
             concrete_actor->ready_spawners++;
 
             printf("DEBUG manager %d says that spawner %d is ready, %d/%d (spawned %d actors)\n",
-                        bsal_actor_name(actor), source,
+                        thorium_actor_name(actor), source,
                         concrete_actor->ready_spawners, concrete_actor->spawners,
                         (int)bsal_vector_size(stores));
 
             if (concrete_actor->ready_spawners == concrete_actor->spawners) {
 
                 printf("DEBUG manager %d says that all spawners are ready\n",
-                        bsal_actor_name(actor));
+                        thorium_actor_name(actor));
 
                 bsal_vector_init(&all_stores, sizeof(int));
 
@@ -320,43 +320,43 @@ void bsal_manager_receive(struct bsal_actor *actor, struct bsal_message *message
 
                 bsal_vector_destroy(&all_stores);
 
-                bsal_message_init(&new_message, BSAL_ACTOR_START_REPLY, new_count, new_buffer);
-                bsal_actor_send_to_supervisor(actor, &new_message);
+                thorium_message_init(&new_message, BSAL_ACTOR_START_REPLY, new_count, new_buffer);
+                thorium_actor_send_to_supervisor(actor, &new_message);
 
                 bsal_memory_free(new_buffer);
 
-                bsal_message_destroy(&new_message);
+                thorium_message_destroy(&new_message);
             }
         } else {
 
-            bsal_actor_send_reply_int(actor, BSAL_ACTOR_SPAWN, concrete_actor->script);
+            thorium_actor_send_reply_int(actor, BSAL_ACTOR_SPAWN, concrete_actor->script);
         }
 
 
     } else if (tag == BSAL_MANAGER_SET_ACTORS_PER_WORKER) {
 
-        bsal_message_unpack_int(message, 0, &concrete_actor->actors_per_worker);
+        thorium_message_unpack_int(message, 0, &concrete_actor->actors_per_worker);
 
         if (concrete_actor->actors_per_worker <= 0) {
             concrete_actor->actors_per_worker = BSAL_ACTOR_NO_VALUE;
         }
 
-        bsal_actor_send_reply_empty(actor, BSAL_MANAGER_SET_ACTORS_PER_WORKER_REPLY);
+        thorium_actor_send_reply_empty(actor, BSAL_MANAGER_SET_ACTORS_PER_WORKER_REPLY);
 
     } else if (tag == BSAL_MANAGER_SET_WORKERS_PER_ACTOR) {
 
-        bsal_message_unpack_int(message, 0, &concrete_actor->workers_per_actor);
+        thorium_message_unpack_int(message, 0, &concrete_actor->workers_per_actor);
 
         if (concrete_actor->workers_per_actor <= 0) {
             concrete_actor->workers_per_actor = BSAL_ACTOR_NO_VALUE;
         }
 
-        bsal_actor_send_reply_empty(actor, BSAL_MANAGER_SET_WORKERS_PER_ACTOR_REPLY);
+        thorium_actor_send_reply_empty(actor, BSAL_MANAGER_SET_WORKERS_PER_ACTOR_REPLY);
 
     }
 }
 
-void bsal_manager_ask_to_stop(struct bsal_actor *actor, struct bsal_message *message)
+void bsal_manager_ask_to_stop(struct thorium_actor *actor, struct thorium_message *message)
 {
 
     struct bsal_manager *concrete_actor;
@@ -365,11 +365,11 @@ void bsal_manager_ask_to_stop(struct bsal_actor *actor, struct bsal_message *mes
     int child;
 
     printf("%s/%d dies\n",
-                    bsal_actor_script_name(actor),
-                    bsal_actor_name(actor));
+                    thorium_actor_script_name(actor),
+                    thorium_actor_name(actor));
 
-    concrete_actor = (struct bsal_manager *)bsal_actor_concrete_actor(actor);
-    bsal_actor_ask_to_stop(actor, message);
+    concrete_actor = (struct bsal_manager *)thorium_actor_concrete_actor(actor);
+    thorium_actor_ask_to_stop(actor, message);
 
     /*
      * Stop children too
@@ -381,6 +381,6 @@ void bsal_manager_ask_to_stop(struct bsal_actor *actor, struct bsal_message *mes
 
         child = bsal_vector_at_as_int(&concrete_actor->children, i);
 
-        bsal_actor_send_empty(actor, child, BSAL_ACTOR_ASK_TO_STOP);
+        thorium_actor_send_empty(actor, child, BSAL_ACTOR_ASK_TO_STOP);
     }
 }

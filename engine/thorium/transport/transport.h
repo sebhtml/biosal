@@ -17,18 +17,18 @@
 
 #define BSAL_TRANSPORT_MOCK_IDENTIFIER (-1)
 
-struct bsal_active_request;
-struct bsal_worker_buffer;
+struct thorium_active_request;
+struct thorium_worker_buffer;
 
 /*
  * This is the transport layer in
  * the thorium actor engine
  */
-struct bsal_transport {
+struct thorium_transport {
 
     /* Common stuff
      */
-    struct bsal_node *node;
+    struct thorium_node *node;
     struct bsal_ring_queue active_requests;
     struct thorium_transport_profiler transport_profiler;
     int provided;
@@ -37,44 +37,44 @@ struct bsal_transport {
 
     struct bsal_memory_pool *inbound_message_memory_pool;
 
-    struct bsal_pami_transport pami_transport;
-    struct bsal_mpi_transport mpi_transport;
+    struct thorium_pami_transport pami_transport;
+    struct thorium_mpi_transport mpi_transport;
 
     int implementation;
 
     void *concrete_transport;
-    struct bsal_transport_interface *transport_interface;
+    struct thorium_transport_interface *transport_interface;
 
     uint32_t flags;
 };
 
-void bsal_transport_init(struct bsal_transport *self, struct bsal_node *node,
+void thorium_transport_init(struct thorium_transport *self, struct thorium_node *node,
                 int *argc, char ***argv,
                 struct bsal_memory_pool *inbound_message_memory_pool);
-void bsal_transport_destroy(struct bsal_transport *self);
-int bsal_transport_send(struct bsal_transport *self, struct bsal_message *message);
-int bsal_transport_receive(struct bsal_transport *self, struct bsal_message *message);
+void thorium_transport_destroy(struct thorium_transport *self);
+int thorium_transport_send(struct thorium_transport *self, struct thorium_message *message);
+int thorium_transport_receive(struct thorium_transport *self, struct thorium_message *message);
 
-int bsal_transport_get_provided(struct bsal_transport *self);
-int bsal_transport_get_rank(struct bsal_transport *self);
-int bsal_transport_get_size(struct bsal_transport *self);
+int thorium_transport_get_provided(struct thorium_transport *self);
+int thorium_transport_get_rank(struct thorium_transport *self);
+int thorium_transport_get_size(struct thorium_transport *self);
 
-int bsal_transport_get_identifier(struct bsal_transport *self);
-const char *bsal_transport_get_name(struct bsal_transport *self);
+int thorium_transport_get_identifier(struct thorium_transport *self);
+const char *thorium_transport_get_name(struct thorium_transport *self);
 
-int bsal_transport_test_requests(struct bsal_transport *self, struct bsal_worker_buffer *worker_buffer);
-int bsal_transport_get_active_request_count(struct bsal_transport *self);
+int thorium_transport_test_requests(struct thorium_transport *self, struct thorium_worker_buffer *worker_buffer);
+int thorium_transport_get_active_request_count(struct thorium_transport *self);
 
-int bsal_transport_dequeue_active_request(struct bsal_transport *self, struct bsal_active_request *active_request);
+int thorium_transport_dequeue_active_request(struct thorium_transport *self, struct thorium_active_request *active_request);
 
-int bsal_transport_get_implementation(struct bsal_transport *self);
+int thorium_transport_get_implementation(struct thorium_transport *self);
 
 
-void *bsal_transport_get_concrete_transport(struct bsal_transport *self);
-void bsal_transport_set(struct bsal_transport *self);
+void *thorium_transport_get_concrete_transport(struct thorium_transport *self);
+void thorium_transport_set(struct thorium_transport *self);
 
-void bsal_transport_select(struct bsal_transport *self);
+void thorium_transport_select(struct thorium_transport *self);
 
-void bsal_transport_print(struct bsal_transport *self);
+void thorium_transport_print(struct thorium_transport *self);
 
 #endif

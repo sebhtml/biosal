@@ -8,21 +8,21 @@
 
 #define BSAL_TRANSPORT_PAMI_NAME "PAMI: Parallel Active Message Interface"
 
-struct bsal_transport_interface bsal_pami_transport_implementation = {
+struct thorium_transport_interface thorium_pami_transport_implementation = {
     .identifier = BSAL_TRANSPORT_PAMI_IDENTIFIER,
     .name = BSAL_TRANSPORT_PAMI_NAME,
-    .size = sizeof(struct bsal_pami_transport),
-    .init = bsal_pami_transport_init,
-    .destroy = bsal_pami_transport_destroy,
-    .send = bsal_pami_transport_send,
-    .receive = bsal_pami_transport_receive
+    .size = sizeof(struct thorium_pami_transport),
+    .init = thorium_pami_transport_init,
+    .destroy = thorium_pami_transport_destroy,
+    .send = thorium_pami_transport_send,
+    .receive = thorium_pami_transport_receive
 };
 
-void bsal_pami_transport_init(struct bsal_transport *self, int *argc, char ***argv)
+void thorium_pami_transport_init(struct thorium_transport *self, int *argc, char ***argv)
 {
 #ifdef BSAL_TRANSPORT_USE_PAMI
     const char client_name[] = "biosal/thorium";
-    struct bsal_pami_transport *concrete_self;
+    struct thorium_pami_transport *concrete_self;
     int configuration_count;
     pami_result_t result;
     pami_configuration_t *configurations;
@@ -32,7 +32,7 @@ void bsal_pami_transport_init(struct bsal_transport *self, int *argc, char ***ar
     configuration_count = 0;
     configurations = NULL;
 
-    pami_transport = bsal_transport_get_concrete_transport(transport);
+    pami_transport = thorium_transport_get_concrete_transport(transport);
 
     /*
      * \see http://www-01.ibm.com/support/knowledgecenter/SSFK3V_1.3.0/com.ibm.cluster.protocols.v1r3.pp400.doc/bl510_pclientc.htm
@@ -59,13 +59,13 @@ void bsal_pami_transport_init(struct bsal_transport *self, int *argc, char ***ar
 #endif
 }
 
-void bsal_pami_transport_destroy(struct bsal_transport *self)
+void thorium_pami_transport_destroy(struct thorium_transport *self)
 {
 #ifdef BSAL_TRANSPORT_USE_PAMI
-    struct bsal_pami_transport *concrete_self;
+    struct thorium_pami_transport *concrete_self;
     pami_result_t result;
 
-    pami_transport = bsal_transport_get_concrete_transport(transport);
+    pami_transport = thorium_transport_get_concrete_transport(transport);
 
     result = PAMI_Client_destroy(&pami_transport->client);
 
@@ -75,7 +75,7 @@ void bsal_pami_transport_destroy(struct bsal_transport *self)
 #endif
 }
 
-int bsal_pami_transport_send(struct bsal_transport *self, struct bsal_message *message)
+int thorium_pami_transport_send(struct thorium_transport *self, struct thorium_message *message)
 {
     /*
      * Based on this example: http://code.google.com/p/pami-examples/source/browse/trunk/function/send.c
@@ -85,8 +85,8 @@ int bsal_pami_transport_send(struct bsal_transport *self, struct bsal_message *m
     int destination_node;
     void *buffer;
 
-    destination_node = bsal_message_destination_node(message);
-    buffer = bsal_message_buffer(message);
+    destination_node = thorium_message_destination_node(message);
+    buffer = thorium_message_buffer(message);
 
 #endif
     /*
@@ -96,7 +96,7 @@ int bsal_pami_transport_send(struct bsal_transport *self, struct bsal_message *m
     return 0;
 }
 
-int bsal_pami_transport_receive(struct bsal_transport *self, struct bsal_message *message)
+int thorium_pami_transport_receive(struct thorium_transport *self, struct thorium_message *message)
 {
     return 0;
 }

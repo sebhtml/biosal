@@ -84,87 +84,87 @@ struct bsal_assembly_graph_builder {
     int ready_graph_store_count;
 };
 
-extern struct bsal_script bsal_assembly_graph_builder_script;
+extern struct thorium_script bsal_assembly_graph_builder_script;
 
 /*
  * Constructor and destructor
  */
-void bsal_assembly_graph_builder_init(struct bsal_actor *self);
-void bsal_assembly_graph_builder_destroy(struct bsal_actor *self);
+void bsal_assembly_graph_builder_init(struct thorium_actor *self);
+void bsal_assembly_graph_builder_destroy(struct thorium_actor *self);
 
 /*
  * The main handler
  */
-void bsal_assembly_graph_builder_receive(struct bsal_actor *self, struct bsal_message *message);
+void bsal_assembly_graph_builder_receive(struct thorium_actor *self, struct thorium_message *message);
 
 /*
  * Other handlers
  */
-void bsal_assembly_graph_builder_ask_to_stop(struct bsal_actor *self, struct bsal_message *message);
+void bsal_assembly_graph_builder_ask_to_stop(struct thorium_actor *self, struct thorium_message *message);
 
-void bsal_assembly_graph_builder_start(struct bsal_actor *self, struct bsal_message *message);
-void bsal_assembly_graph_builder_set_producers(struct bsal_actor *self, struct bsal_message *message);
-void bsal_assembly_graph_builder_spawn_reply(struct bsal_actor *self, struct bsal_message *message);
-void bsal_assembly_graph_builder_spawn_reply_graph_store_manager(struct bsal_actor *self, struct bsal_message *message);
-void bsal_assembly_graph_builder_spawn_reply_window_manager(struct bsal_actor *self, struct bsal_message *message);
+void bsal_assembly_graph_builder_start(struct thorium_actor *self, struct thorium_message *message);
+void bsal_assembly_graph_builder_set_producers(struct thorium_actor *self, struct thorium_message *message);
+void bsal_assembly_graph_builder_spawn_reply(struct thorium_actor *self, struct thorium_message *message);
+void bsal_assembly_graph_builder_spawn_reply_graph_store_manager(struct thorium_actor *self, struct thorium_message *message);
+void bsal_assembly_graph_builder_spawn_reply_window_manager(struct thorium_actor *self, struct thorium_message *message);
 
-void bsal_assembly_graph_builder_set_script_reply_store_manager(struct bsal_actor *self, struct bsal_message *message);
-void bsal_assembly_graph_builder_start_reply_store_manager(struct bsal_actor *self, struct bsal_message *message);
+void bsal_assembly_graph_builder_set_script_reply_store_manager(struct thorium_actor *self, struct thorium_message *message);
+void bsal_assembly_graph_builder_start_reply_store_manager(struct thorium_actor *self, struct thorium_message *message);
 
-void bsal_assembly_graph_builder_set_script_reply_window_manager(struct bsal_actor *self, struct bsal_message *message);
-void bsal_assembly_graph_builder_start_reply_window_manager(struct bsal_actor *self, struct bsal_message *message);
+void bsal_assembly_graph_builder_set_script_reply_window_manager(struct thorium_actor *self, struct thorium_message *message);
+void bsal_assembly_graph_builder_start_reply_window_manager(struct thorium_actor *self, struct thorium_message *message);
 
-void bsal_assembly_graph_builder_set_script_reply_classifier_manager(struct bsal_actor *self, struct bsal_message *message);
-void bsal_assembly_graph_builder_start_reply_classifier_manager(struct bsal_actor *self, struct bsal_message *message);
+void bsal_assembly_graph_builder_set_script_reply_classifier_manager(struct thorium_actor *self, struct thorium_message *message);
+void bsal_assembly_graph_builder_start_reply_classifier_manager(struct thorium_actor *self, struct thorium_message *message);
 
-void bsal_assembly_graph_builder_configure(struct bsal_actor *self);
-void bsal_assembly_graph_builder_set_kmer_reply(struct bsal_actor *self, struct bsal_message *message);
+void bsal_assembly_graph_builder_configure(struct thorium_actor *self);
+void bsal_assembly_graph_builder_set_kmer_reply(struct thorium_actor *self, struct thorium_message *message);
 
-void bsal_assembly_graph_builder_connect_actors(struct bsal_actor *self);
+void bsal_assembly_graph_builder_connect_actors(struct thorium_actor *self);
 
-void bsal_assembly_graph_builder_set_consumers_reply(struct bsal_actor *self, struct bsal_message *message);
-void bsal_assembly_graph_builder_verify(struct bsal_actor *self);
-void bsal_assembly_graph_builder_set_consumer_reply(struct bsal_actor *self, struct bsal_message *message);
+void bsal_assembly_graph_builder_set_consumers_reply(struct thorium_actor *self, struct thorium_message *message);
+void bsal_assembly_graph_builder_verify(struct thorium_actor *self);
+void bsal_assembly_graph_builder_set_consumer_reply(struct thorium_actor *self, struct thorium_message *message);
 
-void bsal_assembly_graph_builder_tell_source(struct bsal_actor *self);
-void bsal_assembly_graph_builder_set_producer_reply(struct bsal_actor *self, struct bsal_message *message);
-int bsal_assembly_graph_builder_get_kmer_length(struct bsal_actor *self);
+void bsal_assembly_graph_builder_tell_source(struct thorium_actor *self);
+void bsal_assembly_graph_builder_set_producer_reply(struct thorium_actor *self, struct thorium_message *message);
+int bsal_assembly_graph_builder_get_kmer_length(struct thorium_actor *self);
 
-void bsal_assembly_graph_builder_notify_reply(struct bsal_actor *self, struct bsal_message *message);
-void bsal_assembly_graph_builder_control_complexity(struct bsal_actor *self, struct bsal_message *message);
-void bsal_assembly_graph_builder_get_entry_count_reply(struct bsal_actor *self, struct bsal_message *message);
+void bsal_assembly_graph_builder_notify_reply(struct thorium_actor *self, struct thorium_message *message);
+void bsal_assembly_graph_builder_control_complexity(struct thorium_actor *self, struct thorium_message *message);
+void bsal_assembly_graph_builder_get_entry_count_reply(struct thorium_actor *self, struct thorium_message *message);
 
-void bsal_assembly_graph_builder_set_consumer_reply_graph_stores(struct bsal_actor *self, struct bsal_message *message);
-void bsal_assembly_graph_builder_set_consumer_reply_windows(struct bsal_actor *self, struct bsal_message *message);
-void bsal_assembly_graph_builder_set_expected_message_count_reply(struct bsal_actor *self, struct bsal_message *message);
-void bsal_assembly_graph_builder_notify_from_distribution(struct bsal_actor *self, struct bsal_message *message);
+void bsal_assembly_graph_builder_set_consumer_reply_graph_stores(struct thorium_actor *self, struct thorium_message *message);
+void bsal_assembly_graph_builder_set_consumer_reply_windows(struct thorium_actor *self, struct thorium_message *message);
+void bsal_assembly_graph_builder_set_expected_message_count_reply(struct thorium_actor *self, struct thorium_message *message);
+void bsal_assembly_graph_builder_notify_from_distribution(struct thorium_actor *self, struct thorium_message *message);
 
-void bsal_assembly_graph_builder_spawn_reply_arc_kernel_manager(struct bsal_actor *self, struct bsal_message *message);
-void bsal_assembly_graph_builder_start_reply_arc_kernel_manager(struct bsal_actor *self, struct bsal_message *message);
-void bsal_assembly_graph_builder_set_script_reply_arc_kernel_manager(struct bsal_actor *self, struct bsal_message *message);
+void bsal_assembly_graph_builder_spawn_reply_arc_kernel_manager(struct thorium_actor *self, struct thorium_message *message);
+void bsal_assembly_graph_builder_start_reply_arc_kernel_manager(struct thorium_actor *self, struct thorium_message *message);
+void bsal_assembly_graph_builder_set_script_reply_arc_kernel_manager(struct thorium_actor *self, struct thorium_message *message);
 
 /*
  * For the manager of arc classifiers.
  */
-void bsal_assembly_graph_builder_start_reply_arc_classifier_manager(struct bsal_actor *self, struct bsal_message *message);
-void bsal_assembly_graph_builder_set_script_reply_arc_classifier_manager(struct bsal_actor *self, struct bsal_message *message);
-void bsal_assembly_graph_builder_spawn_reply_arc_classifier_manager(struct bsal_actor *self, struct bsal_message *message);
+void bsal_assembly_graph_builder_start_reply_arc_classifier_manager(struct thorium_actor *self, struct thorium_message *message);
+void bsal_assembly_graph_builder_set_script_reply_arc_classifier_manager(struct thorium_actor *self, struct thorium_message *message);
+void bsal_assembly_graph_builder_spawn_reply_arc_classifier_manager(struct thorium_actor *self, struct thorium_message *message);
 
 /*
  * Configure kmer length for arcs.
  */
 
-void bsal_assembly_graph_builder_set_kmer_reply_arcs(struct bsal_actor *self, struct bsal_message *message);
-void bsal_assembly_graph_builder_configure_arc_actors(struct bsal_actor *self, struct bsal_message *message);
+void bsal_assembly_graph_builder_set_kmer_reply_arcs(struct thorium_actor *self, struct thorium_message *message);
+void bsal_assembly_graph_builder_configure_arc_actors(struct thorium_actor *self, struct thorium_message *message);
 
 
 /*
  * Functions to verify arcs for high quality.
  */
-void bsal_assembly_graph_builder_verify_arcs(struct bsal_actor *self, struct bsal_message *message);
-void bsal_assembly_graph_builder_verify_arc_kernels(struct bsal_actor *self, struct bsal_message *message);
-void bsal_assembly_graph_builder_notify_reply_arc_kernels(struct bsal_actor *self, struct bsal_message *message);
+void bsal_assembly_graph_builder_verify_arcs(struct thorium_actor *self, struct thorium_message *message);
+void bsal_assembly_graph_builder_verify_arc_kernels(struct thorium_actor *self, struct thorium_message *message);
+void bsal_assembly_graph_builder_notify_reply_arc_kernels(struct thorium_actor *self, struct thorium_message *message);
 
-void bsal_assembly_graph_builder_get_summary_reply(struct bsal_actor *self, struct bsal_message *message);
+void bsal_assembly_graph_builder_get_summary_reply(struct thorium_actor *self, struct thorium_message *message);
 
 #endif

@@ -41,7 +41,7 @@
 
 #define MAXIMUM_AUTO_SCALING_KERNEL_COUNT 0
 
-struct bsal_script bsal_dna_kmer_counter_kernel_script = {
+struct thorium_script bsal_dna_kmer_counter_kernel_script = {
     .identifier = BSAL_DNA_KMER_COUNTER_KERNEL_SCRIPT,
     .init = bsal_dna_kmer_counter_kernel_init,
     .destroy = bsal_dna_kmer_counter_kernel_destroy,
@@ -50,11 +50,11 @@ struct bsal_script bsal_dna_kmer_counter_kernel_script = {
     .name = "bsal_dna_kmer_counter_kernel"
 };
 
-void bsal_dna_kmer_counter_kernel_init(struct bsal_actor *actor)
+void bsal_dna_kmer_counter_kernel_init(struct thorium_actor *actor)
 {
     struct bsal_dna_kmer_counter_kernel *concrete_actor;
 
-    concrete_actor = (struct bsal_dna_kmer_counter_kernel *)bsal_actor_concrete_actor(actor);
+    concrete_actor = (struct bsal_dna_kmer_counter_kernel *)thorium_actor_concrete_actor(actor);
 
     concrete_actor->expected = 0;
     concrete_actor->actual = 0;
@@ -74,7 +74,7 @@ void bsal_dna_kmer_counter_kernel_init(struct bsal_actor *actor)
     bsal_dna_codec_init(&concrete_actor->codec);
 
     if (bsal_dna_codec_must_use_two_bit_encoding(&concrete_actor->codec,
-                            bsal_actor_get_node_count(actor))) {
+                            thorium_actor_get_node_count(actor))) {
         bsal_dna_codec_enable_two_bit_encoding(&concrete_actor->codec);
     }
 
@@ -82,36 +82,36 @@ void bsal_dna_kmer_counter_kernel_init(struct bsal_actor *actor)
 
     concrete_actor->auto_scaling_in_progress = 0;
 
-    bsal_actor_add_route(actor, BSAL_ACTOR_PACK,
+    thorium_actor_add_route(actor, BSAL_ACTOR_PACK,
                     bsal_dna_kmer_counter_kernel_pack_message);
-    bsal_actor_add_route(actor, BSAL_ACTOR_UNPACK,
+    thorium_actor_add_route(actor, BSAL_ACTOR_UNPACK,
                     bsal_dna_kmer_counter_kernel_unpack_message);
-    bsal_actor_add_route(actor, BSAL_ACTOR_CLONE_REPLY,
+    thorium_actor_add_route(actor, BSAL_ACTOR_CLONE_REPLY,
                     bsal_dna_kmer_counter_kernel_clone_reply);
-    bsal_actor_add_route(actor, BSAL_ACTOR_NOTIFY,
+    thorium_actor_add_route(actor, BSAL_ACTOR_NOTIFY,
                     bsal_dna_kmer_counter_kernel_notify);
-    bsal_actor_add_route(actor, BSAL_ACTOR_NOTIFY_REPLY,
+    thorium_actor_add_route(actor, BSAL_ACTOR_NOTIFY_REPLY,
                     bsal_dna_kmer_counter_kernel_notify_reply);
-    bsal_actor_add_route(actor, BSAL_ACTOR_DO_AUTO_SCALING,
+    thorium_actor_add_route(actor, BSAL_ACTOR_DO_AUTO_SCALING,
                     bsal_dna_kmer_counter_kernel_do_auto_scaling);
 
     printf("kernel %d is online !!!\n",
-                    bsal_actor_name(actor));
+                    thorium_actor_name(actor));
 
     /* Enable packing for this actor. Maybe this is already enabled, but who knows.
      */
 
-    bsal_actor_send_to_self_empty(actor, BSAL_ACTOR_PACK_ENABLE);
+    thorium_actor_send_to_self_empty(actor, BSAL_ACTOR_PACK_ENABLE);
     concrete_actor->auto_scaling_clone = BSAL_ACTOR_NOBODY;
 
     concrete_actor->scaling_operations = 0;
 }
 
-void bsal_dna_kmer_counter_kernel_destroy(struct bsal_actor *actor)
+void bsal_dna_kmer_counter_kernel_destroy(struct thorium_actor *actor)
 {
     struct bsal_dna_kmer_counter_kernel *concrete_actor;
 
-    concrete_actor = (struct bsal_dna_kmer_counter_kernel *)bsal_actor_concrete_actor(actor);
+    concrete_actor = (struct bsal_dna_kmer_counter_kernel *)thorium_actor_concrete_actor(actor);
 
     concrete_actor->consumer = -1;
     concrete_actor->producer = -1;
@@ -121,7 +121,7 @@ void bsal_dna_kmer_counter_kernel_destroy(struct bsal_actor *actor)
     bsal_vector_destroy(&concrete_actor->kernels);
 }
 
-void bsal_dna_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_message *message)
+void bsal_dna_kmer_counter_kernel_receive(struct thorium_actor *actor, struct thorium_message *message)
 {
     int tag;
     int source;
@@ -133,17 +133,17 @@ void bsal_dna_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_
     int count;
     int producer;
 
-    if (bsal_actor_use_route(actor, message)) {
+    if (thorium_actor_use_route(actor, message)) {
         return;
     }
 
-    count = bsal_message_count(message);
+    count = thorium_message_count(message);
 
-    concrete_actor = (struct bsal_dna_kmer_counter_kernel *)bsal_actor_concrete_actor(actor);
-    tag = bsal_message_tag(message);
-    name = bsal_actor_name(actor);
-    source = bsal_message_source(message);
-    buffer = bsal_message_buffer(message);
+    concrete_actor = (struct bsal_dna_kmer_counter_kernel *)thorium_actor_concrete_actor(actor);
+    tag = thorium_message_tag(message);
+    name = thorium_actor_name(actor);
+    source = thorium_message_source(message);
+    buffer = thorium_message_buffer(message);
 
     if (tag == BSAL_PUSH_SEQUENCE_DATA_BLOCK) {
         bsal_dna_kmer_counter_kernel_push_sequence_data_block(actor, message);
@@ -156,7 +156,7 @@ void bsal_dna_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_
 
         /*
         source_index = *(int *)buffer;
-        bsal_actor_send_empty(actor,
+        thorium_actor_send_empty(actor,
                         source_index,
                         BSAL_PUSH_SEQUENCE_DATA_BLOCK_REPLY);
                         */
@@ -165,7 +165,7 @@ void bsal_dna_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_
 
     } else if (tag == BSAL_ACTOR_START) {
 
-        bsal_actor_send_reply_empty(actor, BSAL_ACTOR_START_REPLY);
+        thorium_actor_send_reply_empty(actor, BSAL_ACTOR_START_REPLY);
 
     } else if (tag == BSAL_RESERVE) {
 
@@ -175,22 +175,22 @@ void bsal_dna_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_
 
         concrete_actor->expected = *(uint64_t *)buffer;
 
-        bsal_actor_send_reply_empty(actor, BSAL_RESERVE_REPLY);
+        thorium_actor_send_reply_empty(actor, BSAL_RESERVE_REPLY);
 
     } else if (tag == BSAL_ACTOR_ASK_TO_STOP) {
 
         printf("kernel/%d generated %" PRIu64 " kmers from %" PRIu64 " entries (%d blocks)\n",
-                        bsal_actor_name(actor), concrete_actor->kmers,
+                        thorium_actor_name(actor), concrete_actor->kmers,
                         concrete_actor->actual, concrete_actor->blocks);
 
 #ifdef BSAL_KMER_COUNTER_KERNEL_DEBUG
         printf("kernel %d receives request to stop from %d, supervisor is %d\n",
-                        name, source, bsal_actor_supervisor(actor));
+                        name, source, thorium_actor_supervisor(actor));
 #endif
 
-        /*bsal_actor_send_to_self_empty(actor, BSAL_ACTOR_STOP);*/
+        /*thorium_actor_send_to_self_empty(actor, BSAL_ACTOR_STOP);*/
 
-        bsal_actor_ask_to_stop(actor, message);
+        thorium_actor_ask_to_stop(actor, message);
 
     } else if (tag == BSAL_ACTOR_SET_CONSUMER) {
 
@@ -199,23 +199,23 @@ void bsal_dna_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_
 
 #ifdef BSAL_KMER_COUNTER_KERNEL_DEBUG
         printf("kernel %d BSAL_ACTOR_SET_CONSUMER consumer %d index %d\n",
-                        bsal_actor_name(actor), consumer,
+                        thorium_actor_name(actor), consumer,
                         concrete_actor->consumer);
 #endif
 
-        bsal_actor_send_reply_empty(actor, BSAL_ACTOR_SET_CONSUMER_REPLY);
+        thorium_actor_send_reply_empty(actor, BSAL_ACTOR_SET_CONSUMER_REPLY);
 
     } else if (tag == BSAL_SET_KMER_LENGTH) {
 
-        bsal_message_unpack_int(message, 0, &concrete_actor->kmer_length);
+        thorium_message_unpack_int(message, 0, &concrete_actor->kmer_length);
 
         bsal_dna_kmer_init_mock(&kmer, concrete_actor->kmer_length, &concrete_actor->codec,
-                        bsal_actor_get_ephemeral_memory(actor));
+                        thorium_actor_get_ephemeral_memory(actor));
         concrete_actor->bytes_per_kmer = bsal_dna_kmer_pack_size(&kmer, concrete_actor->kmer_length,
                         &concrete_actor->codec);
-        bsal_dna_kmer_destroy(&kmer, bsal_actor_get_ephemeral_memory(actor));
+        bsal_dna_kmer_destroy(&kmer, thorium_actor_get_ephemeral_memory(actor));
 
-        bsal_actor_send_reply_empty(actor, BSAL_SET_KMER_LENGTH_REPLY);
+        thorium_actor_send_reply_empty(actor, BSAL_SET_KMER_LENGTH_REPLY);
 
     } else if (tag == BSAL_ACTOR_SET_PRODUCER) {
 
@@ -229,7 +229,7 @@ void bsal_dna_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_
             return;
         }
 
-        bsal_message_unpack_int(message, 0, &producer);
+        thorium_message_unpack_int(message, 0, &producer);
 
         concrete_actor->producer = producer;
 
@@ -246,7 +246,7 @@ void bsal_dna_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_
         printf("DEBUG kernel was told by producer that nothing is left to do\n");
 #endif
 
-        bsal_actor_send_empty(actor,
+        thorium_actor_send_empty(actor,
                                 concrete_actor->producer_source,
                         BSAL_ACTOR_SET_PRODUCER_REPLY);
 
@@ -256,7 +256,7 @@ void bsal_dna_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_
          */
         producer = concrete_actor->producer;
 
-        bsal_actor_send_int(actor, concrete_actor->auto_scaling_clone,
+        thorium_actor_send_int(actor, concrete_actor->auto_scaling_clone,
                         BSAL_ACTOR_SET_PRODUCER, producer);
 
         concrete_actor->auto_scaling_in_progress = 0;
@@ -264,7 +264,7 @@ void bsal_dna_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_
         concrete_actor->auto_scaling_clone = BSAL_ACTOR_NOBODY;
 
         printf("kernel %d completed auto-scaling # %d\n",
-                        bsal_actor_name(actor),
+                        thorium_actor_name(actor),
                         concrete_actor->scaling_operations);
 
 
@@ -277,16 +277,16 @@ void bsal_dna_kmer_counter_kernel_receive(struct bsal_actor *actor, struct bsal_
         printf("AUTO-SCALING kernel %d enables auto-scaling (BSAL_ACTOR_ENABLE_AUTO_SCALING) via actor %d\n",
                         name, source);
 
-        bsal_actor_send_to_self_empty(actor, BSAL_ACTOR_ENABLE_AUTO_SCALING);
+        thorium_actor_send_to_self_empty(actor, BSAL_ACTOR_ENABLE_AUTO_SCALING);
 
     }
 }
 
-void bsal_dna_kmer_counter_kernel_verify(struct bsal_actor *actor, struct bsal_message *message)
+void bsal_dna_kmer_counter_kernel_verify(struct thorium_actor *actor, struct thorium_message *message)
 {
     struct bsal_dna_kmer_counter_kernel *concrete_actor;
 
-    concrete_actor = (struct bsal_dna_kmer_counter_kernel *)bsal_actor_concrete_actor(actor);
+    concrete_actor = (struct bsal_dna_kmer_counter_kernel *)thorium_actor_concrete_actor(actor);
 
     if (!concrete_actor->notified) {
 
@@ -299,21 +299,21 @@ void bsal_dna_kmer_counter_kernel_verify(struct bsal_actor *actor, struct bsal_m
     }
 #endif
 
-    bsal_actor_send_uint64_t(actor,
+    thorium_actor_send_uint64_t(actor,
                             concrete_actor->notification_source,
                     BSAL_ACTOR_NOTIFY_REPLY, concrete_actor->kmers);
 }
 
-void bsal_dna_kmer_counter_kernel_ask(struct bsal_actor *self, struct bsal_message *message)
+void bsal_dna_kmer_counter_kernel_ask(struct thorium_actor *self, struct thorium_message *message)
 {
     struct bsal_dna_kmer_counter_kernel *concrete_actor;
     int producer;
 
-    concrete_actor = (struct bsal_dna_kmer_counter_kernel *)bsal_actor_concrete_actor(self);
+    concrete_actor = (struct bsal_dna_kmer_counter_kernel *)thorium_actor_concrete_actor(self);
 
     producer = concrete_actor->producer;
 
-    bsal_actor_send_int(self, producer, BSAL_SEQUENCE_STORE_ASK,
+    thorium_actor_send_int(self, producer, BSAL_SEQUENCE_STORE_ASK,
                     concrete_actor->kmer_length);
 
 #ifdef BSAL_DNA_KMER_COUNTER_KERNEL_DEBUG
@@ -321,16 +321,16 @@ void bsal_dna_kmer_counter_kernel_ask(struct bsal_actor *self, struct bsal_messa
 #endif
 }
 
-void bsal_dna_kmer_counter_kernel_do_auto_scaling(struct bsal_actor *actor, struct bsal_message *message)
+void bsal_dna_kmer_counter_kernel_do_auto_scaling(struct thorium_actor *actor, struct thorium_message *message)
 {
     struct bsal_dna_kmer_counter_kernel *concrete_actor;
     int name;
     int source;
 
-    name = bsal_actor_name(actor);
-    source = bsal_message_source(message);
+    name = thorium_actor_name(actor);
+    source = thorium_message_source(message);
 
-    concrete_actor = (struct bsal_dna_kmer_counter_kernel *)bsal_actor_concrete_actor(actor);
+    concrete_actor = (struct bsal_dna_kmer_counter_kernel *)thorium_actor_concrete_actor(actor);
 
     /*
      * Don't do auto-scaling while doing auto-scaling...
@@ -365,43 +365,43 @@ void bsal_dna_kmer_counter_kernel_do_auto_scaling(struct bsal_actor *actor, stru
 
     concrete_actor->auto_scaling_in_progress = 1;
 
-    bsal_actor_send_to_self_int(actor, BSAL_ACTOR_CLONE, name);
+    thorium_actor_send_to_self_int(actor, BSAL_ACTOR_CLONE, name);
 }
 
-void bsal_dna_kmer_counter_kernel_pack_message(struct bsal_actor *actor, struct bsal_message *message)
+void bsal_dna_kmer_counter_kernel_pack_message(struct thorium_actor *actor, struct thorium_message *message)
 {
     int *new_buffer;
     int new_count;
-    struct bsal_message new_message;
+    struct thorium_message new_message;
     struct bsal_memory_pool *ephemeral_memory;
 
-    ephemeral_memory = bsal_actor_get_ephemeral_memory(actor);
+    ephemeral_memory = thorium_actor_get_ephemeral_memory(actor);
     new_count = bsal_dna_kmer_counter_kernel_pack_size(actor);
     new_buffer = bsal_memory_pool_allocate(ephemeral_memory, new_count);
 
     bsal_dna_kmer_counter_kernel_pack(actor, new_buffer);
 
-    bsal_message_init(&new_message, BSAL_ACTOR_PACK_REPLY, new_count, new_buffer);
+    thorium_message_init(&new_message, BSAL_ACTOR_PACK_REPLY, new_count, new_buffer);
 
-    bsal_actor_send_reply(actor, &new_message);
+    thorium_actor_send_reply(actor, &new_message);
 
-    bsal_message_destroy(&new_message);
+    thorium_message_destroy(&new_message);
     bsal_memory_pool_free(ephemeral_memory, new_buffer);
     new_buffer = NULL;
 }
 
-void bsal_dna_kmer_counter_kernel_unpack_message(struct bsal_actor *actor, struct bsal_message *message)
+void bsal_dna_kmer_counter_kernel_unpack_message(struct thorium_actor *actor, struct thorium_message *message)
 {
     void *buffer;
 
-    buffer = bsal_message_buffer(message);
+    buffer = thorium_message_buffer(message);
 
     bsal_dna_kmer_counter_kernel_unpack(actor, buffer);
 
-    bsal_actor_send_reply_empty(actor, BSAL_ACTOR_UNPACK_REPLY);
+    thorium_actor_send_reply_empty(actor, BSAL_ACTOR_UNPACK_REPLY);
 }
 
-void bsal_dna_kmer_counter_kernel_clone_reply(struct bsal_actor *actor, struct bsal_message *message)
+void bsal_dna_kmer_counter_kernel_clone_reply(struct thorium_actor *actor, struct thorium_message *message)
 {
     struct bsal_dna_kmer_counter_kernel *concrete_actor;
     int name;
@@ -411,10 +411,10 @@ void bsal_dna_kmer_counter_kernel_clone_reply(struct bsal_actor *actor, struct b
     /*int producer;*/
     int clone_index;
 
-    source = bsal_message_source(message);
-    concrete_actor = (struct bsal_dna_kmer_counter_kernel *)bsal_actor_concrete_actor(actor);
-    name = bsal_actor_name(actor);
-    bsal_message_unpack_int(message, 0, &clone);
+    source = thorium_message_source(message);
+    concrete_actor = (struct bsal_dna_kmer_counter_kernel *)thorium_actor_concrete_actor(actor);
+    name = thorium_actor_name(actor);
+    thorium_message_unpack_int(message, 0, &clone);
     consumer = concrete_actor->consumer;
     /*producer = concrete_actor->producer);*/
 
@@ -422,7 +422,7 @@ void bsal_dna_kmer_counter_kernel_clone_reply(struct bsal_actor *actor, struct b
         printf("kernel %d cloned itself !!! clone name is %d\n",
                     name, clone);
 
-        bsal_actor_send_int(actor, consumer, BSAL_ACTOR_CLONE, name);
+        thorium_actor_send_int(actor, consumer, BSAL_ACTOR_CLONE, name);
 
         concrete_actor->auto_scaling_clone = clone;
 
@@ -434,7 +434,7 @@ void bsal_dna_kmer_counter_kernel_clone_reply(struct bsal_actor *actor, struct b
         printf("kernel %d cloned aggregator %d, clone name is %d\n",
                         name, consumer, clone);
 
-        bsal_actor_send_int(actor, concrete_actor->auto_scaling_clone,
+        thorium_actor_send_int(actor, concrete_actor->auto_scaling_clone,
                         BSAL_ACTOR_SET_CONSUMER, clone);
 
         /*
@@ -447,17 +447,17 @@ void bsal_dna_kmer_counter_kernel_clone_reply(struct bsal_actor *actor, struct b
 }
 
 
-int bsal_dna_kmer_counter_kernel_pack(struct bsal_actor *actor, void *buffer)
+int bsal_dna_kmer_counter_kernel_pack(struct thorium_actor *actor, void *buffer)
 {
     return bsal_dna_kmer_counter_kernel_pack_unpack(actor, BSAL_PACKER_OPERATION_PACK, buffer);
 }
 
-int bsal_dna_kmer_counter_kernel_unpack(struct bsal_actor *actor, void *buffer)
+int bsal_dna_kmer_counter_kernel_unpack(struct thorium_actor *actor, void *buffer)
 {
     return bsal_dna_kmer_counter_kernel_pack_unpack(actor, BSAL_PACKER_OPERATION_UNPACK, buffer);
 }
 
-int bsal_dna_kmer_counter_kernel_pack_size(struct bsal_actor *actor)
+int bsal_dna_kmer_counter_kernel_pack_size(struct thorium_actor *actor)
 {
     return bsal_dna_kmer_counter_kernel_pack_unpack(actor, BSAL_PACKER_OPERATION_DRY_RUN, NULL);
 }
@@ -469,7 +469,7 @@ int bsal_dna_kmer_counter_kernel_pack_size(struct bsal_actor *actor)
  * - consumer
  * - producer
  */
-int bsal_dna_kmer_counter_kernel_pack_unpack(struct bsal_actor *actor, int operation, void *buffer)
+int bsal_dna_kmer_counter_kernel_pack_unpack(struct thorium_actor *actor, int operation, void *buffer)
 {
     int bytes;
     struct bsal_packer packer;
@@ -477,7 +477,7 @@ int bsal_dna_kmer_counter_kernel_pack_unpack(struct bsal_actor *actor, int opera
     int producer;
     int consumer;
 
-    concrete_actor = (struct bsal_dna_kmer_counter_kernel *)bsal_actor_concrete_actor(actor);
+    concrete_actor = (struct bsal_dna_kmer_counter_kernel *)thorium_actor_concrete_actor(actor);
     producer = BSAL_ACTOR_NOBODY;
     consumer = BSAL_ACTOR_NOBODY;
 
@@ -506,19 +506,19 @@ int bsal_dna_kmer_counter_kernel_pack_unpack(struct bsal_actor *actor, int opera
     return bytes;
 }
 
-void bsal_dna_kmer_counter_kernel_notify(struct bsal_actor *actor, struct bsal_message *message)
+void bsal_dna_kmer_counter_kernel_notify(struct thorium_actor *actor, struct thorium_message *message)
 {
     struct bsal_dna_kmer_counter_kernel *concrete_actor;
     struct bsal_vector_iterator iterator;
     int kernel;
     int source;
 
-    concrete_actor = (struct bsal_dna_kmer_counter_kernel *)bsal_actor_concrete_actor(actor);
+    concrete_actor = (struct bsal_dna_kmer_counter_kernel *)thorium_actor_concrete_actor(actor);
 
-    source = bsal_message_source(message);
+    source = thorium_message_source(message);
     concrete_actor->notified = 1;
 
-    bsal_actor_send_to_self_empty(actor, BSAL_ACTOR_DISABLE_AUTO_SCALING);
+    thorium_actor_send_to_self_empty(actor, BSAL_ACTOR_DISABLE_AUTO_SCALING);
 
     concrete_actor->notification_source = source;
 
@@ -532,7 +532,7 @@ void bsal_dna_kmer_counter_kernel_notify(struct bsal_actor *actor, struct bsal_m
 
         while (bsal_vector_iterator_get_next_value(&iterator, &kernel)) {
 
-            bsal_actor_send_empty(actor, kernel, BSAL_ACTOR_NOTIFY);
+            thorium_actor_send_empty(actor, kernel, BSAL_ACTOR_NOTIFY);
         }
 
         bsal_vector_iterator_destroy(&iterator);
@@ -543,14 +543,14 @@ void bsal_dna_kmer_counter_kernel_notify(struct bsal_actor *actor, struct bsal_m
     }
 }
 
-void bsal_dna_kmer_counter_kernel_notify_reply(struct bsal_actor *actor, struct bsal_message *message)
+void bsal_dna_kmer_counter_kernel_notify_reply(struct thorium_actor *actor, struct thorium_message *message)
 {
     struct bsal_dna_kmer_counter_kernel *concrete_actor;
     uint64_t kmers;
 
-    concrete_actor = (struct bsal_dna_kmer_counter_kernel *)bsal_actor_concrete_actor(actor);
+    concrete_actor = (struct bsal_dna_kmer_counter_kernel *)thorium_actor_concrete_actor(actor);
 
-    bsal_message_unpack_uint64_t(message, 0, &kmers);
+    thorium_message_unpack_uint64_t(message, 0, &kmers);
 
     concrete_actor->sum_of_kmers += kmers;
 
@@ -559,7 +559,7 @@ void bsal_dna_kmer_counter_kernel_notify_reply(struct bsal_actor *actor, struct 
     if (concrete_actor->notified_children == bsal_vector_size(&concrete_actor->kernels)) {
 
 
-        bsal_actor_send_uint64_t(actor,
+        thorium_actor_send_uint64_t(actor,
                             concrete_actor->notification_source,
                     BSAL_ACTOR_NOTIFY_REPLY, concrete_actor->sum_of_kmers);
 
@@ -567,7 +567,7 @@ void bsal_dna_kmer_counter_kernel_notify_reply(struct bsal_actor *actor, struct 
 
 }
 
-void bsal_dna_kmer_counter_kernel_push_sequence_data_block(struct bsal_actor *actor, struct bsal_message *message)
+void bsal_dna_kmer_counter_kernel_push_sequence_data_block(struct thorium_actor *actor, struct thorium_message *message)
 {
     int source;
     struct bsal_dna_kmer kmer;
@@ -585,7 +585,7 @@ void bsal_dna_kmer_counter_kernel_push_sequence_data_block(struct bsal_actor *ac
     int sequence_length;
     int new_count;
     void *new_buffer;
-    struct bsal_message new_message;
+    struct thorium_message new_message;
     int j;
     int limit;
     char saved;
@@ -597,11 +597,11 @@ void bsal_dna_kmer_counter_kernel_push_sequence_data_block(struct bsal_actor *ac
     int kmers_for_sequence;
 
 
-    concrete_actor = (struct bsal_dna_kmer_counter_kernel *)bsal_actor_concrete_actor(actor);
-    ephemeral_memory = bsal_actor_get_ephemeral_memory(actor);
-    name = bsal_actor_name(actor);
-    source = bsal_message_source(message);
-    buffer = bsal_message_buffer(message);
+    concrete_actor = (struct bsal_dna_kmer_counter_kernel *)thorium_actor_concrete_actor(actor);
+    ephemeral_memory = thorium_actor_get_ephemeral_memory(actor);
+    name = thorium_actor_name(actor);
+    source = thorium_message_source(message);
+    buffer = thorium_message_buffer(message);
 
     if (concrete_actor->kmer_length == BSAL_ACTOR_NOBODY) {
         printf("Error no kmer length set in kernel\n");
@@ -625,7 +625,7 @@ void bsal_dna_kmer_counter_kernel_push_sequence_data_block(struct bsal_actor *ac
     source_index = source;
 
     bsal_input_command_init_empty(&payload);
-    bsal_input_command_unpack(&payload, buffer, bsal_actor_get_ephemeral_memory(actor),
+    bsal_input_command_unpack(&payload, buffer, thorium_actor_get_ephemeral_memory(actor),
                     &concrete_actor->codec);
 
     command_entries = bsal_input_command_entries(&payload);
@@ -683,7 +683,7 @@ void bsal_dna_kmer_counter_kernel_push_sequence_data_block(struct bsal_actor *ac
             sequence_data[j + concrete_actor->kmer_length] = '\0';
 
             bsal_dna_kmer_init(&kmer, sequence_data + j,
-                            &concrete_actor->codec, bsal_actor_get_ephemeral_memory(actor));
+                            &concrete_actor->codec, thorium_actor_get_ephemeral_memory(actor));
 
 #ifdef BSAL_KMER_COUNTER_KERNEL_DEBUG_LEVEL_2
             printf("KERNEL kmer %d,%d %s\n", i, j, sequence_data + j);
@@ -692,10 +692,10 @@ void bsal_dna_kmer_counter_kernel_push_sequence_data_block(struct bsal_actor *ac
             /*
              * add kmer in block
              */
-            bsal_dna_kmer_block_add_kmer(&block, &kmer, bsal_actor_get_ephemeral_memory(actor),
+            bsal_dna_kmer_block_add_kmer(&block, &kmer, thorium_actor_get_ephemeral_memory(actor),
                             &concrete_actor->codec);
 
-            bsal_dna_kmer_destroy(&kmer, bsal_actor_get_ephemeral_memory(actor));
+            bsal_dna_kmer_destroy(&kmer, thorium_actor_get_ephemeral_memory(actor));
 
             sequence_data[j + concrete_actor->kmer_length] = saved;
 
@@ -721,7 +721,7 @@ void bsal_dna_kmer_counter_kernel_push_sequence_data_block(struct bsal_actor *ac
     concrete_actor->actual += entries;
     concrete_actor->blocks++;
 
-    bsal_input_command_destroy(&payload, bsal_actor_get_ephemeral_memory(actor));
+    bsal_input_command_destroy(&payload, thorium_actor_get_ephemeral_memory(actor));
 
 #ifdef BSAL_KMER_COUNTER_KERNEL_DEBUG
     printf("consumer%d\n", consumer);
@@ -748,18 +748,18 @@ void bsal_dna_kmer_counter_kernel_push_sequence_data_block(struct bsal_actor *ac
     BSAL_DEBUG_MARKER("kernel sends to aggregator");
 #endif
 
-    bsal_message_init(&new_message, BSAL_AGGREGATE_KERNEL_OUTPUT,
+    thorium_message_init(&new_message, BSAL_AGGREGATE_KERNEL_OUTPUT,
                     new_count, new_buffer);
 
     /*
-    bsal_message_init(&new_message, BSAL_AGGREGATE_KERNEL_OUTPUT,
+    thorium_message_init(&new_message, BSAL_AGGREGATE_KERNEL_OUTPUT,
                     sizeof(source_index), &source_index);
                     */
 
-    bsal_actor_send(actor, consumer, &new_message);
+    thorium_actor_send(actor, consumer, &new_message);
     bsal_memory_pool_free(ephemeral_memory, new_buffer);
 
-    bsal_actor_send_empty(actor,
+    thorium_actor_send_empty(actor,
                     source_index,
                     BSAL_PUSH_SEQUENCE_DATA_BLOCK_REPLY);
 
@@ -783,7 +783,7 @@ void bsal_dna_kmer_counter_kernel_push_sequence_data_block(struct bsal_actor *ac
 
     bsal_timer_destroy(&timer);
 
-    bsal_dna_kmer_block_destroy(&block, bsal_actor_get_ephemeral_memory(actor));
+    bsal_dna_kmer_block_destroy(&block, thorium_actor_get_ephemeral_memory(actor));
 
 #ifdef BSAL_KMER_COUNTER_KERNEL_DEBUG
     BSAL_DEBUG_MARKER("leaving call.\n");

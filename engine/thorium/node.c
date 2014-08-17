@@ -56,9 +56,9 @@
 #define BSAL_NODE_DEBUG_SPAWN_KILL
 */
 
-static struct bsal_node *bsal_node_global_self;
+static struct thorium_node *thorium_node_global_self;
 
-void bsal_node_init(struct bsal_node *node, int *argc, char ***argv)
+void thorium_node_init(struct thorium_node *node, int *argc, char ***argv)
 {
     int i;
     int workers;
@@ -76,7 +76,7 @@ void bsal_node_init(struct bsal_node *node, int *argc, char ***argv)
     */
     /* register signal handlers
      */
-    bsal_node_register_signal_handlers(node);
+    thorium_node_register_signal_handlers(node);
 
     bsal_set_init(&node->auto_scaling_actors, sizeof(int));
 
@@ -85,7 +85,7 @@ void bsal_node_init(struct bsal_node *node, int *argc, char ***argv)
     node->print_structure = 0;
     node->debug = 0;
 
-    bsal_node_global_self = node;
+    thorium_node_global_self = node;
 
     node->start_time = time(NULL);
     node->last_transport_event_time = node->start_time;
@@ -107,15 +107,15 @@ void bsal_node_init(struct bsal_node *node, int *argc, char ***argv)
     bsal_memory_pool_init(&node->outbound_message_memory_pool, 2097152);
     bsal_memory_pool_disable(&node->outbound_message_memory_pool);
 
-    bsal_transport_init(&node->transport, node, argc, argv,
+    thorium_transport_init(&node->transport, node, argc, argv,
                     &node->inbound_message_memory_pool);
 
-    node->provided = bsal_transport_get_provided(&node->transport);
-    node->name = bsal_transport_get_rank(&node->transport);
-    node->nodes = bsal_transport_get_size(&node->transport);
+    node->provided = thorium_transport_get_provided(&node->transport);
+    node->name = thorium_transport_get_rank(&node->transport);
+    node->nodes = thorium_transport_get_size(&node->transport);
 
 #ifdef BSAL_NODE_INJECT_CLEAN_WORKER_BUFFERS
-    bsal_ring_queue_init(&node->clean_outbound_buffers_to_inject, sizeof(struct bsal_worker_buffer));
+    bsal_ring_queue_init(&node->clean_outbound_buffers_to_inject, sizeof(struct thorium_worker_buffer));
 #endif
 
     node->use_transport = 1;
@@ -127,7 +127,7 @@ void bsal_node_init(struct bsal_node *node, int *argc, char ***argv)
 #endif
 
     node->print_counters = 0;
-    bsal_map_init(&node->scripts, sizeof(int), sizeof(struct bsal_script *));
+    bsal_map_init(&node->scripts, sizeof(int), sizeof(struct thorium_script *));
 
     /* the rank number is needed to decide on
      * the number of threads
@@ -153,7 +153,7 @@ void bsal_node_init(struct bsal_node *node, int *argc, char ***argv)
 
     for (i = 0; i < *argc; i++) {
         if (strcmp((*argv)[i], "-threads-per-node") == 0 && i + 1 < *argc) {
-            /*printf("bsal_node_init threads: %s\n",
+            /*printf("thorium_node_init threads: %s\n",
                             (*argv)[i + 1]);*/
 
             required_threads = (*argv)[i + 1];
@@ -174,7 +174,7 @@ void bsal_node_init(struct bsal_node *node, int *argc, char ***argv)
 
             /* -threads-per-node 5,6,9
              */
-            detected = bsal_node_threads_from_string(node, required_threads, node->name);
+            detected = thorium_node_threads_from_string(node, required_threads, node->name);
 
             if (detected > 0) {
                 node->threads = detected;
@@ -269,13 +269,13 @@ void bsal_node_init(struct bsal_node *node, int *argc, char ***argv)
                     node->threads, workers, node->send_in_thread);
 #endif
 
-    bsal_worker_pool_init(&node->worker_pool, workers, node);
+    thorium_worker_pool_init(&node->worker_pool, workers, node);
 
     actor_capacity = 131072;
     node->dead_actors = 0;
     node->alive_actors = 0;
 
-    bsal_vector_init(&node->actors, sizeof(struct bsal_actor));
+    bsal_vector_init(&node->actors, sizeof(struct thorium_actor));
 
     /* it is necessary to reserve because work units will point
      * to actors so their addresses can not be changed
@@ -290,7 +290,7 @@ void bsal_node_init(struct bsal_node *node, int *argc, char ***argv)
     bsal_vector_init(&node->initial_actors, sizeof(int));
 
     /*printf("BEFORE\n");*/
-    bsal_vector_resize(&node->initial_actors, bsal_node_nodes(node));
+    bsal_vector_resize(&node->initial_actors, thorium_node_nodes(node));
     /*printf("AFTER\n");*/
 
     node->received_initial_actors = 0;
@@ -319,14 +319,14 @@ void bsal_node_init(struct bsal_node *node, int *argc, char ***argv)
                     node->name,
             node->nodes,
             node->threads,
-            bsal_worker_pool_worker_count(&node->worker_pool),
+            thorium_worker_pool_worker_count(&node->worker_pool),
             1);
 
-        bsal_transport_print(&node->transport);
+        thorium_transport_print(&node->transport);
     }
 }
 
-void bsal_node_destroy(struct bsal_node *node)
+void thorium_node_destroy(struct thorium_node *node)
 {
     bsal_set_destroy(&node->auto_scaling_actors);
 
@@ -349,15 +349,15 @@ void bsal_node_destroy(struct bsal_node *node)
 
     bsal_queue_destroy(&node->dead_indices);
 
-    bsal_worker_pool_destroy(&node->worker_pool);
+    thorium_worker_pool_destroy(&node->worker_pool);
 
-    bsal_transport_destroy(&node->transport);
+    thorium_transport_destroy(&node->transport);
     bsal_counter_destroy(&node->counter);
 
     bsal_ring_queue_destroy(&node->clean_outbound_buffers_to_inject);
 }
 
-int bsal_node_threads_from_string(struct bsal_node *node,
+int thorium_node_threads_from_string(struct thorium_node *node,
                 char *required_threads, int index)
 {
     int j;
@@ -410,94 +410,94 @@ int bsal_node_threads_from_string(struct bsal_node *node,
          * this never happens because the index is changed at the beginning
          * of the function.
          */
-        return bsal_node_threads_from_string(node, required_threads, index - commas -1);
+        return thorium_node_threads_from_string(node, required_threads, index - commas -1);
     }
 
     return -1;
 }
 
-void bsal_node_set_supervisor(struct bsal_node *node, int name, int supervisor)
+void thorium_node_set_supervisor(struct thorium_node *node, int name, int supervisor)
 {
-    struct bsal_actor *actor;
+    struct thorium_actor *actor;
 
     if (name == BSAL_ACTOR_NOBODY) {
         return;
     }
 
 #ifdef BSAL_NODE_DEBUG_SUPERVISOR
-    printf("DEBUG bsal_node_set_supervisor %d %d\n", name, supervisor);
+    printf("DEBUG thorium_node_set_supervisor %d %d\n", name, supervisor);
 #endif
 
-    actor = bsal_node_get_actor_from_name(node, name);
+    actor = thorium_node_get_actor_from_name(node, name);
 
 #ifdef BSAL_NODE_DEBUG_SUPERVISOR
     printf("DEBUG set supervisor %d %d %p\n", name, supervisor, (void *)actor);
 #endif
 
-    bsal_actor_set_supervisor(actor, supervisor);
+    thorium_actor_set_supervisor(actor, supervisor);
 }
 
-int bsal_node_actors(struct bsal_node *node)
+int thorium_node_actors(struct thorium_node *node)
 {
     return bsal_vector_size(&node->actors);
 }
 
-int bsal_node_spawn(struct bsal_node *node, int script)
+int thorium_node_spawn(struct thorium_node *node, int script)
 {
-    struct bsal_script *script1;
+    struct thorium_script *script1;
     int size;
     void *state;
     int name;
-    struct bsal_actor *actor;
+    struct thorium_actor *actor;
 
     /* in the current implementation, there can only be one initial
      * actor on each node
      */
-    if (node->started == 0 && bsal_node_actors(node) > 0) {
+    if (node->started == 0 && thorium_node_actors(node) > 0) {
         return -1;
     }
 
-    script1 = bsal_node_find_script(node, script);
+    script1 = thorium_node_find_script(node, script);
 
     if (script1 == NULL) {
         return -1;
     }
 
-    size = bsal_script_size(script1);
+    size = thorium_script_size(script1);
 
     state = bsal_memory_pool_allocate(&node->actor_memory_pool, size);
 
-    name = bsal_node_spawn_state(node, state, script1);
+    name = thorium_node_spawn_state(node, state, script1);
 
     /* send the initial actor to the master node
      */
-    if (bsal_node_actors(node) == 1) {
-        struct bsal_message message;
-        bsal_message_init(&message, BSAL_NODE_ADD_INITIAL_ACTOR, sizeof(name), &name);
-        bsal_node_send_to_node(node, 0, &message);
+    if (thorium_node_actors(node) == 1) {
+        struct thorium_message message;
+        thorium_message_init(&message, BSAL_NODE_ADD_INITIAL_ACTOR, sizeof(name), &name);
+        thorium_node_send_to_node(node, 0, &message);
 
         /* initial actors are their own spawners.
          */
-        actor = bsal_node_get_actor_from_name(node, name);
+        actor = thorium_node_get_actor_from_name(node, name);
 
-        bsal_counter_add(bsal_actor_counter(actor), BSAL_COUNTER_SPAWNED_ACTORS, 1);
+        bsal_counter_add(thorium_actor_counter(actor), BSAL_COUNTER_SPAWNED_ACTORS, 1);
     }
 
     bsal_counter_add(&node->counter, BSAL_COUNTER_SPAWNED_ACTORS, 1);
 
 #ifdef BSAL_NODE_DEBUG_SPAWN_KILL
-    printf("DEBUG node/%d bsal_node_spawn actor/%d script/%x\n",
-                    bsal_node_name(node),
+    printf("DEBUG node/%d thorium_node_spawn actor/%d script/%x\n",
+                    thorium_node_name(node),
                     name, script);
 #endif
 
     return name;
 }
 
-int bsal_node_spawn_state(struct bsal_node *node, void *state,
-                struct bsal_script *script)
+int thorium_node_spawn_state(struct thorium_node *node, void *state,
+                struct thorium_script *script)
 {
-    struct bsal_actor *actor;
+    struct thorium_actor *actor;
     int name;
     int *bucket;
     int index;
@@ -510,22 +510,22 @@ int bsal_node_spawn_state(struct bsal_node *node, void *state,
     }
 
 #ifdef BSAL_NODE_DEBUG
-    printf("DEBUG bsal_node_spawn_state\n");
+    printf("DEBUG thorium_node_spawn_state\n");
 #endif
 
     bsal_lock_lock(&node->spawn_and_death_lock);
 
     /* add an actor in the vector of actors
      */
-    index = bsal_node_allocate_actor_index(node);
-    actor = (struct bsal_actor *)bsal_vector_at(&node->actors, index);
+    index = thorium_node_allocate_actor_index(node);
+    actor = (struct thorium_actor *)bsal_vector_at(&node->actors, index);
 
     /* actors have random names to enforce
      * the acquaintance paradigm
      */
-    name = bsal_node_generate_name(node);
+    name = thorium_node_generate_name(node);
 
-    bsal_actor_init(actor, state, script, name, node);
+    thorium_actor_init(actor, state, script, name, node);
 
     /* register the actor name
      */
@@ -550,7 +550,7 @@ int bsal_node_spawn_state(struct bsal_node *node, void *state,
     return name;
 }
 
-int bsal_node_allocate_actor_index(struct bsal_node *node)
+int thorium_node_allocate_actor_index(struct thorium_node *node)
 {
     int index;
 
@@ -558,8 +558,8 @@ int bsal_node_allocate_actor_index(struct bsal_node *node)
     if (bsal_queue_dequeue(&node->dead_indices, &index)) {
 
 #ifdef BSAL_NODE_DEBUG_SPAWN
-        printf("DEBUG node/%d bsal_node_allocate_actor_index using an old index %d, size %d\n",
-                        bsal_node_name(node),
+        printf("DEBUG node/%d thorium_node_allocate_actor_index using an old index %d, size %d\n",
+                        thorium_node_name(node),
                         index, bsal_vector_size(&node->actors));
 #endif
 
@@ -573,33 +573,33 @@ int bsal_node_allocate_actor_index(struct bsal_node *node)
     return index;
 }
 
-int bsal_node_generate_name(struct bsal_node *node)
+int thorium_node_generate_name(struct thorium_node *node)
 {
     int minimal_value;
     int maximum_value;
     int name;
     int range;
-    struct bsal_actor *actor;
+    struct thorium_actor *actor;
     int node_name;
     int difference;
     int nodes;
 
 #ifdef BSAL_NODE_DEBUG
-    printf("DEBUG bsal_node_generate_name\n");
+    printf("DEBUG thorium_node_generate_name\n");
 #endif
 
 #ifdef BSAL_NODE_SIMPLE_INITIAL_ACTOR_NAMES
-    if (bsal_node_actors(node) == 0) {
-        return bsal_node_name(node);
+    if (thorium_node_actors(node) == 0) {
+        return thorium_node_name(node);
     }
 #endif
 
-    node_name = bsal_node_name(node);
+    node_name = thorium_node_name(node);
     actor = NULL;
 
     /* reserve  the first numbers
      */
-    minimal_value = 4* bsal_node_nodes(node);
+    minimal_value = 4* thorium_node_nodes(node);
     name = -1;
     maximum_value = 2000000000;
     range = maximum_value - minimal_value;
@@ -608,7 +608,7 @@ int bsal_node_generate_name(struct bsal_node *node)
     printf("DEBUG assigning name\n");
 #endif
 
-    nodes = bsal_node_nodes(node);
+    nodes = thorium_node_nodes(node);
 
     while (actor != NULL || name < 0) {
         name = rand() % range + minimal_value;
@@ -623,7 +623,7 @@ int bsal_node_generate_name(struct bsal_node *node)
             continue;
         }
 
-        actor = bsal_node_get_actor_from_name(node, name);
+        actor = thorium_node_get_actor_from_name(node, name);
 
         /*printf("DEBUG trying %d... %p\n", name, (void *)actor);*/
 
@@ -633,12 +633,12 @@ int bsal_node_generate_name(struct bsal_node *node)
     printf("DEBUG node %d assigned name %d\n", node->name, name);
 #endif
 
-    /*return node->name + node->nodes * bsal_node_actors(node);*/
+    /*return node->name + node->nodes * thorium_node_actors(node);*/
 
     return name;
 }
 
-void bsal_node_set_initial_actor(struct bsal_node *node, int node_name, int actor)
+void thorium_node_set_initial_actor(struct thorium_node *node, int node_name, int actor)
 {
     int *bucket;
 
@@ -646,12 +646,12 @@ void bsal_node_set_initial_actor(struct bsal_node *node, int node_name, int acto
     *bucket = actor;
 
 #ifdef BSAL_NODE_DEBUG_INITIAL_ACTORS
-    printf("DEBUG bsal_node_set_initial_actor node %d actor %d, %d actors\n",
+    printf("DEBUG thorium_node_set_initial_actor node %d actor %d, %d actors\n",
                     node_name, actor, bsal_vector_size(&node->initial_actors));
 #endif
 }
 
-int bsal_node_run(struct bsal_node *node)
+int thorium_node_run(struct thorium_node *node)
 {
     float load;
     int print_final_load;
@@ -659,9 +659,9 @@ int bsal_node_run(struct bsal_node *node)
 
     if (node->print_counters) {
         printf("----------------------------------------------\n");
-        printf("biosal> node/%d: %d threads, %d workers\n", bsal_node_name(node),
-                    bsal_node_thread_count(node),
-                    bsal_node_worker_count(node));
+        printf("biosal> node/%d: %d threads, %d workers\n", thorium_node_name(node),
+                    thorium_node_thread_count(node),
+                    thorium_node_worker_count(node));
     }
 
     node->started = 1;
@@ -669,9 +669,9 @@ int bsal_node_run(struct bsal_node *node)
     if (node->workers_in_threads) {
 #ifdef BSAL_NODE_DEBUG_RUN
         printf("BSAL_NODE_DEBUG_RUN DEBUG starting %i worker threads\n",
-                        bsal_worker_pool_worker_count(&node->worker_pool));
+                        thorium_worker_pool_worker_count(&node->worker_pool));
 #endif
-        bsal_worker_pool_start(&node->worker_pool);
+        thorium_worker_pool_start(&node->worker_pool);
     }
 
 
@@ -679,26 +679,26 @@ int bsal_node_run(struct bsal_node *node)
 #ifdef BSAL_NODE_DEBUG_RUN
         printf("BSAL_NODE_DEBUG_RUN starting send thread\n");
 #endif
-        bsal_node_start_send_thread(node);
+        thorium_node_start_send_thread(node);
     }
 
 #ifdef BSAL_NODE_DEBUG_RUN
-    printf("BSAL_NODE_DEBUG_RUN entering loop in bsal_node_run\n");
+    printf("BSAL_NODE_DEBUG_RUN entering loop in thorium_node_run\n");
 #endif
 
-    bsal_node_run_loop(node);
+    thorium_node_run_loop(node);
 
 #ifdef BSAL_NODE_DEBUG_RUN
-    printf("BSAL_NODE_DEBUG_RUN after loop in bsal_node_run\n");
+    printf("BSAL_NODE_DEBUG_RUN after loop in thorium_node_run\n");
 #endif
 
     if (node->workers_in_threads) {
-        bsal_worker_pool_stop(&node->worker_pool);
+        thorium_worker_pool_stop(&node->worker_pool);
     }
 
     if (node->print_load) {
-        bsal_worker_pool_print_load(&node->worker_pool, BSAL_WORKER_POOL_LOAD_EPOCH);
-        bsal_worker_pool_print_load(&node->worker_pool, BSAL_WORKER_POOL_LOAD_LOOP);
+        thorium_worker_pool_print_load(&node->worker_pool, BSAL_WORKER_POOL_LOAD_EPOCH);
+        thorium_worker_pool_print_load(&node->worker_pool, BSAL_WORKER_POOL_LOAD_LOOP);
     }
 
     if (node->send_in_thread) {
@@ -708,7 +708,7 @@ int bsal_node_run(struct bsal_node *node)
     /* Always print counters at the end, this is useful.
      */
     if (node->print_counters) {
-        bsal_node_print_counters(node);
+        thorium_node_print_counters(node);
     }
 
     /* Print global load for this node... */
@@ -722,26 +722,26 @@ int bsal_node_run(struct bsal_node *node)
         }
     }
     if (node->print_load || print_final_load) {
-        load = bsal_worker_pool_get_computation_load(&node->worker_pool);
+        load = thorium_worker_pool_get_computation_load(&node->worker_pool);
 
         printf("%s node/%d COMPUTATION LOAD %.2f\n",
                     BSAL_NODE_THORIUM_PREFIX,
-                    bsal_node_name(node),
+                    thorium_node_name(node),
                     load);
     }
 
     return 0;
 }
 
-void bsal_node_start_initial_actor(struct bsal_node *node)
+void thorium_node_start_initial_actor(struct thorium_node *node)
 {
     int actors;
     int bytes;
     void *buffer;
-    struct bsal_actor *actor;
+    struct thorium_actor *actor;
     int i;
     int name;
-    struct bsal_message message;
+    struct thorium_message message;
 
     actors = bsal_vector_size(&node->actors);
 
@@ -756,17 +756,17 @@ void bsal_node_start_initial_actor(struct bsal_node *node)
     bsal_vector_pack(&node->initial_actors, buffer);
 
     for (i = 0; i < actors; ++i) {
-        actor = (struct bsal_actor *)bsal_vector_at(&node->actors, i);
-        name = bsal_actor_name(actor);
+        actor = (struct thorium_actor *)bsal_vector_at(&node->actors, i);
+        name = thorium_actor_name(actor);
 
         /* initial actors are supervised by themselves... */
-        bsal_actor_set_supervisor(actor, name);
+        thorium_actor_set_supervisor(actor, name);
 
-        bsal_message_init(&message, BSAL_ACTOR_START, bytes, buffer);
+        thorium_message_init(&message, BSAL_ACTOR_START, bytes, buffer);
 
-        bsal_node_send_to_actor(node, name, &message);
+        thorium_node_send_to_actor(node, name, &message);
 
-        bsal_message_destroy(&message);
+        thorium_message_destroy(&message);
     }
 
     /*
@@ -774,7 +774,7 @@ void bsal_node_start_initial_actor(struct bsal_node *node)
     */
 }
 
-int bsal_node_running(struct bsal_node *node)
+int thorium_node_running(struct thorium_node *node)
 {
     time_t current_time;
     int elapsed;
@@ -792,7 +792,7 @@ int bsal_node_running(struct bsal_node *node)
     /*
      * wait for the requests to complete.
      */
-    active_requests = bsal_transport_get_active_request_count(&node->transport);
+    active_requests = thorium_transport_get_active_request_count(&node->transport);
     if (active_requests > 0) {
 
             /*
@@ -824,26 +824,26 @@ int bsal_node_running(struct bsal_node *node)
 }
 
 /* TODO, this needs BSAL_THREAD_MULTIPLE, this has not been tested */
-void bsal_node_start_send_thread(struct bsal_node *node)
+void thorium_node_start_send_thread(struct thorium_node *node)
 {
-    bsal_thread_init(&node->thread, bsal_node_main, node);
+    bsal_thread_init(&node->thread, thorium_node_main, node);
     bsal_thread_start(&node->thread);
 }
 
-void *bsal_node_main(void *node1)
+void *thorium_node_main(void *node1)
 {
-    struct bsal_node *node;
+    struct thorium_node *node;
 
-    node = (struct bsal_node*)node1;
+    node = (struct thorium_node*)node1;
 
-    while (bsal_node_running(node)) {
-        bsal_node_send_message(node);
+    while (thorium_node_running(node)) {
+        thorium_node_send_message(node);
     }
 
     return NULL;
 }
 
-int bsal_node_receive_system(struct bsal_node *node, struct bsal_message *message)
+int thorium_node_receive_system(struct thorium_node *node, struct thorium_message *message)
 {
     int tag;
     void *buffer;
@@ -852,15 +852,15 @@ int bsal_node_receive_system(struct bsal_node *node, struct bsal_message *messag
     int i;
     int nodes;
     int source;
-    struct bsal_message new_message;
+    struct thorium_message new_message;
 
 #ifdef BSAL_NODE_DEBUG_RECEIVE_SYSTEM
     int count;
 
-    printf("DEBUG bsal_node_receive_system\n");
+    printf("DEBUG thorium_node_receive_system\n");
 #endif
 
-    tag = bsal_message_tag(message);
+    tag = thorium_message_tag(message);
 
     if (tag == BSAL_NODE_ADD_INITIAL_ACTOR) {
 
@@ -868,12 +868,12 @@ int bsal_node_receive_system(struct bsal_node *node, struct bsal_message *messag
         printf("DEBUG BSAL_NODE_ADD_INITIAL_ACTOR received\n");
 #endif
 
-        source = bsal_message_source(message);
-        buffer = bsal_message_buffer(message);
+        source = thorium_message_source(message);
+        buffer = thorium_message_buffer(message);
         name = *(int *)buffer;
-        bsal_node_set_initial_actor(node, source, name);
+        thorium_node_set_initial_actor(node, source, name);
 
-        nodes = bsal_node_nodes(node);
+        nodes = thorium_node_nodes(node);
         node->received_initial_actors++;
 
         if (node->received_initial_actors == nodes) {
@@ -886,14 +886,14 @@ int bsal_node_receive_system(struct bsal_node *node, struct bsal_message *messag
             buffer = bsal_memory_pool_allocate(&node->outbound_message_memory_pool, bytes);
             bsal_vector_pack(&node->initial_actors, buffer);
 
-            bsal_message_init(&new_message, BSAL_NODE_ADD_INITIAL_ACTORS, bytes, buffer);
+            thorium_message_init(&new_message, BSAL_NODE_ADD_INITIAL_ACTORS, bytes, buffer);
 
             for (i = 0; i < nodes; i++) {
-                bsal_node_send_to_node(node, i, &new_message);
+                thorium_node_send_to_node(node, i, &new_message);
             }
 
             /*
-             * bsal_node_send_to_node does a copy.
+             * thorium_node_send_to_node does a copy.
              */
             bsal_memory_pool_free(&node->outbound_message_memory_pool, buffer);
         }
@@ -906,39 +906,39 @@ int bsal_node_receive_system(struct bsal_node *node, struct bsal_message *messag
         printf("DEBUG BSAL_NODE_ADD_INITIAL_ACTORS received\n");
 #endif
 
-        buffer = bsal_message_buffer(message);
-        source = bsal_message_source_node(message);
+        buffer = thorium_message_buffer(message);
+        source = thorium_message_source_node(message);
 
         bsal_vector_destroy(&node->initial_actors);
         bsal_vector_init(&node->initial_actors, 0);
         bsal_vector_unpack(&node->initial_actors, buffer);
 
 #ifdef BSAL_NODE_DEBUG_RECEIVE_SYSTEM
-        count = bsal_message_count(message);
+        count = thorium_message_count(message);
         printf("DEBUG buffer size: %d, unpacked %d actor names from node/%d\n",
                         count, bsal_vector_size(&node->initial_actors),
                         source);
 #endif
 
-        bsal_node_send_to_node_empty(node, source, BSAL_NODE_ADD_INITIAL_ACTORS_REPLY);
+        thorium_node_send_to_node_empty(node, source, BSAL_NODE_ADD_INITIAL_ACTORS_REPLY);
 
         return 1;
 
     } else if (tag == BSAL_NODE_ADD_INITIAL_ACTORS_REPLY) {
 
         node->ready++;
-        nodes = bsal_node_nodes(node);
-        source = bsal_message_source_node(message);
+        nodes = thorium_node_nodes(node);
+        source = thorium_message_source_node(message);
 
 #ifdef BSAL_NODE_DEBUG_RECEIVE_SYSTEM
         printf("node/%d DEBUG BSAL_NODE_ADD_INITIAL_ACTORS_REPLY received from"
-                        " %d, %d/%d ready\n", bsal_node_name(node),
+                        " %d, %d/%d ready\n", thorium_node_name(node),
                         source, node->ready, nodes);
 #endif
         if (node->ready == nodes) {
 
             for (i = 0; i < nodes; i++) {
-                bsal_node_send_to_node_empty(node, i, BSAL_NODE_START);
+                thorium_node_send_to_node_empty(node, i, BSAL_NODE_START);
             }
         }
 
@@ -955,13 +955,13 @@ int bsal_node_receive_system(struct bsal_node *node, struct bsal_message *messag
 
 #ifdef BSAL_NODE_DEBUG_RECEIVE_SYSTEM
         printf("DEBUG node %d starts its initial actor\n",
-                        bsal_node_name(node));
+                        thorium_node_name(node));
 #endif
 
         /* send BSAL_ACTOR_START to initial actor
          * on this node
          */
-        bsal_node_start_initial_actor(node);
+        thorium_node_start_initial_actor(node);
 
         return 1;
     }
@@ -969,26 +969,26 @@ int bsal_node_receive_system(struct bsal_node *node, struct bsal_message *messag
     return 0;
 }
 
-void bsal_node_send_to_node_empty(struct bsal_node *node, int destination, int tag)
+void thorium_node_send_to_node_empty(struct thorium_node *node, int destination, int tag)
 {
-    struct bsal_message message;
-    bsal_message_init(&message, tag, 0, NULL);
-    bsal_node_send_to_node(node, destination, &message);
+    struct thorium_message message;
+    thorium_message_init(&message, tag, 0, NULL);
+    thorium_node_send_to_node(node, destination, &message);
 }
 
-void bsal_node_send_to_node(struct bsal_node *node, int destination,
-                struct bsal_message *message)
+void thorium_node_send_to_node(struct thorium_node *node, int destination,
+                struct thorium_message *message)
 {
     void *new_buffer;
     int count;
     size_t new_count;
     void *buffer;
-    struct bsal_message new_message;
+    struct thorium_message new_message;
     int tag;
 
-    tag = bsal_message_tag(message);
-    count = bsal_message_count(message);
-    buffer = bsal_message_buffer(message);
+    tag = thorium_message_tag(message);
+    count = thorium_message_count(message);
+    buffer = thorium_message_buffer(message);
     new_count = sizeof(int) * 2 + count;
 
     /* the runtime system always needs at least
@@ -1002,23 +1002,23 @@ void bsal_node_send_to_node(struct bsal_node *node, int destination,
     /* the metadata size is added by the runtime
      * this is why the value is count and not new_count
      */
-    bsal_message_init(&new_message, tag, count, new_buffer);
-    bsal_message_set_source(&new_message, bsal_node_name(node));
-    bsal_message_set_destination(&new_message, destination);
-    bsal_message_write_metadata(&new_message);
+    thorium_message_init(&new_message, tag, count, new_buffer);
+    thorium_message_set_source(&new_message, thorium_node_name(node));
+    thorium_message_set_destination(&new_message, destination);
+    thorium_message_write_metadata(&new_message);
 
 #ifdef BSAL_NODE_DEBUG
-    printf("DEBUG bsal_node_send_to_node %d\n", destination);
+    printf("DEBUG thorium_node_send_to_node %d\n", destination);
 #endif
 
-    bsal_node_send(node, &new_message);
+    thorium_node_send(node, &new_message);
 }
 
-int bsal_node_has_actor(struct bsal_node *self, int name)
+int thorium_node_has_actor(struct thorium_node *self, int name)
 {
     int node_name;
 
-    node_name = bsal_node_actor_node(self, name);
+    node_name = thorium_node_actor_node(self, name);
 
     if (node_name == self->name) {
 
@@ -1029,7 +1029,7 @@ int bsal_node_has_actor(struct bsal_node *self, int name)
 #ifdef BSAL_NODE_CHECK_DEAD_ACTOR
         /* maybe the actor is dead already !
          */
-        if (bsal_node_get_actor_from_name(self, name) != NULL) {
+        if (thorium_node_get_actor_from_name(self, name) != NULL) {
             return 1;
         }
 #endif
@@ -1038,7 +1038,7 @@ int bsal_node_has_actor(struct bsal_node *self, int name)
     return 0;
 }
 
-void bsal_node_send(struct bsal_node *node, struct bsal_message *message)
+void thorium_node_send(struct thorium_node *node, struct thorium_message *message)
 {
     int name;
     int metadata_size;
@@ -1050,32 +1050,32 @@ void bsal_node_send(struct bsal_node *node, struct bsal_message *message)
      *
      * System message have no buffer to free because they have no buffer.
      */
-    if (bsal_node_send_system(node, message)) {
+    if (thorium_node_send_system(node, message)) {
         return;
     }
 
-    name = bsal_message_destination(message);
-    bsal_node_resolve(node, message);
+    name = thorium_message_destination(message);
+    thorium_node_resolve(node, message);
 
     /* If the actor is local, dispatch the message locally
      */
-    if (bsal_node_has_actor(node, name)) {
+    if (thorium_node_has_actor(node, name)) {
 
         /* dispatch locally */
-        bsal_node_dispatch_message(node, message);
+        thorium_node_dispatch_message(node, message);
 
 #ifdef BSAL_NODE_DEBUG_20140601_8
-        if (bsal_message_tag(message) == 1100) {
+        if (thorium_message_tag(message) == 1100) {
             printf("DEBUG local message 1100\n");
         }
 #endif
         bsal_counter_add(&node->counter, BSAL_COUNTER_SENT_MESSAGES_TO_SELF, 1);
         bsal_counter_add(&node->counter, BSAL_COUNTER_SENT_BYTES_TO_SELF,
-                        bsal_message_count(message));
+                        thorium_message_count(message));
 
         bsal_counter_add(&node->counter, BSAL_COUNTER_RECEIVED_MESSAGES_FROM_SELF, 1);
         bsal_counter_add(&node->counter, BSAL_COUNTER_RECEIVED_BYTES_FROM_SELF,
-                        bsal_message_count(message));
+                        thorium_message_count(message));
 
     /* Otherwise, the message must be sent to another BIOSAL
      * node
@@ -1089,15 +1089,15 @@ void bsal_node_send(struct bsal_node *node, struct bsal_message *message)
         /*
          * Add metadata size.
          */
-        count = bsal_message_count(message);
-        metadata_size = bsal_message_metadata_size(message);
+        count = thorium_message_count(message);
+        metadata_size = thorium_message_metadata_size(message);
         all = count + metadata_size;
-        bsal_message_set_count(message, all);
+        thorium_message_set_count(message, all);
 
-        bsal_transport_send(&node->transport, message);
+        thorium_transport_send(&node->transport, message);
 
 #ifdef BSAL_NODE_DEBUG_20140601_8
-        if (bsal_message_tag(message) == 1100) {
+        if (thorium_message_tag(message) == 1100) {
             printf("DEBUG outbound message 1100\n");
 
             node->debug = 1;
@@ -1106,45 +1106,45 @@ void bsal_node_send(struct bsal_node *node, struct bsal_message *message)
 
         bsal_counter_add(&node->counter, BSAL_COUNTER_SENT_MESSAGES_NOT_TO_SELF, 1);
         bsal_counter_add(&node->counter, BSAL_COUNTER_SENT_BYTES_NOT_TO_SELF,
-                        bsal_message_count(message));
+                        thorium_message_count(message));
     }
 }
 
-struct bsal_actor *bsal_node_get_actor_from_name(struct bsal_node *node,
+struct thorium_actor *thorium_node_get_actor_from_name(struct thorium_node *node,
                 int name)
 {
-    struct bsal_actor *actor;
+    struct thorium_actor *actor;
     int index;
 
 #ifdef BSAL_NODE_DEBUG
-    printf("DEBUG bsal_node_get_actor_from_name %d\n", name);
+    printf("DEBUG thorium_node_get_actor_from_name %d\n", name);
 #endif
 
     if (name < 0) {
         return NULL;
     }
 
-    index = bsal_node_actor_index(node, name);
+    index = thorium_node_actor_index(node, name);
 
     if (index < 0) {
         return NULL;
     }
 
-    actor = (struct bsal_actor *)bsal_vector_at(&node->actors, index);
+    actor = (struct thorium_actor *)bsal_vector_at(&node->actors, index);
 
     return actor;
 }
 
-void bsal_node_dispatch_message(struct bsal_node *node, struct bsal_message *message)
+void thorium_node_dispatch_message(struct thorium_node *node, struct thorium_message *message)
 {
     void *buffer;
 
-    if (bsal_node_receive_system(node, message)) {
+    if (thorium_node_receive_system(node, message)) {
 
         /*
          * The buffer must be freed.
          */
-        buffer = bsal_message_buffer(message);
+        buffer = thorium_message_buffer(message);
 
         if (buffer != NULL) {
 
@@ -1161,12 +1161,12 @@ void bsal_node_dispatch_message(struct bsal_node *node, struct bsal_message *mes
     /* otherwise, create work and dispatch work to a worker via
      * the worker pool
      */
-    bsal_node_inject_message_in_pool(node, message);
+    thorium_node_inject_message_in_pool(node, message);
 }
 
-void bsal_node_inject_message_in_pool(struct bsal_node *node, struct bsal_message *message)
+void thorium_node_inject_message_in_pool(struct thorium_node *node, struct thorium_message *message)
 {
-    struct bsal_actor *actor;
+    struct thorium_actor *actor;
     int name;
     int dead;
 
@@ -1175,21 +1175,21 @@ void bsal_node_inject_message_in_pool(struct bsal_node *node, struct bsal_messag
     int source;
 #endif
 
-    name = bsal_message_destination(message);
+    name = thorium_message_destination(message);
 
 #ifdef BSAL_NODE_DEBUG
-    source = bsal_message_source(message);
-    tag = bsal_message_tag(message);
+    source = thorium_message_source(message);
+    tag = thorium_message_tag(message);
 
     printf("[DEBUG %s %s %i] actor%i (node%i) : actor%i (node%i)"
                     "(tag %i) %i bytes\n",
                     __FILE__, __func__, __LINE__,
-                   source, bsal_message_source_node(message),
-                   name, bsal_message_destination_node(message),
-                   tag, bsal_message_count(message));
+                   source, thorium_message_source_node(message),
+                   name, thorium_message_destination_node(message),
+                   tag, thorium_message_count(message));
 #endif
 
-    actor = bsal_node_get_actor_from_name(node, name);
+    actor = thorium_node_get_actor_from_name(node, name);
 
     if (actor == NULL) {
 
@@ -1201,7 +1201,7 @@ void bsal_node_inject_message_in_pool(struct bsal_node *node, struct bsal_messag
         return;
     }
 
-    dead = bsal_actor_dead(actor);
+    dead = thorium_actor_dead(actor);
 
     if (dead) {
 #ifdef BSAL_NODE_DEBUG_NULL_ACTOR
@@ -1214,10 +1214,10 @@ void bsal_node_inject_message_in_pool(struct bsal_node *node, struct bsal_messag
 #if 0
     printf("DEBUG node enqueue message\n");
 #endif
-    bsal_worker_pool_enqueue_message(&node->worker_pool, message);
+    thorium_worker_pool_enqueue_message(&node->worker_pool, message);
 }
 
-int bsal_node_actor_index(struct bsal_node *node, int name)
+int thorium_node_actor_index(struct thorium_node *node, int name)
 {
     int *bucket;
     int index;
@@ -1230,7 +1230,7 @@ int bsal_node_actor_index(struct bsal_node *node, int name)
     bucket = bsal_map_get(&node->actor_names, &name);
 
 #ifdef BSAL_NODE_DEBUG
-    printf("DEBUG bsal_node_actor_index %d %p\n", name, (void *)bucket);
+    printf("DEBUG thorium_node_actor_index %d %p\n", name, (void *)bucket);
 #endif
 
     if (bucket == NULL) {
@@ -1241,22 +1241,22 @@ int bsal_node_actor_index(struct bsal_node *node, int name)
     return index;
 }
 
-int bsal_node_actor_node(struct bsal_node *node, int name)
+int thorium_node_actor_node(struct thorium_node *node, int name)
 {
     return name % node->nodes;
 }
 
-int bsal_node_name(struct bsal_node *node)
+int thorium_node_name(struct thorium_node *node)
 {
     return node->name;
 }
 
-int bsal_node_nodes(struct bsal_node *node)
+int thorium_node_nodes(struct thorium_node *node)
 {
     return node->nodes;
 }
 
-void bsal_node_notify_death(struct bsal_node *node, struct bsal_actor *actor)
+void thorium_node_notify_death(struct thorium_node *node, struct thorium_actor *actor)
 {
     void *state;
     int name;
@@ -1270,39 +1270,39 @@ void bsal_node_notify_death(struct bsal_node *node, struct bsal_actor *actor)
 
     /*
     node_name = node->name;
-    name = bsal_actor_name(actor);
+    name = thorium_actor_name(actor);
     */
 
     if (node->print_structure) {
-        bsal_node_print_structure(node, actor);
+        thorium_node_print_structure(node, actor);
     }
 
-    name = bsal_actor_name(actor);
+    name = thorium_actor_name(actor);
 
 #ifdef BSAL_NODE_DEBUG_SPAWN_KILL
-    printf("DEBUG bsal_node_notify_death node/%d actor/%d script/%x\n",
-                    bsal_node_name(node),
+    printf("DEBUG thorium_node_notify_death node/%d actor/%d script/%x\n",
+                    thorium_node_name(node),
                     name,
-                    bsal_actor_script(actor));
+                    thorium_actor_script(actor));
 #endif
 
 #ifdef BSAL_NODE_REUSE_DEAD_INDICES
-    index = bsal_node_actor_index(node, name);
+    index = thorium_node_actor_index(node, name);
 
 #ifdef BSAL_NODE_DEBUG_SPAWN
     printf("DEBUG node/%d BSAL_NODE_REUSE_DEAD_INDICES push index %d\n",
-                   bsal_node_name(node), index);
+                   thorium_node_name(node), index);
 #endif
 
 #endif
 
-    state = bsal_actor_concrete_actor(actor);
+    state = thorium_actor_concrete_actor(actor);
 
 #ifdef BSAL_NODE_DEBUG_ACTOR_COUNTERS
     printf("----------------------------------------------\n");
     printf("Counters for actor/%d\n",
                     name);
-    bsal_counter_print(bsal_actor_counter(actor));
+    bsal_counter_print(thorium_actor_counter(actor));
     printf("----------------------------------------------\n");
 #endif
 
@@ -1310,7 +1310,7 @@ void bsal_node_notify_death(struct bsal_node *node, struct bsal_actor *actor)
      * this calls destroy on the concrete actor
      * too
      */
-    bsal_actor_destroy(actor);
+    thorium_actor_destroy(actor);
 
     /* free the bytes of the concrete actor */
     bsal_memory_pool_free(&node->actor_memory_pool, state);
@@ -1335,7 +1335,7 @@ void bsal_node_notify_death(struct bsal_node *node, struct bsal_actor *actor)
 #endif
 
 #ifdef BSAL_NODE_DEBUG_20140601_8
-    printf("DEBUG bsal_node_notify_death\n");
+    printf("DEBUG thorium_node_notify_death\n");
 #endif
 
     /* Remove the actor from the list of auto-scaling
@@ -1370,39 +1370,39 @@ void bsal_node_notify_death(struct bsal_node *node, struct bsal_actor *actor)
     bsal_counter_add(&node->counter, BSAL_COUNTER_KILLED_ACTORS, 1);
 
 #ifdef BSAL_NODE_DEBUG_20140601_8
-    printf("DEBUG exiting bsal_node_notify_death\n");
+    printf("DEBUG exiting thorium_node_notify_death\n");
 #endif
 }
 
-int bsal_node_worker_count(struct bsal_node *node)
+int thorium_node_worker_count(struct thorium_node *node)
 {
-    return bsal_worker_pool_worker_count(&node->worker_pool);
+    return thorium_worker_pool_worker_count(&node->worker_pool);
 }
 
-int bsal_node_argc(struct bsal_node *node)
+int thorium_node_argc(struct thorium_node *node)
 {
     return node->argc;
 }
 
-char **bsal_node_argv(struct bsal_node *node)
+char **thorium_node_argv(struct thorium_node *node)
 {
     return node->argv;
 }
 
-int bsal_node_thread_count(struct bsal_node *node)
+int thorium_node_thread_count(struct thorium_node *node)
 {
     return node->threads;
 }
 
-void bsal_node_add_script(struct bsal_node *node, int name,
-                struct bsal_script *script)
+void thorium_node_add_script(struct thorium_node *node, int name,
+                struct thorium_script *script)
 {
     int can_add;
 
     bsal_lock_lock(&node->script_lock);
 
     can_add = 1;
-    if (bsal_node_has_script(node, script)) {
+    if (thorium_node_has_script(node, script)) {
         can_add = 0;
     }
 
@@ -1417,17 +1417,17 @@ void bsal_node_add_script(struct bsal_node *node, int name,
     bsal_lock_unlock(&node->script_lock);
 }
 
-int bsal_node_has_script(struct bsal_node *node, struct bsal_script *script)
+int thorium_node_has_script(struct thorium_node *node, struct thorium_script *script)
 {
-    if (bsal_node_find_script(node, bsal_script_identifier(script)) != NULL) {
+    if (thorium_node_find_script(node, thorium_script_identifier(script)) != NULL) {
         return 1;
     }
     return 0;
 }
 
-struct bsal_script *bsal_node_find_script(struct bsal_node *node, int identifier)
+struct thorium_script *thorium_node_find_script(struct thorium_node *node, int identifier)
 {
-    struct bsal_script **script;
+    struct thorium_script **script;
 
     script = bsal_map_get(&node->scripts, &identifier);
 
@@ -1438,32 +1438,32 @@ struct bsal_script *bsal_node_find_script(struct bsal_node *node, int identifier
     return *script;
 }
 
-void bsal_node_print_counters(struct bsal_node *node)
+void thorium_node_print_counters(struct thorium_node *node)
 {
     printf("----------------------------------------------\n");
     printf("%s Counters for node/%d\n", BSAL_NODE_THORIUM_PREFIX,
-                    bsal_node_name(node));
-    bsal_counter_print(&node->counter, bsal_node_name(node));
+                    thorium_node_name(node));
+    bsal_counter_print(&node->counter, thorium_node_name(node));
 }
 
 /*
  * TODO: on segmentation fault, kill the actor and continue
  * computation
  */
-void bsal_node_handle_signal(int signal)
+void thorium_node_handle_signal(int signal)
 {
     int node;
-    struct bsal_node *self;
+    struct thorium_node *self;
 
-    self = bsal_node_global_self;
+    self = thorium_node_global_self;
 
-    node = bsal_node_name(self);
+    node = thorium_node_name(self);
 
     if (signal == SIGSEGV) {
         printf("Error, node/%d received signal SIGSEGV\n", node);
 
     } else if (signal == SIGUSR1) {
-        bsal_node_toggle_debug_mode(bsal_node_global_self);
+        thorium_node_toggle_debug_mode(thorium_node_global_self);
         return;
     } else {
         printf("Error, node/%d received signal %d\n", node, signal);
@@ -1481,7 +1481,7 @@ void bsal_node_handle_signal(int signal)
     sigaction(signal, &self->action, NULL);
 }
 
-void bsal_node_register_signal_handlers(struct bsal_node *self)
+void thorium_node_register_signal_handlers(struct thorium_node *self)
 {
     struct bsal_vector signals;
     struct bsal_vector_iterator iterator;
@@ -1519,7 +1519,7 @@ void bsal_node_register_signal_handlers(struct bsal_node *self)
      * \see http://pubs.opengroup.org/onlinepubs/7908799/xsh/sigaction.html
      * \see http://stackoverflow.com/questions/10202941/segmentation-fault-handling
      */
-    self->action.sa_handler = bsal_node_handle_signal;
+    self->action.sa_handler = thorium_node_handle_signal;
     sigemptyset(&self->action.sa_mask);
     self->action.sa_flags = 0;
 
@@ -1539,7 +1539,7 @@ void bsal_node_register_signal_handlers(struct bsal_node *self)
      */
 }
 
-void bsal_node_print_structure(struct bsal_node *node, struct bsal_actor *actor)
+void thorium_node_print_structure(struct thorium_node *node, struct thorium_actor *actor)
 {
     struct bsal_map *structure;
     struct bsal_map_iterator iterator;
@@ -1547,14 +1547,14 @@ void bsal_node_print_structure(struct bsal_node *node, struct bsal_actor *actor)
     int *count;
     int name;
     int script;
-    struct bsal_script *actual_script;
+    struct thorium_script *actual_script;
     char color[32];
     int node_name;
 
-    node_name = bsal_node_name(node);
-    name = bsal_actor_name(actor);
-    script = bsal_actor_script(actor);
-    actual_script = bsal_node_find_script(node, script);
+    node_name = thorium_node_name(node);
+    name = thorium_actor_name(actor);
+    script = thorium_actor_script(actor);
+    actual_script = thorium_node_find_script(node, script);
 
     if (node_name == 0) {
         strcpy(color, "red");
@@ -1566,10 +1566,10 @@ void bsal_node_print_structure(struct bsal_node *node, struct bsal_actor *actor)
         strcpy(color, "pink");
     }
 
-    structure = bsal_actor_get_received_messages(actor);
+    structure = thorium_actor_get_received_messages(actor);
 
     printf("    a%d [label=\"%s/%d\", color=\"%s\"]; /* STRUCTURE vertex */\n", name,
-                    bsal_script_description(actual_script), name, color);
+                    thorium_script_description(actual_script), name, color);
 
     bsal_map_iterator_init(&iterator, structure);
 
@@ -1584,54 +1584,54 @@ void bsal_node_print_structure(struct bsal_node *node, struct bsal_actor *actor)
     bsal_map_iterator_destroy(&iterator);
 }
 
-struct bsal_worker_pool *bsal_node_get_worker_pool(struct bsal_node *self)
+struct thorium_worker_pool *thorium_node_get_worker_pool(struct thorium_node *self)
 {
     return &self->worker_pool;
 }
 
-void bsal_node_toggle_debug_mode(struct bsal_node *self)
+void thorium_node_toggle_debug_mode(struct thorium_node *self)
 {
     self->debug = !self->debug;
-    bsal_worker_pool_toggle_debug_mode(&self->worker_pool);
+    thorium_worker_pool_toggle_debug_mode(&self->worker_pool);
 }
 
-void bsal_node_reset_actor_counters(struct bsal_node *node)
+void thorium_node_reset_actor_counters(struct thorium_node *node)
 {
     struct bsal_map_iterator iterator;
     int *name;
-    struct bsal_actor *actor;
+    struct thorium_actor *actor;
 
     bsal_map_iterator_init(&iterator, &node->actor_names);
 
     while (bsal_map_iterator_next(&iterator, (void **)&name, NULL)) {
 
-        actor = bsal_node_get_actor_from_name(node, *name);
+        actor = thorium_node_get_actor_from_name(node, *name);
 
-        bsal_actor_reset_counters(actor);
+        thorium_actor_reset_counters(actor);
     }
     bsal_map_iterator_destroy(&iterator);
 }
 
-int64_t bsal_node_get_counter(struct bsal_node *node, int counter)
+int64_t thorium_node_get_counter(struct thorium_node *node, int counter)
 {
     return bsal_counter_get(&node->counter, counter);
 }
 
-int bsal_node_send_system(struct bsal_node *node, struct bsal_message *message)
+int thorium_node_send_system(struct thorium_node *node, struct thorium_message *message)
 {
     int destination;
     int tag;
     int source;
 
-    tag = bsal_message_tag(message);
-    destination = bsal_message_destination(message);
-    source = bsal_message_source(message);
+    tag = thorium_message_tag(message);
+    destination = thorium_message_destination(message);
+    source = thorium_message_source(message);
 
     if (source == destination
             && tag == BSAL_ACTOR_ENABLE_AUTO_SCALING) {
 
         printf("AUTO-SCALING node/%d enables auto-scaling for actor %d (BSAL_ACTOR_ENABLE_AUTO_SCALING)\n",
-                       bsal_node_name(node),
+                       thorium_node_name(node),
                        source);
 
         bsal_lock_lock(&node->auto_scaling_lock);
@@ -1658,19 +1658,19 @@ int bsal_node_send_system(struct bsal_node *node, struct bsal_message *message)
 }
 
 
-void bsal_node_send_to_actor(struct bsal_node *node, int name, struct bsal_message *message)
+void thorium_node_send_to_actor(struct thorium_node *node, int name, struct thorium_message *message)
 {
-    bsal_message_set_source(message, name);
-    bsal_message_set_destination(message, name);
+    thorium_message_set_source(message, name);
+    thorium_message_set_destination(message, name);
 
-    bsal_node_send(node, message);
+    thorium_node_send(node, message);
 }
 
-void bsal_node_check_load(struct bsal_node *node)
+void thorium_node_check_load(struct thorium_node *node)
 {
     const float load_threshold = 0.90;
     struct bsal_set_iterator iterator;
-    struct bsal_message message;
+    struct thorium_message message;
     int name;
     time_t current_time;
 
@@ -1690,7 +1690,7 @@ void bsal_node_check_load(struct bsal_node *node)
 
     bsal_lock_lock(&node->auto_scaling_lock);
 
-    if (bsal_worker_pool_get_current_load(&node->worker_pool)
+    if (thorium_worker_pool_get_current_load(&node->worker_pool)
                     <= load_threshold) {
 
 
@@ -1698,12 +1698,12 @@ void bsal_node_check_load(struct bsal_node *node)
 
         while (bsal_set_iterator_get_next_value(&iterator, &name)) {
 
-            bsal_message_init(&message, BSAL_ACTOR_DO_AUTO_SCALING,
+            thorium_message_init(&message, BSAL_ACTOR_DO_AUTO_SCALING,
                             0, NULL);
 
-            bsal_node_send_to_actor(node, name, &message);
+            thorium_node_send_to_actor(node, name, &message);
 
-            bsal_message_destroy(&message);
+            thorium_message_destroy(&message);
         }
 
         bsal_set_iterator_destroy(&iterator);
@@ -1712,14 +1712,14 @@ void bsal_node_check_load(struct bsal_node *node)
     bsal_lock_unlock(&node->auto_scaling_lock);
 }
 
-int bsal_node_pull(struct bsal_node *node, struct bsal_message *message)
+int thorium_node_pull(struct thorium_node *node, struct thorium_message *message)
 {
-    return bsal_worker_pool_dequeue_message(&node->worker_pool, message);
+    return thorium_worker_pool_dequeue_message(&node->worker_pool, message);
 }
 
-void bsal_node_run_loop(struct bsal_node *node)
+void thorium_node_run_loop(struct thorium_node *node)
 {
-    struct bsal_message message;
+    struct thorium_message message;
     int credits;
     const int starting_credits = 256;
 
@@ -1747,7 +1747,7 @@ void bsal_node_run_loop(struct bsal_node *node)
 
             if (current_time - node->last_report_time >= period) {
                 if (node->print_load) {
-                    bsal_worker_pool_print_load(&node->worker_pool, BSAL_WORKER_POOL_LOAD_EPOCH);
+                    thorium_worker_pool_print_load(&node->worker_pool, BSAL_WORKER_POOL_LOAD_EPOCH);
 
                     /* Display the number of actors,
                      * the number of active buffers/requests/messages,
@@ -1758,13 +1758,13 @@ void bsal_node_run_loop(struct bsal_node *node)
                                     BSAL_NODE_THORIUM_PREFIX,
                                     node->name,
                                     node->alive_actors,
-                                    bsal_transport_get_active_request_count(&node->transport),
+                                    thorium_transport_get_active_request_count(&node->transport),
                                     bsal_memory_get_heap_size()
                                     );
                 }
 
                 if (node->print_counters) {
-                    bsal_node_print_counters(node);
+                    thorium_node_print_counters(node);
                 }
 
                 node->last_report_time = current_time;
@@ -1774,13 +1774,13 @@ void bsal_node_run_loop(struct bsal_node *node)
 
 #ifdef BSAL_NODE_DEBUG_LOOP
         if (ticks % 1000000 == 0) {
-            bsal_node_print_counters(node);
+            thorium_node_print_counters(node);
         }
 #endif
 
 #ifdef BSAL_NODE_DEBUG_LOOP1
         if (node->debug) {
-            printf("DEBUG node/%d is running\n", bsal_node_name(node));
+            printf("DEBUG node/%d is running\n", thorium_node_name(node));
         }
 #endif
 
@@ -1789,25 +1789,25 @@ void bsal_node_run_loop(struct bsal_node *node)
          * there is a message received.
          */
         if (node->use_transport &&
-            bsal_transport_receive(&node->transport, &message)) {
+            thorium_transport_receive(&node->transport, &message)) {
 
             /*
              * Prepare the message
              */
-            bsal_node_prepare_received_message(node, &message);
+            thorium_node_prepare_received_message(node, &message);
 
             bsal_counter_add(&node->counter, BSAL_COUNTER_RECEIVED_MESSAGES_NOT_FROM_SELF, 1);
             bsal_counter_add(&node->counter, BSAL_COUNTER_RECEIVED_BYTES_NOT_FROM_SELF,
-                    bsal_message_count(&message));
+                    thorium_message_count(&message));
 
-            bsal_node_dispatch_message(node, &message);
+            thorium_node_dispatch_message(node, &message);
         }
 
         /* the one worker works here if there is only
          * one thread
          */
         if (node->worker_in_main_thread) {
-            bsal_worker_pool_run(&node->worker_pool);
+            thorium_worker_pool_run(&node->worker_pool);
         }
 
         /* with 3 or more threads, the sending operations are
@@ -1819,7 +1819,7 @@ void bsal_node_run_loop(struct bsal_node *node)
                 printf("BSAL_NODE_DEBUG_RUN sending messages, no local actors\n");
             }
 #endif
-            bsal_node_send_message(node);
+            thorium_node_send_message(node);
         }
 
 #ifdef BSAL_NODE_ENABLE_INSTRUMENTATION
@@ -1829,7 +1829,7 @@ void bsal_node_run_loop(struct bsal_node *node)
         /* Flush queue buffers in the worker pool
          */
 
-        bsal_worker_pool_work(&node->worker_pool);
+        thorium_worker_pool_work(&node->worker_pool);
 
         --credits;
 
@@ -1837,24 +1837,24 @@ void bsal_node_run_loop(struct bsal_node *node)
          * to the engine loop
          */
         if (credits == 0) {
-            if (bsal_node_running(node)) {
+            if (thorium_node_running(node)) {
                 credits = starting_credits;
 #ifdef BSAL_NODE_DEBUG_RUN
                 printf("BSAL_NODE_DEBUG_RUN here are some credits\n");
 #endif
             }
 
-            bsal_node_check_load(node);
+            thorium_node_check_load(node);
         }
 
         /* Free buffers of active requests
          */
         if (node->use_transport) {
 
-            bsal_node_test_requests(node);
+            thorium_node_test_requests(node);
         }
 
-        bsal_node_do_message_triage(node);
+        thorium_node_do_message_triage(node);
 
 #ifdef BSAL_NODE_DEBUG_RUN
         if (node->alive_actors == 0) {
@@ -1865,50 +1865,50 @@ void bsal_node_run_loop(struct bsal_node *node)
 
 #ifdef BSAL_NODE_DEBUG_20140601_8
     printf("DEBUG node/%d exited loop\n",
-                    bsal_node_name(node));
+                    thorium_node_name(node));
 #endif
 }
 
-void bsal_node_send_message(struct bsal_node *node)
+void thorium_node_send_message(struct thorium_node *node)
 {
-    struct bsal_message message;
+    struct thorium_message message;
 
     /* check for messages to send from from threads */
     /* this call lock only if there is at least
      * a message in the FIFO
      */
-    if (bsal_node_pull(node, &message)) {
+    if (thorium_node_pull(node, &message)) {
 
         node->last_transport_event_time = time(NULL);
 
 #ifdef BSAL_NODE_DEBUG
-        printf("bsal_node_run pulled tag %i buffer %p\n",
-                        bsal_message_tag(&message),
-                        bsal_message_buffer(&message));
+        printf("thorium_node_run pulled tag %i buffer %p\n",
+                        thorium_message_tag(&message),
+                        thorium_message_buffer(&message));
 #endif
 
 #ifdef BSAL_NODE_DEBUG_RUN
         if (node->alive_actors == 0) {
-            printf("BSAL_NODE_DEBUG_RUN bsal_node_send_message pulled a message, tag %d\n",
-                            bsal_message_tag(&message));
+            printf("BSAL_NODE_DEBUG_RUN thorium_node_send_message pulled a message, tag %d\n",
+                            thorium_message_tag(&message));
         }
 #endif
 
         /* send it locally or over the network */
-        bsal_node_send(node, &message);
+        thorium_node_send(node, &message);
     } else {
 #ifdef BSAL_NODE_DEBUG_RUN
         if (node->alive_actors == 0) {
-            printf("BSAL_NODE_DEBUG_RUN bsal_node_send_message no message\n");
+            printf("BSAL_NODE_DEBUG_RUN thorium_node_send_message no message\n");
         }
 #endif
 
     }
 }
 
-void bsal_node_test_requests(struct bsal_node *node)
+void thorium_node_test_requests(struct thorium_node *node)
 {
-    struct bsal_worker_buffer worker_buffer;
+    struct thorium_worker_buffer worker_buffer;
     int requests;
     int requests_to_test;
     int i;
@@ -1921,7 +1921,7 @@ void bsal_node_test_requests(struct bsal_node *node)
     /*
      * Use a half-life approach
      */
-    requests = bsal_transport_get_active_request_count(&node->transport);
+    requests = thorium_transport_get_active_request_count(&node->transport);
 
 
     difference = requests - node->last_active_request_count;
@@ -1958,9 +1958,9 @@ void bsal_node_test_requests(struct bsal_node *node)
 
     i = 0;
     while (i < requests_to_test) {
-        if (bsal_transport_test_requests(&node->transport, &worker_buffer)) {
+        if (thorium_transport_test_requests(&node->transport, &worker_buffer)) {
 
-            worker = bsal_worker_buffer_get_worker(&worker_buffer);
+            worker = thorium_worker_buffer_get_worker(&worker_buffer);
 
             /*
              * This buffer was allocated by the Thorium core and not by
@@ -1968,7 +1968,7 @@ void bsal_node_test_requests(struct bsal_node *node)
              */
             if (worker < 0) {
 
-                buffer = bsal_worker_buffer_get_buffer(&worker_buffer);
+                buffer = thorium_worker_buffer_get_buffer(&worker_buffer);
 
                 bsal_memory_pool_free(&node->outbound_message_memory_pool,
                                 buffer);
@@ -1978,7 +1978,7 @@ void bsal_node_test_requests(struct bsal_node *node)
                  * The buffer was allocated by a worker.
                  */
 
-                bsal_node_free_worker_buffer(node, &worker_buffer);
+                thorium_node_free_worker_buffer(node, &worker_buffer);
             }
         }
 
@@ -1993,32 +1993,32 @@ void bsal_node_test_requests(struct bsal_node *node)
             /*
         printf("INJECT Dequeued buffer to inject\n");
         */
-        bsal_node_free_worker_buffer(node, &worker_buffer);
+        thorium_node_free_worker_buffer(node, &worker_buffer);
     }
 #endif
 }
 
-void bsal_node_free_worker_buffer(struct bsal_node *node,
-                struct bsal_worker_buffer *worker_buffer)
+void thorium_node_free_worker_buffer(struct thorium_node *node,
+                struct thorium_worker_buffer *worker_buffer)
 {
     void *buffer;
 
 #ifdef BSAL_NODE_INJECT_CLEAN_WORKER_BUFFERS
     int worker_name;
-    struct bsal_worker *worker;
+    struct thorium_worker *worker;
 #endif
 
-    buffer = bsal_worker_buffer_get_buffer(worker_buffer);
+    buffer = thorium_worker_buffer_get_buffer(worker_buffer);
 
 #ifdef BSAL_NODE_INJECT_CLEAN_WORKER_BUFFERS
-    worker_name = bsal_worker_buffer_get_worker(worker_buffer);
+    worker_name = thorium_worker_buffer_get_worker(worker_buffer);
 
     BSAL_DEBUGGER_ASSERT(worker_name >= 0);
 
     /* This a worker buffer.
      * Otherwise, this is a Thorium node for startup.
      */
-    worker = bsal_worker_pool_get_worker(&node->worker_pool, worker_name);
+    worker = thorium_worker_pool_get_worker(&node->worker_pool, worker_name);
 
     BSAL_DEBUGGER_ASSERT(worker != NULL);
 
@@ -2028,7 +2028,7 @@ void bsal_node_free_worker_buffer(struct bsal_node *node,
 
     /* Push the buffer in the ring of the worker
      */
-    if (!bsal_worker_inject_clean_outbound_buffer(worker, buffer)) {
+    if (!thorium_worker_inject_clean_outbound_buffer(worker, buffer)) {
 
         /* If the ring is full, queue it locally
          * and try again later
@@ -2042,24 +2042,24 @@ void bsal_node_free_worker_buffer(struct bsal_node *node,
 #endif
 }
 
-void bsal_node_do_message_triage(struct bsal_node *self)
+void thorium_node_do_message_triage(struct thorium_node *self)
 {
     int worker_count;
-    struct bsal_worker *worker;
-    struct bsal_message message;
+    struct thorium_worker *worker;
+    struct thorium_message message;
 
     /*
      * First, verify if any message needs to be processed from
      * the worker pool.
      */
-    if (bsal_worker_pool_dequeue_message_for_triage(&self->worker_pool, &message)) {
+    if (thorium_worker_pool_dequeue_message_for_triage(&self->worker_pool, &message)) {
 
-        bsal_node_recycle_inbound_message(self, &message);
+        thorium_node_recycle_inbound_message(self, &message);
     }
 
-    worker_count = bsal_worker_pool_worker_count(&self->worker_pool);
+    worker_count = thorium_worker_pool_worker_count(&self->worker_pool);
 
-    worker = bsal_worker_pool_get_worker(&self->worker_pool, self->worker_for_triage);
+    worker = thorium_worker_pool_get_worker(&self->worker_pool, self->worker_for_triage);
 
     ++self->worker_for_triage;
 
@@ -2067,20 +2067,20 @@ void bsal_node_do_message_triage(struct bsal_node *self)
         self->worker_for_triage = 0;
     }
 
-    if (bsal_worker_dequeue_message_for_triage(worker, &message)) {
+    if (thorium_worker_dequeue_message_for_triage(worker, &message)) {
 
-        bsal_node_recycle_inbound_message(self, &message);
+        thorium_node_recycle_inbound_message(self, &message);
     }
 }
 
-void bsal_node_recycle_inbound_message(struct bsal_node *self, struct bsal_message *message)
+void thorium_node_recycle_inbound_message(struct thorium_node *self, struct thorium_message *message)
 {
     int worker_name;
     void *buffer;
-    struct bsal_worker_buffer worker_buffer;
+    struct thorium_worker_buffer worker_buffer;
 
-    worker_name = bsal_message_get_worker(message);
-    buffer = bsal_message_buffer(message);
+    worker_name = thorium_message_get_worker(message);
+    buffer = thorium_message_buffer(message);
 
     /*
      * Otherwise, free the buffer here directly since this is a Thorium core
@@ -2096,14 +2096,14 @@ void bsal_node_recycle_inbound_message(struct bsal_node *self, struct bsal_messa
     /*
      * Otherwise, this is a worker buffer.
      */
-    bsal_worker_buffer_init(&worker_buffer, worker_name, buffer);
+    thorium_worker_buffer_init(&worker_buffer, worker_name, buffer);
 
-    bsal_node_free_worker_buffer(self, &worker_buffer);
+    thorium_node_free_worker_buffer(self, &worker_buffer);
 
-    bsal_worker_buffer_destroy(&worker_buffer);
+    thorium_worker_buffer_destroy(&worker_buffer);
 }
 
-void bsal_node_prepare_received_message(struct bsal_node *self, struct bsal_message *message)
+void thorium_node_prepare_received_message(struct thorium_node *self, struct thorium_message *message)
 {
     int metadata_size;
     int count;
@@ -2112,29 +2112,29 @@ void bsal_node_prepare_received_message(struct bsal_node *self, struct bsal_mess
      * Remove the metadata from the count because
      * actors don't need that.
      */
-    count = bsal_message_count(message);
-    metadata_size = bsal_message_metadata_size(message);
+    count = thorium_message_count(message);
+    metadata_size = thorium_message_metadata_size(message);
     count -= metadata_size;
-    bsal_message_set_count(message, count);
-    bsal_message_read_metadata(message);
-    bsal_node_resolve(self, message);
+    thorium_message_set_count(message, count);
+    thorium_message_read_metadata(message);
+    thorium_node_resolve(self, message);
 }
 
-void bsal_node_resolve(struct bsal_node *self, struct bsal_message *message)
+void thorium_node_resolve(struct thorium_node *self, struct thorium_message *message)
 {
     int actor;
     int node_name;
-    struct bsal_node *node;
+    struct thorium_node *node;
 
     node = self;
 
-    actor = bsal_message_source(message);
-    node_name = bsal_node_actor_node(node, actor);
-    bsal_message_set_source_node(message, node_name);
+    actor = thorium_message_source(message);
+    node_name = thorium_node_actor_node(node, actor);
+    thorium_message_set_source_node(message, node_name);
 
-    actor = bsal_message_destination(message);
-    node_name = bsal_node_actor_node(node, actor);
-    bsal_message_set_destination_node(message, node_name);
+    actor = thorium_message_destination(message);
+    node_name = thorium_node_actor_node(node, actor);
+    thorium_message_set_destination_node(message, node_name);
 }
 
 

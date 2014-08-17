@@ -33,27 +33,27 @@
 
 #endif
 
-struct bsal_node;
-struct bsal_message;
+struct thorium_node;
+struct thorium_message;
 struct bsal_active_buffer;
-struct bsal_transport;
+struct thorium_transport;
 
-struct bsal_pami_transport {
+struct thorium_pami_transport {
 #ifdef BSAL_TRANSPORT_USE_PAMI
     pami_client_t client;
 #endif
     int mock;
 };
 
-extern struct bsal_transport_interface bsal_pami_transport_implementation;
+extern struct thorium_transport_interface thorium_pami_transport_implementation;
 
-void bsal_pami_transport_init(struct bsal_transport *self, int *argc, char ***argv);
-void bsal_pami_transport_destroy(struct bsal_transport *self);
+void thorium_pami_transport_init(struct thorium_transport *self, int *argc, char ***argv);
+void thorium_pami_transport_destroy(struct thorium_transport *self);
 
-int bsal_pami_transport_send(struct bsal_transport *self, struct bsal_message *message);
-int bsal_pami_transport_receive(struct bsal_transport *self, struct bsal_message *message);
+int thorium_pami_transport_send(struct thorium_transport *self, struct thorium_message *message);
+int thorium_pami_transport_receive(struct thorium_transport *self, struct thorium_message *message);
 
-int bsal_pami_transport_get_identifier(struct bsal_transport *self);
-const char *bsal_pami_transport_get_name(struct bsal_transport *self);
+int thorium_pami_transport_get_identifier(struct thorium_transport *self);
+const char *thorium_pami_transport_get_name(struct thorium_transport *self);
 
 #endif

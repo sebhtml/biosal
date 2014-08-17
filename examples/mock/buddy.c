@@ -4,7 +4,7 @@
 #include <stdio.h>
 
 /* this script is required */
-struct bsal_script buddy_script = {
+struct thorium_script buddy_script = {
     .identifier = BUDDY_SCRIPT,
     .init = buddy_init,
     .destroy = buddy_destroy,
@@ -13,39 +13,39 @@ struct bsal_script buddy_script = {
     .name = "buddy"
 };
 
-void buddy_init(struct bsal_actor *actor)
+void buddy_init(struct thorium_actor *actor)
 {
     struct buddy *buddy1;
 
-    buddy1 = (struct buddy *)bsal_actor_concrete_actor(actor);
+    buddy1 = (struct buddy *)thorium_actor_concrete_actor(actor);
     buddy1->received = 0;
 }
 
-void buddy_destroy(struct bsal_actor *actor)
+void buddy_destroy(struct thorium_actor *actor)
 {
     struct buddy *buddy1;
 
-    buddy1 = (struct buddy *)bsal_actor_concrete_actor(actor);
+    buddy1 = (struct buddy *)thorium_actor_concrete_actor(actor);
     buddy1->received = -1;
 }
 
-void buddy_receive(struct bsal_actor *actor, struct bsal_message *message)
+void buddy_receive(struct thorium_actor *actor, struct thorium_message *message)
 {
     int tag;
     int source;
     int name;
 
-    name = bsal_actor_name(actor);
-    source = bsal_message_source(message);
-    tag = bsal_message_tag(message);
+    name = thorium_actor_name(actor);
+    source = thorium_message_source(message);
+    tag = thorium_message_tag(message);
 
     if (tag == BUDDY_BOOT) {
 
         printf("BUDDY_BOOT\n");
-        bsal_actor_print(actor);
+        thorium_actor_print(actor);
 
-        bsal_message_init(message, BUDDY_BOOT_REPLY, 0, NULL);
-        bsal_actor_send(actor, source, message);
+        thorium_message_init(message, BUDDY_BOOT_REPLY, 0, NULL);
+        thorium_actor_send(actor, source, message);
 
     } else if (tag == BUDDY_HELLO) {
 
@@ -55,11 +55,11 @@ void buddy_receive(struct bsal_actor *actor, struct bsal_message *message)
          */
 
         /*
-        bsal_actor_send_to_self_empty(actor, BSAL_ACTOR_PIN_TO_WORKER);
+        thorium_actor_send_to_self_empty(actor, BSAL_ACTOR_PIN_TO_WORKER);
         */
 
-        bsal_message_init(message, BUDDY_HELLO_REPLY, 0, NULL);
-        bsal_actor_send(actor, source, message);
+        thorium_message_init(message, BUDDY_HELLO_REPLY, 0, NULL);
+        thorium_actor_send(actor, source, message);
 
     } else if (tag == BSAL_ACTOR_ASK_TO_STOP) {
 
@@ -69,10 +69,10 @@ void buddy_receive(struct bsal_actor *actor, struct bsal_message *message)
                         name, tag, source);
 
         /*
-        bsal_actor_send_to_self_empty(actor, BSAL_ACTOR_UNPIN_FROM_WORKER);
+        thorium_actor_send_to_self_empty(actor, BSAL_ACTOR_UNPIN_FROM_WORKER);
         */
 
-        bsal_message_init(message, BSAL_ACTOR_STOP, 0, NULL);
-        bsal_actor_send(actor, name, message);
+        thorium_message_init(message, BSAL_ACTOR_STOP, 0, NULL);
+        thorium_actor_send(actor, name, message);
     }
 }

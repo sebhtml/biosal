@@ -47,13 +47,13 @@
 #define BSAL_ACTOR_FORWARDING_CLONE 1
 #define BSAL_ACTOR_FORWARDING_MIGRATE 2
 
-void bsal_actor_init(struct bsal_actor *self, void *concrete_actor,
-                struct bsal_script *script, int name, struct bsal_node *node)
+void thorium_actor_init(struct thorium_actor *self, void *concrete_actor,
+                struct thorium_script *script, int name, struct thorium_node *node)
 {
-    bsal_actor_init_fn_t init;
+    thorium_actor_init_fn_t init;
     int capacity;
 
-    bsal_actor_set_priority(self, BSAL_PRIORITY_NORMAL);
+    thorium_actor_set_priority(self, BSAL_PRIORITY_NORMAL);
 
     bsal_map_init(&self->received_messages, sizeof(int), sizeof(int));
     bsal_map_init(&self->sent_messages, sizeof(int), sizeof(int));
@@ -61,7 +61,7 @@ void bsal_actor_init(struct bsal_actor *self, void *concrete_actor,
     /* initialize the dispatcher before calling
      * the concrete initializer
      */
-    bsal_dispatcher_init(&self->dispatcher);
+    thorium_dispatcher_init(&self->dispatcher);
 
     self->concrete_actor = concrete_actor;
     self->name = name;
@@ -88,7 +88,7 @@ void bsal_actor_init(struct bsal_actor *self, void *concrete_actor,
 
 /*
     printf("DEBUG actor %d init can_pack %d\n",
-                    bsal_actor_name(self), self->can_pack);
+                    thorium_actor_name(self), self->can_pack);
 */
 #ifdef BSAL_ACTOR_STORE_CHILDREN
     bsal_vector_init(&self->acquaintance_vector, sizeof(int));
@@ -98,42 +98,42 @@ void bsal_actor_init(struct bsal_actor *self, void *concrete_actor,
     bsal_vector_init(&self->children, sizeof(int));
 #endif
 
-    bsal_queue_init(&self->queued_messages_for_clone, sizeof(struct bsal_message));
-    bsal_queue_init(&self->queued_messages_for_migration, sizeof(struct bsal_message));
-    bsal_queue_init(&self->forwarding_queue, sizeof(struct bsal_message));
+    bsal_queue_init(&self->queued_messages_for_clone, sizeof(struct thorium_message));
+    bsal_queue_init(&self->queued_messages_for_migration, sizeof(struct thorium_message));
+    bsal_queue_init(&self->forwarding_queue, sizeof(struct thorium_message));
 
 #ifdef BSAL_ACTOR_STORE_CHILDREN
     bsal_map_init(&self->acquaintance_map, sizeof(int), sizeof(int));
 #endif
 
     /*
-    bsal_actor_send_to_self_empty(self, BSAL_ACTOR_UNPIN_FROM_WORKER);
-    bsal_actor_send_to_self_empty(self, BSAL_ACTOR_PIN_TO_NODE);
+    thorium_actor_send_to_self_empty(self, BSAL_ACTOR_UNPIN_FROM_WORKER);
+    thorium_actor_send_to_self_empty(self, BSAL_ACTOR_PIN_TO_NODE);
     */
 
-    bsal_queue_init(&self->enqueued_messages, sizeof(struct bsal_message));
+    bsal_queue_init(&self->enqueued_messages, sizeof(struct thorium_message));
 
     capacity = BSAL_ACTOR_MAILBOX_SIZE;
-    bsal_fast_ring_init(&self->mailbox, capacity, sizeof(struct bsal_message));
+    bsal_fast_ring_init(&self->mailbox, capacity, sizeof(struct thorium_message));
 
     /* call the concrete initializer
      * this must be the last call.
      */
-    init = bsal_actor_get_init(self);
+    init = thorium_actor_get_init(self);
     init(self);
 
     BSAL_DEBUGGER_ASSERT(self->name != BSAL_ACTOR_NOBODY);
 }
 
-void bsal_actor_destroy(struct bsal_actor *self)
+void thorium_actor_destroy(struct thorium_actor *self)
 {
-    bsal_actor_init_fn_t destroy;
-    struct bsal_message message;
+    thorium_actor_init_fn_t destroy;
+    struct thorium_message message;
     void *buffer;
 
     /* The concrete actor must first be destroyed.
      */
-    destroy = bsal_actor_get_destroy(self);
+    destroy = thorium_actor_get_destroy(self);
     destroy(self);
 
     /*
@@ -144,7 +144,7 @@ void bsal_actor_destroy(struct bsal_actor *self)
 
     bsal_memory_fence();
 
-    bsal_dispatcher_destroy(&self->dispatcher);
+    thorium_dispatcher_destroy(&self->dispatcher);
 
 #ifdef BSAL_ACTOR_STORE_CHILDREN
     bsal_vector_destroy(&self->acquaintance_vector);
@@ -169,13 +169,13 @@ void bsal_actor_destroy(struct bsal_actor *self)
 
     while (bsal_queue_dequeue(&self->enqueued_messages, &message)) {
 
-        bsal_worker_free_message(self->worker, &message);
+        thorium_worker_free_message(self->worker, &message);
     }
 
     bsal_queue_destroy(&self->enqueued_messages);
 
-    while (bsal_actor_dequeue_mailbox_message(self, &message)) {
-        buffer = bsal_message_buffer(&message);
+    while (thorium_actor_dequeue_mailbox_message(self, &message)) {
+        buffer = thorium_message_buffer(&message);
 
         if (buffer != NULL) {
             bsal_memory_free(buffer);
@@ -191,7 +191,7 @@ void bsal_actor_destroy(struct bsal_actor *self)
     /* unlock the actor if the actor is being destroyed while
      * being locked
      */
-    bsal_actor_unlock(self);
+    thorium_actor_unlock(self);
 
     bsal_lock_destroy(&self->receive_lock);
 
@@ -202,80 +202,80 @@ void bsal_actor_destroy(struct bsal_actor *self)
     bsal_fast_ring_destroy(&self->mailbox);
 }
 
-int bsal_actor_name(struct bsal_actor *self)
+int thorium_actor_name(struct thorium_actor *self)
 {
     BSAL_DEBUGGER_ASSERT(self != NULL);
 
     return self->name;
 }
 
-bsal_actor_receive_fn_t bsal_actor_get_receive(struct bsal_actor *self)
+thorium_actor_receive_fn_t thorium_actor_get_receive(struct thorium_actor *self)
 {
-    return bsal_script_get_receive(self->script);
+    return thorium_script_get_receive(self->script);
 }
 
-void bsal_actor_set_name(struct bsal_actor *self, int name)
+void thorium_actor_set_name(struct thorium_actor *self, int name)
 {
     self->name = name;
 }
 
-void bsal_actor_print(struct bsal_actor *self)
+void thorium_actor_print(struct thorium_actor *self)
 {
     /* with -Werror -Wall:
-     * engine/bsal_actor.c:58:21: error: ISO C for bids conversion of function pointer to object pointer type [-Werror=edantic]
+     * engine/thorium_actor.c:58:21: error: ISO C for bids conversion of function pointer to object pointer type [-Werror=edantic]
      */
 
     int received = (int)bsal_counter_get(&self->counter, BSAL_COUNTER_RECEIVED_MESSAGES);
     int sent = (int)bsal_counter_get(&self->counter, BSAL_COUNTER_SENT_MESSAGES);
 
     printf("INSPECT actor: %s/%d\n",
-                        bsal_actor_script_name(self),
-                        bsal_actor_name(self));
+                        thorium_actor_script_name(self),
+                        thorium_actor_name(self));
 
-    printf("[bsal_actor_print] Name: %i Supervisor %i Node: %i, Thread: %i"
-                    " received %i sent %i\n", bsal_actor_name(self),
-                    bsal_actor_supervisor(self),
-                    bsal_node_name(bsal_actor_node(self)),
-                    bsal_worker_name(bsal_actor_worker(self)),
+    printf("[thorium_actor_print] Name: %i Supervisor %i Node: %i, Thread: %i"
+                    " received %i sent %i\n", thorium_actor_name(self),
+                    thorium_actor_supervisor(self),
+                    thorium_node_name(thorium_actor_node(self)),
+                    thorium_worker_name(thorium_actor_worker(self)),
                     received, sent);
 }
 
-bsal_actor_init_fn_t bsal_actor_get_init(struct bsal_actor *self)
+thorium_actor_init_fn_t thorium_actor_get_init(struct thorium_actor *self)
 {
-    return bsal_script_get_init(self->script);
+    return thorium_script_get_init(self->script);
 }
 
-bsal_actor_destroy_fn_t bsal_actor_get_destroy(struct bsal_actor *self)
+thorium_actor_destroy_fn_t thorium_actor_get_destroy(struct thorium_actor *self)
 {
-    return bsal_script_get_destroy(self->script);
+    return thorium_script_get_destroy(self->script);
 }
 
-void bsal_actor_set_worker(struct bsal_actor *self, struct bsal_worker *worker)
+void thorium_actor_set_worker(struct thorium_actor *self, struct thorium_worker *worker)
 {
     self->worker = worker;
 }
 
-int bsal_actor_send_system_self(struct bsal_actor *self, struct bsal_message *message)
+int thorium_actor_send_system_self(struct thorium_actor *self, struct thorium_message *message)
 {
     int tag;
 
-    tag = bsal_message_tag(message);
+    tag = thorium_message_tag(message);
 
 #if 0
     if (tag == BSAL_ACTOR_PIN_TO_WORKER) {
-        bsal_actor_pin_to_worker(self);
+        thorium_actor_pin_to_worker(self);
         return 1;
 
     } else if (tag == BSAL_ACTOR_UNPIN_FROM_WORKER) {
-        bsal_actor_unpin_from_worker(self);
+        thorium_actor_unpin_from_worker(self);
         return 1;
 
     if (tag == BSAL_ACTOR_PIN_TO_NODE) {
-        bsal_actor_pin_to_node(self);
+        thorium_actor_pin_to_node(self);
         return 1;
 
     } else if (tag == BSAL_ACTOR_UNPIN_FROM_NODE) {
-        bsal_actor_unpin_from_node(self);
+        thorium_actor_unpin_from_node(self);
         return 1;
 
 #endif
@@ -284,14 +284,14 @@ int bsal_actor_send_system_self(struct bsal_actor *self, struct bsal_message *me
 
             /*
         printf("DEBUG actor %d enabling can_pack\n",
-                        bsal_actor_name(self));
+                        thorium_actor_name(self));
                         */
 
         self->can_pack = BSAL_ACTOR_STATUS_SUPPORTED;
 
         /*
-        bsal_actor_send_to_self_empty(self, BSAL_ACTOR_UNPIN_FROM_WORKER);
-        bsal_actor_send_to_self_empty(self, BSAL_ACTOR_UNPIN_FROM_NODE);
+        thorium_actor_send_to_self_empty(self, BSAL_ACTOR_UNPIN_FROM_WORKER);
+        thorium_actor_send_to_self_empty(self, BSAL_ACTOR_UNPIN_FROM_NODE);
         */
 
         return 1;
@@ -301,30 +301,30 @@ int bsal_actor_send_system_self(struct bsal_actor *self, struct bsal_message *me
         return 1;
 
     } else if (tag == BSAL_ACTOR_YIELD) {
-        bsal_actor_send_to_self_empty(self, BSAL_ACTOR_YIELD_REPLY);
+        thorium_actor_send_to_self_empty(self, BSAL_ACTOR_YIELD_REPLY);
         return 1;
 
     } else if (tag == BSAL_ACTOR_STOP) {
 
-        bsal_actor_die(self);
+        thorium_actor_die(self);
         return 1;
     }
 
     return 0;
 }
 
-int bsal_actor_send_system(struct bsal_actor *self, int name, struct bsal_message *message)
+int thorium_actor_send_system(struct thorium_actor *self, int name, struct thorium_message *message)
 {
     int self_name;
 
-    self_name = bsal_actor_name(self);
+    self_name = thorium_actor_name(self);
 
     /* Verify if the message is a special message.
      * For instance, it is important to pin an
      * actor right away if it is requested.
      */
     if (name == self_name) {
-        if (bsal_actor_send_system_self(self, message)) {
+        if (thorium_actor_send_system_self(self, message)) {
             return 1;
         }
     }
@@ -332,7 +332,7 @@ int bsal_actor_send_system(struct bsal_actor *self, int name, struct bsal_messag
     return 0;
 }
 
-void bsal_actor_send(struct bsal_actor *self, int name, struct bsal_message *message)
+void thorium_actor_send(struct thorium_actor *self, int name, struct thorium_message *message)
 {
     int source;
     int *bucket;
@@ -348,39 +348,39 @@ void bsal_actor_send(struct bsal_actor *self, int name, struct bsal_message *mes
 
     (*bucket)++;
 
-    source = bsal_actor_name(self);
+    source = thorium_actor_name(self);
 
     /* update counters
      */
     if (source == name) {
         bsal_counter_add(&self->counter, BSAL_COUNTER_SENT_MESSAGES_TO_SELF, 1);
         bsal_counter_add(&self->counter, BSAL_COUNTER_SENT_BYTES_TO_SELF,
-                        bsal_message_count(message));
+                        thorium_message_count(message));
     } else {
         bsal_counter_add(&self->counter, BSAL_COUNTER_SENT_MESSAGES_NOT_TO_SELF, 1);
         bsal_counter_add(&self->counter, BSAL_COUNTER_SENT_BYTES_NOT_TO_SELF,
-                        bsal_message_count(message));
+                        thorium_message_count(message));
     }
 
-    if (bsal_actor_send_system(self, name, message)) {
+    if (thorium_actor_send_system(self, name, message)) {
         return;
     }
 
-    bsal_actor_send_with_source(self, name, message, source);
+    thorium_actor_send_with_source(self, name, message, source);
 }
 
-void bsal_actor_send_with_source(struct bsal_actor *self, int name, struct bsal_message *message,
+void thorium_actor_send_with_source(struct thorium_actor *self, int name, struct thorium_message *message,
                 int source)
 {
     int tag;
 
-    tag = bsal_message_tag(message);
-    bsal_message_set_source(message, source);
-    bsal_message_set_destination(message, name);
+    tag = thorium_message_tag(message);
+    thorium_message_set_source(message, source);
+    thorium_message_set_destination(message, name);
 
 #ifdef BSAL_ACTOR_DEBUG9
-    if (bsal_message_tag(message) == 1100) {
-        printf("DEBUG bsal_message_set_source 1100\n");
+    if (thorium_message_tag(message) == 1100) {
+        printf("DEBUG thorium_message_set_source 1100\n");
     }
 #endif
 
@@ -395,17 +395,17 @@ void bsal_actor_send_with_source(struct bsal_actor *self, int name, struct bsal_
         return;
     }
 
-    bsal_worker_send(self->worker, message);
+    thorium_worker_send(self->worker, message);
 }
 
-int bsal_actor_spawn(struct bsal_actor *self, int script)
+int thorium_actor_spawn(struct thorium_actor *self, int script)
 {
     int name;
 
-    name = bsal_actor_spawn_real(self, script);
+    name = thorium_actor_spawn_real(self, script);
 
 #ifdef BSAL_ACTOR_STORE_CHILDREN
-    bsal_actor_add_child(self, name);
+    thorium_actor_add_child(self, name);
 #endif
 
 #ifdef BSAL_ACTOR_DEBUG_SPAWN
@@ -417,16 +417,16 @@ int bsal_actor_spawn(struct bsal_actor *self, int script)
     return name;
 }
 
-int bsal_actor_spawn_real(struct bsal_actor *self, int script)
+int thorium_actor_spawn_real(struct thorium_actor *self, int script)
 {
     int name;
-    int self_name = bsal_actor_name(self);
+    int self_name = thorium_actor_name(self);
 
 #ifdef BSAL_ACTOR_DEBUG_SPAWN
-    printf("DEBUG bsal_actor_spawn script %d\n", script);
+    printf("DEBUG thorium_actor_spawn script %d\n", script);
 #endif
 
-    name = bsal_node_spawn(bsal_actor_node(self), script);
+    name = thorium_node_spawn(thorium_actor_node(self), script);
 
     if (name == BSAL_ACTOR_NOBODY) {
         printf("Error: problem with spawning! did you register the script ?\n");
@@ -434,18 +434,18 @@ int bsal_actor_spawn_real(struct bsal_actor *self, int script)
     }
 
 #ifdef BSAL_ACTOR_DEBUG_SPAWN
-    printf("DEBUG bsal_actor_spawn before set_supervisor, spawned %d\n",
+    printf("DEBUG thorium_actor_spawn before set_supervisor, spawned %d\n",
                     name);
 #endif
 
-    bsal_node_set_supervisor(bsal_actor_node(self), name, self_name);
+    thorium_node_set_supervisor(thorium_actor_node(self), name, self_name);
 
     bsal_counter_add(&self->counter, BSAL_COUNTER_SPAWNED_ACTORS, 1);
 
     return name;
 }
 
-void bsal_actor_die(struct bsal_actor *self)
+void thorium_actor_die(struct thorium_actor *self)
 {
     bsal_counter_add(&self->counter, BSAL_COUNTER_KILLED_ACTORS, 1);
     self->dead = 1;
@@ -457,12 +457,12 @@ void bsal_actor_die(struct bsal_actor *self)
     bsal_memory_fence();
 }
 
-struct bsal_counter *bsal_actor_counter(struct bsal_actor *self)
+struct bsal_counter *thorium_actor_counter(struct thorium_actor *self)
 {
     return &self->counter;
 }
 
-struct bsal_node *bsal_actor_node(struct bsal_actor *self)
+struct thorium_node *thorium_actor_node(struct thorium_actor *self)
 {
     if (self->node != NULL) {
         return self->node;
@@ -472,16 +472,16 @@ struct bsal_node *bsal_actor_node(struct bsal_actor *self)
         return NULL;
     }
 
-    return bsal_worker_node(bsal_actor_worker(self));
+    return thorium_worker_node(thorium_actor_worker(self));
 }
 
-void bsal_actor_lock(struct bsal_actor *self)
+void thorium_actor_lock(struct thorium_actor *self)
 {
     bsal_lock_lock(&self->receive_lock);
     self->locked = BSAL_LOCK_LOCKED;
 }
 
-void bsal_actor_unlock(struct bsal_actor *self)
+void thorium_actor_unlock(struct thorium_actor *self)
 {
     if (!self->locked) {
         return;
@@ -491,43 +491,43 @@ void bsal_actor_unlock(struct bsal_actor *self)
     bsal_lock_unlock(&self->receive_lock);
 }
 
-int bsal_actor_argc(struct bsal_actor *self)
+int thorium_actor_argc(struct thorium_actor *self)
 {
-    return bsal_node_argc(bsal_actor_node(self));
+    return thorium_node_argc(thorium_actor_node(self));
 }
 
-char **bsal_actor_argv(struct bsal_actor *self)
+char **thorium_actor_argv(struct thorium_actor *self)
 {
-    return bsal_node_argv(bsal_actor_node(self));
+    return thorium_node_argv(thorium_actor_node(self));
 }
 
-int bsal_actor_supervisor(struct bsal_actor *self)
+int thorium_actor_supervisor(struct thorium_actor *self)
 {
     return self->supervisor;
 }
 
-void bsal_actor_set_supervisor(struct bsal_actor *self, int supervisor)
+void thorium_actor_set_supervisor(struct thorium_actor *self, int supervisor)
 {
     self->supervisor = supervisor;
 }
 
-int bsal_actor_receive_system_no_pack(struct bsal_actor *self, struct bsal_message *message)
+int thorium_actor_receive_system_no_pack(struct thorium_actor *self, struct thorium_message *message)
 {
     int tag;
 
-    tag = bsal_message_tag(message);
+    tag = thorium_message_tag(message);
 
     if (tag == BSAL_ACTOR_PACK) {
 
-        bsal_actor_send_reply_empty(self, BSAL_ACTOR_PACK_REPLY);
+        thorium_actor_send_reply_empty(self, BSAL_ACTOR_PACK_REPLY);
         return 1;
 
     } else if (tag == BSAL_ACTOR_PACK_SIZE) {
-        bsal_actor_send_reply_int(self, BSAL_ACTOR_PACK_SIZE_REPLY, 0);
+        thorium_actor_send_reply_int(self, BSAL_ACTOR_PACK_SIZE_REPLY, 0);
         return 1;
 
     } else if (tag == BSAL_ACTOR_UNPACK) {
-        bsal_actor_send_reply_empty(self, BSAL_ACTOR_PACK_REPLY);
+        thorium_actor_send_reply_empty(self, BSAL_ACTOR_PACK_REPLY);
         return 1;
 
     } else if (tag == BSAL_ACTOR_CLONE) {
@@ -537,11 +537,11 @@ int bsal_actor_receive_system_no_pack(struct bsal_actor *self, struct bsal_messa
          */
 
             /*
-        printf("DEBUG actor %d BSAL_ACTOR_CLONE not supported can_pack %d\n", bsal_actor_name(self),
+        printf("DEBUG actor %d BSAL_ACTOR_CLONE not supported can_pack %d\n", thorium_actor_name(self),
                         self->can_pack);
                         */
 
-        bsal_actor_send_reply_int(self, BSAL_ACTOR_CLONE_REPLY, BSAL_ACTOR_NOBODY);
+        thorium_actor_send_reply_int(self, BSAL_ACTOR_CLONE_REPLY, BSAL_ACTOR_NOBODY);
         return 1;
 
     } else if (tag == BSAL_ACTOR_MIGRATE) {
@@ -551,10 +551,10 @@ int bsal_actor_receive_system_no_pack(struct bsal_actor *self, struct bsal_messa
          */
 
 #ifdef BSAL_ACTOR_DEBUG_MIGRATE
-        printf("DEBUG bsal_actor_migrate: pack not supported\n");
+        printf("DEBUG thorium_actor_migrate: pack not supported\n");
 #endif
 
-        bsal_actor_send_reply_int(self, BSAL_ACTOR_MIGRATE_REPLY, BSAL_ACTOR_NOBODY);
+        thorium_actor_send_reply_int(self, BSAL_ACTOR_MIGRATE_REPLY, BSAL_ACTOR_NOBODY);
 
         return 1;
     }
@@ -562,7 +562,7 @@ int bsal_actor_receive_system_no_pack(struct bsal_actor *self, struct bsal_messa
     return 0;
 }
 
-int bsal_actor_receive_system(struct bsal_actor *self, struct bsal_message *message)
+int thorium_actor_receive_system(struct thorium_actor *self, struct thorium_message *message)
 {
     int tag;
     int name;
@@ -575,7 +575,7 @@ int bsal_actor_receive_system(struct bsal_actor *self, struct bsal_message *mess
     int supervisor;
     int new_count;
     void *new_buffer;
-    struct bsal_message new_message;
+    struct thorium_message new_message;
     int offset;
     int bytes;
     struct bsal_memory_pool *ephemeral_memory;
@@ -584,23 +584,23 @@ int bsal_actor_receive_system(struct bsal_actor *self, struct bsal_message *mess
     int new_actor;
 #endif
 
-    ephemeral_memory = bsal_actor_get_ephemeral_memory(self);
-    tag = bsal_message_tag(message);
+    ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
+    tag = thorium_message_tag(message);
 
     /* the concrete actor must catch these otherwise.
      * Also, clone and migrate depend on these.
      */
     if (self->can_pack == BSAL_ACTOR_STATUS_NOT_SUPPORTED) {
 
-        if (bsal_actor_receive_system_no_pack(self, message)) {
+        if (thorium_actor_receive_system_no_pack(self, message)) {
             return 1;
         }
     }
 
-    name = bsal_actor_name(self);
-    source =bsal_message_source(message);
-    buffer = bsal_message_buffer(message);
-    count = bsal_message_count(message);
+    name = thorium_actor_name(self);
+    source =thorium_message_source(message);
+    buffer = thorium_message_buffer(message);
+    count = thorium_message_count(message);
 
 #ifdef BSAL_ACTOR_STORE_CHILDREN
     /* For any remote spawning operation, add the new actor in the list of
@@ -609,7 +609,7 @@ int bsal_actor_receive_system(struct bsal_actor *self, struct bsal_message *mess
     if (tag == BSAL_ACTOR_SPAWN_REPLY) {
 
         new_actor = *(int *)buffer;
-        bsal_actor_add_child(self, new_actor);
+        thorium_actor_add_child(self, new_actor);
     }
 #endif
 
@@ -625,17 +625,17 @@ int bsal_actor_receive_system(struct bsal_actor *self, struct bsal_message *mess
         if (self->cloning_status == BSAL_ACTOR_STATUS_NOT_STARTED) {
 
             /* begin the cloning operation */
-            bsal_actor_clone(self, message);
+            thorium_actor_clone(self, message);
 
         } else {
             /* queue the cloning message */
 #ifdef BSAL_ACTOR_DEBUG_MIGRATE
-            printf("DEBUG bsal_actor_receive_system queuing message %d because cloning is in progress\n",
+            printf("DEBUG thorium_actor_receive_system queuing message %d because cloning is in progress\n",
                             tag);
 #endif
 
             self->forwarding_selector = BSAL_ACTOR_FORWARDING_CLONE;
-            bsal_actor_queue_message(self, message);
+            thorium_actor_queue_message(self, message);
         }
 
         return 1;
@@ -643,10 +643,10 @@ int bsal_actor_receive_system(struct bsal_actor *self, struct bsal_message *mess
     } else if (self->cloning_status == BSAL_ACTOR_STATUS_STARTED) {
 
         /* call a function called
-         * bsal_actor_continue_clone
+         * thorium_actor_continue_clone
          */
         self->cloning_progressed = 0;
-        bsal_actor_continue_clone(self, message);
+        thorium_actor_continue_clone(self, message);
 
         if (self->cloning_progressed) {
             return 1;
@@ -656,7 +656,7 @@ int bsal_actor_receive_system(struct bsal_actor *self, struct bsal_message *mess
     if (self->migration_status == BSAL_ACTOR_STATUS_STARTED) {
 
         self->migration_progressed = 0;
-        bsal_actor_migrate(self, message);
+        thorium_actor_migrate(self, message);
 
         if (self->migration_progressed) {
             return 1;
@@ -669,13 +669,13 @@ int bsal_actor_receive_system(struct bsal_actor *self, struct bsal_message *mess
      */
     if (tag == BSAL_ACTOR_SPAWN) {
         script = *(int *)buffer;
-        spawned = bsal_actor_spawn_real(self, script);
+        spawned = thorium_actor_spawn_real(self, script);
 
 #ifdef BSAL_ACTOR_DEBUG_SPAWN
         printf("DEBUG setting supervisor of %d to %d\n", spawned, source);
 #endif
 
-        bsal_node_set_supervisor(bsal_actor_node(self), spawned, source);
+        thorium_node_set_supervisor(thorium_actor_node(self), spawned, source);
 
         new_buffer = bsal_memory_pool_allocate(ephemeral_memory, 2 * sizeof(int));
         offset = 0;
@@ -688,28 +688,28 @@ int bsal_actor_receive_system(struct bsal_actor *self, struct bsal_message *mess
         offset += bytes;
 
         new_count = offset;
-        bsal_message_init(&new_message, BSAL_ACTOR_SPAWN_REPLY, new_count, new_buffer);
-        bsal_actor_send(self, source, &new_message);
+        thorium_message_init(&new_message, BSAL_ACTOR_SPAWN_REPLY, new_count, new_buffer);
+        thorium_actor_send(self, source, &new_message);
 
-        bsal_message_destroy(&new_message);
+        thorium_message_destroy(&new_message);
         bsal_memory_pool_free(ephemeral_memory, new_buffer);
 
         return 1;
 
 #ifdef BSAL_ACTOR_STORE_CHILDREN
     } else if (tag == BSAL_ACTOR_MIGRATE_NOTIFY_ACQUAINTANCES) {
-        bsal_actor_migrate_notify_acquaintances(self, message);
+        thorium_actor_migrate_notify_acquaintances(self, message);
         return 1;
 
     } else if (tag == BSAL_ACTOR_NOTIFY_NAME_CHANGE) {
 
-        bsal_actor_notify_name_change(self, message);
+        thorium_actor_notify_name_change(self, message);
         return 1;
 #endif
 
     } else if (tag == BSAL_ACTOR_NOTIFY_NAME_CHANGE_REPLY) {
 
-        bsal_actor_send_to_self_empty(self, BSAL_ACTOR_MIGRATE_NOTIFY_ACQUAINTANCES);
+        thorium_actor_send_to_self_empty(self, BSAL_ACTOR_MIGRATE_NOTIFY_ACQUAINTANCES);
 
         return 1;
 
@@ -719,7 +719,7 @@ int bsal_actor_receive_system(struct bsal_actor *self, struct bsal_message *mess
         return 0;
 
     } else if (tag == BSAL_ACTOR_PROXY_MESSAGE) {
-        bsal_actor_receive_proxy_message(self, message);
+        thorium_actor_receive_proxy_message(self, message);
         return 1;
 
     } else if (tag == BSAL_ACTOR_FORWARD_MESSAGES_REPLY) {
@@ -741,11 +741,11 @@ int bsal_actor_receive_system(struct bsal_actor *self, struct bsal_message *mess
     if (self->migration_status == BSAL_ACTOR_STATUS_STARTED) {
 
 #ifdef BSAL_ACTOR_DEBUG_MIGRATE
-        printf("DEBUG bsal_actor_receive_system queuing message %d during migration\n",
+        printf("DEBUG thorium_actor_receive_system queuing message %d during migration\n",
                         tag);
 #endif
         self->forwarding_selector = BSAL_ACTOR_FORWARDING_MIGRATE;
-        bsal_actor_queue_message(self, message);
+        thorium_actor_queue_message(self, message);
         return 1;
     }
 
@@ -753,19 +753,19 @@ int bsal_actor_receive_system(struct bsal_actor *self, struct bsal_message *mess
     /* Perform binomial routing.
      */
     if (tag == BSAL_ACTOR_BINOMIAL_TREE_SEND) {
-        bsal_actor_receive_binomial_tree_send(self, message);
+        thorium_actor_receive_binomial_tree_send(self, message);
         return 1;
 
     } else if (tag == BSAL_ACTOR_MIGRATE) {
 
-        bsal_actor_migrate(self, message);
+        thorium_actor_migrate(self, message);
         return 1;
 
     } else if (tag == BSAL_ACTOR_SYNCHRONIZE) {
         /* the concrete actor must catch this one */
 
     } else if (tag == BSAL_ACTOR_SYNCHRONIZE_REPLY) {
-        bsal_actor_receive_synchronize_reply(self, message);
+        thorium_actor_receive_synchronize_reply(self, message);
 
         /* we also allow the concrete actor to receive this */
 
@@ -788,7 +788,7 @@ int bsal_actor_receive_system(struct bsal_actor *self, struct bsal_message *mess
         return 1;
 */
     } else if (tag == BSAL_ACTOR_SET_SUPERVISOR
-                    /*&& source == bsal_actor_supervisor(self)*/) {
+                    /*&& source == thorium_actor_supervisor(self)*/) {
 
     /* only an actor that knows the name of
      * the current supervisor can assign a new supervisor
@@ -800,25 +800,25 @@ int bsal_actor_receive_system(struct bsal_actor *self, struct bsal_message *mess
             return 1;
         }
 
-        bsal_message_unpack_int(message, 0, &old_supervisor);
-        bsal_message_unpack_int(message, sizeof(old_supervisor), &supervisor);
+        thorium_message_unpack_int(message, 0, &old_supervisor);
+        thorium_message_unpack_int(message, sizeof(old_supervisor), &supervisor);
 
 #ifdef BSAL_ACTOR_DEBUG_MIGRATE
-        printf("DEBUG bsal_actor_receive_system actor %d receives BSAL_ACTOR_SET_SUPERVISOR old supervisor %d (provided %d), new supervisor %d\n",
-                        bsal_actor_name(self),
-                        bsal_actor_supervisor(self), old_supervisor,
+        printf("DEBUG thorium_actor_receive_system actor %d receives BSAL_ACTOR_SET_SUPERVISOR old supervisor %d (provided %d), new supervisor %d\n",
+                        thorium_actor_name(self),
+                        thorium_actor_supervisor(self), old_supervisor,
                         supervisor);
 #endif
 
-        if (bsal_actor_supervisor(self) == old_supervisor) {
+        if (thorium_actor_supervisor(self) == old_supervisor) {
 
 #ifdef BSAL_ACTOR_DEBUG_MIGRATE
-            printf("DEBUG bsal_actor_receive_system authentification successful\n");
+            printf("DEBUG thorium_actor_receive_system authentification successful\n");
 #endif
-            bsal_actor_set_supervisor(self, supervisor);
+            thorium_actor_set_supervisor(self, supervisor);
         }
 
-        bsal_actor_send_reply_empty(self, BSAL_ACTOR_SET_SUPERVISOR_REPLY);
+        thorium_actor_send_reply_empty(self, BSAL_ACTOR_SET_SUPERVISOR_REPLY);
 
         return 1;
 
@@ -844,19 +844,19 @@ int bsal_actor_receive_system(struct bsal_actor *self, struct bsal_message *mess
 
     } else if (tag == BSAL_ACTOR_GET_NODE_NAME) {
 
-        bsal_actor_send_reply_int(self, BSAL_ACTOR_GET_NODE_NAME_REPLY,
-                        bsal_actor_node_name(self));
+        thorium_actor_send_reply_int(self, BSAL_ACTOR_GET_NODE_NAME_REPLY,
+                        thorium_actor_node_name(self));
         return 1;
 
     } else if (tag == BSAL_ACTOR_GET_NODE_WORKER_COUNT) {
 
-        bsal_actor_send_reply_int(self, BSAL_ACTOR_GET_NODE_WORKER_COUNT_REPLY,
-                        bsal_actor_node_worker_count(self));
+        thorium_actor_send_reply_int(self, BSAL_ACTOR_GET_NODE_WORKER_COUNT_REPLY,
+                        thorium_actor_node_worker_count(self));
         return 1;
 
     } else  if (tag == BSAL_ACTOR_FORWARD_MESSAGES) {
 
-        bsal_actor_forward_messages(self, message);
+        thorium_actor_forward_messages(self, message);
         return 1;
 
     }
@@ -866,30 +866,30 @@ int bsal_actor_receive_system(struct bsal_actor *self, struct bsal_message *mess
     return 0;
 }
 
-void bsal_actor_receive(struct bsal_actor *self, struct bsal_message *message)
+void thorium_actor_receive(struct thorium_actor *self, struct thorium_message *message)
 {
-    bsal_actor_receive_fn_t receive;
+    thorium_actor_receive_fn_t receive;
     int name;
     int source;
     int *bucket;
 
 #ifdef BSAL_ACTOR_DEBUG_SYNC
-    printf("\nDEBUG bsal_actor_receive...... tag %d\n",
-                    bsal_message_tag(message));
+    printf("\nDEBUG thorium_actor_receive...... tag %d\n",
+                    thorium_message_tag(message));
 
-    if (bsal_message_tag(message) == BSAL_ACTOR_SYNCHRONIZED) {
+    if (thorium_message_tag(message) == BSAL_ACTOR_SYNCHRONIZED) {
         printf("DEBUG =============\n");
-        printf("DEBUG bsal_actor_receive before concrete receive BSAL_ACTOR_SYNCHRONIZED\n");
+        printf("DEBUG thorium_actor_receive before concrete receive BSAL_ACTOR_SYNCHRONIZED\n");
     }
 
-    printf("DEBUG bsal_actor_receive tag %d for %d\n",
-                    bsal_message_tag(message),
-                    bsal_actor_name(self));
+    printf("DEBUG thorium_actor_receive tag %d for %d\n",
+                    thorium_message_tag(message),
+                    thorium_actor_name(self));
 #endif
 
     /* Update counter
      */
-    source = bsal_message_source(message);
+    source = thorium_message_source(message);
 
     self->current_source = source;
     bucket = (int *)bsal_map_get(&self->received_messages, &source);
@@ -904,14 +904,14 @@ void bsal_actor_receive(struct bsal_actor *self, struct bsal_message *message)
     /* check if this is a message that the system can
      * figure out what to do with it
      */
-    if (bsal_actor_receive_system(self, message)) {
+    if (thorium_actor_receive_system(self, message)) {
         return;
 
 #ifdef BSAL_ACTOR_DO_DISPATCH_IN_ABSTRACT_ACTOR
     /* otherwise, verify if the actor registered a
      * handler for this tag
      */
-    } else if (bsal_actor_use_route(self, message)) {
+    } else if (thorium_actor_use_route(self, message)) {
         return;
 #endif
     }
@@ -919,59 +919,59 @@ void bsal_actor_receive(struct bsal_actor *self, struct bsal_message *message)
 
     /* Otherwise, this is a message for the actor itself.
      */
-    receive = bsal_actor_get_receive(self);
+    receive = thorium_actor_get_receive(self);
 
     BSAL_DEBUGGER_ASSERT(receive != NULL);
 
 #ifdef BSAL_ACTOR_DEBUG_SYNC
-    printf("DEBUG bsal_actor_receive calls concrete receive tag %d\n",
-                    bsal_message_tag(message));
+    printf("DEBUG thorium_actor_receive calls concrete receive tag %d\n",
+                    thorium_message_tag(message));
 #endif
 
-    name = bsal_actor_name(self);
+    name = thorium_actor_name(self);
 
     /* update counters
      */
     if (source == name) {
         bsal_counter_add(&self->counter, BSAL_COUNTER_RECEIVED_MESSAGES_FROM_SELF, 1);
         bsal_counter_add(&self->counter, BSAL_COUNTER_RECEIVED_BYTES_FROM_SELF,
-                        bsal_message_count(message));
+                        thorium_message_count(message));
     } else {
         bsal_counter_add(&self->counter, BSAL_COUNTER_RECEIVED_MESSAGES_NOT_FROM_SELF, 1);
         bsal_counter_add(&self->counter, BSAL_COUNTER_RECEIVED_BYTES_NOT_FROM_SELF,
-                        bsal_message_count(message));
+                        thorium_message_count(message));
     }
 
     receive(self, message);
 }
 
-void bsal_actor_receive_proxy_message(struct bsal_actor *self,
-                struct bsal_message *message)
+void thorium_actor_receive_proxy_message(struct thorium_actor *self,
+                struct thorium_message *message)
 {
     int source;
 
-    source = bsal_actor_unpack_proxy_message(self, message);
-    bsal_actor_send_with_source(self, bsal_actor_name(self),
+    source = thorium_actor_unpack_proxy_message(self, message);
+    thorium_actor_send_with_source(self, thorium_actor_name(self),
                     message, source);
 }
 
-void bsal_actor_receive_synchronize(struct bsal_actor *self,
-                struct bsal_message *message)
+void thorium_actor_receive_synchronize(struct thorium_actor *self,
+                struct thorium_message *message)
 {
 
 #ifdef BSAL_ACTOR_DEBUG
     printf("DEBUG56 replying to %i with BSAL_ACTOR_PRIVATE_SYNCHRONIZE_REPLY\n",
-                    bsal_message_source(message));
+                    thorium_message_source(message));
 #endif
 
-    bsal_message_init(message, BSAL_ACTOR_SYNCHRONIZE_REPLY, 0, NULL);
-    bsal_actor_send(self, bsal_message_source(message), message);
+    thorium_message_init(message, BSAL_ACTOR_SYNCHRONIZE_REPLY, 0, NULL);
+    thorium_actor_send(self, thorium_message_source(message), message);
 
-    bsal_message_destroy(message);
+    thorium_message_destroy(message);
 }
 
-void bsal_actor_receive_synchronize_reply(struct bsal_actor *self,
-                struct bsal_message *message)
+void thorium_actor_receive_synchronize_reply(struct thorium_actor *self,
+                struct thorium_message *message)
 {
     int name;
 
@@ -987,27 +987,27 @@ void bsal_actor_receive_synchronize_reply(struct bsal_actor *self,
 
         /* send BSAL_ACTOR_SYNCHRONIZED to self
          */
-        if (bsal_actor_synchronization_completed(self)) {
+        if (thorium_actor_synchronization_completed(self)) {
 
 #ifdef BSAL_ACTOR_DEBUG_SYNC
             printf("DEBUG sending BSAL_ACTOR_SYNCHRONIZED to self\n");
 #endif
-            struct bsal_message new_message;
-            bsal_message_init(&new_message, BSAL_ACTOR_SYNCHRONIZED,
+            struct thorium_message new_message;
+            thorium_message_init(&new_message, BSAL_ACTOR_SYNCHRONIZED,
                             sizeof(self->synchronization_responses),
                             &self->synchronization_responses);
 
-            name = bsal_actor_name(self);
+            name = thorium_actor_name(self);
 
-            bsal_actor_send(self, name, &new_message);
+            thorium_actor_send(self, name, &new_message);
             self->synchronization_started = 0;
         }
     }
 }
 
-void bsal_actor_synchronize(struct bsal_actor *self, struct bsal_vector *actors)
+void thorium_actor_synchronize(struct thorium_actor *self, struct bsal_vector *actors)
 {
-    struct bsal_message message;
+    struct thorium_message message;
 
     self->synchronization_started = 1;
     self->synchronization_expected_responses = bsal_vector_size(actors);
@@ -1018,26 +1018,26 @@ void bsal_actor_synchronize(struct bsal_actor *self, struct bsal_vector *actors)
 
 #ifdef BSAL_ACTOR_DEBUG
     printf("DEBUG actor %i emit synchronization %i-%i, expected: %i\n",
-                    bsal_actor_name(self), first, last,
+                    thorium_actor_name(self), first, last,
                     self->synchronization_expected_responses);
 #endif
 
-    bsal_message_init(&message, BSAL_ACTOR_SYNCHRONIZE, 0, NULL);
+    thorium_message_init(&message, BSAL_ACTOR_SYNCHRONIZE, 0, NULL);
 
-    /* TODO bsal_actor_send_range_binomial_tree is broken */
-    bsal_actor_send_range(self, actors, &message);
-    bsal_message_destroy(&message);
+    /* TODO thorium_actor_send_range_binomial_tree is broken */
+    thorium_actor_send_range(self, actors, &message);
+    thorium_message_destroy(&message);
 }
 
-int bsal_actor_synchronization_completed(struct bsal_actor *self)
+int thorium_actor_synchronization_completed(struct thorium_actor *self)
 {
     if (self->synchronization_started == 0) {
         return 0;
     }
 
 #ifdef BSAL_ACTOR_DEBUG
-    printf("DEBUG32 actor %i bsal_actor_synchronization_completed %i/%i\n",
-                    bsal_actor_name(self),
+    printf("DEBUG32 actor %i thorium_actor_synchronization_completed %i/%i\n",
+                    thorium_actor_name(self),
                     self->synchronization_responses,
                     self->synchronization_expected_responses);
 #endif
@@ -1049,8 +1049,8 @@ int bsal_actor_synchronization_completed(struct bsal_actor *self)
     return 0;
 }
 
-int bsal_actor_unpack_proxy_message(struct bsal_actor *self,
-                struct bsal_message *message)
+int thorium_actor_unpack_proxy_message(struct thorium_actor *self,
+                struct thorium_message *message)
 {
     int new_count;
     int tag;
@@ -1058,8 +1058,8 @@ int bsal_actor_unpack_proxy_message(struct bsal_actor *self,
     void *buffer;
     int offset;
 
-    buffer = bsal_message_buffer(message);
-    new_count = bsal_message_count(message);
+    buffer = thorium_message_buffer(message);
+    new_count = thorium_message_count(message);
     new_count -= sizeof(source);
     new_count -= sizeof(tag);
 
@@ -1072,12 +1072,12 @@ int bsal_actor_unpack_proxy_message(struct bsal_actor *self,
 
     /* TODO, verify if it is new_count or old count
      */
-    bsal_message_init(message, tag, new_count, buffer);
+    thorium_message_init(message, tag, new_count, buffer);
 
     return source;
 }
 
-void bsal_actor_pack_proxy_message(struct bsal_actor *self, struct bsal_message *message,
+void thorium_actor_pack_proxy_message(struct thorium_actor *self, struct thorium_message *message,
                 int real_source)
 {
     int real_tag;
@@ -1087,9 +1087,9 @@ void bsal_actor_pack_proxy_message(struct bsal_actor *self, struct bsal_message 
     void *new_buffer;
     int offset;
 
-    real_tag = bsal_message_tag(message);
-    buffer = bsal_message_buffer(message);
-    count = bsal_message_count(message);
+    real_tag = thorium_message_tag(message);
+    buffer = thorium_message_buffer(message);
+    count = thorium_message_count(message);
 
     new_count = count + sizeof(real_source) + sizeof(real_tag);
 
@@ -1109,8 +1109,8 @@ void bsal_actor_pack_proxy_message(struct bsal_actor *self, struct bsal_message 
     memcpy((char *)new_buffer + offset, &real_tag, sizeof(real_tag));
     offset += sizeof(real_tag);
 
-    bsal_message_init(message, BSAL_ACTOR_PROXY_MESSAGE, new_count, new_buffer);
-    bsal_message_set_source(message, real_source);
+    thorium_message_init(message, BSAL_ACTOR_PROXY_MESSAGE, new_count, new_buffer);
+    thorium_message_set_source(message, real_source);
 
     /* free the old buffer
      */
@@ -1118,65 +1118,65 @@ void bsal_actor_pack_proxy_message(struct bsal_actor *self, struct bsal_message 
     buffer = NULL;
 }
 
-int bsal_actor_script(struct bsal_actor *self)
+int thorium_actor_script(struct thorium_actor *self)
 {
     BSAL_DEBUGGER_ASSERT(self != NULL);
 
     BSAL_DEBUGGER_ASSERT(self->script != NULL);
 
-    return bsal_script_identifier(self->script);
+    return thorium_script_identifier(self->script);
 }
 
-void bsal_actor_add_script(struct bsal_actor *self, int name, struct bsal_script *script)
+void thorium_actor_add_script(struct thorium_actor *self, int name, struct thorium_script *script)
 {
-    bsal_node_add_script(bsal_actor_node(self), name, script);
+    thorium_node_add_script(thorium_actor_node(self), name, script);
 }
 
-void bsal_actor_clone(struct bsal_actor *self, struct bsal_message *message)
+void thorium_actor_clone(struct thorium_actor *self, struct thorium_message *message)
 {
     int spawner;
     void *buffer;
     int script;
-    struct bsal_message new_message;
+    struct thorium_message new_message;
     int source;
 
-    script = bsal_actor_script(self);
-    source = bsal_message_source(message);
-    buffer = bsal_message_buffer(message);
+    script = thorium_actor_script(self);
+    source = thorium_message_source(message);
+    buffer = thorium_message_buffer(message);
     spawner = *(int *)buffer;
     self->cloning_spawner = spawner;
     self->cloning_client = source;
 
 #ifdef BSAL_ACTOR_DEBUG_CLONE
     int name;
-    name = bsal_actor_name(self);
+    name = thorium_actor_name(self);
     printf("DEBUG %d sending BSAL_ACTOR_SPAWN to spawner %d for client %d\n", name, spawner,
                     source);
 #endif
 
-    bsal_message_init(&new_message, BSAL_ACTOR_SPAWN, sizeof(script), &script);
-    bsal_actor_send(self, spawner, &new_message);
+    thorium_message_init(&new_message, BSAL_ACTOR_SPAWN, sizeof(script), &script);
+    thorium_actor_send(self, spawner, &new_message);
 
     self->cloning_status = BSAL_ACTOR_STATUS_STARTED;
 }
 
-void bsal_actor_continue_clone(struct bsal_actor *self, struct bsal_message *message)
+void thorium_actor_continue_clone(struct thorium_actor *self, struct thorium_message *message)
 {
     int tag;
     int source;
     int self_name;
-    struct bsal_message new_message;
+    struct thorium_message new_message;
     int count;
     void *buffer;
 
-    count = bsal_message_count(message);
-    buffer = bsal_message_buffer(message);
-    self_name = bsal_actor_name(self);
-    tag = bsal_message_tag(message);
-    source = bsal_message_source(message);
+    count = thorium_message_count(message);
+    buffer = thorium_message_buffer(message);
+    self_name = thorium_actor_name(self);
+    tag = thorium_message_tag(message);
+    source = thorium_message_source(message);
 
 #ifdef BSAL_ACTOR_DEBUG_CLONE1
-    printf("DEBUG bsal_actor_continue_clone source %d tag %d\n", source, tag);
+    printf("DEBUG thorium_actor_continue_clone source %d tag %d\n", source, tag);
 #endif
 
     if (tag == BSAL_ACTOR_SPAWN_REPLY && source == self->cloning_spawner) {
@@ -1184,50 +1184,50 @@ void bsal_actor_continue_clone(struct bsal_actor *self, struct bsal_message *mes
         self->cloning_new_actor = *(int *)buffer;
 
 #ifdef BSAL_ACTOR_DEBUG_CLONE
-        printf("DEBUG bsal_actor_continue_clone BSAL_ACTOR_SPAWN_REPLY NEW ACTOR IS %d\n",
+        printf("DEBUG thorium_actor_continue_clone BSAL_ACTOR_SPAWN_REPLY NEW ACTOR IS %d\n",
                         self->cloning_new_actor);
 #endif
 
 
-        bsal_actor_send_to_self_empty(self, BSAL_ACTOR_PACK);
+        thorium_actor_send_to_self_empty(self, BSAL_ACTOR_PACK);
 
         self->cloning_progressed = 1;
 
     } else if (tag == BSAL_ACTOR_PACK_REPLY && source == self_name) {
 
 #ifdef BSAL_ACTOR_DEBUG_CLONE
-        printf("DEBUG bsal_actor_continue_clone BSAL_ACTOR_PACK_REPLY sending UNPACK to %d\n",
+        printf("DEBUG thorium_actor_continue_clone BSAL_ACTOR_PACK_REPLY sending UNPACK to %d\n",
                          self->cloning_new_actor);
 #endif
 
         /* forward the buffer to the new actor */
-        bsal_message_init(&new_message, BSAL_ACTOR_UNPACK, count, buffer);
-        bsal_actor_send(self, self->cloning_new_actor, &new_message);
+        thorium_message_init(&new_message, BSAL_ACTOR_UNPACK, count, buffer);
+        thorium_actor_send(self, self->cloning_new_actor, &new_message);
 
         self->cloning_progressed = 1;
 
-        bsal_message_destroy(&new_message);
+        thorium_message_destroy(&new_message);
 
     } else if (tag == BSAL_ACTOR_UNPACK_REPLY && source == self->cloning_new_actor) {
 
             /*
     } else if (tag == BSAL_ACTOR_FORWARD_MESSAGES_REPLY) {
 #ifdef BSAL_ACTOR_DEBUG_CLONE
-        printf("DEBUG bsal_actor_continue_clone BSAL_ACTOR_UNPACK_REPLY\n");
+        printf("DEBUG thorium_actor_continue_clone BSAL_ACTOR_UNPACK_REPLY\n");
 #endif
 */
         /* it is required that the cloning process be concluded at this point because otherwise
          * queued messages will be queued when they are being forwarded.
          */
-        bsal_message_init(&new_message, BSAL_ACTOR_CLONE_REPLY, sizeof(self->cloning_new_actor),
+        thorium_message_init(&new_message, BSAL_ACTOR_CLONE_REPLY, sizeof(self->cloning_new_actor),
                         &self->cloning_new_actor);
-        bsal_actor_send(self, self->cloning_client, &new_message);
+        thorium_actor_send(self, self->cloning_client, &new_message);
 
         /* we are ready for another cloning */
         self->cloning_status = BSAL_ACTOR_STATUS_NOT_STARTED;
 
 #ifdef BSAL_ACTOR_DEBUG_CLONE
-        printf("actor:%d sends clone %d to client %d\n", bsal_actor_name(self),
+        printf("actor:%d sends clone %d to client %d\n", thorium_actor_name(self),
                         self->cloning_new_actor, self->cloning_client);
 #endif
 
@@ -1235,99 +1235,99 @@ void bsal_actor_continue_clone(struct bsal_actor *self, struct bsal_message *mes
 
 #ifdef BSAL_ACTOR_DEBUG_CLONE
         printf("DEBUG clone finished, forwarding queued messages (if any) to %d, queue/%d\n",
-                        bsal_actor_name(self), self->forwarding_selector);
+                        thorium_actor_name(self), self->forwarding_selector);
 #endif
 
-        bsal_actor_send_to_self_empty(self, BSAL_ACTOR_FORWARD_MESSAGES);
+        thorium_actor_send_to_self_empty(self, BSAL_ACTOR_FORWARD_MESSAGES);
 
         self->cloning_progressed = 1;
     }
 }
 
-int bsal_actor_source(struct bsal_actor *self)
+int thorium_actor_source(struct thorium_actor *self)
 {
     return self->current_source;
 }
 
-int bsal_actor_node_name(struct bsal_actor *self)
+int thorium_actor_node_name(struct thorium_actor *self)
 {
-    return bsal_node_name(bsal_actor_node(self));
+    return thorium_node_name(thorium_actor_node(self));
 }
 
-int bsal_actor_get_node_count(struct bsal_actor *self)
+int thorium_actor_get_node_count(struct thorium_actor *self)
 {
-    return bsal_node_nodes(bsal_actor_node(self));
+    return thorium_node_nodes(thorium_actor_node(self));
 }
 
-int bsal_actor_node_worker_count(struct bsal_actor *self)
+int thorium_actor_node_worker_count(struct thorium_actor *self)
 {
-    return bsal_node_worker_count(bsal_actor_node(self));
+    return thorium_node_worker_count(thorium_actor_node(self));
 }
 
-int bsal_actor_use_route(struct bsal_actor *self, struct bsal_message *message)
+int thorium_actor_use_route(struct thorium_actor *self, struct thorium_message *message)
 {
 
 #ifdef BSAL_ACTOR_DEBUG_10335
-    if (bsal_message_tag(message) == 10335) {
-        printf("DEBUG actor %d bsal_actor_dispatch 10335\n",
-                        bsal_actor_name(self));
+    if (thorium_message_tag(message) == 10335) {
+        printf("DEBUG actor %d thorium_actor_dispatch 10335\n",
+                        thorium_actor_name(self));
     }
 #endif
 
-    return bsal_dispatcher_dispatch(&self->dispatcher, self, message);
+    return thorium_dispatcher_dispatch(&self->dispatcher, self, message);
 }
 
-struct bsal_dispatcher *bsal_actor_dispatcher(struct bsal_actor *self)
+struct thorium_dispatcher *thorium_actor_dispatcher(struct thorium_actor *self)
 {
     return &self->dispatcher;
 }
 
-void bsal_actor_set_node(struct bsal_actor *self, struct bsal_node *node)
+void thorium_actor_set_node(struct thorium_actor *self, struct thorium_node *node)
 {
     self->node = node;
 }
 
-void bsal_actor_migrate(struct bsal_actor *self, struct bsal_message *message)
+void thorium_actor_migrate(struct thorium_actor *self, struct thorium_message *message)
 {
     int spawner;
     void *buffer;
     int source;
     int tag;
     int name;
-    struct bsal_message new_message;
+    struct thorium_message new_message;
     int data[2];
     int selector;
 
-    tag = bsal_message_tag(message);
-    source = bsal_message_source(message);
-    name = bsal_actor_name(self);
+    tag = thorium_message_tag(message);
+    source = thorium_message_source(message);
+    name = thorium_actor_name(self);
 
     /*
      * For migration, the same name is kept
      */
 
-    bsal_actor_send_reply_int(self, BSAL_ACTOR_MIGRATE_REPLY,
-                    bsal_actor_name(self));
+    thorium_actor_send_reply_int(self, BSAL_ACTOR_MIGRATE_REPLY,
+                    thorium_actor_name(self));
 
     return;
 
     if (self->migration_cloned == 0) {
 
 #ifdef BSAL_ACTOR_DEBUG_MIGRATE
-        printf("DEBUG bsal_actor_migrate bsal_actor_migrate: cloning self...\n");
+        printf("DEBUG thorium_actor_migrate thorium_actor_migrate: cloning self...\n");
 #endif
 
         /* clone self
          */
-        source = bsal_message_source(message);
-        buffer = bsal_message_buffer(message);
+        source = thorium_message_source(message);
+        buffer = thorium_message_buffer(message);
         spawner = *(int *)buffer;
-        name = bsal_actor_name(self);
+        name = thorium_actor_name(self);
 
         self->migration_spawner = spawner;
         self->migration_client = source;
 
-        bsal_actor_send_to_self_int(self, BSAL_ACTOR_CLONE, spawner);
+        thorium_actor_send_to_self_int(self, BSAL_ACTOR_CLONE, spawner);
 
         self->migration_status = BSAL_ACTOR_STATUS_STARTED;
         self->migration_cloned = 1;
@@ -1337,18 +1337,18 @@ void bsal_actor_migrate(struct bsal_actor *self, struct bsal_message *message)
     } else if (tag == BSAL_ACTOR_CLONE_REPLY && source == name) {
 
 #ifdef BSAL_ACTOR_DEBUG_MIGRATE
-        printf("DEBUG bsal_actor_migrate bsal_actor_migrate: cloned.\n");
+        printf("DEBUG thorium_actor_migrate thorium_actor_migrate: cloned.\n");
 #endif
 
         /* tell acquaintances that the clone is the new original.
          */
-        bsal_message_unpack_int(message, 0, &self->migration_new_actor);
+        thorium_message_unpack_int(message, 0, &self->migration_new_actor);
 
         self->acquaintance_index = 0;
-        bsal_actor_send_to_self_empty(self, BSAL_ACTOR_MIGRATE_NOTIFY_ACQUAINTANCES);
+        thorium_actor_send_to_self_empty(self, BSAL_ACTOR_MIGRATE_NOTIFY_ACQUAINTANCES);
 
 #ifdef BSAL_ACTOR_DEBUG_MIGRATE
-        printf("DEBUG bsal_actor_migrate: notify acquaintance of name change.\n");
+        printf("DEBUG thorium_actor_migrate: notify acquaintance of name change.\n");
 #endif
         self->migration_progressed = 1;
 
@@ -1363,19 +1363,19 @@ void bsal_actor_migrate(struct bsal_actor *self, struct bsal_message *message)
          * of the migrated actor
          */
 #ifdef BSAL_ACTOR_DEBUG_MIGRATE
-        printf("DEBUG bsal_actor_migrate actor %d setting supervisor of %d to %d\n",
-                        bsal_actor_name(self),
+        printf("DEBUG thorium_actor_migrate actor %d setting supervisor of %d to %d\n",
+                        thorium_actor_name(self),
                         self->migration_new_actor,
-                        bsal_actor_supervisor(self));
+                        thorium_actor_supervisor(self));
 #endif
 
-        data[0] = bsal_actor_name(self);
-        data[1] = bsal_actor_supervisor(self);
+        data[0] = thorium_actor_name(self);
+        data[1] = thorium_actor_supervisor(self);
 
-        bsal_message_init(&new_message, BSAL_ACTOR_SET_SUPERVISOR,
+        thorium_message_init(&new_message, BSAL_ACTOR_SET_SUPERVISOR,
                         2 * sizeof(int), data);
-        bsal_actor_send(self, self->migration_new_actor, &new_message);
-        bsal_message_destroy(&new_message);
+        thorium_actor_send(self, self->migration_new_actor, &new_message);
+        thorium_message_destroy(&new_message);
 
         self->migration_progressed = 1;
 
@@ -1383,15 +1383,15 @@ void bsal_actor_migrate(struct bsal_actor *self, struct bsal_message *message)
 
         /* send the name of the new copy and die of a peaceful death.
          */
-        bsal_actor_send_int(self, self->migration_client, BSAL_ACTOR_MIGRATE_REPLY,
+        thorium_actor_send_int(self, self->migration_client, BSAL_ACTOR_MIGRATE_REPLY,
                         self->migration_new_actor);
 
-        bsal_actor_send_to_self_empty(self, BSAL_ACTOR_STOP);
+        thorium_actor_send_to_self_empty(self, BSAL_ACTOR_STOP);
 
         self->migration_status = BSAL_ACTOR_STATUS_NOT_STARTED;
 
 #ifdef BSAL_ACTOR_DEBUG_MIGRATE
-        printf("DEBUG bsal_actor_migrate: OK, now killing self and returning clone name to client.\n");
+        printf("DEBUG thorium_actor_migrate: OK, now killing self and returning clone name to client.\n");
 #endif
 
         self->migration_progressed = 1;
@@ -1406,12 +1406,12 @@ void bsal_actor_migrate(struct bsal_actor *self, struct bsal_message *message)
             self->forwarding_selector = BSAL_ACTOR_FORWARDING_MIGRATE;
 
 #ifdef BSAL_ACTOR_DEBUG_MIGRATE
-            printf("DEBUG bsal_actor_migrate %d forwarding queued messages to actor %d, queue/%d (forwarding system ready.)\n",
-                        bsal_actor_name(self),
+            printf("DEBUG thorium_actor_migrate %d forwarding queued messages to actor %d, queue/%d (forwarding system ready.)\n",
+                        thorium_actor_name(self),
                         self->migration_new_actor, self->forwarding_selector);
 #endif
 
-            bsal_actor_send_to_self_empty(self, BSAL_ACTOR_FORWARD_MESSAGES);
+            thorium_actor_send_to_self_empty(self, BSAL_ACTOR_FORWARD_MESSAGES);
             self->migration_forwarded_messages = 1;
 
         /* wait for the clone queue to be empty.
@@ -1419,7 +1419,7 @@ void bsal_actor_migrate(struct bsal_actor *self, struct bsal_message *message)
         } else {
 
 #ifdef BSAL_ACTOR_DEBUG_MIGRATE
-            printf("DEBUG bsal_actor_migrate queuing system is busy (used by queue/%d), queuing selector\n",
+            printf("DEBUG thorium_actor_migrate queuing system is busy (used by queue/%d), queuing selector\n",
                             self->forwarding_selector);
 #endif
             /* queue the selector into the forwarding system
@@ -1433,23 +1433,23 @@ void bsal_actor_migrate(struct bsal_actor *self, struct bsal_message *message)
 }
 
 #ifdef BSAL_ACTOR_STORE_CHILDREN
-void bsal_actor_notify_name_change(struct bsal_actor *self, struct bsal_message *message)
+void thorium_actor_notify_name_change(struct thorium_actor *self, struct thorium_message *message)
 {
     int old_name;
     int new_name;
     int source;
     int index;
     int *bucket;
-    struct bsal_message new_message;
+    struct thorium_message new_message;
     int enqueued_messages;
 
-    source = bsal_message_source(message);
+    source = thorium_message_source(message);
     old_name = source;
-    bsal_message_unpack_int(message, 0, &new_name);
+    thorium_message_unpack_int(message, 0, &new_name);
 
     /* update the acquaintance vector
      */
-    index = bsal_actor_get_acquaintance_index_private(self, old_name);
+    index = thorium_actor_get_acquaintance_index_private(self, old_name);
 
     bucket = bsal_vector_at(&self->acquaintance_vector, index);
 
@@ -1462,82 +1462,82 @@ void bsal_actor_notify_name_change(struct bsal_actor *self, struct bsal_message 
 
     /* update userland queued messages
      */
-    enqueued_messages = bsal_actor_enqueued_message_count(self);
+    enqueued_messages = thorium_actor_enqueued_message_count(self);
 
     while (enqueued_messages--) {
 
-        bsal_actor_dequeue_message(self, &new_message);
-        if (bsal_message_source(&new_message) == old_name) {
-            bsal_message_set_source(&new_message, new_name);
+        thorium_actor_dequeue_message(self, &new_message);
+        if (thorium_message_source(&new_message) == old_name) {
+            thorium_message_set_source(&new_message, new_name);
         }
-        bsal_actor_enqueue_message(self, &new_message);
+        thorium_actor_enqueue_message(self, &new_message);
     }
 
-    bsal_actor_send_reply_empty(self, BSAL_ACTOR_NOTIFY_NAME_CHANGE_REPLY);
+    thorium_actor_send_reply_empty(self, BSAL_ACTOR_NOTIFY_NAME_CHANGE_REPLY);
 }
 #endif
 
 #ifdef BSAL_ACTOR_STORE_CHILDREN
-void bsal_actor_migrate_notify_acquaintances(struct bsal_actor *self, struct bsal_message *message)
+void thorium_actor_migrate_notify_acquaintances(struct thorium_actor *self, struct thorium_message *message)
 {
     struct bsal_vector *acquaintance_vector;
     int acquaintance;
 
-    acquaintance_vector = bsal_actor_acquaintance_vector_private(self);
+    acquaintance_vector = thorium_actor_acquaintance_vector_private(self);
 
     if (self->acquaintance_index < bsal_vector_size(acquaintance_vector)) {
 
         acquaintance = bsal_vector_at_as_int(acquaintance_vector, self->acquaintance_index);
-        bsal_actor_send_int(self, acquaintance, BSAL_ACTOR_NOTIFY_NAME_CHANGE,
+        thorium_actor_send_int(self, acquaintance, BSAL_ACTOR_NOTIFY_NAME_CHANGE,
                         self->migration_new_actor);
         self->acquaintance_index++;
 
     } else {
 
-        bsal_actor_send_to_self_empty(self, BSAL_ACTOR_MIGRATE_NOTIFY_ACQUAINTANCES_REPLY);
+        thorium_actor_send_to_self_empty(self, BSAL_ACTOR_MIGRATE_NOTIFY_ACQUAINTANCES_REPLY);
     }
 }
 #endif
 
-void bsal_actor_send_to_self_proxy(struct bsal_actor *self,
-                struct bsal_message *message, int real_source)
+void thorium_actor_send_to_self_proxy(struct thorium_actor *self,
+                struct thorium_message *message, int real_source)
 {
     int destination;
 
-    destination = bsal_actor_name(self);
-    bsal_actor_send_proxy(self, destination, message, real_source);
+    destination = thorium_actor_name(self);
+    thorium_actor_send_proxy(self, destination, message, real_source);
 }
 
-void bsal_actor_send_proxy(struct bsal_actor *self, int destination,
-                struct bsal_message *message, int real_source)
+void thorium_actor_send_proxy(struct thorium_actor *self, int destination,
+                struct thorium_message *message, int real_source)
 {
-    struct bsal_message new_message;
+    struct thorium_message new_message;
 
-    bsal_message_init_copy(&new_message, message);
+    thorium_message_init_copy(&new_message, message);
 
-    bsal_actor_pack_proxy_message(self, &new_message, real_source);
-    bsal_actor_send(self, destination, &new_message);
+    thorium_actor_pack_proxy_message(self, &new_message, real_source);
+    thorium_actor_send(self, destination, &new_message);
 
-    bsal_message_destroy(&new_message);
+    thorium_message_destroy(&new_message);
 }
 
-void bsal_actor_queue_message(struct bsal_actor *self,
-                struct bsal_message *message)
+void thorium_actor_queue_message(struct thorium_actor *self,
+                struct thorium_message *message)
 {
     void *buffer;
     void *new_buffer;
     int count;
-    struct bsal_message new_message;
+    struct thorium_message new_message;
     struct bsal_queue *queue;
     int tag;
     int source;
 
-    bsal_message_get_all(message, &tag, &count, &buffer, &source);
+    thorium_message_get_all(message, &tag, &count, &buffer, &source);
 
     new_buffer = NULL;
 
 #ifdef BSAL_ACTOR_DEBUG_MIGRATE
-    printf("DEBUG bsal_actor_queue_message queuing message tag= %d to queue queue/%d\n",
+    printf("DEBUG thorium_actor_queue_message queuing message tag= %d to queue queue/%d\n",
                         tag, self->forwarding_selector);
 #endif
 
@@ -1546,11 +1546,11 @@ void bsal_actor_queue_message(struct bsal_actor *self,
         memcpy(new_buffer, buffer, count);
     }
 
-    bsal_message_init(&new_message, tag, count, new_buffer);
-    bsal_message_set_source(&new_message,
-                    bsal_message_source(message));
-    bsal_message_set_destination(&new_message,
-                    bsal_message_destination(message));
+    thorium_message_init(&new_message, tag, count, new_buffer);
+    thorium_message_set_source(&new_message,
+                    thorium_message_source(message));
+    thorium_message_set_destination(&new_message,
+                    thorium_message_destination(message));
 
     queue = NULL;
 
@@ -1564,9 +1564,9 @@ void bsal_actor_queue_message(struct bsal_actor *self,
     bsal_queue_enqueue(queue, &new_message);
 }
 
-void bsal_actor_forward_messages(struct bsal_actor *self, struct bsal_message *message)
+void thorium_actor_forward_messages(struct thorium_actor *self, struct thorium_message *message)
 {
-    struct bsal_message new_message;
+    struct thorium_message new_message;
     struct bsal_queue *queue;
     int destination;
     void *buffer_to_release;
@@ -1575,13 +1575,13 @@ void bsal_actor_forward_messages(struct bsal_actor *self, struct bsal_message *m
     destination = -1;
 
 #ifdef BSAL_ACTOR_DEBUG_FORWARDING
-    printf("DEBUG bsal_actor_forward_messages using queue/%d\n",
+    printf("DEBUG thorium_actor_forward_messages using queue/%d\n",
                     self->forwarding_selector);
 #endif
 
     if (self->forwarding_selector == BSAL_ACTOR_FORWARDING_CLONE) {
         queue = &self->queued_messages_for_clone;
-        destination = bsal_actor_name(self);
+        destination = thorium_actor_name(self);
 
     } else if (self->forwarding_selector == BSAL_ACTOR_FORWARDING_MIGRATE) {
 
@@ -1592,7 +1592,7 @@ void bsal_actor_forward_messages(struct bsal_actor *self, struct bsal_message *m
     if (queue == NULL) {
 
 #ifdef BSAL_ACTOR_DEBUG_FORWARDING
-        printf("DEBUG bsal_actor_forward_messages error could not select queue\n");
+        printf("DEBUG thorium_actor_forward_messages error could not select queue\n");
 #endif
         return;
     }
@@ -1600,35 +1600,35 @@ void bsal_actor_forward_messages(struct bsal_actor *self, struct bsal_message *m
     if (bsal_queue_dequeue(queue, &new_message)) {
 
 #ifdef BSAL_ACTOR_DEBUG_FORWARDING
-        printf("DEBUG bsal_actor_forward_messages actor %d forwarding message to actor %d tag is %d,"
+        printf("DEBUG thorium_actor_forward_messages actor %d forwarding message to actor %d tag is %d,"
                             " real source is %d\n",
-                            bsal_actor_name(self),
+                            thorium_actor_name(self),
                             destination,
-                            bsal_message_tag(&new_message),
-                            bsal_message_source(&new_message));
+                            thorium_message_tag(&new_message),
+                            thorium_message_source(&new_message));
 #endif
 
-        bsal_actor_pack_proxy_message(self, &new_message,
-                        bsal_message_source(&new_message));
-        bsal_actor_send(self, destination, &new_message);
+        thorium_actor_pack_proxy_message(self, &new_message,
+                        thorium_message_source(&new_message));
+        thorium_actor_send(self, destination, &new_message);
 
-        buffer_to_release = bsal_message_buffer(&new_message);
+        buffer_to_release = thorium_message_buffer(&new_message);
         bsal_memory_free(buffer_to_release);
 
         /* recursive actor call
          */
-        bsal_actor_send_to_self_empty(self, BSAL_ACTOR_FORWARD_MESSAGES);
+        thorium_actor_send_to_self_empty(self, BSAL_ACTOR_FORWARD_MESSAGES);
     } else {
 
 #ifdef BSAL_ACTOR_DEBUG_FORWARDING
-        printf("DEBUG bsal_actor_forward_messages actor %d has no more messages to forward in queue/%d\n",
-                        bsal_actor_name(self), self->forwarding_selector);
+        printf("DEBUG thorium_actor_forward_messages actor %d has no more messages to forward in queue/%d\n",
+                        thorium_actor_name(self), self->forwarding_selector);
 #endif
 
         if (bsal_queue_dequeue(&self->forwarding_queue, &self->forwarding_selector)) {
 
 #ifdef BSAL_ACTOR_DEBUG_FORWARDING
-            printf("DEBUG bsal_actor_forward_messages will now using queue (FIFO pop)/%d\n",
+            printf("DEBUG thorium_actor_forward_messages will now using queue (FIFO pop)/%d\n",
                             self->forwarding_selector);
 #endif
             if (self->forwarding_selector == BSAL_ACTOR_FORWARDING_MIGRATE) {
@@ -1637,62 +1637,62 @@ void bsal_actor_forward_messages(struct bsal_actor *self, struct bsal_message *m
 
             /* do a recursive call
              */
-            bsal_actor_send_to_self_empty(self, BSAL_ACTOR_FORWARD_MESSAGES);
+            thorium_actor_send_to_self_empty(self, BSAL_ACTOR_FORWARD_MESSAGES);
         } else {
 
 #ifdef BSAL_ACTOR_DEBUG_FORWARDING
-            printf("DEBUG bsal_actor_forward_messages the forwarding system is now available.\n");
+            printf("DEBUG thorium_actor_forward_messages the forwarding system is now available.\n");
 #endif
 
             self->forwarding_selector = BSAL_ACTOR_FORWARDING_NONE;
             /* this is finished
              */
-            bsal_actor_send_to_self_empty(self, BSAL_ACTOR_FORWARD_MESSAGES_REPLY);
+            thorium_actor_send_to_self_empty(self, BSAL_ACTOR_FORWARD_MESSAGES_REPLY);
 
         }
     }
 }
 
-void bsal_actor_pin_to_node(struct bsal_actor *self)
+void thorium_actor_pin_to_node(struct thorium_actor *self)
 {
 
 }
 
-void bsal_actor_unpin_from_node(struct bsal_actor *self)
+void thorium_actor_unpin_from_node(struct thorium_actor *self)
 {
 
 }
 
 #ifdef BSAL_ACTOR_STORE_CHILDREN
-int bsal_actor_acquaintance_count(struct bsal_actor *self)
+int thorium_actor_acquaintance_count(struct thorium_actor *self)
 {
     return bsal_vector_size(&self->acquaintance_vector);
 }
 #endif
 
 #ifdef BSAL_ACTOR_STORE_CHILDREN
-int bsal_actor_get_child(struct bsal_actor *self, int index)
+int thorium_actor_get_child(struct thorium_actor *self, int index)
 {
     int index2;
 
     if (index < bsal_vector_size(&self->children)) {
         index2 = *(int *)bsal_vector_at(&self->children, index);
-        return bsal_actor_get_acquaintance_private(self, index2);
+        return thorium_actor_get_acquaintance_private(self, index2);
     }
 
     return BSAL_ACTOR_NOBODY;
 }
 
-int bsal_actor_child_count(struct bsal_actor *self)
+int thorium_actor_child_count(struct thorium_actor *self)
 {
     return bsal_vector_size(&self->children);
 }
 
-int bsal_actor_add_child(struct bsal_actor *self, int name)
+int thorium_actor_add_child(struct thorium_actor *self, int name)
 {
     int index;
 
-    index = bsal_actor_add_acquaintance_private(self, name);
+    index = thorium_actor_add_acquaintance_private(self, name);
     bsal_vector_push_back(&self->children, &index);
 
     return index;
@@ -1700,12 +1700,12 @@ int bsal_actor_add_child(struct bsal_actor *self, int name)
 #endif
 
 #ifdef BSAL_ACTOR_STORE_CHILDREN
-int bsal_actor_add_acquaintance_private(struct bsal_actor *self, int name)
+int thorium_actor_add_acquaintance_private(struct thorium_actor *self, int name)
 {
     int index;
     int *bucket;
 
-    index = bsal_actor_get_acquaintance_index_private(self, name);
+    index = thorium_actor_get_acquaintance_index_private(self, name);
 
     if (index >= 0) {
         return index;
@@ -1715,10 +1715,10 @@ int bsal_actor_add_acquaintance_private(struct bsal_actor *self, int name)
         return -1;
     }
 
-    bsal_vector_push_back_int(bsal_actor_acquaintance_vector_private(self),
+    bsal_vector_push_back_int(thorium_actor_acquaintance_vector_private(self),
                     name);
 
-    index = bsal_vector_size(bsal_actor_acquaintance_vector_private(self)) - 1;
+    index = bsal_vector_size(thorium_actor_acquaintance_vector_private(self)) - 1;
 
     bucket = bsal_map_add(&self->acquaintance_map, &name);
     *bucket = index;
@@ -1728,7 +1728,7 @@ int bsal_actor_add_acquaintance_private(struct bsal_actor *self, int name)
 #endif
 
 #ifdef BSAL_ACTOR_STORE_CHILDREN
-int bsal_actor_get_acquaintance_index_private(struct bsal_actor *self, int name)
+int thorium_actor_get_acquaintance_index_private(struct thorium_actor *self, int name)
 {
     int *bucket;
 
@@ -1747,7 +1747,7 @@ int bsal_actor_get_acquaintance_index_private(struct bsal_actor *self, int name)
 #endif
 
 #ifdef BSAL_ACTOR_STORE_CHILDREN
-int bsal_actor_get_child_index(struct bsal_actor *self, int name)
+int thorium_actor_get_child_index(struct thorium_actor *self, int name)
 {
     int i;
     int index;
@@ -1757,14 +1757,14 @@ int bsal_actor_get_child_index(struct bsal_actor *self, int name)
         return -1;
     }
 
-    for (i = 0; i < bsal_actor_child_count(self); i++) {
+    for (i = 0; i < thorium_actor_child_count(self); i++) {
         index = *(int *)bsal_vector_at(&self->children, i);
 
 #ifdef BSAL_ACTOR_DEBUG_CHILDREN
         printf("DEBUG index %d\n", index);
 #endif
 
-        child = bsal_actor_get_acquaintance_private(self, index);
+        child = thorium_actor_get_acquaintance_private(self, index);
 
         if (child == name) {
             return i;
@@ -1775,18 +1775,18 @@ int bsal_actor_get_child_index(struct bsal_actor *self, int name)
 }
 #endif
 
-void bsal_actor_enqueue_message(struct bsal_actor *self, struct bsal_message *message)
+void thorium_actor_enqueue_message(struct thorium_actor *self, struct thorium_message *message)
 {
     void *new_buffer;
     int count;
     void *buffer;
     int source;
     int tag;
-    struct bsal_message new_message;
+    struct thorium_message new_message;
     int destination;
 
-    bsal_message_get_all(message, &tag, &count, &buffer, &source);
-    destination = bsal_message_destination(message);
+    thorium_message_get_all(message, &tag, &count, &buffer, &source);
+    destination = thorium_message_destination(message);
 
     new_buffer = NULL;
 
@@ -1795,57 +1795,57 @@ void bsal_actor_enqueue_message(struct bsal_actor *self, struct bsal_message *me
         memcpy(new_buffer, buffer, count);
     }
 
-    bsal_message_init(&new_message, tag, count, new_buffer);
-    bsal_message_set_source(&new_message, source);
-    bsal_message_set_destination(&new_message, destination);
+    thorium_message_init(&new_message, tag, count, new_buffer);
+    thorium_message_set_source(&new_message, source);
+    thorium_message_set_destination(&new_message, destination);
 
     bsal_queue_enqueue(&self->enqueued_messages, &new_message);
-    bsal_message_destroy(&new_message);
+    thorium_message_destroy(&new_message);
 }
 
-void bsal_actor_dequeue_message(struct bsal_actor *self, struct bsal_message *message)
+void thorium_actor_dequeue_message(struct thorium_actor *self, struct thorium_message *message)
 {
-    if (bsal_actor_enqueued_message_count(self) == 0) {
+    if (thorium_actor_enqueued_message_count(self) == 0) {
         return;
     }
 
     bsal_queue_dequeue(&self->enqueued_messages, message);
 }
 
-int bsal_actor_enqueued_message_count(struct bsal_actor *self)
+int thorium_actor_enqueued_message_count(struct thorium_actor *self)
 {
     return bsal_queue_size(&self->enqueued_messages);
 }
 
-struct bsal_map *bsal_actor_get_received_messages(struct bsal_actor *self)
+struct bsal_map *thorium_actor_get_received_messages(struct thorium_actor *self)
 {
     return &self->received_messages;
 }
 
-struct bsal_map *bsal_actor_get_sent_messages(struct bsal_actor *self)
+struct bsal_map *thorium_actor_get_sent_messages(struct thorium_actor *self)
 {
     return &self->sent_messages;
 }
 
-int bsal_actor_enqueue_mailbox_message(struct bsal_actor *self, struct bsal_message *message)
+int thorium_actor_enqueue_mailbox_message(struct thorium_actor *self, struct thorium_message *message)
 {
     return bsal_fast_ring_push_from_producer(&self->mailbox, message);
 }
 
-int bsal_actor_dequeue_mailbox_message(struct bsal_actor *self, struct bsal_message *message)
+int thorium_actor_dequeue_mailbox_message(struct thorium_actor *self, struct thorium_message *message)
 {
     return bsal_fast_ring_pop_from_consumer(&self->mailbox, message);
 }
 
-int bsal_actor_work(struct bsal_actor *self)
+int thorium_actor_work(struct thorium_actor *self)
 {
-    struct bsal_message message;
+    struct thorium_message message;
     void *buffer;
     int source_worker;
 
-    if (!bsal_actor_dequeue_mailbox_message(self, &message)) {
+    if (!thorium_actor_dequeue_mailbox_message(self, &message)) {
         printf("Error, no message...\n");
-        bsal_actor_print(self);
+        thorium_actor_print(self);
 
         return 0;
     }
@@ -1853,29 +1853,29 @@ int bsal_actor_work(struct bsal_actor *self)
     /* Make a copy of the buffer and of the worker
      * because actors can not be trusted.
      */
-    buffer = bsal_message_buffer(&message);
-    source_worker = bsal_message_get_worker(&message);
+    buffer = thorium_message_buffer(&message);
+    source_worker = thorium_message_get_worker(&message);
 
     /*
      * Receive the message !
      */
-    bsal_actor_receive(self, &message);
+    thorium_actor_receive(self, &message);
 
     /* Restore the important stuff
      */
 
-    bsal_message_set_buffer(&message, buffer);
-    bsal_message_set_worker(&message, source_worker);
+    thorium_message_set_buffer(&message, buffer);
+    thorium_message_set_worker(&message, source_worker);
 
     /*
      * Send the buffer back to the source to be recycled.
      */
-    bsal_worker_free_message(self->worker, &message);
+    thorium_worker_free_message(self->worker, &message);
 
     return 1;
 }
 
-int bsal_actor_get_mailbox_size(struct bsal_actor *self)
+int thorium_actor_get_mailbox_size(struct thorium_actor *self)
 {
     if (self->dead) {
         return 0;
@@ -1883,7 +1883,7 @@ int bsal_actor_get_mailbox_size(struct bsal_actor *self)
     return bsal_fast_ring_size_from_producer(&self->mailbox);
 }
 
-int bsal_actor_get_sum_of_received_messages(struct bsal_actor *self)
+int thorium_actor_get_sum_of_received_messages(struct thorium_actor *self)
 {
     struct bsal_map_iterator map_iterator;
     struct bsal_map *map;
@@ -1893,7 +1893,7 @@ int bsal_actor_get_sum_of_received_messages(struct bsal_actor *self)
     if (self->dead) {
         return 0;
     }
-    map = bsal_actor_get_received_messages(self);
+    map = thorium_actor_get_received_messages(self);
 
     value = 0;
 
@@ -1908,12 +1908,12 @@ int bsal_actor_get_sum_of_received_messages(struct bsal_actor *self)
     return value;
 }
 
-char *bsal_actor_script_name(struct bsal_actor *self)
+char *thorium_actor_script_name(struct thorium_actor *self)
 {
-    return bsal_script_name(self->script);
+    return thorium_script_name(self->script);
 }
 
-void bsal_actor_reset_counters(struct bsal_actor *self)
+void thorium_actor_reset_counters(struct thorium_actor *self)
 {
 #if 0
     struct bsal_map_iterator map_iterator;
@@ -1921,7 +1921,7 @@ void bsal_actor_reset_counters(struct bsal_actor *self)
     int name;
     int messages;
 
-    map = bsal_actor_get_received_messages(self);
+    map = thorium_actor_get_received_messages(self);
 
     bsal_map_iterator_init(&map_iterator, map);
 
@@ -1937,39 +1937,39 @@ void bsal_actor_reset_counters(struct bsal_actor *self)
     bsal_map_init(&self->received_messages, sizeof(int), sizeof(int));
 }
 
-int bsal_actor_get_priority(struct bsal_actor *self)
+int thorium_actor_get_priority(struct thorium_actor *self)
 {
     return self->priority;
 }
 
-int bsal_actor_get_source_count(struct bsal_actor *self)
+int thorium_actor_get_source_count(struct thorium_actor *self)
 {
     return bsal_map_size(&self->received_messages);
 }
 
-void bsal_actor_set_priority(struct bsal_actor *self, int priority)
+void thorium_actor_set_priority(struct thorium_actor *self, int priority)
 {
     self->priority = priority;
 }
 
-void *bsal_actor_concrete_actor(struct bsal_actor *self)
+void *thorium_actor_concrete_actor(struct thorium_actor *self)
 {
     return self->concrete_actor;
 }
 
-struct bsal_worker *bsal_actor_worker(struct bsal_actor *self)
+struct thorium_worker *thorium_actor_worker(struct thorium_actor *self)
 {
     return self->worker;
 }
 
-int bsal_actor_dead(struct bsal_actor *self)
+int thorium_actor_dead(struct thorium_actor *self)
 {
     return self->dead;
 }
 
 /* return 0 if successful
  */
-int bsal_actor_trylock(struct bsal_actor *self)
+int thorium_actor_trylock(struct thorium_actor *self)
 {
     int result;
 
@@ -1984,15 +1984,15 @@ int bsal_actor_trylock(struct bsal_actor *self)
 }
 
 #ifdef BSAL_ACTOR_STORE_CHILDREN
-struct bsal_vector *bsal_actor_acquaintance_vector_private(struct bsal_actor *self)
+struct bsal_vector *thorium_actor_acquaintance_vector_private(struct thorium_actor *self)
 {
     return &self->acquaintance_vector;
 }
 
-int bsal_actor_get_acquaintance_private(struct bsal_actor *self, int index)
+int thorium_actor_get_acquaintance_private(struct thorium_actor *self, int index)
 {
-    if (index < bsal_vector_size(bsal_actor_acquaintance_vector_private(self))) {
-        return bsal_vector_at_as_int(bsal_actor_acquaintance_vector_private(self),
+    if (index < bsal_vector_size(thorium_actor_acquaintance_vector_private(self))) {
+        return bsal_vector_at_as_int(thorium_actor_acquaintance_vector_private(self),
                         index);
     }
 
@@ -2000,20 +2000,20 @@ int bsal_actor_get_acquaintance_private(struct bsal_actor *self, int index)
 }
 #endif
 
-struct bsal_memory_pool *bsal_actor_get_ephemeral_memory(struct bsal_actor *self)
+struct bsal_memory_pool *thorium_actor_get_ephemeral_memory(struct thorium_actor *self)
 {
-    struct bsal_worker *worker;
+    struct thorium_worker *worker;
 
-    worker = bsal_actor_worker(self);
+    worker = thorium_actor_worker(self);
 
     if (worker == NULL) {
         return NULL;
     }
 
-    return bsal_worker_get_ephemeral_memory(worker);
+    return thorium_worker_get_ephemeral_memory(worker);
 }
 
-int bsal_actor_get_spawner(struct bsal_actor *self, struct bsal_vector *spawners)
+int thorium_actor_get_spawner(struct thorium_actor *self, struct bsal_vector *spawners)
 {
     int actor;
 
@@ -2041,13 +2041,13 @@ int bsal_actor_get_spawner(struct bsal_actor *self, struct bsal_vector *spawners
     return actor;
 }
 
-struct bsal_script *bsal_actor_get_script(struct bsal_actor *self)
+struct thorium_script *thorium_actor_get_script(struct thorium_actor *self)
 {
     return self->script;
 }
 
-void bsal_actor_add_route_with_source_and_condition(struct bsal_actor *self, int tag, bsal_actor_receive_fn_t handler, int source,
+void thorium_actor_add_route_with_source_and_condition(struct thorium_actor *self, int tag, thorium_actor_receive_fn_t handler, int source,
         int *actual, int expected)
 {
-    bsal_dispatcher_add_route(&self->dispatcher, tag, handler, source, actual, expected);
+    thorium_dispatcher_add_route(&self->dispatcher, tag, handler, source, actual, expected);
 }

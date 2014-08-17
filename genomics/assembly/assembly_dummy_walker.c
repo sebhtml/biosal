@@ -21,7 +21,7 @@
 #define BSAL_ASSEMBLY_DUMMY_WALKER_DEBUG
 */
 
-struct bsal_script bsal_assembly_dummy_walker_script = {
+struct thorium_script bsal_assembly_dummy_walker_script = {
     .identifier = BSAL_ASSEMBLY_DUMMY_WALKER_SCRIPT,
     .name = "bsal_assembly_dummy_walker",
     .init = bsal_assembly_dummy_walker_init,
@@ -30,7 +30,7 @@ struct bsal_script bsal_assembly_dummy_walker_script = {
     .size = sizeof(struct bsal_assembly_dummy_walker)
 };
 
-void bsal_assembly_dummy_walker_init(struct bsal_actor *self)
+void bsal_assembly_dummy_walker_init(struct thorium_actor *self)
 {
     struct bsal_assembly_dummy_walker *concrete_self;
     char *directory_name;
@@ -38,32 +38,32 @@ void bsal_assembly_dummy_walker_init(struct bsal_actor *self)
     int argc;
     char **argv;
 
-    concrete_self = (struct bsal_assembly_dummy_walker *)bsal_actor_concrete_actor(self);
+    concrete_self = (struct bsal_assembly_dummy_walker *)thorium_actor_concrete_actor(self);
 
-    argc = bsal_actor_argc(self);
-    argv = bsal_actor_argv(self);
+    argc = thorium_actor_argc(self);
+    argv = thorium_actor_argv(self);
 
     bsal_vector_init(&concrete_self->graph_stores, sizeof(int));
 
-    bsal_actor_add_route(self, BSAL_ASSEMBLY_GET_STARTING_VERTEX_REPLY,
+    thorium_actor_add_route(self, BSAL_ASSEMBLY_GET_STARTING_VERTEX_REPLY,
         bsal_assembly_dummy_walker_get_starting_vertex_reply);
 
-    bsal_actor_add_route(self, BSAL_ACTOR_START,
+    thorium_actor_add_route(self, BSAL_ACTOR_START,
                     bsal_assembly_dummy_walker_start);
 
-    bsal_actor_add_route(self, BSAL_ASSEMBLY_GET_VERTEX_REPLY,
+    thorium_actor_add_route(self, BSAL_ASSEMBLY_GET_VERTEX_REPLY,
                     bsal_assembly_dummy_walker_get_vertex_reply);
 
-    bsal_actor_add_route(self, BSAL_ASSEMBLY_GET_VERTICES_AND_SELECT,
+    thorium_actor_add_route(self, BSAL_ASSEMBLY_GET_VERTICES_AND_SELECT,
                     bsal_assembly_dummy_walker_get_vertices_and_select);
 
-    bsal_actor_add_route(self, BSAL_ASSEMBLY_GET_VERTICES_AND_SELECT_REPLY,
+    thorium_actor_add_route(self, BSAL_ASSEMBLY_GET_VERTICES_AND_SELECT_REPLY,
                     bsal_assembly_dummy_walker_get_vertices_and_select_reply);
 
-    bsal_actor_add_route(self, BSAL_ACTOR_BEGIN,
+    thorium_actor_add_route(self, BSAL_ACTOR_BEGIN,
                     bsal_assembly_dummy_walker_begin);
 
-    bsal_actor_add_route_with_condition(self, BSAL_ASSEMBLY_GET_VERTEX_REPLY,
+    thorium_actor_add_route_with_condition(self, BSAL_ASSEMBLY_GET_VERTEX_REPLY,
                     bsal_assembly_dummy_walker_get_vertex_reply_starting_vertex,
                     &concrete_self->has_starting_vertex, 0);
 
@@ -81,7 +81,7 @@ void bsal_assembly_dummy_walker_init(struct bsal_actor *self)
     bsal_dna_codec_init(&concrete_self->codec);
 
     if (bsal_dna_codec_must_use_two_bit_encoding(&concrete_self->codec,
-                            bsal_actor_get_node_count(self))) {
+                            thorium_actor_get_node_count(self))) {
         bsal_dna_codec_enable_two_bit_encoding(&concrete_self->codec);
     }
 
@@ -100,11 +100,11 @@ void bsal_assembly_dummy_walker_init(struct bsal_actor *self)
     bsal_buffered_file_writer_init(&concrete_self->writer, path);
 }
 
-void bsal_assembly_dummy_walker_destroy(struct bsal_actor *self)
+void bsal_assembly_dummy_walker_destroy(struct thorium_actor *self)
 {
     struct bsal_assembly_dummy_walker *concrete_self;
 
-    concrete_self = (struct bsal_assembly_dummy_walker *)bsal_actor_concrete_actor(self);
+    concrete_self = (struct bsal_assembly_dummy_walker *)thorium_actor_concrete_actor(self);
 
     bsal_memory_pool_destroy(&concrete_self->memory_pool);
     bsal_dna_codec_destroy(&concrete_self->codec);
@@ -127,30 +127,30 @@ void bsal_assembly_dummy_walker_destroy(struct bsal_actor *self)
     bsal_assembly_vertex_destroy(&concrete_self->current_vertex);
 }
 
-void bsal_assembly_dummy_walker_receive(struct bsal_actor *self, struct bsal_message *message)
+void bsal_assembly_dummy_walker_receive(struct thorium_actor *self, struct thorium_message *message)
 {
     int tag;
     struct bsal_assembly_dummy_walker *concrete_self;
     struct bsal_dna_kmer kmer;
     struct bsal_memory_pool *ephemeral_memory;
 
-    if (bsal_actor_use_route(self, message)) {
+    if (thorium_actor_use_route(self, message)) {
         return;
     }
 
-    tag = bsal_message_tag(message);
-    concrete_self = (struct bsal_assembly_dummy_walker *)bsal_actor_concrete_actor(self);
-    ephemeral_memory = bsal_actor_get_ephemeral_memory(self);
+    tag = thorium_message_tag(message);
+    concrete_self = (struct bsal_assembly_dummy_walker *)thorium_actor_concrete_actor(self);
+    ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
 
     if (tag == BSAL_ACTOR_START) {
 
     } else if (tag == BSAL_ACTOR_ASK_TO_STOP) {
 
-        bsal_actor_send_to_self_empty(self, BSAL_ACTOR_STOP);
+        thorium_actor_send_to_self_empty(self, BSAL_ACTOR_STOP);
 
     } else if (tag == BSAL_ASSEMBLY_GET_KMER_LENGTH_REPLY) {
 
-        bsal_message_unpack_int(message, 0, &concrete_self->kmer_length);
+        thorium_message_unpack_int(message, 0, &concrete_self->kmer_length);
 
         bsal_dna_kmer_init_mock(&kmer, concrete_self->kmer_length, &concrete_self->codec,
                         ephemeral_memory);
@@ -168,66 +168,66 @@ void bsal_assembly_dummy_walker_receive(struct bsal_actor *self, struct bsal_mes
 
         printf("KeyLength %d\n", concrete_self->key_length);
 
-        bsal_actor_send_to_self_empty(self, BSAL_ACTOR_BEGIN);
+        thorium_actor_send_to_self_empty(self, BSAL_ACTOR_BEGIN);
     }
 }
 
-void bsal_assembly_dummy_walker_begin(struct bsal_actor *self, struct bsal_message *message)
+void bsal_assembly_dummy_walker_begin(struct thorium_actor *self, struct thorium_message *message)
 {
     struct bsal_assembly_dummy_walker *concrete_self;
     int store_index;
     int store;
 
-    concrete_self = (struct bsal_assembly_dummy_walker *)bsal_actor_concrete_actor(self);
+    concrete_self = (struct bsal_assembly_dummy_walker *)thorium_actor_concrete_actor(self);
 
     store_index = 0;
     store = bsal_vector_at_as_int(&concrete_self->graph_stores, store_index);
 
-    bsal_actor_send_empty(self, store, BSAL_ASSEMBLY_GET_STARTING_VERTEX);
+    thorium_actor_send_empty(self, store, BSAL_ASSEMBLY_GET_STARTING_VERTEX);
 }
 
-void bsal_assembly_dummy_walker_start(struct bsal_actor *self, struct bsal_message *message)
+void bsal_assembly_dummy_walker_start(struct thorium_actor *self, struct thorium_message *message)
 {
     void *buffer;
     struct bsal_assembly_dummy_walker *concrete_self;
     int graph;
 
-    buffer = bsal_message_buffer(message);
-    concrete_self = (struct bsal_assembly_dummy_walker *)bsal_actor_concrete_actor(self);
+    buffer = thorium_message_buffer(message);
+    concrete_self = (struct bsal_assembly_dummy_walker *)thorium_actor_concrete_actor(self);
 
     printf("%s/%d is ready to surf the graph !\n",
-                        bsal_actor_script_name(self),
-                        bsal_actor_name(self));
+                        thorium_actor_script_name(self),
+                        thorium_actor_name(self));
 
     bsal_vector_unpack(&concrete_self->graph_stores, buffer);
 
     graph = bsal_vector_at_as_int(&concrete_self->graph_stores, 0);
 
-    bsal_actor_send_empty(self, graph, BSAL_ASSEMBLY_GET_KMER_LENGTH);
+    thorium_actor_send_empty(self, graph, BSAL_ASSEMBLY_GET_KMER_LENGTH);
 }
 
-void bsal_assembly_dummy_walker_get_starting_vertex_reply(struct bsal_actor *self, struct bsal_message *message)
+void bsal_assembly_dummy_walker_get_starting_vertex_reply(struct thorium_actor *self, struct thorium_message *message)
 {
     struct bsal_assembly_dummy_walker *concrete_self;
     void *buffer;
     struct bsal_memory_pool *ephemeral_memory;
     int count;
-    struct bsal_message new_message;
+    struct thorium_message new_message;
 
-    count = bsal_message_count(message);
+    count = thorium_message_count(message);
 
     /*
      * No more vertices to consume.
      */
     if (count == 0) {
 
-        bsal_actor_send_to_supervisor_empty(self, BSAL_ACTOR_START_REPLY);
+        thorium_actor_send_to_supervisor_empty(self, BSAL_ACTOR_START_REPLY);
         return;
     }
 
-    buffer = bsal_message_buffer(message);
-    concrete_self = (struct bsal_assembly_dummy_walker *)bsal_actor_concrete_actor(self);
-    ephemeral_memory = bsal_actor_get_ephemeral_memory(self);
+    buffer = thorium_message_buffer(message);
+    concrete_self = (struct bsal_assembly_dummy_walker *)thorium_actor_concrete_actor(self);
+    ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
 
     bsal_dna_kmer_init_empty(&concrete_self->current_kmer);
     bsal_dna_kmer_unpack(&concrete_self->current_kmer, buffer, concrete_self->kmer_length,
@@ -236,10 +236,10 @@ void bsal_assembly_dummy_walker_get_starting_vertex_reply(struct bsal_actor *sel
 
 #ifdef BSAL_ASSEMBLY_DUMMY_WALKER_DEBUG
     printf("%s/%d received starting vertex (%d bytes) from source %d hash %" PRIu64 "\n",
-                    bsal_actor_script_name(self),
-                    bsal_actor_name(self),
+                    thorium_actor_script_name(self),
+                    thorium_actor_name(self),
                     count,
-                    bsal_message_source(message),
+                    thorium_message_source(message),
                     bsal_dna_kmer_hash(&concrete_self->current_kmer, concrete_self->kmer_length,
                             &concrete_self->codec));
 
@@ -262,20 +262,20 @@ void bsal_assembly_dummy_walker_get_starting_vertex_reply(struct bsal_actor *sel
 
     concrete_self->has_starting_vertex = 0;
 
-    bsal_message_init(&new_message, BSAL_ASSEMBLY_GET_VERTEX, count, buffer);
-    bsal_actor_send_reply(self, &new_message);
-    bsal_message_destroy(&new_message);
+    thorium_message_init(&new_message, BSAL_ASSEMBLY_GET_VERTEX, count, buffer);
+    thorium_actor_send_reply(self, &new_message);
+    thorium_message_destroy(&new_message);
 }
 
-void bsal_assembly_dummy_walker_get_vertex_reply_starting_vertex(struct bsal_actor *self, struct bsal_message *message)
+void bsal_assembly_dummy_walker_get_vertex_reply_starting_vertex(struct thorium_actor *self, struct thorium_message *message)
 {
     void *buffer;
     struct bsal_assembly_dummy_walker *concrete_self;
     struct bsal_memory_pool *ephemeral_memory;
 
-    buffer = bsal_message_buffer(message);
-    concrete_self = (struct bsal_assembly_dummy_walker *)bsal_actor_concrete_actor(self);
-    ephemeral_memory = bsal_actor_get_ephemeral_memory(self);
+    buffer = thorium_message_buffer(message);
+    concrete_self = (struct bsal_assembly_dummy_walker *)thorium_actor_concrete_actor(self);
+    ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
 
     bsal_assembly_vertex_init(&concrete_self->current_vertex);
     bsal_assembly_vertex_unpack(&concrete_self->current_vertex, buffer);
@@ -298,13 +298,13 @@ void bsal_assembly_dummy_walker_get_vertex_reply_starting_vertex(struct bsal_act
     concrete_self->has_starting_vertex = 1;
     bsal_assembly_dummy_walker_clean_children(self);
 
-    bsal_actor_send_to_self_empty(self, BSAL_ASSEMBLY_GET_VERTICES_AND_SELECT);
+    thorium_actor_send_to_self_empty(self, BSAL_ASSEMBLY_GET_VERTICES_AND_SELECT);
 }
 
-void bsal_assembly_dummy_walker_get_vertices_and_select(struct bsal_actor *self, struct bsal_message *message)
+void bsal_assembly_dummy_walker_get_vertices_and_select(struct thorium_actor *self, struct thorium_message *message)
 {
     struct bsal_assembly_dummy_walker *concrete_self;
-    struct bsal_message new_message;
+    struct thorium_message new_message;
     int new_count;
     void *new_buffer;
     struct bsal_memory_pool *ephemeral_memory;
@@ -320,8 +320,8 @@ void bsal_assembly_dummy_walker_get_vertices_and_select(struct bsal_actor *self,
     int choice;
     void *key;
 
-    concrete_self = (struct bsal_assembly_dummy_walker *)bsal_actor_concrete_actor(self);
-    ephemeral_memory = bsal_actor_get_ephemeral_memory(self);
+    concrete_self = (struct bsal_assembly_dummy_walker *)thorium_actor_concrete_actor(self);
+    ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
 
     /*
      * - generate child kmers
@@ -378,9 +378,9 @@ void bsal_assembly_dummy_walker_get_vertices_and_select(struct bsal_actor *self,
 
         store = bsal_vector_at_as_int(&concrete_self->graph_stores, store_index);
 
-        bsal_message_init(&new_message, BSAL_ASSEMBLY_GET_VERTEX, new_count, new_buffer);
-        bsal_actor_send(self, store, &new_message);
-        bsal_message_destroy(&new_message);
+        thorium_message_init(&new_message, BSAL_ASSEMBLY_GET_VERTEX, new_count, new_buffer);
+        thorium_actor_send(self, store, &new_message);
+        thorium_message_destroy(&new_message);
 
         bsal_memory_pool_free(ephemeral_memory, new_buffer);
 
@@ -442,7 +442,7 @@ void bsal_assembly_dummy_walker_get_vertices_and_select(struct bsal_actor *self,
 
             bsal_assembly_dummy_walker_clean_children(self);
 
-            bsal_actor_send_to_self_empty(self, BSAL_ASSEMBLY_GET_VERTICES_AND_SELECT);
+            thorium_actor_send_to_self_empty(self, BSAL_ASSEMBLY_GET_VERTICES_AND_SELECT);
 
         /* Finish
          */
@@ -452,38 +452,38 @@ void bsal_assembly_dummy_walker_get_vertices_and_select(struct bsal_actor *self,
 
             bsal_assembly_dummy_walker_clean_children(self);
 
-            bsal_actor_send_to_self_empty(self, BSAL_ASSEMBLY_GET_VERTICES_AND_SELECT_REPLY);
+            thorium_actor_send_to_self_empty(self, BSAL_ASSEMBLY_GET_VERTICES_AND_SELECT_REPLY);
         }
     }
 }
 
-void bsal_assembly_dummy_walker_get_vertices_and_select_reply(struct bsal_actor *self, struct bsal_message *message)
+void bsal_assembly_dummy_walker_get_vertices_and_select_reply(struct thorium_actor *self, struct thorium_message *message)
 {
     struct bsal_assembly_dummy_walker *concrete_self;
 
-    concrete_self = (struct bsal_assembly_dummy_walker *)bsal_actor_concrete_actor(self);
+    concrete_self = (struct bsal_assembly_dummy_walker *)thorium_actor_concrete_actor(self);
 
     bsal_assembly_dummy_walker_dump_path(self);
 
     if (concrete_self->path_index < 2) {
 
-        bsal_actor_send_to_self_empty(self, BSAL_ACTOR_BEGIN);
+        thorium_actor_send_to_self_empty(self, BSAL_ACTOR_BEGIN);
 
     } else {
-        bsal_actor_send_to_supervisor_empty(self, BSAL_ACTOR_START_REPLY);
+        thorium_actor_send_to_supervisor_empty(self, BSAL_ACTOR_START_REPLY);
     }
 }
 
-void bsal_assembly_dummy_walker_get_vertex_reply(struct bsal_actor *self, struct bsal_message *message)
+void bsal_assembly_dummy_walker_get_vertex_reply(struct thorium_actor *self, struct thorium_message *message)
 {
     void *buffer;
     struct bsal_assembly_dummy_walker *concrete_self;
     struct bsal_memory_pool *ephemeral_memory;
     struct bsal_assembly_vertex vertex;
 
-    buffer = bsal_message_buffer(message);
-    concrete_self = (struct bsal_assembly_dummy_walker *)bsal_actor_concrete_actor(self);
-    ephemeral_memory = bsal_actor_get_ephemeral_memory(self);
+    buffer = thorium_message_buffer(message);
+    concrete_self = (struct bsal_assembly_dummy_walker *)thorium_actor_concrete_actor(self);
+    ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
 
     bsal_assembly_vertex_init(&vertex);
     bsal_assembly_vertex_unpack(&vertex, buffer);
@@ -498,10 +498,10 @@ void bsal_assembly_dummy_walker_get_vertex_reply(struct bsal_actor *self, struct
 
     ++concrete_self->current_child;
 
-    bsal_actor_send_to_self_empty(self, BSAL_ASSEMBLY_GET_VERTICES_AND_SELECT);
+    thorium_actor_send_to_self_empty(self, BSAL_ASSEMBLY_GET_VERTICES_AND_SELECT);
 }
 
-void bsal_assembly_dummy_walker_clean_children(struct bsal_actor *self)
+void bsal_assembly_dummy_walker_clean_children(struct thorium_actor *self)
 {
     struct bsal_assembly_dummy_walker *concrete_self;
     int size;
@@ -509,7 +509,7 @@ void bsal_assembly_dummy_walker_clean_children(struct bsal_actor *self)
     struct bsal_dna_kmer *kmer;
     struct bsal_assembly_vertex *vertex;
 
-    concrete_self = (struct bsal_assembly_dummy_walker *)bsal_actor_concrete_actor(self);
+    concrete_self = (struct bsal_assembly_dummy_walker *)thorium_actor_concrete_actor(self);
 
     size = bsal_vector_size(&concrete_self->child_kmers);
 
@@ -528,7 +528,7 @@ void bsal_assembly_dummy_walker_clean_children(struct bsal_actor *self)
     concrete_self->current_child = 0;
 }
 
-void bsal_assembly_dummy_walker_dump_path(struct bsal_actor *self)
+void bsal_assembly_dummy_walker_dump_path(struct thorium_actor *self)
 {
     struct bsal_assembly_dummy_walker *concrete_self;
     char *sequence;
@@ -540,8 +540,8 @@ void bsal_assembly_dummy_walker_dump_path(struct bsal_actor *self)
     char nucleotide;
     int code;
 
-    concrete_self = (struct bsal_assembly_dummy_walker *)bsal_actor_concrete_actor(self);
-    ephemeral_memory = bsal_actor_get_ephemeral_memory(self);
+    concrete_self = (struct bsal_assembly_dummy_walker *)thorium_actor_concrete_actor(self);
+    ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
 
     path_arcs = bsal_vector_size(&concrete_self->path);
     sequence_length = 0;
@@ -580,7 +580,7 @@ void bsal_assembly_dummy_walker_dump_path(struct bsal_actor *self)
     ++concrete_self->path_index;
 }
 
-int bsal_assembly_dummy_walker_select(struct bsal_actor *self)
+int bsal_assembly_dummy_walker_select(struct thorium_actor *self)
 {
     int choice;
     struct bsal_assembly_dummy_walker *concrete_self;
@@ -602,8 +602,8 @@ int bsal_assembly_dummy_walker_select(struct bsal_actor *self)
     /*
      * This code is just a test, it uses the closest coverage, always.
      */
-    concrete_self = (struct bsal_assembly_dummy_walker *)bsal_actor_concrete_actor(self);
-    ephemeral_memory = bsal_actor_get_ephemeral_memory(self);
+    concrete_self = (struct bsal_assembly_dummy_walker *)thorium_actor_concrete_actor(self);
+    ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
 
     key = bsal_memory_pool_allocate(ephemeral_memory, concrete_self->key_length);
 
@@ -685,7 +685,7 @@ int bsal_assembly_dummy_walker_select(struct bsal_actor *self)
     return choice;
 }
 
-void bsal_assembly_dummy_walker_write(struct bsal_actor *self, char *sequence,
+void bsal_assembly_dummy_walker_write(struct thorium_actor *self, char *sequence,
                 int sequence_length)
 {
     struct bsal_assembly_dummy_walker *concrete_self;
@@ -699,9 +699,9 @@ void bsal_assembly_dummy_walker_write(struct bsal_actor *self, char *sequence,
      * \see http://en.wikipedia.org/wiki/FASTA_format
      */
 
-    concrete_self = (struct bsal_assembly_dummy_walker *)bsal_actor_concrete_actor(self);
+    concrete_self = (struct bsal_assembly_dummy_walker *)thorium_actor_concrete_actor(self);
     column_width = 80;
-    ephemeral_memory = bsal_actor_get_ephemeral_memory(self);
+    ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
 
     buffer = bsal_memory_pool_allocate(ephemeral_memory, column_width + 1);
 
@@ -713,8 +713,8 @@ void bsal_assembly_dummy_walker_write(struct bsal_actor *self, char *sequence,
 
     bsal_buffered_file_writer_printf(&concrete_self->writer,
                     ">%s-%d-%d length=%d\n",
-                    bsal_actor_script_name(self),
-                    bsal_actor_name(self),
+                    thorium_actor_script_name(self),
+                    thorium_actor_name(self),
                     concrete_self->path_index,
                     sequence_length);
 

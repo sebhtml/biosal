@@ -14,7 +14,7 @@
 
 #define FLAG_PROFILE 0
 
-void bsal_transport_init(struct bsal_transport *self, struct bsal_node *node,
+void thorium_transport_init(struct thorium_transport *self, struct thorium_node *node,
                 int *argc, char ***argv,
                 struct bsal_memory_pool *inbound_message_memory_pool)
 {
@@ -35,15 +35,15 @@ void bsal_transport_init(struct bsal_transport *self, struct bsal_node *node,
     */
     /* Select the transport layer
      */
-    bsal_transport_select(self);
+    thorium_transport_select(self);
 
     /*
      * Assign functions
      */
-    bsal_transport_set(self);
+    thorium_transport_set(self);
 
     self->node = node;
-    bsal_ring_queue_init(&self->active_requests, sizeof(struct bsal_active_request));
+    bsal_ring_queue_init(&self->active_requests, sizeof(struct thorium_active_request));
 
     self->rank = -1;
     self->size = -1;
@@ -70,9 +70,9 @@ void bsal_transport_init(struct bsal_transport *self, struct bsal_node *node,
     }
 }
 
-void bsal_transport_destroy(struct bsal_transport *self)
+void thorium_transport_destroy(struct thorium_transport *self)
 {
-    struct bsal_active_request active_request;
+    struct thorium_active_request active_request;
 
     /*
      * Print the report if requested.
@@ -83,7 +83,7 @@ void bsal_transport_destroy(struct bsal_transport *self)
 
     thorium_transport_profiler_destroy(&self->transport_profiler);
 
-    BSAL_DEBUGGER_ASSERT(bsal_transport_get_active_request_count(self) == 0);
+    BSAL_DEBUGGER_ASSERT(thorium_transport_get_active_request_count(self) == 0);
 
     if (self->transport_interface != NULL) {
         self->transport_interface->destroy(self);
@@ -93,7 +93,7 @@ void bsal_transport_destroy(struct bsal_transport *self)
     }
 
     while (bsal_ring_queue_dequeue(&self->active_requests, &active_request)) {
-        bsal_active_request_destroy(&active_request);
+        thorium_active_request_destroy(&active_request);
     }
 
     bsal_ring_queue_destroy(&self->active_requests);
@@ -103,7 +103,7 @@ void bsal_transport_destroy(struct bsal_transport *self)
     self->size = -1;
 }
 
-int bsal_transport_send(struct bsal_transport *self, struct bsal_message *message)
+int thorium_transport_send(struct thorium_transport *self, struct thorium_message *message)
 {
     if (self->transport_interface == NULL) {
         return 0;
@@ -120,7 +120,7 @@ int bsal_transport_send(struct bsal_transport *self, struct bsal_message *messag
     return self->transport_interface->send(self, message);
 }
 
-int bsal_transport_receive(struct bsal_transport *self, struct bsal_message *message)
+int thorium_transport_receive(struct thorium_transport *self, struct thorium_message *message)
 {
     if (self->transport_interface == NULL) {
         return 0;
@@ -129,35 +129,35 @@ int bsal_transport_receive(struct bsal_transport *self, struct bsal_message *mes
     return self->transport_interface->receive(self, message);
 }
 
-int bsal_transport_get_provided(struct bsal_transport *self)
+int thorium_transport_get_provided(struct thorium_transport *self)
 {
     return self->provided;
 }
 
-int bsal_transport_get_rank(struct bsal_transport *self)
+int thorium_transport_get_rank(struct thorium_transport *self)
 {
     return self->rank;
 }
 
-int bsal_transport_get_size(struct bsal_transport *self)
+int thorium_transport_get_size(struct thorium_transport *self)
 {
     return self->size;
 }
 
-int bsal_transport_test_requests(struct bsal_transport *self, struct bsal_worker_buffer *worker_buffer)
+int thorium_transport_test_requests(struct thorium_transport *self, struct thorium_worker_buffer *worker_buffer)
 {
-    struct bsal_active_request active_request;
+    struct thorium_active_request active_request;
     void *buffer;
     int worker;
 
     if (bsal_ring_queue_dequeue(&self->active_requests, &active_request)) {
 
-        if (bsal_active_request_test(&active_request)) {
+        if (thorium_active_request_test(&active_request)) {
 
-            worker = bsal_active_request_get_worker(&active_request);
-            buffer = bsal_active_request_buffer(&active_request);
+            worker = thorium_active_request_get_worker(&active_request);
+            buffer = thorium_active_request_buffer(&active_request);
 
-            bsal_worker_buffer_init(worker_buffer, worker, buffer);
+            thorium_worker_buffer_init(worker_buffer, worker, buffer);
 
             return 1;
 
@@ -172,40 +172,40 @@ int bsal_transport_test_requests(struct bsal_transport *self, struct bsal_worker
     return 0;
 }
 
-int bsal_transport_dequeue_active_request(struct bsal_transport *self, struct bsal_active_request *active_request)
+int thorium_transport_dequeue_active_request(struct thorium_transport *self, struct thorium_active_request *active_request)
 {
     return bsal_ring_queue_dequeue(&self->active_requests, active_request);
 }
 
-int bsal_transport_get_implementation(struct bsal_transport *self)
+int thorium_transport_get_implementation(struct thorium_transport *self)
 {
     return self->implementation;
 }
 
-void *bsal_transport_get_concrete_transport(struct bsal_transport *self)
+void *thorium_transport_get_concrete_transport(struct thorium_transport *self)
 {
     return self->concrete_transport;
 }
 
-void bsal_transport_set(struct bsal_transport *self)
+void thorium_transport_set(struct thorium_transport *self)
 {
     self->transport_interface = NULL;
 
-    if (self->implementation == bsal_pami_transport_implementation.identifier) {
-        self->transport_interface = &bsal_pami_transport_implementation;
+    if (self->implementation == thorium_pami_transport_implementation.identifier) {
+        self->transport_interface = &thorium_pami_transport_implementation;
 
-    } else if (self->implementation == bsal_mpi_transport_implementation.identifier) {
+    } else if (self->implementation == thorium_mpi_transport_implementation.identifier) {
 
-        self->transport_interface = &bsal_mpi_transport_implementation;
+        self->transport_interface = &thorium_mpi_transport_implementation;
     }
 }
 
-int bsal_transport_get_active_request_count(struct bsal_transport *self)
+int thorium_transport_get_active_request_count(struct thorium_transport *self)
 {
     return bsal_ring_queue_size(&self->active_requests);
 }
 
-int bsal_transport_get_identifier(struct bsal_transport *self)
+int thorium_transport_get_identifier(struct thorium_transport *self)
 {
     if (self->transport_interface == NULL) {
         return -1;
@@ -214,7 +214,7 @@ int bsal_transport_get_identifier(struct bsal_transport *self)
     return self->transport_interface->identifier;
 }
 
-const char *bsal_transport_get_name(struct bsal_transport *self)
+const char *thorium_transport_get_name(struct thorium_transport *self)
 {
     if (self->transport_interface == NULL) {
         return NULL;
@@ -223,7 +223,7 @@ const char *bsal_transport_get_name(struct bsal_transport *self)
     return self->transport_interface->name;
 }
 
-void bsal_transport_select(struct bsal_transport *self)
+void thorium_transport_select(struct thorium_transport *self)
 {
     self->implementation = BSAL_TRANSPORT_MOCK_IDENTIFIER;
 
@@ -246,11 +246,11 @@ void bsal_transport_select(struct bsal_transport *self)
 
 }
 
-void bsal_transport_print(struct bsal_transport *self)
+void thorium_transport_print(struct thorium_transport *self)
 {
     printf("%s TRANSPORT Rank: %d RankCount: %d Implementation: %s\n",
                     BSAL_NODE_THORIUM_PREFIX,
                 self->rank, self->size,
-                bsal_transport_get_name(self));
+                thorium_transport_get_name(self));
 }
 

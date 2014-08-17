@@ -5,11 +5,11 @@
 
 #include <stdlib.h>
 
-void bsal_mpi_active_request_init(struct bsal_active_request *self)
+void thorium_mpi_active_request_init(struct thorium_active_request *self)
 {
-    struct bsal_mpi_active_request *concrete_object;
+    struct thorium_mpi_active_request *concrete_object;
 
-    concrete_object = bsal_active_request_get_concrete_object(self);
+    concrete_object = thorium_active_request_get_concrete_object(self);
 
     concrete_object->request = MPI_REQUEST_NULL;
 }
@@ -17,11 +17,11 @@ void bsal_mpi_active_request_init(struct bsal_active_request *self)
 /* \see http://blogs.cisco.com/performance/mpi_request_free-is-evil/
  * \see http://www.mpich.org/static/docs/v3.1/www3/MPI_Request_free.html
  */
-void bsal_mpi_active_request_destroy(struct bsal_active_request *self)
+void thorium_mpi_active_request_destroy(struct thorium_active_request *self)
 {
-    struct bsal_mpi_active_request *concrete_object;
+    struct thorium_mpi_active_request *concrete_object;
 
-    concrete_object = bsal_active_request_get_concrete_object(self);
+    concrete_object = thorium_active_request_get_concrete_object(self);
 
     if (concrete_object->request != MPI_REQUEST_NULL) {
         MPI_Request_free(&concrete_object->request);
@@ -32,11 +32,11 @@ void bsal_mpi_active_request_destroy(struct bsal_active_request *self)
 
 /* \see http://www.mpich.org/static/docs/v3.1/www3/MPI_Test.html
  */
-int bsal_mpi_active_request_test(struct bsal_active_request *self)
+int thorium_mpi_active_request_test(struct thorium_active_request *self)
 {
-    struct bsal_mpi_active_request *concrete_object;
+    struct thorium_mpi_active_request *concrete_object;
 
-    concrete_object = bsal_active_request_get_concrete_object(self);
+    concrete_object = thorium_active_request_get_concrete_object(self);
 
     MPI_Status status;
     int flag;
@@ -64,11 +64,11 @@ int bsal_mpi_active_request_test(struct bsal_active_request *self)
     return 0;
 }
 
-void *bsal_mpi_active_request_request(struct bsal_active_request *self)
+void *thorium_mpi_active_request_request(struct thorium_active_request *self)
 {
-    struct bsal_mpi_active_request *concrete_object;
+    struct thorium_mpi_active_request *concrete_object;
 
-    concrete_object = bsal_active_request_get_concrete_object(self);
+    concrete_object = thorium_active_request_get_concrete_object(self);
 
     return &concrete_object->request;
 }

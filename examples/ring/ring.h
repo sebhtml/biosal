@@ -24,10 +24,10 @@ struct ring {
 #define RING_PUSH_NEXT 0x0000153c
 #define RING_SPAWN 0x00001bd7
 
-extern struct bsal_script ring_script;
+extern struct thorium_script ring_script;
 
-void ring_init(struct bsal_actor *self);
-void ring_destroy(struct bsal_actor *self);
-void ring_receive(struct bsal_actor *self, struct bsal_message *message);
+void ring_init(struct thorium_actor *self);
+void ring_destroy(struct thorium_actor *self);
+void ring_receive(struct thorium_actor *self, struct thorium_message *message);
 
 #endif

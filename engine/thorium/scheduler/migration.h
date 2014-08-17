@@ -4,19 +4,19 @@
 
 struct bsal_pool;
 
-struct bsal_migration {
+struct thorium_migration {
     int actor_name;
     int old_worker;
     int new_worker;
 };
 
-void bsal_migration_init(struct bsal_migration *self, int actor_name,
+void thorium_migration_init(struct thorium_migration *self, int actor_name,
                 int old_worker, int new_worker);
-void bsal_migration_destroy(struct bsal_migration *self);
+void thorium_migration_destroy(struct thorium_migration *self);
 
-int bsal_migration_get_actor(struct bsal_migration *self);
-int bsal_migration_get_old_worker(struct bsal_migration *self);
-int bsal_migration_get_new_worker(struct bsal_migration *self);
+int thorium_migration_get_actor(struct thorium_migration *self);
+int thorium_migration_get_old_worker(struct thorium_migration *self);
+int thorium_migration_get_new_worker(struct thorium_migration *self);
 
 
 #endif

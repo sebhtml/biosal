@@ -21,7 +21,7 @@
 
 */
 
-struct bsal_script bsal_sequence_partitioner_script = {
+struct thorium_script bsal_sequence_partitioner_script = {
     .identifier = BSAL_SEQUENCE_PARTITIONER_SCRIPT,
     .init = bsal_sequence_partitioner_init,
     .destroy = bsal_sequence_partitioner_destroy,
@@ -30,11 +30,11 @@ struct bsal_script bsal_sequence_partitioner_script = {
     .name = "sequence_partitioner"
 };
 
-void bsal_sequence_partitioner_init(struct bsal_actor *actor)
+void bsal_sequence_partitioner_init(struct thorium_actor *actor)
 {
     struct bsal_sequence_partitioner *concrete_actor;
 
-    concrete_actor = (struct bsal_sequence_partitioner *)bsal_actor_concrete_actor(actor);
+    concrete_actor = (struct bsal_sequence_partitioner *)thorium_actor_concrete_actor(actor);
 
     bsal_vector_init(&concrete_actor->stream_entries, sizeof(uint64_t));
     bsal_vector_init(&concrete_actor->stream_positions, sizeof(uint64_t));
@@ -53,11 +53,11 @@ void bsal_sequence_partitioner_init(struct bsal_actor *actor)
     concrete_actor->last_progress = -1;
 }
 
-void bsal_sequence_partitioner_destroy(struct bsal_actor *actor)
+void bsal_sequence_partitioner_destroy(struct thorium_actor *actor)
 {
     struct bsal_sequence_partitioner *concrete_actor;
 
-    concrete_actor = (struct bsal_sequence_partitioner *)bsal_actor_concrete_actor(actor);
+    concrete_actor = (struct bsal_sequence_partitioner *)thorium_actor_concrete_actor(actor);
 
     bsal_vector_destroy(&concrete_actor->stream_entries);
     bsal_vector_destroy(&concrete_actor->stream_positions);
@@ -68,7 +68,7 @@ void bsal_sequence_partitioner_destroy(struct bsal_actor *actor)
     bsal_map_destroy(&concrete_actor->active_commands);
 }
 
-void bsal_sequence_partitioner_receive(struct bsal_actor *actor, struct bsal_message *message)
+void bsal_sequence_partitioner_receive(struct thorium_actor *actor, struct thorium_message *message)
 {
     int tag;
     int source;
@@ -77,7 +77,7 @@ void bsal_sequence_partitioner_receive(struct bsal_actor *actor, struct bsal_mes
     int bytes;
     struct bsal_sequence_partitioner *concrete_actor;
     struct bsal_partition_command command;
-    struct bsal_message response;
+    struct thorium_message response;
     int command_number;
     struct bsal_partition_command *active_command;
     int stream_index;
@@ -85,14 +85,14 @@ void bsal_sequence_partitioner_receive(struct bsal_actor *actor, struct bsal_mes
     int i;
     struct bsal_memory_pool *ephemeral_memory;
 
-    ephemeral_memory = bsal_actor_get_ephemeral_memory(actor);
-    bsal_message_get_all(message, &tag, &count, &buffer, &source);
+    ephemeral_memory = thorium_actor_get_ephemeral_memory(actor);
+    thorium_message_get_all(message, &tag, &count, &buffer, &source);
 
-    concrete_actor = (struct bsal_sequence_partitioner *)bsal_actor_concrete_actor(actor);
+    concrete_actor = (struct bsal_sequence_partitioner *)thorium_actor_concrete_actor(actor);
 
     if (tag == BSAL_SEQUENCE_PARTITIONER_SET_BLOCK_SIZE) {
-        bsal_message_unpack_int(message, 0, &concrete_actor->block_size);
-        bsal_actor_send_reply_empty(actor, BSAL_SEQUENCE_PARTITIONER_SET_BLOCK_SIZE_REPLY);
+        thorium_message_unpack_int(message, 0, &concrete_actor->block_size);
+        thorium_actor_send_reply_empty(actor, BSAL_SEQUENCE_PARTITIONER_SET_BLOCK_SIZE_REPLY);
 
         bsal_sequence_partitioner_verify(actor);
 /*
@@ -112,7 +112,7 @@ void bsal_sequence_partitioner_receive(struct bsal_actor *actor, struct bsal_mes
         printf("DEBUG after unpack\n");
         */
 
-        bsal_actor_send_reply_empty(actor, BSAL_SEQUENCE_PARTITIONER_SET_ENTRY_VECTOR_REPLY);
+        thorium_actor_send_reply_empty(actor, BSAL_SEQUENCE_PARTITIONER_SET_ENTRY_VECTOR_REPLY);
 
         /*
         printf("DEBUG bsal_sequence_partitioner_receive received received entry vector\n");
@@ -121,8 +121,8 @@ void bsal_sequence_partitioner_receive(struct bsal_actor *actor, struct bsal_mes
 
     } else if (tag == BSAL_SEQUENCE_PARTITIONER_SET_ACTOR_COUNT) {
 
-        bsal_message_unpack_int(message, 0, &concrete_actor->store_count);
-        bsal_actor_send_reply_empty(actor, BSAL_SEQUENCE_PARTITIONER_SET_ACTOR_COUNT_REPLY);
+        thorium_message_unpack_int(message, 0, &concrete_actor->store_count);
+        thorium_actor_send_reply_empty(actor, BSAL_SEQUENCE_PARTITIONER_SET_ACTOR_COUNT_REPLY);
 
         bsal_sequence_partitioner_verify(actor);
         /*
@@ -142,9 +142,9 @@ void bsal_sequence_partitioner_receive(struct bsal_actor *actor, struct bsal_mes
             buffer = bsal_memory_pool_allocate(ephemeral_memory, bytes);
             bsal_partition_command_pack(&command, buffer);
 
-            bsal_message_init(&response, BSAL_SEQUENCE_PARTITIONER_GET_COMMAND_REPLY,
+            thorium_message_init(&response, BSAL_SEQUENCE_PARTITIONER_GET_COMMAND_REPLY,
                             bytes, buffer);
-            bsal_actor_send_reply(actor, &response);
+            thorium_actor_send_reply(actor, &response);
 
             /* store the active command
              */
@@ -166,7 +166,7 @@ void bsal_sequence_partitioner_receive(struct bsal_actor *actor, struct bsal_mes
          * as a reply
          */
 
-        bsal_message_unpack_int(message, 0, &command_number);
+        thorium_message_unpack_int(message, 0, &command_number);
 
         active_command = bsal_map_get(&concrete_actor->active_commands,
                         &command_number);
@@ -185,17 +185,17 @@ void bsal_sequence_partitioner_receive(struct bsal_actor *actor, struct bsal_mes
         if (bsal_map_size(&concrete_actor->active_commands) == 0
                         && bsal_queue_size(&concrete_actor->available_commands) == 0) {
 
-            bsal_actor_send_reply_empty(actor, BSAL_SEQUENCE_PARTITIONER_FINISHED);
+            thorium_actor_send_reply_empty(actor, BSAL_SEQUENCE_PARTITIONER_FINISHED);
         }
 
     } else if (tag == BSAL_ACTOR_ASK_TO_STOP
-                    && source == bsal_actor_supervisor(actor)) {
+                    && source == thorium_actor_supervisor(actor)) {
 
 #ifdef BSAL_SEQUENCE_PARTITIONER_DEBUG
         printf("DEBUG bsal_sequence_partitioner_receive BSAL_ACTOR_ASK_TO_STOP\n");
 #endif
 
-        bsal_actor_send_to_self_empty(actor,
+        thorium_actor_send_to_self_empty(actor,
                         BSAL_ACTOR_STOP);
 
     } else if (tag == BSAL_SEQUENCE_PARTITIONER_PROVIDE_STORE_ENTRY_COUNTS_REPLY) {
@@ -208,7 +208,7 @@ void bsal_sequence_partitioner_receive(struct bsal_actor *actor, struct bsal_mes
     }
 }
 
-void bsal_sequence_partitioner_verify(struct bsal_actor *actor)
+void bsal_sequence_partitioner_verify(struct thorium_actor *actor)
 {
     struct bsal_sequence_partitioner *concrete_actor;
     int i;
@@ -217,15 +217,15 @@ void bsal_sequence_partitioner_verify(struct bsal_actor *actor)
     uint64_t stream_entries;
     int bytes;
     void *buffer;
-    struct bsal_message message;
+    struct thorium_message message;
     int64_t remaining;
     int remainder;
     uint64_t *bucket_for_store_count;
     struct bsal_vector_iterator iterator;
     struct bsal_memory_pool *ephemeral_memory;
 
-    ephemeral_memory = bsal_actor_get_ephemeral_memory(actor);
-    concrete_actor = (struct bsal_sequence_partitioner *)bsal_actor_concrete_actor(actor);
+    ephemeral_memory = thorium_actor_get_ephemeral_memory(actor);
+    concrete_actor = (struct bsal_sequence_partitioner *)thorium_actor_concrete_actor(actor);
 
     /*
      * check if parameters are
@@ -358,9 +358,9 @@ void bsal_sequence_partitioner_verify(struct bsal_actor *actor)
     buffer = bsal_memory_pool_allocate(ephemeral_memory, bytes);
     bsal_vector_pack(&concrete_actor->store_entries, buffer);
 
-    bsal_message_init(&message, BSAL_SEQUENCE_PARTITIONER_PROVIDE_STORE_ENTRY_COUNTS,
+    thorium_message_init(&message, BSAL_SEQUENCE_PARTITIONER_PROVIDE_STORE_ENTRY_COUNTS,
                     bytes, buffer);
-    bsal_actor_send_reply(actor, &message);
+    thorium_actor_send_reply(actor, &message);
 
     bsal_memory_pool_free(ephemeral_memory, buffer);
 }
@@ -420,7 +420,7 @@ int bsal_sequence_partitioner_get_store(uint64_t index, int block_size, int stor
     return ( index / (uint64_t) block_size) % ( (uint64_t) store_count);
 }
 
-void bsal_sequence_partitioner_generate_command(struct bsal_actor *actor, int stream_index)
+void bsal_sequence_partitioner_generate_command(struct thorium_actor *actor, int stream_index)
 {
     uint64_t *bucket_for_stream_position;
     uint64_t *bucket_for_global_position;
@@ -448,7 +448,7 @@ void bsal_sequence_partitioner_generate_command(struct bsal_actor *actor, int st
     int blocks;
     float progress;
 
-    concrete_actor = (struct bsal_sequence_partitioner *)bsal_actor_concrete_actor(actor);
+    concrete_actor = (struct bsal_sequence_partitioner *)thorium_actor_concrete_actor(actor);
 
     /*
     printf("DEBUG bsal_sequence_partitioner_generate_command %d\n",
@@ -552,7 +552,7 @@ void bsal_sequence_partitioner_generate_command(struct bsal_actor *actor, int st
 
     /* emit a signal
      */
-    bsal_actor_send_reply_empty(actor, BSAL_SEQUENCE_PARTITIONER_COMMAND_IS_READY);
+    thorium_actor_send_reply_empty(actor, BSAL_SEQUENCE_PARTITIONER_COMMAND_IS_READY);
 
     command_name = bsal_partition_command_name(&command);
 
@@ -569,7 +569,7 @@ void bsal_sequence_partitioner_generate_command(struct bsal_actor *actor, int st
                     || command_name == blocks - 1) {
 
         printf("partitioner/%d generated partition command # %d (total %" PRIu64 ", block_size %d, blocks %d, progress %.2f)\n",
-                    bsal_actor_name(actor),
+                    thorium_actor_name(actor),
                     command_name,
                     concrete_actor->total, concrete_actor->block_size,
                     blocks, progress);

@@ -35,7 +35,7 @@
 
 #define BSAL_DEBUG_ISSUE_540
 
-struct bsal_script bsal_assembly_graph_store_script = {
+struct thorium_script bsal_assembly_graph_store_script = {
     .identifier = BSAL_ASSEMBLY_GRAPH_STORE_SCRIPT,
     .name = "bsal_assembly_graph_store",
     .init = bsal_assembly_graph_store_init,
@@ -47,11 +47,11 @@ struct bsal_script bsal_assembly_graph_store_script = {
     .version = "Stable"
 };
 
-void bsal_assembly_graph_store_init(struct bsal_actor *self)
+void bsal_assembly_graph_store_init(struct thorium_actor *self)
 {
     struct bsal_assembly_graph_store *concrete_self;
 
-    concrete_self = (struct bsal_assembly_graph_store *)bsal_actor_concrete_actor(self);
+    concrete_self = (struct bsal_assembly_graph_store *)thorium_actor_concrete_actor(self);
     concrete_self->kmer_length = -1;
     concrete_self->received = 0;
 
@@ -65,7 +65,7 @@ void bsal_assembly_graph_store_init(struct bsal_actor *self)
     concrete_self->codec_are_different = 1;
 
     if (bsal_dna_codec_must_use_two_bit_encoding(&concrete_self->transport_codec,
-                            bsal_actor_get_node_count(self))) {
+                            thorium_actor_get_node_count(self))) {
         concrete_self->codec_are_different = 0;
         bsal_dna_codec_enable_two_bit_encoding(&concrete_self->transport_codec);
     }
@@ -79,26 +79,26 @@ void bsal_assembly_graph_store_init(struct bsal_actor *self)
 
     concrete_self->last_received = 0;
 
-    bsal_actor_add_route(self, BSAL_ACTOR_YIELD_REPLY, bsal_assembly_graph_store_yield_reply);
-    bsal_actor_add_route(self, BSAL_PUSH_KMER_BLOCK,
+    thorium_actor_add_route(self, BSAL_ACTOR_YIELD_REPLY, bsal_assembly_graph_store_yield_reply);
+    thorium_actor_add_route(self, BSAL_PUSH_KMER_BLOCK,
                     bsal_assembly_graph_store_push_kmer_block);
 
     concrete_self->received_arc_count = 0;
 
-    bsal_actor_add_route(self, BSAL_ASSEMBLY_PUSH_ARC_BLOCK,
+    thorium_actor_add_route(self, BSAL_ASSEMBLY_PUSH_ARC_BLOCK,
                     bsal_assembly_graph_store_push_arc_block);
 
     concrete_self->received_arc_block_count = 0;
 
-    bsal_actor_add_route(self, BSAL_ASSEMBLY_GET_SUMMARY,
+    thorium_actor_add_route(self, BSAL_ASSEMBLY_GET_SUMMARY,
                     bsal_assembly_graph_store_get_summary);
 
     concrete_self->summary_in_progress = 0;
 
-    bsal_actor_add_route(self, BSAL_ASSEMBLY_GET_VERTEX,
+    thorium_actor_add_route(self, BSAL_ASSEMBLY_GET_VERTEX,
                     bsal_assembly_graph_store_get_vertex);
 
-    bsal_actor_add_route(self, BSAL_ASSEMBLY_GET_STARTING_VERTEX,
+    thorium_actor_add_route(self, BSAL_ASSEMBLY_GET_STARTING_VERTEX,
                     bsal_assembly_graph_store_get_starting_vertex);
 
     concrete_self->printed_vertex_size = 0;
@@ -106,11 +106,11 @@ void bsal_assembly_graph_store_init(struct bsal_actor *self)
 
 }
 
-void bsal_assembly_graph_store_destroy(struct bsal_actor *self)
+void bsal_assembly_graph_store_destroy(struct thorium_actor *self)
 {
     struct bsal_assembly_graph_store *concrete_self;
 
-    concrete_self = (struct bsal_assembly_graph_store *)bsal_actor_concrete_actor(self);
+    concrete_self = (struct bsal_assembly_graph_store *)thorium_actor_concrete_actor(self);
 
     if (concrete_self->kmer_length != -1) {
         bsal_map_destroy(&concrete_self->table);
@@ -122,7 +122,7 @@ void bsal_assembly_graph_store_destroy(struct bsal_actor *self)
     concrete_self->kmer_length = -1;
 }
 
-void bsal_assembly_graph_store_receive(struct bsal_actor *self, struct bsal_message *message)
+void bsal_assembly_graph_store_receive(struct thorium_actor *self, struct thorium_message *message)
 {
     int tag;
     void *buffer;
@@ -133,24 +133,24 @@ void bsal_assembly_graph_store_receive(struct bsal_actor *self, struct bsal_mess
     int customer;
 
 
-    if (bsal_actor_use_route(self, message)) {
+    if (thorium_actor_use_route(self, message)) {
         return;
     }
 
-    ephemeral_memory = bsal_actor_get_ephemeral_memory(self);
-    concrete_self = (struct bsal_assembly_graph_store *)bsal_actor_concrete_actor(self);
-    tag = bsal_message_tag(message);
-    buffer = bsal_message_buffer(message);
+    ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
+    concrete_self = (struct bsal_assembly_graph_store *)thorium_actor_concrete_actor(self);
+    tag = thorium_message_tag(message);
+    buffer = thorium_message_buffer(message);
 
     if (tag == BSAL_SET_KMER_LENGTH) {
 
-        bsal_message_unpack_int(message, 0, &concrete_self->kmer_length);
+        thorium_message_unpack_int(message, 0, &concrete_self->kmer_length);
 
         bsal_dna_kmer_init_mock(&kmer, concrete_self->kmer_length,
-                        &concrete_self->storage_codec, bsal_actor_get_ephemeral_memory(self));
+                        &concrete_self->storage_codec, thorium_actor_get_ephemeral_memory(self));
         concrete_self->key_length_in_bytes = bsal_dna_kmer_pack_size(&kmer,
                         concrete_self->kmer_length, &concrete_self->storage_codec);
-        bsal_dna_kmer_destroy(&kmer, bsal_actor_get_ephemeral_memory(self));
+        bsal_dna_kmer_destroy(&kmer, thorium_actor_get_ephemeral_memory(self));
 
 
         bsal_map_init(&concrete_self->table, concrete_self->key_length_in_bytes,
@@ -168,61 +168,61 @@ void bsal_assembly_graph_store_receive(struct bsal_actor *self, struct bsal_mess
          */
         bsal_map_set_threshold(&concrete_self->table, 0.95);
 
-        bsal_actor_send_reply_empty(self, BSAL_SET_KMER_LENGTH_REPLY);
+        thorium_actor_send_reply_empty(self, BSAL_SET_KMER_LENGTH_REPLY);
 
     } else if (tag == BSAL_ASSEMBLY_GET_KMER_LENGTH) {
 
-        bsal_actor_send_reply_int(self, BSAL_ASSEMBLY_GET_KMER_LENGTH_REPLY,
+        thorium_actor_send_reply_int(self, BSAL_ASSEMBLY_GET_KMER_LENGTH_REPLY,
                         concrete_self->kmer_length);
 
     } else if (tag == BSAL_SEQUENCE_STORE_REQUEST_PROGRESS_REPLY) {
 
-        bsal_message_unpack_double(message, 0, &value);
+        thorium_message_unpack_double(message, 0, &value);
 
         bsal_map_set_current_size_estimate(&concrete_self->table, value);
 
     } else if (tag == BSAL_ACTOR_ASK_TO_STOP) {
 
         printf("%s/%d received %d arc blocks\n",
-                        bsal_actor_script_name(self),
-                        bsal_actor_name(self),
+                        thorium_actor_script_name(self),
+                        thorium_actor_name(self),
                         concrete_self->received_arc_block_count);
 
-        bsal_actor_ask_to_stop(self, message);
+        thorium_actor_ask_to_stop(self, message);
 
     } else if (tag == BSAL_ACTOR_SET_CONSUMER) {
 
-        bsal_message_unpack_int(message, 0, &customer);
+        thorium_message_unpack_int(message, 0, &customer);
 
         printf("%s/%d will use coverage distribution %d\n",
-                        bsal_actor_script_name(self),
-                        bsal_actor_name(self), customer);
+                        thorium_actor_script_name(self),
+                        thorium_actor_name(self), customer);
 
         concrete_self->customer = customer;
 
-        bsal_actor_send_reply_empty(self, BSAL_ACTOR_SET_CONSUMER_REPLY);
+        thorium_actor_send_reply_empty(self, BSAL_ACTOR_SET_CONSUMER_REPLY);
 
     } else if (tag == BSAL_PUSH_DATA) {
 
         printf("%s/%d receives BSAL_PUSH_DATA\n",
-                        bsal_actor_script_name(self),
-                        bsal_actor_name(self));
+                        thorium_actor_script_name(self),
+                        thorium_actor_name(self));
 
         bsal_assembly_graph_store_push_data(self, message);
 
     } else if (tag == BSAL_STORE_GET_ENTRY_COUNT) {
 
-        bsal_actor_send_reply_uint64_t(self, BSAL_STORE_GET_ENTRY_COUNT_REPLY,
+        thorium_actor_send_reply_uint64_t(self, BSAL_STORE_GET_ENTRY_COUNT_REPLY,
                         concrete_self->received);
 
     } else if (tag == BSAL_GET_RECEIVED_ARC_COUNT) {
 
-        bsal_actor_send_reply_uint64_t(self, BSAL_GET_RECEIVED_ARC_COUNT_REPLY,
+        thorium_actor_send_reply_uint64_t(self, BSAL_GET_RECEIVED_ARC_COUNT_REPLY,
                         concrete_self->received_arc_count);
     }
 }
 
-void bsal_assembly_graph_store_print(struct bsal_actor *self)
+void bsal_assembly_graph_store_print(struct thorium_actor *self)
 {
     struct bsal_map_iterator iterator;
     struct bsal_dna_kmer kmer;
@@ -235,8 +235,8 @@ void bsal_assembly_graph_store_print(struct bsal_actor *self)
     int length;
     struct bsal_memory_pool *ephemeral_memory;
 
-    ephemeral_memory = bsal_actor_get_ephemeral_memory(self);
-    concrete_self = (struct bsal_assembly_graph_store *)bsal_actor_concrete_actor(self);
+    ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
+    concrete_self = (struct bsal_assembly_graph_store *)thorium_actor_concrete_actor(self);
     bsal_map_iterator_init(&iterator, &concrete_self->table);
 
     printf("map size %d\n", (int)bsal_map_size(&concrete_self->table));
@@ -248,7 +248,7 @@ void bsal_assembly_graph_store_print(struct bsal_actor *self)
 
         bsal_dna_kmer_init_empty(&kmer);
         bsal_dna_kmer_unpack(&kmer, key, concrete_self->kmer_length,
-                        bsal_actor_get_ephemeral_memory(self),
+                        thorium_actor_get_ephemeral_memory(self),
                         &concrete_self->storage_codec);
 
         length = bsal_dna_kmer_length(&kmer, concrete_self->kmer_length);
@@ -259,7 +259,7 @@ void bsal_assembly_graph_store_print(struct bsal_actor *self)
         if (length > maximum_length) {
             maximum_length = length;
         }
-        bsal_dna_kmer_destroy(&kmer, bsal_actor_get_ephemeral_memory(self));
+        bsal_dna_kmer_destroy(&kmer, thorium_actor_get_ephemeral_memory(self));
     }
 
     /*
@@ -276,7 +276,7 @@ void bsal_assembly_graph_store_print(struct bsal_actor *self)
 
         bsal_dna_kmer_init_empty(&kmer);
         bsal_dna_kmer_unpack(&kmer, key, concrete_self->kmer_length,
-                        bsal_actor_get_ephemeral_memory(self),
+                        thorium_actor_get_ephemeral_memory(self),
                         &concrete_self->storage_codec);
 
         bsal_dna_kmer_get_sequence(&kmer, sequence, concrete_self->kmer_length,
@@ -286,38 +286,38 @@ void bsal_assembly_graph_store_print(struct bsal_actor *self)
 
         printf("Sequence %s Coverage %d\n", sequence, coverage);
 
-        bsal_dna_kmer_destroy(&kmer, bsal_actor_get_ephemeral_memory(self));
+        bsal_dna_kmer_destroy(&kmer, thorium_actor_get_ephemeral_memory(self));
     }
 
     bsal_map_iterator_destroy(&iterator);
     bsal_memory_pool_free(ephemeral_memory, sequence);
 }
 
-void bsal_assembly_graph_store_push_data(struct bsal_actor *self, struct bsal_message *message)
+void bsal_assembly_graph_store_push_data(struct thorium_actor *self, struct thorium_message *message)
 {
     struct bsal_assembly_graph_store *concrete_self;
     int name;
     int source;
 
-    concrete_self = (struct bsal_assembly_graph_store *)bsal_actor_concrete_actor(self);
-    source = bsal_message_source(message);
+    concrete_self = (struct bsal_assembly_graph_store *)thorium_actor_concrete_actor(self);
+    source = thorium_message_source(message);
     concrete_self->source = source;
-    name = bsal_actor_name(self);
+    name = thorium_actor_name(self);
 
     bsal_map_init(&concrete_self->coverage_distribution, sizeof(int), sizeof(uint64_t));
 
     printf("%s/%d: local table has %" PRIu64" canonical kmers (%" PRIu64 " kmers)\n",
-                        bsal_actor_script_name(self),
+                        thorium_actor_script_name(self),
                     name, bsal_map_size(&concrete_self->table),
                     2 * bsal_map_size(&concrete_self->table));
 
     bsal_map_iterator_init(&concrete_self->iterator, &concrete_self->table);
 
 
-    bsal_actor_send_to_self_empty(self, BSAL_ACTOR_YIELD);
+    thorium_actor_send_to_self_empty(self, BSAL_ACTOR_YIELD);
 }
 
-void bsal_assembly_graph_store_yield_reply(struct bsal_actor *self, struct bsal_message *message)
+void bsal_assembly_graph_store_yield_reply(struct thorium_actor *self, struct thorium_message *message)
 {
     struct bsal_dna_kmer kmer;
     void *key;
@@ -327,14 +327,14 @@ void bsal_assembly_graph_store_yield_reply(struct bsal_actor *self, struct bsal_
     uint64_t *count;
     int new_count;
     void *new_buffer;
-    struct bsal_message new_message;
+    struct thorium_message new_message;
     struct bsal_memory_pool *ephemeral_memory;
     struct bsal_assembly_graph_store *concrete_self;
     int i;
     int max;
 
-    ephemeral_memory = bsal_actor_get_ephemeral_memory(self);
-    concrete_self = (struct bsal_assembly_graph_store *)bsal_actor_concrete_actor(self);
+    ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
+    concrete_self = (struct bsal_assembly_graph_store *)thorium_actor_concrete_actor(self);
     customer = concrete_self->customer;
 
 #if 0
@@ -384,7 +384,7 @@ void bsal_assembly_graph_store_yield_reply(struct bsal_actor *self, struct bsal_
         printf("yield ! %d\n", i);
 #endif
 
-        bsal_actor_send_to_self_empty(self, BSAL_ACTOR_YIELD);
+        thorium_actor_send_to_self_empty(self, BSAL_ACTOR_YIELD);
 
         return;
     }
@@ -402,24 +402,24 @@ void bsal_assembly_graph_store_yield_reply(struct bsal_actor *self, struct bsal_
     bsal_map_pack(&concrete_self->coverage_distribution, new_buffer);
 
     printf("SENDING %s/%d sends map to %d, %d bytes / %d entries\n",
-                        bsal_actor_script_name(self),
-                    bsal_actor_name(self),
+                        thorium_actor_script_name(self),
+                    thorium_actor_name(self),
                     customer, new_count,
                     (int)bsal_map_size(&concrete_self->coverage_distribution));
 
-    bsal_message_init(&new_message, BSAL_PUSH_DATA, new_count, new_buffer);
+    thorium_message_init(&new_message, BSAL_PUSH_DATA, new_count, new_buffer);
 
-    bsal_actor_send(self, customer, &new_message);
-    bsal_message_destroy(&new_message);
+    thorium_actor_send(self, customer, &new_message);
+    thorium_message_destroy(&new_message);
 
     bsal_map_destroy(&concrete_self->coverage_distribution);
 
-    bsal_actor_send_empty(self, concrete_self->source,
+    thorium_actor_send_empty(self, concrete_self->source,
                             BSAL_PUSH_DATA_REPLY);
 
 }
 
-void bsal_assembly_graph_store_push_kmer_block(struct bsal_actor *self, struct bsal_message *message)
+void bsal_assembly_graph_store_push_kmer_block(struct thorium_actor *self, struct thorium_message *message)
 {
     struct bsal_memory_pool *ephemeral_memory;
     struct bsal_dna_kmer_frequency_block block;
@@ -439,11 +439,11 @@ void bsal_assembly_graph_store_push_kmer_block(struct bsal_actor *self, struct b
     struct bsal_dna_kmer *kmer_pointer;
     int *frequency;
 
-    ephemeral_memory = bsal_actor_get_ephemeral_memory(self);
-    concrete_self = (struct bsal_assembly_graph_store *)bsal_actor_concrete_actor(self);
-    tag = bsal_message_tag(message);
-    buffer = bsal_message_buffer(message);
-    count = bsal_message_count(message);
+    ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
+    concrete_self = (struct bsal_assembly_graph_store *)thorium_actor_concrete_actor(self);
+    tag = thorium_message_tag(message);
+    buffer = thorium_message_buffer(message);
+    count = thorium_message_count(message);
 
     /*
      * Handler for PUSH_DATA
@@ -452,7 +452,7 @@ void bsal_assembly_graph_store_push_kmer_block(struct bsal_actor *self, struct b
     bsal_dna_kmer_frequency_block_init(&block, concrete_self->kmer_length,
                     ephemeral_memory, &concrete_self->transport_codec, 0);
 
-    bsal_dna_kmer_frequency_block_unpack(&block, buffer, bsal_actor_get_ephemeral_memory(self),
+    bsal_dna_kmer_frequency_block_unpack(&block, buffer, thorium_actor_get_ephemeral_memory(self),
                     &concrete_self->transport_codec);
 
     key = bsal_memory_pool_allocate(ephemeral_memory, concrete_self->key_length_in_bytes);
@@ -462,7 +462,7 @@ void bsal_assembly_graph_store_push_kmer_block(struct bsal_actor *self, struct b
 
     period = 2500000;
 
-    raw_kmer = bsal_memory_pool_allocate(bsal_actor_get_ephemeral_memory(self),
+    raw_kmer = bsal_memory_pool_allocate(thorium_actor_get_ephemeral_memory(self),
                     concrete_self->kmer_length + 1);
 
     if (!concrete_self->printed_vertex_size) {
@@ -497,13 +497,13 @@ void bsal_assembly_graph_store_push_kmer_block(struct bsal_actor *self, struct b
 
 
             bsal_dna_kmer_init(&encoded_kmer, raw_kmer, &concrete_self->storage_codec,
-                        bsal_actor_get_ephemeral_memory(self));
+                        thorium_actor_get_ephemeral_memory(self));
             kmer_pointer = &encoded_kmer;
         }
 
         bsal_dna_kmer_pack_store_key(kmer_pointer, key,
                         concrete_self->kmer_length, &concrete_self->storage_codec,
-                        bsal_actor_get_ephemeral_memory(self));
+                        thorium_actor_get_ephemeral_memory(self));
 
 #ifdef BSAL_DEBUG_ISSUE_540
         if (strcmp(raw_kmer, "AGCTGGTAGTCATCACCAGACTGGAACAG") == 0
@@ -533,7 +533,7 @@ void bsal_assembly_graph_store_push_kmer_block(struct bsal_actor *self, struct b
 
         if (concrete_self->codec_are_different) {
             bsal_dna_kmer_destroy(&encoded_kmer,
-                        bsal_actor_get_ephemeral_memory(self));
+                        thorium_actor_get_ephemeral_memory(self));
         }
 
         bsal_dna_kmer_destroy(&kmer, ephemeral_memory);
@@ -543,8 +543,8 @@ void bsal_assembly_graph_store_push_kmer_block(struct bsal_actor *self, struct b
         if (concrete_self->received >= concrete_self->last_received + period) {
             printf("%s/%d received %" PRIu64 " kmers so far,"
                             " store has %" PRIu64 " canonical kmers, %" PRIu64 " kmers\n",
-                        bsal_actor_script_name(self),
-                            bsal_actor_name(self), concrete_self->received,
+                        thorium_actor_script_name(self),
+                            thorium_actor_name(self), concrete_self->received,
                             bsal_map_size(&concrete_self->table),
                             2 * bsal_map_size(&concrete_self->table));
 
@@ -558,12 +558,12 @@ void bsal_assembly_graph_store_push_kmer_block(struct bsal_actor *self, struct b
     bsal_memory_pool_free(ephemeral_memory, raw_kmer);
 
     bsal_map_iterator_destroy(&iterator);
-    bsal_dna_kmer_frequency_block_destroy(&block, bsal_actor_get_ephemeral_memory(self));
+    bsal_dna_kmer_frequency_block_destroy(&block, thorium_actor_get_ephemeral_memory(self));
 
-    bsal_actor_send_reply_empty(self, BSAL_PUSH_KMER_BLOCK_REPLY);
+    thorium_actor_send_reply_empty(self, BSAL_PUSH_KMER_BLOCK_REPLY);
 }
 
-void bsal_assembly_graph_store_push_arc_block(struct bsal_actor *self, struct bsal_message *message)
+void bsal_assembly_graph_store_push_arc_block(struct thorium_actor *self, struct thorium_message *message)
 {
     struct bsal_assembly_graph_store *concrete_self;
     int size;
@@ -581,19 +581,19 @@ void bsal_assembly_graph_store_push_arc_block(struct bsal_actor *self, struct bs
     /*
      * Don't do anything to rule out that this is the problem.
      */
-    bsal_actor_send_reply_empty(self, BSAL_ASSEMBLY_PUSH_ARC_BLOCK_REPLY);
+    thorium_actor_send_reply_empty(self, BSAL_ASSEMBLY_PUSH_ARC_BLOCK_REPLY);
     return;
 #endif
 
-    concrete_self = (struct bsal_assembly_graph_store *)bsal_actor_concrete_actor(self);
-    ephemeral_memory = bsal_actor_get_ephemeral_memory(self);
+    concrete_self = (struct bsal_assembly_graph_store *)thorium_actor_concrete_actor(self);
+    ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
 
     sequence = bsal_memory_pool_allocate(ephemeral_memory, concrete_self->kmer_length + 1);
 
     ++concrete_self->received_arc_block_count;
 
-    count = bsal_message_count(message);
-    buffer = bsal_message_buffer(message);
+    count = thorium_message_count(message);
+    buffer = thorium_message_buffer(message);
 
     bsal_assembly_arc_block_init(&input_block, ephemeral_memory, concrete_self->kmer_length,
                     &concrete_self->transport_codec);
@@ -633,12 +633,12 @@ void bsal_assembly_graph_store_push_arc_block(struct bsal_actor *self, struct bs
      * Add the arcs to the graph
      */
 
-    bsal_actor_send_reply_empty(self, BSAL_ASSEMBLY_PUSH_ARC_BLOCK_REPLY);
+    thorium_actor_send_reply_empty(self, BSAL_ASSEMBLY_PUSH_ARC_BLOCK_REPLY);
 
     bsal_memory_pool_free(ephemeral_memory, sequence);
 }
 
-void bsal_assembly_graph_store_add_arc(struct bsal_actor *self,
+void bsal_assembly_graph_store_add_arc(struct thorium_actor *self,
                 struct bsal_assembly_arc *arc, char *sequence,
                 void *key)
 {
@@ -664,8 +664,8 @@ void bsal_assembly_graph_store_add_arc(struct bsal_actor *self,
     int verbose;
 #endif
 
-    ephemeral_memory = bsal_actor_get_ephemeral_memory(self);
-    concrete_self = (struct bsal_assembly_graph_store *)bsal_actor_concrete_actor(self);
+    ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
+    concrete_self = (struct bsal_assembly_graph_store *)thorium_actor_concrete_actor(self);
 
 #ifdef BSAL_ASSEMBLY_GRAPH_STORE_DEBUG_ARC
     verbose = 0;
@@ -762,13 +762,13 @@ void bsal_assembly_graph_store_add_arc(struct bsal_actor *self,
     }
 }
 
-void bsal_assembly_graph_store_get_summary(struct bsal_actor *self, struct bsal_message *message)
+void bsal_assembly_graph_store_get_summary(struct thorium_actor *self, struct thorium_message *message)
 {
     struct bsal_assembly_graph_store *concrete_self;
     int source;
 
-    source = bsal_message_source(message);
-    concrete_self = (struct bsal_assembly_graph_store *)bsal_actor_concrete_actor(self);
+    source = thorium_message_source(message);
+    concrete_self = (struct bsal_assembly_graph_store *)thorium_actor_concrete_actor(self);
 
     concrete_self->vertex_count = 0;
     concrete_self->vertex_observation_count = 0;
@@ -776,16 +776,16 @@ void bsal_assembly_graph_store_get_summary(struct bsal_actor *self, struct bsal_
     concrete_self->summary_in_progress = 1;
     concrete_self->source_for_summary = source;
 
-    bsal_actor_add_route_with_condition(self, BSAL_ACTOR_YIELD_REPLY,
+    thorium_actor_add_route_with_condition(self, BSAL_ACTOR_YIELD_REPLY,
                     bsal_assembly_graph_store_yield_reply_summary,
                     &concrete_self->summary_in_progress, 1);
 
     bsal_map_iterator_init(&concrete_self->iterator, &concrete_self->table);
 
-    bsal_actor_send_to_self_empty(self, BSAL_ACTOR_YIELD);
+    thorium_actor_send_to_self_empty(self, BSAL_ACTOR_YIELD);
 }
 
-void bsal_assembly_graph_store_yield_reply_summary(struct bsal_actor *self, struct bsal_message *message)
+void bsal_assembly_graph_store_yield_reply_summary(struct thorium_actor *self, struct thorium_message *message)
 {
     struct bsal_assembly_graph_store *concrete_self;
     int limit;
@@ -796,7 +796,7 @@ void bsal_assembly_graph_store_yield_reply_summary(struct bsal_actor *self, stru
     int parent_count;
     /*int child_count;*/
 
-    concrete_self = (struct bsal_assembly_graph_store *)bsal_actor_concrete_actor(self);
+    concrete_self = (struct bsal_assembly_graph_store *)thorium_actor_concrete_actor(self);
     limit = 4321;
     processed = 0;
 
@@ -826,7 +826,7 @@ void bsal_assembly_graph_store_yield_reply_summary(struct bsal_actor *self, stru
 
     if (bsal_map_iterator_has_next(&concrete_self->iterator)) {
 
-        bsal_actor_send_to_self_empty(self, BSAL_ACTOR_YIELD);
+        thorium_actor_send_to_self_empty(self, BSAL_ACTOR_YIELD);
 
     } else {
 
@@ -840,7 +840,7 @@ void bsal_assembly_graph_store_yield_reply_summary(struct bsal_actor *self, stru
         bsal_vector_push_back_uint64_t(&vector, concrete_self->vertex_observation_count);
         bsal_vector_push_back_uint64_t(&vector, concrete_self->arc_count);
 
-        bsal_actor_send_vector(self, concrete_self->source_for_summary,
+        thorium_actor_send_vector(self, concrete_self->source_for_summary,
                         BSAL_ASSEMBLY_GET_SUMMARY_REPLY, &vector);
 
         bsal_vector_destroy(&vector);
@@ -854,7 +854,7 @@ void bsal_assembly_graph_store_yield_reply_summary(struct bsal_actor *self, stru
     }
 }
 
-void bsal_assembly_graph_store_get_vertex(struct bsal_actor *self, struct bsal_message *message)
+void bsal_assembly_graph_store_get_vertex(struct thorium_actor *self, struct thorium_message *message)
 {
     struct bsal_assembly_vertex vertex;
     struct bsal_dna_kmer kmer;
@@ -862,7 +862,7 @@ void bsal_assembly_graph_store_get_vertex(struct bsal_actor *self, struct bsal_m
     void *buffer;
     struct bsal_assembly_graph_store *concrete_self;
     struct bsal_memory_pool *ephemeral_memory;
-    struct bsal_message new_message;
+    struct thorium_message new_message;
     int new_count;
     void *new_buffer;
     char *sequence;
@@ -870,10 +870,10 @@ void bsal_assembly_graph_store_get_vertex(struct bsal_actor *self, struct bsal_m
     void *key;
     int is_canonical;
 
-    ephemeral_memory = bsal_actor_get_ephemeral_memory(self);
-    concrete_self = (struct bsal_assembly_graph_store *)bsal_actor_concrete_actor(self);
+    ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
+    concrete_self = (struct bsal_assembly_graph_store *)thorium_actor_concrete_actor(self);
 
-    buffer = bsal_message_buffer(message);
+    buffer = thorium_message_buffer(message);
 
     bsal_dna_kmer_init_empty(&kmer);
     bsal_dna_kmer_unpack(&kmer, buffer, concrete_self->kmer_length,
@@ -903,7 +903,7 @@ void bsal_assembly_graph_store_get_vertex(struct bsal_actor *self, struct bsal_m
     if (canonical_vertex == NULL) {
 
         printf("not found Seq = %s name %d kmerlength %d key_length %d hash %" PRIu64 "\n", sequence,
-                        bsal_actor_name(self),
+                        thorium_actor_name(self),
                         concrete_self->kmer_length,
                         concrete_self->key_length_in_bytes,
                         bsal_dna_kmer_hash(&storage_kmer, concrete_self->kmer_length,
@@ -929,30 +929,30 @@ void bsal_assembly_graph_store_get_vertex(struct bsal_actor *self, struct bsal_m
 
     bsal_assembly_vertex_pack(&vertex, new_buffer);
 
-    bsal_message_init(&new_message, BSAL_ASSEMBLY_GET_VERTEX_REPLY,
+    thorium_message_init(&new_message, BSAL_ASSEMBLY_GET_VERTEX_REPLY,
                     new_count, new_buffer);
 
-    bsal_actor_send_reply(self, &new_message);
+    thorium_actor_send_reply(self, &new_message);
 
-    bsal_message_destroy(&new_message);
+    thorium_message_destroy(&new_message);
     bsal_memory_pool_free(ephemeral_memory, new_buffer);
 }
 
-void bsal_assembly_graph_store_get_starting_vertex(struct bsal_actor *self, struct bsal_message *message)
+void bsal_assembly_graph_store_get_starting_vertex(struct thorium_actor *self, struct thorium_message *message)
 {
     struct bsal_assembly_graph_store *concrete_self;
     struct bsal_dna_kmer transport_kmer;
     struct bsal_dna_kmer storage_kmer;
     struct bsal_memory_pool *ephemeral_memory;
-    struct bsal_message new_message;
+    struct thorium_message new_message;
     int new_count;
     void *new_buffer;
     char *sequence;
     void *storage_key;
     struct bsal_assembly_vertex *vertex;
 
-    ephemeral_memory = bsal_actor_get_ephemeral_memory(self);
-    concrete_self = (struct bsal_assembly_graph_store *)bsal_actor_concrete_actor(self);
+    ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
+    concrete_self = (struct bsal_assembly_graph_store *)thorium_actor_concrete_actor(self);
 
     if (bsal_map_iterator_has_next(&concrete_self->iterator)) {
 
@@ -1015,12 +1015,12 @@ void bsal_assembly_graph_store_get_starting_vertex(struct bsal_actor *self, stru
                     ephemeral_memory);
 #endif
 
-        bsal_message_init(&new_message, BSAL_ASSEMBLY_GET_STARTING_VERTEX_REPLY,
+        thorium_message_init(&new_message, BSAL_ASSEMBLY_GET_STARTING_VERTEX_REPLY,
                         new_count, new_buffer);
 
-        bsal_actor_send_reply(self, &new_message);
+        thorium_actor_send_reply(self, &new_message);
 
-        bsal_message_destroy(&new_message);
+        thorium_message_destroy(&new_message);
 
         bsal_dna_kmer_destroy(&transport_kmer, ephemeral_memory);
 
@@ -1030,6 +1030,6 @@ void bsal_assembly_graph_store_get_starting_vertex(struct bsal_actor *self, stru
         bsal_memory_pool_free(ephemeral_memory, new_buffer);
 
     } else {
-        bsal_actor_send_reply_empty(self, BSAL_ASSEMBLY_GET_STARTING_VERTEX_REPLY);
+        thorium_actor_send_reply_empty(self, BSAL_ASSEMBLY_GET_STARTING_VERTEX_REPLY);
     }
 }

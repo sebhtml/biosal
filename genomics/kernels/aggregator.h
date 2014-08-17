@@ -42,24 +42,24 @@ struct bsal_aggregator {
 #define BSAL_AGGREGATOR_FLUSH 0x00007305
 #define BSAL_AGGREGATOR_FLUSH_REPLY 0x000029fe
 
-extern struct bsal_script bsal_aggregator_script;
+extern struct thorium_script bsal_aggregator_script;
 
-void bsal_aggregator_init(struct bsal_actor *actor);
-void bsal_aggregator_destroy(struct bsal_actor *actor);
-void bsal_aggregator_receive(struct bsal_actor *actor, struct bsal_message *message);
+void bsal_aggregator_init(struct thorium_actor *actor);
+void bsal_aggregator_destroy(struct thorium_actor *actor);
+void bsal_aggregator_receive(struct thorium_actor *actor, struct thorium_message *message);
 
-void bsal_aggregator_flush(struct bsal_actor *self, int customer_index, struct bsal_vector *buffers,
+void bsal_aggregator_flush(struct thorium_actor *self, int customer_index, struct bsal_vector *buffers,
                 int force);
-void bsal_aggregator_verify(struct bsal_actor *self, struct bsal_message *message);
-void bsal_aggregator_aggregate_kernel_output(struct bsal_actor *self, struct bsal_message *message);
+void bsal_aggregator_verify(struct thorium_actor *self, struct thorium_message *message);
+void bsal_aggregator_aggregate_kernel_output(struct thorium_actor *self, struct thorium_message *message);
 
-void bsal_aggregator_unpack_message(struct bsal_actor *actor, struct bsal_message *message);
-void bsal_aggregator_pack_message(struct bsal_actor *actor, struct bsal_message *message);
-int bsal_aggregator_set_consumers(struct bsal_actor *actor, void *buffer);
+void bsal_aggregator_unpack_message(struct thorium_actor *actor, struct thorium_message *message);
+void bsal_aggregator_pack_message(struct thorium_actor *actor, struct thorium_message *message);
+int bsal_aggregator_set_consumers(struct thorium_actor *actor, void *buffer);
 
-int bsal_aggregator_pack_unpack(struct bsal_actor *actor, int operation, void *buffer);
-int bsal_aggregator_pack(struct bsal_actor *actor, void *buffer);
-int bsal_aggregator_unpack(struct bsal_actor *actor, void *buffer);
-int bsal_aggregator_pack_size(struct bsal_actor *actor);
+int bsal_aggregator_pack_unpack(struct thorium_actor *actor, int operation, void *buffer);
+int bsal_aggregator_pack(struct thorium_actor *actor, void *buffer);
+int bsal_aggregator_unpack(struct thorium_actor *actor, void *buffer);
+int bsal_aggregator_pack_size(struct thorium_actor *actor);
 
 #endif

@@ -14,10 +14,10 @@ struct frame {
     struct bsal_vector acquaintance_vector;
 };
 
-extern struct bsal_script frame_script;
+extern struct thorium_script frame_script;
 
-void frame_init(struct bsal_actor *self);
-void frame_destroy(struct bsal_actor *self);
-void frame_receive(struct bsal_actor *self, struct bsal_message *message);
+void frame_init(struct thorium_actor *self);
+void frame_destroy(struct thorium_actor *self);
+void frame_receive(struct thorium_actor *self, struct thorium_message *message);
 
 #endif

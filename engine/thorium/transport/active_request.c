@@ -6,7 +6,7 @@
 #include "pami/pami_active_request.h"
 #include "mpi/mpi_active_request.h"
 
-void bsal_active_request_init(struct bsal_active_request *self, void *buffer, int worker)
+void thorium_active_request_init(struct thorium_active_request *self, void *buffer, int worker)
 {
     int implementation;
 
@@ -25,16 +25,16 @@ void bsal_active_request_init(struct bsal_active_request *self, void *buffer, in
     self->worker = worker;
 
     if (implementation == BSAL_TRANSPORT_PAMI_IDENTIFIER) {
-        self->active_request_init = bsal_pami_active_request_init;
-        self->active_request_destroy = bsal_pami_active_request_destroy;
-        self->active_request_test = bsal_pami_active_request_test;
-        self->active_request_request = bsal_pami_active_request_request;
+        self->active_request_init = thorium_pami_active_request_init;
+        self->active_request_destroy = thorium_pami_active_request_destroy;
+        self->active_request_test = thorium_pami_active_request_test;
+        self->active_request_request = thorium_pami_active_request_request;
 
     } else if (implementation == BSAL_TRANSPORT_MPI_IDENTIFIER) {
-        self->active_request_init = bsal_mpi_active_request_init;
-        self->active_request_destroy = bsal_mpi_active_request_destroy;
-        self->active_request_test = bsal_mpi_active_request_test;
-        self->active_request_request = bsal_mpi_active_request_request;
+        self->active_request_init = thorium_mpi_active_request_init;
+        self->active_request_destroy = thorium_mpi_active_request_destroy;
+        self->active_request_test = thorium_mpi_active_request_test;
+        self->active_request_request = thorium_mpi_active_request_request;
 
     } else /* if (implementation == BSAL_TRANSPORT_IMPLEMENTATION_PAMI) */ {
         self->active_request_init = NULL;
@@ -47,7 +47,7 @@ void bsal_active_request_init(struct bsal_active_request *self, void *buffer, in
     self->active_request_init(self);
 }
 
-void bsal_active_request_destroy(struct bsal_active_request *self)
+void thorium_active_request_destroy(struct thorium_active_request *self)
 {
     self->active_request_destroy(self);
 
@@ -60,27 +60,27 @@ void bsal_active_request_destroy(struct bsal_active_request *self)
     self->active_request_request = NULL;
 }
 
-int bsal_active_request_test(struct bsal_active_request *self)
+int thorium_active_request_test(struct thorium_active_request *self)
 {
     return self->active_request_test(self);
 }
 
-void *bsal_active_request_buffer(struct bsal_active_request *self)
+void *thorium_active_request_buffer(struct thorium_active_request *self)
 {
     return self->buffer;
 }
 
-void *bsal_active_request_request(struct bsal_active_request *self)
+void *thorium_active_request_request(struct thorium_active_request *self)
 {
     return self->active_request_request(self);
 }
 
-int bsal_active_request_get_worker(struct bsal_active_request *self)
+int thorium_active_request_get_worker(struct thorium_active_request *self)
 {
     return self->worker;
 }
 
-void *bsal_active_request_get_concrete_object(struct bsal_active_request *self)
+void *thorium_active_request_get_concrete_object(struct thorium_active_request *self)
 {
     return (void *)&self->concrete_object;
 }

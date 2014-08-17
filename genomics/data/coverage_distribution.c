@@ -20,7 +20,7 @@
 
 #include <inttypes.h>
 
-struct bsal_script bsal_coverage_distribution_script = {
+struct thorium_script bsal_coverage_distribution_script = {
     .identifier = BSAL_COVERAGE_DISTRIBUTION_SCRIPT,
     .name = "bsal_coverage_distribution",
     .init = bsal_coverage_distribution_init,
@@ -29,11 +29,11 @@ struct bsal_script bsal_coverage_distribution_script = {
     .size = sizeof(struct bsal_coverage_distribution)
 };
 
-void bsal_coverage_distribution_init(struct bsal_actor *self)
+void bsal_coverage_distribution_init(struct thorium_actor *self)
 {
     struct bsal_coverage_distribution *concrete_actor;
 
-    concrete_actor = (struct bsal_coverage_distribution *)bsal_actor_concrete_actor(self);
+    concrete_actor = (struct bsal_coverage_distribution *)thorium_actor_concrete_actor(self);
 
     bsal_map_init(&concrete_actor->distribution, sizeof(int), sizeof(uint64_t));
 
@@ -44,16 +44,16 @@ void bsal_coverage_distribution_init(struct bsal_actor *self)
     concrete_actor->expected = 0;
 }
 
-void bsal_coverage_distribution_destroy(struct bsal_actor *self)
+void bsal_coverage_distribution_destroy(struct thorium_actor *self)
 {
     struct bsal_coverage_distribution *concrete_actor;
 
-    concrete_actor = (struct bsal_coverage_distribution *)bsal_actor_concrete_actor(self);
+    concrete_actor = (struct bsal_coverage_distribution *)thorium_actor_concrete_actor(self);
 
     bsal_map_destroy(&concrete_actor->distribution);
 }
 
-void bsal_coverage_distribution_receive(struct bsal_actor *self, struct bsal_message *message)
+void bsal_coverage_distribution_receive(struct thorium_actor *self, struct thorium_message *message)
 {
     int tag;
     struct bsal_map map;
@@ -68,13 +68,13 @@ void bsal_coverage_distribution_receive(struct bsal_actor *self, struct bsal_mes
     int source;
     struct bsal_memory_pool *ephemeral_memory;
 
-    ephemeral_memory = bsal_actor_get_ephemeral_memory(self);
-    name = bsal_actor_name(self);
-    source = bsal_message_source(message);
-    concrete_actor = (struct bsal_coverage_distribution *)bsal_actor_concrete_actor(self);
-    tag = bsal_message_tag(message);
-    count = bsal_message_count(message);
-    buffer = bsal_message_buffer(message);
+    ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
+    name = thorium_actor_name(self);
+    source = thorium_message_source(message);
+    concrete_actor = (struct bsal_coverage_distribution *)thorium_actor_concrete_actor(self);
+    tag = thorium_message_tag(message);
+    count = thorium_message_count(message);
+    buffer = thorium_message_buffer(message);
 
     if (tag == BSAL_PUSH_DATA) {
 
@@ -108,7 +108,7 @@ void bsal_coverage_distribution_receive(struct bsal_actor *self, struct bsal_mes
 
         bsal_map_iterator_destroy(&iterator);
 
-        bsal_actor_send_reply_empty(self, BSAL_PUSH_DATA_REPLY);
+        thorium_actor_send_reply_empty(self, BSAL_PUSH_DATA_REPLY);
 
         concrete_actor->actual++;
 
@@ -122,7 +122,7 @@ void bsal_coverage_distribution_receive(struct bsal_actor *self, struct bsal_mes
 
             bsal_coverage_distribution_write_distribution(self);
 
-            bsal_actor_send_empty(self, concrete_actor->source,
+            thorium_actor_send_empty(self, concrete_actor->source,
                             BSAL_ACTOR_NOTIFY);
         }
 
@@ -135,17 +135,17 @@ void bsal_coverage_distribution_receive(struct bsal_actor *self, struct bsal_mes
     } else if (tag == BSAL_SET_EXPECTED_MESSAGE_COUNT) {
 
         concrete_actor->source = source;
-        bsal_message_unpack_int(message, 0, &concrete_actor->expected);
+        thorium_message_unpack_int(message, 0, &concrete_actor->expected);
 
         printf("distribution %d expects %d messages\n",
-                        bsal_actor_name(self),
+                        thorium_actor_name(self),
                         concrete_actor->expected);
 
-        bsal_actor_send_reply_empty(self, BSAL_SET_EXPECTED_MESSAGE_COUNT_REPLY);
+        thorium_actor_send_reply_empty(self, BSAL_SET_EXPECTED_MESSAGE_COUNT_REPLY);
     }
 }
 
-void bsal_coverage_distribution_write_distribution(struct bsal_actor *self)
+void bsal_coverage_distribution_write_distribution(struct thorium_actor *self)
 {
     struct bsal_map_iterator iterator;
     int *coverage;
@@ -163,9 +163,9 @@ void bsal_coverage_distribution_write_distribution(struct bsal_actor *self)
     int name;
     char *directory_name;
 
-    name = bsal_actor_name(self);
-    argc = bsal_actor_argc(self);
-    argv = bsal_actor_argv(self);
+    name = thorium_actor_name(self);
+    argc = thorium_actor_argc(self);
+    argv = thorium_actor_argv(self);
 
     directory_name = bsal_get_output_directory(argc, argv);
 
@@ -190,7 +190,7 @@ void bsal_coverage_distribution_write_distribution(struct bsal_actor *self)
     bsal_buffered_file_writer_init(&descriptor, bsal_string_get(&file_name));
     bsal_buffered_file_writer_init(&descriptor_canonical, bsal_string_get(&canonical_file_name));
 
-    concrete_actor = (struct bsal_coverage_distribution *)bsal_actor_concrete_actor(self);
+    concrete_actor = (struct bsal_coverage_distribution *)thorium_actor_concrete_actor(self);
 
     bsal_vector_init(&coverage_values, sizeof(int));
     bsal_map_iterator_init(&iterator, &concrete_actor->distribution);
@@ -259,7 +259,7 @@ void bsal_coverage_distribution_write_distribution(struct bsal_actor *self)
     bsal_string_destroy(&canonical_file_name);
 }
 
-void bsal_coverage_distribution_ask_to_stop(struct bsal_actor *self, struct bsal_message *message)
+void bsal_coverage_distribution_ask_to_stop(struct thorium_actor *self, struct thorium_message *message)
 {
     struct bsal_map_iterator iterator;
     struct bsal_vector coverage_values;
@@ -268,7 +268,7 @@ void bsal_coverage_distribution_ask_to_stop(struct bsal_actor *self, struct bsal
     uint64_t *frequency;
     int *coverage;
 
-    concrete_actor = (struct bsal_coverage_distribution *)bsal_actor_concrete_actor(self);
+    concrete_actor = (struct bsal_coverage_distribution *)thorium_actor_concrete_actor(self);
     bsal_map_iterator_init(&iterator, &concrete_actor->distribution);
 
     bsal_vector_init(&coverage_values, sizeof(int));
@@ -297,7 +297,7 @@ void bsal_coverage_distribution_ask_to_stop(struct bsal_actor *self, struct bsal
 
     bsal_vector_destroy(&coverage_values);
 
-    bsal_actor_ask_to_stop(self, message);
+    thorium_actor_ask_to_stop(self, message);
 }
 
 char *bsal_get_output_directory(int argc, char **argv)

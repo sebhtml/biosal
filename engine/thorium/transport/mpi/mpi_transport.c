@@ -12,14 +12,14 @@
 
 #define BSAL_TRANSPORT_MPI_NAME "MPI: Message Passing Interface"
 
-struct bsal_transport_interface bsal_mpi_transport_implementation = {
+struct thorium_transport_interface thorium_mpi_transport_implementation = {
     .identifier = BSAL_TRANSPORT_MPI_IDENTIFIER,
     .name = BSAL_TRANSPORT_MPI_NAME,
-    .size = sizeof(struct bsal_mpi_transport),
-    .init = bsal_mpi_transport_init,
-    .destroy = bsal_mpi_transport_destroy,
-    .send = bsal_mpi_transport_send,
-    .receive = bsal_mpi_transport_receive
+    .size = sizeof(struct thorium_mpi_transport),
+    .init = thorium_mpi_transport_init,
+    .destroy = thorium_mpi_transport_destroy,
+    .send = thorium_mpi_transport_send,
+    .receive = thorium_mpi_transport_receive
 };
 
 /*
@@ -28,14 +28,14 @@ struct bsal_transport_interface bsal_mpi_transport_implementation = {
  * \see https://github.com/GeneAssembly/kiki/blob/master/ki.c#L960
  * \see http://mpi.deino.net/mpi_functions/MPI_Comm_create.html
  */
-void bsal_mpi_transport_init(struct bsal_transport *self, int *argc, char ***argv)
+void thorium_mpi_transport_init(struct thorium_transport *self, int *argc, char ***argv)
 {
     int required;
-    struct bsal_mpi_transport *concrete_self;
+    struct thorium_mpi_transport *concrete_self;
     int result;
     int provided;
 
-    concrete_self = bsal_transport_get_concrete_transport(self);
+    concrete_self = thorium_transport_get_concrete_transport(self);
 
     /*
     required = MPI_THREAD_MULTIPLE;
@@ -86,12 +86,12 @@ void bsal_mpi_transport_init(struct bsal_transport *self, int *argc, char ***arg
     concrete_self->datatype = MPI_BYTE;
 }
 
-void bsal_mpi_transport_destroy(struct bsal_transport *self)
+void thorium_mpi_transport_destroy(struct thorium_transport *self)
 {
-    struct bsal_mpi_transport *concrete_self;
+    struct thorium_mpi_transport *concrete_self;
     int result;
 
-    concrete_self = bsal_transport_get_concrete_transport(self);
+    concrete_self = thorium_transport_get_concrete_transport(self);
 
     /*
      * \see http://www.mpich.org/static/docs/v3.1/www3/MPI_Comm_free.html
@@ -110,28 +110,28 @@ void bsal_mpi_transport_destroy(struct bsal_transport *self)
 }
 
 /* \see http://www.mpich.org/static/docs/v3.1/www3/MPI_Isend.html */
-int bsal_mpi_transport_send(struct bsal_transport *self, struct bsal_message *message)
+int thorium_mpi_transport_send(struct thorium_transport *self, struct thorium_message *message)
 {
-    struct bsal_mpi_transport *concrete_self;
+    struct thorium_mpi_transport *concrete_self;
     char *buffer;
     int count;
     int destination;
     int tag;
     MPI_Request *request;
-    struct bsal_active_request active_request;
+    struct thorium_active_request active_request;
     int worker;
     int result;
 
-    concrete_self = bsal_transport_get_concrete_transport(self);
+    concrete_self = thorium_transport_get_concrete_transport(self);
 
-    worker = bsal_message_get_worker(message);
-    buffer = bsal_message_buffer(message);
-    count = bsal_message_count(message);
-    destination = bsal_message_destination_node(message);
-    tag = bsal_message_tag(message);
+    worker = thorium_message_get_worker(message);
+    buffer = thorium_message_buffer(message);
+    count = thorium_message_count(message);
+    destination = thorium_message_destination_node(message);
+    tag = thorium_message_tag(message);
 
-    bsal_active_request_init(&active_request, buffer, worker);
-    request = bsal_active_request_request(&active_request);
+    thorium_active_request_init(&active_request, buffer, worker);
+    request = thorium_active_request_request(&active_request);
 
     BSAL_DEBUGGER_ASSERT(buffer == NULL || count > 0);
 
@@ -158,9 +158,9 @@ int bsal_mpi_transport_send(struct bsal_transport *self, struct bsal_message *me
 /* \see http://www.mpich.org/static/docs/v3.1/www3/MPI_Iprobe.html */
 /* \see http://www.mpich.org/static/docs/v3.1/www3/MPI_Recv.html */
 /* \see http://www.malcolmmclean.site11.com/www/MpiTutorial/MPIStatus.html */
-int bsal_mpi_transport_receive(struct bsal_transport *self, struct bsal_message *message)
+int thorium_mpi_transport_receive(struct thorium_transport *self, struct thorium_message *message)
 {
-    struct bsal_mpi_transport *concrete_self;
+    struct thorium_mpi_transport *concrete_self;
     char *buffer;
     int count;
     int source;
@@ -170,7 +170,7 @@ int bsal_mpi_transport_receive(struct bsal_transport *self, struct bsal_message 
     MPI_Status status;
     int result;
 
-    concrete_self = bsal_transport_get_concrete_transport(self);
+    concrete_self = thorium_transport_get_concrete_transport(self);
     source = MPI_ANY_SOURCE;
     tag = MPI_ANY_TAG;
 
@@ -213,7 +213,7 @@ int bsal_mpi_transport_receive(struct bsal_transport *self, struct bsal_message 
      * Prepare the message. The worker will be -1 to tell the thorium
      * code that this is not a worker buffer.
      */
-    bsal_message_init_with_nodes(message, tag, count, buffer, source,
+    thorium_message_init_with_nodes(message, tag, count, buffer, source,
                     destination);
 
     return 1;

@@ -3,7 +3,7 @@
 
 #include <stdio.h>
 
-struct bsal_script table_script = {
+struct thorium_script table_script = {
     .identifier = TABLE_SCRIPT,
     .init = table_init,
     .destroy = table_destroy,
@@ -12,42 +12,42 @@ struct bsal_script table_script = {
     .name = "table"
 };
 
-void table_init(struct bsal_actor *actor)
+void table_init(struct thorium_actor *actor)
 {
     struct table *table1;
 
-    table1 = (struct table *)bsal_actor_concrete_actor(actor);
+    table1 = (struct table *)thorium_actor_concrete_actor(actor);
     table1->done = 0;
     bsal_vector_init(&table1->spawners, sizeof(int));
 }
 
-void table_destroy(struct bsal_actor *actor)
+void table_destroy(struct thorium_actor *actor)
 {
     struct table *table1;
 
-    table1 = (struct table *)bsal_actor_concrete_actor(actor);
+    table1 = (struct table *)thorium_actor_concrete_actor(actor);
 
     bsal_vector_destroy(&table1->spawners);
-    printf("actor %d dies\n", bsal_actor_name(actor));
+    printf("actor %d dies\n", thorium_actor_name(actor));
 }
 
-void table_receive(struct bsal_actor *actor, struct bsal_message *message)
+void table_receive(struct thorium_actor *actor, struct thorium_message *message)
 {
     int tag;
     int source;
     int name;
     int remote;
-    struct bsal_message spawn_message;
+    struct thorium_message spawn_message;
     int script;
     int new_actor;
     void *buffer;
     struct table *table1;
 
-    table1 = (struct table *)bsal_actor_concrete_actor(actor);
-    source = bsal_message_source(message);
-    tag = bsal_message_tag(message);
-    name = bsal_actor_name(actor);
-    buffer = bsal_message_buffer(message);
+    table1 = (struct table *)thorium_actor_concrete_actor(actor);
+    source = thorium_message_source(message);
+    tag = thorium_message_tag(message);
+    name = thorium_actor_name(actor);
+    buffer = thorium_message_buffer(message);
 
     if (tag == BSAL_ACTOR_START) {
         printf("Actor %i receives BSAL_ACTOR_START from actor %i\n",
@@ -60,13 +60,13 @@ void table_receive(struct bsal_actor *actor, struct bsal_message *message)
         remote %= bsal_vector_size(&table1->spawners);
 
         script = TABLE_SCRIPT;
-        bsal_message_init(&spawn_message, BSAL_ACTOR_SPAWN, sizeof(script), &script);
-        bsal_actor_send(actor, *(int *)bsal_vector_at(&table1->spawners, remote), &spawn_message);
+        thorium_message_init(&spawn_message, BSAL_ACTOR_SPAWN, sizeof(script), &script);
+        thorium_actor_send(actor, *(int *)bsal_vector_at(&table1->spawners, remote), &spawn_message);
 
         /*
         printf("sending notification\n");
-        bsal_message_init(message, TABLE_NOTIFY, 0, NULL);
-        bsal_actor_send(actor, 0, message);
+        thorium_message_init(message, TABLE_NOTIFY, 0, NULL);
+        thorium_actor_send(actor, 0, message);
 */
     } else if (tag == BSAL_ACTOR_SPAWN_REPLY) {
 
@@ -76,11 +76,11 @@ void table_receive(struct bsal_actor *actor, struct bsal_message *message)
                         " new actor is %d\n",
                         name,  source, new_actor);
 
-        bsal_message_init(message, TABLE_DIE2, 0, NULL);
-        bsal_actor_send(actor, new_actor, message);
+        thorium_message_init(message, TABLE_DIE2, 0, NULL);
+        thorium_actor_send(actor, new_actor, message);
 
-        bsal_message_init(message, TABLE_NOTIFY, 0, NULL);
-        bsal_actor_send(actor, bsal_vector_at_as_int(&table1->spawners, 0), message);
+        thorium_message_init(message, TABLE_NOTIFY, 0, NULL);
+        thorium_actor_send(actor, bsal_vector_at_as_int(&table1->spawners, 0), message);
 
     } else if (tag == TABLE_DIE2) {
 
@@ -91,16 +91,16 @@ void table_receive(struct bsal_actor *actor, struct bsal_message *message)
             return;
         }
 
-        bsal_message_init(message, BSAL_ACTOR_STOP, 0, NULL);
-        bsal_actor_send(actor, name, message);
+        thorium_message_init(message, BSAL_ACTOR_STOP, 0, NULL);
+        thorium_actor_send(actor, name, message);
 
     } else if (tag == TABLE_DIE) {
 
         printf("Actor %i receives TABLE_DIE from actor %i\n",
                         name,  source);
 
-        bsal_message_init(message, BSAL_ACTOR_STOP, 0, NULL);
-        bsal_actor_send(actor, name, message);
+        thorium_message_init(message, BSAL_ACTOR_STOP, 0, NULL);
+        thorium_actor_send(actor, name, message);
 
     } else if (tag == TABLE_NOTIFY) {
 
@@ -112,8 +112,8 @@ void table_receive(struct bsal_actor *actor, struct bsal_message *message)
         if (table1->done == bsal_vector_size(&table1->spawners)) {
             printf("actor %d kills %d to %d\n",
                            name, 0, (int)bsal_vector_size(&table1->spawners) - 1);
-            bsal_message_init(message, TABLE_DIE, 0, NULL);
-            bsal_actor_send_range(actor, &table1->spawners, message);
+            thorium_message_init(message, TABLE_DIE, 0, NULL);
+            thorium_actor_send_range(actor, &table1->spawners, message);
         }
     }
 }

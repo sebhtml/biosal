@@ -3,35 +3,35 @@
 
 void bsal_thorium_engine_init(struct bsal_thorium_engine *self, int *argc, char ***argv)
 {
-    bsal_node_init(&self->node, argc, argv);
+    thorium_node_init(&self->node, argc, argv);
 }
 
 void bsal_thorium_engine_destroy(struct bsal_thorium_engine *self)
 {
-    bsal_node_destroy(&self->node);
+    thorium_node_destroy(&self->node);
 }
 
 int bsal_thorium_engine_boot(struct bsal_thorium_engine *self, int script_identifier,
-                struct bsal_script *script)
+                struct thorium_script *script)
 {
     /*
      * Register the script
      */
-    bsal_node_add_script(&self->node, script_identifier, script);
+    thorium_node_add_script(&self->node, script_identifier, script);
 
     /*
      * Spawn the initial actor
      */
-    bsal_node_spawn(&self->node, script_identifier);
+    thorium_node_spawn(&self->node, script_identifier);
 
     /*
      * Boot the Thorium node
      */
-    return bsal_node_run(&self->node);
+    return thorium_node_run(&self->node);
 }
 
 
-int bsal_thorium_engine_boot_initial_actor(int *argc, char ***argv, int script_identifier, struct bsal_script *script)
+int bsal_thorium_engine_boot_initial_actor(int *argc, char ***argv, int script_identifier, struct thorium_script *script)
 {
     struct bsal_thorium_engine thorium_engine;
     int return_value;
@@ -39,7 +39,7 @@ int bsal_thorium_engine_boot_initial_actor(int *argc, char ***argv, int script_i
 #if 0
     int script_identifier;
 
-    script_identifier = bsal_script_identifier(script);
+    script_identifier = thorium_script_identifier(script);
 #endif
 
     bsal_thorium_engine_init(&thorium_engine, argc, argv);

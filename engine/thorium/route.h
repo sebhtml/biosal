@@ -13,19 +13,19 @@
  *
  * Routes are indexed by tags, then by sources.
  */
-struct bsal_route {
+struct thorium_route {
     int *actual_value;
     int expected_value;
-    bsal_actor_receive_fn_t handler;
+    thorium_actor_receive_fn_t handler;
 };
 
-void bsal_route_init(struct bsal_route *self, int *actual_value, int expected_value,
-                bsal_actor_receive_fn_t handler);
-void bsal_route_destroy(struct bsal_route *self);
-int bsal_route_test(struct bsal_route *self);
-bsal_actor_receive_fn_t bsal_route_handler(struct bsal_route *self);
+void thorium_route_init(struct thorium_route *self, int *actual_value, int expected_value,
+                thorium_actor_receive_fn_t handler);
+void thorium_route_destroy(struct thorium_route *self);
+int thorium_route_test(struct thorium_route *self);
+thorium_actor_receive_fn_t thorium_route_handler(struct thorium_route *self);
 
-int bsal_route_equals(struct bsal_route *self, struct bsal_route *route);
+int thorium_route_equals(struct thorium_route *self, struct thorium_route *route);
 
 
 #endif

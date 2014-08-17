@@ -5,18 +5,18 @@
 
 #include <stdint.h>
 
-int bsal_message_unpack_int(struct bsal_message *message, int offset, int *value)
+int thorium_message_unpack_int(struct thorium_message *message, int offset, int *value)
 {
     int bytes;
     void *buffer;
     int *pointer;
 
-    if (offset >= bsal_message_count(message)) {
+    if (offset >= thorium_message_count(message)) {
         return -1;
     }
 
     bytes = sizeof(value);
-    buffer = bsal_message_buffer(message);
+    buffer = thorium_message_buffer(message);
 
     pointer = (int *)((char *)buffer + offset);
 
@@ -27,18 +27,18 @@ int bsal_message_unpack_int(struct bsal_message *message, int offset, int *value
     return offset;
 }
 
-int bsal_message_unpack_uint64_t(struct bsal_message *message, int offset, uint64_t *value)
+int thorium_message_unpack_uint64_t(struct thorium_message *message, int offset, uint64_t *value)
 {
     int bytes;
     void *buffer;
     uint64_t *pointer;
 
-    if (offset >= bsal_message_count(message)) {
+    if (offset >= thorium_message_count(message)) {
         return -1;
     }
 
     bytes = sizeof(value);
-    buffer = bsal_message_buffer(message);
+    buffer = thorium_message_buffer(message);
 
     pointer = (uint64_t *)((char *)buffer + offset);
 
@@ -49,26 +49,26 @@ int bsal_message_unpack_uint64_t(struct bsal_message *message, int offset, uint6
     return offset;
 }
 
-void bsal_message_get_all(struct bsal_message *message, int *tag, int *count, void **buffer, int *source)
+void thorium_message_get_all(struct thorium_message *message, int *tag, int *count, void **buffer, int *source)
 {
-    *tag = bsal_message_tag(message);
-    *count = bsal_message_count(message);
-    *buffer = bsal_message_buffer(message);
-    *source = bsal_message_source(message);
+    *tag = thorium_message_tag(message);
+    *count = thorium_message_count(message);
+    *buffer = thorium_message_buffer(message);
+    *source = thorium_message_source(message);
 }
 
-int bsal_message_unpack_int64_t(struct bsal_message *message, int offset, int64_t *value)
+int thorium_message_unpack_int64_t(struct thorium_message *message, int offset, int64_t *value)
 {
     int bytes;
     void *buffer;
     int64_t *pointer;
 
-    if (offset >= bsal_message_count(message)) {
+    if (offset >= thorium_message_count(message)) {
         return -1;
     }
 
     bytes = sizeof(value);
-    buffer = bsal_message_buffer(message);
+    buffer = thorium_message_buffer(message);
 
     pointer = (int64_t *)((char *)buffer + offset);
 
@@ -79,18 +79,18 @@ int bsal_message_unpack_int64_t(struct bsal_message *message, int offset, int64_
     return offset;
 }
 
-int bsal_message_unpack_double(struct bsal_message *message, int offset, double *value)
+int thorium_message_unpack_double(struct thorium_message *message, int offset, double *value)
 {
     int bytes;
     void *buffer;
     double *pointer;
 
-    if (offset >= bsal_message_count(message)) {
+    if (offset >= thorium_message_count(message)) {
         return -1;
     }
 
     bytes = sizeof(value);
-    buffer = bsal_message_buffer(message);
+    buffer = thorium_message_buffer(message);
 
     pointer = (double *)((char *)buffer + offset);
 

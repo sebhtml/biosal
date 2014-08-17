@@ -50,21 +50,21 @@ struct argonnite {
 
 };
 
-extern struct bsal_script argonnite_script;
+extern struct thorium_script argonnite_script;
 
 #define ARGONNITE_PROBE_KMER_STORES 0x00001ba7
 #define ARGONNITE_PREPARE_SEQUENCE_STORES 0x00003264
 
-void argonnite_init(struct bsal_actor *actor);
-void argonnite_destroy(struct bsal_actor *actor);
-void argonnite_receive(struct bsal_actor *actor, struct bsal_message *message);
+void argonnite_init(struct thorium_actor *actor);
+void argonnite_destroy(struct thorium_actor *actor);
+void argonnite_receive(struct thorium_actor *actor, struct thorium_message *message);
 
-void argonnite_add_file(struct bsal_actor *actor, struct bsal_message *message);
-void argonnite_help(struct bsal_actor *actor);
+void argonnite_add_file(struct thorium_actor *actor, struct thorium_message *message);
+void argonnite_help(struct thorium_actor *actor);
 
-void argonnite_prepare_sequence_stores_reply(struct bsal_actor *self, struct bsal_message *message);
-void argonnite_prepare_sequence_stores(struct bsal_actor *self, struct bsal_message *message);
-void argonnite_connect_kernels_with_stores(struct bsal_actor *self, struct bsal_message *message);
-void argonnite_request_progress_reply(struct bsal_actor *actor, struct bsal_message *message);
+void argonnite_prepare_sequence_stores_reply(struct thorium_actor *self, struct thorium_message *message);
+void argonnite_prepare_sequence_stores(struct thorium_actor *self, struct thorium_message *message);
+void argonnite_connect_kernels_with_stores(struct thorium_actor *self, struct thorium_message *message);
+void argonnite_request_progress_reply(struct thorium_actor *actor, struct thorium_message *message);
 
 #endif

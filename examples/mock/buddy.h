@@ -15,10 +15,10 @@ struct buddy {
 #define BUDDY_BOOT 0x0000265b
 #define BUDDY_BOOT_REPLY 0x00006d65
 
-extern struct bsal_script buddy_script;
+extern struct thorium_script buddy_script;
 
-void buddy_init(struct bsal_actor *self);
-void buddy_destroy(struct bsal_actor *self);
-void buddy_receive(struct bsal_actor *self, struct bsal_message *message);
+void buddy_init(struct thorium_actor *self);
+void buddy_destroy(struct thorium_actor *self);
+void buddy_receive(struct thorium_actor *self, struct thorium_message *message);
 
 #endif

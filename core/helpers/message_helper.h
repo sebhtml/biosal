@@ -4,12 +4,12 @@
 
 #include <stdint.h>
 
-struct bsal_message;
+struct thorium_message;
 
-int bsal_message_unpack_int(struct bsal_message *message, int offset, int *value);
-int bsal_message_unpack_double(struct bsal_message *message, int offset, double *value);
-int bsal_message_unpack_uint64_t(struct bsal_message *message, int offset, uint64_t *value);
-int bsal_message_unpack_int64_t(struct bsal_message *message, int offset, int64_t *value);
-void bsal_message_get_all(struct bsal_message *message, int *tag, int *count, void **buffer, int *source);
+int thorium_message_unpack_int(struct thorium_message *message, int offset, int *value);
+int thorium_message_unpack_double(struct thorium_message *message, int offset, double *value);
+int thorium_message_unpack_uint64_t(struct thorium_message *message, int offset, uint64_t *value);
+int thorium_message_unpack_int64_t(struct thorium_message *message, int offset, int64_t *value);
+void thorium_message_get_all(struct thorium_message *message, int *tag, int *count, void **buffer, int *source);
 
 #endif

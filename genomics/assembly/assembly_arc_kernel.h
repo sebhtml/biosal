@@ -34,14 +34,14 @@ struct bsal_assembly_arc_kernel {
     int flushed_messages;
 };
 
-extern struct bsal_script bsal_assembly_arc_kernel_script;
+extern struct thorium_script bsal_assembly_arc_kernel_script;
 
-void bsal_assembly_arc_kernel_init(struct bsal_actor *self);
-void bsal_assembly_arc_kernel_destroy(struct bsal_actor *self);
-void bsal_assembly_arc_kernel_receive(struct bsal_actor *self, struct bsal_message *message);
+void bsal_assembly_arc_kernel_init(struct thorium_actor *self);
+void bsal_assembly_arc_kernel_destroy(struct thorium_actor *self);
+void bsal_assembly_arc_kernel_receive(struct thorium_actor *self, struct thorium_message *message);
 
-void bsal_assembly_arc_kernel_set_kmer_length(struct bsal_actor *self, struct bsal_message *message);
-void bsal_assembly_arc_kernel_push_sequence_data_block(struct bsal_actor *self, struct bsal_message *message);
-void bsal_assembly_arc_kernel_ask(struct bsal_actor *self, struct bsal_message *message);
+void bsal_assembly_arc_kernel_set_kmer_length(struct thorium_actor *self, struct thorium_message *message);
+void bsal_assembly_arc_kernel_push_sequence_data_block(struct thorium_actor *self, struct thorium_message *message);
+void bsal_assembly_arc_kernel_ask(struct thorium_actor *self, struct thorium_message *message);
 
 #endif

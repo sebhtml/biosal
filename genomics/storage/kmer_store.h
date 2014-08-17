@@ -43,14 +43,14 @@ struct bsal_kmer_store {
 #define BSAL_STORE_GET_ENTRY_COUNT 0x00007aad
 #define BSAL_STORE_GET_ENTRY_COUNT_REPLY 0x00002e6a
 
-extern struct bsal_script bsal_kmer_store_script;
+extern struct thorium_script bsal_kmer_store_script;
 
-void bsal_kmer_store_init(struct bsal_actor *actor);
-void bsal_kmer_store_destroy(struct bsal_actor *actor);
-void bsal_kmer_store_receive(struct bsal_actor *actor, struct bsal_message *message);
+void bsal_kmer_store_init(struct thorium_actor *actor);
+void bsal_kmer_store_destroy(struct thorium_actor *actor);
+void bsal_kmer_store_receive(struct thorium_actor *actor, struct thorium_message *message);
 
-void bsal_kmer_store_print(struct bsal_actor *self);
-void bsal_kmer_store_push_data(struct bsal_actor *self, struct bsal_message *message);
-void bsal_kmer_store_yield_reply(struct bsal_actor *self, struct bsal_message *message);
+void bsal_kmer_store_print(struct thorium_actor *self);
+void bsal_kmer_store_push_data(struct thorium_actor *self, struct thorium_message *message);
+void bsal_kmer_store_yield_reply(struct thorium_actor *self, struct thorium_message *message);
 
 #endif

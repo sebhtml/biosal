@@ -51,8 +51,8 @@
 /*
 */
 
-struct bsal_script;
-struct bsal_worker_buffer;
+struct thorium_script;
+struct thorium_worker_buffer;
 
 /*
  * This is the Thorium distributed actor engine developed
@@ -63,13 +63,13 @@ struct bsal_worker_buffer;
  *
  * Thorium has these components:
  *
- * - Runtime node (struct bsal_node)
- * - Actor scheduler (struct bsal_scheduler)
- * - Actor (struct bsal_actor)
- * - Message (struct bsal_message)
- * - Worker pool (struct bsal_worker_pool)
- * - Worker (struct bsal_worker)
- * - Actor script (struct bsal_script)
+ * - Runtime node (struct thorium_node)
+ * - Actor scheduler (struct thorium_scheduler)
+ * - Actor (struct thorium_actor)
+ * - Message (struct thorium_message)
+ * - Worker pool (struct thorium_worker_pool)
+ * - Worker (struct thorium_worker)
+ * - Actor script (struct thorium_script)
  *
  * - message reception: one queue per thread
  * - the queue has variables for its heads
@@ -80,10 +80,10 @@ struct bsal_worker_buffer;
  * - use actor affinity in implementation
  *
  */
-struct bsal_node {
+struct thorium_node {
     struct bsal_vector actors;
     struct bsal_set auto_scaling_actors;
-    struct bsal_worker_pool worker_pool;
+    struct thorium_worker_pool worker_pool;
     struct bsal_map actor_names;
     struct bsal_vector initial_actors;
     int received_initial_actors;
@@ -114,22 +114,22 @@ struct bsal_node {
     int use_transport;
 
     struct bsal_thread thread;
-    struct bsal_transport transport;
+    struct thorium_transport transport;
 
     /*
      * This lock can not be removed because
-     * of the function bsal_actor_spawn.
+     * of the function thorium_actor_spawn.
      * The message BSAL_ACTOR_SPAWN however does not
      * requires locking.
      *
-     * If bsal_actor_spawn is removed from the API, then
+     * If thorium_actor_spawn is removed from the API, then
      * this lock might be removed.
      */
     struct bsal_lock spawn_and_death_lock;
 
     /*
      * This lock is required because of the
-     * function bsal_actor_add_script.
+     * function thorium_actor_add_script.
      *
      * A message tag BSAL_ACTOR_ADD_SCRIPT could be added
      * in order to remove this lock.
@@ -138,12 +138,12 @@ struct bsal_node {
 
     /*
      * This lock is required because it is accessed when
-     * bsal_node_notify_death is called from bsal_actor_die.
+     * thorium_node_notify_death is called from thorium_actor_die.
      *
      * This could be fixed by changing the semantics of BSAL_ACTOR_STOP.
      * Instead of catching it inside an actor, the actor could just send it to itself
      * and the Thorium engine could catch it and kill the actor
-     * (the Thorium pacing thread would call bsal_node_notify_death
+     * (the Thorium pacing thread would call thorium_node_notify_death
      * instead of the worker thread).
      */
     struct bsal_lock auto_scaling_lock;
@@ -203,90 +203,90 @@ struct bsal_node {
     char print_counters;
 };
 
-void bsal_node_init(struct bsal_node *self, int *argc, char ***argv);
-void bsal_node_destroy(struct bsal_node *self);
-int bsal_node_run(struct bsal_node *self);
-void bsal_node_start_initial_actor(struct bsal_node *self);
+void thorium_node_init(struct thorium_node *self, int *argc, char ***argv);
+void thorium_node_destroy(struct thorium_node *self);
+int thorium_node_run(struct thorium_node *self);
+void thorium_node_start_initial_actor(struct thorium_node *self);
 
-int bsal_node_spawn_state(struct bsal_node *self, void *state,
-                struct bsal_script *script);
-int bsal_node_spawn(struct bsal_node *self, int script);
-void bsal_node_send(struct bsal_node *self, struct bsal_message *message);
+int thorium_node_spawn_state(struct thorium_node *self, void *state,
+                struct thorium_script *script);
+int thorium_node_spawn(struct thorium_node *self, int script);
+void thorium_node_send(struct thorium_node *self, struct thorium_message *message);
 
-int bsal_node_generate_name(struct bsal_node *self);
+int thorium_node_generate_name(struct thorium_node *self);
 
-int bsal_node_actor_node(struct bsal_node *self, int name);
-int bsal_node_actor_index(struct bsal_node *self, int name);
-struct bsal_actor *bsal_node_get_actor_from_name(struct bsal_node *self,
+int thorium_node_actor_node(struct thorium_node *self, int name);
+int thorium_node_actor_index(struct thorium_node *self, int name);
+struct thorium_actor *thorium_node_get_actor_from_name(struct thorium_node *self,
                 int name);
 
-int bsal_node_name(struct bsal_node *self);
-int bsal_node_nodes(struct bsal_node *self);
-int bsal_node_actors(struct bsal_node *self);
+int thorium_node_name(struct thorium_node *self);
+int thorium_node_nodes(struct thorium_node *self);
+int thorium_node_actors(struct thorium_node *self);
 
-void bsal_node_set_supervisor(struct bsal_node *self, int name, int supervisor);
+void thorium_node_set_supervisor(struct thorium_node *self, int name, int supervisor);
 
-void bsal_node_run_loop(struct bsal_node *self);
+void thorium_node_run_loop(struct thorium_node *self);
 
-void bsal_node_send_message(struct bsal_node *self);
-void bsal_node_notify_death(struct bsal_node *self, struct bsal_actor *actor);
+void thorium_node_send_message(struct thorium_node *self);
+void thorium_node_notify_death(struct thorium_node *self, struct thorium_actor *actor);
 
-void bsal_node_inject_message_in_pool(struct bsal_node *self, struct bsal_message *message);
-int bsal_node_pull(struct bsal_node *self, struct bsal_message *message);
+void thorium_node_inject_message_in_pool(struct thorium_node *self, struct thorium_message *message);
+int thorium_node_pull(struct thorium_node *self, struct thorium_message *message);
 
-int bsal_node_worker_count(struct bsal_node *self);
-int bsal_node_thread_count(struct bsal_node *self);
+int thorium_node_worker_count(struct thorium_node *self);
+int thorium_node_thread_count(struct thorium_node *self);
 
-int bsal_node_argc(struct bsal_node *self);
-char **bsal_node_argv(struct bsal_node *self);
-void *bsal_node_main(void *node1);
-int bsal_node_running(struct bsal_node *self);
-void bsal_node_start_send_thread(struct bsal_node *self);
-int bsal_node_threads_from_string(struct bsal_node *self,
+int thorium_node_argc(struct thorium_node *self);
+char **thorium_node_argv(struct thorium_node *self);
+void *thorium_node_main(void *node1);
+int thorium_node_running(struct thorium_node *self);
+void thorium_node_start_send_thread(struct thorium_node *self);
+int thorium_node_threads_from_string(struct thorium_node *self,
                 char *required_threads, int index);
 
-void bsal_node_add_script(struct bsal_node *self, int name, struct bsal_script *script);
-struct bsal_script *bsal_node_find_script(struct bsal_node *self, int identifier);
-int bsal_node_has_script(struct bsal_node *self, struct bsal_script *script);
+void thorium_node_add_script(struct thorium_node *self, int name, struct thorium_script *script);
+struct thorium_script *thorium_node_find_script(struct thorium_node *self, int identifier);
+int thorium_node_has_script(struct thorium_node *self, struct thorium_script *script);
 
-void bsal_node_send_to_node(struct bsal_node *self, int destination,
-                struct bsal_message *message);
-void bsal_node_send_to_node_empty(struct bsal_node *self, int destination, int tag);
-int bsal_node_receive_system(struct bsal_node *self, struct bsal_message *message);
-void bsal_node_dispatch_message(struct bsal_node *self, struct bsal_message *message);
-void bsal_node_set_initial_actor(struct bsal_node *self, int node_name, int actor);
-int bsal_node_allocate_actor_index(struct bsal_node *self);
+void thorium_node_send_to_node(struct thorium_node *self, int destination,
+                struct thorium_message *message);
+void thorium_node_send_to_node_empty(struct thorium_node *self, int destination, int tag);
+int thorium_node_receive_system(struct thorium_node *self, struct thorium_message *message);
+void thorium_node_dispatch_message(struct thorium_node *self, struct thorium_message *message);
+void thorium_node_set_initial_actor(struct thorium_node *self, int node_name, int actor);
+int thorium_node_allocate_actor_index(struct thorium_node *self);
 
-void bsal_node_print_event_counters(struct bsal_node *self);
-void bsal_node_print_counters(struct bsal_node *self);
+void thorium_node_print_event_counters(struct thorium_node *self);
+void thorium_node_print_counters(struct thorium_node *self);
 
-void bsal_node_handle_signal(int signal);
-void bsal_node_register_signal_handlers(struct bsal_node *self);
+void thorium_node_handle_signal(int signal);
+void thorium_node_register_signal_handlers(struct thorium_node *self);
 
-void bsal_node_print_structure(struct bsal_node *self, struct bsal_actor *actor);
-int bsal_node_has_actor(struct bsal_node *self, int name);
+void thorium_node_print_structure(struct thorium_node *self, struct thorium_actor *actor);
+int thorium_node_has_actor(struct thorium_node *self, int name);
 
-struct bsal_worker_pool *bsal_node_get_worker_pool(struct bsal_node *self);
+struct thorium_worker_pool *thorium_node_get_worker_pool(struct thorium_node *self);
 
-void bsal_node_toggle_debug_mode(struct bsal_node *self);
+void thorium_node_toggle_debug_mode(struct thorium_node *self);
 
-void bsal_node_reset_actor_counters(struct bsal_node *self);
+void thorium_node_reset_actor_counters(struct thorium_node *self);
 
-int64_t bsal_node_get_counter(struct bsal_node *self, int counter);
-void bsal_node_test_requests(struct bsal_node *self);
+int64_t thorium_node_get_counter(struct thorium_node *self, int counter);
+void thorium_node_test_requests(struct thorium_node *self);
 
-void bsal_node_free_worker_buffer(struct bsal_node *self,
-                struct bsal_worker_buffer *worker_buffer);
+void thorium_node_free_worker_buffer(struct thorium_node *self,
+                struct thorium_worker_buffer *worker_buffer);
 
-void bsal_node_send_to_actor(struct bsal_node *self, int name, struct bsal_message *message);
-void bsal_node_check_efficiency(struct bsal_node *self);
-int bsal_node_send_system(struct bsal_node *self, struct bsal_message *message);
+void thorium_node_send_to_actor(struct thorium_node *self, int name, struct thorium_message *message);
+void thorium_node_check_efficiency(struct thorium_node *self);
+int thorium_node_send_system(struct thorium_node *self, struct thorium_message *message);
 
-void bsal_node_do_message_triage(struct bsal_node *self);
-void bsal_node_recycle_inbound_message(struct bsal_node *self, struct bsal_message *message);
+void thorium_node_do_message_triage(struct thorium_node *self);
+void thorium_node_recycle_inbound_message(struct thorium_node *self, struct thorium_message *message);
 
-void bsal_node_prepare_received_message(struct bsal_node *self, struct bsal_message *message);
-void bsal_node_resolve(struct bsal_node *self, struct bsal_message *message);
+void thorium_node_prepare_received_message(struct thorium_node *self, struct thorium_message *message);
+void thorium_node_resolve(struct thorium_node *self, struct thorium_message *message);
 
 
 #endif

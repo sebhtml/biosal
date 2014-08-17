@@ -48,23 +48,23 @@ struct bsal_sequence_store {
 #define BSAL_SEQUENCE_STORE_REQUEST_PROGRESS 0x0000648a
 #define BSAL_SEQUENCE_STORE_REQUEST_PROGRESS_REPLY 0x000074a5
 
-extern struct bsal_script bsal_sequence_store_script;
+extern struct thorium_script bsal_sequence_store_script;
 
-void bsal_sequence_store_init(struct bsal_actor *actor);
-void bsal_sequence_store_destroy(struct bsal_actor *actor);
-void bsal_sequence_store_receive(struct bsal_actor *actor, struct bsal_message *message);
+void bsal_sequence_store_init(struct thorium_actor *actor);
+void bsal_sequence_store_destroy(struct thorium_actor *actor);
+void bsal_sequence_store_receive(struct thorium_actor *actor, struct thorium_message *message);
 
-int bsal_sequence_store_has_error(struct bsal_actor *actor,
-                struct bsal_message *message);
+int bsal_sequence_store_has_error(struct thorium_actor *actor,
+                struct thorium_message *message);
 
-int bsal_sequence_store_check_open_error(struct bsal_actor *actor,
-                struct bsal_message *message);
-void bsal_sequence_store_push_sequence_data_block(struct bsal_actor *actor, struct bsal_message *message);
-void bsal_sequence_store_reserve(struct bsal_actor *actor, struct bsal_message *message);
-void bsal_sequence_store_show_progress(struct bsal_actor *actor, struct bsal_message *message);
+int bsal_sequence_store_check_open_error(struct thorium_actor *actor,
+                struct thorium_message *message);
+void bsal_sequence_store_push_sequence_data_block(struct thorium_actor *actor, struct thorium_message *message);
+void bsal_sequence_store_reserve(struct thorium_actor *actor, struct thorium_message *message);
+void bsal_sequence_store_show_progress(struct thorium_actor *actor, struct thorium_message *message);
 
-void bsal_sequence_store_ask(struct bsal_actor *self, struct bsal_message *message);
+void bsal_sequence_store_ask(struct thorium_actor *self, struct thorium_message *message);
 
-int bsal_sequence_store_get_required_kmers(struct bsal_actor *actor, struct bsal_message *message);
+int bsal_sequence_store_get_required_kmers(struct thorium_actor *actor, struct thorium_message *message);
 
 #endif

@@ -28,7 +28,7 @@
  */
 #define ENABLE_PARALLEL_COUNT
 
-struct bsal_script bsal_input_stream_script = {
+struct thorium_script bsal_input_stream_script = {
     .identifier = BSAL_INPUT_STREAM_SCRIPT,
     .init = bsal_input_stream_init,
     .destroy = bsal_input_stream_destroy,
@@ -37,12 +37,12 @@ struct bsal_script bsal_input_stream_script = {
     .name = "input_stream"
 };
 
-void bsal_input_stream_init(struct bsal_actor *actor)
+void bsal_input_stream_init(struct thorium_actor *actor)
 {
     struct bsal_input_stream *input;
     struct bsal_input_stream *concrete_self;
 
-    input = (struct bsal_input_stream *)bsal_actor_concrete_actor(actor);
+    input = (struct bsal_input_stream *)thorium_actor_concrete_actor(actor);
     concrete_self = input;
     concrete_self->proxy_ready = 0;
     concrete_self->buffer_for_sequence = NULL;
@@ -55,7 +55,7 @@ void bsal_input_stream_init(struct bsal_actor *actor)
     bsal_dna_codec_init(&concrete_self->codec);
 
     if (bsal_dna_codec_must_use_two_bit_encoding(&concrete_self->codec,
-                            bsal_actor_get_node_count(actor))) {
+                            thorium_actor_get_node_count(actor))) {
         bsal_dna_codec_enable_two_bit_encoding(&concrete_self->codec);
     }
 
@@ -80,16 +80,16 @@ void bsal_input_stream_init(struct bsal_actor *actor)
 
     bsal_vector_init(&concrete_self->mega_blocks, sizeof(struct bsal_mega_block));
 
-    bsal_actor_add_route(actor, BSAL_INPUT_STREAM_SET_START_OFFSET, bsal_input_stream_set_start_offset);
-    bsal_actor_add_route(actor, BSAL_INPUT_STREAM_SET_END_OFFSET, bsal_input_stream_set_end_offset);
+    thorium_actor_add_route(actor, BSAL_INPUT_STREAM_SET_START_OFFSET, bsal_input_stream_set_start_offset);
+    thorium_actor_add_route(actor, BSAL_INPUT_STREAM_SET_END_OFFSET, bsal_input_stream_set_end_offset);
 
 #ifdef ENABLE_PARALLEL_COUNT
-    bsal_actor_add_route(actor, BSAL_INPUT_COUNT_IN_PARALLEL, bsal_input_stream_count_in_parallel);
-    bsal_actor_add_route(actor, BSAL_INPUT_COUNT_REPLY, bsal_input_stream_count_reply);
+    thorium_actor_add_route(actor, BSAL_INPUT_COUNT_IN_PARALLEL, bsal_input_stream_count_in_parallel);
+    thorium_actor_add_route(actor, BSAL_INPUT_COUNT_REPLY, bsal_input_stream_count_reply);
 
 #else
-    bsal_actor_add_route(actor, BSAL_INPUT_COUNT_IN_PARALLEL, bsal_input_stream_count_in_parallel_mock);
-    bsal_actor_add_route(actor, BSAL_INPUT_COUNT_REPLY, bsal_input_stream_count_reply_mock);
+    thorium_actor_add_route(actor, BSAL_INPUT_COUNT_IN_PARALLEL, bsal_input_stream_count_in_parallel_mock);
+    thorium_actor_add_route(actor, BSAL_INPUT_COUNT_REPLY, bsal_input_stream_count_reply_mock);
 #endif
 
     concrete_self->count_customer = BSAL_ACTOR_NOBODY;
@@ -118,11 +118,11 @@ void bsal_input_stream_init(struct bsal_actor *actor)
     bsal_vector_init(&concrete_self->parallel_mega_blocks, sizeof(struct bsal_vector));
 }
 
-void bsal_input_stream_destroy(struct bsal_actor *actor)
+void bsal_input_stream_destroy(struct thorium_actor *actor)
 {
     struct bsal_input_stream *concrete_self;
 
-    concrete_self = (struct bsal_input_stream *)bsal_actor_concrete_actor(actor);
+    concrete_self = (struct bsal_input_stream *)thorium_actor_concrete_actor(actor);
 
 #if 0
     bsal_string_destroy(&concrete_selffile_for_parallel_counting);
@@ -161,7 +161,7 @@ void bsal_input_stream_destroy(struct bsal_actor *actor)
     bsal_vector_destroy(&concrete_self->parallel_mega_blocks);
 }
 
-void bsal_input_stream_receive(struct bsal_actor *actor, struct bsal_message *message)
+void bsal_input_stream_receive(struct thorium_actor *actor, struct thorium_message *message)
 {
     int tag;
     int source;
@@ -177,14 +177,14 @@ void bsal_input_stream_receive(struct bsal_actor *actor, struct bsal_message *me
     struct bsal_mega_block mega_block;
     char *file_name_in_buffer;
 
-    if (bsal_actor_use_route(actor, message)) {
+    if (thorium_actor_use_route(actor, message)) {
         return;
     }
 
-    concrete_self = (struct bsal_input_stream *)bsal_actor_concrete_actor(actor);
-    tag = bsal_message_tag(message);
-    source = bsal_message_source(message);
-    buffer = (char *)bsal_message_buffer(message);
+    concrete_self = (struct bsal_input_stream *)thorium_actor_concrete_actor(actor);
+    tag = thorium_message_tag(message);
+    source = thorium_message_source(message);
+    buffer = (char *)thorium_message_buffer(message);
 
     /* Do nothing if there is an error.
      * has_error returns the error to the source.
@@ -205,8 +205,8 @@ void bsal_input_stream_receive(struct bsal_actor *actor, struct bsal_message *me
         if (concrete_self->open) {
 
             concrete_self->error = BSAL_INPUT_ERROR_ALREADY_OPEN;
-            bsal_actor_send_reply_int(actor, BSAL_INPUT_OPEN_REPLY, concrete_self->error);
-            bsal_actor_send_to_self_empty(actor, BSAL_ACTOR_ASK_TO_STOP);
+            thorium_actor_send_reply_int(actor, BSAL_INPUT_OPEN_REPLY, concrete_self->error);
+            thorium_actor_send_to_self_empty(actor, BSAL_ACTOR_ASK_TO_STOP);
 
             return;
         }
@@ -228,8 +228,8 @@ void bsal_input_stream_receive(struct bsal_actor *actor, struct bsal_message *me
         /*memcpy(&concrete_self->file_index, buffer, sizeof(concrete_self->file_index));*/
         file_name_in_buffer = buffer;
 
-        printf("stream/%d (node/%d) opens file %s offset %" PRIu64 "\n", bsal_actor_name(actor),
-                        bsal_actor_node_name(actor), file_name_in_buffer,
+        printf("stream/%d (node/%d) opens file %s offset %" PRIu64 "\n", thorium_actor_name(actor),
+                        thorium_actor_node_name(actor), file_name_in_buffer,
                         concrete_self->starting_offset);
         concrete_self->file_name = bsal_memory_allocate(strlen(file_name_in_buffer) + 1);
         strcpy(concrete_self->file_name, file_name_in_buffer);
@@ -247,8 +247,8 @@ void bsal_input_stream_receive(struct bsal_actor *actor, struct bsal_message *me
             printf("DEBUG has error\n");
 #endif
 
-            bsal_actor_send_reply_int(actor, BSAL_INPUT_OPEN_REPLY, concrete_self->error);
-            bsal_actor_send_to_self_empty(actor, BSAL_ACTOR_ASK_TO_STOP);
+            thorium_actor_send_reply_int(actor, BSAL_INPUT_OPEN_REPLY, concrete_self->error);
+            thorium_actor_send_to_self_empty(actor, BSAL_ACTOR_ASK_TO_STOP);
 
             return;
         }
@@ -256,7 +256,7 @@ void bsal_input_stream_receive(struct bsal_actor *actor, struct bsal_message *me
         concrete_self->controller = source;
 
         /* no error here... */
-        bsal_actor_send_reply_int(actor, BSAL_INPUT_OPEN_REPLY, concrete_self->error);
+        thorium_actor_send_reply_int(actor, BSAL_INPUT_OPEN_REPLY, concrete_self->error);
 
     } else if (tag == BSAL_INPUT_COUNT) {
         /* count a little bit and yield the worker */
@@ -267,8 +267,8 @@ void bsal_input_stream_receive(struct bsal_actor *actor, struct bsal_message *me
 
         if (bsal_input_stream_check_open_error(actor, message)) {
 
-            bsal_actor_send_reply_int64_t(actor, BSAL_INPUT_COUNT_REPLY, concrete_self->error);
-            bsal_actor_send_to_self_empty(actor, BSAL_ACTOR_ASK_TO_STOP);
+            thorium_actor_send_reply_int64_t(actor, BSAL_INPUT_COUNT_REPLY, concrete_self->error);
+            thorium_actor_send_to_self_empty(actor, BSAL_ACTOR_ASK_TO_STOP);
 
             return;
         }
@@ -307,14 +307,14 @@ void bsal_input_stream_receive(struct bsal_actor *actor, struct bsal_message *me
             concrete_self->last_entries = sequences;
             concrete_self->last_offset = bsal_input_proxy_offset(&concrete_self->proxy);
 
-            bsal_actor_send_int64_t(actor, concrete_self->controller, BSAL_INPUT_COUNT_PROGRESS, sequences);
+            thorium_actor_send_int64_t(actor, concrete_self->controller, BSAL_INPUT_COUNT_PROGRESS, sequences);
         }
 
         if (has_sequence) {
 
             /*printf("DEBUG yield\n");*/
 
-            bsal_actor_send_to_self_empty(actor, BSAL_ACTOR_YIELD);
+            thorium_actor_send_to_self_empty(actor, BSAL_ACTOR_YIELD);
 
             /* notify the controller of our progress...
              */
@@ -322,7 +322,7 @@ void bsal_input_stream_receive(struct bsal_actor *actor, struct bsal_message *me
 
         } else {
 
-            bsal_actor_send_to_self_empty(actor, BSAL_INPUT_COUNT_READY);
+            thorium_actor_send_to_self_empty(actor, BSAL_INPUT_COUNT_READY);
         }
 
     } else if (tag == BSAL_ACTOR_YIELD_REPLY) {
@@ -331,14 +331,14 @@ void bsal_input_stream_receive(struct bsal_actor *actor, struct bsal_message *me
                 /*
                  * it is not clear that there can be an error when receiving YIELD.
             error = concrete_self->error;
-            bsal_actor_send_reply_int(actor, BSAL_INPUT_COUNT_REPLY, error);
-            bsal_actor_send_to_self(actor, BSAL_ACTOR_ASK_TO_STOP);
+            thorium_actor_send_reply_int(actor, BSAL_INPUT_COUNT_REPLY, error);
+            thorium_actor_send_to_self(actor, BSAL_ACTOR_ASK_TO_STOP);
 
                  */
             return;
         }
 
-        bsal_actor_send_to_self_empty(actor, BSAL_INPUT_COUNT);
+        thorium_actor_send_to_self_empty(actor, BSAL_INPUT_COUNT);
 
     } else if (tag == BSAL_INPUT_COUNT_READY) {
 
@@ -348,11 +348,11 @@ void bsal_input_stream_receive(struct bsal_actor *actor, struct bsal_message *me
 
         count = bsal_input_proxy_size(&concrete_self->proxy);
 
-        bsal_actor_send_vector(actor, concrete_self->count_customer, BSAL_INPUT_COUNT_REPLY,
+        thorium_actor_send_vector(actor, concrete_self->count_customer, BSAL_INPUT_COUNT_REPLY,
                         &concrete_self->mega_blocks);
 
         printf("input_stream/%d on node/%d counted entries in %s, %" PRIu64 "\n",
-                        bsal_actor_name(actor), bsal_actor_node_name(actor),
+                        thorium_actor_name(actor), thorium_actor_node_name(actor),
                         concrete_self->file_name, count);
 
     } else if (tag == BSAL_INPUT_CLOSE) {
@@ -365,23 +365,23 @@ void bsal_input_stream_receive(struct bsal_actor *actor, struct bsal_message *me
         if (bsal_input_stream_check_open_error(actor, message)) {
             concrete_self->error = BSAL_INPUT_ERROR_FILE_NOT_OPEN;
 
-            bsal_message_init(message, BSAL_INPUT_CLOSE_REPLY, sizeof(concrete_self->error),
+            thorium_message_init(message, BSAL_INPUT_CLOSE_REPLY, sizeof(concrete_self->error),
                 &concrete_self->error);
-            bsal_actor_send(actor, source, message);
+            thorium_actor_send(actor, source, message);
 
-            bsal_actor_send_to_self_empty(actor, BSAL_ACTOR_ASK_TO_STOP);
+            thorium_actor_send_to_self_empty(actor, BSAL_ACTOR_ASK_TO_STOP);
             return;
         }
 
-        bsal_message_init(message, BSAL_INPUT_CLOSE_REPLY, sizeof(concrete_self->error),
+        thorium_message_init(message, BSAL_INPUT_CLOSE_REPLY, sizeof(concrete_self->error),
                 &concrete_self->error);
-        bsal_actor_send(actor, source, message);
+        thorium_actor_send(actor, source, message);
 
-        bsal_actor_send_to_self_empty(actor, BSAL_ACTOR_ASK_TO_STOP);
+        thorium_actor_send_to_self_empty(actor, BSAL_ACTOR_ASK_TO_STOP);
 
 #ifdef BSAL_INPUT_STREAM_DEBUG
         printf("actor %d sending BSAL_INPUT_CLOSE_REPLY to %d\n",
-                        bsal_actor_name(actor), source);
+                        thorium_actor_name(actor), source);
 #endif
 
     } else if (tag == BSAL_INPUT_GET_SEQUENCE) {
@@ -390,9 +390,9 @@ void bsal_input_stream_receive(struct bsal_actor *actor, struct bsal_message *me
 
             /* the error management could be better. */
             concrete_self->error = BSAL_INPUT_ERROR_FILE_NOT_OPEN;
-            bsal_message_init(message, BSAL_INPUT_GET_SEQUENCE_REPLY, sizeof(concrete_self->error),
+            thorium_message_init(message, BSAL_INPUT_GET_SEQUENCE_REPLY, sizeof(concrete_self->error),
                             &concrete_self->error);
-            bsal_actor_send(actor, source, message);
+            thorium_actor_send(actor, source, message);
 
             return;
         }
@@ -407,8 +407,8 @@ void bsal_input_stream_receive(struct bsal_actor *actor, struct bsal_message *me
                             read_buffer);
 
         if (!has_sequence) {
-            bsal_message_init(message, BSAL_INPUT_GET_SEQUENCE_END, 0, NULL);
-            bsal_actor_send(actor, source, message);
+            thorium_message_init(message, BSAL_INPUT_GET_SEQUENCE_END, 0, NULL);
+            thorium_actor_send(actor, source, message);
 
             return;
         }
@@ -417,9 +417,9 @@ void bsal_input_stream_receive(struct bsal_actor *actor, struct bsal_message *me
 
         memcpy(concrete_self->buffer_for_sequence, &sequence_index, sizeof(sequence_index));
 
-        bsal_message_init(message, BSAL_INPUT_GET_SEQUENCE_REPLY,
+        thorium_message_init(message, BSAL_INPUT_GET_SEQUENCE_REPLY,
                         buffer_size, concrete_self->buffer_for_sequence);
-        bsal_actor_send(actor, source, message);
+        thorium_actor_send(actor, source, message);
 
     } else if (tag == BSAL_INPUT_PUSH_SEQUENCES) {
 
@@ -427,19 +427,19 @@ void bsal_input_stream_receive(struct bsal_actor *actor, struct bsal_message *me
 
     } else if (tag == BSAL_ACTOR_ASK_TO_STOP) {
 
-        bsal_actor_send_to_self_empty(actor, BSAL_ACTOR_STOP);
+        thorium_actor_send_to_self_empty(actor, BSAL_ACTOR_STOP);
 
-        bsal_actor_send_range_empty(actor, &concrete_self->parallel_streams,
+        thorium_actor_send_range_empty(actor, &concrete_self->parallel_streams,
                         BSAL_ACTOR_ASK_TO_STOP);
 
-        bsal_actor_send_reply_empty(actor, BSAL_ACTOR_ASK_TO_STOP_REPLY);
+        thorium_actor_send_reply_empty(actor, BSAL_ACTOR_ASK_TO_STOP_REPLY);
 
     } else if (tag == BSAL_INPUT_STREAM_RESET) {
 
         /* fail silently
          */
         if (!concrete_self->open) {
-            bsal_actor_send_reply_empty(actor, BSAL_INPUT_STREAM_RESET_REPLY);
+            thorium_actor_send_reply_empty(actor, BSAL_INPUT_STREAM_RESET_REPLY);
             return;
         }
 
@@ -452,21 +452,21 @@ void bsal_input_stream_receive(struct bsal_actor *actor, struct bsal_message *me
                         concrete_self->starting_offset,
                         concrete_self->ending_offset);
 
-        bsal_actor_send_reply_empty(actor, BSAL_INPUT_STREAM_RESET_REPLY);
+        thorium_actor_send_reply_empty(actor, BSAL_INPUT_STREAM_RESET_REPLY);
 
     } else if (tag == BSAL_PUSH_SEQUENCE_DATA_BLOCK_REPLY) {
 
-        bsal_actor_send_to_supervisor_int(actor, BSAL_INPUT_PUSH_SEQUENCES_REPLY,
+        thorium_actor_send_to_supervisor_int(actor, BSAL_INPUT_PUSH_SEQUENCES_REPLY,
                         source);
     }
 }
 
-int bsal_input_stream_has_error(struct bsal_actor *actor,
-                struct bsal_message *message)
+int bsal_input_stream_has_error(struct thorium_actor *actor,
+                struct thorium_message *message)
 {
     struct bsal_input_stream *concrete_self;
 
-    concrete_self = (struct bsal_input_stream *)bsal_actor_concrete_actor(actor);
+    concrete_self = (struct bsal_input_stream *)thorium_actor_concrete_actor(actor);
 
     if (!concrete_self->proxy_ready) {
         return 0;
@@ -485,12 +485,12 @@ int bsal_input_stream_has_error(struct bsal_actor *actor,
     return 0;
 }
 
-int bsal_input_stream_check_open_error(struct bsal_actor *actor,
-                struct bsal_message *message)
+int bsal_input_stream_check_open_error(struct thorium_actor *actor,
+                struct thorium_message *message)
 {
     struct bsal_input_stream *concrete_self;
 
-    concrete_self = (struct bsal_input_stream *)bsal_actor_concrete_actor(actor);
+    concrete_self = (struct bsal_input_stream *)thorium_actor_concrete_actor(actor);
 
     if (!concrete_self->open) {
 
@@ -501,8 +501,8 @@ int bsal_input_stream_check_open_error(struct bsal_actor *actor,
     return 0;
 }
 
-void bsal_input_stream_push_sequences(struct bsal_actor *actor,
-                struct bsal_message *message)
+void bsal_input_stream_push_sequences(struct thorium_actor *actor,
+                struct thorium_message *message)
 {
     struct bsal_input_command command;
     void *buffer;
@@ -512,7 +512,7 @@ void bsal_input_stream_push_sequences(struct bsal_actor *actor,
     int sequences_to_read;
     void *new_buffer;
     int new_count;
-    struct bsal_message new_message;
+    struct thorium_message new_message;
     void *buffer_for_sequence;
     struct bsal_dna_sequence dna_sequence;
     /*struct bsal_vector *command_entries;*/
@@ -528,26 +528,26 @@ void bsal_input_stream_push_sequences(struct bsal_actor *actor,
 
     /* answer immediately
      */
-    bsal_actor_send_reply_empty(actor, BSAL_INPUT_PUSH_SEQUENCES_READY);
-    ephemeral_memory = (struct bsal_memory_pool *)bsal_actor_get_ephemeral_memory(actor);
+    thorium_actor_send_reply_empty(actor, BSAL_INPUT_PUSH_SEQUENCES_READY);
+    ephemeral_memory = (struct bsal_memory_pool *)thorium_actor_get_ephemeral_memory(actor);
     has_sequence = 1;
 
 #ifdef BSAL_INPUT_STREAM_DEBUG
     printf("DEBUG stream/%d bsal_input_stream_push_sequences entering...\n",
-                    bsal_actor_name(actor));
+                    thorium_actor_name(actor));
 #endif
 
 
-    buffer = bsal_message_buffer(message);
+    buffer = thorium_message_buffer(message);
 
-    concrete_self = (struct bsal_input_stream *)bsal_actor_concrete_actor(actor);
+    concrete_self = (struct bsal_input_stream *)thorium_actor_concrete_actor(actor);
 
     bsal_input_command_init_empty(&command);
-    bsal_input_command_unpack(&command, buffer, bsal_actor_get_ephemeral_memory(actor),
+    bsal_input_command_unpack(&command, buffer, thorium_actor_get_ephemeral_memory(actor),
                     &concrete_self->codec);
 
 #ifdef BSAL_INPUT_STREAM_DEBUG
-    count = bsal_message_count(message);
+    count = thorium_message_count(message);
     printf("DEBUG bsal_input_stream_push_sequences after unpack, count %d:\n",
                     count);
 
@@ -582,12 +582,12 @@ void bsal_input_stream_push_sequences(struct bsal_actor *actor,
                             buffer_for_sequence);
 
         bsal_dna_sequence_init(&dna_sequence, buffer_for_sequence,
-                        &concrete_self->codec, bsal_actor_get_ephemeral_memory(actor));
+                        &concrete_self->codec, thorium_actor_get_ephemeral_memory(actor));
 
         bsal_input_command_add_entry(&command, &dna_sequence, &concrete_self->codec,
-                        bsal_actor_get_ephemeral_memory(actor));
+                        thorium_actor_get_ephemeral_memory(actor));
 
-        bsal_dna_sequence_destroy(&dna_sequence, bsal_actor_get_ephemeral_memory(actor));
+        bsal_dna_sequence_destroy(&dna_sequence, thorium_actor_get_ephemeral_memory(actor));
 
         i++;
     }
@@ -611,7 +611,7 @@ void bsal_input_stream_push_sequences(struct bsal_actor *actor,
                     actual_count);
 #endif
 
-    bsal_message_init(&new_message, BSAL_PUSH_SEQUENCE_DATA_BLOCK,
+    thorium_message_init(&new_message, BSAL_PUSH_SEQUENCE_DATA_BLOCK,
                     new_count, new_buffer);
 
 #ifdef BSAL_INPUT_STREAM_DEBUG
@@ -619,14 +619,14 @@ void bsal_input_stream_push_sequences(struct bsal_actor *actor,
                     store_name);
 #endif
 
-    bsal_actor_send(actor, store_name, &new_message);
+    thorium_actor_send(actor, store_name, &new_message);
 
     /*
      * send sequences to store.
      * The required information is the input command
      */
     /*
-    bsal_actor_send_reply_empty(actor, BSAL_INPUT_PUSH_SEQUENCES_REPLY);
+    thorium_actor_send_reply_empty(actor, BSAL_INPUT_PUSH_SEQUENCES_REPLY);
     */
 
     /* free memory
@@ -638,13 +638,13 @@ void bsal_input_stream_push_sequences(struct bsal_actor *actor,
                     (int)bsal_vector_size(command_entries));
 #endif
 
-    bsal_input_command_destroy(&command, bsal_actor_get_ephemeral_memory(actor));
+    bsal_input_command_destroy(&command, thorium_actor_get_ephemeral_memory(actor));
 
 #if 0
     for (i = 0; i < bsal_vector_size(command_entries); i++) {
         a_sequence = (struct bsal_dna_sequence *)bsal_vector_at(command_entries, i);
 
-        bsal_dna_sequence_destroy(a_sequence, bsal_actor_get_ephemeral_memory(actor));
+        bsal_dna_sequence_destroy(a_sequence, thorium_actor_get_ephemeral_memory(actor));
     }
 
     bsal_vector_destroy(command_entries);
@@ -656,28 +656,28 @@ void bsal_input_stream_push_sequences(struct bsal_actor *actor,
 
 }
 
-void bsal_input_stream_set_start_offset(struct bsal_actor *self, struct bsal_message *message)
+void bsal_input_stream_set_start_offset(struct thorium_actor *self, struct thorium_message *message)
 {
     struct bsal_input_stream *concrete_self;
 
-    concrete_self = (struct bsal_input_stream *)bsal_actor_concrete_actor(self);
-    bsal_message_unpack_uint64_t(message, 0, &concrete_self->starting_offset);
-    bsal_actor_send_reply_empty(self, BSAL_INPUT_STREAM_SET_START_OFFSET_REPLY);
+    concrete_self = (struct bsal_input_stream *)thorium_actor_concrete_actor(self);
+    thorium_message_unpack_uint64_t(message, 0, &concrete_self->starting_offset);
+    thorium_actor_send_reply_empty(self, BSAL_INPUT_STREAM_SET_START_OFFSET_REPLY);
 
     concrete_self->last_offset = concrete_self->starting_offset;
 }
 
-void bsal_input_stream_set_end_offset(struct bsal_actor *self, struct bsal_message *message)
+void bsal_input_stream_set_end_offset(struct thorium_actor *self, struct thorium_message *message)
 {
     struct bsal_input_stream *concrete_self;
 
-    concrete_self = (struct bsal_input_stream *)bsal_actor_concrete_actor(self);
+    concrete_self = (struct bsal_input_stream *)thorium_actor_concrete_actor(self);
 
-    bsal_message_unpack_uint64_t(message, 0, &concrete_self->ending_offset);
-    bsal_actor_send_reply_empty(self, BSAL_INPUT_STREAM_SET_END_OFFSET_REPLY);
+    thorium_message_unpack_uint64_t(message, 0, &concrete_self->ending_offset);
+    thorium_actor_send_reply_empty(self, BSAL_INPUT_STREAM_SET_END_OFFSET_REPLY);
 }
 
-void bsal_input_stream_count_in_parallel(struct bsal_actor *self, struct bsal_message *message)
+void bsal_input_stream_count_in_parallel(struct thorium_actor *self, struct thorium_message *message)
 {
     struct bsal_input_stream *concrete_self;
     char *file;
@@ -709,8 +709,8 @@ void bsal_input_stream_count_in_parallel(struct bsal_actor *self, struct bsal_me
      * 4. Set the offsets for each stream
      * 5. Set ask them to count
      */
-    concrete_self = (struct bsal_input_stream *)bsal_actor_concrete_actor(self);
-    buffer = bsal_message_buffer(message);
+    concrete_self = (struct bsal_input_stream *)thorium_actor_concrete_actor(self);
+    buffer = thorium_message_buffer(message);
 
     bsal_vector_unpack(&concrete_self->spawners, buffer);
 
@@ -748,18 +748,18 @@ void bsal_input_stream_count_in_parallel(struct bsal_actor *self, struct bsal_me
 
     size = bsal_vector_size(&concrete_self->start_offsets);
 
-    bsal_actor_add_route(self, BSAL_ACTOR_SPAWN_REPLY, bsal_input_stream_spawn_reply);
+    thorium_actor_add_route(self, BSAL_ACTOR_SPAWN_REPLY, bsal_input_stream_spawn_reply);
 
     for (i = 0; i < size; i++) {
 
-        spawner = bsal_actor_get_spawner(self, &concrete_self->spawners);
+        spawner = thorium_actor_get_spawner(self, &concrete_self->spawners);
 
-        bsal_actor_send_int(self, spawner, BSAL_ACTOR_SPAWN,
+        thorium_actor_send_int(self, spawner, BSAL_ACTOR_SPAWN,
                 BSAL_INPUT_STREAM_SCRIPT);
     }
 }
 
-void bsal_input_stream_spawn_reply(struct bsal_actor *self, struct bsal_message *message)
+void bsal_input_stream_spawn_reply(struct thorium_actor *self, struct thorium_message *message)
 {
     int stream;
     struct bsal_input_stream *concrete_self;
@@ -768,9 +768,9 @@ void bsal_input_stream_spawn_reply(struct bsal_actor *self, struct bsal_message 
     uint64_t start_offset;
     uint64_t end_offset;
 
-    concrete_self = (struct bsal_input_stream *)bsal_actor_concrete_actor(self);
+    concrete_self = (struct bsal_input_stream *)thorium_actor_concrete_actor(self);
 
-    bsal_message_unpack_int(message, 0, &stream);
+    thorium_message_unpack_int(message, 0, &stream);
 
     bsal_vector_push_back_int(&concrete_self->parallel_streams, stream);
 
@@ -780,9 +780,9 @@ void bsal_input_stream_spawn_reply(struct bsal_actor *self, struct bsal_message 
         /* Set offsets
          */
 
-        bsal_actor_add_route(self, BSAL_INPUT_STREAM_SET_START_OFFSET_REPLY,
+        thorium_actor_add_route(self, BSAL_INPUT_STREAM_SET_START_OFFSET_REPLY,
                             bsal_input_stream_set_offset_reply);
-        bsal_actor_add_route(self, BSAL_INPUT_STREAM_SET_END_OFFSET_REPLY,
+        thorium_actor_add_route(self, BSAL_INPUT_STREAM_SET_END_OFFSET_REPLY,
                             bsal_input_stream_set_offset_reply);
 
         concrete_self->finished_parallel_stream_count = 0;
@@ -795,22 +795,22 @@ void bsal_input_stream_spawn_reply(struct bsal_actor *self, struct bsal_message 
             end_offset = bsal_vector_at_as_uint64_t(&concrete_self->end_offsets, i);
             stream = bsal_vector_at_as_int(&concrete_self->parallel_streams, i);
 
-            bsal_actor_send_uint64_t(self, stream, BSAL_INPUT_STREAM_SET_START_OFFSET,
+            thorium_actor_send_uint64_t(self, stream, BSAL_INPUT_STREAM_SET_START_OFFSET,
                             start_offset);
-            bsal_actor_send_uint64_t(self, stream, BSAL_INPUT_STREAM_SET_END_OFFSET,
+            thorium_actor_send_uint64_t(self, stream, BSAL_INPUT_STREAM_SET_END_OFFSET,
                             end_offset);
         }
     }
 }
 
-void bsal_input_stream_open_reply(struct bsal_actor *self, struct bsal_message *message)
+void bsal_input_stream_open_reply(struct thorium_actor *self, struct thorium_message *message)
 {
     struct bsal_input_stream *concrete_self;
     int i;
     int size;
     struct bsal_vector *vector;
 
-    concrete_self = (struct bsal_input_stream *)bsal_actor_concrete_actor(self);
+    concrete_self = (struct bsal_input_stream *)thorium_actor_concrete_actor(self);
 
     ++concrete_self->finished_parallel_stream_count;
 
@@ -835,12 +835,12 @@ void bsal_input_stream_open_reply(struct bsal_actor *self, struct bsal_message *
             bsal_vector_init(vector, sizeof(struct bsal_mega_block));
         }
 
-        bsal_actor_send_range_empty(self, &concrete_self->parallel_streams,
+        thorium_actor_send_range_empty(self, &concrete_self->parallel_streams,
                         BSAL_INPUT_COUNT);
     }
 }
 
-void bsal_input_stream_count_reply(struct bsal_actor *self, struct bsal_message *message)
+void bsal_input_stream_count_reply(struct thorium_actor *self, struct thorium_message *message)
 {
     struct bsal_input_stream *concrete_self;
     void *buffer;
@@ -856,13 +856,13 @@ void bsal_input_stream_count_reply(struct bsal_actor *self, struct bsal_message 
     int j;
     uint64_t total;
 
-    concrete_self = (struct bsal_input_stream *)bsal_actor_concrete_actor(self);
+    concrete_self = (struct bsal_input_stream *)thorium_actor_concrete_actor(self);
 
-    buffer = bsal_message_buffer(message);
-    count = bsal_message_count(message);
-    ephemeral_memory = bsal_actor_get_ephemeral_memory(self);
+    buffer = thorium_message_buffer(message);
+    count = thorium_message_count(message);
+    ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
 
-    source = bsal_message_source(message);
+    source = thorium_message_source(message);
     source_index = bsal_vector_index_of(&concrete_self->parallel_streams, &source);
     vector = bsal_vector_at(&concrete_self->parallel_mega_blocks, source_index);
     bsal_vector_unpack(vector, buffer);
@@ -950,35 +950,35 @@ void bsal_input_stream_count_reply(struct bsal_actor *self, struct bsal_message 
         printf("DEBUG send BSAL_INPUT_COUNT_IN_PARALLEL_REPLY to %d\n",
                         concrete_self->controller);
 
-        bsal_actor_send_vector(self, concrete_self->controller,
+        thorium_actor_send_vector(self, concrete_self->controller,
                     BSAL_INPUT_COUNT_IN_PARALLEL_REPLY,
                     &concrete_self->mega_blocks);
     }
 }
 
-void bsal_input_stream_count_in_parallel_mock(struct bsal_actor *self, struct bsal_message *message)
+void bsal_input_stream_count_in_parallel_mock(struct thorium_actor *self, struct thorium_message *message)
 {
     struct bsal_input_stream *concrete_self;
     void *buffer;
     int count;
     char *file;
 
-    concrete_self = (struct bsal_input_stream *)bsal_actor_concrete_actor(self);
+    concrete_self = (struct bsal_input_stream *)thorium_actor_concrete_actor(self);
 
-    buffer = bsal_message_buffer(message);
-    count = bsal_message_count(message);
+    buffer = thorium_message_buffer(message);
+    count = thorium_message_count(message);
 
     file = concrete_self->file_name;
 
     printf("%s/%d receives BSAL_INPUT_COUNT_IN_PARALLEL file %s\n",
-                    bsal_actor_script_name(self),
-                    bsal_actor_name(self),
+                    thorium_actor_script_name(self),
+                    thorium_actor_name(self),
                     file);
 
-    bsal_actor_send_to_self_buffer(self, BSAL_INPUT_COUNT, count, buffer);
+    thorium_actor_send_to_self_buffer(self, BSAL_INPUT_COUNT, count, buffer);
 }
 
-void bsal_input_stream_count_reply_mock(struct bsal_actor *self, struct bsal_message *message)
+void bsal_input_stream_count_reply_mock(struct thorium_actor *self, struct thorium_message *message)
 {
     struct bsal_input_stream *concrete_self;
     void *buffer;
@@ -989,10 +989,10 @@ void bsal_input_stream_count_reply_mock(struct bsal_actor *self, struct bsal_mes
     uint64_t result;
     struct bsal_mega_block *block;
 
-    concrete_self = (struct bsal_input_stream *)bsal_actor_concrete_actor(self);
-    buffer = bsal_message_buffer(message);
-    count = bsal_message_count(message);
-    ephemeral_memory = bsal_actor_get_ephemeral_memory(self);
+    concrete_self = (struct bsal_input_stream *)thorium_actor_concrete_actor(self);
+    buffer = thorium_message_buffer(message);
+    count = thorium_message_count(message);
+    ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
 
     bsal_vector_init(&mega_blocks, 0);
     bsal_vector_set_memory_pool(&mega_blocks, ephemeral_memory);
@@ -1009,22 +1009,22 @@ void bsal_input_stream_count_reply_mock(struct bsal_actor *self, struct bsal_mes
     file = concrete_self->file_name;
 
     printf("%s/%d COUNT_IN_PARALLEL result for %s is %" PRIu64 "\n",
-                    bsal_actor_script_name(self),
-                    bsal_actor_name(self),
+                    thorium_actor_script_name(self),
+                    thorium_actor_name(self),
                     file,
                     result);
 
     bsal_vector_destroy(&mega_blocks);
 
-    bsal_actor_send_buffer(self, concrete_self->controller,
+    thorium_actor_send_buffer(self, concrete_self->controller,
                     BSAL_INPUT_COUNT_IN_PARALLEL_REPLY, count, buffer);
 }
 
-void bsal_input_stream_set_offset_reply(struct bsal_actor *self, struct bsal_message *message)
+void bsal_input_stream_set_offset_reply(struct thorium_actor *self, struct thorium_message *message)
 {
     struct bsal_input_stream *concrete_self;
 
-    concrete_self = (struct bsal_input_stream *)bsal_actor_concrete_actor(self);
+    concrete_self = (struct bsal_input_stream *)thorium_actor_concrete_actor(self);
 
     ++concrete_self->finished_parallel_stream_count;
 
@@ -1034,12 +1034,12 @@ void bsal_input_stream_set_offset_reply(struct bsal_actor *self, struct bsal_mes
          * Assign files to input streams
          */
 
-        bsal_actor_add_route(self, BSAL_INPUT_OPEN_REPLY,
+        thorium_actor_add_route(self, BSAL_INPUT_OPEN_REPLY,
                         bsal_input_stream_open_reply);
 
         concrete_self->finished_parallel_stream_count = 0;
 
-        bsal_actor_send_range_buffer(self,
+        thorium_actor_send_range_buffer(self,
                         &concrete_self->parallel_streams,
                         BSAL_INPUT_OPEN,
                         strlen(concrete_self->file_name) + 1,
