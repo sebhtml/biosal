@@ -94,6 +94,8 @@ void bsal_assembly_arc_block_add_arc(struct bsal_assembly_arc_block *self,
          * Don't append it if the arc is there already
          */
         if (found) {
+
+            bsal_assembly_arc_destroy(arc, pool);
             bsal_vector_resize(&self->arcs, size);
         } else {
 
