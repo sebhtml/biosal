@@ -113,15 +113,11 @@ void bsal_mpi_transport_destroy(struct bsal_transport *self)
 int bsal_mpi_transport_send(struct bsal_transport *self, struct bsal_message *message)
 {
     struct bsal_mpi_transport *concrete_self;
-
     char *buffer;
     int count;
-    /* int source; */
     int destination;
     int tag;
-    int metadata_size;
     MPI_Request *request;
-    int all;
     struct bsal_active_request active_request;
     int worker;
     int result;
@@ -131,16 +127,16 @@ int bsal_mpi_transport_send(struct bsal_transport *self, struct bsal_message *me
     worker = bsal_message_get_worker(message);
     buffer = bsal_message_buffer(message);
     count = bsal_message_count(message);
-    metadata_size = bsal_message_metadata_size(message);
-    all = count + metadata_size;
     destination = bsal_message_destination_node(message);
     tag = bsal_message_tag(message);
 
     bsal_active_request_init(&active_request, buffer, worker);
     request = bsal_active_request_request(&active_request);
 
+    BSAL_DEBUGGER_ASSERT(buffer == NULL || count > 0);
+
     /* get return value */
-    result = MPI_Isend(buffer, all, concrete_self->datatype, destination, tag,
+    result = MPI_Isend(buffer, count, concrete_self->datatype, destination, tag,
                     concrete_self->comm, request);
 
     if (result != MPI_SUCCESS) {
@@ -168,7 +164,7 @@ int bsal_mpi_transport_receive(struct bsal_transport *self, struct bsal_message 
     char *buffer;
     int count;
     int source;
-    /*int destination;*/
+    int destination;
     int tag;
     int flag;
     MPI_Status status;
@@ -177,7 +173,6 @@ int bsal_mpi_transport_receive(struct bsal_transport *self, struct bsal_message 
     concrete_self = bsal_transport_get_concrete_transport(self);
     source = MPI_ANY_SOURCE;
     tag = MPI_ANY_TAG;
-    /*destination = self->rank;*/
 
     /* get return value */
     result = MPI_Iprobe(source, tag, concrete_self->comm, &flag, &status);
@@ -212,9 +207,14 @@ int bsal_mpi_transport_receive(struct bsal_transport *self, struct bsal_message 
         return 0;
     }
 
-    bsal_transport_prepare_received_message(self, message, source, tag, count, buffer);
+    destination = self->rank;
 
-    BSAL_DEBUGGER_ASSERT(result == MPI_SUCCESS);
+    /*
+     * Prepare the message. The worker will be -1 to tell the thorium
+     * code that this is not a worker buffer.
+     */
+    bsal_message_init_with_nodes(message, tag, count, buffer, source,
+                    destination);
 
     return 1;
 }

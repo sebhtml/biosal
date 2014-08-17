@@ -285,4 +285,8 @@ int bsal_node_send_system(struct bsal_node *self, struct bsal_message *message);
 void bsal_node_do_message_triage(struct bsal_node *self);
 void bsal_node_recycle_inbound_message(struct bsal_node *self, struct bsal_message *message);
 
+void bsal_node_prepare_received_message(struct bsal_node *self, struct bsal_message *message);
+void bsal_node_resolve(struct bsal_node *self, struct bsal_message *message);
+
+
 #endif

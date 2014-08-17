@@ -160,4 +160,18 @@ int bsal_message_get_worker(struct bsal_message *message)
     return message->worker;
 }
 
+void bsal_message_init_with_nodes(struct bsal_message *self, int tag, int count, void *buffer, int source,
+                int destination)
+{
+    bsal_message_init(self, tag, count, buffer);
 
+    /*
+     * Initially assign the MPI source rank and MPI destination
+     * rank for the actor source and actor destination, respectively.
+     * Then, read the metadata and resolve the MPI rank from
+     * that. The resolved MPI ranks should be the same in all cases
+     */
+
+    bsal_message_set_source(self, source);
+    bsal_message_set_destination(self, destination);
+}

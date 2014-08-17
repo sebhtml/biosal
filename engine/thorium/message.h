@@ -30,6 +30,8 @@ struct bsal_message {
 };
 
 void bsal_message_init(struct bsal_message *self, int tag, int count, void *buffer);
+void bsal_message_init_with_nodes(struct bsal_message *self, int tag, int count, void *buffer, int source,
+                int destination);
 void bsal_message_init_copy(struct bsal_message *self, struct bsal_message *old_message);
 void bsal_message_destroy(struct bsal_message *self);
 

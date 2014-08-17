@@ -1041,6 +1041,9 @@ int bsal_node_has_actor(struct bsal_node *self, int name)
 void bsal_node_send(struct bsal_node *node, struct bsal_message *message)
 {
     int name;
+    int metadata_size;
+    int all;
+    int count;
 
     /* Check the message to see
      * if it is a special message.
@@ -1052,7 +1055,7 @@ void bsal_node_send(struct bsal_node *node, struct bsal_message *message)
     }
 
     name = bsal_message_destination(message);
-    bsal_transport_resolve(&node->transport, message);
+    bsal_node_resolve(node, message);
 
     /* If the actor is local, dispatch the message locally
      */
@@ -1082,6 +1085,15 @@ void bsal_node_send(struct bsal_node *node, struct bsal_message *message)
          * is disable, this will never be reached anyway
          */
         /* send messages over the network */
+
+        /*
+         * Add metadata size.
+         */
+        count = bsal_message_count(message);
+        metadata_size = bsal_message_metadata_size(message);
+        all = count + metadata_size;
+        bsal_message_set_count(message, all);
+
         bsal_transport_send(&node->transport, message);
 
 #ifdef BSAL_NODE_DEBUG_20140601_8
@@ -1779,10 +1791,14 @@ void bsal_node_run_loop(struct bsal_node *node)
         if (node->use_transport &&
             bsal_transport_receive(&node->transport, &message)) {
 
+            /*
+             * Prepare the message
+             */
+            bsal_node_prepare_received_message(node, &message);
+
             bsal_counter_add(&node->counter, BSAL_COUNTER_RECEIVED_MESSAGES_NOT_FROM_SELF, 1);
             bsal_counter_add(&node->counter, BSAL_COUNTER_RECEIVED_BYTES_NOT_FROM_SELF,
                     bsal_message_count(&message));
-
 
             bsal_node_dispatch_message(node, &message);
         }
@@ -2086,3 +2102,39 @@ void bsal_node_recycle_inbound_message(struct bsal_node *self, struct bsal_messa
 
     bsal_worker_buffer_destroy(&worker_buffer);
 }
+
+void bsal_node_prepare_received_message(struct bsal_node *self, struct bsal_message *message)
+{
+    int metadata_size;
+    int count;
+
+    /*
+     * Remove the metadata from the count because
+     * actors don't need that.
+     */
+    count = bsal_message_count(message);
+    metadata_size = bsal_message_metadata_size(message);
+    count -= metadata_size;
+    bsal_message_set_count(message, count);
+    bsal_message_read_metadata(message);
+    bsal_node_resolve(self, message);
+}
+
+void bsal_node_resolve(struct bsal_node *self, struct bsal_message *message)
+{
+    int actor;
+    int node_name;
+    struct bsal_node *node;
+
+    node = self;
+
+    actor = bsal_message_source(message);
+    node_name = bsal_node_actor_node(node, actor);
+    bsal_message_set_source_node(message, node_name);
+
+    actor = bsal_message_destination(message);
+    node_name = bsal_node_actor_node(node, actor);
+    bsal_message_set_destination_node(message, node_name);
+}
+
+

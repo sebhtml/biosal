@@ -1,3 +1,5 @@
+# Thorium event counters
+
 To print counters at the node level, add -print-counters to the command.
 
 
@@ -27,3 +29,6 @@ BSAL_COUNTER_SENT_BYTES 84
  BSAL_COUNTER_SENT_BYTES_NOT_TO_SELF 0
  balance BSAL_COUNTER_BALANCE_BYTES 0
 
+# Thorium transport profiler
+
+-enable-transport-profiler

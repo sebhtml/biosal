@@ -3,6 +3,7 @@
 #define BSAL_TRANSPORT_H
 
 #include "transport_interface.h"
+#include "transport_profiler.h"
 
 #include "pami/pami_transport.h"
 #include "mpi/mpi_transport.h"
@@ -29,6 +30,7 @@ struct bsal_transport {
      */
     struct bsal_node *node;
     struct bsal_ring_queue active_requests;
+    struct thorium_transport_profiler transport_profiler;
     int provided;
     int rank;
     int size;
@@ -42,6 +44,8 @@ struct bsal_transport {
 
     void *concrete_transport;
     struct bsal_transport_interface *transport_interface;
+
+    uint32_t flags;
 };
 
 void bsal_transport_init(struct bsal_transport *self, struct bsal_node *node,
@@ -50,7 +54,6 @@ void bsal_transport_init(struct bsal_transport *self, struct bsal_node *node,
 void bsal_transport_destroy(struct bsal_transport *self);
 int bsal_transport_send(struct bsal_transport *self, struct bsal_message *message);
 int bsal_transport_receive(struct bsal_transport *self, struct bsal_message *message);
-void bsal_transport_resolve(struct bsal_transport *self, struct bsal_message *message);
 
 int bsal_transport_get_provided(struct bsal_transport *self);
 int bsal_transport_get_rank(struct bsal_transport *self);
@@ -69,9 +72,6 @@ int bsal_transport_get_implementation(struct bsal_transport *self);
 
 void *bsal_transport_get_concrete_transport(struct bsal_transport *self);
 void bsal_transport_set(struct bsal_transport *self);
-
-void bsal_transport_prepare_received_message(struct bsal_transport *self, struct bsal_message *message,
-                int source, int tag, int count, void *buffer);
 
 void bsal_transport_select(struct bsal_transport *self);
 

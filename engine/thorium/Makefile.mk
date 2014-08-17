@@ -21,6 +21,7 @@ THORIUM_OBJECTS += engine/thorium/scheduler/priority_scheduler.o
 
 # transport system
 THORIUM_OBJECTS += engine/thorium/transport/transport.o
+THORIUM_OBJECTS += engine/thorium/transport/transport_profiler.o
 THORIUM_OBJECTS += engine/thorium/transport/active_request.o
 THORIUM_OBJECTS += engine/thorium/transport/mpi/mpi_transport.o
 THORIUM_OBJECTS += engine/thorium/transport/mpi/mpi_active_request.o

@@ -1,7 +1,10 @@
 
 # Coding style
 
-Symbols are prefixed with bsal_
+Symbols are prefixed with bsal_ for biosal actors.
+
+Thorium things have the prefix thorium_ (needs a vote).
+
 
 K & R style with 4 spaces for indentation
 http://en.wikipedia.org/wiki/Indent_style#K.26R_style

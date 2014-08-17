@@ -1,6 +1,9 @@
 
 #include "transport.h"
 
+#include <core/system/command.h>
+#include <core/helpers/bitmap.h>
+
 #include "active_request.h"
 
 #include <engine/thorium/worker_buffer.h>
@@ -9,10 +12,21 @@
 
 #include <core/system/debugger.h>
 
+#define FLAG_PROFILE 0
+
 void bsal_transport_init(struct bsal_transport *self, struct bsal_node *node,
                 int *argc, char ***argv,
                 struct bsal_memory_pool *inbound_message_memory_pool)
 {
+    int actual_argc;
+    char **actual_argv;
+
+    actual_argc = *argc;
+    actual_argv = *argv;
+
+    self->flags = 0;
+    bsal_bitmap_set_bit_value_uint32_t(&self->flags, FLAG_PROFILE, 0);
+
     self->transport_interface = NULL;
     self->concrete_transport = NULL;
 
@@ -45,11 +59,29 @@ void bsal_transport_init(struct bsal_transport *self, struct bsal_node *node,
     BSAL_DEBUGGER_ASSERT(self->node != NULL);
 
     self->inbound_message_memory_pool = inbound_message_memory_pool;
+
+    thorium_transport_profiler_init(&self->transport_profiler);
+
+    if (bsal_command_has_argument(actual_argc, actual_argv, "-enable-transport-profiler")) {
+
+        printf("Enable transport profiler\n");
+
+        bsal_bitmap_set_bit_value_uint32_t(&self->flags, FLAG_PROFILE, 1);
+    }
 }
 
 void bsal_transport_destroy(struct bsal_transport *self)
 {
     struct bsal_active_request active_request;
+
+    /*
+     * Print the report if requested.
+     */
+    if (bsal_bitmap_get_bit_value_uint32_t(&self->flags, FLAG_PROFILE)) {
+        thorium_transport_profiler_print_report(&self->transport_profiler);
+    }
+
+    thorium_transport_profiler_destroy(&self->transport_profiler);
 
     BSAL_DEBUGGER_ASSERT(bsal_transport_get_active_request_count(self) == 0);
 
@@ -77,6 +109,14 @@ int bsal_transport_send(struct bsal_transport *self, struct bsal_message *messag
         return 0;
     }
 
+    /*
+     * Send the message through the mock transport which is
+     * a transport profiler.
+     */
+    if (bsal_bitmap_get_bit_value_uint32_t(&self->flags, FLAG_PROFILE)) {
+        thorium_transport_profiler_send_mock(&self->transport_profiler, message);
+    }
+
     return self->transport_interface->send(self, message);
 }
 
@@ -87,23 +127,6 @@ int bsal_transport_receive(struct bsal_transport *self, struct bsal_message *mes
     }
 
     return self->transport_interface->receive(self, message);
-}
-
-void bsal_transport_resolve(struct bsal_transport *self, struct bsal_message *message)
-{
-    int actor;
-    int node_name;
-    struct bsal_node *node;
-
-    node = self->node;
-
-    actor = bsal_message_source(message);
-    node_name = bsal_node_actor_node(node, actor);
-    bsal_message_set_source_node(message, node_name);
-
-    actor = bsal_message_destination(message);
-    node_name = bsal_node_actor_node(node, actor);
-    bsal_message_set_destination_node(message, node_name);
 }
 
 int bsal_transport_get_provided(struct bsal_transport *self)
@@ -177,28 +200,6 @@ void bsal_transport_set(struct bsal_transport *self)
     }
 }
 
-void bsal_transport_prepare_received_message(struct bsal_transport *self, struct bsal_message *message,
-                int source, int tag, int count, void *buffer)
-{
-    int metadata_size;
-    int destination;
-
-    destination = self->rank;
-    metadata_size = bsal_message_metadata_size(message);
-    count -= metadata_size;
-
-    /* Initially assign the MPI source rank and MPI destination
-     * rank for the actor source and actor destination, respectively.
-     * Then, read the metadata and resolve the MPI rank from
-     * that. The resolved MPI ranks should be the same in all cases
-     */
-    bsal_message_init(message, tag, count, buffer);
-    bsal_message_set_source(message, source);
-    bsal_message_set_destination(message, destination);
-    bsal_message_read_metadata(message);
-    bsal_transport_resolve(self, message);
-}
-
 int bsal_transport_get_active_request_count(struct bsal_transport *self)
 {
     return bsal_ring_queue_size(&self->active_requests);
@@ -252,3 +253,4 @@ void bsal_transport_print(struct bsal_transport *self)
                 self->rank, self->size,
                 bsal_transport_get_name(self));
 }
+
