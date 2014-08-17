@@ -90,14 +90,21 @@ void bsal_assembly_arc_block_add_arc(struct bsal_assembly_arc_block *self,
 
         found = bsal_set_find(&self->set, buffer);
 
-        bsal_memory_pool_free(pool, buffer);
-
         /*
          * Don't append it if the arc is there already
          */
         if (found) {
             bsal_vector_resize(&self->arcs, size);
+        } else {
+
+            /*
+             * Actually add the key into the
+             * set.
+             */
+            bsal_set_add(&self->set, buffer);
         }
+
+        bsal_memory_pool_free(pool, buffer);
     }
 }
 
