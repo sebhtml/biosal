@@ -5,7 +5,7 @@ echo "Warning, this will merge in master !!!"
 echo "Push energy"
 (
 git push origin energy
-git push --tags origin energy
+git push --tags origin
 ) &> energy-git-1.log
 
 echo "Merge energy into master"
@@ -20,7 +20,7 @@ echo "Push to master"
 
 (
 git push origin master
-git push --tags origin master
+git push --tags origin
 ) &> master-git-2.log
 
 echo "Push to mirror"
@@ -30,7 +30,7 @@ git checkout mirror
 git merge master
 # push mirror
 git push geneassembly mirror
-git push --tags geneassembly mirror
+git push --tags geneassembly
 
 git checkout energy
 ) &> mirror-git-1.log
