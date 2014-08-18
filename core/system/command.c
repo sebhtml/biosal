@@ -1,6 +1,8 @@
 
 #include "command.h"
 
+#include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 
 char BSAL_DEFAULT_OUTPUT[] = "output";
@@ -29,7 +31,7 @@ char *bsal_command_get_argument_value(int argc, char **argv, const char *argumen
     value = NULL;
 
     for (i = 0; i < argc; i++) {
-        if (strcmp(argv[i], "-o") == 0 && i + 1 < argc) {
+        if (strcmp(argv[i], argument) == 0 && i + 1 < argc) {
             value = argv[i + 1];
             break;
         }
@@ -55,3 +57,30 @@ char *bsal_command_get_output_directory(int argc, char **argv)
     return directory_name;
 }
 
+int bsal_command_get_kmer_length(int argc, char **argv)
+{
+    char *value;
+    int kmer_length;
+    int provided_value;
+
+    kmer_length = BSAL_DEFAULT_KMER_LENGTH;
+
+    value = bsal_command_get_argument_value(argc, argv, "-k");
+
+    if (value != NULL) {
+        provided_value = atoi(value);
+
+        /*
+         * Use a odd kmer length
+         */
+        if (provided_value % 2 == 0) {
+            ++provided_value;
+        }
+
+        kmer_length = provided_value;
+    }
+
+    printf("DEBUG kmer_length %d\n", kmer_length);
+
+    return kmer_length;
+}

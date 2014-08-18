@@ -188,12 +188,7 @@ void argonnite_receive(struct thorium_actor *actor, struct thorium_message *mess
                         THORIUM_ACTOR_ENABLE_AUTO_SCALING);
                         */
 
-        for (i = 0; i < argc; i++) {
-            if (strcmp(argv[i], "-k") == 0 && i + 1 < argc) {
-
-                concrete_actor->kmer_length =atoi(argv[i + 1]);
-            }
-        }
+        concrete_actor->kmer_length = bsal_command_get_kmer_length(argc, argv);
 
 #ifdef ARGONNITE_DEBUG1
         BSAL_DEBUG_MARKER("foo_marker");

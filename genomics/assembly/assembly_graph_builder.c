@@ -9,6 +9,7 @@
 #include "assembly_arc_classifier.h"
 
 #include <core/system/debugger.h>
+#include <core/system/command.h>
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -748,30 +749,14 @@ void bsal_assembly_graph_builder_tell_source(struct thorium_actor *self)
 int bsal_assembly_graph_builder_get_kmer_length(struct thorium_actor *self)
 {
     int kmer_length;
-    int i;
     int argc;
     char **argv;
 
     argc = thorium_actor_argc(self);
     argv = thorium_actor_argv(self);
 
-    kmer_length = BSAL_ASSEMBLY_GRAPH_BUILDER_DEFAULT_KMER_LENGTH;
-
-    /* get kmer length
-     */
-    for (i = 0; i < argc; i++) {
-        if (strcmp(argv[i], "-k") == 0 && i + 1 < argc) {
-            kmer_length = atoi(argv[i + 1]);
-            break;
-        }
-    }
-
-    /*
-     * Use a odd kmer length
-     */
-    if (kmer_length % 2 == 0) {
-        ++kmer_length;
-    }
+    kmer_length = BSAL_DEFAULT_KMER_LENGTH;
+    kmer_length = bsal_command_get_kmer_length(argc, argv);
 
     return kmer_length;
 }

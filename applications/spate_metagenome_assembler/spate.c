@@ -530,7 +530,7 @@ void spate_help(struct thorium_actor *self)
 
     printf("\n");
     printf("Default values:\n");
-    printf("    -k %d (no limit and no recompilation is required)\n", BSAL_ASSEMBLY_GRAPH_BUILDER_DEFAULT_KMER_LENGTH);
+    printf("    -k %d (no limit and no recompilation is required)\n", BSAL_DEFAULT_KMER_LENGTH);
     printf("    -threads-per-node %d\n", 1);
     printf("    -o %s\n",
                     BSAL_DEFAULT_OUTPUT);
