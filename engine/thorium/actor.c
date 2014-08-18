@@ -11,6 +11,7 @@
 
 #include <core/helpers/vector_helper.h>
 #include <core/helpers/message_helper.h>
+#include <core/helpers/bitmap.h>
 
 #include <core/system/memory.h>
 #include <core/system/debugger.h>
@@ -38,7 +39,6 @@
 #define BSAL_ACTOR_DEBUG_CLONE
 */
 
-
 /* some constants
  */
 #define BSAL_ACTOR_ACQUAINTANCE_SUPERVISOR 0
@@ -46,6 +46,18 @@
 #define BSAL_ACTOR_FORWARDING_NONE 0
 #define BSAL_ACTOR_FORWARDING_CLONE 1
 #define BSAL_ACTOR_FORWARDING_MIGRATE 2
+
+/*
+ * Flags.
+ */
+#define FLAG_DEAD 0
+#define FLAG_CAN_PACK 1
+#define FLAG_MIGRATION_PROGRESSED 2
+#define FLAG_LOCKED 3
+#define FLAG_MIGRATION_CLONED 4
+#define FLAG_MIGRATION_FORWARDED_MESSAGES 5
+#define FLAG_CLONING_PROGRESSED 6
+#define FLAG_SYNCHRONIZATION_STARTED 7
 
 void thorium_actor_init(struct thorium_actor *self, void *concrete_actor,
                 struct thorium_script *script, int name, struct thorium_node *node)
@@ -66,29 +78,31 @@ void thorium_actor_init(struct thorium_actor *self, void *concrete_actor,
     self->concrete_actor = concrete_actor;
     self->name = name;
     self->node = node;
-    self->dead = 0;
+
+    self->flags = 0;
+
+    bsal_bitmap_clear_bit_uint32_t(&self->flags, FLAG_DEAD);
+
     self->script = script;
     self->worker = NULL;
 
     self->spawner_index = BSAL_ACTOR_NO_VALUE;
 
-    self->synchronization_started = 0;
+    bsal_bitmap_clear_bit_uint32_t(&self->flags, FLAG_SYNCHRONIZATION_STARTED);
     self->synchronization_expected_responses = 0;
     self->synchronization_responses = 0;
 
     bsal_lock_init(&self->receive_lock);
-    self->locked = BSAL_LOCK_UNLOCKED;
+    bsal_bitmap_clear_bit_uint32_t(&self->flags, FLAG_LOCKED);
 
-    self->can_pack = BSAL_ACTOR_STATUS_NOT_SUPPORTED;
+    bsal_bitmap_clear_bit_uint32_t(&self->flags, FLAG_CAN_PACK);
 
     self->cloning_status = BSAL_ACTOR_STATUS_NOT_STARTED;
     self->migration_status = BSAL_ACTOR_STATUS_NOT_STARTED;
-    self->migration_cloned = 0;
-    self->migration_forwarded_messages = 0;
+    bsal_bitmap_clear_bit_uint32_t(&self->flags, FLAG_MIGRATION_CLONED);
+    bsal_bitmap_clear_bit_uint32_t(&self->flags, FLAG_MIGRATION_FORWARDED_MESSAGES);
 
 /*
-    printf("DEBUG actor %d init can_pack %d\n",
-                    thorium_actor_name(self), self->can_pack);
 */
 #ifdef BSAL_ACTOR_STORE_CHILDREN
     bsal_vector_init(&self->acquaintance_vector, sizeof(int));
@@ -140,7 +154,7 @@ void thorium_actor_destroy(struct thorium_actor *self)
      * Make sure that everyone see that this actor is
      * dead.
      */
-    self->dead = 1;
+    bsal_bitmap_set_bit_uint32_t(&self->flags, FLAG_DEAD);
 
     bsal_memory_fence();
 
@@ -287,7 +301,7 @@ int thorium_actor_send_system_self(struct thorium_actor *self, struct thorium_me
                         thorium_actor_name(self));
                         */
 
-        self->can_pack = BSAL_ACTOR_STATUS_SUPPORTED;
+        bsal_bitmap_set_bit_uint32_t(&self->flags, FLAG_CAN_PACK);
 
         /*
         thorium_actor_send_to_self_empty(self, BSAL_ACTOR_UNPIN_FROM_WORKER);
@@ -297,7 +311,7 @@ int thorium_actor_send_system_self(struct thorium_actor *self, struct thorium_me
         return 1;
 
     } else if (tag == BSAL_ACTOR_PACK_DISABLE) {
-        self->can_pack = BSAL_ACTOR_STATUS_NOT_SUPPORTED;
+        bsal_bitmap_clear_bit_uint32_t(&self->flags, FLAG_CAN_PACK);
         return 1;
 
     } else if (tag == BSAL_ACTOR_YIELD) {
@@ -448,7 +462,7 @@ int thorium_actor_spawn_real(struct thorium_actor *self, int script)
 void thorium_actor_die(struct thorium_actor *self)
 {
     bsal_counter_add(&self->counter, BSAL_COUNTER_KILLED_ACTORS, 1);
-    self->dead = 1;
+    bsal_bitmap_set_bit_uint32_t(&self->flags, FLAG_DEAD);
 
     /*
      * Publish the memory transaction so that other threads see it
@@ -478,16 +492,16 @@ struct thorium_node *thorium_actor_node(struct thorium_actor *self)
 void thorium_actor_lock(struct thorium_actor *self)
 {
     bsal_lock_lock(&self->receive_lock);
-    self->locked = BSAL_LOCK_LOCKED;
+    bsal_bitmap_set_bit_uint32_t(&self->flags, FLAG_LOCKED);
 }
 
 void thorium_actor_unlock(struct thorium_actor *self)
 {
-    if (!self->locked) {
+    if (!bsal_bitmap_get_bit_uint32_t(&self->flags, FLAG_LOCKED)) {
         return;
     }
 
-    self->locked = BSAL_LOCK_UNLOCKED;
+    bsal_bitmap_clear_bit_uint32_t(&self->flags, FLAG_LOCKED);
     bsal_lock_unlock(&self->receive_lock);
 }
 
@@ -538,7 +552,6 @@ int thorium_actor_receive_system_no_pack(struct thorium_actor *self, struct thor
 
             /*
         printf("DEBUG actor %d BSAL_ACTOR_CLONE not supported can_pack %d\n", thorium_actor_name(self),
-                        self->can_pack);
                         */
 
         thorium_actor_send_reply_int(self, BSAL_ACTOR_CLONE_REPLY, BSAL_ACTOR_NOBODY);
@@ -590,7 +603,7 @@ int thorium_actor_receive_system(struct thorium_actor *self, struct thorium_mess
     /* the concrete actor must catch these otherwise.
      * Also, clone and migrate depend on these.
      */
-    if (self->can_pack == BSAL_ACTOR_STATUS_NOT_SUPPORTED) {
+    if (!bsal_bitmap_get_bit_uint32_t(&self->flags, FLAG_CAN_PACK)) {
 
         if (thorium_actor_receive_system_no_pack(self, message)) {
             return 1;
@@ -645,20 +658,20 @@ int thorium_actor_receive_system(struct thorium_actor *self, struct thorium_mess
         /* call a function called
          * thorium_actor_continue_clone
          */
-        self->cloning_progressed = 0;
+        bsal_bitmap_clear_bit_uint32_t(&self->flags, FLAG_CLONING_PROGRESSED);
         thorium_actor_continue_clone(self, message);
 
-        if (self->cloning_progressed) {
+        if (bsal_bitmap_get_bit_uint32_t(&self->flags, FLAG_CLONING_PROGRESSED)) {
             return 1;
         }
     }
 
     if (self->migration_status == BSAL_ACTOR_STATUS_STARTED) {
 
-        self->migration_progressed = 0;
+        bsal_bitmap_clear_bit_uint32_t(&self->flags, FLAG_MIGRATION_PROGRESSED);
         thorium_actor_migrate(self, message);
 
-        if (self->migration_progressed) {
+        if (bsal_bitmap_get_bit_uint32_t(&self->flags, FLAG_MIGRATION_PROGRESSED)) {
             return 1;
         }
     }
@@ -975,7 +988,7 @@ void thorium_actor_receive_synchronize_reply(struct thorium_actor *self,
 {
     int name;
 
-    if (self->synchronization_started) {
+    if (bsal_bitmap_get_bit_uint32_t(&self->flags, FLAG_SYNCHRONIZATION_STARTED)) {
 
 #ifdef BSAL_ACTOR_DEBUG
         printf("DEBUG99 synchronization_reply %i/%i\n",
@@ -1000,7 +1013,7 @@ void thorium_actor_receive_synchronize_reply(struct thorium_actor *self,
             name = thorium_actor_name(self);
 
             thorium_actor_send(self, name, &new_message);
-            self->synchronization_started = 0;
+            bsal_bitmap_clear_bit_uint32_t(&self->flags, FLAG_SYNCHRONIZATION_STARTED);
         }
     }
 }
@@ -1009,7 +1022,7 @@ void thorium_actor_synchronize(struct thorium_actor *self, struct bsal_vector *a
 {
     struct thorium_message message;
 
-    self->synchronization_started = 1;
+    bsal_bitmap_set_bit_uint32_t(&self->flags, FLAG_SYNCHRONIZATION_STARTED);
     self->synchronization_expected_responses = bsal_vector_size(actors);
     self->synchronization_responses = 0;
 
@@ -1031,7 +1044,7 @@ void thorium_actor_synchronize(struct thorium_actor *self, struct bsal_vector *a
 
 int thorium_actor_synchronization_completed(struct thorium_actor *self)
 {
-    if (self->synchronization_started == 0) {
+    if (bsal_bitmap_get_bit_uint32_t(&self->flags, FLAG_SYNCHRONIZATION_STARTED) == 0) {
         return 0;
     }
 
@@ -1188,10 +1201,9 @@ void thorium_actor_continue_clone(struct thorium_actor *self, struct thorium_mes
                         self->cloning_new_actor);
 #endif
 
-
         thorium_actor_send_to_self_empty(self, BSAL_ACTOR_PACK);
 
-        self->cloning_progressed = 1;
+        bsal_bitmap_set_bit_uint32_t(&self->flags, FLAG_CLONING_PROGRESSED);
 
     } else if (tag == BSAL_ACTOR_PACK_REPLY && source == self_name) {
 
@@ -1204,7 +1216,7 @@ void thorium_actor_continue_clone(struct thorium_actor *self, struct thorium_mes
         thorium_message_init(&new_message, BSAL_ACTOR_UNPACK, count, buffer);
         thorium_actor_send(self, self->cloning_new_actor, &new_message);
 
-        self->cloning_progressed = 1;
+        bsal_bitmap_set_bit_uint32_t(&self->flags, FLAG_CLONING_PROGRESSED);
 
         thorium_message_destroy(&new_message);
 
@@ -1240,7 +1252,7 @@ void thorium_actor_continue_clone(struct thorium_actor *self, struct thorium_mes
 
         thorium_actor_send_to_self_empty(self, BSAL_ACTOR_FORWARD_MESSAGES);
 
-        self->cloning_progressed = 1;
+        bsal_bitmap_set_bit_uint32_t(&self->flags, FLAG_CLONING_PROGRESSED);
     }
 }
 
@@ -1311,7 +1323,7 @@ void thorium_actor_migrate(struct thorium_actor *self, struct thorium_message *m
 
     return;
 
-    if (self->migration_cloned == 0) {
+    if (bsal_bitmap_get_bit_uint32_t(&self->flags, FLAG_MIGRATION_CLONED) == 0) {
 
 #ifdef BSAL_ACTOR_DEBUG_MIGRATE
         printf("DEBUG thorium_actor_migrate thorium_actor_migrate: cloning self...\n");
@@ -1330,9 +1342,9 @@ void thorium_actor_migrate(struct thorium_actor *self, struct thorium_message *m
         thorium_actor_send_to_self_int(self, BSAL_ACTOR_CLONE, spawner);
 
         self->migration_status = BSAL_ACTOR_STATUS_STARTED;
-        self->migration_cloned = 1;
+        bsal_bitmap_set_bit_uint32_t(&self->flags, FLAG_MIGRATION_CLONED);
 
-        self->migration_progressed = 1;
+        bsal_bitmap_set_bit_uint32_t(&self->flags, FLAG_MIGRATION_PROGRESSED);
 
     } else if (tag == BSAL_ACTOR_CLONE_REPLY && source == name) {
 
@@ -1344,13 +1356,15 @@ void thorium_actor_migrate(struct thorium_actor *self, struct thorium_message *m
          */
         thorium_message_unpack_int(message, 0, &self->migration_new_actor);
 
+#ifdef BSAL_ACTOR_STORE_CHILDREN
         self->acquaintance_index = 0;
+#endif
         thorium_actor_send_to_self_empty(self, BSAL_ACTOR_MIGRATE_NOTIFY_ACQUAINTANCES);
 
 #ifdef BSAL_ACTOR_DEBUG_MIGRATE
         printf("DEBUG thorium_actor_migrate: notify acquaintance of name change.\n");
 #endif
-        self->migration_progressed = 1;
+        bsal_bitmap_set_bit_uint32_t(&self->flags, FLAG_MIGRATION_PROGRESSED);
 
     } else if (tag == BSAL_ACTOR_MIGRATE_NOTIFY_ACQUAINTANCES_REPLY && source == name) {
 
@@ -1377,9 +1391,11 @@ void thorium_actor_migrate(struct thorium_actor *self, struct thorium_message *m
         thorium_actor_send(self, self->migration_new_actor, &new_message);
         thorium_message_destroy(&new_message);
 
-        self->migration_progressed = 1;
+        bsal_bitmap_set_bit_uint32_t(&self->flags, FLAG_MIGRATION_PROGRESSED);
 
-    } else if (tag == BSAL_ACTOR_FORWARD_MESSAGES_REPLY && self->migration_forwarded_messages) {
+    } else if (tag == BSAL_ACTOR_FORWARD_MESSAGES_REPLY
+                    && bsal_bitmap_get_bit_uint32_t(&self->flags,
+                            FLAG_MIGRATION_FORWARDED_MESSAGES)) {
 
         /* send the name of the new copy and die of a peaceful death.
          */
@@ -1394,7 +1410,7 @@ void thorium_actor_migrate(struct thorium_actor *self, struct thorium_message *m
         printf("DEBUG thorium_actor_migrate: OK, now killing self and returning clone name to client.\n");
 #endif
 
-        self->migration_progressed = 1;
+        bsal_bitmap_set_bit_uint32_t(&self->flags, FLAG_MIGRATION_PROGRESSED);
 
     } else if (tag == BSAL_ACTOR_SET_SUPERVISOR_REPLY
                     && source == self->migration_new_actor) {
@@ -1412,7 +1428,8 @@ void thorium_actor_migrate(struct thorium_actor *self, struct thorium_message *m
 #endif
 
             thorium_actor_send_to_self_empty(self, BSAL_ACTOR_FORWARD_MESSAGES);
-            self->migration_forwarded_messages = 1;
+            bsal_bitmap_set_bit_uint32_t(&self->flags,
+                                FLAG_MIGRATION_FORWARDED_MESSAGES);
 
         /* wait for the clone queue to be empty.
          */
@@ -1428,7 +1445,7 @@ void thorium_actor_migrate(struct thorium_actor *self, struct thorium_message *m
             bsal_queue_enqueue(&self->forwarding_queue, &selector);
         }
 
-        self->migration_progressed = 1;
+        bsal_bitmap_set_bit_uint32_t(&self->flags, FLAG_MIGRATION_PROGRESSED);
     }
 }
 
@@ -1632,7 +1649,8 @@ void thorium_actor_forward_messages(struct thorium_actor *self, struct thorium_m
                             self->forwarding_selector);
 #endif
             if (self->forwarding_selector == BSAL_ACTOR_FORWARDING_MIGRATE) {
-                self->migration_forwarded_messages = 1;
+                bsal_bitmap_set_bit_uint32_t(&self->flags,
+                                FLAG_MIGRATION_FORWARDED_MESSAGES);
             }
 
             /* do a recursive call
@@ -1877,7 +1895,7 @@ int thorium_actor_work(struct thorium_actor *self)
 
 int thorium_actor_get_mailbox_size(struct thorium_actor *self)
 {
-    if (self->dead) {
+    if (thorium_actor_dead(self)) {
         return 0;
     }
     return bsal_fast_ring_size_from_producer(&self->mailbox);
@@ -1890,7 +1908,7 @@ int thorium_actor_get_sum_of_received_messages(struct thorium_actor *self)
     int value;
     int messages;
 
-    if (self->dead) {
+    if (thorium_actor_dead(self)) {
         return 0;
     }
     map = thorium_actor_get_received_messages(self);
@@ -1964,7 +1982,7 @@ struct thorium_worker *thorium_actor_worker(struct thorium_actor *self)
 
 int thorium_actor_dead(struct thorium_actor *self)
 {
-    return self->dead;
+    return bsal_bitmap_get_bit_uint32_t(&self->flags, FLAG_DEAD);
 }
 
 /* return 0 if successful
@@ -1976,7 +1994,7 @@ int thorium_actor_trylock(struct thorium_actor *self)
     result = bsal_lock_trylock(&self->receive_lock);
 
     if (result == BSAL_LOCK_SUCCESS) {
-        self->locked = BSAL_LOCK_LOCKED;
+        bsal_bitmap_set_bit_uint32_t(&self->flags, FLAG_LOCKED);
         return result;
     }
 

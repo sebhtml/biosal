@@ -223,14 +223,15 @@ struct bsal_memory_pool;
 #define BSAL_ACTOR_MAILBOX_SIZE 256
 
 /*
- * the actor attribute is a void *
+ * The actor attribute is a void *
  */
 struct thorium_actor {
-    int priority;
     struct thorium_script *script;
     struct thorium_worker *worker;
     struct thorium_node *node;
 
+    int priority;
+    uint32_t flags;
     struct bsal_fast_ring mailbox;
 
     struct bsal_map received_messages;
@@ -241,9 +242,8 @@ struct thorium_actor {
     struct bsal_map acquaintance_map;
 
     struct bsal_vector children;
-#endif
-
     int acquaintance_index;
+#endif
 
     struct bsal_queue enqueued_messages;
 
@@ -252,8 +252,6 @@ struct thorium_actor {
     void *concrete_actor;
 
     struct bsal_lock receive_lock;
-
-    int locked;
 
     /*
      * The name of the actor
@@ -272,15 +270,10 @@ struct thorium_actor {
      */
     int spawner_index;
 
-    int dead;
-
     struct bsal_counter counter;
 
-    int synchronization_started;
     int synchronization_responses;
     int synchronization_expected_responses;
-
-    int can_pack;
 
     int forwarding_selector;
     struct bsal_queue forwarding_queue;
@@ -291,16 +284,11 @@ struct thorium_actor {
     int cloning_spawner;
     int cloning_new_actor;
     int cloning_client;
-    int cloning_progressed;
 
     int migration_status;
     int migration_spawner;
     int migration_new_actor;
     int migration_client;
-    int migration_cloned;
-    int migration_progressed;
-    int migration_forwarded_messages;
-
 };
 
 void thorium_actor_init(struct thorium_actor *self, void *state,
