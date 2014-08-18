@@ -1,13 +1,13 @@
 
 #include "bitmap.h"
 
-int bsal_bitmap_get_bit_value_uint8_t(uint8_t *self, int index)
+int bsal_bitmap_get_bit_uint8_t(uint8_t *self, int index)
 {
     uint64_t bitmap;
 
     bitmap = *self;
 
-    return bsal_bitmap_get_bit_value_uint64_t(&bitmap, index);
+    return bsal_bitmap_get_bit_uint64_t(&bitmap, index);
 }
 
 void bsal_bitmap_set_bit_value_uint8_t(uint8_t *self, int index, int value)
@@ -21,13 +21,13 @@ void bsal_bitmap_set_bit_value_uint8_t(uint8_t *self, int index, int value)
     *self = bitmap;
 }
 
-int bsal_bitmap_get_bit_value_uint32_t(uint32_t *self, int index)
+int bsal_bitmap_get_bit_uint32_t(uint32_t *self, int index)
 {
     uint64_t bitmap;
 
     bitmap = *self;
 
-    return bsal_bitmap_get_bit_value_uint64_t(&bitmap, index);
+    return bsal_bitmap_get_bit_uint64_t(&bitmap, index);
 }
 
 void bsal_bitmap_set_bit_value_uint32_t(uint32_t *self, int index, int value)
@@ -41,7 +41,7 @@ void bsal_bitmap_set_bit_value_uint32_t(uint32_t *self, int index, int value)
     *self = bitmap;
 }
 
-int bsal_bitmap_get_bit_value_uint64_t(uint64_t *self, int index)
+int bsal_bitmap_get_bit_uint64_t(uint64_t *self, int index)
 {
     int bit_value;
     uint64_t bitmap;
@@ -74,4 +74,12 @@ void bsal_bitmap_set_bit_value_uint64_t(uint64_t *self, int index, int value)
     *self = bitmap;
 }
 
+void bsal_bitmap_set_bit_uint32_t(uint32_t *self, int index)
+{
+    bsal_bitmap_set_bit_value_uint32_t(self, index, BSAL_BIT_ONE);
+}
 
+void bsal_bitmap_clear_bit_uint32_t(uint32_t *self, int index)
+{
+    bsal_bitmap_set_bit_value_uint32_t(self, index, BSAL_BIT_ZERO);
+}

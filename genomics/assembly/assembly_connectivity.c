@@ -62,7 +62,7 @@ int bsal_assembly_connectivity_get_count(struct bsal_assembly_connectivity *self
             offset = bsal_assembly_connectivity_child_offset(i);
         }
 
-        value = bsal_bitmap_get_bit_value_uint8_t(&self->bitmap,
+        value = bsal_bitmap_get_bit_uint8_t(&self->bitmap,
                 offset);
 
         count += value;
@@ -83,7 +83,6 @@ void bsal_assembly_connectivity_delete_child(struct bsal_assembly_connectivity *
     bsal_bitmap_set_bit_value_uint8_t(&self->bitmap,
                 bsal_assembly_connectivity_child_offset(symbol_code),
                     BSAL_BIT_ZERO);
-
 }
 
 int bsal_assembly_connectivity_get_element(struct bsal_assembly_connectivity *self, int index, int type)
@@ -109,7 +108,7 @@ int bsal_assembly_connectivity_get_element(struct bsal_assembly_connectivity *se
             offset = bsal_assembly_connectivity_parent_offset(i);
         }
 
-        value = bsal_bitmap_get_bit_value_uint8_t(&self->bitmap, offset);
+        value = bsal_bitmap_get_bit_uint8_t(&self->bitmap, offset);
 
         if (value) {
             skipped++;
@@ -139,7 +138,6 @@ void bsal_assembly_connectivity_add_parent(struct bsal_assembly_connectivity *se
     bsal_bitmap_set_bit_value_uint8_t(&self->bitmap,
                 bsal_assembly_connectivity_parent_offset(symbol_code),
                     BSAL_BIT_ONE);
-
 }
 
 void bsal_assembly_connectivity_delete_parent(struct bsal_assembly_connectivity *self, int symbol_code)
@@ -147,7 +145,6 @@ void bsal_assembly_connectivity_delete_parent(struct bsal_assembly_connectivity 
     bsal_bitmap_set_bit_value_uint8_t(&self->bitmap,
                 bsal_assembly_connectivity_parent_offset(symbol_code),
                     BSAL_BIT_ZERO);
-
 }
 
 int bsal_assembly_connectivity_get_parent(struct bsal_assembly_connectivity *self, int index)

@@ -20,7 +20,6 @@
  */
 #include <signal.h>
 
-
 /* Some message tags at the node level instead of the actor level
  */
 
@@ -88,7 +87,8 @@ struct thorium_node {
     struct bsal_vector initial_actors;
     int received_initial_actors;
     int ready;
-    char print_structure;
+
+    uint32_t flags;
 
     /*
      * Last number of active requests.
@@ -101,8 +101,6 @@ struct thorium_node {
     int worker_for_triage;
 #endif
 
-    int started;
-
     struct bsal_map scripts;
     int available_scripts;
     int maximum_scripts;
@@ -111,8 +109,6 @@ struct thorium_node {
  * Enable a check to avoid calling transport probing function
  * when running on one single node.
  */
-    int use_transport;
-
     struct bsal_thread thread;
     struct thorium_transport transport;
 
@@ -173,17 +169,11 @@ struct thorium_node {
     int nodes;
     int threads;
 
-    int worker_in_main_thread;
-    int send_in_thread;
-    int workers_in_threads;
-
     int dead_actors;
     int alive_actors;
 
     int argc;
     char **argv;
-
-    char debug;
 
     struct bsal_counter counter;
 
@@ -199,8 +189,6 @@ struct thorium_node {
     time_t last_report_time;
     time_t last_auto_scaling;
     time_t last_transport_event_time;
-    char print_load;
-    char print_counters;
 };
 
 void thorium_node_init(struct thorium_node *self, int *argc, char ***argv);

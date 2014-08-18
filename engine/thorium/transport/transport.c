@@ -77,7 +77,7 @@ void thorium_transport_destroy(struct thorium_transport *self)
     /*
      * Print the report if requested.
      */
-    if (bsal_bitmap_get_bit_value_uint32_t(&self->flags, FLAG_PROFILE)) {
+    if (bsal_bitmap_get_bit_uint32_t(&self->flags, FLAG_PROFILE)) {
         thorium_transport_profiler_print_report(&self->transport_profiler);
     }
 
@@ -113,7 +113,7 @@ int thorium_transport_send(struct thorium_transport *self, struct thorium_messag
      * Send the message through the mock transport which is
      * a transport profiler.
      */
-    if (bsal_bitmap_get_bit_value_uint32_t(&self->flags, FLAG_PROFILE)) {
+    if (bsal_bitmap_get_bit_uint32_t(&self->flags, FLAG_PROFILE)) {
         thorium_transport_profiler_send_mock(&self->transport_profiler, message);
     }
 
