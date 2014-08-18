@@ -1,11 +1,10 @@
 
-#ifndef BSAL_MESSAGE_H
-#define BSAL_MESSAGE_H
+#ifndef THORIUM_MESSAGE_H
+#define THORIUM_MESSAGE_H
 
 /* helpers */
 
 #include "core/helpers/message_helper.h"
-
 
 /*
  * This is a message.

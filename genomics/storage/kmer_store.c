@@ -56,7 +56,7 @@ void bsal_kmer_store_init(struct thorium_actor *self)
 
     concrete_actor->last_received = 0;
 
-    thorium_actor_add_route(self, BSAL_ACTOR_YIELD_REPLY, bsal_kmer_store_yield_reply);
+    thorium_actor_add_route(self, THORIUM_ACTOR_YIELD_REPLY, bsal_kmer_store_yield_reply);
 }
 
 void bsal_kmer_store_destroy(struct thorium_actor *self)
@@ -245,7 +245,7 @@ void bsal_kmer_store_receive(struct thorium_actor *self, struct thorium_message 
 
         bsal_map_set_current_size_estimate(&concrete_actor->table, value);
 
-    } else if (tag == BSAL_ACTOR_ASK_TO_STOP) {
+    } else if (tag == THORIUM_ACTOR_ASK_TO_STOP) {
 
 #ifdef BSAL_KMER_STORE_DEBUG
         bsal_kmer_store_print(self);
@@ -253,7 +253,7 @@ void bsal_kmer_store_receive(struct thorium_actor *self, struct thorium_message 
 
         thorium_actor_ask_to_stop(self, message);
 
-    } else if (tag == BSAL_ACTOR_SET_CONSUMER) {
+    } else if (tag == THORIUM_ACTOR_SET_CONSUMER) {
 
         thorium_message_unpack_int(message, 0, &customer);
 
@@ -264,7 +264,7 @@ void bsal_kmer_store_receive(struct thorium_actor *self, struct thorium_message 
 
         concrete_actor->customer = customer;
 
-        thorium_actor_send_reply_empty(self, BSAL_ACTOR_SET_CONSUMER_REPLY);
+        thorium_actor_send_reply_empty(self, THORIUM_ACTOR_SET_CONSUMER_REPLY);
 
     } else if (tag == BSAL_PUSH_DATA) {
 
@@ -373,7 +373,7 @@ void bsal_kmer_store_push_data(struct thorium_actor *self, struct thorium_messag
     printf("yield 1\n");
 #endif
 
-    thorium_actor_send_to_self_empty(self, BSAL_ACTOR_YIELD);
+    thorium_actor_send_to_self_empty(self, THORIUM_ACTOR_YIELD);
 }
 
 void bsal_kmer_store_yield_reply(struct thorium_actor *self, struct thorium_message *message)
@@ -443,7 +443,7 @@ void bsal_kmer_store_yield_reply(struct thorium_actor *self, struct thorium_mess
         printf("yield ! %d\n", i);
 #endif
 
-        thorium_actor_send_to_self_empty(self, BSAL_ACTOR_YIELD);
+        thorium_actor_send_to_self_empty(self, THORIUM_ACTOR_YIELD);
 
         return;
     }

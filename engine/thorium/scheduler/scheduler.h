@@ -1,6 +1,6 @@
 
-#ifndef BSAL_SCHEDULER_H
-#define BSAL_SCHEDULER_H
+#ifndef THORIUM_SCHEDULER_H
+#define THORIUM_SCHEDULER_H
 
 #include <core/structures/map.h>
 
@@ -10,7 +10,7 @@ struct thorium_message;
 struct thorium_actor;
 struct thorium_migration;
 
-#define BSAL_SCHEDULER_PERIOD_IN_SECONDS 30
+#define THORIUM_SCHEDULER_PERIOD_IN_SECONDS 30
 
 struct thorium_scheduler {
     struct thorium_worker_pool *pool;

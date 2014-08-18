@@ -1,6 +1,6 @@
 
-#ifndef BSAL_TRANSPORT_PROFILER_H
-#define BSAL_TRANSPORT_PROFILER_H
+#ifndef THORIUM_TRANSPORT_PROFILER_H
+#define THORIUM_TRANSPORT_PROFILER_H
 
 #include <core/structures/map.h>
 

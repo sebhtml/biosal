@@ -27,7 +27,7 @@ void bsal_assembly_arc_classifier_init(struct thorium_actor *self)
 
     concrete_self->kmer_length = -1;
 
-    thorium_actor_add_route(self, BSAL_ACTOR_ASK_TO_STOP,
+    thorium_actor_add_route(self, THORIUM_ACTOR_ASK_TO_STOP,
                     thorium_actor_ask_to_stop);
 
     thorium_actor_add_route(self, BSAL_SET_KMER_LENGTH,
@@ -105,7 +105,7 @@ void bsal_assembly_arc_classifier_receive(struct thorium_actor *self, struct tho
     buffer = thorium_message_buffer(message);
     source = thorium_message_source(message);
 
-    if (tag == BSAL_ACTOR_SET_CONSUMERS) {
+    if (tag == THORIUM_ACTOR_SET_CONSUMERS) {
 
         bsal_vector_unpack(&concrete_self->consumers, buffer);
 
@@ -116,7 +116,7 @@ void bsal_assembly_arc_classifier_receive(struct thorium_actor *self, struct tho
             bsal_vector_set_int(&concrete_self->pending_requests, i, 0);
         }
 
-        thorium_actor_send_reply_empty(self, BSAL_ACTOR_SET_CONSUMERS_REPLY);
+        thorium_actor_send_reply_empty(self, THORIUM_ACTOR_SET_CONSUMERS_REPLY);
 
     } else if (tag == BSAL_ASSEMBLY_PUSH_ARC_BLOCK_REPLY){
 

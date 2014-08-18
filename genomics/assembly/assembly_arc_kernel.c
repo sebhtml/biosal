@@ -42,8 +42,8 @@ void bsal_assembly_arc_kernel_init(struct thorium_actor *self)
                     thorium_actor_script_name(self),
                     thorium_actor_name(self));
 
-    concrete_self->producer = BSAL_ACTOR_NOBODY;
-    concrete_self->consumer = BSAL_ACTOR_NOBODY;
+    concrete_self->producer = THORIUM_ACTOR_NOBODY;
+    concrete_self->consumer = THORIUM_ACTOR_NOBODY;
 
     /*
      * Configure the codec.
@@ -76,8 +76,8 @@ void bsal_assembly_arc_kernel_destroy(struct thorium_actor *self)
 
     bsal_dna_codec_destroy(&concrete_self->codec);
 
-    concrete_self->producer = BSAL_ACTOR_NOBODY;
-    concrete_self->consumer = BSAL_ACTOR_NOBODY;
+    concrete_self->producer = THORIUM_ACTOR_NOBODY;
+    concrete_self->consumer = THORIUM_ACTOR_NOBODY;
 }
 
 void bsal_assembly_arc_kernel_receive(struct thorium_actor *self, struct thorium_message *message)
@@ -94,7 +94,7 @@ void bsal_assembly_arc_kernel_receive(struct thorium_actor *self, struct thorium
     tag = thorium_message_tag(message);
     source = thorium_message_source(message);
 
-    if (tag == BSAL_ACTOR_SET_PRODUCER) {
+    if (tag == THORIUM_ACTOR_SET_PRODUCER) {
 
         thorium_message_unpack_int(message, 0, &concrete_self->producer);
 
@@ -102,23 +102,23 @@ void bsal_assembly_arc_kernel_receive(struct thorium_actor *self, struct thorium
 
         bsal_assembly_arc_kernel_ask(self, message);
 
-    } else if (tag == BSAL_ACTOR_SET_CONSUMER) {
+    } else if (tag == THORIUM_ACTOR_SET_CONSUMER) {
 
         thorium_message_unpack_int(message, 0, &concrete_self->consumer);
 
-        thorium_actor_send_reply_empty(self, BSAL_ACTOR_SET_CONSUMER_REPLY);
+        thorium_actor_send_reply_empty(self, THORIUM_ACTOR_SET_CONSUMER_REPLY);
 
-    } else if (tag == BSAL_ACTOR_NOTIFY) {
+    } else if (tag == THORIUM_ACTOR_NOTIFY) {
 
-        thorium_actor_send_reply_uint64_t(self, BSAL_ACTOR_NOTIFY_REPLY,
+        thorium_actor_send_reply_uint64_t(self, THORIUM_ACTOR_NOTIFY_REPLY,
                         concrete_self->produced_arcs);
 
     } else if (tag == BSAL_SEQUENCE_STORE_ASK_REPLY) {
 
         thorium_actor_send_empty(self, concrete_self->source,
-                        BSAL_ACTOR_SET_PRODUCER_REPLY);
+                        THORIUM_ACTOR_SET_PRODUCER_REPLY);
 
-    } else if (tag == BSAL_ACTOR_ASK_TO_STOP) {
+    } else if (tag == THORIUM_ACTOR_ASK_TO_STOP) {
 
         printf("%s/%d generated %" PRIu64 " arcs from %d sequence blocks, generated %d messages for consumer\n",
                         thorium_actor_script_name(self),
@@ -155,12 +155,12 @@ void bsal_assembly_arc_kernel_ask(struct thorium_actor *self, struct thorium_mes
 
     concrete_self = (struct bsal_assembly_arc_kernel *)thorium_actor_concrete_actor(self);
 
-    if (concrete_self->consumer == BSAL_ACTOR_NOBODY) {
+    if (concrete_self->consumer == THORIUM_ACTOR_NOBODY) {
         printf("Error: no consumer in arc kernel\n");
         return;
     }
 
-    if (concrete_self->producer == BSAL_ACTOR_NOBODY) {
+    if (concrete_self->producer == THORIUM_ACTOR_NOBODY) {
         printf("Error: no producer in arc kernel\n");
         return;
     }
@@ -212,17 +212,17 @@ void bsal_assembly_arc_kernel_push_sequence_data_block(struct thorium_actor *sel
 
     ++concrete_self->received_blocks;
 
-    if (concrete_self->kmer_length == BSAL_ACTOR_NOBODY) {
+    if (concrete_self->kmer_length == THORIUM_ACTOR_NOBODY) {
         printf("Error no kmer length set in kernel\n");
         return;
     }
 
-    if (concrete_self->consumer == BSAL_ACTOR_NOBODY) {
+    if (concrete_self->consumer == THORIUM_ACTOR_NOBODY) {
         printf("Error no consumer set in kernel\n");
         return;
     }
 
-    if (concrete_self->source == BSAL_ACTOR_NOBODY || concrete_self->producer == BSAL_ACTOR_NOBODY) {
+    if (concrete_self->source == THORIUM_ACTOR_NOBODY || concrete_self->producer == THORIUM_ACTOR_NOBODY) {
         printf("Error, no producer_source set\n");
         return;
     }

@@ -70,11 +70,11 @@ void ring_receive(struct thorium_actor *actor, struct thorium_message *message)
     buffer = thorium_message_buffer(message);
     name = thorium_actor_name(actor);
 
-    if (tag == BSAL_ACTOR_START) {
+    if (tag == THORIUM_ACTOR_START) {
 
         bsal_vector_init(&concrete_actor->spawners, 0);
         bsal_vector_unpack(&concrete_actor->spawners, buffer);
-        printf("actor %d BSAL_ACTOR_START, %d spawners\n", name,
+        printf("actor %d THORIUM_ACTOR_START, %d spawners\n", name,
                         (int)bsal_vector_size(&concrete_actor->spawners));
 
         destination = *(int *)bsal_vector_at(&concrete_actor->spawners, 0);
@@ -206,6 +206,6 @@ void ring_receive(struct thorium_actor *actor, struct thorium_message *message)
 
     } else if (tag == RING_KILL) {
 
-        thorium_actor_send_to_self_empty(actor, BSAL_ACTOR_STOP);
+        thorium_actor_send_to_self_empty(actor, THORIUM_ACTOR_STOP);
     }
 }

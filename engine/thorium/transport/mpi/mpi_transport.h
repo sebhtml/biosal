@@ -1,12 +1,12 @@
 
-#ifndef BSAL_MPI_TRANSPORT_H
-#define BSAL_MPI_TRANSPORT_H
+#ifndef THORIUM_MPI_TRANSPORT_H
+#define THORIUM_MPI_TRANSPORT_H
 
 #include <engine/thorium/transport/transport_interface.h>
 #include <core/structures/ring_queue.h>
 
-#define BSAL_TRANSPORT_USE_MPI
-#define BSAL_TRANSPORT_MPI_IDENTIFIER 10
+#define THORIUM_TRANSPORT_USE_MPI
+#define THORIUM_TRANSPORT_MPI_IDENTIFIER 10
 
 #include <mpi.h>
 

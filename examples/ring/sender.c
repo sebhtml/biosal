@@ -75,7 +75,7 @@ void sender_receive(struct thorium_actor *actor, struct thorium_message *message
 
         thorium_actor_send(actor, concrete_actor->next, message);
 
-        thorium_actor_send_to_self_empty(actor, BSAL_ACTOR_STOP);
+        thorium_actor_send_to_self_empty(actor, THORIUM_ACTOR_STOP);
     }
 }
 

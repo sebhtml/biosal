@@ -13,7 +13,7 @@
 #include <stdio.h>
 
 /*
-#define BSAL_DISPATCHER_DEBUG_10335
+#define THORIUM_DISPATCHER_DEBUG_10335
 */
 
 void thorium_dispatcher_init(struct thorium_dispatcher *self)
@@ -131,14 +131,14 @@ int thorium_dispatcher_dispatch(struct thorium_dispatcher *self, struct thorium_
     tag = thorium_message_tag(message);
     source = thorium_message_source(message);
 
-#ifdef BSAL_DISPATCHER_DEBUG_GET
+#ifdef THORIUM_DISPATCHER_DEBUG_GET
     printf("DEBUG thorium_dispatcher_dispatch Tag %d Source %d\n",
                     tag, source);
 
     thorium_dispatcher_print(self);
 #endif
 
-#ifdef BSAL_DISPATCHER_DEBUG_10335
+#ifdef THORIUM_DISPATCHER_DEBUG_10335
     if (tag == 10335) {
         printf("DEBUG thorium_dispatcher_dispatch 10335, available %d\n",
                         bsal_vector_size(&self->tags));
@@ -151,19 +151,19 @@ int thorium_dispatcher_dispatch(struct thorium_dispatcher *self, struct thorium_
      * the tag and the source.
      *
      * If that does not work, try with the tag and
-     * with the source wildcard BSAL_ACTOR_ANYBODY
+     * with the source wildcard THORIUM_ACTOR_ANYBODY
      */
     handler = thorium_dispatcher_get(self, tag, source);
 
     /*
      * If there is no route for this source,
-     * try with the wild card BSAL_ACTOR_ANYBODY to see
+     * try with the wild card THORIUM_ACTOR_ANYBODY to see
      * if this is registered.
      *
      */
     if (handler == NULL) {
 
-        handler = thorium_dispatcher_get(self, tag, BSAL_ACTOR_ANYBODY);
+        handler = thorium_dispatcher_get(self, tag, THORIUM_ACTOR_ANYBODY);
     }
 
     if (handler == NULL) {
@@ -171,10 +171,10 @@ int thorium_dispatcher_dispatch(struct thorium_dispatcher *self, struct thorium_
         /*
          * There is no default route for this tag and this source.
          * In fact, there is no route for this tag and
-         * BSAL_ACTOR_ANYBODY.
+         * THORIUM_ACTOR_ANYBODY.
          *
          */
-#ifdef BSAL_DISPATCHER_DEBUG_10335
+#ifdef THORIUM_DISPATCHER_DEBUG_10335
         if (tag == 10335) {
             printf("DEBUG 10335 is not registered.\n");
             thorium_dispatcher_print(self);
@@ -234,18 +234,18 @@ thorium_actor_receive_fn_t thorium_dispatcher_get(struct thorium_dispatcher *sel
 
         route = bsal_vector_at(vector, i);
 
-        if (thorium_route_test(route) == BSAL_ROUTE_CONDITION_TRUE) {
+        if (thorium_route_test(route) == THORIUM_ROUTE_CONDITION_TRUE) {
             handler_with_condition = thorium_route_handler(route);
-        } else if (thorium_route_test(route) == BSAL_ROUTE_CONDITION_NONE) {
+        } else if (thorium_route_test(route) == THORIUM_ROUTE_CONDITION_NONE) {
             handler_without_condition = thorium_route_handler(route);
         }
 
-        /* Otherwise it is BSAL_ROUTE_CONDITION_FALSE
+        /* Otherwise it is THORIUM_ROUTE_CONDITION_FALSE
          */
     }
 
     /*
-     * BSAL_ROUTE_CONDITION_TRUE has priority
+     * THORIUM_ROUTE_CONDITION_TRUE has priority
      */
 
     if (handler_with_condition != NULL) {

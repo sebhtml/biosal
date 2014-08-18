@@ -42,7 +42,7 @@ void hello_receive(struct thorium_actor *actor, struct thorium_message *message)
     name = thorium_actor_name(actor);
     buffer = thorium_message_buffer(message);
 
-    if (tag == BSAL_ACTOR_START) {
+    if (tag == THORIUM_ACTOR_START) {
 
         bsal_vector_unpack(&hello1->initial_helloes, buffer);
 
@@ -54,6 +54,6 @@ void hello_receive(struct thorium_actor *actor, struct thorium_message *message)
         }
         printf("\n");
 
-        thorium_actor_send_to_self_empty(actor, BSAL_ACTOR_STOP);
+        thorium_actor_send_to_self_empty(actor, THORIUM_ACTOR_STOP);
     }
 }

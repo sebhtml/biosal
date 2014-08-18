@@ -1,6 +1,6 @@
 
-#ifndef BSAL_WORKER_POOL_H
-#define BSAL_WORKER_POOL_H
+#ifndef THORIUM_WORKER_POOL_H
+#define THORIUM_WORKER_POOL_H
 
 #include "worker.h"
 
@@ -16,11 +16,13 @@ struct thorium_worker;
 struct thorium_migration;
 
 /*
-#define BSAL_WORKER_POOL_HAS_SPECIAL_QUEUES
+#define THORIUM_WORKER_POOL_HAS_SPECIAL_QUEUES
 */
 
+/*
+ * A worker pool.
+ */
 struct thorium_worker_pool {
-
     struct thorium_scheduler scheduler;
 
     struct bsal_vector worker_actors;
@@ -54,11 +56,10 @@ struct thorium_worker_pool {
     int ticks_without_messages;
 
     time_t starting_time;
-
 };
 
-#define BSAL_WORKER_POOL_LOAD_LOOP 0
-#define BSAL_WORKER_POOL_LOAD_EPOCH 1
+#define THORIUM_WORKER_POOL_LOAD_LOOP 0
+#define THORIUM_WORKER_POOL_LOAD_EPOCH 1
 
 void thorium_worker_pool_init(struct thorium_worker_pool *self, int workers, struct thorium_node *node);
 void thorium_worker_pool_destroy(struct thorium_worker_pool *self);
@@ -81,7 +82,7 @@ struct thorium_worker *thorium_worker_pool_get_worker(
 
 void thorium_worker_pool_print_load(struct thorium_worker_pool *self, int type);
 
-#ifdef BSAL_WORKER_HAS_OWN_QUEUES
+#ifdef THORIUM_WORKER_HAS_OWN_QUEUES
 int thorium_worker_pool_pull_classic(struct thorium_worker_pool *self, struct thorium_message *message);
 void thorium_worker_pool_schedule_work_classic(struct thorium_worker_pool *self, struct bsal_work *work);
 

@@ -1,6 +1,6 @@
 
-#ifndef BSAL_PRIORITY_SCHEDULER
-#define BSAL_PRIORITY_SCHEDULER
+#ifndef THORIUM_PRIORITY_SCHEDULER
+#define THORIUM_PRIORITY_SCHEDULER
 
 #include <core/structures/map.h>
 

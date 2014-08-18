@@ -1,6 +1,6 @@
 
-#ifndef BSAL_WORKER_BUFFER_H
-#define BSAL_WORKER_BUFFER_H
+#ifndef THORIUM_WORKER_BUFFER_H
+#define THORIUM_WORKER_BUFFER_H
 
 /*
  * This is a worker buffer.

@@ -1,6 +1,6 @@
 
-#ifndef BSAL_NODE_H
-#define BSAL_NODE_H
+#ifndef THORIUM_NODE_H
+#define THORIUM_NODE_H
 
 #include "actor.h"
 #include "worker_pool.h"
@@ -23,16 +23,16 @@
 /* Some message tags at the node level instead of the actor level
  */
 
-#define BSAL_NODE_ADD_INITIAL_ACTOR 0x00002438
-#define BSAL_NODE_ADD_INITIAL_ACTORS 0x00004c19
-#define BSAL_NODE_ADD_INITIAL_ACTORS_REPLY 0x00003ad3
-#define BSAL_NODE_START 0x0000082c
+#define THORIUM_NODE_ADD_INITIAL_ACTOR 0x00002438
+#define THORIUM_NODE_ADD_INITIAL_ACTORS 0x00004c19
+#define THORIUM_NODE_ADD_INITIAL_ACTORS_REPLY 0x00003ad3
+#define THORIUM_NODE_START 0x0000082c
 
 /*
  * Thorium product branding.
  */
 
-#define BSAL_NODE_THORIUM_PREFIX "[thorium]"
+#define THORIUM_NODE_THORIUM_PREFIX "[thorium]"
 
 /*
  * Compilation options:
@@ -44,8 +44,8 @@
  */
 /*
  */
-#define BSAL_NODE_ENABLE_INSTRUMENTATION
-#define BSAL_NODE_LOAD_PERIOD 5
+#define THORIUM_NODE_ENABLE_INSTRUMENTATION
+#define THORIUM_NODE_LOAD_PERIOD 5
 
 /*
 */
@@ -95,7 +95,7 @@ struct thorium_node {
      */
     int last_active_request_count;
 
-#ifdef BSAL_NODE_INJECT_CLEAN_WORKER_BUFFERS
+#ifdef THORIUM_NODE_INJECT_CLEAN_WORKER_BUFFERS
     struct bsal_ring_queue clean_outbound_buffers_to_inject;
 
     int worker_for_triage;
@@ -115,7 +115,7 @@ struct thorium_node {
     /*
      * This lock can not be removed because
      * of the function thorium_actor_spawn.
-     * The message BSAL_ACTOR_SPAWN however does not
+     * The message THORIUM_ACTOR_SPAWN however does not
      * requires locking.
      *
      * If thorium_actor_spawn is removed from the API, then
@@ -127,7 +127,7 @@ struct thorium_node {
      * This lock is required because of the
      * function thorium_actor_add_script.
      *
-     * A message tag BSAL_ACTOR_ADD_SCRIPT could be added
+     * A message tag THORIUM_ACTOR_ADD_SCRIPT could be added
      * in order to remove this lock.
      */
     struct bsal_lock script_lock;
@@ -136,7 +136,7 @@ struct thorium_node {
      * This lock is required because it is accessed when
      * thorium_node_notify_death is called from thorium_actor_die.
      *
-     * This could be fixed by changing the semantics of BSAL_ACTOR_STOP.
+     * This could be fixed by changing the semantics of THORIUM_ACTOR_STOP.
      * Instead of catching it inside an actor, the actor could just send it to itself
      * and the Thorium engine could catch it and kill the actor
      * (the Thorium pacing thread would call thorium_node_notify_death
@@ -275,6 +275,5 @@ void thorium_node_recycle_inbound_message(struct thorium_node *self, struct thor
 
 void thorium_node_prepare_received_message(struct thorium_node *self, struct thorium_message *message);
 void thorium_node_resolve(struct thorium_node *self, struct thorium_message *message);
-
 
 #endif

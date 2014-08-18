@@ -188,15 +188,15 @@ void bsal_sequence_partitioner_receive(struct thorium_actor *actor, struct thori
             thorium_actor_send_reply_empty(actor, BSAL_SEQUENCE_PARTITIONER_FINISHED);
         }
 
-    } else if (tag == BSAL_ACTOR_ASK_TO_STOP
+    } else if (tag == THORIUM_ACTOR_ASK_TO_STOP
                     && source == thorium_actor_supervisor(actor)) {
 
 #ifdef BSAL_SEQUENCE_PARTITIONER_DEBUG
-        printf("DEBUG bsal_sequence_partitioner_receive BSAL_ACTOR_ASK_TO_STOP\n");
+        printf("DEBUG bsal_sequence_partitioner_receive THORIUM_ACTOR_ASK_TO_STOP\n");
 #endif
 
         thorium_actor_send_to_self_empty(actor,
-                        BSAL_ACTOR_STOP);
+                        THORIUM_ACTOR_STOP);
 
     } else if (tag == BSAL_SEQUENCE_PARTITIONER_PROVIDE_STORE_ENTRY_COUNTS_REPLY) {
         /* generate commands

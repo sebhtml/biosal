@@ -225,16 +225,16 @@ const char *thorium_transport_get_name(struct thorium_transport *self)
 
 void thorium_transport_select(struct thorium_transport *self)
 {
-    self->implementation = BSAL_TRANSPORT_MOCK_IDENTIFIER;
+    self->implementation = THORIUM_TRANSPORT_MOCK_IDENTIFIER;
 
-#if defined(BSAL_TRANSPORT_USE_PAMI)
-    self->implementation = BSAL_TRANSPORT_PAMI_IDENTIFIER;
+#if defined(THORIUM_TRANSPORT_USE_PAMI)
+    self->implementation = THORIUM_TRANSPORT_PAMI_IDENTIFIER;
 
-#elif defined(BSAL_TRANSPORT_USE_MPI)
-    self->implementation = BSAL_TRANSPORT_MPI_IDENTIFIER;
+#elif defined(THORIUM_TRANSPORT_USE_MPI)
+    self->implementation = THORIUM_TRANSPORT_MPI_IDENTIFIER;
 #endif
 
-    if (self->implementation == BSAL_TRANSPORT_MOCK_IDENTIFIER) {
+    if (self->implementation == THORIUM_TRANSPORT_MOCK_IDENTIFIER) {
         printf("Error: no transport implementation is available.\n");
         exit(1);
     }
@@ -249,7 +249,7 @@ void thorium_transport_select(struct thorium_transport *self)
 void thorium_transport_print(struct thorium_transport *self)
 {
     printf("%s TRANSPORT Rank: %d RankCount: %d Implementation: %s\n",
-                    BSAL_NODE_THORIUM_PREFIX,
+                    THORIUM_NODE_THORIUM_PREFIX,
                 self->rank, self->size,
                 thorium_transport_get_name(self));
 }

@@ -1,6 +1,6 @@
 
-#ifndef BSAL_TRANSPORT_H
-#define BSAL_TRANSPORT_H
+#ifndef THORIUM_TRANSPORT_H
+#define THORIUM_TRANSPORT_H
 
 #include "transport_interface.h"
 #include "transport_profiler.h"
@@ -8,14 +8,14 @@
 #include "pami/pami_transport.h"
 #include "mpi/mpi_transport.h"
 
-#define BSAL_TRANSPORT_IMPLEMENTATION_MOCK 0
+#define THORIUM_TRANSPORT_IMPLEMENTATION_MOCK 0
 
-#define BSAL_THREAD_SINGLE 0
-#define BSAL_THREAD_FUNNELED 1
-#define BSAL_THREAD_SERIALIZED 2
-#define BSAL_THREAD_MULTIPLE 3
+#define THORIUM_THREAD_SINGLE 0
+#define THORIUM_THREAD_FUNNELED 1
+#define THORIUM_THREAD_SERIALIZED 2
+#define THORIUM_THREAD_MULTIPLE 3
 
-#define BSAL_TRANSPORT_MOCK_IDENTIFIER (-1)
+#define THORIUM_TRANSPORT_MOCK_IDENTIFIER (-1)
 
 struct thorium_active_request;
 struct thorium_worker_buffer;
@@ -68,7 +68,6 @@ int thorium_transport_get_active_request_count(struct thorium_transport *self);
 int thorium_transport_dequeue_active_request(struct thorium_transport *self, struct thorium_active_request *active_request);
 
 int thorium_transport_get_implementation(struct thorium_transport *self);
-
 
 void *thorium_transport_get_concrete_transport(struct thorium_transport *self);
 void thorium_transport_set(struct thorium_transport *self);

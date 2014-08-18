@@ -1,6 +1,6 @@
 
-#ifndef BSAL_WORKER_H
-#define BSAL_WORKER_H
+#ifndef THORIUM_WORKER_H
+#define THORIUM_WORKER_H
 
 #include "actor.h"
 
@@ -27,38 +27,37 @@ struct thorium_scheduler;
 /*
  * Inject clean worker buffers into the worker rings
  */
-#define BSAL_NODE_INJECT_CLEAN_WORKER_BUFFERS
+#define THORIUM_NODE_INJECT_CLEAN_WORKER_BUFFERS
 
 /*
  * Enable wait and signal for workers
  */
 /*
 */
-#define BSAL_WORKER_ENABLE_WAIT
+#define THORIUM_WORKER_ENABLE_WAIT
 
-#define BSAL_WORKER_NONE (-99)
+#define THORIUM_WORKER_NONE (-99)
 
 /*
-#define BSAL_WORKER_USE_LOCK
+#define THORIUM_WORKER_USE_LOCK
 */
 
 /*
  * Configuration of the buffering system of biosal
  */
-#define BSAL_WORKER_RING_CAPACITY 512
+#define THORIUM_WORKER_RING_CAPACITY 512
 
 /* Warning options for local work queue and
  * local message queue.
  */
-#define BSAL_WORKER_WARNING_THRESHOLD 1
-#define BSAL_WORKER_WARNING_THRESHOLD_STRIDE 128
+#define THORIUM_WORKER_WARNING_THRESHOLD 1
+#define THORIUM_WORKER_WARNING_THRESHOLD_STRIDE 128
 
 /*
-*/
-#define BSAL_WORKER_HAS_OWN_QUEUES
-
-#define BSAL_WORKER_USE_FAST_RINGS
-
+ * Some fancy compilation options.
+ */
+#define THORIUM_WORKER_HAS_OWN_QUEUES
+#define THORIUM_WORKER_USE_FAST_RINGS
 
 /* this is similar to worker threads in linux ([kworker/0] [kworker/1])
  */
@@ -78,7 +77,7 @@ struct thorium_worker {
      */
     struct bsal_fast_ring actors_to_schedule;
 
-#ifdef BSAL_NODE_INJECT_CLEAN_WORKER_BUFFERS
+#ifdef THORIUM_NODE_INJECT_CLEAN_WORKER_BUFFERS
     struct bsal_fast_ring injected_clean_outbound_buffers;
 
     struct bsal_fast_ring clean_message_ring_for_triage;

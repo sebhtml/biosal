@@ -10,11 +10,11 @@
 #include <core/system/memory_pool.h>
 #include <core/system/debugger.h>
 
-#define BSAL_TRANSPORT_MPI_NAME "MPI: Message Passing Interface"
+#define THORIUM_TRANSPORT_MPI_NAME "MPI: Message Passing Interface"
 
 struct thorium_transport_interface thorium_mpi_transport_implementation = {
-    .identifier = BSAL_TRANSPORT_MPI_IDENTIFIER,
-    .name = BSAL_TRANSPORT_MPI_NAME,
+    .identifier = THORIUM_TRANSPORT_MPI_IDENTIFIER,
+    .name = THORIUM_TRANSPORT_MPI_NAME,
     .size = sizeof(struct thorium_mpi_transport),
     .init = thorium_mpi_transport_init,
     .destroy = thorium_mpi_transport_destroy,
@@ -52,16 +52,16 @@ void thorium_mpi_transport_init(struct thorium_transport *self, int *argc, char 
      * Set the provided level of thread support
      */
     if (provided == MPI_THREAD_SINGLE) {
-        self->provided = BSAL_THREAD_SINGLE;
+        self->provided = THORIUM_THREAD_SINGLE;
 
     } else if (provided == MPI_THREAD_FUNNELED) {
-        self->provided = BSAL_THREAD_FUNNELED;
+        self->provided = THORIUM_THREAD_FUNNELED;
 
     } else if (provided == MPI_THREAD_SERIALIZED) {
-        self->provided = BSAL_THREAD_SERIALIZED;
+        self->provided = THORIUM_THREAD_SERIALIZED;
 
     } else if (provided == MPI_THREAD_MULTIPLE) {
-        self->provided = BSAL_THREAD_MULTIPLE;
+        self->provided = THORIUM_THREAD_MULTIPLE;
     }
 
     /* make a new communicator for the library and don't use MPI_COMM_WORLD later */

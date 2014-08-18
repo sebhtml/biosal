@@ -20,14 +20,14 @@ void thorium_route_destroy(struct thorium_route *self)
 int thorium_route_test(struct thorium_route *self)
 {
     if (self->actual_value == NULL) {
-        return BSAL_ROUTE_CONDITION_NONE;
+        return THORIUM_ROUTE_CONDITION_NONE;
     }
 
     if (*(self->actual_value) == self->expected_value) {
-        return BSAL_ROUTE_CONDITION_TRUE;
+        return THORIUM_ROUTE_CONDITION_TRUE;
     }
 
-    return BSAL_ROUTE_CONDITION_FALSE;
+    return THORIUM_ROUTE_CONDITION_FALSE;
 }
 
 thorium_actor_receive_fn_t thorium_route_handler(struct thorium_route *self)

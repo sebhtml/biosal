@@ -49,8 +49,8 @@ void table_receive(struct thorium_actor *actor, struct thorium_message *message)
     name = thorium_actor_name(actor);
     buffer = thorium_message_buffer(message);
 
-    if (tag == BSAL_ACTOR_START) {
-        printf("Actor %i receives BSAL_ACTOR_START from actor %i\n",
+    if (tag == THORIUM_ACTOR_START) {
+        printf("Actor %i receives THORIUM_ACTOR_START from actor %i\n",
                         name,  source);
 
         bsal_vector_init(&table1->spawners, 0);
@@ -60,7 +60,7 @@ void table_receive(struct thorium_actor *actor, struct thorium_message *message)
         remote %= bsal_vector_size(&table1->spawners);
 
         script = TABLE_SCRIPT;
-        thorium_message_init(&spawn_message, BSAL_ACTOR_SPAWN, sizeof(script), &script);
+        thorium_message_init(&spawn_message, THORIUM_ACTOR_SPAWN, sizeof(script), &script);
         thorium_actor_send(actor, *(int *)bsal_vector_at(&table1->spawners, remote), &spawn_message);
 
         /*
@@ -68,11 +68,11 @@ void table_receive(struct thorium_actor *actor, struct thorium_message *message)
         thorium_message_init(message, TABLE_NOTIFY, 0, NULL);
         thorium_actor_send(actor, 0, message);
 */
-    } else if (tag == BSAL_ACTOR_SPAWN_REPLY) {
+    } else if (tag == THORIUM_ACTOR_SPAWN_REPLY) {
 
         new_actor= *(int *)buffer;
 
-        printf("Actor %i receives BSAL_ACTOR_SPAWN_REPLY from actor %i,"
+        printf("Actor %i receives THORIUM_ACTOR_SPAWN_REPLY from actor %i,"
                         " new actor is %d\n",
                         name,  source, new_actor);
 
@@ -91,7 +91,7 @@ void table_receive(struct thorium_actor *actor, struct thorium_message *message)
             return;
         }
 
-        thorium_message_init(message, BSAL_ACTOR_STOP, 0, NULL);
+        thorium_message_init(message, THORIUM_ACTOR_STOP, 0, NULL);
         thorium_actor_send(actor, name, message);
 
     } else if (tag == TABLE_DIE) {
@@ -99,7 +99,7 @@ void table_receive(struct thorium_actor *actor, struct thorium_message *message)
         printf("Actor %i receives TABLE_DIE from actor %i\n",
                         name,  source);
 
-        thorium_message_init(message, BSAL_ACTOR_STOP, 0, NULL);
+        thorium_message_init(message, THORIUM_ACTOR_STOP, 0, NULL);
         thorium_actor_send(actor, name, message);
 
     } else if (tag == TABLE_NOTIFY) {

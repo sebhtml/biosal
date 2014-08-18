@@ -174,14 +174,14 @@ void argonnite_receive(struct thorium_actor *actor, struct thorium_message *mess
     name = thorium_actor_name(actor);
     source = thorium_message_source(message);
 
-    if (tag == BSAL_ACTOR_START) {
+    if (tag == THORIUM_ACTOR_START) {
 
             /* Don't register for auto scaling here.
              * Kernels do this instead.
              */
             /*
         thorium_actor_send_to_self_empty(actor,
-                        BSAL_ACTOR_ENABLE_AUTO_SCALING);
+                        THORIUM_ACTOR_ENABLE_AUTO_SCALING);
                         */
 
         for (i = 0; i < argc; i++) {
@@ -243,13 +243,13 @@ void argonnite_receive(struct thorium_actor *actor, struct thorium_message *mess
 
             spawner = bsal_vector_at_as_int(&concrete_actor->initial_actors, i);
 
-            thorium_actor_send_empty(actor, spawner, BSAL_ACTOR_GET_NODE_WORKER_COUNT);
+            thorium_actor_send_empty(actor, spawner, THORIUM_ACTOR_GET_NODE_WORKER_COUNT);
         }
 
         concrete_actor->configured_actors = 0;
 
 
-    } else if (tag == BSAL_ACTOR_GET_NODE_WORKER_COUNT_REPLY) {
+    } else if (tag == THORIUM_ACTOR_GET_NODE_WORKER_COUNT_REPLY) {
 
         thorium_message_unpack_int(message, 0, &workers);
 
@@ -264,11 +264,11 @@ void argonnite_receive(struct thorium_actor *actor, struct thorium_message *mess
 
         if (concrete_actor->configured_actors == bsal_vector_size(&concrete_actor->initial_actors)) {
             spawner = bsal_vector_at_as_int(&concrete_actor->initial_actors, bsal_vector_size(&concrete_actor->initial_actors) / 2);
-            thorium_actor_send_int(actor, spawner, BSAL_ACTOR_SPAWN, BSAL_COVERAGE_DISTRIBUTION_SCRIPT);
+            thorium_actor_send_int(actor, spawner, THORIUM_ACTOR_SPAWN, BSAL_COVERAGE_DISTRIBUTION_SCRIPT);
         }
 
 
-    } else if (tag == BSAL_ACTOR_SPAWN_REPLY) {
+    } else if (tag == THORIUM_ACTOR_SPAWN_REPLY) {
 
         if (concrete_actor->state == ARGONNITE_STATE_PREPARE_SEQUENCE_STORES) {
             argonnite_prepare_sequence_stores(actor, message);
@@ -296,23 +296,23 @@ void argonnite_receive(struct thorium_actor *actor, struct thorium_message *mess
 #endif
 
         thorium_actor_send_reply_int(actor, BSAL_MANAGER_SET_ACTORS_PER_SPAWNER,
-                        BSAL_ACTOR_NO_VALUE);
+                        THORIUM_ACTOR_NO_VALUE);
 
     } else if (tag == BSAL_MANAGER_SET_ACTORS_PER_SPAWNER_REPLY
                     && source == concrete_actor->manager_for_kernels) {
 
-        thorium_actor_send_reply_vector(actor, BSAL_ACTOR_START, &concrete_actor->initial_actors);
+        thorium_actor_send_reply_vector(actor, THORIUM_ACTOR_START, &concrete_actor->initial_actors);
 
         /* ask the manager to spawn BSAL_KMER_COUNTER_KERNEL_SCRIPT actors,
          * these will be the customers of the controller
          */
 
-    } else if (tag == BSAL_ACTOR_START_REPLY
+    } else if (tag == THORIUM_ACTOR_START_REPLY
                     && source == concrete_actor->manager_for_sequence_stores) {
 
         argonnite_prepare_sequence_stores(actor, message);
 
-    } else if (tag == BSAL_ACTOR_START_REPLY
+    } else if (tag == THORIUM_ACTOR_START_REPLY
                     && source == concrete_actor->manager_for_kernels) {
 
         /* make sure that customers are unpacking correctly
@@ -329,14 +329,14 @@ void argonnite_receive(struct thorium_actor *actor, struct thorium_message *mess
          */
 
 
-    } else if (tag == BSAL_ACTOR_SET_CONSUMERS_REPLY
+    } else if (tag == THORIUM_ACTOR_SET_CONSUMERS_REPLY
                     && source == concrete_actor->controller) {
 
 
-        thorium_actor_send_reply_vector(actor, BSAL_ACTOR_START, &concrete_actor->initial_actors);
+        thorium_actor_send_reply_vector(actor, THORIUM_ACTOR_START, &concrete_actor->initial_actors);
 
 
-    } else if (tag == BSAL_ACTOR_START_REPLY
+    } else if (tag == THORIUM_ACTOR_START_REPLY
                     && source == concrete_actor->controller) {
 
         /* add files */
@@ -400,14 +400,14 @@ void argonnite_receive(struct thorium_actor *actor, struct thorium_message *mess
         /* send spawners to the aggregator manager
          */
 
-        thorium_actor_send_reply_vector(actor, BSAL_ACTOR_START,
+        thorium_actor_send_reply_vector(actor, THORIUM_ACTOR_START,
                         &concrete_actor->initial_actors);
 
         printf("argonnite %d ask manager %d to spawn children for work\n",
                         thorium_actor_name(actor), manager_for_aggregators);
 
 
-    } else if (tag == BSAL_ACTOR_START_REPLY &&
+    } else if (tag == THORIUM_ACTOR_START_REPLY &&
                     source == concrete_actor->manager_for_aggregators) {
 
         concrete_actor->wired_kernels= 0;
@@ -434,7 +434,7 @@ void argonnite_receive(struct thorium_actor *actor, struct thorium_message *mess
             kernel = kernel_index;
             aggregator = aggregator_index;
 
-            thorium_actor_send_int(actor, kernel, BSAL_ACTOR_SET_CONSUMER, aggregator);
+            thorium_actor_send_int(actor, kernel, THORIUM_ACTOR_SET_CONSUMER, aggregator);
 
             ++kernel_index_index;
             ++aggregator_index_index;
@@ -463,7 +463,7 @@ void argonnite_receive(struct thorium_actor *actor, struct thorium_message *mess
 #ifdef ARGONNITE_DEBUG_WIRING
 #endif
 
-                thorium_actor_send_int(actor, kernel, BSAL_ACTOR_SET_CONSUMER, aggregator);
+                thorium_actor_send_int(actor, kernel, THORIUM_ACTOR_SET_CONSUMER, aggregator);
 
                 kernel_index_index++;
                 aggregator
@@ -491,7 +491,7 @@ void argonnite_receive(struct thorium_actor *actor, struct thorium_message *mess
         }
 #endif
 
-    } else if (tag == BSAL_ACTOR_SET_CONSUMER_REPLY
+    } else if (tag == THORIUM_ACTOR_SET_CONSUMER_REPLY
                     && concrete_actor->wiring_distribution) {
 
         concrete_actor->configured_actors++;
@@ -506,7 +506,7 @@ void argonnite_receive(struct thorium_actor *actor, struct thorium_message *mess
         }
 
 
-    } else if (tag == BSAL_ACTOR_SET_CONSUMER_REPLY) {
+    } else if (tag == THORIUM_ACTOR_SET_CONSUMER_REPLY) {
 
         concrete_actor->wired_kernels++;
 
@@ -559,10 +559,10 @@ void argonnite_receive(struct thorium_actor *actor, struct thorium_message *mess
     } else if (tag == BSAL_MANAGER_SET_ACTORS_PER_WORKER_REPLY
                     && source == concrete_actor->manager_for_kmer_stores) {
 
-        thorium_actor_send_reply_vector(actor, BSAL_ACTOR_START, &concrete_actor->initial_actors);
+        thorium_actor_send_reply_vector(actor, THORIUM_ACTOR_START, &concrete_actor->initial_actors);
 
 
-    } else if (tag == BSAL_ACTOR_START_REPLY
+    } else if (tag == THORIUM_ACTOR_START_REPLY
                     && source == concrete_actor->manager_for_kmer_stores) {
 
         printf("DEBUG kmer stores READY\n");
@@ -573,11 +573,11 @@ void argonnite_receive(struct thorium_actor *actor, struct thorium_message *mess
         concrete_actor->configured_aggregators = 0;
 
 
-        thorium_actor_send_range_vector(actor, &concrete_actor->aggregators, BSAL_ACTOR_SET_CONSUMERS,
+        thorium_actor_send_range_vector(actor, &concrete_actor->aggregators, THORIUM_ACTOR_SET_CONSUMERS,
                 &concrete_actor->kmer_stores);
 
 
-    } else if (tag == BSAL_ACTOR_SET_CONSUMERS_REPLY) {
+    } else if (tag == THORIUM_ACTOR_SET_CONSUMERS_REPLY) {
         /*
          * received a reply from one of the aggregators.
          */
@@ -611,12 +611,12 @@ void argonnite_receive(struct thorium_actor *actor, struct thorium_message *mess
 
             concrete_actor->wiring_distribution = 1;
 
-            thorium_actor_send_range_int(actor, &concrete_actor->kmer_stores, BSAL_ACTOR_SET_CONSUMER,
+            thorium_actor_send_range_int(actor, &concrete_actor->kmer_stores, THORIUM_ACTOR_SET_CONSUMER,
                             distribution);
 
         }
 
-    } else if (tag == BSAL_ACTOR_SET_PRODUCER_REPLY) {
+    } else if (tag == THORIUM_ACTOR_SET_PRODUCER_REPLY) {
 
         /* give it a new producer
          */
@@ -685,7 +685,7 @@ void argonnite_receive(struct thorium_actor *actor, struct thorium_message *mess
                             sequence_store_index_index);
             kernel = source;
 
-            thorium_actor_send_int(actor, kernel, BSAL_ACTOR_SET_PRODUCER, sequence_store);
+            thorium_actor_send_int(actor, kernel, THORIUM_ACTOR_SET_PRODUCER, sequence_store);
 
             if (print_stuff) {
                 printf("argonnite %d tells kernel %d to steal work from kernel %d (%d), producer is sequence store %d\n",
@@ -704,13 +704,13 @@ void argonnite_receive(struct thorium_actor *actor, struct thorium_message *mess
         if (concrete_actor->finished_kernels == bsal_vector_size(&concrete_actor->kernels)) {
 
 
-            printf("sending BSAL_ACTOR_NOTIFY\n");
-            thorium_actor_send_range_empty(actor, &concrete_actor->kernels, BSAL_ACTOR_NOTIFY);
+            printf("sending THORIUM_ACTOR_NOTIFY\n");
+            thorium_actor_send_range_empty(actor, &concrete_actor->kernels, THORIUM_ACTOR_NOTIFY);
 
             concrete_actor->finished_kernels = 0;
         }
 
-    } else if (tag == BSAL_ACTOR_NOTIFY_REPLY) {
+    } else if (tag == THORIUM_ACTOR_NOTIFY_REPLY) {
 
         thorium_message_unpack_uint64_t(message, 0, &produced);
 
@@ -781,7 +781,7 @@ void argonnite_receive(struct thorium_actor *actor, struct thorium_message *mess
         concrete_actor->actual_kmers = 0;
 
 
-    } else if (tag == BSAL_ACTOR_NOTIFY && source == concrete_actor->distribution) {
+    } else if (tag == THORIUM_ACTOR_NOTIFY && source == concrete_actor->distribution) {
 
 
         bsal_vector_iterator_init(&iterator, &concrete_actor->initial_actors);
@@ -794,13 +794,13 @@ void argonnite_receive(struct thorium_actor *actor, struct thorium_message *mess
             printf("argonnite %d stops argonnite %d\n",
                             name, other_name);
 
-            thorium_actor_send_empty(actor, other_name, BSAL_ACTOR_ASK_TO_STOP);
+            thorium_actor_send_empty(actor, other_name, THORIUM_ACTOR_ASK_TO_STOP);
         }
 
 
         bsal_vector_iterator_destroy(&iterator);
 
-    } else if (tag == BSAL_ACTOR_ASK_TO_STOP) {
+    } else if (tag == THORIUM_ACTOR_ASK_TO_STOP) {
 
         if (concrete_actor->is_boss) {
             bsal_timer_stop(&concrete_actor->timer_for_kmers);
@@ -817,19 +817,19 @@ void argonnite_receive(struct thorium_actor *actor, struct thorium_message *mess
          */
 
         thorium_actor_send_empty(actor, concrete_actor->manager_for_sequence_stores,
-                        BSAL_ACTOR_ASK_TO_STOP);
+                        THORIUM_ACTOR_ASK_TO_STOP);
         thorium_actor_send_empty(actor, concrete_actor->manager_for_kmer_stores,
-                        BSAL_ACTOR_ASK_TO_STOP);
+                        THORIUM_ACTOR_ASK_TO_STOP);
         thorium_actor_send_empty(actor, concrete_actor->manager_for_kernels,
-                        BSAL_ACTOR_ASK_TO_STOP);
+                        THORIUM_ACTOR_ASK_TO_STOP);
         thorium_actor_send_empty(actor, concrete_actor->manager_for_aggregators,
-                        BSAL_ACTOR_ASK_TO_STOP);
+                        THORIUM_ACTOR_ASK_TO_STOP);
         thorium_actor_send_empty(actor, concrete_actor->distribution,
-                        BSAL_ACTOR_ASK_TO_STOP);
+                        THORIUM_ACTOR_ASK_TO_STOP);
 
         thorium_actor_ask_to_stop(actor, message);
 
-        thorium_actor_send_to_self_empty(actor, BSAL_ACTOR_STOP);
+        thorium_actor_send_to_self_empty(actor, THORIUM_ACTOR_STOP);
     }
 }
 
@@ -928,9 +928,9 @@ void argonnite_prepare_sequence_stores(struct thorium_actor *self, struct thoriu
         printf("DEBUGY spawn manager for stores\n");
         spawner = bsal_vector_at_as_int(&concrete_actor->initial_actors,
                         bsal_vector_size(&concrete_actor->initial_actors) - 1);
-        thorium_actor_send_int(self, spawner, BSAL_ACTOR_SPAWN, BSAL_MANAGER_SCRIPT);
+        thorium_actor_send_int(self, spawner, THORIUM_ACTOR_SPAWN, BSAL_MANAGER_SCRIPT);
 
-    } else if (tag == BSAL_ACTOR_SPAWN_REPLY) {
+    } else if (tag == THORIUM_ACTOR_SPAWN_REPLY) {
 
         printf("DEBUGY got manager for stores\n");
         thorium_message_unpack_int(message, 0, &manager_for_sequence_stores);
@@ -944,16 +944,16 @@ void argonnite_prepare_sequence_stores(struct thorium_actor *self, struct thoriu
         printf("DEBUG script set for manager for sequence stores\n");
 
 
-        thorium_actor_send_reply_vector(self, BSAL_ACTOR_START, &concrete_actor->initial_actors);
+        thorium_actor_send_reply_vector(self, THORIUM_ACTOR_START, &concrete_actor->initial_actors);
 
-    } else if (tag == BSAL_ACTOR_START_REPLY) {
+    } else if (tag == THORIUM_ACTOR_START_REPLY) {
 
         printf("DEBUGY got sequence stores !\n");
         bsal_vector_unpack(&concrete_actor->sequence_stores, buffer);
 
         controller = concrete_actor->controller;
 
-        thorium_actor_send_vector(self, controller, BSAL_ACTOR_SET_CONSUMERS,
+        thorium_actor_send_vector(self, controller, THORIUM_ACTOR_SET_CONSUMERS,
                         &concrete_actor->sequence_stores);
 
 
@@ -996,7 +996,7 @@ void argonnite_connect_kernels_with_stores(struct thorium_actor *self, struct th
     /* kill controller now !
      */
 
-    thorium_actor_send_reply_empty(self, BSAL_ACTOR_ASK_TO_STOP);
+    thorium_actor_send_reply_empty(self, THORIUM_ACTOR_ASK_TO_STOP);
 
     name = thorium_actor_name(self);
     concrete_actor = (struct argonnite *)thorium_actor_concrete_actor(self);
@@ -1020,11 +1020,11 @@ void argonnite_connect_kernels_with_stores(struct thorium_actor *self, struct th
         sequence_store = bsal_vector_at_as_int(&concrete_actor->sequence_stores, i);
         kernel = bsal_vector_at_as_int(&concrete_actor->kernels, i);
 
-        thorium_actor_send_int(self, kernel, BSAL_ACTOR_SET_PRODUCER, sequence_store);
+        thorium_actor_send_int(self, kernel, THORIUM_ACTOR_SET_PRODUCER, sequence_store);
 
         /* Enable auto-scaling for initial kernels
          */
-        thorium_actor_send_empty(self, kernel, BSAL_ACTOR_ENABLE_AUTO_SCALING);
+        thorium_actor_send_empty(self, kernel, THORIUM_ACTOR_ENABLE_AUTO_SCALING);
     }
 
 

@@ -1,6 +1,6 @@
 
-#ifndef BSAL_THORIUM_ENGINE_H
-#define BSAL_THORIUM_ENGINE_H
+#ifndef THORIUM_THORIUM_ENGINE_H
+#define THORIUM_THORIUM_ENGINE_H
 
 #include "node.h"
 #include "actor.h"

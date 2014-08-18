@@ -22,17 +22,17 @@
 #include <stdio.h>
 #include <string.h>
 
-/*#define BSAL_WORKER_DEBUG
+/*#define THORIUM_WORKER_DEBUG
   */
 
 #define STATUS_IDLE 0
 #define STATUS_QUEUED 1
 
 /*
-#define BSAL_WORKER_DEBUG_MEMORY
+#define THORIUM_WORKER_DEBUG_MEMORY
 */
 
-#define BSAL_WORKER_UNPRODUCTIVE_TICK_LIMIT 256
+#define THORIUM_WORKER_UNPRODUCTIVE_TICK_LIMIT 256
 
 /*
  * The amount required idle time to go to sleep
@@ -43,23 +43,23 @@
  *
  * TODO lower this value.
  */
-#define BSAL_WORKER_UNPRODUCTIVE_MICROSECONDS_FOR_WAIT (64 * 1000)
+#define THORIUM_WORKER_UNPRODUCTIVE_MICROSECONDS_FOR_WAIT (64 * 1000)
 
 /*
-#define BSAL_WORKER_DEBUG_WAIT_SIGNAL
+#define THORIUM_WORKER_DEBUG_WAIT_SIGNAL
 */
 
 /*
  * Print scheduling queue for debugging purposes
  */
 /*
-#define BSAL_WORKER_PRINT_SCHEDULING_QUEUE
+#define THORIUM_WORKER_PRINT_SCHEDULING_QUEUE
 */
 
 /* Debug symmetric actor placement
  */
 /*
-#define BSAL_WORKER_DEBUG_SYMMETRIC_PLACEMENT
+#define THORIUM_WORKER_DEBUG_SYMMETRIC_PLACEMENT
 */
 
 void thorium_worker_init(struct thorium_worker *worker, int name, struct thorium_node *node)
@@ -72,7 +72,7 @@ void thorium_worker_init(struct thorium_worker *worker, int name, struct thorium
     worker->waiting_start_time = 0;
 
     bsal_timer_init(&worker->timer);
-    capacity = BSAL_WORKER_RING_CAPACITY;
+    capacity = THORIUM_WORKER_RING_CAPACITY;
     /*worker->work_queue = work_queue;*/
     worker->node = node;
     worker->name = name;
@@ -89,7 +89,7 @@ void thorium_worker_init(struct thorium_worker *worker, int name, struct thorium
      */
     bsal_fast_ring_init(&worker->actors_to_schedule, capacity, sizeof(struct thorium_actor *));
 
-#ifdef BSAL_NODE_INJECT_CLEAN_WORKER_BUFFERS
+#ifdef THORIUM_NODE_INJECT_CLEAN_WORKER_BUFFERS
     injected_buffer_ring_size = capacity;
     bsal_fast_ring_init(&worker->injected_clean_outbound_buffers,
                     injected_buffer_ring_size, sizeof(void *));
@@ -178,7 +178,7 @@ void thorium_worker_destroy(struct thorium_worker *worker)
 
     bsal_fast_ring_destroy(&worker->actors_to_schedule);
 
-#ifdef BSAL_NODE_INJECT_CLEAN_WORKER_BUFFERS
+#ifdef THORIUM_NODE_INJECT_CLEAN_WORKER_BUFFERS
     bsal_fast_ring_destroy(&worker->injected_clean_outbound_buffers);
 
     bsal_fast_ring_destroy(&worker->clean_message_ring_for_triage);
@@ -227,11 +227,11 @@ void thorium_worker_send(struct thorium_worker *worker, struct thorium_message *
     buffer = (char *)bsal_memory_pool_allocate(&worker->outbound_message_memory_pool,
                     all * sizeof(char));
 
-#ifdef BSAL_WORKER_DEBUG_MEMORY
+#ifdef THORIUM_WORKER_DEBUG_MEMORY
     printf("ALLOCATE %p\n", buffer);
 #endif
 
-#ifdef BSAL_WORKER_DEBUG
+#ifdef THORIUM_WORKER_DEBUG
     printf("[thorium_worker_send] allocated %i bytes (%i + %i) for buffer %p\n",
                     all, count, metadata_size, buffer);
 
@@ -256,7 +256,7 @@ void thorium_worker_send(struct thorium_worker *worker, struct thorium_message *
     thorium_message_set_buffer(&copy, buffer);
     thorium_message_write_metadata(&copy);
 
-#ifdef BSAL_WORKER_DEBUG_20140601
+#ifdef THORIUM_WORKER_DEBUG_20140601
     if (thorium_message_tag(message) == 1100) {
         printf("DEBUG thorium_worker_send 1100\n");
     }
@@ -287,7 +287,7 @@ void *thorium_worker_main(void *worker1)
 
     worker = (struct thorium_worker*)worker1;
 
-#ifdef BSAL_WORKER_DEBUG
+#ifdef THORIUM_WORKER_DEBUG
     thorium_worker_display(worker);
     printf("Starting worker thread\n");
 #endif
@@ -315,7 +315,7 @@ int thorium_worker_name(struct thorium_worker *worker)
 void thorium_worker_stop(struct thorium_worker *worker)
 {
 
-#ifdef BSAL_WORKER_DEBUG
+#ifdef THORIUM_WORKER_DEBUG
     thorium_worker_display(worker);
     printf("stopping worker!\n");
 #endif
@@ -455,13 +455,13 @@ int thorium_worker_dequeue_actor(struct thorium_worker *worker, struct thorium_a
 
         other_name = thorium_actor_name(other_actor);
 
-#ifdef BSAL_WORKER_DEBUG_SCHEDULER
+#ifdef THORIUM_WORKER_DEBUG_SCHEDULER
         printf("ring.DEQUEUE %d\n", other_name);
 #endif
 
         if (bsal_set_find(&worker->evicted_actors, &other_name)) {
 
-#ifdef BSAL_WORKER_DEBUG_SCHEDULER
+#ifdef THORIUM_WORKER_DEBUG_SCHEDULER
             printf("ALREADY EVICTED\n");
 #endif
             continue;
@@ -489,7 +489,7 @@ int thorium_worker_dequeue_actor(struct thorium_worker *worker, struct thorium_a
             thorium_scheduling_queue_enqueue(&worker->scheduling_queue, other_actor);
         } else {
 
-#ifdef BSAL_WORKER_DEBUG_SCHEDULER
+#ifdef THORIUM_WORKER_DEBUG_SCHEDULER
             printf("SCHEDULER %d already scheduled to run, scheduled: %d\n", other_name,
                             (int)bsal_set_size(&worker->queued_actors));
 #endif
@@ -505,14 +505,14 @@ int thorium_worker_dequeue_actor(struct thorium_worker *worker, struct thorium_a
      * check_production at the end uses the value and the name;
      * if value is false, check_production is not using name anyway.
      */
-    name = BSAL_ACTOR_NOBODY;
+    name = THORIUM_ACTOR_NOBODY;
 
     /* an actor is ready to be run and it was dequeued from the scheduling queue.
      */
     if (value) {
         name = thorium_actor_name(*actor);
 
-#ifdef BSAL_WORKER_DEBUG_SCHEDULER
+#ifdef THORIUM_WORKER_DEBUG_SCHEDULER
         printf("scheduler.DEQUEUE actor %d, removed from queued actors...\n", name);
 #endif
 
@@ -522,7 +522,7 @@ int thorium_worker_dequeue_actor(struct thorium_worker *worker, struct thorium_a
          * be processed now.
          */
         if (mailbox_size == 1) {
-#ifdef BSAL_WORKER_DEBUG_SCHEDULER
+#ifdef THORIUM_WORKER_DEBUG_SCHEDULER
             printf("SCHEDULER %d has no message to schedule...\n", name);
 #endif
             /* Set the status of the worker to STATUS_IDLE
@@ -542,7 +542,7 @@ int thorium_worker_dequeue_actor(struct thorium_worker *worker, struct thorium_a
              * still has messages
              */
 
-#ifdef BSAL_WORKER_DEBUG_SCHEDULER
+#ifdef THORIUM_WORKER_DEBUG_SCHEDULER
             printf("Scheduling actor %d again, messages: %d\n",
                         name,
                         thorium_actor_get_mailbox_size(*actor));
@@ -1005,11 +1005,11 @@ void thorium_worker_run(struct thorium_worker *worker)
     struct thorium_actor *actor;
     struct thorium_message other_message;
 
-#ifdef BSAL_NODE_INJECT_CLEAN_WORKER_BUFFERS
+#ifdef THORIUM_NODE_INJECT_CLEAN_WORKER_BUFFERS
     void *buffer;
 #endif
 
-#ifdef BSAL_NODE_ENABLE_INSTRUMENTATION
+#ifdef THORIUM_NODE_ENABLE_INSTRUMENTATION
     time_t current_time;
     int elapsed;
     int period;
@@ -1017,7 +1017,7 @@ void thorium_worker_run(struct thorium_worker *worker)
     uint64_t elapsed_nanoseconds;
 #endif
 
-#ifdef BSAL_WORKER_DEBUG
+#ifdef THORIUM_WORKER_DEBUG
     int tag;
     int destination;
     struct thorium_message *message;
@@ -1025,8 +1025,8 @@ void thorium_worker_run(struct thorium_worker *worker)
 
     thorium_worker_lock(worker);
 
-#ifdef BSAL_NODE_ENABLE_INSTRUMENTATION
-    period = BSAL_NODE_LOAD_PERIOD;
+#ifdef THORIUM_NODE_ENABLE_INSTRUMENTATION
+    period = THORIUM_NODE_LOAD_PERIOD;
     current_time = time(NULL);
 
     elapsed = current_time - worker->last_report;
@@ -1035,7 +1035,7 @@ void thorium_worker_run(struct thorium_worker *worker)
 
         current_nanoseconds = bsal_timer_get_nanoseconds(&worker->timer);
 
-#ifdef BSAL_WORKER_DEBUG_LOAD
+#ifdef THORIUM_WORKER_DEBUG_LOAD
         printf("DEBUG Updating load report\n");
 #endif
         elapsed_nanoseconds = current_nanoseconds - worker->epoch_start_in_nanoseconds;
@@ -1055,7 +1055,7 @@ void thorium_worker_run(struct thorium_worker *worker)
             worker->last_report = current_time;
         }
 
-#ifdef BSAL_WORKER_PRINT_SCHEDULING_QUEUE
+#ifdef THORIUM_WORKER_PRINT_SCHEDULING_QUEUE
 
         /*
         if (thorium_node_name(worker->node) == 0
@@ -1070,13 +1070,13 @@ void thorium_worker_run(struct thorium_worker *worker)
         */
 #endif
 
-#ifdef BSAL_WORKER_DEBUG_SYMMETRIC_PLACEMENT
+#ifdef THORIUM_WORKER_DEBUG_SYMMETRIC_PLACEMENT
         thorium_worker_print_actors(worker, NULL);
 #endif
     }
 #endif
 
-#ifdef BSAL_WORKER_DEBUG
+#ifdef THORIUM_WORKER_DEBUG
     if (worker->debug) {
         printf("DEBUG worker/%d thorium_worker_run\n",
                         thorium_worker_name(worker));
@@ -1086,13 +1086,13 @@ void thorium_worker_run(struct thorium_worker *worker)
     /* check for messages in inbound FIFO */
     if (thorium_worker_dequeue_actor(worker, &actor)) {
 
-#ifdef BSAL_WORKER_DEBUG
+#ifdef THORIUM_WORKER_DEBUG
         message = bsal_work_message(&work);
         tag = thorium_message_tag(message);
         destination = thorium_message_destination(message);
 
-        if (tag == BSAL_ACTOR_ASK_TO_STOP) {
-            printf("DEBUG pulled BSAL_ACTOR_ASK_TO_STOP for %d\n",
+        if (tag == THORIUM_ACTOR_ASK_TO_STOP) {
+            printf("DEBUG pulled THORIUM_ACTOR_ASK_TO_STOP for %d\n",
                             destination);
         }
 #endif
@@ -1104,7 +1104,7 @@ void thorium_worker_run(struct thorium_worker *worker)
          */
         thorium_priority_scheduler_update(&worker->scheduler, actor);
 
-#ifdef BSAL_NODE_ENABLE_INSTRUMENTATION
+#ifdef THORIUM_NODE_ENABLE_INSTRUMENTATION
         bsal_timer_start(&worker->timer);
 #endif
 
@@ -1114,7 +1114,7 @@ void thorium_worker_run(struct thorium_worker *worker)
 
         worker->busy = 0;
 
-#ifdef BSAL_NODE_ENABLE_INSTRUMENTATION
+#ifdef THORIUM_NODE_ENABLE_INSTRUMENTATION
         bsal_timer_stop(&worker->timer);
 
         elapsed_nanoseconds = bsal_timer_get_elapsed_nanoseconds(&worker->timer);
@@ -1135,7 +1135,7 @@ void thorium_worker_run(struct thorium_worker *worker)
         }
     }
 
-#ifdef BSAL_NODE_INJECT_CLEAN_WORKER_BUFFERS
+#ifdef THORIUM_NODE_INJECT_CLEAN_WORKER_BUFFERS
     /* free outbound buffers, if any
      */
 
@@ -1164,14 +1164,14 @@ void thorium_worker_work(struct thorium_worker *worker, struct thorium_actor *ac
     int dead;
     int actor_name;
 
-#ifdef BSAL_WORKER_DEBUG
+#ifdef THORIUM_WORKER_DEBUG
     int tag;
     int destination;
 #endif
 
     actor_name = thorium_actor_name(actor);
 
-#ifdef BSAL_WORKER_DEBUG_SCHEDULER
+#ifdef THORIUM_WORKER_DEBUG_SCHEDULER
     printf("WORK actor %d\n", actor_name);
 #endif
 
@@ -1201,7 +1201,7 @@ void thorium_worker_work(struct thorium_worker *worker, struct thorium_actor *ac
     if (thorium_actor_dead(actor)) {
 
         printf("DEBUG thorium_worker_work actor died while the worker was waiting for the lock.\n");
-#ifdef BSAL_WORKER_DEBUG
+#ifdef THORIUM_WORKER_DEBUG
 #endif
         /*thorium_actor_unlock(actor);*/
         return;
@@ -1228,7 +1228,7 @@ void thorium_worker_work(struct thorium_worker *worker, struct thorium_actor *ac
 
     thorium_actor_set_worker(actor, NULL);
 
-#ifdef BSAL_WORKER_DEBUG_20140601
+#ifdef THORIUM_WORKER_DEBUG_20140601
     if (worker->debug) {
         printf("DEBUG worker/%d after dead call\n",
                         thorium_worker_name(worker));
@@ -1241,13 +1241,13 @@ void thorium_worker_work(struct thorium_worker *worker, struct thorium_actor *ac
      */
     thorium_actor_unlock(actor);
 
-#ifdef BSAL_WORKER_DEBUG
+#ifdef THORIUM_WORKER_DEBUG
     printf("thorium_worker_work Freeing buffer %p %i tag %i\n",
                     buffer, thorium_message_count(message),
                     thorium_message_tag(message));
 #endif
 
-#ifdef BSAL_WORKER_DEBUG_20140601
+#ifdef THORIUM_WORKER_DEBUG_20140601
     if (worker->debug) {
         printf("DEBUG worker/%d exiting thorium_worker_work\n",
                         thorium_worker_name(worker));
@@ -1317,7 +1317,7 @@ void thorium_worker_check_production(struct thorium_worker *worker, int value, i
      * This should not happen theoretically.
      *
      */
-    if (worker->ticks_without_production >= BSAL_WORKER_UNPRODUCTIVE_TICK_LIMIT) {
+    if (worker->ticks_without_production >= THORIUM_WORKER_UNPRODUCTIVE_TICK_LIMIT) {
 
         if (bsal_map_iterator_get_next_key_and_value(&worker->actor_iterator, &name, NULL)) {
 
@@ -1369,7 +1369,7 @@ void thorium_worker_check_production(struct thorium_worker *worker, int value, i
                 /* Verify the elapsed time.
                  * There are 1000 nanoseconds in 1 microsecond.
                  */
-                if (elapsed >= BSAL_WORKER_UNPRODUCTIVE_MICROSECONDS_FOR_WAIT * 1000) {
+                if (elapsed >= THORIUM_WORKER_UNPRODUCTIVE_MICROSECONDS_FOR_WAIT * 1000) {
                     /*
                      * Here, the worker will wait until it receives a signal.
                      * Such a signal will mean that something is ready to be consumed.
@@ -1379,7 +1379,7 @@ void thorium_worker_check_production(struct thorium_worker *worker, int value, i
                      */
                     worker->waiting_start_time = 0;
 
-#ifdef BSAL_WORKER_DEBUG_WAIT_SIGNAL
+#ifdef THORIUM_WORKER_DEBUG_WAIT_SIGNAL
                     printf("DEBUG worker/%d will wait, elapsed %d\n",
                                     worker->name, (int)elapsed);
 #endif

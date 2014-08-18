@@ -51,18 +51,18 @@ void mock_receive(struct thorium_actor *actor, struct thorium_message *message)
     buffer = thorium_message_buffer(message);
     /*thorium_actor_print(actor);*/
 
-    if (tag == BSAL_ACTOR_START) {
+    if (tag == THORIUM_ACTOR_START) {
 
         bsal_vector_init(&mock1->spawners, 0);
         bsal_vector_unpack(&mock1->spawners, buffer);
 
-        printf("BSAL_ACTOR_START spawners: %d\n",
+        printf("THORIUM_ACTOR_START spawners: %d\n",
                         (int)bsal_vector_size(&mock1->spawners));
 
         /*mock_init(actor);*/
         mock_start(actor, message);
 
-    } else if (tag == BSAL_ACTOR_ASK_TO_STOP) {
+    } else if (tag == THORIUM_ACTOR_ASK_TO_STOP) {
         printf("MOCK_DIE\n");
         mock_die(actor, message);
 
@@ -98,12 +98,12 @@ void mock_receive(struct thorium_actor *actor, struct thorium_message *message)
         }
 
     } else if (tag == MOCK_PREPARE_DEATH) {
-        thorium_message_init(message, BSAL_ACTOR_ASK_TO_STOP, 0, NULL);
+        thorium_message_init(message, THORIUM_ACTOR_ASK_TO_STOP, 0, NULL);
 
         name = thorium_actor_name(actor);
         thorium_actor_send(actor, name, message);
 
-        thorium_message_init(message, BSAL_ACTOR_ASK_TO_STOP, 0, NULL);
+        thorium_message_init(message, THORIUM_ACTOR_ASK_TO_STOP, 0, NULL);
         thorium_actor_send(actor, mock1->children[0], message);
 
     } else if (tag == BUDDY_BOOT_REPLY) {
@@ -145,7 +145,7 @@ void mock_die(struct thorium_actor *actor, struct thorium_message *message)
 
     printf("mock_die actor %i dies (MOCK_DIE from %i)\n", name, source);
 
-    thorium_message_init(message, BSAL_ACTOR_STOP, 0, NULL);
+    thorium_message_init(message, THORIUM_ACTOR_STOP, 0, NULL);
     thorium_actor_send(actor, name, message);
 }
 

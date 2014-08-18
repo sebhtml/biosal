@@ -10,33 +10,33 @@ void thorium_active_request_init(struct thorium_active_request *self, void *buff
 {
     int implementation;
 
-#if defined(BSAL_TRANSPORT_USE_PAMI)
-    implementation = BSAL_TRANSPORT_PAMI_IDENTIFIER;
+#if defined(THORIUM_TRANSPORT_USE_PAMI)
+    implementation = THORIUM_TRANSPORT_PAMI_IDENTIFIER;
 
-#elif defined(BSAL_TRANSPORT_USE_MPI)
-    implementation = BSAL_TRANSPORT_MPI_IDENTIFIER;
+#elif defined(THORIUM_TRANSPORT_USE_MPI)
+    implementation = THORIUM_TRANSPORT_MPI_IDENTIFIER;
 
 #else
 
-    implementation = BSAL_TRANSPORT_MOCK_IDENTIFIER;
+    implementation = THORIUM_TRANSPORT_MOCK_IDENTIFIER;
 #endif
 
     self->buffer = buffer;
     self->worker = worker;
 
-    if (implementation == BSAL_TRANSPORT_PAMI_IDENTIFIER) {
+    if (implementation == THORIUM_TRANSPORT_PAMI_IDENTIFIER) {
         self->active_request_init = thorium_pami_active_request_init;
         self->active_request_destroy = thorium_pami_active_request_destroy;
         self->active_request_test = thorium_pami_active_request_test;
         self->active_request_request = thorium_pami_active_request_request;
 
-    } else if (implementation == BSAL_TRANSPORT_MPI_IDENTIFIER) {
+    } else if (implementation == THORIUM_TRANSPORT_MPI_IDENTIFIER) {
         self->active_request_init = thorium_mpi_active_request_init;
         self->active_request_destroy = thorium_mpi_active_request_destroy;
         self->active_request_test = thorium_mpi_active_request_test;
         self->active_request_request = thorium_mpi_active_request_request;
 
-    } else /* if (implementation == BSAL_TRANSPORT_IMPLEMENTATION_PAMI) */ {
+    } else /* if (implementation == THORIUM_TRANSPORT_IMPLEMENTATION_PAMI) */ {
         self->active_request_init = NULL;
         self->active_request_destroy = NULL;
         self->active_request_test = NULL;

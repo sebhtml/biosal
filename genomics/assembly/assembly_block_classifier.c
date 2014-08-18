@@ -75,11 +75,11 @@ void bsal_assembly_block_classifier_init(struct thorium_actor *self)
 
     /* Enable cloning stuff
      */
-    thorium_actor_send_to_self_empty(self, BSAL_ACTOR_PACK_ENABLE);
+    thorium_actor_send_to_self_empty(self, THORIUM_ACTOR_PACK_ENABLE);
 
-    thorium_actor_add_route(self, BSAL_ACTOR_PACK,
+    thorium_actor_add_route(self, THORIUM_ACTOR_PACK,
                     bsal_assembly_block_classifier_pack_message);
-    thorium_actor_add_route(self, BSAL_ACTOR_UNPACK,
+    thorium_actor_add_route(self, THORIUM_ACTOR_UNPACK,
                     bsal_assembly_block_classifier_unpack_message);
     thorium_actor_add_route(self, BSAL_AGGREGATE_KERNEL_OUTPUT,
                     bsal_assembly_block_classifier_aggregate_kernel_output);
@@ -123,7 +123,7 @@ void bsal_assembly_block_classifier_receive(struct thorium_actor *self, struct t
     tag = thorium_message_tag(message);
     source = thorium_message_source(message);
 
-    if (tag == BSAL_ACTOR_ASK_TO_STOP) {
+    if (tag == THORIUM_ACTOR_ASK_TO_STOP) {
 
         thorium_actor_ask_to_stop(self, message);
 
@@ -133,11 +133,11 @@ void bsal_assembly_block_classifier_receive(struct thorium_actor *self, struct t
 
         thorium_actor_send_reply_empty(self, BSAL_SET_KMER_LENGTH_REPLY);
 
-    } else if (tag == BSAL_ACTOR_SET_CONSUMERS) {
+    } else if (tag == THORIUM_ACTOR_SET_CONSUMERS) {
 
         bsal_assembly_block_classifier_set_consumers(self, buffer);
 
-        thorium_actor_send_reply_empty(self, BSAL_ACTOR_SET_CONSUMERS_REPLY);
+        thorium_actor_send_reply_empty(self, THORIUM_ACTOR_SET_CONSUMERS_REPLY);
 
     } else if (tag == BSAL_AGGREGATOR_FLUSH) {
 
@@ -499,7 +499,7 @@ void bsal_assembly_block_classifier_pack_message(struct thorium_actor *actor, st
 
     bsal_assembly_block_classifier_pack(actor, new_buffer);
 
-    thorium_message_init(&new_message, BSAL_ACTOR_PACK_REPLY, new_count, new_buffer);
+    thorium_message_init(&new_message, THORIUM_ACTOR_PACK_REPLY, new_count, new_buffer);
     thorium_actor_send_reply(actor, &new_message);
     thorium_message_destroy(&new_message);
 
@@ -515,7 +515,7 @@ void bsal_assembly_block_classifier_unpack_message(struct thorium_actor *actor, 
 
     bsal_assembly_block_classifier_unpack(actor, buffer);
 
-    thorium_actor_send_reply_empty(actor, BSAL_ACTOR_UNPACK_REPLY);
+    thorium_actor_send_reply_empty(actor, THORIUM_ACTOR_UNPACK_REPLY);
 }
 
 int bsal_assembly_block_classifier_set_consumers(struct thorium_actor *actor, void *buffer)

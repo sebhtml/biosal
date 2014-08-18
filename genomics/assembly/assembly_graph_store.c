@@ -79,7 +79,7 @@ void bsal_assembly_graph_store_init(struct thorium_actor *self)
 
     concrete_self->last_received = 0;
 
-    thorium_actor_add_route(self, BSAL_ACTOR_YIELD_REPLY, bsal_assembly_graph_store_yield_reply);
+    thorium_actor_add_route(self, THORIUM_ACTOR_YIELD_REPLY, bsal_assembly_graph_store_yield_reply);
     thorium_actor_add_route(self, BSAL_PUSH_KMER_BLOCK,
                     bsal_assembly_graph_store_push_kmer_block);
 
@@ -181,7 +181,7 @@ void bsal_assembly_graph_store_receive(struct thorium_actor *self, struct thoriu
 
         bsal_map_set_current_size_estimate(&concrete_self->table, value);
 
-    } else if (tag == BSAL_ACTOR_ASK_TO_STOP) {
+    } else if (tag == THORIUM_ACTOR_ASK_TO_STOP) {
 
         printf("%s/%d received %d arc blocks\n",
                         thorium_actor_script_name(self),
@@ -190,7 +190,7 @@ void bsal_assembly_graph_store_receive(struct thorium_actor *self, struct thoriu
 
         thorium_actor_ask_to_stop(self, message);
 
-    } else if (tag == BSAL_ACTOR_SET_CONSUMER) {
+    } else if (tag == THORIUM_ACTOR_SET_CONSUMER) {
 
         thorium_message_unpack_int(message, 0, &customer);
 
@@ -200,7 +200,7 @@ void bsal_assembly_graph_store_receive(struct thorium_actor *self, struct thoriu
 
         concrete_self->customer = customer;
 
-        thorium_actor_send_reply_empty(self, BSAL_ACTOR_SET_CONSUMER_REPLY);
+        thorium_actor_send_reply_empty(self, THORIUM_ACTOR_SET_CONSUMER_REPLY);
 
     } else if (tag == BSAL_PUSH_DATA) {
 
@@ -314,7 +314,7 @@ void bsal_assembly_graph_store_push_data(struct thorium_actor *self, struct thor
     bsal_map_iterator_init(&concrete_self->iterator, &concrete_self->table);
 
 
-    thorium_actor_send_to_self_empty(self, BSAL_ACTOR_YIELD);
+    thorium_actor_send_to_self_empty(self, THORIUM_ACTOR_YIELD);
 }
 
 void bsal_assembly_graph_store_yield_reply(struct thorium_actor *self, struct thorium_message *message)
@@ -384,7 +384,7 @@ void bsal_assembly_graph_store_yield_reply(struct thorium_actor *self, struct th
         printf("yield ! %d\n", i);
 #endif
 
-        thorium_actor_send_to_self_empty(self, BSAL_ACTOR_YIELD);
+        thorium_actor_send_to_self_empty(self, THORIUM_ACTOR_YIELD);
 
         return;
     }
@@ -776,13 +776,13 @@ void bsal_assembly_graph_store_get_summary(struct thorium_actor *self, struct th
     concrete_self->summary_in_progress = 1;
     concrete_self->source_for_summary = source;
 
-    thorium_actor_add_route_with_condition(self, BSAL_ACTOR_YIELD_REPLY,
+    thorium_actor_add_route_with_condition(self, THORIUM_ACTOR_YIELD_REPLY,
                     bsal_assembly_graph_store_yield_reply_summary,
                     &concrete_self->summary_in_progress, 1);
 
     bsal_map_iterator_init(&concrete_self->iterator, &concrete_self->table);
 
-    thorium_actor_send_to_self_empty(self, BSAL_ACTOR_YIELD);
+    thorium_actor_send_to_self_empty(self, THORIUM_ACTOR_YIELD);
 }
 
 void bsal_assembly_graph_store_yield_reply_summary(struct thorium_actor *self, struct thorium_message *message)
@@ -826,7 +826,7 @@ void bsal_assembly_graph_store_yield_reply_summary(struct thorium_actor *self, s
 
     if (bsal_map_iterator_has_next(&concrete_self->iterator)) {
 
-        thorium_actor_send_to_self_empty(self, BSAL_ACTOR_YIELD);
+        thorium_actor_send_to_self_empty(self, THORIUM_ACTOR_YIELD);
 
     } else {
 

@@ -44,10 +44,10 @@ void thorium_priority_scheduler_destroy(struct thorium_priority_scheduler *sched
 /*
  * Gather data for sources.
  * Detect hubs
- * Assign BSAL_PRIORITY_MAX to >=P95
- * Assign BSAL_PRIORITY_HIGH to >=P70
- * Assign BSAL_PRIORITY_LOW to <= P30
- * Assign BSAL_PRIORITY_NORMAL otherwise.
+ * Assign THORIUM_PRIORITY_MAX to >=P95
+ * Assign THORIUM_PRIORITY_HIGH to >=P70
+ * Assign THORIUM_PRIORITY_LOW to <= P30
+ * Assign THORIUM_PRIORITY_NORMAL otherwise.
  */
 void thorium_priority_scheduler_update(struct thorium_priority_scheduler *scheduler, struct thorium_actor *actor)
 {
@@ -100,16 +100,16 @@ void thorium_priority_scheduler_update(struct thorium_priority_scheduler *schedu
 
         old_priority = thorium_actor_get_priority(actor);
 
-        new_priority = BSAL_PRIORITY_NORMAL;
+        new_priority = THORIUM_PRIORITY_NORMAL;
 
         if (new_source_count >= scheduler->max_priority_minimum_value) {
-            new_priority = BSAL_PRIORITY_MAX;
+            new_priority = THORIUM_PRIORITY_MAX;
 
         } else if (new_source_count >= scheduler->high_priority_minimum_value) {
-            new_priority = BSAL_PRIORITY_HIGH;
+            new_priority = THORIUM_PRIORITY_HIGH;
 
         } else if (new_source_count <= scheduler->low_priority_maximum_value) {
-            new_priority = BSAL_PRIORITY_LOW;
+            new_priority = THORIUM_PRIORITY_LOW;
 
         }
 
@@ -141,7 +141,7 @@ void thorium_priority_scheduler_update_thresholds(struct thorium_priority_schedu
     int value;
     int frequency;
 
-#ifdef BSAL_PRIORITY_SCHEDULER_DEBUG
+#ifdef THORIUM_PRIORITY_SCHEDULER_DEBUG
     printf("DEBUG thorium_priority_scheduler_update_thresholds: calls %d changes %d\n",
                     scheduler->calls, scheduler->changes);
 #endif

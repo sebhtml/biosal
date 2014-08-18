@@ -1,6 +1,6 @@
 
-#ifndef BSAL_SCRIPT_H
-#define BSAL_SCRIPT_H
+#ifndef THORIUM_SCRIPT_H
+#define THORIUM_SCRIPT_H
 
 struct thorium_actor;
 struct thorium_message;

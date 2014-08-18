@@ -1,12 +1,12 @@
 
-#ifndef _BSAL_ROUTE_H
-#define _BSAL_ROUTE_H
+#ifndef THORIUM_ROUTE_H
+#define THORIUM_ROUTE_H
 
 #include "script.h"
 
-#define BSAL_ROUTE_CONDITION_NONE 0
-#define BSAL_ROUTE_CONDITION_TRUE 1
-#define BSAL_ROUTE_CONDITION_FALSE 2
+#define THORIUM_ROUTE_CONDITION_NONE 0
+#define THORIUM_ROUTE_CONDITION_TRUE 1
+#define THORIUM_ROUTE_CONDITION_FALSE 2
 
 /*
  * A message route
@@ -26,6 +26,5 @@ int thorium_route_test(struct thorium_route *self);
 thorium_actor_receive_fn_t thorium_route_handler(struct thorium_route *self);
 
 int thorium_route_equals(struct thorium_route *self, struct thorium_route *route);
-
 
 #endif

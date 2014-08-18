@@ -25,9 +25,9 @@
  * with BSAL_MANAGER_SET_ACTORS_PER_WORKER (reply is
  * BSAL_MANAGER_SET_ACTORS_PER_WORKER_REPLY). The default is 1.
  *
- * 4. Finally, BSAL_ACTOR_START is sent to the manager (buffer contains
+ * 4. Finally, THORIUM_ACTOR_START is sent to the manager (buffer contains
  * a vector of spawners). The manager
- * will reply with BSAL_ACTOR_START_REPLY and the buffer will
+ * will reply with THORIUM_ACTOR_START_REPLY and the buffer will
  * contain a vector of spawned actors (spawned using the provided spawners).
  *
  *

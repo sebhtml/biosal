@@ -1,12 +1,17 @@
 
-#ifndef BSAL_ACTIVE_BUFFER_H
-#define BSAL_ACTIVE_BUFFER_H
+#ifndef THORIUM_ACTIVE_BUFFER_H
+#define THORIUM_ACTIVE_BUFFER_H
 
 #include "transport.h"
 
 #include "pami/pami_active_request.h"
 #include "mpi/mpi_active_request.h"
 
+/*
+ * A transport active request.
+ * This is used to store worker buffers and
+ * Thorium core buffers.
+ */
 struct thorium_active_request {
 
     void *buffer;
@@ -14,10 +19,10 @@ struct thorium_active_request {
 
     int implementation;
 
-#ifdef BSAL_TRANSPORT_USE_PAMI
+#ifdef THORIUM_TRANSPORT_USE_PAMI
     struct thorium_pami_active_request concrete_object;
 
-#elif defined(BSAL_TRANSPORT_USE_MPI)
+#elif defined(THORIUM_TRANSPORT_USE_MPI)
     struct thorium_mpi_active_request concrete_object;
 #endif
 
@@ -38,6 +43,5 @@ void *thorium_active_request_buffer(struct thorium_active_request *self);
 int thorium_active_request_get_worker(struct thorium_active_request *self);
 
 void *thorium_active_request_get_concrete_object(struct thorium_active_request *self);
-
 
 #endif

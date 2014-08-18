@@ -45,35 +45,35 @@ void bsal_assembly_graph_builder_init(struct thorium_actor *self)
     bsal_vector_init(&concrete_self->sequence_stores, sizeof(int));
     bsal_vector_init(&concrete_self->block_classifiers, sizeof(int));
 
-    thorium_actor_add_route(self, BSAL_ACTOR_START, bsal_assembly_graph_builder_start);
-    thorium_actor_add_route(self, BSAL_ACTOR_SET_PRODUCERS, bsal_assembly_graph_builder_set_producers);
-    thorium_actor_add_route(self, BSAL_ACTOR_SET_PRODUCER_REPLY, bsal_assembly_graph_builder_set_producer_reply);
-    thorium_actor_add_route(self, BSAL_ACTOR_ASK_TO_STOP, bsal_assembly_graph_builder_ask_to_stop);
-    thorium_actor_add_route(self, BSAL_ACTOR_SPAWN_REPLY, bsal_assembly_graph_builder_spawn_reply);
+    thorium_actor_add_route(self, THORIUM_ACTOR_START, bsal_assembly_graph_builder_start);
+    thorium_actor_add_route(self, THORIUM_ACTOR_SET_PRODUCERS, bsal_assembly_graph_builder_set_producers);
+    thorium_actor_add_route(self, THORIUM_ACTOR_SET_PRODUCER_REPLY, bsal_assembly_graph_builder_set_producer_reply);
+    thorium_actor_add_route(self, THORIUM_ACTOR_ASK_TO_STOP, bsal_assembly_graph_builder_ask_to_stop);
+    thorium_actor_add_route(self, THORIUM_ACTOR_SPAWN_REPLY, bsal_assembly_graph_builder_spawn_reply);
     thorium_actor_add_route(self, BSAL_SET_KMER_LENGTH_REPLY, bsal_assembly_graph_builder_set_kmer_reply);
-    thorium_actor_add_route(self, BSAL_ACTOR_NOTIFY_REPLY, bsal_assembly_graph_builder_notify_reply);
+    thorium_actor_add_route(self, THORIUM_ACTOR_NOTIFY_REPLY, bsal_assembly_graph_builder_notify_reply);
     thorium_actor_add_route(self, BSAL_ASSEMBLY_GRAPH_BUILDER_CONTROL_COMPLEXITY,
                     bsal_assembly_graph_builder_control_complexity);
 
-    thorium_actor_add_route(self, BSAL_ACTOR_SET_CONSUMER_REPLY, bsal_assembly_graph_builder_set_consumer_reply);
-    thorium_actor_add_route(self, BSAL_ACTOR_SET_CONSUMERS_REPLY, bsal_assembly_graph_builder_set_consumers_reply);
+    thorium_actor_add_route(self, THORIUM_ACTOR_SET_CONSUMER_REPLY, bsal_assembly_graph_builder_set_consumer_reply);
+    thorium_actor_add_route(self, THORIUM_ACTOR_SET_CONSUMERS_REPLY, bsal_assembly_graph_builder_set_consumers_reply);
     thorium_actor_add_route(self, BSAL_STORE_GET_ENTRY_COUNT_REPLY,
                     bsal_assembly_graph_builder_get_entry_count_reply);
 
-    concrete_self->manager_for_graph_stores = BSAL_ACTOR_NOBODY;
+    concrete_self->manager_for_graph_stores = THORIUM_ACTOR_NOBODY;
     bsal_vector_init(&concrete_self->graph_stores, sizeof(int));
 
-    concrete_self->manager_for_classifiers = BSAL_ACTOR_NOBODY;
+    concrete_self->manager_for_classifiers = THORIUM_ACTOR_NOBODY;
 
-    concrete_self->manager_for_windows = BSAL_ACTOR_NOBODY;
+    concrete_self->manager_for_windows = THORIUM_ACTOR_NOBODY;
     bsal_vector_init(&concrete_self->sliding_windows, sizeof(int));
 
-    concrete_self->coverage_distribution = BSAL_ACTOR_NOBODY;
+    concrete_self->coverage_distribution = THORIUM_ACTOR_NOBODY;
 
-    concrete_self->manager_for_arc_kernels = BSAL_ACTOR_NOBODY;
+    concrete_self->manager_for_arc_kernels = THORIUM_ACTOR_NOBODY;
     bsal_vector_init(&concrete_self->arc_kernels, sizeof(int));
 
-    concrete_self->manager_for_arc_classifiers = BSAL_ACTOR_NOBODY;
+    concrete_self->manager_for_arc_classifiers = THORIUM_ACTOR_NOBODY;
     bsal_vector_init(&concrete_self->arc_classifiers, sizeof(int));
 
     concrete_self->configured_graph_stores = 0;
@@ -104,19 +104,19 @@ void bsal_assembly_graph_builder_destroy(struct thorium_actor *self)
     bsal_vector_destroy(&concrete_self->spawners);
     bsal_vector_destroy(&concrete_self->sequence_stores);
 
-    concrete_self->manager_for_graph_stores = BSAL_ACTOR_NOBODY;
+    concrete_self->manager_for_graph_stores = THORIUM_ACTOR_NOBODY;
     bsal_vector_destroy(&concrete_self->graph_stores);
 
-    concrete_self->manager_for_classifiers = BSAL_ACTOR_NOBODY;
+    concrete_self->manager_for_classifiers = THORIUM_ACTOR_NOBODY;
     bsal_vector_destroy(&concrete_self->block_classifiers);
 
-    concrete_self->manager_for_windows= BSAL_ACTOR_NOBODY;
+    concrete_self->manager_for_windows= THORIUM_ACTOR_NOBODY;
     bsal_vector_destroy(&concrete_self->sliding_windows);
 
-    concrete_self->manager_for_arc_kernels = BSAL_ACTOR_NOBODY;
+    concrete_self->manager_for_arc_kernels = THORIUM_ACTOR_NOBODY;
     bsal_vector_destroy(&concrete_self->arc_kernels);
 
-    concrete_self->manager_for_arc_classifiers = BSAL_ACTOR_NOBODY;
+    concrete_self->manager_for_arc_classifiers = THORIUM_ACTOR_NOBODY;
     bsal_vector_destroy(&concrete_self->arc_classifiers);
 
     bsal_timer_destroy(&concrete_self->timer);
@@ -146,7 +146,7 @@ void bsal_assembly_graph_builder_ask_to_stop(struct thorium_actor *self, struct 
      */
 
     thorium_actor_send_empty(self, concrete_self->manager_for_graph_stores,
-                    BSAL_ACTOR_ASK_TO_STOP);
+                    THORIUM_ACTOR_ASK_TO_STOP);
 }
 
 void bsal_assembly_graph_builder_start(struct thorium_actor *self, struct thorium_message *message)
@@ -182,16 +182,16 @@ void bsal_assembly_graph_builder_start(struct thorium_actor *self, struct thoriu
     /*
      * Spawn the manager for graph stores
      */
-    concrete_self->manager_for_graph_stores = BSAL_ACTOR_SPAWNING_IN_PROGRESS;
+    concrete_self->manager_for_graph_stores = THORIUM_ACTOR_SPAWNING_IN_PROGRESS;
 
     thorium_actor_add_route_with_source_and_condition(self,
-                    BSAL_ACTOR_SPAWN_REPLY,
+                    THORIUM_ACTOR_SPAWN_REPLY,
                     bsal_assembly_graph_builder_spawn_reply_graph_store_manager,
                     spawner,
                     &(concrete_self->manager_for_graph_stores),
-                    BSAL_ACTOR_SPAWNING_IN_PROGRESS);
+                    THORIUM_ACTOR_SPAWNING_IN_PROGRESS);
 
-    thorium_actor_send_int(self, spawner, BSAL_ACTOR_SPAWN, BSAL_MANAGER_SCRIPT);
+    thorium_actor_send_int(self, spawner, THORIUM_ACTOR_SPAWN, BSAL_MANAGER_SCRIPT);
 }
 
 void bsal_assembly_graph_builder_spawn_reply_graph_store_manager(struct thorium_actor *self, struct thorium_message *message)
@@ -210,7 +210,7 @@ void bsal_assembly_graph_builder_spawn_reply_graph_store_manager(struct thorium_
                     bsal_assembly_graph_builder_set_script_reply_store_manager,
                     concrete_self->manager_for_graph_stores);
 
-    thorium_actor_add_route_with_source(self, BSAL_ACTOR_START_REPLY,
+    thorium_actor_add_route_with_source(self, THORIUM_ACTOR_START_REPLY,
                     bsal_assembly_graph_builder_start_reply_store_manager,
                     concrete_self->manager_for_graph_stores);
 
@@ -240,7 +240,7 @@ void bsal_assembly_graph_builder_spawn_reply(struct thorium_actor *self, struct 
      * Configure the manager for block classifiers
      */
 
-    if (concrete_self->manager_for_classifiers == BSAL_ACTOR_NOBODY) {
+    if (concrete_self->manager_for_classifiers == THORIUM_ACTOR_NOBODY) {
 
         thorium_message_unpack_int(message, 0, &concrete_self->manager_for_classifiers);
 
@@ -248,14 +248,14 @@ void bsal_assembly_graph_builder_spawn_reply(struct thorium_actor *self, struct 
                         bsal_assembly_graph_builder_set_script_reply_classifier_manager,
                         concrete_self->manager_for_classifiers);
 
-        thorium_actor_add_route_with_source(self, BSAL_ACTOR_START_REPLY,
+        thorium_actor_add_route_with_source(self, THORIUM_ACTOR_START_REPLY,
                         bsal_assembly_graph_builder_start_reply_classifier_manager,
                         concrete_self->manager_for_classifiers);
 
         thorium_actor_send_int(self, concrete_self->manager_for_classifiers, BSAL_MANAGER_SET_SCRIPT,
                         BSAL_ASSEMBLY_BLOCK_CLASSIFIER_SCRIPT);
 
-    } else if (concrete_self->coverage_distribution == BSAL_ACTOR_NOBODY) {
+    } else if (concrete_self->coverage_distribution == THORIUM_ACTOR_NOBODY) {
 
         thorium_message_unpack_int(message, 0, &concrete_self->coverage_distribution);
 
@@ -263,7 +263,7 @@ void bsal_assembly_graph_builder_spawn_reply(struct thorium_actor *self, struct 
                             bsal_assembly_graph_builder_set_expected_message_count_reply,
                         concrete_self->coverage_distribution);
 
-        thorium_actor_add_route_with_source(self, BSAL_ACTOR_NOTIFY,
+        thorium_actor_add_route_with_source(self, THORIUM_ACTOR_NOTIFY,
                         bsal_assembly_graph_builder_notify_from_distribution,
                         concrete_self->coverage_distribution);
 
@@ -272,7 +272,7 @@ void bsal_assembly_graph_builder_spawn_reply(struct thorium_actor *self, struct 
 
     } else {
 
-        printf("Warning: unknown state when receiveing BSAL_ACTOR_SPAWN_REPLY\n");
+        printf("Warning: unknown state when receiveing THORIUM_ACTOR_SPAWN_REPLY\n");
     }
 }
 
@@ -282,7 +282,7 @@ void bsal_assembly_graph_builder_set_expected_message_count_reply(struct thorium
 
     concrete_self = thorium_actor_concrete_actor(self);
 
-    thorium_actor_add_route_with_sources(self, BSAL_ACTOR_SET_CONSUMER_REPLY,
+    thorium_actor_add_route_with_sources(self, THORIUM_ACTOR_SET_CONSUMER_REPLY,
                     bsal_assembly_graph_builder_set_consumer_reply_graph_stores,
                     &concrete_self->graph_stores);
 
@@ -290,7 +290,7 @@ void bsal_assembly_graph_builder_set_expected_message_count_reply(struct thorium
      * Link the graph stores to the coverage distribution
      */
     thorium_actor_send_range_int(self, &concrete_self->graph_stores,
-                    BSAL_ACTOR_SET_CONSUMER,
+                    THORIUM_ACTOR_SET_CONSUMER,
                     concrete_self->coverage_distribution);
 }
 
@@ -300,7 +300,7 @@ void bsal_assembly_graph_builder_set_script_reply_store_manager(struct thorium_a
 
     concrete_self = thorium_actor_concrete_actor(self);
 
-    thorium_actor_send_reply_vector(self, BSAL_ACTOR_START, &concrete_self->spawners);
+    thorium_actor_send_reply_vector(self, THORIUM_ACTOR_START, &concrete_self->spawners);
 }
 
 void bsal_assembly_graph_builder_start_reply_store_manager(struct thorium_actor *self, struct thorium_message *message)
@@ -329,15 +329,15 @@ void bsal_assembly_graph_builder_start_reply_store_manager(struct thorium_actor 
      * Register event to happen before
      * sending message (which generates an event)
      */
-    concrete_self->manager_for_windows = BSAL_ACTOR_SPAWNING_IN_PROGRESS;
+    concrete_self->manager_for_windows = THORIUM_ACTOR_SPAWNING_IN_PROGRESS;
 
     thorium_actor_add_route_with_condition(self,
-                    BSAL_ACTOR_SPAWN_REPLY,
+                    THORIUM_ACTOR_SPAWN_REPLY,
                     bsal_assembly_graph_builder_spawn_reply_window_manager,
                     &concrete_self->manager_for_windows,
-                    BSAL_ACTOR_SPAWNING_IN_PROGRESS);
+                    THORIUM_ACTOR_SPAWNING_IN_PROGRESS);
 
-    thorium_actor_send_int(self, spawner, BSAL_ACTOR_SPAWN,
+    thorium_actor_send_int(self, spawner, THORIUM_ACTOR_SPAWN,
                     BSAL_MANAGER_SCRIPT);
 
 }
@@ -364,7 +364,7 @@ void bsal_assembly_graph_builder_spawn_reply_window_manager(struct thorium_actor
                     bsal_assembly_graph_builder_set_script_reply_window_manager,
                     concrete_self->manager_for_windows);
 
-    thorium_actor_add_route_with_source(self, BSAL_ACTOR_START_REPLY,
+    thorium_actor_add_route_with_source(self, THORIUM_ACTOR_START_REPLY,
                     bsal_assembly_graph_builder_start_reply_window_manager,
                     concrete_self->manager_for_windows);
 
@@ -395,7 +395,7 @@ void bsal_assembly_graph_builder_set_producers(struct thorium_actor *self, struc
 
     bsal_vector_unpack(&concrete_self->sequence_stores, buffer);
 
-    thorium_actor_send_reply_empty(self, BSAL_ACTOR_SET_PRODUCERS_REPLY);
+    thorium_actor_send_reply_empty(self, THORIUM_ACTOR_SET_PRODUCERS_REPLY);
 
 }
 
@@ -405,7 +405,7 @@ void bsal_assembly_graph_builder_set_script_reply_window_manager(struct thorium_
 
     concrete_self = thorium_actor_concrete_actor(self);
 
-    thorium_actor_send_reply_vector(self, BSAL_ACTOR_START, &concrete_self->spawners);
+    thorium_actor_send_reply_vector(self, THORIUM_ACTOR_START, &concrete_self->spawners);
 }
 
 void bsal_assembly_graph_builder_start_reply_window_manager(struct thorium_actor *self, struct thorium_message *message)
@@ -424,7 +424,7 @@ void bsal_assembly_graph_builder_start_reply_window_manager(struct thorium_actor
      */
     bsal_vector_unpack(&concrete_self->sliding_windows, buffer);
 
-    thorium_actor_add_route_with_sources(self, BSAL_ACTOR_SET_CONSUMER_REPLY,
+    thorium_actor_add_route_with_sources(self, THORIUM_ACTOR_SET_CONSUMER_REPLY,
                     bsal_assembly_graph_builder_set_consumer_reply_windows,
                     &concrete_self->sliding_windows);
 
@@ -435,7 +435,7 @@ void bsal_assembly_graph_builder_start_reply_window_manager(struct thorium_actor
 
     spawner = thorium_actor_get_spawner(self, &concrete_self->spawners);
 
-    thorium_actor_send_int(self, spawner, BSAL_ACTOR_SPAWN,
+    thorium_actor_send_int(self, spawner, THORIUM_ACTOR_SPAWN,
                     BSAL_MANAGER_SCRIPT);
 }
 
@@ -445,7 +445,7 @@ void bsal_assembly_graph_builder_set_script_reply_classifier_manager(struct thor
 
     concrete_self = thorium_actor_concrete_actor(self);
 
-    thorium_actor_send_reply_vector(self, BSAL_ACTOR_START, &concrete_self->spawners);
+    thorium_actor_send_reply_vector(self, THORIUM_ACTOR_START, &concrete_self->spawners);
 }
 
 void bsal_assembly_graph_builder_start_reply_classifier_manager(struct thorium_actor *self, struct thorium_message *message)
@@ -575,7 +575,7 @@ void bsal_assembly_graph_builder_connect_actors(struct thorium_actor *self)
 
         /* set the consumer for sliding window
          */
-        thorium_actor_send_int(self, producer, BSAL_ACTOR_SET_CONSUMER,
+        thorium_actor_send_int(self, producer, THORIUM_ACTOR_SET_CONSUMER,
                         consumer);
 
         printf("DEBUG neural LINK %d -> %d\n",
@@ -589,7 +589,7 @@ void bsal_assembly_graph_builder_connect_actors(struct thorium_actor *self)
                         (int)bsal_vector_size(&concrete_self->graph_stores),
                         consumer);
 
-        thorium_actor_send_vector(self, consumer, BSAL_ACTOR_SET_CONSUMERS,
+        thorium_actor_send_vector(self, consumer, THORIUM_ACTOR_SET_CONSUMERS,
                         &concrete_self->graph_stores);
     }
 }
@@ -669,7 +669,7 @@ void bsal_assembly_graph_builder_verify(struct thorium_actor *self)
         printf("CONFIGURE neural LINK %d -> %d\n",
                         producer, consumer);
 
-        thorium_actor_send_int(self, consumer, BSAL_ACTOR_SET_PRODUCER,
+        thorium_actor_send_int(self, consumer, THORIUM_ACTOR_SET_PRODUCER,
                         producer);
     }
 
@@ -703,7 +703,7 @@ void bsal_assembly_graph_builder_set_producer_reply(struct thorium_actor *self, 
      */
     if (concrete_self->completed_sliding_windows == bsal_vector_size(&concrete_self->sliding_windows)) {
 
-        thorium_actor_send_range_empty(self, &concrete_self->sliding_windows, BSAL_ACTOR_NOTIFY);
+        thorium_actor_send_range_empty(self, &concrete_self->sliding_windows, THORIUM_ACTOR_NOTIFY);
     }
 }
 
@@ -717,7 +717,7 @@ void bsal_assembly_graph_builder_tell_source(struct thorium_actor *self)
      * Stop actors
      */
     /*
-    thorium_actor_send_range_empty(self, &concrete_self->arc_kernels, BSAL_ACTOR_ASK_TO_STOP);
+    thorium_actor_send_range_empty(self, &concrete_self->arc_kernels, THORIUM_ACTOR_ASK_TO_STOP);
     */
     /*
      * We need to stop the arc supervisor to stop
@@ -725,8 +725,8 @@ void bsal_assembly_graph_builder_tell_source(struct thorium_actor *self)
      * The current actor can not stop arc kernels directly.
      */
 
-    thorium_actor_send_empty(self, concrete_self->manager_for_arc_kernels, BSAL_ACTOR_ASK_TO_STOP);
-    thorium_actor_send_empty(self, concrete_self->manager_for_arc_classifiers, BSAL_ACTOR_ASK_TO_STOP);
+    thorium_actor_send_empty(self, concrete_self->manager_for_arc_kernels, THORIUM_ACTOR_ASK_TO_STOP);
+    thorium_actor_send_empty(self, concrete_self->manager_for_arc_classifiers, THORIUM_ACTOR_ASK_TO_STOP);
 
     /*
      * Show timer
@@ -741,7 +741,7 @@ void bsal_assembly_graph_builder_tell_source(struct thorium_actor *self)
     /*
      * Tell somebody about it
      */
-    thorium_actor_send_vector(self, concrete_self->source, BSAL_ACTOR_START_REPLY,
+    thorium_actor_send_vector(self, concrete_self->source, THORIUM_ACTOR_START_REPLY,
                     &concrete_self->graph_stores);
 }
 
@@ -841,7 +841,7 @@ void bsal_assembly_graph_builder_get_entry_count_reply(struct thorium_actor *sel
 
             spawner = thorium_actor_get_spawner(self, &concrete_self->spawners);
 
-            thorium_actor_send_int(self, spawner, BSAL_ACTOR_SPAWN,
+            thorium_actor_send_int(self, spawner, THORIUM_ACTOR_SPAWN,
                             BSAL_COVERAGE_DISTRIBUTION_SCRIPT);
 
         } else {
@@ -866,13 +866,13 @@ void bsal_assembly_graph_builder_notify_from_distribution(struct thorium_actor *
      */
 
     thorium_actor_send_empty(self, concrete_self->manager_for_windows,
-                    BSAL_ACTOR_ASK_TO_STOP);
+                    THORIUM_ACTOR_ASK_TO_STOP);
 
     thorium_actor_send_empty(self, concrete_self->manager_for_classifiers,
-                    BSAL_ACTOR_ASK_TO_STOP);
+                    THORIUM_ACTOR_ASK_TO_STOP);
 
     thorium_actor_send_empty(self, concrete_self->coverage_distribution,
-                    BSAL_ACTOR_ASK_TO_STOP);
+                    THORIUM_ACTOR_ASK_TO_STOP);
 
     bsal_timer_stop(&concrete_self->vertex_timer);
 
@@ -886,14 +886,14 @@ void bsal_assembly_graph_builder_notify_from_distribution(struct thorium_actor *
 
     spawner = thorium_actor_get_spawner(self, &concrete_self->spawners);
 
-    concrete_self->manager_for_arc_kernels = BSAL_ACTOR_SPAWNING_IN_PROGRESS;
+    concrete_self->manager_for_arc_kernels = THORIUM_ACTOR_SPAWNING_IN_PROGRESS;
 
-    thorium_actor_add_route_with_condition(self, BSAL_ACTOR_SPAWN_REPLY,
+    thorium_actor_add_route_with_condition(self, THORIUM_ACTOR_SPAWN_REPLY,
                     bsal_assembly_graph_builder_spawn_reply_arc_kernel_manager,
                     &concrete_self->manager_for_arc_kernels,
-                    BSAL_ACTOR_SPAWNING_IN_PROGRESS);
+                    THORIUM_ACTOR_SPAWNING_IN_PROGRESS);
 
-    thorium_actor_send_int(self, spawner, BSAL_ACTOR_SPAWN,
+    thorium_actor_send_int(self, spawner, THORIUM_ACTOR_SPAWN,
                     BSAL_MANAGER_SCRIPT);
 }
 
@@ -919,11 +919,11 @@ void bsal_assembly_graph_builder_set_script_reply_arc_kernel_manager(struct thor
 
     concrete_self = thorium_actor_concrete_actor(self);
 
-    thorium_actor_add_route_with_source(self, BSAL_ACTOR_START_REPLY,
+    thorium_actor_add_route_with_source(self, THORIUM_ACTOR_START_REPLY,
                     bsal_assembly_graph_builder_start_reply_arc_kernel_manager,
                     concrete_self->manager_for_arc_kernels);
 
-    thorium_actor_send_reply_vector(self, BSAL_ACTOR_START, &concrete_self->spawners);
+    thorium_actor_send_reply_vector(self, THORIUM_ACTOR_START, &concrete_self->spawners);
 }
 
 void bsal_assembly_graph_builder_start_reply_arc_kernel_manager(struct thorium_actor *self, struct thorium_message *message)
@@ -937,16 +937,16 @@ void bsal_assembly_graph_builder_start_reply_arc_kernel_manager(struct thorium_a
 
     bsal_vector_unpack(&concrete_self->arc_kernels, buffer);
 
-    concrete_self->manager_for_arc_classifiers = BSAL_ACTOR_SPAWNING_IN_PROGRESS;
+    concrete_self->manager_for_arc_classifiers = THORIUM_ACTOR_SPAWNING_IN_PROGRESS;
 
-    thorium_actor_add_route_with_condition(self, BSAL_ACTOR_SPAWN_REPLY,
+    thorium_actor_add_route_with_condition(self, THORIUM_ACTOR_SPAWN_REPLY,
                     bsal_assembly_graph_builder_spawn_reply_arc_classifier_manager,
                     &concrete_self->manager_for_arc_classifiers,
-                    BSAL_ACTOR_SPAWNING_IN_PROGRESS);
+                    THORIUM_ACTOR_SPAWNING_IN_PROGRESS);
 
     spawner = thorium_actor_get_spawner(self, &concrete_self->spawners);
 
-    thorium_actor_send_int(self, spawner, BSAL_ACTOR_SPAWN, BSAL_MANAGER_SCRIPT);
+    thorium_actor_send_int(self, spawner, THORIUM_ACTOR_SPAWN, BSAL_MANAGER_SCRIPT);
 }
 
 void bsal_assembly_graph_builder_spawn_reply_arc_classifier_manager(struct thorium_actor *self, struct thorium_message *message)
@@ -975,11 +975,11 @@ void bsal_assembly_graph_builder_set_script_reply_arc_classifier_manager(struct 
 
     concrete_self = thorium_actor_concrete_actor(self);
 
-    thorium_actor_add_route_with_source(self, BSAL_ACTOR_START_REPLY,
+    thorium_actor_add_route_with_source(self, THORIUM_ACTOR_START_REPLY,
                     bsal_assembly_graph_builder_start_reply_arc_classifier_manager,
                     concrete_self->manager_for_arc_classifiers);
 
-    thorium_actor_send_reply_vector(self, BSAL_ACTOR_START,
+    thorium_actor_send_reply_vector(self, THORIUM_ACTOR_START,
                     &concrete_self->spawners);
 }
 
@@ -1038,7 +1038,7 @@ void bsal_assembly_graph_builder_set_kmer_reply_arcs(struct thorium_actor *self,
 
         concrete_self->configured_actors_for_arcs = 0;
 
-        thorium_actor_add_route_with_condition(self, BSAL_ACTOR_SET_CONSUMER_REPLY,
+        thorium_actor_add_route_with_condition(self, THORIUM_ACTOR_SET_CONSUMER_REPLY,
                         bsal_assembly_graph_builder_configure_arc_actors,
                         &concrete_self->doing_arcs, 1);
 
@@ -1058,7 +1058,7 @@ void bsal_assembly_graph_builder_set_kmer_reply_arcs(struct thorium_actor *self,
             producer = bsal_vector_at_as_int(&concrete_self->arc_kernels, i);
             consumer = bsal_vector_at_as_int(&concrete_self->arc_classifiers, i);
 
-            thorium_actor_send_int(self, producer, BSAL_ACTOR_SET_CONSUMER,
+            thorium_actor_send_int(self, producer, THORIUM_ACTOR_SET_CONSUMER,
                             consumer);
         }
 
@@ -1067,12 +1067,12 @@ void bsal_assembly_graph_builder_set_kmer_reply_arcs(struct thorium_actor *self,
          */
 
         thorium_actor_add_route_with_condition(self,
-                        BSAL_ACTOR_SET_CONSUMERS_REPLY,
+                        THORIUM_ACTOR_SET_CONSUMERS_REPLY,
                         bsal_assembly_graph_builder_configure_arc_actors,
                         &concrete_self->doing_arcs, 1);
 
         thorium_actor_send_range_vector(self, &concrete_self->arc_classifiers,
-                        BSAL_ACTOR_SET_CONSUMERS,
+                        THORIUM_ACTOR_SET_CONSUMERS,
                         &concrete_self->graph_stores);
 
         /*
@@ -1080,11 +1080,11 @@ void bsal_assembly_graph_builder_set_kmer_reply_arcs(struct thorium_actor *self,
          */
 
         thorium_actor_add_route(self,
-                        BSAL_ACTOR_RESET_REPLY,
+                        THORIUM_ACTOR_RESET_REPLY,
                         bsal_assembly_graph_builder_configure_arc_actors);
 
         thorium_actor_send_range_empty(self, &concrete_self->sequence_stores,
-                        BSAL_ACTOR_RESET);
+                        THORIUM_ACTOR_RESET);
     }
 }
 
@@ -1127,7 +1127,7 @@ void bsal_assembly_graph_builder_configure_arc_actors(struct thorium_actor *self
 
         size = bsal_vector_size(&concrete_self->arc_kernels);
 
-        thorium_actor_add_route_with_condition(self, BSAL_ACTOR_SET_PRODUCER_REPLY,
+        thorium_actor_add_route_with_condition(self, THORIUM_ACTOR_SET_PRODUCER_REPLY,
                         bsal_assembly_graph_builder_verify_arc_kernels,
                         &concrete_self->doing_arcs, 1);
 
@@ -1135,7 +1135,7 @@ void bsal_assembly_graph_builder_configure_arc_actors(struct thorium_actor *self
             producer = bsal_vector_at_as_int(&concrete_self->sequence_stores, i);
             consumer = bsal_vector_at_as_int(&concrete_self->arc_kernels, i);
 
-            thorium_actor_send_int(self, consumer, BSAL_ACTOR_SET_PRODUCER,
+            thorium_actor_send_int(self, consumer, THORIUM_ACTOR_SET_PRODUCER,
                             producer);
         }
     }
@@ -1157,14 +1157,14 @@ void bsal_assembly_graph_builder_verify_arc_kernels(struct thorium_actor *self, 
         concrete_self->completed_arc_kernels = 0;
 
         thorium_actor_add_route_with_condition(self,
-                        BSAL_ACTOR_NOTIFY_REPLY,
+                        THORIUM_ACTOR_NOTIFY_REPLY,
                         bsal_assembly_graph_builder_notify_reply_arc_kernels,
                         &concrete_self->doing_arcs, 1);
         /*
          * Ask each kernel the amount of produced arcs
          */
         thorium_actor_send_range_empty(self, &concrete_self->arc_kernels,
-                        BSAL_ACTOR_NOTIFY);
+                        THORIUM_ACTOR_NOTIFY);
     }
 }
 

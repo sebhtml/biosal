@@ -43,7 +43,7 @@ void bsal_manager_init(struct thorium_actor *actor)
      * Register the route for stopping
      */
 
-    thorium_actor_add_route(actor, BSAL_ACTOR_ASK_TO_STOP,
+    thorium_actor_add_route(actor, THORIUM_ACTOR_ASK_TO_STOP,
                     bsal_manager_ask_to_stop);
 
     bsal_map_init(&concrete_actor->spawner_child_count, sizeof(int), sizeof(int));
@@ -52,10 +52,10 @@ void bsal_manager_init(struct thorium_actor *actor)
 
     concrete_actor->ready_spawners = 0;
     concrete_actor->spawners = 0;
-    concrete_actor->actors_per_spawner = BSAL_ACTOR_NO_VALUE;
-    concrete_actor->actors_per_worker = BSAL_ACTOR_NO_VALUE;
-    concrete_actor->workers_per_actor = BSAL_ACTOR_NO_VALUE;
-    concrete_actor->script = BSAL_ACTOR_NO_VALUE;
+    concrete_actor->actors_per_spawner = THORIUM_ACTOR_NO_VALUE;
+    concrete_actor->actors_per_worker = THORIUM_ACTOR_NO_VALUE;
+    concrete_actor->workers_per_actor = THORIUM_ACTOR_NO_VALUE;
+    concrete_actor->script = THORIUM_ACTOR_NO_VALUE;
 }
 
 void bsal_manager_destroy(struct thorium_actor *actor)
@@ -115,14 +115,14 @@ void bsal_manager_receive(struct thorium_actor *actor, struct thorium_message *m
     concrete_actor = (struct bsal_manager *)thorium_actor_concrete_actor(actor);
     tag = thorium_message_tag(message);
 
-    if (tag == BSAL_ACTOR_START) {
+    if (tag == THORIUM_ACTOR_START) {
 
         /* return empty vector
          */
-        if (concrete_actor->script == BSAL_ACTOR_NO_VALUE) {
+        if (concrete_actor->script == THORIUM_ACTOR_NO_VALUE) {
 
             bsal_vector_init(&all_stores, sizeof(int));
-            thorium_actor_send_reply_vector(actor, BSAL_ACTOR_START_REPLY, &all_stores);
+            thorium_actor_send_reply_vector(actor, THORIUM_ACTOR_START_REPLY, &all_stores);
             bsal_vector_destroy(&all_stores);
             return;
         }
@@ -172,7 +172,7 @@ void bsal_manager_receive(struct thorium_actor *actor, struct thorium_message *m
 
             bsal_vector_init(stores, sizeof(int));
 
-            thorium_actor_send_empty(actor, spawner, BSAL_ACTOR_GET_NODE_WORKER_COUNT);
+            thorium_actor_send_empty(actor, spawner, THORIUM_ACTOR_GET_NODE_WORKER_COUNT);
         }
 
         bsal_vector_iterator_destroy(&iterator);
@@ -199,12 +199,12 @@ void bsal_manager_receive(struct thorium_actor *actor, struct thorium_message *m
         concrete_actor->actors_per_spawner = *(int *)buffer;
 
         if (concrete_actor->actors_per_spawner <= 0) {
-            concrete_actor->actors_per_spawner = BSAL_ACTOR_NO_VALUE;
+            concrete_actor->actors_per_spawner = THORIUM_ACTOR_NO_VALUE;
         }
 
         thorium_actor_send_reply_empty(actor, BSAL_MANAGER_SET_ACTORS_PER_SPAWNER_REPLY);
 
-    } else if (tag == BSAL_ACTOR_GET_NODE_WORKER_COUNT_REPLY) {
+    } else if (tag == THORIUM_ACTOR_GET_NODE_WORKER_COUNT_REPLY) {
 
         workers = *(int *)buffer;
 
@@ -227,7 +227,7 @@ void bsal_manager_receive(struct thorium_actor *actor, struct thorium_message *m
         /* Option 1: Use a number of actors for each spawner. This number
          * is the same for all spawner.
          */
-        if (concrete_actor->actors_per_spawner != BSAL_ACTOR_NO_VALUE) {
+        if (concrete_actor->actors_per_spawner != THORIUM_ACTOR_NO_VALUE) {
             (*bucket) = concrete_actor->actors_per_spawner;
 
         /* Otherwise, the number of actors is either a number of actors per worker
@@ -236,7 +236,7 @@ void bsal_manager_receive(struct thorium_actor *actor, struct thorium_message *m
 
         /* Option 2: spawn 1 actor for each N workers
          */
-        } else if (concrete_actor->workers_per_actor != BSAL_ACTOR_NO_VALUE) {
+        } else if (concrete_actor->workers_per_actor != THORIUM_ACTOR_NO_VALUE) {
 
             (*bucket) = workers / concrete_actor->workers_per_actor;
 
@@ -247,7 +247,7 @@ void bsal_manager_receive(struct thorium_actor *actor, struct thorium_message *m
         /* Option 3: Otherwise, multiply the number of workers by a number of actors
          * per worker.
          */
-        } else if (concrete_actor->actors_per_worker != BSAL_ACTOR_NO_VALUE) {
+        } else if (concrete_actor->actors_per_worker != THORIUM_ACTOR_NO_VALUE) {
 
             (*bucket) = workers * concrete_actor->actors_per_worker;
 
@@ -259,9 +259,9 @@ void bsal_manager_receive(struct thorium_actor *actor, struct thorium_message *m
 
         }
 
-        thorium_actor_send_reply_int(actor, BSAL_ACTOR_SPAWN, concrete_actor->script);
+        thorium_actor_send_reply_int(actor, THORIUM_ACTOR_SPAWN, concrete_actor->script);
 
-    } else if (tag == BSAL_ACTOR_SPAWN_REPLY) {
+    } else if (tag == THORIUM_ACTOR_SPAWN_REPLY) {
 
         store = *(int *)buffer;
         index = source;
@@ -320,7 +320,7 @@ void bsal_manager_receive(struct thorium_actor *actor, struct thorium_message *m
 
                 bsal_vector_destroy(&all_stores);
 
-                thorium_message_init(&new_message, BSAL_ACTOR_START_REPLY, new_count, new_buffer);
+                thorium_message_init(&new_message, THORIUM_ACTOR_START_REPLY, new_count, new_buffer);
                 thorium_actor_send_to_supervisor(actor, &new_message);
 
                 bsal_memory_free(new_buffer);
@@ -329,7 +329,7 @@ void bsal_manager_receive(struct thorium_actor *actor, struct thorium_message *m
             }
         } else {
 
-            thorium_actor_send_reply_int(actor, BSAL_ACTOR_SPAWN, concrete_actor->script);
+            thorium_actor_send_reply_int(actor, THORIUM_ACTOR_SPAWN, concrete_actor->script);
         }
 
 
@@ -338,7 +338,7 @@ void bsal_manager_receive(struct thorium_actor *actor, struct thorium_message *m
         thorium_message_unpack_int(message, 0, &concrete_actor->actors_per_worker);
 
         if (concrete_actor->actors_per_worker <= 0) {
-            concrete_actor->actors_per_worker = BSAL_ACTOR_NO_VALUE;
+            concrete_actor->actors_per_worker = THORIUM_ACTOR_NO_VALUE;
         }
 
         thorium_actor_send_reply_empty(actor, BSAL_MANAGER_SET_ACTORS_PER_WORKER_REPLY);
@@ -348,7 +348,7 @@ void bsal_manager_receive(struct thorium_actor *actor, struct thorium_message *m
         thorium_message_unpack_int(message, 0, &concrete_actor->workers_per_actor);
 
         if (concrete_actor->workers_per_actor <= 0) {
-            concrete_actor->workers_per_actor = BSAL_ACTOR_NO_VALUE;
+            concrete_actor->workers_per_actor = THORIUM_ACTOR_NO_VALUE;
         }
 
         thorium_actor_send_reply_empty(actor, BSAL_MANAGER_SET_WORKERS_PER_ACTOR_REPLY);
@@ -381,6 +381,6 @@ void bsal_manager_ask_to_stop(struct thorium_actor *actor, struct thorium_messag
 
         child = bsal_vector_at_as_int(&concrete_actor->children, i);
 
-        thorium_actor_send_empty(actor, child, BSAL_ACTOR_ASK_TO_STOP);
+        thorium_actor_send_empty(actor, child, THORIUM_ACTOR_ASK_TO_STOP);
     }
 }

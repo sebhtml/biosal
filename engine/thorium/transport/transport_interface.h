@@ -1,6 +1,6 @@
 
-#ifndef BSAL_TRANSPORT_INTERFACE_H
-#define BSAL_TRANSPORT_INTERFACE_H
+#ifndef THORIUM_TRANSPORT_INTERFACE_H
+#define THORIUM_TRANSPORT_INTERFACE_H
 
 struct thorium_message;
 struct thorium_transport;

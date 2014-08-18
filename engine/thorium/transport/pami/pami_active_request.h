@@ -1,6 +1,6 @@
 
-#ifndef BSAL_PAMI_ACTIVE_BUFFER_H
-#define BSAL_PAMI_ACTIVE_BUFFER_H
+#ifndef THORIUM_PAMI_ACTIVE_BUFFER_H
+#define THORIUM_PAMI_ACTIVE_BUFFER_H
 
 #include "pami_transport.h"
 

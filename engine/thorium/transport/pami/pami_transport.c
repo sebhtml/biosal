@@ -6,11 +6,11 @@
 
 #include <core/system/debugger.h>
 
-#define BSAL_TRANSPORT_PAMI_NAME "PAMI: Parallel Active Message Interface"
+#define THORIUM_TRANSPORT_PAMI_NAME "PAMI: Parallel Active Message Interface"
 
 struct thorium_transport_interface thorium_pami_transport_implementation = {
-    .identifier = BSAL_TRANSPORT_PAMI_IDENTIFIER,
-    .name = BSAL_TRANSPORT_PAMI_NAME,
+    .identifier = THORIUM_TRANSPORT_PAMI_IDENTIFIER,
+    .name = THORIUM_TRANSPORT_PAMI_NAME,
     .size = sizeof(struct thorium_pami_transport),
     .init = thorium_pami_transport_init,
     .destroy = thorium_pami_transport_destroy,
@@ -20,7 +20,7 @@ struct thorium_transport_interface thorium_pami_transport_implementation = {
 
 void thorium_pami_transport_init(struct thorium_transport *self, int *argc, char ***argv)
 {
-#ifdef BSAL_TRANSPORT_USE_PAMI
+#ifdef THORIUM_TRANSPORT_USE_PAMI
     const char client_name[] = "biosal/thorium";
     struct thorium_pami_transport *concrete_self;
     int configuration_count;
@@ -61,7 +61,7 @@ void thorium_pami_transport_init(struct thorium_transport *self, int *argc, char
 
 void thorium_pami_transport_destroy(struct thorium_transport *self)
 {
-#ifdef BSAL_TRANSPORT_USE_PAMI
+#ifdef THORIUM_TRANSPORT_USE_PAMI
     struct thorium_pami_transport *concrete_self;
     pami_result_t result;
 

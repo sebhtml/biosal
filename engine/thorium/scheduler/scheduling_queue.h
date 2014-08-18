@@ -1,6 +1,6 @@
 
-#ifndef BSAL_SCHEDULING_QUEUE
-#define BSAL_SCHEDULING_QUEUE
+#ifndef THORIUM_SCHEDULING_QUEUE
+#define THORIUM_SCHEDULING_QUEUE
 
 #include <core/structures/ring_queue.h>
 
@@ -11,12 +11,12 @@ struct thorium_actor;
 /*
  * \see http://dictionary.cambridge.org/dictionary/british/max_1
  */
-#define BSAL_PRIORITY_LOW 4
-#define BSAL_PRIORITY_NORMAL 64
-#define BSAL_PRIORITY_HIGH 128
-#define BSAL_PRIORITY_MAX 1048576
+#define THORIUM_PRIORITY_LOW 4
+#define THORIUM_PRIORITY_NORMAL 64
+#define THORIUM_PRIORITY_HIGH 128
+#define THORIUM_PRIORITY_MAX 1048576
 
-#define BSAL_SCHEDULING_QUEUE_RATIO 64
+#define THORIUM_SCHEDULING_QUEUE_RATIO 64
 
 /*
  * This is an actor scheduling queue.

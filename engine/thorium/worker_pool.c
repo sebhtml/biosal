@@ -24,25 +24,25 @@
 
 
 /*
-#define BSAL_WORKER_POOL_DEBUG
-#define BSAL_WORKER_POOL_DEBUG_ISSUE_334
+#define THORIUM_WORKER_POOL_DEBUG
+#define THORIUM_WORKER_POOL_DEBUG_ISSUE_334
 */
 
-#define BSAL_WORKER_POOL_MESSAGE_SCHEDULING_WINDOW 4
+#define THORIUM_WORKER_POOL_MESSAGE_SCHEDULING_WINDOW 4
 
 /*
  * Scheduling options.
  */
-#define BSAL_WORKER_POOL_PUSH_WORK_ON_SAME_WORKER
-#define BSAL_WORKER_POOL_FORCE_LAST_WORKER 1
+#define THORIUM_WORKER_POOL_PUSH_WORK_ON_SAME_WORKER
+#define THORIUM_WORKER_POOL_FORCE_LAST_WORKER 1
 
 /*
  * Configuration for initial placement.
  */
 /*
-#define BSAL_WORKER_POOL_USE_LEAST_BUSY
+#define THORIUM_WORKER_POOL_USE_LEAST_BUSY
 */
-#define BSAL_WORKER_POOL_USE_SCRIPT_ROUND_ROBIN
+#define THORIUM_WORKER_POOL_USE_SCRIPT_ROUND_ROBIN
 
 /*
  * Enable the load balancer.
@@ -52,7 +52,7 @@
  * instead.
  */
 /*
-#define BSAL_WORKER_POOL_BALANCE
+#define THORIUM_WORKER_POOL_BALANCE
 */
 
 void thorium_worker_pool_init(struct thorium_worker_pool *pool, int workers,
@@ -87,7 +87,7 @@ void thorium_worker_pool_init(struct thorium_worker_pool *pool, int workers,
         exit(1);
     }
 
-#ifdef BSAL_WORKER_POOL_HAS_SPECIAL_QUEUES
+#ifdef THORIUM_WORKER_POOL_HAS_SPECIAL_QUEUES
     bsal_work_queue_init(&pool->work_queue);
     thorium_message_queue_init(&pool->message_queue);
 #endif
@@ -121,7 +121,7 @@ void thorium_worker_pool_init(struct thorium_worker_pool *pool, int workers,
     pool->last_balancing = pool->starting_time;
     pool->last_signal_check = pool->starting_time;
 
-    pool->balance_period = BSAL_SCHEDULER_PERIOD_IN_SECONDS;
+    pool->balance_period = THORIUM_SCHEDULER_PERIOD_IN_SECONDS;
 
 }
 
@@ -238,7 +238,7 @@ void thorium_worker_pool_stop(struct thorium_worker_pool *pool)
      * stop workers
      */
 
-#ifdef BSAL_WORKER_POOL_DEBUG
+#ifdef THORIUM_WORKER_POOL_DEBUG
     printf("Stop workers\n");
 #endif
 
@@ -300,9 +300,9 @@ void thorium_worker_pool_print_load(struct thorium_worker_pool *self, int type)
 
     description = NULL;
 
-    if (type == BSAL_WORKER_POOL_LOAD_LOOP) {
+    if (type == THORIUM_WORKER_POOL_LOAD_LOOP) {
         description = loop;
-    } else if (type == BSAL_WORKER_POOL_LOAD_EPOCH) {
+    } else if (type == THORIUM_WORKER_POOL_LOAD_EPOCH) {
         description = epoch;
     } else {
         return;
@@ -336,11 +336,11 @@ void thorium_worker_pool_print_load(struct thorium_worker_pool *self, int type)
         selected_load = epoch_load;
         selected_wake_up_count = epoch_wake_up_count;
 
-        if (type == BSAL_WORKER_POOL_LOAD_EPOCH) {
+        if (type == THORIUM_WORKER_POOL_LOAD_EPOCH) {
             selected_load = epoch_load;
             selected_wake_up_count = epoch_wake_up_count;
 
-        } else if (type == BSAL_WORKER_POOL_LOAD_LOOP) {
+        } else if (type == THORIUM_WORKER_POOL_LOAD_LOOP) {
             selected_load = loop_load;
             selected_wake_up_count = loop_wake_up_count;
         }
@@ -364,13 +364,13 @@ void thorium_worker_pool_print_load(struct thorium_worker_pool *self, int type)
     load = sum / count;
 
     printf("%s node/%d %s LOAD %d s %.2f/%d (%.2f)%s\n",
-                    BSAL_NODE_THORIUM_PREFIX,
+                    THORIUM_NODE_THORIUM_PREFIX,
                     node_name,
                     description, elapsed,
                     sum, count, load, buffer);
 
     printf("%s node/%d %s WAKE_UP_COUNT %d s %s\n",
-                    BSAL_NODE_THORIUM_PREFIX,
+                    THORIUM_NODE_THORIUM_PREFIX,
                     node_name,
                     description, elapsed,
                     buffer_for_wake_up_events);
@@ -425,7 +425,7 @@ int thorium_worker_pool_give_message_to_actor(struct thorium_worker_pool *pool, 
     actor = thorium_node_get_actor_from_name(pool->node, destination);
 
     if (actor == NULL) {
-#ifdef BSAL_WORKER_POOL_DEBUG_DEAD_CHANNEL
+#ifdef THORIUM_WORKER_POOL_DEBUG_DEAD_CHANNEL
         printf("DEAD LETTER CHANNEL...\n");
 #endif
 
@@ -451,7 +451,7 @@ int thorium_worker_pool_give_message_to_actor(struct thorium_worker_pool *pool, 
      */
     if (!thorium_actor_enqueue_mailbox_message(actor, message)) {
 
-#ifdef BSAL_WORKER_POOL_DEBUG_MESSAGE_BUFFERING
+#ifdef THORIUM_WORKER_POOL_DEBUG_MESSAGE_BUFFERING
         printf("DEBUG897 could not enqueue message, buffering...\n");
 #endif
 
@@ -504,7 +504,7 @@ void thorium_worker_pool_work(struct thorium_worker_pool *pool)
     struct thorium_worker *worker;
     int name;
 
-#ifdef BSAL_WORKER_POOL_BALANCE
+#ifdef THORIUM_WORKER_POOL_BALANCE
 #endif
 
     /* If there are messages in the inbound message buffer,
@@ -535,7 +535,7 @@ void thorium_worker_pool_work(struct thorium_worker_pool *pool)
              * But the actor do have messages, but the problem is that all the actor scheduling queue
              * on every worker are full.
              */
-#ifdef BSAL_WORKER_POOL_DEBUG_ACTOR_ASSIGNMENT_PROBLEM
+#ifdef THORIUM_WORKER_POOL_DEBUG_ACTOR_ASSIGNMENT_PROBLEM
             printf("Notice: actor %d has no assigned worker\n", name);
 #endif
             thorium_worker_pool_assign_worker_to_actor(pool, name);
@@ -554,7 +554,7 @@ void thorium_worker_pool_work(struct thorium_worker_pool *pool)
                     destination);
 #endif
 
-#ifdef BSAL_WORKER_POOL_BALANCE
+#ifdef THORIUM_WORKER_POOL_BALANCE
     /* balance the pool regularly
      */
 
@@ -586,11 +586,11 @@ void thorium_worker_pool_assign_worker_to_actor(struct thorium_worker_pool *pool
     int worker_index;
     struct bsal_set *set;
 
-#ifdef BSAL_WORKER_POOL_USE_LEAST_BUSY
+#ifdef THORIUM_WORKER_POOL_USE_LEAST_BUSY
     int score;
 #endif
 
-#ifdef BSAL_WORKER_POOL_USE_SCRIPT_ROUND_ROBIN
+#ifdef THORIUM_WORKER_POOL_USE_SCRIPT_ROUND_ROBIN
     int script;
     struct thorium_actor *actor;
 #endif
@@ -603,10 +603,10 @@ void thorium_worker_pool_assign_worker_to_actor(struct thorium_worker_pool *pool
 
     worker_index = -1;
 
-#ifdef BSAL_WORKER_POOL_USE_LEAST_BUSY
+#ifdef THORIUM_WORKER_POOL_USE_LEAST_BUSY
     worker_index = thorium_scheduler_select_worker_least_busy(&pool->scheduler, &score);
 
-#elif defined(BSAL_WORKER_POOL_USE_SCRIPT_ROUND_ROBIN)
+#elif defined(THORIUM_WORKER_POOL_USE_SCRIPT_ROUND_ROBIN)
     actor = thorium_node_get_actor_from_name(pool->node, name);
 
     /*
@@ -703,7 +703,7 @@ struct thorium_worker *thorium_worker_pool_select_worker_for_message(struct thor
     best_worker = NULL;
 
     i = 0;
-    attempts = BSAL_WORKER_POOL_MESSAGE_SCHEDULING_WINDOW;
+    attempts = THORIUM_WORKER_POOL_MESSAGE_SCHEDULING_WINDOW;
 
     /* select thet worker with the most messages in the window.
      */

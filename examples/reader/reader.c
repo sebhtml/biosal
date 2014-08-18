@@ -63,7 +63,7 @@ void reader_receive(struct thorium_actor *actor, struct thorium_message *message
     buffer = thorium_message_buffer(message);
     name = thorium_actor_name(actor);
 
-    if (tag == BSAL_ACTOR_START) {
+    if (tag == THORIUM_ACTOR_START) {
 
         bsal_vector_init(&reader1->spawners, 0);
         bsal_vector_unpack(&reader1->spawners, buffer);
@@ -82,14 +82,14 @@ void reader_receive(struct thorium_actor *actor, struct thorium_message *message
         */
 
         if (bsal_vector_index_of(&reader1->spawners, &name) != 0) {
-            thorium_message_init(message, BSAL_ACTOR_STOP, 0, NULL);
+            thorium_message_init(message, THORIUM_ACTOR_STOP, 0, NULL);
             thorium_actor_send(actor, name, message);
 
             return;
         }
 
         if (argc == 1) {
-            thorium_message_init(message, BSAL_ACTOR_STOP, 0, NULL);
+            thorium_message_init(message, THORIUM_ACTOR_STOP, 0, NULL);
             thorium_actor_send(actor, name, message);
 
             return;
@@ -131,12 +131,12 @@ void reader_receive(struct thorium_actor *actor, struct thorium_message *message
         } else if (error == BSAL_INPUT_ERROR_FILE_NOT_FOUND) {
 
             printf("Error, file not found! \n");
-            thorium_actor_send_to_self_empty(actor, BSAL_ACTOR_STOP);
+            thorium_actor_send_to_self_empty(actor, THORIUM_ACTOR_STOP);
 
         } else if (error == BSAL_INPUT_ERROR_FORMAT_NOT_SUPPORTED) {
 
             printf("Error, format not supported! \n");
-            thorium_actor_send_to_self_empty(actor, BSAL_ACTOR_STOP);
+            thorium_actor_send_to_self_empty(actor, THORIUM_ACTOR_STOP);
 
         }
     } else if (tag == BSAL_INPUT_COUNT_REPLY) {
@@ -152,12 +152,12 @@ void reader_receive(struct thorium_actor *actor, struct thorium_message *message
     } else if (tag == BSAL_INPUT_CLOSE_REPLY && !reader1->pulled) {
 
         /* not necessary, it is already dead. */
-        thorium_actor_send_reply_empty(actor, BSAL_ACTOR_ASK_TO_STOP);
+        thorium_actor_send_reply_empty(actor, THORIUM_ACTOR_ASK_TO_STOP);
 
         printf("actor %d received BSAL_INPUT_CLOSE_REPLY from actor %d, asking it to stop"
-                        " with BSAL_ACTOR_ASK_TO_STOP\n", name, source);
+                        " with THORIUM_ACTOR_ASK_TO_STOP\n", name, source);
             /*
-        thorium_message_init(message, BSAL_ACTOR_STOP, 0, NULL);
+        thorium_message_init(message, THORIUM_ACTOR_STOP, 0, NULL);
         thorium_actor_send(actor, name, message);
 
         return;
@@ -165,22 +165,22 @@ void reader_receive(struct thorium_actor *actor, struct thorium_message *message
 
         script = BSAL_INPUT_STREAM_SCRIPT;
 
-        thorium_message_init(message, BSAL_ACTOR_SPAWN, sizeof(script), &script);
+        thorium_message_init(message, THORIUM_ACTOR_SPAWN, sizeof(script), &script);
         thorium_actor_send(actor, name, message);
 
     } else if (tag == BSAL_INPUT_CLOSE_REPLY && reader1->pulled) {
 
-        thorium_actor_send_reply_empty(actor, BSAL_ACTOR_ASK_TO_STOP);
+        thorium_actor_send_reply_empty(actor, THORIUM_ACTOR_ASK_TO_STOP);
 
-        thorium_actor_send_to_self_empty(actor, BSAL_ACTOR_STOP);
+        thorium_actor_send_to_self_empty(actor, THORIUM_ACTOR_STOP);
 
-    } else if (tag == BSAL_ACTOR_ASK_TO_STOP_REPLY && reader1->pulled) {
+    } else if (tag == THORIUM_ACTOR_ASK_TO_STOP_REPLY && reader1->pulled) {
 
         /* this tag will never arrive here */
-        thorium_message_init(message, BSAL_ACTOR_STOP, 0, NULL);
+        thorium_message_init(message, THORIUM_ACTOR_STOP, 0, NULL);
         thorium_actor_send(actor, name, message);
 
-    } else if (tag == BSAL_ACTOR_SPAWN_REPLY && source == name) {
+    } else if (tag == THORIUM_ACTOR_SPAWN_REPLY && source == name) {
 
         reader1->sequence_reader = *(int *)buffer;
 

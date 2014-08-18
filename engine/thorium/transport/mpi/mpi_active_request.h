@@ -1,13 +1,13 @@
 
-#ifndef BSAL_MPI_ACTIVE_BUFFER_H
-#define BSAL_MPI_ACTIVE_BUFFER_H
+#ifndef THORIUM_MPI_ACTIVE_BUFFER_H
+#define THORIUM_MPI_ACTIVE_BUFFER_H
 
 #include "mpi_transport.h"
 
 struct thorium_active_request;
 
 struct thorium_mpi_active_request {
-#ifdef BSAL_TRANSPORT_USE_MPI
+#ifdef THORIUM_TRANSPORT_USE_MPI
     MPI_Request request;
 #else
     int mock;

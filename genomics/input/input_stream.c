@@ -92,7 +92,7 @@ void bsal_input_stream_init(struct thorium_actor *actor)
     thorium_actor_add_route(actor, BSAL_INPUT_COUNT_REPLY, bsal_input_stream_count_reply_mock);
 #endif
 
-    concrete_self->count_customer = BSAL_ACTOR_NOBODY;
+    concrete_self->count_customer = THORIUM_ACTOR_NOBODY;
 
 #if 0
     bsal_string_init(&concrete_self->file_for_parallel_counting, NULL);
@@ -206,7 +206,7 @@ void bsal_input_stream_receive(struct thorium_actor *actor, struct thorium_messa
 
             concrete_self->error = BSAL_INPUT_ERROR_ALREADY_OPEN;
             thorium_actor_send_reply_int(actor, BSAL_INPUT_OPEN_REPLY, concrete_self->error);
-            thorium_actor_send_to_self_empty(actor, BSAL_ACTOR_ASK_TO_STOP);
+            thorium_actor_send_to_self_empty(actor, THORIUM_ACTOR_ASK_TO_STOP);
 
             return;
         }
@@ -248,7 +248,7 @@ void bsal_input_stream_receive(struct thorium_actor *actor, struct thorium_messa
 #endif
 
             thorium_actor_send_reply_int(actor, BSAL_INPUT_OPEN_REPLY, concrete_self->error);
-            thorium_actor_send_to_self_empty(actor, BSAL_ACTOR_ASK_TO_STOP);
+            thorium_actor_send_to_self_empty(actor, THORIUM_ACTOR_ASK_TO_STOP);
 
             return;
         }
@@ -261,14 +261,14 @@ void bsal_input_stream_receive(struct thorium_actor *actor, struct thorium_messa
     } else if (tag == BSAL_INPUT_COUNT) {
         /* count a little bit and yield the worker */
 
-        if (concrete_self->count_customer == BSAL_ACTOR_NOBODY) {
+        if (concrete_self->count_customer == THORIUM_ACTOR_NOBODY) {
             concrete_self->count_customer = source;
         }
 
         if (bsal_input_stream_check_open_error(actor, message)) {
 
             thorium_actor_send_reply_int64_t(actor, BSAL_INPUT_COUNT_REPLY, concrete_self->error);
-            thorium_actor_send_to_self_empty(actor, BSAL_ACTOR_ASK_TO_STOP);
+            thorium_actor_send_to_self_empty(actor, THORIUM_ACTOR_ASK_TO_STOP);
 
             return;
         }
@@ -314,7 +314,7 @@ void bsal_input_stream_receive(struct thorium_actor *actor, struct thorium_messa
 
             /*printf("DEBUG yield\n");*/
 
-            thorium_actor_send_to_self_empty(actor, BSAL_ACTOR_YIELD);
+            thorium_actor_send_to_self_empty(actor, THORIUM_ACTOR_YIELD);
 
             /* notify the controller of our progress...
              */
@@ -325,14 +325,14 @@ void bsal_input_stream_receive(struct thorium_actor *actor, struct thorium_messa
             thorium_actor_send_to_self_empty(actor, BSAL_INPUT_COUNT_READY);
         }
 
-    } else if (tag == BSAL_ACTOR_YIELD_REPLY) {
+    } else if (tag == THORIUM_ACTOR_YIELD_REPLY) {
 
         if (bsal_input_stream_check_open_error(actor, message)) {
                 /*
                  * it is not clear that there can be an error when receiving YIELD.
             error = concrete_self->error;
             thorium_actor_send_reply_int(actor, BSAL_INPUT_COUNT_REPLY, error);
-            thorium_actor_send_to_self(actor, BSAL_ACTOR_ASK_TO_STOP);
+            thorium_actor_send_to_self(actor, THORIUM_ACTOR_ASK_TO_STOP);
 
                  */
             return;
@@ -369,7 +369,7 @@ void bsal_input_stream_receive(struct thorium_actor *actor, struct thorium_messa
                 &concrete_self->error);
             thorium_actor_send(actor, source, message);
 
-            thorium_actor_send_to_self_empty(actor, BSAL_ACTOR_ASK_TO_STOP);
+            thorium_actor_send_to_self_empty(actor, THORIUM_ACTOR_ASK_TO_STOP);
             return;
         }
 
@@ -377,7 +377,7 @@ void bsal_input_stream_receive(struct thorium_actor *actor, struct thorium_messa
                 &concrete_self->error);
         thorium_actor_send(actor, source, message);
 
-        thorium_actor_send_to_self_empty(actor, BSAL_ACTOR_ASK_TO_STOP);
+        thorium_actor_send_to_self_empty(actor, THORIUM_ACTOR_ASK_TO_STOP);
 
 #ifdef BSAL_INPUT_STREAM_DEBUG
         printf("actor %d sending BSAL_INPUT_CLOSE_REPLY to %d\n",
@@ -425,14 +425,14 @@ void bsal_input_stream_receive(struct thorium_actor *actor, struct thorium_messa
 
         bsal_input_stream_push_sequences(actor, message);
 
-    } else if (tag == BSAL_ACTOR_ASK_TO_STOP) {
+    } else if (tag == THORIUM_ACTOR_ASK_TO_STOP) {
 
-        thorium_actor_send_to_self_empty(actor, BSAL_ACTOR_STOP);
+        thorium_actor_send_to_self_empty(actor, THORIUM_ACTOR_STOP);
 
         thorium_actor_send_range_empty(actor, &concrete_self->parallel_streams,
-                        BSAL_ACTOR_ASK_TO_STOP);
+                        THORIUM_ACTOR_ASK_TO_STOP);
 
-        thorium_actor_send_reply_empty(actor, BSAL_ACTOR_ASK_TO_STOP_REPLY);
+        thorium_actor_send_reply_empty(actor, THORIUM_ACTOR_ASK_TO_STOP_REPLY);
 
     } else if (tag == BSAL_INPUT_STREAM_RESET) {
 
@@ -748,13 +748,13 @@ void bsal_input_stream_count_in_parallel(struct thorium_actor *self, struct thor
 
     size = bsal_vector_size(&concrete_self->start_offsets);
 
-    thorium_actor_add_route(self, BSAL_ACTOR_SPAWN_REPLY, bsal_input_stream_spawn_reply);
+    thorium_actor_add_route(self, THORIUM_ACTOR_SPAWN_REPLY, bsal_input_stream_spawn_reply);
 
     for (i = 0; i < size; i++) {
 
         spawner = thorium_actor_get_spawner(self, &concrete_self->spawners);
 
-        thorium_actor_send_int(self, spawner, BSAL_ACTOR_SPAWN,
+        thorium_actor_send_int(self, spawner, THORIUM_ACTOR_SPAWN,
                 BSAL_INPUT_STREAM_SCRIPT);
     }
 }

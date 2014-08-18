@@ -62,9 +62,9 @@ void bsal_dna_kmer_counter_kernel_init(struct thorium_actor *actor)
     concrete_actor->blocks = 0;
 
     concrete_actor->kmer_length = -1;
-    concrete_actor->consumer = BSAL_ACTOR_NOBODY;
-    concrete_actor->producer = BSAL_ACTOR_NOBODY;
-    concrete_actor->producer_source = BSAL_ACTOR_NOBODY;
+    concrete_actor->consumer = THORIUM_ACTOR_NOBODY;
+    concrete_actor->producer = THORIUM_ACTOR_NOBODY;
+    concrete_actor->producer_source = THORIUM_ACTOR_NOBODY;
 
     concrete_actor->notified = 0;
     concrete_actor->notification_source = 0;
@@ -82,17 +82,17 @@ void bsal_dna_kmer_counter_kernel_init(struct thorium_actor *actor)
 
     concrete_actor->auto_scaling_in_progress = 0;
 
-    thorium_actor_add_route(actor, BSAL_ACTOR_PACK,
+    thorium_actor_add_route(actor, THORIUM_ACTOR_PACK,
                     bsal_dna_kmer_counter_kernel_pack_message);
-    thorium_actor_add_route(actor, BSAL_ACTOR_UNPACK,
+    thorium_actor_add_route(actor, THORIUM_ACTOR_UNPACK,
                     bsal_dna_kmer_counter_kernel_unpack_message);
-    thorium_actor_add_route(actor, BSAL_ACTOR_CLONE_REPLY,
+    thorium_actor_add_route(actor, THORIUM_ACTOR_CLONE_REPLY,
                     bsal_dna_kmer_counter_kernel_clone_reply);
-    thorium_actor_add_route(actor, BSAL_ACTOR_NOTIFY,
+    thorium_actor_add_route(actor, THORIUM_ACTOR_NOTIFY,
                     bsal_dna_kmer_counter_kernel_notify);
-    thorium_actor_add_route(actor, BSAL_ACTOR_NOTIFY_REPLY,
+    thorium_actor_add_route(actor, THORIUM_ACTOR_NOTIFY_REPLY,
                     bsal_dna_kmer_counter_kernel_notify_reply);
-    thorium_actor_add_route(actor, BSAL_ACTOR_DO_AUTO_SCALING,
+    thorium_actor_add_route(actor, THORIUM_ACTOR_DO_AUTO_SCALING,
                     bsal_dna_kmer_counter_kernel_do_auto_scaling);
 
     printf("kernel %d is online !!!\n",
@@ -101,8 +101,8 @@ void bsal_dna_kmer_counter_kernel_init(struct thorium_actor *actor)
     /* Enable packing for this actor. Maybe this is already enabled, but who knows.
      */
 
-    thorium_actor_send_to_self_empty(actor, BSAL_ACTOR_PACK_ENABLE);
-    concrete_actor->auto_scaling_clone = BSAL_ACTOR_NOBODY;
+    thorium_actor_send_to_self_empty(actor, THORIUM_ACTOR_PACK_ENABLE);
+    concrete_actor->auto_scaling_clone = THORIUM_ACTOR_NOBODY;
 
     concrete_actor->scaling_operations = 0;
 }
@@ -163,9 +163,9 @@ void bsal_dna_kmer_counter_kernel_receive(struct thorium_actor *actor, struct th
 
         bsal_dna_kmer_counter_kernel_ask(actor, message);
 
-    } else if (tag == BSAL_ACTOR_START) {
+    } else if (tag == THORIUM_ACTOR_START) {
 
-        thorium_actor_send_reply_empty(actor, BSAL_ACTOR_START_REPLY);
+        thorium_actor_send_reply_empty(actor, THORIUM_ACTOR_START_REPLY);
 
     } else if (tag == BSAL_RESERVE) {
 
@@ -177,7 +177,7 @@ void bsal_dna_kmer_counter_kernel_receive(struct thorium_actor *actor, struct th
 
         thorium_actor_send_reply_empty(actor, BSAL_RESERVE_REPLY);
 
-    } else if (tag == BSAL_ACTOR_ASK_TO_STOP) {
+    } else if (tag == THORIUM_ACTOR_ASK_TO_STOP) {
 
         printf("kernel/%d generated %" PRIu64 " kmers from %" PRIu64 " entries (%d blocks)\n",
                         thorium_actor_name(actor), concrete_actor->kmers,
@@ -188,22 +188,22 @@ void bsal_dna_kmer_counter_kernel_receive(struct thorium_actor *actor, struct th
                         name, source, thorium_actor_supervisor(actor));
 #endif
 
-        /*thorium_actor_send_to_self_empty(actor, BSAL_ACTOR_STOP);*/
+        /*thorium_actor_send_to_self_empty(actor, THORIUM_ACTOR_STOP);*/
 
         thorium_actor_ask_to_stop(actor, message);
 
-    } else if (tag == BSAL_ACTOR_SET_CONSUMER) {
+    } else if (tag == THORIUM_ACTOR_SET_CONSUMER) {
 
         consumer = *(int *)buffer;
         concrete_actor->consumer = consumer;
 
 #ifdef BSAL_KMER_COUNTER_KERNEL_DEBUG
-        printf("kernel %d BSAL_ACTOR_SET_CONSUMER consumer %d index %d\n",
+        printf("kernel %d THORIUM_ACTOR_SET_CONSUMER consumer %d index %d\n",
                         thorium_actor_name(actor), consumer,
                         concrete_actor->consumer);
 #endif
 
-        thorium_actor_send_reply_empty(actor, BSAL_ACTOR_SET_CONSUMER_REPLY);
+        thorium_actor_send_reply_empty(actor, THORIUM_ACTOR_SET_CONSUMER_REPLY);
 
     } else if (tag == BSAL_SET_KMER_LENGTH) {
 
@@ -217,14 +217,14 @@ void bsal_dna_kmer_counter_kernel_receive(struct thorium_actor *actor, struct th
 
         thorium_actor_send_reply_empty(actor, BSAL_SET_KMER_LENGTH_REPLY);
 
-    } else if (tag == BSAL_ACTOR_SET_PRODUCER) {
+    } else if (tag == THORIUM_ACTOR_SET_PRODUCER) {
 
         if (count == 0) {
             printf("Error: kernel needs producer\n");
             return;
         }
 
-        if (concrete_actor->consumer == BSAL_ACTOR_NOBODY) {
+        if (concrete_actor->consumer == THORIUM_ACTOR_NOBODY) {
             printf("Error: kernel needs a consumer\n");
             return;
         }
@@ -248,20 +248,20 @@ void bsal_dna_kmer_counter_kernel_receive(struct thorium_actor *actor, struct th
 
         thorium_actor_send_empty(actor,
                                 concrete_actor->producer_source,
-                        BSAL_ACTOR_SET_PRODUCER_REPLY);
+                        THORIUM_ACTOR_SET_PRODUCER_REPLY);
 
-    } else if (tag == BSAL_ACTOR_SET_CONSUMER_REPLY) {
+    } else if (tag == THORIUM_ACTOR_SET_CONSUMER_REPLY) {
 
         /* Set the producer for the new kernel
          */
         producer = concrete_actor->producer;
 
         thorium_actor_send_int(actor, concrete_actor->auto_scaling_clone,
-                        BSAL_ACTOR_SET_PRODUCER, producer);
+                        THORIUM_ACTOR_SET_PRODUCER, producer);
 
         concrete_actor->auto_scaling_in_progress = 0;
         concrete_actor->scaling_operations++;
-        concrete_actor->auto_scaling_clone = BSAL_ACTOR_NOBODY;
+        concrete_actor->auto_scaling_clone = THORIUM_ACTOR_NOBODY;
 
         printf("kernel %d completed auto-scaling # %d\n",
                         thorium_actor_name(actor),
@@ -269,15 +269,15 @@ void bsal_dna_kmer_counter_kernel_receive(struct thorium_actor *actor, struct th
 
 
 
-    } else if (tag == BSAL_ACTOR_SET_PRODUCER_REPLY
+    } else if (tag == THORIUM_ACTOR_SET_PRODUCER_REPLY
                     && source == concrete_actor->auto_scaling_clone) {
 
-    } else if (tag == BSAL_ACTOR_ENABLE_AUTO_SCALING) {
+    } else if (tag == THORIUM_ACTOR_ENABLE_AUTO_SCALING) {
 
-        printf("AUTO-SCALING kernel %d enables auto-scaling (BSAL_ACTOR_ENABLE_AUTO_SCALING) via actor %d\n",
+        printf("AUTO-SCALING kernel %d enables auto-scaling (THORIUM_ACTOR_ENABLE_AUTO_SCALING) via actor %d\n",
                         name, source);
 
-        thorium_actor_send_to_self_empty(actor, BSAL_ACTOR_ENABLE_AUTO_SCALING);
+        thorium_actor_send_to_self_empty(actor, THORIUM_ACTOR_ENABLE_AUTO_SCALING);
 
     }
 }
@@ -301,7 +301,7 @@ void bsal_dna_kmer_counter_kernel_verify(struct thorium_actor *actor, struct tho
 
     thorium_actor_send_uint64_t(actor,
                             concrete_actor->notification_source,
-                    BSAL_ACTOR_NOTIFY_REPLY, concrete_actor->kmers);
+                    THORIUM_ACTOR_NOTIFY_REPLY, concrete_actor->kmers);
 }
 
 void bsal_dna_kmer_counter_kernel_ask(struct thorium_actor *self, struct thorium_message *message)
@@ -349,7 +349,7 @@ void bsal_dna_kmer_counter_kernel_do_auto_scaling(struct thorium_actor *actor, s
     /*
      * Can't scale now because there is no producer
      */
-    if (concrete_actor->producer == BSAL_ACTOR_NOBODY) {
+    if (concrete_actor->producer == THORIUM_ACTOR_NOBODY) {
         return;
     }
 
@@ -357,15 +357,15 @@ void bsal_dna_kmer_counter_kernel_do_auto_scaling(struct thorium_actor *actor, s
      * - spawn an aggregator
      * - set the aggregator as the consumer of the kernel
      * - set the kmer stores as the consumers of the aggregator
-     * - set a sequence store as the producer of the kernel (BSAL_ACTOR_SET_PRODUCER)
+     * - set a sequence store as the producer of the kernel (THORIUM_ACTOR_SET_PRODUCER)
      */
 
-    printf("AUTO-SCALING kernel %d receives auto-scale message (BSAL_ACTOR_DO_AUTO_SCALING) via actor %d\n",
+    printf("AUTO-SCALING kernel %d receives auto-scale message (THORIUM_ACTOR_DO_AUTO_SCALING) via actor %d\n",
                     name, source);
 
     concrete_actor->auto_scaling_in_progress = 1;
 
-    thorium_actor_send_to_self_int(actor, BSAL_ACTOR_CLONE, name);
+    thorium_actor_send_to_self_int(actor, THORIUM_ACTOR_CLONE, name);
 }
 
 void bsal_dna_kmer_counter_kernel_pack_message(struct thorium_actor *actor, struct thorium_message *message)
@@ -381,7 +381,7 @@ void bsal_dna_kmer_counter_kernel_pack_message(struct thorium_actor *actor, stru
 
     bsal_dna_kmer_counter_kernel_pack(actor, new_buffer);
 
-    thorium_message_init(&new_message, BSAL_ACTOR_PACK_REPLY, new_count, new_buffer);
+    thorium_message_init(&new_message, THORIUM_ACTOR_PACK_REPLY, new_count, new_buffer);
 
     thorium_actor_send_reply(actor, &new_message);
 
@@ -398,7 +398,7 @@ void bsal_dna_kmer_counter_kernel_unpack_message(struct thorium_actor *actor, st
 
     bsal_dna_kmer_counter_kernel_unpack(actor, buffer);
 
-    thorium_actor_send_reply_empty(actor, BSAL_ACTOR_UNPACK_REPLY);
+    thorium_actor_send_reply_empty(actor, THORIUM_ACTOR_UNPACK_REPLY);
 }
 
 void bsal_dna_kmer_counter_kernel_clone_reply(struct thorium_actor *actor, struct thorium_message *message)
@@ -422,7 +422,7 @@ void bsal_dna_kmer_counter_kernel_clone_reply(struct thorium_actor *actor, struc
         printf("kernel %d cloned itself !!! clone name is %d\n",
                     name, clone);
 
-        thorium_actor_send_int(actor, consumer, BSAL_ACTOR_CLONE, name);
+        thorium_actor_send_int(actor, consumer, THORIUM_ACTOR_CLONE, name);
 
         concrete_actor->auto_scaling_clone = clone;
 
@@ -435,7 +435,7 @@ void bsal_dna_kmer_counter_kernel_clone_reply(struct thorium_actor *actor, struc
                         name, consumer, clone);
 
         thorium_actor_send_int(actor, concrete_actor->auto_scaling_clone,
-                        BSAL_ACTOR_SET_CONSUMER, clone);
+                        THORIUM_ACTOR_SET_CONSUMER, clone);
 
         /*
         printf("kernel %d sending SET_PRODUCER to %d with value %d\n",
@@ -478,8 +478,8 @@ int bsal_dna_kmer_counter_kernel_pack_unpack(struct thorium_actor *actor, int op
     int consumer;
 
     concrete_actor = (struct bsal_dna_kmer_counter_kernel *)thorium_actor_concrete_actor(actor);
-    producer = BSAL_ACTOR_NOBODY;
-    consumer = BSAL_ACTOR_NOBODY;
+    producer = THORIUM_ACTOR_NOBODY;
+    consumer = THORIUM_ACTOR_NOBODY;
 
     if (operation != BSAL_PACKER_OPERATION_UNPACK) {
         producer = concrete_actor->producer;
@@ -518,7 +518,7 @@ void bsal_dna_kmer_counter_kernel_notify(struct thorium_actor *actor, struct tho
     source = thorium_message_source(message);
     concrete_actor->notified = 1;
 
-    thorium_actor_send_to_self_empty(actor, BSAL_ACTOR_DISABLE_AUTO_SCALING);
+    thorium_actor_send_to_self_empty(actor, THORIUM_ACTOR_DISABLE_AUTO_SCALING);
 
     concrete_actor->notification_source = source;
 
@@ -532,7 +532,7 @@ void bsal_dna_kmer_counter_kernel_notify(struct thorium_actor *actor, struct tho
 
         while (bsal_vector_iterator_get_next_value(&iterator, &kernel)) {
 
-            thorium_actor_send_empty(actor, kernel, BSAL_ACTOR_NOTIFY);
+            thorium_actor_send_empty(actor, kernel, THORIUM_ACTOR_NOTIFY);
         }
 
         bsal_vector_iterator_destroy(&iterator);
@@ -561,7 +561,7 @@ void bsal_dna_kmer_counter_kernel_notify_reply(struct thorium_actor *actor, stru
 
         thorium_actor_send_uint64_t(actor,
                             concrete_actor->notification_source,
-                    BSAL_ACTOR_NOTIFY_REPLY, concrete_actor->sum_of_kmers);
+                    THORIUM_ACTOR_NOTIFY_REPLY, concrete_actor->sum_of_kmers);
 
     }
 
@@ -603,17 +603,17 @@ void bsal_dna_kmer_counter_kernel_push_sequence_data_block(struct thorium_actor 
     source = thorium_message_source(message);
     buffer = thorium_message_buffer(message);
 
-    if (concrete_actor->kmer_length == BSAL_ACTOR_NOBODY) {
+    if (concrete_actor->kmer_length == THORIUM_ACTOR_NOBODY) {
         printf("Error no kmer length set in kernel\n");
         return;
     }
 
-    if (concrete_actor->consumer == BSAL_ACTOR_NOBODY) {
+    if (concrete_actor->consumer == THORIUM_ACTOR_NOBODY) {
         printf("Error no consumer set in kernel\n");
         return;
     }
 
-    if (concrete_actor->producer_source == BSAL_ACTOR_NOBODY) {
+    if (concrete_actor->producer_source == THORIUM_ACTOR_NOBODY) {
         printf("Error, no producer_source set\n");
         return;
     }

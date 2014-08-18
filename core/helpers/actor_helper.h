@@ -1,6 +1,6 @@
 
-#ifndef BSAL_ACTOR_HELPER_H
-#define BSAL_ACTOR_HELPER_H
+#ifndef THORIUM_ACTOR_HELPER_H
+#define THORIUM_ACTOR_HELPER_H
 
 #include <engine/thorium/script.h>
 
@@ -36,7 +36,7 @@ void thorium_actor_send_to_self_buffer(struct thorium_actor *actor, int tag, int
 void thorium_actor_send_to_supervisor_empty(struct thorium_actor *actor, int tag);
 void thorium_actor_send_to_supervisor_int(struct thorium_actor *actor, int tag, int value);
 
-#ifdef BSAL_ACTOR_EXPOSE_ACQUAINTANCE_VECTOR
+#ifdef THORIUM_ACTOR_EXPOSE_ACQUAINTANCE_VECTOR
 /*
  * initialize avector and push actor names using a vector
  * of acquaintance indices

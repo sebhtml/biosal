@@ -66,7 +66,7 @@ void bsal_sequence_store_init(struct thorium_actor *actor)
     concrete_actor->left = -1;
     concrete_actor->last = -1;
 
-    concrete_actor->progress_supervisor = BSAL_ACTOR_NOBODY;
+    concrete_actor->progress_supervisor = THORIUM_ACTOR_NOBODY;
 
     /*
      * Payload for the first production round is
@@ -133,7 +133,7 @@ void bsal_sequence_store_receive(struct thorium_actor *actor, struct thorium_mes
 
         bsal_sequence_store_reserve(actor, message);
 
-    } else if (tag == BSAL_ACTOR_ASK_TO_STOP) {
+    } else if (tag == THORIUM_ACTOR_ASK_TO_STOP) {
 
         printf("%s/%d %d dies\n",
                         thorium_actor_script_name(actor),
@@ -148,7 +148,7 @@ void bsal_sequence_store_receive(struct thorium_actor *actor, struct thorium_mes
 
         concrete_actor->progress_supervisor = source;
 
-    } else if (tag == BSAL_ACTOR_RESET) {
+    } else if (tag == THORIUM_ACTOR_RESET) {
 
         printf("RESET\n");
         /* Destroy iterator if it is started.
@@ -170,7 +170,7 @@ void bsal_sequence_store_receive(struct thorium_actor *actor, struct thorium_mes
         concrete_actor->left = concrete_actor->received;
         concrete_actor->last = 0;
 
-        thorium_actor_send_reply_empty(actor, BSAL_ACTOR_RESET_REPLY);
+        thorium_actor_send_reply_empty(actor, THORIUM_ACTOR_RESET_REPLY);
     }
 }
 
@@ -497,7 +497,7 @@ void bsal_sequence_store_ask(struct thorium_actor *self, struct thorium_message 
     /*
      * Send a progress report to the supervisor of progression
      */
-    if (concrete_actor->progress_supervisor != BSAL_ACTOR_NOBODY) {
+    if (concrete_actor->progress_supervisor != THORIUM_ACTOR_NOBODY) {
         ratio = (concrete_actor->received - concrete_actor->left + 0.0) / concrete_actor->received;
 
         if (ratio >= 0.16) {
@@ -506,7 +506,7 @@ void bsal_sequence_store_ask(struct thorium_actor *self, struct thorium_message 
                                     concrete_actor->progress_supervisor,
                             BSAL_SEQUENCE_STORE_REQUEST_PROGRESS_REPLY,
                             ratio);
-            concrete_actor->progress_supervisor = BSAL_ACTOR_NOBODY;
+            concrete_actor->progress_supervisor = THORIUM_ACTOR_NOBODY;
         }
     }
 }

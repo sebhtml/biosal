@@ -123,12 +123,12 @@ void bsal_coverage_distribution_receive(struct thorium_actor *self, struct thori
             bsal_coverage_distribution_write_distribution(self);
 
             thorium_actor_send_empty(self, concrete_actor->source,
-                            BSAL_ACTOR_NOTIFY);
+                            THORIUM_ACTOR_NOTIFY);
         }
 
         bsal_map_destroy(&map);
 
-    } else if (tag == BSAL_ACTOR_ASK_TO_STOP) {
+    } else if (tag == THORIUM_ACTOR_ASK_TO_STOP) {
 
         bsal_coverage_distribution_ask_to_stop(self, message);
 

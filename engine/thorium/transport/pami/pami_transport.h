@@ -1,6 +1,6 @@
 
-#ifndef BSAL_PAMI_TRANSPORT_H
-#define BSAL_PAMI_TRANSPORT_H
+#ifndef THORIUM_PAMI_TRANSPORT_H
+#define THORIUM_PAMI_TRANSPORT_H
 
 #include <engine/thorium/transport/transport_interface.h>
 
@@ -8,26 +8,25 @@
  * Decide if the code will use PAMI or MPI
  */
 
-#define BSAL_TRANSPORT_PAMI_IDENTIFIER 2000
+#define THORIUM_TRANSPORT_PAMI_IDENTIFIER 2000
 
 /*
  * This variable is set to 1 if PAMI support is ready to be
  * used
  */
-#define BSAL_TRANSPORT_PAMI_IS_READY 0
+#define THORIUM_TRANSPORT_PAMI_IS_READY 0
 
 /*
  * Use IBM PAMI on IBM Blue Gene/Q
  * PAMI: Parallel Active Message Interface
  */
-#if defined(__bgq__) && BSAL_TRANSPORT_PAMI_IS_READY
+#if defined(__bgq__) && THORIUM_TRANSPORT_PAMI_IS_READY
 
-#define BSAL_TRANSPORT_USE_PAMI
+#define THORIUM_TRANSPORT_USE_PAMI
 
 #endif
 
-
-#if defined(BSAL_TRANSPORT_USE_PAMI)
+#if defined(THORIUM_TRANSPORT_USE_PAMI)
 
 #include <pami.h>
 
@@ -39,7 +38,7 @@ struct bsal_active_buffer;
 struct thorium_transport;
 
 struct thorium_pami_transport {
-#ifdef BSAL_TRANSPORT_USE_PAMI
+#ifdef THORIUM_TRANSPORT_USE_PAMI
     pami_client_t client;
 #endif
     int mock;

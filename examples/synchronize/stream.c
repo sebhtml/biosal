@@ -55,7 +55,7 @@ void stream_receive(struct thorium_actor *actor, struct thorium_message *message
 
     to_spawn = 30000;
 
-    if (tag == BSAL_ACTOR_START) {
+    if (tag == THORIUM_ACTOR_START) {
 
         bsal_vector_init(&stream1->spawners, 0);
         bsal_vector_unpack(&stream1->spawners, buffer);
@@ -88,7 +88,7 @@ void stream_receive(struct thorium_actor *actor, struct thorium_message *message
 
         thorium_actor_synchronize(actor, &stream1->spawners);
 
-    } else if (tag == BSAL_ACTOR_SYNCHRONIZED && stream1->initial_synchronization == 1) {
+    } else if (tag == THORIUM_ACTOR_SYNCHRONIZED && stream1->initial_synchronization == 1) {
 
         printf("king %d synchronized\n", name);
 
@@ -97,16 +97,16 @@ void stream_receive(struct thorium_actor *actor, struct thorium_message *message
 
         thorium_actor_send_range_empty(actor, &stream1->spawners, STREAM_SYNC);
 
-    } else if (tag == BSAL_ACTOR_SYNCHRONIZE) {
+    } else if (tag == THORIUM_ACTOR_SYNCHRONIZE) {
 
-        thorium_actor_send_reply_empty(actor, BSAL_ACTOR_SYNCHRONIZE_REPLY);
+        thorium_actor_send_reply_empty(actor, THORIUM_ACTOR_SYNCHRONIZE_REPLY);
 
-    } else if (tag == BSAL_ACTOR_SYNCHRONIZE_REPLY && stream1->initial_synchronization == 0) {
+    } else if (tag == THORIUM_ACTOR_SYNCHRONIZE_REPLY && stream1->initial_synchronization == 0) {
 
         stream1->ready++;
 
         if (stream1->ready % 1000 == 0) {
-            printf("BSAL_ACTOR_SYNCHRONIZE_REPLY %d/%d\n", stream1->ready,
+            printf("THORIUM_ACTOR_SYNCHRONIZE_REPLY %d/%d\n", stream1->ready,
                         (int)bsal_vector_size(&stream1->children));
         }
 
@@ -122,7 +122,7 @@ void stream_receive(struct thorium_actor *actor, struct thorium_message *message
 
         /* synchronize with everyone ! */
 
-        printf("actor %d sends BSAL_ACTOR_SYNCHRONIZE manually to %d actors\n",
+        printf("actor %d sends THORIUM_ACTOR_SYNCHRONIZE manually to %d actors\n",
                         name, (int)bsal_vector_size(&stream1->children));
 
         for (i = 0 ; i < bsal_vector_size(&stream1->children); i++) {
@@ -132,7 +132,7 @@ void stream_receive(struct thorium_actor *actor, struct thorium_message *message
             }
             new_actor = *(int *)bsal_vector_at(&stream1->children, i);
 
-            thorium_actor_send_empty(actor, new_actor, BSAL_ACTOR_SYNCHRONIZE);
+            thorium_actor_send_empty(actor, new_actor, THORIUM_ACTOR_SYNCHRONIZE);
         }
 
         printf("done...\n");
@@ -144,7 +144,7 @@ void stream_receive(struct thorium_actor *actor, struct thorium_message *message
             thorium_actor_send_empty(actor, new_actor, STREAM_DIE);
         }
 
-        thorium_actor_send_to_self_empty(actor, BSAL_ACTOR_STOP);
+        thorium_actor_send_to_self_empty(actor, THORIUM_ACTOR_STOP);
     }
 }
 

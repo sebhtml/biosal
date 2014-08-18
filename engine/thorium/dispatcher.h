@@ -1,6 +1,6 @@
 
-#ifndef BSAL_DISPATCHER_H
-#define BSAL_DISPATCHER_H
+#ifndef THORIUM_DISPATCHER_H
+#define THORIUM_DISPATCHER_H
 
 #include "script.h"
 

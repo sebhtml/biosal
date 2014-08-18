@@ -48,7 +48,7 @@ void bsal_assembly_dummy_walker_init(struct thorium_actor *self)
     thorium_actor_add_route(self, BSAL_ASSEMBLY_GET_STARTING_VERTEX_REPLY,
         bsal_assembly_dummy_walker_get_starting_vertex_reply);
 
-    thorium_actor_add_route(self, BSAL_ACTOR_START,
+    thorium_actor_add_route(self, THORIUM_ACTOR_START,
                     bsal_assembly_dummy_walker_start);
 
     thorium_actor_add_route(self, BSAL_ASSEMBLY_GET_VERTEX_REPLY,
@@ -60,7 +60,7 @@ void bsal_assembly_dummy_walker_init(struct thorium_actor *self)
     thorium_actor_add_route(self, BSAL_ASSEMBLY_GET_VERTICES_AND_SELECT_REPLY,
                     bsal_assembly_dummy_walker_get_vertices_and_select_reply);
 
-    thorium_actor_add_route(self, BSAL_ACTOR_BEGIN,
+    thorium_actor_add_route(self, THORIUM_ACTOR_BEGIN,
                     bsal_assembly_dummy_walker_begin);
 
     thorium_actor_add_route_with_condition(self, BSAL_ASSEMBLY_GET_VERTEX_REPLY,
@@ -142,11 +142,11 @@ void bsal_assembly_dummy_walker_receive(struct thorium_actor *self, struct thori
     concrete_self = (struct bsal_assembly_dummy_walker *)thorium_actor_concrete_actor(self);
     ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
 
-    if (tag == BSAL_ACTOR_START) {
+    if (tag == THORIUM_ACTOR_START) {
 
-    } else if (tag == BSAL_ACTOR_ASK_TO_STOP) {
+    } else if (tag == THORIUM_ACTOR_ASK_TO_STOP) {
 
-        thorium_actor_send_to_self_empty(self, BSAL_ACTOR_STOP);
+        thorium_actor_send_to_self_empty(self, THORIUM_ACTOR_STOP);
 
     } else if (tag == BSAL_ASSEMBLY_GET_KMER_LENGTH_REPLY) {
 
@@ -168,7 +168,7 @@ void bsal_assembly_dummy_walker_receive(struct thorium_actor *self, struct thori
 
         printf("KeyLength %d\n", concrete_self->key_length);
 
-        thorium_actor_send_to_self_empty(self, BSAL_ACTOR_BEGIN);
+        thorium_actor_send_to_self_empty(self, THORIUM_ACTOR_BEGIN);
     }
 }
 
@@ -221,7 +221,7 @@ void bsal_assembly_dummy_walker_get_starting_vertex_reply(struct thorium_actor *
      */
     if (count == 0) {
 
-        thorium_actor_send_to_supervisor_empty(self, BSAL_ACTOR_START_REPLY);
+        thorium_actor_send_to_supervisor_empty(self, THORIUM_ACTOR_START_REPLY);
         return;
     }
 
@@ -467,10 +467,10 @@ void bsal_assembly_dummy_walker_get_vertices_and_select_reply(struct thorium_act
 
     if (concrete_self->path_index < 2) {
 
-        thorium_actor_send_to_self_empty(self, BSAL_ACTOR_BEGIN);
+        thorium_actor_send_to_self_empty(self, THORIUM_ACTOR_BEGIN);
 
     } else {
-        thorium_actor_send_to_supervisor_empty(self, BSAL_ACTOR_START_REPLY);
+        thorium_actor_send_to_supervisor_empty(self, THORIUM_ACTOR_START_REPLY);
     }
 }
 
