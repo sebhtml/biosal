@@ -30,7 +30,6 @@ struct bsal_coverage_distribution {
 #define BSAL_SET_EXPECTED_MESSAGE_COUNT 0x00004878
 #define BSAL_SET_EXPECTED_MESSAGE_COUNT_REPLY 0x00007e2f
 
-#define BSAL_COVERAGE_DISTRIBUTION_DEFAULT_OUTPUT "output"
 #define BSAL_COVERAGE_DISTRIBUTION_DEFAULT_OUTPUT_FILE "coverage_distribution.txt"
 #define BSAL_COVERAGE_DISTRIBUTION_DEFAULT_OUTPUT_FILE_CANONICAL "coverage_distribution.txt-canonical"
 
@@ -42,7 +41,5 @@ void bsal_coverage_distribution_receive(struct thorium_actor *actor, struct thor
 
 void bsal_coverage_distribution_write_distribution(struct thorium_actor *self);
 void bsal_coverage_distribution_ask_to_stop(struct thorium_actor *self, struct thorium_message *message);
-
-char *bsal_get_output_directory(int argc, char **argv);
 
 #endif

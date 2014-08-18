@@ -8,6 +8,8 @@
 #include <genomics/data/dna_kmer.h>
 #include <genomics/data/dna_codec.h>
 
+#include <core/system/command.h>
+
 #include <stdio.h>
 #include <string.h>
 
@@ -90,7 +92,7 @@ void bsal_assembly_dummy_walker_init(struct thorium_actor *self)
 
     concrete_self->path_index = 0;
 
-    directory_name = bsal_get_output_directory(argc, argv);
+    directory_name = bsal_command_get_output_directory(argc, argv);
 
     bsal_string_init(&concrete_self->file_path, directory_name);
     bsal_string_append(&concrete_self->file_path, "/dummy_walker.fasta");

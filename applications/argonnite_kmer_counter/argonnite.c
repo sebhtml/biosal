@@ -1,16 +1,20 @@
 
 #include "argonnite.h"
 
-#include <genomics/data/coverage_distribution.h>
 #include <genomics/kernels/dna_kmer_counter_kernel.h>
 #include <genomics/kernels/aggregator.h>
+
+#include <genomics/data/coverage_distribution.h>
 #include <genomics/storage/kmer_store.h>
 
 #include <core/structures/vector.h>
-#include <core/helpers/set_helper.h>
 #include <core/structures/vector_iterator.h>
+
+#include <core/helpers/set_helper.h>
 #include <core/patterns/manager.h>
+
 #include <core/system/memory.h>
+#include <core/system/command.h>
 #include <core/system/debugger.h>
 
 #include <stdio.h>
@@ -873,7 +877,8 @@ void argonnite_help(struct thorium_actor *actor)
     printf("-threads-per-node thread_count       threads per biosal node\n");
     printf("-k kmer_length                      kmer length (default: %d, no limit, no compilation option)\n",
                     ARGONNITE_DEFAULT_KMER_LENGTH);
-    printf("-o output                           output directory (default: %s)\n", BSAL_COVERAGE_DISTRIBUTION_DEFAULT_OUTPUT);
+    printf("-o output                           output directory (default: %s)\n",
+                    BSAL_DEFAULT_OUTPUT);
     printf("-print-load                         display load, memory usage, actor count, active requests\n");
     printf("-print-counters                     print node-level biosal counters\n");
     printf("\n");

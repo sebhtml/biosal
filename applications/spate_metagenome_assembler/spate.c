@@ -11,6 +11,9 @@
 
 #include <genomics/input/input_controller.h>
 
+#include <core/system/command.h>
+#include <core/file_storage/directory.h>
+
 #include <stdio.h>
 #include <string.h>
 
@@ -139,6 +142,10 @@ void spate_start(struct thorium_actor *self, struct thorium_message *message)
     int name;
     struct spate *concrete_self;
     int spawner;
+    char *directory_name;
+    int already_created;
+    int argc;
+    char **argv;
 
     concrete_self = (struct spate *)thorium_actor_concrete_actor(self);
     buffer = thorium_message_buffer(message);
@@ -171,7 +178,32 @@ void spate_start(struct thorium_actor *self, struct thorium_message *message)
         return;
     }
 
+    /*
+     * Otherwise, the coverage distribution will take care of creating
+     * the directory.
+     */
+
     bsal_timer_start(&concrete_self->timer);
+
+    /*
+     * Verify if the directory already exists. If it does, don't
+     * do anything as it is not a good thing to overwrite previous science
+     * results.
+     */
+    argc = thorium_actor_argc(self);
+    argv = thorium_actor_argv(self);
+    directory_name = bsal_command_get_output_directory(argc, argv);
+    already_created = bsal_directory_verify_existence(directory_name);
+
+    if (already_created) {
+        printf("%s/%d Error: output directory \"%s\" already exists, please delete it or use a different output directory\n",
+                        thorium_actor_script_name(self),
+                        thorium_actor_name(self),
+                        directory_name);
+        spate_stop(self);
+        return;
+    }
+
 
     spawner = thorium_actor_get_spawner(self, &concrete_self->initial_actors);
 
@@ -501,7 +533,7 @@ void spate_help(struct thorium_actor *self)
     printf("    -k %d (no limit and no recompilation is required)\n", BSAL_ASSEMBLY_GRAPH_BUILDER_DEFAULT_KMER_LENGTH);
     printf("    -threads-per-node %d\n", 1);
     printf("    -o %s\n",
-                    BSAL_COVERAGE_DISTRIBUTION_DEFAULT_OUTPUT);
+                    BSAL_DEFAULT_OUTPUT);
 
     printf("\n");
     printf("Example:\n");

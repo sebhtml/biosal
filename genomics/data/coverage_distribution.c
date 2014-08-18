@@ -9,6 +9,7 @@
 #include <core/structures/string.h>
 
 #include <core/system/memory.h>
+#include <core/system/command.h>
 #include <core/system/debugger.h>
 
 #include <core/file_storage/directory.h>
@@ -167,7 +168,7 @@ void bsal_coverage_distribution_write_distribution(struct thorium_actor *self)
     argc = thorium_actor_argc(self);
     argv = thorium_actor_argv(self);
 
-    directory_name = bsal_get_output_directory(argc, argv);
+    directory_name = bsal_command_get_output_directory(argc, argv);
 
     /* Create the directory if it does not exist
      */
@@ -298,23 +299,5 @@ void bsal_coverage_distribution_ask_to_stop(struct thorium_actor *self, struct t
     bsal_vector_destroy(&coverage_values);
 
     thorium_actor_ask_to_stop(self, message);
-}
-
-char *bsal_get_output_directory(int argc, char **argv)
-{
-    int i;
-    char default_directory[] = BSAL_COVERAGE_DISTRIBUTION_DEFAULT_OUTPUT;
-    char *directory_name;
-
-    directory_name = default_directory;
-
-    for (i = 0; i < argc; i++) {
-        if (strcmp(argv[i], "-o") == 0 && i + 1 < argc) {
-            directory_name = argv[i + 1];
-            break;
-        }
-    }
-
-    return directory_name;
 }
 
