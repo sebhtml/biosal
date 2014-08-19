@@ -61,9 +61,9 @@ The actor model has actors and messages, mostly.
 
 When an actor receives a message, it can ([Agha 1986](http://dl.acm.org/citation.cfm?id=7929), p. 12, 2.1.3):
 
-- send a finite number of messages to other actors (**bsal_actor_send**);
-- create a finite number of new actors (**bsal_actor_spawn**, **BSAL_ACTOR_SPAWN**);
-- designate the behavior to be used for the next message it receives (**bsal_actor_concrete_actor**, **BSAL_ACTOR_STOP**).
+- send a finite number of messages to other actors (**thorium_actor_send**);
+- create a finite number of new actors (**thorium_actor_spawn**, **BSAL_ACTOR_SPAWN**);
+- designate the behavior to be used for the next message it receives (**thorium_actor_concrete_actor**, **BSAL_ACTOR_STOP**).
 
 Other names for the actor model: actors, virtual processors, activation frames, streams
 ([Hewitt, Bishop, Steiger 1973](http://dl.acm.org/citation.cfm?id=1624804)).
@@ -100,14 +100,14 @@ Key concepts
 
 | Concept | Description | Structure |
 | --- | --- | --- |
-| Message | Information with a source and a destination | struct bsal_message |
-| Actor | Something that receives messages and behaves according to a script | struct bsal_actor |
-| Actor mailbox | Messages for an actor are buffered there | bsal_fast_ring |
-| Script | Describes the behavior of an actor ([Hewitt, Bishop, Steiger 1973](http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.77.7898))| struct bsal_script |
-| Node | A runtime system that can be connected to other nodes (see [Erlang's definition](http://www.erlang.org/doc/reference_manual/distributed.html)) | struct bsal_node |
-| Worker pool | A set of available workers inside a node | struct bsal_worker_pool |
-| Worker | A instance that has a actor scheduling queue | struct bsal_worker |
-| Scheduling queue | Each worker has a actor scheduling queue and an outbound message queue | struct bsal_scheduling_queue |
+| Message | Information with a source and a destination | struct thorium_message |
+| Actor | Something that receives messages and behaves according to a script | struct thorium_actor |
+| Actor mailbox | Messages for an actor are buffered there | thorium_fast_ring |
+| Script | Describes the behavior of an actor ([Hewitt, Bishop, Steiger 1973](http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.77.7898))| struct thorium_script |
+| Node | A runtime system that can be connected to other nodes (see [Erlang's definition](http://www.erlang.org/doc/reference_manual/distributed.html)) | struct thorium_node |
+| Worker pool | A set of available workers inside a node | struct thorium_worker_pool |
+| Worker | A instance that has a actor scheduling queue | struct thorium_worker |
+| Scheduling queue | Each worker has a actor scheduling queue and an outbound message queue | struct thorium_scheduling_queue |
 
 # Implementation of the runtime system
 
@@ -129,7 +129,7 @@ a actor directly on the same node.
 
 Each biosal node is managed by an instance of the Thorium engine. These Thorium instances
 speak to each other.
-The number of nodes is set by mpiexec -n @number_of_bsal_nodes ./a.out.
+The number of nodes is set by mpiexec -n @number_of_thorium_nodes ./a.out.
 The number of threads on each node is set with -threads-per-node.
 
 The following command starts 256 nodes (there is 1 MPI rank per
