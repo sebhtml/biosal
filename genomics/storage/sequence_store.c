@@ -550,8 +550,6 @@ int bsal_sequence_store_get_required_kmers(struct thorium_actor *actor, struct t
 
     /* Maximum number of bytes for a node
      */
-    /*maximum_number_of_bytes = 2147483648;*/
-    /*maximum_number_of_bytes = 1073741824;*/
     maximum_number_of_bytes = 536870912;
     maximum_number_of_bytes_per_worker = maximum_number_of_bytes / workers;
 

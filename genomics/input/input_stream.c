@@ -691,9 +691,10 @@ void bsal_input_stream_count_in_parallel(struct thorium_actor *self, struct thor
     uint64_t parallel_block_size;
 
     /*
-     * 1 GiB.
+     * The block size for deciding when to spawn new actors for
+     * I/O.
      */
-    parallel_block_size = 1073741824;
+    parallel_block_size = 536870912;
 
     /*
     parallel_block_size = 0;
