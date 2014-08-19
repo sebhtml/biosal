@@ -51,7 +51,7 @@ char *bsal_command_get_output_directory(int argc, char **argv)
     value = bsal_command_get_argument_value(argc, argv, "-o");
 
     if (value != NULL) {
-        value = directory_name;
+        directory_name = value;
     }
 
     return directory_name;
