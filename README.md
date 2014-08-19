@@ -62,8 +62,8 @@ The actor model has actors and messages, mostly.
 When an actor receives a message, it can ([Agha 1986](http://dl.acm.org/citation.cfm?id=7929), p. 12, 2.1.3):
 
 - send a finite number of messages to other actors (**thorium_actor_send**);
-- create a finite number of new actors (**thorium_actor_spawn**, **BSAL_ACTOR_SPAWN**);
-- designate the behavior to be used for the next message it receives (**thorium_actor_concrete_actor**, **BSAL_ACTOR_STOP**).
+- create a finite number of new actors (**thorium_actor_spawn**, **THORIUM_ACTOR_SPAWN**);
+- designate the behavior to be used for the next message it receives (**thorium_actor_concrete_actor**, **THORIUM_ACTOR_STOP**).
 
 Other names for the actor model: actors, virtual processors, activation frames, streams
 ([Hewitt, Bishop, Steiger 1973](http://dl.acm.org/citation.cfm?id=1624804)).
