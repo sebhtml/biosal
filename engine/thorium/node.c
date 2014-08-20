@@ -115,9 +115,13 @@ void thorium_node_init(struct thorium_node *node, int *argc, char ***argv)
     bsal_memory_pool_disable(&node->actor_memory_pool);
 
     bsal_memory_pool_init(&node->inbound_message_memory_pool, 2097152);
+    bsal_memory_pool_enable_normalization(&node->inbound_message_memory_pool);
+
     /*bsal_memory_pool_disable(&node->inbound_message_memory_pool);*/
 
     bsal_memory_pool_init(&node->outbound_message_memory_pool, 2097152);
+    bsal_memory_pool_enable_normalization(&node->outbound_message_memory_pool);
+
     /*bsal_memory_pool_disable(&node->outbound_message_memory_pool);*/
 
     thorium_transport_init(&node->transport, node, argc, argv,

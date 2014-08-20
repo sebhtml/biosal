@@ -143,6 +143,7 @@ void thorium_worker_init(struct thorium_worker *worker, int name, struct thorium
      * directly.
      */
     /*bsal_memory_pool_disable(&worker->outbound_message_memory_pool);*/
+    bsal_memory_pool_enable_normalization(&worker->outbound_message_memory_pool);
 
     worker->ticks_without_production = 0;
 

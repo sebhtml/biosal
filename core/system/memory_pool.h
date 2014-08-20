@@ -9,6 +9,8 @@
 #include <core/structures/set.h>
 #include <core/structures/queue.h>
 
+#include <stdint.h>
+
 /*
  * \see http://en.wikipedia.org/wiki/Memory_pool
  */
@@ -19,9 +21,9 @@ struct bsal_memory_pool {
     struct bsal_memory_block *current_block;
     struct bsal_queue ready_blocks;
     struct bsal_queue dried_blocks;
+
+    uint32_t flags;
     int block_size;
-    int tracking_is_enabled;
-    int disabled;
 };
 
 void bsal_memory_pool_init(struct bsal_memory_pool *self, int block_size);
@@ -37,5 +39,10 @@ void bsal_memory_pool_disable(struct bsal_memory_pool *self);
 
 void bsal_memory_pool_add_block(struct bsal_memory_pool *self);
 void *bsal_memory_pool_allocate_private(struct bsal_memory_pool *self, size_t size);
+
+size_t bsal_memory_pool_normalize_segment_length(struct bsal_memory_pool *self, size_t size);
+
+void bsal_memory_pool_disable_normalization(struct bsal_memory_pool *self);
+void bsal_memory_pool_enable_normalization(struct bsal_memory_pool *self);
 
 #endif
