@@ -43,6 +43,7 @@ struct thorium_transport {
 
     void *concrete_transport;
     struct thorium_transport_interface *transport_interface;
+    int active_request_count;
 
     uint32_t flags;
 };

@@ -19,6 +19,8 @@ void thorium_transport_init(struct thorium_transport *self, struct thorium_node 
     int actual_argc;
     char **actual_argv;
 
+    self->active_request_count = 0;
+
     actual_argc = *argc;
     actual_argv = *argv;
 
@@ -94,6 +96,8 @@ void thorium_transport_destroy(struct thorium_transport *self)
 
 int thorium_transport_send(struct thorium_transport *self, struct thorium_message *message)
 {
+    int value;
+
     if (self->transport_interface == NULL) {
         return 0;
     }
@@ -106,7 +110,13 @@ int thorium_transport_send(struct thorium_transport *self, struct thorium_messag
         thorium_transport_profiler_send_mock(&self->transport_profiler, message);
     }
 
-    return self->transport_interface->send(self, message);
+    value = self->transport_interface->send(self, message);
+
+    if (value) {
+        ++self->active_request_count;
+    }
+
+    return value;
 }
 
 int thorium_transport_receive(struct thorium_transport *self, struct thorium_message *message)
@@ -135,11 +145,19 @@ int thorium_transport_get_size(struct thorium_transport *self)
 
 int thorium_transport_test(struct thorium_transport *self, struct thorium_worker_buffer *worker_buffer)
 {
+    int value;
+
     if (self->transport_interface == NULL) {
         return 0;
     }
 
-    return self->transport_interface->test(self, worker_buffer);
+    value = self->transport_interface->test(self, worker_buffer);
+
+    if (value) {
+        --self->active_request_count;
+    }
+
+    return value;
 }
 
 int thorium_transport_get_implementation(struct thorium_transport *self)
@@ -167,7 +185,7 @@ void thorium_transport_set(struct thorium_transport *self)
 
 int thorium_transport_get_active_request_count(struct thorium_transport *self)
 {
-    return self->transport_interface->get_active_request_count(self);
+    return self->active_request_count;
 }
 
 int thorium_transport_get_identifier(struct thorium_transport *self)
@@ -208,7 +226,6 @@ void thorium_transport_select(struct thorium_transport *self)
     printf("DEBUG Transport is %d\n",
                     self->implementation);
                     */
-
 }
 
 void thorium_transport_print(struct thorium_transport *self)

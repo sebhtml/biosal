@@ -28,8 +28,7 @@ struct thorium_transport_interface thorium_mpi1_ptp_transport_implementation = {
     .destroy = thorium_mpi1_ptp_transport_destroy,
     .send = thorium_mpi1_ptp_transport_send,
     .receive = thorium_mpi1_ptp_transport_receive,
-    .test = thorium_mpi1_ptp_transport_test,
-    .get_active_request_count = thorium_mpi1_ptp_transport_get_active_request_count
+    .test = thorium_mpi1_ptp_transport_test
 };
 
 /*
@@ -268,11 +267,3 @@ int thorium_mpi1_ptp_transport_test(struct thorium_transport *self, struct thori
     return 0;
 }
 
-int thorium_mpi1_ptp_transport_get_active_request_count(struct thorium_transport *self)
-{
-    struct thorium_mpi1_ptp_transport *concrete_self;
-
-    concrete_self = thorium_transport_get_concrete_transport(self);
-
-    return bsal_ring_queue_size(&concrete_self->active_requests);
-}

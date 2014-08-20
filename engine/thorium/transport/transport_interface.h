@@ -21,7 +21,6 @@ struct thorium_transport_interface {
     int (*receive)(struct thorium_transport *self, struct thorium_message *message);
 
     int (*test)(struct thorium_transport *self, struct thorium_worker_buffer *worker_buffer);
-    int (*get_active_request_count)(struct thorium_transport *self);
 };
 
 #endif

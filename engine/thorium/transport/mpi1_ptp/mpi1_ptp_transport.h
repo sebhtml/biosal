@@ -36,6 +36,5 @@ int thorium_mpi1_ptp_transport_get_identifier(struct thorium_transport *self);
 const char *thorium_mpi1_ptp_transport_get_name(struct thorium_transport *self);
 
 int thorium_mpi1_ptp_transport_test(struct thorium_transport *self, struct thorium_worker_buffer *worker_buffer);
-int thorium_mpi1_ptp_transport_get_active_request_count(struct thorium_transport *self);
 
 #endif
