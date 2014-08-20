@@ -15,16 +15,16 @@ void bsal_assembly_arc_block_init(struct bsal_assembly_arc_block *self, struct b
 
     bsal_assembly_arc_destroy(&arc, pool);
 
-    bsal_set_init(&self->set, key_length);
-
-    bsal_vector_init(&self->arcs, sizeof(struct bsal_assembly_arc));
-
     /*
      * Set the memory pool too.
      * The main use case is to generate stuff to transport between actors so
      * ephemeral memory pool is going to be used.
      */
+
+    bsal_set_init(&self->set, key_length);
     bsal_set_set_memory_pool(&self->set, pool);
+
+    bsal_vector_init(&self->arcs, sizeof(struct bsal_assembly_arc));
     bsal_vector_set_memory_pool(&self->arcs, pool);
 
     self->enable_redundancy_check = 0;

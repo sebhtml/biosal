@@ -20,6 +20,7 @@ void bsal_dna_kmer_frequency_block_init(struct bsal_dna_kmer_frequency_block *se
     bsal_dna_kmer_destroy(&kmer, memory);
 
     bsal_map_init(&self->kmers, key_size, sizeof(int));
+    bsal_map_set_memory_pool(&self->kmers, memory);
 
     self->kmer_length = kmer_length;
 }
