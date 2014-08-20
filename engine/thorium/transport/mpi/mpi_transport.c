@@ -12,6 +12,13 @@
 
 #define THORIUM_TRANSPORT_MPI_NAME "MPI: Message Passing Interface"
 
+/*
+ * Use a dummy tag since the tag is actually stored inside the buffer
+ * to avoid the MPI_TAG_UB bug / limitation in MPI.
+ */
+#define MEANING_OF_LIFE_THE_UNIVERSE_AND_EVERYTHING 42
+#define DUMMY_TAG MEANING_OF_LIFE_THE_UNIVERSE_AND_EVERYTHING
+
 struct thorium_transport_interface thorium_mpi_transport_implementation = {
     .identifier = THORIUM_TRANSPORT_MPI_IDENTIFIER,
     .name = THORIUM_TRANSPORT_MPI_NAME,
@@ -128,7 +135,7 @@ int thorium_mpi_transport_send(struct thorium_transport *self, struct thorium_me
     buffer = thorium_message_buffer(message);
     count = thorium_message_count(message);
     destination = thorium_message_destination_node(message);
-    tag = thorium_message_tag(message);
+    tag = DUMMY_TAG;
 
     thorium_active_request_init(&active_request, buffer, worker);
     request = thorium_active_request_request(&active_request);
@@ -172,7 +179,7 @@ int thorium_mpi_transport_receive(struct thorium_transport *self, struct thorium
 
     concrete_self = thorium_transport_get_concrete_transport(self);
     source = MPI_ANY_SOURCE;
-    tag = MPI_ANY_TAG;
+    tag = DUMMY_TAG;
 
     /* get return value */
     result = MPI_Iprobe(source, tag, concrete_self->comm, &flag, &status);
@@ -197,7 +204,6 @@ int thorium_mpi_transport_receive(struct thorium_transport *self, struct thorium
                     count * sizeof(char));
 
     source = status.MPI_SOURCE;
-    tag = status.MPI_TAG;
 
     /* get return value */
     result = MPI_Recv(buffer, count, concrete_self->datatype, source, tag,

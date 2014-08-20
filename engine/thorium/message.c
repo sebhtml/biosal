@@ -104,19 +104,38 @@ void thorium_message_set_tag(struct thorium_message *message, int tag)
 
 int thorium_message_metadata_size(struct thorium_message *message)
 {
-    return sizeof(message->source_actor) + sizeof(message->destination_actor);
+    int total;
+
+    total = 0;
+
+    total += sizeof(message->source_actor);
+    total += sizeof(message->destination_actor);
+    total += sizeof(message->tag);
+
+    return total;
 }
 
 void thorium_message_write_metadata(struct thorium_message *message)
 {
-    /* TODO this could be a single memcpy with 2 *sizeof(int)
+    /* This could be a single memcpy with N *sizeof(int)
      * because source_actor and destination_actor are consecutive
      */
-    memcpy((char *)message->buffer + message->count, &message->source_actor,
-                    sizeof(message->source_actor));
+    int offset;
+    int size;
 
-    memcpy((char *)message->buffer + message->count + sizeof(message->source_actor),
-            &message->destination_actor, sizeof(message->destination_actor));
+    offset = message->count;
+
+    size = sizeof(message->source_actor);
+    memcpy((char *)message->buffer + offset, &message->source_actor, size);
+    offset += size;
+
+    size = sizeof(message->destination_actor);
+    memcpy((char *)message->buffer + offset, &message->destination_actor, size);
+    offset += size;
+
+    size = sizeof(message->tag);
+    memcpy((char *)message->buffer + offset, &message->tag, size);
+    offset += size;
 }
 
 void thorium_message_read_metadata(struct thorium_message *message)
@@ -124,12 +143,22 @@ void thorium_message_read_metadata(struct thorium_message *message)
     /* TODO this could be a single memcpy with 2 *sizeof(int)
      * because source_actor and destination_actor are consecutive
      */
-    memcpy(&message->source_actor, (char *)message->buffer + message->count,
-                    sizeof(message->source_actor));
+    int offset;
+    int size;
 
-    memcpy(&message->destination_actor,
-            (char *)message->buffer + message->count + sizeof(message->source_actor),
-            sizeof(message->destination_actor));
+    offset = message->count;
+
+    size = sizeof(message->source_actor);
+    memcpy(&message->source_actor, (char *)message->buffer + offset, size);
+    offset += size;
+
+    size = sizeof(message->destination_actor);
+    memcpy(&message->destination_actor, (char *)message->buffer + offset, size);
+    offset += size;
+
+    size = sizeof(message->tag);
+    memcpy(&message->tag, (char *)message->buffer + offset, size);
+    offset += size;
 }
 
 void thorium_message_set_count(struct thorium_message *message, int count)
