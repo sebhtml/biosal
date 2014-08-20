@@ -143,7 +143,6 @@ void thorium_actor_destroy(struct thorium_actor *self)
 {
     thorium_actor_init_fn_t destroy;
     struct thorium_message message;
-    void *buffer;
 
     /* The concrete actor must first be destroyed.
      */
@@ -188,13 +187,7 @@ void thorium_actor_destroy(struct thorium_actor *self)
 
     bsal_queue_destroy(&self->enqueued_messages);
 
-    while (thorium_actor_dequeue_mailbox_message(self, &message)) {
-        buffer = thorium_message_buffer(&message);
-
-        if (buffer != NULL) {
-            bsal_memory_free(buffer);
-        }
-    }
+    BSAL_DEBUGGER_ASSERT(bsal_fast_ring_empty(&self->mailbox));
 
     self->name = -1;
 
@@ -1889,6 +1882,19 @@ int thorium_actor_work(struct thorium_actor *self)
      * Send the buffer back to the source to be recycled.
      */
     thorium_worker_free_message(self->worker, &message);
+
+    /*
+     * Check if the actor is dead. If it is, give all the messages
+     * to the worker.
+     */
+
+    if (thorium_actor_dead(self)) {
+
+        while (thorium_actor_dequeue_mailbox_message(self, &message)) {
+
+            thorium_worker_free_message(self->worker, &message);
+        }
+    }
 
     return 1;
 }

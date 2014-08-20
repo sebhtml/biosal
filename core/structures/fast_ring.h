@@ -100,5 +100,6 @@ void bsal_fast_ring_update_head_cache(struct bsal_fast_ring *self);
 void bsal_fast_ring_update_tail_cache(struct bsal_fast_ring *self);
 
 uint64_t bsal_fast_ring_mock(struct bsal_fast_ring *self);
+int bsal_fast_ring_empty(struct bsal_fast_ring *self);
 
 #endif

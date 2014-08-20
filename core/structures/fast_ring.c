@@ -246,4 +246,7 @@ int bsal_fast_ring_is_empty_from_consumer(struct bsal_fast_ring *self)
     return 0;
 }
 
-
+int bsal_fast_ring_empty(struct bsal_fast_ring *self)
+{
+    return bsal_fast_ring_size_from_producer(self) == 0;
+}
