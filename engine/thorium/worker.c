@@ -142,7 +142,7 @@ void thorium_worker_init(struct thorium_worker *worker, int name, struct thorium
      * Disable the pool so that it uses allocate and free
      * directly.
      */
-    bsal_memory_pool_disable(&worker->outbound_message_memory_pool);
+    /*bsal_memory_pool_disable(&worker->outbound_message_memory_pool);*/
 
     worker->ticks_without_production = 0;
 
