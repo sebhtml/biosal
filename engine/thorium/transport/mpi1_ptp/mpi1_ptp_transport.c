@@ -1,9 +1,10 @@
 
 #include "mpi1_ptp_transport.h"
+#include "mpi1_ptp_active_request.h"
 
 #include <engine/thorium/transport/transport.h>
-#include <engine/thorium/transport/active_request.h>
 
+#include <engine/thorium/worker_buffer.h>
 #include <engine/thorium/message.h>
 
 #include <core/system/memory.h>
@@ -26,7 +27,9 @@ struct thorium_transport_interface thorium_mpi1_ptp_transport_implementation = {
     .init = thorium_mpi1_ptp_transport_init,
     .destroy = thorium_mpi1_ptp_transport_destroy,
     .send = thorium_mpi1_ptp_transport_send,
-    .receive = thorium_mpi1_ptp_transport_receive
+    .receive = thorium_mpi1_ptp_transport_receive,
+    .test = thorium_mpi1_ptp_transport_test,
+    .get_active_request_count = thorium_mpi1_ptp_transport_get_active_request_count
 };
 
 /*
@@ -43,6 +46,8 @@ void thorium_mpi1_ptp_transport_init(struct thorium_transport *self, int *argc, 
     int provided;
 
     concrete_self = thorium_transport_get_concrete_transport(self);
+
+    bsal_ring_queue_init(&concrete_self->active_requests, sizeof(struct thorium_mpi1_ptp_active_request));
 
     /*
     required = MPI_THREAD_MULTIPLE;
@@ -97,8 +102,15 @@ void thorium_mpi1_ptp_transport_destroy(struct thorium_transport *self)
 {
     struct thorium_mpi1_ptp_transport *concrete_self;
     int result;
+    struct thorium_mpi1_ptp_active_request active_request;
 
     concrete_self = thorium_transport_get_concrete_transport(self);
+
+    while (bsal_ring_queue_dequeue(&concrete_self->active_requests, &active_request)) {
+        thorium_mpi1_ptp_active_request_destroy(&active_request);
+    }
+
+    bsal_ring_queue_destroy(&concrete_self->active_requests);
 
     /*
      * \see http://www.mpich.org/static/docs/v3.1/www3/MPI_Comm_free.html
@@ -125,7 +137,7 @@ int thorium_mpi1_ptp_transport_send(struct thorium_transport *self, struct thori
     int destination;
     int tag;
     MPI_Request *request;
-    struct thorium_active_request active_request;
+    struct thorium_mpi1_ptp_active_request active_request;
     int worker;
     int result;
 
@@ -137,8 +149,8 @@ int thorium_mpi1_ptp_transport_send(struct thorium_transport *self, struct thori
     destination = thorium_message_destination_node(message);
     tag = DUMMY_TAG;
 
-    thorium_active_request_init(&active_request, buffer, worker);
-    request = thorium_active_request_request(&active_request);
+    thorium_mpi1_ptp_active_request_init(&active_request, buffer, worker);
+    request = thorium_mpi1_ptp_active_request_request(&active_request);
 
     BSAL_DEBUGGER_ASSERT(buffer == NULL || count > 0);
 
@@ -157,7 +169,7 @@ int thorium_mpi1_ptp_transport_send(struct thorium_transport *self, struct thori
      */
     /*MPI_Request_free(&request);*/
 
-    bsal_ring_queue_enqueue(&self->active_requests, &active_request);
+    bsal_ring_queue_enqueue(&concrete_self->active_requests, &active_request);
 
     return 1;
 }
@@ -225,3 +237,42 @@ int thorium_mpi1_ptp_transport_receive(struct thorium_transport *self, struct th
     return 1;
 }
 
+int thorium_mpi1_ptp_transport_test(struct thorium_transport *self, struct thorium_worker_buffer *worker_buffer)
+{
+    struct thorium_mpi1_ptp_active_request active_request;
+    struct thorium_mpi1_ptp_transport *concrete_self;
+    void *buffer;
+    int worker;
+
+    concrete_self = thorium_transport_get_concrete_transport(self);
+
+    if (bsal_ring_queue_dequeue(&concrete_self->active_requests, &active_request)) {
+
+        if (thorium_mpi1_ptp_active_request_test(&active_request)) {
+
+            worker = thorium_mpi1_ptp_active_request_worker(&active_request);
+            buffer = thorium_mpi1_ptp_active_request_buffer(&active_request);
+
+            thorium_worker_buffer_init(worker_buffer, worker, buffer);
+
+            return 1;
+
+        /* Just put it back in the FIFO for later */
+        } else {
+            bsal_ring_queue_enqueue(&concrete_self->active_requests, &active_request);
+
+            return 0;
+        }
+    }
+
+    return 0;
+}
+
+int thorium_mpi1_ptp_transport_get_active_request_count(struct thorium_transport *self)
+{
+    struct thorium_mpi1_ptp_transport *concrete_self;
+
+    concrete_self = thorium_transport_get_concrete_transport(self);
+
+    return bsal_ring_queue_size(&concrete_self->active_requests);
+}

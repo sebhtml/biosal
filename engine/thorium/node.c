@@ -1987,7 +1987,7 @@ void thorium_node_test_requests(struct thorium_node *node)
 
     i = 0;
     while (i < requests_to_test) {
-        if (thorium_transport_test_requests(&node->transport, &worker_buffer)) {
+        if (thorium_transport_test(&node->transport, &worker_buffer)) {
 
             worker = thorium_worker_buffer_get_worker(&worker_buffer);
 

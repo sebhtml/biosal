@@ -4,8 +4,6 @@
 #include <core/system/command.h>
 #include <core/helpers/bitmap.h>
 
-#include "active_request.h"
-
 #include <engine/thorium/worker_buffer.h>
 #include <engine/thorium/message.h>
 #include <engine/thorium/node.h>
@@ -43,7 +41,6 @@ void thorium_transport_init(struct thorium_transport *self, struct thorium_node 
     thorium_transport_set(self);
 
     self->node = node;
-    bsal_ring_queue_init(&self->active_requests, sizeof(struct thorium_active_request));
 
     self->rank = -1;
     self->size = -1;
@@ -72,8 +69,6 @@ void thorium_transport_init(struct thorium_transport *self, struct thorium_node 
 
 void thorium_transport_destroy(struct thorium_transport *self)
 {
-    struct thorium_active_request active_request;
-
     /*
      * Print the report if requested.
      */
@@ -91,12 +86,6 @@ void thorium_transport_destroy(struct thorium_transport *self)
         bsal_memory_free(self->concrete_transport);
         self->concrete_transport = NULL;
     }
-
-    while (bsal_ring_queue_dequeue(&self->active_requests, &active_request)) {
-        thorium_active_request_destroy(&active_request);
-    }
-
-    bsal_ring_queue_destroy(&self->active_requests);
 
     self->node = NULL;
     self->rank = -1;
@@ -144,37 +133,13 @@ int thorium_transport_get_size(struct thorium_transport *self)
     return self->size;
 }
 
-int thorium_transport_test_requests(struct thorium_transport *self, struct thorium_worker_buffer *worker_buffer)
+int thorium_transport_test(struct thorium_transport *self, struct thorium_worker_buffer *worker_buffer)
 {
-    struct thorium_active_request active_request;
-    void *buffer;
-    int worker;
-
-    if (bsal_ring_queue_dequeue(&self->active_requests, &active_request)) {
-
-        if (thorium_active_request_test(&active_request)) {
-
-            worker = thorium_active_request_get_worker(&active_request);
-            buffer = thorium_active_request_buffer(&active_request);
-
-            thorium_worker_buffer_init(worker_buffer, worker, buffer);
-
-            return 1;
-
-        /* Just put it back in the FIFO for later */
-        } else {
-            bsal_ring_queue_enqueue(&self->active_requests, &active_request);
-
-            return 0;
-        }
+    if (self->transport_interface == NULL) {
+        return 0;
     }
 
-    return 0;
-}
-
-int thorium_transport_dequeue_active_request(struct thorium_transport *self, struct thorium_active_request *active_request)
-{
-    return bsal_ring_queue_dequeue(&self->active_requests, active_request);
+    return self->transport_interface->test(self, worker_buffer);
 }
 
 int thorium_transport_get_implementation(struct thorium_transport *self)
@@ -202,7 +167,7 @@ void thorium_transport_set(struct thorium_transport *self)
 
 int thorium_transport_get_active_request_count(struct thorium_transport *self)
 {
-    return bsal_ring_queue_size(&self->active_requests);
+    return self->transport_interface->get_active_request_count(self);
 }
 
 int thorium_transport_get_identifier(struct thorium_transport *self)

@@ -1,43 +1,34 @@
 
 #include "mpi1_ptp_active_request.h"
 
-#include <engine/thorium/transport/active_request.h>
-
 #include <stdlib.h>
 
-void thorium_mpi1_ptp_active_request_init(struct thorium_active_request *self)
+void thorium_mpi1_ptp_active_request_init(struct thorium_mpi1_ptp_active_request *self,
+                void *buffer, int worker)
 {
-    struct thorium_mpi1_ptp_active_request *concrete_object;
-
-    concrete_object = thorium_active_request_get_concrete_object(self);
-
-    concrete_object->request = MPI_REQUEST_NULL;
+    self->request = MPI_REQUEST_NULL;
+    self->worker = worker;
+    self->buffer = buffer;
 }
 
 /* \see http://blogs.cisco.com/performance/mpi_request_free-is-evil/
  * \see http://www.mpich.org/static/docs/v3.1/www3/MPI_Request_free.html
  */
-void thorium_mpi1_ptp_active_request_destroy(struct thorium_active_request *self)
+void thorium_mpi1_ptp_active_request_destroy(struct thorium_mpi1_ptp_active_request *self)
 {
-    struct thorium_mpi1_ptp_active_request *concrete_object;
-
-    concrete_object = thorium_active_request_get_concrete_object(self);
-
-    if (concrete_object->request != MPI_REQUEST_NULL) {
-        MPI_Request_free(&concrete_object->request);
-        concrete_object->request = MPI_REQUEST_NULL;
+    if (self->request != MPI_REQUEST_NULL) {
+        MPI_Request_free(&self->request);
+        self->request = MPI_REQUEST_NULL;
     }
 
+    self->worker = -1;
+    self->buffer = NULL;
 }
 
 /* \see http://www.mpich.org/static/docs/v3.1/www3/MPI_Test.html
  */
-int thorium_mpi1_ptp_active_request_test(struct thorium_active_request *self)
+int thorium_mpi1_ptp_active_request_test(struct thorium_mpi1_ptp_active_request *self)
 {
-    struct thorium_mpi1_ptp_active_request *concrete_object;
-
-    concrete_object = thorium_active_request_get_concrete_object(self);
-
     MPI_Status status;
     int flag;
     int error;
@@ -45,7 +36,7 @@ int thorium_mpi1_ptp_active_request_test(struct thorium_active_request *self)
     flag = 0;
     error = 0;
 
-    error = MPI_Test(&concrete_object->request, &flag, &status);
+    error = MPI_Test(&self->request, &flag, &status);
 
     /* TODO do something with this error
      */
@@ -57,19 +48,24 @@ int thorium_mpi1_ptp_active_request_test(struct thorium_active_request *self)
      * The request is ready
      */
     if (flag) {
-        concrete_object->request = MPI_REQUEST_NULL;
+        self->request = MPI_REQUEST_NULL;
         return 1;
     }
 
     return 0;
 }
 
-void *thorium_mpi1_ptp_active_request_request(struct thorium_active_request *self)
+void *thorium_mpi1_ptp_active_request_request(struct thorium_mpi1_ptp_active_request *self)
 {
-    struct thorium_mpi1_ptp_active_request *concrete_object;
-
-    concrete_object = thorium_active_request_get_concrete_object(self);
-
-    return &concrete_object->request;
+    return &self->request;
 }
 
+void *thorium_mpi1_ptp_active_request_buffer(struct thorium_mpi1_ptp_active_request *self)
+{
+    return self->buffer;
+}
+
+int thorium_mpi1_ptp_active_request_worker(struct thorium_mpi1_ptp_active_request *self)
+{
+    return self->worker;
+}
