@@ -68,6 +68,9 @@ void *bsal_memory_allocate_private(size_t size, const char *function, const char
     }
 #endif
 
+#if 0
+    printf("Size is %d\n", (int)size);
+#endif
     pointer = malloc(size);
 
 #ifdef BSAL_MEMORY_DEBUG_DETAIL

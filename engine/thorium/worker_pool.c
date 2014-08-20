@@ -58,9 +58,6 @@
 void thorium_worker_pool_init(struct thorium_worker_pool *pool, int workers,
                 struct thorium_node *node)
 {
-    int i;
-    struct bsal_set *set;
-
     pool->debug_mode = 0;
     pool->node = node;
     pool->waiting_is_enabled = 0;
@@ -107,36 +104,15 @@ void thorium_worker_pool_init(struct thorium_worker_pool *pool, int workers,
     bsal_ring_queue_init(&pool->scheduled_actor_queue_buffer, sizeof(struct thorium_actor *));
     bsal_ring_queue_init(&pool->inbound_message_queue_buffer, sizeof(struct thorium_message));
 
-    bsal_vector_init(&pool->worker_actors, sizeof(struct bsal_set));
-
-    bsal_vector_resize(&pool->worker_actors, pool->workers);
-
-    for (i = 0; i < pool->workers; i++) {
-
-        set = (struct bsal_set *)bsal_vector_at(&pool->worker_actors, i);
-
-        bsal_set_init(set, sizeof(int));
-    }
-
     pool->last_balancing = pool->starting_time;
     pool->last_signal_check = pool->starting_time;
 
     pool->balance_period = THORIUM_SCHEDULER_PERIOD_IN_SECONDS;
-
 }
 
 void thorium_worker_pool_destroy(struct thorium_worker_pool *pool)
 {
-    int i;
-    struct bsal_set *set;
-
     thorium_scheduler_destroy(&pool->scheduler);
-
-    for (i = 0; i < pool->workers; i++) {
-        set= (struct bsal_set *)bsal_vector_at(&pool->worker_actors, i);
-
-        bsal_set_destroy(set);
-    }
 
     thorium_worker_pool_delete_workers(pool);
 
@@ -145,8 +121,6 @@ void thorium_worker_pool_destroy(struct thorium_worker_pool *pool)
     bsal_ring_queue_destroy(&pool->inbound_message_queue_buffer);
     bsal_ring_queue_destroy(&pool->scheduled_actor_queue_buffer);
     bsal_ring_queue_destroy(&pool->messages_for_triage);
-
-    bsal_vector_destroy(&pool->worker_actors);
 }
 
 void thorium_worker_pool_delete_workers(struct thorium_worker_pool *pool)
@@ -584,7 +558,6 @@ void thorium_worker_pool_work(struct thorium_worker_pool *pool)
 void thorium_worker_pool_assign_worker_to_actor(struct thorium_worker_pool *pool, int name)
 {
     int worker_index;
-    struct bsal_set *set;
 
 #ifdef THORIUM_WORKER_POOL_USE_LEAST_BUSY
     int score;
@@ -628,10 +601,8 @@ void thorium_worker_pool_assign_worker_to_actor(struct thorium_worker_pool *pool
 
     BSAL_DEBUGGER_ASSERT(worker_index >= 0);
 
+    printf("ASSIGNING %d to %d\n", name, worker_index);
     thorium_scheduler_set_actor_worker(&pool->scheduler, name, worker_index);
-    set = (struct bsal_set *)bsal_vector_at(&pool->worker_actors, worker_index);
-    bsal_set_add(set, &name);
-
 }
 
 float thorium_worker_pool_get_current_load(struct thorium_worker_pool *pool)

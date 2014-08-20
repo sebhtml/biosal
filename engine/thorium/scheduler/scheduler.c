@@ -717,7 +717,6 @@ int thorium_scheduler_get_actor_worker(struct thorium_scheduler *scheduler, int 
     return worker_index;
 }
 
-
 void thorium_scheduler_set_actor_worker(struct thorium_scheduler *scheduler, int name, int worker_index)
 {
     bsal_map_add_value(&scheduler->actor_affinities, &name, &worker_index);

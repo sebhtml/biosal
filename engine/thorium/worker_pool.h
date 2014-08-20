@@ -25,8 +25,6 @@ struct thorium_migration;
 struct thorium_worker_pool {
     struct thorium_scheduler scheduler;
 
-    struct bsal_vector worker_actors;
-
     struct bsal_ring_queue scheduled_actor_queue_buffer;
     struct bsal_ring_queue inbound_message_queue_buffer;
 
