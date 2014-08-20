@@ -34,13 +34,20 @@
 
 struct thorium_node;
 struct thorium_message;
-struct bsal_active_buffer;
 struct thorium_transport;
+struct thorium_worker_buffer;
 
+/*
+ * Transport using IBM PAMI (Parallel Active Message Interface)
+ */
 struct thorium_pami_transport {
 #ifdef THORIUM_TRANSPORT_USE_PAMI
     pami_client_t client;
 #endif
+
+    /*
+     * Avoid having nothing in the structure.
+     */
     int mock;
 };
 
@@ -52,7 +59,6 @@ void thorium_pami_transport_destroy(struct thorium_transport *self);
 int thorium_pami_transport_send(struct thorium_transport *self, struct thorium_message *message);
 int thorium_pami_transport_receive(struct thorium_transport *self, struct thorium_message *message);
 
-int thorium_pami_transport_get_identifier(struct thorium_transport *self);
-const char *thorium_pami_transport_get_name(struct thorium_transport *self);
+int thorium_pami_transport_test(struct thorium_transport *self, struct thorium_worker_buffer *buffer);
 
 #endif

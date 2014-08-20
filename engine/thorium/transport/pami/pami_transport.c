@@ -15,7 +15,8 @@ struct thorium_transport_interface thorium_pami_transport_implementation = {
     .init = thorium_pami_transport_init,
     .destroy = thorium_pami_transport_destroy,
     .send = thorium_pami_transport_send,
-    .receive = thorium_pami_transport_receive
+    .receive = thorium_pami_transport_receive,
+    .test = thorium_pami_transport_test
 };
 
 void thorium_pami_transport_init(struct thorium_transport *self, int *argc, char ***argv)
@@ -101,3 +102,7 @@ int thorium_pami_transport_receive(struct thorium_transport *self, struct thoriu
     return 0;
 }
 
+int thorium_pami_transport_test(struct thorium_transport *self, struct thorium_worker_buffer *buffer)
+{
+    return 0;
+}
