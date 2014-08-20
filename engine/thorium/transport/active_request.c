@@ -4,7 +4,7 @@
 #include "transport.h"
 
 #include "pami/pami_active_request.h"
-#include "mpi/mpi_active_request.h"
+#include "mpi1_ptp/mpi1_ptp_active_request.h"
 
 void thorium_active_request_init(struct thorium_active_request *self, void *buffer, int worker)
 {
@@ -13,8 +13,8 @@ void thorium_active_request_init(struct thorium_active_request *self, void *buff
 #if defined(THORIUM_TRANSPORT_USE_PAMI)
     implementation = THORIUM_TRANSPORT_PAMI_IDENTIFIER;
 
-#elif defined(THORIUM_TRANSPORT_USE_MPI)
-    implementation = THORIUM_TRANSPORT_MPI_IDENTIFIER;
+#elif defined(THORIUM_TRANSPORT_USE_MPI1_PTP)
+    implementation = THORIUM_TRANSPORT_MPI1_PTP_IDENTIFIER;
 
 #else
 
@@ -30,11 +30,11 @@ void thorium_active_request_init(struct thorium_active_request *self, void *buff
         self->active_request_test = thorium_pami_active_request_test;
         self->active_request_request = thorium_pami_active_request_request;
 
-    } else if (implementation == THORIUM_TRANSPORT_MPI_IDENTIFIER) {
-        self->active_request_init = thorium_mpi_active_request_init;
-        self->active_request_destroy = thorium_mpi_active_request_destroy;
-        self->active_request_test = thorium_mpi_active_request_test;
-        self->active_request_request = thorium_mpi_active_request_request;
+    } else if (implementation == THORIUM_TRANSPORT_MPI1_PTP_IDENTIFIER) {
+        self->active_request_init = thorium_mpi1_ptp_active_request_init;
+        self->active_request_destroy = thorium_mpi1_ptp_active_request_destroy;
+        self->active_request_test = thorium_mpi1_ptp_active_request_test;
+        self->active_request_request = thorium_mpi1_ptp_active_request_request;
 
     } else /* if (implementation == THORIUM_TRANSPORT_IMPLEMENTATION_PAMI) */ {
         self->active_request_init = NULL;

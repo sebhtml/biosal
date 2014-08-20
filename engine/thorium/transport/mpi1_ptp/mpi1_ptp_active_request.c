@@ -1,13 +1,13 @@
 
-#include "mpi_active_request.h"
+#include "mpi1_ptp_active_request.h"
 
 #include <engine/thorium/transport/active_request.h>
 
 #include <stdlib.h>
 
-void thorium_mpi_active_request_init(struct thorium_active_request *self)
+void thorium_mpi1_ptp_active_request_init(struct thorium_active_request *self)
 {
-    struct thorium_mpi_active_request *concrete_object;
+    struct thorium_mpi1_ptp_active_request *concrete_object;
 
     concrete_object = thorium_active_request_get_concrete_object(self);
 
@@ -17,9 +17,9 @@ void thorium_mpi_active_request_init(struct thorium_active_request *self)
 /* \see http://blogs.cisco.com/performance/mpi_request_free-is-evil/
  * \see http://www.mpich.org/static/docs/v3.1/www3/MPI_Request_free.html
  */
-void thorium_mpi_active_request_destroy(struct thorium_active_request *self)
+void thorium_mpi1_ptp_active_request_destroy(struct thorium_active_request *self)
 {
-    struct thorium_mpi_active_request *concrete_object;
+    struct thorium_mpi1_ptp_active_request *concrete_object;
 
     concrete_object = thorium_active_request_get_concrete_object(self);
 
@@ -32,9 +32,9 @@ void thorium_mpi_active_request_destroy(struct thorium_active_request *self)
 
 /* \see http://www.mpich.org/static/docs/v3.1/www3/MPI_Test.html
  */
-int thorium_mpi_active_request_test(struct thorium_active_request *self)
+int thorium_mpi1_ptp_active_request_test(struct thorium_active_request *self)
 {
-    struct thorium_mpi_active_request *concrete_object;
+    struct thorium_mpi1_ptp_active_request *concrete_object;
 
     concrete_object = thorium_active_request_get_concrete_object(self);
 
@@ -64,9 +64,9 @@ int thorium_mpi_active_request_test(struct thorium_active_request *self)
     return 0;
 }
 
-void *thorium_mpi_active_request_request(struct thorium_active_request *self)
+void *thorium_mpi1_ptp_active_request_request(struct thorium_active_request *self)
 {
-    struct thorium_mpi_active_request *concrete_object;
+    struct thorium_mpi1_ptp_active_request *concrete_object;
 
     concrete_object = thorium_active_request_get_concrete_object(self);
 

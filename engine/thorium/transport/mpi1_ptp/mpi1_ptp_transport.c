@@ -1,5 +1,5 @@
 
-#include "mpi_transport.h"
+#include "mpi1_ptp_transport.h"
 
 #include <engine/thorium/transport/transport.h>
 #include <engine/thorium/transport/active_request.h>
@@ -10,7 +10,7 @@
 #include <core/system/memory_pool.h>
 #include <core/system/debugger.h>
 
-#define THORIUM_TRANSPORT_MPI_NAME "MPI: Message Passing Interface"
+#define THORIUM_TRANSPORT_MPI1_PTP_NAME "MPI 1.0 Point-to-Point"
 
 /*
  * Use a dummy tag since the tag is actually stored inside the buffer
@@ -19,14 +19,14 @@
 #define MEANING_OF_LIFE_THE_UNIVERSE_AND_EVERYTHING 42
 #define DUMMY_TAG MEANING_OF_LIFE_THE_UNIVERSE_AND_EVERYTHING
 
-struct thorium_transport_interface thorium_mpi_transport_implementation = {
-    .identifier = THORIUM_TRANSPORT_MPI_IDENTIFIER,
-    .name = THORIUM_TRANSPORT_MPI_NAME,
-    .size = sizeof(struct thorium_mpi_transport),
-    .init = thorium_mpi_transport_init,
-    .destroy = thorium_mpi_transport_destroy,
-    .send = thorium_mpi_transport_send,
-    .receive = thorium_mpi_transport_receive
+struct thorium_transport_interface thorium_mpi1_ptp_transport_implementation = {
+    .identifier = THORIUM_TRANSPORT_MPI1_PTP_IDENTIFIER,
+    .name = THORIUM_TRANSPORT_MPI1_PTP_NAME,
+    .size = sizeof(struct thorium_mpi1_ptp_transport),
+    .init = thorium_mpi1_ptp_transport_init,
+    .destroy = thorium_mpi1_ptp_transport_destroy,
+    .send = thorium_mpi1_ptp_transport_send,
+    .receive = thorium_mpi1_ptp_transport_receive
 };
 
 /*
@@ -35,10 +35,10 @@ struct thorium_transport_interface thorium_mpi_transport_implementation = {
  * \see https://github.com/GeneAssembly/kiki/blob/master/ki.c#L960
  * \see http://mpi.deino.net/mpi_functions/MPI_Comm_create.html
  */
-void thorium_mpi_transport_init(struct thorium_transport *self, int *argc, char ***argv)
+void thorium_mpi1_ptp_transport_init(struct thorium_transport *self, int *argc, char ***argv)
 {
     int required;
-    struct thorium_mpi_transport *concrete_self;
+    struct thorium_mpi1_ptp_transport *concrete_self;
     int result;
     int provided;
 
@@ -93,9 +93,9 @@ void thorium_mpi_transport_init(struct thorium_transport *self, int *argc, char 
     concrete_self->datatype = MPI_BYTE;
 }
 
-void thorium_mpi_transport_destroy(struct thorium_transport *self)
+void thorium_mpi1_ptp_transport_destroy(struct thorium_transport *self)
 {
-    struct thorium_mpi_transport *concrete_self;
+    struct thorium_mpi1_ptp_transport *concrete_self;
     int result;
 
     concrete_self = thorium_transport_get_concrete_transport(self);
@@ -117,9 +117,9 @@ void thorium_mpi_transport_destroy(struct thorium_transport *self)
 }
 
 /* \see http://www.mpich.org/static/docs/v3.1/www3/MPI_Isend.html */
-int thorium_mpi_transport_send(struct thorium_transport *self, struct thorium_message *message)
+int thorium_mpi1_ptp_transport_send(struct thorium_transport *self, struct thorium_message *message)
 {
-    struct thorium_mpi_transport *concrete_self;
+    struct thorium_mpi1_ptp_transport *concrete_self;
     char *buffer;
     int count;
     int destination;
@@ -165,9 +165,9 @@ int thorium_mpi_transport_send(struct thorium_transport *self, struct thorium_me
 /* \see http://www.mpich.org/static/docs/v3.1/www3/MPI_Iprobe.html */
 /* \see http://www.mpich.org/static/docs/v3.1/www3/MPI_Recv.html */
 /* \see http://www.malcolmmclean.site11.com/www/MpiTutorial/MPIStatus.html */
-int thorium_mpi_transport_receive(struct thorium_transport *self, struct thorium_message *message)
+int thorium_mpi1_ptp_transport_receive(struct thorium_transport *self, struct thorium_message *message)
 {
-    struct thorium_mpi_transport *concrete_self;
+    struct thorium_mpi1_ptp_transport *concrete_self;
     char *buffer;
     int count;
     int source;

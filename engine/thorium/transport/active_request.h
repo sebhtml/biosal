@@ -5,7 +5,7 @@
 #include "transport.h"
 
 #include "pami/pami_active_request.h"
-#include "mpi/mpi_active_request.h"
+#include "mpi1_ptp/mpi1_ptp_active_request.h"
 
 /*
  * A transport active request.
@@ -22,8 +22,8 @@ struct thorium_active_request {
 #ifdef THORIUM_TRANSPORT_USE_PAMI
     struct thorium_pami_active_request concrete_object;
 
-#elif defined(THORIUM_TRANSPORT_USE_MPI)
-    struct thorium_mpi_active_request concrete_object;
+#elif defined(THORIUM_TRANSPORT_USE_MPI1_PTP)
+    struct thorium_mpi1_ptp_active_request concrete_object;
 #endif
 
     /*
