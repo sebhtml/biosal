@@ -177,9 +177,9 @@ void thorium_transport_set(struct thorium_transport *self)
     if (self->implementation == thorium_pami_transport_implementation.identifier) {
         self->transport_interface = &thorium_pami_transport_implementation;
 
-    } else if (self->implementation == thorium_mpi1_ptp_transport_implementation.identifier) {
+    } else if (self->implementation == thorium_mpi1_p2p_transport_implementation.identifier) {
 
-        self->transport_interface = &thorium_mpi1_ptp_transport_implementation;
+        self->transport_interface = &thorium_mpi1_p2p_transport_implementation;
     }
 }
 
@@ -213,8 +213,8 @@ void thorium_transport_select(struct thorium_transport *self)
 #if defined(THORIUM_TRANSPORT_USE_PAMI)
     self->implementation = THORIUM_TRANSPORT_PAMI_IDENTIFIER;
 
-#elif defined(THORIUM_TRANSPORT_USE_MPI1_PTP)
-    self->implementation = THORIUM_TRANSPORT_MPI1_PTP_IDENTIFIER;
+#elif defined(THORIUM_TRANSPORT_USE_MPI1_P2P)
+    self->implementation = THORIUM_TRANSPORT_MPI1_P2P_IDENTIFIER;
 #endif
 
     if (self->implementation == THORIUM_TRANSPORT_MOCK_IDENTIFIER) {

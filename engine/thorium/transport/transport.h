@@ -6,7 +6,7 @@
 #include "transport_profiler.h"
 
 #include "pami/pami_transport.h"
-#include "mpi1_ptp/mpi1_ptp_transport.h"
+#include "mpi1_p2p/mpi1_p2p_transport.h"
 
 #define THORIUM_TRANSPORT_IMPLEMENTATION_MOCK 0
 
@@ -37,7 +37,7 @@ struct thorium_transport {
     struct bsal_memory_pool *inbound_message_memory_pool;
 
     struct thorium_pami_transport pami_transport;
-    struct thorium_mpi1_ptp_transport mpi_transport;
+    struct thorium_mpi1_p2p_transport mpi_transport;
 
     int implementation;
 
