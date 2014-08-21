@@ -9,7 +9,7 @@ void thorium_mpi1_request_init(struct thorium_mpi1_request *self, void *buffer)
 
     self->source = -1;
     self->count = -1;
-    self->buffer = NULL;
+    self->buffer = buffer;
     self->worker = -1;
     self->tag = -1;
 }

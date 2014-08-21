@@ -14,7 +14,8 @@
 
 void thorium_transport_init(struct thorium_transport *self, struct thorium_node *node,
                 int *argc, char ***argv,
-                struct bsal_memory_pool *inbound_message_memory_pool)
+                struct bsal_memory_pool *inbound_message_memory_pool,
+                struct bsal_memory_pool *outbound_message_memory_pool)
 {
     int actual_argc;
     char **actual_argv;
@@ -56,6 +57,7 @@ void thorium_transport_init(struct thorium_transport *self, struct thorium_node 
     BSAL_DEBUGGER_ASSERT(self->node != NULL);
 
     self->inbound_message_memory_pool = inbound_message_memory_pool;
+    self->outbound_message_memory_pool = outbound_message_memory_pool;
 
     thorium_transport_profiler_init(&self->transport_profiler);
 
@@ -167,7 +169,7 @@ void thorium_transport_set(struct thorium_transport *self)
 {
     self->transport_interface = NULL;
 
-#ifdef THORIUM_TRANSPORT_USE_PAMI
+#ifdef THORIUM_TRANSPORT_USE_PAMI_DISABLE
         self->transport_interface = &thorium_pami_transport_implementation;
 #elif defined(THORIUM_TRANSPORT_USE_MPI1_PT2PT_NONBLOCKING)
         self->transport_interface = &thorium_mpi1_pt2pt_nonblocking_transport_implementation;

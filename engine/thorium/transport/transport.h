@@ -36,6 +36,7 @@ struct thorium_transport {
     int size;
 
     struct bsal_memory_pool *inbound_message_memory_pool;
+    struct bsal_memory_pool *outbound_message_memory_pool;
 
     struct thorium_pami_transport pami_transport;
     struct thorium_mpi1_p2p_transport mpi_transport;
@@ -49,8 +50,11 @@ struct thorium_transport {
 
 void thorium_transport_init(struct thorium_transport *self, struct thorium_node *node,
                 int *argc, char ***argv,
-                struct bsal_memory_pool *inbound_message_memory_pool);
+                struct bsal_memory_pool *inbound_message_memory_pool,
+                struct bsal_memory_pool *outbound_message_memory_pool);
+
 void thorium_transport_destroy(struct thorium_transport *self);
+
 int thorium_transport_send(struct thorium_transport *self, struct thorium_message *message);
 int thorium_transport_receive(struct thorium_transport *self, struct thorium_message *message);
 

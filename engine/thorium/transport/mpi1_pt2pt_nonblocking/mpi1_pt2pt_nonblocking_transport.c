@@ -11,11 +11,15 @@
 #include <core/system/memory_pool.h>
 #include <core/system/debugger.h>
 
+#include <string.h>
+
 /*
  * Use a dummy tag since the tag is actually stored inside the buffer
  * to avoid the MPI_TAG_UB bug / limitation in MPI.
  */
-#define DUMMY_TAG 101
+#define TAG_SMALL_PAYLOAD 10
+#define TAG_BIG_NOTIFICATION 20
+#define TAG_BIG_PAYLOAD 30
 
 struct thorium_transport_interface thorium_mpi1_pt2pt_nonblocking_transport_implementation = {
     .name = "thorium_mpi1_pt2pt_nonblocking_transport_implementation",
@@ -40,7 +44,18 @@ void thorium_mpi1_pt2pt_nonblocking_transport_init(struct thorium_transport *sel
     int result;
     int provided;
 
+    /*
+     * 128 MiB for receive buffers.
+     */
     concrete_self = thorium_transport_get_concrete_transport(self);
+
+    concrete_self->maximum_buffer_size = 8192;
+
+    concrete_self->maximum_receive_request_count = 64;
+    concrete_self->small_request_count = 0;
+
+    concrete_self->maximum_big_receive_request_count = 4;
+    concrete_self->big_request_count = 0;
 
     bsal_ring_queue_init(&concrete_self->send_requests, sizeof(struct thorium_mpi1_request));
     bsal_ring_queue_init(&concrete_self->receive_requests, sizeof(struct thorium_mpi1_request));
@@ -73,19 +88,19 @@ void thorium_mpi1_pt2pt_nonblocking_transport_init(struct thorium_transport *sel
     }
 
     /* make a new communicator for the library and don't use MPI_COMM_WORLD later */
-    result = MPI_Comm_dup(MPI_COMM_WORLD, &concrete_self->comm);
+    result = MPI_Comm_dup(MPI_COMM_WORLD, &concrete_self->communicator);
 
     if (result != MPI_SUCCESS) {
         return;
     }
 
-    result = MPI_Comm_rank(concrete_self->comm, &self->rank);
+    result = MPI_Comm_rank(concrete_self->communicator, &self->rank);
 
     if (result != MPI_SUCCESS) {
         return;
     }
 
-    result = MPI_Comm_size(concrete_self->comm, &self->size);
+    result = MPI_Comm_size(concrete_self->communicator, &self->size);
 
     if (result != MPI_SUCCESS) {
         return;
@@ -99,24 +114,34 @@ void thorium_mpi1_pt2pt_nonblocking_transport_destroy(struct thorium_transport *
     struct thorium_mpi1_pt2pt_nonblocking_transport *concrete_self;
     int result;
     struct thorium_mpi1_request active_request;
+    void *buffer;
 
     concrete_self = thorium_transport_get_concrete_transport(self);
 
+    /*
+     * Destroy send requests.
+     */
     while (bsal_ring_queue_dequeue(&concrete_self->send_requests, &active_request)) {
         MPI_Request_free(thorium_mpi1_request_request(&active_request));
     }
 
+    bsal_ring_queue_destroy(&concrete_self->send_requests);
+
+    /*
+     * Destroy receive requests.
+     */
     while (bsal_ring_queue_dequeue(&concrete_self->receive_requests, &active_request)) {
+        buffer = thorium_mpi1_request_buffer(&active_request);
+        bsal_memory_pool_free(self->inbound_message_memory_pool, buffer);
         MPI_Request_free(thorium_mpi1_request_request(&active_request));
     }
 
-    bsal_ring_queue_destroy(&concrete_self->send_requests);
     bsal_ring_queue_destroy(&concrete_self->receive_requests);
 
     /*
      * \see http://www.mpich.org/static/docs/v3.1/www3/MPI_Comm_free.html
      */
-    result = MPI_Comm_free(&concrete_self->comm);
+    result = MPI_Comm_free(&concrete_self->communicator);
 
     if (result != MPI_SUCCESS) {
         return;
@@ -134,13 +159,17 @@ int thorium_mpi1_pt2pt_nonblocking_transport_send(struct thorium_transport *self
 {
     struct thorium_mpi1_pt2pt_nonblocking_transport *concrete_self;
     char *buffer;
+    char *buffer2;
     int count;
+    int count2;
     int destination;
-    int tag;
     MPI_Request *request;
+    MPI_Request *request2;
     struct thorium_mpi1_request active_request;
+    struct thorium_mpi1_request active_request2;
     int worker;
     int result;
+    int payload_tag;
 
     concrete_self = thorium_transport_get_concrete_transport(self);
 
@@ -148,16 +177,52 @@ int thorium_mpi1_pt2pt_nonblocking_transport_send(struct thorium_transport *self
     buffer = thorium_message_buffer(message);
     count = thorium_message_count(message);
     destination = thorium_message_destination_node(message);
-    tag = DUMMY_TAG;
+
+    BSAL_DEBUGGER_ASSERT(buffer == NULL || count > 0);
+
+    payload_tag = TAG_SMALL_PAYLOAD;
+
+    /*
+     * If it is a large message, send a message to tell the destination
+     * about it.
+     */
+
+    if (count > concrete_self->maximum_buffer_size) {
+
+        /*
+         * send a message to the other rank to tell it to do a MPI_Irecv with a bigger buffer
+         * now.
+         */
+
+        count2 = sizeof(count);
+        buffer2 = bsal_memory_pool_allocate(self->outbound_message_memory_pool,
+                        count2);
+
+        memcpy(buffer2, &count, count2);
+
+        thorium_mpi1_request_init(&active_request2, buffer2);
+        request2 = thorium_mpi1_request_request(&active_request2);
+
+        result = MPI_Isend(buffer2, count2, concrete_self->datatype, destination, TAG_BIG_NOTIFICATION,
+                    concrete_self->communicator, request2);
+
+        printf("DEBUG Sending TAG_BIG_NOTIFICATION count %d\n", count);
+
+        if (result != MPI_SUCCESS) {
+            return 0;
+        }
+
+        bsal_ring_queue_enqueue(&concrete_self->send_requests, &active_request2);
+
+        payload_tag = TAG_BIG_PAYLOAD;
+    }
 
     thorium_mpi1_request_init_with_worker(&active_request, buffer, worker);
     request = thorium_mpi1_request_request(&active_request);
 
-    BSAL_DEBUGGER_ASSERT(buffer == NULL || count > 0);
-
     /* get return value */
-    result = MPI_Isend(buffer, count, concrete_self->datatype, destination, tag,
-                    concrete_self->comm, request);
+    result = MPI_Isend(buffer, count, concrete_self->datatype, destination, payload_tag,
+                    concrete_self->communicator, request);
 
     if (result != MPI_SUCCESS) {
         return 0;
@@ -181,52 +246,83 @@ int thorium_mpi1_pt2pt_nonblocking_transport_send(struct thorium_transport *self
 int thorium_mpi1_pt2pt_nonblocking_transport_receive(struct thorium_transport *self, struct thorium_message *message)
 {
     struct thorium_mpi1_pt2pt_nonblocking_transport *concrete_self;
-    char *buffer;
+    void *buffer;
     int count;
+    struct thorium_mpi1_request request;
     int source;
     int destination;
     int tag;
-    int flag;
-    MPI_Status status;
-    int result;
+    int size;
+    int request_tag;
 
     concrete_self = thorium_transport_get_concrete_transport(self);
-    source = MPI_ANY_SOURCE;
-    tag = DUMMY_TAG;
 
-    /* get return value */
-    result = MPI_Iprobe(source, tag, concrete_self->comm, &flag, &status);
+    /*
+     * If the number of requests is below the maximum, add some of them.
+     */
 
-    if (result != MPI_SUCCESS) {
+    if (concrete_self->small_request_count < concrete_self->maximum_receive_request_count) {
+
+        size = concrete_self->maximum_buffer_size;
+        request_tag = TAG_SMALL_PAYLOAD;
+        thorium_mpi1_pt2pt_nonblocking_transport_add_receive_request(self, request_tag, size);
+    }
+
+    /*
+     * Make sure there are enough requests for big messages too.
+     */
+    if (concrete_self->big_request_count < concrete_self->maximum_big_receive_request_count) {
+
+        size = sizeof(int);
+        request_tag = TAG_BIG_NOTIFICATION;
+        thorium_mpi1_pt2pt_nonblocking_transport_add_receive_request(self, request_tag, size);
+    }
+
+    /*
+     * Dequeue a request and check if it is ready.
+     */
+    if (!bsal_ring_queue_dequeue(&concrete_self->receive_requests, &request)) {
+
         return 0;
     }
 
-    if (!flag) {
+    /*
+     * Test the receive request now.
+     */
+    if (!thorium_mpi1_request_test(&request)) {
+
+        /*
+         * Put it back in the queue now.
+         */
+
+        bsal_ring_queue_enqueue(&concrete_self->receive_requests, &request);
+
         return 0;
     }
 
-    /* get return value */
-    result = MPI_Get_count(&status, concrete_self->datatype, &count);
+    source = thorium_mpi1_request_source(&request);
+    destination = thorium_transport_get_rank(self);
+    tag = thorium_mpi1_request_tag(&request);
+    count = thorium_mpi1_request_count(&request);
+    buffer = thorium_mpi1_request_buffer(&request);
 
-    if (result != MPI_SUCCESS) {
+    thorium_mpi1_request_destroy(&request);
+
+    /*
+     * This is a big message
+     */
+    if (tag == TAG_BIG_NOTIFICATION) {
+
+        size = *(int *)buffer;
+        request_tag = TAG_BIG_PAYLOAD;
+
+        printf("DEBUG received TAG_BIG_NOTIFICATION count %d\n", size);
+        thorium_mpi1_pt2pt_nonblocking_transport_add_receive_request(self, request_tag, size);
+
+        bsal_memory_pool_free(self->inbound_message_memory_pool, buffer);
+
         return 0;
     }
-
-    /* actually allocate (slab allocator) a buffer with count bytes ! */
-    buffer = bsal_memory_pool_allocate(self->inbound_message_memory_pool,
-                    count * sizeof(char));
-
-    source = status.MPI_SOURCE;
-
-    /* get return value */
-    result = MPI_Recv(buffer, count, concrete_self->datatype, source, tag,
-                    concrete_self->comm, &status);
-
-    if (result != MPI_SUCCESS) {
-        return 0;
-    }
-
-    destination = self->rank;
 
     /*
      * Prepare the message. The worker will be -1 to tell the thorium
@@ -234,6 +330,22 @@ int thorium_mpi1_pt2pt_nonblocking_transport_receive(struct thorium_transport *s
      */
     thorium_message_init_with_nodes(message, tag, count, buffer, source,
                     destination);
+
+#ifdef THORIUM_MPI1_PT2PT_NON_BLOCKING_DEBUG
+    printf("DEBUG Non Blocking Test is conclusive Tag %d Count %d Buffer %p Source %d\n",
+                    tag, count, buffer, source);
+#endif
+
+    if (tag == TAG_BIG_PAYLOAD) {
+        --concrete_self->big_request_count;
+    } else if (tag == TAG_SMALL_PAYLOAD) {
+        --concrete_self->small_request_count;
+    }
+
+    /*
+     * When the buffer is available again, it will be injected back into the
+     * inbound_message_memory_pool.
+     */
 
     return 1;
 }
@@ -255,7 +367,6 @@ int thorium_mpi1_pt2pt_nonblocking_transport_test(struct thorium_transport *self
             buffer = thorium_mpi1_request_buffer(&active_request);
 
             thorium_worker_buffer_init(worker_buffer, worker, buffer);
-
             thorium_mpi1_request_destroy(&active_request);
 
             return 1;
@@ -271,3 +382,42 @@ int thorium_mpi1_pt2pt_nonblocking_transport_test(struct thorium_transport *self
     return 0;
 }
 
+void thorium_mpi1_pt2pt_nonblocking_transport_add_receive_request(struct thorium_transport *self,
+                int tag, int count)
+{
+    void *buffer;
+    struct thorium_mpi1_pt2pt_nonblocking_transport *concrete_self;
+    struct thorium_mpi1_request request;
+    MPI_Request *mpi_request;
+    int result;
+
+    concrete_self = thorium_transport_get_concrete_transport(self);
+
+    buffer = bsal_memory_pool_allocate(self->inbound_message_memory_pool,
+                    count);
+
+    if (tag == TAG_BIG_PAYLOAD) {
+        printf("DEBUG add request for TAG_BIG_PAYLOAD count %d buffer %p\n",
+                        count, buffer);
+    }
+    thorium_mpi1_request_init(&request, buffer);
+    mpi_request = thorium_mpi1_request_request(&request);
+
+    result = MPI_Irecv(buffer, count,
+                    concrete_self->datatype, MPI_ANY_SOURCE,
+                    tag, concrete_self->communicator, mpi_request);
+
+    bsal_ring_queue_enqueue(&concrete_self->receive_requests, &request);
+
+    if (tag == TAG_BIG_NOTIFICATION) {
+        ++concrete_self->big_request_count;
+    } else if (tag == TAG_SMALL_PAYLOAD) {
+        ++concrete_self->small_request_count;
+    }
+
+#ifdef THORIUM_MPI1_PT2PT_NON_BLOCKING_DEBUG
+    printf("DEBUG Non Blocking added a request, now with %d/%d\n",
+                        (int)bsal_ring_queue_size(&concrete_self->receive_requests),
+                        concrete_self->maximum_receive_request_count);
+#endif
+}

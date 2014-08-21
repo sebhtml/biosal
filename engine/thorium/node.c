@@ -125,7 +125,8 @@ void thorium_node_init(struct thorium_node *node, int *argc, char ***argv)
     /*bsal_memory_pool_disable(&node->outbound_message_memory_pool);*/
 
     thorium_transport_init(&node->transport, node, argc, argv,
-                    &node->inbound_message_memory_pool);
+                    &node->inbound_message_memory_pool,
+                    &node->outbound_message_memory_pool);
 
     node->provided = thorium_transport_get_provided(&node->transport);
     node->name = thorium_transport_get_rank(&node->transport);
@@ -349,10 +350,6 @@ void thorium_node_destroy(struct thorium_node *node)
 {
     bsal_set_destroy(&node->auto_scaling_actors);
 
-    bsal_memory_pool_destroy(&node->actor_memory_pool);
-    bsal_memory_pool_destroy(&node->inbound_message_memory_pool);
-    bsal_memory_pool_destroy(&node->outbound_message_memory_pool);
-
     bsal_map_destroy(&node->actor_names);
 
     /*printf("BEFORE DESTROY\n");*/
@@ -374,6 +371,13 @@ void thorium_node_destroy(struct thorium_node *node)
     bsal_counter_destroy(&node->counter);
 
     bsal_ring_queue_destroy(&node->clean_outbound_buffers_to_inject);
+
+    /*
+     * Destroy the memory pool after the rest.
+     */
+    bsal_memory_pool_destroy(&node->actor_memory_pool);
+    bsal_memory_pool_destroy(&node->inbound_message_memory_pool);
+    bsal_memory_pool_destroy(&node->outbound_message_memory_pool);
 }
 
 int thorium_node_threads_from_string(struct thorium_node *node,
