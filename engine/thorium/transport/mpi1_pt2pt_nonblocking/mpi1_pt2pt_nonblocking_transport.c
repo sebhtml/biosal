@@ -1,6 +1,6 @@
 
-#include "mpi1_p2p_transport.h"
-#include "mpi1_p2p_active_request.h"
+#include "mpi1_pt2pt_nonblocking_transport.h"
+#include "mpi1_request.h"
 
 #include <engine/thorium/transport/transport.h>
 
@@ -15,17 +15,16 @@
  * Use a dummy tag since the tag is actually stored inside the buffer
  * to avoid the MPI_TAG_UB bug / limitation in MPI.
  */
-#define MEANING_OF_LIFE_THE_UNIVERSE_AND_EVERYTHING 42
-#define DUMMY_TAG MEANING_OF_LIFE_THE_UNIVERSE_AND_EVERYTHING
+#define DUMMY_TAG 101
 
-struct thorium_transport_interface thorium_mpi1_p2p_transport_implementation = {
-    .name = "thorium_mpi1_p2p_transport_implementation",
-    .size = sizeof(struct thorium_mpi1_p2p_transport),
-    .init = thorium_mpi1_p2p_transport_init,
-    .destroy = thorium_mpi1_p2p_transport_destroy,
-    .send = thorium_mpi1_p2p_transport_send,
-    .receive = thorium_mpi1_p2p_transport_receive,
-    .test = thorium_mpi1_p2p_transport_test
+struct thorium_transport_interface thorium_mpi1_pt2pt_nonblocking_transport_implementation = {
+    .name = "thorium_mpi1_pt2pt_nonblocking_transport_implementation",
+    .size = sizeof(struct thorium_mpi1_pt2pt_nonblocking_transport),
+    .init = thorium_mpi1_pt2pt_nonblocking_transport_init,
+    .destroy = thorium_mpi1_pt2pt_nonblocking_transport_destroy,
+    .send = thorium_mpi1_pt2pt_nonblocking_transport_send,
+    .receive = thorium_mpi1_pt2pt_nonblocking_transport_receive,
+    .test = thorium_mpi1_pt2pt_nonblocking_transport_test
 };
 
 /*
@@ -34,16 +33,17 @@ struct thorium_transport_interface thorium_mpi1_p2p_transport_implementation = {
  * \see https://github.com/GeneAssembly/kiki/blob/master/ki.c#L960
  * \see http://mpi.deino.net/mpi_functions/MPI_Comm_create.html
  */
-void thorium_mpi1_p2p_transport_init(struct thorium_transport *self, int *argc, char ***argv)
+void thorium_mpi1_pt2pt_nonblocking_transport_init(struct thorium_transport *self, int *argc, char ***argv)
 {
     int required;
-    struct thorium_mpi1_p2p_transport *concrete_self;
+    struct thorium_mpi1_pt2pt_nonblocking_transport *concrete_self;
     int result;
     int provided;
 
     concrete_self = thorium_transport_get_concrete_transport(self);
 
-    bsal_ring_queue_init(&concrete_self->active_requests, sizeof(struct thorium_mpi1_p2p_active_request));
+    bsal_ring_queue_init(&concrete_self->send_requests, sizeof(struct thorium_mpi1_request));
+    bsal_ring_queue_init(&concrete_self->receive_requests, sizeof(struct thorium_mpi1_request));
 
     /*
     required = MPI_THREAD_MULTIPLE;
@@ -94,19 +94,24 @@ void thorium_mpi1_p2p_transport_init(struct thorium_transport *self, int *argc, 
     concrete_self->datatype = MPI_BYTE;
 }
 
-void thorium_mpi1_p2p_transport_destroy(struct thorium_transport *self)
+void thorium_mpi1_pt2pt_nonblocking_transport_destroy(struct thorium_transport *self)
 {
-    struct thorium_mpi1_p2p_transport *concrete_self;
+    struct thorium_mpi1_pt2pt_nonblocking_transport *concrete_self;
     int result;
-    struct thorium_mpi1_p2p_active_request active_request;
+    struct thorium_mpi1_request active_request;
 
     concrete_self = thorium_transport_get_concrete_transport(self);
 
-    while (bsal_ring_queue_dequeue(&concrete_self->active_requests, &active_request)) {
-        thorium_mpi1_p2p_active_request_destroy(&active_request);
+    while (bsal_ring_queue_dequeue(&concrete_self->send_requests, &active_request)) {
+        MPI_Request_free(thorium_mpi1_request_request(&active_request));
     }
 
-    bsal_ring_queue_destroy(&concrete_self->active_requests);
+    while (bsal_ring_queue_dequeue(&concrete_self->receive_requests, &active_request)) {
+        MPI_Request_free(thorium_mpi1_request_request(&active_request));
+    }
+
+    bsal_ring_queue_destroy(&concrete_self->send_requests);
+    bsal_ring_queue_destroy(&concrete_self->receive_requests);
 
     /*
      * \see http://www.mpich.org/static/docs/v3.1/www3/MPI_Comm_free.html
@@ -125,15 +130,15 @@ void thorium_mpi1_p2p_transport_destroy(struct thorium_transport *self)
 }
 
 /* \see http://www.mpich.org/static/docs/v3.1/www3/MPI_Isend.html */
-int thorium_mpi1_p2p_transport_send(struct thorium_transport *self, struct thorium_message *message)
+int thorium_mpi1_pt2pt_nonblocking_transport_send(struct thorium_transport *self, struct thorium_message *message)
 {
-    struct thorium_mpi1_p2p_transport *concrete_self;
+    struct thorium_mpi1_pt2pt_nonblocking_transport *concrete_self;
     char *buffer;
     int count;
     int destination;
     int tag;
     MPI_Request *request;
-    struct thorium_mpi1_p2p_active_request active_request;
+    struct thorium_mpi1_request active_request;
     int worker;
     int result;
 
@@ -145,8 +150,8 @@ int thorium_mpi1_p2p_transport_send(struct thorium_transport *self, struct thori
     destination = thorium_message_destination_node(message);
     tag = DUMMY_TAG;
 
-    thorium_mpi1_p2p_active_request_init(&active_request, buffer, worker);
-    request = thorium_mpi1_p2p_active_request_request(&active_request);
+    thorium_mpi1_request_init_with_worker(&active_request, buffer, worker);
+    request = thorium_mpi1_request_request(&active_request);
 
     BSAL_DEBUGGER_ASSERT(buffer == NULL || count > 0);
 
@@ -165,7 +170,7 @@ int thorium_mpi1_p2p_transport_send(struct thorium_transport *self, struct thori
      */
     /*MPI_Request_free(&request);*/
 
-    bsal_ring_queue_enqueue(&concrete_self->active_requests, &active_request);
+    bsal_ring_queue_enqueue(&concrete_self->send_requests, &active_request);
 
     return 1;
 }
@@ -173,9 +178,9 @@ int thorium_mpi1_p2p_transport_send(struct thorium_transport *self, struct thori
 /* \see http://www.mpich.org/static/docs/v3.1/www3/MPI_Iprobe.html */
 /* \see http://www.mpich.org/static/docs/v3.1/www3/MPI_Recv.html */
 /* \see http://www.malcolmmclean.site11.com/www/MpiTutorial/MPIStatus.html */
-int thorium_mpi1_p2p_transport_receive(struct thorium_transport *self, struct thorium_message *message)
+int thorium_mpi1_pt2pt_nonblocking_transport_receive(struct thorium_transport *self, struct thorium_message *message)
 {
-    struct thorium_mpi1_p2p_transport *concrete_self;
+    struct thorium_mpi1_pt2pt_nonblocking_transport *concrete_self;
     char *buffer;
     int count;
     int source;
@@ -233,29 +238,31 @@ int thorium_mpi1_p2p_transport_receive(struct thorium_transport *self, struct th
     return 1;
 }
 
-int thorium_mpi1_p2p_transport_test(struct thorium_transport *self, struct thorium_worker_buffer *worker_buffer)
+int thorium_mpi1_pt2pt_nonblocking_transport_test(struct thorium_transport *self, struct thorium_worker_buffer *worker_buffer)
 {
-    struct thorium_mpi1_p2p_active_request active_request;
-    struct thorium_mpi1_p2p_transport *concrete_self;
+    struct thorium_mpi1_request active_request;
+    struct thorium_mpi1_pt2pt_nonblocking_transport *concrete_self;
     void *buffer;
     int worker;
 
     concrete_self = thorium_transport_get_concrete_transport(self);
 
-    if (bsal_ring_queue_dequeue(&concrete_self->active_requests, &active_request)) {
+    if (bsal_ring_queue_dequeue(&concrete_self->send_requests, &active_request)) {
 
-        if (thorium_mpi1_p2p_active_request_test(&active_request)) {
+        if (thorium_mpi1_request_test(&active_request)) {
 
-            worker = thorium_mpi1_p2p_active_request_worker(&active_request);
-            buffer = thorium_mpi1_p2p_active_request_buffer(&active_request);
+            worker = thorium_mpi1_request_worker(&active_request);
+            buffer = thorium_mpi1_request_buffer(&active_request);
 
             thorium_worker_buffer_init(worker_buffer, worker, buffer);
+
+            thorium_mpi1_request_destroy(&active_request);
 
             return 1;
 
         /* Just put it back in the FIFO for later */
         } else {
-            bsal_ring_queue_enqueue(&concrete_self->active_requests, &active_request);
+            bsal_ring_queue_enqueue(&concrete_self->send_requests, &active_request);
 
             return 0;
         }

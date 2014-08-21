@@ -8,8 +8,6 @@
  * Decide if the code will use PAMI or MPI
  */
 
-#define THORIUM_TRANSPORT_PAMI_IDENTIFIER 2000
-
 /*
  * This variable is set to 1 if PAMI support is ready to be
  * used

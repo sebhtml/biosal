@@ -6,11 +6,8 @@
 
 #include <core/system/debugger.h>
 
-#define THORIUM_TRANSPORT_PAMI_NAME "PAMI: Parallel Active Message Interface"
-
 struct thorium_transport_interface thorium_pami_transport_implementation = {
-    .identifier = THORIUM_TRANSPORT_PAMI_IDENTIFIER,
-    .name = THORIUM_TRANSPORT_PAMI_NAME,
+    .name = "thorium_pami_transport_implementation",
     .size = sizeof(struct thorium_pami_transport),
     .init = thorium_pami_transport_init,
     .destroy = thorium_pami_transport_destroy,

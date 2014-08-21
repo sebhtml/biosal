@@ -10,7 +10,6 @@ struct thorium_worker_buffer;
  * Interface for transport.
  */
 struct thorium_transport_interface {
-    int identifier;
     char *name;
     int size;
 

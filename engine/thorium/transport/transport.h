@@ -7,6 +7,7 @@
 
 #include "pami/pami_transport.h"
 #include "mpi1_p2p/mpi1_p2p_transport.h"
+#include "mpi1_pt2pt_nonblocking/mpi1_pt2pt_nonblocking_transport.h"
 
 #define THORIUM_TRANSPORT_IMPLEMENTATION_MOCK 0
 
@@ -39,8 +40,6 @@ struct thorium_transport {
     struct thorium_pami_transport pami_transport;
     struct thorium_mpi1_p2p_transport mpi_transport;
 
-    int implementation;
-
     void *concrete_transport;
     struct thorium_transport_interface *transport_interface;
     int active_request_count;
@@ -65,12 +64,9 @@ const char *thorium_transport_get_name(struct thorium_transport *self);
 int thorium_transport_test(struct thorium_transport *self, struct thorium_worker_buffer *worker_buffer);
 
 int thorium_transport_get_active_request_count(struct thorium_transport *self);
-int thorium_transport_get_implementation(struct thorium_transport *self);
 
 void *thorium_transport_get_concrete_transport(struct thorium_transport *self);
 void thorium_transport_set(struct thorium_transport *self);
-
-void thorium_transport_select(struct thorium_transport *self);
 
 void thorium_transport_print(struct thorium_transport *self);
 

@@ -35,8 +35,6 @@ void thorium_transport_init(struct thorium_transport *self, struct thorium_node 
     */
     /* Select the transport layer
      */
-    thorium_transport_select(self);
-
     /*
      * Assign functions
      */
@@ -160,11 +158,6 @@ int thorium_transport_test(struct thorium_transport *self, struct thorium_worker
     return value;
 }
 
-int thorium_transport_get_implementation(struct thorium_transport *self)
-{
-    return self->implementation;
-}
-
 void *thorium_transport_get_concrete_transport(struct thorium_transport *self)
 {
     return self->concrete_transport;
@@ -174,27 +167,21 @@ void thorium_transport_set(struct thorium_transport *self)
 {
     self->transport_interface = NULL;
 
-    if (self->implementation == thorium_pami_transport_implementation.identifier) {
+#ifdef THORIUM_TRANSPORT_USE_PAMI
         self->transport_interface = &thorium_pami_transport_implementation;
-
-    } else if (self->implementation == thorium_mpi1_p2p_transport_implementation.identifier) {
-
+#elif defined(THORIUM_TRANSPORT_USE_MPI1_PT2PT_NONBLOCKING)
+        self->transport_interface = &thorium_mpi1_pt2pt_nonblocking_transport_implementation;
+#elif defined(THORIUM_TRANSPORT_USE_MPI1_P2P)
         self->transport_interface = &thorium_mpi1_p2p_transport_implementation;
-    }
+#endif
+
+    printf("TRANSPORT -> %s\n",
+                    self->transport_interface->name);
 }
 
 int thorium_transport_get_active_request_count(struct thorium_transport *self)
 {
     return self->active_request_count;
-}
-
-int thorium_transport_get_identifier(struct thorium_transport *self)
-{
-    if (self->transport_interface == NULL) {
-        return -1;
-    }
-
-    return self->transport_interface->identifier;
 }
 
 const char *thorium_transport_get_name(struct thorium_transport *self)
@@ -204,28 +191,6 @@ const char *thorium_transport_get_name(struct thorium_transport *self)
     }
 
     return self->transport_interface->name;
-}
-
-void thorium_transport_select(struct thorium_transport *self)
-{
-    self->implementation = THORIUM_TRANSPORT_MOCK_IDENTIFIER;
-
-#if defined(THORIUM_TRANSPORT_USE_PAMI)
-    self->implementation = THORIUM_TRANSPORT_PAMI_IDENTIFIER;
-
-#elif defined(THORIUM_TRANSPORT_USE_MPI1_P2P)
-    self->implementation = THORIUM_TRANSPORT_MPI1_P2P_IDENTIFIER;
-#endif
-
-    if (self->implementation == THORIUM_TRANSPORT_MOCK_IDENTIFIER) {
-        printf("Error: no transport implementation is available.\n");
-        exit(1);
-    }
-
-    /*
-    printf("DEBUG Transport is %d\n",
-                    self->implementation);
-                    */
 }
 
 void thorium_transport_print(struct thorium_transport *self)
