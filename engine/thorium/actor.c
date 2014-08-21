@@ -859,7 +859,9 @@ int thorium_actor_receive_system(struct thorium_actor *self, struct thorium_mess
 
         workers = thorium_actor_node_worker_count(self);
 
-        printf("DEBUG THORIUM_ACTOR_GET_NODE_WORKER_COUNT %d workers\n", workers);
+        printf("DEBUG actor %d THORIUM_ACTOR_GET_NODE_WORKER_COUNT %d workers\n",
+                        thorium_actor_name(self),
+                        workers);
 
         thorium_actor_send_reply_int(self, THORIUM_ACTOR_GET_NODE_WORKER_COUNT_REPLY,
                         workers);

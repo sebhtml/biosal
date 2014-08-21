@@ -1013,7 +1013,7 @@ void thorium_node_send_to_node(struct thorium_node *node, int destination,
     tag = thorium_message_tag(message);
     count = thorium_message_count(message);
     buffer = thorium_message_buffer(message);
-    new_count = sizeof(int) * 2 + count;
+    new_count = thorium_message_metadata_size(message) + count;
 
     /* the runtime system always needs at least
      * 2 int in the buffer for actor names
