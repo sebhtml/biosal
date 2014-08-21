@@ -21,7 +21,7 @@
 
 struct thorium_script bsal_manager_script = {
     .identifier = BSAL_MANAGER_SCRIPT,
-    .name = "manager",
+    .name = "bsal_manager",
     .description = "Manager",
     .author = "Sebastien Boisvert",
     .version = "",
@@ -156,13 +156,13 @@ void bsal_manager_receive(struct thorium_actor *actor, struct thorium_message *m
             printf("DEBUG manager %d add spawned processes for spawner %d\n",
                             thorium_actor_name(actor), spawner);
 
-            stores = (struct bsal_vector *)bsal_map_add(&concrete_actor->spawner_children, &index);
+            stores = bsal_map_add(&concrete_actor->spawner_children, &index);
 
 #ifdef BSAL_MANAGER_DEBUG
             printf("DEBUG adding %d to table\n", index);
 #endif
 
-            bucket = (int *)bsal_map_add(&concrete_actor->spawner_child_count, &index);
+            bucket = bsal_map_add(&concrete_actor->spawner_child_count, &index);
             *bucket = 0;
 
 #ifdef BSAL_MANAGER_DEBUG
@@ -206,7 +206,7 @@ void bsal_manager_receive(struct thorium_actor *actor, struct thorium_message *m
 
     } else if (tag == THORIUM_ACTOR_GET_NODE_WORKER_COUNT_REPLY) {
 
-        workers = *(int *)buffer;
+        thorium_message_unpack_int(message, 0, &workers);
 
         index = source;
 
@@ -217,7 +217,7 @@ void bsal_manager_receive(struct thorium_actor *actor, struct thorium_message *m
         printf("DEBUG getting table index %d\n", index);
 #endif
 
-        bucket = (int *)bsal_map_get(&concrete_actor->spawner_child_count, &index);
+        bucket = bsal_map_get(&concrete_actor->spawner_child_count, &index);
 
 #ifdef BSAL_MANAGER_DEBUG
         printf("DEBUG685-2 spawner %d index %d bucket %p\n", source, index, (void *)bucket);
@@ -266,8 +266,8 @@ void bsal_manager_receive(struct thorium_actor *actor, struct thorium_message *m
         store = *(int *)buffer;
         index = source;
 
-        stores = (struct bsal_vector *)bsal_map_get(&concrete_actor->spawner_children, &index);
-        bucket = (int *)bsal_map_get(&concrete_actor->spawner_child_count, &index);
+        stores = bsal_map_get(&concrete_actor->spawner_children, &index);
+        bucket = bsal_map_get(&concrete_actor->spawner_child_count, &index);
 
         bsal_vector_push_back(stores, &store);
 
@@ -277,7 +277,7 @@ void bsal_manager_receive(struct thorium_actor *actor, struct thorium_message *m
                         (int)bsal_vector_size(stores), *bucket);
 #endif
 
-        if (bsal_vector_size(stores) == *bucket) {
+        if (bsal_vector_size(stores) >= *bucket) {
 
             concrete_actor->ready_spawners++;
 

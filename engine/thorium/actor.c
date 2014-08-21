@@ -585,6 +585,7 @@ int thorium_actor_receive_system(struct thorium_actor *self, struct thorium_mess
     int offset;
     int bytes;
     struct bsal_memory_pool *ephemeral_memory;
+    int workers;
 
 #ifdef THORIUM_ACTOR_STORE_CHILDREN
     int new_actor;
@@ -856,8 +857,12 @@ int thorium_actor_receive_system(struct thorium_actor *self, struct thorium_mess
 
     } else if (tag == THORIUM_ACTOR_GET_NODE_WORKER_COUNT) {
 
+        workers = thorium_actor_node_worker_count(self);
+
+        printf("DEBUG THORIUM_ACTOR_GET_NODE_WORKER_COUNT %d workers\n", workers);
+
         thorium_actor_send_reply_int(self, THORIUM_ACTOR_GET_NODE_WORKER_COUNT_REPLY,
-                        thorium_actor_node_worker_count(self));
+                        workers);
         return 1;
 
     } else  if (tag == THORIUM_ACTOR_FORWARD_MESSAGES) {
@@ -866,8 +871,6 @@ int thorium_actor_receive_system(struct thorium_actor *self, struct thorium_mess
         return 1;
 
     }
-
-
 
     return 0;
 }
