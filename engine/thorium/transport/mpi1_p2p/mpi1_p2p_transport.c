@@ -251,6 +251,8 @@ int thorium_mpi1_p2p_transport_test(struct thorium_transport *self, struct thori
 
             thorium_worker_buffer_init(worker_buffer, worker, buffer);
 
+            thorium_mpi1_p2p_active_request_destroy(&active_request);
+
             return 1;
 
         /* Just put it back in the FIFO for later */
