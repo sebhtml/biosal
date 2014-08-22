@@ -10,6 +10,10 @@
 
 #include <core/system/debugger.h>
 
+/*
+#define THORIUM_TRANSPORT_DEBUG
+*/
+
 #define FLAG_PROFILE 0
 
 void thorium_transport_init(struct thorium_transport *self, struct thorium_node *node,
@@ -113,6 +117,13 @@ int thorium_transport_send(struct thorium_transport *self, struct thorium_messag
     value = self->transport_interface->send(self, message);
 
     if (value) {
+#ifdef THORIUM_TRANSPORT_DEBUG
+        printf("TRANSPORT SEND Source %d Destination %d Tag %d Count %d\n",
+                        thorium_message_source_node(message),
+                        thorium_message_destination_node(message),
+                        thorium_message_tag(message),
+                        thorium_message_count(message));
+#endif
         ++self->active_request_count;
     }
 
@@ -121,11 +132,25 @@ int thorium_transport_send(struct thorium_transport *self, struct thorium_messag
 
 int thorium_transport_receive(struct thorium_transport *self, struct thorium_message *message)
 {
+    int value;
+
     if (self->transport_interface == NULL) {
         return 0;
     }
 
-    return self->transport_interface->receive(self, message);
+    value = self->transport_interface->receive(self, message);
+
+    if (value) {
+#ifdef THORIUM_TRANSPORT_DEBUG
+        printf("TRANSPORT RECEIVE Source %d Destination %d Tag %d Count %d\n",
+                        thorium_message_source_node(message),
+                        thorium_message_destination_node(message),
+                        thorium_message_tag(message),
+                        thorium_message_count(message));
+#endif
+    }
+
+    return value;
 }
 
 int thorium_transport_get_provided(struct thorium_transport *self)

@@ -14,6 +14,10 @@
 #include <string.h>
 
 /*
+#define DEBUG_MPI1_PT2PT
+*/
+
+/*
  * Use a dummy tag since the tag is actually stored inside the buffer
  * to avoid the MPI_TAG_UB bug / limitation in MPI.
  */
@@ -52,6 +56,32 @@ void thorium_mpi1_pt2pt_nonblocking_transport_init(struct thorium_transport *sel
     concrete_self->maximum_buffer_size = 8192;
 
     concrete_self->maximum_receive_request_count = 64;
+
+    /*
+     * Avoid a problem with MPICH:
+     * MPICH is hanging inside MPI_Test is there are too many requests.
+     *
+     * Here is the stack when MPICH hangs event if MPI_Test is supposed to be
+     * non-blocking.
+     *
+     * (gdb) bt
+#0  000000037e26df2f8 in poll () from /lib64/libc.so.6
+#1  000007f5e624ebe7e in MPID_nem_tcp_connpoll () from /software/mpich/3.1.1-1/lib/libmpi.so.12
+#2  000007f5e624db437 in MPIDI_CH3I_Progress () from /software/mpich/3.1.1-1/lib/libmpi.so.12
+#3  000007f5e62455038 in MPIR_Test_impl () from /software/mpich/3.1.1-1/lib/libmpi.so.12
+#4  000007f5e62455320 in PMPI_Test () from /software/mpich/3.1.1-1/lib/libmpi.so.12
+#5  00000000000422556 in thorium_mpi1_request_test (self=0x7fff5efe3f70) at engine/thorium/transport/mpi1_pt2pt_nonblocking/mpi1_request.c:71
+#6  00000000000421f42 in thorium_mpi1_pt2pt_nonblocking_transport_receive (self=0x7fff5efe4890, message=0x7fff5efe4040) at engine/thorium/transport/mpi1_pt2pt_nonblocking/mpi1_pt2pt_nonblocking_transport.c:328
+#7  00000000000418bcd in thorium_node_run_loop (node=0x7fff5efe4110) at engine/thorium/node.c:1828
+#8  00000000000418e9c in thorium_node_run (node=0x7fff5efe4110) at engine/thorium/node.c:714
+#9  0000000000041e878 in bsal_thorium_engine_boot (argc=<value optimized out>, argv=<value optimized out>, script_identifier=-1359079029, script=0x6524c0) at engine/thorium/thorium_engine.c:30
+#10 bsal_thorium_engine_boot_initial_actor (argc=<value optimized out>, argv=<value optimized out>, script_identifier=-1359079029, script=0x6524c0) at engine/thorium/thorium_engine.c:46
+#11 00000000000416083 in main (argc=6, argv=0x7fff5efe5548) at applications/spate_metagenome_assembler/main.c:8
+     */
+    if (self->size < 4) {
+        concrete_self->maximum_receive_request_count = 4;
+    }
+
     concrete_self->small_request_count = 0;
 
     concrete_self->maximum_big_receive_request_count = 4;
@@ -220,6 +250,11 @@ int thorium_mpi1_pt2pt_nonblocking_transport_send(struct thorium_transport *self
     thorium_mpi1_request_init_with_worker(&active_request, buffer, worker);
     request = thorium_mpi1_request_request(&active_request);
 
+#ifdef DEBUG_MPI1_PT2PT
+    printf("DEBUG Isend with tag %d RealTag %d\n", payload_tag,
+                    thorium_message_tag(message));
+#endif
+
     /* get return value */
     result = MPI_Isend(buffer, count, concrete_self->datatype, destination, payload_tag,
                     concrete_self->communicator, request);
@@ -269,6 +304,11 @@ int thorium_mpi1_pt2pt_nonblocking_transport_receive(struct thorium_transport *s
                         MPI_ANY_SOURCE);
 
         ++concrete_self->small_request_count;
+
+#ifdef DEBUG_MPI1_PT2PT
+        printf("DEBUG now has %d/%d TAG_SMALL_PAYLOAD requests\n", concrete_self->small_request_count,
+                        concrete_self->maximum_receive_request_count);
+#endif
     }
 
     /*
@@ -282,6 +322,12 @@ int thorium_mpi1_pt2pt_nonblocking_transport_receive(struct thorium_transport *s
                         MPI_ANY_SOURCE);
 
         ++concrete_self->big_request_count;
+
+#ifdef DEBUG_MPI1_PT2PT
+        printf("DEBUG now has %d/%d TAG_BIG_NOTIFICATION requests\n",
+                        concrete_self->big_request_count,
+                        concrete_self->maximum_big_receive_request_count);
+#endif
     }
 
     /*
