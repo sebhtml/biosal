@@ -30,6 +30,7 @@
 
 /*
 #define THORIUM_WORKER_DEBUG_MEMORY
+#define THORIUM_BUG_594
 */
 
 #define THORIUM_WORKER_UNPRODUCTIVE_TICK_LIMIT 256
@@ -142,8 +143,16 @@ void thorium_worker_init(struct thorium_worker *worker, int name, struct thorium
      * Disable the pool so that it uses allocate and free
      * directly.
      */
-    /*bsal_memory_pool_disable(&worker->outbound_message_memory_pool);*/
+
+#ifdef BSAL_MEMORY_POOL_DISABLE_MESSAGE_BUFFER_POOL
+    bsal_memory_pool_disable(&worker->outbound_message_memory_pool);
+#endif
+
+    /*
+     * Transport message buffers are fancy objects.
+     */
     bsal_memory_pool_enable_normalization(&worker->outbound_message_memory_pool);
+    bsal_memory_pool_enable_alignment(&worker->outbound_message_memory_pool);
 
     worker->ticks_without_production = 0;
 
@@ -256,6 +265,13 @@ void thorium_worker_send(struct thorium_worker *worker, struct thorium_message *
 
     thorium_message_set_buffer(&copy, buffer);
     thorium_message_write_metadata(&copy);
+
+#ifdef THORIUM_BUG_594
+    if (thorium_message_tag(&copy) == 30202) {
+        printf("DEBUG-594 thorium_worker_send\n");
+        thorium_message_print(&copy);
+    }
+#endif
 
 #ifdef THORIUM_WORKER_DEBUG_20140601
     if (thorium_message_tag(message) == 1100) {

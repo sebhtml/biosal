@@ -397,6 +397,12 @@ void bsal_input_controller_receive(struct thorium_actor *actor, struct thorium_m
         printf("asking stream/%d to open %s\n", stream, local_file);
 #endif
         thorium_message_init(&new_message, BSAL_INPUT_OPEN, strlen(local_file) + 1, local_file);
+
+#ifdef DEBUG_ISSUE_594
+        thorium_message_print(&new_message);
+        printf("SEND Buffer %s\n", local_file);
+#endif
+
         thorium_actor_send(actor, stream, &new_message);
         thorium_message_destroy(&new_message);
 
@@ -405,6 +411,10 @@ void bsal_input_controller_receive(struct thorium_actor *actor, struct thorium_m
             thorium_actor_send_to_self_empty(actor, BSAL_INPUT_SPAWN);
 
         }
+
+#ifdef DEBUG_ISSUE_594
+        printf("EXIT Buffer %s\n", local_file);
+#endif
 
     } else if (tag == BSAL_INPUT_OPEN_REPLY) {
 
@@ -1290,6 +1300,8 @@ void bsal_input_controller_set_offset_reply(struct thorium_actor *self, struct t
 
     file_index = bsal_mega_block_get_file(block);
     file_name = *(char **)bsal_vector_at(&concrete_actor->files, file_index);
+
+    printf("DEBUG send BSAL_INPUT_OPEN %s\n", file_name);
 
     thorium_message_init(&new_message, BSAL_INPUT_OPEN, strlen(file_name) + 1, file_name);
 

@@ -72,6 +72,14 @@
 #define BSAL_MEMORY_ALIGNMENT_BLUE_GENE_Q_L2_CACHE_LINE_SIZE 128
 
 /*
+ * IBM Blue Gene/Q alignment
+ *
+ * \see https://wiki.alcf.anl.gov/parts/index.php/Blue_Gene/Q
+ */
+
+#define BSAL_MEMORY_ALIGNMENT_BLUE_GENE_Q_DESIRABLE 32
+
+/*
  * The default alignment to use in biosal.
  * The default is 4 bytes.
  */
@@ -127,5 +135,8 @@ void bsal_memory_fence();
 void bsal_l_fence();
 void bsal_s_fence();
 void bsal_fence();
+
+size_t bsal_memory_normalize_segment_length_power_of_2(size_t size);
+
 
 #endif

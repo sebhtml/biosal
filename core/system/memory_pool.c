@@ -16,6 +16,7 @@
 #define FLAG_ENABLE_TRACKING 0
 #define FLAG_DISABLED 1
 #define FLAG_ENABLE_SEGMENT_NORMALIZATION 2
+#define FLAG_ALIGN 3
 
 void bsal_memory_pool_init(struct bsal_memory_pool *self, int block_size)
 {
@@ -37,6 +38,7 @@ void bsal_memory_pool_init(struct bsal_memory_pool *self, int block_size)
     bsal_bitmap_set_bit_uint32_t(&self->flags, FLAG_ENABLE_TRACKING);
     bsal_bitmap_clear_bit_uint32_t(&self->flags, FLAG_ENABLE_SEGMENT_NORMALIZATION);
     bsal_bitmap_clear_bit_uint32_t(&self->flags, FLAG_DISABLED);
+    bsal_bitmap_clear_bit_uint32_t(&self->flags, FLAG_ALIGN);
 }
 
 void bsal_memory_pool_destroy(struct bsal_memory_pool *self)
@@ -92,12 +94,46 @@ void *bsal_memory_pool_allocate(struct bsal_memory_pool *self, size_t size)
     void *pointer;
     size_t new_size;
 
+    /*
+     * Normalize the length of the segment to be a power of 2.
+     */
     if (self != NULL
                  && bsal_bitmap_get_bit_uint32_t(&self->flags, FLAG_ENABLE_SEGMENT_NORMALIZATION)) {
-        new_size = bsal_memory_pool_normalize_segment_length(self, size);
+
+        new_size = bsal_memory_normalize_segment_length_power_of_2(size);
 #if 0
         printf("NORMALIZE %zu -> %zu\n", size, new_size);
 #endif
+        size = new_size;
+    }
+
+    /*
+     * Normalize the length so that it won't break alignment
+     */
+    /*
+     * Finally, normalize so that the alignment is maintained.
+     *
+     * On Cray XE6 (AMD Opteron), or on Intel Xeon, this does not change
+     * the correctness while it can lead to better performance.
+     *
+     * On IBM Blue Gene/Q (IBM PowerPC A2 1.6 GHz), unaligned communication
+     * buffers produce incorrect behaviours.
+     *
+     * On Cetus and Mira, I noticed that MPI_Isend / MPI_Irecv and friends have very strange behavior
+     * when the buffer are not aligned at all.
+     *
+     * In http://www.redbooks.ibm.com/redbooks/pdfs/sg247948.pdf
+     *
+     * section 6.2.7 Buffer alignment sensitivity says that Blue Gene/Q likes MPI buffers aligned on 32 bytes.
+     *
+     * So 32-byte and 64-byte alignment can give better performance.
+     * But what is the necessary alignment for getting correct behavior ?
+     */
+    if (self != NULL
+                && bsal_bitmap_get_bit_uint32_t(&self->flags, FLAG_ALIGN)) {
+
+        new_size = bsal_memory_align(size);
+
         size = new_size;
     }
 
@@ -123,13 +159,6 @@ void *bsal_memory_pool_allocate_private(struct bsal_memory_pool *self, size_t si
     if (size == 0) {
         return NULL;
     }
-
-#ifdef BSAL_MEMORY_ALIGNMENT_ENABLED
-    /* Align memory to avoid problems with performance and/or
-     * Bus errors...
-     */
-    size = bsal_memory_align(size);
-#endif
 
     if (self == NULL || bsal_bitmap_get_bit_uint32_t(&self->flags, FLAG_DISABLED)) {
         return bsal_memory_allocate(size);
@@ -245,6 +274,9 @@ void bsal_memory_pool_free(struct bsal_memory_pool *self, void *pointer)
         return;
     }
 
+    /*
+     * This was not allocated by this pool.
+     */
     if (!bsal_map_get_value(&self->allocated_blocks, &pointer, &size)) {
         return;
     }
@@ -274,6 +306,16 @@ void bsal_memory_pool_enable_normalization(struct bsal_memory_pool *self)
 void bsal_memory_pool_disable_normalization(struct bsal_memory_pool *self)
 {
     bsal_bitmap_clear_bit_uint32_t(&self->flags, FLAG_ENABLE_SEGMENT_NORMALIZATION);
+}
+
+void bsal_memory_pool_enable_alignment(struct bsal_memory_pool *self)
+{
+    bsal_bitmap_set_bit_uint32_t(&self->flags, FLAG_ALIGN);
+}
+
+void bsal_memory_pool_disable_alignment(struct bsal_memory_pool *self)
+{
+    bsal_bitmap_clear_bit_uint32_t(&self->flags, FLAG_ALIGN);
 }
 
 void bsal_memory_pool_enable_tracking(struct bsal_memory_pool *self)
@@ -318,54 +360,4 @@ void bsal_memory_pool_disable(struct bsal_memory_pool *self)
     bsal_bitmap_set_bit_uint32_t(&self->flags, FLAG_DISABLED);
 }
 
-size_t bsal_memory_pool_normalize_segment_length(struct bsal_memory_pool *self, size_t size)
-{
-    uint32_t value;
-    size_t maximum;
-    size_t return_value;
 
-    /*
-     * Pick up the next power of 2.
-     */
-
-    /*
-     * Check if the value fits in 32 bits.
-     */
-    value = 0;
-    value--;
-
-    maximum = value;
-
-    if (size > maximum) {
-        /*
-         * Use a manual approach for things that don't fit in a uint32_t.
-         */
-
-        return_value = 1;
-
-        while (return_value < size) {
-            return_value *= 2;
-        }
-
-        return return_value;
-    }
-
-    /*
-     * Otherwise, use the fancy algorithm.
-     * The algorithm is from http://graphics.stanford.edu/~seander/bithacks.html#RoundUpPowerOf2
-     */
-
-    value = size;
-
-    value--;
-    value |= value >> 1;
-    value |= value >> 2;
-    value |= value >> 4;
-    value |= value >> 8;
-    value |= value >> 16;
-    value++;
-
-    return_value = value;
-
-    return value;
-}

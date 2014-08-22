@@ -601,7 +601,10 @@ void thorium_worker_pool_assign_worker_to_actor(struct thorium_worker_pool *pool
 
     BSAL_DEBUGGER_ASSERT(worker_index >= 0);
 
+#ifdef THORIUM_WORKER_POOL_DEBUG
     printf("ASSIGNING %d to %d\n", name, worker_index);
+#endif
+
     thorium_scheduler_set_actor_worker(&pool->scheduler, name, worker_index);
 }
 

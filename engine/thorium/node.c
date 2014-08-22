@@ -46,7 +46,6 @@
 #define THORIUM_NODE_DEBUG_RUN "Yes"
 */
 
-
 /*
 #define THORIUM_NODE_SIMPLE_INITIAL_ACTOR_NAMES
 #define THORIUM_NODE_DEBUG_SPAWN
@@ -56,6 +55,10 @@
 #define THORIUM_NODE_DEBUG_LOOP
 
 #define THORIUM_NODE_DEBUG_SPAWN_KILL
+*/
+
+/*
+#define TRANSPORT_DEBUG_ISSUE_594
 */
 
 static struct thorium_node *thorium_node_global_self;
@@ -116,13 +119,19 @@ void thorium_node_init(struct thorium_node *node, int *argc, char ***argv)
 
     bsal_memory_pool_init(&node->inbound_message_memory_pool, 2097152);
     bsal_memory_pool_enable_normalization(&node->inbound_message_memory_pool);
+    bsal_memory_pool_enable_alignment(&node->inbound_message_memory_pool);
 
-    /*bsal_memory_pool_disable(&node->inbound_message_memory_pool);*/
+#ifdef BSAL_MEMORY_POOL_DISABLE_MESSAGE_BUFFER_POOL
+    bsal_memory_pool_disable(&node->inbound_message_memory_pool);
+#endif
 
     bsal_memory_pool_init(&node->outbound_message_memory_pool, 2097152);
     bsal_memory_pool_enable_normalization(&node->outbound_message_memory_pool);
+    bsal_memory_pool_enable_alignment(&node->outbound_message_memory_pool);
 
-    /*bsal_memory_pool_disable(&node->outbound_message_memory_pool);*/
+#ifdef BSAL_MEMORY_POOL_DISABLE_MESSAGE_BUFFER_POOL
+    bsal_memory_pool_disable(&node->outbound_message_memory_pool);
+#endif
 
     thorium_transport_init(&node->transport, node, argc, argv,
                     &node->inbound_message_memory_pool,
@@ -1122,6 +1131,13 @@ void thorium_node_send(struct thorium_node *node, struct thorium_message *messag
         all = count + metadata_size;
         thorium_message_set_count(message, all);
 
+#ifdef TRANSPORT_DEBUG_ISSUE_594
+    if (thorium_message_tag(message) == 30202) {
+        printf("DEBUG-594 thorium_node_send\n");
+        thorium_message_print(message);
+    }
+#endif
+
         thorium_transport_send(&node->transport, message);
 
 #ifdef THORIUM_NODE_DEBUG_20140601_8
@@ -1748,7 +1764,18 @@ void thorium_node_check_load(struct thorium_node *node)
 
 int thorium_node_pull(struct thorium_node *node, struct thorium_message *message)
 {
-    return thorium_worker_pool_dequeue_message(&node->worker_pool, message);
+    int value;
+
+    value = thorium_worker_pool_dequeue_message(&node->worker_pool, message);
+
+#ifdef TRANSPORT_DEBUG_ISSUE_594
+    if (value && thorium_message_tag(message) == 30202) {
+        printf("BUG-594 thorium_node_pull\n");
+        thorium_message_print(message);
+    }
+#endif
+
+    return value;
 }
 
 void thorium_node_run_loop(struct thorium_node *node)

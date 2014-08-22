@@ -2,6 +2,7 @@
 #include "message.h"
 
 #include <core/system/packer.h>
+#include <core/system/debugger.h>
 
 #include <stdlib.h>
 #include <string.h>
@@ -70,8 +71,15 @@ void thorium_message_set_destination(struct thorium_message *message, int destin
     message->destination_actor = destination;
 }
 
-void thorium_message_print(struct thorium_message *message)
+void thorium_message_print(struct thorium_message *self)
 {
+    printf("Message Tag %d Count %d SourceActor %d DestinationActor %d\n",
+                    self->tag,
+                    self->count,
+                    self->source_actor,
+                    self->destination_actor);
+
+    bsal_debugger_examine(self->buffer, self->count);
 }
 
 void *thorium_message_buffer(struct thorium_message *message)

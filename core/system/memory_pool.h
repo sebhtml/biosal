@@ -12,6 +12,18 @@
 #include <stdint.h>
 
 /*
+*/
+
+/*
+ * Disable particular memory pool on IBM
+ * Blue Gene/Q because otherwise it does not
+ * work.
+ */
+#if defined(__bgq__)
+#define BSAL_MEMORY_POOL_DISABLE_MESSAGE_BUFFER_POOL
+#endif
+
+/*
  * \see http://en.wikipedia.org/wiki/Memory_pool
  */
 struct bsal_memory_pool {
@@ -40,9 +52,10 @@ void bsal_memory_pool_disable(struct bsal_memory_pool *self);
 void bsal_memory_pool_add_block(struct bsal_memory_pool *self);
 void *bsal_memory_pool_allocate_private(struct bsal_memory_pool *self, size_t size);
 
-size_t bsal_memory_pool_normalize_segment_length(struct bsal_memory_pool *self, size_t size);
-
 void bsal_memory_pool_disable_normalization(struct bsal_memory_pool *self);
 void bsal_memory_pool_enable_normalization(struct bsal_memory_pool *self);
+
+void bsal_memory_pool_disable_alignment(struct bsal_memory_pool *self);
+void bsal_memory_pool_enable_alignment(struct bsal_memory_pool *self);
 
 #endif

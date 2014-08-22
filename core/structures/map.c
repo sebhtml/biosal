@@ -20,7 +20,7 @@ void bsal_map_init(struct bsal_map *self, int key_size, int value_size)
 
 void bsal_map_init_with_capacity(struct bsal_map *self, int key_size, int value_size, uint64_t buckets)
 {
-#ifdef BSAL_MEMORY_ALIGNMENT_ENABLED
+#ifdef BSAL_MAP_ALIGNMENT_ENABLED
     self->original_key_size = key_size;
     self->original_value_size = value_size;
 
@@ -38,7 +38,7 @@ void bsal_map_destroy(struct bsal_map *self)
 {
     bsal_dynamic_hash_table_destroy(&self->table);
 
-#ifdef BSAL_MEMORY_ALIGNMENT_ENABLED
+#ifdef BSAL_MAP_ALIGNMENT_ENABLED
     bsal_memory_free(self->key_buffer);
     self->key_buffer = NULL;
 #endif
@@ -46,7 +46,7 @@ void bsal_map_destroy(struct bsal_map *self)
 
 void *bsal_map_add(struct bsal_map *self, void *key)
 {
-#ifdef BSAL_MEMORY_ALIGNMENT_ENABLED
+#ifdef BSAL_MAP_ALIGNMENT_ENABLED
     key = bsal_map_pad_key(self, key);
 #endif
 
@@ -55,7 +55,7 @@ void *bsal_map_add(struct bsal_map *self, void *key)
 
 void *bsal_map_get(struct bsal_map *self, void *key)
 {
-#ifdef BSAL_MEMORY_ALIGNMENT_ENABLED
+#ifdef BSAL_MAP_ALIGNMENT_ENABLED
     key = bsal_map_pad_key(self, key);
 #endif
 
@@ -64,7 +64,7 @@ void *bsal_map_get(struct bsal_map *self, void *key)
 
 void bsal_map_delete(struct bsal_map *self, void *key)
 {
-#ifdef BSAL_MEMORY_ALIGNMENT_ENABLED
+#ifdef BSAL_MAP_ALIGNMENT_ENABLED
     key = bsal_map_pad_key(self, key);
 #endif
 
@@ -113,7 +113,7 @@ int bsal_map_update_value(struct bsal_map *self, void *key, void *value)
     void *bucket;
     int value_size;
 
-#ifdef BSAL_MEMORY_ALIGNMENT_ENABLED
+#ifdef BSAL_MAP_ALIGNMENT_ENABLED
     key = bsal_map_pad_key(self, key);
 #endif
 
@@ -123,7 +123,7 @@ int bsal_map_update_value(struct bsal_map *self, void *key, void *value)
         return 0;
     }
 
-#ifdef BSAL_MEMORY_ALIGNMENT_ENABLED
+#ifdef BSAL_MAP_ALIGNMENT_ENABLED
     value_size = self->original_value_size;
 #else
     value_size = bsal_map_get_value_size(self);
@@ -139,7 +139,7 @@ int bsal_map_add_value(struct bsal_map *self, void *key, void *value)
     void *bucket;
     int value_size;
 
-#ifdef BSAL_MEMORY_ALIGNMENT_ENABLED
+#ifdef BSAL_MAP_ALIGNMENT_ENABLED
     key = bsal_map_pad_key(self, key);
 #endif
 
@@ -153,7 +153,7 @@ int bsal_map_add_value(struct bsal_map *self, void *key, void *value)
 
     bucket = bsal_map_add(self, key);
 
-#ifdef BSAL_MEMORY_ALIGNMENT_ENABLED
+#ifdef BSAL_MAP_ALIGNMENT_ENABLED
     value_size = self->original_value_size;
 #else
     value_size = bsal_map_get_value_size(self);
@@ -166,7 +166,7 @@ int bsal_map_add_value(struct bsal_map *self, void *key, void *value)
 
 int bsal_map_get_key_size(struct bsal_map *self)
 {
-#ifdef BSAL_MEMORY_ALIGNMENT_ENABLED
+#ifdef BSAL_MAP_ALIGNMENT_ENABLED
     return self->original_key_size;
 #else
     return bsal_dynamic_hash_table_get_key_size(&self->table);
@@ -175,7 +175,7 @@ int bsal_map_get_key_size(struct bsal_map *self)
 
 int bsal_map_get_value_size(struct bsal_map *self)
 {
-#ifdef BSAL_MEMORY_ALIGNMENT_ENABLED
+#ifdef BSAL_MAP_ALIGNMENT_ENABLED
     return self->original_value_size;
 #else
     return bsal_dynamic_hash_table_get_value_size(&self->table);
@@ -192,7 +192,7 @@ int bsal_map_get_value(struct bsal_map *self, void *key, void *value)
     void *bucket;
     int size;
 
-#ifdef BSAL_MEMORY_ALIGNMENT_ENABLED
+#ifdef BSAL_MAP_ALIGNMENT_ENABLED
     key = bsal_map_pad_key(self, key);
 #endif
 
@@ -202,7 +202,7 @@ int bsal_map_get_value(struct bsal_map *self, void *key, void *value)
         return 0;
     }
 
-#ifdef BSAL_MEMORY_ALIGNMENT_ENABLED
+#ifdef BSAL_MAP_ALIGNMENT_ENABLED
     size = self->original_value_size;
 #else
     size = bsal_map_get_value_size(self);
@@ -220,7 +220,7 @@ int bsal_map_pack_unpack(struct bsal_map *self, int operation, void *buffer)
     struct bsal_packer packer;
     int offset;
 
-#ifdef BSAL_MEMORY_ALIGNMENT_ENABLED
+#ifdef BSAL_MAP_ALIGNMENT_ENABLED
     int key_size;
 #endif
 
@@ -228,7 +228,7 @@ int bsal_map_pack_unpack(struct bsal_map *self, int operation, void *buffer)
 
     bsal_packer_init(&packer, operation, buffer);
 
-#ifdef BSAL_MEMORY_ALIGNMENT_ENABLED
+#ifdef BSAL_MAP_ALIGNMENT_ENABLED
     bsal_packer_work(&packer, &self->original_key_size, sizeof(self->original_key_size));
     bsal_packer_work(&packer, &self->original_value_size, sizeof(self->original_value_size));
 #endif
@@ -245,7 +245,7 @@ int bsal_map_pack_unpack(struct bsal_map *self, int operation, void *buffer)
     } else if (operation == BSAL_PACKER_OPERATION_UNPACK) {
         offset += bsal_dynamic_hash_table_unpack(&self->table, (char *)buffer + offset);
 
-#ifdef BSAL_MEMORY_ALIGNMENT_ENABLED
+#ifdef BSAL_MAP_ALIGNMENT_ENABLED
         key_size = bsal_dynamic_hash_table_get_key_size(&self->table);
 
         self->key_padding = key_size - self->original_key_size;
@@ -257,7 +257,7 @@ int bsal_map_pack_unpack(struct bsal_map *self, int operation, void *buffer)
     return offset;
 }
 
-#ifdef BSAL_MEMORY_ALIGNMENT_ENABLED
+#ifdef BSAL_MAP_ALIGNMENT_ENABLED
 void *bsal_map_pad_key(struct bsal_map *self, void *key)
 {
     if (self->key_padding == 0) {

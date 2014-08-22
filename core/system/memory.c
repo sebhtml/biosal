@@ -169,9 +169,16 @@ uint64_t bsal_memory_get_heap_size()
 
 size_t bsal_memory_align(size_t unaligned)
 {
+/*
+ * On IBM Blue Gene/Q, use the configured alignment.
+ * Otherwise, we don't care really.
+ */
+#if defined(__bgq__)
+    return bsal_memory_align_private(unaligned, BSAL_MEMORY_ALIGNMENT_BLUE_GENE_Q_DESIRABLE);
+
 /* enable alignment only if alignment is greater than 0
  */
-#ifdef BSAL_MEMORY_ALIGNMENT_ENABLED
+#elif defined(BSAL_MEMORY_ALIGNMENT_ENABLED)
     return bsal_memory_align_private(unaligned, BSAL_MEMORY_ALIGNMENT_DEFAULT);
 #else
     return unaligned;
@@ -182,7 +189,17 @@ size_t bsal_memory_align_private(size_t unaligned, size_t alignment)
 {
     size_t aligned;
 
+    /*
+     * Nothing to align, really.
+     */
     if (alignment == 0) {
+        return unaligned;
+    }
+
+    /*
+     * Already aligned.
+     */
+    if (unaligned == alignment) {
         return unaligned;
     }
 
@@ -190,7 +207,8 @@ size_t bsal_memory_align_private(size_t unaligned, size_t alignment)
 
 #ifdef BSAL_DNA_KMER_DEBUG_ALIGNMENT
     printf("ALIGNMENT %d unaligned %d aligned %d\n",
-                    alignment, unaligned, aligned);
+                    (int)alignment, (int)unaligned, (int)aligned);
+
 #endif
 
     return aligned;
@@ -225,12 +243,12 @@ void bsal_l_fence()
 
 void bsal_s_fence()
 {
-#if defined(__bgq__)
-    __lwsync();
-
-#elif defined(__GNUC__)
+#if defined(__GNUC__)
 
     bsal_fence();
+
+#elif defined(__bgq__)
+    __lwsync();
 
 #elif defined(_CRAYC)
     __builtin_ia32_sfence();
@@ -244,14 +262,7 @@ void bsal_s_fence()
 
 void bsal_fence()
 {
-#ifdef __bgq__
-
-    /*
-     * \see http://publib.boulder.ibm.com/infocenter/cellcomp/v101v121/index.jsp?topic=/com.ibm.xlcpp101.cell.doc/compiler_ref/compiler_builtins.html
-     */
-    __sync();
-
-#elif defined(__GNUC__)
+#if defined(__GNUC__)
 
     /*
      * \see http://stackoverflow.com/questions/982129/what-does-sync-synchronize-do
@@ -267,6 +278,14 @@ void bsal_fence()
      * \see https://gcc.gnu.org/onlinedocs/gcc-4.4.5/gcc/Atomic-Builtins.html
      */
     __sync_synchronize();
+
+#elif defined(__bgq__)
+
+    /*
+     * \see http://publib.boulder.ibm.com/infocenter/cellcomp/v101v121/index.jsp?topic=/com.ibm.xlcpp101.cell.doc/compiler_ref/compiler_builtins.html
+     */
+    __sync();
+
 
 
 #elif defined(_CRAYC)
@@ -298,4 +317,56 @@ void bsal_fence()
 #error "Memory fence is not implemented for unknown systems"
     /* Do nothing... */
 #endif
+}
+
+size_t bsal_memory_normalize_segment_length_power_of_2(size_t size)
+{
+    uint32_t value;
+    size_t maximum;
+    size_t return_value;
+
+    /*
+     * Pick up the next power of 2.
+     */
+
+    /*
+     * Check if the value fits in 32 bits.
+     */
+    value = 0;
+    value--;
+
+    maximum = value;
+
+    if (size > maximum) {
+        /*
+         * Use a manual approach for things that don't fit in a uint32_t.
+         */
+
+        return_value = 1;
+
+        while (return_value < size) {
+            return_value *= 2;
+        }
+
+        return return_value;
+    }
+
+    /*
+     * Otherwise, use the fancy algorithm.
+     * The algorithm is from http://graphics.stanford.edu/~seander/bithacks.html#RoundUpPowerOf2
+     */
+
+    value = size;
+
+    value--;
+    value |= value >> 1;
+    value |= value >> 2;
+    value |= value >> 4;
+    value |= value >> 8;
+    value |= value >> 16;
+    value++;
+
+    return_value = value;
+
+    return value;
 }

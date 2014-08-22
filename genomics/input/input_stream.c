@@ -34,7 +34,7 @@ struct thorium_script bsal_input_stream_script = {
     .destroy = bsal_input_stream_destroy,
     .receive = bsal_input_stream_receive,
     .size = sizeof(struct bsal_input_stream),
-    .name = "input_stream"
+    .name = "bsal_input_stream"
 };
 
 void bsal_input_stream_init(struct thorium_actor *actor)
@@ -116,6 +116,11 @@ void bsal_input_stream_init(struct thorium_actor *actor)
     bsal_vector_init(&concrete_self->end_offsets, sizeof(uint64_t));
 
     bsal_vector_init(&concrete_self->parallel_mega_blocks, sizeof(struct bsal_vector));
+
+    printf("%s/%d is now online on node %d\n",
+                    thorium_actor_script_name(actor),
+                    thorium_actor_name(actor),
+                    thorium_actor_node_name(actor));
 }
 
 void bsal_input_stream_destroy(struct thorium_actor *actor)
@@ -231,6 +236,13 @@ void bsal_input_stream_receive(struct thorium_actor *actor, struct thorium_messa
         printf("stream/%d (node/%d) opens file %s offset %" PRIu64 "\n", thorium_actor_name(actor),
                         thorium_actor_node_name(actor), file_name_in_buffer,
                         concrete_self->starting_offset);
+
+#ifdef DEBUG_ISSUE_594
+        thorium_message_print(message);
+
+        printf("Buffer %s\n", buffer);
+#endif
+
         concrete_self->file_name = bsal_memory_allocate(strlen(file_name_in_buffer) + 1);
         strcpy(concrete_self->file_name, file_name_in_buffer);
 
@@ -318,7 +330,6 @@ void bsal_input_stream_receive(struct thorium_actor *actor, struct thorium_messa
 
             /* notify the controller of our progress...
              */
-
 
         } else {
 
@@ -664,6 +675,11 @@ void bsal_input_stream_set_start_offset(struct thorium_actor *self, struct thori
     thorium_message_unpack_uint64_t(message, 0, &concrete_self->starting_offset);
     thorium_actor_send_reply_empty(self, BSAL_INPUT_STREAM_SET_START_OFFSET_REPLY);
 
+#ifdef DEBUG_ISSUE_594
+    printf("DEBUG %d bsal_input_stream_set_start_offset\n",
+                    thorium_actor_name(self));
+#endif
+
     concrete_self->last_offset = concrete_self->starting_offset;
 }
 
@@ -672,6 +688,11 @@ void bsal_input_stream_set_end_offset(struct thorium_actor *self, struct thorium
     struct bsal_input_stream *concrete_self;
 
     concrete_self = (struct bsal_input_stream *)thorium_actor_concrete_actor(self);
+
+#ifdef DEBUG_ISSUE_594
+    printf("DEBUG %d bsal_input_stream_set_end_offset\n",
+                    thorium_actor_name(self));
+#endif
 
     thorium_message_unpack_uint64_t(message, 0, &concrete_self->ending_offset);
     thorium_actor_send_reply_empty(self, BSAL_INPUT_STREAM_SET_END_OFFSET_REPLY);
@@ -751,6 +772,10 @@ void bsal_input_stream_count_in_parallel(struct thorium_actor *self, struct thor
 
     thorium_actor_add_route(self, THORIUM_ACTOR_SPAWN_REPLY, bsal_input_stream_spawn_reply);
 
+    printf("DEBUG stream/%d spawns %d streams for counting\n",
+                    thorium_actor_name(self),
+                    size);
+
     for (i = 0; i < size; i++) {
 
         spawner = thorium_actor_get_spawner(self, &concrete_self->spawners);
@@ -768,12 +793,20 @@ void bsal_input_stream_spawn_reply(struct thorium_actor *self, struct thorium_me
     int size;
     uint64_t start_offset;
     uint64_t end_offset;
+    int name;
 
+    name = thorium_actor_name(self);
     concrete_self = (struct bsal_input_stream *)thorium_actor_concrete_actor(self);
 
     thorium_message_unpack_int(message, 0, &stream);
 
     bsal_vector_push_back_int(&concrete_self->parallel_streams, stream);
+
+#ifdef DEBUG_ISSUE_594
+    printf("DEBUG bsal_input_stream_spawn_reply %d/%d\n",
+            (int)bsal_vector_size(&concrete_self->parallel_streams),
+            (int)bsal_vector_size(&concrete_self->start_offsets));
+#endif
 
     if (bsal_vector_size(&concrete_self->parallel_streams) ==
                     bsal_vector_size(&concrete_self->start_offsets)) {
@@ -795,6 +828,14 @@ void bsal_input_stream_spawn_reply(struct thorium_actor *self, struct thorium_me
             start_offset = bsal_vector_at_as_uint64_t(&concrete_self->start_offsets, i);
             end_offset = bsal_vector_at_as_uint64_t(&concrete_self->end_offsets, i);
             stream = bsal_vector_at_as_int(&concrete_self->parallel_streams, i);
+
+#ifdef DEBUG_ISSUE_594
+            printf("actor %d send BSAL_INPUT_STREAM_SET_START_OFFSET to %d\n",
+                            name, stream);
+
+            printf("actor %d send BSAL_INPUT_STREAM_SET_END_OFFSET to %d\n",
+                            name, stream);
+#endif
 
             thorium_actor_send_uint64_t(self, stream, BSAL_INPUT_STREAM_SET_START_OFFSET,
                             start_offset);
@@ -1026,8 +1067,13 @@ void bsal_input_stream_set_offset_reply(struct thorium_actor *self, struct thori
     struct bsal_input_stream *concrete_self;
 
     concrete_self = (struct bsal_input_stream *)thorium_actor_concrete_actor(self);
-
     ++concrete_self->finished_parallel_stream_count;
+
+#ifdef DEBUG_ISSUE_594
+    printf("DEBUG bsal_input_stream_set_offset_reply %d/%d\n",
+                    concrete_self->finished_parallel_stream_count,
+                    2 * bsal_vector_size(&concrete_self->parallel_streams));
+#endif
 
     if (concrete_self->finished_parallel_stream_count ==
                     2 * bsal_vector_size(&concrete_self->parallel_streams)) {
@@ -1044,6 +1090,10 @@ void bsal_input_stream_set_offset_reply(struct thorium_actor *self, struct thori
                         &concrete_self->parallel_streams,
                         BSAL_INPUT_OPEN,
                         strlen(concrete_self->file_name) + 1,
+                        concrete_self->file_name);
+
+        printf("DEBUG SEND BSAL_INPUT_OPEN to %d actors with file %s\n",
+                        (int)bsal_vector_size(&concrete_self->parallel_streams),
                         concrete_self->file_name);
     }
 }

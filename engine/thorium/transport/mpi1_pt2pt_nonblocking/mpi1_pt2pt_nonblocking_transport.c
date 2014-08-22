@@ -15,6 +15,8 @@
 
 /*
 #define DEBUG_MPI1_PT2PT
+
+#define DEBUG_BIG_HANDSHAKE
 */
 
 /*
@@ -48,9 +50,6 @@ void thorium_mpi1_pt2pt_nonblocking_transport_init(struct thorium_transport *sel
     int result;
     int provided;
 
-    /*
-     * 128 MiB for receive buffers.
-     */
     concrete_self = thorium_transport_get_concrete_transport(self);
 
     concrete_self->maximum_buffer_size = 8192;
@@ -236,7 +235,9 @@ int thorium_mpi1_pt2pt_nonblocking_transport_send(struct thorium_transport *self
         result = MPI_Isend(buffer2, count2, concrete_self->datatype, destination, TAG_BIG_NOTIFICATION,
                     concrete_self->communicator, request2);
 
+#ifdef DEBUG_BIG_HANDSHAKE
         printf("DEBUG Sending TAG_BIG_NOTIFICATION count %d\n", count);
+#endif
 
         if (result != MPI_SUCCESS) {
             return 0;
@@ -368,7 +369,9 @@ int thorium_mpi1_pt2pt_nonblocking_transport_receive(struct thorium_transport *s
         size = *(int *)buffer;
         request_tag = TAG_BIG_PAYLOAD;
 
+#ifdef DEBUG_BIG_HANDSHAKE
         printf("DEBUG received TAG_BIG_NOTIFICATION count %d\n", size);
+#endif
 
         /*
          * Post the receive operation using the same source.
@@ -401,7 +404,9 @@ int thorium_mpi1_pt2pt_nonblocking_transport_receive(struct thorium_transport *s
 #endif
 
     if (tag == TAG_BIG_PAYLOAD) {
+#ifdef DEBUG_BIG_HANDSHAKE
         printf("DEBUG Received TAG_BIG_PAYLOAD %d\n", count);
+#endif
         --concrete_self->big_request_count;
     } else if (tag == TAG_SMALL_PAYLOAD) {
         --concrete_self->small_request_count;
@@ -461,10 +466,13 @@ void thorium_mpi1_pt2pt_nonblocking_transport_add_receive_request(struct thorium
     buffer = bsal_memory_pool_allocate(self->inbound_message_memory_pool,
                     count);
 
+#ifdef DEBUG_BIG_HANDSHAKE
     if (tag == TAG_BIG_PAYLOAD) {
         printf("DEBUG add request for TAG_BIG_PAYLOAD count %d buffer %p\n",
                         count, buffer);
     }
+#endif
+
     thorium_mpi1_request_init(&request, buffer);
     mpi_request = thorium_mpi1_request_request(&request);
 

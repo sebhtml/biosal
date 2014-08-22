@@ -17,7 +17,7 @@ struct bsal_memory_pool;
  */
 struct bsal_map {
 
-#ifdef BSAL_MEMORY_ALIGNMENT_ENABLED
+#ifdef BSAL_MAP_ALIGNMENT_ENABLED
     int original_key_size;
     int original_value_size;
     void *key_buffer;
@@ -52,7 +52,7 @@ int bsal_map_unpack(struct bsal_map *self, void *buffer);
 int bsal_map_empty(struct bsal_map *self);
 int bsal_map_pack_unpack(struct bsal_map *self, int operation, void *buffer);
 
-#ifdef BSAL_MEMORY_ALIGNMENT_ENABLED
+#ifdef BSAL_MAP_ALIGNMENT_ENABLED
 void *bsal_map_pad_key(struct bsal_map *self, void *key);
 #endif
 

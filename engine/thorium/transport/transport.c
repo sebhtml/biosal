@@ -71,6 +71,11 @@ void thorium_transport_init(struct thorium_transport *self, struct thorium_node 
 
         bsal_bitmap_set_bit_value_uint32_t(&self->flags, FLAG_PROFILE, 1);
     }
+
+    if (self->rank == 0) {
+        printf("DEBUG TRANSPORT -> %s\n",
+                    self->transport_interface->name);
+    }
 }
 
 void thorium_transport_destroy(struct thorium_transport *self)
@@ -205,15 +210,12 @@ void thorium_transport_set(struct thorium_transport *self)
 
 #elif defined(THORIUM_TRANSPORT_USE_MPI1_PT2PT_NONBLOCKING)
         self->transport_interface = &thorium_mpi1_pt2pt_nonblocking_transport_implementation;
-#warning "Will use MPI 1.0 PT2PT nonblocking"
+/*#warning "Will use MPI 1.0 PT2PT nonblocking"*/
 
 #elif defined(THORIUM_TRANSPORT_USE_MPI1_P2P)
         self->transport_interface = &thorium_mpi1_p2p_transport_implementation;
-#warning "Will use MPI 1.0 PT2PT"
+/*#warning "Will use MPI 1.0 PT2PT"*/
 #endif
-
-    printf("TRANSPORT -> %s\n",
-                    self->transport_interface->name);
 }
 
 int thorium_transport_get_active_request_count(struct thorium_transport *self)
