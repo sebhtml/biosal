@@ -194,12 +194,22 @@ void thorium_transport_set(struct thorium_transport *self)
 {
     self->transport_interface = NULL;
 
+    /*
+#ifdef __bgq__
+#undef THORIUM_TRANSPORT_USE_MPI1_PT2PT_NONBLOCKING
+#endif
+*/
+
 #ifdef THORIUM_TRANSPORT_USE_PAMI_DISABLE
         self->transport_interface = &thorium_pami_transport_implementation;
+
 #elif defined(THORIUM_TRANSPORT_USE_MPI1_PT2PT_NONBLOCKING)
         self->transport_interface = &thorium_mpi1_pt2pt_nonblocking_transport_implementation;
+#warning "Will use MPI 1.0 PT2PT nonblocking"
+
 #elif defined(THORIUM_TRANSPORT_USE_MPI1_P2P)
         self->transport_interface = &thorium_mpi1_p2p_transport_implementation;
+#warning "Will use MPI 1.0 PT2PT"
 #endif
 
     printf("TRANSPORT -> %s\n",

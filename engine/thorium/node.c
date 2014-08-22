@@ -157,7 +157,7 @@ void thorium_node_init(struct thorium_node *node, int *argc, char ***argv)
     node->argc = *argc;
     node->argv = *argv;
 
-    if (bsal_command_has_argument(node->argc, node->argv, "print-counters")) {
+    if (bsal_command_has_argument(node->argc, node->argv, "-print-counters")) {
         bsal_bitmap_set_bit_uint32_t(&node->flags, FLAG_PRINT_COUNTERS);
     }
 
