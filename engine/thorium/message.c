@@ -1,6 +1,8 @@
 
 #include "message.h"
 
+#include <core/system/packer.h>
+
 #include <stdlib.h>
 #include <string.h>
 
@@ -102,63 +104,22 @@ void thorium_message_set_tag(struct thorium_message *message, int tag)
     message->tag = tag;
 }
 
-int thorium_message_metadata_size(struct thorium_message *message)
+int thorium_message_metadata_size(struct thorium_message *self)
 {
-    int total;
-
-    total = 0;
-
-    total += sizeof(message->source_actor);
-    total += sizeof(message->destination_actor);
-    total += sizeof(message->tag);
-
-    return total;
+    return thorium_message_pack_unpack(self, BSAL_PACKER_OPERATION_DRY_RUN,
+                    NULL);
 }
 
-void thorium_message_write_metadata(struct thorium_message *message)
+int thorium_message_write_metadata(struct thorium_message *self)
 {
-    /* This could be a single memcpy with N *sizeof(int)
-     * because source_actor and destination_actor are consecutive
-     */
-    int offset;
-    int size;
-
-    offset = message->count;
-
-    size = sizeof(message->source_actor);
-    memcpy((char *)message->buffer + offset, &message->source_actor, size);
-    offset += size;
-
-    size = sizeof(message->destination_actor);
-    memcpy((char *)message->buffer + offset, &message->destination_actor, size);
-    offset += size;
-
-    size = sizeof(message->tag);
-    memcpy((char *)message->buffer + offset, &message->tag, size);
-    offset += size;
+    return thorium_message_pack_unpack(self, BSAL_PACKER_OPERATION_PACK,
+                    (char *)self->buffer + self->count);
 }
 
-void thorium_message_read_metadata(struct thorium_message *message)
+int thorium_message_read_metadata(struct thorium_message *self)
 {
-    /* TODO this could be a single memcpy with 2 *sizeof(int)
-     * because source_actor and destination_actor are consecutive
-     */
-    int offset;
-    int size;
-
-    offset = message->count;
-
-    size = sizeof(message->source_actor);
-    memcpy(&message->source_actor, (char *)message->buffer + offset, size);
-    offset += size;
-
-    size = sizeof(message->destination_actor);
-    memcpy(&message->destination_actor, (char *)message->buffer + offset, size);
-    offset += size;
-
-    size = sizeof(message->tag);
-    memcpy(&message->tag, (char *)message->buffer + offset, size);
-    offset += size;
+    return thorium_message_pack_unpack(self, BSAL_PACKER_OPERATION_UNPACK,
+                    (char *)self->buffer + self->count);
 }
 
 void thorium_message_set_count(struct thorium_message *message, int count)
@@ -203,4 +164,22 @@ void thorium_message_init_with_nodes(struct thorium_message *self, int tag, int 
 
     thorium_message_set_source(self, source);
     thorium_message_set_destination(self, destination);
+}
+
+int thorium_message_pack_unpack(struct thorium_message *self, int operation, void *buffer)
+{
+    struct bsal_packer packer;
+    int count;
+
+    bsal_packer_init(&packer, operation, buffer);
+
+    bsal_packer_work(&packer, &self->source_actor, sizeof(self->source_actor));
+    bsal_packer_work(&packer, &self->destination_actor, sizeof(self->destination_actor));
+    bsal_packer_work(&packer, &self->tag, sizeof(self->tag));
+
+    count = bsal_packer_worked_bytes(&packer);
+
+    bsal_packer_destroy(&packer);
+
+    return count;
 }

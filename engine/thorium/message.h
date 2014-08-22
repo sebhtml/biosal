@@ -56,8 +56,8 @@ int thorium_message_destination_node(struct thorium_message *self);
 void thorium_message_set_destination_node(struct thorium_message *self, int destination);
 
 int thorium_message_metadata_size(struct thorium_message *self);
-void thorium_message_read_metadata(struct thorium_message *self);
-void thorium_message_write_metadata(struct thorium_message *self);
+int thorium_message_read_metadata(struct thorium_message *self);
+int thorium_message_write_metadata(struct thorium_message *self);
 
 void thorium_message_print(struct thorium_message *self);
 
@@ -65,5 +65,7 @@ void thorium_message_set_worker(struct thorium_message *self, int worker);
 int thorium_message_get_worker(struct thorium_message *self);
 
 int thorium_message_is_recycled(struct thorium_message *self);
+
+int thorium_message_pack_unpack(struct thorium_message *self, int operation, void *buffer);
 
 #endif
