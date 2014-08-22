@@ -17,6 +17,10 @@ struct thorium_transport;
 /*
  * MPI 1 point-to-point transport layer
  * using nonblocking communication.
+ *
+ * Designed by: Pavan Balaji
+ * Implemented by: Sebastien Boisvert
+ * August 2014
  */
 struct thorium_mpi1_pt2pt_nonblocking_transport {
 
