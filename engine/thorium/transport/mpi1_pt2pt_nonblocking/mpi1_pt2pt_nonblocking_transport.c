@@ -267,6 +267,8 @@ int thorium_mpi1_pt2pt_nonblocking_transport_receive(struct thorium_transport *s
         request_tag = TAG_SMALL_PAYLOAD;
         thorium_mpi1_pt2pt_nonblocking_transport_add_receive_request(self, request_tag, size,
                         MPI_ANY_SOURCE);
+
+        ++concrete_self->small_request_count;
     }
 
     /*
@@ -278,6 +280,8 @@ int thorium_mpi1_pt2pt_nonblocking_transport_receive(struct thorium_transport *s
         request_tag = TAG_BIG_NOTIFICATION;
         thorium_mpi1_pt2pt_nonblocking_transport_add_receive_request(self, request_tag, size,
                         MPI_ANY_SOURCE);
+
+        ++concrete_self->big_request_count;
     }
 
     /*
@@ -423,12 +427,6 @@ void thorium_mpi1_pt2pt_nonblocking_transport_add_receive_request(struct thorium
                     tag, concrete_self->communicator, mpi_request);
 
     bsal_ring_queue_enqueue(&concrete_self->receive_requests, &request);
-
-    if (tag == TAG_BIG_NOTIFICATION) {
-        ++concrete_self->big_request_count;
-    } else if (tag == TAG_SMALL_PAYLOAD) {
-        ++concrete_self->small_request_count;
-    }
 
 #ifdef THORIUM_MPI1_PT2PT_NON_BLOCKING_DEBUG
     printf("DEBUG Non Blocking added a request, now with %d/%d\n",
