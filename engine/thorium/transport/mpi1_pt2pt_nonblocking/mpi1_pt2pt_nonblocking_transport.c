@@ -265,7 +265,8 @@ int thorium_mpi1_pt2pt_nonblocking_transport_receive(struct thorium_transport *s
 
         size = concrete_self->maximum_buffer_size;
         request_tag = TAG_SMALL_PAYLOAD;
-        thorium_mpi1_pt2pt_nonblocking_transport_add_receive_request(self, request_tag, size);
+        thorium_mpi1_pt2pt_nonblocking_transport_add_receive_request(self, request_tag, size,
+                        MPI_ANY_SOURCE);
     }
 
     /*
@@ -275,7 +276,8 @@ int thorium_mpi1_pt2pt_nonblocking_transport_receive(struct thorium_transport *s
 
         size = sizeof(int);
         request_tag = TAG_BIG_NOTIFICATION;
-        thorium_mpi1_pt2pt_nonblocking_transport_add_receive_request(self, request_tag, size);
+        thorium_mpi1_pt2pt_nonblocking_transport_add_receive_request(self, request_tag, size,
+                        MPI_ANY_SOURCE);
     }
 
     /*
@@ -317,7 +319,19 @@ int thorium_mpi1_pt2pt_nonblocking_transport_receive(struct thorium_transport *s
         request_tag = TAG_BIG_PAYLOAD;
 
         printf("DEBUG received TAG_BIG_NOTIFICATION count %d\n", size);
-        thorium_mpi1_pt2pt_nonblocking_transport_add_receive_request(self, request_tag, size);
+
+        /*
+         * Post the receive operation using the same source.
+         *
+         * This avoids this:
+         *
+         * Fatal error in PMPI_Test: Message truncated, error stack:
+         * PMPI_Test(166)....: MPI_Test(request=0x7fffb3278350, flag=0x7fffb327831c, status=0x7fffb3278300) failed
+         * MPIR_Test_impl(65):
+         * do_cts(511).......: Message truncated; 117460 bytes received but buffer size is 9760
+         */
+        thorium_mpi1_pt2pt_nonblocking_transport_add_receive_request(self, request_tag, size,
+                        source);
 
         bsal_memory_pool_free(self->inbound_message_memory_pool, buffer);
 
@@ -337,6 +351,7 @@ int thorium_mpi1_pt2pt_nonblocking_transport_receive(struct thorium_transport *s
 #endif
 
     if (tag == TAG_BIG_PAYLOAD) {
+        printf("DEBUG Received TAG_BIG_PAYLOAD %d\n", count);
         --concrete_self->big_request_count;
     } else if (tag == TAG_SMALL_PAYLOAD) {
         --concrete_self->small_request_count;
@@ -383,7 +398,7 @@ int thorium_mpi1_pt2pt_nonblocking_transport_test(struct thorium_transport *self
 }
 
 void thorium_mpi1_pt2pt_nonblocking_transport_add_receive_request(struct thorium_transport *self,
-                int tag, int count)
+                int tag, int count, int source)
 {
     void *buffer;
     struct thorium_mpi1_pt2pt_nonblocking_transport *concrete_self;
@@ -404,7 +419,7 @@ void thorium_mpi1_pt2pt_nonblocking_transport_add_receive_request(struct thorium
     mpi_request = thorium_mpi1_request_request(&request);
 
     result = MPI_Irecv(buffer, count,
-                    concrete_self->datatype, MPI_ANY_SOURCE,
+                    concrete_self->datatype, source,
                     tag, concrete_self->communicator, mpi_request);
 
     bsal_ring_queue_enqueue(&concrete_self->receive_requests, &request);
