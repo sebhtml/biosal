@@ -56,3 +56,11 @@ SMarTFor_1                     106    8 515 920 210
 # PacBio data
 
 - http://www.ncbi.nlm.nih.gov/sra/?term=SRP040522
+
+
+# Assemblathon 2 datasets
+
+- http://www.gigasciencejournal.com/content/2/1/10
+- Bird http://www.ebi.ac.uk/ena/data/view/ERP002324
+- Fish http://www.ebi.ac.uk/ena/data/view/SRA026860
+- Snake http://www.ebi.ac.uk/ena/data/view/ERP002294
