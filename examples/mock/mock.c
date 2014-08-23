@@ -2,6 +2,8 @@
 #include "mock.h"
 #include "buddy.h"
 
+#include <core/system/debugger.h>
+
 #include <stdio.h>
 
 struct thorium_script mock_script = {
@@ -44,6 +46,8 @@ void mock_receive(struct thorium_actor *actor, struct thorium_message *message)
     int name;
     struct mock *mock1;
     char *buffer;
+    int destination;
+    struct thorium_message new_message;
 
     mock1 = (struct mock *)thorium_actor_concrete_actor(actor);
 
@@ -75,8 +79,14 @@ void mock_receive(struct thorium_actor *actor, struct thorium_message *message)
     } else if (tag == ACTION_ACTION_BUDDY_HELLO_REPLY) {
 
         printf("ACTION_BUDDY_HELLO_OK\n");
-        thorium_message_init(message, ACTION_MOCK_NOTIFY, 0, NULL);
-        thorium_actor_send(actor, *(int *)bsal_vector_at(&mock1->spawners, 0), message);
+
+        BSAL_DEBUGGER_ASSERT(bsal_vector_size(&mock1->spawners) > 0);
+
+        destination = *(int *)bsal_vector_at(&mock1->spawners, 0);
+
+        thorium_message_init(&new_message, ACTION_MOCK_NOTIFY, 0, NULL);
+        thorium_actor_send(actor, destination, &new_message);
+        thorium_message_destroy(&new_message);
 
     } else if (tag == ACTION_MOCK_NOTIFY) {
 
