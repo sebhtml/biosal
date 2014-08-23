@@ -447,11 +447,11 @@ void spate_start_reply_builder(struct thorium_actor *self, struct thorium_messag
 
     spawner = thorium_actor_get_spawner(self, &concrete_self->initial_actors);
 
-    concrete_self->dummy_walker = ACTION_SPAWNING_IN_PROGRESS;
+    concrete_self->dummy_walker = THORIUM_ACTOR_SPAWNING_IN_PROGRESS;
 
     thorium_actor_add_action_with_condition(self, ACTION_SPAWN_REPLY,
                     spate_spawn_reply_dummy_walker,
-                    &concrete_self->dummy_walker, ACTION_SPAWNING_IN_PROGRESS);
+                    &concrete_self->dummy_walker, THORIUM_ACTOR_SPAWNING_IN_PROGRESS);
 
     thorium_actor_send_int(self, spawner, ACTION_SPAWN, SCRIPT_ASSEMBLY_DUMMY_WALKER);
 

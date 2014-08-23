@@ -188,14 +188,14 @@ void bsal_assembly_graph_builder_start(struct thorium_actor *self, struct thoriu
     /*
      * Spawn the manager for graph stores
      */
-    concrete_self->manager_for_graph_stores = ACTION_SPAWNING_IN_PROGRESS;
+    concrete_self->manager_for_graph_stores = THORIUM_ACTOR_SPAWNING_IN_PROGRESS;
 
     thorium_actor_add_action_with_source_and_condition(self,
                     ACTION_SPAWN_REPLY,
                     bsal_assembly_graph_builder_spawn_reply_graph_store_manager,
                     spawner,
                     &(concrete_self->manager_for_graph_stores),
-                    ACTION_SPAWNING_IN_PROGRESS);
+                    THORIUM_ACTOR_SPAWNING_IN_PROGRESS);
 
     thorium_actor_send_int(self, spawner, ACTION_SPAWN, SCRIPT_MANAGER);
 }
@@ -335,13 +335,13 @@ void bsal_assembly_graph_builder_start_reply_store_manager(struct thorium_actor 
      * Register event to happen before
      * sending message (which generates an event)
      */
-    concrete_self->manager_for_windows = ACTION_SPAWNING_IN_PROGRESS;
+    concrete_self->manager_for_windows = THORIUM_ACTOR_SPAWNING_IN_PROGRESS;
 
     thorium_actor_add_action_with_condition(self,
                     ACTION_SPAWN_REPLY,
                     bsal_assembly_graph_builder_spawn_reply_window_manager,
                     &concrete_self->manager_for_windows,
-                    ACTION_SPAWNING_IN_PROGRESS);
+                    THORIUM_ACTOR_SPAWNING_IN_PROGRESS);
 
     thorium_actor_send_int(self, spawner, ACTION_SPAWN,
                     SCRIPT_MANAGER);
@@ -924,12 +924,12 @@ void bsal_assembly_graph_builder_notify_from_distribution(struct thorium_actor *
 
     spawner = thorium_actor_get_spawner(self, &concrete_self->spawners);
 
-    concrete_self->manager_for_arc_kernels = ACTION_SPAWNING_IN_PROGRESS;
+    concrete_self->manager_for_arc_kernels = THORIUM_ACTOR_SPAWNING_IN_PROGRESS;
 
     thorium_actor_add_action_with_condition(self, ACTION_SPAWN_REPLY,
                     bsal_assembly_graph_builder_spawn_reply_arc_kernel_manager,
                     &concrete_self->manager_for_arc_kernels,
-                    ACTION_SPAWNING_IN_PROGRESS);
+                    THORIUM_ACTOR_SPAWNING_IN_PROGRESS);
 
     thorium_actor_send_int(self, spawner, ACTION_SPAWN,
                     SCRIPT_MANAGER);
@@ -975,12 +975,12 @@ void bsal_assembly_graph_builder_start_reply_arc_kernel_manager(struct thorium_a
 
     bsal_vector_unpack(&concrete_self->arc_kernels, buffer);
 
-    concrete_self->manager_for_arc_classifiers = ACTION_SPAWNING_IN_PROGRESS;
+    concrete_self->manager_for_arc_classifiers = THORIUM_ACTOR_SPAWNING_IN_PROGRESS;
 
     thorium_actor_add_action_with_condition(self, ACTION_SPAWN_REPLY,
                     bsal_assembly_graph_builder_spawn_reply_arc_classifier_manager,
                     &concrete_self->manager_for_arc_classifiers,
-                    ACTION_SPAWNING_IN_PROGRESS);
+                    THORIUM_ACTOR_SPAWNING_IN_PROGRESS);
 
     spawner = thorium_actor_get_spawner(self, &concrete_self->spawners);
 
