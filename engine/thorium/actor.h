@@ -377,7 +377,7 @@ struct bsal_counter *thorium_actor_counter(struct thorium_actor *self);
 /*
  * Functions to use and register handlers
  */
-int thorium_actor_use_route(struct thorium_actor *self, struct thorium_message *message);
+int thorium_actor_take_action(struct thorium_actor *self, struct thorium_message *message);
 
 void thorium_actor_add_action_with_source_and_condition(struct thorium_actor *self, int tag, thorium_actor_receive_fn_t handler,
                 int source, int *actual, int expected);

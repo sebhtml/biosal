@@ -165,7 +165,7 @@ void argonnite_receive(struct thorium_actor *actor, struct thorium_message *mess
     struct bsal_memory_pool *ephemeral_memory;
     int enable_work_stealing;
 
-    if (thorium_actor_use_route(actor, message)) {
+    if (thorium_actor_take_action(actor, message)) {
         return;
     }
 

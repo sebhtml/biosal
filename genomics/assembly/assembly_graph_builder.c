@@ -132,7 +132,7 @@ void bsal_assembly_graph_builder_destroy(struct thorium_actor *self)
 
 void bsal_assembly_graph_builder_receive(struct thorium_actor *self, struct thorium_message *message)
 {
-    thorium_actor_use_route(self, message);
+    thorium_actor_take_action(self, message);
 }
 
 void bsal_assembly_graph_builder_ask_to_stop(struct thorium_actor *self, struct thorium_message *message)

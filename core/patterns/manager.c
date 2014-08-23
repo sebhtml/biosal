@@ -105,7 +105,7 @@ void bsal_manager_receive(struct thorium_actor *actor, struct thorium_message *m
     struct thorium_message new_message;
     struct bsal_memory_pool *ephemeral_memory;
 
-    if (thorium_actor_use_route(actor, message)) {
+    if (thorium_actor_take_action(actor, message)) {
         return;
     }
 

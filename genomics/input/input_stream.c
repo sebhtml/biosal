@@ -182,7 +182,7 @@ void bsal_input_stream_receive(struct thorium_actor *actor, struct thorium_messa
     struct bsal_mega_block mega_block;
     char *file_name_in_buffer;
 
-    if (thorium_actor_use_route(actor, message)) {
+    if (thorium_actor_take_action(actor, message)) {
         return;
     }
 

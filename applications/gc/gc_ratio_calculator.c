@@ -38,7 +38,7 @@ void gc_ratio_calculator_destroy(struct thorium_actor *actor)
 
 void gc_ratio_calculator_receive(struct thorium_actor *actor, struct thorium_message *message)
 {
-    thorium_actor_use_route(actor, message);
+    thorium_actor_take_action(actor, message);
 }
 
 /* dispatch handlers */

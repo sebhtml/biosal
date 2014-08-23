@@ -922,7 +922,7 @@ void thorium_actor_receive(struct thorium_actor *self, struct thorium_message *m
     /* otherwise, verify if the actor registered a
      * handler for this tag
      */
-    } else if (thorium_actor_use_route(self, message)) {
+    } else if (thorium_actor_take_action(self, message)) {
         return;
 #endif
     }
@@ -1274,7 +1274,7 @@ int thorium_actor_node_worker_count(struct thorium_actor *self)
     return thorium_node_worker_count(thorium_actor_node(self));
 }
 
-int thorium_actor_use_route(struct thorium_actor *self, struct thorium_message *message)
+int thorium_actor_take_action(struct thorium_actor *self, struct thorium_message *message)
 {
 
 #ifdef THORIUM_ACTOR_DEBUG_10335

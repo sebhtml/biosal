@@ -133,7 +133,7 @@ void spate_destroy(struct thorium_actor *self)
 
 void spate_receive(struct thorium_actor *self, struct thorium_message *message)
 {
-    thorium_actor_use_route(self, message);
+    thorium_actor_take_action(self, message);
 }
 
 void spate_start(struct thorium_actor *self, struct thorium_message *message)

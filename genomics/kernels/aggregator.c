@@ -121,7 +121,7 @@ void bsal_aggregator_receive(struct thorium_actor *self, struct thorium_message 
     int consumer_index_index;
     int *bucket;
 
-    if (thorium_actor_use_route(self, message)) {
+    if (thorium_actor_take_action(self, message)) {
         return;
     }
 

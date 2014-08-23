@@ -222,7 +222,7 @@ void bsal_input_controller_receive(struct thorium_actor *actor, struct thorium_m
     int acquaintance_index;
     struct bsal_memory_pool *ephemeral_memory;
 
-    if (thorium_actor_use_route(actor, message)) {
+    if (thorium_actor_take_action(actor, message)) {
         return;
     }
 

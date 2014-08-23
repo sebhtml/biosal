@@ -100,7 +100,7 @@ void bsal_kmer_store_receive(struct thorium_actor *self, struct thorium_message 
     int name;
 #endif
 
-    if (thorium_actor_use_route(self, message)) {
+    if (thorium_actor_take_action(self, message)) {
         return;
     }
 

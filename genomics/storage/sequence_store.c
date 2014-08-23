@@ -117,7 +117,7 @@ void bsal_sequence_store_receive(struct thorium_actor *actor, struct thorium_mes
     int source;
     struct bsal_sequence_store *concrete_actor;
 
-    if (thorium_actor_use_route(actor, message)) {
+    if (thorium_actor_take_action(actor, message)) {
         return;
     }
 

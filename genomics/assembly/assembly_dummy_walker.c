@@ -136,7 +136,7 @@ void bsal_assembly_dummy_walker_receive(struct thorium_actor *self, struct thori
     struct bsal_dna_kmer kmer;
     struct bsal_memory_pool *ephemeral_memory;
 
-    if (thorium_actor_use_route(self, message)) {
+    if (thorium_actor_take_action(self, message)) {
         return;
     }
 

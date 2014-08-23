@@ -141,7 +141,7 @@ void bsal_assembly_sliding_window_receive(struct thorium_actor *actor, struct th
     int count;
     int producer;
 
-    if (thorium_actor_use_route(actor, message)) {
+    if (thorium_actor_take_action(actor, message)) {
         return;
     }
 

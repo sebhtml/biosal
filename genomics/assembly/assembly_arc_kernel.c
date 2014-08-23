@@ -86,7 +86,7 @@ void bsal_assembly_arc_kernel_receive(struct thorium_actor *self, struct thorium
     int source;
     struct bsal_assembly_arc_kernel *concrete_self;
 
-    if (thorium_actor_use_route(self, message)) {
+    if (thorium_actor_take_action(self, message)) {
         return;
     }
 

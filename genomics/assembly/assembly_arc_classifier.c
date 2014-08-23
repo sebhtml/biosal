@@ -96,7 +96,7 @@ void bsal_assembly_arc_classifier_receive(struct thorium_actor *self, struct tho
     int source;
     int source_index;
 
-    if (thorium_actor_use_route(self, message)) {
+    if (thorium_actor_take_action(self, message)) {
         return;
     }
 

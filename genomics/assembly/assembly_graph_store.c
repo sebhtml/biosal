@@ -133,7 +133,7 @@ void bsal_assembly_graph_store_receive(struct thorium_actor *self, struct thoriu
     int customer;
 
 
-    if (thorium_actor_use_route(self, message)) {
+    if (thorium_actor_take_action(self, message)) {
         return;
     }
 
