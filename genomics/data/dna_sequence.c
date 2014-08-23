@@ -7,6 +7,7 @@
 
 #include <core/system/packer.h>
 #include <core/system/memory.h>
+#include <core/system/debugger.h>
 #include <core/system/memory_pool.h>
 
 #include <stdlib.h>
@@ -100,7 +101,12 @@ int bsal_dna_sequence_pack_unpack(struct bsal_dna_sequence *sequence,
 */
     bsal_packer_work(&packer, &sequence->length_in_nucleotides, sizeof(sequence->length_in_nucleotides));
 
+    BSAL_DEBUGGER_ASSERT(sequence->length_in_nucleotides > 0);
+
     encoded_length = bsal_dna_codec_encoded_length(codec, sequence->length_in_nucleotides);
+
+    BSAL_DEBUGGER_ASSERT(encoded_length > 0);
+    BSAL_DEBUGGER_ASSERT(encoded_length < 1000000000);
 
 #ifdef BSAL_DNA_SEQUENCE_DEBUG
     if (operation == BSAL_PACKER_OPERATION_UNPACK) {

@@ -24,6 +24,18 @@
 #endif
 
 /*
+ * \see https://wiki.alcf.anl.gov/parts/index.php/Blue_Gene/Q
+ * \see https://svn.mcs.anl.gov/repos/ZeptoOS/trunk/BGP/comm/arch-runtime/arch/include/cnk/vmm.h
+ * \see https://github.com/jedbrown/bgq-driver/blob/master/cnk/include/Config.h
+ */
+
+#if defined(__bgq__)
+#define BSAL_MEMORY_POOL_MESSAGE_BUFFER_BLOCK_SIZE (4 * 1024)
+#else
+#define BSAL_MEMORY_POOL_MESSAGE_BUFFER_BLOCK_SIZE (2 * 1024 * 1024)
+#endif
+
+/*
  * \see http://en.wikipedia.org/wiki/Memory_pool
  */
 struct bsal_memory_pool {

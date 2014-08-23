@@ -2,6 +2,7 @@
 #include "memory.h"
 
 #include "tracer.h"
+#include "debugger.h"
 
 #include <string.h>
 #include <stdio.h>
@@ -19,15 +20,6 @@
 #ifdef __bgq__
 #include <spi/include/kernel/memory.h>
 #endif
-
-/* minimum is 1 byte
- */
-#define BSAL_MEMORY_MINIMUM 1
-
-/*
- * maximum is 1000 * 1000 * 1000 * 1000 bytes (1 terabyte)
- */
-#define BSAL_MEMORY_MAXIMUM 1000000000000
 
 void *bsal_memory_allocate_private(size_t size, const char *function, const char *file, int line)
 {
@@ -59,6 +51,8 @@ void *bsal_memory_allocate_private(size_t size, const char *function, const char
         bsal_tracer_print_stack_backtrace();
         exit(1);
     }
+
+    BSAL_DEBUGGER_ASSERT(size <= BSAL_MEMORY_MAXIMUM);
 
 #ifdef BSAL_MEMORY_DEBUG_TRACK_TARGET
     char target[] = "bsal_vector_reserve";
@@ -172,16 +166,17 @@ size_t bsal_memory_align(size_t unaligned)
 /*
  * On IBM Blue Gene/Q, use the configured alignment.
  * Otherwise, we don't care really.
+ *
+ * Align on 128 bytes on Blue Gene/Q.
  */
 #if defined(__bgq__)
-    return bsal_memory_align_private(unaligned, BSAL_MEMORY_ALIGNMENT_BLUE_GENE_Q_DESIRABLE);
+    return bsal_memory_align_private(unaligned, BSAL_MEMORY_ALIGNMENT_BLUE_GENE_Q_L2_CACHE_LINE_SIZE);
 
-/* enable alignment only if alignment is greater than 0
- */
-#elif defined(BSAL_MEMORY_ALIGNMENT_ENABLED)
-    return bsal_memory_align_private(unaligned, BSAL_MEMORY_ALIGNMENT_DEFAULT);
 #else
-    return unaligned;
+ /*
+  * Align on 64 bytes on Intel and AMD.
+  */
+    return bsal_memory_align_private(unaligned, BSAL_MEMORY_ALIGNMENT_INTEL_L3_CACHE_LINE_SIZE);
 #endif
 }
 
@@ -199,17 +194,28 @@ size_t bsal_memory_align_private(size_t unaligned, size_t alignment)
     /*
      * Already aligned.
      */
-    if (unaligned == alignment) {
+    if (unaligned % alignment == 0) {
+        return unaligned;
+    }
+
+    /*
+     * We don't want to align 0 byte.
+     */
+    BSAL_DEBUGGER_ASSERT(unaligned != 0);
+
+    if (unaligned == 0) {
         return unaligned;
     }
 
     aligned = unaligned + (alignment - (unaligned % alignment));
 
 #ifdef BSAL_DNA_KMER_DEBUG_ALIGNMENT
-    printf("ALIGNMENT %d unaligned %d aligned %d\n",
-                    (int)alignment, (int)unaligned, (int)aligned);
-
+    printf("ALIGNMENT %zu unaligned %zu aligned %zu\n",
+                    alignment, unaligned, aligned);
 #endif
+
+    BSAL_DEBUGGER_ASSERT(aligned >= BSAL_MEMORY_MINIMUM);
+    BSAL_DEBUGGER_ASSERT(aligned <= BSAL_MEMORY_MAXIMUM);
 
     return aligned;
 }

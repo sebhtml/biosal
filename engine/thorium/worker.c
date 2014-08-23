@@ -137,7 +137,8 @@ void thorium_worker_init(struct thorium_worker *worker, int name, struct thorium
     bsal_lock_init(&worker->lock);
     bsal_set_init(&worker->evicted_actors, sizeof(int));
 
-    bsal_memory_pool_init(&worker->outbound_message_memory_pool, 2097152);
+    bsal_memory_pool_init(&worker->outbound_message_memory_pool,
+                    BSAL_MEMORY_POOL_MESSAGE_BUFFER_BLOCK_SIZE);
 
     /*
      * Disable the pool so that it uses allocate and free

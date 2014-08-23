@@ -11,13 +11,24 @@
  * \see http://stackoverflow.com/questions/15884793/how-to-get-the-name-or-file-and-line-of-caller-method
  */
 
+/* minimum is 1 byte
+ */
+#define BSAL_MEMORY_MINIMUM 1
+
+/*
+ * maximum is 1000 * 1000 * 1000 * 1000 bytes (1 terabyte)
+ */
+#define BSAL_MEMORY_MAXIMUM 1000000000000
+
 #define BSAL_TRUE 1
 #define BSAL_FALSE 0
 
 /*
  * Show memory allocation events.
-#define BSAL_MEMORY_DEBUG_DETAIL
  */
+/*
+#define BSAL_MEMORY_DEBUG_DETAIL
+*/
 
 /*
  */

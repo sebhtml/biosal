@@ -2,6 +2,7 @@
 #include "memory_pool.h"
 
 #include <core/system/tracer.h>
+#include <core/system/debugger.h>
 
 #include <core/helpers/bitmap.h>
 
@@ -94,6 +95,17 @@ void *bsal_memory_pool_allocate(struct bsal_memory_pool *self, size_t size)
     void *pointer;
     size_t new_size;
 
+#ifdef BSAL_DEBUGGER_ENABLE_ASSERT
+    if (size < BSAL_MEMORY_MINIMUM) {
+        printf("Error: too low %zu\n", size);
+    }
+    if (size > BSAL_MEMORY_MAXIMUM) {
+        printf("Error: too high %zu\n", size);
+    }
+#endif
+    BSAL_DEBUGGER_ASSERT(size >= BSAL_MEMORY_MINIMUM);
+    BSAL_DEBUGGER_ASSERT(size <= BSAL_MEMORY_MAXIMUM);
+
     /*
      * Normalize the length of the segment to be a power of 2.
      */
@@ -106,6 +118,9 @@ void *bsal_memory_pool_allocate(struct bsal_memory_pool *self, size_t size)
 #endif
         size = new_size;
     }
+
+    BSAL_DEBUGGER_ASSERT(size >= BSAL_MEMORY_MINIMUM);
+    BSAL_DEBUGGER_ASSERT(size <= BSAL_MEMORY_MAXIMUM);
 
     /*
      * Normalize the length so that it won't break alignment
@@ -136,6 +151,9 @@ void *bsal_memory_pool_allocate(struct bsal_memory_pool *self, size_t size)
 
         size = new_size;
     }
+
+    BSAL_DEBUGGER_ASSERT(size >= BSAL_MEMORY_MINIMUM);
+    BSAL_DEBUGGER_ASSERT(size <= BSAL_MEMORY_MAXIMUM);
 
     pointer = bsal_memory_pool_allocate_private(self, size);
 
