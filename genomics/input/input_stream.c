@@ -948,7 +948,9 @@ void bsal_input_stream_count_reply(struct thorium_actor *self, struct thorium_me
             vector = bsal_vector_at(&concrete_self->parallel_mega_blocks,
                             i);
 
+#if 0
             printf("ParallelStream %d\n", i);
+#endif
 
             for (j = 0; j < bsal_vector_size(vector); j++) {
 

@@ -466,6 +466,7 @@ void bsal_assembly_graph_store_push_kmer_block(struct thorium_actor *self, struc
                     concrete_self->kmer_length + 1);
 
     if (!concrete_self->printed_vertex_size) {
+
         printf("DEBUG VERTEX DELIVERY %d bytes\n", count);
 
         concrete_self->printed_vertex_size = 1;
