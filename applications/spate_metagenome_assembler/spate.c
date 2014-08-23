@@ -64,7 +64,7 @@ void spate_init(struct thorium_actor *self)
     thorium_actor_add_action(self,
                     ACTION_SPATE_ADD_FILES, spate_add_files);
     thorium_actor_add_action(self,
-                    ACTION_ACTION_SPATE_ADD_FILES_REPLY, spate_add_files_reply);
+                    ACTION_SPATE_ADD_FILES_REPLY, spate_add_files_reply);
     thorium_actor_add_action(self,
                     ACTION_ADD_FILE_REPLY, spate_add_file_reply);
 
@@ -388,7 +388,7 @@ void spate_set_block_size_reply(struct thorium_actor *self, struct thorium_messa
 void spate_add_files(struct thorium_actor *self, struct thorium_message *message)
 {
     if (!spate_add_file(self)) {
-        thorium_actor_send_to_self_empty(self, ACTION_ACTION_SPATE_ADD_FILES_REPLY);
+        thorium_actor_send_to_self_empty(self, ACTION_SPATE_ADD_FILES_REPLY);
     }
 }
 

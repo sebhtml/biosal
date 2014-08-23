@@ -94,7 +94,7 @@ void bsal_assembly_sliding_window_init(struct thorium_actor *actor)
                     bsal_assembly_sliding_window_notify_reply);
     thorium_actor_add_action(actor, ACTION_DO_AUTO_SCALING,
                     bsal_assembly_sliding_window_do_auto_scaling);
-    thorium_actor_add_action(actor, ACTION_ACTION_SET_PRODUCERS_FOR_WORK_STEALING,
+    thorium_actor_add_action(actor, ACTION_SET_PRODUCERS_FOR_WORK_STEALING,
                     bsal_assembly_sliding_window_set_producers_for_work_stealing);
 
     printf("%s/%d is online on node node/%d\n",
@@ -835,5 +835,5 @@ void bsal_assembly_sliding_window_set_producers_for_work_stealing(struct thorium
 
     bsal_vector_destroy(&producers);
 
-    thorium_actor_send_reply_empty(self, ACTION_ACTION_ACTION_SET_PRODUCERS_FOR_WORK_STEALING_REPLY);
+    thorium_actor_send_reply_empty(self, ACTION_SET_PRODUCERS_FOR_WORK_STEALING_REPLY);
 }

@@ -49,7 +49,7 @@ void sender_receive(struct thorium_actor *actor, struct thorium_message *message
 #if 0
         printf("receive ACTION_SENDER_SET_NEXT %d\n", concrete_actor->next);
 #endif
-        thorium_actor_send_reply_empty(actor, ACTION_ACTION_SENDER_SET_NEXT_REPLY);
+        thorium_actor_send_reply_empty(actor, ACTION_SENDER_SET_NEXT_REPLY);
 
     } else if (tag == ACTION_SENDER_HELLO) {
 
@@ -62,7 +62,7 @@ void sender_receive(struct thorium_actor *actor, struct thorium_message *message
         }
 
         if (messages == 0) {
-            thorium_actor_send_to_supervisor_empty(actor, ACTION_ACTION_SENDER_HELLO_REPLY);
+            thorium_actor_send_to_supervisor_empty(actor, ACTION_SENDER_HELLO_REPLY);
             return;
         }
 

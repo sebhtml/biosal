@@ -925,7 +925,7 @@ int thorium_node_receive_system(struct thorium_node *node, struct thorium_messag
             buffer = bsal_memory_pool_allocate(&node->outbound_message_memory_pool, bytes);
             bsal_vector_pack(&node->initial_actors, buffer);
 
-            thorium_message_init(&new_message, ACTION_ACTION_THORIUM_NODE_ADD_INITIAL_ACTORS, bytes, buffer);
+            thorium_message_init(&new_message, ACTION_THORIUM_NODE_ADD_INITIAL_ACTORS, bytes, buffer);
 
             for (i = 0; i < nodes; i++) {
                 thorium_node_send_to_node(node, i, &new_message);
@@ -939,10 +939,10 @@ int thorium_node_receive_system(struct thorium_node *node, struct thorium_messag
 
         return 1;
 
-    } else if (tag == ACTION_ACTION_THORIUM_NODE_ADD_INITIAL_ACTORS) {
+    } else if (tag == ACTION_THORIUM_NODE_ADD_INITIAL_ACTORS) {
 
 #ifdef THORIUM_NODE_DEBUG_RECEIVE_SYSTEM
-        printf("DEBUG ACTION_ACTION_THORIUM_NODE_ADD_INITIAL_ACTORS received\n");
+        printf("DEBUG ACTION_THORIUM_NODE_ADD_INITIAL_ACTORS received\n");
 #endif
 
         buffer = thorium_message_buffer(message);
@@ -959,18 +959,18 @@ int thorium_node_receive_system(struct thorium_node *node, struct thorium_messag
                         source);
 #endif
 
-        thorium_node_send_to_node_empty(node, source, ACTION_ACTION_ACTION_THORIUM_NODE_ADD_INITIAL_ACTORS_REPLY);
+        thorium_node_send_to_node_empty(node, source, ACTION_THORIUM_NODE_ADD_INITIAL_ACTORS_REPLY);
 
         return 1;
 
-    } else if (tag == ACTION_ACTION_ACTION_THORIUM_NODE_ADD_INITIAL_ACTORS_REPLY) {
+    } else if (tag == ACTION_THORIUM_NODE_ADD_INITIAL_ACTORS_REPLY) {
 
         node->ready++;
         nodes = thorium_node_nodes(node);
         source = thorium_message_source_node(message);
 
 #ifdef THORIUM_NODE_DEBUG_RECEIVE_SYSTEM
-        printf("node/%d DEBUG ACTION_ACTION_ACTION_THORIUM_NODE_ADD_INITIAL_ACTORS_REPLY received from"
+        printf("node/%d DEBUG ACTION_THORIUM_NODE_ADD_INITIAL_ACTORS_REPLY received from"
                         " %d, %d/%d ready\n", thorium_node_name(node),
                         source, node->ready, nodes);
 #endif

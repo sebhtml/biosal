@@ -7,7 +7,7 @@
 #define SCRIPT_GC_RATIO_CALCULATOR 0x74c20114
 
 #define ACTION_GC_HELLO 0x00003fa8
-#define ACTION_ACTION_GC_HELLO_REPLY 0x00004790
+#define ACTION_GC_HELLO_REPLY 0x00004790
 
 struct gc_ratio_calculator {
     struct bsal_vector spawners;

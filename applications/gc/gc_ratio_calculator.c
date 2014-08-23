@@ -24,7 +24,7 @@ void gc_ratio_calculator_init(struct thorium_actor *actor)
 
     thorium_actor_add_action(actor, ACTION_START, gc_ratio_calculator_start);
     thorium_actor_add_action(actor, ACTION_GC_HELLO, gc_ratio_calculator_hello);
-    thorium_actor_add_action(actor, ACTION_ACTION_GC_HELLO_REPLY, gc_ratio_calculator_hello_reply);
+    thorium_actor_add_action(actor, ACTION_GC_HELLO_REPLY, gc_ratio_calculator_hello_reply);
     thorium_actor_add_action(actor, ACTION_NOTIFY, gc_ratio_calculator_notify);
     thorium_actor_add_action(actor, ACTION_ASK_TO_STOP, gc_ratio_calculator_ask_to_stop);
 }
@@ -85,7 +85,7 @@ void gc_ratio_calculator_hello(struct thorium_actor *actor, struct thorium_messa
 {
     printf("received ACTION_GC_HELLO\n");
 
-    thorium_actor_send_reply_empty(actor, ACTION_ACTION_GC_HELLO_REPLY);
+    thorium_actor_send_reply_empty(actor, ACTION_GC_HELLO_REPLY);
 }
 
 void gc_ratio_calculator_hello_reply(struct thorium_actor *actor, struct thorium_message *message)

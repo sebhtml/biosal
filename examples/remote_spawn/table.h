@@ -13,7 +13,7 @@ struct table {
 };
 
 #define ACTION_TABLE_DIE 0x00003391
-#define ACTION_ACTION_TABLE_DIE2 0x000005e0
+#define ACTION_TABLE_DIE2 0x000005e0
 #define ACTION_TABLE_NOTIFY 0x000026ea
 
 extern struct thorium_script table_script;

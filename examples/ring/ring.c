@@ -140,7 +140,7 @@ void ring_receive(struct thorium_actor *actor, struct thorium_message *message)
         thorium_message_set_tag(message, ACTION_SENDER_SET_NEXT);
         thorium_actor_send(actor, concrete_actor->last, message);
 
-    } else if (tag == ACTION_ACTION_SENDER_SET_NEXT_REPLY
+    } else if (tag == ACTION_SENDER_SET_NEXT_REPLY
                     && concrete_actor->step == RING_STEP_SPAWN) {
 
 
@@ -171,12 +171,12 @@ void ring_receive(struct thorium_actor *actor, struct thorium_message *message)
 
             concrete_actor->previous = new_actor;
         }
-    } else if (tag == ACTION_ACTION_SENDER_SET_NEXT_REPLY
+    } else if (tag == ACTION_SENDER_SET_NEXT_REPLY
                     && concrete_actor->step == RING_STEP_PUSH_NEXT) {
 
         concrete_actor->ready_senders++;
 
-        printf("ACTION_ACTION_SENDER_SET_NEXT_REPLY %d/%d\n",
+        printf("ACTION_SENDER_SET_NEXT_REPLY %d/%d\n",
                         concrete_actor->ready_senders,
                         1);
 
@@ -199,7 +199,7 @@ void ring_receive(struct thorium_actor *actor, struct thorium_message *message)
 
             concrete_actor->ready_rings = 0;
         }
-    } else if (tag == ACTION_ACTION_SENDER_HELLO_REPLY) {
+    } else if (tag == ACTION_SENDER_HELLO_REPLY) {
 
         thorium_actor_send_range_empty(actor, &concrete_actor->spawners, ACTION_RING_KILL);
         thorium_actor_send_empty(actor, concrete_actor->first, ACTION_SENDER_KILL);

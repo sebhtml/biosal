@@ -35,6 +35,8 @@ void bsal_assembly_arc_kernel_init(struct thorium_actor *self)
 
     concrete_self->kmer_length = -1;
 
+    bsal_fast_queue_init(&concrete_self->producers_for_work_stealing, sizeof(int));
+
     thorium_actor_add_action(self, ACTION_SET_KMER_LENGTH,
                     bsal_assembly_arc_kernel_set_kmer_length);
 
@@ -60,6 +62,8 @@ void bsal_assembly_arc_kernel_init(struct thorium_actor *self)
 
     thorium_actor_add_action(self, ACTION_PUSH_SEQUENCE_DATA_BLOCK,
                     bsal_assembly_arc_kernel_push_sequence_data_block);
+    thorium_actor_add_action(self, ACTION_SET_PRODUCERS_FOR_WORK_STEALING,
+                    bsal_assembly_arc_kernel_set_producers_for_work_stealing);
 
     concrete_self->received_blocks = 0;
 
@@ -78,6 +82,8 @@ void bsal_assembly_arc_kernel_destroy(struct thorium_actor *self)
 
     concrete_self->producer = THORIUM_ACTOR_NOBODY;
     concrete_self->consumer = THORIUM_ACTOR_NOBODY;
+
+    bsal_fast_queue_destroy(&concrete_self->producers_for_work_stealing);
 }
 
 void bsal_assembly_arc_kernel_receive(struct thorium_actor *self, struct thorium_message *message)
@@ -376,4 +382,7 @@ void bsal_assembly_arc_kernel_push_sequence_data_block(struct thorium_actor *sel
     bsal_memory_pool_free(ephemeral_memory, new_buffer);
 }
 
+void bsal_assembly_arc_kernel_set_producers_for_work_stealing(struct thorium_actor *self, struct thorium_message *message)
+{
 
+}

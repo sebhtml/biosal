@@ -580,7 +580,7 @@ void bsal_assembly_graph_builder_connect_actors(struct thorium_actor *self)
             thorium_actor_script_name(self),
             thorium_actor_name(self));
 
-    thorium_actor_add_action_with_sources(self, ACTION_ACTION_ACTION_SET_PRODUCERS_FOR_WORK_STEALING_REPLY,
+    thorium_actor_add_action_with_sources(self, ACTION_SET_PRODUCERS_FOR_WORK_STEALING_REPLY,
                     bsal_assembly_graph_builder_set_consumer_reply_windows,
                     &concrete_self->sliding_windows);
 
@@ -626,7 +626,7 @@ void bsal_assembly_graph_builder_connect_actors(struct thorium_actor *self)
          * consumer.
          */
 
-        thorium_actor_send_vector(self, producer, ACTION_ACTION_SET_PRODUCERS_FOR_WORK_STEALING,
+        thorium_actor_send_vector(self, producer, ACTION_SET_PRODUCERS_FOR_WORK_STEALING,
                         &alternate_producers);
 
         /*

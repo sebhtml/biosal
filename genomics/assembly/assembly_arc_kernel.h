@@ -5,7 +5,9 @@
 #include <engine/thorium/actor.h>
 
 #include <genomics/data/dna_codec.h>
+
 #include <core/structures/vector.h>
+#include <core/structures/fast_queue.h>
 
 #include <core/system/memory_pool.h>
 
@@ -21,6 +23,7 @@ struct bsal_assembly_arc_kernel {
     int kmer_length;
 
     int producer;
+    struct bsal_fast_queue producers_for_work_stealing;
 
     int consumer;
 
@@ -43,5 +46,7 @@ void bsal_assembly_arc_kernel_receive(struct thorium_actor *self, struct thorium
 void bsal_assembly_arc_kernel_set_kmer_length(struct thorium_actor *self, struct thorium_message *message);
 void bsal_assembly_arc_kernel_push_sequence_data_block(struct thorium_actor *self, struct thorium_message *message);
 void bsal_assembly_arc_kernel_ask(struct thorium_actor *self, struct thorium_message *message);
+
+void bsal_assembly_arc_kernel_set_producers_for_work_stealing(struct thorium_actor *self, struct thorium_message *message);
 
 #endif

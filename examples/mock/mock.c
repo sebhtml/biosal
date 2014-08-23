@@ -74,9 +74,9 @@ void mock_receive(struct thorium_actor *actor, struct thorium_message *message)
         printf("ACTION_MOCK_NEW_CONTACTS\n");
         mock_add_contacts(actor, message);
 
-    } else if (tag == ACTION_ACTION_MOCK_NEW_CONTACTS_REPLY) {
+    } else if (tag == ACTION_MOCK_NEW_CONTACTS_REPLY) {
 
-    } else if (tag == ACTION_ACTION_BUDDY_HELLO_REPLY) {
+    } else if (tag == ACTION_BUDDY_HELLO_REPLY) {
 
         printf("ACTION_BUDDY_HELLO_OK\n");
 
@@ -116,7 +116,7 @@ void mock_receive(struct thorium_actor *actor, struct thorium_message *message)
         thorium_message_init(message, ACTION_ASK_TO_STOP, 0, NULL);
         thorium_actor_send(actor, mock1->children[0], message);
 
-    } else if (tag == ACTION_ACTION_BUDDY_BOOT_REPLY) {
+    } else if (tag == ACTION_BUDDY_BOOT_REPLY) {
 
         mock_share(actor, message);
     }
@@ -136,7 +136,7 @@ void mock_add_contacts(struct thorium_actor *actor, struct thorium_message *mess
     printf("mock_receive remote friend is %i\n",
                         mock1->remote_actor);
 
-    thorium_message_init(message, ACTION_ACTION_MOCK_NEW_CONTACTS_REPLY, 0, NULL);
+    thorium_message_init(message, ACTION_MOCK_NEW_CONTACTS_REPLY, 0, NULL);
     thorium_actor_send(actor, source, message);
 
     /* say hello to remote actor too !

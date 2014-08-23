@@ -76,15 +76,15 @@ void table_receive(struct thorium_actor *actor, struct thorium_message *message)
                         " new actor is %d\n",
                         name,  source, new_actor);
 
-        thorium_message_init(message, ACTION_ACTION_TABLE_DIE2, 0, NULL);
+        thorium_message_init(message, ACTION_TABLE_DIE2, 0, NULL);
         thorium_actor_send(actor, new_actor, message);
 
         thorium_message_init(message, ACTION_TABLE_NOTIFY, 0, NULL);
         thorium_actor_send(actor, bsal_vector_at_as_int(&table1->spawners, 0), message);
 
-    } else if (tag == ACTION_ACTION_TABLE_DIE2) {
+    } else if (tag == ACTION_TABLE_DIE2) {
 
-        printf("Actor %i receives ACTION_ACTION_TABLE_DIE2 from actor %i\n",
+        printf("Actor %i receives ACTION_TABLE_DIE2 from actor %i\n",
                         name,  source);
 
         if (name < bsal_vector_size(&table1->spawners)) {

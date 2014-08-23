@@ -44,7 +44,7 @@ void buddy_receive(struct thorium_actor *actor, struct thorium_message *message)
         printf("ACTION_BUDDY_BOOT\n");
         thorium_actor_print(actor);
 
-        thorium_message_init(message, ACTION_ACTION_BUDDY_BOOT_REPLY, 0, NULL);
+        thorium_message_init(message, ACTION_BUDDY_BOOT_REPLY, 0, NULL);
         thorium_actor_send(actor, source, message);
 
     } else if (tag == ACTION_BUDDY_HELLO) {
@@ -58,7 +58,7 @@ void buddy_receive(struct thorium_actor *actor, struct thorium_message *message)
         thorium_actor_send_to_self_empty(actor, ACTION_PIN_TO_WORKER);
         */
 
-        thorium_message_init(message, ACTION_ACTION_BUDDY_HELLO_REPLY, 0, NULL);
+        thorium_message_init(message, ACTION_BUDDY_HELLO_REPLY, 0, NULL);
         thorium_actor_send(actor, source, message);
 
     } else if (tag == ACTION_ASK_TO_STOP) {
