@@ -4,7 +4,7 @@
 
 #include <biosal.h>
 
-#define SPATE_SCRIPT 0xaefe198b
+#define SCRIPT_SPATE 0xaefe198b
 
 #define SPATE_ADD_FILES 0x00004eff
 #define SPATE_ADD_FILES_REPLY 0x00001b3a

@@ -12,7 +12,7 @@
 
 #include <core/system/memory_pool.h>
 
-#define BSAL_ASSEMBLY_SLIDING_WINDOW_SCRIPT 0xa128805e
+#define SCRIPT_ASSEMBLY_SLIDING_WINDOW 0xa128805e
 
 /*
  * A kernel for computing vertices from sequence reads.

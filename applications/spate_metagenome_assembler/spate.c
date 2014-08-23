@@ -18,7 +18,7 @@
 #include <string.h>
 
 struct thorium_script spate_script = {
-    .identifier = SPATE_SCRIPT,
+    .identifier = SCRIPT_SPATE,
     .init = spate_init,
     .destroy = spate_destroy,
     .receive = spate_receive,
@@ -75,37 +75,37 @@ void spate_init(struct thorium_actor *self)
      * Register required actor scripts now
      */
 
-    thorium_actor_add_script(self, BSAL_INPUT_CONTROLLER_SCRIPT,
+    thorium_actor_add_script(self, SCRIPT_INPUT_CONTROLLER,
                     &bsal_input_controller_script);
-    thorium_actor_add_script(self, BSAL_DNA_KMER_COUNTER_KERNEL_SCRIPT,
+    thorium_actor_add_script(self, SCRIPT_DNA_KMER_COUNTER_KERNEL,
                     &bsal_dna_kmer_counter_kernel_script);
-    thorium_actor_add_script(self, BSAL_MANAGER_SCRIPT,
+    thorium_actor_add_script(self, SCRIPT_MANAGER,
                     &bsal_manager_script);
-    thorium_actor_add_script(self, BSAL_AGGREGATOR_SCRIPT,
+    thorium_actor_add_script(self, SCRIPT_AGGREGATOR,
                     &bsal_aggregator_script);
-    thorium_actor_add_script(self, BSAL_KMER_STORE_SCRIPT,
+    thorium_actor_add_script(self, SCRIPT_KMER_STORE,
                     &bsal_kmer_store_script);
-    thorium_actor_add_script(self, BSAL_SEQUENCE_STORE_SCRIPT,
+    thorium_actor_add_script(self, SCRIPT_SEQUENCE_STORE,
                     &bsal_sequence_store_script);
-    thorium_actor_add_script(self, BSAL_COVERAGE_DISTRIBUTION_SCRIPT,
+    thorium_actor_add_script(self, SCRIPT_COVERAGE_DISTRIBUTION,
                     &bsal_coverage_distribution_script);
-    thorium_actor_add_script(self, BSAL_ASSEMBLY_GRAPH_BUILDER_SCRIPT,
+    thorium_actor_add_script(self, SCRIPT_ASSEMBLY_GRAPH_BUILDER,
                     &bsal_assembly_graph_builder_script);
 
-    thorium_actor_add_script(self, BSAL_ASSEMBLY_GRAPH_STORE_SCRIPT,
+    thorium_actor_add_script(self, SCRIPT_ASSEMBLY_GRAPH_STORE,
                     &bsal_assembly_graph_store_script);
-    thorium_actor_add_script(self, BSAL_ASSEMBLY_SLIDING_WINDOW_SCRIPT,
+    thorium_actor_add_script(self, SCRIPT_ASSEMBLY_SLIDING_WINDOW,
                     &bsal_assembly_sliding_window_script);
-    thorium_actor_add_script(self, BSAL_ASSEMBLY_BLOCK_CLASSIFIER_SCRIPT,
+    thorium_actor_add_script(self, SCRIPT_ASSEMBLY_BLOCK_CLASSIFIER,
                     &bsal_assembly_block_classifier_script);
-    thorium_actor_add_script(self, BSAL_COVERAGE_DISTRIBUTION_SCRIPT,
+    thorium_actor_add_script(self, SCRIPT_COVERAGE_DISTRIBUTION,
                     &bsal_coverage_distribution_script);
 
-    thorium_actor_add_script(self, BSAL_ASSEMBLY_ARC_KERNEL_SCRIPT,
+    thorium_actor_add_script(self, SCRIPT_ASSEMBLY_ARC_KERNEL,
                     &bsal_assembly_arc_kernel_script);
-    thorium_actor_add_script(self, BSAL_ASSEMBLY_ARC_CLASSIFIER_SCRIPT,
+    thorium_actor_add_script(self, SCRIPT_ASSEMBLY_ARC_CLASSIFIER,
                     &bsal_assembly_arc_classifier_script);
-    thorium_actor_add_script(self, BSAL_ASSEMBLY_DUMMY_WALKER_SCRIPT,
+    thorium_actor_add_script(self, SCRIPT_ASSEMBLY_DUMMY_WALKER,
                     &bsal_assembly_dummy_walker_script);
 
     concrete_self->block_size = 16 * 4096;
@@ -207,7 +207,7 @@ void spate_start(struct thorium_actor *self, struct thorium_message *message)
 
     spawner = thorium_actor_get_spawner(self, &concrete_self->initial_actors);
 
-    thorium_actor_send_int(self, spawner, THORIUM_ACTOR_SPAWN, BSAL_INPUT_CONTROLLER_SCRIPT);
+    thorium_actor_send_int(self, spawner, THORIUM_ACTOR_SPAWN, SCRIPT_INPUT_CONTROLLER);
 }
 
 void spate_ask_to_stop(struct thorium_actor *self, struct thorium_message *message)
@@ -273,7 +273,7 @@ void spate_spawn_reply(struct thorium_actor *self, struct thorium_message *messa
 
         spawner = thorium_actor_get_spawner(self, &concrete_self->initial_actors);
 
-        thorium_actor_send_int(self, spawner, THORIUM_ACTOR_SPAWN, BSAL_MANAGER_SCRIPT);
+        thorium_actor_send_int(self, spawner, THORIUM_ACTOR_SPAWN, SCRIPT_MANAGER);
 
     } else if (concrete_self->manager_for_sequence_stores == THORIUM_ACTOR_NOBODY) {
 
@@ -289,7 +289,7 @@ void spate_spawn_reply(struct thorium_actor *self, struct thorium_message *messa
 
         spawner = thorium_actor_get_spawner(self, &concrete_self->initial_actors);
 
-        thorium_actor_send_int(self, spawner, THORIUM_ACTOR_SPAWN, BSAL_ASSEMBLY_GRAPH_BUILDER_SCRIPT);
+        thorium_actor_send_int(self, spawner, THORIUM_ACTOR_SPAWN, SCRIPT_ASSEMBLY_GRAPH_BUILDER);
 
     } else if (concrete_self->assembly_graph_builder == THORIUM_ACTOR_NOBODY) {
 
@@ -309,7 +309,7 @@ void spate_spawn_reply(struct thorium_actor *self, struct thorium_message *messa
                         new_actor);
 
         thorium_actor_send_int(self, concrete_self->manager_for_sequence_stores, BSAL_MANAGER_SET_SCRIPT,
-                        BSAL_SEQUENCE_STORE_SCRIPT);
+                        SCRIPT_SEQUENCE_STORE);
     }
 }
 
@@ -453,7 +453,7 @@ void spate_start_reply_builder(struct thorium_actor *self, struct thorium_messag
                     spate_spawn_reply_dummy_walker,
                     &concrete_self->dummy_walker, THORIUM_ACTOR_SPAWNING_IN_PROGRESS);
 
-    thorium_actor_send_int(self, spawner, THORIUM_ACTOR_SPAWN, BSAL_ASSEMBLY_DUMMY_WALKER_SCRIPT);
+    thorium_actor_send_int(self, spawner, THORIUM_ACTOR_SPAWN, SCRIPT_ASSEMBLY_DUMMY_WALKER);
 
 }
 

@@ -4,7 +4,7 @@
 
 #include <biosal.h>
 
-#define TABLE_SCRIPT 0x53f9c43c
+#define SCRIPT_TABLE 0x53f9c43c
 
 struct table {
     int received;

@@ -13,7 +13,7 @@
 #include <genomics/data/dna_codec.h>
 
 
-#define BSAL_INPUT_CONTROLLER_SCRIPT 0x985607aa
+#define SCRIPT_INPUT_CONTROLLER 0x985607aa
 
 struct bsal_input_controller {
     struct bsal_vector consumers;

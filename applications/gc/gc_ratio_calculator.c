@@ -4,7 +4,7 @@
 #include <stdio.h>
 
 struct thorium_script gc_ratio_calculator_script = {
-    .identifier = GC_RATIO_CALCULATOR_SCRIPT,
+    .identifier = SCRIPT_GC_RATIO_CALCULATOR,
     .init = gc_ratio_calculator_init,
     .destroy = gc_ratio_calculator_destroy,
     .receive = gc_ratio_calculator_receive,

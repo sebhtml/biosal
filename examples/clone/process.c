@@ -4,7 +4,7 @@
 #include <stdio.h>
 
 struct thorium_script process_script = {
-    .identifier = PROCESS_SCRIPT,
+    .identifier = SCRIPT_PROCESS,
     .init = process_init,
     .destroy = process_destroy,
     .receive = process_receive,

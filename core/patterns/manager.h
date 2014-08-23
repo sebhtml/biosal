@@ -7,7 +7,7 @@
 #include <core/structures/map.h>
 #include <core/structures/vector.h>
 
-#define BSAL_MANAGER_SCRIPT 0xe41954c7
+#define SCRIPT_MANAGER 0xe41954c7
 
 /**
  * How to use:

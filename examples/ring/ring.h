@@ -4,7 +4,7 @@
 
 #include <biosal.h>
 
-#define RING_SCRIPT 0x88ad8b92
+#define SCRIPT_RING 0x88ad8b92
 
 struct ring {
     struct bsal_vector spawners;

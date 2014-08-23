@@ -4,7 +4,7 @@
 #include <stdio.h>
 
 struct thorium_script table_script = {
-    .identifier = TABLE_SCRIPT,
+    .identifier = SCRIPT_TABLE,
     .init = table_init,
     .destroy = table_destroy,
     .receive = table_receive,
@@ -59,7 +59,7 @@ void table_receive(struct thorium_actor *actor, struct thorium_message *message)
         remote = bsal_vector_index_of(&table1->spawners, &name) + 1;
         remote %= bsal_vector_size(&table1->spawners);
 
-        script = TABLE_SCRIPT;
+        script = SCRIPT_TABLE;
         thorium_message_init(&spawn_message, THORIUM_ACTOR_SPAWN, sizeof(script), &script);
         thorium_actor_send(actor, *(int *)bsal_vector_at(&table1->spawners, remote), &spawn_message);
 

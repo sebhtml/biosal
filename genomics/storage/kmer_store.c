@@ -22,7 +22,7 @@
 #include <stdio.h>
 
 struct thorium_script bsal_kmer_store_script = {
-    .identifier = BSAL_KMER_STORE_SCRIPT,
+    .identifier = SCRIPT_KMER_STORE,
     .init = bsal_kmer_store_init,
     .destroy = bsal_kmer_store_destroy,
     .receive = bsal_kmer_store_receive,

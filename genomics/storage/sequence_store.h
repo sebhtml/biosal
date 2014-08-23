@@ -11,7 +11,7 @@
 
 #include <engine/thorium/actor.h>
 
-#define BSAL_SEQUENCE_STORE_SCRIPT 0x47e2e424
+#define SCRIPT_SEQUENCE_STORE 0x47e2e424
 
 struct bsal_sequence_store {
     struct bsal_vector sequences;

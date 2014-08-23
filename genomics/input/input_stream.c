@@ -29,7 +29,7 @@
 #define ENABLE_PARALLEL_COUNT
 
 struct thorium_script bsal_input_stream_script = {
-    .identifier = BSAL_INPUT_STREAM_SCRIPT,
+    .identifier = BSAL_INPUT_SCRIPT_STREAM,
     .init = bsal_input_stream_init,
     .destroy = bsal_input_stream_destroy,
     .receive = bsal_input_stream_receive,
@@ -781,7 +781,7 @@ void bsal_input_stream_count_in_parallel(struct thorium_actor *self, struct thor
         spawner = thorium_actor_get_spawner(self, &concrete_self->spawners);
 
         thorium_actor_send_int(self, spawner, THORIUM_ACTOR_SPAWN,
-                BSAL_INPUT_STREAM_SCRIPT);
+                BSAL_INPUT_SCRIPT_STREAM);
     }
 }
 

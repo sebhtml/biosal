@@ -13,7 +13,7 @@
 
 #include <stdint.h>
 
-#define BSAL_AGGREGATOR_SCRIPT 0x82673850
+#define SCRIPT_AGGREGATOR 0x82673850
 
 struct bsal_aggregator {
     uint64_t received;

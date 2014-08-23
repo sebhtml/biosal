@@ -4,7 +4,7 @@
 
 #include <biosal.h>
 
-#define SENDER_SCRIPT 0x99a9f4e1
+#define SCRIPT_SENDER 0x99a9f4e1
 
 struct sender {
     int next;

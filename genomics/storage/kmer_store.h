@@ -13,7 +13,7 @@
 
 #include <core/system/memory_pool.h>
 
-#define BSAL_KMER_STORE_SCRIPT 0xe6d32c91
+#define SCRIPT_KMER_STORE 0xe6d32c91
 
 /*
  * For ephemeral storage, see

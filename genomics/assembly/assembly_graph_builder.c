@@ -23,7 +23,7 @@
 #define BSAL_ASSEMBLY_GRAPH_BUILDER_AUTHOR "Sebastien Boisvert, Argonne National Laboratory"
 
 struct thorium_script bsal_assembly_graph_builder_script = {
-    .identifier = BSAL_ASSEMBLY_GRAPH_BUILDER_SCRIPT,
+    .identifier = SCRIPT_ASSEMBLY_GRAPH_BUILDER,
     .name = BSAL_ASSEMBLY_GRAPH_BUILDER_NAME,
     .description = BSAL_ASSEMBLY_GRAPH_BUILDER_DESCRIPTION,
     .version = BSAL_ASSEMBLY_GRAPH_BUILDER_VERSION,
@@ -197,7 +197,7 @@ void bsal_assembly_graph_builder_start(struct thorium_actor *self, struct thoriu
                     &(concrete_self->manager_for_graph_stores),
                     THORIUM_ACTOR_SPAWNING_IN_PROGRESS);
 
-    thorium_actor_send_int(self, spawner, THORIUM_ACTOR_SPAWN, BSAL_MANAGER_SCRIPT);
+    thorium_actor_send_int(self, spawner, THORIUM_ACTOR_SPAWN, SCRIPT_MANAGER);
 }
 
 void bsal_assembly_graph_builder_spawn_reply_graph_store_manager(struct thorium_actor *self, struct thorium_message *message)
@@ -221,7 +221,7 @@ void bsal_assembly_graph_builder_spawn_reply_graph_store_manager(struct thorium_
                     concrete_self->manager_for_graph_stores);
 
     thorium_actor_send_int(self, concrete_self->manager_for_graph_stores, BSAL_MANAGER_SET_SCRIPT,
-                        BSAL_ASSEMBLY_GRAPH_STORE_SCRIPT);
+                        SCRIPT_ASSEMBLY_GRAPH_STORE);
 }
 
 
@@ -259,7 +259,7 @@ void bsal_assembly_graph_builder_spawn_reply(struct thorium_actor *self, struct 
                         concrete_self->manager_for_classifiers);
 
         thorium_actor_send_int(self, concrete_self->manager_for_classifiers, BSAL_MANAGER_SET_SCRIPT,
-                        BSAL_ASSEMBLY_BLOCK_CLASSIFIER_SCRIPT);
+                        SCRIPT_ASSEMBLY_BLOCK_CLASSIFIER);
 
     } else if (concrete_self->coverage_distribution == THORIUM_ACTOR_NOBODY) {
 
@@ -344,7 +344,7 @@ void bsal_assembly_graph_builder_start_reply_store_manager(struct thorium_actor 
                     THORIUM_ACTOR_SPAWNING_IN_PROGRESS);
 
     thorium_actor_send_int(self, spawner, THORIUM_ACTOR_SPAWN,
-                    BSAL_MANAGER_SCRIPT);
+                    SCRIPT_MANAGER);
 
 }
 
@@ -375,7 +375,7 @@ void bsal_assembly_graph_builder_spawn_reply_window_manager(struct thorium_actor
                     concrete_self->manager_for_windows);
 
     thorium_actor_send_int(self, concrete_self->manager_for_windows, BSAL_MANAGER_SET_SCRIPT,
-                    BSAL_ASSEMBLY_SLIDING_WINDOW_SCRIPT);
+                    SCRIPT_ASSEMBLY_SLIDING_WINDOW);
 
 }
 
@@ -442,7 +442,7 @@ void bsal_assembly_graph_builder_start_reply_window_manager(struct thorium_actor
     spawner = thorium_actor_get_spawner(self, &concrete_self->spawners);
 
     thorium_actor_send_int(self, spawner, THORIUM_ACTOR_SPAWN,
-                    BSAL_MANAGER_SCRIPT);
+                    SCRIPT_MANAGER);
 }
 
 void bsal_assembly_graph_builder_set_script_reply_classifier_manager(struct thorium_actor *self, struct thorium_message *message)
@@ -880,7 +880,7 @@ void bsal_assembly_graph_builder_get_entry_count_reply(struct thorium_actor *sel
             spawner = thorium_actor_get_spawner(self, &concrete_self->spawners);
 
             thorium_actor_send_int(self, spawner, THORIUM_ACTOR_SPAWN,
-                            BSAL_COVERAGE_DISTRIBUTION_SCRIPT);
+                            SCRIPT_COVERAGE_DISTRIBUTION);
 
         } else {
             /*
@@ -932,7 +932,7 @@ void bsal_assembly_graph_builder_notify_from_distribution(struct thorium_actor *
                     THORIUM_ACTOR_SPAWNING_IN_PROGRESS);
 
     thorium_actor_send_int(self, spawner, THORIUM_ACTOR_SPAWN,
-                    BSAL_MANAGER_SCRIPT);
+                    SCRIPT_MANAGER);
 }
 
 void bsal_assembly_graph_builder_spawn_reply_arc_kernel_manager(struct thorium_actor *self, struct thorium_message *message)
@@ -948,7 +948,7 @@ void bsal_assembly_graph_builder_spawn_reply_arc_kernel_manager(struct thorium_a
                     concrete_self->manager_for_arc_kernels);
 
     thorium_actor_send_int(self, concrete_self->manager_for_arc_kernels, BSAL_MANAGER_SET_SCRIPT,
-                    BSAL_ASSEMBLY_ARC_KERNEL_SCRIPT);
+                    SCRIPT_ASSEMBLY_ARC_KERNEL);
 }
 
 void bsal_assembly_graph_builder_set_script_reply_arc_kernel_manager(struct thorium_actor *self, struct thorium_message *message)
@@ -984,7 +984,7 @@ void bsal_assembly_graph_builder_start_reply_arc_kernel_manager(struct thorium_a
 
     spawner = thorium_actor_get_spawner(self, &concrete_self->spawners);
 
-    thorium_actor_send_int(self, spawner, THORIUM_ACTOR_SPAWN, BSAL_MANAGER_SCRIPT);
+    thorium_actor_send_int(self, spawner, THORIUM_ACTOR_SPAWN, SCRIPT_MANAGER);
 }
 
 void bsal_assembly_graph_builder_spawn_reply_arc_classifier_manager(struct thorium_actor *self, struct thorium_message *message)
@@ -1003,7 +1003,7 @@ void bsal_assembly_graph_builder_spawn_reply_arc_classifier_manager(struct thori
                     concrete_self->manager_for_arc_classifiers);
 
     thorium_actor_send_int(self, concrete_self->manager_for_arc_classifiers, BSAL_MANAGER_SET_SCRIPT,
-                    BSAL_ASSEMBLY_ARC_CLASSIFIER_SCRIPT);
+                    SCRIPT_ASSEMBLY_ARC_CLASSIFIER);
 
 }
 

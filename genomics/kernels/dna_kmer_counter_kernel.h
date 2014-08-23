@@ -10,7 +10,7 @@
 
 #include <core/system/memory_pool.h>
 
-#define BSAL_DNA_KMER_COUNTER_KERNEL_SCRIPT 0xed338fa2
+#define SCRIPT_DNA_KMER_COUNTER_KERNEL 0xed338fa2
 
 struct bsal_dna_kmer_counter_kernel {
     struct bsal_dna_codec codec;

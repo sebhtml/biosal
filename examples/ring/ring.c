@@ -7,7 +7,7 @@
 #include <string.h>
 
 struct thorium_script ring_script = {
-    .identifier = RING_SCRIPT,
+    .identifier = SCRIPT_RING,
     .init = ring_init,
     .destroy = ring_destroy,
     .receive = ring_receive,
@@ -39,7 +39,7 @@ void ring_init(struct thorium_actor *actor)
 
     bsal_vector_init(&concrete_actor->spawners, sizeof(int));
 
-    thorium_actor_add_script(actor, SENDER_SCRIPT, &sender_script);
+    thorium_actor_add_script(actor, SCRIPT_SENDER, &sender_script);
 
     bsal_vector_init(&concrete_actor->spawners, 0);
 }
@@ -97,10 +97,10 @@ void ring_receive(struct thorium_actor *actor, struct thorium_message *message)
 
         concrete_actor->step = RING_STEP_SPAWN;
 
-        new_actor = thorium_actor_spawn(actor, SENDER_SCRIPT);
+        new_actor = thorium_actor_spawn(actor, SCRIPT_SENDER);
         concrete_actor->first = new_actor;
         previous = new_actor;
-        new_actor = thorium_actor_spawn(actor, SENDER_SCRIPT);
+        new_actor = thorium_actor_spawn(actor, SCRIPT_SENDER);
         concrete_actor->previous = new_actor;
 
         thorium_message_init(message, SENDER_SET_NEXT, sizeof(new_actor), &new_actor);
@@ -162,7 +162,7 @@ void ring_receive(struct thorium_actor *actor, struct thorium_message *message)
 
             concrete_actor->last = concrete_actor->previous;
         } else {
-            new_actor = thorium_actor_spawn(actor, SENDER_SCRIPT);
+            new_actor = thorium_actor_spawn(actor, SCRIPT_SENDER);
             ++concrete_actor->spawned_senders;
             previous = concrete_actor->previous;
 

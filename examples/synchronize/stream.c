@@ -4,7 +4,7 @@
 #include <stdio.h>
 
 struct thorium_script stream_script = {
-    .identifier = STREAM_SCRIPT,
+    .identifier = SCRIPT_STREAM,
     .init = stream_init,
     .destroy = stream_destroy,
     .receive = stream_receive,
@@ -24,7 +24,7 @@ void stream_init(struct thorium_actor *actor)
     bsal_vector_init(&stream1->spawners, sizeof(int));
     stream1->is_king = 0;
 
-    thorium_actor_add_script(actor, STREAM_SCRIPT, &stream_script);
+    thorium_actor_add_script(actor, SCRIPT_STREAM, &stream_script);
 }
 
 void stream_destroy(struct thorium_actor *actor)
@@ -71,7 +71,7 @@ void stream_receive(struct thorium_actor *actor, struct thorium_message *message
         i = 0;
 
         while (i < to_spawn) {
-            new_actor = thorium_actor_spawn(actor, STREAM_SCRIPT);
+            new_actor = thorium_actor_spawn(actor, SCRIPT_STREAM);
 
             bsal_vector_push_back(&stream1->children, &new_actor);
             i++;

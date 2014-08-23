@@ -6,7 +6,7 @@
 #include <string.h>
 
 struct thorium_script sender_script = {
-    .identifier = SENDER_SCRIPT,
+    .identifier = SCRIPT_SENDER,
     .init = sender_init,
     .destroy = sender_destroy,
     .receive = sender_receive,

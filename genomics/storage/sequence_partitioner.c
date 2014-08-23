@@ -22,7 +22,7 @@
 */
 
 struct thorium_script bsal_sequence_partitioner_script = {
-    .identifier = BSAL_SEQUENCE_PARTITIONER_SCRIPT,
+    .identifier = SCRIPT_SEQUENCE_PARTITIONER,
     .init = bsal_sequence_partitioner_init,
     .destroy = bsal_sequence_partitioner_destroy,
     .receive = bsal_sequence_partitioner_receive,

@@ -20,7 +20,7 @@
 */
 
 struct thorium_script bsal_manager_script = {
-    .identifier = BSAL_MANAGER_SCRIPT,
+    .identifier = SCRIPT_MANAGER,
     .name = "bsal_manager",
     .description = "Manager",
     .author = "Sebastien Boisvert",

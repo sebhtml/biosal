@@ -9,7 +9,7 @@
 #include <stdio.h>
 
 struct thorium_script bsal_assembly_arc_classifier_script = {
-    .identifier = BSAL_ASSEMBLY_ARC_CLASSIFIER_SCRIPT,
+    .identifier = SCRIPT_ASSEMBLY_ARC_CLASSIFIER,
     .name = "bsal_assembly_arc_classifier",
     .init = bsal_assembly_arc_classifier_init,
     .destroy = bsal_assembly_arc_classifier_destroy,

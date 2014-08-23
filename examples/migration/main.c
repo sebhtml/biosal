@@ -5,5 +5,5 @@
 
 int main(int argc, char **argv)
 {
-    return bsal_thorium_engine_boot_initial_actor(&argc, &argv, FRAME_SCRIPT, &frame_script);
+    return bsal_thorium_engine_boot_initial_actor(&argc, &argv, SCRIPT_FRAME, &frame_script);
 }

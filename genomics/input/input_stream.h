@@ -12,7 +12,7 @@
 
 #include <core/structures/string.h>
 
-#define BSAL_INPUT_STREAM_SCRIPT 0xeb2fe16a
+#define BSAL_INPUT_SCRIPT_STREAM 0xeb2fe16a
 
 struct bsal_input_stream {
     struct bsal_input_proxy proxy;

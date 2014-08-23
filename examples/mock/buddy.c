@@ -5,7 +5,7 @@
 
 /* this script is required */
 struct thorium_script buddy_script = {
-    .identifier = BUDDY_SCRIPT,
+    .identifier = SCRIPT_BUDDY,
     .init = buddy_init,
     .destroy = buddy_destroy,
     .receive = buddy_receive,

@@ -38,7 +38,7 @@
 #define ARGONNITE_STATE_PREPARE_SEQUENCE_STORES 1
 
 struct thorium_script argonnite_script = {
-    .identifier = ARGONNITE_SCRIPT,
+    .identifier = SCRIPT_ARGONNITE,
     .init = argonnite_init,
     .destroy = argonnite_destroy,
     .receive = argonnite_receive,
@@ -62,19 +62,19 @@ void argonnite_init(struct thorium_actor *actor)
     bsal_timer_init(&concrete_actor->timer_for_kmers);
     bsal_map_init(&concrete_actor->plentiful_stores, sizeof(int), sizeof(int));
 
-    thorium_actor_add_script(actor, BSAL_INPUT_CONTROLLER_SCRIPT,
+    thorium_actor_add_script(actor, SCRIPT_INPUT_CONTROLLER,
                     &bsal_input_controller_script);
-    thorium_actor_add_script(actor, BSAL_DNA_KMER_COUNTER_KERNEL_SCRIPT,
+    thorium_actor_add_script(actor, SCRIPT_DNA_KMER_COUNTER_KERNEL,
                     &bsal_dna_kmer_counter_kernel_script);
-    thorium_actor_add_script(actor, BSAL_MANAGER_SCRIPT,
+    thorium_actor_add_script(actor, SCRIPT_MANAGER,
                     &bsal_manager_script);
-    thorium_actor_add_script(actor, BSAL_AGGREGATOR_SCRIPT,
+    thorium_actor_add_script(actor, SCRIPT_AGGREGATOR,
                     &bsal_aggregator_script);
-    thorium_actor_add_script(actor, BSAL_KMER_STORE_SCRIPT,
+    thorium_actor_add_script(actor, SCRIPT_KMER_STORE,
                     &bsal_kmer_store_script);
-    thorium_actor_add_script(actor, BSAL_SEQUENCE_STORE_SCRIPT,
+    thorium_actor_add_script(actor, SCRIPT_SEQUENCE_STORE,
                     &bsal_sequence_store_script);
-    thorium_actor_add_script(actor, BSAL_COVERAGE_DISTRIBUTION_SCRIPT,
+    thorium_actor_add_script(actor, SCRIPT_COVERAGE_DISTRIBUTION,
                     &bsal_coverage_distribution_script);
 
     concrete_actor->kmer_length = ARGONNITE_DEFAULT_KMER_LENGTH;
@@ -226,10 +226,10 @@ void argonnite_receive(struct thorium_actor *actor, struct thorium_message *mess
 
         bsal_timer_start(&concrete_actor->timer);
 
-        controller = thorium_actor_spawn(actor, BSAL_INPUT_CONTROLLER_SCRIPT);
+        controller = thorium_actor_spawn(actor, SCRIPT_INPUT_CONTROLLER);
         concrete_actor->controller = controller;
 
-        manager_for_kernels = thorium_actor_spawn(actor, BSAL_MANAGER_SCRIPT);
+        manager_for_kernels = thorium_actor_spawn(actor, SCRIPT_MANAGER);
         concrete_actor->manager_for_kernels = manager_for_kernels;
 
 #ifdef ARGONNITE_DEBUG1
@@ -263,7 +263,7 @@ void argonnite_receive(struct thorium_actor *actor, struct thorium_message *mess
 
         if (concrete_actor->configured_actors == bsal_vector_size(&concrete_actor->initial_actors)) {
             spawner = bsal_vector_at_as_int(&concrete_actor->initial_actors, bsal_vector_size(&concrete_actor->initial_actors) / 2);
-            thorium_actor_send_int(actor, spawner, THORIUM_ACTOR_SPAWN, BSAL_COVERAGE_DISTRIBUTION_SCRIPT);
+            thorium_actor_send_int(actor, spawner, THORIUM_ACTOR_SPAWN, SCRIPT_COVERAGE_DISTRIBUTION);
         }
 
 
@@ -280,7 +280,7 @@ void argonnite_receive(struct thorium_actor *actor, struct thorium_message *mess
 
         manager_for_kernels = concrete_actor->manager_for_kernels;
         thorium_actor_send_int(actor, manager_for_kernels, BSAL_MANAGER_SET_SCRIPT,
-                        BSAL_DNA_KMER_COUNTER_KERNEL_SCRIPT);
+                        SCRIPT_DNA_KMER_COUNTER_KERNEL);
 
     } else if (tag == BSAL_MANAGER_SET_SCRIPT_REPLY
                     && source == concrete_actor->manager_for_sequence_stores) {
@@ -354,7 +354,7 @@ void argonnite_receive(struct thorium_actor *actor, struct thorium_message *mess
             /* spawn the manager for aggregators
              */
             manager_for_aggregators = thorium_actor_spawn(actor,
-                            BSAL_MANAGER_SCRIPT);
+                            SCRIPT_MANAGER);
 
             printf("argonnite %d spawns manager %d for aggregators\n",
                             thorium_actor_name(actor), manager_for_aggregators);
@@ -362,7 +362,7 @@ void argonnite_receive(struct thorium_actor *actor, struct thorium_message *mess
             concrete_actor->manager_for_aggregators = manager_for_aggregators;
 
             thorium_actor_send_int(actor, manager_for_aggregators,
-                            BSAL_MANAGER_SET_SCRIPT, BSAL_AGGREGATOR_SCRIPT);
+                            BSAL_MANAGER_SET_SCRIPT, SCRIPT_AGGREGATOR);
 
 #ifdef ARGONNITE_DEBUG2
             BSAL_DEBUG_MARKER("set aggregator script");
@@ -538,7 +538,7 @@ void argonnite_receive(struct thorium_actor *actor, struct thorium_message *mess
         }
     } else if (tag == BSAL_SET_BLOCK_SIZE_REPLY) {
 
-        manager_for_kmer_stores = thorium_actor_spawn(actor, BSAL_MANAGER_SCRIPT);
+        manager_for_kmer_stores = thorium_actor_spawn(actor, SCRIPT_MANAGER);
 
         concrete_actor->manager_for_kmer_stores = manager_for_kmer_stores;
 
@@ -547,7 +547,7 @@ void argonnite_receive(struct thorium_actor *actor, struct thorium_message *mess
 #endif
 
         thorium_actor_send_int(actor, manager_for_kmer_stores, BSAL_MANAGER_SET_SCRIPT,
-                        BSAL_KMER_STORE_SCRIPT);
+                        SCRIPT_KMER_STORE);
 
     } else if (tag == BSAL_MANAGER_SET_SCRIPT_REPLY
                     && source == concrete_actor->manager_for_kmer_stores) {
@@ -928,7 +928,7 @@ void argonnite_prepare_sequence_stores(struct thorium_actor *self, struct thoriu
         printf("DEBUGY spawn manager for stores\n");
         spawner = bsal_vector_at_as_int(&concrete_actor->initial_actors,
                         bsal_vector_size(&concrete_actor->initial_actors) - 1);
-        thorium_actor_send_int(self, spawner, THORIUM_ACTOR_SPAWN, BSAL_MANAGER_SCRIPT);
+        thorium_actor_send_int(self, spawner, THORIUM_ACTOR_SPAWN, SCRIPT_MANAGER);
 
     } else if (tag == THORIUM_ACTOR_SPAWN_REPLY) {
 
@@ -937,7 +937,7 @@ void argonnite_prepare_sequence_stores(struct thorium_actor *self, struct thoriu
         concrete_actor->manager_for_sequence_stores = manager_for_sequence_stores;
 
         thorium_actor_send_int(self, manager_for_sequence_stores, BSAL_MANAGER_SET_SCRIPT,
-                        BSAL_SEQUENCE_STORE_SCRIPT);
+                        SCRIPT_SEQUENCE_STORE);
 
     } else if (tag == BSAL_MANAGER_SET_SCRIPT_REPLY) {
 

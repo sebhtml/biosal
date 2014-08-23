@@ -6,7 +6,7 @@
 
 #include <core/structures/vector.h>
 
-#define STREAM_SCRIPT 0xb9b19139
+#define SCRIPT_STREAM 0xb9b19139
 
 struct stream {
     struct bsal_vector spawners;

@@ -8,7 +8,7 @@
 #include <inttypes.h>
 
 struct thorium_script reader_script = {
-    .identifier = READER_SCRIPT,
+    .identifier = SCRIPT_READER,
     .init = reader_init,
     .destroy = reader_destroy,
     .receive = reader_receive,
@@ -25,7 +25,7 @@ void reader_init(struct thorium_actor *actor)
     reader1->pulled = 0;
 
     bsal_vector_init(&reader1->spawners, sizeof(int));
-    thorium_actor_add_script(actor, BSAL_INPUT_STREAM_SCRIPT,
+    thorium_actor_add_script(actor, BSAL_INPUT_SCRIPT_STREAM,
                     &bsal_input_stream_script);
 }
 
@@ -95,7 +95,7 @@ void reader_receive(struct thorium_actor *actor, struct thorium_message *message
             return;
         }
 
-        reader1->sequence_reader = thorium_actor_spawn(actor, BSAL_INPUT_STREAM_SCRIPT);
+        reader1->sequence_reader = thorium_actor_spawn(actor, BSAL_INPUT_SCRIPT_STREAM);
 
         reader1->file = argv[argc - 1];
 
@@ -163,7 +163,7 @@ void reader_receive(struct thorium_actor *actor, struct thorium_message *message
         return;
         */
 
-        script = BSAL_INPUT_STREAM_SCRIPT;
+        script = BSAL_INPUT_SCRIPT_STREAM;
 
         thorium_message_init(message, THORIUM_ACTOR_SPAWN, sizeof(script), &script);
         thorium_actor_send(actor, name, message);

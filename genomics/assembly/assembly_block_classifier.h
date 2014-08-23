@@ -14,7 +14,7 @@
 
 #include <stdint.h>
 
-#define BSAL_ASSEMBLY_BLOCK_CLASSIFIER_SCRIPT 0x8f6f8767
+#define SCRIPT_ASSEMBLY_BLOCK_CLASSIFIER 0x8f6f8767
 
 /*
  * This is a classifier that dispatch a vertex block to the

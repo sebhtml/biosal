@@ -9,7 +9,7 @@
 
 #include <core/system/memory_pool.h>
 
-#define BSAL_ASSEMBLY_ARC_CLASSIFIER_SCRIPT 0x115b87ed
+#define SCRIPT_ASSEMBLY_ARC_CLASSIFIER 0x115b87ed
 
 /*
  * This actor classifies arcs.

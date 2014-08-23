@@ -24,7 +24,7 @@
 */
 
 struct thorium_script bsal_assembly_dummy_walker_script = {
-    .identifier = BSAL_ASSEMBLY_DUMMY_WALKER_SCRIPT,
+    .identifier = SCRIPT_ASSEMBLY_DUMMY_WALKER,
     .name = "bsal_assembly_dummy_walker",
     .init = bsal_assembly_dummy_walker_init,
     .destroy = bsal_assembly_dummy_walker_destroy,

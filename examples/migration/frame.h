@@ -4,7 +4,7 @@
 
 #include <biosal.h>
 
-#define FRAME_SCRIPT 0x246eaaa0
+#define SCRIPT_FRAME 0x246eaaa0
 
 struct frame {
     int value;

@@ -8,7 +8,7 @@
 #include <string.h>
 
 struct thorium_script root_script = {
-    .identifier = ROOT_SCRIPT,
+    .identifier = SCRIPT_ROOT,
     .init = root_init,
     .destroy = root_destroy,
     .receive = root_receive,
@@ -28,14 +28,14 @@ void root_init(struct thorium_actor *actor)
     concrete_self->is_king = 0;
     concrete_self->ready = 0;
 
-    thorium_actor_add_script(actor, BSAL_INPUT_CONTROLLER_SCRIPT,
+    thorium_actor_add_script(actor, SCRIPT_INPUT_CONTROLLER,
                         &bsal_input_controller_script);
-    thorium_actor_add_script(actor, BSAL_MANAGER_SCRIPT,
+    thorium_actor_add_script(actor, SCRIPT_MANAGER,
                         &bsal_manager_script);
 
     /* TODO: do this one inside the manager script.
 */
-thorium_actor_add_script(actor, BSAL_SEQUENCE_STORE_SCRIPT,
+thorium_actor_add_script(actor, SCRIPT_SEQUENCE_STORE,
                         &bsal_sequence_store_script);
 }
 
@@ -99,7 +99,7 @@ void root_receive(struct thorium_actor *actor, struct thorium_message *message)
 /*
             printf("is king\n");
             */
-            concrete_self->controller = thorium_actor_spawn(actor, BSAL_INPUT_CONTROLLER_SCRIPT);
+            concrete_self->controller = thorium_actor_spawn(actor, SCRIPT_INPUT_CONTROLLER);
             printf("root actor/%d spawned controller actor/%d\n", name, concrete_self->controller);
             thorium_actor_synchronize(actor, &concrete_self->spawners);
             /*
@@ -119,13 +119,13 @@ void root_receive(struct thorium_actor *actor, struct thorium_message *message)
             /*
         printf("actor %d receives THORIUM_ACTOR_SYNCHRONIZE\n", name);
 */
-        thorium_actor_add_script(actor, BSAL_INPUT_CONTROLLER_SCRIPT,
+        thorium_actor_add_script(actor, SCRIPT_INPUT_CONTROLLER,
                         &bsal_input_controller_script);
 
-        /* TODO remove this, BSAL_INPUT_CONTROLLER_SCRIPT should pull
+        /* TODO remove this, SCRIPT_INPUT_CONTROLLER should pull
          * its dependencies...
          */
-        thorium_actor_add_script(actor, BSAL_INPUT_STREAM_SCRIPT,
+        thorium_actor_add_script(actor, BSAL_INPUT_SCRIPT_STREAM,
                         &bsal_input_stream_script);
 
         concrete_self->ready++;
@@ -151,11 +151,11 @@ void root_receive(struct thorium_actor *actor, struct thorium_message *message)
 
     } else if (tag == THORIUM_ACTOR_YIELD_REPLY) {
 
-        manager = thorium_actor_spawn(actor, BSAL_MANAGER_SCRIPT);
+        manager = thorium_actor_spawn(actor, SCRIPT_MANAGER);
 
         concrete_actor->manager = manager;
 
-        thorium_actor_send_int(actor, manager, BSAL_MANAGER_SET_SCRIPT, BSAL_SEQUENCE_STORE_SCRIPT);
+        thorium_actor_send_int(actor, manager, BSAL_MANAGER_SET_SCRIPT, SCRIPT_SEQUENCE_STORE);
 
         printf("DEBUG root actor/%d spawned manager actor/%d\n",
                         thorium_actor_name(actor), manager);

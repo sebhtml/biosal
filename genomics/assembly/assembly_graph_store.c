@@ -36,7 +36,7 @@
 #define BSAL_DEBUG_ISSUE_540
 
 struct thorium_script bsal_assembly_graph_store_script = {
-    .identifier = BSAL_ASSEMBLY_GRAPH_STORE_SCRIPT,
+    .identifier = SCRIPT_ASSEMBLY_GRAPH_STORE,
     .name = "bsal_assembly_graph_store",
     .init = bsal_assembly_graph_store_init,
     .destroy = bsal_assembly_graph_store_destroy,

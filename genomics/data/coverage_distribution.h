@@ -11,7 +11,7 @@
  *
  * To use it:
  *
- * 1. spawn it with the script BSAL_COVERAGE_DISTRIBUTION_SCRIPT
+ * 1. spawn it with the script SCRIPT_COVERAGE_DISTRIBUTION
  * 2. send BSAL_SET_EXPECTED_MESSAGE_COUNT
  * 3. Tell some other actors to send it BSAL_PUSH_DATA messages
  * 4. Enjoy
@@ -23,7 +23,7 @@ struct bsal_coverage_distribution {
     int source;
 };
 
-#define BSAL_COVERAGE_DISTRIBUTION_SCRIPT 0xfdec2b1e
+#define SCRIPT_COVERAGE_DISTRIBUTION 0xfdec2b1e
 
 #define BSAL_PUSH_DATA 0x00005c27
 #define BSAL_PUSH_DATA_REPLY 0x00004874

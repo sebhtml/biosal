@@ -5,7 +5,7 @@
 #include <stdlib.h>
 
 struct thorium_script frame_script = {
-    .identifier = FRAME_SCRIPT,
+    .identifier = SCRIPT_FRAME,
     .init = frame_init,
     .destroy = frame_destroy,
     .receive = frame_receive,

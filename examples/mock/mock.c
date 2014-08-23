@@ -5,7 +5,7 @@
 #include <stdio.h>
 
 struct thorium_script mock_script = {
-    .identifier = MOCK_SCRIPT,
+    .identifier = SCRIPT_MOCK,
     .init = mock_init,
     .destroy = mock_destroy,
     .receive = mock_receive,
@@ -25,7 +25,7 @@ void mock_init(struct thorium_actor *actor)
     mock1->notified = 0;
 
     bsal_vector_init(&mock1->spawners, sizeof(int));
-    thorium_actor_add_script(actor, BUDDY_SCRIPT, &buddy_script);
+    thorium_actor_add_script(actor, SCRIPT_BUDDY, &buddy_script);
 }
 
 void mock_destroy(struct thorium_actor *actor)
@@ -199,7 +199,7 @@ void mock_spawn_children(struct thorium_actor *actor)
 
     for (i = 0; i <total; i++) {
 
-        name = thorium_actor_spawn(actor, BUDDY_SCRIPT);
+        name = thorium_actor_spawn(actor, SCRIPT_BUDDY);
 
         thorium_actor_send(actor, name, &message);
 

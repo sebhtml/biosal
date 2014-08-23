@@ -21,7 +21,7 @@
 #define MINIMUM_PERIOD 4096
 
 struct thorium_script bsal_sequence_store_script = {
-    .identifier = BSAL_SEQUENCE_STORE_SCRIPT,
+    .identifier = SCRIPT_SEQUENCE_STORE,
     .init = bsal_sequence_store_init,
     .destroy = bsal_sequence_store_destroy,
     .receive = bsal_sequence_store_receive,

@@ -4,7 +4,7 @@
 
 #include <biosal.h>
 
-#define ROOT_SCRIPT 0xf04a42e1
+#define SCRIPT_ROOT 0xf04a42e1
 
 struct root {
     struct bsal_vector spawners;

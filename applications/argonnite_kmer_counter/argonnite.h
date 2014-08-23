@@ -4,7 +4,7 @@
 
 #include <biosal.h>
 
-#define ARGONNITE_SCRIPT 0x97e07af7
+#define SCRIPT_ARGONNITE 0x97e07af7
 
 struct argonnite {
     struct bsal_vector initial_actors;

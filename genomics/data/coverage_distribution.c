@@ -22,7 +22,7 @@
 #include <inttypes.h>
 
 struct thorium_script bsal_coverage_distribution_script = {
-    .identifier = BSAL_COVERAGE_DISTRIBUTION_SCRIPT,
+    .identifier = SCRIPT_COVERAGE_DISTRIBUTION,
     .name = "bsal_coverage_distribution",
     .init = bsal_coverage_distribution_init,
     .destroy = bsal_coverage_distribution_destroy,

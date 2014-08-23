@@ -4,7 +4,7 @@
 
 #include <biosal.h>
 
-#define PROCESS_SCRIPT 0x083212f2
+#define SCRIPT_PROCESS 0x083212f2
 
 struct process {
     int clone;

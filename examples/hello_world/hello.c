@@ -4,7 +4,7 @@
 #include <stdio.h>
 
 struct thorium_script hello_script = {
-    .identifier = HELLO_SCRIPT,
+    .identifier = SCRIPT_HELLO,
     .init = hello_init,
     .destroy = hello_destroy,
     .receive = hello_receive,

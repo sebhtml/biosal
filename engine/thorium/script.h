@@ -1,6 +1,6 @@
 
-#ifndef THORIUM_SCRIPT_H
-#define THORIUM_SCRIPT_H
+#ifndef SCRIPT_H
+#define SCRIPT_H
 
 struct thorium_actor;
 struct thorium_message;

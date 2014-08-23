@@ -46,7 +46,7 @@
 
 
 struct thorium_script bsal_aggregator_script = {
-    .identifier = BSAL_AGGREGATOR_SCRIPT,
+    .identifier = SCRIPT_AGGREGATOR,
     .name = "bsal_aggregator",
     .description = "",
     .version = "",

@@ -4,7 +4,7 @@
 
 #include <biosal.h>
 
-#define HELLO_SCRIPT 0xfbcedbb5
+#define SCRIPT_HELLO 0xfbcedbb5
 
 struct hello {
     struct bsal_vector initial_helloes;

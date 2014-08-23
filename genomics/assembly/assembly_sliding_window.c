@@ -40,7 +40,7 @@
 #define MAXIMUM_AUTO_SCALING_KERNEL_COUNT 0
 
 struct thorium_script bsal_assembly_sliding_window_script = {
-    .identifier = BSAL_ASSEMBLY_SLIDING_WINDOW_SCRIPT,
+    .identifier = SCRIPT_ASSEMBLY_SLIDING_WINDOW,
     .init = bsal_assembly_sliding_window_init,
     .destroy = bsal_assembly_sliding_window_destroy,
     .receive = bsal_assembly_sliding_window_receive,

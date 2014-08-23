@@ -4,7 +4,7 @@
 
 #include <biosal.h>
 
-#define READER_SCRIPT 0x0edc63d2
+#define SCRIPT_READER 0x0edc63d2
 
 struct reader {
     struct bsal_vector spawners;

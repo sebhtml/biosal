@@ -4,7 +4,7 @@
 
 #include <biosal.h>
 
-#define MOCK_SCRIPT 0x959ff8ea
+#define SCRIPT_MOCK 0x959ff8ea
 
 struct mock {
     int value;

@@ -38,7 +38,7 @@
 */
 
 struct thorium_script bsal_assembly_block_classifier_script = {
-    .identifier = BSAL_ASSEMBLY_BLOCK_CLASSIFIER_SCRIPT,
+    .identifier = SCRIPT_ASSEMBLY_BLOCK_CLASSIFIER,
     .name = "bsal_assembly_block_classifier",
     .description = "",
     .version = "",

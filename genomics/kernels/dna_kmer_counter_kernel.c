@@ -42,7 +42,7 @@
 #define MAXIMUM_AUTO_SCALING_KERNEL_COUNT 0
 
 struct thorium_script bsal_dna_kmer_counter_kernel_script = {
-    .identifier = BSAL_DNA_KMER_COUNTER_KERNEL_SCRIPT,
+    .identifier = SCRIPT_DNA_KMER_COUNTER_KERNEL,
     .init = bsal_dna_kmer_counter_kernel_init,
     .destroy = bsal_dna_kmer_counter_kernel_destroy,
     .receive = bsal_dna_kmer_counter_kernel_receive,
