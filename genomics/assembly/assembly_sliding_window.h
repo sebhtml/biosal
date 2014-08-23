@@ -7,7 +7,7 @@
 #include <genomics/data/dna_codec.h>
 
 #include <core/structures/vector.h>
-#include <core/structures/ring_queue.h>
+#include <core/structures/fast_queue.h>
 #include <core/structures/map.h>
 
 #include <core/system/memory_pool.h>
@@ -27,7 +27,7 @@ struct bsal_assembly_sliding_window {
     int blocks;
     int consumer;
     int producer;
-    struct bsal_ring_queue producers_for_work_stealing;
+    struct bsal_fast_queue producers_for_work_stealing;
     int kmer_length;
 
     int producer_source;

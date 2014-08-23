@@ -58,7 +58,7 @@ CORE_OBJECTS += core/structures/set.o
 CORE_OBJECTS += core/structures/set_iterator.o
 CORE_OBJECTS += core/structures/ring.o
 CORE_OBJECTS += core/structures/linked_ring.o
-CORE_OBJECTS += core/structures/ring_queue.o
+CORE_OBJECTS += core/structures/fast_queue.o
 CORE_OBJECTS += core/structures/fast_ring.o
 
 

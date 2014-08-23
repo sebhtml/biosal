@@ -3,7 +3,7 @@
 #define THORIUM_MPI1_P2P_TRANSPORT_H
 
 #include <engine/thorium/transport/transport_interface.h>
-#include <core/structures/ring_queue.h>
+#include <core/structures/fast_queue.h>
 
 #define THORIUM_TRANSPORT_USE_MPI1_P2P
 #define THORIUM_TRANSPORT_MPI1_P2P_IDENTIFIER 10
@@ -19,7 +19,7 @@ struct thorium_transport;
  * MPI 1 point-to-point transport layer.
  */
 struct thorium_mpi1_p2p_transport {
-    struct bsal_ring_queue active_requests;
+    struct bsal_fast_queue active_requests;
     MPI_Comm comm;
     MPI_Datatype datatype;
 };

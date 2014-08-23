@@ -66,7 +66,7 @@ void thorium_worker_pool_init(struct thorium_worker_pool *pool, int workers,
 
     pool->ticks_without_messages = 0;
 
-    bsal_ring_queue_init(&pool->messages_for_triage, sizeof(struct thorium_message));
+    bsal_fast_queue_init(&pool->messages_for_triage, sizeof(struct thorium_message));
 
     pool->last_warning = 0;
     pool->last_scheduling_warning = 0;
@@ -101,8 +101,8 @@ void thorium_worker_pool_init(struct thorium_worker_pool *pool, int workers,
 
     pool->starting_time = time(NULL);
 
-    bsal_ring_queue_init(&pool->scheduled_actor_queue_buffer, sizeof(struct thorium_actor *));
-    bsal_ring_queue_init(&pool->inbound_message_queue_buffer, sizeof(struct thorium_message));
+    bsal_fast_queue_init(&pool->scheduled_actor_queue_buffer, sizeof(struct thorium_actor *));
+    bsal_fast_queue_init(&pool->inbound_message_queue_buffer, sizeof(struct thorium_message));
 
     pool->last_balancing = pool->starting_time;
     pool->last_signal_check = pool->starting_time;
@@ -118,9 +118,9 @@ void thorium_worker_pool_destroy(struct thorium_worker_pool *pool)
 
     pool->node = NULL;
 
-    bsal_ring_queue_destroy(&pool->inbound_message_queue_buffer);
-    bsal_ring_queue_destroy(&pool->scheduled_actor_queue_buffer);
-    bsal_ring_queue_destroy(&pool->messages_for_triage);
+    bsal_fast_queue_destroy(&pool->inbound_message_queue_buffer);
+    bsal_fast_queue_destroy(&pool->scheduled_actor_queue_buffer);
+    bsal_fast_queue_destroy(&pool->messages_for_triage);
 }
 
 void thorium_worker_pool_delete_workers(struct thorium_worker_pool *pool)
@@ -403,7 +403,7 @@ int thorium_worker_pool_give_message_to_actor(struct thorium_worker_pool *pool, 
         printf("DEAD LETTER CHANNEL...\n");
 #endif
 
-        bsal_ring_queue_enqueue(&pool->messages_for_triage, message);
+        bsal_fast_queue_enqueue(&pool->messages_for_triage, message);
 
         return 0;
     }
@@ -414,7 +414,7 @@ int thorium_worker_pool_give_message_to_actor(struct thorium_worker_pool *pool, 
      */
     if (dead) {
 
-        bsal_ring_queue_enqueue(&pool->messages_for_triage, message);
+        bsal_fast_queue_enqueue(&pool->messages_for_triage, message);
 
         return 0;
     }
@@ -429,7 +429,7 @@ int thorium_worker_pool_give_message_to_actor(struct thorium_worker_pool *pool, 
         printf("DEBUG897 could not enqueue message, buffering...\n");
 #endif
 
-        bsal_ring_queue_enqueue(&pool->inbound_message_queue_buffer, message);
+        bsal_fast_queue_enqueue(&pool->inbound_message_queue_buffer, message);
 
     } else {
         /*
@@ -463,7 +463,7 @@ int thorium_worker_pool_give_message_to_actor(struct thorium_worker_pool *pool, 
          * If that fails, queue the actor.
          */
         if (!thorium_worker_enqueue_actor(affinity_worker, actor)) {
-            bsal_ring_queue_enqueue(&pool->scheduled_actor_queue_buffer, &actor);
+            bsal_fast_queue_enqueue(&pool->scheduled_actor_queue_buffer, &actor);
         }
     }
 
@@ -484,14 +484,14 @@ void thorium_worker_pool_work(struct thorium_worker_pool *pool)
     /* If there are messages in the inbound message buffer,
      * Try to give  them too.
      */
-    if (bsal_ring_queue_dequeue(&pool->inbound_message_queue_buffer, &other_message)) {
+    if (bsal_fast_queue_dequeue(&pool->inbound_message_queue_buffer, &other_message)) {
         thorium_worker_pool_give_message_to_actor(pool, &other_message);
     }
 
     /* Try to dequeue an actor for scheduling
      */
 
-    if (bsal_ring_queue_dequeue(&pool->scheduled_actor_queue_buffer, &actor)) {
+    if (bsal_fast_queue_dequeue(&pool->scheduled_actor_queue_buffer, &actor)) {
 
         name = thorium_actor_name(actor);
         worker_index = thorium_scheduler_get_actor_worker(&pool->scheduler, name);
@@ -519,7 +519,7 @@ void thorium_worker_pool_work(struct thorium_worker_pool *pool)
         worker = thorium_worker_pool_get_worker(pool, worker_index);
 
         if (!thorium_worker_enqueue_actor(worker, actor)) {
-            bsal_ring_queue_enqueue(&pool->scheduled_actor_queue_buffer, &actor);
+            bsal_fast_queue_enqueue(&pool->scheduled_actor_queue_buffer, &actor);
         }
     }
 
@@ -787,5 +787,5 @@ void thorium_worker_pool_wake_up_workers(struct thorium_worker_pool *pool)
 int thorium_worker_pool_dequeue_message_for_triage(struct thorium_worker_pool *self,
                 struct thorium_message *message)
 {
-    return bsal_ring_queue_dequeue(&self->messages_for_triage, message);
+    return bsal_fast_queue_dequeue(&self->messages_for_triage, message);
 }

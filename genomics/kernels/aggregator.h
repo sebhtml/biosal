@@ -7,7 +7,7 @@
 #include <genomics/data/dna_codec.h>
 
 #include <core/structures/vector.h>
-#include <core/structures/ring_queue.h>
+#include <core/structures/fast_queue.h>
 
 #include <core/system/memory_pool.h>
 
@@ -22,7 +22,7 @@ struct bsal_aggregator {
 
     struct bsal_vector consumers;
 
-    struct bsal_ring_queue stalled_producers;
+    struct bsal_fast_queue stalled_producers;
 
     int maximum_active_messages;
     struct bsal_vector active_messages;

@@ -1,11 +1,11 @@
 
-#include "ring_queue.h"
+#include "fast_queue.h"
 
 #include <core/system/memory.h>
 
 #include <stdlib.h>
 
-void bsal_ring_queue_init(struct bsal_ring_queue *self, int bytes_per_unit)
+void bsal_fast_queue_init(struct bsal_fast_queue *self, int bytes_per_unit)
 {
     self->head = NULL;
     self->tail = NULL;
@@ -20,7 +20,7 @@ void bsal_ring_queue_init(struct bsal_ring_queue *self, int bytes_per_unit)
 #endif
 }
 
-void bsal_ring_queue_destroy(struct bsal_ring_queue *self)
+void bsal_fast_queue_destroy(struct bsal_fast_queue *self)
 {
     struct bsal_linked_ring *next;
     self->tail = NULL;
@@ -46,26 +46,26 @@ void bsal_ring_queue_destroy(struct bsal_ring_queue *self)
 #endif
 }
 
-int bsal_ring_queue_full(struct bsal_ring_queue *self)
+int bsal_fast_queue_full(struct bsal_fast_queue *self)
 {
     return BSAL_FALSE;
 }
 
 #ifdef BSAL_RING_QUEUE_THREAD_SAFE
-void bsal_ring_queue_lock(struct bsal_ring_queue *self)
+void bsal_fast_queue_lock(struct bsal_fast_queue *self)
 {
     bsal_lock_lock(&self->lock);
     self->locked = BSAL_LOCK_LOCKED;
 }
 
-void bsal_ring_queue_unlock(struct bsal_ring_queue *self)
+void bsal_fast_queue_unlock(struct bsal_fast_queue *self)
 {
     self->locked = BSAL_LOCK_UNLOCKED;
     bsal_lock_unlock(&self->lock);
 }
 #endif
 
-struct bsal_linked_ring *bsal_ring_queue_get_ring(struct bsal_ring_queue *self)
+struct bsal_linked_ring *bsal_fast_queue_get_ring(struct bsal_fast_queue *self)
 {
     struct bsal_linked_ring *ring;
 
@@ -83,16 +83,16 @@ struct bsal_linked_ring *bsal_ring_queue_get_ring(struct bsal_ring_queue *self)
     return ring;
 }
 
-int bsal_ring_queue_size(struct bsal_ring_queue *queue)
+int bsal_fast_queue_size(struct bsal_fast_queue *queue)
 {
     return queue->size;
 }
 
-int bsal_ring_queue_dequeue(struct bsal_ring_queue *self, void *item)
+int bsal_fast_queue_dequeue(struct bsal_fast_queue *self, void *item)
 {
     struct bsal_linked_ring *new_head;
 
-    if (bsal_ring_queue_empty(self)) {
+    if (bsal_fast_queue_empty(self)) {
         return BSAL_FALSE;
     }
 
@@ -102,7 +102,7 @@ int bsal_ring_queue_dequeue(struct bsal_ring_queue *self, void *item)
                             && self->head != self->tail) {
 
 #ifdef BSAL_RING_QUEUE_THREAD_SAFE
-        bsal_ring_queue_lock(self);
+        bsal_fast_queue_lock(self);
 #endif
 
         new_head = bsal_linked_ring_get_next(self->head);
@@ -111,7 +111,7 @@ int bsal_ring_queue_dequeue(struct bsal_ring_queue *self, void *item)
         self->head = new_head;
 
 #ifdef BSAL_RING_QUEUE_THREAD_SAFE
-        bsal_ring_queue_unlock(self);
+        bsal_fast_queue_unlock(self);
 #endif
     }
 
@@ -120,22 +120,22 @@ int bsal_ring_queue_dequeue(struct bsal_ring_queue *self, void *item)
     return BSAL_TRUE;
 }
 
-int bsal_ring_queue_empty(struct bsal_ring_queue *self)
+int bsal_fast_queue_empty(struct bsal_fast_queue *self)
 {
-    if (bsal_ring_queue_size(self) == 0) {
+    if (bsal_fast_queue_size(self) == 0) {
         return BSAL_TRUE;
     }
     return BSAL_FALSE;
 }
 
-int bsal_ring_queue_enqueue(struct bsal_ring_queue *self, void *item)
+int bsal_fast_queue_enqueue(struct bsal_fast_queue *self, void *item)
 {
-    bsal_ring_queue_enqueue_private(self, item);
+    bsal_fast_queue_enqueue_private(self, item);
     self->size++;
     return BSAL_TRUE;
 }
 
-int bsal_ring_queue_enqueue_private(struct bsal_ring_queue *self, void *item)
+int bsal_fast_queue_enqueue_private(struct bsal_fast_queue *self, void *item)
 {
     int inserted;
     struct bsal_linked_ring *new_ring;
@@ -143,7 +143,7 @@ int bsal_ring_queue_enqueue_private(struct bsal_ring_queue *self, void *item)
     if (self->tail == NULL) {
 
 #ifdef BSAL_RING_QUEUE_THREAD_SAFE
-        bsal_ring_queue_lock(self);
+        bsal_fast_queue_lock(self);
 #endif
 
         /* the tail was assigned while this thread was waiting
@@ -151,7 +151,7 @@ int bsal_ring_queue_enqueue_private(struct bsal_ring_queue *self, void *item)
         if (self->tail != NULL) {
 
 #ifdef BSAL_RING_QUEUE_THREAD_SAFE
-            bsal_ring_queue_unlock(self);
+            bsal_fast_queue_unlock(self);
 #endif
 
             inserted = bsal_ring_push(bsal_linked_ring_get_ring(self->tail), item);
@@ -162,14 +162,14 @@ int bsal_ring_queue_enqueue_private(struct bsal_ring_queue *self, void *item)
 
             /* do a recursive call to add a ring
              */
-            return bsal_ring_queue_enqueue_private(self, item);
+            return bsal_fast_queue_enqueue_private(self, item);
         }
 
-        self->tail = bsal_ring_queue_get_ring(self);
+        self->tail = bsal_fast_queue_get_ring(self);
         self->head = self->tail;
 
 #ifdef BSAL_RING_QUEUE_THREAD_SAFE
-        bsal_ring_queue_unlock(self);
+        bsal_fast_queue_unlock(self);
 #endif
 
         inserted = bsal_ring_push(bsal_linked_ring_get_ring(self->tail), item);
@@ -178,7 +178,7 @@ int bsal_ring_queue_enqueue_private(struct bsal_ring_queue *self, void *item)
             return inserted;
         }
 
-        return bsal_ring_queue_enqueue_private(self, item);
+        return bsal_fast_queue_enqueue_private(self, item);
     }
 
     inserted = bsal_ring_push(bsal_linked_ring_get_ring(self->tail), item);
@@ -188,7 +188,7 @@ int bsal_ring_queue_enqueue_private(struct bsal_ring_queue *self, void *item)
     if (!inserted) {
 
 #ifdef BSAL_RING_QUEUE_THREAD_SAFE
-        bsal_ring_queue_lock(self);
+        bsal_fast_queue_lock(self);
 #endif
 
         /* try again
@@ -198,17 +198,17 @@ int bsal_ring_queue_enqueue_private(struct bsal_ring_queue *self, void *item)
         if (inserted) {
 
 #ifdef BSAL_RING_QUEUE_THREAD_SAFE
-            bsal_ring_queue_unlock(self);
+            bsal_fast_queue_unlock(self);
 #endif
             return inserted;
         }
 
-        new_ring = bsal_ring_queue_get_ring(self);
+        new_ring = bsal_fast_queue_get_ring(self);
         bsal_linked_ring_set_next(self->tail, new_ring);
         self->tail = new_ring;
 
 #ifdef BSAL_RING_QUEUE_THREAD_SAFE
-        bsal_ring_queue_unlock(self);
+        bsal_fast_queue_unlock(self);
 #endif
 
         inserted = bsal_ring_push(bsal_linked_ring_get_ring(self->tail), item);

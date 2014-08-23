@@ -144,7 +144,7 @@ void thorium_node_init(struct thorium_node *node, int *argc, char ***argv)
     node->nodes = thorium_transport_get_size(&node->transport);
 
 #ifdef THORIUM_NODE_INJECT_CLEAN_WORKER_BUFFERS
-    bsal_ring_queue_init(&node->clean_outbound_buffers_to_inject, sizeof(struct thorium_worker_buffer));
+    bsal_fast_queue_init(&node->clean_outbound_buffers_to_inject, sizeof(struct thorium_worker_buffer));
 #endif
 
     bsal_bitmap_set_bit_uint32_t(&node->flags, FLAG_USE_TRANSPORT);
@@ -381,7 +381,7 @@ void thorium_node_destroy(struct thorium_node *node)
     thorium_transport_destroy(&node->transport);
     bsal_counter_destroy(&node->counter);
 
-    bsal_ring_queue_destroy(&node->clean_outbound_buffers_to_inject);
+    bsal_fast_queue_destroy(&node->clean_outbound_buffers_to_inject);
 
     /*
      * Destroy the memory pool after the rest.
@@ -2054,7 +2054,7 @@ void thorium_node_test_requests(struct thorium_node *node)
 #ifdef THORIUM_NODE_INJECT_CLEAN_WORKER_BUFFERS
     /* Check if there are queued buffers to give to workers
      */
-    if (bsal_ring_queue_dequeue(&node->clean_outbound_buffers_to_inject, &worker_buffer)) {
+    if (bsal_fast_queue_dequeue(&node->clean_outbound_buffers_to_inject, &worker_buffer)) {
 
             /*
         printf("INJECT Dequeued buffer to inject\n");
@@ -2099,7 +2099,7 @@ void thorium_node_free_worker_buffer(struct thorium_node *node,
         /* If the ring is full, queue it locally
          * and try again later
          */
-        bsal_ring_queue_enqueue(&node->clean_outbound_buffers_to_inject, worker_buffer);
+        bsal_fast_queue_enqueue(&node->clean_outbound_buffers_to_inject, worker_buffer);
     }
 
 /* This is a node buffer

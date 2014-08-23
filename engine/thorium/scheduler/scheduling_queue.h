@@ -2,7 +2,7 @@
 #ifndef THORIUM_SCHEDULING_QUEUE
 #define THORIUM_SCHEDULING_QUEUE
 
-#include <core/structures/ring_queue.h>
+#include <core/structures/fast_queue.h>
 
 #include <stdint.h>
 
@@ -29,10 +29,10 @@ struct thorium_scheduling_queue {
     uint64_t normal_priority_dequeue_operations;
     uint64_t low_priority_dequeue_operations;
 
-    struct bsal_ring_queue max_priority_queue;
-    struct bsal_ring_queue high_priority_queue;
-    struct bsal_ring_queue normal_priority_queue;
-    struct bsal_ring_queue low_priority_queue;
+    struct bsal_fast_queue max_priority_queue;
+    struct bsal_fast_queue high_priority_queue;
+    struct bsal_fast_queue normal_priority_queue;
+    struct bsal_fast_queue low_priority_queue;
 };
 
 void thorium_scheduling_queue_init(struct thorium_scheduling_queue *self);
@@ -45,7 +45,7 @@ int thorium_scheduling_queue_size(struct thorium_scheduling_queue *self);
 
 int thorium_scheduling_queue_get_size_with_priority(struct thorium_scheduling_queue *self, int priority);
 
-struct bsal_ring_queue *thorium_scheduling_queue_select_queue(struct thorium_scheduling_queue *self, int priority);
+struct bsal_fast_queue *thorium_scheduling_queue_select_queue(struct thorium_scheduling_queue *self, int priority);
 uint64_t *thorium_scheduling_queue_select_counter(struct thorium_scheduling_queue *self, int priority);
 
 int thorium_scheduling_queue_dequeue_with_priority(struct thorium_scheduling_queue *self, int priority,

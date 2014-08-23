@@ -99,7 +99,7 @@ void thorium_worker_init(struct thorium_worker *worker, int name, struct thorium
                     injected_buffer_ring_size,
                     sizeof(struct thorium_message));
 
-    bsal_ring_queue_init(&worker->clean_message_queue_for_triage,
+    bsal_fast_queue_init(&worker->clean_message_queue_for_triage,
                     sizeof(struct thorium_message));
 #endif
 
@@ -110,7 +110,7 @@ void thorium_worker_init(struct thorium_worker *worker, int name, struct thorium
 
     bsal_fast_ring_init(&worker->outbound_message_queue, capacity, sizeof(struct thorium_message));
 
-    bsal_ring_queue_init(&worker->outbound_message_queue_buffer, sizeof(struct thorium_message));
+    bsal_fast_queue_init(&worker->outbound_message_queue_buffer, sizeof(struct thorium_message));
 
 
     worker->debug = 0;
@@ -193,12 +193,12 @@ void thorium_worker_destroy(struct thorium_worker *worker)
     bsal_fast_ring_destroy(&worker->injected_clean_outbound_buffers);
 
     bsal_fast_ring_destroy(&worker->clean_message_ring_for_triage);
-    bsal_ring_queue_destroy(&worker->clean_message_queue_for_triage);
+    bsal_fast_queue_destroy(&worker->clean_message_queue_for_triage);
 #endif
 
     thorium_scheduling_queue_destroy(&worker->scheduling_queue);
     bsal_fast_ring_destroy(&worker->outbound_message_queue);
-    bsal_ring_queue_destroy(&worker->outbound_message_queue_buffer);
+    bsal_fast_queue_destroy(&worker->outbound_message_queue_buffer);
 
     bsal_map_destroy(&worker->actors);
     bsal_map_iterator_destroy(&worker->actor_iterator);
@@ -630,7 +630,7 @@ int thorium_worker_enqueue_message(struct thorium_worker *worker, struct thorium
 
         /* If that does not work, push the message in the queue buffer.
          */
-        bsal_ring_queue_enqueue(&worker->outbound_message_queue_buffer, message);
+        bsal_fast_queue_enqueue(&worker->outbound_message_queue_buffer, message);
 
     }
 
@@ -754,12 +754,12 @@ void thorium_worker_evict_actor(struct thorium_worker *worker, int actor_name)
 {
     struct thorium_actor *actor;
     int name;
-    struct bsal_ring_queue saved_actors;
+    struct bsal_fast_queue saved_actors;
     int count;
 
     bsal_set_add(&worker->evicted_actors, &actor_name);
     bsal_map_delete(&worker->actors, &actor_name);
-    bsal_ring_queue_init(&saved_actors, sizeof(struct thorium_actor *));
+    bsal_fast_queue_init(&saved_actors, sizeof(struct thorium_actor *));
 
     /* evict the actor from the scheduling queue
      */
@@ -769,16 +769,16 @@ void thorium_worker_evict_actor(struct thorium_worker *worker, int actor_name)
 
         if (name != actor_name) {
 
-            bsal_ring_queue_enqueue(&saved_actors,
+            bsal_fast_queue_enqueue(&saved_actors,
                             &actor);
         }
     }
 
-    while (bsal_ring_queue_dequeue(&saved_actors, &actor)) {
+    while (bsal_fast_queue_dequeue(&saved_actors, &actor)) {
         thorium_scheduling_queue_enqueue(&worker->scheduling_queue, actor);
     }
 
-    bsal_ring_queue_destroy(&saved_actors);
+    bsal_fast_queue_destroy(&saved_actors);
 
     /* Evict the actor from the ring
      */
@@ -992,7 +992,7 @@ int thorium_worker_enqueue_message_for_triage(struct thorium_worker *worker, str
 {
     if (!bsal_fast_ring_push_from_producer(&worker->clean_message_ring_for_triage, message)) {
 
-        bsal_ring_queue_enqueue(&worker->clean_message_queue_for_triage, message);
+        bsal_fast_queue_enqueue(&worker->clean_message_queue_for_triage, message);
     }
 
     return 1;
@@ -1013,7 +1013,7 @@ int thorium_worker_get_message_production_score(struct thorium_worker *worker)
 
     score += bsal_fast_ring_size_from_producer(&worker->outbound_message_queue);
 
-    score += bsal_ring_queue_size(&worker->outbound_message_queue_buffer);
+    score += bsal_fast_queue_size(&worker->outbound_message_queue_buffer);
 
     return score;
 }
@@ -1145,11 +1145,11 @@ void thorium_worker_run(struct thorium_worker *worker)
 
     /* queue buffered message
      */
-    if (bsal_ring_queue_dequeue(&worker->outbound_message_queue_buffer, &other_message)) {
+    if (bsal_fast_queue_dequeue(&worker->outbound_message_queue_buffer, &other_message)) {
 
         if (!bsal_fast_ring_push_from_producer(&worker->outbound_message_queue, &other_message)) {
 
-            bsal_ring_queue_enqueue(&worker->outbound_message_queue_buffer, &other_message);
+            bsal_fast_queue_enqueue(&worker->outbound_message_queue_buffer, &other_message);
         }
     }
 
@@ -1166,11 +1166,11 @@ void thorium_worker_run(struct thorium_worker *worker)
      * Transfer messages for triage
      */
 
-    if (bsal_ring_queue_dequeue(&worker->clean_message_queue_for_triage, &other_message)) {
+    if (bsal_fast_queue_dequeue(&worker->clean_message_queue_for_triage, &other_message)) {
 
         if (!bsal_fast_ring_push_from_producer(&worker->clean_message_ring_for_triage, &other_message)) {
 
-            bsal_ring_queue_enqueue(&worker->clean_message_queue_for_triage, &other_message);
+            bsal_fast_queue_enqueue(&worker->clean_message_queue_for_triage, &other_message);
         }
     }
 

@@ -96,7 +96,7 @@ struct thorium_node {
     int last_active_request_count;
 
 #ifdef THORIUM_NODE_INJECT_CLEAN_WORKER_BUFFERS
-    struct bsal_ring_queue clean_outbound_buffers_to_inject;
+    struct bsal_fast_queue clean_outbound_buffers_to_inject;
 
     int worker_for_triage;
 #endif

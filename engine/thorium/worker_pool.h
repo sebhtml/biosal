@@ -6,7 +6,7 @@
 
 #include "scheduler/scheduler.h"
 
-#include <core/structures/ring_queue.h>
+#include <core/structures/fast_queue.h>
 #include <core/structures/vector.h>
 
 #include <time.h>
@@ -25,10 +25,10 @@ struct thorium_migration;
 struct thorium_worker_pool {
     struct thorium_scheduler scheduler;
 
-    struct bsal_ring_queue scheduled_actor_queue_buffer;
-    struct bsal_ring_queue inbound_message_queue_buffer;
+    struct bsal_fast_queue scheduled_actor_queue_buffer;
+    struct bsal_fast_queue inbound_message_queue_buffer;
 
-    struct bsal_ring_queue messages_for_triage;
+    struct bsal_fast_queue messages_for_triage;
 
     int workers;
     struct bsal_vector worker_array;

@@ -8,7 +8,7 @@
 #include "scheduler/priority_scheduler.h"
 
 #include <core/structures/fast_ring.h>
-#include <core/structures/ring_queue.h>
+#include <core/structures/fast_queue.h>
 #include <core/structures/set.h>
 #include <core/structures/map.h>
 #include <core/structures/map_iterator.h>
@@ -81,13 +81,13 @@ struct thorium_worker {
     struct bsal_fast_ring injected_clean_outbound_buffers;
 
     struct bsal_fast_ring clean_message_ring_for_triage;
-    struct bsal_ring_queue clean_message_queue_for_triage;
+    struct bsal_fast_queue clean_message_queue_for_triage;
 #endif
 
     struct thorium_scheduling_queue scheduling_queue;
 
     struct bsal_fast_ring outbound_message_queue;
-    struct bsal_ring_queue outbound_message_queue_buffer;
+    struct bsal_fast_queue outbound_message_queue_buffer;
 
     struct bsal_set evicted_actors;
 

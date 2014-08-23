@@ -68,7 +68,7 @@ void bsal_assembly_block_classifier_init(struct thorium_actor *self)
         bsal_dna_codec_enable_two_bit_encoding(&concrete_actor->codec);
     }
 
-    bsal_ring_queue_init(&concrete_actor->stalled_producers, sizeof(int));
+    bsal_fast_queue_init(&concrete_actor->stalled_producers, sizeof(int));
     bsal_vector_init(&concrete_actor->active_messages, sizeof(int));
 
     concrete_actor->forced = 0;
@@ -100,7 +100,7 @@ void bsal_assembly_block_classifier_destroy(struct thorium_actor *self)
     concrete_actor->last = 0;
     bsal_dna_codec_destroy(&concrete_actor->codec);
 
-    bsal_ring_queue_destroy(&concrete_actor->stalled_producers);
+    bsal_fast_queue_destroy(&concrete_actor->stalled_producers);
 
     bsal_vector_destroy(&concrete_actor->consumers);
 }
@@ -289,7 +289,7 @@ void bsal_assembly_block_classifier_verify(struct thorium_actor *self, struct th
         return;
     }
 
-    while (bsal_ring_queue_dequeue(&concrete_actor->stalled_producers, &producer_index)) {
+    while (bsal_fast_queue_dequeue(&concrete_actor->stalled_producers, &producer_index)) {
         /* tell the producer to continue...
          */
         producer = producer_index;
@@ -336,7 +336,7 @@ void bsal_assembly_block_classifier_aggregate_kernel_output(struct thorium_actor
     /* enqueue the producer
      */
     producer_index = source;
-    bsal_ring_queue_enqueue(&concrete_actor->stalled_producers, &producer_index);
+    bsal_fast_queue_enqueue(&concrete_actor->stalled_producers, &producer_index);
 
 
 #ifdef BSAL_ASSEMBLY_BLOCK_CLASSIFIER_DEBUG

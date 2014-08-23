@@ -59,7 +59,7 @@ void bsal_assembly_sliding_window_init(struct thorium_actor *actor)
     concrete_actor->last = 0;
     concrete_actor->blocks = 0;
 
-    bsal_ring_queue_init(&concrete_actor->producers_for_work_stealing, sizeof(int));
+    bsal_fast_queue_init(&concrete_actor->producers_for_work_stealing, sizeof(int));
 
     concrete_actor->kmer_length = -1;
     concrete_actor->consumer = THORIUM_ACTOR_NOBODY;
@@ -126,7 +126,7 @@ void bsal_assembly_sliding_window_destroy(struct thorium_actor *actor)
     bsal_dna_codec_destroy(&concrete_actor->codec);
     bsal_vector_destroy(&concrete_actor->kernels);
 
-    bsal_ring_queue_destroy(&concrete_actor->producers_for_work_stealing);
+    bsal_fast_queue_destroy(&concrete_actor->producers_for_work_stealing);
 }
 
 void bsal_assembly_sliding_window_receive(struct thorium_actor *actor, struct thorium_message *message)
@@ -269,7 +269,7 @@ void bsal_assembly_sliding_window_receive(struct thorium_actor *actor, struct th
         printf("DEBUG window was told by producer that nothing is left to do\n");
 #endif
 
-        if (bsal_ring_queue_dequeue(&concrete_actor->producers_for_work_stealing, &producer)) {
+        if (bsal_fast_queue_dequeue(&concrete_actor->producers_for_work_stealing, &producer)) {
 
             /*
              * Use work stealing to get work from the producer that
@@ -828,7 +828,7 @@ void bsal_assembly_sliding_window_set_producers_for_work_stealing(struct thorium
     while (i < size) {
         producer = bsal_vector_at_as_int(&producers, i);
 
-        bsal_ring_queue_enqueue(&concrete_self->producers_for_work_stealing, &producer);
+        bsal_fast_queue_enqueue(&concrete_self->producers_for_work_stealing, &producer);
 
         ++i;
     }
