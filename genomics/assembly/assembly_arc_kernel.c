@@ -91,6 +91,7 @@ void bsal_assembly_arc_kernel_receive(struct thorium_actor *self, struct thorium
     int tag;
     int source;
     struct bsal_assembly_arc_kernel *concrete_self;
+    int producer;
 
     if (thorium_actor_take_action(self, message)) {
         return;
@@ -121,9 +122,24 @@ void bsal_assembly_arc_kernel_receive(struct thorium_actor *self, struct thorium
 
     } else if (tag == ACTION_SEQUENCE_STORE_ASK_REPLY) {
 
-        thorium_actor_send_empty(self, concrete_self->source,
-                        ACTION_SET_PRODUCER_REPLY);
+        if (bsal_fast_queue_dequeue(&concrete_self->producers_for_work_stealing, &producer)) {
 
+            /*
+             * Do some work stealing with the producer of another consumer.
+             */
+            concrete_self->producer = producer;
+
+            printf("%s/%d will steal work from producer %d now\n",
+                            thorium_actor_script_name(self),
+                            thorium_actor_name(self),
+                            concrete_self->producer);
+
+            bsal_assembly_arc_kernel_ask(self, message);
+
+        } else {
+            thorium_actor_send_empty(self, concrete_self->source,
+                        ACTION_SET_PRODUCER_REPLY);
+        }
     } else if (tag == ACTION_ASK_TO_STOP) {
 
         printf("%s/%d generated %" PRIu64 " arcs from %d sequence blocks, generated %d messages for consumer\n",
@@ -378,11 +394,40 @@ void bsal_assembly_arc_kernel_push_sequence_data_block(struct thorium_actor *sel
     thorium_message_destroy(&new_message);
 
     bsal_memory_pool_free(ephemeral_memory, sequence);
-
     bsal_memory_pool_free(ephemeral_memory, new_buffer);
 }
 
 void bsal_assembly_arc_kernel_set_producers_for_work_stealing(struct thorium_actor *self, struct thorium_message *message)
 {
+    struct bsal_assembly_arc_kernel *concrete_self;
+    struct bsal_memory_pool *ephemeral_memory;
+    void *buffer;
+    struct bsal_vector producers;
+    int i;
+    int size;
+    int producer;
 
+    ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
+    concrete_self = (struct bsal_assembly_arc_kernel *)thorium_actor_concrete_actor(self);
+    buffer = thorium_message_buffer(message);
+
+    bsal_vector_init(&producers, sizeof(int));
+    bsal_vector_set_memory_pool(&producers, ephemeral_memory);
+
+    bsal_vector_unpack(&producers, buffer);
+
+    i = 0;
+    size = bsal_vector_size(&producers);
+
+    while (i < size) {
+
+        producer = bsal_vector_at_as_int(&producers, i);
+        bsal_fast_queue_enqueue(&concrete_self->producers_for_work_stealing, &producer);
+
+        ++i;
+    }
+
+    bsal_vector_destroy(&producers);
+
+    thorium_actor_send_reply_empty(self, ACTION_SET_PRODUCERS_FOR_WORK_STEALING_REPLY);
 }

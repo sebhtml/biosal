@@ -1051,7 +1051,12 @@ void bsal_assembly_graph_builder_set_kmer_reply_arcs(struct thorium_actor *self,
     int producer;
     int consumer;
     int size;
+    struct bsal_vector producers_for_work_stealing;
+    struct bsal_memory_pool *ephemeral_memory;
+    int stealing_period;
+    int j;
 
+    ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
     concrete_self = thorium_actor_concrete_actor(self);
 
     ++concrete_self->configured_actors_for_arcs;
@@ -1059,6 +1064,10 @@ void bsal_assembly_graph_builder_set_kmer_reply_arcs(struct thorium_actor *self,
     expected = 0;
     expected += bsal_vector_size(&concrete_self->arc_kernels);
     expected += bsal_vector_size(&concrete_self->arc_classifiers);
+
+    bsal_vector_init(&producers_for_work_stealing, sizeof(int));
+    bsal_vector_set_memory_pool(&producers_for_work_stealing,
+                    ephemeral_memory);
 
     /*
      * All arc actors not have a kmer length configured.
@@ -1084,15 +1093,47 @@ void bsal_assembly_graph_builder_set_kmer_reply_arcs(struct thorium_actor *self,
          */
 
         /*
+         * Configure action for reply to the message that sets
+         * work stealing producers.
+         */
+        thorium_actor_add_action_with_sources(self, ACTION_SET_PRODUCERS_FOR_WORK_STEALING_REPLY,
+                        bsal_assembly_graph_builder_configure_arc_actors,
+                        &concrete_self->arc_kernels);
+
+        stealing_period = thorium_actor_node_worker_count(self);
+
+        /*
          * Link kernels and classifiers
          */
         for (i = 0; i < size; i++) {
+
+            bsal_vector_clear(&producers_for_work_stealing);
+
+            /*
+             * Compute the producers for the stealing period.
+             */
+            if (i % stealing_period == 0) {
+
+                j = 0;
+                while (j < stealing_period && i + j < size) {
+
+                    producer = bsal_vector_at_as_int(&concrete_self->sequence_stores, i + j);
+                    bsal_vector_push_back(&producers_for_work_stealing, &producer);
+                    ++j;
+                }
+            }
 
             producer = bsal_vector_at_as_int(&concrete_self->arc_kernels, i);
             consumer = bsal_vector_at_as_int(&concrete_self->arc_classifiers, i);
 
             thorium_actor_send_int(self, producer, ACTION_SET_CONSUMER,
                             consumer);
+
+            /*
+             * Also set producers for work stealing too.
+             */
+            thorium_actor_send_vector(self, producer, ACTION_SET_PRODUCERS_FOR_WORK_STEALING,
+                            &producers_for_work_stealing);
         }
 
         /*
@@ -1119,6 +1160,8 @@ void bsal_assembly_graph_builder_set_kmer_reply_arcs(struct thorium_actor *self,
         thorium_actor_send_range_empty(self, &concrete_self->sequence_stores,
                         ACTION_RESET);
     }
+
+    bsal_vector_destroy(&producers_for_work_stealing);
 }
 
 void bsal_assembly_graph_builder_configure_arc_actors(struct thorium_actor *self, struct thorium_message *message)
@@ -1135,6 +1178,9 @@ void bsal_assembly_graph_builder_configure_arc_actors(struct thorium_actor *self
     ++concrete_self->configured_actors_for_arcs;
 
     expected = 0;
+    /* For consumers */
+    expected += bsal_vector_size(&concrete_self->arc_kernels);
+    /* For alternate producers */
     expected += bsal_vector_size(&concrete_self->arc_kernels);
     expected += bsal_vector_size(&concrete_self->arc_classifiers);
     expected += bsal_vector_size(&concrete_self->sequence_stores);
