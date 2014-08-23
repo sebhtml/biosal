@@ -44,7 +44,6 @@
 #define BSAL_AGGREGATOR_DEBUG_FLUSHING
 */
 
-
 struct thorium_script bsal_aggregator_script = {
     .identifier = SCRIPT_AGGREGATOR,
     .name = "bsal_aggregator",

@@ -35,7 +35,6 @@
 #define BSAL_INPUT_CONTROLLER_DEBUG_CONSUMERS
 */
 
-
 /* states of this actor
  */
 #define BSAL_INPUT_CONTROLLER_STATE_NONE 0
@@ -51,7 +50,7 @@ struct thorium_script bsal_input_controller_script = {
     .destroy = bsal_input_controller_destroy,
     .receive = bsal_input_controller_receive,
     .size = sizeof(struct bsal_input_controller),
-    .name = "input_controller"
+    .name = "bsal_input_controller"
 };
 
 void bsal_input_controller_init(struct thorium_actor *actor)

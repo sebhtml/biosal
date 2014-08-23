@@ -18,7 +18,6 @@
 
 /*
 #define BSAL_SEQUENCE_PARTITIONER_DEBUG
-
 */
 
 struct thorium_script bsal_sequence_partitioner_script = {
@@ -27,7 +26,7 @@ struct thorium_script bsal_sequence_partitioner_script = {
     .destroy = bsal_sequence_partitioner_destroy,
     .receive = bsal_sequence_partitioner_receive,
     .size = sizeof(struct bsal_sequence_partitioner),
-    .name = "sequence_partitioner"
+    .name = "bsal_sequence_partitioner"
 };
 
 void bsal_sequence_partitioner_init(struct thorium_actor *actor)

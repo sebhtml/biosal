@@ -26,7 +26,7 @@ struct thorium_script bsal_sequence_store_script = {
     .destroy = bsal_sequence_store_destroy,
     .receive = bsal_sequence_store_receive,
     .size = sizeof(struct bsal_sequence_store),
-    .name = "sequence_store"
+    .name = "bsal_sequence_store"
 };
 
 void bsal_sequence_store_init(struct thorium_actor *actor)

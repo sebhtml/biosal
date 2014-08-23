@@ -17,17 +17,12 @@
 #include <stdint.h>
 #include <inttypes.h>
 
-#define BSAL_ASSEMBLY_GRAPH_BUILDER_NAME "bsal_assembly_graph_builder"
-#define BSAL_ASSEMBLY_GRAPH_BUILDER_DESCRIPTION "This builder implements a distributed actor algorithm for building an assembly graph"
-#define BSAL_ASSEMBLY_GRAPH_BUILDER_VERSION "Cool version"
-#define BSAL_ASSEMBLY_GRAPH_BUILDER_AUTHOR "Sebastien Boisvert, Argonne National Laboratory"
-
 struct thorium_script bsal_assembly_graph_builder_script = {
     .identifier = SCRIPT_ASSEMBLY_GRAPH_BUILDER,
-    .name = BSAL_ASSEMBLY_GRAPH_BUILDER_NAME,
-    .description = BSAL_ASSEMBLY_GRAPH_BUILDER_DESCRIPTION,
-    .version = BSAL_ASSEMBLY_GRAPH_BUILDER_VERSION,
-    .author = BSAL_ASSEMBLY_GRAPH_BUILDER_AUTHOR,
+    .name = "bsal_assembly_graph_builder",
+    .description = "This builder implements a distributed actor algorithm for building an assembly graph",
+    .version = "Cool version",
+    .author = "Sebastien Boisvert, Argonne National Laboratory",
     .init = bsal_assembly_graph_builder_init,
     .destroy = bsal_assembly_graph_builder_destroy,
     .receive = bsal_assembly_graph_builder_receive,

@@ -40,7 +40,7 @@
 struct thorium_script bsal_assembly_block_classifier_script = {
     .identifier = SCRIPT_ASSEMBLY_BLOCK_CLASSIFIER,
     .name = "bsal_assembly_block_classifier",
-    .description = "",
+    .description = "Classifier for blocks of kmers.",
     .version = "",
     .author = "Sebastien Boisvert",
     .size = sizeof(struct bsal_assembly_block_classifier),

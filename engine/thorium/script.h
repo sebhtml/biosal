@@ -1,6 +1,6 @@
 
-#ifndef SCRIPT_H
-#define SCRIPT_H
+#ifndef BIOSAL_SCRIPT_H
+#define BIOSAL_SCRIPT_H
 
 struct thorium_actor;
 struct thorium_message;
