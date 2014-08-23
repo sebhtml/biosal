@@ -59,6 +59,8 @@ void bsal_assembly_sliding_window_init(struct thorium_actor *actor)
     concrete_actor->last = 0;
     concrete_actor->blocks = 0;
 
+    bsal_ring_queue_init(&concrete_actor->producers_for_work_stealing, sizeof(int));
+
     concrete_actor->kmer_length = -1;
     concrete_actor->consumer = THORIUM_ACTOR_NOBODY;
     concrete_actor->producer = THORIUM_ACTOR_NOBODY;
@@ -92,6 +94,8 @@ void bsal_assembly_sliding_window_init(struct thorium_actor *actor)
                     bsal_assembly_sliding_window_notify_reply);
     thorium_actor_add_route(actor, THORIUM_ACTOR_DO_AUTO_SCALING,
                     bsal_assembly_sliding_window_do_auto_scaling);
+    thorium_actor_add_route(actor, ACTION_SET_PRODUCERS_FOR_WORK_STEALING,
+                    bsal_assembly_sliding_window_set_producers_for_work_stealing);
 
     printf("%s/%d is online on node node/%d\n",
                     thorium_actor_script_name(actor),
@@ -121,6 +125,8 @@ void bsal_assembly_sliding_window_destroy(struct thorium_actor *actor)
 
     bsal_dna_codec_destroy(&concrete_actor->codec);
     bsal_vector_destroy(&concrete_actor->kernels);
+
+    bsal_ring_queue_destroy(&concrete_actor->producers_for_work_stealing);
 }
 
 void bsal_assembly_sliding_window_receive(struct thorium_actor *actor, struct thorium_message *message)
@@ -263,9 +269,24 @@ void bsal_assembly_sliding_window_receive(struct thorium_actor *actor, struct th
         printf("DEBUG window was told by producer that nothing is left to do\n");
 #endif
 
-        thorium_actor_send_empty(actor,
+        if (bsal_ring_queue_dequeue(&concrete_actor->producers_for_work_stealing, &producer)) {
+
+            /*
+             * Use work stealing to get work from the producer that
+             * belongs to another consumer.
+             */
+            concrete_actor->producer = producer;
+
+            printf("DEBUG window %d asks new producer %d (work stealing)\n",
+                    thorium_actor_name(actor),
+                    producer);
+            bsal_assembly_sliding_window_ask(actor, message);
+
+        } else {
+            thorium_actor_send_empty(actor,
                                 concrete_actor->producer_source,
                         THORIUM_ACTOR_SET_PRODUCER_REPLY);
+        }
 
     } else if (tag == THORIUM_ACTOR_SET_CONSUMER_REPLY) {
 
@@ -334,7 +355,9 @@ void bsal_assembly_sliding_window_ask(struct thorium_actor *self, struct thorium
                     concrete_actor->kmer_length);
 
 #ifdef BSAL_ASSEMBLY_SLIDING_WINDOW_DEBUG
-    printf("DEBUG window asks producer\n");
+    printf("DEBUG window %d asks producer %d\n",
+                    thorium_actor_name(self),
+                    producer);
 #endif
 }
 
@@ -573,9 +596,7 @@ void bsal_assembly_sliding_window_notify_reply(struct thorium_actor *actor, stru
         thorium_actor_send_uint64_t(actor,
                             concrete_actor->notification_source,
                     THORIUM_ACTOR_NOTIFY_REPLY, concrete_actor->sum_of_kmers);
-
     }
-
 }
 
 void bsal_assembly_sliding_window_push_sequence_data_block(struct thorium_actor *actor, struct thorium_message *message)
@@ -781,5 +802,38 @@ void bsal_assembly_sliding_window_push_sequence_data_block(struct thorium_actor 
 #endif
 
     bsal_assembly_sliding_window_verify(actor, message);
+}
 
+void bsal_assembly_sliding_window_set_producers_for_work_stealing(struct thorium_actor *self, struct thorium_message *message)
+{
+    struct bsal_assembly_sliding_window *concrete_self;
+    struct bsal_memory_pool *ephemeral_memory;
+    void *buffer;
+    struct bsal_vector producers;
+    int i;
+    int size;
+    int producer;
+
+    buffer = thorium_message_buffer(message);
+    concrete_self = (struct bsal_assembly_sliding_window *)thorium_actor_concrete_actor(self);
+    ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
+
+    bsal_vector_init(&producers, sizeof(int));
+    bsal_vector_set_memory_pool(&producers, ephemeral_memory);
+    bsal_vector_unpack(&producers, buffer);
+
+    i = 0;
+    size = bsal_vector_size(&producers);
+
+    while (i < size) {
+        producer = bsal_vector_at_as_int(&producers, i);
+
+        bsal_ring_queue_enqueue(&concrete_self->producers_for_work_stealing, &producer);
+
+        ++i;
+    }
+
+    bsal_vector_destroy(&producers);
+
+    thorium_actor_send_reply_empty(self, ACTION_SET_PRODUCERS_FOR_WORK_STEALING_REPLY);
 }

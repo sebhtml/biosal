@@ -17,6 +17,11 @@
 #include <stdint.h>
 #include <inttypes.h>
 
+#define BSAL_ASSEMBLY_GRAPH_BUILDER_NAME "bsal_assembly_graph_builder"
+#define BSAL_ASSEMBLY_GRAPH_BUILDER_DESCRIPTION "This builder implements a distributed actor algorithm for building an assembly graph"
+#define BSAL_ASSEMBLY_GRAPH_BUILDER_VERSION "Cool version"
+#define BSAL_ASSEMBLY_GRAPH_BUILDER_AUTHOR "Sebastien Boisvert, Argonne National Laboratory"
+
 struct thorium_script bsal_assembly_graph_builder_script = {
     .identifier = BSAL_ASSEMBLY_GRAPH_BUILDER_SCRIPT,
     .name = BSAL_ASSEMBLY_GRAPH_BUILDER_NAME,
@@ -557,19 +562,58 @@ void bsal_assembly_graph_builder_connect_actors(struct thorium_actor *self)
     int producer;
     int consumer;
     struct bsal_assembly_graph_builder *concrete_self;
+    struct bsal_vector alternate_producers;
+    struct bsal_memory_pool *ephemeral_memory;
+    int period;
+    int j;
 
     concrete_self = thorium_actor_concrete_actor(self);
+    ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
+    bsal_vector_init(&alternate_producers, sizeof(int));
+    bsal_vector_set_memory_pool(&alternate_producers, ephemeral_memory);
 
     /*
      * sequence store ===> sliding window ===> block classifier ===> graph store
      */
 
+    /*
+     * TODO: instead of 8, the code could use the topology.
+     */
+    period = 8;
+
     printf("%s/%d connects actors\n",
             thorium_actor_script_name(self),
             thorium_actor_name(self));
 
+    thorium_actor_add_route_with_sources(self, ACTION_SET_PRODUCERS_FOR_WORK_STEALING_REPLY,
+                    bsal_assembly_graph_builder_set_consumer_reply_windows,
+                    &concrete_self->sliding_windows);
 
     for (i = 0; i < bsal_vector_size(&concrete_self->sliding_windows); i++) {
+
+        /*
+         * Gather the list of alternate producers.
+         */
+
+        if (i % period == 0) {
+
+            j = 0;
+
+            bsal_vector_clear(&alternate_producers);
+
+            /*
+             * There is the same number of sliding_windows and sequence_stores.
+             */
+            while (j < period
+                            && i + j < bsal_vector_size(&concrete_self->sequence_stores)) {
+
+                producer = bsal_vector_at_as_int(&concrete_self->sequence_stores, i + j);
+
+                bsal_vector_push_back(&alternate_producers, &producer);
+
+                ++j;
+            }
+        }
 
         producer = bsal_vector_at_as_int(&concrete_self->sliding_windows, i);
         consumer = bsal_vector_at_as_int(&concrete_self->block_classifiers, i);
@@ -583,6 +627,14 @@ void bsal_assembly_graph_builder_connect_actors(struct thorium_actor *self)
                         producer, consumer);
 
         /*
+         * Also configure a bunch of alternate producer for the
+         * consumer.
+         */
+
+        thorium_actor_send_vector(self, producer, ACTION_SET_PRODUCERS_FOR_WORK_STEALING,
+                        &alternate_producers);
+
+        /*
          * set the consumers for each classifier
          */
 
@@ -593,11 +645,12 @@ void bsal_assembly_graph_builder_connect_actors(struct thorium_actor *self)
         thorium_actor_send_vector(self, consumer, THORIUM_ACTOR_SET_CONSUMERS,
                         &concrete_self->graph_stores);
     }
+
+    bsal_vector_destroy(&alternate_producers);
 }
 
 void bsal_assembly_graph_builder_set_consumer_reply(struct thorium_actor *self, struct thorium_message *message)
 {
-
 }
 
 void bsal_assembly_graph_builder_set_consumer_reply_graph_stores(struct thorium_actor *self, struct thorium_message *message)
@@ -646,7 +699,7 @@ void bsal_assembly_graph_builder_verify(struct thorium_actor *self)
 
     /* Verify if the system is ready to roll
      */
-    if (concrete_self->configured_sliding_windows < bsal_vector_size(&concrete_self->sliding_windows)) {
+    if (concrete_self->configured_sliding_windows < 2 * bsal_vector_size(&concrete_self->sliding_windows)) {
         return;
     }
 

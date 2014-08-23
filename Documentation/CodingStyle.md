@@ -1,9 +1,17 @@
 
 # Coding style
 
-Symbols are prefixed with bsal_ for biosal actors.
 
-Thorium things have the prefix thorium_ (needs a vote).
+Thorium things have the prefix thorium_ or THORIUM_
+
+BIOSAL things are prefixed with bsal_ or BSAL_.
+
+Any message tag must use the previx ACTION_
+
+Any actor script identifier must start with SCRIPT_
+
+
+New tags can be generated with ./scripts/generate-random-tag.py
 
 
 K & R style with 4 spaces for indentation

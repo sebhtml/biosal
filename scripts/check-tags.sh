@@ -10,6 +10,9 @@ grep 0x0000 * -R|grep -v BSAL_HASH|grep -v check-tags.sh|awk '{print $3}'|sort|u
 min=0
 max=32767
 
+exit
+
+# We don't need to verify the minimum and maximum now.
 for tag in $(grep 0x * -R|grep -v ')'|grep -v BSAL_HASH|grep -v table | grep -v SCRIPT|grep -v check-tags.sh|awk '{print $3}'|grep 0x)
 do
     #echo $tag

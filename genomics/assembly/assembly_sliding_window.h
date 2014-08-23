@@ -5,13 +5,18 @@
 #include <engine/thorium/actor.h>
 
 #include <genomics/data/dna_codec.h>
+
 #include <core/structures/vector.h>
+#include <core/structures/ring_queue.h>
 #include <core/structures/map.h>
 
 #include <core/system/memory_pool.h>
 
 #define BSAL_ASSEMBLY_SLIDING_WINDOW_SCRIPT 0xa128805e
 
+/*
+ * A kernel for computing vertices from sequence reads.
+ */
 struct bsal_assembly_sliding_window {
     struct bsal_dna_codec codec;
     uint64_t expected;
@@ -22,6 +27,7 @@ struct bsal_assembly_sliding_window {
     int blocks;
     int consumer;
     int producer;
+    struct bsal_ring_queue producers_for_work_stealing;
     int kmer_length;
 
     int producer_source;
@@ -72,5 +78,7 @@ int bsal_assembly_sliding_window_pack_unpack(struct thorium_actor *actor, int op
 void bsal_assembly_sliding_window_notify(struct thorium_actor *actor, struct thorium_message *message);
 void bsal_assembly_sliding_window_notify_reply(struct thorium_actor *actor, struct thorium_message *message);
 void bsal_assembly_sliding_window_push_sequence_data_block(struct thorium_actor *actor, struct thorium_message *message);
+
+void bsal_assembly_sliding_window_set_producers_for_work_stealing(struct thorium_actor *self, struct thorium_message *message);
 
 #endif

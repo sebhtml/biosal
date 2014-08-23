@@ -5,10 +5,6 @@
 #include <biosal.h>
 
 #define BSAL_ASSEMBLY_GRAPH_BUILDER_SCRIPT 0xc0b1a2b3
-#define BSAL_ASSEMBLY_GRAPH_BUILDER_NAME "bsal_assembly_graph_builder"
-#define BSAL_ASSEMBLY_GRAPH_BUILDER_DESCRIPTION "This builder implements a distributed actor algorithm for building an assembly graph"
-#define BSAL_ASSEMBLY_GRAPH_BUILDER_VERSION "Cool version"
-#define BSAL_ASSEMBLY_GRAPH_BUILDER_AUTHOR "Sebastien Boisvert, Argonne National Laboratory"
 
 #define BSAL_ASSEMBLY_GRAPH_BUILDER_CONTROL_COMPLEXITY 0x00006439
 
