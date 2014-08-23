@@ -47,25 +47,25 @@ void bsal_assembly_dummy_walker_init(struct thorium_actor *self)
 
     bsal_vector_init(&concrete_self->graph_stores, sizeof(int));
 
-    thorium_actor_add_action(self, BSAL_ASSEMBLY_GET_STARTING_VERTEX_REPLY,
+    thorium_actor_add_action(self, ACTION_ASSEMBLY_GET_STARTING_VERTEX_REPLY,
         bsal_assembly_dummy_walker_get_starting_vertex_reply);
 
-    thorium_actor_add_action(self, THORIUM_ACTOR_START,
+    thorium_actor_add_action(self, ACTION_START,
                     bsal_assembly_dummy_walker_start);
 
-    thorium_actor_add_action(self, BSAL_ASSEMBLY_GET_VERTEX_REPLY,
+    thorium_actor_add_action(self, ACTION_ASSEMBLY_GET_VERTEX_REPLY,
                     bsal_assembly_dummy_walker_get_vertex_reply);
 
-    thorium_actor_add_action(self, BSAL_ASSEMBLY_GET_VERTICES_AND_SELECT,
+    thorium_actor_add_action(self, ACTION_ASSEMBLY_GET_VERTICES_AND_SELECT,
                     bsal_assembly_dummy_walker_get_vertices_and_select);
 
-    thorium_actor_add_action(self, BSAL_ASSEMBLY_GET_VERTICES_AND_SELECT_REPLY,
+    thorium_actor_add_action(self, ACTION_ASSEMBLY_GET_VERTICES_AND_SELECT_REPLY,
                     bsal_assembly_dummy_walker_get_vertices_and_select_reply);
 
-    thorium_actor_add_action(self, THORIUM_ACTOR_BEGIN,
+    thorium_actor_add_action(self, ACTION_BEGIN,
                     bsal_assembly_dummy_walker_begin);
 
-    thorium_actor_add_action_with_condition(self, BSAL_ASSEMBLY_GET_VERTEX_REPLY,
+    thorium_actor_add_action_with_condition(self, ACTION_ASSEMBLY_GET_VERTEX_REPLY,
                     bsal_assembly_dummy_walker_get_vertex_reply_starting_vertex,
                     &concrete_self->has_starting_vertex, 0);
 
@@ -144,13 +144,13 @@ void bsal_assembly_dummy_walker_receive(struct thorium_actor *self, struct thori
     concrete_self = (struct bsal_assembly_dummy_walker *)thorium_actor_concrete_actor(self);
     ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
 
-    if (tag == THORIUM_ACTOR_START) {
+    if (tag == ACTION_START) {
 
-    } else if (tag == THORIUM_ACTOR_ASK_TO_STOP) {
+    } else if (tag == ACTION_ASK_TO_STOP) {
 
-        thorium_actor_send_to_self_empty(self, THORIUM_ACTOR_STOP);
+        thorium_actor_send_to_self_empty(self, ACTION_STOP);
 
-    } else if (tag == BSAL_ASSEMBLY_GET_KMER_LENGTH_REPLY) {
+    } else if (tag == ACTION_ASSEMBLY_GET_KMER_LENGTH_REPLY) {
 
         thorium_message_unpack_int(message, 0, &concrete_self->kmer_length);
 
@@ -170,7 +170,7 @@ void bsal_assembly_dummy_walker_receive(struct thorium_actor *self, struct thori
 
         printf("KeyLength %d\n", concrete_self->key_length);
 
-        thorium_actor_send_to_self_empty(self, THORIUM_ACTOR_BEGIN);
+        thorium_actor_send_to_self_empty(self, ACTION_BEGIN);
     }
 }
 
@@ -185,7 +185,7 @@ void bsal_assembly_dummy_walker_begin(struct thorium_actor *self, struct thorium
     store_index = 0;
     store = bsal_vector_at_as_int(&concrete_self->graph_stores, store_index);
 
-    thorium_actor_send_empty(self, store, BSAL_ASSEMBLY_GET_STARTING_VERTEX);
+    thorium_actor_send_empty(self, store, ACTION_ASSEMBLY_GET_STARTING_VERTEX);
 }
 
 void bsal_assembly_dummy_walker_start(struct thorium_actor *self, struct thorium_message *message)
@@ -205,7 +205,7 @@ void bsal_assembly_dummy_walker_start(struct thorium_actor *self, struct thorium
 
     graph = bsal_vector_at_as_int(&concrete_self->graph_stores, 0);
 
-    thorium_actor_send_empty(self, graph, BSAL_ASSEMBLY_GET_KMER_LENGTH);
+    thorium_actor_send_empty(self, graph, ACTION_ASSEMBLY_GET_KMER_LENGTH);
 }
 
 void bsal_assembly_dummy_walker_get_starting_vertex_reply(struct thorium_actor *self, struct thorium_message *message)
@@ -223,7 +223,7 @@ void bsal_assembly_dummy_walker_get_starting_vertex_reply(struct thorium_actor *
      */
     if (count == 0) {
 
-        thorium_actor_send_to_supervisor_empty(self, THORIUM_ACTOR_START_REPLY);
+        thorium_actor_send_to_supervisor_empty(self, ACTION_START_REPLY);
         return;
     }
 
@@ -264,7 +264,7 @@ void bsal_assembly_dummy_walker_get_starting_vertex_reply(struct thorium_actor *
 
     concrete_self->has_starting_vertex = 0;
 
-    thorium_message_init(&new_message, BSAL_ASSEMBLY_GET_VERTEX, count, buffer);
+    thorium_message_init(&new_message, ACTION_ASSEMBLY_GET_VERTEX, count, buffer);
     thorium_actor_send_reply(self, &new_message);
     thorium_message_destroy(&new_message);
 }
@@ -300,7 +300,7 @@ void bsal_assembly_dummy_walker_get_vertex_reply_starting_vertex(struct thorium_
     concrete_self->has_starting_vertex = 1;
     bsal_assembly_dummy_walker_clean_children(self);
 
-    thorium_actor_send_to_self_empty(self, BSAL_ASSEMBLY_GET_VERTICES_AND_SELECT);
+    thorium_actor_send_to_self_empty(self, ACTION_ASSEMBLY_GET_VERTICES_AND_SELECT);
 }
 
 void bsal_assembly_dummy_walker_get_vertices_and_select(struct thorium_actor *self, struct thorium_message *message)
@@ -380,7 +380,7 @@ void bsal_assembly_dummy_walker_get_vertices_and_select(struct thorium_actor *se
 
         store = bsal_vector_at_as_int(&concrete_self->graph_stores, store_index);
 
-        thorium_message_init(&new_message, BSAL_ASSEMBLY_GET_VERTEX, new_count, new_buffer);
+        thorium_message_init(&new_message, ACTION_ASSEMBLY_GET_VERTEX, new_count, new_buffer);
         thorium_actor_send(self, store, &new_message);
         thorium_message_destroy(&new_message);
 
@@ -444,7 +444,7 @@ void bsal_assembly_dummy_walker_get_vertices_and_select(struct thorium_actor *se
 
             bsal_assembly_dummy_walker_clean_children(self);
 
-            thorium_actor_send_to_self_empty(self, BSAL_ASSEMBLY_GET_VERTICES_AND_SELECT);
+            thorium_actor_send_to_self_empty(self, ACTION_ASSEMBLY_GET_VERTICES_AND_SELECT);
 
         /* Finish
          */
@@ -454,7 +454,7 @@ void bsal_assembly_dummy_walker_get_vertices_and_select(struct thorium_actor *se
 
             bsal_assembly_dummy_walker_clean_children(self);
 
-            thorium_actor_send_to_self_empty(self, BSAL_ASSEMBLY_GET_VERTICES_AND_SELECT_REPLY);
+            thorium_actor_send_to_self_empty(self, ACTION_ASSEMBLY_GET_VERTICES_AND_SELECT_REPLY);
         }
     }
 }
@@ -469,10 +469,10 @@ void bsal_assembly_dummy_walker_get_vertices_and_select_reply(struct thorium_act
 
     if (concrete_self->path_index < 2) {
 
-        thorium_actor_send_to_self_empty(self, THORIUM_ACTOR_BEGIN);
+        thorium_actor_send_to_self_empty(self, ACTION_BEGIN);
 
     } else {
-        thorium_actor_send_to_supervisor_empty(self, THORIUM_ACTOR_START_REPLY);
+        thorium_actor_send_to_supervisor_empty(self, ACTION_START_REPLY);
     }
 }
 
@@ -500,7 +500,7 @@ void bsal_assembly_dummy_walker_get_vertex_reply(struct thorium_actor *self, str
 
     ++concrete_self->current_child;
 
-    thorium_actor_send_to_self_empty(self, BSAL_ASSEMBLY_GET_VERTICES_AND_SELECT);
+    thorium_actor_send_to_self_empty(self, ACTION_ASSEMBLY_GET_VERTICES_AND_SELECT);
 }
 
 void bsal_assembly_dummy_walker_clean_children(struct thorium_actor *self)

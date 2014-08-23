@@ -15,25 +15,25 @@
 
 #define SCRIPT_ASSEMBLY_GRAPH_STORE 0xc81a1596
 
-#define BSAL_GET_RECEIVED_ARC_COUNT 0x00004f17
-#define BSAL_GET_RECEIVED_ARC_COUNT_REPLY 0x00001cd9
+#define ACTION_GET_RECEIVED_ARC_COUNT 0x00004f17
+#define ACTION_GET_RECEIVED_ARC_COUNT_REPLY 0x00001cd9
 
-#define BSAL_ASSEMBLY_GET_SUMMARY 0x00000f4c
-#define BSAL_ASSEMBLY_GET_SUMMARY_REPLY 0x00003991
+#define ACTION_ASSEMBLY_GET_SUMMARY 0x00000f4c
+#define ACTION_ASSEMBLY_GET_SUMMARY_REPLY 0x00003991
 
-#define BSAL_ASSEMBLY_GET_KMER_LENGTH 0x00005d66
-#define BSAL_ASSEMBLY_GET_KMER_LENGTH_REPLY 0x00000d22
+#define ACTION_ASSEMBLY_GET_KMER_LENGTH 0x00005d66
+#define ACTION_ASSEMBLY_GET_KMER_LENGTH_REPLY 0x00000d22
 
 /*
  * Enable arc registration with arc actors
  */
 #define BSAL_ASSEMBLY_ADD_ARCS
 
-#define BSAL_ASSEMBLY_GET_STARTING_VERTEX 0x000019bb
-#define BSAL_ASSEMBLY_GET_STARTING_VERTEX_REPLY 0x00006957
+#define ACTION_ASSEMBLY_GET_STARTING_VERTEX 0x000019bb
+#define ACTION_ASSEMBLY_GET_STARTING_VERTEX_REPLY 0x00006957
 
-#define BSAL_ASSEMBLY_GET_VERTEX 0x0000491e
-#define BSAL_ASSEMBLY_GET_VERTEX_REPLY 0x00007724
+#define ACTION_ASSEMBLY_GET_VERTEX 0x0000491e
+#define ACTION_ASSEMBLY_GET_VERTEX_REPLY 0x00007724
 
 struct bsal_assembly_arc;
 
@@ -102,7 +102,7 @@ void bsal_assembly_graph_store_get_summary(struct thorium_actor *self, struct th
 void bsal_assembly_graph_store_yield_reply_summary(struct thorium_actor *self, struct thorium_message *message);
 
 /*
- * This is the route for BSAL_ASSEMBLY_GET_VERTEX.
+ * This is the route for ACTION_ASSEMBLY_GET_VERTEX.
  * It returns a packed bsal_assembly_vertex.
  */
 void bsal_assembly_graph_store_get_vertex(struct thorium_actor *self, struct thorium_message *message);

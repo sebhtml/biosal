@@ -51,34 +51,34 @@ void mock_receive(struct thorium_actor *actor, struct thorium_message *message)
     buffer = thorium_message_buffer(message);
     /*thorium_actor_print(actor);*/
 
-    if (tag == THORIUM_ACTOR_START) {
+    if (tag == ACTION_START) {
 
         bsal_vector_init(&mock1->spawners, 0);
         bsal_vector_unpack(&mock1->spawners, buffer);
 
-        printf("THORIUM_ACTOR_START spawners: %d\n",
+        printf("ACTION_START spawners: %d\n",
                         (int)bsal_vector_size(&mock1->spawners));
 
         /*mock_init(actor);*/
         mock_start(actor, message);
 
-    } else if (tag == THORIUM_ACTOR_ASK_TO_STOP) {
+    } else if (tag == ACTION_ASK_TO_STOP) {
         printf("MOCK_DIE\n");
         mock_die(actor, message);
 
-    } else if (tag == MOCK_NEW_CONTACTS) {
-        printf("MOCK_NEW_CONTACTS\n");
+    } else if (tag == ACTION_MOCK_NEW_CONTACTS) {
+        printf("ACTION_MOCK_NEW_CONTACTS\n");
         mock_add_contacts(actor, message);
 
-    } else if (tag == MOCK_NEW_CONTACTS_REPLY) {
+    } else if (tag == ACTION_ACTION_MOCK_NEW_CONTACTS_REPLY) {
 
-    } else if (tag == BUDDY_HELLO_REPLY) {
+    } else if (tag == ACTION_ACTION_BUDDY_HELLO_REPLY) {
 
-        printf("BUDDY_HELLO_OK\n");
-        thorium_message_init(message, MOCK_NOTIFY, 0, NULL);
+        printf("ACTION_BUDDY_HELLO_OK\n");
+        thorium_message_init(message, ACTION_MOCK_NOTIFY, 0, NULL);
         thorium_actor_send(actor, *(int *)bsal_vector_at(&mock1->spawners, 0), message);
 
-    } else if (tag == MOCK_NOTIFY) {
+    } else if (tag == ACTION_MOCK_NOTIFY) {
 
         mock1->notified++;
 
@@ -86,7 +86,7 @@ void mock_receive(struct thorium_actor *actor, struct thorium_message *message)
                         (int)bsal_vector_size(&mock1->spawners));
 
         if (mock1->notified == bsal_vector_size(&mock1->spawners)) {
-            thorium_message_init(message, MOCK_PREPARE_DEATH, 0, NULL);
+            thorium_message_init(message, ACTION_MOCK_PREPARE_DEATH, 0, NULL);
 
             /* the default binomial-tree algorithm can not
              * be used here because proxy actors may die
@@ -97,16 +97,16 @@ void mock_receive(struct thorium_actor *actor, struct thorium_message *message)
             printf("Stopping all initial actors now\n");
         }
 
-    } else if (tag == MOCK_PREPARE_DEATH) {
-        thorium_message_init(message, THORIUM_ACTOR_ASK_TO_STOP, 0, NULL);
+    } else if (tag == ACTION_MOCK_PREPARE_DEATH) {
+        thorium_message_init(message, ACTION_ASK_TO_STOP, 0, NULL);
 
         name = thorium_actor_name(actor);
         thorium_actor_send(actor, name, message);
 
-        thorium_message_init(message, THORIUM_ACTOR_ASK_TO_STOP, 0, NULL);
+        thorium_message_init(message, ACTION_ASK_TO_STOP, 0, NULL);
         thorium_actor_send(actor, mock1->children[0], message);
 
-    } else if (tag == BUDDY_BOOT_REPLY) {
+    } else if (tag == ACTION_ACTION_BUDDY_BOOT_REPLY) {
 
         mock_share(actor, message);
     }
@@ -126,12 +126,12 @@ void mock_add_contacts(struct thorium_actor *actor, struct thorium_message *mess
     printf("mock_receive remote friend is %i\n",
                         mock1->remote_actor);
 
-    thorium_message_init(message, MOCK_NEW_CONTACTS_REPLY, 0, NULL);
+    thorium_message_init(message, ACTION_ACTION_MOCK_NEW_CONTACTS_REPLY, 0, NULL);
     thorium_actor_send(actor, source, message);
 
     /* say hello to remote actor too !
      */
-    thorium_message_init(message, BUDDY_HELLO, 0, NULL);
+    thorium_message_init(message, ACTION_BUDDY_HELLO, 0, NULL);
     thorium_actor_send(actor, mock1->remote_actor, message);
 }
 
@@ -145,7 +145,7 @@ void mock_die(struct thorium_actor *actor, struct thorium_message *message)
 
     printf("mock_die actor %i dies (MOCK_DIE from %i)\n", name, source);
 
-    thorium_message_init(message, THORIUM_ACTOR_STOP, 0, NULL);
+    thorium_message_init(message, ACTION_STOP, 0, NULL);
     thorium_actor_send(actor, name, message);
 }
 
@@ -178,7 +178,7 @@ void mock_share(struct thorium_actor *actor, struct thorium_message *message)
      */
     next = (index + 1) % bsal_vector_size(&mock1->spawners);
 
-    thorium_message_init(&message2, MOCK_NEW_CONTACTS, 3 * sizeof(int),
+    thorium_message_init(&message2, ACTION_MOCK_NEW_CONTACTS, 3 * sizeof(int),
                     (char *)mock1->children);
     thorium_actor_send(actor, *(int *)bsal_vector_at(&mock1->spawners, next), &message2);
     thorium_message_destroy(&message2);
@@ -192,7 +192,7 @@ void mock_spawn_children(struct thorium_actor *actor)
     int name;
     struct thorium_message message;
 
-    thorium_message_init(&message, BUDDY_BOOT, 0, NULL);
+    thorium_message_init(&message, ACTION_BUDDY_BOOT, 0, NULL);
 
     total = 1;
     mock = (struct mock*)thorium_actor_concrete_actor(actor);

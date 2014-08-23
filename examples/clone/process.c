@@ -21,7 +21,7 @@ void process_init(struct thorium_actor *actor)
     process1->value = 42;
     process1->ready = 0;
     process1->cloned = 0;
-    thorium_actor_send_to_self_empty(actor, THORIUM_ACTOR_PACK_ENABLE);
+    thorium_actor_send_to_self_empty(actor, ACTION_PACK_ENABLE);
 }
 
 void process_destroy(struct thorium_actor *actor)
@@ -47,7 +47,7 @@ void process_receive(struct thorium_actor *actor, struct thorium_message *messag
     name = thorium_actor_name(actor);
     buffer = thorium_message_buffer(message);
 
-    if (tag == THORIUM_ACTOR_START) {
+    if (tag == ACTION_START) {
 
         bsal_vector_init(&process1->initial_processes, 0);
         bsal_vector_unpack(&process1->initial_processes, buffer);
@@ -65,7 +65,7 @@ void process_receive(struct thorium_actor *actor, struct thorium_message *messag
         printf("Hi, I am actor:%d and my value is %d. I will clone myself using %d as the spawner\n",
                         name, process1->value, other);
 
-        thorium_message_init(&new_message, THORIUM_ACTOR_CLONE, sizeof(other), &other);
+        thorium_message_init(&new_message, ACTION_CLONE, sizeof(other), &other);
 
         /* create 2 clones
          * to test the capacity of the runtime to queue messages
@@ -74,13 +74,13 @@ void process_receive(struct thorium_actor *actor, struct thorium_message *messag
         thorium_actor_send_to_self(actor, &new_message);
         thorium_actor_send_to_self(actor, &new_message);
 
-    } else if (tag == THORIUM_ACTOR_CLONE_REPLY) {
+    } else if (tag == ACTION_CLONE_REPLY) {
 
         process1->clone = *(int *)buffer;
 
         printf("New clone is actor:%d\n", process1->clone);
 
-        thorium_actor_send_empty(actor, process1->clone, THORIUM_ACTOR_ASK_TO_STOP);
+        thorium_actor_send_empty(actor, process1->clone, ACTION_ASK_TO_STOP);
 
         process1->cloned++;
 
@@ -96,33 +96,33 @@ void process_receive(struct thorium_actor *actor, struct thorium_message *messag
 
         if (process1->ready) {
             thorium_actor_send_empty(actor, bsal_vector_at_as_int(&process1->initial_processes, 0),
-                            THORIUM_ACTOR_SYNCHRONIZE_REPLY);
+                            ACTION_SYNCHRONIZE_REPLY);
         }
         process1->ready = 1;
 
-    } else if (tag == THORIUM_ACTOR_SYNCHRONIZE) {
+    } else if (tag == ACTION_SYNCHRONIZE) {
 
         if (process1->ready) {
             thorium_actor_send_empty(actor, bsal_vector_at_as_int(&process1->initial_processes, 0),
-                            THORIUM_ACTOR_SYNCHRONIZE_REPLY);
+                            ACTION_SYNCHRONIZE_REPLY);
         }
         process1->ready = 1;
 
-    } else if (tag == THORIUM_ACTOR_SYNCHRONIZED) {
+    } else if (tag == ACTION_SYNCHRONIZED) {
 
-        thorium_actor_send_range_empty(actor, &process1->initial_processes, THORIUM_ACTOR_ASK_TO_STOP);
+        thorium_actor_send_range_empty(actor, &process1->initial_processes, ACTION_ASK_TO_STOP);
 
-    } else if (tag == THORIUM_ACTOR_PACK) {
+    } else if (tag == ACTION_PACK) {
 
-        thorium_message_init(&new_message, THORIUM_ACTOR_PACK_REPLY, sizeof(process1->value), &process1->value);
+        thorium_message_init(&new_message, ACTION_PACK_REPLY, sizeof(process1->value), &process1->value);
         thorium_actor_send_reply(actor, &new_message);
 
-    } else if (tag == THORIUM_ACTOR_UNPACK) {
+    } else if (tag == ACTION_UNPACK) {
 
         process1->value = *(int*)buffer;
-        thorium_actor_send_reply_empty(actor, THORIUM_ACTOR_UNPACK_REPLY);
+        thorium_actor_send_reply_empty(actor, ACTION_UNPACK_REPLY);
 
-    } else if (tag == THORIUM_ACTOR_ASK_TO_STOP) {
+    } else if (tag == ACTION_ASK_TO_STOP) {
 
         if (process1->clone == -1) {
             printf("Hi !, my name is %d and my value is %d. I am a clone.\n", name, process1->value);
@@ -131,6 +131,6 @@ void process_receive(struct thorium_actor *actor, struct thorium_message *messag
             printf("Hello. my name is %d and my value is %d. I am an original.\n", name, process1->value);
         }
 
-        thorium_actor_send_to_self_empty(actor, THORIUM_ACTOR_STOP);
+        thorium_actor_send_to_self_empty(actor, ACTION_STOP);
     }
 }

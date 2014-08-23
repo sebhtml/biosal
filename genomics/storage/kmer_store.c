@@ -56,7 +56,7 @@ void bsal_kmer_store_init(struct thorium_actor *self)
 
     concrete_actor->last_received = 0;
 
-    thorium_actor_add_action(self, THORIUM_ACTOR_YIELD_REPLY, bsal_kmer_store_yield_reply);
+    thorium_actor_add_action(self, ACTION_YIELD_REPLY, bsal_kmer_store_yield_reply);
 }
 
 void bsal_kmer_store_destroy(struct thorium_actor *self)
@@ -109,7 +109,7 @@ void bsal_kmer_store_receive(struct thorium_actor *self, struct thorium_message 
     tag = thorium_message_tag(message);
     buffer = thorium_message_buffer(message);
 
-    if (tag == BSAL_SET_KMER_LENGTH) {
+    if (tag == ACTION_SET_KMER_LENGTH) {
 
         thorium_message_unpack_int(message, 0, &concrete_actor->kmer_length);
 
@@ -141,9 +141,9 @@ void bsal_kmer_store_receive(struct thorium_actor *self, struct thorium_message 
          */
         bsal_map_set_threshold(&concrete_actor->table, 0.95);
 
-        thorium_actor_send_reply_empty(self, BSAL_SET_KMER_LENGTH_REPLY);
+        thorium_actor_send_reply_empty(self, ACTION_SET_KMER_LENGTH_REPLY);
 
-    } else if (tag == BSAL_PUSH_KMER_BLOCK) {
+    } else if (tag == ACTION_PUSH_KMER_BLOCK) {
 
         bsal_dna_kmer_frequency_block_init(&block, concrete_actor->kmer_length,
                         ephemeral_memory, &concrete_actor->transport_codec, 0);
@@ -237,15 +237,15 @@ void bsal_kmer_store_receive(struct thorium_actor *self, struct thorium_message 
         bsal_map_iterator_destroy(&iterator);
         bsal_dna_kmer_frequency_block_destroy(&block, thorium_actor_get_ephemeral_memory(self));
 
-        thorium_actor_send_reply_empty(self, BSAL_PUSH_KMER_BLOCK_REPLY);
+        thorium_actor_send_reply_empty(self, ACTION_PUSH_KMER_BLOCK_REPLY);
 
-    } else if (tag == BSAL_SEQUENCE_STORE_REQUEST_PROGRESS_REPLY) {
+    } else if (tag == ACTION_SEQUENCE_STORE_REQUEST_PROGRESS_REPLY) {
 
         thorium_message_unpack_double(message, 0, &value);
 
         bsal_map_set_current_size_estimate(&concrete_actor->table, value);
 
-    } else if (tag == THORIUM_ACTOR_ASK_TO_STOP) {
+    } else if (tag == ACTION_ASK_TO_STOP) {
 
 #ifdef BSAL_KMER_STORE_DEBUG
         bsal_kmer_store_print(self);
@@ -253,7 +253,7 @@ void bsal_kmer_store_receive(struct thorium_actor *self, struct thorium_message 
 
         thorium_actor_ask_to_stop(self, message);
 
-    } else if (tag == THORIUM_ACTOR_SET_CONSUMER) {
+    } else if (tag == ACTION_SET_CONSUMER) {
 
         thorium_message_unpack_int(message, 0, &customer);
 
@@ -264,18 +264,18 @@ void bsal_kmer_store_receive(struct thorium_actor *self, struct thorium_message 
 
         concrete_actor->customer = customer;
 
-        thorium_actor_send_reply_empty(self, THORIUM_ACTOR_SET_CONSUMER_REPLY);
+        thorium_actor_send_reply_empty(self, ACTION_SET_CONSUMER_REPLY);
 
-    } else if (tag == BSAL_PUSH_DATA) {
+    } else if (tag == ACTION_PUSH_DATA) {
 
-        printf("DEBUG kmer store %d receives BSAL_PUSH_DATA\n",
+        printf("DEBUG kmer store %d receives ACTION_PUSH_DATA\n",
                         thorium_actor_name(self));
 
         bsal_kmer_store_push_data(self, message);
 
-    } else if (tag == BSAL_STORE_GET_ENTRY_COUNT) {
+    } else if (tag == ACTION_STORE_GET_ENTRY_COUNT) {
 
-        thorium_actor_send_reply_uint64_t(self, BSAL_STORE_GET_ENTRY_COUNT_REPLY,
+        thorium_actor_send_reply_uint64_t(self, ACTION_STORE_GET_ENTRY_COUNT_REPLY,
                         concrete_actor->received);
     }
 }
@@ -373,7 +373,7 @@ void bsal_kmer_store_push_data(struct thorium_actor *self, struct thorium_messag
     printf("yield 1\n");
 #endif
 
-    thorium_actor_send_to_self_empty(self, THORIUM_ACTOR_YIELD);
+    thorium_actor_send_to_self_empty(self, ACTION_YIELD);
 }
 
 void bsal_kmer_store_yield_reply(struct thorium_actor *self, struct thorium_message *message)
@@ -443,7 +443,7 @@ void bsal_kmer_store_yield_reply(struct thorium_actor *self, struct thorium_mess
         printf("yield ! %d\n", i);
 #endif
 
-        thorium_actor_send_to_self_empty(self, THORIUM_ACTOR_YIELD);
+        thorium_actor_send_to_self_empty(self, ACTION_YIELD);
 
         return;
     }
@@ -467,7 +467,7 @@ void bsal_kmer_store_yield_reply(struct thorium_actor *self, struct thorium_mess
 #ifdef BSAL_KMER_STORE_DEBUG
 #endif
 
-    thorium_message_init(&new_message, BSAL_PUSH_DATA, new_count, new_buffer);
+    thorium_message_init(&new_message, ACTION_PUSH_DATA, new_count, new_buffer);
 
     thorium_actor_send(self, customer, &new_message);
     thorium_message_destroy(&new_message);
@@ -475,6 +475,6 @@ void bsal_kmer_store_yield_reply(struct thorium_actor *self, struct thorium_mess
     bsal_map_destroy(&concrete_actor->coverage_distribution);
 
     thorium_actor_send_empty(self, concrete_actor->source,
-                            BSAL_PUSH_DATA_REPLY);
+                            ACTION_PUSH_DATA_REPLY);
 
 }

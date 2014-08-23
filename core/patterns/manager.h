@@ -12,22 +12,22 @@
 /**
  * How to use:
  *
- * 1. The script must be set with BSAL_MANAGER_SET_SCRIPT
- * (reply is BSAL_MANAGER_SET_SCRIPT_REPLY).
+ * 1. The script must be set with ACTION_MANAGER_SET_SCRIPT
+ * (reply is ACTION_MANAGER_SET_SCRIPT_REPLY).
  *
  * 2. The number of actors per spawner is set with
- * BSAL_MANAGER_SET_ACTORS_PER_SPAWNER (reply is
- * BSAL_MANAGER_SET_ACTORS_PER_SPAWNER_REPLY). The default is to
+ * ACTION_MANAGER_SET_ACTORS_PER_SPAWNER (reply is
+ * ACTION_MANAGER_SET_ACTORS_PER_SPAWNER_REPLY). The default is to
  * spawn as many actors as there are workers on a spawner's
  * node.
  *
  * 3. The number of actors per worker can also be changed
- * with BSAL_MANAGER_SET_ACTORS_PER_WORKER (reply is
- * BSAL_MANAGER_SET_ACTORS_PER_WORKER_REPLY). The default is 1.
+ * with ACTION_MANAGER_SET_ACTORS_PER_WORKER (reply is
+ * ACTION_MANAGER_SET_ACTORS_PER_WORKER_REPLY). The default is 1.
  *
- * 4. Finally, THORIUM_ACTOR_START is sent to the manager (buffer contains
+ * 4. Finally, ACTION_START is sent to the manager (buffer contains
  * a vector of spawners). The manager
- * will reply with THORIUM_ACTOR_START_REPLY and the buffer will
+ * will reply with ACTION_START_REPLY and the buffer will
  * contain a vector of spawned actors (spawned using the provided spawners).
  *
  *
@@ -47,14 +47,14 @@ struct bsal_manager {
     struct bsal_vector children;
 };
 
-#define BSAL_MANAGER_SET_SCRIPT 0x00007595
-#define BSAL_MANAGER_SET_SCRIPT_REPLY 0x00007667
-#define BSAL_MANAGER_SET_ACTORS_PER_SPAWNER 0x000044d9
-#define BSAL_MANAGER_SET_ACTORS_PER_SPAWNER_REPLY 0x00005b4c
-#define BSAL_MANAGER_SET_ACTORS_PER_WORKER 0x000000c9
-#define BSAL_MANAGER_SET_ACTORS_PER_WORKER_REPLY 0x00007b37
-#define BSAL_MANAGER_SET_WORKERS_PER_ACTOR 0x0000322a
-#define BSAL_MANAGER_SET_WORKERS_PER_ACTOR_REPLY 0x00007b74
+#define ACTION_MANAGER_SET_SCRIPT 0x00007595
+#define ACTION_MANAGER_SET_SCRIPT_REPLY 0x00007667
+#define ACTION_MANAGER_SET_ACTORS_PER_SPAWNER 0x000044d9
+#define ACTION_MANAGER_SET_ACTORS_PER_SPAWNER_REPLY 0x00005b4c
+#define ACTION_MANAGER_SET_ACTORS_PER_WORKER 0x000000c9
+#define ACTION_MANAGER_SET_ACTORS_PER_WORKER_REPLY 0x00007b37
+#define ACTION_MANAGER_SET_WORKERS_PER_ACTOR 0x0000322a
+#define ACTION_MANAGER_SET_WORKERS_PER_ACTOR_REPLY 0x00007b74
 
 extern struct thorium_script bsal_manager_script;
 

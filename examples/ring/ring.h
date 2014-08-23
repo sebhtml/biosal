@@ -18,11 +18,11 @@ struct ring {
     int previous;
 };
 
-#define RING_READY 0x000067db
-#define RING_KILL 0x00004cfe
-#define RING_SET_NEXT 0x00003833
-#define RING_PUSH_NEXT 0x0000153c
-#define RING_SPAWN 0x00001bd7
+#define ACTION_RING_READY 0x000067db
+#define ACTION_RING_KILL 0x00004cfe
+#define ACTION_RING_SET_NEXT 0x00003833
+#define ACTION_RING_PUSH_NEXT 0x0000153c
+#define ACTION_RING_SPAWN 0x00001bd7
 
 extern struct thorium_script ring_script;
 

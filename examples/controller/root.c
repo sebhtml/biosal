@@ -80,10 +80,10 @@ void root_receive(struct thorium_actor *actor, struct thorium_message *message)
     count = thorium_message_count(message);
 
     /*
-    printf(">>root_receive source %d name %d tag %d THORIUM_ACTOR_SYNCHRONIZED is %d\n", source, name, tag,
-                    THORIUM_ACTOR_SYNCHRONIZED);
+    printf(">>root_receive source %d name %d tag %d ACTION_SYNCHRONIZED is %d\n", source, name, tag,
+                    ACTION_SYNCHRONIZED);
 */
-    if (tag == THORIUM_ACTOR_START) {
+    if (tag == ACTION_START) {
 
         bsal_vector_init(&concrete_self->spawners, 0);
         bsal_vector_unpack(&concrete_self->spawners, buffer);
@@ -111,13 +111,13 @@ void root_receive(struct thorium_actor *actor, struct thorium_message *message)
 
         if (concrete_self->ready == 2) {
 
-            thorium_actor_send_empty(actor, king, THORIUM_ACTOR_SYNCHRONIZE_REPLY);
+            thorium_actor_send_empty(actor, king, ACTION_SYNCHRONIZE_REPLY);
         }
 
-    } else if (tag == THORIUM_ACTOR_SYNCHRONIZE) {
+    } else if (tag == ACTION_SYNCHRONIZE) {
 
             /*
-        printf("actor %d receives THORIUM_ACTOR_SYNCHRONIZE\n", name);
+        printf("actor %d receives ACTION_SYNCHRONIZE\n", name);
 */
         thorium_actor_add_script(actor, SCRIPT_INPUT_CONTROLLER,
                         &bsal_input_controller_script);
@@ -125,7 +125,7 @@ void root_receive(struct thorium_actor *actor, struct thorium_message *message)
         /* TODO remove this, SCRIPT_INPUT_CONTROLLER should pull
          * its dependencies...
          */
-        thorium_actor_add_script(actor, BSAL_INPUT_SCRIPT_STREAM,
+        thorium_actor_add_script(actor, ACTION_INPUT_SCRIPT_STREAM,
                         &bsal_input_stream_script);
 
         concrete_self->ready++;
@@ -133,34 +133,34 @@ void root_receive(struct thorium_actor *actor, struct thorium_message *message)
         if (concrete_self->ready == 2) {
 
             king = *(int *)bsal_vector_at(&concrete_self->spawners, 0);
-            thorium_actor_send_empty(actor, king, THORIUM_ACTOR_SYNCHRONIZE_REPLY);
+            thorium_actor_send_empty(actor, king, ACTION_SYNCHRONIZE_REPLY);
         }
 
-    } else if (tag == THORIUM_ACTOR_SYNCHRONIZED) {
+    } else if (tag == ACTION_SYNCHRONIZED) {
 
         if (concrete_self->synchronized) {
-            printf("Error already received THORIUM_ACTOR_SYNCHRONIZED\n");
+            printf("Error already received ACTION_SYNCHRONIZED\n");
             return;
         }
 
         concrete_self->synchronized = 1;
         /*
-        printf("actor %d receives THORIUM_ACTOR_SYNCHRONIZED, sending THORIUM_ACTOR_YIELD\n", name);
+        printf("actor %d receives ACTION_SYNCHRONIZED, sending ACTION_YIELD\n", name);
         */
-        thorium_actor_send_to_self_empty(actor, THORIUM_ACTOR_YIELD);
+        thorium_actor_send_to_self_empty(actor, ACTION_YIELD);
 
-    } else if (tag == THORIUM_ACTOR_YIELD_REPLY) {
+    } else if (tag == ACTION_YIELD_REPLY) {
 
         manager = thorium_actor_spawn(actor, SCRIPT_MANAGER);
 
         concrete_actor->manager = manager;
 
-        thorium_actor_send_int(actor, manager, BSAL_MANAGER_SET_SCRIPT, SCRIPT_SEQUENCE_STORE);
+        thorium_actor_send_int(actor, manager, ACTION_MANAGER_SET_SCRIPT, SCRIPT_SEQUENCE_STORE);
 
         printf("DEBUG root actor/%d spawned manager actor/%d\n",
                         thorium_actor_name(actor), manager);
 
-    } else if (tag == BSAL_MANAGER_SET_SCRIPT_REPLY) {
+    } else if (tag == ACTION_MANAGER_SET_SCRIPT_REPLY) {
 
         manager = source;
 
@@ -172,14 +172,14 @@ void root_receive(struct thorium_actor *actor, struct thorium_message *message)
         new_buffer = bsal_memory_pool_allocate(ephemeral_memory, new_count);
         bsal_vector_pack(&spawners, new_buffer);
 
-        thorium_message_init(&new_message, THORIUM_ACTOR_START, new_count, new_buffer);
+        thorium_message_init(&new_message, ACTION_START, new_count, new_buffer);
         thorium_actor_send(actor, manager, &new_message);
 
         bsal_memory_pool_free(ephemeral_memory, new_buffer);
 
         bsal_vector_destroy(&spawners);
 
-    } else if (tag == THORIUM_ACTOR_START_REPLY
+    } else if (tag == ACTION_START_REPLY
                     && source == concrete_actor->manager) {
 
         bsal_vector_init(&stores, 0);
@@ -189,16 +189,16 @@ void root_receive(struct thorium_actor *actor, struct thorium_message *message)
                         thorium_actor_name(actor),
                         source);
 
-        thorium_message_init(&new_message, THORIUM_ACTOR_SET_CONSUMERS, count, buffer);
+        thorium_message_init(&new_message, ACTION_SET_CONSUMERS, count, buffer);
         thorium_actor_send(actor, concrete_self->controller, &new_message);
 
-    } else if (tag == THORIUM_ACTOR_SET_CONSUMERS_REPLY) {
+    } else if (tag == ACTION_SET_CONSUMERS_REPLY) {
 
         bytes = bsal_vector_pack_size(&concrete_self->spawners);
         buffer = bsal_memory_pool_allocate(ephemeral_memory, bytes);
         bsal_vector_pack(&concrete_self->spawners, buffer);
 
-        thorium_message_init(message, THORIUM_ACTOR_START, bytes, buffer);
+        thorium_message_init(message, ACTION_START, bytes, buffer);
         thorium_actor_send(actor, concrete_self->controller, message);
         bsal_memory_pool_free(ephemeral_memory, buffer);
         buffer = NULL;
@@ -206,12 +206,12 @@ void root_receive(struct thorium_actor *actor, struct thorium_message *message)
         printf("root actor/%d starts controller actor/%d\n", name,
                         concrete_self->controller);
 
-    } else if (tag == THORIUM_ACTOR_START_REPLY) {
+    } else if (tag == ACTION_START_REPLY) {
 
         if (!concrete_self->is_king) {
             printf("root actor/%d stops controller actor/%d\n", name, source);
 
-            thorium_actor_send_reply_empty(actor, THORIUM_ACTOR_ASK_TO_STOP);
+            thorium_actor_send_reply_empty(actor, ACTION_ASK_TO_STOP);
             return;
         }
 /*
@@ -223,7 +223,7 @@ void root_receive(struct thorium_actor *actor, struct thorium_message *message)
         for (i = 1; i < argc; i++) {
             file = argv[i];
 
-            thorium_message_init(message, BSAL_ADD_FILE, strlen(file) + 1, file);
+            thorium_message_init(message, ACTION_ADD_FILE, strlen(file) + 1, file);
             thorium_actor_send_reply(actor, message);
 
             printf("root actor/%d add file %s to controller actor/%d\n", name,
@@ -238,12 +238,12 @@ void root_receive(struct thorium_actor *actor, struct thorium_message *message)
         if (concrete_self->events == 0) {
             concrete_self->events++;
 
-            thorium_actor_send_to_self_empty(actor, BSAL_ADD_FILE_REPLY);
+            thorium_actor_send_to_self_empty(actor, ACTION_ADD_FILE_REPLY);
         }
 
         printf("root actor/%d has no more files to add\n", name);
 
-    } else if (tag == BSAL_ADD_FILE_REPLY) {
+    } else if (tag == ACTION_ADD_FILE_REPLY) {
 
         concrete_self->events--;
 
@@ -253,47 +253,47 @@ void root_receive(struct thorium_actor *actor, struct thorium_message *message)
                             name, source);
 
             thorium_actor_send_empty(actor, concrete_self->controller,
-                            BSAL_INPUT_DISTRIBUTE);
+                            ACTION_INPUT_DISTRIBUTE);
         }
-    } else if (tag == BSAL_INPUT_DISTRIBUTE_REPLY) {
+    } else if (tag == ACTION_INPUT_DISTRIBUTE_REPLY) {
 
         printf("root actor/%d is notified by controller actor/%d that the distribution is complete\n",
                         name, source);
 
-        thorium_actor_send_reply_empty(actor, THORIUM_ACTOR_ASK_TO_STOP);
+        thorium_actor_send_reply_empty(actor, ACTION_ASK_TO_STOP);
 
-    } else if (tag == THORIUM_ACTOR_ASK_TO_STOP_REPLY) {
+    } else if (tag == ACTION_ASK_TO_STOP_REPLY) {
 
-        printf("DEBUG root receives THORIUM_ACTOR_ASK_TO_STOP_REPLY\n");
+        printf("DEBUG root receives ACTION_ASK_TO_STOP_REPLY\n");
         if (source == concrete_self->controller) {
 
-            printf("DEBUG root actor/%d sending to self ROOT_STOP_ALL\n",
+            printf("DEBUG root actor/%d sending to self ACTION_ROOT_STOP_ALL\n",
                             thorium_actor_name(actor));
 
-            thorium_actor_send_to_self_empty(actor, ROOT_STOP_ALL);
+            thorium_actor_send_to_self_empty(actor, ACTION_ROOT_STOP_ALL);
 
             /* Stop manager and controller
              */
 
             thorium_actor_send_empty(actor, concrete_self->manager,
-                            THORIUM_ACTOR_ASK_TO_STOP);
+                            ACTION_ASK_TO_STOP);
             thorium_actor_send_empty(actor, concrete_self->controller,
-                            THORIUM_ACTOR_ASK_TO_STOP);
+                            ACTION_ASK_TO_STOP);
 
         }
-    } else if (tag == ROOT_STOP_ALL) {
+    } else if (tag == ACTION_ROOT_STOP_ALL) {
 
         printf("root actor/%d stops all other actors\n", name);
 
-        thorium_actor_send_range_empty(actor, &concrete_self->spawners, THORIUM_ACTOR_ASK_TO_STOP);
+        thorium_actor_send_range_empty(actor, &concrete_self->spawners, ACTION_ASK_TO_STOP);
 
-    } else if (tag == THORIUM_ACTOR_ASK_TO_STOP) {
+    } else if (tag == ACTION_ASK_TO_STOP) {
 
-        thorium_actor_send_empty(actor, concrete_actor->manager, THORIUM_ACTOR_ASK_TO_STOP);
+        thorium_actor_send_empty(actor, concrete_actor->manager, ACTION_ASK_TO_STOP);
 
         printf("DEBUG stopping root actor/%d (source: %d)\n", thorium_actor_name(actor),
                         source);
-        thorium_actor_send_to_self_empty(actor, THORIUM_ACTOR_STOP);
+        thorium_actor_send_to_self_empty(actor, ACTION_STOP);
     }
 }
 

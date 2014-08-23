@@ -16,9 +16,9 @@ struct stream {
     int is_king;
 };
 
-#define STREAM_DIE 0x00005988
-#define STREAM_READY 0x000077cc
-#define STREAM_SYNC 0x00006fed
+#define ACTION_STREAM_DIE 0x00005988
+#define ACTION_STREAM_READY 0x000077cc
+#define ACTION_STREAM_SYNC 0x00006fed
 
 extern struct thorium_script stream_script;
 

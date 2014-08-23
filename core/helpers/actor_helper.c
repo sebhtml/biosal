@@ -324,10 +324,10 @@ void thorium_actor_send_range_binomial_tree(struct thorium_actor *actor, struct 
         memcpy((char *)new_buffer + offset, &magic_offset, sizeof(magic_offset));
         offset += sizeof(magic_offset);
 
-        thorium_message_init(&new_message, THORIUM_ACTOR_BINOMIAL_TREE_SEND, new_count, new_buffer);
+        thorium_message_init(&new_message, ACTION_BINOMIAL_TREE_SEND, new_count, new_buffer);
 
     #ifdef THORIUM_ACTOR_DEBUG_BINOMIAL_TREE
-        printf("DEBUG111111 actor %i sending THORIUM_ACTOR_BINOMIAL_TREE_SEND to %i, range is %i-%i\n",
+        printf("DEBUG111111 actor %i sending ACTION_BINOMIAL_TREE_SEND to %i, range is %i-%i\n",
                         name, middle1, first1, last1);
     #endif
 
@@ -363,14 +363,14 @@ void thorium_actor_send_range_binomial_tree(struct thorium_actor *actor, struct 
         offset += sizeof(magic_offset);
 
 #ifdef THORIUM_ACTOR_DEBUG_BINOMIAL_TREE2
-        printf("DEBUG78 %i source: %i tag: %i THORIUM_ACTOR_BINOMIAL_TREE_SEND\n",
+        printf("DEBUG78 %i source: %i tag: %i ACTION_BINOMIAL_TREE_SEND\n",
                     name, source, tag);
 #endif
 
-        thorium_message_init(&new_message, THORIUM_ACTOR_BINOMIAL_TREE_SEND, new_count, new_buffer);
+        thorium_message_init(&new_message, ACTION_BINOMIAL_TREE_SEND, new_count, new_buffer);
 
 #ifdef THORIUM_ACTOR_DEBUG_BINOMIAL_TREE
-        printf("DEBUG %i sending THORIUM_ACTOR_BINOMIAL_TREE_SEND to %i, range is %i-%i\n",
+        printf("DEBUG %i sending ACTION_BINOMIAL_TREE_SEND to %i, range is %i-%i\n",
                     name, middle2, first2, last2);
 #endif
 
@@ -467,7 +467,7 @@ void thorium_actor_receive_binomial_tree_send(struct thorium_actor *actor, struc
     offset += sizeof(real_tag);
 
 #ifdef THORIUM_ACTOR_DEBUG
-    printf("DEBUG78 actor %i received THORIUM_ACTOR_BINOMIAL_TREE_SEND "
+    printf("DEBUG78 actor %i received ACTION_BINOMIAL_TREE_SEND "
                     "real_source: %i real_tag: %i first: %i last: %i\n",
                     thorium_actor_name(actor), real_source, real_tag, first,
                     last);
@@ -519,14 +519,14 @@ void thorium_actor_ask_to_stop(struct thorium_actor *actor, struct thorium_messa
                             thorium_actor_name(actor), child);
 #endif
 
-        thorium_actor_send_empty(actor, child, THORIUM_ACTOR_ASK_TO_STOP);
+        thorium_actor_send_empty(actor, child, ACTION_ASK_TO_STOP);
     }
 
 #ifdef THORIUM_ACTOR_HELPER_DEBUG_STOP
     printf("DEBUG121212 actor/%d dies\n",
                     thorium_actor_name(actor));
 
-    printf("DEBUG actor/%d send THORIUM_ACTOR_STOP to self\n",
+    printf("DEBUG actor/%d send ACTION_STOP to self\n",
                     thorium_actor_name(actor));
 #endif
 
@@ -537,9 +537,9 @@ void thorium_actor_ask_to_stop(struct thorium_actor *actor, struct thorium_messa
      * This is the default behavior and can be overwritten by
      * the concrete actor
      */
-    thorium_actor_send_to_self_empty(actor, THORIUM_ACTOR_STOP);
+    thorium_actor_send_to_self_empty(actor, ACTION_STOP);
 
-    thorium_actor_send_reply_empty(actor, THORIUM_ACTOR_ASK_TO_STOP_REPLY);
+    thorium_actor_send_reply_empty(actor, ACTION_ASK_TO_STOP_REPLY);
 }
 
 #ifdef THORIUM_ACTOR_EXPOSE_ACQUAINTANCE_VECTOR

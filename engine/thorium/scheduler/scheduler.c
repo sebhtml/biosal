@@ -796,8 +796,8 @@ int thorium_scheduler_select_worker_least_busy(
     tag = thorium_message_tag(message);
     destination = thorium_message_destination(message);
 
-    if (tag == THORIUM_ACTOR_ASK_TO_STOP) {
-        printf("DEBUG dispatching THORIUM_ACTOR_ASK_TO_STOP for actor %d to worker %d\n",
+    if (tag == ACTION_ASK_TO_STOP) {
+        printf("DEBUG dispatching ACTION_ASK_TO_STOP for actor %d to worker %d\n",
                         destination, *start);
     }
 

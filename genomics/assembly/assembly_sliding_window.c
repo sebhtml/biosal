@@ -82,19 +82,19 @@ void bsal_assembly_sliding_window_init(struct thorium_actor *actor)
 
     concrete_actor->auto_scaling_in_progress = 0;
 
-    thorium_actor_add_action(actor, THORIUM_ACTOR_PACK,
+    thorium_actor_add_action(actor, ACTION_PACK,
                     bsal_assembly_sliding_window_pack_message);
-    thorium_actor_add_action(actor, THORIUM_ACTOR_UNPACK,
+    thorium_actor_add_action(actor, ACTION_UNPACK,
                     bsal_assembly_sliding_window_unpack_message);
-    thorium_actor_add_action(actor, THORIUM_ACTOR_CLONE_REPLY,
+    thorium_actor_add_action(actor, ACTION_CLONE_REPLY,
                     bsal_assembly_sliding_window_clone_reply);
-    thorium_actor_add_action(actor, THORIUM_ACTOR_NOTIFY,
+    thorium_actor_add_action(actor, ACTION_NOTIFY,
                     bsal_assembly_sliding_window_notify);
-    thorium_actor_add_action(actor, THORIUM_ACTOR_NOTIFY_REPLY,
+    thorium_actor_add_action(actor, ACTION_NOTIFY_REPLY,
                     bsal_assembly_sliding_window_notify_reply);
-    thorium_actor_add_action(actor, THORIUM_ACTOR_DO_AUTO_SCALING,
+    thorium_actor_add_action(actor, ACTION_DO_AUTO_SCALING,
                     bsal_assembly_sliding_window_do_auto_scaling);
-    thorium_actor_add_action(actor, ACTION_SET_PRODUCERS_FOR_WORK_STEALING,
+    thorium_actor_add_action(actor, ACTION_ACTION_SET_PRODUCERS_FOR_WORK_STEALING,
                     bsal_assembly_sliding_window_set_producers_for_work_stealing);
 
     printf("%s/%d is online on node node/%d\n",
@@ -105,7 +105,7 @@ void bsal_assembly_sliding_window_init(struct thorium_actor *actor)
     /* Enable packing for this actor. Maybe this is already enabled, but who knows.
      */
 
-    thorium_actor_send_to_self_empty(actor, THORIUM_ACTOR_PACK_ENABLE);
+    thorium_actor_send_to_self_empty(actor, ACTION_PACK_ENABLE);
     concrete_actor->auto_scaling_clone = THORIUM_ACTOR_NOBODY;
 
     concrete_actor->scaling_operations = 0;
@@ -153,10 +153,10 @@ void bsal_assembly_sliding_window_receive(struct thorium_actor *actor, struct th
     source = thorium_message_source(message);
     buffer = thorium_message_buffer(message);
 
-    if (tag == BSAL_PUSH_SEQUENCE_DATA_BLOCK) {
+    if (tag == ACTION_PUSH_SEQUENCE_DATA_BLOCK) {
         bsal_assembly_sliding_window_push_sequence_data_block(actor, message);
 
-    } else if (tag == BSAL_AGGREGATE_KERNEL_OUTPUT_REPLY) {
+    } else if (tag == ACTION_AGGREGATE_KERNEL_OUTPUT_REPLY) {
 
 #ifdef BSAL_WINDOW_DEBUG
         BSAL_DEBUG_MARKER("kernel receives reply from aggregator\n");
@@ -166,25 +166,25 @@ void bsal_assembly_sliding_window_receive(struct thorium_actor *actor, struct th
         source_index = *(int *)buffer;
         thorium_actor_send_empty(actor,
                         source_index,
-                        BSAL_PUSH_SEQUENCE_DATA_BLOCK_REPLY);
+                        ACTION_PUSH_SEQUENCE_DATA_BLOCK_REPLY);
                         */
 
         bsal_assembly_sliding_window_ask(actor, message);
 
-    } else if (tag == THORIUM_ACTOR_START) {
+    } else if (tag == ACTION_START) {
 
-        thorium_actor_send_reply_empty(actor, THORIUM_ACTOR_START_REPLY);
+        thorium_actor_send_reply_empty(actor, ACTION_START_REPLY);
 
-    } else if (tag == BSAL_RESERVE) {
+    } else if (tag == ACTION_RESERVE) {
 
         printf("%s/%d is online !\n",
                         thorium_actor_script_name(actor), name);
 
         concrete_actor->expected = *(uint64_t *)buffer;
 
-        thorium_actor_send_reply_empty(actor, BSAL_RESERVE_REPLY);
+        thorium_actor_send_reply_empty(actor, ACTION_RESERVE_REPLY);
 
-    } else if (tag == THORIUM_ACTOR_ASK_TO_STOP) {
+    } else if (tag == ACTION_ASK_TO_STOP) {
 
         printf("window/%d generated %" PRIu64 " kmers from %" PRIu64
                         " entries (%d blocks), sent %d messages to consumer \n",
@@ -197,24 +197,24 @@ void bsal_assembly_sliding_window_receive(struct thorium_actor *actor, struct th
                         name, source, thorium_actor_supervisor(actor));
 #endif
 
-        /*thorium_actor_send_to_self_empty(actor, THORIUM_ACTOR_STOP);*/
+        /*thorium_actor_send_to_self_empty(actor, ACTION_STOP);*/
 
         thorium_actor_ask_to_stop(actor, message);
 
-    } else if (tag == THORIUM_ACTOR_SET_CONSUMER) {
+    } else if (tag == ACTION_SET_CONSUMER) {
 
         consumer = *(int *)buffer;
         concrete_actor->consumer = consumer;
 
 #ifdef BSAL_WINDOW_DEBUG
-        printf("window %d THORIUM_ACTOR_SET_CONSUMER consumer %d index %d\n",
+        printf("window %d ACTION_SET_CONSUMER consumer %d index %d\n",
                         thorium_actor_name(actor), consumer,
                         concrete_actor->consumer);
 #endif
 
-        thorium_actor_send_reply_empty(actor, THORIUM_ACTOR_SET_CONSUMER_REPLY);
+        thorium_actor_send_reply_empty(actor, ACTION_SET_CONSUMER_REPLY);
 
-    } else if (tag == BSAL_SET_KMER_LENGTH) {
+    } else if (tag == ACTION_SET_KMER_LENGTH) {
 
         thorium_message_unpack_int(message, 0, &concrete_actor->kmer_length);
 
@@ -229,9 +229,9 @@ void bsal_assembly_sliding_window_receive(struct thorium_actor *actor, struct th
                         &concrete_actor->codec);
         bsal_dna_kmer_destroy(&kmer, thorium_actor_get_ephemeral_memory(actor));
 
-        thorium_actor_send_reply_empty(actor, BSAL_SET_KMER_LENGTH_REPLY);
+        thorium_actor_send_reply_empty(actor, ACTION_SET_KMER_LENGTH_REPLY);
 
-    } else if (tag == THORIUM_ACTOR_SET_PRODUCER) {
+    } else if (tag == ACTION_SET_PRODUCER) {
 
         if (count == 0) {
             printf("Error: window needs producer\n");
@@ -260,7 +260,7 @@ void bsal_assembly_sliding_window_receive(struct thorium_actor *actor, struct th
 
         concrete_actor->producer_source = source;
 
-    } else if (tag == BSAL_SEQUENCE_STORE_ASK_REPLY) {
+    } else if (tag == ACTION_SEQUENCE_STORE_ASK_REPLY) {
 
         /* the store has no more sequence...
          */
@@ -285,17 +285,17 @@ void bsal_assembly_sliding_window_receive(struct thorium_actor *actor, struct th
         } else {
             thorium_actor_send_empty(actor,
                                 concrete_actor->producer_source,
-                        THORIUM_ACTOR_SET_PRODUCER_REPLY);
+                        ACTION_SET_PRODUCER_REPLY);
         }
 
-    } else if (tag == THORIUM_ACTOR_SET_CONSUMER_REPLY) {
+    } else if (tag == ACTION_SET_CONSUMER_REPLY) {
 
         /* Set the producer for the new window
          */
         producer = concrete_actor->producer;
 
         thorium_actor_send_int(actor, concrete_actor->auto_scaling_clone,
-                        THORIUM_ACTOR_SET_PRODUCER, producer);
+                        ACTION_SET_PRODUCER, producer);
 
         concrete_actor->auto_scaling_in_progress = 0;
         concrete_actor->scaling_operations++;
@@ -307,15 +307,15 @@ void bsal_assembly_sliding_window_receive(struct thorium_actor *actor, struct th
 
 
 
-    } else if (tag == THORIUM_ACTOR_SET_PRODUCER_REPLY
+    } else if (tag == ACTION_SET_PRODUCER_REPLY
                     && source == concrete_actor->auto_scaling_clone) {
 
-    } else if (tag == THORIUM_ACTOR_ENABLE_AUTO_SCALING) {
+    } else if (tag == ACTION_ENABLE_AUTO_SCALING) {
 
-        printf("AUTO-SCALING window %d enables auto-scaling (THORIUM_ACTOR_ENABLE_AUTO_SCALING) via actor %d\n",
+        printf("AUTO-SCALING window %d enables auto-scaling (ACTION_ENABLE_AUTO_SCALING) via actor %d\n",
                         name, source);
 
-        thorium_actor_send_to_self_empty(actor, THORIUM_ACTOR_ENABLE_AUTO_SCALING);
+        thorium_actor_send_to_self_empty(actor, ACTION_ENABLE_AUTO_SCALING);
 
     }
 }
@@ -339,7 +339,7 @@ void bsal_assembly_sliding_window_verify(struct thorium_actor *actor, struct tho
 
     thorium_actor_send_uint64_t(actor,
                             concrete_actor->notification_source,
-                    THORIUM_ACTOR_NOTIFY_REPLY, concrete_actor->kmers);
+                    ACTION_NOTIFY_REPLY, concrete_actor->kmers);
 }
 
 void bsal_assembly_sliding_window_ask(struct thorium_actor *self, struct thorium_message *message)
@@ -351,7 +351,7 @@ void bsal_assembly_sliding_window_ask(struct thorium_actor *self, struct thorium
 
     producer = concrete_actor->producer;
 
-    thorium_actor_send_int(self, producer, BSAL_SEQUENCE_STORE_ASK,
+    thorium_actor_send_int(self, producer, ACTION_SEQUENCE_STORE_ASK,
                     concrete_actor->kmer_length);
 
 #ifdef BSAL_ASSEMBLY_SLIDING_WINDOW_DEBUG
@@ -397,15 +397,15 @@ void bsal_assembly_sliding_window_do_auto_scaling(struct thorium_actor *actor, s
      * - spawn an aggregator
      * - set the aggregator as the consumer of the kernel
      * - set the kmer stores as the consumers of the aggregator
-     * - set a sequence store as the producer of the kernel (THORIUM_ACTOR_SET_PRODUCER)
+     * - set a sequence store as the producer of the kernel (ACTION_SET_PRODUCER)
      */
 
-    printf("AUTO-SCALING window %d receives auto-scale message (THORIUM_ACTOR_DO_AUTO_SCALING) via actor %d\n",
+    printf("AUTO-SCALING window %d receives auto-scale message (ACTION_DO_AUTO_SCALING) via actor %d\n",
                     name, source);
 
     concrete_actor->auto_scaling_in_progress = 1;
 
-    thorium_actor_send_to_self_int(actor, THORIUM_ACTOR_CLONE, name);
+    thorium_actor_send_to_self_int(actor, ACTION_CLONE, name);
 }
 
 void bsal_assembly_sliding_window_pack_message(struct thorium_actor *actor, struct thorium_message *message)
@@ -421,7 +421,7 @@ void bsal_assembly_sliding_window_pack_message(struct thorium_actor *actor, stru
 
     bsal_assembly_sliding_window_pack(actor, new_buffer);
 
-    thorium_message_init(&new_message, THORIUM_ACTOR_PACK_REPLY, new_count, new_buffer);
+    thorium_message_init(&new_message, ACTION_PACK_REPLY, new_count, new_buffer);
 
     thorium_actor_send_reply(actor, &new_message);
 
@@ -438,7 +438,7 @@ void bsal_assembly_sliding_window_unpack_message(struct thorium_actor *actor, st
 
     bsal_assembly_sliding_window_unpack(actor, buffer);
 
-    thorium_actor_send_reply_empty(actor, THORIUM_ACTOR_UNPACK_REPLY);
+    thorium_actor_send_reply_empty(actor, ACTION_UNPACK_REPLY);
 }
 
 void bsal_assembly_sliding_window_clone_reply(struct thorium_actor *actor, struct thorium_message *message)
@@ -462,7 +462,7 @@ void bsal_assembly_sliding_window_clone_reply(struct thorium_actor *actor, struc
         printf("window %d cloned itself !!! clone name is %d\n",
                     name, clone);
 
-        thorium_actor_send_int(actor, consumer, THORIUM_ACTOR_CLONE, name);
+        thorium_actor_send_int(actor, consumer, ACTION_CLONE, name);
 
         concrete_actor->auto_scaling_clone = clone;
 
@@ -475,7 +475,7 @@ void bsal_assembly_sliding_window_clone_reply(struct thorium_actor *actor, struc
                         name, consumer, clone);
 
         thorium_actor_send_int(actor, concrete_actor->auto_scaling_clone,
-                        THORIUM_ACTOR_SET_CONSUMER, clone);
+                        ACTION_SET_CONSUMER, clone);
 
     }
 }
@@ -552,7 +552,7 @@ void bsal_assembly_sliding_window_notify(struct thorium_actor *actor, struct tho
     source = thorium_message_source(message);
     concrete_actor->notified = 1;
 
-    thorium_actor_send_to_self_empty(actor, THORIUM_ACTOR_DISABLE_AUTO_SCALING);
+    thorium_actor_send_to_self_empty(actor, ACTION_DISABLE_AUTO_SCALING);
 
     concrete_actor->notification_source = source;
 
@@ -566,7 +566,7 @@ void bsal_assembly_sliding_window_notify(struct thorium_actor *actor, struct tho
 
         while (bsal_vector_iterator_get_next_value(&iterator, &kernel)) {
 
-            thorium_actor_send_empty(actor, kernel, THORIUM_ACTOR_NOTIFY);
+            thorium_actor_send_empty(actor, kernel, ACTION_NOTIFY);
         }
 
         bsal_vector_iterator_destroy(&iterator);
@@ -595,7 +595,7 @@ void bsal_assembly_sliding_window_notify_reply(struct thorium_actor *actor, stru
 
         thorium_actor_send_uint64_t(actor,
                             concrete_actor->notification_source,
-                    THORIUM_ACTOR_NOTIFY_REPLY, concrete_actor->sum_of_kmers);
+                    ACTION_NOTIFY_REPLY, concrete_actor->sum_of_kmers);
     }
 }
 
@@ -758,11 +758,11 @@ void bsal_assembly_sliding_window_push_sequence_data_block(struct thorium_actor 
 #endif
 
 
-    thorium_message_init(&new_message, BSAL_AGGREGATE_KERNEL_OUTPUT,
+    thorium_message_init(&new_message, ACTION_AGGREGATE_KERNEL_OUTPUT,
                     new_count, new_buffer);
 
     /*
-    thorium_message_init(&new_message, BSAL_AGGREGATE_KERNEL_OUTPUT,
+    thorium_message_init(&new_message, ACTION_AGGREGATE_KERNEL_OUTPUT,
                     sizeof(source_index), &source_index);
                     */
 
@@ -773,7 +773,7 @@ void bsal_assembly_sliding_window_push_sequence_data_block(struct thorium_actor 
 
     thorium_actor_send_empty(actor,
                     source_index,
-                    BSAL_PUSH_SEQUENCE_DATA_BLOCK_REPLY);
+                    ACTION_PUSH_SEQUENCE_DATA_BLOCK_REPLY);
 
     if (concrete_actor->actual == concrete_actor->expected
                     || concrete_actor->actual >= concrete_actor->last + 300000
@@ -835,5 +835,5 @@ void bsal_assembly_sliding_window_set_producers_for_work_stealing(struct thorium
 
     bsal_vector_destroy(&producers);
 
-    thorium_actor_send_reply_empty(self, ACTION_SET_PRODUCERS_FOR_WORK_STEALING_REPLY);
+    thorium_actor_send_reply_empty(self, ACTION_ACTION_ACTION_SET_PRODUCERS_FOR_WORK_STEALING_REPLY);
 }

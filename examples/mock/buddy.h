@@ -10,10 +10,10 @@ struct buddy {
     int received;
 };
 
-#define BUDDY_HELLO 0x000028b6
-#define BUDDY_HELLO_REPLY 0x00003819
-#define BUDDY_BOOT 0x0000265b
-#define BUDDY_BOOT_REPLY 0x00006d65
+#define ACTION_BUDDY_HELLO 0x000028b6
+#define ACTION_ACTION_BUDDY_HELLO_REPLY 0x00003819
+#define ACTION_BUDDY_BOOT 0x0000265b
+#define ACTION_ACTION_BUDDY_BOOT_REPLY 0x00006d65
 
 extern struct thorium_script buddy_script;
 

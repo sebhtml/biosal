@@ -47,8 +47,8 @@ struct bsal_dna_kmer_counter_kernel {
     struct bsal_vector children;
 };
 
-#define BSAL_SET_KMER_LENGTH 0x0000702b
-#define BSAL_SET_KMER_LENGTH_REPLY 0x00005162
+#define ACTION_SET_KMER_LENGTH 0x0000702b
+#define ACTION_SET_KMER_LENGTH_REPLY 0x00005162
 
 extern struct thorium_script bsal_dna_kmer_counter_kernel_script;
 

@@ -121,8 +121,8 @@ void thorium_actor_init(struct thorium_actor *self, void *concrete_actor,
 #endif
 
     /*
-    thorium_actor_send_to_self_empty(self, THORIUM_ACTOR_UNPIN_FROM_WORKER);
-    thorium_actor_send_to_self_empty(self, THORIUM_ACTOR_PIN_TO_NODE);
+    thorium_actor_send_to_self_empty(self, ACTION_UNPIN_FROM_WORKER);
+    thorium_actor_send_to_self_empty(self, ACTION_PIN_TO_NODE);
     */
 
     bsal_queue_init(&self->enqueued_messages, sizeof(struct thorium_message));
@@ -269,25 +269,25 @@ int thorium_actor_send_system_self(struct thorium_actor *self, struct thorium_me
     tag = thorium_message_tag(message);
 
 #if 0
-    if (tag == THORIUM_ACTOR_PIN_TO_WORKER) {
+    if (tag == ACTION_PIN_TO_WORKER) {
         thorium_actor_pin_to_worker(self);
         return 1;
 
-    } else if (tag == THORIUM_ACTOR_UNPIN_FROM_WORKER) {
+    } else if (tag == ACTION_UNPIN_FROM_WORKER) {
         thorium_actor_unpin_from_worker(self);
         return 1;
 
-    if (tag == THORIUM_ACTOR_PIN_TO_NODE) {
+    if (tag == ACTION_PIN_TO_NODE) {
         thorium_actor_pin_to_node(self);
         return 1;
 
-    } else if (tag == THORIUM_ACTOR_UNPIN_FROM_NODE) {
+    } else if (tag == ACTION_UNPIN_FROM_NODE) {
         thorium_actor_unpin_from_node(self);
         return 1;
 
 #endif
 
-    if (tag == THORIUM_ACTOR_PACK_ENABLE) {
+    if (tag == ACTION_PACK_ENABLE) {
 
             /*
         printf("DEBUG actor %d enabling can_pack\n",
@@ -297,21 +297,21 @@ int thorium_actor_send_system_self(struct thorium_actor *self, struct thorium_me
         bsal_bitmap_set_bit_uint32_t(&self->flags, FLAG_CAN_PACK);
 
         /*
-        thorium_actor_send_to_self_empty(self, THORIUM_ACTOR_UNPIN_FROM_WORKER);
-        thorium_actor_send_to_self_empty(self, THORIUM_ACTOR_UNPIN_FROM_NODE);
+        thorium_actor_send_to_self_empty(self, ACTION_UNPIN_FROM_WORKER);
+        thorium_actor_send_to_self_empty(self, ACTION_UNPIN_FROM_NODE);
         */
 
         return 1;
 
-    } else if (tag == THORIUM_ACTOR_PACK_DISABLE) {
+    } else if (tag == ACTION_PACK_DISABLE) {
         bsal_bitmap_clear_bit_uint32_t(&self->flags, FLAG_CAN_PACK);
         return 1;
 
-    } else if (tag == THORIUM_ACTOR_YIELD) {
-        thorium_actor_send_to_self_empty(self, THORIUM_ACTOR_YIELD_REPLY);
+    } else if (tag == ACTION_YIELD) {
+        thorium_actor_send_to_self_empty(self, ACTION_YIELD_REPLY);
         return 1;
 
-    } else if (tag == THORIUM_ACTOR_STOP) {
+    } else if (tag == ACTION_STOP) {
 
         thorium_actor_die(self);
         return 1;
@@ -524,33 +524,33 @@ int thorium_actor_receive_system_no_pack(struct thorium_actor *self, struct thor
 
     tag = thorium_message_tag(message);
 
-    if (tag == THORIUM_ACTOR_PACK) {
+    if (tag == ACTION_PACK) {
 
-        thorium_actor_send_reply_empty(self, THORIUM_ACTOR_PACK_REPLY);
+        thorium_actor_send_reply_empty(self, ACTION_PACK_REPLY);
         return 1;
 
-    } else if (tag == THORIUM_ACTOR_PACK_SIZE) {
-        thorium_actor_send_reply_int(self, THORIUM_ACTOR_PACK_SIZE_REPLY, 0);
+    } else if (tag == ACTION_PACK_SIZE) {
+        thorium_actor_send_reply_int(self, ACTION_PACK_SIZE_REPLY, 0);
         return 1;
 
-    } else if (tag == THORIUM_ACTOR_UNPACK) {
-        thorium_actor_send_reply_empty(self, THORIUM_ACTOR_PACK_REPLY);
+    } else if (tag == ACTION_UNPACK) {
+        thorium_actor_send_reply_empty(self, ACTION_PACK_REPLY);
         return 1;
 
-    } else if (tag == THORIUM_ACTOR_CLONE) {
+    } else if (tag == ACTION_CLONE) {
 
         /* return nothing if the cloning is not supported or
          * if a cloning is already in progress, the message will be queued below.
          */
 
             /*
-        printf("DEBUG actor %d THORIUM_ACTOR_CLONE not supported can_pack %d\n", thorium_actor_name(self),
+        printf("DEBUG actor %d ACTION_CLONE not supported can_pack %d\n", thorium_actor_name(self),
                         */
 
-        thorium_actor_send_reply_int(self, THORIUM_ACTOR_CLONE_REPLY, THORIUM_ACTOR_NOBODY);
+        thorium_actor_send_reply_int(self, ACTION_CLONE_REPLY, THORIUM_ACTOR_NOBODY);
         return 1;
 
-    } else if (tag == THORIUM_ACTOR_MIGRATE) {
+    } else if (tag == ACTION_MIGRATE) {
 
         /* return nothing if the cloning is not supported or
          * if a cloning is already in progress
@@ -560,7 +560,7 @@ int thorium_actor_receive_system_no_pack(struct thorium_actor *self, struct thor
         printf("DEBUG thorium_actor_migrate: pack not supported\n");
 #endif
 
-        thorium_actor_send_reply_int(self, THORIUM_ACTOR_MIGRATE_REPLY, THORIUM_ACTOR_NOBODY);
+        thorium_actor_send_reply_int(self, ACTION_MIGRATE_REPLY, THORIUM_ACTOR_NOBODY);
 
         return 1;
     }
@@ -613,7 +613,7 @@ int thorium_actor_receive_system(struct thorium_actor *self, struct thorium_mess
     /* For any remote spawning operation, add the new actor in the list of
      * children
      */
-    if (tag == THORIUM_ACTOR_SPAWN_REPLY) {
+    if (tag == ACTION_SPAWN_REPLY) {
 
         new_actor = *(int *)buffer;
         thorium_actor_add_child(self, new_actor);
@@ -627,7 +627,7 @@ int thorium_actor_receive_system(struct thorium_actor *self, struct thorium_mess
 
     /* cloning workflow in 4 easy steps !
      */
-    if (tag == THORIUM_ACTOR_CLONE) {
+    if (tag == ACTION_CLONE) {
 
         if (self->cloning_status == THORIUM_ACTOR_STATUS_NOT_STARTED) {
 
@@ -672,9 +672,9 @@ int thorium_actor_receive_system(struct thorium_actor *self, struct thorium_mess
 
     /* spawn an actor.
      * This works even during migration because the supervisor is the
-     * source of THORIUM_ACTOR_SPAWN...
+     * source of ACTION_SPAWN...
      */
-    if (tag == THORIUM_ACTOR_SPAWN) {
+    if (tag == ACTION_SPAWN) {
         script = *(int *)buffer;
         spawned = thorium_actor_spawn_real(self, script);
 
@@ -695,7 +695,7 @@ int thorium_actor_receive_system(struct thorium_actor *self, struct thorium_mess
         offset += bytes;
 
         new_count = offset;
-        thorium_message_init(&new_message, THORIUM_ACTOR_SPAWN_REPLY, new_count, new_buffer);
+        thorium_message_init(&new_message, ACTION_SPAWN_REPLY, new_count, new_buffer);
         thorium_actor_send(self, source, &new_message);
 
         thorium_message_destroy(&new_message);
@@ -704,32 +704,32 @@ int thorium_actor_receive_system(struct thorium_actor *self, struct thorium_mess
         return 1;
 
 #ifdef THORIUM_ACTOR_STORE_CHILDREN
-    } else if (tag == THORIUM_ACTOR_MIGRATE_NOTIFY_ACQUAINTANCES) {
+    } else if (tag == ACTION_MIGRATE_NOTIFY_ACQUAINTANCES) {
         thorium_actor_migrate_notify_acquaintances(self, message);
         return 1;
 
-    } else if (tag == THORIUM_ACTOR_NOTIFY_NAME_CHANGE) {
+    } else if (tag == ACTION_NOTIFY_NAME_CHANGE) {
 
         thorium_actor_notify_name_change(self, message);
         return 1;
 #endif
 
-    } else if (tag == THORIUM_ACTOR_NOTIFY_NAME_CHANGE_REPLY) {
+    } else if (tag == ACTION_NOTIFY_NAME_CHANGE_REPLY) {
 
-        thorium_actor_send_to_self_empty(self, THORIUM_ACTOR_MIGRATE_NOTIFY_ACQUAINTANCES);
+        thorium_actor_send_to_self_empty(self, ACTION_MIGRATE_NOTIFY_ACQUAINTANCES);
 
         return 1;
 
-    } else if (tag == THORIUM_ACTOR_PACK && source == name) {
-        /* THORIUM_ACTOR_PACK has to go through during live migration
+    } else if (tag == ACTION_PACK && source == name) {
+        /* ACTION_PACK has to go through during live migration
          */
         return 0;
 
-    } else if (tag == THORIUM_ACTOR_PROXY_MESSAGE) {
+    } else if (tag == ACTION_PROXY_MESSAGE) {
         thorium_actor_receive_proxy_message(self, message);
         return 1;
 
-    } else if (tag == THORIUM_ACTOR_FORWARD_MESSAGES_REPLY) {
+    } else if (tag == ACTION_FORWARD_MESSAGES_REPLY) {
         /* This message is a system message, it is not for the concrete
          * actor
          */
@@ -743,7 +743,7 @@ int thorium_actor_receive_system(struct thorium_actor *self, struct thorium_mess
 
     /* queue messages during a hot migration
      *
-     * THORIUM_ACTOR_CLONE messsages are also queued during cloning...
+     * ACTION_CLONE messsages are also queued during cloning...
      */
     if (self->migration_status == THORIUM_ACTOR_STATUS_STARTED) {
 
@@ -759,19 +759,19 @@ int thorium_actor_receive_system(struct thorium_actor *self, struct thorium_mess
 
     /* Perform binomial routing.
      */
-    if (tag == THORIUM_ACTOR_BINOMIAL_TREE_SEND) {
+    if (tag == ACTION_BINOMIAL_TREE_SEND) {
         thorium_actor_receive_binomial_tree_send(self, message);
         return 1;
 
-    } else if (tag == THORIUM_ACTOR_MIGRATE) {
+    } else if (tag == ACTION_MIGRATE) {
 
         thorium_actor_migrate(self, message);
         return 1;
 
-    } else if (tag == THORIUM_ACTOR_SYNCHRONIZE) {
+    } else if (tag == ACTION_SYNCHRONIZE) {
         /* the concrete actor must catch this one */
 
-    } else if (tag == THORIUM_ACTOR_SYNCHRONIZE_REPLY) {
+    } else if (tag == ACTION_SYNCHRONIZE_REPLY) {
         thorium_actor_receive_synchronize_reply(self, message);
 
         /* we also allow the concrete actor to receive this */
@@ -782,19 +782,19 @@ int thorium_actor_receive_system(struct thorium_actor *self, struct thorium_mess
      */
 
         /*
-    } else if (tag == THORIUM_ACTOR_PIN_TO_WORKER) {
+    } else if (tag == ACTION_PIN_TO_WORKER) {
         return 1;
 
-    } else if (tag == THORIUM_ACTOR_UNPIN_FROM_WORKER) {
+    } else if (tag == ACTION_UNPIN_FROM_WORKER) {
         return 1;
 
-    } else if (tag == THORIUM_ACTOR_PIN_TO_NODE) {
+    } else if (tag == ACTION_PIN_TO_NODE) {
         return 1;
 
-    } else if (tag == THORIUM_ACTOR_UNPIN_FROM_NODE) {
+    } else if (tag == ACTION_UNPIN_FROM_NODE) {
         return 1;
 */
-    } else if (tag == THORIUM_ACTOR_SET_SUPERVISOR
+    } else if (tag == ACTION_SET_SUPERVISOR
                     /*&& source == thorium_actor_supervisor(self)*/) {
 
     /* only an actor that knows the name of
@@ -811,7 +811,7 @@ int thorium_actor_receive_system(struct thorium_actor *self, struct thorium_mess
         thorium_message_unpack_int(message, sizeof(old_supervisor), &supervisor);
 
 #ifdef THORIUM_ACTOR_DEBUG_MIGRATE
-        printf("DEBUG thorium_actor_receive_system actor %d receives THORIUM_ACTOR_SET_SUPERVISOR old supervisor %d (provided %d), new supervisor %d\n",
+        printf("DEBUG thorium_actor_receive_system actor %d receives ACTION_SET_SUPERVISOR old supervisor %d (provided %d), new supervisor %d\n",
                         thorium_actor_name(self),
                         thorium_actor_supervisor(self), old_supervisor,
                         supervisor);
@@ -825,49 +825,49 @@ int thorium_actor_receive_system(struct thorium_actor *self, struct thorium_mess
             thorium_actor_set_supervisor(self, supervisor);
         }
 
-        thorium_actor_send_reply_empty(self, THORIUM_ACTOR_SET_SUPERVISOR_REPLY);
+        thorium_actor_send_reply_empty(self, ACTION_SET_SUPERVISOR_REPLY);
 
         return 1;
 
-    /* THORIUM_ACTOR_SYNCHRONIZE can not be queued.
+    /* ACTION_SYNCHRONIZE can not be queued.
      */
-    } else if (tag == THORIUM_ACTOR_SYNCHRONIZE) {
+    } else if (tag == ACTION_SYNCHRONIZE) {
         return 1;
 
-    /* THORIUM_ACTOR_SYNCHRONIZED can only be sent to an actor
+    /* ACTION_SYNCHRONIZED can only be sent to an actor
      * by itself.
      */
-    } else if (tag == THORIUM_ACTOR_SYNCHRONIZED && name != source) {
+    } else if (tag == ACTION_SYNCHRONIZED && name != source) {
         return 1;
 
-    /* block THORIUM_ACTOR_STOP if it is not from self
-     * acquaintance actors have to use THORIUM_ACTOR_ASK_TO_STOP
+    /* block ACTION_STOP if it is not from self
+     * acquaintance actors have to use ACTION_ASK_TO_STOP
      * in fact, this message has to be sent by the actor
      * itself.
      */
-    } else if (tag == THORIUM_ACTOR_STOP) {
+    } else if (tag == ACTION_STOP) {
 
         return 1;
 
-    } else if (tag == THORIUM_ACTOR_GET_NODE_NAME) {
+    } else if (tag == ACTION_GET_NODE_NAME) {
 
-        thorium_actor_send_reply_int(self, THORIUM_ACTOR_GET_NODE_NAME_REPLY,
+        thorium_actor_send_reply_int(self, ACTION_GET_NODE_NAME_REPLY,
                         thorium_actor_node_name(self));
         return 1;
 
-    } else if (tag == THORIUM_ACTOR_GET_NODE_WORKER_COUNT) {
+    } else if (tag == ACTION_GET_NODE_WORKER_COUNT) {
 
         workers = thorium_actor_node_worker_count(self);
 
-        printf("DEBUG actor %d THORIUM_ACTOR_GET_NODE_WORKER_COUNT %d workers\n",
+        printf("DEBUG actor %d ACTION_GET_NODE_WORKER_COUNT %d workers\n",
                         thorium_actor_name(self),
                         workers);
 
-        thorium_actor_send_reply_int(self, THORIUM_ACTOR_GET_NODE_WORKER_COUNT_REPLY,
+        thorium_actor_send_reply_int(self, ACTION_GET_NODE_WORKER_COUNT_REPLY,
                         workers);
         return 1;
 
-    } else  if (tag == THORIUM_ACTOR_FORWARD_MESSAGES) {
+    } else  if (tag == ACTION_FORWARD_MESSAGES) {
 
         thorium_actor_forward_messages(self, message);
         return 1;
@@ -888,9 +888,9 @@ void thorium_actor_receive(struct thorium_actor *self, struct thorium_message *m
     printf("\nDEBUG thorium_actor_receive...... tag %d\n",
                     thorium_message_tag(message));
 
-    if (thorium_message_tag(message) == THORIUM_ACTOR_SYNCHRONIZED) {
+    if (thorium_message_tag(message) == ACTION_SYNCHRONIZED) {
         printf("DEBUG =============\n");
-        printf("DEBUG thorium_actor_receive before concrete receive THORIUM_ACTOR_SYNCHRONIZED\n");
+        printf("DEBUG thorium_actor_receive before concrete receive ACTION_SYNCHRONIZED\n");
     }
 
     printf("DEBUG thorium_actor_receive tag %d for %d\n",
@@ -975,7 +975,7 @@ void thorium_actor_receive_synchronize(struct thorium_actor *self,
                     thorium_message_source(message));
 #endif
 
-    thorium_message_init(message, THORIUM_ACTOR_SYNCHRONIZE_REPLY, 0, NULL);
+    thorium_message_init(message, ACTION_SYNCHRONIZE_REPLY, 0, NULL);
     thorium_actor_send(self, thorium_message_source(message), message);
 
     thorium_message_destroy(message);
@@ -996,15 +996,15 @@ void thorium_actor_receive_synchronize_reply(struct thorium_actor *self,
 
         self->synchronization_responses++;
 
-        /* send THORIUM_ACTOR_SYNCHRONIZED to self
+        /* send ACTION_SYNCHRONIZED to self
          */
         if (thorium_actor_synchronization_completed(self)) {
 
 #ifdef THORIUM_ACTOR_DEBUG_SYNC
-            printf("DEBUG sending THORIUM_ACTOR_SYNCHRONIZED to self\n");
+            printf("DEBUG sending ACTION_SYNCHRONIZED to self\n");
 #endif
             struct thorium_message new_message;
-            thorium_message_init(&new_message, THORIUM_ACTOR_SYNCHRONIZED,
+            thorium_message_init(&new_message, ACTION_SYNCHRONIZED,
                             sizeof(self->synchronization_responses),
                             &self->synchronization_responses);
 
@@ -1033,7 +1033,7 @@ void thorium_actor_synchronize(struct thorium_actor *self, struct bsal_vector *a
                     self->synchronization_expected_responses);
 #endif
 
-    thorium_message_init(&message, THORIUM_ACTOR_SYNCHRONIZE, 0, NULL);
+    thorium_message_init(&message, ACTION_SYNCHRONIZE, 0, NULL);
 
     /* TODO thorium_actor_send_range_binomial_tree is broken */
     thorium_actor_send_range(self, actors, &message);
@@ -1120,7 +1120,7 @@ void thorium_actor_pack_proxy_message(struct thorium_actor *self, struct thorium
     memcpy((char *)new_buffer + offset, &real_tag, sizeof(real_tag));
     offset += sizeof(real_tag);
 
-    thorium_message_init(message, THORIUM_ACTOR_PROXY_MESSAGE, new_count, new_buffer);
+    thorium_message_init(message, ACTION_PROXY_MESSAGE, new_count, new_buffer);
     thorium_message_set_source(message, real_source);
 
     /* free the old buffer
@@ -1161,11 +1161,11 @@ void thorium_actor_clone(struct thorium_actor *self, struct thorium_message *mes
 #ifdef THORIUM_ACTOR_DEBUG_CLONE
     int name;
     name = thorium_actor_name(self);
-    printf("DEBUG %d sending THORIUM_ACTOR_SPAWN to spawner %d for client %d\n", name, spawner,
+    printf("DEBUG %d sending ACTION_SPAWN to spawner %d for client %d\n", name, spawner,
                     source);
 #endif
 
-    thorium_message_init(&new_message, THORIUM_ACTOR_SPAWN, sizeof(script), &script);
+    thorium_message_init(&new_message, ACTION_SPAWN, sizeof(script), &script);
     thorium_actor_send(self, spawner, &new_message);
 
     self->cloning_status = THORIUM_ACTOR_STATUS_STARTED;
@@ -1190,46 +1190,46 @@ void thorium_actor_continue_clone(struct thorium_actor *self, struct thorium_mes
     printf("DEBUG thorium_actor_continue_clone source %d tag %d\n", source, tag);
 #endif
 
-    if (tag == THORIUM_ACTOR_SPAWN_REPLY && source == self->cloning_spawner) {
+    if (tag == ACTION_SPAWN_REPLY && source == self->cloning_spawner) {
 
         self->cloning_new_actor = *(int *)buffer;
 
 #ifdef THORIUM_ACTOR_DEBUG_CLONE
-        printf("DEBUG thorium_actor_continue_clone THORIUM_ACTOR_SPAWN_REPLY NEW ACTOR IS %d\n",
+        printf("DEBUG thorium_actor_continue_clone ACTION_SPAWN_REPLY NEW ACTOR IS %d\n",
                         self->cloning_new_actor);
 #endif
 
-        thorium_actor_send_to_self_empty(self, THORIUM_ACTOR_PACK);
+        thorium_actor_send_to_self_empty(self, ACTION_PACK);
 
         bsal_bitmap_set_bit_uint32_t(&self->flags, FLAG_CLONING_PROGRESSED);
 
-    } else if (tag == THORIUM_ACTOR_PACK_REPLY && source == self_name) {
+    } else if (tag == ACTION_PACK_REPLY && source == self_name) {
 
 #ifdef THORIUM_ACTOR_DEBUG_CLONE
-        printf("DEBUG thorium_actor_continue_clone THORIUM_ACTOR_PACK_REPLY sending UNPACK to %d\n",
+        printf("DEBUG thorium_actor_continue_clone ACTION_PACK_REPLY sending UNPACK to %d\n",
                          self->cloning_new_actor);
 #endif
 
         /* forward the buffer to the new actor */
-        thorium_message_init(&new_message, THORIUM_ACTOR_UNPACK, count, buffer);
+        thorium_message_init(&new_message, ACTION_UNPACK, count, buffer);
         thorium_actor_send(self, self->cloning_new_actor, &new_message);
 
         bsal_bitmap_set_bit_uint32_t(&self->flags, FLAG_CLONING_PROGRESSED);
 
         thorium_message_destroy(&new_message);
 
-    } else if (tag == THORIUM_ACTOR_UNPACK_REPLY && source == self->cloning_new_actor) {
+    } else if (tag == ACTION_UNPACK_REPLY && source == self->cloning_new_actor) {
 
             /*
-    } else if (tag == THORIUM_ACTOR_FORWARD_MESSAGES_REPLY) {
+    } else if (tag == ACTION_FORWARD_MESSAGES_REPLY) {
 #ifdef THORIUM_ACTOR_DEBUG_CLONE
-        printf("DEBUG thorium_actor_continue_clone THORIUM_ACTOR_UNPACK_REPLY\n");
+        printf("DEBUG thorium_actor_continue_clone ACTION_UNPACK_REPLY\n");
 #endif
 */
         /* it is required that the cloning process be concluded at this point because otherwise
          * queued messages will be queued when they are being forwarded.
          */
-        thorium_message_init(&new_message, THORIUM_ACTOR_CLONE_REPLY, sizeof(self->cloning_new_actor),
+        thorium_message_init(&new_message, ACTION_CLONE_REPLY, sizeof(self->cloning_new_actor),
                         &self->cloning_new_actor);
         thorium_actor_send(self, self->cloning_client, &new_message);
 
@@ -1248,7 +1248,7 @@ void thorium_actor_continue_clone(struct thorium_actor *self, struct thorium_mes
                         thorium_actor_name(self), self->forwarding_selector);
 #endif
 
-        thorium_actor_send_to_self_empty(self, THORIUM_ACTOR_FORWARD_MESSAGES);
+        thorium_actor_send_to_self_empty(self, ACTION_FORWARD_MESSAGES);
 
         bsal_bitmap_set_bit_uint32_t(&self->flags, FLAG_CLONING_PROGRESSED);
     }
@@ -1316,7 +1316,7 @@ void thorium_actor_migrate(struct thorium_actor *self, struct thorium_message *m
      * For migration, the same name is kept
      */
 
-    thorium_actor_send_reply_int(self, THORIUM_ACTOR_MIGRATE_REPLY,
+    thorium_actor_send_reply_int(self, ACTION_MIGRATE_REPLY,
                     thorium_actor_name(self));
 
     return;
@@ -1337,14 +1337,14 @@ void thorium_actor_migrate(struct thorium_actor *self, struct thorium_message *m
         self->migration_spawner = spawner;
         self->migration_client = source;
 
-        thorium_actor_send_to_self_int(self, THORIUM_ACTOR_CLONE, spawner);
+        thorium_actor_send_to_self_int(self, ACTION_CLONE, spawner);
 
         self->migration_status = THORIUM_ACTOR_STATUS_STARTED;
         bsal_bitmap_set_bit_uint32_t(&self->flags, FLAG_MIGRATION_CLONED);
 
         bsal_bitmap_set_bit_uint32_t(&self->flags, FLAG_MIGRATION_PROGRESSED);
 
-    } else if (tag == THORIUM_ACTOR_CLONE_REPLY && source == name) {
+    } else if (tag == ACTION_CLONE_REPLY && source == name) {
 
 #ifdef THORIUM_ACTOR_DEBUG_MIGRATE
         printf("DEBUG thorium_actor_migrate thorium_actor_migrate: cloned.\n");
@@ -1357,14 +1357,14 @@ void thorium_actor_migrate(struct thorium_actor *self, struct thorium_message *m
 #ifdef THORIUM_ACTOR_STORE_CHILDREN
         self->acquaintance_index = 0;
 #endif
-        thorium_actor_send_to_self_empty(self, THORIUM_ACTOR_MIGRATE_NOTIFY_ACQUAINTANCES);
+        thorium_actor_send_to_self_empty(self, ACTION_MIGRATE_NOTIFY_ACQUAINTANCES);
 
 #ifdef THORIUM_ACTOR_DEBUG_MIGRATE
         printf("DEBUG thorium_actor_migrate: notify acquaintance of name change.\n");
 #endif
         bsal_bitmap_set_bit_uint32_t(&self->flags, FLAG_MIGRATION_PROGRESSED);
 
-    } else if (tag == THORIUM_ACTOR_MIGRATE_NOTIFY_ACQUAINTANCES_REPLY && source == name) {
+    } else if (tag == ACTION_MIGRATE_NOTIFY_ACQUAINTANCES_REPLY && source == name) {
 
         /* at this point, there should not be any new messages addressed
          * to the old name if all the code implied uses
@@ -1384,23 +1384,23 @@ void thorium_actor_migrate(struct thorium_actor *self, struct thorium_message *m
         data[0] = thorium_actor_name(self);
         data[1] = thorium_actor_supervisor(self);
 
-        thorium_message_init(&new_message, THORIUM_ACTOR_SET_SUPERVISOR,
+        thorium_message_init(&new_message, ACTION_SET_SUPERVISOR,
                         2 * sizeof(int), data);
         thorium_actor_send(self, self->migration_new_actor, &new_message);
         thorium_message_destroy(&new_message);
 
         bsal_bitmap_set_bit_uint32_t(&self->flags, FLAG_MIGRATION_PROGRESSED);
 
-    } else if (tag == THORIUM_ACTOR_FORWARD_MESSAGES_REPLY
+    } else if (tag == ACTION_FORWARD_MESSAGES_REPLY
                     && bsal_bitmap_get_bit_uint32_t(&self->flags,
                             FLAG_MIGRATION_FORWARDED_MESSAGES)) {
 
         /* send the name of the new copy and die of a peaceful death.
          */
-        thorium_actor_send_int(self, self->migration_client, THORIUM_ACTOR_MIGRATE_REPLY,
+        thorium_actor_send_int(self, self->migration_client, ACTION_MIGRATE_REPLY,
                         self->migration_new_actor);
 
-        thorium_actor_send_to_self_empty(self, THORIUM_ACTOR_STOP);
+        thorium_actor_send_to_self_empty(self, ACTION_STOP);
 
         self->migration_status = THORIUM_ACTOR_STATUS_NOT_STARTED;
 
@@ -1410,7 +1410,7 @@ void thorium_actor_migrate(struct thorium_actor *self, struct thorium_message *m
 
         bsal_bitmap_set_bit_uint32_t(&self->flags, FLAG_MIGRATION_PROGRESSED);
 
-    } else if (tag == THORIUM_ACTOR_SET_SUPERVISOR_REPLY
+    } else if (tag == ACTION_SET_SUPERVISOR_REPLY
                     && source == self->migration_new_actor) {
 
         if (self->forwarding_selector == THORIUM_ACTOR_FORWARDING_NONE) {
@@ -1425,7 +1425,7 @@ void thorium_actor_migrate(struct thorium_actor *self, struct thorium_message *m
                         self->migration_new_actor, self->forwarding_selector);
 #endif
 
-            thorium_actor_send_to_self_empty(self, THORIUM_ACTOR_FORWARD_MESSAGES);
+            thorium_actor_send_to_self_empty(self, ACTION_FORWARD_MESSAGES);
             bsal_bitmap_set_bit_uint32_t(&self->flags,
                                 FLAG_MIGRATION_FORWARDED_MESSAGES);
 
@@ -1488,7 +1488,7 @@ void thorium_actor_notify_name_change(struct thorium_actor *self, struct thorium
         thorium_actor_enqueue_message(self, &new_message);
     }
 
-    thorium_actor_send_reply_empty(self, THORIUM_ACTOR_NOTIFY_NAME_CHANGE_REPLY);
+    thorium_actor_send_reply_empty(self, ACTION_NOTIFY_NAME_CHANGE_REPLY);
 }
 #endif
 
@@ -1503,13 +1503,13 @@ void thorium_actor_migrate_notify_acquaintances(struct thorium_actor *self, stru
     if (self->acquaintance_index < bsal_vector_size(acquaintance_vector)) {
 
         acquaintance = bsal_vector_at_as_int(acquaintance_vector, self->acquaintance_index);
-        thorium_actor_send_int(self, acquaintance, THORIUM_ACTOR_NOTIFY_NAME_CHANGE,
+        thorium_actor_send_int(self, acquaintance, ACTION_NOTIFY_NAME_CHANGE,
                         self->migration_new_actor);
         self->acquaintance_index++;
 
     } else {
 
-        thorium_actor_send_to_self_empty(self, THORIUM_ACTOR_MIGRATE_NOTIFY_ACQUAINTANCES_REPLY);
+        thorium_actor_send_to_self_empty(self, ACTION_MIGRATE_NOTIFY_ACQUAINTANCES_REPLY);
     }
 }
 #endif
@@ -1632,7 +1632,7 @@ void thorium_actor_forward_messages(struct thorium_actor *self, struct thorium_m
 
         /* recursive actor call
          */
-        thorium_actor_send_to_self_empty(self, THORIUM_ACTOR_FORWARD_MESSAGES);
+        thorium_actor_send_to_self_empty(self, ACTION_FORWARD_MESSAGES);
     } else {
 
 #ifdef THORIUM_ACTOR_DEBUG_FORWARDING
@@ -1653,7 +1653,7 @@ void thorium_actor_forward_messages(struct thorium_actor *self, struct thorium_m
 
             /* do a recursive call
              */
-            thorium_actor_send_to_self_empty(self, THORIUM_ACTOR_FORWARD_MESSAGES);
+            thorium_actor_send_to_self_empty(self, ACTION_FORWARD_MESSAGES);
         } else {
 
 #ifdef THORIUM_ACTOR_DEBUG_FORWARDING
@@ -1663,7 +1663,7 @@ void thorium_actor_forward_messages(struct thorium_actor *self, struct thorium_m
             self->forwarding_selector = THORIUM_ACTOR_FORWARDING_NONE;
             /* this is finished
              */
-            thorium_actor_send_to_self_empty(self, THORIUM_ACTOR_FORWARD_MESSAGES_REPLY);
+            thorium_actor_send_to_self_empty(self, ACTION_FORWARD_MESSAGES_REPLY);
 
         }
     }

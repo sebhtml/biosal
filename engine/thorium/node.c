@@ -508,7 +508,7 @@ int thorium_node_spawn(struct thorium_node *node, int script)
      */
     if (thorium_node_actors(node) == 1) {
         struct thorium_message message;
-        thorium_message_init(&message, THORIUM_NODE_ADD_INITIAL_ACTOR, sizeof(name), &name);
+        thorium_message_init(&message, ACTION_THORIUM_NODE_ADD_INITIAL_ACTOR, sizeof(name), &name);
         thorium_node_send_to_node(node, 0, &message);
 
         /* initial actors are their own spawners.
@@ -801,7 +801,7 @@ void thorium_node_start_initial_actor(struct thorium_node *node)
         /* initial actors are supervised by themselves... */
         thorium_actor_set_supervisor(actor, name);
 
-        thorium_message_init(&message, THORIUM_ACTOR_START, bytes, buffer);
+        thorium_message_init(&message, ACTION_START, bytes, buffer);
 
         thorium_node_send_to_actor(node, name, &message);
 
@@ -901,10 +901,10 @@ int thorium_node_receive_system(struct thorium_node *node, struct thorium_messag
 
     tag = thorium_message_tag(message);
 
-    if (tag == THORIUM_NODE_ADD_INITIAL_ACTOR) {
+    if (tag == ACTION_THORIUM_NODE_ADD_INITIAL_ACTOR) {
 
 #ifdef THORIUM_NODE_DEBUG_RECEIVE_SYSTEM
-        printf("DEBUG THORIUM_NODE_ADD_INITIAL_ACTOR received\n");
+        printf("DEBUG ACTION_THORIUM_NODE_ADD_INITIAL_ACTOR received\n");
 #endif
 
         source = thorium_message_source(message);
@@ -918,14 +918,14 @@ int thorium_node_receive_system(struct thorium_node *node, struct thorium_messag
         if (node->received_initial_actors == nodes) {
 
 #ifdef THORIUM_NODE_DEBUG_RECEIVE_SYSTEM
-            printf("DEBUG send THORIUM_NODE_ADD_INITIAL_ACTOR to all nodes\n");
+            printf("DEBUG send ACTION_THORIUM_NODE_ADD_INITIAL_ACTOR to all nodes\n");
 #endif
 
             bytes = bsal_vector_pack_size(&node->initial_actors);
             buffer = bsal_memory_pool_allocate(&node->outbound_message_memory_pool, bytes);
             bsal_vector_pack(&node->initial_actors, buffer);
 
-            thorium_message_init(&new_message, THORIUM_NODE_ADD_INITIAL_ACTORS, bytes, buffer);
+            thorium_message_init(&new_message, ACTION_ACTION_THORIUM_NODE_ADD_INITIAL_ACTORS, bytes, buffer);
 
             for (i = 0; i < nodes; i++) {
                 thorium_node_send_to_node(node, i, &new_message);
@@ -939,10 +939,10 @@ int thorium_node_receive_system(struct thorium_node *node, struct thorium_messag
 
         return 1;
 
-    } else if (tag == THORIUM_NODE_ADD_INITIAL_ACTORS) {
+    } else if (tag == ACTION_ACTION_THORIUM_NODE_ADD_INITIAL_ACTORS) {
 
 #ifdef THORIUM_NODE_DEBUG_RECEIVE_SYSTEM
-        printf("DEBUG THORIUM_NODE_ADD_INITIAL_ACTORS received\n");
+        printf("DEBUG ACTION_ACTION_THORIUM_NODE_ADD_INITIAL_ACTORS received\n");
 #endif
 
         buffer = thorium_message_buffer(message);
@@ -959,31 +959,31 @@ int thorium_node_receive_system(struct thorium_node *node, struct thorium_messag
                         source);
 #endif
 
-        thorium_node_send_to_node_empty(node, source, THORIUM_NODE_ADD_INITIAL_ACTORS_REPLY);
+        thorium_node_send_to_node_empty(node, source, ACTION_ACTION_ACTION_THORIUM_NODE_ADD_INITIAL_ACTORS_REPLY);
 
         return 1;
 
-    } else if (tag == THORIUM_NODE_ADD_INITIAL_ACTORS_REPLY) {
+    } else if (tag == ACTION_ACTION_ACTION_THORIUM_NODE_ADD_INITIAL_ACTORS_REPLY) {
 
         node->ready++;
         nodes = thorium_node_nodes(node);
         source = thorium_message_source_node(message);
 
 #ifdef THORIUM_NODE_DEBUG_RECEIVE_SYSTEM
-        printf("node/%d DEBUG THORIUM_NODE_ADD_INITIAL_ACTORS_REPLY received from"
+        printf("node/%d DEBUG ACTION_ACTION_ACTION_THORIUM_NODE_ADD_INITIAL_ACTORS_REPLY received from"
                         " %d, %d/%d ready\n", thorium_node_name(node),
                         source, node->ready, nodes);
 #endif
         if (node->ready == nodes) {
 
             for (i = 0; i < nodes; i++) {
-                thorium_node_send_to_node_empty(node, i, THORIUM_NODE_START);
+                thorium_node_send_to_node_empty(node, i, ACTION_THORIUM_NODE_START);
             }
         }
 
         return 1;
 
-    } else if (tag == THORIUM_NODE_START) {
+    } else if (tag == ACTION_THORIUM_NODE_START) {
 
         /* disable transport layer
          * if there is only one node
@@ -997,7 +997,7 @@ int thorium_node_receive_system(struct thorium_node *node, struct thorium_messag
                         thorium_node_name(node));
 #endif
 
-        /* send THORIUM_ACTOR_START to initial actor
+        /* send ACTION_START to initial actor
          * on this node
          */
         thorium_node_start_initial_actor(node);
@@ -1680,9 +1680,9 @@ int thorium_node_send_system(struct thorium_node *node, struct thorium_message *
     source = thorium_message_source(message);
 
     if (source == destination
-            && tag == THORIUM_ACTOR_ENABLE_AUTO_SCALING) {
+            && tag == ACTION_ENABLE_AUTO_SCALING) {
 
-        printf("AUTO-SCALING node/%d enables auto-scaling for actor %d (THORIUM_ACTOR_ENABLE_AUTO_SCALING)\n",
+        printf("AUTO-SCALING node/%d enables auto-scaling for actor %d (ACTION_ENABLE_AUTO_SCALING)\n",
                        thorium_node_name(node),
                        source);
 
@@ -1695,7 +1695,7 @@ int thorium_node_send_system(struct thorium_node *node, struct thorium_message *
         return 1;
 
     } else if (source == destination
-           && tag == THORIUM_ACTOR_DISABLE_AUTO_SCALING) {
+           && tag == ACTION_DISABLE_AUTO_SCALING) {
 
         bsal_lock_lock(&node->auto_scaling_lock);
 
@@ -1750,7 +1750,7 @@ void thorium_node_check_load(struct thorium_node *node)
 
         while (bsal_set_iterator_get_next_value(&iterator, &name)) {
 
-            thorium_message_init(&message, THORIUM_ACTOR_DO_AUTO_SCALING,
+            thorium_message_init(&message, ACTION_DO_AUTO_SCALING,
                             0, NULL);
 
             thorium_node_send_to_actor(node, name, &message);

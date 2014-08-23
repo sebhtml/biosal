@@ -17,7 +17,7 @@ struct root {
     int manager;
 };
 
-#define ROOT_STOP_ALL 0x00005fd3
+#define ACTION_ROOT_STOP_ALL 0x00005fd3
 
 extern struct thorium_script root_script;
 

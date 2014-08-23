@@ -6,8 +6,8 @@
 
 #define SCRIPT_SPATE 0xaefe198b
 
-#define SPATE_ADD_FILES 0x00004eff
-#define SPATE_ADD_FILES_REPLY 0x00001b3a
+#define ACTION_SPATE_ADD_FILES 0x00004eff
+#define ACTION_ACTION_SPATE_ADD_FILES_REPLY 0x00001b3a
 
 /*
  * A really cool metagenome assembler.

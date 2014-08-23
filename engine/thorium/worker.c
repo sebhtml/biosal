@@ -1109,8 +1109,8 @@ void thorium_worker_run(struct thorium_worker *worker)
         tag = thorium_message_tag(message);
         destination = thorium_message_destination(message);
 
-        if (tag == THORIUM_ACTOR_ASK_TO_STOP) {
-            printf("DEBUG pulled THORIUM_ACTOR_ASK_TO_STOP for %d\n",
+        if (tag == ACTION_ASK_TO_STOP) {
+            printf("DEBUG pulled ACTION_ASK_TO_STOP for %d\n",
                             destination);
         }
 #endif

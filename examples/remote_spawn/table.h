@@ -12,9 +12,9 @@ struct table {
     struct bsal_vector spawners;
 };
 
-#define TABLE_DIE 0x00003391
-#define TABLE_DIE2 0x000005e0
-#define TABLE_NOTIFY 0x000026ea
+#define ACTION_TABLE_DIE 0x00003391
+#define ACTION_ACTION_TABLE_DIE2 0x000005e0
+#define ACTION_TABLE_NOTIFY 0x000026ea
 
 extern struct thorium_script table_script;
 

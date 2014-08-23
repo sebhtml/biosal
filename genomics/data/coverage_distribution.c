@@ -77,7 +77,7 @@ void bsal_coverage_distribution_receive(struct thorium_actor *self, struct thori
     count = thorium_message_count(message);
     buffer = thorium_message_buffer(message);
 
-    if (tag == BSAL_PUSH_DATA) {
+    if (tag == ACTION_PUSH_DATA) {
 
         bsal_map_init(&map, 0, 0);
         bsal_map_set_memory_pool(&map, ephemeral_memory);
@@ -109,7 +109,7 @@ void bsal_coverage_distribution_receive(struct thorium_actor *self, struct thori
 
         bsal_map_iterator_destroy(&iterator);
 
-        thorium_actor_send_reply_empty(self, BSAL_PUSH_DATA_REPLY);
+        thorium_actor_send_reply_empty(self, ACTION_PUSH_DATA_REPLY);
 
         concrete_actor->actual++;
 
@@ -124,16 +124,16 @@ void bsal_coverage_distribution_receive(struct thorium_actor *self, struct thori
             bsal_coverage_distribution_write_distribution(self);
 
             thorium_actor_send_empty(self, concrete_actor->source,
-                            THORIUM_ACTOR_NOTIFY);
+                            ACTION_NOTIFY);
         }
 
         bsal_map_destroy(&map);
 
-    } else if (tag == THORIUM_ACTOR_ASK_TO_STOP) {
+    } else if (tag == ACTION_ASK_TO_STOP) {
 
         bsal_coverage_distribution_ask_to_stop(self, message);
 
-    } else if (tag == BSAL_SET_EXPECTED_MESSAGE_COUNT) {
+    } else if (tag == ACTION_SET_EXPECTED_MESSAGE_COUNT) {
 
         concrete_actor->source = source;
         thorium_message_unpack_int(message, 0, &concrete_actor->expected);
@@ -142,7 +142,7 @@ void bsal_coverage_distribution_receive(struct thorium_actor *self, struct thori
                         thorium_actor_name(self),
                         concrete_actor->expected);
 
-        thorium_actor_send_reply_empty(self, BSAL_SET_EXPECTED_MESSAGE_COUNT_REPLY);
+        thorium_actor_send_reply_empty(self, ACTION_SET_EXPECTED_MESSAGE_COUNT_REPLY);
     }
 }
 

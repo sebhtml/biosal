@@ -79,26 +79,26 @@ void bsal_assembly_graph_store_init(struct thorium_actor *self)
 
     concrete_self->last_received = 0;
 
-    thorium_actor_add_action(self, THORIUM_ACTOR_YIELD_REPLY, bsal_assembly_graph_store_yield_reply);
-    thorium_actor_add_action(self, BSAL_PUSH_KMER_BLOCK,
+    thorium_actor_add_action(self, ACTION_YIELD_REPLY, bsal_assembly_graph_store_yield_reply);
+    thorium_actor_add_action(self, ACTION_PUSH_KMER_BLOCK,
                     bsal_assembly_graph_store_push_kmer_block);
 
     concrete_self->received_arc_count = 0;
 
-    thorium_actor_add_action(self, BSAL_ASSEMBLY_PUSH_ARC_BLOCK,
+    thorium_actor_add_action(self, ACTION_ASSEMBLY_PUSH_ARC_BLOCK,
                     bsal_assembly_graph_store_push_arc_block);
 
     concrete_self->received_arc_block_count = 0;
 
-    thorium_actor_add_action(self, BSAL_ASSEMBLY_GET_SUMMARY,
+    thorium_actor_add_action(self, ACTION_ASSEMBLY_GET_SUMMARY,
                     bsal_assembly_graph_store_get_summary);
 
     concrete_self->summary_in_progress = 0;
 
-    thorium_actor_add_action(self, BSAL_ASSEMBLY_GET_VERTEX,
+    thorium_actor_add_action(self, ACTION_ASSEMBLY_GET_VERTEX,
                     bsal_assembly_graph_store_get_vertex);
 
-    thorium_actor_add_action(self, BSAL_ASSEMBLY_GET_STARTING_VERTEX,
+    thorium_actor_add_action(self, ACTION_ASSEMBLY_GET_STARTING_VERTEX,
                     bsal_assembly_graph_store_get_starting_vertex);
 
     concrete_self->printed_vertex_size = 0;
@@ -142,7 +142,7 @@ void bsal_assembly_graph_store_receive(struct thorium_actor *self, struct thoriu
     tag = thorium_message_tag(message);
     buffer = thorium_message_buffer(message);
 
-    if (tag == BSAL_SET_KMER_LENGTH) {
+    if (tag == ACTION_SET_KMER_LENGTH) {
 
         thorium_message_unpack_int(message, 0, &concrete_self->kmer_length);
 
@@ -168,20 +168,20 @@ void bsal_assembly_graph_store_receive(struct thorium_actor *self, struct thoriu
          */
         bsal_map_set_threshold(&concrete_self->table, 0.95);
 
-        thorium_actor_send_reply_empty(self, BSAL_SET_KMER_LENGTH_REPLY);
+        thorium_actor_send_reply_empty(self, ACTION_SET_KMER_LENGTH_REPLY);
 
-    } else if (tag == BSAL_ASSEMBLY_GET_KMER_LENGTH) {
+    } else if (tag == ACTION_ASSEMBLY_GET_KMER_LENGTH) {
 
-        thorium_actor_send_reply_int(self, BSAL_ASSEMBLY_GET_KMER_LENGTH_REPLY,
+        thorium_actor_send_reply_int(self, ACTION_ASSEMBLY_GET_KMER_LENGTH_REPLY,
                         concrete_self->kmer_length);
 
-    } else if (tag == BSAL_SEQUENCE_STORE_REQUEST_PROGRESS_REPLY) {
+    } else if (tag == ACTION_SEQUENCE_STORE_REQUEST_PROGRESS_REPLY) {
 
         thorium_message_unpack_double(message, 0, &value);
 
         bsal_map_set_current_size_estimate(&concrete_self->table, value);
 
-    } else if (tag == THORIUM_ACTOR_ASK_TO_STOP) {
+    } else if (tag == ACTION_ASK_TO_STOP) {
 
         printf("%s/%d received %d arc blocks\n",
                         thorium_actor_script_name(self),
@@ -190,7 +190,7 @@ void bsal_assembly_graph_store_receive(struct thorium_actor *self, struct thoriu
 
         thorium_actor_ask_to_stop(self, message);
 
-    } else if (tag == THORIUM_ACTOR_SET_CONSUMER) {
+    } else if (tag == ACTION_SET_CONSUMER) {
 
         thorium_message_unpack_int(message, 0, &customer);
 
@@ -200,24 +200,24 @@ void bsal_assembly_graph_store_receive(struct thorium_actor *self, struct thoriu
 
         concrete_self->customer = customer;
 
-        thorium_actor_send_reply_empty(self, THORIUM_ACTOR_SET_CONSUMER_REPLY);
+        thorium_actor_send_reply_empty(self, ACTION_SET_CONSUMER_REPLY);
 
-    } else if (tag == BSAL_PUSH_DATA) {
+    } else if (tag == ACTION_PUSH_DATA) {
 
-        printf("%s/%d receives BSAL_PUSH_DATA\n",
+        printf("%s/%d receives ACTION_PUSH_DATA\n",
                         thorium_actor_script_name(self),
                         thorium_actor_name(self));
 
         bsal_assembly_graph_store_push_data(self, message);
 
-    } else if (tag == BSAL_STORE_GET_ENTRY_COUNT) {
+    } else if (tag == ACTION_STORE_GET_ENTRY_COUNT) {
 
-        thorium_actor_send_reply_uint64_t(self, BSAL_STORE_GET_ENTRY_COUNT_REPLY,
+        thorium_actor_send_reply_uint64_t(self, ACTION_STORE_GET_ENTRY_COUNT_REPLY,
                         concrete_self->received);
 
-    } else if (tag == BSAL_GET_RECEIVED_ARC_COUNT) {
+    } else if (tag == ACTION_GET_RECEIVED_ARC_COUNT) {
 
-        thorium_actor_send_reply_uint64_t(self, BSAL_GET_RECEIVED_ARC_COUNT_REPLY,
+        thorium_actor_send_reply_uint64_t(self, ACTION_GET_RECEIVED_ARC_COUNT_REPLY,
                         concrete_self->received_arc_count);
     }
 }
@@ -314,7 +314,7 @@ void bsal_assembly_graph_store_push_data(struct thorium_actor *self, struct thor
     bsal_map_iterator_init(&concrete_self->iterator, &concrete_self->table);
 
 
-    thorium_actor_send_to_self_empty(self, THORIUM_ACTOR_YIELD);
+    thorium_actor_send_to_self_empty(self, ACTION_YIELD);
 }
 
 void bsal_assembly_graph_store_yield_reply(struct thorium_actor *self, struct thorium_message *message)
@@ -384,7 +384,7 @@ void bsal_assembly_graph_store_yield_reply(struct thorium_actor *self, struct th
         printf("yield ! %d\n", i);
 #endif
 
-        thorium_actor_send_to_self_empty(self, THORIUM_ACTOR_YIELD);
+        thorium_actor_send_to_self_empty(self, ACTION_YIELD);
 
         return;
     }
@@ -407,7 +407,7 @@ void bsal_assembly_graph_store_yield_reply(struct thorium_actor *self, struct th
                     customer, new_count,
                     (int)bsal_map_size(&concrete_self->coverage_distribution));
 
-    thorium_message_init(&new_message, BSAL_PUSH_DATA, new_count, new_buffer);
+    thorium_message_init(&new_message, ACTION_PUSH_DATA, new_count, new_buffer);
 
     thorium_actor_send(self, customer, &new_message);
     thorium_message_destroy(&new_message);
@@ -415,7 +415,7 @@ void bsal_assembly_graph_store_yield_reply(struct thorium_actor *self, struct th
     bsal_map_destroy(&concrete_self->coverage_distribution);
 
     thorium_actor_send_empty(self, concrete_self->source,
-                            BSAL_PUSH_DATA_REPLY);
+                            ACTION_PUSH_DATA_REPLY);
 
 }
 
@@ -561,7 +561,7 @@ void bsal_assembly_graph_store_push_kmer_block(struct thorium_actor *self, struc
     bsal_map_iterator_destroy(&iterator);
     bsal_dna_kmer_frequency_block_destroy(&block, thorium_actor_get_ephemeral_memory(self));
 
-    thorium_actor_send_reply_empty(self, BSAL_PUSH_KMER_BLOCK_REPLY);
+    thorium_actor_send_reply_empty(self, ACTION_PUSH_KMER_BLOCK_REPLY);
 }
 
 void bsal_assembly_graph_store_push_arc_block(struct thorium_actor *self, struct thorium_message *message)
@@ -582,7 +582,7 @@ void bsal_assembly_graph_store_push_arc_block(struct thorium_actor *self, struct
     /*
      * Don't do anything to rule out that this is the problem.
      */
-    thorium_actor_send_reply_empty(self, BSAL_ASSEMBLY_PUSH_ARC_BLOCK_REPLY);
+    thorium_actor_send_reply_empty(self, ACTION_ASSEMBLY_PUSH_ARC_BLOCK_REPLY);
     return;
 #endif
 
@@ -634,7 +634,7 @@ void bsal_assembly_graph_store_push_arc_block(struct thorium_actor *self, struct
      * Add the arcs to the graph
      */
 
-    thorium_actor_send_reply_empty(self, BSAL_ASSEMBLY_PUSH_ARC_BLOCK_REPLY);
+    thorium_actor_send_reply_empty(self, ACTION_ASSEMBLY_PUSH_ARC_BLOCK_REPLY);
 
     bsal_memory_pool_free(ephemeral_memory, sequence);
 }
@@ -777,13 +777,13 @@ void bsal_assembly_graph_store_get_summary(struct thorium_actor *self, struct th
     concrete_self->summary_in_progress = 1;
     concrete_self->source_for_summary = source;
 
-    thorium_actor_add_action_with_condition(self, THORIUM_ACTOR_YIELD_REPLY,
+    thorium_actor_add_action_with_condition(self, ACTION_YIELD_REPLY,
                     bsal_assembly_graph_store_yield_reply_summary,
                     &concrete_self->summary_in_progress, 1);
 
     bsal_map_iterator_init(&concrete_self->iterator, &concrete_self->table);
 
-    thorium_actor_send_to_self_empty(self, THORIUM_ACTOR_YIELD);
+    thorium_actor_send_to_self_empty(self, ACTION_YIELD);
 }
 
 void bsal_assembly_graph_store_yield_reply_summary(struct thorium_actor *self, struct thorium_message *message)
@@ -827,7 +827,7 @@ void bsal_assembly_graph_store_yield_reply_summary(struct thorium_actor *self, s
 
     if (bsal_map_iterator_has_next(&concrete_self->iterator)) {
 
-        thorium_actor_send_to_self_empty(self, THORIUM_ACTOR_YIELD);
+        thorium_actor_send_to_self_empty(self, ACTION_YIELD);
 
     } else {
 
@@ -842,7 +842,7 @@ void bsal_assembly_graph_store_yield_reply_summary(struct thorium_actor *self, s
         bsal_vector_push_back_uint64_t(&vector, concrete_self->arc_count);
 
         thorium_actor_send_vector(self, concrete_self->source_for_summary,
-                        BSAL_ASSEMBLY_GET_SUMMARY_REPLY, &vector);
+                        ACTION_ASSEMBLY_GET_SUMMARY_REPLY, &vector);
 
         bsal_vector_destroy(&vector);
 
@@ -930,7 +930,7 @@ void bsal_assembly_graph_store_get_vertex(struct thorium_actor *self, struct tho
 
     bsal_assembly_vertex_pack(&vertex, new_buffer);
 
-    thorium_message_init(&new_message, BSAL_ASSEMBLY_GET_VERTEX_REPLY,
+    thorium_message_init(&new_message, ACTION_ASSEMBLY_GET_VERTEX_REPLY,
                     new_count, new_buffer);
 
     thorium_actor_send_reply(self, &new_message);
@@ -1016,7 +1016,7 @@ void bsal_assembly_graph_store_get_starting_vertex(struct thorium_actor *self, s
                     ephemeral_memory);
 #endif
 
-        thorium_message_init(&new_message, BSAL_ASSEMBLY_GET_STARTING_VERTEX_REPLY,
+        thorium_message_init(&new_message, ACTION_ASSEMBLY_GET_STARTING_VERTEX_REPLY,
                         new_count, new_buffer);
 
         thorium_actor_send_reply(self, &new_message);
@@ -1031,6 +1031,6 @@ void bsal_assembly_graph_store_get_starting_vertex(struct thorium_actor *self, s
         bsal_memory_pool_free(ephemeral_memory, new_buffer);
 
     } else {
-        thorium_actor_send_reply_empty(self, BSAL_ASSEMBLY_GET_STARTING_VERTEX_REPLY);
+        thorium_actor_send_reply_empty(self, ACTION_ASSEMBLY_GET_STARTING_VERTEX_REPLY);
     }
 }

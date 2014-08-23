@@ -18,4 +18,4 @@ hexadecimal = hex(value).replace('x', '')
 while len(hexadecimal) != 8:
     hexadecimal = '0' + hexadecimal
 
-print('#define ACT_CHANGE_ME 0x' + hexadecimal)
+print('#define ACTION_CHANGE_ME 0x' + hexadecimal)

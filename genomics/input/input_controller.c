@@ -92,25 +92,25 @@ void bsal_input_controller_init(struct thorium_actor *actor)
     concrete_actor->state = BSAL_INPUT_CONTROLLER_STATE_NONE;
 
 #ifdef BSAL_INPUT_CONTROLLER_DEBUG_10355
-    printf("DEBUG actor %d register BSAL_INPUT_CONTROLLER_CREATE_STORES\n",
+    printf("DEBUG actor %d register ACTION_INPUT_CONTROLLER_CREATE_STORES\n",
                     thorium_actor_name(actor));
 #endif
 
-    thorium_actor_add_action(actor, BSAL_INPUT_CONTROLLER_CREATE_STORES,
+    thorium_actor_add_action(actor, ACTION_INPUT_CONTROLLER_CREATE_STORES,
                     bsal_input_controller_create_stores);
-    thorium_actor_add_action(actor, THORIUM_ACTOR_GET_NODE_NAME_REPLY,
+    thorium_actor_add_action(actor, ACTION_GET_NODE_NAME_REPLY,
                     bsal_input_controller_get_node_name_reply);
-    thorium_actor_add_action(actor, THORIUM_ACTOR_GET_NODE_WORKER_COUNT_REPLY,
+    thorium_actor_add_action(actor, ACTION_GET_NODE_WORKER_COUNT_REPLY,
                     bsal_input_controller_get_node_worker_count_reply);
 
-    thorium_actor_add_action(actor, BSAL_INPUT_CONTROLLER_PREPARE_SPAWNERS,
+    thorium_actor_add_action(actor, ACTION_INPUT_CONTROLLER_PREPARE_SPAWNERS,
                     bsal_input_controller_prepare_spawners);
-    thorium_actor_add_action(actor, BSAL_INPUT_CONTROLLER_SPAWN_READING_STREAMS,
+    thorium_actor_add_action(actor, ACTION_INPUT_CONTROLLER_SPAWN_READING_STREAMS,
                     bsal_input_controller_spawn_streams);
 
-    thorium_actor_add_action(actor, BSAL_INPUT_STREAM_SET_START_OFFSET_REPLY,
+    thorium_actor_add_action(actor, ACTION_INPUT_STREAM_SET_START_OFFSET_REPLY,
                     bsal_input_controller_set_offset_reply);
-    thorium_actor_add_script(actor, BSAL_INPUT_SCRIPT_STREAM, &bsal_input_stream_script);
+    thorium_actor_add_script(actor, ACTION_INPUT_SCRIPT_STREAM, &bsal_input_stream_script);
     thorium_actor_add_script(actor, SCRIPT_SEQUENCE_STORE, &bsal_sequence_store_script);
     thorium_actor_add_script(actor, SCRIPT_SEQUENCE_PARTITIONER,
                     &bsal_sequence_partitioner_script);
@@ -233,7 +233,7 @@ void bsal_input_controller_receive(struct thorium_actor *actor, struct thorium_m
     controller = (struct bsal_input_controller *)thorium_actor_concrete_actor(actor);
     concrete_actor = controller;
 
-    if (tag == THORIUM_ACTOR_START) {
+    if (tag == ACTION_START) {
 
         bsal_vector_init(&concrete_actor->spawners, 0);
         bsal_vector_unpack(&concrete_actor->spawners, buffer);
@@ -256,13 +256,13 @@ void bsal_input_controller_receive(struct thorium_actor *actor, struct thorium_m
         printf("DEBUG preparing first spawner\n");
 #endif
 
-        thorium_actor_send_to_self_empty(actor, BSAL_INPUT_CONTROLLER_PREPARE_SPAWNERS);
+        thorium_actor_send_to_self_empty(actor, ACTION_INPUT_CONTROLLER_PREPARE_SPAWNERS);
 
         /*
         thorium_dispatcher_print(thorium_actor_dispatcher(actor));
         */
 
-    } else if (tag == BSAL_ADD_FILE) {
+    } else if (tag == ACTION_ADD_FILE) {
 
         file = (char *)buffer;
 
@@ -275,13 +275,13 @@ void bsal_input_controller_receive(struct thorium_actor *actor, struct thorium_m
         local_file = *(char **)bucket;
 
 #ifdef BSAL_INPUT_CONTROLLER_DEBUG_LEVEL_2
-        printf("DEBUG11 BSAL_ADD_FILE %s %p bucket %p index %d\n",
+        printf("DEBUG11 ACTION_ADD_FILE %s %p bucket %p index %d\n",
                         local_file, local_file, (void *)bucket, bsal_vector_size(&concrete_actor->files) - 1);
 #endif
 
-        thorium_actor_send_reply_empty(actor, BSAL_ADD_FILE_REPLY);
+        thorium_actor_send_reply_empty(actor, ACTION_ADD_FILE_REPLY);
 
-    } else if (tag == THORIUM_ACTOR_SPAWN_REPLY) {
+    } else if (tag == ACTION_SPAWN_REPLY) {
 
         if (concrete_actor->state == BSAL_INPUT_CONTROLLER_STATE_SPAWN_STORES) {
 
@@ -292,15 +292,15 @@ void bsal_input_controller_receive(struct thorium_actor *actor, struct thorium_m
 
             concrete_actor->ready_spawners++;
             thorium_message_unpack_int(message, 0, &name);
-            thorium_actor_send_empty(actor, name, THORIUM_ACTOR_ASK_TO_STOP);
-            thorium_actor_send_to_self_empty(actor, BSAL_INPUT_CONTROLLER_PREPARE_SPAWNERS);
+            thorium_actor_send_empty(actor, name, ACTION_ASK_TO_STOP);
+            thorium_actor_send_to_self_empty(actor, ACTION_INPUT_CONTROLLER_PREPARE_SPAWNERS);
 
             if (concrete_actor->ready_spawners == (int)bsal_vector_size(&concrete_actor->spawners)) {
 
 #ifdef BSAL_INPUT_CONTROLLER_DEBUG
                 printf("DEBUG all spawners are prepared\n");
 #endif
-                thorium_actor_send_to_supervisor_empty(actor, THORIUM_ACTOR_START_REPLY);
+                thorium_actor_send_to_supervisor_empty(actor, ACTION_START_REPLY);
             }
 
             return;
@@ -317,10 +317,10 @@ void bsal_input_controller_receive(struct thorium_actor *actor, struct thorium_m
              */
             destination = concrete_actor->partitioner;
             thorium_actor_send_int(actor, destination,
-                            BSAL_SEQUENCE_PARTITIONER_SET_BLOCK_SIZE,
+                            ACTION_SEQUENCE_PARTITIONER_SET_BLOCK_SIZE,
                             concrete_actor->block_size);
             thorium_actor_send_int(actor, destination,
-                            BSAL_SEQUENCE_PARTITIONER_SET_ACTOR_COUNT,
+                            ACTION_SEQUENCE_PARTITIONER_SET_ACTOR_COUNT,
                             bsal_vector_size(&concrete_actor->consumers));
 
             bsal_vector_init(&block_counts, sizeof(uint64_t));
@@ -341,7 +341,7 @@ void bsal_input_controller_receive(struct thorium_actor *actor, struct thorium_m
 #endif
 
             bsal_vector_pack(&block_counts, new_buffer);
-            thorium_message_init(&new_message, BSAL_SEQUENCE_PARTITIONER_SET_ENTRY_VECTOR,
+            thorium_message_init(&new_message, ACTION_SEQUENCE_PARTITIONER_SET_ENTRY_VECTOR,
                             new_count, new_buffer);
             thorium_actor_send(actor, destination, &new_message);
             bsal_memory_pool_free(ephemeral_memory, new_buffer);
@@ -375,7 +375,7 @@ void bsal_input_controller_receive(struct thorium_actor *actor, struct thorium_m
                             offset, stream);
 #endif
 
-            thorium_actor_send_uint64_t(actor, stream, BSAL_INPUT_STREAM_SET_START_OFFSET, offset);
+            thorium_actor_send_uint64_t(actor, stream, ACTION_INPUT_STREAM_SET_START_OFFSET, offset);
 
             return;
         }
@@ -396,7 +396,7 @@ void bsal_input_controller_receive(struct thorium_actor *actor, struct thorium_m
 #ifdef BSAL_INPUT_CONTROLLER_DEBUG_READING_STREAMS
         printf("asking stream/%d to open %s\n", stream, local_file);
 #endif
-        thorium_message_init(&new_message, BSAL_INPUT_OPEN, strlen(local_file) + 1, local_file);
+        thorium_message_init(&new_message, ACTION_INPUT_OPEN, strlen(local_file) + 1, local_file);
 
 #ifdef DEBUG_ISSUE_594
         thorium_message_print(&new_message);
@@ -408,7 +408,7 @@ void bsal_input_controller_receive(struct thorium_actor *actor, struct thorium_m
 
         if (bsal_vector_size(&concrete_actor->counting_streams) != bsal_vector_size(&concrete_actor->files)) {
 
-            thorium_actor_send_to_self_empty(actor, BSAL_INPUT_SPAWN);
+            thorium_actor_send_to_self_empty(actor, ACTION_INPUT_SPAWN);
 
         }
 
@@ -416,7 +416,7 @@ void bsal_input_controller_receive(struct thorium_actor *actor, struct thorium_m
         printf("EXIT Buffer %s\n", local_file);
 #endif
 
-    } else if (tag == BSAL_INPUT_OPEN_REPLY) {
+    } else if (tag == ACTION_INPUT_OPEN_REPLY) {
 
         if (concrete_actor->state == BSAL_INPUT_CONTROLLER_STATE_SPAWN_READING_STREAMS) {
 
@@ -426,7 +426,7 @@ void bsal_input_controller_receive(struct thorium_actor *actor, struct thorium_m
             concrete_actor->opened_streams++;
 
             if (concrete_actor->opened_streams == bsal_vector_size(&concrete_actor->mega_block_vector)) {
-                thorium_actor_send_to_self_empty(actor, BSAL_INPUT_CONTROLLER_CREATE_STORES);
+                thorium_actor_send_to_self_empty(actor, ACTION_INPUT_CONTROLLER_CREATE_STORES);
             }
 
             return;
@@ -440,10 +440,10 @@ void bsal_input_controller_receive(struct thorium_actor *actor, struct thorium_m
         if (error == BSAL_INPUT_ERROR_NO_ERROR) {
 
 #ifdef BSAL_INPUT_CONTROLLER_DEBUG_LEVEL_2
-            printf("DEBUG actor %d asks %d BSAL_INPUT_COUNT_IN_PARALLEL\n", name, stream);
+            printf("DEBUG actor %d asks %d ACTION_INPUT_COUNT_IN_PARALLEL\n", name, stream);
 #endif
 
-            thorium_actor_send_vector(actor, stream, BSAL_INPUT_COUNT_IN_PARALLEL,
+            thorium_actor_send_vector(actor, stream, ACTION_INPUT_COUNT_IN_PARALLEL,
                             &concrete_actor->spawners);
         } else {
 
@@ -460,14 +460,14 @@ void bsal_input_controller_receive(struct thorium_actor *actor, struct thorium_m
 #endif
             printf("DEBUG %d: Error all streams failed.\n",
                             thorium_actor_name(actor));
-            thorium_actor_send_to_supervisor_empty(actor, BSAL_INPUT_DISTRIBUTE_REPLY);
+            thorium_actor_send_to_supervisor_empty(actor, ACTION_INPUT_DISTRIBUTE_REPLY);
         }
 
 /*
         if (concrete_actor->opened_streams == bsal_vector_size(&concrete_actor->files)) {
 
 #ifdef BSAL_INPUT_CONTROLLER_DEBUG
-            printf("DEBUG controller %d sends BSAL_INPUT_DISTRIBUTE_REPLY to supervisor %d [%d/%d]\n",
+            printf("DEBUG controller %d sends ACTION_INPUT_DISTRIBUTE_REPLY to supervisor %d [%d/%d]\n",
                             name, thorium_actor_supervisor(actor),
                             concrete_actor->opened_streams, bsal_vector_size(&concrete_actor->files));
 #endif
@@ -475,7 +475,7 @@ void bsal_input_controller_receive(struct thorium_actor *actor, struct thorium_m
         }
 */
 
-    } else if (tag == BSAL_INPUT_COUNT_PROGRESS) {
+    } else if (tag == ACTION_INPUT_COUNT_PROGRESS) {
 
         stream_index = bsal_vector_index_of(&concrete_actor->counting_streams, &source);
         local_file = bsal_vector_at_as_char_pointer(&concrete_actor->files, stream_index);
@@ -487,7 +487,7 @@ void bsal_input_controller_receive(struct thorium_actor *actor, struct thorium_m
                         name, source, local_file, entries);
         *bucket = entries;
 
-    } else if (tag == BSAL_INPUT_COUNT_IN_PARALLEL_REPLY) {
+    } else if (tag == ACTION_INPUT_COUNT_IN_PARALLEL_REPLY) {
 
         stream_index = bsal_vector_index_of(&concrete_actor->counting_streams, &source);
         local_file = bsal_vector_at_as_char_pointer(&concrete_actor->files, stream_index);
@@ -532,15 +532,15 @@ void bsal_input_controller_receive(struct thorium_actor *actor, struct thorium_m
                         name, source, local_file, entries,
                         concrete_actor->counted, (int)bsal_vector_size(&concrete_actor->files));
 
-        thorium_actor_send_reply_empty(actor, BSAL_INPUT_CLOSE);
+        thorium_actor_send_reply_empty(actor, ACTION_INPUT_CLOSE);
 
         /* continue work here, tell supervisor about it */
         if (concrete_actor->counted == bsal_vector_size(&concrete_actor->files)) {
-            thorium_actor_send_to_self_empty(actor, BSAL_INPUT_CONTROLLER_SPAWN_READING_STREAMS);
+            thorium_actor_send_to_self_empty(actor, ACTION_INPUT_CONTROLLER_SPAWN_READING_STREAMS);
         }
 
 
-    } else if (tag == BSAL_INPUT_DISTRIBUTE) {
+    } else if (tag == ACTION_INPUT_DISTRIBUTE) {
 
         bsal_timer_start(&concrete_actor->input_timer);
         bsal_timer_start(&concrete_actor->counting_timer);
@@ -552,19 +552,19 @@ void bsal_input_controller_receive(struct thorium_actor *actor, struct thorium_m
         if (bsal_vector_size(&concrete_actor->files) == 0) {
 
             printf("Error: no file to distribute...\n");
-            thorium_actor_send_reply_empty(actor, BSAL_INPUT_DISTRIBUTE_REPLY);
+            thorium_actor_send_reply_empty(actor, ACTION_INPUT_DISTRIBUTE_REPLY);
             return;
         }
 
 #ifdef BSAL_INPUT_CONTROLLER_DEBUG_LEVEL_2
-        printf("DEBUG actor %d receives BSAL_INPUT_DISTRIBUTE\n", name);
+        printf("DEBUG actor %d receives ACTION_INPUT_DISTRIBUTE\n", name);
 #endif
 
 #ifdef BSAL_INPUT_CONTROLLER_DEBUG_LEVEL_2
-        printf("DEBUG send BSAL_INPUT_SPAWN to self\n");
+        printf("DEBUG send ACTION_INPUT_SPAWN to self\n");
 #endif
 
-        thorium_actor_send_to_self_empty(actor, BSAL_INPUT_SPAWN);
+        thorium_actor_send_to_self_empty(actor, ACTION_INPUT_SPAWN);
 
 #ifdef BSAL_INPUT_CONTROLLER_DEBUG_LEVEL_2
         printf("DEBUG resizing counts to %d\n", bsal_vector_size(&concrete_actor->files));
@@ -577,13 +577,13 @@ void bsal_input_controller_receive(struct thorium_actor *actor, struct thorium_m
             *bucket = 0;
         }
 
-    } else if (tag == BSAL_INPUT_SPAWN && source == name) {
+    } else if (tag == ACTION_INPUT_SPAWN && source == name) {
 
 #ifdef BSAL_INPUT_CONTROLLER_DEBUG_LEVEL_2
-        printf("DEBUG BSAL_INPUT_SPAWN\n");
+        printf("DEBUG ACTION_INPUT_SPAWN\n");
 #endif
 
-        script = BSAL_INPUT_SCRIPT_STREAM;
+        script = ACTION_INPUT_SCRIPT_STREAM;
 
         concrete_actor->state = BSAL_INPUT_CONTROLLER_STATE_SPAWN_STREAMS;
 
@@ -593,7 +593,7 @@ void bsal_input_controller_receive(struct thorium_actor *actor, struct thorium_m
         destination_index = i % bsal_vector_size(&concrete_actor->spawners);
         destination = *(int *)bsal_vector_at(&concrete_actor->spawners, destination_index);
 
-        thorium_message_init(message, THORIUM_ACTOR_SPAWN, sizeof(script), &script);
+        thorium_message_init(message, ACTION_SPAWN, sizeof(script), &script);
         thorium_actor_send(actor, destination, message);
 
         bucket = bsal_vector_at(&concrete_actor->files, i);
@@ -611,7 +611,7 @@ void bsal_input_controller_receive(struct thorium_actor *actor, struct thorium_m
 
         /* also, spawn 4 stores on each node */
 
-    } else if (tag == THORIUM_ACTOR_ASK_TO_STOP && ( source == thorium_actor_supervisor(actor)
+    } else if (tag == ACTION_ASK_TO_STOP && ( source == thorium_actor_supervisor(actor)
                             || source == thorium_actor_name(actor))) {
 
 #ifdef BSAL_INPUT_CONTROLLER_DEBUG_LEVEL_2
@@ -622,12 +622,12 @@ void bsal_input_controller_receive(struct thorium_actor *actor, struct thorium_m
         for (i = 0; i < bsal_vector_size(&concrete_actor->counting_streams); i++) {
             stream = *(int *)bsal_vector_at(&concrete_actor->counting_streams, i);
 
-            thorium_actor_send_empty(actor, stream, THORIUM_ACTOR_ASK_TO_STOP);
+            thorium_actor_send_empty(actor, stream, ACTION_ASK_TO_STOP);
         }
         for (i = 0; i < bsal_vector_size(&concrete_actor->reading_streams); i++) {
             stream = *(int *)bsal_vector_at(&concrete_actor->reading_streams, i);
 
-            thorium_actor_send_empty(actor, stream, THORIUM_ACTOR_ASK_TO_STOP);
+            thorium_actor_send_empty(actor, stream, ACTION_ASK_TO_STOP);
         }
 
 
@@ -638,7 +638,7 @@ void bsal_input_controller_receive(struct thorium_actor *actor, struct thorium_m
         for (i = 0; i < bsal_vector_size(&concrete_actor->consumers); i++) {
             store = bsal_vector_at_as_int(&concrete_actor->consumers, i);
 
-            thorium_actor_send_empty(actor, store, THORIUM_ACTOR_ASK_TO_STOP);
+            thorium_actor_send_empty(actor, store, ACTION_ASK_TO_STOP);
         }
 #endif
         /* stop partitioner
@@ -647,21 +647,21 @@ void bsal_input_controller_receive(struct thorium_actor *actor, struct thorium_m
         if (concrete_actor->partitioner != THORIUM_ACTOR_NOBODY) {
             thorium_actor_send_empty(actor,
                                 concrete_actor->partitioner,
-                        THORIUM_ACTOR_ASK_TO_STOP);
+                        ACTION_ASK_TO_STOP);
 
 #ifdef BSAL_INPUT_CONTROLLER_DEBUG
-            printf("DEBUG controller %d sends THORIUM_ACTOR_ASK_TO_STOP_REPLY to %d\n",
+            printf("DEBUG controller %d sends ACTION_ASK_TO_STOP_REPLY to %d\n",
                         thorium_actor_name(actor),
                         thorium_message_source(message));
 #endif
 
         }
 
-        thorium_actor_send_reply_empty(actor, THORIUM_ACTOR_ASK_TO_STOP_REPLY);
+        thorium_actor_send_reply_empty(actor, ACTION_ASK_TO_STOP_REPLY);
 
         /* stop self
          */
-        thorium_actor_send_to_self_empty(actor, THORIUM_ACTOR_STOP);
+        thorium_actor_send_to_self_empty(actor, ACTION_STOP);
 
         thorium_actor_ask_to_stop(actor, message);
 
@@ -669,12 +669,12 @@ void bsal_input_controller_receive(struct thorium_actor *actor, struct thorium_m
 #ifdef BSAL_INPUT_CONTROLLER_DEBUG
 #endif
 
-    } else if (tag == BSAL_INPUT_CONTROLLER_CREATE_PARTITION && source == name) {
+    } else if (tag == ACTION_INPUT_CONTROLLER_CREATE_PARTITION && source == name) {
 
         spawner = *(int *)bsal_vector_at(&concrete_actor->spawners,
                         bsal_vector_size(&concrete_actor->spawners) / 2);
 
-        thorium_actor_send_int(actor, spawner, THORIUM_ACTOR_SPAWN,
+        thorium_actor_send_int(actor, spawner, ACTION_SPAWN,
                         SCRIPT_SEQUENCE_PARTITIONER);
         concrete_actor->state = BSAL_INPUT_CONTROLLER_STATE_SPAWN_PARTITIONER;
 
@@ -683,35 +683,35 @@ void bsal_input_controller_receive(struct thorium_actor *actor, struct thorium_m
                         name,  spawner);
 #endif
 
-    } else if (tag == BSAL_SEQUENCE_PARTITIONER_COMMAND_IS_READY) {
+    } else if (tag == ACTION_SEQUENCE_PARTITIONER_COMMAND_IS_READY) {
 
 #ifdef BSAL_INPUT_CONTROLLER_DEBUG
-        printf("DEBUG controller receives BSAL_SEQUENCE_PARTITIONER_COMMAND_IS_READY, asks for command\n");
+        printf("DEBUG controller receives ACTION_SEQUENCE_PARTITIONER_COMMAND_IS_READY, asks for command\n");
 #endif
 
-        thorium_actor_send_reply_empty(actor, BSAL_SEQUENCE_PARTITIONER_GET_COMMAND);
+        thorium_actor_send_reply_empty(actor, ACTION_SEQUENCE_PARTITIONER_GET_COMMAND);
 
-    } else if (tag == BSAL_SEQUENCE_PARTITIONER_GET_COMMAND_REPLY) {
+    } else if (tag == ACTION_SEQUENCE_PARTITIONER_GET_COMMAND_REPLY) {
 
         bsal_input_controller_receive_command(actor, message);
 
-    } else if (tag == BSAL_SEQUENCE_PARTITIONER_FINISHED) {
+    } else if (tag == ACTION_SEQUENCE_PARTITIONER_FINISHED) {
 
         thorium_actor_send_empty(actor,
                                 concrete_actor->partitioner,
-                        THORIUM_ACTOR_ASK_TO_STOP);
+                        ACTION_ASK_TO_STOP);
 
         bsal_input_controller_verify_requests(actor, message);
 
-    } else if (tag == BSAL_SEQUENCE_PARTITIONER_PROVIDE_STORE_ENTRY_COUNTS) {
+    } else if (tag == ACTION_SEQUENCE_PARTITIONER_PROVIDE_STORE_ENTRY_COUNTS) {
 
         bsal_input_controller_receive_store_entry_counts(actor, message);
 
-    } else if (tag == BSAL_RESERVE_REPLY) {
+    } else if (tag == ACTION_RESERVE_REPLY) {
 
         concrete_actor->ready_consumers++;
 
-        printf("DEBUG marker BSAL_RESERVE_REPLY %d/%d\n",
+        printf("DEBUG marker ACTION_RESERVE_REPLY %d/%d\n",
                         concrete_actor->ready_consumers,
                         (int)bsal_vector_size(&concrete_actor->consumers));
 
@@ -721,13 +721,13 @@ void bsal_input_controller_receive(struct thorium_actor *actor, struct thorium_m
             printf("DEBUG all consumers are ready\n");
             thorium_actor_send_empty(actor,
                             concrete_actor->partitioner,
-                            BSAL_SEQUENCE_PARTITIONER_PROVIDE_STORE_ENTRY_COUNTS_REPLY);
+                            ACTION_SEQUENCE_PARTITIONER_PROVIDE_STORE_ENTRY_COUNTS_REPLY);
         }
 
-    } else if (tag == BSAL_INPUT_PUSH_SEQUENCES_READY) {
+    } else if (tag == ACTION_INPUT_PUSH_SEQUENCES_READY) {
 
 #ifdef BSAL_INPUT_CONTROLLER_DEBUG
-        printf("DEBUG bsal_input_controller_receive received BSAL_INPUT_PUSH_SEQUENCES_READY\n");
+        printf("DEBUG bsal_input_controller_receive received ACTION_INPUT_PUSH_SEQUENCES_READY\n");
 #endif
 
         stream_name = source;
@@ -739,10 +739,10 @@ void bsal_input_controller_receive(struct thorium_actor *actor, struct thorium_m
 
         thorium_actor_send_int(actor,
                                 concrete_actor->partitioner,
-                        BSAL_SEQUENCE_PARTITIONER_GET_COMMAND_REPLY_REPLY,
+                        ACTION_SEQUENCE_PARTITIONER_GET_COMMAND_REPLY_REPLY,
                         command_name);
 
-    } else if (tag == BSAL_INPUT_PUSH_SEQUENCES_REPLY) {
+    } else if (tag == ACTION_INPUT_PUSH_SEQUENCES_REPLY) {
 
         stream_name = source;
 
@@ -763,7 +763,7 @@ void bsal_input_controller_receive(struct thorium_actor *actor, struct thorium_m
 #endif
 
 
-    } else if (tag == THORIUM_ACTOR_SET_CONSUMERS) {
+    } else if (tag == ACTION_SET_CONSUMERS) {
 
         bsal_vector_init(&concrete_actor->consumers, 0);
         bsal_vector_unpack(&concrete_actor->consumers, buffer);
@@ -780,26 +780,26 @@ void bsal_input_controller_receive(struct thorium_actor *actor, struct thorium_m
         bsal_vector_print_int(&concrete_actor->consumers);
         printf("\n");
 #endif
-        thorium_actor_send_reply_empty(actor, THORIUM_ACTOR_SET_CONSUMERS_REPLY);
+        thorium_actor_send_reply_empty(actor, ACTION_SET_CONSUMERS_REPLY);
 
-    } else if (tag == BSAL_SET_BLOCK_SIZE) {
+    } else if (tag == ACTION_SET_BLOCK_SIZE) {
 
         thorium_message_unpack_int(message, 0, &concrete_actor->block_size);
-        thorium_actor_send_reply_empty(actor, BSAL_SET_BLOCK_SIZE_REPLY);
+        thorium_actor_send_reply_empty(actor, ACTION_SET_BLOCK_SIZE_REPLY);
 
-    } else if (tag == BSAL_SEQUENCE_STORE_READY) {
+    } else if (tag == ACTION_SEQUENCE_STORE_READY) {
 
         concrete_actor->filled_consumers++;
 
 #ifdef BSAL_INPUT_CONTROLLER_DEBUG
-        printf("DEBUG BSAL_SEQUENCE_STORE_READY %d/%d\n", concrete_actor->filled_consumers,
+        printf("DEBUG ACTION_SEQUENCE_STORE_READY %d/%d\n", concrete_actor->filled_consumers,
                         (int)bsal_vector_size(&concrete_actor->consumers));
 #endif
 
         if (concrete_actor->filled_consumers == bsal_vector_size(&concrete_actor->consumers)) {
             concrete_actor->filled_consumers = 0;
 
-            printf("DEBUG: all consumers are filled,  sending BSAL_INPUT_DISTRIBUTE_REPLY\n");
+            printf("DEBUG: all consumers are filled,  sending ACTION_INPUT_DISTRIBUTE_REPLY\n");
 
             bsal_timer_stop(&concrete_actor->input_timer);
             bsal_timer_stop(&concrete_actor->distribution_timer);
@@ -810,7 +810,7 @@ void bsal_input_controller_receive(struct thorium_actor *actor, struct thorium_m
             bsal_timer_print_with_description(&concrete_actor->input_timer,
                             "Load input");
 
-            thorium_actor_send_to_supervisor_empty(actor, BSAL_INPUT_DISTRIBUTE_REPLY);
+            thorium_actor_send_to_supervisor_empty(actor, ACTION_INPUT_DISTRIBUTE_REPLY);
         }
     }
 }
@@ -847,7 +847,7 @@ void bsal_input_controller_receive_store_entry_counts(struct thorium_actor *acto
         printf("DEBUG controller/%d tells consumer/%d to reserve %" PRIu64 " buckets\n",
                         name, store, entries);
 
-        thorium_message_init(&new_message, BSAL_RESERVE,
+        thorium_message_init(&new_message, ACTION_RESERVE,
                         sizeof(entries), &entries);
         thorium_actor_send(actor, store, &new_message);
     }
@@ -895,7 +895,7 @@ void bsal_input_controller_create_stores(struct thorium_actor *actor, struct tho
 
             spawner = bsal_vector_at_as_int(&concrete_actor->spawners, i);
 
-            thorium_actor_send_empty(actor, spawner, THORIUM_ACTOR_GET_NODE_NAME);
+            thorium_actor_send_empty(actor, spawner, ACTION_GET_NODE_NAME);
             return;
         }
     }
@@ -919,7 +919,7 @@ void bsal_input_controller_create_stores(struct thorium_actor *actor, struct tho
 /*
             printf("DEBUG spawner %d is %d\n", i, spawner);
 */
-            thorium_actor_send_int(actor, spawner, THORIUM_ACTOR_SPAWN, SCRIPT_SEQUENCE_STORE);
+            thorium_actor_send_int(actor, spawner, ACTION_SPAWN, SCRIPT_SEQUENCE_STORE);
 
             return;
         }
@@ -975,26 +975,26 @@ void bsal_input_controller_create_stores(struct thorium_actor *actor, struct tho
                     total, block_size, blocks);
 
 #ifdef BSAL_INPUT_CONTROLLER_DEBUG_10355
-    printf("DEBUG send BSAL_INPUT_CONTROLLER_CREATE_STORES to self %d\n",
+    printf("DEBUG send ACTION_INPUT_CONTROLLER_CREATE_STORES to self %d\n",
                             thorium_actor_name(actor));
 #endif
 
 #ifdef BSAL_INPUT_CONTROLLER_DEBUG
-    printf("DEBUG bsal_input_controller_create_stores send BSAL_INPUT_CONTROLLER_CREATE_PARTITION\n");
+    printf("DEBUG bsal_input_controller_create_stores send ACTION_INPUT_CONTROLLER_CREATE_PARTITION\n");
 #endif
 
     /* no sequences at all !
      */
     if (total == 0) {
         printf("Error, total is 0, can not distribute\n");
-        thorium_actor_send_to_supervisor_empty(actor, BSAL_INPUT_DISTRIBUTE_REPLY);
+        thorium_actor_send_to_supervisor_empty(actor, ACTION_INPUT_DISTRIBUTE_REPLY);
         return;
     } else {
-        thorium_actor_send_to_self_empty(actor, BSAL_INPUT_CONTROLLER_CREATE_PARTITION);
+        thorium_actor_send_to_self_empty(actor, ACTION_INPUT_CONTROLLER_CREATE_PARTITION);
     }
 
     /*
-    thorium_actor_send_to_self_empty(actor, THORIUM_ACTOR_STOP);
+    thorium_actor_send_to_self_empty(actor, ACTION_STOP);
     */
 }
 
@@ -1013,7 +1013,7 @@ void bsal_input_controller_get_node_name_reply(struct thorium_actor *actor, stru
 
     printf("DEBUG spawner %d is on node node/%d\n", spawner, node);
 
-    thorium_actor_send_reply_empty(actor, THORIUM_ACTOR_GET_NODE_WORKER_COUNT);
+    thorium_actor_send_reply_empty(actor, ACTION_GET_NODE_WORKER_COUNT);
 }
 
 void bsal_input_controller_get_node_worker_count_reply(struct thorium_actor *actor, struct thorium_message *message)
@@ -1041,7 +1041,7 @@ void bsal_input_controller_get_node_worker_count_reply(struct thorium_actor *act
     printf("DEBUG spawner %d (node %d) is on a node that has %d workers\n", spawner,
                     index, worker_count);
 
-    thorium_actor_send_to_self_empty(actor, BSAL_INPUT_CONTROLLER_CREATE_STORES);
+    thorium_actor_send_to_self_empty(actor, ACTION_INPUT_CONTROLLER_CREATE_STORES);
 }
 
 void bsal_input_controller_add_store(struct thorium_actor *actor, struct thorium_message *message)
@@ -1074,7 +1074,7 @@ void bsal_input_controller_add_store(struct thorium_actor *actor, struct thorium
     *bucket = (*bucket - 1);
     bsal_vector_push_back(&concrete_actor->consumers, &store);
 
-    thorium_actor_send_to_self_empty(actor, BSAL_INPUT_CONTROLLER_CREATE_STORES);
+    thorium_actor_send_to_self_empty(actor, ACTION_INPUT_CONTROLLER_CREATE_STORES);
 
     /*
     printf("DEBUG remaining to spawn: %d (before returning)\n", *bucket);
@@ -1097,7 +1097,7 @@ void bsal_input_controller_prepare_spawners(struct thorium_actor *actor, struct 
      */
     if (bsal_queue_dequeue(&concrete_actor->unprepared_spawners, &spawner)) {
 
-        thorium_actor_send_int(actor, spawner, THORIUM_ACTOR_SPAWN, thorium_actor_script(actor));
+        thorium_actor_send_int(actor, spawner, ACTION_SPAWN, thorium_actor_script(actor));
         concrete_actor->state = BSAL_INPUT_CONTROLLER_STATE_PREPARE_SPAWNERS;
     }
 }
@@ -1169,11 +1169,11 @@ void bsal_input_controller_receive_command(struct thorium_actor *actor, struct t
     bsal_input_command_pack(&input_command, new_buffer,
                     &concrete_actor->codec);
 
-    thorium_message_init(&new_message, BSAL_INPUT_PUSH_SEQUENCES, bytes,
+    thorium_message_init(&new_message, ACTION_INPUT_PUSH_SEQUENCES, bytes,
                     new_buffer);
 
 #ifdef BSAL_INPUT_CONTROLLER_DEBUG_COMMANDS
-    printf("DEBUG bsal_input_controller_receive_command sending BSAL_INPUT_PUSH_SEQUENCES to %d (index %d)\n",
+    printf("DEBUG bsal_input_controller_receive_command sending ACTION_INPUT_PUSH_SEQUENCES to %d (index %d)\n",
                     stream_name, stream_index);
     bsal_input_command_print(&input_command);
 
@@ -1260,10 +1260,10 @@ void bsal_input_controller_spawn_streams(struct thorium_actor *actor, struct tho
         concrete_actor->spawner %= bsal_vector_size(&concrete_actor->spawners);
 
 #ifdef BSAL_INPUT_CONTROLLER_DEBUG_READING_STREAMS
-        printf("DEBUG asking %d to spawn script %d\n", spawner, BSAL_INPUT_SCRIPT_STREAM);
+        printf("DEBUG asking %d to spawn script %d\n", spawner, ACTION_INPUT_SCRIPT_STREAM);
 #endif
 
-        thorium_actor_send_int(actor, spawner, THORIUM_ACTOR_SPAWN, BSAL_INPUT_SCRIPT_STREAM);
+        thorium_actor_send_int(actor, spawner, ACTION_SPAWN, ACTION_INPUT_SCRIPT_STREAM);
     }
 
     bsal_vector_iterator_destroy(&iterator);
@@ -1301,9 +1301,9 @@ void bsal_input_controller_set_offset_reply(struct thorium_actor *self, struct t
     file_index = bsal_mega_block_get_file(block);
     file_name = *(char **)bsal_vector_at(&concrete_actor->files, file_index);
 
-    printf("DEBUG send BSAL_INPUT_OPEN %s\n", file_name);
+    printf("DEBUG send ACTION_INPUT_OPEN %s\n", file_name);
 
-    thorium_message_init(&new_message, BSAL_INPUT_OPEN, strlen(file_name) + 1, file_name);
+    thorium_message_init(&new_message, ACTION_INPUT_OPEN, strlen(file_name) + 1, file_name);
 
     thorium_actor_send_reply(self, &new_message);
 

@@ -39,7 +39,7 @@ void sender_receive(struct thorium_actor *actor, struct thorium_message *message
     concrete_actor = (struct sender *)thorium_actor_concrete_actor(actor);
     name = thorium_actor_name(actor);
 
-    if (tag == SENDER_SET_NEXT) {
+    if (tag == ACTION_SENDER_SET_NEXT) {
 
         concrete_actor->next = *(int *)buffer;
 
@@ -47,11 +47,11 @@ void sender_receive(struct thorium_actor *actor, struct thorium_message *message
             printf("Error: invalid actor name\n");
         }
 #if 0
-        printf("receive SENDER_SET_NEXT %d\n", concrete_actor->next);
+        printf("receive ACTION_SENDER_SET_NEXT %d\n", concrete_actor->next);
 #endif
-        thorium_actor_send_reply_empty(actor, SENDER_SET_NEXT_REPLY);
+        thorium_actor_send_reply_empty(actor, ACTION_ACTION_SENDER_SET_NEXT_REPLY);
 
-    } else if (tag == SENDER_HELLO) {
+    } else if (tag == ACTION_SENDER_HELLO) {
 
         messages = *(int *)buffer;
         messages--;
@@ -62,20 +62,20 @@ void sender_receive(struct thorium_actor *actor, struct thorium_message *message
         }
 
         if (messages == 0) {
-            thorium_actor_send_to_supervisor_empty(actor, SENDER_HELLO_REPLY);
+            thorium_actor_send_to_supervisor_empty(actor, ACTION_ACTION_SENDER_HELLO_REPLY);
             return;
         }
 
-        thorium_message_init(message, SENDER_HELLO, sizeof(messages), &messages);
+        thorium_message_init(message, ACTION_SENDER_HELLO, sizeof(messages), &messages);
         thorium_actor_send(actor, concrete_actor->next, message);
 /*
         printf("actor %d sends to next: actor %d\n", name, concrete_actor->next);
 */
-    } else if (tag == SENDER_KILL) {
+    } else if (tag == ACTION_SENDER_KILL) {
 
         thorium_actor_send(actor, concrete_actor->next, message);
 
-        thorium_actor_send_to_self_empty(actor, THORIUM_ACTOR_STOP);
+        thorium_actor_send_to_self_empty(actor, ACTION_STOP);
     }
 }
 

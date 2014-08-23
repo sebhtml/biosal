@@ -6,12 +6,12 @@
 
 #define SCRIPT_ASSEMBLY_GRAPH_BUILDER 0xc0b1a2b3
 
-#define BSAL_ASSEMBLY_GRAPH_BUILDER_CONTROL_COMPLEXITY 0x00006439
+#define ACTION_ASSEMBLY_GRAPH_BUILDER_CONTROL_COMPLEXITY 0x00006439
 
 /*
  * Message tags for the graph builder.
  */
-#define BSAL_VERIFY_ARCS 0x000032be
+#define ACTION_VERIFY_ARCS 0x000032be
 
 /*
  * This actor builds an assembly graph.

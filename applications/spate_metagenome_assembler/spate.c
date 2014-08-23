@@ -48,28 +48,28 @@ void spate_init(struct thorium_actor *self)
     bsal_timer_init(&concrete_self->timer);
 
     thorium_actor_add_action(self,
-                    THORIUM_ACTOR_START, spate_start);
+                    ACTION_START, spate_start);
     thorium_actor_add_action(self,
-                    THORIUM_ACTOR_ASK_TO_STOP, spate_ask_to_stop);
+                    ACTION_ASK_TO_STOP, spate_ask_to_stop);
     thorium_actor_add_action(self,
-                    THORIUM_ACTOR_SPAWN_REPLY, spate_spawn_reply);
+                    ACTION_SPAWN_REPLY, spate_spawn_reply);
     thorium_actor_add_action(self,
-                    BSAL_MANAGER_SET_SCRIPT_REPLY, spate_set_script_reply);
+                    ACTION_MANAGER_SET_SCRIPT_REPLY, spate_set_script_reply);
     thorium_actor_add_action(self,
-                    THORIUM_ACTOR_SET_CONSUMERS_REPLY, spate_set_consumers_reply);
+                    ACTION_SET_CONSUMERS_REPLY, spate_set_consumers_reply);
     thorium_actor_add_action(self,
-                    BSAL_SET_BLOCK_SIZE_REPLY, spate_set_block_size_reply);
+                    ACTION_SET_BLOCK_SIZE_REPLY, spate_set_block_size_reply);
     thorium_actor_add_action(self,
-                    BSAL_INPUT_DISTRIBUTE_REPLY, spate_distribute_reply);
+                    ACTION_INPUT_DISTRIBUTE_REPLY, spate_distribute_reply);
     thorium_actor_add_action(self,
-                    SPATE_ADD_FILES, spate_add_files);
+                    ACTION_SPATE_ADD_FILES, spate_add_files);
     thorium_actor_add_action(self,
-                    SPATE_ADD_FILES_REPLY, spate_add_files_reply);
+                    ACTION_ACTION_SPATE_ADD_FILES_REPLY, spate_add_files_reply);
     thorium_actor_add_action(self,
-                    BSAL_ADD_FILE_REPLY, spate_add_file_reply);
+                    ACTION_ADD_FILE_REPLY, spate_add_file_reply);
 
     thorium_actor_add_action(self,
-                    THORIUM_ACTOR_START_REPLY, spate_start_reply);
+                    ACTION_START_REPLY, spate_start_reply);
 
     /*
      * Register required actor scripts now
@@ -207,7 +207,7 @@ void spate_start(struct thorium_actor *self, struct thorium_message *message)
 
     spawner = thorium_actor_get_spawner(self, &concrete_self->initial_actors);
 
-    thorium_actor_send_int(self, spawner, THORIUM_ACTOR_SPAWN, SCRIPT_INPUT_CONTROLLER);
+    thorium_actor_send_int(self, spawner, ACTION_SPAWN, SCRIPT_INPUT_CONTROLLER);
 }
 
 void spate_ask_to_stop(struct thorium_actor *self, struct thorium_message *message)
@@ -232,15 +232,15 @@ void spate_ask_to_stop(struct thorium_actor *self, struct thorium_message *messa
      */
 
     if (bsal_vector_index_of(&concrete_self->initial_actors, &source) >= 0) {
-        thorium_actor_send_to_self_empty(self, THORIUM_ACTOR_STOP);
+        thorium_actor_send_to_self_empty(self, ACTION_STOP);
     }
 
     if (concrete_self->is_leader) {
 
         thorium_actor_send_empty(self, concrete_self->assembly_graph_builder,
-                        THORIUM_ACTOR_ASK_TO_STOP);
+                        ACTION_ASK_TO_STOP);
         thorium_actor_send_empty(self, concrete_self->manager_for_sequence_stores,
-                        THORIUM_ACTOR_ASK_TO_STOP);
+                        ACTION_ASK_TO_STOP);
 
         if (!spate_must_print_help(self)) {
             bsal_timer_stop(&concrete_self->timer);
@@ -264,7 +264,7 @@ void spate_spawn_reply(struct thorium_actor *self, struct thorium_message *messa
         concrete_self->input_controller = new_actor;
 
         thorium_actor_add_action_with_source(self,
-                    THORIUM_ACTOR_START_REPLY,
+                    ACTION_START_REPLY,
                     spate_start_reply_controller,
                     concrete_self->input_controller);
 
@@ -273,14 +273,14 @@ void spate_spawn_reply(struct thorium_actor *self, struct thorium_message *messa
 
         spawner = thorium_actor_get_spawner(self, &concrete_self->initial_actors);
 
-        thorium_actor_send_int(self, spawner, THORIUM_ACTOR_SPAWN, SCRIPT_MANAGER);
+        thorium_actor_send_int(self, spawner, ACTION_SPAWN, SCRIPT_MANAGER);
 
     } else if (concrete_self->manager_for_sequence_stores == THORIUM_ACTOR_NOBODY) {
 
         concrete_self->manager_for_sequence_stores = new_actor;
 
         thorium_actor_add_action_with_source(self,
-                    THORIUM_ACTOR_START_REPLY,
+                    ACTION_START_REPLY,
                     spate_start_reply_manager,
                     concrete_self->manager_for_sequence_stores);
 
@@ -289,26 +289,26 @@ void spate_spawn_reply(struct thorium_actor *self, struct thorium_message *messa
 
         spawner = thorium_actor_get_spawner(self, &concrete_self->initial_actors);
 
-        thorium_actor_send_int(self, spawner, THORIUM_ACTOR_SPAWN, SCRIPT_ASSEMBLY_GRAPH_BUILDER);
+        thorium_actor_send_int(self, spawner, ACTION_SPAWN, SCRIPT_ASSEMBLY_GRAPH_BUILDER);
 
     } else if (concrete_self->assembly_graph_builder == THORIUM_ACTOR_NOBODY) {
 
         concrete_self->assembly_graph_builder = new_actor;
 
         thorium_actor_add_action_with_source(self,
-                    THORIUM_ACTOR_START_REPLY,
+                    ACTION_START_REPLY,
                     spate_start_reply_builder,
                 concrete_self->assembly_graph_builder);
 
         thorium_actor_add_action_with_source(self,
-                    THORIUM_ACTOR_SET_PRODUCERS_REPLY,
+                    ACTION_SET_PRODUCERS_REPLY,
                     spate_set_producers_reply,
                     concrete_self->assembly_graph_builder);
 
         printf("spate %d spawned graph builder %d\n", thorium_actor_name(self),
                         new_actor);
 
-        thorium_actor_send_int(self, concrete_self->manager_for_sequence_stores, BSAL_MANAGER_SET_SCRIPT,
+        thorium_actor_send_int(self, concrete_self->manager_for_sequence_stores, ACTION_MANAGER_SET_SCRIPT,
                         SCRIPT_SEQUENCE_STORE);
     }
 }
@@ -319,7 +319,7 @@ void spate_set_script_reply(struct thorium_actor *self, struct thorium_message *
 
     concrete_self = (struct spate *)thorium_actor_concrete_actor(self);
 
-    thorium_actor_send_reply_vector(self, THORIUM_ACTOR_START, &concrete_self->initial_actors);
+    thorium_actor_send_reply_vector(self, ACTION_START, &concrete_self->initial_actors);
 }
 
 void spate_start_reply(struct thorium_actor *self, struct thorium_message *message)
@@ -344,7 +344,7 @@ void spate_start_reply_manager(struct thorium_actor *self, struct thorium_messag
                     (int)bsal_vector_size(&consumers),
                     concrete_self->input_controller);
 
-    thorium_actor_send_vector(self, concrete_self->input_controller, THORIUM_ACTOR_SET_CONSUMERS, &consumers);
+    thorium_actor_send_vector(self, concrete_self->input_controller, ACTION_SET_CONSUMERS, &consumers);
 
     bsal_vector_push_back_vector(&concrete_self->sequence_stores, &consumers);
 
@@ -362,7 +362,7 @@ void spate_set_consumers_reply(struct thorium_actor *self, struct thorium_messag
                     (int)bsal_vector_size(&concrete_self->initial_actors),
                     concrete_self->input_controller);
 
-    thorium_actor_send_reply_vector(self, THORIUM_ACTOR_START, &concrete_self->initial_actors);
+    thorium_actor_send_reply_vector(self, ACTION_START, &concrete_self->initial_actors);
 }
 
 void spate_start_reply_controller(struct thorium_actor *self, struct thorium_message *message)
@@ -376,19 +376,19 @@ void spate_start_reply_controller(struct thorium_actor *self, struct thorium_mes
      * Stop the actor computation
      */
 
-    thorium_actor_send_reply_int(self, BSAL_SET_BLOCK_SIZE, concrete_self->block_size);
+    thorium_actor_send_reply_int(self, ACTION_SET_BLOCK_SIZE, concrete_self->block_size);
 }
 
 void spate_set_block_size_reply(struct thorium_actor *self, struct thorium_message *message)
 {
 
-    thorium_actor_send_to_self_empty(self, SPATE_ADD_FILES);
+    thorium_actor_send_to_self_empty(self, ACTION_SPATE_ADD_FILES);
 }
 
 void spate_add_files(struct thorium_actor *self, struct thorium_message *message)
 {
     if (!spate_add_file(self)) {
-        thorium_actor_send_to_self_empty(self, SPATE_ADD_FILES_REPLY);
+        thorium_actor_send_to_self_empty(self, ACTION_ACTION_SPATE_ADD_FILES_REPLY);
     }
 }
 
@@ -399,7 +399,7 @@ void spate_add_files_reply(struct thorium_actor *self, struct thorium_message *m
     concrete_self = (struct spate *)thorium_actor_concrete_actor(self);
 
     thorium_actor_send_empty(self, concrete_self->input_controller,
-                    BSAL_INPUT_DISTRIBUTE);
+                    ACTION_INPUT_DISTRIBUTE);
 }
 
 void spate_distribute_reply(struct thorium_actor *self, struct thorium_message *message)
@@ -412,12 +412,12 @@ void spate_distribute_reply(struct thorium_actor *self, struct thorium_message *
                     thorium_actor_name(self));
 
     thorium_actor_send_vector(self, concrete_self->assembly_graph_builder,
-                    THORIUM_ACTOR_SET_PRODUCERS, &concrete_self->sequence_stores);
+                    ACTION_SET_PRODUCERS, &concrete_self->sequence_stores);
 
     /* kill the controller
      */
 
-    thorium_actor_send_reply_empty(self, THORIUM_ACTOR_ASK_TO_STOP);
+    thorium_actor_send_reply_empty(self, ACTION_ASK_TO_STOP);
 }
 
 void spate_set_producers_reply(struct thorium_actor *self, struct thorium_message *message)
@@ -426,7 +426,7 @@ void spate_set_producers_reply(struct thorium_actor *self, struct thorium_messag
 
     concrete_self = (struct spate *)thorium_actor_concrete_actor(self);
 
-    thorium_actor_send_reply_vector(self, THORIUM_ACTOR_START, &concrete_self->initial_actors);
+    thorium_actor_send_reply_vector(self, ACTION_START, &concrete_self->initial_actors);
 }
 
 void spate_start_reply_builder(struct thorium_actor *self, struct thorium_message *message)
@@ -447,13 +447,13 @@ void spate_start_reply_builder(struct thorium_actor *self, struct thorium_messag
 
     spawner = thorium_actor_get_spawner(self, &concrete_self->initial_actors);
 
-    concrete_self->dummy_walker = THORIUM_ACTOR_SPAWNING_IN_PROGRESS;
+    concrete_self->dummy_walker = ACTION_SPAWNING_IN_PROGRESS;
 
-    thorium_actor_add_action_with_condition(self, THORIUM_ACTOR_SPAWN_REPLY,
+    thorium_actor_add_action_with_condition(self, ACTION_SPAWN_REPLY,
                     spate_spawn_reply_dummy_walker,
-                    &concrete_self->dummy_walker, THORIUM_ACTOR_SPAWNING_IN_PROGRESS);
+                    &concrete_self->dummy_walker, ACTION_SPAWNING_IN_PROGRESS);
 
-    thorium_actor_send_int(self, spawner, THORIUM_ACTOR_SPAWN, SCRIPT_ASSEMBLY_DUMMY_WALKER);
+    thorium_actor_send_int(self, spawner, ACTION_SPAWN, SCRIPT_ASSEMBLY_DUMMY_WALKER);
 
 }
 
@@ -465,18 +465,18 @@ void spate_spawn_reply_dummy_walker(struct thorium_actor *self, struct thorium_m
 
     thorium_message_unpack_int(message, 0, &concrete_self->dummy_walker);
 
-    thorium_actor_add_action_with_source(self, THORIUM_ACTOR_START_REPLY,
+    thorium_actor_add_action_with_source(self, ACTION_START_REPLY,
                     spate_start_reply_dummy_walker,
                     concrete_self->dummy_walker);
 
     thorium_actor_send_vector(self, concrete_self->dummy_walker,
-                    THORIUM_ACTOR_START,
+                    ACTION_START,
                     &concrete_self->graph_stores);
 }
 
 void spate_start_reply_dummy_walker(struct thorium_actor *self, struct thorium_message *message)
 {
-    thorium_actor_send_reply_empty(self, THORIUM_ACTOR_ASK_TO_STOP);
+    thorium_actor_send_reply_empty(self, ACTION_ASK_TO_STOP);
 
     spate_stop(self);
 }
@@ -496,7 +496,7 @@ int spate_add_file(struct thorium_actor *self)
     if (concrete_self->file_index < argc) {
         file = argv[concrete_self->file_index];
 
-        thorium_message_init(&message, BSAL_ADD_FILE, strlen(file) + 1, file);
+        thorium_message_init(&message, ACTION_ADD_FILE, strlen(file) + 1, file);
 
         thorium_actor_send(self, concrete_self->input_controller, &message);
 
@@ -512,7 +512,7 @@ int spate_add_file(struct thorium_actor *self)
 
 void spate_add_file_reply(struct thorium_actor *self, struct thorium_message *message)
 {
-    thorium_actor_send_to_self_empty(self, SPATE_ADD_FILES);
+    thorium_actor_send_to_self_empty(self, ACTION_SPATE_ADD_FILES);
 }
 
 void spate_help(struct thorium_actor *self)
@@ -552,7 +552,7 @@ void spate_stop(struct thorium_actor *self)
     struct spate *concrete_self;
 
     concrete_self = (struct spate *)thorium_actor_concrete_actor(self);
-    thorium_actor_send_range_empty(self, &concrete_self->initial_actors, THORIUM_ACTOR_ASK_TO_STOP);
+    thorium_actor_send_range_empty(self, &concrete_self->initial_actors, ACTION_ASK_TO_STOP);
 }
 
 int spate_must_print_help(struct thorium_actor *self)

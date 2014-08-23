@@ -14,10 +14,10 @@ struct mock {
     struct bsal_vector spawners;
 };
 
-#define MOCK_PREPARE_DEATH 0x00007437
-#define MOCK_NOTIFY 0x00002d45
-#define MOCK_NEW_CONTACTS 0x00003f75
-#define MOCK_NEW_CONTACTS_REPLY 0x000071a1
+#define ACTION_MOCK_PREPARE_DEATH 0x00007437
+#define ACTION_MOCK_NOTIFY 0x00002d45
+#define ACTION_MOCK_NEW_CONTACTS 0x00003f75
+#define ACTION_ACTION_MOCK_NEW_CONTACTS_REPLY 0x000071a1
 
 extern struct thorium_script mock_script;
 

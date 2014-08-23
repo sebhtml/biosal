@@ -27,10 +27,10 @@ void bsal_assembly_arc_classifier_init(struct thorium_actor *self)
 
     concrete_self->kmer_length = -1;
 
-    thorium_actor_add_action(self, THORIUM_ACTOR_ASK_TO_STOP,
+    thorium_actor_add_action(self, ACTION_ASK_TO_STOP,
                     thorium_actor_ask_to_stop);
 
-    thorium_actor_add_action(self, BSAL_SET_KMER_LENGTH,
+    thorium_actor_add_action(self, ACTION_SET_KMER_LENGTH,
                     bsal_assembly_arc_classifier_set_kmer_length);
 
     printf("%s/%d is now active\n",
@@ -51,7 +51,7 @@ void bsal_assembly_arc_classifier_init(struct thorium_actor *self)
 
     bsal_vector_init(&concrete_self->consumers, sizeof(int));
 
-    thorium_actor_add_action(self, BSAL_ASSEMBLY_PUSH_ARC_BLOCK,
+    thorium_actor_add_action(self, ACTION_ASSEMBLY_PUSH_ARC_BLOCK,
                     bsal_assembly_arc_classifier_push_arc_block);
 
     concrete_self->received_blocks = 0;
@@ -105,7 +105,7 @@ void bsal_assembly_arc_classifier_receive(struct thorium_actor *self, struct tho
     buffer = thorium_message_buffer(message);
     source = thorium_message_source(message);
 
-    if (tag == THORIUM_ACTOR_SET_CONSUMERS) {
+    if (tag == ACTION_SET_CONSUMERS) {
 
         bsal_vector_unpack(&concrete_self->consumers, buffer);
 
@@ -116,9 +116,9 @@ void bsal_assembly_arc_classifier_receive(struct thorium_actor *self, struct tho
             bsal_vector_set_int(&concrete_self->pending_requests, i, 0);
         }
 
-        thorium_actor_send_reply_empty(self, THORIUM_ACTOR_SET_CONSUMERS_REPLY);
+        thorium_actor_send_reply_empty(self, ACTION_SET_CONSUMERS_REPLY);
 
-    } else if (tag == BSAL_ASSEMBLY_PUSH_ARC_BLOCK_REPLY){
+    } else if (tag == ACTION_ASSEMBLY_PUSH_ARC_BLOCK_REPLY){
 
         /*
          * Decrease counter now.
@@ -147,7 +147,7 @@ void bsal_assembly_arc_classifier_set_kmer_length(struct thorium_actor *self, st
 
     thorium_message_unpack_int(message, 0, &concrete_self->kmer_length);
 
-    thorium_actor_send_reply_empty(self, BSAL_SET_KMER_LENGTH_REPLY);
+    thorium_actor_send_reply_empty(self, ACTION_SET_KMER_LENGTH_REPLY);
 }
 
 void bsal_assembly_arc_classifier_push_arc_block(struct thorium_actor *self, struct thorium_message *message)
@@ -309,7 +309,7 @@ void bsal_assembly_arc_classifier_push_arc_block(struct thorium_actor *self, str
         bsal_assembly_arc_block_destroy(output_block,
                     ephemeral_memory);
 
-        thorium_message_init(&new_message, BSAL_ASSEMBLY_PUSH_ARC_BLOCK,
+        thorium_message_init(&new_message, ACTION_ASSEMBLY_PUSH_ARC_BLOCK,
                     new_count, new_buffer);
 
         consumer = bsal_vector_at_as_int(&concrete_self->consumers, i);
@@ -346,7 +346,7 @@ void bsal_assembly_arc_classifier_push_arc_block(struct thorium_actor *self, str
     if (maximum_pending_requests  <= concrete_self->maximum_pending_request_count) {
 
         thorium_actor_send_empty(self, concrete_self->source,
-                    BSAL_ASSEMBLY_PUSH_ARC_BLOCK_REPLY);
+                    ACTION_ASSEMBLY_PUSH_ARC_BLOCK_REPLY);
     } else {
 
         concrete_self->producer_is_waiting = 1;
@@ -392,7 +392,7 @@ void bsal_assembly_arc_classifier_verify_counters(struct thorium_actor *self)
      * Trigger an actor event now.
      */
     thorium_actor_send_empty(self, concrete_self->source,
-             BSAL_ASSEMBLY_PUSH_ARC_BLOCK_REPLY);
+             ACTION_ASSEMBLY_PUSH_ARC_BLOCK_REPLY);
 
     concrete_self->producer_is_waiting = 0;
 }

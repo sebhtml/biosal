@@ -35,7 +35,7 @@ void bsal_assembly_arc_kernel_init(struct thorium_actor *self)
 
     concrete_self->kmer_length = -1;
 
-    thorium_actor_add_action(self, BSAL_SET_KMER_LENGTH,
+    thorium_actor_add_action(self, ACTION_SET_KMER_LENGTH,
                     bsal_assembly_arc_kernel_set_kmer_length);
 
     printf("%s/%d is now active\n",
@@ -58,7 +58,7 @@ void bsal_assembly_arc_kernel_init(struct thorium_actor *self)
 
     concrete_self->produced_arcs = 0;
 
-    thorium_actor_add_action(self, BSAL_PUSH_SEQUENCE_DATA_BLOCK,
+    thorium_actor_add_action(self, ACTION_PUSH_SEQUENCE_DATA_BLOCK,
                     bsal_assembly_arc_kernel_push_sequence_data_block);
 
     concrete_self->received_blocks = 0;
@@ -94,7 +94,7 @@ void bsal_assembly_arc_kernel_receive(struct thorium_actor *self, struct thorium
     tag = thorium_message_tag(message);
     source = thorium_message_source(message);
 
-    if (tag == THORIUM_ACTOR_SET_PRODUCER) {
+    if (tag == ACTION_SET_PRODUCER) {
 
         thorium_message_unpack_int(message, 0, &concrete_self->producer);
 
@@ -102,23 +102,23 @@ void bsal_assembly_arc_kernel_receive(struct thorium_actor *self, struct thorium
 
         bsal_assembly_arc_kernel_ask(self, message);
 
-    } else if (tag == THORIUM_ACTOR_SET_CONSUMER) {
+    } else if (tag == ACTION_SET_CONSUMER) {
 
         thorium_message_unpack_int(message, 0, &concrete_self->consumer);
 
-        thorium_actor_send_reply_empty(self, THORIUM_ACTOR_SET_CONSUMER_REPLY);
+        thorium_actor_send_reply_empty(self, ACTION_SET_CONSUMER_REPLY);
 
-    } else if (tag == THORIUM_ACTOR_NOTIFY) {
+    } else if (tag == ACTION_NOTIFY) {
 
-        thorium_actor_send_reply_uint64_t(self, THORIUM_ACTOR_NOTIFY_REPLY,
+        thorium_actor_send_reply_uint64_t(self, ACTION_NOTIFY_REPLY,
                         concrete_self->produced_arcs);
 
-    } else if (tag == BSAL_SEQUENCE_STORE_ASK_REPLY) {
+    } else if (tag == ACTION_SEQUENCE_STORE_ASK_REPLY) {
 
         thorium_actor_send_empty(self, concrete_self->source,
-                        THORIUM_ACTOR_SET_PRODUCER_REPLY);
+                        ACTION_SET_PRODUCER_REPLY);
 
-    } else if (tag == THORIUM_ACTOR_ASK_TO_STOP) {
+    } else if (tag == ACTION_ASK_TO_STOP) {
 
         printf("%s/%d generated %" PRIu64 " arcs from %d sequence blocks, generated %d messages for consumer\n",
                         thorium_actor_script_name(self),
@@ -129,7 +129,7 @@ void bsal_assembly_arc_kernel_receive(struct thorium_actor *self, struct thorium
 
         thorium_actor_ask_to_stop(self, message);
 
-    } else if (tag == BSAL_ASSEMBLY_PUSH_ARC_BLOCK_REPLY) {
+    } else if (tag == ACTION_ASSEMBLY_PUSH_ARC_BLOCK_REPLY) {
 
         /*
          * Ask for more !
@@ -146,7 +146,7 @@ void bsal_assembly_arc_kernel_set_kmer_length(struct thorium_actor *self, struct
 
     thorium_message_unpack_int(message, 0, &concrete_self->kmer_length);
 
-    thorium_actor_send_reply_empty(self, BSAL_SET_KMER_LENGTH_REPLY);
+    thorium_actor_send_reply_empty(self, ACTION_SET_KMER_LENGTH_REPLY);
 }
 
 void bsal_assembly_arc_kernel_ask(struct thorium_actor *self, struct thorium_message *message)
@@ -166,17 +166,17 @@ void bsal_assembly_arc_kernel_ask(struct thorium_actor *self, struct thorium_mes
     }
 
     /*
-     * Send BSAL_SEQUENCE_STORE_ASK to producer. This message needs
+     * Send ACTION_SEQUENCE_STORE_ASK to producer. This message needs
      * a kmer length.
      *
      * There are 2 possible answers:
      *
-     * 1. BSAL_SEQUENCE_STORE_ASK_REPLY which means there is nothing available.
-     * 2. BSAL_PUSH_SEQUENCE_DATA_BLOCK which contains sequences.
+     * 1. ACTION_SEQUENCE_STORE_ASK_REPLY which means there is nothing available.
+     * 2. ACTION_PUSH_SEQUENCE_DATA_BLOCK which contains sequences.
      */
 
     thorium_actor_send_int(self, concrete_self->producer,
-                    BSAL_SEQUENCE_STORE_ASK, concrete_self->kmer_length);
+                    ACTION_SEQUENCE_STORE_ASK, concrete_self->kmer_length);
 }
 
 void bsal_assembly_arc_kernel_push_sequence_data_block(struct thorium_actor *self, struct thorium_message *message)
@@ -363,7 +363,7 @@ void bsal_assembly_arc_kernel_push_sequence_data_block(struct thorium_actor *sel
 
     bsal_input_command_destroy(&input_block, ephemeral_memory);
 
-    thorium_message_init(&new_message, BSAL_ASSEMBLY_PUSH_ARC_BLOCK,
+    thorium_message_init(&new_message, ACTION_ASSEMBLY_PUSH_ARC_BLOCK,
                     new_count, new_buffer);
     thorium_actor_send(self, concrete_self->consumer, &new_message);
 

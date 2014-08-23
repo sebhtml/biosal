@@ -23,10 +23,10 @@
 /* Some message tags at the node level instead of the actor level
  */
 
-#define THORIUM_NODE_ADD_INITIAL_ACTOR 0x00002438
-#define THORIUM_NODE_ADD_INITIAL_ACTORS 0x00004c19
-#define THORIUM_NODE_ADD_INITIAL_ACTORS_REPLY 0x00003ad3
-#define THORIUM_NODE_START 0x0000082c
+#define ACTION_THORIUM_NODE_ADD_INITIAL_ACTOR 0x00002438
+#define ACTION_ACTION_THORIUM_NODE_ADD_INITIAL_ACTORS 0x00004c19
+#define ACTION_ACTION_ACTION_THORIUM_NODE_ADD_INITIAL_ACTORS_REPLY 0x00003ad3
+#define ACTION_THORIUM_NODE_START 0x0000082c
 
 /*
  * Thorium product branding.
@@ -115,7 +115,7 @@ struct thorium_node {
     /*
      * This lock can not be removed because
      * of the function thorium_actor_spawn.
-     * The message THORIUM_ACTOR_SPAWN however does not
+     * The message ACTION_SPAWN however does not
      * requires locking.
      *
      * If thorium_actor_spawn is removed from the API, then
@@ -136,7 +136,7 @@ struct thorium_node {
      * This lock is required because it is accessed when
      * thorium_node_notify_death is called from thorium_actor_die.
      *
-     * This could be fixed by changing the semantics of THORIUM_ACTOR_STOP.
+     * This could be fixed by changing the semantics of ACTION_STOP.
      * Instead of catching it inside an actor, the actor could just send it to itself
      * and the Thorium engine could catch it and kill the actor
      * (the Thorium pacing thread would call thorium_node_notify_death
