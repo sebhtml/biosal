@@ -572,9 +572,9 @@ void bsal_assembly_graph_builder_connect_actors(struct thorium_actor *self)
      */
 
     /*
-     * TODO: instead of 8, the code could use the topology.
+     * DONE: instead of 8, the code could use the topology.
      */
-    period = 8;
+    period = thorium_actor_node_worker_count(self);
 
     printf("%s/%d connects actors\n",
             thorium_actor_script_name(self),
