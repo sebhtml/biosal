@@ -607,7 +607,7 @@ void thorium_actor_send_to_supervisor(struct thorium_actor *actor, struct thoriu
     thorium_actor_send(actor, thorium_actor_supervisor(actor), message);
 }
 
-void thorium_actor_add_route_with_sources(struct thorium_actor *self, int tag,
+void thorium_actor_add_action_with_sources(struct thorium_actor *self, int tag,
                 thorium_actor_receive_fn_t handler, struct bsal_vector *sources)
 {
     int i;
@@ -620,11 +620,11 @@ void thorium_actor_add_route_with_sources(struct thorium_actor *self, int tag,
 
         source = bsal_vector_at_as_int(sources, i);
 
-        thorium_actor_add_route_with_source(self, tag, handler, source);
+        thorium_actor_add_action_with_source(self, tag, handler, source);
     }
 }
 
-void thorium_actor_add_route(struct thorium_actor *self, int tag, thorium_actor_receive_fn_t handler)
+void thorium_actor_add_action(struct thorium_actor *self, int tag, thorium_actor_receive_fn_t handler)
 {
 
 #ifdef THORIUM_ACTOR_DEBUG_10335
@@ -634,20 +634,20 @@ void thorium_actor_add_route(struct thorium_actor *self, int tag, thorium_actor_
     }
 #endif
 
-    thorium_actor_add_route_with_source(self, tag, handler, THORIUM_ACTOR_ANYBODY);
+    thorium_actor_add_action_with_source(self, tag, handler, THORIUM_ACTOR_ANYBODY);
 }
 
-void thorium_actor_add_route_with_source(struct thorium_actor *self, int tag, thorium_actor_receive_fn_t handler,
+void thorium_actor_add_action_with_source(struct thorium_actor *self, int tag, thorium_actor_receive_fn_t handler,
                 int source)
 {
-    thorium_actor_add_route_with_source_and_condition(self, tag,
+    thorium_actor_add_action_with_source_and_condition(self, tag,
                     handler, source, NULL, -1);
 }
 
-void thorium_actor_add_route_with_condition(struct thorium_actor *self, int tag, thorium_actor_receive_fn_t handler, int *actual,
+void thorium_actor_add_action_with_condition(struct thorium_actor *self, int tag, thorium_actor_receive_fn_t handler, int *actual,
                 int expected)
 {
-    thorium_actor_add_route_with_source_and_condition(self, tag, handler, THORIUM_ACTOR_ANYBODY, actual, expected);
+    thorium_actor_add_action_with_source_and_condition(self, tag, handler, THORIUM_ACTOR_ANYBODY, actual, expected);
 }
 
 void thorium_actor_send_to_self_buffer(struct thorium_actor *actor, int tag, int count, void *buffer)

@@ -96,19 +96,19 @@ void bsal_input_controller_init(struct thorium_actor *actor)
                     thorium_actor_name(actor));
 #endif
 
-    thorium_actor_add_route(actor, BSAL_INPUT_CONTROLLER_CREATE_STORES,
+    thorium_actor_add_action(actor, BSAL_INPUT_CONTROLLER_CREATE_STORES,
                     bsal_input_controller_create_stores);
-    thorium_actor_add_route(actor, THORIUM_ACTOR_GET_NODE_NAME_REPLY,
+    thorium_actor_add_action(actor, THORIUM_ACTOR_GET_NODE_NAME_REPLY,
                     bsal_input_controller_get_node_name_reply);
-    thorium_actor_add_route(actor, THORIUM_ACTOR_GET_NODE_WORKER_COUNT_REPLY,
+    thorium_actor_add_action(actor, THORIUM_ACTOR_GET_NODE_WORKER_COUNT_REPLY,
                     bsal_input_controller_get_node_worker_count_reply);
 
-    thorium_actor_add_route(actor, BSAL_INPUT_CONTROLLER_PREPARE_SPAWNERS,
+    thorium_actor_add_action(actor, BSAL_INPUT_CONTROLLER_PREPARE_SPAWNERS,
                     bsal_input_controller_prepare_spawners);
-    thorium_actor_add_route(actor, BSAL_INPUT_CONTROLLER_SPAWN_READING_STREAMS,
+    thorium_actor_add_action(actor, BSAL_INPUT_CONTROLLER_SPAWN_READING_STREAMS,
                     bsal_input_controller_spawn_streams);
 
-    thorium_actor_add_route(actor, BSAL_INPUT_STREAM_SET_START_OFFSET_REPLY,
+    thorium_actor_add_action(actor, BSAL_INPUT_STREAM_SET_START_OFFSET_REPLY,
                     bsal_input_controller_set_offset_reply);
     thorium_actor_add_script(actor, BSAL_INPUT_STREAM_SCRIPT, &bsal_input_stream_script);
     thorium_actor_add_script(actor, BSAL_SEQUENCE_STORE_SCRIPT, &bsal_sequence_store_script);

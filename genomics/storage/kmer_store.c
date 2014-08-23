@@ -56,7 +56,7 @@ void bsal_kmer_store_init(struct thorium_actor *self)
 
     concrete_actor->last_received = 0;
 
-    thorium_actor_add_route(self, THORIUM_ACTOR_YIELD_REPLY, bsal_kmer_store_yield_reply);
+    thorium_actor_add_action(self, THORIUM_ACTOR_YIELD_REPLY, bsal_kmer_store_yield_reply);
 }
 
 void bsal_kmer_store_destroy(struct thorium_actor *self)

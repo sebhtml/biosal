@@ -80,16 +80,16 @@ void bsal_aggregator_init(struct thorium_actor *self)
 
     concrete_actor->forced = BSAL_FALSE;
 
-    thorium_actor_add_route(self, BSAL_AGGREGATE_KERNEL_OUTPUT,
+    thorium_actor_add_action(self, BSAL_AGGREGATE_KERNEL_OUTPUT,
                     bsal_aggregator_aggregate_kernel_output);
 
     /* Enable cloning stuff
      */
     thorium_actor_send_to_self_empty(self, THORIUM_ACTOR_PACK_ENABLE);
 
-    thorium_actor_add_route(self, THORIUM_ACTOR_PACK,
+    thorium_actor_add_action(self, THORIUM_ACTOR_PACK,
                     bsal_aggregator_pack_message);
-    thorium_actor_add_route(self, THORIUM_ACTOR_UNPACK,
+    thorium_actor_add_action(self, THORIUM_ACTOR_UNPACK,
                     bsal_aggregator_unpack_message);
 
     printf("aggregator %d is online\n", thorium_actor_name(self));

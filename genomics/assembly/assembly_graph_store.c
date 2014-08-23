@@ -79,26 +79,26 @@ void bsal_assembly_graph_store_init(struct thorium_actor *self)
 
     concrete_self->last_received = 0;
 
-    thorium_actor_add_route(self, THORIUM_ACTOR_YIELD_REPLY, bsal_assembly_graph_store_yield_reply);
-    thorium_actor_add_route(self, BSAL_PUSH_KMER_BLOCK,
+    thorium_actor_add_action(self, THORIUM_ACTOR_YIELD_REPLY, bsal_assembly_graph_store_yield_reply);
+    thorium_actor_add_action(self, BSAL_PUSH_KMER_BLOCK,
                     bsal_assembly_graph_store_push_kmer_block);
 
     concrete_self->received_arc_count = 0;
 
-    thorium_actor_add_route(self, BSAL_ASSEMBLY_PUSH_ARC_BLOCK,
+    thorium_actor_add_action(self, BSAL_ASSEMBLY_PUSH_ARC_BLOCK,
                     bsal_assembly_graph_store_push_arc_block);
 
     concrete_self->received_arc_block_count = 0;
 
-    thorium_actor_add_route(self, BSAL_ASSEMBLY_GET_SUMMARY,
+    thorium_actor_add_action(self, BSAL_ASSEMBLY_GET_SUMMARY,
                     bsal_assembly_graph_store_get_summary);
 
     concrete_self->summary_in_progress = 0;
 
-    thorium_actor_add_route(self, BSAL_ASSEMBLY_GET_VERTEX,
+    thorium_actor_add_action(self, BSAL_ASSEMBLY_GET_VERTEX,
                     bsal_assembly_graph_store_get_vertex);
 
-    thorium_actor_add_route(self, BSAL_ASSEMBLY_GET_STARTING_VERTEX,
+    thorium_actor_add_action(self, BSAL_ASSEMBLY_GET_STARTING_VERTEX,
                     bsal_assembly_graph_store_get_starting_vertex);
 
     concrete_self->printed_vertex_size = 0;
@@ -777,7 +777,7 @@ void bsal_assembly_graph_store_get_summary(struct thorium_actor *self, struct th
     concrete_self->summary_in_progress = 1;
     concrete_self->source_for_summary = source;
 
-    thorium_actor_add_route_with_condition(self, THORIUM_ACTOR_YIELD_REPLY,
+    thorium_actor_add_action_with_condition(self, THORIUM_ACTOR_YIELD_REPLY,
                     bsal_assembly_graph_store_yield_reply_summary,
                     &concrete_self->summary_in_progress, 1);
 

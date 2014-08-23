@@ -2075,8 +2075,8 @@ struct thorium_script *thorium_actor_get_script(struct thorium_actor *self)
     return self->script;
 }
 
-void thorium_actor_add_route_with_source_and_condition(struct thorium_actor *self, int tag, thorium_actor_receive_fn_t handler, int source,
+void thorium_actor_add_action_with_source_and_condition(struct thorium_actor *self, int tag, thorium_actor_receive_fn_t handler, int source,
         int *actual, int expected)
 {
-    thorium_dispatcher_add_route(&self->dispatcher, tag, handler, source, actual, expected);
+    thorium_dispatcher_add_action(&self->dispatcher, tag, handler, source, actual, expected);
 }

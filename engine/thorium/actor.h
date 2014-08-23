@@ -379,7 +379,7 @@ struct bsal_counter *thorium_actor_counter(struct thorium_actor *self);
  */
 int thorium_actor_use_route(struct thorium_actor *self, struct thorium_message *message);
 
-void thorium_actor_add_route_with_source_and_condition(struct thorium_actor *self, int tag, thorium_actor_receive_fn_t handler,
+void thorium_actor_add_action_with_source_and_condition(struct thorium_actor *self, int tag, thorium_actor_receive_fn_t handler,
                 int source, int *actual, int expected);
 
 struct thorium_dispatcher *thorium_actor_dispatcher(struct thorium_actor *self);

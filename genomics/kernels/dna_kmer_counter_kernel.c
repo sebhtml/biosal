@@ -82,17 +82,17 @@ void bsal_dna_kmer_counter_kernel_init(struct thorium_actor *actor)
 
     concrete_actor->auto_scaling_in_progress = 0;
 
-    thorium_actor_add_route(actor, THORIUM_ACTOR_PACK,
+    thorium_actor_add_action(actor, THORIUM_ACTOR_PACK,
                     bsal_dna_kmer_counter_kernel_pack_message);
-    thorium_actor_add_route(actor, THORIUM_ACTOR_UNPACK,
+    thorium_actor_add_action(actor, THORIUM_ACTOR_UNPACK,
                     bsal_dna_kmer_counter_kernel_unpack_message);
-    thorium_actor_add_route(actor, THORIUM_ACTOR_CLONE_REPLY,
+    thorium_actor_add_action(actor, THORIUM_ACTOR_CLONE_REPLY,
                     bsal_dna_kmer_counter_kernel_clone_reply);
-    thorium_actor_add_route(actor, THORIUM_ACTOR_NOTIFY,
+    thorium_actor_add_action(actor, THORIUM_ACTOR_NOTIFY,
                     bsal_dna_kmer_counter_kernel_notify);
-    thorium_actor_add_route(actor, THORIUM_ACTOR_NOTIFY_REPLY,
+    thorium_actor_add_action(actor, THORIUM_ACTOR_NOTIFY_REPLY,
                     bsal_dna_kmer_counter_kernel_notify_reply);
-    thorium_actor_add_route(actor, THORIUM_ACTOR_DO_AUTO_SCALING,
+    thorium_actor_add_action(actor, THORIUM_ACTOR_DO_AUTO_SCALING,
                     bsal_dna_kmer_counter_kernel_do_auto_scaling);
 
     printf("kernel %d is online !!!\n",

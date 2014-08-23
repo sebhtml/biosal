@@ -77,11 +77,11 @@ void bsal_assembly_block_classifier_init(struct thorium_actor *self)
      */
     thorium_actor_send_to_self_empty(self, THORIUM_ACTOR_PACK_ENABLE);
 
-    thorium_actor_add_route(self, THORIUM_ACTOR_PACK,
+    thorium_actor_add_action(self, THORIUM_ACTOR_PACK,
                     bsal_assembly_block_classifier_pack_message);
-    thorium_actor_add_route(self, THORIUM_ACTOR_UNPACK,
+    thorium_actor_add_action(self, THORIUM_ACTOR_UNPACK,
                     bsal_assembly_block_classifier_unpack_message);
-    thorium_actor_add_route(self, BSAL_AGGREGATE_KERNEL_OUTPUT,
+    thorium_actor_add_action(self, BSAL_AGGREGATE_KERNEL_OUTPUT,
                     bsal_assembly_block_classifier_aggregate_kernel_output);
 
     printf("assembly_block_classifier %d is online\n", thorium_actor_name(self));

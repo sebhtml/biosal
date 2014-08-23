@@ -23,7 +23,7 @@ struct thorium_dispatcher {
 void thorium_dispatcher_init(struct thorium_dispatcher *self);
 void thorium_dispatcher_destroy(struct thorium_dispatcher *self);
 
-void thorium_dispatcher_add_route(struct thorium_dispatcher *self, int tag, thorium_actor_receive_fn_t handler,
+void thorium_dispatcher_add_action(struct thorium_dispatcher *self, int tag, thorium_actor_receive_fn_t handler,
                 int source, int *actual, int expected);
 
 int thorium_dispatcher_dispatch(struct thorium_dispatcher *self, struct thorium_actor *actor,

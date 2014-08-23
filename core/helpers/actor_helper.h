@@ -81,12 +81,12 @@ void thorium_actor_send_to_self(struct thorium_actor *actor, struct thorium_mess
 void thorium_actor_send_to_supervisor(struct thorium_actor *actor, struct thorium_message *message);
 
 
-void thorium_actor_add_route_with_sources(struct thorium_actor *self, int tag,
+void thorium_actor_add_action_with_sources(struct thorium_actor *self, int tag,
                 thorium_actor_receive_fn_t handler, struct bsal_vector *sources);
-void thorium_actor_add_route(struct thorium_actor *self, int tag, thorium_actor_receive_fn_t handler);
-void thorium_actor_add_route_with_source(struct thorium_actor *self, int tag, thorium_actor_receive_fn_t handler,
+void thorium_actor_add_action(struct thorium_actor *self, int tag, thorium_actor_receive_fn_t handler);
+void thorium_actor_add_action_with_source(struct thorium_actor *self, int tag, thorium_actor_receive_fn_t handler,
                 int source);
-void thorium_actor_add_route_with_condition(struct thorium_actor *self, int tag, thorium_actor_receive_fn_t handler, int *actual,
+void thorium_actor_add_action_with_condition(struct thorium_actor *self, int tag, thorium_actor_receive_fn_t handler, int *actual,
                 int expected);
 
 #endif

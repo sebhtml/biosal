@@ -80,16 +80,16 @@ void bsal_input_stream_init(struct thorium_actor *actor)
 
     bsal_vector_init(&concrete_self->mega_blocks, sizeof(struct bsal_mega_block));
 
-    thorium_actor_add_route(actor, BSAL_INPUT_STREAM_SET_START_OFFSET, bsal_input_stream_set_start_offset);
-    thorium_actor_add_route(actor, BSAL_INPUT_STREAM_SET_END_OFFSET, bsal_input_stream_set_end_offset);
+    thorium_actor_add_action(actor, BSAL_INPUT_STREAM_SET_START_OFFSET, bsal_input_stream_set_start_offset);
+    thorium_actor_add_action(actor, BSAL_INPUT_STREAM_SET_END_OFFSET, bsal_input_stream_set_end_offset);
 
 #ifdef ENABLE_PARALLEL_COUNT
-    thorium_actor_add_route(actor, BSAL_INPUT_COUNT_IN_PARALLEL, bsal_input_stream_count_in_parallel);
-    thorium_actor_add_route(actor, BSAL_INPUT_COUNT_REPLY, bsal_input_stream_count_reply);
+    thorium_actor_add_action(actor, BSAL_INPUT_COUNT_IN_PARALLEL, bsal_input_stream_count_in_parallel);
+    thorium_actor_add_action(actor, BSAL_INPUT_COUNT_REPLY, bsal_input_stream_count_reply);
 
 #else
-    thorium_actor_add_route(actor, BSAL_INPUT_COUNT_IN_PARALLEL, bsal_input_stream_count_in_parallel_mock);
-    thorium_actor_add_route(actor, BSAL_INPUT_COUNT_REPLY, bsal_input_stream_count_reply_mock);
+    thorium_actor_add_action(actor, BSAL_INPUT_COUNT_IN_PARALLEL, bsal_input_stream_count_in_parallel_mock);
+    thorium_actor_add_action(actor, BSAL_INPUT_COUNT_REPLY, bsal_input_stream_count_reply_mock);
 #endif
 
     concrete_self->count_customer = THORIUM_ACTOR_NOBODY;
@@ -770,7 +770,7 @@ void bsal_input_stream_count_in_parallel(struct thorium_actor *self, struct thor
 
     size = bsal_vector_size(&concrete_self->start_offsets);
 
-    thorium_actor_add_route(self, THORIUM_ACTOR_SPAWN_REPLY, bsal_input_stream_spawn_reply);
+    thorium_actor_add_action(self, THORIUM_ACTOR_SPAWN_REPLY, bsal_input_stream_spawn_reply);
 
     printf("DEBUG stream/%d spawns %d streams for counting\n",
                     thorium_actor_name(self),
@@ -814,9 +814,9 @@ void bsal_input_stream_spawn_reply(struct thorium_actor *self, struct thorium_me
         /* Set offsets
          */
 
-        thorium_actor_add_route(self, BSAL_INPUT_STREAM_SET_START_OFFSET_REPLY,
+        thorium_actor_add_action(self, BSAL_INPUT_STREAM_SET_START_OFFSET_REPLY,
                             bsal_input_stream_set_offset_reply);
-        thorium_actor_add_route(self, BSAL_INPUT_STREAM_SET_END_OFFSET_REPLY,
+        thorium_actor_add_action(self, BSAL_INPUT_STREAM_SET_END_OFFSET_REPLY,
                             bsal_input_stream_set_offset_reply);
 
         concrete_self->finished_parallel_stream_count = 0;
@@ -1083,7 +1083,7 @@ void bsal_input_stream_set_offset_reply(struct thorium_actor *self, struct thori
          * Assign files to input streams
          */
 
-        thorium_actor_add_route(self, BSAL_INPUT_OPEN_REPLY,
+        thorium_actor_add_action(self, BSAL_INPUT_OPEN_REPLY,
                         bsal_input_stream_open_reply);
 
         concrete_self->finished_parallel_stream_count = 0;

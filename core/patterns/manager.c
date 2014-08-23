@@ -43,7 +43,7 @@ void bsal_manager_init(struct thorium_actor *actor)
      * Register the route for stopping
      */
 
-    thorium_actor_add_route(actor, THORIUM_ACTOR_ASK_TO_STOP,
+    thorium_actor_add_action(actor, THORIUM_ACTOR_ASK_TO_STOP,
                     bsal_manager_ask_to_stop);
 
     bsal_map_init(&concrete_actor->spawner_child_count, sizeof(int), sizeof(int));

@@ -47,28 +47,28 @@ void spate_init(struct thorium_actor *self)
 
     bsal_timer_init(&concrete_self->timer);
 
-    thorium_actor_add_route(self,
+    thorium_actor_add_action(self,
                     THORIUM_ACTOR_START, spate_start);
-    thorium_actor_add_route(self,
+    thorium_actor_add_action(self,
                     THORIUM_ACTOR_ASK_TO_STOP, spate_ask_to_stop);
-    thorium_actor_add_route(self,
+    thorium_actor_add_action(self,
                     THORIUM_ACTOR_SPAWN_REPLY, spate_spawn_reply);
-    thorium_actor_add_route(self,
+    thorium_actor_add_action(self,
                     BSAL_MANAGER_SET_SCRIPT_REPLY, spate_set_script_reply);
-    thorium_actor_add_route(self,
+    thorium_actor_add_action(self,
                     THORIUM_ACTOR_SET_CONSUMERS_REPLY, spate_set_consumers_reply);
-    thorium_actor_add_route(self,
+    thorium_actor_add_action(self,
                     BSAL_SET_BLOCK_SIZE_REPLY, spate_set_block_size_reply);
-    thorium_actor_add_route(self,
+    thorium_actor_add_action(self,
                     BSAL_INPUT_DISTRIBUTE_REPLY, spate_distribute_reply);
-    thorium_actor_add_route(self,
+    thorium_actor_add_action(self,
                     SPATE_ADD_FILES, spate_add_files);
-    thorium_actor_add_route(self,
+    thorium_actor_add_action(self,
                     SPATE_ADD_FILES_REPLY, spate_add_files_reply);
-    thorium_actor_add_route(self,
+    thorium_actor_add_action(self,
                     BSAL_ADD_FILE_REPLY, spate_add_file_reply);
 
-    thorium_actor_add_route(self,
+    thorium_actor_add_action(self,
                     THORIUM_ACTOR_START_REPLY, spate_start_reply);
 
     /*
@@ -263,7 +263,7 @@ void spate_spawn_reply(struct thorium_actor *self, struct thorium_message *messa
 
         concrete_self->input_controller = new_actor;
 
-        thorium_actor_add_route_with_source(self,
+        thorium_actor_add_action_with_source(self,
                     THORIUM_ACTOR_START_REPLY,
                     spate_start_reply_controller,
                     concrete_self->input_controller);
@@ -279,7 +279,7 @@ void spate_spawn_reply(struct thorium_actor *self, struct thorium_message *messa
 
         concrete_self->manager_for_sequence_stores = new_actor;
 
-        thorium_actor_add_route_with_source(self,
+        thorium_actor_add_action_with_source(self,
                     THORIUM_ACTOR_START_REPLY,
                     spate_start_reply_manager,
                     concrete_self->manager_for_sequence_stores);
@@ -295,12 +295,12 @@ void spate_spawn_reply(struct thorium_actor *self, struct thorium_message *messa
 
         concrete_self->assembly_graph_builder = new_actor;
 
-        thorium_actor_add_route_with_source(self,
+        thorium_actor_add_action_with_source(self,
                     THORIUM_ACTOR_START_REPLY,
                     spate_start_reply_builder,
                 concrete_self->assembly_graph_builder);
 
-        thorium_actor_add_route_with_source(self,
+        thorium_actor_add_action_with_source(self,
                     THORIUM_ACTOR_SET_PRODUCERS_REPLY,
                     spate_set_producers_reply,
                     concrete_self->assembly_graph_builder);
@@ -449,7 +449,7 @@ void spate_start_reply_builder(struct thorium_actor *self, struct thorium_messag
 
     concrete_self->dummy_walker = THORIUM_ACTOR_SPAWNING_IN_PROGRESS;
 
-    thorium_actor_add_route_with_condition(self, THORIUM_ACTOR_SPAWN_REPLY,
+    thorium_actor_add_action_with_condition(self, THORIUM_ACTOR_SPAWN_REPLY,
                     spate_spawn_reply_dummy_walker,
                     &concrete_self->dummy_walker, THORIUM_ACTOR_SPAWNING_IN_PROGRESS);
 
@@ -465,7 +465,7 @@ void spate_spawn_reply_dummy_walker(struct thorium_actor *self, struct thorium_m
 
     thorium_message_unpack_int(message, 0, &concrete_self->dummy_walker);
 
-    thorium_actor_add_route_with_source(self, THORIUM_ACTOR_START_REPLY,
+    thorium_actor_add_action_with_source(self, THORIUM_ACTOR_START_REPLY,
                     spate_start_reply_dummy_walker,
                     concrete_self->dummy_walker);
 

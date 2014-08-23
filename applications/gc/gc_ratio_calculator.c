@@ -22,11 +22,11 @@ void gc_ratio_calculator_init(struct thorium_actor *actor)
     bsal_vector_init(&concrete_actor->spawners, sizeof(int));
     concrete_actor->completed = 0;
 
-    thorium_actor_add_route(actor, THORIUM_ACTOR_START, gc_ratio_calculator_start);
-    thorium_actor_add_route(actor, GC_HELLO, gc_ratio_calculator_hello);
-    thorium_actor_add_route(actor, GC_HELLO_REPLY, gc_ratio_calculator_hello_reply);
-    thorium_actor_add_route(actor, THORIUM_ACTOR_NOTIFY, gc_ratio_calculator_notify);
-    thorium_actor_add_route(actor, THORIUM_ACTOR_ASK_TO_STOP, gc_ratio_calculator_ask_to_stop);
+    thorium_actor_add_action(actor, THORIUM_ACTOR_START, gc_ratio_calculator_start);
+    thorium_actor_add_action(actor, GC_HELLO, gc_ratio_calculator_hello);
+    thorium_actor_add_action(actor, GC_HELLO_REPLY, gc_ratio_calculator_hello_reply);
+    thorium_actor_add_action(actor, THORIUM_ACTOR_NOTIFY, gc_ratio_calculator_notify);
+    thorium_actor_add_action(actor, THORIUM_ACTOR_ASK_TO_STOP, gc_ratio_calculator_ask_to_stop);
 }
 
 void gc_ratio_calculator_destroy(struct thorium_actor *actor)

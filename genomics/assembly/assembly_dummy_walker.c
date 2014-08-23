@@ -47,25 +47,25 @@ void bsal_assembly_dummy_walker_init(struct thorium_actor *self)
 
     bsal_vector_init(&concrete_self->graph_stores, sizeof(int));
 
-    thorium_actor_add_route(self, BSAL_ASSEMBLY_GET_STARTING_VERTEX_REPLY,
+    thorium_actor_add_action(self, BSAL_ASSEMBLY_GET_STARTING_VERTEX_REPLY,
         bsal_assembly_dummy_walker_get_starting_vertex_reply);
 
-    thorium_actor_add_route(self, THORIUM_ACTOR_START,
+    thorium_actor_add_action(self, THORIUM_ACTOR_START,
                     bsal_assembly_dummy_walker_start);
 
-    thorium_actor_add_route(self, BSAL_ASSEMBLY_GET_VERTEX_REPLY,
+    thorium_actor_add_action(self, BSAL_ASSEMBLY_GET_VERTEX_REPLY,
                     bsal_assembly_dummy_walker_get_vertex_reply);
 
-    thorium_actor_add_route(self, BSAL_ASSEMBLY_GET_VERTICES_AND_SELECT,
+    thorium_actor_add_action(self, BSAL_ASSEMBLY_GET_VERTICES_AND_SELECT,
                     bsal_assembly_dummy_walker_get_vertices_and_select);
 
-    thorium_actor_add_route(self, BSAL_ASSEMBLY_GET_VERTICES_AND_SELECT_REPLY,
+    thorium_actor_add_action(self, BSAL_ASSEMBLY_GET_VERTICES_AND_SELECT_REPLY,
                     bsal_assembly_dummy_walker_get_vertices_and_select_reply);
 
-    thorium_actor_add_route(self, THORIUM_ACTOR_BEGIN,
+    thorium_actor_add_action(self, THORIUM_ACTOR_BEGIN,
                     bsal_assembly_dummy_walker_begin);
 
-    thorium_actor_add_route_with_condition(self, BSAL_ASSEMBLY_GET_VERTEX_REPLY,
+    thorium_actor_add_action_with_condition(self, BSAL_ASSEMBLY_GET_VERTEX_REPLY,
                     bsal_assembly_dummy_walker_get_vertex_reply_starting_vertex,
                     &concrete_self->has_starting_vertex, 0);
 

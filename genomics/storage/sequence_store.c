@@ -53,7 +53,7 @@ void bsal_sequence_store_init(struct thorium_actor *actor)
         bsal_dna_codec_enable_two_bit_encoding(&concrete_actor->codec);
     }
 
-    thorium_actor_add_route(actor, BSAL_SEQUENCE_STORE_ASK,
+    thorium_actor_add_action(actor, BSAL_SEQUENCE_STORE_ASK,
                     bsal_sequence_store_ask);
 
     concrete_actor->iterator_started = 0;

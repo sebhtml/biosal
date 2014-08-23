@@ -58,7 +58,7 @@ void thorium_dispatcher_destroy(struct thorium_dispatcher *self)
     bsal_map_destroy(&self->routes);
 }
 
-void thorium_dispatcher_add_route(struct thorium_dispatcher *self, int tag,
+void thorium_dispatcher_add_action(struct thorium_dispatcher *self, int tag,
                thorium_actor_receive_fn_t handler,
                int source,
                int *actual,

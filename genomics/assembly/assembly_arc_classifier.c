@@ -27,10 +27,10 @@ void bsal_assembly_arc_classifier_init(struct thorium_actor *self)
 
     concrete_self->kmer_length = -1;
 
-    thorium_actor_add_route(self, THORIUM_ACTOR_ASK_TO_STOP,
+    thorium_actor_add_action(self, THORIUM_ACTOR_ASK_TO_STOP,
                     thorium_actor_ask_to_stop);
 
-    thorium_actor_add_route(self, BSAL_SET_KMER_LENGTH,
+    thorium_actor_add_action(self, BSAL_SET_KMER_LENGTH,
                     bsal_assembly_arc_classifier_set_kmer_length);
 
     printf("%s/%d is now active\n",
@@ -51,7 +51,7 @@ void bsal_assembly_arc_classifier_init(struct thorium_actor *self)
 
     bsal_vector_init(&concrete_self->consumers, sizeof(int));
 
-    thorium_actor_add_route(self, BSAL_ASSEMBLY_PUSH_ARC_BLOCK,
+    thorium_actor_add_action(self, BSAL_ASSEMBLY_PUSH_ARC_BLOCK,
                     bsal_assembly_arc_classifier_push_arc_block);
 
     concrete_self->received_blocks = 0;

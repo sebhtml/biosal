@@ -82,19 +82,19 @@ void bsal_assembly_sliding_window_init(struct thorium_actor *actor)
 
     concrete_actor->auto_scaling_in_progress = 0;
 
-    thorium_actor_add_route(actor, THORIUM_ACTOR_PACK,
+    thorium_actor_add_action(actor, THORIUM_ACTOR_PACK,
                     bsal_assembly_sliding_window_pack_message);
-    thorium_actor_add_route(actor, THORIUM_ACTOR_UNPACK,
+    thorium_actor_add_action(actor, THORIUM_ACTOR_UNPACK,
                     bsal_assembly_sliding_window_unpack_message);
-    thorium_actor_add_route(actor, THORIUM_ACTOR_CLONE_REPLY,
+    thorium_actor_add_action(actor, THORIUM_ACTOR_CLONE_REPLY,
                     bsal_assembly_sliding_window_clone_reply);
-    thorium_actor_add_route(actor, THORIUM_ACTOR_NOTIFY,
+    thorium_actor_add_action(actor, THORIUM_ACTOR_NOTIFY,
                     bsal_assembly_sliding_window_notify);
-    thorium_actor_add_route(actor, THORIUM_ACTOR_NOTIFY_REPLY,
+    thorium_actor_add_action(actor, THORIUM_ACTOR_NOTIFY_REPLY,
                     bsal_assembly_sliding_window_notify_reply);
-    thorium_actor_add_route(actor, THORIUM_ACTOR_DO_AUTO_SCALING,
+    thorium_actor_add_action(actor, THORIUM_ACTOR_DO_AUTO_SCALING,
                     bsal_assembly_sliding_window_do_auto_scaling);
-    thorium_actor_add_route(actor, ACTION_SET_PRODUCERS_FOR_WORK_STEALING,
+    thorium_actor_add_action(actor, ACTION_SET_PRODUCERS_FOR_WORK_STEALING,
                     bsal_assembly_sliding_window_set_producers_for_work_stealing);
 
     printf("%s/%d is online on node node/%d\n",

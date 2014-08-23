@@ -35,7 +35,7 @@ void bsal_assembly_arc_kernel_init(struct thorium_actor *self)
 
     concrete_self->kmer_length = -1;
 
-    thorium_actor_add_route(self, BSAL_SET_KMER_LENGTH,
+    thorium_actor_add_action(self, BSAL_SET_KMER_LENGTH,
                     bsal_assembly_arc_kernel_set_kmer_length);
 
     printf("%s/%d is now active\n",
@@ -58,7 +58,7 @@ void bsal_assembly_arc_kernel_init(struct thorium_actor *self)
 
     concrete_self->produced_arcs = 0;
 
-    thorium_actor_add_route(self, BSAL_PUSH_SEQUENCE_DATA_BLOCK,
+    thorium_actor_add_action(self, BSAL_PUSH_SEQUENCE_DATA_BLOCK,
                     bsal_assembly_arc_kernel_push_sequence_data_block);
 
     concrete_self->received_blocks = 0;
