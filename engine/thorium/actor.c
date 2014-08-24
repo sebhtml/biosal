@@ -19,6 +19,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <inttypes.h>
+#include <stdint.h>
 
 /* Debugging options
  */
@@ -66,6 +68,9 @@ void thorium_actor_init(struct thorium_actor *self, void *concrete_actor,
     int capacity;
 
     thorium_actor_set_priority(self, THORIUM_PRIORITY_NORMAL);
+
+    self->current_source = THORIUM_ACTOR_NOBODY;
+    self->current_message = NULL;
 
     bsal_map_init(&self->received_messages, sizeof(int), sizeof(int));
     bsal_map_init(&self->sent_messages, sizeof(int), sizeof(int));
@@ -235,16 +240,25 @@ void thorium_actor_print(struct thorium_actor *self)
     int received = (int)bsal_counter_get(&self->counter, BSAL_COUNTER_RECEIVED_MESSAGES);
     int sent = (int)bsal_counter_get(&self->counter, BSAL_COUNTER_SENT_MESSAGES);
 
-    printf("INSPECT actor: %s/%d\n",
+    printf("EXAMINE: actor: %s/%d\n",
                         thorium_actor_script_name(self),
                         thorium_actor_name(self));
 
-    printf("[thorium_actor_print] Name: %i Supervisor %i Node: %i, Thread: %i"
-                    " received %i sent %i\n", thorium_actor_name(self),
+    printf("EXAMINE: Name: %i Supervisor: %i ThoriumNode: %i, Worker: %i"
+                    " ReceivedMessages: %i SentMessages: %i\n",
+                    thorium_actor_name(self),
                     thorium_actor_supervisor(self),
                     thorium_node_name(thorium_actor_node(self)),
                     thorium_worker_name(thorium_actor_worker(self)),
-                    received, sent);
+                    received,
+                    sent);
+
+    printf("EXAMINE: CurrentHeapSize for home node is %" PRIu64 "\n",
+                    bsal_memory_get_heap_size());
+
+    printf("EXAMINE: CurrentMessageSource: %d CurrentMessageTag: %d\n",
+                    thorium_message_source(self->current_message),
+                    thorium_message_tag(self->current_message));
 }
 
 thorium_actor_init_fn_t thorium_actor_get_init(struct thorium_actor *self)
@@ -903,6 +917,8 @@ void thorium_actor_receive(struct thorium_actor *self, struct thorium_message *m
     source = thorium_message_source(message);
 
     self->current_source = source;
+    self->current_message = message;
+
     bucket = (int *)bsal_map_get(&self->received_messages, &source);
 
     if (bucket == NULL) {
@@ -954,6 +970,9 @@ void thorium_actor_receive(struct thorium_actor *self, struct thorium_message *m
     }
 
     receive(self, message);
+
+    self->current_source = THORIUM_ACTOR_NOBODY;
+    self->current_message = NULL;
 }
 
 void thorium_actor_receive_proxy_message(struct thorium_actor *self,
@@ -2080,3 +2099,4 @@ void thorium_actor_add_action_with_source_and_condition(struct thorium_actor *se
 {
     thorium_dispatcher_add_action(&self->dispatcher, tag, handler, source, actual, expected);
 }
+

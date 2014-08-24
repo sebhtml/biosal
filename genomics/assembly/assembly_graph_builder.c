@@ -219,7 +219,6 @@ void bsal_assembly_graph_builder_spawn_reply_graph_store_manager(struct thorium_
                         SCRIPT_ASSEMBLY_GRAPH_STORE);
 }
 
-
 /*
  * find some sort of way to reduce the number of lines here
  * using a new Thorium API call.
@@ -234,13 +233,11 @@ void bsal_assembly_graph_builder_spawn_reply(struct thorium_actor *self, struct 
     struct bsal_assembly_graph_builder *concrete_self;
 
     concrete_self = thorium_actor_concrete_actor(self);
-
     printf("DEBUG bsal_assembly_graph_builder_spawn_reply\n");
 
     /*
      * Configure the manager for block classifiers
      */
-
     if (concrete_self->manager_for_classifiers == THORIUM_ACTOR_NOBODY) {
 
         thorium_message_unpack_int(message, 0, &concrete_self->manager_for_classifiers);
@@ -340,7 +337,6 @@ void bsal_assembly_graph_builder_start_reply_store_manager(struct thorium_actor 
 
     thorium_actor_send_int(self, spawner, ACTION_SPAWN,
                     SCRIPT_MANAGER);
-
 }
 
 void bsal_assembly_graph_builder_spawn_reply_window_manager(struct thorium_actor *self, struct thorium_message *message)
@@ -371,7 +367,6 @@ void bsal_assembly_graph_builder_spawn_reply_window_manager(struct thorium_actor
 
     thorium_actor_send_int(self, concrete_self->manager_for_windows, ACTION_MANAGER_SET_SCRIPT,
                     SCRIPT_ASSEMBLY_SLIDING_WINDOW);
-
 }
 
 void bsal_assembly_graph_builder_set_producers(struct thorium_actor *self, struct thorium_message *message)
@@ -381,7 +376,6 @@ void bsal_assembly_graph_builder_set_producers(struct thorium_actor *self, struc
     int source;
 
     source = thorium_message_source(message);
-
 
     concrete_self = thorium_actor_concrete_actor(self);
     concrete_self->source = source;
@@ -394,10 +388,12 @@ void bsal_assembly_graph_builder_set_producers(struct thorium_actor *self, struc
                     (int)bsal_vector_size(&concrete_self->sequence_stores),
                     concrete_self->source);
 
+    /*
+     * Unpack sequence stores in the concrete actor.
+     */
     bsal_vector_unpack(&concrete_self->sequence_stores, buffer);
 
     thorium_actor_send_reply_empty(self, ACTION_SET_PRODUCERS_REPLY);
-
 }
 
 void bsal_assembly_graph_builder_set_script_reply_window_manager(struct thorium_actor *self, struct thorium_message *message)
@@ -405,7 +401,6 @@ void bsal_assembly_graph_builder_set_script_reply_window_manager(struct thorium_
     struct bsal_assembly_graph_builder *concrete_self;
 
     concrete_self = thorium_actor_concrete_actor(self);
-
     thorium_actor_send_reply_vector(self, ACTION_START, &concrete_self->spawners);
 }
 
@@ -445,7 +440,6 @@ void bsal_assembly_graph_builder_set_script_reply_classifier_manager(struct thor
     struct bsal_assembly_graph_builder *concrete_self;
 
     concrete_self = thorium_actor_concrete_actor(self);
-
     thorium_actor_send_reply_vector(self, ACTION_START, &concrete_self->spawners);
 }
 
@@ -455,9 +449,7 @@ void bsal_assembly_graph_builder_start_reply_classifier_manager(struct thorium_a
     struct bsal_assembly_graph_builder *concrete_self;
 
     concrete_self = thorium_actor_concrete_actor(self);
-
     buffer = thorium_message_buffer(message);
-
     bsal_vector_unpack(&concrete_self->block_classifiers, buffer);
 
     printf("%s/%d has %d block classifiers for assembly\n",
@@ -469,7 +461,6 @@ void bsal_assembly_graph_builder_start_reply_classifier_manager(struct thorium_a
      * Configure the graph builder now.
      */
     bsal_assembly_graph_builder_configure(self);
-
 }
 
 void bsal_assembly_graph_builder_configure(struct thorium_actor *self)
@@ -485,13 +476,12 @@ void bsal_assembly_graph_builder_configure(struct thorium_actor *self)
      */
     concrete_self->kmer_length = bsal_assembly_graph_builder_get_kmer_length(self);
 
+    thorium_actor_print(self);
 
     printf("%s/%d configures the kmer length (%d) for the actor computation\n",
                     thorium_actor_script_name(self),
                     thorium_actor_name(self),
                     concrete_self->kmer_length);
-
-
     /*
      * set the kmer length for graph stores, sliding windows, and block classifiers
      */
@@ -499,7 +489,6 @@ void bsal_assembly_graph_builder_configure(struct thorium_actor *self)
     for (i = 0; i < bsal_vector_size(&concrete_self->graph_stores); i++) {
 
         destination = bsal_vector_at_as_int(&concrete_self->graph_stores, i);
-
         thorium_actor_send_int(self, destination, ACTION_SET_KMER_LENGTH,
                         concrete_self->kmer_length);
     }
@@ -507,7 +496,6 @@ void bsal_assembly_graph_builder_configure(struct thorium_actor *self)
     for (i = 0; i < bsal_vector_size(&concrete_self->sliding_windows); i++) {
 
         destination = bsal_vector_at_as_int(&concrete_self->sliding_windows, i);
-
         thorium_actor_send_int(self, destination, ACTION_SET_KMER_LENGTH,
                         concrete_self->kmer_length);
     }
@@ -520,6 +508,9 @@ void bsal_assembly_graph_builder_configure(struct thorium_actor *self)
                         concrete_self->kmer_length);
     }
 
+    /*
+     * There will be a response for this.
+     */
 }
 
 void bsal_assembly_graph_builder_set_kmer_reply(struct thorium_actor *self, struct thorium_message *message)
@@ -528,11 +519,9 @@ void bsal_assembly_graph_builder_set_kmer_reply(struct thorium_actor *self, stru
     struct bsal_assembly_graph_builder *concrete_self;
 
     concrete_self = thorium_actor_concrete_actor(self);
-
     ++concrete_self->actors_with_kmer_length;
 
     expected = 0;
-
     expected += bsal_vector_size(&concrete_self->graph_stores);
     expected += bsal_vector_size(&concrete_self->sliding_windows);
     expected += bsal_vector_size(&concrete_self->block_classifiers);
@@ -542,6 +531,8 @@ void bsal_assembly_graph_builder_set_kmer_reply(struct thorium_actor *self, stru
      */
     if (concrete_self->actors_with_kmer_length == expected) {
 
+        thorium_actor_print(self);
+    
         printf("%s/%d configured (%d actors) the kmer length value for sliding windows, block classifiers and graph stores\n",
                         thorium_actor_script_name(self),
                         thorium_actor_name(self),
@@ -624,7 +615,6 @@ void bsal_assembly_graph_builder_set_consumer_reply_graph_stores(struct thorium_
     struct bsal_assembly_graph_builder *concrete_self;
 
     concrete_self = thorium_actor_concrete_actor(self);
-
     ++concrete_self->configured_graph_stores;
 
     if (concrete_self->configured_graph_stores == bsal_vector_size(&concrete_self->graph_stores)) {
@@ -643,7 +633,6 @@ void bsal_assembly_graph_builder_set_consumer_reply_windows(struct thorium_actor
     struct bsal_assembly_graph_builder *concrete_self;
 
     concrete_self = thorium_actor_concrete_actor(self);
-
     ++concrete_self->configured_sliding_windows;
 
 #ifdef BSAL_ASSEMBLY_GRAPH_BUILDER_DEBUG
@@ -677,6 +666,7 @@ void bsal_assembly_graph_builder_verify(struct thorium_actor *self)
             thorium_actor_script_name(self),
             thorium_actor_name(self));
 
+    thorium_actor_print(self);
 
     /* Set the producer for every sliding window.
      */
@@ -692,7 +682,6 @@ void bsal_assembly_graph_builder_verify(struct thorium_actor *self)
         thorium_actor_send_int(self, consumer, ACTION_SET_PRODUCER,
                         producer);
     }
-
 }
 
 void bsal_assembly_graph_builder_set_consumers_reply(struct thorium_actor *self, struct thorium_message *message)
@@ -700,7 +689,6 @@ void bsal_assembly_graph_builder_set_consumers_reply(struct thorium_actor *self,
     struct bsal_assembly_graph_builder *concrete_self;
 
     concrete_self = thorium_actor_concrete_actor(self);
-
     ++concrete_self->configured_block_classifiers;
 
 #ifdef BSAL_ASSEMBLY_GRAPH_BUILDER_DEBUG
@@ -715,7 +703,6 @@ void bsal_assembly_graph_builder_set_producer_reply(struct thorium_actor *self, 
     struct bsal_assembly_graph_builder *concrete_self;
 
     concrete_self = thorium_actor_concrete_actor(self);
-
     ++concrete_self->completed_sliding_windows;
 
     /*
@@ -790,7 +777,6 @@ void bsal_assembly_graph_builder_notify_reply(struct thorium_actor *self, struct
     thorium_message_unpack_uint64_t(message, 0, &produced_kmer_count);
 
     concrete_self->total_kmer_count += produced_kmer_count;
-
     ++concrete_self->notified_windows;
 
     if (concrete_self->notified_windows == bsal_vector_size(&concrete_self->sliding_windows)) {

@@ -248,6 +248,7 @@ struct thorium_actor {
 
     struct thorium_dispatcher dispatcher;
     int current_source;
+    struct thorium_message *current_message;
     void *concrete_actor;
 
     struct bsal_lock receive_lock;

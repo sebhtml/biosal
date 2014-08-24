@@ -256,7 +256,6 @@ thorium_actor_receive_fn_t thorium_dispatcher_get(struct thorium_dispatcher *sel
         return handler_without_condition;
     }
 
-
     return NULL;
 }
 
