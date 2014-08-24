@@ -1,5 +1,11 @@
 #!/bin/bash
 
+if test $# -lt 1
+then
+    echo "Need a file (gz file)"
+    exit
+fi
+
 file=$1
 
 mkdir $file"_PROFILES"
@@ -12,8 +18,14 @@ ln -s ../$file
 nodes=$(cat $file | gunzip | grep booted | head -n1|awk '{print $5}'|sed 's=(==g')
 
 echo "Nodes= $nodes"
+seq 0 $((nodes - 1)) > NodeList.txt
 
-for node in $(seq 0 $((nodes - 1)))
+if test $# -eq 2
+then
+    echo $2 > NodeList.txt
+fi
+
+for node in $(cat NodeList.txt)
 do
     echo $node
 
