@@ -151,7 +151,6 @@ void bsal_assembly_graph_builder_spawn_reply_arc_classifier_manager(struct thori
 void bsal_assembly_graph_builder_set_kmer_reply_arcs(struct thorium_actor *self, struct thorium_message *message);
 void bsal_assembly_graph_builder_configure_arc_actors(struct thorium_actor *self, struct thorium_message *message);
 
-
 /*
  * Functions to verify arcs for high quality.
  */
@@ -160,5 +159,7 @@ void bsal_assembly_graph_builder_verify_arc_kernels(struct thorium_actor *self, 
 void bsal_assembly_graph_builder_notify_reply_arc_kernels(struct thorium_actor *self, struct thorium_message *message);
 
 void bsal_assembly_graph_builder_get_summary_reply(struct thorium_actor *self, struct thorium_message *message);
+void bsal_assembly_graph_builder_get_producers_for_work_stealing(struct thorium_actor *self, struct bsal_vector *producers_for_work_stealing,
+                int i);
 
 #endif

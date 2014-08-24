@@ -557,24 +557,17 @@ void bsal_assembly_graph_builder_connect_actors(struct thorium_actor *self)
     int producer;
     int consumer;
     struct bsal_assembly_graph_builder *concrete_self;
-    struct bsal_vector alternate_producers;
+    struct bsal_vector producers_for_work_stealing;
     struct bsal_memory_pool *ephemeral_memory;
-    int period;
-    int j;
 
     concrete_self = thorium_actor_concrete_actor(self);
     ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
-    bsal_vector_init(&alternate_producers, sizeof(int));
-    bsal_vector_set_memory_pool(&alternate_producers, ephemeral_memory);
+    bsal_vector_init(&producers_for_work_stealing, sizeof(int));
+    bsal_vector_set_memory_pool(&producers_for_work_stealing, ephemeral_memory);
 
     /*
      * sequence store ===> sliding window ===> block classifier ===> graph store
      */
-
-    /*
-     * DONE: instead of 8, the code could use the topology.
-     */
-    period = thorium_actor_node_worker_count(self);
 
     printf("%s/%d connects actors\n",
             thorium_actor_script_name(self),
@@ -586,32 +579,18 @@ void bsal_assembly_graph_builder_connect_actors(struct thorium_actor *self)
 
     for (i = 0; i < bsal_vector_size(&concrete_self->sliding_windows); i++) {
 
-        /*
-         * Gather the list of alternate producers.
-         */
-
-        if (i % period == 0) {
-
-            j = 0;
-
-            bsal_vector_clear(&alternate_producers);
-
-            /*
-             * There is the same number of sliding_windows and sequence_stores.
-             */
-            while (j < period
-                            && i + j < bsal_vector_size(&concrete_self->sequence_stores)) {
-
-                producer = bsal_vector_at_as_int(&concrete_self->sequence_stores, i + j);
-
-                bsal_vector_push_back(&alternate_producers, &producer);
-
-                ++j;
-            }
-        }
+        bsal_assembly_graph_builder_get_producers_for_work_stealing(self, &producers_for_work_stealing, i);
 
         producer = bsal_vector_at_as_int(&concrete_self->sliding_windows, i);
         consumer = bsal_vector_at_as_int(&concrete_self->block_classifiers, i);
+
+        /*
+         * Also configure a bunch of alternate producer for the
+         * consumer.
+         */
+
+        thorium_actor_send_vector(self, producer, ACTION_SET_PRODUCERS_FOR_WORK_STEALING,
+                        &producers_for_work_stealing);
 
         /* set the consumer for sliding window
          */
@@ -620,14 +599,6 @@ void bsal_assembly_graph_builder_connect_actors(struct thorium_actor *self)
 
         printf("DEBUG neural LINK %d -> %d\n",
                         producer, consumer);
-
-        /*
-         * Also configure a bunch of alternate producer for the
-         * consumer.
-         */
-
-        thorium_actor_send_vector(self, producer, ACTION_SET_PRODUCERS_FOR_WORK_STEALING,
-                        &alternate_producers);
 
         /*
          * set the consumers for each classifier
@@ -641,7 +612,7 @@ void bsal_assembly_graph_builder_connect_actors(struct thorium_actor *self)
                         &concrete_self->graph_stores);
     }
 
-    bsal_vector_destroy(&alternate_producers);
+    bsal_vector_destroy(&producers_for_work_stealing);
 }
 
 void bsal_assembly_graph_builder_set_consumer_reply(struct thorium_actor *self, struct thorium_message *message)
@@ -1053,8 +1024,6 @@ void bsal_assembly_graph_builder_set_kmer_reply_arcs(struct thorium_actor *self,
     int size;
     struct bsal_vector producers_for_work_stealing;
     struct bsal_memory_pool *ephemeral_memory;
-    int stealing_period;
-    int j;
 
     ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
     concrete_self = thorium_actor_concrete_actor(self);
@@ -1100,28 +1069,12 @@ void bsal_assembly_graph_builder_set_kmer_reply_arcs(struct thorium_actor *self,
                         bsal_assembly_graph_builder_configure_arc_actors,
                         &concrete_self->arc_kernels);
 
-        stealing_period = thorium_actor_node_worker_count(self);
-
         /*
          * Link kernels and classifiers
          */
         for (i = 0; i < size; i++) {
 
-            bsal_vector_clear(&producers_for_work_stealing);
-
-            /*
-             * Compute the producers for the stealing period.
-             */
-            if (i % stealing_period == 0) {
-
-                j = 0;
-                while (j < stealing_period && i + j < size) {
-
-                    producer = bsal_vector_at_as_int(&concrete_self->sequence_stores, i + j);
-                    bsal_vector_push_back(&producers_for_work_stealing, &producer);
-                    ++j;
-                }
-            }
+            bsal_assembly_graph_builder_get_producers_for_work_stealing(self, &producers_for_work_stealing, i);
 
             producer = bsal_vector_at_as_int(&concrete_self->arc_kernels, i);
             consumer = bsal_vector_at_as_int(&concrete_self->arc_classifiers, i);
@@ -1367,4 +1320,51 @@ void bsal_assembly_graph_builder_get_summary_reply(struct thorium_actor *self, s
     }
 
     bsal_vector_destroy(&vector);
+}
+
+void bsal_assembly_graph_builder_get_producers_for_work_stealing(struct thorium_actor *self, struct bsal_vector *producers_for_work_stealing,
+                int i)
+{
+    struct bsal_assembly_graph_builder *concrete_self;
+    int left;
+    int right;
+    int producer;
+    int j;
+    int gap;
+    int store_count;
+    int period;
+
+    concrete_self = thorium_actor_concrete_actor(self);
+
+    store_count = bsal_vector_size(&concrete_self->sequence_stores);
+    period = 4;
+    gap = store_count / 4;
+
+    /*
+     * Gather the list of alternate producers.
+     */
+    bsal_vector_clear(producers_for_work_stealing);
+    j = 0;
+
+    /*
+     * There is the same number of sliding_windows and sequence_stores.
+     */
+    while (j < period) {
+
+        left = i - gap + j;
+        if (left < 0) {
+            left += store_count;
+        }
+        producer = bsal_vector_at_as_int(&concrete_self->sequence_stores, left);
+        bsal_vector_push_back(producers_for_work_stealing, &producer);
+
+        right = i + gap + j;
+        right %= store_count;
+        producer = bsal_vector_at_as_int(&concrete_self->sequence_stores, right);
+        bsal_vector_push_back(producers_for_work_stealing, &producer);
+
+        printf("DEBUG positions i %d left %d right %d\n", i, left, right);
+
+        ++j;
+    }
 }
