@@ -1361,7 +1361,7 @@ void bsal_assembly_graph_builder_get_producers_for_work_stealing(struct thorium_
             producer = bsal_vector_at_as_int(&concrete_self->sequence_stores, index);
             bsal_vector_push_back(producers_for_work_stealing, &producer);
 
-#if 1
+#if 0
         printf("DEBUG positions i %d index %d\n", i, index);
 #endif
         }
