@@ -1326,19 +1326,21 @@ void bsal_assembly_graph_builder_get_producers_for_work_stealing(struct thorium_
                 int i)
 {
     struct bsal_assembly_graph_builder *concrete_self;
-    int left;
-    int right;
+    int index;
     int producer;
     int j;
     int gap;
     int store_count;
     int period;
+    int stride;
+    int k;
 
     concrete_self = thorium_actor_concrete_actor(self);
 
     store_count = bsal_vector_size(&concrete_self->sequence_stores);
-    period = 4;
-    gap = store_count / 4;
+    period = 1;
+    stride = 16;
+    gap = store_count / stride;
 
     /*
      * Gather the list of alternate producers.
@@ -1349,22 +1351,19 @@ void bsal_assembly_graph_builder_get_producers_for_work_stealing(struct thorium_
     /*
      * There is the same number of sliding_windows and sequence_stores.
      */
-    while (j < period) {
+    for (k = 1; k < stride; ++k) {
+        for (j = 0; j < period; ++j) {
 
-        left = i - gap + j;
-        if (left < 0) {
-            left += store_count;
+            index = i - k * gap + j;
+            if (index < 0) {
+                index += store_count;
+            }
+            producer = bsal_vector_at_as_int(&concrete_self->sequence_stores, index);
+            bsal_vector_push_back(producers_for_work_stealing, &producer);
+
+#if 1
+        printf("DEBUG positions i %d index %d\n", i, index);
+#endif
         }
-        producer = bsal_vector_at_as_int(&concrete_self->sequence_stores, left);
-        bsal_vector_push_back(producers_for_work_stealing, &producer);
-
-        right = i + gap + j;
-        right %= store_count;
-        producer = bsal_vector_at_as_int(&concrete_self->sequence_stores, right);
-        bsal_vector_push_back(producers_for_work_stealing, &producer);
-
-        printf("DEBUG positions i %d left %d right %d\n", i, left, right);
-
-        ++j;
     }
 }
