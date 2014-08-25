@@ -28,12 +28,11 @@
 #define TAG_BIG_HANDSHAKE 1
 
 /*
- * Tests done with MPICH 3.1.1 with MPI_Comm_get_attr basically returns random
- * values for attribute MPI_TAG_UB.
+ * MPI_Comm_get_attr sets the pointer value to the attribute.
+ *
+ * \see https://svn.mcs.anl.gov/repos/mpi/mpich2/trunk/test/mpi/attr/baseattrcomm.c
  */
-/*
 #define GET_ATTR_ACTUALLY_WORKS
- */
 
 /*
  * Each big message transported between a pair of ranks A and B needs to have its own tag.
@@ -65,6 +64,7 @@ void thorium_mpi1_pt2pt_nonblocking_transport_init(struct thorium_transport *sel
     int result;
     int provided;
     int flag;
+    int *value;
 
     concrete_self = thorium_transport_get_concrete_transport(self);
 
@@ -164,8 +164,12 @@ void thorium_mpi1_pt2pt_nonblocking_transport_init(struct thorium_transport *sel
     flag = 0;
 
 #ifdef GET_ATTR_ACTUALLY_WORKS
-    MPI_Comm_get_attr(MPI_COMM_WORLD, MPI_TAG_UB, &concrete_self->mpi_tag_ub, &flag);
+    MPI_Comm_get_attr(MPI_COMM_WORLD, MPI_TAG_UB, &value, &flag);
 #endif
+
+    if (flag) {
+        concrete_self->mpi_tag_ub = *value;
+    }
 
     if (self->rank == 0) {
         printf("Attribute value for MPI_TAG_UB is %d\n",
