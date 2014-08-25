@@ -347,15 +347,16 @@ void bsal_memory_pool_free_all(struct bsal_memory_pool *self)
     int i;
     int size;
 
-    /* reset the current block
+    /*
+     * Reset the current block
      */
     if (self->current_block != NULL) {
         bsal_memory_block_free_all(self->current_block);
     }
 
-    /* reset all ready blocks
+    /*
+     * Reset all ready blocks
      */
-
     size = bsal_queue_size(&self->ready_blocks);
     i = 0;
     while (i < size
@@ -366,10 +367,24 @@ void bsal_memory_pool_free_all(struct bsal_memory_pool *self)
         i++;
     }
 
-    /* reset all dried blocks */
+    /*
+     * Reset all dried blocks
+     */
     while (bsal_queue_dequeue(&self->dried_blocks, &block)) {
         bsal_memory_block_free_all(block);
         bsal_queue_enqueue(&self->ready_blocks, &block);
+    }
+
+    /*
+     * Reset current structures.
+     */
+    if (bsal_bitmap_get_bit_uint32_t(&self->flags, FLAG_ENABLE_TRACKING)) {
+        bsal_map_clear(&self->allocated_blocks);
+        bsal_map_clear(&self->recycle_bin);
+    }
+
+    if (!bsal_bitmap_get_bit_uint32_t(&self->flags, FLAG_DISABLED)) {
+        bsal_set_clear(&self->large_blocks);
     }
 }
 

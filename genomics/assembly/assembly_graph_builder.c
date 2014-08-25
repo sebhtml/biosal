@@ -553,6 +553,7 @@ void bsal_assembly_graph_builder_connect_actors(struct thorium_actor *self)
 
     concrete_self = thorium_actor_concrete_actor(self);
     ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
+
     bsal_vector_init(&producers_for_work_stealing, sizeof(int));
     bsal_vector_set_memory_pool(&producers_for_work_stealing, ephemeral_memory);
 
@@ -563,6 +564,8 @@ void bsal_assembly_graph_builder_connect_actors(struct thorium_actor *self)
     printf("%s/%d connects actors\n",
             thorium_actor_script_name(self),
             thorium_actor_name(self));
+
+    thorium_actor_print(self);
 
     thorium_actor_add_action_with_sources(self, ACTION_SET_PRODUCERS_FOR_WORK_STEALING_REPLY,
                     bsal_assembly_graph_builder_set_consumer_reply_windows,
@@ -598,12 +601,15 @@ void bsal_assembly_graph_builder_connect_actors(struct thorium_actor *self)
         printf("DEBUG sending %d store names to classifier %d\n",
                         (int)bsal_vector_size(&concrete_self->graph_stores),
                         consumer);
-
-        thorium_actor_send_vector(self, consumer, ACTION_SET_CONSUMERS,
-                        &concrete_self->graph_stores);
     }
 
+    thorium_actor_send_range_vector(self, &concrete_self->block_classifiers,
+                    ACTION_SET_CONSUMERS,
+                        &concrete_self->graph_stores);
+
     bsal_vector_destroy(&producers_for_work_stealing);
+
+    thorium_actor_print(self);
 }
 
 void bsal_assembly_graph_builder_set_consumer_reply(struct thorium_actor *self, struct thorium_message *message)
