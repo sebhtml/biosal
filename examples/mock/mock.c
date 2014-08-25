@@ -185,8 +185,9 @@ void mock_share(struct thorium_actor *actor, struct thorium_message *message)
     index = bsal_vector_index_of(&mock1->spawners, &name);
 
     /* get the next mock actor
+     * Actually uses 0 because this example code is ill-designed.
      */
-    next = (index + 1) % bsal_vector_size(&mock1->spawners);
+    next = (index + 0) % bsal_vector_size(&mock1->spawners);
 
     thorium_message_init(&message2, ACTION_MOCK_NEW_CONTACTS, 3 * sizeof(int),
                     (char *)mock1->children);
