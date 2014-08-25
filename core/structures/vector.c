@@ -290,7 +290,7 @@ int bsal_vector_get_value(struct bsal_vector *self, int64_t index, void *value)
 
 void bsal_vector_set_memory_pool(struct bsal_vector *self, struct bsal_memory_pool *memory)
 {
-    self->memory = NULL;
+    self->memory = memory;
 }
 
 void *bsal_vector_at(struct bsal_vector *self, int64_t index)
