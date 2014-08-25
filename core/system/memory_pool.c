@@ -10,6 +10,8 @@
 #include <core/structures/map_iterator.h>
 
 #include <stdio.h>
+#include <inttypes.h>
+#include <stdint.h>
 
 /*
  * Some flags.
@@ -393,4 +395,24 @@ void bsal_memory_pool_disable(struct bsal_memory_pool *self)
     bsal_bitmap_set_bit_uint32_t(&self->flags, FLAG_DISABLED);
 }
 
+void bsal_memory_pool_print(struct bsal_memory_pool *self)
+{
+    int block_count;
+    uint64_t byte_count;
 
+    block_count = 0;
+
+    if (self->current_block != NULL) {
+        ++block_count;
+    }
+
+    block_count += bsal_queue_size(&self->dried_blocks);
+    block_count += bsal_queue_size(&self->ready_blocks);
+
+    byte_count = (uint64_t)block_count * (uint64_t)self->block_size;
+
+    printf("EXAMINE memory_pool BlockSize: %d BlockCount: %d ByteCount: %" PRIu64 "\n",
+                    self->block_size,
+                    block_count,
+                    byte_count);
+}

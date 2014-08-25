@@ -239,6 +239,9 @@ void thorium_actor_print(struct thorium_actor *self)
 
     int received = (int)bsal_counter_get(&self->counter, BSAL_COUNTER_RECEIVED_MESSAGES);
     int sent = (int)bsal_counter_get(&self->counter, BSAL_COUNTER_SENT_MESSAGES);
+    struct bsal_memory_pool *ephemeral_memory;
+
+    ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
 
     printf("EXAMINE: actor: %s/%d\n",
                         thorium_actor_script_name(self),
@@ -255,6 +258,8 @@ void thorium_actor_print(struct thorium_actor *self)
 
     printf("EXAMINE: CurrentHeapSize for home node is %" PRIu64 "\n",
                     bsal_memory_get_heap_size());
+    printf("EXAMINE: ephemeral memory for worker:\n");
+    bsal_memory_pool_print(ephemeral_memory);
 
     printf("EXAMINE: CurrentMessageSource: %d CurrentMessageTag: %d\n",
                     thorium_message_source(self->current_message),

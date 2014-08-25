@@ -36,6 +36,8 @@
 #endif
 
 /*
+ * A memory pool for genomics.
+ *
  * \see http://en.wikipedia.org/wiki/Memory_pool
  */
 struct bsal_memory_pool {
@@ -69,5 +71,6 @@ void bsal_memory_pool_enable_normalization(struct bsal_memory_pool *self);
 
 void bsal_memory_pool_disable_alignment(struct bsal_memory_pool *self);
 void bsal_memory_pool_enable_alignment(struct bsal_memory_pool *self);
+void bsal_memory_pool_print(struct bsal_memory_pool *self);
 
 #endif
