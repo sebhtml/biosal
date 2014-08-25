@@ -532,7 +532,7 @@ void bsal_assembly_graph_builder_set_kmer_reply(struct thorium_actor *self, stru
     if (concrete_self->actors_with_kmer_length == expected) {
 
         thorium_actor_print(self);
-    
+
         printf("%s/%d configured (%d actors) the kmer length value for sliding windows, block classifiers and graph stores\n",
                         thorium_actor_script_name(self),
                         thorium_actor_name(self),
