@@ -23,9 +23,12 @@
  * Use a dummy tag since the tag is actually stored inside the buffer
  * to avoid the MPI_TAG_UB bug / limitation in MPI.
  */
-#define TAG_SMALL_PAYLOAD 10
-#define TAG_BIG_NOTIFICATION 20
-#define TAG_BIG_PAYLOAD 30
+#define TAG_BIG_NO_VALUE (-9999)
+#define TAG_SMALL_PAYLOAD 0
+#define TAG_BIG_NOTIFICATION 1
+#define TAG_BIG_START_VALUE 2
+/* MPI_TAG_UB >= 32767 */
+#define TAG_BIG_END_VALUE 32767
 
 struct thorium_transport_interface thorium_mpi1_pt2pt_nonblocking_transport_implementation = {
     .name = "thorium_mpi1_pt2pt_nonblocking_transport_implementation",
@@ -51,6 +54,7 @@ void thorium_mpi1_pt2pt_nonblocking_transport_init(struct thorium_transport *sel
     int provided;
 
     concrete_self = thorium_transport_get_concrete_transport(self);
+    concrete_self->current_big_tag = TAG_BIG_NO_VALUE;
 
     concrete_self->maximum_buffer_size = 8192;
 
@@ -223,11 +227,14 @@ int thorium_mpi1_pt2pt_nonblocking_transport_send(struct thorium_transport *self
          * now.
          */
 
-        count2 = sizeof(count);
+        payload_tag = thorium_mpi1_pt2pt_nonblocking_transport_get_big_tag(self);
+
+        count2 = sizeof(payload_tag) + sizeof(count);
         buffer2 = bsal_memory_pool_allocate(self->outbound_message_memory_pool,
                         count2);
 
-        memcpy(buffer2, &count, count2);
+        memcpy(buffer2 + 0, &payload_tag, sizeof(payload_tag));
+        memcpy(buffer2 + sizeof(payload_tag), &count, sizeof(count));
 
         thorium_mpi1_request_init(&active_request2, buffer2);
         request2 = thorium_mpi1_request_request(&active_request2);
@@ -244,8 +251,6 @@ int thorium_mpi1_pt2pt_nonblocking_transport_send(struct thorium_transport *self
         }
 
         bsal_fast_queue_enqueue(&concrete_self->send_requests, &active_request2);
-
-        payload_tag = TAG_BIG_PAYLOAD;
     }
 
     thorium_mpi1_request_init_with_worker(&active_request, buffer, worker);
@@ -282,7 +287,7 @@ int thorium_mpi1_pt2pt_nonblocking_transport_send(struct thorium_transport *self
 int thorium_mpi1_pt2pt_nonblocking_transport_receive(struct thorium_transport *self, struct thorium_message *message)
 {
     struct thorium_mpi1_pt2pt_nonblocking_transport *concrete_self;
-    void *buffer;
+    char *buffer;
     int count;
     struct thorium_mpi1_request request;
     int source;
@@ -317,7 +322,11 @@ int thorium_mpi1_pt2pt_nonblocking_transport_receive(struct thorium_transport *s
      */
     if (concrete_self->big_request_count < concrete_self->maximum_big_receive_request_count) {
 
-        size = sizeof(int);
+        /*
+         * A buffer for a TAG_BIG_NOTIFICATION message
+         * contains the tag and the count.
+         */
+        size = sizeof(int) * 2;
         request_tag = TAG_BIG_NOTIFICATION;
         thorium_mpi1_pt2pt_nonblocking_transport_add_receive_request(self, request_tag, size,
                         MPI_ANY_SOURCE);
@@ -366,11 +375,11 @@ int thorium_mpi1_pt2pt_nonblocking_transport_receive(struct thorium_transport *s
      */
     if (tag == TAG_BIG_NOTIFICATION) {
 
-        size = *(int *)buffer;
-        request_tag = TAG_BIG_PAYLOAD;
+        request_tag = *(int *)(buffer + 0);
+        size = *(int *)(buffer + sizeof(request_tag));
 
 #ifdef DEBUG_BIG_HANDSHAKE
-        printf("DEBUG received TAG_BIG_NOTIFICATION count %d\n", size);
+        printf("DEBUG received TAG_BIG_NOTIFICATION Tag: %d Count %d\n", request_tag, size);
 #endif
 
         /*
@@ -403,7 +412,7 @@ int thorium_mpi1_pt2pt_nonblocking_transport_receive(struct thorium_transport *s
                     tag, count, buffer, source);
 #endif
 
-    if (tag == TAG_BIG_PAYLOAD) {
+    if (tag >= TAG_BIG_START_VALUE && tag <= TAG_BIG_END_VALUE) {
 #ifdef DEBUG_BIG_HANDSHAKE
         printf("DEBUG Received TAG_BIG_PAYLOAD %d\n", count);
 #endif
@@ -487,4 +496,33 @@ void thorium_mpi1_pt2pt_nonblocking_transport_add_receive_request(struct thorium
                         (int)bsal_fast_queue_size(&concrete_self->receive_requests),
                         concrete_self->maximum_receive_request_count);
 #endif
+}
+
+int thorium_mpi1_pt2pt_nonblocking_transport_get_big_tag(struct thorium_transport *self)
+{
+    struct thorium_mpi1_pt2pt_nonblocking_transport *concrete_self;
+    int tag;
+
+    concrete_self = thorium_transport_get_concrete_transport(self);
+
+    /*
+     * Start at beginning.
+     */
+    if (concrete_self->current_big_tag == TAG_BIG_NO_VALUE) {
+        concrete_self->current_big_tag = TAG_BIG_START_VALUE;
+    }
+
+    tag = concrete_self->current_big_tag;
+
+    ++concrete_self->current_big_tag;
+
+    /*
+     * Set the current tag to no value for the next
+     * call.
+     */
+    if (concrete_self->current_big_tag > TAG_BIG_END_VALUE) {
+        concrete_self->current_big_tag = TAG_BIG_NO_VALUE;
+    }
+
+    return tag;
 }

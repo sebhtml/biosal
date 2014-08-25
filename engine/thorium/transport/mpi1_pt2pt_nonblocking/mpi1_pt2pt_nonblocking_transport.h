@@ -36,6 +36,8 @@ struct thorium_mpi1_pt2pt_nonblocking_transport {
 
     int maximum_big_receive_request_count;
     int big_request_count;
+
+    int current_big_tag;
 };
 
 extern struct thorium_transport_interface thorium_mpi1_pt2pt_nonblocking_transport_implementation;
@@ -49,5 +51,7 @@ int thorium_mpi1_pt2pt_nonblocking_transport_receive(struct thorium_transport *s
 int thorium_mpi1_pt2pt_nonblocking_transport_test(struct thorium_transport *self, struct thorium_worker_buffer *worker_buffer);
 
 void thorium_mpi1_pt2pt_nonblocking_transport_add_receive_request(struct thorium_transport *self, int tag, int count, int source);
+
+int thorium_mpi1_pt2pt_nonblocking_transport_get_big_tag(struct thorium_transport *self);
 
 #endif
