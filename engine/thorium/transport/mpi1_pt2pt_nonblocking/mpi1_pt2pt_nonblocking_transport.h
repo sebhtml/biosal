@@ -38,6 +38,7 @@ struct thorium_mpi1_pt2pt_nonblocking_transport {
     int big_request_count;
 
     int current_big_tag;
+    int mpi_tag_ub;
 };
 
 extern struct thorium_transport_interface thorium_mpi1_pt2pt_nonblocking_transport_implementation;

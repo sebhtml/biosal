@@ -28,13 +28,19 @@
 #define TAG_BIG_HANDSHAKE 1
 
 /*
+ * Tests done with MPICH 3.1.1 with MPI_Comm_get_attr basically returns random
+ * values for attribute MPI_TAG_UB.
+ */
+/*
+#define GET_ATTR_ACTUALLY_WORKS
+ */
+
+/*
  * Each big message transported between a pair of ranks A and B needs to have its own tag.
  * Otherwise, a Irecv request may pull the wrong big message and this
  * generates a "The buffer is truncated !" message.
  */
 #define TAG_BIG_START_VALUE 2
-/* MPI_TAG_UB >= 32767 */
-#define TAG_BIG_END_VALUE 32767
 
 struct thorium_transport_interface thorium_mpi1_pt2pt_nonblocking_transport_implementation = {
     .name = "thorium_mpi1_pt2pt_nonblocking_transport_implementation",
@@ -58,12 +64,11 @@ void thorium_mpi1_pt2pt_nonblocking_transport_init(struct thorium_transport *sel
     struct thorium_mpi1_pt2pt_nonblocking_transport *concrete_self;
     int result;
     int provided;
+    int flag;
 
     concrete_self = thorium_transport_get_concrete_transport(self);
-    concrete_self->current_big_tag = TAG_BIG_NO_VALUE;
 
     concrete_self->maximum_buffer_size = 8192;
-
     concrete_self->maximum_receive_request_count = 64;
 
     /*
@@ -146,6 +151,29 @@ void thorium_mpi1_pt2pt_nonblocking_transport_init(struct thorium_transport *sel
     }
 
     concrete_self->datatype = MPI_BYTE;
+
+    concrete_self->current_big_tag = TAG_BIG_NO_VALUE;
+
+    /*
+     * Get the maximum value for a tag.
+     * MPI_TAG_UB attribute value is at least 32767.
+     *
+     * \see http://stackoverflow.com/questions/9280671/mpi-tags-are-disabled
+     */
+    concrete_self->mpi_tag_ub = 32767;
+    flag = 0;
+
+#ifdef GET_ATTR_ACTUALLY_WORKS
+    MPI_Comm_get_attr(MPI_COMM_WORLD, MPI_TAG_UB, &concrete_self->mpi_tag_ub, &flag);
+#endif
+
+    if (self->rank == 0) {
+        printf("Attribute value for MPI_TAG_UB is %d\n",
+                        concrete_self->mpi_tag_ub);
+        if (!flag) {
+            printf("Attribute MPI_TAG_UB not found !\n");
+        }
+    }
 }
 
 void thorium_mpi1_pt2pt_nonblocking_transport_destroy(struct thorium_transport *self)
@@ -418,7 +446,7 @@ int thorium_mpi1_pt2pt_nonblocking_transport_receive(struct thorium_transport *s
                     tag, count, buffer, source);
 #endif
 
-    if (tag >= TAG_BIG_START_VALUE && tag <= TAG_BIG_END_VALUE) {
+    if (tag >= TAG_BIG_START_VALUE && tag <= concrete_self->mpi_tag_ub) {
 #ifdef DEBUG_BIG_HANDSHAKE
         printf("DEBUG Received TAG_BIG_PAYLOAD %d\n", count);
 #endif
@@ -526,7 +554,7 @@ int thorium_mpi1_pt2pt_nonblocking_transport_get_big_tag(struct thorium_transpor
      * Set the current tag to no value for the next
      * call.
      */
-    if (concrete_self->current_big_tag > TAG_BIG_END_VALUE) {
+    if (concrete_self->current_big_tag > concrete_self->mpi_tag_ub) {
         concrete_self->current_big_tag = TAG_BIG_NO_VALUE;
     }
 
