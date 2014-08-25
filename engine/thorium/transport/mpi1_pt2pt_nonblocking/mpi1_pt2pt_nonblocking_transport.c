@@ -25,7 +25,13 @@
  */
 #define TAG_BIG_NO_VALUE (-9999)
 #define TAG_SMALL_PAYLOAD 0
-#define TAG_BIG_NOTIFICATION 1
+#define TAG_BIG_HANDSHAKE 1
+
+/*
+ * Each big message transported between a pair of ranks A and B needs to have its own tag.
+ * Otherwise, a Irecv request may pull the wrong big message and this
+ * generates a "The buffer is truncated !" message.
+ */
 #define TAG_BIG_START_VALUE 2
 /* MPI_TAG_UB >= 32767 */
 #define TAG_BIG_END_VALUE 32767
@@ -239,11 +245,11 @@ int thorium_mpi1_pt2pt_nonblocking_transport_send(struct thorium_transport *self
         thorium_mpi1_request_init(&active_request2, buffer2);
         request2 = thorium_mpi1_request_request(&active_request2);
 
-        result = MPI_Isend(buffer2, count2, concrete_self->datatype, destination, TAG_BIG_NOTIFICATION,
+        result = MPI_Isend(buffer2, count2, concrete_self->datatype, destination, TAG_BIG_HANDSHAKE,
                     concrete_self->communicator, request2);
 
 #ifdef DEBUG_BIG_HANDSHAKE
-        printf("DEBUG Sending TAG_BIG_NOTIFICATION count %d\n", count);
+        printf("DEBUG Sending TAG_BIG_HANDSHAKE count %d\n", count);
 #endif
 
         if (result != MPI_SUCCESS) {
@@ -323,18 +329,18 @@ int thorium_mpi1_pt2pt_nonblocking_transport_receive(struct thorium_transport *s
     if (concrete_self->big_request_count < concrete_self->maximum_big_receive_request_count) {
 
         /*
-         * A buffer for a TAG_BIG_NOTIFICATION message
+         * A buffer for a TAG_BIG_HANDSHAKE message
          * contains the tag and the count.
          */
         size = sizeof(int) * 2;
-        request_tag = TAG_BIG_NOTIFICATION;
+        request_tag = TAG_BIG_HANDSHAKE;
         thorium_mpi1_pt2pt_nonblocking_transport_add_receive_request(self, request_tag, size,
                         MPI_ANY_SOURCE);
 
         ++concrete_self->big_request_count;
 
 #ifdef DEBUG_MPI1_PT2PT
-        printf("DEBUG now has %d/%d TAG_BIG_NOTIFICATION requests\n",
+        printf("DEBUG now has %d/%d TAG_BIG_HANDSHAKE requests\n",
                         concrete_self->big_request_count,
                         concrete_self->maximum_big_receive_request_count);
 #endif
@@ -373,13 +379,13 @@ int thorium_mpi1_pt2pt_nonblocking_transport_receive(struct thorium_transport *s
     /*
      * This is a big message
      */
-    if (tag == TAG_BIG_NOTIFICATION) {
+    if (tag == TAG_BIG_HANDSHAKE) {
 
         request_tag = *(int *)(buffer + 0);
         size = *(int *)(buffer + sizeof(request_tag));
 
 #ifdef DEBUG_BIG_HANDSHAKE
-        printf("DEBUG received TAG_BIG_NOTIFICATION Tag: %d Count %d\n", request_tag, size);
+        printf("DEBUG received TAG_BIG_HANDSHAKE Tag: %d Count %d\n", request_tag, size);
 #endif
 
         /*
