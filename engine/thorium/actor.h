@@ -6,7 +6,8 @@
 #include "script.h"
 #include "dispatcher.h"
 
-#include "modules/binomial_tree/binomial_tree_message.h"
+#include "modules/binomial_tree_message.h"
+#include "modules/proxy_message.h"
 
 #include <core/structures/vector.h>
 #include <core/structures/map.h>
@@ -351,11 +352,6 @@ void thorium_actor_receive_synchronize_reply(struct thorium_actor *self,
                 struct thorium_message *message);
 int thorium_actor_synchronization_completed(struct thorium_actor *self);
 void thorium_actor_synchronize(struct thorium_actor *self, struct bsal_vector *actors);
-
-void thorium_actor_pack_proxy_message(struct thorium_actor *self,
-                struct thorium_message *message, int real_source);
-void thorium_actor_unpack_proxy_message(struct thorium_actor *self,
-                struct thorium_message *message);
 
 void thorium_actor_forward_messages(struct thorium_actor *self, struct thorium_message *message);
 
