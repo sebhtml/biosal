@@ -185,13 +185,18 @@ void thorium_actor_add_acquaintances(struct thorium_actor *actor,
 void thorium_actor_send_range(struct thorium_actor *actor, struct bsal_vector *actors,
                 struct thorium_message *message)
 {
+    int first;
+    int last;
+
+    first = 0;
+    last = bsal_vector_size(actors) - 1;
         /*
     int real_source;
 
     real_source = thorium_actor_name(actor);
     */
 
-    thorium_actor_send_range_standard(actor, actors, message);
+    thorium_actor_send_range_standard(actor, actors, first, last, message);
 /*
     thorium_actor_pack_proxy_message(actor, message, real_source);
     thorium_actor_send_range_binomial_tree(actor, actors, message);
@@ -199,15 +204,11 @@ void thorium_actor_send_range(struct thorium_actor *actor, struct bsal_vector *a
 }
 
 void thorium_actor_send_range_standard(struct thorium_actor *actor, struct bsal_vector *actors,
+                int first, int last,
                 struct thorium_message *message)
 {
     int i;
-    int first;
-    int last;
     int the_actor;
-
-    first = 0;
-    last = bsal_vector_size(actors) - 1;
 
 #ifdef THORIUM_ACTOR_DEBUG1
     printf("DEBUG thorium_actor_send_range_standard %i-%i\n",
@@ -260,7 +261,7 @@ void thorium_actor_send_range_binomial_tree(struct thorium_actor *actor, struct 
     limit = 0;
 
     if (bsal_vector_size(actors) < limit) {
-        thorium_actor_send_range_standard(actor, actors, message);
+        thorium_actor_send_range(actor, actors, message);
         return;
     }
 
@@ -478,7 +479,7 @@ void thorium_actor_receive_binomial_tree_send(struct thorium_actor *actor, struc
     thorium_message_init(message, real_tag, new_count, buffer);
 
     if (amount < limit) {
-        thorium_actor_send_range_standard(actor, &actors, message);
+        thorium_actor_send_range(actor, &actors, message);
     } else {
         thorium_actor_send_range_binomial_tree(actor, &actors, message);
     }
@@ -666,4 +667,22 @@ void thorium_actor_send_buffer(struct thorium_actor *actor, int destination, int
     thorium_message_destroy(&message);
 }
 
+void thorium_actor_send_range_positions_vector(struct thorium_actor *actor, struct bsal_vector *actors,
+                int first, int last,
+                int tag, struct bsal_vector *vector)
+{
+    struct thorium_message message;
+    int count;
+    void *buffer;
+    struct bsal_memory_pool *ephemeral_memory;
 
+    ephemeral_memory = thorium_actor_get_ephemeral_memory(actor);
+    count = bsal_vector_pack_size(vector);
+    buffer = bsal_memory_pool_allocate(ephemeral_memory, count);
+    bsal_vector_pack(vector, buffer);
+    thorium_message_init(&message, tag, count, buffer);
+    thorium_actor_send_range_standard(actor, actors, first, last, &message);
+    thorium_message_destroy(&message);
+
+    bsal_memory_pool_free(ephemeral_memory, buffer);
+}

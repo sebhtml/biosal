@@ -427,6 +427,12 @@ void bsal_assembly_arc_kernel_set_producers_for_work_stealing(struct thorium_act
         ++i;
     }
 
+#if 0
+    printf("ACTION_SET_PRODUCERS_FOR_WORK_STEALING: \n");
+    bsal_vector_print_int(&producers);
+    printf("\n");
+#endif
+
     bsal_vector_destroy(&producers);
 
     thorium_actor_send_reply_empty(self, ACTION_SET_PRODUCERS_FOR_WORK_STEALING_REPLY);

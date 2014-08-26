@@ -55,6 +55,7 @@ void thorium_actor_add_acquaintances(struct thorium_actor *actor,
 #endif
 
 void thorium_actor_send_range_standard(struct thorium_actor *actor, struct bsal_vector *actors,
+                int first, int last,
                 struct thorium_message *message);
 /* Send a message to a range of actors.
  * The implementation uses a binomial tree.
@@ -73,6 +74,10 @@ void thorium_actor_send_range_binomial_tree(struct thorium_actor *actor, struct 
                 struct thorium_message *message);
 void thorium_actor_receive_binomial_tree_send(struct thorium_actor *actor,
                 struct thorium_message *message);
+
+void thorium_actor_send_range_positions_vector(struct thorium_actor *actor, struct bsal_vector *actors,
+                int first, int last,
+                int tag, struct bsal_vector *vector);
 
 void thorium_actor_ask_to_stop(struct thorium_actor *actor, struct thorium_message *message);
 

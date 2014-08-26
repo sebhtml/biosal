@@ -466,8 +466,6 @@ void bsal_assembly_graph_builder_start_reply_classifier_manager(struct thorium_a
 void bsal_assembly_graph_builder_configure(struct thorium_actor *self)
 {
     struct bsal_assembly_graph_builder *concrete_self;
-    int destination;
-    int i;
 
     concrete_self = thorium_actor_concrete_actor(self);
 
@@ -486,27 +484,14 @@ void bsal_assembly_graph_builder_configure(struct thorium_actor *self)
      * set the kmer length for graph stores, sliding windows, and block classifiers
      */
 
-    for (i = 0; i < bsal_vector_size(&concrete_self->graph_stores); i++) {
-
-        destination = bsal_vector_at_as_int(&concrete_self->graph_stores, i);
-        thorium_actor_send_int(self, destination, ACTION_SET_KMER_LENGTH,
+    thorium_actor_send_range_int(self, &concrete_self->graph_stores, ACTION_SET_KMER_LENGTH,
                         concrete_self->kmer_length);
-    }
 
-    for (i = 0; i < bsal_vector_size(&concrete_self->sliding_windows); i++) {
-
-        destination = bsal_vector_at_as_int(&concrete_self->sliding_windows, i);
-        thorium_actor_send_int(self, destination, ACTION_SET_KMER_LENGTH,
+    thorium_actor_send_range_int(self, &concrete_self->sliding_windows, ACTION_SET_KMER_LENGTH,
                         concrete_self->kmer_length);
-    }
 
-    for (i = 0; i < bsal_vector_size(&concrete_self->block_classifiers); i++) {
-
-        destination = bsal_vector_at_as_int(&concrete_self->block_classifiers, i);
-
-        thorium_actor_send_int(self, destination, ACTION_SET_KMER_LENGTH,
+    thorium_actor_send_range_int(self, &concrete_self->block_classifiers, ACTION_SET_KMER_LENGTH,
                         concrete_self->kmer_length);
-    }
 
     /*
      * There will be a response for this.
@@ -550,6 +535,7 @@ void bsal_assembly_graph_builder_connect_actors(struct thorium_actor *self)
     struct bsal_assembly_graph_builder *concrete_self;
     struct bsal_vector producers_for_work_stealing;
     struct bsal_memory_pool *ephemeral_memory;
+    int period;
 
     concrete_self = thorium_actor_concrete_actor(self);
     ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
@@ -571,9 +557,18 @@ void bsal_assembly_graph_builder_connect_actors(struct thorium_actor *self)
                     bsal_assembly_graph_builder_set_consumer_reply_windows,
                     &concrete_self->sliding_windows);
 
-    for (i = 0; i < bsal_vector_size(&concrete_self->sliding_windows); i++) {
+    period = thorium_actor_get_node_count(self);
+
+    for (i = 0; i < bsal_vector_size(&concrete_self->sliding_windows); i += period) {
 
         bsal_assembly_graph_builder_get_producers_for_work_stealing(self, &producers_for_work_stealing, i);
+
+        thorium_actor_send_range_positions_vector(self, &concrete_self->sliding_windows,
+                       i, i + period - 1, ACTION_SET_PRODUCERS_FOR_WORK_STEALING,
+                        &producers_for_work_stealing);
+    }
+
+    for (i = 0; i < bsal_vector_size(&concrete_self->sliding_windows); i++) {
 
         producer = bsal_vector_at_as_int(&concrete_self->sliding_windows, i);
         consumer = bsal_vector_at_as_int(&concrete_self->block_classifiers, i);
@@ -582,9 +577,6 @@ void bsal_assembly_graph_builder_connect_actors(struct thorium_actor *self)
          * Also configure a bunch of alternate producer for the
          * consumer.
          */
-
-        thorium_actor_send_vector(self, producer, ACTION_SET_PRODUCERS_FOR_WORK_STEALING,
-                        &producers_for_work_stealing);
 
         /* set the consumer for sliding window
          */
@@ -1016,6 +1008,7 @@ void bsal_assembly_graph_builder_set_kmer_reply_arcs(struct thorium_actor *self,
     int size;
     struct bsal_vector producers_for_work_stealing;
     struct bsal_memory_pool *ephemeral_memory;
+    int period;
 
     ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
     concrete_self = thorium_actor_concrete_actor(self);
@@ -1061,24 +1054,30 @@ void bsal_assembly_graph_builder_set_kmer_reply_arcs(struct thorium_actor *self,
                         bsal_assembly_graph_builder_configure_arc_actors,
                         &concrete_self->arc_kernels);
 
+        period = thorium_actor_get_node_count(self);
+
+        for (i = 0; i < size; i += period) {
+
+            bsal_assembly_graph_builder_get_producers_for_work_stealing(self, &producers_for_work_stealing, i);
+
+            /*
+             * Also set producers for work stealing too.
+             */
+            thorium_actor_send_range_positions_vector(self, &concrete_self->arc_kernels,
+                            i, i + period - 1, ACTION_SET_PRODUCERS_FOR_WORK_STEALING,
+                            &producers_for_work_stealing);
+        }
+
         /*
          * Link kernels and classifiers
          */
         for (i = 0; i < size; i++) {
-
-            bsal_assembly_graph_builder_get_producers_for_work_stealing(self, &producers_for_work_stealing, i);
 
             producer = bsal_vector_at_as_int(&concrete_self->arc_kernels, i);
             consumer = bsal_vector_at_as_int(&concrete_self->arc_classifiers, i);
 
             thorium_actor_send_int(self, producer, ACTION_SET_CONSUMER,
                             consumer);
-
-            /*
-             * Also set producers for work stealing too.
-             */
-            thorium_actor_send_vector(self, producer, ACTION_SET_PRODUCERS_FOR_WORK_STEALING,
-                            &producers_for_work_stealing);
         }
 
         /*
@@ -1330,7 +1329,7 @@ void bsal_assembly_graph_builder_get_producers_for_work_stealing(struct thorium_
     concrete_self = thorium_actor_concrete_actor(self);
 
     store_count = bsal_vector_size(&concrete_self->sequence_stores);
-    period = 1;
+    period = thorium_actor_get_node_count(self);
     stride = 16;
     gap = store_count / stride;
 
