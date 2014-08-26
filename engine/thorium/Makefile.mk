@@ -18,6 +18,7 @@ THORIUM_OBJECTS += engine/thorium/worker_buffer.o
 THORIUM_OBJECTS += engine/thorium/modules/binomial_tree_message.o
 THORIUM_OBJECTS += engine/thorium/modules/proxy_message.o
 THORIUM_OBJECTS += engine/thorium/modules/action_helpers.o
+THORIUM_OBJECTS += engine/thorium/modules/send_helpers.o
 
 #  scheduler system
 THORIUM_OBJECTS += engine/thorium/scheduler/migration.o

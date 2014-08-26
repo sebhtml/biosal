@@ -1,11 +1,11 @@
 
-#include "actor_helper.h"
-#include "vector_helper.h"
+#include "send_helpers.h"
 
 #include <engine/thorium/actor.h>
 #include <engine/thorium/message.h>
 
 #include <core/structures/vector_iterator.h>
+#include <core/helpers/vector_helper.h>
 
 #include <core/system/debugger.h>
 #include <core/system/memory.h>

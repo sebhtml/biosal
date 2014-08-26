@@ -9,6 +9,7 @@
 #include "modules/binomial_tree_message.h"
 #include "modules/proxy_message.h"
 #include "modules/action_helpers.h"
+#include "modules/send_helpers.h"
 
 #include <core/structures/vector.h>
 #include <core/structures/map.h>
@@ -17,8 +18,6 @@
 
 #include <core/system/lock.h>
 #include <core/system/counter.h>
-
-#include <core/helpers/actor_helper.h>
 
 #include <pthread.h>
 #include <stdint.h>

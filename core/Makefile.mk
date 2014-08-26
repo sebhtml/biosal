@@ -4,11 +4,12 @@ CORE_OBJECTS=
 # hot code above
 # cold code below
 # core stuff
+
 CORE_OBJECTS += core/patterns/manager.o
 
 CORE_OBJECTS += core/hash/murmur_hash_2_64_a.o
+
 # helpers
-CORE_OBJECTS += core/helpers/actor_helper.o
 CORE_OBJECTS += core/helpers/message_helper.o
 CORE_OBJECTS += core/helpers/vector_helper.o
 CORE_OBJECTS += core/helpers/map_helper.o
