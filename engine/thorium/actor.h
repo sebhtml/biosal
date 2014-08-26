@@ -4,8 +4,9 @@
 
 #include "message.h"
 #include "script.h"
-
 #include "dispatcher.h"
+
+#include "modules/binomial_tree/binomial_tree_message.h"
 
 #include <core/structures/vector.h>
 #include <core/structures/map.h>
@@ -62,8 +63,6 @@
 #define ACTION_YIELD 0x00000173
 #define ACTION_YIELD_REPLY 0x000016f1
 
-/* binomial-tree */
-#define ACTION_BINOMIAL_TREE_SEND 0x00005b36
 #define ACTION_PROXY_MESSAGE 0x00004bed
 
 /* affinity */
@@ -247,7 +246,6 @@ struct thorium_actor {
     struct bsal_queue enqueued_messages;
 
     struct thorium_dispatcher dispatcher;
-    int current_source;
     struct thorium_message *current_message;
     void *concrete_actor;
 
@@ -354,14 +352,10 @@ void thorium_actor_receive_synchronize_reply(struct thorium_actor *self,
 int thorium_actor_synchronization_completed(struct thorium_actor *self);
 void thorium_actor_synchronize(struct thorium_actor *self, struct bsal_vector *actors);
 
-void thorium_actor_receive_proxy_message(struct thorium_actor *self,
-                struct thorium_message *message);
 void thorium_actor_pack_proxy_message(struct thorium_actor *self,
                 struct thorium_message *message, int real_source);
-int thorium_actor_unpack_proxy_message(struct thorium_actor *self,
+void thorium_actor_unpack_proxy_message(struct thorium_actor *self,
                 struct thorium_message *message);
-void thorium_actor_send_proxy(struct thorium_actor *self, int destination,
-                struct thorium_message *message, int real_source);
 
 void thorium_actor_forward_messages(struct thorium_actor *self, struct thorium_message *message);
 

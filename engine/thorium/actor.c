@@ -69,7 +69,6 @@ void thorium_actor_init(struct thorium_actor *self, void *concrete_actor,
 
     thorium_actor_set_priority(self, THORIUM_PRIORITY_NORMAL);
 
-    self->current_source = THORIUM_ACTOR_NOBODY;
     self->current_message = NULL;
 
     bsal_map_init(&self->received_messages, sizeof(int), sizeof(int));
@@ -745,8 +744,12 @@ int thorium_actor_receive_system(struct thorium_actor *self, struct thorium_mess
         return 0;
 
     } else if (tag == ACTION_PROXY_MESSAGE) {
-        thorium_actor_receive_proxy_message(self, message);
-        return 1;
+        thorium_actor_unpack_proxy_message(self, message);
+
+        /*
+         * Say 0 so that the concrete actor can pick it up.
+         */
+        return 0;
 
     } else if (tag == ACTION_FORWARD_MESSAGES_REPLY) {
         /* This message is a system message, it is not for the concrete
@@ -921,7 +924,6 @@ void thorium_actor_receive(struct thorium_actor *self, struct thorium_message *m
      */
     source = thorium_message_source(message);
 
-    self->current_source = source;
     self->current_message = message;
 
     bucket = (int *)bsal_map_get(&self->received_messages, &source);
@@ -975,18 +977,7 @@ void thorium_actor_receive(struct thorium_actor *self, struct thorium_message *m
 
     receive(self, message);
 
-    self->current_source = THORIUM_ACTOR_NOBODY;
     self->current_message = NULL;
-}
-
-void thorium_actor_receive_proxy_message(struct thorium_actor *self,
-                struct thorium_message *message)
-{
-    int source;
-
-    source = thorium_actor_unpack_proxy_message(self, message);
-    thorium_actor_send_with_source(self, thorium_actor_name(self),
-                    message, source);
 }
 
 void thorium_actor_receive_synchronize(struct thorium_actor *self,
@@ -1083,7 +1074,7 @@ int thorium_actor_synchronization_completed(struct thorium_actor *self)
     return 0;
 }
 
-int thorium_actor_unpack_proxy_message(struct thorium_actor *self,
+void thorium_actor_unpack_proxy_message(struct thorium_actor *self,
                 struct thorium_message *message)
 {
     int new_count;
@@ -1104,11 +1095,19 @@ int thorium_actor_unpack_proxy_message(struct thorium_actor *self,
     tag = *(int *)((char *)buffer + offset);
     offset += sizeof(tag);
 
-    /* TODO, verify if it is new_count or old count
-     */
-    thorium_message_init(message, tag, new_count, buffer);
+    /*thorium_message_init(message, tag, new_count, buffer);*/
 
-    return source;
+    /*
+     * Change the tag, source, and count.
+     */
+    thorium_message_set_source(message, source);
+    thorium_message_set_tag(message, tag);
+    thorium_message_set_count(message, new_count);
+
+#if 0
+    printf("DEBUG unpack_proxy_message... source %d tag %d count %d\n",
+                    source, tag, new_count);
+#endif
 }
 
 void thorium_actor_pack_proxy_message(struct thorium_actor *self, struct thorium_message *message,
@@ -1120,15 +1119,17 @@ void thorium_actor_pack_proxy_message(struct thorium_actor *self, struct thorium
     void *buffer;
     void *new_buffer;
     int offset;
+    struct bsal_memory_pool *ephemeral_memory;
 
+    ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
     real_tag = thorium_message_tag(message);
     buffer = thorium_message_buffer(message);
     count = thorium_message_count(message);
 
     new_count = count + sizeof(real_source) + sizeof(real_tag);
 
-    /* TODO: use slab allocator */
-    new_buffer = bsal_memory_allocate(new_count);
+    /* use slab allocator */
+    new_buffer = bsal_memory_pool_allocate(ephemeral_memory, new_count);
 
 #ifdef THORIUM_ACTOR_DEBUG
     printf("DEBUG12 bsal_memory_pool_allocate %p (pack proxy message)\n",
@@ -1146,10 +1147,12 @@ void thorium_actor_pack_proxy_message(struct thorium_actor *self, struct thorium
     thorium_message_init(message, ACTION_PROXY_MESSAGE, new_count, new_buffer);
     thorium_message_set_source(message, real_source);
 
+#if 0
     /* free the old buffer
      */
     bsal_memory_free(buffer);
     buffer = NULL;
+#endif
 }
 
 int thorium_actor_script(struct thorium_actor *self)
@@ -1279,7 +1282,11 @@ void thorium_actor_continue_clone(struct thorium_actor *self, struct thorium_mes
 
 int thorium_actor_source(struct thorium_actor *self)
 {
-    return self->current_source;
+    if (self->current_message == NULL) {
+        return THORIUM_ACTOR_NOBODY;
+    }
+
+    return thorium_message_source(self->current_message);
 }
 
 int thorium_actor_node_name(struct thorium_actor *self)
@@ -1536,28 +1543,6 @@ void thorium_actor_migrate_notify_acquaintances(struct thorium_actor *self, stru
     }
 }
 #endif
-
-void thorium_actor_send_to_self_proxy(struct thorium_actor *self,
-                struct thorium_message *message, int real_source)
-{
-    int destination;
-
-    destination = thorium_actor_name(self);
-    thorium_actor_send_proxy(self, destination, message, real_source);
-}
-
-void thorium_actor_send_proxy(struct thorium_actor *self, int destination,
-                struct thorium_message *message, int real_source)
-{
-    struct thorium_message new_message;
-
-    thorium_message_init_copy(&new_message, message);
-
-    thorium_actor_pack_proxy_message(self, &new_message, real_source);
-    thorium_actor_send(self, destination, &new_message);
-
-    thorium_message_destroy(&new_message);
-}
 
 void thorium_actor_queue_message(struct thorium_actor *self,
                 struct thorium_message *message)

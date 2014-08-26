@@ -54,12 +54,10 @@ void thorium_actor_add_acquaintances(struct thorium_actor *actor,
                 struct bsal_vector *names, struct bsal_vector *indices);
 #endif
 
-void thorium_actor_send_range_standard(struct thorium_actor *actor, struct bsal_vector *actors,
+void thorium_actor_send_range_default(struct thorium_actor *actor, struct bsal_vector *actors,
                 int first, int last,
                 struct thorium_message *message);
-/* Send a message to a range of actors.
- * The implementation uses a binomial tree.
- */
+
 void thorium_actor_send_range(struct thorium_actor *actor, struct bsal_vector *actors,
                 struct thorium_message *message);
 void thorium_actor_send_range_int(struct thorium_actor *actor, struct bsal_vector *actors,
@@ -70,9 +68,8 @@ void thorium_actor_send_range_vector(struct thorium_actor *actor, struct bsal_ve
                 int tag, struct bsal_vector *vector);
 void thorium_actor_send_range_empty(struct thorium_actor *actor, struct bsal_vector *actors,
                 int tag);
-void thorium_actor_send_range_binomial_tree(struct thorium_actor *actor, struct bsal_vector *actors,
-                struct thorium_message *message);
-void thorium_actor_receive_binomial_tree_send(struct thorium_actor *actor,
+void thorium_actor_send_range_loop(struct thorium_actor *actor, struct bsal_vector *actors,
+                int first, int last,
                 struct thorium_message *message);
 
 void thorium_actor_send_range_positions_vector(struct thorium_actor *actor, struct bsal_vector *actors,

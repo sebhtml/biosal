@@ -13,6 +13,10 @@ THORIUM_OBJECTS += engine/thorium/dispatcher.o
 THORIUM_OBJECTS += engine/thorium/route.o
 THORIUM_OBJECTS += engine/thorium/worker_buffer.o
 
+# modules 
+
+THORIUM_OBJECTS += engine/thorium/modules/binomial_tree/binomial_tree_message.o
+
 #  scheduler system
 THORIUM_OBJECTS += engine/thorium/scheduler/migration.o
 THORIUM_OBJECTS += engine/thorium/scheduler/scheduler.o
@@ -30,5 +34,4 @@ THORIUM_OBJECTS += engine/thorium/transport/mpi1_pt2pt_nonblocking/mpi1_pt2pt_no
 THORIUM_OBJECTS += engine/thorium/transport/mpi1_pt2pt_nonblocking/mpi1_request.o
 
 THORIUM_OBJECTS += engine/thorium/transport/pami/pami_transport.o
-
 

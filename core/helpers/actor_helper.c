@@ -2,16 +2,22 @@
 #include "actor_helper.h"
 #include "vector_helper.h"
 
-#include <core/structures/vector_iterator.h>
 #include <engine/thorium/actor.h>
 #include <engine/thorium/message.h>
 
+#include <core/structures/vector_iterator.h>
+
+#include <core/system/debugger.h>
 #include <core/system/memory.h>
 #include <core/system/memory_pool.h>
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+
+/*
+*/
+#define USE_BINOMIAL_TREE
 
 void thorium_actor_send_vector(struct thorium_actor *actor, int destination,
                 int tag, struct bsal_vector *vector)
@@ -196,14 +202,39 @@ void thorium_actor_send_range(struct thorium_actor *actor, struct bsal_vector *a
     real_source = thorium_actor_name(actor);
     */
 
-    thorium_actor_send_range_standard(actor, actors, first, last, message);
-/*
-    thorium_actor_pack_proxy_message(actor, message, real_source);
-    thorium_actor_send_range_binomial_tree(actor, actors, message);
-    */
+    thorium_actor_send_range_default(actor, actors, first, last, message);
 }
 
-void thorium_actor_send_range_standard(struct thorium_actor *actor, struct bsal_vector *actors,
+void thorium_actor_send_range_default(struct thorium_actor *actor, struct bsal_vector *actors,
+                int first, int last,
+                struct thorium_message *message)
+{
+#ifdef USE_BINOMIAL_TREE
+    struct bsal_vector destinations;
+    struct bsal_memory_pool *ephemeral_memory;
+    int name;
+
+    ephemeral_memory = thorium_actor_get_ephemeral_memory(actor);
+    bsal_vector_init(&destinations, sizeof(int));
+    bsal_vector_set_memory_pool(&destinations, ephemeral_memory);
+    bsal_vector_copy_range(actors, first, last, &destinations);
+
+    /*
+     * Set the source now.
+     */
+    name = thorium_actor_name(actor);
+    thorium_message_set_source(message, name);
+
+    thorium_actor_send_range_binomial_tree(actor, &destinations, message);
+
+    bsal_vector_destroy(&destinations);
+#else
+
+    thorium_actor_send_range_loop(actor, actors, first, last, message);
+#endif
+}
+
+void thorium_actor_send_range_loop(struct thorium_actor *actor, struct bsal_vector *actors,
                 int first, int last,
                 struct thorium_message *message)
 {
@@ -211,7 +242,7 @@ void thorium_actor_send_range_standard(struct thorium_actor *actor, struct bsal_
     int the_actor;
 
 #ifdef THORIUM_ACTOR_DEBUG1
-    printf("DEBUG thorium_actor_send_range_standard %i-%i\n",
+    printf("DEBUG thorium_actor_send_range_default%i-%i\n",
                     first, last);
 #endif
 
@@ -226,161 +257,6 @@ void thorium_actor_send_range_standard(struct thorium_actor *actor, struct bsal_
         the_actor = *(int *)bsal_vector_at(actors, i);
         thorium_actor_send(actor, the_actor, message);
         i++;
-    }
-}
-
-void thorium_actor_send_range_binomial_tree(struct thorium_actor *actor, struct bsal_vector *actors,
-                struct thorium_message *message)
-{
-    int middle;
-    int first1;
-    int last1;
-    int middle1;
-    int first2;
-    int last2;
-    int middle2;
-    void *buffer;
-    void *new_buffer;
-    int tag;
-    int count;
-    int new_count;
-    int source;
-    int offset;
-    int first;
-    int last;
-    struct bsal_vector left_part;
-    struct bsal_vector right_part;
-    int left_actor;
-    int right_actor;
-    struct thorium_message new_message;
-    int magic_offset;
-    int limit;
-    struct bsal_memory_pool *ephemeral_memory;
-
-    ephemeral_memory = thorium_actor_get_ephemeral_memory(actor);
-    limit = 0;
-
-    if (bsal_vector_size(actors) < limit) {
-        thorium_actor_send_range(actor, actors, message);
-        return;
-    }
-
-    bsal_vector_init(&left_part, sizeof(int));
-    bsal_vector_init(&right_part, sizeof(int));
-
-#ifdef THORIUM_ACTOR_DEBUG_BINOMIAL_TREE
-    int name;
-
-    name = thorium_actor_name(actor);
-#endif
-
-    source = thorium_actor_name(actor);
-    thorium_message_set_source(message, source);
-
-    first = 0;
-    last = bsal_vector_size(actors) - 1;
-    middle = first + (last - first) / 2;
-
-#ifdef THORIUM_ACTOR_DEBUG_BINOMIAL_TREE
-    printf("DEBUG %i thorium_actor_send_range_binomial_tree\n", name);
-    printf("DEBUG %i first: %i last: %i middle: %i\n", name, first, last, middle);
-#endif
-
-    first1 = first;
-    last1 = middle - 1;
-    first2 = middle;
-    last2 = last;
-    middle1 = first1 + (last1 - first1) / 2;
-    middle2 = first2 + (last2 - first2) / 2;
-
-    tag = thorium_message_tag(message);
-    buffer = thorium_message_buffer(message);
-    count = thorium_message_count(message);
-
-    magic_offset = count + sizeof(source) + sizeof(tag);
-
-    if (bsal_vector_size(&left_part) > 0) {
-        bsal_vector_copy_range(actors, first1, last1, &left_part);
-
-        /* TODO use slab allocator */
-        new_count = count + sizeof(source) + sizeof(tag) + bsal_vector_pack_size(&left_part) + sizeof(magic_offset);
-        new_buffer = bsal_memory_pool_allocate(ephemeral_memory, new_count);
-
-#ifdef THORIUM_ACTOR_DEBUG_BINOMIAL_TREE
-        printf("DEBUG12 bsal_memory_pool_allocate %p (send_binomial_range)\n",
-                    new_buffer);
-#endif
-
-        memcpy(new_buffer, buffer, count);
-
-        /* send to the left actor
-        */
-        offset = count;
-        memcpy((char *)new_buffer + offset, &source, sizeof(source));
-        offset += sizeof(source);
-        memcpy((char *)new_buffer + offset, &tag, sizeof(tag));
-        offset += sizeof(tag);
-        bsal_vector_pack(&left_part, (char *)new_buffer + offset);
-        offset += bsal_vector_pack_size(&left_part);
-        memcpy((char *)new_buffer + offset, &magic_offset, sizeof(magic_offset));
-        offset += sizeof(magic_offset);
-
-        thorium_message_init(&new_message, ACTION_BINOMIAL_TREE_SEND, new_count, new_buffer);
-
-    #ifdef THORIUM_ACTOR_DEBUG_BINOMIAL_TREE
-        printf("DEBUG111111 actor %i sending ACTION_BINOMIAL_TREE_SEND to %i, range is %i-%i\n",
-                        name, middle1, first1, last1);
-    #endif
-
-        printf("DEBUG left part size: %d\n", (int)bsal_vector_size(&left_part));
-
-        left_actor = *(int *)bsal_vector_at(&left_part, middle1);
-        thorium_actor_send(actor, left_actor, &new_message);
-
-        /* restore the buffer for the user */
-        bsal_memory_pool_free(ephemeral_memory, new_buffer);
-        bsal_vector_destroy(&left_part);
-    }
-
-    /* send to the right actor
-     */
-
-    bsal_vector_copy_range(actors, first2, last2, &right_part);
-
-    if (bsal_vector_size(&right_part) > 0) {
-
-        new_count = count + sizeof(source) + sizeof(tag) + bsal_vector_pack_size(&right_part) + sizeof(magic_offset);
-        new_buffer = bsal_memory_pool_allocate(ephemeral_memory, new_count);
-
-        memcpy(new_buffer, buffer, count);
-        offset = count;
-        memcpy((char *)new_buffer + offset, &source, sizeof(source));
-        offset += sizeof(source);
-        memcpy((char *)new_buffer + offset, &tag, sizeof(tag));
-        offset += sizeof(tag);
-        bsal_vector_pack(&right_part, (char *)new_buffer + offset);
-        offset += bsal_vector_pack_size(&right_part);
-        memcpy((char *)new_buffer + offset, &magic_offset, sizeof(magic_offset));
-        offset += sizeof(magic_offset);
-
-#ifdef THORIUM_ACTOR_DEBUG_BINOMIAL_TREE2
-        printf("DEBUG78 %i source: %i tag: %i ACTION_BINOMIAL_TREE_SEND\n",
-                    name, source, tag);
-#endif
-
-        thorium_message_init(&new_message, ACTION_BINOMIAL_TREE_SEND, new_count, new_buffer);
-
-#ifdef THORIUM_ACTOR_DEBUG_BINOMIAL_TREE
-        printf("DEBUG %i sending ACTION_BINOMIAL_TREE_SEND to %i, range is %i-%i\n",
-                    name, middle2, first2, last2);
-#endif
-
-        right_actor = *(int *)bsal_vector_at(&right_part, middle2);
-        thorium_actor_send(actor, right_actor, &new_message);
-
-        bsal_vector_destroy(&right_part);
-        bsal_memory_pool_free(ephemeral_memory, new_buffer);
-        new_buffer = NULL;
     }
 }
 
@@ -431,60 +307,6 @@ void thorium_actor_send_range_vector(struct thorium_actor *actor, struct bsal_ve
     thorium_message_destroy(&message);
 
     bsal_memory_pool_free(ephemeral_memory, buffer);
-}
-
-void thorium_actor_receive_binomial_tree_send(struct thorium_actor *actor, struct thorium_message *message)
-{
-    int real_tag;
-    void *buffer;
-    int count;
-    int amount;
-    int new_count;
-    int limit;
-    int real_source;
-    int offset;
-    struct bsal_vector actors;
-    int magic_offset;
-
-    limit = 42;
-    count = thorium_message_count(message);
-    buffer = thorium_message_buffer(message);
-
-    offset = count - 1 - sizeof(magic_offset);
-
-    magic_offset = *(int *)(char *)buffer + offset;
-    bsal_vector_init(&actors, 0);
-    bsal_vector_unpack(&actors, (char *)buffer + magic_offset);
-
-    new_count = magic_offset;
-    new_count -= sizeof(real_source);
-    new_count -= sizeof(real_tag);
-
-    offset = new_count;
-
-    real_source = *(int *)((char *)buffer + offset);
-    offset += sizeof(real_source);
-    real_tag = *(int *)((char *)buffer + offset);
-    offset += sizeof(real_tag);
-
-#ifdef THORIUM_ACTOR_DEBUG
-    printf("DEBUG78 actor %i received ACTION_BINOMIAL_TREE_SEND "
-                    "real_source: %i real_tag: %i first: %i last: %i\n",
-                    thorium_actor_name(actor), real_source, real_tag, first,
-                    last);
-#endif
-
-    amount = bsal_vector_size(&actors);
-
-    thorium_message_init(message, real_tag, new_count, buffer);
-
-    if (amount < limit) {
-        thorium_actor_send_range(actor, &actors, message);
-    } else {
-        thorium_actor_send_range_binomial_tree(actor, &actors, message);
-    }
-
-    bsal_vector_destroy(&actors);
 }
 
 void thorium_actor_ask_to_stop(struct thorium_actor *actor, struct thorium_message *message)
@@ -681,7 +503,7 @@ void thorium_actor_send_range_positions_vector(struct thorium_actor *actor, stru
     buffer = bsal_memory_pool_allocate(ephemeral_memory, count);
     bsal_vector_pack(vector, buffer);
     thorium_message_init(&message, tag, count, buffer);
-    thorium_actor_send_range_standard(actor, actors, first, last, &message);
+    thorium_actor_send_range_default(actor, actors, first, last, &message);
     thorium_message_destroy(&message);
 
     bsal_memory_pool_free(ephemeral_memory, buffer);
