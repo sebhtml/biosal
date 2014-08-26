@@ -570,7 +570,7 @@ void bsal_assembly_graph_builder_connect_actors(struct thorium_actor *self)
                     bsal_assembly_graph_builder_set_consumer_reply_windows,
                     &concrete_self->sliding_windows);
 
-    period = thorium_actor_get_node_count(self);
+    period = thorium_actor_node_worker_count(self);
 
     for (i = 0; i < bsal_vector_size(&concrete_self->sliding_windows); i += period) {
 
@@ -1075,7 +1075,7 @@ void bsal_assembly_graph_builder_set_kmer_reply_arcs(struct thorium_actor *self,
                         bsal_assembly_graph_builder_configure_arc_actors,
                         &concrete_self->arc_kernels);
 
-        period = thorium_actor_get_node_count(self);
+        period = thorium_actor_node_worker_count(self);
 
         for (i = 0; i < size; i += period) {
 
@@ -1350,7 +1350,7 @@ void bsal_assembly_graph_builder_get_producers_for_work_stealing(struct thorium_
     concrete_self = thorium_actor_concrete_actor(self);
 
     store_count = bsal_vector_size(&concrete_self->sequence_stores);
-    period = thorium_actor_get_node_count(self);
+    period = thorium_actor_node_worker_count(self);
     stride = 16;
     gap = store_count / stride;
 
