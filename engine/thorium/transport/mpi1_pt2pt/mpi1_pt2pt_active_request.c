@@ -1,9 +1,9 @@
 
-#include "mpi1_p2p_active_request.h"
+#include "mpi1_pt2pt_active_request.h"
 
 #include <stdlib.h>
 
-void thorium_mpi1_p2p_active_request_init(struct thorium_mpi1_p2p_active_request *self,
+void thorium_mpi1_pt2pt_active_request_init(struct thorium_mpi1_pt2pt_active_request *self,
                 void *buffer, int worker)
 {
     self->request = MPI_REQUEST_NULL;
@@ -14,7 +14,7 @@ void thorium_mpi1_p2p_active_request_init(struct thorium_mpi1_p2p_active_request
 /* \see http://blogs.cisco.com/performance/mpi_request_free-is-evil/
  * \see http://www.mpich.org/static/docs/v3.1/www3/MPI_Request_free.html
  */
-void thorium_mpi1_p2p_active_request_destroy(struct thorium_mpi1_p2p_active_request *self)
+void thorium_mpi1_pt2pt_active_request_destroy(struct thorium_mpi1_pt2pt_active_request *self)
 {
     if (self->request != MPI_REQUEST_NULL) {
         MPI_Request_free(&self->request);
@@ -27,7 +27,7 @@ void thorium_mpi1_p2p_active_request_destroy(struct thorium_mpi1_p2p_active_requ
 
 /* \see http://www.mpich.org/static/docs/v3.1/www3/MPI_Test.html
  */
-int thorium_mpi1_p2p_active_request_test(struct thorium_mpi1_p2p_active_request *self)
+int thorium_mpi1_pt2pt_active_request_test(struct thorium_mpi1_pt2pt_active_request *self)
 {
     MPI_Status status;
     int flag;
@@ -55,17 +55,17 @@ int thorium_mpi1_p2p_active_request_test(struct thorium_mpi1_p2p_active_request 
     return 0;
 }
 
-void *thorium_mpi1_p2p_active_request_request(struct thorium_mpi1_p2p_active_request *self)
+void *thorium_mpi1_pt2pt_active_request_request(struct thorium_mpi1_pt2pt_active_request *self)
 {
     return &self->request;
 }
 
-void *thorium_mpi1_p2p_active_request_buffer(struct thorium_mpi1_p2p_active_request *self)
+void *thorium_mpi1_pt2pt_active_request_buffer(struct thorium_mpi1_pt2pt_active_request *self)
 {
     return self->buffer;
 }
 
-int thorium_mpi1_p2p_active_request_worker(struct thorium_mpi1_p2p_active_request *self)
+int thorium_mpi1_pt2pt_active_request_worker(struct thorium_mpi1_pt2pt_active_request *self)
 {
     return self->worker;
 }
