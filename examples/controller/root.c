@@ -34,9 +34,17 @@ void root_init(struct thorium_actor *actor)
                         &bsal_manager_script);
 
     /* TODO: do this one inside the manager script.
-*/
-thorium_actor_add_script(actor, SCRIPT_SEQUENCE_STORE,
+     */
+    thorium_actor_add_script(actor, SCRIPT_SEQUENCE_STORE,
                         &bsal_sequence_store_script);
+    thorium_actor_add_script(actor, SCRIPT_INPUT_CONTROLLER,
+                        &bsal_input_controller_script);
+
+    /* TODO remove this, SCRIPT_INPUT_CONTROLLER should pull
+     * its dependencies...
+     */
+    thorium_actor_add_script(actor, ACTION_INPUT_SCRIPT_STREAM,
+                        &bsal_input_stream_script);
 }
 
 void root_destroy(struct thorium_actor *actor)
@@ -119,15 +127,6 @@ void root_receive(struct thorium_actor *actor, struct thorium_message *message)
             /*
         printf("actor %d receives ACTION_SYNCHRONIZE\n", name);
 */
-        thorium_actor_add_script(actor, SCRIPT_INPUT_CONTROLLER,
-                        &bsal_input_controller_script);
-
-        /* TODO remove this, SCRIPT_INPUT_CONTROLLER should pull
-         * its dependencies...
-         */
-        thorium_actor_add_script(actor, ACTION_INPUT_SCRIPT_STREAM,
-                        &bsal_input_stream_script);
-
         concrete_self->ready++;
 
         if (concrete_self->ready == 2) {
@@ -223,8 +222,9 @@ void root_receive(struct thorium_actor *actor, struct thorium_message *message)
         for (i = 1; i < argc; i++) {
             file = argv[i];
 
-            thorium_message_init(message, ACTION_ADD_FILE, strlen(file) + 1, file);
-            thorium_actor_send_reply(actor, message);
+            thorium_message_init(&new_message, ACTION_ADD_FILE, strlen(file) + 1, file);
+            thorium_actor_send_reply(actor, &new_message);
+            thorium_message_destroy(&new_message);
 
             printf("root actor/%d add file %s to controller actor/%d\n", name,
                             file, source);
@@ -241,11 +241,14 @@ void root_receive(struct thorium_actor *actor, struct thorium_message *message)
             thorium_actor_send_to_self_empty(actor, ACTION_ADD_FILE_REPLY);
         }
 
-        printf("root actor/%d has no more files to add\n", name);
+        printf("root actor/%d has no more files to add (events %d)\n", name,
+                        concrete_self->events);
 
     } else if (tag == ACTION_ADD_FILE_REPLY) {
 
         concrete_self->events--;
+
+        printf("DEBUG receives ACTION_ADD_FILE_REPLY\n");
 
         if (concrete_self->events == 0) {
 

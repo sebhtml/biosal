@@ -268,6 +268,10 @@ void bsal_input_controller_receive(struct thorium_actor *actor, struct thorium_m
         local_file = bsal_memory_allocate(strlen(file) + 1);
         strcpy(local_file, file);
 
+        printf("controller %d ACTION_ADD_FILE %s\n",
+                        thorium_actor_name(actor),
+                        local_file);
+
         bsal_vector_push_back(&concrete_actor->files, &local_file);
 
         bucket = bsal_vector_at(&concrete_actor->files, bsal_vector_size(&concrete_actor->files) - 1);

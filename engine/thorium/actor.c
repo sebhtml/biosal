@@ -1201,6 +1201,8 @@ void thorium_actor_continue_clone(struct thorium_actor *self, struct thorium_mes
 
 int thorium_actor_source(struct thorium_actor *self)
 {
+    BSAL_DEBUGGER_ASSERT(self->current_message != NULL);
+
     if (self->current_message == NULL) {
         return THORIUM_ACTOR_NOBODY;
     }
