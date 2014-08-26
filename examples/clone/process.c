@@ -65,6 +65,9 @@ void process_receive(struct thorium_actor *actor, struct thorium_message *messag
         printf("Hi, I am actor:%d and my value is %d. I will clone myself using %d as the spawner\n",
                         name, process1->value, other);
 
+        /*
+         * Apparently, the code does not work when nesting ACTION_CLONE messages.
+         */
         thorium_message_init(&new_message, ACTION_CLONE, sizeof(other), &other);
 
         /* create 2 clones
@@ -72,7 +75,7 @@ void process_receive(struct thorium_actor *actor, struct thorium_message *messag
          * during cloning
          */
         thorium_actor_send_to_self(actor, &new_message);
-        thorium_actor_send_to_self(actor, &new_message);
+        /*thorium_actor_send_to_self(actor, &new_message);*/
 
     } else if (tag == ACTION_CLONE_REPLY) {
 
@@ -86,7 +89,7 @@ void process_receive(struct thorium_actor *actor, struct thorium_message *messag
 
         /* wait for the second clone
          */
-        if (process1->cloned != 2) {
+        if (process1->cloned != 1) {
             return;
         }
 
