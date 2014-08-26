@@ -8,7 +8,7 @@
 
 #include "modules/binomial_tree_message.h"
 #include "modules/proxy_message.h"
-#include "modules/actions.h"
+#include "modules/action_helpers.h"
 
 #include <core/structures/vector.h>
 #include <core/structures/map.h>
