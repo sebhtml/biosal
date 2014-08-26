@@ -134,7 +134,7 @@ void thorium_actor_send_range_binomial_tree(struct thorium_actor *actor, struct 
 #ifdef DEBUG_BINOMIAL_TREE
     printf("DEBUG %i thorium_actor_send_range_binomial_tree\n",
                     thorium_actor_name(actor));
-    printf("DEBUG %i first: %i last: %i middle: %i size %d\n", 
+    printf("DEBUG %i first: %i last: %i middle: %i size %d\n",
                     thorium_actor_name(actor), first, last, middle,
                     (int)bsal_vector_size(actors));
 #endif

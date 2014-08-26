@@ -13,10 +13,11 @@ THORIUM_OBJECTS += engine/thorium/dispatcher.o
 THORIUM_OBJECTS += engine/thorium/route.o
 THORIUM_OBJECTS += engine/thorium/worker_buffer.o
 
-# modules 
+# modules
 
 THORIUM_OBJECTS += engine/thorium/modules/binomial_tree_message.o
 THORIUM_OBJECTS += engine/thorium/modules/proxy_message.o
+THORIUM_OBJECTS += engine/thorium/modules/actions.o
 
 #  scheduler system
 THORIUM_OBJECTS += engine/thorium/scheduler/migration.o
