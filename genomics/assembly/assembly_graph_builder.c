@@ -474,6 +474,7 @@ void bsal_assembly_graph_builder_configure(struct thorium_actor *self)
      */
     concrete_self->kmer_length = bsal_assembly_graph_builder_get_kmer_length(self);
 
+    printf("EXAMINE: before configuring kmer length\n");
     thorium_actor_print(self);
 
     printf("%s/%d configures the kmer length (%d) for the actor computation\n",
@@ -496,6 +497,8 @@ void bsal_assembly_graph_builder_configure(struct thorium_actor *self)
     /*
      * There will be a response for this.
      */
+    printf("EXAMINE: after configuring kmer length\n");
+    thorium_actor_print(self);
 }
 
 void bsal_assembly_graph_builder_set_kmer_reply(struct thorium_actor *self, struct thorium_message *message)
@@ -511,11 +514,20 @@ void bsal_assembly_graph_builder_set_kmer_reply(struct thorium_actor *self, stru
     expected += bsal_vector_size(&concrete_self->sliding_windows);
     expected += bsal_vector_size(&concrete_self->block_classifiers);
 
+    if (concrete_self->actors_with_kmer_length % 100 == 0) {
+
+        printf("EXAMINE: progress SET_KMER_LENGTH %d/%d\n",
+                        concrete_self->actors_with_kmer_length,
+                        expected);
+        thorium_actor_print(self);
+    }
+
     /*
      * Verify if all actors are properly configured
      */
     if (concrete_self->actors_with_kmer_length == expected) {
 
+        printf("EXAMINE: configured kmer length\n");
         thorium_actor_print(self);
 
         printf("%s/%d configured (%d actors) the kmer length value for sliding windows, block classifiers and graph stores\n",
@@ -551,6 +563,7 @@ void bsal_assembly_graph_builder_connect_actors(struct thorium_actor *self)
             thorium_actor_script_name(self),
             thorium_actor_name(self));
 
+    printf("EXAMINE: connecting actors\n");
     thorium_actor_print(self);
 
     thorium_actor_add_action_with_sources(self, ACTION_SET_PRODUCERS_FOR_WORK_STEALING_REPLY,
@@ -567,6 +580,9 @@ void bsal_assembly_graph_builder_connect_actors(struct thorium_actor *self)
                        i, i + period - 1, ACTION_SET_PRODUCERS_FOR_WORK_STEALING,
                         &producers_for_work_stealing);
     }
+
+    printf("EXAMINE: after sending producers for work stealing\n");
+    thorium_actor_print(self);
 
     for (i = 0; i < bsal_vector_size(&concrete_self->sliding_windows); i++) {
 
@@ -595,12 +611,16 @@ void bsal_assembly_graph_builder_connect_actors(struct thorium_actor *self)
                         consumer);
     }
 
+    printf("EXAMINE: before SET_CONSUMERS\n");
+    thorium_actor_print(self);
+
     thorium_actor_send_range_vector(self, &concrete_self->block_classifiers,
                     ACTION_SET_CONSUMERS,
                         &concrete_self->graph_stores);
 
     bsal_vector_destroy(&producers_for_work_stealing);
 
+    printf("EXAMINE: after connecting actors\n");
     thorium_actor_print(self);
 }
 
@@ -664,6 +684,7 @@ void bsal_assembly_graph_builder_verify(struct thorium_actor *self)
             thorium_actor_script_name(self),
             thorium_actor_name(self));
 
+    printf("EXAMINE: ready to build\n");
     thorium_actor_print(self);
 
     /* Set the producer for every sliding window.
@@ -1332,6 +1353,13 @@ void bsal_assembly_graph_builder_get_producers_for_work_stealing(struct thorium_
     period = thorium_actor_get_node_count(self);
     stride = 16;
     gap = store_count / stride;
+
+    /*
+     * Don'T compute stuff too much.
+     */
+    if (i % period != 0) {
+        return;
+    }
 
     /*
      * Gather the list of alternate producers.

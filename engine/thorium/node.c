@@ -2035,7 +2035,6 @@ void thorium_node_test_requests(struct thorium_node *node)
             if (worker < 0) {
 
                 buffer = thorium_worker_buffer_get_buffer(&worker_buffer);
-
                 bsal_memory_pool_free(&node->outbound_message_memory_pool,
                                 buffer);
             } else {

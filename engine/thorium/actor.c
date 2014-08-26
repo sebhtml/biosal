@@ -948,7 +948,6 @@ void thorium_actor_receive(struct thorium_actor *self, struct thorium_message *m
 #endif
     }
 
-
     /* Otherwise, this is a message for the actor itself.
      */
     receive = thorium_actor_get_receive(self);

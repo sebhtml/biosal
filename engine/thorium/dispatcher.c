@@ -189,8 +189,6 @@ int thorium_dispatcher_dispatch(struct thorium_dispatcher *self, struct thorium_
     return 1;
 }
 
-
-
 thorium_actor_receive_fn_t thorium_dispatcher_get(struct thorium_dispatcher *self, int tag, int source)
 {
     struct bsal_map *map;
