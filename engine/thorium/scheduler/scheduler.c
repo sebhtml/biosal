@@ -252,7 +252,7 @@ void thorium_scheduler_balance(struct thorium_scheduler *scheduler)
 
 #ifdef THORIUM_SCHEDULER_ENABLE_VERBOSITY
     printf("Percentiles for epoch loads: ");
-    bsal_statistics_get_print_percentiles_int(&loads);
+    bsal_statistics_print_percentiles_int(&loads);
 #endif
 
     for (i = 0; i < thorium_worker_pool_worker_count(scheduler->pool); i++) {
@@ -448,7 +448,7 @@ void thorium_scheduler_balance(struct thorium_scheduler *scheduler)
     bsal_vector_sort_int(&actors_to_migrate);
 
     printf("Percentiles for production: ");
-    bsal_statistics_get_print_percentiles_int(&actors_to_migrate);
+    bsal_statistics_print_percentiles_int(&actors_to_migrate);
     */
 
     /* Sort them in reverse order.

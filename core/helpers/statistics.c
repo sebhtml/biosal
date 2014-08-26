@@ -127,7 +127,7 @@ int bsal_statistics_get_percentile_int(struct bsal_vector *vector, int p)
     return bsal_vector_at_as_int(vector, index);
 }
 
-void bsal_statistics_get_print_percentiles_int(struct bsal_vector *vector)
+void bsal_statistics_print_percentiles_int(struct bsal_vector *vector)
 {
     int percentile_5;
     int percentile_25;
@@ -191,7 +191,7 @@ float bsal_statistics_get_percentile_float(struct bsal_vector *vector, int p)
     return bsal_vector_at_as_float(vector, index);
 }
 
-void bsal_statistics_get_print_percentiles_float(struct bsal_vector *vector)
+void bsal_statistics_print_percentiles_float(struct bsal_vector *vector)
 {
     float percentile_5;
     float percentile_25;

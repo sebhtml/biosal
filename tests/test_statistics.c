@@ -23,7 +23,7 @@ int main(int argc, char **argv)
     }
 
     /*
-    bsal_statistics_get_print_percentiles_int(&values);
+    bsal_statistics_print_percentiles_int(&values);
     */
 
     percentile_5 = bsal_statistics_get_percentile_int(&values, 5);
