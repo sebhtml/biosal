@@ -109,6 +109,8 @@ void process_stop(struct thorium_actor *self, struct thorium_message *message)
                     thorium_actor_name(self),
                     (int)bsal_vector_size(&intervals));
 
+    bsal_vector_sort_int(&intervals);
+
     bsal_statistics_print_percentiles_int(&intervals);
 
     bsal_vector_destroy(&intervals);
