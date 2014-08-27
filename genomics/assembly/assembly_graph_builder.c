@@ -1348,6 +1348,7 @@ void bsal_assembly_graph_builder_get_producers_for_work_stealing(struct thorium_
     int nodes;
     int workers;
     int actors;
+    double probability_of_having_an_alone_actor;
 
     /*
      * Given N actors,
@@ -1362,18 +1363,7 @@ void bsal_assembly_graph_builder_get_producers_for_work_stealing(struct thorium_
      * (1 - 1/N) ^ ( actors * 1)
      *
      * Some examples:
-     *
-     * irb(main):013:0> actors = 2048*15
-     * => 30720
-     * irb(main):014:0> (1 - 1.0 / actors)**(actors * 1)
-     * => 0.36787345346945044
-     * irb(main):015:0> (1 - 1.0 / actors)**(actors * 10)
-     * => 4.5392540892387874e-05
-     * irb(main):016:0> (1 - 1.0 / actors)**(actors * 16)
-     * => 1.1250587186554038e-07
-     *
      */
-
     /*
      * Now, given N actors, we don't want any of them to be alone.
      *
@@ -1384,7 +1374,64 @@ void bsal_assembly_graph_builder_get_producers_for_work_stealing(struct thorium_
     nodes = thorium_actor_get_node_count(self);
     workers = thorium_actor_node_worker_count(self);
     actors = nodes * workers;
-    probability = 1.0 / (32 * actors);
+
+    /*
+     * We don't want any actor alone in the process. Each actor, hopefully,
+     * should be qable to get its stuff stolen by a thief.
+     * But obviously that's not how life works. Everything is
+     * a probability. So let's set that probability to a very small
+     * value.
+     *
+     * 0.0001 is 0.01%.
+     *
+     * So the probability that at least one of the actors not being selected
+     * by any other actor is very low.
+     */
+    probability_of_having_an_alone_actor = 0.0001;
+
+    /* probability = 1 - pow(M_E, log(1.0 - probability_of_having_an_alone_actor) / actors);*/
+    /* Otherwise, M_E can be obtained with:
+     * double e = exp(1.0);
+     */
+
+    /*
+     * Suppose that p is the probability that 1 actor be the victim of no one.
+     * (1 - p) is then the probability of being a victim.
+     *
+     * (1 - p) ^ N, where N is the number of actors, is the probability that every actor
+     * is a victim.
+     *
+     * q is the probability that at least 1 actor is not the victim of anyone.
+     * To compute q, we need the probability that every actor is the victim of at
+     * least an actor.
+     *
+     * In the relationship is:
+     *
+     * probability_of_having_an_alone_actor = 1.0 - pow(1.0 - probability, actors)
+     *
+     * "pow(1.0 - probability, actors)" represents the probability of having all
+     * actors being the victim of at least 1 actor.
+     *
+     * The complement event is "at least one actor is not the victime of anyone.
+     *
+     * q = 1 - (1 - p) ^ N
+     *
+     * Let's isolate p.
+     *
+     * (1 - p) ^ N = 1 - q
+     * (1 - p) = (1 - q) ^ (1 / N)
+     * 1 - p = (1 - q) ^ (1 / N)
+     * 1 - (1 - q) ^ (1 / N) = p
+     * p = 1 - (1 - q) ^ (1 / N) ****
+     */
+
+    probability = 1 - pow(1.0 - probability_of_having_an_alone_actor, 1.0 / actors);
+
+    printf("PROBABILITY p of having an actor not selected by anyone %f, given %d actors\n",
+                    probability_of_having_an_alone_actor, actors);
+
+    printf("PROBABILITY p for an actor to not being selected by anyone: %f\n",
+                    probability);
 
     /*
      * irb(main):011:0> victims = Math.log(1.0/(5*actors))/(actors*Math.log(1 - 1.0/actors))
@@ -1399,35 +1446,6 @@ void bsal_assembly_graph_builder_get_producers_for_work_stealing(struct thorium_
      * each actor picks a constant number of peers.
      */
 
-    /*
-     * irb(main):016:0> nodes=2048
-     * => 2048
-     * irb(main):017:0> workers=15
-     * => 15
-     * irb(main):018:0> actors = nodes * workers
-     * => 30720
-     * irb(main):019:0> probability = 1.0/actors
-     * => 3.255208333333333e-05
-     * irb(main):020:0> not_picked_up_probability = 1 - probability
-     * => 0.9999674479166667
-     * irb(main):021:0> links=10
-     * => 10
-     * irb(main):022:0> not_picked_by_anyone = not_picked_up_probability**(actors * links)
-     * => 4.5392540892387874e-05
-     * irb(main):023:0> links=1
-     * => 1
-     * irb(main):024:0> not_picked_by_anyone = not_picked_up_probability**(actors * links)
-     * => 0.36787345346945044
-     * irb(main):025:0> links=4
-     * => 4
-     * irb(main):026:0> not_picked_by_anyone = not_picked_up_probability**(actors * links)
-     * => 0.018314446477332835
-     * irb(main):027:0> links=8
-     * => 8
-     * irb(main):028:0> not_picked_by_anyone = not_picked_up_probability**(actors * links)
-     * => 0.00033541894977108907
-     *
-     */
     concrete_self = thorium_actor_concrete_actor(self);
 
     store_count = bsal_vector_size(&concrete_self->sequence_stores);
