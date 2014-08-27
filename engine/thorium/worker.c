@@ -1320,6 +1320,7 @@ void thorium_worker_check_production(struct thorium_worker *worker, int value, i
     struct thorium_actor *other_actor;
     int mailbox_size;
     int status;
+    uint64_t threshold;
 
     /*
      * If no actor is scheduled to run, things are getting out of hand
@@ -1390,10 +1391,16 @@ void thorium_worker_check_production(struct thorium_worker *worker, int value, i
 
                 elapsed = time - worker->waiting_start_time;
 
+                threshold = THORIUM_WORKER_UNPRODUCTIVE_MICROSECONDS_FOR_WAIT;
+
+                /* Convert microseconds to nanoseconds
+                 */
+                threshold *= 1000;
+
                 /* Verify the elapsed time.
                  * There are 1000 nanoseconds in 1 microsecond.
                  */
-                if (elapsed >= THORIUM_WORKER_UNPRODUCTIVE_MICROSECONDS_FOR_WAIT * 1000) {
+                if (elapsed >= threshold) {
                     /*
                      * Here, the worker will wait until it receives a signal.
                      * Such a signal will mean that something is ready to be consumed.

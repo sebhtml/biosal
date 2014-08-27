@@ -159,7 +159,6 @@ void bsal_assembly_graph_builder_verify_arc_kernels(struct thorium_actor *self, 
 void bsal_assembly_graph_builder_notify_reply_arc_kernels(struct thorium_actor *self, struct thorium_message *message);
 
 void bsal_assembly_graph_builder_get_summary_reply(struct thorium_actor *self, struct thorium_message *message);
-void bsal_assembly_graph_builder_get_producers_for_work_stealing(struct thorium_actor *self, struct bsal_vector *producers_for_work_stealing,
-                int i);
+void bsal_assembly_graph_builder_get_producers_for_work_stealing(struct thorium_actor *self, struct bsal_vector *producers_for_work_stealing);
 
 #endif

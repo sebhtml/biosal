@@ -16,6 +16,7 @@
 #include <string.h>
 #include <stdint.h>
 #include <inttypes.h>
+#include <math.h>
 
 struct thorium_script bsal_assembly_graph_builder_script = {
     .identifier = SCRIPT_ASSEMBLY_GRAPH_BUILDER,
@@ -572,12 +573,12 @@ void bsal_assembly_graph_builder_connect_actors(struct thorium_actor *self)
 
     period = thorium_actor_node_worker_count(self);
 
-    for (i = 0; i < bsal_vector_size(&concrete_self->sliding_windows); i += period) {
+    for (i = 0; i < bsal_vector_size(&concrete_self->sliding_windows); ++i) {
 
-        bsal_assembly_graph_builder_get_producers_for_work_stealing(self, &producers_for_work_stealing, i);
+        bsal_assembly_graph_builder_get_producers_for_work_stealing(self, &producers_for_work_stealing);
 
-        thorium_actor_send_range_positions_vector(self, &concrete_self->sliding_windows,
-                       i, i + period - 1, ACTION_SET_PRODUCERS_FOR_WORK_STEALING,
+        producer = bsal_vector_at_as_int(&concrete_self->sliding_windows, i);
+        thorium_actor_send_vector(self, producer, ACTION_SET_PRODUCERS_FOR_WORK_STEALING,
                         &producers_for_work_stealing);
     }
 
@@ -1077,15 +1078,16 @@ void bsal_assembly_graph_builder_set_kmer_reply_arcs(struct thorium_actor *self,
 
         period = thorium_actor_node_worker_count(self);
 
-        for (i = 0; i < size; i += period) {
+        for (i = 0; i < size; ++i) {
 
-            bsal_assembly_graph_builder_get_producers_for_work_stealing(self, &producers_for_work_stealing, i);
+            bsal_assembly_graph_builder_get_producers_for_work_stealing(self, &producers_for_work_stealing);
+
+            producer = bsal_vector_at_as_int(&concrete_self->arc_kernels, i);
 
             /*
              * Also set producers for work stealing too.
              */
-            thorium_actor_send_range_positions_vector(self, &concrete_self->arc_kernels,
-                            i, i + period - 1, ACTION_SET_PRODUCERS_FOR_WORK_STEALING,
+            thorium_actor_send_vector(self, producer, ACTION_SET_PRODUCERS_FOR_WORK_STEALING,
                             &producers_for_work_stealing);
         }
 
@@ -1334,55 +1336,114 @@ void bsal_assembly_graph_builder_get_summary_reply(struct thorium_actor *self, s
     bsal_vector_destroy(&vector);
 }
 
-void bsal_assembly_graph_builder_get_producers_for_work_stealing(struct thorium_actor *self, struct bsal_vector *producers_for_work_stealing,
-                int i)
+void bsal_assembly_graph_builder_get_producers_for_work_stealing(struct thorium_actor *self, struct bsal_vector *producers_for_work_stealing)
 {
     struct bsal_assembly_graph_builder *concrete_self;
     int index;
     int producer;
-    int j;
-    int gap;
     int store_count;
-    int period;
-    int stride;
-    int k;
+    int victim_count;
+    int i;
+    double probability;
+    int nodes;
+    int workers;
+    int actors;
 
+    /*
+     * Given N actors,
+     * the probability of being picked up as a victim by an actor (1 event)
+     * is 1 / N.
+     *
+     * The probability of not being picked up is 1 - 1/N.
+     *
+     * If all actors picks up 1 victim, the probability of not being the victim
+     * of any actor is
+     *
+     * (1 - 1/N) ^ ( actors * 1)
+     *
+     * Some examples:
+     *
+     * irb(main):013:0> actors = 2048*15
+     * => 30720
+     * irb(main):014:0> (1 - 1.0 / actors)**(actors * 1)
+     * => 0.36787345346945044
+     * irb(main):015:0> (1 - 1.0 / actors)**(actors * 10)
+     * => 4.5392540892387874e-05
+     * irb(main):016:0> (1 - 1.0 / actors)**(actors * 16)
+     * => 1.1250587186554038e-07
+     *
+     */
+
+    /*
+     * Now, given N actors, we don't want any of them to be alone.
+     *
+     * An actor has probability N of being selected.
+     *
+     *
+     */
+    nodes = thorium_actor_get_node_count(self);
+    workers = thorium_actor_node_worker_count(self);
+    actors = nodes * workers;
+    probability = 1.0 / (32 * actors);
+
+    /*
+     * irb(main):011:0> victims = Math.log(1.0/(5*actors))/(actors*Math.log(1 - 1.0/actors))
+     */
+
+    victim_count = log(probability) / (actors * log(1 - (1.0 / actors)));
+
+    printf("WORK_STEALING DEBUG victim count is %d\n", victim_count);
+
+    /*
+     * Algorithm:
+     * each actor picks a constant number of peers.
+     */
+
+    /*
+     * irb(main):016:0> nodes=2048
+     * => 2048
+     * irb(main):017:0> workers=15
+     * => 15
+     * irb(main):018:0> actors = nodes * workers
+     * => 30720
+     * irb(main):019:0> probability = 1.0/actors
+     * => 3.255208333333333e-05
+     * irb(main):020:0> not_picked_up_probability = 1 - probability
+     * => 0.9999674479166667
+     * irb(main):021:0> links=10
+     * => 10
+     * irb(main):022:0> not_picked_by_anyone = not_picked_up_probability**(actors * links)
+     * => 4.5392540892387874e-05
+     * irb(main):023:0> links=1
+     * => 1
+     * irb(main):024:0> not_picked_by_anyone = not_picked_up_probability**(actors * links)
+     * => 0.36787345346945044
+     * irb(main):025:0> links=4
+     * => 4
+     * irb(main):026:0> not_picked_by_anyone = not_picked_up_probability**(actors * links)
+     * => 0.018314446477332835
+     * irb(main):027:0> links=8
+     * => 8
+     * irb(main):028:0> not_picked_by_anyone = not_picked_up_probability**(actors * links)
+     * => 0.00033541894977108907
+     *
+     */
     concrete_self = thorium_actor_concrete_actor(self);
 
     store_count = bsal_vector_size(&concrete_self->sequence_stores);
-    period = thorium_actor_node_worker_count(self);
-    stride = 16;
-    gap = store_count / stride;
-
-    /*
-     * Don'T compute stuff too much.
-     */
-    if (i % period != 0) {
-        return;
-    }
 
     /*
      * Gather the list of alternate producers.
      */
     bsal_vector_clear(producers_for_work_stealing);
-    j = 0;
 
     /*
      * There is the same number of sliding_windows and sequence_stores.
      */
-    for (k = 1; k < stride; ++k) {
-        for (j = 0; j < period; ++j) {
 
-            index = i - k * gap + j;
-            if (index < 0) {
-                index += store_count;
-            }
-            producer = bsal_vector_at_as_int(&concrete_self->sequence_stores, index);
-            bsal_vector_push_back(producers_for_work_stealing, &producer);
-
-#if 0
-        printf("DEBUG positions i %d index %d\n", i, index);
-#endif
-        }
+    for (i = 0; i < victim_count; ++i) {
+        index = rand() % store_count;
+        producer = bsal_vector_at_as_int(&concrete_self->sequence_stores, index);
+        bsal_vector_push_back(producers_for_work_stealing, &producer);
     }
 }

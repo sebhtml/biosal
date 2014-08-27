@@ -108,8 +108,6 @@ void thorium_node_init(struct thorium_node *node, int *argc, char ***argv)
     node->last_report_time = 0;
     node->last_auto_scaling = node->start_time;
 
-    srand(node->start_time * getpid());
-
     /*
      * Build memory pools
      */
@@ -142,6 +140,12 @@ void thorium_node_init(struct thorium_node *node, int *argc, char ***argv)
     node->provided = thorium_transport_get_provided(&node->transport);
     node->name = thorium_transport_get_rank(&node->transport);
     node->nodes = thorium_transport_get_size(&node->transport);
+
+    /*
+     * On Blue Gene/Q, the starting time and PID is the same for all ranks.
+     * Therefore, the name of the rank is also used.
+     */
+    srand(node->start_time * getpid() * node->name);
 
 #ifdef THORIUM_NODE_INJECT_CLEAN_WORKER_BUFFERS
     bsal_fast_queue_init(&node->clean_outbound_buffers_to_inject, sizeof(struct thorium_worker_buffer));
