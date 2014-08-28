@@ -422,6 +422,7 @@ void thorium_actor_set_priority(struct thorium_actor *self, int priority);
 int thorium_actor_get_source_count(struct thorium_actor *self);
 
 int thorium_actor_get_spawner(struct thorium_actor *self, struct bsal_vector *spawners);
+int thorium_actor_get_random_spawner(struct thorium_actor *self, struct bsal_vector *spawners);
 
 /*
  * Expose the acquaintance API if required.

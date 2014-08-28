@@ -2010,3 +2010,20 @@ void thorium_actor_add_action_with_source_and_condition(struct thorium_actor *se
     thorium_dispatcher_add_action(&self->dispatcher, tag, handler, source, actual, expected);
 }
 
+int thorium_actor_get_random_spawner(struct thorium_actor *self, struct bsal_vector *spawners)
+{
+    int actor;
+    int size;
+    int index;
+
+    size = bsal_vector_size(spawners);
+
+    if (size == 0) {
+        return THORIUM_ACTOR_NOBODY;
+    }
+
+    index = rand() % size;
+    actor = bsal_vector_at_as_int(spawners, index);
+
+    return actor;
+}
