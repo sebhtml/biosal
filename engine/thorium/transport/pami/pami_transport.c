@@ -49,6 +49,9 @@ void thorium_pami_transport_init(struct thorium_transport *self, int *argc, char
     pami_transport->send_queue = (struct bsal_fast_queue*)malloc(sizeof(struct bsal_fast_queue));
     pami_transport->recv_queue = (struct bsal_fast_queue*)malloc(sizeof(struct bsal_fast_queue));
 
+    bsal_fast_queue_init(pami_transport->send_queue, sizeof(send_info_t));
+    bsal_fast_queue_init(pami_transport->recv_queue, sizeof(recv_info_t));
+
     /*
      * \see http://www-01.ibm.com/support/knowledgecenter/SSFK3V_1.3.0/com.ibm.cluster.protocols.v1r3.pp400.doc/bl510_pclientc.htm
      */
@@ -74,8 +77,8 @@ void thorium_pami_transport_init(struct thorium_transport *self, int *argc, char
     query_configurations[2].name = PAMI_CLIENT_NUM_CONTEXTS;
 
     result = PAMI_Client_query(pami_transport->client, query_configurations, 3);
-    pami_transport->size = query_configurations[0].value.intval;
-    pami_transport->rank = query_configurations[1].value.intval;
+    self->size = query_configurations[0].value.intval;
+    self->rank = query_configurations[1].value.intval;
     contexts = query_configurations[2].value.intval;
 
     BSAL_DEBUGGER_ASSERT(contexts > 1);
@@ -117,6 +120,10 @@ void thorium_pami_transport_destroy(struct thorium_transport *self)
 
     free(pami_transport->recv_queue);
     free(pami_transport->send_queue);
+    
+    bsal_fast_queue_destroy(&pami_transport->recv_queue);
+    bsal_fast_queue_destroy(&pami_transport->send_queue);
+
 
     /*Destroy context*/
     result = PAMI_Context_destroyv(&pami_transport->context, pami_transport->num_contexts);
@@ -192,7 +199,7 @@ int thorium_pami_transport_receive(struct thorium_transport *self, struct thoriu
     if(bsal_fast_queue_size(pami_transport->recv_queue) > 0) {
 	recv_info_t recv_info;
 	bsal_fast_queue_dequeue(pami_transport->recv_queue, (void *)&recv_info);
-	thorium_message_init_with_nodes(message, -1, recv_info.count, (void *)recv_info.buffer, recv_info.source, -1);
+	thorium_message_init_with_nodes(message, -1, recv_info.count, (void *)recv_info.buffer, recv_info.source, self->rank);
     } else {
 	return 0;
     }

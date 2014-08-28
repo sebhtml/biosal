@@ -22,7 +22,7 @@
 #if defined(__bgq__) && THORIUM_TRANSPORT_PAMI_IS_READY
 
 #define THORIUM_TRANSPORT_USE_PAMI
-
+#warning "PAMI is used"
 #endif
 
 #if defined(THORIUM_TRANSPORT_USE_PAMI)
@@ -70,8 +70,6 @@ typedef struct {
  *   */
 struct thorium_pami_transport {
 #ifdef THORIUM_TRANSPORT_USE_PAMI
-    int size;
-    int rank;
     pami_client_t client;
     pami_context_t context;
     size_t num_contexts;
