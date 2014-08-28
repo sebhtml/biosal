@@ -5,10 +5,6 @@
 #include "transport_interface.h"
 #include "transport_profiler.h"
 
-#include "pami/pami_transport.h"
-#include "mpi1_pt2pt/mpi1_pt2pt_transport.h"
-#include "mpi1_pt2pt_nonblocking/mpi1_pt2pt_nonblocking_transport.h"
-
 #define THORIUM_TRANSPORT_IMPLEMENTATION_MOCK 0
 
 #define THORIUM_THREAD_SINGLE 0
@@ -37,9 +33,6 @@ struct thorium_transport {
 
     struct bsal_memory_pool *inbound_message_memory_pool;
     struct bsal_memory_pool *outbound_message_memory_pool;
-
-    struct thorium_pami_transport pami_transport;
-    struct thorium_mpi1_pt2pt_transport mpi_transport;
 
     void *concrete_transport;
     struct thorium_transport_interface *transport_interface;
