@@ -125,22 +125,21 @@ void bsal_assembly_graph_store_destroy(struct thorium_actor *self)
 void bsal_assembly_graph_store_receive(struct thorium_actor *self, struct thorium_message *message)
 {
     int tag;
-    void *buffer;
+    /*void *buffer;*/
     struct bsal_assembly_graph_store *concrete_self;
     double value;
     struct bsal_dna_kmer kmer;
-    struct bsal_memory_pool *ephemeral_memory;
+    /*struct bsal_memory_pool *ephemeral_memory;*/
     int customer;
-
 
     if (thorium_actor_take_action(self, message)) {
         return;
     }
 
-    ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
+    /*ephemeral_memory = thorium_actor_get_ephemeral_memory(self);*/
     concrete_self = (struct bsal_assembly_graph_store *)thorium_actor_concrete_actor(self);
     tag = thorium_message_tag(message);
-    buffer = thorium_message_buffer(message);
+    /*buffer = thorium_message_buffer(message);*/
 
     if (tag == ACTION_SET_KMER_LENGTH) {
 
@@ -427,7 +426,7 @@ void bsal_assembly_graph_store_push_kmer_block(struct thorium_actor *self, struc
     void *packed_kmer;
     struct bsal_map_iterator iterator;
     struct bsal_assembly_graph_store *concrete_self;
-    int tag;
+    /*int tag;*/
     void *key;
     struct bsal_map *kmers;
     struct bsal_dna_kmer kmer;
@@ -441,7 +440,7 @@ void bsal_assembly_graph_store_push_kmer_block(struct thorium_actor *self, struc
 
     ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
     concrete_self = (struct bsal_assembly_graph_store *)thorium_actor_concrete_actor(self);
-    tag = thorium_message_tag(message);
+    /*tag = thorium_message_tag(message);*/
     buffer = thorium_message_buffer(message);
     count = thorium_message_count(message);
 

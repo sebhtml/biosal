@@ -104,8 +104,11 @@ void bsal_assembly_arc_kernel_receive(struct thorium_actor *self, struct thorium
     if (tag == ACTION_SET_PRODUCER) {
 
         thorium_message_unpack_int(message, 0, &concrete_self->producer);
-
         concrete_self->source = source;
+
+        printf("%s/%d received ACTION_SET_PRODUCER, starting now!\n",
+                        thorium_actor_script_name(self),
+                        thorium_actor_name(self));
 
         bsal_assembly_arc_kernel_ask(self, message);
 
@@ -137,6 +140,11 @@ void bsal_assembly_arc_kernel_receive(struct thorium_actor *self, struct thorium
             bsal_assembly_arc_kernel_ask(self, message);
 
         } else {
+
+            printf("%s/%d DONE\n",
+                            thorium_actor_script_name(self),
+                            thorium_actor_name(self));
+
             thorium_actor_send_empty(self, concrete_self->source,
                         ACTION_SET_PRODUCER_REPLY);
         }
@@ -413,7 +421,6 @@ void bsal_assembly_arc_kernel_set_producers_for_work_stealing(struct thorium_act
 
     bsal_vector_init(&producers, sizeof(int));
     bsal_vector_set_memory_pool(&producers, ephemeral_memory);
-
     bsal_vector_unpack(&producers, buffer);
 
     i = 0;

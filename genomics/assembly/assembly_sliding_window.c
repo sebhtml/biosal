@@ -283,11 +283,15 @@ void bsal_assembly_sliding_window_receive(struct thorium_actor *actor, struct th
             bsal_assembly_sliding_window_ask(actor, message);
 
         } else {
+
+            printf("DEBUG %s/%d DONE\n",
+                            thorium_actor_script_name(actor),
+                    thorium_actor_name(actor));
+
             thorium_actor_send_empty(actor,
                                 concrete_actor->producer_source,
                         ACTION_SET_PRODUCER_REPLY);
         }
-
     } else if (tag == ACTION_SET_CONSUMER_REPLY) {
 
         /* Set the producer for the new window
@@ -304,8 +308,6 @@ void bsal_assembly_sliding_window_receive(struct thorium_actor *actor, struct th
         printf("window %d completed auto-scaling # %d\n",
                         thorium_actor_name(actor),
                         concrete_actor->scaling_operations);
-
-
 
     } else if (tag == ACTION_SET_PRODUCER_REPLY
                     && source == concrete_actor->auto_scaling_clone) {

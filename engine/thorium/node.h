@@ -29,9 +29,13 @@
 #define ACTION_THORIUM_NODE_START 0x0000082c
 
 /*
+ * Use deterministic actor names.
+ */
+#define THORIUM_NODE_USE_DETERMINISTIC_ACTOR_NAMES
+
+/*
  * Thorium product branding.
  */
-
 #define THORIUM_NODE_THORIUM_PREFIX "[thorium]"
 
 /*
@@ -45,7 +49,7 @@
 /*
  */
 #define THORIUM_NODE_ENABLE_INSTRUMENTATION
-#define THORIUM_NODE_LOAD_PERIOD 5
+#define THORIUM_NODE_LOAD_PERIOD 10
 
 /*
 */
@@ -189,6 +193,10 @@ struct thorium_node {
     time_t last_report_time;
     time_t last_auto_scaling;
     time_t last_transport_event_time;
+
+#ifdef THORIUM_NODE_USE_DETERMINISTIC_ACTOR_NAMES
+    int current_actor_name;
+#endif
 };
 
 void thorium_node_init(struct thorium_node *self, int *argc, char ***argv);
@@ -275,5 +283,11 @@ void thorium_node_recycle_inbound_message(struct thorium_node *self, struct thor
 
 void thorium_node_prepare_received_message(struct thorium_node *self, struct thorium_message *message);
 void thorium_node_resolve(struct thorium_node *self, struct thorium_message *message);
+
+/*
+ * Generate an actor name.
+ */
+int thorium_node_generate_random_name(struct thorium_node *self,
+                int minimal_value, int maximum_value);
 
 #endif
