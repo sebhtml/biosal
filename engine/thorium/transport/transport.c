@@ -241,8 +241,8 @@ void thorium_transport_select_implementation(struct thorium_transport *self, int
      *
      * Possible values are:
      *
-     * -transport thorium_mpi1_pt2pt_nonblocking_transport_implementation
-     * -transport thorium_mpi1_pt2pt_transport_implementation
+     * -transport mpi1_pt2pt_nonblocking_transport
+     * -transport mpi1_pt2pt_transport
      * -transport thorium_pami_transport_implementation
      */
     if (requested_implementation_name != NULL) {
