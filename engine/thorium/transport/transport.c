@@ -237,7 +237,7 @@ void thorium_transport_select_implementation(struct thorium_transport *self, int
     bsal_vector_push_back(&implementations, &component);
 #endif
 
-#if defined(_CRAYC)
+#if defined(_CRAYC) && 0
     component = &thorium_gni_transport_implementation;
     bsal_vector_push_back(&implementations, &component);
 #endif
