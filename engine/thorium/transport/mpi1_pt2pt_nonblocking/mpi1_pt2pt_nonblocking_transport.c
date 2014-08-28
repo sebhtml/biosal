@@ -42,7 +42,7 @@
 #define TAG_BIG_START_VALUE 2
 
 struct thorium_transport_interface thorium_mpi1_pt2pt_nonblocking_transport_implementation = {
-    .name = "thorium_mpi1_pt2pt_nonblocking_transport_implementation",
+    .name = "mpi1_pt2pt_nonblocking_transport",
     .size = sizeof(struct thorium_mpi1_pt2pt_nonblocking_transport),
     .init = thorium_mpi1_pt2pt_nonblocking_transport_init,
     .destroy = thorium_mpi1_pt2pt_nonblocking_transport_destroy,

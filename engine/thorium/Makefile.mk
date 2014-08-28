@@ -30,11 +30,6 @@ THORIUM_OBJECTS += engine/thorium/scheduler/priority_scheduler.o
 THORIUM_OBJECTS += engine/thorium/transport/transport.o
 THORIUM_OBJECTS += engine/thorium/transport/transport_profiler.o
 
-THORIUM_OBJECTS += engine/thorium/transport/mpi1_pt2pt/mpi1_pt2pt_transport.o
-THORIUM_OBJECTS += engine/thorium/transport/mpi1_pt2pt/mpi1_pt2pt_active_request.o
+include engine/thorium/transport/*/Makefile.am
 
-THORIUM_OBJECTS += engine/thorium/transport/mpi1_pt2pt_nonblocking/mpi1_pt2pt_nonblocking_transport.o
-THORIUM_OBJECTS += engine/thorium/transport/mpi1_pt2pt_nonblocking/mpi1_request.o
-
-THORIUM_OBJECTS += engine/thorium/transport/pami/pami_transport.o
 

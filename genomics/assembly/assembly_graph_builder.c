@@ -572,7 +572,7 @@ void bsal_assembly_graph_builder_connect_actors(struct thorium_actor *self)
 
     for (i = 0; i < bsal_vector_size(&concrete_self->sliding_windows); ++i) {
 
-        bsal_assembly_graph_builder_get_producers_for_work_stealing(self, &producers_for_work_stealing);
+        bsal_assembly_graph_builder_get_producers_for_work_stealing(self, &producers_for_work_stealing, i);
 
         producer = bsal_vector_at_as_int(&concrete_self->sliding_windows, i);
         thorium_actor_send_vector(self, producer, ACTION_SET_PRODUCERS_FOR_WORK_STEALING,
@@ -1077,7 +1077,7 @@ void bsal_assembly_graph_builder_set_kmer_reply_arcs(struct thorium_actor *self,
 
     for (i = 0; i < size; ++i) {
 
-        bsal_assembly_graph_builder_get_producers_for_work_stealing(self, &producers_for_work_stealing);
+        bsal_assembly_graph_builder_get_producers_for_work_stealing(self, &producers_for_work_stealing, i);
 
         producer = bsal_vector_at_as_int(&concrete_self->arc_kernels, i);
 
@@ -1337,7 +1337,8 @@ void bsal_assembly_graph_builder_get_summary_reply(struct thorium_actor *self, s
     bsal_vector_destroy(&vector);
 }
 
-void bsal_assembly_graph_builder_get_producers_for_work_stealing(struct thorium_actor *self, struct bsal_vector *producers_for_work_stealing)
+void bsal_assembly_graph_builder_get_producers_for_work_stealing(struct thorium_actor *self, struct bsal_vector *producers_for_work_stealing,
+                int current_index)
 {
     struct bsal_assembly_graph_builder *concrete_self;
     int index;
@@ -1350,6 +1351,7 @@ void bsal_assembly_graph_builder_get_producers_for_work_stealing(struct thorium_
     int workers;
     int actors;
     double probability_of_having_an_alone_actor;
+    int steps;
 
     /*
      * Given N actors,
@@ -1428,11 +1430,13 @@ void bsal_assembly_graph_builder_get_producers_for_work_stealing(struct thorium_
 
     probability = 1 - pow(1.0 - probability_of_having_an_alone_actor, 1.0 / actors);
 
+#ifdef DISPLAY_WORK_STEALING_STATISTICS
     printf("PROBABILITY p of having an actor not selected by anyone %f, given %d actors\n",
                     probability_of_having_an_alone_actor, actors);
 
     printf("PROBABILITY p for an actor to not being selected by anyone: %f\n",
                     probability);
+#endif
 
     /*
      * irb(main):011:0> victims = Math.log(1.0/(5*actors))/(actors*Math.log(1 - 1.0/actors))
@@ -1440,6 +1444,8 @@ void bsal_assembly_graph_builder_get_producers_for_work_stealing(struct thorium_
 
     victim_count = log(probability) / (actors * log(1 - (1.0 / actors)));
 
+#ifdef DISPLAY_WORK_STEALING_STATISTICS
+#endif
     printf("WORK_STEALING DEBUG victim count is %d\n", victim_count);
 
     /*
@@ -1461,7 +1467,18 @@ void bsal_assembly_graph_builder_get_producers_for_work_stealing(struct thorium_
      */
 
     for (i = 0; i < victim_count; ++i) {
-        index = rand() % store_count;
+        index = current_index;
+
+        /*
+         * Avoid infinite loops if random numbers are very bad.
+         */
+        steps = 512;
+
+        while (index == current_index
+                        && --steps) {
+            index = rand() % store_count;
+        }
+
         producer = bsal_vector_at_as_int(&concrete_self->sequence_stores, index);
         bsal_vector_push_back(producers_for_work_stealing, &producer);
     }

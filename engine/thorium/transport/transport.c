@@ -1,6 +1,14 @@
 
 #include "transport.h"
 
+/*
+ * Implementations of the interface.
+ */
+
+#include "pami/pami_transport.h"
+#include "mpi1_pt2pt/mpi1_pt2pt_transport.h"
+#include "mpi1_pt2pt_nonblocking/mpi1_pt2pt_nonblocking_transport.h"
+
 #include <core/system/command.h>
 #include <core/helpers/bitmap.h>
 
@@ -9,6 +17,8 @@
 #include <engine/thorium/node.h>
 
 #include <core/system/debugger.h>
+
+#include <string.h>
 
 /*
 #define THORIUM_TRANSPORT_DEBUG
@@ -43,7 +53,7 @@ void thorium_transport_init(struct thorium_transport *self, struct thorium_node 
     /*
      * Assign functions
      */
-    thorium_transport_set(self);
+    thorium_transport_select_implementation(self, actual_argc, actual_argv);
 
     self->node = node;
 
@@ -195,27 +205,77 @@ void *thorium_transport_get_concrete_transport(struct thorium_transport *self)
     return self->concrete_transport;
 }
 
-void thorium_transport_set(struct thorium_transport *self)
+void thorium_transport_select_implementation(struct thorium_transport *self, int argc, char ** argv)
 {
-    self->transport_interface = NULL;
+    char *requested_implementation_name;
+    struct bsal_vector implementations;
+    int i;
+    int size;
+    struct thorium_transport_interface *component;
+    char *available_name;
 
     /*
-#ifdef __bgq__
-#undef THORIUM_TRANSPORT_USE_MPI1_PT2PT_NONBLOCKING
+     * Prepare a list of potential transport implementations to
+     * use.
+     */
+
+    bsal_vector_init(&implementations, sizeof(struct thorium_transport_interface *));
+
+    /* MPI non-blocking, this is the default.
+     */
+    component = &thorium_mpi1_pt2pt_nonblocking_transport_implementation;
+    bsal_vector_push_back(&implementations, &component);
+
+    component = &thorium_mpi1_pt2pt_transport_implementation;
+    bsal_vector_push_back(&implementations, &component);
+
+    /*
+     * Only enable the pami thing on Blue Gene/Q.
+     */
+#if defined(__bgq__)
+    component = &thorium_pami_transport_implementation;
+    bsal_vector_push_back(&implementations, &component);
 #endif
-*/
 
-#ifdef THORIUM_TRANSPORT_USE_PAMI_DISABLE
-        self->transport_interface = &thorium_pami_transport_implementation;
-
-#elif defined(THORIUM_TRANSPORT_USE_MPI1_PT2PT_NONBLOCKING)
-        self->transport_interface = &thorium_mpi1_pt2pt_nonblocking_transport_implementation;
-/*#warning "Will use MPI 1.0 PT2PT nonblocking"*/
-
-#elif defined(THORIUM_TRANSPORT_USE_MPI1_P2P)
-        self->transport_interface = &thorium_mpi1_pt2pt_transport_implementation;
-/*#warning "Will use MPI 1.0 PT2PT"*/
+#if defined(_CRAYC)
+    component = &thorium_gni_transport_implementation;
+    bsal_vector_push_back(&implementations, &component);
 #endif
+
+    requested_implementation_name = bsal_command_get_argument_value(argc, argv, "-transport");
+
+    /*
+     * The default is the first one in the list.
+     */
+    self->transport_interface = *(struct thorium_transport_interface **)bsal_vector_at(&implementations, 0);
+
+    /*
+     * The option -transport was provided.
+     *
+     * Possible values are:
+     *
+     * -transport mpi1_pt2pt_nonblocking_transport
+     * -transport mpi1_pt2pt_transport
+     * -transport thorium_pami_transport_implementation
+     */
+    if (requested_implementation_name != NULL) {
+
+        size = bsal_vector_size(&implementations);
+
+        for (i = 0; i < size; ++i) {
+            component = *(struct thorium_transport_interface **)bsal_vector_at(&implementations, i);
+            available_name = component->name;
+
+            if (strcmp(available_name, requested_implementation_name) == 0) {
+                self->transport_interface = component;
+                break;
+            }
+        }
+    }
+
+    bsal_vector_destroy(&implementations);
+
+    BSAL_DEBUGGER_ASSERT(self->transport_interface != NULL);
 }
 
 int thorium_transport_get_active_request_count(struct thorium_transport *self)

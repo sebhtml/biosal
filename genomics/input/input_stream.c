@@ -778,7 +778,7 @@ void bsal_input_stream_count_in_parallel(struct thorium_actor *self, struct thor
 
     for (i = 0; i < size; i++) {
 
-        spawner = thorium_actor_get_spawner(self, &concrete_self->spawners);
+        spawner = thorium_actor_get_random_spawner(self, &concrete_self->spawners);
 
         thorium_actor_send_int(self, spawner, ACTION_SPAWN,
                 ACTION_INPUT_SCRIPT_STREAM);
