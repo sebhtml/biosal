@@ -1428,11 +1428,13 @@ void bsal_assembly_graph_builder_get_producers_for_work_stealing(struct thorium_
 
     probability = 1 - pow(1.0 - probability_of_having_an_alone_actor, 1.0 / actors);
 
+#ifdef DISPLAY_WORK_STEALING_STATISTICS
     printf("PROBABILITY p of having an actor not selected by anyone %f, given %d actors\n",
                     probability_of_having_an_alone_actor, actors);
 
     printf("PROBABILITY p for an actor to not being selected by anyone: %f\n",
                     probability);
+#endif
 
     /*
      * irb(main):011:0> victims = Math.log(1.0/(5*actors))/(actors*Math.log(1 - 1.0/actors))
@@ -1440,7 +1442,9 @@ void bsal_assembly_graph_builder_get_producers_for_work_stealing(struct thorium_
 
     victim_count = log(probability) / (actors * log(1 - (1.0 / actors)));
 
+#ifdef DISPLAY_WORK_STEALING_STATISTICS
     printf("WORK_STEALING DEBUG victim count is %d\n", victim_count);
+#endif
 
     /*
      * Algorithm:
