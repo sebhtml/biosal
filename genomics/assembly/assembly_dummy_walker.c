@@ -271,11 +271,9 @@ void bsal_assembly_dummy_walker_get_vertex_reply_starting_vertex(struct thorium_
 {
     void *buffer;
     struct bsal_assembly_dummy_walker *concrete_self;
-    struct bsal_memory_pool *ephemeral_memory;
 
     buffer = thorium_message_buffer(message);
     concrete_self = (struct bsal_assembly_dummy_walker *)thorium_actor_concrete_actor(self);
-    ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
 
     bsal_assembly_vertex_init(&concrete_self->current_vertex);
     bsal_assembly_vertex_unpack(&concrete_self->current_vertex, buffer);
@@ -478,12 +476,10 @@ void bsal_assembly_dummy_walker_get_vertex_reply(struct thorium_actor *self, str
 {
     void *buffer;
     struct bsal_assembly_dummy_walker *concrete_self;
-    struct bsal_memory_pool *ephemeral_memory;
     struct bsal_assembly_vertex vertex;
 
     buffer = thorium_message_buffer(message);
     concrete_self = (struct bsal_assembly_dummy_walker *)thorium_actor_concrete_actor(self);
-    ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
 
     bsal_assembly_vertex_init(&vertex);
     bsal_assembly_vertex_unpack(&vertex, buffer);
@@ -590,7 +586,7 @@ int bsal_assembly_dummy_walker_select(struct thorium_actor *self)
     int difference;
     int size;
     int i;
-    int code;
+    /*int code;*/
     /*char nucleotide;*/
     struct bsal_assembly_vertex *vertex;
     struct bsal_dna_kmer *kmer;
@@ -616,7 +612,7 @@ int bsal_assembly_dummy_walker_select(struct thorium_actor *self)
     best_coverage = -1;
 
     for (i = 0; i < size; i++) {
-        code = bsal_assembly_vertex_get_child(&concrete_self->current_vertex, i);
+        /*code = bsal_assembly_vertex_get_child(&concrete_self->current_vertex, i);*/
 
         /*nucleotide = bsal_dna_codec_get_nucleotide_from_code(code);*/
         vertex = bsal_vector_at(&concrete_self->child_vertices, i);

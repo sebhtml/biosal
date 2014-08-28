@@ -162,14 +162,12 @@ void argonnite_receive(struct thorium_actor *actor, struct thorium_message *mess
     int other_kernel;
     int print_stuff;
     int aggregator_index_index;
-    struct bsal_memory_pool *ephemeral_memory;
     int enable_work_stealing;
 
     if (thorium_actor_take_action(actor, message)) {
         return;
     }
 
-    ephemeral_memory = thorium_actor_get_ephemeral_memory(actor);
     concrete_actor = (struct argonnite *)thorium_actor_concrete_actor(actor);
     tag = thorium_message_tag(message);
     buffer = thorium_message_buffer(message);
@@ -912,9 +910,6 @@ void argonnite_prepare_sequence_stores(struct thorium_actor *self, struct thoriu
     int controller;
     int i;
     int *bucket;
-    struct bsal_memory_pool *ephemeral_memory;
-
-    ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
 
     concrete_actor = (struct argonnite *)thorium_actor_concrete_actor(self);
 
@@ -989,9 +984,6 @@ void argonnite_connect_kernels_with_stores(struct thorium_actor *self, struct th
     int kernel;
     int sequence_store;
     int i;
-    struct bsal_memory_pool *ephemeral_memory;
-
-    ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
 
     /* kill controller now !
      */

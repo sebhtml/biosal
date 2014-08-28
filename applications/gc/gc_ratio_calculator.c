@@ -46,8 +46,6 @@ void gc_ratio_calculator_receive(struct thorium_actor *actor, struct thorium_mes
 void gc_ratio_calculator_start(struct thorium_actor *actor, struct thorium_message *message)
 {
     int name;
-    int tag;
-    int source;
     int index;
     int size;
     int neighbor_index;
@@ -60,9 +58,7 @@ void gc_ratio_calculator_start(struct thorium_actor *actor, struct thorium_messa
     concrete_actor = thorium_actor_concrete_actor(actor);
 
     name = thorium_actor_name(actor);
-    tag = thorium_message_tag(message);
     buffer = thorium_message_buffer(message);
-    source = thorium_message_source(message);
     spawners = &concrete_actor->spawners;
     size = bsal_vector_size(spawners);
 

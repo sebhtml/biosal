@@ -793,9 +793,7 @@ void bsal_input_stream_spawn_reply(struct thorium_actor *self, struct thorium_me
     int size;
     uint64_t start_offset;
     uint64_t end_offset;
-    int name;
 
-    name = thorium_actor_name(self);
     concrete_self = (struct bsal_input_stream *)thorium_actor_concrete_actor(self);
 
     thorium_message_unpack_int(message, 0, &stream);
@@ -886,10 +884,8 @@ void bsal_input_stream_count_reply(struct thorium_actor *self, struct thorium_me
 {
     struct bsal_input_stream *concrete_self;
     void *buffer;
-    struct bsal_memory_pool *ephemeral_memory;
     uint64_t result;
     struct bsal_mega_block *block;
-    int count;
     int i;
     int size;
     struct bsal_vector *vector;
@@ -901,8 +897,6 @@ void bsal_input_stream_count_reply(struct thorium_actor *self, struct thorium_me
     concrete_self = (struct bsal_input_stream *)thorium_actor_concrete_actor(self);
 
     buffer = thorium_message_buffer(message);
-    count = thorium_message_count(message);
-    ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
 
     source = thorium_message_source(message);
     source_index = bsal_vector_index_of(&concrete_self->parallel_streams, &source);
