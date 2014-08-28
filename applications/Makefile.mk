@@ -2,6 +2,6 @@
 APPLICATION_EXECUTABLES=
 APPLICATION_OBJECTS=
 
-include applications/*/Makefile.am
+include applications/*/Makefile.mk
 
 
