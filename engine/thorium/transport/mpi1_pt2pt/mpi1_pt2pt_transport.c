@@ -19,7 +19,7 @@
 #define DUMMY_TAG MEANING_OF_LIFE_THE_UNIVERSE_AND_EVERYTHING
 
 struct thorium_transport_interface thorium_mpi1_pt2pt_transport_implementation = {
-    .name = "thorium_mpi1_pt2pt_transport_implementation",
+    .name = "mpi1_pt2pt_transport",
     .size = sizeof(struct thorium_mpi1_pt2pt_transport),
     .init = thorium_mpi1_pt2pt_transport_init,
     .destroy = thorium_mpi1_pt2pt_transport_destroy,

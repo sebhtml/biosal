@@ -70,7 +70,7 @@ int thorium_transport_test(struct thorium_transport *self, struct thorium_worker
 int thorium_transport_get_active_request_count(struct thorium_transport *self);
 
 void *thorium_transport_get_concrete_transport(struct thorium_transport *self);
-void thorium_transport_set(struct thorium_transport *self);
+void thorium_transport_select_implementation(struct thorium_transport *self, int argc, char **argv);
 
 void thorium_transport_print(struct thorium_transport *self);
 
