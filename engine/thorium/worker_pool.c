@@ -392,9 +392,12 @@ int thorium_worker_pool_give_message_to_actor(struct thorium_worker_pool *pool, 
     int worker_index;
     int name;
     int dead;
+
+    /*
     void *buffer;
 
     buffer = thorium_message_buffer(message);
+    */
     destination = thorium_message_destination(message);
     actor = thorium_node_get_actor_from_name(pool->node, destination);
 

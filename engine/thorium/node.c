@@ -36,6 +36,10 @@
 */
 #define THORIUM_NODE_REUSE_DEAD_INDICES
 
+/*
+#define USE_RANDOM_ACTOR_NAMES
+*/
+
 /* debugging options */
 /*
 #define THORIUM_NODE_DEBUG
@@ -107,6 +111,10 @@ void thorium_node_init(struct thorium_node *node, int *argc, char ***argv)
     node->last_transport_event_time = node->start_time;
     node->last_report_time = 0;
     node->last_auto_scaling = node->start_time;
+
+#ifdef THORIUM_NODE_USE_DETERMINISTIC_ACTOR_NAMES
+    node->current_actor_name = THORIUM_ACTOR_NOBODY;
+#endif
 
     /*
      * Build memory pools
@@ -357,7 +365,9 @@ void thorium_node_init(struct thorium_node *node, int *argc, char ***argv)
             thorium_worker_pool_worker_count(&node->worker_pool),
             1);
 
+#if 0
         thorium_transport_print(&node->transport);
+#endif
     }
 }
 
@@ -617,7 +627,6 @@ int thorium_node_generate_name(struct thorium_node *node)
     int minimal_value;
     int maximum_value;
     int name;
-    int range;
     struct thorium_actor *actor;
     int node_name;
     int difference;
@@ -635,13 +644,12 @@ int thorium_node_generate_name(struct thorium_node *node)
 
     node_name = thorium_node_name(node);
     actor = NULL;
+    name = THORIUM_ACTOR_NOBODY;
 
     /* reserve  the first numbers
      */
-    minimal_value = 4* thorium_node_nodes(node);
-    name = -1;
+    minimal_value = thorium_node_name(node) + 1000000;
     maximum_value = 2000000000;
-    range = maximum_value - minimal_value;
 
 #ifdef THORIUM_NODE_DEBUG
     printf("DEBUG assigning name\n");
@@ -649,8 +657,11 @@ int thorium_node_generate_name(struct thorium_node *node)
 
     nodes = thorium_node_nodes(node);
 
+    /*
+     * Find a name that is not already used.
+     */
     while (actor != NULL || name < 0) {
-        name = rand() % range + minimal_value;
+        name = thorium_node_generate_random_name(node, minimal_value, maximum_value);
 
         difference = node_name - name % node->nodes;
         /* add the difference */
@@ -665,7 +676,6 @@ int thorium_node_generate_name(struct thorium_node *node)
         actor = thorium_node_get_actor_from_name(node, name);
 
         /*printf("DEBUG trying %d... %p\n", name, (void *)actor);*/
-
     }
 
 #ifdef THORIUM_NODE_DEBUG_SPAWN
@@ -2206,4 +2216,36 @@ void thorium_node_resolve(struct thorium_node *self, struct thorium_message *mes
     thorium_message_set_destination_node(message, node_name);
 }
 
+int thorium_node_generate_random_name(struct thorium_node *self,
+                int minimal_value, int maximum_value)
+{
+#if defined(THORIUM_NODE_USE_DETERMINISTIC_ACTOR_NAMES)
 
+    int name;
+    int stride;
+
+    if (self->current_actor_name < minimal_value
+                    || self->current_actor_name > maximum_value
+                    || self->current_actor_name == THORIUM_ACTOR_NOBODY) {
+
+        self->current_actor_name = minimal_value;
+    }
+
+    stride = thorium_node_nodes(self);
+
+    name = self->current_actor_name;
+    self->current_actor_name += stride;
+
+    return name;
+
+#elif defined(USE_RANDOM_ACTOR_NAMES)
+    int name;
+    int range;
+
+    range = maximum_value - minimal_value;
+    name = rand() % range + minimal_value;
+    return name;
+
+
+#endif
+}

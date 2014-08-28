@@ -527,6 +527,10 @@ void thorium_mpi1_pt2pt_nonblocking_transport_add_receive_request(struct thorium
                     concrete_self->datatype, source,
                     tag, concrete_self->communicator, mpi_request);
 
+    if (result != MPI_SUCCESS) {
+        return;
+    }
+
     bsal_fast_queue_enqueue(&concrete_self->receive_requests, &request);
 
 #ifdef THORIUM_MPI1_PT2PT_NON_BLOCKING_DEBUG

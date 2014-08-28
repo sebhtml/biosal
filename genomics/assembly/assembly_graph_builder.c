@@ -548,7 +548,6 @@ void bsal_assembly_graph_builder_connect_actors(struct thorium_actor *self)
     struct bsal_assembly_graph_builder *concrete_self;
     struct bsal_vector producers_for_work_stealing;
     struct bsal_memory_pool *ephemeral_memory;
-    int period;
 
     concrete_self = thorium_actor_concrete_actor(self);
     ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
@@ -570,8 +569,6 @@ void bsal_assembly_graph_builder_connect_actors(struct thorium_actor *self)
     thorium_actor_add_action_with_sources(self, ACTION_SET_PRODUCERS_FOR_WORK_STEALING_REPLY,
                     bsal_assembly_graph_builder_set_consumer_reply_windows,
                     &concrete_self->sliding_windows);
-
-    period = thorium_actor_node_worker_count(self);
 
     for (i = 0; i < bsal_vector_size(&concrete_self->sliding_windows); ++i) {
 
@@ -696,7 +693,7 @@ void bsal_assembly_graph_builder_verify(struct thorium_actor *self)
         producer = bsal_vector_at_as_int(&concrete_self->sequence_stores, i);
         consumer = bsal_vector_at_as_int(&concrete_self->sliding_windows, i);
 
-        printf("CONFIGURE neural LINK %d -> %d\n",
+        printf("CONFIGURE neural LINK store %d -> window %d\n",
                         producer, consumer);
 
         thorium_actor_send_int(self, consumer, ACTION_SET_PRODUCER,
@@ -1030,7 +1027,6 @@ void bsal_assembly_graph_builder_set_kmer_reply_arcs(struct thorium_actor *self,
     int size;
     struct bsal_vector producers_for_work_stealing;
     struct bsal_memory_pool *ephemeral_memory;
-    int period;
 
     ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
     concrete_self = thorium_actor_concrete_actor(self);
@@ -1041,92 +1037,92 @@ void bsal_assembly_graph_builder_set_kmer_reply_arcs(struct thorium_actor *self,
     expected += bsal_vector_size(&concrete_self->arc_kernels);
     expected += bsal_vector_size(&concrete_self->arc_classifiers);
 
+    /*
+     * All arc actors have a kmer length configured.
+     */
+    if (concrete_self->configured_actors_for_arcs < expected) {
+
+        return;
+    }
+
     bsal_vector_init(&producers_for_work_stealing, sizeof(int));
     bsal_vector_set_memory_pool(&producers_for_work_stealing,
-                    ephemeral_memory);
+                ephemeral_memory);
+
+    printf("%s/%d configured the kmer length for arc actors\n",
+                    thorium_actor_script_name(self),
+                    thorium_actor_name(self));
+
+    concrete_self->configured_actors_for_arcs = 0;
+
+    thorium_actor_add_action_with_condition(self, ACTION_SET_CONSUMER_REPLY,
+                    bsal_assembly_graph_builder_configure_arc_actors,
+                    &concrete_self->doing_arcs, 1);
+
+    size = bsal_vector_size(&concrete_self->arc_kernels);
 
     /*
-     * All arc actors not have a kmer length configured.
+     * Design:
+     *
+     * sequence_store => arc_kernel => arc_classifier => graph_store/0 graph_store/1 graph_store/2
      */
-    if (concrete_self->configured_actors_for_arcs == expected) {
 
-        printf("%s/%d configured the kmer length for arc actors\n",
-                        thorium_actor_script_name(self),
-                        thorium_actor_name(self));
+    /*
+     * Configure action for reply to the message that sets
+     * work stealing producers.
+     */
+    thorium_actor_add_action_with_sources(self, ACTION_SET_PRODUCERS_FOR_WORK_STEALING_REPLY,
+                    bsal_assembly_graph_builder_configure_arc_actors,
+                    &concrete_self->arc_kernels);
 
-        concrete_self->configured_actors_for_arcs = 0;
+    for (i = 0; i < size; ++i) {
 
-        thorium_actor_add_action_with_condition(self, ACTION_SET_CONSUMER_REPLY,
-                        bsal_assembly_graph_builder_configure_arc_actors,
-                        &concrete_self->doing_arcs, 1);
+        bsal_assembly_graph_builder_get_producers_for_work_stealing(self, &producers_for_work_stealing);
 
-        size = bsal_vector_size(&concrete_self->arc_kernels);
-
-        /*
-         * Design:
-         *
-         * sequence_store => arc_kernel => arc_classifier => graph_store/0 graph_store/1 graph_store/2
-         */
+        producer = bsal_vector_at_as_int(&concrete_self->arc_kernels, i);
 
         /*
-         * Configure action for reply to the message that sets
-         * work stealing producers.
+         * Also set producers for work stealing too.
          */
-        thorium_actor_add_action_with_sources(self, ACTION_SET_PRODUCERS_FOR_WORK_STEALING_REPLY,
-                        bsal_assembly_graph_builder_configure_arc_actors,
-                        &concrete_self->arc_kernels);
-
-        period = thorium_actor_node_worker_count(self);
-
-        for (i = 0; i < size; ++i) {
-
-            bsal_assembly_graph_builder_get_producers_for_work_stealing(self, &producers_for_work_stealing);
-
-            producer = bsal_vector_at_as_int(&concrete_self->arc_kernels, i);
-
-            /*
-             * Also set producers for work stealing too.
-             */
-            thorium_actor_send_vector(self, producer, ACTION_SET_PRODUCERS_FOR_WORK_STEALING,
-                            &producers_for_work_stealing);
-        }
-
-        /*
-         * Link kernels and classifiers
-         */
-        for (i = 0; i < size; i++) {
-
-            producer = bsal_vector_at_as_int(&concrete_self->arc_kernels, i);
-            consumer = bsal_vector_at_as_int(&concrete_self->arc_classifiers, i);
-
-            thorium_actor_send_int(self, producer, ACTION_SET_CONSUMER,
-                            consumer);
-        }
-
-        /*
-         * Link classifiers and graph stores
-         */
-
-        thorium_actor_add_action_with_condition(self,
-                        ACTION_SET_CONSUMERS_REPLY,
-                        bsal_assembly_graph_builder_configure_arc_actors,
-                        &concrete_self->doing_arcs, 1);
-
-        thorium_actor_send_range_vector(self, &concrete_self->arc_classifiers,
-                        ACTION_SET_CONSUMERS,
-                        &concrete_self->graph_stores);
-
-        /*
-         * Reset the sequence stores now.
-         */
-
-        thorium_actor_add_action(self,
-                        ACTION_RESET_REPLY,
-                        bsal_assembly_graph_builder_configure_arc_actors);
-
-        thorium_actor_send_range_empty(self, &concrete_self->sequence_stores,
-                        ACTION_RESET);
+        thorium_actor_send_vector(self, producer, ACTION_SET_PRODUCERS_FOR_WORK_STEALING,
+                        &producers_for_work_stealing);
     }
+
+    /*
+     * Link kernels and classifiers
+     */
+    for (i = 0; i < size; i++) {
+
+        producer = bsal_vector_at_as_int(&concrete_self->arc_kernels, i);
+        consumer = bsal_vector_at_as_int(&concrete_self->arc_classifiers, i);
+
+        thorium_actor_send_int(self, producer, ACTION_SET_CONSUMER,
+                        consumer);
+    }
+
+    /*
+     * Link classifiers and graph stores
+     */
+
+    thorium_actor_add_action_with_condition(self,
+                    ACTION_SET_CONSUMERS_REPLY,
+                    bsal_assembly_graph_builder_configure_arc_actors,
+                    &concrete_self->doing_arcs, 1);
+
+    thorium_actor_send_range_vector(self, &concrete_self->arc_classifiers,
+                    ACTION_SET_CONSUMERS,
+                    &concrete_self->graph_stores);
+
+    /*
+     * Reset the sequence stores now.
+     */
+
+    thorium_actor_add_action(self,
+                    ACTION_RESET_REPLY,
+                    bsal_assembly_graph_builder_configure_arc_actors);
+
+    thorium_actor_send_range_empty(self, &concrete_self->sequence_stores,
+                    ACTION_RESET);
 
     bsal_vector_destroy(&producers_for_work_stealing);
 }
@@ -1141,49 +1137,54 @@ void bsal_assembly_graph_builder_configure_arc_actors(struct thorium_actor *self
     struct bsal_assembly_graph_builder *concrete_self;
 
     concrete_self = thorium_actor_concrete_actor(self);
-
     ++concrete_self->configured_actors_for_arcs;
 
     expected = 0;
-    /* For consumers */
+    /* For ACTION_SET_CONSUMER_REPLY */
     expected += bsal_vector_size(&concrete_self->arc_kernels);
-    /* For alternate producers */
+    /* For ACTION_SET_PRODUCERS_FOR_WORK_STEALING_REPLY */
     expected += bsal_vector_size(&concrete_self->arc_kernels);
+    /* For ACTION_SET_CONSUMERS_REPLY */
     expected += bsal_vector_size(&concrete_self->arc_classifiers);
+    /* For ACTION_RESET_REPLY */
     expected += bsal_vector_size(&concrete_self->sequence_stores);
 
-    printf("PROGRESS ARC configuration %d/%d %d %d %d\n",
+    if (concrete_self->configured_actors_for_arcs % 1000 == 0
+                    || concrete_self->configured_actors_for_arcs == expected) {
+        printf("PROGRESS ARC configuration %d/%d %d %d %d\n",
                     concrete_self->configured_actors_for_arcs,
                     expected,
                     (int)bsal_vector_size(&concrete_self->arc_kernels),
                     (int)bsal_vector_size(&concrete_self->arc_classifiers),
                     (int)bsal_vector_size(&concrete_self->sequence_stores));
+    }
 
-    if (concrete_self->configured_actors_for_arcs == expected) {
+    if (concrete_self->configured_actors_for_arcs < expected) {
+        return;
+    }
 
-        printf("%s/%d configured the neural links for arc actors\n",
-                        thorium_actor_script_name(self),
-                        thorium_actor_name(self));
+    printf("%s/%d configured the neural links for arc actors\n",
+                    thorium_actor_script_name(self),
+                    thorium_actor_name(self));
 
-        concrete_self->completed_arc_kernels = 0;
+    concrete_self->completed_arc_kernels = 0;
 
-        /*
-         * Start arc computation
-         */
+    /*
+     * Start arc computation
+     */
 
-        size = bsal_vector_size(&concrete_self->arc_kernels);
+    size = bsal_vector_size(&concrete_self->arc_kernels);
 
-        thorium_actor_add_action_with_condition(self, ACTION_SET_PRODUCER_REPLY,
-                        bsal_assembly_graph_builder_verify_arc_kernels,
-                        &concrete_self->doing_arcs, 1);
+    thorium_actor_add_action_with_condition(self, ACTION_SET_PRODUCER_REPLY,
+                    bsal_assembly_graph_builder_verify_arc_kernels,
+                    &concrete_self->doing_arcs, 1);
 
-        for (i = 0; i < size; i++) {
-            producer = bsal_vector_at_as_int(&concrete_self->sequence_stores, i);
-            consumer = bsal_vector_at_as_int(&concrete_self->arc_kernels, i);
+    for (i = 0; i < size; i++) {
+        producer = bsal_vector_at_as_int(&concrete_self->sequence_stores, i);
+        consumer = bsal_vector_at_as_int(&concrete_self->arc_kernels, i);
 
-            thorium_actor_send_int(self, consumer, ACTION_SET_PRODUCER,
-                            producer);
-        }
+        thorium_actor_send_int(self, consumer, ACTION_SET_PRODUCER,
+                        producer);
     }
 }
 
@@ -1348,6 +1349,7 @@ void bsal_assembly_graph_builder_get_producers_for_work_stealing(struct thorium_
     int nodes;
     int workers;
     int actors;
+    double probability_of_having_an_alone_actor;
 
     /*
      * Given N actors,
@@ -1362,18 +1364,7 @@ void bsal_assembly_graph_builder_get_producers_for_work_stealing(struct thorium_
      * (1 - 1/N) ^ ( actors * 1)
      *
      * Some examples:
-     *
-     * irb(main):013:0> actors = 2048*15
-     * => 30720
-     * irb(main):014:0> (1 - 1.0 / actors)**(actors * 1)
-     * => 0.36787345346945044
-     * irb(main):015:0> (1 - 1.0 / actors)**(actors * 10)
-     * => 4.5392540892387874e-05
-     * irb(main):016:0> (1 - 1.0 / actors)**(actors * 16)
-     * => 1.1250587186554038e-07
-     *
      */
-
     /*
      * Now, given N actors, we don't want any of them to be alone.
      *
@@ -1384,7 +1375,64 @@ void bsal_assembly_graph_builder_get_producers_for_work_stealing(struct thorium_
     nodes = thorium_actor_get_node_count(self);
     workers = thorium_actor_node_worker_count(self);
     actors = nodes * workers;
-    probability = 1.0 / (32 * actors);
+
+    /*
+     * We don't want any actor alone in the process. Each actor, hopefully,
+     * should be qable to get its stuff stolen by a thief.
+     * But obviously that's not how life works. Everything is
+     * a probability. So let's set that probability to a very small
+     * value.
+     *
+     * 0.0001 is 0.01%.
+     *
+     * So the probability that at least one of the actors not being selected
+     * by any other actor is very low.
+     */
+    probability_of_having_an_alone_actor = 0.0001;
+
+    /* probability = 1 - pow(M_E, log(1.0 - probability_of_having_an_alone_actor) / actors);*/
+    /* Otherwise, M_E can be obtained with:
+     * double e = exp(1.0);
+     */
+
+    /*
+     * Suppose that p is the probability that 1 actor be the victim of no one.
+     * (1 - p) is then the probability of being a victim.
+     *
+     * (1 - p) ^ N, where N is the number of actors, is the probability that every actor
+     * is a victim.
+     *
+     * q is the probability that at least 1 actor is not the victim of anyone.
+     * To compute q, we need the probability that every actor is the victim of at
+     * least an actor.
+     *
+     * In the relationship is:
+     *
+     * probability_of_having_an_alone_actor = 1.0 - pow(1.0 - probability, actors)
+     *
+     * "pow(1.0 - probability, actors)" represents the probability of having all
+     * actors being the victim of at least 1 actor.
+     *
+     * The complement event is "at least one actor is not the victime of anyone.
+     *
+     * q = 1 - (1 - p) ^ N
+     *
+     * Let's isolate p.
+     *
+     * (1 - p) ^ N = 1 - q
+     * (1 - p) = (1 - q) ^ (1 / N)
+     * 1 - p = (1 - q) ^ (1 / N)
+     * 1 - (1 - q) ^ (1 / N) = p
+     * p = 1 - (1 - q) ^ (1 / N) ****
+     */
+
+    probability = 1 - pow(1.0 - probability_of_having_an_alone_actor, 1.0 / actors);
+
+    printf("PROBABILITY p of having an actor not selected by anyone %f, given %d actors\n",
+                    probability_of_having_an_alone_actor, actors);
+
+    printf("PROBABILITY p for an actor to not being selected by anyone: %f\n",
+                    probability);
 
     /*
      * irb(main):011:0> victims = Math.log(1.0/(5*actors))/(actors*Math.log(1 - 1.0/actors))
@@ -1399,35 +1447,6 @@ void bsal_assembly_graph_builder_get_producers_for_work_stealing(struct thorium_
      * each actor picks a constant number of peers.
      */
 
-    /*
-     * irb(main):016:0> nodes=2048
-     * => 2048
-     * irb(main):017:0> workers=15
-     * => 15
-     * irb(main):018:0> actors = nodes * workers
-     * => 30720
-     * irb(main):019:0> probability = 1.0/actors
-     * => 3.255208333333333e-05
-     * irb(main):020:0> not_picked_up_probability = 1 - probability
-     * => 0.9999674479166667
-     * irb(main):021:0> links=10
-     * => 10
-     * irb(main):022:0> not_picked_by_anyone = not_picked_up_probability**(actors * links)
-     * => 4.5392540892387874e-05
-     * irb(main):023:0> links=1
-     * => 1
-     * irb(main):024:0> not_picked_by_anyone = not_picked_up_probability**(actors * links)
-     * => 0.36787345346945044
-     * irb(main):025:0> links=4
-     * => 4
-     * irb(main):026:0> not_picked_by_anyone = not_picked_up_probability**(actors * links)
-     * => 0.018314446477332835
-     * irb(main):027:0> links=8
-     * => 8
-     * irb(main):028:0> not_picked_by_anyone = not_picked_up_probability**(actors * links)
-     * => 0.00033541894977108907
-     *
-     */
     concrete_self = thorium_actor_concrete_actor(self);
 
     store_count = bsal_vector_size(&concrete_self->sequence_stores);
