@@ -22,7 +22,6 @@ struct thorium_script bsal_assembly_arc_classifier_script = {
 void bsal_assembly_arc_classifier_init(struct thorium_actor *self)
 {
     struct bsal_assembly_arc_classifier *concrete_self;
-    int bonus;
 
     concrete_self = (struct bsal_assembly_arc_classifier *)thorium_actor_concrete_actor(self);
 
@@ -57,18 +56,7 @@ void bsal_assembly_arc_classifier_init(struct thorium_actor *self)
 
     concrete_self->producer_is_waiting = 0;
 
-    concrete_self->maximum_pending_request_count = 1;
-
-    if (thorium_actor_get_node_count(self) == 1) {
-
-        concrete_self->maximum_pending_request_count = 4;
-    }
-
-    /*
-     * Add bonus damage with the upgrade for big jobs.
-     */
-    bonus = thorium_actor_get_node_count(self) / THORIUM_NODE_COUNT_PER_ACTIVE_MESSAGE;
-    concrete_self->maximum_pending_request_count += bonus;
+    concrete_self->maximum_pending_request_count = thorium_actor_active_message_limit(self);
 
     concrete_self->consumer_count_above_threshold = 0;
 

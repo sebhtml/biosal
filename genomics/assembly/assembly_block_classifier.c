@@ -525,7 +525,6 @@ int bsal_assembly_block_classifier_set_consumers(struct thorium_actor *actor, vo
     int size;
     int i;
     int zero;
-    int bonus;
 
     concrete_actor = (struct bsal_assembly_block_classifier *)thorium_actor_concrete_actor(actor);
 
@@ -549,23 +548,7 @@ int bsal_assembly_block_classifier_set_consumers(struct thorium_actor *actor, vo
      * The maximum number of active messages for any consumer is
      * set here.
      */
-    concrete_actor->maximum_active_messages = 1;
-
-    /* Increase the active message count if running on one node */
-    if (thorium_actor_get_node_count(actor) == 1) {
-
-        /*
-         * If the thing runs on one single node, there is no transport
-         * calls so everything should be regular.
-         */
-        concrete_actor->maximum_active_messages = 4;
-    }
-
-    /*
-     * Add actor bonus
-     */
-    bonus = thorium_actor_get_node_count(actor) / THORIUM_NODE_COUNT_PER_ACTIVE_MESSAGE;
-    concrete_actor->maximum_active_messages += bonus;
+    concrete_actor->maximum_active_messages = thorium_actor_active_message_limit(actor);
 
     printf("DEBUG45 classifier %d preparing %d buffers, kmer_length %d, ACTIVE_MESSAGE_LIMIT %d\n",
                     thorium_actor_name(actor),

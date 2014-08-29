@@ -539,17 +539,7 @@ int bsal_aggregator_set_consumers(struct thorium_actor *actor, void *buffer)
      * The maximum number of active messages for any consumer is
      * set here.
      */
-    concrete_actor->maximum_active_messages = 1;
-
-    /* Increase the active message count if running on one node */
-    if (thorium_actor_get_node_count(actor) == 1) {
-
-        /*
-         * If the thing runs on one single node, there is no transport
-         * calls so everything should be regular.
-         */
-        concrete_actor->maximum_active_messages = 4;
-    }
+    concrete_actor->maximum_active_messages = thorium_actor_active_message_limit(actor);
 
     printf("DEBUG45 aggregator %d preparing %d buffers, kmer_length %d\n",
                     thorium_actor_name(actor),
