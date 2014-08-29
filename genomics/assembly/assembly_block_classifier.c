@@ -525,6 +525,7 @@ int bsal_assembly_block_classifier_set_consumers(struct thorium_actor *actor, vo
     int size;
     int i;
     int zero;
+    int bonus;
 
     concrete_actor = (struct bsal_assembly_block_classifier *)thorium_actor_concrete_actor(actor);
 
@@ -560,10 +561,17 @@ int bsal_assembly_block_classifier_set_consumers(struct thorium_actor *actor, vo
         concrete_actor->maximum_active_messages = 4;
     }
 
-    printf("DEBUG45 classifier %d preparing %d buffers, kmer_length %d\n",
+    /*
+     * Add actor bonus
+     */
+    bonus = thorium_actor_get_node_count(actor) / THORIUM_NODE_COUNT_PER_ACTIVE_MESSAGE;
+    concrete_actor->maximum_active_messages += bonus;
+
+    printf("DEBUG45 classifier %d preparing %d buffers, kmer_length %d, ACTIVE_MESSAGE_LIMIT %d\n",
                     thorium_actor_name(actor),
                         (int)bsal_vector_size(&concrete_actor->consumers),
-                        concrete_actor->kmer_length);
+                        concrete_actor->kmer_length,
+                        concrete_actor->maximum_active_messages);
 
 #ifdef BSAL_ASSEMBLY_BLOCK_CLASSIFIER_DEBUG
     printf("DEBUG classifier configured %d consumers\n",

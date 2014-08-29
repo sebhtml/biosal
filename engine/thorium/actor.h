@@ -31,6 +31,19 @@
 #define THORIUM_ACTOR_EXPOSE_ACQUAINTANCE_VECTOR
 */
 
+/*
+ * This constant can be used by actors as a hint that they are
+ * part of a big job.
+ *
+ * For example, an actor may choose to send more messages onto the
+ * actor messaging fabric if there are a lot of nodes. The
+ * motivation is that more nodes provide more distributed memory.
+ *
+ * For each <THORIUM_ACTOR_EXPOSE_ACQUAINTANCE_VECTOR>, an actor is allowed
+ * to generate 1 active messages.
+ */
+#define THORIUM_NODE_COUNT_PER_ACTIVE_MESSAGE 128
+
 /* for control */
 #define ACTION_START 0x00000885
 #define ACTION_START_REPLY 0x0000232f
