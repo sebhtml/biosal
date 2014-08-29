@@ -17,10 +17,21 @@
  * The value is completely arbitrary.
  */
 
+/*
+ * Blue Gene/Q only has 16 GiB per node
+ */
 #ifdef __bgq__
 #define THORIUM_NODE_COUNT_PER_ACTIVE_MESSAGE 256
+
+/*
+ * Typically, Cray systems have more memory per node
+ */
+#elif defined(_CRAYC)
+#define THORIUM_NODE_COUNT_PER_ACTIVE_MESSAGE 128
+
 #else
-#define THORIUM_NODE_COUNT_PER_ACTIVE_MESSAGE 256
+#define THORIUM_NODE_COUNT_PER_ACTIVE_MESSAGE 230
+
 #endif
 
 int thorium_actor_active_message_limit(struct thorium_actor *self)
