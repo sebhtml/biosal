@@ -39,21 +39,6 @@ void thorium_actor_send_to_self_buffer(struct thorium_actor *actor, int tag, int
 void thorium_actor_send_to_supervisor_empty(struct thorium_actor *actor, int tag);
 void thorium_actor_send_to_supervisor_int(struct thorium_actor *actor, int tag, int value);
 
-#ifdef THORIUM_ACTOR_EXPOSE_ACQUAINTANCE_VECTOR
-/*
- * initialize avector and push actor names using a vector
- * of acquaintance indices
- */
-void thorium_actor_get_acquaintances(struct thorium_actor *actor, struct bsal_vector *indices,
-                struct bsal_vector *names);
-int thorium_actor_get_acquaintance(struct thorium_actor *actor, struct bsal_vector *indices,
-                int index);
-int thorium_actor_get_acquaintance_index(struct thorium_actor *actor, struct bsal_vector *indices,
-                int name);
-void thorium_actor_add_acquaintances(struct thorium_actor *actor,
-                struct bsal_vector *names, struct bsal_vector *indices);
-#endif
-
 void thorium_actor_send_range_default(struct thorium_actor *actor, struct bsal_vector *actors,
                 int first, int last,
                 struct thorium_message *message);
@@ -75,8 +60,6 @@ void thorium_actor_send_range_loop(struct thorium_actor *actor, struct bsal_vect
 void thorium_actor_send_range_positions_vector(struct thorium_actor *actor, struct bsal_vector *actors,
                 int first, int last,
                 int tag, struct bsal_vector *vector);
-
-void thorium_actor_ask_to_stop(struct thorium_actor *actor, struct thorium_message *message);
 
 void thorium_actor_send_reply(struct thorium_actor *actor, struct thorium_message *message);
 void thorium_actor_send_to_self(struct thorium_actor *actor, struct thorium_message *message);

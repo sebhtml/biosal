@@ -19,6 +19,7 @@ THORIUM_OBJECTS += engine/thorium/modules/proxy_message.o
 THORIUM_OBJECTS += engine/thorium/modules/action_helpers.o
 THORIUM_OBJECTS += engine/thorium/modules/send_helpers.o
 THORIUM_OBJECTS += engine/thorium/modules/active_message_limit.o
+THORIUM_OBJECTS += engine/thorium/modules/stop.o
 
 #  scheduler system
 THORIUM_OBJECTS += engine/thorium/scheduler/migration.o
