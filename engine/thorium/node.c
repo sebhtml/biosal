@@ -2239,6 +2239,15 @@ int thorium_node_generate_random_name(struct thorium_node *self,
     return name;
 
 #elif defined(USE_RANDOM_ACTOR_NAMES)
+    /*
+     * On BGQ, RAND_MAX is:
+     *
+     * > [harms@vestalac1 ~]$ echo -e "#include <stdlib.h>\nunsigned long long
+     * > rand_max = RAND_MAX;" | powerpc64-bgq-linux-gcc -E - | tail -1
+     * > unsigned long long rand_max = 2147483647;Q
+     *
+     * (thanks to Harms, Kevin N. at ALCF)
+     */
     int name;
     int range;
 
