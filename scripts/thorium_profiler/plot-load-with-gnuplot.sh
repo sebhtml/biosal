@@ -8,7 +8,7 @@ echo "
 reset
 set term png
 set output '$file.map.png'
-set ylabel 'Time (seconds'
+set ylabel 'Time (seconds)'
 set xlabel 'Node'
 set zlab 'Load'
 
@@ -21,7 +21,7 @@ echo "
 reset
 set term gif animate delay 15
 set output '$file.animation.gif'
-set ylabel 'Time (seconds'
+set ylabel 'Time (seconds)'
 set xlabel 'Node'
 set zlab 'Load'
 
