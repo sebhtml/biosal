@@ -6,17 +6,30 @@ file=$1
 
 echo "
 reset
-set term gif animate delay 30
-#set pm3d
-set output '$file.gif'
+set term png
+set output '$file.map.png'
 set ylabel 'Time (seconds'
 set xlabel 'Node'
 set zlab 'Load'
 
-do for [angle=0:350:5] {
+set view 0, 90
+splot '$file' with pm3d
+
+" | gnuplot
+
+echo "
+reset
+set term gif animate delay 15
+set output '$file.animation.gif'
+set ylabel 'Time (seconds'
+set xlabel 'Node'
+set zlab 'Load'
+
+do for [angle=0:350:2] {
     set view 50, angle
-    splot '$file' with lines lc palette
-    #splot '$file'
+    splot '$file' with pm3d
 }
 
 " | gnuplot
+
+
