@@ -31,6 +31,11 @@ LIBRARY_OBJECTS += $(CORE_OBJECTS)
 # include these after the library
 include tests/Makefile.mk
 include examples/Makefile.mk
+
+APPLICATION_EXECUTABLES=
+APPLICATION_OBJECTS=
+
+include performance/Makefile.mk
 include applications/Makefile.mk
 
 all: $(TEST_EXECUTABLES) $(EXAMPLE_EXECUTABLES) $(APPLICATION_EXECUTABLES)

@@ -1,6 +1,6 @@
 
-APPLICATION_FAIRNESS_CHECKER_PRODUCT=applications/fairness_checker/fairness_checker
-APPLICATION_FAIRNESS_CHECKER_OBJECTS=applications/fairness_checker/main.o applications/fairness_checker/process.o
+APPLICATION_FAIRNESS_CHECKER_PRODUCT=performance/fairness_checker/fairness_checker
+APPLICATION_FAIRNESS_CHECKER_OBJECTS=performance/fairness_checker/main.o performance/fairness_checker/process.o
 
 APPLICATION_EXECUTABLES+=$(APPLICATION_FAIRNESS_CHECKER_PRODUCT)
 APPLICATION_OBJECTS+=$(APPLICATION_FAIRNESS_CHECKER_OBJECTS)

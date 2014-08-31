@@ -1,6 +1,6 @@
 
-APPLICATION_TRANSPORT_TESTER_PRODUCT=applications/transport_tester/transport_tester
-APPLICATION_TRANSPORT_TESTER_OBJECTS=applications/transport_tester/main.o applications/transport_tester/process.o
+APPLICATION_TRANSPORT_TESTER_PRODUCT=performance/transport_tester/transport_tester
+APPLICATION_TRANSPORT_TESTER_OBJECTS=performance/transport_tester/main.o performance/transport_tester/process.o
 
 APPLICATION_EXECUTABLES+=$(APPLICATION_TRANSPORT_TESTER_PRODUCT)
 APPLICATION_OBJECTS+=$(APPLICATION_TRANSPORT_TESTER_OBJECTS)

@@ -1,0 +1,4 @@
+
+include performance/*/Makefile.mk
+
+
