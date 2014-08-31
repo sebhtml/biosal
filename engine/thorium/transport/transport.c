@@ -5,7 +5,10 @@
  * Implementations of the interface.
  */
 
+#ifdef CONFIG_PAMI
 #include "pami/pami_transport.h"
+#endif
+
 #include "mpi1_pt2pt/mpi1_pt2pt_transport.h"
 #include "mpi1_pt2pt_nonblocking/mpi1_pt2pt_nonblocking_transport.h"
 
@@ -232,9 +235,11 @@ void thorium_transport_select_implementation(struct thorium_transport *self, int
     /*
      * Only enable the pami thing on Blue Gene/Q.
      */
+#ifdef CONFIG_PAMI
 #if defined(__bgq__)
     component = &thorium_pami_transport_implementation;
     bsal_vector_push_back(&implementations, &component);
+#endif
 #endif
 
 #if defined(_CRAYC) && 0
