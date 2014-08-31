@@ -14,4 +14,5 @@ CFLAGS="$CFLAGS -L/soft/libraries/alcf/current/xl/ZLIB/lib -I/soft/libraries/alc
 make clean
 make -j 8 CFLAGS="$CFLAGS" \
     applications/argonnite_kmer_counter/argonnite \
-    applications/spate_metagenome_assembler/spate
+    applications/spate_metagenome_assembler/spate \
+    examples/example_ring
