@@ -21,6 +21,8 @@
 #define MINIMUM_PERIOD 4096
 #define NO_USEFUL_VALUE (-879)
 
+#define BASIC_PRODUCTION_BYTE_COUNT 4096
+
 struct thorium_script bsal_sequence_store_script = {
     .identifier = SCRIPT_SEQUENCE_STORE,
     .init = bsal_sequence_store_init,
@@ -77,7 +79,7 @@ void bsal_sequence_store_init(struct thorium_actor *actor)
      * generates twice the amount of bytes in the deliveries.
      */
 
-    concrete_actor->production_block_size = 2048;
+    concrete_actor->production_block_size = BASIC_PRODUCTION_BYTE_COUNT;
 }
 
 void bsal_sequence_store_destroy(struct thorium_actor *actor)
@@ -171,7 +173,7 @@ void bsal_sequence_store_receive(struct thorium_actor *actor, struct thorium_mes
              * The reason is that arc payload are a bit larger and twice
              * in number too.
              */
-            concrete_actor->production_block_size = 512;
+            concrete_actor->production_block_size = BASIC_PRODUCTION_BYTE_COUNT / 2;
 
             /*
              * Also reset the number of required kmers so that the old
