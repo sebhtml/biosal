@@ -19,6 +19,11 @@
 
 /*
  * Blue Gene/Q only has 16 GiB per node
+ *
+ * 512 -> 1 + 2
+ * 1024 -> 1 + 4
+ * 1546 -> 1 + 4
+ * 2048 -> 1 + 4
  */
 #ifdef __bgq__
 #define THORIUM_NODE_COUNT_PER_ACTIVE_MESSAGE 256
@@ -39,6 +44,10 @@ int thorium_actor_active_message_limit(struct thorium_actor *self)
     int node_count;
     int bonus;
     int value;
+
+#ifdef USE_MAXIMUM
+    int maximum;
+#endif
 
     value = 1;
 
@@ -61,6 +70,14 @@ int thorium_actor_active_message_limit(struct thorium_actor *self)
      * Add bonus damage with the upgrade for big jobs.
      */
     bonus = node_count / THORIUM_NODE_COUNT_PER_ACTIVE_MESSAGE;
+
+#ifdef USE_MAXIMUM
+    maximum = 4;
+
+    if (bonus > maximum) {
+        bonus = maximum;
+    }
+#endif
 
     value += bonus;
 
