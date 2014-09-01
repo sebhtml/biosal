@@ -3,16 +3,16 @@
 
 #include <core/helpers/statistics.h>
 #include <core/hash/murmur_hash_2_64_a.h>
+#include <core/system/command.h>
 
 #include <stdio.h>
 #include <inttypes.h>
 #include <stdint.h>
 
 #define SEED 0x92a96a40
-#define MINIMUM_BUFFER_SIZE 16
-#define MAXIMUM_BUFFER_SIZE (512*1024)
 
 #define EVENT_COUNT 100000
+#define BUFFER_SIZE_OPTION "-maximum-buffer-size"
 
 struct thorium_script process_script = {
     .identifier = SCRIPT_TRANSPORT_PROCESS,
@@ -26,6 +26,11 @@ struct thorium_script process_script = {
 void process_init(struct thorium_actor *self)
 {
     struct process *concrete_self;
+    int argc;
+    char **argv;
+
+    argc = thorium_actor_argc(self);
+    argv = thorium_actor_argv(self);
 
     concrete_self = thorium_actor_concrete_actor(self);
     bsal_vector_init(&concrete_self->actors, sizeof(int));
@@ -39,6 +44,18 @@ void process_init(struct thorium_actor *self)
     concrete_self->passed = 0;
     concrete_self->failed = 0;
     concrete_self->events = 0;
+
+    concrete_self->minimum_buffer_size = 16;
+    concrete_self->maximum_buffer_size = 512*1024;
+
+    if (bsal_command_has_argument(argc, argv, BUFFER_SIZE_OPTION)) {
+        concrete_self->maximum_buffer_size = bsal_command_get_argument_value_int(argc, argv, BUFFER_SIZE_OPTION);
+    }
+
+    printf("%s/%d using -maximum-buffer-size %d\n",
+                    thorium_actor_script_name(self),
+                    thorium_actor_name(self),
+                    concrete_self->maximum_buffer_size);
 }
 
 void process_destroy(struct thorium_actor *self)
@@ -161,10 +178,10 @@ void process_send_ping(struct thorium_actor *self)
     concrete_self = thorium_actor_concrete_actor(self);
     ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
 
-    range = MAXIMUM_BUFFER_SIZE - MINIMUM_BUFFER_SIZE;
+    range = concrete_self->maximum_buffer_size - concrete_self->minimum_buffer_size;
 
     buffer_size = rand() % range;
-    buffer_size += MINIMUM_BUFFER_SIZE;
+    buffer_size += concrete_self->minimum_buffer_size;
     count = buffer_size + sizeof(checksum);
 
     buffer = bsal_memory_pool_allocate(ephemeral_memory, count);

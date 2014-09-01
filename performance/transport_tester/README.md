@@ -1,5 +1,8 @@
-mpiexec -n 4 applications/transport_tester/transport_tester -threads-per-node 8
+mpiexec -n 4 performance/transport_tester/transport_tester -threads-per-node 8
 
+Other options:
+
+-maximum-buffer-size <maximum_buffer_size> (default: 524288, in bytes)
 
 The result should look like this:
 

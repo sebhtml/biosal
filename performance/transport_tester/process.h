@@ -16,6 +16,8 @@ struct process {
 
     int passed;
     int failed;
+    int minimum_buffer_size;
+    int maximum_buffer_size;
 };
 
 extern struct thorium_script process_script;
