@@ -13,6 +13,8 @@
 
 #include <core/system/memory_pool.h>
 
+struct bsal_assembly_arc;
+
 #define SCRIPT_ASSEMBLY_GRAPH_STORE 0xc81a1596
 
 #define ACTION_GET_RECEIVED_ARC_COUNT 0x00004f17
@@ -35,7 +37,15 @@
 #define ACTION_ASSEMBLY_GET_VERTEX 0x0000491e
 #define ACTION_ASSEMBLY_GET_VERTEX_REPLY 0x00007724
 
-struct bsal_assembly_arc;
+/*
+ * Limit the number of graph stores to avoid running out of memory with all these buffers.
+ * At 1024 nodes and 15 graph store per node (and 15 typical kernels per node too),
+ * the memory usage per node for communication alone is
+ *
+ * irb(main):001:0> 15*1024*4096*15
+ * => 943718400
+ */
+#define BSAL_MAXIMUM_GRAPH_STORE_COUNT ((16 - 1) * 1024)
 
 /*
  * This is a graph store

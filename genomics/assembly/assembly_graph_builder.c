@@ -18,16 +18,6 @@
 #include <inttypes.h>
 #include <math.h>
 
-/*
- * Limit the number of graph stores to avoid running out of memory with all these buffers.
- * At 1024 nodes and 15 graph store per node (and 15 typical kernels per node too),
- * the memory usage per node for communication alone is
- *
- * irb(main):001:0> 15*1024*4096*15
- * => 943718400
- */
-#define MAXIMUM_GRAPH_STORE_COUNT ((16 - 1) * 1024)
-
 struct thorium_script bsal_assembly_graph_builder_script = {
     .identifier = SCRIPT_ASSEMBLY_GRAPH_BUILDER,
     .name = "bsal_assembly_graph_builder",
@@ -324,8 +314,8 @@ void bsal_assembly_graph_builder_set_script_reply_store_manager(struct thorium_a
     /*
      * Verify the upper bound.
      */
-    if (actor_count > MAXIMUM_GRAPH_STORE_COUNT) {
-        actors_per_spawner = MAXIMUM_GRAPH_STORE_COUNT / node_count;
+    if (actor_count > BSAL_MAXIMUM_GRAPH_STORE_COUNT) {
+        actors_per_spawner = BSAL_MAXIMUM_GRAPH_STORE_COUNT / node_count;
 
         if (actors_per_spawner == 0) {
             ++actors_per_spawner;

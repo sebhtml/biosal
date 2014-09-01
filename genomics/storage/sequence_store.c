@@ -4,6 +4,11 @@
 #include <genomics/input/input_command.h>
 #include <genomics/data/dna_sequence.h>
 
+/*
+ * For BSAL_MAXIMUM_GRAPH_STORE_COUNT
+ */
+#include <genomics/assembly/assembly_graph_store.h>
+
 #include <core/structures/vector_iterator.h>
 #include <core/helpers/message_helper.h>
 #include <core/system/memory.h>
@@ -527,8 +532,6 @@ void bsal_sequence_store_ask(struct thorium_actor *self, struct thorium_message 
 
 int bsal_sequence_store_get_required_kmers(struct thorium_actor *actor, struct thorium_message *message)
 {
-    size_t maximum_number_of_bytes;
-    size_t maximum_number_of_bytes_per_worker;
     size_t sum_of_buffer_sizes;
     int minimum_end_buffer_size_in_bytes;
     int minimum_end_buffer_size_in_nucleotides;
@@ -550,6 +553,11 @@ int bsal_sequence_store_get_required_kmers(struct thorium_actor *actor, struct t
     nodes = thorium_actor_get_node_count(actor);
     total_workers = nodes * workers;
     total_kmer_stores = total_workers * 1;
+
+    if (total_kmer_stores > BSAL_MAXIMUM_GRAPH_STORE_COUNT) {
+        total_kmer_stores = BSAL_MAXIMUM_GRAPH_STORE_COUNT;
+    }
+
     thorium_message_unpack_int(message, 0, &kmer_length);
 
     if (kmer_length <= 0) {
@@ -561,18 +569,6 @@ int bsal_sequence_store_get_required_kmers(struct thorium_actor *actor, struct t
     }
 
     minimum_end_buffer_size_in_bytes = concrete_actor->production_block_size;
-
-    /* Maximum number of bytes for a node
-     */
-    maximum_number_of_bytes = 536870912;
-    maximum_number_of_bytes_per_worker = maximum_number_of_bytes / workers;
-
-    sum_of_buffer_sizes = minimum_end_buffer_size_in_bytes * total_kmer_stores;
-
-    if (sum_of_buffer_sizes > maximum_number_of_bytes_per_worker) {
-        minimum_end_buffer_size_in_bytes = maximum_number_of_bytes_per_worker / total_kmer_stores;
-    }
-
     sum_of_buffer_sizes = minimum_end_buffer_size_in_bytes * total_kmer_stores;
 
     /* Assume 1 byte per nucleotide since transportation does not use 2-bit encoding in the
