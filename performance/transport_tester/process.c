@@ -13,6 +13,7 @@
 
 #define BUFFER_SIZE_OPTION "-maximum-buffer-size"
 #define EVENT_COUNT_OPTION "-event-count"
+#define CONCURRENT_EVENT_COUNT_OPTION "-concurrent-event-count"
 
 struct thorium_script process_script = {
     .identifier = SCRIPT_TRANSPORT_PROCESS,
@@ -58,11 +59,20 @@ void process_init(struct thorium_actor *self)
         concrete_self->event_count = bsal_command_get_argument_value_int(argc, argv, EVENT_COUNT_OPTION);
     }
 
-    printf("%s/%d using -maximum-buffer-size %d -event-count %d\n",
+    concrete_self->concurrent_event_count = 8;
+
+    if (bsal_command_has_argument(argc, argv, CONCURRENT_EVENT_COUNT_OPTION)) {
+        concrete_self->concurrent_event_count = bsal_command_get_argument_value_int(argc, argv, CONCURRENT_EVENT_COUNT_OPTION);
+    }
+
+    concrete_self->active_messages = 0;
+
+    printf("%s/%d using -maximum-buffer-size %d -event-count %d -concurrent-event-count %d\n",
                     thorium_actor_script_name(self),
                     thorium_actor_name(self),
                     concrete_self->maximum_buffer_size,
-                    concrete_self->event_count);
+                    concrete_self->event_count,
+                    concrete_self->concurrent_event_count);
 }
 
 void process_destroy(struct thorium_actor *self)
@@ -126,7 +136,9 @@ void process_start(struct thorium_actor *self, struct thorium_message *message)
 
     concrete_self->ready = 0;
 
-    process_send_ping(self);
+    while (concrete_self->active_messages < concrete_self->concurrent_event_count) {
+        process_send_ping(self);
+    }
 }
 
 void process_stop(struct thorium_actor *self, struct thorium_message *message)
@@ -153,6 +165,7 @@ void process_ping_reply(struct thorium_actor *self, struct thorium_message *mess
     concrete_self = (struct process *)thorium_actor_concrete_actor(self);
 
     ++concrete_self->events;
+    --concrete_self->active_messages;
 
     if (concrete_self->events % 1000 == 0) {
         printf("PROGRESS %d/%d\n", concrete_self->events, concrete_self->event_count);
@@ -210,7 +223,7 @@ void process_send_ping(struct thorium_actor *self)
     destination = bsal_vector_at_as_int(&concrete_self->actors, index);
 
     thorium_actor_send_buffer(self, destination, ACTION_PING, count, buffer);
-
+    ++concrete_self->active_messages;
     bsal_memory_pool_free(ephemeral_memory, buffer);
 }
 

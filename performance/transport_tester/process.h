@@ -17,7 +17,9 @@ struct process {
      * State for events
      */
     int event_count;
+    int concurrent_event_count;
     int events;
+    int active_messages;
 
     /*
      * state for test results.
