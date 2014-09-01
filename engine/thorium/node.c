@@ -764,7 +764,7 @@ int thorium_node_run(struct thorium_node *node)
 
     /* Print global load for this node... */
 
-    print_final_load = 1;
+    print_final_load = 0;
 
     for (i = 0; i < node->argc; i++) {
         if (strstr(node->argv[i], "-help") != NULL

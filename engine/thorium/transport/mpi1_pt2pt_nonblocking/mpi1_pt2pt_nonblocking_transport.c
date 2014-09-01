@@ -171,6 +171,7 @@ void thorium_mpi1_pt2pt_nonblocking_transport_init(struct thorium_transport *sel
         concrete_self->mpi_tag_ub = *value;
     }
 
+#ifdef DISPLAY_MPI_TAG_UB
     if (self->rank == 0) {
         printf("Attribute value for MPI_TAG_UB is %d\n",
                         concrete_self->mpi_tag_ub);
@@ -178,6 +179,7 @@ void thorium_mpi1_pt2pt_nonblocking_transport_init(struct thorium_transport *sel
             printf("Attribute MPI_TAG_UB not found !\n");
         }
     }
+#endif
 }
 
 void thorium_mpi1_pt2pt_nonblocking_transport_destroy(struct thorium_transport *self)

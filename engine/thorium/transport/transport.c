@@ -86,7 +86,8 @@ void thorium_transport_init(struct thorium_transport *self, struct thorium_node 
     }
 
     if (self->rank == 0) {
-        printf("DEBUG TRANSPORT -> %s\n",
+        printf("%s DEBUG TRANSPORT -> %s\n",
+                        THORIUM_NODE_THORIUM_PREFIX,
                     self->transport_interface->name);
     }
 }
