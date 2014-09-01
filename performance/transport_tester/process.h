@@ -12,10 +12,22 @@
 struct process {
     struct bsal_vector actors;
     int ready;
+
+    /*
+     * State for events
+     */
+    int event_count;
     int events;
 
+    /*
+     * state for test results.
+     */
     int passed;
     int failed;
+
+    /*
+     * Configuration for buffer size
+     */
     int minimum_buffer_size;
     int maximum_buffer_size;
 };
