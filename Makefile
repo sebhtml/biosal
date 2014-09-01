@@ -1,5 +1,6 @@
 CC=mpicc
 CFLAGS=-O3 -g -I.
+CONFIG_FLAGS=
 LDFLAGS=-lm -lz
 LD=$(CC)
 
@@ -13,7 +14,6 @@ RM=rm
 # first target
 all:
 
-
 include engine/thorium/Makefile.mk
 include genomics/Makefile.mk
 include core/Makefile.mk
@@ -22,11 +22,6 @@ LIBRARY_OBJECTS=
 LIBRARY_OBJECTS += $(THORIUM_OBJECTS)
 LIBRARY_OBJECTS += $(GENOMICS_OBJECTS)
 LIBRARY_OBJECTS += $(CORE_OBJECTS)
-
-# generic build rule
-%.o: %.c
-	$(Q)$(ECHO) "  CC $@"
-	$(Q)$(CC) $(CFLAGS) -c $< -o $@
 
 # include these after the library
 include tests/Makefile.mk
@@ -37,6 +32,12 @@ APPLICATION_OBJECTS=
 
 include performance/Makefile.mk
 include applications/Makefile.mk
+
+# generic build rule
+%.o: %.c
+#$(Q)$(ECHO) " CFLAGS= $(CFLAGS) $(CONFIG_FLAGS)"
+	$(Q)$(ECHO) "  CC $@"
+	$(Q)$(CC) $(CFLAGS) $(CONFIG_FLAGS) -c $< -o $@
 
 all: $(TEST_EXECUTABLES) $(EXAMPLE_EXECUTABLES) $(APPLICATION_EXECUTABLES)
 
