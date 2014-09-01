@@ -139,6 +139,7 @@ void thorium_worker_init(struct thorium_worker *worker, int name, struct thorium
     /*ephemeral_memory_block_size = 16777216;*/
     bsal_memory_pool_init(&worker->ephemeral_memory, ephemeral_memory_block_size);
     bsal_memory_pool_disable_tracking(&worker->ephemeral_memory);
+    bsal_memory_pool_enable_ephemeral_mode(&worker->ephemeral_memory);
 
     bsal_lock_init(&worker->lock);
     bsal_set_init(&worker->evicted_actors, sizeof(int));

@@ -68,6 +68,7 @@ void *bsal_memory_pool_allocate_private(struct bsal_memory_pool *self, size_t si
 
 void bsal_memory_pool_disable_normalization(struct bsal_memory_pool *self);
 void bsal_memory_pool_enable_normalization(struct bsal_memory_pool *self);
+void bsal_memory_pool_enable_ephemeral_mode(struct bsal_memory_pool *self);
 
 void bsal_memory_pool_disable_alignment(struct bsal_memory_pool *self);
 void bsal_memory_pool_enable_alignment(struct bsal_memory_pool *self);

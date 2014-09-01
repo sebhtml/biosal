@@ -20,6 +20,7 @@
 #define FLAG_DISABLED 1
 #define FLAG_ENABLE_SEGMENT_NORMALIZATION 2
 #define FLAG_ALIGN 3
+#define FLAG_EPHEMERAL 4
 
 void bsal_memory_pool_init(struct bsal_memory_pool *self, int block_size)
 {
@@ -39,9 +40,10 @@ void bsal_memory_pool_init(struct bsal_memory_pool *self, int block_size)
      */
     self->flags = 0;
     bsal_bitmap_set_bit_uint32_t(&self->flags, FLAG_ENABLE_TRACKING);
-    bsal_bitmap_clear_bit_uint32_t(&self->flags, FLAG_ENABLE_SEGMENT_NORMALIZATION);
     bsal_bitmap_clear_bit_uint32_t(&self->flags, FLAG_DISABLED);
+    bsal_bitmap_clear_bit_uint32_t(&self->flags, FLAG_ENABLE_SEGMENT_NORMALIZATION);
     bsal_bitmap_clear_bit_uint32_t(&self->flags, FLAG_ALIGN);
+    bsal_bitmap_clear_bit_uint32_t(&self->flags, FLAG_EPHEMERAL);
 }
 
 void bsal_memory_pool_destroy(struct bsal_memory_pool *self)
@@ -96,6 +98,7 @@ void *bsal_memory_pool_allocate(struct bsal_memory_pool *self, size_t size)
 {
     void *pointer;
     size_t new_size;
+    int normalize;
 
 #ifdef BSAL_DEBUGGER_ENABLE_ASSERT
     if (size < BSAL_MEMORY_MINIMUM) {
@@ -108,12 +111,33 @@ void *bsal_memory_pool_allocate(struct bsal_memory_pool *self, size_t size)
     BSAL_DEBUGGER_ASSERT(size >= BSAL_MEMORY_MINIMUM);
     BSAL_DEBUGGER_ASSERT(size <= BSAL_MEMORY_MAXIMUM);
 
+    normalize = 0;
+
     /*
-     * Normalize the length of the segment to be a power of 2.
+     * Normalize the length of the segment to be a power of 2
+     * if the flag FLAG_ENABLE_SEGMENT_NORMALIZATION is set.
      */
     if (self != NULL
                  && bsal_bitmap_get_bit_uint32_t(&self->flags, FLAG_ENABLE_SEGMENT_NORMALIZATION)) {
+        normalize = 1;
+    }
 
+    /*
+     * Normalize the segment if the flag FLAG_EPHEMERAL is set
+     * and if the segment size is larger than block size.
+     *
+     * This is required because any size exceeding the capacity will go to the
+     * operating system malloc/free directly so sizes should be
+     * normalized.
+     */
+
+    if (self != NULL
+              && size > self->block_size
+              && bsal_bitmap_get_bit_uint32_t(&self->flags, FLAG_EPHEMERAL)) {
+        normalize = 1;
+    }
+
+    if (normalize) {
         new_size = bsal_memory_normalize_segment_length_power_of_2(size);
 #if 0
         printf("NORMALIZE %zu -> %zu\n", size, new_size);
@@ -415,4 +439,9 @@ void bsal_memory_pool_print(struct bsal_memory_pool *self)
                     self->block_size,
                     block_count,
                     byte_count);
+}
+
+void bsal_memory_pool_enable_ephemeral_mode(struct bsal_memory_pool *self)
+{
+    bsal_bitmap_set_bit_uint32_t(&self->flags, FLAG_EPHEMERAL);
 }
