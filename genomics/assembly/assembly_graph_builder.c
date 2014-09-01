@@ -18,6 +18,16 @@
 #include <inttypes.h>
 #include <math.h>
 
+/*
+ * Limit the number of graph stores to avoid running out of memory with all these buffers.
+ * At 1024 nodes and 15 graph store per node (and 15 typical kernels per node too),
+ * the memory usage per node for communication alone is
+ *
+ * irb(main):001:0> 15*1024*4096*15
+ * => 943718400
+ */
+#define MAXIMUM_GRAPH_STORE_COUNT ((16 - 1) * 1024)
+
 struct thorium_script bsal_assembly_graph_builder_script = {
     .identifier = SCRIPT_ASSEMBLY_GRAPH_BUILDER,
     .name = "bsal_assembly_graph_builder",
@@ -296,9 +306,47 @@ void bsal_assembly_graph_builder_set_expected_message_count_reply(struct thorium
 void bsal_assembly_graph_builder_set_script_reply_store_manager(struct thorium_actor *self, struct thorium_message *message)
 {
     struct bsal_assembly_graph_builder *concrete_self;
+    int node_count;
+    int worker_count;
+    int actor_count;
+    int actors_per_spawner;
+    int source;
+
+    /*
+     * Verify is the number of actors is too high.
+     */
+    node_count = thorium_actor_get_node_count(self);
+    worker_count = thorium_actor_node_worker_count(self);
+    actors_per_spawner = worker_count;
+    actor_count = node_count * actors_per_spawner;
+    source = thorium_message_source(message);
+
+    /*
+     * Verify the upper bound.
+     */
+    if (actor_count > MAXIMUM_GRAPH_STORE_COUNT) {
+        actors_per_spawner = MAXIMUM_GRAPH_STORE_COUNT / node_count;
+
+        if (actors_per_spawner == 0) {
+            ++actors_per_spawner;
+        }
+    }
 
     concrete_self = thorium_actor_concrete_actor(self);
 
+    thorium_actor_add_action_with_source(self, ACTION_MANAGER_SET_ACTORS_PER_SPAWNER_REPLY,
+                    bsal_assembly_graph_builder_set_actors_reply_store_manager,
+                    source);
+
+    thorium_actor_send_reply_int(self, ACTION_MANAGER_SET_ACTORS_PER_SPAWNER,
+                    actors_per_spawner);
+}
+
+void bsal_assembly_graph_builder_set_actors_reply_store_manager(struct thorium_actor *self, struct thorium_message *message)
+{
+    struct bsal_assembly_graph_builder *concrete_self;
+
+    concrete_self = thorium_actor_concrete_actor(self);
     thorium_actor_send_reply_vector(self, ACTION_START, &concrete_self->spawners);
 }
 
