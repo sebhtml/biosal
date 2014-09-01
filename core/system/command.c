@@ -59,16 +59,13 @@ char *bsal_command_get_output_directory(int argc, char **argv)
 
 int bsal_command_get_kmer_length(int argc, char **argv)
 {
-    char *value;
     int kmer_length;
     int provided_value;
 
     kmer_length = BSAL_DEFAULT_KMER_LENGTH;
 
-    value = bsal_command_get_argument_value(argc, argv, "-k");
-
-    if (value != NULL) {
-        provided_value = atoi(value);
+    if (bsal_command_has_argument(argc, argv, "-k")) {
+        provided_value = bsal_command_get_argument_value_int(argc, argv, "-k");
 
         /*
          * Use a odd kmer length
@@ -83,4 +80,19 @@ int bsal_command_get_kmer_length(int argc, char **argv)
     printf("DEBUG kmer_length %d\n", kmer_length);
 
     return kmer_length;
+}
+
+int bsal_command_get_argument_value_int(int argc, char **argv, const char *argument)
+{
+    char *value;
+    int integer_value;
+
+    integer_value = -1;
+    value = bsal_command_get_argument_value(argc, argv, argument);
+
+    if (value != NULL) {
+        integer_value = atoi(value);
+    }
+
+    return integer_value;
 }
