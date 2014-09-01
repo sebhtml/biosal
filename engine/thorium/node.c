@@ -648,7 +648,7 @@ int thorium_node_generate_name(struct thorium_node *node)
 
     /* reserve  the first numbers
      */
-    minimal_value = thorium_node_name(node) + 1000000;
+    minimal_value = 4 * thorium_node_nodes(node) + thorium_node_name(node) + 1000000;
     maximum_value = 2000000000;
 
 #ifdef THORIUM_NODE_DEBUG
