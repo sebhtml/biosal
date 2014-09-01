@@ -19,6 +19,7 @@
 */
 
 #define MINIMUM_PERIOD 4096
+#define NO_USEFUL_VALUE (-879)
 
 struct thorium_script bsal_sequence_store_script = {
     .identifier = SCRIPT_SEQUENCE_STORE,
@@ -36,7 +37,7 @@ void bsal_sequence_store_init(struct thorium_actor *actor)
     concrete_actor = (struct bsal_sequence_store *)thorium_actor_concrete_actor(actor);
     bsal_vector_init(&concrete_actor->sequences, sizeof(struct bsal_dna_sequence));
 
-    concrete_actor->required_kmers = -1;
+    concrete_actor->required_kmers = NO_USEFUL_VALUE;
 
     printf("DEBUG sequence store %d is online on node %d\n",
                     thorium_actor_name(actor),
@@ -163,8 +164,21 @@ void bsal_sequence_store_receive(struct thorium_actor *actor, struct thorium_mes
              * TODO: don't assume that, instead, add a requirement
              * that the ACTOR_RESET payload contains a desired final
              * message buffer size.
+             *
+             * Currently, 2048 bytes is used for ACTION_PUSH_KMER_BLOCK,
+             * and 512 bytes (predicted) for ACTION_ASSEMBLY_PUSH_ARC_BLOCK.
+             *
+             * The reason is that arc payload are a bit larger and twice
+             * in number too.
              */
             concrete_actor->production_block_size = 512;
+
+            /*
+             * Also reset the number of required kmers so that the old
+             * cached value is not being used.
+             */
+
+            concrete_actor->required_kmers = NO_USEFUL_VALUE;
         }
 
         concrete_actor->left = concrete_actor->received;
@@ -396,8 +410,6 @@ void bsal_sequence_store_ask(struct thorium_actor *self, struct thorium_message 
                         concrete_actor->reservation_producer);
     }
 
-
-
     if (!concrete_actor->iterator_started) {
         bsal_vector_iterator_init(&concrete_actor->iterator, &concrete_actor->sequences);
 
@@ -528,7 +540,7 @@ int bsal_sequence_store_get_required_kmers(struct thorium_actor *actor, struct t
 
     concrete_actor = (struct bsal_sequence_store *)thorium_actor_concrete_actor(actor);
 
-    if (concrete_actor->required_kmers != -1) {
+    if (concrete_actor->required_kmers != NO_USEFUL_VALUE) {
         return concrete_actor->required_kmers;
     }
 
@@ -561,13 +573,6 @@ int bsal_sequence_store_get_required_kmers(struct thorium_actor *actor, struct t
 
     sum_of_buffer_sizes = minimum_end_buffer_size_in_bytes * total_kmer_stores;
 
-    printf("INFO KmerLength %d Workers: %d Consumers: %d BufferSizeForConsumer: %d BufferSizeForWorker: %zu\n",
-                    kmer_length,
-                    workers,
-                    total_kmer_stores,
-                    minimum_end_buffer_size_in_bytes,
-                    sum_of_buffer_sizes);
-
     /* Assume 1 byte per nucleotide since transportation does not use 2-bit encoding in the
      * DNA codec.
      *
@@ -590,6 +595,14 @@ int bsal_sequence_store_get_required_kmers(struct thorium_actor *actor, struct t
     minimum_end_buffer_size_in_ascii_kmers = minimum_end_buffer_size_in_nucleotides / kmer_length;
 
     concrete_actor->required_kmers = minimum_end_buffer_size_in_ascii_kmers * total_kmer_stores;
+
+    printf("INFO KmerLength %d Workers: %d Consumers: %d BufferSizeForConsumer: %d BufferSizeForWorker: %zu required_kmers %d\n",
+                    kmer_length,
+                    workers,
+                    total_kmer_stores,
+                    minimum_end_buffer_size_in_bytes,
+                    sum_of_buffer_sizes,
+                    concrete_actor->required_kmers);
 
     return concrete_actor->required_kmers;
 }
