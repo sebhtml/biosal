@@ -98,6 +98,7 @@ int bsal_hash_table_pack_unpack(struct bsal_hash_table *self, void *buffer, int 
 void bsal_hash_table_start_groups(struct bsal_hash_table *self);
 
 void bsal_hash_table_set_memory_pool(struct bsal_hash_table *self, struct bsal_memory_pool *memory);
+struct bsal_memory_pool *bsal_hash_table_memory_pool(struct bsal_hash_table *self);
 
 void bsal_hash_table_disable_deletion_support(struct bsal_hash_table *self);
 void bsal_hash_table_enable_deletion_support(struct bsal_hash_table *self);

@@ -819,3 +819,8 @@ void bsal_hash_table_clear(struct bsal_hash_table *self)
         bsal_hash_table_set_memory_pool(self, pool);
     }
 }
+
+struct bsal_memory_pool *bsal_hash_table_memory_pool(struct bsal_hash_table *self)
+{
+    return self->memory;
+}

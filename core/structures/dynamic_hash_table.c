@@ -262,6 +262,12 @@ void bsal_dynamic_hash_table_start_resizing(struct bsal_dynamic_hash_table *self
         bsal_hash_table_disable_deletion_support(self->next);
     }
 
+    /*
+     * Transfer the memory pool to the new one too.
+     */
+    bsal_hash_table_set_memory_pool(self->next,
+                    bsal_hash_table_memory_pool(self->current));
+
     bsal_hash_table_iterator_init(&self->iterator, self->current);
 
 #ifdef BSAL_DYNAMIC_HASH_TABLE_DEBUG
