@@ -436,7 +436,7 @@ void bsal_memory_pool_print(struct bsal_memory_pool *self)
     byte_count = (uint64_t)block_count * (uint64_t)self->block_size;
 
     printf("EXAMINE memory_pool BlockSize: %d BlockCount: %d ByteCount: %" PRIu64 "\n",
-                    self->block_size,
+                    (int)self->block_size,
                     block_count,
                     byte_count);
 }

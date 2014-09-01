@@ -49,7 +49,7 @@ struct bsal_memory_pool {
     struct bsal_queue dried_blocks;
 
     uint32_t flags;
-    int block_size;
+    size_t block_size;
 };
 
 void bsal_memory_pool_init(struct bsal_memory_pool *self, int block_size);
