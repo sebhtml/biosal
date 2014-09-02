@@ -138,10 +138,15 @@ void *bsal_memory_pool_allocate(struct bsal_memory_pool *self, size_t size)
     }
 
     if (normalize) {
-            /*
+
+        /*
+         * The Blue Gene/Q seems to prefer powers of 2
+         * otherwise fragmentation makes the system run out of memory.
+         */
         new_size = bsal_memory_normalize_segment_length_power_of_2(size);
-        */
+            /*
         new_size = bsal_memory_normalize_segment_length_page_size(size);
+        */
 #if 0
         printf("NORMALIZE %zu -> %zu\n", size, new_size);
 #endif

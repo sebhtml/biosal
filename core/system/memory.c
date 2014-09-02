@@ -92,7 +92,12 @@ void *bsal_memory_allocate_private(size_t size, const char *function, const char
      */
     if (pointer == NULL) {
         printf("DEBUG Error bsal_memory_allocate returned %p, %zu bytes\n", pointer, size);
+        printf("used / total -> %" PRIu64 " / %" PRIu64  "\n",
+                        bsal_memory_get_utilized_byte_count(),
+                        bsal_memory_get_total_byte_count());
+
         bsal_tracer_print_stack_backtrace();
+
         exit(1);
     }
 

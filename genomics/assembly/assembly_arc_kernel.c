@@ -282,9 +282,9 @@ void bsal_assembly_arc_kernel_push_sequence_data_block(struct thorium_actor *sel
     maximum_length = 0;
     to_reserve = 0;
 
-#ifdef DEBUG_MODE_FOR_PAYLOAD
     printf("arc_kernel ACTION_PUSH_SEQUENCE_DATA_BLOCK with %d DNA sequences\n",
                     entries);
+#ifdef DEBUG_MODE_FOR_PAYLOAD
 #endif
 
     /*
