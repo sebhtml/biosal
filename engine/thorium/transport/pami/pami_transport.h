@@ -49,24 +49,24 @@ struct thorium_worker_buffer;
 typedef struct {
     char *buffer;
     int worker;
-} send_info_t;
+} thorium_send_info_t;
 
 typedef struct {
     struct bsal_fast_queue *send_queue;
-    send_info_t send_info;
-} send_cookie_t;
+    thorium_send_info_t send_info;
+} thorium_send_cookie_t;
 
 typedef struct {
     volatile char *buffer;
     volatile int count;
     volatile int source;
     volatile int dest;
-} recv_info_t;
+} thorium_recv_info_t;
 
 typedef struct {
     struct bsal_fast_queue *recv_queue;
-    volatile recv_info_t recv_info;
-} recv_cookie_t;
+    volatile thorium_recv_info_t recv_info;
+} thorium_recv_cookie_t;
 
 /*
  *  * Transport using IBM PAMI (Parallel Active Message Interface)
@@ -83,8 +83,8 @@ struct thorium_pami_transport {
     char **recv_buffers_large;
     volatile int buf_index_small;
     volatile int buf_index_large;
-    send_cookie_t *send_cookies;
-    recv_cookie_t *recv_cookies;
+    thorium_send_cookie_t *send_cookies;
+    thorium_recv_cookie_t *recv_cookies;
     struct bsal_fast_queue *send_queue;
     struct bsal_fast_queue *recv_queue;
     int send_index;
