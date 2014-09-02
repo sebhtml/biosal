@@ -45,7 +45,16 @@ struct bsal_assembly_arc;
  * irb(main):001:0> 15*1024*4096*15
  * => 943718400
  */
-#define BSAL_MAXIMUM_GRAPH_STORE_COUNT ((16 - 1) * 1024)
+
+#ifdef __bgq__
+#define BSAL_MAXIMUM_GRAPH_STORE_COUNT ((16 - 1) * 512)
+#else
+
+/*
+ * Right now, there is no limit for other systems.
+ */
+#define BSAL_MAXIMUM_GRAPH_STORE_COUNT ((64 - 1) * 2048)
+#endif
 
 /*
  * This is a graph store
