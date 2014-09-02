@@ -762,9 +762,14 @@ int thorium_node_run(struct thorium_node *node)
         thorium_node_print_counters(node);
     }
 
-    /* Print global load for this node... */
+    /*
+     * Print global load for this node...
+     *
+     * The automated tests rely on this "COMPUTATION LOAD" line to decide whether or
+     * not each test passes or fails.
+     */
 
-    print_final_load = 0;
+    print_final_load = 1;
 
     for (i = 0; i < node->argc; i++) {
         if (strstr(node->argv[i], "-help") != NULL
