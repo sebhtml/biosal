@@ -297,7 +297,6 @@ void bsal_assembly_graph_builder_set_script_reply_store_manager(struct thorium_a
 {
     struct bsal_assembly_graph_builder *concrete_self;
     int node_count;
-    int worker_count;
     int actor_count;
     int actors_per_spawner;
     int source;
@@ -306,21 +305,9 @@ void bsal_assembly_graph_builder_set_script_reply_store_manager(struct thorium_a
      * Verify is the number of actors is too high.
      */
     node_count = thorium_actor_get_node_count(self);
-    worker_count = thorium_actor_node_worker_count(self);
-    actors_per_spawner = worker_count;
+    actors_per_spawner = bsal_assembly_graph_store_get_store_count_per_node(self);
     actor_count = node_count * actors_per_spawner;
     source = thorium_message_source(message);
-
-    /*
-     * Verify the upper bound.
-     */
-    if (actor_count > BSAL_MAXIMUM_GRAPH_STORE_COUNT) {
-        actors_per_spawner = BSAL_MAXIMUM_GRAPH_STORE_COUNT / node_count;
-
-        if (actors_per_spawner == 0) {
-            ++actors_per_spawner;
-        }
-    }
 
     concrete_self = thorium_actor_concrete_actor(self);
 

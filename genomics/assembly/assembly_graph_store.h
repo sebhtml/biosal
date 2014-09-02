@@ -38,25 +38,6 @@ struct bsal_assembly_arc;
 #define ACTION_ASSEMBLY_GET_VERTEX_REPLY 0x00007724
 
 /*
- * Limit the number of graph stores to avoid running out of memory with all these buffers.
- * At 1024 nodes and 15 graph store per node (and 15 typical kernels per node too),
- * the memory usage per node for communication alone is
- *
- * irb(main):001:0> 15*1024*4096*15
- * => 943718400
- */
-
-#ifdef __bgq__
-#define BSAL_MAXIMUM_GRAPH_STORE_COUNT ((16 - 1) * 512)
-#else
-
-/*
- * Right now, there is no limit for other systems.
- */
-#define BSAL_MAXIMUM_GRAPH_STORE_COUNT ((64 - 1) * 2048)
-#endif
-
-/*
  * This is a graph store
  * for assembling sequences.
  *
@@ -126,5 +107,7 @@ void bsal_assembly_graph_store_yield_reply_summary(struct thorium_actor *self, s
  */
 void bsal_assembly_graph_store_get_vertex(struct thorium_actor *self, struct thorium_message *message);
 void bsal_assembly_graph_store_get_starting_vertex(struct thorium_actor *self, struct thorium_message *message);
+
+int bsal_assembly_graph_store_get_store_count_per_node(struct thorium_actor *self);
 
 #endif

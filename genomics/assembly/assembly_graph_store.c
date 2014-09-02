@@ -1033,3 +1033,45 @@ void bsal_assembly_graph_store_get_starting_vertex(struct thorium_actor *self, s
         thorium_actor_send_reply_empty(self, ACTION_ASSEMBLY_GET_STARTING_VERTEX_REPLY);
     }
 }
+
+/*
+ * Limit the number of graph stores to avoid running out of memory with all these buffers.
+ * At 1024 nodes and 15 graph store per node (and 15 typical kernels per node too),
+ * the memory usage per node for communication alone is
+ *
+ * irb(main):001:0> 15*1024*4096*15
+ * => 943718400
+ */
+
+int bsal_assembly_graph_store_get_store_count_per_node(struct thorium_actor *self)
+{
+#ifdef __bgq__
+    int powerpc_a2_processor_core_count;
+
+    /*
+     * The A2 chip has 18 cores (0-17).
+     *
+     * Cores 0-15 are for applications.
+     * Core 16 is used by the operating system only.
+     * Core 17 is for manufacturing yield.
+     */
+    powerpc_a2_processor_core_count = 16;
+
+    /*
+     * The A2 chip has 16 cores, one of them is used
+     * by the Thorium core.
+     *
+     * 512 nodes -> 512 * 8 graph stores
+     * 1024 nodes -> 1024 * 8 graph stores
+     * 2048 nodes -> 2048 * 8 graph stores
+     */
+    return powerpc_a2_processor_core_count / 2;
+#else
+
+    /*
+     * Right now, there is no limit for other systems.
+     * The policy is to use one graph store per worker.
+     */
+    return thorium_actor_node_worker_count(self);
+#endif
+}

@@ -536,12 +536,12 @@ int bsal_sequence_store_get_required_kmers(struct thorium_actor *actor, struct t
     int minimum_end_buffer_size_in_bytes;
     int minimum_end_buffer_size_in_nucleotides;
     int minimum_end_buffer_size_in_ascii_kmers;
-    int total_workers;
     int total_kmer_stores;
     int nodes;
     int workers;
     struct bsal_sequence_store *concrete_actor;
     int kmer_length;
+    int stores_per_node;
 
     concrete_actor = (struct bsal_sequence_store *)thorium_actor_concrete_actor(actor);
 
@@ -551,12 +551,13 @@ int bsal_sequence_store_get_required_kmers(struct thorium_actor *actor, struct t
 
     workers = thorium_actor_node_worker_count(actor);
     nodes = thorium_actor_get_node_count(actor);
-    total_workers = nodes * workers;
-    total_kmer_stores = total_workers * 1;
 
-    if (total_kmer_stores > BSAL_MAXIMUM_GRAPH_STORE_COUNT) {
-        total_kmer_stores = BSAL_MAXIMUM_GRAPH_STORE_COUNT;
-    }
+    /*
+     * bsal_assembly_graph_store_get_store_count_per_node is a trait
+     * and any actor type can use that.
+     */
+    stores_per_node = bsal_assembly_graph_store_get_store_count_per_node(actor);
+    total_kmer_stores = nodes * stores_per_node;
 
     thorium_message_unpack_int(message, 0, &kmer_length);
 
