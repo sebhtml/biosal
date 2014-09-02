@@ -111,7 +111,7 @@ void thorium_pami_transport_init(struct thorium_transport *self, int *argc, char
     /*Register dispatch IDs*/
     pami_dispatch_callback_function fn;
     pami_dispatch_hint_t options = {};
-    fn.p2p = recv_message_fn;
+    fn.p2p = thorium_recv_message_fn;
     result = PAMI_Dispatch_set (pami_transport->context,
             RECV_MESSAGE_DISPATCH_ID,
             fn,
@@ -185,11 +185,11 @@ int thorium_pami_transport_send(struct thorium_transport *self, struct thorium_m
 
     if (nbytes <= MAX_SHORT_MESSAGE_LENGTH) {
 	pami_send_immediate_t parameter;
-	parameter.dispatch        = RECV_MESSAGE_DISPATCH_ID;
+	parameter.dispatch = RECV_MESSAGE_DISPATCH_ID;
         parameter.header.iov_base = NULL;
-        parameter.header.iov_len  = 0;
-	parameter.data.iov_base   = (void *)buffer;
-        parameter.data.iov_len    = nbytes;
+        parameter.header.iov_len = 0;
+	parameter.data.iov_base = (void *)buffer;
+        parameter.data.iov_len = nbytes;
         PAMI_Endpoint_create (pami_transport->client, destination_node, 0, &parameter.dest);
 
         result = PAMI_Send_immediate (pami_transport->context, &parameter);
@@ -199,25 +199,25 @@ int thorium_pami_transport_send(struct thorium_transport *self, struct thorium_m
         }
 	/*Add buffer and worker into send_queue*/
 	bsal_fast_queue_enqueue(send_cookie->send_queue, (void*)&(send_cookie->send_info));
-	//fprintf (stderr, "send: source = %d, dest = %d, nbytes = %d done worker = %d\n", self->rank, destination_node, nbytes, send_cookie->send_info.worker);
+	/*fprintf (stderr, "send: source = %d, dest = %d, nbytes = %d done worker = %d\n", self->rank, destination_node, nbytes, send_cookie->send_info.worker);*/
     } else {
 	pami_send_t param_send;
         param_send.send.dest = destination_node;
         param_send.send.dispatch = RECV_MESSAGE_DISPATCH_ID;
 	param_send.send.header.iov_base = NULL;
         param_send.send.header.iov_len = 0;
-	param_send.send.data.iov_base  = (void *)buffer;
+	param_send.send.data.iov_base = (void *)buffer;
         param_send.send.data.iov_len = nbytes;
-        param_send.events.cookie        = (void *)send_cookie;
-        param_send.events.local_fn      = send_done_fn;
-        param_send.events.remote_fn     = NULL;
+        param_send.events.cookie = (void *)send_cookie;
+        param_send.events.local_fn = thorium_send_done_fn;
+        param_send.events.remote_fn = NULL;
 
         result = PAMI_Send(pami_transport->context, &param_send);
 	BSAL_DEBUGGER_ASSERT(result == PAMI_SUCCESS);
         if (result != PAMI_SUCCESS) {
 	    return 0;
         }
-	//fprintf (stderr, "send: source = %d, dest = %d, nbytes = %d, posted worker = %d\n", self->rank, destination_node, nbytes, send_cookie->send_info.worker);
+	/*fprintf (stderr, "send: source = %d, dest = %d, nbytes = %d, posted worker = %d\n", self->rank, destination_node, nbytes, send_cookie->send_info.worker);*/
     }
 
     return 1;
@@ -232,12 +232,12 @@ int thorium_pami_transport_receive(struct thorium_transport *self, struct thoriu
 
     thorium_recv_info_t recv_info;
     if (bsal_fast_queue_dequeue(pami_transport->recv_queue, (void *)&recv_info)) {
-	//fprintf(stderr, "Dequeue: source = %d, dest = %d, count = %d\n", recv_info.source, recv_info.dest, recv_info.count);
+	/*fprintf(stderr, "Dequeue: source = %d, dest = %d, count = %d\n", recv_info.source, recv_info.dest, recv_info.count);*/
 	char *buffer = bsal_memory_pool_allocate(self->inbound_message_memory_pool, recv_info.count);
 	memcpy(buffer, (void *)recv_info.buffer, recv_info.count);
 
 	thorium_message_init_with_nodes(message, recv_info.count, buffer, recv_info.source, self->rank);
-	//fprintf(stderr, "Initialized: source = %d, dest = %d, count = %d\n", recv_info.source, recv_info.dest, recv_info.count);
+	/*fprintf(stderr, "Initialized: source = %d, dest = %d, count = %d\n", recv_info.source, recv_info.dest, recv_info.count);*/
     } else {
 	return 0;
     }
@@ -263,31 +263,29 @@ int thorium_pami_transport_test(struct thorium_transport *self, struct thorium_w
     return 1;
 }
 
-void send_done_fn (pami_context_t   context,
+void thorium_send_done_fn (pami_context_t   context,
         void           * cookie,
-        pami_result_t    result) {
+        pami_result_t    result) 
+{
     thorium_send_cookie_t *send_cookie = (thorium_send_cookie_t *)cookie;
     bsal_fast_queue_enqueue(send_cookie->send_queue, (void *)&(send_cookie->send_info));
-    /*fprintf (stderr, "send_done_fn() worker = %d\n", send_cookie->send_info.worker);*/
+    /*fprintf (stderr, "thorium_send_done_fn() worker = %d\n", send_cookie->send_info.worker);*/
 }
 
-void recv_done_fn (pami_context_t   context,
-        void           * cookie,
-        pami_result_t    result) {
+void thorium_recv_done_fn (pami_context_t context, void *cookie, pami_result_t result) 
+{
     thorium_recv_cookie_t *recv_cookie = (thorium_recv_cookie_t *)cookie;
     bsal_fast_queue_enqueue(recv_cookie->recv_queue, (void*)&(recv_cookie->recv_info));
-    //fprintf (stderr, "recv_done_fn: source = %d, dest = %d, count = %d\n", recv_cookie->recv_info.source, recv_cookie->recv_info.dest, recv_cookie->recv_info.count);
+    /*fprintf (stderr, "thorium_recv_done_fn: source = %d, dest = %d, count = %d\n", recv_cookie->recv_info.source, recv_cookie->recv_info.dest, recv_cookie->recv_info.count);*/
 }
 
-void recv_message_fn(
-        pami_context_t    context,      /**< IN: PAMI context */
-        void            * cookie,       /**< IN: dispatch cookie */
-        const void      * header,       /**< IN: header address */
-        size_t            header_size,  /**< IN: header size */
-        const void      * data,         /**< IN: address of PAMI pipe buffer */
-        size_t            data_size,    /**< IN: size of PAMI pipe buffer */
-        pami_endpoint_t   origin,
-        pami_recv_t     * recv)         /**< OUT: receive message structure */
+void thorium_recv_message_fn( pami_context_t context, void * cookie, 
+        const void *header,
+        size_t header_size,
+        const void * data,
+        size_t data_size,
+        pami_endpoint_t origin,
+        pami_recv_t * recv) 
 {
     struct thorium_pami_transport *pami_transport = (struct thorium_pami_transport *) cookie;
 
@@ -308,21 +306,21 @@ void recv_message_fn(
     recv_cookie->recv_info.source = origin;
     recv_cookie->recv_info.count = data_size;
 
-    //fprintf (stderr, "recv: source = %d, dest = %d, buf_index_small = %d, buf_index_large = %d,  count = %d\n", origin, pami_transport->rank, pami_transport->buf_index_small, pami_transport->buf_index_large, recv_cookie->recv_info.count);
+    /*fprintf (stderr, "recv: source = %d, dest = %d, buf_index_small = %d, buf_index_large = %d, count = %d\n", origin, pami_transport->rank, pami_transport->buf_index_small, pami_transport->buf_index_large, recv_cookie->recv_info.count);*/
 
     if (data != NULL) {
-        /*fprintf (stderr, "recv_message_fn() source = %d, count = %d\n", origin, data_size);*/
+        /*fprintf (stderr, "thorium_recv_message_fn() source = %d, count = %d\n", origin, data_size);*/
         memcpy(buffer, data, data_size);
 	bsal_fast_queue_enqueue(recv_cookie->recv_queue, (void*)&(recv_cookie->recv_info));
     }
     else {
-        /*fprintf (stderr, "recv_message_fn() data_size = %d, active = %d\n", data_size, cookie_recv->active);*/
-        recv->local_fn = recv_done_fn;
-        recv->cookie   = (void *)recv_cookie;
-        recv->type     = PAMI_TYPE_BYTE;
-        recv->addr     = (void *)buffer;
-        recv->offset   = 0;
-        recv->data_fn  = PAMI_DATA_COPY;
+        /*fprintf (stderr, "thorium_recv_message_fn() data_size = %d, active = %d\n", data_size, cookie_recv->active);*/
+        recv->local_fn = thorium_recv_done_fn;
+        recv->cookie = (void *)recv_cookie;
+        recv->type = PAMI_TYPE_BYTE;
+        recv->addr = (void *)buffer;
+        recv->offset = 0;
+        recv->data_fn = PAMI_DATA_COPY;
         recv->data_cookie = NULL;
     }
     return;
