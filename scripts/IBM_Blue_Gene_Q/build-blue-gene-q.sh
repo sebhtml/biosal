@@ -15,4 +15,5 @@ make clean
 make -j 8 CFLAGS="$CFLAGS" CONFIG_PAMI=y \
     applications/argonnite_kmer_counter/argonnite \
     applications/spate_metagenome_assembler/spate \
-    examples/example_ring
+    examples/example_ring \
+    performance/transport_tester/transport_tester
