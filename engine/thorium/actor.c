@@ -256,7 +256,7 @@ void thorium_actor_print(struct thorium_actor *self)
                     sent);
 
     printf("EXAMINE: CurrentHeapSize for home node is %" PRIu64 "\n",
-                    bsal_memory_get_heap_size());
+                    bsal_memory_get_utilized_byte_count());
     printf("EXAMINE: ephemeral memory for worker:\n");
     bsal_memory_pool_print(ephemeral_memory);
 

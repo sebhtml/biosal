@@ -137,7 +137,9 @@ void bsal_memory_free_private(void *pointer, const char *function, const char *f
  *
  * \see http://www.hep.wisc.edu/~pinghc/Process_Memory.htm
  */
-uint64_t bsal_memory_get_heap_size();
+uint64_t bsal_memory_get_total_byte_count();
+uint64_t bsal_memory_get_utilized_byte_count();
+uint64_t bsal_memory_get_remaining_byte_count();
 
 size_t bsal_memory_align(size_t unaligned);
 size_t bsal_memory_align_private(size_t unaligned, size_t alignment);
@@ -148,6 +150,6 @@ void bsal_s_fence();
 void bsal_fence();
 
 size_t bsal_memory_normalize_segment_length_power_of_2(size_t size);
-
+size_t bsal_memory_normalize_segment_length_page_size(size_t size);
 
 #endif

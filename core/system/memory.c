@@ -4,8 +4,12 @@
 #include "tracer.h"
 #include "debugger.h"
 
+#include <unistd.h>
 #include <string.h>
 #include <stdio.h>
+
+#include <inttypes.h>
+#include <stdint.h>
 
 /*
  * bound memory allocations in order
@@ -15,8 +19,8 @@
  */
 
 /*
-   * Use System Programming Interface on the IBM Blue Gene/Q to get memory usage.
-   */
+ * Use System Programming Interface on the IBM Blue Gene/Q to get memory usage.
+ */
 #ifdef __bgq__
 #include <spi/include/kernel/memory.h>
 #endif
@@ -118,7 +122,92 @@ void bsal_memory_free_private(void *pointer, const char *function, const char *f
      */
 }
 
-uint64_t bsal_memory_get_heap_size()
+uint64_t bsal_memory_get_total_byte_count()
+{
+#ifdef __bgq__
+    uint64_t total_memory;
+    uint64_t memory_for_kernel;
+    uint64_t memory_for_application;
+
+    /*
+     * Each BGQ node has 16 GiB RAM and CNK uses 16 MiB.
+     */
+    total_memory = 17179869184;
+    memory_for_kernel = 16777216;
+    memory_for_application = total_memory - memory_for_kernel;
+
+    /*
+     * Example:
+     * 16991182848 used
+     * 17179869184 total
+     */
+
+    return memory_for_application;
+
+#elif defined(__linux__)
+
+    /*
+     * use /proc/meminfo
+     *
+     * [seb@localhost ~]$ head -n 1 /proc/meminfo
+     * MemTotal:        8168536 kB
+     *
+     */
+
+    char buffer[16];
+    uint64_t total_memory;
+    FILE *file;
+    file = fopen("/proc/meminfo", "r");
+
+    /*
+     * Fake a big memory byte count.
+     */
+    total_memory = 0;
+    --total_memory;
+
+    while (fscanf(file, "%s", buffer) > 0) {
+        if (strcmp(buffer, "MemTotal:") == 0) {
+            fscanf(file, "%" PRIu64, &total_memory);
+
+            /*
+             * Convert KiB to B
+             */
+            total_memory *= 1024;
+            break;
+        }
+    }
+
+    fclose(file);
+
+    return total_memory;
+
+#else
+    uint64_t total;
+
+    /*
+     * Otherwise, this hint is currently unsupported.
+     * This is obviously broken.
+     */
+
+    total = 18446744073709551615;
+    return total;
+#endif
+}
+
+uint64_t bsal_memory_get_remaining_byte_count()
+{
+    uint64_t total;
+    uint64_t utilized;
+    uint64_t remaining;
+
+    total = bsal_memory_get_total_byte_count();
+    utilized = bsal_memory_get_utilized_byte_count();
+    remaining = total - utilized;
+
+    return remaining;
+}
+
+uint64_t bsal_memory_get_utilized_byte_count()
 {
     uint64_t bytes;
     bytes = 0;
@@ -375,4 +464,18 @@ size_t bsal_memory_normalize_segment_length_power_of_2(size_t size)
     return_value = value;
 
     return value;
+}
+
+size_t bsal_memory_normalize_segment_length_page_size(size_t size)
+{
+    size_t page_size;
+    size_t remainder;
+    size_t padding;
+
+    page_size = sysconf(_SC_PAGE_SIZE);
+
+    remainder = size % page_size;
+    padding = page_size - remainder;
+
+    return size + padding;
 }

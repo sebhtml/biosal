@@ -42,6 +42,10 @@
 
 #endif
 
+/*
+#define USE_MAXIMUM
+*/
+
 int thorium_actor_active_message_limit(struct thorium_actor *self)
 {
     int node_count;
@@ -75,7 +79,11 @@ int thorium_actor_active_message_limit(struct thorium_actor *self)
     bonus = node_count / THORIUM_NODE_COUNT_PER_ACTIVE_MESSAGE;
 
 #ifdef USE_MAXIMUM
-    maximum = 4;
+
+    /*
+     * 4 * 256 = 1024
+     */
+    maximum = 6;
 
     if (bonus > maximum) {
         bonus = maximum;

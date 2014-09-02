@@ -1833,13 +1833,13 @@ void thorium_node_run_loop(struct thorium_node *node)
                      * and
                      * the heap size.
                      */
-                    printf("%s node/%d METRICS AliveActorCount: %d ActiveRequestCount: %d HeapByteCount: %" PRIu64 "\n",
+                    printf("%s node/%d METRICS AliveActorCount: %d ActiveRequestCount: %d ByteCount: %" PRIu64 " / %" PRIu64 "\n",
                                     THORIUM_NODE_THORIUM_PREFIX,
                                     node->name,
                                     node->alive_actors,
                                     thorium_transport_get_active_request_count(&node->transport),
-                                    bsal_memory_get_heap_size()
-                                    );
+                                    bsal_memory_get_utilized_byte_count(),
+                                    bsal_memory_get_total_byte_count());
                 }
 
                 if (bsal_bitmap_get_bit_uint32_t(&node->flags, FLAG_PRINT_COUNTERS)) {

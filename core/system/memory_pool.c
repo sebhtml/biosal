@@ -138,7 +138,10 @@ void *bsal_memory_pool_allocate(struct bsal_memory_pool *self, size_t size)
     }
 
     if (normalize) {
+            /*
         new_size = bsal_memory_normalize_segment_length_power_of_2(size);
+        */
+        new_size = bsal_memory_normalize_segment_length_page_size(size);
 #if 0
         printf("NORMALIZE %zu -> %zu\n", size, new_size);
 #endif
