@@ -303,7 +303,7 @@ void bsal_assembly_arc_kernel_push_sequence_data_block(struct thorium_actor *sel
         /*
          * The number of edges is bounded by twice the length
          */
-        to_reserve += 3 * length;
+        to_reserve += 2 * length;
     }
 
     bsal_assembly_arc_block_reserve(&output_block, to_reserve);
