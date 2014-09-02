@@ -22,7 +22,7 @@
 #if defined(__bgq__) && THORIUM_TRANSPORT_PAMI_IS_READY
 
 #define THORIUM_TRANSPORT_USE_PAMI
-#warning "PAMI is used"
+
 #endif
 
 #if defined(THORIUM_TRANSPORT_USE_PAMI)
@@ -30,8 +30,10 @@
 #include <pami.h>
 
 #define MAX_SHORT_MESSAGE_LENGTH 128
-#define RECV_BUFFER_SIZE 1048576
-#define NUM_RECV_BUFFERS 64
+#define RECV_BUFFER_SIZE_LARGE 4194304
+#define NUM_RECV_BUFFERS_LARGE 16
+#define RECV_BUFFER_SIZE_SMALL 4096
+#define NUM_RECV_BUFFERS_SMALL 2048
 #define NUM_RECV_COOKIES 65536
 #define NUM_SEND_COOKIES 65536
 
@@ -45,7 +47,7 @@ struct thorium_transport;
 struct thorium_worker_buffer;
 
 typedef struct {
-    void *buffer;
+    char *buffer;
     int worker;
 } send_info_t;
 
@@ -55,9 +57,10 @@ typedef struct {
 } send_cookie_t;
 
 typedef struct {
-    volatile void *buffer;
+    volatile char *buffer;
     volatile int count;
     volatile int source;
+    volatile int dest;
 } recv_info_t;
 
 typedef struct {
@@ -73,9 +76,13 @@ struct thorium_pami_transport {
     pami_client_t client;
     pami_context_t context;
     size_t num_contexts;
-    
-    void **recv_buffers;
-    volatile int buf_index;
+
+    int rank; 
+   
+    char **recv_buffers_small;
+    char **recv_buffers_large;
+    volatile int buf_index_small;
+    volatile int buf_index_large;
     send_cookie_t *send_cookies;
     recv_cookie_t *recv_cookies;
     struct bsal_fast_queue *send_queue;
