@@ -108,15 +108,15 @@ int thorium_pami_transport_receive(struct thorium_transport *self, struct thoriu
 
 int thorium_pami_transport_test(struct thorium_transport *self, struct thorium_worker_buffer *buffer);
 
-void recv_done_fn (pami_context_t   context,
+void thorium_recv_done_fn (pami_context_t   context,
         void           * cookie,
         pami_result_t    result);
 
-void send_done_fn (pami_context_t   context,
+void thorium_send_done_fn (pami_context_t   context,
         void           * cookie,
         pami_result_t    result);
 
-void recv_message_fn (
+void thorium_recv_message_fn (
         pami_context_t    context,      /**< IN: PAMI context */
         void            * cookie,       /**< IN: dispatch cookie */
         const void      * header,       /**< IN: header address */
