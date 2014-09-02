@@ -71,6 +71,7 @@ void bsal_assembly_block_classifier_init(struct thorium_actor *self)
     bsal_fast_queue_init(&concrete_actor->stalled_producers, sizeof(int));
     bsal_vector_init(&concrete_actor->active_messages, sizeof(int));
 
+    concrete_actor->active_requests = 0;
     concrete_actor->forced = 0;
 
     /* Enable cloning stuff
@@ -156,6 +157,7 @@ void bsal_assembly_block_classifier_receive(struct thorium_actor *self, struct t
 
         bucket = (int *)bsal_vector_at(&concrete_actor->active_messages, consumer_index_index);
         (*bucket)--;
+        --concrete_actor->active_requests;
 
         if (*bucket == concrete_actor->maximum_active_messages) {
 
@@ -224,6 +226,7 @@ void bsal_assembly_block_classifier_flush(struct thorium_actor *self, int custom
 
     bucket = bsal_vector_at(&concrete_actor->active_messages, customer_index);
     (*bucket)++;
+    ++concrete_actor->active_requests;
 
     /*
      * Increment event counter
@@ -286,6 +289,16 @@ void bsal_assembly_block_classifier_verify(struct thorium_actor *self, struct th
 #endif
 
     if (concrete_actor->consumer_count_above_threshold > 0) {
+        return;
+    }
+
+    /*
+     * The code here is to make sure that there is enough memory.
+     * If there is 0 active requests, then a reply must be sent
+     * anyway even if the system is out of memory.
+     */
+    if (concrete_actor->active_requests > 0
+                    && !bsal_memory_has_enough_bytes()) {
         return;
     }
 

@@ -25,6 +25,7 @@ struct bsal_assembly_arc_classifier {
     int received_blocks;
 
     struct bsal_vector pending_requests;
+    int active_requests;
     int producer_is_waiting;
     int maximum_pending_request_count;
 

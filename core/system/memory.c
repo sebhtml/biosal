@@ -207,6 +207,21 @@ uint64_t bsal_memory_get_remaining_byte_count()
     return remaining;
 }
 
+int bsal_memory_has_enough_bytes()
+{
+    uint64_t remaining;
+    uint64_t threshold;
+
+    remaining = bsal_memory_get_remaining_byte_count();
+    threshold = 536870912;
+
+    if (remaining > threshold) {
+        return 1;
+    }
+
+    return 0;
+}
+
 uint64_t bsal_memory_get_utilized_byte_count()
 {
     uint64_t bytes;

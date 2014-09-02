@@ -53,6 +53,7 @@ void bsal_assembly_arc_classifier_init(struct thorium_actor *self)
     concrete_self->received_blocks = 0;
 
     bsal_vector_init(&concrete_self->pending_requests, sizeof(int));
+    concrete_self->active_requests = 0;
 
     concrete_self->producer_is_waiting = 0;
 
@@ -122,6 +123,7 @@ void bsal_assembly_arc_classifier_receive(struct thorium_actor *self, struct tho
         source_index = bsal_vector_index_of(&concrete_self->consumers, &source);
         bucket = bsal_vector_at(&concrete_self->pending_requests, source_index);
         --(*bucket);
+        --concrete_self->active_requests;
 
         /*
          * The previous value was maximum_pending_request_count + 1
@@ -318,6 +320,7 @@ void bsal_assembly_arc_classifier_push_arc_block(struct thorium_actor *self, str
 
         bucket = bsal_vector_at(&concrete_self->pending_requests, i);
         ++(*bucket);
+        ++concrete_self->active_requests;
 
         if (*bucket > maximum_pending_requests) {
             maximum_pending_requests = *bucket;
@@ -339,7 +342,14 @@ void bsal_assembly_arc_classifier_push_arc_block(struct thorium_actor *self, str
     ++concrete_self->received_blocks;
     concrete_self->source = source;
 
-    if (maximum_pending_requests  <= concrete_self->maximum_pending_request_count) {
+    /*
+     * Only send a direct reply if there is enough memory.
+     *
+     * As long as maximum_pending_requests is lower than maximum_pending_request_count,
+     * there is still space for at least one additional request.
+     */
+    if (maximum_pending_requests < concrete_self->maximum_pending_request_count
+            && bsal_memory_has_enough_bytes()) {
 
         thorium_actor_send_empty(self, concrete_self->source,
                     ACTION_ASSEMBLY_PUSH_ARC_BLOCK_REPLY);
@@ -370,6 +380,20 @@ void bsal_assembly_arc_classifier_verify_counters(struct thorium_actor *self)
         return;
     }
 
+    /*
+     * Make sure that we have enough memory available.
+     * This verification is not performed if there are 0 active
+     * requests.
+     */
+    /*
+     * The code here is to make sure that there is enough memory.
+     */
+
+    if (concrete_self->active_requests > 0
+            && !bsal_memory_has_enough_bytes()) {
+        return;
+    }
+
 #if 0
     /*
      * Abort if at least one counter is above the threshold.
@@ -384,6 +408,7 @@ void bsal_assembly_arc_classifier_verify_counters(struct thorium_actor *self)
         }
     }
 #endif
+
     /*
      * Trigger an actor event now.
      */

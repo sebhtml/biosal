@@ -31,6 +31,7 @@ struct bsal_assembly_block_classifier {
 
     int maximum_active_messages;
     struct bsal_vector active_messages;
+    int active_requests;
 
     int customer_block_size;
     int flushed;
