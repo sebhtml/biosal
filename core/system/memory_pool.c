@@ -18,6 +18,9 @@
  */
 
 /*
+#define TRACK_EXTERNAL_OPERATIONS
+*/
+/*
  * Enable the tracking for allocations smaller or equal to block_size
  */
 #define FLAG_ENABLE_TRACKING 0
@@ -272,12 +275,14 @@ void *bsal_memory_pool_allocate(struct bsal_memory_pool *self, size_t size)
 
     pointer = bsal_memory_pool_allocate_private(self, size, &path);
 
+#ifdef DEBUG_MEMORY_LEAK_2014_09_02
     if (size == 8388608) {
         printf("memory_pool/%d bsal_memory_pool_allocate size= %zu path= %d external_allocated_blocks: %d allocated_blocks: %d\n",
                         self->name,
                     size, path, (int)bsal_map_size(&self->external_allocated_blocks),
                     (int)bsal_map_size(&self->allocated_blocks));
     }
+#endif
 
     if (pointer == NULL) {
         printf("Error, requested %zu bytes, returned pointer is NULL (code path: %d, block_size %zu)\n",
@@ -307,6 +312,8 @@ void *bsal_memory_pool_allocate_private(struct bsal_memory_pool *self, size_t si
     if (self == NULL || bsal_bitmap_get_bit_uint32_t(&self->flags, FLAG_DISABLED)) {
         return bsal_memory_allocate(size);
     }
+
+    BSAL_DEBUGGER_ASSERT(self != NULL);
 
     /*
      * Check if this large size is available in the external recycle bin.
@@ -340,12 +347,35 @@ void *bsal_memory_pool_allocate_private(struct bsal_memory_pool *self, size_t si
 
         pointer = bsal_memory_allocate(size);
 
+        BSAL_DEBUGGER_ASSERT(pointer != NULL);
+
+        BSAL_DEBUGGER_ASSERT(path != NULL);
         *path = CODE_PATH_EXTERNAL_NEW;
+
+        BSAL_DEBUGGER_ASSERT(self != NULL);
+
+#ifdef BSAL_DEBUGGER_ENABLE_ASSERT
+        if (bsal_map_get(&self->external_allocated_blocks, &pointer) != NULL) {
+            bucket = bsal_map_get(&self->external_allocated_blocks, &pointer);
+            printf("Error, pool/%d pointer %p found size %zu block_size %zu\n",
+                            self->name, pointer, *bucket, self->block_size);
+        }
+#endif
+        BSAL_DEBUGGER_ASSERT(bsal_map_get(&self->external_allocated_blocks, &pointer) == NULL);
+
         bucket = bsal_map_add(&self->external_allocated_blocks, &pointer);
+
+        BSAL_DEBUGGER_ASSERT(bucket != NULL);
+
         *bucket = size;
 
         return pointer;
     }
+
+    /*
+     * Make sure that block allocation is not disabled.
+     */
+    BSAL_DEBUGGER_ASSERT(!bsal_bitmap_get_bit_uint32_t(&self->flags, FLAG_DISABLED_BLOCK_ALLOCATION));
 
     /*
      * Look out for a small piece.
@@ -432,15 +462,41 @@ void bsal_memory_pool_free(struct bsal_memory_pool *self, void *pointer)
      */
 
     bucket = bsal_map_get(&self->external_allocated_blocks, &pointer);
+
     if (bucket != NULL) {
+
+#if 0
+        if (self->name == BSAL_MEMORY_POOL_NAME_NODE_INBOUND) {
+            printf("DEBUG free %p found bucket\n", pointer);
+        }
+#endif
 
         size = *bucket;
 
+#ifdef DEBUG_MEMORY_LEAK_2014_09_02
         if (size == 8388608) {
             printf("memory_pool/%d Freeing point %zu\n", self->name, size);
         }
+#endif
 
+        BSAL_DEBUGGER_ASSERT(bsal_map_get(&self->external_allocated_blocks, &pointer) != NULL);
+
+        /*
+         * There is a bug in map_delete...
+         * https://github.com/GeneAssembly/biosal/issues/641
+         */
         bsal_map_delete(&self->external_allocated_blocks, &pointer);
+        bsal_map_delete(&self->external_allocated_blocks, &pointer);
+
+#ifdef BSAL_DEBUGGER_ASSERT
+        if (bsal_map_get(&self->external_allocated_blocks, &pointer) != NULL) {
+            printf("Error, pool/%d pointer %p is still registered after deletion (%d items)\n",
+                            self->name, pointer,
+                            (int)bsal_map_size(&self->external_allocated_blocks));
+        }
+#endif
+        BSAL_DEBUGGER_ASSERT(bsal_map_get(&self->external_allocated_blocks, &pointer) == NULL);
+
         bsal_memory_pool_recycle_external_segment(self, size, pointer);
 
         return;
@@ -570,6 +626,7 @@ void bsal_memory_pool_free_all(struct bsal_memory_pool *self)
 void bsal_memory_pool_recycle_external_segment(struct bsal_memory_pool *self, size_t size,
                 void *pointer)
 {
+#ifdef TRACK_EXTERNAL_OPERATIONS
     struct bsal_fast_queue *queue;
 
     queue = bsal_map_get(&self->external_recycle_bin, &size);
@@ -579,7 +636,13 @@ void bsal_memory_pool_recycle_external_segment(struct bsal_memory_pool *self, si
         bsal_fast_queue_init(queue, sizeof(void *));
     }
 
+    BSAL_DEBUGGER_ASSERT(queue != NULL);
+    BSAL_DEBUGGER_ASSERT(pointer != NULL);
+
     bsal_fast_queue_enqueue(queue, &pointer);
+#else
+    bsal_memory_free(pointer);
+#endif
 }
 
 void bsal_memory_pool_disable(struct bsal_memory_pool *self)

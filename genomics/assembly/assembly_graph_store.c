@@ -1065,7 +1065,14 @@ int bsal_assembly_graph_store_get_store_count_per_node(struct thorium_actor *sel
      * 1024 nodes -> 1024 * 8 graph stores
      * 2048 nodes -> 2048 * 8 graph stores
      */
-    return powerpc_a2_processor_core_count / 2;
+
+#if 0
+    if (thorium_actor_get_node_count(self) < 1024) {
+        return powerpc_a2_processor_core_count / 2;
+    }
+#endif
+
+    return thorium_actor_node_worker_count(self);
 #else
 
     /*

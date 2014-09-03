@@ -36,11 +36,7 @@
  * \see https://github.com/jedbrown/bgq-driver/blob/master/cnk/include/Config.h
  */
 
-#if defined(__bgq__)
-#define BSAL_MEMORY_POOL_MESSAGE_BUFFER_BLOCK_SIZE (4 * 1024)
-#else
-#define BSAL_MEMORY_POOL_MESSAGE_BUFFER_BLOCK_SIZE (2 * 1024 * 1024)
-#endif
+#define BSAL_MEMORY_POOL_MESSAGE_BUFFER_BLOCK_SIZE (4 * 1024 * 1024)
 
 /*
  * A memory pool for genomics.

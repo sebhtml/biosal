@@ -544,6 +544,8 @@ void thorium_mpi1_pt2pt_nonblocking_transport_add_receive_request(struct thorium
 
     concrete_self = thorium_transport_get_concrete_transport(self);
 
+    BSAL_DEBUGGER_ASSERT(self->inbound_message_memory_pool != NULL);
+
     buffer = bsal_memory_pool_allocate(self->inbound_message_memory_pool,
                     count);
 
