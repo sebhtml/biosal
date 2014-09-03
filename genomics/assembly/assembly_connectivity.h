@@ -4,6 +4,8 @@
 
 #include <stdint.h>
 
+#define BSAL_DNA_ALPHABET_SIZE 4
+
 /*
  * Offsets for parents
  */
@@ -12,7 +14,7 @@
 /*
  * Offsets for children
  */
-#define BSAL_ASSEMBLY_CONNECTIVITY_OFFSET_CHILDREN 4
+#define BSAL_ASSEMBLY_CONNECTIVITY_OFFSET_CHILDREN BSAL_DNA_ALPHABET_SIZE
 
 /*
  * Connectivity

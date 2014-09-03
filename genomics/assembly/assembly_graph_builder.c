@@ -11,6 +11,8 @@
 #include <core/system/debugger.h>
 #include <core/system/command.h>
 
+#include <core/structures/string.h>
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -1292,6 +1294,11 @@ void bsal_assembly_graph_builder_get_summary_reply(struct thorium_actor *self, s
     void *buffer;
     struct bsal_memory_pool *ephemeral_memory;
     struct bsal_assembly_graph_summary partial_summary;
+    char *file_name;
+    struct bsal_string file_name_string;
+    char *output_directory;
+    int argc;
+    char **argv;
 
     ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
     concrete_self = thorium_actor_concrete_actor(self);
@@ -1313,6 +1320,22 @@ void bsal_assembly_graph_builder_get_summary_reply(struct thorium_actor *self, s
     if (concrete_self->ready_graph_store_count == expected) {
 
         bsal_assembly_graph_summary_print(&concrete_self->graph_summary);
+
+        /*
+         * Write summary file too in XML
+         */
+
+        argc = thorium_actor_argc(self);
+        argv = thorium_actor_argv(self);
+        output_directory = bsal_command_get_output_directory(argc, argv);
+        bsal_string_init(&file_name_string, output_directory);
+        bsal_string_append(&file_name_string, "/assembly_graph_summary.xml");
+        file_name = bsal_string_get(&file_name_string);
+
+        bsal_assembly_graph_summary_write_summary(&concrete_self->graph_summary,
+                        file_name, concrete_self->kmer_length);
+
+        bsal_string_destroy(&file_name_string);
 
         bsal_assembly_graph_builder_tell_source(self);
     }
