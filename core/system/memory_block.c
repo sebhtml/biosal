@@ -31,12 +31,13 @@ void *bsal_memory_block_allocate(struct bsal_memory_block *self, int size)
         self->memory = bsal_memory_allocate(self->total_bytes);
     }
 
-    if (self->offset + size >= self->total_bytes) {
+    if (self->offset + size > self->total_bytes) {
         return NULL;
     }
 
     pointer = ((char *)self->memory) + self->offset;
     self->offset += size;
+
     return pointer;
 }
 
