@@ -31,9 +31,9 @@
 
 #define MAX_SHORT_MESSAGE_LENGTH 128
 #define RECV_BUFFER_SIZE_LARGE 4194304
-#define NUM_RECV_BUFFERS_LARGE 16
+#define NUM_RECV_BUFFERS_LARGE 128
 #define RECV_BUFFER_SIZE_SMALL 4096
-#define NUM_RECV_BUFFERS_SMALL 2048
+#define NUM_RECV_BUFFERS_SMALL 4096
 #define NUM_RECV_COOKIES 65536
 #define NUM_SEND_COOKIES 65536
 
@@ -88,7 +88,7 @@ struct thorium_pami_transport {
     struct bsal_fast_queue *send_queue;
     struct bsal_fast_queue *recv_queue;
     int send_index;
-    int recv_index;
+    volatile int recv_index;
 
 #endif
 
