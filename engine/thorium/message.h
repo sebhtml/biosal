@@ -29,7 +29,7 @@ struct thorium_message {
 };
 
 void thorium_message_init(struct thorium_message *self, int tag, int count, void *buffer);
-void thorium_message_init_with_nodes(struct thorium_message *self, int tag, int count, void *buffer, int source,
+void thorium_message_init_with_nodes(struct thorium_message *self, int count, void *buffer, int source,
                 int destination);
 void thorium_message_init_copy(struct thorium_message *self, struct thorium_message *old_message);
 void thorium_message_destroy(struct thorium_message *self);

@@ -447,8 +447,7 @@ int thorium_mpi1_pt2pt_nonblocking_transport_receive(struct thorium_transport *s
      * Prepare the message. The worker will be -1 to tell the thorium
      * code that this is not a worker buffer.
      */
-    thorium_message_init_with_nodes(message, tag, count, buffer, source,
-                    destination);
+    thorium_message_init_with_nodes(message, count, buffer, source, destination);
 
 #ifdef THORIUM_MPI1_PT2PT_NON_BLOCKING_DEBUG
     printf("DEBUG Non Blocking Test is conclusive Tag %d Count %d Buffer %p Source %d\n",

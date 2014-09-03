@@ -158,9 +158,13 @@ int thorium_message_get_worker(struct thorium_message *message)
     return message->worker;
 }
 
-void thorium_message_init_with_nodes(struct thorium_message *self, int tag, int count, void *buffer, int source,
+void thorium_message_init_with_nodes(struct thorium_message *self, int count, void *buffer, int source,
                 int destination)
 {
+    int tag;
+
+    tag = -1;
+
     thorium_message_init(self, tag, count, buffer);
 
     /*

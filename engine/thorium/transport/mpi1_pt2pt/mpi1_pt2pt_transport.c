@@ -227,8 +227,7 @@ int thorium_mpi1_pt2pt_transport_receive(struct thorium_transport *self, struct 
      * Prepare the message. The worker will be -1 to tell the thorium
      * code that this is not a worker buffer.
      */
-    thorium_message_init_with_nodes(message, tag, count, buffer, source,
-                    destination);
+    thorium_message_init_with_nodes(message, count, buffer, source, destination);
 
     return 1;
 }
