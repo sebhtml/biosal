@@ -206,12 +206,12 @@ void thorium_worker_destroy(struct thorium_worker *worker)
 
         bsal_memory_pool_free(&worker->outbound_message_memory_pool, buffer);
 
-#ifdef THORIUM_WORKER_DEBUG_INJECTION 
+#ifdef THORIUM_WORKER_DEBUG_INJECTION
         ++worker->counter_freed_outbound_buffers_from_other_workers;
 #endif
     }
 
-#ifdef THORIUM_WORKER_DEBUG_INJECTION 
+#ifdef THORIUM_WORKER_DEBUG_INJECTION
     printf("AFTER COLLECTION\n");
     thorium_worker_print_balance(worker);
 
@@ -277,7 +277,7 @@ void thorium_worker_send(struct thorium_worker *worker, struct thorium_message *
     buffer = (char *)bsal_memory_pool_allocate(&worker->outbound_message_memory_pool,
                     all * sizeof(char));
 
-#ifdef THORIUM_WORKER_DEBUG_INJECTION 
+#ifdef THORIUM_WORKER_DEBUG_INJECTION
     ++worker->counter_allocated_outbound_buffers;
 #endif
 
@@ -1023,7 +1023,7 @@ void thorium_worker_free_message(struct thorium_worker *worker, struct thorium_m
         /* This is from the current worker
          */
         bsal_memory_pool_free(&worker->outbound_message_memory_pool, buffer);
-#ifdef THORIUM_WORKER_DEBUG_INJECTION 
+#ifdef THORIUM_WORKER_DEBUG_INJECTION
         ++worker->counter_freed_outbound_buffers_from_self;
 #endif
 
@@ -1039,7 +1039,7 @@ void thorium_worker_free_message(struct thorium_worker *worker, struct thorium_m
 
 int thorium_worker_enqueue_message_for_triage(struct thorium_worker *worker, struct thorium_message *message)
 {
-#ifdef THORIUM_WORKER_DEBUG_INJECTION 
+#ifdef THORIUM_WORKER_DEBUG_INJECTION
     int worker_name;
 #endif
 
@@ -1047,7 +1047,7 @@ int thorium_worker_enqueue_message_for_triage(struct thorium_worker *worker, str
 
         bsal_fast_queue_enqueue(&worker->clean_message_queue_for_triage, message);
 
-#ifdef THORIUM_WORKER_DEBUG_INJECTION 
+#ifdef THORIUM_WORKER_DEBUG_INJECTION
     } else {
         /*
          * Update software counters.
@@ -1228,7 +1228,7 @@ void thorium_worker_run(struct thorium_worker *worker)
     if (thorium_worker_fetch_clean_outbound_buffer(worker, &buffer)) {
         bsal_memory_pool_free(&worker->outbound_message_memory_pool, buffer);
 
-#ifdef THORIUM_WORKER_DEBUG_INJECTION 
+#ifdef THORIUM_WORKER_DEBUG_INJECTION
         ++worker->counter_freed_outbound_buffers_from_other_workers;
 #endif
     }

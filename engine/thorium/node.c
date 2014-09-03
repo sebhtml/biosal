@@ -391,7 +391,7 @@ void thorium_node_destroy(struct thorium_node *node)
 #ifdef THORIUM_NODE_DEBUG_INJECTION
     printf("THORIUM DEBUG clean_outbound_buffers_to_inject has %d items\n",
           bsal_fast_queue_size(&node->clean_outbound_buffers_to_inject));
-    
+
     printf("node/%d \n"
              "   counter_freed_injected_inbound_core_buffers %d\n"
              "   counter_freed_thorium_outbound_buffers %d\n"
