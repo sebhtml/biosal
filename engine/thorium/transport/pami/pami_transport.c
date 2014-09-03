@@ -142,7 +142,7 @@ int thorium_pami_transport_send(struct thorium_transport *self, struct thorium_m
     int destination_node = thorium_message_destination_node(message);
     void *buffer = thorium_message_buffer(message);
     int nbytes = thorium_message_count(message);
-    int worker = thorium_message_get_worker(message);
+    int worker = thorium_message_worker(message);
 
     pami_result_t result;
     pami_transport = thorium_transport_get_concrete_transport(self);

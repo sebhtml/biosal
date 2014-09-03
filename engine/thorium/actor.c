@@ -1799,7 +1799,7 @@ int thorium_actor_work(struct thorium_actor *self)
      * because actors can not be trusted.
      */
     buffer = thorium_message_buffer(&message);
-    source_worker = thorium_message_get_worker(&message);
+    source_worker = thorium_message_worker(&message);
 
     /*
      * Receive the message !

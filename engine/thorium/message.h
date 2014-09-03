@@ -62,7 +62,7 @@ int thorium_message_write_metadata(struct thorium_message *self);
 void thorium_message_print(struct thorium_message *self);
 
 void thorium_message_set_worker(struct thorium_message *self, int worker);
-int thorium_message_get_worker(struct thorium_message *self);
+int thorium_message_worker(struct thorium_message *self);
 
 int thorium_message_is_recycled(struct thorium_message *self);
 

@@ -153,7 +153,7 @@ void thorium_message_set_worker(struct thorium_message *message, int worker)
     message->worker = worker;
 }
 
-int thorium_message_get_worker(struct thorium_message *message)
+int thorium_message_worker(struct thorium_message *message)
 {
     return message->worker;
 }

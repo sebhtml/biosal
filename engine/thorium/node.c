@@ -2207,7 +2207,7 @@ void thorium_node_recycle_message(struct thorium_node *self, struct thorium_mess
     void *buffer;
     struct thorium_worker_buffer worker_buffer;
 
-    worker_name = thorium_message_get_worker(message);
+    worker_name = thorium_message_worker(message);
     buffer = thorium_message_buffer(message);
 
     /*

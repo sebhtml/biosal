@@ -246,7 +246,7 @@ int thorium_mpi1_pt2pt_nonblocking_transport_send(struct thorium_transport *self
 
     concrete_self = thorium_transport_get_concrete_transport(self);
 
-    worker = thorium_message_get_worker(message);
+    worker = thorium_message_worker(message);
     buffer = thorium_message_buffer(message);
     count = thorium_message_count(message);
     destination = thorium_message_destination_node(message);

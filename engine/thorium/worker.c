@@ -1016,7 +1016,7 @@ void thorium_worker_free_message(struct thorium_worker *worker, struct thorium_m
     void *buffer;
 
     buffer = thorium_message_buffer(message);
-    source_worker = thorium_message_get_worker(message);
+    source_worker = thorium_message_worker(message);
 
     if (source_worker == worker->name) {
 
@@ -1052,7 +1052,7 @@ int thorium_worker_enqueue_message_for_triage(struct thorium_worker *worker, str
         /*
          * Update software counters.
          */
-        worker_name = thorium_message_get_worker(message);
+        worker_name = thorium_message_worker(message);
 
         if (worker_name >= 0) {
             ++worker->counter_injected_outbound_buffers_other_local_workers;
