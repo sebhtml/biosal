@@ -92,9 +92,7 @@ void bsal_assembly_graph_builder_init(struct thorium_actor *self)
 
     concrete_self->expected_arc_count = 0;
 
-    concrete_self->vertex_count = 0;
-    concrete_self->vertex_observation_count = 0;
-    concrete_self->arc_count = 0;
+    bsal_assembly_graph_summary_init(&concrete_self->graph_summary);
 }
 
 void bsal_assembly_graph_builder_destroy(struct thorium_actor *self)
@@ -124,6 +122,8 @@ void bsal_assembly_graph_builder_destroy(struct thorium_actor *self)
     bsal_timer_destroy(&concrete_self->timer);
     bsal_timer_destroy(&concrete_self->vertex_timer);
     bsal_timer_destroy(&concrete_self->arc_timer);
+
+    bsal_assembly_graph_summary_destroy(&concrete_self->graph_summary);
 }
 
 void bsal_assembly_graph_builder_receive(struct thorium_actor *self, struct thorium_message *message)
@@ -1289,36 +1289,19 @@ void bsal_assembly_graph_builder_get_summary_reply(struct thorium_actor *self, s
 {
     int expected;
     struct bsal_assembly_graph_builder *concrete_self;
-    struct bsal_vector vector;
     void *buffer;
-    uint64_t vertex_count;
-    uint64_t vertex_observation_count;
-    uint64_t arc_count;
-    int position;
     struct bsal_memory_pool *ephemeral_memory;
+    struct bsal_assembly_graph_summary partial_summary;
 
     ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
     concrete_self = thorium_actor_concrete_actor(self);
     buffer = thorium_message_buffer(message);
 
-    bsal_vector_init(&vector, sizeof(int));
-    bsal_vector_set_memory_pool(&vector, ephemeral_memory);
+    bsal_assembly_graph_summary_init(&partial_summary);
+    bsal_assembly_graph_summary_unpack(&partial_summary, buffer);
 
-    bsal_vector_unpack(&vector, buffer);
-
-    BSAL_DEBUGGER_ASSERT(bsal_vector_size(&vector) == 3);
-
-    position = 0;
-    vertex_count = bsal_vector_at_as_uint64_t(&vector, position);
-    ++position;
-    vertex_observation_count = bsal_vector_at_as_uint64_t(&vector, position);
-    ++position;
-    arc_count = bsal_vector_at_as_uint64_t(&vector, position);
-    ++position;
-
-    concrete_self->vertex_count += vertex_count;
-    concrete_self->vertex_observation_count += vertex_observation_count;
-    concrete_self->arc_count += arc_count;
+    bsal_assembly_graph_summary_merge(&concrete_self->graph_summary, &partial_summary);
+    bsal_assembly_graph_summary_destroy(&partial_summary);
 
     ++concrete_self->ready_graph_store_count;
 
@@ -1329,37 +1312,10 @@ void bsal_assembly_graph_builder_get_summary_reply(struct thorium_actor *self, s
 
     if (concrete_self->ready_graph_store_count == expected) {
 
-        printf("GRAPH %s/%d ->",
-                        thorium_actor_script_name(self),
-                        thorium_actor_name(self));
-
-        printf(" %" PRIu64 " canonical vertices,",
-                        concrete_self->vertex_count);
-        printf(" %" PRIu64 " canonical vertex observations,",
-                        concrete_self->vertex_observation_count);
-        printf(" and %" PRIu64 " canonical arcs.",
-                        concrete_self->arc_count);
-
-        printf("\n");
-
-        printf("GRAPH %s/%d ->",
-                        thorium_actor_script_name(self),
-                        thorium_actor_name(self));
-
-
-        printf(" %" PRIu64 " vertices,",
-                        2 * concrete_self->vertex_count);
-        printf(" %" PRIu64 " vertex observations,",
-                        2 * concrete_self->vertex_observation_count);
-        printf(" and %" PRIu64 " arcs.",
-                        2 * concrete_self->arc_count);
-
-        printf("\n");
+        bsal_assembly_graph_summary_print(&concrete_self->graph_summary);
 
         bsal_assembly_graph_builder_tell_source(self);
     }
-
-    bsal_vector_destroy(&vector);
 }
 
 void bsal_assembly_graph_builder_get_producers_for_work_stealing(struct thorium_actor *self, struct bsal_vector *producers_for_work_stealing,

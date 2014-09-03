@@ -2,6 +2,8 @@
 #ifndef BSAL_ASSEMBLY_GRAPH_STORE_H
 #define BSAL_ASSEMBLY_GRAPH_STORE_H
 
+#include "assembly_graph_summary.h"
+
 #include <engine/thorium/actor.h>
 
 #include <genomics/data/dna_codec.h>
@@ -72,9 +74,8 @@ struct bsal_assembly_graph_store {
 
     int source_for_summary;
     int summary_in_progress;
-    uint64_t vertex_count;
-    uint64_t vertex_observation_count;
-    uint64_t arc_count;
+
+    struct bsal_assembly_graph_summary graph_summary;
 
     int printed_vertex_size;
     int printed_arc_size;

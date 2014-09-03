@@ -62,7 +62,7 @@ void bsal_packer_destroy(struct bsal_packer *self)
     self->buffer = NULL;
 }
 
-int bsal_packer_work(struct bsal_packer *self, void *object, int bytes)
+int bsal_packer_process(struct bsal_packer *self, void *object, int bytes)
 {
 
 #ifdef BSAL_PACKER_DEBUG
@@ -143,4 +143,19 @@ void bsal_packer_print_bytes(void *buffer, int bytes)
     integer_value = (int *)buffer;
 
     printf(" integer value: %d\n", *integer_value);
+}
+
+int bsal_packer_work(struct bsal_packer *self, void *object, int bytes)
+{
+    return bsal_packer_process(self, object, bytes);
+}
+
+int bsal_packer_process_int(struct bsal_packer *self, int *object)
+{
+    return bsal_packer_process(self, object, sizeof(int));
+}
+
+int bsal_packer_process_uint64_t(struct bsal_packer *self, uint64_t *object)
+{
+    return bsal_packer_process(self, object, sizeof(uint64_t));
 }

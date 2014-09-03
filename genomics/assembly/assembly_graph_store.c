@@ -55,6 +55,8 @@ void bsal_assembly_graph_store_init(struct thorium_actor *self)
     concrete_self->kmer_length = -1;
     concrete_self->received = 0;
 
+    bsal_assembly_graph_summary_init(&concrete_self->graph_summary);
+
     bsal_dna_codec_init(&concrete_self->transport_codec);
 
     /*
@@ -111,6 +113,8 @@ void bsal_assembly_graph_store_destroy(struct thorium_actor *self)
     struct bsal_assembly_graph_store *concrete_self;
 
     concrete_self = (struct bsal_assembly_graph_store *)thorium_actor_concrete_actor(self);
+
+    bsal_assembly_graph_summary_destroy(&concrete_self->graph_summary);
 
     if (concrete_self->kmer_length != -1) {
         bsal_map_destroy(&concrete_self->table);
@@ -770,9 +774,6 @@ void bsal_assembly_graph_store_get_summary(struct thorium_actor *self, struct th
     source = thorium_message_source(message);
     concrete_self = (struct bsal_assembly_graph_store *)thorium_actor_concrete_actor(self);
 
-    concrete_self->vertex_count = 0;
-    concrete_self->vertex_observation_count = 0;
-    concrete_self->arc_count = 0;
     concrete_self->summary_in_progress = 1;
     concrete_self->source_for_summary = source;
 
@@ -790,28 +791,33 @@ void bsal_assembly_graph_store_yield_reply_summary(struct thorium_actor *self, s
     struct bsal_assembly_graph_store *concrete_self;
     int limit;
     int processed;
-    struct bsal_vector vector;
+    int new_count;
+    void *new_buffer;
     struct bsal_assembly_vertex *vertex;
     int coverage;
     int parent_count;
+    int child_count;
+    struct bsal_memory_pool *ephemeral_memory;
     /*int child_count;*/
 
-    concrete_self = (struct bsal_assembly_graph_store *)thorium_actor_concrete_actor(self);
+    concrete_self = thorium_actor_concrete_actor(self);
+    ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
+
     limit = 4321;
     processed = 0;
 
+    /*
+     * This loop gather canonical information only.
+     */
     while (processed < limit
                     && bsal_map_iterator_has_next(&concrete_self->iterator)) {
 
         bsal_map_iterator_next(&concrete_self->iterator, NULL, (void **)&vertex);
 
-        ++concrete_self->vertex_count;
-
         coverage = bsal_assembly_vertex_coverage_depth(vertex);
-        concrete_self->vertex_observation_count += coverage;
 
         parent_count = bsal_assembly_vertex_parent_count(vertex);
-        concrete_self->arc_count += parent_count;
+        child_count = bsal_assembly_vertex_child_count(vertex);
 
         /*
          * Don't count any real arc twice.
@@ -820,6 +826,13 @@ void bsal_assembly_graph_store_yield_reply_summary(struct thorium_actor *self, s
         child_count = bsal_assembly_vertex_child_count(vertex);
         concrete_self->arc_count += child_count;
         */
+
+        /*
+         * Gather degree information too !
+         */
+
+        bsal_assembly_graph_summary_add(&concrete_self->graph_summary, coverage, parent_count, child_count);
+        bsal_assembly_graph_summary_add(&concrete_self->graph_summary, coverage, child_count, parent_count);
 
         ++processed;
     }
@@ -834,19 +847,15 @@ void bsal_assembly_graph_store_yield_reply_summary(struct thorium_actor *self, s
          * Send the answer
          */
 
-        bsal_vector_init(&vector, sizeof(uint64_t));
-
-        bsal_vector_push_back_uint64_t(&vector, concrete_self->vertex_count);
-        bsal_vector_push_back_uint64_t(&vector, concrete_self->vertex_observation_count);
-        bsal_vector_push_back_uint64_t(&vector, concrete_self->arc_count);
-
-        thorium_actor_send_vector(self, concrete_self->source_for_summary,
-                        ACTION_ASSEMBLY_GET_SUMMARY_REPLY, &vector);
-
-        bsal_vector_destroy(&vector);
+        new_count = bsal_assembly_graph_summary_pack_size(&concrete_self->graph_summary);
+        new_buffer = bsal_memory_pool_allocate(ephemeral_memory, new_count);
+        bsal_assembly_graph_summary_pack(&concrete_self->graph_summary, new_buffer);
+        thorium_actor_send_buffer(self, concrete_self->source_for_summary,
+                        ACTION_ASSEMBLY_GET_SUMMARY_REPLY, new_count, new_buffer);
+        bsal_memory_pool_free(ephemeral_memory, new_buffer);
 
         /*
-         * Rest the iterator.
+         * Reset the iterator.
          */
 
         bsal_map_iterator_destroy(&concrete_self->iterator);

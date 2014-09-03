@@ -6,6 +6,8 @@
 
 #include <genomics/data/dna_codec.h>
 
+typedef int coverage_t;
+
 /*
  * Attributes of an assembly vertex
  */

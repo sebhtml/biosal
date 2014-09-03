@@ -4,6 +4,8 @@
 
 #include <biosal.h>
 
+#include "assembly_graph_summary.h"
+
 #define SCRIPT_ASSEMBLY_GRAPH_BUILDER 0xc0b1a2b3
 
 #define ACTION_ASSEMBLY_GRAPH_BUILDER_CONTROL_COMPLEXITY 0x00006439
@@ -72,9 +74,8 @@ struct bsal_assembly_graph_builder {
      * Summary data
      */
 
-    uint64_t vertex_count;
-    uint64_t vertex_observation_count;
-    uint64_t arc_count;
+    struct bsal_assembly_graph_summary graph_summary;
+
     int ready_graph_store_count;
 };
 
