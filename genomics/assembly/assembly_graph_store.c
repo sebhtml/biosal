@@ -1045,7 +1045,7 @@ void bsal_assembly_graph_store_get_starting_vertex(struct thorium_actor *self, s
 
 int bsal_assembly_graph_store_get_store_count_per_node(struct thorium_actor *self)
 {
-#ifdef __bgq__DISABLED
+#ifdef __bgq__
     int powerpc_a2_processor_core_count;
 
     /*
@@ -1066,13 +1066,7 @@ int bsal_assembly_graph_store_get_store_count_per_node(struct thorium_actor *sel
      * 2048 nodes -> 2048 * 8 graph stores
      */
 
-#if 0
-    if (thorium_actor_get_node_count(self) < 1024) {
-        return powerpc_a2_processor_core_count / 2;
-    }
-#endif
-
-    return thorium_actor_node_worker_count(self);
+    return powerpc_a2_processor_core_count / 2 - 2;
 #else
 
     /*
