@@ -197,6 +197,13 @@ struct thorium_node {
 #ifdef THORIUM_NODE_USE_DETERMINISTIC_ACTOR_NAMES
     int current_actor_name;
 #endif
+
+#ifdef THORIUM_NODE_DEBUG_INJECTION
+    int counter_freed_thorium_outbound_buffers;
+    int counter_freed_injected_inbound_core_buffers;
+    int counter_injected_buffers_for_local_workers;
+    int counter_injected_transport_outbound_buffer_for_workers;
+#endif
 };
 
 void thorium_node_init(struct thorium_node *self, int *argc, char ***argv);
@@ -279,7 +286,7 @@ void thorium_node_check_efficiency(struct thorium_node *self);
 int thorium_node_send_system(struct thorium_node *self, struct thorium_message *message);
 
 void thorium_node_do_message_triage(struct thorium_node *self);
-void thorium_node_recycle_inbound_message(struct thorium_node *self, struct thorium_message *message);
+void thorium_node_recycle_message(struct thorium_node *self, struct thorium_message *message);
 
 void thorium_node_prepare_received_message(struct thorium_node *self, struct thorium_message *message);
 void thorium_node_resolve(struct thorium_node *self, struct thorium_message *message);

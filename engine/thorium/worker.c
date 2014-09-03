@@ -74,6 +74,14 @@ void thorium_worker_init(struct thorium_worker *worker, int name, struct thorium
     int ephemeral_memory_block_size;
     int injected_buffer_ring_size;
 
+#ifdef THORIUM_WORKER_DEBUG_INJECTION
+    worker->counter_allocated_outbound_buffers = 0;
+    worker->counter_freed_outbound_buffers_from_self = 0;
+    worker->counter_freed_outbound_buffers_from_other_workers = 0;
+    worker->counter_injected_outbound_buffers_other_local_workers= 0;
+    worker->counter_injected_inbound_buffers_from_thorium_core = 0;
+#endif
+
     worker->waiting_is_enabled = 0;
     worker->waiting_start_time = 0;
 
@@ -138,6 +146,8 @@ void thorium_worker_init(struct thorium_worker *worker, int name, struct thorium
     ephemeral_memory_block_size = 8388608;
     /*ephemeral_memory_block_size = 16777216;*/
     bsal_memory_pool_init(&worker->ephemeral_memory, ephemeral_memory_block_size);
+    bsal_memory_pool_set_name(&worker->ephemeral_memory, BSAL_MEMORY_POOL_NAME_WORKER_EPHEMERAL);
+
     bsal_memory_pool_disable_tracking(&worker->ephemeral_memory);
     bsal_memory_pool_enable_ephemeral_mode(&worker->ephemeral_memory);
 
@@ -146,6 +156,8 @@ void thorium_worker_init(struct thorium_worker *worker, int name, struct thorium
 
     bsal_memory_pool_init(&worker->outbound_message_memory_pool,
                     BSAL_MEMORY_POOL_MESSAGE_BUFFER_BLOCK_SIZE);
+    bsal_memory_pool_set_name(&worker->outbound_message_memory_pool,
+                    BSAL_MEMORY_POOL_NAME_WORKER_OUTBOUND);
 
     /*
      * Disable the pool so that it uses allocate and free
@@ -153,7 +165,7 @@ void thorium_worker_init(struct thorium_worker *worker, int name, struct thorium
      */
 
 #ifdef BSAL_MEMORY_POOL_DISABLE_MESSAGE_BUFFER_POOL
-    bsal_memory_pool_disable(&worker->outbound_message_memory_pool);
+    bsal_memory_pool_disable_block_allocation(&worker->outbound_message_memory_pool);
 #endif
 
     /*
@@ -187,9 +199,29 @@ void thorium_worker_destroy(struct thorium_worker *worker)
 {
     void *buffer;
 
+    /*
+    thorium_worker_print_balance(worker);
+    */
     while (thorium_worker_fetch_clean_outbound_buffer(worker, &buffer)) {
+
         bsal_memory_pool_free(&worker->outbound_message_memory_pool, buffer);
+
+#ifdef THORIUM_WORKER_DEBUG_INJECTION 
+        ++worker->counter_freed_outbound_buffers_from_other_workers;
+#endif
     }
+
+#ifdef THORIUM_WORKER_DEBUG_INJECTION 
+    printf("AFTER COLLECTION\n");
+    thorium_worker_print_balance(worker);
+
+    printf("THORIUM-> clean_message_queue_for_triage has %d items\n",
+                    bsal_fast_queue_size(&worker->clean_message_queue_for_triage));
+    printf("THORIUM-> clean_message_ring_for_triage has %d items\n",
+                    bsal_fast_ring_size_from_producer(&worker->clean_message_ring_for_triage));
+    printf("THORIUM-> injected_clean_outbound_buffers has %d items\n",
+                    bsal_fast_ring_size_from_producer(&worker->injected_clean_outbound_buffers));
+#endif
 
     bsal_timer_destroy(&worker->timer);
     bsal_lock_destroy(&worker->lock);
@@ -244,6 +276,10 @@ void thorium_worker_send(struct thorium_worker *worker, struct thorium_message *
     /* use slab allocator to allocate buffer... */
     buffer = (char *)bsal_memory_pool_allocate(&worker->outbound_message_memory_pool,
                     all * sizeof(char));
+
+#ifdef THORIUM_WORKER_DEBUG_INJECTION 
+    ++worker->counter_allocated_outbound_buffers;
+#endif
 
 #ifdef THORIUM_WORKER_DEBUG_MEMORY
     printf("ALLOCATE %p\n", buffer);
@@ -971,6 +1007,9 @@ int thorium_worker_get_producer_count(struct thorium_worker *worker, struct thor
     return count;
 }
 
+/*
+ *This is called from within the actor running inside this worker.
+ */
 void thorium_worker_free_message(struct thorium_worker *worker, struct thorium_message *message)
 {
     int source_worker;
@@ -984,6 +1023,9 @@ void thorium_worker_free_message(struct thorium_worker *worker, struct thorium_m
         /* This is from the current worker
          */
         bsal_memory_pool_free(&worker->outbound_message_memory_pool, buffer);
+#ifdef THORIUM_WORKER_DEBUG_INJECTION 
+        ++worker->counter_freed_outbound_buffers_from_self;
+#endif
 
     } else {
 
@@ -997,9 +1039,27 @@ void thorium_worker_free_message(struct thorium_worker *worker, struct thorium_m
 
 int thorium_worker_enqueue_message_for_triage(struct thorium_worker *worker, struct thorium_message *message)
 {
+#ifdef THORIUM_WORKER_DEBUG_INJECTION 
+    int worker_name;
+#endif
+
     if (!bsal_fast_ring_push_from_producer(&worker->clean_message_ring_for_triage, message)) {
 
         bsal_fast_queue_enqueue(&worker->clean_message_queue_for_triage, message);
+
+#ifdef THORIUM_WORKER_DEBUG_INJECTION 
+    } else {
+        /*
+         * Update software counters.
+         */
+        worker_name = thorium_message_get_worker(message);
+
+        if (worker_name >= 0) {
+            ++worker->counter_injected_outbound_buffers_other_local_workers;
+        } else {
+            ++worker->counter_injected_inbound_buffers_from_thorium_core;
+        }
+#endif
     }
 
     return 1;
@@ -1161,11 +1221,16 @@ void thorium_worker_run(struct thorium_worker *worker)
     }
 
 #ifdef THORIUM_NODE_INJECT_CLEAN_WORKER_BUFFERS
-    /* free outbound buffers, if any
+    /*
+     * Free outbound buffers, if any
      */
 
     if (thorium_worker_fetch_clean_outbound_buffer(worker, &buffer)) {
         bsal_memory_pool_free(&worker->outbound_message_memory_pool, buffer);
+
+#ifdef THORIUM_WORKER_DEBUG_INJECTION 
+        ++worker->counter_freed_outbound_buffers_from_other_workers;
+#endif
     }
 #endif
 
@@ -1175,10 +1240,7 @@ void thorium_worker_run(struct thorium_worker *worker)
 
     if (bsal_fast_queue_dequeue(&worker->clean_message_queue_for_triage, &other_message)) {
 
-        if (!bsal_fast_ring_push_from_producer(&worker->clean_message_ring_for_triage, &other_message)) {
-
-            bsal_fast_queue_enqueue(&worker->clean_message_queue_for_triage, &other_message);
-        }
+        thorium_worker_enqueue_message_for_triage(worker, &other_message);
     }
 
     thorium_worker_unlock(worker);
@@ -1435,4 +1497,30 @@ int thorium_worker_fetch_clean_outbound_buffer(struct thorium_worker *self, void
 {
     return bsal_fast_ring_pop_from_consumer(&self->injected_clean_outbound_buffers,
                     buffer);
+}
+
+void thorium_worker_print_balance(struct thorium_worker *self)
+{
+#ifdef THORIUM_WORKER_DEBUG_INJECTION
+    int balance;
+
+    balance = 0;
+    balance += self->counter_allocated_outbound_buffers;
+    balance -= self->counter_freed_outbound_buffers_from_other_workers;
+    balance -= self->counter_freed_outbound_buffers_from_self;
+
+    printf("THORIUM worker/%d \n"
+                    "    counter_allocated_outbound_buffers %d\n"
+                    "    counter_freed_outbound_buffers_from_self %d\n"
+                    "    counter_freed_outbound_buffers_from_other_workers %d\n"
+                    "    balance %d\n"
+                    "    counter_injected_outbound_buffers_other_local_workers %d\n"
+                    "    counter_injected_inbound_buffers_from_thorium_core %d\n",
+                    self->name,
+                    self->counter_allocated_outbound_buffers, self->counter_freed_outbound_buffers_from_self,
+                    self->counter_freed_outbound_buffers_from_other_workers,
+                    balance,
+                    self->counter_injected_outbound_buffers_other_local_workers,
+                    self->counter_injected_inbound_buffers_from_thorium_core);
+#endif
 }

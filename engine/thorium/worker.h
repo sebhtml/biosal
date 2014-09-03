@@ -132,6 +132,14 @@ struct thorium_worker {
     uint64_t last_wake_up_count;
 
     uint64_t waiting_start_time;
+
+#ifdef THORIUM_WORKER_DEBUG_INJECTION
+    int counter_allocated_outbound_buffers;
+    int counter_freed_outbound_buffers_from_self;
+    int counter_freed_outbound_buffers_from_other_workers;
+    int counter_injected_outbound_buffers_other_local_workers;
+    int counter_injected_inbound_buffers_from_thorium_core;
+#endif
 };
 
 void thorium_worker_init(struct thorium_worker *self, int name, struct thorium_node *node);
@@ -200,5 +208,7 @@ int thorium_worker_inject_clean_outbound_buffer(struct thorium_worker *self, voi
 int thorium_worker_fetch_clean_outbound_buffer(struct thorium_worker *self, void **buffer);
 int thorium_worker_enqueue_message_for_triage(struct thorium_worker *worker, struct thorium_message *message);
 int thorium_worker_dequeue_message_for_triage(struct thorium_worker *worker, struct thorium_message *message);
+
+void thorium_worker_print_balance(struct thorium_worker *self);
 
 #endif
