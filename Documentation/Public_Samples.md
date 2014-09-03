@@ -52,11 +52,12 @@ Sample                   File count   Read count       Base count
 SMarTFor_1                     106    8 515 920 210
 ```
 
-# ERP003210 : Wheat Genome
+# ERP003210 : Wheat Genome (Triticum aestivum)
 
 - http://www.ebi.ac.uk/ena/data/view/ERP003210
 - http://www.wheatgenome.org/
 - http://www.sciencemag.org/site/extra/wheatgenome/
+- http://www.sciencemag.org/content/345/6194/1251788.abstract
 
 
 # PacBio data
