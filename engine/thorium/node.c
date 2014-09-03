@@ -138,7 +138,7 @@ void thorium_node_init(struct thorium_node *node, int *argc, char ***argv)
     bsal_memory_pool_enable_alignment(&node->inbound_message_memory_pool);
 
 #ifdef BSAL_MEMORY_POOL_DISABLE_MESSAGE_BUFFER_POOL
-    bsal_memory_pool_disable_block_allocation(&node->inbound_message_memory_pool);
+    bsal_memory_pool_disable(&node->inbound_message_memory_pool);
 #endif
 
     bsal_memory_pool_init(&node->outbound_message_memory_pool,
@@ -150,7 +150,7 @@ void thorium_node_init(struct thorium_node *node, int *argc, char ***argv)
     bsal_memory_pool_enable_alignment(&node->outbound_message_memory_pool);
 
 #ifdef BSAL_MEMORY_POOL_DISABLE_MESSAGE_BUFFER_POOL
-    bsal_memory_pool_disable_block_allocation(&node->outbound_message_memory_pool);
+    bsal_memory_pool_disable(&node->outbound_message_memory_pool);
 #endif
 
     thorium_transport_init(&node->transport, node, argc, argv,

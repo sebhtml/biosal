@@ -165,7 +165,7 @@ void thorium_worker_init(struct thorium_worker *worker, int name, struct thorium
      */
 
 #ifdef BSAL_MEMORY_POOL_DISABLE_MESSAGE_BUFFER_POOL
-    bsal_memory_pool_disable_block_allocation(&worker->outbound_message_memory_pool);
+    bsal_memory_pool_disable(&worker->outbound_message_memory_pool);
 #endif
 
     /*
