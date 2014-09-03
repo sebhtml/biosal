@@ -54,8 +54,9 @@ SMarTFor_1                     106    8 515 920 210
 
 # ERP003210 : Wheat Genome (Triticum aestivum)
 
-- http://www.ebi.ac.uk/ena/data/view/ERP003210
+- http://www.ebi.ac.uk/ena/data/view/PRJEB3955
 - http://www.wheatgenome.org/
+- Table S11 http://www.sciencemag.org/content/suppl/2014/07/16/345.6194.1251788.DC1/Mayer.SM.pdf
 - http://www.sciencemag.org/site/extra/wheatgenome/
 - http://www.sciencemag.org/content/345/6194/1251788.abstract
 
