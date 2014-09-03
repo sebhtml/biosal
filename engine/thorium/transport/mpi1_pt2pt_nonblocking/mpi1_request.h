@@ -15,6 +15,7 @@ struct thorium_mpi1_request {
     void *buffer;
     int worker;
     int count;
+    int marked;
 };
 
 void thorium_mpi1_request_init(struct thorium_mpi1_request *self, void *buffer);
@@ -23,8 +24,12 @@ void thorium_mpi1_request_init_with_worker(struct thorium_mpi1_request *self, vo
 void thorium_mpi1_request_destroy(struct thorium_mpi1_request *self);
 
 int thorium_mpi1_request_count(struct thorium_mpi1_request *self);
+void thorium_mpi1_request_set_count(struct thorium_mpi1_request *self, int count);
 int thorium_mpi1_request_source(struct thorium_mpi1_request *self);
 int thorium_mpi1_request_tag(struct thorium_mpi1_request *self);
+void thorium_mpi1_request_set_tag(struct thorium_mpi1_request *self, int tag);
+void thorium_mpi1_request_mark(struct thorium_mpi1_request *self);
+int thorium_mpi1_request_has_mark(struct thorium_mpi1_request *self);
 void *thorium_mpi1_request_buffer(struct thorium_mpi1_request *self);
 int thorium_mpi1_request_worker(struct thorium_mpi1_request *self);
 MPI_Request *thorium_mpi1_request_request(struct thorium_mpi1_request *self);

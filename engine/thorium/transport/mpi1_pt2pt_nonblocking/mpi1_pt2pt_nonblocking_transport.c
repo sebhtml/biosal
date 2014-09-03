@@ -277,6 +277,8 @@ int thorium_mpi1_pt2pt_nonblocking_transport_send(struct thorium_transport *self
         memcpy(buffer2 + sizeof(payload_tag), &count, sizeof(count));
 
         thorium_mpi1_request_init(&active_request2, buffer2);
+        thorium_mpi1_request_mark(&active_request2);
+
         request2 = thorium_mpi1_request_request(&active_request2);
 
         result = MPI_Isend(buffer2, count2, concrete_self->datatype, destination, TAG_BIG_HANDSHAKE,
@@ -294,6 +296,7 @@ int thorium_mpi1_pt2pt_nonblocking_transport_send(struct thorium_transport *self
     }
 
     thorium_mpi1_request_init_with_worker(&active_request, buffer, worker);
+
     request = thorium_mpi1_request_request(&active_request);
 
 #ifdef DEBUG_MPI1_PT2PT
@@ -475,6 +478,7 @@ int thorium_mpi1_pt2pt_nonblocking_transport_test(struct thorium_transport *self
     struct thorium_mpi1_pt2pt_nonblocking_transport *concrete_self;
     void *buffer;
     int worker;
+    int marked;
 
     concrete_self = thorium_transport_get_concrete_transport(self);
 
@@ -484,9 +488,38 @@ int thorium_mpi1_pt2pt_nonblocking_transport_test(struct thorium_transport *self
 
             worker = thorium_mpi1_request_worker(&active_request);
             buffer = thorium_mpi1_request_buffer(&active_request);
+            marked = thorium_mpi1_request_has_mark(&active_request);
 
-            thorium_worker_buffer_init(worker_buffer, worker, buffer);
             thorium_mpi1_request_destroy(&active_request);
+
+            /*
+             * This needs to remain inside this implementation, otherwise
+             * this would be a leaky abstraction with a memory leak.
+             */
+            if (marked) {
+
+#ifdef BUG_LEAKY_ABSTRACTION_2014_09_02
+                printf("TAG_BIG_HANDSHAKE completed.\n");
+#endif
+                bsal_memory_pool_free(self->outbound_message_memory_pool, buffer);
+                return 0;
+            }
+
+#ifdef BUG_LEAKY_ABSTRACTION_2014_09_02
+            if (worker < 0) {
+                printf("request completed for worker %d count %d\n", worker,
+                                thorium_mpi1_request_count(&active_request));
+            }
+#endif
+
+#ifdef BSAL_DEBUGGER_ENABLE_ASSERT
+
+#endif
+            /*
+             * Otherwise, the tag is either TAG_SMALL_PAYLOAD (fixed value)
+             * or TAG_BIG_PAYLOAD (from TAG_BIG_START_VALUE to mpi_tag_ub)
+             */
+            thorium_worker_buffer_init(worker_buffer, worker, buffer);
 
             return 1;
 

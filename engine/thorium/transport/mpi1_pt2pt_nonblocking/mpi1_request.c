@@ -8,10 +8,12 @@ void thorium_mpi1_request_init(struct thorium_mpi1_request *self, void *buffer)
     self->request = MPI_REQUEST_NULL;
 
     self->source = -1;
-    self->count = -1;
     self->buffer = buffer;
     self->worker = -1;
-    self->tag = -1;
+    self->marked = 0;
+
+    thorium_mpi1_request_set_tag(self, -1);
+    thorium_mpi1_request_set_count(self, -1);
 }
 
 void thorium_mpi1_request_destroy(struct thorium_mpi1_request *self)
@@ -94,4 +96,24 @@ int thorium_mpi1_request_test(struct thorium_mpi1_request *self)
 int thorium_mpi1_request_count(struct thorium_mpi1_request *self)
 {
     return self->count;
+}
+
+void thorium_mpi1_request_set_tag(struct thorium_mpi1_request *self, int tag)
+{
+    self->tag = tag;
+}
+
+void thorium_mpi1_request_set_count(struct thorium_mpi1_request *self, int count)
+{
+    self->count = count;
+}
+
+void thorium_mpi1_request_mark(struct thorium_mpi1_request *self)
+{
+    self->marked = 1;
+}
+
+int thorium_mpi1_request_has_mark(struct thorium_mpi1_request *self)
+{
+    return self->marked;
 }
