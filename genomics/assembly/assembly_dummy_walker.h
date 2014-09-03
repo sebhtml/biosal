@@ -39,14 +39,20 @@ struct bsal_assembly_dummy_walker {
 
     struct bsal_dna_kmer current_kmer;
     struct bsal_assembly_vertex current_vertex;
-    int current_child;
 
+    int current_child;
     struct bsal_vector child_kmers;
     struct bsal_vector child_vertices;
+
+    int current_parent;
+    struct bsal_vector parent_kmers;
+    struct bsal_vector parent_vertices;
+
     int path_index;
 
     int key_length;
     struct bsal_set visited;
+    int operation;
 };
 
 extern struct thorium_script bsal_assembly_dummy_walker_script;
@@ -63,7 +69,7 @@ void bsal_assembly_dummy_walker_get_vertices_and_select(struct thorium_actor *se
 void bsal_assembly_dummy_walker_get_vertices_and_select_reply(struct thorium_actor *self, struct thorium_message *message);
 void bsal_assembly_dummy_walker_get_vertex_reply_starting_vertex(struct thorium_actor *self, struct thorium_message *message);
 
-void bsal_assembly_dummy_walker_clean_children(struct thorium_actor *self);
+void bsal_assembly_dummy_walker_clear(struct thorium_actor *self);
 void bsal_assembly_dummy_walker_dump_path(struct thorium_actor *self);
 void bsal_assembly_dummy_walker_begin(struct thorium_actor *self, struct thorium_message *message);
 

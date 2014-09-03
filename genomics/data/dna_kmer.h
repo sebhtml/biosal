@@ -37,8 +37,10 @@ void bsal_dna_kmer_init_copy(struct bsal_dna_kmer *self, struct bsal_dna_kmer *o
                 int kmer_length, struct bsal_memory_pool *memory,
                 struct bsal_dna_codec *codec);
 void bsal_dna_kmer_init_as_child(struct bsal_dna_kmer *self, struct bsal_dna_kmer *other,
-                int code,
-                int kmer_length, struct bsal_memory_pool *memory,
+                int code, int kmer_length, struct bsal_memory_pool *memory,
+                struct bsal_dna_codec *codec);
+void bsal_dna_kmer_init_as_parent(struct bsal_dna_kmer *self, struct bsal_dna_kmer *other,
+                int code, int kmer_length, struct bsal_memory_pool *memory,
                 struct bsal_dna_codec *codec);
 
 void bsal_dna_kmer_print(struct bsal_dna_kmer *self, int kmer_length, struct bsal_dna_codec *codec,

@@ -74,6 +74,8 @@ int bsal_dna_codec_get_complement(int code);
 
 void bsal_dna_codec_mutate_as_child(struct bsal_dna_codec *self,
                 int length_in_nucleotides, void *encoded_sequence, int last_code);
+void bsal_dna_codec_mutate_as_parent(struct bsal_dna_codec *self,
+                int length_in_nucleotides, void *encoded_sequence, int first_code);
 int bsal_dna_codec_must_use_two_bit_encoding(struct bsal_dna_codec *self,
                 int node_count);
 

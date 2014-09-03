@@ -660,7 +660,6 @@ void bsal_dna_codec_mutate_as_child(struct bsal_dna_codec *self,
     for (i = 0 ; i < limit ; i++) {
 
         nucleotide = bsal_dna_codec_get_nucleotide(self, encoded_sequence, i + 1);
-
         bsal_dna_codec_set_nucleotide(self, encoded_sequence, i, nucleotide);
     }
 
@@ -675,3 +674,34 @@ int bsal_dna_codec_must_use_two_bit_encoding(struct bsal_dna_codec *self,
 {
     return node_count >= BSAL_DNA_CODEC_MINIMUM_NODE_COUNT_FOR_TWO_BIT;
 }
+
+void bsal_dna_codec_mutate_as_parent(struct bsal_dna_codec *self,
+                int length_in_nucleotides, void *encoded_sequence, int first_code)
+{
+    char nucleotide;
+    int old_position;
+    int new_position;
+
+    /*
+     *  [---------parent ----------]
+     *    [---------current----------]
+     */
+
+    old_position = length_in_nucleotides - 2;
+    new_position = length_in_nucleotides - 1;
+
+    while (old_position >= 0) {
+
+        nucleotide = bsal_dna_codec_get_nucleotide(self, encoded_sequence, old_position);
+        bsal_dna_codec_set_nucleotide(self, encoded_sequence, new_position, nucleotide);
+
+        --old_position;
+        --new_position;
+    }
+
+    nucleotide = bsal_dna_codec_get_nucleotide_from_code(first_code);
+
+    bsal_dna_codec_set_nucleotide(self, encoded_sequence, 0, nucleotide);
+}
+
+

@@ -9,6 +9,7 @@
 #include <genomics/data/dna_codec.h>
 
 #include <core/system/command.h>
+#include <core/system/debugger.h>
 
 #include <stdio.h>
 #include <string.h>
@@ -23,13 +24,18 @@
 #define BSAL_ASSEMBLY_DUMMY_WALKER_DEBUG
 */
 
+#define OPERATION_FETCH_FIRST 0
+#define OPERATION_FETCH_PARENTS 1
+#define OPERATION_FETCH_CHILDREN 2
+
 struct thorium_script bsal_assembly_dummy_walker_script = {
     .identifier = SCRIPT_ASSEMBLY_DUMMY_WALKER,
     .name = "bsal_assembly_dummy_walker",
     .init = bsal_assembly_dummy_walker_init,
     .destroy = bsal_assembly_dummy_walker_destroy,
     .receive = bsal_assembly_dummy_walker_receive,
-    .size = sizeof(struct bsal_assembly_dummy_walker)
+    .size = sizeof(struct bsal_assembly_dummy_walker),
+    .description = "Testbed for testing ideas."
 };
 
 void bsal_assembly_dummy_walker_init(struct thorium_actor *self)
@@ -76,6 +82,9 @@ void bsal_assembly_dummy_walker_init(struct thorium_actor *self)
     bsal_vector_init(&concrete_self->child_vertices, sizeof(struct bsal_assembly_vertex));
     bsal_vector_init(&concrete_self->child_kmers, sizeof(struct bsal_dna_kmer));
 
+    bsal_vector_init(&concrete_self->parent_vertices, sizeof(struct bsal_assembly_vertex));
+    bsal_vector_init(&concrete_self->parent_kmers, sizeof(struct bsal_dna_kmer));
+
     /*
      * Configure the codec.
      */
@@ -100,6 +109,8 @@ void bsal_assembly_dummy_walker_init(struct thorium_actor *self)
     path = bsal_string_get(&concrete_self->file_path);
 
     bsal_buffered_file_writer_init(&concrete_self->writer, path);
+
+    concrete_self->operation = OPERATION_FETCH_FIRST;
 }
 
 void bsal_assembly_dummy_walker_destroy(struct thorium_actor *self)
@@ -119,11 +130,14 @@ void bsal_assembly_dummy_walker_destroy(struct thorium_actor *self)
 
     bsal_vector_destroy(&concrete_self->graph_stores);
 
-    bsal_assembly_dummy_walker_clean_children(self);
+    bsal_assembly_dummy_walker_clear(self);
 
     bsal_vector_destroy(&concrete_self->path);
+
     bsal_vector_destroy(&concrete_self->child_kmers);
     bsal_vector_destroy(&concrete_self->child_vertices);
+    bsal_vector_destroy(&concrete_self->parent_kmers);
+    bsal_vector_destroy(&concrete_self->parent_vertices);
 
     bsal_dna_kmer_destroy(&concrete_self->current_kmer, &concrete_self->memory_pool);
     bsal_assembly_vertex_destroy(&concrete_self->current_vertex);
@@ -168,7 +182,9 @@ void bsal_assembly_dummy_walker_receive(struct thorium_actor *self, struct thori
 
         bsal_dna_kmer_destroy(&kmer, ephemeral_memory);
 
+#if 0
         printf("KeyLength %d\n", concrete_self->key_length);
+#endif
 
         thorium_actor_send_to_self_empty(self, ACTION_BEGIN);
     }
@@ -262,6 +278,8 @@ void bsal_assembly_dummy_walker_get_starting_vertex_reply(struct thorium_actor *
 
     concrete_self->has_starting_vertex = 0;
 
+    concrete_self->operation = OPERATION_FETCH_FIRST;
+
     thorium_message_init(&new_message, ACTION_ASSEMBLY_GET_VERTEX, count, buffer);
     thorium_actor_send_reply(self, &new_message);
     thorium_message_destroy(&new_message);
@@ -294,7 +312,7 @@ void bsal_assembly_dummy_walker_get_vertex_reply_starting_vertex(struct thorium_
      */
 
     concrete_self->has_starting_vertex = 1;
-    bsal_assembly_dummy_walker_clean_children(self);
+    bsal_assembly_dummy_walker_clear(self);
 
     thorium_actor_send_to_self_empty(self, ACTION_ASSEMBLY_GET_VERTICES_AND_SELECT);
 }
@@ -309,10 +327,13 @@ void bsal_assembly_dummy_walker_get_vertices_and_select(struct thorium_actor *se
     int store_index;
     int store;
     int i;
-    int size;
+    int child_count;
+    int parent_count;
     int code;
     struct bsal_dna_kmer child_kmer;
     struct bsal_dna_kmer *child_kmer_to_fetch;
+    struct bsal_dna_kmer parent_kmer;
+    struct bsal_dna_kmer *parent_kmer_to_fetch;
     struct bsal_dna_kmer *kmer;
     struct bsal_assembly_vertex *vertex;
     int choice;
@@ -333,15 +354,16 @@ void bsal_assembly_dummy_walker_get_vertices_and_select(struct thorium_actor *se
     /*
      * Generate child kmers.
      */
-    size = bsal_assembly_vertex_child_count(&concrete_self->current_vertex);
+    child_count = bsal_assembly_vertex_child_count(&concrete_self->current_vertex);
+    parent_count = bsal_assembly_vertex_parent_count(&concrete_self->current_vertex);
 
     if (bsal_vector_size(&concrete_self->child_kmers) !=
-                    size) {
+                    child_count) {
 
 #ifdef BSAL_ASSEMBLY_DUMMY_WALKER_DEBUG
         printf("Generate child kmers\n");
 #endif
-        for (i = 0; i < size; i++) {
+        for (i = 0; i < child_count; i++) {
 
             code = bsal_assembly_vertex_get_child(&concrete_self->current_vertex, i);
 
@@ -354,9 +376,24 @@ void bsal_assembly_dummy_walker_get_vertices_and_select(struct thorium_actor *se
         }
     }
 
+    if (bsal_vector_size(&concrete_self->parent_kmers) !=
+                    parent_count) {
+
+        for (i = 0; i < parent_count; i++) {
+
+            code = bsal_assembly_vertex_get_parent(&concrete_self->current_vertex, i);
+            bsal_dna_kmer_init_as_parent(&parent_kmer, &concrete_self->current_kmer,
+                            code, concrete_self->kmer_length, &concrete_self->memory_pool,
+                            &concrete_self->codec);
+
+            bsal_vector_push_back(&concrete_self->parent_kmers,
+                            &parent_kmer);
+        }
+    }
+
     /* Fetch a child vertex.
      */
-    if (concrete_self->current_child < size) {
+    if (concrete_self->current_child < child_count) {
 
         child_kmer_to_fetch = bsal_vector_at(&concrete_self->child_kmers,
                         concrete_self->current_child);
@@ -375,6 +412,48 @@ void bsal_assembly_dummy_walker_get_vertices_and_select(struct thorium_actor *se
                     &concrete_self->codec, ephemeral_memory);
 
         store = bsal_vector_at_as_int(&concrete_self->graph_stores, store_index);
+
+        concrete_self->operation = OPERATION_FETCH_CHILDREN;
+
+        thorium_message_init(&new_message, ACTION_ASSEMBLY_GET_VERTEX, new_count, new_buffer);
+        thorium_actor_send(self, store, &new_message);
+        thorium_message_destroy(&new_message);
+
+        bsal_memory_pool_free(ephemeral_memory, new_buffer);
+
+    /* Fetch a parent vertex.
+     */
+    } else if (concrete_self->current_parent < parent_count) {
+
+        parent_kmer_to_fetch = bsal_vector_at(&concrete_self->parent_kmers,
+                        concrete_self->current_parent);
+
+        new_count = bsal_dna_kmer_pack_size(parent_kmer_to_fetch, concrete_self->kmer_length,
+                    &concrete_self->codec);
+        new_buffer = bsal_memory_pool_allocate(ephemeral_memory, new_count);
+
+        bsal_dna_kmer_pack(parent_kmer_to_fetch, new_buffer,
+                    concrete_self->kmer_length,
+                    &concrete_self->codec);
+
+        store_index = bsal_dna_kmer_store_index(parent_kmer_to_fetch,
+                    bsal_vector_size(&concrete_self->graph_stores),
+                    concrete_self->kmer_length,
+                    &concrete_self->codec, ephemeral_memory);
+
+        store = bsal_vector_at_as_int(&concrete_self->graph_stores, store_index);
+
+        concrete_self->operation = OPERATION_FETCH_PARENTS;
+
+#if 0
+        printf("DEBUG send %d/%d ACTION_ASSEMBLY_GET_VERTEX Parent ",
+                        concrete_self->current_parent, parent_count);
+        bsal_dna_kmer_print(parent_kmer_to_fetch, concrete_self->kmer_length, &concrete_self->codec,
+                ephemeral_memory);
+        printf("Current: ");
+        bsal_dna_kmer_print(&concrete_self->current_kmer, concrete_self->kmer_length, &concrete_self->codec,
+                    ephemeral_memory);
+#endif
 
         thorium_message_init(&new_message, ACTION_ASSEMBLY_GET_VERTEX, new_count, new_buffer);
         thorium_actor_send(self, store, &new_message);
@@ -438,7 +517,7 @@ void bsal_assembly_dummy_walker_get_vertices_and_select(struct thorium_actor *se
             bsal_assembly_vertex_destroy(&concrete_self->current_vertex);
             bsal_assembly_vertex_init_copy(&concrete_self->current_vertex, vertex);
 
-            bsal_assembly_dummy_walker_clean_children(self);
+            bsal_assembly_dummy_walker_clear(self);
 
             thorium_actor_send_to_self_empty(self, ACTION_ASSEMBLY_GET_VERTICES_AND_SELECT);
 
@@ -448,7 +527,7 @@ void bsal_assembly_dummy_walker_get_vertices_and_select(struct thorium_actor *se
             bsal_dna_kmer_destroy(&concrete_self->current_kmer, &concrete_self->memory_pool);
             bsal_assembly_vertex_destroy(&concrete_self->current_vertex);
 
-            bsal_assembly_dummy_walker_clean_children(self);
+            bsal_assembly_dummy_walker_clear(self);
 
             thorium_actor_send_to_self_empty(self, ACTION_ASSEMBLY_GET_VERTICES_AND_SELECT_REPLY);
         }
@@ -463,7 +542,7 @@ void bsal_assembly_dummy_walker_get_vertices_and_select_reply(struct thorium_act
 
     bsal_assembly_dummy_walker_dump_path(self);
 
-    if (concrete_self->path_index < 2) {
+    if (concrete_self->path_index < 4096) {
 
         thorium_actor_send_to_self_empty(self, ACTION_BEGIN);
 
@@ -490,26 +569,41 @@ void bsal_assembly_dummy_walker_get_vertex_reply(struct thorium_actor *self, str
     bsal_assembly_vertex_print(&vertex);
 #endif
 
-    bsal_vector_push_back(&concrete_self->child_vertices, &vertex);
+    /*
+     * OPERATION_FETCH_FIRST uses a different code path.
+     */
+    BSAL_DEBUGGER_ASSERT(concrete_self->operation != OPERATION_FETCH_FIRST);
 
-    ++concrete_self->current_child;
+    if (concrete_self->operation == OPERATION_FETCH_CHILDREN) {
+        bsal_vector_push_back(&concrete_self->child_vertices, &vertex);
+        ++concrete_self->current_child;
+
+    } else if (concrete_self->operation == OPERATION_FETCH_PARENTS) {
+
+        bsal_vector_push_back(&concrete_self->parent_vertices, &vertex);
+        ++concrete_self->current_parent;
+    }
 
     thorium_actor_send_to_self_empty(self, ACTION_ASSEMBLY_GET_VERTICES_AND_SELECT);
 }
 
-void bsal_assembly_dummy_walker_clean_children(struct thorium_actor *self)
+void bsal_assembly_dummy_walker_clear(struct thorium_actor *self)
 {
     struct bsal_assembly_dummy_walker *concrete_self;
-    int size;
+    int parent_count;
+    int child_count;
     int i;
     struct bsal_dna_kmer *kmer;
     struct bsal_assembly_vertex *vertex;
 
-    concrete_self = (struct bsal_assembly_dummy_walker *)thorium_actor_concrete_actor(self);
+    concrete_self = thorium_actor_concrete_actor(self);
 
-    size = bsal_vector_size(&concrete_self->child_kmers);
+    /*
+     * Clear children
+     */
+    child_count = bsal_vector_size(&concrete_self->child_kmers);
 
-    for (i = 0; i < size; i++) {
+    for (i = 0; i < child_count; i++) {
 
         kmer = bsal_vector_at(&concrete_self->child_kmers, i);
         vertex = bsal_vector_at(&concrete_self->child_vertices, i);
@@ -518,10 +612,27 @@ void bsal_assembly_dummy_walker_clean_children(struct thorium_actor *self)
         bsal_assembly_vertex_destroy(vertex);
     }
 
+    concrete_self->current_child = 0;
     bsal_vector_clear(&concrete_self->child_kmers);
     bsal_vector_clear(&concrete_self->child_vertices);
 
-    concrete_self->current_child = 0;
+    /*
+     * Clear parents
+     */
+    parent_count = bsal_vector_size(&concrete_self->parent_kmers);
+
+    for (i = 0; i < parent_count; i++) {
+
+        kmer = bsal_vector_at(&concrete_self->parent_kmers, i);
+        vertex = bsal_vector_at(&concrete_self->parent_vertices, i);
+
+        bsal_dna_kmer_destroy(kmer, &concrete_self->memory_pool);
+        bsal_assembly_vertex_destroy(vertex);
+    }
+
+    concrete_self->current_parent =0;
+    bsal_vector_clear(&concrete_self->parent_kmers);
+    bsal_vector_clear(&concrete_self->parent_vertices);
 }
 
 void bsal_assembly_dummy_walker_dump_path(struct thorium_actor *self)
