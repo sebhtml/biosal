@@ -50,7 +50,8 @@ echo ""
 
 echo "Detected issues: $(run_checks|wc -l)"
 
-run_checks
+# remove warnings about PAMI since the code is in development
+run_checks | grep -v pami_transport
 
 ./scripts/check-tags.sh
 
