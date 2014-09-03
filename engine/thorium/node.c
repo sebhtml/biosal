@@ -128,6 +128,7 @@ void thorium_node_init(struct thorium_node *node, int *argc, char ***argv)
      */
 
     bsal_memory_pool_init(&node->actor_memory_pool, 2097152);
+    bsal_memory_pool_disable(&node->actor_memory_pool);
 
     bsal_memory_pool_init(&node->inbound_message_memory_pool,
                     BSAL_MEMORY_POOL_MESSAGE_BUFFER_BLOCK_SIZE);
