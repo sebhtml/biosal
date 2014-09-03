@@ -1045,7 +1045,7 @@ void bsal_assembly_graph_store_get_starting_vertex(struct thorium_actor *self, s
 
 int bsal_assembly_graph_store_get_store_count_per_node(struct thorium_actor *self)
 {
-#ifdef __bgq__
+#ifdef __bgq__DISABLED
     int powerpc_a2_processor_core_count;
 
     /*
