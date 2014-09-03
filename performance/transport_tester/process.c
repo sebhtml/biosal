@@ -11,7 +11,8 @@
 
 #define SEED 0x92a96a40
 
-#define BUFFER_SIZE_OPTION "-maximum-buffer-size"
+#define MIN_BUFFER_SIZE_OPTION "-minimum-buffer-size"
+#define MAX_BUFFER_SIZE_OPTION "-maximum-buffer-size"
 #define EVENT_COUNT_OPTION "-event-count"
 #define CONCURRENT_EVENT_COUNT_OPTION "-concurrent-event-count"
 
@@ -49,8 +50,12 @@ void process_init(struct thorium_actor *self)
     concrete_self->minimum_buffer_size = 16;
     concrete_self->maximum_buffer_size = 512*1024;
 
-    if (bsal_command_has_argument(argc, argv, BUFFER_SIZE_OPTION)) {
-        concrete_self->maximum_buffer_size = bsal_command_get_argument_value_int(argc, argv, BUFFER_SIZE_OPTION);
+    if (bsal_command_has_argument(argc, argv, MIN_BUFFER_SIZE_OPTION)) {
+        concrete_self->maximum_buffer_size = bsal_command_get_argument_value_int(argc, argv, MIN_BUFFER_SIZE_OPTION);
+    }
+
+    if (bsal_command_has_argument(argc, argv, MAX_BUFFER_SIZE_OPTION)) {
+        concrete_self->maximum_buffer_size = bsal_command_get_argument_value_int(argc, argv, MAX_BUFFER_SIZE_OPTION);
     }
 
     concrete_self->event_count = 100000;
@@ -67,11 +72,16 @@ void process_init(struct thorium_actor *self)
 
     concrete_self->active_messages = 0;
 
-    printf("%s/%d using -maximum-buffer-size %d -event-count %d -concurrent-event-count %d\n",
+    printf("%s/%d using %s %d %s %d %s %d %s %d\n",
                     thorium_actor_script_name(self),
                     thorium_actor_name(self),
+                    MIN_BUFFER_SIZE_OPTION,
+                    concrete_self->minimum_buffer_size,
+                    MAX_BUFFER_SIZE_OPTION,
                     concrete_self->maximum_buffer_size,
+                    EVENT_COUNT_OPTION,
                     concrete_self->event_count,
+                    CONCURRENT_EVENT_COUNT_OPTION,
                     concrete_self->concurrent_event_count);
 }
 
@@ -224,6 +234,7 @@ void process_send_ping(struct thorium_actor *self)
 
     thorium_actor_send_buffer(self, destination, ACTION_PING, count, buffer);
     ++concrete_self->active_messages;
+
     bsal_memory_pool_free(ephemeral_memory, buffer);
 }
 
