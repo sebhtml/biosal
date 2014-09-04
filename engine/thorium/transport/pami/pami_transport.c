@@ -47,6 +47,7 @@ void thorium_pami_transport_init(struct thorium_transport *self, int *argc, char
     pami_transport->recv_cookies = (thorium_recv_cookie_t*)malloc(sizeof(thorium_recv_cookie_t)*NUM_RECV_COOKIES);
     BSAL_DEBUGGER_ASSERT(pami_transport->recv_cookies != NULL);
 
+    pami_transport->avail_small_buffers = (int*)malloc(sizeof(int)*NUM_RECV_BUFFERS_SMALL_POINTERS);
     pami_transport->recv_buffers_small = (char **)malloc(sizeof(char *)*NUM_RECV_BUFFERS_SMALL_POINTERS);
     BSAL_DEBUGGER_ASSERT(pami_transport->recv_buffers_small != NULL);
 
@@ -57,6 +58,7 @@ void thorium_pami_transport_init(struct thorium_transport *self, int *argc, char
 	pami_transport->avail_small_buffers[i] = 1;
     }
 
+    pami_transport->avail_large_buffers = (int*)malloc(sizeof(int)*NUM_RECV_BUFFERS_LARGE_POINTERS);
     pami_transport->recv_buffers_large = (char **)malloc(sizeof(char *)*NUM_RECV_BUFFERS_LARGE_POINTERS);
     BSAL_DEBUGGER_ASSERT(pami_transport->recv_buffers_large != NULL);
 
