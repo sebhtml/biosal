@@ -669,6 +669,7 @@ void bsal_assembly_dummy_walker_dump_path(struct thorium_actor *self)
     bsal_vector_resize(&concrete_self->left_path, 0);
     bsal_vector_resize(&concrete_self->right_path, 0);
     bsal_dna_kmer_destroy(&concrete_self->starting_kmer, &concrete_self->memory_pool);
+    bsal_assembly_vertex_destroy(&concrete_self->starting_vertex);
 
     bsal_set_clear(&concrete_self->visited);
 
