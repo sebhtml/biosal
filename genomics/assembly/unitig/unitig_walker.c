@@ -212,7 +212,10 @@ void bsal_unitig_walker_begin(struct thorium_actor *self, struct thorium_message
     concrete_self = (struct bsal_unitig_walker *)thorium_actor_concrete_actor(self);
 
     size = bsal_vector_size(&concrete_self->graph_stores);
-    store_index = rand() % size;
+    store_index = concrete_self->store_index;
+    ++concrete_self->store_index;
+    concrete_self->store_index %= size;
+
     store = bsal_vector_at_as_int(&concrete_self->graph_stores, store_index);
 
     thorium_actor_send_empty(self, store, ACTION_ASSEMBLY_GET_STARTING_VERTEX);
@@ -223,17 +226,24 @@ void bsal_unitig_walker_start(struct thorium_actor *self, struct thorium_message
     void *buffer;
     struct bsal_unitig_walker *concrete_self;
     int graph;
+    int source;
+    int size;
 
+    source = thorium_message_source(message);
     buffer = thorium_message_buffer(message);
     concrete_self = (struct bsal_unitig_walker *)thorium_actor_concrete_actor(self);
+    concrete_self->source = source;
 
     printf("%s/%d is ready to surf the graph !\n",
                         thorium_actor_script_name(self),
                         thorium_actor_name(self));
 
     bsal_vector_unpack(&concrete_self->graph_stores, buffer);
+    size = bsal_vector_size(&concrete_self->graph_stores);
 
-    graph = bsal_vector_at_as_int(&concrete_self->graph_stores, 0);
+    concrete_self->store_index = rand() % size;
+
+    graph = bsal_vector_at_as_int(&concrete_self->graph_stores, concrete_self->store_index);
 
     thorium_actor_send_empty(self, graph, ACTION_ASSEMBLY_GET_KMER_LENGTH);
 }
@@ -247,17 +257,18 @@ void bsal_unitig_walker_get_starting_vertex_reply(struct thorium_actor *self, st
 
     count = thorium_message_count(message);
 
+    concrete_self = (struct bsal_unitig_walker *)thorium_actor_concrete_actor(self);
+
     /*
      * No more vertices to consume.
      */
     if (count == 0) {
 
-        thorium_actor_send_to_supervisor_empty(self, ACTION_START_REPLY);
+        thorium_actor_send_empty(self, concrete_self->source, ACTION_START_REPLY);
         return;
     }
 
     buffer = thorium_message_buffer(message);
-    concrete_self = (struct bsal_unitig_walker *)thorium_actor_concrete_actor(self);
 
     bsal_dna_kmer_init_empty(&concrete_self->current_kmer);
     bsal_dna_kmer_unpack(&concrete_self->current_kmer, buffer, concrete_self->kmer_length,
@@ -490,7 +501,6 @@ void bsal_unitig_walker_get_vertices_and_select(struct thorium_actor *self, stru
 #endif
 
         bsal_unitig_walker_make_decision(self);
-
     }
 }
 
@@ -508,7 +518,7 @@ void bsal_unitig_walker_get_vertices_and_select_reply(struct thorium_actor *self
         thorium_actor_send_to_self_empty(self, ACTION_BEGIN);
 
     } else {
-        thorium_actor_send_to_supervisor_empty(self, ACTION_START_REPLY);
+        thorium_actor_send_empty(self, concrete_self->source, ACTION_START_REPLY);
     }
 }
 
@@ -780,7 +790,7 @@ int bsal_unitig_walker_select(struct thorium_actor *self)
 
         /*
          * This is a unitig, so it must be
-         * regular. Otherwise there could be DNA misassemblies 
+         * regular. Otherwise there could be DNA misassemblies
          * at this stage.
          */
         if (!(coverage >= threshold)) {
@@ -793,7 +803,7 @@ int bsal_unitig_walker_select(struct thorium_actor *self)
          * Check out the others too and make sure that they are all weak.
          */
         for (j = 0; j < size; ++j) {
-            
+
             other_vertex = bsal_vector_at(selected_vertices, j);
             other_coverage = bsal_assembly_vertex_coverage_depth(vertex);
 

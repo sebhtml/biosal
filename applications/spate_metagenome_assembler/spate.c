@@ -9,6 +9,7 @@
 #include <genomics/assembly/assembly_arc_classifier.h>
 
 #include <genomics/assembly/unitig/unitig_walker.h>
+#include <genomics/assembly/unitig/unitig_manager.h>
 
 #include <genomics/input/input_controller.h>
 
@@ -108,6 +109,8 @@ void spate_init(struct thorium_actor *self)
                     &bsal_assembly_arc_classifier_script);
     thorium_actor_add_script(self, SCRIPT_UNITIG_WALKER,
                     &bsal_unitig_walker_script);
+    thorium_actor_add_script(self, SCRIPT_UNITIG_MANAGER,
+                    &bsal_unitig_manager_script);
 
     concrete_self->block_size = 16 * 4096;
 
@@ -448,33 +451,47 @@ void spate_start_reply_builder(struct thorium_actor *self, struct thorium_messag
 
     spawner = thorium_actor_get_spawner(self, &concrete_self->initial_actors);
 
-    concrete_self->dummy_walker = THORIUM_ACTOR_SPAWNING_IN_PROGRESS;
+    concrete_self->unitig_manager = THORIUM_ACTOR_SPAWNING_IN_PROGRESS;
 
     thorium_actor_add_action_with_condition(self, ACTION_SPAWN_REPLY,
-                    spate_spawn_reply_dummy_walker,
-                    &concrete_self->dummy_walker, THORIUM_ACTOR_SPAWNING_IN_PROGRESS);
+                    spate_spawn_reply_unitig_manager,
+                    &concrete_self->unitig_manager, THORIUM_ACTOR_SPAWNING_IN_PROGRESS);
 
-    thorium_actor_send_int(self, spawner, ACTION_SPAWN, SCRIPT_UNITIG_WALKER);
+    thorium_actor_send_int(self, spawner, ACTION_SPAWN, SCRIPT_UNITIG_MANAGER);
 }
 
-void spate_spawn_reply_dummy_walker(struct thorium_actor *self, struct thorium_message *message)
+void spate_spawn_reply_unitig_manager(struct thorium_actor *self, struct thorium_message *message)
 {
     struct spate *concrete_self;
 
     concrete_self = (struct spate *)thorium_actor_concrete_actor(self);
 
-    thorium_message_unpack_int(message, 0, &concrete_self->dummy_walker);
+    thorium_message_unpack_int(message, 0, &concrete_self->unitig_manager);
 
     thorium_actor_add_action_with_source(self, ACTION_START_REPLY,
-                    spate_start_reply_dummy_walker,
-                    concrete_self->dummy_walker);
+                    spate_start_reply_unitig_manager,
+                    concrete_self->unitig_manager);
 
-    thorium_actor_send_vector(self, concrete_self->dummy_walker,
+    thorium_actor_send_vector(self, concrete_self->unitig_manager,
                     ACTION_START,
+                    &concrete_self->initial_actors);
+}
+
+void spate_start_reply_unitig_manager(struct thorium_actor *self, struct thorium_message *message)
+{
+    struct spate *concrete_self;
+
+    concrete_self = (struct spate *)thorium_actor_concrete_actor(self);
+
+    thorium_actor_add_action_with_source(self, ACTION_SET_PRODUCERS_REPLY,
+                    spate_set_producers_reply_reply_unitig_manager,
+                    concrete_self->unitig_manager);
+
+    thorium_actor_send_reply_vector(self, ACTION_SET_PRODUCERS,
                     &concrete_self->graph_stores);
 }
 
-void spate_start_reply_dummy_walker(struct thorium_actor *self, struct thorium_message *message)
+void spate_set_producers_reply_reply_unitig_manager(struct thorium_actor *self, struct thorium_message *message)
 {
     thorium_actor_send_reply_empty(self, ACTION_ASK_TO_STOP);
 

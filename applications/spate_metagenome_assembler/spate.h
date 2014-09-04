@@ -25,7 +25,7 @@ struct spate {
     struct bsal_vector initial_actors;
     struct bsal_vector graph_stores;
 
-    int dummy_walker;
+    int unitig_manager;
 
     int is_leader;
     struct bsal_timer timer;
@@ -78,7 +78,8 @@ void spate_help(struct thorium_actor *self);
 void spate_stop(struct thorium_actor *self);
 int spate_must_print_help(struct thorium_actor *self);
 
-void spate_spawn_reply_dummy_walker(struct thorium_actor *self, struct thorium_message *message);
-void spate_start_reply_dummy_walker(struct thorium_actor *self, struct thorium_message *message);
+void spate_spawn_reply_unitig_manager(struct thorium_actor *self, struct thorium_message *message);
+void spate_start_reply_unitig_manager(struct thorium_actor *self, struct thorium_message *message);
+void spate_set_producers_reply_reply_unitig_manager(struct thorium_actor *self, struct thorium_message *message);
 
 #endif

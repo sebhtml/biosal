@@ -29,6 +29,13 @@ struct bsal_unitig_walker {
     struct bsal_dna_codec codec;
     struct bsal_memory_pool memory_pool;
 
+    int source;
+
+    /*
+     * The next store index to use.
+     */
+    int store_index;
+
     struct bsal_buffered_file_writer writer;
     struct bsal_string file_path;
 
