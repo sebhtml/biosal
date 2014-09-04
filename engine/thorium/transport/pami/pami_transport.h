@@ -60,7 +60,7 @@ typedef struct {
 
 typedef struct {
     volatile char *buffer;
-    int buf_index;
+    volatile int buf_index;
     volatile int count;
     volatile int source;
     volatile int dest;
@@ -94,8 +94,8 @@ struct thorium_pami_transport {
     volatile int num_preallocated_small_buffers;
     volatile int num_avail_large_buffers;
     volatile int num_avail_small_buffers;
-    int *avail_large_buffers;
-    int *avail_small_buffers;
+    volatile int *avail_large_buffers;
+    volatile int *avail_small_buffers;
 
 #endif
 
