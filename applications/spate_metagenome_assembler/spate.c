@@ -7,7 +7,8 @@
 #include <genomics/assembly/assembly_graph_builder.h>
 #include <genomics/assembly/assembly_arc_kernel.h>
 #include <genomics/assembly/assembly_arc_classifier.h>
-#include <genomics/assembly/assembly_dummy_walker.h>
+
+#include <genomics/assembly/unitig/unitig_walker.h>
 
 #include <genomics/input/input_controller.h>
 
@@ -105,8 +106,8 @@ void spate_init(struct thorium_actor *self)
                     &bsal_assembly_arc_kernel_script);
     thorium_actor_add_script(self, SCRIPT_ASSEMBLY_ARC_CLASSIFIER,
                     &bsal_assembly_arc_classifier_script);
-    thorium_actor_add_script(self, SCRIPT_ASSEMBLY_DUMMY_WALKER,
-                    &bsal_assembly_dummy_walker_script);
+    thorium_actor_add_script(self, SCRIPT_UNITIG_WALKER,
+                    &bsal_unitig_walker_script);
 
     concrete_self->block_size = 16 * 4096;
 
@@ -453,8 +454,7 @@ void spate_start_reply_builder(struct thorium_actor *self, struct thorium_messag
                     spate_spawn_reply_dummy_walker,
                     &concrete_self->dummy_walker, THORIUM_ACTOR_SPAWNING_IN_PROGRESS);
 
-    thorium_actor_send_int(self, spawner, ACTION_SPAWN, SCRIPT_ASSEMBLY_DUMMY_WALKER);
-
+    thorium_actor_send_int(self, spawner, ACTION_SPAWN, SCRIPT_UNITIG_WALKER);
 }
 
 void spate_spawn_reply_dummy_walker(struct thorium_actor *self, struct thorium_message *message)
