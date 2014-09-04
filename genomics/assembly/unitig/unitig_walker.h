@@ -36,6 +36,8 @@ struct bsal_unitig_walker {
      */
     int store_index;
 
+    int dried_stores;
+
     struct bsal_buffered_file_writer writer;
     struct bsal_string file_path;
 

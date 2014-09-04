@@ -53,6 +53,8 @@ void bsal_unitig_walker_init(struct thorium_actor *self)
 
     concrete_self = (struct bsal_unitig_walker *)thorium_actor_concrete_actor(self);
 
+    concrete_self->dried_stores = 0;
+
     argc = thorium_actor_argc(self);
     argv = thorium_actor_argv(self);
 
@@ -264,7 +266,14 @@ void bsal_unitig_walker_get_starting_vertex_reply(struct thorium_actor *self, st
      */
     if (count == 0) {
 
-        thorium_actor_send_empty(self, concrete_self->source, ACTION_START_REPLY);
+        ++concrete_self->dried_stores;
+
+        if (concrete_self->dried_stores == bsal_vector_size(&concrete_self->graph_stores)) {
+            thorium_actor_send_empty(self, concrete_self->source, ACTION_START_REPLY);
+        } else {
+            thorium_actor_send_to_self_empty(self, ACTION_BEGIN);
+        }
+
         return;
     }
 
@@ -512,14 +521,8 @@ void bsal_unitig_walker_get_vertices_and_select_reply(struct thorium_actor *self
 
     bsal_unitig_walker_dump_path(self);
 
-    if (concrete_self->path_index < 64) {
-
-        printf("path_index is %d\n", concrete_self->path_index);
-        thorium_actor_send_to_self_empty(self, ACTION_BEGIN);
-
-    } else {
-        thorium_actor_send_empty(self, concrete_self->source, ACTION_START_REPLY);
-    }
+    printf("path_index is %d\n", concrete_self->path_index);
+    thorium_actor_send_to_self_empty(self, ACTION_BEGIN);
 }
 
 void bsal_unitig_walker_get_vertex_reply(struct thorium_actor *self, struct thorium_message *message)
