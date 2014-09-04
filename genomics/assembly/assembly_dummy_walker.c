@@ -661,7 +661,8 @@ void bsal_assembly_dummy_walker_dump_path(struct thorium_actor *self)
 
     sequence[sequence_length] = '\0';
 
-    bsal_assembly_dummy_walker_write(self, sequence, sequence_length);
+    bsal_assembly_dummy_walker_write(self, concrete_self->hash_value,
+                    sequence, sequence_length);
 
     bsal_memory_pool_free(ephemeral_memory, sequence);
 
@@ -831,7 +832,8 @@ int bsal_assembly_dummy_walker_select(struct thorium_actor *self)
     return choice;
 }
 
-void bsal_assembly_dummy_walker_write(struct thorium_actor *self, char *sequence,
+void bsal_assembly_dummy_walker_write(struct thorium_actor *self, uint64_t name,
+                char *sequence,
                 int sequence_length)
 {
     struct bsal_assembly_dummy_walker *concrete_self;
@@ -858,10 +860,8 @@ void bsal_assembly_dummy_walker_write(struct thorium_actor *self, char *sequence
 #endif
 
     bsal_buffered_file_writer_printf(&concrete_self->writer,
-                    ">%s-%d-%d length=%d\n",
-                    thorium_actor_script_name(self),
-                    thorium_actor_name(self),
-                    concrete_self->path_index,
+                    ">path_%" PRIu64 " length=%d\n",
+                    name,
                     sequence_length);
 
     while (i < sequence_length) {
@@ -902,6 +902,7 @@ void bsal_assembly_dummy_walker_make_decision(struct thorium_actor *self)
     struct bsal_vector *selected_output_path;
     struct bsal_memory_pool *ephemeral_memory;
     int code;
+    uint64_t hash_value;
 
     concrete_self = (struct bsal_assembly_dummy_walker *)thorium_actor_concrete_actor(self);
     ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
@@ -922,7 +923,8 @@ void bsal_assembly_dummy_walker_make_decision(struct thorium_actor *self)
     }
 
     /*
-     * Proceed with the choice.
+     * Proceed with the choice
+     * (this is either for OPERATION_SELECT_CHILD or OPERATION_SELECT_PARENT).
      */
     if (choice >= 0) {
 
@@ -971,6 +973,12 @@ void bsal_assembly_dummy_walker_make_decision(struct thorium_actor *self)
          */
         concrete_self->select_operation = OPERATION_SELECT_PARENT;
 
+        hash_value = bsal_dna_kmer_canonical_hash(&concrete_self->current_kmer,
+                        concrete_self->kmer_length, &concrete_self->codec,
+                       ephemeral_memory);
+
+        concrete_self->hash_value = hash_value;
+
         /*
          * Change the current vertex.
          */
@@ -984,6 +992,17 @@ void bsal_assembly_dummy_walker_make_decision(struct thorium_actor *self)
     /* Finish
      */
     } else if (concrete_self->select_operation == OPERATION_SELECT_PARENT) {
+
+        /*
+         * Get the hash value
+         */
+        hash_value = bsal_dna_kmer_canonical_hash(&concrete_self->current_kmer,
+                        concrete_self->kmer_length, &concrete_self->codec,
+                        ephemeral_memory);
+
+        if (hash_value < concrete_self->hash_value) {
+            concrete_self->hash_value = hash_value;
+        }
 
         bsal_dna_kmer_destroy(&concrete_self->current_kmer, &concrete_self->memory_pool);
         bsal_assembly_vertex_destroy(&concrete_self->current_vertex);

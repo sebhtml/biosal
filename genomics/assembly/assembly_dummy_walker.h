@@ -56,6 +56,8 @@ struct bsal_assembly_dummy_walker {
     struct bsal_set visited;
     int fetch_operation;
     int select_operation;
+
+    uint64_t hash_value;
 };
 
 extern struct thorium_script bsal_assembly_dummy_walker_script;
@@ -77,7 +79,8 @@ void bsal_assembly_dummy_walker_dump_path(struct thorium_actor *self);
 void bsal_assembly_dummy_walker_begin(struct thorium_actor *self, struct thorium_message *message);
 
 int bsal_assembly_dummy_walker_select(struct thorium_actor *self);
-void bsal_assembly_dummy_walker_write(struct thorium_actor *self, char *sequence, int sequence_length);
+void bsal_assembly_dummy_walker_write(struct thorium_actor *self, uint64_t name,
+                char *sequence, int sequence_length);
 void bsal_assembly_dummy_walker_make_decision(struct thorium_actor *self);
 
 void bsal_assembly_dummy_walker_set_current(struct thorium_actor *self,
