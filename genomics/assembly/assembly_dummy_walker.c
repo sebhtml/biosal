@@ -75,7 +75,7 @@ void bsal_assembly_dummy_walker_init(struct thorium_actor *self)
                     bsal_assembly_dummy_walker_get_vertex_reply_starting_vertex,
                     &concrete_self->has_starting_vertex, 0);
 
-    bsal_memory_pool_init(&concrete_self->memory_pool, 32768);
+    bsal_memory_pool_init(&concrete_self->memory_pool, 1048576);
 
     bsal_vector_init(&concrete_self->path, sizeof(int));
 

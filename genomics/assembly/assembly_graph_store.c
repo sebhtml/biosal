@@ -878,10 +878,12 @@ void bsal_assembly_graph_store_get_vertex(struct thorium_actor *self, struct tho
     struct bsal_assembly_vertex *canonical_vertex;
     void *key;
     int is_canonical;
+    int source;
 
     ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
     concrete_self = (struct bsal_assembly_graph_store *)thorium_actor_concrete_actor(self);
-
+    
+    source = thorium_message_source(message);
     buffer = thorium_message_buffer(message);
 
     bsal_dna_kmer_init_empty(&kmer);
@@ -927,7 +929,11 @@ void bsal_assembly_graph_store_get_vertex(struct thorium_actor *self, struct tho
      * Mark the vertex with BSAL_VERTEX_STATE_USED after making the
      * copy.
      */
-    bsal_assembly_vertex_set_state(canonical_vertex, BSAL_VERTEX_STATE_USED);
+
+    if (bsal_assembly_vertex_state(canonical_vertex) == BSAL_VERTEX_STATE_UNUSED) {
+        bsal_assembly_vertex_set_state(canonical_vertex, BSAL_VERTEX_STATE_USED);
+        bsal_assembly_vertex_set_first_actor(canonical_vertex, source);
+    }
 
     if (!is_canonical) {
 
@@ -982,7 +988,9 @@ void bsal_assembly_graph_store_get_starting_vertex(struct thorium_actor *self, s
          */
         if (bsal_assembly_vertex_state(vertex) != BSAL_VERTEX_STATE_UNUSED) {
 
+#if 0
             printf("Skipping state != BSAL_VERTEX_STATE_UNUSED\n");
+#endif
 
             continue;
         }
