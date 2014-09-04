@@ -31,9 +31,11 @@
 
 #define MAX_SHORT_MESSAGE_LENGTH 128
 #define RECV_BUFFER_SIZE_LARGE 4194304
-#define NUM_RECV_BUFFERS_LARGE 128
+#define NUM_RECV_BUFFERS_LARGE 64
+#define NUM_RECV_BUFFERS_LARGE_POINTERS 128
 #define RECV_BUFFER_SIZE_SMALL 4096
 #define NUM_RECV_BUFFERS_SMALL 4096
+#define NUM_RECV_BUFFERS_SMALL_POINTERS 4096
 #define NUM_RECV_COOKIES 65536
 #define NUM_SEND_COOKIES 65536
 
@@ -58,6 +60,7 @@ typedef struct {
 
 typedef struct {
     volatile char *buffer;
+    int buf_index;
     volatile int count;
     volatile int source;
     volatile int dest;
@@ -81,14 +84,18 @@ struct thorium_pami_transport {
    
     char **recv_buffers_small;
     char **recv_buffers_large;
-    volatile int buf_index_small;
-    volatile int buf_index_large;
     thorium_send_cookie_t *send_cookies;
     thorium_recv_cookie_t *recv_cookies;
     struct bsal_fast_queue *send_queue;
     struct bsal_fast_queue *recv_queue;
     int send_index;
     volatile int recv_index;
+    volatile int num_preallocated_large_buffers;
+    volatile int num_preallocated_small_buffers;
+    volatile int num_avail_large_buffers;
+    volatile int num_avail_small_buffers;
+    int *avail_large_buffers;
+    int *avail_small_buffers;
 
 #endif
 
