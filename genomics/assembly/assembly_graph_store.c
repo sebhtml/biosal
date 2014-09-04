@@ -882,7 +882,7 @@ void bsal_assembly_graph_store_get_vertex(struct thorium_actor *self, struct tho
 
     ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
     concrete_self = (struct bsal_assembly_graph_store *)thorium_actor_concrete_actor(self);
-    
+
     source = thorium_message_source(message);
     buffer = thorium_message_buffer(message);
 
