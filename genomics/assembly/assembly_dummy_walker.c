@@ -207,10 +207,12 @@ void bsal_assembly_dummy_walker_begin(struct thorium_actor *self, struct thorium
     struct bsal_assembly_dummy_walker *concrete_self;
     int store_index;
     int store;
+    int size;
 
     concrete_self = (struct bsal_assembly_dummy_walker *)thorium_actor_concrete_actor(self);
 
-    store_index = 0;
+    size = bsal_vector_size(&concrete_self->graph_stores);
+    store_index = rand() % size;
     store = bsal_vector_at_as_int(&concrete_self->graph_stores, store_index);
 
     thorium_actor_send_empty(self, store, ACTION_ASSEMBLY_GET_STARTING_VERTEX);
