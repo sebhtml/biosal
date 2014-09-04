@@ -45,6 +45,8 @@ void bsal_assembly_dummy_walker_init(struct thorium_actor *self)
     char *path;
     int argc;
     char **argv;
+    char name_as_string[64];
+    int name;
 
     concrete_self = (struct bsal_assembly_dummy_walker *)thorium_actor_concrete_actor(self);
 
@@ -103,8 +105,12 @@ void bsal_assembly_dummy_walker_init(struct thorium_actor *self)
 
     directory_name = bsal_command_get_output_directory(argc, argv);
 
+    name = thorium_actor_name(self);
+    sprintf(name_as_string, "%d", name);
     bsal_string_init(&concrete_self->file_path, directory_name);
-    bsal_string_append(&concrete_self->file_path, "/dummy_walker.fasta");
+    bsal_string_append(&concrete_self->file_path, "/dummy_walker_");
+    bsal_string_append(&concrete_self->file_path, name_as_string);
+    bsal_string_append(&concrete_self->file_path, ".fasta");
 
     path = bsal_string_get(&concrete_self->file_path);
 
@@ -542,7 +548,7 @@ void bsal_assembly_dummy_walker_get_vertices_and_select_reply(struct thorium_act
 
     bsal_assembly_dummy_walker_dump_path(self);
 
-    if (concrete_self->path_index < 4096) {
+    if (concrete_self->path_index < 64) {
 
         printf("path_index is %d\n", concrete_self->path_index);
         thorium_actor_send_to_self_empty(self, ACTION_BEGIN);
