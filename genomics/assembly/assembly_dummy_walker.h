@@ -35,7 +35,9 @@ struct bsal_assembly_dummy_walker {
     int has_starting_vertex;
 
     struct bsal_dna_kmer starting_kmer;
-    struct bsal_vector path;
+    struct bsal_assembly_vertex starting_vertex;
+    struct bsal_vector left_path;
+    struct bsal_vector right_path;
 
     struct bsal_dna_kmer current_kmer;
     struct bsal_assembly_vertex current_vertex;
@@ -52,7 +54,8 @@ struct bsal_assembly_dummy_walker {
 
     int key_length;
     struct bsal_set visited;
-    int operation;
+    int fetch_operation;
+    int select_operation;
 };
 
 extern struct thorium_script bsal_assembly_dummy_walker_script;
@@ -75,5 +78,9 @@ void bsal_assembly_dummy_walker_begin(struct thorium_actor *self, struct thorium
 
 int bsal_assembly_dummy_walker_select(struct thorium_actor *self);
 void bsal_assembly_dummy_walker_write(struct thorium_actor *self, char *sequence, int sequence_length);
+void bsal_assembly_dummy_walker_make_decision(struct thorium_actor *self);
+
+void bsal_assembly_dummy_walker_set_current(struct thorium_actor *self,
+                struct bsal_dna_kmer *kmer, struct bsal_assembly_vertex *vertex);
 
 #endif
