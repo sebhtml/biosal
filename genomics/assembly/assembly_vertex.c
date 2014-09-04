@@ -8,6 +8,7 @@
 void bsal_assembly_vertex_init(struct bsal_assembly_vertex *self)
 {
     self->coverage_depth = 0;
+    bsal_assembly_vertex_set_state(self, BSAL_VERTEX_STATE_UNUSED);
 
     bsal_assembly_connectivity_init(&self->connectivity);
 }
@@ -128,6 +129,7 @@ void bsal_assembly_vertex_init_copy(struct bsal_assembly_vertex *self,
                 struct bsal_assembly_vertex *vertex)
 {
     self->coverage_depth = vertex->coverage_depth;
+    self->state = vertex->state;
 
     bsal_assembly_connectivity_init_copy(&self->connectivity, &vertex->connectivity);
 }
@@ -135,4 +137,14 @@ void bsal_assembly_vertex_init_copy(struct bsal_assembly_vertex *self,
 void bsal_assembly_vertex_invert_arcs(struct bsal_assembly_vertex *self)
 {
     bsal_assembly_connectivity_invert_arcs(&self->connectivity);
+}
+
+int bsal_assembly_vertex_state(struct bsal_assembly_vertex *self)
+{
+    return self->state;
+}
+
+void bsal_assembly_vertex_set_state(struct bsal_assembly_vertex *self, int state)
+{
+    self->state = state;
 }

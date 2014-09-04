@@ -544,6 +544,7 @@ void bsal_assembly_dummy_walker_get_vertices_and_select_reply(struct thorium_act
 
     if (concrete_self->path_index < 4096) {
 
+        printf("path_index is %d\n", concrete_self->path_index);
         thorium_actor_send_to_self_empty(self, ACTION_BEGIN);
 
     } else {
