@@ -680,10 +680,7 @@ int bsal_assembly_dummy_walker_select(struct thorium_actor *self)
 {
     int choice;
     struct bsal_assembly_dummy_walker *concrete_self;
-    int best_coverage;
     int current_coverage;
-    int best_difference;
-    int difference;
     int size;
     int i;
     int code;
@@ -696,6 +693,12 @@ int bsal_assembly_dummy_walker_select(struct thorium_actor *self)
     int found;
     struct bsal_vector *selected_vertices;
     struct bsal_vector *selected_kmers;
+    struct bsal_assembly_vertex *other_vertex;
+    int threshold;
+    int threshold_weak;
+    int j;
+    int other_coverage;
+    int is_strong;
 
     /*
      * This code select the best edge for a unitig.
@@ -719,14 +722,20 @@ int bsal_assembly_dummy_walker_select(struct thorium_actor *self)
     }
 
     size = bsal_vector_size(selected_vertices);
-
     current_coverage = bsal_assembly_vertex_coverage_depth(&concrete_self->current_vertex);
+    threshold = current_coverage;
+    threshold_weak = current_coverage / 4;
 
-    best_coverage = -1;
+    if (size >= 2)
+        threshold /= size;
 
     for (i = 0; i < size; i++) {
 
         vertex = bsal_vector_at(selected_vertices, i);
+
+        /*
+         * Verify if it was visited already.
+         */
         kmer = bsal_vector_at(selected_kmers, i);
 
         bsal_dna_kmer_pack(kmer, key, concrete_self->kmer_length,
@@ -749,33 +758,59 @@ int bsal_assembly_dummy_walker_select(struct thorium_actor *self)
             continue;
         }
 
+        /*
+         * Otherwise, if there is only one choice, return it.
+         */
+
+        if (size == 1) {
+            choice = i;
+            break;
+        }
+
         coverage = bsal_assembly_vertex_coverage_depth(vertex);
 
-#ifdef BSAL_ASSEMBLY_DUMMY_WALKER_DEBUG
-        printf("#%d is %c with coverage %d\n", i, nucleotide,
-                        coverage);
-#endif
-
-        if (best_coverage < 0) {
-            choice = i;
-            best_coverage = coverage;
+        /*
+         * This change is too big to be OK.
+         */
+        if (coverage >= 2 * current_coverage) {
+            continue;
         }
 
-        best_difference = best_coverage - current_coverage;
-        if (best_difference < 0) {
-            best_difference = -best_difference;
+        /*
+         * This is a unitig, so it must be
+         * regular. Otherwise there could be DNA misassemblies 
+         * at this stage.
+         */
+        if (!(coverage >= threshold)) {
+            continue;
         }
 
-        difference = coverage - current_coverage;
+        is_strong = 1;
 
-        if (difference < 0) {
-            difference = -difference;
+        /*
+         * Check out the others too and make sure that they are all weak.
+         */
+        for (j = 0; j < size; ++j) {
+            
+            other_vertex = bsal_vector_at(selected_vertices, j);
+            other_coverage = bsal_assembly_vertex_coverage_depth(vertex);
+
+            if (other_coverage >= threshold_weak) {
+                is_strong = 0;
+                break;
+            }
         }
 
-        if (difference < best_difference) {
-            choice = i;
-            best_coverage = coverage;
+        if (!is_strong) {
+            continue;
         }
+
+        /*
+         * At this point, the edge satisfies everything.
+         */
+
+        choice = i;
+        break;
     }
 
 #ifdef BSAL_ASSEMBLY_DUMMY_WALKER_DEBUG
@@ -811,7 +846,7 @@ int bsal_assembly_dummy_walker_select(struct thorium_actor *self)
 
             coverage = bsal_assembly_vertex_coverage_depth(vertex);
 
-            printf(" (%c %d %d)", nucleotide, code, coverage);
+            printf(" (%c %d)", nucleotide, coverage);
         }
         printf("\n");
         printf("Most likely reason (select_operation= ");
