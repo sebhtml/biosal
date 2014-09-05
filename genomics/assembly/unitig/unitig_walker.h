@@ -89,7 +89,7 @@ void bsal_unitig_walker_clear(struct thorium_actor *self);
 void bsal_unitig_walker_dump_path(struct thorium_actor *self);
 void bsal_unitig_walker_begin(struct thorium_actor *self, struct thorium_message *message);
 
-int bsal_unitig_walker_select(struct thorium_actor *self, int *status);
+int bsal_unitig_walker_select(struct thorium_actor *self, int *output_status);
 void bsal_unitig_walker_write(struct thorium_actor *self, uint64_t name,
                 char *sequence, int sequence_length);
 void bsal_unitig_walker_make_decision(struct thorium_actor *self);

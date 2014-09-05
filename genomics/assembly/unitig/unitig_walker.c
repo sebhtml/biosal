@@ -46,6 +46,7 @@
 #define STATUS_NOT_REGULAR 2
 #define STATUS_WITH_CHOICE 3
 #define STATUS_ALREADY_VISITED 4
+#define STATUS_DISAGREEMENT 5
 
 struct thorium_script bsal_unitig_walker_script = {
     .identifier = SCRIPT_UNITIG_WALKER,
@@ -738,8 +739,10 @@ void bsal_unitig_walker_dump_path(struct thorium_actor *self)
 
     path_name = bsal_unitig_walker_get_path_name(self, sequence_length, sequence);
 
+#ifdef DEBUG_PATH_NAMES
     printf("DEBUG path_name= %" PRIu64 "path_length= %d start_position= %d\n",
                     path_name, sequence_length, start_position);
+#endif
 
     if (sequence_length >= MINIMUM_PATH_LENGTH_IN_NUCLEOTIDES) {
         bsal_unitig_walker_write(self, path_name,
@@ -758,9 +761,10 @@ void bsal_unitig_walker_dump_path(struct thorium_actor *self)
     ++concrete_self->path_index;
 }
 
-int bsal_unitig_walker_select(struct thorium_actor *self, int *status)
+int bsal_unitig_walker_select(struct thorium_actor *self, int *output_status)
 {
     int choice;
+    int status;
     int parent_choice;
     int child_choice;
     struct bsal_unitig_walker *concrete_self;
@@ -782,8 +786,12 @@ int bsal_unitig_walker_select(struct thorium_actor *self, int *status)
     struct bsal_vector child_coverage_values;
     struct bsal_vector *selected_path;
     int size;
+    int right_path_size;
+    int parent_code;
+    int child_code;
+    int expected_parent_code;
 
-    *status = STATUS_NO_STATUS;
+    status = STATUS_NO_STATUS;
 
     /*
      * This code select the best edge for a unitig.
@@ -853,11 +861,11 @@ int bsal_unitig_walker_select(struct thorium_actor *self, int *status)
      */
     if (choice == BSAL_HEURISTIC_CHOICE_NONE) {
         if (size == 0)
-            *status = STATUS_NO_EDGE;
+            status = STATUS_NO_EDGE;
         else
-            *status = STATUS_IMPOSSIBLE_CHOICE;
+            status = STATUS_IMPOSSIBLE_CHOICE;
     } else {
-        *status = STATUS_WITH_CHOICE;
+        status = STATUS_WITH_CHOICE;
     }
 
     /*
@@ -866,7 +874,60 @@ int bsal_unitig_walker_select(struct thorium_actor *self, int *status)
     if (parent_choice == BSAL_HEURISTIC_CHOICE_NONE
                     || child_choice == BSAL_HEURISTIC_CHOICE_NONE) {
         choice = BSAL_HEURISTIC_CHOICE_NONE;
-        *status = STATUS_NOT_REGULAR;
+        status = STATUS_NOT_REGULAR;
+    }
+
+    /*
+     * Verify that there ris no disagreement
+     * (STATUS_DISAGREEMENT).
+     */
+    if (choice != BSAL_HEURISTIC_CHOICE_NONE) {
+
+        /*
+         * This goes from left to right.
+         */
+        if (concrete_self->select_operation == OPERATION_SELECT_CHILD) {
+            parent_code = bsal_assembly_vertex_get_parent(&concrete_self->current_vertex, parent_choice);
+            child_code = bsal_assembly_vertex_get_child(&concrete_self->current_vertex, child_choice);
+
+            right_path_size = bsal_vector_size(&concrete_self->right_path);
+
+            if (right_path_size >= concrete_self->kmer_length + 1) {
+                expected_parent_code = bsal_vector_at_as_int(&concrete_self->right_path,
+                            right_path_size - concrete_self->kmer_length - 1);
+
+                printf("DEBUG STATUS_DISAGREEMENT actual %d expected %d",
+                            parent_code, expected_parent_code);
+
+                if (parent_code != expected_parent_code) {
+                    printf("MISMATCH");
+                }
+                printf("\n");
+
+#if 0
+                choice = BSAL_HEURISTIC_CHOICE_NONE;
+                status = STATUS_DISAGREEMENT;
+#endif
+            }
+#if 0
+            tail_size = 5;
+
+            if (right_path_size >= concrete_self->kmer_length + tail_size) {
+                printf("actor/%d Test for STATUS_DISAGREEMENT parent_choice_code= %d child_choice_code= %d right_path_size %d last %d codes: [",
+                                thorium_actor_name(self),
+                                parent_code, child_code, right_path_size, tail_size);
+
+                for (i = 0; i < tail_size; ++i) {
+                    other_code = bsal_vector_at_as_int(&concrete_self->right_path,
+                                    right_path_size - concrete_self->kmer_length - tail_size + i);
+
+                    printf(" %d", other_code);
+                }
+
+                printf("]\n");
+            }
+#endif
+        }
     }
 
     found = 0;
@@ -896,7 +957,7 @@ int bsal_unitig_walker_select(struct thorium_actor *self, int *status)
             bsal_dna_kmer_print(kmer, concrete_self->kmer_length, &concrete_self->codec,
                         ephemeral_memory);
             choice = BSAL_HEURISTIC_CHOICE_NONE;
-            *status = STATUS_ALREADY_VISITED;
+            status = STATUS_ALREADY_VISITED;
         }
     }
 #ifdef BSAL_UNITIG_WALKER_DEBUG
@@ -919,44 +980,67 @@ int bsal_unitig_walker_select(struct thorium_actor *self, int *status)
     if (choice == BSAL_HEURISTIC_CHOICE_NONE
                     && bsal_vector_size(selected_path) > 200) {
 
-        printf("Notice: can not select, current_coverage %d, %d arcs: ", current_coverage, size);
-        for (i = 0; i < size; i++) {
+        printf("Notice: can not select, current_coverage %d", current_coverage);
 
-            if (concrete_self->select_operation == OPERATION_SELECT_CHILD) {
-                code = bsal_assembly_vertex_get_child(&concrete_self->current_vertex, i);
-                coverage = bsal_vector_at_as_int(&child_coverage_values, i);
-            } else /*if (concrete_self->select_operation == OPERATION_SELECT_CHILD) */ {
-                code = bsal_assembly_vertex_get_parent(&concrete_self->current_vertex, i);
-                coverage = bsal_vector_at_as_int(&parent_coverage_values, i);
-            }
+        /*
+         * Print edges.
+         */
+        printf(", %d parents: ", parent_size);
+        for (i = 0; i < parent_size; i++) {
 
+            code = bsal_assembly_vertex_get_parent(&concrete_self->current_vertex, i);
+            coverage = bsal_vector_at_as_int(&parent_coverage_values, i);
             nucleotide = bsal_dna_codec_get_nucleotide_from_code(code);
 
             printf(" (%c %d)", nucleotide, coverage);
         }
+
+        printf(", %d children: ", child_size);
+        for (i = 0; i < child_size; i++) {
+
+            code = bsal_assembly_vertex_get_child(&concrete_self->current_vertex, i);
+            coverage = bsal_vector_at_as_int(&child_coverage_values, i);
+            nucleotide = bsal_dna_codec_get_nucleotide_from_code(code);
+
+            printf(" (%c %d)", nucleotide, coverage);
+        }
+
         printf("\n");
-        printf("Most likely reason (select_operation= ");
+
+        printf("operation= ");
 
         if (concrete_self->select_operation == OPERATION_SELECT_CHILD)
-            printf("OPERATION_SELECT_CHILD): ");
+            printf("OPERATION_SELECT_CHILD");
         else
-            printf("OPERATION_SELECT_PARENT): ");
+            printf("OPERATION_SELECT_PARENT");
 
-        if (size == 0) {
-            printf("0 choice, dead end\n");
-        } else if (size == 1 && found) {
-            printf("1 choice, already in use\n");
-        } else {
-            printf("Unknown\n");
-        }
+        printf(" status= ");
+
+        BSAL_DEBUGGER_ASSERT(status != STATUS_WITH_CHOICE
+                        && status != STATUS_NO_STATUS);
+
+        if (status == STATUS_NO_EDGE)
+            printf("STATUS_NO_EDGE");
+        else if (status == STATUS_ALREADY_VISITED)
+            printf("STATUS_ALREADY_VISITED");
+        else if (status == STATUS_NOT_REGULAR)
+            printf("STATUS_NOT_REGULAR");
+        else if (status == STATUS_IMPOSSIBLE_CHOICE)
+            printf("STATUS_IMPOSSIBLE_CHOICE");
+        else if (status == STATUS_DISAGREEMENT)
+            printf("STATUS_DISAGREEMENT");
+
+        printf("\n");
     }
 
     bsal_vector_destroy(&parent_coverage_values);
     bsal_vector_destroy(&child_coverage_values);
 
-    BSAL_DEBUGGER_ASSERT(*status != STATUS_NO_STATUS);
+    BSAL_DEBUGGER_ASSERT(status != STATUS_NO_STATUS);
     BSAL_DEBUGGER_ASSERT(choice == BSAL_HEURISTIC_CHOICE_NONE ||
                     (0 <= choice && choice < size));
+
+    *output_status = status;
 
     return choice;
 }
@@ -1111,7 +1195,9 @@ void bsal_unitig_walker_make_decision(struct thorium_actor *self)
          * Remove the last one because it is not a "easy" vertex.
          */
         old_size = bsal_vector_size(&concrete_self->right_path);
-        if (old_size > 0 && status == STATUS_NOT_REGULAR && remove_irregular_vertices)
+        if (old_size > 0 &&
+                        (status == STATUS_NOT_REGULAR || status == STATUS_DISAGREEMENT)
+                        && remove_irregular_vertices)
             bsal_vector_resize(&concrete_self->right_path, old_size - 1);
 
         /*
@@ -1138,7 +1224,9 @@ void bsal_unitig_walker_make_decision(struct thorium_actor *self)
          */
 
         old_size = bsal_vector_size(&concrete_self->left_path);
-        if (old_size > 0 && status == STATUS_NOT_REGULAR && remove_irregular_vertices)
+        if (old_size > 0 &&
+                        (status == STATUS_NOT_REGULAR || status == STATUS_DISAGREEMENT)
+                        && remove_irregular_vertices)
             bsal_vector_resize(&concrete_self->left_path, old_size - 1);
 
         bsal_dna_kmer_destroy(&concrete_self->current_kmer, &concrete_self->memory_pool);

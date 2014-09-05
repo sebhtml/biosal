@@ -5,6 +5,11 @@
 
 #include <core/structures/vector.h>
 
+#define REPEAT_MULTIPLIER 8
+
+#define SUPER_CAREFUL_WITH_MULTIPLIER
+#define SUPER_CAREFUL_WITH_THRESHOLD
+
 void bsal_unitig_heuristic_init(struct bsal_unitig_heuristic *self)
 {
     self->select = bsal_unitig_heuristic_select_with_flow_split;
@@ -33,6 +38,7 @@ int bsal_unitig_heuristic_select_with_flow_split(struct bsal_unitig_heuristic *s
     int is_strong;
     int size;
     int threshold;
+    int with_same_coverage;
 
     size = bsal_vector_size(coverage_values);
 
@@ -58,13 +64,33 @@ int bsal_unitig_heuristic_select_with_flow_split(struct bsal_unitig_heuristic *s
         coverage = bsal_vector_at_as_int(coverage_values, i);
 
         /*
-         * This change is too big to be OK.
+         * Check if any other edge has the same coverage.
          */
-        if (coverage >= 2 * current_coverage
-                        || current_coverage >= 2 * coverage) {
+        with_same_coverage = 0;
+
+        for (j = 0; j < size; ++j) {
+            other_coverage = bsal_vector_at_as_int(coverage_values, j);
+
+            if (other_coverage == coverage) {
+                ++with_same_coverage;
+            }
+        }
+
+        if (with_same_coverage > 1) {
             continue;
         }
 
+#ifdef SUPER_CAREFUL_WITH_MULTIPLIER
+        /*
+         * This change is too big to be OK.
+         */
+        if (coverage >= REPEAT_MULTIPLIER * current_coverage
+                        || current_coverage >= REPEAT_MULTIPLIER * coverage) {
+            continue;
+        }
+#endif
+
+#ifdef SUPER_CAREFUL_WITH_THRESHOLD
         /*
          * This is a unitig, so it must be
          * regular. Otherwise there could be DNA misassemblies
@@ -73,6 +99,7 @@ int bsal_unitig_heuristic_select_with_flow_split(struct bsal_unitig_heuristic *s
         if (!(coverage >= threshold)) {
             continue;
         }
+#endif
 
         is_strong = 1;
 
