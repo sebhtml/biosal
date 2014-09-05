@@ -1056,6 +1056,9 @@ int bsal_assembly_graph_store_get_store_count_per_node(struct thorium_actor *sel
 {
 #ifdef __bgq__
     int powerpc_a2_processor_core_count;
+    int nodes;
+
+    nodes = thorium_actor_get_node_count(self);
 
     /*
      * The A2 chip has 18 cores (0-17).
@@ -1072,8 +1075,14 @@ int bsal_assembly_graph_store_get_store_count_per_node(struct thorium_actor *sel
      *
      * 512 nodes -> 512 * 8 graph stores
      * 1024 nodes -> 1024 * 8 graph stores
-     * 2048 nodes -> 2048 * 8 graph stores
+     * 2048 nodes -> 2048 * 6 graph stores
      */
+
+
+    if (1 * 512 <= nodes && nodes <= 3 * 512) {
+
+        return powerpc_a2_processor_core_count / 2;
+    }
 
     return powerpc_a2_processor_core_count / 2 - 2;
 #else
