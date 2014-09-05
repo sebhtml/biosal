@@ -89,9 +89,9 @@ int bsal_dna_kmer_frequency_block_pack_unpack(struct bsal_dna_kmer_frequency_blo
 
     bytes = 0;
 
-    bsal_packer_work(&packer, &self->kmer_length, sizeof(self->kmer_length));
+    bsal_packer_process(&packer, &self->kmer_length, sizeof(self->kmer_length));
 
-    bytes += bsal_packer_worked_bytes(&packer);
+    bytes += bsal_packer_get_byte_count(&packer);
 
     bytes += bsal_map_pack_unpack(&self->kmers, operation, ((char *) buffer) + bytes);
 

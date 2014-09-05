@@ -59,10 +59,10 @@ int bsal_assembly_arc_pack_unpack(struct bsal_assembly_arc *self, int operation,
 
     bytes = 0;
 
-    bsal_packer_work(&packer, &self->type, sizeof(self->type));
-    bsal_packer_work(&packer, &self->destination, sizeof(self->destination));
+    bsal_packer_process(&packer, &self->type, sizeof(self->type));
+    bsal_packer_process(&packer, &self->destination, sizeof(self->destination));
 
-    bytes += bsal_packer_worked_bytes(&packer);
+    bytes += bsal_packer_get_byte_count(&packer);
 
     bytes += bsal_dna_kmer_pack_unpack(&self->source, (char *)buffer + bytes, operation,
                     kmer_length, memory, codec);

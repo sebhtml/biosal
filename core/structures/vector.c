@@ -219,14 +219,14 @@ int bsal_vector_pack_unpack(struct bsal_vector *self, void *buffer, int operatio
 
     bsal_packer_init(&packer, operation, buffer);
 
-    bsal_packer_work(&packer, &self->size, sizeof(self->size));
+    bsal_packer_process(&packer, &self->size, sizeof(self->size));
 
 #ifdef BSAL_VECTOR_DEBUG
     printf("DEBUG bsal_vector_pack_unpack operation %d size %d\n",
                     operation, self->size);
 #endif
 
-    bsal_packer_work(&packer, &self->element_size, sizeof(self->element_size));
+    bsal_packer_process(&packer, &self->element_size, sizeof(self->element_size));
 
 #ifdef BSAL_VECTOR_DEBUG
     printf("DEBUG bsal_vector_pack_unpack operation %d element_size %d\n",
@@ -252,10 +252,10 @@ int bsal_vector_pack_unpack(struct bsal_vector *self, void *buffer, int operatio
 
     if (self->size > 0) {
 
-        bsal_packer_work(&packer, self->data, self->size * self->element_size);
+        bsal_packer_process(&packer, self->data, self->size * self->element_size);
     }
 
-    bytes = bsal_packer_worked_bytes(&packer);
+    bytes = bsal_packer_get_byte_count(&packer);
     bsal_packer_destroy(&packer);
 
     return bytes;

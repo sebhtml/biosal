@@ -97,9 +97,9 @@ int bsal_dna_sequence_pack_unpack(struct bsal_dna_sequence *sequence,
     bsal_packer_init(&packer, operation, buffer);
 
     /*
-    bsal_packer_work(&packer, &sequence->pair, sizeof(sequence->pair));
+    bsal_packer_process(&packer, &sequence->pair, sizeof(sequence->pair));
 */
-    bsal_packer_work(&packer, &sequence->length_in_nucleotides, sizeof(sequence->length_in_nucleotides));
+    bsal_packer_process(&packer, &sequence->length_in_nucleotides, sizeof(sequence->length_in_nucleotides));
 
     BSAL_DEBUGGER_ASSERT(sequence->length_in_nucleotides > 0);
 
@@ -138,10 +138,10 @@ int bsal_dna_sequence_pack_unpack(struct bsal_dna_sequence *sequence,
 #endif
 
     if (sequence->length_in_nucleotides > 0) {
-        bsal_packer_work(&packer, sequence->encoded_data, encoded_length);
+        bsal_packer_process(&packer, sequence->encoded_data, encoded_length);
     }
 
-    offset = bsal_packer_worked_bytes(&packer);
+    offset = bsal_packer_get_byte_count(&packer);
 
     bsal_packer_destroy(&packer);
 

@@ -100,7 +100,7 @@ int bsal_dna_kmer_pack_unpack(struct bsal_dna_kmer *sequence,
     /* don't pack the kmer length...
      */
 #if 0
-    bsal_packer_work(&packer, kmer_length, sizeof(kmer_length));
+    bsal_packer_process(&packer, kmer_length, sizeof(kmer_length));
 #endif
 
     encoded_length = bsal_dna_codec_encoded_length(codec, kmer_length);
@@ -117,10 +117,10 @@ int bsal_dna_kmer_pack_unpack(struct bsal_dna_kmer *sequence,
     }
 
     if (kmer_length > 0) {
-        bsal_packer_work(&packer, sequence->encoded_data, encoded_length);
+        bsal_packer_process(&packer, sequence->encoded_data, encoded_length);
     }
 
-    offset = bsal_packer_worked_bytes(&packer);
+    offset = bsal_packer_get_byte_count(&packer);
 
     bsal_packer_destroy(&packer);
 

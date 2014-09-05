@@ -490,9 +490,9 @@ int bsal_dna_kmer_counter_kernel_pack_unpack(struct thorium_actor *actor, int op
 
     bsal_packer_init(&packer, operation, buffer);
 
-    bsal_packer_work(&packer, &concrete_actor->kmer_length, sizeof(concrete_actor->kmer_length));
-    bsal_packer_work(&packer, &producer, sizeof(producer));
-    bsal_packer_work(&packer, &consumer, sizeof(consumer));
+    bsal_packer_process(&packer, &concrete_actor->kmer_length, sizeof(concrete_actor->kmer_length));
+    bsal_packer_process(&packer, &producer, sizeof(producer));
+    bsal_packer_process(&packer, &consumer, sizeof(consumer));
 
     if (operation == BSAL_PACKER_OPERATION_UNPACK) {
 
@@ -500,7 +500,7 @@ int bsal_dna_kmer_counter_kernel_pack_unpack(struct thorium_actor *actor, int op
         concrete_actor->consumer = consumer;
     }
 
-    bytes += bsal_packer_worked_bytes(&packer);
+    bytes += bsal_packer_get_byte_count(&packer);
     bsal_packer_destroy(&packer);
 
     return bytes;

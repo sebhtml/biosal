@@ -68,7 +68,7 @@ int bsal_packer_process(struct bsal_packer *self, void *object, int bytes)
 {
 
 #ifdef BSAL_PACKER_DEBUG
-    printf("DEBUG ENTRY bsal_packer_work operation %d object %p bytes %d offset %d buffer %p\n",
+    printf("DEBUG ENTRY bsal_packer_process operation %d object %p bytes %d offset %d buffer %p\n",
                     self->operation,
                     object, bytes, self->offset, self->buffer);
 #endif
@@ -113,7 +113,7 @@ int bsal_packer_process(struct bsal_packer *self, void *object, int bytes)
     self->offset += bytes;
 
 #ifdef BSAL_PACKER_DEBUG
-    printf("DEBUG bsal_packer_work final offset %d\n", self->offset);
+    printf("DEBUG bsal_packer_process final offset %d\n", self->offset);
 #endif
 
     return self->offset;
@@ -124,7 +124,7 @@ void bsal_packer_rewind(struct bsal_packer *self)
     self->offset = 0;
 }
 
-int bsal_packer_worked_bytes(struct bsal_packer *self)
+int bsal_packer_get_byte_count(struct bsal_packer *self)
 {
     return self->offset;
 }
@@ -145,11 +145,6 @@ void bsal_packer_print_bytes(void *buffer, int bytes)
     integer_value = (int *)buffer;
 
     printf(" integer value: %d\n", *integer_value);
-}
-
-int bsal_packer_work(struct bsal_packer *self, void *object, int bytes)
-{
-    return bsal_packer_process(self, object, bytes);
 }
 
 int bsal_packer_process_int(struct bsal_packer *self, int *object)

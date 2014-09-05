@@ -138,20 +138,20 @@ int bsal_partition_command_pack_unpack(struct bsal_partition_command *self, void
 
     bsal_packer_init(&packer, operation, buffer);
 
-    bsal_packer_work(&packer, &self->name, sizeof(self->name));
+    bsal_packer_process(&packer, &self->name, sizeof(self->name));
 
-    bsal_packer_work(&packer, &self->stream_index, sizeof(self->stream_index));
-    bsal_packer_work(&packer, &self->stream_first, sizeof(self->stream_first));
-    bsal_packer_work(&packer, &self->stream_last, sizeof(self->stream_last));
+    bsal_packer_process(&packer, &self->stream_index, sizeof(self->stream_index));
+    bsal_packer_process(&packer, &self->stream_first, sizeof(self->stream_first));
+    bsal_packer_process(&packer, &self->stream_last, sizeof(self->stream_last));
 
-    bsal_packer_work(&packer, &self->store_index, sizeof(self->store_index));
-    bsal_packer_work(&packer, &self->store_first, sizeof(self->store_first));
-    bsal_packer_work(&packer, &self->store_last, sizeof(self->store_last));
+    bsal_packer_process(&packer, &self->store_index, sizeof(self->store_index));
+    bsal_packer_process(&packer, &self->store_first, sizeof(self->store_first));
+    bsal_packer_process(&packer, &self->store_last, sizeof(self->store_last));
 
-    bsal_packer_work(&packer, &self->global_first, sizeof(self->global_first));
-    bsal_packer_work(&packer, &self->global_last, sizeof(self->global_last));
+    bsal_packer_process(&packer, &self->global_first, sizeof(self->global_first));
+    bsal_packer_process(&packer, &self->global_last, sizeof(self->global_last));
 
-    bytes = bsal_packer_worked_bytes(&packer);
+    bytes = bsal_packer_get_byte_count(&packer);
 
     bsal_packer_destroy(&packer);
 

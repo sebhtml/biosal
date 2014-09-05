@@ -238,14 +238,14 @@ int bsal_hash_table_group_pack_unpack(struct bsal_hash_table_group *self, void *
 
     bsal_packer_init(&packer, operation, buffer);
 
-    bsal_packer_work(&packer, self->array, array_bytes);
-    bsal_packer_work(&packer, self->occupancy_bitmap, bitmap_bytes);
+    bsal_packer_process(&packer, self->array, array_bytes);
+    bsal_packer_process(&packer, self->occupancy_bitmap, bitmap_bytes);
 
     if (deletion_is_enabled) {
-        bsal_packer_work(&packer, self->deletion_bitmap, bitmap_bytes);
+        bsal_packer_process(&packer, self->deletion_bitmap, bitmap_bytes);
     }
 
-    offset = bsal_packer_worked_bytes(&packer);
+    offset = bsal_packer_get_byte_count(&packer);
     bsal_packer_destroy(&packer);
 
     return offset;

@@ -229,11 +229,11 @@ int bsal_map_pack_unpack(struct bsal_map *self, int operation, void *buffer)
     bsal_packer_init(&packer, operation, buffer);
 
 #ifdef BSAL_MAP_ALIGNMENT_ENABLED
-    bsal_packer_work(&packer, &self->original_key_size, sizeof(self->original_key_size));
-    bsal_packer_work(&packer, &self->original_value_size, sizeof(self->original_value_size));
+    bsal_packer_process(&packer, &self->original_key_size, sizeof(self->original_key_size));
+    bsal_packer_process(&packer, &self->original_value_size, sizeof(self->original_value_size));
 #endif
 
-    offset = bsal_packer_worked_bytes(&packer);
+    offset = bsal_packer_get_byte_count(&packer);
     bsal_packer_destroy(&packer);
 
     if (operation == BSAL_PACKER_OPERATION_DRY_RUN) {

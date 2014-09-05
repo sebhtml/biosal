@@ -226,9 +226,9 @@ int bsal_assembly_connectivity_pack_unpack(struct bsal_assembly_connectivity *se
 
     bsal_packer_init(&packer, operation, buffer);
 
-    bsal_packer_work(&packer, &self->bitmap, sizeof(self->bitmap));
+    bsal_packer_process(&packer, &self->bitmap, sizeof(self->bitmap));
 
-    bytes = bsal_packer_worked_bytes(&packer);
+    bytes = bsal_packer_get_byte_count(&packer);
 
     bsal_packer_destroy(&packer);
 

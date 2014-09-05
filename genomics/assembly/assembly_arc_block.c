@@ -145,14 +145,14 @@ int bsal_assembly_arc_block_pack_unpack(struct bsal_assembly_arc_block *self, in
     bsal_packer_init(&packer, operation, buffer);
 
     size = bsal_vector_size(&self->arcs);
-    bsal_packer_work(&packer, &size, sizeof(size));
+    bsal_packer_process(&packer, &size, sizeof(size));
 
     if (operation == BSAL_PACKER_OPERATION_UNPACK) {
 
         bsal_vector_resize(&self->arcs, size);
     }
 
-    bytes = bsal_packer_worked_bytes(&packer);
+    bytes = bsal_packer_get_byte_count(&packer);
 
     bsal_packer_destroy(&packer);
 

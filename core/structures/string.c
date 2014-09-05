@@ -126,15 +126,15 @@ int bsal_string_pack_unpack(struct bsal_string *self, int operation, void *buffe
 
     bsal_packer_init(&packer, operation, buffer);
 
-    bsal_packer_work(&packer, &length, sizeof(length));
+    bsal_packer_process(&packer, &length, sizeof(length));
 
     if (operation == BSAL_PACKER_OPERATION_UNPACK) {
         self->data = bsal_memory_allocate(length + 1);
     }
 
-    bsal_packer_work(&packer, self->data, length + 1);
+    bsal_packer_process(&packer, self->data, length + 1);
 
-    bytes = bsal_packer_worked_bytes(&packer);
+    bytes = bsal_packer_get_byte_count(&packer);
 
     bsal_packer_destroy(&packer);
 

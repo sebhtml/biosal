@@ -69,7 +69,7 @@ int bsal_assembly_graph_summary_pack_unpack(struct bsal_assembly_graph_summary *
     bytes = BSAL_DEGREE_VALUE_COUNT * BSAL_DEGREE_VALUE_COUNT * sizeof(uint64_t);
     bsal_packer_process(&packer, &self->degree_frequencies, bytes);
 
-    count = bsal_packer_worked_bytes(&packer);
+    count = bsal_packer_get_byte_count(&packer);
     bsal_packer_destroy(&packer);
 
     return count;

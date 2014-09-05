@@ -94,8 +94,8 @@ int bsal_dna_kmer_block_pack_unpack(struct bsal_dna_kmer_block *self, void *buff
     BSAL_DEBUG_MARKER("pack unpack 1");
 #endif
 
-    bsal_packer_work(&packer, &self->kmer_length, sizeof(self->kmer_length));
-    bsal_packer_work(&packer, &self->source_index, sizeof(self->source_index));
+    bsal_packer_process(&packer, &self->kmer_length, sizeof(self->kmer_length));
+    bsal_packer_process(&packer, &self->source_index, sizeof(self->source_index));
 
     if (operation != BSAL_PACKER_OPERATION_UNPACK) {
         elements = bsal_vector_size(&self->kmers);
@@ -105,7 +105,7 @@ int bsal_dna_kmer_block_pack_unpack(struct bsal_dna_kmer_block *self, void *buff
     BSAL_DEBUG_MARKER("pack unpack 2");
 #endif
 
-    bsal_packer_work(&packer, &elements, sizeof(elements));
+    bsal_packer_process(&packer, &elements, sizeof(elements));
 
     if (operation == BSAL_PACKER_OPERATION_UNPACK) {
 
@@ -117,7 +117,7 @@ int bsal_dna_kmer_block_pack_unpack(struct bsal_dna_kmer_block *self, void *buff
                     self->source_index, elements);
 #endif
 
-    offset = bsal_packer_worked_bytes(&packer);
+    offset = bsal_packer_get_byte_count(&packer);
     bsal_packer_destroy(&packer);
 
     /* do the rest manually

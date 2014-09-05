@@ -313,18 +313,18 @@ int bsal_hash_table_pack_unpack(struct bsal_hash_table *self, void *buffer, int 
 
     bsal_packer_init(&packer, operation, buffer);
 
-    bsal_packer_work(&packer, &self->elements, sizeof(self->elements));
-    bsal_packer_work(&packer, &self->buckets, sizeof(self->buckets));
+    bsal_packer_process(&packer, &self->elements, sizeof(self->elements));
+    bsal_packer_process(&packer, &self->buckets, sizeof(self->buckets));
 
-    bsal_packer_work(&packer, &self->group_count, sizeof(self->group_count));
-    bsal_packer_work(&packer, &self->buckets_per_group, sizeof(self->buckets_per_group));
-    bsal_packer_work(&packer, &self->key_size, sizeof(self->key_size));
-    bsal_packer_work(&packer, &self->value_size, sizeof(self->value_size));
+    bsal_packer_process(&packer, &self->group_count, sizeof(self->group_count));
+    bsal_packer_process(&packer, &self->buckets_per_group, sizeof(self->buckets_per_group));
+    bsal_packer_process(&packer, &self->key_size, sizeof(self->key_size));
+    bsal_packer_process(&packer, &self->value_size, sizeof(self->value_size));
 
-    bsal_packer_work(&packer, &self->debug, sizeof(self->debug));
-    bsal_packer_work(&packer, &self->deletion_is_enabled, sizeof(self->deletion_is_enabled));
+    bsal_packer_process(&packer, &self->debug, sizeof(self->debug));
+    bsal_packer_process(&packer, &self->deletion_is_enabled, sizeof(self->deletion_is_enabled));
 
-    offset = bsal_packer_worked_bytes(&packer);
+    offset = bsal_packer_get_byte_count(&packer);
 
 #ifdef BSAL_HASH_TABLE_DEBUG
     printf("before destroy\n");

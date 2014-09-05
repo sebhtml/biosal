@@ -188,11 +188,11 @@ int thorium_message_pack_unpack(struct thorium_message *self, int operation, voi
 
     bsal_packer_init(&packer, operation, buffer);
 
-    bsal_packer_work(&packer, &self->source_actor, sizeof(self->source_actor));
-    bsal_packer_work(&packer, &self->destination_actor, sizeof(self->destination_actor));
-    bsal_packer_work(&packer, &self->tag, sizeof(self->tag));
+    bsal_packer_process(&packer, &self->source_actor, sizeof(self->source_actor));
+    bsal_packer_process(&packer, &self->destination_actor, sizeof(self->destination_actor));
+    bsal_packer_process(&packer, &self->tag, sizeof(self->tag));
 
-    count = bsal_packer_worked_bytes(&packer);
+    count = bsal_packer_get_byte_count(&packer);
 
     bsal_packer_destroy(&packer);
 

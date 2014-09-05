@@ -569,9 +569,9 @@ int bsal_aggregator_pack_unpack(struct thorium_actor *actor, int operation, void
     /*
      * Pack the kmer length
      */
-    bsal_packer_work(&packer, &concrete_actor->kmer_length, sizeof(concrete_actor->kmer_length));
+    bsal_packer_process(&packer, &concrete_actor->kmer_length, sizeof(concrete_actor->kmer_length));
 
-    bytes += bsal_packer_worked_bytes(&packer);
+    bytes += bsal_packer_get_byte_count(&packer);
 
     /*
     if (operation == BSAL_PACKER_OPERATION_UNPACK) {

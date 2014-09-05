@@ -24,7 +24,7 @@ int main(int argc, char **argv)
     struct bsal_packer packer;
 
     bsal_packer_init(&packer, BSAL_PACKER_OPERATION_PACK, buffer);
-    bsal_packer_work(&packer, &expected_value, sizeof(expected_value));
+    bsal_packer_process(&packer, &expected_value, sizeof(expected_value));
     bsal_packer_destroy(&packer);
 
     bsal_packer_init(&packer, BSAL_PACKER_OPERATION_UNPACK, buffer);
@@ -32,7 +32,7 @@ int main(int argc, char **argv)
     /*
     printf("DEBUG unpacking in test\n");
     */
-    bsal_packer_work(&packer, &actual_value, sizeof(actual_value));
+    bsal_packer_process(&packer, &actual_value, sizeof(actual_value));
     bsal_packer_destroy(&packer);
 
     /*

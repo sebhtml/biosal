@@ -106,9 +106,9 @@ int bsal_input_command_pack_unpack(struct bsal_input_command *self, void *buffer
 
     bsal_packer_init(&packer, operation, buffer);
 
-    bsal_packer_work(&packer, &self->store_name, sizeof(self->store_name));
-    bsal_packer_work(&packer, &self->store_first, sizeof(self->store_first));
-    bsal_packer_work(&packer, &self->store_last, sizeof(self->store_last));
+    bsal_packer_process(&packer, &self->store_name, sizeof(self->store_name));
+    bsal_packer_process(&packer, &self->store_first, sizeof(self->store_first));
+    bsal_packer_process(&packer, &self->store_last, sizeof(self->store_last));
 
     /* TODO remove this line
      */
@@ -118,7 +118,7 @@ int bsal_input_command_pack_unpack(struct bsal_input_command *self, void *buffer
         bsal_vector_init(&self->entries, sizeof(struct bsal_dna_sequence));
     }
 
-    return bsal_packer_worked_bytes(&packer);
+    return bsal_packer_get_byte_count(&packer);
 */
 
 #ifdef BSAL_INPUT_COMMAND_DEBUG
@@ -145,9 +145,9 @@ int bsal_input_command_pack_unpack(struct bsal_input_command *self, void *buffer
 
     /* 1. entries
      */
-    bsal_packer_work(&packer, &entries, sizeof(entries));
+    bsal_packer_process(&packer, &entries, sizeof(entries));
 
-    offset = bsal_packer_worked_bytes(&packer);
+    offset = bsal_packer_get_byte_count(&packer);
     bsal_packer_destroy(&packer);
 
 #ifdef BSAL_INPUT_COMMAND_DEBUG
