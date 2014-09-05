@@ -74,5 +74,7 @@ int bsal_dna_kmer_first_symbol(struct bsal_dna_kmer *self,
 int bsal_dna_kmer_last_symbol(struct bsal_dna_kmer *self,
                 int kmer_length, struct bsal_dna_codec *codec);
 
+uint64_t bsal_dna_kmer_canonical_hash(struct bsal_dna_kmer *self, int kmer_length,
+                struct bsal_dna_codec *codec, struct bsal_memory_pool *memory);
 
 #endif

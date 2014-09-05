@@ -195,7 +195,7 @@ void bsal_dna_kmer_print(struct bsal_dna_kmer *self, int kmer_length,
 
     printf("KMER length: %d nucleotides, sequence: %s hash %" PRIu64 "\n", kmer_length,
                    dna_sequence,
-                   bsal_dna_kmer_hash(self, kmer_length, codec));
+                   bsal_dna_kmer_canonical_hash(self, kmer_length, codec, memory));
 
     bsal_memory_pool_free(memory, dna_sequence);
     dna_sequence = NULL;
@@ -244,7 +244,19 @@ int bsal_dna_kmer_store_index(struct bsal_dna_kmer *self, int stores, int kmer_l
 {
     uint64_t hash;
     int store_index;
+
+    hash = bsal_dna_kmer_canonical_hash(self, kmer_length, codec, memory);
+
+    store_index = hash % stores;
+
+    return store_index;
+}
+
+uint64_t bsal_dna_kmer_canonical_hash(struct bsal_dna_kmer *self, int kmer_length,
+                struct bsal_dna_codec *codec, struct bsal_memory_pool *memory)
+{
     struct bsal_dna_kmer kmer2;
+    uint64_t hash;
 
     if (bsal_dna_kmer_is_canonical(self, kmer_length, codec)) {
         hash = bsal_dna_kmer_hash(self, kmer_length, codec);
@@ -257,9 +269,7 @@ int bsal_dna_kmer_store_index(struct bsal_dna_kmer *self, int stores, int kmer_l
         bsal_dna_kmer_destroy(&kmer2, memory);
     }
 
-    store_index = hash % stores;
-
-    return store_index;
+    return hash;
 }
 
 void bsal_dna_kmer_get_sequence(struct bsal_dna_kmer *self, char *sequence, int kmer_length,

@@ -878,10 +878,12 @@ void bsal_assembly_graph_store_get_vertex(struct thorium_actor *self, struct tho
     struct bsal_assembly_vertex *canonical_vertex;
     void *key;
     int is_canonical;
+    int source;
 
     ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
     concrete_self = (struct bsal_assembly_graph_store *)thorium_actor_concrete_actor(self);
 
+    source = thorium_message_source(message);
     buffer = thorium_message_buffer(message);
 
     bsal_dna_kmer_init_empty(&kmer);
@@ -923,6 +925,16 @@ void bsal_assembly_graph_store_get_vertex(struct thorium_actor *self, struct tho
 
     bsal_assembly_vertex_init_copy(&vertex, canonical_vertex);
 
+    /*
+     * Mark the vertex with BSAL_VERTEX_STATE_USED after making the
+     * copy.
+     */
+
+    if (bsal_assembly_vertex_state(canonical_vertex) == BSAL_VERTEX_STATE_UNUSED) {
+        bsal_assembly_vertex_set_state(canonical_vertex, BSAL_VERTEX_STATE_USED);
+        bsal_assembly_vertex_set_first_actor(canonical_vertex, source);
+    }
+
     if (!is_canonical) {
 
         bsal_assembly_vertex_invert_arcs(&vertex);
@@ -963,13 +975,25 @@ void bsal_assembly_graph_store_get_starting_vertex(struct thorium_actor *self, s
     ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
     concrete_self = (struct bsal_assembly_graph_store *)thorium_actor_concrete_actor(self);
 
-    if (bsal_map_iterator_has_next(&concrete_self->iterator)) {
+    while (bsal_map_iterator_has_next(&concrete_self->iterator)) {
 
         storage_key = NULL;
         vertex = NULL;
 
         bsal_map_iterator_next(&concrete_self->iterator, (void **)&storage_key,
                         (void **)&vertex);
+
+        /*
+         * Skip the vertex if it is already used.
+         */
+        if (bsal_assembly_vertex_state(vertex) != BSAL_VERTEX_STATE_UNUSED) {
+
+#if 0
+            printf("Skipping state != BSAL_VERTEX_STATE_UNUSED\n");
+#endif
+
+            continue;
+        }
 
         BSAL_DEBUGGER_ASSERT(storage_key != NULL);
 
@@ -1038,9 +1062,13 @@ void bsal_assembly_graph_store_get_starting_vertex(struct thorium_actor *self, s
         bsal_dna_kmer_destroy(&storage_kmer, ephemeral_memory);
         bsal_memory_pool_free(ephemeral_memory, new_buffer);
 
-    } else {
-        thorium_actor_send_reply_empty(self, ACTION_ASSEMBLY_GET_STARTING_VERTEX_REPLY);
+        return;
     }
+
+    /*
+     * An empty reply means that the store has nothing more to yield.
+     */
+    thorium_actor_send_reply_empty(self, ACTION_ASSEMBLY_GET_STARTING_VERTEX_REPLY);
 }
 
 /*

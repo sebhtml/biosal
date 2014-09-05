@@ -1,6 +1,8 @@
 
 #include "assembly_vertex.h"
 
+#include <engine/thorium/actor.h>
+
 #include <core/system/packer.h>
 
 #include <stdio.h>
@@ -8,6 +10,8 @@
 void bsal_assembly_vertex_init(struct bsal_assembly_vertex *self)
 {
     self->coverage_depth = 0;
+    bsal_assembly_vertex_set_state(self, BSAL_VERTEX_STATE_UNUSED);
+    bsal_assembly_vertex_set_first_actor(self, THORIUM_ACTOR_NOBODY);
 
     bsal_assembly_connectivity_init(&self->connectivity);
 }
@@ -114,7 +118,9 @@ int bsal_assembly_vertex_pack_unpack(struct bsal_assembly_vertex *self, int oper
 
     bsal_packer_init(&packer, operation, buffer);
 
-    bytes += bsal_packer_work(&packer, &self->coverage_depth, sizeof(self->coverage_depth));
+    bytes += bsal_packer_process(&packer, &self->coverage_depth, sizeof(self->coverage_depth));
+    bytes += bsal_packer_process(&packer, &self->state, sizeof(self->state));
+    bytes += bsal_packer_process(&packer, &self->first_actor, sizeof(self->first_actor));
 
     bsal_packer_destroy(&packer);
 
@@ -128,6 +134,7 @@ void bsal_assembly_vertex_init_copy(struct bsal_assembly_vertex *self,
                 struct bsal_assembly_vertex *vertex)
 {
     self->coverage_depth = vertex->coverage_depth;
+    self->state = vertex->state;
 
     bsal_assembly_connectivity_init_copy(&self->connectivity, &vertex->connectivity);
 }
@@ -135,4 +142,24 @@ void bsal_assembly_vertex_init_copy(struct bsal_assembly_vertex *self,
 void bsal_assembly_vertex_invert_arcs(struct bsal_assembly_vertex *self)
 {
     bsal_assembly_connectivity_invert_arcs(&self->connectivity);
+}
+
+int bsal_assembly_vertex_state(struct bsal_assembly_vertex *self)
+{
+    return self->state;
+}
+
+void bsal_assembly_vertex_set_state(struct bsal_assembly_vertex *self, int state)
+{
+    self->state = state;
+}
+
+void bsal_assembly_vertex_set_first_actor(struct bsal_assembly_vertex *self, int first_actor)
+{
+    self->first_actor = first_actor;
+}
+
+int bsal_assembly_vertex_first_actor(struct bsal_assembly_vertex *self)
+{
+    return self->first_actor;
 }

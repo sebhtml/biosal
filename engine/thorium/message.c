@@ -176,6 +176,9 @@ void thorium_message_init_with_nodes(struct thorium_message *self, int count, vo
 
     thorium_message_set_source(self, source);
     thorium_message_set_destination(self, destination);
+
+    thorium_message_set_source_node(self, source);
+    thorium_message_set_destination_node(self, destination);
 }
 
 int thorium_message_pack_unpack(struct thorium_message *self, int operation, void *buffer)

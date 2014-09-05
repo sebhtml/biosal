@@ -8,12 +8,19 @@
 
 typedef int coverage_t;
 
+#define BSAL_VERTEX_STATE_UNUSED 0
+#define BSAL_VERTEX_STATE_USED 1
+#define BSAL_VERTEX_STATE_TIP 2
+#define BSAL_VERTEX_STATE_BUBBLE 3
+
 /*
  * Attributes of an assembly vertex
  */
 struct bsal_assembly_vertex {
 
     int coverage_depth;
+    char state;
+    int first_actor;
 
     /*
      * Connectivity.
@@ -47,5 +54,11 @@ int bsal_assembly_vertex_unpack(struct bsal_assembly_vertex *self, void *buffer)
 int bsal_assembly_vertex_pack_unpack(struct bsal_assembly_vertex *self, int operation, void *buffer);
 
 void bsal_assembly_vertex_invert_arcs(struct bsal_assembly_vertex *self);
+
+void bsal_assembly_vertex_set_state(struct bsal_assembly_vertex *self, int state);
+int bsal_assembly_vertex_state(struct bsal_assembly_vertex *self);
+
+void bsal_assembly_vertex_set_first_actor(struct bsal_assembly_vertex *self, int first_actor);
+int bsal_assembly_vertex_first_actor(struct bsal_assembly_vertex *self);
 
 #endif
