@@ -69,6 +69,8 @@ void bsal_unitig_walker_init(struct thorium_actor *self)
 
     concrete_self = (struct bsal_unitig_walker *)thorium_actor_concrete_actor(self);
 
+    bsal_memory_pool_init(&concrete_self->memory_pool, 1048576);
+
     concrete_self->dried_stores = 0;
 
     argc = thorium_actor_argc(self);
@@ -98,8 +100,6 @@ void bsal_unitig_walker_init(struct thorium_actor *self)
                     bsal_unitig_walker_get_vertex_reply_starting_vertex,
                     &concrete_self->has_starting_vertex, 0);
 
-    bsal_memory_pool_init(&concrete_self->memory_pool, 1048576);
-
     bsal_vector_init(&concrete_self->left_path, sizeof(int));
     bsal_vector_set_memory_pool(&concrete_self->left_path, &concrete_self->memory_pool);
 
@@ -107,10 +107,14 @@ void bsal_unitig_walker_init(struct thorium_actor *self)
     bsal_vector_set_memory_pool(&concrete_self->right_path, &concrete_self->memory_pool);
 
     bsal_vector_init(&concrete_self->child_vertices, sizeof(struct bsal_assembly_vertex));
+    bsal_vector_set_memory_pool(&concrete_self->child_vertices, &concrete_self->memory_pool);
     bsal_vector_init(&concrete_self->child_kmers, sizeof(struct bsal_dna_kmer));
+    bsal_vector_set_memory_pool(&concrete_self->child_kmers, &concrete_self->memory_pool);
 
     bsal_vector_init(&concrete_self->parent_vertices, sizeof(struct bsal_assembly_vertex));
+    bsal_vector_set_memory_pool(&concrete_self->parent_vertices, &concrete_self->memory_pool);
     bsal_vector_init(&concrete_self->parent_kmers, sizeof(struct bsal_dna_kmer));
+    bsal_vector_set_memory_pool(&concrete_self->parent_kmers, &concrete_self->memory_pool);
 
     /*
      * Configure the codec.
@@ -270,6 +274,9 @@ void bsal_unitig_walker_start(struct thorium_actor *self, struct thorium_message
     bsal_vector_unpack(&concrete_self->graph_stores, buffer);
     size = bsal_vector_size(&concrete_self->graph_stores);
 
+    /*
+     * Use a random starting point.
+     */
     concrete_self->store_index = rand() % size;
 
     graph = bsal_vector_at_as_int(&concrete_self->graph_stores, concrete_self->store_index);
@@ -295,9 +302,16 @@ void bsal_unitig_walker_get_starting_vertex_reply(struct thorium_actor *self, st
 
         ++concrete_self->dried_stores;
 
+        /*
+         * All the graph was explored.
+         */
         if (concrete_self->dried_stores == bsal_vector_size(&concrete_self->graph_stores)) {
             thorium_actor_send_empty(self, concrete_self->source, ACTION_START_REPLY);
         } else {
+
+            /*
+             * Otherwise, begin a new round using the next graph store.
+             */
             thorium_actor_send_to_self_empty(self, ACTION_BEGIN);
         }
 
@@ -357,6 +371,9 @@ void bsal_unitig_walker_get_vertex_reply_starting_vertex(struct thorium_actor *s
     bsal_assembly_vertex_init(&concrete_self->current_vertex);
     bsal_assembly_vertex_unpack(&concrete_self->current_vertex, buffer);
 
+    /*
+     * This is the starting vertex.
+     */
     bsal_assembly_vertex_init_copy(&concrete_self->starting_vertex,
                     &concrete_self->current_vertex);
 
@@ -412,7 +429,7 @@ void bsal_unitig_walker_get_vertices_and_select(struct thorium_actor *self, stru
      */
 
     /*
-     * Generate child kmers.
+     * Generate child kmers and parent kmers.
      */
     child_count = bsal_assembly_vertex_child_count(&concrete_self->current_vertex);
     parent_count = bsal_assembly_vertex_parent_count(&concrete_self->current_vertex);
@@ -562,7 +579,7 @@ void bsal_unitig_walker_get_vertex_reply(struct thorium_actor *self, struct thor
     struct bsal_assembly_vertex vertex;
 
     buffer = thorium_message_buffer(message);
-    concrete_self = (struct bsal_unitig_walker *)thorium_actor_concrete_actor(self);
+    concrete_self = thorium_actor_concrete_actor(self);
 
     bsal_assembly_vertex_init(&vertex);
     bsal_assembly_vertex_unpack(&vertex, buffer);
@@ -654,7 +671,7 @@ void bsal_unitig_walker_dump_path(struct thorium_actor *self)
     int code;
     uint64_t path_name;
 
-    concrete_self = (struct bsal_unitig_walker *)thorium_actor_concrete_actor(self);
+    concrete_self = thorium_actor_concrete_actor(self);
     ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
 
     left_path_arcs = bsal_vector_size(&concrete_self->left_path);
@@ -671,9 +688,6 @@ void bsal_unitig_walker_dump_path(struct thorium_actor *self)
     sequence_length += concrete_self->kmer_length;
     sequence_length += left_path_arcs;
     sequence_length += right_path_arcs;
-
-    if (sequence_length < MINIMUM_PATH_LENGTH_IN_NUCLEOTIDES)
-        return;
 
     sequence = bsal_memory_pool_allocate(ephemeral_memory, sequence_length + 1);
 
@@ -727,8 +741,10 @@ void bsal_unitig_walker_dump_path(struct thorium_actor *self)
     printf("DEBUG path_name= %" PRIu64 "path_length= %d start_position= %d\n",
                     path_name, sequence_length, start_position);
 
-    bsal_unitig_walker_write(self, path_name,
+    if (sequence_length >= MINIMUM_PATH_LENGTH_IN_NUCLEOTIDES) {
+        bsal_unitig_walker_write(self, path_name,
                     sequence, sequence_length);
+    }
 
     bsal_memory_pool_free(ephemeral_memory, sequence);
 
@@ -772,12 +788,10 @@ int bsal_unitig_walker_select(struct thorium_actor *self, int *status)
     /*
      * This code select the best edge for a unitig.
      */
-    concrete_self = (struct bsal_unitig_walker *)thorium_actor_concrete_actor(self);
+    concrete_self = thorium_actor_concrete_actor(self);
     ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
 
     key = bsal_memory_pool_allocate(ephemeral_memory, concrete_self->key_length);
-
-    found = 0;
 
     if (concrete_self->select_operation == OPERATION_SELECT_CHILD) {
         selected_vertices = &concrete_self->child_vertices;
@@ -855,6 +869,8 @@ int bsal_unitig_walker_select(struct thorium_actor *self, int *status)
         *status = STATUS_NOT_REGULAR;
     }
 
+    found = 0;
+
     /*
      * Verify if it was visited already.
      */
@@ -900,7 +916,9 @@ int bsal_unitig_walker_select(struct thorium_actor *self, int *status)
 
     bsal_memory_pool_free(ephemeral_memory, key);
 
-    if (choice < 0 && bsal_vector_size(selected_path) > 200) {
+    if (choice == BSAL_HEURISTIC_CHOICE_NONE
+                    && bsal_vector_size(selected_path) > 200) {
+
         printf("Notice: can not select, current_coverage %d, %d arcs: ", current_coverage, size);
         for (i = 0; i < size; i++) {
 
@@ -958,7 +976,7 @@ void bsal_unitig_walker_write(struct thorium_actor *self, uint64_t name,
      * \see http://en.wikipedia.org/wiki/FASTA_format
      */
 
-    concrete_self = (struct bsal_unitig_walker *)thorium_actor_concrete_actor(self);
+    concrete_self = thorium_actor_concrete_actor(self);
     column_width = 80;
     ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
 
@@ -1015,8 +1033,11 @@ void bsal_unitig_walker_make_decision(struct thorium_actor *self)
     int code;
     int old_size;
     int status;
+    int remove_irregular_vertices;
 
-    concrete_self = (struct bsal_unitig_walker *)thorium_actor_concrete_actor(self);
+    remove_irregular_vertices = 1;
+
+    concrete_self = thorium_actor_concrete_actor(self);
     ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
 
     /*
@@ -1090,7 +1111,7 @@ void bsal_unitig_walker_make_decision(struct thorium_actor *self)
          * Remove the last one because it is not a "easy" vertex.
          */
         old_size = bsal_vector_size(&concrete_self->right_path);
-        if (old_size > 0 && status == STATUS_NOT_REGULAR)
+        if (old_size > 0 && status == STATUS_NOT_REGULAR && remove_irregular_vertices)
             bsal_vector_resize(&concrete_self->right_path, old_size - 1);
 
         /*
@@ -1117,7 +1138,7 @@ void bsal_unitig_walker_make_decision(struct thorium_actor *self)
          */
 
         old_size = bsal_vector_size(&concrete_self->left_path);
-        if (old_size > 0 && status == STATUS_NOT_REGULAR)
+        if (old_size > 0 && status == STATUS_NOT_REGULAR && remove_irregular_vertices)
             bsal_vector_resize(&concrete_self->left_path, old_size - 1);
 
         bsal_dna_kmer_destroy(&concrete_self->current_kmer, &concrete_self->memory_pool);
@@ -1159,7 +1180,13 @@ uint64_t bsal_unitig_walker_get_path_name(struct thorium_actor *self, int length
     char saved_symbol;
     struct bsal_memory_pool *ephemeral_memory;
 
-    concrete_self = (struct bsal_unitig_walker *)thorium_actor_concrete_actor(self);
+    /*
+     * Get a path name.
+     * To do it, the first and last kmers are selected.
+     * The canonical hash of each of them is computed.
+     * And finally the lower hash value is used for the name.
+     */
+    concrete_self = thorium_actor_concrete_actor(self);
     ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
 
     /*
