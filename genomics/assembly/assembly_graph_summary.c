@@ -40,7 +40,7 @@ int bsal_assembly_graph_summary_pack_size(struct bsal_assembly_graph_summary *se
 {
     int bytes;
 
-    bytes = bsal_assembly_graph_summary_pack_unpack(self, BSAL_PACKER_OPERATION_DRY_RUN, NULL);
+    bytes = bsal_assembly_graph_summary_pack_unpack(self, BSAL_PACKER_OPERATION_PACK_SIZE, NULL);
 
     return bytes;
 }

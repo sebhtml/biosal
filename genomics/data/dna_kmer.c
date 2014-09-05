@@ -50,7 +50,7 @@ void bsal_dna_kmer_destroy(struct bsal_dna_kmer *sequence, struct bsal_memory_po
 
 int bsal_dna_kmer_pack_size(struct bsal_dna_kmer *sequence, int kmer_length, struct bsal_dna_codec *codec)
 {
-    return bsal_dna_kmer_pack_unpack(sequence, NULL, BSAL_PACKER_OPERATION_DRY_RUN,
+    return bsal_dna_kmer_pack_unpack(sequence, NULL, BSAL_PACKER_OPERATION_PACK_SIZE,
                     kmer_length, NULL, codec);
 }
 

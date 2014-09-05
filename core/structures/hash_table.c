@@ -281,7 +281,7 @@ int bsal_hash_table_key_size(struct bsal_hash_table *self)
 
 int bsal_hash_table_pack_size(struct bsal_hash_table *self)
 {
-    return bsal_hash_table_pack_unpack(self, NULL, BSAL_PACKER_OPERATION_DRY_RUN);
+    return bsal_hash_table_pack_unpack(self, NULL, BSAL_PACKER_OPERATION_PACK_SIZE);
 }
 
 int bsal_hash_table_pack(struct bsal_hash_table *self, void *buffer)

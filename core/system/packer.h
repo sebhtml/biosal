@@ -2,9 +2,25 @@
 #ifndef BSAL_PACKER_H
 #define BSAL_PACKER_H
 
-#define BSAL_PACKER_OPERATION_DO_NOTHING 0
-#define BSAL_PACKER_OPERATION_DRY_RUN 1
+/*
+ * Perform nothing.
+ */
+#define BSAL_PACKER_OPERATION_NO_OPERATION 0
+
+/*
+ * Do a dry run to gather the size required by
+ * BSAL_PACKER_OPERATION_PACK.
+ */
+#define BSAL_PACKER_OPERATION_PACK_SIZE 1
+
+/*
+ * Pack stuff in a buffer.
+ */
 #define BSAL_PACKER_OPERATION_PACK 2
+
+/*
+ * Unpack stuff.
+ */
 #define BSAL_PACKER_OPERATION_UNPACK 3
 
 #include <stdint.h>

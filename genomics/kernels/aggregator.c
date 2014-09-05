@@ -611,7 +611,7 @@ int bsal_aggregator_unpack(struct thorium_actor *actor, void *buffer)
 
 int bsal_aggregator_pack_size(struct thorium_actor *actor)
 {
-    return bsal_aggregator_pack_unpack(actor, BSAL_PACKER_OPERATION_DRY_RUN, NULL);
+    return bsal_aggregator_pack_unpack(actor, BSAL_PACKER_OPERATION_PACK_SIZE, NULL);
 }
 
 

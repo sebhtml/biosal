@@ -103,7 +103,7 @@ void bsal_string_combine(struct bsal_string *string, const char *data, int opera
 
 int bsal_string_pack_size(struct bsal_string *self)
 {
-    return bsal_string_pack_unpack(self, BSAL_PACKER_OPERATION_DRY_RUN, NULL);
+    return bsal_string_pack_unpack(self, BSAL_PACKER_OPERATION_PACK_SIZE, NULL);
 }
 
 int bsal_string_pack(struct bsal_string *self, void *buffer)

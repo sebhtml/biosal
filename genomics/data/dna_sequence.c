@@ -62,7 +62,7 @@ void bsal_dna_sequence_destroy(struct bsal_dna_sequence *sequence, struct bsal_m
 
 int bsal_dna_sequence_pack_size(struct bsal_dna_sequence *sequence, struct bsal_dna_codec *codec)
 {
-    return bsal_dna_sequence_pack_unpack(sequence, NULL, BSAL_PACKER_OPERATION_DRY_RUN, NULL, codec);
+    return bsal_dna_sequence_pack_unpack(sequence, NULL, BSAL_PACKER_OPERATION_PACK_SIZE, NULL, codec);
 }
 
 int bsal_dna_sequence_unpack(struct bsal_dna_sequence *sequence,

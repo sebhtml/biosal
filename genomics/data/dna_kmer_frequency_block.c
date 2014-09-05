@@ -59,7 +59,7 @@ void bsal_dna_kmer_frequency_block_add_kmer(struct bsal_dna_kmer_frequency_block
 int bsal_dna_kmer_frequency_block_pack_size(struct bsal_dna_kmer_frequency_block *self, struct bsal_dna_codec *codec)
 {
 
-    return bsal_dna_kmer_frequency_block_pack_unpack(self, NULL, BSAL_PACKER_OPERATION_DRY_RUN,
+    return bsal_dna_kmer_frequency_block_pack_unpack(self, NULL, BSAL_PACKER_OPERATION_PACK_SIZE,
                     NULL, codec);
 }
 

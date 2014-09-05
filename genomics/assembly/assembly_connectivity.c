@@ -206,7 +206,7 @@ void bsal_assembly_connectivity_print(struct bsal_assembly_connectivity *self)
 
 int bsal_assembly_connectivity_pack_size(struct bsal_assembly_connectivity *self)
 {
-    return bsal_assembly_connectivity_pack_unpack(self, BSAL_PACKER_OPERATION_DRY_RUN, NULL);
+    return bsal_assembly_connectivity_pack_unpack(self, BSAL_PACKER_OPERATION_PACK_SIZE, NULL);
 }
 
 int bsal_assembly_connectivity_pack(struct bsal_assembly_connectivity *self, void *buffer)

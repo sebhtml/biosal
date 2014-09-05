@@ -634,7 +634,7 @@ int bsal_assembly_block_classifier_unpack(struct thorium_actor *actor, void *buf
 
 int bsal_assembly_block_classifier_pack_size(struct thorium_actor *actor)
 {
-    return bsal_assembly_block_classifier_pack_unpack(actor, BSAL_PACKER_OPERATION_DRY_RUN, NULL);
+    return bsal_assembly_block_classifier_pack_unpack(actor, BSAL_PACKER_OPERATION_PACK_SIZE, NULL);
 }
 
 

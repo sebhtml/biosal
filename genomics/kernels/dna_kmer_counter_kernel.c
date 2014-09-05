@@ -459,7 +459,7 @@ int bsal_dna_kmer_counter_kernel_unpack(struct thorium_actor *actor, void *buffe
 
 int bsal_dna_kmer_counter_kernel_pack_size(struct thorium_actor *actor)
 {
-    return bsal_dna_kmer_counter_kernel_pack_unpack(actor, BSAL_PACKER_OPERATION_DRY_RUN, NULL);
+    return bsal_dna_kmer_counter_kernel_pack_unpack(actor, BSAL_PACKER_OPERATION_PACK_SIZE, NULL);
 }
 
 /*

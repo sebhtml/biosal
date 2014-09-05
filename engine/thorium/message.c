@@ -114,7 +114,7 @@ void thorium_message_set_tag(struct thorium_message *message, int tag)
 
 int thorium_message_metadata_size(struct thorium_message *self)
 {
-    return thorium_message_pack_unpack(self, BSAL_PACKER_OPERATION_DRY_RUN,
+    return thorium_message_pack_unpack(self, BSAL_PACKER_OPERATION_PACK_SIZE,
                     NULL);
 }
 

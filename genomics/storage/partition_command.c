@@ -81,7 +81,7 @@ int bsal_partition_command_store_index(struct bsal_partition_command *self)
 
 int bsal_partition_command_pack_size(struct bsal_partition_command *self)
 {
-    return bsal_partition_command_pack_unpack(self, NULL, BSAL_PACKER_OPERATION_DRY_RUN);
+    return bsal_partition_command_pack_unpack(self, NULL, BSAL_PACKER_OPERATION_PACK_SIZE);
 }
 
 void bsal_partition_command_pack(struct bsal_partition_command *self, void *buffer)

@@ -55,7 +55,7 @@ int bsal_input_command_store_name(struct bsal_input_command *self)
 int bsal_input_command_pack_size(struct bsal_input_command *self,
                 struct bsal_dna_codec *codec)
 {
-    return bsal_input_command_pack_unpack(self, NULL, BSAL_PACKER_OPERATION_DRY_RUN, NULL, codec);
+    return bsal_input_command_pack_unpack(self, NULL, BSAL_PACKER_OPERATION_PACK_SIZE, NULL, codec);
 }
 
 int bsal_input_command_pack(struct bsal_input_command *self, void *buffer,
@@ -134,7 +134,7 @@ int bsal_input_command_pack_unpack(struct bsal_input_command *self, void *buffer
      */
 
     if (operation == BSAL_PACKER_OPERATION_PACK
-                    || operation == BSAL_PACKER_OPERATION_DRY_RUN) {
+                    || operation == BSAL_PACKER_OPERATION_PACK_SIZE) {
         entries = bsal_vector_size(&self->entries);
     } else if (operation == BSAL_PACKER_OPERATION_UNPACK) {
 
@@ -188,7 +188,7 @@ int bsal_input_command_pack_unpack(struct bsal_input_command *self, void *buffer
                             bytes, offset);
 #endif
         }
-    } else if (operation == BSAL_PACKER_OPERATION_DRY_RUN) {
+    } else if (operation == BSAL_PACKER_OPERATION_PACK_SIZE) {
 
         i = 0;
         while (entries--) {

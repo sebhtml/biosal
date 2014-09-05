@@ -96,7 +96,7 @@ void bsal_assembly_vertex_print(struct bsal_assembly_vertex *self)
 
 int bsal_assembly_vertex_pack_size(struct bsal_assembly_vertex *self)
 {
-    return bsal_assembly_vertex_pack_unpack(self, BSAL_PACKER_OPERATION_DRY_RUN, NULL);
+    return bsal_assembly_vertex_pack_unpack(self, BSAL_PACKER_OPERATION_PACK_SIZE, NULL);
 }
 
 int bsal_assembly_vertex_pack(struct bsal_assembly_vertex *self, void *buffer)

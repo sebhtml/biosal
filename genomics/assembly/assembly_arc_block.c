@@ -112,7 +112,7 @@ void bsal_assembly_arc_block_add_arc(struct bsal_assembly_arc_block *self,
 
 int bsal_assembly_arc_block_pack_size(struct bsal_assembly_arc_block *self, int kmer_length, struct bsal_dna_codec *codec)
 {
-    return bsal_assembly_arc_block_pack_unpack(self, BSAL_PACKER_OPERATION_DRY_RUN,
+    return bsal_assembly_arc_block_pack_unpack(self, BSAL_PACKER_OPERATION_PACK_SIZE,
                     NULL, kmer_length, codec, NULL);
 }
 

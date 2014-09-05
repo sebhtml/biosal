@@ -29,7 +29,7 @@ void bsal_assembly_arc_destroy(struct bsal_assembly_arc *self,
 
 int bsal_assembly_arc_pack_size(struct bsal_assembly_arc *self, int kmer_length, struct bsal_dna_codec *codec)
 {
-    return bsal_assembly_arc_pack_unpack(self, BSAL_PACKER_OPERATION_DRY_RUN,
+    return bsal_assembly_arc_pack_unpack(self, BSAL_PACKER_OPERATION_PACK_SIZE,
                     NULL, kmer_length, NULL, codec);
 }
 

@@ -58,7 +58,7 @@ void bsal_dna_kmer_block_add_kmer(struct bsal_dna_kmer_block *self, struct bsal_
 
 int bsal_dna_kmer_block_pack_size(struct bsal_dna_kmer_block *self, struct bsal_dna_codec *codec)
 {
-    return bsal_dna_kmer_block_pack_unpack(self, NULL, BSAL_PACKER_OPERATION_DRY_RUN, NULL, codec);
+    return bsal_dna_kmer_block_pack_unpack(self, NULL, BSAL_PACKER_OPERATION_PACK_SIZE, NULL, codec);
 }
 
 int bsal_dna_kmer_block_pack(struct bsal_dna_kmer_block *self, void *buffer,

@@ -83,7 +83,7 @@ struct bsal_dynamic_hash_table *bsal_map_table(struct bsal_map *self)
 
 int bsal_map_pack_size(struct bsal_map *self)
 {
-    return bsal_map_pack_unpack(self, BSAL_PACKER_OPERATION_DRY_RUN, NULL);
+    return bsal_map_pack_unpack(self, BSAL_PACKER_OPERATION_PACK_SIZE, NULL);
 }
 
 int bsal_map_pack(struct bsal_map *self, void *buffer)
@@ -236,7 +236,7 @@ int bsal_map_pack_unpack(struct bsal_map *self, int operation, void *buffer)
     offset = bsal_packer_get_byte_count(&packer);
     bsal_packer_destroy(&packer);
 
-    if (operation == BSAL_PACKER_OPERATION_DRY_RUN) {
+    if (operation == BSAL_PACKER_OPERATION_PACK_SIZE) {
         offset += bsal_dynamic_hash_table_pack_size(&self->table);
 
     } else if (operation == BSAL_PACKER_OPERATION_PACK) {

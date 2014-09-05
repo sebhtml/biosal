@@ -113,7 +113,7 @@ void bsal_vector_push_back(struct bsal_vector *self, void *data)
 
 int bsal_vector_pack_size(struct bsal_vector *self)
 {
-    return bsal_vector_pack_unpack(self, NULL, BSAL_PACKER_OPERATION_DRY_RUN);
+    return bsal_vector_pack_unpack(self, NULL, BSAL_PACKER_OPERATION_PACK_SIZE);
 }
 
 int bsal_vector_pack(struct bsal_vector *self, void *buffer)

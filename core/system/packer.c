@@ -13,7 +13,7 @@
 
 void bsal_packer_init(struct bsal_packer *self, int operation, void *buffer)
 {
-    self->operation = BSAL_PACKER_OPERATION_DO_NOTHING;
+    self->operation = BSAL_PACKER_OPERATION_NO_OPERATION;
 
 #ifdef BSAL_PACKER_DEBUG
     printf("DEBUG bsal_packer_init operation %d buffer %p\n", operation, buffer);
@@ -21,7 +21,7 @@ void bsal_packer_init(struct bsal_packer *self, int operation, void *buffer)
 
     /* The buffer is not needed for dry runs
      */
-    if (operation == BSAL_PACKER_OPERATION_DRY_RUN) {
+    if (operation == BSAL_PACKER_OPERATION_PACK_SIZE) {
         self->buffer = NULL;
         self->offset = 0;
         self->operation = operation;
@@ -34,7 +34,7 @@ void bsal_packer_init(struct bsal_packer *self, int operation, void *buffer)
     }
 
     if (buffer == NULL) {
-        self->operation = BSAL_PACKER_OPERATION_DO_NOTHING;
+        self->operation = BSAL_PACKER_OPERATION_NO_OPERATION;
         self->offset = 0;
         self->buffer = buffer;
     }
@@ -59,7 +59,7 @@ void bsal_packer_init(struct bsal_packer *self, int operation, void *buffer)
 
 void bsal_packer_destroy(struct bsal_packer *self)
 {
-    self->operation = BSAL_PACKER_OPERATION_DO_NOTHING;
+    self->operation = BSAL_PACKER_OPERATION_NO_OPERATION;
     self->offset = 0;
     self->buffer = NULL;
 }
@@ -73,7 +73,7 @@ int bsal_packer_process(struct bsal_packer *self, void *object, int bytes)
                     object, bytes, self->offset, self->buffer);
 #endif
 
-    if (self->operation == BSAL_PACKER_OPERATION_DO_NOTHING) {
+    if (self->operation == BSAL_PACKER_OPERATION_NO_OPERATION) {
         return self->offset;
     }
 
@@ -98,7 +98,7 @@ int bsal_packer_process(struct bsal_packer *self, void *object, int bytes)
 
         bsal_memory_copy(object, (char *)self->buffer + self->offset, bytes);
 
-    } else if (self->operation == BSAL_PACKER_OPERATION_DRY_RUN) {
+    } else if (self->operation == BSAL_PACKER_OPERATION_PACK_SIZE) {
         /* just increase the offset.
          */
     }
