@@ -21,4 +21,4 @@ do
     echo ""
 done > DefectList.txt
 
-echo "Check DefectList.txt ($(cat DefectList.txt |grep ^Defect| wc -l))"
+echo "Check DefectList.txt (defects: $(cat DefectList.txt |grep ^Defect| wc -l) / $(cat raw-names | wc -l))"

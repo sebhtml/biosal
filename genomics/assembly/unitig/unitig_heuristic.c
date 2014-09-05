@@ -38,7 +38,7 @@ int bsal_unitig_heuristic_select_with_flow_split(struct bsal_unitig_heuristic *s
 
     configured_divisor = BSAL_MAXIMUM_DEGREE;
     threshold = current_coverage / configured_divisor;
-    choice = -1;
+    choice = BSAL_HEURISTIC_CHOICE_NONE;
 
     for (i = 0; i < size; i++) {
         /*

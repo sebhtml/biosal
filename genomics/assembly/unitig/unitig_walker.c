@@ -8,6 +8,8 @@
 #include <genomics/data/dna_kmer.h>
 #include <genomics/data/dna_codec.h>
 
+#include <core/helpers/order.h>
+
 #include <core/system/command.h>
 #include <core/system/debugger.h>
 
@@ -23,6 +25,8 @@
 /*
 #define BSAL_UNITIG_WALKER_DEBUG
 */
+
+#define MINIMUM_PATH_LENGTH_IN_NUCLEOTIDES 100
 
 #define OPERATION_FETCH_FIRST 0
 #define OPERATION_FETCH_PARENTS 1
@@ -85,7 +89,10 @@ void bsal_unitig_walker_init(struct thorium_actor *self)
     bsal_memory_pool_init(&concrete_self->memory_pool, 1048576);
 
     bsal_vector_init(&concrete_self->left_path, sizeof(int));
+    bsal_vector_set_memory_pool(&concrete_self->left_path, &concrete_self->memory_pool);
+
     bsal_vector_init(&concrete_self->right_path, sizeof(int));
+    bsal_vector_set_memory_pool(&concrete_self->right_path, &concrete_self->memory_pool);
 
     bsal_vector_init(&concrete_self->child_vertices, sizeof(struct bsal_assembly_vertex));
     bsal_vector_init(&concrete_self->child_kmers, sizeof(struct bsal_dna_kmer));
@@ -134,7 +141,6 @@ void bsal_unitig_walker_destroy(struct thorium_actor *self)
 
     concrete_self = (struct bsal_unitig_walker *)thorium_actor_concrete_actor(self);
 
-    bsal_memory_pool_destroy(&concrete_self->memory_pool);
     bsal_dna_codec_destroy(&concrete_self->codec);
 
     bsal_string_destroy(&concrete_self->file_path);
@@ -159,6 +165,11 @@ void bsal_unitig_walker_destroy(struct thorium_actor *self)
     bsal_assembly_vertex_destroy(&concrete_self->current_vertex);
 
     bsal_unitig_heuristic_destroy(&concrete_self->heuristic);
+
+    /*
+     * Destroy the memory pool at the end.
+     */
+    bsal_memory_pool_destroy(&concrete_self->memory_pool);
 }
 
 void bsal_unitig_walker_receive(struct thorium_actor *self, struct thorium_message *message)
@@ -628,6 +639,7 @@ void bsal_unitig_walker_dump_path(struct thorium_actor *self)
     int i;
     char nucleotide;
     int code;
+    uint64_t path_name;
 
     concrete_self = (struct bsal_unitig_walker *)thorium_actor_concrete_actor(self);
     ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
@@ -646,6 +658,9 @@ void bsal_unitig_walker_dump_path(struct thorium_actor *self)
     sequence_length += concrete_self->kmer_length;
     sequence_length += left_path_arcs;
     sequence_length += right_path_arcs;
+
+    if (sequence_length < MINIMUM_PATH_LENGTH_IN_NUCLEOTIDES)
+        return;
 
     sequence = bsal_memory_pool_allocate(ephemeral_memory, sequence_length + 1);
 
@@ -685,7 +700,9 @@ void bsal_unitig_walker_dump_path(struct thorium_actor *self)
 
     sequence[sequence_length] = '\0';
 
-    bsal_unitig_walker_write(self, concrete_self->hash_value,
+    path_name = bsal_unitig_walker_get_path_name(self, sequence_length, sequence);
+
+    bsal_unitig_walker_write(self, path_name,
                     sequence, sequence_length);
 
     bsal_memory_pool_free(ephemeral_memory, sequence);
@@ -703,9 +720,12 @@ void bsal_unitig_walker_dump_path(struct thorium_actor *self)
 int bsal_unitig_walker_select(struct thorium_actor *self)
 {
     int choice;
+    int parent_choice;
+    int child_choice;
     struct bsal_unitig_walker *concrete_self;
     int current_coverage;
-    int size;
+    int parent_size;
+    int child_size;
     int i;
     int code;
     char nucleotide;
@@ -717,8 +737,10 @@ int bsal_unitig_walker_select(struct thorium_actor *self)
     int found;
     struct bsal_vector *selected_vertices;
     struct bsal_vector *selected_kmers;
-    struct bsal_vector coverage_values;
+    struct bsal_vector parent_coverage_values;
+    struct bsal_vector child_coverage_values;
     struct bsal_vector *selected_path;
+    int size;
 
     /*
      * This code select the best edge for a unitig.
@@ -728,7 +750,6 @@ int bsal_unitig_walker_select(struct thorium_actor *self)
 
     key = bsal_memory_pool_allocate(ephemeral_memory, concrete_self->key_length);
 
-    size = 0;
     found = 0;
 
     if (concrete_self->select_operation == OPERATION_SELECT_CHILD) {
@@ -741,26 +762,63 @@ int bsal_unitig_walker_select(struct thorium_actor *self)
         selected_path = &concrete_self->left_path;
     }
 
-    size = bsal_vector_size(selected_vertices);
     current_coverage = bsal_assembly_vertex_coverage_depth(&concrete_self->current_vertex);
+    size = bsal_vector_size(selected_vertices);
 
-    bsal_vector_init(&coverage_values, sizeof(int));
-    bsal_vector_set_memory_pool(&coverage_values, ephemeral_memory);
+    /*
+     * Get the selected parent
+     */
 
-    for (i = 0; i < size; i++) {
-        vertex = bsal_vector_at(selected_vertices, i);
+    parent_size = bsal_vector_size(&concrete_self->parent_vertices);
+    bsal_vector_init(&parent_coverage_values, sizeof(int));
+    bsal_vector_set_memory_pool(&parent_coverage_values, ephemeral_memory);
+
+    for (i = 0; i < parent_size; i++) {
+        vertex = bsal_vector_at(&concrete_self->parent_vertices, i);
         coverage = bsal_assembly_vertex_coverage_depth(vertex);
-        bsal_vector_push_back(&coverage_values, &coverage);
+        bsal_vector_push_back(&parent_coverage_values, &coverage);
     }
 
-    choice = bsal_unitig_heuristic_select(&concrete_self->heuristic, current_coverage,
-                    &coverage_values);
+    parent_choice = bsal_unitig_heuristic_select(&concrete_self->heuristic, current_coverage,
+                    &parent_coverage_values);
 
+    /*
+     * Select the child.
+     */
+    child_size = bsal_vector_size(&concrete_self->child_vertices);
+
+    bsal_vector_init(&child_coverage_values, sizeof(int));
+    bsal_vector_set_memory_pool(&child_coverage_values, ephemeral_memory);
+
+    for (i = 0; i < child_size; i++) {
+        vertex = bsal_vector_at(&concrete_self->child_vertices, i);
+        coverage = bsal_assembly_vertex_coverage_depth(vertex);
+        bsal_vector_push_back(&child_coverage_values, &coverage);
+    }
+
+    child_choice = bsal_unitig_heuristic_select(&concrete_self->heuristic, current_coverage,
+                    &child_coverage_values);
+
+    /*
+     * Pick up the choice.
+     */
+    if (concrete_self->select_operation == OPERATION_SELECT_PARENT)
+        choice = parent_choice;
+    else
+        choice = child_choice;
+
+    /*
+     * Enforce mathematical symmetry.
+     */
+    if (parent_choice == BSAL_HEURISTIC_CHOICE_NONE
+                    || child_choice == BSAL_HEURISTIC_CHOICE_NONE)
+        choice = BSAL_HEURISTIC_CHOICE_NONE;
+
+    /*
+     * Verify if it was visited already.
+     */
     if (choice >= 0) {
 
-        /*
-         * Verify if it was visited already.
-         */
         kmer = bsal_vector_at(selected_kmers, choice);
 
         bsal_dna_kmer_pack(kmer, key, concrete_self->kmer_length,
@@ -780,7 +838,7 @@ int bsal_unitig_walker_select(struct thorium_actor *self)
 
             bsal_dna_kmer_print(kmer, concrete_self->kmer_length, &concrete_self->codec,
                         ephemeral_memory);
-            choice = -1;
+            choice = BSAL_HEURISTIC_CHOICE_NONE;
         }
     }
 #ifdef BSAL_UNITIG_WALKER_DEBUG
@@ -794,7 +852,7 @@ int bsal_unitig_walker_select(struct thorium_actor *self)
      */
     if (bsal_vector_size(&concrete_self->left_path) >= 100000) {
 
-        choice = -1;
+        choice = BSAL_HEURISTIC_CHOICE_NONE;
     }
 #endif
 
@@ -806,15 +864,13 @@ int bsal_unitig_walker_select(struct thorium_actor *self)
 
             if (concrete_self->select_operation == OPERATION_SELECT_CHILD) {
                 code = bsal_assembly_vertex_get_child(&concrete_self->current_vertex, i);
+                coverage = bsal_vector_at_as_int(&child_coverage_values, i);
             } else /*if (concrete_self->select_operation == OPERATION_SELECT_CHILD) */ {
                 code = bsal_assembly_vertex_get_parent(&concrete_self->current_vertex, i);
+                coverage = bsal_vector_at_as_int(&parent_coverage_values, i);
             }
 
             nucleotide = bsal_dna_codec_get_nucleotide_from_code(code);
-            vertex = bsal_vector_at(selected_vertices, i);
-            kmer = bsal_vector_at(selected_kmers, i);
-
-            coverage = bsal_assembly_vertex_coverage_depth(vertex);
 
             printf(" (%c %d)", nucleotide, coverage);
         }
@@ -834,6 +890,9 @@ int bsal_unitig_walker_select(struct thorium_actor *self)
             printf("Unknown\n");
         }
     }
+
+    bsal_vector_destroy(&parent_coverage_values);
+    bsal_vector_destroy(&child_coverage_values);
 
     return choice;
 }
@@ -908,7 +967,7 @@ void bsal_unitig_walker_make_decision(struct thorium_actor *self)
     struct bsal_vector *selected_output_path;
     struct bsal_memory_pool *ephemeral_memory;
     int code;
-    uint64_t hash_value;
+    int old_size;
 
     concrete_self = (struct bsal_unitig_walker *)thorium_actor_concrete_actor(self);
     ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
@@ -975,15 +1034,16 @@ void bsal_unitig_walker_make_decision(struct thorium_actor *self)
     } else if (concrete_self->select_operation == OPERATION_SELECT_CHILD) {
 
         /*
+         * Remove the last one because it is not a "easy" vertex.
+         */
+        old_size = bsal_vector_size(&concrete_self->right_path);
+        if (old_size > 0)
+            bsal_vector_resize(&concrete_self->right_path, old_size - 1);
+
+        /*
          * Switch now to OPERATION_SELECT_PARENT
          */
         concrete_self->select_operation = OPERATION_SELECT_PARENT;
-
-        hash_value = bsal_dna_kmer_canonical_hash(&concrete_self->current_kmer,
-                        concrete_self->kmer_length, &concrete_self->codec,
-                       ephemeral_memory);
-
-        concrete_self->hash_value = hash_value;
 
         /*
          * Change the current vertex.
@@ -1000,15 +1060,12 @@ void bsal_unitig_walker_make_decision(struct thorium_actor *self)
     } else if (concrete_self->select_operation == OPERATION_SELECT_PARENT) {
 
         /*
-         * Get the hash value
+         * Remove the last one because it is not a "easy" vertex.
          */
-        hash_value = bsal_dna_kmer_canonical_hash(&concrete_self->current_kmer,
-                        concrete_self->kmer_length, &concrete_self->codec,
-                        ephemeral_memory);
 
-        if (hash_value < concrete_self->hash_value) {
-            concrete_self->hash_value = hash_value;
-        }
+        old_size = bsal_vector_size(&concrete_self->left_path);
+        if (old_size > 0)
+            bsal_vector_resize(&concrete_self->left_path, old_size - 1);
 
         bsal_dna_kmer_destroy(&concrete_self->current_kmer, &concrete_self->memory_pool);
         bsal_assembly_vertex_destroy(&concrete_self->current_vertex);
@@ -1036,4 +1093,55 @@ void bsal_unitig_walker_set_current(struct thorium_actor *self,
 
     bsal_assembly_vertex_destroy(&concrete_self->current_vertex);
     bsal_assembly_vertex_init_copy(&concrete_self->current_vertex, vertex);
+}
+
+uint64_t bsal_unitig_walker_get_path_name(struct thorium_actor *self, int length, char *sequence)
+{
+    struct bsal_dna_kmer kmer1;
+    uint64_t hash_value1;
+    struct bsal_dna_kmer kmer2;
+    uint64_t hash_value2;
+    struct bsal_unitig_walker *concrete_self;
+    char *kmer_sequence;
+    char saved_symbol;
+    struct bsal_memory_pool *ephemeral_memory;
+
+    concrete_self = (struct bsal_unitig_walker *)thorium_actor_concrete_actor(self);
+    ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
+
+    /*
+     * Get the left hash value.
+     */
+    kmer_sequence = sequence;
+    saved_symbol = kmer_sequence[concrete_self->kmer_length];
+    kmer_sequence[concrete_self->kmer_length] = '\0';
+
+    bsal_dna_kmer_init(&kmer1, kmer_sequence, &concrete_self->codec,
+                    ephemeral_memory);
+    kmer_sequence[concrete_self->kmer_length] = saved_symbol;
+
+    hash_value1 = bsal_dna_kmer_canonical_hash(&kmer1,
+                        concrete_self->kmer_length, &concrete_self->codec,
+                       ephemeral_memory);
+    bsal_dna_kmer_destroy(&kmer1, ephemeral_memory);
+
+    /*
+     * Get the second hash value.
+     */
+
+    BSAL_DEBUGGER_ASSERT(concrete_self->kmer_length <= length);
+
+    kmer_sequence = sequence + length - concrete_self->kmer_length;
+
+    bsal_dna_kmer_init(&kmer2, kmer_sequence, &concrete_self->codec,
+                    ephemeral_memory);
+    hash_value2 = bsal_dna_kmer_canonical_hash(&kmer2,
+                        concrete_self->kmer_length, &concrete_self->codec,
+                       ephemeral_memory);
+    bsal_dna_kmer_destroy(&kmer2, ephemeral_memory);
+
+    /*
+     * Return the lowest value.
+     */
+    return bsal_order_minimum(hash_value1, hash_value2);
 }

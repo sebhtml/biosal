@@ -5,6 +5,8 @@
 struct bsal_vector;
 struct bsal_unitig_heuristic;
 
+#define BSAL_HEURISTIC_CHOICE_NONE (-1)
+
 /*
  * A heuristic for computing unitigs.
  */

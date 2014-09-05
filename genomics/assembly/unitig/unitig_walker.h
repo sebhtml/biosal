@@ -68,8 +68,6 @@ struct bsal_unitig_walker {
     int fetch_operation;
     int select_operation;
 
-    uint64_t hash_value;
-
     struct bsal_unitig_heuristic heuristic;
 };
 
@@ -98,5 +96,6 @@ void bsal_unitig_walker_make_decision(struct thorium_actor *self);
 
 void bsal_unitig_walker_set_current(struct thorium_actor *self,
                 struct bsal_dna_kmer *kmer, struct bsal_assembly_vertex *vertex);
+uint64_t bsal_unitig_walker_get_path_name(struct thorium_actor *self, int length, char *sequence);
 
 #endif
