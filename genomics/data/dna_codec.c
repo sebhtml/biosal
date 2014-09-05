@@ -110,10 +110,10 @@ void bsal_dna_codec_generate_block(struct bsal_dna_codec *self, int position, ch
 #endif
 
         bucket = bsal_map_add(&self->encoding_lookup_table, block);
-        memcpy(bucket, buffer, 1);
+        bsal_memory_copy(bucket, buffer, 1);
 
         bucket = bsal_map_add(&self->decoding_lookup_table, buffer);
-        memcpy(bucket, block, self->block_length);
+        bsal_memory_copy(bucket, block, self->block_length);
     }
 
 }
@@ -198,7 +198,7 @@ void bsal_dna_codec_encode_with_blocks(struct bsal_dna_codec *self,
             /* A is 00, so it is the same as nothing
              */
             memset(data, 'A', self->block_length);
-            memcpy(data, block, remaining);
+            bsal_memory_copy(data, block, remaining);
             block = data;
         }
 
@@ -281,7 +281,7 @@ void bsal_dna_codec_decode_with_blocks(struct bsal_dna_codec *self,
         if (to_copy > remaining) {
             to_copy = remaining;
         }
-        memcpy(dna_sequence + nucleotide_position, encoded_block, to_copy);
+        bsal_memory_copy(dna_sequence + nucleotide_position, encoded_block, to_copy);
 
         nucleotide_position += self->block_length;
         encoded_position++;

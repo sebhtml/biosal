@@ -525,7 +525,10 @@ void bsal_unitig_walker_get_vertices_and_select_reply(struct thorium_actor *self
 
     bsal_unitig_walker_dump_path(self);
 
-    printf("path_index is %d\n", concrete_self->path_index);
+    if (concrete_self->path_index % 1000 == 0) {
+        printf("path_index is %d\n", concrete_self->path_index);
+    }
+
     thorium_actor_send_to_self_empty(self, ACTION_BEGIN);
 }
 
@@ -634,9 +637,11 @@ void bsal_unitig_walker_dump_path(struct thorium_actor *self)
 
     sequence_length = 0;
 
+#if 0
     printf("DEBUG dump_path() kmer_length %d left_path_arcs %d right_path_arcs %d\n",
                     concrete_self->kmer_length,
                     left_path_arcs, right_path_arcs);
+#endif
 
     sequence_length += concrete_self->kmer_length;
     sequence_length += left_path_arcs;
@@ -713,6 +718,7 @@ int bsal_unitig_walker_select(struct thorium_actor *self)
     struct bsal_vector *selected_vertices;
     struct bsal_vector *selected_kmers;
     struct bsal_vector coverage_values;
+    struct bsal_vector *selected_path;
 
     /*
      * This code select the best edge for a unitig.
@@ -728,9 +734,11 @@ int bsal_unitig_walker_select(struct thorium_actor *self)
     if (concrete_self->select_operation == OPERATION_SELECT_CHILD) {
         selected_vertices = &concrete_self->child_vertices;
         selected_kmers = &concrete_self->child_kmers;
+        selected_path = &concrete_self->right_path;
     } else /*if (concrete_self->select_operation == OPERATION_SELECT_PARENT) */{
         selected_vertices = &concrete_self->parent_vertices;
         selected_kmers = &concrete_self->parent_kmers;
+        selected_path = &concrete_self->left_path;
     }
 
     size = bsal_vector_size(selected_vertices);
@@ -792,7 +800,7 @@ int bsal_unitig_walker_select(struct thorium_actor *self)
 
     bsal_memory_pool_free(ephemeral_memory, key);
 
-    if (choice < 0) {
+    if (choice < 0 && bsal_vector_size(selected_path) > 200) {
         printf("Notice: can not select, current_coverage %d, %d arcs: ", current_coverage, size);
         for (i = 0; i < size; i++) {
 
@@ -870,7 +878,7 @@ void bsal_unitig_walker_write(struct thorium_actor *self, uint64_t name,
             block_length = column_width;
         }
 
-        memcpy(buffer, sequence + i, block_length);
+        bsal_memory_copy(buffer, sequence + i, block_length);
         buffer[block_length] = '\0';
 
 #if 0

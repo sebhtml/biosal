@@ -25,6 +25,8 @@
 #include <spi/include/kernel/memory.h>
 #endif
 
+#define FAST_MEMORY
+
 void *bsal_memory_allocate_private(size_t size, const char *function, const char *file, int line)
 {
     void *pointer;
@@ -498,4 +500,40 @@ size_t bsal_memory_normalize_segment_length_page_size(size_t size)
     padding = page_size - remainder;
 
     return size + padding;
+}
+
+void *bsal_memory_copy(void *destination, const void *source, size_t count)
+{
+    BSAL_DEBUGGER_ASSERT(destination != NULL);
+    BSAL_DEBUGGER_ASSERT(source != NULL);
+    BSAL_DEBUGGER_ASSERT(count > 0);
+
+#ifdef FAST_MEMORY
+    return memcpy(destination, source, count);
+#else
+    size_t i;
+    char *destination_buffer;
+    char *source_buffer;
+
+    destination_buffer = destination;
+    source_buffer = source;
+
+    for (i = 0; i < count; ++i)
+        destination_buffer[i] = source_buffer[i];
+
+    return destination;
+#endif
+}
+
+void *bsal_memory_move(void *destination, const void *source, size_t count)
+{
+    BSAL_DEBUGGER_ASSERT(destination != NULL);
+    BSAL_DEBUGGER_ASSERT(source != NULL);
+    BSAL_DEBUGGER_ASSERT(count > 0);
+
+#ifdef FAST_MEMORY
+    return memmove(destination, source, count);
+#else
+    return memmove(destination, source, count);
+#endif
 }

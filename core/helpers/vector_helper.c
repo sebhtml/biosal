@@ -199,7 +199,7 @@ int64_t bsal_vector_partition(struct bsal_vector *self,
     pivot_index = bsal_vector_select_pivot(self, first, last, compare);
     pivot_value = bsal_vector_at(self, pivot_index);
     element_size = bsal_vector_element_size(self);
-    memcpy(saved_pivot_value, pivot_value, element_size);
+    bsal_memory_copy(saved_pivot_value, pivot_value, element_size);
 
 #ifdef BSAL_VECTOR_HELPER_DEBUG
     printf("DEBUG ENTER partition first %d last %d pivot_index %d pivot_value %d ", (int)first, (int)last, (int)pivot_index,

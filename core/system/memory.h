@@ -153,4 +153,7 @@ void bsal_fence();
 size_t bsal_memory_normalize_segment_length_power_of_2(size_t size);
 size_t bsal_memory_normalize_segment_length_page_size(size_t size);
 
+void *bsal_memory_copy(void *destination, const void *source, size_t count);
+void *bsal_memory_move(void *destination, const void *source, size_t count);
+
 #endif

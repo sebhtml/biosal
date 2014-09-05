@@ -1089,7 +1089,9 @@ void thorium_node_send_to_node(struct thorium_node *node, int destination,
      * nodes, these names are faked...
      */
     new_buffer = bsal_memory_pool_allocate(&node->outbound_message_memory_pool, new_count);
-    memcpy(new_buffer, buffer, count);
+
+    if (count > 0)
+        bsal_memory_copy(new_buffer, buffer, count);
 
     /* the metadata size is added by the runtime
      * this is why the value is count and not new_count

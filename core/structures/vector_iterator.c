@@ -1,6 +1,8 @@
 
 #include "vector_iterator.h"
 
+#include <core/system/memory.h>
+
 #include <stdlib.h>
 #include <string.h>
 
@@ -47,7 +49,7 @@ int bsal_vector_iterator_get_next_value(struct bsal_vector_iterator *self, void 
 
     if (value != NULL) {
         size = bsal_vector_element_size(self->list);
-        memcpy(value, bucket, size);
+        bsal_memory_copy(value, bucket, size);
     }
 
     return 1;

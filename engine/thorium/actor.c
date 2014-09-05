@@ -706,10 +706,10 @@ int thorium_actor_receive_system(struct thorium_actor *self, struct thorium_mess
         offset = 0;
 
         bytes = sizeof(spawned);
-        memcpy((char *)new_buffer + offset, &spawned, bytes);
+        bsal_memory_copy((char *)new_buffer + offset, &spawned, bytes);
         offset += bytes;
         bytes = sizeof(script);
-        memcpy((char *)new_buffer + offset, &script, bytes);
+        bsal_memory_copy((char *)new_buffer + offset, &script, bytes);
         offset += bytes;
 
         new_count = offset;
@@ -1487,7 +1487,7 @@ void thorium_actor_queue_message(struct thorium_actor *self,
 
     if (count > 0) {
         new_buffer = bsal_memory_allocate(count);
-        memcpy(new_buffer, buffer, count);
+        bsal_memory_copy(new_buffer, buffer, count);
     }
 
     thorium_message_init(&new_message, tag, count, new_buffer);
@@ -1737,7 +1737,7 @@ void thorium_actor_enqueue_message(struct thorium_actor *self, struct thorium_me
 
     if (buffer != NULL) {
         new_buffer = bsal_memory_allocate(count);
-        memcpy(new_buffer, buffer, count);
+        bsal_memory_copy(new_buffer, buffer, count);
     }
 
     thorium_message_init(&new_message, tag, count, new_buffer);

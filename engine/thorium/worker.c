@@ -268,7 +268,7 @@ void thorium_worker_send(struct thorium_worker *worker, struct thorium_message *
     int all;
     void *old_buffer;
 
-    memcpy(&copy, message, sizeof(struct thorium_message));
+    bsal_memory_copy(&copy, message, sizeof(struct thorium_message));
     count = thorium_message_count(&copy);
     metadata_size = thorium_message_metadata_size(message);
     all = count + metadata_size;
@@ -294,15 +294,15 @@ void thorium_worker_send(struct thorium_worker *worker, struct thorium_message *
 #endif
 
     /* according to
-     * http://stackoverflow.com/questions/3751797/can-i-call-memcpy-and-memmove-with-number-of-bytes-set-to-zero
-     * memcpy works with a count of 0, but the addresses must be valid
+     * http://stackoverflow.com/questions/3751797/can-i-call-bsal_memory_copy-and-bsal_memory_move-with-number-of-bytes-set-to-zero
+     * bsal_memory_copy works with a count of 0, but the addresses must be valid
      * nonetheless
      *
      * Copy the message data.
      */
     if (count > 0) {
         old_buffer = thorium_message_buffer(message);
-        memcpy(buffer, old_buffer, count);
+        bsal_memory_copy(buffer, old_buffer, count);
 
         /* TODO use slab allocator */
     }

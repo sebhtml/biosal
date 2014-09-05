@@ -1,6 +1,8 @@
 
 #include "packer.h"
 
+#include <core/system/memory.h>
+
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -86,7 +88,7 @@ int bsal_packer_process(struct bsal_packer *self, void *object, int bytes)
 #endif
 
     if (self->operation == BSAL_PACKER_OPERATION_PACK) {
-        memcpy((char *)self->buffer + self->offset, object, bytes);
+        bsal_memory_copy((char *)self->buffer + self->offset, object, bytes);
 
     } else if (self->operation == BSAL_PACKER_OPERATION_UNPACK) {
 
@@ -94,7 +96,7 @@ int bsal_packer_process(struct bsal_packer *self, void *object, int bytes)
         printf("DEBUG unpack !\n");
 #endif
 
-        memcpy(object, (char *)self->buffer + self->offset, bytes);
+        bsal_memory_copy(object, (char *)self->buffer + self->offset, bytes);
 
     } else if (self->operation == BSAL_PACKER_OPERATION_DRY_RUN) {
         /* just increase the offset.

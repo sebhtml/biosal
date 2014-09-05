@@ -79,7 +79,7 @@ int bsal_fast_ring_push_from_producer(struct bsal_fast_ring *self, void *element
     }
 
     cell = bsal_fast_ring_get_cell(self, self->tail);
-    memcpy(cell, element, self->cell_size);
+    bsal_memory_copy(cell, element, self->cell_size);
 
     bsal_memory_fence();
 
@@ -222,7 +222,7 @@ int bsal_fast_ring_pop_from_consumer(struct bsal_fast_ring *self, void *element)
     }
 
     cell = bsal_fast_ring_get_cell(self, self->head);
-    memcpy(element, cell, self->cell_size);
+    bsal_memory_copy(element, cell, self->cell_size);
 
     bsal_memory_fence();
 

@@ -471,11 +471,11 @@ void *bsal_hash_table_add(struct bsal_hash_table *table, void *key)
             printf("DEBUG get key group %d bucket_in_group %d key_size %d value_size %d\n",
                             group, bucket_in_group, table->key_size, table->value_size);
 
-            printf("DEBUG memcpy %p %p %i\n", bucket_key, key, table->key_size);
+            printf("DEBUG bsal_memory_copy %p %p %i\n", bucket_key, key, table->key_size);
         }
 #endif
 
-        memcpy(bucket_key, key, table->key_size);
+        bsal_memory_copy(bucket_key, key, table->key_size);
 
 #ifdef BSAL_HASH_TABLE_DEBUG_DOUBLE_HASHING_DEBUG
         if (table->debug) {

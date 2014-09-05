@@ -70,12 +70,13 @@ void thorium_actor_pack_proxy_message(struct thorium_actor *self, struct thorium
                     new_buffer);
 #endif
 
-    memcpy(new_buffer, buffer, count);
+    if (count > 0)
+        bsal_memory_copy(new_buffer, buffer, count);
 
     offset = count;
-    memcpy((char *)new_buffer + offset, &real_source, sizeof(real_source));
+    bsal_memory_copy((char *)new_buffer + offset, &real_source, sizeof(real_source));
     offset += sizeof(real_source);
-    memcpy((char *)new_buffer + offset, &real_tag, sizeof(real_tag));
+    bsal_memory_copy((char *)new_buffer + offset, &real_tag, sizeof(real_tag));
     offset += sizeof(real_tag);
 
     thorium_message_init(message, ACTION_PROXY_MESSAGE, new_count, new_buffer);

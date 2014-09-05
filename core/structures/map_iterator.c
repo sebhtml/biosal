@@ -46,12 +46,12 @@ int bsal_map_iterator_get_next_key_and_value(struct bsal_map_iterator *self, voi
 
     if (key != NULL) {
         key_size = bsal_map_get_key_size(self->list);
-        memcpy(key, key_bucket, key_size);
+        bsal_memory_copy(key, key_bucket, key_size);
     }
 
     if (value != NULL) {
         value_size = bsal_map_get_value_size(self->list);
-        memcpy(value, value_bucket, value_size);
+        bsal_memory_copy(value, value_bucket, value_size);
     }
 
     return 1;

@@ -230,7 +230,7 @@ void bsal_input_stream_receive(struct thorium_actor *actor, struct thorium_messa
                         buffer);
 #endif
 
-        /*memcpy(&concrete_self->file_index, buffer, sizeof(concrete_self->file_index));*/
+        /*bsal_memory_copy(&concrete_self->file_index, buffer, sizeof(concrete_self->file_index));*/
         file_name_in_buffer = buffer;
 
         printf("stream/%d (node/%d) opens file %s offset %" PRIu64 "\n", thorium_actor_name(actor),
@@ -426,7 +426,7 @@ void bsal_input_stream_receive(struct thorium_actor *actor, struct thorium_messa
 
         buffer_size = sizeof(sequence_index) + strlen(read_buffer) + 1;
 
-        memcpy(concrete_self->buffer_for_sequence, &sequence_index, sizeof(sequence_index));
+        bsal_memory_copy(concrete_self->buffer_for_sequence, &sequence_index, sizeof(sequence_index));
 
         thorium_message_init(message, ACTION_INPUT_GET_SEQUENCE_REPLY,
                         buffer_size, concrete_self->buffer_for_sequence);

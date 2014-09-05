@@ -36,7 +36,7 @@ int bsal_ring_push(struct bsal_ring *self, void *element)
     }
 
     cell = bsal_ring_get_cell(self, self->tail);
-    memcpy(cell, element, self->cell_size);
+    bsal_memory_copy(cell, element, self->cell_size);
     self->tail = bsal_ring_increment(self, self->tail);
 
     return BSAL_TRUE;
@@ -51,7 +51,7 @@ int bsal_ring_pop(struct bsal_ring *self, void *element)
     }
 
     cell = bsal_ring_get_cell(self, self->head);
-    memcpy(element, cell, self->cell_size);
+    bsal_memory_copy(element, cell, self->cell_size);
     self->head = bsal_ring_increment(self, self->head);
 
     return BSAL_TRUE;

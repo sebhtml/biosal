@@ -103,7 +103,7 @@ void bsal_vector_push_back(struct bsal_vector *self, void *data)
     index = self->size;
     self->size++;
     bucket = bsal_vector_at(self, index);
-    memcpy(bucket, data, self->element_size);
+    bsal_memory_copy(bucket, data, self->element_size);
 
 #ifdef BSAL_VECTOR_DEBUG
     printf("DEBUG bsal_vector_push_back new_size is %d, pushed in bucket %d, value in bucket %d\n",
@@ -178,7 +178,7 @@ void bsal_vector_reserve(struct bsal_vector *self, int64_t size)
      * copy old data
      */
     if (self->size > 0) {
-        memcpy(new_data, self->data, old_byte_count);
+        bsal_memory_copy(new_data, self->data, old_byte_count);
         bsal_memory_pool_free(self->memory, self->data);
 
         self->data = NULL;
@@ -283,7 +283,7 @@ int bsal_vector_get_value(struct bsal_vector *self, int64_t index, void *value)
         return 0;
     }
 
-    memcpy(value, bucket, self->element_size);
+    bsal_memory_copy(value, bucket, self->element_size);
 
     return 1;
 }
@@ -313,7 +313,7 @@ void bsal_vector_set(struct bsal_vector *self, int64_t index, void *data)
     void *bucket;
 
     bucket = bsal_vector_at(self, index);
-    memcpy(bucket, data, self->element_size);
+    bsal_memory_copy(bucket, data, self->element_size);
 }
 
 int bsal_vector_empty(struct bsal_vector *self)

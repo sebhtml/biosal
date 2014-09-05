@@ -273,8 +273,8 @@ int thorium_mpi1_pt2pt_nonblocking_transport_send(struct thorium_transport *self
         buffer2 = bsal_memory_pool_allocate(self->outbound_message_memory_pool,
                         count2);
 
-        memcpy(buffer2 + 0, &payload_tag, sizeof(payload_tag));
-        memcpy(buffer2 + sizeof(payload_tag), &count, sizeof(count));
+        bsal_memory_copy(buffer2 + 0, &payload_tag, sizeof(payload_tag));
+        bsal_memory_copy(buffer2 + sizeof(payload_tag), &count, sizeof(count));
 
         thorium_mpi1_request_init(&active_request2, buffer2);
         thorium_mpi1_request_mark(&active_request2);

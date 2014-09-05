@@ -44,7 +44,7 @@ int bsal_set_iterator_get_next_value(struct bsal_set_iterator *self, void *key)
 
     if (key != NULL) {
         size = bsal_map_get_key_size(self->list);
-        memcpy(key, bucket, size);
+        bsal_memory_copy(key, bucket, size);
     }
 
     return 1;

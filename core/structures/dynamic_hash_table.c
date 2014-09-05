@@ -2,6 +2,7 @@
 #include "dynamic_hash_table.h"
 
 #include <core/system/tracer.h>
+#include <core/system/memory.h>
 
 #include <string.h>
 #include <stdlib.h>
@@ -135,7 +136,7 @@ void *bsal_dynamic_hash_table_add(struct bsal_dynamic_hash_table *self, void *ke
     value_size = bsal_hash_table_value_size(self->current);
 
     if (value_size > 0) {
-        memcpy(new_bucket, bucket, value_size);
+        bsal_memory_copy(new_bucket, bucket, value_size);
     }
 
     self->resize_current_size--;
@@ -331,7 +332,7 @@ int bsal_dynamic_hash_table_resize(struct bsal_dynamic_hash_table *self)
                     printf("next %" PRIu64 "/%" PRIu64 "\n", bsal_hash_table_size(self->next), bsal_hash_table_buckets(self->next));
                 }
 
-                memcpy(new_value, value, value_size);
+                bsal_memory_copy(new_value, value, value_size);
 
                 self->resize_current_size--;
             }

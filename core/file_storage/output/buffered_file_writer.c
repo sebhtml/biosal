@@ -78,7 +78,7 @@ int bsal_buffered_file_writer_write(struct bsal_buffered_file_writer *self,
     if (length <= available) {
 
         destination = self->buffer + self->buffer_length;
-        memcpy(destination, data, length);
+        bsal_memory_copy(destination, data, length);
         self->buffer_length += length;
 
     /*

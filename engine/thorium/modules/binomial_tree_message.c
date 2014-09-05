@@ -45,11 +45,11 @@ void thorium_actor_receive_binomial_tree_send(struct thorium_actor *actor, struc
     bsal_vector_set_memory_pool(&actors, ephemeral_memory);
     offset += bsal_vector_unpack(&actors, (char *)buffer + offset);
 
-    memcpy(&real_tag, buffer + offset, sizeof(real_tag));
+    bsal_memory_copy(&real_tag, buffer + offset, sizeof(real_tag));
     offset += sizeof(real_tag);
-    memcpy(&real_source, buffer + offset, sizeof(real_source));
+    bsal_memory_copy(&real_source, buffer + offset, sizeof(real_source));
     offset += sizeof(real_source);
-    memcpy(&real_count, buffer + offset, sizeof(real_count));
+    bsal_memory_copy(&real_count, buffer + offset, sizeof(real_count));
     offset += sizeof(real_count);
     real_buffer = buffer + offset;
     offset += real_count;
@@ -216,13 +216,15 @@ void thorium_actor_send_range_binomial_tree_part(struct thorium_actor *actor,
 
     offset = 0;
     offset += bsal_vector_pack(actors, new_buffer + offset);
-    memcpy(new_buffer + offset, &real_tag, sizeof(real_tag));
+    bsal_memory_copy(new_buffer + offset, &real_tag, sizeof(real_tag));
     offset += sizeof(real_tag);
-    memcpy(new_buffer + offset, &real_source, sizeof(real_source));
+    bsal_memory_copy(new_buffer + offset, &real_source, sizeof(real_source));
     offset += sizeof(real_source);
-    memcpy(new_buffer + offset, &real_count, sizeof(real_count));
+    bsal_memory_copy(new_buffer + offset, &real_count, sizeof(real_count));
     offset += sizeof(real_count);
-    memcpy(new_buffer + offset, real_buffer, real_count);
+
+    if (real_count > 0)
+        bsal_memory_copy(new_buffer + offset, real_buffer, real_count);
     offset += real_count;
 
     BSAL_DEBUGGER_ASSERT(offset == new_count);

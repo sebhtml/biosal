@@ -176,7 +176,7 @@ uint64_t bsal_fasta_input_get_sequence(struct bsal_input_format *input,
             --block_length;
         }
 
-        memcpy(sequence + position_in_sequence,
+        bsal_memory_copy(sequence + position_in_sequence,
                         fasta->buffer,
                         block_length);
 

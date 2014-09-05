@@ -78,7 +78,7 @@ int bsal_queue_enqueue(struct bsal_queue *self, void *item)
                                 self->size, (int)bsal_vector_size(&self->vector));
 #endif
 
-                memcpy(bucket2, bucket1, self->bytes_per_element);
+                bsal_memory_copy(bucket2, bucket1, self->bytes_per_element);
 
                 i++;
             }
@@ -87,7 +87,7 @@ int bsal_queue_enqueue(struct bsal_queue *self, void *item)
             self->dequeue_index -= stride;
 
             bucket1 = bsal_vector_at(&self->vector, self->enqueue_index);
-            memcpy(bucket1, item, self->bytes_per_element);
+            bsal_memory_copy(bucket1, item, self->bytes_per_element);
             self->enqueue_index++;
             self->size++;
             return 1;
@@ -107,7 +107,7 @@ int bsal_queue_enqueue(struct bsal_queue *self, void *item)
      */
 
     bucket1 = bsal_vector_at(&self->vector, self->enqueue_index);
-    memcpy(bucket1, item, self->bytes_per_element);
+    bsal_memory_copy(bucket1, item, self->bytes_per_element);
     self->enqueue_index++;
     self->size++;
 
@@ -122,7 +122,7 @@ int bsal_queue_dequeue(struct bsal_queue *self, void *item)
     }
 
     bucket = bsal_vector_at(&self->vector, self->dequeue_index);
-    memcpy(item, bucket, self->bytes_per_element);
+    bsal_memory_copy(item, bucket, self->bytes_per_element);
     self->dequeue_index++;
     self->size--;
 

@@ -129,7 +129,7 @@ int bsal_map_update_value(struct bsal_map *self, void *key, void *value)
     value_size = bsal_map_get_value_size(self);
 #endif
 
-    memcpy(bucket, value, value_size);
+    bsal_memory_copy(bucket, value, value_size);
 
     return 1;
 }
@@ -159,7 +159,7 @@ int bsal_map_add_value(struct bsal_map *self, void *key, void *value)
     value_size = bsal_map_get_value_size(self);
 #endif
 
-    memcpy(bucket, value, value_size);
+    bsal_memory_copy(bucket, value, value_size);
 
     return 1;
 }
@@ -209,7 +209,7 @@ int bsal_map_get_value(struct bsal_map *self, void *key, void *value)
 #endif
 
     if (value != NULL) {
-        memcpy(value, bucket, size);
+        bsal_memory_copy(value, bucket, size);
     }
 
     return 1;
@@ -268,7 +268,7 @@ void *bsal_map_pad_key(struct bsal_map *self, void *key)
      * version of it
      */
 
-    memcpy(self->key_buffer, key, self->original_key_size);
+    bsal_memory_copy(self->key_buffer, key, self->original_key_size);
     memset((char *)self->key_buffer + self->original_key_size, 0,
                 self->key_padding);
 

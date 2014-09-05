@@ -181,7 +181,7 @@ void bsal_dna_kmer_init_copy(struct bsal_dna_kmer *self, struct bsal_dna_kmer *o
 
     encoded_length = bsal_dna_codec_encoded_length(codec, kmer_length);
     self->encoded_data = bsal_memory_pool_allocate(memory, encoded_length);
-    memcpy(self->encoded_data, other->encoded_data, encoded_length);
+    bsal_memory_copy(self->encoded_data, other->encoded_data, encoded_length);
 }
 
 void bsal_dna_kmer_print(struct bsal_dna_kmer *self, int kmer_length,
