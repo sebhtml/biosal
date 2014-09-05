@@ -146,7 +146,9 @@ int bsal_raw_buffered_reader_read_line_private(struct bsal_buffered_reader *self
     if (has_new_line || end_of_file) {
 
         read = position - reader->position_in_buffer;
-        bsal_memory_copy(buffer, reader->buffer + reader->position_in_buffer,
+
+        if (read > 0)
+            bsal_memory_copy(buffer, reader->buffer + reader->position_in_buffer,
                         read);
         buffer[read] = '\0';
 
