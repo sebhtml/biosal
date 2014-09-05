@@ -2,6 +2,8 @@
 #ifndef BSAL_UNITIG_WALKER_H
 #define BSAL_UNITIG_WALKER_H
 
+#include "unitig_heuristic.h"
+
 #include <engine/thorium/actor.h>
 
 #include <core/file_storage/output/buffered_file_writer.h>
@@ -67,6 +69,8 @@ struct bsal_unitig_walker {
     int select_operation;
 
     uint64_t hash_value;
+
+    struct bsal_unitig_heuristic heuristic;
 };
 
 extern struct thorium_script bsal_unitig_walker_script;

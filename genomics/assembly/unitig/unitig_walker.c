@@ -124,6 +124,8 @@ void bsal_unitig_walker_init(struct thorium_actor *self)
 
     concrete_self->fetch_operation = OPERATION_FETCH_FIRST;
     concrete_self->select_operation = OPERATION_SELECT_CHILD;
+
+    bsal_unitig_heuristic_init(&concrete_self->heuristic);
 }
 
 void bsal_unitig_walker_destroy(struct thorium_actor *self)
@@ -155,6 +157,8 @@ void bsal_unitig_walker_destroy(struct thorium_actor *self)
 
     bsal_dna_kmer_destroy(&concrete_self->current_kmer, &concrete_self->memory_pool);
     bsal_assembly_vertex_destroy(&concrete_self->current_vertex);
+
+    bsal_unitig_heuristic_destroy(&concrete_self->heuristic);
 }
 
 void bsal_unitig_walker_receive(struct thorium_actor *self, struct thorium_message *message)
@@ -708,12 +712,7 @@ int bsal_unitig_walker_select(struct thorium_actor *self)
     int found;
     struct bsal_vector *selected_vertices;
     struct bsal_vector *selected_kmers;
-    struct bsal_assembly_vertex *other_vertex;
-    int threshold;
-    int threshold_weak;
-    int j;
-    int other_coverage;
-    int is_strong;
+    struct bsal_vector coverage_values;
 
     /*
      * This code select the best edge for a unitig.
@@ -722,8 +721,6 @@ int bsal_unitig_walker_select(struct thorium_actor *self)
     ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
 
     key = bsal_memory_pool_allocate(ephemeral_memory, concrete_self->key_length);
-
-    choice = -1;
 
     size = 0;
     found = 0;
@@ -738,20 +735,25 @@ int bsal_unitig_walker_select(struct thorium_actor *self)
 
     size = bsal_vector_size(selected_vertices);
     current_coverage = bsal_assembly_vertex_coverage_depth(&concrete_self->current_vertex);
-    threshold = current_coverage;
-    threshold_weak = current_coverage / 4;
 
-    if (size >= 2)
-        threshold /= size;
+    bsal_vector_init(&coverage_values, sizeof(int));
+    bsal_vector_set_memory_pool(&coverage_values, ephemeral_memory);
 
     for (i = 0; i < size; i++) {
-
         vertex = bsal_vector_at(selected_vertices, i);
+        coverage = bsal_assembly_vertex_coverage_depth(vertex);
+        bsal_vector_push_back(&coverage_values, &coverage);
+    }
+
+    choice = bsal_unitig_heuristic_select(&concrete_self->heuristic, current_coverage,
+                    &coverage_values);
+
+    if (choice >= 0) {
 
         /*
          * Verify if it was visited already.
          */
-        kmer = bsal_vector_at(selected_kmers, i);
+        kmer = bsal_vector_at(selected_kmers, choice);
 
         bsal_dna_kmer_pack(kmer, key, concrete_self->kmer_length,
                         &concrete_self->codec);
@@ -770,64 +772,9 @@ int bsal_unitig_walker_select(struct thorium_actor *self)
 
             bsal_dna_kmer_print(kmer, concrete_self->kmer_length, &concrete_self->codec,
                         ephemeral_memory);
-            continue;
+            choice = -1;
         }
-
-        /*
-         * Otherwise, if there is only one choice, return it.
-         */
-
-        if (size == 1) {
-            choice = i;
-            break;
-        }
-
-        coverage = bsal_assembly_vertex_coverage_depth(vertex);
-
-        /*
-         * This change is too big to be OK.
-         */
-        if (coverage >= 2 * current_coverage) {
-            continue;
-        }
-
-        /*
-         * This is a unitig, so it must be
-         * regular. Otherwise there could be DNA misassemblies
-         * at this stage.
-         */
-        if (!(coverage >= threshold)) {
-            continue;
-        }
-
-        is_strong = 1;
-
-        /*
-         * Check out the others too and make sure that they are all weak.
-         */
-        for (j = 0; j < size; ++j) {
-
-            other_vertex = bsal_vector_at(selected_vertices, j);
-            other_coverage = bsal_assembly_vertex_coverage_depth(vertex);
-
-            if (other_coverage >= threshold_weak) {
-                is_strong = 0;
-                break;
-            }
-        }
-
-        if (!is_strong) {
-            continue;
-        }
-
-        /*
-         * At this point, the edge satisfies everything.
-         */
-
-        choice = i;
-        break;
     }
-
 #ifdef BSAL_UNITIG_WALKER_DEBUG
     printf("Choice is %d\n", choice);
 #endif
