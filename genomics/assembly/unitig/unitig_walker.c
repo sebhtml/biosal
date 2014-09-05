@@ -896,13 +896,12 @@ int bsal_unitig_walker_select(struct thorium_actor *self, int *output_status)
                 expected_parent_code = bsal_vector_at_as_int(&concrete_self->right_path,
                             right_path_size - concrete_self->kmer_length - 1);
 
-                printf("DEBUG STATUS_DISAGREEMENT actual %d expected %d",
-                            parent_code, expected_parent_code);
-
                 if (parent_code != expected_parent_code) {
+                    printf("DEBUG STATUS_DISAGREEMENT actual %d expected %d",
+                            parent_code, expected_parent_code);
                     printf("MISMATCH");
+                    printf("\n");
                 }
-                printf("\n");
 
 #if 0
                 choice = BSAL_HEURISTIC_CHOICE_NONE;

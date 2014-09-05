@@ -24,4 +24,5 @@ done > DefectList.txt
 echo "Check DefectList.txt (defects: $(cat DefectList.txt |grep ^Defect| wc -l) / $(cat raw-names | wc -l))"
 
 echo "4 longest:"
-grep '>' $file |awk '{print $2}'|sed 's/=/ /g'|awk '{print $2}'|sort -r -n|head -n 4
+grep '>' $file |awk '{print $2}'|sed 's/=/ /g'|awk '{print $2}'|sort -r -n > lengths
+head -n 4 lengths
