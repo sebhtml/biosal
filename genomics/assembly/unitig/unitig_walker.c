@@ -40,6 +40,13 @@
 #define OPERATION_SELECT_CHILD 8
 #define OPERATION_SELECT_PARENT 9
 
+#define STATUS_NO_STATUS (-1)
+#define STATUS_NO_EDGE 0
+#define STATUS_IMPOSSIBLE_CHOICE 1
+#define STATUS_NOT_REGULAR 2
+#define STATUS_WITH_CHOICE 3
+#define STATUS_ALREADY_VISITED 4
+
 struct thorium_script bsal_unitig_walker_script = {
     .identifier = SCRIPT_UNITIG_WALKER,
     .name = "bsal_unitig_walker",
@@ -126,7 +133,7 @@ void bsal_unitig_walker_init(struct thorium_actor *self)
     name = thorium_actor_name(self);
     sprintf(name_as_string, "%d", name);
     bsal_string_init(&concrete_self->file_path, directory_name);
-    bsal_string_append(&concrete_self->file_path, "/dummy_walker_");
+    bsal_string_append(&concrete_self->file_path, "/unitig_walker_");
     bsal_string_append(&concrete_self->file_path, name_as_string);
     bsal_string_append(&concrete_self->file_path, ".fasta");
 
@@ -636,6 +643,7 @@ void bsal_unitig_walker_dump_path(struct thorium_actor *self)
 {
     struct bsal_unitig_walker *concrete_self;
     char *sequence;
+    int start_position;
     int left_path_arcs;
     int right_path_arcs;
     int sequence_length;
@@ -682,12 +690,16 @@ void bsal_unitig_walker_dump_path(struct thorium_actor *self)
         ++position;
     }
 
+    BSAL_DEBUGGER_ASSERT(position == left_path_arcs);
+
     /*
      * Starting kmer.
      */
     bsal_dna_kmer_get_sequence(&concrete_self->starting_kmer, sequence + position,
                     concrete_self->kmer_length,
                     &concrete_self->codec);
+
+    start_position = position;
 
 #ifdef HIGHLIGH_STARTING_POINT
     bsal_dna_helper_set_lower_case(sequence, position, position + concrete_self->kmer_length - 1);
@@ -712,6 +724,9 @@ void bsal_unitig_walker_dump_path(struct thorium_actor *self)
 
     path_name = bsal_unitig_walker_get_path_name(self, sequence_length, sequence);
 
+    printf("DEBUG path_name= %" PRIu64 "path_length= %d start_position= %d\n",
+                    path_name, sequence_length, start_position);
+
     bsal_unitig_walker_write(self, path_name,
                     sequence, sequence_length);
 
@@ -727,7 +742,7 @@ void bsal_unitig_walker_dump_path(struct thorium_actor *self)
     ++concrete_self->path_index;
 }
 
-int bsal_unitig_walker_select(struct thorium_actor *self)
+int bsal_unitig_walker_select(struct thorium_actor *self, int *status)
 {
     int choice;
     int parent_choice;
@@ -751,6 +766,8 @@ int bsal_unitig_walker_select(struct thorium_actor *self)
     struct bsal_vector child_coverage_values;
     struct bsal_vector *selected_path;
     int size;
+
+    *status = STATUS_NO_STATUS;
 
     /*
      * This code select the best edge for a unitig.
@@ -818,16 +835,30 @@ int bsal_unitig_walker_select(struct thorium_actor *self)
         choice = child_choice;
 
     /*
+     * Explain the choice
+     */
+    if (choice == BSAL_HEURISTIC_CHOICE_NONE) {
+        if (size == 0)
+            *status = STATUS_NO_EDGE;
+        else
+            *status = STATUS_IMPOSSIBLE_CHOICE;
+    } else {
+        *status = STATUS_WITH_CHOICE;
+    }
+
+    /*
      * Enforce mathematical symmetry.
      */
     if (parent_choice == BSAL_HEURISTIC_CHOICE_NONE
-                    || child_choice == BSAL_HEURISTIC_CHOICE_NONE)
+                    || child_choice == BSAL_HEURISTIC_CHOICE_NONE) {
         choice = BSAL_HEURISTIC_CHOICE_NONE;
+        *status = STATUS_NOT_REGULAR;
+    }
 
     /*
      * Verify if it was visited already.
      */
-    if (choice >= 0) {
+    if (choice != BSAL_HEURISTIC_CHOICE_NONE) {
 
         kmer = bsal_vector_at(selected_kmers, choice);
 
@@ -849,6 +880,7 @@ int bsal_unitig_walker_select(struct thorium_actor *self)
             bsal_dna_kmer_print(kmer, concrete_self->kmer_length, &concrete_self->codec,
                         ephemeral_memory);
             choice = BSAL_HEURISTIC_CHOICE_NONE;
+            *status = STATUS_ALREADY_VISITED;
         }
     }
 #ifdef BSAL_UNITIG_WALKER_DEBUG
@@ -903,6 +935,10 @@ int bsal_unitig_walker_select(struct thorium_actor *self)
 
     bsal_vector_destroy(&parent_coverage_values);
     bsal_vector_destroy(&child_coverage_values);
+
+    BSAL_DEBUGGER_ASSERT(*status != STATUS_NO_STATUS);
+    BSAL_DEBUGGER_ASSERT(choice == BSAL_HEURISTIC_CHOICE_NONE ||
+                    (0 <= choice && choice < size));
 
     return choice;
 }
@@ -978,6 +1014,7 @@ void bsal_unitig_walker_make_decision(struct thorium_actor *self)
     struct bsal_memory_pool *ephemeral_memory;
     int code;
     int old_size;
+    int status;
 
     concrete_self = (struct bsal_unitig_walker *)thorium_actor_concrete_actor(self);
     ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
@@ -985,7 +1022,11 @@ void bsal_unitig_walker_make_decision(struct thorium_actor *self)
     /*
      * Select a choice and carry on...
      */
-    choice = bsal_unitig_walker_select(self);
+    status = STATUS_NO_STATUS;
+
+    choice = bsal_unitig_walker_select(self, &status);
+
+    BSAL_DEBUGGER_ASSERT(status != STATUS_NO_STATUS);
 
     if (concrete_self->select_operation == OPERATION_SELECT_CHILD) {
         selected_vertices = &concrete_self->child_vertices;
@@ -1001,7 +1042,9 @@ void bsal_unitig_walker_make_decision(struct thorium_actor *self)
      * Proceed with the choice
      * (this is either for OPERATION_SELECT_CHILD or OPERATION_SELECT_PARENT).
      */
-    if (choice >= 0) {
+    if (choice != BSAL_HEURISTIC_CHOICE_NONE) {
+
+        BSAL_DEBUGGER_ASSERT(status == STATUS_WITH_CHOICE);
 
         coverage = bsal_assembly_vertex_coverage_depth(&concrete_self->current_vertex);
 
@@ -1047,7 +1090,7 @@ void bsal_unitig_walker_make_decision(struct thorium_actor *self)
          * Remove the last one because it is not a "easy" vertex.
          */
         old_size = bsal_vector_size(&concrete_self->right_path);
-        if (old_size > 0)
+        if (old_size > 0 && status == STATUS_NOT_REGULAR)
             bsal_vector_resize(&concrete_self->right_path, old_size - 1);
 
         /*
@@ -1074,7 +1117,7 @@ void bsal_unitig_walker_make_decision(struct thorium_actor *self)
          */
 
         old_size = bsal_vector_size(&concrete_self->left_path);
-        if (old_size > 0)
+        if (old_size > 0 && status == STATUS_NOT_REGULAR)
             bsal_vector_resize(&concrete_self->left_path, old_size - 1);
 
         bsal_dna_kmer_destroy(&concrete_self->current_kmer, &concrete_self->memory_pool);
