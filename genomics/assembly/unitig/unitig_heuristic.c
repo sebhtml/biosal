@@ -75,6 +75,11 @@ int bsal_unitig_heuristic_select_with_flow_split(struct bsal_unitig_heuristic *s
          */
         for (j = 0; j < size; ++j) {
 
+            /*
+             * An edge does not compete with itself at all.
+             */
+            if (i == j)
+                continue;
             other_coverage = bsal_vector_at_as_int(coverage_values, j);
 
             if (other_coverage >= threshold) {
