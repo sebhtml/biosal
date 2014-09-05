@@ -41,6 +41,11 @@ int bsal_unitig_heuristic_select_with_flow_split(struct bsal_unitig_heuristic *s
     choice = BSAL_HEURISTIC_CHOICE_NONE;
 
     for (i = 0; i < size; i++) {
+
+        /*
+         * Check the one choice nonetheless...
+         */
+#if 0
         /*
          * Otherwise, if there is only one choice, return it.
          */
@@ -49,7 +54,7 @@ int bsal_unitig_heuristic_select_with_flow_split(struct bsal_unitig_heuristic *s
             choice = i;
             break;
         }
-
+#endif
         coverage = bsal_vector_at_as_int(coverage_values, i);
 
         /*
