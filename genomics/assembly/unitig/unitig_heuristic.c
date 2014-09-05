@@ -60,7 +60,8 @@ int bsal_unitig_heuristic_select_with_flow_split(struct bsal_unitig_heuristic *s
         /*
          * This change is too big to be OK.
          */
-        if (coverage >= 2 * current_coverage) {
+        if (coverage >= 2 * current_coverage
+                        || current_coverage >= 2 * coverage) {
             continue;
         }
 

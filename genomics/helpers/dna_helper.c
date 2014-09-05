@@ -147,4 +147,24 @@ char bsal_dna_helper_normalize_nucleotide(char nucleotide)
     return default_value;
 }
 
+void bsal_dna_helper_set_lower_case(char *sequence, int start, int end)
+{
+    char old_character;
+    char new_character;
+    int i;
 
+    for (i = start; i <= end; ++i) {
+        old_character = sequence[i];
+        new_character = old_character;
+        if (old_character == 'A')
+            new_character = 'a';
+        else if (old_character == 'T')
+            new_character = 't';
+        else if (old_character == 'C')
+            new_character = 'c';
+        else if (old_character == 'G')
+            new_character = 'g';
+
+        sequence[i] = new_character;
+    }
+}

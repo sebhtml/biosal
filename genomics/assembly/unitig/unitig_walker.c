@@ -7,6 +7,7 @@
 #include <genomics/data/coverage_distribution.h>
 #include <genomics/data/dna_kmer.h>
 #include <genomics/data/dna_codec.h>
+#include <genomics/helpers/dna_helper.h>
 
 #include <core/helpers/order.h>
 
@@ -27,6 +28,10 @@
 */
 
 #define MINIMUM_PATH_LENGTH_IN_NUCLEOTIDES 100
+
+/*
+#define HIGHLIGH_STARTING_POINT
+*/
 
 #define OPERATION_FETCH_FIRST 0
 #define OPERATION_FETCH_PARENTS 1
@@ -683,6 +688,11 @@ void bsal_unitig_walker_dump_path(struct thorium_actor *self)
     bsal_dna_kmer_get_sequence(&concrete_self->starting_kmer, sequence + position,
                     concrete_self->kmer_length,
                     &concrete_self->codec);
+
+#ifdef HIGHLIGH_STARTING_POINT
+    bsal_dna_helper_set_lower_case(sequence, position, position + concrete_self->kmer_length - 1);
+#endif
+
     position += concrete_self->kmer_length;
 
     /*
