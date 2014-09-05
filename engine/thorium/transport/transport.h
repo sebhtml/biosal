@@ -5,6 +5,8 @@
 #include "transport_interface.h"
 #include "transport_profiler.h"
 
+#include <core/system/timer.h>
+
 #define THORIUM_TRANSPORT_IMPLEMENTATION_MOCK 0
 
 #define THORIUM_THREAD_SINGLE 0
@@ -39,6 +41,8 @@ struct thorium_transport {
     int active_request_count;
 
     uint32_t flags;
+    struct bsal_timer timer;
+    uint64_t start_time;
 };
 
 void thorium_transport_init(struct thorium_transport *self, struct thorium_node *node,
@@ -66,5 +70,6 @@ void *thorium_transport_get_concrete_transport(struct thorium_transport *self);
 void thorium_transport_select_implementation(struct thorium_transport *self, int argc, char **argv);
 
 void thorium_transport_print(struct thorium_transport *self);
+void thorium_transport_print_event(struct thorium_transport *self, int type, struct thorium_message *message);
 
 #endif

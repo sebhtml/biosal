@@ -22,12 +22,20 @@
 #include <core/system/debugger.h>
 
 #include <string.h>
+#include <stdint.h>
+#include <inttypes.h>
 
 /*
 #define THORIUM_TRANSPORT_DEBUG
 */
 
+#define EVENT_TYPE_SEND 0
+#define EVENT_TYPE_RECEIVE 1
+#define EVENT_STRING_SEND "EVENT_SEND"
+#define EVENT_STRING_RECEIVE "EVENT_RECEIVE"
+
 #define FLAG_PROFILE 0
+#define FLAG_PRINT_TRANSPORT_EVENTS 1
 
 void thorium_transport_init(struct thorium_transport *self, struct thorium_node *node,
                 int *argc, char ***argv,
@@ -43,7 +51,8 @@ void thorium_transport_init(struct thorium_transport *self, struct thorium_node 
     actual_argv = *argv;
 
     self->flags = 0;
-    bsal_bitmap_set_bit_value_uint32_t(&self->flags, FLAG_PROFILE, 0);
+    bsal_bitmap_clear_bit_uint32_t(&self->flags, FLAG_PROFILE);
+    bsal_bitmap_clear_bit_uint32_t(&self->flags, FLAG_PRINT_TRANSPORT_EVENTS);
 
     self->transport_interface = NULL;
     self->concrete_transport = NULL;
@@ -82,7 +91,7 @@ void thorium_transport_init(struct thorium_transport *self, struct thorium_node 
 
         printf("Enable transport profiler\n");
 
-        bsal_bitmap_set_bit_value_uint32_t(&self->flags, FLAG_PROFILE, 1);
+        bsal_bitmap_set_bit_uint32_t(&self->flags, FLAG_PROFILE);
     }
 
     if (self->rank == 0) {
@@ -90,6 +99,13 @@ void thorium_transport_init(struct thorium_transport *self, struct thorium_node 
                         THORIUM_NODE_THORIUM_PREFIX,
                     self->transport_interface->name);
     }
+
+    if (bsal_command_has_argument(actual_argc, actual_argv, "-print-transport-events")) {
+        bsal_bitmap_set_bit_uint32_t(&self->flags, FLAG_PRINT_TRANSPORT_EVENTS);
+    }
+
+    bsal_timer_init(&self->timer);
+    self->start_time = bsal_timer_get_nanoseconds(&self->timer);
 }
 
 void thorium_transport_destroy(struct thorium_transport *self)
@@ -115,6 +131,8 @@ void thorium_transport_destroy(struct thorium_transport *self)
     self->node = NULL;
     self->rank = -1;
     self->size = -1;
+
+    bsal_timer_destroy(&self->timer);
 }
 
 int thorium_transport_send(struct thorium_transport *self, struct thorium_message *message)
@@ -144,6 +162,10 @@ int thorium_transport_send(struct thorium_transport *self, struct thorium_messag
                         thorium_message_count(message));
 #endif
         ++self->active_request_count;
+
+        if (bsal_bitmap_get_bit_uint32_t(&self->flags, FLAG_PRINT_TRANSPORT_EVENTS)) {
+            thorium_transport_print_event(self, EVENT_TYPE_SEND, message);
+        }
     }
 
     return value;
@@ -167,6 +189,10 @@ int thorium_transport_receive(struct thorium_transport *self, struct thorium_mes
                         thorium_message_tag(message),
                         thorium_message_count(message));
 #endif
+
+        if (bsal_bitmap_get_bit_uint32_t(&self->flags, FLAG_PRINT_TRANSPORT_EVENTS)) {
+            thorium_transport_print_event(self, EVENT_TYPE_RECEIVE, message);
+        }
     }
 
     return value;
@@ -306,3 +332,26 @@ void thorium_transport_print(struct thorium_transport *self)
                 thorium_transport_get_name(self));
 }
 
+void thorium_transport_print_event(struct thorium_transport *self, int type, struct thorium_message *message)
+{
+    char *description;
+    int count;
+    int source_rank;
+    int destination_rank;
+    uint64_t time;
+
+    description = EVENT_STRING_SEND;
+
+    if (type == EVENT_TYPE_RECEIVE)
+        description = EVENT_STRING_RECEIVE;
+
+    count = thorium_message_count(message);
+    source_rank = thorium_message_source_node(message);
+    destination_rank = thorium_message_destination_node(message);
+
+    time = bsal_timer_get_nanoseconds(&self->timer);
+    time -= self->start_time;
+    printf("%s print_event time_nanoseconds= %" PRIu64 " type= %s source= %d destination= %d count= %d\n",
+                    THORIUM_NODE_THORIUM_PREFIX, time, description,
+                    source_rank, destination_rank, count);
+}
