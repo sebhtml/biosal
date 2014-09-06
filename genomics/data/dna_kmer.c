@@ -7,6 +7,7 @@
 
 #include <core/system/packer.h>
 #include <core/system/memory.h>
+#include <core/system/debugger.h>
 
 #include <core/hash/murmur_hash_2_64_a.h>
 
@@ -398,13 +399,23 @@ int bsal_dna_kmer_equals(struct bsal_dna_kmer *self, struct bsal_dna_kmer *kmer,
 int bsal_dna_kmer_first_symbol(struct bsal_dna_kmer *self,
                 int kmer_length, struct bsal_dna_codec *codec)
 {
-    return bsal_dna_codec_get_nucleotide_code(codec, self->encoded_data, 0);
+    return bsal_dna_kmer_get_symbol(self, 0, kmer_length, codec);
 }
 
 int bsal_dna_kmer_last_symbol(struct bsal_dna_kmer *self,
                 int kmer_length, struct bsal_dna_codec *codec)
 {
-    return bsal_dna_codec_get_nucleotide_code(codec, self->encoded_data, kmer_length - 1);
+    return bsal_dna_kmer_get_symbol(self, kmer_length - 1, kmer_length,
+                    codec);
+}
+
+int bsal_dna_kmer_get_symbol(struct bsal_dna_kmer *self, int position,
+                int kmer_length, struct bsal_dna_codec *codec)
+{
+    BSAL_DEBUGGER_ASSERT(position >= 0);
+    BSAL_DEBUGGER_ASSERT(position < kmer_length);
+
+    return bsal_dna_codec_get_nucleotide_code(codec, self->encoded_data, position);
 }
 
 void bsal_dna_kmer_init_as_child(struct bsal_dna_kmer *self, struct bsal_dna_kmer *other,
