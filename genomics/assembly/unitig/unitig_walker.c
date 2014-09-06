@@ -873,14 +873,7 @@ int bsal_unitig_walker_select(struct thorium_actor *self, int *output_status)
         status = STATUS_WITH_CHOICE;
     }
 
-    /*
-     * Enforce mathematical symmetry.
-     */
-    if (parent_choice == BSAL_HEURISTIC_CHOICE_NONE
-                    || child_choice == BSAL_HEURISTIC_CHOICE_NONE) {
-        choice = BSAL_HEURISTIC_CHOICE_NONE;
-        status = STATUS_NOT_REGULAR;
-    }
+    bsal_unitig_walker_check_symmetry(self, parent_choice, child_choice, &choice, &status);
 
     /*
      * Verify that there ris no disagreement
@@ -1376,4 +1369,17 @@ uint64_t bsal_unitig_walker_get_path_name(struct thorium_actor *self, int length
      * Return the lowest value.
      */
     return bsal_order_minimum(hash_value1, hash_value2);
+}
+
+void bsal_unitig_walker_check_symmetry(struct thorium_actor *self, int parent_choice, int child_choice,
+                int *choice, int *status)
+{
+    /*
+     * Enforce mathematical symmetry.
+     */
+    if (parent_choice == BSAL_HEURISTIC_CHOICE_NONE
+                    || child_choice == BSAL_HEURISTIC_CHOICE_NONE) {
+        *choice = BSAL_HEURISTIC_CHOICE_NONE;
+        *status = STATUS_NOT_REGULAR;
+    }
 }
