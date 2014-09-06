@@ -100,5 +100,7 @@ uint64_t bsal_unitig_walker_get_path_name(struct thorium_actor *self, int length
 
 void bsal_unitig_walker_check_symmetry(struct thorium_actor *self, int parent_choice, int child_choice,
                 int *choice, int *status);
+void bsal_unitig_walker_check_agreement(struct thorium_actor *self, int parent_choice, int child_choice,
+                int *choice, int *status);
 
 #endif

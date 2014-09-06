@@ -788,13 +788,6 @@ int bsal_unitig_walker_select(struct thorium_actor *self, int *output_status)
     struct bsal_vector child_coverage_values;
     struct bsal_vector *selected_path;
     int size;
-    int right_path_size;
-    int left_path_size;
-    int parent_code;
-    int child_code;
-    int expected_parent_code;
-    int expected_child_code;
-    int previous_position;
 
     status = STATUS_NO_STATUS;
 
@@ -875,111 +868,8 @@ int bsal_unitig_walker_select(struct thorium_actor *self, int *output_status)
 
     bsal_unitig_walker_check_symmetry(self, parent_choice, child_choice, &choice, &status);
 
-    /*
-     * Verify that there ris no disagreement
-     * (STATUS_DISAGREEMENT).
-     */
     if (choice != BSAL_HEURISTIC_CHOICE_NONE) {
-
-        /*
-         * This goes from left to right.
-         */
-        if (concrete_self->select_operation == OPERATION_SELECT_CHILD) {
-            right_path_size = bsal_vector_size(&concrete_self->right_path);
-
-            if (right_path_size >= 1) {
-
-                previous_position = right_path_size - concrete_self->kmer_length - 1;
-
-                /*
-                 * This is in the starting kmer.
-                 */
-                if (previous_position < 0) {
-                    previous_position += concrete_self->kmer_length;
-                    expected_parent_code = bsal_dna_kmer_get_symbol(&concrete_self->starting_kmer,
-                                    previous_position, concrete_self->kmer_length,
-                                    &concrete_self->codec);
-                } else {
-                    expected_parent_code = bsal_vector_at_as_int(&concrete_self->right_path,
-                            previous_position);
-                }
-
-                parent_code = bsal_assembly_vertex_get_parent(&concrete_self->current_vertex, parent_choice);
-                child_code = bsal_assembly_vertex_get_child(&concrete_self->current_vertex, child_choice);
-
-                if (parent_code != expected_parent_code) {
-                    printf("DEBUG STATUS_DISAGREEMENT child actual %d expected %d",
-                            parent_code, expected_parent_code);
-                    printf(" MISMATCH");
-                    printf("\n");
-
-                    choice = BSAL_HEURISTIC_CHOICE_NONE;
-                    status = STATUS_DISAGREEMENT;
-                }
-            }
-#if 0
-            tail_size = 5;
-
-            if (right_path_size >= concrete_self->kmer_length + tail_size) {
-                printf("actor/%d Test for STATUS_DISAGREEMENT parent_choice_code= %d child_choice_code= %d right_path_size %d last %d codes: [",
-                                thorium_actor_name(self),
-                                parent_code, child_code, right_path_size, tail_size);
-
-                for (i = 0; i < tail_size; ++i) {
-                    other_code = bsal_vector_at_as_int(&concrete_self->right_path,
-                                    right_path_size - concrete_self->kmer_length - tail_size + i);
-
-                    printf(" %d", other_code);
-                }
-
-                printf("]\n");
-            }
-#endif
-
-        /*
-         * Validate from right to left.
-         */
-        } else if (concrete_self->select_operation == OPERATION_SELECT_PARENT) {
-            left_path_size = bsal_vector_size(&concrete_self->left_path);
-
-            if (left_path_size >= 1) {
-
-                previous_position = left_path_size - concrete_self->kmer_length - 1;
-
-                /*
-                 * The previous one is in the starting kmer.
-                 */
-                if (previous_position < 0) {
-
-                    previous_position += concrete_self->kmer_length;
-
-                    /*
-                     * Invert the polarity of the bio object.
-                     */
-                    previous_position = concrete_self->kmer_length - 1 - previous_position;
-
-                    expected_child_code = bsal_dna_kmer_get_symbol(&concrete_self->starting_kmer,
-                                    previous_position, concrete_self->kmer_length,
-                                    &concrete_self->codec);
-                } else {
-                    expected_child_code = bsal_vector_at_as_int(&concrete_self->left_path,
-                            previous_position);
-                }
-
-                parent_code = bsal_assembly_vertex_get_parent(&concrete_self->current_vertex, parent_choice);
-                child_code = bsal_assembly_vertex_get_child(&concrete_self->current_vertex, child_choice);
-
-                if (child_code != expected_child_code) {
-                    printf("DEBUG STATUS_DISAGREEMENT parent actual %d expected %d",
-                            child_code, expected_child_code);
-                    printf(" MISMATCH");
-                    printf("\n");
-
-                    choice = BSAL_HEURISTIC_CHOICE_NONE;
-                    status = STATUS_DISAGREEMENT;
-                }
-            }
-        }
+        bsal_unitig_walker_check_agreement(self, parent_choice, child_choice, &choice, &status);
     }
 
     found = 0;
@@ -1381,5 +1271,124 @@ void bsal_unitig_walker_check_symmetry(struct thorium_actor *self, int parent_ch
                     || child_choice == BSAL_HEURISTIC_CHOICE_NONE) {
         *choice = BSAL_HEURISTIC_CHOICE_NONE;
         *status = STATUS_NOT_REGULAR;
+    }
+}
+
+void bsal_unitig_walker_check_agreement(struct thorium_actor *self, int parent_choice, int child_choice,
+                int *choice, int *status)
+{
+    struct bsal_unitig_walker *concrete_self;
+    int right_path_size;
+    int left_path_size;
+    int parent_code;
+    int child_code;
+    int expected_parent_code;
+    int expected_child_code;
+    int previous_position;
+
+    concrete_self = thorium_actor_concrete_actor(self);
+
+    /*
+     * Verify that there ris no disagreement
+     * (STATUS_DISAGREEMENT).
+     */
+    /*
+     * This goes from left to right.
+     */
+    if (concrete_self->select_operation == OPERATION_SELECT_CHILD) {
+        right_path_size = bsal_vector_size(&concrete_self->right_path);
+
+        if (right_path_size >= 1) {
+
+            previous_position = right_path_size - concrete_self->kmer_length - 1;
+
+            /*
+             * This is in the starting kmer.
+             */
+            if (previous_position < 0) {
+                previous_position += concrete_self->kmer_length;
+                expected_parent_code = bsal_dna_kmer_get_symbol(&concrete_self->starting_kmer,
+                                previous_position, concrete_self->kmer_length,
+                                &concrete_self->codec);
+            } else {
+                expected_parent_code = bsal_vector_at_as_int(&concrete_self->right_path,
+                        previous_position);
+            }
+
+            parent_code = bsal_assembly_vertex_get_parent(&concrete_self->current_vertex, parent_choice);
+            child_code = bsal_assembly_vertex_get_child(&concrete_self->current_vertex, child_choice);
+
+            if (parent_code != expected_parent_code) {
+                printf("DEBUG STATUS_DISAGREEMENT child actual %d expected %d",
+                        parent_code, expected_parent_code);
+                printf(" MISMATCH");
+                printf("\n");
+
+                *choice = BSAL_HEURISTIC_CHOICE_NONE;
+                *status = STATUS_DISAGREEMENT;
+            }
+        }
+        #if 0
+        tail_size = 5;
+
+        if (right_path_size >= concrete_self->kmer_length + tail_size) {
+            printf("actor/%d Test for STATUS_DISAGREEMENT parent_choice_code= %d child_choice_code= %d right_path_size %d last %d codes: [",
+                            thorium_actor_name(self),
+                            parent_code, child_code, right_path_size, tail_size);
+
+            for (i = 0; i < tail_size; ++i) {
+                other_code = bsal_vector_at_as_int(&concrete_self->right_path,
+                                right_path_size - concrete_self->kmer_length - tail_size + i);
+
+                printf(" %d", other_code);
+            }
+
+            printf("]\n");
+        }
+        #endif
+
+    /*
+     * Validate from right to left.
+     */
+    } else if (concrete_self->select_operation == OPERATION_SELECT_PARENT) {
+        left_path_size = bsal_vector_size(&concrete_self->left_path);
+
+        if (left_path_size >= 1) {
+
+            previous_position = left_path_size - concrete_self->kmer_length - 1;
+
+            /*
+             * The previous one is in the starting kmer.
+             */
+            if (previous_position < 0) {
+
+                previous_position += concrete_self->kmer_length;
+
+                /*
+                 * Invert the polarity of the bio object.
+                 */
+                previous_position = concrete_self->kmer_length - 1 - previous_position;
+
+                expected_child_code = bsal_dna_kmer_get_symbol(&concrete_self->starting_kmer,
+                                previous_position, concrete_self->kmer_length,
+                                &concrete_self->codec);
+            } else {
+                expected_child_code = bsal_vector_at_as_int(&concrete_self->left_path,
+                        previous_position);
+            }
+
+            parent_code = bsal_assembly_vertex_get_parent(&concrete_self->current_vertex, parent_choice);
+            child_code = bsal_assembly_vertex_get_child(&concrete_self->current_vertex, child_choice);
+
+            if (child_code != expected_child_code) {
+                printf("DEBUG STATUS_DISAGREEMENT parent actual %d expected %d",
+                        child_code, expected_child_code);
+                printf(" MISMATCH");
+                printf("\n");
+
+                *choice = BSAL_HEURISTIC_CHOICE_NONE;
+                *status = STATUS_DISAGREEMENT;
+            }
+        }
     }
 }
