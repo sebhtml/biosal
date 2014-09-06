@@ -28,6 +28,7 @@
 */
 
 #define MINIMUM_PATH_LENGTH_IN_NUCLEOTIDES 100
+#define DEBUG_PATH_NAMES
 
 /*
 #define HIGHLIGH_STARTING_POINT
@@ -739,12 +740,13 @@ void bsal_unitig_walker_dump_path(struct thorium_actor *self)
 
     path_name = bsal_unitig_walker_get_path_name(self, sequence_length, sequence);
 
+    if (sequence_length >= MINIMUM_PATH_LENGTH_IN_NUCLEOTIDES) {
+
 #ifdef DEBUG_PATH_NAMES
-    printf("DEBUG path_name= %" PRIu64 "path_length= %d start_position= %d\n",
+    printf("DEBUG path_name= %" PRIu64 " path_length= %d start_position= %d\n",
                     path_name, sequence_length, start_position);
 #endif
 
-    if (sequence_length >= MINIMUM_PATH_LENGTH_IN_NUCLEOTIDES) {
         bsal_unitig_walker_write(self, path_name,
                     sequence, sequence_length);
     }
@@ -899,7 +901,7 @@ int bsal_unitig_walker_select(struct thorium_actor *self, int *output_status)
                 if (parent_code != expected_parent_code) {
                     printf("DEBUG STATUS_DISAGREEMENT actual %d expected %d",
                             parent_code, expected_parent_code);
-                    printf("MISMATCH");
+                    printf(" MISMATCH");
                     printf("\n");
                 }
 
