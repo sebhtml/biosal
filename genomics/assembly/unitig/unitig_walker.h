@@ -103,4 +103,7 @@ void bsal_unitig_walker_check_symmetry(struct thorium_actor *self, int parent_ch
 void bsal_unitig_walker_check_agreement(struct thorium_actor *self, int parent_choice, int child_choice,
                 int *choice, int *status);
 
+void bsal_unitig_walker_check_usage(struct thorium_actor *self, int *choice, int *status,
+                struct bsal_vector *selected_kmers);
+
 #endif

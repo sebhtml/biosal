@@ -777,11 +777,8 @@ int bsal_unitig_walker_select(struct thorium_actor *self, int *output_status)
     int code;
     char nucleotide;
     struct bsal_assembly_vertex *vertex;
-    struct bsal_dna_kmer *kmer;
     int coverage;
-    void *key;
     struct bsal_memory_pool *ephemeral_memory;
-    int found;
     struct bsal_vector *selected_vertices;
     struct bsal_vector *selected_kmers;
     struct bsal_vector parent_coverage_values;
@@ -796,8 +793,6 @@ int bsal_unitig_walker_select(struct thorium_actor *self, int *output_status)
      */
     concrete_self = thorium_actor_concrete_actor(self);
     ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
-
-    key = bsal_memory_pool_allocate(ephemeral_memory, concrete_self->key_length);
 
     if (concrete_self->select_operation == OPERATION_SELECT_CHILD) {
         selected_vertices = &concrete_self->child_vertices;
@@ -843,6 +838,9 @@ int bsal_unitig_walker_select(struct thorium_actor *self, int *output_status)
         bsal_vector_push_back(&child_coverage_values, &coverage);
     }
 
+    /*
+     * Use the heuristic to make the call.
+     */
     child_choice = bsal_unitig_heuristic_select(&concrete_self->heuristic, current_coverage,
                     &child_coverage_values);
 
@@ -866,45 +864,20 @@ int bsal_unitig_walker_select(struct thorium_actor *self, int *output_status)
         status = STATUS_WITH_CHOICE;
     }
 
+    /*
+     * Check symmetry.
+     */
     bsal_unitig_walker_check_symmetry(self, parent_choice, child_choice, &choice, &status);
 
-    if (choice != BSAL_HEURISTIC_CHOICE_NONE) {
-        bsal_unitig_walker_check_agreement(self, parent_choice, child_choice, &choice, &status);
-    }
-
-    found = 0;
+    /*
+     * Verify agreement
+     */
+    bsal_unitig_walker_check_agreement(self, parent_choice, child_choice, &choice, &status);
 
     /*
-     * Verify if it was visited already.
+     * Make sure that the choice is not already in the unitig.
      */
-    if (choice != BSAL_HEURISTIC_CHOICE_NONE) {
-
-        kmer = bsal_vector_at(selected_kmers, choice);
-
-        bsal_dna_kmer_pack(kmer, key, concrete_self->kmer_length,
-                        &concrete_self->codec);
-
-        found = bsal_set_find(&concrete_self->visited, key);
-
-#ifdef BSAL_UNITIG_WALKER_DEBUG
-        printf("Find result %d\n", found);
-
-        bsal_dna_kmer_print(kmer, concrete_self->kmer_length, &concrete_self->codec,
-                        ephemeral_memory);
-#endif
-
-        if (found) {
-            printf("This one was already visited:\n");
-
-            bsal_dna_kmer_print(kmer, concrete_self->kmer_length, &concrete_self->codec,
-                        ephemeral_memory);
-            choice = BSAL_HEURISTIC_CHOICE_NONE;
-            status = STATUS_ALREADY_VISITED;
-        }
-    }
-#ifdef BSAL_UNITIG_WALKER_DEBUG
-    printf("Choice is %d\n", choice);
-#endif
+    bsal_unitig_walker_check_usage(self, &choice, &status, selected_kmers);
 
 #if 0
     /*
@@ -916,8 +889,6 @@ int bsal_unitig_walker_select(struct thorium_actor *self, int *output_status)
         choice = BSAL_HEURISTIC_CHOICE_NONE;
     }
 #endif
-
-    bsal_memory_pool_free(ephemeral_memory, key);
 
     if (choice == BSAL_HEURISTIC_CHOICE_NONE
                     && bsal_vector_size(selected_path) > 200) {
@@ -1192,7 +1163,7 @@ void bsal_unitig_walker_set_current(struct thorium_actor *self,
 {
     struct bsal_unitig_walker *concrete_self;
 
-    concrete_self = (struct bsal_unitig_walker *)thorium_actor_concrete_actor(self);
+    concrete_self = thorium_actor_concrete_actor(self);
 
     bsal_dna_kmer_destroy(&concrete_self->current_kmer, &concrete_self->memory_pool);
 
@@ -1285,6 +1256,10 @@ void bsal_unitig_walker_check_agreement(struct thorium_actor *self, int parent_c
     int expected_parent_code;
     int expected_child_code;
     int previous_position;
+
+    if (*choice == BSAL_HEURISTIC_CHOICE_NONE) {
+        return;
+    }
 
     concrete_self = thorium_actor_concrete_actor(self);
 
@@ -1391,4 +1366,55 @@ void bsal_unitig_walker_check_agreement(struct thorium_actor *self, int parent_c
             }
         }
     }
+}
+
+void bsal_unitig_walker_check_usage(struct thorium_actor *self, int *choice, int *status,
+                struct bsal_vector *selected_kmers)
+{
+    int found;
+    struct bsal_dna_kmer *kmer;
+    void *key;
+    struct bsal_memory_pool *ephemeral_memory;
+    struct bsal_unitig_walker *concrete_self;
+
+    concrete_self = thorium_actor_concrete_actor(self);
+    found = 0;
+
+    ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
+    key = bsal_memory_pool_allocate(ephemeral_memory, concrete_self->key_length);
+
+    /*
+     * Verify if it was visited already.
+     */
+    if (*choice == BSAL_HEURISTIC_CHOICE_NONE) {
+        return;
+    }
+
+    kmer = bsal_vector_at(selected_kmers, *choice);
+
+    bsal_dna_kmer_pack(kmer, key, concrete_self->kmer_length,
+                    &concrete_self->codec);
+
+    found = bsal_set_find(&concrete_self->visited, key);
+
+#ifdef BSAL_UNITIG_WALKER_DEBUG
+    printf("Find result %d\n", found);
+
+    bsal_dna_kmer_print(kmer, concrete_self->kmer_length, &concrete_self->codec,
+                        ephemeral_memory);
+#endif
+
+    if (found) {
+        printf("This one was already visited:\n");
+
+        bsal_dna_kmer_print(kmer, concrete_self->kmer_length, &concrete_self->codec,
+                    ephemeral_memory);
+        *choice = BSAL_HEURISTIC_CHOICE_NONE;
+        *status = STATUS_ALREADY_VISITED;
+    }
+#ifdef BSAL_UNITIG_WALKER_DEBUG
+    printf("Choice is %d\n", choice);
+#endif
+
+    bsal_memory_pool_free(ephemeral_memory, key);
 }
