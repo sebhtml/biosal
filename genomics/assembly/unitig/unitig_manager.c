@@ -5,6 +5,8 @@
 
 #include <core/patterns/manager.h>
 
+#define UNITIG_WALKER_COUNT_PER_WORKER 4
+
 struct thorium_script bsal_unitig_manager_script = {
     .identifier = SCRIPT_UNITIG_MANAGER,
     .name = "bsal_unitig_manager",
@@ -12,7 +14,7 @@ struct thorium_script bsal_unitig_manager_script = {
     .destroy = bsal_unitig_manager_destroy,
     .receive = bsal_unitig_manager_receive,
     .size = sizeof(struct bsal_unitig_manager),
-    .description = "Testbed for testing ideas."
+    .description = "The chief executive for unitig walkers"
 };
 
 void bsal_unitig_manager_init(struct thorium_actor *self)
@@ -85,6 +87,11 @@ void bsal_unitig_manager_receive(struct thorium_actor *self, struct thorium_mess
         thorium_actor_send_reply_empty(self, ACTION_ASK_TO_STOP_REPLY);
 
     } else if (tag == ACTION_MANAGER_SET_SCRIPT_REPLY) {
+
+        thorium_actor_send_reply_int(self, ACTION_MANAGER_SET_ACTORS_PER_WORKER,
+                        UNITIG_WALKER_COUNT_PER_WORKER);
+
+    } else if (tag == ACTION_MANAGER_SET_ACTORS_PER_WORKER_REPLY) {
 
         thorium_actor_send_reply_vector(self, ACTION_START,
                         &concrete_self->spawners);
