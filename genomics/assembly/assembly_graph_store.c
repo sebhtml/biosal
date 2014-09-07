@@ -52,6 +52,9 @@ void bsal_assembly_graph_store_init(struct thorium_actor *self)
     struct bsal_assembly_graph_store *concrete_self;
 
     concrete_self = (struct bsal_assembly_graph_store *)thorium_actor_concrete_actor(self);
+
+    concrete_self->consumed_canonical_vertex_count = 0;
+
     concrete_self->kmer_length = -1;
     concrete_self->received = 0;
 
@@ -933,6 +936,10 @@ void bsal_assembly_graph_store_get_vertex(struct thorium_actor *self, struct tho
     if (bsal_assembly_vertex_state(canonical_vertex) == BSAL_VERTEX_STATE_UNUSED) {
         bsal_assembly_vertex_set_state(canonical_vertex, BSAL_VERTEX_STATE_USED);
         bsal_assembly_vertex_set_first_actor(canonical_vertex, source);
+
+        ++concrete_self->consumed_canonical_vertex_count;
+
+        bsal_assembly_graph_store_print_progress(self);
     }
 
     if (!is_canonical) {
@@ -972,8 +979,8 @@ void bsal_assembly_graph_store_get_starting_vertex(struct thorium_actor *self, s
     void *storage_key;
     struct bsal_assembly_vertex *vertex;
 
-    ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
     concrete_self = (struct bsal_assembly_graph_store *)thorium_actor_concrete_actor(self);
+    ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
 
     while (bsal_map_iterator_has_next(&concrete_self->iterator)) {
 
@@ -1121,4 +1128,42 @@ int bsal_assembly_graph_store_get_store_count_per_node(struct thorium_actor *sel
      */
     return thorium_actor_node_worker_count(self);
 #endif
+}
+
+void bsal_assembly_graph_store_print_progress(struct thorium_actor *self)
+{
+    struct bsal_assembly_graph_store *concrete_self;
+    uint64_t total;
+    uint64_t stride;
+    uint64_t current_value;
+    int steps;
+    float ratio;
+    char finished[] = " FINISHED";
+    char not_finished[] = "";
+    char *state;
+
+    concrete_self = (struct bsal_assembly_graph_store *)thorium_actor_concrete_actor(self);
+
+    total = bsal_map_size(&concrete_self->table);
+    steps = 20;
+    stride = total / steps;
+
+    current_value = concrete_self->consumed_canonical_vertex_count;
+
+    if ((current_value == 0)
+                    || (current_value % stride == 0)
+                    || (current_value == total)) {
+
+        state = not_finished;
+
+        if (current_value == total) {
+            state = finished;
+        }
+
+        ratio = (0.0 + current_value) / total;
+
+        printf("%s/%d %.2f of vertices were consumed%s\n",
+                        thorium_actor_script_name(self),
+                        thorium_actor_name(self), ratio, state);
+    }
 }

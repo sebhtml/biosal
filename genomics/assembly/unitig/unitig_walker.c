@@ -28,7 +28,10 @@
 */
 
 #define MINIMUM_PATH_LENGTH_IN_NUCLEOTIDES 100
+
+/*
 #define DEBUG_PATH_NAMES
+*/
 
 /*
 #define HIGHLIGH_STARTING_POINT
@@ -567,9 +570,11 @@ void bsal_unitig_walker_get_vertices_and_select_reply(struct thorium_actor *self
 
     bsal_unitig_walker_dump_path(self);
 
+#if 0
     if (concrete_self->path_index % 1000 == 0) {
         printf("path_index is %d\n", concrete_self->path_index);
     }
+#endif
 
     thorium_actor_send_to_self_empty(self, ACTION_BEGIN);
 }
@@ -785,6 +790,7 @@ int bsal_unitig_walker_select(struct thorium_actor *self, int *output_status)
     struct bsal_vector child_coverage_values;
     struct bsal_vector *selected_path;
     int size;
+    int print_status;
 
     status = STATUS_NO_STATUS;
 
@@ -890,10 +896,21 @@ int bsal_unitig_walker_select(struct thorium_actor *self, int *output_status)
     }
 #endif
 
-    if (choice == BSAL_HEURISTIC_CHOICE_NONE
-                    && bsal_vector_size(selected_path) > 200) {
+    print_status = 0;
 
-        printf("Notice: can not select, current_coverage %d", current_coverage);
+    if (bsal_vector_size(selected_path) > 2000)
+        print_status = 1;
+
+    /*
+     * Don't print status if everything went fine.
+     */
+    if (choice != BSAL_HEURISTIC_CHOICE_NONE)
+        print_status = 0;
+
+    if (print_status) {
+
+        printf("Notice: can not select, current_coverage %d, selected_path.size %d", current_coverage,
+                        (int)bsal_vector_size(selected_path));
 
         /*
          * Print edges.

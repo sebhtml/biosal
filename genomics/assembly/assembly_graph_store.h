@@ -80,6 +80,9 @@ struct bsal_assembly_graph_store {
     int printed_vertex_size;
     int printed_arc_size;
     int codec_are_different;
+
+    uint64_t consumed_canonical_vertex_count;
+    uint64_t last_progress;
 };
 
 extern struct thorium_script bsal_assembly_graph_store_script;
@@ -110,5 +113,7 @@ void bsal_assembly_graph_store_get_vertex(struct thorium_actor *self, struct tho
 void bsal_assembly_graph_store_get_starting_vertex(struct thorium_actor *self, struct thorium_message *message);
 
 int bsal_assembly_graph_store_get_store_count_per_node(struct thorium_actor *self);
+
+void bsal_assembly_graph_store_print_progress(struct thorium_actor *self);
 
 #endif
