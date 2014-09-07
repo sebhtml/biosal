@@ -107,6 +107,9 @@ void bsal_unitig_walker_init(struct thorium_actor *self)
                     bsal_unitig_walker_get_vertex_reply_starting_vertex,
                     &concrete_self->has_starting_vertex, 0);
 
+    thorium_actor_add_action(self, ACTION_NOTIFY, bsal_unitig_walker_notify);
+    thorium_actor_add_action(self, ACTION_NOTIFY_REPLY, bsal_unitig_walker_notify_reply);
+
     bsal_vector_init(&concrete_self->left_path, sizeof(int));
     bsal_vector_set_memory_pool(&concrete_self->left_path, &concrete_self->memory_pool);
 
@@ -609,6 +612,10 @@ void bsal_unitig_walker_get_vertex_reply(struct thorium_actor *self, struct thor
     void *buffer;
     struct bsal_unitig_walker *concrete_self;
     struct bsal_assembly_vertex vertex;
+    int state;
+    int actor;
+    int name;
+    int length;
 
     buffer = thorium_message_buffer(message);
     concrete_self = thorium_actor_concrete_actor(self);
@@ -636,6 +643,57 @@ void bsal_unitig_walker_get_vertex_reply(struct thorium_actor *self, struct thor
         bsal_vector_push_back(&concrete_self->parent_vertices, &vertex);
         ++concrete_self->current_parent;
     }
+
+    /*
+     * Check for competition.
+     */
+    state = bsal_assembly_vertex_state(&vertex);
+
+    BSAL_DEBUGGER_ASSERT(state == BSAL_VERTEX_STATE_USED
+                    || state == BSAL_VERTEX_STATE_UNUSED);
+
+    actor = bsal_assembly_vertex_best_actor(&vertex);
+    name = thorium_actor_name(self);
+
+    if (state == BSAL_VERTEX_STATE_USED && actor != name) {
+
+#if 0
+        /* ask the other actor about it.
+         */
+        printf("actor/%d needs to ask actor/%d for solving BSAL_VERTEX_STATE_USED\n",
+                        thorium_actor_name(self), actor);
+#endif
+
+        length = bsal_unitig_walker_get_current_length(self);
+
+        thorium_actor_send_int(self, actor, ACTION_NOTIFY, length);
+
+    } else {
+
+        thorium_actor_send_to_self_empty(self, ACTION_ASSEMBLY_GET_VERTICES_AND_SELECT);
+    }
+}
+
+void bsal_unitig_walker_notify(struct thorium_actor *self, struct thorium_message *message)
+{
+    struct bsal_unitig_walker *concrete_self;
+    int first_is_longer;
+    int other_length;
+
+    thorium_message_unpack_int(message, 0, &other_length);
+    concrete_self = thorium_actor_concrete_actor(self);
+    first_is_longer = 0;
+
+    thorium_actor_send_reply_int(self, ACTION_NOTIFY_REPLY, first_is_longer);
+}
+
+void bsal_unitig_walker_notify_reply(struct thorium_actor *self, struct thorium_message *message)
+{
+    struct bsal_unitig_walker *concrete_self;
+    int first_is_longer;
+
+    concrete_self = thorium_actor_concrete_actor(self);
+    thorium_message_unpack_int(message, 0, &first_is_longer);
 
     thorium_actor_send_to_self_empty(self, ACTION_ASSEMBLY_GET_VERTICES_AND_SELECT);
 }
@@ -1459,4 +1517,19 @@ void bsal_unitig_walker_check_usage(struct thorium_actor *self, int *choice, int
 #endif
 
     bsal_memory_pool_free(ephemeral_memory, key);
+}
+
+int bsal_unitig_walker_get_current_length(struct thorium_actor *self)
+{
+    struct bsal_unitig_walker *concrete_self;
+    int length;
+
+    concrete_self = thorium_actor_concrete_actor(self);
+
+    length = 0;
+    length += concrete_self->kmer_length;
+    length += bsal_vector_size(&concrete_self->left_path);
+    length += bsal_vector_size(&concrete_self->right_path);
+
+    return length;
 }

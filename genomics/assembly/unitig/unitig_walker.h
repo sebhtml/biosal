@@ -105,5 +105,9 @@ void bsal_unitig_walker_check_agreement(struct thorium_actor *self, int parent_c
 
 void bsal_unitig_walker_check_usage(struct thorium_actor *self, int *choice, int *status,
                 struct bsal_vector *selected_kmers);
+int bsal_unitig_walker_get_current_length(struct thorium_actor *self);
+
+void bsal_unitig_walker_notify(struct thorium_actor *self, struct thorium_message *message);
+void bsal_unitig_walker_notify_reply(struct thorium_actor *self, struct thorium_message *message);
 
 #endif

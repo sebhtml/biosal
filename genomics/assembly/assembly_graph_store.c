@@ -1191,7 +1191,11 @@ void bsal_assembly_graph_store_mark_as_used(struct thorium_actor *self,
     BSAL_DEBUGGER_ASSERT(bsal_assembly_vertex_state(vertex) == BSAL_VERTEX_STATE_UNUSED);
 
     bsal_assembly_vertex_set_state(vertex, BSAL_VERTEX_STATE_USED);
-    bsal_assembly_vertex_set_first_actor(vertex, source);
+
+#if 0
+    printf("DEBUG set vertex source to %d\n", source);
+#endif
+    bsal_assembly_vertex_set_best_actor(vertex, source);
 
     ++concrete_self->consumed_canonical_vertex_count;
     bsal_assembly_graph_store_print_progress(self);
