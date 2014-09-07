@@ -51,7 +51,7 @@ void bsal_assembly_graph_store_init(struct thorium_actor *self)
 {
     struct bsal_assembly_graph_store *concrete_self;
 
-    concrete_self = (struct bsal_assembly_graph_store *)thorium_actor_concrete_actor(self);
+    concrete_self = thorium_actor_concrete_actor(self);
 
     concrete_self->consumed_canonical_vertex_count = 0;
 
@@ -115,7 +115,7 @@ void bsal_assembly_graph_store_destroy(struct thorium_actor *self)
 {
     struct bsal_assembly_graph_store *concrete_self;
 
-    concrete_self = (struct bsal_assembly_graph_store *)thorium_actor_concrete_actor(self);
+    concrete_self = thorium_actor_concrete_actor(self);
 
     bsal_assembly_graph_summary_destroy(&concrete_self->graph_summary);
 
@@ -144,7 +144,8 @@ void bsal_assembly_graph_store_receive(struct thorium_actor *self, struct thoriu
     }
 
     /*ephemeral_memory = thorium_actor_get_ephemeral_memory(self);*/
-    concrete_self = (struct bsal_assembly_graph_store *)thorium_actor_concrete_actor(self);
+    concrete_self = thorium_actor_concrete_actor(self);
+
     tag = thorium_message_tag(message);
     /*buffer = thorium_message_buffer(message);*/
 
@@ -242,7 +243,8 @@ void bsal_assembly_graph_store_print(struct thorium_actor *self)
     struct bsal_memory_pool *ephemeral_memory;
 
     ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
-    concrete_self = (struct bsal_assembly_graph_store *)thorium_actor_concrete_actor(self);
+    concrete_self = thorium_actor_concrete_actor(self);
+
     bsal_map_iterator_init(&iterator, &concrete_self->table);
 
     printf("map size %d\n", (int)bsal_map_size(&concrete_self->table));
@@ -305,7 +307,7 @@ void bsal_assembly_graph_store_push_data(struct thorium_actor *self, struct thor
     int name;
     int source;
 
-    concrete_self = (struct bsal_assembly_graph_store *)thorium_actor_concrete_actor(self);
+    concrete_self = thorium_actor_concrete_actor(self);
     source = thorium_message_source(message);
     concrete_self->source = source;
     name = thorium_actor_name(self);
@@ -340,7 +342,7 @@ void bsal_assembly_graph_store_yield_reply(struct thorium_actor *self, struct th
     int max;
 
     ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
-    concrete_self = (struct bsal_assembly_graph_store *)thorium_actor_concrete_actor(self);
+    concrete_self = thorium_actor_concrete_actor(self);
     customer = concrete_self->customer;
 
 #if 0
@@ -446,7 +448,7 @@ void bsal_assembly_graph_store_push_kmer_block(struct thorium_actor *self, struc
     int *frequency;
 
     ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
-    concrete_self = (struct bsal_assembly_graph_store *)thorium_actor_concrete_actor(self);
+    concrete_self = thorium_actor_concrete_actor(self);
     /*tag = thorium_message_tag(message);*/
     buffer = thorium_message_buffer(message);
     count = thorium_message_count(message);
@@ -592,7 +594,7 @@ void bsal_assembly_graph_store_push_arc_block(struct thorium_actor *self, struct
     return;
 #endif
 
-    concrete_self = (struct bsal_assembly_graph_store *)thorium_actor_concrete_actor(self);
+    concrete_self = thorium_actor_concrete_actor(self);
     ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
 
     sequence = bsal_memory_pool_allocate(ephemeral_memory, concrete_self->kmer_length + 1);
@@ -672,7 +674,7 @@ void bsal_assembly_graph_store_add_arc(struct thorium_actor *self,
 #endif
 
     ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
-    concrete_self = (struct bsal_assembly_graph_store *)thorium_actor_concrete_actor(self);
+    concrete_self = thorium_actor_concrete_actor(self);
 
 #ifdef BSAL_ASSEMBLY_GRAPH_STORE_DEBUG_ARC
     verbose = 0;
@@ -775,7 +777,7 @@ void bsal_assembly_graph_store_get_summary(struct thorium_actor *self, struct th
     int source;
 
     source = thorium_message_source(message);
-    concrete_self = (struct bsal_assembly_graph_store *)thorium_actor_concrete_actor(self);
+    concrete_self = thorium_actor_concrete_actor(self);
 
     concrete_self->summary_in_progress = 1;
     concrete_self->source_for_summary = source;
@@ -884,7 +886,7 @@ void bsal_assembly_graph_store_get_vertex(struct thorium_actor *self, struct tho
     int source;
 
     ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
-    concrete_self = (struct bsal_assembly_graph_store *)thorium_actor_concrete_actor(self);
+    concrete_self = thorium_actor_concrete_actor(self);
 
     source = thorium_message_source(message);
     buffer = thorium_message_buffer(message);
@@ -929,18 +931,12 @@ void bsal_assembly_graph_store_get_vertex(struct thorium_actor *self, struct tho
     bsal_assembly_vertex_init_copy(&vertex, canonical_vertex);
 
     /*
-     * Mark the vertex with BSAL_VERTEX_STATE_USED after making the
+     * Mark the vertex with BSAL_VERTEX_STATE_USED *after* making the
      * copy.
      */
 
-    if (bsal_assembly_vertex_state(canonical_vertex) == BSAL_VERTEX_STATE_UNUSED) {
-        bsal_assembly_vertex_set_state(canonical_vertex, BSAL_VERTEX_STATE_USED);
-        bsal_assembly_vertex_set_first_actor(canonical_vertex, source);
-
-        ++concrete_self->consumed_canonical_vertex_count;
-
-        bsal_assembly_graph_store_print_progress(self);
-    }
+    if (bsal_assembly_vertex_state(canonical_vertex) == BSAL_VERTEX_STATE_UNUSED)
+        bsal_assembly_graph_store_mark_as_used(self, canonical_vertex, source);
 
     if (!is_canonical) {
 
@@ -978,9 +974,12 @@ void bsal_assembly_graph_store_get_starting_vertex(struct thorium_actor *self, s
     char *sequence;
     void *storage_key;
     struct bsal_assembly_vertex *vertex;
+    int source;
 
-    concrete_self = (struct bsal_assembly_graph_store *)thorium_actor_concrete_actor(self);
+    concrete_self = thorium_actor_concrete_actor(self);
     ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
+
+    source = thorium_message_source(message);
 
     while (bsal_map_iterator_has_next(&concrete_self->iterator)) {
 
@@ -991,7 +990,8 @@ void bsal_assembly_graph_store_get_starting_vertex(struct thorium_actor *self, s
                         (void **)&vertex);
 
         /*
-         * Skip the vertex if it is already used.
+         * Skip the vertex if it does not have the status
+         * BSAL_VERTEX_STATE_UNUSED.
          */
         if (bsal_assembly_vertex_state(vertex) != BSAL_VERTEX_STATE_UNUSED) {
 
@@ -1001,6 +1001,19 @@ void bsal_assembly_graph_store_get_starting_vertex(struct thorium_actor *self, s
 
             continue;
         }
+
+        /*
+         * At this point, mark the vertex with flag BSAL_VERTEX_STATE_USED
+         * so that any other actor that attempt to grab it will have to communicate
+         * with the actor.
+         */
+
+        /*
+         * This is not a good idea.
+         */
+#if 0
+        bsal_assembly_graph_store_mark_as_used(self, vertex, source);
+#endif
 
         BSAL_DEBUGGER_ASSERT(storage_key != NULL);
 
@@ -1142,7 +1155,7 @@ void bsal_assembly_graph_store_print_progress(struct thorium_actor *self)
     char not_finished[] = "";
     char *state;
 
-    concrete_self = (struct bsal_assembly_graph_store *)thorium_actor_concrete_actor(self);
+    concrete_self = thorium_actor_concrete_actor(self);
 
     total = bsal_map_size(&concrete_self->table);
     steps = 20;
@@ -1166,4 +1179,20 @@ void bsal_assembly_graph_store_print_progress(struct thorium_actor *self)
                         thorium_actor_script_name(self),
                         thorium_actor_name(self), ratio, state);
     }
+}
+
+void bsal_assembly_graph_store_mark_as_used(struct thorium_actor *self,
+                struct bsal_assembly_vertex *vertex, int source)
+{
+    struct bsal_assembly_graph_store *concrete_self;
+
+    concrete_self = thorium_actor_concrete_actor(self);
+
+    BSAL_DEBUGGER_ASSERT(bsal_assembly_vertex_state(vertex) == BSAL_VERTEX_STATE_UNUSED);
+
+    bsal_assembly_vertex_set_state(vertex, BSAL_VERTEX_STATE_USED);
+    bsal_assembly_vertex_set_first_actor(vertex, source);
+
+    ++concrete_self->consumed_canonical_vertex_count;
+    bsal_assembly_graph_store_print_progress(self);
 }

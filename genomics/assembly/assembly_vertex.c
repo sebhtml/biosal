@@ -4,6 +4,7 @@
 #include <engine/thorium/actor.h>
 
 #include <core/system/packer.h>
+#include <core/system/debugger.h>
 
 #include <stdio.h>
 
@@ -163,3 +164,4 @@ int bsal_assembly_vertex_first_actor(struct bsal_assembly_vertex *self)
 {
     return self->first_actor;
 }
+

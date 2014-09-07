@@ -29,6 +29,8 @@
 
 #define MINIMUM_PATH_LENGTH_IN_NUCLEOTIDES 100
 
+#define DEBUG_SYNCHRONIZATION
+
 /*
 #define DEBUG_PATH_NAMES
 */
@@ -369,12 +371,35 @@ void bsal_unitig_walker_get_vertex_reply_starting_vertex(struct thorium_actor *s
 {
     void *buffer;
     struct bsal_unitig_walker *concrete_self;
+    int state;
 
     buffer = thorium_message_buffer(message);
     concrete_self = (struct bsal_unitig_walker *)thorium_actor_concrete_actor(self);
 
     bsal_assembly_vertex_init(&concrete_self->current_vertex);
     bsal_assembly_vertex_unpack(&concrete_self->current_vertex, buffer);
+
+    /*
+     * Check if the vertex is already used. ACTION_ASSEMBLY_GET_STARTING_VERTEX
+     * returns a kmer that is in state BSAL_VERTEX_STATE_UNUSED,
+     * but another actor can grab the vertex in the mean time.
+     */
+
+    state = bsal_assembly_vertex_state(&concrete_self->current_vertex);
+
+    if (state != BSAL_VERTEX_STATE_UNUSED) {
+
+#ifdef DEBUG_SYNCHRONIZATION
+        printf("SYNC skip vertex at start (state = %d)\n",
+                        state);
+#endif
+
+        bsal_assembly_vertex_destroy(&concrete_self->current_vertex);
+
+        thorium_actor_send_to_self_empty(self, ACTION_BEGIN);
+
+        return;
+    }
 
     /*
      * This is the starting vertex.

@@ -15,6 +15,7 @@
 
 #include <core/system/memory_pool.h>
 
+struct bsal_assembly_vertex;
 struct bsal_assembly_arc;
 
 #define SCRIPT_ASSEMBLY_GRAPH_STORE 0xc81a1596
@@ -115,5 +116,8 @@ void bsal_assembly_graph_store_get_starting_vertex(struct thorium_actor *self, s
 int bsal_assembly_graph_store_get_store_count_per_node(struct thorium_actor *self);
 
 void bsal_assembly_graph_store_print_progress(struct thorium_actor *self);
+
+void bsal_assembly_graph_store_mark_as_used(struct thorium_actor *self,
+                struct bsal_assembly_vertex *vertex, int source);
 
 #endif
