@@ -20,7 +20,6 @@ struct bsal_assembly_vertex {
 
     int coverage_depth;
     int best_actor;
-    int best_length;
     char state;
 
     /*

@@ -13,7 +13,6 @@ void bsal_assembly_vertex_init(struct bsal_assembly_vertex *self)
     self->coverage_depth = 0;
     bsal_assembly_vertex_set_state(self, BSAL_VERTEX_STATE_UNUSED);
     bsal_assembly_vertex_set_best_actor(self, THORIUM_ACTOR_NOBODY);
-    self->best_length = 0;
 
     bsal_assembly_connectivity_init(&self->connectivity);
 }

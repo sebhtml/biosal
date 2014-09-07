@@ -29,7 +29,9 @@
 
 #define MINIMUM_PATH_LENGTH_IN_NUCLEOTIDES 100
 
+/*
 #define DEBUG_SYNCHRONIZATION
+*/
 
 /*
 #define DEBUG_PATH_NAMES
@@ -332,8 +334,7 @@ void bsal_unitig_walker_get_starting_vertex_reply(struct thorium_actor *self, st
 
     bsal_dna_kmer_init_empty(&concrete_self->current_kmer);
     bsal_dna_kmer_unpack(&concrete_self->current_kmer, buffer, concrete_self->kmer_length,
-                    &concrete_self->memory_pool,
-                    &concrete_self->codec);
+                    &concrete_self->memory_pool, &concrete_self->codec);
 
 #ifdef BSAL_UNITIG_WALKER_DEBUG
     printf("%s/%d received starting vertex (%d bytes) from source %d hash %" PRIu64 "\n",
@@ -616,7 +617,12 @@ void bsal_unitig_walker_get_vertex_reply(struct thorium_actor *self, struct thor
     int actor;
     int name;
     int length;
+    int new_count;
+    char *new_buffer;
+    struct bsal_memory_pool *ephemeral_memory;
+    int position;
 
+    ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
     buffer = thorium_message_buffer(message);
     concrete_self = thorium_actor_concrete_actor(self);
 
@@ -666,7 +672,23 @@ void bsal_unitig_walker_get_vertex_reply(struct thorium_actor *self, struct thor
 
         length = bsal_unitig_walker_get_current_length(self);
 
-        thorium_actor_send_int(self, actor, ACTION_NOTIFY, length);
+        new_count = bsal_dna_kmer_pack_size(&concrete_self->current_kmer, concrete_self->kmer_length,
+                    &concrete_self->codec);
+        new_count += sizeof(length);
+
+        new_buffer = bsal_memory_pool_allocate(ephemeral_memory, new_count);
+
+        position = 0;
+        position += bsal_dna_kmer_pack(&concrete_self->current_kmer, new_buffer + position,
+                    concrete_self->kmer_length,
+                    &concrete_self->codec);
+
+        bsal_memory_copy(new_buffer + position, &length, sizeof(length));
+
+        thorium_actor_send_buffer(self, actor, ACTION_NOTIFY, new_count,
+                        new_buffer);
+
+        bsal_memory_pool_free(ephemeral_memory, new_buffer);
 
     } else {
 
@@ -678,11 +700,88 @@ void bsal_unitig_walker_notify(struct thorium_actor *self, struct thorium_messag
 {
     struct bsal_unitig_walker *concrete_self;
     int first_is_longer;
+    int length;
     int other_length;
+    int source;
+    int position;
+    struct bsal_dna_kmer kmer;
+    struct bsal_memory_pool *ephemeral_memory;
+    int found;
+    char *key;
+    void *buffer;
 
-    thorium_message_unpack_int(message, 0, &other_length);
     concrete_self = thorium_actor_concrete_actor(self);
+
+    position = 0;
+    ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
+    source = thorium_message_source(message);
+    buffer = thorium_message_buffer(message);
+
+    /*
+     * Check if the kmer is in the current set. If not, it was in
+     * a previous set.
+     */
+
+    bsal_dna_kmer_init_empty(&kmer);
+    bsal_dna_kmer_unpack(&kmer, buffer, concrete_self->kmer_length,
+                    ephemeral_memory, &concrete_self->codec);
+    key = bsal_memory_pool_allocate(ephemeral_memory, concrete_self->key_length);
+    bsal_dna_kmer_pack_store_key(&kmer, key, concrete_self->kmer_length,
+                    &concrete_self->codec, ephemeral_memory);
+    found = bsal_set_find(&concrete_self->visited, key);
+    bsal_memory_pool_free(ephemeral_memory, key);
+
+    thorium_message_unpack_int(message, position, &other_length);
+    length = bsal_unitig_walker_get_current_length(self);
+
+#if 0
+    printf("DEBUG ACTION_NOTIFY actor/%d (self) has %d, actor/%d has %d\n",
+                    thorium_actor_name(self),
+                    length, source, other_length);
+#endif
+
+    bsal_dna_kmer_destroy(&kmer, ephemeral_memory);
+
     first_is_longer = 0;
+
+    /*
+     * If the kmer is not found, it means that it was in a previous piece of work.
+     */
+    if (!found) {
+        first_is_longer = 1;
+
+#ifdef DEBUG_SYNCHRONIZATION
+        printf("DEBUG ACTION_NOTIFY not found\n");
+#endif
+    } else if (length > other_length) {
+
+        /*
+         * Otherwise, if the current length is larger, we win.
+         */
+        first_is_longer = 1;
+
+#ifdef DEBUG_SYNCHRONIZATION
+        printf("DEBUG ACTION_NOTIFY longer\n");
+#endif
+    } else if (length == other_length) {
+
+        /*
+         * The current actor also wins if its length is equal to the other one.
+         */
+        first_is_longer = 1;
+
+#ifdef DEBUG_SYNCHRONIZATION
+        printf("DEBUG ACTION_NOTIFY equal\n");
+#endif
+
+    } else if (length < other_length) {
+
+        first_is_longer = 0;
+
+#ifdef DEBUG_SYNCHRONIZATION
+        printf("DEBUG ACTION_NOTIFY source has a bigger one\n");
+#endif
+    }
 
     thorium_actor_send_reply_int(self, ACTION_NOTIFY_REPLY, first_is_longer);
 }
@@ -694,6 +793,11 @@ void bsal_unitig_walker_notify_reply(struct thorium_actor *self, struct thorium_
 
     concrete_self = thorium_actor_concrete_actor(self);
     thorium_message_unpack_int(message, 0, &first_is_longer);
+
+#ifdef DEBUG_SYNCHRONIZATION
+    printf("DEBUG received ACTION_NOTIFY_REPLY, other_is_longer-> %d\n",
+                    first_is_longer);
+#endif
 
     thorium_actor_send_to_self_empty(self, ACTION_ASSEMBLY_GET_VERTICES_AND_SELECT);
 }
@@ -1477,12 +1581,6 @@ void bsal_unitig_walker_check_usage(struct thorium_actor *self, int *choice, int
     struct bsal_memory_pool *ephemeral_memory;
     struct bsal_unitig_walker *concrete_self;
 
-    concrete_self = thorium_actor_concrete_actor(self);
-    found = 0;
-
-    ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
-    key = bsal_memory_pool_allocate(ephemeral_memory, concrete_self->key_length);
-
     /*
      * Verify if it was visited already.
      */
@@ -1490,11 +1588,16 @@ void bsal_unitig_walker_check_usage(struct thorium_actor *self, int *choice, int
         return;
     }
 
+    concrete_self = thorium_actor_concrete_actor(self);
+    found = 0;
+
+    ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
+    key = bsal_memory_pool_allocate(ephemeral_memory, concrete_self->key_length);
+
     kmer = bsal_vector_at(selected_kmers, *choice);
 
-    bsal_dna_kmer_pack(kmer, key, concrete_self->kmer_length,
-                    &concrete_self->codec);
-
+    bsal_dna_kmer_pack_store_key(kmer, key, concrete_self->kmer_length,
+                    &concrete_self->codec, ephemeral_memory);
     found = bsal_set_find(&concrete_self->visited, key);
 
 #ifdef BSAL_UNITIG_WALKER_DEBUG
