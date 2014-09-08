@@ -233,7 +233,7 @@ int thorium_pami_transport_send(struct thorium_transport *self, struct thorium_m
     int destination_node = thorium_message_destination_node(message);
     char *buffer = thorium_message_buffer(message);
     int nbytes = thorium_message_count(message);
-    int worker = thorium_message_get_worker(message);
+    int worker = thorium_message_worker(message);
 
     pami_result_t result;
     pami_transport = thorium_transport_get_concrete_transport(self);
@@ -303,7 +303,7 @@ int thorium_pami_transport_receive(struct thorium_transport *self, struct thoriu
 	char *buffer = (char *)bsal_memory_pool_allocate(self->inbound_message_memory_pool, recv_cookie->recv_info.count);
 	memcpy(buffer, (void *)recv_cookie->recv_info.buffer, recv_cookie->recv_info.count);
 
-	thorium_message_init_with_nodes(message, -1, recv_cookie->recv_info.count, buffer, recv_cookie->recv_info.source, self->rank);
+	thorium_message_init_with_nodes(message, recv_cookie->recv_info.count, buffer, recv_cookie->recv_info.source, self->rank);
 
 	thorium_pami_transport_mem_pool_return(pami_transport, recv_cookie->recv_info.count, &recv_cookie->recv_info.buffer);
 
