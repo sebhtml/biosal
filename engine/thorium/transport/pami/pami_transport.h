@@ -30,12 +30,16 @@
 #include <pami.h>
 
 #define MAX_SHORT_MESSAGE_LENGTH 128
+
 #define RECV_BUFFER_SIZE_LARGE 4194304
 #define NUM_RECV_BUFFERS_LARGE 16
-#define NUM_RECV_BUFFERS_LARGE_POINTERS 512
-#define RECV_BUFFER_SIZE_SMALL 4096
-#define NUM_RECV_BUFFERS_SMALL 4096
-#define NUM_RECV_BUFFERS_SMALL_POINTERS 131072
+
+#define RECV_BUFFER_SIZE_MEDIUM 4096
+#define NUM_RECV_BUFFERS_MEDIUM 4096
+
+#define RECV_BUFFER_SIZE_SMALL 128
+#define NUM_RECV_BUFFERS_SMALL 131072
+
 #define NUM_RECV_COOKIES 131072
 #define NUM_SEND_COOKIES 131072
 
@@ -59,16 +63,15 @@ typedef struct {
 } thorium_send_cookie_t;
 
 typedef struct {
-    volatile char *buffer;
-    volatile int buf_index;
-    volatile int count;
-    volatile int source;
-    volatile int dest;
+    char *buffer;
+    int count;
+    int source;
+    int dest;
 } thorium_recv_info_t;
 
 typedef struct {
     struct bsal_fast_queue *recv_queue;
-    volatile thorium_recv_info_t recv_info;
+    thorium_recv_info_t recv_info;
 } thorium_recv_cookie_t;
 
 /*
@@ -81,22 +84,24 @@ struct thorium_pami_transport {
     size_t num_contexts;
 
     int rank; 
-   
-    char **recv_buffers_small;
-    char **recv_buffers_large;
-    thorium_send_cookie_t *send_cookies;
-    thorium_recv_cookie_t *recv_cookies;
-    struct bsal_fast_queue *send_queue;
-    struct bsal_fast_queue *recv_queue;
-    int send_index;
-    volatile int recv_index;
-    volatile int num_preallocated_large_buffers;
-    volatile int num_preallocated_small_buffers;
-    volatile int num_avail_large_buffers;
-    volatile int num_avail_small_buffers;
-    volatile int *avail_large_buffers;
-    volatile int *avail_small_buffers;
 
+    pami_endpoint_t *endpoints;
+  
+    thorium_send_cookie_t **send_cookies;
+    struct bsal_fast_queue *avail_send_cookies_queue;
+    struct bsal_fast_queue *in_use_send_cookies_queue;
+
+    thorium_recv_cookie_t **recv_cookies;
+    struct bsal_fast_queue *avail_recv_cookies_queue;
+    struct bsal_fast_queue *in_use_recv_cookies_queue;
+
+    struct bsal_fast_queue *large_buffer_queue;
+    struct bsal_fast_queue *medium_buffer_queue;
+    struct bsal_fast_queue *small_buffer_queue;
+
+    char **large_buffers;
+    char **medium_buffers;
+    char **small_buffers;
 #endif
 
     /*
@@ -115,22 +120,26 @@ int thorium_pami_transport_receive(struct thorium_transport *self, struct thoriu
 
 int thorium_pami_transport_test(struct thorium_transport *self, struct thorium_worker_buffer *buffer);
 
+void thorium_pami_transport_mem_pool_alloc(struct thorium_pami_transport *pami_transport, int data_size, void *buffer);
+
+void thorium_pami_transport_mem_pool_return(struct thorium_pami_transport *pami_transport, int data_size, void *buffer);
+
 void thorium_recv_done_fn (pami_context_t   context,
-        void           * cookie,
+        void           *cookie,
         pami_result_t    result);
 
 void thorium_send_done_fn (pami_context_t   context,
-        void           * cookie,
+        void           *cookie,
         pami_result_t    result);
 
 void thorium_recv_message_fn (
         pami_context_t    context,      /**< IN: PAMI context */
-        void            * cookie,       /**< IN: dispatch cookie */
-        const void      * header,       /**< IN: header address */
+        void            *cookie,       /**< IN: dispatch cookie */
+        const void      *header,       /**< IN: header address */
         size_t            header_size,  /**< IN: header size */
-        const void      * data,         /**< IN: address of PAMI pipe buffer */
+        const void      *data,         /**< IN: address of PAMI pipe buffer */
         size_t            data_size,    /**< IN: size of PAMI pipe buffer */
         pami_endpoint_t   origin,
-        pami_recv_t     * recv);        /**< OUT: receive message structure */
+        pami_recv_t     *recv);        /**< OUT: receive message structure */
 
 #endif
