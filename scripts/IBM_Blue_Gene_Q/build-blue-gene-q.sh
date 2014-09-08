@@ -11,7 +11,7 @@ CFLAGS="$CFLAGS -L/soft/libraries/alcf/current/xl/ZLIB/lib -I/soft/libraries/alc
 #echo $CFLAGS
 #exit
 
-make clean
+make clean CONFIG_PAMI=y
 make -j 8 CFLAGS="$CFLAGS" CONFIG_PAMI=y \
     applications/argonnite_kmer_counter/argonnite \
     applications/spate_metagenome_assembler/spate \
