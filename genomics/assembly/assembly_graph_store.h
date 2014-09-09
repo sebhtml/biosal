@@ -40,6 +40,9 @@ struct bsal_assembly_arc;
 #define ACTION_ASSEMBLY_GET_VERTEX 0x0000491e
 #define ACTION_ASSEMBLY_GET_VERTEX_REPLY 0x00007724
 
+#define ACTION_MARK_VERTEX_AS_VISITED 0x002e0b8a
+#define ACTION_MARK_VERTEX_AS_VISITED_REPLY 0x002b4b17
+
 /*
  * This is a graph store
  * for assembling sequences.
@@ -119,5 +122,6 @@ void bsal_assembly_graph_store_print_progress(struct thorium_actor *self);
 
 void bsal_assembly_graph_store_mark_as_used(struct thorium_actor *self,
                 struct bsal_assembly_vertex *vertex, int source, int path);
+void bsal_assembly_graph_store_mark_vertex_as_visited(struct thorium_actor *self, struct thorium_message *message);
 
 #endif

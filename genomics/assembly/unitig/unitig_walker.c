@@ -234,6 +234,13 @@ void bsal_unitig_walker_receive(struct thorium_actor *self, struct thorium_messa
 
     if (tag == ACTION_START) {
 
+    } else if (tag == ACTION_MARK_VERTEX_AS_VISITED_REPLY) {
+
+        /*
+         * Continue the work now.
+         */
+        thorium_actor_send_to_self_empty(self, ACTION_ASSEMBLY_GET_VERTICES_AND_SELECT);
+
     } else if (tag == ACTION_ASK_TO_STOP) {
 
         thorium_actor_send_to_self_empty(self, ACTION_STOP);
@@ -558,15 +565,17 @@ void bsal_unitig_walker_get_vertices_and_select(struct thorium_actor *self, stru
 
         new_count = bsal_dna_kmer_pack_size(child_kmer_to_fetch, concrete_self->kmer_length,
                     &concrete_self->codec);
-        new_count += sizeof(concrete_self->path_index);
+        /*new_count += sizeof(concrete_self->path_index);*/
 
         new_buffer = bsal_memory_pool_allocate(ephemeral_memory, new_count);
 
         bsal_dna_kmer_pack(child_kmer_to_fetch, new_buffer,
                     concrete_self->kmer_length,
                     &concrete_self->codec);
+        /*
         bsal_memory_copy(new_buffer + new_count - sizeof(concrete_self->path_index),
                         &concrete_self->path_index, sizeof(concrete_self->path_index));
+                        */
 
         store_index = bsal_dna_kmer_store_index(child_kmer_to_fetch,
                     bsal_vector_size(&concrete_self->graph_stores),
@@ -592,15 +601,19 @@ void bsal_unitig_walker_get_vertices_and_select(struct thorium_actor *self, stru
 
         new_count = bsal_dna_kmer_pack_size(parent_kmer_to_fetch, concrete_self->kmer_length,
                     &concrete_self->codec);
+        /*
         new_count += sizeof(concrete_self->path_index);
+        */
 
         new_buffer = bsal_memory_pool_allocate(ephemeral_memory, new_count);
 
         bsal_dna_kmer_pack(parent_kmer_to_fetch, new_buffer,
                     concrete_self->kmer_length,
                     &concrete_self->codec);
+        /*
         bsal_memory_copy(new_buffer + new_count - sizeof(concrete_self->path_index),
                         &concrete_self->path_index, sizeof(concrete_self->path_index));
+                        */
 
         store_index = bsal_dna_kmer_store_index(parent_kmer_to_fetch,
                     bsal_vector_size(&concrete_self->graph_stores),
@@ -863,7 +876,9 @@ void bsal_unitig_walker_notify(struct thorium_actor *self, struct thorium_messag
             /*
             *bucket = PATH_STATUS_VICTORY_WITH_CHALLENGERS;
             */
+#if 0
             printf("%d victory with length\n", thorium_actor_name(self));
+#endif
         } else {
             authorized_to_continue = 1;
 
@@ -1439,6 +1454,12 @@ void bsal_unitig_walker_make_decision(struct thorium_actor *self)
     int old_size;
     int status;
     int remove_irregular_vertices;
+    int new_count;
+    int store_index;
+    int store;
+    int position;
+    char *new_buffer;
+    struct thorium_message new_message;
 
     remove_irregular_vertices = 1;
 
@@ -1481,6 +1502,9 @@ void bsal_unitig_walker_make_decision(struct thorium_actor *self)
             code = bsal_assembly_vertex_get_parent(&concrete_self->current_vertex, choice);
         }
 
+        /*
+         * Add the choice to the list.
+         */
         kmer = bsal_vector_at(selected_kmers, choice);
         vertex = bsal_vector_at(selected_vertices, choice);
         bsal_vector_push_back(selected_output_path, &code);
@@ -1502,13 +1526,43 @@ void bsal_unitig_walker_make_decision(struct thorium_actor *self)
                         (int)bsal_vector_size(&concrete_self->path));
         #endif
 
+        /*
+         * Send the marker to the graph store.
+         */
+        new_count = bsal_dna_kmer_pack_size(kmer, concrete_self->kmer_length,
+                    &concrete_self->codec);
+        new_count += sizeof(concrete_self->path_index);
+
+        new_buffer = bsal_memory_pool_allocate(ephemeral_memory, new_count);
+        position = 0;
+        position += bsal_dna_kmer_pack(kmer, new_buffer,
+                    concrete_self->kmer_length,
+                    &concrete_self->codec);
+        bsal_memory_copy(new_buffer + position,
+                        &concrete_self->path_index, sizeof(concrete_self->path_index));
+        position += sizeof(concrete_self->path_index);
+
+        BSAL_DEBUGGER_ASSERT(position == new_count);
+
+        store_index = bsal_dna_kmer_store_index(kmer,
+                    bsal_vector_size(&concrete_self->graph_stores),
+                    concrete_self->kmer_length,
+                    &concrete_self->codec, ephemeral_memory);
+        store = bsal_vector_at_as_int(&concrete_self->graph_stores, store_index);
+
+        thorium_message_init(&new_message, ACTION_MARK_VERTEX_AS_VISITED, new_count, new_buffer);
+        thorium_actor_send(self, store, &new_message);
+        thorium_message_destroy(&new_message);
+
+        bsal_memory_pool_free(ephemeral_memory, new_buffer);
+
         bsal_memory_pool_free(ephemeral_memory, key);
 
+        /*
+         * Whenever a choice is made, the vertex is marked as visited.
+         */
         bsal_unitig_walker_set_current(self, kmer, vertex);
-
         bsal_unitig_walker_clear(self);
-
-        thorium_actor_send_to_self_empty(self, ACTION_ASSEMBLY_GET_VERTICES_AND_SELECT);
 
     } else if (concrete_self->select_operation == OPERATION_SELECT_CHILD) {
 
