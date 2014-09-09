@@ -20,6 +20,7 @@ struct thorium_script bsal_unitig_manager_script = {
 void bsal_unitig_manager_init(struct thorium_actor *self)
 {
     struct bsal_unitig_manager *concrete_self;
+
     concrete_self = (struct bsal_unitig_manager *)thorium_actor_concrete_actor(self);
 
     bsal_vector_init(&concrete_self->spawners, sizeof(int));
@@ -28,11 +29,14 @@ void bsal_unitig_manager_init(struct thorium_actor *self)
 
     concrete_self->completed = 0;
     concrete_self->manager = THORIUM_ACTOR_NOBODY;
+
+    bsal_timer_init(&concrete_self->timer);
 }
 
 void bsal_unitig_manager_destroy(struct thorium_actor *self)
 {
     struct bsal_unitig_manager *concrete_self;
+
     concrete_self = (struct bsal_unitig_manager *)thorium_actor_concrete_actor(self);
 
     bsal_vector_destroy(&concrete_self->spawners);
@@ -41,6 +45,8 @@ void bsal_unitig_manager_destroy(struct thorium_actor *self)
 
     concrete_self->completed = 0;
     concrete_self->manager = THORIUM_ACTOR_NOBODY;
+
+    bsal_timer_destroy(&concrete_self->timer);
 }
 
 /*
@@ -107,6 +113,8 @@ void bsal_unitig_manager_receive(struct thorium_actor *self, struct thorium_mess
 
         bsal_vector_unpack(&concrete_self->graph_stores, buffer);
 
+        bsal_timer_start(&concrete_self->timer);
+
         thorium_actor_send_range_vector(self, &concrete_self->walkers,
                         ACTION_START, &concrete_self->graph_stores);
 
@@ -119,6 +127,10 @@ void bsal_unitig_manager_receive(struct thorium_actor *self, struct thorium_mess
                         (int)bsal_vector_size(&concrete_self->walkers));
 
         if (concrete_self->completed == bsal_vector_size(&concrete_self->walkers)) {
+
+            bsal_timer_stop(&concrete_self->timer);
+            bsal_timer_print_with_description(&concrete_self->timer, "Traverse graph for unitigs");
+
             thorium_actor_send_to_supervisor_empty(self, ACTION_SET_PRODUCERS_REPLY);
         }
     }

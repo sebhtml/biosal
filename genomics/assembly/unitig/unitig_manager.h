@@ -4,6 +4,8 @@
 
 #include <engine/thorium/actor.h>
 
+#include <core/system/timer.h>
+
 #define SCRIPT_UNITIG_MANAGER 0x3bf29ca1
 
 /*
@@ -15,6 +17,7 @@ struct bsal_unitig_manager {
     struct bsal_vector walkers;
     int completed;
     int manager;
+    struct bsal_timer timer;
 };
 
 extern struct thorium_script bsal_unitig_manager_script;
