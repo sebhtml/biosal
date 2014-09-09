@@ -999,14 +999,11 @@ void bsal_assembly_graph_store_get_starting_vertex(struct thorium_actor *self, s
                         (void **)&vertex);
 
         /*
-         * Skip the vertex if it does not have the status
-         * BSAL_VERTEX_STATE_UNUSED.
+         * Skip the vertex if it does have the status
+         * BSAL_VERTEX_STATE_USED.
          */
-        if (bsal_assembly_vertex_state(vertex) != BSAL_VERTEX_STATE_UNUSED) {
+        if (bsal_assembly_vertex_get_flag(vertex, BSAL_VERTEX_STATE_USED)) {
 
-#if 0
-            printf("Skipping state != BSAL_VERTEX_STATE_UNUSED\n");
-#endif
 
             continue;
         }
@@ -1181,16 +1178,11 @@ void bsal_assembly_graph_store_mark_as_used(struct thorium_actor *self,
                 struct bsal_assembly_vertex *vertex, int source, int path)
 {
     struct bsal_assembly_graph_store *concrete_self;
-    int state;
 
     concrete_self = thorium_actor_concrete_actor(self);
-    state = bsal_assembly_vertex_state(vertex);
 
-    /*
-    BSAL_DEBUGGER_ASSERT(bsal_assembly_vertex_state(vertex) == BSAL_VERTEX_STATE_UNUSED);
-    */
-    if (state == BSAL_VERTEX_STATE_UNUSED) {
-        bsal_assembly_vertex_set_state(vertex, BSAL_VERTEX_STATE_USED);
+    if (!bsal_assembly_vertex_get_flag(vertex, BSAL_VERTEX_STATE_USED)) {
+        bsal_assembly_vertex_set_flag(vertex, BSAL_VERTEX_STATE_USED);
         ++concrete_self->consumed_canonical_vertex_count;
         bsal_assembly_graph_store_print_progress(self);
     }
@@ -1217,7 +1209,6 @@ void bsal_assembly_graph_store_mark_vertex_as_visited(struct thorium_actor *self
     struct bsal_assembly_vertex *canonical_vertex;
     int position;
     void *key;
-    int state;
     int force;
 
     force = 1;
@@ -1263,12 +1254,10 @@ void bsal_assembly_graph_store_mark_vertex_as_visited(struct thorium_actor *self
      * with the actor.
      */
 
-    state = bsal_assembly_vertex_state(canonical_vertex);
-
     /*
      * This is a good idea to always update with the last one.
      */
-    if (force || state == BSAL_VERTEX_STATE_UNUSED) {
+    if (force || !bsal_assembly_vertex_get_flag(canonical_vertex, BSAL_VERTEX_STATE_USED)) {
         bsal_assembly_graph_store_mark_as_used(self, canonical_vertex, source, path_index);
     }
 #if 0

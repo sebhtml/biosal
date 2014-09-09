@@ -23,5 +23,7 @@ int bsal_unitig_heuristic_select_with_flow_split(struct bsal_unitig_heuristic *s
                 int current_coverage, struct bsal_vector *coverage_values);
 int bsal_unitig_heuristic_select(struct bsal_unitig_heuristic *self,
                 int current_coverage, struct bsal_vector *coverage_values);
+int bsal_unitig_heuristic_select_highest(struct bsal_unitig_heuristic *self,
+                int current_coverage, struct bsal_vector *coverage_values);
 
 #endif

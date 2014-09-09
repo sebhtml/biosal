@@ -8,10 +8,9 @@
 
 typedef int coverage_t;
 
-#define BSAL_VERTEX_STATE_UNUSED 0
-#define BSAL_VERTEX_STATE_USED 1
-#define BSAL_VERTEX_STATE_TIP 2
-#define BSAL_VERTEX_STATE_BUBBLE 3
+#define BSAL_VERTEX_STATE_USED 0
+#define BSAL_VERTEX_STATE_TIP 1
+#define BSAL_VERTEX_STATE_BUBBLE 2
 
 /*
  * Attributes of an assembly vertex
@@ -19,10 +18,10 @@ typedef int coverage_t;
 struct bsal_assembly_vertex {
 
     int coverage_depth;
+    uint32_t flags;
+
     int last_actor;
     int last_path_index;
-
-    char state;
 
     /*
      * Connectivity.
@@ -57,8 +56,9 @@ int bsal_assembly_vertex_pack_unpack(struct bsal_assembly_vertex *self, int oper
 
 void bsal_assembly_vertex_invert_arcs(struct bsal_assembly_vertex *self);
 
-void bsal_assembly_vertex_set_state(struct bsal_assembly_vertex *self, int state);
-int bsal_assembly_vertex_state(struct bsal_assembly_vertex *self);
+void bsal_assembly_vertex_set_flag(struct bsal_assembly_vertex *self, int flag);
+void bsal_assembly_vertex_clear_flag(struct bsal_assembly_vertex *self, int flag);
+int bsal_assembly_vertex_get_flag(struct bsal_assembly_vertex *self, int flag);
 
 void bsal_assembly_vertex_set_last_actor(struct bsal_assembly_vertex *self, int last_actor, int last_path_index);
 int bsal_assembly_vertex_last_actor(struct bsal_assembly_vertex *self);

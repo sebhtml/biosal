@@ -416,7 +416,6 @@ void bsal_unitig_walker_get_vertex_reply_starting_vertex(struct thorium_actor *s
 {
     void *buffer;
     struct bsal_unitig_walker *concrete_self;
-    int state;
     struct bsal_path_status *bucket;
 
     buffer = thorium_message_buffer(message);
@@ -427,18 +426,14 @@ void bsal_unitig_walker_get_vertex_reply_starting_vertex(struct thorium_actor *s
 
     /*
      * Check if the vertex is already used. ACTION_ASSEMBLY_GET_STARTING_VERTEX
-     * returns a kmer that is in state BSAL_VERTEX_STATE_UNUSED,
+     * returns a kmer that has the flag BSAL_VERTEX_STATE_USED set,
      * but another actor can grab the vertex in the mean time.
+     *
+     * Skip used vertices.
      */
 
-    state = bsal_assembly_vertex_state(&concrete_self->current_vertex);
-
-    if (state != BSAL_VERTEX_STATE_UNUSED) {
-
-#ifdef DEBUG_SYNCHRONIZATION
-        printf("SYNC skip vertex at start (state = %d)\n",
-                        state);
-#endif
+    if (bsal_assembly_vertex_get_flag(&concrete_self->current_vertex,
+                            BSAL_VERTEX_STATE_USED)) {
 
         bsal_assembly_vertex_destroy(&concrete_self->current_vertex);
 
@@ -684,7 +679,6 @@ void bsal_unitig_walker_get_vertex_reply(struct thorium_actor *self, struct thor
     void *buffer;
     struct bsal_unitig_walker *concrete_self;
     struct bsal_assembly_vertex vertex;
-    int state;
     int last_actor;
     int last_path_index;
     int name;
@@ -725,25 +719,14 @@ void bsal_unitig_walker_get_vertex_reply(struct thorium_actor *self, struct thor
     /*
      * Check for competition.
      */
-    state = bsal_assembly_vertex_state(&vertex);
-
-    BSAL_DEBUGGER_ASSERT(state == BSAL_VERTEX_STATE_USED
-                    || state == BSAL_VERTEX_STATE_UNUSED);
 
     last_actor = bsal_assembly_vertex_last_actor(&vertex);
     last_path_index = bsal_assembly_vertex_last_path_index(&vertex);
 
-#if 0
-    if (state != BSAL_VERTEX_STATE_UNUSED)
-        printf("%s/%d after unpack state %d last_actor %d last_path_index= %d\n",
-                    thorium_actor_script_name(self),
-                    thorium_actor_name(self),
-                    state, last_actor, last_path_index);
-#endif
-
     name = thorium_actor_name(self);
 
-    if (state == BSAL_VERTEX_STATE_USED && last_actor != name) {
+    if (bsal_assembly_vertex_get_flag(&vertex, BSAL_VERTEX_STATE_USED)
+                    && last_actor != name) {
 
 #if 0
         /* ask the other actor about it.
@@ -862,7 +845,7 @@ void bsal_unitig_walker_notify(struct thorium_actor *self, struct thorium_messag
                     other_length);
 #endif
 
-#ifdef BSAL_DEBUGGER_ENABLE_ASSERT
+#ifdef BSAL_DEBUGGER_ENABLE_ASSERT_disabled
         if (!(other_length <= length)) {
             printf("Error, this is false: %d <= %d\n",
                             other_length, length);
@@ -1757,10 +1740,13 @@ void bsal_unitig_walker_check_agreement(struct thorium_actor *self, int parent_c
             child_code = bsal_assembly_vertex_get_child(&concrete_self->current_vertex, child_choice);
 
             if (parent_code != expected_parent_code) {
+
+#if 0
                 printf("DEBUG STATUS_DISAGREEMENT child actual %d expected %d",
                         parent_code, expected_parent_code);
                 printf(" MISMATCH");
                 printf("\n");
+#endif
 
                 *choice = BSAL_HEURISTIC_CHOICE_NONE;
                 *status = STATUS_DISAGREEMENT;
@@ -1819,10 +1805,12 @@ void bsal_unitig_walker_check_agreement(struct thorium_actor *self, int parent_c
             child_code = bsal_assembly_vertex_get_child(&concrete_self->current_vertex, child_choice);
 
             if (child_code != expected_child_code) {
+#if 0
                 printf("DEBUG STATUS_DISAGREEMENT parent actual %d expected %d",
                         child_code, expected_child_code);
                 printf(" MISMATCH");
                 printf("\n");
+#endif
 
                 *choice = BSAL_HEURISTIC_CHOICE_NONE;
                 *status = STATUS_DISAGREEMENT;
