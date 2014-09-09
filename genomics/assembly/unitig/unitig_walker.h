@@ -111,4 +111,6 @@ int bsal_unitig_walker_get_current_length(struct thorium_actor *self);
 void bsal_unitig_walker_notify(struct thorium_actor *self, struct thorium_message *message);
 void bsal_unitig_walker_notify_reply(struct thorium_actor *self, struct thorium_message *message);
 
+void bsal_unitig_walker_mark_vertex(struct thorium_actor *self, struct bsal_dna_kmer *kmer);
+
 #endif

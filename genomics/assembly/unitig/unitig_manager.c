@@ -5,7 +5,7 @@
 
 #include <core/patterns/manager.h>
 
-#define UNITIG_WALKER_COUNT_PER_WORKER 4
+#define UNITIG_WALKER_COUNT_PER_WORKER 8
 
 struct thorium_script bsal_unitig_manager_script = {
     .identifier = SCRIPT_UNITIG_MANAGER,

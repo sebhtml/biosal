@@ -5,7 +5,7 @@
 
 #include <core/structures/vector.h>
 
-#define REPEAT_MULTIPLIER 8
+#define REPEAT_MULTIPLIER 2
 
 #define SUPER_CAREFUL_WITH_MULTIPLIER
 #define SUPER_CAREFUL_WITH_THRESHOLD
