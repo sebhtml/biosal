@@ -716,7 +716,7 @@ void bsal_unitig_walker_get_vertex_reply(struct thorium_actor *self, struct thor
 
     last_actor = bsal_assembly_vertex_last_actor(&vertex);
     last_path_index = bsal_assembly_vertex_last_path_index(&vertex);
-    
+
 #if 0
     if (state != BSAL_VERTEX_STATE_UNUSED)
         printf("%s/%d after unpack state %d last_actor %d last_path_index= %d\n",
@@ -753,9 +753,10 @@ void bsal_unitig_walker_get_vertex_reply(struct thorium_actor *self, struct thor
         BSAL_DEBUGGER_ASSERT(last_path_index >= 0);
 
 #if 0
-        printf("%d sends to %d ACTION_NOTIFY last_path_index %d length %d\n",
+        printf("%d sends to %d ACTION_NOTIFY last_path_index %d current_path %d length %d\n",
                         thorium_actor_name(self),
-                        last_actor, last_path_index, length);
+                        last_actor, last_path_index,
+                        concrete_self->path_index, length);
 #endif
 
         thorium_actor_send_buffer(self, last_actor, ACTION_NOTIFY, new_count,
@@ -836,16 +837,16 @@ void bsal_unitig_walker_notify(struct thorium_actor *self, struct thorium_messag
          */
 
 #if 0
-        printf("%d past victory %d\n", thorium_actor_name(self),
-                        status);
+        printf("actor %d path %d past victory %d\n", thorium_actor_name(self),
+                    path_index, status);
 #endif
 
-        /* TODO This should be 0 */
+        /* TODO: This should be 0 */
         authorized_to_continue = 1;
 
     } else if (status == PATH_STATUS_IN_PROGRESS_WITHOUT_CHALLENGERS
                   || status == PATH_STATUS_VICTORY_WITH_CHALLENGERS) {
-    
+
         /*
          * Fight now !!!
          *
@@ -867,15 +868,14 @@ void bsal_unitig_walker_notify(struct thorium_actor *self, struct thorium_messag
             authorized_to_continue = 1;
 
             /*
-             * TODO Stop the current one.
-             */
-            /*
+            */
             printf("%d DEBUG PATH_STATUS_DEFEAT_WITH_CHALLENGER length %d other_length %d\n",
                             thorium_actor_name(self), length, other_length);
 
+            /*
+             * TODO Stop the current one.
+             */
             *bucket = PATH_STATUS_DEFEAT_WITH_CHALLENGER;
-            */
-
         }
     } else if (status == PATH_STATUS_DEFEAT_WITH_CHALLENGER
                  || status == PATH_STATUS_DEFEAT_BY_FAILED_CHALLENGE) {
@@ -912,9 +912,12 @@ void bsal_unitig_walker_notify_reply(struct thorium_actor *self, struct thorium_
          */
         *bucket = PATH_STATUS_DEFEAT_BY_FAILED_CHALLENGE;
 
-        printf("%d path_index %d source %d DEBUG PATH_STATUS_DEFEAT_BY_FAILED_CHALLENGE !!!\n",
+        printf("%d path_index %d source %d current_length %d DEBUG PATH_STATUS_DEFEAT_BY_FAILED_CHALLENGE !!!\n",
                         thorium_actor_name(self),
-                        concrete_self->path_index, thorium_message_source(message));
+                        concrete_self->path_index, thorium_message_source(message),
+                        bsal_unitig_walker_get_current_length(self));
+#if 0
+#endif
     }
 
 #ifdef DEBUG_SYNCHRONIZATION
@@ -1083,24 +1086,34 @@ void bsal_unitig_walker_dump_path(struct thorium_actor *self)
      * Convert in-progress status to victory status.
      */
     if (status == PATH_STATUS_IN_PROGRESS_WITHOUT_CHALLENGERS) {
-        /*printf("%d sequence_length %d PATH_STATUS_IN_PROGRESS_WITHOUT_CHALLENGERS\n",
-                        thorium_actor_name(self), sequence_length);*/
+
+#if 0
+        printf("actor/%d path %d sequence_length %d PATH_STATUS_IN_PROGRESS_WITHOUT_CHALLENGERS\n",
+                        thorium_actor_name(self),
+                        concrete_self->path_index, sequence_length);
+#endif
         *bucket = PATH_STATUS_VICTORY_WITHOUT_CHALLENGERS;
         victory = 1;
 
     } else if (status == PATH_STATUS_IN_PROGRESS_WITH_CHALLENGERS) {
-        printf("%d sequence_length %d PATH_STATUS_IN_PROGRESS_WITH_CHALLENGERS\n",
-                        thorium_actor_name(self), sequence_length);
+
+#if 0
+        printf("actor %d path %d sequence_length %d PATH_STATUS_IN_PROGRESS_WITH_CHALLENGERS\n",
+                        thorium_actor_name(self),
+                        concrete_self->path_index, sequence_length);
+#endif
         *bucket = PATH_STATUS_VICTORY_WITH_CHALLENGERS;
         victory = 1;
     }
 
+#if 0
     if (!victory) {
 
         printf("%d sequence_length %d not victorious -> %d\n",
                         thorium_actor_name(self), sequence_length,
                         *bucket);
     }
+#endif
 
     if (victory
              && sequence_length >= MINIMUM_PATH_LENGTH_IN_NUCLEOTIDES) {
@@ -1123,6 +1136,9 @@ void bsal_unitig_walker_dump_path(struct thorium_actor *self)
 
     bsal_set_clear(&concrete_self->visited);
 
+    /*
+     * Update path index
+     */
     ++concrete_self->path_index;
 }
 
