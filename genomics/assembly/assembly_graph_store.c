@@ -884,17 +884,34 @@ void bsal_assembly_graph_store_get_vertex(struct thorium_actor *self, struct tho
     void *key;
     int is_canonical;
     int source;
+    int path;
+    int position;
+    int count;
 
+    path = -1;
     ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
     concrete_self = thorium_actor_concrete_actor(self);
 
     source = thorium_message_source(message);
     buffer = thorium_message_buffer(message);
+    count = thorium_message_count(message);
 
     bsal_dna_kmer_init_empty(&kmer);
-    bsal_dna_kmer_unpack(&kmer, buffer, concrete_self->kmer_length,
+
+    position = 0;
+    position += bsal_dna_kmer_unpack(&kmer, buffer, concrete_self->kmer_length,
                 ephemeral_memory,
                 &concrete_self->transport_codec);
+
+    /*
+     * Check if a path index was provided too.
+     */
+    if (position < count) {
+        position += thorium_message_unpack_int(message, position, &path);
+    }
+
+    BSAL_DEBUGGER_ASSERT_IS_EQUAL_INT(position, count);
+    BSAL_DEBUGGER_ASSERT(position == count);
 
     sequence = bsal_memory_pool_allocate(ephemeral_memory, concrete_self->kmer_length + 1);
 
@@ -926,21 +943,23 @@ void bsal_assembly_graph_store_get_vertex(struct thorium_actor *self, struct tho
                                 &concrete_self->storage_codec));
     }
 #endif
+
     BSAL_DEBUGGER_ASSERT(canonical_vertex != NULL);
 
     bsal_assembly_vertex_init_copy(&vertex, canonical_vertex);
+
+    if (!is_canonical) {
+
+        bsal_assembly_vertex_invert_arcs(&vertex);
+    }
 
     /*
      * Mark the vertex with BSAL_VERTEX_STATE_USED *after* making the
      * copy.
      */
-
-    if (bsal_assembly_vertex_state(canonical_vertex) == BSAL_VERTEX_STATE_UNUSED)
-        bsal_assembly_graph_store_mark_as_used(self, canonical_vertex, source);
-
-    if (!is_canonical) {
-
-        bsal_assembly_vertex_invert_arcs(&vertex);
+    if (path >= 0
+                    && bsal_assembly_vertex_state(canonical_vertex) == BSAL_VERTEX_STATE_UNUSED) {
+        bsal_assembly_graph_store_mark_as_used(self, canonical_vertex, source, path);
     }
 
     bsal_memory_pool_free(ephemeral_memory, sequence);
@@ -1182,7 +1201,7 @@ void bsal_assembly_graph_store_print_progress(struct thorium_actor *self)
 }
 
 void bsal_assembly_graph_store_mark_as_used(struct thorium_actor *self,
-                struct bsal_assembly_vertex *vertex, int source)
+                struct bsal_assembly_vertex *vertex, int source, int path)
 {
     struct bsal_assembly_graph_store *concrete_self;
 
@@ -1193,9 +1212,12 @@ void bsal_assembly_graph_store_mark_as_used(struct thorium_actor *self,
     bsal_assembly_vertex_set_state(vertex, BSAL_VERTEX_STATE_USED);
 
 #if 0
-    printf("DEBUG set vertex source to %d\n", source);
+    printf("%s set last_actor %d last_path_index %d\n",
+                    thorium_actor_script_name(self),
+                    source, path);
 #endif
-    bsal_assembly_vertex_set_best_actor(vertex, source);
+
+    bsal_assembly_vertex_set_last_actor(vertex, source, path);
 
     ++concrete_self->consumed_canonical_vertex_count;
     bsal_assembly_graph_store_print_progress(self);

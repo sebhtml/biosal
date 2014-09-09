@@ -31,6 +31,7 @@ struct bsal_unitig_walker {
     struct bsal_dna_codec codec;
     struct bsal_memory_pool memory_pool;
 
+    struct bsal_map path_statuses;
     int source;
 
     /*

@@ -118,6 +118,6 @@ int bsal_assembly_graph_store_get_store_count_per_node(struct thorium_actor *sel
 void bsal_assembly_graph_store_print_progress(struct thorium_actor *self);
 
 void bsal_assembly_graph_store_mark_as_used(struct thorium_actor *self,
-                struct bsal_assembly_vertex *vertex, int source);
+                struct bsal_assembly_vertex *vertex, int source, int path);
 
 #endif

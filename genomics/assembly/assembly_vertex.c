@@ -12,7 +12,7 @@ void bsal_assembly_vertex_init(struct bsal_assembly_vertex *self)
 {
     self->coverage_depth = 0;
     bsal_assembly_vertex_set_state(self, BSAL_VERTEX_STATE_UNUSED);
-    bsal_assembly_vertex_set_best_actor(self, THORIUM_ACTOR_NOBODY);
+    bsal_assembly_vertex_set_last_actor(self, THORIUM_ACTOR_NOBODY, -1);
 
     bsal_assembly_connectivity_init(&self->connectivity);
 }
@@ -121,7 +121,8 @@ int bsal_assembly_vertex_pack_unpack(struct bsal_assembly_vertex *self, int oper
 
     bytes += bsal_packer_process(&packer, &self->coverage_depth, sizeof(self->coverage_depth));
     bytes += bsal_packer_process(&packer, &self->state, sizeof(self->state));
-    bytes += bsal_packer_process(&packer, &self->best_actor, sizeof(self->best_actor));
+    bytes += bsal_packer_process(&packer, &self->last_actor, sizeof(self->last_actor));
+    bytes += bsal_packer_process(&packer, &self->last_path_index, sizeof(self->last_path_index));
 
     bsal_packer_destroy(&packer);
 
@@ -136,7 +137,8 @@ void bsal_assembly_vertex_init_copy(struct bsal_assembly_vertex *self,
 {
     self->coverage_depth = vertex->coverage_depth;
     self->state = vertex->state;
-    self->best_actor = vertex->best_actor;
+    self->last_actor = vertex->last_actor;
+    self->last_path_index = vertex->last_path_index;
 
     bsal_assembly_connectivity_init_copy(&self->connectivity, &vertex->connectivity);
 }
@@ -156,13 +158,19 @@ void bsal_assembly_vertex_set_state(struct bsal_assembly_vertex *self, int state
     self->state = state;
 }
 
-void bsal_assembly_vertex_set_best_actor(struct bsal_assembly_vertex *self, int best_actor)
+void bsal_assembly_vertex_set_last_actor(struct bsal_assembly_vertex *self, int last_actor,
+                int last_path_index)
 {
-    self->best_actor = best_actor;
+    self->last_actor = last_actor;
+    self->last_path_index = last_path_index;
 }
 
-int bsal_assembly_vertex_best_actor(struct bsal_assembly_vertex *self)
+int bsal_assembly_vertex_last_actor(struct bsal_assembly_vertex *self)
 {
-    return self->best_actor;
+    return self->last_actor;
 }
 
+int bsal_assembly_vertex_last_path_index(struct bsal_assembly_vertex *self)
+{
+    return self->last_path_index;
+}

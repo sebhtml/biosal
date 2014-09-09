@@ -31,12 +31,24 @@
         exit(1); \
     }
 
+#define BSAL_DEBUGGER_ASSERT_IS_EQUAL_INT(actual, expected) \
+    if (!((actual) == (expected))) { \
+        BSAL_DEBUG_MARKER("BSAL_DEBUGGER_ASSERT catched a bug !"); \
+        printf("Actual %d Expected %d\n", actual, expected); \
+        bsal_tracer_print_stack_backtrace(); \
+        fflush(stdout); \
+        fflush(stderr); \
+        exit(1); \
+    }
+
 #else
 
 /*
  * Do nothing
  */
 #define BSAL_DEBUGGER_ASSERT(condition)
+
+#define BSAL_DEBUGGER_ASSERT_IS_EQUAL_INT(actual, expected)
 
 #endif
 
