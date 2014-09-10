@@ -2,15 +2,19 @@
 #include "unitig_visitor.h"
 
 #include <genomics/assembly/assembly_graph_store.h>
+#include <genomics/assembly/assembly_arc.h>
 
 #include <core/structures/vector.h>
 
 #include <stdio.h>
 
 #define STEP_GET_KMER_LENGTH 0
-#define STEP_GET_START_KMER 1
-#define STEP_GET_START_VERTEX 2
-#define STEP_DECIDE 3
+
+#define STEP_GET_MAIN_KMER 1
+#define STEP_GET_MAIN_VERTEX_DATA 2
+
+#define STEP_DECIDE 1000
+#define STEP_ABORT 9999
 
 struct thorium_script bsal_unitig_visitor_script = {
     .identifier = SCRIPT_UNITIG_VISITOR,
@@ -46,6 +50,11 @@ void bsal_unitig_visitor_init(struct thorium_actor *self)
 
     concrete_self->visited = 0;
 
+    /*
+    bsal_vertex_neighborhood_init_empty(&concrete_self->main_neighborhood);
+    bsal_vertex_neighborhood_init_empty(&concrete_self->left_neighborhood);
+    bsal_vertex_neighborhood_init_empty(&concrete_self->right_neighborhood);
+    */
 }
 
 void bsal_unitig_visitor_destroy(struct thorium_actor *self)
@@ -56,6 +65,12 @@ void bsal_unitig_visitor_destroy(struct thorium_actor *self)
     concrete_self->completed = 0;
 
     bsal_vector_destroy(&concrete_self->graph_stores);
+
+    /*
+    bsal_vertex_neighborhood_destroy(&concrete_self->main_neighborhood);
+    bsal_vertex_neighborhood_destroy(&concrete_self->left_neighborhood);
+    bsal_vertex_neighborhood_destroy(&concrete_self->right_neighborhood);
+    */
 
     bsal_memory_pool_destroy(&concrete_self->memory_pool);
 }
@@ -74,6 +89,18 @@ void bsal_unitig_visitor_receive(struct thorium_actor *self, struct thorium_mess
     buffer = thorium_message_buffer(message);
     concrete_self = (struct bsal_unitig_visitor *)thorium_actor_concrete_actor(self);
     source = thorium_message_source(message);
+
+    if (concrete_self->step == STEP_GET_MAIN_VERTEX_DATA) {
+        if (bsal_vertex_neighborhood_fetch(&concrete_self->main_neighborhood, message)) {
+
+#if 0
+            printf("VISITOR fetched main vertex data.\n");
+#endif
+            concrete_self->step = STEP_DECIDE;
+            bsal_unitig_visitor_do_something(self);
+        }
+        return;
+    }
 
     if (tag == ACTION_START) {
 
@@ -99,7 +126,11 @@ void bsal_unitig_visitor_receive(struct thorium_actor *self, struct thorium_mess
 
         if (count == 0) {
             ++concrete_self->completed;
-            concrete_self->step = STEP_GET_START_KMER;
+
+            /*
+             * Restart somewhere else.
+             */
+            concrete_self->step = STEP_GET_MAIN_KMER;
             bsal_unitig_visitor_do_something(self);
 
         } else {
@@ -107,23 +138,19 @@ void bsal_unitig_visitor_receive(struct thorium_actor *self, struct thorium_mess
             bsal_dna_kmer_unpack(&concrete_self->main_kmer, buffer, concrete_self->kmer_length,
                     &concrete_self->memory_pool, &concrete_self->codec);
 
-            concrete_self->step = STEP_GET_START_VERTEX;
+            concrete_self->step = STEP_GET_MAIN_VERTEX_DATA;
             bsal_unitig_visitor_do_something(self);
         }
 
     } else if (tag == ACTION_ASSEMBLY_GET_KMER_LENGTH_REPLY) {
         thorium_message_unpack_int(message, 0, &concrete_self->kmer_length);
 
-        concrete_self->step = STEP_GET_START_KMER;
-
+        concrete_self->step = STEP_GET_MAIN_KMER;
         bsal_unitig_visitor_do_something(self);
 
     } else if (tag == ACTION_ASSEMBLY_GET_VERTEX_REPLY) {
-        
-        if (concrete_self->step == STEP_GET_START_VERTEX) {
 
-            bsal_assembly_vertex_init(&concrete_self->main_vertex);
-            bsal_assembly_vertex_unpack(&concrete_self->main_vertex, buffer);
+        if (concrete_self->step == STEP_GET_MAIN_VERTEX_DATA) {
 
             concrete_self->step = STEP_DECIDE;
             bsal_unitig_visitor_do_something(self);
@@ -151,34 +178,64 @@ void bsal_unitig_visitor_do_something(struct thorium_actor *self)
 
     if (concrete_self->completed == bsal_vector_size(&concrete_self->graph_stores)) {
         thorium_actor_send_empty(self, concrete_self->manager, ACTION_START_REPLY);
+
+#if 0
+        printf("visitor Finished\n");
+#endif
     } else if (concrete_self->step == STEP_GET_KMER_LENGTH) {
         graph_store_index = concrete_self->graph_store_index;
         graph_store = bsal_vector_at_as_int(&concrete_self->graph_stores, graph_store_index);
 
         thorium_actor_send_empty(self, graph_store, ACTION_ASSEMBLY_GET_KMER_LENGTH);
 
-    } else if (concrete_self->step == STEP_GET_START_KMER) {
+#if 0
+        printf("visitor STEP_GET_KMER_LENGTH\n");
+#endif
+
+    } else if (concrete_self->step == STEP_GET_MAIN_KMER) {
+
+        /*
+         * Get a starting kmer from one of the graph stores.
+         */
         graph_store_index = concrete_self->graph_store_index;
         ++concrete_self->graph_store_index;
         concrete_self->graph_store_index %= size;
-
         graph_store = bsal_vector_at_as_int(&concrete_self->graph_stores, graph_store_index);
 
         thorium_actor_send_empty(self, graph_store,
                     ACTION_ASSEMBLY_GET_STARTING_VERTEX);
 
-    } else if (concrete_self->step == STEP_GET_START_VERTEX) {
+#if 0
+        printf("visitor STEP_GET_MAIN_KMER\n");
+#endif
 
-        bsal_unitig_visitor_fetch_remote_memory(self, &concrete_self->main_kmer);
+    } else if (concrete_self->step == STEP_GET_MAIN_VERTEX_DATA) {
+
+        /*
+         * Fetch everything related to the main kmer.
+         */
+        bsal_vertex_neighborhood_init(&concrete_self->main_neighborhood,
+                            &concrete_self->main_kmer, BSAL_ARC_TYPE_ANY, &concrete_self->graph_stores,
+                            concrete_self->kmer_length, &concrete_self->memory_pool,
+                            &concrete_self->codec, self);
+
+        /*
+         * Start first one.
+         */
+        bsal_vertex_neighborhood_fetch(&concrete_self->main_neighborhood, NULL);
+
+#if 0
+        printf("visitor STEP_GET_MAIN_VERTEX_DATA\n");
+#endif
 
     } else if (concrete_self->step == STEP_DECIDE) {
 
         bsal_dna_kmer_destroy(&concrete_self->main_kmer, &concrete_self->memory_pool);
-        bsal_assembly_vertex_destroy(&concrete_self->main_vertex);
+        bsal_vertex_neighborhood_destroy(&concrete_self->main_neighborhood);
 
-        concrete_self->step = STEP_GET_START_KMER;
+        concrete_self->step = STEP_GET_MAIN_KMER;
 
-        if (concrete_self->visited % 10000 == 0) {
+        if (concrete_self->visited % 5000 == 0) {
             printf("%s/%d visited %d vertices so far\n",
                             thorium_actor_script_name(self), thorium_actor_name(self),
                             concrete_self->visited);
@@ -189,33 +246,4 @@ void bsal_unitig_visitor_do_something(struct thorium_actor *self)
     }
 }
 
-void bsal_unitig_visitor_fetch_remote_memory(struct thorium_actor *self, struct bsal_dna_kmer *kmer)
-{
-    struct bsal_unitig_visitor *concrete_self;
-    struct bsal_memory_pool *ephemeral_memory;
-    struct  thorium_message new_message;
-    void *new_buffer;
-    int new_count;
-    int store_index;
-    int store;
-    int size;
 
-    concrete_self = thorium_actor_concrete_actor(self);
-    ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
-
-    new_count = bsal_dna_kmer_pack_size(kmer, concrete_self->kmer_length,
-                &concrete_self->codec);
-    new_buffer = bsal_memory_pool_allocate(ephemeral_memory, new_count);
-    bsal_dna_kmer_pack(kmer, new_buffer, concrete_self->kmer_length, &concrete_self->codec);
-
-    size = bsal_vector_size(&concrete_self->graph_stores);
-    store_index = bsal_dna_kmer_store_index(kmer, size, concrete_self->kmer_length,
-                &concrete_self->codec, ephemeral_memory);
-    store = bsal_vector_at_as_int(&concrete_self->graph_stores, store_index);
-
-    thorium_message_init(&new_message, ACTION_ASSEMBLY_GET_VERTEX, new_count, new_buffer);
-    thorium_actor_send(self, store, &new_message);
-    thorium_message_destroy(&new_message);
-
-    bsal_memory_pool_free(ephemeral_memory, new_buffer);
-}

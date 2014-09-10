@@ -189,4 +189,9 @@ int bsal_assembly_vertex_get_flag(struct bsal_assembly_vertex *self, int flag)
     return bsal_bitmap_get_bit_uint32_t(&self->flags, flag);
 }
 
+void bsal_assembly_vertex_init_empty(struct bsal_assembly_vertex *self)
+{
+    bsal_assembly_vertex_init(self);
+}
+
 

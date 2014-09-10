@@ -2,10 +2,11 @@
 #ifndef BSAL_UNITIG_VISITOR_H
 #define BSAL_UNITIG_VISITOR_H
 
+#include <genomics/assembly/assembly_vertex.h>
+#include <genomics/assembly/vertex_neighborhood.h>
+
 #include <genomics/data/dna_codec.h>
 #include <genomics/data/dna_kmer.h>
-
-#include <genomics/assembly/assembly_vertex.h>
 
 #include <core/system/timer.h>
 #include <core/system/memory_pool.h>
@@ -25,7 +26,9 @@ struct bsal_unitig_visitor {
     struct bsal_dna_codec codec;
 
     struct bsal_dna_kmer main_kmer;
-    struct bsal_assembly_vertex main_vertex;
+    struct bsal_vertex_neighborhood main_neighborhood;
+    struct bsal_vertex_neighborhood left_neighborhood;
+    struct bsal_vertex_neighborhood right_neighborhood;
 
     struct bsal_memory_pool memory_pool;
 
@@ -44,7 +47,6 @@ void bsal_unitig_visitor_init(struct thorium_actor *self);
 void bsal_unitig_visitor_destroy(struct thorium_actor *self);
 void bsal_unitig_visitor_receive(struct thorium_actor *self, struct thorium_message *message);
 
-void bsal_unitig_visitor_fetch_remote_memory(struct thorium_actor *self, struct bsal_dna_kmer *kmer);
 void bsal_unitig_visitor_do_something(struct thorium_actor *self);
 
 #endif

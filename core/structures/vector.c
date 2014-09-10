@@ -71,6 +71,8 @@ void bsal_vector_resize(struct bsal_vector *self, int64_t size)
 
 int64_t bsal_vector_size(struct bsal_vector *self)
 {
+    BSAL_DEBUGGER_ASSERT(self != NULL);
+
     return self->size;
 }
 

@@ -33,6 +33,8 @@ struct bsal_assembly_vertex {
 void bsal_assembly_vertex_init(struct bsal_assembly_vertex *self);
 void bsal_assembly_vertex_init_copy(struct bsal_assembly_vertex *self,
                 struct bsal_assembly_vertex *vertex);
+void bsal_assembly_vertex_init_empty(struct bsal_assembly_vertex *self);
+
 void bsal_assembly_vertex_destroy(struct bsal_assembly_vertex *self);
 
 int bsal_assembly_vertex_coverage_depth(struct bsal_assembly_vertex *self);

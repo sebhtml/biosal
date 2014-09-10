@@ -6,6 +6,7 @@
 
 #define BSAL_ARC_TYPE_PARENT 0
 #define BSAL_ARC_TYPE_CHILD 1
+#define BSAL_ARC_TYPE_ANY 8
 
 /*
  * An assembly arc.

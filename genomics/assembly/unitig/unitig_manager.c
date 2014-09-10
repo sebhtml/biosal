@@ -115,6 +115,9 @@ void bsal_unitig_manager_receive(struct thorium_actor *self, struct thorium_mess
 
         bsal_vector_unpack(&concrete_self->visitors, buffer);
 
+        printf("DEBUG the system has %d visitors\n",
+                        (int)bsal_vector_size(&concrete_self->visitors));
+
         thorium_actor_send_to_supervisor_empty(self, ACTION_START_REPLY);
 
     } else if (tag == ACTION_SET_PRODUCERS) {
