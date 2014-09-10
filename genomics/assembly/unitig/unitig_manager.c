@@ -6,7 +6,7 @@
 
 #include <core/patterns/manager.h>
 
-#define UNITIG_WALKER_COUNT_PER_WORKER 8
+#define UNITIG_WALKER_COUNT_PER_WORKER 32
 
 struct thorium_script bsal_unitig_manager_script = {
     .identifier = SCRIPT_UNITIG_MANAGER,
@@ -25,8 +25,10 @@ void bsal_unitig_manager_init(struct thorium_actor *self)
     concrete_self = (struct bsal_unitig_manager *)thorium_actor_concrete_actor(self);
 
     bsal_vector_init(&concrete_self->spawners, sizeof(int));
-    bsal_vector_init(&concrete_self->walkers, sizeof(int));
     bsal_vector_init(&concrete_self->graph_stores, sizeof(int));
+
+    bsal_vector_init(&concrete_self->visitors, sizeof(int));
+    bsal_vector_init(&concrete_self->walkers, sizeof(int));
 
     concrete_self->completed = 0;
     concrete_self->manager = THORIUM_ACTOR_NOBODY;
@@ -41,8 +43,10 @@ void bsal_unitig_manager_destroy(struct thorium_actor *self)
     concrete_self = (struct bsal_unitig_manager *)thorium_actor_concrete_actor(self);
 
     bsal_vector_destroy(&concrete_self->spawners);
-    bsal_vector_destroy(&concrete_self->walkers);
     bsal_vector_destroy(&concrete_self->graph_stores);
+
+    bsal_vector_destroy(&concrete_self->walkers);
+    bsal_vector_destroy(&concrete_self->visitors);
 
     concrete_self->completed = 0;
     concrete_self->manager = THORIUM_ACTOR_NOBODY;
@@ -52,6 +56,9 @@ void bsal_unitig_manager_destroy(struct thorium_actor *self)
 
 /*
  * Basically, this actor does this:
+ * - spawn visitors
+ * - let them visit stuff
+ * - kill them.
  * - spawn walkers
  * - let them walk
  * - kill the walkers
@@ -82,7 +89,7 @@ void bsal_unitig_manager_receive(struct thorium_actor *self, struct thorium_mess
         thorium_message_unpack_int(message, 0, &concrete_self->manager);
 
         thorium_actor_send_int(self, concrete_self->manager, ACTION_MANAGER_SET_SCRIPT,
-                        SCRIPT_UNITIG_WALKER);
+                        SCRIPT_UNITIG_VISITOR);
 
     } else if (tag == ACTION_ASK_TO_STOP) {
 
@@ -104,9 +111,9 @@ void bsal_unitig_manager_receive(struct thorium_actor *self, struct thorium_mess
                         &concrete_self->spawners);
 
     } else if (tag == ACTION_START_REPLY
-                    && bsal_vector_size(&concrete_self->walkers) == 0) {
+                    && bsal_vector_size(&concrete_self->visitors) == 0) {
 
-        bsal_vector_unpack(&concrete_self->walkers, buffer);
+        bsal_vector_unpack(&concrete_self->visitors, buffer);
 
         thorium_actor_send_to_supervisor_empty(self, ACTION_START_REPLY);
 
@@ -116,18 +123,18 @@ void bsal_unitig_manager_receive(struct thorium_actor *self, struct thorium_mess
 
         bsal_timer_start(&concrete_self->timer);
 
-        thorium_actor_send_range_vector(self, &concrete_self->walkers,
+        thorium_actor_send_range_vector(self, &concrete_self->visitors,
                         ACTION_START, &concrete_self->graph_stores);
 
     } else if (tag == ACTION_START_REPLY) {
 
         ++concrete_self->completed;
 
-        printf("PROGRESS unitig walkers %d/%d\n",
+        printf("PROGRESS unitig visitors %d/%d\n",
                         concrete_self->completed,
-                        (int)bsal_vector_size(&concrete_self->walkers));
+                        (int)bsal_vector_size(&concrete_self->visitors));
 
-        if (concrete_self->completed == bsal_vector_size(&concrete_self->walkers)) {
+        if (concrete_self->completed == bsal_vector_size(&concrete_self->visitors)) {
 
             bsal_timer_stop(&concrete_self->timer);
             bsal_timer_print_with_description(&concrete_self->timer, "Traverse graph for unitigs");

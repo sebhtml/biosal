@@ -8,6 +8,7 @@
 #include <genomics/assembly/assembly_arc_kernel.h>
 #include <genomics/assembly/assembly_arc_classifier.h>
 
+#include <genomics/assembly/unitig/unitig_visitor.h>
 #include <genomics/assembly/unitig/unitig_walker.h>
 #include <genomics/assembly/unitig/unitig_manager.h>
 
@@ -109,6 +110,8 @@ void spate_init(struct thorium_actor *self)
                     &bsal_assembly_arc_classifier_script);
     thorium_actor_add_script(self, SCRIPT_UNITIG_WALKER,
                     &bsal_unitig_walker_script);
+    thorium_actor_add_script(self, SCRIPT_UNITIG_VISITOR,
+                    &bsal_unitig_visitor_script);
     thorium_actor_add_script(self, SCRIPT_UNITIG_MANAGER,
                     &bsal_unitig_manager_script);
 
