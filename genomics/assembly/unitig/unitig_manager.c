@@ -1,6 +1,7 @@
 
 #include "unitig_manager.h"
 
+#include "unitig_visitor.h"
 #include "unitig_walker.h"
 
 #include <core/patterns/manager.h>

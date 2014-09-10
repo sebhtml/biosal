@@ -300,6 +300,12 @@ void bsal_unitig_walker_start(struct thorium_actor *self, struct thorium_message
     int source;
     int size;
 
+    /*
+     * Right now, this is disabled.
+     */
+    thorium_actor_send_reply_empty(self, ACTION_START_REPLY);
+    return;
+
     source = thorium_message_source(message);
     buffer = thorium_message_buffer(message);
     concrete_self = (struct bsal_unitig_walker *)thorium_actor_concrete_actor(self);

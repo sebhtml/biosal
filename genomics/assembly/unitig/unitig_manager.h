@@ -14,9 +14,12 @@
 struct bsal_unitig_manager {
     struct bsal_vector spawners;
     struct bsal_vector graph_stores;
+    struct bsal_vector visitors;
     struct bsal_vector walkers;
+
     int completed;
     int manager;
+
     struct bsal_timer timer;
 };
 

@@ -11,6 +11,7 @@ typedef int coverage_t;
 #define BSAL_VERTEX_STATE_USED 0
 #define BSAL_VERTEX_STATE_TIP 1
 #define BSAL_VERTEX_STATE_BUBBLE 2
+#define BSAL_VERTEX_STATE_VISITED 3
 
 /*
  * Attributes of an assembly vertex
