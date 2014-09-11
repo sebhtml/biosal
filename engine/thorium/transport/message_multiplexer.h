@@ -14,6 +14,11 @@ struct thorium_message;
 #include <stdint.h>
 
 /*
+ * The multiplexer needs its own action
+ */
+#define ACTION_MULTIPLEXER_MESSAGE 0x0024afc9
+
+/*
  * Genomic graph traversal is characterized by:
  *
  * - a high ratio of consumer actors (visitors, walkers, and so on) to producer actors (graph stores)
@@ -30,24 +35,6 @@ struct thorium_message;
  *   I added 5 calls (around 10 lines)
  *   in thorium_node (in node.c, init, destroy, and 3 hooks: multiplex, demultiplex, test)
  */
-
-/*
- * Size threshold.
- *
- * The current value is 1 KiB.
- */
-#define THORIUM_MESSAGE_MULTIPLEXER_SIZE_THRESHOLD_IN_BYTES (1 * 1024)
-
-/*
- * Time threshold in microseconds.
- *
- * The current value is 2000 us (2 ms).
- *
- * There are 1 000 ms in 1 second
- * There are 1 000 000 us in 1 second.
- * There are 1 000 000 000 ns in 1 second.
- */
-#define THORIUM_MESSAGE_MULTIPLEXER_TIME_THRESHOLD_IN_NANOSECONDS (2 * 1000 * 1000)
 
 /*
  * A message multiplerxser.
@@ -78,7 +65,7 @@ struct thorium_message_multiplexer {
      * At some point (in thorium_message_multiplexer_test),
      * the multiplexer will flush messages even if they are below
      * <threshold_buffer_size_in_bytes>.
-     * 
+     *
      * To do so, the maximum duration of <threshold_time_in_nanoseconds>
      * nanoseconds is utilized.
      */
@@ -89,12 +76,11 @@ struct thorium_message_multiplexer {
 
     uint64_t last_flush;
 
-    struct bsal_set actions_to_skip;
+    struct thorium_multiplexer_policy *policy;
 };
 
 void thorium_message_multiplexer_init(struct thorium_message_multiplexer *self,
-                struct thorium_node *node, int threshold_buffer_size_in_bytes,
-                int threshold_time_in_nanoseconds);
+                struct thorium_node *node, struct thorium_multiplexer_policy *policy);
 void thorium_message_multiplexer_destroy(struct thorium_message_multiplexer *self);
 
 /*

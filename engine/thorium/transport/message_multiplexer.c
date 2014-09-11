@@ -15,18 +15,10 @@
 
 #include <stdlib.h>
 
-/*
- * The multiplexer needs its own action
- */
-#define ACTION_MULTIPLEXER_MESSAGE 0x0024afc9
-
 #define FORCE_NO 0
 #define FORCE_YES_SIZE 1
 #define FORCE_YES_TIME 1
 
-/*
-#define DISABLE_MULTIPLEXER
-*/
 #define FLAG_DISABLE 0
 
 /*
@@ -34,8 +26,7 @@
 */
 
 void thorium_message_multiplexer_init(struct thorium_message_multiplexer *self,
-                struct thorium_node *node, int threshold_buffer_size_in_bytes,
-                int threshold_time_in_nanoseconds)
+                struct thorium_node *node, struct thorium_multiplexer_policy *policy)
 {
     int size;
     int i;
@@ -43,6 +34,7 @@ void thorium_message_multiplexer_init(struct thorium_message_multiplexer *self,
     int position;
     struct thorium_multiplexed_buffer *multiplexed_buffer;
 
+    self->policy = policy;
     self->original_message_count = 0;
     self->real_message_count = 0;
 
@@ -50,12 +42,11 @@ void thorium_message_multiplexer_init(struct thorium_message_multiplexer *self,
     bsal_bitmap_clear_bit_uint32_t(&self->flags, FLAG_DISABLE);
 
     bsal_set_init(&self->buffers_with_content, sizeof(int));
-    bsal_set_init(&self->actions_to_skip, sizeof(int));
 
     bsal_timer_init(&self->timer);
 
-    self->threshold_buffer_size_in_bytes = threshold_buffer_size_in_bytes;
-    self->threshold_time_in_nanoseconds = threshold_time_in_nanoseconds;
+    self->threshold_buffer_size_in_bytes = thorium_multiplexer_policy_size_threshold(self->policy);
+    self->threshold_time_in_nanoseconds = thorium_multiplexer_policy_time_threshold(self->policy);
 
     self->node = node;
 
@@ -95,22 +86,9 @@ void thorium_message_multiplexer_init(struct thorium_message_multiplexer *self,
 
     self->last_flush = bsal_timer_get_nanoseconds(&self->timer);
 
-#ifdef DISABLE_MULTIPLEXER
-    bsal_bitmap_set_bit_uint32_t(&self->flags, FLAG_DISABLE);
-#endif
-
-    /*
-     * We don't want to slow down things so the following actions
-     * are not multiplexed.
-     */
-
-    bsal_set_add_int(&self->actions_to_skip, ACTION_MULTIPLEXER_MESSAGE);
-    bsal_set_add_int(&self->actions_to_skip, ACTION_THORIUM_NODE_START);
-    bsal_set_add_int(&self->actions_to_skip, ACTION_THORIUM_NODE_ADD_INITIAL_ACTOR);
-    bsal_set_add_int(&self->actions_to_skip, ACTION_THORIUM_NODE_ADD_INITIAL_ACTORS);
-    bsal_set_add_int(&self->actions_to_skip, ACTION_THORIUM_NODE_ADD_INITIAL_ACTORS_REPLY);
-    bsal_set_add_int(&self->actions_to_skip, ACTION_SPAWN);
-    bsal_set_add_int(&self->actions_to_skip, ACTION_SPAWN_REPLY);
+    if (thorium_multiplexer_policy_is_disabled(self->policy)) {
+        bsal_bitmap_set_bit_uint32_t(&self->flags, FLAG_DISABLE);
+    }
 }
 
 void thorium_message_multiplexer_destroy(struct thorium_message_multiplexer *self)
@@ -135,7 +113,6 @@ void thorium_message_multiplexer_destroy(struct thorium_message_multiplexer *sel
     BSAL_DEBUGGER_ASSERT(bsal_set_empty(&self->buffers_with_content));
 
     bsal_set_destroy(&self->buffers_with_content);
-    bsal_set_destroy(&self->actions_to_skip);
 
     for (i = 0; i < size; ++i) {
         multiplexed_buffer = bsal_vector_at(&self->buffers, i);
@@ -204,7 +181,7 @@ int thorium_message_multiplexer_multiplex(struct thorium_message_multiplexer *se
     /*
      * Don't multiplex already-multiplexed messages.
      */
-    if (bsal_set_find(&self->actions_to_skip, &action)) {
+    if (thorium_multiplexer_policy_is_action_to_skip(self->policy, action)) {
         ++self->real_message_count;
         return 0;
     }
