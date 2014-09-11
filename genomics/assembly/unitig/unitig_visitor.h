@@ -29,8 +29,8 @@ struct bsal_unitig_visitor {
 
     struct bsal_dna_kmer main_kmer;
     struct bsal_vertex_neighborhood main_neighborhood;
-    struct bsal_vertex_neighborhood left_neighborhood;
-    struct bsal_vertex_neighborhood right_neighborhood;
+    struct bsal_vertex_neighborhood parent_neighborhood;
+    struct bsal_vertex_neighborhood child_neighborhood;
     int selected_parent;
     int selected_child;
 
@@ -53,6 +53,6 @@ void bsal_unitig_visitor_init(struct thorium_actor *self);
 void bsal_unitig_visitor_destroy(struct thorium_actor *self);
 void bsal_unitig_visitor_receive(struct thorium_actor *self, struct thorium_message *message);
 
-void bsal_unitig_visitor_run(struct thorium_actor *self);
+void bsal_unitig_visitor_execute(struct thorium_actor *self);
 
 #endif

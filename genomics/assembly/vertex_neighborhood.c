@@ -76,7 +76,7 @@ int bsal_vertex_neighborhood_receive(struct bsal_vertex_neighborhood *self, stru
     void *buffer;
 
     if (message == NULL) {
-        return bsal_vertex_neighborhood_do_something(self);
+        return bsal_vertex_neighborhood_execute(self);
     }
 
     tag = thorium_message_tag(message);
@@ -99,18 +99,18 @@ int bsal_vertex_neighborhood_receive(struct bsal_vertex_neighborhood *self, stru
 
             self->step = STEP_GET_PARENTS;
 
-            return bsal_vertex_neighborhood_do_something(self);
+            return bsal_vertex_neighborhood_execute(self);
 
         } else if (self->step == STEP_GET_PARENTS) {
 
             bsal_vector_push_back(&self->parent_vertices, &vertex);
 
-            return bsal_vertex_neighborhood_do_something(self);
+            return bsal_vertex_neighborhood_execute(self);
 
         } else if (self->step == STEP_GET_CHILDREN) {
             bsal_vector_push_back(&self->child_vertices, &vertex);
 
-            return bsal_vertex_neighborhood_do_something(self);
+            return bsal_vertex_neighborhood_execute(self);
         }
     }
 
@@ -159,7 +159,7 @@ void bsal_vertex_neighborhood_get_remote_memory(struct bsal_vertex_neighborhood 
     bsal_memory_pool_free(ephemeral_memory, new_buffer);
 }
 
-int bsal_vertex_neighborhood_do_something(struct bsal_vertex_neighborhood *self)
+int bsal_vertex_neighborhood_execute(struct bsal_vertex_neighborhood *self)
 {
     int actual;
     int expected;
@@ -197,7 +197,7 @@ int bsal_vertex_neighborhood_do_something(struct bsal_vertex_neighborhood *self)
 
             self->step = STEP_GET_CHILDREN;
 
-            return bsal_vertex_neighborhood_do_something(self);
+            return bsal_vertex_neighborhood_execute(self);
         } else {
 
             /*
@@ -231,7 +231,7 @@ int bsal_vertex_neighborhood_do_something(struct bsal_vertex_neighborhood *self)
         if (actual == expected) {
             self->step = STEP_FINISH;
 
-            return bsal_vertex_neighborhood_do_something(self);
+            return bsal_vertex_neighborhood_execute(self);
         } else {
 
             /*
