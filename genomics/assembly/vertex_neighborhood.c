@@ -272,3 +272,18 @@ int bsal_vertex_neighborhood_do_something(struct bsal_vertex_neighborhood *self)
         return 0;
     }
 }
+
+struct bsal_assembly_vertex *bsal_vertex_neighborhood_vertex(struct bsal_vertex_neighborhood *self)
+{
+    return &self->main_vertex;
+}
+
+struct bsal_assembly_vertex *bsal_vertex_neighborhood_parent(struct bsal_vertex_neighborhood *self, int i)
+{
+    return bsal_vector_at(&self->parent_vertices, i);
+}
+
+struct bsal_assembly_vertex *bsal_vertex_neighborhood_child(struct bsal_vertex_neighborhood *self, int i)
+{
+    return bsal_vector_at(&self->child_vertices, i);
+}

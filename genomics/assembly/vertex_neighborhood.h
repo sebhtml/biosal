@@ -54,4 +54,8 @@ void bsal_vertex_neighborhood_receive_remote_memory(struct bsal_vertex_neighborh
 
 int bsal_vertex_neighborhood_do_something(struct bsal_vertex_neighborhood *self);
 
+struct bsal_assembly_vertex *bsal_vertex_neighborhood_vertex(struct bsal_vertex_neighborhood *self);
+struct bsal_assembly_vertex *bsal_vertex_neighborhood_parent(struct bsal_vertex_neighborhood *self, int i);
+struct bsal_assembly_vertex *bsal_vertex_neighborhood_child(struct bsal_vertex_neighborhood *self, int i);
+
 #endif

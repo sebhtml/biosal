@@ -2,6 +2,8 @@
 #ifndef BSAL_UNITIG_VISITOR_H
 #define BSAL_UNITIG_VISITOR_H
 
+#include "unitig_heuristic.h"
+
 #include <genomics/assembly/assembly_vertex.h>
 #include <genomics/assembly/vertex_neighborhood.h>
 
@@ -29,6 +31,8 @@ struct bsal_unitig_visitor {
     struct bsal_vertex_neighborhood main_neighborhood;
     struct bsal_vertex_neighborhood left_neighborhood;
     struct bsal_vertex_neighborhood right_neighborhood;
+    int selected_parent;
+    int selected_child;
 
     struct bsal_memory_pool memory_pool;
 
@@ -39,6 +43,8 @@ struct bsal_unitig_visitor {
     int kmer_length;
     int step;
     int visited;
+
+    struct bsal_unitig_heuristic heuristic;
 };
 
 extern struct thorium_script bsal_unitig_visitor_script;
