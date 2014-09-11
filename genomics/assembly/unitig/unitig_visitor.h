@@ -28,11 +28,15 @@ struct bsal_unitig_visitor {
     struct bsal_dna_codec codec;
 
     struct bsal_dna_kmer main_kmer;
+    struct bsal_dna_kmer parent_kmer;
+    struct bsal_dna_kmer child_kmer;
     struct bsal_vertex_neighborhood main_neighborhood;
     struct bsal_vertex_neighborhood parent_neighborhood;
     struct bsal_vertex_neighborhood child_neighborhood;
     int selected_parent;
     int selected_child;
+    int selected_parent_child;
+    int selected_child_parent;
 
     struct bsal_memory_pool memory_pool;
 

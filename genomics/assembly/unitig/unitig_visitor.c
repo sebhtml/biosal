@@ -5,6 +5,7 @@
 #include <genomics/assembly/assembly_arc.h>
 
 #include <core/structures/vector.h>
+#include <core/system/debugger.h>
 
 #include <stdio.h>
 
@@ -53,13 +54,15 @@ void bsal_unitig_visitor_init(struct thorium_actor *self)
 
     concrete_self->visited = 0;
 
-    /*
     bsal_vertex_neighborhood_init_empty(&concrete_self->main_neighborhood);
     bsal_vertex_neighborhood_init_empty(&concrete_self->parent_neighborhood);
     bsal_vertex_neighborhood_init_empty(&concrete_self->child_neighborhood);
-    */
 
     bsal_unitig_heuristic_init(&concrete_self->heuristic);
+
+    bsal_dna_kmer_init_empty(&concrete_self->main_kmer);
+    bsal_dna_kmer_init_empty(&concrete_self->parent_kmer);
+    bsal_dna_kmer_init_empty(&concrete_self->child_kmer);
 }
 
 void bsal_unitig_visitor_destroy(struct thorium_actor *self)
@@ -71,11 +74,9 @@ void bsal_unitig_visitor_destroy(struct thorium_actor *self)
 
     bsal_vector_destroy(&concrete_self->graph_stores);
 
-    /*
     bsal_vertex_neighborhood_destroy(&concrete_self->main_neighborhood);
     bsal_vertex_neighborhood_destroy(&concrete_self->parent_neighborhood);
     bsal_vertex_neighborhood_destroy(&concrete_self->child_neighborhood);
-    */
 
     bsal_unitig_heuristic_destroy(&concrete_self->heuristic);
     bsal_memory_pool_destroy(&concrete_self->memory_pool);
@@ -155,7 +156,6 @@ void bsal_unitig_visitor_receive(struct thorium_actor *self, struct thorium_mess
             bsal_unitig_visitor_execute(self);
 
         } else {
-            bsal_dna_kmer_init_empty(&concrete_self->main_kmer);
             bsal_dna_kmer_unpack(&concrete_self->main_kmer, buffer, concrete_self->kmer_length,
                     &concrete_self->memory_pool, &concrete_self->codec);
 
@@ -190,12 +190,15 @@ void bsal_unitig_visitor_execute(struct thorium_actor *self)
     int size;
     struct bsal_vector coverages;
     int coverage;
+    struct bsal_assembly_vertex *other_vertex;
     struct bsal_assembly_vertex *vertex;
     int parents;
     int children;
     int i;
     int other_coverage;
     struct bsal_memory_pool *ephemeral_memory;
+    int code;
+    int expected_code;
 
     concrete_self = thorium_actor_concrete_actor(self);
     size = bsal_vector_size(&concrete_self->graph_stores);
@@ -261,7 +264,7 @@ void bsal_unitig_visitor_execute(struct thorium_actor *self)
 
         vertex = bsal_vertex_neighborhood_vertex(&concrete_self->main_neighborhood);
         coverage = bsal_assembly_vertex_coverage_depth(vertex);
-        
+
         parents = bsal_assembly_vertex_parent_count(vertex);
         children = bsal_assembly_vertex_child_count(vertex);
 
@@ -272,7 +275,7 @@ void bsal_unitig_visitor_execute(struct thorium_actor *self)
         bsal_vector_set_memory_pool(&coverages, ephemeral_memory);
 
         for (i = 0; i < parents; ++i) {
-            
+
             vertex = bsal_vertex_neighborhood_parent(&concrete_self->main_neighborhood, i);
             other_coverage = bsal_assembly_vertex_coverage_depth(vertex);
             bsal_vector_push_back(&coverages, &other_coverage);
@@ -288,7 +291,7 @@ void bsal_unitig_visitor_execute(struct thorium_actor *self)
          */
 
         for (i = 0; i < children; ++i) {
-            
+
             vertex = bsal_vertex_neighborhood_child(&concrete_self->main_neighborhood, i);
             other_coverage = bsal_assembly_vertex_coverage_depth(vertex);
             bsal_vector_push_back(&coverages, &other_coverage);
@@ -315,7 +318,18 @@ void bsal_unitig_visitor_execute(struct thorium_actor *self)
     } else if (concrete_self->step == STEP_DO_RESET) {
 
         bsal_dna_kmer_destroy(&concrete_self->main_kmer, &concrete_self->memory_pool);
+        bsal_dna_kmer_destroy(&concrete_self->parent_kmer, &concrete_self->memory_pool);
+        bsal_dna_kmer_destroy(&concrete_self->child_kmer, &concrete_self->memory_pool);
+
         bsal_vertex_neighborhood_destroy(&concrete_self->main_neighborhood);
+        bsal_vertex_neighborhood_init_empty(&concrete_self->main_neighborhood);
+
+        bsal_vertex_neighborhood_destroy(&concrete_self->parent_neighborhood);
+        bsal_vertex_neighborhood_init_empty(&concrete_self->parent_neighborhood);
+
+        bsal_vertex_neighborhood_destroy(&concrete_self->child_neighborhood);
+        bsal_vertex_neighborhood_init_empty(&concrete_self->child_neighborhood);
+
 
         concrete_self->step = STEP_GET_MAIN_KMER;
 
@@ -330,16 +344,96 @@ void bsal_unitig_visitor_execute(struct thorium_actor *self)
 
     } else if (concrete_self->step == STEP_GET_PARENT_VERTEX_DATA) {
 
-        concrete_self->step = STEP_DO_RESET;
+        BSAL_DEBUGGER_ASSERT(concrete_self->selected_parent >= 0);
+        vertex = bsal_vertex_neighborhood_vertex(&concrete_self->main_neighborhood);
+        code = bsal_assembly_vertex_get_parent(vertex,
+                            concrete_self->selected_parent);
 
-        bsal_unitig_visitor_execute(self);
+        bsal_dna_kmer_init_as_parent(&concrete_self->parent_kmer, &concrete_self->main_kmer,
+                            code, concrete_self->kmer_length, &concrete_self->memory_pool,
+                            &concrete_self->codec);
+
+        bsal_vertex_neighborhood_init(&concrete_self->parent_neighborhood,
+                            &concrete_self->parent_kmer, BSAL_ARC_TYPE_CHILD, &concrete_self->graph_stores,
+                            concrete_self->kmer_length, &concrete_self->memory_pool,
+                            &concrete_self->codec, self);
+
+        /*
+         * Start first one.
+         */
+        bsal_vertex_neighborhood_receive(&concrete_self->parent_neighborhood, NULL);
 
     } else if (concrete_self->step == STEP_DECIDE_PARENT) {
 
+#if 0
+        printf("DEBUG STEP_DECIDE_PARENT\n");
+#endif
+        other_vertex = bsal_vertex_neighborhood_vertex(&concrete_self->parent_neighborhood);
+        coverage = bsal_assembly_vertex_coverage_depth(other_vertex);
+        children = bsal_assembly_vertex_child_count(other_vertex);
+
+        bsal_vector_init(&coverages, sizeof(int));
+        bsal_vector_set_memory_pool(&coverages, ephemeral_memory);
+
+        for (i = 0; i < children; ++i) {
+
+            vertex = bsal_vertex_neighborhood_child(&concrete_self->parent_neighborhood, i);
+            other_coverage = bsal_assembly_vertex_coverage_depth(vertex);
+            bsal_vector_push_back(&coverages, &other_coverage);
+        }
+
+        concrete_self->selected_parent_child = bsal_unitig_heuristic_select(&concrete_self->heuristic,
+                        coverage, &coverages);
+        bsal_vector_destroy(&coverages);
+
+        if (concrete_self->selected_parent_child >= 0) {
+            code = bsal_assembly_vertex_get_child(other_vertex, concrete_self->selected_parent_child);
+            expected_code = bsal_dna_kmer_last_symbol(&concrete_self->main_kmer, concrete_self->kmer_length,
+                            &concrete_self->codec);
+
+            if (code == expected_code) {
+                concrete_self->step = STEP_GET_CHILD_VERTEX_DATA;
+            } else {
+                printf("Info: parent code mismatch !\n");
+                concrete_self->step = STEP_DO_RESET;
+            }
+        } else {
+            concrete_self->step = STEP_DO_RESET;
+        }
+
+        /* recursive call.
+         *
+         * Otherwise, we could use ACTION_YIELD to do an actor-like recursion.
+         */
+        bsal_unitig_visitor_execute(self);
+
     } else if (concrete_self->step == STEP_GET_CHILD_VERTEX_DATA) {
+
+        BSAL_DEBUGGER_ASSERT(concrete_self->selected_child >= 0);
+
+        vertex = bsal_vertex_neighborhood_vertex(&concrete_self->main_neighborhood);
+        code = bsal_assembly_vertex_get_child(vertex,
+                            concrete_self->selected_child);
+
+        bsal_dna_kmer_init_as_child(&concrete_self->child_kmer, &concrete_self->main_kmer,
+                            code, concrete_self->kmer_length, &concrete_self->memory_pool,
+                            &concrete_self->codec);
+
+        bsal_vertex_neighborhood_init(&concrete_self->child_neighborhood,
+                            &concrete_self->child_kmer, BSAL_ARC_TYPE_PARENT, &concrete_self->graph_stores,
+                            concrete_self->kmer_length, &concrete_self->memory_pool,
+                            &concrete_self->codec, self);
+
+        /*
+         * Start first one.
+         */
+        bsal_vertex_neighborhood_receive(&concrete_self->child_neighborhood, NULL);
 
     } else if (concrete_self->step == STEP_DECIDE_CHILD) {
 
+        concrete_self->step = STEP_DO_RESET;
+
+        bsal_unitig_visitor_execute(self);
     }
 }
 

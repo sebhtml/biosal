@@ -20,6 +20,7 @@ void bsal_assembly_vertex_init(struct bsal_assembly_vertex *self)
     bsal_assembly_vertex_clear_flag(self, BSAL_VERTEX_STATE_TIP);
     bsal_assembly_vertex_clear_flag(self, BSAL_VERTEX_STATE_BUBBLE);
     bsal_assembly_vertex_clear_flag(self, BSAL_VERTEX_STATE_VISITED);
+    bsal_assembly_vertex_clear_flag(self, BSAL_VERTEX_STATE_UNITIG);
 
     bsal_assembly_vertex_set_last_actor(self, THORIUM_ACTOR_NOBODY, -1);
 

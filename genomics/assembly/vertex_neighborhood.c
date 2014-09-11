@@ -128,6 +128,9 @@ void bsal_vertex_neighborhood_init_empty(struct bsal_vertex_neighborhood *self)
 
     bsal_dna_kmer_init_empty(&self->main_kmer);
     bsal_assembly_vertex_init_empty(&self->main_vertex);
+
+    bsal_vector_init(&self->parent_vertices, 0);
+    bsal_vector_init(&self->child_vertices, 0);
 }
 
 void bsal_vertex_neighborhood_get_remote_memory(struct bsal_vertex_neighborhood *self, struct bsal_dna_kmer *kmer)
