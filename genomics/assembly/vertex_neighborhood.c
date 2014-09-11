@@ -200,6 +200,9 @@ int bsal_vertex_neighborhood_do_something(struct bsal_vertex_neighborhood *self)
             return bsal_vertex_neighborhood_do_something(self);
         } else {
 
+            /*
+             * Fetch a parent.
+             */
             edge_index = actual;
             code = bsal_assembly_vertex_get_parent(&self->main_vertex,
                             edge_index);
@@ -213,10 +216,6 @@ int bsal_vertex_neighborhood_do_something(struct bsal_vertex_neighborhood *self)
              */
             bsal_vertex_neighborhood_get_remote_memory(self, &other_kmer);
             bsal_dna_kmer_destroy(&other_kmer, self->memory);
-
-            /*
-             * Fetch a parent.
-             */
         }
     } else if (self->step == STEP_GET_CHILDREN) {
 #if 0
@@ -226,14 +225,43 @@ int bsal_vertex_neighborhood_do_something(struct bsal_vertex_neighborhood *self)
         actual = bsal_vector_size(&self->child_vertices);
         expected = bsal_assembly_vertex_child_count(&self->main_vertex);
 
-        expected = 0;
+        if (!self->fetch_children)
+            expected = 0;
 
         if (actual == expected) {
             self->step = STEP_FINISH;
 
             return bsal_vertex_neighborhood_do_something(self);
+        } else {
+
+            /*
+             * Fetch a child
+             */
+            edge_index = actual;
+            code = bsal_assembly_vertex_get_child(&self->main_vertex,
+                            edge_index);
+
+            bsal_dna_kmer_init_as_child(&other_kmer, &self->main_kmer,
+                            code, self->kmer_length, self->memory,
+                            self->codec);
+
+            /*
+             * Do some remote-memory access.
+             */
+            bsal_vertex_neighborhood_get_remote_memory(self, &other_kmer);
+            bsal_dna_kmer_destroy(&other_kmer, self->memory);
         }
     } else if (self->step == STEP_FINISH) {
+
+#if 0
+        printf("neighborhood, finished, coverage %d parents %d children %d"
+                        " fetched parents %d fetched children %d\n",
+                        bsal_assembly_vertex_coverage_depth(&self->main_vertex),
+                        bsal_assembly_vertex_parent_count(&self->main_vertex),
+                        bsal_assembly_vertex_child_count(&self->main_vertex),
+                        (int)bsal_vector_size(&self->parent_vertices),
+                        (int)bsal_vector_size(&self->child_vertices));
+#endif
 
         return 1;
     }
