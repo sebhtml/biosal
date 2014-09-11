@@ -251,7 +251,7 @@ void spate_ask_to_stop(struct thorium_actor *self, struct thorium_message *messa
 
         if (!spate_must_print_help(self)) {
             bsal_timer_stop(&concrete_self->timer);
-            bsal_timer_print_with_description(&concrete_self->timer, "Run actor computation");
+            bsal_timer_print_with_description(&concrete_self->timer, "Total");
         }
     }
 }
