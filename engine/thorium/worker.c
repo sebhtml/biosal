@@ -15,6 +15,7 @@
 #include <core/helpers/vector_helper.h>
 #include <core/helpers/bitmap.h>
 
+#include <core/system/command.h>
 #include <core/system/memory.h>
 #include <core/system/timer.h>
 #include <core/system/debugger.h>
@@ -54,6 +55,8 @@
 
 #define FLAG_DEBUG_ACTORS 0
 
+#define DEBUG_WORKER_OPTION "-debug-worker"
+
 /*
 #define THORIUM_WORKER_DEBUG_WAIT_SIGNAL
 */
@@ -76,6 +79,11 @@ void thorium_worker_init(struct thorium_worker *worker, int name, struct thorium
     int capacity;
     int ephemeral_memory_block_size;
     int injected_buffer_ring_size;
+    int argc;
+    char **argv;
+
+    argc = thorium_node_argc(node);
+    argv = thorium_node_argv(node);
 
 #ifdef THORIUM_WORKER_DEBUG_INJECTION
     worker->counter_allocated_outbound_buffers = 0;
@@ -136,12 +144,21 @@ void thorium_worker_init(struct thorium_worker *worker, int name, struct thorium
     worker->flags = 0;
     bsal_bitmap_clear_bit_uint32_t(&worker->flags, FLAG_DEBUG_ACTORS);
 
-#ifdef DEBUG_ACTORS
-    if (thorium_node_name(worker->node) == 0
-                    && thorium_worker_name(worker) == 0) {
-        bsal_bitmap_set_bit_uint32_t(&worker->flags, FLAG_DEBUG_ACTORS);
-    }
+    if (bsal_command_has_argument(argc, argv, DEBUG_WORKER_OPTION)) {
+
+#if 0
+        printf("DEBUG has option %s\n", DEBUG_WORKER_OPTION);
 #endif
+
+        if (thorium_node_name(worker->node) == 0
+                    && thorium_worker_name(worker) == 0) {
+
+#if 0
+            printf("DEBUG setting bit FLAG_DEBUG_ACTORS because %s\n", DEBUG_WORKER_OPTION);
+#endif
+            bsal_bitmap_set_bit_uint32_t(&worker->flags, FLAG_DEBUG_ACTORS);
+        }
+    }
 
     worker->epoch_used_nanoseconds = 0;
     worker->loop_used_nanoseconds = 0;
@@ -1177,8 +1194,9 @@ void thorium_worker_run(struct thorium_worker *worker)
         */
 #endif
 
-        if (bsal_bitmap_get_bit_uint32_t(&worker->flags, FLAG_DEBUG_ACTORS))
+        if (bsal_bitmap_get_bit_uint32_t(&worker->flags, FLAG_DEBUG_ACTORS)) {
             thorium_worker_print_actors(worker, NULL);
+        }
     }
 #endif
 
