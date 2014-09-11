@@ -6,6 +6,7 @@
 #include "worker_pool.h"
 
 #include "transport/transport.h"
+#include "transport/message_multiplexer.h"
 
 #include <core/structures/vector.h>
 #include <core/structures/queue.h>
@@ -115,6 +116,7 @@ struct thorium_node {
  */
     struct bsal_thread thread;
     struct thorium_transport transport;
+    struct thorium_message_multiplexer multiplexer;
 
     /*
      * This lock can not be removed because
@@ -215,6 +217,7 @@ int thorium_node_spawn_state(struct thorium_node *self, void *state,
                 struct thorium_script *script);
 int thorium_node_spawn(struct thorium_node *self, int script);
 void thorium_node_send(struct thorium_node *self, struct thorium_message *message);
+void thorium_node_send_with_transport(struct thorium_node *self, struct thorium_message *message);
 
 int thorium_node_generate_name(struct thorium_node *self);
 

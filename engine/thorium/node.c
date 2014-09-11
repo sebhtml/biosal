@@ -156,6 +156,7 @@ void thorium_node_init(struct thorium_node *node, int *argc, char ***argv)
     thorium_transport_init(&node->transport, node, argc, argv,
                     &node->inbound_message_memory_pool,
                     &node->outbound_message_memory_pool);
+    thorium_message_multiplexer_init(&node->multiplexer, node);
 
     node->provided = thorium_transport_get_provided(&node->transport);
     node->name = thorium_transport_get_rank(&node->transport);
@@ -427,6 +428,8 @@ void thorium_node_destroy(struct thorium_node *node)
     thorium_worker_pool_destroy(&node->worker_pool);
 
     thorium_transport_destroy(&node->transport);
+    thorium_message_multiplexer_destroy(&node->multiplexer);
+
     bsal_counter_destroy(&node->counter);
 
     bsal_fast_queue_destroy(&node->clean_outbound_buffers_to_inject);
@@ -1195,7 +1198,9 @@ void thorium_node_send(struct thorium_node *node, struct thorium_message *messag
     }
 #endif
 
-        thorium_transport_send(&node->transport, message);
+        if (!thorium_message_multiplexer_multiplex(&node->multiplexer, message)) {
+            thorium_node_send_with_transport(node, message);
+        }
 
 #ifdef THORIUM_NODE_DEBUG_20140601_8
         if (thorium_message_tag(message) == 1100) {
@@ -1205,9 +1210,6 @@ void thorium_node_send(struct thorium_node *node, struct thorium_message *messag
         }
 #endif
 
-        bsal_counter_add(&node->counter, BSAL_COUNTER_SENT_MESSAGES_NOT_TO_SELF, 1);
-        bsal_counter_add(&node->counter, BSAL_COUNTER_SENT_BYTES_NOT_TO_SELF,
-                        thorium_message_count(message));
     }
 }
 
@@ -1920,7 +1922,9 @@ void thorium_node_run_loop(struct thorium_node *node)
             bsal_counter_add(&node->counter, BSAL_COUNTER_RECEIVED_BYTES_NOT_FROM_SELF,
                     thorium_message_count(&message));
 
-            thorium_node_dispatch_message(node, &message);
+            if (!thorium_message_multiplexer_demultiplex(&node->multiplexer, &message)) {
+                thorium_node_dispatch_message(node, &message);
+            }
         }
 
         /* the one worker works here if there is only
@@ -2315,4 +2319,14 @@ int thorium_node_generate_random_name(struct thorium_node *self,
 
 
 #endif
+}
+
+void thorium_node_send_with_transport(struct thorium_node *self, struct thorium_message *message)
+{
+    thorium_transport_send(&self->transport, message);
+
+    bsal_counter_add(&self->counter, BSAL_COUNTER_SENT_MESSAGES_NOT_TO_SELF, 1);
+    bsal_counter_add(&self->counter, BSAL_COUNTER_SENT_BYTES_NOT_TO_SELF,
+                        thorium_message_count(message));
+
 }
