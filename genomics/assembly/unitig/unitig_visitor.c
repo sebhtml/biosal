@@ -87,17 +87,17 @@ void bsal_unitig_visitor_receive(struct thorium_actor *self, struct thorium_mess
     tag = thorium_message_tag(message);
     count = thorium_message_count(message);
     buffer = thorium_message_buffer(message);
-    concrete_self = (struct bsal_unitig_visitor *)thorium_actor_concrete_actor(self);
+    concrete_self = thorium_actor_concrete_actor(self);
     source = thorium_message_source(message);
 
     if (concrete_self->step == STEP_GET_MAIN_VERTEX_DATA) {
-        if (bsal_vertex_neighborhood_fetch(&concrete_self->main_neighborhood, message)) {
+        if (bsal_vertex_neighborhood_receive(&concrete_self->main_neighborhood, message)) {
 
 #if 0
             printf("VISITOR fetched main vertex data.\n");
 #endif
             concrete_self->step = STEP_DECIDE;
-            bsal_unitig_visitor_do_something(self);
+            bsal_unitig_visitor_run(self);
         }
         return;
     }
@@ -115,7 +115,7 @@ void bsal_unitig_visitor_receive(struct thorium_actor *self, struct thorium_mess
         concrete_self->graph_store_index = rand() % size;
 
         concrete_self->step = STEP_GET_KMER_LENGTH;
-        bsal_unitig_visitor_do_something(self);
+        bsal_unitig_visitor_run(self);
 
     } else if (tag == ACTION_ASK_TO_STOP) {
         thorium_actor_send_to_self_empty(self, ACTION_STOP);
@@ -131,7 +131,7 @@ void bsal_unitig_visitor_receive(struct thorium_actor *self, struct thorium_mess
              * Restart somewhere else.
              */
             concrete_self->step = STEP_GET_MAIN_KMER;
-            bsal_unitig_visitor_do_something(self);
+            bsal_unitig_visitor_run(self);
 
         } else {
             bsal_dna_kmer_init_empty(&concrete_self->main_kmer);
@@ -139,29 +139,29 @@ void bsal_unitig_visitor_receive(struct thorium_actor *self, struct thorium_mess
                     &concrete_self->memory_pool, &concrete_self->codec);
 
             concrete_self->step = STEP_GET_MAIN_VERTEX_DATA;
-            bsal_unitig_visitor_do_something(self);
+            bsal_unitig_visitor_run(self);
         }
 
     } else if (tag == ACTION_ASSEMBLY_GET_KMER_LENGTH_REPLY) {
         thorium_message_unpack_int(message, 0, &concrete_self->kmer_length);
 
         concrete_self->step = STEP_GET_MAIN_KMER;
-        bsal_unitig_visitor_do_something(self);
+        bsal_unitig_visitor_run(self);
 
     } else if (tag == ACTION_ASSEMBLY_GET_VERTEX_REPLY) {
 
         if (concrete_self->step == STEP_GET_MAIN_VERTEX_DATA) {
 
             concrete_self->step = STEP_DECIDE;
-            bsal_unitig_visitor_do_something(self);
+            bsal_unitig_visitor_run(self);
         }
 
     } else if (tag == ACTION_YIELD_REPLY) {
-        bsal_unitig_visitor_do_something(self);
+        bsal_unitig_visitor_run(self);
     }
 }
 
-void bsal_unitig_visitor_do_something(struct thorium_actor *self)
+void bsal_unitig_visitor_run(struct thorium_actor *self)
 {
     struct bsal_unitig_visitor *concrete_self;
     int graph_store_index;
@@ -172,7 +172,7 @@ void bsal_unitig_visitor_do_something(struct thorium_actor *self)
     size = bsal_vector_size(&concrete_self->graph_stores);
 
 #if 0
-    printf("bsal_unitig_visitor_do_something step= %d\n",
+    printf("bsal_unitig_visitor_run step= %d\n",
                     concrete_self->step);
 #endif
 
@@ -202,8 +202,7 @@ void bsal_unitig_visitor_do_something(struct thorium_actor *self)
         concrete_self->graph_store_index %= size;
         graph_store = bsal_vector_at_as_int(&concrete_self->graph_stores, graph_store_index);
 
-        thorium_actor_send_empty(self, graph_store,
-                    ACTION_ASSEMBLY_GET_STARTING_VERTEX);
+        thorium_actor_send_empty(self, graph_store, ACTION_ASSEMBLY_GET_STARTING_VERTEX);
 
 #if 0
         printf("visitor STEP_GET_MAIN_KMER\n");
@@ -222,7 +221,7 @@ void bsal_unitig_visitor_do_something(struct thorium_actor *self)
         /*
          * Start first one.
          */
-        bsal_vertex_neighborhood_fetch(&concrete_self->main_neighborhood, NULL);
+        bsal_vertex_neighborhood_receive(&concrete_self->main_neighborhood, NULL);
 
 #if 0
         printf("visitor STEP_GET_MAIN_VERTEX_DATA\n");

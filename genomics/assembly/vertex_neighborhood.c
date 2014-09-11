@@ -69,7 +69,7 @@ void bsal_vertex_neighborhood_destroy(struct bsal_vertex_neighborhood *self)
     self->actor = NULL;
 }
 
-int bsal_vertex_neighborhood_fetch(struct bsal_vertex_neighborhood *self, struct thorium_message *message)
+int bsal_vertex_neighborhood_receive(struct bsal_vertex_neighborhood *self, struct thorium_message *message)
 {
     int tag;
     struct bsal_assembly_vertex vertex;
@@ -130,7 +130,7 @@ void bsal_vertex_neighborhood_init_empty(struct bsal_vertex_neighborhood *self)
     bsal_assembly_vertex_init_empty(&self->main_vertex);
 }
 
-void bsal_vertex_neighborhood_fetch_remote_memory(struct bsal_vertex_neighborhood *self, struct bsal_dna_kmer *kmer)
+void bsal_vertex_neighborhood_get_remote_memory(struct bsal_vertex_neighborhood *self, struct bsal_dna_kmer *kmer)
 {
     struct bsal_memory_pool *ephemeral_memory;
     struct thorium_message new_message;
@@ -163,10 +163,13 @@ int bsal_vertex_neighborhood_do_something(struct bsal_vertex_neighborhood *self)
 {
     int actual;
     int expected;
+    int edge_index;
+    int code;
+    struct bsal_dna_kmer other_kmer;
 
     if (self->step == STEP_GET_MAIN_VERTEX) {
 
-        bsal_vertex_neighborhood_fetch_remote_memory(self, &self->main_kmer);
+        bsal_vertex_neighborhood_get_remote_memory(self, &self->main_kmer);
 
 #if 0
         printf("neighborhood STEP_GET_MAIN_VERTEX\n");
@@ -181,14 +184,35 @@ int bsal_vertex_neighborhood_do_something(struct bsal_vertex_neighborhood *self)
         actual = bsal_vector_size(&self->parent_vertices);
         expected = bsal_assembly_vertex_parent_count(&self->main_vertex);
 
-        /* TODO Fix this. */
-        expected = 0;
+        /* DONE: Fix this. */
+
+        if (!self->fetch_parents)
+            expected = 0;
 
         if (actual == expected) {
+
+#if 0
+            printf("Fetched %d parents.\n", expected);
+#endif
+
             self->step = STEP_GET_CHILDREN;
 
             return bsal_vertex_neighborhood_do_something(self);
         } else {
+
+            edge_index = actual;
+            code = bsal_assembly_vertex_get_parent(&self->main_vertex,
+                            edge_index);
+
+            bsal_dna_kmer_init_as_parent(&other_kmer, &self->main_kmer,
+                            code, self->kmer_length, self->memory,
+                            self->codec);
+
+            /*
+             * Do some remote-memory access.
+             */
+            bsal_vertex_neighborhood_get_remote_memory(self, &other_kmer);
+            bsal_dna_kmer_destroy(&other_kmer, self->memory);
 
             /*
              * Fetch a parent.

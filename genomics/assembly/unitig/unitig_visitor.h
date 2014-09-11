@@ -47,6 +47,6 @@ void bsal_unitig_visitor_init(struct thorium_actor *self);
 void bsal_unitig_visitor_destroy(struct thorium_actor *self);
 void bsal_unitig_visitor_receive(struct thorium_actor *self, struct thorium_message *message);
 
-void bsal_unitig_visitor_do_something(struct thorium_actor *self);
+void bsal_unitig_visitor_run(struct thorium_actor *self);
 
 #endif

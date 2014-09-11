@@ -48,9 +48,9 @@ void bsal_vertex_neighborhood_destroy(struct bsal_vertex_neighborhood *self);
 /*
  * Returns 1 if data is ready, 0 otherwise.
  */
-int bsal_vertex_neighborhood_fetch(struct bsal_vertex_neighborhood *self, struct thorium_message *message);
+int bsal_vertex_neighborhood_receive(struct bsal_vertex_neighborhood *self, struct thorium_message *message);
 
-void bsal_vertex_neighborhood_fetch_remote_memory(struct bsal_vertex_neighborhood *self, struct bsal_dna_kmer *kmer);
+void bsal_vertex_neighborhood_receive_remote_memory(struct bsal_vertex_neighborhood *self, struct bsal_dna_kmer *kmer);
 
 int bsal_vertex_neighborhood_do_something(struct bsal_vertex_neighborhood *self);
 

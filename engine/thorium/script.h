@@ -5,9 +5,9 @@
 struct thorium_actor;
 struct thorium_message;
 
-typedef void (*thorium_actor_receive_fn_t)(struct thorium_actor *self, struct thorium_message *message);
 typedef void (*thorium_actor_init_fn_t)(struct thorium_actor *self);
 typedef void (*thorium_actor_destroy_fn_t)(struct thorium_actor *self);
+typedef void (*thorium_actor_receive_fn_t)(struct thorium_actor *self, struct thorium_message *message);
 
 /*
  * An actor script defines the behavior of an actor.
