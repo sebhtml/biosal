@@ -53,6 +53,10 @@ void bsal_assembly_graph_store_init(struct thorium_actor *self)
 {
     struct bsal_assembly_graph_store *concrete_self;
 
+#if 0
+    thorium_actor_set_priority(self, THORIUM_PRIORITY_MAX);
+#endif
+
     concrete_self = thorium_actor_concrete_actor(self);
 
     concrete_self->consumed_canonical_vertex_count = 0;

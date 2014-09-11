@@ -107,10 +107,13 @@ struct thorium_worker {
     int dead;
 
     int debug;
+    uint32_t flags;
 
     /* this is read by 2 threads, but written by 1 thread
      */
     int busy;
+
+    struct bsal_map actor_received_messages;
 
     time_t last_report;
     uint64_t epoch_start_in_nanoseconds;

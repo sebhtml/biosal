@@ -13,6 +13,7 @@
 #include <core/structures/set_iterator.h>
 
 #include <core/helpers/vector_helper.h>
+#include <core/helpers/bitmap.h>
 
 #include <core/system/memory.h>
 #include <core/system/timer.h>
@@ -51,6 +52,8 @@
  */
 #define THORIUM_WORKER_UNPRODUCTIVE_MICROSECONDS_FOR_WAIT (30 * 1000 * 1000)
 
+#define FLAG_DEBUG_ACTORS 0
+
 /*
 #define THORIUM_WORKER_DEBUG_WAIT_SIGNAL
 */
@@ -81,6 +84,8 @@ void thorium_worker_init(struct thorium_worker *worker, int name, struct thorium
     worker->counter_injected_outbound_buffers_other_local_workers= 0;
     worker->counter_injected_inbound_buffers_from_thorium_core = 0;
 #endif
+
+    bsal_map_init(&worker->actor_received_messages, sizeof(int), sizeof(int));
 
     worker->waiting_is_enabled = 0;
     worker->waiting_start_time = 0;
@@ -125,9 +130,18 @@ void thorium_worker_init(struct thorium_worker *worker, int name, struct thorium
 
     bsal_fast_queue_init(&worker->outbound_message_queue_buffer, sizeof(struct thorium_message));
 
-
     worker->debug = 0;
     worker->busy = 0;
+
+    worker->flags = 0;
+    bsal_bitmap_clear_bit_uint32_t(&worker->flags, FLAG_DEBUG_ACTORS);
+
+#ifdef DEBUG_ACTORS
+    if (thorium_node_name(worker->node) == 0
+                    && thorium_worker_name(worker) == 0) {
+        bsal_bitmap_set_bit_uint32_t(&worker->flags, FLAG_DEBUG_ACTORS);
+    }
+#endif
 
     worker->epoch_used_nanoseconds = 0;
     worker->loop_used_nanoseconds = 0;
@@ -198,6 +212,8 @@ void thorium_worker_init(struct thorium_worker *worker, int name, struct thorium
 void thorium_worker_destroy(struct thorium_worker *worker)
 {
     void *buffer;
+
+    bsal_map_destroy(&worker->actor_received_messages);
 
     /*
     thorium_worker_print_balance(worker);
@@ -710,6 +726,7 @@ void thorium_worker_print_actors(struct thorium_worker *worker, struct thorium_s
     int dead;
     int node_name;
     int worker_name;
+    int previous_amount;
 
     node_name = thorium_node_name(worker->node);
     worker_name = worker->name;
@@ -746,17 +763,22 @@ void thorium_worker_print_actors(struct thorium_worker *worker, struct thorium_s
         received = thorium_actor_get_sum_of_received_messages(actor);
         producers = bsal_map_size(thorium_actor_get_received_messages(actor));
         consumers = bsal_map_size(thorium_actor_get_sent_messages(actor));
-        difference = 0;
+        previous_amount = 0;
 
-        if (scheduler != NULL) {
-            difference = thorium_scheduler_get_actor_production(scheduler, actor);
+        bsal_map_get_value(&worker->actor_received_messages, &name,
+                        &previous_amount);
+        difference = received - previous_amount;;
 
-            printf("  [%s/%d] mailbox: %d received: %d (+%d) producers: %d consumers: %d\n",
+        if (!bsal_map_update_value(&worker->actor_received_messages, &name,
+                        &received)) {
+            bsal_map_add_value(&worker->actor_received_messages, &name, &received);
+        }
+
+        printf("  [%s/%d] mailbox: %d received: %d (+%d) producers: %d consumers: %d\n",
                         thorium_actor_script_name(actor),
                         name, count, received,
                        difference,
                        producers, consumers);
-        }
 
         script = thorium_actor_script(actor);
 
@@ -785,7 +807,7 @@ void thorium_worker_print_actors(struct thorium_worker *worker, struct thorium_s
         printf("node/%d worker/%d Frequency %s => %d\n",
                         node_name,
                         worker->name,
-                        thorium_script_description(script_object),
+                        thorium_script_name(script_object),
                         frequency);
     }
 
@@ -1155,9 +1177,8 @@ void thorium_worker_run(struct thorium_worker *worker)
         */
 #endif
 
-#ifdef THORIUM_WORKER_DEBUG_SYMMETRIC_PLACEMENT
-        thorium_worker_print_actors(worker, NULL);
-#endif
+        if (bsal_bitmap_get_bit_uint32_t(&worker->flags, FLAG_DEBUG_ACTORS))
+            thorium_worker_print_actors(worker, NULL);
     }
 #endif
 

@@ -72,6 +72,9 @@ int thorium_scheduling_queue_dequeue(struct thorium_scheduling_queue *queue, str
      * it wins right away, regardless of anything else.
      */
     if (max_size > 0) {
+#if 0
+        printf("Got THORIUM_PRIORITY_MAX !\n");
+#endif
         return thorium_scheduling_queue_dequeue_with_priority(queue, THORIUM_PRIORITY_MAX, actor);
     }
 
