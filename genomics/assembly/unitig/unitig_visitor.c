@@ -122,7 +122,7 @@ void bsal_unitig_visitor_receive(struct thorium_actor *self, struct thorium_mess
 
         thorium_actor_send_reply_empty(self, ACTION_ASK_TO_STOP_REPLY);
 
-    } else if (tag == ACTION_ASSEMBLY_GET_STARTING_VERTEX_REPLY) {
+    } else if (tag == ACTION_ASSEMBLY_GET_STARTING_KMER_REPLY) {
 
         if (count == 0) {
             ++concrete_self->completed;
@@ -202,7 +202,7 @@ void bsal_unitig_visitor_run(struct thorium_actor *self)
         concrete_self->graph_store_index %= size;
         graph_store = bsal_vector_at_as_int(&concrete_self->graph_stores, graph_store_index);
 
-        thorium_actor_send_empty(self, graph_store, ACTION_ASSEMBLY_GET_STARTING_VERTEX);
+        thorium_actor_send_empty(self, graph_store, ACTION_ASSEMBLY_GET_STARTING_KMER);
 
 #if 0
         printf("visitor STEP_GET_MAIN_KMER\n");

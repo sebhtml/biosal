@@ -106,7 +106,7 @@ void bsal_unitig_walker_init(struct thorium_actor *self)
 
     bsal_vector_init(&concrete_self->graph_stores, sizeof(int));
 
-    thorium_actor_add_action(self, ACTION_ASSEMBLY_GET_STARTING_VERTEX_REPLY,
+    thorium_actor_add_action(self, ACTION_ASSEMBLY_GET_STARTING_KMER_REPLY,
         bsal_unitig_walker_get_starting_vertex_reply);
 
     thorium_actor_add_action(self, ACTION_START,
@@ -289,7 +289,7 @@ void bsal_unitig_walker_begin(struct thorium_actor *self, struct thorium_message
 
     store = bsal_vector_at_as_int(&concrete_self->graph_stores, store_index);
 
-    thorium_actor_send_empty(self, store, ACTION_ASSEMBLY_GET_STARTING_VERTEX);
+    thorium_actor_send_empty(self, store, ACTION_ASSEMBLY_GET_STARTING_KMER);
 }
 
 void bsal_unitig_walker_start(struct thorium_actor *self, struct thorium_message *message)
@@ -431,7 +431,7 @@ void bsal_unitig_walker_get_vertex_reply_starting_vertex(struct thorium_actor *s
     bsal_assembly_vertex_unpack(&concrete_self->current_vertex, buffer);
 
     /*
-     * Check if the vertex is already used. ACTION_ASSEMBLY_GET_STARTING_VERTEX
+     * Check if the vertex is already used. ACTION_ASSEMBLY_GET_STARTING_KMER
      * returns a kmer that has the flag BSAL_VERTEX_STATE_USED set,
      * but another actor can grab the vertex in the mean time.
      *

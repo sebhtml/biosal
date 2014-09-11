@@ -101,7 +101,7 @@ void bsal_assembly_graph_store_init(struct thorium_actor *self)
     thorium_actor_add_action(self, ACTION_ASSEMBLY_GET_VERTEX,
                     bsal_assembly_graph_store_get_vertex);
 
-    thorium_actor_add_action(self, ACTION_ASSEMBLY_GET_STARTING_VERTEX,
+    thorium_actor_add_action(self, ACTION_ASSEMBLY_GET_STARTING_KMER,
                     bsal_assembly_graph_store_get_starting_vertex);
 
     thorium_actor_add_action(self, ACTION_MARK_VERTEX_AS_VISITED,
@@ -1067,7 +1067,7 @@ void bsal_assembly_graph_store_get_starting_vertex(struct thorium_actor *self, s
                     ephemeral_memory);
 #endif
 
-        thorium_message_init(&new_message, ACTION_ASSEMBLY_GET_STARTING_VERTEX_REPLY,
+        thorium_message_init(&new_message, ACTION_ASSEMBLY_GET_STARTING_KMER_REPLY,
                         new_count, new_buffer);
 
         thorium_actor_send_reply(self, &new_message);
@@ -1087,7 +1087,7 @@ void bsal_assembly_graph_store_get_starting_vertex(struct thorium_actor *self, s
     /*
      * An empty reply means that the store has nothing more to yield.
      */
-    thorium_actor_send_reply_empty(self, ACTION_ASSEMBLY_GET_STARTING_VERTEX_REPLY);
+    thorium_actor_send_reply_empty(self, ACTION_ASSEMBLY_GET_STARTING_KMER_REPLY);
 }
 
 /*
