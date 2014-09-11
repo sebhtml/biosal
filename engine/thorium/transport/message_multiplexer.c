@@ -14,6 +14,9 @@
 
 #include <stdlib.h>
 
+/*
+ * The multiplexer needs its own action
+ */
 #define ACTION_MULTIPLEXER_MESSAGE 0x0024afc9
 
 #define FORCE_NO 0
