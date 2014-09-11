@@ -205,6 +205,10 @@ struct thorium_actor {
     struct thorium_worker *worker;
     struct thorium_node *node;
 
+    /*
+     * The priority of an actor should be updated by the actor.
+     * The Thorium scheduler does a better job at this.
+     */
     int priority;
     uint32_t flags;
     struct bsal_fast_ring mailbox;

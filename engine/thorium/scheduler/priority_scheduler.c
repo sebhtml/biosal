@@ -7,23 +7,26 @@
 
 #include <core/structures/map_iterator.h>
 
+#include <core/helpers/statistics.h>
 #include <core/system/debugger.h>
 
 #include <stdio.h>
 
-#define CALL_COUNT_THRESHOLD 1024
+#define TIME_THRESHOLD 10
 
-void thorium_priority_scheduler_init(struct thorium_priority_scheduler *scheduler)
+#define THORIUM_PRIORITY_SCHEDULER_DEBUG
+
+void thorium_priority_scheduler_init(struct thorium_priority_scheduler *scheduler, int name)
 {
+    scheduler->name = name;
     bsal_map_init(&scheduler->actor_sources, sizeof(int), sizeof(int));
     bsal_map_init(&scheduler->actor_source_frequencies, sizeof(int), sizeof(int));
 
-    scheduler->low_priority_maximum_value = -1;
-    scheduler->high_priority_minimum_value = -1;
+    scheduler->normal_priority_minimum_value = -1;
+    scheduler->normal_priority_maximum_value= -1;
     scheduler->max_priority_minimum_value = -1;
 
-    scheduler->calls = 0;
-    scheduler->changes = 0;
+    scheduler->last_update = time(NULL);
 }
 
 void thorium_priority_scheduler_destroy(struct thorium_priority_scheduler *scheduler)
@@ -32,22 +35,17 @@ void thorium_priority_scheduler_destroy(struct thorium_priority_scheduler *sched
     bsal_map_destroy(&scheduler->actor_sources);
     bsal_map_destroy(&scheduler->actor_source_frequencies);
 
-    scheduler->low_priority_maximum_value = -1;
-    scheduler->high_priority_minimum_value = -1;
+    scheduler->normal_priority_minimum_value = -1;
+    scheduler->normal_priority_maximum_value= -1;
     scheduler->max_priority_minimum_value = -1;
-
-    scheduler->calls = 0;
-    scheduler->changes = 0;
-
 }
 
 /*
  * Gather data for sources.
  * Detect hubs
- * Assign THORIUM_PRIORITY_MAX to >=P95
- * Assign THORIUM_PRIORITY_HIGH to >=P70
- * Assign THORIUM_PRIORITY_LOW to <= P30
- * Assign THORIUM_PRIORITY_NORMAL otherwise.
+ *
+ *           P30              P70             P95
+ *          |     NORMAL         | HIGH      | MAX
  */
 void thorium_priority_scheduler_update(struct thorium_priority_scheduler *scheduler, struct thorium_actor *actor)
 {
@@ -55,8 +53,9 @@ void thorium_priority_scheduler_update(struct thorium_priority_scheduler *schedu
     int new_priority;
     int old_source_count;
     int new_source_count;
-
+    int class_count;
     int name;
+    time_t now;
 
     BSAL_DEBUGGER_ASSERT(actor != NULL);
 
@@ -78,8 +77,6 @@ void thorium_priority_scheduler_update(struct thorium_priority_scheduler *schedu
 
             thorium_priority_scheduler_decrement(scheduler, old_source_count);
             thorium_priority_scheduler_increment(scheduler, new_source_count);
-
-            ++scheduler->changes;
         }
 
     } else {
@@ -89,14 +86,12 @@ void thorium_priority_scheduler_update(struct thorium_priority_scheduler *schedu
         bsal_map_add_value(&scheduler->actor_sources, &name, &new_source_count);
 
         thorium_priority_scheduler_increment(scheduler, new_source_count);
-
-        ++scheduler->changes;
     }
 
     /* Update the priority now.
      */
 
-    if (scheduler->max_priority_minimum_value != -1) {
+    if (scheduler->normal_priority_minimum_value != -1) {
 
         old_priority = thorium_actor_get_priority(actor);
 
@@ -104,60 +99,103 @@ void thorium_priority_scheduler_update(struct thorium_priority_scheduler *schedu
 
         if (new_source_count >= scheduler->max_priority_minimum_value) {
             new_priority = THORIUM_PRIORITY_MAX;
+        }
+#if 0
+        if (scheduler->normal_priority_minimum_value <= new_source_count
+                        && new_source_count <= scheduler->normal_priority_maximum_value) {
+            new_priority = THORIUM_PRIORITY_NORMAL;
 
-        } else if (new_source_count >= scheduler->high_priority_minimum_value) {
-            new_priority = THORIUM_PRIORITY_HIGH;
-
-        } else if (new_source_count <= scheduler->low_priority_maximum_value) {
+        } else if (new_source_count < scheduler->normal_priority_minimum_value) {
             new_priority = THORIUM_PRIORITY_LOW;
 
-        }
+        } else if (new_source_count >= scheduler->max_priority_minimum_value) {
+            new_priority = THORIUM_PRIORITY_MAX;
 
+        } else {
+            new_priority = THORIUM_PRIORITY_HIGH;
+        }
+#endif
         if (new_priority != old_priority) {
             thorium_actor_set_priority(actor, new_priority);
+
+#ifdef THORIUM_PRIORITY_SCHEDULER_DEBUG
+            printf("THORIUM_PRIORITY_SCHEDULER_DEBUG update priority %s/%d, old %d new %d\n",
+                            thorium_actor_script_name(actor),
+                            thorium_actor_name(actor), old_priority, new_priority);
+#endif
         }
     }
 
-    /*
-     * Increment the number of calls and update threshold if necessary
-     */
+    class_count = bsal_map_size(&scheduler->actor_source_frequencies);
 
-    ++scheduler->calls;
+    now = time(NULL);
 
-    if (scheduler->calls >= CALL_COUNT_THRESHOLD) {
+    if (now - scheduler->last_update >= TIME_THRESHOLD) {
 
-        if (scheduler->changes > 0) {
-            thorium_priority_scheduler_update_thresholds(scheduler);
-        }
-
-        scheduler->calls = 0;
-        scheduler->changes = 0;
+        thorium_priority_scheduler_update_thresholds(scheduler);
+        scheduler->last_update = now;
     }
 }
 
 void thorium_priority_scheduler_update_thresholds(struct thorium_priority_scheduler *scheduler)
 {
     struct bsal_map_iterator iterator;
+    int class_count;
     int value;
     int frequency;
 
+    class_count = bsal_map_size(&scheduler->actor_source_frequencies);
+
+#if 0
 #ifdef THORIUM_PRIORITY_SCHEDULER_DEBUG
-    printf("DEBUG thorium_priority_scheduler_update_thresholds: calls %d changes %d\n",
-                    scheduler->calls, scheduler->changes);
+    printf("THORIUM_PRIORITY_SCHEDULER_DEBUG thorium_priority_scheduler_update_thresholds: calls %d changes %d, class_count %d\n",
+                    scheduler->calls, scheduler->changes, class_count);
+#endif
 #endif
 
     bsal_map_iterator_init(&iterator, &scheduler->actor_source_frequencies);
 
+    /*
+     * use percentiles instead of average, minimum and maximum.
+     */
+
+    class_count = 0;
     while (bsal_map_iterator_get_next_key_and_value(&iterator, &value, &frequency)) {
 
-#if 0
+#ifdef THORIUM_PRIORITY_SCHEDULER_DEBUG
         if (frequency > 0) {
-            printf("VALUE %d Frequency %d\n", value, frequency);
+            printf("THORIUM_PRIORITY_SCHEDULER_DEBUG %d VALUE %d Frequency %d\n",
+                            scheduler->name, value, frequency);
         }
 #endif
+        ++class_count;
     }
 
+    if (class_count < 2)
+        return;
+
+#ifdef THORIUM_PRIORITY_SCHEDULER_DEBUG
+    printf("THORIUM_PRIORITY_SCHEDULER_DEBUG class_count %d\n",
+                    class_count);
+#endif
+
     bsal_map_iterator_destroy(&iterator);
+
+    /*
+     * Actually update thresholds.
+     */
+
+    scheduler->normal_priority_minimum_value = bsal_statistics_get_percentile_int_map(&scheduler->actor_source_frequencies,
+                    30);
+    scheduler->normal_priority_maximum_value = bsal_statistics_get_percentile_int_map(&scheduler->actor_source_frequencies,
+                    70);
+    scheduler->max_priority_minimum_value = bsal_statistics_get_percentile_int_map(&scheduler->actor_source_frequencies,
+                    95);
+
+    printf("THORIUM_PRIORITY_SCHEDULER_DEBUG %d new thresholds P30 %d P70 %d P95 %d\n",
+                    scheduler->name,
+                    scheduler->normal_priority_minimum_value, scheduler->normal_priority_maximum_value,
+                    scheduler->max_priority_minimum_value);
 
     /*
      * Reset frequencies.
@@ -165,7 +203,6 @@ void thorium_priority_scheduler_update_thresholds(struct thorium_priority_schedu
     bsal_map_destroy(&scheduler->actor_source_frequencies);
     bsal_map_init(&scheduler->actor_source_frequencies, sizeof(int), sizeof(int));
 }
-
 
 void thorium_priority_scheduler_decrement(struct thorium_priority_scheduler *scheduler,
                 int old_source_count)
@@ -212,5 +249,4 @@ void thorium_priority_scheduler_increment(struct thorium_priority_scheduler *sch
         bsal_map_add_value(&scheduler->actor_source_frequencies, &new_source_count,
                         &new_source_count_new_frequency);
     }
-
 }

@@ -176,7 +176,7 @@ void thorium_worker_init(struct thorium_worker *worker, int name, struct thorium
 
     worker->ticks_without_production = 0;
 
-    thorium_priority_scheduler_init(&worker->scheduler);
+    thorium_priority_scheduler_init(&worker->scheduler, thorium_worker_name(worker));
 
     /*
      * This variables should be set in
@@ -1187,7 +1187,10 @@ void thorium_worker_run(struct thorium_worker *worker)
          * before starting the timer because this is part of the
          * runtime system (RTS).
          */
+
+#ifdef THORIUM_UPDATE_SCHEDULING_PRIORITIES
         thorium_priority_scheduler_update(&worker->scheduler, actor);
+#endif
 
 #ifdef THORIUM_NODE_ENABLE_INSTRUMENTATION
         bsal_timer_start(&worker->timer);
