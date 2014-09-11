@@ -6,6 +6,12 @@ struct thorium_node;
 struct thorium_message;
 
 #include <core/structures/vector.h>
+#include <core/structures/set.h>
+#include <core/structures/set_iterator.h>
+
+#include <core/system/timer.h>
+
+#include <stdint.h>
 
 /*
  * A message multiplerxser.
@@ -15,14 +21,22 @@ struct thorium_message;
  * time_threshold_in_nanoseconds
  */
 struct thorium_message_multiplexer {
-    int size_threshold_in_bytes;
-    int time_threshold_in_nanoseconds;
+    struct bsal_timer timer;
 
     struct bsal_vector buffers;
     struct bsal_vector buffer_maximum_sizes;
     struct bsal_vector buffer_current_sizes;
+    struct bsal_set buffers_with_content;
 
     struct thorium_node *node;
+    char *big_buffer;
+
+    uint32_t flags;
+
+    int size_threshold_in_bytes;
+    int time_threshold_in_nanoseconds;
+
+    uint64_t last_flush;
 };
 
 void thorium_message_multiplexer_init(struct thorium_message_multiplexer *self,
@@ -44,5 +58,10 @@ int thorium_message_multiplexer_demultiplex(struct thorium_message_multiplexer *
  * Test the multiplexer. This is used to flush messages that have been waiting for too long.
  */
 void thorium_message_multiplexer_test(struct thorium_message_multiplexer *self);
+
+/*
+ * Internal function for flushing stuff away.
+ */
+void thorium_message_multiplexer_flush(struct thorium_message_multiplexer *self, int index, int force);
 
 #endif

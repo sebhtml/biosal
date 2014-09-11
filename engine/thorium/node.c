@@ -156,7 +156,6 @@ void thorium_node_init(struct thorium_node *node, int *argc, char ***argv)
     thorium_transport_init(&node->transport, node, argc, argv,
                     &node->inbound_message_memory_pool,
                     &node->outbound_message_memory_pool);
-    thorium_message_multiplexer_init(&node->multiplexer, node);
 
     node->provided = thorium_transport_get_provided(&node->transport);
     node->name = thorium_transport_get_rank(&node->transport);
@@ -382,6 +381,8 @@ void thorium_node_init(struct thorium_node *node, int *argc, char ***argv)
         thorium_transport_print(&node->transport);
 #endif
     }
+
+    thorium_message_multiplexer_init(&node->multiplexer, node);
 }
 
 void thorium_node_destroy(struct thorium_node *node)
@@ -450,7 +451,6 @@ int thorium_node_threads_from_string(struct thorium_node *node,
     int start;
     int value;
     int length;
-
 
     start = 0;
     length = strlen(required_threads);
@@ -1977,6 +1977,8 @@ void thorium_node_run_loop(struct thorium_node *node)
         if (bsal_bitmap_get_bit_uint32_t(&node->flags, FLAG_USE_TRANSPORT)) {
 
             thorium_node_test_requests(node);
+
+            thorium_message_multiplexer_test(&node->multiplexer);
         }
 
         thorium_node_do_message_triage(node);
@@ -2329,4 +2331,9 @@ void thorium_node_send_with_transport(struct thorium_node *self, struct thorium_
     bsal_counter_add(&self->counter, BSAL_COUNTER_SENT_BYTES_NOT_TO_SELF,
                         thorium_message_count(message));
 
+}
+
+struct bsal_memory_pool *thorium_node_inbound_memory_pool(struct thorium_node *self)
+{
+    return &self->inbound_message_memory_pool;
 }

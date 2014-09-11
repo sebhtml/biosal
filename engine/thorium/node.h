@@ -300,4 +300,6 @@ void thorium_node_resolve(struct thorium_node *self, struct thorium_message *mes
 int thorium_node_generate_random_name(struct thorium_node *self,
                 int minimal_value, int maximum_value);
 
+struct bsal_memory_pool *thorium_node_inbound_memory_pool(struct thorium_node *self);
+
 #endif
