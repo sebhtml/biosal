@@ -24,8 +24,6 @@ struct thorium_message_multiplexer {
     struct bsal_timer timer;
 
     struct bsal_vector buffers;
-    struct bsal_vector buffer_maximum_sizes;
-    struct bsal_vector buffer_current_sizes;
     struct bsal_set buffers_with_content;
 
     struct thorium_node *node;
@@ -35,6 +33,9 @@ struct thorium_message_multiplexer {
 
     int size_threshold_in_bytes;
     int time_threshold_in_nanoseconds;
+
+    int original_message_count;
+    int real_message_count;
 
     uint64_t last_flush;
 };

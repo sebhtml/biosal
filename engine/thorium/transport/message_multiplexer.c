@@ -1,5 +1,6 @@
 
 #include "message_multiplexer.h"
+#include "multiplexed_buffer.h"
 
 #include <engine/thorium/node.h>
 
@@ -16,19 +17,31 @@
 #define ACTION_MULTIPLEXER_MESSAGE 0x0024afc9
 
 #define FORCE_NO 0
-#define FORCE_YES 1
+#define FORCE_YES_SIZE 1
+#define FORCE_YES_TIME 1
 
+/*
+#define DISABLE_MULTIPLEXER
+*/
 #define FLAG_DISABLE 0
 
 /*
- * 4 KiB
+#define DEBUG_MULTIPLEXER
+*/
+
+/*
+ * Size threshold.
+ *
+ * The current value is 1 KiB.
  */
 #define THORIUM_MESSAGE_MULTIPLEXER_SIZE_THRESHOLD_IN_BYTES (1 * 1024)
 
 /*
- * 10 microseconds.
+ * Time threshold in microseconds.
+ *
+ * The current value is 512 us. There are 1 000 000 us in one second.
  */
-#define THORIUM_MESSAGE_MULTIPLEXER_TIME_THRESHOLD_IN_NANOSECONDS (10 * 1000)
+#define THORIUM_MESSAGE_MULTIPLEXER_TIME_THRESHOLD_IN_NANOSECONDS (512 * 1000)
 
 void thorium_message_multiplexer_init(struct thorium_message_multiplexer *self,
                 struct thorium_node *node)
@@ -36,10 +49,11 @@ void thorium_message_multiplexer_init(struct thorium_message_multiplexer *self,
     int size;
     int i;
     int bytes;
-    char *buffer;
     int position;
-    int buffer_size;
-    int buffer_max_size;
+    struct thorium_multiplexed_buffer *multiplexed_buffer;
+
+    self->original_message_count = 0;
+    self->real_message_count = 0;
 
     self->flags = 0;
     bsal_bitmap_clear_bit_uint32_t(&self->flags, FLAG_DISABLE);
@@ -49,52 +63,60 @@ void thorium_message_multiplexer_init(struct thorium_message_multiplexer *self,
     bsal_timer_init(&self->timer);
 
     self->size_threshold_in_bytes = THORIUM_MESSAGE_MULTIPLEXER_SIZE_THRESHOLD_IN_BYTES;
-    self->time_threshold_in_nanoseconds = THORIUM_MESSAGE_MULTIPLEXER_SIZE_THRESHOLD_IN_BYTES;
+    self->time_threshold_in_nanoseconds = THORIUM_MESSAGE_MULTIPLEXER_TIME_THRESHOLD_IN_NANOSECONDS;
 
     self->node = node;
 
-    bsal_vector_init(&self->buffers, sizeof(void *));
-    bsal_vector_init(&self->buffer_current_sizes, sizeof(int));
-    bsal_vector_init(&self->buffer_maximum_sizes, sizeof(int));
+    bsal_vector_init(&self->buffers, sizeof(struct thorium_multiplexed_buffer));
 
     size = thorium_node_nodes(self->node);
-
     bsal_vector_resize(&self->buffers, size);
-    bsal_vector_resize(&self->buffer_current_sizes, size);
-    bsal_vector_resize(&self->buffer_maximum_sizes, size);
 
     bytes = size * self->size_threshold_in_bytes;
 
+#ifdef DEBUG_MULTIPLEXER
     printf("DEBUG_MULTIPLEXER size %d bytes %d\n", size, bytes);
+#endif
 
     self->big_buffer = bsal_memory_allocate(bytes);
     position = 0;
 
     for (i = 0; i < size; ++i) {
-        buffer = self->big_buffer + position;
+        multiplexed_buffer = bsal_vector_at(&self->buffers, i);
+
+        multiplexed_buffer->buffer = self->big_buffer + position;
         position += self->size_threshold_in_bytes;
 
+#ifdef DEBUG_MULTIPLEXER
         printf("DEBUG_MULTIPLEXER thorium_message_multiplexer_init index %d buffer %p\n", i, buffer);
-        bsal_vector_set(&self->buffers, i, &buffer);
+#endif
+
+#ifdef DEBUG_MULTIPLEXER
         printf("DEBUG_MULTIPLEXER thorium_message_multiplexer_init (after) index %d buffer %p\n", i,
-                        bsal_vector_at_as_void_pointer(&self->buffers, i));
+                        bsal_vector_at(&self->buffers, i));
+#endif
 
-        buffer_size = 0;
-        bsal_vector_set(&self->buffer_current_sizes, i, &buffer_size);
-
-        buffer_max_size = self->size_threshold_in_bytes;
-        bsal_vector_set(&self->buffer_maximum_sizes, i, &buffer_max_size);
+        multiplexed_buffer->current_size = 0;
+        multiplexed_buffer->message_count = 0;
+        multiplexed_buffer->maximum_size = self->size_threshold_in_bytes;
     }
 
     self->last_flush = bsal_timer_get_nanoseconds(&self->timer);
 
+#ifdef DISABLE_MULTIPLEXER
     bsal_bitmap_set_bit_uint32_t(&self->flags, FLAG_DISABLE);
+#endif
 }
 
 void thorium_message_multiplexer_destroy(struct thorium_message_multiplexer *self)
 {
     int i;
     int size;
+    struct thorium_multiplexed_buffer *multiplexed_buffer;
+
+    printf("DEBUG_MULTIPLEXER original_message_count %d real_message_count %d\n",
+                    self->original_message_count, self->real_message_count);
+
 #ifdef BSAL_DEBUGGER_ENABLE_ASSERT
 #endif
     size = bsal_vector_size(&self->buffers);
@@ -104,13 +126,14 @@ void thorium_message_multiplexer_destroy(struct thorium_message_multiplexer *sel
     bsal_set_destroy(&self->buffers_with_content);
 
     for (i = 0; i < size; ++i) {
+        multiplexed_buffer = bsal_vector_at(&self->buffers, i);
 
-        BSAL_DEBUGGER_ASSERT(bsal_vector_at_as_int(&self->buffer_current_sizes, i) == 0);
+        BSAL_DEBUGGER_ASSERT(multiplexed_buffer->current_size == 0);
+
+        multiplexed_buffer->buffer = 0;
     }
 
     bsal_vector_destroy(&self->buffers);
-    bsal_vector_destroy(&self->buffer_current_sizes);
-    bsal_vector_destroy(&self->buffer_maximum_sizes);
 
     self->node = NULL;
 
@@ -155,8 +178,12 @@ int thorium_message_multiplexer_multiplex(struct thorium_message_multiplexer *se
     void *multiplexed_buffer;
     void *destination_in_buffer;
     int required_size;
+    struct thorium_multiplexed_buffer *real_multiplexed_buffer;
+
+    ++self->original_message_count;
 
     if (bsal_bitmap_get_bit_uint32_t(&self->flags, FLAG_DISABLE)) {
+        ++self->real_message_count;
         return 0;
     }
 
@@ -166,6 +193,7 @@ int thorium_message_multiplexer_multiplex(struct thorium_message_multiplexer *se
      * Don't multiplex already-multiplexed messages.
      */
     if (tag == ACTION_MULTIPLEXER_MESSAGE) {
+        ++self->real_message_count;
         return 0;
     }
 
@@ -173,18 +201,20 @@ int thorium_message_multiplexer_multiplex(struct thorium_message_multiplexer *se
     required_size = sizeof(count) + count;
     buffer = thorium_message_buffer(message);
     destination_node = thorium_message_destination_node(message);
-    current_size = bsal_vector_at_as_int(&self->buffer_current_sizes, destination_node);
-    maximum_size = bsal_vector_at_as_int(&self->buffer_maximum_sizes, destination_node);
+    real_multiplexed_buffer = bsal_vector_at(&self->buffers, destination_node);
+    current_size = real_multiplexed_buffer->current_size;
+    maximum_size = real_multiplexed_buffer->maximum_size;
 
     /*
      * Don't multiplex large messages.
      */
     if (required_size > maximum_size) {
+
+#ifdef DEBUG_MULTIPLEXER
+        printf("too large required_size %d maximum_size %d\n", required_size, maximum_size);
+#endif
         return 0;
     }
-
-    printf("DEBUG_MULTIPLEXER thorium_message_multiplexer_multiplex required_size %d\n",
-                    required_size);
 
     new_size = current_size + required_size;
 
@@ -192,13 +222,21 @@ int thorium_message_multiplexer_multiplex(struct thorium_message_multiplexer *se
      * Flush now if there is no space left for the <required_size> bytes
      */
     if (new_size > maximum_size) {
-        thorium_message_multiplexer_flush(self, destination_node, FORCE_YES);
-        current_size = bsal_vector_at_as_int(&self->buffer_current_sizes, destination_node);
+
+#ifdef DEBUG_MULTIPLEXER
+        printf("DEBUG_MULTIPLEXER must FLUSH thorium_message_multiplexer_multiplex required_size %d new_size %d maximum_size %d\n",
+                    required_size, new_size, maximum_size);
+#endif
+
+
+
+        thorium_message_multiplexer_flush(self, destination_node, FORCE_YES_SIZE);
+        current_size = real_multiplexed_buffer->current_size;
 
         BSAL_DEBUGGER_ASSERT(current_size == 0);
     }
 
-    multiplexed_buffer = bsal_vector_at_as_void_pointer(&self->buffers, destination_node);
+    multiplexed_buffer = real_multiplexed_buffer->buffer;
     destination_in_buffer = ((char *)multiplexed_buffer) + current_size;
 
     /*
@@ -211,11 +249,12 @@ int thorium_message_multiplexer_multiplex(struct thorium_message_multiplexer *se
     current_size += required_size;
 
     BSAL_DEBUGGER_ASSERT(current_size <= maximum_size);
-    bsal_vector_set(&self->buffer_current_sizes, destination_node, &current_size);
+    real_multiplexed_buffer->current_size = current_size;
+    ++real_multiplexed_buffer->message_count;
 
     thorium_message_multiplexer_flush(self, destination_node, FORCE_NO);
 
-    current_size = bsal_vector_at_as_int(&self->buffer_current_sizes, destination_node);
+    current_size = real_multiplexed_buffer->current_size;
 
     BSAL_DEBUGGER_ASSERT(current_size <= maximum_size);
 
@@ -305,8 +344,10 @@ int thorium_message_multiplexer_demultiplex(struct thorium_message_multiplexer *
 
     BSAL_DEBUGGER_ASSERT(messages > 0);
 
+#ifdef DEBUG_MULTIPLEXER
     printf("DEBUG_MULTIPLEXER thorium_message_multiplexer_demultiplex %d messages\n",
                     messages);
+#endif
 
     return 1;
 }
@@ -345,12 +386,17 @@ void thorium_message_multiplexer_test(struct thorium_message_multiplexer *self)
 
     while (bsal_set_iterator_get_next_value(&iterator, &index)) {
 
-        thorium_message_multiplexer_flush(self, index, FORCE_YES);
+        thorium_message_multiplexer_flush(self, index, FORCE_YES_TIME);
     }
 
     bsal_set_iterator_destroy(&iterator);
 
     bsal_set_clear(&self->buffers_with_content);
+
+    /*
+     * Update the counter for last flush event.
+     */
+    self->last_flush = bsal_timer_get_nanoseconds(&self->timer);
 }
 
 void thorium_message_multiplexer_flush(struct thorium_message_multiplexer *self, int index, int force)
@@ -361,30 +407,38 @@ void thorium_message_multiplexer_flush(struct thorium_message_multiplexer *self,
     int count;
     int current_size;
     int maximum_size;
+    struct thorium_multiplexed_buffer *multiplexed_buffer;
 
     if (bsal_bitmap_get_bit_uint32_t(&self->flags, FLAG_DISABLE)) {
         return;
     }
 
-    current_size = bsal_vector_at_as_int(&self->buffer_current_sizes, index);
-    maximum_size = bsal_vector_at_as_int(&self->buffer_maximum_sizes, index);
+    multiplexed_buffer = bsal_vector_at(&self->buffers, index);
+    current_size = multiplexed_buffer->current_size;
+    maximum_size = multiplexed_buffer->maximum_size;
 
     if (force == FORCE_NO && current_size < maximum_size) {
         return;
     }
 
-    count = bsal_vector_at_as_int(&self->buffer_current_sizes, index);
+    count = current_size;
     tag = ACTION_MULTIPLEXER_MESSAGE;
-    buffer = bsal_vector_at_as_void_pointer(&self->buffers, index);
+    buffer = multiplexed_buffer->buffer;
 
-    printf("DEBUG_MULTIPLEXER thorium_message_multiplexer_flush index %d buffer %p force %d current_size %d maximum_size %d\n",
-                    index, buffer, force, current_size, maximum_size);
+#ifdef DEBUG_MULTIPLEXER
+    printf("DEBUG_MULTIPLEXER thorium_message_multiplexer_flush index %d buffer %p force %d message_count %d current_size %d maximum_size %d\n",
+                    index, buffer, force, multiplexed_buffer->message_count,
+                    current_size, maximum_size);
+#endif
 
     thorium_message_init(&message, tag, count, buffer);
     thorium_node_send_to_node(self->node, index, &message);
+
+    ++self->real_message_count;
     thorium_message_destroy(&message);
 
-    current_size = 0;
+    multiplexed_buffer->current_size = 0;
+    multiplexed_buffer->message_count = 0;
 
-    bsal_vector_set(&self->buffer_current_sizes, index, &current_size);
+    bsal_set_delete(&self->buffers_with_content, &index);
 }
