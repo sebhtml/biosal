@@ -148,7 +148,7 @@ void bsal_assembly_sliding_window_receive(struct thorium_actor *actor, struct th
     count = thorium_message_count(message);
 
     concrete_actor = (struct bsal_assembly_sliding_window *)thorium_actor_concrete_actor(actor);
-    tag = thorium_message_tag(message);
+    tag = thorium_message_action(message);
     name = thorium_actor_name(actor);
     source = thorium_message_source(message);
     buffer = thorium_message_buffer(message);

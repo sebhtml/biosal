@@ -8,14 +8,11 @@
 
 /*
  * This is a message.
- *
- * tags have a value from 0 to MPI_TAB_UB.
- * MPI_TAB_UB is at least 32767 (MPI 1.3, 2.0, 2.1, 2.2, 3.0)
  */
 struct thorium_message {
     void *buffer;
     int count;
-    int tag;
+    int action;
 
     int source_actor;
     int destination_actor;
@@ -28,7 +25,7 @@ struct thorium_message {
     int worker;
 };
 
-void thorium_message_init(struct thorium_message *self, int tag, int count, void *buffer);
+void thorium_message_init(struct thorium_message *self, int action, int count, void *buffer);
 void thorium_message_init_with_nodes(struct thorium_message *self, int count, void *buffer, int source,
                 int destination);
 void thorium_message_init_copy(struct thorium_message *self, struct thorium_message *old_message);
@@ -40,8 +37,8 @@ void thorium_message_set_source(struct thorium_message *self, int source);
 int thorium_message_destination(struct thorium_message *self);
 void thorium_message_set_destination(struct thorium_message *self, int destination);
 
-int thorium_message_tag(struct thorium_message *self);
-void thorium_message_set_tag(struct thorium_message *self, int tag);
+int thorium_message_action(struct thorium_message *self);
+void thorium_message_set_action(struct thorium_message *self, int action);
 
 void *thorium_message_buffer(struct thorium_message *self);
 void thorium_message_set_buffer(struct thorium_message *self, void *buffer);

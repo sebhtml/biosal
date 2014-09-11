@@ -51,7 +51,7 @@ void mock_receive(struct thorium_actor *actor, struct thorium_message *message)
 
     mock1 = (struct mock *)thorium_actor_concrete_actor(actor);
 
-    tag = thorium_message_tag(message);
+    tag = thorium_message_action(message);
     buffer = thorium_message_buffer(message);
     /*thorium_actor_print(actor);*/
 

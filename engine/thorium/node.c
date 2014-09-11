@@ -955,7 +955,7 @@ int thorium_node_receive_system(struct thorium_node *node, struct thorium_messag
     printf("DEBUG thorium_node_receive_system\n");
 #endif
 
-    tag = thorium_message_tag(message);
+    tag = thorium_message_action(message);
 
     if (tag == ACTION_THORIUM_NODE_ADD_INITIAL_ACTOR) {
 
@@ -1081,7 +1081,7 @@ void thorium_node_send_to_node(struct thorium_node *node, int destination,
     struct thorium_message new_message;
     int tag;
 
-    tag = thorium_message_tag(message);
+    tag = thorium_message_action(message);
     count = thorium_message_count(message);
     buffer = thorium_message_buffer(message);
     new_count = thorium_message_metadata_size(message) + count;
@@ -1162,7 +1162,7 @@ void thorium_node_send(struct thorium_node *node, struct thorium_message *messag
         thorium_node_dispatch_message(node, message);
 
 #ifdef THORIUM_NODE_DEBUG_20140601_8
-        if (thorium_message_tag(message) == 1100) {
+        if (thorium_message_action(message) == 1100) {
             printf("DEBUG local message 1100\n");
         }
 #endif
@@ -1192,7 +1192,7 @@ void thorium_node_send(struct thorium_node *node, struct thorium_message *messag
         thorium_message_set_count(message, all);
 
 #ifdef TRANSPORT_DEBUG_ISSUE_594
-    if (thorium_message_tag(message) == 30202) {
+    if (thorium_message_action(message) == 30202) {
         printf("DEBUG-594 thorium_node_send\n");
         thorium_message_print(message);
     }
@@ -1203,7 +1203,7 @@ void thorium_node_send(struct thorium_node *node, struct thorium_message *messag
         }
 
 #ifdef THORIUM_NODE_DEBUG_20140601_8
-        if (thorium_message_tag(message) == 1100) {
+        if (thorium_message_action(message) == 1100) {
             printf("DEBUG outbound message 1100\n");
 
             bsal_bitmap_set_bit_uint32_t(&node->flags, FLAG_DEBUG);
@@ -1282,7 +1282,7 @@ void thorium_node_inject_message_in_pool(struct thorium_node *node, struct thori
 
 #ifdef THORIUM_NODE_DEBUG
     source = thorium_message_source(message);
-    tag = thorium_message_tag(message);
+    tag = thorium_message_action(message);
 
     printf("[DEBUG %s %s %i] actor%i (node%i) : actor%i (node%i)"
                     "(tag %i) %i bytes\n",
@@ -1732,7 +1732,7 @@ int thorium_node_send_system(struct thorium_node *node, struct thorium_message *
     int tag;
     int source;
 
-    tag = thorium_message_tag(message);
+    tag = thorium_message_action(message);
     destination = thorium_message_destination(message);
     source = thorium_message_source(message);
 
@@ -1828,7 +1828,7 @@ int thorium_node_pull(struct thorium_node *node, struct thorium_message *message
     value = thorium_worker_pool_dequeue_message(&node->worker_pool, message);
 
 #ifdef TRANSPORT_DEBUG_ISSUE_594
-    if (value && thorium_message_tag(message) == 30202) {
+    if (value && thorium_message_action(message) == 30202) {
         printf("BUG-594 thorium_node_pull\n");
         thorium_message_print(message);
     }
@@ -2010,14 +2010,14 @@ void thorium_node_send_message(struct thorium_node *node)
 
 #ifdef THORIUM_NODE_DEBUG
         printf("thorium_node_run pulled tag %i buffer %p\n",
-                        thorium_message_tag(&message),
+                        thorium_message_action(&message),
                         thorium_message_buffer(&message));
 #endif
 
 #ifdef THORIUM_NODE_DEBUG_RUN
         if (node->alive_actors == 0) {
             printf("THORIUM_NODE_DEBUG_RUN thorium_node_send_message pulled a message, tag %d\n",
-                            thorium_message_tag(&message));
+                            thorium_message_action(&message));
         }
 #endif
 

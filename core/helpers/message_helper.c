@@ -47,7 +47,7 @@ int thorium_message_unpack_uint64_t(struct thorium_message *message, int offset,
 
 void thorium_message_get_all(struct thorium_message *message, int *tag, int *count, void **buffer, int *source)
 {
-    *tag = thorium_message_tag(message);
+    *tag = thorium_message_action(message);
     *count = thorium_message_count(message);
     *buffer = thorium_message_buffer(message);
     *source = thorium_message_source(message);

@@ -37,7 +37,7 @@ void buddy_receive(struct thorium_actor *actor, struct thorium_message *message)
 
     name = thorium_actor_name(actor);
     source = thorium_message_source(message);
-    tag = thorium_message_tag(message);
+    tag = thorium_message_action(message);
 
     if (tag == ACTION_BUDDY_BOOT) {
 

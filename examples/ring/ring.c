@@ -66,7 +66,7 @@ void ring_receive(struct thorium_actor *actor, struct thorium_message *message)
     int destination;
 
     concrete_actor = (struct ring *)thorium_actor_concrete_actor(actor);
-    tag = thorium_message_tag(message);
+    tag = thorium_message_action(message);
     buffer = thorium_message_buffer(message);
     name = thorium_actor_name(actor);
 
@@ -137,7 +137,7 @@ void ring_receive(struct thorium_actor *actor, struct thorium_message *message)
     } else if (tag == ACTION_RING_SET_NEXT) {
 
         concrete_actor->step = RING_STEP_PUSH_NEXT;
-        thorium_message_set_tag(message, ACTION_SENDER_SET_NEXT);
+        thorium_message_set_action(message, ACTION_SENDER_SET_NEXT);
         thorium_actor_send(actor, concrete_actor->last, message);
 
     } else if (tag == ACTION_SENDER_SET_NEXT_REPLY

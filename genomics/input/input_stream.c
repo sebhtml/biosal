@@ -187,7 +187,7 @@ void bsal_input_stream_receive(struct thorium_actor *actor, struct thorium_messa
     }
 
     concrete_self = (struct bsal_input_stream *)thorium_actor_concrete_actor(actor);
-    tag = thorium_message_tag(message);
+    tag = thorium_message_action(message);
     source = thorium_message_source(message);
     buffer = (char *)thorium_message_buffer(message);
 

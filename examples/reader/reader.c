@@ -58,7 +58,7 @@ void reader_receive(struct thorium_actor *actor, struct thorium_message *message
     int error;
 
     reader1 = (struct reader *)thorium_actor_concrete_actor(actor);
-    tag = thorium_message_tag(message);
+    tag = thorium_message_action(message);
     source = thorium_message_source(message);
     buffer = thorium_message_buffer(message);
     name = thorium_actor_name(actor);

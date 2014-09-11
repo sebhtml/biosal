@@ -230,7 +230,7 @@ void bsal_unitig_walker_receive(struct thorium_actor *self, struct thorium_messa
         return;
     }
 
-    tag = thorium_message_tag(message);
+    tag = thorium_message_action(message);
     concrete_self = (struct bsal_unitig_walker *)thorium_actor_concrete_actor(self);
     ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
 

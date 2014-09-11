@@ -186,7 +186,7 @@ void thorium_actor_send_range_loop(struct thorium_actor *actor, struct bsal_vect
 
 #ifdef THORIUM_ACTOR_DEBUG_20140601_1
         printf("DEBUG sending %d to %d\n",
-                       thorium_message_tag(message), i);
+                       thorium_message_action(message), i);
 #endif
         the_actor = *(int *)bsal_vector_at(actors, i);
         thorium_actor_send(actor, the_actor, message);

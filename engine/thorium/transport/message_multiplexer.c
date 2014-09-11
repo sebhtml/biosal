@@ -190,7 +190,7 @@ int thorium_message_multiplexer_multiplex(struct thorium_message_multiplexer *se
         return 0;
     }
 
-    tag = thorium_message_tag(message);
+    tag = thorium_message_action(message);
 
     /*
      * Don't multiplex already-multiplexed messages.
@@ -308,7 +308,7 @@ int thorium_message_multiplexer_demultiplex(struct thorium_message_multiplexer *
         return 0;
     }
 
-    tag = thorium_message_tag(message);
+    tag = thorium_message_action(message);
 
     if (tag != ACTION_MULTIPLEXER_MESSAGE) {
         return 0;

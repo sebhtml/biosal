@@ -82,7 +82,7 @@ void root_receive(struct thorium_actor *actor, struct thorium_message *message)
     concrete_self = (struct root *)thorium_actor_concrete_actor(actor);
     concrete_actor = concrete_self;
     source = thorium_message_source(message);
-    tag = thorium_message_tag(message);
+    tag = thorium_message_action(message);
     buffer = thorium_message_buffer(message);
     name = thorium_actor_name(actor);
     count = thorium_message_count(message);

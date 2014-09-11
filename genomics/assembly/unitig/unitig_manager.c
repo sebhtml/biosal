@@ -71,7 +71,7 @@ void bsal_unitig_manager_receive(struct thorium_actor *self, struct thorium_mess
     void *buffer;
     int spawner;
 
-    tag = thorium_message_tag(message);
+    tag = thorium_message_action(message);
     buffer = thorium_message_buffer(message);
 
     concrete_self = (struct bsal_unitig_manager *)thorium_actor_concrete_actor(self);

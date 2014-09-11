@@ -151,7 +151,7 @@ void bsal_assembly_graph_store_receive(struct thorium_actor *self, struct thoriu
     /*ephemeral_memory = thorium_actor_get_ephemeral_memory(self);*/
     concrete_self = thorium_actor_concrete_actor(self);
 
-    tag = thorium_message_tag(message);
+    tag = thorium_message_action(message);
     /*buffer = thorium_message_buffer(message);*/
 
     if (tag == ACTION_SET_KMER_LENGTH) {
@@ -454,7 +454,7 @@ void bsal_assembly_graph_store_push_kmer_block(struct thorium_actor *self, struc
 
     ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
     concrete_self = thorium_actor_concrete_actor(self);
-    /*tag = thorium_message_tag(message);*/
+    /*tag = thorium_message_action(message);*/
     buffer = thorium_message_buffer(message);
     count = thorium_message_count(message);
 

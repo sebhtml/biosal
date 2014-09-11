@@ -129,7 +129,7 @@ void bsal_sequence_store_receive(struct thorium_actor *actor, struct thorium_mes
         return;
     }
 
-    tag = thorium_message_tag(message);
+    tag = thorium_message_action(message);
     source = thorium_message_source(message);
     concrete_actor = (struct bsal_sequence_store *)thorium_actor_concrete_actor(actor);
 

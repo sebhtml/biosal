@@ -793,7 +793,7 @@ int thorium_scheduler_select_worker_least_busy(
 
 #ifdef THORIUM_WORKER_POOL_DEBUG
     message = bsal_work_message(work);
-    tag = thorium_message_tag(message);
+    tag = thorium_message_action(message);
     destination = thorium_message_destination(message);
 
     if (tag == ACTION_ASK_TO_STOP) {

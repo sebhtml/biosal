@@ -169,7 +169,7 @@ void argonnite_receive(struct thorium_actor *actor, struct thorium_message *mess
     }
 
     concrete_actor = (struct argonnite *)thorium_actor_concrete_actor(actor);
-    tag = thorium_message_tag(message);
+    tag = thorium_message_action(message);
     buffer = thorium_message_buffer(message);
     argc = thorium_actor_argc(actor);
     argv = thorium_actor_argv(actor);
@@ -915,7 +915,7 @@ void argonnite_prepare_sequence_stores(struct thorium_actor *self, struct thoriu
 
     concrete_actor->state = ARGONNITE_STATE_PREPARE_SEQUENCE_STORES;
 
-    tag = thorium_message_tag(message);
+    tag = thorium_message_action(message);
     buffer = thorium_message_buffer(message);
 
     if (tag == ACTION_ARGONNITE_PREPARE_SEQUENCE_STORES) {

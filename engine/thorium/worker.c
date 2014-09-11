@@ -327,14 +327,14 @@ void thorium_worker_send(struct thorium_worker *worker, struct thorium_message *
     thorium_message_write_metadata(&copy);
 
 #ifdef THORIUM_BUG_594
-    if (thorium_message_tag(&copy) == 30202) {
+    if (thorium_message_action(&copy) == 30202) {
         printf("DEBUG-594 thorium_worker_send\n");
         thorium_message_print(&copy);
     }
 #endif
 
 #ifdef THORIUM_WORKER_DEBUG_20140601
-    if (thorium_message_tag(message) == 1100) {
+    if (thorium_message_action(message) == 1100) {
         printf("DEBUG thorium_worker_send 1100\n");
     }
 #endif
@@ -1194,7 +1194,7 @@ void thorium_worker_run(struct thorium_worker *worker)
 
 #ifdef THORIUM_WORKER_DEBUG
         message = bsal_work_message(&work);
-        tag = thorium_message_tag(message);
+        tag = thorium_message_action(message);
         destination = thorium_message_destination(message);
 
         if (tag == ACTION_ASK_TO_STOP) {
@@ -1355,7 +1355,7 @@ void thorium_worker_work(struct thorium_worker *worker, struct thorium_actor *ac
 #ifdef THORIUM_WORKER_DEBUG
     printf("thorium_worker_work Freeing buffer %p %i tag %i\n",
                     buffer, thorium_message_count(message),
-                    thorium_message_tag(message));
+                    thorium_message_action(message));
 #endif
 
 #ifdef THORIUM_WORKER_DEBUG_20140601

@@ -50,7 +50,7 @@ void frame_receive(struct thorium_actor *actor, struct thorium_message *message)
 
     source = thorium_message_source(message);
     concrete_actor = (struct frame *)thorium_actor_concrete_actor(actor);
-    tag = thorium_message_tag(message);
+    tag = thorium_message_action(message);
     name = thorium_actor_name(actor);
     buffer = thorium_message_buffer(message);
     acquaintance_vector = &concrete_actor->acquaintance_vector;

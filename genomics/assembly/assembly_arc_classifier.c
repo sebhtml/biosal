@@ -98,7 +98,7 @@ void bsal_assembly_arc_classifier_receive(struct thorium_actor *self, struct tho
     }
 
     concrete_self = (struct bsal_assembly_arc_classifier *)thorium_actor_concrete_actor(self);
-    tag = thorium_message_tag(message);
+    tag = thorium_message_action(message);
     buffer = thorium_message_buffer(message);
     source = thorium_message_source(message);
 

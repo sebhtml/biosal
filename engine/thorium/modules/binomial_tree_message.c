@@ -205,7 +205,7 @@ void thorium_actor_send_range_binomial_tree_part(struct thorium_actor *actor,
 
     ephemeral_memory = thorium_actor_get_ephemeral_memory(actor);
 
-    real_tag = thorium_message_tag(message);
+    real_tag = thorium_message_action(message);
     real_source = thorium_message_source(message);
     real_count = thorium_message_count(message);
     real_buffer = thorium_message_buffer(message);

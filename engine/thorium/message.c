@@ -7,10 +7,10 @@
 #include <stdlib.h>
 #include <string.h>
 
-void thorium_message_init(struct thorium_message *message, int tag, int count,
+void thorium_message_init(struct thorium_message *message, int action, int count,
                 void *buffer)
 {
-    message->tag = tag;
+    message->action= action;
     message->buffer = buffer;
     message->count = count;
 
@@ -31,7 +31,7 @@ void thorium_message_destroy(struct thorium_message *message)
 {
     message->source_actor = -1;
     message->destination_actor = -1;
-    message->tag = -1;
+    message->action= -1;
     message->buffer = NULL;
     message->count= 0;
 }
@@ -56,9 +56,9 @@ int thorium_message_destination_node(struct thorium_message *message)
     return message->destination_node;
 }
 
-int thorium_message_tag(struct thorium_message *message)
+int thorium_message_action(struct thorium_message *message)
 {
-    return message->tag;
+    return message->action;
 }
 
 void thorium_message_set_source(struct thorium_message *message, int source)
@@ -74,7 +74,7 @@ void thorium_message_set_destination(struct thorium_message *message, int destin
 void thorium_message_print(struct thorium_message *self)
 {
     printf("Message Tag %d Count %d SourceActor %d DestinationActor %d\n",
-                    self->tag,
+                    self->action,
                     self->count,
                     self->source_actor,
                     self->destination_actor);
@@ -107,9 +107,9 @@ void thorium_message_set_buffer(struct thorium_message *message, void *buffer)
     message->buffer = buffer;
 }
 
-void thorium_message_set_tag(struct thorium_message *message, int tag)
+void thorium_message_set_action(struct thorium_message *message, int action)
 {
-    message->tag = tag;
+    message->action= action;
 }
 
 int thorium_message_metadata_size(struct thorium_message *self)
@@ -138,7 +138,7 @@ void thorium_message_set_count(struct thorium_message *message, int count)
 void thorium_message_init_copy(struct thorium_message *message, struct thorium_message *old_message)
 {
     thorium_message_init(message,
-                    thorium_message_tag(old_message),
+                    thorium_message_action(old_message),
                     thorium_message_count(old_message),
                     thorium_message_buffer(old_message));
 
@@ -161,11 +161,11 @@ int thorium_message_worker(struct thorium_message *message)
 void thorium_message_init_with_nodes(struct thorium_message *self, int count, void *buffer, int source,
                 int destination)
 {
-    int tag;
+    int action;
 
-    tag = -1;
+    action = -1;
 
-    thorium_message_init(self, tag, count, buffer);
+    thorium_message_init(self, action, count, buffer);
 
     /*
      * Initially assign the MPI source rank and MPI destination
@@ -190,7 +190,7 @@ int thorium_message_pack_unpack(struct thorium_message *self, int operation, voi
 
     bsal_packer_process(&packer, &self->source_actor, sizeof(self->source_actor));
     bsal_packer_process(&packer, &self->destination_actor, sizeof(self->destination_actor));
-    bsal_packer_process(&packer, &self->tag, sizeof(self->tag));
+    bsal_packer_process(&packer, &self->action, sizeof(self->action));
 
     count = bsal_packer_get_byte_count(&packer);
 

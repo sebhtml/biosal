@@ -91,7 +91,7 @@ void bsal_unitig_visitor_receive(struct thorium_actor *self, struct thorium_mess
     int size;
     int count;
 
-    tag = thorium_message_tag(message);
+    tag = thorium_message_action(message);
     count = thorium_message_count(message);
     buffer = thorium_message_buffer(message);
     concrete_self = thorium_actor_concrete_actor(self);

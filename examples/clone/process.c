@@ -43,7 +43,7 @@ void process_receive(struct thorium_actor *actor, struct thorium_message *messag
     struct thorium_message new_message;
 
     process1 = (struct process *)thorium_actor_concrete_actor(actor);
-    tag = thorium_message_tag(message);
+    tag = thorium_message_action(message);
     name = thorium_actor_name(actor);
     buffer = thorium_message_buffer(message);
 

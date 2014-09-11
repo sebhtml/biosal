@@ -158,7 +158,7 @@ int thorium_transport_send(struct thorium_transport *self, struct thorium_messag
         printf("TRANSPORT SEND Source %d Destination %d Tag %d Count %d\n",
                         thorium_message_source_node(message),
                         thorium_message_destination_node(message),
-                        thorium_message_tag(message),
+                        thorium_message_action(message),
                         thorium_message_count(message));
 #endif
         ++self->active_request_count;
@@ -186,7 +186,7 @@ int thorium_transport_receive(struct thorium_transport *self, struct thorium_mes
         printf("TRANSPORT RECEIVE Source %d Destination %d Tag %d Count %d\n",
                         thorium_message_source_node(message),
                         thorium_message_destination_node(message),
-                        thorium_message_tag(message),
+                        thorium_message_action(message),
                         thorium_message_count(message));
 #endif
 

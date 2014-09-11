@@ -98,7 +98,7 @@ void bsal_assembly_arc_kernel_receive(struct thorium_actor *self, struct thorium
     }
 
     concrete_self = (struct bsal_assembly_arc_kernel *)thorium_actor_concrete_actor(self);
-    tag = thorium_message_tag(message);
+    tag = thorium_message_action(message);
     source = thorium_message_source(message);
 
     if (tag == ACTION_SET_PRODUCER) {

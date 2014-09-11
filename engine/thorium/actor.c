@@ -262,7 +262,7 @@ void thorium_actor_print(struct thorium_actor *self)
 
     printf("EXAMINE: CurrentMessageSource: %d CurrentMessageTag: %d\n",
                     thorium_message_source(self->current_message),
-                    thorium_message_tag(self->current_message));
+                    thorium_message_action(self->current_message));
 }
 
 thorium_actor_init_fn_t thorium_actor_get_init(struct thorium_actor *self)
@@ -284,7 +284,7 @@ int thorium_actor_send_system_self(struct thorium_actor *self, struct thorium_me
 {
     int tag;
 
-    tag = thorium_message_tag(message);
+    tag = thorium_message_action(message);
 
 #if 0
     if (tag == ACTION_PIN_TO_WORKER) {
@@ -399,12 +399,12 @@ void thorium_actor_send_with_source(struct thorium_actor *self, int name, struct
 {
     int tag;
 
-    tag = thorium_message_tag(message);
+    tag = thorium_message_action(message);
     thorium_message_set_source(message, source);
     thorium_message_set_destination(message, name);
 
 #ifdef THORIUM_ACTOR_DEBUG9
-    if (thorium_message_tag(message) == 1100) {
+    if (thorium_message_action(message) == 1100) {
         printf("DEBUG thorium_message_set_source 1100\n");
     }
 #endif
@@ -540,7 +540,7 @@ int thorium_actor_receive_system_no_pack(struct thorium_actor *self, struct thor
 {
     int tag;
 
-    tag = thorium_message_tag(message);
+    tag = thorium_message_action(message);
 
     if (tag == ACTION_PACK) {
 
@@ -610,7 +610,7 @@ int thorium_actor_receive_system(struct thorium_actor *self, struct thorium_mess
 #endif
 
     ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
-    tag = thorium_message_tag(message);
+    tag = thorium_message_action(message);
 
     /* the concrete actor must catch these otherwise.
      * Also, clone and migrate depend on these.
@@ -908,15 +908,15 @@ void thorium_actor_receive(struct thorium_actor *self, struct thorium_message *m
 
 #ifdef THORIUM_ACTOR_DEBUG_SYNC
     printf("\nDEBUG thorium_actor_receive...... tag %d\n",
-                    thorium_message_tag(message));
+                    thorium_message_action(message));
 
-    if (thorium_message_tag(message) == ACTION_SYNCHRONIZED) {
+    if (thorium_message_action(message) == ACTION_SYNCHRONIZED) {
         printf("DEBUG =============\n");
         printf("DEBUG thorium_actor_receive before concrete receive ACTION_SYNCHRONIZED\n");
     }
 
     printf("DEBUG thorium_actor_receive tag %d for %d\n",
-                    thorium_message_tag(message),
+                    thorium_message_action(message),
                     thorium_actor_name(self));
 #endif
 
@@ -958,7 +958,7 @@ void thorium_actor_receive(struct thorium_actor *self, struct thorium_message *m
 
 #ifdef THORIUM_ACTOR_DEBUG_SYNC
     printf("DEBUG thorium_actor_receive calls concrete receive tag %d\n",
-                    thorium_message_tag(message));
+                    thorium_message_action(message));
 #endif
 
     name = thorium_actor_name(self);
@@ -1128,7 +1128,7 @@ void thorium_actor_continue_clone(struct thorium_actor *self, struct thorium_mes
     count = thorium_message_count(message);
     buffer = thorium_message_buffer(message);
     self_name = thorium_actor_name(self);
-    tag = thorium_message_tag(message);
+    tag = thorium_message_action(message);
     source = thorium_message_source(message);
 
 #ifdef THORIUM_ACTOR_DEBUG_CLONE1
@@ -1229,7 +1229,7 @@ int thorium_actor_take_action(struct thorium_actor *self, struct thorium_message
 {
 
 #ifdef THORIUM_ACTOR_DEBUG_10335
-    if (thorium_message_tag(message) == 10335) {
+    if (thorium_message_action(message) == 10335) {
         printf("DEBUG actor %d thorium_actor_dispatch 10335\n",
                         thorium_actor_name(self));
     }
@@ -1259,7 +1259,7 @@ void thorium_actor_migrate(struct thorium_actor *self, struct thorium_message *m
     int data[2];
     int selector;
 
-    tag = thorium_message_tag(message);
+    tag = thorium_message_action(message);
     source = thorium_message_source(message);
     name = thorium_actor_name(self);
 
@@ -1548,7 +1548,7 @@ void thorium_actor_forward_messages(struct thorium_actor *self, struct thorium_m
                             " real source is %d\n",
                             thorium_actor_name(self),
                             destination,
-                            thorium_message_tag(&new_message),
+                            thorium_message_action(&new_message),
                             thorium_message_source(&new_message));
 #endif
 

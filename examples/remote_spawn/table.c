@@ -45,7 +45,7 @@ void table_receive(struct thorium_actor *actor, struct thorium_message *message)
 
     table1 = (struct table *)thorium_actor_concrete_actor(actor);
     source = thorium_message_source(message);
-    tag = thorium_message_tag(message);
+    tag = thorium_message_action(message);
     name = thorium_actor_name(actor);
     buffer = thorium_message_buffer(message);
 

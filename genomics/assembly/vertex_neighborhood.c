@@ -79,7 +79,7 @@ int bsal_vertex_neighborhood_receive(struct bsal_vertex_neighborhood *self, stru
         return bsal_vertex_neighborhood_execute(self);
     }
 
-    tag = thorium_message_tag(message);
+    tag = thorium_message_action(message);
     buffer = thorium_message_buffer(message);
 
     if (tag == ACTION_ASSEMBLY_GET_VERTEX_REPLY) {
