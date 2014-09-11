@@ -14,11 +14,47 @@ struct thorium_message;
 #include <stdint.h>
 
 /*
+ * Genomic graph traversal is characterized by:
+ *
+ * - a high ratio of consumer actors (visitors, walkers, and so on) to producer actors (graph stores)
+ *   - small messages (example: ACTION_ASSEMBLY_GET_VERTEX)
+ *
+ *   Today, I implemented a multiplexer in thorium (< 500 lines).
+ *
+ *   With the current setting, it is giving a 25% decrease in running time on my small example.
+ *   (parameters are 1 KiB for buffers and 512 us for maximum length of accumulation window
+ *
+ *
+ *   It is very modular too.
+ *
+ *   I added 5 calls (around 10 lines)
+ *   in thorium_node (in node.c, init, destroy, and 3 hooks: multiplex, demultiplex, test)
+ */
+
+/*
+ * Size threshold.
+ *
+ * The current value is 1 KiB.
+ */
+#define THORIUM_MESSAGE_MULTIPLEXER_SIZE_THRESHOLD_IN_BYTES (1 * 1024)
+
+/*
+ * Time threshold in microseconds.
+ *
+ * The current value is 2000 us (2 ms).
+ *
+ * There are 1 000 ms in 1 second
+ * There are 1 000 000 us in 1 second.
+ * There are 1 000 000 000 ns in 1 second.
+ */
+#define THORIUM_MESSAGE_MULTIPLEXER_TIME_THRESHOLD_IN_NANOSECONDS (2 * 1000 * 1000)
+
+/*
  * A message multiplerxser.
  * The 2 options are:
  *
- * size_threshold_in_bytes
- * time_threshold_in_nanoseconds
+ * threshold_buffer_size_in_bytes
+ * threshold_time_in_nanoseconds
  */
 struct thorium_message_multiplexer {
     struct bsal_timer timer;
@@ -31,8 +67,22 @@ struct thorium_message_multiplexer {
 
     uint32_t flags;
 
-    int size_threshold_in_bytes;
-    int time_threshold_in_nanoseconds;
+    /*
+     * This is the maximum buffer size for a multiplexed message.
+     * A multiplexed message contains smaller messages. These smaller
+     * messages must be smaller than <threshold_buffer_size_in_bytes>
+     */
+    int threshold_buffer_size_in_bytes;
+
+    /*
+     * At some point (in thorium_message_multiplexer_test),
+     * the multiplexer will flush messages even if they are below
+     * <threshold_buffer_size_in_bytes>.
+     * 
+     * To do so, the maximum duration of <threshold_time_in_nanoseconds>
+     * nanoseconds is utilized.
+     */
+    int threshold_time_in_nanoseconds;
 
     int original_message_count;
     int real_message_count;
@@ -41,7 +91,8 @@ struct thorium_message_multiplexer {
 };
 
 void thorium_message_multiplexer_init(struct thorium_message_multiplexer *self,
-                struct thorium_node *node);
+                struct thorium_node *node, int threshold_buffer_size_in_bytes,
+                int threshold_time_in_nanoseconds);
 void thorium_message_multiplexer_destroy(struct thorium_message_multiplexer *self);
 
 /*

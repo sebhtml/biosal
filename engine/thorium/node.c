@@ -86,6 +86,8 @@ void thorium_node_init(struct thorium_node *node, int *argc, char ***argv)
     int detected;
     int actor_capacity;
     int processor;
+    int multiplexer_threshold_size;
+    int multiplexer_threshold_time;
 
 #ifdef THORIUM_NODE_DEBUG_INJECTION
     node->counter_freed_thorium_outbound_buffers = 0;
@@ -382,7 +384,11 @@ void thorium_node_init(struct thorium_node *node, int *argc, char ***argv)
 #endif
     }
 
-    thorium_message_multiplexer_init(&node->multiplexer, node);
+    multiplexer_threshold_size = THORIUM_MESSAGE_MULTIPLEXER_SIZE_THRESHOLD_IN_BYTES;
+    multiplexer_threshold_time = THORIUM_MESSAGE_MULTIPLEXER_TIME_THRESHOLD_IN_NANOSECONDS;
+
+    thorium_message_multiplexer_init(&node->multiplexer, node,
+                    multiplexer_threshold_size, multiplexer_threshold_time);
 }
 
 void thorium_node_destroy(struct thorium_node *node)

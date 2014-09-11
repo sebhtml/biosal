@@ -32,22 +32,9 @@
 #define DEBUG_MULTIPLEXER
 */
 
-/*
- * Size threshold.
- *
- * The current value is 1 KiB.
- */
-#define THORIUM_MESSAGE_MULTIPLEXER_SIZE_THRESHOLD_IN_BYTES (1 * 1024)
-
-/*
- * Time threshold in microseconds.
- *
- * The current value is 512 us. There are 1 000 000 us in one second.
- */
-#define THORIUM_MESSAGE_MULTIPLEXER_TIME_THRESHOLD_IN_NANOSECONDS (512 * 1000)
-
 void thorium_message_multiplexer_init(struct thorium_message_multiplexer *self,
-                struct thorium_node *node)
+                struct thorium_node *node, int threshold_buffer_size_in_bytes,
+                int threshold_time_in_nanoseconds)
 {
     int size;
     int i;
@@ -65,8 +52,8 @@ void thorium_message_multiplexer_init(struct thorium_message_multiplexer *self,
 
     bsal_timer_init(&self->timer);
 
-    self->size_threshold_in_bytes = THORIUM_MESSAGE_MULTIPLEXER_SIZE_THRESHOLD_IN_BYTES;
-    self->time_threshold_in_nanoseconds = THORIUM_MESSAGE_MULTIPLEXER_TIME_THRESHOLD_IN_NANOSECONDS;
+    self->threshold_buffer_size_in_bytes = threshold_buffer_size_in_bytes;
+    self->threshold_time_in_nanoseconds = threshold_time_in_nanoseconds;
 
     self->node = node;
 
@@ -75,7 +62,7 @@ void thorium_message_multiplexer_init(struct thorium_message_multiplexer *self,
     size = thorium_node_nodes(self->node);
     bsal_vector_resize(&self->buffers, size);
 
-    bytes = size * self->size_threshold_in_bytes;
+    bytes = size * self->threshold_buffer_size_in_bytes;
 
 #ifdef DEBUG_MULTIPLEXER
     printf("DEBUG_MULTIPLEXER size %d bytes %d\n", size, bytes);
@@ -88,7 +75,7 @@ void thorium_message_multiplexer_init(struct thorium_message_multiplexer *self,
         multiplexed_buffer = bsal_vector_at(&self->buffers, i);
 
         multiplexed_buffer->buffer = self->big_buffer + position;
-        position += self->size_threshold_in_bytes;
+        position += self->threshold_buffer_size_in_bytes;
 
 #ifdef DEBUG_MULTIPLEXER
         printf("DEBUG_MULTIPLEXER thorium_message_multiplexer_init index %d buffer %p\n", i, buffer);
@@ -101,7 +88,7 @@ void thorium_message_multiplexer_init(struct thorium_message_multiplexer *self,
 
         multiplexed_buffer->current_size = 0;
         multiplexed_buffer->message_count = 0;
-        multiplexed_buffer->maximum_size = self->size_threshold_in_bytes;
+        multiplexed_buffer->maximum_size = self->threshold_buffer_size_in_bytes;
     }
 
     self->last_flush = bsal_timer_get_nanoseconds(&self->timer);
@@ -116,9 +103,15 @@ void thorium_message_multiplexer_destroy(struct thorium_message_multiplexer *sel
     int i;
     int size;
     struct thorium_multiplexed_buffer *multiplexed_buffer;
+    float ratio;
 
-    printf("DEBUG_MULTIPLEXER original_message_count %d real_message_count %d\n",
-                    self->original_message_count, self->real_message_count);
+    ratio = 0.0;
+
+    if (self->original_message_count != 0) {
+        ratio = self->real_message_count / (0.0 + self->original_message_count);
+    }
+    printf("DEBUG_MULTIPLEXER original_message_count %d real_message_count %d (%.4f)\n",
+                    self->original_message_count, self->real_message_count, ratio);
 
 #ifdef BSAL_DEBUGGER_ENABLE_ASSERT
 #endif
@@ -140,8 +133,8 @@ void thorium_message_multiplexer_destroy(struct thorium_message_multiplexer *sel
 
     self->node = NULL;
 
-    self->size_threshold_in_bytes = -1;
-    self->time_threshold_in_nanoseconds = -1;
+    self->threshold_buffer_size_in_bytes = -1;
+    self->threshold_time_in_nanoseconds = -1;
 
     bsal_memory_free(self->big_buffer);
     self->big_buffer = NULL;
@@ -377,7 +370,7 @@ void thorium_message_multiplexer_test(struct thorium_message_multiplexer *self)
 
     duration = time - self->last_flush;
 
-    if (duration < self->time_threshold_in_nanoseconds) {
+    if (duration < self->threshold_time_in_nanoseconds) {
         return;
     }
 
