@@ -88,6 +88,8 @@ struct thorium_message_multiplexer {
     int real_message_count;
 
     uint64_t last_flush;
+
+    struct bsal_set actions_to_skip;
 };
 
 void thorium_message_multiplexer_init(struct thorium_message_multiplexer *self,

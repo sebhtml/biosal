@@ -10,6 +10,7 @@
 #include <core/system/memory.h>
 
 #include <core/structures/vector.h>
+#include <core/helpers/set_helper.h>
 #include <core/structures/set_iterator.h>
 
 #include <stdlib.h>
@@ -49,6 +50,7 @@ void thorium_message_multiplexer_init(struct thorium_message_multiplexer *self,
     bsal_bitmap_clear_bit_uint32_t(&self->flags, FLAG_DISABLE);
 
     bsal_set_init(&self->buffers_with_content, sizeof(int));
+    bsal_set_init(&self->actions_to_skip, sizeof(int));
 
     bsal_timer_init(&self->timer);
 
@@ -96,6 +98,19 @@ void thorium_message_multiplexer_init(struct thorium_message_multiplexer *self,
 #ifdef DISABLE_MULTIPLEXER
     bsal_bitmap_set_bit_uint32_t(&self->flags, FLAG_DISABLE);
 #endif
+
+    /*
+     * We don't want to slow down things so the following actions
+     * are not multiplexed.
+     */
+
+    bsal_set_add_int(&self->actions_to_skip, ACTION_MULTIPLEXER_MESSAGE);
+    bsal_set_add_int(&self->actions_to_skip, ACTION_THORIUM_NODE_START);
+    bsal_set_add_int(&self->actions_to_skip, ACTION_THORIUM_NODE_ADD_INITIAL_ACTOR);
+    bsal_set_add_int(&self->actions_to_skip, ACTION_THORIUM_NODE_ADD_INITIAL_ACTORS);
+    bsal_set_add_int(&self->actions_to_skip, ACTION_THORIUM_NODE_ADD_INITIAL_ACTORS_REPLY);
+    bsal_set_add_int(&self->actions_to_skip, ACTION_SPAWN);
+    bsal_set_add_int(&self->actions_to_skip, ACTION_SPAWN_REPLY);
 }
 
 void thorium_message_multiplexer_destroy(struct thorium_message_multiplexer *self)
@@ -120,6 +135,7 @@ void thorium_message_multiplexer_destroy(struct thorium_message_multiplexer *sel
     BSAL_DEBUGGER_ASSERT(bsal_set_empty(&self->buffers_with_content));
 
     bsal_set_destroy(&self->buffers_with_content);
+    bsal_set_destroy(&self->actions_to_skip);
 
     for (i = 0; i < size; ++i) {
         multiplexed_buffer = bsal_vector_at(&self->buffers, i);
@@ -167,7 +183,7 @@ int thorium_message_multiplexer_multiplex(struct thorium_message_multiplexer *se
     int count;
     int current_size;
     int maximum_size;
-    int tag;
+    int action;
     void *buffer;
     int destination_node;
     int new_size;
@@ -183,12 +199,12 @@ int thorium_message_multiplexer_multiplex(struct thorium_message_multiplexer *se
         return 0;
     }
 
-    tag = thorium_message_action(message);
+    action = thorium_message_action(message);
 
     /*
      * Don't multiplex already-multiplexed messages.
      */
-    if (tag == ACTION_MULTIPLEXER_MESSAGE) {
+    if (bsal_set_find(&self->actions_to_skip, &action)) {
         ++self->real_message_count;
         return 0;
     }
