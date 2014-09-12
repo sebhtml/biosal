@@ -104,14 +104,7 @@ struct thorium_worker {
 
     /* this is read by 2 threads, but written by 1 thread
      */
-    int dead;
-
-    int debug;
     uint32_t flags;
-
-    /* this is read by 2 threads, but written by 1 thread
-     */
-    int busy;
 
     struct bsal_map actor_received_messages;
 

@@ -53,7 +53,13 @@
  */
 #define THORIUM_WORKER_UNPRODUCTIVE_MICROSECONDS_FOR_WAIT (30 * 1000 * 1000)
 
+/*
+ * Worker flags.
+ */
 #define FLAG_DEBUG_ACTORS 0
+#define FLAG_DEAD 1
+#define FLAG_DEBUG 2
+#define FLAG_BUSY 3
 
 #define DEBUG_WORKER_OPTION "-debug-worker"
 
@@ -103,7 +109,7 @@ void thorium_worker_init(struct thorium_worker *worker, int name, struct thorium
     /*worker->work_queue = work_queue;*/
     worker->node = node;
     worker->name = name;
-    worker->dead = 0;
+    bsal_bitmap_clear_bit_uint32_t(&worker->flags, FLAG_DEAD);
     worker->last_warning = 0;
 
     worker->last_wake_up_count = 0;
@@ -138,8 +144,8 @@ void thorium_worker_init(struct thorium_worker *worker, int name, struct thorium
 
     bsal_fast_queue_init(&worker->outbound_message_queue_buffer, sizeof(struct thorium_message));
 
-    worker->debug = 0;
-    worker->busy = 0;
+    bsal_bitmap_clear_bit_uint32_t(&worker->flags, FLAG_DEBUG);
+    bsal_bitmap_clear_bit_uint32_t(&worker->flags, FLAG_BUSY);
 
     worker->flags = 0;
     bsal_bitmap_clear_bit_uint32_t(&worker->flags, FLAG_DEBUG_ACTORS);
@@ -279,7 +285,7 @@ void thorium_worker_destroy(struct thorium_worker *worker)
     worker->node = NULL;
 
     worker->name = -1;
-    worker->dead = 1;
+    bsal_bitmap_set_bit_uint32_t(&worker->flags, FLAG_DEAD);
 
     bsal_memory_pool_destroy(&worker->ephemeral_memory);
     bsal_memory_pool_destroy(&worker->outbound_message_memory_pool);
@@ -386,7 +392,7 @@ void *thorium_worker_main(void *worker1)
     printf("Starting worker thread\n");
 #endif
 
-    while (!worker->dead) {
+    while (!bsal_bitmap_get_bit_uint32_t(&worker->flags, FLAG_DEAD)) {
 
         thorium_worker_run(worker);
     }
@@ -415,10 +421,12 @@ void thorium_worker_stop(struct thorium_worker *worker)
 #endif
 
     /*
-     * worker->dead is changed and will be read
+     * FLAG_DEAD is changed and will be read
      * by the running thread.
+     *
+     * Only one thread is changing this value, so no thread are needed.
      */
-    worker->dead = 1;
+    bsal_bitmap_set_bit_uint32_t(&worker->flags, FLAG_DEAD);
 
     /* Make the change visible to other threads too
      */
@@ -444,7 +452,7 @@ void thorium_worker_stop(struct thorium_worker *worker)
 
 int thorium_worker_is_busy(struct thorium_worker *worker)
 {
-    return worker->busy;
+    return bsal_bitmap_get_bit_uint32_t(&worker->flags, FLAG_BUSY);
 }
 
 
@@ -1201,7 +1209,7 @@ void thorium_worker_run(struct thorium_worker *worker)
 #endif
 
 #ifdef THORIUM_WORKER_DEBUG
-    if (worker->debug) {
+    if (bsal_bitmap_get_bit_uint32_t(&worker->flags, FLAG_DEBUG)) {
         printf("DEBUG worker/%d thorium_worker_run\n",
                         thorium_worker_name(worker));
     }
@@ -1235,11 +1243,14 @@ void thorium_worker_run(struct thorium_worker *worker)
         bsal_timer_start(&worker->timer);
 #endif
 
-        worker->busy = 1;
-        /* dispatch message to a worker */
+        bsal_bitmap_set_bit_uint32_t(&worker->flags, FLAG_BUSY);
+
+        /*
+         * Dispatch message to a worker
+         */
         thorium_worker_work(worker, actor);
 
-        worker->busy = 0;
+        bsal_bitmap_clear_bit_uint32_t(&worker->flags, FLAG_BUSY);
 
 #ifdef THORIUM_NODE_ENABLE_INSTRUMENTATION
         bsal_timer_stop(&worker->timer);
@@ -1358,7 +1369,7 @@ void thorium_worker_work(struct thorium_worker *worker, struct thorium_actor *ac
     thorium_actor_set_worker(actor, NULL);
 
 #ifdef THORIUM_WORKER_DEBUG_20140601
-    if (worker->debug) {
+    if (bsal_bitmap_get_bit_uint32_t(&worker->flags, FLAG_DEBUG)) {
         printf("DEBUG worker/%d after dead call\n",
                         thorium_worker_name(worker));
     }
@@ -1377,7 +1388,7 @@ void thorium_worker_work(struct thorium_worker *worker, struct thorium_actor *ac
 #endif
 
 #ifdef THORIUM_WORKER_DEBUG_20140601
-    if (worker->debug) {
+    if (bsal_bitmap_get_bit_uint32_t(&worker->flags, FLAG_DEBUG)) {
         printf("DEBUG worker/%d exiting thorium_worker_work\n",
                         thorium_worker_name(worker));
     }
