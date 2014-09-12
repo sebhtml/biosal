@@ -338,6 +338,12 @@ int thorium_message_multiplexer_demultiplex(struct thorium_message_multiplexer *
                     messages);
 #endif
 
+    /*
+     * Don't leak memory
+     */
+
+    bsal_memory_pool_free(pool, buffer);
+
     return 1;
 }
 
