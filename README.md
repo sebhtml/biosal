@@ -41,7 +41,7 @@ see [examples](examples) and [tests](tests)
 
 | Branch | URL | Clone URL |
 | --- | --- | --- |
-| master | https://github.com/sebhtml/biosal/tree/master | [HTTPS](https://github.com/GeneAssembly/biosal.git) |
+| master (clone / pull from this one) | https://github.com/sebhtml/biosal/tree/master | [HTTPS](https://github.com/GeneAssembly/biosal.git) |
 | Read-only copy of (mirror) | https://github.com/GeneAssembly/biosal/tree/mirror | [HTTPS](https://github.com/GeneAssembly/biosal.git) |
 | Fangfang's branch (energy) | https://github.com/levinas/biosal/tree/entropy | [HTTPS](https://github.com/levinas/biosal.git) |
 | Huy 's branch | https://github.com/huyba/biosal/tree/master | [HTTPS](https://github.com/huyba/biosal.git) |
