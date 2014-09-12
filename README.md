@@ -42,12 +42,12 @@ see [examples](examples) and [tests](tests)
 | Branch | URL | Clone URL |
 | --- | --- | --- |
 | master | https://github.com/sebhtml/biosal/tree/master | [HTTPS](https://github.com/GeneAssembly/biosal.git) |
-| mirror (read-only copy of master) | https://github.com/GeneAssembly/biosal/tree/mirror | [HTTPS](https://github.com/GeneAssembly/biosal.git) |
-| entropy (Fangfang's branch) | https://github.com/levinas/biosal/tree/entropy | [HTTPS](https://github.com/levinas/biosal.git) |
-| energy (Sébastien's branch) | https://github.com/sebhtml/biosal/tree/energy | [HTTPS](https://github.com/sebhtml/biosal.git) |
+| Read-only copy of (mirror) | https://github.com/GeneAssembly/biosal/tree/mirror | [HTTPS](https://github.com/GeneAssembly/biosal.git) |
+| Fangfang's branch (energy) | https://github.com/levinas/biosal/tree/entropy | [HTTPS](https://github.com/levinas/biosal.git) |
+| Huy 's branch | https://github.com/huyba/biosal/tree/master | [HTTPS](https://github.com/huyba/biosal.git) |
+| Sébastien's branch (energy) | https://github.com/sebhtml/biosal/tree/energy | [HTTPS](https://github.com/sebhtml/biosal.git) |
 
 # Product team
-
 see [CREDITS.md](CREDITS.md)
 
 # Tickets
@@ -62,8 +62,8 @@ The actor model has actors and messages, mostly.
 When an actor receives a message, it can ([Agha 1986](http://dl.acm.org/citation.cfm?id=7929), p. 12, 2.1.3):
 
 - send a finite number of messages to other actors (**thorium_actor_send**);
-- create a finite number of new actors (**thorium_actor_spawn**, **THORIUM_ACTOR_SPAWN**);
-- designate the behavior to be used for the next message it receives (**thorium_actor_concrete_actor**, **THORIUM_ACTOR_STOP**).
+- create a finite number of new actors (**thorium_actor_spawn**, **ACTION_SPAWN**);
+- designate the behavior to be used for the next message it receives (**thorium_actor_concrete_actor**, **ACTION_STOP**).
 
 Other names for the actor model: actors, virtual processors, activation frames, streams
 ([Hewitt, Bishop, Steiger 1973](http://dl.acm.org/citation.cfm?id=1624804)).
