@@ -163,6 +163,7 @@ int thorium_message_multiplexer_multiplex(struct thorium_message_multiplexer *se
     int action;
     void *buffer;
     int destination_node;
+    int destination_actor;
     int new_size;
     void *multiplexed_buffer;
     void *destination_in_buffer;
@@ -189,8 +190,28 @@ int thorium_message_multiplexer_multiplex(struct thorium_message_multiplexer *se
     count = thorium_message_count(message);
     required_size = sizeof(count) + count;
     buffer = thorium_message_buffer(message);
+    destination_actor = thorium_message_destination(message);
+
+    /*
+     * Don't multiplex non-actor messages.
+     */
+    if (destination_actor == THORIUM_ACTOR_NOBODY) {
+        return 0;
+    }
+
     destination_node = thorium_message_destination_node(message);
+
     real_multiplexed_buffer = bsal_vector_at(&self->buffers, destination_node);
+
+#ifdef BSAL_DEBUGGER_ASSERT
+    if (real_multiplexed_buffer == NULL) {
+        printf("Error action %d destination_node %d destination_actor %d\n", action, destination_node,
+                        destination_actor);
+    }
+#endif
+
+    BSAL_DEBUGGER_ASSERT(real_multiplexed_buffer != NULL);
+
     current_size = real_multiplexed_buffer->current_size;
     maximum_size = real_multiplexed_buffer->maximum_size;
 
