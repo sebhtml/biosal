@@ -7,6 +7,7 @@
 #include <core/patterns/manager.h>
 
 #define UNITIG_WALKER_COUNT_PER_WORKER 512
+#define UNITIG_VISITOR_COUNT_PER_WORKER 512
 
 struct thorium_script bsal_unitig_manager_script = {
     .identifier = SCRIPT_UNITIG_MANAGER,
@@ -103,7 +104,7 @@ void bsal_unitig_manager_receive(struct thorium_actor *self, struct thorium_mess
     } else if (tag == ACTION_MANAGER_SET_SCRIPT_REPLY) {
 
         thorium_actor_send_reply_int(self, ACTION_MANAGER_SET_ACTORS_PER_WORKER,
-                        UNITIG_WALKER_COUNT_PER_WORKER);
+                        UNITIG_VISITOR_COUNT_PER_WORKER);
 
     } else if (tag == ACTION_MANAGER_SET_ACTORS_PER_WORKER_REPLY) {
 

@@ -11,20 +11,20 @@
 /*
  * Size threshold.
  *
- * The current value is 1 KiB.
+ * The current value is 8 KiB.
  */
-#define THORIUM_MESSAGE_MULTIPLEXER_SIZE_THRESHOLD_IN_BYTES (1 * 1024)
+#define THORIUM_MESSAGE_MULTIPLEXER_SIZE_THRESHOLD_IN_BYTES (8 * 1024)
 
 /*
  * Time threshold in microseconds.
  *
- * The current value is 2000 us (2 ms).
+ * The current value is 1000 us (1 ms).
  *
  * There are 1 000 ms in 1 second
  * There are 1 000 000 us in 1 second.
  * There are 1 000 000 000 ns in 1 second.
  */
-#define THORIUM_MESSAGE_MULTIPLEXER_TIME_THRESHOLD_IN_NANOSECONDS (2 * 1000 * 1000)
+#define THORIUM_MESSAGE_MULTIPLEXER_TIME_THRESHOLD_IN_NANOSECONDS (1 * 1000 * 1000)
 
 void thorium_multiplexer_policy_init(struct thorium_multiplexer_policy *self)
 {
