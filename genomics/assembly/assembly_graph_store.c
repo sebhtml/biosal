@@ -106,6 +106,8 @@ void bsal_assembly_graph_store_init(struct thorium_actor *self)
 
     thorium_actor_add_action(self, ACTION_MARK_VERTEX_AS_VISITED,
                     bsal_assembly_graph_store_mark_vertex_as_visited);
+    thorium_actor_add_action(self, ACTION_SET_VERTEX_FLAG,
+                    bsal_assembly_graph_store_set_vertex_flag);
 
     concrete_self->printed_vertex_size = 0;
     concrete_self->printed_arc_size = 0;
@@ -186,6 +188,8 @@ void bsal_assembly_graph_store_receive(struct thorium_actor *self, struct thoriu
 
         thorium_actor_send_reply_int(self, ACTION_ASSEMBLY_GET_KMER_LENGTH_REPLY,
                         concrete_self->kmer_length);
+
+    } else if (tag == ACTION_SET_VERTEX_FLAG) {
 
     } else if (tag == ACTION_SEQUENCE_STORE_REQUEST_PROGRESS_REPLY) {
 
@@ -1270,4 +1274,17 @@ void bsal_assembly_graph_store_mark_vertex_as_visited(struct thorium_actor *self
 #endif
 
     thorium_actor_send_reply_empty(self, ACTION_MARK_VERTEX_AS_VISITED_REPLY);
+}
+
+void bsal_assembly_graph_store_set_vertex_flag(struct thorium_actor *self,
+                struct thorium_message *message)
+{
+/*
+        bsal_dna_kmer_init_empty(&kmer);
+        bsal_dna_kmer_unpack(&kmer, key, concrete_self->kmer_length,
+                        thorium_actor_get_ephemeral_memory(self),
+                        &concrete_self->storage_codec);
+*/
+
+    thorium_actor_send_reply_empty(self, ACTION_SET_VERTEX_FLAG_REPLY);
 }

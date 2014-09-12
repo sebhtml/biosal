@@ -47,6 +47,7 @@ struct bsal_unitig_visitor {
     int kmer_length;
     int step;
     int visited;
+    int unitig_flags;
 
     struct bsal_unitig_heuristic heuristic;
 };
@@ -58,5 +59,7 @@ void bsal_unitig_visitor_destroy(struct thorium_actor *self);
 void bsal_unitig_visitor_receive(struct thorium_actor *self, struct thorium_message *message);
 
 void bsal_unitig_visitor_execute(struct thorium_actor *self);
+
+void bsal_unitig_visitor_mark_vertex(struct thorium_actor *self, struct bsal_dna_kmer *kmer);
 
 #endif

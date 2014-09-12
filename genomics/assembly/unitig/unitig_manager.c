@@ -71,6 +71,7 @@ void bsal_unitig_manager_receive(struct thorium_actor *self, struct thorium_mess
     int tag;
     void *buffer;
     int spawner;
+    int expected;
 
     tag = thorium_message_action(message);
     buffer = thorium_message_buffer(message);
@@ -133,10 +134,14 @@ void bsal_unitig_manager_receive(struct thorium_actor *self, struct thorium_mess
     } else if (tag == ACTION_START_REPLY) {
 
         ++concrete_self->completed;
+        expected = bsal_vector_size(&concrete_self->visitors);
 
-        printf("PROGRESS unitig visitors %d/%d\n",
+        if (concrete_self->completed % 1000 == 0
+                        || concrete_self->completed == expected) {
+            printf("PROGRESS unitig visitors %d/%d\n",
                         concrete_self->completed,
-                        (int)bsal_vector_size(&concrete_self->visitors));
+                        expected);
+        }
 
         if (concrete_self->completed == bsal_vector_size(&concrete_self->visitors)) {
 
