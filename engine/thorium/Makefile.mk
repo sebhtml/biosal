@@ -16,7 +16,7 @@ THORIUM_OBJECTS += engine/thorium/worker_buffer.o
 # actor modules. These are mostly traits.
 THORIUM_OBJECTS += engine/thorium/modules/binomial_tree_message.o
 THORIUM_OBJECTS += engine/thorium/modules/proxy_message.o
-THORIUM_OBJECTS += engine/thorium/modules/action_helpers.o
+THORIUM_OBJECTS += engine/thorium/modules/actions.o
 THORIUM_OBJECTS += engine/thorium/modules/send_helpers.o
 THORIUM_OBJECTS += engine/thorium/modules/active_message_limit.o
 THORIUM_OBJECTS += engine/thorium/modules/stop.o

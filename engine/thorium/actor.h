@@ -8,7 +8,7 @@
 
 #include "modules/binomial_tree_message.h"
 #include "modules/proxy_message.h"
-#include "modules/action_helpers.h"
+#include "modules/actions.h"
 #include "modules/send_helpers.h"
 #include "modules/active_message_limit.h"
 #include "modules/stop.h"
