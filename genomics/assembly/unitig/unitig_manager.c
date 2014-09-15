@@ -7,7 +7,7 @@
 #include <core/patterns/manager.h>
 
 #define UNITIG_VISITOR_COUNT_PER_WORKER 512
-#define UNITIG_WALKER_COUNT_PER_WORKER 4
+#define UNITIG_WALKER_COUNT_PER_WORKER 1
 
 #define STATE_VISITORS 0
 #define STATE_WALKERS 1
@@ -190,10 +190,28 @@ void bsal_unitig_manager_receive(struct thorium_actor *self, struct thorium_mess
              */
             thorium_actor_send_empty(self, concrete_self->manager, ACTION_ASK_TO_STOP);
 
-            concrete_self->state = STATE_WALKERS;
-            thorium_actor_send_to_self_empty(self, ACTION_PING);
+            /*
+             * Reset graph stores.
+             */
+            thorium_actor_send_range_empty(self, &concrete_self->graph_stores,
+                            ACTION_RESET);
+            concrete_self->completed = 0;
         }
 
+    } else if (tag == ACTION_RESET_REPLY) {
+
+        ++concrete_self->completed;
+        expected = bsal_vector_size(&concrete_self->graph_stores);
+
+        if (concrete_self->completed == expected) {
+            concrete_self->completed = 0;
+            concrete_self->state = STATE_WALKERS;
+
+            /*
+             * Go back at the beginning.
+             */
+            thorium_actor_send_to_self_empty(self, ACTION_PING);
+        }
     } else if (tag == ACTION_START_REPLY && concrete_self->state == STATE_WALKERS) {
 
         ++concrete_self->completed;

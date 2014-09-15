@@ -291,6 +291,9 @@ void bsal_unitig_walker_begin(struct thorium_actor *self, struct thorium_message
 
     store = bsal_vector_at_as_int(&concrete_self->graph_stores, store_index);
 
+#if 0
+    printf("DEBUG_WALKER BEGIN\n");
+#endif
     thorium_actor_send_empty(self, store, ACTION_ASSEMBLY_GET_STARTING_KMER);
 }
 
@@ -302,23 +305,24 @@ void bsal_unitig_walker_start(struct thorium_actor *self, struct thorium_message
     int source;
     int size;
 
-    /*
-     * Right now, this is disabled.
-     */
+#if 0
     thorium_actor_send_reply_empty(self, ACTION_START_REPLY);
+
     return;
+#endif
 
     source = thorium_message_source(message);
     buffer = thorium_message_buffer(message);
     concrete_self = thorium_actor_concrete_actor(self);
     concrete_self->source = source;
 
-    printf("%s/%d is ready to surf the graph !\n",
-                        thorium_actor_script_name(self),
-                        thorium_actor_name(self));
-
     bsal_vector_unpack(&concrete_self->graph_stores, buffer);
     size = bsal_vector_size(&concrete_self->graph_stores);
+
+    printf("%s/%d is ready to surf the graph (%d stores)!\n",
+                        thorium_actor_script_name(self),
+                        thorium_actor_name(self),
+                        size);
 
     /*
      * Use a random starting point.
@@ -434,14 +438,14 @@ void bsal_unitig_walker_get_vertex_reply_starting_vertex(struct thorium_actor *s
 
     /*
      * Check if the vertex is already used. ACTION_ASSEMBLY_GET_STARTING_KMER
-     * returns a kmer that has the flag BSAL_VERTEX_STATE_USED set,
+     * returns a kmer that has the flag BSAL_VERTEX_FLAG_USED set,
      * but another actor can grab the vertex in the mean time.
      *
      * Skip used vertices.
      */
 
     if (bsal_assembly_vertex_get_flag(&concrete_self->current_vertex,
-                            BSAL_VERTEX_STATE_USED)) {
+                            BSAL_VERTEX_FLAG_USED)) {
 
         bsal_assembly_vertex_destroy(&concrete_self->current_vertex);
 
@@ -704,7 +708,7 @@ void bsal_unitig_walker_get_vertex_reply(struct thorium_actor *self, struct thor
     bsal_assembly_vertex_unpack(&vertex, buffer);
 
 #ifdef BSAL_UNITIG_WALKER_DEBUG
-    printf("Connectivity for vertex: \n");
+    printf("Vertex after reception: \n");
 
     bsal_assembly_vertex_print(&vertex);
 #endif
@@ -729,17 +733,16 @@ void bsal_unitig_walker_get_vertex_reply(struct thorium_actor *self, struct thor
      */
 
     last_actor = bsal_assembly_vertex_last_actor(&vertex);
-    last_path_index = bsal_assembly_vertex_last_path_index(&vertex);
-
     name = thorium_actor_name(self);
 
-    if (bsal_assembly_vertex_get_flag(&vertex, BSAL_VERTEX_STATE_USED)
+    if (bsal_assembly_vertex_get_flag(&vertex, BSAL_VERTEX_FLAG_USED)
                     && last_actor != name) {
 
+        last_path_index = bsal_assembly_vertex_last_path_index(&vertex);
 #if 0
         /* ask the other actor about it.
          */
-        printf("actor/%d needs to ask actor/%d for solving BSAL_VERTEX_STATE_USED\n",
+        printf("actor/%d needs to ask actor/%d for solving BSAL_VERTEX_FLAG_USED\n",
                         thorium_actor_name(self), actor);
 #endif
 
@@ -757,14 +760,14 @@ void bsal_unitig_walker_get_vertex_reply(struct thorium_actor *self, struct thor
         bsal_memory_copy(new_buffer + position, &length, sizeof(length));
         position += sizeof(length);
 
-        BSAL_DEBUGGER_ASSERT(last_path_index >= 0);
-
 #if 0
         printf("%d sends to %d ACTION_NOTIFY last_path_index %d current_path %d length %d\n",
                         thorium_actor_name(self),
                         last_actor, last_path_index,
                         concrete_self->path_index, length);
 #endif
+
+        BSAL_DEBUGGER_ASSERT(last_path_index >= 0);
 
         /*
          * Reset defeat count

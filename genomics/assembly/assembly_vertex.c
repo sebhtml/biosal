@@ -16,11 +16,11 @@ void bsal_assembly_vertex_init(struct bsal_assembly_vertex *self)
 
     self->flags = 0;
 
-    bsal_assembly_vertex_clear_flag(self, BSAL_VERTEX_STATE_USED);
-    bsal_assembly_vertex_clear_flag(self, BSAL_VERTEX_STATE_TIP);
-    bsal_assembly_vertex_clear_flag(self, BSAL_VERTEX_STATE_BUBBLE);
-    bsal_assembly_vertex_clear_flag(self, BSAL_VERTEX_STATE_VISITED);
-    bsal_assembly_vertex_clear_flag(self, BSAL_VERTEX_STATE_UNITIG);
+    bsal_assembly_vertex_clear_flag(self, BSAL_VERTEX_FLAG_USED);
+    bsal_assembly_vertex_clear_flag(self, BSAL_VERTEX_FLAG_TIP);
+    bsal_assembly_vertex_clear_flag(self, BSAL_VERTEX_FLAG_BUBBLE);
+    bsal_assembly_vertex_clear_flag(self, BSAL_VERTEX_FLAG_VISITED);
+    bsal_assembly_vertex_clear_flag(self, BSAL_VERTEX_FLAG_UNITIG);
 
     bsal_assembly_vertex_set_last_actor(self, THORIUM_ACTOR_NOBODY, -1);
 
@@ -101,6 +101,7 @@ void bsal_assembly_vertex_print(struct bsal_assembly_vertex *self)
                     self->coverage_depth);
 
     bsal_assembly_connectivity_print(&self->connectivity);
+    
 
     printf("\n");
 }
@@ -177,6 +178,9 @@ int bsal_assembly_vertex_last_path_index(struct bsal_assembly_vertex *self)
 
 void bsal_assembly_vertex_set_flag(struct bsal_assembly_vertex *self, int flag)
 {
+    BSAL_DEBUGGER_ASSERT(flag >= BSAL_VERTEX_FLAG_START_VALUE);
+    BSAL_DEBUGGER_ASSERT(flag <= BSAL_VERTEX_FLAG_END_VALUE);
+
     bsal_bitmap_set_bit_uint32_t(&self->flags, flag);
 }
 

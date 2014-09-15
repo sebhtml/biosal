@@ -72,7 +72,7 @@ void bsal_unitig_visitor_destroy(struct thorium_actor *self)
     struct bsal_unitig_visitor *concrete_self;
 
     concrete_self = thorium_actor_concrete_actor(self);
-    printf("%s/%d vertex_count: %d BSAL_VERTEX_STATE_UNITIG: %d\n",
+    printf("%s/%d vertex_count: %d BSAL_VERTEX_FLAG_UNITIG: %d\n",
                     thorium_actor_script_name(self), thorium_actor_name(self),
                     concrete_self->visited, concrete_self->unitig_flags);
 
@@ -518,10 +518,10 @@ void bsal_unitig_visitor_mark_vertex(struct thorium_actor *self, struct bsal_dna
     ++concrete_self->unitig_flags;
 
     /*
-     * Mark the vertex with the BSAL_VERTEX_STATE_UNITIG
+     * Mark the vertex with the BSAL_VERTEX_FLAG_UNITIG
      */
 
-    flag = BSAL_VERTEX_STATE_UNITIG;
+    flag = BSAL_VERTEX_FLAG_UNITIG;
 
     new_count = bsal_dna_kmer_pack_size(kmer, concrete_self->kmer_length,
             &concrete_self->codec);
@@ -530,7 +530,7 @@ void bsal_unitig_visitor_mark_vertex(struct thorium_actor *self, struct bsal_dna
 
     position = 0;
     position += bsal_dna_kmer_pack(kmer, new_buffer, concrete_self->kmer_length, &concrete_self->codec);
-    bsal_memory_copy(&new_buffer + position, &flag, sizeof(flag));
+    bsal_memory_copy(new_buffer + position, &flag, sizeof(flag));
     position += sizeof(flag);
 
     BSAL_DEBUGGER_ASSERT(position == new_count);

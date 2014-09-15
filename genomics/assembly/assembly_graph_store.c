@@ -189,6 +189,15 @@ void bsal_assembly_graph_store_receive(struct thorium_actor *self, struct thoriu
         thorium_actor_send_reply_int(self, ACTION_ASSEMBLY_GET_KMER_LENGTH_REPLY,
                         concrete_self->kmer_length);
 
+    } else if (tag == ACTION_RESET) {
+
+        /*
+         * Reset the iterator.
+         */
+        bsal_map_iterator_init(&concrete_self->iterator, &concrete_self->table);
+
+        thorium_actor_send_reply_empty(self, ACTION_RESET_REPLY);
+
     } else if (tag == ACTION_SET_VERTEX_FLAG) {
 
     } else if (tag == ACTION_SEQUENCE_STORE_REQUEST_PROGRESS_REPLY) {
@@ -329,7 +338,6 @@ void bsal_assembly_graph_store_push_data(struct thorium_actor *self, struct thor
                     2 * bsal_map_size(&concrete_self->table));
 
     bsal_map_iterator_init(&concrete_self->iterator, &concrete_self->table);
-
 
     thorium_actor_send_to_self_empty(self, ACTION_YIELD);
 }
@@ -976,9 +984,9 @@ void bsal_assembly_graph_store_get_starting_vertex(struct thorium_actor *self, s
 
         /*
          * Skip the vertex if it does have the status
-         * BSAL_VERTEX_STATE_USED.
+         * BSAL_VERTEX_FLAG_USED.
          */
-        if (bsal_assembly_vertex_get_flag(vertex, BSAL_VERTEX_STATE_USED)) {
+        if (bsal_assembly_vertex_get_flag(vertex, BSAL_VERTEX_FLAG_USED)) {
 
 
             continue;
@@ -1155,10 +1163,13 @@ void bsal_assembly_graph_store_mark_as_used(struct thorium_actor *self,
 {
     struct bsal_assembly_graph_store *concrete_self;
 
+    BSAL_DEBUGGER_ASSERT(source >= 0);
+    BSAL_DEBUGGER_ASSERT(path >= 0);
+
     concrete_self = thorium_actor_concrete_actor(self);
 
-    if (!bsal_assembly_vertex_get_flag(vertex, BSAL_VERTEX_STATE_USED)) {
-        bsal_assembly_vertex_set_flag(vertex, BSAL_VERTEX_STATE_USED);
+    if (!bsal_assembly_vertex_get_flag(vertex, BSAL_VERTEX_FLAG_USED)) {
+        bsal_assembly_vertex_set_flag(vertex, BSAL_VERTEX_FLAG_USED);
         ++concrete_self->consumed_canonical_vertex_count;
         bsal_assembly_graph_store_print_progress(self);
     }
@@ -1225,7 +1236,7 @@ void bsal_assembly_graph_store_mark_vertex_as_visited(struct thorium_actor *self
 
     position += thorium_message_unpack_int(message, position, &path_index);
     /*
-     * At this point, mark the vertex with flag BSAL_VERTEX_STATE_USED
+     * At this point, mark the vertex with flag BSAL_VERTEX_FLAG_USED
      * so that any other actor that attempt to grab it will have to communicate
      * with the actor.
      */
@@ -1233,7 +1244,7 @@ void bsal_assembly_graph_store_mark_vertex_as_visited(struct thorium_actor *self
     /*
      * This is a good idea to always update with the last one.
      */
-    if (force || !bsal_assembly_vertex_get_flag(canonical_vertex, BSAL_VERTEX_STATE_USED)) {
+    if (force || !bsal_assembly_vertex_get_flag(canonical_vertex, BSAL_VERTEX_FLAG_USED)) {
         bsal_assembly_graph_store_mark_as_used(self, canonical_vertex, source, path_index);
     }
 #if 0
@@ -1267,6 +1278,9 @@ void bsal_assembly_graph_store_set_vertex_flag(struct thorium_actor *self,
     position += sizeof(flag);
     BSAL_DEBUGGER_ASSERT(position == count);
 
+#if 0
+    printf("DEBUG ACTION_SET_VERTEX_FLAG %d\n", flag);
+#endif
     vertex = bsal_assembly_graph_store_find_vertex(self, &transport_kmer);
 
     bsal_dna_kmer_destroy(&transport_kmer, ephemeral_memory);
