@@ -17,6 +17,7 @@
 
 struct bsal_assembly_vertex;
 struct bsal_assembly_arc;
+struct bsal_dna_kmer;
 
 #define SCRIPT_ASSEMBLY_GRAPH_STORE 0xc81a1596
 
@@ -129,5 +130,7 @@ void bsal_assembly_graph_store_mark_vertex_as_visited(struct thorium_actor *self
 
 void bsal_assembly_graph_store_set_vertex_flag(struct thorium_actor *self,
                 struct thorium_message *message);
+struct bsal_assembly_vertex *bsal_assembly_graph_store_find_vertex(struct thorium_actor *self,
+                struct bsal_dna_kmer *kmer);
 
 #endif

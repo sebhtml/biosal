@@ -881,16 +881,13 @@ void bsal_assembly_graph_store_get_vertex(struct thorium_actor *self, struct tho
 {
     struct bsal_assembly_vertex vertex;
     struct bsal_dna_kmer kmer;
-    struct bsal_dna_kmer storage_kmer;
     void *buffer;
     struct bsal_assembly_graph_store *concrete_self;
     struct bsal_memory_pool *ephemeral_memory;
     struct thorium_message new_message;
     int new_count;
     void *new_buffer;
-    char *sequence;
     struct bsal_assembly_vertex *canonical_vertex;
-    void *key;
     int is_canonical;
     int source;
     int path;
@@ -922,48 +919,17 @@ void bsal_assembly_graph_store_get_vertex(struct thorium_actor *self, struct tho
     BSAL_DEBUGGER_ASSERT_IS_EQUAL_INT(position, count);
     BSAL_DEBUGGER_ASSERT(position == count);
 
-    sequence = bsal_memory_pool_allocate(ephemeral_memory, concrete_self->kmer_length + 1);
-
-    bsal_dna_kmer_get_sequence(&kmer, sequence, concrete_self->kmer_length,
-                        &concrete_self->transport_codec);
-
-    bsal_dna_kmer_init(&storage_kmer, sequence, &concrete_self->storage_codec,
-                        ephemeral_memory);
-
-    is_canonical = bsal_dna_kmer_is_canonical(&storage_kmer, concrete_self->kmer_length,
-                    &concrete_self->storage_codec);
-
-    key = bsal_memory_pool_allocate(ephemeral_memory, concrete_self->key_length_in_bytes);
-
-    bsal_dna_kmer_pack_store_key(&storage_kmer, key,
-                        concrete_self->kmer_length, &concrete_self->storage_codec,
-                        ephemeral_memory);
-
-    canonical_vertex = bsal_map_get(&concrete_self->table, key);
-
-#ifdef BSAL_DEBUGGER_ASSERT
-    if (canonical_vertex == NULL) {
-
-        printf("not found Seq = %s name %d kmerlength %d key_length %d hash %" PRIu64 "\n", sequence,
-                        thorium_actor_name(self),
-                        concrete_self->kmer_length,
-                        concrete_self->key_length_in_bytes,
-                        bsal_dna_kmer_hash(&storage_kmer, concrete_self->kmer_length,
-                                &concrete_self->storage_codec));
-    }
-#endif
-
-    BSAL_DEBUGGER_ASSERT(canonical_vertex != NULL);
+    canonical_vertex = bsal_assembly_graph_store_find_vertex(self, &kmer);
 
     bsal_assembly_vertex_init_copy(&vertex, canonical_vertex);
+
+    is_canonical = bsal_dna_kmer_is_canonical(&kmer, concrete_self->kmer_length,
+                    &concrete_self->transport_codec);
 
     if (!is_canonical) {
 
         bsal_assembly_vertex_invert_arcs(&vertex);
     }
-
-    bsal_memory_pool_free(ephemeral_memory, sequence);
-    bsal_memory_pool_free(ephemeral_memory, key);
 
     bsal_dna_kmer_destroy(&kmer, ephemeral_memory);
 
@@ -1279,12 +1245,83 @@ void bsal_assembly_graph_store_mark_vertex_as_visited(struct thorium_actor *self
 void bsal_assembly_graph_store_set_vertex_flag(struct thorium_actor *self,
                 struct thorium_message *message)
 {
-/*
-        bsal_dna_kmer_init_empty(&kmer);
-        bsal_dna_kmer_unpack(&kmer, key, concrete_self->kmer_length,
-                        thorium_actor_get_ephemeral_memory(self),
-                        &concrete_self->storage_codec);
-*/
+    char *buffer;
+    int count;
+    int flag;
+    struct bsal_dna_kmer transport_kmer;
+    struct bsal_assembly_vertex *vertex;
+    struct bsal_assembly_graph_store *concrete_self;
+    struct bsal_memory_pool *ephemeral_memory;
+    int position;
+
+    concrete_self = thorium_actor_concrete_actor(self);
+    ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
+    bsal_dna_kmer_init_empty(&transport_kmer);
+    buffer = thorium_message_buffer(message);
+    count = thorium_message_count(message);
+
+    position = 0;
+    position += bsal_dna_kmer_unpack(&transport_kmer, buffer, concrete_self->kmer_length,
+                    ephemeral_memory, &concrete_self->storage_codec);
+    bsal_memory_copy(&flag, buffer + position, sizeof(flag));
+    position += sizeof(flag);
+    BSAL_DEBUGGER_ASSERT(position == count);
+
+    vertex = bsal_assembly_graph_store_find_vertex(self, &transport_kmer);
+
+    bsal_dna_kmer_destroy(&transport_kmer, ephemeral_memory);
+
+    bsal_assembly_vertex_set_flag(vertex, flag);
 
     thorium_actor_send_reply_empty(self, ACTION_SET_VERTEX_FLAG_REPLY);
+}
+
+struct bsal_assembly_vertex *bsal_assembly_graph_store_find_vertex(struct thorium_actor *self,
+                struct bsal_dna_kmer *kmer)
+{
+    struct bsal_memory_pool *ephemeral_memory;
+    struct bsal_assembly_graph_store *concrete_self;
+    char *sequence;
+    struct bsal_dna_kmer storage_kmer;
+    char *key;
+    struct bsal_assembly_vertex *canonical_vertex;
+
+    ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
+    concrete_self = thorium_actor_concrete_actor(self);
+
+    sequence = bsal_memory_pool_allocate(ephemeral_memory, concrete_self->kmer_length + 1);
+
+    bsal_dna_kmer_get_sequence(kmer, sequence, concrete_self->kmer_length,
+                        &concrete_self->transport_codec);
+
+    bsal_dna_kmer_init(&storage_kmer, sequence, &concrete_self->storage_codec,
+                        ephemeral_memory);
+
+    key = bsal_memory_pool_allocate(ephemeral_memory, concrete_self->key_length_in_bytes);
+
+    bsal_dna_kmer_pack_store_key(&storage_kmer, key,
+                        concrete_self->kmer_length, &concrete_self->storage_codec,
+                        ephemeral_memory);
+
+    canonical_vertex = bsal_map_get(&concrete_self->table, key);
+
+#ifdef BSAL_DEBUGGER_ASSERT
+    if (canonical_vertex == NULL) {
+
+        printf("not found Seq = %s name %d kmerlength %d key_length %d hash %" PRIu64 "\n", sequence,
+                        thorium_actor_name(self),
+                        concrete_self->kmer_length,
+                        concrete_self->key_length_in_bytes,
+                        bsal_dna_kmer_hash(&storage_kmer, concrete_self->kmer_length,
+                                &concrete_self->storage_codec));
+    }
+#endif
+
+    BSAL_DEBUGGER_ASSERT(canonical_vertex != NULL);
+
+    bsal_memory_pool_free(ephemeral_memory, sequence);
+    bsal_memory_pool_free(ephemeral_memory, key);
+    bsal_dna_kmer_destroy(&storage_kmer, ephemeral_memory);
+
+    return canonical_vertex;
 }
