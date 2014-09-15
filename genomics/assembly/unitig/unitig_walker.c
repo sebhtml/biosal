@@ -90,7 +90,7 @@ void bsal_unitig_walker_init(struct thorium_actor *self)
     char name_as_string[64];
     int name;
 
-    concrete_self = (struct bsal_unitig_walker *)thorium_actor_concrete_actor(self);
+    concrete_self = thorium_actor_concrete_actor(self);
 
     /*
      * Initialize the memory pool first.
@@ -103,6 +103,8 @@ void bsal_unitig_walker_init(struct thorium_actor *self)
 
     argc = thorium_actor_argc(self);
     argv = thorium_actor_argv(self);
+
+    bsal_set_init(&concrete_self->visited, 0);
 
     bsal_vector_init(&concrete_self->graph_stores, sizeof(int));
 
@@ -186,7 +188,7 @@ void bsal_unitig_walker_destroy(struct thorium_actor *self)
 {
     struct bsal_unitig_walker *concrete_self;
 
-    concrete_self = (struct bsal_unitig_walker *)thorium_actor_concrete_actor(self);
+    concrete_self = thorium_actor_concrete_actor(self);
 
     bsal_map_destroy(&concrete_self->path_statuses);
     bsal_dna_codec_destroy(&concrete_self->codec);
@@ -231,7 +233,7 @@ void bsal_unitig_walker_receive(struct thorium_actor *self, struct thorium_messa
     }
 
     tag = thorium_message_action(message);
-    concrete_self = (struct bsal_unitig_walker *)thorium_actor_concrete_actor(self);
+    concrete_self = thorium_actor_concrete_actor(self);
     ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
 
     if (tag == ACTION_START) {
@@ -280,7 +282,7 @@ void bsal_unitig_walker_begin(struct thorium_actor *self, struct thorium_message
     int store;
     int size;
 
-    concrete_self = (struct bsal_unitig_walker *)thorium_actor_concrete_actor(self);
+    concrete_self = thorium_actor_concrete_actor(self);
 
     size = bsal_vector_size(&concrete_self->graph_stores);
     store_index = concrete_self->store_index;
@@ -308,7 +310,7 @@ void bsal_unitig_walker_start(struct thorium_actor *self, struct thorium_message
 
     source = thorium_message_source(message);
     buffer = thorium_message_buffer(message);
-    concrete_self = (struct bsal_unitig_walker *)thorium_actor_concrete_actor(self);
+    concrete_self = thorium_actor_concrete_actor(self);
     concrete_self->source = source;
 
     printf("%s/%d is ready to surf the graph !\n",

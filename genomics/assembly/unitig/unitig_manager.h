@@ -21,6 +21,7 @@ struct bsal_unitig_manager {
     int manager;
 
     struct bsal_timer timer;
+    int state;
 };
 
 extern struct thorium_script bsal_unitig_manager_script;

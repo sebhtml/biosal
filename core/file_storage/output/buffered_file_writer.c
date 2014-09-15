@@ -30,11 +30,15 @@ void bsal_buffered_file_writer_destroy(struct bsal_buffered_file_writer *self)
 {
     bsal_buffered_file_writer_flush(self);
 
-    fclose(self->descriptor);
-    self->descriptor = NULL;
+    if (self->descriptor != NULL) {
+        fclose(self->descriptor);
+        self->descriptor = NULL;
+    }
 
-    fclose(self->null_file);
-    self->null_file = NULL;
+    if (self->null_file != NULL) {
+        fclose(self->null_file);
+        self->null_file = NULL;
+    }
 
     if (self->buffer != NULL) {
 
