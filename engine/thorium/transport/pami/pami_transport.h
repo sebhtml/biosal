@@ -85,6 +85,8 @@ struct thorium_pami_transport {
 
     int rank; 
 
+    struct thorium_transport *self;
+
     pami_endpoint_t *endpoints;
   
     thorium_send_cookie_t **send_cookies;
@@ -95,13 +97,13 @@ struct thorium_pami_transport {
     struct bsal_fast_queue *avail_recv_cookies_queue;
     struct bsal_fast_queue *in_use_recv_cookies_queue;
 
-    struct bsal_fast_queue *large_buffer_queue;
+    /*struct bsal_fast_queue *large_buffer_queue;
     struct bsal_fast_queue *medium_buffer_queue;
     struct bsal_fast_queue *small_buffer_queue;
 
     char **large_buffers;
     char **medium_buffers;
-    char **small_buffers;
+    char **small_buffers;*/
 #endif
 
     /*
