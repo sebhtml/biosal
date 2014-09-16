@@ -19,7 +19,7 @@ struct thorium_script bsal_unitig_manager_script = {
     .destroy = bsal_unitig_manager_destroy,
     .receive = bsal_unitig_manager_receive,
     .size = sizeof(struct bsal_unitig_manager),
-    .description = "The chief executive for unitig walkers"
+    .description = "The chief executive for unitig visitors and walkers"
 };
 
 void bsal_unitig_manager_init(struct thorium_actor *self)
@@ -173,7 +173,7 @@ void bsal_unitig_manager_receive(struct thorium_actor *self, struct thorium_mess
         ++concrete_self->completed;
         expected = bsal_vector_size(&concrete_self->visitors);
 
-        if (concrete_self->completed % 1000 == 0
+        if (concrete_self->completed % UNITIG_VISITOR_COUNT_PER_WORKER == 0
                         || concrete_self->completed == expected) {
             printf("PROGRESS unitig visitors %d/%d\n",
                         concrete_self->completed,
@@ -217,7 +217,7 @@ void bsal_unitig_manager_receive(struct thorium_actor *self, struct thorium_mess
         ++concrete_self->completed;
         expected = bsal_vector_size(&concrete_self->walkers);
 
-        if (concrete_self->completed % 1000 == 0
+        if (concrete_self->completed % UNITIG_WALKER_COUNT_PER_WORKER == 0
                         || concrete_self->completed == expected) {
             printf("PROGRESS unitig walkers %d/%d\n",
                         concrete_self->completed,

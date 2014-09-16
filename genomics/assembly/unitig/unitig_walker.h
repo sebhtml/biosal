@@ -79,7 +79,7 @@ void bsal_unitig_walker_init(struct thorium_actor *self);
 void bsal_unitig_walker_destroy(struct thorium_actor *self);
 void bsal_unitig_walker_receive(struct thorium_actor *self, struct thorium_message *message);
 
-void bsal_unitig_walker_get_starting_vertex_reply(struct thorium_actor *self, struct thorium_message *message);
+void bsal_unitig_walker_get_starting_kmer_reply(struct thorium_actor *self, struct thorium_message *message);
 void bsal_unitig_walker_start(struct thorium_actor *self, struct thorium_message *message);
 void bsal_unitig_walker_get_vertex_reply(struct thorium_actor *self, struct thorium_message *message);
 

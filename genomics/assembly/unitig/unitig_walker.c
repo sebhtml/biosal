@@ -112,7 +112,7 @@ void bsal_unitig_walker_init(struct thorium_actor *self)
     bsal_vector_init(&concrete_self->graph_stores, sizeof(int));
 
     thorium_actor_add_action(self, ACTION_ASSEMBLY_GET_STARTING_KMER_REPLY,
-        bsal_unitig_walker_get_starting_vertex_reply);
+        bsal_unitig_walker_get_starting_kmer_reply);
 
     thorium_actor_add_action(self, ACTION_START,
                     bsal_unitig_walker_start);
@@ -341,7 +341,7 @@ void bsal_unitig_walker_start(struct thorium_actor *self, struct thorium_message
     thorium_actor_send_empty(self, graph, ACTION_ASSEMBLY_GET_KMER_LENGTH);
 }
 
-void bsal_unitig_walker_get_starting_vertex_reply(struct thorium_actor *self, struct thorium_message *message)
+void bsal_unitig_walker_get_starting_kmer_reply(struct thorium_actor *self, struct thorium_message *message)
 {
     struct bsal_unitig_walker *concrete_self;
     void *buffer;
@@ -473,7 +473,6 @@ void bsal_unitig_walker_get_vertex_reply_starting_vertex(struct thorium_actor *s
 
         return;
     }
-
 
     /*
      * Set an initial status.
@@ -781,7 +780,7 @@ void bsal_unitig_walker_get_vertex_reply(struct thorium_actor *self, struct thor
         bsal_memory_copy(new_buffer + position, &length, sizeof(length));
         position += sizeof(length);
 
-#if 0
+#ifdef BSAL_UNITIG_WALKER_DEBUG
         printf("%d sends to %d ACTION_NOTIFY last_path_index %d current_path %d length %d\n",
                         thorium_actor_name(self),
                         last_actor, last_path_index,
@@ -791,7 +790,7 @@ void bsal_unitig_walker_get_vertex_reply(struct thorium_actor *self, struct thor
         BSAL_DEBUGGER_ASSERT(last_path_index >= 0);
 
         /*
-         * Reset defeat count
+         * Ask the owner about it.
          */
 
         thorium_actor_send_buffer(self, last_actor, ACTION_NOTIFY, new_count,
@@ -835,17 +834,17 @@ void bsal_unitig_walker_notify(struct thorium_actor *self, struct thorium_messag
 
     length = bsal_unitig_walker_get_current_length(self);
 
-#if 0
-    printf("DEBUG ACTION_NOTIFY actor/%d (self) has %d, actor/%d has %d\n",
-                    thorium_actor_name(self),
-                    length, source, other_length);
-#endif
-
     /*
      * Get path status.
      */
 
     bucket = bsal_map_get(&concrete_self->path_statuses, &path_index);
+
+#ifdef BSAL_UNITIG_WALKER_DEBUG
+    printf("DEBUG ACTION_NOTIFY actor/%d (self) has %d (status %d), actor/%d has %d\n",
+                    thorium_actor_name(self),
+                    length, bucket->status, source, other_length);
+#endif
 
 #ifdef BSAL_DEBUGGER_ENABLE_ASSERT
     if (bucket == NULL) {
@@ -871,7 +870,7 @@ void bsal_unitig_walker_notify(struct thorium_actor *self, struct thorium_messag
          * The current actor already claimed a victory in the past.
          */
 
-#if 0
+#ifdef BSAL_UNITIG_WALKER_DEBUG
         printf("actor %d path %d past victory status %d length_in_nucleotides %d challenger length %d\n", thorium_actor_name(self),
                     path_index, bucket->status, bucket->length_in_nucleotides,
                     other_length);
@@ -890,7 +889,7 @@ void bsal_unitig_walker_notify(struct thorium_actor *self, struct thorium_messag
         authorized_to_continue = 0;
 
     } else if (bucket->status == PATH_STATUS_IN_PROGRESS_WITHOUT_CHALLENGERS
-                  || bucket->status == PATH_STATUS_VICTORY_WITH_CHALLENGERS) {
+                  || bucket->status == PATH_STATUS_IN_PROGRESS_WITH_CHALLENGERS) {
 
         /*
          * Fight now !!!
@@ -966,8 +965,9 @@ void bsal_unitig_walker_notify_reply(struct thorium_actor *self, struct thorium_
         /*
          * accept defeat.
          */
-        /**bucket = PATH_STATUS_DEFEAT_BY_FAILED_CHALLENGE;
-         * */
+        /*
+        */
+        bucket->status = PATH_STATUS_DEFEAT_BY_FAILED_CHALLENGE;
 
 #if 0
         printf("%d path_index %d source %d current_length %d DEBUG PATH_STATUS_DEFEAT_BY_FAILED_CHALLENGE !!!\n",
