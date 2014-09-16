@@ -816,7 +816,11 @@ void bsal_unitig_walker_notify(struct thorium_actor *self, struct thorium_messag
     int path_index;
     struct bsal_path_status *bucket;
     void *buffer;
+    int name;
+    int check_equal_length;
 
+    check_equal_length = 1;
+    name = thorium_actor_name(self);
     concrete_self = thorium_actor_concrete_actor(self);
 
     position = 0;
@@ -895,9 +899,15 @@ void bsal_unitig_walker_notify(struct thorium_actor *self, struct thorium_messag
          * Fight now !!!
          *
          * The longest wins.
+         *
+         * If the lengths are equal, then the highest name wins.
          */
 
-        if (length >= other_length) {
+        BSAL_DEBUGGER_ASSERT(name != source);
+
+        if (length > other_length
+               || (check_equal_length
+                       && length == other_length && name > source)) {
 
             /* this should be 0 */
             authorized_to_continue = 0;
@@ -910,6 +920,7 @@ void bsal_unitig_walker_notify(struct thorium_actor *self, struct thorium_messag
 #if 0
             printf("%d victory with length\n", thorium_actor_name(self));
 #endif
+
         } else {
             authorized_to_continue = 1;
 
