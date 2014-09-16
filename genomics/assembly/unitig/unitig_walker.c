@@ -58,6 +58,7 @@
 #define STATUS_ALREADY_VISITED 4
 #define STATUS_DISAGREEMENT 5
 #define STATUS_DEFEAT 6
+#define STATUS_NOT_UNITIG_VERTEX 7
 
 /*
  * Statuses for a path.
@@ -100,6 +101,8 @@ void bsal_unitig_walker_init(struct thorium_actor *self)
     bsal_map_set_memory_pool(&concrete_self->path_statuses, &concrete_self->memory_pool);
 
     concrete_self->dried_stores = 0;
+    concrete_self->skipped_at_start_used = 0;
+    concrete_self->skipped_at_start_not_unitig = 0;
 
     argc = thorium_actor_argc(self);
     argv = thorium_actor_argv(self);
@@ -214,6 +217,10 @@ void bsal_unitig_walker_destroy(struct thorium_actor *self)
     bsal_assembly_vertex_destroy(&concrete_self->current_vertex);
 
     bsal_unitig_heuristic_destroy(&concrete_self->heuristic);
+
+    printf("DEBUG unitig_walker skipped_at_start_used %d skipped_at_start_not_unitig %d\n",
+                    concrete_self->skipped_at_start_used,
+                    concrete_self->skipped_at_start_not_unitig);
 
     /*
      * Destroy the memory pool at the end.
@@ -448,11 +455,25 @@ void bsal_unitig_walker_get_vertex_reply_starting_vertex(struct thorium_actor *s
                             BSAL_VERTEX_FLAG_USED)) {
 
         bsal_assembly_vertex_destroy(&concrete_self->current_vertex);
-
+        ++concrete_self->skipped_at_start_used;
         thorium_actor_send_to_self_empty(self, ACTION_BEGIN);
 
         return;
     }
+
+    /*
+     * Skip it if it is not a unitig vertex.
+     */
+    if (!bsal_assembly_vertex_get_flag(&concrete_self->current_vertex,
+                            BSAL_VERTEX_FLAG_UNITIG)) {
+
+        bsal_assembly_vertex_destroy(&concrete_self->current_vertex);
+        ++concrete_self->skipped_at_start_not_unitig;
+        thorium_actor_send_to_self_empty(self, ACTION_BEGIN);
+
+        return;
+    }
+
 
     /*
      * Set an initial status.
@@ -1182,6 +1203,57 @@ void bsal_unitig_walker_dump_path(struct thorium_actor *self)
 }
 
 int bsal_unitig_walker_select(struct thorium_actor *self, int *output_status)
+{
+    struct bsal_unitig_walker *concrete_self;
+    int i;
+    int size;
+    struct bsal_assembly_vertex *vertex;
+    int is_unitig_vertex;
+    int choice;
+    int status;
+    struct bsal_vector *selected_kmers;
+    struct bsal_vector *selected_vertices;
+
+    choice = BSAL_HEURISTIC_CHOICE_NONE;
+    status = STATUS_NO_STATUS;
+
+    concrete_self = thorium_actor_concrete_actor(self);
+    /*ephemeral_memory = thorium_actor_get_ephemeral_memory(self);*/
+
+    if (concrete_self->select_operation == OPERATION_SELECT_CHILD) {
+        selected_vertices = &concrete_self->child_vertices;
+        selected_kmers = &concrete_self->child_kmers;
+    } else /*if (concrete_self->select_operation == OPERATION_SELECT_PARENT) */{
+        selected_vertices = &concrete_self->parent_vertices;
+        selected_kmers = &concrete_self->parent_kmers;
+    }
+
+    size = bsal_vector_size(selected_vertices);
+
+    status = STATUS_NOT_UNITIG_VERTEX;
+
+    for (i = 0; i < size; ++i) {
+        vertex = bsal_vector_at(selected_vertices, i);
+
+        is_unitig_vertex = bsal_assembly_vertex_get_flag(vertex, BSAL_VERTEX_FLAG_UNITIG);
+
+        if (is_unitig_vertex) {
+            choice = i;
+            status = STATUS_WITH_CHOICE;
+            break;
+        }
+    }
+
+    /*
+     * Make sure that the choice is not already in the unitig.
+     */
+    bsal_unitig_walker_check_usage(self, &choice, &status, selected_kmers);
+    *output_status = status;
+
+    return choice;
+}
+
+int bsal_unitig_walker_select_old_version(struct thorium_actor *self, int *output_status)
 {
     int choice;
     int status;

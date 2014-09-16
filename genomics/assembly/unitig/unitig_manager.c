@@ -7,7 +7,7 @@
 #include <core/patterns/manager.h>
 
 #define UNITIG_VISITOR_COUNT_PER_WORKER 512
-#define UNITIG_WALKER_COUNT_PER_WORKER 1
+#define UNITIG_WALKER_COUNT_PER_WORKER 32
 
 #define STATE_VISITORS 0
 #define STATE_WALKERS 1

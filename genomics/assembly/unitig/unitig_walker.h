@@ -30,7 +30,8 @@ struct bsal_unitig_walker {
     int kmer_length;
     struct bsal_dna_codec codec;
     struct bsal_memory_pool memory_pool;
-
+    int skipped_at_start_used;
+    int skipped_at_start_not_unitig;
     struct bsal_map path_statuses;
     int source;
 
@@ -112,5 +113,7 @@ void bsal_unitig_walker_notify(struct thorium_actor *self, struct thorium_messag
 void bsal_unitig_walker_notify_reply(struct thorium_actor *self, struct thorium_message *message);
 
 void bsal_unitig_walker_mark_vertex(struct thorium_actor *self, struct bsal_dna_kmer *kmer);
+
+int bsal_unitig_walker_select_old_version(struct thorium_actor *self, int *output_status);
 
 #endif
