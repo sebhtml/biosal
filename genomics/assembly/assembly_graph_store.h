@@ -60,6 +60,7 @@ struct bsal_assembly_graph_store {
     struct bsal_dna_codec storage_codec;
     int kmer_length;
     int key_length_in_bytes;
+    int unitig_vertex_count;
 
     int customer;
 

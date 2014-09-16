@@ -70,6 +70,7 @@
 #define PATH_STATUS_VICTORY_WITH_CHALLENGERS 4
 #define PATH_STATUS_IN_PROGRESS_WITHOUT_CHALLENGERS 5
 #define PATH_STATUS_IN_PROGRESS_WITH_CHALLENGERS 6
+#define PATH_STATUS_DUPLICATE_VERTEX 7
 
 struct thorium_script bsal_unitig_walker_script = {
     .identifier = SCRIPT_UNITIG_WALKER,
@@ -1151,6 +1152,7 @@ void bsal_unitig_walker_dump_path(struct thorium_actor *self)
 
     if (sequence_length < MINIMUM_PATH_LENGTH_IN_NUCLEOTIDES) {
         bucket->status = PATH_STATUS_DEFEAT_BY_SHORT_LENGTH;
+        victory = 0;
     }
 
     /*
@@ -1186,6 +1188,11 @@ void bsal_unitig_walker_dump_path(struct thorium_actor *self)
     }
 #endif
 
+    if (concrete_self->current_has_duplicate) {
+        victory = 0;
+        bucket->status = PATH_STATUS_DUPLICATE_VERTEX;
+    }
+
     if (victory
              && sequence_length >= MINIMUM_PATH_LENGTH_IN_NUCLEOTIDES) {
 
@@ -1206,6 +1213,7 @@ void bsal_unitig_walker_dump_path(struct thorium_actor *self)
     bsal_assembly_vertex_destroy(&concrete_self->starting_vertex);
 
     bsal_set_clear(&concrete_self->visited);
+    concrete_self->current_has_duplicate = 0;
 
     /*
      * Update path index
@@ -1953,6 +1961,8 @@ void bsal_unitig_walker_check_usage(struct thorium_actor *self, int *choice, int
 
         bsal_dna_kmer_print(kmer, concrete_self->kmer_length, &concrete_self->codec,
                     ephemeral_memory);
+        concrete_self->current_has_duplicate = 1;
+
         *choice = BSAL_HEURISTIC_CHOICE_NONE;
         *status = STATUS_ALREADY_VISITED;
     }

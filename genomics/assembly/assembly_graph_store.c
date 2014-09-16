@@ -116,6 +116,8 @@ void bsal_assembly_graph_store_init(struct thorium_actor *self)
     concrete_self->received_arc_block_count = 0;
     concrete_self->received_arc_count = 0;
     concrete_self->summary_in_progress = 0;
+
+    concrete_self->unitig_vertex_count = 0;
 }
 
 void bsal_assembly_graph_store_destroy(struct thorium_actor *self)
@@ -196,9 +198,11 @@ void bsal_assembly_graph_store_receive(struct thorium_actor *self, struct thoriu
          */
         bsal_map_iterator_init(&concrete_self->iterator, &concrete_self->table);
 
+        printf("DEBUG unitig_vertex_count %d\n",
+                        concrete_self->unitig_vertex_count);
+
         thorium_actor_send_reply_empty(self, ACTION_RESET_REPLY);
 
-    } else if (tag == ACTION_SET_VERTEX_FLAG) {
 
     } else if (tag == ACTION_SEQUENCE_STORE_REQUEST_PROGRESS_REPLY) {
 
@@ -1277,6 +1281,13 @@ void bsal_assembly_graph_store_set_vertex_flag(struct thorium_actor *self,
     bsal_memory_copy(&flag, buffer + position, sizeof(flag));
     position += sizeof(flag);
     BSAL_DEBUGGER_ASSERT(position == count);
+
+    BSAL_DEBUGGER_ASSERT(flag >= BSAL_VERTEX_FLAG_START_VALUE);
+    BSAL_DEBUGGER_ASSERT(flag <= BSAL_VERTEX_FLAG_END_VALUE);
+
+    if (flag == BSAL_VERTEX_FLAG_UNITIG) {
+        ++concrete_self->unitig_vertex_count;
+    }
 
 #if 0
     printf("DEBUG ACTION_SET_VERTEX_FLAG %d\n", flag);

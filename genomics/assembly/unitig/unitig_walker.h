@@ -34,6 +34,7 @@ struct bsal_unitig_walker {
     int skipped_at_start_not_unitig;
     struct bsal_map path_statuses;
     int source;
+    int current_has_duplicate;
 
     /*
      * The next store index to use.
