@@ -186,6 +186,8 @@ void bsal_unitig_walker_init(struct thorium_actor *self)
     concrete_self->select_operation = OPERATION_SELECT_CHILD;
 
     bsal_unitig_heuristic_init(&concrete_self->heuristic);
+
+    concrete_self->current_has_duplicate = 0;
 }
 
 void bsal_unitig_walker_destroy(struct thorium_actor *self)
@@ -1189,8 +1191,14 @@ void bsal_unitig_walker_dump_path(struct thorium_actor *self)
 #endif
 
     if (concrete_self->current_has_duplicate) {
+#if 0
         victory = 0;
         bucket->status = PATH_STATUS_DUPLICATE_VERTEX;
+#endif
+        if (victory) {
+            printf("DEBUG current_has_duplicate name= %" PRIu64 " sequence_length= %d victory %d\n",
+                        path_name, sequence_length, victory);
+        }
     }
 
     if (victory
@@ -1947,6 +1955,7 @@ void bsal_unitig_walker_check_usage(struct thorium_actor *self, int *choice, int
 
     bsal_dna_kmer_pack_store_key(kmer, key, concrete_self->kmer_length,
                     &concrete_self->codec, ephemeral_memory);
+
     found = bsal_set_find(&concrete_self->visited, key);
 
 #ifdef BSAL_UNITIG_WALKER_DEBUG
