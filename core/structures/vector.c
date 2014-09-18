@@ -297,7 +297,9 @@ void bsal_vector_set_memory_pool(struct bsal_vector *self, struct bsal_memory_po
 
 void *bsal_vector_at(struct bsal_vector *self, int64_t index)
 {
+#if 0
     BSAL_DEBUGGER_ASSERT(index < self->size);
+#endif
 
     if (index >= self->size) {
         return NULL;

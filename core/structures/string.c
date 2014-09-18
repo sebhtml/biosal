@@ -3,9 +3,11 @@
 
 #include <core/system/memory.h>
 #include <core/system/packer.h>
+#include <core/system/debugger.h>
 
 #include <string.h>
 #include <stdlib.h>
+#include <stdio.h>
 
 #define BSAL_STRING_APPEND 100
 #define BSAL_STRING_PREPEND 200
@@ -148,4 +150,66 @@ int bsal_string_length(struct bsal_string *self)
     }
 
     return strlen(self->data);
+}
+
+void bsal_string_swap_c_string(char *sequence, int i, int j)
+{
+    char value;
+
+    BSAL_DEBUGGER_ASSERT(sequence != NULL);
+
+    value = sequence[i];
+    sequence[i] = sequence[j];
+    sequence[j] = value;
+
+#ifdef DEBUG_STRING
+    printf("SWAP %d %d result %s\n", i, j, sequence);
+#endif
+}
+
+void bsal_string_rotate_c_string(char *sequence, int length, int new_start)
+{
+    int offset;
+
+    /*
+     * in-place rotation
+     */
+
+    /*
+     * Nothing to do.
+     */
+    if (new_start == 0)
+        return;
+
+#ifdef DEBUG_STRING
+    printf("ROTATE %s %d\n", sequence, new_start);
+#endif
+
+    /*
+     * See http://stackoverflow.com/questions/19316335/rotate-string-in-place-with-on
+     */
+    bsal_string_reverse_c_string(sequence, 0, length - 1);
+
+    offset = length - new_start;
+
+    bsal_string_reverse_c_string(sequence, 0, offset - 1);
+    bsal_string_reverse_c_string(sequence, offset, length - 1);
+}
+
+void bsal_string_reverse_c_string(char *sequence, int start, int end)
+{
+#ifdef DEBUG_STRING
+    printf("reverse before %s\n", sequence);
+#endif
+
+    while (start < end) {
+
+        bsal_string_swap_c_string(sequence, start, end);
+        ++start;
+        --end;
+    }
+
+#ifdef DEBUG_STRING
+    printf("reverse after %s\n", sequence);
+#endif
 }

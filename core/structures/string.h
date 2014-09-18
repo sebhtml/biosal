@@ -26,4 +26,8 @@ int bsal_string_pack_unpack(struct bsal_string *self, int operation, void *buffe
 
 int bsal_string_length(struct bsal_string *self);
 
+void bsal_string_rotate_c_string(char *sequence, int length, int new_start);
+void bsal_string_swap_c_string(char *sequence, int i, int j);
+void bsal_string_reverse_c_string(char *sequence, int start, int end);
+
 #endif

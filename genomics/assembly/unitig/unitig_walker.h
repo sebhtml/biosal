@@ -34,7 +34,7 @@ struct bsal_unitig_walker {
     int skipped_at_start_not_unitig;
     struct bsal_map path_statuses;
     int source;
-    int current_has_duplicate;
+    int current_is_circular;
 
     /*
      * The next store index to use.
@@ -116,5 +116,6 @@ void bsal_unitig_walker_notify_reply(struct thorium_actor *self, struct thorium_
 void bsal_unitig_walker_mark_vertex(struct thorium_actor *self, struct bsal_dna_kmer *kmer);
 
 int bsal_unitig_walker_select_old_version(struct thorium_actor *self, int *output_status);
+void bsal_unitig_walker_normalize_cycle(struct thorium_actor *self, int length, char *sequence);
 
 #endif

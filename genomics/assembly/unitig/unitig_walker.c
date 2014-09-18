@@ -43,12 +43,12 @@
 #define HIGHLIGH_STARTING_POINT
 */
 
-#define OPERATION_FETCH_FIRST 0
-#define OPERATION_FETCH_PARENTS 1
-#define OPERATION_FETCH_CHILDREN 2
+#define OPERATION_FETCH_FIRST       0
+#define OPERATION_FETCH_PARENTS     1
+#define OPERATION_FETCH_CHILDREN    2
 
-#define OPERATION_SELECT_CHILD 8
-#define OPERATION_SELECT_PARENT 9
+#define OPERATION_SELECT_CHILD      8
+#define OPERATION_SELECT_PARENT     9
 
 #define STATUS_NO_STATUS (-1)
 #define STATUS_NO_EDGE 0
@@ -59,6 +59,7 @@
 #define STATUS_DISAGREEMENT 5
 #define STATUS_DEFEAT 6
 #define STATUS_NOT_UNITIG_VERTEX 7
+#define STATUS_CYCLE 8
 
 /*
  * Statuses for a path.
@@ -187,7 +188,7 @@ void bsal_unitig_walker_init(struct thorium_actor *self)
 
     bsal_unitig_heuristic_init(&concrete_self->heuristic);
 
-    concrete_self->current_has_duplicate = 0;
+    concrete_self->current_is_circular = 0;
 }
 
 void bsal_unitig_walker_destroy(struct thorium_actor *self)
@@ -353,6 +354,7 @@ void bsal_unitig_walker_get_starting_kmer_reply(struct thorium_actor *self, stru
     char *new_buffer;
     struct bsal_memory_pool *ephemeral_memory;
     int new_count;
+    char *key;
 
     count = thorium_message_count(message);
     concrete_self = thorium_actor_concrete_actor(self);
@@ -413,6 +415,15 @@ void bsal_unitig_walker_get_starting_kmer_reply(struct thorium_actor *self, stru
                     concrete_self->kmer_length, &concrete_self->memory_pool,
                     &concrete_self->codec);
 
+    /*
+     * Set the key as visited to detect cycles in the graphs
+     * caused by plasmids and other cool stuff.
+     */
+    key = bsal_memory_pool_allocate(ephemeral_memory, concrete_self->key_length);
+    bsal_dna_kmer_pack(&concrete_self->starting_kmer, key, concrete_self->kmer_length, &concrete_self->codec);
+    bsal_set_add(&concrete_self->visited, key);
+    bsal_memory_pool_free(ephemeral_memory, key);
+
     concrete_self->has_starting_vertex = 0;
 
     concrete_self->fetch_operation = OPERATION_FETCH_FIRST;
@@ -441,7 +452,7 @@ void bsal_unitig_walker_get_vertex_reply_starting_vertex(struct thorium_actor *s
     struct bsal_path_status *bucket;
 
     buffer = thorium_message_buffer(message);
-    concrete_self = (struct bsal_unitig_walker *)thorium_actor_concrete_actor(self);
+    concrete_self = thorium_actor_concrete_actor(self);
 
     bsal_assembly_vertex_init(&concrete_self->current_vertex);
     bsal_assembly_vertex_unpack(&concrete_self->current_vertex, buffer);
@@ -537,7 +548,7 @@ void bsal_unitig_walker_get_vertices_and_select(struct thorium_actor *self, stru
     struct bsal_dna_kmer parent_kmer;
     struct bsal_dna_kmer *parent_kmer_to_fetch;
 
-    concrete_self = (struct bsal_unitig_walker *)thorium_actor_concrete_actor(self);
+    concrete_self = thorium_actor_concrete_actor(self);
     ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
 
     /*
@@ -696,7 +707,7 @@ void bsal_unitig_walker_get_vertices_and_select_reply(struct thorium_actor *self
 {
     struct bsal_unitig_walker *concrete_self;
 
-    concrete_self = (struct bsal_unitig_walker *)thorium_actor_concrete_actor(self);
+    concrete_self = thorium_actor_concrete_actor(self);
 
     bsal_unitig_walker_dump_path(self);
 
@@ -821,7 +832,9 @@ void bsal_unitig_walker_notify(struct thorium_actor *self, struct thorium_messag
     void *buffer;
     int name;
     int check_equal_length;
+    int disable_battle;
 
+    disable_battle = 1;
     check_equal_length = 1;
     name = thorium_actor_name(self);
     concrete_self = thorium_actor_concrete_actor(self);
@@ -868,7 +881,9 @@ void bsal_unitig_walker_notify(struct thorium_actor *self, struct thorium_messag
      */
     authorized_to_continue = 1;
 
-    if (bucket->status == PATH_STATUS_VICTORY_WITHOUT_CHALLENGERS
+    if (disable_battle) {
+
+    } else if (bucket->status == PATH_STATUS_VICTORY_WITHOUT_CHALLENGERS
             || bucket->status == PATH_STATUS_VICTORY_WITH_CHALLENGERS) {
 
         length = bucket->length_in_nucleotides;
@@ -1129,6 +1144,19 @@ void bsal_unitig_walker_dump_path(struct thorium_actor *self)
 
     sequence[sequence_length] = '\0';
 
+    /*
+     * If the sequence is a cycle, normalize it.
+     * Plasmid and virus can be simple circles.
+     *
+     * Although bacteria have in general a circular chromosome,
+     * they are complex enough not to generate one single circle in
+     * the graph.
+     */
+
+    if (concrete_self->current_is_circular) {
+        bsal_unitig_walker_normalize_cycle(self, sequence_length, sequence);
+    }
+
     path_name = bsal_unitig_walker_get_path_name(self, sequence_length, sequence);
 
     bucket = bsal_map_get(&concrete_self->path_statuses, &concrete_self->path_index);
@@ -1190,13 +1218,13 @@ void bsal_unitig_walker_dump_path(struct thorium_actor *self)
     }
 #endif
 
-    if (concrete_self->current_has_duplicate) {
+    if (concrete_self->current_is_circular) {
 #if 0
         victory = 0;
         bucket->status = PATH_STATUS_DUPLICATE_VERTEX;
 #endif
         if (victory) {
-            printf("DEBUG current_has_duplicate name= %" PRIu64 " sequence_length= %d victory %d\n",
+            printf("DEBUG current_is_circular name= %" PRIu64 " sequence_length= %d victory %d\n",
                         path_name, sequence_length, victory);
         }
     }
@@ -1221,7 +1249,7 @@ void bsal_unitig_walker_dump_path(struct thorium_actor *self)
     bsal_assembly_vertex_destroy(&concrete_self->starting_vertex);
 
     bsal_set_clear(&concrete_self->visited);
-    concrete_self->current_has_duplicate = 0;
+    concrete_self->current_is_circular = 0;
 
     /*
      * Update path index
@@ -1592,6 +1620,16 @@ void bsal_unitig_walker_make_decision(struct thorium_actor *self)
 
     choice = bsal_unitig_walker_select(self, &status);
 
+    /*
+     * If the thing is circular, don't do anything else.
+     */
+    if (concrete_self->select_operation == OPERATION_SELECT_PARENT) {
+        if (concrete_self->current_is_circular) {
+            status = STATUS_CYCLE;
+            choice = BSAL_HEURISTIC_CHOICE_NONE;
+        }
+    }
+
     BSAL_DEBUGGER_ASSERT(status != STATUS_NO_STATUS);
 
     if (concrete_self->select_operation == OPERATION_SELECT_CHILD) {
@@ -1741,6 +1779,7 @@ uint64_t bsal_unitig_walker_get_path_name(struct thorium_actor *self, int length
     char *kmer_sequence;
     char saved_symbol;
     struct bsal_memory_pool *ephemeral_memory;
+    uint64_t name;
 
     /*
      * Get a path name.
@@ -1765,7 +1804,6 @@ uint64_t bsal_unitig_walker_get_path_name(struct thorium_actor *self, int length
     hash_value1 = bsal_dna_kmer_canonical_hash(&kmer1,
                         concrete_self->kmer_length, &concrete_self->codec,
                        ephemeral_memory);
-    bsal_dna_kmer_destroy(&kmer1, ephemeral_memory);
 
     /*
      * Get the second hash value.
@@ -1780,12 +1818,21 @@ uint64_t bsal_unitig_walker_get_path_name(struct thorium_actor *self, int length
     hash_value2 = bsal_dna_kmer_canonical_hash(&kmer2,
                         concrete_self->kmer_length, &concrete_self->codec,
                        ephemeral_memory);
+
+    name = hash_value1;
+
+    if (bsal_dna_kmer_is_lower(&kmer2, &kmer1, concrete_self->kmer_length,
+                            &concrete_self->codec)) {
+        name = hash_value2;
+    }
+
+    bsal_dna_kmer_destroy(&kmer1, ephemeral_memory);
     bsal_dna_kmer_destroy(&kmer2, ephemeral_memory);
 
     /*
      * Return the lowest value.
      */
-    return bsal_order_minimum(hash_value1, hash_value2);
+    return name;
 }
 
 void bsal_unitig_walker_check_symmetry(struct thorium_actor *self, int parent_choice, int child_choice,
@@ -1970,7 +2017,11 @@ void bsal_unitig_walker_check_usage(struct thorium_actor *self, int *choice, int
 
         bsal_dna_kmer_print(kmer, concrete_self->kmer_length, &concrete_self->codec,
                     ephemeral_memory);
-        concrete_self->current_has_duplicate = 1;
+
+        printf("Starting kmer\n");
+        bsal_dna_kmer_print(&concrete_self->starting_kmer, concrete_self->kmer_length, &concrete_self->codec,
+                    ephemeral_memory);
+        concrete_self->current_is_circular = 1;
 
         *choice = BSAL_HEURISTIC_CHOICE_NONE;
         *status = STATUS_ALREADY_VISITED;
@@ -2040,4 +2091,72 @@ void bsal_unitig_walker_mark_vertex(struct thorium_actor *self, struct bsal_dna_
     thorium_message_destroy(&new_message);
 
     bsal_memory_pool_free(ephemeral_memory, new_buffer);
+}
+
+void bsal_unitig_walker_normalize_cycle(struct thorium_actor *self, int length, char *sequence)
+{
+    int i;
+    int selected_start;
+    uint64_t selected_hash;
+    struct bsal_dna_kmer selected_kmer;
+    int selected_is_canonical;
+    uint64_t hash_value1;
+    char saved_symbol;
+    struct bsal_dna_kmer kmer1;
+    struct bsal_unitig_walker *concrete_self;
+    struct bsal_memory_pool *ephemeral_memory;
+    char *kmer_sequence;
+
+    concrete_self = thorium_actor_concrete_actor(self);
+    ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
+    selected_start = -1;
+    selected_is_canonical = -1;
+
+    /*
+     * Find the canonical kmer with the lowest hash.
+     *
+     * N nucleotides = (N - k + 1) vertices
+     */
+
+    bsal_dna_kmer_init_empty(&selected_kmer);
+
+    for (i = 0; i < length - concrete_self->kmer_length + 1; ++i) {
+        kmer_sequence = sequence + i;
+        saved_symbol = kmer_sequence[concrete_self->kmer_length];
+        kmer_sequence[concrete_self->kmer_length] = '\0';
+
+        bsal_dna_kmer_init(&kmer1, kmer_sequence, &concrete_self->codec,
+                    ephemeral_memory);
+        kmer_sequence[concrete_self->kmer_length] = saved_symbol;
+
+        hash_value1 = bsal_dna_kmer_canonical_hash(&kmer1,
+                        concrete_self->kmer_length, &concrete_self->codec,
+                       ephemeral_memory);
+
+        if (selected_start == -1 || bsal_dna_kmer_is_lower(&kmer1, &selected_kmer, concrete_self->kmer_length,
+                                &concrete_self->codec)) {
+            selected_hash = hash_value1;
+            selected_start = i;
+            selected_is_canonical = bsal_dna_kmer_is_canonical(&kmer1, concrete_self->kmer_length,
+                            &concrete_self->codec);
+
+            bsal_dna_kmer_destroy(&selected_kmer, ephemeral_memory);
+            bsal_dna_kmer_init_copy(&selected_kmer, &kmer1, concrete_self->kmer_length,
+                            ephemeral_memory, &concrete_self->codec);
+        }
+
+        bsal_dna_kmer_destroy(&kmer1, ephemeral_memory);
+    }
+
+    /*
+     * at this point, do some rotation.
+     */
+    printf("DEBUG CYCLE bsal_unitig_walker_normalize_cycle length= %d selected_start= %d selected_is_canonical= %d\n",
+                    length, selected_start, selected_is_canonical);
+
+    bsal_dna_kmer_destroy(&selected_kmer, ephemeral_memory);
+
+    printf("CYCLE before %s\n", sequence);
+    bsal_string_rotate_c_string(sequence, length, selected_start);
+    printf("CYCLE after %s\n", sequence);
 }
