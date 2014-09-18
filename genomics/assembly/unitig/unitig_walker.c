@@ -1162,6 +1162,11 @@ void bsal_unitig_walker_dump_path(struct thorium_actor *self)
         bsal_unitig_walker_normalize_cycle(self, sequence_length, sequence);
     }
 
+    /*
+     * Select the good strand.
+     */
+    bsal_unitig_walker_select_strand(self, sequence_length, sequence);
+
     path_name = bsal_unitig_walker_get_path_name(self, sequence_length, sequence);
 
     bucket = bsal_map_get(&concrete_self->path_statuses, &concrete_self->path_index);
@@ -2167,3 +2172,60 @@ void bsal_unitig_walker_normalize_cycle(struct thorium_actor *self, int length, 
     bsal_string_rotate_path(sequence, length, selected_start, concrete_self->kmer_length, ephemeral_memory);
     printf("CYCLE after %s\n", sequence);
 }
+
+void bsal_unitig_walker_select_strand(struct thorium_actor *self, int length, char *sequence)
+{
+    struct bsal_dna_kmer kmer1;
+    struct bsal_dna_kmer kmer2;
+    char *kmer_sequence;
+    char saved_symbol;
+    struct bsal_memory_pool *ephemeral_memory;
+    struct bsal_unitig_walker *concrete_self;
+
+    concrete_self = thorium_actor_concrete_actor(self);
+    ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
+
+    /*
+     * Get the first kmer.
+     */
+    kmer_sequence = sequence;
+    saved_symbol = kmer_sequence[concrete_self->kmer_length];
+    kmer_sequence[concrete_self->kmer_length] = '\0';
+
+    bsal_dna_kmer_init(&kmer1, kmer_sequence, &concrete_self->codec,
+                    ephemeral_memory);
+    kmer_sequence[concrete_self->kmer_length] = saved_symbol;
+
+    BSAL_DEBUGGER_ASSERT(concrete_self->kmer_length <= length);
+
+    /*
+     * Get the second kmer.
+     */
+    kmer_sequence = sequence + length - concrete_self->kmer_length;
+
+    bsal_dna_kmer_init(&kmer2, kmer_sequence, &concrete_self->codec,
+                    ephemeral_memory);
+    bsal_dna_kmer_reverse_complement_self(&kmer2, concrete_self->kmer_length, &concrete_self->codec,
+                    ephemeral_memory);
+
+    if (length == 6936) {
+
+        printf("DEBUG_6936 ends\n");
+
+        bsal_dna_kmer_print(&kmer1, concrete_self->kmer_length, &concrete_self->codec,
+                    ephemeral_memory);
+        bsal_dna_kmer_print(&kmer2, concrete_self->kmer_length, &concrete_self->codec,
+                    ephemeral_memory);
+    }
+
+    if (bsal_dna_kmer_is_lower(&kmer2, &kmer1, concrete_self->kmer_length,
+                            &concrete_self->codec)) {
+
+        bsal_dna_helper_reverse_complement_in_place(sequence);
+    }
+
+    bsal_dna_kmer_destroy(&kmer1, ephemeral_memory);
+    bsal_dna_kmer_destroy(&kmer2, ephemeral_memory);
+}
+
+

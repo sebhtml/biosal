@@ -117,5 +117,6 @@ void bsal_unitig_walker_mark_vertex(struct thorium_actor *self, struct bsal_dna_
 
 int bsal_unitig_walker_select_old_version(struct thorium_actor *self, int *output_status);
 void bsal_unitig_walker_normalize_cycle(struct thorium_actor *self, int length, char *sequence);
+void bsal_unitig_walker_select_strand(struct thorium_actor *self, int length, char *sequence);
 
 #endif

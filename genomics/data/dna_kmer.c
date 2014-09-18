@@ -338,6 +338,7 @@ int bsal_dna_kmer_compare(struct bsal_dna_kmer *self, struct bsal_dna_kmer *othe
                 struct bsal_dna_codec *codec)
 {
     int encoded_length;
+
     encoded_length = bsal_dna_codec_encoded_length(codec, kmer_length);
 
     return memcmp(self->encoded_data, other->encoded_data, encoded_length);
