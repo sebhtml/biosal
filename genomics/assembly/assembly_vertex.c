@@ -101,7 +101,6 @@ void bsal_assembly_vertex_print(struct bsal_assembly_vertex *self)
                     self->coverage_depth);
 
     bsal_assembly_connectivity_print(&self->connectivity);
-    
 
     printf("\n");
 }
