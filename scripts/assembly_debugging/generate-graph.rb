@@ -61,7 +61,7 @@ last = sequence[i..(i + k - 2)]
 if first == last
     i = 0
     vertex = sequence[i..(i + k - 1)]
-    i = total_length - k 
+    i = total_length - k
     previous = sequence[i..(i + k - 1)]
 
     #puts previous + " -> " + vertex
