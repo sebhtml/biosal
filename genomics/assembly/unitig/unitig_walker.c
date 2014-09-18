@@ -13,6 +13,8 @@
 
 #include <core/helpers/order.h>
 
+#include <core/hash/murmur_hash_2_64_a.h>
+
 #include <core/system/command.h>
 #include <core/system/debugger.h>
 
@@ -30,6 +32,8 @@
 */
 
 #define MINIMUM_PATH_LENGTH_IN_NUCLEOTIDES 100
+
+#define SIGNATURE_SEED (0xd948c134)
 
 /*
 #define DEBUG_SYNCHRONIZATION
@@ -1078,6 +1082,7 @@ void bsal_unitig_walker_dump_path(struct thorium_actor *self)
     uint64_t path_name;
     struct bsal_path_status *bucket;
     int victory;
+    uint64_t signature;
 
     concrete_self = thorium_actor_concrete_actor(self);
     ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
@@ -1237,8 +1242,11 @@ void bsal_unitig_walker_dump_path(struct thorium_actor *self)
                     path_name, sequence_length, start_position);
 #endif
 
+        signature = bsal_murmur_hash_2_64_a(sequence, sequence_length, SIGNATURE_SEED);
+
         bsal_unitig_walker_write(self, path_name,
-                    sequence, sequence_length, concrete_self->current_is_circular);
+                    sequence, sequence_length, concrete_self->current_is_circular,
+                    signature);
     }
 
     bsal_memory_pool_free(ephemeral_memory, sequence);
@@ -1535,7 +1543,7 @@ int bsal_unitig_walker_select_old_version(struct thorium_actor *self, int *outpu
 }
 
 void bsal_unitig_walker_write(struct thorium_actor *self, uint64_t name,
-                char *sequence, int sequence_length, int circular)
+                char *sequence, int sequence_length, int circular, uint64_t signature)
 {
     struct bsal_unitig_walker *concrete_self;
     int column_width;
@@ -1561,7 +1569,7 @@ void bsal_unitig_walker_write(struct thorium_actor *self, uint64_t name,
 #endif
 
     bsal_buffered_file_writer_printf(&concrete_self->writer,
-                    ">path_%" PRIu64 " length=%d circular=%d\n",
+                    ">path_%" PRIu64 " length=%d circular=%d signature=%" PRIx64 "\n",
                     name,
                     sequence_length);
 
