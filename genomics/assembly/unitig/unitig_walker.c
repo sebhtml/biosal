@@ -91,11 +91,14 @@ struct thorium_script bsal_unitig_walker_script = {
 void bsal_unitig_walker_init(struct thorium_actor *self)
 {
     struct bsal_unitig_walker *concrete_self;
-    char *directory_name;
-    char *path;
     int argc;
     char **argv;
+
+#ifdef BSAL_UNITIG_WALKER_USE_PRIVATE_FILE
     char name_as_string[64];
+    char *directory_name;
+    char *path;
+#endif
     int name;
 
     concrete_self = thorium_actor_concrete_actor(self);
@@ -178,9 +181,13 @@ void bsal_unitig_walker_init(struct thorium_actor *self)
 
     concrete_self->path_index = 0;
 
+#ifdef BSAL_UNITIG_WALKER_USE_PRIVATE_FILE
     directory_name = bsal_command_get_output_directory(argc, argv);
+#endif
 
     name = thorium_actor_name(self);
+
+#ifdef BSAL_UNITIG_WALKER_USE_PRIVATE_FILE
     sprintf(name_as_string, "%d", name);
     bsal_string_init(&concrete_self->file_path, directory_name);
     bsal_string_append(&concrete_self->file_path, "/unitig_walker_");
@@ -190,6 +197,7 @@ void bsal_unitig_walker_init(struct thorium_actor *self)
     path = bsal_string_get(&concrete_self->file_path);
 
     bsal_buffered_file_writer_init(&concrete_self->writer, path);
+#endif
 
     concrete_self->fetch_operation = OPERATION_FETCH_FIRST;
     concrete_self->select_operation = OPERATION_SELECT_CHILD;
@@ -207,9 +215,12 @@ void bsal_unitig_walker_destroy(struct thorium_actor *self)
 
     bsal_map_destroy(&concrete_self->path_statuses);
     bsal_dna_codec_destroy(&concrete_self->codec);
+
+#ifdef BSAL_UNITIG_WALKER_USE_PRIVATE_FILE
     bsal_string_destroy(&concrete_self->file_path);
 
     bsal_buffered_file_writer_destroy(&concrete_self->writer);
+#endif
 
     bsal_set_destroy(&concrete_self->visited);
 

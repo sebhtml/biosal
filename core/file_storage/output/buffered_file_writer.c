@@ -8,7 +8,9 @@
 
 void bsal_buffered_file_writer_init(struct bsal_buffered_file_writer *self, const char *file)
 {
-    self->descriptor = fopen(file, "w");
+    bsal_string_init(&self->file, file);
+
+    self->descriptor = NULL;
 
     /*
      * Buffer for content
@@ -56,6 +58,8 @@ void bsal_buffered_file_writer_destroy(struct bsal_buffered_file_writer *self)
         self->format_buffer = NULL;
         self->format_buffer_capacity = 0;
     }
+
+    bsal_string_destroy(&self->file);
 }
 
 int bsal_buffered_file_writer_write(struct bsal_buffered_file_writer *self,
@@ -91,7 +95,7 @@ int bsal_buffered_file_writer_write(struct bsal_buffered_file_writer *self,
      */
     } else {
 
-        fwrite(data, 1, length, self->descriptor);
+        bsal_buffered_file_writer_write_back(self, data, length);
     }
 
     return length;
@@ -155,10 +159,27 @@ int bsal_buffered_file_writer_flush(struct bsal_buffered_file_writer *self)
     /*
      * \see http://www.cplusplus.com/reference/cstdio/fwrite/
      */
-    fwrite(self->buffer, 1, self->buffer_length, self->descriptor);
+    bsal_buffered_file_writer_write_back(self, self->buffer, self->buffer_length);
 
     value = self->buffer_length;
     self->buffer_length = 0;
 
     return value;
+}
+
+size_t bsal_buffered_file_writer_write_back(struct bsal_buffered_file_writer *self,
+                const void *buffer, size_t count)
+{
+    size_t size;
+    char *file_name;
+
+    if (self->descriptor == NULL) {
+
+        file_name = bsal_string_get(&self->file);
+        self->descriptor = fopen(file_name, "w");
+    }
+
+    size = 1;
+
+    return fwrite(buffer, size, count, self->descriptor);
 }

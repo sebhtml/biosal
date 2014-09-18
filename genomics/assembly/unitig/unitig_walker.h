@@ -22,6 +22,8 @@
 #define ACTION_ASSEMBLY_GET_VERTICES_AND_SELECT 0x0000122a
 #define ACTION_ASSEMBLY_GET_VERTICES_AND_SELECT_REPLY 0x00000a0b
 
+#define BSAL_UNITIG_WALKER_USE_PRIVATE_FILE
+
 /*
  * A dummy walker to test the concept.
  */
@@ -43,8 +45,10 @@ struct bsal_unitig_walker {
 
     int dried_stores;
 
+#ifdef BSAL_UNITIG_WALKER_USE_PRIVATE_FILE
     struct bsal_buffered_file_writer writer;
     struct bsal_string file_path;
+#endif
 
     int has_starting_vertex;
 

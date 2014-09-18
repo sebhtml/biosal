@@ -7,6 +7,8 @@ grep '>' $file > names
 
 cat names|awk '{print $1}' | sed 's/>//g' | sort | uniq > uniq-names
 
+echo "Nothing is good."
+
 for i in $(cat uniq-names)
 do
     echo -n $i
