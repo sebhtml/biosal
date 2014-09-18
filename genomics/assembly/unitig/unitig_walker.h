@@ -72,6 +72,9 @@ struct bsal_unitig_walker {
     int select_operation;
 
     struct bsal_unitig_heuristic heuristic;
+
+    int writer_process;
+    int start_messages;
 };
 
 extern struct thorium_script bsal_unitig_walker_script;

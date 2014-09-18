@@ -203,6 +203,9 @@ void bsal_unitig_manager_receive(struct thorium_actor *self, struct thorium_mess
 
         bsal_timer_start(&concrete_self->timer);
         concrete_self->completed = 0;
+
+        thorium_actor_send_range_int(self, &concrete_self->walkers,
+                        ACTION_SET_CONSUMER, concrete_self->writer_process);
         thorium_actor_send_range_vector(self, &concrete_self->walkers,
                         ACTION_START, &concrete_self->graph_stores);
 

@@ -100,6 +100,9 @@ void bsal_unitig_walker_init(struct thorium_actor *self)
 
     concrete_self = thorium_actor_concrete_actor(self);
 
+    concrete_self->writer_process = THORIUM_ACTOR_NOBODY;
+    concrete_self->start_messages = 0;
+
     /*
      * Initialize the memory pool first.
      */
@@ -254,6 +257,23 @@ void bsal_unitig_walker_receive(struct thorium_actor *self, struct thorium_messa
 
     if (tag == ACTION_START) {
 
+        /*
+         * This is useless because ACTION_START is configured to be handled
+         * by bsal_unitig_walker_start().
+         */
+        bsal_unitig_walker_start(self, message);
+
+    } else if (tag == ACTION_SET_CONSUMER) {
+
+        thorium_message_unpack_int(message, 0, &concrete_self->writer_process);
+
+        thorium_actor_send_reply_empty(self, ACTION_SET_CONSUMER_REPLY);
+
+        /*
+         * Try to start now.
+         */
+        bsal_unitig_walker_start(self, message);
+
     } else if (tag == ACTION_MARK_VERTEX_AS_VISITED_REPLY) {
 
         /*
@@ -327,18 +347,28 @@ void bsal_unitig_walker_start(struct thorium_actor *self, struct thorium_message
     return;
 #endif
 
+    concrete_self = thorium_actor_concrete_actor(self);
+
+    /*
+     * 2 start messages are required: ACTION_START and ACTION_SET_CONSUMER
+     */
+    ++concrete_self->start_messages;
+
+    if (concrete_self->start_messages != 2) {
+        return;
+    }
+
     source = thorium_message_source(message);
     buffer = thorium_message_buffer(message);
-    concrete_self = thorium_actor_concrete_actor(self);
     concrete_self->source = source;
 
     bsal_vector_unpack(&concrete_self->graph_stores, buffer);
     size = bsal_vector_size(&concrete_self->graph_stores);
 
-    printf("%s/%d is ready to surf the graph (%d stores)!\n",
+    printf("%s/%d is ready to surf the graph (%d stores => writer/%d)!\n",
                         thorium_actor_script_name(self),
                         thorium_actor_name(self),
-                        size);
+                        size, concrete_self->writer_process);
 
     /*
      * Use a random starting point.
