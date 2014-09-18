@@ -12,6 +12,8 @@
 
 #include <genomics/helpers/dna_helper.h>
 
+#include <core/patterns/writer_process.h>
+
 #include <core/helpers/order.h>
 
 #include <core/hash/murmur_hash_2_64_a.h>
@@ -1598,6 +1600,9 @@ void bsal_unitig_walker_write(struct thorium_actor *self, uint64_t name,
     struct bsal_memory_pool *ephemeral_memory;
     int block_length;
     int i;
+    size_t required;
+    size_t position;
+    char *message_buffer;
 
     /*
      * \see http://en.wikipedia.org/wiki/FASTA_format
@@ -1609,17 +1614,21 @@ void bsal_unitig_walker_write(struct thorium_actor *self, uint64_t name,
 
     buffer = bsal_memory_pool_allocate(ephemeral_memory, column_width + 1);
 
-    i = 0;
+    required = 0;
 
 #if 0
     printf("LENGTH=%d\n", sequence_length);
 #endif
 
-    bsal_buffered_file_writer_printf(&concrete_self->writer,
+    /*
+     * Calculate the required size.
+     */
+    required += snprintf(NULL, 0,
                     ">path_%" PRIu64 " length=%d circular=%d signature=%" PRIx64 "\n",
                     name,
-                    sequence_length);
+                    sequence_length, circular, signature);
 
+    i = 0;
     while (i < sequence_length) {
 
         block_length = sequence_length - i;
@@ -1631,18 +1640,47 @@ void bsal_unitig_walker_write(struct thorium_actor *self, uint64_t name,
         bsal_memory_copy(buffer, sequence + i, block_length);
         buffer[block_length] = '\0';
 
-#if 0
-        printf("BLOCK %d <<%s>>\n",
-                        block_length, buffer);
-#endif
+        required += snprintf(NULL, 0, "%s\n", buffer);
 
-        bsal_buffered_file_writer_printf(&concrete_self->writer,
+        i += block_length;
+    }
+
+    /*
+     * Generate message.
+     */
+
+    message_buffer = bsal_memory_pool_allocate(ephemeral_memory, required + 1);
+
+    position = 0;
+    position += sprintf(message_buffer + position,
+                    ">path_%" PRIu64 " length=%d circular=%d signature=%" PRIx64 "\n",
+                    name,
+                    sequence_length, circular, signature);
+
+    i = 0;
+    while (i < sequence_length) {
+
+        block_length = sequence_length - i;
+
+        if (column_width < block_length) {
+            block_length = column_width;
+        }
+
+        bsal_memory_copy(buffer, sequence + i, block_length);
+        buffer[block_length] = '\0';
+        position += sprintf(message_buffer + position,
                         "%s\n", buffer);
 
         i += block_length;
     }
 
+    BSAL_DEBUGGER_ASSERT(position == required);
+
+    thorium_actor_send_buffer(self, concrete_self->writer_process,
+                    ACTION_WRITE, position, message_buffer);
+
     bsal_memory_pool_free(ephemeral_memory, buffer);
+    bsal_memory_pool_free(ephemeral_memory, message_buffer);
 }
 
 void bsal_unitig_walker_make_decision(struct thorium_actor *self)
