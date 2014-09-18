@@ -454,7 +454,7 @@ int thorium_actor_spawn_real(struct thorium_actor *self, int script)
     name = thorium_node_spawn(thorium_actor_node(self), script);
 
     if (name == THORIUM_ACTOR_NOBODY) {
-        printf("Error: problem with spawning! did you register the script ?\n");
+        printf("Error: problem with spawning! did you register the script (%x)?\n", script);
         return name;
     }
 

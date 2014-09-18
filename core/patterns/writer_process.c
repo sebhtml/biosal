@@ -17,6 +17,10 @@ void bsal_writer_process_init(struct thorium_actor *self)
     concrete_self = thorium_actor_concrete_actor(self);
 
     concrete_self->has_file = 0;
+
+    printf("%s/%d is ready to do input/output operations\n",
+                    thorium_actor_script_name(self),
+                    thorium_actor_name(self));
 }
 
 void bsal_writer_process_destroy(struct thorium_actor *self)
@@ -32,6 +36,7 @@ void bsal_writer_process_receive(struct thorium_actor *self, struct thorium_mess
 {
     int action;
     int count;
+    int source;
     char *buffer;
     char *file_name;
     struct bsal_writer_process *concrete_self;
@@ -41,6 +46,7 @@ void bsal_writer_process_receive(struct thorium_actor *self, struct thorium_mess
     action = thorium_message_action(message);
     count = thorium_message_count(message);
     buffer = thorium_message_buffer(message);
+    source = thorium_message_source(message);
 
     if (action == ACTION_OPEN) {
 
@@ -75,6 +81,13 @@ void bsal_writer_process_receive(struct thorium_actor *self, struct thorium_mess
         concrete_self->has_file = 0;
 
         thorium_actor_send_reply_empty(self, ACTION_CLOSE_REPLY);
+
+    } else if (action == ACTION_ASK_TO_STOP
+                    && source == thorium_actor_supervisor(self)) {
+
+        thorium_actor_send_to_self_empty(self, ACTION_STOP);
+
+        thorium_actor_send_reply_empty(self, ACTION_ASK_TO_STOP_REPLY);
     }
 }
 

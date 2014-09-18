@@ -22,6 +22,8 @@ struct bsal_unitig_manager {
 
     struct bsal_timer timer;
     int state;
+
+    int writer_process;
 };
 
 extern struct thorium_script bsal_unitig_manager_script;

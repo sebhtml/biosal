@@ -15,7 +15,11 @@
 #include <genomics/input/input_controller.h>
 
 #include <core/system/command.h>
+
 #include <core/file_storage/directory.h>
+
+#include <core/patterns/manager.h>
+#include <core/patterns/writer_process.h>
 
 #include <stdio.h>
 #include <string.h>
@@ -27,7 +31,7 @@ struct thorium_script spate_script = {
     .receive = spate_receive,
     .size = sizeof(struct spate),
     .name = "spate",
-    .version = "0.0.1-development",
+    .version = "0.2.0-development",
     .author = "Sebastien Boisvert",
     .description = "Exact, convenient, and scalable metagenome assembly and genome isolation for everyone"
 };
@@ -84,6 +88,8 @@ void spate_init(struct thorium_actor *self)
                     &bsal_dna_kmer_counter_kernel_script);
     thorium_actor_add_script(self, SCRIPT_MANAGER,
                     &bsal_manager_script);
+    thorium_actor_add_script(self, SCRIPT_WRITER_PROCESS,
+                    &bsal_writer_process_script);
     thorium_actor_add_script(self, SCRIPT_AGGREGATOR,
                     &bsal_aggregator_script);
     thorium_actor_add_script(self, SCRIPT_KMER_STORE,

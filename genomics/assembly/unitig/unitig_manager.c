@@ -5,12 +5,14 @@
 #include "unitig_walker.h"
 
 #include <core/patterns/manager.h>
+#include <core/patterns/writer_process.h>
 
-#define UNITIG_VISITOR_COUNT_PER_WORKER 512
-#define UNITIG_WALKER_COUNT_PER_WORKER 32
+#define UNITIG_VISITOR_COUNT_PER_WORKER     512
+#define UNITIG_WALKER_COUNT_PER_WORKER      32
 
-#define STATE_VISITORS 0
-#define STATE_WALKERS 1
+#define STATE_SPAWN_WRITER  0
+#define STATE_VISITORS      1
+#define STATE_WALKERS       2
 
 struct thorium_script bsal_unitig_manager_script = {
     .identifier = SCRIPT_UNITIG_MANAGER,
@@ -89,8 +91,21 @@ void bsal_unitig_manager_receive(struct thorium_actor *self, struct thorium_mess
 
         bsal_vector_unpack(&concrete_self->spawners, buffer);
 
-        concrete_self->state = STATE_VISITORS;
+        spawner = thorium_actor_get_random_spawner(self, &concrete_self->spawners);
 
+        concrete_self->state = STATE_SPAWN_WRITER;
+
+        thorium_actor_send_int(self, spawner, ACTION_SPAWN, SCRIPT_WRITER_PROCESS);
+
+    } else if (tag == ACTION_SPAWN_REPLY
+                    && concrete_self->state == STATE_SPAWN_WRITER) {
+
+        thorium_message_unpack_int(message, 0, &concrete_self->writer_process);
+
+        /*
+         * Spawn visitors.
+         */
+        concrete_self->state = STATE_VISITORS;
         thorium_actor_send_to_self_empty(self, ACTION_PING);
 
     } else if (tag == ACTION_PING) {
@@ -111,10 +126,13 @@ void bsal_unitig_manager_receive(struct thorium_actor *self, struct thorium_mess
 
     } else if (tag == ACTION_ASK_TO_STOP) {
 
-        thorium_actor_send_to_self_empty(self, ACTION_STOP);
+        thorium_actor_send_empty(self, concrete_self->writer_process,
+                        ACTION_ASK_TO_STOP);
 
         thorium_actor_send_empty(self, concrete_self->manager,
                         ACTION_ASK_TO_STOP);
+
+        thorium_actor_send_to_self_empty(self, ACTION_STOP);
 
         thorium_actor_send_reply_empty(self, ACTION_ASK_TO_STOP_REPLY);
 
