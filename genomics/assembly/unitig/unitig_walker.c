@@ -2157,6 +2157,6 @@ void bsal_unitig_walker_normalize_cycle(struct thorium_actor *self, int length, 
     bsal_dna_kmer_destroy(&selected_kmer, ephemeral_memory);
 
     printf("CYCLE before %s\n", sequence);
-    bsal_string_rotate_c_string(sequence, length, selected_start);
+    bsal_string_rotate_path(sequence, length, selected_start, concrete_self->kmer_length, ephemeral_memory);
     printf("CYCLE after %s\n", sequence);
 }

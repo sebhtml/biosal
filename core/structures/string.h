@@ -2,6 +2,8 @@
 #ifndef BSAL_STRING_H
 #define BSAL_STRING_H
 
+struct bsal_memory_pool;
+
 /*
  * A string of characters (bytes).
  */
@@ -29,5 +31,8 @@ int bsal_string_length(struct bsal_string *self);
 void bsal_string_rotate_c_string(char *sequence, int length, int new_start);
 void bsal_string_swap_c_string(char *sequence, int i, int j);
 void bsal_string_reverse_c_string(char *sequence, int start, int end);
+
+void bsal_string_rotate_path(char *sequence, int length, int rotation, int kmer_length,
+                struct bsal_memory_pool *pool);
 
 #endif

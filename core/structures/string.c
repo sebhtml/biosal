@@ -2,6 +2,7 @@
 #include "string.h"
 
 #include <core/system/memory.h>
+#include <core/system/memory_pool.h>
 #include <core/system/packer.h>
 #include <core/system/debugger.h>
 
@@ -212,4 +213,50 @@ void bsal_string_reverse_c_string(char *sequence, int start, int end)
 #ifdef DEBUG_STRING
     printf("reverse after %s\n", sequence);
 #endif
+}
+
+void bsal_string_rotate_path(char *sequence, int length, int rotation, int kmer_length,
+                struct bsal_memory_pool *pool)
+{
+    char *buffer;
+
+    /*
+     * Impossible.
+     */
+    if (length < kmer_length) {
+        return;
+    }
+
+    /*
+     * Simplify the rotation
+     */
+    rotation %= length;
+
+    buffer = bsal_memory_pool_allocate(pool, length);
+
+    /*
+     * Algorithm:
+     *
+     * 1. Copy (l - r) from old @ r to new @ 0
+     * 2. Copy (r - k + 1) from old @ (k - 1) to new @ (l - r)   (only if (r - k + 1 > 0))
+     * 3. Copy (k - 1) from new @ 0 to new @ (l - k + 1)
+     */
+
+    bsal_memory_copy(buffer + 0, sequence + rotation, (length - rotation));
+
+    /*
+     * Copy the middle
+     * */
+    if ((rotation - kmer_length + 1) > 0)
+        bsal_memory_copy(buffer + (length - rotation), sequence + (kmer_length - 1),
+                    (rotation - kmer_length + 1));
+
+    bsal_memory_copy(buffer + (length - kmer_length + 1), buffer + 0, (kmer_length - 1));
+
+    /*
+     * Copy the new sequence.
+     */
+    bsal_memory_copy(sequence, buffer, length);
+
+    bsal_memory_pool_free(pool, buffer);
 }
