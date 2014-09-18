@@ -1238,7 +1238,7 @@ void bsal_unitig_walker_dump_path(struct thorium_actor *self)
 #endif
 
         bsal_unitig_walker_write(self, path_name,
-                    sequence, sequence_length);
+                    sequence, sequence_length, concrete_self->current_is_circular);
     }
 
     bsal_memory_pool_free(ephemeral_memory, sequence);
@@ -1535,8 +1535,7 @@ int bsal_unitig_walker_select_old_version(struct thorium_actor *self, int *outpu
 }
 
 void bsal_unitig_walker_write(struct thorium_actor *self, uint64_t name,
-                char *sequence,
-                int sequence_length)
+                char *sequence, int sequence_length, int circular)
 {
     struct bsal_unitig_walker *concrete_self;
     int column_width;
@@ -1562,7 +1561,7 @@ void bsal_unitig_walker_write(struct thorium_actor *self, uint64_t name,
 #endif
 
     bsal_buffered_file_writer_printf(&concrete_self->writer,
-                    ">path_%" PRIu64 " length=%d\n",
+                    ">path_%" PRIu64 " length=%d circular=%d\n",
                     name,
                     sequence_length);
 
