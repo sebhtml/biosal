@@ -9,6 +9,7 @@
 #include <genomics/data/coverage_distribution.h>
 #include <genomics/data/dna_kmer.h>
 #include <genomics/data/dna_codec.h>
+
 #include <genomics/helpers/dna_helper.h>
 
 #include <core/helpers/order.h>

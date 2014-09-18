@@ -6,6 +6,7 @@ CORE_OBJECTS=
 # core stuff
 
 CORE_OBJECTS += core/patterns/manager.o
+CORE_OBJECTS += core/patterns/writer_process.o
 
 CORE_OBJECTS += core/hash/murmur_hash_2_64_a.o
 
