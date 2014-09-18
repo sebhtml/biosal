@@ -7,6 +7,10 @@
 #include <core/patterns/manager.h>
 #include <core/patterns/writer_process.h>
 
+#include <core/system/command.h>
+
+#include <string.h>
+
 #define UNITIG_VISITOR_COUNT_PER_WORKER     512
 #define UNITIG_WALKER_COUNT_PER_WORKER      32
 
@@ -81,8 +85,15 @@ void bsal_unitig_manager_receive(struct thorium_actor *self, struct thorium_mess
     int expected;
     int script;
     int actor_count;
+    int source;
+    struct bsal_string file_name;
+    char *directory;
+    int argc;
+    char **argv;
+    char *path;
 
     tag = thorium_message_action(message);
+    source = thorium_message_source(message);
     buffer = thorium_message_buffer(message);
 
     concrete_self = (struct bsal_unitig_manager *)thorium_actor_concrete_actor(self);
@@ -102,6 +113,25 @@ void bsal_unitig_manager_receive(struct thorium_actor *self, struct thorium_mess
 
         thorium_message_unpack_int(message, 0, &concrete_self->writer_process);
 
+        /*
+         * open the file now.
+         */
+
+        argc = thorium_actor_argc(self);
+        argv = thorium_actor_argv(self);
+        directory = bsal_command_get_output_directory(argc, argv);
+        bsal_string_init(&file_name, directory);
+        bsal_string_append(&file_name, "/");
+        bsal_string_append(&file_name, "unitigs.fasta");
+        path = bsal_string_get(&file_name);
+
+        thorium_actor_send_buffer(self, concrete_self->writer_process,
+                        ACTION_OPEN, strlen(path) + 1, path);
+
+        bsal_string_destroy(&file_name);
+
+    } else if (tag == ACTION_OPEN_REPLY
+                    && source == concrete_self->writer_process) {
         /*
          * Spawn visitors.
          */

@@ -77,13 +77,22 @@ void bsal_writer_process_receive(struct thorium_actor *self, struct thorium_mess
         }
 
         bsal_buffered_file_writer_destroy(&concrete_self->writer);
-
         concrete_self->has_file = 0;
 
         thorium_actor_send_reply_empty(self, ACTION_CLOSE_REPLY);
 
     } else if (action == ACTION_ASK_TO_STOP
                     && source == thorium_actor_supervisor(self)) {
+
+        /*
+         * Close the file if it is open
+         * right now.
+         */
+        if (concrete_self->has_file) {
+
+            bsal_buffered_file_writer_destroy(&concrete_self->writer);
+            concrete_self->has_file = 0;
+        }
 
         thorium_actor_send_to_self_empty(self, ACTION_STOP);
 
