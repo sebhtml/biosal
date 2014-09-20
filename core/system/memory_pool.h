@@ -38,7 +38,7 @@
 /*
  * The block size for the memory pool.
  */
-#define BSAL_MEMORY_POOL_MESSAGE_BUFFER_BLOCK_SIZE (4 * 1024)
+#define BSAL_MEMORY_POOL_MESSAGE_BUFFER_BLOCK_SIZE (2 * 1024 * 1024)
 
 /*
  * A memory pool for genomics.
