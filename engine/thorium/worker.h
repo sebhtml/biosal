@@ -16,6 +16,7 @@
 #include <core/system/memory_pool.h>
 #include <core/system/timer.h>
 #include <core/system/thread.h>
+#include <core/system/debugger.h>
 
 #include <stdint.h>
 
@@ -23,10 +24,6 @@ struct bsal_work;
 struct thorium_node;
 struct thorium_message;
 struct thorium_scheduler;
-
-/*
-#define THORIUM_WORKER_DEBUG_INJECTION
-*/
 
 /*
  * Inject clean worker buffers into the worker rings

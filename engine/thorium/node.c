@@ -89,8 +89,11 @@ void thorium_node_init(struct thorium_node *node, int *argc, char ***argv)
     int processor;
 
 #ifdef THORIUM_NODE_DEBUG_INJECTION
+    node->counter_allocated_node_inbound_buffers = 0;
+    node->counter_freed_multiplexed_inbound_buffers = 0;
+    node->counter_allocated_node_outbound_buffers = 0;
     node->counter_freed_thorium_outbound_buffers = 0;
-    node->counter_freed_injected_inbound_core_buffers = 0;
+    node->counter_freed_injected_node_inbound_buffers = 0;
     node->counter_injected_buffers_for_local_workers = 0;
     node->counter_injected_transport_outbound_buffer_for_workers = 0;
 #endif
@@ -406,13 +409,15 @@ void thorium_node_destroy(struct thorium_node *node)
           bsal_fast_queue_size(&node->clean_outbound_buffers_to_inject));
 
     printf("node/%d \n"
-             "   counter_freed_injected_inbound_core_buffers %d\n"
+             "   counter_allocated_node_inbound_buffers %d\n"
+             "   counter_freed_injected_node_inbound_buffers %d\n"
              "   counter_freed_thorium_outbound_buffers %d\n"
              "   counter_injected_buffers_for_local_workers %d\n"
              "   counter_injected_transport_outbound_buffer_for_workers %d\n"
              "   active_requests %d\n",
              node->name,
-             node->counter_freed_injected_inbound_core_buffers,
+             node->counter_allocated_node_inbound_buffers,
+             node->counter_freed_injected_node_inbound_buffers,
              node->counter_freed_thorium_outbound_buffers,
              node->counter_injected_buffers_for_local_workers,
              node->counter_injected_transport_outbound_buffer_for_workers,
@@ -1280,10 +1285,11 @@ void thorium_node_dispatch_message(struct thorium_node *node, struct thorium_mes
             /*
              * This is a Thorium core buffer since the workers are not authorized to talk to
              * the Thorium core.
+             *
+             * Also, this system buffer needs to be freed now anyway because there is no other
+             * place where it will have the change to be freed.
              */
-            /*
             bsal_memory_pool_free(&node->inbound_message_memory_pool, buffer);
-            */
         }
 
         return;
@@ -1872,6 +1878,7 @@ void thorium_node_run_loop(struct thorium_node *node)
     struct thorium_message message;
     int credits;
     const int starting_credits = 256;
+    void *buffer;
 
 #ifdef THORIUM_NODE_ENABLE_INSTRUMENTATION
     int ticks;
@@ -1943,6 +1950,12 @@ void thorium_node_run_loop(struct thorium_node *node)
         if (bsal_bitmap_get_bit_uint32_t(&node->flags, FLAG_USE_TRANSPORT)
             && thorium_transport_receive(&node->transport, &message)) {
 
+#ifdef THORIUM_NODE_DEBUG_INJECTION
+            /*
+             * This gives a list of inbound buffers allocated by the node.
+             */
+            ++node->counter_allocated_node_inbound_buffers;
+#endif
             /*
              * Prepare the message
              */
@@ -1954,6 +1967,16 @@ void thorium_node_run_loop(struct thorium_node *node)
 
             if (!thorium_message_multiplexer_demultiplex(&node->multiplexer, &message)) {
                 thorium_node_dispatch_message(node, &message);
+            } else {
+                /*
+                 * Don't leak memory
+                 */
+#ifdef THORIUM_NODE_DEBUG_INJECTION
+                ++node->counter_freed_multiplexed_inbound_buffers;
+#endif
+
+                buffer = thorium_message_buffer(&message);
+                bsal_memory_pool_free(&node->inbound_message_memory_pool, buffer);
             }
         }
 
@@ -2189,6 +2212,9 @@ void thorium_node_do_message_triage(struct thorium_node *self)
     /*
      * First, verify if any message needs to be processed from
      * the worker pool.
+     *
+     * Such messages are for example messages that could not be sent to a
+     * given already-dead actor.
      */
     if (thorium_worker_pool_dequeue_message_for_triage(&self->worker_pool, &message)) {
 
@@ -2199,8 +2225,10 @@ void thorium_node_do_message_triage(struct thorium_node *self)
 
     worker = thorium_worker_pool_get_worker(&self->worker_pool, self->worker_for_triage);
 
+    /*
+     * Position the index on the next worker to process.
+     */
     ++self->worker_for_triage;
-
     if (self->worker_for_triage == worker_count) {
         self->worker_for_triage = 0;
     }
@@ -2228,23 +2256,23 @@ void thorium_node_recycle_message(struct thorium_node *self, struct thorium_mess
 
         bsal_memory_pool_free(&self->inbound_message_memory_pool, buffer);
 #ifdef THORIUM_NODE_DEBUG_INJECTION
-        ++self->counter_freed_injected_inbound_core_buffers;
+        ++self->counter_freed_injected_node_inbound_buffers;
 #endif
 
-        return;
-    }
+    } else {
 
-    /*
-     * Otherwise, this is a worker buffer.
-     */
-    thorium_worker_buffer_init(&worker_buffer, worker_name, buffer);
-    thorium_node_free_worker_buffer(self, &worker_buffer);
+        /*
+         * Otherwise, this is a worker buffer.
+         */
+        thorium_worker_buffer_init(&worker_buffer, worker_name, buffer);
+        thorium_node_free_worker_buffer(self, &worker_buffer);
 
 #ifdef THORIUM_NODE_DEBUG_INJECTION
-    ++self->counter_injected_buffers_for_local_workers;
+        ++self->counter_injected_buffers_for_local_workers;
 #endif
 
-    thorium_worker_buffer_destroy(&worker_buffer);
+        thorium_worker_buffer_destroy(&worker_buffer);
+    }
 }
 
 void thorium_node_prepare_received_message(struct thorium_node *self, struct thorium_message *message)
@@ -2372,10 +2400,10 @@ void thorium_node_inject_outbound_buffer(struct thorium_node *self, struct thori
         bsal_memory_pool_free(&self->outbound_message_memory_pool,
                                 buffer);
 #ifdef THORIUM_NODE_DEBUG_INJECTION
-        ++node->counter_freed_thorium_outbound_buffers;
+        ++self->counter_freed_thorium_outbound_buffers;
 #endif
 
-#ifdef THORIUM_NODE_DEBUG_INJECTION
+#ifdef THORIUM_NODE_DEBUG_INJECTION_DETAILS
         printf("Worker= %d\n", worker);
 #endif
 

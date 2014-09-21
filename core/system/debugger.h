@@ -23,14 +23,21 @@
 /*
  * Enable leak detection using
  * BSAL_DEBUGGER_LEAK_DETECTION_BEGIN and BSAL_DEBUGGER_LEAK_DETECTION_END
- */
 #define BSAL_DEBUGGER_ENABLE_LEAK_DETECTION
+ */
+
+/*
+ * Enable event counter for injections
+ */
+
+/*
+ * Enable verification of injections.
+#define THORIUM_WORKER_DEBUG_INJECTION
+ */
 
 #endif
 
 #include "tracer.h"
-
-#include <engine/thorium/node.h>
 
 #include <stdio.h>
 #include <stdlib.h>

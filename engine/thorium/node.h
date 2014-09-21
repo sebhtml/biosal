@@ -16,10 +16,7 @@
 #include <core/system/lock.h>
 #include <core/system/counter.h>
 #include <core/system/memory_pool.h>
-
-/*
-#define THORIUM_NODE_DEBUG_INJECTION
-*/
+#include <core/system/debugger.h>
 
 /*
  * \see http://pubs.opengroup.org/onlinepubs/009696699/basedefs/signal.h.html
@@ -207,8 +204,12 @@ struct thorium_node {
 #endif
 
 #ifdef THORIUM_NODE_DEBUG_INJECTION
+    int counter_allocated_node_inbound_buffers;
+    int counter_allocated_node_outbound_buffers;
+
     int counter_freed_thorium_outbound_buffers;
-    int counter_freed_injected_inbound_core_buffers;
+    int counter_freed_injected_node_inbound_buffers;
+    int counter_freed_multiplexed_inbound_buffers;
     int counter_injected_buffers_for_local_workers;
     int counter_injected_transport_outbound_buffer_for_workers;
 #endif
