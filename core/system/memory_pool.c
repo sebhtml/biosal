@@ -25,6 +25,13 @@
 #define OPERATION_ALLOCATE  0
 #define OPERATION_FREE      1
 
+/*
+ * Parameters for debugging.
+ */
+/*
+#define CHECK_DOUBLE_FREE
+#define CHECK_LEAKS
+*/
 void bsal_memory_pool_init(struct bsal_memory_pool *self, int block_size, int name)
 {
     bsal_map_init(&self->recycle_bin, sizeof(int), sizeof(struct bsal_queue));
@@ -550,8 +557,32 @@ void bsal_memory_pool_profile(struct bsal_memory_pool *self, int operation, size
 
 int bsal_memory_pool_has_leaks(struct bsal_memory_pool *self)
 {
-    return 0;
-#if 0
+#ifdef CHECK_LEAKS
     return self->profile_allocate_calls != self->profile_free_calls;
+#else
+    return 0;
 #endif
+}
+
+void bsal_memory_pool_begin(struct bsal_memory_pool *self, struct bsal_memory_pool_state *state)
+{
+    state->test_profile_allocate_calls = self->profile_allocate_calls;
+    state->test_profile_free_calls = self->profile_free_calls;
+}
+
+void bsal_memory_pool_end(struct bsal_memory_pool *self, struct bsal_memory_pool_state *state,
+                const char *name, const char *function, const char *file, int line)
+{
+    int allocate_calls;
+    int free_calls;
+
+    allocate_calls = self->profile_allocate_calls - state->test_profile_allocate_calls;
+    free_calls = self->profile_free_calls - state->test_profile_free_calls;
+
+    if (allocate_calls != free_calls) {
+        printf("Error, saved pool state \"%s\" (%s %s %d) reveals leaks: allocate_calls %d free_calls %d\n",
+                        name, function, file, line, allocate_calls, free_calls);
+    }
+
+    BSAL_DEBUGGER_ASSERT(allocate_calls == free_calls);
 }

@@ -36,6 +36,9 @@ void thorium_actor_receive_binomial_tree_send(struct thorium_actor *actor, struc
      * new_count = bsal_vector_pack_size(actors) + sizeof(real_tag) + sizeof(real_source) + sizeof(real_count) + real_count;
      */
     ephemeral_memory = thorium_actor_get_ephemeral_memory(actor);
+
+    BSAL_DEBUGGER_LEAK_DETECTION_BEGIN(ephemeral_memory, binomial_send);
+
     limit = BINOMIAL_TREE_MINIMUM;
     count = thorium_message_count(message);
     buffer = thorium_message_buffer(message);
@@ -72,6 +75,7 @@ void thorium_actor_receive_binomial_tree_send(struct thorium_actor *actor, struc
      */
     if (amount < limit) {
 
+        BSAL_DEBUGGER_LEAK_DETECTION_BEGIN(ephemeral_memory, send_range);
         thorium_actor_pack_proxy_message(actor, &new_message,
                         real_source);
         thorium_actor_send_range_loop(actor, &actors, 0, bsal_vector_size(&actors) - 1, &new_message);
@@ -82,12 +86,17 @@ void thorium_actor_receive_binomial_tree_send(struct thorium_actor *actor, struc
         new_buffer = thorium_message_buffer(&new_message);
         bsal_memory_pool_free(ephemeral_memory, new_buffer);
 
+        BSAL_DEBUGGER_LEAK_DETECTION_END(ephemeral_memory, send_range);
     } else {
+        BSAL_DEBUGGER_LEAK_DETECTION_BEGIN(ephemeral_memory, binomial_tree);
         thorium_actor_send_range_binomial_tree(actor, &actors, &new_message);
+        BSAL_DEBUGGER_LEAK_DETECTION_END(ephemeral_memory, binomial_tree);
     }
 
     thorium_message_destroy(&new_message);
     bsal_vector_destroy(&actors);
+
+    BSAL_DEBUGGER_LEAK_DETECTION_END(ephemeral_memory, binomial_send);
 }
 
 void thorium_actor_send_range_binomial_tree(struct thorium_actor *actor, struct bsal_vector *actors,
@@ -117,8 +126,6 @@ void thorium_actor_send_range_binomial_tree(struct thorium_actor *actor, struct 
                        bsal_vector_size(actors) - 1, message);
         return;
     }
-
-    bsal_vector_init(&right_part, sizeof(int));
 
 #ifdef THORIUM_ACTOR_DEBUG_BINOMIAL_TREE
     int name;
@@ -184,7 +191,7 @@ void thorium_actor_send_range_binomial_tree(struct thorium_actor *actor, struct 
     right_actor = *(int *)bsal_vector_at(&right_part, middle2 - first2);
 
     thorium_actor_send_range_binomial_tree_part(actor, right_actor, &right_part, message);
-    bsal_vector_destroy(&left_part);
+    bsal_vector_destroy(&right_part);
 }
 
 void thorium_actor_send_range_binomial_tree_part(struct thorium_actor *actor,

@@ -9,6 +9,11 @@
 #define BSAL_DEBUGGER_ENABLE_ASSERT
 */
 
+/*
+ * Enable leak detection
+ */
+#define ENABLE_LEAK_DETECTION
+
 #include "tracer.h"
 
 #include <engine/thorium/node.h>
@@ -55,5 +60,21 @@
 #endif
 
 void bsal_debugger_examine(void *pointer, int bytes);
+
+#ifdef ENABLE_LEAK_DETECTION
+
+#define BSAL_DEBUGGER_LEAK_DETECTION_BEGIN(pool, state) \
+    struct bsal_memory_pool_state state; \
+    bsal_memory_pool_begin(pool, &state);
+
+#define BSAL_DEBUGGER_LEAK_DETECTION_END(pool, state) \
+    bsal_memory_pool_end(pool, &state, # state, __func__, __FILE__, __LINE__);
+
+#else
+
+#define BSAL_DEBUGGER_LEAK_DETECTION_BEGIN(pool, state)
+#define BSAL_DEBUGGER_LEAK_DETECTION_END(pool, state)
+
+#endif
 
 #endif

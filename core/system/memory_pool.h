@@ -43,6 +43,11 @@
  */
 #define BSAL_MEMORY_POOL_MESSAGE_BUFFER_BLOCK_SIZE (2 * 1024 * 1024)
 
+struct bsal_memory_pool_state {
+    int test_profile_allocate_calls;
+    int test_profile_free_calls;
+};
+
 /*
  * A memory pool for genomics.
  *
@@ -98,5 +103,9 @@ void bsal_memory_pool_examine(struct bsal_memory_pool *self);
 void bsal_memory_pool_profile(struct bsal_memory_pool *self, int operation, size_t byte_count);
 
 int bsal_memory_pool_has_leaks(struct bsal_memory_pool *self);
+void bsal_memory_pool_begin(struct bsal_memory_pool *self, struct bsal_memory_pool_state *state);
+void bsal_memory_pool_end(struct bsal_memory_pool *self, struct bsal_memory_pool_state *state,
+                const char *name, const char *function, const char *file, int line);
+
 
 #endif
