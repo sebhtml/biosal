@@ -573,8 +573,9 @@ void bsal_memory_pool_end(struct bsal_memory_pool *self, struct bsal_memory_pool
     free_calls = self->profile_free_calls - state->test_profile_free_calls;
 
     if (allocate_calls != free_calls) {
-        printf("Error, saved pool state \"%s\" (%s %s %d) reveals leaks: allocate_calls %d free_calls %d\n",
-                        name, function, file, line, allocate_calls, free_calls);
+        printf("Error, saved pool state \"%s\" (%s %s %d) reveals leaks: allocate_calls %d free_calls %d (balance: %d)\n",
+                        name, function, file, line, allocate_calls, free_calls,
+                        allocate_calls - free_calls);
     }
 
     BSAL_DEBUGGER_ASSERT(allocate_calls == free_calls);

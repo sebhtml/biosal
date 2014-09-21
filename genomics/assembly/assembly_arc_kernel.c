@@ -237,6 +237,8 @@ void bsal_assembly_arc_kernel_push_sequence_data_block(struct thorium_actor *sel
     int new_count;
     void *new_buffer;
     int to_reserve;
+    int profile_kmer_init_calls;
+    int profile_kmer_destroy_calls;
 
     ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
 
@@ -269,6 +271,8 @@ void bsal_assembly_arc_kernel_push_sequence_data_block(struct thorium_actor *sel
     sequences = bsal_input_command_entries(&input_block);
 
     entries = bsal_vector_size(sequences);
+
+    printf("ENTRIES %d\n", entries);
 
     bsal_assembly_arc_block_init(&output_block, ephemeral_memory,
                     concrete_self->kmer_length, &concrete_self->codec);
@@ -321,6 +325,9 @@ void bsal_assembly_arc_kernel_push_sequence_data_block(struct thorium_actor *sel
 
     /*BSAL_DEBUGGER_LEAK_DETECTION_BEGIN(ephemeral_memory, loop_arc_generation);*/
 
+    profile_kmer_init_calls = 0;
+    profile_kmer_destroy_calls = 0;
+
     /*
      * Generate arcs.
      *
@@ -344,6 +351,7 @@ void bsal_assembly_arc_kernel_push_sequence_data_block(struct thorium_actor *sel
 
             bsal_dna_kmer_init(&current_kmer, kmer_sequence, &concrete_self->codec,
                             ephemeral_memory);
+            ++profile_kmer_init_calls;
 
             /*
              * Restore the data
@@ -385,24 +393,34 @@ void bsal_assembly_arc_kernel_push_sequence_data_block(struct thorium_actor *sel
 #endif
             }
 
-            if (position != 1)
+            if (position >= 1) {
                 bsal_dna_kmer_destroy(&previous_kmer, ephemeral_memory);
+                ++profile_kmer_destroy_calls;
+            }
 
             bsal_dna_kmer_init_copy(&previous_kmer, &current_kmer, concrete_self->kmer_length,
                             ephemeral_memory, &concrete_self->codec);
+            ++profile_kmer_init_calls;
 
             bsal_dna_kmer_destroy(&current_kmer, ephemeral_memory);
+            ++profile_kmer_destroy_calls;
 
             /* Previous is not needed anymore
              */
             if (position == limit - 1) {
 
                 bsal_dna_kmer_destroy(&previous_kmer, ephemeral_memory);
+                ++profile_kmer_destroy_calls;
             }
         }
 
         /*BSAL_DEBUGGER_LEAK_DETECTION_END(ephemeral_memory, loop_arc_generation_sequence);*/
     }
+
+#if 0
+    printf("DEBUG profile_kmer_init_calls %d profile_kmer_destroy_calls %d\n",
+                    profile_kmer_init_calls, profile_kmer_destroy_calls);
+#endif
 
     /*BSAL_DEBUGGER_LEAK_DETECTION_END(ephemeral_memory, loop_arc_generation);*/
 
