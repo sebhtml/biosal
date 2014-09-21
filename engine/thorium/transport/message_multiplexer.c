@@ -275,6 +275,9 @@ int thorium_message_multiplexer_multiplex(struct thorium_message_multiplexer *se
         bsal_set_add(&self->buffers_with_content, &destination_node);
     }
 
+    /*
+     * Inject the buffer into the worker too.
+     */
     return 1;
 }
 

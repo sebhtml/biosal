@@ -1154,6 +1154,9 @@ void thorium_node_send(struct thorium_node *node, struct thorium_message *messag
     int metadata_size;
     int all;
     int count;
+    int worker;
+    void *buffer;
+    struct thorium_worker_buffer worker_buffer;
 
     /* Check the message to see
      * if it is a special message.
@@ -1213,6 +1216,16 @@ void thorium_node_send(struct thorium_node *node, struct thorium_message *messag
 
         if (!thorium_message_multiplexer_multiplex(&node->multiplexer, message)) {
             thorium_node_send_with_transport(node, message);
+        } else {
+
+            /*
+             * There is now a copy of the buffer.
+             */
+            buffer = thorium_message_buffer(message);
+            worker = thorium_message_worker(message);
+            thorium_worker_buffer_init(&worker_buffer, worker, buffer);
+            thorium_node_inject_outbound_buffer(node, &worker_buffer);
+            thorium_worker_buffer_destroy(&worker_buffer);
         }
 
 #ifdef THORIUM_NODE_DEBUG_20140601_8
@@ -1279,10 +1292,10 @@ void thorium_node_dispatch_message(struct thorium_node *node, struct thorium_mes
     /* otherwise, create work and dispatch work to a worker via
      * the worker pool
      */
-    thorium_node_inject_message_in_pool(node, message);
+    thorium_node_inject_message_in_worker_pool(node, message);
 }
 
-void thorium_node_inject_message_in_pool(struct thorium_node *node, struct thorium_message *message)
+void thorium_node_inject_message_in_worker_pool(struct thorium_node *node, struct thorium_message *message)
 {
     struct thorium_actor *actor;
     int name;
@@ -2057,7 +2070,6 @@ void thorium_node_test_requests(struct thorium_node *node)
     int requests_to_test;
     int i;
     int worker;
-    void *buffer;
     int difference;
     int minimum;
     int maximum;
@@ -2105,35 +2117,7 @@ void thorium_node_test_requests(struct thorium_node *node)
 
             worker = thorium_worker_buffer_get_worker(&worker_buffer);
 
-            /*
-             * This buffer was allocated by the Thorium core and not by
-             * a worker.
-             */
-            if (worker < 0) {
-
-                buffer = thorium_worker_buffer_get_buffer(&worker_buffer);
-                bsal_memory_pool_free(&node->outbound_message_memory_pool,
-                                buffer);
-#ifdef THORIUM_NODE_DEBUG_INJECTION
-                ++node->counter_freed_thorium_outbound_buffers;
-#endif
-
-#ifdef THORIUM_NODE_DEBUG_INJECTION
-                printf("Worker= %d\n", worker);
-#endif
-
-            } else {
-
-                /*
-                 * The buffer was allocated by a worker.
-                 */
-
-                thorium_node_free_worker_buffer(node, &worker_buffer);
-
-#ifdef THORIUM_NODE_DEBUG_INJECTION
-                ++node->counter_injected_transport_outbound_buffer_for_workers;
-#endif
-            }
+            thorium_node_inject_outbound_buffer(node, &worker_buffer);
         }
 
         ++i;
@@ -2369,4 +2353,42 @@ void thorium_node_examine(struct thorium_node *self)
     bsal_memory_pool_examine(&self->outbound_message_memory_pool);
 
     thorium_worker_pool_examine(&self->worker_pool);
+}
+
+void thorium_node_inject_outbound_buffer(struct thorium_node *self, struct thorium_worker_buffer *worker_buffer)
+{
+    int worker;
+    void *buffer;
+
+    worker = thorium_worker_buffer_get_worker(worker_buffer);
+
+    /*
+     * This buffer was allocated by the Thorium core and not by
+     * a worker.
+     */
+    if (worker < 0) {
+
+        buffer = thorium_worker_buffer_get_buffer(worker_buffer);
+        bsal_memory_pool_free(&self->outbound_message_memory_pool,
+                                buffer);
+#ifdef THORIUM_NODE_DEBUG_INJECTION
+        ++node->counter_freed_thorium_outbound_buffers;
+#endif
+
+#ifdef THORIUM_NODE_DEBUG_INJECTION
+        printf("Worker= %d\n", worker);
+#endif
+
+    } else {
+
+        /*
+         * The buffer was allocated by a worker.
+         */
+
+        thorium_node_free_worker_buffer(self, worker_buffer);
+
+#ifdef THORIUM_NODE_DEBUG_INJECTION
+        ++self->counter_injected_transport_outbound_buffer_for_workers;
+#endif
+    }
 }

@@ -18,6 +18,10 @@
 #include <core/system/memory_pool.h>
 
 /*
+#define THORIUM_NODE_DEBUG_INJECTION
+*/
+
+/*
  * \see http://pubs.opengroup.org/onlinepubs/009696699/basedefs/signal.h.html
  */
 #include <signal.h>
@@ -241,7 +245,7 @@ void thorium_node_run_loop(struct thorium_node *self);
 void thorium_node_send_message(struct thorium_node *self);
 void thorium_node_notify_death(struct thorium_node *self, struct thorium_actor *actor);
 
-void thorium_node_inject_message_in_pool(struct thorium_node *self, struct thorium_message *message);
+void thorium_node_inject_message_in_worker_pool(struct thorium_node *self, struct thorium_message *message);
 int thorium_node_pull(struct thorium_node *self, struct thorium_message *message);
 
 int thorium_node_worker_count(struct thorium_node *self);
@@ -307,5 +311,6 @@ int thorium_node_generate_random_name(struct thorium_node *self,
 struct bsal_memory_pool *thorium_node_inbound_memory_pool(struct thorium_node *self);
 
 void thorium_node_examine(struct thorium_node *self);
+void thorium_node_inject_outbound_buffer(struct thorium_node *self, struct thorium_worker_buffer *worker_buffer);
 
 #endif

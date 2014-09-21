@@ -272,7 +272,9 @@ void bsal_assembly_arc_kernel_push_sequence_data_block(struct thorium_actor *sel
 
     entries = bsal_vector_size(sequences);
 
+#if 0
     printf("ENTRIES %d\n", entries);
+#endif
 
     bsal_assembly_arc_block_init(&output_block, ephemeral_memory,
                     concrete_self->kmer_length, &concrete_self->codec);

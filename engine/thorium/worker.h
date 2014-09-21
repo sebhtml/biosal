@@ -25,6 +25,10 @@ struct thorium_message;
 struct thorium_scheduler;
 
 /*
+#define THORIUM_WORKER_DEBUG_INJECTION
+*/
+
+/*
  * Inject clean worker buffers into the worker rings
  */
 #define THORIUM_NODE_INJECT_CLEAN_WORKER_BUFFERS
