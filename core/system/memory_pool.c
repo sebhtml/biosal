@@ -25,13 +25,6 @@
 #define OPERATION_ALLOCATE  0
 #define OPERATION_FREE      1
 
-/*
- * Parameters for debugging.
- */
-/*
-#define CHECK_DOUBLE_FREE
-#define CHECK_LEAKS
-*/
 void bsal_memory_pool_init(struct bsal_memory_pool *self, int block_size, int name)
 {
     bsal_map_init(&self->recycle_bin, sizeof(int), sizeof(struct bsal_queue));
@@ -545,7 +538,7 @@ void bsal_memory_pool_profile(struct bsal_memory_pool *self, int operation, size
         self->profile_freed_byte_count += byte_count;
     }
 
-#ifdef CHECK_DOUBLE_FREE
+#ifdef BSAL_DEBUGGER_CHECK_DOUBLE_FREE_IN_POOL
 #ifdef BSAL_DEBUGGER_ENABLE_ASSERT
     if (!(self->profile_allocate_calls >= self->profile_free_calls)) {
         bsal_memory_pool_examine(self);
@@ -557,7 +550,7 @@ void bsal_memory_pool_profile(struct bsal_memory_pool *self, int operation, size
 
 int bsal_memory_pool_has_leaks(struct bsal_memory_pool *self)
 {
-#ifdef CHECK_LEAKS
+#ifdef BSAL_DEBUGGER_CHECK_LEAKS_IN_POOL
     return self->profile_allocate_calls != self->profile_free_calls;
 #else
     return 0;

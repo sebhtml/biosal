@@ -5,7 +5,7 @@
 # -O5 to enable -ipa
 # -s to strip symbols
 
-CFLAGS="-I. -g -O3 -qmaxmem=-1 -qarch=qp -qtune=qp -DBSAL_DEBUGGER_ENABLE_ASSERT "
+CFLAGS="-I. -g -O3 -qmaxmem=-1 -qarch=qp -qtune=qp -DTHORIUM_DEBUG "
 CFLAGS="$CFLAGS -L/soft/libraries/alcf/current/xl/ZLIB/lib -I/soft/libraries/alcf/current/xl/ZLIB/include"
 
 #echo $CFLAGS

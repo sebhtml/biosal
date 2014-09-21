@@ -3,16 +3,30 @@
 #define BSAL_DEBUGGER_H
 
 /*
- * Enable debug mode
+ * Enable debug mode.
+ * Parameters for debugging are below.
  */
-/*
+
+#ifdef THORIUM_DEBUG
+
 #define BSAL_DEBUGGER_ENABLE_ASSERT
+
+/*
+#define BSAL_DEBUGGER_CHECK_DOUBLE_FREE_IN_POOL
 */
 
 /*
- * Enable leak detection
+ * Report memory leaks in memory pool.
+#define BSAL_DEBUGGER_CHECK_LEAKS_IN_POOL
  */
-#define ENABLE_LEAK_DETECTION
+
+/*
+ * Enable leak detection using
+ * BSAL_DEBUGGER_LEAK_DETECTION_BEGIN and BSAL_DEBUGGER_LEAK_DETECTION_END
+ */
+#define BSAL_DEBUGGER_ENABLE_LEAK_DETECTION
+
+#endif
 
 #include "tracer.h"
 
@@ -61,7 +75,7 @@
 
 void bsal_debugger_examine(void *pointer, int bytes);
 
-#ifdef ENABLE_LEAK_DETECTION
+#ifdef BSAL_DEBUGGER_ENABLE_LEAK_DETECTION
 
 #define BSAL_DEBUGGER_LEAK_DETECTION_BEGIN(pool, state) \
     struct bsal_memory_pool_state state; \

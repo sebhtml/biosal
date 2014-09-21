@@ -446,6 +446,7 @@ void bsal_assembly_graph_store_yield_reply(struct thorium_actor *self, struct th
     thorium_actor_send_empty(self, concrete_self->source,
                             ACTION_PUSH_DATA_REPLY);
 
+    bsal_memory_pool_free(ephemeral_memory, new_buffer);
 }
 
 void bsal_assembly_graph_store_push_kmer_block(struct thorium_actor *self, struct thorium_message *message)
