@@ -792,3 +792,20 @@ int thorium_worker_pool_dequeue_message_for_triage(struct thorium_worker_pool *s
 {
     return bsal_fast_queue_dequeue(&self->messages_for_triage, message);
 }
+
+void thorium_worker_pool_examine(struct thorium_worker_pool *self)
+{
+    int i;
+    int size;
+    struct thorium_worker *worker;
+
+    i = 0;
+    size = thorium_worker_pool_worker_count(self);
+
+    for (i = 0; i < size; ++i) {
+
+        worker = thorium_worker_pool_get_worker(self, i);
+
+        thorium_worker_examine(worker);
+    }
+}

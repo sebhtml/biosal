@@ -65,8 +65,6 @@
 #define TRANSPORT_DEBUG_ISSUE_594
 */
 
-static struct thorium_node *thorium_node_global_self;
-
 #define FLAG_PRINT_LOAD 0
 #define FLAG_DEBUG 1
 #define FLAG_PRINT_STRUCTURE 2
@@ -76,6 +74,9 @@ static struct thorium_node *thorium_node_global_self;
 #define FLAG_SEND_IN_THREAD 6
 #define FLAG_WORKER_IN_MAIN_THREAD 7
 #define FLAG_WORKERS_IN_THREADS 8
+#define FLAG_EXAMINE 9
+
+struct thorium_node *thorium_node_global_self;
 
 void thorium_node_init(struct thorium_node *node, int *argc, char ***argv)
 {
@@ -111,6 +112,7 @@ void thorium_node_init(struct thorium_node *node, int *argc, char ***argv)
     bsal_bitmap_clear_bit_uint32_t(&node->flags, FLAG_PRINT_STRUCTURE);
     bsal_bitmap_clear_bit_uint32_t(&node->flags, FLAG_DEBUG);
     bsal_bitmap_clear_bit_uint32_t(&node->flags, FLAG_PRINT_COUNTERS);
+    bsal_bitmap_clear_bit_uint32_t(&node->flags, FLAG_EXAMINE);
 
     thorium_node_global_self = node;
 
@@ -127,11 +129,11 @@ void thorium_node_init(struct thorium_node *node, int *argc, char ***argv)
      * Build memory pools
      */
 
-    bsal_memory_pool_init(&node->actor_memory_pool, 2097152);
+    bsal_memory_pool_init(&node->actor_memory_pool, 2097152, BSAL_MEMORY_POOL_NAME_ACTORS);
     bsal_memory_pool_disable(&node->actor_memory_pool);
 
     bsal_memory_pool_init(&node->inbound_message_memory_pool,
-                    BSAL_MEMORY_POOL_MESSAGE_BUFFER_BLOCK_SIZE);
+                    BSAL_MEMORY_POOL_MESSAGE_BUFFER_BLOCK_SIZE, BSAL_MEMORY_POOL_NAME_NODE_INBOUND);
     bsal_memory_pool_set_name(&node->inbound_message_memory_pool,
                     BSAL_MEMORY_POOL_NAME_NODE_INBOUND);
     bsal_memory_pool_enable_normalization(&node->inbound_message_memory_pool);
@@ -142,7 +144,7 @@ void thorium_node_init(struct thorium_node *node, int *argc, char ***argv)
 #endif
 
     bsal_memory_pool_init(&node->outbound_message_memory_pool,
-                    BSAL_MEMORY_POOL_MESSAGE_BUFFER_BLOCK_SIZE);
+                    BSAL_MEMORY_POOL_MESSAGE_BUFFER_BLOCK_SIZE, BSAL_MEMORY_POOL_NAME_NODE_OUTBOUND);
     bsal_memory_pool_set_name(&node->outbound_message_memory_pool,
                     BSAL_MEMORY_POOL_NAME_NODE_OUTBOUND);
 
@@ -191,6 +193,9 @@ void thorium_node_init(struct thorium_node *node, int *argc, char ***argv)
     node->threads = threads;
     node->argc = *argc;
     node->argv = *argv;
+
+    if (bsal_command_has_argument(node->argc, node->argv, "-debug-memory-pools"))
+        bsal_bitmap_set_bit_uint32_t(&node->flags, FLAG_EXAMINE);
 
     if (bsal_command_has_argument(node->argc, node->argv, "-print-counters")) {
         bsal_bitmap_set_bit_uint32_t(&node->flags, FLAG_PRINT_COUNTERS);
@@ -390,6 +395,9 @@ void thorium_node_init(struct thorium_node *node, int *argc, char ***argv)
 void thorium_node_destroy(struct thorium_node *node)
 {
     int active_requests;
+
+    if (bsal_bitmap_get_bit_uint32_t(&node->flags, FLAG_EXAMINE))
+        thorium_node_examine(node);
 
     active_requests = thorium_transport_get_active_request_count(&node->transport);
 
@@ -1577,6 +1585,8 @@ void thorium_node_handle_signal(int signal)
         printf("Error, node/%d received signal %d\n", node, signal);
     }
 
+    thorium_node_examine(thorium_node_global_self);
+
     bsal_tracer_print_stack_backtrace();
 
     fflush(stdout);
@@ -2339,4 +2349,20 @@ void thorium_node_send_with_transport(struct thorium_node *self, struct thorium_
 struct bsal_memory_pool *thorium_node_inbound_memory_pool(struct thorium_node *self)
 {
     return &self->inbound_message_memory_pool;
+}
+
+void thorium_node_examine(struct thorium_node *self)
+{
+    printf("DEBUG_NODE Name= %d WorkerCount= %d\n",
+                    self->name,
+            thorium_worker_pool_worker_count(&self->worker_pool));
+
+    printf("MEMORY used / total -> %" PRIu64 " / %" PRIu64  "\n",
+                        bsal_memory_get_utilized_byte_count(),
+                        bsal_memory_get_total_byte_count());
+
+    bsal_memory_pool_examine(&self->inbound_message_memory_pool);
+    bsal_memory_pool_examine(&self->outbound_message_memory_pool);
+
+    thorium_worker_pool_examine(&self->worker_pool);
 }

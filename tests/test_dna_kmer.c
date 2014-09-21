@@ -25,7 +25,7 @@ int main(int argc, char **argv)
     bsal_dna_codec_init(&codec);
     bsal_dna_codec_enable_two_bit_encoding(&codec);
 
-    bsal_memory_pool_init(&pool, 1000000);
+    bsal_memory_pool_init(&pool, 1000000, BSAL_MEMORY_POOL_NAME_OTHER);
 
     bsal_dna_kmer_init(&kmer, sequence, &codec, &pool);
 

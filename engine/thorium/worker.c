@@ -182,7 +182,8 @@ void thorium_worker_init(struct thorium_worker *worker, int name, struct thorium
      */
     ephemeral_memory_block_size = 8388608;
     /*ephemeral_memory_block_size = 16777216;*/
-    bsal_memory_pool_init(&worker->ephemeral_memory, ephemeral_memory_block_size);
+    bsal_memory_pool_init(&worker->ephemeral_memory, ephemeral_memory_block_size,
+                    BSAL_MEMORY_POOL_NAME_WORKER_EPHEMERAL);
     bsal_memory_pool_set_name(&worker->ephemeral_memory, BSAL_MEMORY_POOL_NAME_WORKER_EPHEMERAL);
 
     bsal_memory_pool_disable_tracking(&worker->ephemeral_memory);
@@ -192,7 +193,7 @@ void thorium_worker_init(struct thorium_worker *worker, int name, struct thorium
     bsal_set_init(&worker->evicted_actors, sizeof(int));
 
     bsal_memory_pool_init(&worker->outbound_message_memory_pool,
-                    BSAL_MEMORY_POOL_MESSAGE_BUFFER_BLOCK_SIZE);
+                    BSAL_MEMORY_POOL_MESSAGE_BUFFER_BLOCK_SIZE, BSAL_MEMORY_POOL_NAME_WORKER_OUTBOUND);
     bsal_memory_pool_set_name(&worker->outbound_message_memory_pool,
                     BSAL_MEMORY_POOL_NAME_WORKER_OUTBOUND);
 
@@ -1576,4 +1577,12 @@ void thorium_worker_print_balance(struct thorium_worker *self)
                     self->counter_injected_outbound_buffers_other_local_workers,
                     self->counter_injected_inbound_buffers_from_thorium_core);
 #endif
+}
+
+void thorium_worker_examine(struct thorium_worker *self)
+{
+    printf("DEBUG_WORKER Name= %d\n", self->name);
+
+    bsal_memory_pool_examine(&self->ephemeral_memory);
+    bsal_memory_pool_examine(&self->outbound_message_memory_pool);
 }

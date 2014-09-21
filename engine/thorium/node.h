@@ -210,6 +210,8 @@ struct thorium_node {
 #endif
 };
 
+extern struct thorium_node *thorium_node_global_self;
+
 void thorium_node_init(struct thorium_node *self, int *argc, char ***argv);
 void thorium_node_destroy(struct thorium_node *self);
 int thorium_node_run(struct thorium_node *self);
@@ -303,5 +305,7 @@ int thorium_node_generate_random_name(struct thorium_node *self,
                 int minimal_value, int maximum_value);
 
 struct bsal_memory_pool *thorium_node_inbound_memory_pool(struct thorium_node *self);
+
+void thorium_node_examine(struct thorium_node *self);
 
 #endif

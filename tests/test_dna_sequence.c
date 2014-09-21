@@ -23,7 +23,7 @@ int main(int argc, char **argv)
     void *buffer_for_pack;
     struct bsal_memory_pool memory;
 
-    bsal_memory_pool_init(&memory, 4194304);
+    bsal_memory_pool_init(&memory, 4194304, BSAL_MEMORY_POOL_NAME_OTHER);
     buffer = bsal_memory_allocate(101);
     strcpy((char *)buffer, "TCCCGAGCGCAGGTAGGCCTCGGGATCGATGTCCGGGGTGTTGAGGATGTTGGACGTGTATTCGTGGTTGTACTGGGTCCAGTCCGCCACCGGGCGCCGC");
     bsal_dna_codec_init(&codec);

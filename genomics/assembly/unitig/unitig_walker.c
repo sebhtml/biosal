@@ -111,7 +111,8 @@ void bsal_unitig_walker_init(struct thorium_actor *self)
     /*
      * Initialize the memory pool first.
      */
-    bsal_memory_pool_init(&concrete_self->memory_pool, 1048576);
+    bsal_memory_pool_init(&concrete_self->memory_pool, 1048576,
+                    BSAL_MEMORY_POOL_NAME_OTHER);
     bsal_map_init(&concrete_self->path_statuses, sizeof(int), sizeof(struct bsal_path_status));
     bsal_map_set_memory_pool(&concrete_self->path_statuses, &concrete_self->memory_pool);
 

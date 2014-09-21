@@ -14,11 +14,14 @@
 /*
 */
 
-#define BSAL_MEMORY_POOL_NAME_WORKER_EPHEMERAL 2222
-#define BSAL_MEMORY_POOL_NAME_WORKER_OUTBOUND 4444
-#define BSAL_MEMORY_POOL_NAME_NODE_INBOUND 6666
-#define BSAL_MEMORY_POOL_NAME_NODE_OUTBOUND 8888
-#define BSAL_MEMORY_POOL_NAME_NONE 10101010
+#define BSAL_MEMORY_POOL_NAME_WORKER_EPHEMERAL  0
+#define BSAL_MEMORY_POOL_NAME_WORKER_OUTBOUND   1
+#define BSAL_MEMORY_POOL_NAME_NODE_INBOUND      2
+#define BSAL_MEMORY_POOL_NAME_NODE_OUTBOUND     3
+#define BSAL_MEMORY_POOL_NAME_NONE              4
+#define BSAL_MEMORY_POOL_NAME_ACTORS            5
+#define BSAL_MEMORY_POOL_NAME_SEQUENCE_STORE    6
+#define BSAL_MEMORY_POOL_NAME_OTHER             7
 
 /*
  * Disable particular memory pool on IBM
@@ -55,9 +58,17 @@ struct bsal_memory_pool {
 
     uint32_t flags;
     size_t block_size;
+
+    int profile_name;
+
+    uint64_t profile_allocated_byte_count;
+    uint64_t profile_freed_byte_count;
+
+    int profile_allocate_calls;
+    int profile_free_calls;
 };
 
-void bsal_memory_pool_init(struct bsal_memory_pool *self, int block_size);
+void bsal_memory_pool_init(struct bsal_memory_pool *self, int block_size, int name);
 void bsal_memory_pool_destroy(struct bsal_memory_pool *self);
 void *bsal_memory_pool_allocate(struct bsal_memory_pool *self, size_t size);
 void bsal_memory_pool_free(struct bsal_memory_pool *self, void *pointer);
@@ -79,5 +90,8 @@ void bsal_memory_pool_disable_alignment(struct bsal_memory_pool *self);
 void bsal_memory_pool_enable_alignment(struct bsal_memory_pool *self);
 void bsal_memory_pool_print(struct bsal_memory_pool *self);
 void bsal_memory_pool_set_name(struct bsal_memory_pool *self, int name);
+
+void bsal_memory_pool_examine(struct bsal_memory_pool *self);
+void bsal_memory_pool_profile(struct bsal_memory_pool *self, int operation, size_t byte_count);
 
 #endif

@@ -22,13 +22,17 @@
 #define FLAG_ALIGN 3
 #define FLAG_EPHEMERAL 4
 
-void bsal_memory_pool_init(struct bsal_memory_pool *self, int block_size)
+#define OPERATION_ALLOCATE  0
+#define OPERATION_FREE      1
+
+void bsal_memory_pool_init(struct bsal_memory_pool *self, int block_size, int name)
 {
     bsal_map_init(&self->recycle_bin, sizeof(int), sizeof(struct bsal_queue));
     bsal_map_init(&self->allocated_blocks, sizeof(void *), sizeof(int));
     bsal_set_init(&self->large_blocks, sizeof(void *));
 
     self->current_block = NULL;
+    self->profile_name = name;
 
     bsal_queue_init(&self->dried_blocks, sizeof(struct bsal_memory_block *));
     bsal_queue_init(&self->ready_blocks, sizeof(struct bsal_memory_block *));
@@ -44,6 +48,11 @@ void bsal_memory_pool_init(struct bsal_memory_pool *self, int block_size)
     bsal_bitmap_clear_bit_uint32_t(&self->flags, FLAG_ENABLE_SEGMENT_NORMALIZATION);
     bsal_bitmap_clear_bit_uint32_t(&self->flags, FLAG_ALIGN);
     bsal_bitmap_clear_bit_uint32_t(&self->flags, FLAG_EPHEMERAL);
+
+    self->profile_allocated_byte_count = 0;
+    self->profile_freed_byte_count = 0;
+    self->profile_allocate_calls = 0;
+    self->profile_free_calls = 0;
 }
 
 void bsal_memory_pool_destroy(struct bsal_memory_pool *self)
@@ -212,7 +221,13 @@ void *bsal_memory_pool_allocate_private(struct bsal_memory_pool *self, size_t si
         return NULL;
     }
 
-    if (self == NULL || bsal_bitmap_get_bit_uint32_t(&self->flags, FLAG_DISABLED)) {
+    if (self == NULL) {
+        return bsal_memory_allocate(size);
+    }
+
+    bsal_memory_pool_profile(self, OPERATION_ALLOCATE, size);
+
+    if (bsal_bitmap_get_bit_uint32_t(&self->flags, FLAG_DISABLED)) {
         return bsal_memory_allocate(size);
     }
 
@@ -299,7 +314,17 @@ void bsal_memory_pool_free(struct bsal_memory_pool *self, void *pointer)
         return;
     }
 
-    if (self == NULL || bsal_bitmap_get_bit_uint32_t(&self->flags, FLAG_DISABLED)) {
+    if (self == NULL) {
+        bsal_memory_free(pointer);
+        return;
+    }
+
+    /*
+     * TODO: find out the actual size.
+     */
+    bsal_memory_pool_profile(self, OPERATION_FREE, 0);
+
+    if (bsal_bitmap_get_bit_uint32_t(&self->flags, FLAG_DISABLED)) {
         bsal_memory_free(pointer);
         return;
     }
@@ -307,7 +332,6 @@ void bsal_memory_pool_free(struct bsal_memory_pool *self, void *pointer)
     /* Verify if the pointer is a large block not managed by one of the memory
      * blocks
      */
-
     if (bsal_set_find(&self->large_blocks, &pointer)) {
 
         bsal_memory_free(pointer);
@@ -456,5 +480,28 @@ void bsal_memory_pool_enable_ephemeral_mode(struct bsal_memory_pool *self)
 
 void bsal_memory_pool_set_name(struct bsal_memory_pool *self, int name)
 {
+    self->profile_name = name;
+}
 
+void bsal_memory_pool_examine(struct bsal_memory_pool *self)
+{
+    printf("DEBUG_POOL Name= %d"
+                    " AllocatedBytes= %" PRIu64 " (%" PRIu64 " - %" PRIu64 ")"
+                    " ActiveSegments= %d (%d - %d)\n",
+                    self->profile_name,
+                    self->profile_allocated_byte_count - self->profile_freed_byte_count,
+                    self->profile_allocated_byte_count, self->profile_freed_byte_count,
+                    self->profile_allocate_calls - self->profile_free_calls,
+                    self->profile_allocate_calls, self->profile_free_calls);
+}
+
+void bsal_memory_pool_profile(struct bsal_memory_pool *self, int operation, size_t byte_count)
+{
+    if (operation == OPERATION_ALLOCATE) {
+        ++self->profile_allocate_calls;
+        self->profile_allocated_byte_count += byte_count;
+    } else if (operation == OPERATION_FREE) {
+        ++self->profile_free_calls;
+        self->profile_freed_byte_count += byte_count;
+    }
 }

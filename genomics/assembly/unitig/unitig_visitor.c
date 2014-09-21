@@ -36,7 +36,8 @@ void bsal_unitig_visitor_init(struct thorium_actor *self)
     struct bsal_unitig_visitor *concrete_self;
 
     concrete_self = (struct bsal_unitig_visitor *)thorium_actor_concrete_actor(self);
-    bsal_memory_pool_init(&concrete_self->memory_pool, 131072);
+    bsal_memory_pool_init(&concrete_self->memory_pool, 131072,
+                    BSAL_MEMORY_POOL_NAME_OTHER);
 
     bsal_vector_init(&concrete_self->graph_stores, sizeof(int));
     bsal_vector_set_memory_pool(&concrete_self->graph_stores, &concrete_self->memory_pool);

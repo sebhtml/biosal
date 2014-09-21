@@ -106,4 +106,6 @@ void thorium_worker_pool_wake_up_workers(struct thorium_worker_pool *self);
 int thorium_worker_pool_dequeue_message_for_triage(struct thorium_worker_pool *self,
                 struct thorium_message *message);
 
+void thorium_worker_pool_examine(struct thorium_worker_pool *self);
+
 #endif

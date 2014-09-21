@@ -68,7 +68,8 @@ void bsal_sequence_store_init(struct thorium_actor *actor)
     concrete_actor->reservation_producer = -1;
 
     /* 2^26 */
-    bsal_memory_pool_init(&concrete_actor->persistent_memory, 67108864);
+    bsal_memory_pool_init(&concrete_actor->persistent_memory, 67108864,
+                    BSAL_MEMORY_POOL_NAME_SEQUENCE_STORE);
     bsal_memory_pool_disable_tracking(&concrete_actor->persistent_memory);
 
     concrete_actor->left = -1;

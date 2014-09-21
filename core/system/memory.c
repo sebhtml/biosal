@@ -4,6 +4,8 @@
 #include "tracer.h"
 #include "debugger.h"
 
+#include <engine/thorium/node.h>
+
 #include <unistd.h>
 #include <string.h>
 #include <stdio.h>
@@ -97,6 +99,8 @@ void *bsal_memory_allocate_private(size_t size, const char *function, const char
         printf("used / total -> %" PRIu64 " / %" PRIu64  "\n",
                         bsal_memory_get_utilized_byte_count(),
                         bsal_memory_get_total_byte_count());
+
+        thorium_node_examine(thorium_node_global_self);
 
         bsal_tracer_print_stack_backtrace();
 

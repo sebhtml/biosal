@@ -57,7 +57,7 @@ int main(int argc, char **argv)
     {
         struct bsal_memory_pool memory;
 
-        bsal_memory_pool_init(&memory, 16777216);
+        bsal_memory_pool_init(&memory, 16777216, BSAL_MEMORY_POOL_NAME_OTHER);
 
         test_allocator(&memory);
 

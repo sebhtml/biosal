@@ -207,4 +207,6 @@ int thorium_worker_dequeue_message_for_triage(struct thorium_worker *worker, str
 
 void thorium_worker_print_balance(struct thorium_worker *self);
 
+void thorium_worker_examine(struct thorium_worker *self);
+
 #endif
