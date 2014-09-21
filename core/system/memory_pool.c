@@ -53,6 +53,9 @@ void bsal_memory_pool_init(struct bsal_memory_pool *self, int block_size, int na
     self->profile_freed_byte_count = 0;
     self->profile_allocate_calls = 0;
     self->profile_free_calls = 0;
+
+    self->snapshot_profile_allocate_calls = self->profile_allocate_calls;
+    self->snapshot_profile_free_calls = self->profile_free_calls;
 }
 
 void bsal_memory_pool_destroy(struct bsal_memory_pool *self)
@@ -409,9 +412,16 @@ void bsal_memory_pool_free_all(struct bsal_memory_pool *self)
     int i;
     int size;
 
-#ifdef BSAL_MEMORY_POOL_FIND_LEAKS
+#ifdef BSAL_DEBUGGER_ENABLE_ASSERT
+    if (bsal_memory_pool_has_leaks(self)) {
+        bsal_memory_pool_examine(self);
+    }
+
     BSAL_DEBUGGER_ASSERT(!bsal_memory_pool_has_leaks(self));
 #endif
+
+    self->snapshot_profile_allocate_calls = self->profile_allocate_calls;
+    self->snapshot_profile_free_calls = self->profile_free_calls;
 
     /*
      * Reset the current block
@@ -494,13 +504,28 @@ void bsal_memory_pool_set_name(struct bsal_memory_pool *self, int name)
 void bsal_memory_pool_examine(struct bsal_memory_pool *self)
 {
     printf("DEBUG_POOL Name= %d"
+                    " SinceSnapshotActiveSegments= %d (%d - %d)"
+                    " ActiveSegments= %d (%d - %d)"
+                    " SnapshotActiveSegments= %d (%d - %d)"
                     " AllocatedBytes= %" PRIu64 " (%" PRIu64 " - %" PRIu64 ")"
-                    " ActiveSegments= %d (%d - %d)\n",
+                    "\n",
+
                     self->profile_name,
-                    self->profile_allocated_byte_count - self->profile_freed_byte_count,
-                    self->profile_allocated_byte_count, self->profile_freed_byte_count,
+
+                    (self->profile_allocate_calls - self->snapshot_profile_allocate_calls) -
+                    (self->profile_free_calls - self->snapshot_profile_free_calls),
+                    (self->profile_allocate_calls - self->snapshot_profile_allocate_calls),
+                    (self->profile_free_calls - self->snapshot_profile_free_calls),
+
                     self->profile_allocate_calls - self->profile_free_calls,
-                    self->profile_allocate_calls, self->profile_free_calls);
+                    self->profile_allocate_calls, self->profile_free_calls,
+
+                    self->snapshot_profile_allocate_calls - self->snapshot_profile_free_calls,
+                    self->snapshot_profile_allocate_calls, self->snapshot_profile_free_calls,
+
+                    self->profile_allocated_byte_count - self->profile_freed_byte_count,
+                    self->profile_allocated_byte_count, self->profile_freed_byte_count);
+
 }
 
 void bsal_memory_pool_profile(struct bsal_memory_pool *self, int operation, size_t byte_count)
@@ -513,7 +538,7 @@ void bsal_memory_pool_profile(struct bsal_memory_pool *self, int operation, size
         self->profile_freed_byte_count += byte_count;
     }
 
-#if 0
+#ifdef CHECK_DOUBLE_FREE
 #ifdef BSAL_DEBUGGER_ENABLE_ASSERT
     if (!(self->profile_allocate_calls >= self->profile_free_calls)) {
         bsal_memory_pool_examine(self);
@@ -527,6 +552,6 @@ int bsal_memory_pool_has_leaks(struct bsal_memory_pool *self)
 {
     return 0;
 #if 0
-    return self->profile_allocate_calls > self->profile_free_calls;
+    return self->profile_allocate_calls != self->profile_free_calls;
 #endif
 }

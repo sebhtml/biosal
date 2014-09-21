@@ -72,7 +72,6 @@ void thorium_actor_receive_binomial_tree_send(struct thorium_actor *actor, struc
      */
     if (amount < limit) {
 
-
         thorium_actor_pack_proxy_message(actor, &new_message,
                         real_source);
         thorium_actor_send_range_loop(actor, &actors, 0, bsal_vector_size(&actors) - 1, &new_message);

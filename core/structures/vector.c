@@ -23,14 +23,20 @@ void bsal_vector_init(struct bsal_vector *self, int element_size)
     self->data = NULL;
 
     bsal_vector_set_memory_pool(self, NULL);
+
+    self->profile_allocate_calls = 0;
+    self->profile_free_calls = 0;
 }
 
 void bsal_vector_destroy(struct bsal_vector *self)
 {
     if (self->data != NULL) {
         bsal_memory_pool_free(self->memory, self->data);
+        ++self->profile_free_calls;
         self->data = NULL;
     }
+
+    BSAL_DEBUGGER_ASSERT(self->profile_allocate_calls == self->profile_free_calls);
 
     self->element_size = 0;
     self->maximum_size = 0;
@@ -170,6 +176,7 @@ void bsal_vector_reserve(struct bsal_vector *self, int64_t size)
 #endif
 
     new_data = bsal_memory_pool_allocate(self->memory, new_byte_count);
+    ++self->profile_allocate_calls;
 
 #ifdef BSAL_VECTOR_DEBUG
     printf("DEBUG size %d old %p new %p\n", (int)self->size,
@@ -182,6 +189,7 @@ void bsal_vector_reserve(struct bsal_vector *self, int64_t size)
     if (self->size > 0) {
         bsal_memory_copy(new_data, self->data, old_byte_count);
         bsal_memory_pool_free(self->memory, self->data);
+        ++self->profile_free_calls;
 
         self->data = NULL;
     }
@@ -241,12 +249,16 @@ int bsal_vector_pack_unpack(struct bsal_vector *self, void *buffer, int operatio
         memory = self->memory;
         bsal_vector_init(self, self->element_size);
 
+        /*
+         * Restore attributes.
+         */
         self->size = size;
         self->maximum_size = self->size;
         self->memory = memory;
 
         if (self->size > 0) {
             self->data = bsal_memory_pool_allocate(self->memory, self->maximum_size * self->element_size);
+            ++self->profile_allocate_calls;
         } else {
             self->data = NULL;
         }

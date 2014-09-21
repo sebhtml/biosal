@@ -1514,7 +1514,9 @@ void thorium_actor_forward_messages(struct thorium_actor *self, struct thorium_m
     struct bsal_queue *queue;
     int destination;
     void *buffer_to_release;
+    struct bsal_memory_pool *ephemeral_memory;
 
+    ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
     queue = NULL;
     destination = -1;
 
@@ -1557,7 +1559,7 @@ void thorium_actor_forward_messages(struct thorium_actor *self, struct thorium_m
         thorium_actor_send(self, destination, &new_message);
 
         buffer_to_release = thorium_message_buffer(&new_message);
-        bsal_memory_free(buffer_to_release);
+        bsal_memory_pool_free(ephemeral_memory, buffer_to_release);
 
         /* recursive actor call
          */
@@ -1804,8 +1806,8 @@ int thorium_actor_work(struct thorium_actor *self)
     buffer = thorium_message_buffer(&message);
     source_worker = thorium_message_worker(&message);
 
-#ifdef BSAL_MEMORY_POOL_FIND_LEAKS
     BSAL_DEBUGGER_ASSERT(!bsal_memory_pool_has_leaks(ephemeral_memory));
+#ifdef BSAL_MEMORY_POOL_FIND_LEAKS
 #endif
 
     /*
@@ -1813,8 +1815,18 @@ int thorium_actor_work(struct thorium_actor *self)
      */
     thorium_actor_receive(self, &message);
 
-#ifdef BSAL_MEMORY_POOL_FIND_LEAKS
+#ifdef BSAL_DEBUGGER_ENABLE_ASSERT
+    if (bsal_memory_pool_has_leaks(ephemeral_memory)) {
+        printf("Error: detected leak in %s/%d action %x source %d\n",
+                        thorium_actor_script_name(self),
+                        thorium_actor_name(self),
+                        thorium_message_action(&message),
+                        thorium_message_source(&message));
+        bsal_memory_pool_examine(ephemeral_memory);
+    }
+#endif
     BSAL_DEBUGGER_ASSERT(!bsal_memory_pool_has_leaks(ephemeral_memory));
+#ifdef BSAL_MEMORY_POOL_FIND_LEAKS
 #endif
 
     /* Restore the important stuff
