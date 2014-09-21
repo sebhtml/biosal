@@ -61,6 +61,10 @@ void bsal_memory_pool_destroy(struct bsal_memory_pool *self)
     struct bsal_map_iterator iterator;
     struct bsal_memory_block *block;
 
+#ifdef BSAL_MEMORY_POOL_FIND_LEAKS
+    BSAL_DEBUGGER_ASSERT(!bsal_memory_pool_has_leaks(self));
+#endif
+
     /* destroy recycled objects
      */
     bsal_map_iterator_init(&iterator, &self->recycle_bin);
@@ -405,6 +409,10 @@ void bsal_memory_pool_free_all(struct bsal_memory_pool *self)
     int i;
     int size;
 
+#ifdef BSAL_MEMORY_POOL_FIND_LEAKS
+    BSAL_DEBUGGER_ASSERT(!bsal_memory_pool_has_leaks(self));
+#endif
+
     /*
      * Reset the current block
      */
@@ -504,4 +512,21 @@ void bsal_memory_pool_profile(struct bsal_memory_pool *self, int operation, size
         ++self->profile_free_calls;
         self->profile_freed_byte_count += byte_count;
     }
+
+#if 0
+#ifdef BSAL_DEBUGGER_ENABLE_ASSERT
+    if (!(self->profile_allocate_calls >= self->profile_free_calls)) {
+        bsal_memory_pool_examine(self);
+    }
+#endif
+    BSAL_DEBUGGER_ASSERT(self->profile_allocate_calls >= self->profile_free_calls);
+#endif
+}
+
+int bsal_memory_pool_has_leaks(struct bsal_memory_pool *self)
+{
+    return 0;
+#if 0
+    return self->profile_allocate_calls > self->profile_free_calls;
+#endif
 }

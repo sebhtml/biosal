@@ -1787,6 +1787,7 @@ int thorium_actor_work(struct thorium_actor *self)
     struct thorium_message message;
     void *buffer;
     int source_worker;
+    struct bsal_memory_pool *ephemeral_memory;
 
     if (!thorium_actor_dequeue_mailbox_message(self, &message)) {
         printf("Error, no message...\n");
@@ -1795,16 +1796,26 @@ int thorium_actor_work(struct thorium_actor *self)
         return 0;
     }
 
+    ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
+
     /* Make a copy of the buffer and of the worker
      * because actors can not be trusted.
      */
     buffer = thorium_message_buffer(&message);
     source_worker = thorium_message_worker(&message);
 
+#ifdef BSAL_MEMORY_POOL_FIND_LEAKS
+    BSAL_DEBUGGER_ASSERT(!bsal_memory_pool_has_leaks(ephemeral_memory));
+#endif
+
     /*
      * Receive the message !
      */
     thorium_actor_receive(self, &message);
+
+#ifdef BSAL_MEMORY_POOL_FIND_LEAKS
+    BSAL_DEBUGGER_ASSERT(!bsal_memory_pool_has_leaks(ephemeral_memory));
+#endif
 
     /* Restore the important stuff
      */

@@ -94,4 +94,6 @@ void bsal_memory_pool_set_name(struct bsal_memory_pool *self, int name);
 void bsal_memory_pool_examine(struct bsal_memory_pool *self);
 void bsal_memory_pool_profile(struct bsal_memory_pool *self, int operation, size_t byte_count);
 
+int bsal_memory_pool_has_leaks(struct bsal_memory_pool *self);
+
 #endif

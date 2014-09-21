@@ -998,10 +998,12 @@ int thorium_node_receive_system(struct thorium_node *node, struct thorium_messag
                 thorium_node_send_to_node(node, i, &new_message);
             }
 
+#if 0
             /*
              * thorium_node_send_to_node does a copy.
              */
             bsal_memory_pool_free(&node->outbound_message_memory_pool, buffer);
+#endif
         }
 
         return 1;
@@ -1266,7 +1268,9 @@ void thorium_node_dispatch_message(struct thorium_node *node, struct thorium_mes
              * This is a Thorium core buffer since the workers are not authorized to talk to
              * the Thorium core.
              */
+            /*
             bsal_memory_pool_free(&node->inbound_message_memory_pool, buffer);
+            */
         }
 
         return;

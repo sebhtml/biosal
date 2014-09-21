@@ -11,6 +11,8 @@
 
 #include "tracer.h"
 
+#include <engine/thorium/node.h>
+
 #include <stdio.h>
 #include <stdlib.h>
 
