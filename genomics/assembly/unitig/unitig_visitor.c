@@ -346,7 +346,7 @@ void bsal_unitig_visitor_execute(struct thorium_actor *self)
 
         concrete_self->step = STEP_GET_MAIN_KMER;
 
-        if (concrete_self->visited % 5000 == 0) {
+        if (concrete_self->visited % 500 == 0) {
             printf("%s/%d visited %d vertices so far\n",
                             thorium_actor_script_name(self), thorium_actor_name(self),
                             concrete_self->visited);
@@ -411,7 +411,9 @@ void bsal_unitig_visitor_execute(struct thorium_actor *self)
             if (code == expected_code) {
                 concrete_self->step = STEP_GET_CHILD_VERTEX_DATA;
             } else {
+#if 0
                 printf("Info: parent code mismatch !\n");
+#endif
                 concrete_self->step = STEP_DO_RESET;
             }
         } else {
@@ -481,7 +483,9 @@ void bsal_unitig_visitor_execute(struct thorium_actor *self)
             if (code == expected_code) {
                 concrete_self->step = STEP_MARK_UNITIG;
             } else {
+#if 0
                 printf("Info: child code mismatch !\n");
+#endif
                 concrete_self->step = STEP_DO_RESET;
             }
         } else {
