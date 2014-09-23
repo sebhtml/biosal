@@ -53,9 +53,6 @@ void bsal_memory_pool_init(struct bsal_memory_pool *self, int block_size, int na
     self->profile_freed_byte_count = 0;
     self->profile_allocate_calls = 0;
     self->profile_free_calls = 0;
-
-    self->snapshot_profile_allocate_calls = self->profile_allocate_calls;
-    self->snapshot_profile_free_calls = self->profile_free_calls;
 }
 
 void bsal_memory_pool_destroy(struct bsal_memory_pool *self)
@@ -420,9 +417,6 @@ void bsal_memory_pool_free_all(struct bsal_memory_pool *self)
     BSAL_DEBUGGER_ASSERT(!bsal_memory_pool_has_leaks(self));
 #endif
 
-    self->snapshot_profile_allocate_calls = self->profile_allocate_calls;
-    self->snapshot_profile_free_calls = self->profile_free_calls;
-
     /*
      * Reset the current block
      */
@@ -504,28 +498,17 @@ void bsal_memory_pool_set_name(struct bsal_memory_pool *self, int name)
 void bsal_memory_pool_examine(struct bsal_memory_pool *self)
 {
     printf("DEBUG_POOL Name= %d"
-                    " SinceSnapshotActiveSegments= %d (%d - %d)"
                     " ActiveSegments= %d (%d - %d)"
-                    " SnapshotActiveSegments= %d (%d - %d)"
                     " AllocatedBytes= %" PRIu64 " (%" PRIu64 " - %" PRIu64 ")"
                     "\n",
 
                     self->profile_name,
 
-                    (self->profile_allocate_calls - self->snapshot_profile_allocate_calls) -
-                    (self->profile_free_calls - self->snapshot_profile_free_calls),
-                    (self->profile_allocate_calls - self->snapshot_profile_allocate_calls),
-                    (self->profile_free_calls - self->snapshot_profile_free_calls),
-
                     self->profile_allocate_calls - self->profile_free_calls,
                     self->profile_allocate_calls, self->profile_free_calls,
 
-                    self->snapshot_profile_allocate_calls - self->snapshot_profile_free_calls,
-                    self->snapshot_profile_allocate_calls, self->snapshot_profile_free_calls,
-
                     self->profile_allocated_byte_count - self->profile_freed_byte_count,
                     self->profile_allocated_byte_count, self->profile_freed_byte_count);
-
 }
 
 void bsal_memory_pool_profile(struct bsal_memory_pool *self, int operation, size_t byte_count)

@@ -22,6 +22,7 @@
 #define BSAL_MEMORY_POOL_NAME_ACTORS            5
 #define BSAL_MEMORY_POOL_NAME_SEQUENCE_STORE    6
 #define BSAL_MEMORY_POOL_NAME_OTHER             7
+#define BSAL_MEMORY_POOL_NAME_GRAPH_STORE       8
 
 /*
  * Disable particular memory pool on IBM
@@ -71,9 +72,6 @@ struct bsal_memory_pool {
 
     int profile_allocate_calls;
     int profile_free_calls;
-
-    int snapshot_profile_allocate_calls;
-    int snapshot_profile_free_calls;
 };
 
 void bsal_memory_pool_init(struct bsal_memory_pool *self, int block_size, int name);
