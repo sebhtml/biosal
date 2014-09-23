@@ -59,6 +59,9 @@ void bsal_assembly_graph_store_init(struct thorium_actor *self)
 
     concrete_self = thorium_actor_concrete_actor(self);
 
+    bsal_memory_pool_init(&concrete_self->persistent_memory, 0,
+                    BSAL_MEMORY_POOL_NAME_GRAPH_STORE);
+
     concrete_self->consumed_canonical_vertex_count = 0;
 
     concrete_self->kmer_length = -1;
@@ -136,6 +139,8 @@ void bsal_assembly_graph_store_destroy(struct thorium_actor *self)
     bsal_dna_codec_destroy(&concrete_self->storage_codec);
 
     concrete_self->kmer_length = -1;
+
+    bsal_memory_pool_destroy(&concrete_self->persistent_memory);
 }
 
 void bsal_assembly_graph_store_receive(struct thorium_actor *self, struct thorium_message *message)
@@ -172,8 +177,11 @@ void bsal_assembly_graph_store_receive(struct thorium_actor *self, struct thoriu
 
         big_key_size = concrete_self->key_length_in_bytes;
         big_value_size = sizeof(struct bsal_assembly_vertex);
+
         bsal_map_init(&concrete_self->table, big_key_size,
                         big_value_size);
+        bsal_map_set_memory_pool(&concrete_self->table,
+                        &concrete_self->persistent_memory);
 
         printf("DEBUG big_key_size %d big_value_size %d\n", big_key_size, big_value_size);
 
@@ -345,6 +353,8 @@ void bsal_assembly_graph_store_push_data(struct thorium_actor *self, struct thor
                         thorium_actor_script_name(self),
                     name, bsal_map_size(&concrete_self->table),
                     2 * bsal_map_size(&concrete_self->table));
+
+    bsal_memory_pool_examine(&concrete_self->persistent_memory);
 
     bsal_map_iterator_init(&concrete_self->iterator, &concrete_self->table);
 

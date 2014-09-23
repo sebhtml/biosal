@@ -18,13 +18,13 @@
 /*
  * Time threshold in microseconds.
  *
- * The current value is 1000 us (1 ms).
+ * The current value is 256 us.
  *
  * There are 1 000 ms in 1 second
  * There are 1 000 000 us in 1 second.
  * There are 1 000 000 000 ns in 1 second.
  */
-#define THORIUM_MESSAGE_MULTIPLEXER_TIME_THRESHOLD_IN_NANOSECONDS (1 * 1000 * 1000)
+#define THORIUM_MESSAGE_MULTIPLEXER_TIME_THRESHOLD_IN_NANOSECONDS ( 256 * 1000)
 
 void thorium_multiplexer_policy_init(struct thorium_multiplexer_policy *self)
 {
