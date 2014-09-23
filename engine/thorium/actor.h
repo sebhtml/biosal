@@ -5,6 +5,7 @@
 #include "message.h"
 #include "script.h"
 #include "dispatcher.h"
+#include "load_profiler.h"
 
 #include "modules/binomial_tree_message.h"
 #include "modules/proxy_message.h"
@@ -201,6 +202,7 @@ struct bsal_memory_pool;
  * The actor attribute is a void *
  */
 struct thorium_actor {
+    struct thorium_load_profiler profiler;
     struct thorium_script *script;
     struct thorium_worker *worker;
     struct thorium_node *node;
@@ -403,6 +405,13 @@ int thorium_actor_get_source_count(struct thorium_actor *self);
 
 int thorium_actor_get_spawner(struct thorium_actor *self, struct bsal_vector *spawners);
 int thorium_actor_get_random_spawner(struct thorium_actor *self, struct bsal_vector *spawners);
+
+void thorium_actor_enable_profiler(struct thorium_actor *self);
+void thorium_actor_disable_profiler(struct thorium_actor *self);
+void thorium_actor_receive_private(struct thorium_actor *self, struct thorium_message *message);
+
+void thorium_actor_write_profile(struct thorium_actor *self,
+               struct bsal_buffered_file_writer *writer);
 
 /*
  * Expose the acquaintance API if required.

@@ -65,16 +65,17 @@
 #define TRANSPORT_DEBUG_ISSUE_594
 */
 
-#define FLAG_PRINT_LOAD 0
-#define FLAG_DEBUG 1
-#define FLAG_PRINT_STRUCTURE 2
-#define FLAG_STARTED 3
-#define FLAG_PRINT_COUNTERS 4
-#define FLAG_USE_TRANSPORT 5
-#define FLAG_SEND_IN_THREAD 6
-#define FLAG_WORKER_IN_MAIN_THREAD 7
-#define FLAG_WORKERS_IN_THREADS 8
-#define FLAG_EXAMINE 9
+#define FLAG_PRINT_LOAD                 0
+#define FLAG_DEBUG                      1
+#define FLAG_PRINT_STRUCTURE            2
+#define FLAG_STARTED                    3
+#define FLAG_PRINT_COUNTERS             4
+#define FLAG_USE_TRANSPORT              5
+#define FLAG_SEND_IN_THREAD             6
+#define FLAG_WORKER_IN_MAIN_THREAD      7
+#define FLAG_WORKERS_IN_THREADS         8
+#define FLAG_EXAMINE                    9
+#define FLAG_ENABLE_ACTOR_LOAD_PROFILES 10
 
 struct thorium_node *thorium_node_global_self;
 
@@ -393,6 +394,11 @@ void thorium_node_init(struct thorium_node *node, int *argc, char ***argv)
     thorium_multiplexer_policy_init(&node->multiplexer_policy);
     thorium_message_multiplexer_init(&node->multiplexer, node,
                     &node->multiplexer_policy);
+
+    if (bsal_command_has_argument(node->argc, node->argv, "-enable-actor-load-profiler")) {
+        thorium_worker_pool_enable_profiler(&node->worker_pool);
+        bsal_bitmap_set_bit_uint32_t(&node->flags, FLAG_ENABLE_ACTOR_LOAD_PROFILES);
+    }
 }
 
 void thorium_node_destroy(struct thorium_node *node)
@@ -628,6 +634,10 @@ int thorium_node_spawn_state(struct thorium_node *node, void *state,
     name = thorium_node_generate_name(node);
 
     thorium_actor_init(actor, state, script, name, node);
+
+    if (bsal_bitmap_get_bit_uint32_t(&node->flags, FLAG_ENABLE_ACTOR_LOAD_PROFILES)) {
+        thorium_actor_enable_profiler(actor);
+    }
 
     /* register the actor name
      */

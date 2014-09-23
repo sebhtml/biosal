@@ -12,11 +12,15 @@ lines = length(data[,1])
 minimum = -1
 maximum = -1
 
+minimum_y = -1
+maximum_y = -1
+
 i = 1
 
 while (i <= lines) {
-    start = data[,2][i]
-    end = data[,3][i]
+    start = data[,1][i]
+    end = data[,2][i]
+    actor = data[,3][i]
 
     if (minimum == -1 || start < minimum) {
         minimum = start
@@ -26,19 +30,28 @@ while (i <= lines) {
         maximum = end
     }
 
+    if (minimum_y == -1 || actor < minimum_y) {
+        minimum_y = actor
+    }
+
+    if (maximum_y == -1 || actor > maximum_y) {
+        maximum_y = actor
+    }
+
     i = i + 1
 }
 
 png("file.png", width=1000, height=1000)
-plot(c(0), c(0), xlim = c(minimum, maximum), ylim = c(0, 1), type='l', col='red')
+plot(c(0), c(0), xlim = c(minimum, maximum), ylim = c(minimum_y, maximum_y), type='l', col='red')
 
 i = 1
 
 while (i <= lines) {
-    start = data[,2][i]
-    end = data[,3][i]
+    start = data[,1][i]
+    end = data[,2][i]
+    actor = data[,3][i]
 
-    lines(c(start, end), c(1, 1), col='blue')
+    lines(c(start, end), c(actor, actor), col='blue')
     i = i + 1
 }
 

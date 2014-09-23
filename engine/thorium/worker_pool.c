@@ -809,3 +809,20 @@ void thorium_worker_pool_examine(struct thorium_worker_pool *self)
         thorium_worker_examine(worker);
     }
 }
+
+void thorium_worker_pool_enable_profiler(struct thorium_worker_pool *self)
+{
+    int i;
+    int size;
+    struct thorium_worker *worker;
+
+    i = 0;
+    size = thorium_worker_pool_worker_count(self);
+
+    for (i = 0; i < size; ++i) {
+
+        worker = thorium_worker_pool_get_worker(self, i);
+
+        thorium_worker_enable_profiler(worker);
+    }
+}

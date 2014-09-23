@@ -4,6 +4,8 @@
 
 #include "actor.h"
 
+#include "load_profiler.h"
+
 #include "scheduler/scheduling_queue.h"
 #include "scheduler/priority_scheduler.h"
 
@@ -12,6 +14,8 @@
 #include <core/structures/set.h>
 #include <core/structures/map.h>
 #include <core/structures/map_iterator.h>
+
+#include <core/file_storage/output/buffered_file_writer.h>
 
 #include <core/system/memory_pool.h>
 #include <core/system/timer.h>
@@ -60,9 +64,12 @@ struct thorium_scheduler;
 #define THORIUM_WORKER_HAS_OWN_QUEUES
 #define THORIUM_WORKER_USE_FAST_RINGS
 
-/* this is similar to worker threads in linux ([kworker/0] [kworker/1])
+/*
+ * This is similar to worker threads in linux ([kworker/0] [kworker/1])
  */
 struct thorium_worker {
+    struct thorium_load_profiler profiler;
+    struct bsal_buffered_file_writer load_profile_writer;
     struct thorium_node *node;
 
     struct bsal_timer timer;
@@ -207,7 +214,9 @@ int thorium_worker_enqueue_message_for_triage(struct thorium_worker *worker, str
 int thorium_worker_dequeue_message_for_triage(struct thorium_worker *worker, struct thorium_message *message);
 
 void thorium_worker_print_balance(struct thorium_worker *self);
+int thorium_worker_spawn(struct thorium_worker *self, int script);
 
 void thorium_worker_examine(struct thorium_worker *self);
+void thorium_worker_enable_profiler(struct thorium_worker *self);
 
 #endif

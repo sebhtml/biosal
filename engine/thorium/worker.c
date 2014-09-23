@@ -56,10 +56,11 @@
 /*
  * Worker flags.
  */
-#define FLAG_DEBUG_ACTORS 0
-#define FLAG_DEAD 1
-#define FLAG_DEBUG 2
-#define FLAG_BUSY 3
+#define FLAG_DEBUG_ACTORS               0
+#define FLAG_DEAD                       1
+#define FLAG_DEBUG                      2
+#define FLAG_BUSY                       3
+#define FLAG_ENABLE_ACTOR_LOAD_PROFILER 4
 
 #define DEBUG_WORKER_OPTION "-debug-worker"
 
@@ -87,6 +88,8 @@ void thorium_worker_init(struct thorium_worker *worker, int name, struct thorium
     int injected_buffer_ring_size;
     int argc;
     char **argv;
+
+    thorium_load_profiler_init(&worker->profiler);
 
     argc = thorium_node_argc(node);
     argv = thorium_node_argv(node);
@@ -146,6 +149,7 @@ void thorium_worker_init(struct thorium_worker *worker, int name, struct thorium
 
     bsal_bitmap_clear_bit_uint32_t(&worker->flags, FLAG_DEBUG);
     bsal_bitmap_clear_bit_uint32_t(&worker->flags, FLAG_BUSY);
+    bsal_bitmap_clear_bit_uint32_t(&node->flags, FLAG_ENABLE_ACTOR_LOAD_PROFILER);
 
     worker->flags = 0;
     bsal_bitmap_clear_bit_uint32_t(&worker->flags, FLAG_DEBUG_ACTORS);
@@ -236,6 +240,12 @@ void thorium_worker_init(struct thorium_worker *worker, int name, struct thorium
 void thorium_worker_destroy(struct thorium_worker *worker)
 {
     void *buffer;
+
+    thorium_load_profiler_destroy(&worker->profiler);
+
+    if (bsal_bitmap_get_bit_uint32_t(&worker->flags, FLAG_ENABLE_ACTOR_LOAD_PROFILER)) {
+        bsal_buffered_file_writer_destroy(&worker->load_profile_writer);
+    }
 
     bsal_map_destroy(&worker->actor_received_messages);
 
@@ -1364,6 +1374,10 @@ void thorium_worker_work(struct thorium_worker *worker, struct thorium_actor *ac
 
         bsal_map_delete(&worker->actors, &actor_name);
 
+        if (bsal_bitmap_get_bit_uint32_t(&worker->flags,
+                                FLAG_ENABLE_ACTOR_LOAD_PROFILER)) {
+            thorium_actor_write_profile(actor, &worker->load_profile_writer);
+        }
         thorium_node_notify_death(worker->node, actor);
     }
 
@@ -1585,4 +1599,33 @@ void thorium_worker_examine(struct thorium_worker *self)
 
     bsal_memory_pool_examine(&self->ephemeral_memory);
     bsal_memory_pool_examine(&self->outbound_message_memory_pool);
+}
+
+int thorium_worker_spawn(struct thorium_worker *self, int script)
+{
+    int name;
+
+    name = thorium_node_spawn(self->node, script);
+
+#if 0
+    if (bsal_bitmap_get_bit_uint32_t(&node->flags, FLAG_ENABLE_ACTOR_LOAD_PROFILER)) {
+        thorium_actor_enable_profiler(actor);
+    }
+#endif
+
+    return name;
+}
+
+void thorium_worker_enable_profiler(struct thorium_worker *self)
+{
+    char file_name[100];
+
+    bsal_bitmap_set_bit_uint32_t(&self->flags, FLAG_ENABLE_ACTOR_LOAD_PROFILER);
+
+    sprintf(file_name, "node_%d_worker_%d_actor_load_profile.txt", thorium_node_name(self->node),
+                    self->name);
+
+    bsal_buffered_file_writer_init(&self->load_profile_writer, file_name);
+
+    bsal_buffered_file_writer_printf(&self->load_profile_writer, "start_time    end_time    actor   script\n");
 }

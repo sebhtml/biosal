@@ -52,20 +52,23 @@
 /*
  * Flags.
  */
-#define FLAG_DEAD 0
-#define FLAG_CAN_PACK 1
-#define FLAG_MIGRATION_PROGRESSED 2
-#define FLAG_LOCKED 3
-#define FLAG_MIGRATION_CLONED 4
-#define FLAG_MIGRATION_FORWARDED_MESSAGES 5
-#define FLAG_CLONING_PROGRESSED 6
-#define FLAG_SYNCHRONIZATION_STARTED 7
+#define FLAG_DEAD                           0
+#define FLAG_CAN_PACK                       1
+#define FLAG_MIGRATION_PROGRESSED           2
+#define FLAG_LOCKED                         3
+#define FLAG_MIGRATION_CLONED               4
+#define FLAG_MIGRATION_FORWARDED_MESSAGES   5
+#define FLAG_CLONING_PROGRESSED             6
+#define FLAG_SYNCHRONIZATION_STARTED        7
+#define FLAG_ENABLE_LOAD_PROFILER           8
 
 void thorium_actor_init(struct thorium_actor *self, void *concrete_actor,
                 struct thorium_script *script, int name, struct thorium_node *node)
 {
     thorium_actor_init_fn_t init;
     int capacity;
+
+    thorium_load_profiler_init(&self->profiler);
 
     thorium_actor_set_priority(self, THORIUM_PRIORITY_NORMAL);
 
@@ -105,6 +108,8 @@ void thorium_actor_init(struct thorium_actor *self, void *concrete_actor,
     self->migration_status = THORIUM_ACTOR_STATUS_NOT_STARTED;
     bsal_bitmap_clear_bit_uint32_t(&self->flags, FLAG_MIGRATION_CLONED);
     bsal_bitmap_clear_bit_uint32_t(&self->flags, FLAG_MIGRATION_FORWARDED_MESSAGES);
+
+    bsal_bitmap_clear_bit_uint32_t(&self->flags, FLAG_ENABLE_LOAD_PROFILER);
 
 /*
 */
@@ -147,6 +152,8 @@ void thorium_actor_destroy(struct thorium_actor *self)
 {
     thorium_actor_init_fn_t destroy;
     struct thorium_message message;
+
+    thorium_load_profiler_destroy(&self->profiler);
 
     /* The concrete actor must first be destroyed.
      */
@@ -451,7 +458,7 @@ int thorium_actor_spawn_real(struct thorium_actor *self, int script)
     printf("DEBUG thorium_actor_spawn script %d\n", script);
 #endif
 
-    name = thorium_node_spawn(thorium_actor_node(self), script);
+    name = thorium_worker_spawn(self->worker, script);
 
     if (name == THORIUM_ACTOR_NOBODY) {
         printf("Error: problem with spawning! did you register the script (%x)?\n", script);
@@ -900,6 +907,19 @@ int thorium_actor_receive_system(struct thorium_actor *self, struct thorium_mess
 }
 
 void thorium_actor_receive(struct thorium_actor *self, struct thorium_message *message)
+{
+    if (bsal_bitmap_get_bit_uint32_t(&self->flags, FLAG_ENABLE_LOAD_PROFILER)) {
+        thorium_load_profiler_profile(&self->profiler, THORIUM_LOAD_PROFILER_RECEIVE_BEGIN);
+    }
+
+    thorium_actor_receive_private(self, message);
+
+    if (bsal_bitmap_get_bit_uint32_t(&self->flags, FLAG_ENABLE_LOAD_PROFILER)) {
+        thorium_load_profiler_profile(&self->profiler, THORIUM_LOAD_PROFILER_RECEIVE_END);
+    }
+}
+
+void thorium_actor_receive_private(struct thorium_actor *self, struct thorium_message *message)
 {
     thorium_actor_receive_fn_t receive;
     int name;
@@ -2053,4 +2073,28 @@ int thorium_actor_get_random_spawner(struct thorium_actor *self, struct bsal_vec
     actor = bsal_vector_at_as_int(spawners, index);
 
     return actor;
+}
+
+void thorium_actor_enable_profiler(struct thorium_actor *self)
+{
+#if 0
+    printf("thorium_actor_enable_profiler\n");
+#endif
+    bsal_bitmap_set_bit_uint32_t(&self->flags, FLAG_ENABLE_LOAD_PROFILER);
+}
+
+void thorium_actor_disable_profiler(struct thorium_actor *self)
+{
+    bsal_bitmap_clear_bit_uint32_t(&self->flags, FLAG_ENABLE_LOAD_PROFILER);
+}
+
+void thorium_actor_write_profile(struct thorium_actor *self,
+               struct bsal_buffered_file_writer *writer)
+{
+#if 0
+    printf("thorium_actor_write_profile\n");
+#endif
+
+    thorium_load_profiler_write(&self->profiler, thorium_actor_script_name(self),
+                    thorium_actor_name(self), writer);
 }
