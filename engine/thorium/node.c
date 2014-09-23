@@ -2392,6 +2392,7 @@ void thorium_node_examine(struct thorium_node *self)
                         bsal_memory_get_utilized_byte_count(),
                         bsal_memory_get_total_byte_count());
 
+    bsal_memory_pool_examine(&self->actor_memory_pool);
     bsal_memory_pool_examine(&self->inbound_message_memory_pool);
     bsal_memory_pool_examine(&self->outbound_message_memory_pool);
 

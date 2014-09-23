@@ -40,9 +40,20 @@ struct thorium_script bsal_sequence_store_script = {
 void bsal_sequence_store_init(struct thorium_actor *actor)
 {
     struct bsal_sequence_store *concrete_actor;
+    int block_size;
 
-    concrete_actor = (struct bsal_sequence_store *)thorium_actor_concrete_actor(actor);
+    concrete_actor = thorium_actor_concrete_actor(actor);
+
+    block_size = 67108864;
+
+    /* 2^26 */
+    bsal_memory_pool_init(&concrete_actor->persistent_memory, block_size,
+                    BSAL_MEMORY_POOL_NAME_SEQUENCE_STORE);
+    bsal_memory_pool_disable_tracking(&concrete_actor->persistent_memory);
+
     bsal_vector_init(&concrete_actor->sequences, sizeof(struct bsal_dna_sequence));
+    bsal_vector_set_memory_pool(&concrete_actor->sequences,
+                    &concrete_actor->persistent_memory);
 
     concrete_actor->required_kmers = NO_USEFUL_VALUE;
 
@@ -67,11 +78,6 @@ void bsal_sequence_store_init(struct thorium_actor *actor)
     concrete_actor->iterator_started = 0;
     concrete_actor->reservation_producer = -1;
 
-    /* 2^26 */
-    bsal_memory_pool_init(&concrete_actor->persistent_memory, 67108864,
-                    BSAL_MEMORY_POOL_NAME_SEQUENCE_STORE);
-    bsal_memory_pool_disable_tracking(&concrete_actor->persistent_memory);
-
     concrete_actor->left = -1;
     concrete_actor->last = -1;
 
@@ -94,7 +100,7 @@ void bsal_sequence_store_destroy(struct thorium_actor *actor)
     struct bsal_vector_iterator iterator;
     struct bsal_dna_sequence *sequence;
 
-    concrete_actor = (struct bsal_sequence_store *)thorium_actor_concrete_actor(actor);
+    concrete_actor = thorium_actor_concrete_actor(actor);
 
     bsal_vector_iterator_init(&iterator, &concrete_actor->sequences);
 
@@ -132,7 +138,7 @@ void bsal_sequence_store_receive(struct thorium_actor *actor, struct thorium_mes
 
     tag = thorium_message_action(message);
     source = thorium_message_source(message);
-    concrete_actor = (struct bsal_sequence_store *)thorium_actor_concrete_actor(actor);
+    concrete_actor = thorium_actor_concrete_actor(actor);
 
     if (tag == ACTION_PUSH_SEQUENCE_DATA_BLOCK) {
 
@@ -159,7 +165,10 @@ void bsal_sequence_store_receive(struct thorium_actor *actor, struct thorium_mes
 
     } else if (tag == ACTION_RESET) {
 
+#if 0
         printf("RESET\n");
+#endif
+
         /* Destroy iterator if it is started.
          */
         if (concrete_actor->iterator_started) {
@@ -216,7 +225,7 @@ void bsal_sequence_store_push_sequence_data_block(struct thorium_actor *actor, s
     struct bsal_dna_sequence *bucket_in_store;
 
     buffer = thorium_message_buffer(message);
-    concrete_actor = (struct bsal_sequence_store *)thorium_actor_concrete_actor(actor);
+    concrete_actor = thorium_actor_concrete_actor(actor);
 
 #ifdef BSAL_SEQUENCE_STORE_DEBUG
     count = thorium_message_count(message);
@@ -327,7 +336,7 @@ void bsal_sequence_store_reserve(struct thorium_actor *actor, struct thorium_mes
     source = thorium_message_source(message);
     buffer = thorium_message_buffer(message);
     amount = *(uint64_t*)buffer;
-    concrete_actor = (struct bsal_sequence_store *)thorium_actor_concrete_actor(actor);
+    concrete_actor = thorium_actor_concrete_actor(actor);
 
     concrete_actor->expected = amount;
 
@@ -366,12 +375,14 @@ void bsal_sequence_store_show_progress(struct thorium_actor *actor, struct thori
 {
     struct bsal_sequence_store *concrete_actor;
 
-    concrete_actor = (struct bsal_sequence_store *)thorium_actor_concrete_actor(actor);
+    concrete_actor = thorium_actor_concrete_actor(actor);
 
     printf("sequence store %d has %" PRId64 "/%" PRId64 " entries\n",
                     thorium_actor_name(actor),
                     concrete_actor->received,
                     bsal_vector_size(&concrete_actor->sequences));
+
+    bsal_memory_pool_examine(&concrete_actor->persistent_memory);
 
     if (concrete_actor->received == concrete_actor->expected) {
 
@@ -409,7 +420,7 @@ void bsal_sequence_store_ask(struct thorium_actor *self, struct thorium_message 
 #endif
 
     ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
-    concrete_actor = (struct bsal_sequence_store *)thorium_actor_concrete_actor(self);
+    concrete_actor = thorium_actor_concrete_actor(self);
 
     if (concrete_actor->received != concrete_actor->expected) {
         printf("Error: sequence store %d is not ready %" PRIu64 "/%" PRIu64 " (reservation producer %d)\n",
@@ -544,7 +555,7 @@ int bsal_sequence_store_get_required_kmers(struct thorium_actor *actor, struct t
     int kmer_length;
     int stores_per_node;
 
-    concrete_actor = (struct bsal_sequence_store *)thorium_actor_concrete_actor(actor);
+    concrete_actor = thorium_actor_concrete_actor(actor);
 
     if (concrete_actor->required_kmers != NO_USEFUL_VALUE) {
         return concrete_actor->required_kmers;
