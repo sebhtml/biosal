@@ -6,6 +6,11 @@
 
 #include "core/helpers/message_helper.h"
 
+#define THORIUM_MESSAGE_TYPE_NONE               0
+#define THORIUM_MESSAGE_TYPE_NODE_INBOUND       1
+#define THORIUM_MESSAGE_TYPE_NODE_OUTBOUND      2
+#define THORIUM_MESSAGE_TYPE_WORKER_OUTBOUND    3
+
 /*
  * This is a message.
  */
@@ -23,6 +28,8 @@ struct thorium_message {
     int routing_source;
     int routing_destination;
     int worker;
+
+    int type;
 };
 
 void thorium_message_init(struct thorium_message *self, int action, int count, void *buffer);
@@ -64,5 +71,8 @@ int thorium_message_worker(struct thorium_message *self);
 int thorium_message_is_recycled(struct thorium_message *self);
 
 int thorium_message_pack_unpack(struct thorium_message *self, int operation, void *buffer);
+
+int thorium_message_type(struct thorium_message *self);
+void thorium_message_set_type(struct thorium_message *self, int type);
 
 #endif

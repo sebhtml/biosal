@@ -1126,6 +1126,12 @@ void thorium_node_send_to_node(struct thorium_node *node, int destination,
     printf("DEBUG thorium_node_send_to_node %d\n", destination);
 #endif
 
+    /*
+     * Mark the message.
+     */
+
+    thorium_message_set_type(&new_message, THORIUM_MESSAGE_TYPE_NODE_OUTBOUND);
+
     thorium_node_send(node, &new_message);
 }
 
@@ -1335,6 +1341,7 @@ void thorium_node_inject_message_in_worker_pool(struct thorium_node *node, struc
                         name);
 #endif
 
+        thorium_node_recycle_message(node, message);
         return;
     }
 
@@ -1345,6 +1352,7 @@ void thorium_node_inject_message_in_worker_pool(struct thorium_node *node, struc
         printf("DEBUG node/%d: actor/%d is dead\n", node->name,
                         name);
 #endif
+        thorium_node_recycle_message(node, message);
         return;
     }
 
@@ -2244,6 +2252,13 @@ void thorium_node_recycle_message(struct thorium_node *self, struct thorium_mess
     int worker_name;
     void *buffer;
     struct thorium_worker_buffer worker_buffer;
+
+    /*
+     * This function recycle a message.
+     * The type can not be THORIUM_MESSAGE_TYPE_NODE_OUTBOUND.
+     */
+    BSAL_DEBUGGER_ASSERT(thorium_message_type(message) == THORIUM_MESSAGE_TYPE_NODE_INBOUND
+                    || thorium_message_type(message) == THORIUM_MESSAGE_TYPE_WORKER_OUTBOUND);
 
     worker_name = thorium_message_worker(message);
     buffer = thorium_message_buffer(message);

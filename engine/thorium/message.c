@@ -25,6 +25,8 @@ void thorium_message_init(struct thorium_message *message, int action, int count
     message->routing_destination = -1;
 
     message->worker = -1;
+
+    thorium_message_set_type(message,  THORIUM_MESSAGE_TYPE_NONE);
 }
 
 void thorium_message_destroy(struct thorium_message *message)
@@ -151,6 +153,8 @@ void thorium_message_init_copy(struct thorium_message *message, struct thorium_m
 void thorium_message_set_worker(struct thorium_message *message, int worker)
 {
     message->worker = worker;
+
+    thorium_message_set_type(message, THORIUM_MESSAGE_TYPE_WORKER_OUTBOUND);
 }
 
 int thorium_message_worker(struct thorium_message *message)
@@ -179,6 +183,8 @@ void thorium_message_init_with_nodes(struct thorium_message *self, int count, vo
 
     thorium_message_set_source_node(self, source);
     thorium_message_set_destination_node(self, destination);
+
+    thorium_message_set_type(self, THORIUM_MESSAGE_TYPE_NODE_INBOUND);
 }
 
 int thorium_message_pack_unpack(struct thorium_message *self, int operation, void *buffer)
@@ -197,4 +203,14 @@ int thorium_message_pack_unpack(struct thorium_message *self, int operation, voi
     bsal_packer_destroy(&packer);
 
     return count;
+}
+
+int thorium_message_type(struct thorium_message *self)
+{
+    return self->type;
+}
+
+void thorium_message_set_type(struct thorium_message *self, int type)
+{
+    self->type = type;
 }
