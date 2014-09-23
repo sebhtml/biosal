@@ -23,8 +23,8 @@
 /*
  * Enable leak detection using
  * BSAL_DEBUGGER_LEAK_DETECTION_BEGIN and BSAL_DEBUGGER_LEAK_DETECTION_END
-#define BSAL_DEBUGGER_ENABLE_LEAK_DETECTION
  */
+#define BSAL_DEBUGGER_ENABLE_LEAK_DETECTION
 
 /*
  * Enable event counter for injections
@@ -91,10 +91,14 @@ void bsal_debugger_examine(void *pointer, int bytes);
 #define BSAL_DEBUGGER_LEAK_DETECTION_END(pool, state) \
     bsal_memory_pool_end(pool, &state, # state, __func__, __FILE__, __LINE__);
 
+#define BSAL_DEBUGGER_LEAK_CHECK_DOUBLE_FREE(pool) \
+    bsal_memory_pool_check_double_free(pool, __func__, __FILE__, __LINE__);
+
 #else
 
 #define BSAL_DEBUGGER_LEAK_DETECTION_BEGIN(pool, state)
 #define BSAL_DEBUGGER_LEAK_DETECTION_END(pool, state)
+#define BSAL_DEBUGGER_LEAK_CHECK_DOUBLE_FREE(pool)
 
 #endif
 

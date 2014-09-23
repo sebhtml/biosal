@@ -147,6 +147,8 @@ void bsal_assembly_graph_store_receive(struct thorium_actor *self, struct thoriu
     struct bsal_dna_kmer kmer;
     /*struct bsal_memory_pool *ephemeral_memory;*/
     int customer;
+    int big_key_size;
+    int big_value_size;
 
     if (thorium_actor_take_action(self, message)) {
         return;
@@ -168,9 +170,12 @@ void bsal_assembly_graph_store_receive(struct thorium_actor *self, struct thoriu
                         concrete_self->kmer_length, &concrete_self->storage_codec);
         bsal_dna_kmer_destroy(&kmer, thorium_actor_get_ephemeral_memory(self));
 
+        big_key_size = concrete_self->key_length_in_bytes;
+        big_value_size = sizeof(struct bsal_assembly_vertex);
+        bsal_map_init(&concrete_self->table, big_key_size,
+                        big_value_size);
 
-        bsal_map_init(&concrete_self->table, concrete_self->key_length_in_bytes,
-                        sizeof(struct bsal_assembly_vertex));
+        printf("DEBUG big_key_size %d big_value_size %d\n", big_key_size, big_value_size);
 
         /*
          * Configure the map for better performance.

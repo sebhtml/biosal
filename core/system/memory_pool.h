@@ -106,6 +106,12 @@ int bsal_memory_pool_has_leaks(struct bsal_memory_pool *self);
 void bsal_memory_pool_begin(struct bsal_memory_pool *self, struct bsal_memory_pool_state *state);
 void bsal_memory_pool_end(struct bsal_memory_pool *self, struct bsal_memory_pool_state *state,
                 const char *name, const char *function, const char *file, int line);
+int bsal_memory_pool_has_double_free(struct bsal_memory_pool *self);
+int bsal_memory_pool_profile_allocate_count(struct bsal_memory_pool *self);
+int bsal_memory_pool_profile_free_count(struct bsal_memory_pool *self);
+void bsal_memory_pool_check_double_free(struct bsal_memory_pool *self,
+                const char *function, const char *file, int line);
+int bsal_memory_pool_profile_balance_count(struct bsal_memory_pool *self);
 
 
 #endif

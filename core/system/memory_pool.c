@@ -580,3 +580,42 @@ void bsal_memory_pool_end(struct bsal_memory_pool *self, struct bsal_memory_pool
 
     BSAL_DEBUGGER_ASSERT(allocate_calls == free_calls);
 }
+
+int bsal_memory_pool_has_double_free(struct bsal_memory_pool *self)
+{
+    return self->profile_allocate_calls < self->profile_free_calls;
+}
+
+int bsal_memory_pool_profile_allocate_count(struct bsal_memory_pool *self)
+{
+    return self->profile_allocate_calls;
+}
+
+int bsal_memory_pool_profile_free_count(struct bsal_memory_pool *self)
+{
+    return self->profile_free_calls;
+}
+
+void bsal_memory_pool_check_double_free(struct bsal_memory_pool *self,
+        const char *function, const char *file, int line)
+{
+    int balance;
+
+    balance = 0;
+
+    balance += self->profile_allocate_calls;
+    balance -= self->profile_free_calls;
+
+    if (self->profile_free_calls > self->profile_allocate_calls) {
+        printf("%s %s %d INFO profile_allocate_calls %d profile_free_calls %d balance %d\n",
+                        function, file, line,
+                        self->profile_allocate_calls, self->profile_free_calls, balance);
+    }
+
+    BSAL_DEBUGGER_ASSERT(self->profile_allocate_calls >= self->profile_free_calls);
+}
+
+int bsal_memory_pool_profile_balance_count(struct bsal_memory_pool *self)
+{
+    return self->profile_allocate_calls - self->profile_free_calls;
+}
