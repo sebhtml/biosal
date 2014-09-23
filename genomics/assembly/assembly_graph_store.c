@@ -1221,8 +1221,7 @@ void bsal_assembly_graph_store_mark_vertex_as_visited(struct thorium_actor *self
     bsal_dna_kmer_init_empty(&kmer);
 
     position += bsal_dna_kmer_unpack(&kmer, buffer, concrete_self->kmer_length,
-                ephemeral_memory,
-                &concrete_self->transport_codec);
+                ephemeral_memory, &concrete_self->transport_codec);
     sequence = bsal_memory_pool_allocate(ephemeral_memory, concrete_self->kmer_length + 1);
     bsal_dna_kmer_get_sequence(&kmer, sequence, concrete_self->kmer_length,
                         &concrete_self->transport_codec);
@@ -1233,8 +1232,7 @@ void bsal_assembly_graph_store_mark_vertex_as_visited(struct thorium_actor *self
      * Get store key
      */
     key = bsal_memory_pool_allocate(ephemeral_memory, concrete_self->key_length_in_bytes);
-    bsal_dna_kmer_pack_store_key(&storage_kmer, key,
-                        concrete_self->kmer_length, &concrete_self->storage_codec,
+    bsal_dna_kmer_pack_store_key(&storage_kmer, key, concrete_self->kmer_length, &concrete_self->storage_codec,
                         ephemeral_memory);
 
     /* Get vertex. */
@@ -1243,6 +1241,7 @@ void bsal_assembly_graph_store_mark_vertex_as_visited(struct thorium_actor *self
     bsal_dna_kmer_destroy(&kmer, ephemeral_memory);
     bsal_dna_kmer_destroy(&storage_kmer, ephemeral_memory);
     bsal_memory_pool_free(ephemeral_memory, key);
+    bsal_memory_pool_free(ephemeral_memory, sequence);
 
     position += thorium_message_unpack_int(message, position, &path_index);
     /*

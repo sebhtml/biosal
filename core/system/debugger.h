@@ -17,8 +17,8 @@
 
 /*
  * Report memory leaks in memory pool.
-#define BSAL_DEBUGGER_CHECK_LEAKS_IN_POOL
  */
+#define BSAL_DEBUGGER_CHECK_LEAKS_IN_POOL
 
 /*
  * Enable leak detection using
