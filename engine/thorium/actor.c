@@ -950,9 +950,13 @@ void thorium_actor_receive(struct thorium_actor *self, struct thorium_message *m
 #endif
     }
 
+    BSAL_DEBUGGER_ASSERT(bsal_memory_pool_profile_balance_count(thorium_actor_get_ephemeral_memory(self)) == 0);
+
     /* Otherwise, this is a message for the actor itself.
      */
     receive = thorium_actor_get_receive(self);
+
+    BSAL_DEBUGGER_ASSERT(bsal_memory_pool_profile_balance_count(thorium_actor_get_ephemeral_memory(self)) == 0);
 
     BSAL_DEBUGGER_ASSERT(receive != NULL);
 
