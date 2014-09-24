@@ -62,8 +62,6 @@ CORE_OBJECTS += core/structures/ring.o
 CORE_OBJECTS += core/structures/linked_ring.o
 CORE_OBJECTS += core/structures/fast_queue.o
 CORE_OBJECTS += core/structures/fast_ring.o
-
-
-
-
+CORE_OBJECTS += core/structures/ordered/red_black_tree.o
+CORE_OBJECTS += core/structures/ordered/red_black_node.o
 
