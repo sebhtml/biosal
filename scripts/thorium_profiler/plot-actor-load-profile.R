@@ -17,6 +17,16 @@ maximum_y = -1
 
 i = 1
 
+used_duration = 0
+window_start = -1
+window_end = -1
+last_index = -1
+
+# in nanoseconds (10 ms)
+window_maximum_size = (10 * 1000 * 1000)
+
+utilizations = 1:lines
+
 while (i <= lines) {
     start = data[,1][i]
     end = data[,2][i]
@@ -38,13 +48,46 @@ while (i <= lines) {
         maximum_y = actor
     }
 
+    # create window too.
+
+    if (last_index == -1) {
+        last_index = i;
+    }
+
+    # add the item to the window
+    used_duration = used_duration + (end - start)
+
+    if (window_start == -1) {
+        window_start = i
+    }
+
+    window_end = i
+
+    # Verify if we must reduce the window
+    while (window_end >= window_start &&
+                    (data[,2][window_end] - data[,1][window_start] > window_maximum_size)) {
+        difference = data[,2][window_start] - data[,1][window_start]
+
+        if (used_duration - difference <= window_maximum_size) {
+            break;
+        }
+        used_duration = used_duration - difference
+        window_start = window_start + 1
+    }
+
+    total = data[,2][window_end] - data[,1][window_start]
+    utilization = used_duration / total
+    #print(used_duration)
+    #print(total)
+    utilizations[i] = utilization
     i = i + 1
 }
 
-png("file.png")
-#, width=4000, height=1000)
+png(paste(file, ".png", sep=""), width=1000, height=800)
+par(mfrow=c(2,1))
+plot(data[,1], utilizations, col='black', type='l', ylab='Processor core utilization', xlab='Time (nanoseconds)', main='Processor core profile')
 plot(c(0), c(0), xlim = c(minimum, maximum), ylim = c(minimum_y, maximum_y), type='l', col='red',
-                xlab='Time (nanoseconds)', ylab='Actor', main="Actor load profiles")
+                xlab='Time (nanoseconds)', ylab='Actor', main=paste("Actor load profiles (", file, ")", sep=""))
 
 i = 1
 
