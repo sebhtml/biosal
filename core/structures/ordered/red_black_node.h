@@ -13,8 +13,8 @@ struct bsal_red_black_node;
  */
 struct bsal_red_black_node {
     struct bsal_red_black_node *parent;
-    struct bsal_red_black_node *left_child;
-    struct bsal_red_black_node *right_child;
+    struct bsal_red_black_node *left_node;
+    struct bsal_red_black_node *right_node;
     char color;
 
     int key;
@@ -32,11 +32,11 @@ int bsal_red_black_node_key(struct bsal_red_black_node *self);
 char bsal_red_black_node_color(struct bsal_red_black_node *self);
 void bsal_red_black_node_set_color(struct bsal_red_black_node *self, char color);
 
-struct bsal_red_black_node *bsal_red_black_node_left_child(struct bsal_red_black_node *self);
-void bsal_red_black_node_set_left_child(struct bsal_red_black_node *self, struct bsal_red_black_node *node);
+struct bsal_red_black_node *bsal_red_black_node_left_node(struct bsal_red_black_node *self);
+void bsal_red_black_node_set_left_node(struct bsal_red_black_node *self, struct bsal_red_black_node *node);
 
-struct bsal_red_black_node *bsal_red_black_node_right_child(struct bsal_red_black_node *self);
-void bsal_red_black_node_set_right_child(struct bsal_red_black_node *self, struct bsal_red_black_node *node);
+struct bsal_red_black_node *bsal_red_black_node_right_node(struct bsal_red_black_node *self);
+void bsal_red_black_node_set_right_node(struct bsal_red_black_node *self, struct bsal_red_black_node *node);
 
 struct bsal_red_black_node *bsal_red_black_node_parent(struct bsal_red_black_node *self);
 void bsal_red_black_node_set_parent(struct bsal_red_black_node *self, struct bsal_red_black_node *node);

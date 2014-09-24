@@ -8,8 +8,8 @@
 void bsal_red_black_node_init(struct bsal_red_black_node *self, int key)
 {
     self->parent = NULL;
-    self->left_child = NULL;
-    self->right_child = NULL;
+    self->left_node = NULL;
+    self->right_node = NULL;
 
     self->key = key;
 
@@ -19,8 +19,8 @@ void bsal_red_black_node_init(struct bsal_red_black_node *self, int key)
 void bsal_red_black_node_destroy(struct bsal_red_black_node *self)
 {
     self->parent = NULL;
-    self->left_child = NULL;
-    self->right_child = NULL;
+    self->left_node = NULL;
+    self->right_node = NULL;
 
     self->key = -1;
 
@@ -42,24 +42,24 @@ void bsal_red_black_node_set_color(struct bsal_red_black_node *self, char color)
     self->color = color;
 }
 
-struct bsal_red_black_node *bsal_red_black_node_left_child(struct bsal_red_black_node *self)
+struct bsal_red_black_node *bsal_red_black_node_left_node(struct bsal_red_black_node *self)
 {
-    return self->left_child;
+    return self->left_node;
 }
 
-void bsal_red_black_node_set_left_child(struct bsal_red_black_node *self, struct bsal_red_black_node *node)
+void bsal_red_black_node_set_left_node(struct bsal_red_black_node *self, struct bsal_red_black_node *node)
 {
-    self->left_child = node;
+    self->left_node = node;
 }
 
-struct bsal_red_black_node *bsal_red_black_node_right_child(struct bsal_red_black_node *self)
+struct bsal_red_black_node *bsal_red_black_node_right_node(struct bsal_red_black_node *self)
 {
-    return self->right_child;
+    return self->right_node;
 }
 
-void bsal_red_black_node_set_right_child(struct bsal_red_black_node *self, struct bsal_red_black_node *node)
+void bsal_red_black_node_set_right_node(struct bsal_red_black_node *self, struct bsal_red_black_node *node)
 {
-    self->right_child = node;
+    self->right_node = node;
 }
 
 struct bsal_red_black_node *bsal_red_black_node_parent(struct bsal_red_black_node *self)
@@ -81,10 +81,10 @@ struct bsal_red_black_node *bsal_red_black_node_uncle(struct bsal_red_black_node
     if (grandparent == NULL)
         return NULL;
 
-    if (self->parent == grandparent->left_child) {
-        return grandparent->right_child;
+    if (self->parent == grandparent->left_node) {
+        return grandparent->right_node;
     } else {
-        return grandparent->left_child;
+        return grandparent->left_node;
     }
 }
 

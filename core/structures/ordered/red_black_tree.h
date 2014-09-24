@@ -8,9 +8,7 @@ struct bsal_memory_pool;
 /*
  * A red-black tree.
  *
- * \see http://en.wikipedia.org/wiki/Red%E2%80%93black_tree
- *
- * The 5 rules are:
+ * The 5 algorithmic rules are:
  *
  * 1. A node is red or black.
  * 2. The root is black.
@@ -18,6 +16,9 @@ struct bsal_memory_pool;
  * 4. Any red node has 2 black child nodes.
  * 5. Every path from given node to any of its descendent leaf node contains
  *    the same number of black nodes.
+ *
+ * The implementation is based on pseudo-code in the Wikipedia page.
+ * \see http://en.wikipedia.org/wiki/Red%E2%80%93black_tree
  */
 struct bsal_red_black_tree {
     struct bsal_red_black_node *root;
@@ -56,5 +57,18 @@ void bsal_red_black_tree_insert_case2(struct bsal_red_black_tree *self,
                 struct bsal_red_black_node *node);
 void bsal_red_black_tree_insert_case3(struct bsal_red_black_tree *self,
                 struct bsal_red_black_node *node);
+void bsal_red_black_tree_insert_case4(struct bsal_red_black_tree *self,
+                struct bsal_red_black_node *node);
+void bsal_red_black_tree_insert_case5(struct bsal_red_black_tree *self,
+                struct bsal_red_black_node *node);
+
+void bsal_red_black_tree_rotate_left(struct bsal_red_black_tree *self,
+                struct bsal_red_black_node *node);
+void bsal_red_black_tree_rotate_right(struct bsal_red_black_tree *self,
+                struct bsal_red_black_node *node);
+
+void bsal_red_black_tree_print(struct bsal_red_black_tree *self);
+void bsal_red_black_tree_print_node(struct bsal_red_black_tree *self,
+                struct bsal_red_black_node *node, int depth);
 
 #endif
