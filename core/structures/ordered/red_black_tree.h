@@ -37,4 +37,7 @@ void bsal_red_black_tree_set_memory_pool(struct bsal_red_black_tree *self,
 
 int bsal_red_black_tree_size(struct bsal_red_black_tree *self);
 
+void bsal_red_black_tree_free_node(struct bsal_red_black_tree *self,
+                struct bsal_red_black_node *node);
+
 #endif

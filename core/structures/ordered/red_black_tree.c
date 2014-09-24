@@ -17,7 +17,7 @@ void bsal_red_black_tree_init(struct bsal_red_black_tree *self)
 void bsal_red_black_tree_destroy(struct bsal_red_black_tree *self)
 {
     if (self->root != NULL) {
-        bsal_memory_pool_free(self->memory_pool, self->root);
+        bsal_red_black_tree_free_node(self, self->root);
         self->root = NULL;
     }
 
@@ -111,4 +111,32 @@ void bsal_red_black_tree_set_memory_pool(struct bsal_red_black_tree *self,
 int bsal_red_black_tree_size(struct bsal_red_black_tree *self)
 {
     return self->size;
+}
+
+void bsal_red_black_tree_free_node(struct bsal_red_black_tree *self,
+                struct bsal_red_black_node *node)
+{
+    struct bsal_red_black_node *left_node;
+    struct bsal_red_black_node *right_node;
+
+    if (node == NULL) {
+        return;
+    }
+
+#if 0
+    printf("free_node\n");
+#endif
+
+    left_node = bsal_red_black_node_left_child(node);
+    right_node = bsal_red_black_node_right_child(node);
+
+    bsal_red_black_tree_free_node(self, left_node);
+    bsal_red_black_tree_free_node(self, right_node);
+
+    bsal_red_black_node_destroy(node);
+
+#if 0
+    printf("free %p\n", (void *)node);
+#endif
+    bsal_memory_pool_free(self->memory_pool, node);
 }
