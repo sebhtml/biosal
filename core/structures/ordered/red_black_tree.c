@@ -34,8 +34,11 @@ void bsal_red_black_tree_add(struct bsal_red_black_tree *self, int key)
 
     node = bsal_memory_pool_allocate(self->memory_pool, sizeof(struct bsal_red_black_node));
 
+    bsal_red_black_node_init(node, key);
+
     if (self->root == NULL) {
         self->root = node;
+        bsal_red_black_node_set_color(self->root, BSAL_COLOR_BLACK);
         ++self->size;
         return;
     }
@@ -77,7 +80,7 @@ void bsal_red_black_tree_delete(struct bsal_red_black_tree *self, int key)
 }
 
 /*
- * A red-black tree.
+ * This function checks the rules.
  *
  * \see http://en.wikipedia.org/wiki/Red%E2%80%93black_tree
  *
@@ -90,16 +93,18 @@ void bsal_red_black_tree_delete(struct bsal_red_black_tree *self, int key)
  * 5. Every path from given node to any of its descendent leaf node contains
  *    the same number of black nodes.
  */
-void bsal_red_black_tree_check_rules(struct bsal_red_black_tree *self, int key)
+int bsal_red_black_tree_has_ignored_rules(struct bsal_red_black_tree *self)
 {
     if (self->root == NULL) {
-        return;
+        return 0;
     }
 
     if (bsal_red_black_node_color(self->root) != BSAL_COLOR_BLACK) {
         printf("Rule 2 is ignored !\n");
-        return;
+        return 1;
     }
+
+    return 0;
 }
 
 void bsal_red_black_tree_set_memory_pool(struct bsal_red_black_tree *self,

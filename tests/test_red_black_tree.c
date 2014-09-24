@@ -30,7 +30,7 @@ int main(int argc, char **argv)
         key = rand();
 
         bsal_red_black_tree_add(&tree, key);
-
+        TEST_INT_EQUALS(bsal_red_black_tree_has_ignored_rules(&tree), 0);
         TEST_INT_EQUALS(bsal_red_black_tree_size(&tree), i + 1);
     }
 

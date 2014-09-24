@@ -31,7 +31,12 @@ void bsal_red_black_tree_destroy(struct bsal_red_black_tree *self);
 void bsal_red_black_tree_add(struct bsal_red_black_tree *self, int key);
 void bsal_red_black_tree_delete(struct bsal_red_black_tree *self, int key);
 
-void bsal_red_black_tree_check_rules(struct bsal_red_black_tree *self, int key);
+/*
+ * Check the 5 red-black tree rules.
+ *
+ * If there is a problem, a non-zero value is returned.
+ */
+int bsal_red_black_tree_has_ignored_rules(struct bsal_red_black_tree *self);
 void bsal_red_black_tree_set_memory_pool(struct bsal_red_black_tree *self,
                 struct bsal_memory_pool *memory_pool);
 
