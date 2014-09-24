@@ -38,7 +38,7 @@ void bsal_red_black_tree_add(struct bsal_red_black_tree *self, int key)
 
     if (self->root == NULL) {
         self->root = node;
-        bsal_red_black_node_set_color(self->root, BSAL_COLOR_BLACK);
+        bsal_red_black_tree_insert_case1(self, node);
         ++self->size;
         return;
     }
@@ -55,6 +55,7 @@ void bsal_red_black_tree_add(struct bsal_red_black_tree *self, int key)
                 bsal_red_black_node_set_left_child(current_node, node);
                 bsal_red_black_node_set_parent(node, current_node);
                 ++self->size;
+                bsal_red_black_tree_insert_case1(self, node);
                 break;
             } else {
                 current_node = left_node;
@@ -67,6 +68,7 @@ void bsal_red_black_tree_add(struct bsal_red_black_tree *self, int key)
                 bsal_red_black_node_set_right_child(current_node, node);
                 bsal_red_black_node_set_parent(node, current_node);
                 ++self->size;
+                bsal_red_black_tree_insert_case1(self, node);
                 break;
             } else {
                 current_node = right_node;
@@ -144,4 +146,34 @@ void bsal_red_black_tree_free_node(struct bsal_red_black_tree *self,
     printf("free %p\n", (void *)node);
 #endif
     bsal_memory_pool_free(self->memory_pool, node);
+}
+
+void bsal_red_black_tree_insert_case1(struct bsal_red_black_tree *self,
+                struct bsal_red_black_node *node)
+{
+    if (node->parent == NULL) {
+        /*
+         * Adding at the root adds one black node to all paths.
+         */
+        bsal_red_black_node_set_color(self->root, BSAL_COLOR_BLACK);
+    } else {
+        bsal_red_black_tree_insert_case2(self, node);
+    }
+}
+
+void bsal_red_black_tree_insert_case2(struct bsal_red_black_tree *self,
+                struct bsal_red_black_node *node)
+{
+    if (node->parent->color == BSAL_COLOR_BLACK) {
+        return;
+    } else {
+
+        bsal_red_black_tree_insert_case3(self, node);
+    }
+}
+
+void bsal_red_black_tree_insert_case3(struct bsal_red_black_tree *self,
+                struct bsal_red_black_node *node)
+{
+
 }

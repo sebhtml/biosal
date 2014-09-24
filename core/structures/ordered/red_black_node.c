@@ -1,6 +1,8 @@
 
 #include "red_black_node.h"
 
+#include <core/system/debugger.h>
+
 #include <stdlib.h>
 
 void bsal_red_black_node_init(struct bsal_red_black_node *self, int key)
@@ -70,4 +72,27 @@ void bsal_red_black_node_set_parent(struct bsal_red_black_node *self, struct bsa
     self->parent = node;
 }
 
+struct bsal_red_black_node *bsal_red_black_node_uncle(struct bsal_red_black_node *self)
+{
+    struct bsal_red_black_node *grandparent;
 
+    grandparent = bsal_red_black_node_grandparent(self);
+
+    if (grandparent == NULL)
+        return NULL;
+
+    if (self->parent == grandparent->left_child) {
+        return grandparent->right_child;
+    } else {
+        return grandparent->left_child;
+    }
+}
+
+struct bsal_red_black_node *bsal_red_black_node_grandparent(struct bsal_red_black_node *self)
+{
+    if (self != NULL && self->parent != NULL) {
+        return self->parent->parent;
+    } else {
+        return NULL;
+    }
+}

@@ -45,4 +45,16 @@ int bsal_red_black_tree_size(struct bsal_red_black_tree *self);
 void bsal_red_black_tree_free_node(struct bsal_red_black_tree *self,
                 struct bsal_red_black_node *node);
 
+/*
+ * 5 cases for insertion, based on the Wikipedia article.
+ * \see http://en.wikipedia.org/wiki/Red%E2%80%93black_tree
+ */
+
+void bsal_red_black_tree_insert_case1(struct bsal_red_black_tree *self,
+                struct bsal_red_black_node *node);
+void bsal_red_black_tree_insert_case2(struct bsal_red_black_tree *self,
+                struct bsal_red_black_node *node);
+void bsal_red_black_tree_insert_case3(struct bsal_red_black_tree *self,
+                struct bsal_red_black_node *node);
+
 #endif

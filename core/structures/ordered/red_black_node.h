@@ -41,4 +41,7 @@ void bsal_red_black_node_set_right_child(struct bsal_red_black_node *self, struc
 struct bsal_red_black_node *bsal_red_black_node_parent(struct bsal_red_black_node *self);
 void bsal_red_black_node_set_parent(struct bsal_red_black_node *self, struct bsal_red_black_node *node);
 
+struct bsal_red_black_node *bsal_red_black_node_uncle(struct bsal_red_black_node *self);
+struct bsal_red_black_node *bsal_red_black_node_grandparent(struct bsal_red_black_node *self);
+
 #endif /* BSAL_RED_BLACK_NODE_H */
