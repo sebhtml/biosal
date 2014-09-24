@@ -41,8 +41,10 @@ while (i <= lines) {
     i = i + 1
 }
 
-png("file.png", width=1000, height=1000)
-plot(c(0), c(0), xlim = c(minimum, maximum), ylim = c(minimum_y, maximum_y), type='l', col='red')
+png("file.png")
+#, width=4000, height=1000)
+plot(c(0), c(0), xlim = c(minimum, maximum), ylim = c(minimum_y, maximum_y), type='l', col='red',
+                xlab='Time (nanoseconds)', ylab='Actor', main="Actor load profiles")
 
 i = 1
 
@@ -51,7 +53,7 @@ while (i <= lines) {
     end = data[,2][i]
     actor = data[,3][i]
 
-    lines(c(start, end), c(actor, actor), col='blue')
+    lines(c(start, end), c(actor, actor), col='black')
     i = i + 1
 }
 
