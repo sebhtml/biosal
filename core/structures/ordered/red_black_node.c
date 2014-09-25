@@ -1,6 +1,8 @@
 
 #include "red_black_node.h"
 
+#include "red_black_tree.h"
+
 #include <core/system/debugger.h>
 #include <core/system/memory_pool.h>
 #include <core/system/memory.h>
@@ -110,11 +112,16 @@ struct bsal_red_black_node *bsal_red_black_node_grandparent(struct bsal_red_blac
     }
 }
 
-void bsal_red_black_node_run_assertions(struct bsal_red_black_node *self, int key_size)
+void bsal_red_black_node_run_assertions(struct bsal_red_black_node *self, struct bsal_red_black_tree *tree)
 {
+    int key_size;
+
+    key_size = tree->key_size;
+
     if (self == NULL) {
         return;
     }
+
     if (self->left_node != NULL) {
         if (self->left_node->parent != self) {
             printf("Problem with %d -> %d (left_node parent should be %d, but it is %d)\n",
@@ -124,9 +131,13 @@ void bsal_red_black_node_run_assertions(struct bsal_red_black_node *self, int ke
 #if 1
         BSAL_DEBUGGER_ASSERT(self->left_node->parent == self);
 #endif
+
+        BSAL_DEBUGGER_ASSERT(bsal_red_black_tree_compare(tree, self->left_node->key, self->key) <= 0);
+        /*BSAL_DEBUGGER_ASSERT(bsal_red_black_tree_compare(tree, self->left_node->key, tree->root->key) <= 0);*/
     }
     if (self->right_node != NULL) {
         BSAL_DEBUGGER_ASSERT(self->right_node->parent == self);
+        /*BSAL_DEBUGGER_ASSERT(bsal_red_black_tree_compare(tree, self->right_node->key, self->key) >= 0);*/
     }
 
 #if 0

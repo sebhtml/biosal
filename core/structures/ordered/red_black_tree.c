@@ -11,6 +11,7 @@
 /*
 #define RUN_TREE_ASSERTIONS
 */
+
 void bsal_red_black_tree_init(struct bsal_red_black_tree *self, int key_size, int value_size)
 {
     self->root = NULL;
@@ -76,7 +77,7 @@ void *bsal_red_black_tree_add(struct bsal_red_black_tree *self, void *key)
 
     while (inserted == 0) {
 
-        result = self->compare(self, node->key, current_node->key);
+        result = bsal_red_black_tree_compare(self, node->key, current_node->key);
 
         if (result < 0) {
 
@@ -117,7 +118,7 @@ void *bsal_red_black_tree_add(struct bsal_red_black_tree *self, void *key)
         }
     }
 
-    bsal_red_black_node_run_assertions(node);
+    bsal_red_black_node_run_assertions(node, self);
 #endif
 
     return node->value;
@@ -395,11 +396,11 @@ void bsal_red_black_tree_rotate_left(struct bsal_red_black_tree *self,
     node_D->parent = node_G;
 
 #ifdef RUN_TREE_ASSERTIONS
-    bsal_red_black_node_run_assertions(node_D);
-    bsal_red_black_node_run_assertions(node_N);
-    bsal_red_black_node_run_assertions(node_G);
-    bsal_red_black_node_run_assertions(node_E);
-    bsal_red_black_node_run_assertions(self->root);
+    bsal_red_black_node_run_assertions(node_D, self);
+    bsal_red_black_node_run_assertions(node_N, self);
+    bsal_red_black_node_run_assertions(node_G, self);
+    bsal_red_black_node_run_assertions(node_E, self);
+    bsal_red_black_node_run_assertions(self->root, self);
 #endif
 }
 
@@ -464,11 +465,11 @@ void bsal_red_black_tree_rotate_right(struct bsal_red_black_tree *self,
     bsal_red_black_tree_print(self);
 #endif
 #ifdef RUN_TREE_ASSERTIONS
-    bsal_red_black_node_run_assertions(node_N);
-    bsal_red_black_node_run_assertions(node_G);
-    bsal_red_black_node_run_assertions(node_D);
-    bsal_red_black_node_run_assertions(node_E);
-    bsal_red_black_node_run_assertions(self->root);
+    bsal_red_black_node_run_assertions(node_N, self);
+    bsal_red_black_node_run_assertions(node_G, self);
+    bsal_red_black_node_run_assertions(node_D, self);
+    bsal_red_black_node_run_assertions(node_E, self);
+    bsal_red_black_node_run_assertions(self->root, self);
 #endif
 
 }
@@ -527,7 +528,7 @@ void *bsal_red_black_tree_get(struct bsal_red_black_tree *self, void *key)
     node = self->root;
 
     while (node != NULL && value == NULL) {
-        result = self->compare(self, key, node->key);
+        result = bsal_red_black_tree_compare(self, key, node->key);
 
         if (result < 0) {
             node = node->left_node;
@@ -576,9 +577,31 @@ void *bsal_red_black_tree_get_lowest_key(struct bsal_red_black_tree *self)
     return NULL;
 }
 
+int bsal_red_black_tree_compare(struct bsal_red_black_tree *self, void *key1, void *key2)
+{
+    return self->compare(self, key1, key2);
+}
+
 int bsal_red_black_tree_compare_memory_content(struct bsal_red_black_tree *self, void *key1, void *key2)
 {
-    return memcmp(key1, key2, self->key_size);
+    int result;
+
+#ifdef DEBUG_COMPARE_MEMORY_CONTENT
+    int integer1;
+    int integer2;
+
+    integer1 = *(int *)key1;
+    integer2 = *(int *)key2;
+#endif
+
+    result = memcmp(key1, key2, self->key_size);
+
+#ifdef DEBUG_COMPARE_MEMORY_CONTENT
+    printf("DEBUG compare_memory_content integer1 %d integer2 %d result %d\n",
+                    integer1, integer2, result);
+#endif
+
+    return result;
 }
 
 int bsal_red_black_tree_compare_uint64_t(struct bsal_red_black_tree *self, void *key1, void *key2)
@@ -601,4 +624,25 @@ int bsal_red_black_tree_compare_uint64_t(struct bsal_red_black_tree *self, void 
 void bsal_red_black_tree_use_uint64_t_keys(struct bsal_red_black_tree *self)
 {
     self->compare = bsal_red_black_tree_compare_uint64_t;
+}
+
+void bsal_red_black_tree_run_assertions(struct bsal_red_black_tree *self)
+{
+    bsal_red_black_tree_run_assertions_on_node(self, self->root);
+}
+
+void bsal_red_black_tree_run_assertions_on_node(struct bsal_red_black_tree *self, struct bsal_red_black_node *node)
+{
+    if (node == NULL)
+        return;
+
+#if 0
+    printf("run_assertions_on_node node %d\n",
+                    bsal_red_black_node_get_key_as_int(node, self->key_size));
+#endif
+
+    bsal_red_black_node_run_assertions(node, self);
+
+    bsal_red_black_tree_run_assertions_on_node(self, node->left_node);
+    bsal_red_black_tree_run_assertions_on_node(self, node->right_node);
 }

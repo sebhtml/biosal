@@ -104,8 +104,11 @@ void bsal_red_black_tree_print(struct bsal_red_black_tree *self);
 void bsal_red_black_tree_print_node(struct bsal_red_black_tree *self,
                 struct bsal_red_black_node *node, int depth);
 
+int bsal_red_black_tree_compare(struct bsal_red_black_tree *self, void *key1, void *key2);
 int bsal_red_black_tree_compare_memory_content(struct bsal_red_black_tree *self, void *key1, void *key2);
 int bsal_red_black_tree_compare_uint64_t(struct bsal_red_black_tree *self, void *key1, void *key2);
 void bsal_red_black_tree_use_uint64_t_keys(struct bsal_red_black_tree *self);
+void bsal_red_black_tree_run_assertions(struct bsal_red_black_tree *self);
+void bsal_red_black_tree_run_assertions_on_node(struct bsal_red_black_tree *self, struct bsal_red_black_node *node);
 
 #endif

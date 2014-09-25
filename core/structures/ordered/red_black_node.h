@@ -7,6 +7,7 @@
 #define BSAL_COLOR_BLACK    2
 
 struct bsal_red_black_node;
+struct bsal_red_black_tree;
 struct bsal_memory_pool;
 
 /*
@@ -42,7 +43,7 @@ void bsal_red_black_node_set_parent(struct bsal_red_black_node *self, struct bsa
 struct bsal_red_black_node *bsal_red_black_node_uncle(struct bsal_red_black_node *self);
 struct bsal_red_black_node *bsal_red_black_node_grandparent(struct bsal_red_black_node *self);
 
-void bsal_red_black_node_run_assertions(struct bsal_red_black_node *self, int key_size);
+void bsal_red_black_node_run_assertions(struct bsal_red_black_node *self, struct bsal_red_black_tree *tree);
 
 int bsal_red_black_node_get_key_as_int(struct bsal_red_black_node *self, int key_size);
 

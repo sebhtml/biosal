@@ -23,6 +23,7 @@ int main(int argc, char **argv)
     bsal_memory_pool_init(&memory_pool, 1024*1024, -1);
 
     count = 100000;
+    /*count = 5;*/
 
     srand(88);
 
@@ -57,6 +58,10 @@ int main(int argc, char **argv)
         TEST_POINTER_NOT_EQUALS(result, NULL);
 
 #if 0
+        bsal_red_black_tree_run_assertions(&tree);
+#endif
+
+#if 0
         bsal_red_black_tree_print(&tree);
         TEST_INT_EQUALS(*result, lowest);
 #endif
@@ -73,6 +78,7 @@ int main(int argc, char **argv)
     bsal_memory_pool_examine(&memory_pool);
 #endif
 
+    bsal_red_black_tree_run_assertions(&tree);
     bsal_red_black_tree_destroy(&tree);
 
     TEST_INT_EQUALS(bsal_memory_pool_profile_balance_count(&memory_pool), 0);
