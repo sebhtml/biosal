@@ -29,8 +29,8 @@ struct bsal_red_black_tree {
     int key_size;
     int value_size;
 
-    struct bsal_red_black_node *cached_last_result;
-    struct bsal_red_black_node *cached_lowest_result;
+    struct bsal_red_black_node *cached_last_node;
+    struct bsal_red_black_node *cached_lowest_node;
 
     int (*compare)(struct bsal_red_black_tree *self, void *key1, void *key2);
 };
@@ -41,27 +41,37 @@ void bsal_red_black_tree_destroy(struct bsal_red_black_tree *self);
 /*
  * Add a key and return a pointer to the uninitialized
  * bucket for the corresponding value.
+ *
+ * Time complexity: O(log(N))
  */
 void *bsal_red_black_tree_add(struct bsal_red_black_tree *self, void *key);
 
 /*
  * Add a key with a value and return a pointer to the initialized
  * bucket for the corresponding value.
+ *
+ * Time complexity: O(log(N))
  */
 void *bsal_red_black_tree_add_key_and_value(struct bsal_red_black_tree *self, void *key, void *value);
 
 /*
  * Delete a key-value pair using the key as search pattern.
+ *
+ * Time complexity: O(log(N))
  */
 void bsal_red_black_tree_delete(struct bsal_red_black_tree *self, void *key);
 
 /*
  * Get the value for a given key. If there are duplicates, return the first match.
+ *
+ * Time complexity: O(log(N))
  */
 void *bsal_red_black_tree_get(struct bsal_red_black_tree *self, void *key);
 
 /*
  * Return the lowest key.
+ *
+ * Time complexity: O(1)
  */
 void *bsal_red_black_tree_get_lowest_key(struct bsal_red_black_tree *self);
 
@@ -74,6 +84,11 @@ int bsal_red_black_tree_has_ignored_rules(struct bsal_red_black_tree *self);
 void bsal_red_black_tree_set_memory_pool(struct bsal_red_black_tree *self,
                 struct bsal_memory_pool *memory_pool);
 
+/*
+ * Get the number of non-NIL nodes.
+ *
+ * Time complexity: O(1)
+ */
 int bsal_red_black_tree_size(struct bsal_red_black_tree *self);
 
 void bsal_red_black_tree_free_node(struct bsal_red_black_tree *self,
