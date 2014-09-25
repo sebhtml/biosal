@@ -54,32 +54,32 @@
 #define THORIUM_SCHEDULER_ENABLE_VERBOSITY
 */
 
-void thorium_balancer_init(struct thorium_balancer *scheduler, struct thorium_worker_pool *pool)
+void thorium_balancer_init(struct thorium_balancer *self, struct thorium_worker_pool *pool)
 {
-    scheduler->pool = pool;
-    bsal_map_init(&scheduler->actor_affinities, sizeof(int), sizeof(int));
-    bsal_map_init(&scheduler->last_actor_received_messages, sizeof(int), sizeof(int));
+    self->pool = pool;
+    bsal_map_init(&self->actor_affinities, sizeof(int), sizeof(int));
+    bsal_map_init(&self->last_actor_received_messages, sizeof(int), sizeof(int));
 
-    scheduler->worker_for_work = 0;
-    scheduler->last_migrations = 0;
-    scheduler->last_killed_actors = -1;
-    scheduler->last_spawned_actors = -1;
+    self->worker_for_work = 0;
+    self->last_migrations = 0;
+    self->last_killed_actors = -1;
+    self->last_spawned_actors = -1;
 
-    bsal_map_init(&scheduler->current_script_workers, sizeof(int), sizeof(int));
+    bsal_map_init(&self->current_script_workers, sizeof(int), sizeof(int));
 
-    scheduler->first_worker = 0;
+    self->first_worker = 0;
 }
 
-void thorium_balancer_destroy(struct thorium_balancer *scheduler)
+void thorium_balancer_destroy(struct thorium_balancer *self)
 {
-    scheduler->pool = NULL;
-    bsal_map_destroy(&scheduler->actor_affinities);
-    bsal_map_destroy(&scheduler->last_actor_received_messages);
+    self->pool = NULL;
+    bsal_map_destroy(&self->actor_affinities);
+    bsal_map_destroy(&self->last_actor_received_messages);
 
-    bsal_map_destroy(&scheduler->current_script_workers);
+    bsal_map_destroy(&self->current_script_workers);
 }
 
-void thorium_balancer_balance(struct thorium_balancer *scheduler)
+void thorium_balancer_balance(struct thorium_balancer *self)
 {
     /*
      * The 95th percentile is useful:
@@ -147,7 +147,7 @@ void thorium_balancer_balance(struct thorium_balancer *scheduler)
     int script;
 #endif
 
-    node = thorium_worker_pool_get_node(scheduler->pool);
+    node = thorium_worker_pool_get_node(self->pool);
 
     spawned_actors = thorium_node_get_counter(node, BSAL_COUNTER_SPAWNED_ACTORS);
 
@@ -163,9 +163,9 @@ void thorium_balancer_balance(struct thorium_balancer *scheduler)
      * The system can probably not be balanced to get in
      * a better shape anyway.
      */
-    if (spawned_actors == scheduler->last_spawned_actors
-                    && killed_actors == scheduler->last_killed_actors
-                    && scheduler->last_migrations == 0) {
+    if (spawned_actors == self->last_spawned_actors
+                    && killed_actors == self->last_killed_actors
+                    && self->last_migrations == 0) {
 
         printf("SCHEDULER: balance can not be improved because nothing changed.\n");
         return;
@@ -175,8 +175,8 @@ void thorium_balancer_balance(struct thorium_balancer *scheduler)
      */
 
     perfect = 1;
-    for (i = 0; i < thorium_worker_pool_worker_count(scheduler->pool); i++) {
-        worker = thorium_worker_pool_get_worker(scheduler->pool, i);
+    for (i = 0; i < thorium_worker_pool_worker_count(self->pool); i++) {
+        worker = thorium_worker_pool_get_worker(self->pool, i);
 
         load_value = thorium_worker_get_epoch_load(worker) * 100;
 
@@ -193,8 +193,8 @@ void thorium_balancer_balance(struct thorium_balancer *scheduler)
 
     /* update counters
      */
-    scheduler->last_spawned_actors = spawned_actors;
-    scheduler->last_killed_actors = killed_actors;
+    self->last_spawned_actors = spawned_actors;
+    self->last_killed_actors = killed_actors;
 
     /* Otherwise, try to balance things
      */
@@ -205,13 +205,13 @@ void thorium_balancer_balance(struct thorium_balancer *scheduler)
 #ifdef THORIUM_SCHEDULER_ENABLE_SYMMETRIC_SCHEDULING
     bsal_map_init(&symmetric_actor_scripts, sizeof(int), sizeof(int));
 
-    thorium_balancer_detect_symmetric_scripts(scheduler, &symmetric_actor_scripts);
+    thorium_balancer_detect_symmetric_scripts(self, &symmetric_actor_scripts);
 #endif
 
     /* Lock all workers first
      */
-    for (i = 0; i < thorium_worker_pool_worker_count(scheduler->pool); i++) {
-        worker = thorium_worker_pool_get_worker(scheduler->pool, i);
+    for (i = 0; i < thorium_worker_pool_worker_count(self->pool); i++) {
+        worker = thorium_worker_pool_get_worker(self->pool, i);
 
         thorium_worker_lock(worker);
     }
@@ -230,8 +230,8 @@ void thorium_balancer_balance(struct thorium_balancer *scheduler)
 
     bsal_vector_init(&actors_to_migrate, sizeof(struct bsal_pair));
 
-    for (i = 0; i < thorium_worker_pool_worker_count(scheduler->pool); i++) {
-        worker = thorium_worker_pool_get_worker(scheduler->pool, i);
+    for (i = 0; i < thorium_worker_pool_worker_count(self->pool); i++) {
+        worker = thorium_worker_pool_get_worker(self->pool, i);
         load_value = thorium_worker_get_scheduling_epoch_load(worker) * SCHEDULER_PRECISION;
 
 #if 0
@@ -255,8 +255,8 @@ void thorium_balancer_balance(struct thorium_balancer *scheduler)
     bsal_statistics_print_percentiles_int(&loads);
 #endif
 
-    for (i = 0; i < thorium_worker_pool_worker_count(scheduler->pool); i++) {
-        worker = thorium_worker_pool_get_worker(scheduler->pool, i);
+    for (i = 0; i < thorium_worker_pool_worker_count(self->pool); i++) {
+        worker = thorium_worker_pool_get_worker(self->pool, i);
         load_value = bsal_vector_at_as_int(&loads_unsorted, i);
 
         set = thorium_worker_get_actors(worker);
@@ -295,7 +295,7 @@ void thorium_balancer_balance(struct thorium_balancer *scheduler)
         }
 
 #ifdef THORIUM_SCHEDULER_ENABLE_VERBOSITY
-        thorium_worker_print_actors(worker, scheduler);
+        thorium_worker_print_actors(worker, self);
 #endif
 
     }
@@ -318,7 +318,7 @@ void thorium_balancer_balance(struct thorium_balancer *scheduler)
 
         old_worker = bsal_pair_get_second(&pair);
 
-        worker = thorium_worker_pool_get_worker(scheduler->pool, old_worker);
+        worker = thorium_worker_pool_get_worker(self->pool, old_worker);
         set = thorium_worker_get_actors(worker);
 
         /*
@@ -338,8 +338,8 @@ void thorium_balancer_balance(struct thorium_balancer *scheduler)
 
         while (bsal_map_iterator_get_next_key_and_value(&set_iterator, &actor_name, NULL)) {
 
-            actor = thorium_node_get_actor_from_name(thorium_worker_pool_get_node(scheduler->pool), actor_name);
-            messages = thorium_balancer_get_actor_production(scheduler, actor);
+            actor = thorium_node_get_actor_from_name(thorium_worker_pool_get_node(self->pool), actor_name);
+            messages = thorium_balancer_get_actor_production(self, actor);
 
             if (maximum == -1 || messages > maximum) {
                 maximum = messages;
@@ -372,12 +372,12 @@ void thorium_balancer_balance(struct thorium_balancer *scheduler)
 
         while (bsal_map_iterator_get_next_key_and_value(&set_iterator, &actor_name, NULL)) {
 
-            actor = thorium_node_get_actor_from_name(thorium_worker_pool_get_node(scheduler->pool), actor_name);
+            actor = thorium_node_get_actor_from_name(thorium_worker_pool_get_node(self->pool), actor_name);
 
             if (actor == NULL) {
                 continue;
             }
-            messages = thorium_balancer_get_actor_production(scheduler, actor);
+            messages = thorium_balancer_get_actor_production(self, actor);
 
 #ifdef THORIUM_SCHEDULER_ENABLE_SYMMETRIC_SCHEDULING
             script = thorium_actor_script(actor);
@@ -464,22 +464,22 @@ void thorium_balancer_balance(struct thorium_balancer *scheduler)
 
         actor_name = bsal_pair_get_second(&pair);
 
-        actor = thorium_node_get_actor_from_name(thorium_worker_pool_get_node(scheduler->pool), actor_name);
+        actor = thorium_node_get_actor_from_name(thorium_worker_pool_get_node(self->pool), actor_name);
 
         if (actor == NULL) {
            continue;
         }
 
-        messages = thorium_balancer_get_actor_production(scheduler, actor);
-        bsal_map_get_value(&scheduler->actor_affinities, &actor_name, &old_worker);
+        messages = thorium_balancer_get_actor_production(self, actor);
+        bsal_map_get_value(&self->actor_affinities, &actor_name, &old_worker);
 
-        worker = thorium_worker_pool_get_worker(scheduler->pool, old_worker);
+        worker = thorium_worker_pool_get_worker(self->pool, old_worker);
 
         /* old_total can not be 0 because otherwise the would not
          * be burdened.
          */
-        old_total = thorium_worker_get_production(worker, scheduler);
-        with_messages = thorium_worker_get_producer_count(worker, scheduler);
+        old_total = thorium_worker_get_production(worker, self);
+        with_messages = thorium_worker_get_producer_count(worker, self);
         old_load = thorium_worker_get_scheduling_epoch_load(worker) * SCHEDULER_PRECISION;
         actor_load = ((0.0 + messages) / old_total) * old_load;
 
@@ -496,7 +496,7 @@ void thorium_balancer_balance(struct thorium_balancer *scheduler)
             bsal_vector_get_value(&stalled_workers, test_stalled_index, &pair);
             new_worker_index = bsal_pair_get_second(&pair);
 
-            new_worker = thorium_worker_pool_get_worker(scheduler->pool, new_worker_index);
+            new_worker = thorium_worker_pool_get_worker(self->pool, new_worker_index);
             new_load = thorium_worker_get_scheduling_epoch_load(new_worker) * SCHEDULER_PRECISION;
         /*new_total = thorium_worker_get_production(new_worker);*/
 
@@ -569,17 +569,17 @@ void thorium_balancer_balance(struct thorium_balancer *scheduler)
 
     /* Update the last values
      */
-    for (i = 0; i < thorium_worker_pool_worker_count(scheduler->pool); i++) {
+    for (i = 0; i < thorium_worker_pool_worker_count(self->pool); i++) {
 
-        worker = thorium_worker_pool_get_worker(scheduler->pool, i);
+        worker = thorium_worker_pool_get_worker(self->pool, i);
 
         set = thorium_worker_get_actors(worker);
 
         bsal_map_iterator_init(&set_iterator, set);
 
         while (bsal_map_iterator_get_next_key_and_value(&set_iterator, &actor_name, NULL)) {
-            actor = thorium_node_get_actor_from_name(thorium_worker_pool_get_node(scheduler->pool), actor_name);
-            thorium_balancer_update_actor_production(scheduler, actor);
+            actor = thorium_node_get_actor_from_name(thorium_worker_pool_get_node(self->pool), actor_name);
+            thorium_balancer_update_actor_production(self, actor);
         }
         bsal_map_iterator_destroy(&set_iterator);
 
@@ -590,7 +590,7 @@ void thorium_balancer_balance(struct thorium_balancer *scheduler)
     /* Generate migrations for symmetric actors.
      */
 
-    thorium_balancer_generate_symmetric_migrations(scheduler, &symmetric_actor_scripts, &migrations);
+    thorium_balancer_generate_symmetric_migrations(self, &symmetric_actor_scripts, &migrations);
 #endif
 
     /* Actually do the migrations
@@ -599,19 +599,19 @@ void thorium_balancer_balance(struct thorium_balancer *scheduler)
 
     while (bsal_vector_iterator_next(&vector_iterator, (void **)&migration_to_do)) {
 
-        thorium_balancer_migrate(scheduler, migration_to_do);
+        thorium_balancer_migrate(self, migration_to_do);
     }
 
     bsal_vector_iterator_destroy(&vector_iterator);
 
-    scheduler->last_migrations = bsal_vector_size(&migrations);
+    self->last_migrations = bsal_vector_size(&migrations);
 
     bsal_vector_destroy(&migrations);
 
     /* Unlock all workers
      */
-    for (i = 0; i < thorium_worker_pool_worker_count(scheduler->pool); i++) {
-        worker = thorium_worker_pool_get_worker(scheduler->pool, i);
+    for (i = 0; i < thorium_worker_pool_worker_count(self->pool); i++) {
+        worker = thorium_worker_pool_get_worker(self->pool, i);
 
         thorium_worker_unlock(worker);
     }
@@ -624,10 +624,10 @@ void thorium_balancer_balance(struct thorium_balancer *scheduler)
 
     printf("SCHEDULER: elapsed time for balancing: %d us, %d migrations performed\n",
                     (int)(bsal_timer_get_elapsed_nanoseconds(&timer) / 1000),
-                    scheduler->last_migrations);
+                    self->last_migrations);
 }
 
-void thorium_balancer_migrate(struct thorium_balancer *scheduler, struct thorium_migration *migration)
+void thorium_balancer_migrate(struct thorium_balancer *self, struct thorium_migration *migration)
 {
     struct thorium_worker *old_worker_object;
     struct thorium_worker *new_worker_object;
@@ -639,16 +639,16 @@ void thorium_balancer_migrate(struct thorium_balancer *scheduler, struct thorium
     old_worker = thorium_migration_get_old_worker(migration);
     new_worker = thorium_migration_get_new_worker(migration);
     actor_name = thorium_migration_get_actor(migration);
-    actor = thorium_node_get_actor_from_name(thorium_worker_pool_get_node(scheduler->pool), actor_name);
+    actor = thorium_node_get_actor_from_name(thorium_worker_pool_get_node(self->pool), actor_name);
 
 #ifdef THORIUM_SCHEDULER_ENABLE_VERBOSITY
     printf("MIGRATION node %d migrated actor %d from worker %d to worker %d\n",
-                    thorium_node_name(thorium_worker_pool_get_node(scheduler->pool)), actor_name,
+                    thorium_node_name(thorium_worker_pool_get_node(self->pool)), actor_name,
                     old_worker, new_worker);
 #endif
 
-    old_worker_object = thorium_worker_pool_get_worker(scheduler->pool, old_worker);
-    new_worker_object = thorium_worker_pool_get_worker(scheduler->pool, new_worker);
+    old_worker_object = thorium_worker_pool_get_worker(self->pool, old_worker);
+    new_worker_object = thorium_worker_pool_get_worker(self->pool, new_worker);
 
     /* evict the actor from the old worker
      */
@@ -657,7 +657,7 @@ void thorium_balancer_migrate(struct thorium_balancer *scheduler, struct thorium
     /* Redirect messages for this actor to the
      * new worker
      */
-    bsal_map_update_value(&scheduler->actor_affinities, &actor_name, &new_worker);
+    bsal_map_update_value(&self->actor_affinities, &actor_name, &new_worker);
 
 #ifdef THORIUM_WORKER_POOL_DEBUG_MIGRATION
     printf("ROUTE actor %d ->  worker %d\n", actor_name, new_worker);
@@ -667,7 +667,7 @@ void thorium_balancer_migrate(struct thorium_balancer *scheduler, struct thorium
 
 }
 
-int thorium_balancer_get_actor_production(struct thorium_balancer *scheduler, struct thorium_actor *actor)
+int thorium_balancer_get_actor_production(struct thorium_balancer *self, struct thorium_actor *actor)
 {
     int messages;
     int last_messages;
@@ -682,14 +682,14 @@ int thorium_balancer_get_actor_production(struct thorium_balancer *scheduler, st
 
     last_messages = 0;
     name = thorium_actor_name(actor);
-    bsal_map_get_value(&scheduler->last_actor_received_messages, &name, &last_messages);
+    bsal_map_get_value(&self->last_actor_received_messages, &name, &last_messages);
 
     result = messages - last_messages;
 
     return result;
 }
 
-void thorium_balancer_update_actor_production(struct thorium_balancer *scheduler, struct thorium_actor *actor)
+void thorium_balancer_update_actor_production(struct thorium_balancer *self, struct thorium_actor *actor)
 {
     int messages;
     int name;
@@ -701,30 +701,30 @@ void thorium_balancer_update_actor_production(struct thorium_balancer *scheduler
     messages = thorium_actor_get_sum_of_received_messages(actor);
     name = thorium_actor_name(actor);
 
-    if (!bsal_map_update_value(&scheduler->last_actor_received_messages, &name, &messages)) {
-        bsal_map_add_value(&scheduler->last_actor_received_messages, &name, &messages);
+    if (!bsal_map_update_value(&self->last_actor_received_messages, &name, &messages)) {
+        bsal_map_add_value(&self->last_actor_received_messages, &name, &messages);
     }
 }
 
-int thorium_balancer_get_actor_worker(struct thorium_balancer *scheduler, int name)
+int thorium_balancer_get_actor_worker(struct thorium_balancer *self, int name)
 {
     int worker_index;
 
     worker_index = -1;
 
-    bsal_map_get_value(&scheduler->actor_affinities, &name, &worker_index);
+    bsal_map_get_value(&self->actor_affinities, &name, &worker_index);
 
     return worker_index;
 }
 
-void thorium_balancer_set_actor_worker(struct thorium_balancer *scheduler, int name, int worker_index)
+void thorium_balancer_set_actor_worker(struct thorium_balancer *self, int name, int worker_index)
 {
-    bsal_map_add_value(&scheduler->actor_affinities, &name, &worker_index);
+    bsal_map_add_value(&self->actor_affinities, &name, &worker_index);
 }
 
 #ifdef THORIUM_WORKER_HAS_OWN_QUEUES
 int thorium_balancer_select_worker_least_busy(
-                struct thorium_balancer *scheduler, int *worker_score)
+                struct thorium_balancer *self, int *worker_score)
 {
     int to_check;
     int score;
@@ -753,7 +753,7 @@ int thorium_balancer_select_worker_least_busy(
         /*
          * get the worker to test for this iteration.
          */
-        worker = thorium_worker_pool_get_worker(scheduler->pool, scheduler->worker_for_work);
+        worker = thorium_worker_pool_get_worker(self->pool, self->worker_for_work);
 
         score = thorium_worker_get_epoch_load(worker);
 
@@ -762,8 +762,8 @@ int thorium_balancer_select_worker_least_busy(
                         && (self->last_scheduling_warning == 0
                              || score >= self->last_scheduling_warning + THORIUM_WORKER_WARNING_THRESHOLD_STRIDE)) {
             printf("Warning: node %d worker %d has a scheduling score of %d\n",
-                            thorium_node_name(thorium_worker_pool_get_node(scheduler->pool)),
-                            scheduler->worker_for_work, score);
+                            thorium_node_name(thorium_worker_pool_get_node(self->pool)),
+                            self->worker_for_work, score);
 
             self->last_scheduling_warning = score;
         }
@@ -788,7 +788,7 @@ int thorium_balancer_select_worker_least_busy(
         /*
          * assign the next worker
          */
-        scheduler->worker_for_work = thorium_worker_pool_next_worker(scheduler->pool, scheduler->worker_for_work);
+        self->worker_for_work = thorium_worker_pool_next_worker(self->pool, self->worker_for_work);
     }
 
 #ifdef THORIUM_WORKER_POOL_DEBUG
@@ -804,12 +804,12 @@ int thorium_balancer_select_worker_least_busy(
 
 #endif
 
-    selected_worker = scheduler->worker_for_work;
+    selected_worker = self->worker_for_work;
 
     /*
      * assign the next worker
      */
-    scheduler->worker_for_work = thorium_worker_pool_next_worker(scheduler->pool, scheduler->worker_for_work);
+    self->worker_for_work = thorium_worker_pool_next_worker(self->pool, self->worker_for_work);
 
     *worker_score = best_score;
     /* This is a best effort algorithm
@@ -819,7 +819,7 @@ int thorium_balancer_select_worker_least_busy(
 
 #endif
 
-void thorium_balancer_detect_symmetric_scripts(struct thorium_balancer *scheduler, struct bsal_map *symmetric_actor_scripts)
+void thorium_balancer_detect_symmetric_scripts(struct thorium_balancer *self, struct bsal_map *symmetric_actor_scripts)
 {
     int i;
     struct thorium_worker *worker;
@@ -837,16 +837,16 @@ void thorium_balancer_detect_symmetric_scripts(struct thorium_balancer *schedule
     struct thorium_script *actual_script;
 #endif
 
-    worker_count = thorium_worker_pool_worker_count(scheduler->pool);
+    worker_count = thorium_worker_pool_worker_count(self->pool);
     bsal_map_init(&frequencies, sizeof(int), sizeof(int));
 
-    node = thorium_worker_pool_get_node(scheduler->pool);
+    node = thorium_worker_pool_get_node(self->pool);
 
     /* Gather frequencies
      */
     for (i = 0; i < worker_count; i++) {
 
-        worker = thorium_worker_pool_get_worker(scheduler->pool, i);
+        worker = thorium_worker_pool_get_worker(self->pool, i);
 
         set = thorium_worker_get_actors(worker);
 
@@ -910,7 +910,7 @@ void thorium_balancer_detect_symmetric_scripts(struct thorium_balancer *schedule
     bsal_map_destroy(&frequencies);
 }
 
-void thorium_balancer_generate_symmetric_migrations(struct thorium_balancer *scheduler, struct bsal_map *symmetric_actor_scripts,
+void thorium_balancer_generate_symmetric_migrations(struct thorium_balancer *self, struct bsal_map *symmetric_actor_scripts,
                 struct bsal_vector *migrations)
 {
     int i;
@@ -947,12 +947,12 @@ void thorium_balancer_generate_symmetric_migrations(struct thorium_balancer *sch
     bsal_map_init(&script_current_worker, sizeof(int), sizeof(int));
     bsal_map_init(&script_current_worker_actor_count, sizeof(int), sizeof(int));
 
-    node = thorium_worker_pool_get_node(scheduler->pool);
-    worker_count = thorium_worker_pool_worker_count(scheduler->pool);
+    node = thorium_worker_pool_get_node(self->pool);
+    worker_count = thorium_worker_pool_worker_count(self->pool);
 
     for (i = 0; i < worker_count; i++) {
 
-        worker = thorium_worker_pool_get_worker(scheduler->pool, i);
+        worker = thorium_worker_pool_get_worker(self->pool, i);
 
         set = thorium_worker_get_actors(worker);
 
@@ -985,7 +985,7 @@ void thorium_balancer_generate_symmetric_migrations(struct thorium_balancer *sch
                  * Emit migration instruction
                  */
 
-                old_worker = thorium_balancer_get_actor_worker(scheduler, actor_name);
+                old_worker = thorium_balancer_get_actor_worker(self, actor_name);
                 new_worker = current_worker;
 #ifdef THORIUM_SCHEDULER_ENABLE_VERBOSITY
                 actual_script = thorium_node_find_script(node, script);
@@ -1037,26 +1037,26 @@ void thorium_balancer_generate_symmetric_migrations(struct thorium_balancer *sch
     bsal_map_destroy(&script_current_worker_actor_count);
 }
 
-int thorium_balancer_select_worker_script_round_robin(struct thorium_balancer *scheduler, int script)
+int thorium_balancer_select_worker_script_round_robin(struct thorium_balancer *self, int script)
 {
     int worker;
     int worker_count;
     int next_worker;
     int *bucket;
 
-    bucket = bsal_map_get(&scheduler->current_script_workers, &script);
+    bucket = bsal_map_get(&self->current_script_workers, &script);
 
-    worker_count = thorium_worker_pool_worker_count(scheduler->pool);
+    worker_count = thorium_worker_pool_worker_count(self->pool);
 
     /* First time for this script
      */
     if (bucket == NULL) {
 
-        bucket = bsal_map_add(&scheduler->current_script_workers, &script);
+        bucket = bsal_map_add(&self->current_script_workers, &script);
 
-        *bucket = scheduler->first_worker;
+        *bucket = self->first_worker;
 
-        scheduler->first_worker = (scheduler->first_worker + 1) % worker_count;
+        self->first_worker = (self->first_worker + 1) % worker_count;
     }
 
     worker = *bucket;
