@@ -1,5 +1,5 @@
 
-#include "priority_scheduler.h"
+#include "priority_assigner.h"
 
 #include "scheduling_queue.h"
 
@@ -16,7 +16,7 @@
 
 #define THORIUM_PRIORITY_SCHEDULER_DEBUG
 
-void thorium_priority_scheduler_init(struct thorium_priority_scheduler *scheduler, int name)
+void thorium_priority_assigner_init(struct thorium_priority_assigner *scheduler, int name)
 {
     scheduler->name = name;
     bsal_map_init(&scheduler->actor_sources, sizeof(int), sizeof(int));
@@ -29,7 +29,7 @@ void thorium_priority_scheduler_init(struct thorium_priority_scheduler *schedule
     scheduler->last_update = time(NULL);
 }
 
-void thorium_priority_scheduler_destroy(struct thorium_priority_scheduler *scheduler)
+void thorium_priority_assigner_destroy(struct thorium_priority_assigner *scheduler)
 {
 
     bsal_map_destroy(&scheduler->actor_sources);
@@ -47,7 +47,7 @@ void thorium_priority_scheduler_destroy(struct thorium_priority_scheduler *sched
  *           P30              P70             P95
  *          |     NORMAL         | HIGH      | MAX
  */
-void thorium_priority_scheduler_update(struct thorium_priority_scheduler *scheduler, struct thorium_actor *actor)
+void thorium_priority_assigner_update(struct thorium_priority_assigner *scheduler, struct thorium_actor *actor)
 {
     int old_priority;
     int new_priority;
@@ -75,8 +75,8 @@ void thorium_priority_scheduler_update(struct thorium_priority_scheduler *schedu
              */
             bsal_map_update_value(&scheduler->actor_sources, &name, &new_source_count);
 
-            thorium_priority_scheduler_decrement(scheduler, old_source_count);
-            thorium_priority_scheduler_increment(scheduler, new_source_count);
+            thorium_priority_assigner_decrement(scheduler, old_source_count);
+            thorium_priority_assigner_increment(scheduler, new_source_count);
         }
 
     } else {
@@ -85,7 +85,7 @@ void thorium_priority_scheduler_update(struct thorium_priority_scheduler *schedu
          */
         bsal_map_add_value(&scheduler->actor_sources, &name, &new_source_count);
 
-        thorium_priority_scheduler_increment(scheduler, new_source_count);
+        thorium_priority_assigner_increment(scheduler, new_source_count);
     }
 
     /* Update the priority now.
@@ -132,12 +132,12 @@ void thorium_priority_scheduler_update(struct thorium_priority_scheduler *schedu
 
     if (now - scheduler->last_update >= TIME_THRESHOLD) {
 
-        thorium_priority_scheduler_update_thresholds(scheduler);
+        thorium_priority_assigner_update_thresholds(scheduler);
         scheduler->last_update = now;
     }
 }
 
-void thorium_priority_scheduler_update_thresholds(struct thorium_priority_scheduler *scheduler)
+void thorium_priority_assigner_update_thresholds(struct thorium_priority_assigner *scheduler)
 {
     struct bsal_map_iterator iterator;
     int class_count;
@@ -148,7 +148,7 @@ void thorium_priority_scheduler_update_thresholds(struct thorium_priority_schedu
 
 #if 0
 #ifdef THORIUM_PRIORITY_SCHEDULER_DEBUG
-    printf("THORIUM_PRIORITY_SCHEDULER_DEBUG thorium_priority_scheduler_update_thresholds: calls %d changes %d, class_count %d\n",
+    printf("THORIUM_PRIORITY_SCHEDULER_DEBUG thorium_priority_assigner_update_thresholds: calls %d changes %d, class_count %d\n",
                     scheduler->calls, scheduler->changes, class_count);
 #endif
 #endif
@@ -204,7 +204,7 @@ void thorium_priority_scheduler_update_thresholds(struct thorium_priority_schedu
     bsal_map_init(&scheduler->actor_source_frequencies, sizeof(int), sizeof(int));
 }
 
-void thorium_priority_scheduler_decrement(struct thorium_priority_scheduler *scheduler,
+void thorium_priority_assigner_decrement(struct thorium_priority_assigner *scheduler,
                 int old_source_count)
 {
     int old_source_count_old_frequency;
@@ -224,7 +224,7 @@ void thorium_priority_scheduler_decrement(struct thorium_priority_scheduler *sch
     }
 }
 
-void thorium_priority_scheduler_increment(struct thorium_priority_scheduler *scheduler,
+void thorium_priority_assigner_increment(struct thorium_priority_assigner *scheduler,
                 int new_source_count)
 {
     int new_source_count_old_frequency;

@@ -4,7 +4,7 @@
 
 #include "worker.h"
 
-#include "scheduler/scheduler.h"
+#include "scheduler/balancer.h"
 
 #include <core/structures/fast_queue.h>
 #include <core/structures/vector.h>
@@ -23,7 +23,7 @@ struct thorium_migration;
  * A worker pool.
  */
 struct thorium_worker_pool {
-    struct thorium_scheduler scheduler;
+    struct thorium_balancer scheduler;
 
     struct bsal_fast_queue scheduled_actor_queue_buffer;
     struct bsal_fast_queue inbound_message_queue_buffer;

@@ -7,7 +7,7 @@
 #include "load_profiler.h"
 
 #include "scheduler/scheduling_queue.h"
-#include "scheduler/priority_scheduler.h"
+#include "scheduler/priority_assigner.h"
 
 #include <core/structures/fast_ring.h>
 #include <core/structures/fast_queue.h>
@@ -27,7 +27,7 @@
 struct bsal_work;
 struct thorium_node;
 struct thorium_message;
-struct thorium_scheduler;
+struct thorium_balancer;
 
 /*
  * Inject clean worker buffers into the worker rings
@@ -131,7 +131,7 @@ struct thorium_worker {
     struct bsal_memory_pool ephemeral_memory;
     struct bsal_memory_pool outbound_message_memory_pool;
 
-    struct thorium_priority_scheduler scheduler;
+    struct thorium_priority_assigner scheduler;
 
     uint64_t last_wake_up_count;
 
@@ -181,7 +181,7 @@ int thorium_worker_enqueue_actor_special(struct thorium_worker *self, struct tho
 int thorium_worker_enqueue_message(struct thorium_worker *self, struct thorium_message *message);
 int thorium_worker_dequeue_message(struct thorium_worker *self, struct thorium_message *message);
 
-void thorium_worker_print_actors(struct thorium_worker *self, struct thorium_scheduler *scheduler);
+void thorium_worker_print_actors(struct thorium_worker *self, struct thorium_balancer *scheduler);
 
 void thorium_worker_evict_actor(struct thorium_worker *self, int actor_name);
 void thorium_worker_lock(struct thorium_worker *self);
@@ -190,8 +190,8 @@ struct bsal_map *thorium_worker_get_actors(struct thorium_worker *self);
 
 int thorium_worker_get_sum_of_received_actor_messages(struct thorium_worker *self);
 int thorium_worker_get_queued_messages(struct thorium_worker *self);
-int thorium_worker_get_production(struct thorium_worker *self, struct thorium_scheduler *scheduler);
-int thorium_worker_get_producer_count(struct thorium_worker *self, struct thorium_scheduler *scheduler);
+int thorium_worker_get_production(struct thorium_worker *self, struct thorium_balancer *scheduler);
+int thorium_worker_get_producer_count(struct thorium_worker *self, struct thorium_balancer *scheduler);
 
 void thorium_worker_free_message(struct thorium_worker *self, struct thorium_message *message);
 

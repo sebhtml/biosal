@@ -70,7 +70,7 @@ struct thorium_worker_buffer;
  * Thorium has these components:
  *
  * - Runtime node (struct thorium_node)
- * - Actor scheduler (struct thorium_scheduler)
+ * - Actor scheduler (struct thorium_balancer)
  * - Actor (struct thorium_actor)
  * - Message (struct thorium_message)
  * - Worker pool (struct thorium_worker_pool)

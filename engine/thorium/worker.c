@@ -4,7 +4,7 @@
 #include "message.h"
 #include "node.h"
 
-#include "scheduler/scheduler.h"
+#include "scheduler/balancer.h"
 
 #include <core/structures/map.h>
 #include <core/structures/vector.h>
@@ -218,7 +218,7 @@ void thorium_worker_init(struct thorium_worker *worker, int name, struct thorium
 
     worker->ticks_without_production = 0;
 
-    thorium_priority_scheduler_init(&worker->scheduler, thorium_worker_name(worker));
+    thorium_priority_assigner_init(&worker->scheduler, thorium_worker_name(worker));
 
     /*
      * This variables should be set in
@@ -301,7 +301,7 @@ void thorium_worker_destroy(struct thorium_worker *worker)
     bsal_memory_pool_destroy(&worker->ephemeral_memory);
     bsal_memory_pool_destroy(&worker->outbound_message_memory_pool);
 
-    thorium_priority_scheduler_destroy(&worker->scheduler);
+    thorium_priority_assigner_destroy(&worker->scheduler);
 }
 
 struct thorium_node *thorium_worker_node(struct thorium_worker *worker)
@@ -745,7 +745,7 @@ int thorium_worker_dequeue_message(struct thorium_worker *worker, struct thorium
     return answer;
 }
 
-void thorium_worker_print_actors(struct thorium_worker *worker, struct thorium_scheduler *scheduler)
+void thorium_worker_print_actors(struct thorium_worker *worker, struct thorium_balancer *scheduler)
 {
     struct bsal_map_iterator iterator;
     int name;
@@ -1010,7 +1010,7 @@ void thorium_worker_reset_scheduling_epoch(struct thorium_worker *worker)
     worker->scheduling_epoch_used_nanoseconds = 0;
 }
 
-int thorium_worker_get_production(struct thorium_worker *worker, struct thorium_scheduler *scheduler)
+int thorium_worker_get_production(struct thorium_worker *worker, struct thorium_balancer *scheduler)
 {
     struct bsal_map_iterator iterator;
     int name;
@@ -1028,7 +1028,7 @@ int thorium_worker_get_production(struct thorium_worker *worker, struct thorium_
             continue;
         }
 
-        production += thorium_scheduler_get_actor_production(scheduler, actor);
+        production += thorium_balancer_get_actor_production(scheduler, actor);
 
     }
 
@@ -1037,7 +1037,7 @@ int thorium_worker_get_production(struct thorium_worker *worker, struct thorium_
     return production;
 }
 
-int thorium_worker_get_producer_count(struct thorium_worker *worker, struct thorium_scheduler *scheduler)
+int thorium_worker_get_producer_count(struct thorium_worker *worker, struct thorium_balancer *scheduler)
 {
     struct bsal_map_iterator iterator;
     int name;
@@ -1055,7 +1055,7 @@ int thorium_worker_get_producer_count(struct thorium_worker *worker, struct thor
             continue;
         }
 
-        if (thorium_scheduler_get_actor_production(scheduler, actor) > 0) {
+        if (thorium_balancer_get_actor_production(scheduler, actor) > 0) {
             ++count;
         }
 
@@ -1247,7 +1247,7 @@ void thorium_worker_run(struct thorium_worker *worker)
          */
 
 #ifdef THORIUM_UPDATE_SCHEDULING_PRIORITIES
-        thorium_priority_scheduler_update(&worker->scheduler, actor);
+        thorium_priority_assigner_update(&worker->scheduler, actor);
 #endif
 
 #ifdef THORIUM_NODE_ENABLE_INSTRUMENTATION
