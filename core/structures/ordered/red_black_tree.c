@@ -19,6 +19,8 @@ void bsal_red_black_tree_init(struct bsal_red_black_tree *self, int key_size, in
 
     self->key_size = key_size;
     self->value_size = value_size;
+
+    self->compare = bsal_red_black_tree_compare_memory_content;
 }
 
 void bsal_red_black_tree_destroy(struct bsal_red_black_tree *self)
@@ -69,7 +71,7 @@ void *bsal_red_black_tree_add(struct bsal_red_black_tree *self, void *key)
 
     while (inserted == 0) {
 
-        result = memcmp(node->key, current_node->key, self->key_size);
+        result = self->compare(self, node->key, current_node->key);
 
         if (result < 0) {
 
@@ -515,7 +517,7 @@ void *bsal_red_black_tree_get(struct bsal_red_black_tree *self, void *key)
     node = self->root;
 
     while (node != NULL && value == NULL) {
-        result = memcmp(key, node->key, self->key_size);
+        result = self->compare(self, key, node->key);
 
         if (result < 0) {
             node = node->left_node;
@@ -532,4 +534,31 @@ void *bsal_red_black_tree_get(struct bsal_red_black_tree *self, void *key)
 void *bsal_red_black_tree_get_lowest_key_and_value(struct bsal_red_black_tree *self, void **key)
 {
     return NULL;
+}
+
+int bsal_red_black_tree_compare_memory_content(struct bsal_red_black_tree *self, void *key1, void *key2)
+{
+    return memcmp(key1, key2, self->key_size);
+}
+
+int bsal_red_black_tree_compare_uint64_t(struct bsal_red_black_tree *self, void *key1, void *key2)
+{
+    uint64_t key1_as_uint64_t;
+    uint64_t key2_as_uint64_t;
+
+    key1_as_uint64_t = *(uint64_t *)key1;
+    key2_as_uint64_t = *(uint64_t *)key2;
+
+    if (key1_as_uint64_t < key2_as_uint64_t) {
+        return -1;
+    } else if (key1_as_uint64_t > key2_as_uint64_t) {
+        return 1;
+    }
+
+    return 0;
+}
+
+void bsal_red_black_tree_use_uint64_t_keys(struct bsal_red_black_tree *self)
+{
+    self->compare = bsal_red_black_tree_compare_uint64_t;
 }

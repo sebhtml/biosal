@@ -32,9 +32,15 @@ void thorium_cfs_scheduler_init(struct thorium_scheduler *self)
     concrete_self = self->concrete_self;
 
     bsal_memory_pool_init(&concrete_self->pool, 131072, BSAL_MEMORY_POOL_NAME_CFS_SCHEDULER);
+
     bsal_red_black_tree_init(&concrete_self->tree, sizeof(uint64_t),
                     sizeof(struct thorium_actor *));
     bsal_red_black_tree_set_memory_pool(&concrete_self->tree, &concrete_self->pool);
+
+    /*
+     * Use uint64_t keys for comparison instead of a memory comparison.
+     */
+    bsal_red_black_tree_use_uint64_t_keys(&concrete_self->tree);
 }
 
 void thorium_cfs_scheduler_destroy(struct thorium_scheduler *self)
