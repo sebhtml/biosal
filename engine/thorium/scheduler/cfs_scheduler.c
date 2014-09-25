@@ -87,7 +87,20 @@ int thorium_cfs_scheduler_dequeue(struct thorium_scheduler *self, struct thorium
         return 0;
     }
 
-    value = bsal_red_black_tree_get_lowest_key_and_value(&concrete_self->tree, &key);
+    /*
+     * This is O(N)
+     */
+    key = bsal_red_black_tree_get_lowest_key(&concrete_self->tree);
+
+    /*
+     * This is O(1) because the tree always keep a cache of the last node.
+     */
+    value = bsal_red_black_tree_get(&concrete_self->tree, key);
+
+    /*
+     * This is also O(1) because the tree keeps a cache of the last node.
+     */
+    bsal_red_black_tree_delete(&concrete_self->tree, key);
 
     bsal_memory_copy(&virtual_runtime, key, sizeof(virtual_runtime));
     bsal_memory_copy(actor, value, sizeof(struct thorium_actor *));

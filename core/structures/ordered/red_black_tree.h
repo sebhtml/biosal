@@ -29,6 +29,9 @@ struct bsal_red_black_tree {
     int key_size;
     int value_size;
 
+    struct bsal_red_black_node *cached_last_result;
+    struct bsal_red_black_node *cached_lowest_result;
+
     int (*compare)(struct bsal_red_black_tree *self, void *key1, void *key2);
 };
 
@@ -58,10 +61,9 @@ void bsal_red_black_tree_delete(struct bsal_red_black_tree *self, void *key);
 void *bsal_red_black_tree_get(struct bsal_red_black_tree *self, void *key);
 
 /*
- * Returns the value for the lowest key. The key parameter is a output parameter.
- * This returns NULL is the tree is empty.
+ * Return the lowest key.
  */
-void *bsal_red_black_tree_get_lowest_key_and_value(struct bsal_red_black_tree *self, void **key);
+void *bsal_red_black_tree_get_lowest_key(struct bsal_red_black_tree *self);
 
 /*
  * Check the 5 red-black tree rules.

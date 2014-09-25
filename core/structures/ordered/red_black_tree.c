@@ -21,6 +21,9 @@ void bsal_red_black_tree_init(struct bsal_red_black_tree *self, int key_size, in
     self->value_size = value_size;
 
     self->compare = bsal_red_black_tree_compare_memory_content;
+
+    self->cached_last_result = NULL;
+    self->cached_lowest_result = NULL;
 }
 
 void bsal_red_black_tree_destroy(struct bsal_red_black_tree *self)
@@ -56,6 +59,8 @@ void *bsal_red_black_tree_add(struct bsal_red_black_tree *self, void *key)
     int inserted;
 
     node = bsal_memory_pool_allocate(self->memory_pool, sizeof(struct bsal_red_black_node));
+
+    self->cached_last_result = node;
 
     bsal_red_black_node_init(node, self->key_size, key, self->value_size, NULL, self->memory_pool);
 
@@ -513,6 +518,11 @@ void *bsal_red_black_tree_get(struct bsal_red_black_tree *self, void *key)
     void *value;
     int result;
 
+    if (self->cached_last_result != NULL
+                    && self->cached_last_result->key == key) {
+        return self->cached_last_result->value;
+    }
+
     value = NULL;
     node = self->root;
 
@@ -528,11 +538,41 @@ void *bsal_red_black_tree_get(struct bsal_red_black_tree *self, void *key)
         }
     }
 
+    self->cached_last_result = node;
+
     return value;
 }
 
-void *bsal_red_black_tree_get_lowest_key_and_value(struct bsal_red_black_tree *self, void **key)
+void *bsal_red_black_tree_get_lowest_key(struct bsal_red_black_tree *self)
 {
+    struct bsal_red_black_node *node;
+
+    if (self->cached_lowest_result != NULL) {
+        self->cached_last_result = self->cached_lowest_result;
+        return self->cached_lowest_result->key;
+    }
+
+    node = self->root;
+
+    /*
+     * Empty tree.
+     */
+    if (node == NULL) {
+        return NULL;
+    }
+
+    while (1) {
+
+        /*
+         * This is the lowest value.
+         */
+        if (node->left_node == NULL) {
+            return node->key;
+        }
+
+        node = node->left_node;
+    }
+
     return NULL;
 }
 
