@@ -1,6 +1,6 @@
 
-#ifndef THORIUM_SCHEDULING_QUEUE
-#define THORIUM_SCHEDULING_QUEUE
+#ifndef THORIUM_FIFO_SCHEDULER_H
+#define THORIUM_FIFO_SCHEDULER_H
 
 #include <core/structures/fast_queue.h>
 
@@ -14,8 +14,8 @@ struct thorium_actor;
 #define THORIUM_SCHEDULING_QUEUE_RATIO 64
 
 /*
- * This is an actor scheduling queue.
- * Each worker has one of these.
+ * This is an implementation of a FIFO scheduler
+ * for actors.
  */
 struct thorium_fifo_scheduler {
 

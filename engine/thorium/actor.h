@@ -270,6 +270,12 @@ struct thorium_actor {
     int migration_spawner;
     int migration_new_actor;
     int migration_client;
+
+    /*
+     * \see https://www.kernel.org/doc/Documentation/scheduler/sched-design-CFS.txt
+     */
+    uint64_t virtual_runtime;
+    struct bsal_timer timer;
 };
 
 void thorium_actor_init(struct thorium_actor *self, void *state,

@@ -1,12 +1,16 @@
 
 #include "scheduler.h"
 
+#include "cfs_scheduler.h"
+#include "fifo_scheduler.h"
+
 #include <core/system/memory.h>
 #include <core/system/debugger.h>
 
 void thorium_scheduler_init(struct thorium_scheduler *self)
 {
     self->scheduler = THORIUM_FIFO_SCHEDULER;
+    /*self->scheduler = THORIUM_CFS_SCHEDULER;*/
 
     self->concrete_self = NULL;
     self->implementation = NULL;
@@ -16,6 +20,8 @@ void thorium_scheduler_init(struct thorium_scheduler *self)
      */
     if (self->scheduler == thorium_fifo_scheduler_implementation.identifier) {
         self->implementation = &thorium_fifo_scheduler_implementation;
+    } else if (self->scheduler == thorium_cfs_scheduler_implementation.identifier) {
+        self->implementation = &thorium_cfs_scheduler_implementation;
     }
 
     BSAL_DEBUGGER_ASSERT(self->implementation != NULL);

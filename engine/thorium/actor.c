@@ -68,6 +68,9 @@ void thorium_actor_init(struct thorium_actor *self, void *concrete_actor,
     thorium_actor_init_fn_t init;
     int capacity;
 
+    self->virtual_runtime = 0;
+    bsal_timer_init(&self->timer);
+
     thorium_load_profiler_init(&self->profiler);
 
     thorium_actor_set_priority(self, THORIUM_PRIORITY_NORMAL);
@@ -152,6 +155,9 @@ void thorium_actor_destroy(struct thorium_actor *self)
 {
     thorium_actor_init_fn_t destroy;
     struct thorium_message message;
+
+    self->virtual_runtime = 0;
+    bsal_timer_destroy(&self->timer);
 
     thorium_load_profiler_destroy(&self->profiler);
 
@@ -908,6 +914,11 @@ int thorium_actor_receive_system(struct thorium_actor *self, struct thorium_mess
 
 void thorium_actor_receive(struct thorium_actor *self, struct thorium_message *message)
 {
+    uint64_t start;
+    uint64_t end;
+
+    start = bsal_timer_get_nanoseconds(&self->timer);
+
     if (bsal_bitmap_get_bit_uint32_t(&self->flags, FLAG_ENABLE_LOAD_PROFILER)) {
         thorium_load_profiler_profile(&self->profiler, THORIUM_LOAD_PROFILER_RECEIVE_BEGIN);
     }
@@ -917,6 +928,10 @@ void thorium_actor_receive(struct thorium_actor *self, struct thorium_message *m
     if (bsal_bitmap_get_bit_uint32_t(&self->flags, FLAG_ENABLE_LOAD_PROFILER)) {
         thorium_load_profiler_profile(&self->profiler, THORIUM_LOAD_PROFILER_RECEIVE_END);
     }
+
+    end = bsal_timer_get_nanoseconds(&self->timer);
+
+    self->virtual_runtime += (end - start);
 }
 
 void thorium_actor_receive_private(struct thorium_actor *self, struct thorium_message *message)

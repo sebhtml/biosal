@@ -528,3 +528,8 @@ void *bsal_red_black_tree_get(struct bsal_red_black_tree *self, void *key)
 
     return value;
 }
+
+void *bsal_red_black_tree_get_lowest_key_and_value(struct bsal_red_black_tree *self, void **key)
+{
+    return NULL;
+}

@@ -4,8 +4,6 @@
 
 #include "scheduler_interface.h"
 
-#include "fifo_scheduler.h"
-
 #include <stdint.h>
 
 struct thorium_actor;
