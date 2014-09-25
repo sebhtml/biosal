@@ -7,6 +7,8 @@
 
 #include <stdlib.h>
 
+#define RUN_TREE_ASSERTIONS
+
 void bsal_red_black_tree_init(struct bsal_red_black_tree *self)
 {
     self->root = NULL;
@@ -52,8 +54,8 @@ void bsal_red_black_tree_add(struct bsal_red_black_tree *self, int key)
             left_node = bsal_red_black_node_left_node(current_node);
 
             if (left_node == NULL) {
-                bsal_red_black_node_set_left_node(current_node, node);
-                bsal_red_black_node_set_parent(node, current_node);
+                current_node->left_node = node;
+                node->parent = current_node;
                 ++self->size;
                 bsal_red_black_tree_insert_case1(self, node);
                 break;
@@ -65,8 +67,8 @@ void bsal_red_black_tree_add(struct bsal_red_black_tree *self, int key)
             right_node = bsal_red_black_node_right_node(current_node);
 
             if (right_node == NULL) {
-                bsal_red_black_node_set_right_node(current_node, node);
-                bsal_red_black_node_set_parent(node, current_node);
+                current_node->right_node = node;
+                node->parent = current_node;
                 ++self->size;
                 bsal_red_black_tree_insert_case1(self, node);
                 break;
@@ -75,6 +77,7 @@ void bsal_red_black_tree_add(struct bsal_red_black_tree *self, int key)
             }
         }
     }
+
 
 #ifdef BSAL_DEBUGGER_ASSERT
     /*
@@ -85,6 +88,8 @@ void bsal_red_black_tree_add(struct bsal_red_black_tree *self, int key)
             BSAL_DEBUGGER_ASSERT(node->parent->color == BSAL_COLOR_BLACK);
         }
     }
+
+    bsal_red_black_node_run_assertions(node);
 #endif
 }
 
@@ -306,6 +311,8 @@ void bsal_red_black_tree_insert_case5(struct bsal_red_black_tree *self,
  *    C   D
  *       E F
  *
+ * (N can also be the right_node of G).
+ *
  * becomes
  *
  *          G
@@ -324,10 +331,16 @@ void bsal_red_black_tree_rotate_left(struct bsal_red_black_tree *self,
     struct bsal_red_black_node *node_E;
 
 #ifdef DEBUG_TREE
-    printf("rotate_left node %d\n", node->key);
+    printf("before rotate_left rotate_left node %d\n", node->key);
     bsal_red_black_tree_print(self);
 #endif
 
+    /*
+     * List:
+     *
+     * C -> N [x]
+     * N -> E [x]
+     */
     node_N = node;
     node_G = node_N->parent;
     node_D = node_N->right_node;
@@ -342,11 +355,22 @@ void bsal_red_black_tree_rotate_left(struct bsal_red_black_tree *self,
     node_N->parent = node_D;
 
     if (node_G != NULL) {
-        node_G->left_node = node_D;
+        if (node_G->left_node == node_N)
+            node_G->left_node = node_D;
+        else
+            node_G->right_node = node_D;
     } else {
         self->root = node_D;
     }
     node_D->parent = node_G;
+
+#ifdef RUN_TREE_ASSERTIONS
+    bsal_red_black_node_run_assertions(node_D);
+    bsal_red_black_node_run_assertions(node_N);
+    bsal_red_black_node_run_assertions(node_G);
+    bsal_red_black_node_run_assertions(node_E);
+    bsal_red_black_node_run_assertions(self->root);
+#endif
 }
 
 /*
@@ -358,6 +382,8 @@ void bsal_red_black_tree_rotate_left(struct bsal_red_black_tree *self,
  *              N
  *            D   C
  *           F E
+ *
+ * (N can also be the left_node of G).
  *
  * After
  *
@@ -375,6 +401,11 @@ void bsal_red_black_tree_rotate_right(struct bsal_red_black_tree *self,
     struct bsal_red_black_node *node_D;
     struct bsal_red_black_node *node_E;
 
+#if 0
+    printf("before rotate_right node %d\n", node->key);
+    bsal_red_black_tree_print(self);
+#endif
+
     node_N = node;
     node_G = node_N->parent;
     node_D = node_N->left_node;
@@ -389,11 +420,27 @@ void bsal_red_black_tree_rotate_right(struct bsal_red_black_tree *self,
     node_N->parent = node_D;
 
     if (node_G != NULL) {
-        node_G->right_node = node_D;
+        if (node_G->right_node == node_N)
+            node_G->right_node = node_D;
+        else
+            node_G->left_node = node_D;
     } else {
         self->root = node_D;
     }
     node_D->parent = node_G;
+
+#if 0
+    printf("Before assertions\n");
+    bsal_red_black_tree_print(self);
+#endif
+#ifdef RUN_TREE_ASSERTIONS
+    bsal_red_black_node_run_assertions(node_N);
+    bsal_red_black_node_run_assertions(node_G);
+    bsal_red_black_node_run_assertions(node_D);
+    bsal_red_black_node_run_assertions(node_E);
+    bsal_red_black_node_run_assertions(self->root);
+#endif
+
 }
 
 void print_spaces(int depth)
@@ -419,6 +466,10 @@ void bsal_red_black_tree_print_node(struct bsal_red_black_tree *self,
             printf("(%d, BLACK)\n", node->key);
         }
 
+#if 0
+        bsal_red_black_node_run_assertions(node);
+#endif
+
         bsal_red_black_tree_print_node(self, node->left_node, depth + 1);
         bsal_red_black_tree_print_node(self, node->right_node, depth + 1);
     }
@@ -426,7 +477,7 @@ void bsal_red_black_tree_print_node(struct bsal_red_black_tree *self,
 
 void bsal_red_black_tree_print(struct bsal_red_black_tree *self)
 {
-    printf("Red-black tree content (%d nodes):\n", self->size);
+    printf("Red-black tree content (%d non-NIL nodes):\n", self->size);
     bsal_red_black_tree_print_node(self, self->root, 0);
     printf("\n");
 }

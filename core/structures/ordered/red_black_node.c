@@ -96,3 +96,34 @@ struct bsal_red_black_node *bsal_red_black_node_grandparent(struct bsal_red_blac
         return NULL;
     }
 }
+
+void bsal_red_black_node_run_assertions(struct bsal_red_black_node *self)
+{
+    if (self == NULL) {
+        return;
+    }
+    if (self->left_node != NULL) {
+        if (self->left_node->parent != self) {
+            printf("Problem with %d -> %d (left_node parent should be %d, but it is %d)\n",
+                            self->key, self->left_node->key,
+                            self->key, self->left_node->parent->key);
+        }
+#if 1
+        BSAL_DEBUGGER_ASSERT(self->left_node->parent == self);
+#endif
+    }
+    if (self->right_node != NULL) {
+        BSAL_DEBUGGER_ASSERT(self->right_node->parent == self);
+    }
+
+#if 0
+    if (self->parent == NULL) {
+        BSAL_DEBUGGER_ASSERT(self->color == BSAL_COLOR_BLACK);
+    }
+
+    if (self->color == BSAL_COLOR_RED) {
+        BSAL_DEBUGGER_ASSERT(self->left_node == NULL || self->left_node->color == BSAL_COLOR_BLACK);
+        BSAL_DEBUGGER_ASSERT(self->right_node == NULL || self->right_node->color == BSAL_COLOR_BLACK);
+    }
+#endif
+}
