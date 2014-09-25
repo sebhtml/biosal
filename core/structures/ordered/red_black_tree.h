@@ -24,14 +24,35 @@ struct bsal_red_black_tree {
     struct bsal_red_black_node *root;
     struct bsal_memory_pool *memory_pool;
     int size;
+
+    int key_size;
+    int value_size;
 };
 
-void bsal_red_black_tree_init(struct bsal_red_black_tree *self);
+void bsal_red_black_tree_init(struct bsal_red_black_tree *self, int key_size, int value_size);
 void bsal_red_black_tree_destroy(struct bsal_red_black_tree *self);
 
-void bsal_red_black_tree_add(struct bsal_red_black_tree *self, int key);
-void bsal_red_black_tree_delete(struct bsal_red_black_tree *self, int key);
-int bsal_red_black_tree_get(struct bsal_red_black_tree *self, int key);
+/*
+ * Add a key and return a pointer to the uninitialized
+ * bucket for the corresponding value.
+ */
+void *bsal_red_black_tree_add(struct bsal_red_black_tree *self, void *key);
+
+/*
+ * Add a key with a value and return a pointer to the initialized
+ * bucket for the corresponding value.
+ */
+void *bsal_red_black_tree_add_key_and_value(struct bsal_red_black_tree *self, void *key, void *value);
+
+/*
+ * Delete a key-value pair using the key as search pattern.
+ */
+void bsal_red_black_tree_delete(struct bsal_red_black_tree *self, void *key);
+
+/*
+ * Get the value for a given key. If there are duplicates, return the first match.
+ */
+void *bsal_red_black_tree_get(struct bsal_red_black_tree *self, void *key);
 
 /*
  * Check the 5 red-black tree rules.

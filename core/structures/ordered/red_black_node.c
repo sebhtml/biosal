@@ -2,32 +2,45 @@
 #include "red_black_node.h"
 
 #include <core/system/debugger.h>
+#include <core/system/memory_pool.h>
+#include <core/system/memory.h>
 
 #include <stdlib.h>
 
-void bsal_red_black_node_init(struct bsal_red_black_node *self, int key)
+void bsal_red_black_node_init(struct bsal_red_black_node *self, int key_size, void *key, int value_size,
+                void *value, struct bsal_memory_pool *pool)
 {
     self->parent = NULL;
     self->left_node = NULL;
     self->right_node = NULL;
 
-    self->key = key;
+    self->key = bsal_memory_pool_allocate(pool, key_size);
+    bsal_memory_copy(self->key, key, key_size);
+
+    self->value = bsal_memory_pool_allocate(pool, value_size);
+
+    if (value != NULL)
+        bsal_memory_copy(self->value, value, value_size);
 
     self->color = BSAL_COLOR_RED;
 }
 
-void bsal_red_black_node_destroy(struct bsal_red_black_node *self)
+void bsal_red_black_node_destroy(struct bsal_red_black_node *self, struct bsal_memory_pool  *pool)
 {
     self->parent = NULL;
     self->left_node = NULL;
     self->right_node = NULL;
 
-    self->key = -1;
+    bsal_memory_pool_free(pool, self->key);
+    self->key = NULL;
+
+    bsal_memory_pool_free(pool, self->value);
+    self->value = NULL;
 
     self->color = BSAL_COLOR_NONE;
 }
 
-int bsal_red_black_node_key(struct bsal_red_black_node *self)
+void *bsal_red_black_node_key(struct bsal_red_black_node *self)
 {
     return self->key;
 }
@@ -97,7 +110,7 @@ struct bsal_red_black_node *bsal_red_black_node_grandparent(struct bsal_red_blac
     }
 }
 
-void bsal_red_black_node_run_assertions(struct bsal_red_black_node *self)
+void bsal_red_black_node_run_assertions(struct bsal_red_black_node *self, int key_size)
 {
     if (self == NULL) {
         return;
@@ -105,8 +118,8 @@ void bsal_red_black_node_run_assertions(struct bsal_red_black_node *self)
     if (self->left_node != NULL) {
         if (self->left_node->parent != self) {
             printf("Problem with %d -> %d (left_node parent should be %d, but it is %d)\n",
-                            self->key, self->left_node->key,
-                            self->key, self->left_node->parent->key);
+                            bsal_red_black_node_get_key_as_int(self, key_size), bsal_red_black_node_get_key_as_int(self->left_node, key_size),
+                            bsal_red_black_node_get_key_as_int(self, key_size), bsal_red_black_node_get_key_as_int(self->left_node->parent, key_size));
         }
 #if 1
         BSAL_DEBUGGER_ASSERT(self->left_node->parent == self);
@@ -126,4 +139,18 @@ void bsal_red_black_node_run_assertions(struct bsal_red_black_node *self)
         BSAL_DEBUGGER_ASSERT(self->right_node == NULL || self->right_node->color == BSAL_COLOR_BLACK);
     }
 #endif
+}
+
+int bsal_red_black_node_get_key_as_int(struct bsal_red_black_node *self, int key_size)
+{
+    int key;
+
+    key = 0;
+
+    if (key_size > (int)sizeof(key))
+        key_size = sizeof(key);
+
+    bsal_memory_copy(&key, self->key, key_size);
+
+    return key;
 }

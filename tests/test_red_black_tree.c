@@ -23,7 +23,7 @@ int main(int argc, char **argv)
 
     srand(88);
 
-    bsal_red_black_tree_init(&tree);
+    bsal_red_black_tree_init(&tree, sizeof(int), sizeof(int));
     bsal_red_black_tree_set_memory_pool(&tree, &memory_pool);
 
 #if 0
@@ -38,11 +38,11 @@ int main(int argc, char **argv)
         bsal_red_black_tree_print(&tree);
 #endif
         TEST_INT_EQUALS(bsal_red_black_tree_has_ignored_rules(&tree), 0);
-        bsal_red_black_tree_add(&tree, key);
+        bsal_red_black_tree_add(&tree, &key);
         TEST_INT_EQUALS(bsal_red_black_tree_has_ignored_rules(&tree), 0);
         TEST_INT_EQUALS(bsal_red_black_tree_size(&tree), i + 1);
 
-        TEST_INT_EQUALS(bsal_red_black_tree_get(&tree, key), 1);
+        TEST_POINTER_NOT_EQUALS(bsal_red_black_tree_get(&tree, &key), NULL);
 #if 0
         bsal_red_black_tree_print(&tree);
 #endif
