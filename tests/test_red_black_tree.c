@@ -19,7 +19,7 @@ int main(int argc, char **argv)
 
     bsal_memory_pool_init(&memory_pool, 1024*1024, -1);
 
-    count = 1000000;
+    count = 100000;
 
     srand(88);
 
@@ -42,6 +42,7 @@ int main(int argc, char **argv)
         TEST_INT_EQUALS(bsal_red_black_tree_has_ignored_rules(&tree), 0);
         TEST_INT_EQUALS(bsal_red_black_tree_size(&tree), i + 1);
 
+        TEST_INT_EQUALS(bsal_red_black_tree_get(&tree, key), 1);
 #if 0
         bsal_red_black_tree_print(&tree);
 #endif

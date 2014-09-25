@@ -7,8 +7,9 @@
 
 #include <stdlib.h>
 
+/*
 #define RUN_TREE_ASSERTIONS
-
+*/
 void bsal_red_black_tree_init(struct bsal_red_black_tree *self)
 {
     self->root = NULL;
@@ -78,8 +79,7 @@ void bsal_red_black_tree_add(struct bsal_red_black_tree *self, int key)
         }
     }
 
-
-#ifdef BSAL_DEBUGGER_ASSERT
+#ifdef RUN_TREE_ASSERTIONS
     /*
      * If the current node is RED, then the parent must be black
      */
@@ -480,4 +480,25 @@ void bsal_red_black_tree_print(struct bsal_red_black_tree *self)
     printf("Red-black tree content (%d non-NIL nodes):\n", self->size);
     bsal_red_black_tree_print_node(self, self->root, 0);
     printf("\n");
+}
+
+int bsal_red_black_tree_get(struct bsal_red_black_tree *self, int key)
+{
+    struct bsal_red_black_node *node;
+    int value;
+
+    value = 0;
+    node = self->root;
+
+    while (node != NULL && value == 0) {
+        if (key < node->key) {
+            node = node->left_node;
+        } else if (key > node->key) {
+            node = node->right_node;
+        } else {
+            value = 1;
+        }
+    }
+
+    return value;
 }

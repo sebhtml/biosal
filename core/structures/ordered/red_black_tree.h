@@ -31,6 +31,7 @@ void bsal_red_black_tree_destroy(struct bsal_red_black_tree *self);
 
 void bsal_red_black_tree_add(struct bsal_red_black_tree *self, int key);
 void bsal_red_black_tree_delete(struct bsal_red_black_tree *self, int key);
+int bsal_red_black_tree_get(struct bsal_red_black_tree *self, int key);
 
 /*
  * Check the 5 red-black tree rules.
