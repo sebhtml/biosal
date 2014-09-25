@@ -4,7 +4,7 @@
 #include "worker.h"
 #include "node.h"
 
-#include "scheduler/scheduling_queue.h"
+#include "scheduler/fifo_scheduler.h"
 
 #include <core/structures/vector_iterator.h>
 #include <core/structures/map_iterator.h>

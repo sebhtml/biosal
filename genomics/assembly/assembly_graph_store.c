@@ -27,7 +27,7 @@
 
 #include <core/system/debugger.h>
 
-#include <engine/thorium/scheduler/scheduling_queue.h>
+#include <engine/thorium/scheduler/fifo_scheduler.h>
 
 #include <inttypes.h>
 #include <stdint.h>
