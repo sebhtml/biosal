@@ -1,7 +1,7 @@
 
 #include "priority_assigner.h"
 
-#include "fifo_scheduler.h"
+#include "scheduler.h"
 
 #include <engine/thorium/actor.h>
 

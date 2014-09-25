@@ -1,6 +1,6 @@
 
-#ifndef THORIUM_SCHEDULER_H
-#define THORIUM_SCHEDULER_H
+#ifndef THORIUM_BALANCER_H
+#define THORIUM_BALANCER_H
 
 #include <core/structures/map.h>
 

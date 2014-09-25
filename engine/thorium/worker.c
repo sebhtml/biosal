@@ -139,7 +139,7 @@ void thorium_worker_init(struct thorium_worker *worker, int name, struct thorium
 #endif
 
 
-    thorium_fifo_scheduler_init(&worker->scheduling_queue);
+    thorium_scheduler_init(&worker->scheduler);
     bsal_map_init(&worker->actors, sizeof(int), sizeof(int));
     bsal_map_iterator_init(&worker->actor_iterator, &worker->actors);
 
@@ -218,7 +218,7 @@ void thorium_worker_init(struct thorium_worker *worker, int name, struct thorium
 
     worker->ticks_without_production = 0;
 
-    thorium_priority_assigner_init(&worker->scheduler, thorium_worker_name(worker));
+    thorium_priority_assigner_init(&worker->assigner, thorium_worker_name(worker));
 
     /*
      * This variables should be set in
@@ -285,7 +285,7 @@ void thorium_worker_destroy(struct thorium_worker *worker)
     bsal_fast_queue_destroy(&worker->clean_message_queue_for_triage);
 #endif
 
-    thorium_fifo_scheduler_destroy(&worker->scheduling_queue);
+    thorium_scheduler_destroy(&worker->scheduler);
     bsal_fast_ring_destroy(&worker->outbound_message_queue);
     bsal_fast_queue_destroy(&worker->outbound_message_queue_buffer);
 
@@ -301,7 +301,7 @@ void thorium_worker_destroy(struct thorium_worker *worker)
     bsal_memory_pool_destroy(&worker->ephemeral_memory);
     bsal_memory_pool_destroy(&worker->outbound_message_memory_pool);
 
-    thorium_priority_assigner_destroy(&worker->scheduler);
+    thorium_priority_assigner_destroy(&worker->assigner);
 }
 
 struct thorium_node *thorium_worker_node(struct thorium_worker *worker)
@@ -599,7 +599,7 @@ int thorium_worker_dequeue_actor(struct thorium_worker *worker, struct thorium_a
 
             bsal_map_update_value(&worker->actors, &other_name, &status);
 
-            thorium_fifo_scheduler_enqueue(&worker->scheduling_queue, other_actor);
+            thorium_scheduler_enqueue(&worker->scheduler, other_actor);
         } else {
 
 #ifdef THORIUM_WORKER_DEBUG_SCHEDULER
@@ -612,7 +612,7 @@ int thorium_worker_dequeue_actor(struct thorium_worker *worker, struct thorium_a
     /* Now, dequeue an actor from the real queue.
      * If it has more than 1 message, re-enqueue it
      */
-    value = thorium_fifo_scheduler_dequeue(&worker->scheduling_queue, actor);
+    value = thorium_scheduler_dequeue(&worker->scheduler, actor);
 
     /* Setting name to nobody;
      * check_production at the end uses the value and the name;
@@ -663,7 +663,7 @@ int thorium_worker_dequeue_actor(struct thorium_worker *worker, struct thorium_a
 
             /* The status is still STATUS_QUEUED
              */
-            thorium_fifo_scheduler_enqueue(&worker->scheduling_queue, *actor);
+            thorium_scheduler_enqueue(&worker->scheduler, *actor);
 
 
         /* The actor is scheduled to run, but the new tail is not
@@ -776,7 +776,7 @@ void thorium_worker_print_actors(struct thorium_worker *worker, struct thorium_b
                     thorium_worker_is_busy(worker),
                     thorium_worker_get_scheduling_epoch_load(worker),
                     bsal_fast_ring_size_from_producer(&worker->actors_to_schedule),
-                    thorium_fifo_scheduler_size(&worker->scheduling_queue),
+                    thorium_scheduler_size(&worker->scheduler),
                     (int)bsal_map_size(&worker->actors));
 
     bsal_map_init(&distribution, sizeof(int), sizeof(int));
@@ -864,7 +864,7 @@ void thorium_worker_evict_actor(struct thorium_worker *worker, int actor_name)
 
     /* evict the actor from the scheduling queue
      */
-    while (thorium_fifo_scheduler_dequeue(&worker->scheduling_queue, &actor)) {
+    while (thorium_scheduler_dequeue(&worker->scheduler, &actor)) {
 
         name = thorium_actor_name(actor);
 
@@ -876,7 +876,7 @@ void thorium_worker_evict_actor(struct thorium_worker *worker, int actor_name)
     }
 
     while (bsal_fast_queue_dequeue(&saved_actors, &actor)) {
-        thorium_fifo_scheduler_enqueue(&worker->scheduling_queue, actor);
+        thorium_scheduler_enqueue(&worker->scheduler, actor);
     }
 
     bsal_fast_queue_destroy(&saved_actors);
@@ -1205,7 +1205,7 @@ void thorium_worker_run(struct thorium_worker *worker)
                         && worker->name == 0) {
                         */
 
-        thorium_fifo_scheduler_print(&worker->scheduling_queue,
+        thorium_scheduler_print(&worker->scheduler,
                         thorium_node_name(worker->node),
                         worker->name);
             /*
@@ -1485,7 +1485,7 @@ void thorium_worker_check_production(struct thorium_worker *worker, int value, i
             }
 
             if (mailbox_size > 0) {
-                thorium_fifo_scheduler_enqueue(&worker->scheduling_queue, other_actor);
+                thorium_scheduler_enqueue(&worker->scheduler, other_actor);
 
                 status = STATUS_QUEUED;
                 bsal_map_update_value(&worker->actors, &name, &status);

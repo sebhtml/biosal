@@ -23,7 +23,7 @@ struct thorium_migration;
  * A worker pool.
  */
 struct thorium_worker_pool {
-    struct thorium_balancer scheduler;
+    struct thorium_balancer balancer;
 
     struct bsal_fast_queue scheduled_actor_queue_buffer;
     struct bsal_fast_queue inbound_message_queue_buffer;

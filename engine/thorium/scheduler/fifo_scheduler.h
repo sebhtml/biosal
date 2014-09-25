@@ -6,15 +6,10 @@
 
 #include <stdint.h>
 
-struct thorium_actor;
+#define THORIUM_FIFO_SCHEDULER 1234
 
-/*
- * \see http://dictionary.cambridge.org/dictionary/british/max_1
- */
-#define THORIUM_PRIORITY_LOW 4
-#define THORIUM_PRIORITY_NORMAL 64
-#define THORIUM_PRIORITY_HIGH 128
-#define THORIUM_PRIORITY_MAX 1048576
+struct thorium_scheduler;
+struct thorium_actor;
 
 #define THORIUM_SCHEDULING_QUEUE_RATIO 64
 
@@ -35,13 +30,15 @@ struct thorium_fifo_scheduler {
     struct bsal_fast_queue low_priority_queue;
 };
 
-void thorium_fifo_scheduler_init(struct thorium_fifo_scheduler *self);
-void thorium_fifo_scheduler_destroy(struct thorium_fifo_scheduler *self);
+extern struct thorium_scheduler_interface thorium_fifo_scheduler_implementation;
 
-int thorium_fifo_scheduler_enqueue(struct thorium_fifo_scheduler *self, struct thorium_actor *actor);
-int thorium_fifo_scheduler_dequeue(struct thorium_fifo_scheduler *self, struct thorium_actor **actor);
+void thorium_fifo_scheduler_init(struct thorium_scheduler *self);
+void thorium_fifo_scheduler_destroy(struct thorium_scheduler *self);
 
-int thorium_fifo_scheduler_size(struct thorium_fifo_scheduler *self);
+int thorium_fifo_scheduler_enqueue(struct thorium_scheduler *self, struct thorium_actor *actor);
+int thorium_fifo_scheduler_dequeue(struct thorium_scheduler *self, struct thorium_actor **actor);
+
+int thorium_fifo_scheduler_size(struct thorium_scheduler *self);
 
 int thorium_fifo_scheduler_get_size_with_priority(struct thorium_fifo_scheduler *self, int priority);
 
@@ -54,7 +51,7 @@ int thorium_fifo_scheduler_dequeue_with_priority(struct thorium_fifo_scheduler *
 void thorium_fifo_scheduler_reset_counter(struct thorium_fifo_scheduler *self, int priority);
 uint64_t thorium_fifo_scheduler_get_counter(struct thorium_fifo_scheduler *self, int priority);
 
-void thorium_fifo_scheduler_print(struct thorium_fifo_scheduler *self, int node, int worker);
+void thorium_fifo_scheduler_print(struct thorium_scheduler *self, int node, int worker);
 void thorium_fifo_scheduler_print_with_priority(struct thorium_fifo_scheduler *self, int priority, const char *name,
                 int node, int worker);
 

@@ -6,7 +6,7 @@
 
 #include "load_profiler.h"
 
-#include "scheduler/fifo_scheduler.h"
+#include "scheduler/scheduler.h"
 #include "scheduler/priority_assigner.h"
 
 #include <core/structures/fast_ring.h>
@@ -92,7 +92,7 @@ struct thorium_worker {
     struct bsal_fast_queue clean_message_queue_for_triage;
 #endif
 
-    struct thorium_fifo_scheduler scheduling_queue;
+    struct thorium_scheduler scheduler;
 
     struct bsal_fast_ring outbound_message_queue;
     struct bsal_fast_queue outbound_message_queue_buffer;
@@ -131,7 +131,7 @@ struct thorium_worker {
     struct bsal_memory_pool ephemeral_memory;
     struct bsal_memory_pool outbound_message_memory_pool;
 
-    struct thorium_priority_assigner scheduler;
+    struct thorium_priority_assigner assigner;
 
     uint64_t last_wake_up_count;
 

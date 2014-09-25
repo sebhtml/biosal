@@ -1,12 +1,30 @@
 
 #include "fifo_scheduler.h"
 
+#include "scheduler.h"
+
 #include <engine/thorium/actor.h>
 
 #include <core/system/debugger.h>
 
-void thorium_fifo_scheduler_init(struct thorium_fifo_scheduler *queue)
+struct thorium_scheduler_interface thorium_fifo_scheduler_implementation = {
+    .identifier = THORIUM_FIFO_SCHEDULER,
+    .name = "thorium_fifo_scheduler",
+    .object_size = sizeof(struct thorium_fifo_scheduler),
+    .init = thorium_fifo_scheduler_init,
+    .destroy = thorium_fifo_scheduler_destroy,
+    .enqueue = thorium_fifo_scheduler_enqueue,
+    .dequeue = thorium_fifo_scheduler_dequeue,
+    .size = thorium_fifo_scheduler_size,
+    .print = thorium_fifo_scheduler_print
+};
+
+void thorium_fifo_scheduler_init(struct thorium_scheduler *self)
 {
+    struct thorium_fifo_scheduler *queue;
+
+    queue = self->concrete_self;
+
     bsal_fast_queue_init(thorium_fifo_scheduler_select_queue(queue, THORIUM_PRIORITY_MAX),
                     sizeof(struct thorium_actor *));
     bsal_fast_queue_init(thorium_fifo_scheduler_select_queue(queue, THORIUM_PRIORITY_HIGH),
@@ -22,8 +40,12 @@ void thorium_fifo_scheduler_init(struct thorium_fifo_scheduler *queue)
     thorium_fifo_scheduler_reset_counter(queue, THORIUM_PRIORITY_LOW);
 }
 
-void thorium_fifo_scheduler_destroy(struct thorium_fifo_scheduler *queue)
+void thorium_fifo_scheduler_destroy(struct thorium_scheduler *self)
 {
+    struct thorium_fifo_scheduler *queue;
+
+    queue = self->concrete_self;
+
     bsal_fast_queue_destroy(thorium_fifo_scheduler_select_queue(queue, THORIUM_PRIORITY_MAX));
     bsal_fast_queue_destroy(thorium_fifo_scheduler_select_queue(queue, THORIUM_PRIORITY_HIGH));
     bsal_fast_queue_destroy(thorium_fifo_scheduler_select_queue(queue, THORIUM_PRIORITY_NORMAL));
@@ -35,10 +57,13 @@ void thorium_fifo_scheduler_destroy(struct thorium_fifo_scheduler *queue)
     thorium_fifo_scheduler_reset_counter(queue, THORIUM_PRIORITY_LOW);
 }
 
-int thorium_fifo_scheduler_enqueue(struct thorium_fifo_scheduler *queue, struct thorium_actor *actor)
+int thorium_fifo_scheduler_enqueue(struct thorium_scheduler *self, struct thorium_actor *actor)
 {
     int priority;
     struct bsal_fast_queue *selected_queue;
+    struct thorium_fifo_scheduler *queue;
+
+    queue = self->concrete_self;
 
     BSAL_DEBUGGER_ASSERT(actor != NULL);
 
@@ -49,7 +74,7 @@ int thorium_fifo_scheduler_enqueue(struct thorium_fifo_scheduler *queue, struct 
     return bsal_fast_queue_enqueue(selected_queue, &actor);
 }
 
-int thorium_fifo_scheduler_dequeue(struct thorium_fifo_scheduler *queue, struct thorium_actor **actor)
+int thorium_fifo_scheduler_dequeue(struct thorium_scheduler *self, struct thorium_actor **actor)
 {
     int low_size;
     int normal_size;
@@ -64,6 +89,10 @@ int thorium_fifo_scheduler_dequeue(struct thorium_fifo_scheduler *queue, struct 
 
     uint64_t allowed_normal_operations;
     uint64_t allowed_low_operations;
+
+    struct thorium_fifo_scheduler *queue;
+
+    queue = self->concrete_self;
 
     max_size = thorium_fifo_scheduler_get_size_with_priority(queue, THORIUM_PRIORITY_MAX);
 
@@ -208,9 +237,12 @@ int thorium_fifo_scheduler_dequeue(struct thorium_fifo_scheduler *queue, struct 
     return thorium_fifo_scheduler_dequeue_with_priority(queue, THORIUM_PRIORITY_NORMAL, actor);
 }
 
-int thorium_fifo_scheduler_size(struct thorium_fifo_scheduler *queue)
+int thorium_fifo_scheduler_size(struct thorium_scheduler *self)
 {
     int size;
+    struct thorium_fifo_scheduler *queue;
+
+    queue = self->concrete_self;
 
     size = 0;
 
@@ -316,8 +348,12 @@ void thorium_fifo_scheduler_reset_counter(struct thorium_fifo_scheduler *queue, 
     *counter = 0;
 }
 
-void thorium_fifo_scheduler_print(struct thorium_fifo_scheduler *queue, int node, int worker)
+void thorium_fifo_scheduler_print(struct thorium_scheduler *self, int node, int worker)
 {
+    struct thorium_fifo_scheduler *queue;
+
+    queue = self->concrete_self;
+
     printf("node/%d worker/%d SchedulingQueue Levels: %d\n",
                     node, worker, 4);
 

@@ -1,6 +1,6 @@
 
-#ifndef THORIUM_PRIORITY_SCHEDULER
-#define THORIUM_PRIORITY_SCHEDULER
+#ifndef THORIUM_PRIORITY_ASSIGNER_H
+#define THORIUM_PRIORITY_ASSIGNER_H
 
 #include <core/structures/map.h>
 
