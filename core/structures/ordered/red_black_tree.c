@@ -281,7 +281,9 @@ void bsal_red_black_tree_insert_case5(struct bsal_red_black_tree *self,
     struct bsal_red_black_node *grandparent;
     struct bsal_red_black_node *parent;
 
+#ifdef DEBUG_TREE
     printf("insert_case5 %d\n", node->key);
+#endif
 
     grandparent = bsal_red_black_node_grandparent(node);
     parent = bsal_red_black_node_parent(node);
@@ -339,7 +341,11 @@ void bsal_red_black_tree_rotate_left(struct bsal_red_black_tree *self,
     node_D->left_node = node_N;
     node_N->parent = node_D;
 
-    node_G->left_node = node_D;
+    if (node_G != NULL) {
+        node_G->left_node = node_D;
+    } else {
+        self->root = node_D;
+    }
     node_D->parent = node_G;
 }
 
@@ -382,7 +388,11 @@ void bsal_red_black_tree_rotate_right(struct bsal_red_black_tree *self,
     node_D->right_node = node_N;
     node_N->parent = node_D;
 
-    node_G->right_node = node_D;
+    if (node_G != NULL) {
+        node_G->right_node = node_D;
+    } else {
+        self->root = node_D;
+    }
     node_D->parent = node_G;
 }
 

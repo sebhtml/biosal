@@ -19,7 +19,7 @@ int main(int argc, char **argv)
 
     bsal_memory_pool_init(&memory_pool, 1024*1024, -1);
 
-    count = 5;
+    count = 10;
 
     srand(88);
 
