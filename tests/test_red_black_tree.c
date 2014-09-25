@@ -1,6 +1,8 @@
 
 #include <core/structures/ordered/red_black_tree.h>
 
+#include <core/structures/vector.h>
+
 #include <core/system/memory_pool.h>
 
 #include "test.h"
@@ -17,10 +19,13 @@ int main(int argc, char **argv)
     int key;
     struct bsal_red_black_tree tree;
     struct bsal_memory_pool memory_pool;
+    struct bsal_vector keys;
     int *result;
 
     lowest = 0;
     bsal_memory_pool_init(&memory_pool, 1024*1024, -1);
+
+    bsal_vector_init(&keys, sizeof(int));
 
     count = 100000;
     /*count = 5;*/
@@ -36,6 +41,8 @@ int main(int argc, char **argv)
 
     for (i = 0; i < count; ++i) {
         key = rand() % 300;
+
+        bsal_vector_push_back(&keys, &key);
 
         if (i == 0)
             lowest = key;
@@ -80,6 +87,7 @@ int main(int argc, char **argv)
 
     bsal_red_black_tree_run_assertions(&tree);
     bsal_red_black_tree_destroy(&tree);
+    bsal_vector_destroy(&keys);
 
     TEST_INT_EQUALS(bsal_memory_pool_profile_balance_count(&memory_pool), 0);
 

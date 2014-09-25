@@ -56,6 +56,26 @@ void thorium_cfs_scheduler_destroy(struct thorium_scheduler *self)
     bsal_memory_pool_destroy(&concrete_self->pool);
 }
 
+/*
+ * TODO:
+ *
+ * add support for actor priority values here.
+ *
+ * Values are:
+ *
+ * - THORIUM_PRIORITY_LOW
+ * - THORIUM_PRIORITY_NORMAL
+ * - THORIUM_PRIORITY_HIGH
+ * - THORIUM_PRIORITY_MAX
+ *
+ * The priority (an integer of type 'int') of an actor can be obtained with
+ *
+ * actor->priority
+ *
+ * or with
+ *
+ * thorium_actor_get_priority(actor)
+ */
 int thorium_cfs_scheduler_enqueue(struct thorium_scheduler *self, struct thorium_actor *actor)
 {
     struct thorium_cfs_scheduler *concrete_self;
