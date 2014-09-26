@@ -16,15 +16,24 @@ void bsal_red_black_node_init(struct bsal_red_black_node *self, int key_size, vo
     self->left_node = NULL;
     self->right_node = NULL;
 
-    self->key = bsal_memory_pool_allocate(pool, key_size);
-    bsal_memory_copy(self->key, key, key_size);
+    self->key = NULL;
+    self->value = NULL;
+
+    if (key != NULL) {
+        self->key = bsal_memory_pool_allocate(pool, key_size);
+        bsal_memory_copy(self->key, key, key_size);
+    }
 
     self->value = bsal_memory_pool_allocate(pool, value_size);
 
-    if (value != NULL)
+    if (value != NULL) {
         bsal_memory_copy(self->value, value, value_size);
+    }
 
     self->color = BSAL_COLOR_RED;
+
+    if (self->key == NULL)
+        self->color = BSAL_COLOR_BLACK;
 }
 
 void bsal_red_black_node_destroy(struct bsal_red_black_node *self, struct bsal_memory_pool  *pool)
@@ -33,11 +42,15 @@ void bsal_red_black_node_destroy(struct bsal_red_black_node *self, struct bsal_m
     self->left_node = NULL;
     self->right_node = NULL;
 
-    bsal_memory_pool_free(pool, self->key);
-    self->key = NULL;
+    if (self->key != NULL) {
+        bsal_memory_pool_free(pool, self->key);
+        self->key = NULL;
+    }
 
-    bsal_memory_pool_free(pool, self->value);
-    self->value = NULL;
+    if (self->value != NULL) {
+        bsal_memory_pool_free(pool, self->value);
+        self->value = NULL;
+    }
 
     self->color = BSAL_COLOR_NONE;
 }

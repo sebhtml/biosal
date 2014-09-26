@@ -156,6 +156,7 @@ void *bsal_red_black_tree_add(struct bsal_red_black_tree *self, void *key)
 void bsal_red_black_tree_delete(struct bsal_red_black_tree *self, void *key)
 {
     struct bsal_red_black_node *node;
+    struct bsal_red_black_node *largest_value_node;
 
     /*
      * Nothing to delete.
@@ -201,14 +202,42 @@ void bsal_red_black_tree_delete(struct bsal_red_black_tree *self, void *key)
 #endif
 
     /*
-     * Delete the node.
+     * Find the largest value before the node
      */
+    largest_value_node = node->left_node;
+
+    while (largest_value_node != NULL
+                    && largest_value_node->right_node != NULL)
+        largest_value_node = largest_value_node->right_node;
 
     printf("Before Delete node %d\n",
                     bsal_red_black_node_get_key_as_int(node, self->key_size));
+
     bsal_red_black_tree_print(self);
 
-    bsal_red_black_tree_delete_one_child(self, node);
+    /*
+     * Delete the node.
+     */
+    if (largest_value_node == NULL) {
+
+        printf("delete node %d, no largest value found.\n",
+                        bsal_red_black_node_get_key_as_int(node, self->key_size));
+        bsal_red_black_tree_delete_one_child(self, node);
+
+    } else {
+        /*
+         * Replace the key and the value of the node
+         */
+
+        printf("Largest value node %d\n",
+                    bsal_red_black_node_get_key_as_int(largest_value_node, self->key_size));
+
+        bsal_memory_copy(node->key, largest_value_node->key, self->key_size);
+        bsal_memory_copy(node->value, largest_value_node->value, self->value_size);
+
+        bsal_red_black_tree_print(self);
+        bsal_red_black_tree_delete_one_child(self, largest_value_node);
+    }
 
     --self->size;
 
@@ -596,7 +625,7 @@ void bsal_red_black_tree_print_node(struct bsal_red_black_tree *self,
 
 void bsal_red_black_tree_print(struct bsal_red_black_tree *self)
 {
-    printf("Red-black tree content (%d non-NIL nodes):\n", self->size);
+    printf("Red-black tree content (%d nodes):\n", self->size);
     bsal_red_black_tree_print_node(self, self->root, 0);
     printf("\n");
 }
@@ -764,12 +793,21 @@ void bsal_red_black_tree_delete_one_child(struct bsal_red_black_tree *self, stru
 {
     struct bsal_red_black_node *child;
 
-    child = node->right_node;
+    printf("delete_one_child node %d\n",
+                    bsal_red_black_node_get_key_as_int(node, self->key_size));
+    bsal_red_black_tree_print(self);
 
+    /*
+     * Pick the non-leaf child, if any.
+     */
+    child = node->right_node;
     if (bsal_red_black_node_is_leaf(node->right_node))
         child = node->left_node;
 
     bsal_red_black_tree_replace_node(self, node, child);
+
+    printf("After replace_node\n");
+    bsal_red_black_tree_print(self);
 
     if (bsal_red_black_node_is_black(node)) {
         if (bsal_red_black_node_is_red(child))
@@ -788,21 +826,18 @@ void bsal_red_black_tree_delete_one_child(struct bsal_red_black_tree *self, stru
 void bsal_red_black_tree_replace_node(struct bsal_red_black_tree *self, struct bsal_red_black_node *node,
             struct bsal_red_black_node *child)
 {
-    BSAL_DEBUGGER_ASSERT(node != NULL);
-    BSAL_DEBUGGER_ASSERT(child!= NULL);
-
 #if 0
     printf("In replace_node\n");
     bsal_red_black_tree_print(self);
 #endif
 
-    child->parent = node->parent;
+    if (child != NULL)
+        child->parent = node->parent;
     if (bsal_red_black_node_is_left_node(node)) {
         node->parent->left_node = child;
     } else {
         node->parent->right_node = child;
     }
-
 }
 
 /*

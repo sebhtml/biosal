@@ -32,9 +32,10 @@ int main(int argc, char **argv)
 
     bsal_vector_init(&keys, sizeof(int));
 
-    /*count = 100000;*/
+    count = 100000;
+    /*
     count = 5;
-
+    */
     srand(88);
 
     bsal_red_black_tree_init(&tree, sizeof(int), sizeof(int));
@@ -86,6 +87,7 @@ int main(int argc, char **argv)
 #if 0
     bsal_red_black_tree_print(&tree);
 #endif
+
 #if 0
     bsal_memory_pool_examine(&memory_pool);
 #endif
