@@ -4,6 +4,10 @@ arguments = commandArgs(trailingOnly = TRUE)
 file = arguments[1]
 data = read.table(file, header= TRUE)
 
+threshold = (500 * 1000)
+bad_color = 'red'
+default_color = 'black'
+
 lines = length(data[,1])
 
 #print("Lines")
@@ -83,11 +87,42 @@ while (i <= lines) {
     i = i + 1
 }
 
-png(paste(file, ".png", sep=""), width=1000, height=800)
-par(mfrow=c(2,1))
-plot(data[,1], utilizations, col='black', type='l', ylab='Processor core utilization', xlab='Time (nanoseconds)', main='Processor core profile')
+#png(paste(file, ".png", sep=""), width=2000, height=1200)
+pdf(paste(file, ".pdf", sep=""))
+par(mfrow=c(3,1))
+
+# panel A
+plot(data[,1], utilizations, col='black', type='l', ylab='Processor core utilization', xlab='Time (nanoseconds)',
+                main=paste('Processor core utilization profile\n(Profile data file: ', file, ')', sep=''))
+
+# panel B
+plot(c(-1), c(-1), xlim = c(minimum, maximum), ylim = c(0, 0), type='l', col='red',
+                xlab='Time (nanoseconds)', ylab='Timeline', main= paste("Timeline of actor execution (collapsed)\n(any granularity >= ", threshold / 1000, " µs is shown in red)", sep=""))
+
+i = 1
+
+while (i <= lines) {
+    start = data[,1][i]
+    end = data[,2][i]
+
+    selected_color = default_color
+
+    if ((end - start) >= threshold)
+        selected_color = bad_color
+
+    lines(c(start, end), c(0, 0), col=selected_color)
+    i = i + 1
+}
+
+real_minimum_y = minimum_y
+minimum_y = minimum_y - real_minimum_y
+maximum_y = maximum_y - real_minimum_y
+
+# panel C
 plot(c(0), c(0), xlim = c(minimum, maximum), ylim = c(minimum_y, maximum_y), type='l', col='red',
-                xlab='Time (nanoseconds)', ylab='Actor', main=paste("Actor load profiles (", file, ")", sep=""))
+                xlab='Time (nanoseconds)', ylab='Actor index', main=paste("Timeline of actor execution",
+#"\n(any granularity >= ", threshold / 1000, " µs is shown in red)",
+                        sep=""))
 
 i = 1
 
@@ -95,9 +130,15 @@ while (i <= lines) {
     start = data[,1][i]
     end = data[,2][i]
     actor = data[,3][i]
+    index = actor - real_minimum_y
+    selected_color = default_color
 
-    lines(c(start, end), c(actor, actor), col='black')
+    if ((end - start) >= threshold)
+        selected_color = bad_color
+
+    lines(c(start, end), c(index, index), col=selected_color)
     i = i + 1
 }
+
 
 dev.off()
