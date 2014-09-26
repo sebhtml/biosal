@@ -129,7 +129,9 @@ int thorium_cfs_scheduler_dequeue(struct thorium_scheduler *self, struct thorium
 
 #ifdef SHOW_TIMELINE
     if (size >= 10 && self->node == 0 && self->worker == 1) {
+            /*
         printf("[cfs_scheduler] %d actor are in the timeline\n", size);
+        */
         thorium_cfs_scheduler_print(self);
     }
 #endif
@@ -176,12 +178,15 @@ void thorium_cfs_scheduler_print(struct thorium_scheduler *self)
     uint64_t virtual_runtime;
     struct thorium_actor *actor;
     int i;
+    struct bsal_timer timer;
 
+    bsal_timer_init(&timer);
     concrete_self = self->concrete_self;
 
     bsal_red_black_tree_iterator_init(&iterator, &concrete_self->tree);
 
-    printf("[cfs_scheduler] timeline contains %d actors\n",
+    printf("[cfs_scheduler] %" PRIu64 " ns, timeline contains %d actors\n",
+                    bsal_timer_get_nanoseconds(&timer),
                     bsal_red_black_tree_size(&concrete_self->tree));
 
     i = 0;
@@ -194,6 +199,7 @@ void thorium_cfs_scheduler_print(struct thorium_scheduler *self)
     }
 
     bsal_red_black_tree_iterator_destroy(&iterator);
+    bsal_timer_destroy(&timer);
 }
 
 
