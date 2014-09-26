@@ -140,7 +140,7 @@ int main(int argc, char **argv)
         bsal_red_black_tree_init(&tree, sizeof(int), sizeof(int), &memory_pool);
 
         i = 0;
-        size = 10;
+        size = 100000;
 
         while (i < size) {
             key = rand() % (2 * size);
