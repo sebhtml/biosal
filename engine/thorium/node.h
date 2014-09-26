@@ -48,6 +48,8 @@
 /*
  * Enable load reporting with -print-load and memory reporting with
  * -print-memory-usage
+ *
+ * This can not be disabled.
  */
 /*
  */

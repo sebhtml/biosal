@@ -258,9 +258,11 @@ void thorium_worker_pool_print_load(struct thorium_worker_pool *self, int type)
     int node_name;
     char *buffer;
     char *buffer_for_wake_up_events;
+    char *buffer_for_future_timeline;
     int allocated;
     int offset;
     int offset_for_wake_up;
+    int offset_for_future;
     int extra;
     time_t current_time;
     int elapsed;
@@ -292,9 +294,11 @@ void thorium_worker_pool_print_load(struct thorium_worker_pool *self, int type)
 
     buffer = bsal_memory_allocate(allocated);
     buffer_for_wake_up_events = bsal_memory_allocate(allocated);
+    buffer_for_future_timeline = bsal_memory_allocate(allocated);
     node_name = thorium_node_name(self->node);
     offset = 0;
     offset_for_wake_up = 0;
+    offset_for_future = 0;
     i = 0;
     sum = 0;
 
@@ -330,6 +334,9 @@ void thorium_worker_pool_print_load(struct thorium_worker_pool *self, int type)
         offset_for_wake_up += sprintf(buffer_for_wake_up_events + offset_for_wake_up, " %" PRIu64 "",
                         selected_wake_up_count);
 
+        offset_for_future += sprintf(buffer_for_future_timeline + offset_for_future, " %d",
+                        thorium_worker_get_scheduled_actor_count(worker));
+
         sum += selected_load;
 
         ++i;
@@ -343,6 +350,12 @@ void thorium_worker_pool_print_load(struct thorium_worker_pool *self, int type)
                     description, elapsed,
                     sum, count, load, buffer);
 
+    printf("%s node/%d %s FUTURE_TIMELINE %d s %s\n",
+                    THORIUM_NODE_THORIUM_PREFIX,
+                    node_name,
+                    description, elapsed,
+                    buffer_for_future_timeline);
+
     printf("%s node/%d %s WAKE_UP_COUNT %d s %s\n",
                     THORIUM_NODE_THORIUM_PREFIX,
                     node_name,
@@ -351,6 +364,7 @@ void thorium_worker_pool_print_load(struct thorium_worker_pool *self, int type)
 
     bsal_memory_free(buffer);
     bsal_memory_free(buffer_for_wake_up_events);
+    bsal_memory_free(buffer_for_future_timeline);
 }
 
 void thorium_worker_pool_toggle_debug_mode(struct thorium_worker_pool *self)

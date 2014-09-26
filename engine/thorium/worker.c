@@ -37,6 +37,8 @@
 
 #define THORIUM_WORKER_UNPRODUCTIVE_TICK_LIMIT 256
 
+#define THORIUM_GRANULARITY_WARNING_THRESHOLD (500 * 1000)
+
 /*
  * The amount required idle time to go to sleep
  * for a worker.
@@ -466,6 +468,11 @@ int thorium_worker_is_busy(struct thorium_worker *worker)
     return bsal_bitmap_get_bit_uint32_t(&worker->flags, FLAG_BUSY);
 }
 
+
+int thorium_worker_get_scheduled_actor_count(struct thorium_worker *self)
+{
+    return thorium_scheduler_size(&self->scheduler);
+}
 
 int thorium_worker_get_scheduled_message_count(struct thorium_worker *worker)
 {
@@ -1267,6 +1274,9 @@ void thorium_worker_run(struct thorium_worker *worker)
         bsal_timer_stop(&worker->timer);
 
         elapsed_nanoseconds = bsal_timer_get_elapsed_nanoseconds(&worker->timer);
+
+        if (elapsed_nanoseconds >= THORIUM_GRANULARITY_WARNING_THRESHOLD) {
+        }
 
         worker->epoch_used_nanoseconds += elapsed_nanoseconds;
         worker->loop_used_nanoseconds += elapsed_nanoseconds;

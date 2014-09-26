@@ -15,6 +15,10 @@
 
 #define BSAL_MEMORY_POOL_NAME_CFS_SCHEDULER 0x97b478ba
 
+/*
+#define SHOW_TIMELINE
+*/
+
 struct thorium_scheduler_interface thorium_cfs_scheduler_implementation = {
     .identifier = THORIUM_CFS_SCHEDULER,
     .name = "thorium_cfs_scheduler",

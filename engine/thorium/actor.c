@@ -916,6 +916,7 @@ void thorium_actor_receive(struct thorium_actor *self, struct thorium_message *m
 {
     uint64_t start;
     uint64_t end;
+    uint64_t consumed_virtual_runtime;
 
     start = bsal_timer_get_nanoseconds(&self->timer);
 
@@ -930,8 +931,8 @@ void thorium_actor_receive(struct thorium_actor *self, struct thorium_message *m
     }
 
     end = bsal_timer_get_nanoseconds(&self->timer);
-
-    self->virtual_runtime += (end - start);
+    consumed_virtual_runtime = end - start;
+    self->virtual_runtime += consumed_virtual_runtime;
 }
 
 void thorium_actor_receive_private(struct thorium_actor *self, struct thorium_message *message)

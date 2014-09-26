@@ -218,5 +218,6 @@ int thorium_worker_spawn(struct thorium_worker *self, int script);
 
 void thorium_worker_examine(struct thorium_worker *self);
 void thorium_worker_enable_profiler(struct thorium_worker *self);
+int thorium_worker_get_scheduled_actor_count(struct thorium_worker *self);
 
 #endif
