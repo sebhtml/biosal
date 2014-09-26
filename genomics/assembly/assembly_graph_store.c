@@ -214,13 +214,6 @@ void bsal_assembly_graph_store_receive(struct thorium_actor *self, struct thoriu
         printf("DEBUG unitig_vertex_count %d\n",
                         concrete_self->unitig_vertex_count);
 
-#if 0
-        /*
-         * Trick the scheduler.
-         */
-        self->virtual_runtime = 0;
-#endif
-
         thorium_actor_send_reply_empty(self, ACTION_RESET_REPLY);
 
     } else if (tag == ACTION_SEQUENCE_STORE_REQUEST_PROGRESS_REPLY) {

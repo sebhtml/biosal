@@ -22,6 +22,11 @@
 #include <core/system/lock.h>
 #include <core/system/counter.h>
 
+/*
+ * For priority levels.
+ */
+#include <engine/thorium/scheduler/scheduler.h>
+
 #include <pthread.h>
 #include <stdint.h>
 

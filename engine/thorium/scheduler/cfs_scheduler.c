@@ -89,9 +89,18 @@ int thorium_cfs_scheduler_enqueue(struct thorium_scheduler *self, struct thorium
 {
     struct thorium_cfs_scheduler *concrete_self;
     uint64_t virtual_runtime;
+    int priority;
 
     concrete_self = self->concrete_self;
     virtual_runtime = actor->virtual_runtime;
+    priority = actor->priority;
+
+    /*
+     * Trick the scheduler.
+     */
+    if (priority == THORIUM_PRIORITY_MAX) {
+        virtual_runtime = 0;
+    }
 
     bsal_red_black_tree_add_key_and_value(&concrete_self->tree, &virtual_runtime,
                     &actor);
