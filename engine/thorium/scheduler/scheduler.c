@@ -7,10 +7,19 @@
 #include <core/system/memory.h>
 #include <core/system/debugger.h>
 
-void thorium_scheduler_init(struct thorium_scheduler *self)
+/*
+ * The available schedulers are:
+ *
+ * - THORIUM_CFS_SCHEDULER
+ * - THORIUM_FIFO_SCHEDULER
+ */
+#define THORIUM_DEFAULT_SCHEDULER THORIUM_CFS_SCHEDULER
+
+void thorium_scheduler_init(struct thorium_scheduler *self, int node, int worker)
 {
-    self->scheduler = THORIUM_FIFO_SCHEDULER;
-    /*self->scheduler = THORIUM_CFS_SCHEDULER;*/
+    self->scheduler = THORIUM_DEFAULT_SCHEDULER;
+    self->node = node;
+    self->worker = worker;
 
     self->concrete_self = NULL;
     self->implementation = NULL;
@@ -58,7 +67,7 @@ int thorium_scheduler_size(struct thorium_scheduler *self)
     return self->implementation->size(self);
 }
 
-void thorium_scheduler_print(struct thorium_scheduler *self, int node, int worker)
+void thorium_scheduler_print(struct thorium_scheduler *self)
 {
-    self->implementation->print(self, node, worker);
+    self->implementation->print(self);
 }

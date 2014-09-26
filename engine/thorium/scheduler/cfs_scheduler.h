@@ -60,6 +60,6 @@ int thorium_cfs_scheduler_dequeue(struct thorium_scheduler *self, struct thorium
 
 int thorium_cfs_scheduler_size(struct thorium_scheduler *self);
 
-void thorium_cfs_scheduler_print(struct thorium_scheduler *self, int node, int worker);
+void thorium_cfs_scheduler_print(struct thorium_scheduler *self);
 
 #endif

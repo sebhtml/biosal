@@ -348,10 +348,14 @@ void thorium_fifo_scheduler_reset_counter(struct thorium_fifo_scheduler *queue, 
     *counter = 0;
 }
 
-void thorium_fifo_scheduler_print(struct thorium_scheduler *self, int node, int worker)
+void thorium_fifo_scheduler_print(struct thorium_scheduler *self)
 {
     struct thorium_fifo_scheduler *queue;
+    int node;
+    int worker;
 
+    node = self->node;
+    worker = self->worker;
     queue = self->concrete_self;
 
     printf("node/%d worker/%d SchedulingQueue Levels: %d\n",

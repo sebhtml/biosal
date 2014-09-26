@@ -21,12 +21,14 @@ struct thorium_actor;
  * Each worker has one of these.
  */
 struct thorium_scheduler {
-    int scheduler;
     void *concrete_self;
     struct thorium_scheduler_interface *implementation;
+    int scheduler;
+    int node;
+    int worker;
 };
 
-void thorium_scheduler_init(struct thorium_scheduler *self);
+void thorium_scheduler_init(struct thorium_scheduler *self, int node, int worker);
 void thorium_scheduler_destroy(struct thorium_scheduler *self);
 
 int thorium_scheduler_enqueue(struct thorium_scheduler *self, struct thorium_actor *actor);
@@ -34,6 +36,6 @@ int thorium_scheduler_dequeue(struct thorium_scheduler *self, struct thorium_act
 
 int thorium_scheduler_size(struct thorium_scheduler *self);
 
-void thorium_scheduler_print(struct thorium_scheduler *self, int node, int worker);
+void thorium_scheduler_print(struct thorium_scheduler *self);
 
 #endif

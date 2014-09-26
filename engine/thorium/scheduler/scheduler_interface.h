@@ -17,7 +17,7 @@ struct thorium_scheduler_interface {
     int (*enqueue)(struct thorium_scheduler *self, struct thorium_actor *actor);
     int (*dequeue)(struct thorium_scheduler *self, struct thorium_actor **actor);
     int (*size)(struct thorium_scheduler *self);
-    void (*print)(struct thorium_scheduler *self, int node, int worker);
+    void (*print)(struct thorium_scheduler *self);
 };
 
 #endif

@@ -21,8 +21,10 @@ CORE_OBJECTS += core/structures/map.o
 CORE_OBJECTS += core/structures/map_iterator.o
 CORE_OBJECTS += core/structures/set.o
 CORE_OBJECTS += core/structures/set_iterator.o
+CORE_OBJECTS += core/structures/stack.o
 
 # ordered structures
-CORE_OBJECTS += core/structures/ordered/red_black_tree.o
 CORE_OBJECTS += core/structures/ordered/red_black_node.o
+CORE_OBJECTS += core/structures/ordered/red_black_tree.o
+CORE_OBJECTS += core/structures/ordered/red_black_tree_iterator.o
 

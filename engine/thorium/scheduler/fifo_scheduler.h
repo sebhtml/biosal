@@ -51,7 +51,7 @@ int thorium_fifo_scheduler_dequeue_with_priority(struct thorium_fifo_scheduler *
 void thorium_fifo_scheduler_reset_counter(struct thorium_fifo_scheduler *self, int priority);
 uint64_t thorium_fifo_scheduler_get_counter(struct thorium_fifo_scheduler *self, int priority);
 
-void thorium_fifo_scheduler_print(struct thorium_scheduler *self, int node, int worker);
+void thorium_fifo_scheduler_print(struct thorium_scheduler *self);
 void thorium_fifo_scheduler_print_with_priority(struct thorium_fifo_scheduler *self, int priority, const char *name,
                 int node, int worker);
 

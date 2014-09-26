@@ -138,8 +138,8 @@ void thorium_worker_init(struct thorium_worker *worker, int name, struct thorium
                     sizeof(struct thorium_message));
 #endif
 
-
-    thorium_scheduler_init(&worker->scheduler);
+    thorium_scheduler_init(&worker->scheduler, thorium_node_name(worker->node),
+                    worker->name);
     bsal_map_init(&worker->actors, sizeof(int), sizeof(int));
     bsal_map_iterator_init(&worker->actor_iterator, &worker->actors);
 
