@@ -19,12 +19,13 @@ void bsal_red_black_node_init(struct bsal_red_black_node *self, int key_size, vo
     self->key = NULL;
     self->value = NULL;
 
+    /* Not a NIL leaf node.
+     */
     if (key != NULL) {
         self->key = bsal_memory_pool_allocate(pool, key_size);
         bsal_memory_copy(self->key, key, key_size);
+        self->value = bsal_memory_pool_allocate(pool, value_size);
     }
-
-    self->value = bsal_memory_pool_allocate(pool, value_size);
 
     if (value != NULL) {
         bsal_memory_copy(self->value, value, value_size);
@@ -32,6 +33,9 @@ void bsal_red_black_node_init(struct bsal_red_black_node *self, int key_size, vo
 
     self->color = BSAL_COLOR_RED;
 
+    /*
+     * leaf nodes are NIL
+     */
     if (self->key == NULL)
         self->color = BSAL_COLOR_BLACK;
 }
@@ -77,7 +81,12 @@ struct bsal_red_black_node *bsal_red_black_node_left_node(struct bsal_red_black_
 
 void bsal_red_black_node_set_left_node(struct bsal_red_black_node *self, struct bsal_red_black_node *node)
 {
+    BSAL_DEBUGGER_ASSERT(self != NULL);
+    BSAL_DEBUGGER_ASSERT(node != NULL);
+
     self->left_node = node;
+
+    node->parent = self;
 }
 
 struct bsal_red_black_node *bsal_red_black_node_right_node(struct bsal_red_black_node *self)
@@ -87,7 +96,11 @@ struct bsal_red_black_node *bsal_red_black_node_right_node(struct bsal_red_black
 
 void bsal_red_black_node_set_right_node(struct bsal_red_black_node *self, struct bsal_red_black_node *node)
 {
+    BSAL_DEBUGGER_ASSERT(self != NULL);
+    BSAL_DEBUGGER_ASSERT(node != NULL);
+
     self->right_node = node;
+    node->parent = self;
 }
 
 struct bsal_red_black_node *bsal_red_black_node_parent(struct bsal_red_black_node *self)
@@ -135,7 +148,10 @@ void bsal_red_black_node_run_assertions(struct bsal_red_black_node *self, struct
         return;
     }
 
-    if (self->left_node != NULL) {
+    if (bsal_red_black_node_is_leaf(self))
+        return;
+
+    if (!bsal_red_black_node_is_leaf(self->left_node)) {
         if (self->left_node->parent != self) {
             printf("Problem with %d -> %d (left_node parent should be %d, but it is %d)\n",
                             bsal_red_black_node_get_key_as_int(self, key_size), bsal_red_black_node_get_key_as_int(self->left_node, key_size),
@@ -148,7 +164,7 @@ void bsal_red_black_node_run_assertions(struct bsal_red_black_node *self, struct
         BSAL_DEBUGGER_ASSERT(bsal_red_black_tree_compare(tree, self->left_node->key, self->key) <= 0);
         /*BSAL_DEBUGGER_ASSERT(bsal_red_black_tree_compare(tree, self->left_node->key, tree->root->key) <= 0);*/
     }
-    if (self->right_node != NULL) {
+    if (!bsal_red_black_node_is_leaf(self->right_node)) {
         BSAL_DEBUGGER_ASSERT(self->right_node->parent == self);
         /*BSAL_DEBUGGER_ASSERT(bsal_red_black_tree_compare(tree, self->right_node->key, self->key) >= 0);*/
     }
@@ -217,7 +233,9 @@ int bsal_red_black_node_is_black(struct bsal_red_black_node *self)
 
 int bsal_red_black_node_is_leaf(struct bsal_red_black_node *self)
 {
-    return self == NULL;
+    BSAL_DEBUGGER_ASSERT(self != NULL);
+
+    return self->key == NULL;
 }
 
 int bsal_red_black_node_is_left_node(struct bsal_red_black_node *self)

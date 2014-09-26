@@ -34,8 +34,11 @@ void thorium_cfs_scheduler_init(struct thorium_scheduler *self)
     bsal_memory_pool_init(&concrete_self->pool, 131072, BSAL_MEMORY_POOL_NAME_CFS_SCHEDULER);
 
     bsal_red_black_tree_init(&concrete_self->tree, sizeof(uint64_t),
-                    sizeof(struct thorium_actor *));
+                    sizeof(struct thorium_actor *), &concrete_self->pool);
+
+#if 0
     bsal_red_black_tree_set_memory_pool(&concrete_self->tree, &concrete_self->pool);
+#endif
 
     /*
      * Use uint64_t keys for comparison instead of a memory comparison.

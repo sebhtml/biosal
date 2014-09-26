@@ -37,7 +37,8 @@ struct bsal_red_black_tree {
     int (*compare)(struct bsal_red_black_tree *self, void *key1, void *key2);
 };
 
-void bsal_red_black_tree_init(struct bsal_red_black_tree *self, int key_size, int value_size);
+void bsal_red_black_tree_init(struct bsal_red_black_tree *self, int key_size, int value_size,
+                struct bsal_memory_pool *pool);
 void bsal_red_black_tree_destroy(struct bsal_red_black_tree *self);
 
 /*

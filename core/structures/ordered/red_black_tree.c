@@ -12,10 +12,10 @@
 #define RUN_TREE_ASSERTIONS
 */
 
-void bsal_red_black_tree_init(struct bsal_red_black_tree *self, int key_size, int value_size)
+void bsal_red_black_tree_init(struct bsal_red_black_tree *self, int key_size, int value_size,
+                struct bsal_memory_pool *memory_pool)
 {
-    self->root = NULL;
-    self->memory_pool = NULL;
+    self->memory_pool = memory_pool;
     self->size = 0;
 
     self->key_size = key_size;
@@ -27,6 +27,9 @@ void bsal_red_black_tree_init(struct bsal_red_black_tree *self, int key_size, in
     self->cached_last_node = NULL;
     self->cached_lowest_node = NULL;
 #endif
+
+    self->root = bsal_memory_pool_allocate(self->memory_pool, sizeof(struct bsal_red_black_node));
+    bsal_red_black_node_init(self->root, self->key_size, NULL, self->value_size, NULL, self->memory_pool);
 }
 
 void bsal_red_black_tree_destroy(struct bsal_red_black_tree *self)
@@ -55,11 +58,15 @@ void *bsal_red_black_tree_add_key_and_value(struct bsal_red_black_tree *self, vo
 void *bsal_red_black_tree_add(struct bsal_red_black_tree *self, void *key)
 {
     struct bsal_red_black_node *node;
+    struct bsal_red_black_node *left_nil;
+    struct bsal_red_black_node *right_nil;
     struct bsal_red_black_node *current_node;
     struct bsal_red_black_node *left_node;
     struct bsal_red_black_node *right_node;
     int result;
     int inserted;
+
+    BSAL_DEBUGGER_ASSERT(self->root != NULL);
 
     node = bsal_memory_pool_allocate(self->memory_pool, sizeof(struct bsal_red_black_node));
 
@@ -69,8 +76,17 @@ void *bsal_red_black_tree_add(struct bsal_red_black_tree *self, void *key)
 
     bsal_red_black_node_init(node, self->key_size, key, self->value_size, NULL, self->memory_pool);
 
-    if (self->root == NULL) {
+    if (bsal_red_black_node_is_leaf(self->root)) {
+
+        left_nil = self->root;
+        right_nil = bsal_memory_pool_allocate(self->memory_pool, sizeof(struct bsal_red_black_node));
+        bsal_red_black_node_init(right_nil, self->key_size, NULL, self->value_size, NULL, self->memory_pool);
+
         self->root = node;
+
+        bsal_red_black_node_set_left_node(node, left_nil);
+        bsal_red_black_node_set_right_node(node, right_nil);
+
         bsal_red_black_tree_insert_case1(self, node);
 
 #ifdef BSAL_RED_BLACK_TREE_USE_CACHE
@@ -96,9 +112,16 @@ void *bsal_red_black_tree_add(struct bsal_red_black_tree *self, void *key)
 
             left_node = bsal_red_black_node_left_node(current_node);
 
-            if (left_node == NULL) {
-                current_node->left_node = node;
-                node->parent = current_node;
+            if (bsal_red_black_node_is_leaf(left_node)) {
+
+                left_nil = left_node;
+                right_nil = bsal_memory_pool_allocate(self->memory_pool, sizeof(struct bsal_red_black_node));
+                bsal_red_black_node_init(right_nil, self->key_size, NULL, self->value_size, NULL, self->memory_pool);
+
+                bsal_red_black_node_set_left_node(current_node, node);
+                bsal_red_black_node_set_left_node(node, left_nil);
+                bsal_red_black_node_set_right_node(node, right_nil);
+
                 ++self->size;
                 bsal_red_black_tree_insert_case1(self, node);
                 inserted = 1;
@@ -109,9 +132,16 @@ void *bsal_red_black_tree_add(struct bsal_red_black_tree *self, void *key)
 
             right_node = bsal_red_black_node_right_node(current_node);
 
-            if (right_node == NULL) {
-                current_node->right_node = node;
-                node->parent = current_node;
+            if (bsal_red_black_node_is_leaf(right_node)) {
+
+                left_nil = bsal_memory_pool_allocate(self->memory_pool, sizeof(struct bsal_red_black_node));
+                bsal_red_black_node_init(left_nil, self->key_size, NULL, self->value_size, NULL, self->memory_pool);
+                right_nil = right_node;
+
+                bsal_red_black_node_set_right_node(current_node, node);
+                bsal_red_black_node_set_left_node(node, left_nil);
+                bsal_red_black_node_set_right_node(node, right_nil);
+
                 ++self->size;
                 bsal_red_black_tree_insert_case1(self, node);
                 inserted = 1;
@@ -126,9 +156,7 @@ void *bsal_red_black_tree_add(struct bsal_red_black_tree *self, void *key)
      * If the current node is RED, then the parent must be black
      */
     if (bsal_red_black_node_is_red(node)) {
-        if (node->parent != NULL) {
-            BSAL_DEBUGGER_ASSERT(bsal_red_black_node_is_black(node->parent));
-        }
+        BSAL_DEBUGGER_ASSERT(bsal_red_black_node_is_black(node->parent));
     }
 
     bsal_red_black_node_run_assertions(node, self);
@@ -206,9 +234,12 @@ void bsal_red_black_tree_delete(struct bsal_red_black_tree *self, void *key)
      */
     largest_value_node = node->left_node;
 
-    while (largest_value_node != NULL
-                    && largest_value_node->right_node != NULL)
-        largest_value_node = largest_value_node->right_node;
+    if (!bsal_red_black_node_is_leaf(largest_value_node)) {
+
+        while (!bsal_red_black_node_is_leaf(largest_value_node->right_node)) {
+            largest_value_node = largest_value_node->right_node;
+        }
+    }
 
     printf("Before Delete node %d\n",
                     bsal_red_black_node_get_key_as_int(node, self->key_size));
@@ -362,7 +393,8 @@ void bsal_red_black_tree_insert_case3(struct bsal_red_black_tree *self,
 
     uncle = bsal_red_black_node_uncle(node);
 
-    if (uncle != NULL && bsal_red_black_node_is_red(uncle)) {
+    if (!bsal_red_black_node_is_leaf(uncle)
+                    && bsal_red_black_node_is_red(uncle)) {
         parent = bsal_red_black_node_parent(node);
 
         BSAL_DEBUGGER_ASSERT(bsal_red_black_node_is_red(node));
@@ -602,7 +634,10 @@ void print_spaces(int depth)
 void bsal_red_black_tree_print_node(struct bsal_red_black_tree *self,
                 struct bsal_red_black_node *node, int depth)
 {
-    if (node == NULL) {
+    if (node == NULL)
+        return;
+
+    if (bsal_red_black_node_is_leaf(node)) {
         print_spaces(depth);
         printf("(NIL, BLACK)\n");
     } else {
@@ -625,7 +660,7 @@ void bsal_red_black_tree_print_node(struct bsal_red_black_tree *self,
 
 void bsal_red_black_tree_print(struct bsal_red_black_tree *self)
 {
-    printf("Red-black tree content (%d nodes):\n", self->size);
+    printf("Red-black tree content (%d non-NIL nodes):\n", self->size);
     bsal_red_black_tree_print_node(self, self->root, 0);
     printf("\n");
 }
@@ -636,7 +671,7 @@ void *bsal_red_black_tree_get(struct bsal_red_black_tree *self, void *key)
 
     node = bsal_red_black_tree_get_node(self, key);
 
-    if (node != NULL)
+    if (!bsal_red_black_node_is_leaf(node))
         return node->value;
 
     return NULL;
@@ -656,7 +691,7 @@ struct bsal_red_black_node *bsal_red_black_tree_get_node(struct bsal_red_black_t
 
     node = self->root;
 
-    while (node != NULL) {
+    while (!bsal_red_black_node_is_leaf(node)) {
 
         BSAL_DEBUGGER_ASSERT(node->key != NULL);
 
@@ -682,6 +717,9 @@ void *bsal_red_black_tree_get_lowest_key(struct bsal_red_black_tree *self)
 {
     struct bsal_red_black_node *node;
 
+    if (self->size == 0)
+        return NULL;
+
 #ifdef BSAL_RED_BLACK_TREE_USE_CACHE
     if (self->cached_lowest_node != NULL) {
         self->cached_last_node = self->cached_lowest_node;
@@ -691,26 +729,14 @@ void *bsal_red_black_tree_get_lowest_key(struct bsal_red_black_tree *self)
 
     node = self->root;
 
-    /*
-     * Empty tree.
-     */
-    if (node == NULL) {
-        return NULL;
-    }
-
-    while (1) {
-
-        /*
-         * This is the lowest value.
-         */
-        if (node->left_node == NULL) {
-            return node->key;
-        }
-
+    while (!bsal_red_black_node_is_leaf(node->left_node)) {
         node = node->left_node;
     }
 
-    return NULL;
+    /*
+     * This is the lowest value.
+     */
+    return node->key;
 }
 
 int bsal_red_black_tree_compare(struct bsal_red_black_tree *self, void *key1, void *key2)
@@ -810,10 +836,11 @@ void bsal_red_black_tree_delete_one_child(struct bsal_red_black_tree *self, stru
     bsal_red_black_tree_print(self);
 
     if (bsal_red_black_node_is_black(node)) {
-        if (bsal_red_black_node_is_red(child))
+        if (bsal_red_black_node_is_red(child)) {
             child->color = BSAL_COLOR_BLACK;
-        else
+        } else {
             bsal_red_black_tree_delete_case1(self, child);
+        }
     }
 
     bsal_red_black_node_destroy(node, self->memory_pool);

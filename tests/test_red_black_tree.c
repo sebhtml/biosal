@@ -33,13 +33,17 @@ int main(int argc, char **argv)
     bsal_vector_init(&keys, sizeof(int));
 
     count = 100000;
-    /*
-    count = 5;
-    */
+#if 0
+    count = 0;
+#endif
+
     srand(88);
 
-    bsal_red_black_tree_init(&tree, sizeof(int), sizeof(int));
+    bsal_red_black_tree_init(&tree, sizeof(int), sizeof(int), &memory_pool);
+
+#if 0
     bsal_red_black_tree_set_memory_pool(&tree, &memory_pool);
+#endif
 
 #if 0
     bsal_red_black_tree_print(&tree);
