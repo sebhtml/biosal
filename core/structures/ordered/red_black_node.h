@@ -60,4 +60,6 @@ int bsal_red_black_node_is_root(struct bsal_red_black_node *self);
 int bsal_red_black_node_is_left_node(struct bsal_red_black_node *self);
 int bsal_red_black_node_is_right_node(struct bsal_red_black_node *self);
 
+void bsal_red_black_node_print(struct bsal_red_black_node *self, int key_size);
+
 #endif /* BSAL_RED_BLACK_NODE_H */

@@ -9,8 +9,8 @@
 #include <string.h>
 
 /*
-#define RUN_TREE_ASSERTIONS
 */
+#define RUN_TREE_ASSERTIONS
 
 void bsal_red_black_tree_init(struct bsal_red_black_tree *self, int key_size, int value_size,
                 struct bsal_memory_pool *memory_pool)
@@ -647,6 +647,8 @@ void bsal_red_black_tree_print_node(struct bsal_red_black_tree *self,
     if (node == NULL)
         return;
 
+    bsal_red_black_node_run_assertions(node, self);
+
     if (bsal_red_black_node_is_leaf(node)) {
         print_spaces(depth);
         printf("(NIL, BLACK)\n");
@@ -830,6 +832,9 @@ void bsal_red_black_tree_delete_one_child(struct bsal_red_black_tree *self, stru
     struct bsal_red_black_node *child;
     struct bsal_red_black_node *other_child;
 
+    BSAL_DEBUGGER_ASSERT(node->right_node->parent == node);
+    BSAL_DEBUGGER_ASSERT(node->left_node->parent == node);
+
 #if 0
     printf("delete_one_child node %d\n",
                     bsal_red_black_node_get_key_as_int(node, self->key_size));
@@ -844,6 +849,21 @@ void bsal_red_black_tree_delete_one_child(struct bsal_red_black_tree *self, stru
         child = node->left_node;
 
     other_child = bsal_red_black_node_sibling(child);
+
+#if 0
+    printf("Child \n");
+    bsal_red_black_tree_print_node(self, child, 0);
+    printf("Other child\n");
+    bsal_red_black_tree_print_node(self, other_child, 0);
+#endif
+
+#if 0
+    printf("Showing node, child, and other_child\n");
+    bsal_red_black_node_print(node, self->key_size);
+    bsal_red_black_node_print(child, self->key_size);
+    bsal_red_black_node_print(other_child, self->key_size);
+    printf("Done.\n");
+#endif
 
     bsal_red_black_tree_replace_node(self, node, child);
 
@@ -891,13 +911,13 @@ void bsal_red_black_tree_replace_node(struct bsal_red_black_tree *self, struct b
 
         return;
     }
-    if (!bsal_red_black_node_is_leaf(child)) {
+
+    if (bsal_red_black_node_is_left_node(node)) {
+        node->parent->left_node = child;
         child->parent = node->parent;
-        if (bsal_red_black_node_is_left_node(node)) {
-            node->parent->left_node = child;
-        } else {
-            node->parent->right_node = child;
-        }
+    } else {
+        node->parent->right_node = child;
+        child->parent = node->parent;
     }
 }
 

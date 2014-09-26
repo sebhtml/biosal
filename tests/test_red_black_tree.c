@@ -140,7 +140,7 @@ int main(int argc, char **argv)
         bsal_red_black_tree_init(&tree, sizeof(int), sizeof(int), &memory_pool);
 
         i = 0;
-        size = 1;
+        size = 10;
 
         while (i < size) {
             key = rand() % (2 * size);
@@ -177,7 +177,7 @@ int main(int argc, char **argv)
         while (i < size) {
             key = bsal_vector_at_as_int(&keys, i);
 /*
-            printf("Looking for %d\n", key);
+            printf("Delete %d\n", key);
             */
 
             TEST_POINTER_NOT_EQUALS(bsal_red_black_tree_get(&tree, &key), NULL);

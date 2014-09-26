@@ -260,3 +260,20 @@ int bsal_red_black_node_is_root(struct bsal_red_black_node *self)
 {
     return self->parent == NULL;
 }
+
+void bsal_red_black_node_print(struct bsal_red_black_node *self, int key_size)
+{
+    if (bsal_red_black_node_is_leaf(self))
+        printf("NIL");
+    else
+        printf("%d", bsal_red_black_node_get_key_as_int(self, key_size));
+
+    if (bsal_red_black_node_is_red(self))
+        printf(" RED");
+    else
+        printf(" BLACK");
+
+    printf(" self %p parent %p left_node %p right_node %p\n",
+                    (void *)self, (void *)self->parent,
+                    (void *)self->left_node, (void *)self->right_node);
+}
