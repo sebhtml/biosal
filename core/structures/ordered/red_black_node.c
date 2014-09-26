@@ -255,3 +255,8 @@ int bsal_red_black_node_is_right_node(struct bsal_red_black_node *self)
 
     return 0;
 }
+
+int bsal_red_black_node_is_root(struct bsal_red_black_node *self)
+{
+    return self->parent == NULL;
+}

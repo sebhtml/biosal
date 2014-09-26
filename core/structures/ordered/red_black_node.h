@@ -56,6 +56,7 @@ int bsal_red_black_node_get_key_as_int(struct bsal_red_black_node *self, int key
 int bsal_red_black_node_is_red(struct bsal_red_black_node *self);
 int bsal_red_black_node_is_black(struct bsal_red_black_node *self);
 int bsal_red_black_node_is_leaf(struct bsal_red_black_node *self);
+int bsal_red_black_node_is_root(struct bsal_red_black_node *self);
 int bsal_red_black_node_is_left_node(struct bsal_red_black_node *self);
 int bsal_red_black_node_is_right_node(struct bsal_red_black_node *self);
 

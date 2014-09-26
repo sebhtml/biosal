@@ -10,8 +10,8 @@
 #include <stdlib.h>
 
 /*
-#define TEST_DELETE
 */
+#define TEST_DELETE
 
 int main(int argc, char **argv)
 {
@@ -32,9 +32,11 @@ int main(int argc, char **argv)
 
     bsal_vector_init(&keys, sizeof(int));
 
+#if 0
+#endif
     count = 100000;
 #if 0
-    count = 0;
+    count = 1;
 #endif
 
     srand(88);
@@ -50,7 +52,7 @@ int main(int argc, char **argv)
 #endif
 
     for (i = 0; i < count; ++i) {
-        key = rand() % 300;
+        key = rand() % (2 * count);
 
         bsal_vector_push_back(&keys, &key);
 
@@ -98,7 +100,7 @@ int main(int argc, char **argv)
 
     bsal_red_black_tree_run_assertions(&tree);
 
-    count = bsal_vector_size(&keys);
+    count = 0;
     size = count;
 
     for (i = 0; i < count; ++i) {
@@ -122,6 +124,75 @@ int main(int argc, char **argv)
     TEST_INT_EQUALS(bsal_memory_pool_profile_balance_count(&memory_pool), 0);
 
     bsal_memory_pool_destroy(&memory_pool);
+
+    /*
+     * Small deletions
+     */
+    {
+
+        struct bsal_red_black_tree tree;
+        struct bsal_memory_pool memory_pool;
+        struct bsal_vector keys;
+
+        bsal_vector_init(&keys, sizeof(int));
+
+        bsal_memory_pool_init(&memory_pool, 1024*1024, -1);
+        bsal_red_black_tree_init(&tree, sizeof(int), sizeof(int), &memory_pool);
+
+        i = 0;
+        size = 1;
+
+        while (i < size) {
+            key = rand() % (2 * size);
+
+            /*
+             * For this test, we don't want duplicates.
+             */
+            while (bsal_red_black_tree_get(&tree, &key) != NULL) {
+                key = rand() % (2 * size);
+            }
+#if 0
+            printf("Add %d\n", key);
+#endif
+            bsal_red_black_tree_add(&tree, &key);
+#if 0
+            bsal_red_black_tree_print(&tree);
+#endif
+
+            TEST_POINTER_NOT_EQUALS(bsal_red_black_tree_get(&tree, &key), NULL);
+
+            TEST_POINTER_NOT_EQUALS(bsal_red_black_tree_get_lowest_key(&tree), NULL);
+            result = bsal_red_black_tree_get(&tree, &key);
+            *result = i;
+            bsal_vector_push_back(&keys, &key);
+
+            ++i;
+        }
+
+        i = 0;
+
+#if 0
+        bsal_red_black_tree_print(&tree);
+#endif
+        while (i < size) {
+            key = bsal_vector_at_as_int(&keys, i);
+/*
+            printf("Looking for %d\n", key);
+            */
+
+            TEST_POINTER_NOT_EQUALS(bsal_red_black_tree_get(&tree, &key), NULL);
+
+            bsal_red_black_tree_delete(&tree, &key);
+            TEST_POINTER_EQUALS(bsal_red_black_tree_get(&tree, &key), NULL);
+            ++i;
+        }
+        bsal_red_black_tree_destroy(&tree);
+        bsal_vector_destroy(&keys);
+
+        TEST_INT_EQUALS(bsal_memory_pool_profile_balance_count(&memory_pool), 0);
+
+        bsal_memory_pool_destroy(&memory_pool);
+    }
 
     END_TESTS();
 
