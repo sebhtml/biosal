@@ -2,7 +2,7 @@
 
 arguments = commandArgs(trailingOnly = TRUE)
 file = arguments[1]
-data = read.table(file)
+data = read.table(file, header= TRUE)
 
 lines = length(data[,1])
 
