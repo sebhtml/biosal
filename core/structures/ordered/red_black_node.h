@@ -12,6 +12,10 @@ struct bsal_memory_pool;
 
 /*
  * A red-black node.
+ *
+ * Code is based on the content of the Wikipedia article.
+ *
+ * \see http://en.wikipedia.org/wiki/Red%E2%80%93black_tree
  */
 struct bsal_red_black_node {
     struct bsal_red_black_node *parent;
@@ -43,8 +47,16 @@ void bsal_red_black_node_set_parent(struct bsal_red_black_node *self, struct bsa
 struct bsal_red_black_node *bsal_red_black_node_uncle(struct bsal_red_black_node *self);
 struct bsal_red_black_node *bsal_red_black_node_grandparent(struct bsal_red_black_node *self);
 
+struct bsal_red_black_node *bsal_red_black_node_sibling(struct bsal_red_black_node *self);
+
 void bsal_red_black_node_run_assertions(struct bsal_red_black_node *self, struct bsal_red_black_tree *tree);
 
 int bsal_red_black_node_get_key_as_int(struct bsal_red_black_node *self, int key_size);
+
+int bsal_red_black_node_is_red(struct bsal_red_black_node *self);
+int bsal_red_black_node_is_black(struct bsal_red_black_node *self);
+int bsal_red_black_node_is_leaf(struct bsal_red_black_node *self);
+int bsal_red_black_node_is_left_node(struct bsal_red_black_node *self);
+int bsal_red_black_node_is_right_node(struct bsal_red_black_node *self);
 
 #endif /* BSAL_RED_BLACK_NODE_H */

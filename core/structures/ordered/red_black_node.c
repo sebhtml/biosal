@@ -165,3 +165,62 @@ int bsal_red_black_node_get_key_as_int(struct bsal_red_black_node *self, int key
 
     return key;
 }
+
+struct bsal_red_black_node *bsal_red_black_node_sibling(struct bsal_red_black_node *self)
+{
+    /*
+     * The root has no sibling.
+     */
+    if (self->parent == NULL)
+        return NULL;
+
+    /*
+     * The current node is the left_node.
+     */
+    if (self == self->parent->left_node)
+        return self->parent->right_node;
+
+    /*
+     * The current node is the right_node
+     */
+    if (self == self->parent->right_node)
+        return self->parent->left_node;
+
+    /*
+     * This statement is not reachable.
+     */
+    return NULL;
+}
+
+int bsal_red_black_node_is_red(struct bsal_red_black_node *self)
+{
+    return self != NULL && self->color == BSAL_COLOR_RED;
+}
+
+int bsal_red_black_node_is_black(struct bsal_red_black_node *self)
+{
+    return self == NULL || self->color == BSAL_COLOR_BLACK;
+}
+
+int bsal_red_black_node_is_leaf(struct bsal_red_black_node *self)
+{
+    return self == NULL;
+}
+
+int bsal_red_black_node_is_left_node(struct bsal_red_black_node *self)
+{
+    if (self->parent != NULL
+                    && self->parent->left_node == self)
+        return 1;
+
+    return 0;
+}
+
+int bsal_red_black_node_is_right_node(struct bsal_red_black_node *self)
+{
+    if (self->parent != NULL
+                    && self->parent->right_node == self)
+        return 1;
+
+    return 0;
+}

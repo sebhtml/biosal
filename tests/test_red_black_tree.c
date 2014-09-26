@@ -9,6 +9,10 @@
 
 #include <stdlib.h>
 
+/*
+#define TEST_DELETE
+*/
+
 int main(int argc, char **argv)
 {
     BEGIN_TESTS();
@@ -21,14 +25,15 @@ int main(int argc, char **argv)
     struct bsal_memory_pool memory_pool;
     struct bsal_vector keys;
     int *result;
+    int size;
 
     lowest = 0;
     bsal_memory_pool_init(&memory_pool, 1024*1024, -1);
 
     bsal_vector_init(&keys, sizeof(int));
 
-    count = 100000;
-    /*count = 5;*/
+    /*count = 100000;*/
+    count = 5;
 
     srand(88);
 
@@ -86,6 +91,25 @@ int main(int argc, char **argv)
 #endif
 
     bsal_red_black_tree_run_assertions(&tree);
+
+    count = bsal_vector_size(&keys);
+    size = count;
+
+    for (i = 0; i < count; ++i) {
+        key = bsal_vector_at_as_int(&keys, i);
+
+        result = bsal_red_black_tree_get(&tree, &key);
+
+        TEST_POINTER_NOT_EQUALS(result, NULL);
+
+#ifdef TEST_DELETE
+        bsal_red_black_tree_delete(&tree, &key);
+        --size;
+#endif
+
+        TEST_INT_EQUALS(bsal_red_black_tree_size(&tree), size);
+    }
+
     bsal_red_black_tree_destroy(&tree);
     bsal_vector_destroy(&keys);
 

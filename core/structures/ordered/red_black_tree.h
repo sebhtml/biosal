@@ -29,8 +29,10 @@ struct bsal_red_black_tree {
     int key_size;
     int value_size;
 
+#ifdef BSAL_RED_BLACK_TREE_USE_CACHE
     struct bsal_red_black_node *cached_last_node;
     struct bsal_red_black_node *cached_lowest_node;
+#endif
 
     int (*compare)(struct bsal_red_black_tree *self, void *key1, void *key2);
 };
@@ -125,5 +127,17 @@ int bsal_red_black_tree_compare_uint64_t(struct bsal_red_black_tree *self, void 
 void bsal_red_black_tree_use_uint64_t_keys(struct bsal_red_black_tree *self);
 void bsal_red_black_tree_run_assertions(struct bsal_red_black_tree *self);
 void bsal_red_black_tree_run_assertions_on_node(struct bsal_red_black_tree *self, struct bsal_red_black_node *node);
+
+void bsal_red_black_tree_delete_one_child(struct bsal_red_black_tree *self, struct bsal_red_black_node *node);
+void bsal_red_black_tree_replace_node(struct bsal_red_black_tree *self, struct bsal_red_black_node *node,
+                struct bsal_red_black_node *child);
+void bsal_red_black_tree_delete_case1(struct bsal_red_black_tree *self, struct bsal_red_black_node *node);
+void bsal_red_black_tree_delete_case2(struct bsal_red_black_tree *self, struct bsal_red_black_node *node);
+void bsal_red_black_tree_delete_case3(struct bsal_red_black_tree *self, struct bsal_red_black_node *node);
+void bsal_red_black_tree_delete_case4(struct bsal_red_black_tree *self, struct bsal_red_black_node *node);
+void bsal_red_black_tree_delete_case5(struct bsal_red_black_tree *self, struct bsal_red_black_node *node);
+void bsal_red_black_tree_delete_case6(struct bsal_red_black_tree *self, struct bsal_red_black_node *node);
+
+struct bsal_red_black_node *bsal_red_black_tree_get_node(struct bsal_red_black_tree *self, void *key);
 
 #endif
