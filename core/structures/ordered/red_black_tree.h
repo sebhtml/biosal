@@ -7,6 +7,15 @@ struct bsal_red_black_node;
 struct bsal_memory_pool;
 
 /*
+ * Use a cache to go faster.
+ */
+#define BSAL_RED_BLACK_TREE_USE_CACHE_LAST
+
+/*
+#define BSAL_RED_BLACK_TREE_USE_CACHE_LOWEST
+*/
+
+/*
  * A red-black tree.
  *
  * The 5 algorithmic rules are:
@@ -29,8 +38,10 @@ struct bsal_red_black_tree {
     int key_size;
     int value_size;
 
-#ifdef BSAL_RED_BLACK_TREE_USE_CACHE
+#ifdef BSAL_RED_BLACK_TREE_USE_CACHE_LAST
     struct bsal_red_black_node *cached_last_node;
+#endif
+#ifdef BSAL_RED_BLACK_TREE_USE_CACHE_LOWEST
     struct bsal_red_black_node *cached_lowest_node;
 #endif
 
