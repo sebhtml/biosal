@@ -52,7 +52,9 @@ void *bsal_red_black_tree_add_key_and_value(struct bsal_red_black_tree *self, vo
     void *new_value;
 
     new_value = bsal_red_black_tree_add(self, key);
-    bsal_memory_copy(new_value, value, self->value_size);
+
+    if (value != NULL)
+        bsal_memory_copy(new_value, value, self->value_size);
 
     return new_value;
 }
@@ -71,12 +73,11 @@ void *bsal_red_black_tree_add(struct bsal_red_black_tree *self, void *key)
     BSAL_DEBUGGER_ASSERT(self->root != NULL);
 
     node = bsal_memory_pool_allocate(self->memory_pool, sizeof(struct bsal_red_black_node));
+    bsal_red_black_node_init(node, self->key_size, key, self->value_size, NULL, self->memory_pool);
 
 #ifdef BSAL_RED_BLACK_TREE_USE_CACHE_LAST
     self->cached_last_node = node;
 #endif
-
-    bsal_red_black_node_init(node, self->key_size, key, self->value_size, NULL, self->memory_pool);
 
     if (bsal_red_black_node_is_leaf(self->root)) {
 
@@ -166,7 +167,7 @@ void *bsal_red_black_tree_add(struct bsal_red_black_tree *self, void *key)
 
 #ifdef BSAL_RED_BLACK_TREE_USE_CACHE_LOWEST
     /*
-     * Maintain the cache for the lowest key
+     * Maintain the cache for the lowest key.
      * To do so, we just need to check if the inserted key is lower than
      * the key for cached_lowest_node.
      *
@@ -174,9 +175,11 @@ void *bsal_red_black_tree_add(struct bsal_red_black_tree *self, void *key)
      */
 
     if (self->cached_lowest_node == NULL
-              || bsal_red_black_tree_compare(self, node->key, self->cached_lowest_node->key)) {
+              || bsal_red_black_tree_compare(self, node->key, self->cached_lowest_node->key) < 0) {
 
         self->cached_lowest_node = node;
+
+        BSAL_DEBUGGER_ASSERT(self->cached_lowest_node->key != NULL);
     }
 #endif
 
@@ -186,7 +189,6 @@ void *bsal_red_black_tree_add(struct bsal_red_black_tree *self, void *key)
 void bsal_red_black_tree_delete(struct bsal_red_black_tree *self, void *key)
 {
     struct bsal_red_black_node *node;
-    struct bsal_red_black_node *largest_value_node;
 
     /*
      * Nothing to delete.
@@ -210,8 +212,7 @@ void bsal_red_black_tree_delete(struct bsal_red_black_tree *self, void *key)
      * Update the lowest value cache.
      */
 
-    BSAL_DEBUGGER_ASSERT(self->cached_lowest_node != NULL);
-    BSAL_DEBUGGER_ASSERT(self->cached_lowest_node->key != NULL);
+    BSAL_DEBUGGER_ASSERT(self->cached_lowest_node != NULL || self->cached_lowest_node->key != NULL);
 
     /*
      * If we are deleting the lowest key, the new lowest key
@@ -221,6 +222,7 @@ void bsal_red_black_tree_delete(struct bsal_red_black_tree *self, void *key)
                     && bsal_red_black_tree_compare(self, key, self->cached_lowest_node->key) == 0) {
         self->cached_lowest_node = self->cached_lowest_node->parent;
     }
+
 #endif
 
 #ifdef BSAL_RED_BLACK_TREE_USE_CACHE_LAST
@@ -233,6 +235,14 @@ void bsal_red_black_tree_delete(struct bsal_red_black_tree *self, void *key)
         self->cached_last_node = NULL;
     }
 #endif
+
+    bsal_red_black_tree_delete_private(self, node);
+}
+
+void bsal_red_black_tree_delete_private(struct bsal_red_black_tree *self,
+                struct bsal_red_black_node *node)
+{
+    struct bsal_red_black_node *largest_value_node;
 
     /*
      * Find the largest value before the node

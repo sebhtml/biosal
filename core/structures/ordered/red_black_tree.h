@@ -12,6 +12,15 @@ struct bsal_memory_pool;
 #define BSAL_RED_BLACK_TREE_USE_CACHE_LAST
 
 /*
+ * Use a cache for the node with the lowest key.
+ *
+ * This is broken and disabled.
+ *
+ * The following line is incorrect:
+ *
+ *   self->cached_lowest_node = self->cached_lowest_node->parent
+ */
+/*
 #define BSAL_RED_BLACK_TREE_USE_CACHE_LOWEST
 */
 
@@ -28,6 +37,10 @@ struct bsal_memory_pool;
  *    the same number of black nodes.
  *
  * The implementation is based on pseudo-code in the Wikipedia page.
+ *
+ * This implementation uses explicit leaf nodes (NIL nodes)
+ * because the code is simpler  that way.
+ *
  * \see http://en.wikipedia.org/wiki/Red%E2%80%93black_tree
  */
 struct bsal_red_black_tree {
@@ -151,5 +164,8 @@ void bsal_red_black_tree_delete_case5(struct bsal_red_black_tree *self, struct b
 void bsal_red_black_tree_delete_case6(struct bsal_red_black_tree *self, struct bsal_red_black_node *node);
 
 struct bsal_red_black_node *bsal_red_black_tree_get_node(struct bsal_red_black_tree *self, void *key);
+
+void bsal_red_black_tree_delete_private(struct bsal_red_black_tree *self,
+                struct bsal_red_black_node *node);
 
 #endif
