@@ -168,7 +168,7 @@ struct bsal_red_black_node *bsal_red_black_tree_get_node(struct bsal_red_black_t
 void bsal_red_black_tree_delete_private(struct bsal_red_black_tree *self,
                 struct bsal_red_black_node *node);
 
-struct bsal_red_black_node *bsal_red_black_tree_allocate_normal_node(struct bsal_red_black_tree *self);
+struct bsal_red_black_node *bsal_red_black_tree_allocate_normal_node(struct bsal_red_black_tree *self, void *key, void *value);
 void bsal_red_black_tree_free_normal_node(struct bsal_red_black_tree *self, struct bsal_red_black_node *node);
 struct bsal_red_black_node *bsal_red_black_tree_allocate_nil_node(struct bsal_red_black_tree *self);
 void bsal_red_black_tree_free_nil_node(struct bsal_red_black_tree *self, struct bsal_red_black_node *node);

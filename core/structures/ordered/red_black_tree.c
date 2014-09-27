@@ -30,8 +30,7 @@ void bsal_red_black_tree_init(struct bsal_red_black_tree *self, int key_size, in
     self->cached_lowest_node = NULL;
 #endif
 
-    self->root = bsal_red_black_tree_allocate_normal_node(self);
-    bsal_red_black_node_init(self->root, self->key_size, NULL, self->value_size, NULL, self->memory_pool);
+    self->root = bsal_red_black_tree_allocate_nil_node(self);
 }
 
 void bsal_red_black_tree_destroy(struct bsal_red_black_tree *self)
@@ -72,8 +71,7 @@ void *bsal_red_black_tree_add(struct bsal_red_black_tree *self, void *key)
 
     BSAL_DEBUGGER_ASSERT(self->root != NULL);
 
-    node = bsal_red_black_tree_allocate_normal_node(self);
-    bsal_red_black_node_init(node, self->key_size, key, self->value_size, NULL, self->memory_pool);
+    node = bsal_red_black_tree_allocate_normal_node(self, key, NULL);
 
 #ifdef BSAL_RED_BLACK_TREE_USE_CACHE_LAST
     self->cached_last_node = node;
@@ -83,7 +81,6 @@ void *bsal_red_black_tree_add(struct bsal_red_black_tree *self, void *key)
 
         left_nil = self->root;
         right_nil = bsal_red_black_tree_allocate_nil_node(self);
-        bsal_red_black_node_init(right_nil, self->key_size, NULL, self->value_size, NULL, self->memory_pool);
 
         self->root = node;
 
@@ -119,7 +116,6 @@ void *bsal_red_black_tree_add(struct bsal_red_black_tree *self, void *key)
 
                 left_nil = left_node;
                 right_nil = bsal_red_black_tree_allocate_nil_node(self);
-                bsal_red_black_node_init(right_nil, self->key_size, NULL, self->value_size, NULL, self->memory_pool);
 
                 bsal_red_black_node_set_left_node(current_node, node);
                 bsal_red_black_node_set_left_node(node, left_nil);
@@ -138,7 +134,6 @@ void *bsal_red_black_tree_add(struct bsal_red_black_tree *self, void *key)
             if (bsal_red_black_node_is_leaf(right_node)) {
 
                 left_nil = bsal_red_black_tree_allocate_nil_node(self);
-                bsal_red_black_node_init(left_nil, self->key_size, NULL, self->value_size, NULL, self->memory_pool);
                 right_nil = right_node;
 
                 bsal_red_black_node_set_right_node(current_node, node);
@@ -1073,11 +1068,12 @@ void bsal_red_black_tree_delete_case6(struct bsal_red_black_tree *self, struct b
     }
 }
 
-struct bsal_red_black_node *bsal_red_black_tree_allocate_normal_node(struct bsal_red_black_tree *self)
+struct bsal_red_black_node *bsal_red_black_tree_allocate_normal_node(struct bsal_red_black_tree *self, void *key, void *value)
 {
     struct bsal_red_black_node *node;
 
     node = bsal_memory_pool_allocate(self->memory_pool, sizeof(struct bsal_red_black_node));
+    bsal_red_black_node_init(node, self->key_size, key, self->value_size, value, self->memory_pool);
 
     return node;
 }
@@ -1093,6 +1089,7 @@ struct bsal_red_black_node *bsal_red_black_tree_allocate_nil_node(struct bsal_re
     struct bsal_red_black_node *node;
 
     node = bsal_memory_pool_allocate(self->memory_pool, sizeof(struct bsal_red_black_node));
+    bsal_red_black_node_init(node, self->key_size, NULL, self->value_size, NULL, self->memory_pool);
 
     return node;
 }
