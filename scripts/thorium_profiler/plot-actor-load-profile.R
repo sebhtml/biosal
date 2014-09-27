@@ -5,8 +5,10 @@ file = arguments[1]
 data = read.table(file, header= TRUE)
 
 threshold = (500 * 1000)
+
 bad_color = 'red'
 default_color = 'black'
+bad_color = default_color
 
 lines = length(data[,1])
 
@@ -21,15 +23,13 @@ maximum_y = -1
 
 i = 1
 
-used_duration = 0
-window_start = -1
-window_end = -1
-last_index = -1
-
-# in nanoseconds (10 ms)
-window_maximum_size = (10 * 1000 * 1000)
-
 utilizations = 1:lines
+window_minimum_size = ( 1000 * 1000 )
+
+used_duration = 0
+total = 0
+start_item = -1
+end_item = -1
 
 while (i <= lines) {
     start = data[,1][i]
@@ -54,33 +54,47 @@ while (i <= lines) {
 
     # create window too.
 
-    if (last_index == -1) {
-        last_index = i;
-    }
+    start_item = i
+    end_item = i
+    used_duration = end - start
+    total = end - start
+    j = 1
 
-    # add the item to the window
-    used_duration = used_duration + (end - start)
+    while (((total < window_minimum_size) || (end_item - start_item + 1) <= 1)
+ && (((i - j) >= 1) || ((i + j) <= lines))) {
 
-    if (window_start == -1) {
-        window_start = i
-    }
-
-    window_end = i
-
-    # Verify if we must reduce the window
-    while (window_end >= window_start &&
-                    (data[,2][window_end] - data[,1][window_start] > window_maximum_size)) {
-        difference = data[,2][window_start] - data[,1][window_start]
-
-        if (used_duration - difference <= window_maximum_size) {
-            break;
+        #   [ new_start_item]  [start_item]
+        new_start_item = i - j
+        if (new_start_item >= 1) {
+            used = data[,2][new_start_item] - data[,1][new_start_item]
+            used_duration = used_duration + used
+            distance = data[,1][start_item] - data[,1][new_start_item]
+            total = total + distance
+            start_item = new_start_item
         }
-        used_duration = used_duration - difference
-        window_start = window_start + 1
+
+        #   [end_item] [new_end_item]
+        new_end_item = i + j
+        if (new_end_item <= lines) {
+            used = data[,2][new_end_item] - data[,1][new_end_item]
+            used_duration = used_duration + used
+            distance = data[,2][new_end_item] - data[,2][end_item]
+            total = total + distance
+            end_item = new_end_item
+        }
+
+        j = j + 1
     }
 
-    total = data[,2][window_end] - data[,1][window_start]
+#if (i % 1000 == 0)
+#print(paste(used_duration, "/", total, " ", start_item, i, end_item))
     utilization = used_duration / total
+
+    items = end_item - start_item + 1
+
+    if (items <= 1)
+        utilization = 0
+
     #print(used_duration)
     #print(total)
     utilizations[i] = utilization
@@ -97,7 +111,9 @@ plot(data[,1], utilizations, col='black', type='l', ylab='Processor core utiliza
 
 # panel B
 plot(c(-1), c(-1), xlim = c(minimum, maximum), ylim = c(0, 0), type='l', col='red',
-                xlab='Time (nanoseconds)', ylab='Timeline', main= paste("Timeline of actor execution (collapsed)\n(any granularity >= ", threshold / 1000, " µs is shown in red)", sep=""))
+                xlab='Time (nanoseconds)', ylab='Timeline', main= paste("Timeline of actor execution (collapsed)",
+# "\n(any granularity >= ", threshold / 1000, " µs is shown in red)",
+                        sep=""))
 
 i = 1
 
