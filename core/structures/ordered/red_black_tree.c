@@ -49,6 +49,15 @@ void bsal_red_black_tree_destroy(struct bsal_red_black_tree *self)
         bsal_memory_pool_free(self->memory_pool, self->nil_node_list);
         self->nil_node_list = node;
     }
+
+    while (self->normal_node_list != NULL) {
+        node = self->normal_node_list->left_node;
+        bsal_memory_pool_free(self->memory_pool, self->normal_node_list->key);
+        bsal_memory_pool_free(self->memory_pool, self->normal_node_list->value);
+        bsal_memory_pool_free(self->memory_pool, self->normal_node_list);
+        self->normal_node_list = node;
+    }
+
     self->memory_pool = NULL;
     self->size = 0;
     self->key_size = 0;
@@ -1087,9 +1096,17 @@ struct bsal_red_black_node *bsal_red_black_tree_allocate_normal_node(struct bsal
     void *new_key;
     void *new_value;
 
-    node = bsal_memory_pool_allocate(self->memory_pool, sizeof(struct bsal_red_black_node));
-    new_key = bsal_memory_pool_allocate(self->memory_pool, self->key_size);
-    new_value = bsal_memory_pool_allocate(self->memory_pool, self->value_size);
+    if (self->normal_node_list == NULL) {
+        node = bsal_memory_pool_allocate(self->memory_pool, sizeof(struct bsal_red_black_node));
+        new_key = bsal_memory_pool_allocate(self->memory_pool, self->key_size);
+        new_value = bsal_memory_pool_allocate(self->memory_pool, self->value_size);
+    } else {
+        node = self->normal_node_list;
+        self->normal_node_list = self->normal_node_list->left_node;
+        new_key = node->key;
+        new_value = node->value;
+    }
+
     bsal_red_black_node_init(node, new_key, new_value);
 
     bsal_memory_copy(node->key, key, self->key_size);
@@ -1101,10 +1118,14 @@ struct bsal_red_black_node *bsal_red_black_tree_allocate_normal_node(struct bsal
 
 void bsal_red_black_tree_free_normal_node(struct bsal_red_black_tree *self, struct bsal_red_black_node *node)
 {
+    node->left_node = self->normal_node_list;
+    self->normal_node_list = node;
+#if 0
     bsal_memory_pool_free(self->memory_pool, node->key);
     bsal_memory_pool_free(self->memory_pool, node->value);
     bsal_red_black_node_destroy(node);
     bsal_memory_pool_free(self->memory_pool, node);
+#endif
 }
 
 struct bsal_red_black_node *bsal_red_black_tree_allocate_nil_node(struct bsal_red_black_tree *self)
