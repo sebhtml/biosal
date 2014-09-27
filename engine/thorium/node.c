@@ -1666,14 +1666,15 @@ void thorium_node_register_signal_handlers(struct thorium_node *self)
 
     bsal_vector_push_back_int(&signals, SIGUSR1);
 
+    /* kill signal */
+    bsal_vector_push_back_int(&signals, SIGKILL);
+    /* termination*/
+    bsal_vector_push_back_int(&signals, SIGTERM);
+
 #if 0
     /* interruption */
     bsal_vector_push_back_int(&signals, SIGINT);
     /* kill */
-    bsal_vector_push_back_int(&signals, SIGKILL);
-    /* termination*/
-    bsal_vector_push_back_int(&signals, SIGTERM);
-    /* hang up */
     bsal_vector_push_back_int(&signals, SIGHUP);
     /* illegal instruction */
     bsal_vector_push_back_int(&signals, SIGILL);
