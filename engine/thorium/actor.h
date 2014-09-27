@@ -220,8 +220,11 @@ struct thorium_actor {
     uint32_t flags;
     struct bsal_fast_ring mailbox;
 
+#ifdef THORIUM_ACTOR_GATHER_MESSAGE_METADATA
     struct bsal_map received_messages;
     struct bsal_map sent_messages;
+    struct bsal_counter counter;
+#endif
 
 #ifdef THORIUM_ACTOR_STORE_CHILDREN
     struct bsal_vector acquaintance_vector;
@@ -255,8 +258,6 @@ struct thorium_actor {
      * for spawning new colleagues in the company.
      */
     int spawner_index;
-
-    struct bsal_counter counter;
 
     int synchronization_responses;
     int synchronization_expected_responses;

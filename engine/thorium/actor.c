@@ -77,8 +77,10 @@ void thorium_actor_init(struct thorium_actor *self, void *concrete_actor,
 
     self->current_message = NULL;
 
+#ifdef THORIUM_ACTOR_GATHER_MESSAGE_METADATA
     bsal_map_init(&self->received_messages, sizeof(int), sizeof(int));
     bsal_map_init(&self->sent_messages, sizeof(int), sizeof(int));
+#endif
 
     /* initialize the dispatcher before calling
      * the concrete initializer
@@ -192,8 +194,10 @@ void thorium_actor_destroy(struct thorium_actor *self)
     bsal_map_destroy(&self->acquaintance_map);
 #endif
 
+#ifdef THORIUM_ACTOR_GATHER_MESSAGE_METADATA
     bsal_map_destroy(&self->received_messages);
     bsal_map_destroy(&self->sent_messages);
+#endif
 
     BSAL_DEBUGGER_ASSERT(self->worker != NULL);
 
@@ -249,9 +253,17 @@ void thorium_actor_print(struct thorium_actor *self)
      * engine/thorium_actor.c:58:21: error: ISO C for bids conversion of function pointer to object pointer type [-Werror=edantic]
      */
 
-    int received = (int)bsal_counter_get(&self->counter, BSAL_COUNTER_RECEIVED_MESSAGES);
-    int sent = (int)bsal_counter_get(&self->counter, BSAL_COUNTER_SENT_MESSAGES);
+    int received;
+    int sent;
     struct bsal_memory_pool *ephemeral_memory;
+
+    received = -1;
+    sent = -1;
+
+#ifdef THORIUM_ACTOR_GATHER_MESSAGE_METADATA
+    received = (int)bsal_counter_get(&self->counter, BSAL_COUNTER_RECEIVED_MESSAGES);
+    send = (int)bsal_counter_get(&self->counter, BSAL_COUNTER_SENT_MESSAGES);
+#endif
 
     ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
 
@@ -373,6 +385,8 @@ int thorium_actor_send_system(struct thorium_actor *self, int name, struct thori
 void thorium_actor_send(struct thorium_actor *self, int name, struct thorium_message *message)
 {
     int source;
+
+#ifdef THORIUM_ACTOR_GATHER_MESSAGE_METADATA
     int *bucket;
 
     /* Update counter
@@ -385,9 +399,11 @@ void thorium_actor_send(struct thorium_actor *self, int name, struct thorium_mes
     }
 
     (*bucket)++;
+#endif
 
     source = thorium_actor_name(self);
 
+#ifdef THORIUM_ACTOR_GATHER_MESSAGE_METADATA
     /* update counters
      */
     if (source == name) {
@@ -399,6 +415,7 @@ void thorium_actor_send(struct thorium_actor *self, int name, struct thorium_mes
         bsal_counter_add(&self->counter, BSAL_COUNTER_SENT_BYTES_NOT_TO_SELF,
                         thorium_message_count(message));
     }
+#endif
 
     if (thorium_actor_send_system(self, name, message)) {
         return;
@@ -478,14 +495,19 @@ int thorium_actor_spawn_real(struct thorium_actor *self, int script)
 
     thorium_node_set_supervisor(thorium_actor_node(self), name, self_name);
 
+#ifdef THORIUM_ACTOR_GATHER_MESSAGE_METADATA
     bsal_counter_add(&self->counter, BSAL_COUNTER_SPAWNED_ACTORS, 1);
+#endif
 
     return name;
 }
 
 void thorium_actor_die(struct thorium_actor *self)
 {
+#ifdef THORIUM_ACTOR_GATHER_MESSAGE_METADATA
     bsal_counter_add(&self->counter, BSAL_COUNTER_KILLED_ACTORS, 1);
+#endif
+
     bsal_bitmap_set_bit_uint32_t(&self->flags, FLAG_DEAD);
 
     /*
@@ -497,7 +519,11 @@ void thorium_actor_die(struct thorium_actor *self)
 
 struct bsal_counter *thorium_actor_counter(struct thorium_actor *self)
 {
+#ifdef THORIUM_ACTOR_GATHER_MESSAGE_METADATA
     return &self->counter;
+#else
+    return NULL;
+#endif
 }
 
 struct thorium_node *thorium_actor_node(struct thorium_actor *self)
@@ -940,7 +966,9 @@ void thorium_actor_receive_private(struct thorium_actor *self, struct thorium_me
     thorium_actor_receive_fn_t receive;
     int name;
     int source;
+#ifdef THORIUM_ACTOR_GATHER_MESSAGE_METADATA
     int *bucket;
+#endif
 
 #ifdef THORIUM_ACTOR_DEBUG_SYNC
     printf("\nDEBUG thorium_actor_receive...... tag %d\n",
@@ -956,12 +984,13 @@ void thorium_actor_receive_private(struct thorium_actor *self, struct thorium_me
                     thorium_actor_name(self));
 #endif
 
-    /* Update counter
-     */
     source = thorium_message_source(message);
 
     self->current_message = message;
 
+#ifdef THORIUM_ACTOR_GATHER_MESSAGE_METADATA
+    /* Update counter
+     */
     bucket = (int *)bsal_map_get(&self->received_messages, &source);
 
     if (bucket == NULL) {
@@ -970,6 +999,7 @@ void thorium_actor_receive_private(struct thorium_actor *self, struct thorium_me
     }
 
     (*bucket)++;
+#endif
 
     /* check if this is a message that the system can
      * figure out what to do with it
@@ -1003,6 +1033,7 @@ void thorium_actor_receive_private(struct thorium_actor *self, struct thorium_me
 
     name = thorium_actor_name(self);
 
+#ifdef THORIUM_ACTOR_GATHER_MESSAGE_METADATA
     /* update counters
      */
     if (source == name) {
@@ -1014,6 +1045,7 @@ void thorium_actor_receive_private(struct thorium_actor *self, struct thorium_me
         bsal_counter_add(&self->counter, BSAL_COUNTER_RECEIVED_BYTES_NOT_FROM_SELF,
                         thorium_message_count(message));
     }
+#endif
 
     receive(self, message);
 
@@ -1806,12 +1838,20 @@ int thorium_actor_enqueued_message_count(struct thorium_actor *self)
 
 struct bsal_map *thorium_actor_get_received_messages(struct thorium_actor *self)
 {
+#ifdef THORIUM_ACTOR_GATHER_MESSAGE_METADATA
     return &self->received_messages;
+#else
+    return NULL;
+#endif
 }
 
 struct bsal_map *thorium_actor_get_sent_messages(struct thorium_actor *self)
 {
+#ifdef THORIUM_ACTOR_GATHER_MESSAGE_METADATA
     return &self->sent_messages;
+#else
+    return NULL;
+#endif
 }
 
 int thorium_actor_enqueue_mailbox_message(struct thorium_actor *self, struct thorium_message *message)
@@ -1954,8 +1994,10 @@ void thorium_actor_reset_counters(struct thorium_actor *self)
     bsal_map_iterator_destroy(&map_iterator);
 #endif
 
+#ifdef THORIUM_ACTOR_GATHER_MESSAGE_METADATA
     bsal_map_destroy(&self->received_messages);
     bsal_map_init(&self->received_messages, sizeof(int), sizeof(int));
+#endif
 }
 
 int thorium_actor_get_priority(struct thorium_actor *self)
@@ -1965,7 +2007,11 @@ int thorium_actor_get_priority(struct thorium_actor *self)
 
 int thorium_actor_get_source_count(struct thorium_actor *self)
 {
+#ifdef THORIUM_ACTOR_GATHER_MESSAGE_METADATA
     return bsal_map_size(&self->received_messages);
+#else
+    return -1;
+#endif
 }
 
 void thorium_actor_set_priority(struct thorium_actor *self, int priority)

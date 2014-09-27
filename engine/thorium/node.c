@@ -593,7 +593,9 @@ int thorium_node_spawn(struct thorium_node *node, int script)
          */
         actor = thorium_node_get_actor_from_name(node, name);
 
+#ifdef THORIUM_ACTOR_GATHER_MESSAGE_METADATA
         bsal_counter_add(thorium_actor_counter(actor), BSAL_COUNTER_SPAWNED_ACTORS, 1);
+#endif
     }
 
     bsal_counter_add(&node->counter, BSAL_COUNTER_SPAWNED_ACTORS, 1);
