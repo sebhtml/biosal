@@ -19,7 +19,7 @@
 #define FORCE_YES_SIZE 1
 #define FORCE_YES_TIME 1
 
-#define FLAG_DISABLE 0
+#define FLAG_DISABLED 0
 
 /*
 #define DEBUG_MULTIPLEXER
@@ -39,7 +39,7 @@ void thorium_message_multiplexer_init(struct thorium_message_multiplexer *self,
     self->real_message_count = 0;
 
     self->flags = 0;
-    bsal_bitmap_clear_bit_uint32_t(&self->flags, FLAG_DISABLE);
+    bsal_bitmap_clear_bit_uint32_t(&self->flags, FLAG_DISABLED);
 
     bsal_set_init(&self->buffers_with_content, sizeof(int));
 
@@ -87,10 +87,8 @@ void thorium_message_multiplexer_init(struct thorium_message_multiplexer *self,
     self->last_flush = bsal_timer_get_nanoseconds(&self->timer);
 
     if (thorium_multiplexer_policy_is_disabled(self->policy)) {
-        bsal_bitmap_set_bit_uint32_t(&self->flags, FLAG_DISABLE);
-    }
-
-    if (thorium_node_name(self->node) == 0) {
+        bsal_bitmap_set_bit_uint32_t(&self->flags, FLAG_DISABLED);
+    } else if (thorium_node_name(self->node) == 0) {
         if (self->timeout_in_nanoseconds == THORIUM_DYNAMIC_TIMEOUT) {
             printf("thorium_message_multiplexer: buffer_size_in_bytes=%d timeout_in_nanoseconds=dynamic\n",
                         self->buffer_size_in_bytes);
@@ -182,7 +180,7 @@ int thorium_message_multiplexer_multiplex(struct thorium_message_multiplexer *se
 
     ++self->original_message_count;
 
-    if (bsal_bitmap_get_bit_uint32_t(&self->flags, FLAG_DISABLE)) {
+    if (bsal_bitmap_get_bit_uint32_t(&self->flags, FLAG_DISABLED)) {
         ++self->real_message_count;
         return 0;
     }
@@ -324,7 +322,7 @@ int thorium_message_multiplexer_demultiplex(struct thorium_message_multiplexer *
     int source_node;
     int destination_node;
 
-    if (bsal_bitmap_get_bit_uint32_t(&self->flags, FLAG_DISABLE)) {
+    if (bsal_bitmap_get_bit_uint32_t(&self->flags, FLAG_DISABLED)) {
         return 0;
     }
 
@@ -389,7 +387,7 @@ void thorium_message_multiplexer_test(struct thorium_message_multiplexer *self)
     int duration;
     int index;
 
-    if (bsal_bitmap_get_bit_uint32_t(&self->flags, FLAG_DISABLE)) {
+    if (bsal_bitmap_get_bit_uint32_t(&self->flags, FLAG_DISABLED)) {
         return;
     }
 
@@ -432,7 +430,7 @@ void thorium_message_multiplexer_flush(struct thorium_message_multiplexer *self,
     int maximum_size;
     struct thorium_multiplexed_buffer *multiplexed_buffer;
 
-    if (bsal_bitmap_get_bit_uint32_t(&self->flags, FLAG_DISABLE)) {
+    if (bsal_bitmap_get_bit_uint32_t(&self->flags, FLAG_DISABLED)) {
         return;
     }
 
@@ -464,4 +462,9 @@ void thorium_message_multiplexer_flush(struct thorium_message_multiplexer *self,
     multiplexed_buffer->message_count = 0;
 
     bsal_set_delete(&self->buffers_with_content, &index);
+}
+
+int thorium_message_multiplexer_is_disabled(struct thorium_message_multiplexer *self)
+{
+    return bsal_bitmap_get_bit_uint32_t(&self->flags, FLAG_DISABLED);
 }

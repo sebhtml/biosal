@@ -28,7 +28,8 @@
 void thorium_multiplexer_policy_init(struct thorium_multiplexer_policy *self)
 {
     self->threshold_buffer_size_in_bytes = THORIUM_MESSAGE_MULTIPLEXER_SIZE_THRESHOLD_IN_BYTES;
-    self->threshold_time_in_nanoseconds = THORIUM_DYNAMIC_TIMEOUT;
+    /*self->threshold_time_in_nanoseconds = THORIUM_DYNAMIC_TIMEOUT;*/
+    self->threshold_time_in_nanoseconds = THORIUM_MESSAGE_MULTIPLEXER_TIME_THRESHOLD_IN_NANOSECONDS;
 
     bsal_set_init(&self->actions_to_skip, sizeof(int));
 
@@ -45,7 +46,7 @@ void thorium_multiplexer_policy_init(struct thorium_multiplexer_policy *self)
     bsal_set_add_int(&self->actions_to_skip, ACTION_SPAWN);
     bsal_set_add_int(&self->actions_to_skip, ACTION_SPAWN_REPLY);
 
-    self->disabled = 0;
+    self->disabled = 1;
 }
 
 void thorium_multiplexer_policy_destroy(struct thorium_multiplexer_policy *self)

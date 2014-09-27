@@ -76,7 +76,7 @@
 #define FLAG_WORKERS_IN_THREADS         8
 #define FLAG_EXAMINE                    9
 #define FLAG_ENABLE_ACTOR_LOAD_PROFILES 10
-
+#define FLAG_MULTIPLEXER_IS_DISABLED    11
 struct thorium_node *thorium_node_global_self;
 
 void thorium_node_init(struct thorium_node *node, int *argc, char ***argv)
@@ -117,6 +117,8 @@ void thorium_node_init(struct thorium_node *node, int *argc, char ***argv)
     bsal_bitmap_clear_bit_uint32_t(&node->flags, FLAG_DEBUG);
     bsal_bitmap_clear_bit_uint32_t(&node->flags, FLAG_PRINT_COUNTERS);
     bsal_bitmap_clear_bit_uint32_t(&node->flags, FLAG_EXAMINE);
+    bsal_bitmap_clear_bit_uint32_t(&node->flags, FLAG_ENABLE_ACTOR_LOAD_PROFILES);
+    bsal_bitmap_clear_bit_uint32_t(&node->flags, FLAG_MULTIPLEXER_IS_DISABLED);
 
     thorium_node_global_self = node;
 
@@ -393,6 +395,10 @@ void thorium_node_init(struct thorium_node *node, int *argc, char ***argv)
     thorium_multiplexer_policy_init(&node->multiplexer_policy);
     thorium_message_multiplexer_init(&node->multiplexer, node,
                     &node->multiplexer_policy);
+
+    if (thorium_message_multiplexer_is_disabled(&node->multiplexer)) {
+        bsal_bitmap_set_bit_uint32_t(&node->flags, FLAG_MULTIPLEXER_IS_DISABLED);
+    }
 
     if (bsal_command_has_argument(node->argc, node->argv, "-enable-actor-load-profiler")) {
         thorium_worker_pool_enable_profiler(&node->worker_pool);

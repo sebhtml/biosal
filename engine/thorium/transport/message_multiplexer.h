@@ -106,4 +106,6 @@ void thorium_message_multiplexer_test(struct thorium_message_multiplexer *self);
  */
 void thorium_message_multiplexer_flush(struct thorium_message_multiplexer *self, int index, int force);
 
+int thorium_message_multiplexer_is_disabled(struct thorium_message_multiplexer *self);
+
 #endif
