@@ -88,12 +88,16 @@ void thorium_message_multiplexer_init(struct thorium_message_multiplexer *self,
 
     if (thorium_multiplexer_policy_is_disabled(self->policy)) {
         bsal_bitmap_set_bit_uint32_t(&self->flags, FLAG_DISABLED);
-    } else if (thorium_node_name(self->node) == 0) {
+    }
+
+    if (thorium_node_name(self->node) == 0) {
         if (self->timeout_in_nanoseconds == THORIUM_DYNAMIC_TIMEOUT) {
-            printf("thorium_message_multiplexer: buffer_size_in_bytes=%d timeout_in_nanoseconds=dynamic\n",
+            printf("thorium_message_multiplexer: disabled=%d buffer_size_in_bytes=%d timeout_in_nanoseconds=dynamic\n",
+                            bsal_bitmap_get_bit_uint32_t(&self->flags, FLAG_DISABLED),
                         self->buffer_size_in_bytes);
         } else {
-            printf("thorium_message_multiplexer: buffer_size_in_bytes=%d timeout_in_nanoseconds=%d\n",
+            printf("thorium_message_multiplexer: disabled=%d buffer_size_in_bytes=%d timeout_in_nanoseconds=%d\n",
+                            bsal_bitmap_get_bit_uint32_t(&self->flags, FLAG_DISABLED),
                         self->buffer_size_in_bytes, self->timeout_in_nanoseconds);
         }
     }
