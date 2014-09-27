@@ -53,6 +53,9 @@ void process_receive(struct thorium_actor *self, struct thorium_message *message
 
 void process_ping(struct thorium_actor *self, struct thorium_message *message)
 {
+    struct process *concrete_self;
+    concrete_self = (struct process *)thorium_actor_concrete_actor(self);
+    ++concrete_self->received_ping_events;
     thorium_actor_send_reply_empty(self, ACTION_PING_REPLY);
 }
 
@@ -104,10 +107,10 @@ void process_stop(struct thorium_actor *self, struct thorium_message *message)
         previous_time = the_time;
     }
 
-    printf("%s/%d has %d intervals\n",
+    printf("%s/%d has %d intervals (in nanoseconds) ACTION_PING_REPLY events: %d, ACTION_PING events: %d\n",
                     thorium_actor_script_name(self),
                     thorium_actor_name(self),
-                    (int)bsal_vector_size(&intervals));
+                    (int)bsal_vector_size(&intervals), size, concrete_self->received_ping_events);
 
     bsal_vector_sort_int(&intervals);
 
@@ -123,13 +126,21 @@ void process_ping_reply(struct thorium_actor *self, struct thorium_message *mess
     uint64_t nanoseconds;
     struct process *concrete_self;
     int destination;
+    int size;
 
     concrete_self = (struct process *)thorium_actor_concrete_actor(self);
     nanoseconds = bsal_timer_get_nanoseconds(&concrete_self->timer);
 
     bsal_vector_push_back(&concrete_self->times, &nanoseconds);
 
-    if (bsal_vector_size(&concrete_self->times) < EVENT_COUNT) {
+    size = bsal_vector_size(&concrete_self->times);
+
+    if (size % 1000 == 0) {
+        printf("%s/%d %d/%d\n", thorium_actor_script_name(self),
+                        thorium_actor_name(self), size, EVENT_COUNT);
+    }
+
+    if (size < EVENT_COUNT) {
         process_send_ping(self);
     } else {
         destination = bsal_vector_at_as_int(&concrete_self->actors, 0);
