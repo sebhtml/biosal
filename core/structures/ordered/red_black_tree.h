@@ -25,8 +25,8 @@ struct bsal_memory_pool;
 */
 
 /*
-#define BSAL_RED_BLACK_TREE_USE_NORMAL_NODE_LIST
 */
+#define BSAL_RED_BLACK_TREE_USE_NORMAL_NODE_LIST
 #define BSAL_RED_BLACK_TREE_USE_NIL_NODE_LIST
 
 /*
