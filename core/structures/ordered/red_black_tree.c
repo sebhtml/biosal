@@ -942,7 +942,7 @@ void bsal_red_black_tree_delete_one_child(struct bsal_red_black_tree *self, stru
      * used anymore.
      */
     if (bsal_red_black_node_is_leaf(other_child)) {
-        bsal_red_black_tree_free_nil_node(self, node);
+        bsal_red_black_tree_free_nil_node(self, other_child);
     }
 }
 
