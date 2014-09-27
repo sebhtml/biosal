@@ -4,7 +4,6 @@
 #include "red_black_tree.h"
 
 #include <core/system/debugger.h>
-#include <core/system/memory_pool.h>
 #include <core/system/memory.h>
 
 #include <stdlib.h>
