@@ -25,8 +25,9 @@ struct bsal_memory_pool;
 */
 
 /*
-#define BSAL_RED_BLACK_TREE_USE_NODE_LISTS
+#define BSAL_RED_BLACK_TREE_USE_NORMAL_NODE_LIST
 */
+#define BSAL_RED_BLACK_TREE_USE_NIL_NODE_LIST
 
 /*
  * A red-black tree.
@@ -64,8 +65,10 @@ struct bsal_red_black_tree {
 
     int (*compare)(struct bsal_red_black_tree *self, void *key1, void *key2);
 
-#ifdef BSAL_RED_BLACK_TREE_USE_NODE_LISTS
+#ifdef BSAL_RED_BLACK_TREE_USE_NIL_NODE_LIST
     struct bsal_red_black_node *nil_node_list;
+#endif
+#ifdef BSAL_RED_BLACK_TREE_USE_NORMAL_NODE_LIST
     struct bsal_red_black_node *normal_node_list;
 #endif
 };
