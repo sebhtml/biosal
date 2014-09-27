@@ -135,7 +135,7 @@ void process_ping_reply(struct thorium_actor *self, struct thorium_message *mess
 
     size = bsal_vector_size(&concrete_self->times);
 
-    if (size % 1000 == 0) {
+    if (size % 10000 == 0) {
         printf("%s/%d %d/%d\n", thorium_actor_script_name(self),
                         thorium_actor_name(self), size, EVENT_COUNT);
     }

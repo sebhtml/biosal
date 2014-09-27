@@ -71,6 +71,8 @@ struct thorium_message_multiplexer {
      */
     int timeout_in_nanoseconds;
 
+    int dynamic_timeout;
+
     int original_message_count;
     int real_message_count;
 

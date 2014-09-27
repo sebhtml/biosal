@@ -22,12 +22,13 @@
  * There are 1 000 000 us in 1 second.
  * There are 1 000 000 000 ns in 1 second.
  */
-#define THORIUM_MESSAGE_MULTIPLEXER_TIME_THRESHOLD_IN_NANOSECONDS ( 512 * 1000)
+#define TIMEOUT_IN_MICRO_SECONDS 0
+#define THORIUM_MESSAGE_MULTIPLEXER_TIME_THRESHOLD_IN_NANOSECONDS ( TIMEOUT_IN_MICRO_SECONDS * 1000)
 
 void thorium_multiplexer_policy_init(struct thorium_multiplexer_policy *self)
 {
     self->threshold_buffer_size_in_bytes = THORIUM_MESSAGE_MULTIPLEXER_SIZE_THRESHOLD_IN_BYTES;
-    self->threshold_time_in_nanoseconds = THORIUM_MESSAGE_MULTIPLEXER_TIME_THRESHOLD_IN_NANOSECONDS;
+    self->threshold_time_in_nanoseconds = THORIUM_DYNAMIC_TIMEOUT;
 
     bsal_set_init(&self->actions_to_skip, sizeof(int));
 

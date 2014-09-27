@@ -90,9 +90,15 @@ void thorium_message_multiplexer_init(struct thorium_message_multiplexer *self,
         bsal_bitmap_set_bit_uint32_t(&self->flags, FLAG_DISABLE);
     }
 
-    if (thorium_node_name(self->node) == 0)
-        printf("thorium_message_multiplexer: buffer_size_in_bytes=%d timeout_in_nanoseconds=%d\n",
+    if (thorium_node_name(self->node) == 0) {
+        if (self->timeout_in_nanoseconds == THORIUM_DYNAMIC_TIMEOUT) {
+            printf("thorium_message_multiplexer: buffer_size_in_bytes=%d timeout_in_nanoseconds=dynamic\n",
+                        self->buffer_size_in_bytes);
+        } else {
+            printf("thorium_message_multiplexer: buffer_size_in_bytes=%d timeout_in_nanoseconds=%d\n",
                         self->buffer_size_in_bytes, self->timeout_in_nanoseconds);
+        }
+    }
 }
 
 void thorium_message_multiplexer_destroy(struct thorium_message_multiplexer *self)

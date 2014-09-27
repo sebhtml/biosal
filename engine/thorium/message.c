@@ -7,70 +7,70 @@
 #include <stdlib.h>
 #include <string.h>
 
-void thorium_message_init(struct thorium_message *message, int action, int count,
+void thorium_message_init(struct thorium_message *self, int action, int count,
                 void *buffer)
 {
-    message->action= action;
-    message->buffer = buffer;
-    message->count = count;
+    self->action= action;
+    self->buffer = buffer;
+    self->count = count;
 
-    message->source_actor = -1;
-    message->destination_actor = -1;
+    self->source_actor = -1;
+    self->destination_actor = -1;
 
     /* ranks are set with thorium_node_resolve */
-    message->source_node = -1;
-    message->destination_node = -1;
+    self->source_node = -1;
+    self->destination_node = -1;
 
-    message->routing_source = -1;
-    message->routing_destination = -1;
+    self->routing_source = -1;
+    self->routing_destination = -1;
 
-    message->worker = -1;
+    self->worker = -1;
 
-    thorium_message_set_type(message,  THORIUM_MESSAGE_TYPE_NONE);
+    thorium_message_set_type(self,  THORIUM_MESSAGE_TYPE_NONE);
 }
 
-void thorium_message_destroy(struct thorium_message *message)
+void thorium_message_destroy(struct thorium_message *self)
 {
-    message->source_actor = -1;
-    message->destination_actor = -1;
-    message->action= -1;
-    message->buffer = NULL;
-    message->count= 0;
+    self->source_actor = -1;
+    self->destination_actor = -1;
+    self->action= -1;
+    self->buffer = NULL;
+    self->count= 0;
 }
 
-int thorium_message_source(struct thorium_message *message)
+int thorium_message_source(struct thorium_message *self)
 {
-    return message->source_actor;
+    return self->source_actor;
 }
 
-int thorium_message_destination(struct thorium_message *message)
+int thorium_message_destination(struct thorium_message *self)
 {
-    return message->destination_actor;
+    return self->destination_actor;
 }
 
-int thorium_message_source_node(struct thorium_message *message)
+int thorium_message_source_node(struct thorium_message *self)
 {
-    return message->source_node;
+    return self->source_node;
 }
 
-int thorium_message_destination_node(struct thorium_message *message)
+int thorium_message_destination_node(struct thorium_message *self)
 {
-    return message->destination_node;
+    return self->destination_node;
 }
 
-int thorium_message_action(struct thorium_message *message)
+int thorium_message_action(struct thorium_message *self)
 {
-    return message->action;
+    return self->action;
 }
 
-void thorium_message_set_source(struct thorium_message *message, int source)
+void thorium_message_set_source(struct thorium_message *self, int source)
 {
-    message->source_actor = source;
+    self->source_actor = source;
 }
 
-void thorium_message_set_destination(struct thorium_message *message, int destination)
+void thorium_message_set_destination(struct thorium_message *self, int destination)
 {
-    message->destination_actor = destination;
+    self->destination_actor = destination;
 }
 
 void thorium_message_print(struct thorium_message *self)
@@ -84,34 +84,34 @@ void thorium_message_print(struct thorium_message *self)
     bsal_debugger_examine(self->buffer, self->count);
 }
 
-void *thorium_message_buffer(struct thorium_message *message)
+void *thorium_message_buffer(struct thorium_message *self)
 {
-    return message->buffer;
+    return self->buffer;
 }
 
-int thorium_message_count(struct thorium_message *message)
+int thorium_message_count(struct thorium_message *self)
 {
-    return message->count;
+    return self->count;
 }
 
-void thorium_message_set_source_node(struct thorium_message *message, int source)
+void thorium_message_set_source_node(struct thorium_message *self, int source)
 {
-    message->source_node = source;
+    self->source_node = source;
 }
 
-void thorium_message_set_destination_node(struct thorium_message *message, int destination)
+void thorium_message_set_destination_node(struct thorium_message *self, int destination)
 {
-    message->destination_node = destination;
+    self->destination_node = destination;
 }
 
-void thorium_message_set_buffer(struct thorium_message *message, void *buffer)
+void thorium_message_set_buffer(struct thorium_message *self, void *buffer)
 {
-    message->buffer = buffer;
+    self->buffer = buffer;
 }
 
-void thorium_message_set_action(struct thorium_message *message, int action)
+void thorium_message_set_action(struct thorium_message *self, int action)
 {
-    message->action= action;
+    self->action= action;
 }
 
 int thorium_message_metadata_size(struct thorium_message *self)
@@ -132,34 +132,34 @@ int thorium_message_read_metadata(struct thorium_message *self)
                     (char *)self->buffer + self->count);
 }
 
-void thorium_message_set_count(struct thorium_message *message, int count)
+void thorium_message_set_count(struct thorium_message *self, int count)
 {
-    message->count = count;
+    self->count = count;
 }
 
-void thorium_message_init_copy(struct thorium_message *message, struct thorium_message *old_message)
+void thorium_message_init_copy(struct thorium_message *self, struct thorium_message *old_message)
 {
-    thorium_message_init(message,
+    thorium_message_init(self,
                     thorium_message_action(old_message),
                     thorium_message_count(old_message),
                     thorium_message_buffer(old_message));
 
-    thorium_message_set_source(message,
+    thorium_message_set_source(self,
                     thorium_message_source(old_message));
-    thorium_message_set_destination(message,
+    thorium_message_set_destination(self,
                     thorium_message_destination(old_message));
 }
 
-void thorium_message_set_worker(struct thorium_message *message, int worker)
+void thorium_message_set_worker(struct thorium_message *self, int worker)
 {
-    message->worker = worker;
+    self->worker = worker;
 
-    thorium_message_set_type(message, THORIUM_MESSAGE_TYPE_WORKER_OUTBOUND);
+    thorium_message_set_type(self, THORIUM_MESSAGE_TYPE_WORKER_OUTBOUND);
 }
 
-int thorium_message_worker(struct thorium_message *message)
+int thorium_message_worker(struct thorium_message *self)
 {
-    return message->worker;
+    return self->worker;
 }
 
 void thorium_message_init_with_nodes(struct thorium_message *self, int count, void *buffer, int source,
@@ -214,3 +214,4 @@ void thorium_message_set_type(struct thorium_message *self, int type)
 {
     self->type = type;
 }
+

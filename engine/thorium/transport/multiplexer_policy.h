@@ -4,6 +4,8 @@
 
 #include <core/structures/set.h>
 
+#define THORIUM_DYNAMIC_TIMEOUT (-789)
+
 /*
  * Separate policy from mechanism
  *
