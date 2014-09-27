@@ -27,9 +27,8 @@ struct bsal_red_black_node {
     void *value;
 };
 
-void bsal_red_black_node_init(struct bsal_red_black_node *self, int key_size, void *key,
-                int value_size, void *value, struct bsal_memory_pool *pool);
-void bsal_red_black_node_destroy(struct bsal_red_black_node *self, struct bsal_memory_pool *pool);
+void bsal_red_black_node_init(struct bsal_red_black_node *self, void *key, void *value);
+void bsal_red_black_node_destroy(struct bsal_red_black_node *self);
 
 void *bsal_red_black_node_key(struct bsal_red_black_node *self);
 char bsal_red_black_node_color(struct bsal_red_black_node *self);

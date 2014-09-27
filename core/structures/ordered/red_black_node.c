@@ -9,27 +9,14 @@
 
 #include <stdlib.h>
 
-void bsal_red_black_node_init(struct bsal_red_black_node *self, int key_size, void *key, int value_size,
-                void *value, struct bsal_memory_pool *pool)
+void bsal_red_black_node_init(struct bsal_red_black_node *self, void *key, void *value)
 {
     self->parent = NULL;
     self->left_node = NULL;
     self->right_node = NULL;
 
-    self->key = NULL;
-    self->value = NULL;
-
-    /* Not a NIL leaf node.
-     */
-    if (key != NULL) {
-        self->key = bsal_memory_pool_allocate(pool, key_size);
-        bsal_memory_copy(self->key, key, key_size);
-        self->value = bsal_memory_pool_allocate(pool, value_size);
-    }
-
-    if (value != NULL) {
-        bsal_memory_copy(self->value, value, value_size);
-    }
+    self->key = key;
+    self->value = value;
 
     self->color = BSAL_COLOR_RED;
 
@@ -40,21 +27,14 @@ void bsal_red_black_node_init(struct bsal_red_black_node *self, int key_size, vo
         self->color = BSAL_COLOR_BLACK;
 }
 
-void bsal_red_black_node_destroy(struct bsal_red_black_node *self, struct bsal_memory_pool  *pool)
+void bsal_red_black_node_destroy(struct bsal_red_black_node *self)
 {
     self->parent = NULL;
     self->left_node = NULL;
     self->right_node = NULL;
 
-    if (self->key != NULL) {
-        bsal_memory_pool_free(pool, self->key);
-        self->key = NULL;
-    }
-
-    if (self->value != NULL) {
-        bsal_memory_pool_free(pool, self->value);
-        self->value = NULL;
-    }
+    self->key = NULL;
+    self->value = NULL;
 
     self->color = BSAL_COLOR_NONE;
 }

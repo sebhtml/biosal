@@ -59,6 +59,9 @@ struct bsal_red_black_tree {
 #endif
 
     int (*compare)(struct bsal_red_black_tree *self, void *key1, void *key2);
+
+    struct bsal_red_black_node *nil_node_list;
+    struct bsal_red_black_node *normal_node_list;
 };
 
 void bsal_red_black_tree_init(struct bsal_red_black_tree *self, int key_size, int value_size,
