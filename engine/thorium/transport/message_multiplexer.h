@@ -40,8 +40,8 @@ struct thorium_message;
  * A message multiplerxser.
  * The 2 options are:
  *
- * threshold_buffer_size_in_bytes
- * threshold_time_in_nanoseconds
+ * buffer_size_in_bytes
+ * timeout_in_nanoseconds
  */
 struct thorium_message_multiplexer {
     struct bsal_timer timer;
@@ -57,19 +57,19 @@ struct thorium_message_multiplexer {
     /*
      * This is the maximum buffer size for a multiplexed message.
      * A multiplexed message contains smaller messages. These smaller
-     * messages must be smaller than <threshold_buffer_size_in_bytes>
+     * messages must be smaller than <buffer_size_in_bytes>
      */
-    int threshold_buffer_size_in_bytes;
+    int buffer_size_in_bytes;
 
     /*
      * At some point (in thorium_message_multiplexer_test),
      * the multiplexer will flush messages even if they are below
-     * <threshold_buffer_size_in_bytes>.
+     * <buffer_size_in_bytes>.
      *
-     * To do so, the maximum duration of <threshold_time_in_nanoseconds>
+     * To do so, the maximum duration of <timeout_in_nanoseconds>
      * nanoseconds is utilized.
      */
-    int threshold_time_in_nanoseconds;
+    int timeout_in_nanoseconds;
 
     int original_message_count;
     int real_message_count;

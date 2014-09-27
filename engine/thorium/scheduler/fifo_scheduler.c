@@ -9,7 +9,7 @@
 
 struct thorium_scheduler_interface thorium_fifo_scheduler_implementation = {
     .identifier = THORIUM_FIFO_SCHEDULER,
-    .name = "thorium_fifo_scheduler",
+    .name = "fifo_scheduler",
     .object_size = sizeof(struct thorium_fifo_scheduler),
     .init = thorium_fifo_scheduler_init,
     .destroy = thorium_fifo_scheduler_destroy,

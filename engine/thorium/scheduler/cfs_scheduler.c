@@ -21,7 +21,7 @@
 
 struct thorium_scheduler_interface thorium_cfs_scheduler_implementation = {
     .identifier = THORIUM_CFS_SCHEDULER,
-    .name = "thorium_cfs_scheduler",
+    .name = "cfs_scheduler",
     .object_size = sizeof(struct thorium_cfs_scheduler),
     .init = thorium_cfs_scheduler_init,
     .destroy = thorium_cfs_scheduler_destroy,

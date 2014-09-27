@@ -378,8 +378,7 @@ void thorium_node_init(struct thorium_node *node, int *argc, char ***argv)
     bsal_set_affinity(processor);
 
     if (bsal_bitmap_get_bit_uint32_t(&node->flags, FLAG_PRINT_LOAD)) {
-        printf("%s booted node %d (%d nodes), threads: %d, workers: %d, pacing: %d\n",
-                THORIUM_NODE_THORIUM_PREFIX,
+        printf("thorium_node: booted node %d (%d nodes), threads: %d, workers: %d, pacing: %d\n",
                     node->name,
             node->nodes,
             node->threads,
@@ -845,8 +844,7 @@ int thorium_node_run(struct thorium_node *node)
 
         load = thorium_worker_pool_get_computation_load(&node->worker_pool);
 
-        printf("%s node/%d COMPUTATION LOAD %.2f\n",
-                    THORIUM_NODE_THORIUM_PREFIX,
+        printf("thorium_node: node/%d COMPUTATION LOAD %.2f\n",
                     thorium_node_name(node),
                     load);
     }
@@ -1517,8 +1515,7 @@ void thorium_node_notify_death(struct thorium_node *node, struct thorium_actor *
     if (node->alive_actors == 0
                     && bsal_bitmap_get_bit_uint32_t(&node->flags, FLAG_PRINT_LOAD)) {
 
-        printf("%s all local actors are dead now, %d alive actors, %d dead actors\n",
-                        THORIUM_NODE_THORIUM_PREFIX,
+        printf("thorium_node: all local actors are dead now, %d alive actors, %d dead actors\n",
                         node->alive_actors, node->dead_actors);
     }
 
@@ -1598,7 +1595,7 @@ struct thorium_script *thorium_node_find_script(struct thorium_node *node, int i
 void thorium_node_print_counters(struct thorium_node *node)
 {
     printf("----------------------------------------------\n");
-    printf("%s Counters for node/%d\n", THORIUM_NODE_THORIUM_PREFIX,
+    printf("thorium_node: counters for node/%d\n",
                     thorium_node_name(node));
     bsal_counter_print(&node->counter, thorium_node_name(node));
 }
@@ -1931,8 +1928,7 @@ void thorium_node_run_loop(struct thorium_node *node)
                      * and
                      * the heap size.
                      */
-                    printf("%s node/%d METRICS AliveActorCount: %d ActiveRequestCount: %d ByteCount: %" PRIu64 " / %" PRIu64 "\n",
-                                    THORIUM_NODE_THORIUM_PREFIX,
+                    printf("thorium_node: node/%d METRICS AliveActorCount: %d ActiveRequestCount: %d ByteCount: %" PRIu64 " / %" PRIu64 "\n",
                                     node->name,
                                     node->alive_actors,
                                     thorium_transport_get_active_request_count(&node->transport),
