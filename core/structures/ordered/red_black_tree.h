@@ -25,6 +25,10 @@ struct bsal_memory_pool;
 */
 
 /*
+#define BSAL_RED_BLACK_TREE_USE_NODE_LISTS
+*/
+
+/*
  * A red-black tree.
  *
  * The 5 algorithmic rules are:
@@ -60,8 +64,10 @@ struct bsal_red_black_tree {
 
     int (*compare)(struct bsal_red_black_tree *self, void *key1, void *key2);
 
+#ifdef BSAL_RED_BLACK_TREE_USE_NODE_LISTS
     struct bsal_red_black_node *nil_node_list;
     struct bsal_red_black_node *normal_node_list;
+#endif
 };
 
 void bsal_red_black_tree_init(struct bsal_red_black_tree *self, int key_size, int value_size,

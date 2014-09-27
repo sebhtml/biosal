@@ -102,4 +102,6 @@ void bsal_debugger_examine(void *pointer, int bytes);
 
 #endif
 
+#define BSAL_DEBUGGER_ASSERT_NOT_NULL(pointer) \
+        BSAL_DEBUGGER_ASSERT(pointer != NULL)
 #endif
