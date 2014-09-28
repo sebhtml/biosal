@@ -533,7 +533,7 @@ void bsal_unitig_visitor_mark_vertex(struct thorium_actor *self, struct bsal_dna
     new_count = bsal_dna_kmer_pack_size(kmer, concrete_self->kmer_length,
             &concrete_self->codec);
     new_count += sizeof(flag);
-    new_buffer = bsal_memory_pool_allocate(ephemeral_memory, new_count);
+    new_buffer = thorium_actor_allocate(self, new_count);
 
     position = 0;
     position += bsal_dna_kmer_pack(kmer, new_buffer, concrete_self->kmer_length, &concrete_self->codec);
@@ -550,6 +550,4 @@ void bsal_unitig_visitor_mark_vertex(struct thorium_actor *self, struct bsal_dna
     thorium_message_init(&new_message, ACTION_SET_VERTEX_FLAG, new_count, new_buffer);
     thorium_actor_send(self, store, &new_message);
     thorium_message_destroy(&new_message);
-
-    bsal_memory_pool_free(ephemeral_memory, new_buffer);
 }

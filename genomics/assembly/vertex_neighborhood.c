@@ -147,7 +147,7 @@ void bsal_vertex_neighborhood_get_remote_memory(struct bsal_vertex_neighborhood 
 
     new_count = bsal_dna_kmer_pack_size(kmer, self->kmer_length,
                 self->codec);
-    new_buffer = bsal_memory_pool_allocate(ephemeral_memory, new_count);
+    new_buffer = thorium_actor_allocate(self->actor, new_count);
     bsal_dna_kmer_pack(kmer, new_buffer, self->kmer_length, self->codec);
 
     size = bsal_vector_size(self->graph_stores);
@@ -158,8 +158,6 @@ void bsal_vertex_neighborhood_get_remote_memory(struct bsal_vertex_neighborhood 
     thorium_message_init(&new_message, ACTION_ASSEMBLY_GET_VERTEX, new_count, new_buffer);
     thorium_actor_send(self->actor, store, &new_message);
     thorium_message_destroy(&new_message);
-
-    bsal_memory_pool_free(ephemeral_memory, new_buffer);
 }
 
 int bsal_vertex_neighborhood_execute(struct bsal_vertex_neighborhood *self)

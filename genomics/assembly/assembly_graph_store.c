@@ -440,7 +440,7 @@ void bsal_assembly_graph_store_yield_reply(struct thorium_actor *self, struct th
 
     new_count = bsal_map_pack_size(&concrete_self->coverage_distribution);
 
-    new_buffer = bsal_memory_pool_allocate(ephemeral_memory, new_count);
+    new_buffer = thorium_actor_allocate(self, new_count);
 
     bsal_map_pack(&concrete_self->coverage_distribution, new_buffer);
 
@@ -459,8 +459,6 @@ void bsal_assembly_graph_store_yield_reply(struct thorium_actor *self, struct th
 
     thorium_actor_send_empty(self, concrete_self->source,
                             ACTION_PUSH_DATA_REPLY);
-
-    bsal_memory_pool_free(ephemeral_memory, new_buffer);
 }
 
 void bsal_assembly_graph_store_push_kmer_block(struct thorium_actor *self, struct thorium_message *message)
@@ -889,11 +887,10 @@ void bsal_assembly_graph_store_yield_reply_summary(struct thorium_actor *self, s
          */
 
         new_count = bsal_assembly_graph_summary_pack_size(&concrete_self->graph_summary);
-        new_buffer = bsal_memory_pool_allocate(ephemeral_memory, new_count);
+        new_buffer = thorium_actor_allocate(self, new_count);
         bsal_assembly_graph_summary_pack(&concrete_self->graph_summary, new_buffer);
         thorium_actor_send_buffer(self, concrete_self->source_for_summary,
                         ACTION_ASSEMBLY_GET_SUMMARY_REPLY, new_count, new_buffer);
-        bsal_memory_pool_free(ephemeral_memory, new_buffer);
 
         /*
          * Reset the iterator.
@@ -961,7 +958,7 @@ void bsal_assembly_graph_store_get_vertex(struct thorium_actor *self, struct tho
     bsal_dna_kmer_destroy(&kmer, ephemeral_memory);
 
     new_count = bsal_assembly_vertex_pack_size(&vertex);
-    new_buffer = bsal_memory_pool_allocate(ephemeral_memory, new_count);
+    new_buffer = thorium_actor_allocate(self, new_count);
 
     bsal_assembly_vertex_pack(&vertex, new_buffer);
 
@@ -971,7 +968,6 @@ void bsal_assembly_graph_store_get_vertex(struct thorium_actor *self, struct tho
     thorium_actor_send_reply(self, &new_message);
 
     thorium_message_destroy(&new_message);
-    bsal_memory_pool_free(ephemeral_memory, new_buffer);
 }
 
 void bsal_assembly_graph_store_get_starting_vertex(struct thorium_actor *self, struct thorium_message *message)
@@ -1048,7 +1044,7 @@ void bsal_assembly_graph_store_get_starting_vertex(struct thorium_actor *self, s
 
         new_count = bsal_dna_kmer_pack_size(&transport_kmer, concrete_self->kmer_length,
                         &concrete_self->transport_codec);
-        new_buffer = bsal_memory_pool_allocate(ephemeral_memory, new_count);
+        new_buffer = thorium_actor_allocate(self, new_count);
 
         bsal_dna_kmer_pack(&transport_kmer, new_buffer, concrete_self->kmer_length,
                         &concrete_self->transport_codec);
@@ -1076,7 +1072,6 @@ void bsal_assembly_graph_store_get_starting_vertex(struct thorium_actor *self, s
         bsal_memory_pool_free(ephemeral_memory, sequence);
 
         bsal_dna_kmer_destroy(&storage_kmer, ephemeral_memory);
-        bsal_memory_pool_free(ephemeral_memory, new_buffer);
 
         return;
     }

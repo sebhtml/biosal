@@ -101,8 +101,14 @@ void thorium_actor_send_reply_uint64_t(struct thorium_actor *actor, int tag, uin
 void thorium_actor_send_int(struct thorium_actor *actor, int destination, int tag, int value)
 {
     struct thorium_message message;
+    void *buffer;
+    int count;
 
-    thorium_message_init(&message, tag, sizeof(value), &value);
+    count = sizeof(value);
+    buffer = thorium_actor_allocate(actor, count);
+    bsal_memory_copy(buffer, &value, count);
+
+    thorium_message_init(&message, tag, count, buffer);
     thorium_actor_send(actor, destination, &message);
     thorium_message_destroy(&message);
 }

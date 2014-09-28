@@ -479,7 +479,7 @@ void bsal_unitig_walker_get_starting_kmer_reply(struct thorium_actor *self, stru
 
     new_count = count;
     /*new_count += sizeof(concrete_self->path_index);*/
-    new_buffer = bsal_memory_pool_allocate(ephemeral_memory, new_count);
+    new_buffer = thorium_actor_allocate(self, new_count);
     bsal_memory_copy(new_buffer, buffer, count);
     /*bsal_memory_copy(new_buffer + count, &concrete_self->path_index, sizeof(concrete_self->path_index));*/
 
@@ -490,8 +490,6 @@ void bsal_unitig_walker_get_starting_kmer_reply(struct thorium_actor *self, stru
     thorium_message_init(&new_message, ACTION_ASSEMBLY_GET_VERTEX, new_count, new_buffer);
     thorium_actor_send_reply(self, &new_message);
     thorium_message_destroy(&new_message);
-
-    bsal_memory_pool_free(ephemeral_memory, new_buffer);
 }
 
 void bsal_unitig_walker_get_vertex_reply_starting_vertex(struct thorium_actor *self, struct thorium_message *message)
@@ -660,7 +658,7 @@ void bsal_unitig_walker_get_vertices_and_select(struct thorium_actor *self, stru
                     &concrete_self->codec);
         /*new_count += sizeof(concrete_self->path_index);*/
 
-        new_buffer = bsal_memory_pool_allocate(ephemeral_memory, new_count);
+        new_buffer = thorium_actor_allocate(self, new_count);
 
         bsal_dna_kmer_pack(child_kmer_to_fetch, new_buffer,
                     concrete_self->kmer_length,
@@ -683,8 +681,6 @@ void bsal_unitig_walker_get_vertices_and_select(struct thorium_actor *self, stru
         thorium_actor_send(self, store, &new_message);
         thorium_message_destroy(&new_message);
 
-        bsal_memory_pool_free(ephemeral_memory, new_buffer);
-
     /* Fetch a parent vertex.
      */
     } else if (concrete_self->current_parent < parent_count) {
@@ -698,7 +694,7 @@ void bsal_unitig_walker_get_vertices_and_select(struct thorium_actor *self, stru
         new_count += sizeof(concrete_self->path_index);
         */
 
-        new_buffer = bsal_memory_pool_allocate(ephemeral_memory, new_count);
+        new_buffer = thorium_actor_allocate(self, new_count);
 
         bsal_dna_kmer_pack(parent_kmer_to_fetch, new_buffer,
                     concrete_self->kmer_length,
@@ -730,8 +726,6 @@ void bsal_unitig_walker_get_vertices_and_select(struct thorium_actor *self, stru
         thorium_message_init(&new_message, ACTION_ASSEMBLY_GET_VERTEX, new_count, new_buffer);
         thorium_actor_send(self, store, &new_message);
         thorium_message_destroy(&new_message);
-
-        bsal_memory_pool_free(ephemeral_memory, new_buffer);
 
     } else {
 
@@ -835,7 +829,7 @@ void bsal_unitig_walker_get_vertex_reply(struct thorium_actor *self, struct thor
         new_count += sizeof(last_path_index);
         new_count += sizeof(length);
 
-        new_buffer = bsal_memory_pool_allocate(ephemeral_memory, new_count);
+        new_buffer = thorium_actor_allocate(self, new_count);
 
         position = 0;
         bsal_memory_copy(new_buffer + position, &last_path_index, sizeof(last_path_index));
@@ -858,8 +852,6 @@ void bsal_unitig_walker_get_vertex_reply(struct thorium_actor *self, struct thor
 
         thorium_actor_send_buffer(self, last_actor, ACTION_NOTIFY, new_count,
                         new_buffer);
-
-        bsal_memory_pool_free(ephemeral_memory, new_buffer);
 
     } else {
 
@@ -1650,7 +1642,7 @@ void bsal_unitig_walker_write(struct thorium_actor *self, uint64_t name,
      * Generate message.
      */
 
-    message_buffer = bsal_memory_pool_allocate(ephemeral_memory, required + 1);
+    message_buffer = thorium_actor_allocate(self, required + 1);
 
     position = 0;
     position += sprintf(message_buffer + position,
@@ -1681,7 +1673,6 @@ void bsal_unitig_walker_write(struct thorium_actor *self, uint64_t name,
                     ACTION_WRITE, position, message_buffer);
 
     bsal_memory_pool_free(ephemeral_memory, buffer);
-    bsal_memory_pool_free(ephemeral_memory, message_buffer);
 }
 
 void bsal_unitig_walker_make_decision(struct thorium_actor *self)
@@ -2162,7 +2153,7 @@ void bsal_unitig_walker_mark_vertex(struct thorium_actor *self, struct bsal_dna_
                 &concrete_self->codec);
     new_count += sizeof(concrete_self->path_index);
 
-    new_buffer = bsal_memory_pool_allocate(ephemeral_memory, new_count);
+    new_buffer = thorium_actor_allocate(self, new_count);
     position = 0;
     position += bsal_dna_kmer_pack(kmer, new_buffer,
                 concrete_self->kmer_length,
@@ -2182,8 +2173,6 @@ void bsal_unitig_walker_mark_vertex(struct thorium_actor *self, struct bsal_dna_
     thorium_message_init(&new_message, ACTION_MARK_VERTEX_AS_VISITED, new_count, new_buffer);
     thorium_actor_send(self, store, &new_message);
     thorium_message_destroy(&new_message);
-
-    bsal_memory_pool_free(ephemeral_memory, new_buffer);
 }
 
 void bsal_unitig_walker_normalize_cycle(struct thorium_actor *self, int length, char *sequence)
