@@ -317,10 +317,43 @@ void thorium_worker_send(struct thorium_worker *worker, struct thorium_message *
     int count;
     void *old_buffer;
 
-    count = thorium_message_count(message);
+    old_buffer = thorium_message_buffer(message);
 
-    /* use slab allocator */
-    buffer = thorium_worker_allocate(worker, count);
+    /*
+     * Allocate a buffer if the actor provided a NULL buffer or if it
+     * provided its own buffer.
+     */
+    if (old_buffer == NULL
+                    || old_buffer != worker->zero_copy_buffer) {
+
+        count = thorium_message_count(message);
+        /* use slab allocator */
+        buffer = thorium_worker_allocate(worker, count);
+
+        /* according to
+         * http://stackoverflow.com/questions/3751797/can-i-call-bsal_memory_copy-and-bsal_memory_move-with-number-of-bytes-set-to-zero
+         * memcpy works with a count of 0, but the addresses must be valid
+         * nonetheless
+         *
+         * Copy the message data.
+         */
+        if (count > 0) {
+
+#ifdef DISPLAY_COPY_WARNING
+            printf("thorium_worker: Warning, not using zero-copy path, action %x count %d source %d destination %d\n",
+                            thorium_message_action(message), count, thorium_message_source(message),
+                            thorium_message_destination(message));
+#endif
+            bsal_memory_copy(buffer, old_buffer, count);
+        }
+
+        thorium_message_set_buffer(message, buffer);
+    }
+
+    /*
+     * Always write metadata.
+     */
+    thorium_message_write_metadata(message);
 
 #ifdef THORIUM_WORKER_DEBUG_INJECTION
     ++worker->counter_allocated_outbound_buffers;
@@ -337,21 +370,6 @@ void thorium_worker_send(struct thorium_worker *worker, struct thorium_message *
     printf("thorium_worker_send old buffer: %p\n",
                     thorium_message_buffer(message));
 #endif
-
-    /* according to
-     * http://stackoverflow.com/questions/3751797/can-i-call-bsal_memory_copy-and-bsal_memory_move-with-number-of-bytes-set-to-zero
-     * bsal_memory_copy works with a count of 0, but the addresses must be valid
-     * nonetheless
-     *
-     * Copy the message data.
-     */
-    if (count > 0) {
-        old_buffer = thorium_message_buffer(message);
-        bsal_memory_copy(buffer, old_buffer, count);
-    }
-
-    thorium_message_set_buffer(message, buffer);
-    thorium_message_write_metadata(message);
 
 #ifdef THORIUM_BUG_594
     if (thorium_message_action(&copy) == 30202) {

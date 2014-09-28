@@ -428,7 +428,7 @@ void bsal_assembly_arc_kernel_push_sequence_data_block(struct thorium_actor *sel
 
     new_count = bsal_assembly_arc_block_pack_size(&output_block, concrete_self->kmer_length,
                     &concrete_self->codec);
-    new_buffer = bsal_memory_pool_allocate(ephemeral_memory, new_count);
+    new_buffer = thorium_actor_allocate(self, new_count);
 
     bsal_assembly_arc_block_pack(&output_block, new_buffer, concrete_self->kmer_length,
                     &concrete_self->codec);
@@ -446,7 +446,6 @@ void bsal_assembly_arc_kernel_push_sequence_data_block(struct thorium_actor *sel
     thorium_message_destroy(&new_message);
 
     bsal_memory_pool_free(ephemeral_memory, sequence);
-    bsal_memory_pool_free(ephemeral_memory, new_buffer);
 
     BSAL_DEBUGGER_LEAK_DETECTION_END(ephemeral_memory, data_block);
 }
