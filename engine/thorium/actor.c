@@ -2162,3 +2162,8 @@ void thorium_actor_write_profile(struct thorium_actor *self,
     thorium_load_profiler_write(&self->profiler, thorium_actor_script_name(self),
                     thorium_actor_name(self), writer);
 }
+
+void *thorium_actor_allocate(struct thorium_actor *self, size_t count)
+{
+    return thorium_worker_allocate(self->worker, count);
+}

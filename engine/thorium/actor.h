@@ -439,4 +439,6 @@ void thorium_actor_write_profile(struct thorium_actor *self,
 
 #endif
 
+void *thorium_actor_allocate(struct thorium_actor *self, size_t count);
+
 #endif

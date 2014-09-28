@@ -313,21 +313,14 @@ struct thorium_node *thorium_worker_node(struct thorium_worker *worker)
 
 void thorium_worker_send(struct thorium_worker *worker, struct thorium_message *message)
 {
-    struct thorium_message copy;
     void *buffer;
     int count;
-    int metadata_size;
-    int all;
     void *old_buffer;
 
-    bsal_memory_copy(&copy, message, sizeof(struct thorium_message));
-    count = thorium_message_count(&copy);
-    metadata_size = thorium_message_metadata_size(message);
-    all = count + metadata_size;
+    count = thorium_message_count(message);
 
-    /* use slab allocator to allocate buffer... */
-    buffer = (char *)bsal_memory_pool_allocate(&worker->outbound_message_memory_pool,
-                    all * sizeof(char));
+    /* use slab allocator */
+    buffer = thorium_worker_allocate(worker, count);
 
 #ifdef THORIUM_WORKER_DEBUG_INJECTION
     ++worker->counter_allocated_outbound_buffers;
@@ -355,12 +348,10 @@ void thorium_worker_send(struct thorium_worker *worker, struct thorium_message *
     if (count > 0) {
         old_buffer = thorium_message_buffer(message);
         bsal_memory_copy(buffer, old_buffer, count);
-
-        /* TODO use slab allocator */
     }
 
-    thorium_message_set_buffer(&copy, buffer);
-    thorium_message_write_metadata(&copy);
+    thorium_message_set_buffer(message, buffer);
+    thorium_message_write_metadata(message);
 
 #ifdef THORIUM_BUG_594
     if (thorium_message_action(&copy) == 30202) {
@@ -380,7 +371,8 @@ void thorium_worker_send(struct thorium_worker *worker, struct thorium_message *
      * with the node.
      */
 
-    thorium_worker_enqueue_message(worker, &copy);
+    thorium_worker_enqueue_message(worker, message);
+    worker->zero_copy_buffer = NULL;
 }
 
 void thorium_worker_start(struct thorium_worker *worker, int processor)
@@ -1638,4 +1630,22 @@ void thorium_worker_enable_profiler(struct thorium_worker *self)
     bsal_buffered_file_writer_init(&self->load_profile_writer, file_name);
 
     bsal_buffered_file_writer_printf(&self->load_profile_writer, "start_time    end_time    actor   script\n");
+}
+
+void *thorium_worker_allocate(struct thorium_worker *self, size_t count)
+{
+    void *buffer;
+    int all;
+    int metadata_size;
+
+    metadata_size = THORIUM_MESSAGE_METADATA_SIZE;
+    all = count + metadata_size;
+
+    /* use slab allocator to allocate buffer... */
+    buffer = (char *)bsal_memory_pool_allocate(&self->outbound_message_memory_pool,
+                    all * sizeof(char));
+
+    self->zero_copy_buffer = buffer;
+
+    return buffer;
 }

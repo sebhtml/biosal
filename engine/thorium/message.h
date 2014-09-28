@@ -11,6 +11,8 @@
 #define THORIUM_MESSAGE_TYPE_NODE_OUTBOUND      2
 #define THORIUM_MESSAGE_TYPE_WORKER_OUTBOUND    3
 
+#define THORIUM_MESSAGE_METADATA_SIZE (3 * sizeof(int))
+
 /*
  * This is a message.
  */

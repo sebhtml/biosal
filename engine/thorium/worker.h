@@ -80,6 +80,11 @@ struct thorium_worker {
     char waiting_is_enabled;
 
     /*
+     * Buffer for zero-copy send.
+     */
+    void *zero_copy_buffer;
+
+    /*
      * The worker pool push actors to schedule on this
      * ring
      */
@@ -219,5 +224,7 @@ int thorium_worker_spawn(struct thorium_worker *self, int script);
 void thorium_worker_examine(struct thorium_worker *self);
 void thorium_worker_enable_profiler(struct thorium_worker *self);
 int thorium_worker_get_scheduled_actor_count(struct thorium_worker *self);
+
+void *thorium_worker_allocate(struct thorium_worker *self, size_t count);
 
 #endif
