@@ -75,9 +75,9 @@ void *bsal_memory_allocate_private(size_t size, const char *function, const char
 #endif
     pointer = malloc(size);
 
-#ifdef BSAL_MEMORY_DEBUG_DETAIL
+#ifdef BSAL_MEMORY_DEBUG
     if (file != NULL) {
-        printf("BSAL_MEMORY_DEBUG bsal_memory_allocate %d bytes %p %s %s %d key=%x\n",
+        printf("BSAL_MEMORY_DEBUG bsal_memory_allocate %d bytes %p %s %s %d key= %x\n",
                     (int)size, pointer, function, file, line, key);
     }
 
@@ -114,9 +114,9 @@ void *bsal_memory_allocate_private(size_t size, const char *function, const char
 
 void bsal_memory_free_private(void *pointer, const char *function, const char *file, int line, int key)
 {
-#ifdef BSAL_MEMORY_DEBUG_DETAIL
+#ifdef BSAL_MEMORY_DEBUG
     if (file != NULL) {
-        printf("BSAL_MEMORY_DEBUG bsal_memory_free %p %s %s %d key=%x\n",
+        printf("BSAL_MEMORY_DEBUG bsal_memory_free %p %s %s %d key= %x\n",
                    pointer, function, file, line, key);
     }
 #endif

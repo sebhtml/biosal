@@ -27,14 +27,8 @@
  * Show memory allocation events.
  */
 /*
-#define BSAL_MEMORY_DEBUG_DETAIL
-*/
-
-/*
- */
-#ifdef BSAL_MEMORY_DEBUG_DETAIL
 #define BSAL_MEMORY_DEBUG
-#endif
+*/
 
 /* Intel processors usually have a cache line of 64 bytes.
  * At least, it is the case for Sandy Bridge, Ivy Bridge, and Haswell.
