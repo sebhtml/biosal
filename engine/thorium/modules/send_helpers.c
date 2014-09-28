@@ -25,18 +25,14 @@ void thorium_actor_send_vector(struct thorium_actor *actor, int destination,
     int count;
     struct thorium_message message;
     void *buffer;
-    struct bsal_memory_pool *ephemeral_memory;
 
-    ephemeral_memory = thorium_actor_get_ephemeral_memory(actor);
     count = bsal_vector_pack_size(vector);
-    buffer = bsal_memory_pool_allocate(ephemeral_memory, count);
+    buffer = thorium_actor_allocate(actor, count);
     bsal_vector_pack(vector, buffer);
 
     thorium_message_init(&message, tag, count, buffer);
 
     thorium_actor_send(actor, destination, &message);
-
-    bsal_memory_pool_free(ephemeral_memory, buffer);
 
     thorium_message_destroy(&message);
 }
@@ -59,7 +55,14 @@ void thorium_actor_send_to_self_empty(struct thorium_actor *actor, int tag)
 void thorium_actor_send_empty(struct thorium_actor *actor, int destination, int tag)
 {
     struct thorium_message message;
+#if 0
+    void *buffer;
 
+    /*
+     * Allocate a buffer for metadata.
+     */
+    buffer = thorium_actor_allocate(actor, 0);
+#endif
     thorium_message_init(&message, tag, 0, NULL);
     thorium_actor_send(actor, destination, &message);
     thorium_message_destroy(&message);
