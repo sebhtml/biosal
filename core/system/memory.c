@@ -29,6 +29,11 @@
 
 #define FAST_MEMORY
 
+#define DEBUG_ANY 42
+
+#define DEBUG_KEY DEBUG_ANY
+#define DEBUG_SIZE DEBUG_ANY
+
 void *bsal_memory_allocate_private(size_t size, const char *function, const char *file, int line, int key)
 {
     void *pointer;
@@ -76,16 +81,22 @@ void *bsal_memory_allocate_private(size_t size, const char *function, const char
     pointer = malloc(size);
 
 #ifdef BSAL_MEMORY_DEBUG
-    if (file != NULL) {
-        printf("BSAL_MEMORY_DEBUG bsal_memory_allocate %d bytes %p %s %s %d key= %x\n",
-                    (int)size, pointer, function, file, line, key);
-    }
 
-#if 0
+    /*
+     * 8 24 32 64 320 1280 2560
+     */
+    if ((DEBUG_KEY == DEBUG_ANY || key == (int)DEBUG_KEY)
+                            && (DEBUG_SIZE == DEBUG_ANY || size == DEBUG_SIZE)) {
+        printf("BSAL_MEMORY_DEBUG bsal_memory_allocate %d bytes %p %s %s %d key= 0x%x\n",
+                    (int)size, pointer, function, file, line, key);
+
+#if 1
     /*
      * Ask the tracer to print a stack
      */
-    bsal_tracer_print_stack_backtrace();
+        if (DEBUG_KEY != DEBUG_ANY && DEBUG_SIZE != DEBUG_ANY)
+            bsal_tracer_print_stack_backtrace();
+    }
 #endif
 
 #endif
@@ -115,8 +126,8 @@ void *bsal_memory_allocate_private(size_t size, const char *function, const char
 void bsal_memory_free_private(void *pointer, const char *function, const char *file, int line, int key)
 {
 #ifdef BSAL_MEMORY_DEBUG
-    if (file != NULL) {
-        printf("BSAL_MEMORY_DEBUG bsal_memory_free %p %s %s %d key= %x\n",
+    if (DEBUG_KEY == DEBUG_ANY || key == (int)DEBUG_KEY) {
+        printf("BSAL_MEMORY_DEBUG bsal_memory_free %p %s %s %d key= 0x%x\n",
                    pointer, function, file, line, key);
     }
 #endif

@@ -77,6 +77,8 @@ void bsal_unitig_visitor_destroy(struct thorium_actor *self)
                     thorium_actor_script_name(self), thorium_actor_name(self),
                     concrete_self->visited, concrete_self->unitig_flags);
 
+    bsal_dna_codec_destroy(&concrete_self->codec);
+
     concrete_self->manager = -1;
     concrete_self->completed = 0;
 

@@ -499,7 +499,7 @@ void bsal_memory_pool_set_name(struct bsal_memory_pool *self, int name)
 
 void bsal_memory_pool_examine(struct bsal_memory_pool *self)
 {
-    printf("DEBUG_POOL Name= %x"
+    printf("DEBUG_POOL Name= 0x%x"
                     " ActiveSegments= %d (%d - %d)"
                     " AllocatedBytes= %" PRIu64 " (%" PRIu64 " - %" PRIu64 ")"
                     "\n",
