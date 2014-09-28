@@ -6,6 +6,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define MEMORY_WRITER 0x17f124a5
+
 void bsal_buffered_file_writer_init(struct bsal_buffered_file_writer *self, const char *file)
 {
     bsal_string_init(&self->file, file);
@@ -17,13 +19,13 @@ void bsal_buffered_file_writer_init(struct bsal_buffered_file_writer *self, cons
      */
     self->buffer_capacity = 8388608;
     self->buffer_length = 0;
-    self->buffer = bsal_memory_allocate(self->buffer_capacity);
+    self->buffer = bsal_memory_allocate(self->buffer_capacity, MEMORY_WRITER);
 
     /*
      * Buffer for format
      */
     self->format_buffer_capacity = 2048;
-    self->format_buffer = bsal_memory_allocate(self->format_buffer_capacity);
+    self->format_buffer = bsal_memory_allocate(self->format_buffer_capacity, MEMORY_WRITER);
 
     self->null_file = fopen("/dev/null", "w");
 }
@@ -44,7 +46,7 @@ void bsal_buffered_file_writer_destroy(struct bsal_buffered_file_writer *self)
 
     if (self->buffer != NULL) {
 
-        bsal_memory_free(self->buffer);
+        bsal_memory_free(self->buffer, MEMORY_WRITER);
 
         self->buffer = NULL;
         self->buffer_capacity = 0;
@@ -53,7 +55,7 @@ void bsal_buffered_file_writer_destroy(struct bsal_buffered_file_writer *self)
 
     if (self->format_buffer != NULL) {
 
-        bsal_memory_free(self->format_buffer);
+        bsal_memory_free(self->format_buffer, MEMORY_WRITER);
 
         self->format_buffer = NULL;
         self->format_buffer_capacity = 0;
@@ -126,11 +128,11 @@ int bsal_buffered_file_writer_printf(struct bsal_buffered_file_writer *self, con
      */
     if (bytes > self->format_buffer_capacity) {
 
-        bsal_memory_free(self->format_buffer);
+        bsal_memory_free(self->format_buffer, MEMORY_WRITER);
 
         self->format_buffer_capacity = bytes;
 
-        self->format_buffer = bsal_memory_allocate(self->format_buffer_capacity);
+        self->format_buffer = bsal_memory_allocate(self->format_buffer_capacity, MEMORY_WRITER);
     }
 
     /*

@@ -43,7 +43,7 @@ void root_init(struct thorium_actor *actor)
     /* TODO remove this, SCRIPT_INPUT_CONTROLLER should pull
      * its dependencies...
      */
-    thorium_actor_add_script(actor, ACTION_INPUT_SCRIPT_STREAM,
+    thorium_actor_add_script(actor, SCRIPT_INPUT_STREAM,
                         &bsal_input_stream_script);
 }
 

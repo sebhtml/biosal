@@ -19,7 +19,7 @@ int main(int argc, char **argv)
     expected_value = 42;
     actual_value = 100;
 
-    buffer = bsal_memory_allocate(sizeof(expected_value));
+    buffer = bsal_memory_allocate(sizeof(expected_value), -1);
 
     struct bsal_packer packer;
 
@@ -42,7 +42,7 @@ int main(int argc, char **argv)
 
     TEST_INT_EQUALS(actual_value, expected_value);
 
-    bsal_memory_free(buffer);
+    bsal_memory_free(buffer, -1);
 
     END_TESTS();
 

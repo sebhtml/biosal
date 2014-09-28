@@ -25,6 +25,8 @@
 #define OPERATION_ALLOCATE  0
 #define OPERATION_FREE      1
 
+#define MEMORY_MEMORY_POOL 0xc170626e
+
 void bsal_memory_pool_init(struct bsal_memory_pool *self, int block_size, int name)
 {
     bsal_map_init(&self->recycle_bin, sizeof(int), sizeof(struct bsal_queue));
@@ -32,7 +34,7 @@ void bsal_memory_pool_init(struct bsal_memory_pool *self, int block_size, int na
     bsal_set_init(&self->large_blocks, sizeof(void *));
 
     self->current_block = NULL;
-    self->profile_name = name;
+    self->name = name;
 
     bsal_queue_init(&self->dried_blocks, sizeof(struct bsal_memory_block *));
     bsal_queue_init(&self->ready_blocks, sizeof(struct bsal_memory_block *));
@@ -84,7 +86,7 @@ void bsal_memory_pool_destroy(struct bsal_memory_pool *self)
      */
     while (bsal_queue_dequeue(&self->dried_blocks, &block)) {
         bsal_memory_block_destroy(block);
-        bsal_memory_free(block);
+        bsal_memory_free(block, self->name);
     }
     bsal_queue_destroy(&self->dried_blocks);
 
@@ -92,7 +94,7 @@ void bsal_memory_pool_destroy(struct bsal_memory_pool *self)
      */
     while (bsal_queue_dequeue(&self->ready_blocks, &block)) {
         bsal_memory_block_destroy(block);
-        bsal_memory_free(block);
+        bsal_memory_free(block, self->name);
     }
     bsal_queue_destroy(&self->ready_blocks);
 
@@ -100,7 +102,7 @@ void bsal_memory_pool_destroy(struct bsal_memory_pool *self)
      */
     if (self->current_block != NULL) {
         bsal_memory_block_destroy(self->current_block);
-        bsal_memory_free(self->current_block);
+        bsal_memory_free(self->current_block, self->name);
         self->current_block = NULL;
     }
 
@@ -226,13 +228,13 @@ void *bsal_memory_pool_allocate_private(struct bsal_memory_pool *self, size_t si
     }
 
     if (self == NULL) {
-        return bsal_memory_allocate(size);
+        return bsal_memory_allocate(size, MEMORY_MEMORY_POOL);
     }
 
     bsal_memory_pool_profile(self, OPERATION_ALLOCATE, size);
 
     if (bsal_bitmap_get_bit_uint32_t(&self->flags, FLAG_DISABLED)) {
-        return bsal_memory_allocate(size);
+        return bsal_memory_allocate(size, self->name);
     }
 
     /*
@@ -242,7 +244,7 @@ void *bsal_memory_pool_allocate_private(struct bsal_memory_pool *self, size_t si
      */
 
     if (size >= (size_t)self->block_size) {
-        pointer = bsal_memory_allocate(size);
+        pointer = bsal_memory_allocate(size, self->name);
 
         bsal_set_add(&self->large_blocks, &pointer);
 
@@ -304,7 +306,7 @@ void bsal_memory_pool_add_block(struct bsal_memory_pool *self)
      * Otherwise, create one on-demand today.
      */
     if (!bsal_queue_dequeue(&self->ready_blocks, &self->current_block)) {
-        self->current_block = bsal_memory_allocate(sizeof(struct bsal_memory_block));
+        self->current_block = bsal_memory_allocate(sizeof(struct bsal_memory_block), self->name);
         bsal_memory_block_init(self->current_block, self->block_size);
     }
 }
@@ -319,7 +321,7 @@ void bsal_memory_pool_free(struct bsal_memory_pool *self, void *pointer)
     }
 
     if (self == NULL) {
-        bsal_memory_free(pointer);
+        bsal_memory_free(pointer, MEMORY_MEMORY_POOL);
         return;
     }
 
@@ -329,7 +331,7 @@ void bsal_memory_pool_free(struct bsal_memory_pool *self, void *pointer)
     bsal_memory_pool_profile(self, OPERATION_FREE, 0);
 
     if (bsal_bitmap_get_bit_uint32_t(&self->flags, FLAG_DISABLED)) {
-        bsal_memory_free(pointer);
+        bsal_memory_free(pointer, self->name);
         return;
     }
 
@@ -338,7 +340,7 @@ void bsal_memory_pool_free(struct bsal_memory_pool *self, void *pointer)
      */
     if (bsal_set_find(&self->large_blocks, &pointer)) {
 
-        bsal_memory_free(pointer);
+        bsal_memory_free(pointer, self->name);
         bsal_set_delete(&self->large_blocks, &pointer);
         return;
     }
@@ -492,17 +494,17 @@ void bsal_memory_pool_enable_ephemeral_mode(struct bsal_memory_pool *self)
 
 void bsal_memory_pool_set_name(struct bsal_memory_pool *self, int name)
 {
-    self->profile_name = name;
+    self->name = name;
 }
 
 void bsal_memory_pool_examine(struct bsal_memory_pool *self)
 {
-    printf("DEBUG_POOL Name= %d"
+    printf("DEBUG_POOL Name= %x"
                     " ActiveSegments= %d (%d - %d)"
                     " AllocatedBytes= %" PRIu64 " (%" PRIu64 " - %" PRIu64 ")"
                     "\n",
 
-                    self->profile_name,
+                    self->name,
 
                     self->profile_allocate_calls - self->profile_free_calls,
                     self->profile_allocate_calls, self->profile_free_calls,

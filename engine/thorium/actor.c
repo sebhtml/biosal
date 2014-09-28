@@ -22,6 +22,8 @@
 #include <inttypes.h>
 #include <stdint.h>
 
+#define MEMORY_ACTOR_KEY 0x878a06c0
+
 /* Debugging options
  */
 
@@ -1558,7 +1560,7 @@ void thorium_actor_queue_message(struct thorium_actor *self,
 #endif
 
     if (count > 0) {
-        new_buffer = bsal_memory_allocate(count);
+        new_buffer = bsal_memory_allocate(count, MEMORY_ACTOR_KEY);
         bsal_memory_copy(new_buffer, buffer, count);
     }
 
@@ -1810,7 +1812,7 @@ void thorium_actor_enqueue_message(struct thorium_actor *self, struct thorium_me
     new_buffer = NULL;
 
     if (buffer != NULL) {
-        new_buffer = bsal_memory_allocate(count);
+        new_buffer = bsal_memory_allocate(count, MEMORY_ACTOR_KEY);
         bsal_memory_copy(new_buffer, buffer, count);
     }
 

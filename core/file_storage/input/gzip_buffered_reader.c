@@ -25,6 +25,8 @@
 #define BSAL_BUFFERED_READER_BUFFER_SIZE 8388608
 #define GZ_FILE_EXTENSION ".gz"
 
+#define MEMORY_GZIP 0x4480c242
+
 struct bsal_buffered_reader_interface bsal_gzip_buffered_reader_implementation = {
     .init = bsal_gzip_buffered_reader_init,
     .destroy = bsal_gzip_buffered_reader_destroy,
@@ -50,7 +52,7 @@ void bsal_gzip_buffered_reader_init(struct bsal_buffered_reader *self,
     printf("DEBUG fseek %" PRIu64 "\n", offset);
 #endif
 
-    reader->buffer = (char *)bsal_memory_allocate(BSAL_BUFFERED_READER_BUFFER_SIZE * sizeof(char));
+    reader->buffer = (char *)bsal_memory_allocate(BSAL_BUFFERED_READER_BUFFER_SIZE * sizeof(char), MEMORY_GZIP);
     reader->buffer_capacity = BSAL_BUFFERED_READER_BUFFER_SIZE;
     reader->position_in_buffer = 0;
     reader->buffer_size = 0;
@@ -64,7 +66,7 @@ void bsal_gzip_buffered_reader_destroy(struct bsal_buffered_reader *self)
 
     reader = bsal_buffered_reader_get_concrete_self(self);
 
-    bsal_memory_free(reader->buffer);
+    bsal_memory_free(reader->buffer, MEMORY_GZIP);
 
     reader->buffer = NULL;
     reader->buffer_capacity = 0;
@@ -75,7 +77,7 @@ void bsal_gzip_buffered_reader_destroy(struct bsal_buffered_reader *self)
     fclose(reader->raw_descriptor);
     reader->raw_descriptor = NULL;
 
-    bsal_memory_free(reader->input_buffer);
+    bsal_memory_free(reader->input_buffer, MEMORY_GZIP);
     reader->input_buffer = NULL;
     reader->input_buffer_capacity = 0;
     reader->input_buffer_size = 0;
@@ -260,7 +262,7 @@ void bsal_gzip_buffered_reader_open(struct bsal_buffered_reader *self,
     fseek(reader->raw_descriptor, offset, SEEK_SET);
 
     reader->input_buffer_capacity = BSAL_BUFFERED_READER_BUFFER_SIZE;
-    reader->input_buffer = bsal_memory_allocate(reader->input_buffer_capacity);
+    reader->input_buffer = bsal_memory_allocate(reader->input_buffer_capacity, MEMORY_GZIP);
 
 #else
     reader->descriptor = gzopen(file, "r");

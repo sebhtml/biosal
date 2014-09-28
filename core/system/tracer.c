@@ -27,6 +27,8 @@
 
 #define BSAL_TRACER_STACK_DEPTH 100
 
+#define MEMORY_TRACER 0xefb1b8a1
+
 void bsal_tracer_print_stack_backtrace()
 {
     printf("bsal_tracer_print_stack_backtrace\n");
@@ -52,8 +54,10 @@ void bsal_tracer_print_stack_backtrace()
 
     /*
      * Free the string pointers
+     *
+     * Here, we use free() because the matching malloc is not called by this function.
      */
-    bsal_memory_free(function_names);
+    free(function_names);
 
 #else
     printf("TRACE IS NOT AVAILABLE.\n");

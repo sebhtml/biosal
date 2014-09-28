@@ -7,6 +7,8 @@
 #include <core/system/memory.h>
 #include <core/system/debugger.h>
 
+#define MEMORY_SCHEDULER 0x323f94b8
+
 /*
  * The available schedulers are:
  *
@@ -35,7 +37,7 @@ void thorium_scheduler_init(struct thorium_scheduler *self, int node, int worker
 
     BSAL_DEBUGGER_ASSERT(self->implementation != NULL);
 
-    self->concrete_self = bsal_memory_allocate(self->implementation->object_size);
+    self->concrete_self = bsal_memory_allocate(self->implementation->object_size, MEMORY_SCHEDULER);
 
     self->implementation->init(self);
 
@@ -48,7 +50,7 @@ void thorium_scheduler_destroy(struct thorium_scheduler *self)
     self->implementation->destroy(self);
 
     if (self->concrete_self != NULL) {
-        bsal_memory_free(self->concrete_self);
+        bsal_memory_free(self->concrete_self, MEMORY_SCHEDULER);
         self->concrete_self = NULL;
     }
 

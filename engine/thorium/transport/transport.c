@@ -37,6 +37,8 @@
 #define FLAG_PROFILE 0
 #define FLAG_PRINT_TRANSPORT_EVENTS 1
 
+#define MEMORY_TRANSPORT 0xe1b48d97
+
 void thorium_transport_init(struct thorium_transport *self, struct thorium_node *node,
                 int *argc, char ***argv,
                 struct bsal_memory_pool *inbound_message_memory_pool,
@@ -74,7 +76,7 @@ void thorium_transport_init(struct thorium_transport *self, struct thorium_node 
 
     if (self->transport_interface != NULL) {
 
-        self->concrete_transport = bsal_memory_allocate(self->transport_interface->size);
+        self->concrete_transport = bsal_memory_allocate(self->transport_interface->size, MEMORY_TRANSPORT);
         self->transport_interface->init(self, argc, argv);
     }
 
@@ -123,7 +125,7 @@ void thorium_transport_destroy(struct thorium_transport *self)
     if (self->transport_interface != NULL) {
         self->transport_interface->destroy(self);
 
-        bsal_memory_free(self->concrete_transport);
+        bsal_memory_free(self->concrete_transport, MEMORY_TRANSPORT);
         self->concrete_transport = NULL;
     }
 

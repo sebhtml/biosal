@@ -9,9 +9,9 @@
 
 int main(int argc, char **argv)
 {
-    /*bsal_memory_allocate(0);*/
-    /*bsal_memory_allocate(-1);*/
-    /*bsal_memory_allocate(-10000);*/
+    /*bsal_memory_allocate(0, -1);*/
+    /*bsal_memory_allocate(-1, -1);*/
+    /*bsal_memory_allocate(-10000, -1);*/
 
     BEGIN_TESTS();
 
@@ -147,7 +147,7 @@ int main(int argc, char **argv)
 
         TEST_INT_IS_GREATER_THAN(count, 0);
 
-        buffer = bsal_memory_allocate(count);
+        buffer = bsal_memory_allocate(count, -1);
 
         bsal_vector_pack(&vector1, buffer);
 
@@ -161,7 +161,7 @@ int main(int argc, char **argv)
             TEST_INT_EQUALS(value1, value2);
         }
 
-        bsal_memory_free(buffer);
+        bsal_memory_free(buffer, - 1);
         bsal_vector_destroy(&vector1);
         bsal_vector_destroy(&vector2);
     }

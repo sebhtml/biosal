@@ -30,7 +30,7 @@ void test_allocator(struct bsal_memory_pool *memory)
         if (memory != NULL) {
             pointer = bsal_memory_pool_allocate(memory, size);
         } else {
-            pointer = bsal_memory_allocate(size);
+            pointer = bsal_memory_allocate(size, -1);
         }
 
         bsal_vector_push_back(&vector, &pointer);
@@ -46,6 +46,16 @@ void test_allocator(struct bsal_memory_pool *memory)
     }
     printf("Elapsed : %" PRIu64 " milliseconds\n", elapsed / 1000 / 1000);
 
+    size = bsal_vector_size(&vector);
+    for (i = 0; i < size; ++i) {
+        pointer = bsal_vector_at_as_void_pointer(&vector, i);
+
+        if (memory != NULL) {
+            bsal_memory_pool_free(memory, pointer);
+        } else {
+            bsal_memory_free(pointer, -1);
+        }
+    }
     bsal_vector_destroy(&vector);
     bsal_timer_destroy(&timer);
 }

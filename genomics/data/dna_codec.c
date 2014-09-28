@@ -36,6 +36,8 @@
 */
 #define FAST_REVERSE_COMPLEMENT
 
+#define MEMORY_CODEC 0x9687799e
+
 void bsal_dna_codec_init(struct bsal_dna_codec *self)
 {
     /* 4 * 2 = 8 bits = 1 byte
@@ -65,11 +67,11 @@ void bsal_dna_codec_generate_blocks(struct bsal_dna_codec *self)
 {
     char *block;
 
-    block = bsal_memory_allocate(self->block_length + 1);
+    block = bsal_memory_allocate(self->block_length + 1, MEMORY_CODEC);
 
     bsal_dna_codec_generate_block(self, -1, 'X', block);
 
-    bsal_memory_free(block);
+    bsal_memory_free(block, MEMORY_CODEC);
 }
 
 void bsal_dna_codec_generate_block(struct bsal_dna_codec *self, int position, char symbol,

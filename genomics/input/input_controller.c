@@ -53,6 +53,8 @@ struct thorium_script bsal_input_controller_script = {
     .name = "bsal_input_controller"
 };
 
+#define MEMORY_CONTROLLER SCRIPT_INPUT_CONTROLLER
+
 void bsal_input_controller_init(struct thorium_actor *actor)
 {
     struct bsal_input_controller *concrete_actor;
@@ -109,7 +111,7 @@ void bsal_input_controller_init(struct thorium_actor *actor)
 
     thorium_actor_add_action(actor, ACTION_INPUT_STREAM_SET_START_OFFSET_REPLY,
                     bsal_input_controller_set_offset_reply);
-    thorium_actor_add_script(actor, ACTION_INPUT_SCRIPT_STREAM, &bsal_input_stream_script);
+    thorium_actor_add_script(actor, SCRIPT_INPUT_STREAM, &bsal_input_stream_script);
     thorium_actor_add_script(actor, SCRIPT_SEQUENCE_STORE, &bsal_sequence_store_script);
     thorium_actor_add_script(actor, SCRIPT_SEQUENCE_PARTITIONER,
                     &bsal_sequence_partitioner_script);
@@ -151,7 +153,7 @@ void bsal_input_controller_destroy(struct thorium_actor *actor)
 
     for (i = 0; i < bsal_vector_size(&concrete_actor->files); i++) {
         pointer = *(char **)bsal_vector_at(&concrete_actor->files, i);
-        bsal_memory_free(pointer);
+        bsal_memory_free(pointer, MEMORY_CONTROLLER);
     }
 
     bsal_vector_destroy(&concrete_actor->mega_block_vector);
@@ -265,7 +267,7 @@ void bsal_input_controller_receive(struct thorium_actor *actor, struct thorium_m
 
         file = (char *)buffer;
 
-        local_file = bsal_memory_allocate(strlen(file) + 1);
+        local_file = bsal_memory_allocate(strlen(file) + 1, MEMORY_CONTROLLER);
         strcpy(local_file, file);
 
         printf("controller %d ACTION_ADD_FILE %s\n",
@@ -586,7 +588,7 @@ void bsal_input_controller_receive(struct thorium_actor *actor, struct thorium_m
         printf("DEBUG ACTION_INPUT_SPAWN\n");
 #endif
 
-        script = ACTION_INPUT_SCRIPT_STREAM;
+        script = SCRIPT_INPUT_STREAM;
 
         concrete_actor->state = BSAL_INPUT_CONTROLLER_STATE_SPAWN_STREAMS;
 
@@ -1263,10 +1265,10 @@ void bsal_input_controller_spawn_streams(struct thorium_actor *actor, struct tho
         concrete_actor->spawner %= bsal_vector_size(&concrete_actor->spawners);
 
 #ifdef BSAL_INPUT_CONTROLLER_DEBUG_READING_STREAMS
-        printf("DEBUG asking %d to spawn script %d\n", spawner, ACTION_INPUT_SCRIPT_STREAM);
+        printf("DEBUG asking %d to spawn script %d\n", spawner, SCRIPT_INPUT_STREAM);
 #endif
 
-        thorium_actor_send_int(actor, spawner, ACTION_SPAWN, ACTION_INPUT_SCRIPT_STREAM);
+        thorium_actor_send_int(actor, spawner, ACTION_SPAWN, SCRIPT_INPUT_STREAM);
     }
 
     bsal_vector_iterator_destroy(&iterator);

@@ -44,12 +44,12 @@ int main(int argc, char **argv)
     TEST_INT_IS_GREATER_THAN(encoded_length, 0);
     TEST_INT_IS_GREATER_THAN(sequence_length, 0);
 
-    encoded_sequence = bsal_memory_allocate(encoded_length);
+    encoded_sequence = bsal_memory_allocate(encoded_length, -1);
 
     bsal_dna_codec_encode(&codec, sequence_length, dna, encoded_sequence);
 
-    sequence2 = bsal_memory_allocate(sequence_length + 1);
-    expected_sequence = bsal_memory_allocate(sequence_length + 1);
+    sequence2 = bsal_memory_allocate(sequence_length + 1, -1);
+    expected_sequence = bsal_memory_allocate(sequence_length + 1, -1);
 
     TEST_POINTER_NOT_EQUALS(sequence2, NULL);
 
@@ -90,10 +90,9 @@ int main(int argc, char **argv)
     TEST_BOOLEAN_EQUALS(bsal_dna_codec_get_nucleotide(&codec, encoded_sequence, 3) == 'A', 1);
 #endif
 
-
-    bsal_memory_free(encoded_sequence);
-    bsal_memory_free(sequence2);
-    bsal_memory_free(expected_sequence);
+    bsal_memory_free(encoded_sequence, -1);
+    bsal_memory_free(sequence2, -1);
+    bsal_memory_free(expected_sequence, -1);
 
     bsal_dna_codec_destroy(&codec);
 
@@ -113,8 +112,8 @@ int main(int argc, char **argv)
 
         encoded_length = bsal_dna_codec_encoded_length(&codec, kmer_length);
 
-        encoded_data = bsal_memory_allocate(encoded_length);
-        encoded_data2 = bsal_memory_allocate(encoded_length);
+        encoded_data = bsal_memory_allocate(encoded_length, -1);
+        encoded_data2 = bsal_memory_allocate(encoded_length, -1);
 
         memset(encoded_data, 0xff, encoded_length);
 
@@ -140,8 +139,8 @@ int main(int argc, char **argv)
 
         TEST_INT_EQUALS(memcmp(encoded_data, encoded_data2, encoded_length), 0);
 
-        bsal_memory_free(encoded_data);
-        bsal_memory_free(encoded_data2);
+        bsal_memory_free(encoded_data, -1);
+        bsal_memory_free(encoded_data2, -1);
 
         bsal_dna_codec_destroy(&codec);
 

@@ -25,6 +25,8 @@
 #define DEBUG_MULTIPLEXER
 */
 
+#define MEMORY_MULTIPLEXER 0xb606aa9d
+
 void thorium_message_multiplexer_init(struct thorium_message_multiplexer *self,
                 struct thorium_node *node, struct thorium_multiplexer_policy *policy)
 {
@@ -61,7 +63,7 @@ void thorium_message_multiplexer_init(struct thorium_message_multiplexer *self,
     printf("DEBUG_MULTIPLEXER size %d bytes %d\n", size, bytes);
 #endif
 
-    self->big_buffer = bsal_memory_allocate(bytes);
+    self->big_buffer = bsal_memory_allocate(bytes, MEMORY_MULTIPLEXER);
     position = 0;
 
     for (i = 0; i < size; ++i) {
@@ -141,7 +143,7 @@ void thorium_message_multiplexer_destroy(struct thorium_message_multiplexer *sel
     self->buffer_size_in_bytes = -1;
     self->timeout_in_nanoseconds = -1;
 
-    bsal_memory_free(self->big_buffer);
+    bsal_memory_free(self->big_buffer, MEMORY_MULTIPLEXER);
     self->big_buffer = NULL;
 
     self->last_flush = 0;

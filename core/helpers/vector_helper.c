@@ -9,6 +9,8 @@
 #include <stdio.h>
 #include <string.h>
 
+#define MEMORY_VECTOR_HELPER 0xf16bc1f5
+
 char bsal_vector_at_as_char(struct bsal_vector *self, int64_t index)
 {
     char *bucket;
@@ -153,11 +155,11 @@ void bsal_vector_sort(struct bsal_vector *self, bsal_compare_fn_t compare)
 
     element_size = bsal_vector_element_size(self);
 
-    saved_pivot_value = bsal_memory_allocate(element_size);
+    saved_pivot_value = bsal_memory_allocate(element_size, MEMORY_VECTOR_HELPER);
 
     bsal_vector_quicksort(self, 0, bsal_vector_size(self) - 1, compare, saved_pivot_value);
 
-    bsal_memory_free(saved_pivot_value);
+    bsal_memory_free(saved_pivot_value, MEMORY_VECTOR_HELPER);
 }
 
 void bsal_vector_quicksort(struct bsal_vector *self,

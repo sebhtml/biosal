@@ -5,6 +5,8 @@
 
 #include <stdlib.h>
 
+#define MEMORY_FAST_QUEUE 0x771872d8
+
 void bsal_fast_queue_init(struct bsal_fast_queue *self, int bytes_per_unit)
 {
     self->head = NULL;
@@ -28,14 +30,14 @@ void bsal_fast_queue_destroy(struct bsal_fast_queue *self)
     while (self->head != NULL) {
         next = bsal_linked_ring_get_next(self->head);
         bsal_linked_ring_destroy(self->head);
-        bsal_memory_free(self->head);
+        bsal_memory_free(self->head, MEMORY_FAST_QUEUE);
         self->head = next;
     }
 
     while (self->recycle_bin != NULL) {
         next = bsal_linked_ring_get_next(self->recycle_bin);
         bsal_linked_ring_destroy(self->recycle_bin);
-        bsal_memory_free(self->recycle_bin);
+        bsal_memory_free(self->recycle_bin, MEMORY_FAST_QUEUE);
         self->recycle_bin = next;
     }
 
@@ -70,7 +72,7 @@ struct bsal_linked_ring *bsal_fast_queue_get_ring(struct bsal_fast_queue *self)
     struct bsal_linked_ring *ring;
 
     if (self->recycle_bin == NULL) {
-        ring = bsal_memory_allocate(sizeof(struct bsal_linked_ring));
+        ring = bsal_memory_allocate(sizeof(struct bsal_linked_ring), MEMORY_FAST_QUEUE);
         bsal_linked_ring_init(ring, self->cells_per_ring, self->cell_size);
 
         return ring;

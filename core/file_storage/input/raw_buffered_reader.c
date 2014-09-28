@@ -21,6 +21,8 @@ struct bsal_buffered_reader_interface bsal_raw_buffered_reader_implementation = 
     .size = sizeof(struct bsal_raw_buffered_reader)
 };
 
+#define MEMORY_RAW_READER 0xf853376c
+
 /*
 #define BSAL_BUFFERED_READER_DEBUG
 */
@@ -52,7 +54,7 @@ void bsal_raw_buffered_reader_init(struct bsal_buffered_reader *self,
     printf("DEBUG fseek %" PRIu64 "\n", offset);
 #endif
 
-    reader->buffer = (char *)bsal_memory_allocate(BSAL_BUFFERED_READER_BUFFER_SIZE * sizeof(char));
+    reader->buffer = (char *)bsal_memory_allocate(BSAL_BUFFERED_READER_BUFFER_SIZE * sizeof(char), MEMORY_RAW_READER);
     reader->buffer_capacity = BSAL_BUFFERED_READER_BUFFER_SIZE;
     reader->position_in_buffer = 0;
     reader->buffer_size = 0;
@@ -66,7 +68,7 @@ void bsal_raw_buffered_reader_destroy(struct bsal_buffered_reader *self)
 
     reader = bsal_buffered_reader_get_concrete_self(self);
 
-    bsal_memory_free(reader->buffer);
+    bsal_memory_free(reader->buffer, MEMORY_RAW_READER);
 
     reader->buffer = NULL;
     reader->buffer_capacity = 0;

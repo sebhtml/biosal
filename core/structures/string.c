@@ -13,6 +13,8 @@
 #define BSAL_STRING_APPEND 100
 #define BSAL_STRING_PREPEND 200
 
+#define MEMORY_STRING 0x89fd5efd
+
 void bsal_string_init(struct bsal_string *string, const char *data)
 {
     int length;
@@ -22,7 +24,7 @@ void bsal_string_init(struct bsal_string *string, const char *data)
     if (data != NULL) {
         length = strlen(data);
 
-        string->data = (char *)bsal_memory_allocate(length + 1);
+        string->data = (char *)bsal_memory_allocate(length + 1, MEMORY_STRING);
         strcpy(string->data, data);
     }
 }
@@ -30,7 +32,7 @@ void bsal_string_init(struct bsal_string *string, const char *data)
 void bsal_string_destroy(struct bsal_string *string)
 {
     if (string->data != NULL) {
-        bsal_memory_free(string->data);
+        bsal_memory_free(string->data, MEMORY_STRING);
         string->data = NULL;
     }
 }
@@ -80,7 +82,7 @@ void bsal_string_combine(struct bsal_string *string, const char *data, int opera
 
     new_length = old_length + length;
 
-    new_data = (char *)bsal_memory_allocate(new_length + 1);
+    new_data = (char *)bsal_memory_allocate(new_length + 1, MEMORY_STRING);
 
     strcpy(new_data, "");
 
@@ -98,7 +100,7 @@ void bsal_string_combine(struct bsal_string *string, const char *data, int opera
     }
 
     if (string->data != NULL) {
-        bsal_memory_free(string->data);
+        bsal_memory_free(string->data, MEMORY_STRING);
     }
 
     string->data = new_data;
@@ -132,7 +134,7 @@ int bsal_string_pack_unpack(struct bsal_string *self, int operation, void *buffe
     bsal_packer_process(&packer, &length, sizeof(length));
 
     if (operation == BSAL_PACKER_OPERATION_UNPACK) {
-        self->data = bsal_memory_allocate(length + 1);
+        self->data = bsal_memory_allocate(length + 1, MEMORY_STRING);
     }
 
     bsal_packer_process(&packer, self->data, length + 1);

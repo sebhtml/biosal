@@ -21,6 +21,8 @@
 
 /*#define BSAL_BUFFERED_READER_BUFFER_SIZE 4194304*/
 
+#define MEMORY_READER 0x5fb8b2cc
+
 void bsal_buffered_reader_init(struct bsal_buffered_reader *self,
                 const char *file, uint64_t offset)
 {
@@ -30,7 +32,7 @@ void bsal_buffered_reader_init(struct bsal_buffered_reader *self,
     bsal_buffered_reader_select(self, file);
 
     if (self->interface != NULL) {
-        self->concrete_self = bsal_memory_allocate(self->interface->size);
+        self->concrete_self = bsal_memory_allocate(self->interface->size, MEMORY_READER);
         self->interface->init(self, file, offset);
     }
 }
@@ -41,7 +43,7 @@ void bsal_buffered_reader_destroy(struct bsal_buffered_reader *self)
 
     if (self->concrete_self != NULL) {
 
-        bsal_memory_free(self->concrete_self);
+        bsal_memory_free(self->concrete_self, MEMORY_READER);
         self->concrete_self = NULL;
 
         self->interface = NULL;

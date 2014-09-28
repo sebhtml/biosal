@@ -43,7 +43,7 @@ int main(int argc, char **argv)
 
     TEST_INT_IS_GREATER_THAN(count, 0);
 
-    buffer = bsal_memory_allocate(count);
+    buffer = bsal_memory_allocate(count, -1);
 
     bsal_assembly_arc_pack(&arc, buffer, kmer_length, &codec);
 
@@ -68,7 +68,7 @@ int main(int argc, char **argv)
     bsal_memory_pool_destroy(&pool);
     bsal_dna_codec_destroy(&codec);
 
-    bsal_memory_free(buffer);
+    bsal_memory_free(buffer, -1);
 
     END_TESTS();
 

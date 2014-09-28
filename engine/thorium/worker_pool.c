@@ -22,6 +22,7 @@
 #include <stdint.h>
 #include <inttypes.h>
 
+#define MEMORY_WORKER_POOL_KEY 0x533932bf
 
 /*
 #define THORIUM_WORKER_POOL_DEBUG
@@ -292,9 +293,9 @@ void thorium_worker_pool_print_load(struct thorium_worker_pool *self, int type)
     count = thorium_worker_pool_worker_count(self);
     allocated = count * 20 + 20 + extra;
 
-    buffer = bsal_memory_allocate(allocated);
-    buffer_for_wake_up_events = bsal_memory_allocate(allocated);
-    buffer_for_future_timeline = bsal_memory_allocate(allocated);
+    buffer = bsal_memory_allocate(allocated, MEMORY_WORKER_POOL_KEY);
+    buffer_for_wake_up_events = bsal_memory_allocate(allocated, MEMORY_WORKER_POOL_KEY);
+    buffer_for_future_timeline = bsal_memory_allocate(allocated, MEMORY_WORKER_POOL_KEY);
     node_name = thorium_node_name(self->node);
     offset = 0;
     offset_for_wake_up = 0;
@@ -359,9 +360,9 @@ void thorium_worker_pool_print_load(struct thorium_worker_pool *self, int type)
                     description, elapsed,
                     buffer_for_wake_up_events);
 
-    bsal_memory_free(buffer);
-    bsal_memory_free(buffer_for_wake_up_events);
-    bsal_memory_free(buffer_for_future_timeline);
+    bsal_memory_free(buffer, MEMORY_WORKER_POOL_KEY);
+    bsal_memory_free(buffer_for_wake_up_events, MEMORY_WORKER_POOL_KEY);
+    bsal_memory_free(buffer_for_future_timeline, MEMORY_WORKER_POOL_KEY);
 }
 
 void thorium_worker_pool_toggle_debug_mode(struct thorium_worker_pool *self)

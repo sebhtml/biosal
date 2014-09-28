@@ -159,7 +159,7 @@ int main(int argc, char **argv)
         }
 
         count = bsal_map_pack_size(&map);
-        buffer = bsal_memory_allocate(count);
+        buffer = bsal_memory_allocate(count, -1);
         bsal_map_pack(&map, buffer);
 
         /*
@@ -190,7 +190,7 @@ int main(int argc, char **argv)
         TEST_UINT64_T_EQUALS(bsal_map_size(&map2), bsal_map_size(&map));
         TEST_UINT64_T_EQUALS(bsal_map_size(&map2), elements);
 
-        bsal_memory_free(buffer);
+        bsal_memory_free(buffer, -1);
 
         bsal_map_destroy(&map2);
         bsal_map_destroy(&map);

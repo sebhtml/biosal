@@ -19,6 +19,8 @@
 #define BSAL_MANAGER_DEBUG
 */
 
+#define MEMORY_MANAGER 0x0021b5f1
+
 struct thorium_script bsal_manager_script = {
     .identifier = SCRIPT_MANAGER,
     .name = "bsal_manager",
@@ -309,7 +311,7 @@ void bsal_manager_receive(struct thorium_actor *actor, struct thorium_message *m
                 bsal_vector_iterator_destroy(&iterator);
 
                 new_count = bsal_vector_pack_size(&all_stores);
-                new_buffer = bsal_memory_allocate(new_count);
+                new_buffer = bsal_memory_allocate(new_count, MEMORY_MANAGER);
                 bsal_vector_pack(&all_stores, new_buffer);
 
                 /*
@@ -323,7 +325,7 @@ void bsal_manager_receive(struct thorium_actor *actor, struct thorium_message *m
                 thorium_message_init(&new_message, ACTION_START_REPLY, new_count, new_buffer);
                 thorium_actor_send_to_supervisor(actor, &new_message);
 
-                bsal_memory_free(new_buffer);
+                bsal_memory_free(new_buffer, MEMORY_MANAGER);
 
                 thorium_message_destroy(&new_message);
             }

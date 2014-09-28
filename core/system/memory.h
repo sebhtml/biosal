@@ -113,24 +113,24 @@
 
 #ifdef BSAL_MEMORY_DEBUG
 
-#define bsal_memory_allocate(size) \
-        bsal_memory_allocate_private(size, __func__, __FILE__, __LINE__)
+#define bsal_memory_allocate(size, key) \
+        bsal_memory_allocate_private(size, __func__, __FILE__, __LINE__, key)
 
-#define bsal_memory_free(pointer) \
-        bsal_memory_free_private(pointer, __func__, __FILE__, __LINE__)
+#define bsal_memory_free(pointer, key) \
+        bsal_memory_free_private(pointer, __func__, __FILE__, __LINE__, key)
 
 #else
 
-#define bsal_memory_allocate(size) \
-        bsal_memory_allocate_private(size, NULL, NULL, -1)
+#define bsal_memory_allocate(size, key) \
+        bsal_memory_allocate_private(size, NULL, NULL, -1, key)
 
-#define bsal_memory_free(pointer) \
-        bsal_memory_free_private(pointer, NULL, NULL, -1)
+#define bsal_memory_free(pointer, key) \
+        bsal_memory_free_private(pointer, NULL, NULL, -1, key)
 
 #endif
 
-void *bsal_memory_allocate_private(size_t size, const char *function, const char *file, int line);
-void bsal_memory_free_private(void *pointer, const char *function, const char *file, int line);
+void *bsal_memory_allocate_private(size_t size, const char *function, const char *file, int line, int key);
+void bsal_memory_free_private(void *pointer, const char *function, const char *file, int line, int key);
 
 /*
  * Get size of the data segment (also called heap)

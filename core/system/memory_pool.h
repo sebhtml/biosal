@@ -14,12 +14,12 @@
 /*
 */
 
-#define BSAL_MEMORY_POOL_NAME_WORKER_EPHEMERAL  0
-#define BSAL_MEMORY_POOL_NAME_WORKER_OUTBOUND   1
-#define BSAL_MEMORY_POOL_NAME_NODE_INBOUND      2
-#define BSAL_MEMORY_POOL_NAME_NODE_OUTBOUND     3
-#define BSAL_MEMORY_POOL_NAME_NONE              4
-#define BSAL_MEMORY_POOL_NAME_ACTORS            5
+#define BSAL_MEMORY_POOL_NAME_WORKER_EPHEMERAL  0x2ee1c5a6
+#define BSAL_MEMORY_POOL_NAME_WORKER_OUTBOUND   0x46d316e4
+#define BSAL_MEMORY_POOL_NAME_NODE_INBOUND      0xee1344f0
+#define BSAL_MEMORY_POOL_NAME_NODE_OUTBOUND     0xf3ad5880
+#define BSAL_MEMORY_POOL_NAME_NONE              0xcef49361
+#define BSAL_MEMORY_POOL_NAME_ACTORS            0x37ddf367
 #define BSAL_MEMORY_POOL_NAME_SEQUENCE_STORE    6
 #define BSAL_MEMORY_POOL_NAME_OTHER             7
 #define BSAL_MEMORY_POOL_NAME_GRAPH_STORE       8
@@ -65,7 +65,7 @@ struct bsal_memory_pool {
     uint32_t flags;
     size_t block_size;
 
-    int profile_name;
+    int name;
 
     uint64_t profile_allocated_byte_count;
     uint64_t profile_freed_byte_count;
