@@ -31,15 +31,6 @@
 
 #define MAX_SHORT_MESSAGE_LENGTH 128
 
-#define RECV_BUFFER_SIZE_LARGE 4194304
-#define NUM_RECV_BUFFERS_LARGE 16
-
-#define RECV_BUFFER_SIZE_MEDIUM 4096
-#define NUM_RECV_BUFFERS_MEDIUM 4096
-
-#define RECV_BUFFER_SIZE_SMALL 128
-#define NUM_RECV_BUFFERS_SMALL 131072
-
 #define NUM_RECV_COOKIES 131072
 #define NUM_SEND_COOKIES 131072
 
@@ -85,6 +76,8 @@ struct thorium_pami_transport {
 
     int rank;
 
+    struct thorium_transport *self;
+
     pami_endpoint_t *endpoints;
 
     thorium_send_cookie_t **send_cookies;
@@ -94,14 +87,6 @@ struct thorium_pami_transport {
     thorium_recv_cookie_t **recv_cookies;
     struct bsal_fast_queue *avail_recv_cookies_queue;
     struct bsal_fast_queue *in_use_recv_cookies_queue;
-
-    struct bsal_fast_queue *large_buffer_queue;
-    struct bsal_fast_queue *medium_buffer_queue;
-    struct bsal_fast_queue *small_buffer_queue;
-
-    char **large_buffers;
-    char **medium_buffers;
-    char **small_buffers;
 #endif
 
 /*
@@ -119,10 +104,6 @@ int thorium_pami_transport_send(struct thorium_transport *self, struct thorium_m
 int thorium_pami_transport_receive(struct thorium_transport *self, struct thorium_message *message);
 
 int thorium_pami_transport_test(struct thorium_transport *self, struct thorium_worker_buffer *buffer);
-
-void thorium_pami_transport_mem_pool_alloc(struct thorium_pami_transport *pami_transport, int data_size, void *buffer);
-
-void thorium_pami_transport_mem_pool_return(struct thorium_pami_transport *pami_transport, int data_size, void *buffer);
 
 void thorium_recv_done_fn (pami_context_t   context,
         void           *cookie,
