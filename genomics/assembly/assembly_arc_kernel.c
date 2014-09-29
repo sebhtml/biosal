@@ -10,6 +10,8 @@
 
 #include <genomics/storage/sequence_store.h>
 
+#include <core/system/debugger.h>
+
 #include <stdio.h>
 
 #include <stdint.h>
@@ -31,7 +33,7 @@ void bsal_assembly_arc_kernel_init(struct thorium_actor *self)
 {
     struct bsal_assembly_arc_kernel *concrete_self;
 
-    concrete_self = (struct bsal_assembly_arc_kernel *)thorium_actor_concrete_actor(self);
+    concrete_self = thorium_actor_concrete_actor(self);
 
     concrete_self->kmer_length = -1;
 
@@ -74,7 +76,7 @@ void bsal_assembly_arc_kernel_destroy(struct thorium_actor *self)
 {
     struct bsal_assembly_arc_kernel *concrete_self;
 
-    concrete_self = (struct bsal_assembly_arc_kernel *)thorium_actor_concrete_actor(self);
+    concrete_self = thorium_actor_concrete_actor(self);
 
     concrete_self->kmer_length = -1;
 
@@ -97,8 +99,8 @@ void bsal_assembly_arc_kernel_receive(struct thorium_actor *self, struct thorium
         return;
     }
 
-    concrete_self = (struct bsal_assembly_arc_kernel *)thorium_actor_concrete_actor(self);
-    tag = thorium_message_tag(message);
+    concrete_self = thorium_actor_concrete_actor(self);
+    tag = thorium_message_action(message);
     source = thorium_message_source(message);
 
     if (tag == ACTION_SET_PRODUCER) {
@@ -172,7 +174,7 @@ void bsal_assembly_arc_kernel_set_kmer_length(struct thorium_actor *self, struct
 {
     struct bsal_assembly_arc_kernel *concrete_self;
 
-    concrete_self = (struct bsal_assembly_arc_kernel *)thorium_actor_concrete_actor(self);
+    concrete_self = thorium_actor_concrete_actor(self);
 
     thorium_message_unpack_int(message, 0, &concrete_self->kmer_length);
 
@@ -183,7 +185,7 @@ void bsal_assembly_arc_kernel_ask(struct thorium_actor *self, struct thorium_mes
 {
     struct bsal_assembly_arc_kernel *concrete_self;
 
-    concrete_self = (struct bsal_assembly_arc_kernel *)thorium_actor_concrete_actor(self);
+    concrete_self = thorium_actor_concrete_actor(self);
 
     if (concrete_self->consumer == THORIUM_ACTOR_NOBODY) {
         printf("Error: no consumer in arc kernel\n");
@@ -235,9 +237,12 @@ void bsal_assembly_arc_kernel_push_sequence_data_block(struct thorium_actor *sel
     int new_count;
     void *new_buffer;
     int to_reserve;
+    int profile_kmer_init_calls;
+    int profile_kmer_destroy_calls;
 
     ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
-    concrete_self = (struct bsal_assembly_arc_kernel *)thorium_actor_concrete_actor(self);
+
+    concrete_self = thorium_actor_concrete_actor(self);
     buffer = thorium_message_buffer(message);
 
     ++concrete_self->received_blocks;
@@ -257,6 +262,8 @@ void bsal_assembly_arc_kernel_push_sequence_data_block(struct thorium_actor *sel
         return;
     }
 
+    BSAL_DEBUGGER_LEAK_DETECTION_BEGIN(ephemeral_memory, data_block);
+
     bsal_input_command_init_empty(&input_block);
     bsal_input_command_unpack(&input_block, buffer, ephemeral_memory,
                     &concrete_self->codec);
@@ -264,6 +271,10 @@ void bsal_assembly_arc_kernel_push_sequence_data_block(struct thorium_actor *sel
     sequences = bsal_input_command_entries(&input_block);
 
     entries = bsal_vector_size(sequences);
+
+#if 0
+    printf("ENTRIES %d\n", entries);
+#endif
 
     bsal_assembly_arc_block_init(&output_block, ephemeral_memory,
                     concrete_self->kmer_length, &concrete_self->codec);
@@ -287,6 +298,8 @@ void bsal_assembly_arc_kernel_push_sequence_data_block(struct thorium_actor *sel
                     entries);
 #endif
 
+    BSAL_DEBUGGER_LEAK_DETECTION_BEGIN(ephemeral_memory, length_loop);
+
     /*
      * Get maximum length
      */
@@ -306,9 +319,16 @@ void bsal_assembly_arc_kernel_push_sequence_data_block(struct thorium_actor *sel
         to_reserve += 2 * length;
     }
 
+    BSAL_DEBUGGER_LEAK_DETECTION_END(ephemeral_memory, length_loop);
+
     bsal_assembly_arc_block_reserve(&output_block, to_reserve);
 
     sequence = bsal_memory_pool_allocate(ephemeral_memory, maximum_length + 1);
+
+    /*BSAL_DEBUGGER_LEAK_DETECTION_BEGIN(ephemeral_memory, loop_arc_generation);*/
+
+    profile_kmer_init_calls = 0;
+    profile_kmer_destroy_calls = 0;
 
     /*
      * Generate arcs.
@@ -323,6 +343,8 @@ void bsal_assembly_arc_kernel_push_sequence_data_block(struct thorium_actor *sel
 
         limit = length - concrete_self->kmer_length + 1;
 
+        /*BSAL_DEBUGGER_LEAK_DETECTION_BEGIN(ephemeral_memory, loop_arc_generation_sequence);*/
+
         for (position = 0; position < limit; position++) {
 
             kmer_sequence = sequence + position;
@@ -331,6 +353,7 @@ void bsal_assembly_arc_kernel_push_sequence_data_block(struct thorium_actor *sel
 
             bsal_dna_kmer_init(&current_kmer, kmer_sequence, &concrete_self->codec,
                             ephemeral_memory);
+            ++profile_kmer_init_calls;
 
             /*
              * Restore the data
@@ -372,29 +395,45 @@ void bsal_assembly_arc_kernel_push_sequence_data_block(struct thorium_actor *sel
 #endif
             }
 
+            if (position >= 1) {
+                bsal_dna_kmer_destroy(&previous_kmer, ephemeral_memory);
+                ++profile_kmer_destroy_calls;
+            }
+
             bsal_dna_kmer_init_copy(&previous_kmer, &current_kmer, concrete_self->kmer_length,
                             ephemeral_memory, &concrete_self->codec);
+            ++profile_kmer_init_calls;
 
             bsal_dna_kmer_destroy(&current_kmer, ephemeral_memory);
+            ++profile_kmer_destroy_calls;
 
             /* Previous is not needed anymore
              */
             if (position == limit - 1) {
 
                 bsal_dna_kmer_destroy(&previous_kmer, ephemeral_memory);
+                ++profile_kmer_destroy_calls;
             }
         }
+
+        /*BSAL_DEBUGGER_LEAK_DETECTION_END(ephemeral_memory, loop_arc_generation_sequence);*/
     }
+
+#if 0
+    printf("DEBUG profile_kmer_init_calls %d profile_kmer_destroy_calls %d\n",
+                    profile_kmer_init_calls, profile_kmer_destroy_calls);
+#endif
+
+    /*BSAL_DEBUGGER_LEAK_DETECTION_END(ephemeral_memory, loop_arc_generation);*/
 
     new_count = bsal_assembly_arc_block_pack_size(&output_block, concrete_self->kmer_length,
                     &concrete_self->codec);
-    new_buffer = bsal_memory_pool_allocate(ephemeral_memory, new_count);
+    new_buffer = thorium_actor_allocate(self, new_count);
 
     bsal_assembly_arc_block_pack(&output_block, new_buffer, concrete_self->kmer_length,
                     &concrete_self->codec);
 
-    bsal_assembly_arc_block_destroy(&output_block,
-                    ephemeral_memory);
+    bsal_assembly_arc_block_destroy(&output_block, ephemeral_memory);
 
     bsal_input_command_destroy(&input_block, ephemeral_memory);
 
@@ -407,7 +446,8 @@ void bsal_assembly_arc_kernel_push_sequence_data_block(struct thorium_actor *sel
     thorium_message_destroy(&new_message);
 
     bsal_memory_pool_free(ephemeral_memory, sequence);
-    bsal_memory_pool_free(ephemeral_memory, new_buffer);
+
+    BSAL_DEBUGGER_LEAK_DETECTION_END(ephemeral_memory, data_block);
 }
 
 void bsal_assembly_arc_kernel_set_producers_for_work_stealing(struct thorium_actor *self, struct thorium_message *message)
@@ -421,7 +461,7 @@ void bsal_assembly_arc_kernel_set_producers_for_work_stealing(struct thorium_act
     int producer;
 
     ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
-    concrete_self = (struct bsal_assembly_arc_kernel *)thorium_actor_concrete_actor(self);
+    concrete_self = thorium_actor_concrete_actor(self);
     buffer = thorium_message_buffer(message);
 
     bsal_vector_init(&producers, sizeof(int));

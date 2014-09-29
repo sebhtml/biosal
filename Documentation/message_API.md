@@ -17,7 +17,7 @@ only includes the functions that are useful within an actor.
 ## bsal_message_init
 
 ```C
-void bsal_message_init(struct bsal_message *message, int tag, int count, void *buffer);
+void bsal_message_init(struct bsal_message *message, int action, int count, void *buffer);
 ```
 
 Initialize a message. count is a number of bytes.
@@ -30,13 +30,13 @@ int bsal_message_source(struct bsal_message *message);
 
 Get the source actor.
 
-## bsal_message_tag
+## bsal_message_action
 
 ```C
-int bsal_message_tag(struct bsal_message *message);
+int bsal_message_action(struct bsal_message *message);
 ```
 
-Get tag.
+Get action.
 
 ## bsal_message_buffer
 

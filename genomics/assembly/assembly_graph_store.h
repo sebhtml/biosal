@@ -17,6 +17,7 @@
 
 struct bsal_assembly_vertex;
 struct bsal_assembly_arc;
+struct bsal_dna_kmer;
 
 #define SCRIPT_ASSEMBLY_GRAPH_STORE 0xc81a1596
 
@@ -34,11 +35,17 @@ struct bsal_assembly_arc;
  */
 #define BSAL_ASSEMBLY_ADD_ARCS
 
-#define ACTION_ASSEMBLY_GET_STARTING_VERTEX 0x000019bb
-#define ACTION_ASSEMBLY_GET_STARTING_VERTEX_REPLY 0x00006957
+#define ACTION_ASSEMBLY_GET_STARTING_KMER 0x000019bb
+#define ACTION_ASSEMBLY_GET_STARTING_KMER_REPLY 0x00006957
 
 #define ACTION_ASSEMBLY_GET_VERTEX 0x0000491e
 #define ACTION_ASSEMBLY_GET_VERTEX_REPLY 0x00007724
+
+#define ACTION_MARK_VERTEX_AS_VISITED 0x002e0b8a
+#define ACTION_MARK_VERTEX_AS_VISITED_REPLY 0x002b4b17
+
+#define ACTION_SET_VERTEX_FLAG 0x00286fd6
+#define ACTION_SET_VERTEX_FLAG_REPLY 0x003e175f
 
 /*
  * This is a graph store
@@ -53,6 +60,7 @@ struct bsal_assembly_graph_store {
     struct bsal_dna_codec storage_codec;
     int kmer_length;
     int key_length_in_bytes;
+    int unitig_vertex_count;
 
     int customer;
 
@@ -118,6 +126,12 @@ int bsal_assembly_graph_store_get_store_count_per_node(struct thorium_actor *sel
 void bsal_assembly_graph_store_print_progress(struct thorium_actor *self);
 
 void bsal_assembly_graph_store_mark_as_used(struct thorium_actor *self,
-                struct bsal_assembly_vertex *vertex, int source);
+                struct bsal_assembly_vertex *vertex, int source, int path);
+void bsal_assembly_graph_store_mark_vertex_as_visited(struct thorium_actor *self, struct thorium_message *message);
+
+void bsal_assembly_graph_store_set_vertex_flag(struct thorium_actor *self,
+                struct thorium_message *message);
+struct bsal_assembly_vertex *bsal_assembly_graph_store_find_vertex(struct thorium_actor *self,
+                struct bsal_dna_kmer *kmer);
 
 #endif

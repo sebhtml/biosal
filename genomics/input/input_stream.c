@@ -28,8 +28,10 @@
  */
 #define ENABLE_PARALLEL_COUNT
 
+#define MEMORY_INPUT_STREAM SCRIPT_INPUT_STREAM
+
 struct thorium_script bsal_input_stream_script = {
-    .identifier = ACTION_INPUT_SCRIPT_STREAM,
+    .identifier = SCRIPT_INPUT_STREAM,
     .init = bsal_input_stream_init,
     .destroy = bsal_input_stream_destroy,
     .receive = bsal_input_stream_receive,
@@ -134,7 +136,7 @@ void bsal_input_stream_destroy(struct thorium_actor *actor)
 #endif
 
     if (concrete_self->buffer_for_sequence != NULL) {
-        bsal_memory_free(concrete_self->buffer_for_sequence);
+        bsal_memory_free(concrete_self->buffer_for_sequence, MEMORY_INPUT_STREAM);
         concrete_self->buffer_for_sequence = NULL;
         concrete_self->maximum_sequence_length = 0;
     }
@@ -147,7 +149,7 @@ void bsal_input_stream_destroy(struct thorium_actor *actor)
     }
 
     if (concrete_self->file_name != NULL) {
-        bsal_memory_free(concrete_self->file_name);
+        bsal_memory_free(concrete_self->file_name, MEMORY_INPUT_STREAM);
         concrete_self->file_name = NULL;
     }
 
@@ -186,8 +188,8 @@ void bsal_input_stream_receive(struct thorium_actor *actor, struct thorium_messa
         return;
     }
 
-    concrete_self = (struct bsal_input_stream *)thorium_actor_concrete_actor(actor);
-    tag = thorium_message_tag(message);
+    concrete_self = thorium_actor_concrete_actor(actor);
+    tag = thorium_message_action(message);
     source = thorium_message_source(message);
     buffer = (char *)thorium_message_buffer(message);
 
@@ -221,7 +223,7 @@ void bsal_input_stream_receive(struct thorium_actor *actor, struct thorium_messa
         /* TODO: find out the maximum read length in some way */
         concrete_self->maximum_sequence_length = BSAL_INPUT_MAXIMUM_SEQUENCE_LENGTH;
 
-        concrete_self->buffer_for_sequence = (char *)bsal_memory_allocate(concrete_self->maximum_sequence_length);
+        concrete_self->buffer_for_sequence = (char *)bsal_memory_allocate(concrete_self->maximum_sequence_length, MEMORY_INPUT_STREAM);
 
         /*bsal_input_stream_init(actor);*/
 
@@ -243,7 +245,7 @@ void bsal_input_stream_receive(struct thorium_actor *actor, struct thorium_messa
         printf("Buffer %s\n", buffer);
 #endif
 
-        concrete_self->file_name = bsal_memory_allocate(strlen(file_name_in_buffer) + 1);
+        concrete_self->file_name = bsal_memory_allocate(strlen(file_name_in_buffer) + 1, MEMORY_INPUT_STREAM);
         strcpy(concrete_self->file_name, file_name_in_buffer);
 
         bsal_input_proxy_init(&concrete_self->proxy, concrete_self->file_name,
@@ -781,7 +783,7 @@ void bsal_input_stream_count_in_parallel(struct thorium_actor *self, struct thor
         spawner = thorium_actor_get_random_spawner(self, &concrete_self->spawners);
 
         thorium_actor_send_int(self, spawner, ACTION_SPAWN,
-                ACTION_INPUT_SCRIPT_STREAM);
+                SCRIPT_INPUT_STREAM);
     }
 }
 

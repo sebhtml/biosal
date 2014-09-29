@@ -16,6 +16,8 @@
 #define FIND_IDENTIFIER
 #define CHECK_PREVIOUS_BYTES
 
+#define MEMORY_FASTQ 0x1c318138
+
 struct bsal_input_format_interface bsal_fastq_input_operations = {
     .init = bsal_fastq_input_init,
     .destroy = bsal_fastq_input_destroy,
@@ -54,7 +56,7 @@ void bsal_fastq_input_destroy(struct bsal_input_format *input)
     bsal_buffered_reader_destroy(&fastq->reader);
 
     if (fastq->buffer != NULL) {
-        bsal_memory_free(fastq->buffer);
+        bsal_memory_free(fastq->buffer, MEMORY_FASTQ);
         fastq->buffer = NULL;
     }
 }
@@ -77,7 +79,7 @@ uint64_t bsal_fastq_input_get_sequence(struct bsal_input_format *input,
     fastq = (struct bsal_fastq_input *)bsal_input_format_implementation(input);
 
     if (fastq->buffer == NULL) {
-        fastq->buffer = (char *)bsal_memory_allocate(maximum_sequence_length + 1);
+        fastq->buffer = (char *)bsal_memory_allocate(maximum_sequence_length + 1, MEMORY_FASTQ);
     }
 
     value = 0;

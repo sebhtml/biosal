@@ -1,15 +1,22 @@
 
 #include "unitig_walker.h"
 
+#include "path_status.h"
+
 #include "../assembly_graph_store.h"
 #include "../assembly_vertex.h"
 
 #include <genomics/data/coverage_distribution.h>
 #include <genomics/data/dna_kmer.h>
 #include <genomics/data/dna_codec.h>
+
 #include <genomics/helpers/dna_helper.h>
 
+#include <core/patterns/writer_process.h>
+
 #include <core/helpers/order.h>
+
+#include <core/hash/murmur_hash_2_64_a.h>
 
 #include <core/system/command.h>
 #include <core/system/debugger.h>
@@ -29,6 +36,8 @@
 
 #define MINIMUM_PATH_LENGTH_IN_NUCLEOTIDES 100
 
+#define SIGNATURE_SEED (0xd948c134)
+
 /*
 #define DEBUG_SYNCHRONIZATION
 */
@@ -41,12 +50,12 @@
 #define HIGHLIGH_STARTING_POINT
 */
 
-#define OPERATION_FETCH_FIRST 0
-#define OPERATION_FETCH_PARENTS 1
-#define OPERATION_FETCH_CHILDREN 2
+#define OPERATION_FETCH_FIRST       0
+#define OPERATION_FETCH_PARENTS     1
+#define OPERATION_FETCH_CHILDREN    2
 
-#define OPERATION_SELECT_CHILD 8
-#define OPERATION_SELECT_PARENT 9
+#define OPERATION_SELECT_CHILD      8
+#define OPERATION_SELECT_PARENT     9
 
 #define STATUS_NO_STATUS (-1)
 #define STATUS_NO_EDGE 0
@@ -55,6 +64,21 @@
 #define STATUS_WITH_CHOICE 3
 #define STATUS_ALREADY_VISITED 4
 #define STATUS_DISAGREEMENT 5
+#define STATUS_DEFEAT 6
+#define STATUS_NOT_UNITIG_VERTEX 7
+#define STATUS_CYCLE 8
+
+/*
+ * Statuses for a path.
+ */
+#define PATH_STATUS_DEFEAT_BY_SHORT_LENGTH 0
+#define PATH_STATUS_DEFEAT_BY_FAILED_CHALLENGE 1
+#define PATH_STATUS_DEFEAT_WITH_CHALLENGER 2
+#define PATH_STATUS_VICTORY_WITHOUT_CHALLENGERS 3
+#define PATH_STATUS_VICTORY_WITH_CHALLENGERS 4
+#define PATH_STATUS_IN_PROGRESS_WITHOUT_CHALLENGERS 5
+#define PATH_STATUS_IN_PROGRESS_WITH_CHALLENGERS 6
+#define PATH_STATUS_DUPLICATE_VERTEX 7
 
 struct thorium_script bsal_unitig_walker_script = {
     .identifier = SCRIPT_UNITIG_WALKER,
@@ -69,26 +93,42 @@ struct thorium_script bsal_unitig_walker_script = {
 void bsal_unitig_walker_init(struct thorium_actor *self)
 {
     struct bsal_unitig_walker *concrete_self;
-    char *directory_name;
-    char *path;
     int argc;
     char **argv;
+
+#ifdef BSAL_UNITIG_WALKER_USE_PRIVATE_FILE
     char name_as_string[64];
+    char *directory_name;
+    char *path;
+#endif
     int name;
 
-    concrete_self = (struct bsal_unitig_walker *)thorium_actor_concrete_actor(self);
+    concrete_self = thorium_actor_concrete_actor(self);
 
-    bsal_memory_pool_init(&concrete_self->memory_pool, 1048576);
+    concrete_self->writer_process = THORIUM_ACTOR_NOBODY;
+    concrete_self->start_messages = 0;
+
+    /*
+     * Initialize the memory pool first.
+     */
+    bsal_memory_pool_init(&concrete_self->memory_pool, 1048576,
+                    BSAL_MEMORY_POOL_NAME_OTHER);
+    bsal_map_init(&concrete_self->path_statuses, sizeof(int), sizeof(struct bsal_path_status));
+    bsal_map_set_memory_pool(&concrete_self->path_statuses, &concrete_self->memory_pool);
 
     concrete_self->dried_stores = 0;
+    concrete_self->skipped_at_start_used = 0;
+    concrete_self->skipped_at_start_not_unitig = 0;
 
     argc = thorium_actor_argc(self);
     argv = thorium_actor_argv(self);
 
+    bsal_set_init(&concrete_self->visited, 0);
+
     bsal_vector_init(&concrete_self->graph_stores, sizeof(int));
 
-    thorium_actor_add_action(self, ACTION_ASSEMBLY_GET_STARTING_VERTEX_REPLY,
-        bsal_unitig_walker_get_starting_vertex_reply);
+    thorium_actor_add_action(self, ACTION_ASSEMBLY_GET_STARTING_KMER_REPLY,
+        bsal_unitig_walker_get_starting_kmer_reply);
 
     thorium_actor_add_action(self, ACTION_START,
                     bsal_unitig_walker_start);
@@ -144,9 +184,13 @@ void bsal_unitig_walker_init(struct thorium_actor *self)
 
     concrete_self->path_index = 0;
 
+#ifdef BSAL_UNITIG_WALKER_USE_PRIVATE_FILE
     directory_name = bsal_command_get_output_directory(argc, argv);
+#endif
 
     name = thorium_actor_name(self);
+
+#ifdef BSAL_UNITIG_WALKER_USE_PRIVATE_FILE
     sprintf(name_as_string, "%d", name);
     bsal_string_init(&concrete_self->file_path, directory_name);
     bsal_string_append(&concrete_self->file_path, "/unitig_walker_");
@@ -156,24 +200,30 @@ void bsal_unitig_walker_init(struct thorium_actor *self)
     path = bsal_string_get(&concrete_self->file_path);
 
     bsal_buffered_file_writer_init(&concrete_self->writer, path);
+#endif
 
     concrete_self->fetch_operation = OPERATION_FETCH_FIRST;
     concrete_self->select_operation = OPERATION_SELECT_CHILD;
 
     bsal_unitig_heuristic_init(&concrete_self->heuristic);
+
+    concrete_self->current_is_circular = 0;
 }
 
 void bsal_unitig_walker_destroy(struct thorium_actor *self)
 {
     struct bsal_unitig_walker *concrete_self;
 
-    concrete_self = (struct bsal_unitig_walker *)thorium_actor_concrete_actor(self);
+    concrete_self = thorium_actor_concrete_actor(self);
 
+    bsal_map_destroy(&concrete_self->path_statuses);
     bsal_dna_codec_destroy(&concrete_self->codec);
 
+#ifdef BSAL_UNITIG_WALKER_USE_PRIVATE_FILE
     bsal_string_destroy(&concrete_self->file_path);
 
     bsal_buffered_file_writer_destroy(&concrete_self->writer);
+#endif
 
     bsal_set_destroy(&concrete_self->visited);
 
@@ -194,6 +244,10 @@ void bsal_unitig_walker_destroy(struct thorium_actor *self)
 
     bsal_unitig_heuristic_destroy(&concrete_self->heuristic);
 
+    printf("DEBUG unitig_walker skipped_at_start_used %d skipped_at_start_not_unitig %d\n",
+                    concrete_self->skipped_at_start_used,
+                    concrete_self->skipped_at_start_not_unitig);
+
     /*
      * Destroy the memory pool at the end.
      */
@@ -211,11 +265,35 @@ void bsal_unitig_walker_receive(struct thorium_actor *self, struct thorium_messa
         return;
     }
 
-    tag = thorium_message_tag(message);
-    concrete_self = (struct bsal_unitig_walker *)thorium_actor_concrete_actor(self);
+    tag = thorium_message_action(message);
+    concrete_self = thorium_actor_concrete_actor(self);
     ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
 
     if (tag == ACTION_START) {
+
+        /*
+         * This is useless because ACTION_START is configured to be handled
+         * by bsal_unitig_walker_start().
+         */
+        bsal_unitig_walker_start(self, message);
+
+    } else if (tag == ACTION_SET_CONSUMER) {
+
+        thorium_message_unpack_int(message, 0, &concrete_self->writer_process);
+
+        thorium_actor_send_reply_empty(self, ACTION_SET_CONSUMER_REPLY);
+
+        /*
+         * Try to start now.
+         */
+        bsal_unitig_walker_start(self, message);
+
+    } else if (tag == ACTION_MARK_VERTEX_AS_VISITED_REPLY) {
+
+        /*
+         * Continue the work now.
+         */
+        thorium_actor_send_to_self_empty(self, ACTION_ASSEMBLY_GET_VERTICES_AND_SELECT);
 
     } else if (tag == ACTION_ASK_TO_STOP) {
 
@@ -254,7 +332,7 @@ void bsal_unitig_walker_begin(struct thorium_actor *self, struct thorium_message
     int store;
     int size;
 
-    concrete_self = (struct bsal_unitig_walker *)thorium_actor_concrete_actor(self);
+    concrete_self = thorium_actor_concrete_actor(self);
 
     size = bsal_vector_size(&concrete_self->graph_stores);
     store_index = concrete_self->store_index;
@@ -263,7 +341,10 @@ void bsal_unitig_walker_begin(struct thorium_actor *self, struct thorium_message
 
     store = bsal_vector_at_as_int(&concrete_self->graph_stores, store_index);
 
-    thorium_actor_send_empty(self, store, ACTION_ASSEMBLY_GET_STARTING_VERTEX);
+#if 0
+    printf("DEBUG_WALKER BEGIN\n");
+#endif
+    thorium_actor_send_empty(self, store, ACTION_ASSEMBLY_GET_STARTING_KMER);
 }
 
 void bsal_unitig_walker_start(struct thorium_actor *self, struct thorium_message *message)
@@ -274,17 +355,34 @@ void bsal_unitig_walker_start(struct thorium_actor *self, struct thorium_message
     int source;
     int size;
 
+#if 0
+    thorium_actor_send_reply_empty(self, ACTION_START_REPLY);
+
+    return;
+#endif
+
+    concrete_self = thorium_actor_concrete_actor(self);
+
+    /*
+     * 2 start messages are required: ACTION_START and ACTION_SET_CONSUMER
+     */
+    ++concrete_self->start_messages;
+
+    if (concrete_self->start_messages != 2) {
+        return;
+    }
+
     source = thorium_message_source(message);
     buffer = thorium_message_buffer(message);
-    concrete_self = (struct bsal_unitig_walker *)thorium_actor_concrete_actor(self);
     concrete_self->source = source;
-
-    printf("%s/%d is ready to surf the graph !\n",
-                        thorium_actor_script_name(self),
-                        thorium_actor_name(self));
 
     bsal_vector_unpack(&concrete_self->graph_stores, buffer);
     size = bsal_vector_size(&concrete_self->graph_stores);
+
+    printf("%s/%d is ready to surf the graph (%d stores => writer/%d)!\n",
+                        thorium_actor_script_name(self),
+                        thorium_actor_name(self),
+                        size, concrete_self->writer_process);
 
     /*
      * Use a random starting point.
@@ -296,16 +394,20 @@ void bsal_unitig_walker_start(struct thorium_actor *self, struct thorium_message
     thorium_actor_send_empty(self, graph, ACTION_ASSEMBLY_GET_KMER_LENGTH);
 }
 
-void bsal_unitig_walker_get_starting_vertex_reply(struct thorium_actor *self, struct thorium_message *message)
+void bsal_unitig_walker_get_starting_kmer_reply(struct thorium_actor *self, struct thorium_message *message)
 {
     struct bsal_unitig_walker *concrete_self;
     void *buffer;
     int count;
     struct thorium_message new_message;
+    char *new_buffer;
+    struct bsal_memory_pool *ephemeral_memory;
+    int new_count;
+    char *key;
 
     count = thorium_message_count(message);
-
-    concrete_self = (struct bsal_unitig_walker *)thorium_actor_concrete_actor(self);
+    concrete_self = thorium_actor_concrete_actor(self);
+    ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
 
     /*
      * No more vertices to consume.
@@ -362,11 +464,30 @@ void bsal_unitig_walker_get_starting_vertex_reply(struct thorium_actor *self, st
                     concrete_self->kmer_length, &concrete_self->memory_pool,
                     &concrete_self->codec);
 
+    /*
+     * Set the key as visited to detect cycles in the graphs
+     * caused by plasmids and other cool stuff.
+     */
+    key = bsal_memory_pool_allocate(ephemeral_memory, concrete_self->key_length);
+    bsal_dna_kmer_pack(&concrete_self->starting_kmer, key, concrete_self->kmer_length, &concrete_self->codec);
+    bsal_set_add(&concrete_self->visited, key);
+    bsal_memory_pool_free(ephemeral_memory, key);
+
     concrete_self->has_starting_vertex = 0;
 
     concrete_self->fetch_operation = OPERATION_FETCH_FIRST;
 
-    thorium_message_init(&new_message, ACTION_ASSEMBLY_GET_VERTEX, count, buffer);
+    new_count = count;
+    /*new_count += sizeof(concrete_self->path_index);*/
+    new_buffer = thorium_actor_allocate(self, new_count);
+    bsal_memory_copy(new_buffer, buffer, count);
+    /*bsal_memory_copy(new_buffer + count, &concrete_self->path_index, sizeof(concrete_self->path_index));*/
+
+#if 0
+    printf("ACTION_ASSEMBLY_GET_VERTEX path_index %d\n", concrete_self->path_index);
+#endif
+
+    thorium_message_init(&new_message, ACTION_ASSEMBLY_GET_VERTEX, new_count, new_buffer);
     thorium_actor_send_reply(self, &new_message);
     thorium_message_destroy(&new_message);
 }
@@ -375,35 +496,59 @@ void bsal_unitig_walker_get_vertex_reply_starting_vertex(struct thorium_actor *s
 {
     void *buffer;
     struct bsal_unitig_walker *concrete_self;
-    int state;
+    struct bsal_path_status *bucket;
 
     buffer = thorium_message_buffer(message);
-    concrete_self = (struct bsal_unitig_walker *)thorium_actor_concrete_actor(self);
+    concrete_self = thorium_actor_concrete_actor(self);
 
     bsal_assembly_vertex_init(&concrete_self->current_vertex);
     bsal_assembly_vertex_unpack(&concrete_self->current_vertex, buffer);
 
     /*
-     * Check if the vertex is already used. ACTION_ASSEMBLY_GET_STARTING_VERTEX
-     * returns a kmer that is in state BSAL_VERTEX_STATE_UNUSED,
+     * Check if the vertex is already used. ACTION_ASSEMBLY_GET_STARTING_KMER
+     * returns a kmer that has the flag BSAL_VERTEX_FLAG_USED set,
      * but another actor can grab the vertex in the mean time.
+     *
+     * Skip used vertices.
      */
 
-    state = bsal_assembly_vertex_state(&concrete_self->current_vertex);
-
-    if (state != BSAL_VERTEX_STATE_UNUSED) {
-
-#ifdef DEBUG_SYNCHRONIZATION
-        printf("SYNC skip vertex at start (state = %d)\n",
-                        state);
-#endif
+    if (bsal_assembly_vertex_get_flag(&concrete_self->current_vertex,
+                            BSAL_VERTEX_FLAG_USED)) {
 
         bsal_assembly_vertex_destroy(&concrete_self->current_vertex);
-
+        ++concrete_self->skipped_at_start_used;
         thorium_actor_send_to_self_empty(self, ACTION_BEGIN);
 
         return;
     }
+
+    /*
+     * Skip it if it is not a unitig vertex.
+     */
+    if (!bsal_assembly_vertex_get_flag(&concrete_self->current_vertex,
+                            BSAL_VERTEX_FLAG_UNITIG)) {
+
+        bsal_assembly_vertex_destroy(&concrete_self->current_vertex);
+        ++concrete_self->skipped_at_start_not_unitig;
+        thorium_actor_send_to_self_empty(self, ACTION_BEGIN);
+
+        return;
+    }
+
+    /*
+     * Set an initial status.
+     */
+    bucket = bsal_map_add(&concrete_self->path_statuses,
+                    &concrete_self->path_index);
+
+#if 0
+    printf("%d DEBUG add status path_index %d PATH_STATUS_IN_PROGRESS_WITHOUT_CHALLENGERS\n",
+                    thorium_actor_name(self),
+                    concrete_self->path_index);
+#endif
+
+    bucket->status = PATH_STATUS_IN_PROGRESS_WITHOUT_CHALLENGERS;
+    bucket->length_in_nucleotides = -1;
 
     /*
      * This is the starting vertex.
@@ -437,7 +582,7 @@ void bsal_unitig_walker_get_vertices_and_select(struct thorium_actor *self, stru
     struct bsal_unitig_walker *concrete_self;
     struct thorium_message new_message;
     int new_count;
-    void *new_buffer;
+    char *new_buffer;
     struct bsal_memory_pool *ephemeral_memory;
     int store_index;
     int store;
@@ -450,7 +595,7 @@ void bsal_unitig_walker_get_vertices_and_select(struct thorium_actor *self, stru
     struct bsal_dna_kmer parent_kmer;
     struct bsal_dna_kmer *parent_kmer_to_fetch;
 
-    concrete_self = (struct bsal_unitig_walker *)thorium_actor_concrete_actor(self);
+    concrete_self = thorium_actor_concrete_actor(self);
     ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
 
     /*
@@ -511,11 +656,17 @@ void bsal_unitig_walker_get_vertices_and_select(struct thorium_actor *self, stru
 
         new_count = bsal_dna_kmer_pack_size(child_kmer_to_fetch, concrete_self->kmer_length,
                     &concrete_self->codec);
-        new_buffer = bsal_memory_pool_allocate(ephemeral_memory, new_count);
+        /*new_count += sizeof(concrete_self->path_index);*/
+
+        new_buffer = thorium_actor_allocate(self, new_count);
 
         bsal_dna_kmer_pack(child_kmer_to_fetch, new_buffer,
                     concrete_self->kmer_length,
                     &concrete_self->codec);
+        /*
+        bsal_memory_copy(new_buffer + new_count - sizeof(concrete_self->path_index),
+                        &concrete_self->path_index, sizeof(concrete_self->path_index));
+                        */
 
         store_index = bsal_dna_kmer_store_index(child_kmer_to_fetch,
                     bsal_vector_size(&concrete_self->graph_stores),
@@ -530,8 +681,6 @@ void bsal_unitig_walker_get_vertices_and_select(struct thorium_actor *self, stru
         thorium_actor_send(self, store, &new_message);
         thorium_message_destroy(&new_message);
 
-        bsal_memory_pool_free(ephemeral_memory, new_buffer);
-
     /* Fetch a parent vertex.
      */
     } else if (concrete_self->current_parent < parent_count) {
@@ -541,11 +690,19 @@ void bsal_unitig_walker_get_vertices_and_select(struct thorium_actor *self, stru
 
         new_count = bsal_dna_kmer_pack_size(parent_kmer_to_fetch, concrete_self->kmer_length,
                     &concrete_self->codec);
-        new_buffer = bsal_memory_pool_allocate(ephemeral_memory, new_count);
+        /*
+        new_count += sizeof(concrete_self->path_index);
+        */
+
+        new_buffer = thorium_actor_allocate(self, new_count);
 
         bsal_dna_kmer_pack(parent_kmer_to_fetch, new_buffer,
                     concrete_self->kmer_length,
                     &concrete_self->codec);
+        /*
+        bsal_memory_copy(new_buffer + new_count - sizeof(concrete_self->path_index),
+                        &concrete_self->path_index, sizeof(concrete_self->path_index));
+                        */
 
         store_index = bsal_dna_kmer_store_index(parent_kmer_to_fetch,
                     bsal_vector_size(&concrete_self->graph_stores),
@@ -570,8 +727,6 @@ void bsal_unitig_walker_get_vertices_and_select(struct thorium_actor *self, stru
         thorium_actor_send(self, store, &new_message);
         thorium_message_destroy(&new_message);
 
-        bsal_memory_pool_free(ephemeral_memory, new_buffer);
-
     } else {
 
         /*
@@ -595,7 +750,7 @@ void bsal_unitig_walker_get_vertices_and_select_reply(struct thorium_actor *self
 {
     struct bsal_unitig_walker *concrete_self;
 
-    concrete_self = (struct bsal_unitig_walker *)thorium_actor_concrete_actor(self);
+    concrete_self = thorium_actor_concrete_actor(self);
 
     bsal_unitig_walker_dump_path(self);
 
@@ -613,8 +768,8 @@ void bsal_unitig_walker_get_vertex_reply(struct thorium_actor *self, struct thor
     void *buffer;
     struct bsal_unitig_walker *concrete_self;
     struct bsal_assembly_vertex vertex;
-    int state;
-    int actor;
+    int last_actor;
+    int last_path_index;
     int name;
     int length;
     int new_count;
@@ -622,15 +777,15 @@ void bsal_unitig_walker_get_vertex_reply(struct thorium_actor *self, struct thor
     struct bsal_memory_pool *ephemeral_memory;
     int position;
 
+    concrete_self = thorium_actor_concrete_actor(self);
     ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
     buffer = thorium_message_buffer(message);
-    concrete_self = thorium_actor_concrete_actor(self);
 
     bsal_assembly_vertex_init(&vertex);
     bsal_assembly_vertex_unpack(&vertex, buffer);
 
 #ifdef BSAL_UNITIG_WALKER_DEBUG
-    printf("Connectivity for vertex: \n");
+    printf("Vertex after reception: \n");
 
     bsal_assembly_vertex_print(&vertex);
 #endif
@@ -653,42 +808,50 @@ void bsal_unitig_walker_get_vertex_reply(struct thorium_actor *self, struct thor
     /*
      * Check for competition.
      */
-    state = bsal_assembly_vertex_state(&vertex);
 
-    BSAL_DEBUGGER_ASSERT(state == BSAL_VERTEX_STATE_USED
-                    || state == BSAL_VERTEX_STATE_UNUSED);
-
-    actor = bsal_assembly_vertex_best_actor(&vertex);
+    last_actor = bsal_assembly_vertex_last_actor(&vertex);
     name = thorium_actor_name(self);
 
-    if (state == BSAL_VERTEX_STATE_USED && actor != name) {
+    if (bsal_assembly_vertex_get_flag(&vertex, BSAL_VERTEX_FLAG_USED)
+                    && last_actor != name) {
 
+        last_path_index = bsal_assembly_vertex_last_path_index(&vertex);
 #if 0
         /* ask the other actor about it.
          */
-        printf("actor/%d needs to ask actor/%d for solving BSAL_VERTEX_STATE_USED\n",
+        printf("actor/%d needs to ask actor/%d for solving BSAL_VERTEX_FLAG_USED\n",
                         thorium_actor_name(self), actor);
 #endif
 
         length = bsal_unitig_walker_get_current_length(self);
 
-        new_count = bsal_dna_kmer_pack_size(&concrete_self->current_kmer, concrete_self->kmer_length,
-                    &concrete_self->codec);
+        new_count = 0;
+        new_count += sizeof(last_path_index);
         new_count += sizeof(length);
 
-        new_buffer = bsal_memory_pool_allocate(ephemeral_memory, new_count);
+        new_buffer = thorium_actor_allocate(self, new_count);
 
         position = 0;
-        position += bsal_dna_kmer_pack(&concrete_self->current_kmer, new_buffer + position,
-                    concrete_self->kmer_length,
-                    &concrete_self->codec);
-
+        bsal_memory_copy(new_buffer + position, &last_path_index, sizeof(last_path_index));
+        position += sizeof(last_path_index);
         bsal_memory_copy(new_buffer + position, &length, sizeof(length));
+        position += sizeof(length);
 
-        thorium_actor_send_buffer(self, actor, ACTION_NOTIFY, new_count,
+#ifdef BSAL_UNITIG_WALKER_DEBUG
+        printf("%d sends to %d ACTION_NOTIFY last_path_index %d current_path %d length %d\n",
+                        thorium_actor_name(self),
+                        last_actor, last_path_index,
+                        concrete_self->path_index, length);
+#endif
+
+        BSAL_DEBUGGER_ASSERT(last_path_index >= 0);
+
+        /*
+         * Ask the owner about it.
+         */
+
+        thorium_actor_send_buffer(self, last_actor, ACTION_NOTIFY, new_count,
                         new_buffer);
-
-        bsal_memory_pool_free(ephemeral_memory, new_buffer);
 
     } else {
 
@@ -699,17 +862,22 @@ void bsal_unitig_walker_get_vertex_reply(struct thorium_actor *self, struct thor
 void bsal_unitig_walker_notify(struct thorium_actor *self, struct thorium_message *message)
 {
     struct bsal_unitig_walker *concrete_self;
-    int first_is_longer;
+    int authorized_to_continue;
     int length;
     int other_length;
     int source;
     int position;
-    struct bsal_dna_kmer kmer;
     struct bsal_memory_pool *ephemeral_memory;
-    int found;
-    char *key;
+    int path_index;
+    struct bsal_path_status *bucket;
     void *buffer;
+    int name;
+    int check_equal_length;
+    int disable_battle;
 
+    disable_battle = 1;
+    check_equal_length = 1;
+    name = thorium_actor_name(self);
     concrete_self = thorium_actor_concrete_actor(self);
 
     position = 0;
@@ -722,81 +890,166 @@ void bsal_unitig_walker_notify(struct thorium_actor *self, struct thorium_messag
      * a previous set.
      */
 
-    bsal_dna_kmer_init_empty(&kmer);
-    bsal_dna_kmer_unpack(&kmer, buffer, concrete_self->kmer_length,
-                    ephemeral_memory, &concrete_self->codec);
-    key = bsal_memory_pool_allocate(ephemeral_memory, concrete_self->key_length);
-    bsal_dna_kmer_pack_store_key(&kmer, key, concrete_self->kmer_length,
-                    &concrete_self->codec, ephemeral_memory);
-    found = bsal_set_find(&concrete_self->visited, key);
-    bsal_memory_pool_free(ephemeral_memory, key);
+    position += thorium_message_unpack_int(message, position, &path_index);
+    position += thorium_message_unpack_int(message, position, &other_length);
 
-    thorium_message_unpack_int(message, position, &other_length);
     length = bsal_unitig_walker_get_current_length(self);
 
-#if 0
-    printf("DEBUG ACTION_NOTIFY actor/%d (self) has %d, actor/%d has %d\n",
+    /*
+     * Get path status.
+     */
+
+    bucket = bsal_map_get(&concrete_self->path_statuses, &path_index);
+
+#ifdef BSAL_UNITIG_WALKER_DEBUG
+    printf("DEBUG ACTION_NOTIFY actor/%d (self) has %d (status %d), actor/%d has %d\n",
                     thorium_actor_name(self),
-                    length, source, other_length);
+                    length, bucket->status, source, other_length);
 #endif
 
-    bsal_dna_kmer_destroy(&kmer, ephemeral_memory);
-
-    first_is_longer = 0;
+#ifdef BSAL_DEBUGGER_ENABLE_ASSERT
+    if (bucket == NULL) {
+        printf("Error %d received ACTION_NOTIFY, not found path_index= %d (current path_index %d)\n",
+                        thorium_actor_name(self),
+                        path_index, concrete_self->path_index);
+    }
+#endif
+    BSAL_DEBUGGER_ASSERT(bucket != NULL);
 
     /*
-     * If the kmer is not found, it means that it was in a previous piece of work.
+     * This will tell the source wheteher or not we authorize it to
+     * continue.
      */
-    if (!found) {
-        first_is_longer = 1;
+    authorized_to_continue = 1;
 
-#ifdef DEBUG_SYNCHRONIZATION
-        printf("DEBUG ACTION_NOTIFY not found\n");
-#endif
-    } else if (length > other_length) {
+    if (disable_battle) {
 
-        /*
-         * Otherwise, if the current length is larger, we win.
-         */
-        first_is_longer = 1;
+    } else if (bucket->status == PATH_STATUS_VICTORY_WITHOUT_CHALLENGERS
+            || bucket->status == PATH_STATUS_VICTORY_WITH_CHALLENGERS) {
 
-#ifdef DEBUG_SYNCHRONIZATION
-        printf("DEBUG ACTION_NOTIFY longer\n");
-#endif
-    } else if (length == other_length) {
+        length = bucket->length_in_nucleotides;
 
         /*
-         * The current actor also wins if its length is equal to the other one.
+         * The current actor already claimed a victory in the past.
          */
-        first_is_longer = 1;
 
-#ifdef DEBUG_SYNCHRONIZATION
-        printf("DEBUG ACTION_NOTIFY equal\n");
+#ifdef BSAL_UNITIG_WALKER_DEBUG
+        printf("actor %d path %d past victory status %d length_in_nucleotides %d challenger length %d\n", thorium_actor_name(self),
+                    path_index, bucket->status, bucket->length_in_nucleotides,
+                    other_length);
 #endif
 
-    } else if (length < other_length) {
-
-        first_is_longer = 0;
-
-#ifdef DEBUG_SYNCHRONIZATION
-        printf("DEBUG ACTION_NOTIFY source has a bigger one\n");
+#ifdef BSAL_DEBUGGER_ENABLE_ASSERT_disabled
+        if (!(other_length <= length)) {
+            printf("Error, this is false: %d <= %d\n",
+                            other_length, length);
+        }
 #endif
+
+        /*BSAL_DEBUGGER_ASSERT(other_length <= length);*/
+
+        /* This should be 0 */
+        authorized_to_continue = 0;
+
+    } else if (bucket->status == PATH_STATUS_IN_PROGRESS_WITHOUT_CHALLENGERS
+                  || bucket->status == PATH_STATUS_IN_PROGRESS_WITH_CHALLENGERS) {
+
+        /*
+         * Fight now !!!
+         *
+         * The longest wins.
+         *
+         * If the lengths are equal, then the highest name wins.
+         */
+
+        BSAL_DEBUGGER_ASSERT(name != source);
+
+        if (length > other_length
+               || (check_equal_length
+                       && length == other_length && name > source)) {
+
+            /* this should be 0 */
+            authorized_to_continue = 0;
+
+            bucket->status = PATH_STATUS_IN_PROGRESS_WITH_CHALLENGERS;
+
+            /*
+            *bucket = PATH_STATUS_VICTORY_WITH_CHALLENGERS;
+            */
+#if 0
+            printf("%d victory with length\n", thorium_actor_name(self));
+#endif
+
+        } else {
+            authorized_to_continue = 1;
+
+            /*
+             *
+            printf("%d DEBUG PATH_STATUS_DEFEAT_WITH_CHALLENGER length %d other_length %d\n",
+                            thorium_actor_name(self), length, other_length);
+             */
+
+            /*
+             * Stop the current one.
+             */
+            /*
+            */
+            bucket->status = PATH_STATUS_DEFEAT_WITH_CHALLENGER;
+        }
+    } else if (bucket->status == PATH_STATUS_DEFEAT_WITH_CHALLENGER
+                 || bucket->status == PATH_STATUS_DEFEAT_BY_FAILED_CHALLENGE) {
+        /*
+         * There will be another battle not involving the current actor.
+         */
+        authorized_to_continue = 1;
+
+        /*
+         * TODO: provide the name of the winner.
+         */
     }
 
-    thorium_actor_send_reply_int(self, ACTION_NOTIFY_REPLY, first_is_longer);
+    thorium_actor_send_reply_int(self, ACTION_NOTIFY_REPLY, authorized_to_continue);
 }
+
 
 void bsal_unitig_walker_notify_reply(struct thorium_actor *self, struct thorium_message *message)
 {
     struct bsal_unitig_walker *concrete_self;
-    int first_is_longer;
+    int authorized_to_continue;
+    struct bsal_path_status *bucket;
 
     concrete_self = thorium_actor_concrete_actor(self);
-    thorium_message_unpack_int(message, 0, &first_is_longer);
+    thorium_message_unpack_int(message, 0, &authorized_to_continue);
+
+    if (!authorized_to_continue) {
+
+        bucket = bsal_map_get(&concrete_self->path_statuses, &concrete_self->path_index);
+
+        BSAL_DEBUGGER_ASSERT(bucket != NULL);
+
+        /*
+         * 2 defeats are necessary. The reason is that the ends of bubbles and tips
+         * are also marked, but meeting just one such marked vertex should not
+         * stop anything.
+         */
+        /*
+         * accept defeat.
+         */
+        /*
+        */
+        bucket->status = PATH_STATUS_DEFEAT_BY_FAILED_CHALLENGE;
+
+#if 0
+        printf("%d path_index %d source %d current_length %d DEBUG PATH_STATUS_DEFEAT_BY_FAILED_CHALLENGE !!!\n",
+                        thorium_actor_name(self),
+                        concrete_self->path_index, thorium_message_source(message),
+                        bsal_unitig_walker_get_current_length(self));
+#endif
+    }
 
 #ifdef DEBUG_SYNCHRONIZATION
     printf("DEBUG received ACTION_NOTIFY_REPLY, other_is_longer-> %d\n",
-                    first_is_longer);
+                    authorized_to_continue);
 #endif
 
     thorium_actor_send_to_self_empty(self, ACTION_ASSEMBLY_GET_VERTICES_AND_SELECT);
@@ -864,6 +1117,9 @@ void bsal_unitig_walker_dump_path(struct thorium_actor *self)
     char nucleotide;
     int code;
     uint64_t path_name;
+    struct bsal_path_status *bucket;
+    int victory;
+    uint64_t signature;
 
     concrete_self = thorium_actor_concrete_actor(self);
     ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
@@ -930,17 +1186,109 @@ void bsal_unitig_walker_dump_path(struct thorium_actor *self)
 
     sequence[sequence_length] = '\0';
 
+    /*
+     * If the sequence is a cycle, normalize it.
+     * Plasmid and virus can be simple circles.
+     *
+     * Although bacteria have in general a circular chromosome,
+     * they are complex enough not to generate one single circle in
+     * the graph.
+     */
+
+    if (concrete_self->current_is_circular) {
+        bsal_unitig_walker_normalize_cycle(self, sequence_length, sequence);
+    }
+
+    /*
+     * Select the good strand.
+     */
+    bsal_unitig_walker_select_strand(self, sequence_length, sequence);
+
     path_name = bsal_unitig_walker_get_path_name(self, sequence_length, sequence);
 
-    if (sequence_length >= MINIMUM_PATH_LENGTH_IN_NUCLEOTIDES) {
+    bucket = bsal_map_get(&concrete_self->path_statuses, &concrete_self->path_index);
+    BSAL_DEBUGGER_ASSERT(bucket != NULL);
+
+    victory = 0;
+    bucket->length_in_nucleotides = sequence_length;
+
+#ifdef BSAL_DEBUGGER_ENABLE_ASSERT
+    if (!(bucket->status == PATH_STATUS_IN_PROGRESS_WITH_CHALLENGERS
+                    || bucket->status == PATH_STATUS_IN_PROGRESS_WITHOUT_CHALLENGERS
+                    || bucket->status == PATH_STATUS_DEFEAT_WITH_CHALLENGER
+                    || bucket->status == PATH_STATUS_DEFEAT_BY_FAILED_CHALLENGE)) {
+
+        printf("Error status %d\n", bucket->status);
+    }
+#endif
+
+    BSAL_DEBUGGER_ASSERT(bucket->status == PATH_STATUS_IN_PROGRESS_WITH_CHALLENGERS
+                    || bucket->status == PATH_STATUS_IN_PROGRESS_WITHOUT_CHALLENGERS
+                    || bucket->status == PATH_STATUS_DEFEAT_WITH_CHALLENGER
+                    || bucket->status == PATH_STATUS_DEFEAT_BY_FAILED_CHALLENGE);
+
+    if (sequence_length < MINIMUM_PATH_LENGTH_IN_NUCLEOTIDES) {
+        bucket->status = PATH_STATUS_DEFEAT_BY_SHORT_LENGTH;
+        victory = 0;
+    }
+
+    /*
+     * Convert in-progress status to victory status.
+     */
+    if (bucket->status == PATH_STATUS_IN_PROGRESS_WITHOUT_CHALLENGERS) {
+
+#if 0
+        printf("actor/%d path %d sequence_length %d PATH_STATUS_IN_PROGRESS_WITHOUT_CHALLENGERS\n",
+                        thorium_actor_name(self),
+                        concrete_self->path_index, sequence_length);
+#endif
+        bucket->status = PATH_STATUS_VICTORY_WITHOUT_CHALLENGERS;
+        victory = 1;
+
+    } else if (bucket->status == PATH_STATUS_IN_PROGRESS_WITH_CHALLENGERS) {
+
+#if 0
+        printf("actor %d path %d sequence_length %d PATH_STATUS_IN_PROGRESS_WITH_CHALLENGERS\n",
+                        thorium_actor_name(self),
+                        concrete_self->path_index, sequence_length);
+#endif
+        bucket->status = PATH_STATUS_VICTORY_WITH_CHALLENGERS;
+        victory = 1;
+    }
+
+#if 0
+    if (!victory) {
+
+        printf("%d sequence_length %d not victorious -> %d\n",
+                        thorium_actor_name(self), sequence_length,
+                        *bucket);
+    }
+#endif
+
+    if (concrete_self->current_is_circular) {
+#if 0
+        victory = 0;
+        bucket->status = PATH_STATUS_DUPLICATE_VERTEX;
+#endif
+        if (victory) {
+            printf("DEBUG current_is_circular name= %" PRIu64 " sequence_length= %d victory %d\n",
+                        path_name, sequence_length, victory);
+        }
+    }
+
+    if (victory
+             && sequence_length >= MINIMUM_PATH_LENGTH_IN_NUCLEOTIDES) {
 
 #ifdef DEBUG_PATH_NAMES
     printf("DEBUG path_name= %" PRIu64 " path_length= %d start_position= %d\n",
                     path_name, sequence_length, start_position);
 #endif
 
+        signature = bsal_murmur_hash_2_64_a(sequence, sequence_length, SIGNATURE_SEED);
+
         bsal_unitig_walker_write(self, path_name,
-                    sequence, sequence_length);
+                    sequence, sequence_length, concrete_self->current_is_circular,
+                    signature);
     }
 
     bsal_memory_pool_free(ephemeral_memory, sequence);
@@ -951,11 +1299,66 @@ void bsal_unitig_walker_dump_path(struct thorium_actor *self)
     bsal_assembly_vertex_destroy(&concrete_self->starting_vertex);
 
     bsal_set_clear(&concrete_self->visited);
+    concrete_self->current_is_circular = 0;
 
+    /*
+     * Update path index
+     */
     ++concrete_self->path_index;
 }
 
 int bsal_unitig_walker_select(struct thorium_actor *self, int *output_status)
+{
+    struct bsal_unitig_walker *concrete_self;
+    int i;
+    int size;
+    struct bsal_assembly_vertex *vertex;
+    int is_unitig_vertex;
+    int choice;
+    int status;
+    struct bsal_vector *selected_kmers;
+    struct bsal_vector *selected_vertices;
+
+    choice = BSAL_HEURISTIC_CHOICE_NONE;
+    status = STATUS_NO_STATUS;
+
+    concrete_self = thorium_actor_concrete_actor(self);
+    /*ephemeral_memory = thorium_actor_get_ephemeral_memory(self);*/
+
+    if (concrete_self->select_operation == OPERATION_SELECT_CHILD) {
+        selected_vertices = &concrete_self->child_vertices;
+        selected_kmers = &concrete_self->child_kmers;
+    } else /*if (concrete_self->select_operation == OPERATION_SELECT_PARENT) */{
+        selected_vertices = &concrete_self->parent_vertices;
+        selected_kmers = &concrete_self->parent_kmers;
+    }
+
+    size = bsal_vector_size(selected_vertices);
+
+    status = STATUS_NOT_UNITIG_VERTEX;
+
+    for (i = 0; i < size; ++i) {
+        vertex = bsal_vector_at(selected_vertices, i);
+
+        is_unitig_vertex = bsal_assembly_vertex_get_flag(vertex, BSAL_VERTEX_FLAG_UNITIG);
+
+        if (is_unitig_vertex) {
+            choice = i;
+            status = STATUS_WITH_CHOICE;
+            break;
+        }
+    }
+
+    /*
+     * Make sure that the choice is not already in the unitig.
+     */
+    bsal_unitig_walker_check_usage(self, &choice, &status, selected_kmers);
+    *output_status = status;
+
+    return choice;
+}
+
+int bsal_unitig_walker_select_old_version(struct thorium_actor *self, int *output_status)
 {
     int choice;
     int status;
@@ -978,6 +1381,7 @@ int bsal_unitig_walker_select(struct thorium_actor *self, int *output_status)
     struct bsal_vector *selected_path;
     int size;
     int print_status;
+    struct bsal_path_status *bucket;
 
     status = STATUS_NO_STATUS;
 
@@ -1085,7 +1489,7 @@ int bsal_unitig_walker_select(struct thorium_actor *self, int *output_status)
 
     print_status = 0;
 
-    if (bsal_vector_size(selected_path) > 2000)
+    if (bsal_vector_size(selected_path) > 1000)
         print_status = 1;
 
     /*
@@ -1096,7 +1500,9 @@ int bsal_unitig_walker_select(struct thorium_actor *self, int *output_status)
 
     if (print_status) {
 
-        printf("Notice: can not select, current_coverage %d, selected_path.size %d", current_coverage,
+        printf("actor %d path_index %d Notice: can not select, current_coverage %d, selected_path.size %d",
+                        thorium_actor_name(self), concrete_self->path_index,
+                        current_coverage,
                         (int)bsal_vector_size(selected_path));
 
         /*
@@ -1146,12 +1552,28 @@ int bsal_unitig_walker_select(struct thorium_actor *self, int *output_status)
             printf("STATUS_IMPOSSIBLE_CHOICE");
         else if (status == STATUS_DISAGREEMENT)
             printf("STATUS_DISAGREEMENT");
+        else if (status == STATUS_DEFEAT)
+            printf("STATUS_DEFEAT");
 
         printf("\n");
     }
 
     bsal_vector_destroy(&parent_coverage_values);
     bsal_vector_destroy(&child_coverage_values);
+
+    /*
+     * Check for defeat.
+     */
+
+    bucket = bsal_map_get(&concrete_self->path_statuses,
+                    &concrete_self->path_index);
+
+    if (bucket->status == PATH_STATUS_DEFEAT_WITH_CHALLENGER
+                    || bucket->status == PATH_STATUS_DEFEAT_BY_FAILED_CHALLENGE) {
+
+        choice = BSAL_HEURISTIC_CHOICE_NONE;
+        status = STATUS_DEFEAT;
+    }
 
     BSAL_DEBUGGER_ASSERT(status != STATUS_NO_STATUS);
     BSAL_DEBUGGER_ASSERT(choice == BSAL_HEURISTIC_CHOICE_NONE ||
@@ -1163,8 +1585,7 @@ int bsal_unitig_walker_select(struct thorium_actor *self, int *output_status)
 }
 
 void bsal_unitig_walker_write(struct thorium_actor *self, uint64_t name,
-                char *sequence,
-                int sequence_length)
+                char *sequence, int sequence_length, int circular, uint64_t signature)
 {
     struct bsal_unitig_walker *concrete_self;
     int column_width;
@@ -1172,6 +1593,9 @@ void bsal_unitig_walker_write(struct thorium_actor *self, uint64_t name,
     struct bsal_memory_pool *ephemeral_memory;
     int block_length;
     int i;
+    size_t required;
+    size_t position;
+    char *message_buffer;
 
     /*
      * \see http://en.wikipedia.org/wiki/FASTA_format
@@ -1183,17 +1607,21 @@ void bsal_unitig_walker_write(struct thorium_actor *self, uint64_t name,
 
     buffer = bsal_memory_pool_allocate(ephemeral_memory, column_width + 1);
 
-    i = 0;
+    required = 0;
 
 #if 0
     printf("LENGTH=%d\n", sequence_length);
 #endif
 
-    bsal_buffered_file_writer_printf(&concrete_self->writer,
-                    ">path_%" PRIu64 " length=%d\n",
+    /*
+     * Calculate the required size.
+     */
+    required += snprintf(NULL, 0,
+                    ">path_%" PRIu64 " length=%d circular=%d signature=%" PRIx64 "\n",
                     name,
-                    sequence_length);
+                    sequence_length, circular, signature);
 
+    i = 0;
     while (i < sequence_length) {
 
         block_length = sequence_length - i;
@@ -1205,16 +1633,44 @@ void bsal_unitig_walker_write(struct thorium_actor *self, uint64_t name,
         bsal_memory_copy(buffer, sequence + i, block_length);
         buffer[block_length] = '\0';
 
-#if 0
-        printf("BLOCK %d <<%s>>\n",
-                        block_length, buffer);
-#endif
+        required += snprintf(NULL, 0, "%s\n", buffer);
 
-        bsal_buffered_file_writer_printf(&concrete_self->writer,
+        i += block_length;
+    }
+
+    /*
+     * Generate message.
+     */
+
+    message_buffer = thorium_actor_allocate(self, required + 1);
+
+    position = 0;
+    position += sprintf(message_buffer + position,
+                    ">path_%" PRIu64 " length=%d circular=%d signature=%" PRIx64 "\n",
+                    name,
+                    sequence_length, circular, signature);
+
+    i = 0;
+    while (i < sequence_length) {
+
+        block_length = sequence_length - i;
+
+        if (column_width < block_length) {
+            block_length = column_width;
+        }
+
+        bsal_memory_copy(buffer, sequence + i, block_length);
+        buffer[block_length] = '\0';
+        position += sprintf(message_buffer + position,
                         "%s\n", buffer);
 
         i += block_length;
     }
+
+    BSAL_DEBUGGER_ASSERT(position == required);
+
+    thorium_actor_send_buffer(self, concrete_self->writer_process,
+                    ACTION_WRITE, position, message_buffer);
 
     bsal_memory_pool_free(ephemeral_memory, buffer);
 }
@@ -1248,6 +1704,16 @@ void bsal_unitig_walker_make_decision(struct thorium_actor *self)
 
     choice = bsal_unitig_walker_select(self, &status);
 
+    /*
+     * If the thing is circular, don't do anything else.
+     */
+    if (concrete_self->select_operation == OPERATION_SELECT_PARENT) {
+        if (concrete_self->current_is_circular) {
+            status = STATUS_CYCLE;
+            choice = BSAL_HEURISTIC_CHOICE_NONE;
+        }
+    }
+
     BSAL_DEBUGGER_ASSERT(status != STATUS_NO_STATUS);
 
     if (concrete_self->select_operation == OPERATION_SELECT_CHILD) {
@@ -1277,6 +1743,9 @@ void bsal_unitig_walker_make_decision(struct thorium_actor *self)
             code = bsal_assembly_vertex_get_parent(&concrete_self->current_vertex, choice);
         }
 
+        /*
+         * Add the choice to the list.
+         */
         kmer = bsal_vector_at(selected_kmers, choice);
         vertex = bsal_vector_at(selected_vertices, choice);
         bsal_vector_push_back(selected_output_path, &code);
@@ -1298,13 +1767,18 @@ void bsal_unitig_walker_make_decision(struct thorium_actor *self)
                         (int)bsal_vector_size(&concrete_self->path));
         #endif
 
-        bsal_memory_pool_free(ephemeral_memory, key);
+        /*
+         * Mark the vertex.
+         */
+        bsal_unitig_walker_mark_vertex(self, kmer);
 
+        /*
+         * Whenever a choice is made, the vertex is marked as visited.
+         */
         bsal_unitig_walker_set_current(self, kmer, vertex);
-
         bsal_unitig_walker_clear(self);
 
-        thorium_actor_send_to_self_empty(self, ACTION_ASSEMBLY_GET_VERTICES_AND_SELECT);
+        bsal_memory_pool_free(ephemeral_memory, key);
 
     } else if (concrete_self->select_operation == OPERATION_SELECT_CHILD) {
 
@@ -1389,6 +1863,7 @@ uint64_t bsal_unitig_walker_get_path_name(struct thorium_actor *self, int length
     char *kmer_sequence;
     char saved_symbol;
     struct bsal_memory_pool *ephemeral_memory;
+    uint64_t name;
 
     /*
      * Get a path name.
@@ -1413,7 +1888,6 @@ uint64_t bsal_unitig_walker_get_path_name(struct thorium_actor *self, int length
     hash_value1 = bsal_dna_kmer_canonical_hash(&kmer1,
                         concrete_self->kmer_length, &concrete_self->codec,
                        ephemeral_memory);
-    bsal_dna_kmer_destroy(&kmer1, ephemeral_memory);
 
     /*
      * Get the second hash value.
@@ -1428,12 +1902,21 @@ uint64_t bsal_unitig_walker_get_path_name(struct thorium_actor *self, int length
     hash_value2 = bsal_dna_kmer_canonical_hash(&kmer2,
                         concrete_self->kmer_length, &concrete_self->codec,
                        ephemeral_memory);
+
+    name = hash_value1;
+
+    if (bsal_dna_kmer_is_lower(&kmer2, &kmer1, concrete_self->kmer_length,
+                            &concrete_self->codec)) {
+        name = hash_value2;
+    }
+
+    bsal_dna_kmer_destroy(&kmer1, ephemeral_memory);
     bsal_dna_kmer_destroy(&kmer2, ephemeral_memory);
 
     /*
      * Return the lowest value.
      */
-    return bsal_order_minimum(hash_value1, hash_value2);
+    return name;
 }
 
 void bsal_unitig_walker_check_symmetry(struct thorium_actor *self, int parent_choice, int child_choice,
@@ -1498,10 +1981,13 @@ void bsal_unitig_walker_check_agreement(struct thorium_actor *self, int parent_c
             child_code = bsal_assembly_vertex_get_child(&concrete_self->current_vertex, child_choice);
 
             if (parent_code != expected_parent_code) {
+
+#if 0
                 printf("DEBUG STATUS_DISAGREEMENT child actual %d expected %d",
                         parent_code, expected_parent_code);
                 printf(" MISMATCH");
                 printf("\n");
+#endif
 
                 *choice = BSAL_HEURISTIC_CHOICE_NONE;
                 *status = STATUS_DISAGREEMENT;
@@ -1560,10 +2046,12 @@ void bsal_unitig_walker_check_agreement(struct thorium_actor *self, int parent_c
             child_code = bsal_assembly_vertex_get_child(&concrete_self->current_vertex, child_choice);
 
             if (child_code != expected_child_code) {
+#if 0
                 printf("DEBUG STATUS_DISAGREEMENT parent actual %d expected %d",
                         child_code, expected_child_code);
                 printf(" MISMATCH");
                 printf("\n");
+#endif
 
                 *choice = BSAL_HEURISTIC_CHOICE_NONE;
                 *status = STATUS_DISAGREEMENT;
@@ -1598,6 +2086,7 @@ void bsal_unitig_walker_check_usage(struct thorium_actor *self, int *choice, int
 
     bsal_dna_kmer_pack_store_key(kmer, key, concrete_self->kmer_length,
                     &concrete_self->codec, ephemeral_memory);
+
     found = bsal_set_find(&concrete_self->visited, key);
 
 #ifdef BSAL_UNITIG_WALKER_DEBUG
@@ -1612,6 +2101,12 @@ void bsal_unitig_walker_check_usage(struct thorium_actor *self, int *choice, int
 
         bsal_dna_kmer_print(kmer, concrete_self->kmer_length, &concrete_self->codec,
                     ephemeral_memory);
+
+        printf("Starting kmer\n");
+        bsal_dna_kmer_print(&concrete_self->starting_kmer, concrete_self->kmer_length, &concrete_self->codec,
+                    ephemeral_memory);
+        concrete_self->current_is_circular = 1;
+
         *choice = BSAL_HEURISTIC_CHOICE_NONE;
         *status = STATUS_ALREADY_VISITED;
     }
@@ -1636,3 +2131,171 @@ int bsal_unitig_walker_get_current_length(struct thorium_actor *self)
 
     return length;
 }
+
+void bsal_unitig_walker_mark_vertex(struct thorium_actor *self, struct bsal_dna_kmer *kmer)
+{
+    int new_count;
+    int store_index;
+    int store;
+    int position;
+    char *new_buffer;
+    struct thorium_message new_message;
+    struct bsal_unitig_walker *concrete_self;
+    struct bsal_memory_pool *ephemeral_memory;
+
+    concrete_self = thorium_actor_concrete_actor(self);
+    ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
+
+    /*
+     * Send the marker to the graph store.
+     */
+    new_count = bsal_dna_kmer_pack_size(kmer, concrete_self->kmer_length,
+                &concrete_self->codec);
+    new_count += sizeof(concrete_self->path_index);
+
+    new_buffer = thorium_actor_allocate(self, new_count);
+    position = 0;
+    position += bsal_dna_kmer_pack(kmer, new_buffer,
+                concrete_self->kmer_length,
+                &concrete_self->codec);
+    bsal_memory_copy(new_buffer + position,
+                    &concrete_self->path_index, sizeof(concrete_self->path_index));
+    position += sizeof(concrete_self->path_index);
+
+    BSAL_DEBUGGER_ASSERT(position == new_count);
+
+    store_index = bsal_dna_kmer_store_index(kmer,
+                bsal_vector_size(&concrete_self->graph_stores),
+                concrete_self->kmer_length,
+                &concrete_self->codec, ephemeral_memory);
+    store = bsal_vector_at_as_int(&concrete_self->graph_stores, store_index);
+
+    thorium_message_init(&new_message, ACTION_MARK_VERTEX_AS_VISITED, new_count, new_buffer);
+    thorium_actor_send(self, store, &new_message);
+    thorium_message_destroy(&new_message);
+}
+
+void bsal_unitig_walker_normalize_cycle(struct thorium_actor *self, int length, char *sequence)
+{
+    int i;
+    int selected_start;
+    uint64_t selected_hash;
+    struct bsal_dna_kmer selected_kmer;
+    int selected_is_canonical;
+    uint64_t hash_value1;
+    char saved_symbol;
+    struct bsal_dna_kmer kmer1;
+    struct bsal_unitig_walker *concrete_self;
+    struct bsal_memory_pool *ephemeral_memory;
+    char *kmer_sequence;
+
+    concrete_self = thorium_actor_concrete_actor(self);
+    ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
+    selected_start = -1;
+    selected_is_canonical = -1;
+
+    /*
+     * Find the canonical kmer with the lowest hash.
+     *
+     * N nucleotides = (N - k + 1) vertices
+     */
+
+    bsal_dna_kmer_init_empty(&selected_kmer);
+
+    for (i = 0; i < length - concrete_self->kmer_length + 1; ++i) {
+        kmer_sequence = sequence + i;
+        saved_symbol = kmer_sequence[concrete_self->kmer_length];
+        kmer_sequence[concrete_self->kmer_length] = '\0';
+
+        bsal_dna_kmer_init(&kmer1, kmer_sequence, &concrete_self->codec,
+                    ephemeral_memory);
+        kmer_sequence[concrete_self->kmer_length] = saved_symbol;
+
+        hash_value1 = bsal_dna_kmer_canonical_hash(&kmer1,
+                        concrete_self->kmer_length, &concrete_self->codec,
+                       ephemeral_memory);
+
+        if (selected_start == -1 || bsal_dna_kmer_is_lower(&kmer1, &selected_kmer, concrete_self->kmer_length,
+                                &concrete_self->codec)) {
+            selected_hash = hash_value1;
+            selected_start = i;
+            selected_is_canonical = bsal_dna_kmer_is_canonical(&kmer1, concrete_self->kmer_length,
+                            &concrete_self->codec);
+
+            bsal_dna_kmer_destroy(&selected_kmer, ephemeral_memory);
+            bsal_dna_kmer_init_copy(&selected_kmer, &kmer1, concrete_self->kmer_length,
+                            ephemeral_memory, &concrete_self->codec);
+        }
+
+        bsal_dna_kmer_destroy(&kmer1, ephemeral_memory);
+    }
+
+    /*
+     * at this point, do some rotation.
+     */
+    printf("DEBUG CYCLE bsal_unitig_walker_normalize_cycle length= %d selected_start= %d selected_is_canonical= %d\n",
+                    length, selected_start, selected_is_canonical);
+
+    bsal_dna_kmer_destroy(&selected_kmer, ephemeral_memory);
+
+    printf("CYCLE before %s\n", sequence);
+    bsal_string_rotate_path(sequence, length, selected_start, concrete_self->kmer_length, ephemeral_memory);
+    printf("CYCLE after %s\n", sequence);
+}
+
+void bsal_unitig_walker_select_strand(struct thorium_actor *self, int length, char *sequence)
+{
+    struct bsal_dna_kmer kmer1;
+    struct bsal_dna_kmer kmer2;
+    char *kmer_sequence;
+    char saved_symbol;
+    struct bsal_memory_pool *ephemeral_memory;
+    struct bsal_unitig_walker *concrete_self;
+
+    concrete_self = thorium_actor_concrete_actor(self);
+    ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
+
+    /*
+     * Get the first kmer.
+     */
+    kmer_sequence = sequence;
+    saved_symbol = kmer_sequence[concrete_self->kmer_length];
+    kmer_sequence[concrete_self->kmer_length] = '\0';
+
+    bsal_dna_kmer_init(&kmer1, kmer_sequence, &concrete_self->codec,
+                    ephemeral_memory);
+    kmer_sequence[concrete_self->kmer_length] = saved_symbol;
+
+    BSAL_DEBUGGER_ASSERT(concrete_self->kmer_length <= length);
+
+    /*
+     * Get the second kmer.
+     */
+    kmer_sequence = sequence + length - concrete_self->kmer_length;
+
+    bsal_dna_kmer_init(&kmer2, kmer_sequence, &concrete_self->codec,
+                    ephemeral_memory);
+    bsal_dna_kmer_reverse_complement_self(&kmer2, concrete_self->kmer_length, &concrete_self->codec,
+                    ephemeral_memory);
+
+    if (length == 6936) {
+
+        printf("DEBUG_6936 ends\n");
+
+        bsal_dna_kmer_print(&kmer1, concrete_self->kmer_length, &concrete_self->codec,
+                    ephemeral_memory);
+        bsal_dna_kmer_print(&kmer2, concrete_self->kmer_length, &concrete_self->codec,
+                    ephemeral_memory);
+    }
+
+    if (bsal_dna_kmer_is_lower(&kmer2, &kmer1, concrete_self->kmer_length,
+                            &concrete_self->codec)) {
+
+        bsal_dna_helper_reverse_complement_in_place(sequence);
+    }
+
+    bsal_dna_kmer_destroy(&kmer1, ephemeral_memory);
+    bsal_dna_kmer_destroy(&kmer2, ephemeral_memory);
+}
+
+

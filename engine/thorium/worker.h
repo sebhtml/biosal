@@ -4,8 +4,10 @@
 
 #include "actor.h"
 
-#include "scheduler/scheduling_queue.h"
-#include "scheduler/priority_scheduler.h"
+#include "load_profiler.h"
+
+#include "scheduler/scheduler.h"
+#include "scheduler/priority_assigner.h"
 
 #include <core/structures/fast_ring.h>
 #include <core/structures/fast_queue.h>
@@ -13,16 +15,19 @@
 #include <core/structures/map.h>
 #include <core/structures/map_iterator.h>
 
+#include <core/file_storage/output/buffered_file_writer.h>
+
 #include <core/system/memory_pool.h>
 #include <core/system/timer.h>
 #include <core/system/thread.h>
+#include <core/system/debugger.h>
 
 #include <stdint.h>
 
 struct bsal_work;
 struct thorium_node;
 struct thorium_message;
-struct thorium_scheduler;
+struct thorium_balancer;
 
 /*
  * Inject clean worker buffers into the worker rings
@@ -59,9 +64,12 @@ struct thorium_scheduler;
 #define THORIUM_WORKER_HAS_OWN_QUEUES
 #define THORIUM_WORKER_USE_FAST_RINGS
 
-/* this is similar to worker threads in linux ([kworker/0] [kworker/1])
+/*
+ * This is similar to worker threads in linux ([kworker/0] [kworker/1])
  */
 struct thorium_worker {
+    struct thorium_load_profiler profiler;
+    struct bsal_buffered_file_writer load_profile_writer;
     struct thorium_node *node;
 
     struct bsal_timer timer;
@@ -70,6 +78,11 @@ struct thorium_worker {
     int ticks_without_production;
 
     char waiting_is_enabled;
+
+    /*
+     * Buffer for zero-copy send.
+     */
+    void *zero_copy_buffer;
 
     /*
      * The worker pool push actors to schedule on this
@@ -84,7 +97,7 @@ struct thorium_worker {
     struct bsal_fast_queue clean_message_queue_for_triage;
 #endif
 
-    struct thorium_scheduling_queue scheduling_queue;
+    struct thorium_scheduler scheduler;
 
     struct bsal_fast_ring outbound_message_queue;
     struct bsal_fast_queue outbound_message_queue_buffer;
@@ -104,13 +117,9 @@ struct thorium_worker {
 
     /* this is read by 2 threads, but written by 1 thread
      */
-    int dead;
+    uint32_t flags;
 
-    int debug;
-
-    /* this is read by 2 threads, but written by 1 thread
-     */
-    int busy;
+    struct bsal_map actor_received_messages;
 
     time_t last_report;
     uint64_t epoch_start_in_nanoseconds;
@@ -127,7 +136,7 @@ struct thorium_worker {
     struct bsal_memory_pool ephemeral_memory;
     struct bsal_memory_pool outbound_message_memory_pool;
 
-    struct thorium_priority_scheduler scheduler;
+    struct thorium_priority_assigner assigner;
 
     uint64_t last_wake_up_count;
 
@@ -177,7 +186,7 @@ int thorium_worker_enqueue_actor_special(struct thorium_worker *self, struct tho
 int thorium_worker_enqueue_message(struct thorium_worker *self, struct thorium_message *message);
 int thorium_worker_dequeue_message(struct thorium_worker *self, struct thorium_message *message);
 
-void thorium_worker_print_actors(struct thorium_worker *self, struct thorium_scheduler *scheduler);
+void thorium_worker_print_actors(struct thorium_worker *self, struct thorium_balancer *scheduler);
 
 void thorium_worker_evict_actor(struct thorium_worker *self, int actor_name);
 void thorium_worker_lock(struct thorium_worker *self);
@@ -186,8 +195,8 @@ struct bsal_map *thorium_worker_get_actors(struct thorium_worker *self);
 
 int thorium_worker_get_sum_of_received_actor_messages(struct thorium_worker *self);
 int thorium_worker_get_queued_messages(struct thorium_worker *self);
-int thorium_worker_get_production(struct thorium_worker *self, struct thorium_scheduler *scheduler);
-int thorium_worker_get_producer_count(struct thorium_worker *self, struct thorium_scheduler *scheduler);
+int thorium_worker_get_production(struct thorium_worker *self, struct thorium_balancer *scheduler);
+int thorium_worker_get_producer_count(struct thorium_worker *self, struct thorium_balancer *scheduler);
 
 void thorium_worker_free_message(struct thorium_worker *self, struct thorium_message *message);
 
@@ -210,5 +219,12 @@ int thorium_worker_enqueue_message_for_triage(struct thorium_worker *worker, str
 int thorium_worker_dequeue_message_for_triage(struct thorium_worker *worker, struct thorium_message *message);
 
 void thorium_worker_print_balance(struct thorium_worker *self);
+int thorium_worker_spawn(struct thorium_worker *self, int script);
+
+void thorium_worker_examine(struct thorium_worker *self);
+void thorium_worker_enable_profiler(struct thorium_worker *self);
+int thorium_worker_get_scheduled_actor_count(struct thorium_worker *self);
+
+void *thorium_worker_allocate(struct thorium_worker *self, size_t count);
 
 #endif

@@ -73,7 +73,7 @@ void bsal_coverage_distribution_receive(struct thorium_actor *self, struct thori
     name = thorium_actor_name(self);
     source = thorium_message_source(message);
     concrete_actor = (struct bsal_coverage_distribution *)thorium_actor_concrete_actor(self);
-    tag = thorium_message_tag(message);
+    tag = thorium_message_action(message);
     count = thorium_message_count(message);
     buffer = thorium_message_buffer(message);
 

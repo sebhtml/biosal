@@ -25,7 +25,7 @@ void reader_init(struct thorium_actor *actor)
     reader1->pulled = 0;
 
     bsal_vector_init(&reader1->spawners, sizeof(int));
-    thorium_actor_add_script(actor, ACTION_INPUT_SCRIPT_STREAM,
+    thorium_actor_add_script(actor, SCRIPT_INPUT_STREAM,
                     &bsal_input_stream_script);
 }
 
@@ -58,7 +58,7 @@ void reader_receive(struct thorium_actor *actor, struct thorium_message *message
     int error;
 
     reader1 = (struct reader *)thorium_actor_concrete_actor(actor);
-    tag = thorium_message_tag(message);
+    tag = thorium_message_action(message);
     source = thorium_message_source(message);
     buffer = thorium_message_buffer(message);
     name = thorium_actor_name(actor);
@@ -95,7 +95,7 @@ void reader_receive(struct thorium_actor *actor, struct thorium_message *message
             return;
         }
 
-        reader1->sequence_reader = thorium_actor_spawn(actor, ACTION_INPUT_SCRIPT_STREAM);
+        reader1->sequence_reader = thorium_actor_spawn(actor, SCRIPT_INPUT_STREAM);
 
         reader1->file = argv[argc - 1];
 
@@ -163,7 +163,7 @@ void reader_receive(struct thorium_actor *actor, struct thorium_message *message
         return;
         */
 
-        script = ACTION_INPUT_SCRIPT_STREAM;
+        script = SCRIPT_INPUT_STREAM;
 
         thorium_message_init(message, ACTION_SPAWN, sizeof(script), &script);
         thorium_actor_send(actor, name, message);

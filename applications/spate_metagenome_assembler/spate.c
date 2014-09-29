@@ -8,13 +8,18 @@
 #include <genomics/assembly/assembly_arc_kernel.h>
 #include <genomics/assembly/assembly_arc_classifier.h>
 
+#include <genomics/assembly/unitig/unitig_visitor.h>
 #include <genomics/assembly/unitig/unitig_walker.h>
 #include <genomics/assembly/unitig/unitig_manager.h>
 
 #include <genomics/input/input_controller.h>
 
 #include <core/system/command.h>
+
 #include <core/file_storage/directory.h>
+
+#include <core/patterns/manager.h>
+#include <core/patterns/writer_process.h>
 
 #include <stdio.h>
 #include <string.h>
@@ -26,7 +31,7 @@ struct thorium_script spate_script = {
     .receive = spate_receive,
     .size = sizeof(struct spate),
     .name = "spate",
-    .version = "0.0.1-development",
+    .version = "0.2.0-development",
     .author = "Sebastien Boisvert",
     .description = "Exact, convenient, and scalable metagenome assembly and genome isolation for everyone"
 };
@@ -83,6 +88,8 @@ void spate_init(struct thorium_actor *self)
                     &bsal_dna_kmer_counter_kernel_script);
     thorium_actor_add_script(self, SCRIPT_MANAGER,
                     &bsal_manager_script);
+    thorium_actor_add_script(self, SCRIPT_WRITER_PROCESS,
+                    &bsal_writer_process_script);
     thorium_actor_add_script(self, SCRIPT_AGGREGATOR,
                     &bsal_aggregator_script);
     thorium_actor_add_script(self, SCRIPT_KMER_STORE,
@@ -109,6 +116,8 @@ void spate_init(struct thorium_actor *self)
                     &bsal_assembly_arc_classifier_script);
     thorium_actor_add_script(self, SCRIPT_UNITIG_WALKER,
                     &bsal_unitig_walker_script);
+    thorium_actor_add_script(self, SCRIPT_UNITIG_VISITOR,
+                    &bsal_unitig_visitor_script);
     thorium_actor_add_script(self, SCRIPT_UNITIG_MANAGER,
                     &bsal_unitig_manager_script);
 
@@ -248,7 +257,7 @@ void spate_ask_to_stop(struct thorium_actor *self, struct thorium_message *messa
 
         if (!spate_must_print_help(self)) {
             bsal_timer_stop(&concrete_self->timer);
-            bsal_timer_print_with_description(&concrete_self->timer, "Run actor computation");
+            bsal_timer_print_with_description(&concrete_self->timer, "Total");
         }
     }
 }

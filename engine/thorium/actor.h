@@ -5,10 +5,11 @@
 #include "message.h"
 #include "script.h"
 #include "dispatcher.h"
+#include "load_profiler.h"
 
 #include "modules/binomial_tree_message.h"
 #include "modules/proxy_message.h"
-#include "modules/action_helpers.h"
+#include "modules/actions.h"
 #include "modules/send_helpers.h"
 #include "modules/active_message_limit.h"
 #include "modules/stop.h"
@@ -20,6 +21,11 @@
 
 #include <core/system/lock.h>
 #include <core/system/counter.h>
+
+/*
+ * For priority levels.
+ */
+#include <engine/thorium/scheduler/scheduler.h>
 
 #include <pthread.h>
 #include <stdint.h>
@@ -201,16 +207,24 @@ struct bsal_memory_pool;
  * The actor attribute is a void *
  */
 struct thorium_actor {
+    struct thorium_load_profiler profiler;
     struct thorium_script *script;
     struct thorium_worker *worker;
     struct thorium_node *node;
 
+    /*
+     * The priority of an actor should be updated by the actor.
+     * The Thorium scheduler does a better job at this.
+     */
     int priority;
     uint32_t flags;
     struct bsal_fast_ring mailbox;
 
+#ifdef THORIUM_ACTOR_GATHER_MESSAGE_METADATA
     struct bsal_map received_messages;
     struct bsal_map sent_messages;
+    struct bsal_counter counter;
+#endif
 
 #ifdef THORIUM_ACTOR_STORE_CHILDREN
     struct bsal_vector acquaintance_vector;
@@ -245,8 +259,6 @@ struct thorium_actor {
      */
     int spawner_index;
 
-    struct bsal_counter counter;
-
     int synchronization_responses;
     int synchronization_expected_responses;
 
@@ -264,6 +276,12 @@ struct thorium_actor {
     int migration_spawner;
     int migration_new_actor;
     int migration_client;
+
+    /*
+     * \see https://www.kernel.org/doc/Documentation/scheduler/sched-design-CFS.txt
+     */
+    uint64_t virtual_runtime;
+    struct bsal_timer timer;
 };
 
 void thorium_actor_init(struct thorium_actor *self, void *state,
@@ -400,6 +418,13 @@ int thorium_actor_get_source_count(struct thorium_actor *self);
 int thorium_actor_get_spawner(struct thorium_actor *self, struct bsal_vector *spawners);
 int thorium_actor_get_random_spawner(struct thorium_actor *self, struct bsal_vector *spawners);
 
+void thorium_actor_enable_profiler(struct thorium_actor *self);
+void thorium_actor_disable_profiler(struct thorium_actor *self);
+void thorium_actor_receive_private(struct thorium_actor *self, struct thorium_message *message);
+
+void thorium_actor_write_profile(struct thorium_actor *self,
+               struct bsal_buffered_file_writer *writer);
+
 /*
  * Expose the acquaintance API if required.
  */
@@ -413,5 +438,7 @@ int thorium_actor_get_random_spawner(struct thorium_actor *self, struct bsal_vec
 #define thorium_actor_acquaintance_count thorium_actor_acquaintance_count_private
 
 #endif
+
+void *thorium_actor_allocate(struct thorium_actor *self, size_t count);
 
 #endif

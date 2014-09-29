@@ -6,19 +6,19 @@
 #include <core/structures/fast_queue.h>
 
 /*
- *  * Decide if the code will use PAMI or MPI
- *   */
+ * Decide if the code will use PAMI or MPI
+ */
 
 /*
- *  * This variable is set to 1 if PAMI support is ready to be
- *   * used
- *    */
+ * This variable is set to 1 if PAMI support is ready to be
+ * used
+ */
 #define THORIUM_TRANSPORT_PAMI_IS_READY 1
 
 /*
- *  * Use IBM PAMI on IBM Blue Gene/Q
- *   * PAMI: Parallel Active Message Interface
- *    */
+ * Use IBM PAMI on IBM Blue Gene/Q
+ * PAMI: Parallel Active Message Interface
+ */
 #if defined(__bgq__) && THORIUM_TRANSPORT_PAMI_IS_READY
 
 #define THORIUM_TRANSPORT_USE_PAMI
@@ -75,20 +75,20 @@ typedef struct {
 } thorium_recv_cookie_t;
 
 /*
- *  * Transport using IBM PAMI (Parallel Active Message Interface)
- *   */
+ * Transport using IBM PAMI (Parallel Active Message Interface)
+ */
 struct thorium_pami_transport {
 #ifdef THORIUM_TRANSPORT_USE_PAMI
     pami_client_t client;
     pami_context_t context;
     size_t num_contexts;
 
-    int rank; 
+    int rank;
 
     struct thorium_transport *self;
 
     pami_endpoint_t *endpoints;
-  
+
     thorium_send_cookie_t **send_cookies;
     struct bsal_fast_queue *avail_send_cookies_queue;
     struct bsal_fast_queue *in_use_send_cookies_queue;
@@ -106,9 +106,9 @@ struct thorium_pami_transport {
     char **small_buffers;*/
 #endif
 
-    /*
- *      * Avoid having nothing in the structure.
- *           */
+/*
+ * Avoid having nothing in the structure.
+ */
     int mock;
 };
 

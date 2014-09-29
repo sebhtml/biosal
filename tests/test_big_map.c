@@ -28,7 +28,7 @@ int main(int argc, char **argv)
         struct bsal_dna_codec codec;
         struct bsal_memory_pool memory;
 
-        bsal_memory_pool_init(&memory, 1048576);
+        bsal_memory_pool_init(&memory, 1048576, BSAL_MEMORY_POOL_NAME_OTHER);
         bsal_dna_codec_init(&codec);
 
         run_test = 1;
@@ -42,7 +42,7 @@ int main(int argc, char **argv)
 
         bsal_map_init(&big_map, key_length, sizeof(coverage));
 
-        key = bsal_memory_allocate(key_length);
+        key = bsal_memory_allocate(key_length, -1);
 
         i = 0;
         while (i < count && run_test) {
@@ -64,7 +64,7 @@ int main(int argc, char **argv)
         }
 
         bsal_map_destroy(&big_map);
-        bsal_memory_free(key);
+        bsal_memory_free(key, -1);
         bsal_dna_codec_destroy(&codec);
         bsal_memory_pool_destroy(&memory);
     }

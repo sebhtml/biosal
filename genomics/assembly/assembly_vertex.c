@@ -3,6 +3,8 @@
 
 #include <engine/thorium/actor.h>
 
+#include <core/helpers/bitmap.h>
+
 #include <core/system/packer.h>
 #include <core/system/debugger.h>
 
@@ -11,8 +13,16 @@
 void bsal_assembly_vertex_init(struct bsal_assembly_vertex *self)
 {
     self->coverage_depth = 0;
-    bsal_assembly_vertex_set_state(self, BSAL_VERTEX_STATE_UNUSED);
-    bsal_assembly_vertex_set_best_actor(self, THORIUM_ACTOR_NOBODY);
+
+    self->flags = 0;
+
+    bsal_assembly_vertex_clear_flag(self, BSAL_VERTEX_FLAG_USED);
+    bsal_assembly_vertex_clear_flag(self, BSAL_VERTEX_FLAG_TIP);
+    bsal_assembly_vertex_clear_flag(self, BSAL_VERTEX_FLAG_BUBBLE);
+    bsal_assembly_vertex_clear_flag(self, BSAL_VERTEX_FLAG_VISITED);
+    bsal_assembly_vertex_clear_flag(self, BSAL_VERTEX_FLAG_UNITIG);
+
+    bsal_assembly_vertex_set_last_actor(self, THORIUM_ACTOR_NOBODY, -1);
 
     bsal_assembly_connectivity_init(&self->connectivity);
 }
@@ -120,8 +130,9 @@ int bsal_assembly_vertex_pack_unpack(struct bsal_assembly_vertex *self, int oper
     bsal_packer_init(&packer, operation, buffer);
 
     bytes += bsal_packer_process(&packer, &self->coverage_depth, sizeof(self->coverage_depth));
-    bytes += bsal_packer_process(&packer, &self->state, sizeof(self->state));
-    bytes += bsal_packer_process(&packer, &self->best_actor, sizeof(self->best_actor));
+    bytes += bsal_packer_process(&packer, &self->flags, sizeof(self->flags));
+    bytes += bsal_packer_process(&packer, &self->last_actor, sizeof(self->last_actor));
+    bytes += bsal_packer_process(&packer, &self->last_path_index, sizeof(self->last_path_index));
 
     bsal_packer_destroy(&packer);
 
@@ -135,8 +146,9 @@ void bsal_assembly_vertex_init_copy(struct bsal_assembly_vertex *self,
                 struct bsal_assembly_vertex *vertex)
 {
     self->coverage_depth = vertex->coverage_depth;
-    self->state = vertex->state;
-    self->best_actor = vertex->best_actor;
+    self->flags = vertex->flags;
+    self->last_actor = vertex->last_actor;
+    self->last_path_index = vertex->last_path_index;
 
     bsal_assembly_connectivity_init_copy(&self->connectivity, &vertex->connectivity);
 }
@@ -146,23 +158,44 @@ void bsal_assembly_vertex_invert_arcs(struct bsal_assembly_vertex *self)
     bsal_assembly_connectivity_invert_arcs(&self->connectivity);
 }
 
-int bsal_assembly_vertex_state(struct bsal_assembly_vertex *self)
+void bsal_assembly_vertex_set_last_actor(struct bsal_assembly_vertex *self, int last_actor,
+                int last_path_index)
 {
-    return self->state;
+    self->last_actor = last_actor;
+    self->last_path_index = last_path_index;
 }
 
-void bsal_assembly_vertex_set_state(struct bsal_assembly_vertex *self, int state)
+int bsal_assembly_vertex_last_actor(struct bsal_assembly_vertex *self)
 {
-    self->state = state;
+    return self->last_actor;
 }
 
-void bsal_assembly_vertex_set_best_actor(struct bsal_assembly_vertex *self, int best_actor)
+int bsal_assembly_vertex_last_path_index(struct bsal_assembly_vertex *self)
 {
-    self->best_actor = best_actor;
+    return self->last_path_index;
 }
 
-int bsal_assembly_vertex_best_actor(struct bsal_assembly_vertex *self)
+void bsal_assembly_vertex_set_flag(struct bsal_assembly_vertex *self, int flag)
 {
-    return self->best_actor;
+    BSAL_DEBUGGER_ASSERT(flag >= BSAL_VERTEX_FLAG_START_VALUE);
+    BSAL_DEBUGGER_ASSERT(flag <= BSAL_VERTEX_FLAG_END_VALUE);
+
+    bsal_bitmap_set_bit_uint32_t(&self->flags, flag);
 }
+
+void bsal_assembly_vertex_clear_flag(struct bsal_assembly_vertex *self, int flag)
+{
+    bsal_bitmap_clear_bit_uint32_t(&self->flags, flag);
+}
+
+int bsal_assembly_vertex_get_flag(struct bsal_assembly_vertex *self, int flag)
+{
+    return bsal_bitmap_get_bit_uint32_t(&self->flags, flag);
+}
+
+void bsal_assembly_vertex_init_empty(struct bsal_assembly_vertex *self)
+{
+    bsal_assembly_vertex_init(self);
+}
+
 

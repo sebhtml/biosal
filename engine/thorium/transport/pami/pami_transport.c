@@ -37,7 +37,7 @@ void thorium_pami_transport_init(struct thorium_transport *self, int *argc, char
 
     pami_transport->self = self;
     pami_transport->num_contexts = 1;
-    
+
     int i = 0;
 
     /*Queue of available send cookies*/
@@ -179,7 +179,7 @@ void thorium_pami_transport_destroy(struct thorium_transport *self)
     bsal_fast_queue_destroy(pami_transport->avail_send_cookies_queue);
     free(pami_transport->avail_send_cookies_queue);
     free(pami_transport->send_cookies);
-    
+
     thorium_recv_cookie_t *recv_cookie;
     while (bsal_fast_queue_dequeue(pami_transport->avail_recv_cookies_queue, &recv_cookie)) {
         free(recv_cookie);
@@ -190,7 +190,7 @@ void thorium_pami_transport_destroy(struct thorium_transport *self)
 
     bsal_fast_queue_destroy(pami_transport->in_use_send_cookies_queue);
     bsal_fast_queue_destroy(pami_transport->in_use_recv_cookies_queue);
-    
+
     free(pami_transport->in_use_send_cookies_queue);
     free(pami_transport->in_use_recv_cookies_queue);
 
@@ -244,7 +244,7 @@ int thorium_pami_transport_send(struct thorium_transport *self, struct thorium_m
 	send_cookie = (thorium_send_cookie_t *)malloc(sizeof(thorium_send_cookie_t));
 	BSAL_DEBUGGER_ASSERT(send_cookie != NULL);
     }
-    
+
     send_cookie->send_queue = pami_transport->in_use_send_cookies_queue;
     send_cookie->send_info.worker = worker;
     send_cookie->send_info.buffer = buffer;
@@ -325,10 +325,10 @@ int thorium_pami_transport_test(struct thorium_transport *self, struct thorium_w
     pami_transport = thorium_transport_get_concrete_transport(self);
 
     /*
-    * Check if any send requests have been done, if not repeat the checking loop for 100 times. 
+    * Check if any send requests have been done, if not repeat the checking loop for 100 times.
     * */
     PAMI_Context_advance (pami_transport->context, 100);
-    
+
     thorium_send_cookie_t *send_cookie;
     if (bsal_fast_queue_dequeue(pami_transport->in_use_send_cookies_queue, (void *)&send_cookie)) {
 	thorium_worker_buffer_init(worker_buffer, send_cookie->send_info.worker, send_cookie->send_info.buffer);
@@ -341,7 +341,7 @@ int thorium_pami_transport_test(struct thorium_transport *self, struct thorium_w
 #endif
 }
 
-void thorium_send_done_fn(pami_context_t context, void *cookie, pami_result_t result) 
+void thorium_send_done_fn(pami_context_t context, void *cookie, pami_result_t result)
 {
 #ifdef THORIUM_TRANSPORT_USE_PAMI
     thorium_send_cookie_t *send_cookie = (thorium_send_cookie_t *)cookie;
@@ -349,7 +349,7 @@ void thorium_send_done_fn(pami_context_t context, void *cookie, pami_result_t re
 #endif
 }
 
-void thorium_recv_done_fn(pami_context_t context, void *cookie, pami_result_t result) 
+void thorium_recv_done_fn(pami_context_t context, void *cookie, pami_result_t result)
 {
 #ifdef THORIUM_TRANSPORT_USE_PAMI
     thorium_recv_cookie_t *recv_cookie = (thorium_recv_cookie_t *)cookie;
@@ -357,7 +357,8 @@ void thorium_recv_done_fn(pami_context_t context, void *cookie, pami_result_t re
 #endif
 }
 
-void thorium_recv_message_fn(pami_context_t context, void *cookie, const void *header, size_t header_size, const void *data, size_t data_size, pami_endpoint_t origin, pami_recv_t *recv) 
+void thorium_recv_message_fn(pami_context_t context, void *cookie, const void *header, size_t header_size,
+                const void *data, size_t data_size, pami_endpoint_t origin, pami_recv_t *recv)
 {
 #ifdef THORIUM_TRANSPORT_USE_PAMI
     struct thorium_pami_transport *pami_transport = (struct thorium_pami_transport *) cookie;
@@ -408,7 +409,7 @@ void thorium_pami_transport_mem_pool_return(struct thorium_pami_transport *pami_
 #endif
 }
 
-void thorium_pami_transport_mem_pool_alloc(struct thorium_pami_transport *pami_transport, int data_size, void *buffer) 
+void thorium_pami_transport_mem_pool_alloc(struct thorium_pami_transport *pami_transport, int data_size, void *buffer)
 {
 #ifdef THORIUM_TRANSPORT_USE_PAMI
     /*Dequeue for a buffer, if not, i.e. running out of preallocated buffer, allocate a new one*/

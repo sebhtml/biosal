@@ -106,7 +106,7 @@ void bsal_kmer_store_receive(struct thorium_actor *self, struct thorium_message 
 
     ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
     concrete_actor = (struct bsal_kmer_store *)thorium_actor_concrete_actor(self);
-    tag = thorium_message_tag(message);
+    tag = thorium_message_action(message);
     buffer = thorium_message_buffer(message);
 
     if (tag == ACTION_SET_KMER_LENGTH) {

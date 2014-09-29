@@ -27,6 +27,8 @@
 
 #include <core/system/debugger.h>
 
+#include <engine/thorium/scheduler/fifo_scheduler.h>
+
 #include <inttypes.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -51,7 +53,14 @@ void bsal_assembly_graph_store_init(struct thorium_actor *self)
 {
     struct bsal_assembly_graph_store *concrete_self;
 
+#if 0
+    thorium_actor_set_priority(self, THORIUM_PRIORITY_MAX);
+#endif
+
     concrete_self = thorium_actor_concrete_actor(self);
+
+    bsal_memory_pool_init(&concrete_self->persistent_memory, 0,
+                    BSAL_MEMORY_POOL_NAME_GRAPH_STORE);
 
     concrete_self->consumed_canonical_vertex_count = 0;
 
@@ -82,33 +91,36 @@ void bsal_assembly_graph_store_init(struct thorium_actor *self)
  */
     bsal_dna_codec_enable_two_bit_encoding(&concrete_self->storage_codec);
 
-    concrete_self->last_received = 0;
-
     thorium_actor_add_action(self, ACTION_YIELD_REPLY, bsal_assembly_graph_store_yield_reply);
     thorium_actor_add_action(self, ACTION_PUSH_KMER_BLOCK,
                     bsal_assembly_graph_store_push_kmer_block);
 
-    concrete_self->received_arc_count = 0;
-
     thorium_actor_add_action(self, ACTION_ASSEMBLY_PUSH_ARC_BLOCK,
                     bsal_assembly_graph_store_push_arc_block);
-
-    concrete_self->received_arc_block_count = 0;
 
     thorium_actor_add_action(self, ACTION_ASSEMBLY_GET_SUMMARY,
                     bsal_assembly_graph_store_get_summary);
 
-    concrete_self->summary_in_progress = 0;
-
     thorium_actor_add_action(self, ACTION_ASSEMBLY_GET_VERTEX,
                     bsal_assembly_graph_store_get_vertex);
 
-    thorium_actor_add_action(self, ACTION_ASSEMBLY_GET_STARTING_VERTEX,
+    thorium_actor_add_action(self, ACTION_ASSEMBLY_GET_STARTING_KMER,
                     bsal_assembly_graph_store_get_starting_vertex);
+
+    thorium_actor_add_action(self, ACTION_MARK_VERTEX_AS_VISITED,
+                    bsal_assembly_graph_store_mark_vertex_as_visited);
+    thorium_actor_add_action(self, ACTION_SET_VERTEX_FLAG,
+                    bsal_assembly_graph_store_set_vertex_flag);
 
     concrete_self->printed_vertex_size = 0;
     concrete_self->printed_arc_size = 0;
 
+    concrete_self->last_received = 0;
+    concrete_self->received_arc_block_count = 0;
+    concrete_self->received_arc_count = 0;
+    concrete_self->summary_in_progress = 0;
+
+    concrete_self->unitig_vertex_count = 0;
 }
 
 void bsal_assembly_graph_store_destroy(struct thorium_actor *self)
@@ -127,6 +139,8 @@ void bsal_assembly_graph_store_destroy(struct thorium_actor *self)
     bsal_dna_codec_destroy(&concrete_self->storage_codec);
 
     concrete_self->kmer_length = -1;
+
+    bsal_memory_pool_destroy(&concrete_self->persistent_memory);
 }
 
 void bsal_assembly_graph_store_receive(struct thorium_actor *self, struct thorium_message *message)
@@ -138,6 +152,8 @@ void bsal_assembly_graph_store_receive(struct thorium_actor *self, struct thoriu
     struct bsal_dna_kmer kmer;
     /*struct bsal_memory_pool *ephemeral_memory;*/
     int customer;
+    int big_key_size;
+    int big_value_size;
 
     if (thorium_actor_take_action(self, message)) {
         return;
@@ -146,7 +162,7 @@ void bsal_assembly_graph_store_receive(struct thorium_actor *self, struct thoriu
     /*ephemeral_memory = thorium_actor_get_ephemeral_memory(self);*/
     concrete_self = thorium_actor_concrete_actor(self);
 
-    tag = thorium_message_tag(message);
+    tag = thorium_message_action(message);
     /*buffer = thorium_message_buffer(message);*/
 
     if (tag == ACTION_SET_KMER_LENGTH) {
@@ -159,9 +175,15 @@ void bsal_assembly_graph_store_receive(struct thorium_actor *self, struct thoriu
                         concrete_self->kmer_length, &concrete_self->storage_codec);
         bsal_dna_kmer_destroy(&kmer, thorium_actor_get_ephemeral_memory(self));
 
+        big_key_size = concrete_self->key_length_in_bytes;
+        big_value_size = sizeof(struct bsal_assembly_vertex);
 
-        bsal_map_init(&concrete_self->table, concrete_self->key_length_in_bytes,
-                        sizeof(struct bsal_assembly_vertex));
+        bsal_map_init(&concrete_self->table, big_key_size,
+                        big_value_size);
+        bsal_map_set_memory_pool(&concrete_self->table,
+                        &concrete_self->persistent_memory);
+
+        printf("DEBUG big_key_size %d big_value_size %d\n", big_key_size, big_value_size);
 
         /*
          * Configure the map for better performance.
@@ -181,6 +203,18 @@ void bsal_assembly_graph_store_receive(struct thorium_actor *self, struct thoriu
 
         thorium_actor_send_reply_int(self, ACTION_ASSEMBLY_GET_KMER_LENGTH_REPLY,
                         concrete_self->kmer_length);
+
+    } else if (tag == ACTION_RESET) {
+
+        /*
+         * Reset the iterator.
+         */
+        bsal_map_iterator_init(&concrete_self->iterator, &concrete_self->table);
+
+        printf("DEBUG unitig_vertex_count %d\n",
+                        concrete_self->unitig_vertex_count);
+
+        thorium_actor_send_reply_empty(self, ACTION_RESET_REPLY);
 
     } else if (tag == ACTION_SEQUENCE_STORE_REQUEST_PROGRESS_REPLY) {
 
@@ -319,8 +353,9 @@ void bsal_assembly_graph_store_push_data(struct thorium_actor *self, struct thor
                     name, bsal_map_size(&concrete_self->table),
                     2 * bsal_map_size(&concrete_self->table));
 
-    bsal_map_iterator_init(&concrete_self->iterator, &concrete_self->table);
+    bsal_memory_pool_examine(&concrete_self->persistent_memory);
 
+    bsal_map_iterator_init(&concrete_self->iterator, &concrete_self->table);
 
     thorium_actor_send_to_self_empty(self, ACTION_YIELD);
 }
@@ -405,7 +440,7 @@ void bsal_assembly_graph_store_yield_reply(struct thorium_actor *self, struct th
 
     new_count = bsal_map_pack_size(&concrete_self->coverage_distribution);
 
-    new_buffer = bsal_memory_pool_allocate(ephemeral_memory, new_count);
+    new_buffer = thorium_actor_allocate(self, new_count);
 
     bsal_map_pack(&concrete_self->coverage_distribution, new_buffer);
 
@@ -424,7 +459,6 @@ void bsal_assembly_graph_store_yield_reply(struct thorium_actor *self, struct th
 
     thorium_actor_send_empty(self, concrete_self->source,
                             ACTION_PUSH_DATA_REPLY);
-
 }
 
 void bsal_assembly_graph_store_push_kmer_block(struct thorium_actor *self, struct thorium_message *message)
@@ -449,7 +483,7 @@ void bsal_assembly_graph_store_push_kmer_block(struct thorium_actor *self, struc
 
     ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
     concrete_self = thorium_actor_concrete_actor(self);
-    /*tag = thorium_message_tag(message);*/
+    /*tag = thorium_message_action(message);*/
     buffer = thorium_message_buffer(message);
     count = thorium_message_count(message);
 
@@ -460,7 +494,7 @@ void bsal_assembly_graph_store_push_kmer_block(struct thorium_actor *self, struc
     bsal_dna_kmer_frequency_block_init(&block, concrete_self->kmer_length,
                     ephemeral_memory, &concrete_self->transport_codec, 0);
 
-    bsal_dna_kmer_frequency_block_unpack(&block, buffer, thorium_actor_get_ephemeral_memory(self),
+    bsal_dna_kmer_frequency_block_unpack(&block, buffer, ephemeral_memory,
                     &concrete_self->transport_codec);
 
     key = bsal_memory_pool_allocate(ephemeral_memory, concrete_self->key_length_in_bytes);
@@ -853,11 +887,10 @@ void bsal_assembly_graph_store_yield_reply_summary(struct thorium_actor *self, s
          */
 
         new_count = bsal_assembly_graph_summary_pack_size(&concrete_self->graph_summary);
-        new_buffer = bsal_memory_pool_allocate(ephemeral_memory, new_count);
+        new_buffer = thorium_actor_allocate(self, new_count);
         bsal_assembly_graph_summary_pack(&concrete_self->graph_summary, new_buffer);
         thorium_actor_send_buffer(self, concrete_self->source_for_summary,
                         ACTION_ASSEMBLY_GET_SUMMARY_REPLY, new_count, new_buffer);
-        bsal_memory_pool_free(ephemeral_memory, new_buffer);
 
         /*
          * Reset the iterator.
@@ -872,84 +905,60 @@ void bsal_assembly_graph_store_get_vertex(struct thorium_actor *self, struct tho
 {
     struct bsal_assembly_vertex vertex;
     struct bsal_dna_kmer kmer;
-    struct bsal_dna_kmer storage_kmer;
     void *buffer;
     struct bsal_assembly_graph_store *concrete_self;
     struct bsal_memory_pool *ephemeral_memory;
     struct thorium_message new_message;
     int new_count;
     void *new_buffer;
-    char *sequence;
     struct bsal_assembly_vertex *canonical_vertex;
-    void *key;
     int is_canonical;
     int source;
+    int path;
+    int position;
+    int count;
 
+    path = -1;
     ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
     concrete_self = thorium_actor_concrete_actor(self);
 
     source = thorium_message_source(message);
     buffer = thorium_message_buffer(message);
+    count = thorium_message_count(message);
 
     bsal_dna_kmer_init_empty(&kmer);
-    bsal_dna_kmer_unpack(&kmer, buffer, concrete_self->kmer_length,
+
+    position = 0;
+    position += bsal_dna_kmer_unpack(&kmer, buffer, concrete_self->kmer_length,
                 ephemeral_memory,
                 &concrete_self->transport_codec);
 
-    sequence = bsal_memory_pool_allocate(ephemeral_memory, concrete_self->kmer_length + 1);
-
-    bsal_dna_kmer_get_sequence(&kmer, sequence, concrete_self->kmer_length,
-                        &concrete_self->transport_codec);
-
-    bsal_dna_kmer_init(&storage_kmer, sequence, &concrete_self->storage_codec,
-                        ephemeral_memory);
-
-    is_canonical = bsal_dna_kmer_is_canonical(&storage_kmer, concrete_self->kmer_length,
-                    &concrete_self->storage_codec);
-
-    key = bsal_memory_pool_allocate(ephemeral_memory, concrete_self->key_length_in_bytes);
-
-    bsal_dna_kmer_pack_store_key(&storage_kmer, key,
-                        concrete_self->kmer_length, &concrete_self->storage_codec,
-                        ephemeral_memory);
-
-    canonical_vertex = bsal_map_get(&concrete_self->table, key);
-
-#ifdef BSAL_DEBUGGER_ASSERT
-    if (canonical_vertex == NULL) {
-
-        printf("not found Seq = %s name %d kmerlength %d key_length %d hash %" PRIu64 "\n", sequence,
-                        thorium_actor_name(self),
-                        concrete_self->kmer_length,
-                        concrete_self->key_length_in_bytes,
-                        bsal_dna_kmer_hash(&storage_kmer, concrete_self->kmer_length,
-                                &concrete_self->storage_codec));
+    /*
+     * Check if a path index was provided too.
+     */
+    if (position < count) {
+        position += thorium_message_unpack_int(message, position, &path);
     }
-#endif
-    BSAL_DEBUGGER_ASSERT(canonical_vertex != NULL);
+
+    BSAL_DEBUGGER_ASSERT_IS_EQUAL_INT(position, count);
+    BSAL_DEBUGGER_ASSERT(position == count);
+
+    canonical_vertex = bsal_assembly_graph_store_find_vertex(self, &kmer);
 
     bsal_assembly_vertex_init_copy(&vertex, canonical_vertex);
 
-    /*
-     * Mark the vertex with BSAL_VERTEX_STATE_USED *after* making the
-     * copy.
-     */
-
-    if (bsal_assembly_vertex_state(canonical_vertex) == BSAL_VERTEX_STATE_UNUSED)
-        bsal_assembly_graph_store_mark_as_used(self, canonical_vertex, source);
+    is_canonical = bsal_dna_kmer_is_canonical(&kmer, concrete_self->kmer_length,
+                    &concrete_self->transport_codec);
 
     if (!is_canonical) {
 
         bsal_assembly_vertex_invert_arcs(&vertex);
     }
 
-    bsal_memory_pool_free(ephemeral_memory, sequence);
-    bsal_memory_pool_free(ephemeral_memory, key);
-
     bsal_dna_kmer_destroy(&kmer, ephemeral_memory);
 
     new_count = bsal_assembly_vertex_pack_size(&vertex);
-    new_buffer = bsal_memory_pool_allocate(ephemeral_memory, new_count);
+    new_buffer = thorium_actor_allocate(self, new_count);
 
     bsal_assembly_vertex_pack(&vertex, new_buffer);
 
@@ -959,7 +968,6 @@ void bsal_assembly_graph_store_get_vertex(struct thorium_actor *self, struct tho
     thorium_actor_send_reply(self, &new_message);
 
     thorium_message_destroy(&new_message);
-    bsal_memory_pool_free(ephemeral_memory, new_buffer);
 }
 
 void bsal_assembly_graph_store_get_starting_vertex(struct thorium_actor *self, struct thorium_message *message)
@@ -990,30 +998,14 @@ void bsal_assembly_graph_store_get_starting_vertex(struct thorium_actor *self, s
                         (void **)&vertex);
 
         /*
-         * Skip the vertex if it does not have the status
-         * BSAL_VERTEX_STATE_UNUSED.
+         * Skip the vertex if it does have the status
+         * BSAL_VERTEX_FLAG_USED.
          */
-        if (bsal_assembly_vertex_state(vertex) != BSAL_VERTEX_STATE_UNUSED) {
+        if (bsal_assembly_vertex_get_flag(vertex, BSAL_VERTEX_FLAG_USED)) {
 
-#if 0
-            printf("Skipping state != BSAL_VERTEX_STATE_UNUSED\n");
-#endif
 
             continue;
         }
-
-        /*
-         * At this point, mark the vertex with flag BSAL_VERTEX_STATE_USED
-         * so that any other actor that attempt to grab it will have to communicate
-         * with the actor.
-         */
-
-        /*
-         * This is not a good idea.
-         */
-#if 0
-        bsal_assembly_graph_store_mark_as_used(self, vertex, source);
-#endif
 
         BSAL_DEBUGGER_ASSERT(storage_key != NULL);
 
@@ -1052,7 +1044,7 @@ void bsal_assembly_graph_store_get_starting_vertex(struct thorium_actor *self, s
 
         new_count = bsal_dna_kmer_pack_size(&transport_kmer, concrete_self->kmer_length,
                         &concrete_self->transport_codec);
-        new_buffer = bsal_memory_pool_allocate(ephemeral_memory, new_count);
+        new_buffer = thorium_actor_allocate(self, new_count);
 
         bsal_dna_kmer_pack(&transport_kmer, new_buffer, concrete_self->kmer_length,
                         &concrete_self->transport_codec);
@@ -1068,7 +1060,7 @@ void bsal_assembly_graph_store_get_starting_vertex(struct thorium_actor *self, s
                     ephemeral_memory);
 #endif
 
-        thorium_message_init(&new_message, ACTION_ASSEMBLY_GET_STARTING_VERTEX_REPLY,
+        thorium_message_init(&new_message, ACTION_ASSEMBLY_GET_STARTING_KMER_REPLY,
                         new_count, new_buffer);
 
         thorium_actor_send_reply(self, &new_message);
@@ -1080,7 +1072,6 @@ void bsal_assembly_graph_store_get_starting_vertex(struct thorium_actor *self, s
         bsal_memory_pool_free(ephemeral_memory, sequence);
 
         bsal_dna_kmer_destroy(&storage_kmer, ephemeral_memory);
-        bsal_memory_pool_free(ephemeral_memory, new_buffer);
 
         return;
     }
@@ -1088,7 +1079,7 @@ void bsal_assembly_graph_store_get_starting_vertex(struct thorium_actor *self, s
     /*
      * An empty reply means that the store has nothing more to yield.
      */
-    thorium_actor_send_reply_empty(self, ACTION_ASSEMBLY_GET_STARTING_VERTEX_REPLY);
+    thorium_actor_send_reply_empty(self, ACTION_ASSEMBLY_GET_STARTING_KMER_REPLY);
 }
 
 /*
@@ -1182,21 +1173,189 @@ void bsal_assembly_graph_store_print_progress(struct thorium_actor *self)
 }
 
 void bsal_assembly_graph_store_mark_as_used(struct thorium_actor *self,
-                struct bsal_assembly_vertex *vertex, int source)
+                struct bsal_assembly_vertex *vertex, int source, int path)
 {
     struct bsal_assembly_graph_store *concrete_self;
 
+    BSAL_DEBUGGER_ASSERT(source >= 0);
+    BSAL_DEBUGGER_ASSERT(path >= 0);
+
     concrete_self = thorium_actor_concrete_actor(self);
 
-    BSAL_DEBUGGER_ASSERT(bsal_assembly_vertex_state(vertex) == BSAL_VERTEX_STATE_UNUSED);
-
-    bsal_assembly_vertex_set_state(vertex, BSAL_VERTEX_STATE_USED);
+    if (!bsal_assembly_vertex_get_flag(vertex, BSAL_VERTEX_FLAG_USED)) {
+        bsal_assembly_vertex_set_flag(vertex, BSAL_VERTEX_FLAG_USED);
+        ++concrete_self->consumed_canonical_vertex_count;
+        bsal_assembly_graph_store_print_progress(self);
+    }
 
 #if 0
-    printf("DEBUG set vertex source to %d\n", source);
+    printf("%s set last_actor %d last_path_index %d\n",
+                    thorium_actor_script_name(self),
+                    source, path);
 #endif
-    bsal_assembly_vertex_set_best_actor(vertex, source);
 
-    ++concrete_self->consumed_canonical_vertex_count;
-    bsal_assembly_graph_store_print_progress(self);
+    bsal_assembly_vertex_set_last_actor(vertex, source, path);
+}
+
+void bsal_assembly_graph_store_mark_vertex_as_visited(struct thorium_actor *self, struct thorium_message *message)
+{
+    struct bsal_assembly_graph_store *concrete_self;
+    char *buffer;
+    int source;
+    int path_index;
+    char *sequence;
+    struct bsal_memory_pool *ephemeral_memory;
+    struct bsal_dna_kmer kmer;
+    struct bsal_dna_kmer storage_kmer;
+    struct bsal_assembly_vertex *canonical_vertex;
+    int position;
+    void *key;
+    int force;
+
+    force = 1;
+    position = 0;
+    concrete_self = thorium_actor_concrete_actor(self);
+    source = thorium_message_source(message);
+    buffer = thorium_message_buffer(message);
+    ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
+
+    /*
+     * Get the kmer.
+     */
+    bsal_dna_kmer_init_empty(&kmer);
+
+    position += bsal_dna_kmer_unpack(&kmer, buffer, concrete_self->kmer_length,
+                ephemeral_memory, &concrete_self->transport_codec);
+    sequence = bsal_memory_pool_allocate(ephemeral_memory, concrete_self->kmer_length + 1);
+    bsal_dna_kmer_get_sequence(&kmer, sequence, concrete_self->kmer_length,
+                        &concrete_self->transport_codec);
+    bsal_dna_kmer_init(&storage_kmer, sequence, &concrete_self->storage_codec,
+                        ephemeral_memory);
+
+    /*
+     * Get store key
+     */
+    key = bsal_memory_pool_allocate(ephemeral_memory, concrete_self->key_length_in_bytes);
+    bsal_dna_kmer_pack_store_key(&storage_kmer, key, concrete_self->kmer_length, &concrete_self->storage_codec,
+                        ephemeral_memory);
+
+    /* Get vertex. */
+    canonical_vertex = bsal_map_get(&concrete_self->table, key);
+
+    bsal_dna_kmer_destroy(&kmer, ephemeral_memory);
+    bsal_dna_kmer_destroy(&storage_kmer, ephemeral_memory);
+    bsal_memory_pool_free(ephemeral_memory, key);
+    bsal_memory_pool_free(ephemeral_memory, sequence);
+
+    position += thorium_message_unpack_int(message, position, &path_index);
+    /*
+     * At this point, mark the vertex with flag BSAL_VERTEX_FLAG_USED
+     * so that any other actor that attempt to grab it will have to communicate
+     * with the actor.
+     */
+
+    /*
+     * This is a good idea to always update with the last one.
+     */
+    if (force || !bsal_assembly_vertex_get_flag(canonical_vertex, BSAL_VERTEX_FLAG_USED)) {
+        bsal_assembly_graph_store_mark_as_used(self, canonical_vertex, source, path_index);
+    }
+#if 0
+#endif
+
+    thorium_actor_send_reply_empty(self, ACTION_MARK_VERTEX_AS_VISITED_REPLY);
+}
+
+void bsal_assembly_graph_store_set_vertex_flag(struct thorium_actor *self,
+                struct thorium_message *message)
+{
+    char *buffer;
+    int count;
+    int flag;
+    struct bsal_dna_kmer transport_kmer;
+    struct bsal_assembly_vertex *vertex;
+    struct bsal_assembly_graph_store *concrete_self;
+    struct bsal_memory_pool *ephemeral_memory;
+    int position;
+
+    concrete_self = thorium_actor_concrete_actor(self);
+    ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
+    bsal_dna_kmer_init_empty(&transport_kmer);
+    buffer = thorium_message_buffer(message);
+    count = thorium_message_count(message);
+
+    position = 0;
+    position += bsal_dna_kmer_unpack(&transport_kmer, buffer, concrete_self->kmer_length,
+                    ephemeral_memory, &concrete_self->storage_codec);
+    bsal_memory_copy(&flag, buffer + position, sizeof(flag));
+    position += sizeof(flag);
+    BSAL_DEBUGGER_ASSERT(position == count);
+
+    BSAL_DEBUGGER_ASSERT(flag >= BSAL_VERTEX_FLAG_START_VALUE);
+    BSAL_DEBUGGER_ASSERT(flag <= BSAL_VERTEX_FLAG_END_VALUE);
+
+    if (flag == BSAL_VERTEX_FLAG_UNITIG) {
+        ++concrete_self->unitig_vertex_count;
+    }
+
+#if 0
+    printf("DEBUG ACTION_SET_VERTEX_FLAG %d\n", flag);
+#endif
+    vertex = bsal_assembly_graph_store_find_vertex(self, &transport_kmer);
+
+    bsal_dna_kmer_destroy(&transport_kmer, ephemeral_memory);
+
+    bsal_assembly_vertex_set_flag(vertex, flag);
+
+    thorium_actor_send_reply_empty(self, ACTION_SET_VERTEX_FLAG_REPLY);
+}
+
+struct bsal_assembly_vertex *bsal_assembly_graph_store_find_vertex(struct thorium_actor *self,
+                struct bsal_dna_kmer *kmer)
+{
+    struct bsal_memory_pool *ephemeral_memory;
+    struct bsal_assembly_graph_store *concrete_self;
+    char *sequence;
+    struct bsal_dna_kmer storage_kmer;
+    char *key;
+    struct bsal_assembly_vertex *canonical_vertex;
+
+    ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
+    concrete_self = thorium_actor_concrete_actor(self);
+
+    sequence = bsal_memory_pool_allocate(ephemeral_memory, concrete_self->kmer_length + 1);
+
+    bsal_dna_kmer_get_sequence(kmer, sequence, concrete_self->kmer_length,
+                        &concrete_self->transport_codec);
+
+    bsal_dna_kmer_init(&storage_kmer, sequence, &concrete_self->storage_codec,
+                        ephemeral_memory);
+
+    key = bsal_memory_pool_allocate(ephemeral_memory, concrete_self->key_length_in_bytes);
+
+    bsal_dna_kmer_pack_store_key(&storage_kmer, key,
+                        concrete_self->kmer_length, &concrete_self->storage_codec,
+                        ephemeral_memory);
+
+    canonical_vertex = bsal_map_get(&concrete_self->table, key);
+
+#ifdef BSAL_DEBUGGER_ASSERT
+    if (canonical_vertex == NULL) {
+
+        printf("not found Seq = %s name %d kmerlength %d key_length %d hash %" PRIu64 "\n", sequence,
+                        thorium_actor_name(self),
+                        concrete_self->kmer_length,
+                        concrete_self->key_length_in_bytes,
+                        bsal_dna_kmer_hash(&storage_kmer, concrete_self->kmer_length,
+                                &concrete_self->storage_codec));
+    }
+#endif
+
+    BSAL_DEBUGGER_ASSERT(canonical_vertex != NULL);
+
+    bsal_memory_pool_free(ephemeral_memory, sequence);
+    bsal_memory_pool_free(ephemeral_memory, key);
+    bsal_dna_kmer_destroy(&storage_kmer, ephemeral_memory);
+
+    return canonical_vertex;
 }

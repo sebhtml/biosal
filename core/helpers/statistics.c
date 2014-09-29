@@ -2,7 +2,10 @@
 #include "statistics.h"
 
 #include "vector_helper.h"
+
 #include <core/structures/vector.h>
+#include <core/structures/map.h>
+#include <core/structures/map_iterator.h>
 
 #include <math.h>
 #include <stdio.h>
@@ -232,4 +235,70 @@ void bsal_statistics_print_percentiles_float(struct bsal_vector *vector)
                     70, percentile_70,
                     75, percentile_75,
                     95, percentile_95);
+}
+
+int bsal_statistics_get_percentile_int_map(struct bsal_map *map, int percentile)
+{
+    struct bsal_vector keys;
+    struct bsal_map_iterator iterator;
+    int key;
+    int frequency;
+    int total;
+    int keys_before;
+    int keys_so_far;
+    int i;
+    int size;
+
+    bsal_map_iterator_init(&iterator, map);
+    total = 0;
+    bsal_vector_init(&keys, sizeof(int));
+
+    while (bsal_map_iterator_get_next_key_and_value(&iterator, &key, &frequency)) {
+        bsal_vector_push_back(&keys, &key);
+        total += frequency;
+    }
+
+    bsal_map_iterator_destroy(&iterator);
+
+    keys_before = round((percentile / 100.0) * total);
+
+    bsal_vector_sort_int(&keys);
+
+    i = 0;
+    keys_so_far = 0;
+    size = bsal_vector_size(&keys);
+
+    key = bsal_vector_at_as_int(&keys, size - 1);
+
+    /*
+     * example:
+     *
+     * 31 2
+     * 3000 1
+     *
+     * 31 31 3000
+     *
+     * N = 3
+     *
+     * P30 -> 30.0/100*3 = 0.8999999999999999 = 0 (with round), so P30 is 31
+     * P70 -> 70.0/100*3 = 2.0999999999999996 = 2 (with round), so P70 is 31
+     * P95 -> 95.0/100*3 = 2.8499999999999996 = 3 (with round), so P95 = 3000
+     */
+    while (i < size) {
+        key = bsal_vector_at_as_int(&keys, i);
+        bsal_map_get_value(map, &key, &frequency);
+
+        if (keys_so_far <= keys_before
+                        && keys_before <= keys_so_far + frequency) {
+            break;
+        }
+
+        keys_so_far += frequency;
+
+        ++i;
+    }
+
+    bsal_vector_destroy(&keys);
+
+    return key;
 }

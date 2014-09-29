@@ -6,11 +6,16 @@
 
 #define SCRIPT_FAIRNESS_PROCESS 0x01412af4
 
+/*
+ * Report percentiles for point-to-point for interval duration
+ * between any pair of consecutive ACTION_PING_REPLY events.
+ */
 struct process {
     struct bsal_vector times;
     struct bsal_vector actors;
     struct bsal_timer timer;
     int ready;
+    int received_ping_events;
 };
 
 extern struct thorium_script process_script;

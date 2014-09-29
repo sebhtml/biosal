@@ -5,6 +5,8 @@
 
 #include <string.h>
 
+#define MEMORY_RING 0x28fc4a42
+
 void bsal_ring_init(struct bsal_ring *self, int capacity, int cell_size)
 {
     self->number_of_cells = capacity + 1;
@@ -12,7 +14,7 @@ void bsal_ring_init(struct bsal_ring *self, int capacity, int cell_size)
     self->head = 0;
     self->tail = 0;
 
-    self->cells = bsal_memory_allocate(self->number_of_cells * self->cell_size);
+    self->cells = bsal_memory_allocate(self->number_of_cells * self->cell_size, MEMORY_RING);
 }
 
 void bsal_ring_destroy(struct bsal_ring *self)
@@ -22,7 +24,7 @@ void bsal_ring_destroy(struct bsal_ring *self)
     self->head = 0;
     self->tail = 0;
 
-    bsal_memory_free(self->cells);
+    bsal_memory_free(self->cells, MEMORY_RING);
 
     self->cells = NULL;
 }

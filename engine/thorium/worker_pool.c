@@ -22,6 +22,7 @@
 #include <stdint.h>
 #include <inttypes.h>
 
+#define MEMORY_WORKER_POOL_KEY 0x533932bf
 
 /*
 #define THORIUM_WORKER_POOL_DEBUG
@@ -62,7 +63,7 @@ void thorium_worker_pool_init(struct thorium_worker_pool *pool, int workers,
     pool->node = node;
     pool->waiting_is_enabled = 0;
 
-    thorium_scheduler_init(&pool->scheduler, pool);
+    thorium_balancer_init(&pool->balancer, pool);
 
     pool->ticks_without_messages = 0;
 
@@ -112,7 +113,7 @@ void thorium_worker_pool_init(struct thorium_worker_pool *pool, int workers,
 
 void thorium_worker_pool_destroy(struct thorium_worker_pool *pool)
 {
-    thorium_scheduler_destroy(&pool->scheduler);
+    thorium_balancer_destroy(&pool->balancer);
 
     thorium_worker_pool_delete_workers(pool);
 
@@ -258,9 +259,11 @@ void thorium_worker_pool_print_load(struct thorium_worker_pool *self, int type)
     int node_name;
     char *buffer;
     char *buffer_for_wake_up_events;
+    char *buffer_for_future_timeline;
     int allocated;
     int offset;
     int offset_for_wake_up;
+    int offset_for_future;
     int extra;
     time_t current_time;
     int elapsed;
@@ -290,11 +293,13 @@ void thorium_worker_pool_print_load(struct thorium_worker_pool *self, int type)
     count = thorium_worker_pool_worker_count(self);
     allocated = count * 20 + 20 + extra;
 
-    buffer = bsal_memory_allocate(allocated);
-    buffer_for_wake_up_events = bsal_memory_allocate(allocated);
+    buffer = bsal_memory_allocate(allocated, MEMORY_WORKER_POOL_KEY);
+    buffer_for_wake_up_events = bsal_memory_allocate(allocated, MEMORY_WORKER_POOL_KEY);
+    buffer_for_future_timeline = bsal_memory_allocate(allocated, MEMORY_WORKER_POOL_KEY);
     node_name = thorium_node_name(self->node);
     offset = 0;
     offset_for_wake_up = 0;
+    offset_for_future = 0;
     i = 0;
     sum = 0;
 
@@ -330,6 +335,9 @@ void thorium_worker_pool_print_load(struct thorium_worker_pool *self, int type)
         offset_for_wake_up += sprintf(buffer_for_wake_up_events + offset_for_wake_up, " %" PRIu64 "",
                         selected_wake_up_count);
 
+        offset_for_future += sprintf(buffer_for_future_timeline + offset_for_future, " %d",
+                        thorium_worker_get_scheduled_actor_count(worker));
+
         sum += selected_load;
 
         ++i;
@@ -337,20 +345,24 @@ void thorium_worker_pool_print_load(struct thorium_worker_pool *self, int type)
 
     load = sum / count;
 
-    printf("%s node/%d %s LOAD %d s %.2f/%d (%.2f)%s\n",
-                    THORIUM_NODE_THORIUM_PREFIX,
+    printf("thorium_worker_pool: node/%d %s LOAD %d s %.2f/%d (%.2f)%s\n",
                     node_name,
                     description, elapsed,
                     sum, count, load, buffer);
 
-    printf("%s node/%d %s WAKE_UP_COUNT %d s %s\n",
-                    THORIUM_NODE_THORIUM_PREFIX,
+    printf("thorium_worker_pool: node/%d %s FUTURE_TIMELINE %d s %s\n",
+                    node_name,
+                    description, elapsed,
+                    buffer_for_future_timeline);
+
+    printf("thorium_worker_pool: node/%d %s WAKE_UP_COUNT %d s %s\n",
                     node_name,
                     description, elapsed,
                     buffer_for_wake_up_events);
 
-    bsal_memory_free(buffer);
-    bsal_memory_free(buffer_for_wake_up_events);
+    bsal_memory_free(buffer, MEMORY_WORKER_POOL_KEY);
+    bsal_memory_free(buffer_for_wake_up_events, MEMORY_WORKER_POOL_KEY);
+    bsal_memory_free(buffer_for_future_timeline, MEMORY_WORKER_POOL_KEY);
 }
 
 void thorium_worker_pool_toggle_debug_mode(struct thorium_worker_pool *self)
@@ -445,14 +457,14 @@ int thorium_worker_pool_give_message_to_actor(struct thorium_worker_pool *pool, 
 
         /* Check if the actor is already assigned to a worker
          */
-        worker_index = thorium_scheduler_get_actor_worker(&pool->scheduler, name);
+        worker_index = thorium_balancer_get_actor_worker(&pool->balancer, name);
 
         /* If not, ask the scheduler to assign the actor to a worker
          */
         if (worker_index < 0) {
 
             thorium_worker_pool_assign_worker_to_actor(pool, name);
-            worker_index = thorium_scheduler_get_actor_worker(&pool->scheduler, name);
+            worker_index = thorium_balancer_get_actor_worker(&pool->balancer, name);
         }
 
         affinity_worker = thorium_worker_pool_get_worker(pool, worker_index);
@@ -497,7 +509,7 @@ void thorium_worker_pool_work(struct thorium_worker_pool *pool)
     if (bsal_fast_queue_dequeue(&pool->scheduled_actor_queue_buffer, &actor)) {
 
         name = thorium_actor_name(actor);
-        worker_index = thorium_scheduler_get_actor_worker(&pool->scheduler, name);
+        worker_index = thorium_balancer_get_actor_worker(&pool->balancer, name);
 
         if (worker_index < 0) {
             /*
@@ -516,7 +528,7 @@ void thorium_worker_pool_work(struct thorium_worker_pool *pool)
             printf("Notice: actor %d has no assigned worker\n", name);
 #endif
             thorium_worker_pool_assign_worker_to_actor(pool, name);
-            worker_index = thorium_scheduler_get_actor_worker(&pool->scheduler, name);
+            worker_index = thorium_balancer_get_actor_worker(&pool->balancer, name);
         }
 
         worker = thorium_worker_pool_get_worker(pool, worker_index);
@@ -537,7 +549,7 @@ void thorium_worker_pool_work(struct thorium_worker_pool *pool)
 
 
     if (current_time - pool->last_balancing >= pool->balance_period) {
-        thorium_scheduler_balance(&pool->scheduler);
+        thorium_balancer_balance(&pool->scheduler);
 
         pool->last_balancing = current_time;
     }
@@ -580,7 +592,7 @@ void thorium_worker_pool_assign_worker_to_actor(struct thorium_worker_pool *pool
     worker_index = -1;
 
 #ifdef THORIUM_WORKER_POOL_USE_LEAST_BUSY
-    worker_index = thorium_scheduler_select_worker_least_busy(&pool->scheduler, &score);
+    worker_index = thorium_balancer_select_worker_least_busy(&pool->scheduler, &score);
 
 #elif defined(THORIUM_WORKER_POOL_USE_SCRIPT_ROUND_ROBIN)
     actor = thorium_node_get_actor_from_name(pool->node, name);
@@ -599,7 +611,7 @@ void thorium_worker_pool_assign_worker_to_actor(struct thorium_worker_pool *pool
 
     script = thorium_actor_script(actor);
 
-    worker_index = thorium_scheduler_select_worker_script_round_robin(&pool->scheduler, script);
+    worker_index = thorium_balancer_select_worker_script_round_robin(&pool->balancer, script);
 #endif
 
     BSAL_DEBUGGER_ASSERT(worker_index >= 0);
@@ -608,7 +620,7 @@ void thorium_worker_pool_assign_worker_to_actor(struct thorium_worker_pool *pool
     printf("ASSIGNING %d to %d\n", name, worker_index);
 #endif
 
-    thorium_scheduler_set_actor_worker(&pool->scheduler, name, worker_index);
+    thorium_balancer_set_actor_worker(&pool->balancer, name, worker_index);
 }
 
 float thorium_worker_pool_get_current_load(struct thorium_worker_pool *pool)
@@ -791,4 +803,38 @@ int thorium_worker_pool_dequeue_message_for_triage(struct thorium_worker_pool *s
                 struct thorium_message *message)
 {
     return bsal_fast_queue_dequeue(&self->messages_for_triage, message);
+}
+
+void thorium_worker_pool_examine(struct thorium_worker_pool *self)
+{
+    int i;
+    int size;
+    struct thorium_worker *worker;
+
+    i = 0;
+    size = thorium_worker_pool_worker_count(self);
+
+    for (i = 0; i < size; ++i) {
+
+        worker = thorium_worker_pool_get_worker(self, i);
+
+        thorium_worker_examine(worker);
+    }
+}
+
+void thorium_worker_pool_enable_profiler(struct thorium_worker_pool *self)
+{
+    int i;
+    int size;
+    struct thorium_worker *worker;
+
+    i = 0;
+    size = thorium_worker_pool_worker_count(self);
+
+    for (i = 0; i < size; ++i) {
+
+        worker = thorium_worker_pool_get_worker(self, i);
+
+        thorium_worker_enable_profiler(worker);
+    }
 }

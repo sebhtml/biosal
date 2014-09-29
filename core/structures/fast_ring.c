@@ -9,6 +9,8 @@
 
 #include <inttypes.h>
 
+#define MEMORY_FAST_RING 0x02d9d481
+
 void bsal_fast_ring_init(struct bsal_fast_ring *self, int capacity, int cell_size)
 {
     /* +1 because an empty cell is needed
@@ -28,7 +30,7 @@ void bsal_fast_ring_init(struct bsal_fast_ring *self, int capacity, int cell_siz
     self->head_cache = 0;
     self->tail_cache = 0;
 
-    self->cells = bsal_memory_allocate(self->number_of_cells * self->cell_size);
+    self->cells = bsal_memory_allocate(self->number_of_cells * self->cell_size, MEMORY_FAST_RING);
 
 #ifdef BSAL_FAST_RING_USE_PADDING
     /* assign values to the padding
@@ -58,7 +60,7 @@ void bsal_fast_ring_destroy(struct bsal_fast_ring *self)
     self->head_cache = 0;
     self->tail_cache = 0;
 
-    bsal_memory_free(self->cells);
+    bsal_memory_free(self->cells, MEMORY_FAST_RING);
 
     self->cells = NULL;
 }

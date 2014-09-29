@@ -18,6 +18,9 @@ struct bsal_vector{
     int64_t size;
     int element_size;
     struct bsal_memory_pool *memory;
+
+    int profile_allocate_calls;
+    int profile_free_calls;
 };
 
 void bsal_vector_init(struct bsal_vector *self, int element_size);

@@ -2,13 +2,18 @@
 #include "string.h"
 
 #include <core/system/memory.h>
+#include <core/system/memory_pool.h>
 #include <core/system/packer.h>
+#include <core/system/debugger.h>
 
 #include <string.h>
 #include <stdlib.h>
+#include <stdio.h>
 
 #define BSAL_STRING_APPEND 100
 #define BSAL_STRING_PREPEND 200
+
+#define MEMORY_STRING 0x89fd5efd
 
 void bsal_string_init(struct bsal_string *string, const char *data)
 {
@@ -19,7 +24,7 @@ void bsal_string_init(struct bsal_string *string, const char *data)
     if (data != NULL) {
         length = strlen(data);
 
-        string->data = (char *)bsal_memory_allocate(length + 1);
+        string->data = (char *)bsal_memory_allocate(length + 1, MEMORY_STRING);
         strcpy(string->data, data);
     }
 }
@@ -27,7 +32,7 @@ void bsal_string_init(struct bsal_string *string, const char *data)
 void bsal_string_destroy(struct bsal_string *string)
 {
     if (string->data != NULL) {
-        bsal_memory_free(string->data);
+        bsal_memory_free(string->data, MEMORY_STRING);
         string->data = NULL;
     }
 }
@@ -77,7 +82,7 @@ void bsal_string_combine(struct bsal_string *string, const char *data, int opera
 
     new_length = old_length + length;
 
-    new_data = (char *)bsal_memory_allocate(new_length + 1);
+    new_data = (char *)bsal_memory_allocate(new_length + 1, MEMORY_STRING);
 
     strcpy(new_data, "");
 
@@ -95,7 +100,7 @@ void bsal_string_combine(struct bsal_string *string, const char *data, int opera
     }
 
     if (string->data != NULL) {
-        bsal_memory_free(string->data);
+        bsal_memory_free(string->data, MEMORY_STRING);
     }
 
     string->data = new_data;
@@ -129,7 +134,7 @@ int bsal_string_pack_unpack(struct bsal_string *self, int operation, void *buffe
     bsal_packer_process(&packer, &length, sizeof(length));
 
     if (operation == BSAL_PACKER_OPERATION_UNPACK) {
-        self->data = bsal_memory_allocate(length + 1);
+        self->data = bsal_memory_allocate(length + 1, MEMORY_STRING);
     }
 
     bsal_packer_process(&packer, self->data, length + 1);
@@ -148,4 +153,112 @@ int bsal_string_length(struct bsal_string *self)
     }
 
     return strlen(self->data);
+}
+
+void bsal_string_swap_c_string(char *sequence, int i, int j)
+{
+    char value;
+
+    BSAL_DEBUGGER_ASSERT(sequence != NULL);
+
+    value = sequence[i];
+    sequence[i] = sequence[j];
+    sequence[j] = value;
+
+#ifdef DEBUG_STRING
+    printf("SWAP %d %d result %s\n", i, j, sequence);
+#endif
+}
+
+void bsal_string_rotate_c_string(char *sequence, int length, int new_start)
+{
+    int offset;
+
+    /*
+     * in-place rotation
+     */
+
+    /*
+     * Nothing to do.
+     */
+    if (new_start == 0)
+        return;
+
+#ifdef DEBUG_STRING
+    printf("ROTATE %s %d\n", sequence, new_start);
+#endif
+
+    /*
+     * See http://stackoverflow.com/questions/19316335/rotate-string-in-place-with-on
+     */
+    bsal_string_reverse_c_string(sequence, 0, length - 1);
+
+    offset = length - new_start;
+
+    bsal_string_reverse_c_string(sequence, 0, offset - 1);
+    bsal_string_reverse_c_string(sequence, offset, length - 1);
+}
+
+void bsal_string_reverse_c_string(char *sequence, int start, int end)
+{
+#ifdef DEBUG_STRING
+    printf("reverse before %s\n", sequence);
+#endif
+
+    while (start < end) {
+
+        bsal_string_swap_c_string(sequence, start, end);
+        ++start;
+        --end;
+    }
+
+#ifdef DEBUG_STRING
+    printf("reverse after %s\n", sequence);
+#endif
+}
+
+void bsal_string_rotate_path(char *sequence, int length, int rotation, int kmer_length,
+                struct bsal_memory_pool *pool)
+{
+    char *buffer;
+
+    /*
+     * Impossible.
+     */
+    if (length < kmer_length) {
+        return;
+    }
+
+    /*
+     * Simplify the rotation
+     */
+    rotation %= length;
+
+    buffer = bsal_memory_pool_allocate(pool, length);
+
+    /*
+     * Algorithm:
+     *
+     * 1. Copy (l - r) from old @ r to new @ 0
+     * 2. Copy (r - k + 1) from old @ (k - 1) to new @ (l - r)   (only if (r - k + 1 > 0))
+     * 3. Copy (k - 1) from new @ 0 to new @ (l - k + 1)
+     */
+
+    bsal_memory_copy(buffer + 0, sequence + rotation, (length - rotation));
+
+    /*
+     * Copy the middle
+     * */
+    if ((rotation - kmer_length + 1) > 0)
+        bsal_memory_copy(buffer + (length - rotation), sequence + (kmer_length - 1),
+                    (rotation - kmer_length + 1));
+
+    bsal_memory_copy(buffer + (length - kmer_length + 1), buffer + 0, (kmer_length - 1));
+
+    /*
+     * Copy the new sequence.
+     */
+    bsal_memory_copy(sequence, buffer, length);
+
+    bsal_memory_pool_free(pool, buffer);
 }

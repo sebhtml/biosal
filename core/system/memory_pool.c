@@ -22,13 +22,19 @@
 #define FLAG_ALIGN 3
 #define FLAG_EPHEMERAL 4
 
-void bsal_memory_pool_init(struct bsal_memory_pool *self, int block_size)
+#define OPERATION_ALLOCATE  0
+#define OPERATION_FREE      1
+
+#define MEMORY_MEMORY_POOL 0xc170626e
+
+void bsal_memory_pool_init(struct bsal_memory_pool *self, int block_size, int name)
 {
     bsal_map_init(&self->recycle_bin, sizeof(int), sizeof(struct bsal_queue));
     bsal_map_init(&self->allocated_blocks, sizeof(void *), sizeof(int));
     bsal_set_init(&self->large_blocks, sizeof(void *));
 
     self->current_block = NULL;
+    self->name = name;
 
     bsal_queue_init(&self->dried_blocks, sizeof(struct bsal_memory_block *));
     bsal_queue_init(&self->ready_blocks, sizeof(struct bsal_memory_block *));
@@ -44,6 +50,11 @@ void bsal_memory_pool_init(struct bsal_memory_pool *self, int block_size)
     bsal_bitmap_clear_bit_uint32_t(&self->flags, FLAG_ENABLE_SEGMENT_NORMALIZATION);
     bsal_bitmap_clear_bit_uint32_t(&self->flags, FLAG_ALIGN);
     bsal_bitmap_clear_bit_uint32_t(&self->flags, FLAG_EPHEMERAL);
+
+    self->profile_allocated_byte_count = 0;
+    self->profile_freed_byte_count = 0;
+    self->profile_allocate_calls = 0;
+    self->profile_free_calls = 0;
 }
 
 void bsal_memory_pool_destroy(struct bsal_memory_pool *self)
@@ -51,6 +62,10 @@ void bsal_memory_pool_destroy(struct bsal_memory_pool *self)
     struct bsal_queue *queue;
     struct bsal_map_iterator iterator;
     struct bsal_memory_block *block;
+
+#ifdef BSAL_MEMORY_POOL_FIND_LEAKS
+    BSAL_DEBUGGER_ASSERT(!bsal_memory_pool_has_leaks(self));
+#endif
 
     /* destroy recycled objects
      */
@@ -71,7 +86,7 @@ void bsal_memory_pool_destroy(struct bsal_memory_pool *self)
      */
     while (bsal_queue_dequeue(&self->dried_blocks, &block)) {
         bsal_memory_block_destroy(block);
-        bsal_memory_free(block);
+        bsal_memory_free(block, self->name);
     }
     bsal_queue_destroy(&self->dried_blocks);
 
@@ -79,7 +94,7 @@ void bsal_memory_pool_destroy(struct bsal_memory_pool *self)
      */
     while (bsal_queue_dequeue(&self->ready_blocks, &block)) {
         bsal_memory_block_destroy(block);
-        bsal_memory_free(block);
+        bsal_memory_free(block, self->name);
     }
     bsal_queue_destroy(&self->ready_blocks);
 
@@ -87,7 +102,7 @@ void bsal_memory_pool_destroy(struct bsal_memory_pool *self)
      */
     if (self->current_block != NULL) {
         bsal_memory_block_destroy(self->current_block);
-        bsal_memory_free(self->current_block);
+        bsal_memory_free(self->current_block, self->name);
         self->current_block = NULL;
     }
 
@@ -212,8 +227,14 @@ void *bsal_memory_pool_allocate_private(struct bsal_memory_pool *self, size_t si
         return NULL;
     }
 
-    if (self == NULL || bsal_bitmap_get_bit_uint32_t(&self->flags, FLAG_DISABLED)) {
-        return bsal_memory_allocate(size);
+    if (self == NULL) {
+        return bsal_memory_allocate(size, MEMORY_MEMORY_POOL);
+    }
+
+    bsal_memory_pool_profile(self, OPERATION_ALLOCATE, size);
+
+    if (bsal_bitmap_get_bit_uint32_t(&self->flags, FLAG_DISABLED)) {
+        return bsal_memory_allocate(size, self->name);
     }
 
     /*
@@ -223,7 +244,7 @@ void *bsal_memory_pool_allocate_private(struct bsal_memory_pool *self, size_t si
      */
 
     if (size >= (size_t)self->block_size) {
-        pointer = bsal_memory_allocate(size);
+        pointer = bsal_memory_allocate(size, self->name);
 
         bsal_set_add(&self->large_blocks, &pointer);
 
@@ -285,7 +306,7 @@ void bsal_memory_pool_add_block(struct bsal_memory_pool *self)
      * Otherwise, create one on-demand today.
      */
     if (!bsal_queue_dequeue(&self->ready_blocks, &self->current_block)) {
-        self->current_block = bsal_memory_allocate(sizeof(struct bsal_memory_block));
+        self->current_block = bsal_memory_allocate(sizeof(struct bsal_memory_block), self->name);
         bsal_memory_block_init(self->current_block, self->block_size);
     }
 }
@@ -299,18 +320,27 @@ void bsal_memory_pool_free(struct bsal_memory_pool *self, void *pointer)
         return;
     }
 
-    if (self == NULL || bsal_bitmap_get_bit_uint32_t(&self->flags, FLAG_DISABLED)) {
-        bsal_memory_free(pointer);
+    if (self == NULL) {
+        bsal_memory_free(pointer, MEMORY_MEMORY_POOL);
+        return;
+    }
+
+    /*
+     * TODO: find out the actual size.
+     */
+    bsal_memory_pool_profile(self, OPERATION_FREE, 0);
+
+    if (bsal_bitmap_get_bit_uint32_t(&self->flags, FLAG_DISABLED)) {
+        bsal_memory_free(pointer, self->name);
         return;
     }
 
     /* Verify if the pointer is a large block not managed by one of the memory
      * blocks
      */
-
     if (bsal_set_find(&self->large_blocks, &pointer)) {
 
-        bsal_memory_free(pointer);
+        bsal_memory_free(pointer, self->name);
         bsal_set_delete(&self->large_blocks, &pointer);
         return;
     }
@@ -380,6 +410,14 @@ void bsal_memory_pool_free_all(struct bsal_memory_pool *self)
     struct bsal_memory_block *block;
     int i;
     int size;
+
+#ifdef BSAL_DEBUGGER_ENABLE_ASSERT
+    if (bsal_memory_pool_has_leaks(self)) {
+        bsal_memory_pool_examine(self);
+    }
+
+    BSAL_DEBUGGER_ASSERT(!bsal_memory_pool_has_leaks(self));
+#endif
 
     /*
      * Reset the current block
@@ -456,5 +494,113 @@ void bsal_memory_pool_enable_ephemeral_mode(struct bsal_memory_pool *self)
 
 void bsal_memory_pool_set_name(struct bsal_memory_pool *self, int name)
 {
+    self->name = name;
+}
 
+void bsal_memory_pool_examine(struct bsal_memory_pool *self)
+{
+    printf("DEBUG_POOL Name= 0x%x"
+                    " ActiveSegments= %d (%d - %d)"
+                    " AllocatedBytes= %" PRIu64 " (%" PRIu64 " - %" PRIu64 ")"
+                    "\n",
+
+                    self->name,
+
+                    self->profile_allocate_calls - self->profile_free_calls,
+                    self->profile_allocate_calls, self->profile_free_calls,
+
+                    self->profile_allocated_byte_count - self->profile_freed_byte_count,
+                    self->profile_allocated_byte_count, self->profile_freed_byte_count);
+}
+
+void bsal_memory_pool_profile(struct bsal_memory_pool *self, int operation, size_t byte_count)
+{
+    if (operation == OPERATION_ALLOCATE) {
+        ++self->profile_allocate_calls;
+        self->profile_allocated_byte_count += byte_count;
+    } else if (operation == OPERATION_FREE) {
+        ++self->profile_free_calls;
+        self->profile_freed_byte_count += byte_count;
+    }
+
+#ifdef BSAL_DEBUGGER_CHECK_DOUBLE_FREE_IN_POOL
+#ifdef BSAL_DEBUGGER_ENABLE_ASSERT
+    if (!(self->profile_allocate_calls >= self->profile_free_calls)) {
+        bsal_memory_pool_examine(self);
+    }
+#endif
+    BSAL_DEBUGGER_ASSERT(self->profile_allocate_calls >= self->profile_free_calls);
+#endif
+}
+
+int bsal_memory_pool_has_leaks(struct bsal_memory_pool *self)
+{
+#ifdef BSAL_DEBUGGER_CHECK_LEAKS_IN_POOL
+    return self->profile_allocate_calls != self->profile_free_calls;
+#else
+    return 0;
+#endif
+}
+
+void bsal_memory_pool_begin(struct bsal_memory_pool *self, struct bsal_memory_pool_state *state)
+{
+    state->test_profile_allocate_calls = self->profile_allocate_calls;
+    state->test_profile_free_calls = self->profile_free_calls;
+}
+
+void bsal_memory_pool_end(struct bsal_memory_pool *self, struct bsal_memory_pool_state *state,
+                const char *name, const char *function, const char *file, int line)
+{
+    int allocate_calls;
+    int free_calls;
+
+    allocate_calls = self->profile_allocate_calls - state->test_profile_allocate_calls;
+    free_calls = self->profile_free_calls - state->test_profile_free_calls;
+
+    if (allocate_calls != free_calls) {
+        printf("Error, saved pool state \"%s\" (%s %s %d) reveals leaks: allocate_calls %d free_calls %d (balance: %d)\n",
+                        name, function, file, line, allocate_calls, free_calls,
+                        allocate_calls - free_calls);
+    }
+
+    BSAL_DEBUGGER_ASSERT(allocate_calls == free_calls);
+}
+
+int bsal_memory_pool_has_double_free(struct bsal_memory_pool *self)
+{
+    return self->profile_allocate_calls < self->profile_free_calls;
+}
+
+int bsal_memory_pool_profile_allocate_count(struct bsal_memory_pool *self)
+{
+    return self->profile_allocate_calls;
+}
+
+int bsal_memory_pool_profile_free_count(struct bsal_memory_pool *self)
+{
+    return self->profile_free_calls;
+}
+
+void bsal_memory_pool_check_double_free(struct bsal_memory_pool *self,
+        const char *function, const char *file, int line)
+{
+    int balance;
+
+    balance = 0;
+
+    balance += self->profile_allocate_calls;
+    balance -= self->profile_free_calls;
+
+    if (self->profile_free_calls > self->profile_allocate_calls) {
+        printf("%s %s %d INFO profile_allocate_calls %d profile_free_calls %d balance %d\n",
+                        function, file, line,
+                        self->profile_allocate_calls, self->profile_free_calls, balance);
+    }
+
+    BSAL_DEBUGGER_ASSERT(self->profile_allocate_calls >= self->profile_free_calls);
+}
+
+int bsal_memory_pool_profile_balance_count(struct bsal_memory_pool *self)
+{
+    return self->profile_allocate_calls - self->profile_free_calls;
 }

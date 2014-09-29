@@ -5,6 +5,8 @@
 
 #include <stdlib.h>
 
+#define MEMORY_BLOCK 0x146f7d15
+
 void bsal_memory_block_init(struct bsal_memory_block *self, int total_bytes)
 {
     self->total_bytes = total_bytes;
@@ -18,7 +20,7 @@ void bsal_memory_block_destroy(struct bsal_memory_block *self)
     self->offset = 0;
 
     if (self->memory != NULL) {
-        bsal_memory_free(self->memory);
+        bsal_memory_free(self->memory, MEMORY_BLOCK);
         self->memory = NULL;
     }
 }
@@ -28,7 +30,7 @@ void *bsal_memory_block_allocate(struct bsal_memory_block *self, int size)
     void *pointer;
 
     if (self->memory == NULL) {
-        self->memory = bsal_memory_allocate(self->total_bytes);
+        self->memory = bsal_memory_allocate(self->total_bytes, MEMORY_BLOCK);
     }
 
     if (self->offset + size > self->total_bytes) {

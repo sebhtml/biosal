@@ -6,6 +6,8 @@
 #include "worker_pool.h"
 
 #include "transport/transport.h"
+#include "transport/message_multiplexer.h"
+#include "transport/multiplexer_policy.h"
 
 #include <core/structures/vector.h>
 #include <core/structures/queue.h>
@@ -14,6 +16,7 @@
 #include <core/system/lock.h>
 #include <core/system/counter.h>
 #include <core/system/memory_pool.h>
+#include <core/system/debugger.h>
 
 /*
  * \see http://pubs.opengroup.org/onlinepubs/009696699/basedefs/signal.h.html
@@ -36,7 +39,6 @@
 /*
  * Thorium product branding.
  */
-#define THORIUM_NODE_THORIUM_PREFIX "[thorium]"
 
 /*
  * Compilation options:
@@ -45,6 +47,8 @@
 /*
  * Enable load reporting with -print-load and memory reporting with
  * -print-memory-usage
+ *
+ * This can not be disabled.
  */
 /*
  */
@@ -67,7 +71,7 @@ struct thorium_worker_buffer;
  * Thorium has these components:
  *
  * - Runtime node (struct thorium_node)
- * - Actor scheduler (struct thorium_scheduler)
+ * - Actor scheduler (struct thorium_balancer)
  * - Actor (struct thorium_actor)
  * - Message (struct thorium_message)
  * - Worker pool (struct thorium_worker_pool)
@@ -115,6 +119,8 @@ struct thorium_node {
  */
     struct bsal_thread thread;
     struct thorium_transport transport;
+    struct thorium_message_multiplexer multiplexer;
+    struct thorium_multiplexer_policy multiplexer_policy;
 
     /*
      * This lock can not be removed because
@@ -199,12 +205,18 @@ struct thorium_node {
 #endif
 
 #ifdef THORIUM_NODE_DEBUG_INJECTION
+    int counter_allocated_node_inbound_buffers;
+    int counter_allocated_node_outbound_buffers;
+
     int counter_freed_thorium_outbound_buffers;
-    int counter_freed_injected_inbound_core_buffers;
+    int counter_freed_injected_node_inbound_buffers;
+    int counter_freed_multiplexed_inbound_buffers;
     int counter_injected_buffers_for_local_workers;
     int counter_injected_transport_outbound_buffer_for_workers;
 #endif
 };
+
+extern struct thorium_node *thorium_node_global_self;
 
 void thorium_node_init(struct thorium_node *self, int *argc, char ***argv);
 void thorium_node_destroy(struct thorium_node *self);
@@ -215,6 +227,7 @@ int thorium_node_spawn_state(struct thorium_node *self, void *state,
                 struct thorium_script *script);
 int thorium_node_spawn(struct thorium_node *self, int script);
 void thorium_node_send(struct thorium_node *self, struct thorium_message *message);
+void thorium_node_send_with_transport(struct thorium_node *self, struct thorium_message *message);
 
 int thorium_node_generate_name(struct thorium_node *self);
 
@@ -234,7 +247,7 @@ void thorium_node_run_loop(struct thorium_node *self);
 void thorium_node_send_message(struct thorium_node *self);
 void thorium_node_notify_death(struct thorium_node *self, struct thorium_actor *actor);
 
-void thorium_node_inject_message_in_pool(struct thorium_node *self, struct thorium_message *message);
+void thorium_node_inject_message_in_worker_pool(struct thorium_node *self, struct thorium_message *message);
 int thorium_node_pull(struct thorium_node *self, struct thorium_message *message);
 
 int thorium_node_worker_count(struct thorium_node *self);
@@ -296,5 +309,10 @@ void thorium_node_resolve(struct thorium_node *self, struct thorium_message *mes
  */
 int thorium_node_generate_random_name(struct thorium_node *self,
                 int minimal_value, int maximum_value);
+
+struct bsal_memory_pool *thorium_node_inbound_memory_pool(struct thorium_node *self);
+
+void thorium_node_examine(struct thorium_node *self);
+void thorium_node_inject_outbound_buffer(struct thorium_node *self, struct thorium_worker_buffer *worker_buffer);
 
 #endif

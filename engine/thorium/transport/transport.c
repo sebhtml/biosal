@@ -37,6 +37,8 @@
 #define FLAG_PROFILE 0
 #define FLAG_PRINT_TRANSPORT_EVENTS 1
 
+#define MEMORY_TRANSPORT 0xe1b48d97
+
 void thorium_transport_init(struct thorium_transport *self, struct thorium_node *node,
                 int *argc, char ***argv,
                 struct bsal_memory_pool *inbound_message_memory_pool,
@@ -74,7 +76,7 @@ void thorium_transport_init(struct thorium_transport *self, struct thorium_node 
 
     if (self->transport_interface != NULL) {
 
-        self->concrete_transport = bsal_memory_allocate(self->transport_interface->size);
+        self->concrete_transport = bsal_memory_allocate(self->transport_interface->size, MEMORY_TRANSPORT);
         self->transport_interface->init(self, argc, argv);
     }
 
@@ -95,8 +97,7 @@ void thorium_transport_init(struct thorium_transport *self, struct thorium_node 
     }
 
     if (self->rank == 0) {
-        printf("%s DEBUG TRANSPORT -> %s\n",
-                        THORIUM_NODE_THORIUM_PREFIX,
+        printf("thorium_transport: type %s\n",
                     self->transport_interface->name);
     }
 
@@ -124,7 +125,7 @@ void thorium_transport_destroy(struct thorium_transport *self)
     if (self->transport_interface != NULL) {
         self->transport_interface->destroy(self);
 
-        bsal_memory_free(self->concrete_transport);
+        bsal_memory_free(self->concrete_transport, MEMORY_TRANSPORT);
         self->concrete_transport = NULL;
     }
 
@@ -158,7 +159,7 @@ int thorium_transport_send(struct thorium_transport *self, struct thorium_messag
         printf("TRANSPORT SEND Source %d Destination %d Tag %d Count %d\n",
                         thorium_message_source_node(message),
                         thorium_message_destination_node(message),
-                        thorium_message_tag(message),
+                        thorium_message_action(message),
                         thorium_message_count(message));
 #endif
         ++self->active_request_count;
@@ -186,7 +187,7 @@ int thorium_transport_receive(struct thorium_transport *self, struct thorium_mes
         printf("TRANSPORT RECEIVE Source %d Destination %d Tag %d Count %d\n",
                         thorium_message_source_node(message),
                         thorium_message_destination_node(message),
-                        thorium_message_tag(message),
+                        thorium_message_action(message),
                         thorium_message_count(message));
 #endif
 
@@ -326,8 +327,7 @@ const char *thorium_transport_get_name(struct thorium_transport *self)
 
 void thorium_transport_print(struct thorium_transport *self)
 {
-    printf("%s TRANSPORT Rank: %d RankCount: %d Implementation: %s\n",
-                    THORIUM_NODE_THORIUM_PREFIX,
+    printf("thorium_transport: TRANSPORT Rank: %d RankCount: %d Implementation: %s\n",
                 self->rank, self->size,
                 thorium_transport_get_name(self));
 }
@@ -351,7 +351,7 @@ void thorium_transport_print_event(struct thorium_transport *self, int type, str
 
     time = bsal_timer_get_nanoseconds(&self->timer);
     time -= self->start_time;
-    printf("%s print_event time_nanoseconds= %" PRIu64 " type= %s source= %d destination= %d count= %d\n",
-                    THORIUM_NODE_THORIUM_PREFIX, time, description,
+    printf("thorium_transport print_event time_nanoseconds= %" PRIu64 " type= %s source= %d destination= %d count= %d\n",
+                    time, description,
                     source_rank, destination_rank, count);
 }

@@ -35,7 +35,7 @@ void thorium_actor_unpack_proxy_message(struct thorium_actor *self,
      * Change the tag, source, and count.
      */
     thorium_message_set_source(message, source);
-    thorium_message_set_tag(message, tag);
+    thorium_message_set_action(message, tag);
     thorium_message_set_count(message, new_count);
 
 #if 0
@@ -56,7 +56,7 @@ void thorium_actor_pack_proxy_message(struct thorium_actor *self, struct thorium
     struct bsal_memory_pool *ephemeral_memory;
 
     ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
-    real_tag = thorium_message_tag(message);
+    real_tag = thorium_message_action(message);
     buffer = thorium_message_buffer(message);
     count = thorium_message_count(message);
 

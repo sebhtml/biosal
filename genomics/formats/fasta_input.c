@@ -8,6 +8,8 @@
 #include <string.h>
 #include <stdlib.h>
 
+#define MEMORY_FASTA 0x480002a5
+
 struct bsal_input_format_interface bsal_fasta_input_operations = {
     .init = bsal_fasta_input_init,
     .destroy = bsal_fasta_input_destroy,
@@ -50,12 +52,12 @@ void bsal_fasta_input_destroy(struct bsal_input_format *input)
     bsal_buffered_reader_destroy(&fasta->reader);
 
     if (fasta->buffer != NULL) {
-        bsal_memory_free(fasta->buffer);
+        bsal_memory_free(fasta->buffer, MEMORY_FASTA);
         fasta->buffer = NULL;
     }
 
     if (fasta->next_header != NULL) {
-        bsal_memory_free(fasta->next_header);
+        bsal_memory_free(fasta->next_header, MEMORY_FASTA);
         fasta->next_header= NULL;
     }
 }
@@ -77,8 +79,8 @@ uint64_t bsal_fasta_input_get_sequence(struct bsal_input_format *input,
     fasta = (struct bsal_fasta_input *)bsal_input_format_implementation(input);
 
     if (fasta->buffer == NULL) {
-        fasta->buffer = bsal_memory_allocate(maximum_sequence_length + 1);
-        fasta->next_header= bsal_memory_allocate(maximum_sequence_length + 1);
+        fasta->buffer = bsal_memory_allocate(maximum_sequence_length + 1, MEMORY_FASTA);
+        fasta->next_header= bsal_memory_allocate(maximum_sequence_length + 1, MEMORY_FASTA);
 
         fasta->buffer[0] = '\0';
         fasta->next_header[0] = '\0';

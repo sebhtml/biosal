@@ -23,6 +23,10 @@
 #define ACTION_ASSEMBLY_GET_VERTICES_AND_SELECT_REPLY 0x00000a0b
 
 /*
+#define BSAL_UNITIG_WALKER_USE_PRIVATE_FILE
+*/
+
+/*
  * A dummy walker to test the concept.
  */
 struct bsal_unitig_walker {
@@ -30,8 +34,11 @@ struct bsal_unitig_walker {
     int kmer_length;
     struct bsal_dna_codec codec;
     struct bsal_memory_pool memory_pool;
-
+    int skipped_at_start_used;
+    int skipped_at_start_not_unitig;
+    struct bsal_map path_statuses;
     int source;
+    int current_is_circular;
 
     /*
      * The next store index to use.
@@ -40,8 +47,10 @@ struct bsal_unitig_walker {
 
     int dried_stores;
 
+#ifdef BSAL_UNITIG_WALKER_USE_PRIVATE_FILE
     struct bsal_buffered_file_writer writer;
     struct bsal_string file_path;
+#endif
 
     int has_starting_vertex;
 
@@ -69,6 +78,9 @@ struct bsal_unitig_walker {
     int select_operation;
 
     struct bsal_unitig_heuristic heuristic;
+
+    int writer_process;
+    int start_messages;
 };
 
 extern struct thorium_script bsal_unitig_walker_script;
@@ -77,7 +89,7 @@ void bsal_unitig_walker_init(struct thorium_actor *self);
 void bsal_unitig_walker_destroy(struct thorium_actor *self);
 void bsal_unitig_walker_receive(struct thorium_actor *self, struct thorium_message *message);
 
-void bsal_unitig_walker_get_starting_vertex_reply(struct thorium_actor *self, struct thorium_message *message);
+void bsal_unitig_walker_get_starting_kmer_reply(struct thorium_actor *self, struct thorium_message *message);
 void bsal_unitig_walker_start(struct thorium_actor *self, struct thorium_message *message);
 void bsal_unitig_walker_get_vertex_reply(struct thorium_actor *self, struct thorium_message *message);
 
@@ -91,7 +103,7 @@ void bsal_unitig_walker_begin(struct thorium_actor *self, struct thorium_message
 
 int bsal_unitig_walker_select(struct thorium_actor *self, int *output_status);
 void bsal_unitig_walker_write(struct thorium_actor *self, uint64_t name,
-                char *sequence, int sequence_length);
+                char *sequence, int sequence_length, int circular, uint64_t signature);
 void bsal_unitig_walker_make_decision(struct thorium_actor *self);
 
 void bsal_unitig_walker_set_current(struct thorium_actor *self,
@@ -109,5 +121,11 @@ int bsal_unitig_walker_get_current_length(struct thorium_actor *self);
 
 void bsal_unitig_walker_notify(struct thorium_actor *self, struct thorium_message *message);
 void bsal_unitig_walker_notify_reply(struct thorium_actor *self, struct thorium_message *message);
+
+void bsal_unitig_walker_mark_vertex(struct thorium_actor *self, struct bsal_dna_kmer *kmer);
+
+int bsal_unitig_walker_select_old_version(struct thorium_actor *self, int *output_status);
+void bsal_unitig_walker_normalize_cycle(struct thorium_actor *self, int length, char *sequence);
+void bsal_unitig_walker_select_strand(struct thorium_actor *self, int length, char *sequence);
 
 #endif

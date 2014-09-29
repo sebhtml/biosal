@@ -1,6 +1,8 @@
 #ifndef BSAL_BUFFERED_FILE_WRITER_H
 #define BSAL_BUFFERED_FILE_WRITER_H
 
+#include <core/structures/string.h>
+
 #include <stdio.h>
 #include <stdarg.h>
 
@@ -16,6 +18,8 @@ struct bsal_buffered_file_writer {
     int buffer_length;
 
     FILE *null_file;
+
+    struct bsal_string file;
 };
 
 void bsal_buffered_file_writer_init(struct bsal_buffered_file_writer *self, const char *file);
@@ -27,5 +31,8 @@ int bsal_buffered_file_writer_printf(struct bsal_buffered_file_writer *self, con
                 ...);
 
 int bsal_buffered_file_writer_flush(struct bsal_buffered_file_writer *self);
+
+size_t bsal_buffered_file_writer_write_back(struct bsal_buffered_file_writer *self,
+                const void *buffer, size_t count);
 
 #endif

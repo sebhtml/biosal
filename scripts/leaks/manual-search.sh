@@ -1,11 +1,15 @@
 #!/bin/bash
 
-# define this in the code: BSAL_MEMORY_DEBUG_DETAIL
+# How to use:
+#
+# define BSAL_MEMORY_DEBUG in core/system/memory.h (#define BSAL_MEMORY_DEBUG)
+# Run a job and put the standard output in a file (like 'log')
+#
+# Then run:
+#   scripts/leaks/manual-search.sh log
 
-grep bsal_memory_free log|awk '{print $3}' > free-addr
-grep bsal_memory_allocate log|awk '{print $5}' > allocate-addr
+grep bsal_memory_allocate log|grep DEBUG |awk '{print $5}' > allocate-addr
+grep bsal_memory_free log|grep DEBUG |awk '{print $3}' > free-addr
 cat allocate-addr  free-addr |sort|uniq -c|sort -n|grep " 1 " | awk '{print $2}' > leaks.txt
-for i in $(cat leaks.txt ); do grep $i log|grep _allocate; done > 1
-mv 1 leaks.txt
 
 echo "see leaks.txt"

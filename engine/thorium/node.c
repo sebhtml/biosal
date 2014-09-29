@@ -65,17 +65,19 @@
 #define TRANSPORT_DEBUG_ISSUE_594
 */
 
-static struct thorium_node *thorium_node_global_self;
-
-#define FLAG_PRINT_LOAD 0
-#define FLAG_DEBUG 1
-#define FLAG_PRINT_STRUCTURE 2
-#define FLAG_STARTED 3
-#define FLAG_PRINT_COUNTERS 4
-#define FLAG_USE_TRANSPORT 5
-#define FLAG_SEND_IN_THREAD 6
-#define FLAG_WORKER_IN_MAIN_THREAD 7
-#define FLAG_WORKERS_IN_THREADS 8
+#define FLAG_PRINT_LOAD                 0
+#define FLAG_DEBUG                      1
+#define FLAG_PRINT_STRUCTURE            2
+#define FLAG_STARTED                    3
+#define FLAG_PRINT_COUNTERS             4
+#define FLAG_USE_TRANSPORT              5
+#define FLAG_SEND_IN_THREAD             6
+#define FLAG_WORKER_IN_MAIN_THREAD      7
+#define FLAG_WORKERS_IN_THREADS         8
+#define FLAG_EXAMINE                    9
+#define FLAG_ENABLE_ACTOR_LOAD_PROFILES 10
+#define FLAG_MULTIPLEXER_IS_DISABLED    11
+struct thorium_node *thorium_node_global_self;
 
 void thorium_node_init(struct thorium_node *node, int *argc, char ***argv)
 {
@@ -88,8 +90,11 @@ void thorium_node_init(struct thorium_node *node, int *argc, char ***argv)
     int processor;
 
 #ifdef THORIUM_NODE_DEBUG_INJECTION
+    node->counter_allocated_node_inbound_buffers = 0;
+    node->counter_freed_multiplexed_inbound_buffers = 0;
+    node->counter_allocated_node_outbound_buffers = 0;
     node->counter_freed_thorium_outbound_buffers = 0;
-    node->counter_freed_injected_inbound_core_buffers = 0;
+    node->counter_freed_injected_node_inbound_buffers = 0;
     node->counter_injected_buffers_for_local_workers = 0;
     node->counter_injected_transport_outbound_buffer_for_workers = 0;
 #endif
@@ -111,6 +116,9 @@ void thorium_node_init(struct thorium_node *node, int *argc, char ***argv)
     bsal_bitmap_clear_bit_uint32_t(&node->flags, FLAG_PRINT_STRUCTURE);
     bsal_bitmap_clear_bit_uint32_t(&node->flags, FLAG_DEBUG);
     bsal_bitmap_clear_bit_uint32_t(&node->flags, FLAG_PRINT_COUNTERS);
+    bsal_bitmap_clear_bit_uint32_t(&node->flags, FLAG_EXAMINE);
+    bsal_bitmap_clear_bit_uint32_t(&node->flags, FLAG_ENABLE_ACTOR_LOAD_PROFILES);
+    bsal_bitmap_clear_bit_uint32_t(&node->flags, FLAG_MULTIPLEXER_IS_DISABLED);
 
     thorium_node_global_self = node;
 
@@ -127,11 +135,11 @@ void thorium_node_init(struct thorium_node *node, int *argc, char ***argv)
      * Build memory pools
      */
 
-    bsal_memory_pool_init(&node->actor_memory_pool, 2097152);
+    bsal_memory_pool_init(&node->actor_memory_pool, 2097152, BSAL_MEMORY_POOL_NAME_ACTORS);
     bsal_memory_pool_disable(&node->actor_memory_pool);
 
     bsal_memory_pool_init(&node->inbound_message_memory_pool,
-                    BSAL_MEMORY_POOL_MESSAGE_BUFFER_BLOCK_SIZE);
+                    BSAL_MEMORY_POOL_MESSAGE_BUFFER_BLOCK_SIZE, BSAL_MEMORY_POOL_NAME_NODE_INBOUND);
     bsal_memory_pool_set_name(&node->inbound_message_memory_pool,
                     BSAL_MEMORY_POOL_NAME_NODE_INBOUND);
     bsal_memory_pool_enable_normalization(&node->inbound_message_memory_pool);
@@ -142,7 +150,7 @@ void thorium_node_init(struct thorium_node *node, int *argc, char ***argv)
 #endif
 
     bsal_memory_pool_init(&node->outbound_message_memory_pool,
-                    BSAL_MEMORY_POOL_MESSAGE_BUFFER_BLOCK_SIZE);
+                    BSAL_MEMORY_POOL_MESSAGE_BUFFER_BLOCK_SIZE, BSAL_MEMORY_POOL_NAME_NODE_OUTBOUND);
     bsal_memory_pool_set_name(&node->outbound_message_memory_pool,
                     BSAL_MEMORY_POOL_NAME_NODE_OUTBOUND);
 
@@ -191,6 +199,9 @@ void thorium_node_init(struct thorium_node *node, int *argc, char ***argv)
     node->threads = threads;
     node->argc = *argc;
     node->argv = *argv;
+
+    if (bsal_command_has_argument(node->argc, node->argv, "-debug-memory-pools"))
+        bsal_bitmap_set_bit_uint32_t(&node->flags, FLAG_EXAMINE);
 
     if (bsal_command_has_argument(node->argc, node->argv, "-print-counters")) {
         bsal_bitmap_set_bit_uint32_t(&node->flags, FLAG_PRINT_COUNTERS);
@@ -369,8 +380,7 @@ void thorium_node_init(struct thorium_node *node, int *argc, char ***argv)
     bsal_set_affinity(processor);
 
     if (bsal_bitmap_get_bit_uint32_t(&node->flags, FLAG_PRINT_LOAD)) {
-        printf("%s booted node %d (%d nodes), threads: %d, workers: %d, pacing: %d\n",
-                THORIUM_NODE_THORIUM_PREFIX,
+        printf("thorium_node: booted node %d (%d nodes), threads: %d, workers: %d, pacing: %d\n",
                     node->name,
             node->nodes,
             node->threads,
@@ -381,11 +391,27 @@ void thorium_node_init(struct thorium_node *node, int *argc, char ***argv)
         thorium_transport_print(&node->transport);
 #endif
     }
+
+    thorium_multiplexer_policy_init(&node->multiplexer_policy);
+    thorium_message_multiplexer_init(&node->multiplexer, node,
+                    &node->multiplexer_policy);
+
+    if (thorium_message_multiplexer_is_disabled(&node->multiplexer)) {
+        bsal_bitmap_set_bit_uint32_t(&node->flags, FLAG_MULTIPLEXER_IS_DISABLED);
+    }
+
+    if (bsal_command_has_argument(node->argc, node->argv, "-enable-actor-load-profiler")) {
+        thorium_worker_pool_enable_profiler(&node->worker_pool);
+        bsal_bitmap_set_bit_uint32_t(&node->flags, FLAG_ENABLE_ACTOR_LOAD_PROFILES);
+    }
 }
 
 void thorium_node_destroy(struct thorium_node *node)
 {
     int active_requests;
+
+    if (bsal_bitmap_get_bit_uint32_t(&node->flags, FLAG_EXAMINE))
+        thorium_node_examine(node);
 
     active_requests = thorium_transport_get_active_request_count(&node->transport);
 
@@ -394,13 +420,15 @@ void thorium_node_destroy(struct thorium_node *node)
           bsal_fast_queue_size(&node->clean_outbound_buffers_to_inject));
 
     printf("node/%d \n"
-             "   counter_freed_injected_inbound_core_buffers %d\n"
+             "   counter_allocated_node_inbound_buffers %d\n"
+             "   counter_freed_injected_node_inbound_buffers %d\n"
              "   counter_freed_thorium_outbound_buffers %d\n"
              "   counter_injected_buffers_for_local_workers %d\n"
              "   counter_injected_transport_outbound_buffer_for_workers %d\n"
              "   active_requests %d\n",
              node->name,
-             node->counter_freed_injected_inbound_core_buffers,
+             node->counter_allocated_node_inbound_buffers,
+             node->counter_freed_injected_node_inbound_buffers,
              node->counter_freed_thorium_outbound_buffers,
              node->counter_injected_buffers_for_local_workers,
              node->counter_injected_transport_outbound_buffer_for_workers,
@@ -427,6 +455,9 @@ void thorium_node_destroy(struct thorium_node *node)
     thorium_worker_pool_destroy(&node->worker_pool);
 
     thorium_transport_destroy(&node->transport);
+    thorium_message_multiplexer_destroy(&node->multiplexer);
+    thorium_multiplexer_policy_destroy(&node->multiplexer_policy);
+
     bsal_counter_destroy(&node->counter);
 
     bsal_fast_queue_destroy(&node->clean_outbound_buffers_to_inject);
@@ -447,7 +478,6 @@ int thorium_node_threads_from_string(struct thorium_node *node,
     int start;
     int value;
     int length;
-
 
     start = 0;
     length = strlen(required_threads);
@@ -563,7 +593,9 @@ int thorium_node_spawn(struct thorium_node *node, int script)
          */
         actor = thorium_node_get_actor_from_name(node, name);
 
+#ifdef THORIUM_ACTOR_GATHER_MESSAGE_METADATA
         bsal_counter_add(thorium_actor_counter(actor), BSAL_COUNTER_SPAWNED_ACTORS, 1);
+#endif
     }
 
     bsal_counter_add(&node->counter, BSAL_COUNTER_SPAWNED_ACTORS, 1);
@@ -609,6 +641,10 @@ int thorium_node_spawn_state(struct thorium_node *node, void *state,
     name = thorium_node_generate_name(node);
 
     thorium_actor_init(actor, state, script, name, node);
+
+    if (bsal_bitmap_get_bit_uint32_t(&node->flags, FLAG_ENABLE_ACTOR_LOAD_PROFILES)) {
+        thorium_actor_enable_profiler(actor);
+    }
 
     /* register the actor name
      */
@@ -816,8 +852,7 @@ int thorium_node_run(struct thorium_node *node)
 
         load = thorium_worker_pool_get_computation_load(&node->worker_pool);
 
-        printf("%s node/%d COMPUTATION LOAD %.2f\n",
-                    THORIUM_NODE_THORIUM_PREFIX,
+        printf("thorium_node: node/%d COMPUTATION LOAD %.2f\n",
                     thorium_node_name(node),
                     load);
     }
@@ -952,7 +987,7 @@ int thorium_node_receive_system(struct thorium_node *node, struct thorium_messag
     printf("DEBUG thorium_node_receive_system\n");
 #endif
 
-    tag = thorium_message_tag(message);
+    tag = thorium_message_action(message);
 
     if (tag == ACTION_THORIUM_NODE_ADD_INITIAL_ACTOR) {
 
@@ -984,10 +1019,12 @@ int thorium_node_receive_system(struct thorium_node *node, struct thorium_messag
                 thorium_node_send_to_node(node, i, &new_message);
             }
 
+#if 0
             /*
              * thorium_node_send_to_node does a copy.
              */
             bsal_memory_pool_free(&node->outbound_message_memory_pool, buffer);
+#endif
         }
 
         return 1;
@@ -1078,7 +1115,7 @@ void thorium_node_send_to_node(struct thorium_node *node, int destination,
     struct thorium_message new_message;
     int tag;
 
-    tag = thorium_message_tag(message);
+    tag = thorium_message_action(message);
     count = thorium_message_count(message);
     buffer = thorium_message_buffer(message);
     new_count = thorium_message_metadata_size(message) + count;
@@ -1104,6 +1141,12 @@ void thorium_node_send_to_node(struct thorium_node *node, int destination,
 #ifdef THORIUM_NODE_DEBUG
     printf("DEBUG thorium_node_send_to_node %d\n", destination);
 #endif
+
+    /*
+     * Mark the message.
+     */
+
+    thorium_message_set_type(&new_message, THORIUM_MESSAGE_TYPE_NODE_OUTBOUND);
 
     thorium_node_send(node, &new_message);
 }
@@ -1138,6 +1181,9 @@ void thorium_node_send(struct thorium_node *node, struct thorium_message *messag
     int metadata_size;
     int all;
     int count;
+    int worker;
+    void *buffer;
+    struct thorium_worker_buffer worker_buffer;
 
     /* Check the message to see
      * if it is a special message.
@@ -1159,7 +1205,7 @@ void thorium_node_send(struct thorium_node *node, struct thorium_message *messag
         thorium_node_dispatch_message(node, message);
 
 #ifdef THORIUM_NODE_DEBUG_20140601_8
-        if (thorium_message_tag(message) == 1100) {
+        if (thorium_message_action(message) == 1100) {
             printf("DEBUG local message 1100\n");
         }
 #endif
@@ -1189,25 +1235,34 @@ void thorium_node_send(struct thorium_node *node, struct thorium_message *messag
         thorium_message_set_count(message, all);
 
 #ifdef TRANSPORT_DEBUG_ISSUE_594
-    if (thorium_message_tag(message) == 30202) {
+    if (thorium_message_action(message) == 30202) {
         printf("DEBUG-594 thorium_node_send\n");
         thorium_message_print(message);
     }
 #endif
 
-        thorium_transport_send(&node->transport, message);
+        if (!thorium_message_multiplexer_multiplex(&node->multiplexer, message)) {
+            thorium_node_send_with_transport(node, message);
+        } else {
+
+            /*
+             * There is now a copy of the buffer.
+             */
+            buffer = thorium_message_buffer(message);
+            worker = thorium_message_worker(message);
+            thorium_worker_buffer_init(&worker_buffer, worker, buffer);
+            thorium_node_inject_outbound_buffer(node, &worker_buffer);
+            thorium_worker_buffer_destroy(&worker_buffer);
+        }
 
 #ifdef THORIUM_NODE_DEBUG_20140601_8
-        if (thorium_message_tag(message) == 1100) {
+        if (thorium_message_action(message) == 1100) {
             printf("DEBUG outbound message 1100\n");
 
             bsal_bitmap_set_bit_uint32_t(&node->flags, FLAG_DEBUG);
         }
 #endif
 
-        bsal_counter_add(&node->counter, BSAL_COUNTER_SENT_MESSAGES_NOT_TO_SELF, 1);
-        bsal_counter_add(&node->counter, BSAL_COUNTER_SENT_BYTES_NOT_TO_SELF,
-                        thorium_message_count(message));
     }
 }
 
@@ -1252,6 +1307,9 @@ void thorium_node_dispatch_message(struct thorium_node *node, struct thorium_mes
             /*
              * This is a Thorium core buffer since the workers are not authorized to talk to
              * the Thorium core.
+             *
+             * Also, this system buffer needs to be freed now anyway because there is no other
+             * place where it will have the change to be freed.
              */
             bsal_memory_pool_free(&node->inbound_message_memory_pool, buffer);
         }
@@ -1262,10 +1320,10 @@ void thorium_node_dispatch_message(struct thorium_node *node, struct thorium_mes
     /* otherwise, create work and dispatch work to a worker via
      * the worker pool
      */
-    thorium_node_inject_message_in_pool(node, message);
+    thorium_node_inject_message_in_worker_pool(node, message);
 }
 
-void thorium_node_inject_message_in_pool(struct thorium_node *node, struct thorium_message *message)
+void thorium_node_inject_message_in_worker_pool(struct thorium_node *node, struct thorium_message *message)
 {
     struct thorium_actor *actor;
     int name;
@@ -1280,7 +1338,7 @@ void thorium_node_inject_message_in_pool(struct thorium_node *node, struct thori
 
 #ifdef THORIUM_NODE_DEBUG
     source = thorium_message_source(message);
-    tag = thorium_message_tag(message);
+    tag = thorium_message_action(message);
 
     printf("[DEBUG %s %s %i] actor%i (node%i) : actor%i (node%i)"
                     "(tag %i) %i bytes\n",
@@ -1299,6 +1357,7 @@ void thorium_node_inject_message_in_pool(struct thorium_node *node, struct thori
                         name);
 #endif
 
+        thorium_node_recycle_message(node, message);
         return;
     }
 
@@ -1309,6 +1368,7 @@ void thorium_node_inject_message_in_pool(struct thorium_node *node, struct thori
         printf("DEBUG node/%d: actor/%d is dead\n", node->name,
                         name);
 #endif
+        thorium_node_recycle_message(node, message);
         return;
     }
 
@@ -1463,8 +1523,7 @@ void thorium_node_notify_death(struct thorium_node *node, struct thorium_actor *
     if (node->alive_actors == 0
                     && bsal_bitmap_get_bit_uint32_t(&node->flags, FLAG_PRINT_LOAD)) {
 
-        printf("%s all local actors are dead now, %d alive actors, %d dead actors\n",
-                        THORIUM_NODE_THORIUM_PREFIX,
+        printf("thorium_node: all local actors are dead now, %d alive actors, %d dead actors\n",
                         node->alive_actors, node->dead_actors);
     }
 
@@ -1544,7 +1603,7 @@ struct thorium_script *thorium_node_find_script(struct thorium_node *node, int i
 void thorium_node_print_counters(struct thorium_node *node)
 {
     printf("----------------------------------------------\n");
-    printf("%s Counters for node/%d\n", THORIUM_NODE_THORIUM_PREFIX,
+    printf("thorium_node: counters for node/%d\n",
                     thorium_node_name(node));
     bsal_counter_print(&node->counter, thorium_node_name(node));
 }
@@ -1571,6 +1630,8 @@ void thorium_node_handle_signal(int signal)
     } else {
         printf("Error, node/%d received signal %d\n", node, signal);
     }
+
+    thorium_node_examine(thorium_node_global_self);
 
     bsal_tracer_print_stack_backtrace();
 
@@ -1605,14 +1666,15 @@ void thorium_node_register_signal_handlers(struct thorium_node *self)
 
     bsal_vector_push_back_int(&signals, SIGUSR1);
 
+    /* kill signal */
+    bsal_vector_push_back_int(&signals, SIGKILL);
+    /* termination*/
+    bsal_vector_push_back_int(&signals, SIGTERM);
+
 #if 0
     /* interruption */
     bsal_vector_push_back_int(&signals, SIGINT);
     /* kill */
-    bsal_vector_push_back_int(&signals, SIGKILL);
-    /* termination*/
-    bsal_vector_push_back_int(&signals, SIGTERM);
-    /* hang up */
     bsal_vector_push_back_int(&signals, SIGHUP);
     /* illegal instruction */
     bsal_vector_push_back_int(&signals, SIGILL);
@@ -1730,7 +1792,7 @@ int thorium_node_send_system(struct thorium_node *node, struct thorium_message *
     int tag;
     int source;
 
-    tag = thorium_message_tag(message);
+    tag = thorium_message_action(message);
     destination = thorium_message_destination(message);
     source = thorium_message_source(message);
 
@@ -1826,7 +1888,7 @@ int thorium_node_pull(struct thorium_node *node, struct thorium_message *message
     value = thorium_worker_pool_dequeue_message(&node->worker_pool, message);
 
 #ifdef TRANSPORT_DEBUG_ISSUE_594
-    if (value && thorium_message_tag(message) == 30202) {
+    if (value && thorium_message_action(message) == 30202) {
         printf("BUG-594 thorium_node_pull\n");
         thorium_message_print(message);
     }
@@ -1840,6 +1902,7 @@ void thorium_node_run_loop(struct thorium_node *node)
     struct thorium_message message;
     int credits;
     const int starting_credits = 256;
+    void *buffer;
 
 #ifdef THORIUM_NODE_ENABLE_INSTRUMENTATION
     int ticks;
@@ -1874,8 +1937,7 @@ void thorium_node_run_loop(struct thorium_node *node)
                      * and
                      * the heap size.
                      */
-                    printf("%s node/%d METRICS AliveActorCount: %d ActiveRequestCount: %d ByteCount: %" PRIu64 " / %" PRIu64 "\n",
-                                    THORIUM_NODE_THORIUM_PREFIX,
+                    printf("thorium_node: node/%d METRICS AliveActorCount: %d ActiveRequestCount: %d ByteCount: %" PRIu64 " / %" PRIu64 "\n",
                                     node->name,
                                     node->alive_actors,
                                     thorium_transport_get_active_request_count(&node->transport),
@@ -1911,6 +1973,12 @@ void thorium_node_run_loop(struct thorium_node *node)
         if (bsal_bitmap_get_bit_uint32_t(&node->flags, FLAG_USE_TRANSPORT)
             && thorium_transport_receive(&node->transport, &message)) {
 
+#ifdef THORIUM_NODE_DEBUG_INJECTION
+            /*
+             * This gives a list of inbound buffers allocated by the node.
+             */
+            ++node->counter_allocated_node_inbound_buffers;
+#endif
             /*
              * Prepare the message
              */
@@ -1920,7 +1988,19 @@ void thorium_node_run_loop(struct thorium_node *node)
             bsal_counter_add(&node->counter, BSAL_COUNTER_RECEIVED_BYTES_NOT_FROM_SELF,
                     thorium_message_count(&message));
 
-            thorium_node_dispatch_message(node, &message);
+            if (!thorium_message_multiplexer_demultiplex(&node->multiplexer, &message)) {
+                thorium_node_dispatch_message(node, &message);
+            } else {
+                /*
+                 * Don't leak memory
+                 */
+#ifdef THORIUM_NODE_DEBUG_INJECTION
+                ++node->counter_freed_multiplexed_inbound_buffers;
+#endif
+
+                buffer = thorium_message_buffer(&message);
+                bsal_memory_pool_free(&node->inbound_message_memory_pool, buffer);
+            }
         }
 
         /* the one worker works here if there is only
@@ -1973,6 +2053,8 @@ void thorium_node_run_loop(struct thorium_node *node)
         if (bsal_bitmap_get_bit_uint32_t(&node->flags, FLAG_USE_TRANSPORT)) {
 
             thorium_node_test_requests(node);
+
+            thorium_message_multiplexer_test(&node->multiplexer);
         }
 
         thorium_node_do_message_triage(node);
@@ -2004,14 +2086,14 @@ void thorium_node_send_message(struct thorium_node *node)
 
 #ifdef THORIUM_NODE_DEBUG
         printf("thorium_node_run pulled tag %i buffer %p\n",
-                        thorium_message_tag(&message),
+                        thorium_message_action(&message),
                         thorium_message_buffer(&message));
 #endif
 
 #ifdef THORIUM_NODE_DEBUG_RUN
         if (node->alive_actors == 0) {
             printf("THORIUM_NODE_DEBUG_RUN thorium_node_send_message pulled a message, tag %d\n",
-                            thorium_message_tag(&message));
+                            thorium_message_action(&message));
         }
 #endif
 
@@ -2034,7 +2116,6 @@ void thorium_node_test_requests(struct thorium_node *node)
     int requests_to_test;
     int i;
     int worker;
-    void *buffer;
     int difference;
     int minimum;
     int maximum;
@@ -2082,35 +2163,7 @@ void thorium_node_test_requests(struct thorium_node *node)
 
             worker = thorium_worker_buffer_get_worker(&worker_buffer);
 
-            /*
-             * This buffer was allocated by the Thorium core and not by
-             * a worker.
-             */
-            if (worker < 0) {
-
-                buffer = thorium_worker_buffer_get_buffer(&worker_buffer);
-                bsal_memory_pool_free(&node->outbound_message_memory_pool,
-                                buffer);
-#ifdef THORIUM_NODE_DEBUG_INJECTION
-                ++node->counter_freed_thorium_outbound_buffers;
-#endif
-
-#ifdef THORIUM_NODE_DEBUG_INJECTION
-                printf("Worker= %d\n", worker);
-#endif
-
-            } else {
-
-                /*
-                 * The buffer was allocated by a worker.
-                 */
-
-                thorium_node_free_worker_buffer(node, &worker_buffer);
-
-#ifdef THORIUM_NODE_DEBUG_INJECTION
-                ++node->counter_injected_transport_outbound_buffer_for_workers;
-#endif
-            }
+            thorium_node_inject_outbound_buffer(node, &worker_buffer);
         }
 
         ++i;
@@ -2182,6 +2235,9 @@ void thorium_node_do_message_triage(struct thorium_node *self)
     /*
      * First, verify if any message needs to be processed from
      * the worker pool.
+     *
+     * Such messages are for example messages that could not be sent to a
+     * given already-dead actor.
      */
     if (thorium_worker_pool_dequeue_message_for_triage(&self->worker_pool, &message)) {
 
@@ -2192,8 +2248,10 @@ void thorium_node_do_message_triage(struct thorium_node *self)
 
     worker = thorium_worker_pool_get_worker(&self->worker_pool, self->worker_for_triage);
 
+    /*
+     * Position the index on the next worker to process.
+     */
     ++self->worker_for_triage;
-
     if (self->worker_for_triage == worker_count) {
         self->worker_for_triage = 0;
     }
@@ -2210,6 +2268,13 @@ void thorium_node_recycle_message(struct thorium_node *self, struct thorium_mess
     void *buffer;
     struct thorium_worker_buffer worker_buffer;
 
+    /*
+     * This function recycle a message.
+     * The type can not be THORIUM_MESSAGE_TYPE_NODE_OUTBOUND.
+     */
+    BSAL_DEBUGGER_ASSERT(thorium_message_type(message) == THORIUM_MESSAGE_TYPE_NODE_INBOUND
+                    || thorium_message_type(message) == THORIUM_MESSAGE_TYPE_WORKER_OUTBOUND);
+
     worker_name = thorium_message_worker(message);
     buffer = thorium_message_buffer(message);
 
@@ -2221,23 +2286,23 @@ void thorium_node_recycle_message(struct thorium_node *self, struct thorium_mess
 
         bsal_memory_pool_free(&self->inbound_message_memory_pool, buffer);
 #ifdef THORIUM_NODE_DEBUG_INJECTION
-        ++self->counter_freed_injected_inbound_core_buffers;
+        ++self->counter_freed_injected_node_inbound_buffers;
 #endif
 
-        return;
-    }
+    } else {
 
-    /*
-     * Otherwise, this is a worker buffer.
-     */
-    thorium_worker_buffer_init(&worker_buffer, worker_name, buffer);
-    thorium_node_free_worker_buffer(self, &worker_buffer);
+        /*
+         * Otherwise, this is a worker buffer.
+         */
+        thorium_worker_buffer_init(&worker_buffer, worker_name, buffer);
+        thorium_node_free_worker_buffer(self, &worker_buffer);
 
 #ifdef THORIUM_NODE_DEBUG_INJECTION
-    ++self->counter_injected_buffers_for_local_workers;
+        ++self->counter_injected_buffers_for_local_workers;
 #endif
 
-    thorium_worker_buffer_destroy(&worker_buffer);
+        thorium_worker_buffer_destroy(&worker_buffer);
+    }
 }
 
 void thorium_node_prepare_received_message(struct thorium_node *self, struct thorium_message *message)
@@ -2315,4 +2380,74 @@ int thorium_node_generate_random_name(struct thorium_node *self,
 
 
 #endif
+}
+
+void thorium_node_send_with_transport(struct thorium_node *self, struct thorium_message *message)
+{
+    thorium_transport_send(&self->transport, message);
+
+    bsal_counter_add(&self->counter, BSAL_COUNTER_SENT_MESSAGES_NOT_TO_SELF, 1);
+    bsal_counter_add(&self->counter, BSAL_COUNTER_SENT_BYTES_NOT_TO_SELF,
+                        thorium_message_count(message));
+
+}
+
+struct bsal_memory_pool *thorium_node_inbound_memory_pool(struct thorium_node *self)
+{
+    return &self->inbound_message_memory_pool;
+}
+
+void thorium_node_examine(struct thorium_node *self)
+{
+    printf("DEBUG_NODE Name= %d WorkerCount= %d\n",
+                    self->name,
+            thorium_worker_pool_worker_count(&self->worker_pool));
+
+    printf("MEMORY used / total -> %" PRIu64 " / %" PRIu64  "\n",
+                        bsal_memory_get_utilized_byte_count(),
+                        bsal_memory_get_total_byte_count());
+
+    bsal_memory_pool_examine(&self->actor_memory_pool);
+    bsal_memory_pool_examine(&self->inbound_message_memory_pool);
+    bsal_memory_pool_examine(&self->outbound_message_memory_pool);
+
+    thorium_worker_pool_examine(&self->worker_pool);
+}
+
+void thorium_node_inject_outbound_buffer(struct thorium_node *self, struct thorium_worker_buffer *worker_buffer)
+{
+    int worker;
+    void *buffer;
+
+    worker = thorium_worker_buffer_get_worker(worker_buffer);
+
+    /*
+     * This buffer was allocated by the Thorium core and not by
+     * a worker.
+     */
+    if (worker < 0) {
+
+        buffer = thorium_worker_buffer_get_buffer(worker_buffer);
+        bsal_memory_pool_free(&self->outbound_message_memory_pool,
+                                buffer);
+#ifdef THORIUM_NODE_DEBUG_INJECTION
+        ++self->counter_freed_thorium_outbound_buffers;
+#endif
+
+#ifdef THORIUM_NODE_DEBUG_INJECTION_DETAILS
+        printf("Worker= %d\n", worker);
+#endif
+
+    } else {
+
+        /*
+         * The buffer was allocated by a worker.
+         */
+
+        thorium_node_free_worker_buffer(self, worker_buffer);
+
+#ifdef THORIUM_NODE_DEBUG_INJECTION
+        ++self->counter_injected_transport_outbound_buffer_for_workers;
+#endif
+    }
 }

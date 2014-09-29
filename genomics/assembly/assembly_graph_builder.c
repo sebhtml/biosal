@@ -502,8 +502,10 @@ void bsal_assembly_graph_builder_configure(struct thorium_actor *self)
      */
     concrete_self->kmer_length = bsal_assembly_graph_builder_get_kmer_length(self);
 
+#if 0
     printf("EXAMINE: before configuring kmer length\n");
     thorium_actor_print(self);
+#endif
 
     printf("%s/%d configures the kmer length (%d) for the actor computation\n",
                     thorium_actor_script_name(self),
@@ -522,11 +524,13 @@ void bsal_assembly_graph_builder_configure(struct thorium_actor *self)
     thorium_actor_send_range_int(self, &concrete_self->block_classifiers, ACTION_SET_KMER_LENGTH,
                         concrete_self->kmer_length);
 
+#if 0
     /*
      * There will be a response for this.
      */
     printf("EXAMINE: after configuring kmer length\n");
     thorium_actor_print(self);
+#endif
 }
 
 void bsal_assembly_graph_builder_set_kmer_reply(struct thorium_actor *self, struct thorium_message *message)

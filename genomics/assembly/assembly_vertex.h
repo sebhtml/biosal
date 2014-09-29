@@ -8,19 +8,25 @@
 
 typedef int coverage_t;
 
-#define BSAL_VERTEX_STATE_UNUSED 0
-#define BSAL_VERTEX_STATE_USED 1
-#define BSAL_VERTEX_STATE_TIP 2
-#define BSAL_VERTEX_STATE_BUBBLE 3
+#define BSAL_VERTEX_FLAG_START_VALUE 0
 
+#define BSAL_VERTEX_FLAG_USED 0
+#define BSAL_VERTEX_FLAG_TIP 1
+#define BSAL_VERTEX_FLAG_BUBBLE 2
+#define BSAL_VERTEX_FLAG_VISITED 3
+#define BSAL_VERTEX_FLAG_UNITIG 4
+
+#define BSAL_VERTEX_FLAG_END_VALUE 4
 /*
  * Attributes of an assembly vertex
  */
 struct bsal_assembly_vertex {
 
     int coverage_depth;
-    int best_actor;
-    char state;
+    uint32_t flags;
+
+    int last_actor;
+    int last_path_index;
 
     /*
      * Connectivity.
@@ -31,6 +37,8 @@ struct bsal_assembly_vertex {
 void bsal_assembly_vertex_init(struct bsal_assembly_vertex *self);
 void bsal_assembly_vertex_init_copy(struct bsal_assembly_vertex *self,
                 struct bsal_assembly_vertex *vertex);
+void bsal_assembly_vertex_init_empty(struct bsal_assembly_vertex *self);
+
 void bsal_assembly_vertex_destroy(struct bsal_assembly_vertex *self);
 
 int bsal_assembly_vertex_coverage_depth(struct bsal_assembly_vertex *self);
@@ -55,10 +63,13 @@ int bsal_assembly_vertex_pack_unpack(struct bsal_assembly_vertex *self, int oper
 
 void bsal_assembly_vertex_invert_arcs(struct bsal_assembly_vertex *self);
 
-void bsal_assembly_vertex_set_state(struct bsal_assembly_vertex *self, int state);
-int bsal_assembly_vertex_state(struct bsal_assembly_vertex *self);
+void bsal_assembly_vertex_set_flag(struct bsal_assembly_vertex *self, int flag);
+void bsal_assembly_vertex_clear_flag(struct bsal_assembly_vertex *self, int flag);
+int bsal_assembly_vertex_get_flag(struct bsal_assembly_vertex *self, int flag);
 
-void bsal_assembly_vertex_set_best_actor(struct bsal_assembly_vertex *self, int best_actor);
-int bsal_assembly_vertex_best_actor(struct bsal_assembly_vertex *self);
+void bsal_assembly_vertex_set_last_actor(struct bsal_assembly_vertex *self, int last_actor, int last_path_index);
+int bsal_assembly_vertex_last_actor(struct bsal_assembly_vertex *self);
+
+int bsal_assembly_vertex_last_path_index(struct bsal_assembly_vertex *self);
 
 #endif

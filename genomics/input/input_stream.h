@@ -12,7 +12,7 @@
 
 #include <core/structures/string.h>
 
-#define ACTION_INPUT_SCRIPT_STREAM 0xeb2fe16a
+#define SCRIPT_INPUT_STREAM 0xeb2fe16a
 
 struct bsal_input_stream {
     struct bsal_input_proxy proxy;

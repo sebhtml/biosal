@@ -126,7 +126,7 @@ void bsal_aggregator_receive(struct thorium_actor *self, struct thorium_message 
 
     concrete_actor = (struct bsal_aggregator *)thorium_actor_concrete_actor(self);
     buffer = thorium_message_buffer(message);
-    tag = thorium_message_tag(message);
+    tag = thorium_message_action(message);
     source = thorium_message_source(message);
 
     if (tag == ACTION_ASK_TO_STOP) {

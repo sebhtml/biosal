@@ -34,8 +34,7 @@ void bsal_dna_kmer_init_mock(struct bsal_dna_kmer *self, int kmer_length, struct
 void bsal_dna_kmer_init_random(struct bsal_dna_kmer *self, int kmer_length, struct bsal_dna_codec *codec,
                 struct bsal_memory_pool *memory);
 void bsal_dna_kmer_init_copy(struct bsal_dna_kmer *self, struct bsal_dna_kmer *other,
-                int kmer_length, struct bsal_memory_pool *memory,
-                struct bsal_dna_codec *codec);
+                int kmer_length, struct bsal_memory_pool *memory, struct bsal_dna_codec *codec);
 void bsal_dna_kmer_init_as_child(struct bsal_dna_kmer *self, struct bsal_dna_kmer *other,
                 int code, int kmer_length, struct bsal_memory_pool *memory,
                 struct bsal_dna_codec *codec);

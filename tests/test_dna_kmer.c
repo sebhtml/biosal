@@ -25,7 +25,7 @@ int main(int argc, char **argv)
     bsal_dna_codec_init(&codec);
     bsal_dna_codec_enable_two_bit_encoding(&codec);
 
-    bsal_memory_pool_init(&pool, 1000000);
+    bsal_memory_pool_init(&pool, 1000000, BSAL_MEMORY_POOL_NAME_OTHER);
 
     bsal_dna_kmer_init(&kmer, sequence, &codec, &pool);
 
@@ -33,7 +33,7 @@ int main(int argc, char **argv)
 
     TEST_INT_IS_GREATER_THAN(count, 0);
 
-    buffer = bsal_memory_allocate(count);
+    buffer = bsal_memory_allocate(count, -1);
 
     bsal_dna_kmer_pack(&kmer, buffer, kmer_length, &codec);
 
@@ -60,7 +60,7 @@ int main(int argc, char **argv)
     bsal_memory_pool_destroy(&pool);
     bsal_dna_codec_destroy(&codec);
 
-    bsal_memory_free(buffer);
+    bsal_memory_free(buffer, -1);
 
     END_TESTS();
 

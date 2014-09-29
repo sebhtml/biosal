@@ -2,12 +2,15 @@
 #include "assembly_arc_block.h"
 
 #include <core/system/packer.h>
+#include <core/system/debugger.h>
 
 void bsal_assembly_arc_block_init(struct bsal_assembly_arc_block *self, struct bsal_memory_pool *pool,
                 int kmer_length, struct bsal_dna_codec *codec)
 {
     int key_length;
     struct bsal_assembly_arc arc;
+
+    BSAL_DEBUGGER_LEAK_DETECTION_BEGIN(pool, arc_block_init);
 
     bsal_assembly_arc_init_mock(&arc, kmer_length, pool, codec);
 
@@ -28,6 +31,8 @@ void bsal_assembly_arc_block_init(struct bsal_assembly_arc_block *self, struct b
     bsal_vector_set_memory_pool(&self->arcs, pool);
 
     self->enable_redundancy_check = 0;
+
+    BSAL_DEBUGGER_LEAK_DETECTION_END(pool, arc_block_init);
 }
 
 void bsal_assembly_arc_block_destroy(struct bsal_assembly_arc_block *self, struct bsal_memory_pool *pool)
@@ -48,6 +53,8 @@ void bsal_assembly_arc_block_destroy(struct bsal_assembly_arc_block *self, struc
         arc = bsal_vector_at(&self->arcs, i);
 
         bsal_assembly_arc_destroy(arc, pool);
+
+        BSAL_DEBUGGER_LEAK_CHECK_DOUBLE_FREE(pool);
     }
 
     bsal_vector_destroy(&self->arcs);
@@ -68,6 +75,9 @@ void bsal_assembly_arc_block_add_arc(struct bsal_assembly_arc_block *self,
     size = bsal_vector_size(&self->arcs);
     bsal_vector_resize(&self->arcs, size + 1);
 
+    /*
+     * A pointer to a new arc.
+     */
     arc = bsal_vector_at(&self->arcs, size);
 
     bsal_assembly_arc_init(arc, type, source,
@@ -186,4 +196,15 @@ void bsal_assembly_arc_block_reserve(struct bsal_assembly_arc_block *self, int s
 void bsal_assembly_arc_block_enable_redundancy_check(struct bsal_assembly_arc_block *self)
 {
     self->enable_redundancy_check = 1;
+}
+
+void bsal_assembly_arc_block_add_arc_copy(struct bsal_assembly_arc_block *self,
+                struct bsal_assembly_arc *arc, int kmer_length, struct bsal_dna_codec *codec,
+                struct bsal_memory_pool *pool)
+{
+    struct bsal_assembly_arc new_arc;
+
+    bsal_assembly_arc_init_copy(&new_arc, arc, kmer_length, pool, codec);
+
+    bsal_vector_push_back(&self->arcs, &new_arc);
 }

@@ -13,6 +13,7 @@
 void bsal_unitig_heuristic_init(struct bsal_unitig_heuristic *self)
 {
     self->select = bsal_unitig_heuristic_select_with_flow_split;
+    /*self->select = bsal_unitig_heuristic_select_highest;*/
 }
 
 void bsal_unitig_heuristic_destroy(struct bsal_unitig_heuristic *self)
@@ -24,6 +25,33 @@ int bsal_unitig_heuristic_select(struct bsal_unitig_heuristic *self,
                 int current_coverage, struct bsal_vector *coverage_values)
 {
     return self->select(self, current_coverage, coverage_values);
+}
+
+int bsal_unitig_heuristic_select_highest(struct bsal_unitig_heuristic *self,
+                int current_coverage, struct bsal_vector *coverage_values)
+{
+    int coverage;
+    int i;
+    int size;
+    int max_value;
+    int max_index;
+
+    max_value = max_index = -1;
+    size = bsal_vector_size(coverage_values);
+
+    for (i = 0; i < size; ++i) {
+        coverage = bsal_vector_at_as_int(coverage_values, i);
+
+        /*
+         * This works because the calling code with verify symmetry anyway.
+         */
+        if (max_value == -1 || coverage > max_value) {
+            max_value = coverage;
+            max_index = i;
+        }
+    }
+
+    return max_index;
 }
 
 int bsal_unitig_heuristic_select_with_flow_split(struct bsal_unitig_heuristic *self,

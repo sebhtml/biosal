@@ -49,4 +49,8 @@ struct bsal_vector *bsal_assembly_arc_block_get_arcs(struct bsal_assembly_arc_bl
 
 void bsal_assembly_arc_block_enable_redundancy_check(struct bsal_assembly_arc_block *self);
 
+void bsal_assembly_arc_block_add_arc_copy(struct bsal_assembly_arc_block *self,
+                struct bsal_assembly_arc *arc, int kmer_length, struct bsal_dna_codec *codec,
+                struct bsal_memory_pool *pool);
+
 #endif

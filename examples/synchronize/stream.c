@@ -49,7 +49,7 @@ void stream_receive(struct thorium_actor *actor, struct thorium_message *message
     char *buffer;
 
     stream1 = (struct stream *)thorium_actor_concrete_actor(actor);
-    tag = thorium_message_tag(message);
+    tag = thorium_message_action(message);
     buffer = thorium_message_buffer(message);
     name = thorium_actor_name(actor);
 

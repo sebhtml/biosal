@@ -4,6 +4,8 @@
 #include "tracer.h"
 #include "debugger.h"
 
+#include <engine/thorium/node.h>
+
 #include <unistd.h>
 #include <string.h>
 #include <stdio.h>
@@ -27,7 +29,17 @@
 
 #define FAST_MEMORY
 
-void *bsal_memory_allocate_private(size_t size, const char *function, const char *file, int line)
+#define DEBUG_ANY 0xcccccccc
+
+#define DEBUG_KEY 0xc170626e
+#define DEBUG_SIZE 16
+
+/*
+#define DEBUG_KEY DEBUG_ANY
+#define DEBUG_SIZE DEBUG_ANY
+*/
+
+void *bsal_memory_allocate_private(size_t size, const char *function, const char *file, int line, int key)
 {
     void *pointer;
 
@@ -73,16 +85,24 @@ void *bsal_memory_allocate_private(size_t size, const char *function, const char
 #endif
     pointer = malloc(size);
 
-#ifdef BSAL_MEMORY_DEBUG_DETAIL
-    if (file != NULL) {
-        printf("BSAL_MEMORY_DEBUG bsal_memory_allocate %d bytes %p %s %s %d\n",
-                    (int)size, pointer, function, file, line);
-    }
+#ifdef BSAL_MEMORY_DEBUG
 
+    /*
+     * 8 24 32 64 320 1280 2560
+     */
+    if ((DEBUG_KEY == DEBUG_ANY || key == (int)DEBUG_KEY)
+                            && (DEBUG_SIZE == DEBUG_ANY || size == DEBUG_SIZE)) {
+        printf("BSAL_MEMORY_DEBUG bsal_memory_allocate %d bytes %p %s %s %d key= 0x%x\n",
+                    (int)size, pointer, function, file, line, key);
+
+#if 1
     /*
      * Ask the tracer to print a stack
      */
-    bsal_tracer_print_stack_backtrace();
+        if (DEBUG_KEY != DEBUG_ANY && DEBUG_SIZE != DEBUG_ANY)
+            bsal_tracer_print_stack_backtrace();
+    }
+#endif
 
 #endif
 
@@ -98,6 +118,8 @@ void *bsal_memory_allocate_private(size_t size, const char *function, const char
                         bsal_memory_get_utilized_byte_count(),
                         bsal_memory_get_total_byte_count());
 
+        thorium_node_examine(thorium_node_global_self);
+
         bsal_tracer_print_stack_backtrace();
 
         exit(1);
@@ -106,12 +128,12 @@ void *bsal_memory_allocate_private(size_t size, const char *function, const char
     return pointer;
 }
 
-void bsal_memory_free_private(void *pointer, const char *function, const char *file, int line)
+void bsal_memory_free_private(void *pointer, const char *function, const char *file, int line, int key)
 {
-#ifdef BSAL_MEMORY_DEBUG_DETAIL
-    if (file != NULL) {
-        printf("BSAL_MEMORY_DEBUG bsal_memory_free %p %s %s %d\n",
-                   pointer, function, file, line);
+#ifdef BSAL_MEMORY_DEBUG
+    if (DEBUG_KEY == DEBUG_ANY || key == (int)DEBUG_KEY) {
+        printf("BSAL_MEMORY_DEBUG bsal_memory_free %p %s %s %d key= 0x%x\n",
+                   pointer, function, file, line, key);
     }
 #endif
 

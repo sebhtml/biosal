@@ -200,15 +200,15 @@ void bsal_assembly_graph_summary_write_summary(struct bsal_assembly_graph_summar
 
             frequency = bsal_assembly_graph_summary_get_degree_frequency(self, parent_count, child_count);
 
-            fprintf(file, "    <class><child_count>%d></child_count>"
+            fprintf(file, "    <class>"
                             "<parent_count>%d</parent_count>"
+                            "<child_count>%d></child_count>"
                             "<frequency>%" PRIu64 "</frequency></class>\n",
                             parent_count, child_count, frequency);
         }
     }
 
     fprintf(file, "</connectivity>\n");
-
     fprintf(file, "</assembly_graph_summary>\n");
 
     fclose(file);

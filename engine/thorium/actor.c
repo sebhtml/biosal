@@ -4,7 +4,7 @@
 #include "worker.h"
 #include "node.h"
 
-#include "scheduler/scheduling_queue.h"
+#include "scheduler/fifo_scheduler.h"
 
 #include <core/structures/vector_iterator.h>
 #include <core/structures/map_iterator.h>
@@ -21,6 +21,8 @@
 #include <string.h>
 #include <inttypes.h>
 #include <stdint.h>
+
+#define MEMORY_ACTOR_KEY 0x878a06c0
 
 /* Debugging options
  */
@@ -52,14 +54,15 @@
 /*
  * Flags.
  */
-#define FLAG_DEAD 0
-#define FLAG_CAN_PACK 1
-#define FLAG_MIGRATION_PROGRESSED 2
-#define FLAG_LOCKED 3
-#define FLAG_MIGRATION_CLONED 4
-#define FLAG_MIGRATION_FORWARDED_MESSAGES 5
-#define FLAG_CLONING_PROGRESSED 6
-#define FLAG_SYNCHRONIZATION_STARTED 7
+#define FLAG_DEAD                           0
+#define FLAG_CAN_PACK                       1
+#define FLAG_MIGRATION_PROGRESSED           2
+#define FLAG_LOCKED                         3
+#define FLAG_MIGRATION_CLONED               4
+#define FLAG_MIGRATION_FORWARDED_MESSAGES   5
+#define FLAG_CLONING_PROGRESSED             6
+#define FLAG_SYNCHRONIZATION_STARTED        7
+#define FLAG_ENABLE_LOAD_PROFILER           8
 
 void thorium_actor_init(struct thorium_actor *self, void *concrete_actor,
                 struct thorium_script *script, int name, struct thorium_node *node)
@@ -67,12 +70,19 @@ void thorium_actor_init(struct thorium_actor *self, void *concrete_actor,
     thorium_actor_init_fn_t init;
     int capacity;
 
+    self->virtual_runtime = 0;
+    bsal_timer_init(&self->timer);
+
+    thorium_load_profiler_init(&self->profiler);
+
     thorium_actor_set_priority(self, THORIUM_PRIORITY_NORMAL);
 
     self->current_message = NULL;
 
+#ifdef THORIUM_ACTOR_GATHER_MESSAGE_METADATA
     bsal_map_init(&self->received_messages, sizeof(int), sizeof(int));
     bsal_map_init(&self->sent_messages, sizeof(int), sizeof(int));
+#endif
 
     /* initialize the dispatcher before calling
      * the concrete initializer
@@ -105,6 +115,8 @@ void thorium_actor_init(struct thorium_actor *self, void *concrete_actor,
     self->migration_status = THORIUM_ACTOR_STATUS_NOT_STARTED;
     bsal_bitmap_clear_bit_uint32_t(&self->flags, FLAG_MIGRATION_CLONED);
     bsal_bitmap_clear_bit_uint32_t(&self->flags, FLAG_MIGRATION_FORWARDED_MESSAGES);
+
+    bsal_bitmap_clear_bit_uint32_t(&self->flags, FLAG_ENABLE_LOAD_PROFILER);
 
 /*
 */
@@ -148,6 +160,11 @@ void thorium_actor_destroy(struct thorium_actor *self)
     thorium_actor_init_fn_t destroy;
     struct thorium_message message;
 
+    self->virtual_runtime = 0;
+    bsal_timer_destroy(&self->timer);
+
+    thorium_load_profiler_destroy(&self->profiler);
+
     /* The concrete actor must first be destroyed.
      */
     destroy = thorium_actor_get_destroy(self);
@@ -179,8 +196,10 @@ void thorium_actor_destroy(struct thorium_actor *self)
     bsal_map_destroy(&self->acquaintance_map);
 #endif
 
+#ifdef THORIUM_ACTOR_GATHER_MESSAGE_METADATA
     bsal_map_destroy(&self->received_messages);
     bsal_map_destroy(&self->sent_messages);
+#endif
 
     BSAL_DEBUGGER_ASSERT(self->worker != NULL);
 
@@ -236,9 +255,17 @@ void thorium_actor_print(struct thorium_actor *self)
      * engine/thorium_actor.c:58:21: error: ISO C for bids conversion of function pointer to object pointer type [-Werror=edantic]
      */
 
-    int received = (int)bsal_counter_get(&self->counter, BSAL_COUNTER_RECEIVED_MESSAGES);
-    int sent = (int)bsal_counter_get(&self->counter, BSAL_COUNTER_SENT_MESSAGES);
+    int received;
+    int sent;
     struct bsal_memory_pool *ephemeral_memory;
+
+    received = -1;
+    sent = -1;
+
+#ifdef THORIUM_ACTOR_GATHER_MESSAGE_METADATA
+    received = (int)bsal_counter_get(&self->counter, BSAL_COUNTER_RECEIVED_MESSAGES);
+    send = (int)bsal_counter_get(&self->counter, BSAL_COUNTER_SENT_MESSAGES);
+#endif
 
     ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
 
@@ -262,7 +289,7 @@ void thorium_actor_print(struct thorium_actor *self)
 
     printf("EXAMINE: CurrentMessageSource: %d CurrentMessageTag: %d\n",
                     thorium_message_source(self->current_message),
-                    thorium_message_tag(self->current_message));
+                    thorium_message_action(self->current_message));
 }
 
 thorium_actor_init_fn_t thorium_actor_get_init(struct thorium_actor *self)
@@ -284,7 +311,7 @@ int thorium_actor_send_system_self(struct thorium_actor *self, struct thorium_me
 {
     int tag;
 
-    tag = thorium_message_tag(message);
+    tag = thorium_message_action(message);
 
 #if 0
     if (tag == ACTION_PIN_TO_WORKER) {
@@ -360,6 +387,8 @@ int thorium_actor_send_system(struct thorium_actor *self, int name, struct thori
 void thorium_actor_send(struct thorium_actor *self, int name, struct thorium_message *message)
 {
     int source;
+
+#ifdef THORIUM_ACTOR_GATHER_MESSAGE_METADATA
     int *bucket;
 
     /* Update counter
@@ -372,9 +401,11 @@ void thorium_actor_send(struct thorium_actor *self, int name, struct thorium_mes
     }
 
     (*bucket)++;
+#endif
 
     source = thorium_actor_name(self);
 
+#ifdef THORIUM_ACTOR_GATHER_MESSAGE_METADATA
     /* update counters
      */
     if (source == name) {
@@ -386,6 +417,7 @@ void thorium_actor_send(struct thorium_actor *self, int name, struct thorium_mes
         bsal_counter_add(&self->counter, BSAL_COUNTER_SENT_BYTES_NOT_TO_SELF,
                         thorium_message_count(message));
     }
+#endif
 
     if (thorium_actor_send_system(self, name, message)) {
         return;
@@ -399,12 +431,12 @@ void thorium_actor_send_with_source(struct thorium_actor *self, int name, struct
 {
     int tag;
 
-    tag = thorium_message_tag(message);
+    tag = thorium_message_action(message);
     thorium_message_set_source(message, source);
     thorium_message_set_destination(message, name);
 
 #ifdef THORIUM_ACTOR_DEBUG9
-    if (thorium_message_tag(message) == 1100) {
+    if (thorium_message_action(message) == 1100) {
         printf("DEBUG thorium_message_set_source 1100\n");
     }
 #endif
@@ -451,10 +483,10 @@ int thorium_actor_spawn_real(struct thorium_actor *self, int script)
     printf("DEBUG thorium_actor_spawn script %d\n", script);
 #endif
 
-    name = thorium_node_spawn(thorium_actor_node(self), script);
+    name = thorium_worker_spawn(self->worker, script);
 
     if (name == THORIUM_ACTOR_NOBODY) {
-        printf("Error: problem with spawning! did you register the script ?\n");
+        printf("Error: problem with spawning! did you register the script (%x)?\n", script);
         return name;
     }
 
@@ -465,14 +497,19 @@ int thorium_actor_spawn_real(struct thorium_actor *self, int script)
 
     thorium_node_set_supervisor(thorium_actor_node(self), name, self_name);
 
+#ifdef THORIUM_ACTOR_GATHER_MESSAGE_METADATA
     bsal_counter_add(&self->counter, BSAL_COUNTER_SPAWNED_ACTORS, 1);
+#endif
 
     return name;
 }
 
 void thorium_actor_die(struct thorium_actor *self)
 {
+#ifdef THORIUM_ACTOR_GATHER_MESSAGE_METADATA
     bsal_counter_add(&self->counter, BSAL_COUNTER_KILLED_ACTORS, 1);
+#endif
+
     bsal_bitmap_set_bit_uint32_t(&self->flags, FLAG_DEAD);
 
     /*
@@ -484,7 +521,11 @@ void thorium_actor_die(struct thorium_actor *self)
 
 struct bsal_counter *thorium_actor_counter(struct thorium_actor *self)
 {
+#ifdef THORIUM_ACTOR_GATHER_MESSAGE_METADATA
     return &self->counter;
+#else
+    return NULL;
+#endif
 }
 
 struct thorium_node *thorium_actor_node(struct thorium_actor *self)
@@ -540,7 +581,7 @@ int thorium_actor_receive_system_no_pack(struct thorium_actor *self, struct thor
 {
     int tag;
 
-    tag = thorium_message_tag(message);
+    tag = thorium_message_action(message);
 
     if (tag == ACTION_PACK) {
 
@@ -610,7 +651,7 @@ int thorium_actor_receive_system(struct thorium_actor *self, struct thorium_mess
 #endif
 
     ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
-    tag = thorium_message_tag(message);
+    tag = thorium_message_action(message);
 
     /* the concrete actor must catch these otherwise.
      * Also, clone and migrate depend on these.
@@ -901,31 +942,57 @@ int thorium_actor_receive_system(struct thorium_actor *self, struct thorium_mess
 
 void thorium_actor_receive(struct thorium_actor *self, struct thorium_message *message)
 {
+    uint64_t start;
+    uint64_t end;
+    uint64_t consumed_virtual_runtime;
+
+    start = bsal_timer_get_nanoseconds(&self->timer);
+
+    if (bsal_bitmap_get_bit_uint32_t(&self->flags, FLAG_ENABLE_LOAD_PROFILER)) {
+        thorium_load_profiler_profile(&self->profiler, THORIUM_LOAD_PROFILER_RECEIVE_BEGIN);
+    }
+
+    thorium_actor_receive_private(self, message);
+
+    if (bsal_bitmap_get_bit_uint32_t(&self->flags, FLAG_ENABLE_LOAD_PROFILER)) {
+        thorium_load_profiler_profile(&self->profiler, THORIUM_LOAD_PROFILER_RECEIVE_END);
+    }
+
+    end = bsal_timer_get_nanoseconds(&self->timer);
+    consumed_virtual_runtime = end - start;
+    self->virtual_runtime += consumed_virtual_runtime;
+}
+
+void thorium_actor_receive_private(struct thorium_actor *self, struct thorium_message *message)
+{
     thorium_actor_receive_fn_t receive;
     int name;
     int source;
+#ifdef THORIUM_ACTOR_GATHER_MESSAGE_METADATA
     int *bucket;
+#endif
 
 #ifdef THORIUM_ACTOR_DEBUG_SYNC
     printf("\nDEBUG thorium_actor_receive...... tag %d\n",
-                    thorium_message_tag(message));
+                    thorium_message_action(message));
 
-    if (thorium_message_tag(message) == ACTION_SYNCHRONIZED) {
+    if (thorium_message_action(message) == ACTION_SYNCHRONIZED) {
         printf("DEBUG =============\n");
         printf("DEBUG thorium_actor_receive before concrete receive ACTION_SYNCHRONIZED\n");
     }
 
     printf("DEBUG thorium_actor_receive tag %d for %d\n",
-                    thorium_message_tag(message),
+                    thorium_message_action(message),
                     thorium_actor_name(self));
 #endif
 
-    /* Update counter
-     */
     source = thorium_message_source(message);
 
     self->current_message = message;
 
+#ifdef THORIUM_ACTOR_GATHER_MESSAGE_METADATA
+    /* Update counter
+     */
     bucket = (int *)bsal_map_get(&self->received_messages, &source);
 
     if (bucket == NULL) {
@@ -934,6 +1001,7 @@ void thorium_actor_receive(struct thorium_actor *self, struct thorium_message *m
     }
 
     (*bucket)++;
+#endif
 
     /* check if this is a message that the system can
      * figure out what to do with it
@@ -950,19 +1018,24 @@ void thorium_actor_receive(struct thorium_actor *self, struct thorium_message *m
 #endif
     }
 
+    BSAL_DEBUGGER_ASSERT(bsal_memory_pool_profile_balance_count(thorium_actor_get_ephemeral_memory(self)) == 0);
+
     /* Otherwise, this is a message for the actor itself.
      */
     receive = thorium_actor_get_receive(self);
+
+    BSAL_DEBUGGER_ASSERT(bsal_memory_pool_profile_balance_count(thorium_actor_get_ephemeral_memory(self)) == 0);
 
     BSAL_DEBUGGER_ASSERT(receive != NULL);
 
 #ifdef THORIUM_ACTOR_DEBUG_SYNC
     printf("DEBUG thorium_actor_receive calls concrete receive tag %d\n",
-                    thorium_message_tag(message));
+                    thorium_message_action(message));
 #endif
 
     name = thorium_actor_name(self);
 
+#ifdef THORIUM_ACTOR_GATHER_MESSAGE_METADATA
     /* update counters
      */
     if (source == name) {
@@ -974,6 +1047,7 @@ void thorium_actor_receive(struct thorium_actor *self, struct thorium_message *m
         bsal_counter_add(&self->counter, BSAL_COUNTER_RECEIVED_BYTES_NOT_FROM_SELF,
                         thorium_message_count(message));
     }
+#endif
 
     receive(self, message);
 
@@ -1128,7 +1202,7 @@ void thorium_actor_continue_clone(struct thorium_actor *self, struct thorium_mes
     count = thorium_message_count(message);
     buffer = thorium_message_buffer(message);
     self_name = thorium_actor_name(self);
-    tag = thorium_message_tag(message);
+    tag = thorium_message_action(message);
     source = thorium_message_source(message);
 
 #ifdef THORIUM_ACTOR_DEBUG_CLONE1
@@ -1229,7 +1303,7 @@ int thorium_actor_take_action(struct thorium_actor *self, struct thorium_message
 {
 
 #ifdef THORIUM_ACTOR_DEBUG_10335
-    if (thorium_message_tag(message) == 10335) {
+    if (thorium_message_action(message) == 10335) {
         printf("DEBUG actor %d thorium_actor_dispatch 10335\n",
                         thorium_actor_name(self));
     }
@@ -1259,7 +1333,7 @@ void thorium_actor_migrate(struct thorium_actor *self, struct thorium_message *m
     int data[2];
     int selector;
 
-    tag = thorium_message_tag(message);
+    tag = thorium_message_action(message);
     source = thorium_message_source(message);
     name = thorium_actor_name(self);
 
@@ -1486,7 +1560,7 @@ void thorium_actor_queue_message(struct thorium_actor *self,
 #endif
 
     if (count > 0) {
-        new_buffer = bsal_memory_allocate(count);
+        new_buffer = bsal_memory_allocate(count, MEMORY_ACTOR_KEY);
         bsal_memory_copy(new_buffer, buffer, count);
     }
 
@@ -1514,7 +1588,9 @@ void thorium_actor_forward_messages(struct thorium_actor *self, struct thorium_m
     struct bsal_queue *queue;
     int destination;
     void *buffer_to_release;
+    struct bsal_memory_pool *ephemeral_memory;
 
+    ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
     queue = NULL;
     destination = -1;
 
@@ -1548,7 +1624,7 @@ void thorium_actor_forward_messages(struct thorium_actor *self, struct thorium_m
                             " real source is %d\n",
                             thorium_actor_name(self),
                             destination,
-                            thorium_message_tag(&new_message),
+                            thorium_message_action(&new_message),
                             thorium_message_source(&new_message));
 #endif
 
@@ -1557,7 +1633,7 @@ void thorium_actor_forward_messages(struct thorium_actor *self, struct thorium_m
         thorium_actor_send(self, destination, &new_message);
 
         buffer_to_release = thorium_message_buffer(&new_message);
-        bsal_memory_free(buffer_to_release);
+        bsal_memory_pool_free(ephemeral_memory, buffer_to_release);
 
         /* recursive actor call
          */
@@ -1736,7 +1812,7 @@ void thorium_actor_enqueue_message(struct thorium_actor *self, struct thorium_me
     new_buffer = NULL;
 
     if (buffer != NULL) {
-        new_buffer = bsal_memory_allocate(count);
+        new_buffer = bsal_memory_allocate(count, MEMORY_ACTOR_KEY);
         bsal_memory_copy(new_buffer, buffer, count);
     }
 
@@ -1764,12 +1840,20 @@ int thorium_actor_enqueued_message_count(struct thorium_actor *self)
 
 struct bsal_map *thorium_actor_get_received_messages(struct thorium_actor *self)
 {
+#ifdef THORIUM_ACTOR_GATHER_MESSAGE_METADATA
     return &self->received_messages;
+#else
+    return NULL;
+#endif
 }
 
 struct bsal_map *thorium_actor_get_sent_messages(struct thorium_actor *self)
 {
+#ifdef THORIUM_ACTOR_GATHER_MESSAGE_METADATA
     return &self->sent_messages;
+#else
+    return NULL;
+#endif
 }
 
 int thorium_actor_enqueue_mailbox_message(struct thorium_actor *self, struct thorium_message *message)
@@ -1787,6 +1871,7 @@ int thorium_actor_work(struct thorium_actor *self)
     struct thorium_message message;
     void *buffer;
     int source_worker;
+    struct bsal_memory_pool *ephemeral_memory;
 
     if (!thorium_actor_dequeue_mailbox_message(self, &message)) {
         printf("Error, no message...\n");
@@ -1795,16 +1880,36 @@ int thorium_actor_work(struct thorium_actor *self)
         return 0;
     }
 
+    ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
+
     /* Make a copy of the buffer and of the worker
      * because actors can not be trusted.
      */
     buffer = thorium_message_buffer(&message);
     source_worker = thorium_message_worker(&message);
 
+    BSAL_DEBUGGER_ASSERT(!bsal_memory_pool_has_leaks(ephemeral_memory));
+#ifdef BSAL_MEMORY_POOL_FIND_LEAKS
+#endif
+
     /*
      * Receive the message !
      */
     thorium_actor_receive(self, &message);
+
+#ifdef BSAL_DEBUGGER_ENABLE_ASSERT
+    if (bsal_memory_pool_has_leaks(ephemeral_memory)) {
+        printf("Error: detected leak in %s/%d action %x source %d\n",
+                        thorium_actor_script_name(self),
+                        thorium_actor_name(self),
+                        thorium_message_action(&message),
+                        thorium_message_source(&message));
+        bsal_memory_pool_examine(ephemeral_memory);
+    }
+#endif
+    BSAL_DEBUGGER_ASSERT(!bsal_memory_pool_has_leaks(ephemeral_memory));
+#ifdef BSAL_MEMORY_POOL_FIND_LEAKS
+#endif
 
     /* Restore the important stuff
      */
@@ -1891,8 +1996,10 @@ void thorium_actor_reset_counters(struct thorium_actor *self)
     bsal_map_iterator_destroy(&map_iterator);
 #endif
 
+#ifdef THORIUM_ACTOR_GATHER_MESSAGE_METADATA
     bsal_map_destroy(&self->received_messages);
     bsal_map_init(&self->received_messages, sizeof(int), sizeof(int));
+#endif
 }
 
 int thorium_actor_get_priority(struct thorium_actor *self)
@@ -1902,7 +2009,11 @@ int thorium_actor_get_priority(struct thorium_actor *self)
 
 int thorium_actor_get_source_count(struct thorium_actor *self)
 {
+#ifdef THORIUM_ACTOR_GATHER_MESSAGE_METADATA
     return bsal_map_size(&self->received_messages);
+#else
+    return -1;
+#endif
 }
 
 void thorium_actor_set_priority(struct thorium_actor *self, int priority)
@@ -2026,4 +2137,33 @@ int thorium_actor_get_random_spawner(struct thorium_actor *self, struct bsal_vec
     actor = bsal_vector_at_as_int(spawners, index);
 
     return actor;
+}
+
+void thorium_actor_enable_profiler(struct thorium_actor *self)
+{
+#if 0
+    printf("thorium_actor_enable_profiler\n");
+#endif
+    bsal_bitmap_set_bit_uint32_t(&self->flags, FLAG_ENABLE_LOAD_PROFILER);
+}
+
+void thorium_actor_disable_profiler(struct thorium_actor *self)
+{
+    bsal_bitmap_clear_bit_uint32_t(&self->flags, FLAG_ENABLE_LOAD_PROFILER);
+}
+
+void thorium_actor_write_profile(struct thorium_actor *self,
+               struct bsal_buffered_file_writer *writer)
+{
+#if 0
+    printf("thorium_actor_write_profile\n");
+#endif
+
+    thorium_load_profiler_write(&self->profiler, thorium_actor_script_name(self),
+                    thorium_actor_name(self), writer);
+}
+
+void *thorium_actor_allocate(struct thorium_actor *self, size_t count)
+{
+    return thorium_worker_allocate(self->worker, count);
 }

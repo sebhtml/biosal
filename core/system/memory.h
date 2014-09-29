@@ -27,14 +27,8 @@
  * Show memory allocation events.
  */
 /*
-#define BSAL_MEMORY_DEBUG_DETAIL
-*/
-
-/*
- */
-#ifdef BSAL_MEMORY_DEBUG_DETAIL
 #define BSAL_MEMORY_DEBUG
-#endif
+*/
 
 /* Intel processors usually have a cache line of 64 bytes.
  * At least, it is the case for Sandy Bridge, Ivy Bridge, and Haswell.
@@ -113,24 +107,24 @@
 
 #ifdef BSAL_MEMORY_DEBUG
 
-#define bsal_memory_allocate(size) \
-        bsal_memory_allocate_private(size, __func__, __FILE__, __LINE__)
+#define bsal_memory_allocate(size, key) \
+        bsal_memory_allocate_private(size, __func__, __FILE__, __LINE__, key)
 
-#define bsal_memory_free(pointer) \
-        bsal_memory_free_private(pointer, __func__, __FILE__, __LINE__)
+#define bsal_memory_free(pointer, key) \
+        bsal_memory_free_private(pointer, __func__, __FILE__, __LINE__, key)
 
 #else
 
-#define bsal_memory_allocate(size) \
-        bsal_memory_allocate_private(size, NULL, NULL, -1)
+#define bsal_memory_allocate(size, key) \
+        bsal_memory_allocate_private(size, NULL, NULL, -1, key)
 
-#define bsal_memory_free(pointer) \
-        bsal_memory_free_private(pointer, NULL, NULL, -1)
+#define bsal_memory_free(pointer, key) \
+        bsal_memory_free_private(pointer, NULL, NULL, -1, key)
 
 #endif
 
-void *bsal_memory_allocate_private(size_t size, const char *function, const char *file, int line);
-void bsal_memory_free_private(void *pointer, const char *function, const char *file, int line);
+void *bsal_memory_allocate_private(size_t size, const char *function, const char *file, int line, int key);
+void bsal_memory_free_private(void *pointer, const char *function, const char *file, int line, int key);
 
 /*
  * Get size of the data segment (also called heap)

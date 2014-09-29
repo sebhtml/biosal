@@ -4,6 +4,7 @@
 
 #include <stdint.h>
 
+#include <core/system/memory_pool.h>
 #include <core/structures/map.h>
 
 #define BSAL_DNA_CODEC_HAS_REVERSE_COMPLEMENT_IMPLEMENTATION
@@ -22,14 +23,29 @@
 #define BSAL_NUCLEOTIDE_SYMBOL_T 'T'
 
 /*
+ * use block encoder (faster or not ?)
+#define BSAL_DNA_CODEC_USE_TWO_BIT_BLOCK_ENCODER
+ */
+
+/*
+ * use block decoder (faster or not ?)
+#define BSAL_DNA_CODEC_USE_TWO_BIT_BLOCK_DECODER
+ */
+
+/*
  * A class to encode and decode DNA data.
  */
 struct bsal_dna_codec {
+#ifdef BSAL_DNA_CODEC_USE_TWO_BIT_BLOCK_ENCODER
     struct bsal_map encoding_lookup_table;
+#endif
+#ifdef BSAL_DNA_CODEC_USE_TWO_BIT_BLOCK_DECODER
     struct bsal_map decoding_lookup_table;
+#endif
     int block_length;
 
     int use_two_bit_encoding;
+    struct bsal_memory_pool pool;
 };
 
 void bsal_dna_codec_init(struct bsal_dna_codec *self);
@@ -51,7 +67,7 @@ int bsal_dna_codec_encoded_length_default(struct bsal_dna_codec *self, int lengt
 void bsal_dna_codec_decode_default(struct bsal_dna_codec *self, int length_in_nucleotides, void *encoded_sequence, char *dna_sequence);
 void bsal_dna_codec_encode_default(struct bsal_dna_codec *self, int length_in_nucleotides, char *dna_sequence, void *encoded_sequence);
 
-
+#ifdef BSAL_DNA_CODEC_USE_TWO_BIT_BLOCK_ENCODER
 void bsal_dna_codec_encode_with_blocks(struct bsal_dna_codec *self,
                 int length_in_nucleotides, char *dna_sequence, void *encoded_sequence);
 
@@ -59,8 +75,12 @@ void bsal_dna_codec_generate_blocks(struct bsal_dna_codec *self);
 
 void bsal_dna_codec_generate_block(struct bsal_dna_codec *self, int position, char symbol,
                 char *block);
+#endif
+
+#ifdef BSAL_DNA_CODEC_USE_TWO_BIT_BLOCK_DECODER
 void bsal_dna_codec_decode_with_blocks(struct bsal_dna_codec *self,
                 int length_in_nucleotides, void *encoded_sequence, char *dna_sequence);
+#endif
 
 void bsal_dna_codec_reverse_complement_in_place(struct bsal_dna_codec *codec,
                 int length_in_nucleotides, void *encoded_sequence);

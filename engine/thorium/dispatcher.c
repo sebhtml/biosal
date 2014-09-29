@@ -128,7 +128,7 @@ int thorium_dispatcher_dispatch(struct thorium_dispatcher *self, struct thorium_
     int tag;
     int source;
 
-    tag = thorium_message_tag(message);
+    tag = thorium_message_action(message);
     source = thorium_message_source(message);
 
 #ifdef THORIUM_DISPATCHER_DEBUG_GET

@@ -15,16 +15,14 @@ int thorium_message_unpack_int(struct thorium_message *message, int offset, int 
         return -1;
     }
 
-    bytes = sizeof(value);
+    bytes = sizeof(int);
     buffer = thorium_message_buffer(message);
 
     pointer = (int *)((char *)buffer + offset);
 
     *value = *pointer;
 
-    offset += bytes;
-
-    return offset;
+    return bytes;
 }
 
 int thorium_message_unpack_uint64_t(struct thorium_message *message, int offset, uint64_t *value)
@@ -37,21 +35,19 @@ int thorium_message_unpack_uint64_t(struct thorium_message *message, int offset,
         return -1;
     }
 
-    bytes = sizeof(value);
+    bytes = sizeof(uint64_t);
     buffer = thorium_message_buffer(message);
 
     pointer = (uint64_t *)((char *)buffer + offset);
 
     *value = *pointer;
 
-    offset += bytes;
-
-    return offset;
+    return bytes;
 }
 
 void thorium_message_get_all(struct thorium_message *message, int *tag, int *count, void **buffer, int *source)
 {
-    *tag = thorium_message_tag(message);
+    *tag = thorium_message_action(message);
     *count = thorium_message_count(message);
     *buffer = thorium_message_buffer(message);
     *source = thorium_message_source(message);
@@ -67,16 +63,14 @@ int thorium_message_unpack_int64_t(struct thorium_message *message, int offset, 
         return -1;
     }
 
-    bytes = sizeof(value);
+    bytes = sizeof(int64_t);
     buffer = thorium_message_buffer(message);
 
     pointer = (int64_t *)((char *)buffer + offset);
 
     *value = *pointer;
 
-    offset += bytes;
-
-    return offset;
+    return bytes;
 }
 
 int thorium_message_unpack_double(struct thorium_message *message, int offset, double *value)
@@ -89,16 +83,13 @@ int thorium_message_unpack_double(struct thorium_message *message, int offset, d
         return -1;
     }
 
-    bytes = sizeof(value);
+    bytes = sizeof(double);
     buffer = thorium_message_buffer(message);
 
     pointer = (double *)((char *)buffer + offset);
 
     *value = *pointer;
 
-    offset += bytes;
-
-    return offset;
+    return bytes;
 }
-
 
