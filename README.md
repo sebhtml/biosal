@@ -49,6 +49,24 @@ see [examples](examples) and [tests](tests)
 
 There is also a read-only [mirror](https://github.com/GeneAssembly/biosal/tree/mirror).
 
+```
+
+Workflow
+
+
+    /-------->  energy       -------> /--------\
+    | /------>  entropy      -------> | master |
+    | | /---->  granularity  -------> |        |
+    | | | /-->  pami         -------> \--------/
+    | | | |                            | | | |
+    \ \ \ \----------------------------/ | | |
+     \ \ \-------------------------------/ | |
+      \ \----------------------------------/ |
+       \-------------------------------------/
+    -
+
+```
+
 # Product team
 see [CREDITS.md](CREDITS.md)
 
