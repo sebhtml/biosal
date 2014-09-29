@@ -49,23 +49,7 @@ see [examples](examples) and [tests](tests)
 
 There is also a read-only [mirror](https://github.com/GeneAssembly/biosal/tree/mirror).
 
-```
-
-Workflow
-
-
-    /-------->  energy       -------> /--------\
-    | /------>  entropy      -------> | master |
-    | | /---->  granularity  -------> |        |
-    | | | /-->  pami         -------> \--------/
-    | | | |                            | | | |
-    \ \ \ \----------------------------/ | | |
-     \ \ \-------------------------------/ | |
-      \ \----------------------------------/ |
-       \-------------------------------------/
-    -
-
-```
+The [**Integration Manager Workflow**](http://git-scm.com/about/distributed) is used.
 
 # Product team
 see [CREDITS.md](CREDITS.md)
