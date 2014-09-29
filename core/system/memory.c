@@ -218,7 +218,7 @@ uint64_t bsal_memory_get_total_byte_count()
      * This is obviously broken.
      */
 
-    total = 18446744073709551615;
+    total = 18446744073709551615UL;
     return total;
 #endif
 }
