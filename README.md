@@ -39,13 +39,15 @@ see [examples](examples) and [tests](tests)
 
 # Branches
 
-| Branch | URL | Clone URL |
+| Branch name | Person (alphabetical order) | Clone URL |
 | --- | --- | --- |
-| **master** (clone / pull from this one) | https://github.com/sebhtml/biosal/tree/master | [HTTPS](https://github.com/GeneAssembly/biosal.git) |
-| Read-only copy of (mirror) | https://github.com/GeneAssembly/biosal/tree/mirror | [HTTPS](https://github.com/GeneAssembly/biosal.git) |
-| Fangfang's branch (energy) | https://github.com/levinas/biosal/tree/entropy | [HTTPS](https://github.com/levinas/biosal.git) |
-| Huy 's branch | https://github.com/huyba/biosal/tree/master | [HTTPS](https://github.com/huyba/biosal.git) |
-| Sébastien's branch (energy) | https://github.com/sebhtml/biosal/tree/energy | [HTTPS](https://github.com/sebhtml/biosal.git) |
+| [master](https://github.com/sebhtml/biosal/tree/master) | Sébastien | [HTTPS](https://github.com/GeneAssembly/biosal.git) |
+| [energy](https://github.com/sebhtml/biosal/tree/energy) | Sébastien | [HTTPS](https://github.com/sebhtml/biosal.git) |
+| [pami](https://github.com/huyba/biosal/tree/master) | Huy | [HTTPS](https://github.com/huyba/biosal.git) |
+| [granularity](https://github.com/gkthiruvathukal/biosal/tree/granularity) | George K. Thiruvathukal | [HTTPS](https://github.com/gkthiruvathukal/biosal.git) |
+| [entropy](https://github.com/levinas/biosal/tree/entropy) | Fangfang | [HTTPS](https://github.com/levinas/biosal.git) |
+
+There is also a read-only [mirror](https://github.com/GeneAssembly/biosal/tree/mirror).
 
 # Product team
 see [CREDITS.md](CREDITS.md)
