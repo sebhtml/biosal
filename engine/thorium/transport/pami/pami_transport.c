@@ -70,42 +70,6 @@ void thorium_pami_transport_init(struct thorium_transport *self, int *argc, char
     BSAL_DEBUGGER_ASSERT(pami_transport->in_use_recv_cookies_queue != NULL);
     bsal_fast_queue_init(pami_transport->in_use_recv_cookies_queue, sizeof(thorium_recv_info_t *));
 
-    /*Large buffer for large messages: start with NUM_RECV_BUFFERS_LARGE buffers and can be increased on demand*/
-    /*pami_transport->large_buffer_queue = (struct bsal_fast_queue *)malloc(sizeof(struct bsal_fast_queue));
-    bsal_fast_queue_init(pami_transport->large_buffer_queue, sizeof(char *));
-    pami_transport->large_buffers = (char **)malloc(sizeof(char *) * NUM_RECV_BUFFERS_LARGE);
-    BSAL_DEBUGGER_ASSERT(pami_transport->large_buffers != NULL);
-
-    for (i = 0; i < NUM_RECV_BUFFERS_LARGE; i++) {
-	pami_transport->large_buffers[i] = (char *)malloc(RECV_BUFFER_SIZE_LARGE);
-	BSAL_DEBUGGER_ASSERT(pami_transport->large_buffers[i] != NULL);
-        bsal_fast_queue_enqueue(pami_transport->large_buffer_queue, (void *)&pami_transport->large_buffers[i]);
-    }*/
-
-    /*Medium buffers for medium messages: start with NUM_RECV_BUFFERS_MEDIUM buffers and can be increased on demand*/
-    /*pami_transport->medium_buffer_queue = (struct bsal_fast_queue *)malloc(sizeof(struct bsal_fast_queue));
-    bsal_fast_queue_init(pami_transport->medium_buffer_queue, sizeof(char *));
-    pami_transport->medium_buffers = (char **)malloc(sizeof(char *) * NUM_RECV_BUFFERS_MEDIUM);
-    BSAL_DEBUGGER_ASSERT(pami_transport->medium_buffers != NULL);
-
-    for (i = 0; i < NUM_RECV_BUFFERS_MEDIUM; i++) {
-	pami_transport->medium_buffers[i] = (char *)malloc(RECV_BUFFER_SIZE_MEDIUM);
-	BSAL_DEBUGGER_ASSERT(pami_transport->medium_buffers[i] != NULL);
-        bsal_fast_queue_enqueue(pami_transport->medium_buffer_queue, (void *)&pami_transport->medium_buffers[i]);
-    }*/
-
-    /*Small buffers for small messages: start with NUM_RECV_BUFFERS_SMALL buffers and can be increased on demand*/
-    /*pami_transport->small_buffer_queue = (struct bsal_fast_queue *)malloc(sizeof(struct bsal_fast_queue));
-    bsal_fast_queue_init(pami_transport->small_buffer_queue, sizeof(char *));
-    pami_transport->small_buffers = (char **)malloc(sizeof(char *) * NUM_RECV_BUFFERS_SMALL);
-    BSAL_DEBUGGER_ASSERT(pami_transport->small_buffers != NULL);
-
-    for (i = 0; i < NUM_RECV_BUFFERS_SMALL; i++) {
-	pami_transport->small_buffers[i] = (char *)malloc(RECV_BUFFER_SIZE_SMALL);
-	BSAL_DEBUGGER_ASSERT(pami_transport->small_buffers[i] != NULL);
-        bsal_fast_queue_enqueue(pami_transport->small_buffer_queue, (void *)&pami_transport->small_buffers[i]);
-    }*/
-
     /*
      * \see http://www-01.ibm.com/support/knowledgecenter/SSFK3V_1.3.0/com.ibm.cluster.protocols.v1r3.pp400.doc/bl510_pclientc.htm
      */
@@ -194,28 +158,6 @@ void thorium_pami_transport_destroy(struct thorium_transport *self)
     free(pami_transport->in_use_send_cookies_queue);
     free(pami_transport->in_use_recv_cookies_queue);
 
-    /*char *buffer;
-    while (bsal_fast_queue_dequeue(pami_transport->large_buffer_queue, &buffer)) {
-        free(buffer);
-    }
-    bsal_fast_queue_destroy(pami_transport->large_buffer_queue);
-    free(pami_transport->large_buffer_queue);
-    free(pami_transport->large_buffers);
-
-    while (bsal_fast_queue_dequeue(pami_transport->medium_buffer_queue, &buffer)) {
-        free(buffer);
-    }
-    bsal_fast_queue_destroy(pami_transport->medium_buffer_queue);
-    free(pami_transport->medium_buffer_queue);
-    free(pami_transport->medium_buffers);
-
-    while (bsal_fast_queue_dequeue(pami_transport->small_buffer_queue, &buffer)) {
-        free(buffer);
-    }
-    bsal_fast_queue_destroy(pami_transport->small_buffer_queue);
-    free(pami_transport->small_buffer_queue);
-    free(pami_transport->small_buffers);
-    */
     /*Destroy context*/
     result = PAMI_Context_destroyv(&pami_transport->context, pami_transport->num_contexts);
     BSAL_DEBUGGER_ASSERT(result == PAMI_SUCCESS);
@@ -299,17 +241,7 @@ int thorium_pami_transport_receive(struct thorium_transport *self, struct thoriu
 
     thorium_recv_cookie_t *recv_cookie;
     if (bsal_fast_queue_dequeue(pami_transport->in_use_recv_cookies_queue, (void *)&recv_cookie)) {
-	/*f
- * printf(stderr, "received data %d %d %d %d\n", recv_cookie->recv_info.buffer[0], recv_cookie->recv_info.buffer[1], recv_cookie->recv_info.buffer[2], recv_cookie->recv_info.buffer[3]);*/
-	//char *buffer = (char *)bsal_memory_pool_allocate(self->inbound_message_memory_pool, recv_cookie->recv_info.count);
-	//memcpy(buffer, (void *)recv_cookie->recv_info.buffer, recv_cookie->recv_info.count);
-
 	thorium_message_init_with_nodes(message, recv_cookie->recv_info.count, recv_cookie->recv_info.buffer, recv_cookie->recv_info.source, self->rank);
-
-	//thorium_message_init_with_nodes(message, recv_cookie->recv_info.count, buffer, recv_cookie->recv_info.source, self->rank);
-
-	//thorium_pami_transport_mem_pool_return(pami_transport, recv_cookie->recv_info.count, &recv_cookie->recv_info.buffer);
-
     } else {
 	return 0;
     }
@@ -376,8 +308,6 @@ void thorium_recv_message_fn(pami_context_t context, void *cookie, const void *h
 
     recv_cookie->recv_info.buffer = (char *)bsal_memory_pool_allocate(pami_transport->self->inbound_message_memory_pool, recv_cookie->recv_info.count);
 
-    //thorium_pami_transport_mem_pool_alloc(pami_transport, data_size, &recv_cookie->recv_info.buffer);
-
     if (data != NULL) {
         memcpy(recv_cookie->recv_info.buffer, data, data_size);
 	bsal_fast_queue_enqueue(recv_cookie->recv_queue, (void *)&recv_cookie);
@@ -395,37 +325,3 @@ void thorium_recv_message_fn(pami_context_t context, void *cookie, const void *h
 #endif
 }
 
-void thorium_pami_transport_mem_pool_return(struct thorium_pami_transport *pami_transport, int data_size, void *buffer)
-{
-#ifdef THORIUM_TRANSPORT_USE_PAMI
-    /*Return a buffer to the appropriate queue*/
-    /*if (data_size <= RECV_BUFFER_SIZE_SMALL) {
-	bsal_fast_queue_enqueue(pami_transport->small_buffer_queue, buffer);
-    } else if (data_size <= RECV_BUFFER_SIZE_MEDIUM) {
-	bsal_fast_queue_enqueue(pami_transport->medium_buffer_queue, buffer);
-    } else {
-	bsal_fast_queue_enqueue(pami_transport->large_buffer_queue, buffer);
-    }*/
-#endif
-}
-
-void thorium_pami_transport_mem_pool_alloc(struct thorium_pami_transport *pami_transport, int data_size, void *buffer)
-{
-#ifdef THORIUM_TRANSPORT_USE_PAMI
-    /*Dequeue for a buffer, if not, i.e. running out of preallocated buffer, allocate a new one*/
-    /*if (data_size <= RECV_BUFFER_SIZE_SMALL) {
-        if (bsal_fast_queue_dequeue(pami_transport->small_buffer_queue, buffer) == BSAL_FALSE) {
-	    *(char **)buffer = (char *)malloc(RECV_BUFFER_SIZE_SMALL);
-	}
-    } else if (data_size <= RECV_BUFFER_SIZE_MEDIUM) {
-	if (bsal_fast_queue_dequeue(pami_transport->medium_buffer_queue, buffer) == BSAL_FALSE) {
-            *(char **)buffer = (char *)malloc(RECV_BUFFER_SIZE_MEDIUM);
-        }
-    } else {
-	if (bsal_fast_queue_dequeue(pami_transport->large_buffer_queue, buffer) == BSAL_FALSE) {
-            *(char **)buffer = (char *)malloc(RECV_BUFFER_SIZE_LARGE);
-        }
-    }
-    BSAL_DEBUGGER_ASSERT(buffer != NULL);*/
-#endif
-}

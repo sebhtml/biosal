@@ -122,10 +122,6 @@ int thorium_pami_transport_receive(struct thorium_transport *self, struct thoriu
 
 int thorium_pami_transport_test(struct thorium_transport *self, struct thorium_worker_buffer *buffer);
 
-void thorium_pami_transport_mem_pool_alloc(struct thorium_pami_transport *pami_transport, int data_size, void *buffer);
-
-void thorium_pami_transport_mem_pool_return(struct thorium_pami_transport *pami_transport, int data_size, void *buffer);
-
 void thorium_recv_done_fn (pami_context_t   context,
         void           *cookie,
         pami_result_t    result);
