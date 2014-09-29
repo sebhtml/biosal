@@ -106,7 +106,7 @@ pdf(paste(file, ".pdf", sep=""))
 par(mfrow=c(3,1))
 
 # panel A
-plot(data[,1], utilizations, col='black', type='l', ylab='Processor core utilization', xlab='Time (nanoseconds)',
+plot(data[,1], utilizations, col='black', type='l', , ylim=c(0, 1), ylab='Processor core utilization', xlab='Time (nanoseconds)',
                 main=paste('Processor core utilization profile\n(Profile data file: ', file, ')', sep=''))
 
 # panel B
