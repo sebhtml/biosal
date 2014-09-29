@@ -494,7 +494,7 @@ void bsal_assembly_graph_store_push_kmer_block(struct thorium_actor *self, struc
     bsal_dna_kmer_frequency_block_init(&block, concrete_self->kmer_length,
                     ephemeral_memory, &concrete_self->transport_codec, 0);
 
-    bsal_dna_kmer_frequency_block_unpack(&block, buffer, thorium_actor_get_ephemeral_memory(self),
+    bsal_dna_kmer_frequency_block_unpack(&block, buffer, ephemeral_memory,
                     &concrete_self->transport_codec);
 
     key = bsal_memory_pool_allocate(ephemeral_memory, concrete_self->key_length_in_bytes);

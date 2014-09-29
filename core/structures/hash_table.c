@@ -342,8 +342,10 @@ int bsal_hash_table_pack_unpack(struct bsal_hash_table *self, void *buffer, int 
         elements = self->elements;
         self->elements = elements;
         */
+#if 0
         self->groups = NULL;
         bsal_hash_table_set_memory_pool(self, NULL);
+#endif
 
         bsal_hash_table_start_groups(self);
     } else {
