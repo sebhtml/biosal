@@ -41,11 +41,11 @@ see [examples](examples) and [tests](tests)
 
 | Branch name | Person (alphabetical order) | Clone URL |
 | --- | --- | --- |
-| [master](https://github.com/sebhtml/biosal/tree/master) | Sébastien | [HTTPS](https://github.com/GeneAssembly/biosal.git) |
-| [energy](https://github.com/sebhtml/biosal/tree/energy) | Sébastien | [HTTPS](https://github.com/sebhtml/biosal.git) |
-| [pami](https://github.com/huyba/biosal/tree/master) | Huy | [HTTPS](https://github.com/huyba/biosal.git) |
+| [master](https://github.com/sebhtml/biosal/tree/master) | Sébastien Boisvert | [HTTPS](https://github.com/GeneAssembly/biosal.git) |
+| [energy](https://github.com/sebhtml/biosal/tree/energy) | Sébastien Boisvert| [HTTPS](https://github.com/sebhtml/biosal.git) |
+| [pami](https://github.com/huyba/biosal/tree/master) | Huy Bui | [HTTPS](https://github.com/huyba/biosal.git) |
 | [granularity](https://github.com/gkthiruvathukal/biosal/tree/granularity) | George K. Thiruvathukal | [HTTPS](https://github.com/gkthiruvathukal/biosal.git) |
-| [entropy](https://github.com/levinas/biosal/tree/entropy) | Fangfang | [HTTPS](https://github.com/levinas/biosal.git) |
+| [entropy](https://github.com/levinas/biosal/tree/entropy) | Fangfang Xia | [HTTPS](https://github.com/levinas/biosal.git) |
 
 There is also a read-only [mirror](https://github.com/GeneAssembly/biosal/tree/mirror).
 
