@@ -215,7 +215,7 @@ void bsal_aggregator_flush(struct thorium_actor *self, int customer_index, struc
                     threshold);
 #endif
 
-    buffer = bsal_memory_pool_allocate(ephemeral_memory, count);
+    buffer = thorium_actor_allocate(self, count);
     bsal_dna_kmer_frequency_block_pack(customer_block_pointer, buffer,
                     &concrete_actor->codec);
 
@@ -226,7 +226,6 @@ void bsal_aggregator_flush(struct thorium_actor *self, int customer_index, struc
     (*bucket)++;
 
     thorium_message_destroy(&message);
-    bsal_memory_pool_free(ephemeral_memory, buffer);
 
     buffer = NULL;
 
@@ -486,16 +485,13 @@ void bsal_aggregator_pack_message(struct thorium_actor *actor, struct thorium_me
 
     ephemeral_memory = thorium_actor_get_ephemeral_memory(actor);
     new_count = bsal_aggregator_pack_size(actor);
-    new_buffer = bsal_memory_pool_allocate(ephemeral_memory, new_count);
+    new_buffer = thorium_actor_allocate(actor, new_count);
 
     bsal_aggregator_pack(actor, new_buffer);
 
     thorium_message_init(&new_message, ACTION_PACK_REPLY, new_count, new_buffer);
     thorium_actor_send_reply(actor, &new_message);
     thorium_message_destroy(&new_message);
-
-    bsal_memory_pool_free(ephemeral_memory, new_buffer);
-    new_buffer = NULL;
 }
 
 void bsal_aggregator_unpack_message(struct thorium_actor *actor, struct thorium_message *message)

@@ -614,7 +614,7 @@ void bsal_input_stream_push_sequences(struct thorium_actor *actor,
     new_count = bsal_input_command_pack_size(&command,
                     &concrete_self->codec);
 
-    new_buffer = bsal_memory_pool_allocate(ephemeral_memory, new_count);
+    new_buffer = thorium_actor_allocate(actor, new_count);
 
     bsal_input_command_pack(&command, new_buffer, &concrete_self->codec);
 
@@ -644,7 +644,6 @@ void bsal_input_stream_push_sequences(struct thorium_actor *actor,
 
     /* free memory
      */
-    bsal_memory_pool_free(ephemeral_memory, new_buffer);
 
 #ifdef BSAL_INPUT_STREAM_DEBUG
     printf("DEBUG freeing %d entries\n",

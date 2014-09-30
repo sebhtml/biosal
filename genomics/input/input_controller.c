@@ -339,7 +339,7 @@ void bsal_input_controller_receive(struct thorium_actor *actor, struct thorium_m
             }
 
             new_count = bsal_vector_pack_size(&block_counts);
-            new_buffer = bsal_memory_pool_allocate(ephemeral_memory, new_count);
+            new_buffer = thorium_actor_allocate(actor, new_count);
 
 #ifdef BSAL_INPUT_CONTROLLER_DEBUG
             printf("DEBUG packed counts, %d bytes\n", count);
@@ -349,7 +349,6 @@ void bsal_input_controller_receive(struct thorium_actor *actor, struct thorium_m
             thorium_message_init(&new_message, ACTION_SEQUENCE_PARTITIONER_SET_ENTRY_VECTOR,
                             new_count, new_buffer);
             thorium_actor_send(actor, destination, &new_message);
-            bsal_memory_pool_free(ephemeral_memory, new_buffer);
             bsal_vector_destroy(&block_counts);
 
             return;
@@ -1170,7 +1169,7 @@ void bsal_input_controller_receive_command(struct thorium_actor *actor, struct t
                     bytes);
 #endif
 
-    new_buffer = bsal_memory_pool_allocate(ephemeral_memory, bytes);
+    new_buffer = thorium_actor_allocate(actor, bytes);
     bsal_input_command_pack(&input_command, new_buffer,
                     &concrete_actor->codec);
 
@@ -1186,8 +1185,6 @@ void bsal_input_controller_receive_command(struct thorium_actor *actor, struct t
 #endif
 
     thorium_actor_send(actor, stream_name, &new_message);
-
-    bsal_memory_pool_free(ephemeral_memory, new_buffer);
 
     command_name = bsal_partition_command_name(&command);
 

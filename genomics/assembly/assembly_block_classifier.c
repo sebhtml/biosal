@@ -217,7 +217,7 @@ void bsal_assembly_block_classifier_flush(struct thorium_actor *self, int custom
                     threshold);
 #endif
 
-    buffer = bsal_memory_pool_allocate(ephemeral_memory, count);
+    buffer = thorium_actor_allocate(self, count);
     bsal_dna_kmer_frequency_block_pack(customer_block_pointer, buffer,
                     &concrete_actor->codec);
 
@@ -236,7 +236,6 @@ void bsal_assembly_block_classifier_flush(struct thorium_actor *self, int custom
     }
 
     thorium_message_destroy(&message);
-    bsal_memory_pool_free(ephemeral_memory, buffer);
 
     buffer = NULL;
 
@@ -508,7 +507,7 @@ void bsal_assembly_block_classifier_pack_message(struct thorium_actor *actor, st
 
     ephemeral_memory = thorium_actor_get_ephemeral_memory(actor);
     new_count = bsal_assembly_block_classifier_pack_size(actor);
-    new_buffer = bsal_memory_pool_allocate(ephemeral_memory, new_count);
+    new_buffer = thorium_actor_allocate(actor, new_count);
 
     bsal_assembly_block_classifier_pack(actor, new_buffer);
 
@@ -516,7 +515,6 @@ void bsal_assembly_block_classifier_pack_message(struct thorium_actor *actor, st
     thorium_actor_send_reply(actor, &new_message);
     thorium_message_destroy(&new_message);
 
-    bsal_memory_pool_free(ephemeral_memory, new_buffer);
     new_buffer = NULL;
 }
 

@@ -301,8 +301,6 @@ void bsal_assembly_arc_classifier_push_arc_block(struct thorium_actor *self, str
         }
     }
 
-    new_buffer = bsal_memory_pool_allocate(ephemeral_memory, maximum_buffer_length);
-
 #if 0
     printf("POOL_BALANCE %d\n",
                     bsal_memory_pool_profile_balance_count(ephemeral_memory));
@@ -324,6 +322,8 @@ void bsal_assembly_arc_classifier_push_arc_block(struct thorium_actor *self, str
              */
             new_count = bsal_assembly_arc_block_pack_size(output_block, concrete_self->kmer_length,
                     &concrete_self->codec);
+
+            new_buffer = thorium_actor_allocate(self, maximum_buffer_length);
 
             BSAL_DEBUGGER_ASSERT(new_count <= maximum_buffer_length);
 
@@ -372,7 +372,6 @@ void bsal_assembly_arc_classifier_push_arc_block(struct thorium_actor *self, str
         BSAL_DEBUGGER_ASSERT(!bsal_memory_pool_has_double_free(ephemeral_memory));
     }
 
-    bsal_memory_pool_free(ephemeral_memory, new_buffer);
     bsal_vector_destroy(&output_blocks);
 
     BSAL_DEBUGGER_ASSERT(!bsal_memory_pool_has_double_free(ephemeral_memory));

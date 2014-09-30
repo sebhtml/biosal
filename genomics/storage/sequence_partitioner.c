@@ -138,7 +138,7 @@ void bsal_sequence_partitioner_receive(struct thorium_actor *actor, struct thori
             printf("DEBUG partitioner has command, packing %d bytes!\n", bytes);
             */
 
-            buffer = bsal_memory_pool_allocate(ephemeral_memory, bytes);
+            buffer = thorium_actor_allocate(actor, bytes);
             bsal_partition_command_pack(&command, buffer);
 
             thorium_message_init(&response, ACTION_SEQUENCE_PARTITIONER_GET_COMMAND_REPLY,
@@ -151,8 +151,6 @@ void bsal_sequence_partitioner_receive(struct thorium_actor *actor, struct thori
             command_bucket = (struct bsal_partition_command *)bsal_map_add(&concrete_actor->active_commands,
                             &command_number);
             *command_bucket = command;
-
-            bsal_memory_pool_free(ephemeral_memory, buffer);
 
             /* there may be other command available too !
              */
@@ -354,14 +352,12 @@ void bsal_sequence_partitioner_verify(struct thorium_actor *actor)
 #endif
 
     bytes = bsal_vector_pack_size(&concrete_actor->store_entries);
-    buffer = bsal_memory_pool_allocate(ephemeral_memory, bytes);
+    buffer = thorium_actor_allocate(actor, bytes);
     bsal_vector_pack(&concrete_actor->store_entries, buffer);
 
     thorium_message_init(&message, ACTION_SEQUENCE_PARTITIONER_PROVIDE_STORE_ENTRY_COUNTS,
                     bytes, buffer);
     thorium_actor_send_reply(actor, &message);
-
-    bsal_memory_pool_free(ephemeral_memory, buffer);
 }
 
 uint64_t bsal_sequence_partitioner_get_index_in_store(uint64_t index, int block_size, int store_count)

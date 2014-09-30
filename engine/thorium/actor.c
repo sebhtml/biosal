@@ -744,7 +744,7 @@ int thorium_actor_receive_system(struct thorium_actor *self, struct thorium_mess
 
         thorium_node_set_supervisor(thorium_actor_node(self), spawned, source);
 
-        new_buffer = bsal_memory_pool_allocate(ephemeral_memory, 2 * sizeof(int));
+        new_buffer = thorium_actor_allocate(self, 2 * sizeof(int));
         offset = 0;
 
         bytes = sizeof(spawned);
@@ -759,7 +759,6 @@ int thorium_actor_receive_system(struct thorium_actor *self, struct thorium_mess
         thorium_actor_send(self, source, &new_message);
 
         thorium_message_destroy(&new_message);
-        bsal_memory_pool_free(ephemeral_memory, new_buffer);
 
         return 1;
 

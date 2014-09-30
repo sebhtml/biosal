@@ -214,7 +214,7 @@ void process_send_ping(struct thorium_actor *self)
     buffer_size += concrete_self->minimum_buffer_size;
     count = buffer_size + sizeof(checksum);
 
-    buffer = bsal_memory_pool_allocate(ephemeral_memory, count);
+    buffer = thorium_actor_allocate(self, count);
 
     /*
      * Generate content;
@@ -234,8 +234,6 @@ void process_send_ping(struct thorium_actor *self)
 
     thorium_actor_send_buffer(self, destination, ACTION_PING, count, buffer);
     ++concrete_self->active_messages;
-
-    bsal_memory_pool_free(ephemeral_memory, buffer);
 }
 
 void process_notify(struct thorium_actor *self, struct thorium_message *message)

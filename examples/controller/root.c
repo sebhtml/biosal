@@ -168,13 +168,11 @@ void root_receive(struct thorium_actor *actor, struct thorium_message *message)
         bsal_vector_push_back_vector(&spawners, &concrete_actor->spawners);
 
         new_count = bsal_vector_pack_size(&spawners);
-        new_buffer = bsal_memory_pool_allocate(ephemeral_memory, new_count);
+        new_buffer = thorium_actor_allocate(actor, new_count);
         bsal_vector_pack(&spawners, new_buffer);
 
         thorium_message_init(&new_message, ACTION_START, new_count, new_buffer);
         thorium_actor_send(actor, manager, &new_message);
-
-        bsal_memory_pool_free(ephemeral_memory, new_buffer);
 
         bsal_vector_destroy(&spawners);
 
@@ -194,12 +192,11 @@ void root_receive(struct thorium_actor *actor, struct thorium_message *message)
     } else if (tag == ACTION_SET_CONSUMERS_REPLY) {
 
         bytes = bsal_vector_pack_size(&concrete_self->spawners);
-        buffer = bsal_memory_pool_allocate(ephemeral_memory, bytes);
+        buffer = thorium_actor_allocate(actor, bytes);
         bsal_vector_pack(&concrete_self->spawners, buffer);
 
         thorium_message_init(message, ACTION_START, bytes, buffer);
         thorium_actor_send(actor, concrete_self->controller, message);
-        bsal_memory_pool_free(ephemeral_memory, buffer);
         buffer = NULL;
 
         printf("root actor/%d starts controller actor/%d\n", name,

@@ -419,7 +419,7 @@ void bsal_assembly_sliding_window_pack_message(struct thorium_actor *actor, stru
 
     ephemeral_memory = thorium_actor_get_ephemeral_memory(actor);
     new_count = bsal_assembly_sliding_window_pack_size(actor);
-    new_buffer = bsal_memory_pool_allocate(ephemeral_memory, new_count);
+    new_buffer = thorium_actor_allocate(actor, new_count);
 
     bsal_assembly_sliding_window_pack(actor, new_buffer);
 
@@ -428,8 +428,6 @@ void bsal_assembly_sliding_window_pack_message(struct thorium_actor *actor, stru
     thorium_actor_send_reply(actor, &new_message);
 
     thorium_message_destroy(&new_message);
-    bsal_memory_pool_free(ephemeral_memory, new_buffer);
-    new_buffer = NULL;
 }
 
 void bsal_assembly_sliding_window_unpack_message(struct thorium_actor *actor, struct thorium_message *message)
@@ -750,7 +748,7 @@ void bsal_assembly_sliding_window_push_sequence_data_block(struct thorium_actor 
 
     new_count = bsal_dna_kmer_block_pack_size(&block,
                     &concrete_actor->codec);
-    new_buffer = bsal_memory_pool_allocate(ephemeral_memory, new_count);
+    new_buffer = thorium_actor_allocate(actor, new_count);
     bsal_dna_kmer_block_pack(&block, new_buffer,
                         &concrete_actor->codec);
 
@@ -769,7 +767,6 @@ void bsal_assembly_sliding_window_push_sequence_data_block(struct thorium_actor 
                     */
 
     thorium_actor_send(actor, consumer, &new_message);
-    bsal_memory_pool_free(ephemeral_memory, new_buffer);
 
     ++concrete_actor->flushed_payloads;
 

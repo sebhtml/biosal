@@ -218,7 +218,7 @@ void thorium_actor_send_range_binomial_tree_part(struct thorium_actor *actor,
 
     new_tag = ACTION_BINOMIAL_TREE_SEND;
     new_count = bsal_vector_pack_size(actors) + sizeof(real_tag) + sizeof(real_source) + sizeof(real_count) + real_count;
-    new_buffer = bsal_memory_pool_allocate(ephemeral_memory, new_count);
+    new_buffer = thorium_actor_allocate(actor, new_count);
 
     offset = 0;
     offset += bsal_vector_pack(actors, new_buffer + offset);
@@ -238,7 +238,6 @@ void thorium_actor_send_range_binomial_tree_part(struct thorium_actor *actor,
     thorium_message_init(&new_message, new_tag, new_count, new_buffer);
     thorium_actor_send(actor, destination, &new_message);
     thorium_message_destroy(&new_message);
-    bsal_memory_pool_free(ephemeral_memory, new_buffer);
 }
 
 
