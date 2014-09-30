@@ -76,8 +76,13 @@ struct bsal_memory_pool {
 
 void bsal_memory_pool_init(struct bsal_memory_pool *self, int block_size, int name);
 void bsal_memory_pool_destroy(struct bsal_memory_pool *self);
+
 void *bsal_memory_pool_allocate(struct bsal_memory_pool *self, size_t size);
+void *bsal_memory_pool_allocate_private(struct bsal_memory_pool *self, size_t size);
+
 void bsal_memory_pool_free(struct bsal_memory_pool *self, void *pointer);
+void bsal_memory_pool_free_private(struct bsal_memory_pool *self, void *pointer);
+
 
 void bsal_memory_pool_enable_tracking(struct bsal_memory_pool *self);
 void bsal_memory_pool_disable_tracking(struct bsal_memory_pool *self);
@@ -86,7 +91,6 @@ void bsal_memory_pool_free_all(struct bsal_memory_pool *self);
 void bsal_memory_pool_disable(struct bsal_memory_pool *self);
 
 void bsal_memory_pool_add_block(struct bsal_memory_pool *self);
-void *bsal_memory_pool_allocate_private(struct bsal_memory_pool *self, size_t size);
 
 void bsal_memory_pool_disable_normalization(struct bsal_memory_pool *self);
 void bsal_memory_pool_enable_normalization(struct bsal_memory_pool *self);
@@ -110,6 +114,5 @@ int bsal_memory_pool_profile_free_count(struct bsal_memory_pool *self);
 void bsal_memory_pool_check_double_free(struct bsal_memory_pool *self,
                 const char *function, const char *file, int line);
 int bsal_memory_pool_profile_balance_count(struct bsal_memory_pool *self);
-
 
 #endif

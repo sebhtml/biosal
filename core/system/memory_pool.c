@@ -29,8 +29,8 @@
 
 void bsal_memory_pool_init(struct bsal_memory_pool *self, int block_size, int name)
 {
-    bsal_map_init(&self->recycle_bin, sizeof(int), sizeof(struct bsal_queue));
-    bsal_map_init(&self->allocated_blocks, sizeof(void *), sizeof(int));
+    bsal_map_init(&self->recycle_bin, sizeof(size_t), sizeof(struct bsal_queue));
+    bsal_map_init(&self->allocated_blocks, sizeof(void *), sizeof(size_t));
     bsal_set_init(&self->large_blocks, sizeof(void *));
 
     self->current_block = NULL;
@@ -115,6 +115,12 @@ void *bsal_memory_pool_allocate(struct bsal_memory_pool *self, size_t size)
     size_t new_size;
     int normalize;
 
+    BSAL_DEBUGGER_ASSERT(size > 0);
+
+    if (self == NULL) {
+        return bsal_memory_allocate(size, MEMORY_MEMORY_POOL);
+    }
+
 #ifdef BSAL_DEBUGGER_ENABLE_ASSERT
     if (size < BSAL_MEMORY_MINIMUM) {
         printf("Error: too low %zu\n", size);
@@ -132,8 +138,7 @@ void *bsal_memory_pool_allocate(struct bsal_memory_pool *self, size_t size)
      * Normalize the length of the segment to be a power of 2
      * if the flag FLAG_ENABLE_SEGMENT_NORMALIZATION is set.
      */
-    if (self != NULL
-                 && bsal_bitmap_get_bit_uint32_t(&self->flags, FLAG_ENABLE_SEGMENT_NORMALIZATION)) {
+    if (bsal_bitmap_get_bit_uint32_t(&self->flags, FLAG_ENABLE_SEGMENT_NORMALIZATION)) {
         normalize = 1;
     }
 
@@ -146,8 +151,7 @@ void *bsal_memory_pool_allocate(struct bsal_memory_pool *self, size_t size)
      * normalized.
      */
 
-    if (self != NULL
-              && size > self->block_size
+    if (size > self->block_size
               && bsal_bitmap_get_bit_uint32_t(&self->flags, FLAG_EPHEMERAL)) {
         normalize = 1;
     }
@@ -193,8 +197,7 @@ void *bsal_memory_pool_allocate(struct bsal_memory_pool *self, size_t size)
      * So 32-byte and 64-byte alignment can give better performance.
      * But what is the necessary alignment for getting correct behavior ?
      */
-    if (self != NULL
-                && bsal_bitmap_get_bit_uint32_t(&self->flags, FLAG_ALIGN)) {
+    if (bsal_bitmap_get_bit_uint32_t(&self->flags, FLAG_ALIGN)) {
 
         new_size = bsal_memory_align(size);
 
@@ -205,6 +208,12 @@ void *bsal_memory_pool_allocate(struct bsal_memory_pool *self, size_t size)
     BSAL_DEBUGGER_ASSERT(size <= BSAL_MEMORY_MAXIMUM);
 
     pointer = bsal_memory_pool_allocate_private(self, size);
+
+    if (bsal_bitmap_get_bit_uint32_t(&self->flags, FLAG_ENABLE_TRACKING)) {
+            bsal_map_add_value(&self->allocated_blocks, &pointer, &size);
+    }
+
+    bsal_memory_pool_profile(self, OPERATION_ALLOCATE, size);
 
     if (pointer == NULL) {
         printf("Error, requested %zu bytes, returned pointer is NULL\n",
@@ -227,12 +236,6 @@ void *bsal_memory_pool_allocate_private(struct bsal_memory_pool *self, size_t si
         return NULL;
     }
 
-    if (self == NULL) {
-        return bsal_memory_allocate(size, MEMORY_MEMORY_POOL);
-    }
-
-    bsal_memory_pool_profile(self, OPERATION_ALLOCATE, size);
-
     if (bsal_bitmap_get_bit_uint32_t(&self->flags, FLAG_DISABLED)) {
         return bsal_memory_allocate(size, self->name);
     }
@@ -243,7 +246,7 @@ void *bsal_memory_pool_allocate_private(struct bsal_memory_pool *self, size_t si
      * directly.
      */
 
-    if (size >= (size_t)self->block_size) {
+    if (size >= self->block_size) {
         pointer = bsal_memory_allocate(size, self->name);
 
         bsal_set_add(&self->large_blocks, &pointer);
@@ -260,10 +263,6 @@ void *bsal_memory_pool_allocate_private(struct bsal_memory_pool *self, size_t si
     /* recycling is good for the environment
      */
     if (queue != NULL && bsal_queue_dequeue(queue, &pointer)) {
-
-        if (bsal_bitmap_get_bit_uint32_t(&self->flags, FLAG_ENABLE_TRACKING)) {
-            bsal_map_add_value(&self->allocated_blocks, &pointer, &size);
-        }
 
 #ifdef BSAL_MEMORY_POOL_DISCARD_EMPTY_QUEUES
         if (bsal_queue_empty(queue)) {
@@ -293,10 +292,6 @@ void *bsal_memory_pool_allocate_private(struct bsal_memory_pool *self, size_t si
         pointer = bsal_memory_block_allocate(self->current_block, size);
     }
 
-    if (bsal_bitmap_get_bit_uint32_t(&self->flags, FLAG_ENABLE_TRACKING)) {
-        bsal_map_add_value(&self->allocated_blocks, &pointer, &size);
-    }
-
     return pointer;
 }
 
@@ -313,22 +308,34 @@ void bsal_memory_pool_add_block(struct bsal_memory_pool *self)
 
 void bsal_memory_pool_free(struct bsal_memory_pool *self, void *pointer)
 {
-    struct bsal_queue *queue;
-    int size;
+    size_t size;
 
-    if (pointer == NULL) {
-        return;
-    }
+    BSAL_DEBUGGER_ASSERT(pointer != NULL);
 
     if (self == NULL) {
         bsal_memory_free(pointer, MEMORY_MEMORY_POOL);
         return;
     }
 
+    size = 0;
+
+    bsal_memory_pool_free_private(self, pointer);
+
+    if (bsal_map_get_value(&self->allocated_blocks, &pointer, &size)) {
+
+        bsal_map_delete(&self->allocated_blocks, &pointer);
+    }
+
     /*
-     * TODO: find out the actual size.
+     * find out the actual size.
      */
-    bsal_memory_pool_profile(self, OPERATION_FREE, 0);
+    bsal_memory_pool_profile(self, OPERATION_FREE, size);
+}
+
+void bsal_memory_pool_free_private(struct bsal_memory_pool *self, void *pointer)
+{
+    struct bsal_queue *queue;
+    size_t size;
 
     if (bsal_bitmap_get_bit_uint32_t(&self->flags, FLAG_DISABLED)) {
         bsal_memory_free(pointer, self->name);
@@ -371,8 +378,6 @@ void bsal_memory_pool_free(struct bsal_memory_pool *self, void *pointer)
     }
 
     bsal_queue_enqueue(queue, &pointer);
-
-    bsal_map_delete(&self->allocated_blocks, &pointer);
 }
 
 void bsal_memory_pool_disable_tracking(struct bsal_memory_pool *self)
@@ -481,7 +486,8 @@ void bsal_memory_pool_print(struct bsal_memory_pool *self)
 
     byte_count = (uint64_t)block_count * (uint64_t)self->block_size;
 
-    printf("EXAMINE memory_pool BlockSize: %d BlockCount: %d ByteCount: %" PRIu64 "\n",
+    printf("PRINT POOL Name= 0x%x memory_pool BlockSize: %d BlockCount: %d ByteCount: %" PRIu64 "\n",
+                    self->name,
                     (int)self->block_size,
                     block_count,
                     byte_count);
@@ -500,8 +506,8 @@ void bsal_memory_pool_set_name(struct bsal_memory_pool *self, int name)
 void bsal_memory_pool_examine(struct bsal_memory_pool *self)
 {
     printf("DEBUG_POOL Name= 0x%x"
-                    " ActiveSegments= %d (%d - %d)"
-                    " AllocatedBytes= %" PRIu64 " (%" PRIu64 " - %" PRIu64 ")"
+                    " AllocatedPointerCount= %d (%d - %d)"
+                    " AllocatedByteCount= %" PRIu64 " (%" PRIu64 " - %" PRIu64 ")"
                     "\n",
 
                     self->name,
@@ -511,6 +517,10 @@ void bsal_memory_pool_examine(struct bsal_memory_pool *self)
 
                     self->profile_allocated_byte_count - self->profile_freed_byte_count,
                     self->profile_allocated_byte_count, self->profile_freed_byte_count);
+
+#if 0
+    bsal_memory_pool_print(self);
+#endif
 }
 
 void bsal_memory_pool_profile(struct bsal_memory_pool *self, int operation, size_t byte_count)

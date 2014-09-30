@@ -1108,6 +1108,7 @@ void thorium_worker_free_message(struct thorium_worker *worker, struct thorium_m
          * or from another BIOSAL node altogether.
          */
 
+        BSAL_DEBUGGER_ASSERT(thorium_message_buffer(message) != NULL);
         thorium_worker_enqueue_message_for_triage(worker, message);
     }
 }
@@ -1117,6 +1118,8 @@ int thorium_worker_enqueue_message_for_triage(struct thorium_worker *worker, str
 #ifdef THORIUM_WORKER_DEBUG_INJECTION
     int worker_name;
 #endif
+
+    BSAL_DEBUGGER_ASSERT(thorium_message_buffer(message) != NULL);
 
     if (!bsal_fast_ring_push_from_producer(&worker->clean_message_ring_for_triage, message)) {
 
@@ -1142,7 +1145,17 @@ int thorium_worker_enqueue_message_for_triage(struct thorium_worker *worker, str
 
 int thorium_worker_dequeue_message_for_triage(struct thorium_worker *worker, struct thorium_message *message)
 {
-    return bsal_fast_ring_pop_from_consumer(&worker->clean_message_ring_for_triage, message);
+    int value;
+
+    value = bsal_fast_ring_pop_from_consumer(&worker->clean_message_ring_for_triage, message);
+
+#ifdef BSAL_DEBUGGER_ENABLE_ASSERT
+    if (value) {
+        BSAL_DEBUGGER_ASSERT(thorium_message_buffer(message) != NULL);
+    }
+#endif
+
+    return value;
 }
 
 /* Just return the number of queued messages.
@@ -1324,6 +1337,7 @@ void thorium_worker_run(struct thorium_worker *worker)
 
     if (bsal_fast_queue_dequeue(&worker->clean_message_queue_for_triage, &other_message)) {
 
+        BSAL_DEBUGGER_ASSERT(thorium_message_buffer(&other_message) != NULL);
         thorium_worker_enqueue_message_for_triage(worker, &other_message);
     }
 

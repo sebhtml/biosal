@@ -2265,6 +2265,8 @@ void thorium_node_recycle_message(struct thorium_node *self, struct thorium_mess
     worker_name = thorium_message_worker(message);
     buffer = thorium_message_buffer(message);
 
+    BSAL_DEBUGGER_ASSERT(buffer != NULL);
+
     /*
      * Otherwise, free the buffer here directly since this is a Thorium core
      * buffer for startup.

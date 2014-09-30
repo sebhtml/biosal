@@ -205,6 +205,7 @@ void thorium_actor_destroy(struct thorium_actor *self)
 
     while (bsal_queue_dequeue(&self->enqueued_messages, &message)) {
 
+        BSAL_DEBUGGER_ASSERT(thorium_message_buffer(&message) != NULL);
         thorium_worker_free_message(self->worker, &message);
     }
 
@@ -1886,6 +1887,18 @@ int thorium_actor_work(struct thorium_actor *self)
      * because actors can not be trusted.
      */
     buffer = thorium_message_buffer(&message);
+
+/*
+#ifdef BSAL_DEBUGGER_ENABLE_ASSERT
+    if (buffer == NULL) {
+        printf("Error: actor message is NULL, source %d destination %d action %x\n",
+                        thorium_message_source(&message),
+                        thorium_message_destination(&message),
+                        thorium_message_action(&message));
+    }
+#endif
+    BSAL_DEBUGGER_ASSERT(buffer != NULL);
+    */
     source_worker = thorium_message_worker(&message);
 
     BSAL_DEBUGGER_ASSERT(!bsal_memory_pool_has_leaks(ephemeral_memory));
@@ -1919,8 +1932,14 @@ int thorium_actor_work(struct thorium_actor *self)
 
     /*
      * Send the buffer back to the source to be recycled.
+     *
+     * The buffer may be NULL in some specific cases.
      */
-    thorium_worker_free_message(self->worker, &message);
+
+    if (buffer != NULL) {
+        BSAL_DEBUGGER_ASSERT(thorium_message_buffer(&message) != NULL);
+        thorium_worker_free_message(self->worker, &message);
+    }
 
     /*
      * Check if the actor is dead. If it is, give all the messages
@@ -1931,6 +1950,7 @@ int thorium_actor_work(struct thorium_actor *self)
 
         while (thorium_actor_dequeue_mailbox_message(self, &message)) {
 
+            BSAL_DEBUGGER_ASSERT(thorium_message_buffer(&message) != NULL);
             thorium_worker_free_message(self->worker, &message);
         }
     }
