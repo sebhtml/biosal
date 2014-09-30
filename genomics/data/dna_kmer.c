@@ -9,7 +9,7 @@
 #include <core/system/memory.h>
 #include <core/system/debugger.h>
 
-#include <core/hash/murmur_hash_2_64_a.h>
+#include <core/hash/hash.h>
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -217,7 +217,7 @@ uint64_t bsal_dna_kmer_hash(struct bsal_dna_kmer *self, int kmer_length,
      * comment this block
      */
 #if 0
-    hash = bsal_murmur_hash_2_64_a(self->encoded_data, kmer_length, seed);
+    hash = bsal_hash_data_uint64_t(self->encoded_data, kmer_length, seed);
 
     return hash;
 
@@ -229,9 +229,9 @@ uint64_t bsal_dna_kmer_hash(struct bsal_dna_kmer *self, int kmer_length,
     bsal_dna_kmer_get_sequence(self, sequence);
 #endif
 
-    /*hash = bsal_murmur_hash_2_64_a(sequence, kmer_length, seed);*/
+    /*hash = bsal_hash_data_uint64_t(sequence, kmer_length, seed);*/
 
-    hash = bsal_murmur_hash_2_64_a(self->encoded_data, encoded_length, seed);
+    hash = bsal_hash_data_uint64_t(self->encoded_data, encoded_length, seed);
 /*
     printf("%s %" PRIu64 "\n", sequence, hash);
     b1sal_free(sequence);
