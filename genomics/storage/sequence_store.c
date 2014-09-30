@@ -467,7 +467,7 @@ void bsal_sequence_store_ask(struct thorium_actor *self, struct thorium_message 
     if (entry_count > 0) {
         new_count = bsal_input_command_pack_size(&payload,
                         &concrete_actor->codec);
-        new_buffer = bsal_memory_pool_allocate(ephemeral_memory, new_count);
+        new_buffer = thorium_actor_allocate(self, new_count);
 
         bsal_input_command_pack(&payload, new_buffer,
                         &concrete_actor->codec);
@@ -480,8 +480,6 @@ void bsal_sequence_store_ask(struct thorium_actor *self, struct thorium_message 
 #ifdef BSAL_SEQUENCE_STORE_DEBUG
         printf("store/%d fulfill order\n", name);
 #endif
-
-        bsal_memory_pool_free(ephemeral_memory, new_buffer);
 
         concrete_actor->left -= entry_count;
 
