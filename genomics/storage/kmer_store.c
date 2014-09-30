@@ -456,7 +456,7 @@ void bsal_kmer_store_yield_reply(struct thorium_actor *self, struct thorium_mess
 
     new_count = bsal_map_pack_size(&concrete_actor->coverage_distribution);
 
-    new_buffer = bsal_memory_pool_allocate(ephemeral_memory, new_count);
+    new_buffer = thorium_actor_allocate(self, new_count);
 
     bsal_map_pack(&concrete_actor->coverage_distribution, new_buffer);
 
@@ -476,5 +476,4 @@ void bsal_kmer_store_yield_reply(struct thorium_actor *self, struct thorium_mess
 
     thorium_actor_send_empty(self, concrete_actor->source,
                             ACTION_PUSH_DATA_REPLY);
-
 }
