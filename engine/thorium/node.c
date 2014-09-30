@@ -2115,53 +2115,40 @@ void thorium_node_test_requests(struct thorium_node *node)
     int requests;
     int requests_to_test;
     int i;
-    int worker;
-    int difference;
-    int minimum;
     int maximum;
+    /*
+    int worker;
+    */
 
     /*
      * Use a half-life approach
      */
     requests = thorium_transport_get_active_request_count(&node->transport);
 
-    difference = requests - node->last_active_request_count;
+    /*
+     * Nothing to do.
+     */
+    if (requests == 0)
+        return;
 
-    requests_to_test = difference;
-
-    minimum = 8;
-    maximum = 64;
+    requests_to_test = requests;
 
     /*
      * Make sure the amount is within the bounds.
      */
-    if (requests_to_test < minimum) {
-        requests_to_test = minimum;
-    }
-
-    if (requests_to_test > maximum) {
-
+    maximum = 64;
+    if (requests_to_test > maximum)
         requests_to_test = maximum;
-    }
-
-    if (requests_to_test > requests) {
-
-        requests_to_test = requests;
-    }
-
-    /*
-     * Assign the last active request count.
-     */
-    node->last_active_request_count = requests;
 
     /* Test active buffer requests
      */
-
     i = 0;
     while (i < requests_to_test) {
         if (thorium_transport_test(&node->transport, &worker_buffer)) {
 
+#if 0
             worker = thorium_worker_buffer_get_worker(&worker_buffer);
+#endif
 
             thorium_node_inject_outbound_buffer(node, &worker_buffer);
         }

@@ -1,7 +1,7 @@
 
 #include "hash_table.h"
 
-#include <core/hash/murmur_hash_2_64_a.h>
+#include <core/hash/hash.h>
 
 #include <core/system/memory.h>
 #include <core/system/memory_pool.h>
@@ -147,7 +147,7 @@ uint64_t bsal_hash_table_hash(void *key, int key_size, unsigned int seed)
         printf("DEBUG ERROR key_size %d\n", key_size);
     }
 
-    return bsal_murmur_hash_2_64_a(key, key_size, seed);
+    return bsal_hash_data_uint64_t(key, key_size, seed);
 }
 
 uint64_t bsal_hash_table_hash1(struct bsal_hash_table *table, void *key)

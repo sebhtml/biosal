@@ -2,7 +2,7 @@
 #include "process.h"
 
 #include <core/helpers/statistics.h>
-#include <core/hash/murmur_hash_2_64_a.h>
+#include <core/hash/hash.h>
 #include <core/system/command.h>
 
 #include <stdio.h>
@@ -114,7 +114,7 @@ void process_ping(struct thorium_actor *self, struct thorium_message *message)
     buffer_size = count - sizeof(expected_checksum);
     bucket = (uint64_t *)(buffer + buffer_size);
     expected_checksum = *bucket;
-    actual_checksum = bsal_murmur_hash_2_64_a(buffer, buffer_size, SEED);
+    actual_checksum = bsal_hash_data_uint64_t(buffer, buffer_size, SEED);
 
     if (expected_checksum != actual_checksum) {
         printf("TRANSPORT FAILED source: %d (%d) destination: %d (%d) tag: ACTION_PING count: %d"
@@ -223,7 +223,7 @@ void process_send_ping(struct thorium_actor *self)
         buffer[i] = i % 256;
     }
 
-    checksum = bsal_murmur_hash_2_64_a(buffer, buffer_size, SEED);
+    checksum = bsal_hash_data_uint64_t(buffer, buffer_size, SEED);
     bucket = (uint64_t *)(buffer + buffer_size);
     *bucket = checksum;
 

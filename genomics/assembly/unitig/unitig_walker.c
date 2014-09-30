@@ -16,7 +16,7 @@
 
 #include <core/helpers/order.h>
 
-#include <core/hash/murmur_hash_2_64_a.h>
+#include <core/hash/hash.h>
 
 #include <core/system/command.h>
 #include <core/system/debugger.h>
@@ -1284,7 +1284,7 @@ void bsal_unitig_walker_dump_path(struct thorium_actor *self)
                     path_name, sequence_length, start_position);
 #endif
 
-        signature = bsal_murmur_hash_2_64_a(sequence, sequence_length, SIGNATURE_SEED);
+        signature = bsal_hash_data_uint64_t(sequence, sequence_length, SIGNATURE_SEED);
 
         bsal_unitig_walker_write(self, path_name,
                     sequence, sequence_length, concrete_self->current_is_circular,

@@ -29,8 +29,8 @@
 
 void bsal_memory_pool_init(struct bsal_memory_pool *self, int block_size, int name)
 {
-    bsal_map_init(&self->recycle_bin, sizeof(int), sizeof(struct bsal_queue));
-    bsal_map_init(&self->allocated_blocks, sizeof(void *), sizeof(int));
+    bsal_map_init(&self->recycle_bin, sizeof(size_t), sizeof(struct bsal_queue));
+    bsal_map_init(&self->allocated_blocks, sizeof(void *), sizeof(size_t));
     bsal_set_init(&self->large_blocks, sizeof(void *));
 
     self->current_block = NULL;
@@ -206,6 +206,14 @@ void *bsal_memory_pool_allocate(struct bsal_memory_pool *self, size_t size)
 
     pointer = bsal_memory_pool_allocate_private(self, size);
 
+    /*
+     * If tracking is not disabled, track the allocation.
+     */
+    if (self != NULL
+                    && bsal_bitmap_get_bit_uint32_t(&self->flags, FLAG_ENABLE_TRACKING)) {
+        bsal_map_add_value(&self->allocated_blocks, &pointer, &size);
+    }
+
     if (pointer == NULL) {
         printf("Error, requested %zu bytes, returned pointer is NULL\n",
                         size);
@@ -227,12 +235,18 @@ void *bsal_memory_pool_allocate_private(struct bsal_memory_pool *self, size_t si
         return NULL;
     }
 
+    /*
+     * If the object is NULL, skip it.
+     */
     if (self == NULL) {
         return bsal_memory_allocate(size, MEMORY_MEMORY_POOL);
     }
 
     bsal_memory_pool_profile(self, OPERATION_ALLOCATE, size);
 
+    /*
+     * Pass-through is enabled.
+     */
     if (bsal_bitmap_get_bit_uint32_t(&self->flags, FLAG_DISABLED)) {
         return bsal_memory_allocate(size, self->name);
     }
@@ -243,7 +257,7 @@ void *bsal_memory_pool_allocate_private(struct bsal_memory_pool *self, size_t si
      * directly.
      */
 
-    if (size >= (size_t)self->block_size) {
+    if (size >= self->block_size) {
         pointer = bsal_memory_allocate(size, self->name);
 
         bsal_set_add(&self->large_blocks, &pointer);
@@ -260,10 +274,6 @@ void *bsal_memory_pool_allocate_private(struct bsal_memory_pool *self, size_t si
     /* recycling is good for the environment
      */
     if (queue != NULL && bsal_queue_dequeue(queue, &pointer)) {
-
-        if (bsal_bitmap_get_bit_uint32_t(&self->flags, FLAG_ENABLE_TRACKING)) {
-            bsal_map_add_value(&self->allocated_blocks, &pointer, &size);
-        }
 
 #ifdef BSAL_MEMORY_POOL_DISCARD_EMPTY_QUEUES
         if (bsal_queue_empty(queue)) {
@@ -293,10 +303,6 @@ void *bsal_memory_pool_allocate_private(struct bsal_memory_pool *self, size_t si
         pointer = bsal_memory_block_allocate(self->current_block, size);
     }
 
-    if (bsal_bitmap_get_bit_uint32_t(&self->flags, FLAG_ENABLE_TRACKING)) {
-        bsal_map_add_value(&self->allocated_blocks, &pointer, &size);
-    }
-
     return pointer;
 }
 
@@ -314,22 +320,49 @@ void bsal_memory_pool_add_block(struct bsal_memory_pool *self)
 void bsal_memory_pool_free(struct bsal_memory_pool *self, void *pointer)
 {
     struct bsal_queue *queue;
-    int size;
+    size_t size;
 
     if (pointer == NULL) {
         return;
     }
 
+    /*
+     * Not managed by the pool.
+     */
     if (self == NULL) {
         bsal_memory_free(pointer, MEMORY_MEMORY_POOL);
         return;
     }
 
     /*
-     * TODO: find out the actual size.
+     * Return immediately if memory allocation tracking is disabled.
+     * For example, the ephemeral memory component of a worker
+     * disable tracking (flag FLAG_ENABLE_TRACKING = 0). To free memory,
+     * for the ephemeral memory, bsal_memory_pool_free_all is
+     * used.
      */
-    bsal_memory_pool_profile(self, OPERATION_FREE, 0);
 
+    if (bsal_bitmap_get_bit_uint32_t(&self->flags, FLAG_ENABLE_TRACKING)) {
+
+        /*
+         * This was allocated by this pool.
+         */
+        if (bsal_map_get_value(&self->allocated_blocks, &pointer, &size)) {
+
+            /*
+             * Find out the actual size.
+             */
+            bsal_memory_pool_profile(self, OPERATION_FREE, size);
+            bsal_map_delete(&self->allocated_blocks, &pointer);
+        }
+    } else {
+
+        bsal_memory_pool_profile(self, OPERATION_FREE, 0);
+    }
+
+    /*
+     * If the pool is disabled, just forward the request.
+     */
     if (bsal_bitmap_get_bit_uint32_t(&self->flags, FLAG_DISABLED)) {
         bsal_memory_free(pointer, self->name);
         return;
@@ -346,23 +379,8 @@ void bsal_memory_pool_free(struct bsal_memory_pool *self, void *pointer)
     }
 
     /*
-     * Return immediately if memory allocation tracking is disabled.
-     * For example, the ephemeral memory component of a worker
-     * disable tracking (flag FLAG_ENABLE_TRACKING = 0). To free memory,
-     * for the ephemeral memory, bsal_memory_pool_free_all is
-     * used.
+     * Recycle the buffer.
      */
-    if (!bsal_bitmap_get_bit_uint32_t(&self->flags, FLAG_ENABLE_TRACKING)) {
-        return;
-    }
-
-    /*
-     * This was not allocated by this pool.
-     */
-    if (!bsal_map_get_value(&self->allocated_blocks, &pointer, &size)) {
-        return;
-    }
-
     queue = bsal_map_get(&self->recycle_bin, &size);
 
     if (queue == NULL) {
@@ -371,8 +389,6 @@ void bsal_memory_pool_free(struct bsal_memory_pool *self, void *pointer)
     }
 
     bsal_queue_enqueue(queue, &pointer);
-
-    bsal_map_delete(&self->allocated_blocks, &pointer);
 }
 
 void bsal_memory_pool_disable_tracking(struct bsal_memory_pool *self)

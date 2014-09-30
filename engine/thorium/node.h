@@ -98,10 +98,12 @@ struct thorium_node {
 
     uint32_t flags;
 
+#if 0
     /*
      * Last number of active requests.
      */
     int last_active_request_count;
+#endif
 
 #ifdef THORIUM_NODE_INJECT_CLEAN_WORKER_BUFFERS
     struct bsal_fast_queue clean_outbound_buffers_to_inject;
