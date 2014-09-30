@@ -21,6 +21,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#define MEMORY_KMER_STORE 0x51daca18
+
 struct thorium_script bsal_kmer_store_script = {
     .identifier = SCRIPT_KMER_STORE,
     .init = bsal_kmer_store_init,
@@ -35,6 +37,8 @@ void bsal_kmer_store_init(struct thorium_actor *self)
     struct bsal_kmer_store *concrete_actor;
 
     concrete_actor = (struct bsal_kmer_store *)thorium_actor_concrete_actor(self);
+
+    bsal_memory_pool_init(&concrete_actor->persistent_memory, 0, MEMORY_KMER_STORE);
     concrete_actor->kmer_length = -1;
     concrete_actor->received = 0;
 
@@ -65,6 +69,13 @@ void bsal_kmer_store_destroy(struct thorium_actor *self)
 
     concrete_actor = (struct bsal_kmer_store *)thorium_actor_concrete_actor(self);
 
+    printf("%s/%d MemoryUsageReport\n",
+                    thorium_actor_script_name(self),
+                    thorium_actor_name(self));
+
+    bsal_memory_pool_examine(&concrete_actor->persistent_memory);
+    bsal_map_examine(&concrete_actor->table);
+
     if (concrete_actor->kmer_length != -1) {
         bsal_map_destroy(&concrete_actor->table);
     }
@@ -73,6 +84,8 @@ void bsal_kmer_store_destroy(struct thorium_actor *self)
     bsal_dna_codec_destroy(&concrete_actor->storage_codec);
 
     concrete_actor->kmer_length = -1;
+
+    bsal_memory_pool_destroy(&concrete_actor->persistent_memory);
 }
 
 void bsal_kmer_store_receive(struct thorium_actor *self, struct thorium_message *message)
@@ -128,6 +141,8 @@ void bsal_kmer_store_receive(struct thorium_actor *self, struct thorium_message 
 
         bsal_map_init(&concrete_actor->table, concrete_actor->key_length_in_bytes,
                         sizeof(int));
+        bsal_map_set_memory_pool(&concrete_actor->table,
+                        &concrete_actor->persistent_memory);
 
         /*
          * Configure the map for better performance.

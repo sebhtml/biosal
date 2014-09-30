@@ -67,5 +67,6 @@ void bsal_map_set_threshold(struct bsal_map *self, double threshold);
 int bsal_map_is_currently_resizing(struct bsal_map *self);
 
 void bsal_map_clear(struct bsal_map *self);
+void bsal_map_examine(struct bsal_map *self);
 
 #endif

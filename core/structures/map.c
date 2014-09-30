@@ -8,6 +8,9 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <stdint.h>
+
+#include <inttypes.h>
 
 #define BSAL_MAP_ENABLE_ESTIMATION
 
@@ -321,4 +324,18 @@ void bsal_map_clear(struct bsal_map *self)
 
     bsal_map_init(self, key_size, value_size);
     /*bsal_dynamic_hash_table_clear(&self->table);*/
+}
+
+void bsal_map_examine(struct bsal_map *self)
+{
+    int key_size;
+    int value_size;
+    uint64_t size;
+
+    key_size = bsal_map_get_key_size(self);
+    value_size = bsal_map_get_value_size(self);
+    size = bsal_map_size(self);
+
+    printf("bsal_map_examine key_size %d value_size %d size %" PRIu64 "\n",
+                    key_size, value_size, size);
 }
