@@ -3,7 +3,7 @@ biosal is a distributed BIOlogical Sequence Actor Library.
 biosal applications are written in the form of actors which send each other messages,
 change their state, spawn other actors and eventually die of old age.
 These actors run on top
-of biosal runtime system called "The Thorium Engine". Thorium is a distributed actor machine.
+of biosal runtime system called "The Thorium Engine" using the [API](Documentation/API.md). Thorium is a distributed actor machine.
 Thorium uses script-wise symmetric actor placement and is targeted for high-performance computing.
 Thorium is a general purpose actor model implementation.
 
