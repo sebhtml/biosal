@@ -1470,10 +1470,19 @@ void biosal_assembly_graph_builder_get_producers_for_work_stealing(struct thoriu
      */
     core_vector_clear(producers_for_work_stealing);
 
+#ifdef __bgq__
+    /*
+     * Disable this right now
+     * because sequence stores are generating very big messages.
+     *
+     * There is not enough memory on Blue Gene/Q per node.
+     */
+    victim_count = 0;
+#endif
+
     /*
      * There is the same number of sliding_windows and sequence_stores.
      */
-
     for (i = 0; i < victim_count; ++i) {
         index = current_index;
 
