@@ -55,7 +55,7 @@ struct biosal_dna_kmer;
  * http://docs.openstack.org/openstack-ops/content/storage_decision.html
  */
 struct biosal_assembly_graph_store {
-    struct biosal_map table;
+    struct core_map table;
     struct biosal_dna_codec transport_codec;
     struct biosal_dna_codec storage_codec;
     int kmer_length;
@@ -67,10 +67,10 @@ struct biosal_assembly_graph_store {
     uint64_t received;
     uint64_t last_received;
 
-    struct biosal_memory_pool persistent_memory;
+    struct core_memory_pool persistent_memory;
 
-    struct biosal_map coverage_distribution;
-    struct biosal_map_iterator iterator;
+    struct core_map coverage_distribution;
+    struct core_map_iterator iterator;
     int source;
 
     uint64_t received_arc_count;

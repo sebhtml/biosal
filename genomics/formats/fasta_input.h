@@ -14,8 +14,8 @@
 /*
  * A driver for fasta input.
  */
-struct biosal_fasta_input {
-    struct biosal_buffered_reader reader;
+struct core_fasta_input {
+    struct core_buffered_reader reader;
 
     char *buffer;
     char *next_header;
@@ -24,15 +24,15 @@ struct biosal_fasta_input {
     int has_first;
 };
 
-extern struct biosal_input_format_interface biosal_fasta_input_operations;
+extern struct biosal_input_format_interface core_fasta_input_operations;
 
-void biosal_fasta_input_init(struct biosal_input_format *self);
-void biosal_fasta_input_destroy(struct biosal_input_format *self);
-uint64_t biosal_fasta_input_get_sequence(struct biosal_input_format *self,
+void core_fasta_input_init(struct biosal_input_format *self);
+void core_fasta_input_destroy(struct biosal_input_format *self);
+uint64_t core_fasta_input_get_sequence(struct biosal_input_format *self,
                 char *sequence);
-int biosal_fasta_input_detect(struct biosal_input_format *self);
-uint64_t biosal_fasta_input_get_offset(struct biosal_input_format *self);
+int core_fasta_input_detect(struct biosal_input_format *self);
+uint64_t core_fasta_input_get_offset(struct biosal_input_format *self);
 
-int biosal_fasta_input_check_header(struct biosal_input_format *self, const char *line);
+int core_fasta_input_check_header(struct biosal_input_format *self, const char *line);
 
 #endif

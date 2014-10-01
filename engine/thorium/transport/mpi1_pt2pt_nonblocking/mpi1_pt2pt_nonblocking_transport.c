@@ -101,8 +101,8 @@ void thorium_mpi1_pt2pt_nonblocking_transport_init(struct thorium_transport *sel
     concrete_self->maximum_big_receive_request_count = 4;
     concrete_self->big_request_count = 0;
 
-    biosal_fast_queue_init(&concrete_self->send_requests, sizeof(struct thorium_mpi1_request));
-    biosal_fast_queue_init(&concrete_self->receive_requests, sizeof(struct thorium_mpi1_request));
+    core_fast_queue_init(&concrete_self->send_requests, sizeof(struct thorium_mpi1_request));
+    core_fast_queue_init(&concrete_self->receive_requests, sizeof(struct thorium_mpi1_request));
 
     /*
     required = MPI_THREAD_MULTIPLE;
@@ -194,22 +194,22 @@ void thorium_mpi1_pt2pt_nonblocking_transport_destroy(struct thorium_transport *
     /*
      * Destroy send requests.
      */
-    while (biosal_fast_queue_dequeue(&concrete_self->send_requests, &active_request)) {
+    while (core_fast_queue_dequeue(&concrete_self->send_requests, &active_request)) {
         MPI_Request_free(thorium_mpi1_request_request(&active_request));
     }
 
-    biosal_fast_queue_destroy(&concrete_self->send_requests);
+    core_fast_queue_destroy(&concrete_self->send_requests);
 
     /*
      * Destroy receive requests.
      */
-    while (biosal_fast_queue_dequeue(&concrete_self->receive_requests, &active_request)) {
+    while (core_fast_queue_dequeue(&concrete_self->receive_requests, &active_request)) {
         buffer = thorium_mpi1_request_buffer(&active_request);
-        biosal_memory_pool_free(self->inbound_message_memory_pool, buffer);
+        core_memory_pool_free(self->inbound_message_memory_pool, buffer);
         MPI_Request_free(thorium_mpi1_request_request(&active_request));
     }
 
-    biosal_fast_queue_destroy(&concrete_self->receive_requests);
+    core_fast_queue_destroy(&concrete_self->receive_requests);
 
     /*
      * \see http://www.mpich.org/static/docs/v3.1/www3/MPI_Comm_free.html
@@ -251,7 +251,7 @@ int thorium_mpi1_pt2pt_nonblocking_transport_send(struct thorium_transport *self
     count = thorium_message_count(message);
     destination = thorium_message_destination_node(message);
 
-    BIOSAL_DEBUGGER_ASSERT(buffer == NULL || count > 0);
+    CORE_DEBUGGER_ASSERT(buffer == NULL || count > 0);
 
     payload_tag = TAG_SMALL_PAYLOAD;
 
@@ -270,11 +270,11 @@ int thorium_mpi1_pt2pt_nonblocking_transport_send(struct thorium_transport *self
         payload_tag = thorium_mpi1_pt2pt_nonblocking_transport_get_big_tag(self);
 
         count2 = sizeof(payload_tag) + sizeof(count);
-        buffer2 = biosal_memory_pool_allocate(self->outbound_message_memory_pool,
+        buffer2 = core_memory_pool_allocate(self->outbound_message_memory_pool,
                         count2);
 
-        biosal_memory_copy(buffer2 + 0, &payload_tag, sizeof(payload_tag));
-        biosal_memory_copy(buffer2 + sizeof(payload_tag), &count, sizeof(count));
+        core_memory_copy(buffer2 + 0, &payload_tag, sizeof(payload_tag));
+        core_memory_copy(buffer2 + sizeof(payload_tag), &count, sizeof(count));
 
         thorium_mpi1_request_init(&active_request2, buffer2);
         thorium_mpi1_request_mark(&active_request2);
@@ -292,7 +292,7 @@ int thorium_mpi1_pt2pt_nonblocking_transport_send(struct thorium_transport *self
             return 0;
         }
 
-        biosal_fast_queue_enqueue(&concrete_self->send_requests, &active_request2);
+        core_fast_queue_enqueue(&concrete_self->send_requests, &active_request2);
     }
 
     thorium_mpi1_request_init_with_worker(&active_request, buffer, worker);
@@ -319,7 +319,7 @@ int thorium_mpi1_pt2pt_nonblocking_transport_send(struct thorium_transport *self
      */
     /*MPI_Request_free(&request);*/
 
-    biosal_fast_queue_enqueue(&concrete_self->send_requests, &active_request);
+    core_fast_queue_enqueue(&concrete_self->send_requests, &active_request);
 
     return 1;
 }
@@ -386,7 +386,7 @@ int thorium_mpi1_pt2pt_nonblocking_transport_receive(struct thorium_transport *s
     /*
      * Dequeue a request and check if it is ready.
      */
-    if (!biosal_fast_queue_dequeue(&concrete_self->receive_requests, &request)) {
+    if (!core_fast_queue_dequeue(&concrete_self->receive_requests, &request)) {
 
         return 0;
     }
@@ -400,7 +400,7 @@ int thorium_mpi1_pt2pt_nonblocking_transport_receive(struct thorium_transport *s
          * Put it back in the queue now.
          */
 
-        biosal_fast_queue_enqueue(&concrete_self->receive_requests, &request);
+        core_fast_queue_enqueue(&concrete_self->receive_requests, &request);
 
         return 0;
     }
@@ -438,7 +438,7 @@ int thorium_mpi1_pt2pt_nonblocking_transport_receive(struct thorium_transport *s
         thorium_mpi1_pt2pt_nonblocking_transport_add_receive_request(self, request_tag, size,
                         source);
 
-        biosal_memory_pool_free(self->inbound_message_memory_pool, buffer);
+        core_memory_pool_free(self->inbound_message_memory_pool, buffer);
 
         return 0;
     }
@@ -481,7 +481,7 @@ int thorium_mpi1_pt2pt_nonblocking_transport_test(struct thorium_transport *self
 
     concrete_self = thorium_transport_get_concrete_transport(self);
 
-    if (biosal_fast_queue_dequeue(&concrete_self->send_requests, &active_request)) {
+    if (core_fast_queue_dequeue(&concrete_self->send_requests, &active_request)) {
 
         if (thorium_mpi1_request_test(&active_request)) {
 
@@ -500,7 +500,7 @@ int thorium_mpi1_pt2pt_nonblocking_transport_test(struct thorium_transport *self
 #ifdef BUG_LEAKY_ABSTRACTION_2014_09_02
                 printf("TAG_BIG_HANDSHAKE completed.\n");
 #endif
-                biosal_memory_pool_free(self->outbound_message_memory_pool, buffer);
+                core_memory_pool_free(self->outbound_message_memory_pool, buffer);
                 return 0;
             }
 
@@ -511,7 +511,7 @@ int thorium_mpi1_pt2pt_nonblocking_transport_test(struct thorium_transport *self
             }
 #endif
 
-#ifdef BIOSAL_DEBUGGER_ENABLE_ASSERT
+#ifdef CORE_DEBUGGER_ENABLE_ASSERT
 
 #endif
             /*
@@ -524,7 +524,7 @@ int thorium_mpi1_pt2pt_nonblocking_transport_test(struct thorium_transport *self
 
         /* Just put it back in the FIFO for later */
         } else {
-            biosal_fast_queue_enqueue(&concrete_self->send_requests, &active_request);
+            core_fast_queue_enqueue(&concrete_self->send_requests, &active_request);
 
             return 0;
         }
@@ -544,9 +544,9 @@ void thorium_mpi1_pt2pt_nonblocking_transport_add_receive_request(struct thorium
 
     concrete_self = thorium_transport_get_concrete_transport(self);
 
-    BIOSAL_DEBUGGER_ASSERT(self->inbound_message_memory_pool != NULL);
+    CORE_DEBUGGER_ASSERT(self->inbound_message_memory_pool != NULL);
 
-    buffer = biosal_memory_pool_allocate(self->inbound_message_memory_pool,
+    buffer = core_memory_pool_allocate(self->inbound_message_memory_pool,
                     count);
 
 #ifdef DEBUG_BIG_HANDSHAKE
@@ -567,11 +567,11 @@ void thorium_mpi1_pt2pt_nonblocking_transport_add_receive_request(struct thorium
         return;
     }
 
-    biosal_fast_queue_enqueue(&concrete_self->receive_requests, &request);
+    core_fast_queue_enqueue(&concrete_self->receive_requests, &request);
 
 #ifdef THORIUM_MPI1_PT2PT_NON_BLOCKING_DEBUG
     printf("DEBUG Non Blocking added a request, now with %d/%d\n",
-                        (int)biosal_fast_queue_size(&concrete_self->receive_requests),
+                        (int)core_fast_queue_size(&concrete_self->receive_requests),
                         concrete_self->maximum_receive_request_count);
 #endif
 }

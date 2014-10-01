@@ -37,7 +37,7 @@ void biosal_assembly_arc_kernel_init(struct thorium_actor *self)
 
     concrete_self->kmer_length = -1;
 
-    biosal_fast_queue_init(&concrete_self->producers_for_work_stealing, sizeof(int));
+    core_fast_queue_init(&concrete_self->producers_for_work_stealing, sizeof(int));
 
     thorium_actor_add_action(self, ACTION_SET_KMER_LENGTH,
                     biosal_assembly_arc_kernel_set_kmer_length);
@@ -85,7 +85,7 @@ void biosal_assembly_arc_kernel_destroy(struct thorium_actor *self)
     concrete_self->producer = THORIUM_ACTOR_NOBODY;
     concrete_self->consumer = THORIUM_ACTOR_NOBODY;
 
-    biosal_fast_queue_destroy(&concrete_self->producers_for_work_stealing);
+    core_fast_queue_destroy(&concrete_self->producers_for_work_stealing);
 }
 
 void biosal_assembly_arc_kernel_receive(struct thorium_actor *self, struct thorium_message *message)
@@ -127,7 +127,7 @@ void biosal_assembly_arc_kernel_receive(struct thorium_actor *self, struct thori
 
     } else if (tag == ACTION_SEQUENCE_STORE_ASK_REPLY) {
 
-        if (biosal_fast_queue_dequeue(&concrete_self->producers_for_work_stealing, &producer)) {
+        if (core_fast_queue_dequeue(&concrete_self->producers_for_work_stealing, &producer)) {
 
             /*
              * Do some work stealing with the producer of another consumer.
@@ -216,8 +216,8 @@ void biosal_assembly_arc_kernel_push_sequence_data_block(struct thorium_actor *s
     struct biosal_assembly_arc_kernel *concrete_self;
     struct biosal_input_command input_block;
     void *buffer;
-    struct biosal_memory_pool *ephemeral_memory;
-    struct biosal_vector *sequences;
+    struct core_memory_pool *ephemeral_memory;
+    struct core_vector *sequences;
     struct biosal_assembly_arc_block output_block;
     int entries;
     int i;
@@ -262,7 +262,7 @@ void biosal_assembly_arc_kernel_push_sequence_data_block(struct thorium_actor *s
         return;
     }
 
-    BIOSAL_DEBUGGER_LEAK_DETECTION_BEGIN(ephemeral_memory, data_block);
+    CORE_DEBUGGER_LEAK_DETECTION_BEGIN(ephemeral_memory, data_block);
 
     biosal_input_command_init_empty(&input_block);
     biosal_input_command_unpack(&input_block, buffer, ephemeral_memory,
@@ -270,7 +270,7 @@ void biosal_assembly_arc_kernel_push_sequence_data_block(struct thorium_actor *s
 
     sequences = biosal_input_command_entries(&input_block);
 
-    entries = biosal_vector_size(sequences);
+    entries = core_vector_size(sequences);
 
 #if 0
     printf("ENTRIES %d\n", entries);
@@ -298,14 +298,14 @@ void biosal_assembly_arc_kernel_push_sequence_data_block(struct thorium_actor *s
                     entries);
 #endif
 
-    BIOSAL_DEBUGGER_LEAK_DETECTION_BEGIN(ephemeral_memory, length_loop);
+    CORE_DEBUGGER_LEAK_DETECTION_BEGIN(ephemeral_memory, length_loop);
 
     /*
      * Get maximum length
      */
     for (i = 0 ; i < entries ; i++) {
 
-        dna_sequence = biosal_vector_at(sequences, i);
+        dna_sequence = core_vector_at(sequences, i);
 
         length = biosal_dna_sequence_length(dna_sequence);
 
@@ -319,13 +319,13 @@ void biosal_assembly_arc_kernel_push_sequence_data_block(struct thorium_actor *s
         to_reserve += 2 * length;
     }
 
-    BIOSAL_DEBUGGER_LEAK_DETECTION_END(ephemeral_memory, length_loop);
+    CORE_DEBUGGER_LEAK_DETECTION_END(ephemeral_memory, length_loop);
 
     biosal_assembly_arc_block_reserve(&output_block, to_reserve);
 
-    sequence = biosal_memory_pool_allocate(ephemeral_memory, maximum_length + 1);
+    sequence = core_memory_pool_allocate(ephemeral_memory, maximum_length + 1);
 
-    /*BIOSAL_DEBUGGER_LEAK_DETECTION_BEGIN(ephemeral_memory, loop_arc_generation);*/
+    /*CORE_DEBUGGER_LEAK_DETECTION_BEGIN(ephemeral_memory, loop_arc_generation);*/
 
     profile_kmer_init_calls = 0;
     profile_kmer_destroy_calls = 0;
@@ -337,13 +337,13 @@ void biosal_assembly_arc_kernel_push_sequence_data_block(struct thorium_actor *s
      */
     for (i = 0 ; i < entries ; i++) {
 
-        dna_sequence = biosal_vector_at(sequences, i);
+        dna_sequence = core_vector_at(sequences, i);
         length = biosal_dna_sequence_length(dna_sequence);
         biosal_dna_sequence_get_sequence(dna_sequence, sequence, &concrete_self->codec);
 
         limit = length - concrete_self->kmer_length + 1;
 
-        /*BIOSAL_DEBUGGER_LEAK_DETECTION_BEGIN(ephemeral_memory, loop_arc_generation_sequence);*/
+        /*CORE_DEBUGGER_LEAK_DETECTION_BEGIN(ephemeral_memory, loop_arc_generation_sequence);*/
 
         for (position = 0; position < limit; position++) {
 
@@ -416,7 +416,7 @@ void biosal_assembly_arc_kernel_push_sequence_data_block(struct thorium_actor *s
             }
         }
 
-        /*BIOSAL_DEBUGGER_LEAK_DETECTION_END(ephemeral_memory, loop_arc_generation_sequence);*/
+        /*CORE_DEBUGGER_LEAK_DETECTION_END(ephemeral_memory, loop_arc_generation_sequence);*/
     }
 
 #if 0
@@ -424,7 +424,7 @@ void biosal_assembly_arc_kernel_push_sequence_data_block(struct thorium_actor *s
                     profile_kmer_init_calls, profile_kmer_destroy_calls);
 #endif
 
-    /*BIOSAL_DEBUGGER_LEAK_DETECTION_END(ephemeral_memory, loop_arc_generation);*/
+    /*CORE_DEBUGGER_LEAK_DETECTION_END(ephemeral_memory, loop_arc_generation);*/
 
     new_count = biosal_assembly_arc_block_pack_size(&output_block, concrete_self->kmer_length,
                     &concrete_self->codec);
@@ -445,17 +445,17 @@ void biosal_assembly_arc_kernel_push_sequence_data_block(struct thorium_actor *s
 
     thorium_message_destroy(&new_message);
 
-    biosal_memory_pool_free(ephemeral_memory, sequence);
+    core_memory_pool_free(ephemeral_memory, sequence);
 
-    BIOSAL_DEBUGGER_LEAK_DETECTION_END(ephemeral_memory, data_block);
+    CORE_DEBUGGER_LEAK_DETECTION_END(ephemeral_memory, data_block);
 }
 
 void biosal_assembly_arc_kernel_set_producers_for_work_stealing(struct thorium_actor *self, struct thorium_message *message)
 {
     struct biosal_assembly_arc_kernel *concrete_self;
-    struct biosal_memory_pool *ephemeral_memory;
+    struct core_memory_pool *ephemeral_memory;
     void *buffer;
-    struct biosal_vector producers;
+    struct core_vector producers;
     int i;
     int size;
     int producer;
@@ -464,28 +464,28 @@ void biosal_assembly_arc_kernel_set_producers_for_work_stealing(struct thorium_a
     concrete_self = thorium_actor_concrete_actor(self);
     buffer = thorium_message_buffer(message);
 
-    biosal_vector_init(&producers, sizeof(int));
-    biosal_vector_set_memory_pool(&producers, ephemeral_memory);
-    biosal_vector_unpack(&producers, buffer);
+    core_vector_init(&producers, sizeof(int));
+    core_vector_set_memory_pool(&producers, ephemeral_memory);
+    core_vector_unpack(&producers, buffer);
 
     i = 0;
-    size = biosal_vector_size(&producers);
+    size = core_vector_size(&producers);
 
     while (i < size) {
 
-        producer = biosal_vector_at_as_int(&producers, i);
-        biosal_fast_queue_enqueue(&concrete_self->producers_for_work_stealing, &producer);
+        producer = core_vector_at_as_int(&producers, i);
+        core_fast_queue_enqueue(&concrete_self->producers_for_work_stealing, &producer);
 
         ++i;
     }
 
 #if 0
     printf("ACTION_SET_PRODUCERS_FOR_WORK_STEALING: \n");
-    biosal_vector_print_int(&producers);
+    core_vector_print_int(&producers);
     printf("\n");
 #endif
 
-    biosal_vector_destroy(&producers);
+    core_vector_destroy(&producers);
 
     thorium_actor_send_reply_empty(self, ACTION_SET_PRODUCERS_FOR_WORK_STEALING_REPLY);
 }

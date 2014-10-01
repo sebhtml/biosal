@@ -18,7 +18,7 @@ int main(int argc, char **argv)
     void *buffer;
     int count;
     struct biosal_dna_codec codec;
-    struct biosal_memory_pool pool;
+    struct core_memory_pool pool;
     int kmer_length;
     char sequence[] = "ATGATCTGCAGTACTGAC";
     int type;
@@ -32,7 +32,7 @@ int main(int argc, char **argv)
 
     kmer_length = strlen(sequence);
     biosal_dna_codec_init(&codec);
-    biosal_memory_pool_init(&pool, 1000000, BIOSAL_MEMORY_POOL_NAME_OTHER);
+    core_memory_pool_init(&pool, 1000000, CORE_MEMORY_POOL_NAME_OTHER);
 
     biosal_dna_kmer_init(&kmer, sequence, &codec, &pool);
 
@@ -43,7 +43,7 @@ int main(int argc, char **argv)
 
     TEST_INT_IS_GREATER_THAN(count, 0);
 
-    buffer = biosal_memory_allocate(count, -1);
+    buffer = core_memory_allocate(count, -1);
 
     biosal_assembly_arc_pack(&arc, buffer, kmer_length, &codec);
 
@@ -65,10 +65,10 @@ int main(int argc, char **argv)
 
     biosal_dna_kmer_destroy(&kmer, &pool);
 
-    biosal_memory_pool_destroy(&pool);
+    core_memory_pool_destroy(&pool);
     biosal_dna_codec_destroy(&codec);
 
-    biosal_memory_free(buffer, -1);
+    core_memory_free(buffer, -1);
 
     END_TESTS();
 

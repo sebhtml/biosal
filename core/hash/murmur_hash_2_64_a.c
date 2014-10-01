@@ -6,7 +6,7 @@
  * \see https://code.google.com/p/maatkit/issues/attachmentText?id=19&aid=7029841249934490324&name=MurmurHash64.cpp&token=3b615cc6c16c91de800419e5e95ed1ba
  * \see https://code.google.com/p/smhasher/source/browse/trunk/MurmurHash2.cpp (MurmurHash64A)
  */
-uint64_t biosal_murmur_hash_2_64_a(const void *key, int length, unsigned int seed)
+uint64_t core_murmur_hash_2_64_a(const void *key, int length, unsigned int seed)
 {
     const uint64_t m = 0xc6a4a7935bd1e995;
     const int r = 47;

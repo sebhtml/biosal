@@ -24,10 +24,10 @@ struct thorium_fifo_scheduler {
     uint64_t normal_priority_dequeue_operations;
     uint64_t low_priority_dequeue_operations;
 
-    struct biosal_fast_queue max_priority_queue;
-    struct biosal_fast_queue high_priority_queue;
-    struct biosal_fast_queue normal_priority_queue;
-    struct biosal_fast_queue low_priority_queue;
+    struct core_fast_queue max_priority_queue;
+    struct core_fast_queue high_priority_queue;
+    struct core_fast_queue normal_priority_queue;
+    struct core_fast_queue low_priority_queue;
 };
 
 extern struct thorium_scheduler_interface thorium_fifo_scheduler_implementation;
@@ -42,7 +42,7 @@ int thorium_fifo_scheduler_size(struct thorium_scheduler *self);
 
 int thorium_fifo_scheduler_get_size_with_priority(struct thorium_fifo_scheduler *self, int priority);
 
-struct biosal_fast_queue *thorium_fifo_scheduler_select_queue(struct thorium_fifo_scheduler *self, int priority);
+struct core_fast_queue *thorium_fifo_scheduler_select_queue(struct thorium_fifo_scheduler *self, int priority);
 uint64_t *thorium_fifo_scheduler_select_counter(struct thorium_fifo_scheduler *self, int priority);
 
 int thorium_fifo_scheduler_dequeue_with_priority(struct thorium_fifo_scheduler *self, int priority,

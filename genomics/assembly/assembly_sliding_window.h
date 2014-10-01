@@ -27,7 +27,7 @@ struct biosal_assembly_sliding_window {
     int blocks;
     int consumer;
     int producer;
-    struct biosal_fast_queue producers_for_work_stealing;
+    struct core_fast_queue producers_for_work_stealing;
     int kmer_length;
 
     int producer_source;
@@ -40,7 +40,7 @@ struct biosal_assembly_sliding_window {
     int notified_children;
     uint64_t sum_of_kmers;
 
-    struct biosal_vector kernels;
+    struct core_vector kernels;
 
     int bytes_per_kmer;
 
@@ -50,7 +50,7 @@ struct biosal_assembly_sliding_window {
     int auto_scaling_in_progress;
     int auto_scaling_clone;
 
-    struct biosal_vector children;
+    struct core_vector children;
 
     int flushed_payloads;
 };

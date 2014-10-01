@@ -11,9 +11,9 @@
  * between any pair of consecutive ACTION_PING_REPLY events.
  */
 struct process {
-    struct biosal_vector times;
-    struct biosal_vector actors;
-    struct biosal_timer timer;
+    struct core_vector times;
+    struct core_vector actors;
+    struct core_timer timer;
     int ready;
     int received_ping_events;
 };

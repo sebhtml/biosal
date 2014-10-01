@@ -40,37 +40,37 @@ int biosal_assembly_graph_summary_pack_size(struct biosal_assembly_graph_summary
 {
     int bytes;
 
-    bytes = biosal_assembly_graph_summary_pack_unpack(self, BIOSAL_PACKER_OPERATION_PACK_SIZE, NULL);
+    bytes = biosal_assembly_graph_summary_pack_unpack(self, CORE_PACKER_OPERATION_PACK_SIZE, NULL);
 
     return bytes;
 }
 
 int biosal_assembly_graph_summary_pack(struct biosal_assembly_graph_summary *self, void *buffer)
 {
-    return biosal_assembly_graph_summary_pack_unpack(self, BIOSAL_PACKER_OPERATION_PACK, buffer);
+    return biosal_assembly_graph_summary_pack_unpack(self, CORE_PACKER_OPERATION_PACK, buffer);
 }
 
 int biosal_assembly_graph_summary_unpack(struct biosal_assembly_graph_summary *self, void *buffer)
 {
-    return biosal_assembly_graph_summary_pack_unpack(self, BIOSAL_PACKER_OPERATION_UNPACK, buffer);
+    return biosal_assembly_graph_summary_pack_unpack(self, CORE_PACKER_OPERATION_UNPACK, buffer);
 }
 
 int biosal_assembly_graph_summary_pack_unpack(struct biosal_assembly_graph_summary *self, int operation, void *buffer)
 {
     int count;
-    struct biosal_packer packer;
+    struct core_packer packer;
     int bytes;
 
-    biosal_packer_init(&packer, operation, buffer);
-    biosal_packer_process_uint64_t(&packer, &self->vertex_count);
-    biosal_packer_process_uint64_t(&packer, &self->vertex_observation_count);
-    biosal_packer_process_uint64_t(&packer, &self->arc_count);
+    core_packer_init(&packer, operation, buffer);
+    core_packer_process_uint64_t(&packer, &self->vertex_count);
+    core_packer_process_uint64_t(&packer, &self->vertex_observation_count);
+    core_packer_process_uint64_t(&packer, &self->arc_count);
 
     bytes = BIOSAL_DEGREE_VALUE_COUNT * BIOSAL_DEGREE_VALUE_COUNT * sizeof(uint64_t);
-    biosal_packer_process(&packer, &self->degree_frequencies, bytes);
+    core_packer_process(&packer, &self->degree_frequencies, bytes);
 
-    count = biosal_packer_get_byte_count(&packer);
-    biosal_packer_destroy(&packer);
+    count = core_packer_get_byte_count(&packer);
+    core_packer_destroy(&packer);
 
     return count;
 }
@@ -128,10 +128,10 @@ void biosal_assembly_graph_summary_add(struct biosal_assembly_graph_summary *sel
 uint64_t *biosal_assembly_graph_summary_get_degree_bucket(struct biosal_assembly_graph_summary *self, int parent_count,
                 int child_count)
 {
-    BIOSAL_DEBUGGER_ASSERT(parent_count >= 0);
-    BIOSAL_DEBUGGER_ASSERT(parent_count <= BIOSAL_DNA_ALPHABET_SIZE);
-    BIOSAL_DEBUGGER_ASSERT(child_count >= 0);
-    BIOSAL_DEBUGGER_ASSERT(child_count <= BIOSAL_DNA_ALPHABET_SIZE);
+    CORE_DEBUGGER_ASSERT(parent_count >= 0);
+    CORE_DEBUGGER_ASSERT(parent_count <= BIOSAL_DNA_ALPHABET_SIZE);
+    CORE_DEBUGGER_ASSERT(child_count >= 0);
+    CORE_DEBUGGER_ASSERT(child_count <= BIOSAL_DNA_ALPHABET_SIZE);
 
     return self->degree_frequencies + parent_count * BIOSAL_DEGREE_VALUE_COUNT + child_count;
 }

@@ -19,21 +19,21 @@ int main(int argc, char **argv)
     expected_value = 42;
     actual_value = 100;
 
-    buffer = biosal_memory_allocate(sizeof(expected_value), -1);
+    buffer = core_memory_allocate(sizeof(expected_value), -1);
 
-    struct biosal_packer packer;
+    struct core_packer packer;
 
-    biosal_packer_init(&packer, BIOSAL_PACKER_OPERATION_PACK, buffer);
-    biosal_packer_process(&packer, &expected_value, sizeof(expected_value));
-    biosal_packer_destroy(&packer);
+    core_packer_init(&packer, CORE_PACKER_OPERATION_PACK, buffer);
+    core_packer_process(&packer, &expected_value, sizeof(expected_value));
+    core_packer_destroy(&packer);
 
-    biosal_packer_init(&packer, BIOSAL_PACKER_OPERATION_UNPACK, buffer);
+    core_packer_init(&packer, CORE_PACKER_OPERATION_UNPACK, buffer);
 
     /*
     printf("DEBUG unpacking in test\n");
     */
-    biosal_packer_process(&packer, &actual_value, sizeof(actual_value));
-    biosal_packer_destroy(&packer);
+    core_packer_process(&packer, &actual_value, sizeof(actual_value));
+    core_packer_destroy(&packer);
 
     /*
     printf("DEBUG actual_value %d expected_value %d\n",
@@ -42,7 +42,7 @@ int main(int argc, char **argv)
 
     TEST_INT_EQUALS(actual_value, expected_value);
 
-    biosal_memory_free(buffer, -1);
+    core_memory_free(buffer, -1);
 
     END_TESTS();
 

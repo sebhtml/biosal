@@ -80,7 +80,7 @@ void biosal_input_stream_init(struct thorium_actor *actor)
     concrete_self->ending_offset = 0;
     --concrete_self->ending_offset;
 
-    biosal_vector_init(&concrete_self->mega_blocks, sizeof(struct biosal_mega_block));
+    core_vector_init(&concrete_self->mega_blocks, sizeof(struct biosal_mega_block));
 
     thorium_actor_add_action(actor, ACTION_INPUT_STREAM_SET_START_OFFSET, biosal_input_stream_set_start_offset);
     thorium_actor_add_action(actor, ACTION_INPUT_STREAM_SET_END_OFFSET, biosal_input_stream_set_end_offset);
@@ -97,7 +97,7 @@ void biosal_input_stream_init(struct thorium_actor *actor)
     concrete_self->count_customer = THORIUM_ACTOR_NOBODY;
 
 #if 0
-    biosal_string_init(&concrete_self->file_for_parallel_counting, NULL);
+    core_string_init(&concrete_self->file_for_parallel_counting, NULL);
 #endif
 
     /*
@@ -112,12 +112,12 @@ void biosal_input_stream_init(struct thorium_actor *actor)
 
     concrete_self->finished_parallel_stream_count = 0;
 
-    biosal_vector_init(&concrete_self->spawners, sizeof(int));
-    biosal_vector_init(&concrete_self->parallel_streams, sizeof(int));
-    biosal_vector_init(&concrete_self->start_offsets, sizeof(uint64_t));
-    biosal_vector_init(&concrete_self->end_offsets, sizeof(uint64_t));
+    core_vector_init(&concrete_self->spawners, sizeof(int));
+    core_vector_init(&concrete_self->parallel_streams, sizeof(int));
+    core_vector_init(&concrete_self->start_offsets, sizeof(uint64_t));
+    core_vector_init(&concrete_self->end_offsets, sizeof(uint64_t));
 
-    biosal_vector_init(&concrete_self->parallel_mega_blocks, sizeof(struct biosal_vector));
+    core_vector_init(&concrete_self->parallel_mega_blocks, sizeof(struct core_vector));
 
     printf("%s/%d is now online on node %d\n",
                     thorium_actor_script_name(actor),
@@ -132,11 +132,11 @@ void biosal_input_stream_destroy(struct thorium_actor *actor)
     concrete_self = (struct biosal_input_stream *)thorium_actor_concrete_actor(actor);
 
 #if 0
-    biosal_string_destroy(&concrete_selffile_for_parallel_counting);
+    core_string_destroy(&concrete_selffile_for_parallel_counting);
 #endif
 
     if (concrete_self->buffer_for_sequence != NULL) {
-        biosal_memory_free(concrete_self->buffer_for_sequence, MEMORY_INPUT_STREAM);
+        core_memory_free(concrete_self->buffer_for_sequence, MEMORY_INPUT_STREAM);
         concrete_self->buffer_for_sequence = NULL;
         concrete_self->maximum_sequence_length = 0;
     }
@@ -149,23 +149,23 @@ void biosal_input_stream_destroy(struct thorium_actor *actor)
     }
 
     if (concrete_self->file_name != NULL) {
-        biosal_memory_free(concrete_self->file_name, MEMORY_INPUT_STREAM);
+        core_memory_free(concrete_self->file_name, MEMORY_INPUT_STREAM);
         concrete_self->file_name = NULL;
     }
 
     concrete_self->file_name = NULL;
     biosal_dna_codec_destroy(&concrete_self->codec);
 
-    biosal_vector_destroy(&concrete_self->mega_blocks);
+    core_vector_destroy(&concrete_self->mega_blocks);
 
     concrete_self->total_entries = 0;
     concrete_self->finished_parallel_stream_count = 0;
 
-    biosal_vector_destroy(&concrete_self->spawners);
-    biosal_vector_destroy(&concrete_self->parallel_streams);
-    biosal_vector_destroy(&concrete_self->start_offsets);
-    biosal_vector_destroy(&concrete_self->end_offsets);
-    biosal_vector_destroy(&concrete_self->parallel_mega_blocks);
+    core_vector_destroy(&concrete_self->spawners);
+    core_vector_destroy(&concrete_self->parallel_streams);
+    core_vector_destroy(&concrete_self->start_offsets);
+    core_vector_destroy(&concrete_self->end_offsets);
+    core_vector_destroy(&concrete_self->parallel_mega_blocks);
 }
 
 void biosal_input_stream_receive(struct thorium_actor *actor, struct thorium_message *message)
@@ -223,7 +223,7 @@ void biosal_input_stream_receive(struct thorium_actor *actor, struct thorium_mes
         /* TODO: find out the maximum read length in some way */
         concrete_self->maximum_sequence_length = BIOSAL_INPUT_MAXIMUM_SEQUENCE_LENGTH;
 
-        concrete_self->buffer_for_sequence = (char *)biosal_memory_allocate(concrete_self->maximum_sequence_length, MEMORY_INPUT_STREAM);
+        concrete_self->buffer_for_sequence = (char *)core_memory_allocate(concrete_self->maximum_sequence_length, MEMORY_INPUT_STREAM);
 
         /*biosal_input_stream_init(actor);*/
 
@@ -232,7 +232,7 @@ void biosal_input_stream_receive(struct thorium_actor *actor, struct thorium_mes
                         buffer);
 #endif
 
-        /*biosal_memory_copy(&concrete_self->file_index, buffer, sizeof(concrete_self->file_index));*/
+        /*core_memory_copy(&concrete_self->file_index, buffer, sizeof(concrete_self->file_index));*/
         file_name_in_buffer = buffer;
 
         printf("stream/%d (node/%d) opens file %s offset %" PRIu64 "\n", thorium_actor_name(actor),
@@ -245,7 +245,7 @@ void biosal_input_stream_receive(struct thorium_actor *actor, struct thorium_mes
         printf("Buffer %s\n", buffer);
 #endif
 
-        concrete_self->file_name = biosal_memory_allocate(strlen(file_name_in_buffer) + 1, MEMORY_INPUT_STREAM);
+        concrete_self->file_name = core_memory_allocate(strlen(file_name_in_buffer) + 1, MEMORY_INPUT_STREAM);
         strcpy(concrete_self->file_name, file_name_in_buffer);
 
         biosal_input_proxy_init(&concrete_self->proxy, concrete_self->file_name,
@@ -316,7 +316,7 @@ void biosal_input_stream_receive(struct thorium_actor *actor, struct thorium_mes
             biosal_mega_block_init(&mega_block, -1, concrete_self->last_offset,
                             sequences - concrete_self->last_entries, sequences);
 
-            biosal_vector_push_back(&concrete_self->mega_blocks, &mega_block);
+            core_vector_push_back(&concrete_self->mega_blocks, &mega_block);
 
             concrete_self->last_entries = sequences;
             concrete_self->last_offset = biosal_input_proxy_offset(&concrete_self->proxy);
@@ -428,7 +428,7 @@ void biosal_input_stream_receive(struct thorium_actor *actor, struct thorium_mes
 
         buffer_size = sizeof(sequence_index) + strlen(read_buffer) + 1;
 
-        biosal_memory_copy(concrete_self->buffer_for_sequence, &sequence_index, sizeof(sequence_index));
+        core_memory_copy(concrete_self->buffer_for_sequence, &sequence_index, sizeof(sequence_index));
 
         thorium_message_init(message, ACTION_INPUT_GET_SEQUENCE_REPLY,
                         buffer_size, concrete_self->buffer_for_sequence);
@@ -528,11 +528,11 @@ void biosal_input_stream_push_sequences(struct thorium_actor *actor,
     struct thorium_message new_message;
     void *buffer_for_sequence;
     struct biosal_dna_sequence dna_sequence;
-    /*struct biosal_vector *command_entries;*/
+    /*struct core_vector *command_entries;*/
     int has_sequence;
     int i;
     struct biosal_input_stream *concrete_self;
-    struct biosal_memory_pool *ephemeral_memory;
+    struct core_memory_pool *ephemeral_memory;
 
 #ifdef BIOSAL_INPUT_STREAM_DEBUG
     int count;
@@ -542,7 +542,7 @@ void biosal_input_stream_push_sequences(struct thorium_actor *actor,
     /* answer immediately
      */
     thorium_actor_send_reply_empty(actor, ACTION_INPUT_PUSH_SEQUENCES_READY);
-    ephemeral_memory = (struct biosal_memory_pool *)thorium_actor_get_ephemeral_memory(actor);
+    ephemeral_memory = (struct core_memory_pool *)thorium_actor_get_ephemeral_memory(actor);
     has_sequence = 1;
 
 #ifdef BIOSAL_INPUT_STREAM_DEBUG
@@ -647,19 +647,19 @@ void biosal_input_stream_push_sequences(struct thorium_actor *actor,
 
 #ifdef BIOSAL_INPUT_STREAM_DEBUG
     printf("DEBUG freeing %d entries\n",
-                    (int)biosal_vector_size(command_entries));
+                    (int)core_vector_size(command_entries));
 #endif
 
     biosal_input_command_destroy(&command, thorium_actor_get_ephemeral_memory(actor));
 
 #if 0
-    for (i = 0; i < biosal_vector_size(command_entries); i++) {
-        a_sequence = (struct biosal_dna_sequence *)biosal_vector_at(command_entries, i);
+    for (i = 0; i < core_vector_size(command_entries); i++) {
+        a_sequence = (struct biosal_dna_sequence *)core_vector_at(command_entries, i);
 
         biosal_dna_sequence_destroy(a_sequence, thorium_actor_get_ephemeral_memory(actor));
     }
 
-    biosal_vector_destroy(command_entries);
+    core_vector_destroy(command_entries);
 #endif
 
 #ifdef BIOSAL_INPUT_STREAM_DEBUG
@@ -735,11 +735,11 @@ void biosal_input_stream_count_in_parallel(struct thorium_actor *self, struct th
     concrete_self = (struct biosal_input_stream *)thorium_actor_concrete_actor(self);
     buffer = thorium_message_buffer(message);
 
-    biosal_vector_unpack(&concrete_self->spawners, buffer);
+    core_vector_unpack(&concrete_self->spawners, buffer);
 
     file = concrete_self->file_name;
 
-    file_size = biosal_file_get_size(file);
+    file_size = core_file_get_size(file);
 
     printf("COUNT_IN_PARALLEL %s %" PRIu64 "\n",
                     file, file_size);
@@ -756,8 +756,8 @@ void biosal_input_stream_count_in_parallel(struct thorium_actor *self, struct th
         }
 
 
-        biosal_vector_push_back_uint64_t(&concrete_self->start_offsets, start_offset);
-        biosal_vector_push_back_uint64_t(&concrete_self->end_offsets, end_offset);
+        core_vector_push_back_uint64_t(&concrete_self->start_offsets, start_offset);
+        core_vector_push_back_uint64_t(&concrete_self->end_offsets, end_offset);
 
         printf("DEBUG PARALLEL BLOCK %s %i %" PRIu64 " %" PRIu64 "\n",
                         file,
@@ -769,7 +769,7 @@ void biosal_input_stream_count_in_parallel(struct thorium_actor *self, struct th
         ++i;
     }
 
-    size = biosal_vector_size(&concrete_self->start_offsets);
+    size = core_vector_size(&concrete_self->start_offsets);
 
     thorium_actor_add_action(self, ACTION_SPAWN_REPLY, biosal_input_stream_spawn_reply);
 
@@ -799,16 +799,16 @@ void biosal_input_stream_spawn_reply(struct thorium_actor *self, struct thorium_
 
     thorium_message_unpack_int(message, 0, &stream);
 
-    biosal_vector_push_back_int(&concrete_self->parallel_streams, stream);
+    core_vector_push_back_int(&concrete_self->parallel_streams, stream);
 
 #ifdef DEBUG_ISSUE_594
     printf("DEBUG biosal_input_stream_spawn_reply %d/%d\n",
-            (int)biosal_vector_size(&concrete_self->parallel_streams),
-            (int)biosal_vector_size(&concrete_self->start_offsets));
+            (int)core_vector_size(&concrete_self->parallel_streams),
+            (int)core_vector_size(&concrete_self->start_offsets));
 #endif
 
-    if (biosal_vector_size(&concrete_self->parallel_streams) ==
-                    biosal_vector_size(&concrete_self->start_offsets)) {
+    if (core_vector_size(&concrete_self->parallel_streams) ==
+                    core_vector_size(&concrete_self->start_offsets)) {
 
         /* Set offsets
          */
@@ -820,13 +820,13 @@ void biosal_input_stream_spawn_reply(struct thorium_actor *self, struct thorium_
 
         concrete_self->finished_parallel_stream_count = 0;
 
-        size = biosal_vector_size(&concrete_self->parallel_streams);
+        size = core_vector_size(&concrete_self->parallel_streams);
 
         for (i = 0; i < size; i++) {
 
-            start_offset = biosal_vector_at_as_uint64_t(&concrete_self->start_offsets, i);
-            end_offset = biosal_vector_at_as_uint64_t(&concrete_self->end_offsets, i);
-            stream = biosal_vector_at_as_int(&concrete_self->parallel_streams, i);
+            start_offset = core_vector_at_as_uint64_t(&concrete_self->start_offsets, i);
+            end_offset = core_vector_at_as_uint64_t(&concrete_self->end_offsets, i);
+            stream = core_vector_at_as_int(&concrete_self->parallel_streams, i);
 
 #ifdef DEBUG_ISSUE_594
             printf("actor %d send ACTION_INPUT_STREAM_SET_START_OFFSET to %d\n",
@@ -849,7 +849,7 @@ void biosal_input_stream_open_reply(struct thorium_actor *self, struct thorium_m
     struct biosal_input_stream *concrete_self;
     int i;
     int size;
-    struct biosal_vector *vector;
+    struct core_vector *vector;
 
     concrete_self = (struct biosal_input_stream *)thorium_actor_concrete_actor(self);
 
@@ -860,20 +860,20 @@ void biosal_input_stream_open_reply(struct thorium_actor *self, struct thorium_m
 #endif
 
     if (concrete_self->finished_parallel_stream_count ==
-                    biosal_vector_size(&concrete_self->parallel_streams)) {
+                    core_vector_size(&concrete_self->parallel_streams)) {
 
         concrete_self->finished_parallel_stream_count = 0;
 
-        size = biosal_vector_size(&concrete_self->parallel_streams);
+        size = core_vector_size(&concrete_self->parallel_streams);
 
-        biosal_vector_resize(&concrete_self->parallel_mega_blocks,
+        core_vector_resize(&concrete_self->parallel_mega_blocks,
                        size);
 
         for (i = 0; i < size; i++) {
 
-            vector = biosal_vector_at(&concrete_self->parallel_mega_blocks, i);
+            vector = core_vector_at(&concrete_self->parallel_mega_blocks, i);
 
-            biosal_vector_init(vector, sizeof(struct biosal_mega_block));
+            core_vector_init(vector, sizeof(struct biosal_mega_block));
         }
 
         thorium_actor_send_range_empty(self, &concrete_self->parallel_streams,
@@ -889,7 +889,7 @@ void biosal_input_stream_count_reply(struct thorium_actor *self, struct thorium_
     struct biosal_mega_block *block;
     int i;
     int size;
-    struct biosal_vector *vector;
+    struct core_vector *vector;
     int source_index;
     int source;
     int j;
@@ -900,11 +900,11 @@ void biosal_input_stream_count_reply(struct thorium_actor *self, struct thorium_
     buffer = thorium_message_buffer(message);
 
     source = thorium_message_source(message);
-    source_index = biosal_vector_index_of(&concrete_self->parallel_streams, &source);
-    vector = biosal_vector_at(&concrete_self->parallel_mega_blocks, source_index);
-    biosal_vector_unpack(vector, buffer);
+    source_index = core_vector_index_of(&concrete_self->parallel_streams, &source);
+    vector = core_vector_at(&concrete_self->parallel_mega_blocks, source_index);
+    core_vector_unpack(vector, buffer);
 
-    block = biosal_vector_at_last(vector);
+    block = core_vector_at_last(vector);
 
     result = biosal_mega_block_get_entries(block);
 
@@ -913,20 +913,20 @@ void biosal_input_stream_count_reply(struct thorium_actor *self, struct thorium_
 
     printf("DEBUG count_reply %d/%d\n",
                     concrete_self->finished_parallel_stream_count,
-                    (int)biosal_vector_size(&concrete_self->parallel_streams));
+                    (int)core_vector_size(&concrete_self->parallel_streams));
 
     /*
      * Send back an array of mega blocks when it is done.
      */
     if (concrete_self->finished_parallel_stream_count ==
-                    biosal_vector_size(&concrete_self->parallel_streams)) {
+                    core_vector_size(&concrete_self->parallel_streams)) {
 
         /*
          * Transfer mega blocks
          * to main vector.
          */
 
-        size = biosal_vector_size(&concrete_self->parallel_streams);
+        size = core_vector_size(&concrete_self->parallel_streams);
 
         for (i = 0; i < size; i++) {
 
@@ -940,20 +940,20 @@ void biosal_input_stream_count_reply(struct thorium_actor *self, struct thorium_
              * the stuff between 2 offsets so they are already
              * correct.
              */
-            vector = biosal_vector_at(&concrete_self->parallel_mega_blocks,
+            vector = core_vector_at(&concrete_self->parallel_mega_blocks,
                             i);
 
 #if 0
             printf("ParallelStream %d\n", i);
 #endif
 
-            for (j = 0; j < biosal_vector_size(vector); j++) {
+            for (j = 0; j < core_vector_size(vector); j++) {
 
-                block = biosal_vector_at(vector, j);
+                block = core_vector_at(vector, j);
                 biosal_mega_block_print(block);
             }
 
-            biosal_vector_push_back_vector(&concrete_self->mega_blocks,
+            core_vector_push_back_vector(&concrete_self->mega_blocks,
                             vector);
         }
 
@@ -963,9 +963,9 @@ void biosal_input_stream_count_reply(struct thorium_actor *self, struct thorium_
 
         total = 0;
 
-        for (i = 0; i < biosal_vector_size(&concrete_self->mega_blocks); i++) {
+        for (i = 0; i < core_vector_size(&concrete_self->mega_blocks); i++) {
 
-            block = biosal_vector_at(&concrete_self->mega_blocks, i);
+            block = core_vector_at(&concrete_self->mega_blocks, i);
 
             total += biosal_mega_block_get_entries(block);
 
@@ -978,13 +978,13 @@ void biosal_input_stream_count_reply(struct thorium_actor *self, struct thorium_
 
         for (i = 0; i < size; i++) {
 
-            vector = biosal_vector_at(&concrete_self->parallel_mega_blocks,
+            vector = core_vector_at(&concrete_self->parallel_mega_blocks,
                             i);
 
-            biosal_vector_destroy(vector);
+            core_vector_destroy(vector);
         }
 
-        biosal_vector_resize(&concrete_self->parallel_mega_blocks, 0);
+        core_vector_resize(&concrete_self->parallel_mega_blocks, 0);
 
         printf("DEBUG send ACTION_INPUT_COUNT_IN_PARALLEL_REPLY to %d\n",
                         concrete_self->controller);
@@ -1022,9 +1022,9 @@ void biosal_input_stream_count_reply_mock(struct thorium_actor *self, struct tho
     struct biosal_input_stream *concrete_self;
     void *buffer;
     int count;
-    struct biosal_vector mega_blocks;
+    struct core_vector mega_blocks;
     char *file;
-    struct biosal_memory_pool *ephemeral_memory;
+    struct core_memory_pool *ephemeral_memory;
     uint64_t result;
     struct biosal_mega_block *block;
 
@@ -1033,16 +1033,16 @@ void biosal_input_stream_count_reply_mock(struct thorium_actor *self, struct tho
     count = thorium_message_count(message);
     ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
 
-    biosal_vector_init(&mega_blocks, 0);
-    biosal_vector_set_memory_pool(&mega_blocks, ephemeral_memory);
-    biosal_vector_unpack(&mega_blocks, buffer);
+    core_vector_init(&mega_blocks, 0);
+    core_vector_set_memory_pool(&mega_blocks, ephemeral_memory);
+    core_vector_unpack(&mega_blocks, buffer);
 
-    block = biosal_vector_at_last(&mega_blocks);
+    block = core_vector_at_last(&mega_blocks);
 
     result = biosal_mega_block_get_entries(block);
 
 #if 0
-    file = biosal_string_get(&concrete_self->file_for_parallel_counting);
+    file = core_string_get(&concrete_self->file_for_parallel_counting);
 #endif
 
     file = concrete_self->file_name;
@@ -1053,7 +1053,7 @@ void biosal_input_stream_count_reply_mock(struct thorium_actor *self, struct tho
                     file,
                     result);
 
-    biosal_vector_destroy(&mega_blocks);
+    core_vector_destroy(&mega_blocks);
 
     thorium_actor_send_buffer(self, concrete_self->controller,
                     ACTION_INPUT_COUNT_IN_PARALLEL_REPLY, count, buffer);
@@ -1069,11 +1069,11 @@ void biosal_input_stream_set_offset_reply(struct thorium_actor *self, struct tho
 #ifdef DEBUG_ISSUE_594
     printf("DEBUG biosal_input_stream_set_offset_reply %d/%d\n",
                     concrete_self->finished_parallel_stream_count,
-                    2 * biosal_vector_size(&concrete_self->parallel_streams));
+                    2 * core_vector_size(&concrete_self->parallel_streams));
 #endif
 
     if (concrete_self->finished_parallel_stream_count ==
-                    2 * biosal_vector_size(&concrete_self->parallel_streams)) {
+                    2 * core_vector_size(&concrete_self->parallel_streams)) {
         /*
          * Assign files to input streams
          */
@@ -1090,7 +1090,7 @@ void biosal_input_stream_set_offset_reply(struct thorium_actor *self, struct tho
                         concrete_self->file_name);
 
         printf("DEBUG SEND ACTION_INPUT_OPEN to %d actors with file %s\n",
-                        (int)biosal_vector_size(&concrete_self->parallel_streams),
+                        (int)core_vector_size(&concrete_self->parallel_streams),
                         concrete_self->file_name);
     }
 }

@@ -25,12 +25,12 @@ struct biosal_assembly_block_classifier {
     uint64_t last;
     int kmer_length;
 
-    struct biosal_vector consumers;
+    struct core_vector consumers;
 
-    struct biosal_fast_queue stalled_producers;
+    struct core_fast_queue stalled_producers;
 
     int maximum_active_messages;
-    struct biosal_vector active_messages;
+    struct core_vector active_messages;
     int active_requests;
 
     int customer_block_size;
@@ -50,7 +50,7 @@ void biosal_assembly_block_classifier_init(struct thorium_actor *actor);
 void biosal_assembly_block_classifier_destroy(struct thorium_actor *actor);
 void biosal_assembly_block_classifier_receive(struct thorium_actor *actor, struct thorium_message *message);
 
-void biosal_assembly_block_classifier_flush(struct thorium_actor *self, int customer_index, struct biosal_vector *buffers,
+void biosal_assembly_block_classifier_flush(struct thorium_actor *self, int customer_index, struct core_vector *buffers,
                 int force);
 void biosal_assembly_block_classifier_verify(struct thorium_actor *self, struct thorium_message *message);
 void biosal_assembly_block_classifier_aggregate_kernel_output(struct thorium_actor *self, struct thorium_message *message);

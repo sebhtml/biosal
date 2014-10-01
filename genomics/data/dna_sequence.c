@@ -18,7 +18,7 @@
 #define BIOSAL_DNA_SEQUENCE_DEBUG
 */
 void biosal_dna_sequence_init(struct biosal_dna_sequence *sequence, char *data,
-                struct biosal_dna_codec *codec, struct biosal_memory_pool *memory)
+                struct biosal_dna_codec *codec, struct core_memory_pool *memory)
 {
     int encoded_length;
 
@@ -40,7 +40,7 @@ void biosal_dna_sequence_init(struct biosal_dna_sequence *sequence, char *data,
         sequence->length_in_nucleotides = strlen(data);
 
         encoded_length = biosal_dna_codec_encoded_length(codec, sequence->length_in_nucleotides);
-        sequence->encoded_data = biosal_memory_pool_allocate(memory, encoded_length);
+        sequence->encoded_data = core_memory_pool_allocate(memory, encoded_length);
 
         biosal_dna_codec_encode(codec, sequence->length_in_nucleotides, data, sequence->encoded_data);
     }
@@ -48,10 +48,10 @@ void biosal_dna_sequence_init(struct biosal_dna_sequence *sequence, char *data,
     sequence->pair = -1;
 }
 
-void biosal_dna_sequence_destroy(struct biosal_dna_sequence *sequence, struct biosal_memory_pool *memory)
+void biosal_dna_sequence_destroy(struct biosal_dna_sequence *sequence, struct core_memory_pool *memory)
 {
     if (sequence->encoded_data != NULL) {
-        biosal_memory_pool_free(memory, sequence->encoded_data);
+        core_memory_pool_free(memory, sequence->encoded_data);
         sequence->encoded_data = NULL;
     }
 
@@ -62,26 +62,26 @@ void biosal_dna_sequence_destroy(struct biosal_dna_sequence *sequence, struct bi
 
 int biosal_dna_sequence_pack_size(struct biosal_dna_sequence *sequence, struct biosal_dna_codec *codec)
 {
-    return biosal_dna_sequence_pack_unpack(sequence, NULL, BIOSAL_PACKER_OPERATION_PACK_SIZE, NULL, codec);
+    return biosal_dna_sequence_pack_unpack(sequence, NULL, CORE_PACKER_OPERATION_PACK_SIZE, NULL, codec);
 }
 
 int biosal_dna_sequence_unpack(struct biosal_dna_sequence *sequence,
-                void *buffer, struct biosal_memory_pool *memory, struct biosal_dna_codec *codec)
+                void *buffer, struct core_memory_pool *memory, struct biosal_dna_codec *codec)
 {
-    return biosal_dna_sequence_pack_unpack(sequence, buffer, BIOSAL_PACKER_OPERATION_UNPACK, memory, codec);
+    return biosal_dna_sequence_pack_unpack(sequence, buffer, CORE_PACKER_OPERATION_UNPACK, memory, codec);
 }
 
 int biosal_dna_sequence_pack(struct biosal_dna_sequence *sequence,
                 void *buffer, struct biosal_dna_codec *codec)
 {
-    return biosal_dna_sequence_pack_unpack(sequence, buffer, BIOSAL_PACKER_OPERATION_PACK, NULL, codec);
+    return biosal_dna_sequence_pack_unpack(sequence, buffer, CORE_PACKER_OPERATION_PACK, NULL, codec);
 }
 
 int biosal_dna_sequence_pack_unpack(struct biosal_dna_sequence *sequence,
-                void *buffer, int operation, struct biosal_memory_pool *memory,
+                void *buffer, int operation, struct core_memory_pool *memory,
                 struct biosal_dna_codec *codec)
 {
-    struct biosal_packer packer;
+    struct core_packer packer;
     int offset;
     int encoded_length;
 
@@ -89,31 +89,31 @@ int biosal_dna_sequence_pack_unpack(struct biosal_dna_sequence *sequence,
     printf("DEBUG ENTRY biosal_dna_sequence_pack_unpack operation %d\n",
                     operation);
 
-    if (operation == BIOSAL_PACKER_OPERATION_PACK) {
+    if (operation == CORE_PACKER_OPERATION_PACK) {
         biosal_dna_sequence_print(sequence);
     }
 #endif
 
-    biosal_packer_init(&packer, operation, buffer);
+    core_packer_init(&packer, operation, buffer);
 
     /*
-    biosal_packer_process(&packer, &sequence->pair, sizeof(sequence->pair));
+    core_packer_process(&packer, &sequence->pair, sizeof(sequence->pair));
 */
-    biosal_packer_process(&packer, &sequence->length_in_nucleotides, sizeof(sequence->length_in_nucleotides));
+    core_packer_process(&packer, &sequence->length_in_nucleotides, sizeof(sequence->length_in_nucleotides));
 
-    BIOSAL_DEBUGGER_ASSERT(sequence->length_in_nucleotides > 0);
+    CORE_DEBUGGER_ASSERT(sequence->length_in_nucleotides > 0);
 
     encoded_length = biosal_dna_codec_encoded_length(codec, sequence->length_in_nucleotides);
 
-    BIOSAL_DEBUGGER_ASSERT(encoded_length > 0);
-    BIOSAL_DEBUGGER_ASSERT(encoded_length < 1000000000);
+    CORE_DEBUGGER_ASSERT(encoded_length > 0);
+    CORE_DEBUGGER_ASSERT(encoded_length < 1000000000);
 
 #ifdef BIOSAL_DNA_SEQUENCE_DEBUG
-    if (operation == BIOSAL_PACKER_OPERATION_UNPACK) {
+    if (operation == CORE_PACKER_OPERATION_UNPACK) {
         printf("DEBUG biosal_dna_sequence_pack_unpack unpacking: length %d\n",
                         sequence->length_in_nucleotides);
 
-    } else if (operation == BIOSAL_PACKER_OPERATION_PACK) {
+    } else if (operation == CORE_PACKER_OPERATION_PACK) {
 
         printf("DEBUG biosal_dna_sequence_pack_unpack packing: length %d\n",
                         sequence->length_in_nucleotides);
@@ -122,28 +122,28 @@ int biosal_dna_sequence_pack_unpack(struct biosal_dna_sequence *sequence,
 
     /* TODO: encode in 2 bits instead !
      */
-    if (operation == BIOSAL_PACKER_OPERATION_UNPACK) {
+    if (operation == CORE_PACKER_OPERATION_UNPACK) {
 
         if (sequence->length_in_nucleotides > 0) {
-            sequence->encoded_data = biosal_memory_pool_allocate(memory, encoded_length);
+            sequence->encoded_data = core_memory_pool_allocate(memory, encoded_length);
         } else {
             sequence->encoded_data = NULL;
         }
     }
 
 #ifdef BIOSAL_DNA_SEQUENCE_DEBUG
-    if (operation == BIOSAL_PACKER_OPERATION_UNPACK) {
+    if (operation == CORE_PACKER_OPERATION_UNPACK) {
         printf("DEBUG unpacking %d bytes\n", sequence->length_in_nucleotides + 1);
     }
 #endif
 
     if (sequence->length_in_nucleotides > 0) {
-        biosal_packer_process(&packer, sequence->encoded_data, encoded_length);
+        core_packer_process(&packer, sequence->encoded_data, encoded_length);
     }
 
-    offset = biosal_packer_get_byte_count(&packer);
+    offset = core_packer_get_byte_count(&packer);
 
-    biosal_packer_destroy(&packer);
+    core_packer_destroy(&packer);
 
 #ifdef BIOSAL_DNA_SEQUENCE_DEBUG
     printf("DEBUG EXIT biosal_dna_sequence_pack_unpack operation %d offset %d\n",
@@ -154,17 +154,17 @@ int biosal_dna_sequence_pack_unpack(struct biosal_dna_sequence *sequence,
 }
 
 void biosal_dna_sequence_print(struct biosal_dna_sequence *self, struct biosal_dna_codec *codec,
-                struct biosal_memory_pool *memory)
+                struct core_memory_pool *memory)
 {
     char *dna_sequence;
 
-    dna_sequence = biosal_memory_pool_allocate(memory, self->length_in_nucleotides + 1);
+    dna_sequence = core_memory_pool_allocate(memory, self->length_in_nucleotides + 1);
 
     biosal_dna_codec_decode(codec, self->length_in_nucleotides, self->encoded_data, dna_sequence);
 
     printf("DNA: length %d %s\n", self->length_in_nucleotides, dna_sequence);
 
-    biosal_memory_pool_free(memory, dna_sequence);
+    core_memory_pool_free(memory, dna_sequence);
     dna_sequence = NULL;
 }
 
@@ -187,20 +187,20 @@ void biosal_dna_sequence_get_sequence(struct biosal_dna_sequence *self, char *se
  */
 void biosal_dna_sequence_init_copy(struct biosal_dna_sequence *self,
                 struct biosal_dna_sequence *other, struct biosal_dna_codec *codec,
-                struct biosal_memory_pool *memory)
+                struct core_memory_pool *memory)
 {
     char *dna;
 
     /* need +1 for '\0'
      */
-    dna = biosal_memory_pool_allocate(memory, other->length_in_nucleotides + 1);
+    dna = core_memory_pool_allocate(memory, other->length_in_nucleotides + 1);
 
     biosal_dna_codec_decode(codec, other->length_in_nucleotides, other->encoded_data,
                     dna);
 
     biosal_dna_sequence_init(self, dna, codec, memory);
 
-    biosal_memory_pool_free(memory, dna);
+    core_memory_pool_free(memory, dna);
     dna = NULL;
 }
 

@@ -21,28 +21,28 @@
  * graph stores.
  */
 struct biosal_assembly_graph_builder {
-    struct biosal_vector spawners;
-    struct biosal_vector sequence_stores;
-    struct biosal_timer timer;
-    struct biosal_timer vertex_timer;
-    struct biosal_timer arc_timer;
+    struct core_vector spawners;
+    struct core_vector sequence_stores;
+    struct core_timer timer;
+    struct core_timer vertex_timer;
+    struct core_timer arc_timer;
 
     int source;
 
     int manager_for_graph_stores;
-    struct biosal_vector graph_stores;
+    struct core_vector graph_stores;
 
     int manager_for_windows;
-    struct biosal_vector sliding_windows;
+    struct core_vector sliding_windows;
 
     int manager_for_classifiers;
-    struct biosal_vector block_classifiers;
+    struct core_vector block_classifiers;
 
     int manager_for_arc_kernels;
-    struct biosal_vector arc_kernels;
+    struct core_vector arc_kernels;
 
     int manager_for_arc_classifiers;
-    struct biosal_vector arc_classifiers;
+    struct core_vector arc_classifiers;
 
     int configured_sliding_windows;
     int configured_block_classifiers;
@@ -160,7 +160,7 @@ void biosal_assembly_graph_builder_verify_arc_kernels(struct thorium_actor *self
 void biosal_assembly_graph_builder_notify_reply_arc_kernels(struct thorium_actor *self, struct thorium_message *message);
 
 void biosal_assembly_graph_builder_get_summary_reply(struct thorium_actor *self, struct thorium_message *message);
-void biosal_assembly_graph_builder_get_producers_for_work_stealing(struct thorium_actor *self, struct biosal_vector *producers_for_work_stealing,
+void biosal_assembly_graph_builder_get_producers_for_work_stealing(struct thorium_actor *self, struct core_vector *producers_for_work_stealing,
                 int current_index);
 void biosal_assembly_graph_builder_set_actors_reply_store_manager(struct thorium_actor *self, struct thorium_message *message);
 

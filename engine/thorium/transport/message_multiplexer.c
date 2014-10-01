@@ -41,21 +41,21 @@ void thorium_message_multiplexer_init(struct thorium_message_multiplexer *self,
     self->real_message_count = 0;
 
     self->flags = 0;
-    biosal_bitmap_clear_bit_uint32_t(&self->flags, FLAG_DISABLED);
+    core_bitmap_clear_bit_uint32_t(&self->flags, FLAG_DISABLED);
 
-    biosal_set_init(&self->buffers_with_content, sizeof(int));
+    core_set_init(&self->buffers_with_content, sizeof(int));
 
-    biosal_timer_init(&self->timer);
+    core_timer_init(&self->timer);
 
     self->buffer_size_in_bytes = thorium_multiplexer_policy_size_threshold(self->policy);
     self->timeout_in_nanoseconds = thorium_multiplexer_policy_time_threshold(self->policy);
 
     self->node = node;
 
-    biosal_vector_init(&self->buffers, sizeof(struct thorium_multiplexed_buffer));
+    core_vector_init(&self->buffers, sizeof(struct thorium_multiplexed_buffer));
 
     size = thorium_node_nodes(self->node);
-    biosal_vector_resize(&self->buffers, size);
+    core_vector_resize(&self->buffers, size);
 
     bytes = size * self->buffer_size_in_bytes;
 
@@ -63,11 +63,11 @@ void thorium_message_multiplexer_init(struct thorium_message_multiplexer *self,
     printf("DEBUG_MULTIPLEXER size %d bytes %d\n", size, bytes);
 #endif
 
-    self->big_buffer = biosal_memory_allocate(bytes, MEMORY_MULTIPLEXER);
+    self->big_buffer = core_memory_allocate(bytes, MEMORY_MULTIPLEXER);
     position = 0;
 
     for (i = 0; i < size; ++i) {
-        multiplexed_buffer = biosal_vector_at(&self->buffers, i);
+        multiplexed_buffer = core_vector_at(&self->buffers, i);
 
         multiplexed_buffer->buffer = self->big_buffer + position;
         position += self->buffer_size_in_bytes;
@@ -78,7 +78,7 @@ void thorium_message_multiplexer_init(struct thorium_message_multiplexer *self,
 
 #ifdef DEBUG_MULTIPLEXER
         printf("DEBUG_MULTIPLEXER thorium_message_multiplexer_init (after) index %d buffer %p\n", i,
-                        biosal_vector_at(&self->buffers, i));
+                        core_vector_at(&self->buffers, i));
 #endif
 
         multiplexed_buffer->current_size = 0;
@@ -86,20 +86,20 @@ void thorium_message_multiplexer_init(struct thorium_message_multiplexer *self,
         multiplexed_buffer->maximum_size = self->buffer_size_in_bytes;
     }
 
-    self->last_flush = biosal_timer_get_nanoseconds(&self->timer);
+    self->last_flush = core_timer_get_nanoseconds(&self->timer);
 
     if (thorium_multiplexer_policy_is_disabled(self->policy)) {
-        biosal_bitmap_set_bit_uint32_t(&self->flags, FLAG_DISABLED);
+        core_bitmap_set_bit_uint32_t(&self->flags, FLAG_DISABLED);
     }
 
     if (thorium_node_name(self->node) == 0) {
         if (self->timeout_in_nanoseconds == THORIUM_DYNAMIC_TIMEOUT) {
             printf("thorium_message_multiplexer: disabled=%d buffer_size_in_bytes=%d timeout_in_nanoseconds=dynamic\n",
-                            biosal_bitmap_get_bit_uint32_t(&self->flags, FLAG_DISABLED),
+                            core_bitmap_get_bit_uint32_t(&self->flags, FLAG_DISABLED),
                         self->buffer_size_in_bytes);
         } else {
             printf("thorium_message_multiplexer: disabled=%d buffer_size_in_bytes=%d timeout_in_nanoseconds=%d\n",
-                            biosal_bitmap_get_bit_uint32_t(&self->flags, FLAG_DISABLED),
+                            core_bitmap_get_bit_uint32_t(&self->flags, FLAG_DISABLED),
                         self->buffer_size_in_bytes, self->timeout_in_nanoseconds);
         }
     }
@@ -120,35 +120,35 @@ void thorium_message_multiplexer_destroy(struct thorium_message_multiplexer *sel
     printf("thorium_message_multiplexer: original_message_count %d real_message_count %d (%.4f)\n",
                     self->original_message_count, self->real_message_count, ratio);
 
-#ifdef BIOSAL_DEBUGGER_ENABLE_ASSERT
+#ifdef CORE_DEBUGGER_ENABLE_ASSERT
 #endif
-    size = biosal_vector_size(&self->buffers);
+    size = core_vector_size(&self->buffers);
 
-    BIOSAL_DEBUGGER_ASSERT(biosal_set_empty(&self->buffers_with_content));
+    CORE_DEBUGGER_ASSERT(core_set_empty(&self->buffers_with_content));
 
-    biosal_set_destroy(&self->buffers_with_content);
+    core_set_destroy(&self->buffers_with_content);
 
     for (i = 0; i < size; ++i) {
-        multiplexed_buffer = biosal_vector_at(&self->buffers, i);
+        multiplexed_buffer = core_vector_at(&self->buffers, i);
 
-        BIOSAL_DEBUGGER_ASSERT(multiplexed_buffer->current_size == 0);
+        CORE_DEBUGGER_ASSERT(multiplexed_buffer->current_size == 0);
 
         multiplexed_buffer->buffer = 0;
     }
 
-    biosal_vector_destroy(&self->buffers);
+    core_vector_destroy(&self->buffers);
 
     self->node = NULL;
 
     self->buffer_size_in_bytes = -1;
     self->timeout_in_nanoseconds = -1;
 
-    biosal_memory_free(self->big_buffer, MEMORY_MULTIPLEXER);
+    core_memory_free(self->big_buffer, MEMORY_MULTIPLEXER);
     self->big_buffer = NULL;
 
     self->last_flush = 0;
 
-    biosal_timer_destroy(&self->timer);
+    core_timer_destroy(&self->timer);
 }
 
 /*
@@ -186,7 +186,7 @@ int thorium_message_multiplexer_multiplex(struct thorium_message_multiplexer *se
 
     ++self->original_message_count;
 
-    if (biosal_bitmap_get_bit_uint32_t(&self->flags, FLAG_DISABLED)) {
+    if (core_bitmap_get_bit_uint32_t(&self->flags, FLAG_DISABLED)) {
         ++self->real_message_count;
         return 0;
     }
@@ -215,16 +215,16 @@ int thorium_message_multiplexer_multiplex(struct thorium_message_multiplexer *se
 
     destination_node = thorium_message_destination_node(message);
 
-    real_multiplexed_buffer = biosal_vector_at(&self->buffers, destination_node);
+    real_multiplexed_buffer = core_vector_at(&self->buffers, destination_node);
 
-#ifdef BIOSAL_DEBUGGER_ASSERT
+#ifdef CORE_DEBUGGER_ASSERT
     if (real_multiplexed_buffer == NULL) {
         printf("Error action %d destination_node %d destination_actor %d\n", action, destination_node,
                         destination_actor);
     }
 #endif
 
-    BIOSAL_DEBUGGER_ASSERT(real_multiplexed_buffer != NULL);
+    CORE_DEBUGGER_ASSERT(real_multiplexed_buffer != NULL);
 
     current_size = real_multiplexed_buffer->current_size;
     maximum_size = real_multiplexed_buffer->maximum_size;
@@ -257,7 +257,7 @@ int thorium_message_multiplexer_multiplex(struct thorium_message_multiplexer *se
         thorium_message_multiplexer_flush(self, destination_node, FORCE_YES_SIZE);
         current_size = real_multiplexed_buffer->current_size;
 
-        BIOSAL_DEBUGGER_ASSERT(current_size == 0);
+        CORE_DEBUGGER_ASSERT(current_size == 0);
     }
 
     multiplexed_buffer = real_multiplexed_buffer->buffer;
@@ -266,13 +266,13 @@ int thorium_message_multiplexer_multiplex(struct thorium_message_multiplexer *se
     /*
      * Append <count><buffer> to the <multiplexed_buffer>
      */
-    biosal_memory_copy(destination_in_buffer, &count, sizeof(count));
-    biosal_memory_copy((char *)destination_in_buffer + sizeof(count),
+    core_memory_copy(destination_in_buffer, &count, sizeof(count));
+    core_memory_copy((char *)destination_in_buffer + sizeof(count),
                     buffer, count);
 
     current_size += required_size;
 
-    BIOSAL_DEBUGGER_ASSERT(current_size <= maximum_size);
+    CORE_DEBUGGER_ASSERT(current_size <= maximum_size);
     real_multiplexed_buffer->current_size = current_size;
     ++real_multiplexed_buffer->message_count;
 
@@ -280,13 +280,13 @@ int thorium_message_multiplexer_multiplex(struct thorium_message_multiplexer *se
 
     current_size = real_multiplexed_buffer->current_size;
 
-    BIOSAL_DEBUGGER_ASSERT(current_size <= maximum_size);
+    CORE_DEBUGGER_ASSERT(current_size <= maximum_size);
 
     /*
      * Add the key for this buffer with content.
      */
     if (current_size > 0) {
-        biosal_set_add(&self->buffers_with_content, &destination_node);
+        core_set_add(&self->buffers_with_content, &destination_node);
     }
 
     /*
@@ -322,13 +322,13 @@ int thorium_message_multiplexer_demultiplex(struct thorium_message_multiplexer *
     int new_count;
     void *new_buffer;
     int position;
-    struct biosal_memory_pool *pool;
+    struct core_memory_pool *pool;
     int messages;
     int tag;
     int source_node;
     int destination_node;
 
-    if (biosal_bitmap_get_bit_uint32_t(&self->flags, FLAG_DISABLED)) {
+    if (core_bitmap_get_bit_uint32_t(&self->flags, FLAG_DISABLED)) {
         return 0;
     }
 
@@ -351,11 +351,11 @@ int thorium_message_multiplexer_demultiplex(struct thorium_message_multiplexer *
      * Inject a message for each enclosed message.
      */
     while (position < count) {
-        biosal_memory_copy(&new_count, buffer + position, sizeof(new_count));
+        core_memory_copy(&new_count, buffer + position, sizeof(new_count));
         position += sizeof(new_count);
 
-        new_buffer = biosal_memory_pool_allocate(pool, new_count);
-        biosal_memory_copy(new_buffer, buffer + position, new_count);
+        new_buffer = core_memory_pool_allocate(pool, new_count);
+        core_memory_copy(new_buffer, buffer + position, new_count);
 
         thorium_message_init_with_nodes(&new_message, new_count, new_buffer,
                         source_node, destination_node);
@@ -369,7 +369,7 @@ int thorium_message_multiplexer_demultiplex(struct thorium_message_multiplexer *
         ++messages;
     }
 
-    BIOSAL_DEBUGGER_ASSERT(messages > 0);
+    CORE_DEBUGGER_ASSERT(messages > 0);
 
 #ifdef DEBUG_MULTIPLEXER
     printf("thorium_message_multiplexer_demultiplex %d messages\n",
@@ -389,15 +389,15 @@ void thorium_message_multiplexer_test(struct thorium_message_multiplexer *self)
      */
 
     uint64_t time;
-    struct biosal_set_iterator iterator;
+    struct core_set_iterator iterator;
     int duration;
     int index;
 
-    if (biosal_bitmap_get_bit_uint32_t(&self->flags, FLAG_DISABLED)) {
+    if (core_bitmap_get_bit_uint32_t(&self->flags, FLAG_DISABLED)) {
         return;
     }
 
-    time = biosal_timer_get_nanoseconds(&self->timer);
+    time = core_timer_get_nanoseconds(&self->timer);
 
     duration = time - self->last_flush;
 
@@ -405,25 +405,25 @@ void thorium_message_multiplexer_test(struct thorium_message_multiplexer *self)
         return;
     }
 
-    if (biosal_set_empty(&self->buffers_with_content)) {
+    if (core_set_empty(&self->buffers_with_content)) {
         return;
     }
 
-    biosal_set_iterator_init(&iterator, &self->buffers_with_content);
+    core_set_iterator_init(&iterator, &self->buffers_with_content);
 
-    while (biosal_set_iterator_get_next_value(&iterator, &index)) {
+    while (core_set_iterator_get_next_value(&iterator, &index)) {
 
         thorium_message_multiplexer_flush(self, index, FORCE_YES_TIME);
     }
 
-    biosal_set_iterator_destroy(&iterator);
+    core_set_iterator_destroy(&iterator);
 
-    biosal_set_clear(&self->buffers_with_content);
+    core_set_clear(&self->buffers_with_content);
 
     /*
      * Update the counter for last flush event.
      */
-    self->last_flush = biosal_timer_get_nanoseconds(&self->timer);
+    self->last_flush = core_timer_get_nanoseconds(&self->timer);
 }
 
 void thorium_message_multiplexer_flush(struct thorium_message_multiplexer *self, int index, int force)
@@ -436,11 +436,11 @@ void thorium_message_multiplexer_flush(struct thorium_message_multiplexer *self,
     int maximum_size;
     struct thorium_multiplexed_buffer *multiplexed_buffer;
 
-    if (biosal_bitmap_get_bit_uint32_t(&self->flags, FLAG_DISABLED)) {
+    if (core_bitmap_get_bit_uint32_t(&self->flags, FLAG_DISABLED)) {
         return;
     }
 
-    multiplexed_buffer = biosal_vector_at(&self->buffers, index);
+    multiplexed_buffer = core_vector_at(&self->buffers, index);
     current_size = multiplexed_buffer->current_size;
     maximum_size = multiplexed_buffer->maximum_size;
 
@@ -467,10 +467,10 @@ void thorium_message_multiplexer_flush(struct thorium_message_multiplexer *self,
     multiplexed_buffer->current_size = 0;
     multiplexed_buffer->message_count = 0;
 
-    biosal_set_delete(&self->buffers_with_content, &index);
+    core_set_delete(&self->buffers_with_content, &index);
 }
 
 int thorium_message_multiplexer_is_disabled(struct thorium_message_multiplexer *self)
 {
-    return biosal_bitmap_get_bit_uint32_t(&self->flags, FLAG_DISABLED);
+    return core_bitmap_get_bit_uint32_t(&self->flags, FLAG_DISABLED);
 }

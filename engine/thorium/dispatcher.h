@@ -17,7 +17,7 @@
  *
  */
 struct thorium_dispatcher {
-    struct biosal_map routes;
+    struct core_map routes;
 };
 
 void thorium_dispatcher_init(struct thorium_dispatcher *self);

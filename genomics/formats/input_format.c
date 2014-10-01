@@ -23,7 +23,7 @@ void biosal_input_format_init(struct biosal_input_format *input, void *implement
 
     input->implementation = implementation;
 
-    BIOSAL_DEBUGGER_ASSERT(operations != NULL);
+    CORE_DEBUGGER_ASSERT(operations != NULL);
 
     input->operations = operations;
     input->sequences = 0;
@@ -169,7 +169,7 @@ int biosal_input_format_has_suffix(struct biosal_input_format *input, const char
 
 uint64_t biosal_input_format_offset(struct biosal_input_format *input)
 {
-    BIOSAL_DEBUGGER_ASSERT(input->operations != NULL);
+    CORE_DEBUGGER_ASSERT(input->operations != NULL);
 
     return input->operations->get_offset(input);
 }

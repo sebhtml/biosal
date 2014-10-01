@@ -24,7 +24,7 @@ void frame_init(struct thorium_actor *actor)
 
     concrete_actor->migrated_other = 0;
     concrete_actor->pings = 0;
-    biosal_vector_init(&concrete_actor->acquaintance_vector, sizeof(int));
+    core_vector_init(&concrete_actor->acquaintance_vector, sizeof(int));
 }
 
 void frame_destroy(struct thorium_actor *actor)
@@ -34,7 +34,7 @@ void frame_destroy(struct thorium_actor *actor)
     concrete_actor = (struct frame *)thorium_actor_concrete_actor(actor);
     concrete_actor->value = -1;
 
-    biosal_vector_destroy(&concrete_actor->acquaintance_vector);
+    core_vector_destroy(&concrete_actor->acquaintance_vector);
 }
 
 void frame_receive(struct thorium_actor *actor, struct thorium_message *message)
@@ -44,8 +44,8 @@ void frame_receive(struct thorium_actor *actor, struct thorium_message *message)
     void *buffer;
     struct frame *concrete_actor;
     int other;
-    struct biosal_vector initial_actors;
-    struct biosal_vector *acquaintance_vector;
+    struct core_vector initial_actors;
+    struct core_vector *acquaintance_vector;
     int source;
 
     source = thorium_message_source(message);
@@ -58,13 +58,13 @@ void frame_receive(struct thorium_actor *actor, struct thorium_message *message)
 
     if (tag == ACTION_START) {
 
-        biosal_vector_init(&initial_actors, sizeof(int));
-        biosal_vector_unpack(&initial_actors, buffer);
-        biosal_vector_push_back_vector(acquaintance_vector, &initial_actors);
-        biosal_vector_destroy(&initial_actors);
+        core_vector_init(&initial_actors, sizeof(int));
+        core_vector_unpack(&initial_actors, buffer);
+        core_vector_push_back_vector(acquaintance_vector, &initial_actors);
+        core_vector_destroy(&initial_actors);
 
         other = thorium_actor_spawn(actor, thorium_actor_script(actor));
-        biosal_vector_push_back_int(acquaintance_vector, other);
+        core_vector_push_back_int(acquaintance_vector, other);
 
         thorium_actor_send_empty(actor, other, ACTION_PING);
 
@@ -75,12 +75,12 @@ void frame_receive(struct thorium_actor *actor, struct thorium_message *message)
 
         /* new acquaintance
          */
-        biosal_vector_push_back(acquaintance_vector, &source);
+        core_vector_push_back(acquaintance_vector, &source);
 
         printf("actor %d (value %d) receives ACTION_PING from actor %d\n",
                         name, concrete_actor->value, source);
         printf("Acquaintances of actor %d: ", name);
-        biosal_vector_print_int(acquaintance_vector);
+        core_vector_print_int(acquaintance_vector);
         printf("\n");
 
         thorium_actor_send_reply_empty(actor, ACTION_PING_REPLY);
@@ -109,7 +109,7 @@ void frame_receive(struct thorium_actor *actor, struct thorium_message *message)
                         name, source, name);
 
         printf("Acquaintances of actor %d: ", name);
-        biosal_vector_print_int(acquaintance_vector);
+        core_vector_print_int(acquaintance_vector);
         printf("\n");
 
         thorium_actor_send_reply_int(actor, ACTION_MIGRATE, name);
@@ -128,7 +128,7 @@ void frame_receive(struct thorium_actor *actor, struct thorium_message *message)
         thorium_message_unpack_int(message, 0, &other);
         printf("actor %d received migrated actor %d\n", name, other);
         printf("Acquaintances of actor %d: ", name);
-        biosal_vector_print_int(acquaintance_vector);
+        core_vector_print_int(acquaintance_vector);
         printf("\n");
 
         /* it is possible that the ACTION_PING went through
@@ -153,7 +153,7 @@ void frame_receive(struct thorium_actor *actor, struct thorium_message *message)
         printf("actor %d received ACTION_ASK_TO_STOP, value: %d ",
                         name, concrete_actor->value);
         printf("acquaintance vector: ");
-        biosal_vector_print_int(acquaintance_vector);
+        core_vector_print_int(acquaintance_vector);
         printf("\n");
 
         thorium_actor_send_to_self_empty(actor, ACTION_STOP);

@@ -9,7 +9,7 @@
 struct table {
     int received;
     int done;
-    struct biosal_vector spawners;
+    struct core_vector spawners;
 };
 
 #define ACTION_TABLE_DIE 0x00003391

@@ -1,21 +1,21 @@
 
-#ifndef BIOSAL_FAST_RING_H
-#define BIOSAL_FAST_RING_H
+#ifndef CORE_FAST_RING_H
+#define CORE_FAST_RING_H
 
-struct biosal_fast_ring;
+struct core_fast_ring;
 
 #include <stdint.h>
 
 /*
-#define BIOSAL_FAST_RING_VOLATILE
+#define CORE_FAST_RING_VOLATILE
 */
 
 /*
-#define BIOSAL_FAST_RING_ATOMIC
+#define CORE_FAST_RING_ATOMIC
 */
 
 /*
-BIOSAL_FAST_RING_USE_PADDING
+CORE_FAST_RING_USE_PADDING
 */
 /*
  * \see http://www.codeproject.com/Articles/43510/Lock-Free-Single-Producer-Single-Consumer-Circular
@@ -24,7 +24,7 @@ BIOSAL_FAST_RING_USE_PADDING
  *
  * \see http://stackoverflow.com/questions/17327095/how-does-disruptor-barriers-work
  */
-struct biosal_fast_ring {
+struct core_fast_ring {
     /*
      * \see http://stackoverflow.com/questions/19744508/volatile-vs-atomic
      * \see http://stackoverflow.com/questions/6397662/if-volatile-is-useless-for-threading-why-do-atomic-operations-require-pointers
@@ -48,7 +48,7 @@ struct biosal_fast_ring {
      * 128 bytes
      */
 
-#ifdef BIOSAL_FAST_RING_USE_PADDING
+#ifdef CORE_FAST_RING_USE_PADDING
     uint64_t consumer_padding_0;
     uint64_t consumer_padding_1;
     uint64_t consumer_padding_2;
@@ -63,7 +63,7 @@ struct biosal_fast_ring {
     uint64_t tail;
     uint64_t head_cache;
 
-#ifdef BIOSAL_FAST_RING_USE_PADDING
+#ifdef CORE_FAST_RING_USE_PADDING
     uint64_t producer_padding_0;
     uint64_t producer_padding_1;
     uint64_t producer_padding_2;
@@ -78,28 +78,28 @@ struct biosal_fast_ring {
     int cell_size;
 };
 
-void biosal_fast_ring_init(struct biosal_fast_ring *self, int capacity, int cell_size);
-void biosal_fast_ring_destroy(struct biosal_fast_ring *self);
+void core_fast_ring_init(struct core_fast_ring *self, int capacity, int cell_size);
+void core_fast_ring_destroy(struct core_fast_ring *self);
 
-int biosal_fast_ring_push_from_producer(struct biosal_fast_ring *self, void *element);
-int biosal_fast_ring_pop_from_consumer(struct biosal_fast_ring *self, void *element);
+int core_fast_ring_push_from_producer(struct core_fast_ring *self, void *element);
+int core_fast_ring_pop_from_consumer(struct core_fast_ring *self, void *element);
 
-void *biosal_fast_ring_get_cell(struct biosal_fast_ring *self, uint64_t index);
+void *core_fast_ring_get_cell(struct core_fast_ring *self, uint64_t index);
 
-uint64_t biosal_fast_ring_increment(struct biosal_fast_ring *self, uint64_t index);
-int biosal_fast_ring_capacity(struct biosal_fast_ring *self);
+uint64_t core_fast_ring_increment(struct core_fast_ring *self, uint64_t index);
+int core_fast_ring_capacity(struct core_fast_ring *self);
 
-int biosal_fast_ring_get_next_power_of_two(int value);
-int biosal_fast_ring_is_full_from_producer(struct biosal_fast_ring *self);
-int biosal_fast_ring_is_empty_from_consumer(struct biosal_fast_ring *self);
+int core_fast_ring_get_next_power_of_two(int value);
+int core_fast_ring_is_full_from_producer(struct core_fast_ring *self);
+int core_fast_ring_is_empty_from_consumer(struct core_fast_ring *self);
 
-int biosal_fast_ring_size_from_consumer(struct biosal_fast_ring *self);
-int biosal_fast_ring_size_from_producer(struct biosal_fast_ring *self);
+int core_fast_ring_size_from_consumer(struct core_fast_ring *self);
+int core_fast_ring_size_from_producer(struct core_fast_ring *self);
 
-void biosal_fast_ring_update_head_cache(struct biosal_fast_ring *self);
-void biosal_fast_ring_update_tail_cache(struct biosal_fast_ring *self);
+void core_fast_ring_update_head_cache(struct core_fast_ring *self);
+void core_fast_ring_update_tail_cache(struct core_fast_ring *self);
 
-uint64_t biosal_fast_ring_mock(struct biosal_fast_ring *self);
-int biosal_fast_ring_empty(struct biosal_fast_ring *self);
+uint64_t core_fast_ring_mock(struct core_fast_ring *self);
+int core_fast_ring_empty(struct core_fast_ring *self);
 
 #endif

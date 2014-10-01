@@ -1,10 +1,10 @@
 
-#ifndef BIOSAL_MAP_HELPER_H
-#define BIOSAL_MAP_HELPER_H
+#ifndef CORE_MAP_HELPER_H
+#define CORE_MAP_HELPER_H
 
 
-struct biosal_map;
+struct core_map;
 
-int biosal_map_get_int(struct biosal_map *self, void *key);
+int core_map_get_int(struct core_map *self, void *key);
 
 #endif

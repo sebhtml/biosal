@@ -1,33 +1,33 @@
 
-#ifndef BIOSAL_QUEUE_H
-#define BIOSAL_QUEUE_H
+#ifndef CORE_QUEUE_H
+#define CORE_QUEUE_H
 
 #include "vector.h"
 
-struct biosal_queue {
-    struct biosal_vector vector;
+struct core_queue {
+    struct core_vector vector;
     int enqueue_index;
     int dequeue_index;
     int size;
     int bytes_per_element;
 };
 
-void biosal_queue_init(struct biosal_queue *self, int bytes_per_unit);
-void biosal_queue_destroy(struct biosal_queue *self);
+void core_queue_init(struct core_queue *self, int bytes_per_unit);
+void core_queue_destroy(struct core_queue *self);
 
 /*
  * \returns 1 if successful, 0 otherwise
  */
-int biosal_queue_enqueue(struct biosal_queue *self, void *item);
+int core_queue_enqueue(struct core_queue *self, void *item);
 
 /*
  * \returns 1 if something was dequeued. 0 otherwise.
  */
-int biosal_queue_dequeue(struct biosal_queue *self, void *item);
+int core_queue_dequeue(struct core_queue *self, void *item);
 
-int biosal_queue_empty(struct biosal_queue *self);
-int biosal_queue_full(struct biosal_queue *self);
+int core_queue_empty(struct core_queue *self);
+int core_queue_full(struct core_queue *self);
 
-int biosal_queue_size(struct biosal_queue *self);
+int core_queue_size(struct core_queue *self);
 
 #endif

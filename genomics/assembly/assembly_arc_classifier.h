@@ -18,13 +18,13 @@ struct biosal_assembly_arc_classifier {
     int kmer_length;
 
     int source;
-    struct biosal_vector consumers;
+    struct core_vector consumers;
 
     struct biosal_dna_codec codec;
 
     int received_blocks;
 
-    struct biosal_vector pending_requests;
+    struct core_vector pending_requests;
     int active_requests;
     int producer_is_waiting;
     int maximum_pending_request_count;

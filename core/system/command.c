@@ -5,9 +5,9 @@
 #include <stdio.h>
 #include <string.h>
 
-char BIOSAL_DEFAULT_OUTPUT[] = "output";
+char CORE_DEFAULT_OUTPUT[] = "output";
 
-int biosal_command_has_argument(int argc, char **argv, const char *argument)
+int core_command_has_argument(int argc, char **argv, const char *argument)
 {
     int i;
     char *actual_argument;
@@ -23,7 +23,7 @@ int biosal_command_has_argument(int argc, char **argv, const char *argument)
     return 0;
 }
 
-char *biosal_command_get_argument_value(int argc, char **argv, const char *argument)
+char *core_command_get_argument_value(int argc, char **argv, const char *argument)
 {
     int i;
     char *value;
@@ -41,14 +41,14 @@ char *biosal_command_get_argument_value(int argc, char **argv, const char *argum
 }
 
 
-char *biosal_command_get_output_directory(int argc, char **argv)
+char *core_command_get_output_directory(int argc, char **argv)
 {
     char *directory_name;
     char *value;
 
-    directory_name = BIOSAL_DEFAULT_OUTPUT;
+    directory_name = CORE_DEFAULT_OUTPUT;
 
-    value = biosal_command_get_argument_value(argc, argv, "-o");
+    value = core_command_get_argument_value(argc, argv, "-o");
 
     if (value != NULL) {
         directory_name = value;
@@ -57,15 +57,15 @@ char *biosal_command_get_output_directory(int argc, char **argv)
     return directory_name;
 }
 
-int biosal_command_get_kmer_length(int argc, char **argv)
+int core_command_get_kmer_length(int argc, char **argv)
 {
     int kmer_length;
     int provided_value;
 
-    kmer_length = BIOSAL_DEFAULT_KMER_LENGTH;
+    kmer_length = CORE_DEFAULT_KMER_LENGTH;
 
-    if (biosal_command_has_argument(argc, argv, "-k")) {
-        provided_value = biosal_command_get_argument_value_int(argc, argv, "-k");
+    if (core_command_has_argument(argc, argv, "-k")) {
+        provided_value = core_command_get_argument_value_int(argc, argv, "-k");
 
         /*
          * Use a odd kmer length
@@ -82,13 +82,13 @@ int biosal_command_get_kmer_length(int argc, char **argv)
     return kmer_length;
 }
 
-int biosal_command_get_argument_value_int(int argc, char **argv, const char *argument)
+int core_command_get_argument_value_int(int argc, char **argv, const char *argument)
 {
     char *value;
     int integer_value;
 
     integer_value = -1;
-    value = biosal_command_get_argument_value(argc, argv, argument);
+    value = core_command_get_argument_value(argc, argv, argument);
 
     if (value != NULL) {
         integer_value = atoi(value);

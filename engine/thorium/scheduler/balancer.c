@@ -57,15 +57,15 @@
 void thorium_balancer_init(struct thorium_balancer *self, struct thorium_worker_pool *pool)
 {
     self->pool = pool;
-    biosal_map_init(&self->actor_affinities, sizeof(int), sizeof(int));
-    biosal_map_init(&self->last_actor_received_messages, sizeof(int), sizeof(int));
+    core_map_init(&self->actor_affinities, sizeof(int), sizeof(int));
+    core_map_init(&self->last_actor_received_messages, sizeof(int), sizeof(int));
 
     self->worker_for_work = 0;
     self->last_migrations = 0;
     self->last_killed_actors = -1;
     self->last_spawned_actors = -1;
 
-    biosal_map_init(&self->current_script_workers, sizeof(int), sizeof(int));
+    core_map_init(&self->current_script_workers, sizeof(int), sizeof(int));
 
     self->first_worker = 0;
 }
@@ -73,10 +73,10 @@ void thorium_balancer_init(struct thorium_balancer *self, struct thorium_worker_
 void thorium_balancer_destroy(struct thorium_balancer *self)
 {
     self->pool = NULL;
-    biosal_map_destroy(&self->actor_affinities);
-    biosal_map_destroy(&self->last_actor_received_messages);
+    core_map_destroy(&self->actor_affinities);
+    core_map_destroy(&self->last_actor_received_messages);
 
-    biosal_map_destroy(&self->current_script_workers);
+    core_map_destroy(&self->current_script_workers);
 }
 
 void thorium_balancer_balance(struct thorium_balancer *self)
@@ -87,30 +87,30 @@ void thorium_balancer_balance(struct thorium_balancer *self)
      * \see http://www.init7.net/en/backbone/95-percent-rule
      */
     int load_percentile_50;
-    struct biosal_timer timer;
+    struct core_timer timer;
 
     int i;
-    struct biosal_vector loads;
-    struct biosal_vector loads_unsorted;
-    struct biosal_vector burdened_workers;
-    struct biosal_vector stalled_workers;
+    struct core_vector loads;
+    struct core_vector loads_unsorted;
+    struct core_vector burdened_workers;
+    struct core_vector stalled_workers;
     struct thorium_worker *worker;
     struct thorium_node *node;
 
-    /*struct biosal_set *set;*/
-    struct biosal_pair pair;
-    struct biosal_vector_iterator vector_iterator;
+    /*struct core_set *set;*/
+    struct core_pair pair;
+    struct core_vector_iterator vector_iterator;
     int old_worker;
     int actor_name;
     int messages;
     int maximum;
     int with_maximum;
-    struct biosal_map *set;
-    struct biosal_map_iterator set_iterator;
+    struct core_map *set;
+    struct core_map_iterator set_iterator;
     int stalled_index;
     int stalled_count;
     int new_worker_index;
-    struct biosal_vector migrations;
+    struct core_vector migrations;
     struct thorium_migration migration;
     struct thorium_migration *migration_to_do;
     struct thorium_actor *actor;
@@ -120,7 +120,7 @@ void thorium_balancer_balance(struct thorium_balancer *self)
     int remaining_load;
     int projected_load;
 
-    struct biosal_vector actors_to_migrate;
+    struct core_vector actors_to_migrate;
     int total;
     int with_messages;
     int stalled_percentile;
@@ -130,7 +130,7 @@ void thorium_balancer_balance(struct thorium_balancer *self)
     int old_load;
     int new_load;
     int predicted_new_load;
-    struct biosal_pair *pair_pointer;
+    struct core_pair *pair_pointer;
     struct thorium_worker *new_worker;
     /*int new_total;*/
     int actor_load;
@@ -143,13 +143,13 @@ void thorium_balancer_balance(struct thorium_balancer *self)
     int perfect;
 
 #ifdef THORIUM_SCHEDULER_ENABLE_SYMMETRIC_SCHEDULING
-    struct biosal_map symmetric_actor_scripts;
+    struct core_map symmetric_actor_scripts;
     int script;
 #endif
 
     node = thorium_worker_pool_get_node(self->pool);
 
-    spawned_actors = thorium_node_get_counter(node, BIOSAL_COUNTER_SPAWNED_ACTORS);
+    spawned_actors = thorium_node_get_counter(node, CORE_COUNTER_SPAWNED_ACTORS);
 
     /* There is nothing to balance...
      */
@@ -157,7 +157,7 @@ void thorium_balancer_balance(struct thorium_balancer *self)
         return;
     }
 
-    killed_actors = thorium_node_get_counter(node, BIOSAL_COUNTER_KILLED_ACTORS);
+    killed_actors = thorium_node_get_counter(node, CORE_COUNTER_KILLED_ACTORS);
 
     /*
      * The system can probably not be balanced to get in
@@ -198,12 +198,12 @@ void thorium_balancer_balance(struct thorium_balancer *self)
 
     /* Otherwise, try to balance things
      */
-    biosal_timer_init(&timer);
+    core_timer_init(&timer);
 
-    biosal_timer_start(&timer);
+    core_timer_start(&timer);
 
 #ifdef THORIUM_SCHEDULER_ENABLE_SYMMETRIC_SCHEDULING
-    biosal_map_init(&symmetric_actor_scripts, sizeof(int), sizeof(int));
+    core_map_init(&symmetric_actor_scripts, sizeof(int), sizeof(int));
 
     thorium_balancer_detect_symmetric_scripts(self, &symmetric_actor_scripts);
 #endif
@@ -217,18 +217,18 @@ void thorium_balancer_balance(struct thorium_balancer *self)
     }
 
 
-    biosal_vector_init(&migrations, sizeof(struct thorium_migration));
+    core_vector_init(&migrations, sizeof(struct thorium_migration));
 
 #ifdef THORIUM_SCHEDULER_ENABLE_VERBOSITY
     printf("BALANCING\n");
 #endif
 
-    biosal_vector_init(&loads, sizeof(int));
-    biosal_vector_init(&loads_unsorted, sizeof(int));
-    biosal_vector_init(&burdened_workers, sizeof(struct biosal_pair));
-    biosal_vector_init(&stalled_workers, sizeof(struct biosal_pair));
+    core_vector_init(&loads, sizeof(int));
+    core_vector_init(&loads_unsorted, sizeof(int));
+    core_vector_init(&burdened_workers, sizeof(struct core_pair));
+    core_vector_init(&stalled_workers, sizeof(struct core_pair));
 
-    biosal_vector_init(&actors_to_migrate, sizeof(struct biosal_pair));
+    core_vector_init(&actors_to_migrate, sizeof(struct core_pair));
 
     for (i = 0; i < thorium_worker_pool_worker_count(self->pool); i++) {
         worker = thorium_worker_pool_get_worker(self->pool, i);
@@ -238,26 +238,26 @@ void thorium_balancer_balance(struct thorium_balancer *self)
         printf("DEBUG LOAD %d %d\n", i, load_value);
 #endif
 
-        biosal_vector_push_back(&loads, &load_value);
-        biosal_vector_push_back(&loads_unsorted, &load_value);
+        core_vector_push_back(&loads, &load_value);
+        core_vector_push_back(&loads_unsorted, &load_value);
     }
 
-    biosal_vector_sort_int(&loads);
+    core_vector_sort_int(&loads);
 
-    stalled_percentile = biosal_statistics_get_percentile_int(&loads, SCHEDULER_WINDOW);
-    /*load_percentile_25 = biosal_statistics_get_percentile_int(&loads, 25);*/
-    load_percentile_50 = biosal_statistics_get_percentile_int(&loads, 50);
-    /*load_percentile_75 = biosal_statistics_get_percentile_int(&loads, 75);*/
-    burdened_percentile = biosal_statistics_get_percentile_int(&loads, 100 - SCHEDULER_WINDOW);
+    stalled_percentile = core_statistics_get_percentile_int(&loads, SCHEDULER_WINDOW);
+    /*load_percentile_25 = core_statistics_get_percentile_int(&loads, 25);*/
+    load_percentile_50 = core_statistics_get_percentile_int(&loads, 50);
+    /*load_percentile_75 = core_statistics_get_percentile_int(&loads, 75);*/
+    burdened_percentile = core_statistics_get_percentile_int(&loads, 100 - SCHEDULER_WINDOW);
 
 #ifdef THORIUM_SCHEDULER_ENABLE_VERBOSITY
     printf("Percentiles for epoch loads: ");
-    biosal_statistics_print_percentiles_int(&loads);
+    core_statistics_print_percentiles_int(&loads);
 #endif
 
     for (i = 0; i < thorium_worker_pool_worker_count(self->pool); i++) {
         worker = thorium_worker_pool_get_worker(self->pool, i);
-        load_value = biosal_vector_at_as_int(&loads_unsorted, i);
+        load_value = core_vector_at_as_int(&loads_unsorted, i);
 
         set = thorium_worker_get_actors(worker);
 
@@ -275,8 +275,8 @@ void thorium_balancer_balance(struct thorium_balancer *self)
                             THORIUM_CLASS_STALLED_STRING);
 #endif
 
-            biosal_pair_init(&pair, load_value, i);
-            biosal_vector_push_back(&stalled_workers, &pair);
+            core_pair_init(&pair, load_value, i);
+            core_vector_push_back(&stalled_workers, &pair);
 
         } else if (load_value >= burdened_percentile) {
 
@@ -285,8 +285,8 @@ void thorium_balancer_balance(struct thorium_balancer *self)
                             THORIUM_CLASS_BURDENED_STRING);
 #endif
 
-            biosal_pair_init(&pair, load_value, i);
-            biosal_vector_push_back(&burdened_workers, &pair);
+            core_pair_init(&pair, load_value, i);
+            core_vector_push_back(&burdened_workers, &pair);
         } else {
 #ifdef THORIUM_SCHEDULER_ENABLE_VERBOSITY
             printf("scheduling_class:%s ",
@@ -300,23 +300,23 @@ void thorium_balancer_balance(struct thorium_balancer *self)
 
     }
 
-    biosal_vector_sort_int_reverse(&burdened_workers);
-    biosal_vector_sort_int(&stalled_workers);
+    core_vector_sort_int_reverse(&burdened_workers);
+    core_vector_sort_int(&stalled_workers);
 
-    stalled_count = biosal_vector_size(&stalled_workers);
+    stalled_count = core_vector_size(&stalled_workers);
 
 #ifdef THORIUM_SCHEDULER_ENABLE_VERBOSITY
-    printf("MIGRATIONS (stalled: %d, burdened: %d)\n", (int)biosal_vector_size(&stalled_workers),
-                    (int)biosal_vector_size(&burdened_workers));
+    printf("MIGRATIONS (stalled: %d, burdened: %d)\n", (int)core_vector_size(&stalled_workers),
+                    (int)core_vector_size(&burdened_workers));
 #endif
 
     stalled_index = 0;
-    biosal_vector_iterator_init(&vector_iterator, &burdened_workers);
+    core_vector_iterator_init(&vector_iterator, &burdened_workers);
 
     while (stalled_count > 0
-                    && biosal_vector_iterator_get_next_value(&vector_iterator, &pair)) {
+                    && core_vector_iterator_get_next_value(&vector_iterator, &pair)) {
 
-        old_worker = biosal_pair_get_second(&pair);
+        old_worker = core_pair_get_second(&pair);
 
         worker = thorium_worker_pool_get_worker(self->pool, old_worker);
         set = thorium_worker_get_actors(worker);
@@ -329,14 +329,14 @@ void thorium_balancer_balance(struct thorium_balancer *self)
         /*
          * Lock the worker and try to select actors for migration
          */
-        biosal_map_iterator_init(&set_iterator, set);
+        core_map_iterator_init(&set_iterator, set);
 
         maximum = -1;
         with_maximum = 0;
         total = 0;
         with_messages = 0;
 
-        while (biosal_map_iterator_get_next_key_and_value(&set_iterator, &actor_name, NULL)) {
+        while (core_map_iterator_get_next_key_and_value(&set_iterator, &actor_name, NULL)) {
 
             actor = thorium_node_get_actor_from_name(thorium_worker_pool_get_node(self->pool), actor_name);
             messages = thorium_balancer_get_actor_production(self, actor);
@@ -355,9 +355,9 @@ void thorium_balancer_balance(struct thorium_balancer *self)
             total += messages;
         }
 
-        biosal_map_iterator_destroy(&set_iterator);
+        core_map_iterator_destroy(&set_iterator);
 
-        biosal_map_iterator_init(&set_iterator, set);
+        core_map_iterator_init(&set_iterator, set);
 
         --with_maximum;
 
@@ -370,7 +370,7 @@ void thorium_balancer_balance(struct thorium_balancer *self)
         printf("maximum %d with_maximum %d\n", maximum, with_maximum);
 #endif
 
-        while (biosal_map_iterator_get_next_key_and_value(&set_iterator, &actor_name, NULL)) {
+        while (core_map_iterator_get_next_key_and_value(&set_iterator, &actor_name, NULL)) {
 
             actor = thorium_node_get_actor_from_name(thorium_worker_pool_get_node(self->pool), actor_name);
 
@@ -385,7 +385,7 @@ void thorium_balancer_balance(struct thorium_balancer *self)
 
             /* symmetric actors are migrated elsewhere.
              */
-            if (biosal_map_get_value(&symmetric_actor_scripts, &script, NULL)) {
+            if (core_map_get_value(&symmetric_actor_scripts, &script, NULL)) {
                 continue;
             }
 #endif
@@ -426,8 +426,8 @@ void thorium_balancer_balance(struct thorium_balancer *self)
                 }
 
 
-                biosal_pair_init(&pair, messages, actor_name);
-                biosal_vector_push_back(&actors_to_migrate, &pair);
+                core_pair_init(&pair, messages, actor_name);
+                core_vector_push_back(&actors_to_migrate, &pair);
 
 #ifdef THORIUM_SCHEDULER_DEBUG
                 printf("early CANDIDATE for migration: actor %d, worker %d\n",
@@ -435,34 +435,34 @@ void thorium_balancer_balance(struct thorium_balancer *self)
 #endif
             }
         }
-        biosal_map_iterator_destroy(&set_iterator);
+        core_map_iterator_destroy(&set_iterator);
 
     }
 
-    biosal_vector_iterator_destroy(&vector_iterator);
+    core_vector_iterator_destroy(&vector_iterator);
 
     /* Sort the candidates
      */
 
     /*
-    biosal_vector_sort_int(&actors_to_migrate);
+    core_vector_sort_int(&actors_to_migrate);
 
     printf("Percentiles for production: ");
-    biosal_statistics_print_percentiles_int(&actors_to_migrate);
+    core_statistics_print_percentiles_int(&actors_to_migrate);
     */
 
     /* Sort them in reverse order.
      */
-    biosal_vector_sort_int_reverse(&actors_to_migrate);
+    core_vector_sort_int_reverse(&actors_to_migrate);
 
-    biosal_vector_iterator_init(&vector_iterator, &actors_to_migrate);
+    core_vector_iterator_init(&vector_iterator, &actors_to_migrate);
 
     /* For each highly active actor,
      * try to match it with a stalled worker
      */
-    while (biosal_vector_iterator_get_next_value(&vector_iterator, &pair)) {
+    while (core_vector_iterator_get_next_value(&vector_iterator, &pair)) {
 
-        actor_name = biosal_pair_get_second(&pair);
+        actor_name = core_pair_get_second(&pair);
 
         actor = thorium_node_get_actor_from_name(thorium_worker_pool_get_node(self->pool), actor_name);
 
@@ -471,7 +471,7 @@ void thorium_balancer_balance(struct thorium_balancer *self)
         }
 
         messages = thorium_balancer_get_actor_production(self, actor);
-        biosal_map_get_value(&self->actor_affinities, &actor_name, &old_worker);
+        core_map_get_value(&self->actor_affinities, &actor_name, &old_worker);
 
         worker = thorium_worker_pool_get_worker(self->pool, old_worker);
 
@@ -493,8 +493,8 @@ void thorium_balancer_balance(struct thorium_balancer *self)
         found_match = 0;
         while (tests < stalled_count) {
 
-            biosal_vector_get_value(&stalled_workers, test_stalled_index, &pair);
-            new_worker_index = biosal_pair_get_second(&pair);
+            core_vector_get_value(&stalled_workers, test_stalled_index, &pair);
+            new_worker_index = core_pair_get_second(&pair);
 
             new_worker = thorium_worker_pool_get_worker(self->pool, new_worker_index);
             new_load = thorium_worker_get_scheduling_epoch_load(new_worker) * SCHEDULER_PRECISION;
@@ -534,9 +534,9 @@ void thorium_balancer_balance(struct thorium_balancer *self)
         /* Otherwise, update the load of the stalled one and go forward with the change.
          */
 
-        pair_pointer = (struct biosal_pair *)biosal_vector_at(&stalled_workers, stalled_index);
+        pair_pointer = (struct core_pair *)core_vector_at(&stalled_workers, stalled_index);
 
-        biosal_pair_set_first(pair_pointer, predicted_new_load);
+        core_pair_set_first(pair_pointer, predicted_new_load);
 
         ++stalled_index;
 
@@ -554,18 +554,18 @@ void thorium_balancer_balance(struct thorium_balancer *self)
 #endif
 
         thorium_migration_init(&migration, actor_name, old_worker, new_worker_index);
-        biosal_vector_push_back(&migrations, &migration);
+        core_vector_push_back(&migrations, &migration);
         thorium_migration_destroy(&migration);
 
     }
 
-    biosal_vector_iterator_destroy(&vector_iterator);
+    core_vector_iterator_destroy(&vector_iterator);
 
-    biosal_vector_destroy(&stalled_workers);
-    biosal_vector_destroy(&burdened_workers);
-    biosal_vector_destroy(&loads);
-    biosal_vector_destroy(&loads_unsorted);
-    biosal_vector_destroy(&actors_to_migrate);
+    core_vector_destroy(&stalled_workers);
+    core_vector_destroy(&burdened_workers);
+    core_vector_destroy(&loads);
+    core_vector_destroy(&loads_unsorted);
+    core_vector_destroy(&actors_to_migrate);
 
     /* Update the last values
      */
@@ -575,13 +575,13 @@ void thorium_balancer_balance(struct thorium_balancer *self)
 
         set = thorium_worker_get_actors(worker);
 
-        biosal_map_iterator_init(&set_iterator, set);
+        core_map_iterator_init(&set_iterator, set);
 
-        while (biosal_map_iterator_get_next_key_and_value(&set_iterator, &actor_name, NULL)) {
+        while (core_map_iterator_get_next_key_and_value(&set_iterator, &actor_name, NULL)) {
             actor = thorium_node_get_actor_from_name(thorium_worker_pool_get_node(self->pool), actor_name);
             thorium_balancer_update_actor_production(self, actor);
         }
-        biosal_map_iterator_destroy(&set_iterator);
+        core_map_iterator_destroy(&set_iterator);
 
         thorium_worker_reset_scheduling_epoch(worker);
     }
@@ -595,18 +595,18 @@ void thorium_balancer_balance(struct thorium_balancer *self)
 
     /* Actually do the migrations
      */
-    biosal_vector_iterator_init(&vector_iterator, &migrations);
+    core_vector_iterator_init(&vector_iterator, &migrations);
 
-    while (biosal_vector_iterator_next(&vector_iterator, (void **)&migration_to_do)) {
+    while (core_vector_iterator_next(&vector_iterator, (void **)&migration_to_do)) {
 
         thorium_balancer_migrate(self, migration_to_do);
     }
 
-    biosal_vector_iterator_destroy(&vector_iterator);
+    core_vector_iterator_destroy(&vector_iterator);
 
-    self->last_migrations = biosal_vector_size(&migrations);
+    self->last_migrations = core_vector_size(&migrations);
 
-    biosal_vector_destroy(&migrations);
+    core_vector_destroy(&migrations);
 
     /* Unlock all workers
      */
@@ -617,13 +617,13 @@ void thorium_balancer_balance(struct thorium_balancer *self)
     }
 
 #ifdef THORIUM_SCHEDULER_ENABLE_SYMMETRIC_SCHEDULING
-    biosal_map_destroy(&symmetric_actor_scripts);
+    core_map_destroy(&symmetric_actor_scripts);
 #endif
 
-    biosal_timer_stop(&timer);
+    core_timer_stop(&timer);
 
     printf("SCHEDULER: elapsed time for balancing: %d us, %d migrations performed\n",
-                    (int)(biosal_timer_get_elapsed_nanoseconds(&timer) / 1000),
+                    (int)(core_timer_get_elapsed_nanoseconds(&timer) / 1000),
                     self->last_migrations);
 }
 
@@ -657,7 +657,7 @@ void thorium_balancer_migrate(struct thorium_balancer *self, struct thorium_migr
     /* Redirect messages for this actor to the
      * new worker
      */
-    biosal_map_update_value(&self->actor_affinities, &actor_name, &new_worker);
+    core_map_update_value(&self->actor_affinities, &actor_name, &new_worker);
 
 #ifdef THORIUM_WORKER_POOL_DEBUG_MIGRATION
     printf("ROUTE actor %d ->  worker %d\n", actor_name, new_worker);
@@ -682,7 +682,7 @@ int thorium_balancer_get_actor_production(struct thorium_balancer *self, struct 
 
     last_messages = 0;
     name = thorium_actor_name(actor);
-    biosal_map_get_value(&self->last_actor_received_messages, &name, &last_messages);
+    core_map_get_value(&self->last_actor_received_messages, &name, &last_messages);
 
     result = messages - last_messages;
 
@@ -701,8 +701,8 @@ void thorium_balancer_update_actor_production(struct thorium_balancer *self, str
     messages = thorium_actor_get_sum_of_received_messages(actor);
     name = thorium_actor_name(actor);
 
-    if (!biosal_map_update_value(&self->last_actor_received_messages, &name, &messages)) {
-        biosal_map_add_value(&self->last_actor_received_messages, &name, &messages);
+    if (!core_map_update_value(&self->last_actor_received_messages, &name, &messages)) {
+        core_map_add_value(&self->last_actor_received_messages, &name, &messages);
     }
 }
 
@@ -712,14 +712,14 @@ int thorium_balancer_get_actor_worker(struct thorium_balancer *self, int name)
 
     worker_index = -1;
 
-    biosal_map_get_value(&self->actor_affinities, &name, &worker_index);
+    core_map_get_value(&self->actor_affinities, &name, &worker_index);
 
     return worker_index;
 }
 
 void thorium_balancer_set_actor_worker(struct thorium_balancer *self, int name, int worker_index)
 {
-    biosal_map_add_value(&self->actor_affinities, &name, &worker_index);
+    core_map_add_value(&self->actor_affinities, &name, &worker_index);
 }
 
 #ifdef THORIUM_WORKER_HAS_OWN_QUEUES
@@ -819,18 +819,18 @@ int thorium_balancer_select_worker_least_busy(
 
 #endif
 
-void thorium_balancer_detect_symmetric_scripts(struct thorium_balancer *self, struct biosal_map *symmetric_actor_scripts)
+void thorium_balancer_detect_symmetric_scripts(struct thorium_balancer *self, struct core_map *symmetric_actor_scripts)
 {
     int i;
     struct thorium_worker *worker;
     struct thorium_actor *actor;
-    struct biosal_map_iterator iterator;
-    struct biosal_map *set;
+    struct core_map_iterator iterator;
+    struct core_map *set;
     int actor_name;
     struct thorium_node *node;
     int script;
     int frequency;
-    struct biosal_map frequencies;
+    struct core_map frequencies;
     int worker_count;
     int population_per_worker;
 #ifdef THORIUM_SCHEDULER_ENABLE_VERBOSITY
@@ -838,7 +838,7 @@ void thorium_balancer_detect_symmetric_scripts(struct thorium_balancer *self, st
 #endif
 
     worker_count = thorium_worker_pool_worker_count(self->pool);
-    biosal_map_init(&frequencies, sizeof(int), sizeof(int));
+    core_map_init(&frequencies, sizeof(int), sizeof(int));
 
     node = thorium_worker_pool_get_node(self->pool);
 
@@ -850,9 +850,9 @@ void thorium_balancer_detect_symmetric_scripts(struct thorium_balancer *self, st
 
         set = thorium_worker_get_actors(worker);
 
-        biosal_map_iterator_init(&iterator, set);
+        core_map_iterator_init(&iterator, set);
 
-        while (biosal_map_iterator_get_next_key_and_value(&iterator, &actor_name, NULL)) {
+        while (core_map_iterator_get_next_key_and_value(&iterator, &actor_name, NULL)) {
             actor = thorium_node_get_actor_from_name(node, actor_name);
 
             if (actor == NULL) {
@@ -862,24 +862,24 @@ void thorium_balancer_detect_symmetric_scripts(struct thorium_balancer *self, st
 
             frequency = 0;
 
-            if (!biosal_map_get_value(&frequencies, &script, &frequency)) {
-                biosal_map_add_value(&frequencies, &script, &frequency);
+            if (!core_map_get_value(&frequencies, &script, &frequency)) {
+                core_map_add_value(&frequencies, &script, &frequency);
             }
 
             ++frequency;
 
-            biosal_map_update_value(&frequencies, &script, &frequency);
+            core_map_update_value(&frequencies, &script, &frequency);
         }
 
-        biosal_map_iterator_destroy(&iterator);
+        core_map_iterator_destroy(&iterator);
     }
 
     /*
      * Detect symmetric scripts
      */
-    biosal_map_iterator_init(&iterator, &frequencies);
+    core_map_iterator_init(&iterator, &frequencies);
 
-    while (biosal_map_iterator_get_next_key_and_value(&iterator, &script, &frequency)) {
+    while (core_map_iterator_get_next_key_and_value(&iterator, &script, &frequency)) {
 
 #ifdef THORIUM_SCHEDULER_ENABLE_VERBOSITY
         actual_script = thorium_node_find_script(node, script);
@@ -894,7 +894,7 @@ void thorium_balancer_detect_symmetric_scripts(struct thorium_balancer *self, st
         if (frequency % worker_count == 0) {
             population_per_worker = frequency / worker_count;
 
-            biosal_map_add_value(symmetric_actor_scripts, &script, &population_per_worker);
+            core_map_add_value(symmetric_actor_scripts, &script, &population_per_worker);
 
 #ifdef THORIUM_SCHEDULER_ENABLE_VERBOSITY
             printf("SCHEDULER: script %s is symmetric, worker_count: %d, population_per_worker: %d\n",
@@ -905,22 +905,22 @@ void thorium_balancer_detect_symmetric_scripts(struct thorium_balancer *self, st
         }
     }
 
-    biosal_map_iterator_destroy(&iterator);
+    core_map_iterator_destroy(&iterator);
 
-    biosal_map_destroy(&frequencies);
+    core_map_destroy(&frequencies);
 }
 
-void thorium_balancer_generate_symmetric_migrations(struct thorium_balancer *self, struct biosal_map *symmetric_actor_scripts,
-                struct biosal_vector *migrations)
+void thorium_balancer_generate_symmetric_migrations(struct thorium_balancer *self, struct core_map *symmetric_actor_scripts,
+                struct core_vector *migrations)
 {
     int i;
     int worker_count;
     struct thorium_worker *worker;
-    struct biosal_map *set;
-    struct biosal_map_iterator iterator;
+    struct core_map *set;
+    struct core_map_iterator iterator;
     struct thorium_migration migration;
-    struct biosal_map script_current_worker;
-    struct biosal_map script_current_worker_actor_count;
+    struct core_map script_current_worker;
+    struct core_map script_current_worker_actor_count;
     int frequency;
     int current_worker;
     int current_worker_actor_count;
@@ -944,8 +944,8 @@ void thorium_balancer_generate_symmetric_migrations(struct thorium_balancer *sel
     enabled = 0;
 #endif
 
-    biosal_map_init(&script_current_worker, sizeof(int), sizeof(int));
-    biosal_map_init(&script_current_worker_actor_count, sizeof(int), sizeof(int));
+    core_map_init(&script_current_worker, sizeof(int), sizeof(int));
+    core_map_init(&script_current_worker_actor_count, sizeof(int), sizeof(int));
 
     node = thorium_worker_pool_get_node(self->pool);
     worker_count = thorium_worker_pool_worker_count(self->pool);
@@ -956,9 +956,9 @@ void thorium_balancer_generate_symmetric_migrations(struct thorium_balancer *sel
 
         set = thorium_worker_get_actors(worker);
 
-        biosal_map_iterator_init(&iterator, set);
+        core_map_iterator_init(&iterator, set);
 
-        while (biosal_map_iterator_get_next_key_and_value(&iterator, &actor_name, NULL)) {
+        while (core_map_iterator_get_next_key_and_value(&iterator, &actor_name, NULL)) {
             actor = thorium_node_get_actor_from_name(node, actor_name);
 
             if (actor == NULL) {
@@ -970,15 +970,15 @@ void thorium_balancer_generate_symmetric_migrations(struct thorium_balancer *sel
             /*
              * Check if the actor is symmetric
              */
-            if (biosal_map_get_value(symmetric_actor_scripts, &script, &frequency)) {
+            if (core_map_get_value(symmetric_actor_scripts, &script, &frequency)) {
 
                 current_worker = 0;
-                if (!biosal_map_get_value(&script_current_worker, &script, &current_worker)) {
-                    biosal_map_add_value(&script_current_worker, &script, &current_worker);
+                if (!core_map_get_value(&script_current_worker, &script, &current_worker)) {
+                    core_map_add_value(&script_current_worker, &script, &current_worker);
                 }
                 current_worker_actor_count = 0;
-                if (!biosal_map_get_value(&script_current_worker_actor_count, &script, &current_worker_actor_count)) {
-                    biosal_map_add_value(&script_current_worker_actor_count, &script, &current_worker_actor_count);
+                if (!core_map_get_value(&script_current_worker_actor_count, &script, &current_worker_actor_count)) {
+                    core_map_add_value(&script_current_worker_actor_count, &script, &current_worker_actor_count);
                 }
 
                 /*
@@ -993,7 +993,7 @@ void thorium_balancer_generate_symmetric_migrations(struct thorium_balancer *sel
 
                 if (enabled && old_worker != new_worker) {
                     thorium_migration_init(&migration, actor_name, old_worker, new_worker);
-                    biosal_vector_push_back(migrations, &migration);
+                    core_vector_push_back(migrations, &migration);
                     thorium_migration_destroy(&migration);
 
 #ifdef THORIUM_SCHEDULER_ENABLE_VERBOSITY
@@ -1014,7 +1014,7 @@ void thorium_balancer_generate_symmetric_migrations(struct thorium_balancer *sel
 #endif
 
                 ++current_worker_actor_count;
-                biosal_map_update_value(&script_current_worker_actor_count, &script, &current_worker_actor_count);
+                core_map_update_value(&script_current_worker_actor_count, &script, &current_worker_actor_count);
 
                 /* The current worker is full.
                  * Increment the current worker and set the
@@ -1022,19 +1022,19 @@ void thorium_balancer_generate_symmetric_migrations(struct thorium_balancer *sel
                  */
                 if (current_worker_actor_count == frequency) {
                     ++current_worker;
-                    biosal_map_update_value(&script_current_worker, &script, &current_worker);
+                    core_map_update_value(&script_current_worker, &script, &current_worker);
                     current_worker_actor_count = 0;
-                    biosal_map_update_value(&script_current_worker_actor_count, &script, &current_worker_actor_count);
+                    core_map_update_value(&script_current_worker_actor_count, &script, &current_worker_actor_count);
                 }
             }
 
         }
 
-        biosal_map_iterator_destroy(&iterator);
+        core_map_iterator_destroy(&iterator);
     }
 
-    biosal_map_destroy(&script_current_worker);
-    biosal_map_destroy(&script_current_worker_actor_count);
+    core_map_destroy(&script_current_worker);
+    core_map_destroy(&script_current_worker_actor_count);
 }
 
 int thorium_balancer_select_worker_script_round_robin(struct thorium_balancer *self, int script)
@@ -1044,7 +1044,7 @@ int thorium_balancer_select_worker_script_round_robin(struct thorium_balancer *s
     int next_worker;
     int *bucket;
 
-    bucket = biosal_map_get(&self->current_script_workers, &script);
+    bucket = core_map_get(&self->current_script_workers, &script);
 
     worker_count = thorium_worker_pool_worker_count(self->pool);
 
@@ -1052,7 +1052,7 @@ int thorium_balancer_select_worker_script_round_robin(struct thorium_balancer *s
      */
     if (bucket == NULL) {
 
-        bucket = biosal_map_add(&self->current_script_workers, &script);
+        bucket = core_map_add(&self->current_script_workers, &script);
 
         *bucket = self->first_worker;
 

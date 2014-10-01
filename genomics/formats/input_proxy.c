@@ -27,14 +27,14 @@ void biosal_input_proxy_init(struct biosal_input_proxy *proxy,
     printf("Trying fastq\n");
 #endif
     biosal_input_proxy_try(proxy, &proxy->input, &proxy->fastq,
-                    &biosal_fastq_input_operations, file, offset, maximum_offset);
+                    &core_fastq_input_operations, file, offset, maximum_offset);
 
 #ifdef BIOSAL_INPUT_PROXY_DEBUG
     printf("Trying fasta\n");
 #endif
 
     biosal_input_proxy_try(proxy, &proxy->input, &proxy->fasta,
-                    &biosal_fasta_input_operations, file, offset, maximum_offset);
+                    &core_fasta_input_operations, file, offset, maximum_offset);
 }
 
 int biosal_input_proxy_get_sequence(struct biosal_input_proxy *proxy,

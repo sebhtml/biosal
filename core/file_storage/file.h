@@ -1,9 +1,9 @@
 
-#ifndef BIOSAL_FILE_H
-#define BIOSAL_FILE_H
+#ifndef CORE_FILE_H
+#define CORE_FILE_H
 
 #include <stdint.h>
 
-uint64_t biosal_file_get_size(const char *file);
+uint64_t core_file_get_size(const char *file);
 
 #endif

@@ -23,7 +23,7 @@
  * A visitor for unitigs.
  */
 struct biosal_unitig_visitor {
-    struct biosal_vector graph_stores;
+    struct core_vector graph_stores;
 
     struct biosal_dna_codec codec;
 
@@ -38,7 +38,7 @@ struct biosal_unitig_visitor {
     int selected_parent_child;
     int selected_child_parent;
 
-    struct biosal_memory_pool memory_pool;
+    struct core_memory_pool memory_pool;
 
     int graph_store_index;
     int completed;

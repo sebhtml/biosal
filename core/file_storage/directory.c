@@ -6,7 +6,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-int biosal_directory_verify_existence(const char *directory)
+int core_directory_verify_existence(const char *directory)
 {
     int mode;
     int result;
@@ -27,11 +27,11 @@ int biosal_directory_verify_existence(const char *directory)
     return 0;
 }
 
-int biosal_directory_create(const char *directory)
+int core_directory_create(const char *directory)
 {
     int status;
 
-    if (biosal_directory_verify_existence(directory)) {
+    if (core_directory_verify_existence(directory)) {
         return 0;
     }
 

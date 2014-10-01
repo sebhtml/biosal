@@ -10,32 +10,32 @@
 
 #define MEMORY_FASTA 0x480002a5
 
-struct biosal_input_format_interface biosal_fasta_input_operations = {
-    .init = biosal_fasta_input_init,
-    .destroy = biosal_fasta_input_destroy,
-    .get_sequence = biosal_fasta_input_get_sequence,
-    .detect = biosal_fasta_input_detect,
-    .get_offset = biosal_fasta_input_get_offset
+struct biosal_input_format_interface core_fasta_input_operations = {
+    .init = core_fasta_input_init,
+    .destroy = core_fasta_input_destroy,
+    .get_sequence = core_fasta_input_get_sequence,
+    .detect = core_fasta_input_detect,
+    .get_offset = core_fasta_input_get_offset
 };
 
-void biosal_fasta_input_init(struct biosal_input_format *input)
+void core_fasta_input_init(struct biosal_input_format *input)
 {
     char *file;
-    struct biosal_fasta_input *fasta;
+    struct core_fasta_input *fasta;
     uint64_t offset;
 
-    fasta = (struct biosal_fasta_input *)biosal_input_format_implementation(input);
+    fasta = (struct core_fasta_input *)biosal_input_format_implementation(input);
 
     file = biosal_input_format_file(input);
 
-    BIOSAL_DEBUGGER_ASSERT(input->operations != NULL);
+    CORE_DEBUGGER_ASSERT(input->operations != NULL);
 
 #if 0
     printf("DEBUG BEFORE faulty call.\n");
 #endif
     offset = biosal_input_format_start_offset(input);
 
-    biosal_buffered_reader_init(&fasta->reader, file, offset);
+    core_buffered_reader_init(&fasta->reader, file, offset);
 
     fasta->buffer = NULL;
     fasta->next_header = NULL;
@@ -44,28 +44,28 @@ void biosal_fasta_input_init(struct biosal_input_format *input)
     fasta->has_first = 0;
 }
 
-void biosal_fasta_input_destroy(struct biosal_input_format *input)
+void core_fasta_input_destroy(struct biosal_input_format *input)
 {
-    struct biosal_fasta_input *fasta;
+    struct core_fasta_input *fasta;
 
-    fasta = (struct biosal_fasta_input *)biosal_input_format_implementation(input);
-    biosal_buffered_reader_destroy(&fasta->reader);
+    fasta = (struct core_fasta_input *)biosal_input_format_implementation(input);
+    core_buffered_reader_destroy(&fasta->reader);
 
     if (fasta->buffer != NULL) {
-        biosal_memory_free(fasta->buffer, MEMORY_FASTA);
+        core_memory_free(fasta->buffer, MEMORY_FASTA);
         fasta->buffer = NULL;
     }
 
     if (fasta->next_header != NULL) {
-        biosal_memory_free(fasta->next_header, MEMORY_FASTA);
+        core_memory_free(fasta->next_header, MEMORY_FASTA);
         fasta->next_header= NULL;
     }
 }
 
-uint64_t biosal_fasta_input_get_sequence(struct biosal_input_format *input,
+uint64_t core_fasta_input_get_sequence(struct biosal_input_format *input,
                 char *sequence)
 {
-    struct biosal_fasta_input *fasta;
+    struct core_fasta_input *fasta;
 
     /* TODO use a dynamic buffer to accept long reads... */
     int maximum_sequence_length = BIOSAL_INPUT_MAXIMUM_SEQUENCE_LENGTH;
@@ -76,11 +76,11 @@ uint64_t biosal_fasta_input_get_sequence(struct biosal_input_format *input,
     int is_header;
     int block_length;
 
-    fasta = (struct biosal_fasta_input *)biosal_input_format_implementation(input);
+    fasta = (struct core_fasta_input *)biosal_input_format_implementation(input);
 
     if (fasta->buffer == NULL) {
-        fasta->buffer = biosal_memory_allocate(maximum_sequence_length + 1, MEMORY_FASTA);
-        fasta->next_header= biosal_memory_allocate(maximum_sequence_length + 1, MEMORY_FASTA);
+        fasta->buffer = core_memory_allocate(maximum_sequence_length + 1, MEMORY_FASTA);
+        fasta->next_header= core_memory_allocate(maximum_sequence_length + 1, MEMORY_FASTA);
 
         fasta->buffer[0] = '\0';
         fasta->next_header[0] = '\0';
@@ -103,16 +103,16 @@ uint64_t biosal_fasta_input_get_sequence(struct biosal_input_format *input,
         fasta->has_header = 0;
 
     } else {
-        value = biosal_buffered_reader_read_line(&fasta->reader, fasta->buffer,
+        value = core_buffered_reader_read_line(&fasta->reader, fasta->buffer,
                     maximum_sequence_length);
 
         /* Make sure that this is an identifier.
          */
         if (!fasta->has_first) {
 
-            while (!biosal_fasta_input_check_header(input, fasta->buffer)) {
+            while (!core_fasta_input_check_header(input, fasta->buffer)) {
 
-                value = biosal_buffered_reader_read_line(&fasta->reader, fasta->buffer,
+                value = core_buffered_reader_read_line(&fasta->reader, fasta->buffer,
                     maximum_sequence_length);
             }
 
@@ -138,7 +138,7 @@ uint64_t biosal_fasta_input_get_sequence(struct biosal_input_format *input,
     position_in_sequence = 0;
 
     while (1) {
-        value = biosal_buffered_reader_read_line(&fasta->reader, fasta->buffer,
+        value = core_buffered_reader_read_line(&fasta->reader, fasta->buffer,
                     maximum_sequence_length);
 
         if (value == 0) {
@@ -178,7 +178,7 @@ uint64_t biosal_fasta_input_get_sequence(struct biosal_input_format *input,
             --block_length;
         }
 
-        biosal_memory_copy(sequence + position_in_sequence,
+        core_memory_copy(sequence + position_in_sequence,
                         fasta->buffer,
                         block_length);
 
@@ -188,7 +188,7 @@ uint64_t biosal_fasta_input_get_sequence(struct biosal_input_format *input,
     return total;
 }
 
-int biosal_fasta_input_detect(struct biosal_input_format *input)
+int core_fasta_input_detect(struct biosal_input_format *input)
 {
     if (biosal_input_format_has_suffix(input, ".fasta")) {
         return 1;
@@ -203,16 +203,16 @@ int biosal_fasta_input_detect(struct biosal_input_format *input)
     return 0;
 }
 
-uint64_t biosal_fasta_input_get_offset(struct biosal_input_format *self)
+uint64_t core_fasta_input_get_offset(struct biosal_input_format *self)
 {
-    struct biosal_fasta_input *fasta;
+    struct core_fasta_input *fasta;
 
-    fasta = (struct biosal_fasta_input *)biosal_input_format_implementation(self);
+    fasta = (struct core_fasta_input *)biosal_input_format_implementation(self);
 
-    return biosal_buffered_reader_get_offset(&fasta->reader);
+    return core_buffered_reader_get_offset(&fasta->reader);
 }
 
-int biosal_fasta_input_check_header(struct biosal_input_format *self, const char *line)
+int core_fasta_input_check_header(struct biosal_input_format *self, const char *line)
 {
     int length;
     char character;

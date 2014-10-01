@@ -64,7 +64,7 @@ void biosal_aggregator_init(struct thorium_actor *self)
     concrete_actor->received = 0;
     concrete_actor->last = 0;
 
-    biosal_vector_init(&concrete_actor->consumers, sizeof(int));
+    core_vector_init(&concrete_actor->consumers, sizeof(int));
 
     concrete_actor->flushed = 0;
 
@@ -74,8 +74,8 @@ void biosal_aggregator_init(struct thorium_actor *self)
         biosal_dna_codec_enable_two_bit_encoding(&concrete_actor->codec);
     }
 
-    biosal_fast_queue_init(&concrete_actor->stalled_producers, sizeof(int));
-    biosal_vector_init(&concrete_actor->active_messages, sizeof(int));
+    core_fast_queue_init(&concrete_actor->stalled_producers, sizeof(int));
+    core_vector_init(&concrete_actor->active_messages, sizeof(int));
 
     concrete_actor->forced = BIOSAL_FALSE;
 
@@ -100,14 +100,14 @@ void biosal_aggregator_destroy(struct thorium_actor *self)
 
     concrete_actor = (struct biosal_aggregator *)thorium_actor_concrete_actor(self);
 
-    biosal_vector_destroy(&concrete_actor->active_messages);
+    core_vector_destroy(&concrete_actor->active_messages);
     concrete_actor->received = 0;
     concrete_actor->last = 0;
     biosal_dna_codec_destroy(&concrete_actor->codec);
 
-    biosal_fast_queue_destroy(&concrete_actor->stalled_producers);
+    core_fast_queue_destroy(&concrete_actor->stalled_producers);
 
-    biosal_vector_destroy(&concrete_actor->consumers);
+    core_vector_destroy(&concrete_actor->consumers);
 
 }
 
@@ -158,9 +158,9 @@ void biosal_aggregator_receive(struct thorium_actor *self, struct thorium_messag
         printf("BEFORE ACTION_PUSH_KMER_BLOCK_REPLY %d\n", concrete_actor->active_messages);
 #endif
 
-        consumer_index_index = biosal_vector_index_of(&concrete_actor->consumers, &source);
+        consumer_index_index = core_vector_index_of(&concrete_actor->consumers, &source);
 
-        bucket = (int *)biosal_vector_at(&concrete_actor->active_messages, consumer_index_index);
+        bucket = (int *)core_vector_at(&concrete_actor->active_messages, consumer_index_index);
 
         (*bucket)--;
 
@@ -170,7 +170,7 @@ void biosal_aggregator_receive(struct thorium_actor *self, struct thorium_messag
     }
 }
 
-void biosal_aggregator_flush(struct thorium_actor *self, int customer_index, struct biosal_vector *buffers,
+void biosal_aggregator_flush(struct thorium_actor *self, int customer_index, struct core_vector *buffers,
                 int force)
 {
     struct biosal_dna_kmer_frequency_block *customer_block_pointer;
@@ -179,7 +179,7 @@ void biosal_aggregator_flush(struct thorium_actor *self, int customer_index, str
     void *buffer;
     struct thorium_message message;
     int customer;
-    struct biosal_memory_pool *ephemeral_memory;
+    struct core_memory_pool *ephemeral_memory;
     int threshold;
     int *bucket;
 
@@ -192,10 +192,10 @@ void biosal_aggregator_flush(struct thorium_actor *self, int customer_index, str
     concrete_actor = (struct biosal_aggregator *)thorium_actor_concrete_actor(self);
 
     ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
-    customer = biosal_vector_at_as_int(&concrete_actor->consumers, customer_index);
-    customer_block_pointer = (struct biosal_dna_kmer_frequency_block *)biosal_vector_at(buffers, customer_index);
+    customer = core_vector_at_as_int(&concrete_actor->consumers, customer_index);
+    customer_block_pointer = (struct biosal_dna_kmer_frequency_block *)core_vector_at(buffers, customer_index);
 
-    BIOSAL_DEBUGGER_ASSERT(customer_block_pointer != NULL);
+    CORE_DEBUGGER_ASSERT(customer_block_pointer != NULL);
 
     count = biosal_dna_kmer_frequency_block_pack_size(customer_block_pointer,
                     &concrete_actor->codec);
@@ -222,7 +222,7 @@ void biosal_aggregator_flush(struct thorium_actor *self, int customer_index, str
     thorium_message_init(&message, ACTION_PUSH_KMER_BLOCK, count, buffer);
     thorium_actor_send(self, customer, &message);
 
-    bucket = (int *)biosal_vector_at(&concrete_actor->active_messages, customer_index);
+    bucket = (int *)core_vector_at(&concrete_actor->active_messages, customer_index);
     (*bucket)++;
 
     thorium_message_destroy(&message);
@@ -261,10 +261,10 @@ void biosal_aggregator_verify(struct thorium_actor *self, struct thorium_message
      * active messages.
      */
 
-    size = biosal_vector_size(&concrete_actor->active_messages);
+    size = core_vector_size(&concrete_actor->active_messages);
 
     for (consumer_index = 0; consumer_index < size; consumer_index++) {
-        bucket = (int *)biosal_vector_at(&concrete_actor->active_messages, consumer_index);
+        bucket = (int *)core_vector_at(&concrete_actor->active_messages, consumer_index);
 
         /*
          * Not ready yet because the maximum is still
@@ -275,7 +275,7 @@ void biosal_aggregator_verify(struct thorium_actor *self, struct thorium_message
         }
     }
 
-    while (biosal_fast_queue_dequeue(&concrete_actor->stalled_producers, &producer_index)) {
+    while (core_fast_queue_dequeue(&concrete_actor->stalled_producers, &producer_index)) {
         /* tell the producer to continue...
          */
         producer = producer_index;
@@ -287,24 +287,24 @@ void biosal_aggregator_aggregate_kernel_output(struct thorium_actor *self, struc
 {
     int i;
     struct biosal_aggregator *concrete_actor;
-    struct biosal_vector buffers;
+    struct core_vector buffers;
     int producer_index;
     int customer_count;
     struct biosal_dna_kmer_frequency_block *customer_block_pointer;
     int entries;
     struct biosal_dna_kmer_block input_block;
     struct biosal_dna_kmer_frequency_block *output_block;
-    struct biosal_vector *kmers;
-    struct biosal_memory_pool *ephemeral_memory;
+    struct core_vector *kmers;
+    struct core_memory_pool *ephemeral_memory;
     struct biosal_dna_kmer *kmer;
     int source;
     void *buffer;
     int customer_index;
-    struct biosal_vector_iterator iterator;
+    struct core_vector_iterator iterator;
 
     concrete_actor = (struct biosal_aggregator *)thorium_actor_concrete_actor(self);
 
-    if (biosal_vector_size(&concrete_actor->consumers) == 0) {
+    if (core_vector_size(&concrete_actor->consumers) == 0) {
         printf("Error: aggregator %d has no configured buffers\n",
                         thorium_actor_name(self));
         return;
@@ -314,15 +314,15 @@ void biosal_aggregator_aggregate_kernel_output(struct thorium_actor *self, struc
     source = thorium_message_source(message);
     buffer = thorium_message_buffer(message);
 
-    biosal_vector_init(&buffers, sizeof(struct biosal_dna_kmer_frequency_block));
+    core_vector_init(&buffers, sizeof(struct biosal_dna_kmer_frequency_block));
 
-    biosal_vector_resize(&buffers,
-                    biosal_vector_size(&concrete_actor->consumers));
+    core_vector_resize(&buffers,
+                    core_vector_size(&concrete_actor->consumers));
 
     /* enqueue the producer
      */
     producer_index = source;
-    biosal_fast_queue_enqueue(&concrete_actor->stalled_producers, &producer_index);
+    core_fast_queue_enqueue(&concrete_actor->stalled_producers, &producer_index);
 
 
 #ifdef BIOSAL_AGGREGATOR_DEBUG
@@ -345,9 +345,9 @@ void biosal_aggregator_aggregate_kernel_output(struct thorium_actor *self, struc
      */
 
     kmers = biosal_dna_kmer_block_kmers(&input_block);
-    entries = biosal_vector_size(kmers);
+    entries = core_vector_size(kmers);
 
-    customer_count = biosal_vector_size(&concrete_actor->consumers);
+    customer_count = core_vector_size(&concrete_actor->consumers);
 
     concrete_actor->customer_block_size = (entries / customer_count) * 2;
 
@@ -355,9 +355,9 @@ void biosal_aggregator_aggregate_kernel_output(struct thorium_actor *self, struc
      * Reserve entries
      */
 
-    for (i = 0; i < biosal_vector_size(&concrete_actor->consumers); i++) {
+    for (i = 0; i < core_vector_size(&concrete_actor->consumers); i++) {
 
-        customer_block_pointer = (struct biosal_dna_kmer_frequency_block *)biosal_vector_at(&buffers,
+        customer_block_pointer = (struct biosal_dna_kmer_frequency_block *)core_vector_at(&buffers,
                         i);
         biosal_dna_kmer_frequency_block_init(customer_block_pointer, concrete_actor->kmer_length,
                         ephemeral_memory, &concrete_actor->codec,
@@ -367,7 +367,7 @@ void biosal_aggregator_aggregate_kernel_output(struct thorium_actor *self, struc
 
 
     for (i = 0; i < entries; i++) {
-        kmer = (struct biosal_dna_kmer *)biosal_vector_at(kmers, i);
+        kmer = (struct biosal_dna_kmer *)core_vector_at(kmers, i);
 
         /*
         biosal_dna_kmer_print(kmer);
@@ -377,7 +377,7 @@ void biosal_aggregator_aggregate_kernel_output(struct thorium_actor *self, struc
         customer_index = biosal_dna_kmer_store_index(kmer, customer_count, concrete_actor->kmer_length,
                         &concrete_actor->codec, thorium_actor_get_ephemeral_memory(self));
 
-        customer_block_pointer = (struct biosal_dna_kmer_frequency_block *)biosal_vector_at(&buffers,
+        customer_block_pointer = (struct biosal_dna_kmer_frequency_block *)core_vector_at(&buffers,
                         customer_index);
 
 #ifdef BIOSAL_AGGREGATOR_DEBUG
@@ -439,7 +439,7 @@ void biosal_aggregator_aggregate_kernel_output(struct thorium_actor *self, struc
         BIOSAL_DEBUG_MARKER("aggregator marker EXIT");
 #endif
 
-    biosal_vector_iterator_init(&iterator, &buffers);
+    core_vector_iterator_init(&iterator, &buffers);
 
     /* Flush blocks.
      * Destroy blocks and
@@ -447,9 +447,9 @@ void biosal_aggregator_aggregate_kernel_output(struct thorium_actor *self, struc
      */
 
     i = 0;
-    while (biosal_vector_iterator_has_next(&iterator)) {
+    while (core_vector_iterator_has_next(&iterator)) {
 
-        biosal_vector_iterator_next(&iterator, (void **)&output_block);
+        core_vector_iterator_next(&iterator, (void **)&output_block);
 
         customer_index = i;
 
@@ -468,8 +468,8 @@ void biosal_aggregator_aggregate_kernel_output(struct thorium_actor *self, struc
         i++;
     }
 
-    biosal_vector_iterator_destroy(&iterator);
-    biosal_vector_destroy(&buffers);
+    core_vector_iterator_destroy(&iterator);
+    core_vector_destroy(&buffers);
 
     biosal_aggregator_verify(self, message);
 
@@ -480,7 +480,7 @@ void biosal_aggregator_pack_message(struct thorium_actor *actor, struct thorium_
 {
     void *new_buffer;
     int new_count;
-    struct biosal_memory_pool *ephemeral_memory;
+    struct core_memory_pool *ephemeral_memory;
     struct thorium_message new_message;
 
     ephemeral_memory = thorium_actor_get_ephemeral_memory(actor);
@@ -518,17 +518,17 @@ int biosal_aggregator_set_consumers(struct thorium_actor *actor, void *buffer)
     /*
      * receive customer list
      */
-    biosal_vector_init(&concrete_actor->consumers, 0);
-    bytes = biosal_vector_unpack(&concrete_actor->consumers, buffer);
+    core_vector_init(&concrete_actor->consumers, 0);
+    bytes = core_vector_unpack(&concrete_actor->consumers, buffer);
 
-    size = biosal_vector_size(&concrete_actor->consumers);
+    size = core_vector_size(&concrete_actor->consumers);
 
-    biosal_vector_resize(&concrete_actor->active_messages, size);
+    core_vector_resize(&concrete_actor->active_messages, size);
 
     zero = 0;
 
     for (i = 0; i < size; i++) {
-        biosal_vector_set(&concrete_actor->active_messages, i, &zero);
+        core_vector_set(&concrete_actor->active_messages, i, &zero);
     }
 
     /*
@@ -539,12 +539,12 @@ int biosal_aggregator_set_consumers(struct thorium_actor *actor, void *buffer)
 
     printf("DEBUG45 aggregator %d preparing %d buffers, kmer_length %d\n",
                     thorium_actor_name(actor),
-                        (int)biosal_vector_size(&concrete_actor->consumers),
+                        (int)core_vector_size(&concrete_actor->consumers),
                         concrete_actor->kmer_length);
 
 #ifdef BIOSAL_AGGREGATOR_DEBUG
     printf("DEBUG aggregator configured %d consumers\n",
-                        (int)biosal_vector_size(&concrete_actor->consumers));
+                        (int)core_vector_size(&concrete_actor->consumers));
 #endif
 
     return bytes;
@@ -552,7 +552,7 @@ int biosal_aggregator_set_consumers(struct thorium_actor *actor, void *buffer)
 
 int biosal_aggregator_pack_unpack(struct thorium_actor *actor, int operation, void *buffer)
 {
-    struct biosal_packer packer;
+    struct core_packer packer;
     int bytes;
     struct biosal_aggregator *concrete_actor;
 
@@ -560,17 +560,17 @@ int biosal_aggregator_pack_unpack(struct thorium_actor *actor, int operation, vo
 
     bytes = 0;
 
-    biosal_packer_init(&packer, operation, buffer);
+    core_packer_init(&packer, operation, buffer);
 
     /*
      * Pack the kmer length
      */
-    biosal_packer_process(&packer, &concrete_actor->kmer_length, sizeof(concrete_actor->kmer_length));
+    core_packer_process(&packer, &concrete_actor->kmer_length, sizeof(concrete_actor->kmer_length));
 
-    bytes += biosal_packer_get_byte_count(&packer);
+    bytes += core_packer_get_byte_count(&packer);
 
     /*
-    if (operation == BIOSAL_PACKER_OPERATION_UNPACK) {
+    if (operation == CORE_PACKER_OPERATION_UNPACK) {
         printf("aggregator %d unpacked kmer length %d\n",
                         thorium_actor_name(actor),
                         concrete_actor->kmer_length);
@@ -579,35 +579,35 @@ int biosal_aggregator_pack_unpack(struct thorium_actor *actor, int operation, vo
     /* Pack the consumers
      */
 
-    if (operation == BIOSAL_PACKER_OPERATION_UNPACK) {
+    if (operation == CORE_PACKER_OPERATION_UNPACK) {
         biosal_aggregator_set_consumers(actor,
                         ((char *)buffer) + bytes);
 
     } else {
 
-        bytes += biosal_vector_pack_unpack(&concrete_actor->consumers,
+        bytes += core_vector_pack_unpack(&concrete_actor->consumers,
                         (char *)buffer + bytes,
                         operation);
     }
 
-    biosal_packer_destroy(&packer);
+    core_packer_destroy(&packer);
 
     return bytes;
 }
 
 int biosal_aggregator_pack(struct thorium_actor *actor, void *buffer)
 {
-    return biosal_aggregator_pack_unpack(actor, BIOSAL_PACKER_OPERATION_PACK, buffer);
+    return biosal_aggregator_pack_unpack(actor, CORE_PACKER_OPERATION_PACK, buffer);
 }
 
 int biosal_aggregator_unpack(struct thorium_actor *actor, void *buffer)
 {
-    return biosal_aggregator_pack_unpack(actor, BIOSAL_PACKER_OPERATION_UNPACK, buffer);
+    return biosal_aggregator_pack_unpack(actor, CORE_PACKER_OPERATION_UNPACK, buffer);
 }
 
 int biosal_aggregator_pack_size(struct thorium_actor *actor)
 {
-    return biosal_aggregator_pack_unpack(actor, BIOSAL_PACKER_OPERATION_PACK_SIZE, NULL);
+    return biosal_aggregator_pack_unpack(actor, CORE_PACKER_OPERATION_PACK_SIZE, NULL);
 }
 
 

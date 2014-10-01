@@ -81,12 +81,12 @@ int biosal_partition_command_store_index(struct biosal_partition_command *self)
 
 int biosal_partition_command_pack_size(struct biosal_partition_command *self)
 {
-    return biosal_partition_command_pack_unpack(self, NULL, BIOSAL_PACKER_OPERATION_PACK_SIZE);
+    return biosal_partition_command_pack_unpack(self, NULL, CORE_PACKER_OPERATION_PACK_SIZE);
 }
 
 void biosal_partition_command_pack(struct biosal_partition_command *self, void *buffer)
 {
-    biosal_partition_command_pack_unpack(self, buffer, BIOSAL_PACKER_OPERATION_PACK);
+    biosal_partition_command_pack_unpack(self, buffer, CORE_PACKER_OPERATION_PACK);
 }
 
 void biosal_partition_command_unpack(struct biosal_partition_command *self, void *buffer)
@@ -95,7 +95,7 @@ void biosal_partition_command_unpack(struct biosal_partition_command *self, void
     printf("DEBUG biosal_partition_command_unpack \n");
 #endif
 
-    biosal_partition_command_pack_unpack(self, buffer, BIOSAL_PACKER_OPERATION_UNPACK);
+    biosal_partition_command_pack_unpack(self, buffer, CORE_PACKER_OPERATION_UNPACK);
 }
 
 void biosal_partition_command_print(struct biosal_partition_command *self)
@@ -128,7 +128,7 @@ uint64_t biosal_partition_command_store_last(struct biosal_partition_command *se
 int biosal_partition_command_pack_unpack(struct biosal_partition_command *self, void *buffer,
                 int operation)
 {
-    struct biosal_packer packer;
+    struct core_packer packer;
     int bytes;
 
 #ifdef BIOSAL_PARTITION_COMMAND_DEBUG
@@ -136,24 +136,24 @@ int biosal_partition_command_pack_unpack(struct biosal_partition_command *self, 
                     operation);
 #endif
 
-    biosal_packer_init(&packer, operation, buffer);
+    core_packer_init(&packer, operation, buffer);
 
-    biosal_packer_process(&packer, &self->name, sizeof(self->name));
+    core_packer_process(&packer, &self->name, sizeof(self->name));
 
-    biosal_packer_process(&packer, &self->stream_index, sizeof(self->stream_index));
-    biosal_packer_process(&packer, &self->stream_first, sizeof(self->stream_first));
-    biosal_packer_process(&packer, &self->stream_last, sizeof(self->stream_last));
+    core_packer_process(&packer, &self->stream_index, sizeof(self->stream_index));
+    core_packer_process(&packer, &self->stream_first, sizeof(self->stream_first));
+    core_packer_process(&packer, &self->stream_last, sizeof(self->stream_last));
 
-    biosal_packer_process(&packer, &self->store_index, sizeof(self->store_index));
-    biosal_packer_process(&packer, &self->store_first, sizeof(self->store_first));
-    biosal_packer_process(&packer, &self->store_last, sizeof(self->store_last));
+    core_packer_process(&packer, &self->store_index, sizeof(self->store_index));
+    core_packer_process(&packer, &self->store_first, sizeof(self->store_first));
+    core_packer_process(&packer, &self->store_last, sizeof(self->store_last));
 
-    biosal_packer_process(&packer, &self->global_first, sizeof(self->global_first));
-    biosal_packer_process(&packer, &self->global_last, sizeof(self->global_last));
+    core_packer_process(&packer, &self->global_first, sizeof(self->global_first));
+    core_packer_process(&packer, &self->global_last, sizeof(self->global_last));
 
-    bytes = biosal_packer_get_byte_count(&packer);
+    bytes = core_packer_get_byte_count(&packer);
 
-    biosal_packer_destroy(&packer);
+    core_packer_destroy(&packer);
 
     return bytes;
 }

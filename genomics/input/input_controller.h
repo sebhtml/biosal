@@ -16,27 +16,27 @@
 #define SCRIPT_INPUT_CONTROLLER 0x985607aa
 
 struct biosal_input_controller {
-    struct biosal_vector consumers;
+    struct core_vector consumers;
 
     struct biosal_dna_codec codec;
-    struct biosal_vector files;
+    struct core_vector files;
 
-    struct biosal_vector counting_streams;
-    struct biosal_vector reading_streams;
+    struct core_vector counting_streams;
+    struct core_vector reading_streams;
 
-    struct biosal_map mega_blocks;
-    struct biosal_vector mega_block_vector;
-    struct biosal_map assigned_blocks;
+    struct core_map mega_blocks;
+    struct core_vector mega_block_vector;
+    struct core_map assigned_blocks;
 
-    struct biosal_vector spawners;
+    struct core_vector spawners;
     int partitioner;
 
     int opened_streams;
     int counted;
-    struct biosal_vector counts;
-    struct biosal_vector partition_commands;
-    struct biosal_vector stream_consumers;
-    struct biosal_queue unprepared_spawners;
+    struct core_vector counts;
+    struct core_vector partition_commands;
+    struct core_vector stream_consumers;
+    struct core_queue unprepared_spawners;
     int state;
     int block_size;
     int spawner;
@@ -44,14 +44,14 @@ struct biosal_input_controller {
     int ready_consumers;
     int filled_consumers;
     int ready_spawners;
-    struct biosal_vector stores_per_spawner;
+    struct core_vector stores_per_spawner;
     int stores_per_worker_per_spawner;
 
-    struct biosal_timer input_timer;
-    struct biosal_timer counting_timer;
-    struct biosal_timer distribution_timer;
+    struct core_timer input_timer;
+    struct core_timer counting_timer;
+    struct core_timer distribution_timer;
 
-    struct biosal_vector consumer_active_requests;
+    struct core_vector consumer_active_requests;
 };
 
 #define ACTION_INPUT_DISTRIBUTE 0x00003cbe

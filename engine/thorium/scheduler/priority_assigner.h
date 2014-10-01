@@ -20,8 +20,8 @@ struct thorium_priority_assigner {
      * Stuff to update priorities in real time
      */
     int name;
-    struct biosal_map actor_sources;
-    struct biosal_map actor_source_frequencies;
+    struct core_map actor_sources;
+    struct core_map actor_source_frequencies;
 
     int normal_priority_minimum_value;
     int normal_priority_maximum_value;

@@ -20,15 +20,15 @@
 #define USE_BINOMIAL_TREE
 
 void thorium_actor_send_vector(struct thorium_actor *actor, int destination,
-                int tag, struct biosal_vector *vector)
+                int tag, struct core_vector *vector)
 {
     int count;
     struct thorium_message message;
     void *buffer;
 
-    count = biosal_vector_pack_size(vector);
+    count = core_vector_pack_size(vector);
     buffer = thorium_actor_allocate(actor, count);
-    biosal_vector_pack(vector, buffer);
+    core_vector_pack(vector, buffer);
 
     thorium_message_init(&message, tag, count, buffer);
 
@@ -37,7 +37,7 @@ void thorium_actor_send_vector(struct thorium_actor *actor, int destination,
     thorium_message_destroy(&message);
 }
 
-void thorium_actor_send_reply_vector(struct thorium_actor *actor, int tag, struct biosal_vector *vector)
+void thorium_actor_send_reply_vector(struct thorium_actor *actor, int tag, struct core_vector *vector)
 {
     thorium_actor_send_vector(actor, thorium_actor_source(actor), tag, vector);
 }
@@ -106,7 +106,7 @@ void thorium_actor_send_int(struct thorium_actor *actor, int destination, int ta
 
     count = sizeof(value);
     buffer = thorium_actor_allocate(actor, count);
-    biosal_memory_copy(buffer, &value, count);
+    core_memory_copy(buffer, &value, count);
 
     thorium_message_init(&message, tag, count, buffer);
     thorium_actor_send(actor, destination, &message);
@@ -131,14 +131,14 @@ void thorium_actor_send_int64_t(struct thorium_actor *actor, int destination, in
     thorium_message_destroy(&message);
 }
 
-void thorium_actor_send_range(struct thorium_actor *actor, struct biosal_vector *actors,
+void thorium_actor_send_range(struct thorium_actor *actor, struct core_vector *actors,
                 struct thorium_message *message)
 {
     int first;
     int last;
 
     first = 0;
-    last = biosal_vector_size(actors) - 1;
+    last = core_vector_size(actors) - 1;
         /*
     int real_source;
 
@@ -148,19 +148,19 @@ void thorium_actor_send_range(struct thorium_actor *actor, struct biosal_vector 
     thorium_actor_send_range_default(actor, actors, first, last, message);
 }
 
-void thorium_actor_send_range_default(struct thorium_actor *actor, struct biosal_vector *actors,
+void thorium_actor_send_range_default(struct thorium_actor *actor, struct core_vector *actors,
                 int first, int last,
                 struct thorium_message *message)
 {
 #ifdef USE_BINOMIAL_TREE
-    struct biosal_vector destinations;
-    struct biosal_memory_pool *ephemeral_memory;
+    struct core_vector destinations;
+    struct core_memory_pool *ephemeral_memory;
     int name;
 
     ephemeral_memory = thorium_actor_get_ephemeral_memory(actor);
-    biosal_vector_init(&destinations, sizeof(int));
-    biosal_vector_set_memory_pool(&destinations, ephemeral_memory);
-    biosal_vector_copy_range(actors, first, last, &destinations);
+    core_vector_init(&destinations, sizeof(int));
+    core_vector_set_memory_pool(&destinations, ephemeral_memory);
+    core_vector_copy_range(actors, first, last, &destinations);
 
     /*
      * Set the source now.
@@ -170,14 +170,14 @@ void thorium_actor_send_range_default(struct thorium_actor *actor, struct biosal
 
     thorium_actor_send_range_binomial_tree(actor, &destinations, message);
 
-    biosal_vector_destroy(&destinations);
+    core_vector_destroy(&destinations);
 #else
 
     thorium_actor_send_range_loop(actor, actors, first, last, message);
 #endif
 }
 
-void thorium_actor_send_range_loop(struct thorium_actor *actor, struct biosal_vector *actors,
+void thorium_actor_send_range_loop(struct thorium_actor *actor, struct core_vector *actors,
                 int first, int last,
                 struct thorium_message *message)
 {
@@ -197,13 +197,13 @@ void thorium_actor_send_range_loop(struct thorium_actor *actor, struct biosal_ve
         printf("DEBUG sending %d to %d\n",
                        thorium_message_action(message), i);
 #endif
-        the_actor = *(int *)biosal_vector_at(actors, i);
+        the_actor = *(int *)core_vector_at(actors, i);
         thorium_actor_send(actor, the_actor, message);
         i++;
     }
 }
 
-void thorium_actor_send_range_empty(struct thorium_actor *actor, struct biosal_vector *actors,
+void thorium_actor_send_range_empty(struct thorium_actor *actor, struct core_vector *actors,
                 int tag)
 {
     struct thorium_message message;
@@ -213,7 +213,7 @@ void thorium_actor_send_range_empty(struct thorium_actor *actor, struct biosal_v
     thorium_message_destroy(&message);
 }
 
-void thorium_actor_send_range_int(struct thorium_actor *actor, struct biosal_vector *actors,
+void thorium_actor_send_range_int(struct thorium_actor *actor, struct core_vector *actors,
                 int tag, int value)
 {
     struct thorium_message message;
@@ -223,7 +223,7 @@ void thorium_actor_send_range_int(struct thorium_actor *actor, struct biosal_vec
     thorium_message_destroy(&message);
 }
 
-void thorium_actor_send_range_buffer(struct thorium_actor *actor, struct biosal_vector *destinations,
+void thorium_actor_send_range_buffer(struct thorium_actor *actor, struct core_vector *destinations,
                 int tag, int count, void *buffer)
 {
     struct thorium_message message;
@@ -233,23 +233,23 @@ void thorium_actor_send_range_buffer(struct thorium_actor *actor, struct biosal_
     thorium_message_destroy(&message);
 }
 
-void thorium_actor_send_range_vector(struct thorium_actor *actor, struct biosal_vector *actors,
-                int tag, struct biosal_vector *vector)
+void thorium_actor_send_range_vector(struct thorium_actor *actor, struct core_vector *actors,
+                int tag, struct core_vector *vector)
 {
     struct thorium_message message;
     int count;
     void *buffer;
-    struct biosal_memory_pool *ephemeral_memory;
+    struct core_memory_pool *ephemeral_memory;
 
     ephemeral_memory = thorium_actor_get_ephemeral_memory(actor);
-    count = biosal_vector_pack_size(vector);
-    buffer = biosal_memory_pool_allocate(ephemeral_memory, count);
-    biosal_vector_pack(vector, buffer);
+    count = core_vector_pack_size(vector);
+    buffer = core_memory_pool_allocate(ephemeral_memory, count);
+    core_vector_pack(vector, buffer);
     thorium_message_init(&message, tag, count, buffer);
     thorium_actor_send_range(actor, actors, &message);
     thorium_message_destroy(&message);
 
-    biosal_memory_pool_free(ephemeral_memory, buffer);
+    core_memory_pool_free(ephemeral_memory, buffer);
 }
 
 void thorium_actor_send_double(struct thorium_actor *actor, int destination, int tag, double value)
@@ -292,22 +292,22 @@ void thorium_actor_send_buffer(struct thorium_actor *actor, int destination, int
     thorium_message_destroy(&message);
 }
 
-void thorium_actor_send_range_positions_vector(struct thorium_actor *actor, struct biosal_vector *actors,
+void thorium_actor_send_range_positions_vector(struct thorium_actor *actor, struct core_vector *actors,
                 int first, int last,
-                int tag, struct biosal_vector *vector)
+                int tag, struct core_vector *vector)
 {
     struct thorium_message message;
     int count;
     void *buffer;
-    struct biosal_memory_pool *ephemeral_memory;
+    struct core_memory_pool *ephemeral_memory;
 
     ephemeral_memory = thorium_actor_get_ephemeral_memory(actor);
-    count = biosal_vector_pack_size(vector);
-    buffer = biosal_memory_pool_allocate(ephemeral_memory, count);
-    biosal_vector_pack(vector, buffer);
+    count = core_vector_pack_size(vector);
+    buffer = core_memory_pool_allocate(ephemeral_memory, count);
+    core_vector_pack(vector, buffer);
     thorium_message_init(&message, tag, count, buffer);
     thorium_actor_send_range_default(actor, actors, first, last, &message);
     thorium_message_destroy(&message);
 
-    biosal_memory_pool_free(ephemeral_memory, buffer);
+    core_memory_pool_free(ephemeral_memory, buffer);
 }

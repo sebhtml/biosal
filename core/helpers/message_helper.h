@@ -1,6 +1,6 @@
 
-#ifndef BIOSAL_MESSAGE_HELPER_H
-#define BIOSAL_MESSAGE_HELPER_H
+#ifndef CORE_MESSAGE_HELPER_H
+#define CORE_MESSAGE_HELPER_H
 
 #include <stdint.h>
 

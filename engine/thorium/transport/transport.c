@@ -41,8 +41,8 @@
 
 void thorium_transport_init(struct thorium_transport *self, struct thorium_node *node,
                 int *argc, char ***argv,
-                struct biosal_memory_pool *inbound_message_memory_pool,
-                struct biosal_memory_pool *outbound_message_memory_pool)
+                struct core_memory_pool *inbound_message_memory_pool,
+                struct core_memory_pool *outbound_message_memory_pool)
 {
     int actual_argc;
     char **actual_argv;
@@ -53,8 +53,8 @@ void thorium_transport_init(struct thorium_transport *self, struct thorium_node 
     actual_argv = *argv;
 
     self->flags = 0;
-    biosal_bitmap_clear_bit_uint32_t(&self->flags, FLAG_PROFILE);
-    biosal_bitmap_clear_bit_uint32_t(&self->flags, FLAG_PRINT_TRANSPORT_EVENTS);
+    core_bitmap_clear_bit_uint32_t(&self->flags, FLAG_PROFILE);
+    core_bitmap_clear_bit_uint32_t(&self->flags, FLAG_PRINT_TRANSPORT_EVENTS);
 
     self->transport_interface = NULL;
     self->concrete_transport = NULL;
@@ -76,24 +76,24 @@ void thorium_transport_init(struct thorium_transport *self, struct thorium_node 
 
     if (self->transport_interface != NULL) {
 
-        self->concrete_transport = biosal_memory_allocate(self->transport_interface->size, MEMORY_TRANSPORT);
+        self->concrete_transport = core_memory_allocate(self->transport_interface->size, MEMORY_TRANSPORT);
         self->transport_interface->init(self, argc, argv);
     }
 
-    BIOSAL_DEBUGGER_ASSERT(self->rank >= 0);
-    BIOSAL_DEBUGGER_ASSERT(self->size >= 1);
-    BIOSAL_DEBUGGER_ASSERT(self->node != NULL);
+    CORE_DEBUGGER_ASSERT(self->rank >= 0);
+    CORE_DEBUGGER_ASSERT(self->size >= 1);
+    CORE_DEBUGGER_ASSERT(self->node != NULL);
 
     self->inbound_message_memory_pool = inbound_message_memory_pool;
     self->outbound_message_memory_pool = outbound_message_memory_pool;
 
     thorium_transport_profiler_init(&self->transport_profiler);
 
-    if (biosal_command_has_argument(actual_argc, actual_argv, "-enable-transport-profiler")) {
+    if (core_command_has_argument(actual_argc, actual_argv, "-enable-transport-profiler")) {
 
         printf("Enable transport profiler\n");
 
-        biosal_bitmap_set_bit_uint32_t(&self->flags, FLAG_PROFILE);
+        core_bitmap_set_bit_uint32_t(&self->flags, FLAG_PROFILE);
     }
 
     if (self->rank == 0) {
@@ -101,12 +101,12 @@ void thorium_transport_init(struct thorium_transport *self, struct thorium_node 
                     self->transport_interface->name);
     }
 
-    if (biosal_command_has_argument(actual_argc, actual_argv, "-print-transport-events")) {
-        biosal_bitmap_set_bit_uint32_t(&self->flags, FLAG_PRINT_TRANSPORT_EVENTS);
+    if (core_command_has_argument(actual_argc, actual_argv, "-print-transport-events")) {
+        core_bitmap_set_bit_uint32_t(&self->flags, FLAG_PRINT_TRANSPORT_EVENTS);
     }
 
-    biosal_timer_init(&self->timer);
-    self->start_time = biosal_timer_get_nanoseconds(&self->timer);
+    core_timer_init(&self->timer);
+    self->start_time = core_timer_get_nanoseconds(&self->timer);
 }
 
 void thorium_transport_destroy(struct thorium_transport *self)
@@ -114,18 +114,18 @@ void thorium_transport_destroy(struct thorium_transport *self)
     /*
      * Print the report if requested.
      */
-    if (biosal_bitmap_get_bit_uint32_t(&self->flags, FLAG_PROFILE)) {
+    if (core_bitmap_get_bit_uint32_t(&self->flags, FLAG_PROFILE)) {
         thorium_transport_profiler_print_report(&self->transport_profiler);
     }
 
     thorium_transport_profiler_destroy(&self->transport_profiler);
 
-    BIOSAL_DEBUGGER_ASSERT(thorium_transport_get_active_request_count(self) == 0);
+    CORE_DEBUGGER_ASSERT(thorium_transport_get_active_request_count(self) == 0);
 
     if (self->transport_interface != NULL) {
         self->transport_interface->destroy(self);
 
-        biosal_memory_free(self->concrete_transport, MEMORY_TRANSPORT);
+        core_memory_free(self->concrete_transport, MEMORY_TRANSPORT);
         self->concrete_transport = NULL;
     }
 
@@ -133,7 +133,7 @@ void thorium_transport_destroy(struct thorium_transport *self)
     self->rank = -1;
     self->size = -1;
 
-    biosal_timer_destroy(&self->timer);
+    core_timer_destroy(&self->timer);
 }
 
 int thorium_transport_send(struct thorium_transport *self, struct thorium_message *message)
@@ -148,7 +148,7 @@ int thorium_transport_send(struct thorium_transport *self, struct thorium_messag
      * Send the message through the mock transport which is
      * a transport profiler.
      */
-    if (biosal_bitmap_get_bit_uint32_t(&self->flags, FLAG_PROFILE)) {
+    if (core_bitmap_get_bit_uint32_t(&self->flags, FLAG_PROFILE)) {
         thorium_transport_profiler_send_mock(&self->transport_profiler, message);
     }
 
@@ -164,7 +164,7 @@ int thorium_transport_send(struct thorium_transport *self, struct thorium_messag
 #endif
         ++self->active_request_count;
 
-        if (biosal_bitmap_get_bit_uint32_t(&self->flags, FLAG_PRINT_TRANSPORT_EVENTS)) {
+        if (core_bitmap_get_bit_uint32_t(&self->flags, FLAG_PRINT_TRANSPORT_EVENTS)) {
             thorium_transport_print_event(self, EVENT_TYPE_SEND, message);
         }
     }
@@ -191,7 +191,7 @@ int thorium_transport_receive(struct thorium_transport *self, struct thorium_mes
                         thorium_message_count(message));
 #endif
 
-        if (biosal_bitmap_get_bit_uint32_t(&self->flags, FLAG_PRINT_TRANSPORT_EVENTS)) {
+        if (core_bitmap_get_bit_uint32_t(&self->flags, FLAG_PRINT_TRANSPORT_EVENTS)) {
             thorium_transport_print_event(self, EVENT_TYPE_RECEIVE, message);
         }
     }
@@ -239,7 +239,7 @@ void *thorium_transport_get_concrete_transport(struct thorium_transport *self)
 void thorium_transport_select_implementation(struct thorium_transport *self, int argc, char ** argv)
 {
     char *requested_implementation_name;
-    struct biosal_vector implementations;
+    struct core_vector implementations;
     int i;
     int size;
     struct thorium_transport_interface *component;
@@ -250,15 +250,15 @@ void thorium_transport_select_implementation(struct thorium_transport *self, int
      * use.
      */
 
-    biosal_vector_init(&implementations, sizeof(struct thorium_transport_interface *));
+    core_vector_init(&implementations, sizeof(struct thorium_transport_interface *));
 
     /* MPI non-blocking, this is the default.
      */
     component = &thorium_mpi1_pt2pt_nonblocking_transport_implementation;
-    biosal_vector_push_back(&implementations, &component);
+    core_vector_push_back(&implementations, &component);
 
     component = &thorium_mpi1_pt2pt_transport_implementation;
-    biosal_vector_push_back(&implementations, &component);
+    core_vector_push_back(&implementations, &component);
 
     /*
      * Only enable the pami thing on Blue Gene/Q.
@@ -266,21 +266,21 @@ void thorium_transport_select_implementation(struct thorium_transport *self, int
 #ifdef CONFIG_PAMI
 #if defined(__bgq__)
     component = &thorium_pami_transport_implementation;
-    biosal_vector_push_back(&implementations, &component);
+    core_vector_push_back(&implementations, &component);
 #endif
 #endif
 
 #if defined(_CRAYC) && 0
     component = &thorium_gni_transport_implementation;
-    biosal_vector_push_back(&implementations, &component);
+    core_vector_push_back(&implementations, &component);
 #endif
 
-    requested_implementation_name = biosal_command_get_argument_value(argc, argv, "-transport");
+    requested_implementation_name = core_command_get_argument_value(argc, argv, "-transport");
 
     /*
      * The default is the first one in the list.
      */
-    self->transport_interface = *(struct thorium_transport_interface **)biosal_vector_at(&implementations, 0);
+    self->transport_interface = *(struct thorium_transport_interface **)core_vector_at(&implementations, 0);
 
     /*
      * The option -transport was provided.
@@ -293,10 +293,10 @@ void thorium_transport_select_implementation(struct thorium_transport *self, int
      */
     if (requested_implementation_name != NULL) {
 
-        size = biosal_vector_size(&implementations);
+        size = core_vector_size(&implementations);
 
         for (i = 0; i < size; ++i) {
-            component = *(struct thorium_transport_interface **)biosal_vector_at(&implementations, i);
+            component = *(struct thorium_transport_interface **)core_vector_at(&implementations, i);
             available_name = component->name;
 
             if (strcmp(available_name, requested_implementation_name) == 0) {
@@ -306,9 +306,9 @@ void thorium_transport_select_implementation(struct thorium_transport *self, int
         }
     }
 
-    biosal_vector_destroy(&implementations);
+    core_vector_destroy(&implementations);
 
-    BIOSAL_DEBUGGER_ASSERT(self->transport_interface != NULL);
+    CORE_DEBUGGER_ASSERT(self->transport_interface != NULL);
 }
 
 int thorium_transport_get_active_request_count(struct thorium_transport *self)
@@ -349,7 +349,7 @@ void thorium_transport_print_event(struct thorium_transport *self, int type, str
     source_rank = thorium_message_source_node(message);
     destination_rank = thorium_message_destination_node(message);
 
-    time = biosal_timer_get_nanoseconds(&self->timer);
+    time = core_timer_get_nanoseconds(&self->timer);
     time -= self->start_time;
     printf("thorium_transport print_event time_nanoseconds= %" PRIu64 " type= %s source= %d destination= %d count= %d\n",
                     time, description,

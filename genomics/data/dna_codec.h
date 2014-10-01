@@ -37,15 +37,15 @@
  */
 struct biosal_dna_codec {
 #ifdef BIOSAL_DNA_CODEC_USE_TWO_BIT_BLOCK_ENCODER
-    struct biosal_map encoding_lookup_table;
+    struct core_map encoding_lookup_table;
 #endif
 #ifdef BIOSAL_DNA_CODEC_USE_TWO_BIT_BLOCK_DECODER
-    struct biosal_map decoding_lookup_table;
+    struct core_map decoding_lookup_table;
 #endif
     int block_length;
 
     int use_two_bit_encoding;
-    struct biosal_memory_pool pool;
+    struct core_memory_pool pool;
 };
 
 void biosal_dna_codec_init(struct biosal_dna_codec *self);

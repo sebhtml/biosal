@@ -36,11 +36,11 @@ void biosal_unitig_visitor_init(struct thorium_actor *self)
     struct biosal_unitig_visitor *concrete_self;
 
     concrete_self = (struct biosal_unitig_visitor *)thorium_actor_concrete_actor(self);
-    biosal_memory_pool_init(&concrete_self->memory_pool, 131072,
-                    BIOSAL_MEMORY_POOL_NAME_OTHER);
+    core_memory_pool_init(&concrete_self->memory_pool, 131072,
+                    CORE_MEMORY_POOL_NAME_OTHER);
 
-    biosal_vector_init(&concrete_self->graph_stores, sizeof(int));
-    biosal_vector_set_memory_pool(&concrete_self->graph_stores, &concrete_self->memory_pool);
+    core_vector_init(&concrete_self->graph_stores, sizeof(int));
+    core_vector_set_memory_pool(&concrete_self->graph_stores, &concrete_self->memory_pool);
     concrete_self->manager = -1;
     concrete_self->completed = 0;
     concrete_self->graph_store_index = -1;
@@ -82,14 +82,14 @@ void biosal_unitig_visitor_destroy(struct thorium_actor *self)
     concrete_self->manager = -1;
     concrete_self->completed = 0;
 
-    biosal_vector_destroy(&concrete_self->graph_stores);
+    core_vector_destroy(&concrete_self->graph_stores);
 
     biosal_vertex_neighborhood_destroy(&concrete_self->main_neighborhood);
     biosal_vertex_neighborhood_destroy(&concrete_self->parent_neighborhood);
     biosal_vertex_neighborhood_destroy(&concrete_self->child_neighborhood);
 
     biosal_unitig_heuristic_destroy(&concrete_self->heuristic);
-    biosal_memory_pool_destroy(&concrete_self->memory_pool);
+    core_memory_pool_destroy(&concrete_self->memory_pool);
 }
 
 void biosal_unitig_visitor_receive(struct thorium_actor *self, struct thorium_message *message)
@@ -142,8 +142,8 @@ void biosal_unitig_visitor_receive(struct thorium_actor *self, struct thorium_me
                         thorium_actor_script_name(self),
                         thorium_actor_name(self));
 
-        biosal_vector_unpack(&concrete_self->graph_stores, buffer);
-        size = biosal_vector_size(&concrete_self->graph_stores);
+        core_vector_unpack(&concrete_self->graph_stores, buffer);
+        size = core_vector_size(&concrete_self->graph_stores);
         concrete_self->graph_store_index = rand() % size;
 
         concrete_self->step = STEP_GET_KMER_LENGTH;
@@ -202,7 +202,7 @@ void biosal_unitig_visitor_execute(struct thorium_actor *self)
     int graph_store_index;
     int graph_store;
     int size;
-    struct biosal_vector coverages;
+    struct core_vector coverages;
     int coverage;
     struct biosal_assembly_vertex *other_vertex;
     struct biosal_assembly_vertex *vertex;
@@ -210,13 +210,13 @@ void biosal_unitig_visitor_execute(struct thorium_actor *self)
     int children;
     int i;
     int other_coverage;
-    struct biosal_memory_pool *ephemeral_memory;
+    struct core_memory_pool *ephemeral_memory;
     struct biosal_unitig_visitor *concrete_self;
     int code;
     int expected_code;
 
     concrete_self = thorium_actor_concrete_actor(self);
-    size = biosal_vector_size(&concrete_self->graph_stores);
+    size = core_vector_size(&concrete_self->graph_stores);
     ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
 
 #if 0
@@ -224,7 +224,7 @@ void biosal_unitig_visitor_execute(struct thorium_actor *self)
                     concrete_self->step);
 #endif
 
-    if (concrete_self->completed == biosal_vector_size(&concrete_self->graph_stores)) {
+    if (concrete_self->completed == core_vector_size(&concrete_self->graph_stores)) {
         thorium_actor_send_empty(self, concrete_self->manager, ACTION_START_REPLY);
 
 #if 0
@@ -232,7 +232,7 @@ void biosal_unitig_visitor_execute(struct thorium_actor *self)
 #endif
     } else if (concrete_self->step == STEP_GET_KMER_LENGTH) {
         graph_store_index = concrete_self->graph_store_index;
-        graph_store = biosal_vector_at_as_int(&concrete_self->graph_stores, graph_store_index);
+        graph_store = core_vector_at_as_int(&concrete_self->graph_stores, graph_store_index);
 
         thorium_actor_send_empty(self, graph_store, ACTION_ASSEMBLY_GET_KMER_LENGTH);
 
@@ -248,7 +248,7 @@ void biosal_unitig_visitor_execute(struct thorium_actor *self)
         graph_store_index = concrete_self->graph_store_index;
         ++concrete_self->graph_store_index;
         concrete_self->graph_store_index %= size;
-        graph_store = biosal_vector_at_as_int(&concrete_self->graph_stores, graph_store_index);
+        graph_store = core_vector_at_as_int(&concrete_self->graph_stores, graph_store_index);
 
         thorium_actor_send_empty(self, graph_store, ACTION_ASSEMBLY_GET_STARTING_KMER);
 
@@ -286,20 +286,20 @@ void biosal_unitig_visitor_execute(struct thorium_actor *self)
         /*
          * Select a parent.
          */
-        biosal_vector_init(&coverages, sizeof(int));
-        biosal_vector_set_memory_pool(&coverages, ephemeral_memory);
+        core_vector_init(&coverages, sizeof(int));
+        core_vector_set_memory_pool(&coverages, ephemeral_memory);
 
         for (i = 0; i < parents; ++i) {
 
             vertex = biosal_vertex_neighborhood_parent(&concrete_self->main_neighborhood, i);
             other_coverage = biosal_assembly_vertex_coverage_depth(vertex);
-            biosal_vector_push_back(&coverages, &other_coverage);
+            core_vector_push_back(&coverages, &other_coverage);
         }
 
         concrete_self->selected_parent = biosal_unitig_heuristic_select(&concrete_self->heuristic,
                         coverage, &coverages);
 
-        biosal_vector_clear(&coverages);
+        core_vector_clear(&coverages);
 
         /*
          * Select a child
@@ -309,13 +309,13 @@ void biosal_unitig_visitor_execute(struct thorium_actor *self)
 
             vertex = biosal_vertex_neighborhood_child(&concrete_self->main_neighborhood, i);
             other_coverage = biosal_assembly_vertex_coverage_depth(vertex);
-            biosal_vector_push_back(&coverages, &other_coverage);
+            core_vector_push_back(&coverages, &other_coverage);
         }
 
         concrete_self->selected_child = biosal_unitig_heuristic_select(&concrete_self->heuristic,
                         coverage, &coverages);
 
-        biosal_vector_destroy(&coverages);
+        core_vector_destroy(&coverages);
 
 #if 0
         printf("DEBUG selected_parent %d selected_child %d\n",
@@ -359,7 +359,7 @@ void biosal_unitig_visitor_execute(struct thorium_actor *self)
 
     } else if (concrete_self->step == STEP_GET_PARENT_VERTEX_DATA) {
 
-        BIOSAL_DEBUGGER_ASSERT(concrete_self->selected_parent >= 0);
+        CORE_DEBUGGER_ASSERT(concrete_self->selected_parent >= 0);
         vertex = biosal_vertex_neighborhood_vertex(&concrete_self->main_neighborhood);
         code = biosal_assembly_vertex_get_parent(vertex,
                             concrete_self->selected_parent);
@@ -391,19 +391,19 @@ void biosal_unitig_visitor_execute(struct thorium_actor *self)
         coverage = biosal_assembly_vertex_coverage_depth(other_vertex);
         children = biosal_assembly_vertex_child_count(other_vertex);
 
-        biosal_vector_init(&coverages, sizeof(int));
-        biosal_vector_set_memory_pool(&coverages, ephemeral_memory);
+        core_vector_init(&coverages, sizeof(int));
+        core_vector_set_memory_pool(&coverages, ephemeral_memory);
 
         for (i = 0; i < children; ++i) {
 
             vertex = biosal_vertex_neighborhood_child(&concrete_self->parent_neighborhood, i);
             other_coverage = biosal_assembly_vertex_coverage_depth(vertex);
-            biosal_vector_push_back(&coverages, &other_coverage);
+            core_vector_push_back(&coverages, &other_coverage);
         }
 
         concrete_self->selected_parent_child = biosal_unitig_heuristic_select(&concrete_self->heuristic,
                         coverage, &coverages);
-        biosal_vector_destroy(&coverages);
+        core_vector_destroy(&coverages);
 
         if (concrete_self->selected_parent_child >= 0) {
             code = biosal_assembly_vertex_get_child(other_vertex, concrete_self->selected_parent_child);
@@ -430,7 +430,7 @@ void biosal_unitig_visitor_execute(struct thorium_actor *self)
 
     } else if (concrete_self->step == STEP_GET_CHILD_VERTEX_DATA) {
 
-        BIOSAL_DEBUGGER_ASSERT(concrete_self->selected_child >= 0);
+        CORE_DEBUGGER_ASSERT(concrete_self->selected_child >= 0);
 
         vertex = biosal_vertex_neighborhood_vertex(&concrete_self->main_neighborhood);
         code = biosal_assembly_vertex_get_child(vertex,
@@ -463,19 +463,19 @@ void biosal_unitig_visitor_execute(struct thorium_actor *self)
         coverage = biosal_assembly_vertex_coverage_depth(other_vertex);
         parents = biosal_assembly_vertex_parent_count(other_vertex);
 
-        biosal_vector_init(&coverages, sizeof(int));
-        biosal_vector_set_memory_pool(&coverages, ephemeral_memory);
+        core_vector_init(&coverages, sizeof(int));
+        core_vector_set_memory_pool(&coverages, ephemeral_memory);
 
         for (i = 0; i < parents; ++i) {
 
             vertex = biosal_vertex_neighborhood_parent(&concrete_self->child_neighborhood, i);
             other_coverage = biosal_assembly_vertex_coverage_depth(vertex);
-            biosal_vector_push_back(&coverages, &other_coverage);
+            core_vector_push_back(&coverages, &other_coverage);
         }
 
         concrete_self->selected_child_parent = biosal_unitig_heuristic_select(&concrete_self->heuristic,
                         coverage, &coverages);
-        biosal_vector_destroy(&coverages);
+        core_vector_destroy(&coverages);
 
         if (concrete_self->selected_child_parent >= 0) {
             code = biosal_assembly_vertex_get_parent(other_vertex, concrete_self->selected_child_parent);
@@ -514,7 +514,7 @@ void biosal_unitig_visitor_mark_vertex(struct thorium_actor *self, struct biosal
     int position;
     int store_index;
     int store;
-    struct biosal_memory_pool *ephemeral_memory;
+    struct core_memory_pool *ephemeral_memory;
     struct biosal_unitig_visitor *concrete_self;
     int size;
     struct thorium_message new_message;
@@ -537,15 +537,15 @@ void biosal_unitig_visitor_mark_vertex(struct thorium_actor *self, struct biosal
 
     position = 0;
     position += biosal_dna_kmer_pack(kmer, new_buffer, concrete_self->kmer_length, &concrete_self->codec);
-    biosal_memory_copy(new_buffer + position, &flag, sizeof(flag));
+    core_memory_copy(new_buffer + position, &flag, sizeof(flag));
     position += sizeof(flag);
 
-    BIOSAL_DEBUGGER_ASSERT(position == new_count);
+    CORE_DEBUGGER_ASSERT(position == new_count);
 
-    size = biosal_vector_size(&concrete_self->graph_stores);
+    size = core_vector_size(&concrete_self->graph_stores);
     store_index = biosal_dna_kmer_store_index(kmer, size, concrete_self->kmer_length,
             &concrete_self->codec, ephemeral_memory);
-    store = biosal_vector_at_as_int(&concrete_self->graph_stores, store_index);
+    store = core_vector_at_as_int(&concrete_self->graph_stores, store_index);
 
     thorium_message_init(&new_message, ACTION_SET_VERTEX_FLAG, new_count, new_buffer);
     thorium_actor_send(self, store, &new_message);

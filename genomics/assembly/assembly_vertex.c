@@ -107,34 +107,34 @@ void biosal_assembly_vertex_print(struct biosal_assembly_vertex *self)
 
 int biosal_assembly_vertex_pack_size(struct biosal_assembly_vertex *self)
 {
-    return biosal_assembly_vertex_pack_unpack(self, BIOSAL_PACKER_OPERATION_PACK_SIZE, NULL);
+    return biosal_assembly_vertex_pack_unpack(self, CORE_PACKER_OPERATION_PACK_SIZE, NULL);
 }
 
 int biosal_assembly_vertex_pack(struct biosal_assembly_vertex *self, void *buffer)
 {
-    return biosal_assembly_vertex_pack_unpack(self, BIOSAL_PACKER_OPERATION_PACK, buffer);
+    return biosal_assembly_vertex_pack_unpack(self, CORE_PACKER_OPERATION_PACK, buffer);
 }
 
 int biosal_assembly_vertex_unpack(struct biosal_assembly_vertex *self, void *buffer)
 {
-    return biosal_assembly_vertex_pack_unpack(self, BIOSAL_PACKER_OPERATION_UNPACK, buffer);
+    return biosal_assembly_vertex_pack_unpack(self, CORE_PACKER_OPERATION_UNPACK, buffer);
 }
 
 int biosal_assembly_vertex_pack_unpack(struct biosal_assembly_vertex *self, int operation, void *buffer)
 {
-    struct biosal_packer packer;
+    struct core_packer packer;
     int bytes;
 
     bytes = 0;
 
-    biosal_packer_init(&packer, operation, buffer);
+    core_packer_init(&packer, operation, buffer);
 
-    bytes += biosal_packer_process(&packer, &self->coverage_depth, sizeof(self->coverage_depth));
-    bytes += biosal_packer_process(&packer, &self->flags, sizeof(self->flags));
-    bytes += biosal_packer_process(&packer, &self->last_actor, sizeof(self->last_actor));
-    bytes += biosal_packer_process(&packer, &self->last_path_index, sizeof(self->last_path_index));
+    bytes += core_packer_process(&packer, &self->coverage_depth, sizeof(self->coverage_depth));
+    bytes += core_packer_process(&packer, &self->flags, sizeof(self->flags));
+    bytes += core_packer_process(&packer, &self->last_actor, sizeof(self->last_actor));
+    bytes += core_packer_process(&packer, &self->last_path_index, sizeof(self->last_path_index));
 
-    biosal_packer_destroy(&packer);
+    core_packer_destroy(&packer);
 
     bytes += biosal_assembly_connectivity_pack_unpack(&self->connectivity, operation,
                     (char *)buffer + bytes);
@@ -177,20 +177,20 @@ int biosal_assembly_vertex_last_path_index(struct biosal_assembly_vertex *self)
 
 void biosal_assembly_vertex_set_flag(struct biosal_assembly_vertex *self, int flag)
 {
-    BIOSAL_DEBUGGER_ASSERT(flag >= BIOSAL_VERTEX_FLAG_START_VALUE);
-    BIOSAL_DEBUGGER_ASSERT(flag <= BIOSAL_VERTEX_FLAG_END_VALUE);
+    CORE_DEBUGGER_ASSERT(flag >= BIOSAL_VERTEX_FLAG_START_VALUE);
+    CORE_DEBUGGER_ASSERT(flag <= BIOSAL_VERTEX_FLAG_END_VALUE);
 
-    biosal_bitmap_set_bit_uint32_t(&self->flags, flag);
+    core_bitmap_set_bit_uint32_t(&self->flags, flag);
 }
 
 void biosal_assembly_vertex_clear_flag(struct biosal_assembly_vertex *self, int flag)
 {
-    biosal_bitmap_clear_bit_uint32_t(&self->flags, flag);
+    core_bitmap_clear_bit_uint32_t(&self->flags, flag);
 }
 
 int biosal_assembly_vertex_get_flag(struct biosal_assembly_vertex *self, int flag)
 {
-    return biosal_bitmap_get_bit_uint32_t(&self->flags, flag);
+    return core_bitmap_get_bit_uint32_t(&self->flags, flag);
 }
 
 void biosal_assembly_vertex_init_empty(struct biosal_assembly_vertex *self)

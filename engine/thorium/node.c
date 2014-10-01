@@ -109,16 +109,16 @@ void thorium_node_init(struct thorium_node *node, int *argc, char ***argv)
      */
     thorium_node_register_signal_handlers(node);
 
-    biosal_set_init(&node->auto_scaling_actors, sizeof(int));
+    core_set_init(&node->auto_scaling_actors, sizeof(int));
 
-    biosal_bitmap_clear_bit_uint32_t(&node->flags, FLAG_STARTED);
-    biosal_bitmap_clear_bit_uint32_t(&node->flags, FLAG_PRINT_LOAD);
-    biosal_bitmap_clear_bit_uint32_t(&node->flags, FLAG_PRINT_STRUCTURE);
-    biosal_bitmap_clear_bit_uint32_t(&node->flags, FLAG_DEBUG);
-    biosal_bitmap_clear_bit_uint32_t(&node->flags, FLAG_PRINT_COUNTERS);
-    biosal_bitmap_clear_bit_uint32_t(&node->flags, FLAG_EXAMINE);
-    biosal_bitmap_clear_bit_uint32_t(&node->flags, FLAG_ENABLE_ACTOR_LOAD_PROFILES);
-    biosal_bitmap_clear_bit_uint32_t(&node->flags, FLAG_MULTIPLEXER_IS_DISABLED);
+    core_bitmap_clear_bit_uint32_t(&node->flags, FLAG_STARTED);
+    core_bitmap_clear_bit_uint32_t(&node->flags, FLAG_PRINT_LOAD);
+    core_bitmap_clear_bit_uint32_t(&node->flags, FLAG_PRINT_STRUCTURE);
+    core_bitmap_clear_bit_uint32_t(&node->flags, FLAG_DEBUG);
+    core_bitmap_clear_bit_uint32_t(&node->flags, FLAG_PRINT_COUNTERS);
+    core_bitmap_clear_bit_uint32_t(&node->flags, FLAG_EXAMINE);
+    core_bitmap_clear_bit_uint32_t(&node->flags, FLAG_ENABLE_ACTOR_LOAD_PROFILES);
+    core_bitmap_clear_bit_uint32_t(&node->flags, FLAG_MULTIPLEXER_IS_DISABLED);
 
     thorium_node_global_self = node;
 
@@ -135,30 +135,30 @@ void thorium_node_init(struct thorium_node *node, int *argc, char ***argv)
      * Build memory pools
      */
 
-    biosal_memory_pool_init(&node->actor_memory_pool, 2097152, BIOSAL_MEMORY_POOL_NAME_ACTORS);
-    biosal_memory_pool_disable(&node->actor_memory_pool);
+    core_memory_pool_init(&node->actor_memory_pool, 2097152, CORE_MEMORY_POOL_NAME_ACTORS);
+    core_memory_pool_disable(&node->actor_memory_pool);
 
-    biosal_memory_pool_init(&node->inbound_message_memory_pool,
-                    BIOSAL_MEMORY_POOL_MESSAGE_BUFFER_BLOCK_SIZE, BIOSAL_MEMORY_POOL_NAME_NODE_INBOUND);
-    biosal_memory_pool_set_name(&node->inbound_message_memory_pool,
-                    BIOSAL_MEMORY_POOL_NAME_NODE_INBOUND);
-    biosal_memory_pool_enable_normalization(&node->inbound_message_memory_pool);
-    biosal_memory_pool_enable_alignment(&node->inbound_message_memory_pool);
+    core_memory_pool_init(&node->inbound_message_memory_pool,
+                    CORE_MEMORY_POOL_MESSAGE_BUFFER_BLOCK_SIZE, CORE_MEMORY_POOL_NAME_NODE_INBOUND);
+    core_memory_pool_set_name(&node->inbound_message_memory_pool,
+                    CORE_MEMORY_POOL_NAME_NODE_INBOUND);
+    core_memory_pool_enable_normalization(&node->inbound_message_memory_pool);
+    core_memory_pool_enable_alignment(&node->inbound_message_memory_pool);
 
-#ifdef BIOSAL_MEMORY_POOL_DISABLE_MESSAGE_BUFFER_POOL
-    biosal_memory_pool_disable(&node->inbound_message_memory_pool);
+#ifdef CORE_MEMORY_POOL_DISABLE_MESSAGE_BUFFER_POOL
+    core_memory_pool_disable(&node->inbound_message_memory_pool);
 #endif
 
-    biosal_memory_pool_init(&node->outbound_message_memory_pool,
-                    BIOSAL_MEMORY_POOL_MESSAGE_BUFFER_BLOCK_SIZE, BIOSAL_MEMORY_POOL_NAME_NODE_OUTBOUND);
-    biosal_memory_pool_set_name(&node->outbound_message_memory_pool,
-                    BIOSAL_MEMORY_POOL_NAME_NODE_OUTBOUND);
+    core_memory_pool_init(&node->outbound_message_memory_pool,
+                    CORE_MEMORY_POOL_MESSAGE_BUFFER_BLOCK_SIZE, CORE_MEMORY_POOL_NAME_NODE_OUTBOUND);
+    core_memory_pool_set_name(&node->outbound_message_memory_pool,
+                    CORE_MEMORY_POOL_NAME_NODE_OUTBOUND);
 
-    biosal_memory_pool_enable_normalization(&node->outbound_message_memory_pool);
-    biosal_memory_pool_enable_alignment(&node->outbound_message_memory_pool);
+    core_memory_pool_enable_normalization(&node->outbound_message_memory_pool);
+    core_memory_pool_enable_alignment(&node->outbound_message_memory_pool);
 
-#ifdef BIOSAL_MEMORY_POOL_DISABLE_MESSAGE_BUFFER_POOL
-    biosal_memory_pool_disable(&node->outbound_message_memory_pool);
+#ifdef CORE_MEMORY_POOL_DISABLE_MESSAGE_BUFFER_POOL
+    core_memory_pool_disable(&node->outbound_message_memory_pool);
 #endif
 
     thorium_transport_init(&node->transport, node, argc, argv,
@@ -176,18 +176,18 @@ void thorium_node_init(struct thorium_node *node, int *argc, char ***argv)
     srand(node->start_time * getpid() * node->name);
 
 #ifdef THORIUM_NODE_INJECT_CLEAN_WORKER_BUFFERS
-    biosal_fast_queue_init(&node->clean_outbound_buffers_to_inject, sizeof(struct thorium_worker_buffer));
+    core_fast_queue_init(&node->clean_outbound_buffers_to_inject, sizeof(struct thorium_worker_buffer));
 #endif
 
-    biosal_bitmap_set_bit_uint32_t(&node->flags, FLAG_USE_TRANSPORT);
+    core_bitmap_set_bit_uint32_t(&node->flags, FLAG_USE_TRANSPORT);
 
-    biosal_bitmap_clear_bit_uint32_t(&node->flags, FLAG_DEBUG);
+    core_bitmap_clear_bit_uint32_t(&node->flags, FLAG_DEBUG);
 
 #ifdef THORIUM_NODE_DEBUG_LOOP
-    biosal_bitmap_set_bit_uint32_t(&node->flags, FLAG_DEBUG);
+    core_bitmap_set_bit_uint32_t(&node->flags, FLAG_DEBUG);
 #endif
 
-    biosal_map_init(&node->scripts, sizeof(int), sizeof(struct thorium_script *));
+    core_map_init(&node->scripts, sizeof(int), sizeof(struct thorium_script *));
 
     /* the rank number is needed to decide on
      * the number of threads
@@ -200,19 +200,19 @@ void thorium_node_init(struct thorium_node *node, int *argc, char ***argv)
     node->argc = *argc;
     node->argv = *argv;
 
-    if (biosal_command_has_argument(node->argc, node->argv, "-debug-memory-pools"))
-        biosal_bitmap_set_bit_uint32_t(&node->flags, FLAG_EXAMINE);
+    if (core_command_has_argument(node->argc, node->argv, "-debug-memory-pools"))
+        core_bitmap_set_bit_uint32_t(&node->flags, FLAG_EXAMINE);
 
-    if (biosal_command_has_argument(node->argc, node->argv, "-print-counters")) {
-        biosal_bitmap_set_bit_uint32_t(&node->flags, FLAG_PRINT_COUNTERS);
+    if (core_command_has_argument(node->argc, node->argv, "-print-counters")) {
+        core_bitmap_set_bit_uint32_t(&node->flags, FLAG_PRINT_COUNTERS);
     }
 
-    if (biosal_command_has_argument(node->argc, node->argv, "-print-load")) {
-        biosal_bitmap_set_bit_uint32_t(&node->flags, FLAG_PRINT_LOAD);
+    if (core_command_has_argument(node->argc, node->argv, "-print-load")) {
+        core_bitmap_set_bit_uint32_t(&node->flags, FLAG_PRINT_LOAD);
     }
 
-    if (biosal_command_has_argument(node->argc, node->argv, "-print-structure")) {
-        biosal_bitmap_set_bit_uint32_t(&node->flags, FLAG_PRINT_STRUCTURE);
+    if (core_command_has_argument(node->argc, node->argv, "-print-structure")) {
+        core_bitmap_set_bit_uint32_t(&node->flags, FLAG_PRINT_STRUCTURE);
     }
 
     for (i = 0; i < *argc; i++) {
@@ -265,17 +265,17 @@ void thorium_node_init(struct thorium_node *node, int *argc, char ***argv)
         node->threads = 1;
     }
 
-    biosal_bitmap_set_bit_uint32_t(&node->flags, FLAG_WORKER_IN_MAIN_THREAD);
+    core_bitmap_set_bit_uint32_t(&node->flags, FLAG_WORKER_IN_MAIN_THREAD);
 
     if (node->threads >= 2) {
-        biosal_bitmap_clear_bit_uint32_t(&node->flags, FLAG_WORKER_IN_MAIN_THREAD);
+        core_bitmap_clear_bit_uint32_t(&node->flags, FLAG_WORKER_IN_MAIN_THREAD);
     }
 
-    biosal_bitmap_clear_bit_uint32_t(&node->flags, FLAG_WORKERS_IN_THREADS);
+    core_bitmap_clear_bit_uint32_t(&node->flags, FLAG_WORKERS_IN_THREADS);
 
     /* with 2 threads, one of them runs a worker */
     if (node->threads >= 2) {
-        biosal_bitmap_set_bit_uint32_t(&node->flags, FLAG_WORKERS_IN_THREADS);
+        core_bitmap_set_bit_uint32_t(&node->flags, FLAG_WORKERS_IN_THREADS);
     }
 
 	/*
@@ -307,7 +307,7 @@ void thorium_node_init(struct thorium_node *node, int *argc, char ***argv)
          */
     }
 
-    biosal_bitmap_clear_bit_uint32_t(&node->flags, FLAG_SEND_IN_THREAD);
+    core_bitmap_clear_bit_uint32_t(&node->flags, FLAG_SEND_IN_THREAD);
 
     if (node->threads >= 3) {
 
@@ -315,7 +315,7 @@ void thorium_node_init(struct thorium_node *node, int *argc, char ***argv)
         printf("DEBUG= threads: %i\n", node->threads);
 #endif
         if (node->provided == THORIUM_THREAD_MULTIPLE) {
-            biosal_bitmap_set_bit_uint32_t(&node->flags, FLAG_SEND_IN_THREAD);
+            core_bitmap_set_bit_uint32_t(&node->flags, FLAG_SEND_IN_THREAD);
             workers = node->threads - 2;
 
         /* assume THORIUM_THREAD_FUNNELED
@@ -332,7 +332,7 @@ void thorium_node_init(struct thorium_node *node, int *argc, char ***argv)
 #ifdef THORIUM_NODE_DEBUG
     printf("DEBUG threads: %i workers: %i send_in_thread: %i\n",
                     node->threads, workers,
-                    biosal_bitmap_get_bit_uint32_t(&node->flags, FLAG_SEND_IN_THREAD));
+                    core_bitmap_get_bit_uint32_t(&node->flags, FLAG_SEND_IN_THREAD));
 #endif
 
     thorium_worker_pool_init(&node->worker_pool, workers, node);
@@ -341,34 +341,34 @@ void thorium_node_init(struct thorium_node *node, int *argc, char ***argv)
     node->dead_actors = 0;
     node->alive_actors = 0;
 
-    biosal_vector_init(&node->actors, sizeof(struct thorium_actor));
+    core_vector_init(&node->actors, sizeof(struct thorium_actor));
 
     /* it is necessary to reserve because work units will point
      * to actors so their addresses can not be changed
      */
-    biosal_vector_reserve(&node->actors, actor_capacity);
+    core_vector_reserve(&node->actors, actor_capacity);
 
     /*
      * Multiply by 2 to avoid resizing
      */
-    biosal_map_init_with_capacity(&node->actor_names, sizeof(int), sizeof(int), actor_capacity * 2);
+    core_map_init_with_capacity(&node->actor_names, sizeof(int), sizeof(int), actor_capacity * 2);
 
-    biosal_vector_init(&node->initial_actors, sizeof(int));
+    core_vector_init(&node->initial_actors, sizeof(int));
 
     /*printf("BEFORE\n");*/
-    biosal_vector_resize(&node->initial_actors, thorium_node_nodes(node));
+    core_vector_resize(&node->initial_actors, thorium_node_nodes(node));
     /*printf("AFTER\n");*/
 
     node->received_initial_actors = 0;
     node->ready = 0;
 
-    biosal_lock_init(&node->spawn_and_death_lock);
-    biosal_lock_init(&node->script_lock);
-    biosal_lock_init(&node->auto_scaling_lock);
+    core_lock_init(&node->spawn_and_death_lock);
+    core_lock_init(&node->script_lock);
+    core_lock_init(&node->auto_scaling_lock);
 
-    biosal_queue_init(&node->dead_indices, sizeof(int));
+    core_queue_init(&node->dead_indices, sizeof(int));
 
-    biosal_counter_init(&node->counter);
+    core_counter_init(&node->counter);
 
 
     processor = workers;
@@ -377,9 +377,9 @@ void thorium_node_init(struct thorium_node *node, int *argc, char ***argv)
         processor = -1;
     }
 
-    biosal_set_affinity(processor);
+    core_set_affinity(processor);
 
-    if (biosal_bitmap_get_bit_uint32_t(&node->flags, FLAG_PRINT_LOAD)) {
+    if (core_bitmap_get_bit_uint32_t(&node->flags, FLAG_PRINT_LOAD)) {
         printf("thorium_node: booted node %d (%d nodes), threads: %d, workers: %d, pacing: %d\n",
                     node->name,
             node->nodes,
@@ -397,12 +397,12 @@ void thorium_node_init(struct thorium_node *node, int *argc, char ***argv)
                     &node->multiplexer_policy);
 
     if (thorium_message_multiplexer_is_disabled(&node->multiplexer)) {
-        biosal_bitmap_set_bit_uint32_t(&node->flags, FLAG_MULTIPLEXER_IS_DISABLED);
+        core_bitmap_set_bit_uint32_t(&node->flags, FLAG_MULTIPLEXER_IS_DISABLED);
     }
 
-    if (biosal_command_has_argument(node->argc, node->argv, "-enable-actor-load-profiler")) {
+    if (core_command_has_argument(node->argc, node->argv, "-enable-actor-load-profiler")) {
         thorium_worker_pool_enable_profiler(&node->worker_pool);
-        biosal_bitmap_set_bit_uint32_t(&node->flags, FLAG_ENABLE_ACTOR_LOAD_PROFILES);
+        core_bitmap_set_bit_uint32_t(&node->flags, FLAG_ENABLE_ACTOR_LOAD_PROFILES);
     }
 }
 
@@ -410,14 +410,14 @@ void thorium_node_destroy(struct thorium_node *node)
 {
     int active_requests;
 
-    if (biosal_bitmap_get_bit_uint32_t(&node->flags, FLAG_EXAMINE))
+    if (core_bitmap_get_bit_uint32_t(&node->flags, FLAG_EXAMINE))
         thorium_node_examine(node);
 
     active_requests = thorium_transport_get_active_request_count(&node->transport);
 
 #ifdef THORIUM_NODE_DEBUG_INJECTION
     printf("THORIUM DEBUG clean_outbound_buffers_to_inject has %d items\n",
-          biosal_fast_queue_size(&node->clean_outbound_buffers_to_inject));
+          core_fast_queue_size(&node->clean_outbound_buffers_to_inject));
 
     printf("node/%d \n"
              "   counter_allocated_node_inbound_buffers %d\n"
@@ -435,22 +435,22 @@ void thorium_node_destroy(struct thorium_node *node)
              active_requests);
 #endif
 
-    biosal_set_destroy(&node->auto_scaling_actors);
+    core_set_destroy(&node->auto_scaling_actors);
 
-    biosal_map_destroy(&node->actor_names);
+    core_map_destroy(&node->actor_names);
 
     /*printf("BEFORE DESTROY\n");*/
-    biosal_vector_destroy(&node->initial_actors);
+    core_vector_destroy(&node->initial_actors);
     /*printf("AFTER DESTROY\n");*/
 
-    biosal_map_destroy(&node->scripts);
-    biosal_lock_destroy(&node->spawn_and_death_lock);
-    biosal_lock_destroy(&node->auto_scaling_lock);
-    biosal_lock_destroy(&node->script_lock);
+    core_map_destroy(&node->scripts);
+    core_lock_destroy(&node->spawn_and_death_lock);
+    core_lock_destroy(&node->auto_scaling_lock);
+    core_lock_destroy(&node->script_lock);
 
-    biosal_vector_destroy(&node->actors);
+    core_vector_destroy(&node->actors);
 
-    biosal_queue_destroy(&node->dead_indices);
+    core_queue_destroy(&node->dead_indices);
 
     thorium_worker_pool_destroy(&node->worker_pool);
 
@@ -458,16 +458,16 @@ void thorium_node_destroy(struct thorium_node *node)
     thorium_message_multiplexer_destroy(&node->multiplexer);
     thorium_multiplexer_policy_destroy(&node->multiplexer_policy);
 
-    biosal_counter_destroy(&node->counter);
+    core_counter_destroy(&node->counter);
 
-    biosal_fast_queue_destroy(&node->clean_outbound_buffers_to_inject);
+    core_fast_queue_destroy(&node->clean_outbound_buffers_to_inject);
 
     /*
      * Destroy the memory pool after the rest.
      */
-    biosal_memory_pool_destroy(&node->actor_memory_pool);
-    biosal_memory_pool_destroy(&node->inbound_message_memory_pool);
-    biosal_memory_pool_destroy(&node->outbound_message_memory_pool);
+    core_memory_pool_destroy(&node->actor_memory_pool);
+    core_memory_pool_destroy(&node->inbound_message_memory_pool);
+    core_memory_pool_destroy(&node->outbound_message_memory_pool);
 }
 
 int thorium_node_threads_from_string(struct thorium_node *node,
@@ -551,7 +551,7 @@ void thorium_node_set_supervisor(struct thorium_node *node, int name, int superv
 
 int thorium_node_actors(struct thorium_node *node)
 {
-    return biosal_vector_size(&node->actors);
+    return core_vector_size(&node->actors);
 }
 
 int thorium_node_spawn(struct thorium_node *node, int script)
@@ -565,7 +565,7 @@ int thorium_node_spawn(struct thorium_node *node, int script)
     /* in the current implementation, there can only be one initial
      * actor on each node
      */
-    if (biosal_bitmap_get_bit_uint32_t(&node->flags, FLAG_STARTED) == 0
+    if (core_bitmap_get_bit_uint32_t(&node->flags, FLAG_STARTED) == 0
                     && thorium_node_actors(node) > 0) {
         return -1;
     }
@@ -578,7 +578,7 @@ int thorium_node_spawn(struct thorium_node *node, int script)
 
     size = thorium_script_size(script1);
 
-    state = biosal_memory_pool_allocate(&node->actor_memory_pool, size);
+    state = core_memory_pool_allocate(&node->actor_memory_pool, size);
 
     name = thorium_node_spawn_state(node, state, script1);
 
@@ -594,11 +594,11 @@ int thorium_node_spawn(struct thorium_node *node, int script)
         actor = thorium_node_get_actor_from_name(node, name);
 
 #ifdef THORIUM_ACTOR_GATHER_MESSAGE_METADATA
-        biosal_counter_add(thorium_actor_counter(actor), BIOSAL_COUNTER_SPAWNED_ACTORS, 1);
+        core_counter_add(thorium_actor_counter(actor), CORE_COUNTER_SPAWNED_ACTORS, 1);
 #endif
     }
 
-    biosal_counter_add(&node->counter, BIOSAL_COUNTER_SPAWNED_ACTORS, 1);
+    core_counter_add(&node->counter, CORE_COUNTER_SPAWNED_ACTORS, 1);
 
 #ifdef THORIUM_NODE_DEBUG_SPAWN_KILL
     printf("DEBUG node/%d thorium_node_spawn actor/%d script/%x\n",
@@ -619,7 +619,7 @@ int thorium_node_spawn_state(struct thorium_node *node, void *state,
 
     /* can not spawn any more actor
      */
-    if (biosal_vector_size(&node->actors) == biosal_vector_capacity(&node->actors)) {
+    if (core_vector_size(&node->actors) == core_vector_capacity(&node->actors)) {
         printf("Error: can not spawn more actors, capacity was reached...\n");
         return THORIUM_ACTOR_NOBODY;
     }
@@ -628,12 +628,12 @@ int thorium_node_spawn_state(struct thorium_node *node, void *state,
     printf("DEBUG thorium_node_spawn_state\n");
 #endif
 
-    biosal_lock_lock(&node->spawn_and_death_lock);
+    core_lock_lock(&node->spawn_and_death_lock);
 
     /* add an actor in the vector of actors
      */
     index = thorium_node_allocate_actor_index(node);
-    actor = (struct thorium_actor *)biosal_vector_at(&node->actors, index);
+    actor = (struct thorium_actor *)core_vector_at(&node->actors, index);
 
     /* actors have random names to enforce
      * the acquaintance paradigm
@@ -642,20 +642,20 @@ int thorium_node_spawn_state(struct thorium_node *node, void *state,
 
     thorium_actor_init(actor, state, script, name, node);
 
-    if (biosal_bitmap_get_bit_uint32_t(&node->flags, FLAG_ENABLE_ACTOR_LOAD_PROFILES)) {
+    if (core_bitmap_get_bit_uint32_t(&node->flags, FLAG_ENABLE_ACTOR_LOAD_PROFILES)) {
         thorium_actor_enable_profiler(actor);
     }
 
     /* register the actor name
      */
-    bucket = biosal_map_add(&node->actor_names, &name);
+    bucket = core_map_add(&node->actor_names, &name);
     *bucket = index;
 
     /*
      * Make the name visible to all threads
      */
 
-    biosal_memory_fence();
+    core_memory_fence();
 
 #ifdef THORIUM_NODE_DEBUG_SPAWN
     printf("DEBUG added Actor %d, index is %d, bucket: %p\n", name, index,
@@ -664,7 +664,7 @@ int thorium_node_spawn_state(struct thorium_node *node, void *state,
 
     node->alive_actors++;
 
-    biosal_lock_unlock(&node->spawn_and_death_lock);
+    core_lock_unlock(&node->spawn_and_death_lock);
 
     return name;
 }
@@ -674,20 +674,20 @@ int thorium_node_allocate_actor_index(struct thorium_node *node)
     int index;
 
 #ifdef THORIUM_NODE_REUSE_DEAD_INDICES
-    if (biosal_queue_dequeue(&node->dead_indices, &index)) {
+    if (core_queue_dequeue(&node->dead_indices, &index)) {
 
 #ifdef THORIUM_NODE_DEBUG_SPAWN
         printf("DEBUG node/%d thorium_node_allocate_actor_index using an old index %d, size %d\n",
                         thorium_node_name(node),
-                        index, biosal_vector_size(&node->actors));
+                        index, core_vector_size(&node->actors));
 #endif
 
         return index;
     }
 #endif
 
-    index = (int)biosal_vector_size(&node->actors);
-    biosal_vector_resize(&node->actors, biosal_vector_size(&node->actors) + 1);
+    index = (int)core_vector_size(&node->actors);
+    core_vector_resize(&node->actors, core_vector_size(&node->actors) + 1);
 
     return index;
 }
@@ -761,12 +761,12 @@ void thorium_node_set_initial_actor(struct thorium_node *node, int node_name, in
 {
     int *bucket;
 
-    bucket = biosal_vector_at(&node->initial_actors, node_name);
+    bucket = core_vector_at(&node->initial_actors, node_name);
     *bucket = actor;
 
 #ifdef THORIUM_NODE_DEBUG_INITIAL_ACTORS
     printf("DEBUG thorium_node_set_initial_actor node %d actor %d, %d actors\n",
-                    node_name, actor, biosal_vector_size(&node->initial_actors));
+                    node_name, actor, core_vector_size(&node->initial_actors));
 #endif
 }
 
@@ -776,7 +776,7 @@ int thorium_node_run(struct thorium_node *node)
     int print_final_load;
     int i;
 
-    if (biosal_bitmap_get_bit_uint32_t(&node->flags, FLAG_PRINT_COUNTERS)) {
+    if (core_bitmap_get_bit_uint32_t(&node->flags, FLAG_PRINT_COUNTERS)) {
 
         printf("----------------------------------------------\n");
         printf("biosal> node/%d: %d threads, %d workers\n", thorium_node_name(node),
@@ -784,9 +784,9 @@ int thorium_node_run(struct thorium_node *node)
                     thorium_node_worker_count(node));
     }
 
-    biosal_bitmap_set_bit_uint32_t(&node->flags, FLAG_STARTED);
+    core_bitmap_set_bit_uint32_t(&node->flags, FLAG_STARTED);
 
-    if (biosal_bitmap_get_bit_uint32_t(&node->flags, FLAG_WORKERS_IN_THREADS)) {
+    if (core_bitmap_get_bit_uint32_t(&node->flags, FLAG_WORKERS_IN_THREADS)) {
 #ifdef THORIUM_NODE_DEBUG_RUN
         printf("THORIUM_NODE_DEBUG_RUN DEBUG starting %i worker threads\n",
                         thorium_worker_pool_worker_count(&node->worker_pool));
@@ -795,7 +795,7 @@ int thorium_node_run(struct thorium_node *node)
     }
 
 
-    if (biosal_bitmap_get_bit_uint32_t(&node->flags, FLAG_SEND_IN_THREAD)) {
+    if (core_bitmap_get_bit_uint32_t(&node->flags, FLAG_SEND_IN_THREAD)) {
 #ifdef THORIUM_NODE_DEBUG_RUN
         printf("THORIUM_NODE_DEBUG_RUN starting send thread\n");
 #endif
@@ -812,23 +812,23 @@ int thorium_node_run(struct thorium_node *node)
     printf("THORIUM_NODE_DEBUG_RUN after loop in thorium_node_run\n");
 #endif
 
-    if (biosal_bitmap_get_bit_uint32_t(&node->flags, FLAG_WORKERS_IN_THREADS)) {
+    if (core_bitmap_get_bit_uint32_t(&node->flags, FLAG_WORKERS_IN_THREADS)) {
         thorium_worker_pool_stop(&node->worker_pool);
     }
 
-    if (biosal_bitmap_get_bit_uint32_t(&node->flags, FLAG_PRINT_LOAD)) {
+    if (core_bitmap_get_bit_uint32_t(&node->flags, FLAG_PRINT_LOAD)) {
         thorium_worker_pool_print_load(&node->worker_pool, THORIUM_WORKER_POOL_LOAD_EPOCH);
         thorium_worker_pool_print_load(&node->worker_pool, THORIUM_WORKER_POOL_LOAD_LOOP);
     }
 
-    if (biosal_bitmap_get_bit_uint32_t(&node->flags,
+    if (core_bitmap_get_bit_uint32_t(&node->flags,
                             FLAG_SEND_IN_THREAD)) {
-        biosal_thread_join(&node->thread);
+        core_thread_join(&node->thread);
     }
 
     /* Always print counters at the end, this is useful.
      */
-    if (biosal_bitmap_get_bit_uint32_t(&node->flags, FLAG_PRINT_COUNTERS)) {
+    if (core_bitmap_get_bit_uint32_t(&node->flags, FLAG_PRINT_COUNTERS)) {
         thorium_node_print_counters(node);
     }
 
@@ -847,7 +847,7 @@ int thorium_node_run(struct thorium_node *node)
             print_final_load = 0;
         }
     }
-    if (biosal_bitmap_get_bit_uint32_t(&node->flags, FLAG_PRINT_LOAD)
+    if (core_bitmap_get_bit_uint32_t(&node->flags, FLAG_PRINT_LOAD)
                     || print_final_load) {
 
         load = thorium_worker_pool_get_computation_load(&node->worker_pool);
@@ -870,20 +870,20 @@ void thorium_node_start_initial_actor(struct thorium_node *node)
     int name;
     struct thorium_message message;
 
-    actors = biosal_vector_size(&node->actors);
+    actors = core_vector_size(&node->actors);
 
-    bytes = biosal_vector_pack_size(&node->initial_actors);
+    bytes = core_vector_pack_size(&node->initial_actors);
 
 #ifdef THORIUM_NODE_DEBUG_INITIAL_ACTORS
     printf("DEBUG packing %d initial actors\n",
-                    biosal_vector_size(&node->initial_actors));
+                    core_vector_size(&node->initial_actors));
 #endif
 
-    buffer = biosal_memory_pool_allocate(&node->inbound_message_memory_pool, bytes);
-    biosal_vector_pack(&node->initial_actors, buffer);
+    buffer = core_memory_pool_allocate(&node->inbound_message_memory_pool, bytes);
+    core_vector_pack(&node->initial_actors, buffer);
 
     for (i = 0; i < actors; ++i) {
-        actor = (struct thorium_actor *)biosal_vector_at(&node->actors, i);
+        actor = (struct thorium_actor *)core_vector_at(&node->actors, i);
         name = thorium_actor_name(actor);
 
         /* initial actors are supervised by themselves... */
@@ -897,7 +897,7 @@ void thorium_node_start_initial_actor(struct thorium_node *node)
     }
 
     /*
-    biosal_memory_pool_free(&node->inbound_message_memory_pool, buffer);
+    core_memory_pool_free(&node->inbound_message_memory_pool, buffer);
     */
 }
 
@@ -938,7 +938,7 @@ int thorium_node_running(struct thorium_node *node)
      * if no message were pulled for a duration of at least
      * 4 seconds.
      */
-    if (biosal_bitmap_get_bit_uint32_t(&node->flags, FLAG_USE_TRANSPORT)
+    if (core_bitmap_get_bit_uint32_t(&node->flags, FLAG_USE_TRANSPORT)
                     && elapsed < 4) {
 #ifdef THORIUM_NODE_DEBUG_RUN
         printf("THORIUM_NODE_DEBUG_RUN a message was received in the last period %d %d\n",
@@ -953,8 +953,8 @@ int thorium_node_running(struct thorium_node *node)
 /* TODO, this needs THORIUM_THREAD_MULTIPLE, this has not been tested */
 void thorium_node_start_send_thread(struct thorium_node *node)
 {
-    biosal_thread_init(&node->thread, thorium_node_main, node);
-    biosal_thread_start(&node->thread);
+    core_thread_init(&node->thread, thorium_node_main, node);
+    core_thread_start(&node->thread);
 }
 
 void *thorium_node_main(void *node1)
@@ -1009,9 +1009,9 @@ int thorium_node_receive_system(struct thorium_node *node, struct thorium_messag
             printf("DEBUG send ACTION_THORIUM_NODE_ADD_INITIAL_ACTOR to all nodes\n");
 #endif
 
-            bytes = biosal_vector_pack_size(&node->initial_actors);
-            buffer = biosal_memory_pool_allocate(&node->outbound_message_memory_pool, bytes);
-            biosal_vector_pack(&node->initial_actors, buffer);
+            bytes = core_vector_pack_size(&node->initial_actors);
+            buffer = core_memory_pool_allocate(&node->outbound_message_memory_pool, bytes);
+            core_vector_pack(&node->initial_actors, buffer);
 
             thorium_message_init(&new_message, ACTION_THORIUM_NODE_ADD_INITIAL_ACTORS, bytes, buffer);
 
@@ -1023,7 +1023,7 @@ int thorium_node_receive_system(struct thorium_node *node, struct thorium_messag
             /*
              * thorium_node_send_to_node does a copy.
              */
-            biosal_memory_pool_free(&node->outbound_message_memory_pool, buffer);
+            core_memory_pool_free(&node->outbound_message_memory_pool, buffer);
 #endif
         }
 
@@ -1038,14 +1038,14 @@ int thorium_node_receive_system(struct thorium_node *node, struct thorium_messag
         buffer = thorium_message_buffer(message);
         source = thorium_message_source_node(message);
 
-        biosal_vector_destroy(&node->initial_actors);
-        biosal_vector_init(&node->initial_actors, 0);
-        biosal_vector_unpack(&node->initial_actors, buffer);
+        core_vector_destroy(&node->initial_actors);
+        core_vector_init(&node->initial_actors, 0);
+        core_vector_unpack(&node->initial_actors, buffer);
 
 #ifdef THORIUM_NODE_DEBUG_RECEIVE_SYSTEM
         count = thorium_message_count(message);
         printf("DEBUG buffer size: %d, unpacked %d actor names from node/%d\n",
-                        count, biosal_vector_size(&node->initial_actors),
+                        count, core_vector_size(&node->initial_actors),
                         source);
 #endif
 
@@ -1079,7 +1079,7 @@ int thorium_node_receive_system(struct thorium_node *node, struct thorium_messag
          * if there is only one node
          */
         if (node->nodes == 1) {
-            biosal_bitmap_clear_bit_uint32_t(&node->flags, FLAG_USE_TRANSPORT);
+            core_bitmap_clear_bit_uint32_t(&node->flags, FLAG_USE_TRANSPORT);
         }
 
 #ifdef THORIUM_NODE_DEBUG_RECEIVE_SYSTEM
@@ -1125,10 +1125,10 @@ void thorium_node_send_to_node(struct thorium_node *node, int destination,
      * Since we are sending messages between
      * nodes, these names are faked...
      */
-    new_buffer = biosal_memory_pool_allocate(&node->outbound_message_memory_pool, new_count);
+    new_buffer = core_memory_pool_allocate(&node->outbound_message_memory_pool, new_count);
 
     if (count > 0)
-        biosal_memory_copy(new_buffer, buffer, count);
+        core_memory_copy(new_buffer, buffer, count);
 
     /* the metadata size is added by the runtime
      * this is why the value is count and not new_count
@@ -1209,12 +1209,12 @@ void thorium_node_send(struct thorium_node *node, struct thorium_message *messag
             printf("DEBUG local message 1100\n");
         }
 #endif
-        biosal_counter_add(&node->counter, BIOSAL_COUNTER_SENT_MESSAGES_TO_SELF, 1);
-        biosal_counter_add(&node->counter, BIOSAL_COUNTER_SENT_BYTES_TO_SELF,
+        core_counter_add(&node->counter, CORE_COUNTER_SENT_MESSAGES_TO_SELF, 1);
+        core_counter_add(&node->counter, CORE_COUNTER_SENT_BYTES_TO_SELF,
                         thorium_message_count(message));
 
-        biosal_counter_add(&node->counter, BIOSAL_COUNTER_RECEIVED_MESSAGES_FROM_SELF, 1);
-        biosal_counter_add(&node->counter, BIOSAL_COUNTER_RECEIVED_BYTES_FROM_SELF,
+        core_counter_add(&node->counter, CORE_COUNTER_RECEIVED_MESSAGES_FROM_SELF, 1);
+        core_counter_add(&node->counter, CORE_COUNTER_RECEIVED_BYTES_FROM_SELF,
                         thorium_message_count(message));
 
     /* Otherwise, the message must be sent to another BIOSAL
@@ -1259,7 +1259,7 @@ void thorium_node_send(struct thorium_node *node, struct thorium_message *messag
         if (thorium_message_action(message) == 1100) {
             printf("DEBUG outbound message 1100\n");
 
-            biosal_bitmap_set_bit_uint32_t(&node->flags, FLAG_DEBUG);
+            core_bitmap_set_bit_uint32_t(&node->flags, FLAG_DEBUG);
         }
 #endif
 
@@ -1286,7 +1286,7 @@ struct thorium_actor *thorium_node_get_actor_from_name(struct thorium_node *node
         return NULL;
     }
 
-    actor = (struct thorium_actor *)biosal_vector_at(&node->actors, index);
+    actor = (struct thorium_actor *)core_vector_at(&node->actors, index);
 
     return actor;
 }
@@ -1311,7 +1311,7 @@ void thorium_node_dispatch_message(struct thorium_node *node, struct thorium_mes
              * Also, this system buffer needs to be freed now anyway because there is no other
              * place where it will have the change to be freed.
              */
-            biosal_memory_pool_free(&node->inbound_message_memory_pool, buffer);
+            core_memory_pool_free(&node->inbound_message_memory_pool, buffer);
         }
 
         return;
@@ -1384,11 +1384,11 @@ int thorium_node_actor_index(struct thorium_node *node, int name)
     int index;
 
 #ifdef THORIUM_NODE_DEBUG
-    printf("DEBUG calling biosal_map with pointer to %d, entries %d\n",
-                    name, (int)biosal_map_table_size(&node->actor_names));
+    printf("DEBUG calling core_map with pointer to %d, entries %d\n",
+                    name, (int)core_map_table_size(&node->actor_names));
 #endif
 
-    bucket = biosal_map_get(&node->actor_names, &name);
+    bucket = core_map_get(&node->actor_names, &name);
 
 #ifdef THORIUM_NODE_DEBUG
     printf("DEBUG thorium_node_actor_index %d %p\n", name, (void *)bucket);
@@ -1434,7 +1434,7 @@ void thorium_node_notify_death(struct thorium_node *node, struct thorium_actor *
     name = thorium_actor_name(actor);
     */
 
-    if (biosal_bitmap_get_bit_uint32_t(&node->flags, FLAG_PRINT_STRUCTURE)) {
+    if (core_bitmap_get_bit_uint32_t(&node->flags, FLAG_PRINT_STRUCTURE)) {
         thorium_node_print_structure(node, actor);
     }
 
@@ -1463,7 +1463,7 @@ void thorium_node_notify_death(struct thorium_node *node, struct thorium_actor *
     printf("----------------------------------------------\n");
     printf("Counters for actor/%d\n",
                     name);
-    biosal_counter_print(thorium_actor_counter(actor));
+    core_counter_print(thorium_actor_counter(actor));
     printf("----------------------------------------------\n");
 #endif
 
@@ -1473,10 +1473,10 @@ void thorium_node_notify_death(struct thorium_node *node, struct thorium_actor *
      */
     thorium_actor_destroy(actor);
 
-    biosal_lock_lock(&node->spawn_and_death_lock);
+    core_lock_lock(&node->spawn_and_death_lock);
 
     /* free the bytes of the concrete actor */
-    biosal_memory_pool_free(&node->actor_memory_pool, state);
+    core_memory_pool_free(&node->actor_memory_pool, state);
     state = NULL;
 
     /* remove the name from the registry */
@@ -1484,15 +1484,15 @@ void thorium_node_notify_death(struct thorium_node *node, struct thorium_actor *
      * because spawn also access this attribute
      */
 
-    biosal_map_delete(&node->actor_names, &name);
+    core_map_delete(&node->actor_names, &name);
 
     /*
      * Make this change visible
      */
-    biosal_memory_fence();
+    core_memory_fence();
 
 #ifdef THORIUM_NODE_REUSE_DEAD_INDICES
-    biosal_queue_enqueue(&node->dead_indices, &index);
+    core_queue_enqueue(&node->dead_indices, &index);
 #endif
 
 #ifdef THORIUM_NODE_DEBUG_20140601_8
@@ -1503,33 +1503,33 @@ void thorium_node_notify_death(struct thorium_node *node, struct thorium_actor *
      * actors
      */
 
-    biosal_lock_lock(&node->auto_scaling_lock);
+    core_lock_lock(&node->auto_scaling_lock);
 
-    if (biosal_set_find(&node->auto_scaling_actors, &name)) {
-        biosal_set_delete(&node->auto_scaling_actors, &name);
+    if (core_set_find(&node->auto_scaling_actors, &name)) {
+        core_set_delete(&node->auto_scaling_actors, &name);
 
         /* This fence is not required.
          */
         /*
-        biosal_memory_fence();
+        core_memory_fence();
         */
     }
 
-    biosal_lock_unlock(&node->auto_scaling_lock);
+    core_lock_unlock(&node->auto_scaling_lock);
 
     node->alive_actors--;
     node->dead_actors++;
 
     if (node->alive_actors == 0
-                    && biosal_bitmap_get_bit_uint32_t(&node->flags, FLAG_PRINT_LOAD)) {
+                    && core_bitmap_get_bit_uint32_t(&node->flags, FLAG_PRINT_LOAD)) {
 
         printf("thorium_node: all local actors are dead now, %d alive actors, %d dead actors\n",
                         node->alive_actors, node->dead_actors);
     }
 
-    biosal_lock_unlock(&node->spawn_and_death_lock);
+    core_lock_unlock(&node->spawn_and_death_lock);
 
-    biosal_counter_add(&node->counter, BIOSAL_COUNTER_KILLED_ACTORS, 1);
+    core_counter_add(&node->counter, CORE_COUNTER_KILLED_ACTORS, 1);
 
 #ifdef THORIUM_NODE_DEBUG_20140601_8
     printf("DEBUG exiting thorium_node_notify_death\n");
@@ -1561,7 +1561,7 @@ void thorium_node_add_script(struct thorium_node *node, int name,
 {
     int can_add;
 
-    biosal_lock_lock(&node->script_lock);
+    core_lock_lock(&node->script_lock);
 
     can_add = 1;
     if (thorium_node_has_script(node, script)) {
@@ -1569,14 +1569,14 @@ void thorium_node_add_script(struct thorium_node *node, int name,
     }
 
     if (can_add) {
-        biosal_map_add_value(&node->scripts, &name, &script);
+        core_map_add_value(&node->scripts, &name, &script);
     }
 
 #ifdef THORIUM_NODE_DEBUG_SCRIPT_SYSTEM
     printf("DEBUG added script %x %p\n", name, (void *)script);
 #endif
 
-    biosal_lock_unlock(&node->script_lock);
+    core_lock_unlock(&node->script_lock);
 }
 
 int thorium_node_has_script(struct thorium_node *node, struct thorium_script *script)
@@ -1591,7 +1591,7 @@ struct thorium_script *thorium_node_find_script(struct thorium_node *node, int i
 {
     struct thorium_script **script;
 
-    script = biosal_map_get(&node->scripts, &identifier);
+    script = core_map_get(&node->scripts, &identifier);
 
     if (script == NULL) {
         return NULL;
@@ -1605,7 +1605,7 @@ void thorium_node_print_counters(struct thorium_node *node)
     printf("----------------------------------------------\n");
     printf("thorium_node: counters for node/%d\n",
                     thorium_node_name(node));
-    biosal_counter_print(&node->counter, thorium_node_name(node));
+    core_counter_print(&node->counter, thorium_node_name(node));
 }
 
 /*
@@ -1633,7 +1633,7 @@ void thorium_node_handle_signal(int signal)
 
     thorium_node_examine(thorium_node_global_self);
 
-    biosal_tracer_print_stack_backtrace();
+    core_tracer_print_stack_backtrace();
 
     fflush(stdout);
 
@@ -1647,37 +1647,37 @@ void thorium_node_handle_signal(int signal)
 
 void thorium_node_register_signal_handlers(struct thorium_node *self)
 {
-    struct biosal_vector signals;
-    struct biosal_vector_iterator iterator;
+    struct core_vector signals;
+    struct core_vector_iterator iterator;
     int *signal;
 
-    biosal_vector_init(&signals, sizeof(int));
+    core_vector_init(&signals, sizeof(int));
     /*
      * \see http://unixhelp.ed.ac.uk/CGI/man-cgi?signal+7
      */
     /* segmentation fault */
-    biosal_vector_push_back_int(&signals, SIGSEGV);
+    core_vector_push_back_int(&signals, SIGSEGV);
     /* division by 0 */
-    biosal_vector_push_back_int(&signals, SIGFPE);
+    core_vector_push_back_int(&signals, SIGFPE);
     /* bus error (alignment issue */
-    biosal_vector_push_back_int(&signals, SIGBUS);
+    core_vector_push_back_int(&signals, SIGBUS);
     /* abort */
-    biosal_vector_push_back_int(&signals, SIGABRT);
+    core_vector_push_back_int(&signals, SIGABRT);
 
-    biosal_vector_push_back_int(&signals, SIGUSR1);
+    core_vector_push_back_int(&signals, SIGUSR1);
 
     /* kill signal */
-    biosal_vector_push_back_int(&signals, SIGKILL);
+    core_vector_push_back_int(&signals, SIGKILL);
     /* termination*/
-    biosal_vector_push_back_int(&signals, SIGTERM);
+    core_vector_push_back_int(&signals, SIGTERM);
 
 #if 0
     /* interruption */
-    biosal_vector_push_back_int(&signals, SIGINT);
+    core_vector_push_back_int(&signals, SIGINT);
     /* kill */
-    biosal_vector_push_back_int(&signals, SIGHUP);
+    core_vector_push_back_int(&signals, SIGHUP);
     /* illegal instruction */
-    biosal_vector_push_back_int(&signals, SIGILL);
+    core_vector_push_back_int(&signals, SIGILL);
 #endif
 
     /*
@@ -1688,16 +1688,16 @@ void thorium_node_register_signal_handlers(struct thorium_node *self)
     sigemptyset(&self->action.sa_mask);
     self->action.sa_flags = 0;
 
-    biosal_vector_iterator_init(&iterator, &signals);
+    core_vector_iterator_init(&iterator, &signals);
 
-    while (biosal_vector_iterator_has_next(&iterator)) {
+    while (core_vector_iterator_has_next(&iterator)) {
 
-        biosal_vector_iterator_next(&iterator, (void **)&signal);
+        core_vector_iterator_next(&iterator, (void **)&signal);
         sigaction(*signal, &self->action, NULL);
     }
 
-    biosal_vector_iterator_destroy(&iterator);
-    biosal_vector_destroy(&signals);
+    core_vector_iterator_destroy(&iterator);
+    core_vector_destroy(&signals);
 
         /* generate SIGSEGV
     *((int *)NULL) = 0;
@@ -1706,8 +1706,8 @@ void thorium_node_register_signal_handlers(struct thorium_node *self)
 
 void thorium_node_print_structure(struct thorium_node *node, struct thorium_actor *actor)
 {
-    struct biosal_map *structure;
-    struct biosal_map_iterator iterator;
+    struct core_map *structure;
+    struct core_map_iterator iterator;
     int *source;
     int *count;
     int name;
@@ -1736,17 +1736,17 @@ void thorium_node_print_structure(struct thorium_node *node, struct thorium_acto
     printf("    a%d [label=\"%s/%d\", color=\"%s\"]; /* STRUCTURE vertex */\n", name,
                     thorium_script_description(actual_script), name, color);
 
-    biosal_map_iterator_init(&iterator, structure);
+    core_map_iterator_init(&iterator, structure);
 
-    while (biosal_map_iterator_has_next(&iterator)) {
-        biosal_map_iterator_next(&iterator, (void **)&source, (void **)&count);
+    while (core_map_iterator_has_next(&iterator)) {
+        core_map_iterator_next(&iterator, (void **)&source, (void **)&count);
 
         printf("    a%d -> a%d [label=\"%d\"]; /* STRUCTURE edge */\n", *source, name, *count);
     }
 
     printf(" /* STRUCTURE */\n");
 
-    biosal_map_iterator_destroy(&iterator);
+    core_map_iterator_destroy(&iterator);
 }
 
 struct thorium_worker_pool *thorium_node_get_worker_pool(struct thorium_node *self)
@@ -1756,34 +1756,34 @@ struct thorium_worker_pool *thorium_node_get_worker_pool(struct thorium_node *se
 
 void thorium_node_toggle_debug_mode(struct thorium_node *self)
 {
-    if (biosal_bitmap_get_bit_uint32_t(&self->flags, FLAG_DEBUG)) {
-        biosal_bitmap_clear_bit_uint32_t(&self->flags, FLAG_DEBUG);
+    if (core_bitmap_get_bit_uint32_t(&self->flags, FLAG_DEBUG)) {
+        core_bitmap_clear_bit_uint32_t(&self->flags, FLAG_DEBUG);
     } else {
-        biosal_bitmap_set_bit_uint32_t(&self->flags, FLAG_DEBUG);
+        core_bitmap_set_bit_uint32_t(&self->flags, FLAG_DEBUG);
     }
     thorium_worker_pool_toggle_debug_mode(&self->worker_pool);
 }
 
 void thorium_node_reset_actor_counters(struct thorium_node *node)
 {
-    struct biosal_map_iterator iterator;
+    struct core_map_iterator iterator;
     int *name;
     struct thorium_actor *actor;
 
-    biosal_map_iterator_init(&iterator, &node->actor_names);
+    core_map_iterator_init(&iterator, &node->actor_names);
 
-    while (biosal_map_iterator_next(&iterator, (void **)&name, NULL)) {
+    while (core_map_iterator_next(&iterator, (void **)&name, NULL)) {
 
         actor = thorium_node_get_actor_from_name(node, *name);
 
         thorium_actor_reset_counters(actor);
     }
-    biosal_map_iterator_destroy(&iterator);
+    core_map_iterator_destroy(&iterator);
 }
 
 int64_t thorium_node_get_counter(struct thorium_node *node, int counter)
 {
-    return biosal_counter_get(&node->counter, counter);
+    return core_counter_get(&node->counter, counter);
 }
 
 int thorium_node_send_system(struct thorium_node *node, struct thorium_message *message)
@@ -1803,22 +1803,22 @@ int thorium_node_send_system(struct thorium_node *node, struct thorium_message *
                        thorium_node_name(node),
                        source);
 
-        biosal_lock_lock(&node->auto_scaling_lock);
+        core_lock_lock(&node->auto_scaling_lock);
 
-        biosal_set_add(&node->auto_scaling_actors, &source);
+        core_set_add(&node->auto_scaling_actors, &source);
 
-        biosal_lock_unlock(&node->auto_scaling_lock);
+        core_lock_unlock(&node->auto_scaling_lock);
 
         return 1;
 
     } else if (source == destination
            && tag == ACTION_DISABLE_AUTO_SCALING) {
 
-        biosal_lock_lock(&node->auto_scaling_lock);
+        core_lock_lock(&node->auto_scaling_lock);
 
-        biosal_set_delete(&node->auto_scaling_actors, &source);
+        core_set_delete(&node->auto_scaling_actors, &source);
 
-        biosal_lock_unlock(&node->auto_scaling_lock);
+        core_lock_unlock(&node->auto_scaling_lock);
 
         return 1;
     }
@@ -1838,7 +1838,7 @@ void thorium_node_send_to_actor(struct thorium_node *node, int name, struct thor
 void thorium_node_check_load(struct thorium_node *node)
 {
     const float load_threshold = 0.90;
-    struct biosal_set_iterator iterator;
+    struct core_set_iterator iterator;
     struct thorium_message message;
     int name;
     time_t current_time;
@@ -1857,15 +1857,15 @@ void thorium_node_check_load(struct thorium_node *node)
     /* Check load to see if auto-scaling is needed
      */
 
-    biosal_lock_lock(&node->auto_scaling_lock);
+    core_lock_lock(&node->auto_scaling_lock);
 
     if (thorium_worker_pool_get_current_load(&node->worker_pool)
                     <= load_threshold) {
 
 
-        biosal_set_iterator_init(&iterator, &node->auto_scaling_actors);
+        core_set_iterator_init(&iterator, &node->auto_scaling_actors);
 
-        while (biosal_set_iterator_get_next_value(&iterator, &name)) {
+        while (core_set_iterator_get_next_value(&iterator, &name)) {
 
             thorium_message_init(&message, ACTION_DO_AUTO_SCALING,
                             0, NULL);
@@ -1875,10 +1875,10 @@ void thorium_node_check_load(struct thorium_node *node)
             thorium_message_destroy(&message);
         }
 
-        biosal_set_iterator_destroy(&iterator);
+        core_set_iterator_destroy(&iterator);
     }
 
-    biosal_lock_unlock(&node->auto_scaling_lock);
+    core_lock_unlock(&node->auto_scaling_lock);
 }
 
 int thorium_node_pull(struct thorium_node *node, struct thorium_message *message)
@@ -1910,8 +1910,8 @@ void thorium_node_run_loop(struct thorium_node *node)
     time_t current_time;
     char print_information = 0;
 
-    if (biosal_bitmap_get_bit_uint32_t(&node->flags, FLAG_PRINT_LOAD)
-            || biosal_bitmap_get_bit_uint32_t(&node->flags, FLAG_PRINT_COUNTERS)) {
+    if (core_bitmap_get_bit_uint32_t(&node->flags, FLAG_PRINT_LOAD)
+            || core_bitmap_get_bit_uint32_t(&node->flags, FLAG_PRINT_COUNTERS)) {
 
         print_information = 1;
     }
@@ -1929,7 +1929,7 @@ void thorium_node_run_loop(struct thorium_node *node)
             current_time = time(NULL);
 
             if (current_time - node->last_report_time >= period) {
-                if (biosal_bitmap_get_bit_uint32_t(&node->flags, FLAG_PRINT_LOAD)) {
+                if (core_bitmap_get_bit_uint32_t(&node->flags, FLAG_PRINT_LOAD)) {
                     thorium_worker_pool_print_load(&node->worker_pool, THORIUM_WORKER_POOL_LOAD_EPOCH);
 
                     /* Display the number of actors,
@@ -1941,11 +1941,11 @@ void thorium_node_run_loop(struct thorium_node *node)
                                     node->name,
                                     node->alive_actors,
                                     thorium_transport_get_active_request_count(&node->transport),
-                                    biosal_memory_get_utilized_byte_count(),
-                                    biosal_memory_get_total_byte_count());
+                                    core_memory_get_utilized_byte_count(),
+                                    core_memory_get_total_byte_count());
                 }
 
-                if (biosal_bitmap_get_bit_uint32_t(&node->flags, FLAG_PRINT_COUNTERS)) {
+                if (core_bitmap_get_bit_uint32_t(&node->flags, FLAG_PRINT_COUNTERS)) {
                     thorium_node_print_counters(node);
                 }
 
@@ -1961,7 +1961,7 @@ void thorium_node_run_loop(struct thorium_node *node)
 #endif
 
 #ifdef THORIUM_NODE_DEBUG_LOOP1
-        if (biosal_bitmap_get_bit_uint32_t(&node->flags, FLAG_DEBUG)) {
+        if (core_bitmap_get_bit_uint32_t(&node->flags, FLAG_DEBUG)) {
             printf("DEBUG node/%d is running\n", thorium_node_name(node));
         }
 #endif
@@ -1970,7 +1970,7 @@ void thorium_node_run_loop(struct thorium_node *node)
          * this code path will call lock if
          * there is a message received.
          */
-        if (biosal_bitmap_get_bit_uint32_t(&node->flags, FLAG_USE_TRANSPORT)
+        if (core_bitmap_get_bit_uint32_t(&node->flags, FLAG_USE_TRANSPORT)
             && thorium_transport_receive(&node->transport, &message)) {
 
 #ifdef THORIUM_NODE_DEBUG_INJECTION
@@ -1984,8 +1984,8 @@ void thorium_node_run_loop(struct thorium_node *node)
              */
             thorium_node_prepare_received_message(node, &message);
 
-            biosal_counter_add(&node->counter, BIOSAL_COUNTER_RECEIVED_MESSAGES_NOT_FROM_SELF, 1);
-            biosal_counter_add(&node->counter, BIOSAL_COUNTER_RECEIVED_BYTES_NOT_FROM_SELF,
+            core_counter_add(&node->counter, CORE_COUNTER_RECEIVED_MESSAGES_NOT_FROM_SELF, 1);
+            core_counter_add(&node->counter, CORE_COUNTER_RECEIVED_BYTES_NOT_FROM_SELF,
                     thorium_message_count(&message));
 
             if (!thorium_message_multiplexer_demultiplex(&node->multiplexer, &message)) {
@@ -1999,20 +1999,20 @@ void thorium_node_run_loop(struct thorium_node *node)
 #endif
 
                 buffer = thorium_message_buffer(&message);
-                biosal_memory_pool_free(&node->inbound_message_memory_pool, buffer);
+                core_memory_pool_free(&node->inbound_message_memory_pool, buffer);
             }
         }
 
         /* the one worker works here if there is only
          * one thread
          */
-        if (biosal_bitmap_get_bit_uint32_t(&node->flags, FLAG_WORKER_IN_MAIN_THREAD)) {
+        if (core_bitmap_get_bit_uint32_t(&node->flags, FLAG_WORKER_IN_MAIN_THREAD)) {
             thorium_worker_pool_run(&node->worker_pool);
         }
 
         /* with 3 or more threads, the sending operations are
          * in another thread */
-        if (!biosal_bitmap_get_bit_uint32_t(&node->flags,
+        if (!core_bitmap_get_bit_uint32_t(&node->flags,
                                 FLAG_SEND_IN_THREAD)) {
 
 #ifdef THORIUM_NODE_DEBUG_RUN
@@ -2050,7 +2050,7 @@ void thorium_node_run_loop(struct thorium_node *node)
 
         /* Free buffers of active requests
          */
-        if (biosal_bitmap_get_bit_uint32_t(&node->flags, FLAG_USE_TRANSPORT)) {
+        if (core_bitmap_get_bit_uint32_t(&node->flags, FLAG_USE_TRANSPORT)) {
 
             thorium_node_test_requests(node);
 
@@ -2159,7 +2159,7 @@ void thorium_node_test_requests(struct thorium_node *node)
 #ifdef THORIUM_NODE_INJECT_CLEAN_WORKER_BUFFERS
     /* Check if there are queued buffers to give to workers
      */
-    if (biosal_fast_queue_dequeue(&node->clean_outbound_buffers_to_inject, &worker_buffer)) {
+    if (core_fast_queue_dequeue(&node->clean_outbound_buffers_to_inject, &worker_buffer)) {
 
             /*
         printf("INJECT Dequeued buffer to inject\n");
@@ -2184,14 +2184,14 @@ void thorium_node_free_worker_buffer(struct thorium_node *node,
 #ifdef THORIUM_NODE_INJECT_CLEAN_WORKER_BUFFERS
     worker_name = thorium_worker_buffer_get_worker(worker_buffer);
 
-    BIOSAL_DEBUGGER_ASSERT(worker_name >= 0);
+    CORE_DEBUGGER_ASSERT(worker_name >= 0);
 
     /* This a worker buffer.
      * Otherwise, this is a Thorium node for startup.
      */
     worker = thorium_worker_pool_get_worker(&node->worker_pool, worker_name);
 
-    BIOSAL_DEBUGGER_ASSERT(worker != NULL);
+    CORE_DEBUGGER_ASSERT(worker != NULL);
 
     /*
     printf("INJECT Injecting buffer into worker\n");
@@ -2204,7 +2204,7 @@ void thorium_node_free_worker_buffer(struct thorium_node *node,
         /* If the ring is full, queue it locally
          * and try again later
          */
-        biosal_fast_queue_enqueue(&node->clean_outbound_buffers_to_inject, worker_buffer);
+        core_fast_queue_enqueue(&node->clean_outbound_buffers_to_inject, worker_buffer);
     }
 
 /* This is a node buffer
@@ -2259,13 +2259,13 @@ void thorium_node_recycle_message(struct thorium_node *self, struct thorium_mess
      * This function recycle a message.
      * The type can not be THORIUM_MESSAGE_TYPE_NODE_OUTBOUND.
      */
-    BIOSAL_DEBUGGER_ASSERT(thorium_message_type(message) == THORIUM_MESSAGE_TYPE_NODE_INBOUND
+    CORE_DEBUGGER_ASSERT(thorium_message_type(message) == THORIUM_MESSAGE_TYPE_NODE_INBOUND
                     || thorium_message_type(message) == THORIUM_MESSAGE_TYPE_WORKER_OUTBOUND);
 
     worker_name = thorium_message_worker(message);
     buffer = thorium_message_buffer(message);
 
-    BIOSAL_DEBUGGER_ASSERT(buffer != NULL);
+    CORE_DEBUGGER_ASSERT(buffer != NULL);
 
     /*
      * Otherwise, free the buffer here directly since this is a Thorium core
@@ -2273,7 +2273,7 @@ void thorium_node_recycle_message(struct thorium_node *self, struct thorium_mess
      */
     if (worker_name < 0) {
 
-        biosal_memory_pool_free(&self->inbound_message_memory_pool, buffer);
+        core_memory_pool_free(&self->inbound_message_memory_pool, buffer);
 #ifdef THORIUM_NODE_DEBUG_INJECTION
         ++self->counter_freed_injected_node_inbound_buffers;
 #endif
@@ -2375,13 +2375,13 @@ void thorium_node_send_with_transport(struct thorium_node *self, struct thorium_
 {
     thorium_transport_send(&self->transport, message);
 
-    biosal_counter_add(&self->counter, BIOSAL_COUNTER_SENT_MESSAGES_NOT_TO_SELF, 1);
-    biosal_counter_add(&self->counter, BIOSAL_COUNTER_SENT_BYTES_NOT_TO_SELF,
+    core_counter_add(&self->counter, CORE_COUNTER_SENT_MESSAGES_NOT_TO_SELF, 1);
+    core_counter_add(&self->counter, CORE_COUNTER_SENT_BYTES_NOT_TO_SELF,
                         thorium_message_count(message));
 
 }
 
-struct biosal_memory_pool *thorium_node_inbound_memory_pool(struct thorium_node *self)
+struct core_memory_pool *thorium_node_inbound_memory_pool(struct thorium_node *self)
 {
     return &self->inbound_message_memory_pool;
 }
@@ -2393,12 +2393,12 @@ void thorium_node_examine(struct thorium_node *self)
             thorium_worker_pool_worker_count(&self->worker_pool));
 
     printf("MEMORY used / total -> %" PRIu64 " / %" PRIu64  "\n",
-                        biosal_memory_get_utilized_byte_count(),
-                        biosal_memory_get_total_byte_count());
+                        core_memory_get_utilized_byte_count(),
+                        core_memory_get_total_byte_count());
 
-    biosal_memory_pool_examine(&self->actor_memory_pool);
-    biosal_memory_pool_examine(&self->inbound_message_memory_pool);
-    biosal_memory_pool_examine(&self->outbound_message_memory_pool);
+    core_memory_pool_examine(&self->actor_memory_pool);
+    core_memory_pool_examine(&self->inbound_message_memory_pool);
+    core_memory_pool_examine(&self->outbound_message_memory_pool);
 
     thorium_worker_pool_examine(&self->worker_pool);
 }
@@ -2417,7 +2417,7 @@ void thorium_node_inject_outbound_buffer(struct thorium_node *self, struct thori
     if (worker < 0) {
 
         buffer = thorium_worker_buffer_get_buffer(worker_buffer);
-        biosal_memory_pool_free(&self->outbound_message_memory_pool,
+        core_memory_pool_free(&self->outbound_message_memory_pool,
                                 buffer);
 #ifdef THORIUM_NODE_DEBUG_INJECTION
         ++self->counter_freed_thorium_outbound_buffers;

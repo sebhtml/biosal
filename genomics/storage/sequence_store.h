@@ -14,19 +14,19 @@
 #define SCRIPT_SEQUENCE_STORE 0x47e2e424
 
 struct biosal_sequence_store {
-    struct biosal_vector sequences;
+    struct core_vector sequences;
     struct biosal_dna_codec codec;
     int64_t received;
     int64_t expected;
 
     int iterator_started;
     int reservation_producer;
-    struct biosal_vector_iterator iterator;
+    struct core_vector_iterator iterator;
 
     int64_t left;
     int64_t last;
 
-    struct biosal_memory_pool persistent_memory;
+    struct core_memory_pool persistent_memory;
 
     int progress_supervisor;
 

@@ -21,10 +21,10 @@ int main(int argc, char **argv)
     int expected;
     int required;
     void *buffer_for_pack;
-    struct biosal_memory_pool memory;
+    struct core_memory_pool memory;
 
-    biosal_memory_pool_init(&memory, 4194304, BIOSAL_MEMORY_POOL_NAME_OTHER);
-    buffer = biosal_memory_allocate(101, -1);
+    core_memory_pool_init(&memory, 4194304, CORE_MEMORY_POOL_NAME_OTHER);
+    buffer = core_memory_allocate(101, -1);
     strcpy((char *)buffer, "TCCCGAGCGCAGGTAGGCCTCGGGATCGATGTCCGGGGTGTTGAGGATGTTGGACGTGTATTCGTGGTTGTACTGGGTCCAGTCCGCCACCGGGCGCCGC");
     biosal_dna_codec_init(&codec);
 
@@ -41,7 +41,7 @@ int main(int argc, char **argv)
 
     TEST_INT_IS_GREATER_THAN(required, 0);
 
-    buffer_for_pack = biosal_memory_allocate(required, -1);
+    buffer_for_pack = core_memory_allocate(required, -1);
 
     /*
     printf("DEBUG buffer %p size for pack/unpack has %d bytes\n",
@@ -62,11 +62,11 @@ int main(int argc, char **argv)
     biosal_dna_sequence_destroy(&sequence2, &memory);
 
     biosal_dna_codec_destroy(&codec);
-    biosal_memory_pool_destroy(&memory);
+    core_memory_pool_destroy(&memory);
     END_TESTS();
 
-    biosal_memory_free(buffer, -1);
-    biosal_memory_free(buffer_for_pack, -1);
+    core_memory_free(buffer, -1);
+    core_memory_free(buffer_for_pack, -1);
 
     return 0;
 }

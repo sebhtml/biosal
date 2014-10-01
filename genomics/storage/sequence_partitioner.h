@@ -16,18 +16,18 @@
  * and a block size;
  */
 struct biosal_sequence_partitioner {
-    struct biosal_vector stream_entries;
-    struct biosal_vector stream_positions;
-    struct biosal_vector stream_global_positions;
+    struct core_vector stream_entries;
+    struct core_vector stream_positions;
+    struct core_vector stream_global_positions;
 
-    struct biosal_vector store_entries;
+    struct core_vector store_entries;
 
     uint64_t total;
 
     int block_size;
     int store_count;
-    struct biosal_map active_commands;
-    struct biosal_queue available_commands;
+    struct core_map active_commands;
+    struct core_queue available_commands;
 
     int command_number;
 

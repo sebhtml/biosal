@@ -15,7 +15,7 @@ int main(int argc, char **argv)
     BEGIN_TESTS();
 
     {
-        struct biosal_map big_map;
+        struct core_map big_map;
         int kmer_length = 43;
         struct biosal_dna_kmer kmer;
         int count;
@@ -26,9 +26,9 @@ int main(int argc, char **argv)
         int *bucket;
         int i;
         struct biosal_dna_codec codec;
-        struct biosal_memory_pool memory;
+        struct core_memory_pool memory;
 
-        biosal_memory_pool_init(&memory, 1048576, BIOSAL_MEMORY_POOL_NAME_OTHER);
+        core_memory_pool_init(&memory, 1048576, CORE_MEMORY_POOL_NAME_OTHER);
         biosal_dna_codec_init(&codec);
 
         run_test = 1;
@@ -40,9 +40,9 @@ int main(int argc, char **argv)
         key_length = biosal_dna_kmer_pack_size(&kmer, kmer_length, &codec);
         biosal_dna_kmer_destroy(&kmer, &memory);
 
-        biosal_map_init(&big_map, key_length, sizeof(coverage));
+        core_map_init(&big_map, key_length, sizeof(coverage));
 
-        key = biosal_memory_allocate(key_length, -1);
+        key = core_memory_allocate(key_length, -1);
 
         i = 0;
         while (i < count && run_test) {
@@ -50,7 +50,7 @@ int main(int argc, char **argv)
             biosal_dna_kmer_init_random(&kmer, kmer_length, &codec, &memory);
             biosal_dna_kmer_pack_store_key(&kmer, key, kmer_length, &codec, &memory);
 
-            bucket = biosal_map_add(&big_map, key);
+            bucket = core_map_add(&big_map, key);
             coverage = 99;
             (*bucket) = coverage;
 
@@ -58,15 +58,15 @@ int main(int argc, char **argv)
 
             if (i % 100000 == 0) {
                 printf("ADD %d/%d %" PRIu64 "\n", i, count,
-                                biosal_map_size(&big_map));
+                                core_map_size(&big_map));
             }
             i++;
         }
 
-        biosal_map_destroy(&big_map);
-        biosal_memory_free(key, -1);
+        core_map_destroy(&big_map);
+        core_memory_free(key, -1);
         biosal_dna_codec_destroy(&codec);
-        biosal_memory_pool_destroy(&memory);
+        core_memory_pool_destroy(&memory);
     }
 
     END_TESTS();

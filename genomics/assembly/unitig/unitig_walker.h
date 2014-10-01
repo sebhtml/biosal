@@ -30,13 +30,13 @@
  * A dummy walker to test the concept.
  */
 struct biosal_unitig_walker {
-    struct biosal_vector graph_stores;
+    struct core_vector graph_stores;
     int kmer_length;
     struct biosal_dna_codec codec;
-    struct biosal_memory_pool memory_pool;
+    struct core_memory_pool memory_pool;
     int skipped_at_start_used;
     int skipped_at_start_not_unitig;
-    struct biosal_map path_statuses;
+    struct core_map path_statuses;
     int source;
     int current_is_circular;
 
@@ -49,31 +49,31 @@ struct biosal_unitig_walker {
 
 #ifdef BIOSAL_UNITIG_WALKER_USE_PRIVATE_FILE
     struct biosal_buffered_file_writer writer;
-    struct biosal_string file_path;
+    struct core_string file_path;
 #endif
 
     int has_starting_vertex;
 
     struct biosal_dna_kmer starting_kmer;
     struct biosal_assembly_vertex starting_vertex;
-    struct biosal_vector left_path;
-    struct biosal_vector right_path;
+    struct core_vector left_path;
+    struct core_vector right_path;
 
     struct biosal_dna_kmer current_kmer;
     struct biosal_assembly_vertex current_vertex;
 
     int current_child;
-    struct biosal_vector child_kmers;
-    struct biosal_vector child_vertices;
+    struct core_vector child_kmers;
+    struct core_vector child_vertices;
 
     int current_parent;
-    struct biosal_vector parent_kmers;
-    struct biosal_vector parent_vertices;
+    struct core_vector parent_kmers;
+    struct core_vector parent_vertices;
 
     int path_index;
 
     int key_length;
-    struct biosal_set visited;
+    struct core_set visited;
     int fetch_operation;
     int select_operation;
 
@@ -116,7 +116,7 @@ void biosal_unitig_walker_check_agreement(struct thorium_actor *self, int parent
                 int *choice, int *status);
 
 void biosal_unitig_walker_check_usage(struct thorium_actor *self, int *choice, int *status,
-                struct biosal_vector *selected_kmers);
+                struct core_vector *selected_kmers);
 int biosal_unitig_walker_get_current_length(struct thorium_actor *self);
 
 void biosal_unitig_walker_notify(struct thorium_actor *self, struct thorium_message *message);

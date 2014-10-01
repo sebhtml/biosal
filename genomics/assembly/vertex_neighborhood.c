@@ -14,8 +14,8 @@
 
 void biosal_vertex_neighborhood_init(struct biosal_vertex_neighborhood *self,
                struct biosal_dna_kmer *kmer,
-                int arcs, struct biosal_vector *graph_stores, int kmer_length,
-                struct biosal_memory_pool *memory, struct biosal_dna_codec *codec,
+                int arcs, struct core_vector *graph_stores, int kmer_length,
+                struct core_memory_pool *memory, struct biosal_dna_codec *codec,
                 struct thorium_actor *actor)
 {
     self->kmer_length = kmer_length;
@@ -41,10 +41,10 @@ void biosal_vertex_neighborhood_init(struct biosal_vertex_neighborhood *self,
     biosal_dna_kmer_init_copy(&self->main_kmer, kmer, self->kmer_length, self->memory, self->codec);
     biosal_assembly_vertex_init(&self->main_vertex);
 
-    biosal_vector_init(&self->parent_vertices, sizeof(struct biosal_assembly_vertex));
-    biosal_vector_set_memory_pool(&self->parent_vertices, self->memory);
-    biosal_vector_init(&self->child_vertices, sizeof(struct biosal_assembly_vertex));
-    biosal_vector_set_memory_pool(&self->child_vertices, self->memory);
+    core_vector_init(&self->parent_vertices, sizeof(struct biosal_assembly_vertex));
+    core_vector_set_memory_pool(&self->parent_vertices, self->memory);
+    core_vector_init(&self->child_vertices, sizeof(struct biosal_assembly_vertex));
+    core_vector_set_memory_pool(&self->child_vertices, self->memory);
 
 #if 0
     printf("DEBUG init vertex_neighborhood\n");
@@ -60,8 +60,8 @@ void biosal_vertex_neighborhood_destroy(struct biosal_vertex_neighborhood *self)
 
     biosal_assembly_vertex_destroy(&self->main_vertex);
 
-    biosal_vector_destroy(&self->parent_vertices);
-    biosal_vector_destroy(&self->child_vertices);
+    core_vector_destroy(&self->parent_vertices);
+    core_vector_destroy(&self->child_vertices);
     biosal_dna_kmer_destroy(&self->main_kmer, self->memory);
 
     self->memory = NULL;
@@ -103,12 +103,12 @@ int biosal_vertex_neighborhood_receive(struct biosal_vertex_neighborhood *self, 
 
         } else if (self->step == STEP_GET_PARENTS) {
 
-            biosal_vector_push_back(&self->parent_vertices, &vertex);
+            core_vector_push_back(&self->parent_vertices, &vertex);
 
             return biosal_vertex_neighborhood_execute(self);
 
         } else if (self->step == STEP_GET_CHILDREN) {
-            biosal_vector_push_back(&self->child_vertices, &vertex);
+            core_vector_push_back(&self->child_vertices, &vertex);
 
             return biosal_vertex_neighborhood_execute(self);
         }
@@ -129,13 +129,13 @@ void biosal_vertex_neighborhood_init_empty(struct biosal_vertex_neighborhood *se
     biosal_dna_kmer_init_empty(&self->main_kmer);
     biosal_assembly_vertex_init_empty(&self->main_vertex);
 
-    biosal_vector_init(&self->parent_vertices, 0);
-    biosal_vector_init(&self->child_vertices, 0);
+    core_vector_init(&self->parent_vertices, 0);
+    core_vector_init(&self->child_vertices, 0);
 }
 
 void biosal_vertex_neighborhood_get_remote_memory(struct biosal_vertex_neighborhood *self, struct biosal_dna_kmer *kmer)
 {
-    struct biosal_memory_pool *ephemeral_memory;
+    struct core_memory_pool *ephemeral_memory;
     struct thorium_message new_message;
     void *new_buffer;
     int new_count;
@@ -150,10 +150,10 @@ void biosal_vertex_neighborhood_get_remote_memory(struct biosal_vertex_neighborh
     new_buffer = thorium_actor_allocate(self->actor, new_count);
     biosal_dna_kmer_pack(kmer, new_buffer, self->kmer_length, self->codec);
 
-    size = biosal_vector_size(self->graph_stores);
+    size = core_vector_size(self->graph_stores);
     store_index = biosal_dna_kmer_store_index(kmer, size, self->kmer_length,
                 self->codec, ephemeral_memory);
-    store = biosal_vector_at_as_int(self->graph_stores, store_index);
+    store = core_vector_at_as_int(self->graph_stores, store_index);
 
     thorium_message_init(&new_message, ACTION_ASSEMBLY_GET_VERTEX, new_count, new_buffer);
     thorium_actor_send(self->actor, store, &new_message);
@@ -182,7 +182,7 @@ int biosal_vertex_neighborhood_execute(struct biosal_vertex_neighborhood *self)
         printf("neighborhood STEP_GET_PARENTS\n");
 #endif
 
-        actual = biosal_vector_size(&self->parent_vertices);
+        actual = core_vector_size(&self->parent_vertices);
         expected = biosal_assembly_vertex_parent_count(&self->main_vertex);
 
         /* DONE: Fix this. */
@@ -223,7 +223,7 @@ int biosal_vertex_neighborhood_execute(struct biosal_vertex_neighborhood *self)
         printf("neighborhood STEP_GET_CHILDREN\n");
 #endif
 
-        actual = biosal_vector_size(&self->child_vertices);
+        actual = core_vector_size(&self->child_vertices);
         expected = biosal_assembly_vertex_child_count(&self->main_vertex);
 
         if (!self->fetch_children)
@@ -260,8 +260,8 @@ int biosal_vertex_neighborhood_execute(struct biosal_vertex_neighborhood *self)
                         biosal_assembly_vertex_coverage_depth(&self->main_vertex),
                         biosal_assembly_vertex_parent_count(&self->main_vertex),
                         biosal_assembly_vertex_child_count(&self->main_vertex),
-                        (int)biosal_vector_size(&self->parent_vertices),
-                        (int)biosal_vector_size(&self->child_vertices));
+                        (int)core_vector_size(&self->parent_vertices),
+                        (int)core_vector_size(&self->child_vertices));
 #endif
 
         return 1;
@@ -281,10 +281,10 @@ struct biosal_assembly_vertex *biosal_vertex_neighborhood_vertex(struct biosal_v
 
 struct biosal_assembly_vertex *biosal_vertex_neighborhood_parent(struct biosal_vertex_neighborhood *self, int i)
 {
-    return biosal_vector_at(&self->parent_vertices, i);
+    return core_vector_at(&self->parent_vertices, i);
 }
 
 struct biosal_assembly_vertex *biosal_vertex_neighborhood_child(struct biosal_vertex_neighborhood *self, int i)
 {
-    return biosal_vector_at(&self->child_vertices, i);
+    return core_vector_at(&self->child_vertices, i);
 }

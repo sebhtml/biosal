@@ -11,14 +11,14 @@
 
 #define MEMORY_FAST_RING 0x02d9d481
 
-void biosal_fast_ring_init(struct biosal_fast_ring *self, int capacity, int cell_size)
+void core_fast_ring_init(struct core_fast_ring *self, int capacity, int cell_size)
 {
     /* +1 because an empty cell is needed
      */
-    self->number_of_cells = biosal_fast_ring_get_next_power_of_two(capacity + 1);
+    self->number_of_cells = core_fast_ring_get_next_power_of_two(capacity + 1);
     self->mask = self->number_of_cells - 1;
 
-#ifdef BIOSAL_FAST_RING_DEBUG
+#ifdef CORE_FAST_RING_DEBUG
     printf("DEBUG RING CELLS %" PRIu64 "\n", self->number_of_cells);
 #endif
 
@@ -30,9 +30,9 @@ void biosal_fast_ring_init(struct biosal_fast_ring *self, int capacity, int cell
     self->head_cache = 0;
     self->tail_cache = 0;
 
-    self->cells = biosal_memory_allocate(self->number_of_cells * self->cell_size, MEMORY_FAST_RING);
+    self->cells = core_memory_allocate(self->number_of_cells * self->cell_size, MEMORY_FAST_RING);
 
-#ifdef BIOSAL_FAST_RING_USE_PADDING
+#ifdef CORE_FAST_RING_USE_PADDING
     /* assign values to the padding
      */
     self->consumer_padding_0 = 0;
@@ -51,7 +51,7 @@ void biosal_fast_ring_init(struct biosal_fast_ring *self, int capacity, int cell
 #endif
 }
 
-void biosal_fast_ring_destroy(struct biosal_fast_ring *self)
+void core_fast_ring_destroy(struct core_fast_ring *self)
 {
     self->number_of_cells = 0;
     self->cell_size = 0;
@@ -60,7 +60,7 @@ void biosal_fast_ring_destroy(struct biosal_fast_ring *self)
     self->head_cache = 0;
     self->tail_cache = 0;
 
-    biosal_memory_free(self->cells, MEMORY_FAST_RING);
+    core_memory_free(self->cells, MEMORY_FAST_RING);
 
     self->cells = NULL;
 }
@@ -72,43 +72,43 @@ void biosal_fast_ring_destroy(struct biosal_fast_ring *self)
  * Can read/write head_cache
  * Can read head
  */
-int biosal_fast_ring_push_from_producer(struct biosal_fast_ring *self, void *element)
+int core_fast_ring_push_from_producer(struct core_fast_ring *self, void *element)
 {
     void *cell;
 
-    if (biosal_fast_ring_is_full_from_producer(self)) {
+    if (core_fast_ring_is_full_from_producer(self)) {
         return 0;
     }
 
-    cell = biosal_fast_ring_get_cell(self, self->tail);
-    biosal_memory_copy(cell, element, self->cell_size);
+    cell = core_fast_ring_get_cell(self, self->tail);
+    core_memory_copy(cell, element, self->cell_size);
 
-    biosal_memory_fence();
+    core_memory_fence();
 
-    self->tail = biosal_fast_ring_increment(self, self->tail);
+    self->tail = core_fast_ring_increment(self, self->tail);
 
     return 1;
 }
 
-int biosal_fast_ring_is_full_from_producer(struct biosal_fast_ring *self)
+int core_fast_ring_is_full_from_producer(struct core_fast_ring *self)
 {
     /* check if the head cache must be updated
      */
-    if (self->head_cache == biosal_fast_ring_increment(self, self->tail)) {
-        biosal_fast_ring_update_head_cache(self);
-        return self->head_cache == biosal_fast_ring_increment(self, self->tail);
+    if (self->head_cache == core_fast_ring_increment(self, self->tail)) {
+        core_fast_ring_update_head_cache(self);
+        return self->head_cache == core_fast_ring_increment(self, self->tail);
     }
     return 0;
 }
 
-int biosal_fast_ring_size_from_consumer(struct biosal_fast_ring *self)
+int core_fast_ring_size_from_consumer(struct core_fast_ring *self)
 {
     int head;
     int tail;
 
     /* TODO: remove me
      */
-    biosal_fast_ring_update_tail_cache(self);
+    core_fast_ring_update_tail_cache(self);
 
     head = self->head;
     tail = self->tail_cache;
@@ -117,29 +117,29 @@ int biosal_fast_ring_size_from_consumer(struct biosal_fast_ring *self)
         tail += self->number_of_cells;
     }
 
-#ifdef BIOSAL_FAST_RING_DEBUG
+#ifdef CORE_FAST_RING_DEBUG
     printf("from consumer tail %d head %d\n", tail, head);
 #endif
 
     return tail - head;
 }
 
-int biosal_fast_ring_capacity(struct biosal_fast_ring *self)
+int core_fast_ring_capacity(struct core_fast_ring *self)
 {
     return self->number_of_cells - 1;
 }
 
-uint64_t biosal_fast_ring_increment(struct biosal_fast_ring *self, uint64_t index)
+uint64_t core_fast_ring_increment(struct core_fast_ring *self, uint64_t index)
 {
     return  (index + 1) & self->mask;
 }
 
-void *biosal_fast_ring_get_cell(struct biosal_fast_ring *self, uint64_t index)
+void *core_fast_ring_get_cell(struct core_fast_ring *self, uint64_t index)
 {
     return ((char *)self->cells) + index * self->cell_size;
 }
 
-int biosal_fast_ring_get_next_power_of_two(int value)
+int core_fast_ring_get_next_power_of_two(int value)
 {
     int power_of_two;
 
@@ -155,13 +155,13 @@ int biosal_fast_ring_get_next_power_of_two(int value)
 /*
  * Use the padding to avoid the losing that with optimizations
  */
-uint64_t biosal_fast_ring_mock(struct biosal_fast_ring *self)
+uint64_t core_fast_ring_mock(struct core_fast_ring *self)
 {
     uint64_t sum;
 
     sum = 0;
 
-#ifdef BIOSAL_FAST_RING_USE_PADDING
+#ifdef CORE_FAST_RING_USE_PADDING
     sum += self->consumer_padding_0;
     sum += self->consumer_padding_1;
     sum += self->consumer_padding_2;
@@ -180,19 +180,19 @@ uint64_t biosal_fast_ring_mock(struct biosal_fast_ring *self)
     return sum;
 }
 
-void biosal_fast_ring_update_head_cache(struct biosal_fast_ring *self)
+void core_fast_ring_update_head_cache(struct core_fast_ring *self)
 {
     self->head_cache = self->head;
 }
 
-int biosal_fast_ring_size_from_producer(struct biosal_fast_ring *self)
+int core_fast_ring_size_from_producer(struct core_fast_ring *self)
 {
     int head;
     int tail;
 
     /* TODO: remove me
      */
-    biosal_fast_ring_update_head_cache(self);
+    core_fast_ring_update_head_cache(self);
 
     head = self->head_cache;
     tail = self->tail;
@@ -201,7 +201,7 @@ int biosal_fast_ring_size_from_producer(struct biosal_fast_ring *self)
         tail += self->number_of_cells;
     }
 
-#ifdef BIOSAL_FAST_RING_DEBUG
+#ifdef CORE_FAST_RING_DEBUG
     printf("from producer tail %d head %d\n", tail, head);
 #endif
 
@@ -215,40 +215,40 @@ int biosal_fast_ring_size_from_producer(struct biosal_fast_ring *self)
  * Can read/write tail_cache
  * Can read tail
  */
-int biosal_fast_ring_pop_from_consumer(struct biosal_fast_ring *self, void *element)
+int core_fast_ring_pop_from_consumer(struct core_fast_ring *self, void *element)
 {
     void *cell;
 
-    if (biosal_fast_ring_is_empty_from_consumer(self)) {
+    if (core_fast_ring_is_empty_from_consumer(self)) {
         return 0;
     }
 
-    cell = biosal_fast_ring_get_cell(self, self->head);
-    biosal_memory_copy(element, cell, self->cell_size);
+    cell = core_fast_ring_get_cell(self, self->head);
+    core_memory_copy(element, cell, self->cell_size);
 
-    biosal_memory_fence();
+    core_memory_fence();
 
-    self->head = biosal_fast_ring_increment(self, self->head);
+    self->head = core_fast_ring_increment(self, self->head);
 
     return 1;
 }
 
-void biosal_fast_ring_update_tail_cache(struct biosal_fast_ring *self)
+void core_fast_ring_update_tail_cache(struct core_fast_ring *self)
 {
     self->tail_cache = self->tail;
 }
 
-int biosal_fast_ring_is_empty_from_consumer(struct biosal_fast_ring *self)
+int core_fast_ring_is_empty_from_consumer(struct core_fast_ring *self)
 {
     if (self->tail_cache == self->head) {
-        biosal_fast_ring_update_tail_cache(self);
+        core_fast_ring_update_tail_cache(self);
         return self->tail_cache == self->head;
     }
 
     return 0;
 }
 
-int biosal_fast_ring_empty(struct biosal_fast_ring *self)
+int core_fast_ring_empty(struct core_fast_ring *self)
 {
-    return biosal_fast_ring_size_from_producer(self) == 0;
+    return core_fast_ring_size_from_producer(self) == 0;
 }

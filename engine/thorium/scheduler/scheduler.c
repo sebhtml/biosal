@@ -35,9 +35,9 @@ void thorium_scheduler_init(struct thorium_scheduler *self, int node, int worker
         self->implementation = &thorium_cfs_scheduler_implementation;
     }
 
-    BIOSAL_DEBUGGER_ASSERT(self->implementation != NULL);
+    CORE_DEBUGGER_ASSERT(self->implementation != NULL);
 
-    self->concrete_self = biosal_memory_allocate(self->implementation->object_size, MEMORY_SCHEDULER);
+    self->concrete_self = core_memory_allocate(self->implementation->object_size, MEMORY_SCHEDULER);
 
     self->implementation->init(self);
 
@@ -50,7 +50,7 @@ void thorium_scheduler_destroy(struct thorium_scheduler *self)
     self->implementation->destroy(self);
 
     if (self->concrete_self != NULL) {
-        biosal_memory_free(self->concrete_self, MEMORY_SCHEDULER);
+        core_memory_free(self->concrete_self, MEMORY_SCHEDULER);
         self->concrete_self = NULL;
     }
 

@@ -1,15 +1,15 @@
 
-#ifndef BIOSAL_RED_BLACK_TREE_H
-#define BIOSAL_RED_BLACK_TREE_H
+#ifndef CORE_RED_BLACK_TREE_H
+#define CORE_RED_BLACK_TREE_H
 
-struct biosal_red_black_tree;
-struct biosal_red_black_node;
-struct biosal_memory_pool;
+struct core_red_black_tree;
+struct core_red_black_node;
+struct core_memory_pool;
 
 /*
  * Use a cache to go faster.
  */
-#define BIOSAL_RED_BLACK_TREE_USE_CACHE_LAST
+#define CORE_RED_BLACK_TREE_USE_CACHE_LAST
 
 /*
  * Use a cache for the node with the lowest key.
@@ -21,13 +21,13 @@ struct biosal_memory_pool;
  *   self->cached_lowest_node = self->cached_lowest_node->parent
  */
 /*
-#define BIOSAL_RED_BLACK_TREE_USE_CACHE_LOWEST
+#define CORE_RED_BLACK_TREE_USE_CACHE_LOWEST
 */
 
 /*
 */
-#define BIOSAL_RED_BLACK_TREE_USE_NORMAL_NODE_LIST
-#define BIOSAL_RED_BLACK_TREE_USE_NIL_NODE_LIST
+#define CORE_RED_BLACK_TREE_USE_NORMAL_NODE_LIST
+#define CORE_RED_BLACK_TREE_USE_NIL_NODE_LIST
 
 /*
  * A red-black tree.
@@ -48,34 +48,34 @@ struct biosal_memory_pool;
  *
  * \see http://en.wikipedia.org/wiki/Red%E2%80%93black_tree
  */
-struct biosal_red_black_tree {
-    struct biosal_red_black_node *root;
-    struct biosal_memory_pool *memory_pool;
+struct core_red_black_tree {
+    struct core_red_black_node *root;
+    struct core_memory_pool *memory_pool;
     int size;
 
     int key_size;
     int value_size;
 
-#ifdef BIOSAL_RED_BLACK_TREE_USE_CACHE_LAST
-    struct biosal_red_black_node *cached_last_node;
+#ifdef CORE_RED_BLACK_TREE_USE_CACHE_LAST
+    struct core_red_black_node *cached_last_node;
 #endif
-#ifdef BIOSAL_RED_BLACK_TREE_USE_CACHE_LOWEST
-    struct biosal_red_black_node *cached_lowest_node;
+#ifdef CORE_RED_BLACK_TREE_USE_CACHE_LOWEST
+    struct core_red_black_node *cached_lowest_node;
 #endif
 
-    int (*compare)(struct biosal_red_black_tree *self, void *key1, void *key2);
+    int (*compare)(struct core_red_black_tree *self, void *key1, void *key2);
 
-#ifdef BIOSAL_RED_BLACK_TREE_USE_NIL_NODE_LIST
-    struct biosal_red_black_node *nil_node_list;
+#ifdef CORE_RED_BLACK_TREE_USE_NIL_NODE_LIST
+    struct core_red_black_node *nil_node_list;
 #endif
-#ifdef BIOSAL_RED_BLACK_TREE_USE_NORMAL_NODE_LIST
-    struct biosal_red_black_node *normal_node_list;
+#ifdef CORE_RED_BLACK_TREE_USE_NORMAL_NODE_LIST
+    struct core_red_black_node *normal_node_list;
 #endif
 };
 
-void biosal_red_black_tree_init(struct biosal_red_black_tree *self, int key_size, int value_size,
-                struct biosal_memory_pool *pool);
-void biosal_red_black_tree_destroy(struct biosal_red_black_tree *self);
+void core_red_black_tree_init(struct core_red_black_tree *self, int key_size, int value_size,
+                struct core_memory_pool *pool);
+void core_red_black_tree_destroy(struct core_red_black_tree *self);
 
 /*
  * Add a key and return a pointer to the uninitialized
@@ -83,7 +83,7 @@ void biosal_red_black_tree_destroy(struct biosal_red_black_tree *self);
  *
  * Time complexity: O(log(N))
  */
-void *biosal_red_black_tree_add(struct biosal_red_black_tree *self, void *key);
+void *core_red_black_tree_add(struct core_red_black_tree *self, void *key);
 
 /*
  * Add a key with a value and return a pointer to the initialized
@@ -91,98 +91,98 @@ void *biosal_red_black_tree_add(struct biosal_red_black_tree *self, void *key);
  *
  * Time complexity: O(log(N))
  */
-void *biosal_red_black_tree_add_key_and_value(struct biosal_red_black_tree *self, void *key, void *value);
+void *core_red_black_tree_add_key_and_value(struct core_red_black_tree *self, void *key, void *value);
 
 /*
  * Delete a key-value pair using the key as search pattern.
  *
  * Time complexity: O(log(N))
  */
-void biosal_red_black_tree_delete(struct biosal_red_black_tree *self, void *key);
+void core_red_black_tree_delete(struct core_red_black_tree *self, void *key);
 
 /*
  * Get the value for a given key. If there are duplicates, return the first match.
  *
  * Time complexity: O(log(N))
  */
-void *biosal_red_black_tree_get(struct biosal_red_black_tree *self, void *key);
+void *core_red_black_tree_get(struct core_red_black_tree *self, void *key);
 
 /*
  * Return the lowest key.
  *
  * Time complexity: O(1)
  */
-void *biosal_red_black_tree_get_lowest_key(struct biosal_red_black_tree *self);
+void *core_red_black_tree_get_lowest_key(struct core_red_black_tree *self);
 
 /*
  * Check the 5 red-black tree rules.
  *
  * If there is a problem, a non-zero value is returned.
  */
-int biosal_red_black_tree_has_ignored_rules(struct biosal_red_black_tree *self);
-void biosal_red_black_tree_set_memory_pool(struct biosal_red_black_tree *self,
-                struct biosal_memory_pool *memory_pool);
+int core_red_black_tree_has_ignored_rules(struct core_red_black_tree *self);
+void core_red_black_tree_set_memory_pool(struct core_red_black_tree *self,
+                struct core_memory_pool *memory_pool);
 
 /*
  * Get the number of non-NIL nodes.
  *
  * Time complexity: O(1)
  */
-int biosal_red_black_tree_size(struct biosal_red_black_tree *self);
+int core_red_black_tree_size(struct core_red_black_tree *self);
 
-void biosal_red_black_tree_free_node(struct biosal_red_black_tree *self,
-                struct biosal_red_black_node *node);
+void core_red_black_tree_free_node(struct core_red_black_tree *self,
+                struct core_red_black_node *node);
 
 /*
  * 5 cases for insertion, based on the Wikipedia article.
  * \see http://en.wikipedia.org/wiki/Red%E2%80%93black_tree
  */
 
-void biosal_red_black_tree_insert_case1(struct biosal_red_black_tree *self,
-                struct biosal_red_black_node *node);
-void biosal_red_black_tree_insert_case2(struct biosal_red_black_tree *self,
-                struct biosal_red_black_node *node);
-void biosal_red_black_tree_insert_case3(struct biosal_red_black_tree *self,
-                struct biosal_red_black_node *node);
-void biosal_red_black_tree_insert_case4(struct biosal_red_black_tree *self,
-                struct biosal_red_black_node *node);
-void biosal_red_black_tree_insert_case5(struct biosal_red_black_tree *self,
-                struct biosal_red_black_node *node);
+void core_red_black_tree_insert_case1(struct core_red_black_tree *self,
+                struct core_red_black_node *node);
+void core_red_black_tree_insert_case2(struct core_red_black_tree *self,
+                struct core_red_black_node *node);
+void core_red_black_tree_insert_case3(struct core_red_black_tree *self,
+                struct core_red_black_node *node);
+void core_red_black_tree_insert_case4(struct core_red_black_tree *self,
+                struct core_red_black_node *node);
+void core_red_black_tree_insert_case5(struct core_red_black_tree *self,
+                struct core_red_black_node *node);
 
-void biosal_red_black_tree_rotate_left(struct biosal_red_black_tree *self,
-                struct biosal_red_black_node *node);
-void biosal_red_black_tree_rotate_right(struct biosal_red_black_tree *self,
-                struct biosal_red_black_node *node);
+void core_red_black_tree_rotate_left(struct core_red_black_tree *self,
+                struct core_red_black_node *node);
+void core_red_black_tree_rotate_right(struct core_red_black_tree *self,
+                struct core_red_black_node *node);
 
-void biosal_red_black_tree_print(struct biosal_red_black_tree *self);
-void biosal_red_black_tree_print_node(struct biosal_red_black_tree *self,
-                struct biosal_red_black_node *node, int depth);
+void core_red_black_tree_print(struct core_red_black_tree *self);
+void core_red_black_tree_print_node(struct core_red_black_tree *self,
+                struct core_red_black_node *node, int depth);
 
-int biosal_red_black_tree_compare(struct biosal_red_black_tree *self, void *key1, void *key2);
-int biosal_red_black_tree_compare_memory_content(struct biosal_red_black_tree *self, void *key1, void *key2);
-int biosal_red_black_tree_compare_uint64_t(struct biosal_red_black_tree *self, void *key1, void *key2);
-void biosal_red_black_tree_use_uint64_t_keys(struct biosal_red_black_tree *self);
-void biosal_red_black_tree_run_assertions(struct biosal_red_black_tree *self);
-void biosal_red_black_tree_run_assertions_on_node(struct biosal_red_black_tree *self, struct biosal_red_black_node *node);
+int core_red_black_tree_compare(struct core_red_black_tree *self, void *key1, void *key2);
+int core_red_black_tree_compare_memory_content(struct core_red_black_tree *self, void *key1, void *key2);
+int core_red_black_tree_compare_uint64_t(struct core_red_black_tree *self, void *key1, void *key2);
+void core_red_black_tree_use_uint64_t_keys(struct core_red_black_tree *self);
+void core_red_black_tree_run_assertions(struct core_red_black_tree *self);
+void core_red_black_tree_run_assertions_on_node(struct core_red_black_tree *self, struct core_red_black_node *node);
 
-void biosal_red_black_tree_delete_one_child(struct biosal_red_black_tree *self, struct biosal_red_black_node *node);
-void biosal_red_black_tree_replace_node(struct biosal_red_black_tree *self, struct biosal_red_black_node *node,
-                struct biosal_red_black_node *child);
-void biosal_red_black_tree_delete_case1(struct biosal_red_black_tree *self, struct biosal_red_black_node *node);
-void biosal_red_black_tree_delete_case2(struct biosal_red_black_tree *self, struct biosal_red_black_node *node);
-void biosal_red_black_tree_delete_case3(struct biosal_red_black_tree *self, struct biosal_red_black_node *node);
-void biosal_red_black_tree_delete_case4(struct biosal_red_black_tree *self, struct biosal_red_black_node *node);
-void biosal_red_black_tree_delete_case5(struct biosal_red_black_tree *self, struct biosal_red_black_node *node);
-void biosal_red_black_tree_delete_case6(struct biosal_red_black_tree *self, struct biosal_red_black_node *node);
+void core_red_black_tree_delete_one_child(struct core_red_black_tree *self, struct core_red_black_node *node);
+void core_red_black_tree_replace_node(struct core_red_black_tree *self, struct core_red_black_node *node,
+                struct core_red_black_node *child);
+void core_red_black_tree_delete_case1(struct core_red_black_tree *self, struct core_red_black_node *node);
+void core_red_black_tree_delete_case2(struct core_red_black_tree *self, struct core_red_black_node *node);
+void core_red_black_tree_delete_case3(struct core_red_black_tree *self, struct core_red_black_node *node);
+void core_red_black_tree_delete_case4(struct core_red_black_tree *self, struct core_red_black_node *node);
+void core_red_black_tree_delete_case5(struct core_red_black_tree *self, struct core_red_black_node *node);
+void core_red_black_tree_delete_case6(struct core_red_black_tree *self, struct core_red_black_node *node);
 
-struct biosal_red_black_node *biosal_red_black_tree_get_node(struct biosal_red_black_tree *self, void *key);
+struct core_red_black_node *core_red_black_tree_get_node(struct core_red_black_tree *self, void *key);
 
-void biosal_red_black_tree_delete_private(struct biosal_red_black_tree *self,
-                struct biosal_red_black_node *node);
+void core_red_black_tree_delete_private(struct core_red_black_tree *self,
+                struct core_red_black_node *node);
 
-struct biosal_red_black_node *biosal_red_black_tree_allocate_normal_node(struct biosal_red_black_tree *self, void *key, void *value);
-void biosal_red_black_tree_free_normal_node(struct biosal_red_black_tree *self, struct biosal_red_black_node *node);
-struct biosal_red_black_node *biosal_red_black_tree_allocate_nil_node(struct biosal_red_black_tree *self);
-void biosal_red_black_tree_free_nil_node(struct biosal_red_black_tree *self, struct biosal_red_black_node *node);
+struct core_red_black_node *core_red_black_tree_allocate_normal_node(struct core_red_black_tree *self, void *key, void *value);
+void core_red_black_tree_free_normal_node(struct core_red_black_tree *self, struct core_red_black_node *node);
+struct core_red_black_node *core_red_black_tree_allocate_nil_node(struct core_red_black_tree *self);
+void core_red_black_tree_free_nil_node(struct core_red_black_tree *self, struct core_red_black_node *node);
 
 #endif

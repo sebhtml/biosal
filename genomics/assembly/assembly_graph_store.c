@@ -59,8 +59,8 @@ void biosal_assembly_graph_store_init(struct thorium_actor *self)
 
     concrete_self = thorium_actor_concrete_actor(self);
 
-    biosal_memory_pool_init(&concrete_self->persistent_memory, 0,
-                    BIOSAL_MEMORY_POOL_NAME_GRAPH_STORE);
+    core_memory_pool_init(&concrete_self->persistent_memory, 0,
+                    CORE_MEMORY_POOL_NAME_GRAPH_STORE);
 
     concrete_self->consumed_canonical_vertex_count = 0;
 
@@ -132,7 +132,7 @@ void biosal_assembly_graph_store_destroy(struct thorium_actor *self)
     biosal_assembly_graph_summary_destroy(&concrete_self->graph_summary);
 
     if (concrete_self->kmer_length != -1) {
-        biosal_map_destroy(&concrete_self->table);
+        core_map_destroy(&concrete_self->table);
     }
 
     biosal_dna_codec_destroy(&concrete_self->transport_codec);
@@ -140,7 +140,7 @@ void biosal_assembly_graph_store_destroy(struct thorium_actor *self)
 
     concrete_self->kmer_length = -1;
 
-    biosal_memory_pool_destroy(&concrete_self->persistent_memory);
+    core_memory_pool_destroy(&concrete_self->persistent_memory);
 }
 
 void biosal_assembly_graph_store_receive(struct thorium_actor *self, struct thorium_message *message)
@@ -150,7 +150,7 @@ void biosal_assembly_graph_store_receive(struct thorium_actor *self, struct thor
     struct biosal_assembly_graph_store *concrete_self;
     double value;
     struct biosal_dna_kmer kmer;
-    /*struct biosal_memory_pool *ephemeral_memory;*/
+    /*struct core_memory_pool *ephemeral_memory;*/
     int customer;
     int big_key_size;
     int big_value_size;
@@ -178,9 +178,9 @@ void biosal_assembly_graph_store_receive(struct thorium_actor *self, struct thor
         big_key_size = concrete_self->key_length_in_bytes;
         big_value_size = sizeof(struct biosal_assembly_vertex);
 
-        biosal_map_init(&concrete_self->table, big_key_size,
+        core_map_init(&concrete_self->table, big_key_size,
                         big_value_size);
-        biosal_map_set_memory_pool(&concrete_self->table,
+        core_map_set_memory_pool(&concrete_self->table,
                         &concrete_self->persistent_memory);
 
         printf("DEBUG big_key_size %d big_value_size %d\n", big_key_size, big_value_size);
@@ -188,14 +188,14 @@ void biosal_assembly_graph_store_receive(struct thorium_actor *self, struct thor
         /*
          * Configure the map for better performance.
          */
-        biosal_map_disable_deletion_support(&concrete_self->table);
+        core_map_disable_deletion_support(&concrete_self->table);
 
         /*
          * The threshold of the map is not very important because
          * requests that hit the map have to first arrive as messages,
          * which are slow.
          */
-        biosal_map_set_threshold(&concrete_self->table, 0.95);
+        core_map_set_threshold(&concrete_self->table, 0.95);
 
         thorium_actor_send_reply_empty(self, ACTION_SET_KMER_LENGTH_REPLY);
 
@@ -209,7 +209,7 @@ void biosal_assembly_graph_store_receive(struct thorium_actor *self, struct thor
         /*
          * Reset the iterator.
          */
-        biosal_map_iterator_init(&concrete_self->iterator, &concrete_self->table);
+        core_map_iterator_init(&concrete_self->iterator, &concrete_self->table);
 
         printf("DEBUG unitig_vertex_count %d\n",
                         concrete_self->unitig_vertex_count);
@@ -220,7 +220,7 @@ void biosal_assembly_graph_store_receive(struct thorium_actor *self, struct thor
 
         thorium_message_unpack_double(message, 0, &value);
 
-        biosal_map_set_current_size_estimate(&concrete_self->table, value);
+        core_map_set_current_size_estimate(&concrete_self->table, value);
 
     } else if (tag == ACTION_ASK_TO_STOP) {
 
@@ -265,7 +265,7 @@ void biosal_assembly_graph_store_receive(struct thorium_actor *self, struct thor
 
 void biosal_assembly_graph_store_print(struct thorium_actor *self)
 {
-    struct biosal_map_iterator iterator;
+    struct core_map_iterator iterator;
     struct biosal_dna_kmer kmer;
     void *key;
     struct biosal_assembly_vertex *value;
@@ -274,19 +274,19 @@ void biosal_assembly_graph_store_print(struct thorium_actor *self)
     struct biosal_assembly_graph_store *concrete_self;
     int maximum_length;
     int length;
-    struct biosal_memory_pool *ephemeral_memory;
+    struct core_memory_pool *ephemeral_memory;
 
     ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
     concrete_self = thorium_actor_concrete_actor(self);
 
-    biosal_map_iterator_init(&iterator, &concrete_self->table);
+    core_map_iterator_init(&iterator, &concrete_self->table);
 
-    printf("map size %d\n", (int)biosal_map_size(&concrete_self->table));
+    printf("map size %d\n", (int)core_map_size(&concrete_self->table));
 
     maximum_length = 0;
 
-    while (biosal_map_iterator_has_next(&iterator)) {
-        biosal_map_iterator_next(&iterator, (void **)&key, (void **)&value);
+    while (core_map_iterator_has_next(&iterator)) {
+        core_map_iterator_next(&iterator, (void **)&key, (void **)&value);
 
         biosal_dna_kmer_init_empty(&kmer);
         biosal_dna_kmer_unpack(&kmer, key, concrete_self->kmer_length,
@@ -308,13 +308,13 @@ void biosal_assembly_graph_store_print(struct thorium_actor *self)
     printf("MAx length %d\n", maximum_length);
     */
 
-    sequence = biosal_memory_pool_allocate(ephemeral_memory, maximum_length + 1);
+    sequence = core_memory_pool_allocate(ephemeral_memory, maximum_length + 1);
     sequence[0] = '\0';
-    biosal_map_iterator_destroy(&iterator);
-    biosal_map_iterator_init(&iterator, &concrete_self->table);
+    core_map_iterator_destroy(&iterator);
+    core_map_iterator_init(&iterator, &concrete_self->table);
 
-    while (biosal_map_iterator_has_next(&iterator)) {
-        biosal_map_iterator_next(&iterator, (void **)&key, (void **)&value);
+    while (core_map_iterator_has_next(&iterator)) {
+        core_map_iterator_next(&iterator, (void **)&key, (void **)&value);
 
         biosal_dna_kmer_init_empty(&kmer);
         biosal_dna_kmer_unpack(&kmer, key, concrete_self->kmer_length,
@@ -331,8 +331,8 @@ void biosal_assembly_graph_store_print(struct thorium_actor *self)
         biosal_dna_kmer_destroy(&kmer, thorium_actor_get_ephemeral_memory(self));
     }
 
-    biosal_map_iterator_destroy(&iterator);
-    biosal_memory_pool_free(ephemeral_memory, sequence);
+    core_map_iterator_destroy(&iterator);
+    core_memory_pool_free(ephemeral_memory, sequence);
 }
 
 void biosal_assembly_graph_store_push_data(struct thorium_actor *self, struct thorium_message *message)
@@ -346,16 +346,16 @@ void biosal_assembly_graph_store_push_data(struct thorium_actor *self, struct th
     concrete_self->source = source;
     name = thorium_actor_name(self);
 
-    biosal_map_init(&concrete_self->coverage_distribution, sizeof(int), sizeof(uint64_t));
+    core_map_init(&concrete_self->coverage_distribution, sizeof(int), sizeof(uint64_t));
 
     printf("%s/%d: local table has %" PRIu64" canonical kmers (%" PRIu64 " kmers)\n",
                         thorium_actor_script_name(self),
-                    name, biosal_map_size(&concrete_self->table),
-                    2 * biosal_map_size(&concrete_self->table));
+                    name, core_map_size(&concrete_self->table),
+                    2 * core_map_size(&concrete_self->table));
 
-    biosal_memory_pool_examine(&concrete_self->persistent_memory);
+    core_memory_pool_examine(&concrete_self->persistent_memory);
 
-    biosal_map_iterator_init(&concrete_self->iterator, &concrete_self->table);
+    core_map_iterator_init(&concrete_self->iterator, &concrete_self->table);
 
     thorium_actor_send_to_self_empty(self, ACTION_YIELD);
 }
@@ -371,7 +371,7 @@ void biosal_assembly_graph_store_yield_reply(struct thorium_actor *self, struct 
     int new_count;
     void *new_buffer;
     struct thorium_message new_message;
-    struct biosal_memory_pool *ephemeral_memory;
+    struct core_memory_pool *ephemeral_memory;
     struct biosal_assembly_graph_store *concrete_self;
     int i;
     int max;
@@ -391,9 +391,9 @@ void biosal_assembly_graph_store_yield_reply(struct thorium_actor *self, struct 
     value = NULL;
 
     while (i < max
-                    && biosal_map_iterator_has_next(&concrete_self->iterator)) {
+                    && core_map_iterator_has_next(&concrete_self->iterator)) {
 
-        biosal_map_iterator_next(&concrete_self->iterator, (void **)&key, (void **)&value);
+        core_map_iterator_next(&concrete_self->iterator, (void **)&key, (void **)&value);
 
         biosal_dna_kmer_init_empty(&kmer);
         biosal_dna_kmer_unpack(&kmer, key, concrete_self->kmer_length,
@@ -402,11 +402,11 @@ void biosal_assembly_graph_store_yield_reply(struct thorium_actor *self, struct 
 
         coverage = biosal_assembly_vertex_coverage_depth(value);
 
-        count = (uint64_t *)biosal_map_get(&concrete_self->coverage_distribution, &coverage);
+        count = (uint64_t *)core_map_get(&concrete_self->coverage_distribution, &coverage);
 
         if (count == NULL) {
 
-            count = (uint64_t *)biosal_map_add(&concrete_self->coverage_distribution, &coverage);
+            count = (uint64_t *)core_map_add(&concrete_self->coverage_distribution, &coverage);
 
             (*count) = 0;
         }
@@ -421,7 +421,7 @@ void biosal_assembly_graph_store_yield_reply(struct thorium_actor *self, struct 
 
     /* yield again if the iterator is not at the end
      */
-    if (biosal_map_iterator_has_next(&concrete_self->iterator)) {
+    if (core_map_iterator_has_next(&concrete_self->iterator)) {
 
 #if 0
         printf("yield ! %d\n", i);
@@ -436,26 +436,26 @@ void biosal_assembly_graph_store_yield_reply(struct thorium_actor *self, struct 
     printf("ready...\n");
     */
 
-    biosal_map_iterator_destroy(&concrete_self->iterator);
+    core_map_iterator_destroy(&concrete_self->iterator);
 
-    new_count = biosal_map_pack_size(&concrete_self->coverage_distribution);
+    new_count = core_map_pack_size(&concrete_self->coverage_distribution);
 
     new_buffer = thorium_actor_allocate(self, new_count);
 
-    biosal_map_pack(&concrete_self->coverage_distribution, new_buffer);
+    core_map_pack(&concrete_self->coverage_distribution, new_buffer);
 
     printf("SENDING %s/%d sends map to %d, %d bytes / %d entries\n",
                         thorium_actor_script_name(self),
                     thorium_actor_name(self),
                     customer, new_count,
-                    (int)biosal_map_size(&concrete_self->coverage_distribution));
+                    (int)core_map_size(&concrete_self->coverage_distribution));
 
     thorium_message_init(&new_message, ACTION_PUSH_DATA, new_count, new_buffer);
 
     thorium_actor_send(self, customer, &new_message);
     thorium_message_destroy(&new_message);
 
-    biosal_map_destroy(&concrete_self->coverage_distribution);
+    core_map_destroy(&concrete_self->coverage_distribution);
 
     thorium_actor_send_empty(self, concrete_self->source,
                             ACTION_PUSH_DATA_REPLY);
@@ -463,15 +463,15 @@ void biosal_assembly_graph_store_yield_reply(struct thorium_actor *self, struct 
 
 void biosal_assembly_graph_store_push_kmer_block(struct thorium_actor *self, struct thorium_message *message)
 {
-    struct biosal_memory_pool *ephemeral_memory;
+    struct core_memory_pool *ephemeral_memory;
     struct biosal_dna_kmer_frequency_block block;
     struct biosal_assembly_vertex *bucket;
     void *packed_kmer;
-    struct biosal_map_iterator iterator;
+    struct core_map_iterator iterator;
     struct biosal_assembly_graph_store *concrete_self;
     /*int tag;*/
     void *key;
-    struct biosal_map *kmers;
+    struct core_map *kmers;
     struct biosal_dna_kmer kmer;
     void *buffer;
     int count;
@@ -497,14 +497,14 @@ void biosal_assembly_graph_store_push_kmer_block(struct thorium_actor *self, str
     biosal_dna_kmer_frequency_block_unpack(&block, buffer, ephemeral_memory,
                     &concrete_self->transport_codec);
 
-    key = biosal_memory_pool_allocate(ephemeral_memory, concrete_self->key_length_in_bytes);
+    key = core_memory_pool_allocate(ephemeral_memory, concrete_self->key_length_in_bytes);
 
     kmers = biosal_dna_kmer_frequency_block_kmers(&block);
-    biosal_map_iterator_init(&iterator, kmers);
+    core_map_iterator_init(&iterator, kmers);
 
     period = 2500000;
 
-    raw_kmer = biosal_memory_pool_allocate(thorium_actor_get_ephemeral_memory(self),
+    raw_kmer = core_memory_pool_allocate(thorium_actor_get_ephemeral_memory(self),
                     concrete_self->kmer_length + 1);
 
     if (!concrete_self->printed_vertex_size) {
@@ -514,12 +514,12 @@ void biosal_assembly_graph_store_push_kmer_block(struct thorium_actor *self, str
         concrete_self->printed_vertex_size = 1;
     }
 
-    while (biosal_map_iterator_has_next(&iterator)) {
+    while (core_map_iterator_has_next(&iterator)) {
 
         /*
          * add kmers to store
          */
-        biosal_map_iterator_next(&iterator, (void **)&packed_kmer, (void **)&frequency);
+        core_map_iterator_next(&iterator, (void **)&packed_kmer, (void **)&frequency);
 
         /* Store the kmer in 2 bit encoding
          */
@@ -554,16 +554,16 @@ void biosal_assembly_graph_store_push_kmer_block(struct thorium_actor *self, str
                         || strcmp(raw_kmer, "TACCACGTTAGGCCCAGCAACAGATCGCG") == 0) {
             printf("Examine store key for %s\n", raw_kmer);
 
-            biosal_debugger_examine(key, concrete_self->key_length_in_bytes);
+            core_debugger_examine(key, concrete_self->key_length_in_bytes);
         }
 #endif
 
-        bucket = biosal_map_get(&concrete_self->table, key);
+        bucket = core_map_get(&concrete_self->table, key);
 
         if (bucket == NULL) {
             /* This is the first time that this kmer is seen.
              */
-            bucket = biosal_map_add(&concrete_self->table, key);
+            bucket = core_map_add(&concrete_self->table, key);
 
             biosal_assembly_vertex_init(bucket);
 
@@ -588,8 +588,8 @@ void biosal_assembly_graph_store_push_kmer_block(struct thorium_actor *self, str
                             " store has %" PRIu64 " canonical kmers, %" PRIu64 " kmers\n",
                         thorium_actor_script_name(self),
                             thorium_actor_name(self), concrete_self->received,
-                            biosal_map_size(&concrete_self->table),
-                            2 * biosal_map_size(&concrete_self->table));
+                            core_map_size(&concrete_self->table),
+                            2 * core_map_size(&concrete_self->table));
 
             concrete_self->last_received = concrete_self->received;
         }
@@ -597,10 +597,10 @@ void biosal_assembly_graph_store_push_kmer_block(struct thorium_actor *self, str
         concrete_self->received += *frequency;
     }
 
-    biosal_memory_pool_free(ephemeral_memory, key);
-    biosal_memory_pool_free(ephemeral_memory, raw_kmer);
+    core_memory_pool_free(ephemeral_memory, key);
+    core_memory_pool_free(ephemeral_memory, raw_kmer);
 
-    biosal_map_iterator_destroy(&iterator);
+    core_map_iterator_destroy(&iterator);
     biosal_dna_kmer_frequency_block_destroy(&block, thorium_actor_get_ephemeral_memory(self));
 
     thorium_actor_send_reply_empty(self, ACTION_PUSH_KMER_BLOCK_REPLY);
@@ -615,8 +615,8 @@ void biosal_assembly_graph_store_push_arc_block(struct thorium_actor *self, stru
     int count;
     struct biosal_assembly_arc_block input_block;
     struct biosal_assembly_arc *arc;
-    struct biosal_memory_pool *ephemeral_memory;
-    struct biosal_vector *input_arcs;
+    struct core_memory_pool *ephemeral_memory;
+    struct core_vector *input_arcs;
     char *sequence;
     void *key;
 
@@ -631,7 +631,7 @@ void biosal_assembly_graph_store_push_arc_block(struct thorium_actor *self, stru
     concrete_self = thorium_actor_concrete_actor(self);
     ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
 
-    sequence = biosal_memory_pool_allocate(ephemeral_memory, concrete_self->kmer_length + 1);
+    sequence = core_memory_pool_allocate(ephemeral_memory, concrete_self->kmer_length + 1);
 
     ++concrete_self->received_arc_block_count;
 
@@ -645,7 +645,7 @@ void biosal_assembly_graph_store_push_arc_block(struct thorium_actor *self, stru
                     &concrete_self->transport_codec, ephemeral_memory);
 
     input_arcs = biosal_assembly_arc_block_get_arcs(&input_block);
-    size = biosal_vector_size(input_arcs);
+    size = core_vector_size(input_arcs);
 
     if (!concrete_self->printed_arc_size) {
         printf("DEBUG ARC DELIVERY %d bytes, %d arcs\n",
@@ -654,11 +654,11 @@ void biosal_assembly_graph_store_push_arc_block(struct thorium_actor *self, stru
         concrete_self->printed_arc_size = 1;
     }
 
-    key = biosal_memory_pool_allocate(ephemeral_memory, concrete_self->key_length_in_bytes);
+    key = core_memory_pool_allocate(ephemeral_memory, concrete_self->key_length_in_bytes);
 
     for (i = 0; i < size; i++) {
 
-        arc = biosal_vector_at(input_arcs, i);
+        arc = core_vector_at(input_arcs, i);
 
 #ifdef BIOSAL_ASSEMBLY_ADD_ARCS
         biosal_assembly_graph_store_add_arc(self, arc, sequence, key);
@@ -667,7 +667,7 @@ void biosal_assembly_graph_store_push_arc_block(struct thorium_actor *self, stru
         ++concrete_self->received_arc_count;
     }
 
-    biosal_memory_pool_free(ephemeral_memory, key);
+    core_memory_pool_free(ephemeral_memory, key);
 
     biosal_assembly_arc_block_destroy(&input_block, ephemeral_memory);
 
@@ -678,7 +678,7 @@ void biosal_assembly_graph_store_push_arc_block(struct thorium_actor *self, stru
 
     thorium_actor_send_reply_empty(self, ACTION_ASSEMBLY_PUSH_ARC_BLOCK_REPLY);
 
-    biosal_memory_pool_free(ephemeral_memory, sequence);
+    core_memory_pool_free(ephemeral_memory, sequence);
 }
 
 void biosal_assembly_graph_store_add_arc(struct thorium_actor *self,
@@ -691,7 +691,7 @@ void biosal_assembly_graph_store_add_arc(struct thorium_actor *self,
     int destination;
     int type;
     struct biosal_assembly_vertex *vertex;
-    struct biosal_memory_pool *ephemeral_memory;
+    struct core_memory_pool *ephemeral_memory;
     int is_canonical;
 
 #if 0
@@ -746,17 +746,17 @@ void biosal_assembly_graph_store_add_arc(struct thorium_actor *self,
                         concrete_self->kmer_length, &concrete_self->storage_codec,
                         ephemeral_memory);
 
-    vertex = biosal_map_get(&concrete_self->table, key);
+    vertex = core_map_get(&concrete_self->table, key);
 
-#ifdef BIOSAL_DEBUGGER_ENABLE_ASSERT
+#ifdef CORE_DEBUGGER_ENABLE_ASSERT
     if (vertex == NULL) {
         printf("Error: vertex is NULL, key_length_in_bytes %d size %" PRIu64 "\n",
                         concrete_self->key_length_in_bytes,
-                        biosal_map_size(&concrete_self->table));
+                        core_map_size(&concrete_self->table));
     }
 #endif
 
-    BIOSAL_DEBUGGER_ASSERT(vertex != NULL);
+    CORE_DEBUGGER_ASSERT(vertex != NULL);
 
 #ifdef BIOSAL_ASSEMBLY_GRAPH_STORE_DEBUG_ARC
     if (verbose) {
@@ -820,7 +820,7 @@ void biosal_assembly_graph_store_get_summary(struct thorium_actor *self, struct 
                     biosal_assembly_graph_store_yield_reply_summary,
                     &concrete_self->summary_in_progress, 1);
 
-    biosal_map_iterator_init(&concrete_self->iterator, &concrete_self->table);
+    core_map_iterator_init(&concrete_self->iterator, &concrete_self->table);
 
     thorium_actor_send_to_self_empty(self, ACTION_YIELD);
 }
@@ -836,7 +836,7 @@ void biosal_assembly_graph_store_yield_reply_summary(struct thorium_actor *self,
     int coverage;
     int parent_count;
     int child_count;
-    struct biosal_memory_pool *ephemeral_memory;
+    struct core_memory_pool *ephemeral_memory;
     /*int child_count;*/
 
     concrete_self = thorium_actor_concrete_actor(self);
@@ -849,9 +849,9 @@ void biosal_assembly_graph_store_yield_reply_summary(struct thorium_actor *self,
      * This loop gather canonical information only.
      */
     while (processed < limit
-                    && biosal_map_iterator_has_next(&concrete_self->iterator)) {
+                    && core_map_iterator_has_next(&concrete_self->iterator)) {
 
-        biosal_map_iterator_next(&concrete_self->iterator, NULL, (void **)&vertex);
+        core_map_iterator_next(&concrete_self->iterator, NULL, (void **)&vertex);
 
         coverage = biosal_assembly_vertex_coverage_depth(vertex);
 
@@ -876,7 +876,7 @@ void biosal_assembly_graph_store_yield_reply_summary(struct thorium_actor *self,
         ++processed;
     }
 
-    if (biosal_map_iterator_has_next(&concrete_self->iterator)) {
+    if (core_map_iterator_has_next(&concrete_self->iterator)) {
 
         thorium_actor_send_to_self_empty(self, ACTION_YIELD);
 
@@ -896,8 +896,8 @@ void biosal_assembly_graph_store_yield_reply_summary(struct thorium_actor *self,
          * Reset the iterator.
          */
 
-        biosal_map_iterator_destroy(&concrete_self->iterator);
-        biosal_map_iterator_init(&concrete_self->iterator, &concrete_self->table);
+        core_map_iterator_destroy(&concrete_self->iterator);
+        core_map_iterator_init(&concrete_self->iterator, &concrete_self->table);
     }
 }
 
@@ -907,7 +907,7 @@ void biosal_assembly_graph_store_get_vertex(struct thorium_actor *self, struct t
     struct biosal_dna_kmer kmer;
     void *buffer;
     struct biosal_assembly_graph_store *concrete_self;
-    struct biosal_memory_pool *ephemeral_memory;
+    struct core_memory_pool *ephemeral_memory;
     struct thorium_message new_message;
     int new_count;
     void *new_buffer;
@@ -940,8 +940,8 @@ void biosal_assembly_graph_store_get_vertex(struct thorium_actor *self, struct t
         position += thorium_message_unpack_int(message, position, &path);
     }
 
-    BIOSAL_DEBUGGER_ASSERT_IS_EQUAL_INT(position, count);
-    BIOSAL_DEBUGGER_ASSERT(position == count);
+    CORE_DEBUGGER_ASSERT_IS_EQUAL_INT(position, count);
+    CORE_DEBUGGER_ASSERT(position == count);
 
     canonical_vertex = biosal_assembly_graph_store_find_vertex(self, &kmer);
 
@@ -975,7 +975,7 @@ void biosal_assembly_graph_store_get_starting_vertex(struct thorium_actor *self,
     struct biosal_assembly_graph_store *concrete_self;
     struct biosal_dna_kmer transport_kmer;
     struct biosal_dna_kmer storage_kmer;
-    struct biosal_memory_pool *ephemeral_memory;
+    struct core_memory_pool *ephemeral_memory;
     struct thorium_message new_message;
     int new_count;
     void *new_buffer;
@@ -989,12 +989,12 @@ void biosal_assembly_graph_store_get_starting_vertex(struct thorium_actor *self,
 
     source = thorium_message_source(message);
 
-    while (biosal_map_iterator_has_next(&concrete_self->iterator)) {
+    while (core_map_iterator_has_next(&concrete_self->iterator)) {
 
         storage_key = NULL;
         vertex = NULL;
 
-        biosal_map_iterator_next(&concrete_self->iterator, (void **)&storage_key,
+        core_map_iterator_next(&concrete_self->iterator, (void **)&storage_key,
                         (void **)&vertex);
 
         /*
@@ -1007,13 +1007,13 @@ void biosal_assembly_graph_store_get_starting_vertex(struct thorium_actor *self,
             continue;
         }
 
-        BIOSAL_DEBUGGER_ASSERT(storage_key != NULL);
+        CORE_DEBUGGER_ASSERT(storage_key != NULL);
 
 #ifdef BIOSAL_ASSEMBLY_GRAPH_STORE_DEBUG_GET_STARTING_VERTEX
         printf("From storage\n");
         biosal_assembly_vertex_print(vertex);
 
-        biosal_debugger_examine(storage_key, concrete_self->key_length_in_bytes);
+        core_debugger_examine(storage_key, concrete_self->key_length_in_bytes);
 #endif
 
         biosal_dna_kmer_init_empty(&storage_kmer);
@@ -1030,7 +1030,7 @@ void biosal_assembly_graph_store_get_starting_vertex(struct thorium_actor *self,
                     ephemeral_memory);
 #endif
 
-        sequence = biosal_memory_pool_allocate(ephemeral_memory, concrete_self->kmer_length + 1);
+        sequence = core_memory_pool_allocate(ephemeral_memory, concrete_self->kmer_length + 1);
 
         biosal_dna_kmer_get_sequence(&storage_kmer, sequence, concrete_self->kmer_length,
                         &concrete_self->storage_codec);
@@ -1052,7 +1052,7 @@ void biosal_assembly_graph_store_get_starting_vertex(struct thorium_actor *self,
 #ifdef BIOSAL_ASSEMBLY_GRAPH_STORE_DEBUG_GET_STARTING_VERTEX
         printf("Packed version:\n");
 
-        biosal_debugger_examine(new_buffer, new_count);
+        core_debugger_examine(new_buffer, new_count);
 
         printf("TRANSPORT Kmer new_count %d\n", new_count);
 
@@ -1069,7 +1069,7 @@ void biosal_assembly_graph_store_get_starting_vertex(struct thorium_actor *self,
 
         biosal_dna_kmer_destroy(&transport_kmer, ephemeral_memory);
 
-        biosal_memory_pool_free(ephemeral_memory, sequence);
+        core_memory_pool_free(ephemeral_memory, sequence);
 
         biosal_dna_kmer_destroy(&storage_kmer, ephemeral_memory);
 
@@ -1148,7 +1148,7 @@ void biosal_assembly_graph_store_print_progress(struct thorium_actor *self)
 
     concrete_self = thorium_actor_concrete_actor(self);
 
-    total = biosal_map_size(&concrete_self->table);
+    total = core_map_size(&concrete_self->table);
     steps = 20;
     stride = total / steps;
 
@@ -1177,8 +1177,8 @@ void biosal_assembly_graph_store_mark_as_used(struct thorium_actor *self,
 {
     struct biosal_assembly_graph_store *concrete_self;
 
-    BIOSAL_DEBUGGER_ASSERT(source >= 0);
-    BIOSAL_DEBUGGER_ASSERT(path >= 0);
+    CORE_DEBUGGER_ASSERT(source >= 0);
+    CORE_DEBUGGER_ASSERT(path >= 0);
 
     concrete_self = thorium_actor_concrete_actor(self);
 
@@ -1204,7 +1204,7 @@ void biosal_assembly_graph_store_mark_vertex_as_visited(struct thorium_actor *se
     int source;
     int path_index;
     char *sequence;
-    struct biosal_memory_pool *ephemeral_memory;
+    struct core_memory_pool *ephemeral_memory;
     struct biosal_dna_kmer kmer;
     struct biosal_dna_kmer storage_kmer;
     struct biosal_assembly_vertex *canonical_vertex;
@@ -1226,7 +1226,7 @@ void biosal_assembly_graph_store_mark_vertex_as_visited(struct thorium_actor *se
 
     position += biosal_dna_kmer_unpack(&kmer, buffer, concrete_self->kmer_length,
                 ephemeral_memory, &concrete_self->transport_codec);
-    sequence = biosal_memory_pool_allocate(ephemeral_memory, concrete_self->kmer_length + 1);
+    sequence = core_memory_pool_allocate(ephemeral_memory, concrete_self->kmer_length + 1);
     biosal_dna_kmer_get_sequence(&kmer, sequence, concrete_self->kmer_length,
                         &concrete_self->transport_codec);
     biosal_dna_kmer_init(&storage_kmer, sequence, &concrete_self->storage_codec,
@@ -1235,17 +1235,17 @@ void biosal_assembly_graph_store_mark_vertex_as_visited(struct thorium_actor *se
     /*
      * Get store key
      */
-    key = biosal_memory_pool_allocate(ephemeral_memory, concrete_self->key_length_in_bytes);
+    key = core_memory_pool_allocate(ephemeral_memory, concrete_self->key_length_in_bytes);
     biosal_dna_kmer_pack_store_key(&storage_kmer, key, concrete_self->kmer_length, &concrete_self->storage_codec,
                         ephemeral_memory);
 
     /* Get vertex. */
-    canonical_vertex = biosal_map_get(&concrete_self->table, key);
+    canonical_vertex = core_map_get(&concrete_self->table, key);
 
     biosal_dna_kmer_destroy(&kmer, ephemeral_memory);
     biosal_dna_kmer_destroy(&storage_kmer, ephemeral_memory);
-    biosal_memory_pool_free(ephemeral_memory, key);
-    biosal_memory_pool_free(ephemeral_memory, sequence);
+    core_memory_pool_free(ephemeral_memory, key);
+    core_memory_pool_free(ephemeral_memory, sequence);
 
     position += thorium_message_unpack_int(message, position, &path_index);
     /*
@@ -1275,7 +1275,7 @@ void biosal_assembly_graph_store_set_vertex_flag(struct thorium_actor *self,
     struct biosal_dna_kmer transport_kmer;
     struct biosal_assembly_vertex *vertex;
     struct biosal_assembly_graph_store *concrete_self;
-    struct biosal_memory_pool *ephemeral_memory;
+    struct core_memory_pool *ephemeral_memory;
     int position;
 
     concrete_self = thorium_actor_concrete_actor(self);
@@ -1287,12 +1287,12 @@ void biosal_assembly_graph_store_set_vertex_flag(struct thorium_actor *self,
     position = 0;
     position += biosal_dna_kmer_unpack(&transport_kmer, buffer, concrete_self->kmer_length,
                     ephemeral_memory, &concrete_self->storage_codec);
-    biosal_memory_copy(&flag, buffer + position, sizeof(flag));
+    core_memory_copy(&flag, buffer + position, sizeof(flag));
     position += sizeof(flag);
-    BIOSAL_DEBUGGER_ASSERT(position == count);
+    CORE_DEBUGGER_ASSERT(position == count);
 
-    BIOSAL_DEBUGGER_ASSERT(flag >= BIOSAL_VERTEX_FLAG_START_VALUE);
-    BIOSAL_DEBUGGER_ASSERT(flag <= BIOSAL_VERTEX_FLAG_END_VALUE);
+    CORE_DEBUGGER_ASSERT(flag >= BIOSAL_VERTEX_FLAG_START_VALUE);
+    CORE_DEBUGGER_ASSERT(flag <= BIOSAL_VERTEX_FLAG_END_VALUE);
 
     if (flag == BIOSAL_VERTEX_FLAG_UNITIG) {
         ++concrete_self->unitig_vertex_count;
@@ -1313,7 +1313,7 @@ void biosal_assembly_graph_store_set_vertex_flag(struct thorium_actor *self,
 struct biosal_assembly_vertex *biosal_assembly_graph_store_find_vertex(struct thorium_actor *self,
                 struct biosal_dna_kmer *kmer)
 {
-    struct biosal_memory_pool *ephemeral_memory;
+    struct core_memory_pool *ephemeral_memory;
     struct biosal_assembly_graph_store *concrete_self;
     char *sequence;
     struct biosal_dna_kmer storage_kmer;
@@ -1323,7 +1323,7 @@ struct biosal_assembly_vertex *biosal_assembly_graph_store_find_vertex(struct th
     ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
     concrete_self = thorium_actor_concrete_actor(self);
 
-    sequence = biosal_memory_pool_allocate(ephemeral_memory, concrete_self->kmer_length + 1);
+    sequence = core_memory_pool_allocate(ephemeral_memory, concrete_self->kmer_length + 1);
 
     biosal_dna_kmer_get_sequence(kmer, sequence, concrete_self->kmer_length,
                         &concrete_self->transport_codec);
@@ -1331,15 +1331,15 @@ struct biosal_assembly_vertex *biosal_assembly_graph_store_find_vertex(struct th
     biosal_dna_kmer_init(&storage_kmer, sequence, &concrete_self->storage_codec,
                         ephemeral_memory);
 
-    key = biosal_memory_pool_allocate(ephemeral_memory, concrete_self->key_length_in_bytes);
+    key = core_memory_pool_allocate(ephemeral_memory, concrete_self->key_length_in_bytes);
 
     biosal_dna_kmer_pack_store_key(&storage_kmer, key,
                         concrete_self->kmer_length, &concrete_self->storage_codec,
                         ephemeral_memory);
 
-    canonical_vertex = biosal_map_get(&concrete_self->table, key);
+    canonical_vertex = core_map_get(&concrete_self->table, key);
 
-#ifdef BIOSAL_DEBUGGER_ASSERT
+#ifdef CORE_DEBUGGER_ASSERT
     if (canonical_vertex == NULL) {
 
         printf("not found Seq = %s name %d kmerlength %d key_length %d hash %" PRIu64 "\n", sequence,
@@ -1351,10 +1351,10 @@ struct biosal_assembly_vertex *biosal_assembly_graph_store_find_vertex(struct th
     }
 #endif
 
-    BIOSAL_DEBUGGER_ASSERT(canonical_vertex != NULL);
+    CORE_DEBUGGER_ASSERT(canonical_vertex != NULL);
 
-    biosal_memory_pool_free(ephemeral_memory, sequence);
-    biosal_memory_pool_free(ephemeral_memory, key);
+    core_memory_pool_free(ephemeral_memory, sequence);
+    core_memory_pool_free(ephemeral_memory, key);
     biosal_dna_kmer_destroy(&storage_kmer, ephemeral_memory);
 
     return canonical_vertex;

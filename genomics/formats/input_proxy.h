@@ -11,8 +11,8 @@
 struct biosal_input_proxy {
     struct biosal_input_format input;
 
-    struct biosal_fastq_input fastq;
-    struct biosal_fasta_input fasta;
+    struct core_fastq_input fastq;
+    struct core_fasta_input fasta;
 
     int not_found;
     int not_supported;

@@ -12,15 +12,15 @@
  * A manager for unitig walkers
  */
 struct biosal_unitig_manager {
-    struct biosal_vector spawners;
-    struct biosal_vector graph_stores;
-    struct biosal_vector visitors;
-    struct biosal_vector walkers;
+    struct core_vector spawners;
+    struct core_vector graph_stores;
+    struct core_vector visitors;
+    struct core_vector walkers;
 
     int completed;
     int manager;
 
-    struct biosal_timer timer;
+    struct core_timer timer;
     int state;
 
     int writer_process;

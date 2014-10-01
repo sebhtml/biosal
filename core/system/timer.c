@@ -26,14 +26,14 @@
  * \see http://sourceforge.net/p/x10/mailman/message/32206231/
  */
 #if defined(__bgp__) || defined(__bgq__) || defined(__bg__)
-#define BIOSAL_DISABLE_CLOCK_GETTIME
+#define CORE_DISABLE_CLOCK_GETTIME
 #endif
 
 /*
  * Disable clock_gettime on Mac
  */
 #ifdef __APPLE__
-#define BIOSAL_DISABLE_CLOCK_GETTIME
+#define CORE_DISABLE_CLOCK_GETTIME
 #endif
 
 
@@ -42,55 +42,55 @@
 #define NANOSECONDS_IN_SECOND (1000 * 1000 * 1000)
 #define SECONDS_IN_MINUTE 60
 
-void biosal_timer_init(struct biosal_timer *timer)
+void core_timer_init(struct core_timer *timer)
 {
     timer->start = 0;
 
     timer->started = 0;
     timer->stopped = 0;
 
-    timer->frequency = biosal_timer_fetch_frequency(timer);
+    timer->frequency = core_timer_fetch_frequency(timer);
 }
 
-void biosal_timer_destroy(struct biosal_timer *timer)
+void core_timer_destroy(struct core_timer *timer)
 {
     timer->start = 0;
 }
 
-void biosal_timer_start(struct biosal_timer *timer)
+void core_timer_start(struct core_timer *timer)
 {
-    timer->start = biosal_timer_get_nanoseconds(timer);
+    timer->start = core_timer_get_nanoseconds(timer);
     timer->started = 1;
 }
 
-void biosal_timer_stop(struct biosal_timer *timer)
+void core_timer_stop(struct core_timer *timer)
 {
 
-    timer->stop = biosal_timer_get_nanoseconds(timer);
+    timer->stop = core_timer_get_nanoseconds(timer);
 
     timer->stopped = 1;
 
-#ifdef BIOSAL_TIMER_DEBUG
+#ifdef CORE_TIMER_DEBUG
     printf("TIMER start %" PRIu64 " stop %" PRIu64 "\n", stop, timer->start);
 #endif
 
 }
 
-uint64_t biosal_timer_get_nanoseconds(struct biosal_timer *timer)
+uint64_t core_timer_get_nanoseconds(struct core_timer *timer)
 {
 #if defined(__bgq__)
-    return biosal_timer_get_nanoseconds_blue_gene_q(timer);
+    return core_timer_get_nanoseconds_blue_gene_q(timer);
 #elif defined(__APPLE__)
-    return biosal_timer_get_nanoseconds_apple(timer);
+    return core_timer_get_nanoseconds_apple(timer);
 
-#elif defined(BIOSAL_DISABLE_CLOCK_GETTIME)
-    return biosal_timer_get_nanoseconds_gettimeofday(timer);
+#elif defined(CORE_DISABLE_CLOCK_GETTIME)
+    return core_timer_get_nanoseconds_gettimeofday(timer);
 #else
-    return biosal_timer_get_nanoseconds_clock_gettime(timer);
+    return core_timer_get_nanoseconds_clock_gettime(timer);
 #endif
 }
 
-uint64_t biosal_timer_get_nanoseconds_blue_gene_q(struct biosal_timer *timer)
+uint64_t core_timer_get_nanoseconds_blue_gene_q(struct core_timer *timer)
 {
     uint64_t cycles;
     uint64_t picoseconds_per_cycle;
@@ -118,7 +118,7 @@ uint64_t biosal_timer_get_nanoseconds_blue_gene_q(struct biosal_timer *timer)
     return nanoseconds;
 }
 
-uint64_t biosal_timer_get_nanoseconds_gettimeofday(struct biosal_timer *timer)
+uint64_t core_timer_get_nanoseconds_gettimeofday(struct core_timer *timer)
 {
     uint64_t value;
     struct timeval time;
@@ -135,13 +135,13 @@ uint64_t biosal_timer_get_nanoseconds_gettimeofday(struct biosal_timer *timer)
  * \see http://linux.die.net/man/3/clock_gettime
  * \see http://stackoverflow.com/questions/3523442/difference-between-clock-realtime-and-clock-monotonic
  */
-uint64_t biosal_timer_get_nanoseconds_clock_gettime(struct biosal_timer *timer)
+uint64_t core_timer_get_nanoseconds_clock_gettime(struct core_timer *timer)
 {
     uint64_t value;
 
     value = 0;
 
-#ifndef BIOSAL_DISABLE_CLOCK_GETTIME
+#ifndef CORE_DISABLE_CLOCK_GETTIME
     struct timespec time_value;
     clockid_t clock;
 
@@ -158,7 +158,7 @@ uint64_t biosal_timer_get_nanoseconds_clock_gettime(struct biosal_timer *timer)
 /*
  * \see http://stackoverflow.com/questions/5167269/clock-gettime-alternative-in-mac-os-x
  */
-uint64_t biosal_timer_get_nanoseconds_apple(struct biosal_timer *timer)
+uint64_t core_timer_get_nanoseconds_apple(struct core_timer *timer)
 {
     uint64_t value;
 
@@ -178,12 +178,12 @@ uint64_t biosal_timer_get_nanoseconds_apple(struct biosal_timer *timer)
     return value;
 }
 
-uint64_t biosal_timer_get_elapsed_nanoseconds(struct biosal_timer *timer)
+uint64_t core_timer_get_elapsed_nanoseconds(struct core_timer *timer)
 {
     return timer->stop - timer->start;
 }
 
-void biosal_timer_print_with_description(struct biosal_timer *timer, const char *description)
+void core_timer_print_with_description(struct core_timer *timer, const char *description)
 {
     uint64_t nanoseconds;
     float microseconds;
@@ -194,7 +194,7 @@ void biosal_timer_print_with_description(struct biosal_timer *timer, const char 
 
     printf("TIMER [%s] ", description);
 
-    nanoseconds = biosal_timer_get_elapsed_nanoseconds(timer);
+    nanoseconds = core_timer_get_elapsed_nanoseconds(timer);
 
     if (!timer->started || !timer->stopped) {
         printf("timer error\n");
@@ -257,7 +257,7 @@ void biosal_timer_print_with_description(struct biosal_timer *timer, const char 
     fflush(stdout);
 }
 
-double biosal_timer_fetch_frequency(struct biosal_timer *timer)
+double core_timer_fetch_frequency(struct core_timer *timer)
 {
     double frequency;
 

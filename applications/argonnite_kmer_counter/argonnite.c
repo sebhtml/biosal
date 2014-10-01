@@ -51,23 +51,23 @@ void argonnite_init(struct thorium_actor *actor)
     struct argonnite *concrete_actor;
 
     concrete_actor = (struct argonnite *)thorium_actor_concrete_actor(actor);
-    biosal_vector_init(&concrete_actor->initial_actors, sizeof(int));
-    biosal_vector_init(&concrete_actor->kernels, sizeof(int));
-    biosal_vector_init(&concrete_actor->aggregators, sizeof(int));
-    biosal_vector_init(&concrete_actor->kmer_stores, sizeof(int));
-    biosal_vector_init(&concrete_actor->sequence_stores, sizeof(int));
-    biosal_vector_init(&concrete_actor->worker_counts, sizeof(int));
+    core_vector_init(&concrete_actor->initial_actors, sizeof(int));
+    core_vector_init(&concrete_actor->kernels, sizeof(int));
+    core_vector_init(&concrete_actor->aggregators, sizeof(int));
+    core_vector_init(&concrete_actor->kmer_stores, sizeof(int));
+    core_vector_init(&concrete_actor->sequence_stores, sizeof(int));
+    core_vector_init(&concrete_actor->worker_counts, sizeof(int));
 
-    biosal_timer_init(&concrete_actor->timer);
-    biosal_timer_init(&concrete_actor->timer_for_kmers);
-    biosal_map_init(&concrete_actor->plentiful_stores, sizeof(int), sizeof(int));
+    core_timer_init(&concrete_actor->timer);
+    core_timer_init(&concrete_actor->timer_for_kmers);
+    core_map_init(&concrete_actor->plentiful_stores, sizeof(int), sizeof(int));
 
     thorium_actor_add_script(actor, SCRIPT_INPUT_CONTROLLER,
                     &biosal_input_controller_script);
     thorium_actor_add_script(actor, SCRIPT_DNA_KMER_COUNTER_KERNEL,
                     &biosal_dna_kmer_counter_kernel_script);
     thorium_actor_add_script(actor, SCRIPT_MANAGER,
-                    &biosal_manager_script);
+                    &core_manager_script);
     thorium_actor_add_script(actor, SCRIPT_AGGREGATOR,
                     &biosal_aggregator_script);
     thorium_actor_add_script(actor, SCRIPT_KMER_STORE,
@@ -115,16 +115,16 @@ void argonnite_destroy(struct thorium_actor *actor)
 
     concrete_actor = (struct argonnite *)thorium_actor_concrete_actor(actor);
 
-    biosal_vector_destroy(&concrete_actor->initial_actors);
-    biosal_vector_destroy(&concrete_actor->kernels);
-    biosal_vector_destroy(&concrete_actor->aggregators);
-    biosal_vector_destroy(&concrete_actor->kmer_stores);
-    biosal_vector_destroy(&concrete_actor->sequence_stores);
-    biosal_vector_destroy(&concrete_actor->worker_counts);
+    core_vector_destroy(&concrete_actor->initial_actors);
+    core_vector_destroy(&concrete_actor->kernels);
+    core_vector_destroy(&concrete_actor->aggregators);
+    core_vector_destroy(&concrete_actor->kmer_stores);
+    core_vector_destroy(&concrete_actor->sequence_stores);
+    core_vector_destroy(&concrete_actor->worker_counts);
 
-    biosal_timer_destroy(&concrete_actor->timer);
-    biosal_timer_destroy(&concrete_actor->timer_for_kmers);
-    biosal_map_destroy(&concrete_actor->plentiful_stores);
+    core_timer_destroy(&concrete_actor->timer);
+    core_timer_destroy(&concrete_actor->timer_for_kmers);
+    core_map_destroy(&concrete_actor->plentiful_stores);
 }
 
 void argonnite_receive(struct thorium_actor *actor, struct thorium_message *message)
@@ -139,7 +139,7 @@ void argonnite_receive(struct thorium_actor *actor, struct thorium_message *mess
     int manager_for_aggregators;
     int distribution;
     int other_name;
-    struct biosal_vector_iterator iterator;
+    struct core_vector_iterator iterator;
     int argc;
     char **argv;
     int name;
@@ -150,7 +150,7 @@ void argonnite_receive(struct thorium_actor *actor, struct thorium_message *mess
     int aggregator_index;
     int i;
     int manager_for_kmer_stores;
-    struct biosal_vector kmer_stores;
+    struct core_vector kmer_stores;
     int spawner;
     uint64_t produced;
     int workers;
@@ -186,17 +186,17 @@ void argonnite_receive(struct thorium_actor *actor, struct thorium_message *mess
                         ACTION_ENABLE_AUTO_SCALING);
                         */
 
-        concrete_actor->kmer_length = biosal_command_get_kmer_length(argc, argv);
+        concrete_actor->kmer_length = core_command_get_kmer_length(argc, argv);
 
 #ifdef ARGONNITE_DEBUG1
         BIOSAL_DEBUG_MARKER("foo_marker");
 #endif
 
-        biosal_vector_unpack(&concrete_actor->initial_actors, buffer);
+        core_vector_unpack(&concrete_actor->initial_actors, buffer);
 
         concrete_actor->is_boss = 0;
 
-        if (biosal_vector_at_as_int(&concrete_actor->initial_actors, 0) == name) {
+        if (core_vector_at_as_int(&concrete_actor->initial_actors, 0) == name) {
             concrete_actor->is_boss = 1;
         }
 
@@ -222,7 +222,7 @@ void argonnite_receive(struct thorium_actor *actor, struct thorium_message *mess
             return;
         }
 
-        biosal_timer_start(&concrete_actor->timer);
+        core_timer_start(&concrete_actor->timer);
 
         controller = thorium_actor_spawn(actor, SCRIPT_INPUT_CONTROLLER);
         concrete_actor->controller = controller;
@@ -235,10 +235,10 @@ void argonnite_receive(struct thorium_actor *actor, struct thorium_message *mess
         printf("manager %d, index %d\n", manager_for_directors, concrete_actor->manager_for_directors);
 #endif
 
-        for (i = 0; i < biosal_vector_size(&concrete_actor->initial_actors); i++) {
-            biosal_vector_push_back_int(&concrete_actor->worker_counts, 0);
+        for (i = 0; i < core_vector_size(&concrete_actor->initial_actors); i++) {
+            core_vector_push_back_int(&concrete_actor->worker_counts, 0);
 
-            spawner = biosal_vector_at_as_int(&concrete_actor->initial_actors, i);
+            spawner = core_vector_at_as_int(&concrete_actor->initial_actors, i);
 
             thorium_actor_send_empty(actor, spawner, ACTION_GET_NODE_WORKER_COUNT);
         }
@@ -252,15 +252,15 @@ void argonnite_receive(struct thorium_actor *actor, struct thorium_message *mess
 
         concrete_actor->configured_actors++;
 
-        spawner_index = biosal_vector_index_of(&concrete_actor->initial_actors, &source);
+        spawner_index = core_vector_index_of(&concrete_actor->initial_actors, &source);
 
         printf("MANY_AGGREGATORS argonnite %d: spawner %d is on a node with %d workers\n",
                         name, source, workers);
 
-        biosal_vector_set_int(&concrete_actor->worker_counts, spawner_index, workers);
+        core_vector_set_int(&concrete_actor->worker_counts, spawner_index, workers);
 
-        if (concrete_actor->configured_actors == biosal_vector_size(&concrete_actor->initial_actors)) {
-            spawner = biosal_vector_at_as_int(&concrete_actor->initial_actors, biosal_vector_size(&concrete_actor->initial_actors) / 2);
+        if (concrete_actor->configured_actors == core_vector_size(&concrete_actor->initial_actors)) {
+            spawner = core_vector_at_as_int(&concrete_actor->initial_actors, core_vector_size(&concrete_actor->initial_actors) / 2);
             thorium_actor_send_int(actor, spawner, ACTION_SPAWN, SCRIPT_COVERAGE_DISTRIBUTION);
         }
 
@@ -314,7 +314,7 @@ void argonnite_receive(struct thorium_actor *actor, struct thorium_message *mess
 
         /* make sure that customers are unpacking correctly
          */
-        biosal_vector_unpack(&concrete_actor->kernels, buffer);
+        core_vector_unpack(&concrete_actor->kernels, buffer);
 
         controller = concrete_actor->controller;
 
@@ -409,7 +409,7 @@ void argonnite_receive(struct thorium_actor *actor, struct thorium_message *mess
 
         concrete_actor->wired_kernels= 0;
 
-        biosal_vector_unpack(&concrete_actor->aggregators, buffer);
+        core_vector_unpack(&concrete_actor->aggregators, buffer);
 
 
         /*
@@ -419,15 +419,15 @@ void argonnite_receive(struct thorium_actor *actor, struct thorium_message *mess
 
         printf("argonnite %d wires the brain, %d kernels, %d aggregators\n",
                         thorium_actor_name(actor),
-                        (int)biosal_vector_size(&concrete_actor->kernels),
-                        (int)biosal_vector_size(&concrete_actor->aggregators));
+                        (int)core_vector_size(&concrete_actor->kernels),
+                        (int)core_vector_size(&concrete_actor->aggregators));
 
         kernel_index_index = 0;
         aggregator_index_index = 0;
 
-        while (kernel_index_index < biosal_vector_size(&concrete_actor->kernels)) {
-            kernel_index = biosal_vector_at_as_int(&concrete_actor->kernels, kernel_index_index);
-            aggregator_index = biosal_vector_at_as_int(&concrete_actor->aggregators, aggregator_index_index);
+        while (kernel_index_index < core_vector_size(&concrete_actor->kernels)) {
+            kernel_index = core_vector_at_as_int(&concrete_actor->kernels, kernel_index_index);
+            aggregator_index = core_vector_at_as_int(&concrete_actor->aggregators, aggregator_index_index);
             kernel = kernel_index;
             aggregator = aggregator_index;
 
@@ -438,9 +438,9 @@ void argonnite_receive(struct thorium_actor *actor, struct thorium_message *mess
         }
 
 #if 0
-        for (spawner_index = 0; spawner_index < biosal_vector_size(&concrete_actor->initial_actors); spawner_index++) {
+        for (spawner_index = 0; spawner_index < core_vector_size(&concrete_actor->initial_actors); spawner_index++) {
 
-            workers = biosal_vector_at_as_int(&concrete_actor->worker_counts, spawner_index);
+            workers = core_vector_at_as_int(&concrete_actor->worker_counts, spawner_index);
             /*
             workers_per_aggregator = ARGONNITE_WORKERS_PER_AGGREGATOR;
             */
@@ -450,8 +450,8 @@ void argonnite_receive(struct thorium_actor *actor, struct thorium_message *mess
 #endif
 
             while (workers > 0) {
-                kernel_index = biosal_vector_at_as_int(&concrete_actor->kernels, kernel_index_index);
-                aggregator_index = biosal_vector_at_as_int(&concrete_actor->aggregators, aggregator_index_index);
+                kernel_index = core_vector_at_as_int(&concrete_actor->kernels, kernel_index_index);
+                aggregator_index = core_vector_at_as_int(&concrete_actor->aggregators, aggregator_index_index);
 
                 kernel = kernel_index;
                 aggregator = aggregator_index;
@@ -475,7 +475,7 @@ void argonnite_receive(struct thorium_actor *actor, struct thorium_message *mess
                 */
             }
 
-            workers = biosal_vector_at_as_int(&concrete_actor->worker_counts, spawner_index);
+            workers = core_vector_at_as_int(&concrete_actor->worker_counts, spawner_index);
             workers_per_aggregator = ARGONNITE_WORKERS_PER_AGGREGATOR;
 
             /* increment the aggregator if the number of workers is not a multiple of
@@ -493,7 +493,7 @@ void argonnite_receive(struct thorium_actor *actor, struct thorium_message *mess
 
         concrete_actor->configured_actors++;
 
-        if (concrete_actor->configured_actors == biosal_vector_size(&concrete_actor->kmer_stores)) {
+        if (concrete_actor->configured_actors == core_vector_size(&concrete_actor->kmer_stores)) {
 
             printf("DEBUG all kmer stores are wired.\n");
 
@@ -507,7 +507,7 @@ void argonnite_receive(struct thorium_actor *actor, struct thorium_message *mess
 
         concrete_actor->wired_kernels++;
 
-        if (concrete_actor->wired_kernels == (int)biosal_vector_size(&concrete_actor->kernels)) {
+        if (concrete_actor->wired_kernels == (int)core_vector_size(&concrete_actor->kernels)) {
 
             printf("argonnite %d completed the wiring of the brain\n",
                 thorium_actor_name(actor));
@@ -525,8 +525,8 @@ void argonnite_receive(struct thorium_actor *actor, struct thorium_message *mess
 
         concrete_actor->configured_actors++;
 
-        total_actors = biosal_vector_size(&concrete_actor->aggregators) +
-                                biosal_vector_size(&concrete_actor->kernels);
+        total_actors = core_vector_size(&concrete_actor->aggregators) +
+                                core_vector_size(&concrete_actor->kernels);
 
         if (concrete_actor->configured_actors == total_actors) {
 
@@ -565,7 +565,7 @@ void argonnite_receive(struct thorium_actor *actor, struct thorium_message *mess
         printf("DEBUG kmer stores READY\n");
         concrete_actor->spawned_stores = 1;
 
-        biosal_vector_unpack(&concrete_actor->kmer_stores, buffer);
+        core_vector_unpack(&concrete_actor->kmer_stores, buffer);
 
         concrete_actor->configured_aggregators = 0;
 
@@ -581,7 +581,7 @@ void argonnite_receive(struct thorium_actor *actor, struct thorium_message *mess
 
         concrete_actor->configured_aggregators++;
 
-        if (concrete_actor->configured_aggregators == biosal_vector_size(&concrete_actor->aggregators)) {
+        if (concrete_actor->configured_aggregators == core_vector_size(&concrete_actor->aggregators)) {
 
             printf("DEBUG all aggregator configured...\n");
 
@@ -598,7 +598,7 @@ void argonnite_receive(struct thorium_actor *actor, struct thorium_message *mess
 
         concrete_actor->configured_actors++;
 
-        if (concrete_actor->configured_actors == biosal_vector_size(&concrete_actor->kmer_stores)) {
+        if (concrete_actor->configured_actors == core_vector_size(&concrete_actor->kmer_stores)) {
 
             printf("DEBUG all kmer store have kmer length\n");
             concrete_actor->configured_actors = 0;
@@ -619,16 +619,16 @@ void argonnite_receive(struct thorium_actor *actor, struct thorium_message *mess
          */
 
         kernel_index = source;
-        kernel_index_index = biosal_vector_index_of(&concrete_actor->kernels, &kernel_index);
+        kernel_index_index = core_vector_index_of(&concrete_actor->kernels, &kernel_index);
 
-        BIOSAL_DEBUGGER_ASSERT(kernel_index >= 0);
-        BIOSAL_DEBUGGER_ASSERT(kernel_index_index >= 0);
+        CORE_DEBUGGER_ASSERT(kernel_index >= 0);
+        CORE_DEBUGGER_ASSERT(kernel_index_index >= 0);
 
-        sequence_store_index = biosal_vector_at_as_int(&concrete_actor->sequence_stores, kernel_index_index);
+        sequence_store_index = core_vector_at_as_int(&concrete_actor->sequence_stores, kernel_index_index);
 
-        bucket = biosal_map_get(&concrete_actor->plentiful_stores, &kernel_index_index);
+        bucket = core_map_get(&concrete_actor->plentiful_stores, &kernel_index_index);
 
-        biosal_map_delete(&concrete_actor->plentiful_stores, &kernel_index_index);
+        core_map_delete(&concrete_actor->plentiful_stores, &kernel_index_index);
 
         concrete_actor->finished_kernels++;
 
@@ -643,42 +643,42 @@ void argonnite_receive(struct thorium_actor *actor, struct thorium_message *mess
 
             print_stuff = 1;
             printf("DEBUG finished kernels %d/%d, plentiful stores %d/%d\n", concrete_actor->finished_kernels,
-                        (int)biosal_vector_size(&concrete_actor->kernels),
-                        (int)biosal_map_size(&concrete_actor->plentiful_stores),
-                        (int)biosal_vector_size(&concrete_actor->sequence_stores));
+                        (int)core_vector_size(&concrete_actor->kernels),
+                        (int)core_map_size(&concrete_actor->plentiful_stores),
+                        (int)core_vector_size(&concrete_actor->sequence_stores));
         }
 
         /* CONSTRUCTION SITE */
 
         /* If there are still stores with data
          */
-        if (enable_work_stealing && !biosal_map_empty(&concrete_actor->plentiful_stores)) {
+        if (enable_work_stealing && !core_map_empty(&concrete_actor->plentiful_stores)) {
 
             /* Find a store now with data.
              * There is at least one.
              */
             sequence_store_index_index = kernel_index_index;
 
-            bucket = biosal_map_get(&concrete_actor->plentiful_stores, &sequence_store_index_index);
+            bucket = core_map_get(&concrete_actor->plentiful_stores, &sequence_store_index_index);
 
             while (bucket == NULL) {
 
                 sequence_store_index_index++;
-                sequence_store_index_index %= (int)biosal_vector_size(&concrete_actor->sequence_stores);
+                sequence_store_index_index %= (int)core_vector_size(&concrete_actor->sequence_stores);
 
-                bucket = biosal_map_get(&concrete_actor->plentiful_stores, &sequence_store_index_index);
+                bucket = core_map_get(&concrete_actor->plentiful_stores, &sequence_store_index_index);
             }
 
             /* Make sure the bucket is not NULL...
              */
-            BIOSAL_DEBUGGER_ASSERT(bucket != NULL);
+            CORE_DEBUGGER_ASSERT(bucket != NULL);
 
             (*bucket)++;
 
-            sequence_store_index = biosal_vector_at_as_int(&concrete_actor->sequence_stores,
+            sequence_store_index = core_vector_at_as_int(&concrete_actor->sequence_stores,
                             sequence_store_index_index);
             sequence_store = sequence_store_index;
-            other_kernel = biosal_vector_at_as_int(&concrete_actor->kernels,
+            other_kernel = core_vector_at_as_int(&concrete_actor->kernels,
                             sequence_store_index_index);
             kernel = source;
 
@@ -698,7 +698,7 @@ void argonnite_receive(struct thorium_actor *actor, struct thorium_message *mess
             concrete_actor->finished_kernels--;
         }
 
-        if (concrete_actor->finished_kernels == biosal_vector_size(&concrete_actor->kernels)) {
+        if (concrete_actor->finished_kernels == core_vector_size(&concrete_actor->kernels)) {
 
 
             printf("sending ACTION_NOTIFY\n");
@@ -718,7 +718,7 @@ void argonnite_receive(struct thorium_actor *actor, struct thorium_message *mess
 
         concrete_actor->ready_kernels++;
 
-        if (concrete_actor->ready_kernels == biosal_vector_size(&concrete_actor->kernels)) {
+        if (concrete_actor->ready_kernels == core_vector_size(&concrete_actor->kernels)) {
 
             printf("DEBUG probing kmer stores\n");
             thorium_actor_send_to_self_empty(actor, ACTION_ARGONNITE_PROBE_KMER_STORES);
@@ -730,7 +730,7 @@ void argonnite_receive(struct thorium_actor *actor, struct thorium_message *mess
         thorium_message_unpack_uint64_t(message, 0, &produced);
         concrete_actor->actual_kmers += produced;
 
-        if (concrete_actor->ready_stores == biosal_vector_size(&concrete_actor->kmer_stores)) {
+        if (concrete_actor->ready_stores == core_vector_size(&concrete_actor->kmer_stores)) {
 
             if (concrete_actor->actual_kmers == concrete_actor->total_kmers) {
 
@@ -742,11 +742,11 @@ void argonnite_receive(struct thorium_actor *actor, struct thorium_message *mess
 
 
                 thorium_actor_send_int(actor, distribution, ACTION_SET_EXPECTED_MESSAGE_COUNT,
-                                biosal_vector_size(&concrete_actor->kmer_stores));
+                                core_vector_size(&concrete_actor->kmer_stores));
 
                 printf("ISSUE_481 argonnite %d sends ACTION_PUSH_DATA to %d stores\n",
                                 thorium_actor_name(actor),
-                                (int)biosal_vector_size(&kmer_stores));
+                                (int)core_vector_size(&kmer_stores));
 
                 thorium_actor_send_range_empty(actor, &concrete_actor->kmer_stores, ACTION_PUSH_DATA);
 
@@ -781,10 +781,10 @@ void argonnite_receive(struct thorium_actor *actor, struct thorium_message *mess
     } else if (tag == ACTION_NOTIFY && source == concrete_actor->distribution) {
 
 
-        biosal_vector_iterator_init(&iterator, &concrete_actor->initial_actors);
+        core_vector_iterator_init(&iterator, &concrete_actor->initial_actors);
 
-        while (biosal_vector_iterator_has_next(&iterator)) {
-            biosal_vector_iterator_next(&iterator, (void **)&bucket);
+        while (core_vector_iterator_has_next(&iterator)) {
+            core_vector_iterator_next(&iterator, (void **)&bucket);
 
             other_name = *bucket;
 
@@ -795,16 +795,16 @@ void argonnite_receive(struct thorium_actor *actor, struct thorium_message *mess
         }
 
 
-        biosal_vector_iterator_destroy(&iterator);
+        core_vector_iterator_destroy(&iterator);
 
     } else if (tag == ACTION_ASK_TO_STOP) {
 
         if (concrete_actor->is_boss) {
-            biosal_timer_stop(&concrete_actor->timer_for_kmers);
-            biosal_timer_print_with_description(&concrete_actor->timer_for_kmers, "Input streaming and classification");
+            core_timer_stop(&concrete_actor->timer_for_kmers);
+            core_timer_print_with_description(&concrete_actor->timer_for_kmers, "Input streaming and classification");
 
-            biosal_timer_stop(&concrete_actor->timer);
-            biosal_timer_print_with_description(&concrete_actor->timer, "Actor computation");
+            core_timer_stop(&concrete_actor->timer);
+            core_timer_print_with_description(&concrete_actor->timer, "Actor computation");
         }
 
         printf("argonnite %d stops\n", name);
@@ -871,7 +871,7 @@ void argonnite_help(struct thorium_actor *actor)
     printf("-k kmer_length                      kmer length (default: %d, no limit, no compilation option)\n",
                     ARGONNITE_DEFAULT_KMER_LENGTH);
     printf("-o output                           output directory (default: %s)\n",
-                    BIOSAL_DEFAULT_OUTPUT);
+                    CORE_DEFAULT_OUTPUT);
     printf("-print-load                         display load, memory usage, actor count, active requests\n");
     printf("-print-counters                     print node-level biosal counters\n");
     printf("\n");
@@ -921,8 +921,8 @@ void argonnite_prepare_sequence_stores(struct thorium_actor *self, struct thoriu
     if (tag == ACTION_ARGONNITE_PREPARE_SEQUENCE_STORES) {
 
         printf("DEBUGY spawn manager for stores\n");
-        spawner = biosal_vector_at_as_int(&concrete_actor->initial_actors,
-                        biosal_vector_size(&concrete_actor->initial_actors) - 1);
+        spawner = core_vector_at_as_int(&concrete_actor->initial_actors,
+                        core_vector_size(&concrete_actor->initial_actors) - 1);
         thorium_actor_send_int(self, spawner, ACTION_SPAWN, SCRIPT_MANAGER);
 
     } else if (tag == ACTION_SPAWN_REPLY) {
@@ -944,7 +944,7 @@ void argonnite_prepare_sequence_stores(struct thorium_actor *self, struct thoriu
     } else if (tag == ACTION_START_REPLY) {
 
         printf("DEBUGY got sequence stores !\n");
-        biosal_vector_unpack(&concrete_actor->sequence_stores, buffer);
+        core_vector_unpack(&concrete_actor->sequence_stores, buffer);
 
         controller = concrete_actor->controller;
 
@@ -955,12 +955,12 @@ void argonnite_prepare_sequence_stores(struct thorium_actor *self, struct thoriu
         /* add stores in the plentiful stores
          */
 
-        for (i = 0; i < biosal_vector_size(&concrete_actor->sequence_stores); i++) {
+        for (i = 0; i < core_vector_size(&concrete_actor->sequence_stores); i++) {
                 /*
-            store_index = biosal_vector_at_as_int(&concrete_actor->sequence_stores, i);
+            store_index = core_vector_at_as_int(&concrete_actor->sequence_stores, i);
             */
 
-            bucket = biosal_map_add(&concrete_actor->plentiful_stores, &i);
+            bucket = core_map_add(&concrete_actor->plentiful_stores, &i);
             *bucket = 1;
 
             /*
@@ -968,7 +968,7 @@ void argonnite_prepare_sequence_stores(struct thorium_actor *self, struct thoriu
              * about progress
              */
 #if 1
-            thorium_actor_send_empty(self, biosal_vector_at_as_int(&concrete_actor->sequence_stores, i),
+            thorium_actor_send_empty(self, core_vector_at_as_int(&concrete_actor->sequence_stores, i),
                             ACTION_SEQUENCE_STORE_REQUEST_PROGRESS);
 #endif
         }
@@ -993,7 +993,7 @@ void argonnite_connect_kernels_with_stores(struct thorium_actor *self, struct th
     name = thorium_actor_name(self);
     concrete_actor = (struct argonnite *)thorium_actor_concrete_actor(self);
 
-    biosal_timer_start(&concrete_actor->timer_for_kmers);
+    core_timer_start(&concrete_actor->timer_for_kmers);
 
     printf("argonnite %d receives ACTION_INPUT_DISTRIBUTE_REPLY\n",
                         name);
@@ -1008,9 +1008,9 @@ void argonnite_connect_kernels_with_stores(struct thorium_actor *self, struct th
      */
 
 
-    for (i = 0; i < biosal_vector_size(&concrete_actor->kernels); i++) {
-        sequence_store = biosal_vector_at_as_int(&concrete_actor->sequence_stores, i);
-        kernel = biosal_vector_at_as_int(&concrete_actor->kernels, i);
+    for (i = 0; i < core_vector_size(&concrete_actor->kernels); i++) {
+        sequence_store = core_vector_at_as_int(&concrete_actor->sequence_stores, i);
+        kernel = core_vector_at_as_int(&concrete_actor->kernels, i);
 
         thorium_actor_send_int(self, kernel, ACTION_SET_PRODUCER, sequence_store);
 
@@ -1036,8 +1036,8 @@ void argonnite_request_progress_reply(struct thorium_actor *actor, struct thoriu
     source = thorium_message_source(message);
 
     store_index = source;
-    store_index_index = biosal_vector_index_of(&concrete_actor->sequence_stores, &store_index);
-    kmer_store = biosal_vector_at_as_int(&concrete_actor->kmer_stores, store_index_index);
+    store_index_index = core_vector_index_of(&concrete_actor->sequence_stores, &store_index);
+    kmer_store = core_vector_at_as_int(&concrete_actor->kmer_stores, store_index_index);
 
     printf("sequence store %d has a completion of %f, sending notice to kmer store %d\n",
                     source, value, kmer_store);

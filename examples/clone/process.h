@@ -8,7 +8,7 @@
 
 struct process {
     int clone;
-    struct biosal_vector initial_processes;
+    struct core_vector initial_processes;
     int value;
     int ready;
     int cloned;

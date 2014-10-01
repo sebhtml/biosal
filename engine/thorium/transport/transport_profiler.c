@@ -12,53 +12,53 @@
 void thorium_transport_profiler_init(struct thorium_transport_profiler *self)
 {
     self->rank = -1;
-    biosal_map_init(&self->buffer_sizes, sizeof(int), sizeof(int));
+    core_map_init(&self->buffer_sizes, sizeof(int), sizeof(int));
 }
 
 void thorium_transport_profiler_destroy(struct thorium_transport_profiler *self)
 {
     self->rank = -1;
-    biosal_map_destroy(&self->buffer_sizes);
+    core_map_destroy(&self->buffer_sizes);
 }
 
 void thorium_transport_profiler_print_report(struct thorium_transport_profiler *self)
 {
-    struct biosal_map_iterator iterator;
-    struct biosal_vector_iterator vector_iterator;
+    struct core_map_iterator iterator;
+    struct core_vector_iterator vector_iterator;
     int buffer_size;
     int frequency;
-    struct biosal_vector sizes;
+    struct core_vector sizes;
 
     printf("Thorium Transport Profiler Report, node/%d\n",
                     self->rank);
 
-    biosal_vector_init(&sizes, sizeof(int));
-    biosal_map_iterator_init(&iterator, &self->buffer_sizes);
+    core_vector_init(&sizes, sizeof(int));
+    core_map_iterator_init(&iterator, &self->buffer_sizes);
 
-    while (biosal_map_iterator_get_next_key_and_value(&iterator,
+    while (core_map_iterator_get_next_key_and_value(&iterator,
                             &buffer_size, NULL)) {
 
-        biosal_vector_push_back(&sizes, &buffer_size);
+        core_vector_push_back(&sizes, &buffer_size);
     }
 
-    biosal_vector_sort_int(&sizes);
-    biosal_map_iterator_destroy(&iterator);
+    core_vector_sort_int(&sizes);
+    core_map_iterator_destroy(&iterator);
 
-    biosal_vector_iterator_init(&vector_iterator, &sizes);
+    core_vector_iterator_init(&vector_iterator, &sizes);
 
     printf("Buffer sizes:\n");
     printf("ByteCount\tFrequency\n");
 
-    while (biosal_vector_iterator_get_next_value(&vector_iterator,
+    while (core_vector_iterator_get_next_value(&vector_iterator,
                             &buffer_size)) {
 
-        biosal_map_get_value(&self->buffer_sizes, &buffer_size, &frequency);
+        core_map_get_value(&self->buffer_sizes, &buffer_size, &frequency);
 
         printf("%d\t%d\n", buffer_size, frequency);
     }
 
-    biosal_vector_iterator_destroy(&vector_iterator);
-    biosal_vector_destroy(&sizes);
+    core_vector_iterator_destroy(&vector_iterator);
+    core_vector_destroy(&sizes);
 }
 
 void thorium_transport_profiler_send_mock(struct thorium_transport_profiler *self,
@@ -75,10 +75,10 @@ void thorium_transport_profiler_send_mock(struct thorium_transport_profiler *sel
         self->rank = rank;
     }
 
-    bucket = biosal_map_get(&self->buffer_sizes, &size);
+    bucket = core_map_get(&self->buffer_sizes, &size);
 
     if (bucket == NULL) {
-        bucket = biosal_map_add(&self->buffer_sizes, &size);
+        bucket = core_map_add(&self->buffer_sizes, &size);
         *bucket = 0;
     }
 

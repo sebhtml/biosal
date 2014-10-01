@@ -24,7 +24,7 @@ void reader_init(struct thorium_actor *actor)
     reader1->counted = 0;
     reader1->pulled = 0;
 
-    biosal_vector_init(&reader1->spawners, sizeof(int));
+    core_vector_init(&reader1->spawners, sizeof(int));
     thorium_actor_add_script(actor, SCRIPT_INPUT_STREAM,
                     &biosal_input_stream_script);
 }
@@ -37,7 +37,7 @@ void reader_destroy(struct thorium_actor *actor)
     reader1->counted = 0;
     reader1->pulled = 0;
 
-    biosal_vector_destroy(&reader1->spawners);
+    core_vector_destroy(&reader1->spawners);
 }
 
 void reader_receive(struct thorium_actor *actor, struct thorium_message *message)
@@ -65,8 +65,8 @@ void reader_receive(struct thorium_actor *actor, struct thorium_message *message
 
     if (tag == ACTION_START) {
 
-        biosal_vector_init(&reader1->spawners, 0);
-        biosal_vector_unpack(&reader1->spawners, buffer);
+        core_vector_init(&reader1->spawners, 0);
+        core_vector_unpack(&reader1->spawners, buffer);
 
         argc = thorium_actor_argc(actor);
         argv = thorium_actor_argv(actor);
@@ -81,7 +81,7 @@ void reader_receive(struct thorium_actor *actor, struct thorium_message *message
         }
         */
 
-        if (biosal_vector_index_of(&reader1->spawners, &name) != 0) {
+        if (core_vector_index_of(&reader1->spawners, &name) != 0) {
             thorium_message_init(message, ACTION_STOP, 0, NULL);
             thorium_actor_send(actor, name, message);
 

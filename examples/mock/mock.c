@@ -26,7 +26,7 @@ void mock_init(struct thorium_actor *actor)
     mock1->children[2] = -1;
     mock1->notified = 0;
 
-    biosal_vector_init(&mock1->spawners, sizeof(int));
+    core_vector_init(&mock1->spawners, sizeof(int));
     thorium_actor_add_script(actor, SCRIPT_BUDDY, &buddy_script);
 }
 
@@ -37,7 +37,7 @@ void mock_destroy(struct thorium_actor *actor)
     mock1 = (struct mock *)thorium_actor_concrete_actor(actor);
     mock1->value = -1;
 
-    biosal_vector_destroy(&mock1->spawners);
+    core_vector_destroy(&mock1->spawners);
 }
 
 void mock_receive(struct thorium_actor *actor, struct thorium_message *message)
@@ -57,11 +57,11 @@ void mock_receive(struct thorium_actor *actor, struct thorium_message *message)
 
     if (tag == ACTION_START) {
 
-        biosal_vector_init(&mock1->spawners, 0);
-        biosal_vector_unpack(&mock1->spawners, buffer);
+        core_vector_init(&mock1->spawners, 0);
+        core_vector_unpack(&mock1->spawners, buffer);
 
         printf("ACTION_START spawners: %d\n",
-                        (int)biosal_vector_size(&mock1->spawners));
+                        (int)core_vector_size(&mock1->spawners));
 
         /*mock_init(actor);*/
         mock_start(actor, message);
@@ -80,9 +80,9 @@ void mock_receive(struct thorium_actor *actor, struct thorium_message *message)
 
         printf("ACTION_BUDDY_HELLO_OK\n");
 
-        BIOSAL_DEBUGGER_ASSERT(biosal_vector_size(&mock1->spawners) > 0);
+        CORE_DEBUGGER_ASSERT(core_vector_size(&mock1->spawners) > 0);
 
-        destination = *(int *)biosal_vector_at(&mock1->spawners, 0);
+        destination = *(int *)core_vector_at(&mock1->spawners, 0);
 
         thorium_message_init(&new_message, ACTION_MOCK_NOTIFY, 0, NULL);
         thorium_actor_send(actor, destination, &new_message);
@@ -93,9 +93,9 @@ void mock_receive(struct thorium_actor *actor, struct thorium_message *message)
         mock1->notified++;
 
         printf("notifications %d/%d\n", mock1->notified,
-                        (int)biosal_vector_size(&mock1->spawners));
+                        (int)core_vector_size(&mock1->spawners));
 
-        if (mock1->notified == biosal_vector_size(&mock1->spawners)) {
+        if (mock1->notified == core_vector_size(&mock1->spawners)) {
             thorium_message_init(message, ACTION_MOCK_PREPARE_DEATH, 0, NULL);
 
             /* the default binomial-tree algorithm can not
@@ -182,16 +182,16 @@ void mock_share(struct thorium_actor *actor, struct thorium_message *message)
 
     mock1 = (struct mock *)thorium_actor_concrete_actor(actor);
     name = thorium_actor_name(actor);
-    index = biosal_vector_index_of(&mock1->spawners, &name);
+    index = core_vector_index_of(&mock1->spawners, &name);
 
     /* get the next mock actor
      * Actually uses 0 because this example code is ill-designed.
      */
-    next = (index + 0) % biosal_vector_size(&mock1->spawners);
+    next = (index + 0) % core_vector_size(&mock1->spawners);
 
     thorium_message_init(&message2, ACTION_MOCK_NEW_CONTACTS, 3 * sizeof(int),
                     (char *)mock1->children);
-    thorium_actor_send(actor, *(int *)biosal_vector_at(&mock1->spawners, next), &message2);
+    thorium_actor_send(actor, *(int *)core_vector_at(&mock1->spawners, next), &message2);
     thorium_message_destroy(&message2);
 }
 

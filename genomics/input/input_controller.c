@@ -61,24 +61,24 @@ void biosal_input_controller_init(struct thorium_actor *actor)
 
     concrete_actor = (struct biosal_input_controller *)thorium_actor_concrete_actor(actor);
 
-    biosal_map_init(&concrete_actor->mega_blocks, sizeof(int), sizeof(struct biosal_vector));
-    biosal_map_init(&concrete_actor->assigned_blocks, sizeof(int), sizeof(int));
-    biosal_vector_init(&concrete_actor->mega_block_vector, sizeof(struct biosal_mega_block));
+    core_map_init(&concrete_actor->mega_blocks, sizeof(int), sizeof(struct core_vector));
+    core_map_init(&concrete_actor->assigned_blocks, sizeof(int), sizeof(int));
+    core_vector_init(&concrete_actor->mega_block_vector, sizeof(struct biosal_mega_block));
 
-    biosal_vector_init(&concrete_actor->counting_streams, sizeof(int));
-    biosal_vector_init(&concrete_actor->reading_streams, sizeof(int));
-    biosal_vector_init(&concrete_actor->partition_commands, sizeof(int));
-    biosal_vector_init(&concrete_actor->stream_consumers, sizeof(int));
-    biosal_vector_init(&concrete_actor->consumer_active_requests, sizeof(int));
-    biosal_vector_init(&concrete_actor->files, sizeof(char *));
-    biosal_vector_init(&concrete_actor->spawners, sizeof(int));
-    biosal_vector_init(&concrete_actor->counts, sizeof(int64_t));
-    biosal_vector_init(&concrete_actor->consumers, sizeof(int));
-    biosal_vector_init(&concrete_actor->stores_per_spawner, sizeof(int));
+    core_vector_init(&concrete_actor->counting_streams, sizeof(int));
+    core_vector_init(&concrete_actor->reading_streams, sizeof(int));
+    core_vector_init(&concrete_actor->partition_commands, sizeof(int));
+    core_vector_init(&concrete_actor->stream_consumers, sizeof(int));
+    core_vector_init(&concrete_actor->consumer_active_requests, sizeof(int));
+    core_vector_init(&concrete_actor->files, sizeof(char *));
+    core_vector_init(&concrete_actor->spawners, sizeof(int));
+    core_vector_init(&concrete_actor->counts, sizeof(int64_t));
+    core_vector_init(&concrete_actor->consumers, sizeof(int));
+    core_vector_init(&concrete_actor->stores_per_spawner, sizeof(int));
 
-    biosal_timer_init(&concrete_actor->input_timer);
-    biosal_timer_init(&concrete_actor->counting_timer);
-    biosal_timer_init(&concrete_actor->distribution_timer);
+    core_timer_init(&concrete_actor->input_timer);
+    core_timer_init(&concrete_actor->counting_timer);
+    core_timer_init(&concrete_actor->distribution_timer);
 
     biosal_dna_codec_init(&concrete_actor->codec);
 
@@ -87,7 +87,7 @@ void biosal_input_controller_init(struct thorium_actor *actor)
         biosal_dna_codec_enable_two_bit_encoding(&concrete_actor->codec);
     }
 
-    biosal_queue_init(&concrete_actor->unprepared_spawners, sizeof(int));
+    core_queue_init(&concrete_actor->unprepared_spawners, sizeof(int));
 
     concrete_actor->opened_streams = 0;
     concrete_actor->state = BIOSAL_INPUT_CONTROLLER_STATE_NONE;
@@ -140,44 +140,44 @@ void biosal_input_controller_destroy(struct thorium_actor *actor)
     struct biosal_input_controller *concrete_actor;
     int i;
     char *pointer;
-    struct biosal_map_iterator iterator;
-    struct biosal_vector *vector;
+    struct core_map_iterator iterator;
+    struct core_vector *vector;
 
     concrete_actor = (struct biosal_input_controller *)thorium_actor_concrete_actor(actor);
 
-    biosal_timer_destroy(&concrete_actor->input_timer);
-    biosal_timer_destroy(&concrete_actor->counting_timer);
-    biosal_timer_destroy(&concrete_actor->distribution_timer);
+    core_timer_destroy(&concrete_actor->input_timer);
+    core_timer_destroy(&concrete_actor->counting_timer);
+    core_timer_destroy(&concrete_actor->distribution_timer);
 
     biosal_dna_codec_destroy(&concrete_actor->codec);
 
-    for (i = 0; i < biosal_vector_size(&concrete_actor->files); i++) {
-        pointer = *(char **)biosal_vector_at(&concrete_actor->files, i);
-        biosal_memory_free(pointer, MEMORY_CONTROLLER);
+    for (i = 0; i < core_vector_size(&concrete_actor->files); i++) {
+        pointer = *(char **)core_vector_at(&concrete_actor->files, i);
+        core_memory_free(pointer, MEMORY_CONTROLLER);
     }
 
-    biosal_vector_destroy(&concrete_actor->mega_block_vector);
-    biosal_vector_destroy(&concrete_actor->counting_streams);
-    biosal_vector_destroy(&concrete_actor->reading_streams);
-    biosal_vector_destroy(&concrete_actor->partition_commands);
-    biosal_vector_destroy(&concrete_actor->consumer_active_requests);
-    biosal_vector_destroy(&concrete_actor->stream_consumers);
-    biosal_vector_destroy(&concrete_actor->files);
-    biosal_vector_destroy(&concrete_actor->spawners);
-    biosal_vector_destroy(&concrete_actor->counts);
-    biosal_vector_destroy(&concrete_actor->consumers);
-    biosal_vector_destroy(&concrete_actor->stores_per_spawner);
-    biosal_queue_destroy(&concrete_actor->unprepared_spawners);
+    core_vector_destroy(&concrete_actor->mega_block_vector);
+    core_vector_destroy(&concrete_actor->counting_streams);
+    core_vector_destroy(&concrete_actor->reading_streams);
+    core_vector_destroy(&concrete_actor->partition_commands);
+    core_vector_destroy(&concrete_actor->consumer_active_requests);
+    core_vector_destroy(&concrete_actor->stream_consumers);
+    core_vector_destroy(&concrete_actor->files);
+    core_vector_destroy(&concrete_actor->spawners);
+    core_vector_destroy(&concrete_actor->counts);
+    core_vector_destroy(&concrete_actor->consumers);
+    core_vector_destroy(&concrete_actor->stores_per_spawner);
+    core_queue_destroy(&concrete_actor->unprepared_spawners);
 
-    biosal_map_iterator_init(&iterator, &concrete_actor->mega_blocks);
-    while (biosal_map_iterator_has_next(&iterator)) {
-        biosal_map_iterator_next(&iterator, NULL, (void **)&vector);
+    core_map_iterator_init(&iterator, &concrete_actor->mega_blocks);
+    while (core_map_iterator_has_next(&iterator)) {
+        core_map_iterator_next(&iterator, NULL, (void **)&vector);
 
-        biosal_vector_destroy(vector);
+        core_vector_destroy(vector);
     }
-    biosal_map_iterator_destroy(&iterator);
-    biosal_map_destroy(&concrete_actor->mega_blocks);
-    biosal_map_destroy(&concrete_actor->assigned_blocks);
+    core_map_iterator_destroy(&iterator);
+    core_map_destroy(&concrete_actor->mega_blocks);
+    core_map_destroy(&concrete_actor->assigned_blocks);
 }
 
 void biosal_input_controller_receive(struct thorium_actor *actor, struct thorium_message *message)
@@ -211,17 +211,17 @@ void biosal_input_controller_receive(struct thorium_actor *actor, struct thorium
     char *new_buffer;
     int new_count;
     int file_index;
-    struct biosal_vector mega_blocks;
-    struct biosal_vector_iterator vector_iterator;
+    struct core_vector mega_blocks;
+    struct core_vector_iterator vector_iterator;
     struct biosal_mega_block *mega_block;
-    struct biosal_vector *vector_bucket;
-    struct biosal_vector block_counts;
+    struct core_vector *vector_bucket;
+    struct core_vector block_counts;
     uint64_t block_entries;
     int mega_block_index;
     uint64_t offset;
     struct biosal_mega_block *block;
     int acquaintance_index;
-    struct biosal_memory_pool *ephemeral_memory;
+    struct core_memory_pool *ephemeral_memory;
 
     if (thorium_actor_take_action(actor, message)) {
         return;
@@ -229,26 +229,26 @@ void biosal_input_controller_receive(struct thorium_actor *actor, struct thorium
 
     thorium_message_get_all(message, &tag, &count, &buffer, &source);
 
-    ephemeral_memory = (struct biosal_memory_pool *)thorium_actor_get_ephemeral_memory(actor);
+    ephemeral_memory = (struct core_memory_pool *)thorium_actor_get_ephemeral_memory(actor);
     name = thorium_actor_name(actor);
     controller = (struct biosal_input_controller *)thorium_actor_concrete_actor(actor);
     concrete_actor = controller;
 
     if (tag == ACTION_START) {
 
-        biosal_vector_init(&concrete_actor->spawners, 0);
-        biosal_vector_unpack(&concrete_actor->spawners, buffer);
+        core_vector_init(&concrete_actor->spawners, 0);
+        core_vector_unpack(&concrete_actor->spawners, buffer);
 
-        biosal_vector_resize(&concrete_actor->stores_per_spawner,
-                        biosal_vector_size(&concrete_actor->spawners));
+        core_vector_resize(&concrete_actor->stores_per_spawner,
+                        core_vector_size(&concrete_actor->spawners));
 
-        for (i = 0; i < biosal_vector_size(&concrete_actor->spawners); i++) {
-            int_bucket = (int *)biosal_vector_at(&concrete_actor->stores_per_spawner, i);
+        for (i = 0; i < core_vector_size(&concrete_actor->spawners); i++) {
+            int_bucket = (int *)core_vector_at(&concrete_actor->stores_per_spawner, i);
             *int_bucket = 0;
 
-            spawner = biosal_vector_at_as_int(&concrete_actor->spawners, i);
+            spawner = core_vector_at_as_int(&concrete_actor->spawners, i);
 
-            biosal_queue_enqueue(&concrete_actor->unprepared_spawners, &spawner);
+            core_queue_enqueue(&concrete_actor->unprepared_spawners, &spawner);
         }
 
         concrete_actor->state = BIOSAL_INPUT_CONTROLLER_STATE_PREPARE_SPAWNERS;
@@ -267,21 +267,21 @@ void biosal_input_controller_receive(struct thorium_actor *actor, struct thorium
 
         file = (char *)buffer;
 
-        local_file = biosal_memory_allocate(strlen(file) + 1, MEMORY_CONTROLLER);
+        local_file = core_memory_allocate(strlen(file) + 1, MEMORY_CONTROLLER);
         strcpy(local_file, file);
 
         printf("controller %d ACTION_ADD_FILE %s\n",
                         thorium_actor_name(actor),
                         local_file);
 
-        biosal_vector_push_back(&concrete_actor->files, &local_file);
+        core_vector_push_back(&concrete_actor->files, &local_file);
 
-        bucket = biosal_vector_at(&concrete_actor->files, biosal_vector_size(&concrete_actor->files) - 1);
+        bucket = core_vector_at(&concrete_actor->files, core_vector_size(&concrete_actor->files) - 1);
         local_file = *(char **)bucket;
 
 #ifdef BIOSAL_INPUT_CONTROLLER_DEBUG_LEVEL_2
         printf("DEBUG11 ACTION_ADD_FILE %s %p bucket %p index %d\n",
-                        local_file, local_file, (void *)bucket, biosal_vector_size(&concrete_actor->files) - 1);
+                        local_file, local_file, (void *)bucket, core_vector_size(&concrete_actor->files) - 1);
 #endif
 
         thorium_actor_send_reply_empty(actor, ACTION_ADD_FILE_REPLY);
@@ -300,7 +300,7 @@ void biosal_input_controller_receive(struct thorium_actor *actor, struct thorium
             thorium_actor_send_empty(actor, name, ACTION_ASK_TO_STOP);
             thorium_actor_send_to_self_empty(actor, ACTION_INPUT_CONTROLLER_PREPARE_SPAWNERS);
 
-            if (concrete_actor->ready_spawners == (int)biosal_vector_size(&concrete_actor->spawners)) {
+            if (concrete_actor->ready_spawners == (int)core_vector_size(&concrete_actor->spawners)) {
 
 #ifdef BIOSAL_INPUT_CONTROLLER_DEBUG
                 printf("DEBUG all spawners are prepared\n");
@@ -326,30 +326,30 @@ void biosal_input_controller_receive(struct thorium_actor *actor, struct thorium
                             concrete_actor->block_size);
             thorium_actor_send_int(actor, destination,
                             ACTION_SEQUENCE_PARTITIONER_SET_ACTOR_COUNT,
-                            biosal_vector_size(&concrete_actor->consumers));
+                            core_vector_size(&concrete_actor->consumers));
 
-            biosal_vector_init(&block_counts, sizeof(uint64_t));
+            core_vector_init(&block_counts, sizeof(uint64_t));
 
-            for (i = 0; i < biosal_vector_size(&concrete_actor->mega_block_vector); i++) {
+            for (i = 0; i < core_vector_size(&concrete_actor->mega_block_vector); i++) {
 
-                block = (struct biosal_mega_block *)biosal_vector_at(&concrete_actor->mega_block_vector, i);
+                block = (struct biosal_mega_block *)core_vector_at(&concrete_actor->mega_block_vector, i);
                 block_entries = biosal_mega_block_get_entries(block);
 
-                biosal_vector_push_back_uint64_t(&block_counts, block_entries);
+                core_vector_push_back_uint64_t(&block_counts, block_entries);
             }
 
-            new_count = biosal_vector_pack_size(&block_counts);
+            new_count = core_vector_pack_size(&block_counts);
             new_buffer = thorium_actor_allocate(actor, new_count);
 
 #ifdef BIOSAL_INPUT_CONTROLLER_DEBUG
             printf("DEBUG packed counts, %d bytes\n", count);
 #endif
 
-            biosal_vector_pack(&block_counts, new_buffer);
+            core_vector_pack(&block_counts, new_buffer);
             thorium_message_init(&new_message, ACTION_SEQUENCE_PARTITIONER_SET_ENTRY_VECTOR,
                             new_count, new_buffer);
             thorium_actor_send(actor, destination, &new_message);
-            biosal_vector_destroy(&block_counts);
+            core_vector_destroy(&block_counts);
 
             return;
 
@@ -359,19 +359,19 @@ void biosal_input_controller_receive(struct thorium_actor *actor, struct thorium
 
             stream_index = stream;
 
-            mega_block_index = biosal_vector_size(&concrete_actor->reading_streams);
+            mega_block_index = core_vector_size(&concrete_actor->reading_streams);
 
-            biosal_vector_push_back_int(&concrete_actor->reading_streams, stream_index);
-            biosal_vector_push_back_int(&concrete_actor->partition_commands, -1);
-            biosal_vector_push_back_int(&concrete_actor->stream_consumers, -1);
+            core_vector_push_back_int(&concrete_actor->reading_streams, stream_index);
+            core_vector_push_back_int(&concrete_actor->partition_commands, -1);
+            core_vector_push_back_int(&concrete_actor->stream_consumers, -1);
 
-            stream_index = biosal_vector_size(&concrete_actor->reading_streams) - 1;
-            mega_block = (struct biosal_mega_block *)biosal_vector_at(&concrete_actor->mega_block_vector,
+            stream_index = core_vector_size(&concrete_actor->reading_streams) - 1;
+            mega_block = (struct biosal_mega_block *)core_vector_at(&concrete_actor->mega_block_vector,
                             mega_block_index);
 
             offset = biosal_mega_block_get_offset(mega_block);
 
-            biosal_map_add_value(&concrete_actor->assigned_blocks,
+            core_map_add_value(&concrete_actor->assigned_blocks,
                             &stream_index, &mega_block_index);
 
 #ifdef BIOSAL_INPUT_CONTROLLER_DEBUG_READING_STREAMS
@@ -386,8 +386,8 @@ void biosal_input_controller_receive(struct thorium_actor *actor, struct thorium
 
         stream = *(int *)buffer;
 
-        file_index = biosal_vector_size(&concrete_actor->counting_streams);
-        local_file = *(char **)biosal_vector_at(&concrete_actor->files, file_index);
+        file_index = core_vector_size(&concrete_actor->counting_streams);
+        local_file = *(char **)core_vector_at(&concrete_actor->files, file_index);
 
 #ifdef BIOSAL_INPUT_CONTROLLER_DEBUG_READING_STREAMS
         printf("DEBUG actor %d receives stream %d from spawner %d for file %s\n",
@@ -395,7 +395,7 @@ void biosal_input_controller_receive(struct thorium_actor *actor, struct thorium
                         local_file);
 #endif
 
-        biosal_vector_push_back(&concrete_actor->counting_streams, &stream);
+        core_vector_push_back(&concrete_actor->counting_streams, &stream);
 
 #ifdef BIOSAL_INPUT_CONTROLLER_DEBUG_READING_STREAMS
         printf("asking stream/%d to open %s\n", stream, local_file);
@@ -410,7 +410,7 @@ void biosal_input_controller_receive(struct thorium_actor *actor, struct thorium
         thorium_actor_send(actor, stream, &new_message);
         thorium_message_destroy(&new_message);
 
-        if (biosal_vector_size(&concrete_actor->counting_streams) != biosal_vector_size(&concrete_actor->files)) {
+        if (core_vector_size(&concrete_actor->counting_streams) != core_vector_size(&concrete_actor->files)) {
 
             thorium_actor_send_to_self_empty(actor, ACTION_INPUT_SPAWN);
 
@@ -429,7 +429,7 @@ void biosal_input_controller_receive(struct thorium_actor *actor, struct thorium
 #endif
             concrete_actor->opened_streams++;
 
-            if (concrete_actor->opened_streams == biosal_vector_size(&concrete_actor->mega_block_vector)) {
+            if (concrete_actor->opened_streams == core_vector_size(&concrete_actor->mega_block_vector)) {
                 thorium_actor_send_to_self_empty(actor, ACTION_INPUT_CONTROLLER_CREATE_STORES);
             }
 
@@ -458,7 +458,7 @@ void biosal_input_controller_receive(struct thorium_actor *actor, struct thorium
         }
 
 	/* if all streams failed, notice supervisor */
-        if (concrete_actor->counted == biosal_vector_size(&concrete_actor->files)) {
+        if (concrete_actor->counted == core_vector_size(&concrete_actor->files)) {
 
 #ifdef BIOSAL_INPUT_CONTROLLER_DEBUG_LEVEL_2
 #endif
@@ -468,12 +468,12 @@ void biosal_input_controller_receive(struct thorium_actor *actor, struct thorium
         }
 
 /*
-        if (concrete_actor->opened_streams == biosal_vector_size(&concrete_actor->files)) {
+        if (concrete_actor->opened_streams == core_vector_size(&concrete_actor->files)) {
 
 #ifdef BIOSAL_INPUT_CONTROLLER_DEBUG
             printf("DEBUG controller %d sends ACTION_INPUT_DISTRIBUTE_REPLY to supervisor %d [%d/%d]\n",
                             name, thorium_actor_supervisor(actor),
-                            concrete_actor->opened_streams, biosal_vector_size(&concrete_actor->files));
+                            concrete_actor->opened_streams, core_vector_size(&concrete_actor->files));
 #endif
 
         }
@@ -481,11 +481,11 @@ void biosal_input_controller_receive(struct thorium_actor *actor, struct thorium
 
     } else if (tag == ACTION_INPUT_COUNT_PROGRESS) {
 
-        stream_index = biosal_vector_index_of(&concrete_actor->counting_streams, &source);
-        local_file = biosal_vector_at_as_char_pointer(&concrete_actor->files, stream_index);
+        stream_index = core_vector_index_of(&concrete_actor->counting_streams, &source);
+        local_file = core_vector_at_as_char_pointer(&concrete_actor->files, stream_index);
         thorium_message_unpack_int64_t(message, 0, &entries);
 
-        bucket = (int64_t *)biosal_vector_at(&concrete_actor->counts, stream_index);
+        bucket = (int64_t *)core_vector_at(&concrete_actor->counts, stream_index);
 
         printf("controller/%d receives progress from stream/%d file %s %" PRIu64 " entries so far\n",
                         name, source, local_file, entries);
@@ -493,23 +493,23 @@ void biosal_input_controller_receive(struct thorium_actor *actor, struct thorium
 
     } else if (tag == ACTION_INPUT_COUNT_IN_PARALLEL_REPLY) {
 
-        stream_index = biosal_vector_index_of(&concrete_actor->counting_streams, &source);
-        local_file = biosal_vector_at_as_char_pointer(&concrete_actor->files, stream_index);
+        stream_index = core_vector_index_of(&concrete_actor->counting_streams, &source);
+        local_file = core_vector_at_as_char_pointer(&concrete_actor->files, stream_index);
 
-        biosal_vector_init(&mega_blocks, 0);
-        biosal_vector_unpack(&mega_blocks, buffer);
+        core_vector_init(&mega_blocks, 0);
+        core_vector_unpack(&mega_blocks, buffer);
 
         printf("DEBUG receive mega blocks from %d\n", source);
         /*
          * Update the file index for every mega block.
          */
-        biosal_vector_iterator_init(&vector_iterator, &mega_blocks);
+        core_vector_iterator_init(&vector_iterator, &mega_blocks);
 
-        bucket = (int64_t*)biosal_vector_at(&concrete_actor->counts, stream_index);
+        bucket = (int64_t*)core_vector_at(&concrete_actor->counts, stream_index);
         (*bucket) = 0;
 
-        while (biosal_vector_iterator_has_next(&vector_iterator)) {
-            biosal_vector_iterator_next(&vector_iterator, (void **)&mega_block);
+        while (core_vector_iterator_has_next(&vector_iterator)) {
+            core_vector_iterator_next(&vector_iterator, (void **)&mega_block);
 
             printf("SETTING setting file to %d for mega block\n", stream_index);
             biosal_mega_block_set_file(mega_block, stream_index);
@@ -523,37 +523,37 @@ void biosal_input_controller_receive(struct thorium_actor *actor, struct thorium
             biosal_mega_block_print(mega_block);
         }
 
-        biosal_vector_iterator_destroy(&vector_iterator);
+        core_vector_iterator_destroy(&vector_iterator);
 
-        vector_bucket = (struct biosal_vector *)biosal_map_add(&concrete_actor->mega_blocks, &stream_index);
-        biosal_vector_init_copy(vector_bucket, &mega_blocks);
+        vector_bucket = (struct core_vector *)core_map_add(&concrete_actor->mega_blocks, &stream_index);
+        core_vector_init_copy(vector_bucket, &mega_blocks);
 
-        biosal_vector_destroy(&mega_blocks);
+        core_vector_destroy(&mega_blocks);
 
         concrete_actor->counted++;
 
         printf("controller/%d received from stream/%d for file %s %" PRIu64 " entries (final) %d/%d\n",
                         name, source, local_file, entries,
-                        concrete_actor->counted, (int)biosal_vector_size(&concrete_actor->files));
+                        concrete_actor->counted, (int)core_vector_size(&concrete_actor->files));
 
         thorium_actor_send_reply_empty(actor, ACTION_INPUT_CLOSE);
 
         /* continue work here, tell supervisor about it */
-        if (concrete_actor->counted == biosal_vector_size(&concrete_actor->files)) {
+        if (concrete_actor->counted == core_vector_size(&concrete_actor->files)) {
             thorium_actor_send_to_self_empty(actor, ACTION_INPUT_CONTROLLER_SPAWN_READING_STREAMS);
         }
 
 
     } else if (tag == ACTION_INPUT_DISTRIBUTE) {
 
-        biosal_timer_start(&concrete_actor->input_timer);
-        biosal_timer_start(&concrete_actor->counting_timer);
+        core_timer_start(&concrete_actor->input_timer);
+        core_timer_start(&concrete_actor->counting_timer);
 
         /* for each file, spawn a stream to count */
 
         /* no files, return immediately
          */
-        if (biosal_vector_size(&concrete_actor->files) == 0) {
+        if (core_vector_size(&concrete_actor->files) == 0) {
 
             printf("Error: no file to distribute...\n");
             thorium_actor_send_reply_empty(actor, ACTION_INPUT_DISTRIBUTE_REPLY);
@@ -571,13 +571,13 @@ void biosal_input_controller_receive(struct thorium_actor *actor, struct thorium
         thorium_actor_send_to_self_empty(actor, ACTION_INPUT_SPAWN);
 
 #ifdef BIOSAL_INPUT_CONTROLLER_DEBUG_LEVEL_2
-        printf("DEBUG resizing counts to %d\n", biosal_vector_size(&concrete_actor->files));
+        printf("DEBUG resizing counts to %d\n", core_vector_size(&concrete_actor->files));
 #endif
 
-        biosal_vector_resize(&concrete_actor->counts, biosal_vector_size(&concrete_actor->files));
+        core_vector_resize(&concrete_actor->counts, core_vector_size(&concrete_actor->files));
 
-        for (i = 0; i < biosal_vector_size(&concrete_actor->counts); i++) {
-            bucket = (int64_t*)biosal_vector_at(&concrete_actor->counts, i);
+        for (i = 0; i < core_vector_size(&concrete_actor->counts); i++) {
+            bucket = (int64_t*)core_vector_at(&concrete_actor->counts, i);
             *bucket = 0;
         }
 
@@ -592,16 +592,16 @@ void biosal_input_controller_receive(struct thorium_actor *actor, struct thorium
         concrete_actor->state = BIOSAL_INPUT_CONTROLLER_STATE_SPAWN_STREAMS;
 
         /* the next file name to send is the current number of streams */
-        i = biosal_vector_size(&concrete_actor->counting_streams);
+        i = core_vector_size(&concrete_actor->counting_streams);
 
-        destination_index = i % biosal_vector_size(&concrete_actor->spawners);
-        destination = *(int *)biosal_vector_at(&concrete_actor->spawners, destination_index);
+        destination_index = i % core_vector_size(&concrete_actor->spawners);
+        destination = *(int *)core_vector_at(&concrete_actor->spawners, destination_index);
 
         thorium_message_init(message, ACTION_SPAWN, sizeof(script), &script);
         thorium_actor_send(actor, destination, message);
 
-        bucket = biosal_vector_at(&concrete_actor->files, i);
-        local_file = *(char **)biosal_vector_at(&concrete_actor->files, i);
+        bucket = core_vector_at(&concrete_actor->files, i);
+        local_file = *(char **)core_vector_at(&concrete_actor->files, i);
 
 #ifdef BIOSAL_INPUT_CONTROLLER_DEBUG_LEVEL_2
         printf("DEBUG890 local_file %p bucket %p index %d\n", local_file, (void *)bucket,
@@ -610,7 +610,7 @@ void biosal_input_controller_receive(struct thorium_actor *actor, struct thorium
 
 #ifdef BIOSAL_INPUT_CONTROLLER_DEBUG
         printf("DEBUG actor %d spawns a stream for file %d/%d via spawner %d\n",
-                        name, i, biosal_vector_size(&concrete_actor->files), destination);
+                        name, i, core_vector_size(&concrete_actor->files), destination);
 #endif
 
         /* also, spawn 4 stores on each node */
@@ -623,13 +623,13 @@ void biosal_input_controller_receive(struct thorium_actor *actor, struct thorium
 
         /* stop streams
          */
-        for (i = 0; i < biosal_vector_size(&concrete_actor->counting_streams); i++) {
-            stream = *(int *)biosal_vector_at(&concrete_actor->counting_streams, i);
+        for (i = 0; i < core_vector_size(&concrete_actor->counting_streams); i++) {
+            stream = *(int *)core_vector_at(&concrete_actor->counting_streams, i);
 
             thorium_actor_send_empty(actor, stream, ACTION_ASK_TO_STOP);
         }
-        for (i = 0; i < biosal_vector_size(&concrete_actor->reading_streams); i++) {
-            stream = *(int *)biosal_vector_at(&concrete_actor->reading_streams, i);
+        for (i = 0; i < core_vector_size(&concrete_actor->reading_streams); i++) {
+            stream = *(int *)core_vector_at(&concrete_actor->reading_streams, i);
 
             thorium_actor_send_empty(actor, stream, ACTION_ASK_TO_STOP);
         }
@@ -639,8 +639,8 @@ void biosal_input_controller_receive(struct thorium_actor *actor, struct thorium
 #if 0
         /* stop data stores
          */
-        for (i = 0; i < biosal_vector_size(&concrete_actor->consumers); i++) {
-            store = biosal_vector_at_as_int(&concrete_actor->consumers, i);
+        for (i = 0; i < core_vector_size(&concrete_actor->consumers); i++) {
+            store = core_vector_at_as_int(&concrete_actor->consumers, i);
 
             thorium_actor_send_empty(actor, store, ACTION_ASK_TO_STOP);
         }
@@ -675,8 +675,8 @@ void biosal_input_controller_receive(struct thorium_actor *actor, struct thorium
 
     } else if (tag == ACTION_INPUT_CONTROLLER_CREATE_PARTITION && source == name) {
 
-        spawner = *(int *)biosal_vector_at(&concrete_actor->spawners,
-                        biosal_vector_size(&concrete_actor->spawners) / 2);
+        spawner = *(int *)core_vector_at(&concrete_actor->spawners,
+                        core_vector_size(&concrete_actor->spawners) / 2);
 
         thorium_actor_send_int(actor, spawner, ACTION_SPAWN,
                         SCRIPT_SEQUENCE_PARTITIONER);
@@ -717,9 +717,9 @@ void biosal_input_controller_receive(struct thorium_actor *actor, struct thorium
 
         printf("DEBUG marker ACTION_RESERVE_REPLY %d/%d\n",
                         concrete_actor->ready_consumers,
-                        (int)biosal_vector_size(&concrete_actor->consumers));
+                        (int)core_vector_size(&concrete_actor->consumers));
 
-        if (concrete_actor->ready_consumers == biosal_vector_size(&concrete_actor->consumers)) {
+        if (concrete_actor->ready_consumers == core_vector_size(&concrete_actor->consumers)) {
 
             concrete_actor->ready_consumers = 0;
             printf("DEBUG all consumers are ready\n");
@@ -737,8 +737,8 @@ void biosal_input_controller_receive(struct thorium_actor *actor, struct thorium
         stream_name = source;
 
         acquaintance_index = stream_name;
-        stream_index = biosal_vector_index_of(&concrete_actor->reading_streams, &acquaintance_index);
-        command_name = *(int *)biosal_vector_at(&concrete_actor->partition_commands,
+        stream_index = core_vector_index_of(&concrete_actor->reading_streams, &acquaintance_index);
+        command_name = *(int *)core_vector_at(&concrete_actor->partition_commands,
                         stream_index);
 
         thorium_actor_send_int(actor,
@@ -752,10 +752,10 @@ void biosal_input_controller_receive(struct thorium_actor *actor, struct thorium
 
         thorium_message_unpack_int(message, 0, &consumer);
 
-        consumer_index = biosal_vector_index_of(&concrete_actor->consumers,
+        consumer_index = core_vector_index_of(&concrete_actor->consumers,
                         &consumer);
 
-        bucket_for_requests = (int *)biosal_vector_at(&concrete_actor->consumer_active_requests, consumer_index);
+        bucket_for_requests = (int *)core_vector_at(&concrete_actor->consumer_active_requests, consumer_index);
 
         (*bucket_for_requests)--;
 
@@ -769,19 +769,19 @@ void biosal_input_controller_receive(struct thorium_actor *actor, struct thorium
 
     } else if (tag == ACTION_SET_CONSUMERS) {
 
-        biosal_vector_init(&concrete_actor->consumers, 0);
-        biosal_vector_unpack(&concrete_actor->consumers, buffer);
+        core_vector_init(&concrete_actor->consumers, 0);
+        core_vector_unpack(&concrete_actor->consumers, buffer);
 
         printf("controller %d receives %d consumers\n",
                         thorium_actor_name(actor),
-                        (int)biosal_vector_size(&concrete_actor->consumers));
+                        (int)core_vector_size(&concrete_actor->consumers));
 
-        for (i = 0; i < biosal_vector_size(&concrete_actor->consumers); i++) {
-            biosal_vector_push_back_int(&concrete_actor->consumer_active_requests, 0);
+        for (i = 0; i < core_vector_size(&concrete_actor->consumers); i++) {
+            core_vector_push_back_int(&concrete_actor->consumer_active_requests, 0);
         }
 
 #ifdef BIOSAL_INPUT_CONTROLLER_DEBUG
-        biosal_vector_print_int(&concrete_actor->consumers);
+        core_vector_print_int(&concrete_actor->consumers);
         printf("\n");
 #endif
         thorium_actor_send_reply_empty(actor, ACTION_SET_CONSUMERS_REPLY);
@@ -797,21 +797,21 @@ void biosal_input_controller_receive(struct thorium_actor *actor, struct thorium
 
 #ifdef BIOSAL_INPUT_CONTROLLER_DEBUG
         printf("DEBUG ACTION_SEQUENCE_STORE_READY %d/%d\n", concrete_actor->filled_consumers,
-                        (int)biosal_vector_size(&concrete_actor->consumers));
+                        (int)core_vector_size(&concrete_actor->consumers));
 #endif
 
-        if (concrete_actor->filled_consumers == biosal_vector_size(&concrete_actor->consumers)) {
+        if (concrete_actor->filled_consumers == core_vector_size(&concrete_actor->consumers)) {
             concrete_actor->filled_consumers = 0;
 
             printf("DEBUG: all consumers are filled,  sending ACTION_INPUT_DISTRIBUTE_REPLY\n");
 
-            biosal_timer_stop(&concrete_actor->input_timer);
-            biosal_timer_stop(&concrete_actor->distribution_timer);
+            core_timer_stop(&concrete_actor->input_timer);
+            core_timer_stop(&concrete_actor->distribution_timer);
 
-            biosal_timer_print_with_description(&concrete_actor->distribution_timer,
+            core_timer_print_with_description(&concrete_actor->distribution_timer,
                             "Load input / Distribute input data");
 
-            biosal_timer_print_with_description(&concrete_actor->input_timer,
+            core_timer_print_with_description(&concrete_actor->input_timer,
                             "Load input");
 
             thorium_actor_send_to_supervisor_empty(actor, ACTION_INPUT_DISTRIBUTE_REPLY);
@@ -822,7 +822,7 @@ void biosal_input_controller_receive(struct thorium_actor *actor, struct thorium
 void biosal_input_controller_receive_store_entry_counts(struct thorium_actor *actor, struct thorium_message *message)
 {
     struct biosal_input_controller *concrete_actor;
-    struct biosal_vector store_entries;
+    struct core_vector store_entries;
     void *buffer;
     int i;
     int store;
@@ -830,7 +830,7 @@ void biosal_input_controller_receive_store_entry_counts(struct thorium_actor *ac
     struct thorium_message new_message;
     int name;
 
-    biosal_vector_init(&store_entries, sizeof(uint64_t));
+    core_vector_init(&store_entries, sizeof(uint64_t));
 
     concrete_actor = (struct biosal_input_controller *)thorium_actor_concrete_actor(actor);
     buffer = thorium_message_buffer(message);
@@ -841,12 +841,12 @@ void biosal_input_controller_receive_store_entry_counts(struct thorium_actor *ac
     printf("DEBUG biosal_input_controller_receive_store_entry_counts unpacking entries\n");
 #endif
 
-    biosal_vector_init(&store_entries, 0);
-    biosal_vector_unpack(&store_entries, buffer);
+    core_vector_init(&store_entries, 0);
+    core_vector_unpack(&store_entries, buffer);
 
-    for (i = 0; i < biosal_vector_size(&store_entries); i++) {
-        store = *(int *)biosal_vector_at(&concrete_actor->consumers, i);
-        entries = *(uint64_t *)biosal_vector_at(&store_entries, i);
+    for (i = 0; i < core_vector_size(&store_entries); i++) {
+        store = *(int *)core_vector_at(&concrete_actor->consumers, i);
+        entries = *(uint64_t *)core_vector_at(&store_entries, i);
 
         printf("DEBUG controller/%d tells consumer/%d to reserve %" PRIu64 " buckets\n",
                         name, store, entries);
@@ -860,7 +860,7 @@ void biosal_input_controller_receive_store_entry_counts(struct thorium_actor *ac
     printf("DEBUG biosal_input_controller_receive_store_entry_counts will wait for replies\n");
 #endif
 
-    biosal_vector_destroy(&store_entries);
+    core_vector_destroy(&store_entries);
 }
 
 void biosal_input_controller_create_stores(struct thorium_actor *actor, struct thorium_message *message)
@@ -887,8 +887,8 @@ void biosal_input_controller_create_stores(struct thorium_actor *actor, struct t
     printf("DEBUG biosal_input_controller_create_stores\n");
     */
 
-    for (i = 0; i < biosal_vector_size(&concrete_actor->stores_per_spawner); i++) {
-        value = biosal_vector_at_as_int(&concrete_actor->stores_per_spawner, i);
+    for (i = 0; i < core_vector_size(&concrete_actor->stores_per_spawner); i++) {
+        value = core_vector_at_as_int(&concrete_actor->stores_per_spawner, i);
 
         if (value == -1) {
 
@@ -897,7 +897,7 @@ void biosal_input_controller_create_stores(struct thorium_actor *actor, struct t
                             i);
                             */
 
-            spawner = biosal_vector_at_as_int(&concrete_actor->spawners, i);
+            spawner = core_vector_at_as_int(&concrete_actor->spawners, i);
 
             thorium_actor_send_empty(actor, spawner, ACTION_GET_NODE_NAME);
             return;
@@ -910,16 +910,16 @@ void biosal_input_controller_create_stores(struct thorium_actor *actor, struct t
      * to each spawner
      */
 
-    for (i = 0; i < biosal_vector_size(&concrete_actor->stores_per_spawner); i++) {
+    for (i = 0; i < core_vector_size(&concrete_actor->stores_per_spawner); i++) {
             /*
         printf("DEBUG polling spawner %i/%d\n", i,
-                        biosal_vector_size(&concrete_actor->stores_per_spawner));
+                        core_vector_size(&concrete_actor->stores_per_spawner));
 */
-        value = biosal_vector_at_as_int(&concrete_actor->stores_per_spawner, i);
+        value = core_vector_at_as_int(&concrete_actor->stores_per_spawner, i);
 
         if (value != 0) {
 
-            spawner = biosal_vector_at_as_int(&concrete_actor->spawners, i);
+            spawner = core_vector_at_as_int(&concrete_actor->spawners, i);
 /*
             printf("DEBUG spawner %d is %d\n", i, spawner);
 */
@@ -934,10 +934,10 @@ void biosal_input_controller_create_stores(struct thorium_actor *actor, struct t
 
     printf("DEBUG controller %d: consumers are ready (%d)\n",
                     thorium_actor_name(actor),
-                    (int)biosal_vector_size(&concrete_actor->consumers));
+                    (int)core_vector_size(&concrete_actor->consumers));
 
-    for (i = 0; i < biosal_vector_size(&concrete_actor->consumers); i++) {
-        value = biosal_vector_at_as_int(&concrete_actor->consumers, i);
+    for (i = 0; i < core_vector_size(&concrete_actor->consumers); i++) {
+        value = core_vector_at_as_int(&concrete_actor->consumers, i);
 
         printf("DEBUG controller %d: consumer %i is %d\n",
                         thorium_actor_name(actor), i, value);
@@ -949,14 +949,14 @@ void biosal_input_controller_create_stores(struct thorium_actor *actor, struct t
     total = 0;
     block_size = concrete_actor->block_size;
 
-    for (i = 0; i < biosal_vector_size(&concrete_actor->files); i++) {
-        entries = *(uint64_t*)biosal_vector_at(&concrete_actor->counts, i);
-        local_file = biosal_vector_at_as_char_pointer(&concrete_actor->files, i);
-        name = *(int *)biosal_vector_at(&concrete_actor->counting_streams, i);
+    for (i = 0; i < core_vector_size(&concrete_actor->files); i++) {
+        entries = *(uint64_t*)core_vector_at(&concrete_actor->counts, i);
+        local_file = core_vector_at_as_char_pointer(&concrete_actor->files, i);
+        name = *(int *)core_vector_at(&concrete_actor->counting_streams, i);
 
         printf("stream %d, %d/%d %s %" PRIu64 "\n",
                         name, i,
-                        (int)biosal_vector_size(&concrete_actor->files),
+                        (int)core_vector_size(&concrete_actor->files),
                         local_file,
                         entries);
         total += entries;
@@ -968,10 +968,10 @@ void biosal_input_controller_create_stores(struct thorium_actor *actor, struct t
         blocks++;
     }
 
-    biosal_timer_stop(&concrete_actor->counting_timer);
-    biosal_timer_start(&concrete_actor->distribution_timer);
+    core_timer_stop(&concrete_actor->counting_timer);
+    core_timer_start(&concrete_actor->distribution_timer);
 
-    biosal_timer_print_with_description(&concrete_actor->counting_timer,
+    core_timer_print_with_description(&concrete_actor->counting_timer,
                     "Load input / Count input data");
 
     printf("DEBUG controller %d: Partition Total: %" PRIu64 ", block_size: %d, blocks: %d\n",
@@ -1038,8 +1038,8 @@ void biosal_input_controller_get_node_worker_count_reply(struct thorium_actor *a
     spawner = source;
     thorium_message_unpack_int(message, 0, &worker_count);
 
-    index = biosal_vector_index_of(&concrete_actor->spawners, &spawner);
-    bucket = biosal_vector_at(&concrete_actor->stores_per_spawner, index);
+    index = core_vector_index_of(&concrete_actor->spawners, &spawner);
+    bucket = core_vector_at(&concrete_actor->stores_per_spawner, index);
     *bucket = worker_count * concrete_actor->stores_per_worker_per_spawner;
 
     printf("DEBUG spawner %d (node %d) is on a node that has %d workers\n", spawner,
@@ -1064,19 +1064,19 @@ void biosal_input_controller_add_store(struct thorium_actor *actor, struct thori
     source = thorium_message_source(message);
     thorium_message_unpack_int(message, 0, &store);
 
-    index = biosal_vector_index_of(&concrete_actor->spawners, &source);
+    index = core_vector_index_of(&concrete_actor->spawners, &source);
 
     /*
     printf("DEBUG biosal_input_controller_add_store index %d\n", index);
     */
 
-    bucket = biosal_vector_at(&concrete_actor->stores_per_spawner, index);
+    bucket = core_vector_at(&concrete_actor->stores_per_spawner, index);
 
     /* the content of the bucket is initially the total number of
      * stores that are desired for this spawner.
      */
     *bucket = (*bucket - 1);
-    biosal_vector_push_back(&concrete_actor->consumers, &store);
+    core_vector_push_back(&concrete_actor->consumers, &store);
 
     thorium_actor_send_to_self_empty(actor, ACTION_INPUT_CONTROLLER_CREATE_STORES);
 
@@ -1099,7 +1099,7 @@ void biosal_input_controller_prepare_spawners(struct thorium_actor *actor, struc
     /* spawn an actor of the same script on every spawner to load required
      * scripts on all nodes
      */
-    if (biosal_queue_dequeue(&concrete_actor->unprepared_spawners, &spawner)) {
+    if (core_queue_dequeue(&concrete_actor->unprepared_spawners, &spawner)) {
 
         thorium_actor_send_int(actor, spawner, ACTION_SPAWN, thorium_actor_script(actor));
         concrete_actor->state = BIOSAL_INPUT_CONTROLLER_STATE_PREPARE_SPAWNERS;
@@ -1126,7 +1126,7 @@ void biosal_input_controller_receive_command(struct thorium_actor *actor, struct
     int *bucket;
     int *bucket_for_consumer;
     int consumer_index;
-    struct biosal_memory_pool *ephemeral_memory;
+    struct core_memory_pool *ephemeral_memory;
 
     ephemeral_memory = thorium_actor_get_ephemeral_memory(actor);
     concrete_actor = (struct biosal_input_controller *)thorium_actor_concrete_actor(actor);
@@ -1140,19 +1140,19 @@ void biosal_input_controller_receive_command(struct thorium_actor *actor, struct
 #endif
 
     store_index = biosal_partition_command_store_index(&command);
-    bucket_for_command_name = (int *)biosal_vector_at(&concrete_actor->partition_commands,
+    bucket_for_command_name = (int *)core_vector_at(&concrete_actor->partition_commands,
                     stream_index);
-    bucket_for_consumer = (int *)biosal_vector_at(&concrete_actor->stream_consumers,
+    bucket_for_consumer = (int *)core_vector_at(&concrete_actor->stream_consumers,
                     stream_index);
 
-    stream_name = biosal_vector_at_as_int(&concrete_actor->reading_streams,
+    stream_name = core_vector_at_as_int(&concrete_actor->reading_streams,
                     stream_index);
 
 #ifdef BIOSAL_INPUT_CONTROLLER_DEBUG_COMMANDS
     printf("DEBUG stream_index %d stream_name %d\n", stream_index, stream_name);
 #endif
 
-    store_name = *(int *)biosal_vector_at(&concrete_actor->consumers, store_index);
+    store_name = *(int *)core_vector_at(&concrete_actor->consumers, store_index);
     store_first = biosal_partition_command_store_first(&command);
     store_last = biosal_partition_command_store_last(&command);
 
@@ -1198,7 +1198,7 @@ void biosal_input_controller_receive_command(struct thorium_actor *actor, struct
     consumer_index = store_index;
     *bucket_for_consumer = consumer_index;
 
-    bucket = (int *)biosal_vector_at(&concrete_actor->consumer_active_requests, consumer_index);
+    bucket = (int *)core_vector_at(&concrete_actor->consumer_active_requests, consumer_index);
 
     (*bucket)++;
 
@@ -1212,11 +1212,11 @@ void biosal_input_controller_spawn_streams(struct thorium_actor *actor, struct t
 {
     int spawner;
     struct biosal_input_controller *concrete_actor;
-    struct biosal_vector_iterator iterator;
+    struct core_vector_iterator iterator;
     int i;
     int j;
     int block_index;
-    struct biosal_vector *vector;
+    struct core_vector *vector;
     struct biosal_mega_block *block;
 
 #ifdef BIOSAL_INPUT_CONTROLLER_DEBUG_READING_STREAMS
@@ -1232,34 +1232,34 @@ void biosal_input_controller_spawn_streams(struct thorium_actor *actor, struct t
 
     block_index = 0;
     printf("DEBUG received MEGA BLOCKS\n");
-    for (i = 0; i < biosal_vector_size(&concrete_actor->files); i++) {
+    for (i = 0; i < core_vector_size(&concrete_actor->files); i++) {
 
-        vector = (struct biosal_vector *)biosal_map_get(&concrete_actor->mega_blocks, &i);
+        vector = (struct core_vector *)core_map_get(&concrete_actor->mega_blocks, &i);
 
         if (vector == NULL) {
             continue;
         }
 
-        for (j = 0; j < biosal_vector_size(vector); j++) {
-            block = (struct biosal_mega_block *)biosal_vector_at(vector, j);
+        for (j = 0; j < core_vector_size(vector); j++) {
+            block = (struct biosal_mega_block *)core_vector_at(vector, j);
 
             printf("BLOCK # %d ", block_index);
             block_index++;
             biosal_mega_block_print(block);
 
-            biosal_vector_push_back(&concrete_actor->mega_block_vector, block);
+            core_vector_push_back(&concrete_actor->mega_block_vector, block);
         }
     }
     printf("DEBUG MEGA BLOCKS (total: %d)\n", block_index);
 
-    biosal_vector_iterator_init(&iterator, &concrete_actor->mega_block_vector);
+    core_vector_iterator_init(&iterator, &concrete_actor->mega_block_vector);
 
-    while (biosal_vector_iterator_has_next(&iterator)) {
-        biosal_vector_iterator_next(&iterator, NULL);
-        spawner = biosal_vector_at_as_int(&concrete_actor->spawners, concrete_actor->spawner);
+    while (core_vector_iterator_has_next(&iterator)) {
+        core_vector_iterator_next(&iterator, NULL);
+        spawner = core_vector_at_as_int(&concrete_actor->spawners, concrete_actor->spawner);
 
         concrete_actor->spawner++;
-        concrete_actor->spawner %= biosal_vector_size(&concrete_actor->spawners);
+        concrete_actor->spawner %= core_vector_size(&concrete_actor->spawners);
 
 #ifdef BIOSAL_INPUT_CONTROLLER_DEBUG_READING_STREAMS
         printf("DEBUG asking %d to spawn script %d\n", spawner, SCRIPT_INPUT_STREAM);
@@ -1268,7 +1268,7 @@ void biosal_input_controller_spawn_streams(struct thorium_actor *actor, struct t
         thorium_actor_send_int(actor, spawner, ACTION_SPAWN, SCRIPT_INPUT_STREAM);
     }
 
-    biosal_vector_iterator_destroy(&iterator);
+    core_vector_iterator_destroy(&iterator);
 
     concrete_actor->state = BIOSAL_INPUT_CONTROLLER_STATE_SPAWN_READING_STREAMS;
 }
@@ -1288,20 +1288,20 @@ void biosal_input_controller_set_offset_reply(struct thorium_actor *self, struct
     source = thorium_message_source(message);
     acquaintance_index = source;
     concrete_actor = (struct biosal_input_controller *)thorium_actor_concrete_actor(self);
-    stream_index = biosal_vector_index_of(&concrete_actor->reading_streams, &acquaintance_index);
+    stream_index = core_vector_index_of(&concrete_actor->reading_streams, &acquaintance_index);
 
-    block_index = biosal_map_get_int(&concrete_actor->assigned_blocks, &stream_index);
+    block_index = core_map_get_int(&concrete_actor->assigned_blocks, &stream_index);
 
 #ifdef BIOSAL_INPUT_CONTROLLER_DEBUG_READING_STREAMS
     printf("DEBUG got reply from stream/%d for offset, stream_index %d block_index %d\n", source,
                     stream_index, block_index);
 #endif
 
-    block = (struct biosal_mega_block *)biosal_vector_at(&concrete_actor->mega_block_vector,
+    block = (struct biosal_mega_block *)core_vector_at(&concrete_actor->mega_block_vector,
                     block_index);
 
     file_index = biosal_mega_block_get_file(block);
-    file_name = *(char **)biosal_vector_at(&concrete_actor->files, file_index);
+    file_name = *(char **)core_vector_at(&concrete_actor->files, file_index);
 
     printf("DEBUG send ACTION_INPUT_OPEN %s\n", file_name);
 
@@ -1321,8 +1321,8 @@ void biosal_input_controller_verify_requests(struct thorium_actor *self, struct 
     active = 0;
     concrete_actor = (struct biosal_input_controller *)thorium_actor_concrete_actor(self);
 
-    for (i = 0; i < biosal_vector_size(&concrete_actor->consumer_active_requests); i++) {
-        if (biosal_vector_at_as_int(&concrete_actor->consumer_active_requests, i) != 0) {
+    for (i = 0; i < core_vector_size(&concrete_actor->consumer_active_requests); i++) {
+        if (core_vector_at_as_int(&concrete_actor->consumer_active_requests, i) != 0) {
             active++;
         }
     }

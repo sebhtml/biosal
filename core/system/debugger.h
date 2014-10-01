@@ -1,6 +1,6 @@
 
-#ifndef BIOSAL_DEBUGGER_H
-#define BIOSAL_DEBUGGER_H
+#ifndef CORE_DEBUGGER_H
+#define CORE_DEBUGGER_H
 
 /*
  * Enable debug mode.
@@ -9,22 +9,22 @@
 
 #ifdef THORIUM_DEBUG
 
-#define BIOSAL_DEBUGGER_ENABLE_ASSERT
+#define CORE_DEBUGGER_ENABLE_ASSERT
 
 /*
-#define BIOSAL_DEBUGGER_CHECK_DOUBLE_FREE_IN_POOL
+#define CORE_DEBUGGER_CHECK_DOUBLE_FREE_IN_POOL
 */
 
 /*
  * Report memory leaks in memory pool.
  */
-#define BIOSAL_DEBUGGER_CHECK_LEAKS_IN_POOL
+#define CORE_DEBUGGER_CHECK_LEAKS_IN_POOL
 
 /*
  * Enable leak detection using
- * BIOSAL_DEBUGGER_LEAK_DETECTION_BEGIN and BIOSAL_DEBUGGER_LEAK_DETECTION_END
+ * CORE_DEBUGGER_LEAK_DETECTION_BEGIN and CORE_DEBUGGER_LEAK_DETECTION_END
  */
-#define BIOSAL_DEBUGGER_ENABLE_LEAK_DETECTION
+#define CORE_DEBUGGER_ENABLE_LEAK_DETECTION
 
 /*
  * Enable event counter for injections
@@ -45,25 +45,25 @@
 /*
  */
 
-#define BIOSAL_DEBUG_MARKER(marker) \
-        printf("biosal> BIOSAL_DEBUG_MARKER File: %s Line: %d Function %s: Marker: %s\n", __FILE__, __LINE__, __func__, marker);
+#define CORE_DEBUG_MARKER(marker) \
+        printf("biosal> CORE_DEBUG_MARKER File: %s Line: %d Function %s: Marker: %s\n", __FILE__, __LINE__, __func__, marker);
 
-#ifdef BIOSAL_DEBUGGER_ENABLE_ASSERT
+#ifdef CORE_DEBUGGER_ENABLE_ASSERT
 
-#define BIOSAL_DEBUGGER_ASSERT(condition) \
+#define CORE_DEBUGGER_ASSERT(condition) \
     if (!(condition)) { \
-        BIOSAL_DEBUG_MARKER("BIOSAL_DEBUGGER_ASSERT catched a bug !"); \
-        biosal_tracer_print_stack_backtrace(); \
+        CORE_DEBUG_MARKER("CORE_DEBUGGER_ASSERT catched a bug !"); \
+        core_tracer_print_stack_backtrace(); \
         fflush(stdout); \
         fflush(stderr); \
         exit(1); \
     }
 
-#define BIOSAL_DEBUGGER_ASSERT_IS_EQUAL_INT(actual, expected) \
+#define CORE_DEBUGGER_ASSERT_IS_EQUAL_INT(actual, expected) \
     if (!((actual) == (expected))) { \
-        BIOSAL_DEBUG_MARKER("BIOSAL_DEBUGGER_ASSERT catched a bug !"); \
+        CORE_DEBUG_MARKER("CORE_DEBUGGER_ASSERT catched a bug !"); \
         printf("Actual %d Expected %d\n", actual, expected); \
-        biosal_tracer_print_stack_backtrace(); \
+        core_tracer_print_stack_backtrace(); \
         fflush(stdout); \
         fflush(stderr); \
         exit(1); \
@@ -74,34 +74,34 @@
 /*
  * Do nothing
  */
-#define BIOSAL_DEBUGGER_ASSERT(condition)
+#define CORE_DEBUGGER_ASSERT(condition)
 
-#define BIOSAL_DEBUGGER_ASSERT_IS_EQUAL_INT(actual, expected)
+#define CORE_DEBUGGER_ASSERT_IS_EQUAL_INT(actual, expected)
 
 #endif
 
-void biosal_debugger_examine(void *pointer, int bytes);
+void core_debugger_examine(void *pointer, int bytes);
 
-#ifdef BIOSAL_DEBUGGER_ENABLE_LEAK_DETECTION
+#ifdef CORE_DEBUGGER_ENABLE_LEAK_DETECTION
 
-#define BIOSAL_DEBUGGER_LEAK_DETECTION_BEGIN(pool, state) \
-    struct biosal_memory_pool_state state; \
-    biosal_memory_pool_begin(pool, &state);
+#define CORE_DEBUGGER_LEAK_DETECTION_BEGIN(pool, state) \
+    struct core_memory_pool_state state; \
+    core_memory_pool_begin(pool, &state);
 
-#define BIOSAL_DEBUGGER_LEAK_DETECTION_END(pool, state) \
-    biosal_memory_pool_end(pool, &state, # state, __func__, __FILE__, __LINE__);
+#define CORE_DEBUGGER_LEAK_DETECTION_END(pool, state) \
+    core_memory_pool_end(pool, &state, # state, __func__, __FILE__, __LINE__);
 
-#define BIOSAL_DEBUGGER_LEAK_CHECK_DOUBLE_FREE(pool) \
-    biosal_memory_pool_check_double_free(pool, __func__, __FILE__, __LINE__);
+#define CORE_DEBUGGER_LEAK_CHECK_DOUBLE_FREE(pool) \
+    core_memory_pool_check_double_free(pool, __func__, __FILE__, __LINE__);
 
 #else
 
-#define BIOSAL_DEBUGGER_LEAK_DETECTION_BEGIN(pool, state)
-#define BIOSAL_DEBUGGER_LEAK_DETECTION_END(pool, state)
-#define BIOSAL_DEBUGGER_LEAK_CHECK_DOUBLE_FREE(pool)
+#define CORE_DEBUGGER_LEAK_DETECTION_BEGIN(pool, state)
+#define CORE_DEBUGGER_LEAK_DETECTION_END(pool, state)
+#define CORE_DEBUGGER_LEAK_CHECK_DOUBLE_FREE(pool)
 
 #endif
 
-#define BIOSAL_DEBUGGER_ASSERT_NOT_NULL(pointer) \
-        BIOSAL_DEBUGGER_ASSERT(pointer != NULL)
+#define CORE_DEBUGGER_ASSERT_NOT_NULL(pointer) \
+        CORE_DEBUGGER_ASSERT(pointer != NULL)
 #endif

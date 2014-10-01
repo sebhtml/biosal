@@ -25,13 +25,13 @@ void thorium_fifo_scheduler_init(struct thorium_scheduler *self)
 
     queue = self->concrete_self;
 
-    biosal_fast_queue_init(thorium_fifo_scheduler_select_queue(queue, THORIUM_PRIORITY_MAX),
+    core_fast_queue_init(thorium_fifo_scheduler_select_queue(queue, THORIUM_PRIORITY_MAX),
                     sizeof(struct thorium_actor *));
-    biosal_fast_queue_init(thorium_fifo_scheduler_select_queue(queue, THORIUM_PRIORITY_HIGH),
+    core_fast_queue_init(thorium_fifo_scheduler_select_queue(queue, THORIUM_PRIORITY_HIGH),
                     sizeof(struct thorium_actor *));
-    biosal_fast_queue_init(thorium_fifo_scheduler_select_queue(queue, THORIUM_PRIORITY_NORMAL),
+    core_fast_queue_init(thorium_fifo_scheduler_select_queue(queue, THORIUM_PRIORITY_NORMAL),
                     sizeof(struct thorium_actor *));
-    biosal_fast_queue_init(thorium_fifo_scheduler_select_queue(queue, THORIUM_PRIORITY_LOW),
+    core_fast_queue_init(thorium_fifo_scheduler_select_queue(queue, THORIUM_PRIORITY_LOW),
                     sizeof(struct thorium_actor *));
 
     thorium_fifo_scheduler_reset_counter(queue, THORIUM_PRIORITY_MAX);
@@ -46,10 +46,10 @@ void thorium_fifo_scheduler_destroy(struct thorium_scheduler *self)
 
     queue = self->concrete_self;
 
-    biosal_fast_queue_destroy(thorium_fifo_scheduler_select_queue(queue, THORIUM_PRIORITY_MAX));
-    biosal_fast_queue_destroy(thorium_fifo_scheduler_select_queue(queue, THORIUM_PRIORITY_HIGH));
-    biosal_fast_queue_destroy(thorium_fifo_scheduler_select_queue(queue, THORIUM_PRIORITY_NORMAL));
-    biosal_fast_queue_destroy(thorium_fifo_scheduler_select_queue(queue, THORIUM_PRIORITY_LOW));
+    core_fast_queue_destroy(thorium_fifo_scheduler_select_queue(queue, THORIUM_PRIORITY_MAX));
+    core_fast_queue_destroy(thorium_fifo_scheduler_select_queue(queue, THORIUM_PRIORITY_HIGH));
+    core_fast_queue_destroy(thorium_fifo_scheduler_select_queue(queue, THORIUM_PRIORITY_NORMAL));
+    core_fast_queue_destroy(thorium_fifo_scheduler_select_queue(queue, THORIUM_PRIORITY_LOW));
 
     thorium_fifo_scheduler_reset_counter(queue, THORIUM_PRIORITY_MAX);
     thorium_fifo_scheduler_reset_counter(queue, THORIUM_PRIORITY_HIGH);
@@ -60,18 +60,18 @@ void thorium_fifo_scheduler_destroy(struct thorium_scheduler *self)
 int thorium_fifo_scheduler_enqueue(struct thorium_scheduler *self, struct thorium_actor *actor)
 {
     int priority;
-    struct biosal_fast_queue *selected_queue;
+    struct core_fast_queue *selected_queue;
     struct thorium_fifo_scheduler *queue;
 
     queue = self->concrete_self;
 
-    BIOSAL_DEBUGGER_ASSERT(actor != NULL);
+    CORE_DEBUGGER_ASSERT(actor != NULL);
 
     priority = thorium_actor_get_priority(actor);
 
     selected_queue = thorium_fifo_scheduler_select_queue(queue, priority);
 
-    return biosal_fast_queue_enqueue(selected_queue, &actor);
+    return core_fast_queue_enqueue(selected_queue, &actor);
 }
 
 int thorium_fifo_scheduler_dequeue(struct thorium_scheduler *self, struct thorium_actor **actor)
@@ -256,24 +256,24 @@ int thorium_fifo_scheduler_size(struct thorium_scheduler *self)
 
 int thorium_fifo_scheduler_get_size_with_priority(struct thorium_fifo_scheduler *queue, int priority)
 {
-    struct biosal_fast_queue *selected_queue;
+    struct core_fast_queue *selected_queue;
 
     selected_queue = thorium_fifo_scheduler_select_queue(queue, priority);
 
-    return biosal_fast_queue_size(selected_queue);
+    return core_fast_queue_size(selected_queue);
 }
 
 int thorium_fifo_scheduler_dequeue_with_priority(struct thorium_fifo_scheduler *queue, int priority,
                 struct thorium_actor **actor)
 {
     int value;
-    struct biosal_fast_queue *selected_queue;
+    struct core_fast_queue *selected_queue;
     uint64_t *selected_counter;
 
     selected_queue = thorium_fifo_scheduler_select_queue(queue, priority);
 
     selected_counter = thorium_fifo_scheduler_select_counter(queue, priority);
-    value = biosal_fast_queue_dequeue(selected_queue, actor);
+    value = core_fast_queue_dequeue(selected_queue, actor);
 
     if (value) {
         (*selected_counter)++;
@@ -282,9 +282,9 @@ int thorium_fifo_scheduler_dequeue_with_priority(struct thorium_fifo_scheduler *
     return value;
 }
 
-struct biosal_fast_queue *thorium_fifo_scheduler_select_queue(struct thorium_fifo_scheduler *queue, int priority)
+struct core_fast_queue *thorium_fifo_scheduler_select_queue(struct thorium_fifo_scheduler *queue, int priority)
 {
-    struct biosal_fast_queue *selection;
+    struct core_fast_queue *selection;
 
     selection = NULL;
 
@@ -301,7 +301,7 @@ struct biosal_fast_queue *thorium_fifo_scheduler_select_queue(struct thorium_fif
         selection = &queue->low_priority_queue;
     }
 
-    BIOSAL_DEBUGGER_ASSERT(selection != NULL);
+    CORE_DEBUGGER_ASSERT(selection != NULL);
 
     return selection;
 }
@@ -325,7 +325,7 @@ uint64_t *thorium_fifo_scheduler_select_counter(struct thorium_fifo_scheduler *q
         selection = &queue->low_priority_dequeue_operations;
     }
 
-    BIOSAL_DEBUGGER_ASSERT(selection != NULL);
+    CORE_DEBUGGER_ASSERT(selection != NULL);
 
     return selection;
 }
@@ -373,13 +373,13 @@ void thorium_fifo_scheduler_print(struct thorium_scheduler *self)
 void thorium_fifo_scheduler_print_with_priority(struct thorium_fifo_scheduler *queue, int priority, const char *name,
                 int node, int worker)
 {
-    struct biosal_fast_queue *selection;
+    struct core_fast_queue *selection;
     struct thorium_actor *actor;
     int size;
     int i;
 
     selection = thorium_fifo_scheduler_select_queue(queue, priority);
-    size = biosal_fast_queue_size(selection);
+    size = core_fast_queue_size(selection);
 
     printf("node/%d worker/%d scheduling_queue: Priority Queue %d (%s), actors: %d\n",
                     node, worker,
@@ -388,8 +388,8 @@ void thorium_fifo_scheduler_print_with_priority(struct thorium_fifo_scheduler *q
     i = 0;
 
     while (i < size) {
-        biosal_fast_queue_dequeue(selection, &actor);
-        biosal_fast_queue_enqueue(selection, &actor);
+        core_fast_queue_dequeue(selection, &actor);
+        core_fast_queue_enqueue(selection, &actor);
 
         printf("node/%d worker/%d [%i] actor %s/%d (%d messages)\n",
                         node, worker,

@@ -71,7 +71,7 @@ void thorium_actor_init(struct thorium_actor *self, void *concrete_actor,
     int capacity;
 
     self->virtual_runtime = 0;
-    biosal_timer_init(&self->timer);
+    core_timer_init(&self->timer);
 
     thorium_load_profiler_init(&self->profiler);
 
@@ -80,8 +80,8 @@ void thorium_actor_init(struct thorium_actor *self, void *concrete_actor,
     self->current_message = NULL;
 
 #ifdef THORIUM_ACTOR_GATHER_MESSAGE_METADATA
-    biosal_map_init(&self->received_messages, sizeof(int), sizeof(int));
-    biosal_map_init(&self->sent_messages, sizeof(int), sizeof(int));
+    core_map_init(&self->received_messages, sizeof(int), sizeof(int));
+    core_map_init(&self->sent_messages, sizeof(int), sizeof(int));
 #endif
 
     /* initialize the dispatcher before calling
@@ -95,45 +95,45 @@ void thorium_actor_init(struct thorium_actor *self, void *concrete_actor,
 
     self->flags = 0;
 
-    biosal_bitmap_clear_bit_uint32_t(&self->flags, FLAG_DEAD);
+    core_bitmap_clear_bit_uint32_t(&self->flags, FLAG_DEAD);
 
     self->script = script;
     self->worker = NULL;
 
     self->spawner_index = THORIUM_ACTOR_NO_VALUE;
 
-    biosal_bitmap_clear_bit_uint32_t(&self->flags, FLAG_SYNCHRONIZATION_STARTED);
+    core_bitmap_clear_bit_uint32_t(&self->flags, FLAG_SYNCHRONIZATION_STARTED);
     self->synchronization_expected_responses = 0;
     self->synchronization_responses = 0;
 
-    biosal_lock_init(&self->receive_lock);
-    biosal_bitmap_clear_bit_uint32_t(&self->flags, FLAG_LOCKED);
+    core_lock_init(&self->receive_lock);
+    core_bitmap_clear_bit_uint32_t(&self->flags, FLAG_LOCKED);
 
-    biosal_bitmap_clear_bit_uint32_t(&self->flags, FLAG_CAN_PACK);
+    core_bitmap_clear_bit_uint32_t(&self->flags, FLAG_CAN_PACK);
 
     self->cloning_status = THORIUM_ACTOR_STATUS_NOT_STARTED;
     self->migration_status = THORIUM_ACTOR_STATUS_NOT_STARTED;
-    biosal_bitmap_clear_bit_uint32_t(&self->flags, FLAG_MIGRATION_CLONED);
-    biosal_bitmap_clear_bit_uint32_t(&self->flags, FLAG_MIGRATION_FORWARDED_MESSAGES);
+    core_bitmap_clear_bit_uint32_t(&self->flags, FLAG_MIGRATION_CLONED);
+    core_bitmap_clear_bit_uint32_t(&self->flags, FLAG_MIGRATION_FORWARDED_MESSAGES);
 
-    biosal_bitmap_clear_bit_uint32_t(&self->flags, FLAG_ENABLE_LOAD_PROFILER);
+    core_bitmap_clear_bit_uint32_t(&self->flags, FLAG_ENABLE_LOAD_PROFILER);
 
 /*
 */
 #ifdef THORIUM_ACTOR_STORE_CHILDREN
-    biosal_vector_init(&self->acquaintance_vector, sizeof(int));
+    core_vector_init(&self->acquaintance_vector, sizeof(int));
 #endif
 
 #ifdef THORIUM_ACTOR_STORE_CHILDREN
-    biosal_vector_init(&self->children, sizeof(int));
+    core_vector_init(&self->children, sizeof(int));
 #endif
 
-    biosal_queue_init(&self->queued_messages_for_clone, sizeof(struct thorium_message));
-    biosal_queue_init(&self->queued_messages_for_migration, sizeof(struct thorium_message));
-    biosal_queue_init(&self->forwarding_queue, sizeof(struct thorium_message));
+    core_queue_init(&self->queued_messages_for_clone, sizeof(struct thorium_message));
+    core_queue_init(&self->queued_messages_for_migration, sizeof(struct thorium_message));
+    core_queue_init(&self->forwarding_queue, sizeof(struct thorium_message));
 
 #ifdef THORIUM_ACTOR_STORE_CHILDREN
-    biosal_map_init(&self->acquaintance_map, sizeof(int), sizeof(int));
+    core_map_init(&self->acquaintance_map, sizeof(int), sizeof(int));
 #endif
 
     /*
@@ -141,10 +141,10 @@ void thorium_actor_init(struct thorium_actor *self, void *concrete_actor,
     thorium_actor_send_to_self_empty(self, ACTION_PIN_TO_NODE);
     */
 
-    biosal_queue_init(&self->enqueued_messages, sizeof(struct thorium_message));
+    core_queue_init(&self->enqueued_messages, sizeof(struct thorium_message));
 
     capacity = THORIUM_ACTOR_MAILBOX_SIZE;
-    biosal_fast_ring_init(&self->mailbox, capacity, sizeof(struct thorium_message));
+    core_fast_ring_init(&self->mailbox, capacity, sizeof(struct thorium_message));
 
     /* call the concrete initializer
      * this must be the last call.
@@ -152,7 +152,7 @@ void thorium_actor_init(struct thorium_actor *self, void *concrete_actor,
     init = thorium_actor_get_init(self);
     init(self);
 
-    BIOSAL_DEBUGGER_ASSERT(self->name != THORIUM_ACTOR_NOBODY);
+    CORE_DEBUGGER_ASSERT(self->name != THORIUM_ACTOR_NOBODY);
 }
 
 void thorium_actor_destroy(struct thorium_actor *self)
@@ -161,7 +161,7 @@ void thorium_actor_destroy(struct thorium_actor *self)
     struct thorium_message message;
 
     self->virtual_runtime = 0;
-    biosal_timer_destroy(&self->timer);
+    core_timer_destroy(&self->timer);
 
     thorium_load_profiler_destroy(&self->profiler);
 
@@ -174,44 +174,44 @@ void thorium_actor_destroy(struct thorium_actor *self)
      * Make sure that everyone see that this actor is
      * dead.
      */
-    biosal_bitmap_set_bit_uint32_t(&self->flags, FLAG_DEAD);
+    core_bitmap_set_bit_uint32_t(&self->flags, FLAG_DEAD);
 
-    biosal_memory_fence();
+    core_memory_fence();
 
     thorium_dispatcher_destroy(&self->dispatcher);
 
 #ifdef THORIUM_ACTOR_STORE_CHILDREN
-    biosal_vector_destroy(&self->acquaintance_vector);
+    core_vector_destroy(&self->acquaintance_vector);
 #endif
 
 #ifdef THORIUM_ACTOR_STORE_CHILDREN
-    biosal_vector_destroy(&self->children);
+    core_vector_destroy(&self->children);
 #endif
 
-    biosal_queue_destroy(&self->queued_messages_for_clone);
-    biosal_queue_destroy(&self->queued_messages_for_migration);
-    biosal_queue_destroy(&self->forwarding_queue);
+    core_queue_destroy(&self->queued_messages_for_clone);
+    core_queue_destroy(&self->queued_messages_for_migration);
+    core_queue_destroy(&self->forwarding_queue);
 
 #ifdef THORIUM_ACTOR_STORE_CHILDREN
-    biosal_map_destroy(&self->acquaintance_map);
+    core_map_destroy(&self->acquaintance_map);
 #endif
 
 #ifdef THORIUM_ACTOR_GATHER_MESSAGE_METADATA
-    biosal_map_destroy(&self->received_messages);
-    biosal_map_destroy(&self->sent_messages);
+    core_map_destroy(&self->received_messages);
+    core_map_destroy(&self->sent_messages);
 #endif
 
-    BIOSAL_DEBUGGER_ASSERT(self->worker != NULL);
+    CORE_DEBUGGER_ASSERT(self->worker != NULL);
 
-    while (biosal_queue_dequeue(&self->enqueued_messages, &message)) {
+    while (core_queue_dequeue(&self->enqueued_messages, &message)) {
 
-        BIOSAL_DEBUGGER_ASSERT(thorium_message_buffer(&message) != NULL);
+        CORE_DEBUGGER_ASSERT(thorium_message_buffer(&message) != NULL);
         thorium_worker_free_message(self->worker, &message);
     }
 
-    biosal_queue_destroy(&self->enqueued_messages);
+    core_queue_destroy(&self->enqueued_messages);
 
-    BIOSAL_DEBUGGER_ASSERT(biosal_fast_ring_empty(&self->mailbox));
+    CORE_DEBUGGER_ASSERT(core_fast_ring_empty(&self->mailbox));
 
     self->name = -1;
 
@@ -224,18 +224,18 @@ void thorium_actor_destroy(struct thorium_actor *self)
      */
     thorium_actor_unlock(self);
 
-    biosal_lock_destroy(&self->receive_lock);
+    core_lock_destroy(&self->receive_lock);
 
     /* when exiting the destructor, the actor is unlocked
      * and destroyed too
      */
 
-    biosal_fast_ring_destroy(&self->mailbox);
+    core_fast_ring_destroy(&self->mailbox);
 }
 
 int thorium_actor_name(struct thorium_actor *self)
 {
-    BIOSAL_DEBUGGER_ASSERT(self != NULL);
+    CORE_DEBUGGER_ASSERT(self != NULL);
 
     return self->name;
 }
@@ -258,14 +258,14 @@ void thorium_actor_print(struct thorium_actor *self)
 
     int received;
     int sent;
-    struct biosal_memory_pool *ephemeral_memory;
+    struct core_memory_pool *ephemeral_memory;
 
     received = -1;
     sent = -1;
 
 #ifdef THORIUM_ACTOR_GATHER_MESSAGE_METADATA
-    received = (int)biosal_counter_get(&self->counter, BIOSAL_COUNTER_RECEIVED_MESSAGES);
-    send = (int)biosal_counter_get(&self->counter, BIOSAL_COUNTER_SENT_MESSAGES);
+    received = (int)core_counter_get(&self->counter, CORE_COUNTER_RECEIVED_MESSAGES);
+    send = (int)core_counter_get(&self->counter, CORE_COUNTER_SENT_MESSAGES);
 #endif
 
     ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
@@ -284,9 +284,9 @@ void thorium_actor_print(struct thorium_actor *self)
                     sent);
 
     printf("EXAMINE: CurrentHeapSize for home node is %" PRIu64 "\n",
-                    biosal_memory_get_utilized_byte_count());
+                    core_memory_get_utilized_byte_count());
     printf("EXAMINE: ephemeral memory for worker:\n");
-    biosal_memory_pool_print(ephemeral_memory);
+    core_memory_pool_print(ephemeral_memory);
 
     printf("EXAMINE: CurrentMessageSource: %d CurrentMessageTag: %d\n",
                     thorium_message_source(self->current_message),
@@ -340,7 +340,7 @@ int thorium_actor_send_system_self(struct thorium_actor *self, struct thorium_me
                         thorium_actor_name(self));
                         */
 
-        biosal_bitmap_set_bit_uint32_t(&self->flags, FLAG_CAN_PACK);
+        core_bitmap_set_bit_uint32_t(&self->flags, FLAG_CAN_PACK);
 
         /*
         thorium_actor_send_to_self_empty(self, ACTION_UNPIN_FROM_WORKER);
@@ -350,7 +350,7 @@ int thorium_actor_send_system_self(struct thorium_actor *self, struct thorium_me
         return 1;
 
     } else if (tag == ACTION_PACK_DISABLE) {
-        biosal_bitmap_clear_bit_uint32_t(&self->flags, FLAG_CAN_PACK);
+        core_bitmap_clear_bit_uint32_t(&self->flags, FLAG_CAN_PACK);
         return 1;
 
     } else if (tag == ACTION_YIELD) {
@@ -394,10 +394,10 @@ void thorium_actor_send(struct thorium_actor *self, int name, struct thorium_mes
 
     /* Update counter
      */
-    bucket = (int *)biosal_map_get(&self->sent_messages, &name);
+    bucket = (int *)core_map_get(&self->sent_messages, &name);
 
     if (bucket == NULL) {
-        bucket = (int *)biosal_map_add(&self->sent_messages, &name);
+        bucket = (int *)core_map_add(&self->sent_messages, &name);
         (*bucket) = 0;
     }
 
@@ -410,12 +410,12 @@ void thorium_actor_send(struct thorium_actor *self, int name, struct thorium_mes
     /* update counters
      */
     if (source == name) {
-        biosal_counter_add(&self->counter, BIOSAL_COUNTER_SENT_MESSAGES_TO_SELF, 1);
-        biosal_counter_add(&self->counter, BIOSAL_COUNTER_SENT_BYTES_TO_SELF,
+        core_counter_add(&self->counter, CORE_COUNTER_SENT_MESSAGES_TO_SELF, 1);
+        core_counter_add(&self->counter, CORE_COUNTER_SENT_BYTES_TO_SELF,
                         thorium_message_count(message));
     } else {
-        biosal_counter_add(&self->counter, BIOSAL_COUNTER_SENT_MESSAGES_NOT_TO_SELF, 1);
-        biosal_counter_add(&self->counter, BIOSAL_COUNTER_SENT_BYTES_NOT_TO_SELF,
+        core_counter_add(&self->counter, CORE_COUNTER_SENT_MESSAGES_NOT_TO_SELF, 1);
+        core_counter_add(&self->counter, CORE_COUNTER_SENT_BYTES_NOT_TO_SELF,
                         thorium_message_count(message));
     }
 #endif
@@ -468,7 +468,7 @@ int thorium_actor_spawn(struct thorium_actor *self, int script)
 
 #ifdef THORIUM_ACTOR_DEBUG_SPAWN
     printf("acquaintances after spawning\n");
-    biosal_vector_print_int(&self->acquaintance_vector);
+    core_vector_print_int(&self->acquaintance_vector);
     printf("\n");
 #endif
 
@@ -499,7 +499,7 @@ int thorium_actor_spawn_real(struct thorium_actor *self, int script)
     thorium_node_set_supervisor(thorium_actor_node(self), name, self_name);
 
 #ifdef THORIUM_ACTOR_GATHER_MESSAGE_METADATA
-    biosal_counter_add(&self->counter, BIOSAL_COUNTER_SPAWNED_ACTORS, 1);
+    core_counter_add(&self->counter, CORE_COUNTER_SPAWNED_ACTORS, 1);
 #endif
 
     return name;
@@ -508,19 +508,19 @@ int thorium_actor_spawn_real(struct thorium_actor *self, int script)
 void thorium_actor_die(struct thorium_actor *self)
 {
 #ifdef THORIUM_ACTOR_GATHER_MESSAGE_METADATA
-    biosal_counter_add(&self->counter, BIOSAL_COUNTER_KILLED_ACTORS, 1);
+    core_counter_add(&self->counter, CORE_COUNTER_KILLED_ACTORS, 1);
 #endif
 
-    biosal_bitmap_set_bit_uint32_t(&self->flags, FLAG_DEAD);
+    core_bitmap_set_bit_uint32_t(&self->flags, FLAG_DEAD);
 
     /*
      * Publish the memory transaction so that other threads see it
      * too.
      */
-    biosal_memory_fence();
+    core_memory_fence();
 }
 
-struct biosal_counter *thorium_actor_counter(struct thorium_actor *self)
+struct core_counter *thorium_actor_counter(struct thorium_actor *self)
 {
 #ifdef THORIUM_ACTOR_GATHER_MESSAGE_METADATA
     return &self->counter;
@@ -544,18 +544,18 @@ struct thorium_node *thorium_actor_node(struct thorium_actor *self)
 
 void thorium_actor_lock(struct thorium_actor *self)
 {
-    biosal_lock_lock(&self->receive_lock);
-    biosal_bitmap_set_bit_uint32_t(&self->flags, FLAG_LOCKED);
+    core_lock_lock(&self->receive_lock);
+    core_bitmap_set_bit_uint32_t(&self->flags, FLAG_LOCKED);
 }
 
 void thorium_actor_unlock(struct thorium_actor *self)
 {
-    if (!biosal_bitmap_get_bit_uint32_t(&self->flags, FLAG_LOCKED)) {
+    if (!core_bitmap_get_bit_uint32_t(&self->flags, FLAG_LOCKED)) {
         return;
     }
 
-    biosal_bitmap_clear_bit_uint32_t(&self->flags, FLAG_LOCKED);
-    biosal_lock_unlock(&self->receive_lock);
+    core_bitmap_clear_bit_uint32_t(&self->flags, FLAG_LOCKED);
+    core_lock_unlock(&self->receive_lock);
 }
 
 int thorium_actor_argc(struct thorium_actor *self)
@@ -644,7 +644,7 @@ int thorium_actor_receive_system(struct thorium_actor *self, struct thorium_mess
     struct thorium_message new_message;
     int offset;
     int bytes;
-    struct biosal_memory_pool *ephemeral_memory;
+    struct core_memory_pool *ephemeral_memory;
     int workers;
 
 #ifdef THORIUM_ACTOR_STORE_CHILDREN
@@ -657,7 +657,7 @@ int thorium_actor_receive_system(struct thorium_actor *self, struct thorium_mess
     /* the concrete actor must catch these otherwise.
      * Also, clone and migrate depend on these.
      */
-    if (!biosal_bitmap_get_bit_uint32_t(&self->flags, FLAG_CAN_PACK)) {
+    if (!core_bitmap_get_bit_uint32_t(&self->flags, FLAG_CAN_PACK)) {
 
         if (thorium_actor_receive_system_no_pack(self, message)) {
             return 1;
@@ -712,20 +712,20 @@ int thorium_actor_receive_system(struct thorium_actor *self, struct thorium_mess
         /* call a function called
          * thorium_actor_continue_clone
          */
-        biosal_bitmap_clear_bit_uint32_t(&self->flags, FLAG_CLONING_PROGRESSED);
+        core_bitmap_clear_bit_uint32_t(&self->flags, FLAG_CLONING_PROGRESSED);
         thorium_actor_continue_clone(self, message);
 
-        if (biosal_bitmap_get_bit_uint32_t(&self->flags, FLAG_CLONING_PROGRESSED)) {
+        if (core_bitmap_get_bit_uint32_t(&self->flags, FLAG_CLONING_PROGRESSED)) {
             return 1;
         }
     }
 
     if (self->migration_status == THORIUM_ACTOR_STATUS_STARTED) {
 
-        biosal_bitmap_clear_bit_uint32_t(&self->flags, FLAG_MIGRATION_PROGRESSED);
+        core_bitmap_clear_bit_uint32_t(&self->flags, FLAG_MIGRATION_PROGRESSED);
         thorium_actor_migrate(self, message);
 
-        if (biosal_bitmap_get_bit_uint32_t(&self->flags, FLAG_MIGRATION_PROGRESSED)) {
+        if (core_bitmap_get_bit_uint32_t(&self->flags, FLAG_MIGRATION_PROGRESSED)) {
             return 1;
         }
     }
@@ -748,10 +748,10 @@ int thorium_actor_receive_system(struct thorium_actor *self, struct thorium_mess
         offset = 0;
 
         bytes = sizeof(spawned);
-        biosal_memory_copy((char *)new_buffer + offset, &spawned, bytes);
+        core_memory_copy((char *)new_buffer + offset, &spawned, bytes);
         offset += bytes;
         bytes = sizeof(script);
-        biosal_memory_copy((char *)new_buffer + offset, &script, bytes);
+        core_memory_copy((char *)new_buffer + offset, &script, bytes);
         offset += bytes;
 
         new_count = offset;
@@ -946,19 +946,19 @@ void thorium_actor_receive(struct thorium_actor *self, struct thorium_message *m
     uint64_t end;
     uint64_t consumed_virtual_runtime;
 
-    start = biosal_timer_get_nanoseconds(&self->timer);
+    start = core_timer_get_nanoseconds(&self->timer);
 
-    if (biosal_bitmap_get_bit_uint32_t(&self->flags, FLAG_ENABLE_LOAD_PROFILER)) {
+    if (core_bitmap_get_bit_uint32_t(&self->flags, FLAG_ENABLE_LOAD_PROFILER)) {
         thorium_load_profiler_profile(&self->profiler, THORIUM_LOAD_PROFILER_RECEIVE_BEGIN);
     }
 
     thorium_actor_receive_private(self, message);
 
-    if (biosal_bitmap_get_bit_uint32_t(&self->flags, FLAG_ENABLE_LOAD_PROFILER)) {
+    if (core_bitmap_get_bit_uint32_t(&self->flags, FLAG_ENABLE_LOAD_PROFILER)) {
         thorium_load_profiler_profile(&self->profiler, THORIUM_LOAD_PROFILER_RECEIVE_END);
     }
 
-    end = biosal_timer_get_nanoseconds(&self->timer);
+    end = core_timer_get_nanoseconds(&self->timer);
     consumed_virtual_runtime = end - start;
     self->virtual_runtime += consumed_virtual_runtime;
 }
@@ -993,10 +993,10 @@ void thorium_actor_receive_private(struct thorium_actor *self, struct thorium_me
 #ifdef THORIUM_ACTOR_GATHER_MESSAGE_METADATA
     /* Update counter
      */
-    bucket = (int *)biosal_map_get(&self->received_messages, &source);
+    bucket = (int *)core_map_get(&self->received_messages, &source);
 
     if (bucket == NULL) {
-        bucket = (int *)biosal_map_add(&self->received_messages, &source);
+        bucket = (int *)core_map_add(&self->received_messages, &source);
         (*bucket) = 0;
     }
 
@@ -1018,15 +1018,15 @@ void thorium_actor_receive_private(struct thorium_actor *self, struct thorium_me
 #endif
     }
 
-    BIOSAL_DEBUGGER_ASSERT(biosal_memory_pool_profile_balance_count(thorium_actor_get_ephemeral_memory(self)) == 0);
+    CORE_DEBUGGER_ASSERT(core_memory_pool_profile_balance_count(thorium_actor_get_ephemeral_memory(self)) == 0);
 
     /* Otherwise, this is a message for the actor itself.
      */
     receive = thorium_actor_get_receive(self);
 
-    BIOSAL_DEBUGGER_ASSERT(biosal_memory_pool_profile_balance_count(thorium_actor_get_ephemeral_memory(self)) == 0);
+    CORE_DEBUGGER_ASSERT(core_memory_pool_profile_balance_count(thorium_actor_get_ephemeral_memory(self)) == 0);
 
-    BIOSAL_DEBUGGER_ASSERT(receive != NULL);
+    CORE_DEBUGGER_ASSERT(receive != NULL);
 
 #ifdef THORIUM_ACTOR_DEBUG_SYNC
     printf("DEBUG thorium_actor_receive calls concrete receive tag %d\n",
@@ -1039,12 +1039,12 @@ void thorium_actor_receive_private(struct thorium_actor *self, struct thorium_me
     /* update counters
      */
     if (source == name) {
-        biosal_counter_add(&self->counter, BIOSAL_COUNTER_RECEIVED_MESSAGES_FROM_SELF, 1);
-        biosal_counter_add(&self->counter, BIOSAL_COUNTER_RECEIVED_BYTES_FROM_SELF,
+        core_counter_add(&self->counter, CORE_COUNTER_RECEIVED_MESSAGES_FROM_SELF, 1);
+        core_counter_add(&self->counter, CORE_COUNTER_RECEIVED_BYTES_FROM_SELF,
                         thorium_message_count(message));
     } else {
-        biosal_counter_add(&self->counter, BIOSAL_COUNTER_RECEIVED_MESSAGES_NOT_FROM_SELF, 1);
-        biosal_counter_add(&self->counter, BIOSAL_COUNTER_RECEIVED_BYTES_NOT_FROM_SELF,
+        core_counter_add(&self->counter, CORE_COUNTER_RECEIVED_MESSAGES_NOT_FROM_SELF, 1);
+        core_counter_add(&self->counter, CORE_COUNTER_RECEIVED_BYTES_NOT_FROM_SELF,
                         thorium_message_count(message));
     }
 #endif
@@ -1074,7 +1074,7 @@ void thorium_actor_receive_synchronize_reply(struct thorium_actor *self,
 {
     int name;
 
-    if (biosal_bitmap_get_bit_uint32_t(&self->flags, FLAG_SYNCHRONIZATION_STARTED)) {
+    if (core_bitmap_get_bit_uint32_t(&self->flags, FLAG_SYNCHRONIZATION_STARTED)) {
 
 #ifdef THORIUM_ACTOR_DEBUG
         printf("DEBUG99 synchronization_reply %i/%i\n",
@@ -1099,17 +1099,17 @@ void thorium_actor_receive_synchronize_reply(struct thorium_actor *self,
             name = thorium_actor_name(self);
 
             thorium_actor_send(self, name, &new_message);
-            biosal_bitmap_clear_bit_uint32_t(&self->flags, FLAG_SYNCHRONIZATION_STARTED);
+            core_bitmap_clear_bit_uint32_t(&self->flags, FLAG_SYNCHRONIZATION_STARTED);
         }
     }
 }
 
-void thorium_actor_synchronize(struct thorium_actor *self, struct biosal_vector *actors)
+void thorium_actor_synchronize(struct thorium_actor *self, struct core_vector *actors)
 {
     struct thorium_message message;
 
-    biosal_bitmap_set_bit_uint32_t(&self->flags, FLAG_SYNCHRONIZATION_STARTED);
-    self->synchronization_expected_responses = biosal_vector_size(actors);
+    core_bitmap_set_bit_uint32_t(&self->flags, FLAG_SYNCHRONIZATION_STARTED);
+    self->synchronization_expected_responses = core_vector_size(actors);
     self->synchronization_responses = 0;
 
     /* emit synchronization
@@ -1130,7 +1130,7 @@ void thorium_actor_synchronize(struct thorium_actor *self, struct biosal_vector 
 
 int thorium_actor_synchronization_completed(struct thorium_actor *self)
 {
-    if (biosal_bitmap_get_bit_uint32_t(&self->flags, FLAG_SYNCHRONIZATION_STARTED) == 0) {
+    if (core_bitmap_get_bit_uint32_t(&self->flags, FLAG_SYNCHRONIZATION_STARTED) == 0) {
         return 0;
     }
 
@@ -1150,9 +1150,9 @@ int thorium_actor_synchronization_completed(struct thorium_actor *self)
 
 int thorium_actor_script(struct thorium_actor *self)
 {
-    BIOSAL_DEBUGGER_ASSERT(self != NULL);
+    CORE_DEBUGGER_ASSERT(self != NULL);
 
-    BIOSAL_DEBUGGER_ASSERT(self->script != NULL);
+    CORE_DEBUGGER_ASSERT(self->script != NULL);
 
     return thorium_script_identifier(self->script);
 }
@@ -1220,7 +1220,7 @@ void thorium_actor_continue_clone(struct thorium_actor *self, struct thorium_mes
 
         thorium_actor_send_to_self_empty(self, ACTION_PACK);
 
-        biosal_bitmap_set_bit_uint32_t(&self->flags, FLAG_CLONING_PROGRESSED);
+        core_bitmap_set_bit_uint32_t(&self->flags, FLAG_CLONING_PROGRESSED);
 
     } else if (tag == ACTION_PACK_REPLY && source == self_name) {
 
@@ -1233,7 +1233,7 @@ void thorium_actor_continue_clone(struct thorium_actor *self, struct thorium_mes
         thorium_message_init(&new_message, ACTION_UNPACK, count, buffer);
         thorium_actor_send(self, self->cloning_new_actor, &new_message);
 
-        biosal_bitmap_set_bit_uint32_t(&self->flags, FLAG_CLONING_PROGRESSED);
+        core_bitmap_set_bit_uint32_t(&self->flags, FLAG_CLONING_PROGRESSED);
 
         thorium_message_destroy(&new_message);
 
@@ -1269,13 +1269,13 @@ void thorium_actor_continue_clone(struct thorium_actor *self, struct thorium_mes
 
         thorium_actor_send_to_self_empty(self, ACTION_FORWARD_MESSAGES);
 
-        biosal_bitmap_set_bit_uint32_t(&self->flags, FLAG_CLONING_PROGRESSED);
+        core_bitmap_set_bit_uint32_t(&self->flags, FLAG_CLONING_PROGRESSED);
     }
 }
 
 int thorium_actor_source(struct thorium_actor *self)
 {
-    BIOSAL_DEBUGGER_ASSERT(self->current_message != NULL);
+    CORE_DEBUGGER_ASSERT(self->current_message != NULL);
 
     if (self->current_message == NULL) {
         return THORIUM_ACTOR_NOBODY;
@@ -1346,7 +1346,7 @@ void thorium_actor_migrate(struct thorium_actor *self, struct thorium_message *m
 
     return;
 
-    if (biosal_bitmap_get_bit_uint32_t(&self->flags, FLAG_MIGRATION_CLONED) == 0) {
+    if (core_bitmap_get_bit_uint32_t(&self->flags, FLAG_MIGRATION_CLONED) == 0) {
 
 #ifdef THORIUM_ACTOR_DEBUG_MIGRATE
         printf("DEBUG thorium_actor_migrate thorium_actor_migrate: cloning self...\n");
@@ -1365,9 +1365,9 @@ void thorium_actor_migrate(struct thorium_actor *self, struct thorium_message *m
         thorium_actor_send_to_self_int(self, ACTION_CLONE, spawner);
 
         self->migration_status = THORIUM_ACTOR_STATUS_STARTED;
-        biosal_bitmap_set_bit_uint32_t(&self->flags, FLAG_MIGRATION_CLONED);
+        core_bitmap_set_bit_uint32_t(&self->flags, FLAG_MIGRATION_CLONED);
 
-        biosal_bitmap_set_bit_uint32_t(&self->flags, FLAG_MIGRATION_PROGRESSED);
+        core_bitmap_set_bit_uint32_t(&self->flags, FLAG_MIGRATION_PROGRESSED);
 
     } else if (tag == ACTION_CLONE_REPLY && source == name) {
 
@@ -1387,7 +1387,7 @@ void thorium_actor_migrate(struct thorium_actor *self, struct thorium_message *m
 #ifdef THORIUM_ACTOR_DEBUG_MIGRATE
         printf("DEBUG thorium_actor_migrate: notify acquaintance of name change.\n");
 #endif
-        biosal_bitmap_set_bit_uint32_t(&self->flags, FLAG_MIGRATION_PROGRESSED);
+        core_bitmap_set_bit_uint32_t(&self->flags, FLAG_MIGRATION_PROGRESSED);
 
     } else if (tag == ACTION_MIGRATE_NOTIFY_ACQUAINTANCES_REPLY && source == name) {
 
@@ -1414,10 +1414,10 @@ void thorium_actor_migrate(struct thorium_actor *self, struct thorium_message *m
         thorium_actor_send(self, self->migration_new_actor, &new_message);
         thorium_message_destroy(&new_message);
 
-        biosal_bitmap_set_bit_uint32_t(&self->flags, FLAG_MIGRATION_PROGRESSED);
+        core_bitmap_set_bit_uint32_t(&self->flags, FLAG_MIGRATION_PROGRESSED);
 
     } else if (tag == ACTION_FORWARD_MESSAGES_REPLY
-                    && biosal_bitmap_get_bit_uint32_t(&self->flags,
+                    && core_bitmap_get_bit_uint32_t(&self->flags,
                             FLAG_MIGRATION_FORWARDED_MESSAGES)) {
 
         /* send the name of the new copy and die of a peaceful death.
@@ -1433,7 +1433,7 @@ void thorium_actor_migrate(struct thorium_actor *self, struct thorium_message *m
         printf("DEBUG thorium_actor_migrate: OK, now killing self and returning clone name to client.\n");
 #endif
 
-        biosal_bitmap_set_bit_uint32_t(&self->flags, FLAG_MIGRATION_PROGRESSED);
+        core_bitmap_set_bit_uint32_t(&self->flags, FLAG_MIGRATION_PROGRESSED);
 
     } else if (tag == ACTION_SET_SUPERVISOR_REPLY
                     && source == self->migration_new_actor) {
@@ -1451,7 +1451,7 @@ void thorium_actor_migrate(struct thorium_actor *self, struct thorium_message *m
 #endif
 
             thorium_actor_send_to_self_empty(self, ACTION_FORWARD_MESSAGES);
-            biosal_bitmap_set_bit_uint32_t(&self->flags,
+            core_bitmap_set_bit_uint32_t(&self->flags,
                                 FLAG_MIGRATION_FORWARDED_MESSAGES);
 
         /* wait for the clone queue to be empty.
@@ -1465,10 +1465,10 @@ void thorium_actor_migrate(struct thorium_actor *self, struct thorium_message *m
             /* queue the selector into the forwarding system
              */
             selector = THORIUM_ACTOR_FORWARDING_MIGRATE;
-            biosal_queue_enqueue(&self->forwarding_queue, &selector);
+            core_queue_enqueue(&self->forwarding_queue, &selector);
         }
 
-        biosal_bitmap_set_bit_uint32_t(&self->flags, FLAG_MIGRATION_PROGRESSED);
+        core_bitmap_set_bit_uint32_t(&self->flags, FLAG_MIGRATION_PROGRESSED);
     }
 }
 
@@ -1491,7 +1491,7 @@ void thorium_actor_notify_name_change(struct thorium_actor *self, struct thorium
      */
     index = thorium_actor_get_acquaintance_index_private(self, old_name);
 
-    bucket = biosal_vector_at(&self->acquaintance_vector, index);
+    bucket = core_vector_at(&self->acquaintance_vector, index);
 
     /*
      * Change it only if it exists
@@ -1520,14 +1520,14 @@ void thorium_actor_notify_name_change(struct thorium_actor *self, struct thorium
 #ifdef THORIUM_ACTOR_STORE_CHILDREN
 void thorium_actor_migrate_notify_acquaintances(struct thorium_actor *self, struct thorium_message *message)
 {
-    struct biosal_vector *acquaintance_vector;
+    struct core_vector *acquaintance_vector;
     int acquaintance;
 
     acquaintance_vector = thorium_actor_acquaintance_vector_private(self);
 
-    if (self->acquaintance_index < biosal_vector_size(acquaintance_vector)) {
+    if (self->acquaintance_index < core_vector_size(acquaintance_vector)) {
 
-        acquaintance = biosal_vector_at_as_int(acquaintance_vector, self->acquaintance_index);
+        acquaintance = core_vector_at_as_int(acquaintance_vector, self->acquaintance_index);
         thorium_actor_send_int(self, acquaintance, ACTION_NOTIFY_NAME_CHANGE,
                         self->migration_new_actor);
         self->acquaintance_index++;
@@ -1546,7 +1546,7 @@ void thorium_actor_queue_message(struct thorium_actor *self,
     void *new_buffer;
     int count;
     struct thorium_message new_message;
-    struct biosal_queue *queue;
+    struct core_queue *queue;
     int tag;
     int source;
 
@@ -1560,8 +1560,8 @@ void thorium_actor_queue_message(struct thorium_actor *self,
 #endif
 
     if (count > 0) {
-        new_buffer = biosal_memory_allocate(count, MEMORY_ACTOR_KEY);
-        biosal_memory_copy(new_buffer, buffer, count);
+        new_buffer = core_memory_allocate(count, MEMORY_ACTOR_KEY);
+        core_memory_copy(new_buffer, buffer, count);
     }
 
     thorium_message_init(&new_message, tag, count, new_buffer);
@@ -1579,16 +1579,16 @@ void thorium_actor_queue_message(struct thorium_actor *self,
         queue = &self->queued_messages_for_migration;
     }
 
-    biosal_queue_enqueue(queue, &new_message);
+    core_queue_enqueue(queue, &new_message);
 }
 
 void thorium_actor_forward_messages(struct thorium_actor *self, struct thorium_message *message)
 {
     struct thorium_message new_message;
-    struct biosal_queue *queue;
+    struct core_queue *queue;
     int destination;
     void *buffer_to_release;
-    struct biosal_memory_pool *ephemeral_memory;
+    struct core_memory_pool *ephemeral_memory;
 
     ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
     queue = NULL;
@@ -1617,7 +1617,7 @@ void thorium_actor_forward_messages(struct thorium_actor *self, struct thorium_m
         return;
     }
 
-    if (biosal_queue_dequeue(queue, &new_message)) {
+    if (core_queue_dequeue(queue, &new_message)) {
 
 #ifdef THORIUM_ACTOR_DEBUG_FORWARDING
         printf("DEBUG thorium_actor_forward_messages actor %d forwarding message to actor %d tag is %d,"
@@ -1633,7 +1633,7 @@ void thorium_actor_forward_messages(struct thorium_actor *self, struct thorium_m
         thorium_actor_send(self, destination, &new_message);
 
         buffer_to_release = thorium_message_buffer(&new_message);
-        biosal_memory_pool_free(ephemeral_memory, buffer_to_release);
+        core_memory_pool_free(ephemeral_memory, buffer_to_release);
 
         /* recursive actor call
          */
@@ -1645,14 +1645,14 @@ void thorium_actor_forward_messages(struct thorium_actor *self, struct thorium_m
                         thorium_actor_name(self), self->forwarding_selector);
 #endif
 
-        if (biosal_queue_dequeue(&self->forwarding_queue, &self->forwarding_selector)) {
+        if (core_queue_dequeue(&self->forwarding_queue, &self->forwarding_selector)) {
 
 #ifdef THORIUM_ACTOR_DEBUG_FORWARDING
             printf("DEBUG thorium_actor_forward_messages will now using queue (FIFO pop)/%d\n",
                             self->forwarding_selector);
 #endif
             if (self->forwarding_selector == THORIUM_ACTOR_FORWARDING_MIGRATE) {
-                biosal_bitmap_set_bit_uint32_t(&self->flags,
+                core_bitmap_set_bit_uint32_t(&self->flags,
                                 FLAG_MIGRATION_FORWARDED_MESSAGES);
             }
 
@@ -1687,7 +1687,7 @@ void thorium_actor_unpin_from_node(struct thorium_actor *self)
 #ifdef THORIUM_ACTOR_STORE_CHILDREN
 int thorium_actor_acquaintance_count(struct thorium_actor *self)
 {
-    return biosal_vector_size(&self->acquaintance_vector);
+    return core_vector_size(&self->acquaintance_vector);
 }
 #endif
 
@@ -1696,8 +1696,8 @@ int thorium_actor_get_child(struct thorium_actor *self, int index)
 {
     int index2;
 
-    if (index < biosal_vector_size(&self->children)) {
-        index2 = *(int *)biosal_vector_at(&self->children, index);
+    if (index < core_vector_size(&self->children)) {
+        index2 = *(int *)core_vector_at(&self->children, index);
         return thorium_actor_get_acquaintance_private(self, index2);
     }
 
@@ -1706,7 +1706,7 @@ int thorium_actor_get_child(struct thorium_actor *self, int index)
 
 int thorium_actor_child_count(struct thorium_actor *self)
 {
-    return biosal_vector_size(&self->children);
+    return core_vector_size(&self->children);
 }
 
 int thorium_actor_add_child(struct thorium_actor *self, int name)
@@ -1714,7 +1714,7 @@ int thorium_actor_add_child(struct thorium_actor *self, int name)
     int index;
 
     index = thorium_actor_add_acquaintance_private(self, name);
-    biosal_vector_push_back(&self->children, &index);
+    core_vector_push_back(&self->children, &index);
 
     return index;
 }
@@ -1736,12 +1736,12 @@ int thorium_actor_add_acquaintance_private(struct thorium_actor *self, int name)
         return -1;
     }
 
-    biosal_vector_push_back_int(thorium_actor_acquaintance_vector_private(self),
+    core_vector_push_back_int(thorium_actor_acquaintance_vector_private(self),
                     name);
 
-    index = biosal_vector_size(thorium_actor_acquaintance_vector_private(self)) - 1;
+    index = core_vector_size(thorium_actor_acquaintance_vector_private(self)) - 1;
 
-    bucket = biosal_map_add(&self->acquaintance_map, &name);
+    bucket = core_map_add(&self->acquaintance_map, &name);
     *bucket = index;
 
     return index;
@@ -1754,10 +1754,10 @@ int thorium_actor_get_acquaintance_index_private(struct thorium_actor *self, int
     int *bucket;
 
 #if 0
-    return biosal_vector_index_of(&self->acquaintance_vector, &name);
+    return core_vector_index_of(&self->acquaintance_vector, &name);
 #endif
 
-    bucket = biosal_map_get(&self->acquaintance_map, &name);
+    bucket = core_map_get(&self->acquaintance_map, &name);
 
     if (bucket == NULL) {
         return -1;
@@ -1779,7 +1779,7 @@ int thorium_actor_get_child_index(struct thorium_actor *self, int name)
     }
 
     for (i = 0; i < thorium_actor_child_count(self); i++) {
-        index = *(int *)biosal_vector_at(&self->children, i);
+        index = *(int *)core_vector_at(&self->children, i);
 
 #ifdef THORIUM_ACTOR_DEBUG_CHILDREN
         printf("DEBUG index %d\n", index);
@@ -1812,15 +1812,15 @@ void thorium_actor_enqueue_message(struct thorium_actor *self, struct thorium_me
     new_buffer = NULL;
 
     if (buffer != NULL) {
-        new_buffer = biosal_memory_allocate(count, MEMORY_ACTOR_KEY);
-        biosal_memory_copy(new_buffer, buffer, count);
+        new_buffer = core_memory_allocate(count, MEMORY_ACTOR_KEY);
+        core_memory_copy(new_buffer, buffer, count);
     }
 
     thorium_message_init(&new_message, tag, count, new_buffer);
     thorium_message_set_source(&new_message, source);
     thorium_message_set_destination(&new_message, destination);
 
-    biosal_queue_enqueue(&self->enqueued_messages, &new_message);
+    core_queue_enqueue(&self->enqueued_messages, &new_message);
     thorium_message_destroy(&new_message);
 }
 
@@ -1830,15 +1830,15 @@ void thorium_actor_dequeue_message(struct thorium_actor *self, struct thorium_me
         return;
     }
 
-    biosal_queue_dequeue(&self->enqueued_messages, message);
+    core_queue_dequeue(&self->enqueued_messages, message);
 }
 
 int thorium_actor_enqueued_message_count(struct thorium_actor *self)
 {
-    return biosal_queue_size(&self->enqueued_messages);
+    return core_queue_size(&self->enqueued_messages);
 }
 
-struct biosal_map *thorium_actor_get_received_messages(struct thorium_actor *self)
+struct core_map *thorium_actor_get_received_messages(struct thorium_actor *self)
 {
 #ifdef THORIUM_ACTOR_GATHER_MESSAGE_METADATA
     return &self->received_messages;
@@ -1847,7 +1847,7 @@ struct biosal_map *thorium_actor_get_received_messages(struct thorium_actor *sel
 #endif
 }
 
-struct biosal_map *thorium_actor_get_sent_messages(struct thorium_actor *self)
+struct core_map *thorium_actor_get_sent_messages(struct thorium_actor *self)
 {
 #ifdef THORIUM_ACTOR_GATHER_MESSAGE_METADATA
     return &self->sent_messages;
@@ -1858,12 +1858,12 @@ struct biosal_map *thorium_actor_get_sent_messages(struct thorium_actor *self)
 
 int thorium_actor_enqueue_mailbox_message(struct thorium_actor *self, struct thorium_message *message)
 {
-    return biosal_fast_ring_push_from_producer(&self->mailbox, message);
+    return core_fast_ring_push_from_producer(&self->mailbox, message);
 }
 
 int thorium_actor_dequeue_mailbox_message(struct thorium_actor *self, struct thorium_message *message)
 {
-    return biosal_fast_ring_pop_from_consumer(&self->mailbox, message);
+    return core_fast_ring_pop_from_consumer(&self->mailbox, message);
 }
 
 int thorium_actor_work(struct thorium_actor *self)
@@ -1871,7 +1871,7 @@ int thorium_actor_work(struct thorium_actor *self)
     struct thorium_message message;
     void *buffer;
     int source_worker;
-    struct biosal_memory_pool *ephemeral_memory;
+    struct core_memory_pool *ephemeral_memory;
 
     if (!thorium_actor_dequeue_mailbox_message(self, &message)) {
         printf("Error, no message...\n");
@@ -1888,7 +1888,7 @@ int thorium_actor_work(struct thorium_actor *self)
     buffer = thorium_message_buffer(&message);
 
 /*
-#ifdef BIOSAL_DEBUGGER_ENABLE_ASSERT
+#ifdef CORE_DEBUGGER_ENABLE_ASSERT
     if (buffer == NULL) {
         printf("Error: actor message is NULL, source %d destination %d action %x\n",
                         thorium_message_source(&message),
@@ -1896,12 +1896,12 @@ int thorium_actor_work(struct thorium_actor *self)
                         thorium_message_action(&message));
     }
 #endif
-    BIOSAL_DEBUGGER_ASSERT(buffer != NULL);
+    CORE_DEBUGGER_ASSERT(buffer != NULL);
     */
     source_worker = thorium_message_worker(&message);
 
-    BIOSAL_DEBUGGER_ASSERT(!biosal_memory_pool_has_leaks(ephemeral_memory));
-#ifdef BIOSAL_MEMORY_POOL_FIND_LEAKS
+    CORE_DEBUGGER_ASSERT(!core_memory_pool_has_leaks(ephemeral_memory));
+#ifdef CORE_MEMORY_POOL_FIND_LEAKS
 #endif
 
     /*
@@ -1909,18 +1909,18 @@ int thorium_actor_work(struct thorium_actor *self)
      */
     thorium_actor_receive(self, &message);
 
-#ifdef BIOSAL_DEBUGGER_ENABLE_ASSERT
-    if (biosal_memory_pool_has_leaks(ephemeral_memory)) {
+#ifdef CORE_DEBUGGER_ENABLE_ASSERT
+    if (core_memory_pool_has_leaks(ephemeral_memory)) {
         printf("Error: detected leak in %s/%d action %x source %d\n",
                         thorium_actor_script_name(self),
                         thorium_actor_name(self),
                         thorium_message_action(&message),
                         thorium_message_source(&message));
-        biosal_memory_pool_examine(ephemeral_memory);
+        core_memory_pool_examine(ephemeral_memory);
     }
 #endif
-    BIOSAL_DEBUGGER_ASSERT(!biosal_memory_pool_has_leaks(ephemeral_memory));
-#ifdef BIOSAL_MEMORY_POOL_FIND_LEAKS
+    CORE_DEBUGGER_ASSERT(!core_memory_pool_has_leaks(ephemeral_memory));
+#ifdef CORE_MEMORY_POOL_FIND_LEAKS
 #endif
 
     /* Restore the important stuff
@@ -1936,7 +1936,7 @@ int thorium_actor_work(struct thorium_actor *self)
      */
 
     if (buffer != NULL) {
-        BIOSAL_DEBUGGER_ASSERT(thorium_message_buffer(&message) != NULL);
+        CORE_DEBUGGER_ASSERT(thorium_message_buffer(&message) != NULL);
         thorium_worker_free_message(self->worker, &message);
     }
 
@@ -1949,7 +1949,7 @@ int thorium_actor_work(struct thorium_actor *self)
 
         while (thorium_actor_dequeue_mailbox_message(self, &message)) {
 
-            BIOSAL_DEBUGGER_ASSERT(thorium_message_buffer(&message) != NULL);
+            CORE_DEBUGGER_ASSERT(thorium_message_buffer(&message) != NULL);
             thorium_worker_free_message(self->worker, &message);
         }
     }
@@ -1962,13 +1962,13 @@ int thorium_actor_get_mailbox_size(struct thorium_actor *self)
     if (thorium_actor_dead(self)) {
         return 0;
     }
-    return biosal_fast_ring_size_from_producer(&self->mailbox);
+    return core_fast_ring_size_from_producer(&self->mailbox);
 }
 
 int thorium_actor_get_sum_of_received_messages(struct thorium_actor *self)
 {
-    struct biosal_map_iterator map_iterator;
-    struct biosal_map *map;
+    struct core_map_iterator map_iterator;
+    struct core_map *map;
     int value;
     int messages;
 
@@ -1979,13 +1979,13 @@ int thorium_actor_get_sum_of_received_messages(struct thorium_actor *self)
 
     value = 0;
 
-    biosal_map_iterator_init(&map_iterator, map);
+    core_map_iterator_init(&map_iterator, map);
 
-    while (biosal_map_iterator_get_next_key_and_value(&map_iterator, NULL, &messages)) {
+    while (core_map_iterator_get_next_key_and_value(&map_iterator, NULL, &messages)) {
         value += messages;
     }
 
-    biosal_map_iterator_destroy(&map_iterator);
+    core_map_iterator_destroy(&map_iterator);
 
     return value;
 }
@@ -1998,26 +1998,26 @@ char *thorium_actor_script_name(struct thorium_actor *self)
 void thorium_actor_reset_counters(struct thorium_actor *self)
 {
 #if 0
-    struct biosal_map_iterator map_iterator;
-    struct biosal_map *map;
+    struct core_map_iterator map_iterator;
+    struct core_map *map;
     int name;
     int messages;
 
     map = thorium_actor_get_received_messages(self);
 
-    biosal_map_iterator_init(&map_iterator, map);
+    core_map_iterator_init(&map_iterator, map);
 
-    while (biosal_map_iterator_get_next_key_and_value(&map_iterator, &name, &messages)) {
+    while (core_map_iterator_get_next_key_and_value(&map_iterator, &name, &messages)) {
         messages = 0;
-        biosal_map_update_value(map, &name, &messages);
+        core_map_update_value(map, &name, &messages);
     }
 
-    biosal_map_iterator_destroy(&map_iterator);
+    core_map_iterator_destroy(&map_iterator);
 #endif
 
 #ifdef THORIUM_ACTOR_GATHER_MESSAGE_METADATA
-    biosal_map_destroy(&self->received_messages);
-    biosal_map_init(&self->received_messages, sizeof(int), sizeof(int));
+    core_map_destroy(&self->received_messages);
+    core_map_init(&self->received_messages, sizeof(int), sizeof(int));
 #endif
 }
 
@@ -2029,7 +2029,7 @@ int thorium_actor_get_priority(struct thorium_actor *self)
 int thorium_actor_get_source_count(struct thorium_actor *self)
 {
 #ifdef THORIUM_ACTOR_GATHER_MESSAGE_METADATA
-    return biosal_map_size(&self->received_messages);
+    return core_map_size(&self->received_messages);
 #else
     return -1;
 #endif
@@ -2052,7 +2052,7 @@ struct thorium_worker *thorium_actor_worker(struct thorium_actor *self)
 
 int thorium_actor_dead(struct thorium_actor *self)
 {
-    return biosal_bitmap_get_bit_uint32_t(&self->flags, FLAG_DEAD);
+    return core_bitmap_get_bit_uint32_t(&self->flags, FLAG_DEAD);
 }
 
 /* return 0 if successful
@@ -2061,10 +2061,10 @@ int thorium_actor_trylock(struct thorium_actor *self)
 {
     int result;
 
-    result = biosal_lock_trylock(&self->receive_lock);
+    result = core_lock_trylock(&self->receive_lock);
 
-    if (result == BIOSAL_LOCK_SUCCESS) {
-        biosal_bitmap_set_bit_uint32_t(&self->flags, FLAG_LOCKED);
+    if (result == CORE_LOCK_SUCCESS) {
+        core_bitmap_set_bit_uint32_t(&self->flags, FLAG_LOCKED);
         return result;
     }
 
@@ -2072,15 +2072,15 @@ int thorium_actor_trylock(struct thorium_actor *self)
 }
 
 #ifdef THORIUM_ACTOR_STORE_CHILDREN
-struct biosal_vector *thorium_actor_acquaintance_vector_private(struct thorium_actor *self)
+struct core_vector *thorium_actor_acquaintance_vector_private(struct thorium_actor *self)
 {
     return &self->acquaintance_vector;
 }
 
 int thorium_actor_get_acquaintance_private(struct thorium_actor *self, int index)
 {
-    if (index < biosal_vector_size(thorium_actor_acquaintance_vector_private(self))) {
-        return biosal_vector_at_as_int(thorium_actor_acquaintance_vector_private(self),
+    if (index < core_vector_size(thorium_actor_acquaintance_vector_private(self))) {
+        return core_vector_at_as_int(thorium_actor_acquaintance_vector_private(self),
                         index);
     }
 
@@ -2088,7 +2088,7 @@ int thorium_actor_get_acquaintance_private(struct thorium_actor *self, int index
 }
 #endif
 
-struct biosal_memory_pool *thorium_actor_get_ephemeral_memory(struct thorium_actor *self)
+struct core_memory_pool *thorium_actor_get_ephemeral_memory(struct thorium_actor *self)
 {
     struct thorium_worker *worker;
 
@@ -2101,29 +2101,29 @@ struct biosal_memory_pool *thorium_actor_get_ephemeral_memory(struct thorium_act
     return thorium_worker_get_ephemeral_memory(worker);
 }
 
-int thorium_actor_get_spawner(struct thorium_actor *self, struct biosal_vector *spawners)
+int thorium_actor_get_spawner(struct thorium_actor *self, struct core_vector *spawners)
 {
     int actor;
 
-    if (biosal_vector_size(spawners) == 0) {
+    if (core_vector_size(spawners) == 0) {
         return THORIUM_ACTOR_NOBODY;
     }
 
     if (self->spawner_index == THORIUM_ACTOR_NO_VALUE) {
-        self->spawner_index = biosal_vector_size(spawners) - 1;
+        self->spawner_index = core_vector_size(spawners) - 1;
     }
 
-    if (self->spawner_index >= biosal_vector_size(spawners)) {
-        self->spawner_index = biosal_vector_size(spawners) - 1;
+    if (self->spawner_index >= core_vector_size(spawners)) {
+        self->spawner_index = core_vector_size(spawners) - 1;
     }
 
-    actor = biosal_vector_at_as_int(spawners, self->spawner_index);
+    actor = core_vector_at_as_int(spawners, self->spawner_index);
 
     --self->spawner_index;
 
     if (self->spawner_index < 0) {
 
-        self->spawner_index = biosal_vector_size(spawners) - 1;
+        self->spawner_index = core_vector_size(spawners) - 1;
     }
 
     return actor;
@@ -2140,20 +2140,20 @@ void thorium_actor_add_action_with_source_and_condition(struct thorium_actor *se
     thorium_dispatcher_add_action(&self->dispatcher, tag, handler, source, actual, expected);
 }
 
-int thorium_actor_get_random_spawner(struct thorium_actor *self, struct biosal_vector *spawners)
+int thorium_actor_get_random_spawner(struct thorium_actor *self, struct core_vector *spawners)
 {
     int actor;
     int size;
     int index;
 
-    size = biosal_vector_size(spawners);
+    size = core_vector_size(spawners);
 
     if (size == 0) {
         return THORIUM_ACTOR_NOBODY;
     }
 
     index = rand() % size;
-    actor = biosal_vector_at_as_int(spawners, index);
+    actor = core_vector_at_as_int(spawners, index);
 
     return actor;
 }
@@ -2163,16 +2163,16 @@ void thorium_actor_enable_profiler(struct thorium_actor *self)
 #if 0
     printf("thorium_actor_enable_profiler\n");
 #endif
-    biosal_bitmap_set_bit_uint32_t(&self->flags, FLAG_ENABLE_LOAD_PROFILER);
+    core_bitmap_set_bit_uint32_t(&self->flags, FLAG_ENABLE_LOAD_PROFILER);
 }
 
 void thorium_actor_disable_profiler(struct thorium_actor *self)
 {
-    biosal_bitmap_clear_bit_uint32_t(&self->flags, FLAG_ENABLE_LOAD_PROFILER);
+    core_bitmap_clear_bit_uint32_t(&self->flags, FLAG_ENABLE_LOAD_PROFILER);
 }
 
 void thorium_actor_write_profile(struct thorium_actor *self,
-               struct biosal_buffered_file_writer *writer)
+               struct core_buffered_file_writer *writer)
 {
 #if 0
     printf("thorium_actor_write_profile\n");

@@ -1,6 +1,6 @@
 
-#ifndef BIOSAL_MURMUR_HASSH_2_64_A_H
-#define BIOSAL_MURMUR_HASSH_2_64_A_H
+#ifndef CORE_MURMUR_HASSH_2_64_A_H
+#define CORE_MURMUR_HASSH_2_64_A_H
 
 #include <stdint.h>
 
@@ -19,6 +19,6 @@
  * \see https://code.google.com/p/cityhash/source/browse/trunk/src/city.cc
  * \see http://google-opensource.blogspot.com/2011/04/introducing-cityhash.html
  */
-uint64_t biosal_murmur_hash_2_64_a(const void *key, int length, unsigned int seed);
+uint64_t core_murmur_hash_2_64_a(const void *key, int length, unsigned int seed);
 
 #endif

@@ -7,7 +7,7 @@
 #define SCRIPT_HELLO 0xfbcedbb5
 
 struct hello {
-    struct biosal_vector initial_helloes;
+    struct core_vector initial_helloes;
 };
 
 extern struct thorium_script hello_script;

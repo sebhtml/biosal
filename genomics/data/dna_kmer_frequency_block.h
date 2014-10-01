@@ -14,27 +14,27 @@ struct biosal_dna_kmer_frequency_block {
 
     int kmer_length;
 
-    struct biosal_map kmers;
+    struct core_map kmers;
 };
 
 void biosal_dna_kmer_frequency_block_init(struct biosal_dna_kmer_frequency_block *self, int kmer_length,
-                struct biosal_memory_pool *memory, struct biosal_dna_codec *codec,
+                struct core_memory_pool *memory, struct biosal_dna_codec *codec,
                 int estimated_kmer_count);
 
-void biosal_dna_kmer_frequency_block_destroy(struct biosal_dna_kmer_frequency_block *self, struct biosal_memory_pool *memory);
+void biosal_dna_kmer_frequency_block_destroy(struct biosal_dna_kmer_frequency_block *self, struct core_memory_pool *memory);
 
 void biosal_dna_kmer_frequency_block_add_kmer(struct biosal_dna_kmer_frequency_block *self, struct biosal_dna_kmer *kmer,
-                struct biosal_memory_pool *memory, struct biosal_dna_codec *codec);
+                struct core_memory_pool *memory, struct biosal_dna_codec *codec);
 
 int biosal_dna_kmer_frequency_block_pack_size(struct biosal_dna_kmer_frequency_block *self, struct biosal_dna_codec *codec);
 int biosal_dna_kmer_frequency_block_pack(struct biosal_dna_kmer_frequency_block *self, void *buffer, struct biosal_dna_codec *codec);
-int biosal_dna_kmer_frequency_block_unpack(struct biosal_dna_kmer_frequency_block *self, void *buffer, struct biosal_memory_pool *memory,
+int biosal_dna_kmer_frequency_block_unpack(struct biosal_dna_kmer_frequency_block *self, void *buffer, struct core_memory_pool *memory,
                 struct biosal_dna_codec *codec);
 
 int biosal_dna_kmer_frequency_block_pack_unpack(struct biosal_dna_kmer_frequency_block *self, void *buffer,
-                int operation, struct biosal_memory_pool *memory,
+                int operation, struct core_memory_pool *memory,
                 struct biosal_dna_codec *codec);
 
-struct biosal_map *biosal_dna_kmer_frequency_block_kmers(struct biosal_dna_kmer_frequency_block *self);
+struct core_map *biosal_dna_kmer_frequency_block_kmers(struct biosal_dna_kmer_frequency_block *self);
 
 #endif

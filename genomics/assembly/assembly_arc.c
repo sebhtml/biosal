@@ -8,7 +8,7 @@
 void biosal_assembly_arc_init(struct biosal_assembly_arc *self, int type,
                 struct biosal_dna_kmer *source,
                 int destination,
-                int kmer_length, struct biosal_memory_pool *memory,
+                int kmer_length, struct core_memory_pool *memory,
                 struct biosal_dna_codec *codec)
 {
     self->type = type;
@@ -19,7 +19,7 @@ void biosal_assembly_arc_init(struct biosal_assembly_arc *self, int type,
 }
 
 void biosal_assembly_arc_destroy(struct biosal_assembly_arc *self,
-                struct biosal_memory_pool *memory)
+                struct core_memory_pool *memory)
 {
     self->type = -1;
     self->destination = -1;
@@ -29,57 +29,57 @@ void biosal_assembly_arc_destroy(struct biosal_assembly_arc *self,
 
 int biosal_assembly_arc_pack_size(struct biosal_assembly_arc *self, int kmer_length, struct biosal_dna_codec *codec)
 {
-    return biosal_assembly_arc_pack_unpack(self, BIOSAL_PACKER_OPERATION_PACK_SIZE,
+    return biosal_assembly_arc_pack_unpack(self, CORE_PACKER_OPERATION_PACK_SIZE,
                     NULL, kmer_length, NULL, codec);
 }
 
 int biosal_assembly_arc_pack(struct biosal_assembly_arc *self, void *buffer,
                 int kmer_length, struct biosal_dna_codec *codec)
 {
-    return biosal_assembly_arc_pack_unpack(self, BIOSAL_PACKER_OPERATION_PACK,
+    return biosal_assembly_arc_pack_unpack(self, CORE_PACKER_OPERATION_PACK,
                     buffer, kmer_length, NULL, codec);
 }
 
 int biosal_assembly_arc_unpack(struct biosal_assembly_arc *self, void *buffer,
-                int kmer_length, struct biosal_memory_pool *memory,
+                int kmer_length, struct core_memory_pool *memory,
                 struct biosal_dna_codec *codec)
 {
-    return biosal_assembly_arc_pack_unpack(self, BIOSAL_PACKER_OPERATION_UNPACK,
+    return biosal_assembly_arc_pack_unpack(self, CORE_PACKER_OPERATION_UNPACK,
                     buffer, kmer_length, memory, codec);
 }
 
 int biosal_assembly_arc_pack_unpack(struct biosal_assembly_arc *self, int operation,
-                void *buffer, int kmer_length, struct biosal_memory_pool *memory,
+                void *buffer, int kmer_length, struct core_memory_pool *memory,
                 struct biosal_dna_codec *codec)
 {
-    struct biosal_packer packer;
+    struct core_packer packer;
     int bytes;
 
-    biosal_packer_init(&packer, operation, buffer);
+    core_packer_init(&packer, operation, buffer);
 
     bytes = 0;
 
-    biosal_packer_process(&packer, &self->type, sizeof(self->type));
-    biosal_packer_process(&packer, &self->destination, sizeof(self->destination));
+    core_packer_process(&packer, &self->type, sizeof(self->type));
+    core_packer_process(&packer, &self->destination, sizeof(self->destination));
 
-    bytes += biosal_packer_get_byte_count(&packer);
+    bytes += core_packer_get_byte_count(&packer);
 
     bytes += biosal_dna_kmer_pack_unpack(&self->source, (char *)buffer + bytes, operation,
                     kmer_length, memory, codec);
 
 #if 0
-    if (operation == BIOSAL_PACKER_OPERATION_UNPACK) {
+    if (operation == CORE_PACKER_OPERATION_UNPACK) {
         printf("DEBUG %d bytes unpacked for kmer\n", bytes);
         biosal_dna_kmer_print(&self->source, kmer_length, codec, memory);
 
-    } else if (operation == BIOSAL_PACKER_OPERATION_PACK) {
+    } else if (operation == CORE_PACKER_OPERATION_PACK) {
 
         printf("DEBUG %d bytes packed for kmer\n", bytes);
         biosal_dna_kmer_print(&self->source, kmer_length, codec, memory);
     }
 #endif
 
-    biosal_packer_destroy(&packer);
+    core_packer_destroy(&packer);
 
     return bytes;
 }
@@ -107,7 +107,7 @@ int biosal_assembly_arc_equals(struct biosal_assembly_arc *self, struct biosal_a
 }
 
 void biosal_assembly_arc_init_mock(struct biosal_assembly_arc *self,
-                int kmer_length, struct biosal_memory_pool *memory,
+                int kmer_length, struct core_memory_pool *memory,
                 struct biosal_dna_codec *codec)
 {
     int type;
@@ -125,7 +125,7 @@ void biosal_assembly_arc_init_mock(struct biosal_assembly_arc *self,
 
 void biosal_assembly_arc_init_copy(struct biosal_assembly_arc *self,
                 struct biosal_assembly_arc *arc,
-                int kmer_length, struct biosal_memory_pool *memory,
+                int kmer_length, struct core_memory_pool *memory,
                 struct biosal_dna_codec *codec)
 {
     int type;
@@ -155,7 +155,7 @@ int biosal_assembly_arc_destination(struct biosal_assembly_arc *self)
 }
 
 void biosal_assembly_arc_print(struct biosal_assembly_arc *self, int kmer_length, struct biosal_dna_codec *codec,
-                struct biosal_memory_pool *pool)
+                struct core_memory_pool *pool)
 {
     printf("object, class: BioSAL/AssemblyArc, type: ");
 

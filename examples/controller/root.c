@@ -24,14 +24,14 @@ void root_init(struct thorium_actor *actor)
     concrete_self->controller = -1;
     concrete_self->events = 0;
     concrete_self->synchronized = 0;
-    biosal_vector_init(&concrete_self->spawners, sizeof(int));
+    core_vector_init(&concrete_self->spawners, sizeof(int));
     concrete_self->is_king = 0;
     concrete_self->ready = 0;
 
     thorium_actor_add_script(actor, SCRIPT_INPUT_CONTROLLER,
                         &biosal_input_controller_script);
     thorium_actor_add_script(actor, SCRIPT_MANAGER,
-                        &biosal_manager_script);
+                        &core_manager_script);
 
     /* TODO: do this one inside the manager script.
      */
@@ -52,7 +52,7 @@ void root_destroy(struct thorium_actor *actor)
     struct root *concrete_self;
 
     concrete_self = (struct root *)thorium_actor_concrete_actor(actor);
-    biosal_vector_destroy(&concrete_self->spawners);
+    core_vector_destroy(&concrete_self->spawners);
 }
 
 void root_receive(struct thorium_actor *actor, struct thorium_message *message)
@@ -70,13 +70,13 @@ void root_receive(struct thorium_actor *actor, struct thorium_message *message)
     char *buffer;
     int bytes;
     int manager;
-    struct biosal_vector spawners;
+    struct core_vector spawners;
     int new_count;
     void *new_buffer;
     struct thorium_message new_message;
-    struct biosal_vector stores;
+    struct core_vector stores;
     int count;
-    struct biosal_memory_pool *ephemeral_memory;
+    struct core_memory_pool *ephemeral_memory;
 
     ephemeral_memory = thorium_actor_get_ephemeral_memory(actor);
     concrete_self = (struct root *)thorium_actor_concrete_actor(actor);
@@ -93,11 +93,11 @@ void root_receive(struct thorium_actor *actor, struct thorium_message *message)
 */
     if (tag == ACTION_START) {
 
-        biosal_vector_init(&concrete_self->spawners, 0);
-        biosal_vector_unpack(&concrete_self->spawners, buffer);
+        core_vector_init(&concrete_self->spawners, 0);
+        core_vector_unpack(&concrete_self->spawners, buffer);
 
 
-        king = *(int *)biosal_vector_at(&concrete_self->spawners, 0);
+        king = *(int *)core_vector_at(&concrete_self->spawners, 0);
 
         if (name == king) {
             concrete_self->is_king = 1;
@@ -131,7 +131,7 @@ void root_receive(struct thorium_actor *actor, struct thorium_message *message)
 
         if (concrete_self->ready == 2) {
 
-            king = *(int *)biosal_vector_at(&concrete_self->spawners, 0);
+            king = *(int *)core_vector_at(&concrete_self->spawners, 0);
             thorium_actor_send_empty(actor, king, ACTION_SYNCHRONIZE_REPLY);
         }
 
@@ -163,24 +163,24 @@ void root_receive(struct thorium_actor *actor, struct thorium_message *message)
 
         manager = source;
 
-        biosal_vector_init(&spawners, sizeof(int));
+        core_vector_init(&spawners, sizeof(int));
 
-        biosal_vector_push_back_vector(&spawners, &concrete_actor->spawners);
+        core_vector_push_back_vector(&spawners, &concrete_actor->spawners);
 
-        new_count = biosal_vector_pack_size(&spawners);
+        new_count = core_vector_pack_size(&spawners);
         new_buffer = thorium_actor_allocate(actor, new_count);
-        biosal_vector_pack(&spawners, new_buffer);
+        core_vector_pack(&spawners, new_buffer);
 
         thorium_message_init(&new_message, ACTION_START, new_count, new_buffer);
         thorium_actor_send(actor, manager, &new_message);
 
-        biosal_vector_destroy(&spawners);
+        core_vector_destroy(&spawners);
 
     } else if (tag == ACTION_START_REPLY
                     && source == concrete_actor->manager) {
 
-        biosal_vector_init(&stores, 0);
-        biosal_vector_unpack(&stores, buffer);
+        core_vector_init(&stores, 0);
+        core_vector_unpack(&stores, buffer);
 
         printf("DEBUG root actor/%d received stores from manager actor/%d\n",
                         thorium_actor_name(actor),
@@ -191,9 +191,9 @@ void root_receive(struct thorium_actor *actor, struct thorium_message *message)
 
     } else if (tag == ACTION_SET_CONSUMERS_REPLY) {
 
-        bytes = biosal_vector_pack_size(&concrete_self->spawners);
+        bytes = core_vector_pack_size(&concrete_self->spawners);
         buffer = thorium_actor_allocate(actor, bytes);
-        biosal_vector_pack(&concrete_self->spawners, buffer);
+        core_vector_pack(&concrete_self->spawners, buffer);
 
         thorium_message_init(message, ACTION_START, bytes, buffer);
         thorium_actor_send(actor, concrete_self->controller, message);

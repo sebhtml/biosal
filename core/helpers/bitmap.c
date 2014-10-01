@@ -1,47 +1,47 @@
 
 #include "bitmap.h"
 
-int biosal_bitmap_get_bit_uint8_t(uint8_t *self, int index)
+int core_bitmap_get_bit_uint8_t(uint8_t *self, int index)
 {
     uint64_t bitmap;
 
     bitmap = *self;
 
-    return biosal_bitmap_get_bit_uint64_t(&bitmap, index);
+    return core_bitmap_get_bit_uint64_t(&bitmap, index);
 }
 
-void biosal_bitmap_set_bit_value_uint8_t(uint8_t *self, int index, int value)
+void core_bitmap_set_bit_value_uint8_t(uint8_t *self, int index, int value)
 {
     uint64_t bitmap;
 
     bitmap = *self;
 
-    biosal_bitmap_set_bit_value_uint64_t(&bitmap, index, value);
+    core_bitmap_set_bit_value_uint64_t(&bitmap, index, value);
 
     *self = bitmap;
 }
 
-int biosal_bitmap_get_bit_uint32_t(uint32_t *self, int index)
+int core_bitmap_get_bit_uint32_t(uint32_t *self, int index)
 {
     uint64_t bitmap;
 
     bitmap = *self;
 
-    return biosal_bitmap_get_bit_uint64_t(&bitmap, index);
+    return core_bitmap_get_bit_uint64_t(&bitmap, index);
 }
 
-void biosal_bitmap_set_bit_value_uint32_t(uint32_t *self, int index, int value)
+void core_bitmap_set_bit_value_uint32_t(uint32_t *self, int index, int value)
 {
     uint64_t bitmap;
 
     bitmap = *self;
 
-    biosal_bitmap_set_bit_value_uint64_t(&bitmap, index, value);
+    core_bitmap_set_bit_value_uint64_t(&bitmap, index, value);
 
     *self = bitmap;
 }
 
-int biosal_bitmap_get_bit_uint64_t(uint64_t *self, int index)
+int core_bitmap_get_bit_uint64_t(uint64_t *self, int index)
 {
     int bit_value;
     uint64_t bitmap;
@@ -53,19 +53,19 @@ int biosal_bitmap_get_bit_uint64_t(uint64_t *self, int index)
     return bit_value;
 }
 
-void biosal_bitmap_set_bit_value_uint64_t(uint64_t *self, int index, int value)
+void core_bitmap_set_bit_value_uint64_t(uint64_t *self, int index, int value)
 {
     uint64_t bitmap;
     uint64_t filter;
 
     bitmap = *self;
 
-    if (value == BIOSAL_BIT_ONE){
+    if (value == CORE_BIT_ONE){
         bitmap |= (value << index);
 
         /* set bit to 0 */
-    } else if (value == BIOSAL_BIT_ZERO) {
-        filter = BIOSAL_BIT_ONE;
+    } else if (value == CORE_BIT_ZERO) {
+        filter = CORE_BIT_ONE;
         filter <<= index;
         filter =~ filter;
         bitmap &= filter;
@@ -74,12 +74,12 @@ void biosal_bitmap_set_bit_value_uint64_t(uint64_t *self, int index, int value)
     *self = bitmap;
 }
 
-void biosal_bitmap_set_bit_uint32_t(uint32_t *self, int index)
+void core_bitmap_set_bit_uint32_t(uint32_t *self, int index)
 {
-    biosal_bitmap_set_bit_value_uint32_t(self, index, BIOSAL_BIT_ONE);
+    core_bitmap_set_bit_value_uint32_t(self, index, CORE_BIT_ONE);
 }
 
-void biosal_bitmap_clear_bit_uint32_t(uint32_t *self, int index)
+void core_bitmap_clear_bit_uint32_t(uint32_t *self, int index)
 {
-    biosal_bitmap_set_bit_value_uint32_t(self, index, BIOSAL_BIT_ZERO);
+    core_bitmap_set_bit_value_uint32_t(self, index, CORE_BIT_ZERO);
 }

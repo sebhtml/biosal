@@ -6,7 +6,7 @@
 
 #include <genomics/assembly/assembly_vertex.h>
 
-struct biosal_memory_pool;
+struct core_memory_pool;
 struct biosal_dna_codec;
 struct thorium_actor;
 struct thorium_message;
@@ -16,7 +16,7 @@ struct thorium_message;
  */
 struct biosal_vertex_neighborhood {
 
-    struct biosal_memory_pool *memory;
+    struct core_memory_pool *memory;
     struct biosal_dna_codec *codec;
 
     int fetch_parents;
@@ -25,10 +25,10 @@ struct biosal_vertex_neighborhood {
     struct biosal_dna_kmer main_kmer;
     struct biosal_assembly_vertex main_vertex;
 
-    struct biosal_vector parent_vertices;
-    struct biosal_vector child_vertices;
+    struct core_vector parent_vertices;
+    struct core_vector child_vertices;
 
-    struct biosal_vector *graph_stores;
+    struct core_vector *graph_stores;
 
     int kmer_length;
     int step;
@@ -37,8 +37,8 @@ struct biosal_vertex_neighborhood {
 
 void biosal_vertex_neighborhood_init(struct biosal_vertex_neighborhood *self,
                struct biosal_dna_kmer *kmer,
-                int arcs, struct biosal_vector *graph_stores, int kmer_length,
-                struct biosal_memory_pool *memory, struct biosal_dna_codec *codec,
+                int arcs, struct core_vector *graph_stores, int kmer_length,
+                struct core_memory_pool *memory, struct biosal_dna_codec *codec,
                 struct thorium_actor *actor);
 
 void biosal_vertex_neighborhood_init_empty(struct biosal_vertex_neighborhood *self);

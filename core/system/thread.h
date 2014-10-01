@@ -1,6 +1,6 @@
 
-#ifndef BIOSAL_THREAD_H
-#define BIOSAL_THREAD_H
+#ifndef CORE_THREAD_H
+#define CORE_THREAD_H
 
 #include <pthread.h>
 
@@ -17,7 +17,7 @@
  *
  * \see https://computing.llnl.gov/tutorials/pthreads/
  */
-struct biosal_thread {
+struct core_thread {
     pthread_t thread;
     pthread_attr_t attributes;
     int processor;
@@ -32,16 +32,16 @@ struct biosal_thread {
     uint64_t wake_up_event_count;
 };
 
-void biosal_thread_init(struct biosal_thread *self, void *(*function)(void *), void *argument);
-void biosal_thread_destroy(struct biosal_thread *self);
-void biosal_thread_set_affinity(struct biosal_thread *self, int processor);
-void biosal_thread_start(struct biosal_thread *self);
-void biosal_thread_join(struct biosal_thread *self);
+void core_thread_init(struct core_thread *self, void *(*function)(void *), void *argument);
+void core_thread_destroy(struct core_thread *self);
+void core_thread_set_affinity(struct core_thread *self, int processor);
+void core_thread_start(struct core_thread *self);
+void core_thread_join(struct core_thread *self);
 
-void biosal_set_affinity(int processor);
+void core_set_affinity(int processor);
 
-void biosal_thread_wait(struct biosal_thread *self);
-void biosal_thread_signal(struct biosal_thread *self);
-uint64_t biosal_thread_get_wake_up_count(struct biosal_thread *self);
+void core_thread_wait(struct core_thread *self);
+void core_thread_signal(struct core_thread *self);
+uint64_t core_thread_get_wake_up_count(struct core_thread *self);
 
 #endif

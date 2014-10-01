@@ -4,7 +4,7 @@
 
 #include <core/structures/map.h>
 
-struct biosal_vector;
+struct core_vector;
 struct thorium_worker_pool;
 struct thorium_message;
 struct thorium_actor;
@@ -14,8 +14,8 @@ struct thorium_migration;
 
 struct thorium_balancer {
     struct thorium_worker_pool *pool;
-    struct biosal_map actor_affinities;
-    struct biosal_map last_actor_received_messages;
+    struct core_map actor_affinities;
+    struct core_map last_actor_received_messages;
 
     int worker_for_work;
 
@@ -27,7 +27,7 @@ struct thorium_balancer {
      * For initial placement using round-robin policy for every script.
      */
 
-    struct biosal_map current_script_workers;
+    struct core_map current_script_workers;
     int first_worker;
 };
 
@@ -44,9 +44,9 @@ void thorium_balancer_set_actor_worker(struct thorium_balancer *self, int name, 
 
 int thorium_balancer_select_worker_least_busy(
                 struct thorium_balancer *self, int *worker_score);
-void thorium_balancer_detect_symmetric_scripts(struct thorium_balancer *self, struct biosal_map *symmetric_actors);
-void thorium_balancer_generate_symmetric_migrations(struct thorium_balancer *self, struct biosal_map *symmetric_actor_scripts,
-                struct biosal_vector *migrations);
+void thorium_balancer_detect_symmetric_scripts(struct thorium_balancer *self, struct core_map *symmetric_actors);
+void thorium_balancer_generate_symmetric_migrations(struct thorium_balancer *self, struct core_map *symmetric_actor_scripts,
+                struct core_vector *migrations);
 
 int thorium_balancer_select_worker_script_round_robin(struct thorium_balancer *self, int script);
 

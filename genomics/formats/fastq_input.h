@@ -14,23 +14,23 @@
 /*
  * FastQ driver.
  */
-struct biosal_fastq_input {
-    struct biosal_buffered_reader reader;
+struct core_fastq_input {
+    struct core_buffered_reader reader;
     char *buffer;
 
     int has_first;
 };
 
-extern struct biosal_input_format_interface biosal_fastq_input_operations;
+extern struct biosal_input_format_interface core_fastq_input_operations;
 
-void biosal_fastq_input_init(struct biosal_input_format *self);
-void biosal_fastq_input_destroy(struct biosal_input_format *self);
-uint64_t biosal_fastq_input_get_sequence(struct biosal_input_format *self,
+void core_fastq_input_init(struct biosal_input_format *self);
+void core_fastq_input_destroy(struct biosal_input_format *self);
+uint64_t core_fastq_input_get_sequence(struct biosal_input_format *self,
                 char *sequence);
-int biosal_fastq_input_detect(struct biosal_input_format *self);
-uint64_t biosal_fastq_input_get_offset(struct biosal_input_format *self);
+int core_fastq_input_detect(struct biosal_input_format *self);
+uint64_t core_fastq_input_get_offset(struct biosal_input_format *self);
 
-int biosal_fastq_input_is_identifier(struct biosal_input_format *self, const char *line);
-int biosal_fastq_input_is_identifier_mock(struct biosal_input_format *self, const char *line);
+int core_fastq_input_is_identifier(struct biosal_input_format *self, const char *line);
+int core_fastq_input_is_identifier_mock(struct biosal_input_format *self, const char *line);
 
 #endif

@@ -19,7 +19,7 @@ struct thorium_transport;
  * MPI 1 point-to-point transport layer.
  */
 struct thorium_mpi1_pt2pt_transport {
-    struct biosal_fast_queue active_requests;
+    struct core_fast_queue active_requests;
     MPI_Comm comm;
     MPI_Datatype datatype;
 };

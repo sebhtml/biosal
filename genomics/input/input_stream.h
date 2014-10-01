@@ -31,7 +31,7 @@ struct biosal_input_stream {
 
     char *file_name;
 
-    struct biosal_vector mega_blocks;
+    struct core_vector mega_blocks;
 
     uint64_t starting_offset;
     uint64_t ending_offset;
@@ -39,7 +39,7 @@ struct biosal_input_stream {
     int count_customer;
 
 #if 0
-    struct biosal_string file_for_parallel_counting;
+    struct core_string file_for_parallel_counting;
 #endif
 
     /*
@@ -48,11 +48,11 @@ struct biosal_input_stream {
 
     uint64_t total_entries;
     int finished_parallel_stream_count;
-    struct biosal_vector spawners;
-    struct biosal_vector parallel_streams;
-    struct biosal_vector start_offsets;
-    struct biosal_vector end_offsets;
-    struct biosal_vector parallel_mega_blocks;
+    struct core_vector spawners;
+    struct core_vector parallel_streams;
+    struct core_vector start_offsets;
+    struct core_vector end_offsets;
+    struct core_vector parallel_mega_blocks;
 };
 
 #define ACTION_INPUT_OPEN 0x000075fa

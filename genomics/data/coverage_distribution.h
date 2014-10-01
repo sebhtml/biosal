@@ -17,7 +17,7 @@
  * 4. Enjoy
  */
 struct biosal_coverage_distribution {
-    struct biosal_map distribution;
+    struct core_map distribution;
     int expected;
     int actual;
     int source;

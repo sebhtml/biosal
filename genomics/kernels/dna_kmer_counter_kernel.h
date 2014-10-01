@@ -34,7 +34,7 @@ struct biosal_dna_kmer_counter_kernel {
     int notified_children;
     uint64_t sum_of_kmers;
 
-    struct biosal_vector kernels;
+    struct core_vector kernels;
 
     int bytes_per_kmer;
 
@@ -44,7 +44,7 @@ struct biosal_dna_kmer_counter_kernel {
     int auto_scaling_in_progress;
     int auto_scaling_clone;
 
-    struct biosal_vector children;
+    struct core_vector children;
 };
 
 #define ACTION_SET_KMER_LENGTH 0x0000702b

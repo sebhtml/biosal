@@ -62,7 +62,7 @@ int biosal_assembly_connectivity_get_count(struct biosal_assembly_connectivity *
             offset = biosal_assembly_connectivity_child_offset(i);
         }
 
-        value = biosal_bitmap_get_bit_uint8_t(&self->bitmap,
+        value = core_bitmap_get_bit_uint8_t(&self->bitmap,
                 offset);
 
         count += value;
@@ -73,16 +73,16 @@ int biosal_assembly_connectivity_get_count(struct biosal_assembly_connectivity *
 
 void biosal_assembly_connectivity_add_child(struct biosal_assembly_connectivity *self, int symbol_code)
 {
-    biosal_bitmap_set_bit_value_uint8_t(&self->bitmap,
+    core_bitmap_set_bit_value_uint8_t(&self->bitmap,
                 biosal_assembly_connectivity_child_offset(symbol_code),
-                    BIOSAL_BIT_ONE);
+                    CORE_BIT_ONE);
 }
 
 void biosal_assembly_connectivity_delete_child(struct biosal_assembly_connectivity *self, int symbol_code)
 {
-    biosal_bitmap_set_bit_value_uint8_t(&self->bitmap,
+    core_bitmap_set_bit_value_uint8_t(&self->bitmap,
                 biosal_assembly_connectivity_child_offset(symbol_code),
-                    BIOSAL_BIT_ZERO);
+                    CORE_BIT_ZERO);
 }
 
 int biosal_assembly_connectivity_get_element(struct biosal_assembly_connectivity *self, int index, int type)
@@ -108,7 +108,7 @@ int biosal_assembly_connectivity_get_element(struct biosal_assembly_connectivity
             offset = biosal_assembly_connectivity_parent_offset(i);
         }
 
-        value = biosal_bitmap_get_bit_uint8_t(&self->bitmap, offset);
+        value = core_bitmap_get_bit_uint8_t(&self->bitmap, offset);
 
         if (value) {
             skipped++;
@@ -135,16 +135,16 @@ int biosal_assembly_connectivity_parent_count(struct biosal_assembly_connectivit
 
 void biosal_assembly_connectivity_add_parent(struct biosal_assembly_connectivity *self, int symbol_code)
 {
-    biosal_bitmap_set_bit_value_uint8_t(&self->bitmap,
+    core_bitmap_set_bit_value_uint8_t(&self->bitmap,
                 biosal_assembly_connectivity_parent_offset(symbol_code),
-                    BIOSAL_BIT_ONE);
+                    CORE_BIT_ONE);
 }
 
 void biosal_assembly_connectivity_delete_parent(struct biosal_assembly_connectivity *self, int symbol_code)
 {
-    biosal_bitmap_set_bit_value_uint8_t(&self->bitmap,
+    core_bitmap_set_bit_value_uint8_t(&self->bitmap,
                 biosal_assembly_connectivity_parent_offset(symbol_code),
-                    BIOSAL_BIT_ZERO);
+                    CORE_BIT_ZERO);
 }
 
 int biosal_assembly_connectivity_get_parent(struct biosal_assembly_connectivity *self, int index)
@@ -206,31 +206,31 @@ void biosal_assembly_connectivity_print(struct biosal_assembly_connectivity *sel
 
 int biosal_assembly_connectivity_pack_size(struct biosal_assembly_connectivity *self)
 {
-    return biosal_assembly_connectivity_pack_unpack(self, BIOSAL_PACKER_OPERATION_PACK_SIZE, NULL);
+    return biosal_assembly_connectivity_pack_unpack(self, CORE_PACKER_OPERATION_PACK_SIZE, NULL);
 }
 
 int biosal_assembly_connectivity_pack(struct biosal_assembly_connectivity *self, void *buffer)
 {
-    return biosal_assembly_connectivity_pack_unpack(self, BIOSAL_PACKER_OPERATION_PACK, buffer);
+    return biosal_assembly_connectivity_pack_unpack(self, CORE_PACKER_OPERATION_PACK, buffer);
 }
 
 int biosal_assembly_connectivity_unpack(struct biosal_assembly_connectivity *self, void *buffer)
 {
-    return biosal_assembly_connectivity_pack_unpack(self, BIOSAL_PACKER_OPERATION_UNPACK, buffer);
+    return biosal_assembly_connectivity_pack_unpack(self, CORE_PACKER_OPERATION_UNPACK, buffer);
 }
 
 int biosal_assembly_connectivity_pack_unpack(struct biosal_assembly_connectivity *self, int operation, void *buffer)
 {
     int bytes;
-    struct biosal_packer packer;
+    struct core_packer packer;
 
-    biosal_packer_init(&packer, operation, buffer);
+    core_packer_init(&packer, operation, buffer);
 
-    biosal_packer_process(&packer, &self->bitmap, sizeof(self->bitmap));
+    core_packer_process(&packer, &self->bitmap, sizeof(self->bitmap));
 
-    bytes = biosal_packer_get_byte_count(&packer);
+    bytes = core_packer_get_byte_count(&packer);
 
-    biosal_packer_destroy(&packer);
+    core_packer_destroy(&packer);
 
     return bytes;
 }

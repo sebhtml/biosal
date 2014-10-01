@@ -9,10 +9,10 @@
 #define SCRIPT_STREAM 0xb9b19139
 
 struct stream {
-    struct biosal_vector spawners;
+    struct core_vector spawners;
     int initial_synchronization;
     int ready;
-    struct biosal_vector children;
+    struct core_vector children;
     int is_king;
 };
 

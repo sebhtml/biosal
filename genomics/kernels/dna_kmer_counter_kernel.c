@@ -78,7 +78,7 @@ void biosal_dna_kmer_counter_kernel_init(struct thorium_actor *actor)
         biosal_dna_codec_enable_two_bit_encoding(&concrete_actor->codec);
     }
 
-    biosal_vector_init(&concrete_actor->kernels, sizeof(int));
+    core_vector_init(&concrete_actor->kernels, sizeof(int));
 
     concrete_actor->auto_scaling_in_progress = 0;
 
@@ -118,7 +118,7 @@ void biosal_dna_kmer_counter_kernel_destroy(struct thorium_actor *actor)
     concrete_actor->producer_source =-1;
 
     biosal_dna_codec_destroy(&concrete_actor->codec);
-    biosal_vector_destroy(&concrete_actor->kernels);
+    core_vector_destroy(&concrete_actor->kernels);
 }
 
 void biosal_dna_kmer_counter_kernel_receive(struct thorium_actor *actor, struct thorium_message *message)
@@ -373,7 +373,7 @@ void biosal_dna_kmer_counter_kernel_pack_message(struct thorium_actor *actor, st
     int *new_buffer;
     int new_count;
     struct thorium_message new_message;
-    struct biosal_memory_pool *ephemeral_memory;
+    struct core_memory_pool *ephemeral_memory;
 
     ephemeral_memory = thorium_actor_get_ephemeral_memory(actor);
     new_count = biosal_dna_kmer_counter_kernel_pack_size(actor);
@@ -426,7 +426,7 @@ void biosal_dna_kmer_counter_kernel_clone_reply(struct thorium_actor *actor, str
 
         clone_index = clone;
 
-        biosal_vector_push_back(&concrete_actor->kernels, &clone_index);
+        core_vector_push_back(&concrete_actor->kernels, &clone_index);
 
     } else if (source == consumer) {
         printf("kernel %d cloned aggregator %d, clone name is %d\n",
@@ -447,17 +447,17 @@ void biosal_dna_kmer_counter_kernel_clone_reply(struct thorium_actor *actor, str
 
 int biosal_dna_kmer_counter_kernel_pack(struct thorium_actor *actor, void *buffer)
 {
-    return biosal_dna_kmer_counter_kernel_pack_unpack(actor, BIOSAL_PACKER_OPERATION_PACK, buffer);
+    return biosal_dna_kmer_counter_kernel_pack_unpack(actor, CORE_PACKER_OPERATION_PACK, buffer);
 }
 
 int biosal_dna_kmer_counter_kernel_unpack(struct thorium_actor *actor, void *buffer)
 {
-    return biosal_dna_kmer_counter_kernel_pack_unpack(actor, BIOSAL_PACKER_OPERATION_UNPACK, buffer);
+    return biosal_dna_kmer_counter_kernel_pack_unpack(actor, CORE_PACKER_OPERATION_UNPACK, buffer);
 }
 
 int biosal_dna_kmer_counter_kernel_pack_size(struct thorium_actor *actor)
 {
-    return biosal_dna_kmer_counter_kernel_pack_unpack(actor, BIOSAL_PACKER_OPERATION_PACK_SIZE, NULL);
+    return biosal_dna_kmer_counter_kernel_pack_unpack(actor, CORE_PACKER_OPERATION_PACK_SIZE, NULL);
 }
 
 /*
@@ -470,7 +470,7 @@ int biosal_dna_kmer_counter_kernel_pack_size(struct thorium_actor *actor)
 int biosal_dna_kmer_counter_kernel_pack_unpack(struct thorium_actor *actor, int operation, void *buffer)
 {
     int bytes;
-    struct biosal_packer packer;
+    struct core_packer packer;
     struct biosal_dna_kmer_counter_kernel *concrete_actor;
     int producer;
     int consumer;
@@ -479,27 +479,27 @@ int biosal_dna_kmer_counter_kernel_pack_unpack(struct thorium_actor *actor, int 
     producer = THORIUM_ACTOR_NOBODY;
     consumer = THORIUM_ACTOR_NOBODY;
 
-    if (operation != BIOSAL_PACKER_OPERATION_UNPACK) {
+    if (operation != CORE_PACKER_OPERATION_UNPACK) {
         producer = concrete_actor->producer;
         consumer = concrete_actor->consumer;
     }
 
     bytes = 0;
 
-    biosal_packer_init(&packer, operation, buffer);
+    core_packer_init(&packer, operation, buffer);
 
-    biosal_packer_process(&packer, &concrete_actor->kmer_length, sizeof(concrete_actor->kmer_length));
-    biosal_packer_process(&packer, &producer, sizeof(producer));
-    biosal_packer_process(&packer, &consumer, sizeof(consumer));
+    core_packer_process(&packer, &concrete_actor->kmer_length, sizeof(concrete_actor->kmer_length));
+    core_packer_process(&packer, &producer, sizeof(producer));
+    core_packer_process(&packer, &consumer, sizeof(consumer));
 
-    if (operation == BIOSAL_PACKER_OPERATION_UNPACK) {
+    if (operation == CORE_PACKER_OPERATION_UNPACK) {
 
         concrete_actor->producer = producer;
         concrete_actor->consumer = consumer;
     }
 
-    bytes += biosal_packer_get_byte_count(&packer);
-    biosal_packer_destroy(&packer);
+    bytes += core_packer_get_byte_count(&packer);
+    core_packer_destroy(&packer);
 
     return bytes;
 }
@@ -507,7 +507,7 @@ int biosal_dna_kmer_counter_kernel_pack_unpack(struct thorium_actor *actor, int 
 void biosal_dna_kmer_counter_kernel_notify(struct thorium_actor *actor, struct thorium_message *message)
 {
     struct biosal_dna_kmer_counter_kernel *concrete_actor;
-    struct biosal_vector_iterator iterator;
+    struct core_vector_iterator iterator;
     int kernel;
     int source;
 
@@ -526,14 +526,14 @@ void biosal_dna_kmer_counter_kernel_notify(struct thorium_actor *actor, struct t
         concrete_actor->sum_of_kmers += concrete_actor->kmers;
         concrete_actor->notified_children = 0;
 
-        biosal_vector_iterator_init(&iterator, &concrete_actor->kernels);
+        core_vector_iterator_init(&iterator, &concrete_actor->kernels);
 
-        while (biosal_vector_iterator_get_next_value(&iterator, &kernel)) {
+        while (core_vector_iterator_get_next_value(&iterator, &kernel)) {
 
             thorium_actor_send_empty(actor, kernel, ACTION_NOTIFY);
         }
 
-        biosal_vector_iterator_destroy(&iterator);
+        core_vector_iterator_destroy(&iterator);
 
 
     } else {
@@ -554,7 +554,7 @@ void biosal_dna_kmer_counter_kernel_notify_reply(struct thorium_actor *actor, st
 
     concrete_actor->notified_children++;
 
-    if (concrete_actor->notified_children == biosal_vector_size(&concrete_actor->kernels)) {
+    if (concrete_actor->notified_children == core_vector_size(&concrete_actor->kernels)) {
 
 
         thorium_actor_send_uint64_t(actor,
@@ -579,7 +579,7 @@ void biosal_dna_kmer_counter_kernel_push_sequence_data_block(struct thorium_acto
     int i;
     struct biosal_dna_sequence *sequence;
     char *sequence_data;
-    struct biosal_vector *command_entries;
+    struct core_vector *command_entries;
     int sequence_length;
     int new_count;
     void *new_buffer;
@@ -587,11 +587,11 @@ void biosal_dna_kmer_counter_kernel_push_sequence_data_block(struct thorium_acto
     int j;
     int limit;
     char saved;
-    struct biosal_timer timer;
+    struct core_timer timer;
     struct biosal_dna_kmer_block block;
     int to_reserve;
     int maximum_length;
-    struct biosal_memory_pool *ephemeral_memory;
+    struct core_memory_pool *ephemeral_memory;
     int kmers_for_sequence;
 
 
@@ -616,8 +616,8 @@ void biosal_dna_kmer_counter_kernel_push_sequence_data_block(struct thorium_acto
         return;
     }
 
-    biosal_timer_init(&timer);
-    biosal_timer_start(&timer);
+    core_timer_init(&timer);
+    core_timer_start(&timer);
 
     consumer = concrete_actor->consumer;
     source_index = source;
@@ -628,7 +628,7 @@ void biosal_dna_kmer_counter_kernel_push_sequence_data_block(struct thorium_acto
 
     command_entries = biosal_input_command_entries(&payload);
 
-    entries = biosal_vector_size(command_entries);
+    entries = core_vector_size(command_entries);
 
     if (entries == 0) {
         printf("Error: kernel received empty payload...\n");
@@ -646,7 +646,7 @@ void biosal_dna_kmer_counter_kernel_push_sequence_data_block(struct thorium_acto
 
     for (i = 0; i < entries; i++) {
 
-        sequence = (struct biosal_dna_sequence *)biosal_vector_at(command_entries, i);
+        sequence = (struct biosal_dna_sequence *)core_vector_at(command_entries, i);
 
         sequence_length = biosal_dna_sequence_length(sequence);
 
@@ -659,14 +659,14 @@ void biosal_dna_kmer_counter_kernel_push_sequence_data_block(struct thorium_acto
 
     biosal_dna_kmer_block_init(&block, concrete_actor->kmer_length, source_index, to_reserve);
 
-    sequence_data = biosal_memory_pool_allocate(ephemeral_memory, maximum_length + 1);
+    sequence_data = core_memory_pool_allocate(ephemeral_memory, maximum_length + 1);
 
     /* extract kmers
      */
     for (i = 0; i < entries; i++) {
 
         /* TODO improve this */
-        sequence = (struct biosal_dna_sequence *)biosal_vector_at(command_entries, i);
+        sequence = (struct biosal_dna_sequence *)core_vector_at(command_entries, i);
 
         biosal_dna_sequence_get_sequence(sequence, sequence_data,
                         &concrete_actor->codec);
@@ -709,7 +709,7 @@ void biosal_dna_kmer_counter_kernel_push_sequence_data_block(struct thorium_acto
         concrete_actor->kmers += kmers_for_sequence;
     }
 
-    biosal_memory_pool_free(ephemeral_memory, sequence_data);
+    core_memory_pool_free(ephemeral_memory, sequence_data);
     sequence_data = NULL;
 
 #ifdef BIOSAL_KMER_COUNTER_KERNEL_DEBUG
@@ -771,14 +771,14 @@ void biosal_dna_kmer_counter_kernel_push_sequence_data_block(struct thorium_acto
         concrete_actor->last = concrete_actor->actual;
     }
 
-    biosal_timer_stop(&timer);
+    core_timer_stop(&timer);
 
 #ifdef BIOSAL_KMER_COUNTER_KERNEL_DEBUG
 
-        biosal_timer_print(&timer);
+        core_timer_print(&timer);
 #endif
 
-    biosal_timer_destroy(&timer);
+    core_timer_destroy(&timer);
 
     biosal_dna_kmer_block_destroy(&block, thorium_actor_get_ephemeral_memory(actor));
 

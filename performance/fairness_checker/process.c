@@ -24,10 +24,10 @@ void process_init(struct thorium_actor *self)
     struct process *concrete_self;
 
     concrete_self = thorium_actor_concrete_actor(self);
-    biosal_vector_init(&concrete_self->times, sizeof(uint64_t));
-    biosal_vector_init(&concrete_self->actors, sizeof(int));
+    core_vector_init(&concrete_self->times, sizeof(uint64_t));
+    core_vector_init(&concrete_self->actors, sizeof(int));
 
-    biosal_timer_init(&concrete_self->timer);
+    core_timer_init(&concrete_self->timer);
 
     thorium_actor_add_action(self, ACTION_START, process_start);
     thorium_actor_add_action(self, ACTION_ASK_TO_STOP, process_stop);
@@ -41,9 +41,9 @@ void process_destroy(struct thorium_actor *self)
     struct process *concrete_self;
 
     concrete_self = (struct process *)thorium_actor_concrete_actor(self);
-    biosal_vector_destroy(&concrete_self->times);
-    biosal_vector_destroy(&concrete_self->actors);
-    biosal_timer_destroy(&concrete_self->timer);
+    core_vector_destroy(&concrete_self->times);
+    core_vector_destroy(&concrete_self->actors);
+    core_timer_destroy(&concrete_self->timer);
 }
 
 void process_receive(struct thorium_actor *self, struct thorium_message *message)
@@ -67,17 +67,17 @@ void process_start(struct thorium_actor *self, struct thorium_message *message)
     concrete_self = (struct process *)thorium_actor_concrete_actor(self);
     buffer = thorium_message_buffer(message);
 
-    biosal_vector_unpack(&concrete_self->actors, buffer);
+    core_vector_unpack(&concrete_self->actors, buffer);
 
     concrete_self->ready = 0;
-    biosal_vector_reserve(&concrete_self->times, EVENT_COUNT);
+    core_vector_reserve(&concrete_self->times, EVENT_COUNT);
 
     process_send_ping(self);
 }
 
 void process_stop(struct thorium_actor *self, struct thorium_message *message)
 {
-    struct biosal_vector intervals;
+    struct core_vector intervals;
     uint64_t the_time;
     uint64_t previous_time;
     int i;
@@ -86,13 +86,13 @@ void process_stop(struct thorium_actor *self, struct thorium_message *message)
     int interval;
 
     concrete_self = (struct process *)thorium_actor_concrete_actor(self);
-    biosal_vector_init(&intervals, sizeof(int));
+    core_vector_init(&intervals, sizeof(int));
 
-    size = biosal_vector_size(&concrete_self->times);
+    size = core_vector_size(&concrete_self->times);
 
     for (i = 0; i < size; ++i) {
 
-        the_time = biosal_vector_at_as_uint64_t(&concrete_self->times, i);
+        the_time = core_vector_at_as_uint64_t(&concrete_self->times, i);
 
 #if 0
         printf("%d %" PRIu64 "\n", i, the_time);
@@ -101,7 +101,7 @@ void process_stop(struct thorium_actor *self, struct thorium_message *message)
         if (i > 0) {
             interval = the_time - previous_time;
 
-            biosal_vector_push_back(&intervals, &interval);
+            core_vector_push_back(&intervals, &interval);
         }
 
         previous_time = the_time;
@@ -110,13 +110,13 @@ void process_stop(struct thorium_actor *self, struct thorium_message *message)
     printf("%s/%d has %d intervals (in nanoseconds) ACTION_PING_REPLY events: %d, ACTION_PING events: %d\n",
                     thorium_actor_script_name(self),
                     thorium_actor_name(self),
-                    (int)biosal_vector_size(&intervals), size, concrete_self->received_ping_events);
+                    (int)core_vector_size(&intervals), size, concrete_self->received_ping_events);
 
-    biosal_vector_sort_int(&intervals);
+    core_vector_sort_int(&intervals);
 
-    biosal_statistics_print_percentiles_int(&intervals);
+    core_statistics_print_percentiles_int(&intervals);
 
-    biosal_vector_destroy(&intervals);
+    core_vector_destroy(&intervals);
 
     thorium_actor_send_to_self_empty(self, ACTION_STOP);
 }
@@ -129,11 +129,11 @@ void process_ping_reply(struct thorium_actor *self, struct thorium_message *mess
     int size;
 
     concrete_self = (struct process *)thorium_actor_concrete_actor(self);
-    nanoseconds = biosal_timer_get_nanoseconds(&concrete_self->timer);
+    nanoseconds = core_timer_get_nanoseconds(&concrete_self->timer);
 
-    biosal_vector_push_back(&concrete_self->times, &nanoseconds);
+    core_vector_push_back(&concrete_self->times, &nanoseconds);
 
-    size = biosal_vector_size(&concrete_self->times);
+    size = core_vector_size(&concrete_self->times);
 
     if (size % 10000 == 0) {
         printf("%s/%d %d/%d\n", thorium_actor_script_name(self),
@@ -143,7 +143,7 @@ void process_ping_reply(struct thorium_actor *self, struct thorium_message *mess
     if (size < EVENT_COUNT) {
         process_send_ping(self);
     } else {
-        destination = biosal_vector_at_as_int(&concrete_self->actors, 0);
+        destination = core_vector_at_as_int(&concrete_self->actors, 0);
 
         thorium_actor_send_empty(self, destination, ACTION_NOTIFY);
     }
@@ -158,10 +158,10 @@ void process_send_ping(struct thorium_actor *self)
 
     concrete_self = (struct process *)thorium_actor_concrete_actor(self);
 
-    size = biosal_vector_size(&concrete_self->actors);
+    size = core_vector_size(&concrete_self->actors);
     index = rand() % size;
 
-    destination = biosal_vector_at_as_int(&concrete_self->actors, index);
+    destination = core_vector_at_as_int(&concrete_self->actors, index);
 
     thorium_actor_send_empty(self, destination, ACTION_PING);
 }
@@ -174,7 +174,7 @@ void process_notify(struct thorium_actor *self, struct thorium_message *message)
 
     ++concrete_self->ready;
 
-    if (concrete_self->ready == biosal_vector_size(&concrete_self->actors)) {
+    if (concrete_self->ready == core_vector_size(&concrete_self->actors)) {
         thorium_actor_send_range_empty(self, &concrete_self->actors,
                         ACTION_ASK_TO_STOP);
     }

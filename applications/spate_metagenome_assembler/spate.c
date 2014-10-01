@@ -41,9 +41,9 @@ void spate_init(struct thorium_actor *self)
     struct spate *concrete_self;
 
     concrete_self = (struct spate *)thorium_actor_concrete_actor(self);
-    biosal_vector_init(&concrete_self->initial_actors, sizeof(int));
-    biosal_vector_init(&concrete_self->sequence_stores, sizeof(int));
-    biosal_vector_init(&concrete_self->graph_stores, sizeof(int));
+    core_vector_init(&concrete_self->initial_actors, sizeof(int));
+    core_vector_init(&concrete_self->sequence_stores, sizeof(int));
+    core_vector_init(&concrete_self->graph_stores, sizeof(int));
 
     concrete_self->is_leader = 0;
 
@@ -52,7 +52,7 @@ void spate_init(struct thorium_actor *self)
     concrete_self->assembly_graph = THORIUM_ACTOR_NOBODY;
     concrete_self->assembly_graph_builder = THORIUM_ACTOR_NOBODY;
 
-    biosal_timer_init(&concrete_self->timer);
+    core_timer_init(&concrete_self->timer);
 
     thorium_actor_add_action(self,
                     ACTION_START, spate_start);
@@ -87,9 +87,9 @@ void spate_init(struct thorium_actor *self)
     thorium_actor_add_script(self, SCRIPT_DNA_KMER_COUNTER_KERNEL,
                     &biosal_dna_kmer_counter_kernel_script);
     thorium_actor_add_script(self, SCRIPT_MANAGER,
-                    &biosal_manager_script);
+                    &core_manager_script);
     thorium_actor_add_script(self, SCRIPT_WRITER_PROCESS,
-                    &biosal_writer_process_script);
+                    &core_writer_process_script);
     thorium_actor_add_script(self, SCRIPT_AGGREGATOR,
                     &biosal_aggregator_script);
     thorium_actor_add_script(self, SCRIPT_KMER_STORE,
@@ -132,16 +132,16 @@ void spate_destroy(struct thorium_actor *self)
 
     concrete_self = (struct spate *)thorium_actor_concrete_actor(self);
 
-    biosal_timer_destroy(&concrete_self->timer);
+    core_timer_destroy(&concrete_self->timer);
 
     concrete_self->input_controller = THORIUM_ACTOR_NOBODY;
     concrete_self->manager_for_sequence_stores = THORIUM_ACTOR_NOBODY;
     concrete_self->assembly_graph = THORIUM_ACTOR_NOBODY;
     concrete_self->assembly_graph_builder = THORIUM_ACTOR_NOBODY;
 
-    biosal_vector_destroy(&concrete_self->initial_actors);
-    biosal_vector_destroy(&concrete_self->sequence_stores);
-    biosal_vector_destroy(&concrete_self->graph_stores);
+    core_vector_destroy(&concrete_self->initial_actors);
+    core_vector_destroy(&concrete_self->sequence_stores);
+    core_vector_destroy(&concrete_self->graph_stores);
 }
 
 void spate_receive(struct thorium_actor *self, struct thorium_message *message)
@@ -167,13 +167,13 @@ void spate_start(struct thorium_actor *self, struct thorium_message *message)
     /*
      * The buffer contains initial actors spawned by Thorium
      */
-    biosal_vector_unpack(&concrete_self->initial_actors, buffer);
+    core_vector_unpack(&concrete_self->initial_actors, buffer);
 
     if (!spate_must_print_help(self)) {
         printf("spate/%d starts\n", name);
     }
 
-    if (biosal_vector_index_of(&concrete_self->initial_actors, &name) == 0) {
+    if (core_vector_index_of(&concrete_self->initial_actors, &name) == 0) {
         concrete_self->is_leader = 1;
     }
 
@@ -196,7 +196,7 @@ void spate_start(struct thorium_actor *self, struct thorium_message *message)
      * the directory.
      */
 
-    biosal_timer_start(&concrete_self->timer);
+    core_timer_start(&concrete_self->timer);
 
     /*
      * Verify if the directory already exists. If it does, don't
@@ -205,8 +205,8 @@ void spate_start(struct thorium_actor *self, struct thorium_message *message)
      */
     argc = thorium_actor_argc(self);
     argv = thorium_actor_argv(self);
-    directory_name = biosal_command_get_output_directory(argc, argv);
-    already_created = biosal_directory_verify_existence(directory_name);
+    directory_name = core_command_get_output_directory(argc, argv);
+    already_created = core_directory_verify_existence(directory_name);
 
     if (already_created) {
         printf("%s/%d Error: output directory \"%s\" already exists, please delete it or use a different output directory\n",
@@ -244,7 +244,7 @@ void spate_ask_to_stop(struct thorium_actor *self, struct thorium_message *messa
      * is its own supervisor.
      */
 
-    if (biosal_vector_index_of(&concrete_self->initial_actors, &source) >= 0) {
+    if (core_vector_index_of(&concrete_self->initial_actors, &source) >= 0) {
         thorium_actor_send_to_self_empty(self, ACTION_STOP);
     }
 
@@ -256,8 +256,8 @@ void spate_ask_to_stop(struct thorium_actor *self, struct thorium_message *messa
                         ACTION_ASK_TO_STOP);
 
         if (!spate_must_print_help(self)) {
-            biosal_timer_stop(&concrete_self->timer);
-            biosal_timer_print_with_description(&concrete_self->timer, "Total");
+            core_timer_stop(&concrete_self->timer);
+            core_timer_print_with_description(&concrete_self->timer, "Total");
         }
     }
 }
@@ -341,27 +341,27 @@ void spate_start_reply(struct thorium_actor *self, struct thorium_message *messa
 
 void spate_start_reply_manager(struct thorium_actor *self, struct thorium_message *message)
 {
-    struct biosal_vector consumers;
+    struct core_vector consumers;
     struct spate *concrete_self;
     void *buffer;
 
     concrete_self = (struct spate *)thorium_actor_concrete_actor(self);
-    biosal_vector_init(&consumers, sizeof(int));
+    core_vector_init(&consumers, sizeof(int));
 
     buffer = thorium_message_buffer(message);
 
-    biosal_vector_unpack(&consumers, buffer);
+    core_vector_unpack(&consumers, buffer);
 
     printf("spate %d sends the names of %d consumers to controller %d\n",
                     thorium_actor_name(self),
-                    (int)biosal_vector_size(&consumers),
+                    (int)core_vector_size(&consumers),
                     concrete_self->input_controller);
 
     thorium_actor_send_vector(self, concrete_self->input_controller, ACTION_SET_CONSUMERS, &consumers);
 
-    biosal_vector_push_back_vector(&concrete_self->sequence_stores, &consumers);
+    core_vector_push_back_vector(&concrete_self->sequence_stores, &consumers);
 
-    biosal_vector_destroy(&consumers);
+    core_vector_destroy(&consumers);
 }
 
 void spate_set_consumers_reply(struct thorium_actor *self, struct thorium_message *message)
@@ -372,7 +372,7 @@ void spate_set_consumers_reply(struct thorium_actor *self, struct thorium_messag
 
     printf("spate %d sends %d spawners to controller %d\n",
                     thorium_actor_name(self),
-                    (int)biosal_vector_size(&concrete_self->initial_actors),
+                    (int)core_vector_size(&concrete_self->initial_actors),
                     concrete_self->input_controller);
 
     thorium_actor_send_reply_vector(self, ACTION_START, &concrete_self->initial_actors);
@@ -451,12 +451,12 @@ void spate_start_reply_builder(struct thorium_actor *self, struct thorium_messag
     concrete_self = (struct spate *)thorium_actor_concrete_actor(self);
     buffer = thorium_message_buffer(message);
 
-    biosal_vector_unpack(&concrete_self->graph_stores, buffer);
+    core_vector_unpack(&concrete_self->graph_stores, buffer);
 
     printf("%s/%d has %d graph stores\n",
                     thorium_actor_script_name(self),
                     thorium_actor_name(self),
-                    (int)biosal_vector_size(&concrete_self->graph_stores));
+                    (int)core_vector_size(&concrete_self->graph_stores));
 
     spawner = thorium_actor_get_spawner(self, &concrete_self->initial_actors);
 
@@ -556,10 +556,10 @@ void spate_help(struct thorium_actor *self)
 
     printf("\n");
     printf("Default values:\n");
-    printf("    -k %d (no limit and no recompilation is required)\n", BIOSAL_DEFAULT_KMER_LENGTH);
+    printf("    -k %d (no limit and no recompilation is required)\n", CORE_DEFAULT_KMER_LENGTH);
     printf("    -threads-per-node %d\n", 1);
     printf("    -o %s\n",
-                    BIOSAL_DEFAULT_OUTPUT);
+                    CORE_DEFAULT_OUTPUT);
 
     printf("\n");
     printf("Example:\n");

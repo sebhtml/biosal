@@ -22,13 +22,13 @@ void biosal_unitig_heuristic_destroy(struct biosal_unitig_heuristic *self)
 }
 
 int biosal_unitig_heuristic_select(struct biosal_unitig_heuristic *self,
-                int current_coverage, struct biosal_vector *coverage_values)
+                int current_coverage, struct core_vector *coverage_values)
 {
     return self->select(self, current_coverage, coverage_values);
 }
 
 int biosal_unitig_heuristic_select_highest(struct biosal_unitig_heuristic *self,
-                int current_coverage, struct biosal_vector *coverage_values)
+                int current_coverage, struct core_vector *coverage_values)
 {
     int coverage;
     int i;
@@ -37,10 +37,10 @@ int biosal_unitig_heuristic_select_highest(struct biosal_unitig_heuristic *self,
     int max_index;
 
     max_value = max_index = -1;
-    size = biosal_vector_size(coverage_values);
+    size = core_vector_size(coverage_values);
 
     for (i = 0; i < size; ++i) {
-        coverage = biosal_vector_at_as_int(coverage_values, i);
+        coverage = core_vector_at_as_int(coverage_values, i);
 
         /*
          * This works because the calling code with verify symmetry anyway.
@@ -55,7 +55,7 @@ int biosal_unitig_heuristic_select_highest(struct biosal_unitig_heuristic *self,
 }
 
 int biosal_unitig_heuristic_select_with_flow_split(struct biosal_unitig_heuristic *self,
-                int current_coverage, struct biosal_vector *coverage_values)
+                int current_coverage, struct core_vector *coverage_values)
 {
     int i;
     int coverage;
@@ -68,7 +68,7 @@ int biosal_unitig_heuristic_select_with_flow_split(struct biosal_unitig_heuristi
     int threshold;
     int with_same_coverage;
 
-    size = biosal_vector_size(coverage_values);
+    size = core_vector_size(coverage_values);
 
     configured_divisor = BIOSAL_MAXIMUM_DEGREE;
     threshold = current_coverage / configured_divisor;
@@ -89,7 +89,7 @@ int biosal_unitig_heuristic_select_with_flow_split(struct biosal_unitig_heuristi
             break;
         }
 #endif
-        coverage = biosal_vector_at_as_int(coverage_values, i);
+        coverage = core_vector_at_as_int(coverage_values, i);
 
         /*
          * Check if any other edge has the same coverage.
@@ -97,7 +97,7 @@ int biosal_unitig_heuristic_select_with_flow_split(struct biosal_unitig_heuristi
         with_same_coverage = 0;
 
         for (j = 0; j < size; ++j) {
-            other_coverage = biosal_vector_at_as_int(coverage_values, j);
+            other_coverage = core_vector_at_as_int(coverage_values, j);
 
             if (other_coverage == coverage) {
                 ++with_same_coverage;
@@ -141,7 +141,7 @@ int biosal_unitig_heuristic_select_with_flow_split(struct biosal_unitig_heuristi
              */
             if (i == j)
                 continue;
-            other_coverage = biosal_vector_at_as_int(coverage_values, j);
+            other_coverage = core_vector_at_as_int(coverage_values, j);
 
             if (other_coverage >= threshold) {
                 is_strong = 0;

@@ -21,7 +21,7 @@ struct biosal_assembly_graph_summary {
     uint64_t arc_count;
 
     uint64_t degree_frequencies[(BIOSAL_DEGREE_VALUE_COUNT * BIOSAL_DEGREE_VALUE_COUNT)];
-    struct biosal_map coverage_distribution;
+    struct core_map coverage_distribution;
 };
 
 void biosal_assembly_graph_summary_init(struct biosal_assembly_graph_summary *self);

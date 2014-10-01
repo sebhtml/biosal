@@ -3,37 +3,37 @@
 
 #include <stdlib.h>
 
-void biosal_set_init(struct biosal_set *self, int key_size)
+void core_set_init(struct core_set *self, int key_size)
 {
     /*
      * use 0 for value size...
      */
-    biosal_map_init(&self->map, key_size, 0);
+    core_map_init(&self->map, key_size, 0);
 }
 
-void biosal_set_destroy(struct biosal_set *self)
+void core_set_destroy(struct core_set *self)
 {
-    biosal_map_destroy(&self->map);
+    core_map_destroy(&self->map);
 }
 
-int biosal_set_add(struct biosal_set *self, void *key)
+int core_set_add(struct core_set *self, void *key)
 {
     /* It is already in the set
      */
-    if (biosal_set_find(self, key)) {
+    if (core_set_find(self, key)) {
         return 0;
     }
 
-    biosal_map_add(&self->map, key);
+    core_map_add(&self->map, key);
 
     return 1;
 }
 
-int biosal_set_find(struct biosal_set *self, void *key)
+int core_set_find(struct core_set *self, void *key)
 {
     void *value;
 
-    value = biosal_map_get(&self->map, key);
+    value = core_map_get(&self->map, key);
 
     if (value != NULL) {
 
@@ -49,38 +49,38 @@ int biosal_set_find(struct biosal_set *self, void *key)
     return 0;
 }
 
-int biosal_set_delete(struct biosal_set *self, void *key)
+int core_set_delete(struct core_set *self, void *key)
 {
-    if (!biosal_set_find(self, key)) {
+    if (!core_set_find(self, key)) {
         return 0;
     }
 
-    biosal_map_delete(&self->map, key);
+    core_map_delete(&self->map, key);
 
     return 1;
 }
 
-uint64_t biosal_set_size(struct biosal_set *self)
+uint64_t core_set_size(struct core_set *self)
 {
-    return biosal_map_size(&self->map);
+    return core_map_size(&self->map);
 }
 
-struct biosal_map *biosal_set_map(struct biosal_set *self)
+struct core_map *core_set_map(struct core_set *self)
 {
     return &self->map;
 }
 
-int biosal_set_empty(struct biosal_set *self)
+int core_set_empty(struct core_set *self)
 {
-    return biosal_set_size(self) == 0;
+    return core_set_size(self) == 0;
 }
 
-void biosal_set_set_memory_pool(struct biosal_set *self, struct biosal_memory_pool *pool)
+void core_set_set_memory_pool(struct core_set *self, struct core_memory_pool *pool)
 {
-    biosal_map_set_memory_pool(&self->map, pool);
+    core_map_set_memory_pool(&self->map, pool);
 }
 
-void biosal_set_clear(struct biosal_set *self)
+void core_set_clear(struct core_set *self)
 {
-    biosal_map_clear(&self->map);
+    core_map_clear(&self->map);
 }

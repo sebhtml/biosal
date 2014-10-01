@@ -9,7 +9,7 @@ int main(int argc, char **argv)
 {
     BEGIN_TESTS();
 
-    struct biosal_buffered_reader reader;
+    struct core_buffered_reader reader;
     char file[] = "/home/boisvert/dropbox/SRS213780-Ecoli/SRR306102_1.fastq.gz";
     char buffer[BUFFER_SIZE];
     int expected;
@@ -17,11 +17,11 @@ int main(int argc, char **argv)
 
     expected = 17222992;
 
-    biosal_buffered_reader_init(&reader, file, 0);
+    core_buffered_reader_init(&reader, file, 0);
 
     actual = 0;
 
-    while (biosal_buffered_reader_read_line(&reader, buffer, BUFFER_SIZE) > 0) {
+    while (core_buffered_reader_read_line(&reader, buffer, BUFFER_SIZE) > 0) {
 
         ++actual;
 
@@ -32,7 +32,7 @@ int main(int argc, char **argv)
 
     TEST_INT_EQUALS(actual, expected);
 
-    biosal_buffered_reader_destroy(&reader);
+    core_buffered_reader_destroy(&reader);
 
     END_TESTS();
 

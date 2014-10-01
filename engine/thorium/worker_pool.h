@@ -25,17 +25,17 @@ struct thorium_migration;
 struct thorium_worker_pool {
     struct thorium_balancer balancer;
 
-    struct biosal_fast_queue scheduled_actor_queue_buffer;
-    struct biosal_fast_queue inbound_message_queue_buffer;
+    struct core_fast_queue scheduled_actor_queue_buffer;
+    struct core_fast_queue inbound_message_queue_buffer;
 
-    struct biosal_fast_queue messages_for_triage;
+    struct core_fast_queue messages_for_triage;
 
     int workers;
-    struct biosal_vector worker_array;
+    struct core_vector worker_array;
     struct thorium_worker *worker_cache;
     char waiting_is_enabled;
 
-    struct biosal_vector message_count_cache;
+    struct core_vector message_count_cache;
     int *message_cache;
 
     struct thorium_node *node;

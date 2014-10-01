@@ -36,7 +36,7 @@ void biosal_coverage_distribution_init(struct thorium_actor *self)
 
     concrete_actor = (struct biosal_coverage_distribution *)thorium_actor_concrete_actor(self);
 
-    biosal_map_init(&concrete_actor->distribution, sizeof(int), sizeof(uint64_t));
+    core_map_init(&concrete_actor->distribution, sizeof(int), sizeof(uint64_t));
 
 #ifdef BIOSAL_COVERAGE_DISTRIBUTION_DEBUG
     printf("DISTRIBUTION IS READY\n");
@@ -51,14 +51,14 @@ void biosal_coverage_distribution_destroy(struct thorium_actor *self)
 
     concrete_actor = (struct biosal_coverage_distribution *)thorium_actor_concrete_actor(self);
 
-    biosal_map_destroy(&concrete_actor->distribution);
+    core_map_destroy(&concrete_actor->distribution);
 }
 
 void biosal_coverage_distribution_receive(struct thorium_actor *self, struct thorium_message *message)
 {
     int tag;
-    struct biosal_map map;
-    struct biosal_map_iterator iterator;
+    struct core_map map;
+    struct core_map_iterator iterator;
     int *coverage_from_message;
     uint64_t *count_from_message;
     uint64_t *frequency;
@@ -67,7 +67,7 @@ void biosal_coverage_distribution_receive(struct thorium_actor *self, struct tho
     struct biosal_coverage_distribution *concrete_actor;
     int name;
     int source;
-    struct biosal_memory_pool *ephemeral_memory;
+    struct core_memory_pool *ephemeral_memory;
 
     ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
     name = thorium_actor_name(self);
@@ -79,27 +79,27 @@ void biosal_coverage_distribution_receive(struct thorium_actor *self, struct tho
 
     if (tag == ACTION_PUSH_DATA) {
 
-        biosal_map_init(&map, 0, 0);
-        biosal_map_set_memory_pool(&map, ephemeral_memory);
-        biosal_map_unpack(&map, buffer);
+        core_map_init(&map, 0, 0);
+        core_map_set_memory_pool(&map, ephemeral_memory);
+        core_map_unpack(&map, buffer);
 
-        biosal_map_iterator_init(&iterator, &map);
+        core_map_iterator_init(&iterator, &map);
 
 
-        while (biosal_map_iterator_has_next(&iterator)) {
+        while (core_map_iterator_has_next(&iterator)) {
 
-            biosal_map_iterator_next(&iterator, (void **)&coverage_from_message,
+            core_map_iterator_next(&iterator, (void **)&coverage_from_message,
                             (void **)&count_from_message);
 
 #ifdef BIOSAL_COVERAGE_DISTRIBUTION_DEBUG
             printf("DEBUG DATA %d %d\n", (int)*coverage_from_message, (int)*count_from_message);
 #endif
 
-            frequency = biosal_map_get(&concrete_actor->distribution, coverage_from_message);
+            frequency = core_map_get(&concrete_actor->distribution, coverage_from_message);
 
             if (frequency == NULL) {
 
-                frequency = biosal_map_add(&concrete_actor->distribution, coverage_from_message);
+                frequency = core_map_add(&concrete_actor->distribution, coverage_from_message);
 
                 (*frequency) = 0;
             }
@@ -107,14 +107,14 @@ void biosal_coverage_distribution_receive(struct thorium_actor *self, struct tho
             (*frequency) += (*count_from_message);
         }
 
-        biosal_map_iterator_destroy(&iterator);
+        core_map_iterator_destroy(&iterator);
 
         thorium_actor_send_reply_empty(self, ACTION_PUSH_DATA_REPLY);
 
         concrete_actor->actual++;
 
         printf("distribution/%d receives coverage data from producer/%d, %d entries / %d bytes %d/%d\n",
-                        name, source, (int)biosal_map_size(&map), count,
+                        name, source, (int)core_map_size(&map), count,
                         concrete_actor->actual, concrete_actor->expected);
 
         if (concrete_actor->expected != 0 && concrete_actor->expected == concrete_actor->actual) {
@@ -127,7 +127,7 @@ void biosal_coverage_distribution_receive(struct thorium_actor *self, struct tho
                             ACTION_NOTIFY);
         }
 
-        biosal_map_destroy(&map);
+        core_map_destroy(&map);
 
     } else if (tag == ACTION_ASK_TO_STOP) {
 
@@ -148,17 +148,17 @@ void biosal_coverage_distribution_receive(struct thorium_actor *self, struct tho
 
 void biosal_coverage_distribution_write_distribution(struct thorium_actor *self)
 {
-    struct biosal_map_iterator iterator;
+    struct core_map_iterator iterator;
     int *coverage;
     uint64_t *canonical_frequency;
     uint64_t frequency;
     struct biosal_coverage_distribution *concrete_actor;
-    struct biosal_vector coverage_values;
-    struct biosal_vector_iterator vector_iterator;
-    struct biosal_buffered_file_writer descriptor;
-    struct biosal_buffered_file_writer descriptor_canonical;
-    struct biosal_string file_name;
-    struct biosal_string canonical_file_name;
+    struct core_vector coverage_values;
+    struct core_vector_iterator vector_iterator;
+    struct core_buffered_file_writer descriptor;
+    struct core_buffered_file_writer descriptor_canonical;
+    struct core_string file_name;
+    struct core_string canonical_file_name;
     int argc;
     char **argv;
     int name;
@@ -168,135 +168,135 @@ void biosal_coverage_distribution_write_distribution(struct thorium_actor *self)
     argc = thorium_actor_argc(self);
     argv = thorium_actor_argv(self);
 
-    directory_name = biosal_command_get_output_directory(argc, argv);
+    directory_name = core_command_get_output_directory(argc, argv);
 
     /* Create the directory if it does not exist
      */
 
-    if (!biosal_directory_verify_existence(directory_name)) {
+    if (!core_directory_verify_existence(directory_name)) {
 
-        biosal_directory_create(directory_name);
+        core_directory_create(directory_name);
     }
 
-    biosal_string_init(&file_name, "");
-    biosal_string_append(&file_name, directory_name);
-    biosal_string_append(&file_name, "/");
-    biosal_string_append(&file_name, BIOSAL_COVERAGE_DISTRIBUTION_DEFAULT_OUTPUT_FILE);
+    core_string_init(&file_name, "");
+    core_string_append(&file_name, directory_name);
+    core_string_append(&file_name, "/");
+    core_string_append(&file_name, BIOSAL_COVERAGE_DISTRIBUTION_DEFAULT_OUTPUT_FILE);
 
-    biosal_string_init(&canonical_file_name, "");
-    biosal_string_append(&canonical_file_name, directory_name);
-    biosal_string_append(&canonical_file_name, "/");
-    biosal_string_append(&canonical_file_name, BIOSAL_COVERAGE_DISTRIBUTION_DEFAULT_OUTPUT_FILE_CANONICAL);
+    core_string_init(&canonical_file_name, "");
+    core_string_append(&canonical_file_name, directory_name);
+    core_string_append(&canonical_file_name, "/");
+    core_string_append(&canonical_file_name, BIOSAL_COVERAGE_DISTRIBUTION_DEFAULT_OUTPUT_FILE_CANONICAL);
 
-    biosal_buffered_file_writer_init(&descriptor, biosal_string_get(&file_name));
-    biosal_buffered_file_writer_init(&descriptor_canonical, biosal_string_get(&canonical_file_name));
+    core_buffered_file_writer_init(&descriptor, core_string_get(&file_name));
+    core_buffered_file_writer_init(&descriptor_canonical, core_string_get(&canonical_file_name));
 
     concrete_actor = (struct biosal_coverage_distribution *)thorium_actor_concrete_actor(self);
 
-    biosal_vector_init(&coverage_values, sizeof(int));
-    biosal_map_iterator_init(&iterator, &concrete_actor->distribution);
+    core_vector_init(&coverage_values, sizeof(int));
+    core_map_iterator_init(&iterator, &concrete_actor->distribution);
 
 #ifdef BIOSAL_COVERAGE_DISTRIBUTION_DEBUG
-    printf("map size %d\n", (int)biosal_map_size(&concrete_actor->distribution));
+    printf("map size %d\n", (int)core_map_size(&concrete_actor->distribution));
 #endif
 
-    while (biosal_map_iterator_has_next(&iterator)) {
-        biosal_map_iterator_next(&iterator, (void **)&coverage, (void **)&canonical_frequency);
+    while (core_map_iterator_has_next(&iterator)) {
+        core_map_iterator_next(&iterator, (void **)&coverage, (void **)&canonical_frequency);
 
 #ifdef BIOSAL_COVERAGE_DISTRIBUTION_DEBUG
         printf("DEBUG COVERAGE %d FREQUENCY %" PRIu64 "\n", *coverage, *frequency);
 #endif
 
-        biosal_vector_push_back(&coverage_values, coverage);
+        core_vector_push_back(&coverage_values, coverage);
     }
 
-    biosal_map_iterator_destroy(&iterator);
+    core_map_iterator_destroy(&iterator);
 
-    biosal_vector_sort_int(&coverage_values);
+    core_vector_sort_int(&coverage_values);
 
 #ifdef BIOSAL_COVERAGE_DISTRIBUTION_DEBUG
     printf("after sort ");
-    biosal_vector_print_int(&coverage_values);
+    core_vector_print_int(&coverage_values);
     printf("\n");
 #endif
 
-    biosal_vector_iterator_init(&vector_iterator, &coverage_values);
+    core_vector_iterator_init(&vector_iterator, &coverage_values);
 
 #if 0
-    biosal_buffered_file_writer_printf(&descriptor_canonical, "Coverage\tFrequency\n");
+    core_buffered_file_writer_printf(&descriptor_canonical, "Coverage\tFrequency\n");
 #endif
 
-    biosal_buffered_file_writer_printf(&descriptor, "Coverage\tFrequency\n");
+    core_buffered_file_writer_printf(&descriptor, "Coverage\tFrequency\n");
 #ifdef BIOSAL_COVERAGE_DISTRIBUTION_DEBUG
 #endif
 
-    while (biosal_vector_iterator_has_next(&vector_iterator)) {
+    while (core_vector_iterator_has_next(&vector_iterator)) {
 
-        biosal_vector_iterator_next(&vector_iterator, (void **)&coverage);
+        core_vector_iterator_next(&vector_iterator, (void **)&coverage);
 
-        canonical_frequency = (uint64_t *)biosal_map_get(&concrete_actor->distribution, coverage);
+        canonical_frequency = (uint64_t *)core_map_get(&concrete_actor->distribution, coverage);
 
         frequency = 2 * *canonical_frequency;
 
-        biosal_buffered_file_writer_printf(&descriptor_canonical, "%d %" PRIu64 "\n",
+        core_buffered_file_writer_printf(&descriptor_canonical, "%d %" PRIu64 "\n",
                         *coverage,
                         *canonical_frequency);
 
-        biosal_buffered_file_writer_printf(&descriptor, "%d\t%" PRIu64 "\n",
+        core_buffered_file_writer_printf(&descriptor, "%d\t%" PRIu64 "\n",
                         *coverage,
                         frequency);
     }
 
-    biosal_vector_destroy(&coverage_values);
-    biosal_vector_iterator_destroy(&vector_iterator);
+    core_vector_destroy(&coverage_values);
+    core_vector_iterator_destroy(&vector_iterator);
 
-    printf("distribution %d wrote %s\n", name, biosal_string_get(&file_name));
-    printf("distribution %d wrote %s\n", name, biosal_string_get(&canonical_file_name));
+    printf("distribution %d wrote %s\n", name, core_string_get(&file_name));
+    printf("distribution %d wrote %s\n", name, core_string_get(&canonical_file_name));
 
-    biosal_buffered_file_writer_destroy(&descriptor);
-    biosal_buffered_file_writer_destroy(&descriptor_canonical);
+    core_buffered_file_writer_destroy(&descriptor);
+    core_buffered_file_writer_destroy(&descriptor_canonical);
 
-    biosal_string_destroy(&file_name);
-    biosal_string_destroy(&canonical_file_name);
+    core_string_destroy(&file_name);
+    core_string_destroy(&canonical_file_name);
 }
 
 void biosal_coverage_distribution_ask_to_stop(struct thorium_actor *self, struct thorium_message *message)
 {
-    struct biosal_map_iterator iterator;
-    struct biosal_vector coverage_values;
+    struct core_map_iterator iterator;
+    struct core_vector coverage_values;
     struct biosal_coverage_distribution *concrete_actor;
 
     uint64_t *frequency;
     int *coverage;
 
     concrete_actor = (struct biosal_coverage_distribution *)thorium_actor_concrete_actor(self);
-    biosal_map_iterator_init(&iterator, &concrete_actor->distribution);
+    core_map_iterator_init(&iterator, &concrete_actor->distribution);
 
-    biosal_vector_init(&coverage_values, sizeof(int));
+    core_vector_init(&coverage_values, sizeof(int));
 
-    while (biosal_map_iterator_has_next(&iterator)) {
+    while (core_map_iterator_has_next(&iterator)) {
 
 #if 0
         printf("DEBUG EMIT iterator\n");
 #endif
-        biosal_map_iterator_next(&iterator, (void **)&coverage,
+        core_map_iterator_next(&iterator, (void **)&coverage,
                         (void **)&frequency);
 
-#ifdef BIOSAL_DEBUGGER_ENABLE_ASSERT
+#ifdef CORE_DEBUGGER_ENABLE_ASSERT
         if (coverage == NULL) {
-            printf("DEBUG map has %d buckets\n", (int)biosal_map_size(&concrete_actor->distribution));
+            printf("DEBUG map has %d buckets\n", (int)core_map_size(&concrete_actor->distribution));
         }
 #endif
-        BIOSAL_DEBUGGER_ASSERT(coverage != NULL);
+        CORE_DEBUGGER_ASSERT(coverage != NULL);
 
-        biosal_vector_push_back(&coverage_values, coverage);
+        core_vector_push_back(&coverage_values, coverage);
     }
 
-    biosal_vector_sort_int(&coverage_values);
+    core_vector_sort_int(&coverage_values);
 
-    biosal_map_iterator_destroy(&iterator);
+    core_map_iterator_destroy(&iterator);
 
-    biosal_vector_destroy(&coverage_values);
+    core_vector_destroy(&coverage_values);
 
     thorium_actor_ask_to_stop(self, message);
 }

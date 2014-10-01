@@ -1,10 +1,10 @@
 
-#ifndef BIOSAL_SET_HELPER_H
-#define BIOSAL_SET_HELPER_H
+#ifndef CORE_SET_HELPER_H
+#define CORE_SET_HELPER_H
 
-struct biosal_set;
+struct core_set;
 
-int biosal_set_get_any_int(struct biosal_set *self);
-void biosal_set_add_int(struct biosal_set *self, int value);
+int core_set_get_any_int(struct core_set *self);
+void core_set_add_int(struct core_set *self, int value);
 
 #endif
