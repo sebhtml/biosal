@@ -54,10 +54,11 @@ The [**Integration Manager Workflow**](http://git-scm.com/about/distributed) is 
 # Product team
 see [CREDITS.md](CREDITS.md)
 
-# Tickets
+# Community
 
-- https://github.com/GeneAssembly/biosal/issues?state=open
+- Issues: https://github.com/GeneAssembly/biosal/issues?state=open
 - Website: https://github.com/GeneAssembly/biosal
+- Mailing list: biosal@lists.cels.anl.gov https://lists.cels.anl.gov/mailman/listinfo/biosal
 
 # Actor model
 
