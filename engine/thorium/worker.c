@@ -27,6 +27,10 @@
 /*#define THORIUM_WORKER_DEBUG
   */
 
+/*
+#define SHOW_FULL_RING_WARNINGS
+*/
+
 #define MEMORY_POOL_NAME_WORKER_EPHEMERAL  0x2ee1c5a6
 #define MEMORY_POOL_NAME_WORKER_OUTBOUND   0x46d316e4
 
@@ -716,6 +720,12 @@ int thorium_worker_enqueue_actor(struct thorium_worker *worker, struct thorium_a
 
     value = core_fast_ring_push_from_producer(&worker->actors_to_schedule, &actor);
 
+#ifdef SHOW_FULL_RING_WARNINGS
+    if (!value) {
+        printf("thorium_worker: Warning: ring is full, actors_to_schedule\n");
+    }
+#endif
+
     /*
      * Do a wake up if necessary when scheduling an actor in
      * the scheduling queue.
@@ -741,6 +751,9 @@ int thorium_worker_enqueue_message(struct thorium_worker *worker, struct thorium
      */
     if (!core_fast_ring_push_from_producer(&worker->outbound_message_queue, message)) {
 
+#ifdef SHOW_FULL_RING_WARNINGS
+        printf("thorium_worker: Warning: ring is full, outbound_message_queue\n");
+#endif
         /* If that does not work, push the message in the queue buffer.
          */
         core_fast_queue_enqueue(&worker->outbound_message_queue_buffer, message);
@@ -875,6 +888,7 @@ void thorium_worker_evict_actor(struct thorium_worker *worker, int actor_name)
     int name;
     struct core_fast_queue saved_actors;
     int count;
+    int value;
 
     core_set_add(&worker->evicted_actors, &actor_name);
     core_map_delete(&worker->actors, &actor_name);
@@ -911,8 +925,13 @@ void thorium_worker_evict_actor(struct thorium_worker *worker, int actor_name)
 
         if (name != actor_name) {
 
-            core_fast_ring_push_from_producer(&worker->actors_to_schedule,
+            /*
+             * This can not fail logically.
+             */
+            value = core_fast_ring_push_from_producer(&worker->actors_to_schedule,
                             &actor);
+
+            CORE_DEBUGGER_ASSERT(value);
         }
     }
 
@@ -1124,6 +1143,10 @@ int thorium_worker_enqueue_message_for_triage(struct thorium_worker *worker, str
 
     if (!core_fast_ring_push_from_producer(&worker->clean_message_ring_for_triage, message)) {
 
+#ifdef SHOW_FULL_RING_WARNINGS
+        printf("thorium_worker: Warning: ring is full, clean_message_ring_for_triage\n");
+#endif
+
         core_fast_queue_enqueue(&worker->clean_message_queue_for_triage, message);
 
 #ifdef THORIUM_WORKER_DEBUG_INJECTION
@@ -1314,6 +1337,10 @@ void thorium_worker_run(struct thorium_worker *worker)
 
         if (!core_fast_ring_push_from_producer(&worker->outbound_message_queue, &other_message)) {
 
+#ifdef SHOW_FULL_RING_WARNINGS
+            printf("thorium_worker: Warning: ring is full => outbound_message_queue\n");
+#endif
+
             core_fast_queue_enqueue(&worker->outbound_message_queue_buffer, &other_message);
         }
     }
@@ -1375,9 +1402,11 @@ void thorium_worker_work(struct thorium_worker *worker, struct thorium_actor *ac
      */
     if (thorium_actor_trylock(actor) != CORE_LOCK_SUCCESS) {
 
+#ifdef SHOW_FULL_RING_WARNINGS
         printf("Warning: CONTENTION worker %d could not lock actor %d, returning the message...\n",
                         thorium_worker_name(worker),
                         actor_name);
+#endif
 
         return;
     }
@@ -1592,8 +1621,18 @@ void thorium_worker_check_production(struct thorium_worker *worker, int value, i
 
 int thorium_worker_inject_clean_outbound_buffer(struct thorium_worker *self, void *buffer)
 {
-    return core_fast_ring_push_from_producer(&self->injected_clean_outbound_buffers,
+    int value;
+
+    value = core_fast_ring_push_from_producer(&self->injected_clean_outbound_buffers,
                     &buffer);
+
+#ifdef SHOW_FULL_RING_WARNINGS
+    if (!value) {
+        printf("thorium_worker: Warning: ring is full, injected_clean_outbound_buffers\n");
+    }
+#endif
+
+    return value;
 }
 
 int thorium_worker_fetch_clean_outbound_buffer(struct thorium_worker *self, void **buffer)
@@ -1662,7 +1701,7 @@ void thorium_worker_enable_profiler(struct thorium_worker *self)
 
     core_buffered_file_writer_init(&self->load_profile_writer, file_name);
 
-    core_buffered_file_writer_printf(&self->load_profile_writer, "start_time    end_time    actor   script\n");
+    core_buffered_file_writer_printf(&self->load_profile_writer, "start_time\tend_time\tactor\tscript\taction\tcompute_time\twaiting_time\n");
 }
 
 void *thorium_worker_allocate(struct thorium_worker *self, size_t count)

@@ -949,13 +949,15 @@ void thorium_actor_receive(struct thorium_actor *self, struct thorium_message *m
     start = core_timer_get_nanoseconds(&self->timer);
 
     if (core_bitmap_get_bit_uint32_t(&self->flags, FLAG_ENABLE_LOAD_PROFILER)) {
-        thorium_load_profiler_profile(&self->profiler, THORIUM_LOAD_PROFILER_RECEIVE_BEGIN);
+        thorium_load_profiler_profile(&self->profiler, THORIUM_LOAD_PROFILER_RECEIVE_BEGIN,
+                        thorium_message_action(message));
     }
 
     thorium_actor_receive_private(self, message);
 
     if (core_bitmap_get_bit_uint32_t(&self->flags, FLAG_ENABLE_LOAD_PROFILER)) {
-        thorium_load_profiler_profile(&self->profiler, THORIUM_LOAD_PROFILER_RECEIVE_END);
+        thorium_load_profiler_profile(&self->profiler, THORIUM_LOAD_PROFILER_RECEIVE_END,
+                        thorium_message_action(message));
     }
 
     end = core_timer_get_nanoseconds(&self->timer);

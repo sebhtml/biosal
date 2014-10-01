@@ -13,7 +13,9 @@ void thorium_load_profiler_init(struct thorium_load_profiler *self)
     self->profile_end_count = 0;
 
     core_timer_init(&self->timer);
-    core_vector_init(&self->event_times, sizeof(uint64_t));
+    core_vector_init(&self->event_start_times, sizeof(uint64_t));
+    core_vector_init(&self->event_end_times, sizeof(uint64_t));
+    core_vector_init(&self->event_actions, sizeof(int));
 }
 
 void thorium_load_profiler_destroy(struct thorium_load_profiler *self)
@@ -21,11 +23,13 @@ void thorium_load_profiler_destroy(struct thorium_load_profiler *self)
     self->profile_begin_count = 0;
     self->profile_end_count = 0;
 
-    core_vector_destroy(&self->event_times);
+    core_vector_destroy(&self->event_start_times);
+    core_vector_destroy(&self->event_end_times);
+    core_vector_destroy(&self->event_actions);
     core_timer_destroy(&self->timer);
 }
 
-void thorium_load_profiler_profile(struct thorium_load_profiler *self, int event)
+void thorium_load_profiler_profile(struct thorium_load_profiler *self, int event, int action)
 {
     uint64_t time;
 
@@ -36,13 +40,15 @@ void thorium_load_profiler_profile(struct thorium_load_profiler *self, int event
 
             ++self->profile_begin_count;
 
-            core_vector_push_back(&self->event_times, &time);
+            core_vector_push_back(&self->event_start_times, &time);
+            core_vector_push_back(&self->event_actions, &action);
+
             break;
         case THORIUM_LOAD_PROFILER_RECEIVE_END:
             CORE_DEBUGGER_ASSERT(self->profile_end_count + 1 == self->profile_begin_count);
 
             ++self->profile_end_count;
-            core_vector_push_back(&self->event_times, &time);
+            core_vector_push_back(&self->event_end_times, &time);
             break;
     }
 }
@@ -52,18 +58,35 @@ void thorium_load_profiler_write(struct thorium_load_profiler *self, const char 
 {
     int i;
     int size;
-    uint64_t begin_time;
+    uint64_t start_time;
     uint64_t end_time;
+    uint64_t compute_time;
+    uint64_t wait_time;
+    int action;
+    uint64_t last_end_time;
 
-    size = core_vector_size(&self->event_times);
+    last_end_time = 0;
+    size = core_vector_size(&self->event_start_times);
 
-    CORE_DEBUGGER_ASSERT(size % 2 == 0);
+    for (i = 0; i < size; ++i) {
+        start_time = core_vector_at_as_uint64_t(&self->event_start_times, i);
+        end_time = core_vector_at_as_uint64_t(&self->event_end_times, i);
+        action = core_vector_at_as_int(&self->event_actions, i);
 
-    for (i = 0; i < size; i += 2) {
-        begin_time = core_vector_at_as_uint64_t(&self->event_times, i);
-        end_time = core_vector_at_as_uint64_t(&self->event_times, i + 1);
+        compute_time = end_time - start_time;
+        wait_time = 0;
 
-        core_buffered_file_writer_printf(writer, "%" PRIu64 "\t%" PRIu64 "\t%d\t%s\n",
-                        begin_time, end_time, name, script);
+        if (last_end_time != 0)
+            wait_time = start_time - last_end_time;
+
+        /*
+         * start_time end_time actor script action compute_time wait_time
+         */
+        core_buffered_file_writer_printf(writer, "%" PRIu64 "\t%" PRIu64 "\t%d\t%s"
+                        "\t0x%x\t%" PRIu64 "\t%" PRIu64 "\n",
+                        start_time, end_time, name, script, action,
+                        compute_time, wait_time);
+
+        last_end_time = end_time;
     }
 }
