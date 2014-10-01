@@ -182,7 +182,7 @@ int thorium_pami_transport_send(struct thorium_transport *self, struct thorium_m
     pami_transport = thorium_transport_get_concrete_transport(self);
 
     thorium_send_cookie_t *send_cookie;
-    if (core_fast_queue_dequeue(pami_transport->avail_send_cookies_queue, &send_cookie) == BIOSAL_FALSE) {
+    if (core_fast_queue_dequeue(pami_transport->avail_send_cookies_queue, &send_cookie) == CORE_FALSE) {
 	send_cookie = (thorium_send_cookie_t *)malloc(sizeof(thorium_send_cookie_t));
 	CORE_DEBUGGER_ASSERT(send_cookie != NULL);
     }
@@ -296,7 +296,7 @@ void thorium_recv_message_fn(pami_context_t context, void *cookie, const void *h
     struct thorium_pami_transport *pami_transport = (struct thorium_pami_transport *) cookie;
     thorium_recv_cookie_t *recv_cookie;
 
-    if (core_fast_queue_dequeue(pami_transport->avail_recv_cookies_queue, (void *)&recv_cookie) == BIOSAL_FALSE) {
+    if (core_fast_queue_dequeue(pami_transport->avail_recv_cookies_queue, (void *)&recv_cookie) == CORE_FALSE) {
 	recv_cookie = (thorium_recv_cookie_t *)malloc(sizeof(thorium_recv_cookie_t));
 	CORE_DEBUGGER_ASSERT(recv_cookie != NULL);
     }
