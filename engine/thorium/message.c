@@ -81,7 +81,7 @@ void thorium_message_print(struct thorium_message *self)
                     self->source_actor,
                     self->destination_actor);
 
-    bsal_debugger_examine(self->buffer, self->count);
+    biosal_debugger_examine(self->buffer, self->count);
 }
 
 void *thorium_message_buffer(struct thorium_message *self)
@@ -116,19 +116,19 @@ void thorium_message_set_action(struct thorium_message *self, int action)
 
 int thorium_message_metadata_size(struct thorium_message *self)
 {
-    return thorium_message_pack_unpack(self, BSAL_PACKER_OPERATION_PACK_SIZE,
+    return thorium_message_pack_unpack(self, BIOSAL_PACKER_OPERATION_PACK_SIZE,
                     NULL);
 }
 
 int thorium_message_write_metadata(struct thorium_message *self)
 {
-    return thorium_message_pack_unpack(self, BSAL_PACKER_OPERATION_PACK,
+    return thorium_message_pack_unpack(self, BIOSAL_PACKER_OPERATION_PACK,
                     (char *)self->buffer + self->count);
 }
 
 int thorium_message_read_metadata(struct thorium_message *self)
 {
-    return thorium_message_pack_unpack(self, BSAL_PACKER_OPERATION_UNPACK,
+    return thorium_message_pack_unpack(self, BIOSAL_PACKER_OPERATION_UNPACK,
                     (char *)self->buffer + self->count);
 }
 
@@ -189,18 +189,18 @@ void thorium_message_init_with_nodes(struct thorium_message *self, int count, vo
 
 int thorium_message_pack_unpack(struct thorium_message *self, int operation, void *buffer)
 {
-    struct bsal_packer packer;
+    struct biosal_packer packer;
     int count;
 
-    bsal_packer_init(&packer, operation, buffer);
+    biosal_packer_init(&packer, operation, buffer);
 
-    bsal_packer_process(&packer, &self->source_actor, sizeof(self->source_actor));
-    bsal_packer_process(&packer, &self->destination_actor, sizeof(self->destination_actor));
-    bsal_packer_process(&packer, &self->action, sizeof(self->action));
+    biosal_packer_process(&packer, &self->source_actor, sizeof(self->source_actor));
+    biosal_packer_process(&packer, &self->destination_actor, sizeof(self->destination_actor));
+    biosal_packer_process(&packer, &self->action, sizeof(self->action));
 
-    count = bsal_packer_get_byte_count(&packer);
+    count = biosal_packer_get_byte_count(&packer);
 
-    bsal_packer_destroy(&packer);
+    biosal_packer_destroy(&packer);
 
     return count;
 }

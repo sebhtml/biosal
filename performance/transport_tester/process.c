@@ -35,7 +35,7 @@ void process_init(struct thorium_actor *self)
     argv = thorium_actor_argv(self);
 
     concrete_self = thorium_actor_concrete_actor(self);
-    bsal_vector_init(&concrete_self->actors, sizeof(int));
+    biosal_vector_init(&concrete_self->actors, sizeof(int));
 
     thorium_actor_add_action(self, ACTION_START, process_start);
     thorium_actor_add_action(self, ACTION_ASK_TO_STOP, process_stop);
@@ -50,24 +50,24 @@ void process_init(struct thorium_actor *self)
     concrete_self->minimum_buffer_size = 16;
     concrete_self->maximum_buffer_size = 512*1024;
 
-    if (bsal_command_has_argument(argc, argv, MIN_BUFFER_SIZE_OPTION)) {
-        concrete_self->maximum_buffer_size = bsal_command_get_argument_value_int(argc, argv, MIN_BUFFER_SIZE_OPTION);
+    if (biosal_command_has_argument(argc, argv, MIN_BUFFER_SIZE_OPTION)) {
+        concrete_self->maximum_buffer_size = biosal_command_get_argument_value_int(argc, argv, MIN_BUFFER_SIZE_OPTION);
     }
 
-    if (bsal_command_has_argument(argc, argv, MAX_BUFFER_SIZE_OPTION)) {
-        concrete_self->maximum_buffer_size = bsal_command_get_argument_value_int(argc, argv, MAX_BUFFER_SIZE_OPTION);
+    if (biosal_command_has_argument(argc, argv, MAX_BUFFER_SIZE_OPTION)) {
+        concrete_self->maximum_buffer_size = biosal_command_get_argument_value_int(argc, argv, MAX_BUFFER_SIZE_OPTION);
     }
 
     concrete_self->event_count = 100000;
 
-    if (bsal_command_has_argument(argc, argv, EVENT_COUNT_OPTION)) {
-        concrete_self->event_count = bsal_command_get_argument_value_int(argc, argv, EVENT_COUNT_OPTION);
+    if (biosal_command_has_argument(argc, argv, EVENT_COUNT_OPTION)) {
+        concrete_self->event_count = biosal_command_get_argument_value_int(argc, argv, EVENT_COUNT_OPTION);
     }
 
     concrete_self->concurrent_event_count = 8;
 
-    if (bsal_command_has_argument(argc, argv, CONCURRENT_EVENT_COUNT_OPTION)) {
-        concrete_self->concurrent_event_count = bsal_command_get_argument_value_int(argc, argv, CONCURRENT_EVENT_COUNT_OPTION);
+    if (biosal_command_has_argument(argc, argv, CONCURRENT_EVENT_COUNT_OPTION)) {
+        concrete_self->concurrent_event_count = biosal_command_get_argument_value_int(argc, argv, CONCURRENT_EVENT_COUNT_OPTION);
     }
 
     concrete_self->active_messages = 0;
@@ -90,7 +90,7 @@ void process_destroy(struct thorium_actor *self)
     struct process *concrete_self;
 
     concrete_self = (struct process *)thorium_actor_concrete_actor(self);
-    bsal_vector_destroy(&concrete_self->actors);
+    biosal_vector_destroy(&concrete_self->actors);
 }
 
 void process_receive(struct thorium_actor *self, struct thorium_message *message)
@@ -114,7 +114,7 @@ void process_ping(struct thorium_actor *self, struct thorium_message *message)
     buffer_size = count - sizeof(expected_checksum);
     bucket = (uint64_t *)(buffer + buffer_size);
     expected_checksum = *bucket;
-    actual_checksum = bsal_hash_data_uint64_t(buffer, buffer_size, SEED);
+    actual_checksum = biosal_hash_data_uint64_t(buffer, buffer_size, SEED);
 
     if (expected_checksum != actual_checksum) {
         printf("TRANSPORT FAILED source: %d (%d) destination: %d (%d) tag: ACTION_PING count: %d"
@@ -142,7 +142,7 @@ void process_start(struct thorium_actor *self, struct thorium_message *message)
     concrete_self = (struct process *)thorium_actor_concrete_actor(self);
     buffer = thorium_message_buffer(message);
 
-    bsal_vector_unpack(&concrete_self->actors, buffer);
+    biosal_vector_unpack(&concrete_self->actors, buffer);
 
     concrete_self->ready = 0;
 
@@ -184,7 +184,7 @@ void process_ping_reply(struct thorium_actor *self, struct thorium_message *mess
     if (concrete_self->events < concrete_self->event_count) {
         process_send_ping(self);
     } else {
-        destination = bsal_vector_at_as_int(&concrete_self->actors, 0);
+        destination = biosal_vector_at_as_int(&concrete_self->actors, 0);
 
         thorium_actor_send_empty(self, destination, ACTION_NOTIFY);
     }
@@ -201,7 +201,7 @@ void process_send_ping(struct thorium_actor *self)
     uint64_t checksum;
     int count;
     char *buffer;
-    struct bsal_memory_pool *ephemeral_memory;
+    struct biosal_memory_pool *ephemeral_memory;
     int i;
     uint64_t *bucket;
 
@@ -223,14 +223,14 @@ void process_send_ping(struct thorium_actor *self)
         buffer[i] = i % 256;
     }
 
-    checksum = bsal_hash_data_uint64_t(buffer, buffer_size, SEED);
+    checksum = biosal_hash_data_uint64_t(buffer, buffer_size, SEED);
     bucket = (uint64_t *)(buffer + buffer_size);
     *bucket = checksum;
 
-    size = bsal_vector_size(&concrete_self->actors);
+    size = biosal_vector_size(&concrete_self->actors);
     index = rand() % size;
 
-    destination = bsal_vector_at_as_int(&concrete_self->actors, index);
+    destination = biosal_vector_at_as_int(&concrete_self->actors, index);
 
     thorium_actor_send_buffer(self, destination, ACTION_PING, count, buffer);
     ++concrete_self->active_messages;
@@ -244,7 +244,7 @@ void process_notify(struct thorium_actor *self, struct thorium_message *message)
 
     ++concrete_self->ready;
 
-    if (concrete_self->ready == bsal_vector_size(&concrete_self->actors)) {
+    if (concrete_self->ready == biosal_vector_size(&concrete_self->actors)) {
         thorium_actor_send_range_empty(self, &concrete_self->actors,
                         ACTION_ASK_TO_STOP);
     }

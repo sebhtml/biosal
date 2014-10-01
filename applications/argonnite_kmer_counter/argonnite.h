@@ -7,17 +7,17 @@
 #define SCRIPT_ARGONNITE 0x97e07af7
 
 struct argonnite {
-    struct bsal_vector initial_actors;
-    struct bsal_vector aggregators;
-    struct bsal_vector kernels;
-    struct bsal_vector kmer_stores;
-    struct bsal_vector sequence_stores;
+    struct biosal_vector initial_actors;
+    struct biosal_vector aggregators;
+    struct biosal_vector kernels;
+    struct biosal_vector kmer_stores;
+    struct biosal_vector sequence_stores;
 
-    struct bsal_timer timer;
-    struct bsal_timer timer_for_kmers;
-    struct bsal_map plentiful_stores;
+    struct biosal_timer timer;
+    struct biosal_timer timer_for_kmers;
+    struct biosal_map plentiful_stores;
 
-    struct bsal_vector worker_counts;
+    struct biosal_vector worker_counts;
 
     int is_boss;
     int wired_kernels;

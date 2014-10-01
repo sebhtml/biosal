@@ -39,44 +39,44 @@
 #define DEBUG_SIZE DEBUG_ANY
 */
 
-void *bsal_memory_allocate_private(size_t size, const char *function, const char *file, int line, int key)
+void *biosal_memory_allocate_private(size_t size, const char *function, const char *file, int line, int key)
 {
     void *pointer;
 
     /*
-    printf("DEBUG bsal_memory_allocate size: %zu (as int: %d)\n", size, (int)size);
+    printf("DEBUG biosal_memory_allocate size: %zu (as int: %d)\n", size, (int)size);
     */
     pointer = NULL;
 
-    if (size < BSAL_MEMORY_MINIMUM) {
-        printf("DEBUG Error bsal_memory_allocate received a number below the minimum: %zu bytes\n", size);
+    if (size < BIOSAL_MEMORY_MINIMUM) {
+        printf("DEBUG Error biosal_memory_allocate received a number below the minimum: %zu bytes\n", size);
 
         if (file != NULL) {
-            printf("BSAL_MEMORY_DEBUG bsal_memory_allocate %d bytes %p %s %s %d\n",
+            printf("BIOSAL_MEMORY_DEBUG biosal_memory_allocate %d bytes %p %s %s %d\n",
                     (int)size, pointer, function, file, line);
         }
-        bsal_tracer_print_stack_backtrace();
+        biosal_tracer_print_stack_backtrace();
         exit(1);
     }
 
-    if (size > BSAL_MEMORY_MAXIMUM) {
-        printf("DEBUG Error bsal_memory_allocate received a number above the maximum: %zu bytes (int value: %d)\n", size,
+    if (size > BIOSAL_MEMORY_MAXIMUM) {
+        printf("DEBUG Error biosal_memory_allocate received a number above the maximum: %zu bytes (int value: %d)\n", size,
                         (int)size);
         if (file != NULL) {
-            printf("BSAL_MEMORY_DEBUG bsal_memory_allocate %d bytes %p %s %s %d\n",
+            printf("BIOSAL_MEMORY_DEBUG biosal_memory_allocate %d bytes %p %s %s %d\n",
                     (int)size, pointer, function, file, line);
         }
-        bsal_tracer_print_stack_backtrace();
+        biosal_tracer_print_stack_backtrace();
         exit(1);
     }
 
-    BSAL_DEBUGGER_ASSERT(size <= BSAL_MEMORY_MAXIMUM);
+    BIOSAL_DEBUGGER_ASSERT(size <= BIOSAL_MEMORY_MAXIMUM);
 
-#ifdef BSAL_MEMORY_DEBUG_TRACK_TARGET
-    char target[] = "bsal_vector_reserve";
+#ifdef BIOSAL_MEMORY_DEBUG_TRACK_TARGET
+    char target[] = "biosal_vector_reserve";
     if (strcmp(function, target) == 0) {
-        printf("TRACER: call to bsal_memory_allocate in %s\n", function);
-        bsal_tracer_print_stack_backtrace();
+        printf("TRACER: call to biosal_memory_allocate in %s\n", function);
+        biosal_tracer_print_stack_backtrace();
     }
 #endif
 
@@ -85,14 +85,14 @@ void *bsal_memory_allocate_private(size_t size, const char *function, const char
 #endif
     pointer = malloc(size);
 
-#ifdef BSAL_MEMORY_DEBUG
+#ifdef BIOSAL_MEMORY_DEBUG
 
     /*
      * 8 24 32 64 320 1280 2560
      */
     if ((DEBUG_KEY == DEBUG_ANY || key == (int)DEBUG_KEY)
                             && (DEBUG_SIZE == DEBUG_ANY || size == DEBUG_SIZE)) {
-        printf("BSAL_MEMORY_DEBUG bsal_memory_allocate %d bytes %p %s %s %d key= 0x%x\n",
+        printf("BIOSAL_MEMORY_DEBUG biosal_memory_allocate %d bytes %p %s %s %d key= 0x%x\n",
                     (int)size, pointer, function, file, line, key);
 
 #if 1
@@ -100,7 +100,7 @@ void *bsal_memory_allocate_private(size_t size, const char *function, const char
      * Ask the tracer to print a stack
      */
         if (DEBUG_KEY != DEBUG_ANY && DEBUG_SIZE != DEBUG_ANY)
-            bsal_tracer_print_stack_backtrace();
+            biosal_tracer_print_stack_backtrace();
     }
 #endif
 
@@ -113,14 +113,14 @@ void *bsal_memory_allocate_private(size_t size, const char *function, const char
      * \see http://stackoverflow.com/questions/16674370/why-does-malloc-or-new-never-return-null
      */
     if (pointer == NULL) {
-        printf("DEBUG Error bsal_memory_allocate returned %p, %zu bytes\n", pointer, size);
+        printf("DEBUG Error biosal_memory_allocate returned %p, %zu bytes\n", pointer, size);
         printf("used / total -> %" PRIu64 " / %" PRIu64  "\n",
-                        bsal_memory_get_utilized_byte_count(),
-                        bsal_memory_get_total_byte_count());
+                        biosal_memory_get_utilized_byte_count(),
+                        biosal_memory_get_total_byte_count());
 
         thorium_node_examine(thorium_node_global_self);
 
-        bsal_tracer_print_stack_backtrace();
+        biosal_tracer_print_stack_backtrace();
 
         exit(1);
     }
@@ -128,11 +128,11 @@ void *bsal_memory_allocate_private(size_t size, const char *function, const char
     return pointer;
 }
 
-void bsal_memory_free_private(void *pointer, const char *function, const char *file, int line, int key)
+void biosal_memory_free_private(void *pointer, const char *function, const char *file, int line, int key)
 {
-#ifdef BSAL_MEMORY_DEBUG
+#ifdef BIOSAL_MEMORY_DEBUG
     if (DEBUG_KEY == DEBUG_ANY || key == (int)DEBUG_KEY) {
-        printf("BSAL_MEMORY_DEBUG bsal_memory_free %p %s %s %d key= 0x%x\n",
+        printf("BIOSAL_MEMORY_DEBUG biosal_memory_free %p %s %s %d key= 0x%x\n",
                    pointer, function, file, line, key);
     }
 #endif
@@ -141,7 +141,7 @@ void bsal_memory_free_private(void *pointer, const char *function, const char *f
         return;
     }
 
-#ifdef BSAL_MEMORY_DEBUG
+#ifdef BIOSAL_MEMORY_DEBUG
 #endif
 
     free(pointer);
@@ -151,7 +151,7 @@ void bsal_memory_free_private(void *pointer, const char *function, const char *f
      */
 }
 
-uint64_t bsal_memory_get_total_byte_count()
+uint64_t biosal_memory_get_total_byte_count()
 {
 #ifdef __bgq__
     uint64_t total_memory;
@@ -223,25 +223,25 @@ uint64_t bsal_memory_get_total_byte_count()
 #endif
 }
 
-uint64_t bsal_memory_get_remaining_byte_count()
+uint64_t biosal_memory_get_remaining_byte_count()
 {
     uint64_t total;
     uint64_t utilized;
     uint64_t remaining;
 
-    total = bsal_memory_get_total_byte_count();
-    utilized = bsal_memory_get_utilized_byte_count();
+    total = biosal_memory_get_total_byte_count();
+    utilized = biosal_memory_get_utilized_byte_count();
     remaining = total - utilized;
 
     return remaining;
 }
 
-int bsal_memory_has_enough_bytes()
+int biosal_memory_has_enough_bytes()
 {
     uint64_t remaining;
     uint64_t threshold;
 
-    remaining = bsal_memory_get_remaining_byte_count();
+    remaining = biosal_memory_get_remaining_byte_count();
     threshold = 536870912;
 
     if (remaining > threshold) {
@@ -251,7 +251,7 @@ int bsal_memory_has_enough_bytes()
     return 0;
 }
 
-uint64_t bsal_memory_get_utilized_byte_count()
+uint64_t biosal_memory_get_utilized_byte_count()
 {
     uint64_t bytes;
     bytes = 0;
@@ -277,7 +277,7 @@ uint64_t bsal_memory_get_utilized_byte_count()
                         && strcmp(buffer, "VmData:") == 0) {
             actual = fscanf(descriptor, "%d", &heap_size);
 
-#ifdef BSAL_MEMORY_DEBUG_HEAP
+#ifdef BIOSAL_MEMORY_DEBUG_HEAP
             printf("Scanned %d\n", heap_size);
 #endif
 
@@ -294,7 +294,7 @@ uint64_t bsal_memory_get_utilized_byte_count()
     return bytes;
 }
 
-size_t bsal_memory_align(size_t unaligned)
+size_t biosal_memory_align(size_t unaligned)
 {
 /*
  * On IBM Blue Gene/Q, use the configured alignment.
@@ -303,17 +303,17 @@ size_t bsal_memory_align(size_t unaligned)
  * Align on 128 bytes on Blue Gene/Q.
  */
 #if defined(__bgq__)
-    return bsal_memory_align_private(unaligned, BSAL_MEMORY_ALIGNMENT_BLUE_GENE_Q_L2_CACHE_LINE_SIZE);
+    return biosal_memory_align_private(unaligned, BIOSAL_MEMORY_ALIGNMENT_BLUE_GENE_Q_L2_CACHE_LINE_SIZE);
 
 #else
  /*
   * Align on 64 bytes on Intel and AMD.
   */
-    return bsal_memory_align_private(unaligned, BSAL_MEMORY_ALIGNMENT_INTEL_L3_CACHE_LINE_SIZE);
+    return biosal_memory_align_private(unaligned, BIOSAL_MEMORY_ALIGNMENT_INTEL_L3_CACHE_LINE_SIZE);
 #endif
 }
 
-size_t bsal_memory_align_private(size_t unaligned, size_t alignment)
+size_t biosal_memory_align_private(size_t unaligned, size_t alignment)
 {
     size_t aligned;
 
@@ -334,7 +334,7 @@ size_t bsal_memory_align_private(size_t unaligned, size_t alignment)
     /*
      * We don't want to align 0 byte.
      */
-    BSAL_DEBUGGER_ASSERT(unaligned != 0);
+    BIOSAL_DEBUGGER_ASSERT(unaligned != 0);
 
     if (unaligned == 0) {
         return unaligned;
@@ -342,49 +342,49 @@ size_t bsal_memory_align_private(size_t unaligned, size_t alignment)
 
     aligned = unaligned + (alignment - (unaligned % alignment));
 
-#ifdef BSAL_DNA_KMER_DEBUG_ALIGNMENT
+#ifdef BIOSAL_DNA_KMER_DEBUG_ALIGNMENT
     printf("ALIGNMENT %zu unaligned %zu aligned %zu\n",
                     alignment, unaligned, aligned);
 #endif
 
-    BSAL_DEBUGGER_ASSERT(aligned >= BSAL_MEMORY_MINIMUM);
-    BSAL_DEBUGGER_ASSERT(aligned <= BSAL_MEMORY_MAXIMUM);
+    BIOSAL_DEBUGGER_ASSERT(aligned >= BIOSAL_MEMORY_MINIMUM);
+    BIOSAL_DEBUGGER_ASSERT(aligned <= BIOSAL_MEMORY_MAXIMUM);
 
     return aligned;
 }
 
-void bsal_memory_fence()
+void biosal_memory_fence()
 {
-    bsal_fence();
+    biosal_fence();
 }
 
-void bsal_l_fence()
+void biosal_l_fence()
 {
 #if defined(__bgq__)
 
     /* I am not sure if  __eieio  is a load fence */
-    bsal_fence();
+    biosal_fence();
 
 #elif defined(__GNUC__)
 
-    bsal_fence();
+    biosal_fence();
 
 #elif defined(_CRAYC)
     __builtin_ia32_lfence();
 
 #else
 
-    bsal_fence();
+    biosal_fence();
 
 #endif
 
 }
 
-void bsal_s_fence()
+void biosal_s_fence()
 {
 #if defined(__GNUC__)
 
-    bsal_fence();
+    biosal_fence();
 
 #elif defined(__bgq__)
     __lwsync();
@@ -394,12 +394,12 @@ void bsal_s_fence()
 
 #else
 
-    bsal_fence();
+    biosal_fence();
 
 #endif
 }
 
-void bsal_fence()
+void biosal_fence()
 {
 #if defined(__GNUC__)
 
@@ -458,7 +458,7 @@ void bsal_fence()
 #endif
 }
 
-size_t bsal_memory_normalize_segment_length_power_of_2(size_t size)
+size_t biosal_memory_normalize_segment_length_power_of_2(size_t size)
 {
     uint32_t value;
     size_t maximum;
@@ -510,7 +510,7 @@ size_t bsal_memory_normalize_segment_length_power_of_2(size_t size)
     return value;
 }
 
-size_t bsal_memory_normalize_segment_length_page_size(size_t size)
+size_t biosal_memory_normalize_segment_length_page_size(size_t size)
 {
     size_t page_size;
     size_t remainder;
@@ -524,11 +524,11 @@ size_t bsal_memory_normalize_segment_length_page_size(size_t size)
     return size + padding;
 }
 
-void *bsal_memory_copy(void *destination, const void *source, size_t count)
+void *biosal_memory_copy(void *destination, const void *source, size_t count)
 {
-    BSAL_DEBUGGER_ASSERT(destination != NULL);
-    BSAL_DEBUGGER_ASSERT(source != NULL);
-    BSAL_DEBUGGER_ASSERT(count > 0);
+    BIOSAL_DEBUGGER_ASSERT(destination != NULL);
+    BIOSAL_DEBUGGER_ASSERT(source != NULL);
+    BIOSAL_DEBUGGER_ASSERT(count > 0);
 
 #ifdef FAST_MEMORY
     return memcpy(destination, source, count);
@@ -547,11 +547,11 @@ void *bsal_memory_copy(void *destination, const void *source, size_t count)
 #endif
 }
 
-void *bsal_memory_move(void *destination, const void *source, size_t count)
+void *biosal_memory_move(void *destination, const void *source, size_t count)
 {
-    BSAL_DEBUGGER_ASSERT(destination != NULL);
-    BSAL_DEBUGGER_ASSERT(source != NULL);
-    BSAL_DEBUGGER_ASSERT(count > 0);
+    BIOSAL_DEBUGGER_ASSERT(destination != NULL);
+    BIOSAL_DEBUGGER_ASSERT(source != NULL);
+    BIOSAL_DEBUGGER_ASSERT(count > 0);
 
 #ifdef FAST_MEMORY
     return memmove(destination, source, count);

@@ -14,43 +14,43 @@
 #include <inttypes.h>
 
 /*
-#define BSAL_BUFFERED_READER_DEBUG
+#define BIOSAL_BUFFERED_READER_DEBUG
 */
 
-/*#define BSAL_BUFFERED_READER_BUFFER_SIZE 1048576*/
+/*#define BIOSAL_BUFFERED_READER_BUFFER_SIZE 1048576*/
 
-/*#define BSAL_BUFFERED_READER_BUFFER_SIZE 4194304*/
+/*#define BIOSAL_BUFFERED_READER_BUFFER_SIZE 4194304*/
 
 #define MEMORY_READER 0x5fb8b2cc
 
-void bsal_buffered_reader_init(struct bsal_buffered_reader *self,
+void biosal_buffered_reader_init(struct biosal_buffered_reader *self,
                 const char *file, uint64_t offset)
 {
     self->concrete_self = NULL;
     self->interface = NULL;
 
-    bsal_buffered_reader_select(self, file);
+    biosal_buffered_reader_select(self, file);
 
     if (self->interface != NULL) {
-        self->concrete_self = bsal_memory_allocate(self->interface->size, MEMORY_READER);
+        self->concrete_self = biosal_memory_allocate(self->interface->size, MEMORY_READER);
         self->interface->init(self, file, offset);
     }
 }
 
-void bsal_buffered_reader_destroy(struct bsal_buffered_reader *self)
+void biosal_buffered_reader_destroy(struct biosal_buffered_reader *self)
 {
     self->interface->destroy(self);
 
     if (self->concrete_self != NULL) {
 
-        bsal_memory_free(self->concrete_self, MEMORY_READER);
+        biosal_memory_free(self->concrete_self, MEMORY_READER);
         self->concrete_self = NULL;
 
         self->interface = NULL;
     }
 }
 
-int bsal_buffered_reader_read_line(struct bsal_buffered_reader *self,
+int biosal_buffered_reader_read_line(struct biosal_buffered_reader *self,
                 char *buffer, int length)
 {
     int return_value;
@@ -64,31 +64,31 @@ int bsal_buffered_reader_read_line(struct bsal_buffered_reader *self,
     return return_value;
 }
 
-void *bsal_buffered_reader_get_concrete_self(struct bsal_buffered_reader *self)
+void *biosal_buffered_reader_get_concrete_self(struct biosal_buffered_reader *self)
 {
     return self->concrete_self;
 }
 
-void bsal_buffered_reader_select(struct bsal_buffered_reader *self, const char *file)
+void biosal_buffered_reader_select(struct biosal_buffered_reader *self, const char *file)
 {
-    if (bsal_gzip_buffered_reader_implementation.detect(self, file)) {
+    if (biosal_gzip_buffered_reader_implementation.detect(self, file)) {
 
-        self->interface = &bsal_gzip_buffered_reader_implementation;
+        self->interface = &biosal_gzip_buffered_reader_implementation;
     } else {
 
-        self->interface = &bsal_raw_buffered_reader_implementation;
+        self->interface = &biosal_raw_buffered_reader_implementation;
     }
 }
 
-uint64_t bsal_buffered_reader_get_offset(struct bsal_buffered_reader *self)
+uint64_t biosal_buffered_reader_get_offset(struct biosal_buffered_reader *self)
 {
-    BSAL_DEBUGGER_ASSERT(self != NULL);
-    BSAL_DEBUGGER_ASSERT(self->interface != NULL);
+    BIOSAL_DEBUGGER_ASSERT(self != NULL);
+    BIOSAL_DEBUGGER_ASSERT(self->interface != NULL);
 
     return self->interface->get_offset(self);
 }
 
-int bsal_buffered_reader_get_previous_bytes(struct bsal_buffered_reader *self, char *buffer, int length)
+int biosal_buffered_reader_get_previous_bytes(struct biosal_buffered_reader *self, char *buffer, int length)
 {
     return self->interface->get_previous_bytes(self, buffer, length);
 }

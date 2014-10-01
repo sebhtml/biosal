@@ -6,45 +6,45 @@
 #include <stdlib.h>
 #include <string.h>
 
-void bsal_set_iterator_init(struct bsal_set_iterator *self, struct bsal_set *list)
+void biosal_set_iterator_init(struct biosal_set_iterator *self, struct biosal_set *list)
 {
-    self->list = bsal_set_map(list);
-    bsal_map_iterator_init(&self->iterator, self->list);
+    self->list = biosal_set_map(list);
+    biosal_map_iterator_init(&self->iterator, self->list);
 }
 
-void bsal_set_iterator_destroy(struct bsal_set_iterator *self)
+void biosal_set_iterator_destroy(struct biosal_set_iterator *self)
 {
-    bsal_map_iterator_destroy(&self->iterator);
+    biosal_map_iterator_destroy(&self->iterator);
 }
 
-int bsal_set_iterator_has_next(struct bsal_set_iterator *self)
+int biosal_set_iterator_has_next(struct biosal_set_iterator *self)
 {
-    return bsal_map_iterator_has_next(&self->iterator);
+    return biosal_map_iterator_has_next(&self->iterator);
 }
 
-int bsal_set_iterator_next(struct bsal_set_iterator *self, void **key)
+int biosal_set_iterator_next(struct biosal_set_iterator *self, void **key)
 {
-    if (!bsal_set_iterator_has_next(self)) {
+    if (!biosal_set_iterator_has_next(self)) {
         return 0;
     }
 
-    bsal_map_iterator_next(&self->iterator, key, NULL);
+    biosal_map_iterator_next(&self->iterator, key, NULL);
 
     return 1;
 }
 
-int bsal_set_iterator_get_next_value(struct bsal_set_iterator *self, void *key)
+int biosal_set_iterator_get_next_value(struct biosal_set_iterator *self, void *key)
 {
     int size;
     void *bucket;
 
-    if (!bsal_set_iterator_next(self, (void **)&bucket)) {
+    if (!biosal_set_iterator_next(self, (void **)&bucket)) {
         return 0;
     }
 
     if (key != NULL) {
-        size = bsal_map_get_key_size(self->list);
-        bsal_memory_copy(key, bucket, size);
+        size = biosal_map_get_key_size(self->list);
+        biosal_memory_copy(key, bucket, size);
     }
 
     return 1;

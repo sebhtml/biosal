@@ -192,7 +192,7 @@ new name.
 
 struct thorium_node;
 struct thorium_worker;
-struct bsal_memory_pool;
+struct biosal_memory_pool;
 
 /*
  * The mailbox size of an actor.
@@ -218,29 +218,29 @@ struct thorium_actor {
      */
     int priority;
     uint32_t flags;
-    struct bsal_fast_ring mailbox;
+    struct biosal_fast_ring mailbox;
 
 #ifdef THORIUM_ACTOR_GATHER_MESSAGE_METADATA
-    struct bsal_map received_messages;
-    struct bsal_map sent_messages;
-    struct bsal_counter counter;
+    struct biosal_map received_messages;
+    struct biosal_map sent_messages;
+    struct biosal_counter counter;
 #endif
 
 #ifdef THORIUM_ACTOR_STORE_CHILDREN
-    struct bsal_vector acquaintance_vector;
-    struct bsal_map acquaintance_map;
+    struct biosal_vector acquaintance_vector;
+    struct biosal_map acquaintance_map;
 
-    struct bsal_vector children;
+    struct biosal_vector children;
     int acquaintance_index;
 #endif
 
-    struct bsal_queue enqueued_messages;
+    struct biosal_queue enqueued_messages;
 
     struct thorium_dispatcher dispatcher;
     struct thorium_message *current_message;
     void *concrete_actor;
 
-    struct bsal_lock receive_lock;
+    struct biosal_lock receive_lock;
 
     /*
      * The name of the actor
@@ -263,9 +263,9 @@ struct thorium_actor {
     int synchronization_expected_responses;
 
     int forwarding_selector;
-    struct bsal_queue forwarding_queue;
-    struct bsal_queue queued_messages_for_clone;
-    struct bsal_queue queued_messages_for_migration;
+    struct biosal_queue forwarding_queue;
+    struct biosal_queue queued_messages_for_clone;
+    struct biosal_queue queued_messages_for_migration;
 
     int cloning_status;
     int cloning_spawner;
@@ -281,7 +281,7 @@ struct thorium_actor {
      * \see https://www.kernel.org/doc/Documentation/scheduler/sched-design-CFS.txt
      */
     uint64_t virtual_runtime;
-    struct bsal_timer timer;
+    struct biosal_timer timer;
 };
 
 void thorium_actor_init(struct thorium_actor *self, void *state,
@@ -354,7 +354,7 @@ void thorium_actor_receive_synchronize(struct thorium_actor *self,
 void thorium_actor_receive_synchronize_reply(struct thorium_actor *self,
                 struct thorium_message *message);
 int thorium_actor_synchronization_completed(struct thorium_actor *self);
-void thorium_actor_synchronize(struct thorium_actor *self, struct bsal_vector *actors);
+void thorium_actor_synchronize(struct thorium_actor *self, struct biosal_vector *actors);
 
 void thorium_actor_forward_messages(struct thorium_actor *self, struct thorium_message *message);
 
@@ -366,7 +366,7 @@ void thorium_actor_add_script(struct thorium_actor *self, int name, struct thori
 void thorium_actor_clone(struct thorium_actor *self, struct thorium_message *message);
 void thorium_actor_continue_clone(struct thorium_actor *self, struct thorium_message *message);
 
-struct bsal_counter *thorium_actor_counter(struct thorium_actor *self);
+struct biosal_counter *thorium_actor_counter(struct thorium_actor *self);
 
 /*
  * Functions to use and register handlers
@@ -382,7 +382,7 @@ void thorium_actor_set_node(struct thorium_actor *self, struct thorium_node *nod
 void thorium_actor_migrate(struct thorium_actor *self, struct thorium_message *message);
 
 #ifdef THORIUM_ACTOR_STORE_CHILDREN
-struct bsal_vector *thorium_actor_acquaintance_vector_private(struct thorium_actor *self);
+struct biosal_vector *thorium_actor_acquaintance_vector_private(struct thorium_actor *self);
 int thorium_actor_add_acquaintance_private(struct thorium_actor *self, int name);
 int thorium_actor_get_acquaintance_private(struct thorium_actor *self, int index);
 
@@ -405,10 +405,10 @@ void thorium_actor_enqueue_message(struct thorium_actor *self, struct thorium_me
 void thorium_actor_dequeue_message(struct thorium_actor *self, struct thorium_message *message);
 int thorium_actor_enqueued_message_count(struct thorium_actor *self);
 
-struct bsal_map *thorium_actor_get_received_messages(struct thorium_actor *self);
-struct bsal_map *thorium_actor_get_sent_messages(struct thorium_actor *self);
+struct biosal_map *thorium_actor_get_received_messages(struct thorium_actor *self);
+struct biosal_map *thorium_actor_get_sent_messages(struct thorium_actor *self);
 
-struct bsal_memory_pool *thorium_actor_get_ephemeral_memory(struct thorium_actor *self);
+struct biosal_memory_pool *thorium_actor_get_ephemeral_memory(struct thorium_actor *self);
 struct thorium_worker *thorium_actor_get_last_worker(struct thorium_actor *self);
 
 int thorium_actor_enqueue_mailbox_message(struct thorium_actor *self, struct thorium_message *message);
@@ -424,15 +424,15 @@ int thorium_actor_get_priority(struct thorium_actor *self);
 void thorium_actor_set_priority(struct thorium_actor *self, int priority);
 int thorium_actor_get_source_count(struct thorium_actor *self);
 
-int thorium_actor_get_spawner(struct thorium_actor *self, struct bsal_vector *spawners);
-int thorium_actor_get_random_spawner(struct thorium_actor *self, struct bsal_vector *spawners);
+int thorium_actor_get_spawner(struct thorium_actor *self, struct biosal_vector *spawners);
+int thorium_actor_get_random_spawner(struct thorium_actor *self, struct biosal_vector *spawners);
 
 void thorium_actor_enable_profiler(struct thorium_actor *self);
 void thorium_actor_disable_profiler(struct thorium_actor *self);
 void thorium_actor_receive_private(struct thorium_actor *self, struct thorium_message *message);
 
 void thorium_actor_write_profile(struct thorium_actor *self,
-               struct bsal_buffered_file_writer *writer);
+               struct biosal_buffered_file_writer *writer);
 
 /*
  * Expose the acquaintance API if required.

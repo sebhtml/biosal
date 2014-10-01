@@ -49,7 +49,7 @@ typedef struct {
 } thorium_send_info_t;
 
 typedef struct {
-    struct bsal_fast_queue *send_queue;
+    struct biosal_fast_queue *send_queue;
     thorium_send_info_t send_info;
 } thorium_send_cookie_t;
 
@@ -61,7 +61,7 @@ typedef struct {
 } thorium_recv_info_t;
 
 typedef struct {
-    struct bsal_fast_queue *recv_queue;
+    struct biosal_fast_queue *recv_queue;
     thorium_recv_info_t recv_info;
 } thorium_recv_cookie_t;
 
@@ -81,12 +81,12 @@ struct thorium_pami_transport {
     pami_endpoint_t *endpoints;
 
     thorium_send_cookie_t **send_cookies;
-    struct bsal_fast_queue *avail_send_cookies_queue;
-    struct bsal_fast_queue *in_use_send_cookies_queue;
+    struct biosal_fast_queue *avail_send_cookies_queue;
+    struct biosal_fast_queue *in_use_send_cookies_queue;
 
     thorium_recv_cookie_t **recv_cookies;
-    struct bsal_fast_queue *avail_recv_cookies_queue;
-    struct bsal_fast_queue *in_use_recv_cookies_queue;
+    struct biosal_fast_queue *avail_recv_cookies_queue;
+    struct biosal_fast_queue *in_use_recv_cookies_queue;
 #endif
 
 /*

@@ -1,6 +1,6 @@
 
-#ifndef BSAL_ASSEMBLY_ARC_CLASSIFIER_H
-#define BSAL_ASSEMBLY_ARC_CLASSIFIER_H
+#ifndef BIOSAL_ASSEMBLY_ARC_CLASSIFIER_H
+#define BIOSAL_ASSEMBLY_ARC_CLASSIFIER_H
 
 #include <engine/thorium/actor.h>
 
@@ -14,17 +14,17 @@
 /*
  * This actor classifies arcs.
  */
-struct bsal_assembly_arc_classifier {
+struct biosal_assembly_arc_classifier {
     int kmer_length;
 
     int source;
-    struct bsal_vector consumers;
+    struct biosal_vector consumers;
 
-    struct bsal_dna_codec codec;
+    struct biosal_dna_codec codec;
 
     int received_blocks;
 
-    struct bsal_vector pending_requests;
+    struct biosal_vector pending_requests;
     int active_requests;
     int producer_is_waiting;
     int maximum_pending_request_count;
@@ -32,15 +32,15 @@ struct bsal_assembly_arc_classifier {
     int consumer_count_above_threshold;
 };
 
-extern struct thorium_script bsal_assembly_arc_classifier_script;
+extern struct thorium_script biosal_assembly_arc_classifier_script;
 
-void bsal_assembly_arc_classifier_init(struct thorium_actor *self);
-void bsal_assembly_arc_classifier_destroy(struct thorium_actor *self);
-void bsal_assembly_arc_classifier_receive(struct thorium_actor *self, struct thorium_message *message);
+void biosal_assembly_arc_classifier_init(struct thorium_actor *self);
+void biosal_assembly_arc_classifier_destroy(struct thorium_actor *self);
+void biosal_assembly_arc_classifier_receive(struct thorium_actor *self, struct thorium_message *message);
 
-void bsal_assembly_arc_classifier_set_kmer_length(struct thorium_actor *self, struct thorium_message *message);
+void biosal_assembly_arc_classifier_set_kmer_length(struct thorium_actor *self, struct thorium_message *message);
 
-void bsal_assembly_arc_classifier_push_arc_block(struct thorium_actor *self, struct thorium_message *message);
-void bsal_assembly_arc_classifier_verify_counters(struct thorium_actor *self);
+void biosal_assembly_arc_classifier_push_arc_block(struct thorium_actor *self, struct thorium_message *message);
+void biosal_assembly_arc_classifier_verify_counters(struct thorium_actor *self);
 
 #endif

@@ -24,13 +24,13 @@ struct thorium_actor;
  *
  * enqueue is O(log(N))
  *   functions used:
- *    - bsal_red_black_tree_add()              O(log(N))
+ *    - biosal_red_black_tree_add()              O(log(N))
  *
  * dequeue is O(log(N))
  *   function used:
- *    - bsal_red_black_tree_get_lowest_key()   O(1) because of tree->cached_lowest_node
- *    - bsal_red_black_tree_get                O(1) because of tree->cached_last_node
- *    - bsal_red_black_tree_delete             O(log(N)) because of balance operations.
+ *    - biosal_red_black_tree_get_lowest_key()   O(1) because of tree->cached_lowest_node
+ *    - biosal_red_black_tree_get                O(1) because of tree->cached_last_node
+ *    - biosal_red_black_tree_delete             O(log(N)) because of balance operations.
  *
  * For dequeue, the lowest key is always kept in cache
  * by maintaining the invariant in add() and delete().
@@ -46,8 +46,8 @@ struct thorium_actor;
  * \see http://people.redhat.com/mingo/cfs-scheduler/sched-design-CFS.txt
  */
 struct thorium_cfs_scheduler {
-    struct bsal_memory_pool pool;
-    struct bsal_red_black_tree tree;
+    struct biosal_memory_pool pool;
+    struct biosal_red_black_tree tree;
 };
 
 extern struct thorium_scheduler_interface thorium_cfs_scheduler_implementation;

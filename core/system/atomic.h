@@ -1,8 +1,8 @@
 
-#ifndef BSAL_ATOMIC_H
-#define BSAL_ATOMIC_H
+#ifndef BIOSAL_ATOMIC_H
+#define BIOSAL_ATOMIC_H
 
-#define BSAL_ATOMIC_HAS_COMPARE_AND_SWAP
+#define BIOSAL_ATOMIC_HAS_COMPARE_AND_SWAP
 
 /*
  *
@@ -25,14 +25,14 @@
  * \see http://pic.dhe.ibm.com/infocenter/compbg/v121v141/topic/com.ibm.xlcpp121.bg.doc/compiler_ref/bif_gcc_atomic_fetch_add.html
  */
 /*
-#define bsal_atomic_read_int(pointer) \
+#define biosal_atomic_read_int(pointer) \
         __lwarx(pointer)
         */
-#define bsal_atomic_read_int(pointer) \
+#define biosal_atomic_read_int(pointer) \
         __sync_fetch_and_and (pointer, 1)
         /*__sync_fetch_and_and (pointer, 0xffffffff)*/
 
-#define bsal_atomic_compare_and_swap_int(pointer, old_value, new_value) \
+#define biosal_atomic_compare_and_swap_int(pointer, old_value, new_value) \
         __sync_val_compare_and_swap(pointer, old_value, new_value)
 
 /* \see http://docs.cray.com/cgi-bin/craydoc.cgi?mode=View;id=S-2179-74 */
@@ -41,10 +41,10 @@
 /* Cray
  * \see https://fs.hlrs.de/projects/craydoc/docs_merged/man/xt_libintm/74/cat3/amo.3i.html
  */
-#define bsal_atomic_read_int(pointer) \
+#define biosal_atomic_read_int(pointer) \
         __sync_fetch_and_add (pointer, 0)
 
-#define bsal_atomic_compare_and_swap_int(pointer, old_value, new_value) \
+#define biosal_atomic_compare_and_swap_int(pointer, old_value, new_value) \
         __sync_val_compare_and_swap(pointer, old_value, new_value)
 
 /* Intel compiler
@@ -52,7 +52,7 @@
  * \see https://www.cs.fsu.edu/~engelen/courses/HPC-adv/intref_cls.pdf
 #elif defined(__INTEL_COMPILER)
 
-#define bsal_atomic_read_int(pointer) \
+#define biosal_atomic_read_int(pointer) \
 
  * I did not found anything to read a 4-byte word atomically.
  */
@@ -60,30 +60,30 @@
 #elif defined(__GNUC__)
 
 /*#error "GNU !"*/
-#define bsal_atomic_read_int(pointer) \
+#define biosal_atomic_read_int(pointer) \
         __sync_fetch_and_add (pointer, 0)
 
-#define bsal_atomic_compare_and_swap_int(pointer, old_value, new_value) \
+#define biosal_atomic_compare_and_swap_int(pointer, old_value, new_value) \
         __sync_val_compare_and_swap(pointer, old_value, new_value)
 
 #else
 
 /* no atomic built in is available
  */
-#undef BSAL_ATOMIC_HAS_COMPARE_AND_SWAP
+#undef BIOSAL_ATOMIC_HAS_COMPARE_AND_SWAP
 
 /* Otherwise, just return the value
  */
-#define bsal_atomic_read_int(pointer) \
-        bsal_atomic_read_int_mock(pointer)
+#define biosal_atomic_read_int(pointer) \
+        biosal_atomic_read_int_mock(pointer)
 
-#define bsal_atomic_compare_and_swap_int(pointer, old_value, new_value) \
-        bsal_atomic_compare_and_swap_int_mock(pointer, old_value, new_value)
+#define biosal_atomic_compare_and_swap_int(pointer, old_value, new_value) \
+        biosal_atomic_compare_and_swap_int_mock(pointer, old_value, new_value)
 
 #warning "No atomic features found for this system"
 #endif
 
-int bsal_atomic_read_int_mock(int *pointer);
-int bsal_atomic_compare_and_swap_int_mock(int *pointer, int old_value, int new_value);
+int biosal_atomic_read_int_mock(int *pointer);
+int biosal_atomic_compare_and_swap_int_mock(int *pointer, int old_value, int new_value);
 
 #endif

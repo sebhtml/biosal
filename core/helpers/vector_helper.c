@@ -11,12 +11,12 @@
 
 #define MEMORY_VECTOR_HELPER 0xf16bc1f5
 
-char bsal_vector_at_as_char(struct bsal_vector *self, int64_t index)
+char biosal_vector_at_as_char(struct biosal_vector *self, int64_t index)
 {
     char *bucket;
 
     bucket = NULL;
-    bucket = (char *)bsal_vector_at(self, index);
+    bucket = (char *)biosal_vector_at(self, index);
 
     if (bucket == NULL) {
         return -1;
@@ -26,14 +26,14 @@ char bsal_vector_at_as_char(struct bsal_vector *self, int64_t index)
 }
 
 /*
-#define BSAL_VECTOR_HELPER_DEBUG
+#define BIOSAL_VECTOR_HELPER_DEBUG
 */
-int bsal_vector_at_as_int(struct bsal_vector *self, int64_t index)
+int biosal_vector_at_as_int(struct biosal_vector *self, int64_t index)
 {
     int *bucket;
 
     bucket = NULL;
-    bucket = (int *)bsal_vector_at(self, index);
+    bucket = (int *)biosal_vector_at(self, index);
 
     if (bucket != NULL) {
         return *bucket;
@@ -42,12 +42,12 @@ int bsal_vector_at_as_int(struct bsal_vector *self, int64_t index)
     return -1;
 }
 
-uint64_t bsal_vector_at_as_uint64_t(struct bsal_vector *self, int64_t index)
+uint64_t biosal_vector_at_as_uint64_t(struct biosal_vector *self, int64_t index)
 {
     uint64_t *bucket;
 
     bucket = NULL;
-    bucket = (uint64_t *)bsal_vector_at(self, index);
+    bucket = (uint64_t *)biosal_vector_at(self, index);
 
     if (bucket == NULL) {
         return 0;
@@ -56,16 +56,16 @@ uint64_t bsal_vector_at_as_uint64_t(struct bsal_vector *self, int64_t index)
     return *bucket;
 }
 
-char *bsal_vector_at_as_char_pointer(struct bsal_vector *self, int64_t index)
+char *biosal_vector_at_as_char_pointer(struct biosal_vector *self, int64_t index)
 {
-    return (char *)bsal_vector_at_as_void_pointer(self, index);
+    return (char *)biosal_vector_at_as_void_pointer(self, index);
 }
 
-void *bsal_vector_at_as_void_pointer(struct bsal_vector *self, int64_t index)
+void *biosal_vector_at_as_void_pointer(struct biosal_vector *self, int64_t index)
 {
     void **bucket;
 
-    bucket = (void **)bsal_vector_at(self, index);
+    bucket = (void **)biosal_vector_at(self, index);
 
     if (bucket == NULL) {
         return NULL;
@@ -74,12 +74,12 @@ void *bsal_vector_at_as_void_pointer(struct bsal_vector *self, int64_t index)
     return *bucket;
 }
 
-void bsal_vector_print_int(struct bsal_vector *self)
+void biosal_vector_print_int(struct biosal_vector *self)
 {
     int64_t i;
     int64_t size;
 
-    size = bsal_vector_size(self);
+    size = biosal_vector_size(self);
     i = 0;
 
     printf("[");
@@ -88,35 +88,35 @@ void bsal_vector_print_int(struct bsal_vector *self)
         if (i > 0) {
             printf(", ");
         }
-        printf("%d: %d", (int)i, bsal_vector_at_as_int(self, i));
+        printf("%d: %d", (int)i, biosal_vector_at_as_int(self, i));
         i++;
     }
     printf("]");
 }
 
-void bsal_vector_set_int(struct bsal_vector *self, int64_t index, int value)
+void biosal_vector_set_int(struct biosal_vector *self, int64_t index, int value)
 {
-    bsal_vector_set(self, index, &value);
+    biosal_vector_set(self, index, &value);
 }
 
-void bsal_vector_push_back_char(struct bsal_vector *self, char value)
+void biosal_vector_push_back_char(struct biosal_vector *self, char value)
 {
-    bsal_vector_push_back(self, &value);
+    biosal_vector_push_back(self, &value);
 }
 
-void bsal_vector_push_back_int(struct bsal_vector *self, int value)
+void biosal_vector_push_back_int(struct biosal_vector *self, int value)
 {
-    bsal_vector_push_back(self, &value);
+    biosal_vector_push_back(self, &value);
 }
 
-void bsal_vector_push_back_uint64_t(struct bsal_vector *self, uint64_t value)
+void biosal_vector_push_back_uint64_t(struct biosal_vector *self, uint64_t value)
 {
-    bsal_vector_push_back(self, &value);
+    biosal_vector_push_back(self, &value);
 }
 
 /** \see http://www.cplusplus.com/reference/cstdlib/qsort/
  */
-int bsal_vector_compare_int(const void *a, const void *b)
+int biosal_vector_compare_int(const void *a, const void *b)
 {
     int a_value;
     int b_value;
@@ -133,37 +133,37 @@ int bsal_vector_compare_int(const void *a, const void *b)
     return 0;
 }
 
-int bsal_vector_compare_int_reverse(const void *a, const void *b)
+int biosal_vector_compare_int_reverse(const void *a, const void *b)
 {
-    return bsal_vector_compare_int(b, a);
+    return biosal_vector_compare_int(b, a);
 }
 
-void bsal_vector_sort_int_reverse(struct bsal_vector *self)
+void biosal_vector_sort_int_reverse(struct biosal_vector *self)
 {
-    bsal_vector_sort(self, bsal_vector_compare_int_reverse);
+    biosal_vector_sort(self, biosal_vector_compare_int_reverse);
 }
 
-void bsal_vector_sort_int(struct bsal_vector *self)
+void biosal_vector_sort_int(struct biosal_vector *self)
 {
-    bsal_vector_sort(self, bsal_vector_compare_int);
+    biosal_vector_sort(self, biosal_vector_compare_int);
 }
 
-void bsal_vector_sort(struct bsal_vector *self, bsal_compare_fn_t compare)
+void biosal_vector_sort(struct biosal_vector *self, biosal_compare_fn_t compare)
 {
     void *saved_pivot_value;
     int element_size;
 
-    element_size = bsal_vector_element_size(self);
+    element_size = biosal_vector_element_size(self);
 
-    saved_pivot_value = bsal_memory_allocate(element_size, MEMORY_VECTOR_HELPER);
+    saved_pivot_value = biosal_memory_allocate(element_size, MEMORY_VECTOR_HELPER);
 
-    bsal_vector_quicksort(self, 0, bsal_vector_size(self) - 1, compare, saved_pivot_value);
+    biosal_vector_quicksort(self, 0, biosal_vector_size(self) - 1, compare, saved_pivot_value);
 
-    bsal_memory_free(saved_pivot_value, MEMORY_VECTOR_HELPER);
+    biosal_memory_free(saved_pivot_value, MEMORY_VECTOR_HELPER);
 }
 
-void bsal_vector_quicksort(struct bsal_vector *self,
-                int64_t first, int64_t last, bsal_compare_fn_t compare,
+void biosal_vector_quicksort(struct biosal_vector *self,
+                int64_t first, int64_t last, biosal_compare_fn_t compare,
                 void *saved_pivot_value)
 {
     int64_t pivot_index;
@@ -172,14 +172,14 @@ void bsal_vector_quicksort(struct bsal_vector *self,
         return;
     }
 
-    pivot_index = bsal_vector_partition(self, first, last, compare, saved_pivot_value);
+    pivot_index = biosal_vector_partition(self, first, last, compare, saved_pivot_value);
 
-    bsal_vector_quicksort(self, first, pivot_index - 1, compare, saved_pivot_value);
-    bsal_vector_quicksort(self, pivot_index + 1, last, compare, saved_pivot_value);
+    biosal_vector_quicksort(self, first, pivot_index - 1, compare, saved_pivot_value);
+    biosal_vector_quicksort(self, pivot_index + 1, last, compare, saved_pivot_value);
 
-#ifdef BSAL_VECTOR_HELPER_DEBUG
+#ifdef BIOSAL_VECTOR_HELPER_DEBUG
     printf("after sorting first %d last %d ", first, last);
-    bsal_vector_print_int(self);
+    biosal_vector_print_int(self);
     printf("\n");
 #endif
 }
@@ -187,8 +187,8 @@ void bsal_vector_quicksort(struct bsal_vector *self,
 /**
  * \see http://en.wikipedia.org/wiki/Quicksort
  */
-int64_t bsal_vector_partition(struct bsal_vector *self,
-                int64_t first, int64_t last, bsal_compare_fn_t compare,
+int64_t biosal_vector_partition(struct biosal_vector *self,
+                int64_t first, int64_t last, biosal_compare_fn_t compare,
                 void *saved_pivot_value)
 {
     int64_t pivot_index;
@@ -198,54 +198,54 @@ int64_t bsal_vector_partition(struct bsal_vector *self,
     int64_t i;
     int element_size;
 
-    pivot_index = bsal_vector_select_pivot(self, first, last, compare);
-    pivot_value = bsal_vector_at(self, pivot_index);
-    element_size = bsal_vector_element_size(self);
-    bsal_memory_copy(saved_pivot_value, pivot_value, element_size);
+    pivot_index = biosal_vector_select_pivot(self, first, last, compare);
+    pivot_value = biosal_vector_at(self, pivot_index);
+    element_size = biosal_vector_element_size(self);
+    biosal_memory_copy(saved_pivot_value, pivot_value, element_size);
 
-#ifdef BSAL_VECTOR_HELPER_DEBUG
+#ifdef BIOSAL_VECTOR_HELPER_DEBUG
     printf("DEBUG ENTER partition first %d last %d pivot_index %d pivot_value %d ", (int)first, (int)last, (int)pivot_index,
                     *(int *)pivot_value);
-    bsal_vector_print_int(self);
+    biosal_vector_print_int(self);
     printf("\n");
 #endif
 
-#ifdef BSAL_VECTOR_HELPER_DEBUG
+#ifdef BIOSAL_VECTOR_HELPER_DEBUG
     printf("pivot_index %d pivot_value %d\n",
                     pivot_index, *(int *)pivot_value);
 #endif
 
-    bsal_vector_swap(self, pivot_index, last);
+    biosal_vector_swap(self, pivot_index, last);
 
     store_index = first;
 
     for (i = first; i <= last - 1; i++) {
 
-        other_value = bsal_vector_at(self, i);
+        other_value = biosal_vector_at(self, i);
 
         if (compare(other_value, saved_pivot_value) <= 0) {
 
-            bsal_vector_swap(self, i, store_index);
+            biosal_vector_swap(self, i, store_index);
             store_index = store_index + 1;
         }
     }
 
-    bsal_vector_swap(self, store_index, last);
+    biosal_vector_swap(self, store_index, last);
 
     pivot_index = store_index;
 
-#ifdef BSAL_VECTOR_HELPER_DEBUG
+#ifdef BIOSAL_VECTOR_HELPER_DEBUG
     printf("DEBUG EXIT partition first %d last %d pivot_index %d pivot_value %d ", (int)first, (int)last, (int)pivot_index,
                     *(int *)pivot_value);
-    bsal_vector_print_int(self);
+    biosal_vector_print_int(self);
     printf("\n");
 #endif
 
     return pivot_index;
 }
 
-int64_t bsal_vector_select_pivot(struct bsal_vector *self,
-                int64_t first, int64_t last, bsal_compare_fn_t compare)
+int64_t biosal_vector_select_pivot(struct biosal_vector *self,
+                int64_t first, int64_t last, biosal_compare_fn_t compare)
 {
 
     int64_t middle;
@@ -256,9 +256,9 @@ int64_t bsal_vector_select_pivot(struct bsal_vector *self,
 
     middle = first + (last - first) / 2;
 
-    first_value = bsal_vector_at(self, first);
-    last_value = bsal_vector_at(self, last);
-    middle_value = bsal_vector_at(self, middle);
+    first_value = biosal_vector_at(self, first);
+    last_value = biosal_vector_at(self, last);
+    middle_value = biosal_vector_at(self, middle);
 
     if (compare(first_value, middle_value) <= 0 && compare(middle_value, last_value) <= 0) {
         return middle;
@@ -270,7 +270,7 @@ int64_t bsal_vector_select_pivot(struct bsal_vector *self,
     return last;
 }
 
-void bsal_vector_swap(struct bsal_vector *self,
+void biosal_vector_swap(struct biosal_vector *self,
                 int64_t index1, int64_t index2)
 {
     void *value1;
@@ -279,14 +279,14 @@ void bsal_vector_swap(struct bsal_vector *self,
     char saved;
     int element_size;
 
-    value1 = bsal_vector_at(self, index1);
-    value2 = bsal_vector_at(self, index2);
+    value1 = biosal_vector_at(self, index1);
+    value2 = biosal_vector_at(self, index2);
 
     if (value1 == NULL || value2 == NULL) {
         return;
     }
 
-    element_size = bsal_vector_element_size(self);
+    element_size = biosal_vector_element_size(self);
 
     /* swap 2 elements, byte by byte.
      */
@@ -297,11 +297,11 @@ void bsal_vector_swap(struct bsal_vector *self,
     }
 }
 
-float bsal_vector_at_as_float(struct bsal_vector *self, int64_t index)
+float biosal_vector_at_as_float(struct biosal_vector *self, int64_t index)
 {
     float *bucket;
 
-    bucket = (float *)bsal_vector_at(self, index);
+    bucket = (float *)biosal_vector_at(self, index);
 
     if (bucket == NULL) {
         return -1;
@@ -310,17 +310,17 @@ float bsal_vector_at_as_float(struct bsal_vector *self, int64_t index)
     return *bucket;
 }
 
-void bsal_vector_sort_float_reverse(struct bsal_vector *self)
+void biosal_vector_sort_float_reverse(struct biosal_vector *self)
 {
-    bsal_vector_sort(self, bsal_vector_compare_float_reverse);
+    biosal_vector_sort(self, biosal_vector_compare_float_reverse);
 }
 
-void bsal_vector_sort_float(struct bsal_vector *self)
+void biosal_vector_sort_float(struct biosal_vector *self)
 {
-    bsal_vector_sort(self, bsal_vector_compare_float);
+    biosal_vector_sort(self, biosal_vector_compare_float);
 }
 
-int bsal_vector_compare_float(const void *a, const void *b)
+int biosal_vector_compare_float(const void *a, const void *b)
 {
     float a_value;
     float b_value;
@@ -337,37 +337,37 @@ int bsal_vector_compare_float(const void *a, const void *b)
     return 0;
 }
 
-int bsal_vector_compare_float_reverse(const void *a, const void *b)
+int biosal_vector_compare_float_reverse(const void *a, const void *b)
 {
-    return bsal_vector_compare_float(b, a);
+    return biosal_vector_compare_float(b, a);
 }
 
-void bsal_vector_copy_range(struct bsal_vector *self, int64_t first, int64_t last, struct bsal_vector *destination)
+void biosal_vector_copy_range(struct biosal_vector *self, int64_t first, int64_t last, struct biosal_vector *destination)
 {
     int64_t i;
 
     for (i = first; i <= last; i++) {
 
-        bsal_vector_push_back(destination, bsal_vector_at(self, i));
+        biosal_vector_push_back(destination, biosal_vector_at(self, i));
     }
 }
 
-void bsal_vector_push_back_vector(struct bsal_vector *self, struct bsal_vector *other_vector)
+void biosal_vector_push_back_vector(struct biosal_vector *self, struct biosal_vector *other_vector)
 {
-    bsal_vector_copy_range(other_vector, 0, bsal_vector_size(other_vector) - 1, self);
+    biosal_vector_copy_range(other_vector, 0, biosal_vector_size(other_vector) - 1, self);
 }
 
-void *bsal_vector_at_first(struct bsal_vector *self)
+void *biosal_vector_at_first(struct biosal_vector *self)
 {
-    return bsal_vector_at(self, 0);
+    return biosal_vector_at(self, 0);
 }
 
-void *bsal_vector_at_middle(struct bsal_vector *self)
+void *biosal_vector_at_middle(struct biosal_vector *self)
 {
-    return bsal_vector_at(self, bsal_vector_size(self) - 1);
+    return biosal_vector_at(self, biosal_vector_size(self) - 1);
 }
 
-void *bsal_vector_at_last(struct bsal_vector *self)
+void *biosal_vector_at_last(struct biosal_vector *self)
 {
-    return bsal_vector_at(self, bsal_vector_size(self) / 2);
+    return biosal_vector_at(self, biosal_vector_size(self) / 2);
 }

@@ -24,9 +24,9 @@ void reader_init(struct thorium_actor *actor)
     reader1->counted = 0;
     reader1->pulled = 0;
 
-    bsal_vector_init(&reader1->spawners, sizeof(int));
+    biosal_vector_init(&reader1->spawners, sizeof(int));
     thorium_actor_add_script(actor, SCRIPT_INPUT_STREAM,
-                    &bsal_input_stream_script);
+                    &biosal_input_stream_script);
 }
 
 void reader_destroy(struct thorium_actor *actor)
@@ -37,7 +37,7 @@ void reader_destroy(struct thorium_actor *actor)
     reader1->counted = 0;
     reader1->pulled = 0;
 
-    bsal_vector_destroy(&reader1->spawners);
+    biosal_vector_destroy(&reader1->spawners);
 }
 
 void reader_receive(struct thorium_actor *actor, struct thorium_message *message)
@@ -65,8 +65,8 @@ void reader_receive(struct thorium_actor *actor, struct thorium_message *message
 
     if (tag == ACTION_START) {
 
-        bsal_vector_init(&reader1->spawners, 0);
-        bsal_vector_unpack(&reader1->spawners, buffer);
+        biosal_vector_init(&reader1->spawners, 0);
+        biosal_vector_unpack(&reader1->spawners, buffer);
 
         argc = thorium_actor_argc(actor);
         argv = thorium_actor_argv(actor);
@@ -81,7 +81,7 @@ void reader_receive(struct thorium_actor *actor, struct thorium_message *message
         }
         */
 
-        if (bsal_vector_index_of(&reader1->spawners, &name) != 0) {
+        if (biosal_vector_index_of(&reader1->spawners, &name) != 0) {
             thorium_message_init(message, ACTION_STOP, 0, NULL);
             thorium_actor_send(actor, name, message);
 
@@ -124,16 +124,16 @@ void reader_receive(struct thorium_actor *actor, struct thorium_message *message
 
         thorium_message_unpack_int(message, 0, &error);
 
-        if (error == BSAL_INPUT_ERROR_NO_ERROR) {
+        if (error == BIOSAL_INPUT_ERROR_NO_ERROR) {
             printf("Successfully opened file.\n");
             thorium_actor_send_reply_empty(actor, ACTION_INPUT_COUNT);
 
-        } else if (error == BSAL_INPUT_ERROR_FILE_NOT_FOUND) {
+        } else if (error == BIOSAL_INPUT_ERROR_FILE_NOT_FOUND) {
 
             printf("Error, file not found! \n");
             thorium_actor_send_to_self_empty(actor, ACTION_STOP);
 
-        } else if (error == BSAL_INPUT_ERROR_FORMAT_NOT_SUPPORTED) {
+        } else if (error == BIOSAL_INPUT_ERROR_FORMAT_NOT_SUPPORTED) {
 
             printf("Error, format not supported! \n");
             thorium_actor_send_to_self_empty(actor, ACTION_STOP);

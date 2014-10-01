@@ -9,7 +9,7 @@
  * GNU glibc has a strack backtrace generator built in
  * \see http://www.gnu.org/software/libc/manual/html_node/Backtraces.html
  */
-#define BSAL_TRACER_AVAILABLE
+#define BIOSAL_TRACER_AVAILABLE
 
 #else
 
@@ -17,7 +17,7 @@
 
 #endif
 
-#ifdef BSAL_TRACER_AVAILABLE
+#ifdef BIOSAL_TRACER_AVAILABLE
 #include <execinfo.h>
 #endif
 
@@ -25,21 +25,21 @@
 
 #include <stdio.h>
 
-#define BSAL_TRACER_STACK_DEPTH 100
+#define BIOSAL_TRACER_STACK_DEPTH 100
 
 #define MEMORY_TRACER 0xefb1b8a1
 
-void bsal_tracer_print_stack_backtrace()
+void biosal_tracer_print_stack_backtrace()
 {
-    printf("bsal_tracer_print_stack_backtrace\n");
+    printf("biosal_tracer_print_stack_backtrace\n");
 
-#ifdef BSAL_TRACER_AVAILABLE
-    void* trace_pointers[BSAL_TRACER_STACK_DEPTH];
+#ifdef BIOSAL_TRACER_AVAILABLE
+    void* trace_pointers[BIOSAL_TRACER_STACK_DEPTH];
     int count;
     char** function_names;
     int i;
 
-    count = backtrace(trace_pointers, BSAL_TRACER_STACK_DEPTH);
+    count = backtrace(trace_pointers, BIOSAL_TRACER_STACK_DEPTH);
 
     function_names = backtrace_symbols(trace_pointers, count);
 

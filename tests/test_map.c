@@ -14,8 +14,8 @@ int main(int argc, char **argv)
     BEGIN_TESTS();
 
     {
-        struct bsal_map table;
-        struct bsal_map_iterator iterator;
+        struct biosal_map table;
+        struct biosal_map_iterator iterator;
         int key_size;
         int value_size;
         uint64_t i;
@@ -32,32 +32,32 @@ int main(int argc, char **argv)
         buckets = 500;
         inserted = 0;
 
-        bsal_map_init(&table, key_size, value_size);
+        biosal_map_init(&table, key_size, value_size);
 
         for (i = 0; i < buckets; i++) {
             key = inserted;
-            value_bucket = bsal_map_add(&table, &key);
+            value_bucket = biosal_map_add(&table, &key);
             inserted++;
 
             TEST_POINTER_NOT_EQUALS(value_bucket, NULL);
 
             *value_bucket = i;
 
-            TEST_UINT64_T_EQUALS(bsal_map_size(&table), inserted);
+            TEST_UINT64_T_EQUALS(biosal_map_size(&table), inserted);
 
-            value_bucket = bsal_map_get(&table, &key);
+            value_bucket = biosal_map_get(&table, &key);
 
             TEST_POINTER_NOT_EQUALS(value_bucket, NULL);
         }
 
         key = inserted;
-        value_bucket = bsal_map_add(&table, &key);
+        value_bucket = biosal_map_add(&table, &key);
         inserted++;
 
         for (j = 0; j < 1000; j++) {
             for (i = 0; i < buckets; i++) {
                 key = inserted;
-                value_bucket = bsal_map_add(&table, &key);
+                value_bucket = biosal_map_add(&table, &key);
                 inserted++;
 
                 TEST_POINTER_NOT_EQUALS(value_bucket, NULL);
@@ -66,28 +66,28 @@ int main(int argc, char **argv)
 
                 /*
                 printf("DEBUG actual %d expected %d\n",
-                                (int)bsal_map_size(&table), inserted);
+                                (int)biosal_map_size(&table), inserted);
                                 */
 
-                TEST_UINT64_T_EQUALS(bsal_map_size(&table), inserted);
+                TEST_UINT64_T_EQUALS(biosal_map_size(&table), inserted);
 
-                value_bucket = bsal_map_get(&table, &key);
+                value_bucket = biosal_map_get(&table, &key);
 
                 TEST_POINTER_NOT_EQUALS(value_bucket, NULL);
             }
         }
 
         key = 9999;
-        value_bucket = bsal_map_add(&table, &key);
+        value_bucket = biosal_map_add(&table, &key);
         *value_bucket = 8888;
 
-        bsal_map_iterator_init(&iterator, &table);
+        biosal_map_iterator_init(&iterator, &table);
 
         i = 0;
         found = 0;
 
-        while (bsal_map_iterator_has_next(&iterator)) {
-            bsal_map_iterator_next(&iterator, (void **)&key_bucket,
+        while (biosal_map_iterator_has_next(&iterator)) {
+            biosal_map_iterator_next(&iterator, (void **)&key_bucket,
                             (void **)&value_bucket);
 
             if (*key_bucket == 9999 && *value_bucket == 8888) {
@@ -96,16 +96,16 @@ int main(int argc, char **argv)
             i++;
         }
 
-        TEST_UINT64_T_EQUALS(i, bsal_map_size(&table));
+        TEST_UINT64_T_EQUALS(i, biosal_map_size(&table));
         TEST_INT_EQUALS(found, 1);
 
-        bsal_map_iterator_destroy(&iterator);
+        biosal_map_iterator_destroy(&iterator);
 
-        bsal_map_destroy(&table);
+        biosal_map_destroy(&table);
     }
 
     {
-        struct bsal_map table;
+        struct biosal_map table;
         int key;
         int *value;
 
@@ -114,59 +114,59 @@ int main(int argc, char **argv)
         printf("DEBUG TEST-alpha-89\n");
         */
 
-        bsal_map_init(&table, sizeof(int), sizeof(int));
+        biosal_map_init(&table, sizeof(int), sizeof(int));
 
         for (key = 0; key < 1000000; key++) {
 
 /*
             printf("DEBUG key %d\n", key);
             */
-            bsal_map_add(&table, &key);
+            biosal_map_add(&table, &key);
 
-            value = (int *)bsal_map_get(&table, &key);
+            value = (int *)biosal_map_get(&table, &key);
 
             TEST_POINTER_NOT_EQUALS(value, NULL);
 
             *value = key;
         }
 
-        bsal_map_destroy(&table);
+        biosal_map_destroy(&table);
     }
 
     {
-        struct bsal_map map;
+        struct biosal_map map;
         int key;
         uint64_t elements;
         uint64_t i;
         void *buffer;
         int count;
-        struct bsal_map map2;
+        struct biosal_map map2;
         int *bucket;
         int value;
 
         elements = 900;
-        bsal_map_init(&map, sizeof(int), sizeof(int));
+        biosal_map_init(&map, sizeof(int), sizeof(int));
 
         for (i = 0; i < elements; i++) {
 
             key = i;
 
-            TEST_UINT64_T_EQUALS(bsal_map_size(&map), i);
-            bucket = bsal_map_add(&map, &key);
-            TEST_UINT64_T_EQUALS(bsal_map_size(&map), i + 1);
+            TEST_UINT64_T_EQUALS(biosal_map_size(&map), i);
+            bucket = biosal_map_add(&map, &key);
+            TEST_UINT64_T_EQUALS(biosal_map_size(&map), i + 1);
 
             (*bucket) = i * i;
         }
 
-        count = bsal_map_pack_size(&map);
-        buffer = bsal_memory_allocate(count, -1);
-        bsal_map_pack(&map, buffer);
+        count = biosal_map_pack_size(&map);
+        buffer = biosal_memory_allocate(count, -1);
+        biosal_map_pack(&map, buffer);
 
         /*
         printf("before unpacking %d bytes %p\n", count, buffer);
         */
-        bsal_map_init(&map2, 0, 0);
-        bsal_map_unpack(&map2, buffer);
+        biosal_map_init(&map2, 0, 0);
+        biosal_map_unpack(&map2, buffer);
 
         /*
         printf("after unpacking\n");
@@ -174,7 +174,7 @@ int main(int argc, char **argv)
 
         for (i = 0; i < elements; i++) {
 
-            bucket = (int *)bsal_map_get(&map2, &i);
+            bucket = (int *)biosal_map_get(&map2, &i);
 
             TEST_POINTER_NOT_EQUALS(bucket, NULL);
 
@@ -184,48 +184,48 @@ int main(int argc, char **argv)
         }
 
         /*
-        printf("actual %d expected %d\n", (int)bsal_map_size(&map2), (int)bsal_map_size(&map));
+        printf("actual %d expected %d\n", (int)biosal_map_size(&map2), (int)biosal_map_size(&map));
         */
 
-        TEST_UINT64_T_EQUALS(bsal_map_size(&map2), bsal_map_size(&map));
-        TEST_UINT64_T_EQUALS(bsal_map_size(&map2), elements);
+        TEST_UINT64_T_EQUALS(biosal_map_size(&map2), biosal_map_size(&map));
+        TEST_UINT64_T_EQUALS(biosal_map_size(&map2), elements);
 
-        bsal_memory_free(buffer, -1);
+        biosal_memory_free(buffer, -1);
 
-        bsal_map_destroy(&map2);
-        bsal_map_destroy(&map);
+        biosal_map_destroy(&map2);
+        biosal_map_destroy(&map);
     }
 
     {
-        struct bsal_map map;
-        struct bsal_map_iterator iterator;
+        struct biosal_map map;
+        struct biosal_map_iterator iterator;
         int i;
         int key;
         int value;
         int count;
 
-        memset(&map, 1, sizeof(struct bsal_map));
+        memset(&map, 1, sizeof(struct biosal_map));
 
-        bsal_map_init(&map, sizeof(int), sizeof(int));
+        biosal_map_init(&map, sizeof(int), sizeof(int));
 
         count = 30000;
 
         for (i = 0; i < count; ++i) {
-            bsal_map_add_value(&map, &i, &i);
+            biosal_map_add_value(&map, &i, &i);
 
-            TEST_POINTER_NOT_EQUALS(bsal_map_get(&map, &i), NULL);
-
-        }
-
-        bsal_map_iterator_init(&iterator, &map);
-
-        while (bsal_map_iterator_get_next_key_and_value(&iterator, &key, &value)) {
+            TEST_POINTER_NOT_EQUALS(biosal_map_get(&map, &i), NULL);
 
         }
 
-        bsal_map_iterator_destroy(&iterator);
+        biosal_map_iterator_init(&iterator, &map);
 
-        bsal_map_destroy(&map);
+        while (biosal_map_iterator_get_next_key_and_value(&iterator, &key, &value)) {
+
+        }
+
+        biosal_map_iterator_destroy(&iterator);
+
+        biosal_map_destroy(&map);
 
     }
     END_TESTS();

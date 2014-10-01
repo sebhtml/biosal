@@ -10,7 +10,7 @@
  * Test a transport implementation.
  */
 struct process {
-    struct bsal_vector actors;
+    struct biosal_vector actors;
     int ready;
 
     /*

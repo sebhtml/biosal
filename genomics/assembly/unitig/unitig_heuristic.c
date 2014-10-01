@@ -10,25 +10,25 @@
 #define SUPER_CAREFUL_WITH_MULTIPLIER
 #define SUPER_CAREFUL_WITH_THRESHOLD
 
-void bsal_unitig_heuristic_init(struct bsal_unitig_heuristic *self)
+void biosal_unitig_heuristic_init(struct biosal_unitig_heuristic *self)
 {
-    self->select = bsal_unitig_heuristic_select_with_flow_split;
-    /*self->select = bsal_unitig_heuristic_select_highest;*/
+    self->select = biosal_unitig_heuristic_select_with_flow_split;
+    /*self->select = biosal_unitig_heuristic_select_highest;*/
 }
 
-void bsal_unitig_heuristic_destroy(struct bsal_unitig_heuristic *self)
+void biosal_unitig_heuristic_destroy(struct biosal_unitig_heuristic *self)
 {
     self->select = NULL;
 }
 
-int bsal_unitig_heuristic_select(struct bsal_unitig_heuristic *self,
-                int current_coverage, struct bsal_vector *coverage_values)
+int biosal_unitig_heuristic_select(struct biosal_unitig_heuristic *self,
+                int current_coverage, struct biosal_vector *coverage_values)
 {
     return self->select(self, current_coverage, coverage_values);
 }
 
-int bsal_unitig_heuristic_select_highest(struct bsal_unitig_heuristic *self,
-                int current_coverage, struct bsal_vector *coverage_values)
+int biosal_unitig_heuristic_select_highest(struct biosal_unitig_heuristic *self,
+                int current_coverage, struct biosal_vector *coverage_values)
 {
     int coverage;
     int i;
@@ -37,10 +37,10 @@ int bsal_unitig_heuristic_select_highest(struct bsal_unitig_heuristic *self,
     int max_index;
 
     max_value = max_index = -1;
-    size = bsal_vector_size(coverage_values);
+    size = biosal_vector_size(coverage_values);
 
     for (i = 0; i < size; ++i) {
-        coverage = bsal_vector_at_as_int(coverage_values, i);
+        coverage = biosal_vector_at_as_int(coverage_values, i);
 
         /*
          * This works because the calling code with verify symmetry anyway.
@@ -54,8 +54,8 @@ int bsal_unitig_heuristic_select_highest(struct bsal_unitig_heuristic *self,
     return max_index;
 }
 
-int bsal_unitig_heuristic_select_with_flow_split(struct bsal_unitig_heuristic *self,
-                int current_coverage, struct bsal_vector *coverage_values)
+int biosal_unitig_heuristic_select_with_flow_split(struct biosal_unitig_heuristic *self,
+                int current_coverage, struct biosal_vector *coverage_values)
 {
     int i;
     int coverage;
@@ -68,11 +68,11 @@ int bsal_unitig_heuristic_select_with_flow_split(struct bsal_unitig_heuristic *s
     int threshold;
     int with_same_coverage;
 
-    size = bsal_vector_size(coverage_values);
+    size = biosal_vector_size(coverage_values);
 
-    configured_divisor = BSAL_MAXIMUM_DEGREE;
+    configured_divisor = BIOSAL_MAXIMUM_DEGREE;
     threshold = current_coverage / configured_divisor;
-    choice = BSAL_HEURISTIC_CHOICE_NONE;
+    choice = BIOSAL_HEURISTIC_CHOICE_NONE;
 
     for (i = 0; i < size; i++) {
 
@@ -89,7 +89,7 @@ int bsal_unitig_heuristic_select_with_flow_split(struct bsal_unitig_heuristic *s
             break;
         }
 #endif
-        coverage = bsal_vector_at_as_int(coverage_values, i);
+        coverage = biosal_vector_at_as_int(coverage_values, i);
 
         /*
          * Check if any other edge has the same coverage.
@@ -97,7 +97,7 @@ int bsal_unitig_heuristic_select_with_flow_split(struct bsal_unitig_heuristic *s
         with_same_coverage = 0;
 
         for (j = 0; j < size; ++j) {
-            other_coverage = bsal_vector_at_as_int(coverage_values, j);
+            other_coverage = biosal_vector_at_as_int(coverage_values, j);
 
             if (other_coverage == coverage) {
                 ++with_same_coverage;
@@ -141,7 +141,7 @@ int bsal_unitig_heuristic_select_with_flow_split(struct bsal_unitig_heuristic *s
              */
             if (i == j)
                 continue;
-            other_coverage = bsal_vector_at_as_int(coverage_values, j);
+            other_coverage = biosal_vector_at_as_int(coverage_values, j);
 
             if (other_coverage >= threshold) {
                 is_strong = 0;

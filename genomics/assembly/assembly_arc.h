@@ -1,21 +1,21 @@
 
-#ifndef BSAL_ASSEMBLY_ARC_H
-#define BSAL_ASSEMBLY_ARC_H
+#ifndef BIOSAL_ASSEMBLY_ARC_H
+#define BIOSAL_ASSEMBLY_ARC_H
 
 #include <genomics/data/dna_kmer.h>
 
-#define BSAL_ARC_TYPE_PARENT 0
-#define BSAL_ARC_TYPE_CHILD 1
-#define BSAL_ARC_TYPE_ANY 8
+#define BIOSAL_ARC_TYPE_PARENT 0
+#define BIOSAL_ARC_TYPE_CHILD 1
+#define BIOSAL_ARC_TYPE_ANY 8
 
 /*
  * An assembly arc.
  *
  * This is used for transportation
  */
-struct bsal_assembly_arc {
+struct biosal_assembly_arc {
 
-    struct bsal_dna_kmer source;
+    struct biosal_dna_kmer source;
 
     /*
      * The type is child or parent
@@ -28,41 +28,41 @@ struct bsal_assembly_arc {
     int destination;
 };
 
-void bsal_assembly_arc_init(struct bsal_assembly_arc *self, int type,
-                struct bsal_dna_kmer *source,
+void biosal_assembly_arc_init(struct biosal_assembly_arc *self, int type,
+                struct biosal_dna_kmer *source,
                 int destination,
-                int kmer_length, struct bsal_memory_pool *memory,
-                struct bsal_dna_codec *codec);
-void bsal_assembly_arc_init_copy(struct bsal_assembly_arc *self,
-                struct bsal_assembly_arc *arc,
-                int kmer_length, struct bsal_memory_pool *memory,
-                struct bsal_dna_codec *codec);
-void bsal_assembly_arc_init_mock(struct bsal_assembly_arc *self,
-                int kmer_length, struct bsal_memory_pool *memory,
-                struct bsal_dna_codec *codec);
+                int kmer_length, struct biosal_memory_pool *memory,
+                struct biosal_dna_codec *codec);
+void biosal_assembly_arc_init_copy(struct biosal_assembly_arc *self,
+                struct biosal_assembly_arc *arc,
+                int kmer_length, struct biosal_memory_pool *memory,
+                struct biosal_dna_codec *codec);
+void biosal_assembly_arc_init_mock(struct biosal_assembly_arc *self,
+                int kmer_length, struct biosal_memory_pool *memory,
+                struct biosal_dna_codec *codec);
 
-void bsal_assembly_arc_init_empty(struct bsal_assembly_arc *self);
-void bsal_assembly_arc_destroy(struct bsal_assembly_arc *self, struct bsal_memory_pool *memory);
+void biosal_assembly_arc_init_empty(struct biosal_assembly_arc *self);
+void biosal_assembly_arc_destroy(struct biosal_assembly_arc *self, struct biosal_memory_pool *memory);
 
-int bsal_assembly_arc_pack_size(struct bsal_assembly_arc *self, int kmer_length, struct bsal_dna_codec *codec);
-int bsal_assembly_arc_pack(struct bsal_assembly_arc *self, void *buffer,
-                int kmer_length, struct bsal_dna_codec *codec);
-int bsal_assembly_arc_unpack(struct bsal_assembly_arc *self, void *buffer,
-                int kmer_length, struct bsal_memory_pool *memory,
-                struct bsal_dna_codec *codec);
+int biosal_assembly_arc_pack_size(struct biosal_assembly_arc *self, int kmer_length, struct biosal_dna_codec *codec);
+int biosal_assembly_arc_pack(struct biosal_assembly_arc *self, void *buffer,
+                int kmer_length, struct biosal_dna_codec *codec);
+int biosal_assembly_arc_unpack(struct biosal_assembly_arc *self, void *buffer,
+                int kmer_length, struct biosal_memory_pool *memory,
+                struct biosal_dna_codec *codec);
 
-int bsal_assembly_arc_pack_unpack(struct bsal_assembly_arc *self, int operation,
-                void *buffer, int kmer_length, struct bsal_memory_pool *memory,
-                struct bsal_dna_codec *codec);
+int biosal_assembly_arc_pack_unpack(struct biosal_assembly_arc *self, int operation,
+                void *buffer, int kmer_length, struct biosal_memory_pool *memory,
+                struct biosal_dna_codec *codec);
 
-int bsal_assembly_arc_equals(struct bsal_assembly_arc *self, struct bsal_assembly_arc *arc,
-                int kmer_length, struct bsal_dna_codec *codec);
+int biosal_assembly_arc_equals(struct biosal_assembly_arc *self, struct biosal_assembly_arc *arc,
+                int kmer_length, struct biosal_dna_codec *codec);
 
-struct bsal_dna_kmer *bsal_assembly_arc_source(struct bsal_assembly_arc *self);
-int bsal_assembly_arc_type(struct bsal_assembly_arc *self);
-int bsal_assembly_arc_destination(struct bsal_assembly_arc *self);
+struct biosal_dna_kmer *biosal_assembly_arc_source(struct biosal_assembly_arc *self);
+int biosal_assembly_arc_type(struct biosal_assembly_arc *self);
+int biosal_assembly_arc_destination(struct biosal_assembly_arc *self);
 
-void bsal_assembly_arc_print(struct bsal_assembly_arc *self, int kmer_length, struct bsal_dna_codec *codec,
-                struct bsal_memory_pool *pool);
+void biosal_assembly_arc_print(struct biosal_assembly_arc *self, int kmer_length, struct biosal_dna_codec *codec,
+                struct biosal_memory_pool *pool);
 
 #endif

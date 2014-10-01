@@ -1,13 +1,13 @@
 
-#ifndef BSAL_TEST_H
-#define BSAL_TEST_H
+#ifndef BIOSAL_TEST_H
+#define BIOSAL_TEST_H
 
 #include <stdio.h>
 #include <stdlib.h>
 
 #include <stdint.h>
 
-void bsal_test_print_result(int argc, char **argv, int passed_tests, int failed_tests);
+void biosal_test_print_result(int argc, char **argv, int passed_tests, int failed_tests);
 
 #define BEGIN_TESTS() \
     int correct_tests; \
@@ -16,7 +16,7 @@ void bsal_test_print_result(int argc, char **argv, int passed_tests, int failed_
     incorrect_tests = 0;
 
 #define END_TESTS() \
-    bsal_test_print_result(argc, argv, correct_tests, incorrect_tests);
+    biosal_test_print_result(argc, argv, correct_tests, incorrect_tests);
 
 #define TEST_INT_IS_LOWER_THAN(a, b) \
 if ((a) < (b)) { \

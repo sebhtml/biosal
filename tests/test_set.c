@@ -8,8 +8,8 @@ int main(int argc, char **argv)
 {
     BEGIN_TESTS();
 
-    struct bsal_set set;
-    struct bsal_set_iterator iterator;
+    struct biosal_set set;
+    struct biosal_set_iterator iterator;
     int key;
     int i;
     int j;
@@ -23,12 +23,12 @@ int main(int argc, char **argv)
     elements = 900;
 
     sum = 0;
-    bsal_set_init(&set, sizeof(key));
+    biosal_set_init(&set, sizeof(key));
 
     key = 9;
-    bsal_set_add(&set, &key);
-    bsal_set_delete(&set, &key);
-    bsal_set_delete(&set, &key);
+    biosal_set_add(&set, &key);
+    biosal_set_delete(&set, &key);
+    biosal_set_delete(&set, &key);
 
     key = 0;
 
@@ -40,37 +40,37 @@ int main(int argc, char **argv)
         /*
         printf("insert %d\n", key);
 
-        printf("GT actual %d expected %d\n", (int)bsal_set_size(&set), i);
+        printf("GT actual %d expected %d\n", (int)biosal_set_size(&set), i);
         */
-        TEST_INT_EQUALS(bsal_set_size(&set), i);
-        bsal_set_add(&set, &key);
+        TEST_INT_EQUALS(biosal_set_size(&set), i);
+        biosal_set_add(&set, &key);
 
-        TEST_INT_EQUALS(bsal_set_size(&set), i + 1);
+        TEST_INT_EQUALS(biosal_set_size(&set), i + 1);
 
         for (j = 0; j <= i; j++) {
 
             key = j;
 
-            found = bsal_set_find(&set, &key);
+            found = biosal_set_find(&set, &key);
 
             TEST_INT_IS_GREATER_THAN(found, 0);
         }
 
         /*
-        printf("actual %d expected %d\n", (int)bsal_set_size(&set), i + 1);
+        printf("actual %d expected %d\n", (int)biosal_set_size(&set), i + 1);
         */
 
-        TEST_INT_EQUALS(bsal_set_size(&set), i + 1);
+        TEST_INT_EQUALS(biosal_set_size(&set), i + 1);
     }
 
     iterated = 0;
 
-    bsal_set_iterator_init(&iterator, &set);
+    biosal_set_iterator_init(&iterator, &set);
     sum2 = 0;
 
-    while (bsal_set_iterator_has_next(&iterator)) {
+    while (biosal_set_iterator_has_next(&iterator)) {
 
-        bsal_set_iterator_next(&iterator, (void **)&bucket);
+        biosal_set_iterator_next(&iterator, (void **)&bucket);
         key = *bucket;
 
         sum2 += key;
@@ -79,21 +79,21 @@ int main(int argc, char **argv)
     }
 
     TEST_INT_EQUALS(iterated, elements);
-    bsal_set_iterator_destroy(&iterator);
+    biosal_set_iterator_destroy(&iterator);
 
     for (i = 0; i < elements; i++) {
 
         key = i;
 
-        bsal_set_delete(&set, &key);
+        biosal_set_delete(&set, &key);
 
-        found = bsal_set_find(&set, &key);
+        found = biosal_set_find(&set, &key);
 
         TEST_INT_EQUALS(found, 0);
 
     }
 
-    TEST_INT_EQUALS(bsal_set_size(&set), 0);
+    TEST_INT_EQUALS(biosal_set_size(&set), 0);
 
     END_TESTS();
 

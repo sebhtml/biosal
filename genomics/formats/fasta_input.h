@@ -1,6 +1,6 @@
 
-#ifndef BSAL_FASTA_INPUT_H
-#define BSAL_FASTA_INPUT_H
+#ifndef BIOSAL_FASTA_INPUT_H
+#define BIOSAL_FASTA_INPUT_H
 
 #include <genomics/formats/input_format.h>
 #include <genomics/formats/input_format_interface.h>
@@ -14,8 +14,8 @@
 /*
  * A driver for fasta input.
  */
-struct bsal_fasta_input {
-    struct bsal_buffered_reader reader;
+struct biosal_fasta_input {
+    struct biosal_buffered_reader reader;
 
     char *buffer;
     char *next_header;
@@ -24,15 +24,15 @@ struct bsal_fasta_input {
     int has_first;
 };
 
-extern struct bsal_input_format_interface bsal_fasta_input_operations;
+extern struct biosal_input_format_interface biosal_fasta_input_operations;
 
-void bsal_fasta_input_init(struct bsal_input_format *self);
-void bsal_fasta_input_destroy(struct bsal_input_format *self);
-uint64_t bsal_fasta_input_get_sequence(struct bsal_input_format *self,
+void biosal_fasta_input_init(struct biosal_input_format *self);
+void biosal_fasta_input_destroy(struct biosal_input_format *self);
+uint64_t biosal_fasta_input_get_sequence(struct biosal_input_format *self,
                 char *sequence);
-int bsal_fasta_input_detect(struct bsal_input_format *self);
-uint64_t bsal_fasta_input_get_offset(struct bsal_input_format *self);
+int biosal_fasta_input_detect(struct biosal_input_format *self);
+uint64_t biosal_fasta_input_get_offset(struct biosal_input_format *self);
 
-int bsal_fasta_input_check_header(struct bsal_input_format *self, const char *line);
+int biosal_fasta_input_check_header(struct biosal_input_format *self, const char *line);
 
 #endif

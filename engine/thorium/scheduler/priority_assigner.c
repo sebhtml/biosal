@@ -19,8 +19,8 @@
 void thorium_priority_assigner_init(struct thorium_priority_assigner *scheduler, int name)
 {
     scheduler->name = name;
-    bsal_map_init(&scheduler->actor_sources, sizeof(int), sizeof(int));
-    bsal_map_init(&scheduler->actor_source_frequencies, sizeof(int), sizeof(int));
+    biosal_map_init(&scheduler->actor_sources, sizeof(int), sizeof(int));
+    biosal_map_init(&scheduler->actor_source_frequencies, sizeof(int), sizeof(int));
 
     scheduler->normal_priority_minimum_value = -1;
     scheduler->normal_priority_maximum_value= -1;
@@ -32,8 +32,8 @@ void thorium_priority_assigner_init(struct thorium_priority_assigner *scheduler,
 void thorium_priority_assigner_destroy(struct thorium_priority_assigner *scheduler)
 {
 
-    bsal_map_destroy(&scheduler->actor_sources);
-    bsal_map_destroy(&scheduler->actor_source_frequencies);
+    biosal_map_destroy(&scheduler->actor_sources);
+    biosal_map_destroy(&scheduler->actor_source_frequencies);
 
     scheduler->normal_priority_minimum_value = -1;
     scheduler->normal_priority_maximum_value= -1;
@@ -57,7 +57,7 @@ void thorium_priority_assigner_update(struct thorium_priority_assigner *schedule
     int name;
     time_t now;
 
-    BSAL_DEBUGGER_ASSERT(actor != NULL);
+    BIOSAL_DEBUGGER_ASSERT(actor != NULL);
 
     name = thorium_actor_name(actor);
     new_source_count = thorium_actor_get_source_count(actor);
@@ -65,7 +65,7 @@ void thorium_priority_assigner_update(struct thorium_priority_assigner *schedule
     /*
      * If this actor is already registered, check if its source count changed.
      */
-    if (bsal_map_get_value(&scheduler->actor_sources, &name, &old_source_count)) {
+    if (biosal_map_get_value(&scheduler->actor_sources, &name, &old_source_count)) {
 
         /* Only update the value if it changed
          */
@@ -73,7 +73,7 @@ void thorium_priority_assigner_update(struct thorium_priority_assigner *schedule
 
             /* Update the actor source count
              */
-            bsal_map_update_value(&scheduler->actor_sources, &name, &new_source_count);
+            biosal_map_update_value(&scheduler->actor_sources, &name, &new_source_count);
 
             thorium_priority_assigner_decrement(scheduler, old_source_count);
             thorium_priority_assigner_increment(scheduler, new_source_count);
@@ -83,7 +83,7 @@ void thorium_priority_assigner_update(struct thorium_priority_assigner *schedule
 
         /* It is the first time that this actor is encountered
          */
-        bsal_map_add_value(&scheduler->actor_sources, &name, &new_source_count);
+        biosal_map_add_value(&scheduler->actor_sources, &name, &new_source_count);
 
         thorium_priority_assigner_increment(scheduler, new_source_count);
     }
@@ -126,7 +126,7 @@ void thorium_priority_assigner_update(struct thorium_priority_assigner *schedule
         }
     }
 
-    class_count = bsal_map_size(&scheduler->actor_source_frequencies);
+    class_count = biosal_map_size(&scheduler->actor_source_frequencies);
 
     now = time(NULL);
 
@@ -139,12 +139,12 @@ void thorium_priority_assigner_update(struct thorium_priority_assigner *schedule
 
 void thorium_priority_assigner_update_thresholds(struct thorium_priority_assigner *scheduler)
 {
-    struct bsal_map_iterator iterator;
+    struct biosal_map_iterator iterator;
     int class_count;
     int value;
     int frequency;
 
-    class_count = bsal_map_size(&scheduler->actor_source_frequencies);
+    class_count = biosal_map_size(&scheduler->actor_source_frequencies);
 
 #if 0
 #ifdef THORIUM_PRIORITY_SCHEDULER_DEBUG
@@ -153,14 +153,14 @@ void thorium_priority_assigner_update_thresholds(struct thorium_priority_assigne
 #endif
 #endif
 
-    bsal_map_iterator_init(&iterator, &scheduler->actor_source_frequencies);
+    biosal_map_iterator_init(&iterator, &scheduler->actor_source_frequencies);
 
     /*
      * use percentiles instead of average, minimum and maximum.
      */
 
     class_count = 0;
-    while (bsal_map_iterator_get_next_key_and_value(&iterator, &value, &frequency)) {
+    while (biosal_map_iterator_get_next_key_and_value(&iterator, &value, &frequency)) {
 
 #ifdef THORIUM_PRIORITY_SCHEDULER_DEBUG
         if (frequency > 0) {
@@ -179,17 +179,17 @@ void thorium_priority_assigner_update_thresholds(struct thorium_priority_assigne
                     class_count);
 #endif
 
-    bsal_map_iterator_destroy(&iterator);
+    biosal_map_iterator_destroy(&iterator);
 
     /*
      * Actually update thresholds.
      */
 
-    scheduler->normal_priority_minimum_value = bsal_statistics_get_percentile_int_map(&scheduler->actor_source_frequencies,
+    scheduler->normal_priority_minimum_value = biosal_statistics_get_percentile_int_map(&scheduler->actor_source_frequencies,
                     30);
-    scheduler->normal_priority_maximum_value = bsal_statistics_get_percentile_int_map(&scheduler->actor_source_frequencies,
+    scheduler->normal_priority_maximum_value = biosal_statistics_get_percentile_int_map(&scheduler->actor_source_frequencies,
                     70);
-    scheduler->max_priority_minimum_value = bsal_statistics_get_percentile_int_map(&scheduler->actor_source_frequencies,
+    scheduler->max_priority_minimum_value = biosal_statistics_get_percentile_int_map(&scheduler->actor_source_frequencies,
                     95);
 
     printf("THORIUM_PRIORITY_SCHEDULER_DEBUG %d new thresholds P30 %d P70 %d P95 %d\n",
@@ -200,8 +200,8 @@ void thorium_priority_assigner_update_thresholds(struct thorium_priority_assigne
     /*
      * Reset frequencies.
      */
-    bsal_map_destroy(&scheduler->actor_source_frequencies);
-    bsal_map_init(&scheduler->actor_source_frequencies, sizeof(int), sizeof(int));
+    biosal_map_destroy(&scheduler->actor_source_frequencies);
+    biosal_map_init(&scheduler->actor_source_frequencies, sizeof(int), sizeof(int));
 }
 
 void thorium_priority_assigner_decrement(struct thorium_priority_assigner *scheduler,
@@ -214,12 +214,12 @@ void thorium_priority_assigner_decrement(struct thorium_priority_assigner *sched
      * Update the frequency for the old source count
      */
 
-    if (bsal_map_get_value(&scheduler->actor_source_frequencies, &old_source_count,
+    if (biosal_map_get_value(&scheduler->actor_source_frequencies, &old_source_count,
                     &old_source_count_old_frequency)) {
 
         old_source_count_new_frequency = old_source_count_old_frequency - 1;
 
-        bsal_map_update_value(&scheduler->actor_source_frequencies, &old_source_count,
+        biosal_map_update_value(&scheduler->actor_source_frequencies, &old_source_count,
                            &old_source_count_new_frequency);
     }
 }
@@ -235,18 +235,18 @@ void thorium_priority_assigner_increment(struct thorium_priority_assigner *sched
      */
     new_source_count_old_frequency = 0;
 
-    if (bsal_map_get_value(&scheduler->actor_source_frequencies, &new_source_count,
+    if (biosal_map_get_value(&scheduler->actor_source_frequencies, &new_source_count,
                             &new_source_count_old_frequency)) {
 
         new_source_count_new_frequency = new_source_count_old_frequency + 1;
-        bsal_map_update_value(&scheduler->actor_source_frequencies, &new_source_count,
+        biosal_map_update_value(&scheduler->actor_source_frequencies, &new_source_count,
                         &new_source_count_new_frequency);
 
     } else {
         /* This is the first actor with this source count
          */
         new_source_count_new_frequency = 1;
-        bsal_map_add_value(&scheduler->actor_source_frequencies, &new_source_count,
+        biosal_map_add_value(&scheduler->actor_source_frequencies, &new_source_count,
                         &new_source_count_new_frequency);
     }
 }

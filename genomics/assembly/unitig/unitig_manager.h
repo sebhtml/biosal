@@ -1,6 +1,6 @@
 
-#ifndef BSAL_UNITIG_MANAGER_H
-#define BSAL_UNITIG_MANAGER_H
+#ifndef BIOSAL_UNITIG_MANAGER_H
+#define BIOSAL_UNITIG_MANAGER_H
 
 #include <engine/thorium/actor.h>
 
@@ -11,25 +11,25 @@
 /*
  * A manager for unitig walkers
  */
-struct bsal_unitig_manager {
-    struct bsal_vector spawners;
-    struct bsal_vector graph_stores;
-    struct bsal_vector visitors;
-    struct bsal_vector walkers;
+struct biosal_unitig_manager {
+    struct biosal_vector spawners;
+    struct biosal_vector graph_stores;
+    struct biosal_vector visitors;
+    struct biosal_vector walkers;
 
     int completed;
     int manager;
 
-    struct bsal_timer timer;
+    struct biosal_timer timer;
     int state;
 
     int writer_process;
 };
 
-extern struct thorium_script bsal_unitig_manager_script;
+extern struct thorium_script biosal_unitig_manager_script;
 
-void bsal_unitig_manager_init(struct thorium_actor *self);
-void bsal_unitig_manager_destroy(struct thorium_actor *self);
-void bsal_unitig_manager_receive(struct thorium_actor *self, struct thorium_message *message);
+void biosal_unitig_manager_init(struct thorium_actor *self);
+void biosal_unitig_manager_destroy(struct thorium_actor *self);
+void biosal_unitig_manager_receive(struct thorium_actor *self, struct thorium_message *message);
 
 #endif

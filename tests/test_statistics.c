@@ -9,25 +9,25 @@ int main(int argc, char **argv)
 {
     BEGIN_TESTS();
 
-    struct bsal_vector values;
+    struct biosal_vector values;
     int i;
     int percentile_5;
     int percentile_95;
     int count_percentile_5;
     int count_percentile_95;
 
-    bsal_vector_init(&values, sizeof(int));
+    biosal_vector_init(&values, sizeof(int));
 
     for (i = 0; i < 27; i++) {
-        bsal_vector_push_back(&values, &i);
+        biosal_vector_push_back(&values, &i);
     }
 
     /*
-    bsal_statistics_print_percentiles_int(&values);
+    biosal_statistics_print_percentiles_int(&values);
     */
 
-    percentile_5 = bsal_statistics_get_percentile_int(&values, 5);
-    percentile_95 = bsal_statistics_get_percentile_int(&values, 95);
+    percentile_5 = biosal_statistics_get_percentile_int(&values, 5);
+    percentile_95 = biosal_statistics_get_percentile_int(&values, 95);
 
     count_percentile_5 = 0;
     count_percentile_95 = 0;
@@ -55,7 +55,7 @@ int main(int argc, char **argv)
 
     TEST_INT_EQUALS(count_percentile_5, count_percentile_95);
 
-    bsal_vector_destroy(&values);
+    biosal_vector_destroy(&values);
 
     END_TESTS();
 

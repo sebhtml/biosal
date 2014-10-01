@@ -10,7 +10,7 @@
 #define ACTION_GC_HELLO_REPLY 0x00004790
 
 struct gc_ratio_calculator {
-    struct bsal_vector spawners;
+    struct biosal_vector spawners;
     int completed;
 };
 

@@ -1,6 +1,6 @@
 
-#ifndef BSAL_WRITER_PROCESS_H
-#define BSAL_WRITER_PROCESS_H
+#ifndef BIOSAL_WRITER_PROCESS_H
+#define BIOSAL_WRITER_PROCESS_H
 
 #include <core/file_storage/output/buffered_file_writer.h>
 
@@ -24,15 +24,15 @@
  *
  * This is it.
  */
-struct bsal_writer_process {
+struct biosal_writer_process {
     int has_file;
-    struct bsal_buffered_file_writer writer;
+    struct biosal_buffered_file_writer writer;
 };
 
-extern struct thorium_script bsal_writer_process_script;
+extern struct thorium_script biosal_writer_process_script;
 
-void bsal_writer_process_init(struct thorium_actor *self);
-void bsal_writer_process_destroy(struct thorium_actor *self);
-void bsal_writer_process_receive(struct thorium_actor *self, struct thorium_message *message);
+void biosal_writer_process_init(struct thorium_actor *self);
+void biosal_writer_process_destroy(struct thorium_actor *self);
+void biosal_writer_process_receive(struct thorium_actor *self, struct thorium_message *message);
 
 #endif

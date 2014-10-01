@@ -1,6 +1,6 @@
 
-#ifndef BSAL_INPUT_STREAM_H
-#define BSAL_INPUT_STREAM_H
+#ifndef BIOSAL_INPUT_STREAM_H
+#define BIOSAL_INPUT_STREAM_H
 
 #include <genomics/formats/input_proxy.h>
 
@@ -14,9 +14,9 @@
 
 #define SCRIPT_INPUT_STREAM 0xeb2fe16a
 
-struct bsal_input_stream {
-    struct bsal_input_proxy proxy;
-    struct bsal_dna_codec codec;
+struct biosal_input_stream {
+    struct biosal_input_proxy proxy;
+    struct biosal_dna_codec codec;
     int proxy_ready;
     char *buffer_for_sequence;
     int maximum_sequence_length;
@@ -31,7 +31,7 @@ struct bsal_input_stream {
 
     char *file_name;
 
-    struct bsal_vector mega_blocks;
+    struct biosal_vector mega_blocks;
 
     uint64_t starting_offset;
     uint64_t ending_offset;
@@ -39,7 +39,7 @@ struct bsal_input_stream {
     int count_customer;
 
 #if 0
-    struct bsal_string file_for_parallel_counting;
+    struct biosal_string file_for_parallel_counting;
 #endif
 
     /*
@@ -48,11 +48,11 @@ struct bsal_input_stream {
 
     uint64_t total_entries;
     int finished_parallel_stream_count;
-    struct bsal_vector spawners;
-    struct bsal_vector parallel_streams;
-    struct bsal_vector start_offsets;
-    struct bsal_vector end_offsets;
-    struct bsal_vector parallel_mega_blocks;
+    struct biosal_vector spawners;
+    struct biosal_vector parallel_streams;
+    struct biosal_vector start_offsets;
+    struct biosal_vector end_offsets;
+    struct biosal_vector parallel_mega_blocks;
 };
 
 #define ACTION_INPUT_OPEN 0x000075fa
@@ -83,33 +83,33 @@ struct bsal_input_stream {
 #define ACTION_INPUT_COUNT_IN_PARALLEL 0x00001ce9
 #define ACTION_INPUT_COUNT_IN_PARALLEL_REPLY 0x000058ea
 
-extern struct thorium_script bsal_input_stream_script;
+extern struct thorium_script biosal_input_stream_script;
 
-void bsal_input_stream_init(struct thorium_actor *actor);
-void bsal_input_stream_destroy(struct thorium_actor *actor);
-void bsal_input_stream_receive(struct thorium_actor *actor, struct thorium_message *message);
+void biosal_input_stream_init(struct thorium_actor *actor);
+void biosal_input_stream_destroy(struct thorium_actor *actor);
+void biosal_input_stream_receive(struct thorium_actor *actor, struct thorium_message *message);
 
-void bsal_input_stream_send_sequences_to(struct thorium_actor *actor,
+void biosal_input_stream_send_sequences_to(struct thorium_actor *actor,
                 struct thorium_message *message);
 
-int bsal_input_stream_has_error(struct thorium_actor *actor,
+int biosal_input_stream_has_error(struct thorium_actor *actor,
                 struct thorium_message *message);
 
-int bsal_input_stream_check_open_error(struct thorium_actor *actor,
+int biosal_input_stream_check_open_error(struct thorium_actor *actor,
                 struct thorium_message *message);
-void bsal_input_stream_push_sequences(struct thorium_actor *actor,
+void biosal_input_stream_push_sequences(struct thorium_actor *actor,
                 struct thorium_message *message);
 
-void bsal_input_stream_set_start_offset(struct thorium_actor *actor, struct thorium_message *message);
-void bsal_input_stream_set_end_offset(struct thorium_actor *actor, struct thorium_message *message);
+void biosal_input_stream_set_start_offset(struct thorium_actor *actor, struct thorium_message *message);
+void biosal_input_stream_set_end_offset(struct thorium_actor *actor, struct thorium_message *message);
 
-void bsal_input_stream_count_in_parallel(struct thorium_actor *self, struct thorium_message *message);
-void bsal_input_stream_count_reply(struct thorium_actor *self, struct thorium_message *message);
+void biosal_input_stream_count_in_parallel(struct thorium_actor *self, struct thorium_message *message);
+void biosal_input_stream_count_reply(struct thorium_actor *self, struct thorium_message *message);
 
-void bsal_input_stream_count_reply_mock(struct thorium_actor *self, struct thorium_message *message);
-void bsal_input_stream_count_in_parallel_mock(struct thorium_actor *self, struct thorium_message *message);
-void bsal_input_stream_spawn_reply(struct thorium_actor *self, struct thorium_message *message);
-void bsal_input_stream_open_reply(struct thorium_actor *self, struct thorium_message *message);
-void bsal_input_stream_set_offset_reply(struct thorium_actor *self, struct thorium_message *message);
+void biosal_input_stream_count_reply_mock(struct thorium_actor *self, struct thorium_message *message);
+void biosal_input_stream_count_in_parallel_mock(struct thorium_actor *self, struct thorium_message *message);
+void biosal_input_stream_spawn_reply(struct thorium_actor *self, struct thorium_message *message);
+void biosal_input_stream_open_reply(struct thorium_actor *self, struct thorium_message *message);
+void biosal_input_stream_set_offset_reply(struct thorium_actor *self, struct thorium_message *message);
 
 #endif

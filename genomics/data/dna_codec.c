@@ -16,7 +16,7 @@
 #define BITS_PER_NUCLEOTIDE 2
 #define BITS_PER_BYTE 8
 
-#define BSAL_DNA_CODEC_MINIMUM_NODE_COUNT_FOR_TWO_BIT 2
+#define BIOSAL_DNA_CODEC_MINIMUM_NODE_COUNT_FOR_TWO_BIT 2
 
 /*
  * Fast implemention of reverse complement in place
@@ -28,7 +28,7 @@
 
 #define MEMORY_CODEC 0x9687799e
 
-void bsal_dna_codec_init(struct bsal_dna_codec *self)
+void biosal_dna_codec_init(struct biosal_dna_codec *self)
 {
     /* 4 * 2 = 8 bits = 1 byte
      */
@@ -36,58 +36,58 @@ void bsal_dna_codec_init(struct bsal_dna_codec *self)
 
     self->use_two_bit_encoding = 0;
 
-#ifdef BSAL_DNA_CODEC_USE_TWO_BIT_BLOCK_ENCODER
-    bsal_memory_pool_init(&self->pool, 0, MEMORY_CODEC);
+#ifdef BIOSAL_DNA_CODEC_USE_TWO_BIT_BLOCK_ENCODER
+    biosal_memory_pool_init(&self->pool, 0, MEMORY_CODEC);
 
-    bsal_map_init(&self->encoding_lookup_table, self->block_length, 1);
-    bsal_map_set_memory_pool(&self->encoding_lookup_table, &self->pool);
+    biosal_map_init(&self->encoding_lookup_table, self->block_length, 1);
+    biosal_map_set_memory_pool(&self->encoding_lookup_table, &self->pool);
 #endif
 
-#ifdef BSAL_DNA_CODEC_USE_TWO_BIT_BLOCK_DECODER
-    bsal_map_init(&self->decoding_lookup_table, 1, self->block_length);
-    bsal_map_set_memory_pool(&self->decoding_lookup_table, &self->pool);
+#ifdef BIOSAL_DNA_CODEC_USE_TWO_BIT_BLOCK_DECODER
+    biosal_map_init(&self->decoding_lookup_table, 1, self->block_length);
+    biosal_map_set_memory_pool(&self->decoding_lookup_table, &self->pool);
 
-    bsal_dna_codec_generate_blocks(self);
+    biosal_dna_codec_generate_blocks(self);
 #endif
 
-#ifdef BSAL_DNA_CODEC_FORCE_TWO_BIT_ENCODING_DISABLE_000
-    bsal_dna_codec_enable_two_bit_encoding(self);
+#ifdef BIOSAL_DNA_CODEC_FORCE_TWO_BIT_ENCODING_DISABLE_000
+    biosal_dna_codec_enable_two_bit_encoding(self);
 #endif
 }
 
-void bsal_dna_codec_destroy(struct bsal_dna_codec *self)
+void biosal_dna_codec_destroy(struct biosal_dna_codec *self)
 {
-#ifdef BSAL_DNA_CODEC_USE_TWO_BIT_BLOCK_ENCODER
-    bsal_map_destroy(&self->encoding_lookup_table);
+#ifdef BIOSAL_DNA_CODEC_USE_TWO_BIT_BLOCK_ENCODER
+    biosal_map_destroy(&self->encoding_lookup_table);
 #endif
-#ifdef BSAL_DNA_CODEC_USE_TWO_BIT_BLOCK_DECODER
-    bsal_map_destroy(&self->decoding_lookup_table);
+#ifdef BIOSAL_DNA_CODEC_USE_TWO_BIT_BLOCK_DECODER
+    biosal_map_destroy(&self->decoding_lookup_table);
 
-    bsal_memory_pool_destroy(&self->pool);
+    biosal_memory_pool_destroy(&self->pool);
 #endif
 
     self->block_length = 0;
 }
 
-#ifdef BSAL_DNA_CODEC_USE_TWO_BIT_BLOCK_ENCODER
-void bsal_dna_codec_generate_blocks(struct bsal_dna_codec *self)
+#ifdef BIOSAL_DNA_CODEC_USE_TWO_BIT_BLOCK_ENCODER
+void biosal_dna_codec_generate_blocks(struct biosal_dna_codec *self)
 {
     char *block;
 
-    block = bsal_memory_allocate(self->block_length + 1, MEMORY_CODEC);
+    block = biosal_memory_allocate(self->block_length + 1, MEMORY_CODEC);
 
-    bsal_dna_codec_generate_block(self, -1, 'X', block);
+    biosal_dna_codec_generate_block(self, -1, 'X', block);
 
-    bsal_memory_free(block, MEMORY_CODEC);
+    biosal_memory_free(block, MEMORY_CODEC);
 }
 
-void bsal_dna_codec_generate_block(struct bsal_dna_codec *self, int position, char symbol,
+void biosal_dna_codec_generate_block(struct biosal_dna_codec *self, int position, char symbol,
                 char *block)
 {
     char buffer[10];
     void *bucket;
 
-#ifdef BSAL_DNA_CODEC_DEBUG
+#ifdef BIOSAL_DNA_CODEC_DEBUG
     printf("DEBUG position %d symbol %c\n", position, symbol);
 #endif
 
@@ -99,11 +99,11 @@ void bsal_dna_codec_generate_block(struct bsal_dna_codec *self, int position, ch
 
     if (position < self->block_length && symbol != '\0') {
 
-        bsal_dna_codec_generate_block(self, position, 'A', block);
-        bsal_dna_codec_generate_block(self, position, 'T', block);
-        bsal_dna_codec_generate_block(self, position, 'G', block);
-        bsal_dna_codec_generate_block(self, position, 'C', block);
-        /*bsal_dna_codec_generate_block(self, position, '\0', block);*/
+        biosal_dna_codec_generate_block(self, position, 'A', block);
+        biosal_dna_codec_generate_block(self, position, 'T', block);
+        biosal_dna_codec_generate_block(self, position, 'G', block);
+        biosal_dna_codec_generate_block(self, position, 'C', block);
+        /*biosal_dna_codec_generate_block(self, position, '\0', block);*/
     } else {
 
         while (position < self->block_length + 1) {
@@ -112,32 +112,32 @@ void bsal_dna_codec_generate_block(struct bsal_dna_codec *self, int position, ch
             position++;
         }
 
-        bsal_dna_codec_encode_default(self, self->block_length, block, buffer);
+        biosal_dna_codec_encode_default(self, self->block_length, block, buffer);
 
-#ifdef BSAL_DNA_CODEC_DEBUG
+#ifdef BIOSAL_DNA_CODEC_DEBUG
         printf("BLOCK %s (%d) value %d\n", block, self->block_length, (int)buffer[0]);
 #endif
 
-        bucket = bsal_map_add(&self->encoding_lookup_table, block);
-        bsal_memory_copy(bucket, buffer, 1);
+        bucket = biosal_map_add(&self->encoding_lookup_table, block);
+        biosal_memory_copy(bucket, buffer, 1);
 
-        bucket = bsal_map_add(&self->decoding_lookup_table, buffer);
-        bsal_memory_copy(bucket, block, self->block_length);
+        bucket = biosal_map_add(&self->decoding_lookup_table, buffer);
+        biosal_memory_copy(bucket, block, self->block_length);
     }
 
 }
 #endif
 
-int bsal_dna_codec_encoded_length(struct bsal_dna_codec *self, int length_in_nucleotides)
+int biosal_dna_codec_encoded_length(struct biosal_dna_codec *self, int length_in_nucleotides)
 {
     if (self->use_two_bit_encoding) {
-        return bsal_dna_codec_encoded_length_default(self, length_in_nucleotides);
+        return biosal_dna_codec_encoded_length_default(self, length_in_nucleotides);
     }
 
     return length_in_nucleotides + 1;
 }
 
-int bsal_dna_codec_encoded_length_default(struct bsal_dna_codec *self, int length_in_nucleotides)
+int biosal_dna_codec_encoded_length_default(struct biosal_dna_codec *self, int length_in_nucleotides)
 {
     int bits;
     int bytes;
@@ -153,28 +153,28 @@ int bsal_dna_codec_encoded_length_default(struct bsal_dna_codec *self, int lengt
     return bytes;
 }
 
-void bsal_dna_codec_encode(struct bsal_dna_codec *self,
+void biosal_dna_codec_encode(struct biosal_dna_codec *self,
                 int length_in_nucleotides, char *dna_sequence, void *encoded_sequence)
 {
     if (self->use_two_bit_encoding) {
 
-#ifdef BSAL_DNA_CODEC_USE_TWO_BIT_BLOCK_ENCODER
-        bsal_dna_codec_encode_with_blocks(self, length_in_nucleotides, dna_sequence, encoded_sequence);
+#ifdef BIOSAL_DNA_CODEC_USE_TWO_BIT_BLOCK_ENCODER
+        biosal_dna_codec_encode_with_blocks(self, length_in_nucleotides, dna_sequence, encoded_sequence);
 #else
-        bsal_dna_codec_encode_default(self, length_in_nucleotides, dna_sequence, encoded_sequence);
+        biosal_dna_codec_encode_default(self, length_in_nucleotides, dna_sequence, encoded_sequence);
 #endif
     } else {
         strcpy(encoded_sequence, dna_sequence);
     }
 }
 
-#ifdef BSAL_DNA_CODEC_USE_TWO_BIT_BLOCK_ENCODER
-void bsal_dna_codec_encode_with_blocks(struct bsal_dna_codec *self,
+#ifdef BIOSAL_DNA_CODEC_USE_TWO_BIT_BLOCK_ENCODER
+void biosal_dna_codec_encode_with_blocks(struct biosal_dna_codec *self,
                 int length_in_nucleotides, char *dna_sequence, void *encoded_sequence)
 {
 
 #if 0
-    bsal_dna_codec_encode_default(length_in_nucleotides, dna_sequence, encoded_sequence);
+    biosal_dna_codec_encode_default(length_in_nucleotides, dna_sequence, encoded_sequence);
 #endif
     int position;
     uint8_t byte;
@@ -186,7 +186,7 @@ void bsal_dna_codec_encode_with_blocks(struct bsal_dna_codec *self,
     byte_position = 0;
     position = 0;
 
-#ifdef BSAL_DNA_CODEC_DEBUG
+#ifdef BIOSAL_DNA_CODEC_DEBUG
     printf("DEBUG encoding %s\n", dna_sequence);
 #endif
 
@@ -196,7 +196,7 @@ void bsal_dna_codec_encode_with_blocks(struct bsal_dna_codec *self,
         remaining = length_in_nucleotides - position;
         block = dna_sequence + position;
 
-#ifdef BSAL_DNA_CODEC_DEBUG
+#ifdef BIOSAL_DNA_CODEC_DEBUG
         printf("DEBUG position %d remaining %d block_length %d\n",
                         position, remaining, self->block_length);
 #endif
@@ -209,15 +209,15 @@ void bsal_dna_codec_encode_with_blocks(struct bsal_dna_codec *self,
             /* A is 00, so it is the same as nothing
              */
             memset(data, 'A', self->block_length);
-            bsal_memory_copy(data, block, remaining);
+            biosal_memory_copy(data, block, remaining);
             block = data;
         }
 
-#ifdef BSAL_DNA_CODEC_DEBUG
+#ifdef BIOSAL_DNA_CODEC_DEBUG
         printf("DEBUG block %c%c%c%c\n", block[0], block[1], block[2], block[3]);
 #endif
 
-        byte = *(char *)bsal_map_get(&self->encoding_lookup_table, block);
+        byte = *(char *)biosal_map_get(&self->encoding_lookup_table, block);
         ((char *)encoded_sequence)[byte_position] = byte;
 
         byte_position++;
@@ -226,16 +226,16 @@ void bsal_dna_codec_encode_with_blocks(struct bsal_dna_codec *self,
 }
 #endif
 
-void bsal_dna_codec_encode_default(struct bsal_dna_codec *codec,
+void biosal_dna_codec_encode_default(struct biosal_dna_codec *codec,
                 int length_in_nucleotides, char *dna_sequence, void *encoded_sequence)
 {
     int i;
 
     int encoded_length;
 
-    encoded_length = bsal_dna_codec_encoded_length(codec, length_in_nucleotides);
+    encoded_length = biosal_dna_codec_encoded_length(codec, length_in_nucleotides);
 
-#ifdef BSAL_DNA_CODEC_DEBUG
+#ifdef BIOSAL_DNA_CODEC_DEBUG
     printf("DEBUG encoding %s %d nucleotides, encoded_length %d\n", dna_sequence, length_in_nucleotides,
                     encoded_length);
 #endif
@@ -249,20 +249,20 @@ void bsal_dna_codec_encode_default(struct bsal_dna_codec *codec,
 
     while (i < length_in_nucleotides) {
 
-        bsal_dna_codec_set_nucleotide(codec, encoded_sequence, i, dna_sequence[i]);
+        biosal_dna_codec_set_nucleotide(codec, encoded_sequence, i, dna_sequence[i]);
 
         i++;
     }
 }
 
-void bsal_dna_codec_decode(struct bsal_dna_codec *codec,
+void biosal_dna_codec_decode(struct biosal_dna_codec *codec,
                 int length_in_nucleotides, void *encoded_sequence, char *dna_sequence)
 {
     if (codec->use_two_bit_encoding) {
-#ifdef BSAL_DNA_CODEC_USE_TWO_BIT_BLOCK_DECODER
-        bsal_dna_codec_decode_with_blocks(codec, length_in_nucleotides, encoded_sequence, dna_sequence);
+#ifdef BIOSAL_DNA_CODEC_USE_TWO_BIT_BLOCK_DECODER
+        biosal_dna_codec_decode_with_blocks(codec, length_in_nucleotides, encoded_sequence, dna_sequence);
 #else
-        bsal_dna_codec_decode_default(codec, length_in_nucleotides, encoded_sequence, dna_sequence);
+        biosal_dna_codec_decode_default(codec, length_in_nucleotides, encoded_sequence, dna_sequence);
 
 #endif
     } else {
@@ -270,8 +270,8 @@ void bsal_dna_codec_decode(struct bsal_dna_codec *codec,
     }
 }
 
-#ifdef BSAL_DNA_CODEC_USE_TWO_BIT_BLOCK_DECODER
-void bsal_dna_codec_decode_with_blocks(struct bsal_dna_codec *self,
+#ifdef BIOSAL_DNA_CODEC_USE_TWO_BIT_BLOCK_DECODER
+void biosal_dna_codec_decode_with_blocks(struct biosal_dna_codec *self,
                 int length_in_nucleotides, void *encoded_sequence, char *dna_sequence)
 {
     char byte;
@@ -288,13 +288,13 @@ void bsal_dna_codec_decode_with_blocks(struct bsal_dna_codec *self,
 
         remaining = length_in_nucleotides - nucleotide_position;
         byte = ((char *)encoded_sequence)[encoded_position];
-        encoded_block = bsal_map_get(&self->decoding_lookup_table, &byte);
+        encoded_block = biosal_map_get(&self->decoding_lookup_table, &byte);
         to_copy = self->block_length;
 
         if (to_copy > remaining) {
             to_copy = remaining;
         }
-        bsal_memory_copy(dna_sequence + nucleotide_position, encoded_block, to_copy);
+        biosal_memory_copy(dna_sequence + nucleotide_position, encoded_block, to_copy);
 
         nucleotide_position += self->block_length;
         encoded_position++;
@@ -304,7 +304,7 @@ void bsal_dna_codec_decode_with_blocks(struct bsal_dna_codec *self,
 }
 #endif
 
-void bsal_dna_codec_decode_default(struct bsal_dna_codec *codec, int length_in_nucleotides, void *encoded_sequence, char *dna_sequence)
+void biosal_dna_codec_decode_default(struct biosal_dna_codec *codec, int length_in_nucleotides, void *encoded_sequence, char *dna_sequence)
 {
     int i;
 
@@ -312,7 +312,7 @@ void bsal_dna_codec_decode_default(struct bsal_dna_codec *codec, int length_in_n
 
     while (i < length_in_nucleotides) {
 
-        dna_sequence[i] = bsal_dna_codec_get_nucleotide(codec, encoded_sequence, i);
+        dna_sequence[i] = biosal_dna_codec_get_nucleotide(codec, encoded_sequence, i);
 
         i++;
     }
@@ -320,7 +320,7 @@ void bsal_dna_codec_decode_default(struct bsal_dna_codec *codec, int length_in_n
     dna_sequence[length_in_nucleotides] = '\0';
 }
 
-void bsal_dna_codec_set_nucleotide(struct bsal_dna_codec *self,
+void biosal_dna_codec_set_nucleotide(struct biosal_dna_codec *self,
                 void *encoded_sequence, int index, char nucleotide)
 {
     int bit_index;
@@ -344,11 +344,11 @@ void bsal_dna_codec_set_nucleotide(struct bsal_dna_codec *self,
     byte_index = bit_index / BITS_PER_BYTE;
     bit_index_in_byte = bit_index % BITS_PER_BYTE;
 
-#ifdef BSAL_DNA_CODEC_DEBUG
+#ifdef BIOSAL_DNA_CODEC_DEBUG
     printf("index %d nucleotide %c bit_index %d byte_index %d bit_index_in_byte %d\n",
                         index, nucleotide, bit_index, byte_index, bit_index_in_byte);
 
-    if (nucleotide == BSAL_NUCLEOTIDE_SYMBOL_C) {
+    if (nucleotide == BIOSAL_NUCLEOTIDE_SYMBOL_C) {
     }
 #endif
 
@@ -360,7 +360,7 @@ void bsal_dna_codec_set_nucleotide(struct bsal_dna_codec *self,
      * Remove the bits set to 1
      */
 
-    mask = BSAL_NUCLEOTIDE_CODE_T;
+    mask = BIOSAL_NUCLEOTIDE_CODE_T;
     mask <<= bit_index_in_byte;
     mask = ~mask;
 
@@ -368,10 +368,10 @@ void bsal_dna_codec_set_nucleotide(struct bsal_dna_codec *self,
 
     /* Now, apply the real mask
      */
-    mask = bsal_dna_codec_get_code(nucleotide);
+    mask = biosal_dna_codec_get_code(nucleotide);
 
-#ifdef BSAL_DNA_CODEC_DEBUG
-    if (nucleotide == BSAL_NUCLEOTIDE_SYMBOL_C) {
+#ifdef BIOSAL_DNA_CODEC_DEBUG
+    if (nucleotide == BIOSAL_NUCLEOTIDE_SYMBOL_C) {
         printf("DEBUG code is %d\n", (int)mask);
     }
 #endif
@@ -380,10 +380,10 @@ void bsal_dna_codec_set_nucleotide(struct bsal_dna_codec *self,
 
     new_byte_value |= mask;
 
-#ifdef BSAL_DNA_CODEC_DEBUG
+#ifdef BIOSAL_DNA_CODEC_DEBUG
     printf("old: %d new: %d\n", (int)old_byte_value, (int)new_byte_value);
 
-    if (nucleotide == BSAL_NUCLEOTIDE_SYMBOL_C) {
+    if (nucleotide == BIOSAL_NUCLEOTIDE_SYMBOL_C) {
 
     }
 #endif
@@ -391,33 +391,33 @@ void bsal_dna_codec_set_nucleotide(struct bsal_dna_codec *self,
     ((uint8_t *)encoded_sequence)[byte_index] = new_byte_value;
 }
 
-uint64_t bsal_dna_codec_get_code(char nucleotide)
+uint64_t biosal_dna_codec_get_code(char nucleotide)
 {
     switch (nucleotide) {
 
-        case BSAL_NUCLEOTIDE_SYMBOL_A:
-            return BSAL_NUCLEOTIDE_CODE_A;
-        case BSAL_NUCLEOTIDE_SYMBOL_T:
-            return BSAL_NUCLEOTIDE_CODE_T;
-        case BSAL_NUCLEOTIDE_SYMBOL_C:
-            return BSAL_NUCLEOTIDE_CODE_C;
-        case BSAL_NUCLEOTIDE_SYMBOL_G:
-            return BSAL_NUCLEOTIDE_CODE_G;
+        case BIOSAL_NUCLEOTIDE_SYMBOL_A:
+            return BIOSAL_NUCLEOTIDE_CODE_A;
+        case BIOSAL_NUCLEOTIDE_SYMBOL_T:
+            return BIOSAL_NUCLEOTIDE_CODE_T;
+        case BIOSAL_NUCLEOTIDE_SYMBOL_C:
+            return BIOSAL_NUCLEOTIDE_CODE_C;
+        case BIOSAL_NUCLEOTIDE_SYMBOL_G:
+            return BIOSAL_NUCLEOTIDE_CODE_G;
     }
 
-    return BSAL_NUCLEOTIDE_CODE_A;
+    return BIOSAL_NUCLEOTIDE_CODE_A;
 }
 
-char bsal_dna_codec_get_nucleotide(struct bsal_dna_codec *codec, void *encoded_sequence, int index)
+char biosal_dna_codec_get_nucleotide(struct biosal_dna_codec *codec, void *encoded_sequence, int index)
 {
     int code;
 
-    code = bsal_dna_codec_get_nucleotide_code(codec, encoded_sequence, index);
+    code = biosal_dna_codec_get_nucleotide_code(codec, encoded_sequence, index);
 
-    return bsal_dna_codec_get_nucleotide_from_code(code);
+    return biosal_dna_codec_get_nucleotide_from_code(code);
 }
 
-int bsal_dna_codec_get_nucleotide_code(struct bsal_dna_codec *codec, void *encoded_sequence, int index)
+int biosal_dna_codec_get_nucleotide_code(struct biosal_dna_codec *codec, void *encoded_sequence, int index)
 {
     int bit_index;
     int byte_index;
@@ -429,7 +429,7 @@ int bsal_dna_codec_get_nucleotide_code(struct bsal_dna_codec *codec, void *encod
     if (!codec->use_two_bit_encoding) {
         symbol = ((char *)encoded_sequence)[index];
 
-        return bsal_dna_codec_get_code(symbol);
+        return biosal_dna_codec_get_code(symbol);
     }
 
     bit_index = index * BITS_PER_NUCLEOTIDE;
@@ -440,33 +440,33 @@ int bsal_dna_codec_get_nucleotide_code(struct bsal_dna_codec *codec, void *encod
 
     code = (byte_value << (8 * BITS_PER_BYTE - BITS_PER_NUCLEOTIDE - bit_index_in_byte)) >> (8 * BITS_PER_BYTE - BITS_PER_NUCLEOTIDE);
 
-#ifdef BSAL_DNA_CODEC_DEBUG
+#ifdef BIOSAL_DNA_CODEC_DEBUG
     printf("code %d\n", (int)code);
 #endif
 
     return code;
 }
 
-char bsal_dna_codec_get_nucleotide_from_code(uint64_t code)
+char biosal_dna_codec_get_nucleotide_from_code(uint64_t code)
 {
     switch (code) {
-        case BSAL_NUCLEOTIDE_CODE_A:
-            return BSAL_NUCLEOTIDE_SYMBOL_A;
-        case BSAL_NUCLEOTIDE_CODE_T:
-            return BSAL_NUCLEOTIDE_SYMBOL_T;
-        case BSAL_NUCLEOTIDE_CODE_C:
-            return BSAL_NUCLEOTIDE_SYMBOL_C;
-        case BSAL_NUCLEOTIDE_CODE_G:
-            return BSAL_NUCLEOTIDE_SYMBOL_G;
+        case BIOSAL_NUCLEOTIDE_CODE_A:
+            return BIOSAL_NUCLEOTIDE_SYMBOL_A;
+        case BIOSAL_NUCLEOTIDE_CODE_T:
+            return BIOSAL_NUCLEOTIDE_SYMBOL_T;
+        case BIOSAL_NUCLEOTIDE_CODE_C:
+            return BIOSAL_NUCLEOTIDE_SYMBOL_C;
+        case BIOSAL_NUCLEOTIDE_CODE_G:
+            return BIOSAL_NUCLEOTIDE_SYMBOL_G;
     }
 
-    return BSAL_NUCLEOTIDE_SYMBOL_A;
+    return BIOSAL_NUCLEOTIDE_SYMBOL_A;
 }
 
 /* this would be diccult to do because the padding at the end is not
  * always a multiple of block_length
  */
-void bsal_dna_codec_reverse_complement_in_place(struct bsal_dna_codec *codec,
+void biosal_dna_codec_reverse_complement_in_place(struct biosal_dna_codec *codec,
                 int length_in_nucleotides, void *encoded_sequence)
 {
 #ifdef FAST_REVERSE_COMPLEMENT
@@ -485,7 +485,7 @@ void bsal_dna_codec_reverse_complement_in_place(struct bsal_dna_codec *codec,
     /* Abort if the 2 bit encoding is not being used.
      */
     if (!codec->use_two_bit_encoding) {
-        bsal_dna_helper_reverse_complement_in_place(encoded_sequence);
+        biosal_dna_helper_reverse_complement_in_place(encoded_sequence);
         return;
     }
 
@@ -494,12 +494,12 @@ void bsal_dna_codec_reverse_complement_in_place(struct bsal_dna_codec *codec,
     char *sequence;
 
     sequence = b212sal_memory_allocate(length_in_nucleotides + 1);
-    bsal_dna_codec_decode(codec, length_in_nucleotides, encoded_sequence, sequence);
+    biosal_dna_codec_decode(codec, length_in_nucleotides, encoded_sequence, sequence);
     printf("INPUT: %s\n", sequence);
-    bsal_memory_free(sequence);
+    biosal_memory_free(sequence);
 #endif
 
-    encoded_length = bsal_dna_codec_encoded_length(codec, length_in_nucleotides);
+    encoded_length = biosal_dna_codec_encoded_length(codec, length_in_nucleotides);
 
     i = 0;
 
@@ -526,20 +526,20 @@ void bsal_dna_codec_reverse_complement_in_place(struct bsal_dna_codec *codec,
     middle = length_in_nucleotides / 2;
     while (i < middle) {
         left = i;
-        left_nucleotide = bsal_dna_codec_get_nucleotide(codec, encoded_sequence, left);
+        left_nucleotide = biosal_dna_codec_get_nucleotide(codec, encoded_sequence, left);
 
 #if 0
         printf("%i %c\n", i, left_nucleotide);
 #endif
 
         right = length_in_nucleotides - 1 - i;
-        right_nucleotide = bsal_dna_codec_get_nucleotide(codec, encoded_sequence, right);
+        right_nucleotide = biosal_dna_codec_get_nucleotide(codec, encoded_sequence, right);
 /*
         printf("left %d %c right %d %c\n", left, left_nucleotide,
                         right, right_nucleotide);
 */
-        bsal_dna_codec_set_nucleotide(codec, encoded_sequence, left, right_nucleotide);
-        bsal_dna_codec_set_nucleotide(codec, encoded_sequence, right, left_nucleotide);
+        biosal_dna_codec_set_nucleotide(codec, encoded_sequence, left, right_nucleotide);
+        biosal_dna_codec_set_nucleotide(codec, encoded_sequence, right, left_nucleotide);
 
         ++i;
     }
@@ -560,47 +560,47 @@ void bsal_dna_codec_reverse_complement_in_place(struct bsal_dna_codec *codec,
 
     if (tail != 0) {
         i = 0;
-        blank = BSAL_NUCLEOTIDE_SYMBOL_A;
+        blank = BIOSAL_NUCLEOTIDE_SYMBOL_A;
         while (i < tail) {
-            bsal_dna_codec_set_nucleotide(codec, encoded_sequence, length_in_nucleotides + i, blank);
+            biosal_dna_codec_set_nucleotide(codec, encoded_sequence, length_in_nucleotides + i, blank);
             ++i;
         }
     }
 
 #if 0
     sequence = bs2al_memory_allocate(length_in_nucleotides + 1);
-    bsal_dna_codec_decode(codec, length_in_nucleotides, encoded_sequence, sequence);
+    biosal_dna_codec_decode(codec, length_in_nucleotides, encoded_sequence, sequence);
     printf("INPUT after: %s\n", sequence);
-    bsal_memory_free(sequence);
+    biosal_memory_free(sequence);
 #endif
 
 
 #else
     char *sequence;
 
-    sequence = bsal_memory_allocate(length_in_nucleotides + 1);
+    sequence = biosal_memory_allocate(length_in_nucleotides + 1);
 
-    bsal_dna_codec_decode(codec, length_in_nucleotides, encoded_sequence, sequence);
+    biosal_dna_codec_decode(codec, length_in_nucleotides, encoded_sequence, sequence);
 
-    bsal_dna_helper_reverse_complement_in_place(sequence);
+    biosal_dna_helper_reverse_complement_in_place(sequence);
 
-    bsal_dna_codec_encode(codec, length_in_nucleotides, sequence, encoded_sequence);
+    biosal_dna_codec_encode(codec, length_in_nucleotides, sequence, encoded_sequence);
 
-    bsal_memory_free(sequence);
+    biosal_memory_free(sequence);
 #endif
 }
 
-void bsal_dna_codec_enable_two_bit_encoding(struct bsal_dna_codec *codec)
+void biosal_dna_codec_enable_two_bit_encoding(struct biosal_dna_codec *codec)
 {
     codec->use_two_bit_encoding = 1;
 }
 
-void bsal_dna_codec_disable_two_bit_encoding(struct bsal_dna_codec *codec)
+void biosal_dna_codec_disable_two_bit_encoding(struct biosal_dna_codec *codec)
 {
     codec->use_two_bit_encoding = 0;
 }
 
-int bsal_dna_codec_is_canonical(struct bsal_dna_codec *codec,
+int biosal_dna_codec_is_canonical(struct biosal_dna_codec *codec,
                 int length_in_nucleotides, void *encoded_sequence)
 {
     int i;
@@ -611,12 +611,12 @@ int bsal_dna_codec_is_canonical(struct bsal_dna_codec *codec,
 
     while (i < length_in_nucleotides) {
 
-        nucleotide = bsal_dna_codec_get_nucleotide(codec, encoded_sequence, i);
+        nucleotide = biosal_dna_codec_get_nucleotide(codec, encoded_sequence, i);
 
-        other_nucleotide = bsal_dna_codec_get_nucleotide(codec, encoded_sequence,
+        other_nucleotide = biosal_dna_codec_get_nucleotide(codec, encoded_sequence,
                         length_in_nucleotides - 1 - i);
 
-        other_nucleotide = bsal_dna_helper_complement_nucleotide(other_nucleotide);
+        other_nucleotide = biosal_dna_helper_complement_nucleotide(other_nucleotide);
 
         /* It is canonical
          */
@@ -641,19 +641,19 @@ int bsal_dna_codec_is_canonical(struct bsal_dna_codec *codec,
     return 1;
 }
 
-int bsal_dna_codec_get_complement(int code)
+int biosal_dna_codec_get_complement(int code)
 {
-    if (code == BSAL_NUCLEOTIDE_CODE_A) {
-        return BSAL_NUCLEOTIDE_CODE_T;
+    if (code == BIOSAL_NUCLEOTIDE_CODE_A) {
+        return BIOSAL_NUCLEOTIDE_CODE_T;
 
-    } else if (code == BSAL_NUCLEOTIDE_CODE_C) {
-        return BSAL_NUCLEOTIDE_CODE_G;
+    } else if (code == BIOSAL_NUCLEOTIDE_CODE_C) {
+        return BIOSAL_NUCLEOTIDE_CODE_G;
 
-    } else if (code == BSAL_NUCLEOTIDE_CODE_G) {
-        return BSAL_NUCLEOTIDE_CODE_C;
+    } else if (code == BIOSAL_NUCLEOTIDE_CODE_G) {
+        return BIOSAL_NUCLEOTIDE_CODE_C;
 
-    } else if (code == BSAL_NUCLEOTIDE_CODE_T) {
-        return BSAL_NUCLEOTIDE_CODE_A;
+    } else if (code == BIOSAL_NUCLEOTIDE_CODE_T) {
+        return BIOSAL_NUCLEOTIDE_CODE_A;
     }
 
     /*
@@ -662,7 +662,7 @@ int bsal_dna_codec_get_complement(int code)
     return -1;
 }
 
-void bsal_dna_codec_mutate_as_child(struct bsal_dna_codec *self,
+void biosal_dna_codec_mutate_as_child(struct biosal_dna_codec *self,
                 int length_in_nucleotides, void *encoded_sequence, int last_code)
 {
     int i;
@@ -673,23 +673,23 @@ void bsal_dna_codec_mutate_as_child(struct bsal_dna_codec *self,
 
     for (i = 0 ; i < limit ; i++) {
 
-        nucleotide = bsal_dna_codec_get_nucleotide(self, encoded_sequence, i + 1);
-        bsal_dna_codec_set_nucleotide(self, encoded_sequence, i, nucleotide);
+        nucleotide = biosal_dna_codec_get_nucleotide(self, encoded_sequence, i + 1);
+        biosal_dna_codec_set_nucleotide(self, encoded_sequence, i, nucleotide);
     }
 
-    nucleotide = bsal_dna_codec_get_nucleotide_from_code(last_code);
+    nucleotide = biosal_dna_codec_get_nucleotide_from_code(last_code);
 
-    bsal_dna_codec_set_nucleotide(self, encoded_sequence, length_in_nucleotides - 1,
+    biosal_dna_codec_set_nucleotide(self, encoded_sequence, length_in_nucleotides - 1,
                     nucleotide);
 }
 
-int bsal_dna_codec_must_use_two_bit_encoding(struct bsal_dna_codec *self,
+int biosal_dna_codec_must_use_two_bit_encoding(struct biosal_dna_codec *self,
                 int node_count)
 {
-    return node_count >= BSAL_DNA_CODEC_MINIMUM_NODE_COUNT_FOR_TWO_BIT;
+    return node_count >= BIOSAL_DNA_CODEC_MINIMUM_NODE_COUNT_FOR_TWO_BIT;
 }
 
-void bsal_dna_codec_mutate_as_parent(struct bsal_dna_codec *self,
+void biosal_dna_codec_mutate_as_parent(struct biosal_dna_codec *self,
                 int length_in_nucleotides, void *encoded_sequence, int first_code)
 {
     char nucleotide;
@@ -706,16 +706,16 @@ void bsal_dna_codec_mutate_as_parent(struct bsal_dna_codec *self,
 
     while (old_position >= 0) {
 
-        nucleotide = bsal_dna_codec_get_nucleotide(self, encoded_sequence, old_position);
-        bsal_dna_codec_set_nucleotide(self, encoded_sequence, new_position, nucleotide);
+        nucleotide = biosal_dna_codec_get_nucleotide(self, encoded_sequence, old_position);
+        biosal_dna_codec_set_nucleotide(self, encoded_sequence, new_position, nucleotide);
 
         --old_position;
         --new_position;
     }
 
-    nucleotide = bsal_dna_codec_get_nucleotide_from_code(first_code);
+    nucleotide = biosal_dna_codec_get_nucleotide_from_code(first_code);
 
-    bsal_dna_codec_set_nucleotide(self, encoded_sequence, 0, nucleotide);
+    biosal_dna_codec_set_nucleotide(self, encoded_sequence, 0, nucleotide);
 }
 
 

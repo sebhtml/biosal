@@ -6,31 +6,31 @@
 #include <stdlib.h>
 #include <string.h>
 
-void bsal_vector_iterator_init(struct bsal_vector_iterator *self, struct bsal_vector *list)
+void biosal_vector_iterator_init(struct biosal_vector_iterator *self, struct biosal_vector *list)
 {
     self->list = list;
     self->index = 0;
 }
 
-void bsal_vector_iterator_destroy(struct bsal_vector_iterator *self)
+void biosal_vector_iterator_destroy(struct biosal_vector_iterator *self)
 {
     self->list = NULL;
     self->index = 0;
 }
 
-int bsal_vector_iterator_has_next(struct bsal_vector_iterator *self)
+int biosal_vector_iterator_has_next(struct biosal_vector_iterator *self)
 {
-    return self->index < bsal_vector_size(self->list);
+    return self->index < biosal_vector_size(self->list);
 }
 
-int bsal_vector_iterator_next(struct bsal_vector_iterator *self, void **value)
+int biosal_vector_iterator_next(struct biosal_vector_iterator *self, void **value)
 {
-    if (!bsal_vector_iterator_has_next(self)) {
+    if (!biosal_vector_iterator_has_next(self)) {
         return 0;
     }
 
     if (value != NULL) {
-        *value = bsal_vector_at(self->list, self->index);
+        *value = biosal_vector_at(self->list, self->index);
     }
 
     self->index++;
@@ -38,18 +38,18 @@ int bsal_vector_iterator_next(struct bsal_vector_iterator *self, void **value)
     return 1;
 }
 
-int bsal_vector_iterator_get_next_value(struct bsal_vector_iterator *self, void *value)
+int biosal_vector_iterator_get_next_value(struct biosal_vector_iterator *self, void *value)
 {
     void *bucket;
     int size;
 
-    if (!bsal_vector_iterator_next(self, (void **)&bucket)) {
+    if (!biosal_vector_iterator_next(self, (void **)&bucket)) {
         return 0;
     }
 
     if (value != NULL) {
-        size = bsal_vector_element_size(self->list);
-        bsal_memory_copy(value, bucket, size);
+        size = biosal_vector_element_size(self->list);
+        biosal_memory_copy(value, bucket, size);
     }
 
     return 1;

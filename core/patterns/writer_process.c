@@ -1,18 +1,18 @@
 
 #include "writer_process.h"
 
-struct thorium_script bsal_writer_process_script = {
+struct thorium_script biosal_writer_process_script = {
     .identifier = SCRIPT_WRITER_PROCESS,
-    .name = "bsal_writer_process",
-    .size = sizeof(struct bsal_writer_process),
-    .init = bsal_writer_process_init,
-    .destroy = bsal_writer_process_destroy,
-    .receive = bsal_writer_process_receive
+    .name = "biosal_writer_process",
+    .size = sizeof(struct biosal_writer_process),
+    .init = biosal_writer_process_init,
+    .destroy = biosal_writer_process_destroy,
+    .receive = biosal_writer_process_receive
 };
 
-void bsal_writer_process_init(struct thorium_actor *self)
+void biosal_writer_process_init(struct thorium_actor *self)
 {
-    struct bsal_writer_process *concrete_self;
+    struct biosal_writer_process *concrete_self;
 
     concrete_self = thorium_actor_concrete_actor(self);
 
@@ -23,23 +23,23 @@ void bsal_writer_process_init(struct thorium_actor *self)
                     thorium_actor_name(self));
 }
 
-void bsal_writer_process_destroy(struct thorium_actor *self)
+void biosal_writer_process_destroy(struct thorium_actor *self)
 {
-    struct bsal_writer_process *concrete_self;
+    struct biosal_writer_process *concrete_self;
 
     concrete_self = thorium_actor_concrete_actor(self);
 
     concrete_self->has_file = 0;
 }
 
-void bsal_writer_process_receive(struct thorium_actor *self, struct thorium_message *message)
+void biosal_writer_process_receive(struct thorium_actor *self, struct thorium_message *message)
 {
     int action;
     int count;
     int source;
     char *buffer;
     char *file_name;
-    struct bsal_writer_process *concrete_self;
+    struct biosal_writer_process *concrete_self;
 
     concrete_self = thorium_actor_concrete_actor(self);
 
@@ -57,7 +57,7 @@ void bsal_writer_process_receive(struct thorium_actor *self, struct thorium_mess
 
         file_name = buffer;
 
-        bsal_buffered_file_writer_init(&concrete_self->writer, file_name);
+        biosal_buffered_file_writer_init(&concrete_self->writer, file_name);
 
         concrete_self->has_file = 1;
 
@@ -65,7 +65,7 @@ void bsal_writer_process_receive(struct thorium_actor *self, struct thorium_mess
 
     } else if (action == ACTION_WRITE) {
 
-        bsal_buffered_file_writer_write(&concrete_self->writer, buffer, count);
+        biosal_buffered_file_writer_write(&concrete_self->writer, buffer, count);
 
         thorium_actor_send_reply_empty(self, ACTION_WRITE_REPLY);
 
@@ -76,7 +76,7 @@ void bsal_writer_process_receive(struct thorium_actor *self, struct thorium_mess
             return;
         }
 
-        bsal_buffered_file_writer_destroy(&concrete_self->writer);
+        biosal_buffered_file_writer_destroy(&concrete_self->writer);
         concrete_self->has_file = 0;
 
         thorium_actor_send_reply_empty(self, ACTION_CLOSE_REPLY);
@@ -90,7 +90,7 @@ void bsal_writer_process_receive(struct thorium_actor *self, struct thorium_mess
          */
         if (concrete_self->has_file) {
 
-            bsal_buffered_file_writer_destroy(&concrete_self->writer);
+            biosal_buffered_file_writer_destroy(&concrete_self->writer);
             concrete_self->has_file = 0;
         }
 

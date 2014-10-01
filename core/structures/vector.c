@@ -10,42 +10,42 @@
 #include <string.h>
 
 /*
-#define BSAL_VECTOR_DEBUG
+#define BIOSAL_VECTOR_DEBUG
 */
 
-#define BSAL_VECTOR_INITIAL_BUCKET_COUNT 1
+#define BIOSAL_VECTOR_INITIAL_BUCKET_COUNT 1
 
-void bsal_vector_init(struct bsal_vector *self, int element_size)
+void biosal_vector_init(struct biosal_vector *self, int element_size)
 {
     self->element_size = element_size;
     self->maximum_size = 0;
     self->size = 0;
     self->data = NULL;
 
-    bsal_vector_set_memory_pool(self, NULL);
+    biosal_vector_set_memory_pool(self, NULL);
 
     self->profile_allocate_calls = 0;
     self->profile_free_calls = 0;
 }
 
-void bsal_vector_destroy(struct bsal_vector *self)
+void biosal_vector_destroy(struct biosal_vector *self)
 {
     if (self->data != NULL) {
-        bsal_memory_pool_free(self->memory, self->data);
+        biosal_memory_pool_free(self->memory, self->data);
         ++self->profile_free_calls;
         self->data = NULL;
     }
 
-    BSAL_DEBUGGER_ASSERT(self->profile_allocate_calls == self->profile_free_calls);
+    BIOSAL_DEBUGGER_ASSERT(self->profile_allocate_calls == self->profile_free_calls);
 
     self->element_size = 0;
     self->maximum_size = 0;
     self->size = 0;
 
-    bsal_vector_set_memory_pool(self, NULL);
+    biosal_vector_set_memory_pool(self, NULL);
 }
 
-void bsal_vector_resize(struct bsal_vector *self, int64_t size)
+void biosal_vector_resize(struct biosal_vector *self, int64_t size)
 {
     if (size == self->size) {
         return;
@@ -67,31 +67,31 @@ void bsal_vector_resize(struct bsal_vector *self, int64_t size)
     }
 
     /* otherwise, the array needs to grow */
-    bsal_vector_reserve(self, size);
+    biosal_vector_reserve(self, size);
     self->size = self->maximum_size;
 
-#ifdef BSAL_VECTOR_DEBUG
+#ifdef BIOSAL_VECTOR_DEBUG
     printf("DEBUG resized to %d\n", self->size);
 #endif
 }
 
-int64_t bsal_vector_size(struct bsal_vector *self)
+int64_t biosal_vector_size(struct biosal_vector *self)
 {
-    BSAL_DEBUGGER_ASSERT(self != NULL);
+    BIOSAL_DEBUGGER_ASSERT(self != NULL);
 
     return self->size;
 }
 
-void bsal_vector_push_back(struct bsal_vector *self, void *data)
+void biosal_vector_push_back(struct biosal_vector *self, void *data)
 {
     int64_t index;
     int64_t new_maximum_size;
     void *bucket;
 
-    BSAL_DEBUGGER_ASSERT(data != NULL);
+    BIOSAL_DEBUGGER_ASSERT(data != NULL);
 
-#ifdef BSAL_VECTOR_DEBUG
-    printf("DEBUG bsal_vector_push_back size %d max %d\n",
+#ifdef BIOSAL_VECTOR_DEBUG
+    printf("DEBUG biosal_vector_push_back size %d max %d\n",
                     (int)self->size, (int)self->maximum_size);
 #endif
 
@@ -100,49 +100,49 @@ void bsal_vector_push_back(struct bsal_vector *self, void *data)
         new_maximum_size = 2 * self->maximum_size;
 
         if (new_maximum_size == 0) {
-            new_maximum_size = BSAL_VECTOR_INITIAL_BUCKET_COUNT;
+            new_maximum_size = BIOSAL_VECTOR_INITIAL_BUCKET_COUNT;
         }
 
-        bsal_vector_reserve(self, new_maximum_size);
-        bsal_vector_push_back(self, data);
+        biosal_vector_reserve(self, new_maximum_size);
+        biosal_vector_push_back(self, data);
         return;
     }
 
     index = self->size;
     self->size++;
-    bucket = bsal_vector_at(self, index);
-    bsal_memory_copy(bucket, data, self->element_size);
+    bucket = biosal_vector_at(self, index);
+    biosal_memory_copy(bucket, data, self->element_size);
 
-#ifdef BSAL_VECTOR_DEBUG
-    printf("DEBUG bsal_vector_push_back new_size is %d, pushed in bucket %d, value in bucket %d\n",
+#ifdef BIOSAL_VECTOR_DEBUG
+    printf("DEBUG biosal_vector_push_back new_size is %d, pushed in bucket %d, value in bucket %d\n",
                     self->size, index, *(int *)bucket);
 #endif
 }
 
-int bsal_vector_pack_size(struct bsal_vector *self)
+int biosal_vector_pack_size(struct biosal_vector *self)
 {
-    return bsal_vector_pack_unpack(self, NULL, BSAL_PACKER_OPERATION_PACK_SIZE);
+    return biosal_vector_pack_unpack(self, NULL, BIOSAL_PACKER_OPERATION_PACK_SIZE);
 }
 
-int bsal_vector_pack(struct bsal_vector *self, void *buffer)
+int biosal_vector_pack(struct biosal_vector *self, void *buffer)
 {
-    return bsal_vector_pack_unpack(self, buffer, BSAL_PACKER_OPERATION_PACK);
+    return biosal_vector_pack_unpack(self, buffer, BIOSAL_PACKER_OPERATION_PACK);
 }
 
-int bsal_vector_unpack(struct bsal_vector *self, void *buffer)
+int biosal_vector_unpack(struct biosal_vector *self, void *buffer)
 {
-    return bsal_vector_pack_unpack(self, buffer, BSAL_PACKER_OPERATION_UNPACK);
+    return biosal_vector_pack_unpack(self, buffer, BIOSAL_PACKER_OPERATION_UNPACK);
 }
 
-int64_t bsal_vector_index_of(struct bsal_vector *self, void *data)
+int64_t biosal_vector_index_of(struct biosal_vector *self, void *data)
 {
     int64_t i;
     int64_t last;
 
-    last = bsal_vector_size(self) - 1;
+    last = biosal_vector_size(self) - 1;
 
     for (i = 0; i <= last; i++) {
-        if (memcmp(bsal_vector_at(self, i), data, self->element_size) == 0) {
+        if (memcmp(biosal_vector_at(self, i), data, self->element_size) == 0) {
             return i;
         }
     }
@@ -150,14 +150,14 @@ int64_t bsal_vector_index_of(struct bsal_vector *self, void *data)
     return -1;
 }
 
-void bsal_vector_reserve(struct bsal_vector *self, int64_t size)
+void biosal_vector_reserve(struct biosal_vector *self, int64_t size)
 {
     void *new_data;
     int64_t old_byte_count;
     int64_t new_byte_count;
 
-#ifdef BSAL_VECTOR_DEBUG
-    printf("DEBUG bsal_vector_reserve %p %d buckets current_size %d\n",
+#ifdef BIOSAL_VECTOR_DEBUG
+    printf("DEBUG biosal_vector_reserve %p %d buckets current_size %d\n",
                     (void *)self,
                     (int)size,
                     (int)self->size);
@@ -170,15 +170,15 @@ void bsal_vector_reserve(struct bsal_vector *self, int64_t size)
     new_byte_count = size * self->element_size;
     old_byte_count = self->size * self->element_size;
 
-#ifdef BSAL_VECTOR_DEBUG
-    printf("DEBUG bsal_vector_reserve old_byte_count %d new_byte_count %d\n",
+#ifdef BIOSAL_VECTOR_DEBUG
+    printf("DEBUG biosal_vector_reserve old_byte_count %d new_byte_count %d\n",
                     old_byte_count, new_byte_count);
 #endif
 
-    new_data = bsal_memory_pool_allocate(self->memory, new_byte_count);
+    new_data = biosal_memory_pool_allocate(self->memory, new_byte_count);
     ++self->profile_allocate_calls;
 
-#ifdef BSAL_VECTOR_DEBUG
+#ifdef BIOSAL_VECTOR_DEBUG
     printf("DEBUG size %d old %p new %p\n", (int)self->size,
                     (void *)self->data, (void *)new_data);
 #endif
@@ -187,8 +187,8 @@ void bsal_vector_reserve(struct bsal_vector *self, int64_t size)
      * copy old data
      */
     if (self->size > 0) {
-        bsal_memory_copy(new_data, self->data, old_byte_count);
-        bsal_memory_pool_free(self->memory, self->data);
+        biosal_memory_copy(new_data, self->data, old_byte_count);
+        biosal_memory_pool_free(self->memory, self->data);
         ++self->profile_free_calls;
 
         self->data = NULL;
@@ -198,56 +198,56 @@ void bsal_vector_reserve(struct bsal_vector *self, int64_t size)
     self->maximum_size = size;
 }
 
-int64_t bsal_vector_capacity(struct bsal_vector *self)
+int64_t biosal_vector_capacity(struct biosal_vector *self)
 {
     return self->maximum_size;
 }
 
-void bsal_vector_update(struct bsal_vector *self, void *old_item, void *new_item)
+void biosal_vector_update(struct biosal_vector *self, void *old_item, void *new_item)
 {
     int64_t i;
     int64_t last;
     void *bucket;
 
-    last = bsal_vector_size(self) - 1;
+    last = biosal_vector_size(self) - 1;
 
     for (i = 0; i <= last; i++) {
-        bucket = bsal_vector_at(self, i);
+        bucket = biosal_vector_at(self, i);
         if (memcmp(bucket, old_item, self->element_size) == 0) {
 
-            bsal_vector_set(self, i, new_item);
+            biosal_vector_set(self, i, new_item);
         }
     }
 }
 
-int bsal_vector_pack_unpack(struct bsal_vector *self, void *buffer, int operation)
+int biosal_vector_pack_unpack(struct biosal_vector *self, void *buffer, int operation)
 {
-    struct bsal_packer packer;
+    struct biosal_packer packer;
     int64_t bytes;
     int size;
-    struct bsal_memory_pool *memory;
+    struct biosal_memory_pool *memory;
 
-    bsal_packer_init(&packer, operation, buffer);
+    biosal_packer_init(&packer, operation, buffer);
 
-    bsal_packer_process(&packer, &self->size, sizeof(self->size));
+    biosal_packer_process(&packer, &self->size, sizeof(self->size));
 
-#ifdef BSAL_VECTOR_DEBUG
-    printf("DEBUG bsal_vector_pack_unpack operation %d size %d\n",
+#ifdef BIOSAL_VECTOR_DEBUG
+    printf("DEBUG biosal_vector_pack_unpack operation %d size %d\n",
                     operation, self->size);
 #endif
 
-    bsal_packer_process(&packer, &self->element_size, sizeof(self->element_size));
+    biosal_packer_process(&packer, &self->element_size, sizeof(self->element_size));
 
-#ifdef BSAL_VECTOR_DEBUG
-    printf("DEBUG bsal_vector_pack_unpack operation %d element_size %d\n",
+#ifdef BIOSAL_VECTOR_DEBUG
+    printf("DEBUG biosal_vector_pack_unpack operation %d element_size %d\n",
                     operation, self->element_size);
 #endif
 
-    if (operation == BSAL_PACKER_OPERATION_UNPACK) {
+    if (operation == BIOSAL_PACKER_OPERATION_UNPACK) {
 
         size = self->size;
         memory = self->memory;
-        bsal_vector_init(self, self->element_size);
+        biosal_vector_init(self, self->element_size);
 
         /*
          * Restore attributes.
@@ -257,7 +257,7 @@ int bsal_vector_pack_unpack(struct bsal_vector *self, void *buffer, int operatio
         self->memory = memory;
 
         if (self->size > 0) {
-            self->data = bsal_memory_pool_allocate(self->memory, self->maximum_size * self->element_size);
+            self->data = biosal_memory_pool_allocate(self->memory, self->maximum_size * self->element_size);
             ++self->profile_allocate_calls;
         } else {
             self->data = NULL;
@@ -266,51 +266,51 @@ int bsal_vector_pack_unpack(struct bsal_vector *self, void *buffer, int operatio
 
     if (self->size > 0) {
 
-        bsal_packer_process(&packer, self->data, self->size * self->element_size);
+        biosal_packer_process(&packer, self->data, self->size * self->element_size);
     }
 
-    bytes = bsal_packer_get_byte_count(&packer);
-    bsal_packer_destroy(&packer);
+    bytes = biosal_packer_get_byte_count(&packer);
+    biosal_packer_destroy(&packer);
 
     return bytes;
 }
 
-int bsal_vector_element_size(struct bsal_vector *self)
+int biosal_vector_element_size(struct biosal_vector *self)
 {
     return self->element_size;
 }
 
-void bsal_vector_init_copy(struct bsal_vector *self, struct bsal_vector *other)
+void biosal_vector_init_copy(struct biosal_vector *self, struct biosal_vector *other)
 {
-    bsal_vector_init(self, bsal_vector_element_size(other));
+    biosal_vector_init(self, biosal_vector_element_size(other));
 
-    bsal_vector_push_back_vector(self, other);
+    biosal_vector_push_back_vector(self, other);
 }
 
-int bsal_vector_get_value(struct bsal_vector *self, int64_t index, void *value)
+int biosal_vector_get_value(struct biosal_vector *self, int64_t index, void *value)
 {
     void *bucket;
 
-    bucket = bsal_vector_at(self, index);
+    bucket = biosal_vector_at(self, index);
 
     if (bucket == NULL) {
         return 0;
     }
 
-    bsal_memory_copy(value, bucket, self->element_size);
+    biosal_memory_copy(value, bucket, self->element_size);
 
     return 1;
 }
 
-void bsal_vector_set_memory_pool(struct bsal_vector *self, struct bsal_memory_pool *memory)
+void biosal_vector_set_memory_pool(struct biosal_vector *self, struct biosal_memory_pool *memory)
 {
     self->memory = memory;
 }
 
-void *bsal_vector_at(struct bsal_vector *self, int64_t index)
+void *biosal_vector_at(struct biosal_vector *self, int64_t index)
 {
 #if 0
-    BSAL_DEBUGGER_ASSERT(index < self->size);
+    BIOSAL_DEBUGGER_ASSERT(index < self->size);
 #endif
 
     if (index >= self->size) {
@@ -324,20 +324,20 @@ void *bsal_vector_at(struct bsal_vector *self, int64_t index)
     return ((char *)self->data) + index * self->element_size;
 }
 
-void bsal_vector_set(struct bsal_vector *self, int64_t index, void *data)
+void biosal_vector_set(struct biosal_vector *self, int64_t index, void *data)
 {
     void *bucket;
 
-    bucket = bsal_vector_at(self, index);
-    bsal_memory_copy(bucket, data, self->element_size);
+    bucket = biosal_vector_at(self, index);
+    biosal_memory_copy(bucket, data, self->element_size);
 }
 
-int bsal_vector_empty(struct bsal_vector *self)
+int biosal_vector_empty(struct biosal_vector *self)
 {
-    return bsal_vector_size(self) == 0;
+    return biosal_vector_size(self) == 0;
 }
 
-void bsal_vector_clear(struct bsal_vector *self)
+void biosal_vector_clear(struct biosal_vector *self)
 {
-    bsal_vector_resize(self, 0);
+    biosal_vector_resize(self, 0);
 }

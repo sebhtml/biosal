@@ -67,7 +67,7 @@ void thorium_worker_pool_init(struct thorium_worker_pool *pool, int workers,
 
     pool->ticks_without_messages = 0;
 
-    bsal_fast_queue_init(&pool->messages_for_triage, sizeof(struct thorium_message));
+    biosal_fast_queue_init(&pool->messages_for_triage, sizeof(struct thorium_message));
 
     pool->last_warning = 0;
     pool->last_scheduling_warning = 0;
@@ -86,7 +86,7 @@ void thorium_worker_pool_init(struct thorium_worker_pool *pool, int workers,
     }
 
 #ifdef THORIUM_WORKER_POOL_HAS_SPECIAL_QUEUES
-    bsal_work_queue_init(&pool->work_queue);
+    biosal_work_queue_init(&pool->work_queue);
     thorium_message_queue_init(&pool->message_queue);
 #endif
 
@@ -102,8 +102,8 @@ void thorium_worker_pool_init(struct thorium_worker_pool *pool, int workers,
 
     pool->starting_time = time(NULL);
 
-    bsal_fast_queue_init(&pool->scheduled_actor_queue_buffer, sizeof(struct thorium_actor *));
-    bsal_fast_queue_init(&pool->inbound_message_queue_buffer, sizeof(struct thorium_message));
+    biosal_fast_queue_init(&pool->scheduled_actor_queue_buffer, sizeof(struct thorium_actor *));
+    biosal_fast_queue_init(&pool->inbound_message_queue_buffer, sizeof(struct thorium_message));
 
     pool->last_balancing = pool->starting_time;
     pool->last_signal_check = pool->starting_time;
@@ -119,9 +119,9 @@ void thorium_worker_pool_destroy(struct thorium_worker_pool *pool)
 
     pool->node = NULL;
 
-    bsal_fast_queue_destroy(&pool->inbound_message_queue_buffer);
-    bsal_fast_queue_destroy(&pool->scheduled_actor_queue_buffer);
-    bsal_fast_queue_destroy(&pool->messages_for_triage);
+    biosal_fast_queue_destroy(&pool->inbound_message_queue_buffer);
+    biosal_fast_queue_destroy(&pool->scheduled_actor_queue_buffer);
+    biosal_fast_queue_destroy(&pool->messages_for_triage);
 }
 
 void thorium_worker_pool_delete_workers(struct thorium_worker_pool *pool)
@@ -144,8 +144,8 @@ void thorium_worker_pool_delete_workers(struct thorium_worker_pool *pool)
         thorium_worker_destroy(worker);
     }
 
-    bsal_vector_destroy(&pool->worker_array);
-    bsal_vector_destroy(&pool->message_count_cache);
+    biosal_vector_destroy(&pool->worker_array);
+    biosal_vector_destroy(&pool->message_count_cache);
 }
 
 void thorium_worker_pool_create_workers(struct thorium_worker_pool *pool)
@@ -157,14 +157,14 @@ void thorium_worker_pool_create_workers(struct thorium_worker_pool *pool)
         return;
     }
 
-    bsal_vector_init(&pool->worker_array, sizeof(struct thorium_worker));
-    bsal_vector_init(&pool->message_count_cache, sizeof(int));
+    biosal_vector_init(&pool->worker_array, sizeof(struct thorium_worker));
+    biosal_vector_init(&pool->message_count_cache, sizeof(int));
 
-    bsal_vector_resize(&pool->worker_array, pool->workers);
-    bsal_vector_resize(&pool->message_count_cache, pool->workers);
+    biosal_vector_resize(&pool->worker_array, pool->workers);
+    biosal_vector_resize(&pool->message_count_cache, pool->workers);
 
-    pool->worker_cache = (struct thorium_worker *)bsal_vector_at(&pool->worker_array, 0);
-    pool->message_cache = (int *)bsal_vector_at(&pool->message_count_cache, 0);
+    pool->worker_cache = (struct thorium_worker *)biosal_vector_at(&pool->worker_array, 0);
+    pool->message_cache = (int *)biosal_vector_at(&pool->message_count_cache, 0);
 
     for (i = 0; i < pool->workers; i++) {
 
@@ -175,7 +175,7 @@ void thorium_worker_pool_create_workers(struct thorium_worker_pool *pool)
             thorium_worker_enable_waiting(worker);
         }
 
-        bsal_vector_set_int(&pool->message_count_cache, i, 0);
+        biosal_vector_set_int(&pool->message_count_cache, i, 0);
     }
 }
 
@@ -293,9 +293,9 @@ void thorium_worker_pool_print_load(struct thorium_worker_pool *self, int type)
     count = thorium_worker_pool_worker_count(self);
     allocated = count * 20 + 20 + extra;
 
-    buffer = bsal_memory_allocate(allocated, MEMORY_WORKER_POOL_KEY);
-    buffer_for_wake_up_events = bsal_memory_allocate(allocated, MEMORY_WORKER_POOL_KEY);
-    buffer_for_future_timeline = bsal_memory_allocate(allocated, MEMORY_WORKER_POOL_KEY);
+    buffer = biosal_memory_allocate(allocated, MEMORY_WORKER_POOL_KEY);
+    buffer_for_wake_up_events = biosal_memory_allocate(allocated, MEMORY_WORKER_POOL_KEY);
+    buffer_for_future_timeline = biosal_memory_allocate(allocated, MEMORY_WORKER_POOL_KEY);
     node_name = thorium_node_name(self->node);
     offset = 0;
     offset_for_wake_up = 0;
@@ -360,9 +360,9 @@ void thorium_worker_pool_print_load(struct thorium_worker_pool *self, int type)
                     description, elapsed,
                     buffer_for_wake_up_events);
 
-    bsal_memory_free(buffer, MEMORY_WORKER_POOL_KEY);
-    bsal_memory_free(buffer_for_wake_up_events, MEMORY_WORKER_POOL_KEY);
-    bsal_memory_free(buffer_for_future_timeline, MEMORY_WORKER_POOL_KEY);
+    biosal_memory_free(buffer, MEMORY_WORKER_POOL_KEY);
+    biosal_memory_free(buffer_for_wake_up_events, MEMORY_WORKER_POOL_KEY);
+    biosal_memory_free(buffer_for_future_timeline, MEMORY_WORKER_POOL_KEY);
 }
 
 void thorium_worker_pool_toggle_debug_mode(struct thorium_worker_pool *self)
@@ -418,7 +418,7 @@ int thorium_worker_pool_give_message_to_actor(struct thorium_worker_pool *pool, 
         printf("DEAD LETTER CHANNEL...\n");
 #endif
 
-        bsal_fast_queue_enqueue(&pool->messages_for_triage, message);
+        biosal_fast_queue_enqueue(&pool->messages_for_triage, message);
 
         return 0;
     }
@@ -429,7 +429,7 @@ int thorium_worker_pool_give_message_to_actor(struct thorium_worker_pool *pool, 
      */
     if (dead) {
 
-        bsal_fast_queue_enqueue(&pool->messages_for_triage, message);
+        biosal_fast_queue_enqueue(&pool->messages_for_triage, message);
 
         return 0;
     }
@@ -444,7 +444,7 @@ int thorium_worker_pool_give_message_to_actor(struct thorium_worker_pool *pool, 
         printf("DEBUG897 could not enqueue message, buffering...\n");
 #endif
 
-        bsal_fast_queue_enqueue(&pool->inbound_message_queue_buffer, message);
+        biosal_fast_queue_enqueue(&pool->inbound_message_queue_buffer, message);
 
     } else {
         /*
@@ -478,7 +478,7 @@ int thorium_worker_pool_give_message_to_actor(struct thorium_worker_pool *pool, 
          * If that fails, queue the actor.
          */
         if (!thorium_worker_enqueue_actor(affinity_worker, actor)) {
-            bsal_fast_queue_enqueue(&pool->scheduled_actor_queue_buffer, &actor);
+            biosal_fast_queue_enqueue(&pool->scheduled_actor_queue_buffer, &actor);
         }
     }
 
@@ -499,14 +499,14 @@ void thorium_worker_pool_work(struct thorium_worker_pool *pool)
     /* If there are messages in the inbound message buffer,
      * Try to give  them too.
      */
-    if (bsal_fast_queue_dequeue(&pool->inbound_message_queue_buffer, &other_message)) {
+    if (biosal_fast_queue_dequeue(&pool->inbound_message_queue_buffer, &other_message)) {
         thorium_worker_pool_give_message_to_actor(pool, &other_message);
     }
 
     /* Try to dequeue an actor for scheduling
      */
 
-    if (bsal_fast_queue_dequeue(&pool->scheduled_actor_queue_buffer, &actor)) {
+    if (biosal_fast_queue_dequeue(&pool->scheduled_actor_queue_buffer, &actor)) {
 
         name = thorium_actor_name(actor);
         worker_index = thorium_balancer_get_actor_worker(&pool->balancer, name);
@@ -534,7 +534,7 @@ void thorium_worker_pool_work(struct thorium_worker_pool *pool)
         worker = thorium_worker_pool_get_worker(pool, worker_index);
 
         if (!thorium_worker_enqueue_actor(worker, actor)) {
-            bsal_fast_queue_enqueue(&pool->scheduled_actor_queue_buffer, &actor);
+            biosal_fast_queue_enqueue(&pool->scheduled_actor_queue_buffer, &actor);
         }
     }
 
@@ -607,14 +607,14 @@ void thorium_worker_pool_assign_worker_to_actor(struct thorium_worker_pool *pool
     /* The actor can't be dead if it does not have an initial
      * placement...
      */
-    BSAL_DEBUGGER_ASSERT(actor != NULL);
+    BIOSAL_DEBUGGER_ASSERT(actor != NULL);
 
     script = thorium_actor_script(actor);
 
     worker_index = thorium_balancer_select_worker_script_round_robin(&pool->balancer, script);
 #endif
 
-    BSAL_DEBUGGER_ASSERT(worker_index >= 0);
+    BIOSAL_DEBUGGER_ASSERT(worker_index >= 0);
 
 #ifdef THORIUM_WORKER_POOL_DEBUG
     printf("ASSIGNING %d to %d\n", name, worker_index);
@@ -732,7 +732,7 @@ struct thorium_worker *thorium_worker_pool_select_worker_for_message(struct thor
     /* Update the cached value for the winning worker to have an
      * accurate value for this worker.
      */
-    bsal_vector_set_int(&pool->message_count_cache, best_index, best_score - 1);
+    biosal_vector_set_int(&pool->message_count_cache, best_index, best_score - 1);
 
     return best_worker;
 }
@@ -802,7 +802,7 @@ void thorium_worker_pool_wake_up_workers(struct thorium_worker_pool *pool)
 int thorium_worker_pool_dequeue_message_for_triage(struct thorium_worker_pool *self,
                 struct thorium_message *message)
 {
-    return bsal_fast_queue_dequeue(&self->messages_for_triage, message);
+    return biosal_fast_queue_dequeue(&self->messages_for_triage, message);
 }
 
 void thorium_worker_pool_examine(struct thorium_worker_pool *self)

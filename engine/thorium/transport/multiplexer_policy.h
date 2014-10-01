@@ -15,7 +15,7 @@ struct thorium_multiplexer_policy {
 
     int threshold_buffer_size_in_bytes;
     int threshold_time_in_nanoseconds;
-    struct bsal_set actions_to_skip;
+    struct biosal_set actions_to_skip;
     int disabled;
 };
 

@@ -1,6 +1,6 @@
 
-#ifndef BSAL_UNITIG_WALKER_H
-#define BSAL_UNITIG_WALKER_H
+#ifndef BIOSAL_UNITIG_WALKER_H
+#define BIOSAL_UNITIG_WALKER_H
 
 #include "unitig_heuristic.h"
 
@@ -23,20 +23,20 @@
 #define ACTION_ASSEMBLY_GET_VERTICES_AND_SELECT_REPLY 0x00000a0b
 
 /*
-#define BSAL_UNITIG_WALKER_USE_PRIVATE_FILE
+#define BIOSAL_UNITIG_WALKER_USE_PRIVATE_FILE
 */
 
 /*
  * A dummy walker to test the concept.
  */
-struct bsal_unitig_walker {
-    struct bsal_vector graph_stores;
+struct biosal_unitig_walker {
+    struct biosal_vector graph_stores;
     int kmer_length;
-    struct bsal_dna_codec codec;
-    struct bsal_memory_pool memory_pool;
+    struct biosal_dna_codec codec;
+    struct biosal_memory_pool memory_pool;
     int skipped_at_start_used;
     int skipped_at_start_not_unitig;
-    struct bsal_map path_statuses;
+    struct biosal_map path_statuses;
     int source;
     int current_is_circular;
 
@@ -47,85 +47,85 @@ struct bsal_unitig_walker {
 
     int dried_stores;
 
-#ifdef BSAL_UNITIG_WALKER_USE_PRIVATE_FILE
-    struct bsal_buffered_file_writer writer;
-    struct bsal_string file_path;
+#ifdef BIOSAL_UNITIG_WALKER_USE_PRIVATE_FILE
+    struct biosal_buffered_file_writer writer;
+    struct biosal_string file_path;
 #endif
 
     int has_starting_vertex;
 
-    struct bsal_dna_kmer starting_kmer;
-    struct bsal_assembly_vertex starting_vertex;
-    struct bsal_vector left_path;
-    struct bsal_vector right_path;
+    struct biosal_dna_kmer starting_kmer;
+    struct biosal_assembly_vertex starting_vertex;
+    struct biosal_vector left_path;
+    struct biosal_vector right_path;
 
-    struct bsal_dna_kmer current_kmer;
-    struct bsal_assembly_vertex current_vertex;
+    struct biosal_dna_kmer current_kmer;
+    struct biosal_assembly_vertex current_vertex;
 
     int current_child;
-    struct bsal_vector child_kmers;
-    struct bsal_vector child_vertices;
+    struct biosal_vector child_kmers;
+    struct biosal_vector child_vertices;
 
     int current_parent;
-    struct bsal_vector parent_kmers;
-    struct bsal_vector parent_vertices;
+    struct biosal_vector parent_kmers;
+    struct biosal_vector parent_vertices;
 
     int path_index;
 
     int key_length;
-    struct bsal_set visited;
+    struct biosal_set visited;
     int fetch_operation;
     int select_operation;
 
-    struct bsal_unitig_heuristic heuristic;
+    struct biosal_unitig_heuristic heuristic;
 
     int writer_process;
     int start_messages;
 };
 
-extern struct thorium_script bsal_unitig_walker_script;
+extern struct thorium_script biosal_unitig_walker_script;
 
-void bsal_unitig_walker_init(struct thorium_actor *self);
-void bsal_unitig_walker_destroy(struct thorium_actor *self);
-void bsal_unitig_walker_receive(struct thorium_actor *self, struct thorium_message *message);
+void biosal_unitig_walker_init(struct thorium_actor *self);
+void biosal_unitig_walker_destroy(struct thorium_actor *self);
+void biosal_unitig_walker_receive(struct thorium_actor *self, struct thorium_message *message);
 
-void bsal_unitig_walker_get_starting_kmer_reply(struct thorium_actor *self, struct thorium_message *message);
-void bsal_unitig_walker_start(struct thorium_actor *self, struct thorium_message *message);
-void bsal_unitig_walker_get_vertex_reply(struct thorium_actor *self, struct thorium_message *message);
+void biosal_unitig_walker_get_starting_kmer_reply(struct thorium_actor *self, struct thorium_message *message);
+void biosal_unitig_walker_start(struct thorium_actor *self, struct thorium_message *message);
+void biosal_unitig_walker_get_vertex_reply(struct thorium_actor *self, struct thorium_message *message);
 
-void bsal_unitig_walker_get_vertices_and_select(struct thorium_actor *self, struct thorium_message *message);
-void bsal_unitig_walker_get_vertices_and_select_reply(struct thorium_actor *self, struct thorium_message *message);
-void bsal_unitig_walker_get_vertex_reply_starting_vertex(struct thorium_actor *self, struct thorium_message *message);
+void biosal_unitig_walker_get_vertices_and_select(struct thorium_actor *self, struct thorium_message *message);
+void biosal_unitig_walker_get_vertices_and_select_reply(struct thorium_actor *self, struct thorium_message *message);
+void biosal_unitig_walker_get_vertex_reply_starting_vertex(struct thorium_actor *self, struct thorium_message *message);
 
-void bsal_unitig_walker_clear(struct thorium_actor *self);
-void bsal_unitig_walker_dump_path(struct thorium_actor *self);
-void bsal_unitig_walker_begin(struct thorium_actor *self, struct thorium_message *message);
+void biosal_unitig_walker_clear(struct thorium_actor *self);
+void biosal_unitig_walker_dump_path(struct thorium_actor *self);
+void biosal_unitig_walker_begin(struct thorium_actor *self, struct thorium_message *message);
 
-int bsal_unitig_walker_select(struct thorium_actor *self, int *output_status);
-void bsal_unitig_walker_write(struct thorium_actor *self, uint64_t name,
+int biosal_unitig_walker_select(struct thorium_actor *self, int *output_status);
+void biosal_unitig_walker_write(struct thorium_actor *self, uint64_t name,
                 char *sequence, int sequence_length, int circular, uint64_t signature);
-void bsal_unitig_walker_make_decision(struct thorium_actor *self);
+void biosal_unitig_walker_make_decision(struct thorium_actor *self);
 
-void bsal_unitig_walker_set_current(struct thorium_actor *self,
-                struct bsal_dna_kmer *kmer, struct bsal_assembly_vertex *vertex);
-uint64_t bsal_unitig_walker_get_path_name(struct thorium_actor *self, int length, char *sequence);
+void biosal_unitig_walker_set_current(struct thorium_actor *self,
+                struct biosal_dna_kmer *kmer, struct biosal_assembly_vertex *vertex);
+uint64_t biosal_unitig_walker_get_path_name(struct thorium_actor *self, int length, char *sequence);
 
-void bsal_unitig_walker_check_symmetry(struct thorium_actor *self, int parent_choice, int child_choice,
+void biosal_unitig_walker_check_symmetry(struct thorium_actor *self, int parent_choice, int child_choice,
                 int *choice, int *status);
-void bsal_unitig_walker_check_agreement(struct thorium_actor *self, int parent_choice, int child_choice,
+void biosal_unitig_walker_check_agreement(struct thorium_actor *self, int parent_choice, int child_choice,
                 int *choice, int *status);
 
-void bsal_unitig_walker_check_usage(struct thorium_actor *self, int *choice, int *status,
-                struct bsal_vector *selected_kmers);
-int bsal_unitig_walker_get_current_length(struct thorium_actor *self);
+void biosal_unitig_walker_check_usage(struct thorium_actor *self, int *choice, int *status,
+                struct biosal_vector *selected_kmers);
+int biosal_unitig_walker_get_current_length(struct thorium_actor *self);
 
-void bsal_unitig_walker_notify(struct thorium_actor *self, struct thorium_message *message);
-void bsal_unitig_walker_notify_reply(struct thorium_actor *self, struct thorium_message *message);
+void biosal_unitig_walker_notify(struct thorium_actor *self, struct thorium_message *message);
+void biosal_unitig_walker_notify_reply(struct thorium_actor *self, struct thorium_message *message);
 
-void bsal_unitig_walker_mark_vertex(struct thorium_actor *self, struct bsal_dna_kmer *kmer);
+void biosal_unitig_walker_mark_vertex(struct thorium_actor *self, struct biosal_dna_kmer *kmer);
 
-int bsal_unitig_walker_select_old_version(struct thorium_actor *self, int *output_status);
-void bsal_unitig_walker_normalize_cycle(struct thorium_actor *self, int length, char *sequence);
-void bsal_unitig_walker_select_strand(struct thorium_actor *self, int length, char *sequence);
+int biosal_unitig_walker_select_old_version(struct thorium_actor *self, int *output_status);
+void biosal_unitig_walker_normalize_cycle(struct thorium_actor *self, int length, char *sequence);
+void biosal_unitig_walker_select_strand(struct thorium_actor *self, int length, char *sequence);
 
 #endif

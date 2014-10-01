@@ -19,7 +19,7 @@ void gc_ratio_calculator_init(struct thorium_actor *actor)
 {
     struct gc_ratio_calculator *concrete_actor;
     concrete_actor = thorium_actor_concrete_actor(actor);
-    bsal_vector_init(&concrete_actor->spawners, sizeof(int));
+    biosal_vector_init(&concrete_actor->spawners, sizeof(int));
     concrete_actor->completed = 0;
 
     thorium_actor_add_action(actor, ACTION_START, gc_ratio_calculator_start);
@@ -33,7 +33,7 @@ void gc_ratio_calculator_destroy(struct thorium_actor *actor)
 {
     struct gc_ratio_calculator *concrete_actor;
     concrete_actor = thorium_actor_concrete_actor(actor);
-    bsal_vector_destroy(&concrete_actor->spawners);
+    biosal_vector_destroy(&concrete_actor->spawners);
 }
 
 void gc_ratio_calculator_receive(struct thorium_actor *actor, struct thorium_message *message)
@@ -53,22 +53,22 @@ void gc_ratio_calculator_start(struct thorium_actor *actor, struct thorium_messa
     void * buffer;
 
     struct gc_ratio_calculator *concrete_actor;
-    struct bsal_vector *spawners;
+    struct biosal_vector *spawners;
 
     concrete_actor = thorium_actor_concrete_actor(actor);
 
     name = thorium_actor_name(actor);
     buffer = thorium_message_buffer(message);
     spawners = &concrete_actor->spawners;
-    size = bsal_vector_size(spawners);
+    size = biosal_vector_size(spawners);
 
     printf("received ACTION_START\n");
 
-    bsal_vector_unpack(spawners, buffer);
-    size = bsal_vector_size(spawners);
-    index = bsal_vector_index_of(spawners, &name);
+    biosal_vector_unpack(spawners, buffer);
+    size = biosal_vector_size(spawners);
+    index = biosal_vector_index_of(spawners, &name);
     neighbor_index = (index + 1) % size;
-    neighbor_name = bsal_vector_at_as_int(spawners, neighbor_index);
+    neighbor_name = biosal_vector_at_as_int(spawners, neighbor_index);
 
     printf("about to send to neighbor\n");
     thorium_actor_send_empty(actor, neighbor_name, ACTION_GC_HELLO);
@@ -92,7 +92,7 @@ void gc_ratio_calculator_hello_reply(struct thorium_actor *actor, struct thorium
     int boss;
 
     struct gc_ratio_calculator *concrete_actor;
-    struct bsal_vector *spawners;
+    struct biosal_vector *spawners;
 
     concrete_actor = thorium_actor_concrete_actor(actor);
 
@@ -102,7 +102,7 @@ void gc_ratio_calculator_hello_reply(struct thorium_actor *actor, struct thorium
 
     printf("Actor %d is satisfied with a reply from the neighbor %d.\n", name, source);
 
-    boss = bsal_vector_at_as_int(spawners, 0);
+    boss = biosal_vector_at_as_int(spawners, 0);
     thorium_message_init(&new_message, ACTION_NOTIFY, 0, NULL);
     thorium_actor_send(actor, boss, &new_message);
     thorium_message_destroy(&new_message);
@@ -113,12 +113,12 @@ void gc_ratio_calculator_notify(struct thorium_actor *actor, struct thorium_mess
     int size;
 
     struct gc_ratio_calculator *concrete_actor;
-    struct bsal_vector *spawners;
+    struct biosal_vector *spawners;
 
     concrete_actor = thorium_actor_concrete_actor(actor);
 
     spawners = &concrete_actor->spawners;
-    size = bsal_vector_size(spawners);
+    size = biosal_vector_size(spawners);
 
     printf("received NOTIFY\n");
 

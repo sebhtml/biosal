@@ -8,49 +8,49 @@
 
 #include <stdlib.h>
 
-void bsal_red_black_tree_iterator_init(struct bsal_red_black_tree_iterator *self,
-                struct bsal_red_black_tree *tree)
+void biosal_red_black_tree_iterator_init(struct biosal_red_black_tree_iterator *self,
+                struct biosal_red_black_tree *tree)
 {
-    struct bsal_red_black_node *node;
+    struct biosal_red_black_node *node;
 
-    bsal_stack_init(&self->stack, sizeof(struct bsal_red_black_node *));
+    biosal_stack_init(&self->stack, sizeof(struct biosal_red_black_node *));
 
     node = tree->root;
     self->tree = tree;
 
-    while (!bsal_red_black_node_is_leaf(node)) {
+    while (!biosal_red_black_node_is_leaf(node)) {
 
-        bsal_stack_push(&self->stack, &node);
+        biosal_stack_push(&self->stack, &node);
 
         node = node->left_node;
     }
 }
 
-void bsal_red_black_tree_iterator_destroy(struct bsal_red_black_tree_iterator *self)
+void biosal_red_black_tree_iterator_destroy(struct biosal_red_black_tree_iterator *self)
 {
-    bsal_stack_destroy(&self->stack);
+    biosal_stack_destroy(&self->stack);
 }
 
-int bsal_red_black_tree_iterator_has_next(struct bsal_red_black_tree_iterator *self)
+int biosal_red_black_tree_iterator_has_next(struct biosal_red_black_tree_iterator *self)
 {
-    return !bsal_stack_empty(&self->stack);
+    return !biosal_stack_empty(&self->stack);
 }
 
-int bsal_red_black_tree_iterator_next(struct bsal_red_black_tree_iterator *self, void **key, void **value)
+int biosal_red_black_tree_iterator_next(struct biosal_red_black_tree_iterator *self, void **key, void **value)
 {
-    struct bsal_red_black_node *node;
-    struct bsal_red_black_node *node2;
+    struct biosal_red_black_node *node;
+    struct biosal_red_black_node *node2;
 
-    if (!bsal_red_black_tree_iterator_has_next(self))
+    if (!biosal_red_black_tree_iterator_has_next(self))
         return 0;
 
-    bsal_stack_pop(&self->stack, &node);
+    biosal_stack_pop(&self->stack, &node);
 
     node2 = node->right_node;
 
-    while (!bsal_red_black_node_is_leaf(node2)) {
+    while (!biosal_red_black_node_is_leaf(node2)) {
 
-        bsal_stack_push(&self->stack, &node2);
+        biosal_stack_push(&self->stack, &node2);
 
         node2 = node2->left_node;
     }
@@ -63,23 +63,23 @@ int bsal_red_black_tree_iterator_next(struct bsal_red_black_tree_iterator *self,
     return 1;
 }
 
-int bsal_red_black_tree_iterator_get_next_key_and_value(struct bsal_red_black_tree_iterator *self, void *key, void *value)
+int biosal_red_black_tree_iterator_get_next_key_and_value(struct biosal_red_black_tree_iterator *self, void *key, void *value)
 {
     void *actual_key;
     void *actual_value;
 
-    if (!bsal_red_black_tree_iterator_has_next(self))
+    if (!biosal_red_black_tree_iterator_has_next(self))
         return 0;
 
     actual_key = NULL;
     actual_value = NULL;
 
-    bsal_red_black_tree_iterator_next(self, &actual_key, &actual_value);
+    biosal_red_black_tree_iterator_next(self, &actual_key, &actual_value);
 
     if (key != NULL)
-        bsal_memory_copy(key, actual_key, self->tree->key_size);
+        biosal_memory_copy(key, actual_key, self->tree->key_size);
     if (value != NULL)
-        bsal_memory_copy(value, actual_value, self->tree->value_size);
+        biosal_memory_copy(value, actual_value, self->tree->value_size);
 
     return 1;
 }

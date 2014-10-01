@@ -27,17 +27,17 @@
 
 #define MEMORY_MEMORY_POOL 0xc170626e
 
-void bsal_memory_pool_init(struct bsal_memory_pool *self, int block_size, int name)
+void biosal_memory_pool_init(struct biosal_memory_pool *self, int block_size, int name)
 {
-    bsal_map_init(&self->recycle_bin, sizeof(size_t), sizeof(struct bsal_queue));
-    bsal_map_init(&self->allocated_blocks, sizeof(void *), sizeof(size_t));
-    bsal_set_init(&self->large_blocks, sizeof(void *));
+    biosal_map_init(&self->recycle_bin, sizeof(size_t), sizeof(struct biosal_queue));
+    biosal_map_init(&self->allocated_blocks, sizeof(void *), sizeof(size_t));
+    biosal_set_init(&self->large_blocks, sizeof(void *));
 
     self->current_block = NULL;
     self->name = name;
 
-    bsal_queue_init(&self->dried_blocks, sizeof(struct bsal_memory_block *));
-    bsal_queue_init(&self->ready_blocks, sizeof(struct bsal_memory_block *));
+    biosal_queue_init(&self->dried_blocks, sizeof(struct biosal_memory_block *));
+    biosal_queue_init(&self->ready_blocks, sizeof(struct biosal_memory_block *));
 
     self->block_size = block_size;
 
@@ -45,11 +45,11 @@ void bsal_memory_pool_init(struct bsal_memory_pool *self, int block_size, int na
      * Configure flags
      */
     self->flags = 0;
-    bsal_bitmap_set_bit_uint32_t(&self->flags, FLAG_ENABLE_TRACKING);
-    bsal_bitmap_clear_bit_uint32_t(&self->flags, FLAG_DISABLED);
-    bsal_bitmap_clear_bit_uint32_t(&self->flags, FLAG_ENABLE_SEGMENT_NORMALIZATION);
-    bsal_bitmap_clear_bit_uint32_t(&self->flags, FLAG_ALIGN);
-    bsal_bitmap_clear_bit_uint32_t(&self->flags, FLAG_EPHEMERAL);
+    biosal_bitmap_set_bit_uint32_t(&self->flags, FLAG_ENABLE_TRACKING);
+    biosal_bitmap_clear_bit_uint32_t(&self->flags, FLAG_DISABLED);
+    biosal_bitmap_clear_bit_uint32_t(&self->flags, FLAG_ENABLE_SEGMENT_NORMALIZATION);
+    biosal_bitmap_clear_bit_uint32_t(&self->flags, FLAG_ALIGN);
+    biosal_bitmap_clear_bit_uint32_t(&self->flags, FLAG_EPHEMERAL);
 
     self->profile_allocated_byte_count = 0;
     self->profile_freed_byte_count = 0;
@@ -57,80 +57,80 @@ void bsal_memory_pool_init(struct bsal_memory_pool *self, int block_size, int na
     self->profile_free_calls = 0;
 }
 
-void bsal_memory_pool_destroy(struct bsal_memory_pool *self)
+void biosal_memory_pool_destroy(struct biosal_memory_pool *self)
 {
-    struct bsal_queue *queue;
-    struct bsal_map_iterator iterator;
-    struct bsal_memory_block *block;
+    struct biosal_queue *queue;
+    struct biosal_map_iterator iterator;
+    struct biosal_memory_block *block;
 
-#ifdef BSAL_MEMORY_POOL_FIND_LEAKS
-    BSAL_DEBUGGER_ASSERT(!bsal_memory_pool_has_leaks(self));
+#ifdef BIOSAL_MEMORY_POOL_FIND_LEAKS
+    BIOSAL_DEBUGGER_ASSERT(!biosal_memory_pool_has_leaks(self));
 #endif
 
     /* destroy recycled objects
      */
-    bsal_map_iterator_init(&iterator, &self->recycle_bin);
+    biosal_map_iterator_init(&iterator, &self->recycle_bin);
 
-    while (bsal_map_iterator_has_next(&iterator)) {
-        bsal_map_iterator_next(&iterator, NULL, (void **)&queue);
+    while (biosal_map_iterator_has_next(&iterator)) {
+        biosal_map_iterator_next(&iterator, NULL, (void **)&queue);
 
-        bsal_queue_destroy(queue);
+        biosal_queue_destroy(queue);
     }
-    bsal_map_iterator_destroy(&iterator);
-    bsal_map_destroy(&self->recycle_bin);
+    biosal_map_iterator_destroy(&iterator);
+    biosal_map_destroy(&self->recycle_bin);
 
     /* destroy allocated blocks */
-    bsal_map_destroy(&self->allocated_blocks);
+    biosal_map_destroy(&self->allocated_blocks);
 
     /* destroy dried blocks
      */
-    while (bsal_queue_dequeue(&self->dried_blocks, &block)) {
-        bsal_memory_block_destroy(block);
-        bsal_memory_free(block, self->name);
+    while (biosal_queue_dequeue(&self->dried_blocks, &block)) {
+        biosal_memory_block_destroy(block);
+        biosal_memory_free(block, self->name);
     }
-    bsal_queue_destroy(&self->dried_blocks);
+    biosal_queue_destroy(&self->dried_blocks);
 
     /* destroy ready blocks
      */
-    while (bsal_queue_dequeue(&self->ready_blocks, &block)) {
-        bsal_memory_block_destroy(block);
-        bsal_memory_free(block, self->name);
+    while (biosal_queue_dequeue(&self->ready_blocks, &block)) {
+        biosal_memory_block_destroy(block);
+        biosal_memory_free(block, self->name);
     }
-    bsal_queue_destroy(&self->ready_blocks);
+    biosal_queue_destroy(&self->ready_blocks);
 
     /* destroy the current block
      */
     if (self->current_block != NULL) {
-        bsal_memory_block_destroy(self->current_block);
-        bsal_memory_free(self->current_block, self->name);
+        biosal_memory_block_destroy(self->current_block);
+        biosal_memory_free(self->current_block, self->name);
         self->current_block = NULL;
     }
 
-    bsal_set_destroy(&self->large_blocks);
+    biosal_set_destroy(&self->large_blocks);
 }
 
-void *bsal_memory_pool_allocate(struct bsal_memory_pool *self, size_t size)
+void *biosal_memory_pool_allocate(struct biosal_memory_pool *self, size_t size)
 {
     void *pointer;
     size_t new_size;
     int normalize;
 
-    BSAL_DEBUGGER_ASSERT(size > 0);
+    BIOSAL_DEBUGGER_ASSERT(size > 0);
 
     if (self == NULL) {
-        return bsal_memory_allocate(size, MEMORY_MEMORY_POOL);
+        return biosal_memory_allocate(size, MEMORY_MEMORY_POOL);
     }
 
-#ifdef BSAL_DEBUGGER_ENABLE_ASSERT
-    if (size < BSAL_MEMORY_MINIMUM) {
+#ifdef BIOSAL_DEBUGGER_ENABLE_ASSERT
+    if (size < BIOSAL_MEMORY_MINIMUM) {
         printf("Error: too low %zu\n", size);
     }
-    if (size > BSAL_MEMORY_MAXIMUM) {
+    if (size > BIOSAL_MEMORY_MAXIMUM) {
         printf("Error: too high %zu\n", size);
     }
 #endif
-    BSAL_DEBUGGER_ASSERT(size >= BSAL_MEMORY_MINIMUM);
-    BSAL_DEBUGGER_ASSERT(size <= BSAL_MEMORY_MAXIMUM);
+    BIOSAL_DEBUGGER_ASSERT(size >= BIOSAL_MEMORY_MINIMUM);
+    BIOSAL_DEBUGGER_ASSERT(size <= BIOSAL_MEMORY_MAXIMUM);
 
     normalize = 0;
 
@@ -138,7 +138,7 @@ void *bsal_memory_pool_allocate(struct bsal_memory_pool *self, size_t size)
      * Normalize the length of the segment to be a power of 2
      * if the flag FLAG_ENABLE_SEGMENT_NORMALIZATION is set.
      */
-    if (bsal_bitmap_get_bit_uint32_t(&self->flags, FLAG_ENABLE_SEGMENT_NORMALIZATION)) {
+    if (biosal_bitmap_get_bit_uint32_t(&self->flags, FLAG_ENABLE_SEGMENT_NORMALIZATION)) {
         normalize = 1;
     }
 
@@ -152,7 +152,7 @@ void *bsal_memory_pool_allocate(struct bsal_memory_pool *self, size_t size)
      */
 
     if (size > self->block_size
-              && bsal_bitmap_get_bit_uint32_t(&self->flags, FLAG_EPHEMERAL)) {
+              && biosal_bitmap_get_bit_uint32_t(&self->flags, FLAG_EPHEMERAL)) {
         normalize = 1;
     }
 
@@ -162,9 +162,9 @@ void *bsal_memory_pool_allocate(struct bsal_memory_pool *self, size_t size)
          * The Blue Gene/Q seems to prefer powers of 2
          * otherwise fragmentation makes the system run out of memory.
          */
-        new_size = bsal_memory_normalize_segment_length_power_of_2(size);
+        new_size = biosal_memory_normalize_segment_length_power_of_2(size);
             /*
-        new_size = bsal_memory_normalize_segment_length_page_size(size);
+        new_size = biosal_memory_normalize_segment_length_page_size(size);
         */
 #if 0
         printf("NORMALIZE %zu -> %zu\n", size, new_size);
@@ -172,8 +172,8 @@ void *bsal_memory_pool_allocate(struct bsal_memory_pool *self, size_t size)
         size = new_size;
     }
 
-    BSAL_DEBUGGER_ASSERT(size >= BSAL_MEMORY_MINIMUM);
-    BSAL_DEBUGGER_ASSERT(size <= BSAL_MEMORY_MAXIMUM);
+    BIOSAL_DEBUGGER_ASSERT(size >= BIOSAL_MEMORY_MINIMUM);
+    BIOSAL_DEBUGGER_ASSERT(size <= BIOSAL_MEMORY_MAXIMUM);
 
     /*
      * Normalize the length so that it won't break alignment
@@ -197,29 +197,29 @@ void *bsal_memory_pool_allocate(struct bsal_memory_pool *self, size_t size)
      * So 32-byte and 64-byte alignment can give better performance.
      * But what is the necessary alignment for getting correct behavior ?
      */
-    if (bsal_bitmap_get_bit_uint32_t(&self->flags, FLAG_ALIGN)) {
+    if (biosal_bitmap_get_bit_uint32_t(&self->flags, FLAG_ALIGN)) {
 
-        new_size = bsal_memory_align(size);
+        new_size = biosal_memory_align(size);
 
         size = new_size;
     }
 
-    BSAL_DEBUGGER_ASSERT(size >= BSAL_MEMORY_MINIMUM);
-    BSAL_DEBUGGER_ASSERT(size <= BSAL_MEMORY_MAXIMUM);
+    BIOSAL_DEBUGGER_ASSERT(size >= BIOSAL_MEMORY_MINIMUM);
+    BIOSAL_DEBUGGER_ASSERT(size <= BIOSAL_MEMORY_MAXIMUM);
 
-    pointer = bsal_memory_pool_allocate_private(self, size);
+    pointer = biosal_memory_pool_allocate_private(self, size);
 
-    if (bsal_bitmap_get_bit_uint32_t(&self->flags, FLAG_ENABLE_TRACKING)) {
-            bsal_map_add_value(&self->allocated_blocks, &pointer, &size);
+    if (biosal_bitmap_get_bit_uint32_t(&self->flags, FLAG_ENABLE_TRACKING)) {
+            biosal_map_add_value(&self->allocated_blocks, &pointer, &size);
     }
 
-    bsal_memory_pool_profile(self, OPERATION_ALLOCATE, size);
+    biosal_memory_pool_profile(self, OPERATION_ALLOCATE, size);
 
     if (pointer == NULL) {
         printf("Error, requested %zu bytes, returned pointer is NULL\n",
                         size);
 
-        bsal_tracer_print_stack_backtrace();
+        biosal_tracer_print_stack_backtrace();
 
         exit(1);
     }
@@ -227,17 +227,17 @@ void *bsal_memory_pool_allocate(struct bsal_memory_pool *self, size_t size)
     return pointer;
 }
 
-void *bsal_memory_pool_allocate_private(struct bsal_memory_pool *self, size_t size)
+void *biosal_memory_pool_allocate_private(struct biosal_memory_pool *self, size_t size)
 {
-    struct bsal_queue *queue;
+    struct biosal_queue *queue;
     void *pointer;
 
     if (size == 0) {
         return NULL;
     }
 
-    if (bsal_bitmap_get_bit_uint32_t(&self->flags, FLAG_DISABLED)) {
-        return bsal_memory_allocate(size, self->name);
+    if (biosal_bitmap_get_bit_uint32_t(&self->flags, FLAG_DISABLED)) {
+        return biosal_memory_allocate(size, self->name);
     }
 
     /*
@@ -247,27 +247,27 @@ void *bsal_memory_pool_allocate_private(struct bsal_memory_pool *self, size_t si
      */
 
     if (size >= self->block_size) {
-        pointer = bsal_memory_allocate(size, self->name);
+        pointer = biosal_memory_allocate(size, self->name);
 
-        bsal_set_add(&self->large_blocks, &pointer);
+        biosal_set_add(&self->large_blocks, &pointer);
 
         return pointer;
     }
 
     queue = NULL;
 
-    if (bsal_bitmap_get_bit_uint32_t(&self->flags, FLAG_ENABLE_TRACKING)) {
-        queue = bsal_map_get(&self->recycle_bin, &size);
+    if (biosal_bitmap_get_bit_uint32_t(&self->flags, FLAG_ENABLE_TRACKING)) {
+        queue = biosal_map_get(&self->recycle_bin, &size);
     }
 
     /* recycling is good for the environment
      */
-    if (queue != NULL && bsal_queue_dequeue(queue, &pointer)) {
+    if (queue != NULL && biosal_queue_dequeue(queue, &pointer)) {
 
-#ifdef BSAL_MEMORY_POOL_DISCARD_EMPTY_QUEUES
-        if (bsal_queue_empty(queue)) {
-            bsal_queue_destroy(queue);
-            bsal_map_delete(&self->recycle_bin, &size);
+#ifdef BIOSAL_MEMORY_POOL_DISCARD_EMPTY_QUEUES
+        if (biosal_queue_empty(queue)) {
+            biosal_queue_destroy(queue);
+            biosal_map_delete(&self->recycle_bin, &size);
         }
 #endif
 
@@ -276,79 +276,79 @@ void *bsal_memory_pool_allocate_private(struct bsal_memory_pool *self, size_t si
 
     if (self->current_block == NULL) {
 
-        bsal_memory_pool_add_block(self);
+        biosal_memory_pool_add_block(self);
     }
 
-    pointer = bsal_memory_block_allocate(self->current_block, size);
+    pointer = biosal_memory_block_allocate(self->current_block, size);
 
     /* the current block is exausted...
      */
     if (pointer == NULL) {
-        bsal_queue_enqueue(&self->dried_blocks, &self->current_block);
+        biosal_queue_enqueue(&self->dried_blocks, &self->current_block);
         self->current_block = NULL;
 
-        bsal_memory_pool_add_block(self);
+        biosal_memory_pool_add_block(self);
 
-        pointer = bsal_memory_block_allocate(self->current_block, size);
+        pointer = biosal_memory_block_allocate(self->current_block, size);
     }
 
     return pointer;
 }
 
-void bsal_memory_pool_add_block(struct bsal_memory_pool *self)
+void biosal_memory_pool_add_block(struct biosal_memory_pool *self)
 {
     /* Try to pick a block in the ready block list.
      * Otherwise, create one on-demand today.
      */
-    if (!bsal_queue_dequeue(&self->ready_blocks, &self->current_block)) {
-        self->current_block = bsal_memory_allocate(sizeof(struct bsal_memory_block), self->name);
-        bsal_memory_block_init(self->current_block, self->block_size);
+    if (!biosal_queue_dequeue(&self->ready_blocks, &self->current_block)) {
+        self->current_block = biosal_memory_allocate(sizeof(struct biosal_memory_block), self->name);
+        biosal_memory_block_init(self->current_block, self->block_size);
     }
 }
 
-void bsal_memory_pool_free(struct bsal_memory_pool *self, void *pointer)
+void biosal_memory_pool_free(struct biosal_memory_pool *self, void *pointer)
 {
     size_t size;
 
-    BSAL_DEBUGGER_ASSERT(pointer != NULL);
+    BIOSAL_DEBUGGER_ASSERT(pointer != NULL);
 
     if (self == NULL) {
-        bsal_memory_free(pointer, MEMORY_MEMORY_POOL);
+        biosal_memory_free(pointer, MEMORY_MEMORY_POOL);
         return;
     }
 
     size = 0;
 
-    bsal_memory_pool_free_private(self, pointer);
+    biosal_memory_pool_free_private(self, pointer);
 
-    if (bsal_map_get_value(&self->allocated_blocks, &pointer, &size)) {
+    if (biosal_map_get_value(&self->allocated_blocks, &pointer, &size)) {
 
-        bsal_map_delete(&self->allocated_blocks, &pointer);
+        biosal_map_delete(&self->allocated_blocks, &pointer);
     }
 
     /*
      * find out the actual size.
      */
-    bsal_memory_pool_profile(self, OPERATION_FREE, size);
+    biosal_memory_pool_profile(self, OPERATION_FREE, size);
 }
 
-void bsal_memory_pool_free_private(struct bsal_memory_pool *self, void *pointer)
+void biosal_memory_pool_free_private(struct biosal_memory_pool *self, void *pointer)
 {
-    struct bsal_queue *queue;
+    struct biosal_queue *queue;
     size_t size;
 
-    if (bsal_bitmap_get_bit_uint32_t(&self->flags, FLAG_DISABLED)) {
-        bsal_memory_free(pointer, self->name);
+    if (biosal_bitmap_get_bit_uint32_t(&self->flags, FLAG_DISABLED)) {
+        biosal_memory_free(pointer, self->name);
         return;
     }
 
     /* Verify if the pointer is a large block not managed by one of the memory
      * blocks
      */
-    if (bsal_set_find(&self->large_blocks, &pointer)) {
+    if (biosal_set_find(&self->large_blocks, &pointer)) {
 
-        bsal_memory_free(pointer, self->name);
-        bsal_set_delete(&self->large_blocks, &pointer);
+        biosal_memory_free(pointer, self->name);
+        biosal_set_delete(&self->large_blocks, &pointer);
         return;
     }
 
@@ -356,90 +356,90 @@ void bsal_memory_pool_free_private(struct bsal_memory_pool *self, void *pointer)
      * Return immediately if memory allocation tracking is disabled.
      * For example, the ephemeral memory component of a worker
      * disable tracking (flag FLAG_ENABLE_TRACKING = 0). To free memory,
-     * for the ephemeral memory, bsal_memory_pool_free_all is
+     * for the ephemeral memory, biosal_memory_pool_free_all is
      * used.
      */
-    if (!bsal_bitmap_get_bit_uint32_t(&self->flags, FLAG_ENABLE_TRACKING)) {
+    if (!biosal_bitmap_get_bit_uint32_t(&self->flags, FLAG_ENABLE_TRACKING)) {
         return;
     }
 
     /*
      * This was not allocated by this pool.
      */
-    if (!bsal_map_get_value(&self->allocated_blocks, &pointer, &size)) {
+    if (!biosal_map_get_value(&self->allocated_blocks, &pointer, &size)) {
         return;
     }
 
-    queue = bsal_map_get(&self->recycle_bin, &size);
+    queue = biosal_map_get(&self->recycle_bin, &size);
 
     if (queue == NULL) {
-        queue = bsal_map_add(&self->recycle_bin, &size);
-        bsal_queue_init(queue, sizeof(void *));
+        queue = biosal_map_add(&self->recycle_bin, &size);
+        biosal_queue_init(queue, sizeof(void *));
     }
 
-    bsal_queue_enqueue(queue, &pointer);
+    biosal_queue_enqueue(queue, &pointer);
 }
 
-void bsal_memory_pool_disable_tracking(struct bsal_memory_pool *self)
+void biosal_memory_pool_disable_tracking(struct biosal_memory_pool *self)
 {
-    bsal_bitmap_clear_bit_uint32_t(&self->flags, FLAG_ENABLE_TRACKING);
+    biosal_bitmap_clear_bit_uint32_t(&self->flags, FLAG_ENABLE_TRACKING);
 }
 
-void bsal_memory_pool_enable_normalization(struct bsal_memory_pool *self)
+void biosal_memory_pool_enable_normalization(struct biosal_memory_pool *self)
 {
-    bsal_bitmap_set_bit_uint32_t(&self->flags, FLAG_ENABLE_SEGMENT_NORMALIZATION);
+    biosal_bitmap_set_bit_uint32_t(&self->flags, FLAG_ENABLE_SEGMENT_NORMALIZATION);
 }
 
-void bsal_memory_pool_disable_normalization(struct bsal_memory_pool *self)
+void biosal_memory_pool_disable_normalization(struct biosal_memory_pool *self)
 {
-    bsal_bitmap_clear_bit_uint32_t(&self->flags, FLAG_ENABLE_SEGMENT_NORMALIZATION);
+    biosal_bitmap_clear_bit_uint32_t(&self->flags, FLAG_ENABLE_SEGMENT_NORMALIZATION);
 }
 
-void bsal_memory_pool_enable_alignment(struct bsal_memory_pool *self)
+void biosal_memory_pool_enable_alignment(struct biosal_memory_pool *self)
 {
-    bsal_bitmap_set_bit_uint32_t(&self->flags, FLAG_ALIGN);
+    biosal_bitmap_set_bit_uint32_t(&self->flags, FLAG_ALIGN);
 }
 
-void bsal_memory_pool_disable_alignment(struct bsal_memory_pool *self)
+void biosal_memory_pool_disable_alignment(struct biosal_memory_pool *self)
 {
-    bsal_bitmap_clear_bit_uint32_t(&self->flags, FLAG_ALIGN);
+    biosal_bitmap_clear_bit_uint32_t(&self->flags, FLAG_ALIGN);
 }
 
-void bsal_memory_pool_enable_tracking(struct bsal_memory_pool *self)
+void biosal_memory_pool_enable_tracking(struct biosal_memory_pool *self)
 {
-    bsal_bitmap_set_bit_uint32_t(&self->flags, FLAG_ENABLE_TRACKING);
+    biosal_bitmap_set_bit_uint32_t(&self->flags, FLAG_ENABLE_TRACKING);
 }
 
-void bsal_memory_pool_free_all(struct bsal_memory_pool *self)
+void biosal_memory_pool_free_all(struct biosal_memory_pool *self)
 {
-    struct bsal_memory_block *block;
+    struct biosal_memory_block *block;
     int i;
     int size;
 
-#ifdef BSAL_DEBUGGER_ENABLE_ASSERT
-    if (bsal_memory_pool_has_leaks(self)) {
-        bsal_memory_pool_examine(self);
+#ifdef BIOSAL_DEBUGGER_ENABLE_ASSERT
+    if (biosal_memory_pool_has_leaks(self)) {
+        biosal_memory_pool_examine(self);
     }
 
-    BSAL_DEBUGGER_ASSERT(!bsal_memory_pool_has_leaks(self));
+    BIOSAL_DEBUGGER_ASSERT(!biosal_memory_pool_has_leaks(self));
 #endif
 
     /*
      * Reset the current block
      */
     if (self->current_block != NULL) {
-        bsal_memory_block_free_all(self->current_block);
+        biosal_memory_block_free_all(self->current_block);
     }
 
     /*
      * Reset all ready blocks
      */
-    size = bsal_queue_size(&self->ready_blocks);
+    size = biosal_queue_size(&self->ready_blocks);
     i = 0;
     while (i < size
-                   && bsal_queue_dequeue(&self->ready_blocks, &block)) {
-        bsal_memory_block_free_all(block);
-        bsal_queue_enqueue(&self->ready_blocks, &block);
+                   && biosal_queue_dequeue(&self->ready_blocks, &block)) {
+        biosal_memory_block_free_all(block);
+        biosal_queue_enqueue(&self->ready_blocks, &block);
 
         i++;
     }
@@ -447,30 +447,30 @@ void bsal_memory_pool_free_all(struct bsal_memory_pool *self)
     /*
      * Reset all dried blocks
      */
-    while (bsal_queue_dequeue(&self->dried_blocks, &block)) {
-        bsal_memory_block_free_all(block);
-        bsal_queue_enqueue(&self->ready_blocks, &block);
+    while (biosal_queue_dequeue(&self->dried_blocks, &block)) {
+        biosal_memory_block_free_all(block);
+        biosal_queue_enqueue(&self->ready_blocks, &block);
     }
 
     /*
      * Reset current structures.
      */
-    if (bsal_bitmap_get_bit_uint32_t(&self->flags, FLAG_ENABLE_TRACKING)) {
-        bsal_map_clear(&self->allocated_blocks);
-        bsal_map_clear(&self->recycle_bin);
+    if (biosal_bitmap_get_bit_uint32_t(&self->flags, FLAG_ENABLE_TRACKING)) {
+        biosal_map_clear(&self->allocated_blocks);
+        biosal_map_clear(&self->recycle_bin);
     }
 
-    if (!bsal_bitmap_get_bit_uint32_t(&self->flags, FLAG_DISABLED)) {
-        bsal_set_clear(&self->large_blocks);
+    if (!biosal_bitmap_get_bit_uint32_t(&self->flags, FLAG_DISABLED)) {
+        biosal_set_clear(&self->large_blocks);
     }
 }
 
-void bsal_memory_pool_disable(struct bsal_memory_pool *self)
+void biosal_memory_pool_disable(struct biosal_memory_pool *self)
 {
-    bsal_bitmap_set_bit_uint32_t(&self->flags, FLAG_DISABLED);
+    biosal_bitmap_set_bit_uint32_t(&self->flags, FLAG_DISABLED);
 }
 
-void bsal_memory_pool_print(struct bsal_memory_pool *self)
+void biosal_memory_pool_print(struct biosal_memory_pool *self)
 {
     int block_count;
     uint64_t byte_count;
@@ -481,8 +481,8 @@ void bsal_memory_pool_print(struct bsal_memory_pool *self)
         ++block_count;
     }
 
-    block_count += bsal_queue_size(&self->dried_blocks);
-    block_count += bsal_queue_size(&self->ready_blocks);
+    block_count += biosal_queue_size(&self->dried_blocks);
+    block_count += biosal_queue_size(&self->ready_blocks);
 
     byte_count = (uint64_t)block_count * (uint64_t)self->block_size;
 
@@ -493,17 +493,17 @@ void bsal_memory_pool_print(struct bsal_memory_pool *self)
                     byte_count);
 }
 
-void bsal_memory_pool_enable_ephemeral_mode(struct bsal_memory_pool *self)
+void biosal_memory_pool_enable_ephemeral_mode(struct biosal_memory_pool *self)
 {
-    bsal_bitmap_set_bit_uint32_t(&self->flags, FLAG_EPHEMERAL);
+    biosal_bitmap_set_bit_uint32_t(&self->flags, FLAG_EPHEMERAL);
 }
 
-void bsal_memory_pool_set_name(struct bsal_memory_pool *self, int name)
+void biosal_memory_pool_set_name(struct biosal_memory_pool *self, int name)
 {
     self->name = name;
 }
 
-void bsal_memory_pool_examine(struct bsal_memory_pool *self)
+void biosal_memory_pool_examine(struct biosal_memory_pool *self)
 {
     printf("DEBUG_POOL Name= 0x%x"
                     " AllocatedPointerCount= %d (%d - %d)"
@@ -519,11 +519,11 @@ void bsal_memory_pool_examine(struct bsal_memory_pool *self)
                     self->profile_allocated_byte_count, self->profile_freed_byte_count);
 
 #if 0
-    bsal_memory_pool_print(self);
+    biosal_memory_pool_print(self);
 #endif
 }
 
-void bsal_memory_pool_profile(struct bsal_memory_pool *self, int operation, size_t byte_count)
+void biosal_memory_pool_profile(struct biosal_memory_pool *self, int operation, size_t byte_count)
 {
     if (operation == OPERATION_ALLOCATE) {
         ++self->profile_allocate_calls;
@@ -533,32 +533,32 @@ void bsal_memory_pool_profile(struct bsal_memory_pool *self, int operation, size
         self->profile_freed_byte_count += byte_count;
     }
 
-#ifdef BSAL_DEBUGGER_CHECK_DOUBLE_FREE_IN_POOL
-#ifdef BSAL_DEBUGGER_ENABLE_ASSERT
+#ifdef BIOSAL_DEBUGGER_CHECK_DOUBLE_FREE_IN_POOL
+#ifdef BIOSAL_DEBUGGER_ENABLE_ASSERT
     if (!(self->profile_allocate_calls >= self->profile_free_calls)) {
-        bsal_memory_pool_examine(self);
+        biosal_memory_pool_examine(self);
     }
 #endif
-    BSAL_DEBUGGER_ASSERT(self->profile_allocate_calls >= self->profile_free_calls);
+    BIOSAL_DEBUGGER_ASSERT(self->profile_allocate_calls >= self->profile_free_calls);
 #endif
 }
 
-int bsal_memory_pool_has_leaks(struct bsal_memory_pool *self)
+int biosal_memory_pool_has_leaks(struct biosal_memory_pool *self)
 {
-#ifdef BSAL_DEBUGGER_CHECK_LEAKS_IN_POOL
+#ifdef BIOSAL_DEBUGGER_CHECK_LEAKS_IN_POOL
     return self->profile_allocate_calls != self->profile_free_calls;
 #else
     return 0;
 #endif
 }
 
-void bsal_memory_pool_begin(struct bsal_memory_pool *self, struct bsal_memory_pool_state *state)
+void biosal_memory_pool_begin(struct biosal_memory_pool *self, struct biosal_memory_pool_state *state)
 {
     state->test_profile_allocate_calls = self->profile_allocate_calls;
     state->test_profile_free_calls = self->profile_free_calls;
 }
 
-void bsal_memory_pool_end(struct bsal_memory_pool *self, struct bsal_memory_pool_state *state,
+void biosal_memory_pool_end(struct biosal_memory_pool *self, struct biosal_memory_pool_state *state,
                 const char *name, const char *function, const char *file, int line)
 {
     int allocate_calls;
@@ -573,25 +573,25 @@ void bsal_memory_pool_end(struct bsal_memory_pool *self, struct bsal_memory_pool
                         allocate_calls - free_calls);
     }
 
-    BSAL_DEBUGGER_ASSERT(allocate_calls == free_calls);
+    BIOSAL_DEBUGGER_ASSERT(allocate_calls == free_calls);
 }
 
-int bsal_memory_pool_has_double_free(struct bsal_memory_pool *self)
+int biosal_memory_pool_has_double_free(struct biosal_memory_pool *self)
 {
     return self->profile_allocate_calls < self->profile_free_calls;
 }
 
-int bsal_memory_pool_profile_allocate_count(struct bsal_memory_pool *self)
+int biosal_memory_pool_profile_allocate_count(struct biosal_memory_pool *self)
 {
     return self->profile_allocate_calls;
 }
 
-int bsal_memory_pool_profile_free_count(struct bsal_memory_pool *self)
+int biosal_memory_pool_profile_free_count(struct biosal_memory_pool *self)
 {
     return self->profile_free_calls;
 }
 
-void bsal_memory_pool_check_double_free(struct bsal_memory_pool *self,
+void biosal_memory_pool_check_double_free(struct biosal_memory_pool *self,
         const char *function, const char *file, int line)
 {
     int balance;
@@ -607,10 +607,10 @@ void bsal_memory_pool_check_double_free(struct bsal_memory_pool *self,
                         self->profile_allocate_calls, self->profile_free_calls, balance);
     }
 
-    BSAL_DEBUGGER_ASSERT(self->profile_allocate_calls >= self->profile_free_calls);
+    BIOSAL_DEBUGGER_ASSERT(self->profile_allocate_calls >= self->profile_free_calls);
 }
 
-int bsal_memory_pool_profile_balance_count(struct bsal_memory_pool *self)
+int biosal_memory_pool_profile_balance_count(struct biosal_memory_pool *self)
 {
     return self->profile_allocate_calls - self->profile_free_calls;
 }

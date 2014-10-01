@@ -8,29 +8,29 @@ int main(int argc, char **argv)
     BEGIN_TESTS();
 
     {
-        struct bsal_fast_queue queue;
+        struct biosal_fast_queue queue;
         int i;
         int value;
-        bsal_fast_queue_init(&queue, sizeof(int));
+        biosal_fast_queue_init(&queue, sizeof(int));
 
         i = 300000000;
         while (i--) {
             value = i;
 
-            bsal_fast_queue_enqueue(&queue, &value);
-            bsal_fast_queue_enqueue(&queue, &value);
-            bsal_fast_queue_dequeue(&queue, &value);
-            bsal_fast_queue_enqueue(&queue, &value);
-            bsal_fast_queue_enqueue(&queue, &value);
-            bsal_fast_queue_dequeue(&queue, &value);
-            bsal_fast_queue_enqueue(&queue, &value);
-            bsal_fast_queue_enqueue(&queue, &value);
-            bsal_fast_queue_enqueue(&queue, &value);
-            bsal_fast_queue_dequeue(&queue, &value);
-            bsal_fast_queue_dequeue(&queue, &value);
+            biosal_fast_queue_enqueue(&queue, &value);
+            biosal_fast_queue_enqueue(&queue, &value);
+            biosal_fast_queue_dequeue(&queue, &value);
+            biosal_fast_queue_enqueue(&queue, &value);
+            biosal_fast_queue_enqueue(&queue, &value);
+            biosal_fast_queue_dequeue(&queue, &value);
+            biosal_fast_queue_enqueue(&queue, &value);
+            biosal_fast_queue_enqueue(&queue, &value);
+            biosal_fast_queue_enqueue(&queue, &value);
+            biosal_fast_queue_dequeue(&queue, &value);
+            biosal_fast_queue_dequeue(&queue, &value);
         }
 
-        bsal_fast_queue_destroy(&queue);
+        biosal_fast_queue_destroy(&queue);
     }
 
 

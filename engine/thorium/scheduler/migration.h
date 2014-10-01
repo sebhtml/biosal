@@ -2,7 +2,7 @@
 #ifndef THORIUM_MIGRATION_H
 #define THORIUM_MIGRATION_H
 
-struct bsal_pool;
+struct biosal_pool;
 
 /*
  * An actor migration

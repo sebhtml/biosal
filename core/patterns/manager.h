@@ -1,6 +1,6 @@
 
-#ifndef BSAL_MANAGER_H
-#define BSAL_MANAGER_H
+#ifndef BIOSAL_MANAGER_H
+#define BIOSAL_MANAGER_H
 
 #include <engine/thorium/actor.h>
 
@@ -32,19 +32,19 @@
  *
  *
  */
-struct bsal_manager {
-    struct bsal_map spawner_children;
-    struct bsal_map spawner_child_count;
+struct biosal_manager {
+    struct biosal_map spawner_children;
+    struct biosal_map spawner_child_count;
     int ready_spawners;
     int spawners;
-    struct bsal_vector indices;
+    struct biosal_vector indices;
     int script;
 
     int actors_per_spawner;
     int actors_per_worker;
     int workers_per_actor;
 
-    struct bsal_vector children;
+    struct biosal_vector children;
 };
 
 #define ACTION_MANAGER_SET_SCRIPT 0x00007595
@@ -56,12 +56,12 @@ struct bsal_manager {
 #define ACTION_MANAGER_SET_WORKERS_PER_ACTOR 0x0000322a
 #define ACTION_MANAGER_SET_WORKERS_PER_ACTOR_REPLY 0x00007b74
 
-extern struct thorium_script bsal_manager_script;
+extern struct thorium_script biosal_manager_script;
 
-void bsal_manager_init(struct thorium_actor *self);
-void bsal_manager_destroy(struct thorium_actor *self);
-void bsal_manager_receive(struct thorium_actor *self, struct thorium_message *message);
+void biosal_manager_init(struct thorium_actor *self);
+void biosal_manager_destroy(struct thorium_actor *self);
+void biosal_manager_receive(struct thorium_actor *self, struct thorium_message *message);
 
-void bsal_manager_ask_to_stop(struct thorium_actor *actor, struct thorium_message *message);
+void biosal_manager_ask_to_stop(struct thorium_actor *actor, struct thorium_message *message);
 
 #endif

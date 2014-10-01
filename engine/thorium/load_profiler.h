@@ -11,14 +11,14 @@
 #include <inttypes.h>
 #include <stdint.h>
 
-struct bsal_buffered_file_writer;
+struct biosal_buffered_file_writer;
 
 struct thorium_load_profiler {
     uint64_t profile_begin_count;
     uint64_t profile_end_count;
 
-    struct bsal_timer timer;
-    struct bsal_vector event_times;
+    struct biosal_timer timer;
+    struct biosal_vector event_times;
 };
 
 void thorium_load_profiler_init(struct thorium_load_profiler *self);
@@ -26,6 +26,6 @@ void thorium_load_profiler_destroy(struct thorium_load_profiler *self);
 void thorium_load_profiler_profile(struct thorium_load_profiler *self, int event);
 
 void thorium_load_profiler_write(struct thorium_load_profiler *self, const char *script,
-                int name, struct bsal_buffered_file_writer *writer);
+                int name, struct biosal_buffered_file_writer *writer);
 
 #endif /* THORIUM_LOAD_PROFILER_H */

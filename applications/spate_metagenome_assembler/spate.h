@@ -22,13 +22,13 @@
  * All this is to enable nice science.
  */
 struct spate {
-    struct bsal_vector initial_actors;
-    struct bsal_vector graph_stores;
+    struct biosal_vector initial_actors;
+    struct biosal_vector graph_stores;
 
     int unitig_manager;
 
     int is_leader;
-    struct bsal_timer timer;
+    struct biosal_timer timer;
 
     /*
      * Children
@@ -45,7 +45,7 @@ struct spate {
 
     int file_index;
 
-    struct bsal_vector sequence_stores;
+    struct biosal_vector sequence_stores;
 };
 
 extern struct thorium_script spate_script;

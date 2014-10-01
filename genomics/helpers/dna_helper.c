@@ -3,7 +3,7 @@
 
 #include <string.h>
 
-void bsal_dna_helper_reverse_complement_in_place(char *sequence)
+void biosal_dna_helper_reverse_complement_in_place(char *sequence)
 {
     int position;
     int length;
@@ -17,7 +17,7 @@ void bsal_dna_helper_reverse_complement_in_place(char *sequence)
     position = 0;
 
     while (position < length) {
-        sequence[position] = bsal_dna_helper_complement_nucleotide(sequence[position]);
+        sequence[position] = biosal_dna_helper_complement_nucleotide(sequence[position]);
         position++;
     }
 
@@ -32,7 +32,7 @@ void bsal_dna_helper_reverse_complement_in_place(char *sequence)
     }
 }
 
-void bsal_dna_helper_reverse_complement(char *sequence1, char *sequence2)
+void biosal_dna_helper_reverse_complement(char *sequence1, char *sequence2)
 {
     int length;
     int position1;
@@ -48,7 +48,7 @@ void bsal_dna_helper_reverse_complement(char *sequence1, char *sequence2)
     while (position2 < length) {
 
         nucleotide1 = sequence1[position1];
-        nucleotide2 = bsal_dna_helper_complement_nucleotide(nucleotide1);
+        nucleotide2 = biosal_dna_helper_complement_nucleotide(nucleotide1);
 
         sequence2[position2] = nucleotide2;
 
@@ -58,16 +58,16 @@ void bsal_dna_helper_reverse_complement(char *sequence1, char *sequence2)
 
     sequence2[position2] = '\0';
 
-#ifdef BSAL_DNA_KMER_DEBUG
+#ifdef BIOSAL_DNA_KMER_DEBUG
     printf("%s and %s\n", sequence1, sequence2);
 #endif
 }
 
-#define BSAL_DNA_HELPER_FAST
+#define BIOSAL_DNA_HELPER_FAST
 
-char bsal_dna_helper_complement_nucleotide(char nucleotide)
+char biosal_dna_helper_complement_nucleotide(char nucleotide)
 {
-#ifdef BSAL_DNA_HELPER_FAST
+#ifdef BIOSAL_DNA_HELPER_FAST
     if (nucleotide == 'A') {
         return 'T';
     } else if (nucleotide == 'G') {
@@ -96,7 +96,7 @@ char bsal_dna_helper_complement_nucleotide(char nucleotide)
 #endif
 }
 
-void bsal_dna_helper_normalize(char *sequence)
+void biosal_dna_helper_normalize(char *sequence)
 {
     int length;
     int position;
@@ -107,13 +107,13 @@ void bsal_dna_helper_normalize(char *sequence)
 
     while (position < length) {
 
-        sequence[position] = bsal_dna_helper_normalize_nucleotide(sequence[position]);
+        sequence[position] = biosal_dna_helper_normalize_nucleotide(sequence[position]);
 
         position++;
     }
 }
 
-char bsal_dna_helper_normalize_nucleotide(char nucleotide)
+char biosal_dna_helper_normalize_nucleotide(char nucleotide)
 {
     char default_value;
 
@@ -147,7 +147,7 @@ char bsal_dna_helper_normalize_nucleotide(char nucleotide)
     return default_value;
 }
 
-void bsal_dna_helper_set_lower_case(char *sequence, int start, int end)
+void biosal_dna_helper_set_lower_case(char *sequence, int start, int end)
 {
     char old_character;
     char new_character;

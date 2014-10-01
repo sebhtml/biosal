@@ -23,93 +23,93 @@
 
 #define MEMORY_KMER_STORE 0x51daca18
 
-struct thorium_script bsal_kmer_store_script = {
+struct thorium_script biosal_kmer_store_script = {
     .identifier = SCRIPT_KMER_STORE,
-    .init = bsal_kmer_store_init,
-    .destroy = bsal_kmer_store_destroy,
-    .receive = bsal_kmer_store_receive,
-    .size = sizeof(struct bsal_kmer_store),
-    .name = "bsal_kmer_store"
+    .init = biosal_kmer_store_init,
+    .destroy = biosal_kmer_store_destroy,
+    .receive = biosal_kmer_store_receive,
+    .size = sizeof(struct biosal_kmer_store),
+    .name = "biosal_kmer_store"
 };
 
-void bsal_kmer_store_init(struct thorium_actor *self)
+void biosal_kmer_store_init(struct thorium_actor *self)
 {
-    struct bsal_kmer_store *concrete_actor;
+    struct biosal_kmer_store *concrete_actor;
 
-    concrete_actor = (struct bsal_kmer_store *)thorium_actor_concrete_actor(self);
+    concrete_actor = (struct biosal_kmer_store *)thorium_actor_concrete_actor(self);
 
-    bsal_memory_pool_init(&concrete_actor->persistent_memory, 0, MEMORY_KMER_STORE);
+    biosal_memory_pool_init(&concrete_actor->persistent_memory, 0, MEMORY_KMER_STORE);
     concrete_actor->kmer_length = -1;
     concrete_actor->received = 0;
 
-    bsal_dna_codec_init(&concrete_actor->transport_codec);
+    biosal_dna_codec_init(&concrete_actor->transport_codec);
 
-    if (bsal_dna_codec_must_use_two_bit_encoding(&concrete_actor->transport_codec,
+    if (biosal_dna_codec_must_use_two_bit_encoding(&concrete_actor->transport_codec,
                             thorium_actor_get_node_count(self))) {
-        bsal_dna_codec_enable_two_bit_encoding(&concrete_actor->transport_codec);
+        biosal_dna_codec_enable_two_bit_encoding(&concrete_actor->transport_codec);
     }
 
-    bsal_dna_codec_init(&concrete_actor->storage_codec);
+    biosal_dna_codec_init(&concrete_actor->storage_codec);
 
 /* This option enables 2-bit encoding
  * for kmers.
  */
-#ifdef BSAL_DNA_CODEC_USE_TWO_BIT_ENCODING_FOR_STORAGE
-    bsal_dna_codec_enable_two_bit_encoding(&concrete_actor->storage_codec);
+#ifdef BIOSAL_DNA_CODEC_USE_TWO_BIT_ENCODING_FOR_STORAGE
+    biosal_dna_codec_enable_two_bit_encoding(&concrete_actor->storage_codec);
 #endif
 
     concrete_actor->last_received = 0;
 
-    thorium_actor_add_action(self, ACTION_YIELD_REPLY, bsal_kmer_store_yield_reply);
+    thorium_actor_add_action(self, ACTION_YIELD_REPLY, biosal_kmer_store_yield_reply);
 }
 
-void bsal_kmer_store_destroy(struct thorium_actor *self)
+void biosal_kmer_store_destroy(struct thorium_actor *self)
 {
-    struct bsal_kmer_store *concrete_actor;
+    struct biosal_kmer_store *concrete_actor;
 
-    concrete_actor = (struct bsal_kmer_store *)thorium_actor_concrete_actor(self);
+    concrete_actor = (struct biosal_kmer_store *)thorium_actor_concrete_actor(self);
 
     printf("%s/%d MemoryUsageReport\n",
                     thorium_actor_script_name(self),
                     thorium_actor_name(self));
 
-    bsal_memory_pool_examine(&concrete_actor->persistent_memory);
-    bsal_map_examine(&concrete_actor->table);
+    biosal_memory_pool_examine(&concrete_actor->persistent_memory);
+    biosal_map_examine(&concrete_actor->table);
 
     if (concrete_actor->kmer_length != -1) {
-        bsal_map_destroy(&concrete_actor->table);
+        biosal_map_destroy(&concrete_actor->table);
     }
 
-    bsal_dna_codec_destroy(&concrete_actor->transport_codec);
-    bsal_dna_codec_destroy(&concrete_actor->storage_codec);
+    biosal_dna_codec_destroy(&concrete_actor->transport_codec);
+    biosal_dna_codec_destroy(&concrete_actor->storage_codec);
 
     concrete_actor->kmer_length = -1;
 
-    bsal_memory_pool_destroy(&concrete_actor->persistent_memory);
+    biosal_memory_pool_destroy(&concrete_actor->persistent_memory);
 }
 
-void bsal_kmer_store_receive(struct thorium_actor *self, struct thorium_message *message)
+void biosal_kmer_store_receive(struct thorium_actor *self, struct thorium_message *message)
 {
     int tag;
     void *buffer;
-    struct bsal_kmer_store *concrete_actor;
-    struct bsal_dna_kmer_frequency_block block;
+    struct biosal_kmer_store *concrete_actor;
+    struct biosal_dna_kmer_frequency_block block;
     void *key;
-    struct bsal_map *kmers;
-    struct bsal_map_iterator iterator;
+    struct biosal_map *kmers;
+    struct biosal_map_iterator iterator;
     double value;
-    struct bsal_dna_kmer kmer;
-    struct bsal_dna_kmer *kmer_pointer;
+    struct biosal_dna_kmer kmer;
+    struct biosal_dna_kmer *kmer_pointer;
     void *packed_kmer;
     int *frequency;
     int *bucket;
-    struct bsal_memory_pool *ephemeral_memory;
+    struct biosal_memory_pool *ephemeral_memory;
     int customer;
     int period;
-    struct bsal_dna_kmer encoded_kmer;
+    struct biosal_dna_kmer encoded_kmer;
     char *raw_kmer;
 
-#ifdef BSAL_KMER_STORE_DEBUG
+#ifdef BIOSAL_KMER_STORE_DEBUG
     int name;
 #endif
 
@@ -118,7 +118,7 @@ void bsal_kmer_store_receive(struct thorium_actor *self, struct thorium_message 
     }
 
     ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
-    concrete_actor = (struct bsal_kmer_store *)thorium_actor_concrete_actor(self);
+    concrete_actor = (struct biosal_kmer_store *)thorium_actor_concrete_actor(self);
     tag = thorium_message_action(message);
     buffer = thorium_message_buffer(message);
 
@@ -126,75 +126,75 @@ void bsal_kmer_store_receive(struct thorium_actor *self, struct thorium_message 
 
         thorium_message_unpack_int(message, 0, &concrete_actor->kmer_length);
 
-        bsal_dna_kmer_init_mock(&kmer, concrete_actor->kmer_length,
+        biosal_dna_kmer_init_mock(&kmer, concrete_actor->kmer_length,
                         &concrete_actor->storage_codec, thorium_actor_get_ephemeral_memory(self));
-        concrete_actor->key_length_in_bytes = bsal_dna_kmer_pack_size(&kmer,
+        concrete_actor->key_length_in_bytes = biosal_dna_kmer_pack_size(&kmer,
                         concrete_actor->kmer_length, &concrete_actor->storage_codec);
-        bsal_dna_kmer_destroy(&kmer, thorium_actor_get_ephemeral_memory(self));
+        biosal_dna_kmer_destroy(&kmer, thorium_actor_get_ephemeral_memory(self));
 
-#ifdef BSAL_KMER_STORE_DEBUG
+#ifdef BIOSAL_KMER_STORE_DEBUG
         name = thorium_actor_name(self);
         printf("kmer store %d will use %d bytes for canonical kmers (k is %d)\n",
                         name, concrete_actor->key_length_in_bytes,
                         concrete_actor->kmer_length);
 #endif
 
-        bsal_map_init(&concrete_actor->table, concrete_actor->key_length_in_bytes,
+        biosal_map_init(&concrete_actor->table, concrete_actor->key_length_in_bytes,
                         sizeof(int));
-        bsal_map_set_memory_pool(&concrete_actor->table,
+        biosal_map_set_memory_pool(&concrete_actor->table,
                         &concrete_actor->persistent_memory);
 
         /*
          * Configure the map for better performance.
          */
-        bsal_map_disable_deletion_support(&concrete_actor->table);
+        biosal_map_disable_deletion_support(&concrete_actor->table);
 
         /*
          * The threshold of the map is not very important because
          * requests that hit the map have to first arrive as messages,
          * which are slow.
          */
-        bsal_map_set_threshold(&concrete_actor->table, 0.95);
+        biosal_map_set_threshold(&concrete_actor->table, 0.95);
 
         thorium_actor_send_reply_empty(self, ACTION_SET_KMER_LENGTH_REPLY);
 
     } else if (tag == ACTION_PUSH_KMER_BLOCK) {
 
-        bsal_dna_kmer_frequency_block_init(&block, concrete_actor->kmer_length,
+        biosal_dna_kmer_frequency_block_init(&block, concrete_actor->kmer_length,
                         ephemeral_memory, &concrete_actor->transport_codec, 0);
 
-        bsal_dna_kmer_frequency_block_unpack(&block, buffer, thorium_actor_get_ephemeral_memory(self),
+        biosal_dna_kmer_frequency_block_unpack(&block, buffer, thorium_actor_get_ephemeral_memory(self),
                         &concrete_actor->transport_codec);
 
-        key = bsal_memory_pool_allocate(ephemeral_memory, concrete_actor->key_length_in_bytes);
+        key = biosal_memory_pool_allocate(ephemeral_memory, concrete_actor->key_length_in_bytes);
 
-#ifdef BSAL_KMER_STORE_DEBUG
+#ifdef BIOSAL_KMER_STORE_DEBUG
         printf("Allocating key %d bytes\n", concrete_actor->key_length_in_bytes);
 
         printf("kmer store receives block, kmers in table %" PRIu64 "\n",
-                        bsal_map_size(&concrete_actor->table));
+                        biosal_map_size(&concrete_actor->table));
 #endif
 
-        kmers = bsal_dna_kmer_frequency_block_kmers(&block);
-        bsal_map_iterator_init(&iterator, kmers);
+        kmers = biosal_dna_kmer_frequency_block_kmers(&block);
+        biosal_map_iterator_init(&iterator, kmers);
 
         period = 2500000;
 
-        raw_kmer = bsal_memory_pool_allocate(thorium_actor_get_ephemeral_memory(self),
+        raw_kmer = biosal_memory_pool_allocate(thorium_actor_get_ephemeral_memory(self),
                         concrete_actor->kmer_length + 1);
 
-        while (bsal_map_iterator_has_next(&iterator)) {
+        while (biosal_map_iterator_has_next(&iterator)) {
 
             /*
              * add kmers to store
              */
-            bsal_map_iterator_next(&iterator, (void **)&packed_kmer, (void **)&frequency);
+            biosal_map_iterator_next(&iterator, (void **)&packed_kmer, (void **)&frequency);
 
             /* Store the kmer in 2 bit encoding
              */
 
-            bsal_dna_kmer_init_empty(&kmer);
-            bsal_dna_kmer_unpack(&kmer, packed_kmer, concrete_actor->kmer_length,
+            biosal_dna_kmer_init_empty(&kmer);
+            biosal_dna_kmer_unpack(&kmer, packed_kmer, concrete_actor->kmer_length,
                         ephemeral_memory,
                         &concrete_actor->transport_codec);
 
@@ -203,31 +203,31 @@ void bsal_kmer_store_receive(struct thorium_actor *self, struct thorium_message 
             /*
              * Get a copy of the sequence
              */
-            bsal_dna_kmer_get_sequence(kmer_pointer, raw_kmer, concrete_actor->kmer_length,
+            biosal_dna_kmer_get_sequence(kmer_pointer, raw_kmer, concrete_actor->kmer_length,
                             &concrete_actor->transport_codec);
 
 #if 0
             printf("DEBUG raw_kmer %s\n", raw_kmer);
 #endif
 
-            bsal_dna_kmer_destroy(&kmer, ephemeral_memory);
+            biosal_dna_kmer_destroy(&kmer, ephemeral_memory);
 
-            bsal_dna_kmer_init(&encoded_kmer, raw_kmer, &concrete_actor->storage_codec,
+            biosal_dna_kmer_init(&encoded_kmer, raw_kmer, &concrete_actor->storage_codec,
                             thorium_actor_get_ephemeral_memory(self));
 
-            bsal_dna_kmer_pack_store_key(&encoded_kmer, key,
+            biosal_dna_kmer_pack_store_key(&encoded_kmer, key,
                             concrete_actor->kmer_length, &concrete_actor->storage_codec,
                             thorium_actor_get_ephemeral_memory(self));
 
-            bsal_dna_kmer_destroy(&encoded_kmer,
+            biosal_dna_kmer_destroy(&encoded_kmer,
                             thorium_actor_get_ephemeral_memory(self));
 
-            bucket = (int *)bsal_map_get(&concrete_actor->table, key);
+            bucket = (int *)biosal_map_get(&concrete_actor->table, key);
 
             if (bucket == NULL) {
                 /* This is the first time that this kmer is seen.
                  */
-                bucket = (int *)bsal_map_add(&concrete_actor->table, key);
+                bucket = (int *)biosal_map_add(&concrete_actor->table, key);
                 *bucket = 0;
             }
 
@@ -237,8 +237,8 @@ void bsal_kmer_store_receive(struct thorium_actor *self, struct thorium_message 
                 printf("kmer store %d received %" PRIu64 " kmers so far,"
                                 " store has %" PRIu64 " canonical kmers, %" PRIu64 " kmers\n",
                                 thorium_actor_name(self), concrete_actor->received,
-                                bsal_map_size(&concrete_actor->table),
-                                2 * bsal_map_size(&concrete_actor->table));
+                                biosal_map_size(&concrete_actor->table),
+                                2 * biosal_map_size(&concrete_actor->table));
 
                 concrete_actor->last_received = concrete_actor->received;
             }
@@ -246,11 +246,11 @@ void bsal_kmer_store_receive(struct thorium_actor *self, struct thorium_message 
             concrete_actor->received += *frequency;
         }
 
-        bsal_memory_pool_free(ephemeral_memory, key);
-        bsal_memory_pool_free(ephemeral_memory, raw_kmer);
+        biosal_memory_pool_free(ephemeral_memory, key);
+        biosal_memory_pool_free(ephemeral_memory, raw_kmer);
 
-        bsal_map_iterator_destroy(&iterator);
-        bsal_dna_kmer_frequency_block_destroy(&block, thorium_actor_get_ephemeral_memory(self));
+        biosal_map_iterator_destroy(&iterator);
+        biosal_dna_kmer_frequency_block_destroy(&block, thorium_actor_get_ephemeral_memory(self));
 
         thorium_actor_send_reply_empty(self, ACTION_PUSH_KMER_BLOCK_REPLY);
 
@@ -258,12 +258,12 @@ void bsal_kmer_store_receive(struct thorium_actor *self, struct thorium_message 
 
         thorium_message_unpack_double(message, 0, &value);
 
-        bsal_map_set_current_size_estimate(&concrete_actor->table, value);
+        biosal_map_set_current_size_estimate(&concrete_actor->table, value);
 
     } else if (tag == ACTION_ASK_TO_STOP) {
 
-#ifdef BSAL_KMER_STORE_DEBUG
-        bsal_kmer_store_print(self);
+#ifdef BIOSAL_KMER_STORE_DEBUG
+        biosal_kmer_store_print(self);
 #endif
 
         thorium_actor_ask_to_stop(self, message);
@@ -274,7 +274,7 @@ void bsal_kmer_store_receive(struct thorium_actor *self, struct thorium_message 
 
         printf("kmer store %d will use coverage distribution %d\n",
                         thorium_actor_name(self), customer);
-#ifdef BSAL_KMER_STORE_DEBUG
+#ifdef BIOSAL_KMER_STORE_DEBUG
 #endif
 
         concrete_actor->customer = customer;
@@ -286,7 +286,7 @@ void bsal_kmer_store_receive(struct thorium_actor *self, struct thorium_message 
         printf("DEBUG kmer store %d receives ACTION_PUSH_DATA\n",
                         thorium_actor_name(self));
 
-        bsal_kmer_store_push_data(self, message);
+        biosal_kmer_store_push_data(self, message);
 
     } else if (tag == ACTION_STORE_GET_ENTRY_COUNT) {
 
@@ -295,36 +295,36 @@ void bsal_kmer_store_receive(struct thorium_actor *self, struct thorium_message 
     }
 }
 
-void bsal_kmer_store_print(struct thorium_actor *self)
+void biosal_kmer_store_print(struct thorium_actor *self)
 {
-    struct bsal_map_iterator iterator;
-    struct bsal_dna_kmer kmer;
+    struct biosal_map_iterator iterator;
+    struct biosal_dna_kmer kmer;
     void *key;
     int *value;
     int coverage;
     char *sequence;
-    struct bsal_kmer_store *concrete_actor;
+    struct biosal_kmer_store *concrete_actor;
     int maximum_length;
     int length;
-    struct bsal_memory_pool *ephemeral_memory;
+    struct biosal_memory_pool *ephemeral_memory;
 
     ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
-    concrete_actor = (struct bsal_kmer_store *)thorium_actor_concrete_actor(self);
-    bsal_map_iterator_init(&iterator, &concrete_actor->table);
+    concrete_actor = (struct biosal_kmer_store *)thorium_actor_concrete_actor(self);
+    biosal_map_iterator_init(&iterator, &concrete_actor->table);
 
-    printf("map size %d\n", (int)bsal_map_size(&concrete_actor->table));
+    printf("map size %d\n", (int)biosal_map_size(&concrete_actor->table));
 
     maximum_length = 0;
 
-    while (bsal_map_iterator_has_next(&iterator)) {
-        bsal_map_iterator_next(&iterator, (void **)&key, (void **)&value);
+    while (biosal_map_iterator_has_next(&iterator)) {
+        biosal_map_iterator_next(&iterator, (void **)&key, (void **)&value);
 
-        bsal_dna_kmer_init_empty(&kmer);
-        bsal_dna_kmer_unpack(&kmer, key, concrete_actor->kmer_length,
+        biosal_dna_kmer_init_empty(&kmer);
+        biosal_dna_kmer_unpack(&kmer, key, concrete_actor->kmer_length,
                         thorium_actor_get_ephemeral_memory(self),
                         &concrete_actor->storage_codec);
 
-        length = bsal_dna_kmer_length(&kmer, concrete_actor->kmer_length);
+        length = biosal_dna_kmer_length(&kmer, concrete_actor->kmer_length);
 
         /*
         printf("length %d\n", length);
@@ -332,83 +332,83 @@ void bsal_kmer_store_print(struct thorium_actor *self)
         if (length > maximum_length) {
             maximum_length = length;
         }
-        bsal_dna_kmer_destroy(&kmer, thorium_actor_get_ephemeral_memory(self));
+        biosal_dna_kmer_destroy(&kmer, thorium_actor_get_ephemeral_memory(self));
     }
 
     /*
     printf("MAx length %d\n", maximum_length);
     */
 
-    sequence = bsal_memory_pool_allocate(ephemeral_memory, maximum_length + 1);
+    sequence = biosal_memory_pool_allocate(ephemeral_memory, maximum_length + 1);
     sequence[0] = '\0';
-    bsal_map_iterator_destroy(&iterator);
-    bsal_map_iterator_init(&iterator, &concrete_actor->table);
+    biosal_map_iterator_destroy(&iterator);
+    biosal_map_iterator_init(&iterator, &concrete_actor->table);
 
-    while (bsal_map_iterator_has_next(&iterator)) {
-        bsal_map_iterator_next(&iterator, (void **)&key, (void **)&value);
+    while (biosal_map_iterator_has_next(&iterator)) {
+        biosal_map_iterator_next(&iterator, (void **)&key, (void **)&value);
 
-        bsal_dna_kmer_init_empty(&kmer);
-        bsal_dna_kmer_unpack(&kmer, key, concrete_actor->kmer_length,
+        biosal_dna_kmer_init_empty(&kmer);
+        biosal_dna_kmer_unpack(&kmer, key, concrete_actor->kmer_length,
                         thorium_actor_get_ephemeral_memory(self),
                         &concrete_actor->storage_codec);
 
-        bsal_dna_kmer_get_sequence(&kmer, sequence, concrete_actor->kmer_length,
+        biosal_dna_kmer_get_sequence(&kmer, sequence, concrete_actor->kmer_length,
                         &concrete_actor->storage_codec);
         coverage = *value;
 
         printf("Sequence %s Coverage %d\n", sequence, coverage);
 
-        bsal_dna_kmer_destroy(&kmer, thorium_actor_get_ephemeral_memory(self));
+        biosal_dna_kmer_destroy(&kmer, thorium_actor_get_ephemeral_memory(self));
     }
 
-    bsal_map_iterator_destroy(&iterator);
-    bsal_memory_pool_free(ephemeral_memory, sequence);
+    biosal_map_iterator_destroy(&iterator);
+    biosal_memory_pool_free(ephemeral_memory, sequence);
 }
 
-void bsal_kmer_store_push_data(struct thorium_actor *self, struct thorium_message *message)
+void biosal_kmer_store_push_data(struct thorium_actor *self, struct thorium_message *message)
 {
-    struct bsal_kmer_store *concrete_actor;
+    struct biosal_kmer_store *concrete_actor;
     int name;
     int source;
 
-    concrete_actor = (struct bsal_kmer_store *)thorium_actor_concrete_actor(self);
+    concrete_actor = (struct biosal_kmer_store *)thorium_actor_concrete_actor(self);
     source = thorium_message_source(message);
     concrete_actor->source = source;
     name = thorium_actor_name(self);
 
-    bsal_map_init(&concrete_actor->coverage_distribution, sizeof(int), sizeof(uint64_t));
+    biosal_map_init(&concrete_actor->coverage_distribution, sizeof(int), sizeof(uint64_t));
 
     printf("kmer store %d: local table has %" PRIu64" canonical kmers (%" PRIu64 " kmers)\n",
-                    name, bsal_map_size(&concrete_actor->table),
-                    2 * bsal_map_size(&concrete_actor->table));
+                    name, biosal_map_size(&concrete_actor->table),
+                    2 * biosal_map_size(&concrete_actor->table));
 
-    bsal_map_iterator_init(&concrete_actor->iterator, &concrete_actor->table);
+    biosal_map_iterator_init(&concrete_actor->iterator, &concrete_actor->table);
 
-#ifdef BSAL_KMER_STORE_DEBUG
+#ifdef BIOSAL_KMER_STORE_DEBUG
     printf("yield 1\n");
 #endif
 
     thorium_actor_send_to_self_empty(self, ACTION_YIELD);
 }
 
-void bsal_kmer_store_yield_reply(struct thorium_actor *self, struct thorium_message *message)
+void biosal_kmer_store_yield_reply(struct thorium_actor *self, struct thorium_message *message)
 {
-    struct bsal_dna_kmer kmer;
+    struct biosal_dna_kmer kmer;
     void *key;
     int *value;
     int coverage;
-    struct bsal_kmer_store *concrete_actor;
+    struct biosal_kmer_store *concrete_actor;
     int customer;
     uint64_t *count;
     int new_count;
     void *new_buffer;
     struct thorium_message new_message;
-    struct bsal_memory_pool *ephemeral_memory;
+    struct biosal_memory_pool *ephemeral_memory;
     int i;
     int max;
 
     ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
-    concrete_actor = (struct bsal_kmer_store *)thorium_actor_concrete_actor(self);
+    concrete_actor = (struct biosal_kmer_store *)thorium_actor_concrete_actor(self);
     customer = concrete_actor->customer;
 
 #if 0
@@ -422,22 +422,22 @@ void bsal_kmer_store_yield_reply(struct thorium_actor *self, struct thorium_mess
     value = NULL;
 
     while (i < max
-                    && bsal_map_iterator_has_next(&concrete_actor->iterator)) {
+                    && biosal_map_iterator_has_next(&concrete_actor->iterator)) {
 
-        bsal_map_iterator_next(&concrete_actor->iterator, (void **)&key, (void **)&value);
+        biosal_map_iterator_next(&concrete_actor->iterator, (void **)&key, (void **)&value);
 
-        bsal_dna_kmer_init_empty(&kmer);
-        bsal_dna_kmer_unpack(&kmer, key, concrete_actor->kmer_length,
+        biosal_dna_kmer_init_empty(&kmer);
+        biosal_dna_kmer_unpack(&kmer, key, concrete_actor->kmer_length,
                         ephemeral_memory,
                         &concrete_actor->storage_codec);
 
         coverage = *value;
 
-        count = (uint64_t *)bsal_map_get(&concrete_actor->coverage_distribution, &coverage);
+        count = (uint64_t *)biosal_map_get(&concrete_actor->coverage_distribution, &coverage);
 
         if (count == NULL) {
 
-            count = (uint64_t *)bsal_map_add(&concrete_actor->coverage_distribution, &coverage);
+            count = (uint64_t *)biosal_map_add(&concrete_actor->coverage_distribution, &coverage);
 
             (*count) = 0;
         }
@@ -445,14 +445,14 @@ void bsal_kmer_store_yield_reply(struct thorium_actor *self, struct thorium_mess
         /* increment for the lowest kmer (canonical) */
         (*count)++;
 
-        bsal_dna_kmer_destroy(&kmer, ephemeral_memory);
+        biosal_dna_kmer_destroy(&kmer, ephemeral_memory);
 
         ++i;
     }
 
     /* yield again if the iterator is not at the end
      */
-    if (bsal_map_iterator_has_next(&concrete_actor->iterator)) {
+    if (biosal_map_iterator_has_next(&concrete_actor->iterator)) {
 
 #if 0
         printf("yield ! %d\n", i);
@@ -467,19 +467,19 @@ void bsal_kmer_store_yield_reply(struct thorium_actor *self, struct thorium_mess
     printf("ready...\n");
     */
 
-    bsal_map_iterator_destroy(&concrete_actor->iterator);
+    biosal_map_iterator_destroy(&concrete_actor->iterator);
 
-    new_count = bsal_map_pack_size(&concrete_actor->coverage_distribution);
+    new_count = biosal_map_pack_size(&concrete_actor->coverage_distribution);
 
     new_buffer = thorium_actor_allocate(self, new_count);
 
-    bsal_map_pack(&concrete_actor->coverage_distribution, new_buffer);
+    biosal_map_pack(&concrete_actor->coverage_distribution, new_buffer);
 
     printf("SENDING kmer store %d sends map to %d, %d bytes / %d entries\n",
                     thorium_actor_name(self),
                     customer, new_count,
-                    (int)bsal_map_size(&concrete_actor->coverage_distribution));
-#ifdef BSAL_KMER_STORE_DEBUG
+                    (int)biosal_map_size(&concrete_actor->coverage_distribution));
+#ifdef BIOSAL_KMER_STORE_DEBUG
 #endif
 
     thorium_message_init(&new_message, ACTION_PUSH_DATA, new_count, new_buffer);
@@ -487,7 +487,7 @@ void bsal_kmer_store_yield_reply(struct thorium_actor *self, struct thorium_mess
     thorium_actor_send(self, customer, &new_message);
     thorium_message_destroy(&new_message);
 
-    bsal_map_destroy(&concrete_actor->coverage_distribution);
+    biosal_map_destroy(&concrete_actor->coverage_distribution);
 
     thorium_actor_send_empty(self, concrete_actor->source,
                             ACTION_PUSH_DATA_REPLY);

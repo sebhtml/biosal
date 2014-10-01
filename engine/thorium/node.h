@@ -88,11 +88,11 @@ struct thorium_worker_buffer;
  *
  */
 struct thorium_node {
-    struct bsal_vector actors;
-    struct bsal_set auto_scaling_actors;
+    struct biosal_vector actors;
+    struct biosal_set auto_scaling_actors;
     struct thorium_worker_pool worker_pool;
-    struct bsal_map actor_names;
-    struct bsal_vector initial_actors;
+    struct biosal_map actor_names;
+    struct biosal_vector initial_actors;
     int received_initial_actors;
     int ready;
 
@@ -106,12 +106,12 @@ struct thorium_node {
 #endif
 
 #ifdef THORIUM_NODE_INJECT_CLEAN_WORKER_BUFFERS
-    struct bsal_fast_queue clean_outbound_buffers_to_inject;
+    struct biosal_fast_queue clean_outbound_buffers_to_inject;
 
     int worker_for_triage;
 #endif
 
-    struct bsal_map scripts;
+    struct biosal_map scripts;
     int available_scripts;
     int maximum_scripts;
 
@@ -119,7 +119,7 @@ struct thorium_node {
  * Enable a check to avoid calling transport probing function
  * when running on one single node.
  */
-    struct bsal_thread thread;
+    struct biosal_thread thread;
     struct thorium_transport transport;
     struct thorium_message_multiplexer multiplexer;
     struct thorium_multiplexer_policy multiplexer_policy;
@@ -133,7 +133,7 @@ struct thorium_node {
      * If thorium_actor_spawn is removed from the API, then
      * this lock might be removed.
      */
-    struct bsal_lock spawn_and_death_lock;
+    struct biosal_lock spawn_and_death_lock;
 
     /*
      * This lock is required because of the
@@ -142,7 +142,7 @@ struct thorium_node {
      * A message tag THORIUM_ACTOR_ADD_SCRIPT could be added
      * in order to remove this lock.
      */
-    struct bsal_lock script_lock;
+    struct biosal_lock script_lock;
 
     /*
      * This lock is required because it is accessed when
@@ -154,26 +154,26 @@ struct thorium_node {
      * (the Thorium pacing thread would call thorium_node_notify_death
      * instead of the worker thread).
      */
-    struct bsal_lock auto_scaling_lock;
+    struct biosal_lock auto_scaling_lock;
 
     /*
      * Memory pool for concrete actors.
      */
-    struct bsal_memory_pool actor_memory_pool;
+    struct biosal_memory_pool actor_memory_pool;
 
     /*
      * Memory pool for inbound messages using the transport
      * system.
      */
-    struct bsal_memory_pool inbound_message_memory_pool;
+    struct biosal_memory_pool inbound_message_memory_pool;
 
     /*
      * Memory pool for outboud messages that are not allocated by
      * workers.
      */
-    struct bsal_memory_pool outbound_message_memory_pool;
+    struct biosal_memory_pool outbound_message_memory_pool;
 
-    struct bsal_queue dead_indices;
+    struct biosal_queue dead_indices;
 
     int provided;
 
@@ -187,7 +187,7 @@ struct thorium_node {
     int argc;
     char **argv;
 
-    struct bsal_counter counter;
+    struct biosal_counter counter;
 
     /*
      * Requires -D_POSIX_C_SOURCE=200112L
@@ -312,7 +312,7 @@ void thorium_node_resolve(struct thorium_node *self, struct thorium_message *mes
 int thorium_node_generate_random_name(struct thorium_node *self,
                 int minimal_value, int maximum_value);
 
-struct bsal_memory_pool *thorium_node_inbound_memory_pool(struct thorium_node *self);
+struct biosal_memory_pool *thorium_node_inbound_memory_pool(struct thorium_node *self);
 
 void thorium_node_examine(struct thorium_node *self);
 void thorium_node_inject_outbound_buffer(struct thorium_node *self, struct thorium_worker_buffer *worker_buffer);

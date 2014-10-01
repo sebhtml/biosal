@@ -13,71 +13,71 @@
 #include <inttypes.h>
 
 /*
-#define BSAL_GZIP_BUFFERED_READER_DEBUG_INFLATE
+#define BIOSAL_GZIP_BUFFERED_READER_DEBUG_INFLATE
 */
 
-/*#define BSAL_BUFFERED_READER_BUFFER_SIZE 1048576*/
+/*#define BIOSAL_BUFFERED_READER_BUFFER_SIZE 1048576*/
 
 /*
  * On Mira (Blue Gene/Q with GPFS file system), I/O nodes
  * lock 8-MiB blocks when reading or writing
  */
-#define BSAL_BUFFERED_READER_BUFFER_SIZE 8388608
+#define BIOSAL_BUFFERED_READER_BUFFER_SIZE 8388608
 #define GZ_FILE_EXTENSION ".gz"
 
 #define MEMORY_GZIP 0x4480c242
 
-struct bsal_buffered_reader_interface bsal_gzip_buffered_reader_implementation = {
-    .init = bsal_gzip_buffered_reader_init,
-    .destroy = bsal_gzip_buffered_reader_destroy,
-    .read_line = bsal_gzip_buffered_reader_read_line,
-    .detect = bsal_gzip_buffered_reader_detect,
-    .get_offset = bsal_gzip_buffered_reader_get_offset,
-    .get_previous_bytes = bsal_gzip_buffered_reader_get_previous_bytes,
-    .size = sizeof(struct bsal_gzip_buffered_reader)
+struct biosal_buffered_reader_interface biosal_gzip_buffered_reader_implementation = {
+    .init = biosal_gzip_buffered_reader_init,
+    .destroy = biosal_gzip_buffered_reader_destroy,
+    .read_line = biosal_gzip_buffered_reader_read_line,
+    .detect = biosal_gzip_buffered_reader_detect,
+    .get_offset = biosal_gzip_buffered_reader_get_offset,
+    .get_previous_bytes = biosal_gzip_buffered_reader_get_previous_bytes,
+    .size = sizeof(struct biosal_gzip_buffered_reader)
 };
 
-/*#define BSAL_BUFFERED_READER_BUFFER_SIZE 4194304*/
+/*#define BIOSAL_BUFFERED_READER_BUFFER_SIZE 4194304*/
 
-void bsal_gzip_buffered_reader_init(struct bsal_buffered_reader *self,
+void biosal_gzip_buffered_reader_init(struct biosal_buffered_reader *self,
                 const char *file, uint64_t offset)
 {
-    struct bsal_gzip_buffered_reader *reader;
+    struct biosal_gzip_buffered_reader *reader;
 
-    reader = bsal_buffered_reader_get_concrete_self(self);
+    reader = biosal_buffered_reader_get_concrete_self(self);
 
-    bsal_gzip_buffered_reader_open(self, file, offset);
+    biosal_gzip_buffered_reader_open(self, file, offset);
 
-#ifdef BSAL_BUFFERED_READER_DEBUG
+#ifdef BIOSAL_BUFFERED_READER_DEBUG
     printf("DEBUG fseek %" PRIu64 "\n", offset);
 #endif
 
-    reader->buffer = (char *)bsal_memory_allocate(BSAL_BUFFERED_READER_BUFFER_SIZE * sizeof(char), MEMORY_GZIP);
-    reader->buffer_capacity = BSAL_BUFFERED_READER_BUFFER_SIZE;
+    reader->buffer = (char *)biosal_memory_allocate(BIOSAL_BUFFERED_READER_BUFFER_SIZE * sizeof(char), MEMORY_GZIP);
+    reader->buffer_capacity = BIOSAL_BUFFERED_READER_BUFFER_SIZE;
     reader->position_in_buffer = 0;
     reader->buffer_size = 0;
 
     reader->offset = offset;
 }
 
-void bsal_gzip_buffered_reader_destroy(struct bsal_buffered_reader *self)
+void biosal_gzip_buffered_reader_destroy(struct biosal_buffered_reader *self)
 {
-    struct bsal_gzip_buffered_reader *reader;
+    struct biosal_gzip_buffered_reader *reader;
 
-    reader = bsal_buffered_reader_get_concrete_self(self);
+    reader = biosal_buffered_reader_get_concrete_self(self);
 
-    bsal_memory_free(reader->buffer, MEMORY_GZIP);
+    biosal_memory_free(reader->buffer, MEMORY_GZIP);
 
     reader->buffer = NULL;
     reader->buffer_capacity = 0;
     reader->buffer_size = 0;
     reader->position_in_buffer = 0;
 
-#ifdef BSAL_GZIP_BUFFERED_READER_USE_INFLATE
+#ifdef BIOSAL_GZIP_BUFFERED_READER_USE_INFLATE
     fclose(reader->raw_descriptor);
     reader->raw_descriptor = NULL;
 
-    bsal_memory_free(reader->input_buffer, MEMORY_GZIP);
+    biosal_memory_free(reader->input_buffer, MEMORY_GZIP);
     reader->input_buffer = NULL;
     reader->input_buffer_capacity = 0;
     reader->input_buffer_size = 0;
@@ -95,26 +95,26 @@ void bsal_gzip_buffered_reader_destroy(struct bsal_buffered_reader *self)
 #endif
 }
 
-int bsal_gzip_buffered_reader_read_line(struct bsal_buffered_reader *self,
+int biosal_gzip_buffered_reader_read_line(struct biosal_buffered_reader *self,
                 char *buffer, int length)
 {
     int read;
-    struct bsal_gzip_buffered_reader *reader;
+    struct biosal_gzip_buffered_reader *reader;
 
-    reader = bsal_buffered_reader_get_concrete_self(self);
-    read = bsal_gzip_buffered_reader_read_line_private(self, buffer, length);
+    reader = biosal_buffered_reader_get_concrete_self(self);
+    read = biosal_gzip_buffered_reader_read_line_private(self, buffer, length);
 
     reader->offset += read;
 
     return read;
 }
 
-int bsal_gzip_buffered_reader_read_line_private(struct bsal_buffered_reader *self,
+int biosal_gzip_buffered_reader_read_line_private(struct biosal_buffered_reader *self,
                 char *buffer, int length)
 {
-    struct bsal_gzip_buffered_reader *reader;
+    struct biosal_gzip_buffered_reader *reader;
 
-    reader = bsal_buffered_reader_get_concrete_self(self);
+    reader = biosal_buffered_reader_get_concrete_self(self);
 
     char new_line;
     int position;
@@ -144,7 +144,7 @@ int bsal_gzip_buffered_reader_read_line_private(struct bsal_buffered_reader *sel
     if (has_new_line) {
 
         read = position - reader->position_in_buffer;
-        bsal_memory_copy(buffer, reader->buffer + reader->position_in_buffer,
+        biosal_memory_copy(buffer, reader->buffer + reader->position_in_buffer,
                         read);
         buffer[read] = '\0';
 
@@ -154,8 +154,8 @@ int bsal_gzip_buffered_reader_read_line_private(struct bsal_buffered_reader *sel
          */
         reader->position_in_buffer++;
 
-#ifdef BSAL_BUFFERED_READER_DEBUG9
-        printf("DEBUG bsal_buffered_reader_read_line has line"
+#ifdef BIOSAL_BUFFERED_READER_DEBUG9
+        printf("DEBUG biosal_buffered_reader_read_line has line"
                         "  %i to %i-1 : %s\n", position,
                         reader->position_in_buffer,
                         buffer);
@@ -165,8 +165,8 @@ int bsal_gzip_buffered_reader_read_line_private(struct bsal_buffered_reader *sel
     } else {
         /* try to pull some data and do a recursive call
          */
-        if (bsal_gzip_buffered_reader_pull(self)) {
-            return bsal_gzip_buffered_reader_read_line_private(self, buffer, length);
+        if (biosal_gzip_buffered_reader_pull(self)) {
+            return biosal_gzip_buffered_reader_read_line_private(self, buffer, length);
         } else {
             return 0;
         }
@@ -177,18 +177,18 @@ int bsal_gzip_buffered_reader_read_line_private(struct bsal_buffered_reader *sel
     return 0;
 }
 
-int bsal_gzip_buffered_reader_pull(struct bsal_buffered_reader *self)
+int biosal_gzip_buffered_reader_pull(struct biosal_buffered_reader *self)
 {
     int source;
     int destination;
     int count;
     int available;
     int read;
-    struct bsal_gzip_buffered_reader *reader;
+    struct biosal_gzip_buffered_reader *reader;
 
-    reader = bsal_buffered_reader_get_concrete_self(self);
+    reader = biosal_buffered_reader_get_concrete_self(self);
 
-#ifdef BSAL_BUFFERED_READER_DEBUG
+#ifdef BIOSAL_BUFFERED_READER_DEBUG
     printf("DEBUG ENTERING position_in_buffer %i, buffer_size %i\n",
                     reader->position_in_buffer,
                     reader->buffer_size);
@@ -198,16 +198,16 @@ int bsal_gzip_buffered_reader_pull(struct bsal_buffered_reader *self)
     destination = 0;
     count = reader->buffer_size - reader->position_in_buffer;
 
-#ifdef BSAL_BUFFERED_READER_DEBUG
-    printf("DEBUG bsal_buffered_reader_pull moving data %i to %i\n",
+#ifdef BIOSAL_BUFFERED_READER_DEBUG
+    printf("DEBUG biosal_buffered_reader_pull moving data %i to %i\n",
                     source, destination);
 #endif
 
     if (destination < source) {
-        /* \see http://man7.org/linux/man-pages/man3/bsal_memory_move.3.html
+        /* \see http://man7.org/linux/man-pages/man3/biosal_memory_move.3.html
          * regions may overlap
          */
-        bsal_memory_move(reader->buffer + destination, reader->buffer + source,
+        biosal_memory_move(reader->buffer + destination, reader->buffer + source,
                     count);
 
         reader->position_in_buffer = 0;
@@ -220,17 +220,17 @@ int bsal_gzip_buffered_reader_pull(struct bsal_buffered_reader *self)
      * \see http://www.lemoda.net/c/gzfile-read/
      * \see http://www.zlib.net/manual.html
      */
-    read = bsal_gzip_buffered_reader_read(self,
+    read = biosal_gzip_buffered_reader_read(self,
                     reader->buffer + reader->buffer_size, available);
 
-#ifdef BSAL_BUFFERED_READER_DEBUG
-    printf("DEBUG bsal_buffered_reader_pull available %i, read %i\n",
+#ifdef BIOSAL_BUFFERED_READER_DEBUG
+    printf("DEBUG biosal_buffered_reader_pull available %i, read %i\n",
                     available, read);
 #endif
 
     reader->buffer_size += read;
 
-#ifdef BSAL_BUFFERED_READER_DEBUG
+#ifdef BIOSAL_BUFFERED_READER_DEBUG
     printf("DEBUG EXITING position_in_buffer %i, buffer_size %i\n",
                     reader->position_in_buffer,
                     reader->buffer_size);
@@ -239,17 +239,17 @@ int bsal_gzip_buffered_reader_pull(struct bsal_buffered_reader *self)
     return read;
 }
 
-void bsal_gzip_buffered_reader_open(struct bsal_buffered_reader *self,
+void biosal_gzip_buffered_reader_open(struct biosal_buffered_reader *self,
                 const char *file, uint64_t offset)
 {
-    struct bsal_gzip_buffered_reader *reader;
+    struct biosal_gzip_buffered_reader *reader;
 
-    reader = bsal_buffered_reader_get_concrete_self(self);
+    reader = biosal_buffered_reader_get_concrete_self(self);
 
-#ifdef BSAL_GZIP_BUFFERED_READER_USE_INFLATE
+#ifdef BIOSAL_GZIP_BUFFERED_READER_USE_INFLATE
 
-#ifdef BSAL_GZIP_BUFFERED_READER_DEBUG_INFLATE
-    printf("BSAL_GZIP_BUFFERED_READER_DEBUG_INFLATE open %s\n",
+#ifdef BIOSAL_GZIP_BUFFERED_READER_DEBUG_INFLATE
+    printf("BIOSAL_GZIP_BUFFERED_READER_DEBUG_INFLATE open %s\n",
                     file);
 #endif
 
@@ -261,8 +261,8 @@ void bsal_gzip_buffered_reader_open(struct bsal_buffered_reader *self,
 
     fseek(reader->raw_descriptor, offset, SEEK_SET);
 
-    reader->input_buffer_capacity = BSAL_BUFFERED_READER_BUFFER_SIZE;
-    reader->input_buffer = bsal_memory_allocate(reader->input_buffer_capacity, MEMORY_GZIP);
+    reader->input_buffer_capacity = BIOSAL_BUFFERED_READER_BUFFER_SIZE;
+    reader->input_buffer = biosal_memory_allocate(reader->input_buffer_capacity, MEMORY_GZIP);
 
 #else
     reader->descriptor = gzopen(file, "r");
@@ -273,26 +273,26 @@ void bsal_gzip_buffered_reader_open(struct bsal_buffered_reader *self,
 #endif
 }
 
-int bsal_gzip_buffered_reader_read(struct bsal_buffered_reader *self,
+int biosal_gzip_buffered_reader_read(struct biosal_buffered_reader *self,
                 char *buffer, int length)
 {
-#ifdef BSAL_GZIP_BUFFERED_READER_USE_INFLATE
+#ifdef BIOSAL_GZIP_BUFFERED_READER_USE_INFLATE
     int read;
 
-#ifdef BSAL_GZIP_BUFFERED_READER_DEBUG_INFLATE
-    printf("BSAL_GZIP_BUFFERED_READER_DEBUG_INFLATE read max %d bytes in buffer with inflate\n",
+#ifdef BIOSAL_GZIP_BUFFERED_READER_DEBUG_INFLATE
+    printf("BIOSAL_GZIP_BUFFERED_READER_DEBUG_INFLATE read max %d bytes in buffer with inflate\n",
                     length);
 #endif
 
-    read = bsal_gzip_buffered_reader_read_with_inflate(self, buffer, length);
+    read = biosal_gzip_buffered_reader_read_with_inflate(self, buffer, length);
 
     return read;
 
 #else
     int read;
-    struct bsal_gzip_buffered_reader *reader;
+    struct biosal_gzip_buffered_reader *reader;
 
-    reader = bsal_buffered_reader_get_concrete_self(self);
+    reader = biosal_buffered_reader_get_concrete_self(self);
 
     read = gzread(reader->descriptor, buffer, length);
 
@@ -301,35 +301,35 @@ int bsal_gzip_buffered_reader_read(struct bsal_buffered_reader *self,
 
 }
 
-#ifdef BSAL_GZIP_BUFFERED_READER_USE_INFLATE
-int bsal_gzip_buffered_reader_pull_raw(struct bsal_buffered_reader *self)
+#ifdef BIOSAL_GZIP_BUFFERED_READER_USE_INFLATE
+int biosal_gzip_buffered_reader_pull_raw(struct biosal_buffered_reader *self)
 {
     int source;
     int destination;
     int count;
     int available;
     int read;
-    struct bsal_gzip_buffered_reader *reader;
+    struct biosal_gzip_buffered_reader *reader;
 
-    reader = bsal_buffered_reader_get_concrete_self(self);
+    reader = biosal_buffered_reader_get_concrete_self(self);
 
     source = reader->input_buffer_position;
     destination = 0;
     count = reader->input_buffer_size - reader->input_buffer_position;
 
-#ifdef BSAL_GZIP_BUFFERED_READER_DEBUG_INFLATE
-    printf("BSAL_GZIP_BUFFERED_READER_DEBUG_INFLATE pull_raw, count= %d\n",
+#ifdef BIOSAL_GZIP_BUFFERED_READER_DEBUG_INFLATE
+    printf("BIOSAL_GZIP_BUFFERED_READER_DEBUG_INFLATE pull_raw, count= %d\n",
                     count);
 #endif
 
     if (destination < source) {
-        /* \see http://man7.org/linux/man-pages/man3/bsal_memory_move.3.html
+        /* \see http://man7.org/linux/man-pages/man3/biosal_memory_move.3.html
          * regions may overlap
          */
-        bsal_memory_move(reader->input_buffer + destination, reader->input_buffer + source,
+        biosal_memory_move(reader->input_buffer + destination, reader->input_buffer + source,
                     count);
 
-#ifdef BSAL_GZIP_BUFFERED_READER_DEBUG_INFLATE
+#ifdef BIOSAL_GZIP_BUFFERED_READER_DEBUG_INFLATE
         printf("DEBUG move data on the left for gz raw buffer\n");
 #endif
 
@@ -339,8 +339,8 @@ int bsal_gzip_buffered_reader_pull_raw(struct bsal_buffered_reader *self)
 
     available = reader->input_buffer_capacity - reader->input_buffer_size;
 
-#ifdef BSAL_GZIP_BUFFERED_READER_DEBUG_INFLATE
-    printf("BSAL_GZIP_BUFFERED_READER_DEBUG_INFLATE pull_raw, available= %d\n",
+#ifdef BIOSAL_GZIP_BUFFERED_READER_DEBUG_INFLATE
+    printf("BIOSAL_GZIP_BUFFERED_READER_DEBUG_INFLATE pull_raw, available= %d\n",
                     available);
 #endif
 
@@ -352,14 +352,14 @@ int bsal_gzip_buffered_reader_pull_raw(struct bsal_buffered_reader *self)
                     available,
                     reader->raw_descriptor);
 
-#ifdef BSAL_GZIP_BUFFERED_READER_DEBUG_INFLATE
-    printf("BSAL_GZIP_BUFFERED_READER_DEBUG_INFLATE pull_raw read= %d\n",
+#ifdef BIOSAL_GZIP_BUFFERED_READER_DEBUG_INFLATE
+    printf("BIOSAL_GZIP_BUFFERED_READER_DEBUG_INFLATE pull_raw read= %d\n",
                     read);
 #endif
 
     reader->input_buffer_size += read;
 
-#ifdef BSAL_GZIP_BUFFERED_READER_DEBUG_INFLATE
+#ifdef BIOSAL_GZIP_BUFFERED_READER_DEBUG_INFLATE
     printf("DEBUG input_buffer_position= %d input_buffer_size= %d input_buffer_capacity %d\n",
                     reader->input_buffer_position,
                     reader->input_buffer_size,
@@ -370,23 +370,23 @@ int bsal_gzip_buffered_reader_pull_raw(struct bsal_buffered_reader *self)
 }
 #endif
 
-#ifdef BSAL_GZIP_BUFFERED_READER_USE_INFLATE
-int bsal_gzip_buffered_reader_read_with_inflate(struct bsal_buffered_reader *self,
+#ifdef BIOSAL_GZIP_BUFFERED_READER_USE_INFLATE
+int biosal_gzip_buffered_reader_read_with_inflate(struct biosal_buffered_reader *self,
                 char *buffer, int length)
 {
-    struct bsal_gzip_buffered_reader *reader;
+    struct biosal_gzip_buffered_reader *reader;
     int available_in_input;
     char *input;
     int bytes_read_in_input;
     int bytes_written_in_output;
     int return_value;
 
-    reader = bsal_buffered_reader_get_concrete_self(self);
+    reader = biosal_buffered_reader_get_concrete_self(self);
 
     /*
      * Pull some bytes into the input buffer.
      */
-    bsal_gzip_buffered_reader_pull_raw(self);
+    biosal_gzip_buffered_reader_pull_raw(self);
 
     /*
      * Uncompress at most length bytes from <input_buffer> + <input_buffer_position>
@@ -396,7 +396,7 @@ int bsal_gzip_buffered_reader_read_with_inflate(struct bsal_buffered_reader *sel
     available_in_input = reader->input_buffer_size - reader->input_buffer_position;
     input = reader->input_buffer + reader->input_buffer_position;
 
-#ifdef BSAL_GZIP_BUFFERED_READER_DEBUG_INFLATE
+#ifdef BIOSAL_GZIP_BUFFERED_READER_DEBUG_INFLATE
     printf("DEBUG input at position %d\n",
                     reader->input_buffer_position);
 #endif
@@ -418,15 +418,15 @@ int bsal_gzip_buffered_reader_read_with_inflate(struct bsal_buffered_reader *sel
         return_value = inflateInit2(&reader->decompression_stream, 16 + MAX_WBITS);
         reader->got_header = 1;
 
-        BSAL_DEBUGGER_ASSERT(return_value == Z_OK);
+        BIOSAL_DEBUGGER_ASSERT(return_value == Z_OK);
 
         if (return_value != Z_OK) {
             return -1;
         }
     }
 
-#ifdef BSAL_GZIP_BUFFERED_READER_DEBUG_INFLATE
-    printf("BSAL_GZIP_BUFFERED_READER_DEBUG_INFLATE read_with_inflate inflateInit Z_OK\n");
+#ifdef BIOSAL_GZIP_BUFFERED_READER_DEBUG_INFLATE
+    printf("BIOSAL_GZIP_BUFFERED_READER_DEBUG_INFLATE read_with_inflate inflateInit Z_OK\n");
 #endif
 
     /*
@@ -441,8 +441,8 @@ int bsal_gzip_buffered_reader_read_with_inflate(struct bsal_buffered_reader *sel
     reader->decompression_stream.avail_out = length;
     reader->decompression_stream.next_out = (unsigned char *)buffer;
 
-#ifdef BSAL_GZIP_BUFFERED_READER_DEBUG_INFLATE
-    printf("BSAL_GZIP_BUFFERED_READER_DEBUG_INFLATE read_with_inflate avail_in %d avail_out %d\n",
+#ifdef BIOSAL_GZIP_BUFFERED_READER_DEBUG_INFLATE
+    printf("BIOSAL_GZIP_BUFFERED_READER_DEBUG_INFLATE read_with_inflate avail_in %d avail_out %d\n",
                     decompression_stream.avail_in,
                     decompression_stream.avail_out);
 #endif
@@ -453,8 +453,8 @@ int bsal_gzip_buffered_reader_read_with_inflate(struct bsal_buffered_reader *sel
 
         return_value = inflate(&reader->decompression_stream, Z_BLOCK);
 
-#ifdef BSAL_GZIP_BUFFERED_READER_DEBUG_INFLATE
-        printf("while BSAL_GZIP_BUFFERED_READER_DEBUG_INFLATE read_with_inflate avail_in %d avail_out %d ret %d\n",
+#ifdef BIOSAL_GZIP_BUFFERED_READER_DEBUG_INFLATE
+        printf("while BIOSAL_GZIP_BUFFERED_READER_DEBUG_INFLATE read_with_inflate avail_in %d avail_out %d ret %d\n",
                     decompression_stream.avail_in,
                     decompression_stream.avail_out,
                     return_value);
@@ -475,25 +475,25 @@ int bsal_gzip_buffered_reader_read_with_inflate(struct bsal_buffered_reader *sel
 
     bytes_read_in_input = available_in_input - reader->decompression_stream.avail_in;
 
-    BSAL_DEBUGGER_ASSERT(bytes_read_in_input <= available_in_input);
+    BIOSAL_DEBUGGER_ASSERT(bytes_read_in_input <= available_in_input);
 
     reader->input_buffer_position += bytes_read_in_input;
 
     bytes_written_in_output = length - reader->decompression_stream.avail_out;
 
-#ifdef BSAL_GZIP_BUFFERED_READER_DEBUG_INFLATE
-    printf("BSAL_GZIP_BUFFERED_READER_DEBUG_INFLATE input_read %d output_written %d\n",
+#ifdef BIOSAL_GZIP_BUFFERED_READER_DEBUG_INFLATE
+    printf("BIOSAL_GZIP_BUFFERED_READER_DEBUG_INFLATE input_read %d output_written %d\n",
                     bytes_read_in_input, bytes_written_in_output);
 #endif
 
-    BSAL_DEBUGGER_ASSERT(bytes_written_in_output <= length);
+    BIOSAL_DEBUGGER_ASSERT(bytes_written_in_output <= length);
 
     return bytes_written_in_output;
 }
 
 #endif
 
-int bsal_gzip_buffered_reader_detect(struct bsal_buffered_reader *self,
+int biosal_gzip_buffered_reader_detect(struct biosal_buffered_reader *self,
                 const char *file)
 {
     const char *pointer;
@@ -512,16 +512,16 @@ int bsal_gzip_buffered_reader_detect(struct bsal_buffered_reader *self,
     return 0;
 }
 
-uint64_t bsal_gzip_buffered_reader_get_offset(struct bsal_buffered_reader *self)
+uint64_t biosal_gzip_buffered_reader_get_offset(struct biosal_buffered_reader *self)
 {
-    struct bsal_gzip_buffered_reader *reader;
+    struct biosal_gzip_buffered_reader *reader;
 
-    reader = bsal_buffered_reader_get_concrete_self(self);
+    reader = biosal_buffered_reader_get_concrete_self(self);
 
     return reader->offset;
 }
 
-int bsal_gzip_buffered_reader_get_previous_bytes(struct bsal_buffered_reader *self,
+int biosal_gzip_buffered_reader_get_previous_bytes(struct biosal_buffered_reader *self,
                 char *buffer, int length)
 {
     /* TODO:

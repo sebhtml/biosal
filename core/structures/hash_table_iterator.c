@@ -3,19 +3,19 @@
 
 #include <stdlib.h>
 
-void bsal_hash_table_iterator_init(struct bsal_hash_table_iterator *self, struct bsal_hash_table *list)
+void biosal_hash_table_iterator_init(struct biosal_hash_table_iterator *self, struct biosal_hash_table *list)
 {
     self->index = 0;
     self->list = list;
 }
 
-void bsal_hash_table_iterator_destroy(struct bsal_hash_table_iterator *self)
+void biosal_hash_table_iterator_destroy(struct biosal_hash_table_iterator *self)
 {
     self->index = 0;
     self->list = NULL;
 }
 
-int bsal_hash_table_iterator_has_next(struct bsal_hash_table_iterator *self)
+int biosal_hash_table_iterator_has_next(struct biosal_hash_table_iterator *self)
 {
     uint64_t size;
 
@@ -23,15 +23,15 @@ int bsal_hash_table_iterator_has_next(struct bsal_hash_table_iterator *self)
         return 0;
     }
 
-    size = bsal_hash_table_buckets(self->list);
+    size = biosal_hash_table_buckets(self->list);
 
     if (size == 0) {
         return 0;
     }
 
     while (self->index < size
-                    && bsal_hash_table_state(self->list, self->index) !=
-                    BSAL_HASH_TABLE_BUCKET_OCCUPIED) {
+                    && biosal_hash_table_state(self->list, self->index) !=
+                    BIOSAL_HASH_TABLE_BUCKET_OCCUPIED) {
         self->index++;
     }
 
@@ -42,18 +42,18 @@ int bsal_hash_table_iterator_has_next(struct bsal_hash_table_iterator *self)
     return 1;
 }
 
-void bsal_hash_table_iterator_next(struct bsal_hash_table_iterator *self, void **key, void **value)
+void biosal_hash_table_iterator_next(struct biosal_hash_table_iterator *self, void **key, void **value)
 {
-    if (!bsal_hash_table_iterator_has_next(self)) {
+    if (!biosal_hash_table_iterator_has_next(self)) {
         return;
     }
 
     if (key != NULL) {
-        *key = bsal_hash_table_key(self->list, self->index);
+        *key = biosal_hash_table_key(self->list, self->index);
     }
 
     if (value != NULL) {
-        *value = bsal_hash_table_value(self->list, self->index);
+        *value = biosal_hash_table_value(self->list, self->index);
     }
 
     self->index++;

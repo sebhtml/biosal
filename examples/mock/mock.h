@@ -11,7 +11,7 @@ struct mock {
     int children[3];
     int remote_actor;
     int notified;
-    struct bsal_vector spawners;
+    struct biosal_vector spawners;
 };
 
 #define ACTION_MOCK_PREPARE_DEATH 0x00007437

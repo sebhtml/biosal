@@ -6,17 +6,17 @@
 #include <core/structures/vector.h>
 
 void thorium_actor_add_action_with_sources(struct thorium_actor *self, int tag,
-                thorium_actor_receive_fn_t handler, struct bsal_vector *sources)
+                thorium_actor_receive_fn_t handler, struct biosal_vector *sources)
 {
     int i;
     int source;
     int size;
 
-    size = bsal_vector_size(sources);
+    size = biosal_vector_size(sources);
 
     for (i = 0; i < size; i++) {
 
-        source = bsal_vector_at_as_int(sources, i);
+        source = biosal_vector_at_as_int(sources, i);
 
         thorium_actor_add_action_with_source(self, tag, handler, source);
     }

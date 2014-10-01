@@ -10,13 +10,13 @@
 #include <math.h>
 #include <stdio.h>
 
-double bsal_statistics_get_mean_int(struct bsal_vector *vector)
+double biosal_statistics_get_mean_int(struct biosal_vector *vector)
 {
     double sum;
     int i;
     int count;
 
-    count = bsal_vector_size(vector);
+    count = biosal_vector_size(vector);
 
     if (count == 0) {
         return 0;
@@ -25,13 +25,13 @@ double bsal_statistics_get_mean_int(struct bsal_vector *vector)
     sum = 0;
 
     for (i = 0; i < count; i++) {
-        sum += bsal_vector_at_as_int(vector, i);
+        sum += biosal_vector_at_as_int(vector, i);
     }
 
     return sum / count;
 }
 
-double bsal_statistics_get_standard_deviation_int(struct bsal_vector *vector)
+double biosal_statistics_get_standard_deviation_int(struct biosal_vector *vector)
 {
     double mean;
     double sum;
@@ -39,18 +39,18 @@ double bsal_statistics_get_standard_deviation_int(struct bsal_vector *vector)
     int count;
     double difference;
 
-    count = bsal_vector_size(vector);
+    count = biosal_vector_size(vector);
 
     if (count == 0) {
         return 0;
     }
 
-    mean = bsal_statistics_get_mean_int(vector);
+    mean = biosal_statistics_get_mean_int(vector);
 
     sum = 0;
 
     for (i = 0; i < count; i++) {
-        difference = bsal_vector_at_as_int(vector, i) - mean;
+        difference = biosal_vector_at_as_int(vector, i) - mean;
 
         sum += difference * difference;
     }
@@ -58,20 +58,20 @@ double bsal_statistics_get_standard_deviation_int(struct bsal_vector *vector)
     return sqrt(sum) / count;
 }
 
-int bsal_statistics_get_median_int(struct bsal_vector *vector)
+int biosal_statistics_get_median_int(struct biosal_vector *vector)
 {
     int count;
 
-    count = bsal_vector_size(vector);
+    count = biosal_vector_size(vector);
 
     if (count == 0) {
         return 0;
     }
 
-    return bsal_vector_at_as_int(vector, count / 2);
+    return biosal_vector_at_as_int(vector, count / 2);
 }
 
-int bsal_statistics_get_percentile_int(struct bsal_vector *vector, int p)
+int biosal_statistics_get_percentile_int(struct biosal_vector *vector, int p)
 {
     int index;
     int size;
@@ -82,7 +82,7 @@ int bsal_statistics_get_percentile_int(struct bsal_vector *vector, int p)
 #if 0
 #endif
 
-    size = bsal_vector_size(vector);
+    size = biosal_vector_size(vector);
 
     if (size == 0) {
         return 0;
@@ -124,13 +124,13 @@ int bsal_statistics_get_percentile_int(struct bsal_vector *vector, int p)
 #endif
 
     /*
-    bsal_vector_print_int(vector);
+    biosal_vector_print_int(vector);
     */
 
-    return bsal_vector_at_as_int(vector, index);
+    return biosal_vector_at_as_int(vector, index);
 }
 
-void bsal_statistics_print_percentiles_int(struct bsal_vector *vector)
+void biosal_statistics_print_percentiles_int(struct biosal_vector *vector)
 {
     int percentile_5;
     int percentile_25;
@@ -144,22 +144,22 @@ void bsal_statistics_print_percentiles_int(struct bsal_vector *vector)
 
     int size;
 
-    size = bsal_vector_size(vector);
+    size = biosal_vector_size(vector);
 
     if (size == 0) {
         printf("empty\n");
         return;
     }
 
-    percentile_5 = bsal_statistics_get_percentile_int(vector, 5);
-    percentile_25 = bsal_statistics_get_percentile_int(vector, 25);
-    percentile_30 = bsal_statistics_get_percentile_int(vector, 30);
-    percentile_40 = bsal_statistics_get_percentile_int(vector, 40);
-    percentile_50 = bsal_statistics_get_percentile_int(vector, 50);
-    percentile_60 = bsal_statistics_get_percentile_int(vector, 60);
-    percentile_70 = bsal_statistics_get_percentile_int(vector, 70);
-    percentile_75 = bsal_statistics_get_percentile_int(vector, 75);
-    percentile_95 = bsal_statistics_get_percentile_int(vector, 95);
+    percentile_5 = biosal_statistics_get_percentile_int(vector, 5);
+    percentile_25 = biosal_statistics_get_percentile_int(vector, 25);
+    percentile_30 = biosal_statistics_get_percentile_int(vector, 30);
+    percentile_40 = biosal_statistics_get_percentile_int(vector, 40);
+    percentile_50 = biosal_statistics_get_percentile_int(vector, 50);
+    percentile_60 = biosal_statistics_get_percentile_int(vector, 60);
+    percentile_70 = biosal_statistics_get_percentile_int(vector, 70);
+    percentile_75 = biosal_statistics_get_percentile_int(vector, 75);
+    percentile_95 = biosal_statistics_get_percentile_int(vector, 95);
 
     printf("%d%%: %d, %d%%: %d, %d%%: %d, %d%%: %d, %d%%: %d, %d%%: %d, %d%%: %d, %d%%: %d, %d%%: %d\n",
                     5, percentile_5,
@@ -173,12 +173,12 @@ void bsal_statistics_print_percentiles_int(struct bsal_vector *vector)
                     95, percentile_95);
 }
 
-float bsal_statistics_get_percentile_float(struct bsal_vector *vector, int p)
+float biosal_statistics_get_percentile_float(struct biosal_vector *vector, int p)
 {
     int index;
     int size;
 
-    size = bsal_vector_size(vector);
+    size = biosal_vector_size(vector);
 
     if (size == 0) {
         return 0;
@@ -188,13 +188,13 @@ float bsal_statistics_get_percentile_float(struct bsal_vector *vector, int p)
 
     /*
     printf("percentile %d size %d\n", p, size);
-    bsal_vector_print_int(vector);
+    biosal_vector_print_int(vector);
     */
 
-    return bsal_vector_at_as_float(vector, index);
+    return biosal_vector_at_as_float(vector, index);
 }
 
-void bsal_statistics_print_percentiles_float(struct bsal_vector *vector)
+void biosal_statistics_print_percentiles_float(struct biosal_vector *vector)
 {
     float percentile_5;
     float percentile_25;
@@ -208,22 +208,22 @@ void bsal_statistics_print_percentiles_float(struct bsal_vector *vector)
 
     int size;
 
-    size = bsal_vector_size(vector);
+    size = biosal_vector_size(vector);
 
     if (size == 0) {
         printf("empty\n");
         return;
     }
 
-    percentile_5 = bsal_statistics_get_percentile_float(vector, 5);
-    percentile_25 = bsal_statistics_get_percentile_float(vector, 25);
-    percentile_30 = bsal_statistics_get_percentile_float(vector, 30);
-    percentile_40 = bsal_statistics_get_percentile_float(vector, 40);
-    percentile_50 = bsal_statistics_get_percentile_float(vector, 50);
-    percentile_60 = bsal_statistics_get_percentile_float(vector, 60);
-    percentile_70 = bsal_statistics_get_percentile_float(vector, 70);
-    percentile_75 = bsal_statistics_get_percentile_float(vector, 75);
-    percentile_95 = bsal_statistics_get_percentile_float(vector, 95);
+    percentile_5 = biosal_statistics_get_percentile_float(vector, 5);
+    percentile_25 = biosal_statistics_get_percentile_float(vector, 25);
+    percentile_30 = biosal_statistics_get_percentile_float(vector, 30);
+    percentile_40 = biosal_statistics_get_percentile_float(vector, 40);
+    percentile_50 = biosal_statistics_get_percentile_float(vector, 50);
+    percentile_60 = biosal_statistics_get_percentile_float(vector, 60);
+    percentile_70 = biosal_statistics_get_percentile_float(vector, 70);
+    percentile_75 = biosal_statistics_get_percentile_float(vector, 75);
+    percentile_95 = biosal_statistics_get_percentile_float(vector, 95);
 
     printf("%d%%: %f, %d%%: %f, %d%%: %f, %d%%: %f, %d%%: %f, %d%%: %f, %d%%: %f, %d%%: %f, %d%%: %f\n",
                     5, percentile_5,
@@ -237,10 +237,10 @@ void bsal_statistics_print_percentiles_float(struct bsal_vector *vector)
                     95, percentile_95);
 }
 
-int bsal_statistics_get_percentile_int_map(struct bsal_map *map, int percentile)
+int biosal_statistics_get_percentile_int_map(struct biosal_map *map, int percentile)
 {
-    struct bsal_vector keys;
-    struct bsal_map_iterator iterator;
+    struct biosal_vector keys;
+    struct biosal_map_iterator iterator;
     int key;
     int frequency;
     int total;
@@ -249,26 +249,26 @@ int bsal_statistics_get_percentile_int_map(struct bsal_map *map, int percentile)
     int i;
     int size;
 
-    bsal_map_iterator_init(&iterator, map);
+    biosal_map_iterator_init(&iterator, map);
     total = 0;
-    bsal_vector_init(&keys, sizeof(int));
+    biosal_vector_init(&keys, sizeof(int));
 
-    while (bsal_map_iterator_get_next_key_and_value(&iterator, &key, &frequency)) {
-        bsal_vector_push_back(&keys, &key);
+    while (biosal_map_iterator_get_next_key_and_value(&iterator, &key, &frequency)) {
+        biosal_vector_push_back(&keys, &key);
         total += frequency;
     }
 
-    bsal_map_iterator_destroy(&iterator);
+    biosal_map_iterator_destroy(&iterator);
 
     keys_before = round((percentile / 100.0) * total);
 
-    bsal_vector_sort_int(&keys);
+    biosal_vector_sort_int(&keys);
 
     i = 0;
     keys_so_far = 0;
-    size = bsal_vector_size(&keys);
+    size = biosal_vector_size(&keys);
 
-    key = bsal_vector_at_as_int(&keys, size - 1);
+    key = biosal_vector_at_as_int(&keys, size - 1);
 
     /*
      * example:
@@ -285,8 +285,8 @@ int bsal_statistics_get_percentile_int_map(struct bsal_map *map, int percentile)
      * P95 -> 95.0/100*3 = 2.8499999999999996 = 3 (with round), so P95 = 3000
      */
     while (i < size) {
-        key = bsal_vector_at_as_int(&keys, i);
-        bsal_map_get_value(map, &key, &frequency);
+        key = biosal_vector_at_as_int(&keys, i);
+        biosal_map_get_value(map, &key, &frequency);
 
         if (keys_so_far <= keys_before
                         && keys_before <= keys_so_far + frequency) {
@@ -298,7 +298,7 @@ int bsal_statistics_get_percentile_int_map(struct bsal_map *map, int percentile)
         ++i;
     }
 
-    bsal_vector_destroy(&keys);
+    biosal_vector_destroy(&keys);
 
     return key;
 }

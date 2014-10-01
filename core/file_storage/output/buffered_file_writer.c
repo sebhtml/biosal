@@ -8,9 +8,9 @@
 
 #define MEMORY_WRITER 0x17f124a5
 
-void bsal_buffered_file_writer_init(struct bsal_buffered_file_writer *self, const char *file)
+void biosal_buffered_file_writer_init(struct biosal_buffered_file_writer *self, const char *file)
 {
-    bsal_string_init(&self->file, file);
+    biosal_string_init(&self->file, file);
 
     self->descriptor = NULL;
 
@@ -19,20 +19,20 @@ void bsal_buffered_file_writer_init(struct bsal_buffered_file_writer *self, cons
      */
     self->buffer_capacity = 8388608;
     self->buffer_length = 0;
-    self->buffer = bsal_memory_allocate(self->buffer_capacity, MEMORY_WRITER);
+    self->buffer = biosal_memory_allocate(self->buffer_capacity, MEMORY_WRITER);
 
     /*
      * Buffer for format
      */
     self->format_buffer_capacity = 2048;
-    self->format_buffer = bsal_memory_allocate(self->format_buffer_capacity, MEMORY_WRITER);
+    self->format_buffer = biosal_memory_allocate(self->format_buffer_capacity, MEMORY_WRITER);
 
     self->null_file = fopen("/dev/null", "w");
 }
 
-void bsal_buffered_file_writer_destroy(struct bsal_buffered_file_writer *self)
+void biosal_buffered_file_writer_destroy(struct biosal_buffered_file_writer *self)
 {
-    bsal_buffered_file_writer_flush(self);
+    biosal_buffered_file_writer_flush(self);
 
     if (self->descriptor != NULL) {
         fclose(self->descriptor);
@@ -46,7 +46,7 @@ void bsal_buffered_file_writer_destroy(struct bsal_buffered_file_writer *self)
 
     if (self->buffer != NULL) {
 
-        bsal_memory_free(self->buffer, MEMORY_WRITER);
+        biosal_memory_free(self->buffer, MEMORY_WRITER);
 
         self->buffer = NULL;
         self->buffer_capacity = 0;
@@ -55,16 +55,16 @@ void bsal_buffered_file_writer_destroy(struct bsal_buffered_file_writer *self)
 
     if (self->format_buffer != NULL) {
 
-        bsal_memory_free(self->format_buffer, MEMORY_WRITER);
+        biosal_memory_free(self->format_buffer, MEMORY_WRITER);
 
         self->format_buffer = NULL;
         self->format_buffer_capacity = 0;
     }
 
-    bsal_string_destroy(&self->file);
+    biosal_string_destroy(&self->file);
 }
 
-int bsal_buffered_file_writer_write(struct bsal_buffered_file_writer *self,
+int biosal_buffered_file_writer_write(struct biosal_buffered_file_writer *self,
                 const char *data, int length)
 {
     int available;
@@ -77,7 +77,7 @@ int bsal_buffered_file_writer_write(struct bsal_buffered_file_writer *self,
      */
     if (length > available) {
 
-        bsal_buffered_file_writer_flush(self);
+        biosal_buffered_file_writer_flush(self);
 
         available = self->buffer_capacity - self->buffer_length;
     }
@@ -88,7 +88,7 @@ int bsal_buffered_file_writer_write(struct bsal_buffered_file_writer *self,
     if (length <= available) {
 
         destination = self->buffer + self->buffer_length;
-        bsal_memory_copy(destination, data, length);
+        biosal_memory_copy(destination, data, length);
         self->buffer_length += length;
 
     /*
@@ -97,13 +97,13 @@ int bsal_buffered_file_writer_write(struct bsal_buffered_file_writer *self,
      */
     } else {
 
-        bsal_buffered_file_writer_write_back(self, data, length);
+        biosal_buffered_file_writer_write_back(self, data, length);
     }
 
     return length;
 }
 
-int bsal_buffered_file_writer_printf(struct bsal_buffered_file_writer *self, const char *format,
+int biosal_buffered_file_writer_printf(struct biosal_buffered_file_writer *self, const char *format,
                 ...)
 {
     int bytes;
@@ -111,7 +111,7 @@ int bsal_buffered_file_writer_printf(struct bsal_buffered_file_writer *self, con
     va_list arguments;
 
 #if 0
-    printf("DEBUG bsal_buffered_file_writer_printf %s\n", format);
+    printf("DEBUG biosal_buffered_file_writer_printf %s\n", format);
 #endif
 
     /*
@@ -128,11 +128,11 @@ int bsal_buffered_file_writer_printf(struct bsal_buffered_file_writer *self, con
      */
     if (bytes > self->format_buffer_capacity) {
 
-        bsal_memory_free(self->format_buffer, MEMORY_WRITER);
+        biosal_memory_free(self->format_buffer, MEMORY_WRITER);
 
         self->format_buffer_capacity = bytes;
 
-        self->format_buffer = bsal_memory_allocate(self->format_buffer_capacity, MEMORY_WRITER);
+        self->format_buffer = biosal_memory_allocate(self->format_buffer_capacity, MEMORY_WRITER);
     }
 
     /*
@@ -145,12 +145,12 @@ int bsal_buffered_file_writer_printf(struct bsal_buffered_file_writer *self, con
     /*
      * Write that to the buffered file writer.
      */
-    bsal_buffered_file_writer_write(self, self->format_buffer, actual_byte_count);
+    biosal_buffered_file_writer_write(self, self->format_buffer, actual_byte_count);
 
     return actual_byte_count;
 }
 
-int bsal_buffered_file_writer_flush(struct bsal_buffered_file_writer *self)
+int biosal_buffered_file_writer_flush(struct biosal_buffered_file_writer *self)
 {
     int value;
 
@@ -161,7 +161,7 @@ int bsal_buffered_file_writer_flush(struct bsal_buffered_file_writer *self)
     /*
      * \see http://www.cplusplus.com/reference/cstdio/fwrite/
      */
-    bsal_buffered_file_writer_write_back(self, self->buffer, self->buffer_length);
+    biosal_buffered_file_writer_write_back(self, self->buffer, self->buffer_length);
 
     value = self->buffer_length;
     self->buffer_length = 0;
@@ -169,7 +169,7 @@ int bsal_buffered_file_writer_flush(struct bsal_buffered_file_writer *self)
     return value;
 }
 
-size_t bsal_buffered_file_writer_write_back(struct bsal_buffered_file_writer *self,
+size_t biosal_buffered_file_writer_write_back(struct biosal_buffered_file_writer *self,
                 const void *buffer, size_t count)
 {
     size_t size;
@@ -177,7 +177,7 @@ size_t bsal_buffered_file_writer_write_back(struct bsal_buffered_file_writer *se
 
     if (self->descriptor == NULL) {
 
-        file_name = bsal_string_get(&self->file);
+        file_name = biosal_string_get(&self->file);
         self->descriptor = fopen(file_name, "w");
     }
 

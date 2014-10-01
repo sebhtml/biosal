@@ -10,35 +10,35 @@
 
 #include <stdio.h>
 
-void bsal_assembly_vertex_init(struct bsal_assembly_vertex *self)
+void biosal_assembly_vertex_init(struct biosal_assembly_vertex *self)
 {
     self->coverage_depth = 0;
 
     self->flags = 0;
 
-    bsal_assembly_vertex_clear_flag(self, BSAL_VERTEX_FLAG_USED);
-    bsal_assembly_vertex_clear_flag(self, BSAL_VERTEX_FLAG_TIP);
-    bsal_assembly_vertex_clear_flag(self, BSAL_VERTEX_FLAG_BUBBLE);
-    bsal_assembly_vertex_clear_flag(self, BSAL_VERTEX_FLAG_VISITED);
-    bsal_assembly_vertex_clear_flag(self, BSAL_VERTEX_FLAG_UNITIG);
+    biosal_assembly_vertex_clear_flag(self, BIOSAL_VERTEX_FLAG_USED);
+    biosal_assembly_vertex_clear_flag(self, BIOSAL_VERTEX_FLAG_TIP);
+    biosal_assembly_vertex_clear_flag(self, BIOSAL_VERTEX_FLAG_BUBBLE);
+    biosal_assembly_vertex_clear_flag(self, BIOSAL_VERTEX_FLAG_VISITED);
+    biosal_assembly_vertex_clear_flag(self, BIOSAL_VERTEX_FLAG_UNITIG);
 
-    bsal_assembly_vertex_set_last_actor(self, THORIUM_ACTOR_NOBODY, -1);
+    biosal_assembly_vertex_set_last_actor(self, THORIUM_ACTOR_NOBODY, -1);
 
-    bsal_assembly_connectivity_init(&self->connectivity);
+    biosal_assembly_connectivity_init(&self->connectivity);
 }
 
-void bsal_assembly_vertex_destroy(struct bsal_assembly_vertex *self)
+void biosal_assembly_vertex_destroy(struct biosal_assembly_vertex *self)
 {
     self->coverage_depth = 0;
-    bsal_assembly_connectivity_destroy(&self->connectivity);
+    biosal_assembly_connectivity_destroy(&self->connectivity);
 }
 
-int bsal_assembly_vertex_coverage_depth(struct bsal_assembly_vertex *self)
+int biosal_assembly_vertex_coverage_depth(struct biosal_assembly_vertex *self)
 {
     return self->coverage_depth;
 }
 
-void bsal_assembly_vertex_increase_coverage_depth(struct bsal_assembly_vertex *self,
+void biosal_assembly_vertex_increase_coverage_depth(struct biosal_assembly_vertex *self,
                 int value)
 {
     int old_depth;
@@ -55,147 +55,147 @@ void bsal_assembly_vertex_increase_coverage_depth(struct bsal_assembly_vertex *s
     }
 }
 
-int bsal_assembly_vertex_child_count(struct bsal_assembly_vertex *self)
+int biosal_assembly_vertex_child_count(struct biosal_assembly_vertex *self)
 {
-    return bsal_assembly_connectivity_child_count(&self->connectivity);
+    return biosal_assembly_connectivity_child_count(&self->connectivity);
 }
 
-void bsal_assembly_vertex_add_child(struct bsal_assembly_vertex *self, int symbol_code)
+void biosal_assembly_vertex_add_child(struct biosal_assembly_vertex *self, int symbol_code)
 {
-    bsal_assembly_connectivity_add_child(&self->connectivity, symbol_code);
+    biosal_assembly_connectivity_add_child(&self->connectivity, symbol_code);
 }
 
-void bsal_assembly_vertex_delete_child(struct bsal_assembly_vertex *self, int symbol_code)
+void biosal_assembly_vertex_delete_child(struct biosal_assembly_vertex *self, int symbol_code)
 {
-    bsal_assembly_connectivity_delete_child(&self->connectivity, symbol_code);
+    biosal_assembly_connectivity_delete_child(&self->connectivity, symbol_code);
 }
 
-int bsal_assembly_vertex_get_child(struct bsal_assembly_vertex *self, int index)
+int biosal_assembly_vertex_get_child(struct biosal_assembly_vertex *self, int index)
 {
-    return bsal_assembly_connectivity_get_child(&self->connectivity, index);
+    return biosal_assembly_connectivity_get_child(&self->connectivity, index);
 }
 
-int bsal_assembly_vertex_parent_count(struct bsal_assembly_vertex *self)
+int biosal_assembly_vertex_parent_count(struct biosal_assembly_vertex *self)
 {
-    return bsal_assembly_connectivity_parent_count(&self->connectivity);
+    return biosal_assembly_connectivity_parent_count(&self->connectivity);
 }
 
-void bsal_assembly_vertex_add_parent(struct bsal_assembly_vertex *self, int symbol_code)
+void biosal_assembly_vertex_add_parent(struct biosal_assembly_vertex *self, int symbol_code)
 {
-    bsal_assembly_connectivity_add_parent(&self->connectivity, symbol_code);
+    biosal_assembly_connectivity_add_parent(&self->connectivity, symbol_code);
 }
 
-void bsal_assembly_vertex_delete_parent(struct bsal_assembly_vertex *self, int symbol_code)
+void biosal_assembly_vertex_delete_parent(struct biosal_assembly_vertex *self, int symbol_code)
 {
-    bsal_assembly_connectivity_delete_parent(&self->connectivity, symbol_code);
+    biosal_assembly_connectivity_delete_parent(&self->connectivity, symbol_code);
 }
 
-int bsal_assembly_vertex_get_parent(struct bsal_assembly_vertex *self, int index)
+int biosal_assembly_vertex_get_parent(struct biosal_assembly_vertex *self, int index)
 {
-    return bsal_assembly_connectivity_get_parent(&self->connectivity, index);
+    return biosal_assembly_connectivity_get_parent(&self->connectivity, index);
 }
 
-void bsal_assembly_vertex_print(struct bsal_assembly_vertex *self)
+void biosal_assembly_vertex_print(struct biosal_assembly_vertex *self)
 {
     printf("BioSAL::AssemblyVertex coverage_depth: %d connectivity: ",
                     self->coverage_depth);
 
-    bsal_assembly_connectivity_print(&self->connectivity);
+    biosal_assembly_connectivity_print(&self->connectivity);
 
     printf("\n");
 }
 
-int bsal_assembly_vertex_pack_size(struct bsal_assembly_vertex *self)
+int biosal_assembly_vertex_pack_size(struct biosal_assembly_vertex *self)
 {
-    return bsal_assembly_vertex_pack_unpack(self, BSAL_PACKER_OPERATION_PACK_SIZE, NULL);
+    return biosal_assembly_vertex_pack_unpack(self, BIOSAL_PACKER_OPERATION_PACK_SIZE, NULL);
 }
 
-int bsal_assembly_vertex_pack(struct bsal_assembly_vertex *self, void *buffer)
+int biosal_assembly_vertex_pack(struct biosal_assembly_vertex *self, void *buffer)
 {
-    return bsal_assembly_vertex_pack_unpack(self, BSAL_PACKER_OPERATION_PACK, buffer);
+    return biosal_assembly_vertex_pack_unpack(self, BIOSAL_PACKER_OPERATION_PACK, buffer);
 }
 
-int bsal_assembly_vertex_unpack(struct bsal_assembly_vertex *self, void *buffer)
+int biosal_assembly_vertex_unpack(struct biosal_assembly_vertex *self, void *buffer)
 {
-    return bsal_assembly_vertex_pack_unpack(self, BSAL_PACKER_OPERATION_UNPACK, buffer);
+    return biosal_assembly_vertex_pack_unpack(self, BIOSAL_PACKER_OPERATION_UNPACK, buffer);
 }
 
-int bsal_assembly_vertex_pack_unpack(struct bsal_assembly_vertex *self, int operation, void *buffer)
+int biosal_assembly_vertex_pack_unpack(struct biosal_assembly_vertex *self, int operation, void *buffer)
 {
-    struct bsal_packer packer;
+    struct biosal_packer packer;
     int bytes;
 
     bytes = 0;
 
-    bsal_packer_init(&packer, operation, buffer);
+    biosal_packer_init(&packer, operation, buffer);
 
-    bytes += bsal_packer_process(&packer, &self->coverage_depth, sizeof(self->coverage_depth));
-    bytes += bsal_packer_process(&packer, &self->flags, sizeof(self->flags));
-    bytes += bsal_packer_process(&packer, &self->last_actor, sizeof(self->last_actor));
-    bytes += bsal_packer_process(&packer, &self->last_path_index, sizeof(self->last_path_index));
+    bytes += biosal_packer_process(&packer, &self->coverage_depth, sizeof(self->coverage_depth));
+    bytes += biosal_packer_process(&packer, &self->flags, sizeof(self->flags));
+    bytes += biosal_packer_process(&packer, &self->last_actor, sizeof(self->last_actor));
+    bytes += biosal_packer_process(&packer, &self->last_path_index, sizeof(self->last_path_index));
 
-    bsal_packer_destroy(&packer);
+    biosal_packer_destroy(&packer);
 
-    bytes += bsal_assembly_connectivity_pack_unpack(&self->connectivity, operation,
+    bytes += biosal_assembly_connectivity_pack_unpack(&self->connectivity, operation,
                     (char *)buffer + bytes);
 
     return bytes;
 }
 
-void bsal_assembly_vertex_init_copy(struct bsal_assembly_vertex *self,
-                struct bsal_assembly_vertex *vertex)
+void biosal_assembly_vertex_init_copy(struct biosal_assembly_vertex *self,
+                struct biosal_assembly_vertex *vertex)
 {
     self->coverage_depth = vertex->coverage_depth;
     self->flags = vertex->flags;
     self->last_actor = vertex->last_actor;
     self->last_path_index = vertex->last_path_index;
 
-    bsal_assembly_connectivity_init_copy(&self->connectivity, &vertex->connectivity);
+    biosal_assembly_connectivity_init_copy(&self->connectivity, &vertex->connectivity);
 }
 
-void bsal_assembly_vertex_invert_arcs(struct bsal_assembly_vertex *self)
+void biosal_assembly_vertex_invert_arcs(struct biosal_assembly_vertex *self)
 {
-    bsal_assembly_connectivity_invert_arcs(&self->connectivity);
+    biosal_assembly_connectivity_invert_arcs(&self->connectivity);
 }
 
-void bsal_assembly_vertex_set_last_actor(struct bsal_assembly_vertex *self, int last_actor,
+void biosal_assembly_vertex_set_last_actor(struct biosal_assembly_vertex *self, int last_actor,
                 int last_path_index)
 {
     self->last_actor = last_actor;
     self->last_path_index = last_path_index;
 }
 
-int bsal_assembly_vertex_last_actor(struct bsal_assembly_vertex *self)
+int biosal_assembly_vertex_last_actor(struct biosal_assembly_vertex *self)
 {
     return self->last_actor;
 }
 
-int bsal_assembly_vertex_last_path_index(struct bsal_assembly_vertex *self)
+int biosal_assembly_vertex_last_path_index(struct biosal_assembly_vertex *self)
 {
     return self->last_path_index;
 }
 
-void bsal_assembly_vertex_set_flag(struct bsal_assembly_vertex *self, int flag)
+void biosal_assembly_vertex_set_flag(struct biosal_assembly_vertex *self, int flag)
 {
-    BSAL_DEBUGGER_ASSERT(flag >= BSAL_VERTEX_FLAG_START_VALUE);
-    BSAL_DEBUGGER_ASSERT(flag <= BSAL_VERTEX_FLAG_END_VALUE);
+    BIOSAL_DEBUGGER_ASSERT(flag >= BIOSAL_VERTEX_FLAG_START_VALUE);
+    BIOSAL_DEBUGGER_ASSERT(flag <= BIOSAL_VERTEX_FLAG_END_VALUE);
 
-    bsal_bitmap_set_bit_uint32_t(&self->flags, flag);
+    biosal_bitmap_set_bit_uint32_t(&self->flags, flag);
 }
 
-void bsal_assembly_vertex_clear_flag(struct bsal_assembly_vertex *self, int flag)
+void biosal_assembly_vertex_clear_flag(struct biosal_assembly_vertex *self, int flag)
 {
-    bsal_bitmap_clear_bit_uint32_t(&self->flags, flag);
+    biosal_bitmap_clear_bit_uint32_t(&self->flags, flag);
 }
 
-int bsal_assembly_vertex_get_flag(struct bsal_assembly_vertex *self, int flag)
+int biosal_assembly_vertex_get_flag(struct biosal_assembly_vertex *self, int flag)
 {
-    return bsal_bitmap_get_bit_uint32_t(&self->flags, flag);
+    return biosal_bitmap_get_bit_uint32_t(&self->flags, flag);
 }
 
-void bsal_assembly_vertex_init_empty(struct bsal_assembly_vertex *self)
+void biosal_assembly_vertex_init_empty(struct biosal_assembly_vertex *self)
 {
-    bsal_assembly_vertex_init(self);
+    biosal_assembly_vertex_init(self);
 }
 
 

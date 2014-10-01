@@ -44,10 +44,10 @@ struct thorium_message;
  * timeout_in_nanoseconds
  */
 struct thorium_message_multiplexer {
-    struct bsal_timer timer;
+    struct biosal_timer timer;
 
-    struct bsal_vector buffers;
-    struct bsal_set buffers_with_content;
+    struct biosal_vector buffers;
+    struct biosal_set buffers_with_content;
 
     struct thorium_node *node;
     char *big_buffer;

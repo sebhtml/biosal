@@ -24,7 +24,7 @@
 
 #include <stdint.h>
 
-struct bsal_work;
+struct biosal_work;
 struct thorium_node;
 struct thorium_message;
 struct thorium_balancer;
@@ -69,12 +69,12 @@ struct thorium_balancer;
  */
 struct thorium_worker {
     struct thorium_load_profiler profiler;
-    struct bsal_buffered_file_writer load_profile_writer;
+    struct biosal_buffered_file_writer load_profile_writer;
     struct thorium_node *node;
 
-    struct bsal_timer timer;
-    struct bsal_map actors;
-    struct bsal_map_iterator actor_iterator;
+    struct biosal_timer timer;
+    struct biosal_map actors;
+    struct biosal_map_iterator actor_iterator;
     int ticks_without_production;
 
     char waiting_is_enabled;
@@ -88,25 +88,25 @@ struct thorium_worker {
      * The worker pool push actors to schedule on this
      * ring
      */
-    struct bsal_fast_ring actors_to_schedule;
+    struct biosal_fast_ring actors_to_schedule;
 
 #ifdef THORIUM_NODE_INJECT_CLEAN_WORKER_BUFFERS
-    struct bsal_fast_ring injected_clean_outbound_buffers;
+    struct biosal_fast_ring injected_clean_outbound_buffers;
 
-    struct bsal_fast_ring clean_message_ring_for_triage;
-    struct bsal_fast_queue clean_message_queue_for_triage;
+    struct biosal_fast_ring clean_message_ring_for_triage;
+    struct biosal_fast_queue clean_message_queue_for_triage;
 #endif
 
     struct thorium_scheduler scheduler;
 
-    struct bsal_fast_ring outbound_message_queue;
-    struct bsal_fast_queue outbound_message_queue_buffer;
+    struct biosal_fast_ring outbound_message_queue;
+    struct biosal_fast_queue outbound_message_queue_buffer;
 
-    struct bsal_set evicted_actors;
+    struct biosal_set evicted_actors;
 
-    struct bsal_lock lock;
+    struct biosal_lock lock;
 
-    struct bsal_thread thread;
+    struct biosal_thread thread;
 
     int work_count;
     char started_in_thread;
@@ -119,7 +119,7 @@ struct thorium_worker {
      */
     uint32_t flags;
 
-    struct bsal_map actor_received_messages;
+    struct biosal_map actor_received_messages;
 
     time_t last_report;
     uint64_t epoch_start_in_nanoseconds;
@@ -133,8 +133,8 @@ struct thorium_worker {
     uint64_t scheduling_epoch_start_in_nanoseconds;
     uint64_t scheduling_epoch_used_nanoseconds;
 
-    struct bsal_memory_pool ephemeral_memory;
-    struct bsal_memory_pool outbound_message_memory_pool;
+    struct biosal_memory_pool ephemeral_memory;
+    struct biosal_memory_pool outbound_message_memory_pool;
 
     struct thorium_priority_assigner assigner;
 
@@ -177,7 +177,7 @@ void thorium_worker_reset_scheduling_epoch(struct thorium_worker *self);
 int thorium_worker_get_scheduled_message_count(struct thorium_worker *self);
 int thorium_worker_get_message_production_score(struct thorium_worker *self);
 
-struct bsal_memory_pool *thorium_worker_get_ephemeral_memory(struct thorium_worker *self);
+struct biosal_memory_pool *thorium_worker_get_ephemeral_memory(struct thorium_worker *self);
 
 int thorium_worker_dequeue_actor(struct thorium_worker *self, struct thorium_actor **actor);
 int thorium_worker_enqueue_actor(struct thorium_worker *self, struct thorium_actor *actor);
@@ -191,7 +191,7 @@ void thorium_worker_print_actors(struct thorium_worker *self, struct thorium_bal
 void thorium_worker_evict_actor(struct thorium_worker *self, int actor_name);
 void thorium_worker_lock(struct thorium_worker *self);
 void thorium_worker_unlock(struct thorium_worker *self);
-struct bsal_map *thorium_worker_get_actors(struct thorium_worker *self);
+struct biosal_map *thorium_worker_get_actors(struct thorium_worker *self);
 
 int thorium_worker_get_sum_of_received_actor_messages(struct thorium_worker *self);
 int thorium_worker_get_queued_messages(struct thorium_worker *self);

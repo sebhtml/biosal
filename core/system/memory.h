@@ -1,6 +1,6 @@
 
-#ifndef BSAL_MEMORY_H
-#define BSAL_MEMORY_H
+#ifndef BIOSAL_MEMORY_H
+#define BIOSAL_MEMORY_H
 
 #include <stdlib.h>
 
@@ -13,21 +13,21 @@
 
 /* minimum is 1 byte
  */
-#define BSAL_MEMORY_MINIMUM 1
+#define BIOSAL_MEMORY_MINIMUM 1
 
 /*
  * maximum is 1000 * 1000 * 1000 * 1000 bytes (1 terabyte)
  */
-#define BSAL_MEMORY_MAXIMUM 1000000000000
+#define BIOSAL_MEMORY_MAXIMUM 1000000000000
 
-#define BSAL_TRUE 1
-#define BSAL_FALSE 0
+#define BIOSAL_TRUE 1
+#define BIOSAL_FALSE 0
 
 /*
  * Show memory allocation events.
  */
 /*
-#define BSAL_MEMORY_DEBUG
+#define BIOSAL_MEMORY_DEBUG
 */
 
 /* Intel processors usually have a cache line of 64 bytes.
@@ -43,15 +43,15 @@
  * \see www.prace-project.eu/Best-Practice-Guide-Intel-Xeon-Phi-HTML#id-1.13.5.3
  */
 
-#define BSAL_MEMORY_ALIGNMENT_INTEL_L1_CACHE_LINE_SIZE 64
-#define BSAL_MEMORY_ALIGNMENT_INTEL_L2_CACHE_LINE_SIZE 64
-#define BSAL_MEMORY_ALIGNMENT_INTEL_L3_CACHE_LINE_SIZE 64
+#define BIOSAL_MEMORY_ALIGNMENT_INTEL_L1_CACHE_LINE_SIZE 64
+#define BIOSAL_MEMORY_ALIGNMENT_INTEL_L2_CACHE_LINE_SIZE 64
+#define BIOSAL_MEMORY_ALIGNMENT_INTEL_L3_CACHE_LINE_SIZE 64
 
 /*
  * \see http://bmagic.sourceforge.net/bmsse2opt.html
  * \see http://www.songho.ca/misc/alignment/dataalign.html
  */
-#define BSAL_MEMORY_ALIGNMENT_INTEL_SSE2 16
+#define BIOSAL_MEMORY_ALIGNMENT_INTEL_SSE2 16
 
 /*
  * The AMD Opteron architecture also seems to use
@@ -60,7 +60,7 @@
  * \see http://www.csee.wvu.edu/~ammar/cpe242_files/project%20example/AMD%20OPTERON%20ARCHITECTURE.pptx
  */
 
-#define BSAL_MEMORY_ALIGNMENT_AMD_OPTERON_L1_CACHE_LINE_SIZE 64
+#define BIOSAL_MEMORY_ALIGNMENT_AMD_OPTERON_L1_CACHE_LINE_SIZE 64
 
 /*
  * The Blue Gene/Q has these cache line sizes:
@@ -73,8 +73,8 @@
  * \see http://pic.dhe.ibm.com/infocenter/compbg/v121v141/index.jsp?topic=%2Fcom.ibm.xlcpp121.bg.doc%2Fproguide%2Falignment.html
  */
 
-#define BSAL_MEMORY_ALIGNMENT_BLUE_GENE_Q_L1_CACHE_LINE_SIZE 64
-#define BSAL_MEMORY_ALIGNMENT_BLUE_GENE_Q_L2_CACHE_LINE_SIZE 128
+#define BIOSAL_MEMORY_ALIGNMENT_BLUE_GENE_Q_L1_CACHE_LINE_SIZE 64
+#define BIOSAL_MEMORY_ALIGNMENT_BLUE_GENE_Q_L2_CACHE_LINE_SIZE 128
 
 /*
  * IBM Blue Gene/Q alignment
@@ -82,72 +82,72 @@
  * \see https://wiki.alcf.anl.gov/parts/index.php/Blue_Gene/Q
  */
 
-#define BSAL_MEMORY_ALIGNMENT_BLUE_GENE_Q_DESIRABLE 32
+#define BIOSAL_MEMORY_ALIGNMENT_BLUE_GENE_Q_DESIRABLE 32
 
 /*
  * The default alignment to use in biosal.
  * The default is 4 bytes.
  */
 
-#define BSAL_MEMORY_ALIGNMENT_NONE 0
-#define BSAL_MEMORY_ALIGNMENT_FOUR_BYTES 4
-#define BSAL_MEMORY_ALIGNMENT_EIGHT_BYTES 8
+#define BIOSAL_MEMORY_ALIGNMENT_NONE 0
+#define BIOSAL_MEMORY_ALIGNMENT_FOUR_BYTES 4
+#define BIOSAL_MEMORY_ALIGNMENT_EIGHT_BYTES 8
 
-#define BSAL_MEMORY_ALIGNMENT_DEFAULT BSAL_MEMORY_ALIGNMENT_NONE
+#define BIOSAL_MEMORY_ALIGNMENT_DEFAULT BIOSAL_MEMORY_ALIGNMENT_NONE
 /*
-#define BSAL_MEMORY_ALIGNMENT_DEFAULT BSAL_MEMORY_ALIGNMENT_FOUR_BYTES
+#define BIOSAL_MEMORY_ALIGNMENT_DEFAULT BIOSAL_MEMORY_ALIGNMENT_FOUR_BYTES
 */
 
-#if BSAL_MEMORY_ALIGNMENT_DEFAULT > 0
-#define BSAL_MEMORY_ALIGNMENT_ENABLED
+#if BIOSAL_MEMORY_ALIGNMENT_DEFAULT > 0
+#define BIOSAL_MEMORY_ALIGNMENT_ENABLED
 #endif
 
-#define BSAL_MEMORY_ZERO 0
-#define BSAL_MEMORY_DEFAULT_VALUE BSAL_MEMORY_ZERO
+#define BIOSAL_MEMORY_ZERO 0
+#define BIOSAL_MEMORY_DEFAULT_VALUE BIOSAL_MEMORY_ZERO
 
-#ifdef BSAL_MEMORY_DEBUG
+#ifdef BIOSAL_MEMORY_DEBUG
 
-#define bsal_memory_allocate(size, key) \
-        bsal_memory_allocate_private(size, __func__, __FILE__, __LINE__, key)
+#define biosal_memory_allocate(size, key) \
+        biosal_memory_allocate_private(size, __func__, __FILE__, __LINE__, key)
 
-#define bsal_memory_free(pointer, key) \
-        bsal_memory_free_private(pointer, __func__, __FILE__, __LINE__, key)
+#define biosal_memory_free(pointer, key) \
+        biosal_memory_free_private(pointer, __func__, __FILE__, __LINE__, key)
 
 #else
 
-#define bsal_memory_allocate(size, key) \
-        bsal_memory_allocate_private(size, NULL, NULL, -1, key)
+#define biosal_memory_allocate(size, key) \
+        biosal_memory_allocate_private(size, NULL, NULL, -1, key)
 
-#define bsal_memory_free(pointer, key) \
-        bsal_memory_free_private(pointer, NULL, NULL, -1, key)
+#define biosal_memory_free(pointer, key) \
+        biosal_memory_free_private(pointer, NULL, NULL, -1, key)
 
 #endif
 
-void *bsal_memory_allocate_private(size_t size, const char *function, const char *file, int line, int key);
-void bsal_memory_free_private(void *pointer, const char *function, const char *file, int line, int key);
+void *biosal_memory_allocate_private(size_t size, const char *function, const char *file, int line, int key);
+void biosal_memory_free_private(void *pointer, const char *function, const char *file, int line, int key);
 
 /*
  * Get size of the data segment (also called heap)
  *
  * \see http://www.hep.wisc.edu/~pinghc/Process_Memory.htm
  */
-uint64_t bsal_memory_get_total_byte_count();
-uint64_t bsal_memory_get_utilized_byte_count();
-uint64_t bsal_memory_get_remaining_byte_count();
-int bsal_memory_has_enough_bytes();
+uint64_t biosal_memory_get_total_byte_count();
+uint64_t biosal_memory_get_utilized_byte_count();
+uint64_t biosal_memory_get_remaining_byte_count();
+int biosal_memory_has_enough_bytes();
 
-size_t bsal_memory_align(size_t unaligned);
-size_t bsal_memory_align_private(size_t unaligned, size_t alignment);
+size_t biosal_memory_align(size_t unaligned);
+size_t biosal_memory_align_private(size_t unaligned, size_t alignment);
 
-void bsal_memory_fence();
-void bsal_l_fence();
-void bsal_s_fence();
-void bsal_fence();
+void biosal_memory_fence();
+void biosal_l_fence();
+void biosal_s_fence();
+void biosal_fence();
 
-size_t bsal_memory_normalize_segment_length_power_of_2(size_t size);
-size_t bsal_memory_normalize_segment_length_page_size(size_t size);
+size_t biosal_memory_normalize_segment_length_power_of_2(size_t size);
+size_t biosal_memory_normalize_segment_length_page_size(size_t size);
 
-void *bsal_memory_copy(void *destination, const void *source, size_t count);
-void *bsal_memory_move(void *destination, const void *source, size_t count);
+void *biosal_memory_copy(void *destination, const void *source, size_t count);
+void *biosal_memory_move(void *destination, const void *source, size_t count);
 
 #endif

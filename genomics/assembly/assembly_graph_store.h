@@ -1,6 +1,6 @@
 
-#ifndef BSAL_ASSEMBLY_GRAPH_STORE_H
-#define BSAL_ASSEMBLY_GRAPH_STORE_H
+#ifndef BIOSAL_ASSEMBLY_GRAPH_STORE_H
+#define BIOSAL_ASSEMBLY_GRAPH_STORE_H
 
 #include "assembly_graph_summary.h"
 
@@ -15,9 +15,9 @@
 
 #include <core/system/memory_pool.h>
 
-struct bsal_assembly_vertex;
-struct bsal_assembly_arc;
-struct bsal_dna_kmer;
+struct biosal_assembly_vertex;
+struct biosal_assembly_arc;
+struct biosal_dna_kmer;
 
 #define SCRIPT_ASSEMBLY_GRAPH_STORE 0xc81a1596
 
@@ -33,7 +33,7 @@ struct bsal_dna_kmer;
 /*
  * Enable arc registration with arc actors
  */
-#define BSAL_ASSEMBLY_ADD_ARCS
+#define BIOSAL_ASSEMBLY_ADD_ARCS
 
 #define ACTION_ASSEMBLY_GET_STARTING_KMER 0x000019bb
 #define ACTION_ASSEMBLY_GET_STARTING_KMER_REPLY 0x00006957
@@ -54,10 +54,10 @@ struct bsal_dna_kmer;
  * For ephemeral storage, see
  * http://docs.openstack.org/openstack-ops/content/storage_decision.html
  */
-struct bsal_assembly_graph_store {
-    struct bsal_map table;
-    struct bsal_dna_codec transport_codec;
-    struct bsal_dna_codec storage_codec;
+struct biosal_assembly_graph_store {
+    struct biosal_map table;
+    struct biosal_dna_codec transport_codec;
+    struct biosal_dna_codec storage_codec;
     int kmer_length;
     int key_length_in_bytes;
     int unitig_vertex_count;
@@ -67,10 +67,10 @@ struct bsal_assembly_graph_store {
     uint64_t received;
     uint64_t last_received;
 
-    struct bsal_memory_pool persistent_memory;
+    struct biosal_memory_pool persistent_memory;
 
-    struct bsal_map coverage_distribution;
-    struct bsal_map_iterator iterator;
+    struct biosal_map coverage_distribution;
+    struct biosal_map_iterator iterator;
     int source;
 
     uint64_t received_arc_count;
@@ -84,7 +84,7 @@ struct bsal_assembly_graph_store {
     int source_for_summary;
     int summary_in_progress;
 
-    struct bsal_assembly_graph_summary graph_summary;
+    struct biosal_assembly_graph_summary graph_summary;
 
     int printed_vertex_size;
     int printed_arc_size;
@@ -94,44 +94,44 @@ struct bsal_assembly_graph_store {
     uint64_t last_progress;
 };
 
-extern struct thorium_script bsal_assembly_graph_store_script;
+extern struct thorium_script biosal_assembly_graph_store_script;
 
-void bsal_assembly_graph_store_init(struct thorium_actor *actor);
-void bsal_assembly_graph_store_destroy(struct thorium_actor *actor);
-void bsal_assembly_graph_store_receive(struct thorium_actor *actor, struct thorium_message *message);
+void biosal_assembly_graph_store_init(struct thorium_actor *actor);
+void biosal_assembly_graph_store_destroy(struct thorium_actor *actor);
+void biosal_assembly_graph_store_receive(struct thorium_actor *actor, struct thorium_message *message);
 
-void bsal_assembly_graph_store_print(struct thorium_actor *self);
-void bsal_assembly_graph_store_push_data(struct thorium_actor *self, struct thorium_message *message);
-void bsal_assembly_graph_store_yield_reply(struct thorium_actor *self, struct thorium_message *message);
+void biosal_assembly_graph_store_print(struct thorium_actor *self);
+void biosal_assembly_graph_store_push_data(struct thorium_actor *self, struct thorium_message *message);
+void biosal_assembly_graph_store_yield_reply(struct thorium_actor *self, struct thorium_message *message);
 
-void bsal_assembly_graph_store_push_kmer_block(struct thorium_actor *self, struct thorium_message *message);
-void bsal_assembly_graph_store_push_arc_block(struct thorium_actor *self, struct thorium_message *message);
+void biosal_assembly_graph_store_push_kmer_block(struct thorium_actor *self, struct thorium_message *message);
+void biosal_assembly_graph_store_push_arc_block(struct thorium_actor *self, struct thorium_message *message);
 
-void bsal_assembly_graph_store_add_arc(struct thorium_actor *self,
-                struct bsal_assembly_arc *arc, char *sequence, void *key);
+void biosal_assembly_graph_store_add_arc(struct thorium_actor *self,
+                struct biosal_assembly_arc *arc, char *sequence, void *key);
 
-void bsal_assembly_graph_store_get_summary(struct thorium_actor *self, struct thorium_message *message);
+void biosal_assembly_graph_store_get_summary(struct thorium_actor *self, struct thorium_message *message);
 
-void bsal_assembly_graph_store_yield_reply_summary(struct thorium_actor *self, struct thorium_message *message);
+void biosal_assembly_graph_store_yield_reply_summary(struct thorium_actor *self, struct thorium_message *message);
 
 /*
  * This is the route for ACTION_ASSEMBLY_GET_VERTEX.
- * It returns a packed bsal_assembly_vertex.
+ * It returns a packed biosal_assembly_vertex.
  */
-void bsal_assembly_graph_store_get_vertex(struct thorium_actor *self, struct thorium_message *message);
-void bsal_assembly_graph_store_get_starting_vertex(struct thorium_actor *self, struct thorium_message *message);
+void biosal_assembly_graph_store_get_vertex(struct thorium_actor *self, struct thorium_message *message);
+void biosal_assembly_graph_store_get_starting_vertex(struct thorium_actor *self, struct thorium_message *message);
 
-int bsal_assembly_graph_store_get_store_count_per_node(struct thorium_actor *self);
+int biosal_assembly_graph_store_get_store_count_per_node(struct thorium_actor *self);
 
-void bsal_assembly_graph_store_print_progress(struct thorium_actor *self);
+void biosal_assembly_graph_store_print_progress(struct thorium_actor *self);
 
-void bsal_assembly_graph_store_mark_as_used(struct thorium_actor *self,
-                struct bsal_assembly_vertex *vertex, int source, int path);
-void bsal_assembly_graph_store_mark_vertex_as_visited(struct thorium_actor *self, struct thorium_message *message);
+void biosal_assembly_graph_store_mark_as_used(struct thorium_actor *self,
+                struct biosal_assembly_vertex *vertex, int source, int path);
+void biosal_assembly_graph_store_mark_vertex_as_visited(struct thorium_actor *self, struct thorium_message *message);
 
-void bsal_assembly_graph_store_set_vertex_flag(struct thorium_actor *self,
+void biosal_assembly_graph_store_set_vertex_flag(struct thorium_actor *self,
                 struct thorium_message *message);
-struct bsal_assembly_vertex *bsal_assembly_graph_store_find_vertex(struct thorium_actor *self,
-                struct bsal_dna_kmer *kmer);
+struct biosal_assembly_vertex *biosal_assembly_graph_store_find_vertex(struct thorium_actor *self,
+                struct biosal_dna_kmer *kmer);
 
 #endif

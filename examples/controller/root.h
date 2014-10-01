@@ -7,7 +7,7 @@
 #define SCRIPT_ROOT 0xf04a42e1
 
 struct root {
-    struct bsal_vector spawners;
+    struct biosal_vector spawners;
     int controller;
     int events;
     int synchronized;

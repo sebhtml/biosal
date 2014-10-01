@@ -8,9 +8,9 @@
 #include <string.h>
 
 /*
-#define BSAL_FASTQ_INPUT_DEBUG
+#define BIOSAL_FASTQ_INPUT_DEBUG
 
-#define BSAL_FASTQ_INPUT_DEBUG2
+#define BIOSAL_FASTQ_INPUT_DEBUG2
 */
 
 #define FIND_IDENTIFIER
@@ -18,68 +18,68 @@
 
 #define MEMORY_FASTQ 0x1c318138
 
-struct bsal_input_format_interface bsal_fastq_input_operations = {
-    .init = bsal_fastq_input_init,
-    .destroy = bsal_fastq_input_destroy,
-    .get_sequence = bsal_fastq_input_get_sequence,
-    .detect = bsal_fastq_input_detect,
-    .get_offset = bsal_fastq_input_get_offset
+struct biosal_input_format_interface biosal_fastq_input_operations = {
+    .init = biosal_fastq_input_init,
+    .destroy = biosal_fastq_input_destroy,
+    .get_sequence = biosal_fastq_input_get_sequence,
+    .detect = biosal_fastq_input_detect,
+    .get_offset = biosal_fastq_input_get_offset
 };
 
-void bsal_fastq_input_init(struct bsal_input_format *input)
+void biosal_fastq_input_init(struct biosal_input_format *input)
 {
     char *file;
-    struct bsal_fastq_input *fastq;
+    struct biosal_fastq_input *fastq;
     uint64_t offset;
 
-    file = bsal_input_format_file(input);
-    offset = bsal_input_format_start_offset(input);
+    file = biosal_input_format_file(input);
+    offset = biosal_input_format_start_offset(input);
 
-#ifdef BSAL_FASTQ_INPUT_DEBUG
-    printf("DEBUG bsal_fastq_input_init %s\n",
+#ifdef BIOSAL_FASTQ_INPUT_DEBUG
+    printf("DEBUG biosal_fastq_input_init %s\n",
                     file);
 #endif
 
-    fastq = (struct bsal_fastq_input *)bsal_input_format_implementation(input);
+    fastq = (struct biosal_fastq_input *)biosal_input_format_implementation(input);
 
-    bsal_buffered_reader_init(&fastq->reader, file, offset);
+    biosal_buffered_reader_init(&fastq->reader, file, offset);
     fastq->buffer = NULL;
 
     fastq->has_first = 0;
 }
 
-void bsal_fastq_input_destroy(struct bsal_input_format *input)
+void biosal_fastq_input_destroy(struct biosal_input_format *input)
 {
-    struct bsal_fastq_input *fastq;
+    struct biosal_fastq_input *fastq;
 
-    fastq = (struct bsal_fastq_input *)bsal_input_format_implementation(input);
-    bsal_buffered_reader_destroy(&fastq->reader);
+    fastq = (struct biosal_fastq_input *)biosal_input_format_implementation(input);
+    biosal_buffered_reader_destroy(&fastq->reader);
 
     if (fastq->buffer != NULL) {
-        bsal_memory_free(fastq->buffer, MEMORY_FASTQ);
+        biosal_memory_free(fastq->buffer, MEMORY_FASTQ);
         fastq->buffer = NULL;
     }
 }
 
-uint64_t bsal_fastq_input_get_sequence(struct bsal_input_format *input,
+uint64_t biosal_fastq_input_get_sequence(struct biosal_input_format *input,
                 char *sequence)
 {
-    struct bsal_fastq_input *fastq;
+    struct biosal_fastq_input *fastq;
 
     /*
-     * Input sequence has at least BSAL_INPUT_MAXIMUM_SEQUENCE_LENGTH
+     * Input sequence has at least BIOSAL_INPUT_MAXIMUM_SEQUENCE_LENGTH
      * which is currently 512k
      */
 
     /* TODO use a dynamic buffer to accept long reads... */
-    int maximum_sequence_length = BSAL_INPUT_MAXIMUM_SEQUENCE_LENGTH;
+    int maximum_sequence_length = BIOSAL_INPUT_MAXIMUM_SEQUENCE_LENGTH;
     int value;
     int length;
 
-    fastq = (struct bsal_fastq_input *)bsal_input_format_implementation(input);
+    fastq = (struct biosal_fastq_input *)biosal_input_format_implementation(input);
 
     if (fastq->buffer == NULL) {
-        fastq->buffer = (char *)bsal_memory_allocate(maximum_sequence_length + 1, MEMORY_FASTQ);
+        fastq->buffer = (char *)biosal_memory_allocate(maximum_sequence_length + 1, MEMORY_FASTQ);
     }
 
     value = 0;
@@ -87,7 +87,7 @@ uint64_t bsal_fastq_input_get_sequence(struct bsal_input_format *input,
     /*
      * Read name
      */
-    value += bsal_buffered_reader_read_line(&fastq->reader, fastq->buffer,
+    value += biosal_buffered_reader_read_line(&fastq->reader, fastq->buffer,
                     maximum_sequence_length);
 
 #ifdef FIND_IDENTIFIER
@@ -97,9 +97,9 @@ uint64_t bsal_fastq_input_get_sequence(struct bsal_input_format *input,
      */
     if (!fastq->has_first) {
 
-        while (!bsal_fastq_input_is_identifier(input, fastq->buffer)) {
+        while (!biosal_fastq_input_is_identifier(input, fastq->buffer)) {
 
-            value += bsal_buffered_reader_read_line(&fastq->reader, fastq->buffer,
+            value += biosal_buffered_reader_read_line(&fastq->reader, fastq->buffer,
                     maximum_sequence_length);
         }
 
@@ -110,10 +110,10 @@ uint64_t bsal_fastq_input_get_sequence(struct bsal_input_format *input,
     /*
      * Read DNA sequence
      */
-    length = bsal_buffered_reader_read_line(&fastq->reader, sequence,
+    length = biosal_buffered_reader_read_line(&fastq->reader, sequence,
                     maximum_sequence_length);
 
-#ifdef BSAL_FASTQ_INPUT_DEBUG_READ_LINE
+#ifdef BIOSAL_FASTQ_INPUT_DEBUG_READ_LINE
     printf("FASTQ ReadLine <<%s>>\n", sequence);
 #endif
 
@@ -126,63 +126,63 @@ uint64_t bsal_fastq_input_get_sequence(struct bsal_input_format *input,
 
     value += length;
 
-#ifdef BSAL_FASTQ_INPUT_DEBUG2
-    printf("DEBUG bsal_fastq_input_get_sequence %s\n", buffer);
+#ifdef BIOSAL_FASTQ_INPUT_DEBUG2
+    printf("DEBUG biosal_fastq_input_get_sequence %s\n", buffer);
 #endif
 
     /*
      * Read the + symbol
      */
-    value += bsal_buffered_reader_read_line(&fastq->reader, fastq->buffer,
+    value += biosal_buffered_reader_read_line(&fastq->reader, fastq->buffer,
                     maximum_sequence_length);
 
     /*
      * Read quality string.
      */
-    value += bsal_buffered_reader_read_line(&fastq->reader, fastq->buffer,
+    value += biosal_buffered_reader_read_line(&fastq->reader, fastq->buffer,
                     maximum_sequence_length);
 
     return value;
 }
 
-int bsal_fastq_input_detect(struct bsal_input_format *input)
+int biosal_fastq_input_detect(struct biosal_input_format *input)
 {
-    if (bsal_input_format_has_suffix(input, ".fastq")) {
+    if (biosal_input_format_has_suffix(input, ".fastq")) {
         return 1;
     }
 
-    if (bsal_input_format_has_suffix(input, ".fq")) {
+    if (biosal_input_format_has_suffix(input, ".fq")) {
         return 1;
     }
 
-    if (bsal_input_format_has_suffix(input, ".fastq.gz")) {
+    if (biosal_input_format_has_suffix(input, ".fastq.gz")) {
         return 1;
     }
 
-    if (bsal_input_format_has_suffix(input, ".fq.gz")) {
+    if (biosal_input_format_has_suffix(input, ".fq.gz")) {
         return 1;
     }
 
     return 0;
 }
 
-uint64_t bsal_fastq_input_get_offset(struct bsal_input_format *self)
+uint64_t biosal_fastq_input_get_offset(struct biosal_input_format *self)
 {
-    struct bsal_fastq_input *fastq;
+    struct biosal_fastq_input *fastq;
 
-    fastq = (struct bsal_fastq_input *)bsal_input_format_implementation(self);
+    fastq = (struct biosal_fastq_input *)biosal_input_format_implementation(self);
 
-    return bsal_buffered_reader_get_offset(&fastq->reader);
+    return biosal_buffered_reader_get_offset(&fastq->reader);
 }
 
-int bsal_fastq_input_is_identifier(struct bsal_input_format *self, const char *line)
+int biosal_fastq_input_is_identifier(struct biosal_input_format *self, const char *line)
 {
     int length;
     char buffer[2];
     int read;
-    struct bsal_fastq_input *fastq;
+    struct biosal_fastq_input *fastq;
 
-    fastq = (struct bsal_fastq_input *)bsal_input_format_implementation(self);
+    fastq = (struct biosal_fastq_input *)biosal_input_format_implementation(self);
 
     length = strlen(line);
 
@@ -201,7 +201,7 @@ int bsal_fastq_input_is_identifier(struct bsal_input_format *self, const char *l
 
     read = -1;
 
-    read = bsal_buffered_reader_get_previous_bytes(&fastq->reader,
+    read = biosal_buffered_reader_get_previous_bytes(&fastq->reader,
                     buffer, 3);
 
     /*
@@ -215,16 +215,16 @@ int bsal_fastq_input_is_identifier(struct bsal_input_format *self, const char *l
      * Operation not supported by the driver.
      */
     if (read < 0) {
-        return bsal_fastq_input_is_identifier_mock(self, line);
+        return biosal_fastq_input_is_identifier_mock(self, line);
     }
 
     /*
      * Fall back on this method call.
      */
-    return bsal_fastq_input_is_identifier_mock(self, line);
+    return biosal_fastq_input_is_identifier_mock(self, line);
 }
 
-int bsal_fastq_input_is_identifier_mock(struct bsal_input_format *self, const char *line)
+int biosal_fastq_input_is_identifier_mock(struct biosal_input_format *self, const char *line)
 {
     int length;
     int i;

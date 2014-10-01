@@ -33,22 +33,22 @@ struct thorium_transport {
     int rank;
     int size;
 
-    struct bsal_memory_pool *inbound_message_memory_pool;
-    struct bsal_memory_pool *outbound_message_memory_pool;
+    struct biosal_memory_pool *inbound_message_memory_pool;
+    struct biosal_memory_pool *outbound_message_memory_pool;
 
     void *concrete_transport;
     struct thorium_transport_interface *transport_interface;
     int active_request_count;
 
     uint32_t flags;
-    struct bsal_timer timer;
+    struct biosal_timer timer;
     uint64_t start_time;
 };
 
 void thorium_transport_init(struct thorium_transport *self, struct thorium_node *node,
                 int *argc, char ***argv,
-                struct bsal_memory_pool *inbound_message_memory_pool,
-                struct bsal_memory_pool *outbound_message_memory_pool);
+                struct biosal_memory_pool *inbound_message_memory_pool,
+                struct biosal_memory_pool *outbound_message_memory_pool);
 
 void thorium_transport_destroy(struct thorium_transport *self);
 

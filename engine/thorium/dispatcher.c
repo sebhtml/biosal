@@ -18,44 +18,44 @@
 
 void thorium_dispatcher_init(struct thorium_dispatcher *self)
 {
-    bsal_map_init(&self->routes, sizeof(int), sizeof(struct bsal_map));
+    biosal_map_init(&self->routes, sizeof(int), sizeof(struct biosal_map));
 }
 
 void thorium_dispatcher_destroy(struct thorium_dispatcher *self)
 {
-    struct bsal_map_iterator iterator;
-    struct bsal_map_iterator iterator2;
-    struct bsal_map *map;
-    struct bsal_vector *vector;
+    struct biosal_map_iterator iterator;
+    struct biosal_map_iterator iterator2;
+    struct biosal_map *map;
+    struct biosal_vector *vector;
 
-    bsal_map_iterator_init(&iterator, &self->routes);
+    biosal_map_iterator_init(&iterator, &self->routes);
 
     /*
      * For each tag, iterate over each source and destroy each vector
      * of routes.
      */
-    while (bsal_map_iterator_has_next(&iterator)) {
-        bsal_map_iterator_next(&iterator, NULL, (void **)&map);
+    while (biosal_map_iterator_has_next(&iterator)) {
+        biosal_map_iterator_next(&iterator, NULL, (void **)&map);
 
-        bsal_map_iterator_init(&iterator2, map);
+        biosal_map_iterator_init(&iterator2, map);
 
-        while (bsal_map_iterator_has_next(&iterator2)) {
-            bsal_map_iterator_next(&iterator2, NULL, (void **)&vector);
+        while (biosal_map_iterator_has_next(&iterator2)) {
+            biosal_map_iterator_next(&iterator2, NULL, (void **)&vector);
 
             /*
              * Destroy routes
              */
-            bsal_vector_destroy(vector);
+            biosal_vector_destroy(vector);
         }
 
-        bsal_map_iterator_destroy(&iterator2);
+        biosal_map_iterator_destroy(&iterator2);
 
-        bsal_map_destroy(map);
+        biosal_map_destroy(map);
     }
 
-    bsal_map_iterator_destroy(&iterator);
+    biosal_map_iterator_destroy(&iterator);
 
-    bsal_map_destroy(&self->routes);
+    biosal_map_destroy(&self->routes);
 }
 
 void thorium_dispatcher_add_action(struct thorium_dispatcher *self, int tag,
@@ -64,34 +64,34 @@ void thorium_dispatcher_add_action(struct thorium_dispatcher *self, int tag,
                int *actual,
                int expected)
 {
-    struct bsal_map *map;
-    struct bsal_vector *vector;
+    struct biosal_map *map;
+    struct biosal_vector *vector;
     struct thorium_route *route;
     struct thorium_route new_route;
     int size;
     int i;
     int found;
 
-    map = bsal_map_get(&self->routes, &tag);
+    map = biosal_map_get(&self->routes, &tag);
 
     /*
      * Initialize the map if it does not exist
      */
     if (map == NULL) {
-        map = bsal_map_add(&self->routes, &tag);
+        map = biosal_map_add(&self->routes, &tag);
 
-        bsal_map_init(map, sizeof(int), sizeof(struct bsal_vector));
+        biosal_map_init(map, sizeof(int), sizeof(struct biosal_vector));
     }
 
-    vector = bsal_map_get(map, &source);
+    vector = biosal_map_get(map, &source);
 
     /*
      * Create the bucket if it is not there.
      */
     if (vector == NULL) {
-        vector = bsal_map_add(map, &source);
+        vector = biosal_map_add(map, &source);
 
-        bsal_vector_init(vector, sizeof(struct thorium_route));
+        biosal_vector_init(vector, sizeof(struct thorium_route));
     }
 
     /* Add the route in the vector
@@ -102,11 +102,11 @@ void thorium_dispatcher_add_action(struct thorium_dispatcher *self, int tag,
     /* Check if it is there already
      */
 
-    size = bsal_vector_size(vector);
+    size = biosal_vector_size(vector);
     found = 0;
 
     for (i = 0; i < size; i++) {
-        route = bsal_vector_at(vector, i);
+        route = biosal_vector_at(vector, i);
 
         if (thorium_route_equals(route, &new_route)) {
             found = 1;
@@ -115,7 +115,7 @@ void thorium_dispatcher_add_action(struct thorium_dispatcher *self, int tag,
     }
 
     if (!found) {
-        bsal_vector_push_back(vector, &new_route);
+        biosal_vector_push_back(vector, &new_route);
     }
 
     thorium_route_destroy(&new_route);
@@ -141,7 +141,7 @@ int thorium_dispatcher_dispatch(struct thorium_dispatcher *self, struct thorium_
 #ifdef THORIUM_DISPATCHER_DEBUG_10335
     if (tag == 10335) {
         printf("DEBUG thorium_dispatcher_dispatch 10335, available %d\n",
-                        bsal_vector_size(&self->tags));
+                        biosal_vector_size(&self->tags));
         thorium_dispatcher_print(self);
     }
 #endif
@@ -191,8 +191,8 @@ int thorium_dispatcher_dispatch(struct thorium_dispatcher *self, struct thorium_
 
 thorium_actor_receive_fn_t thorium_dispatcher_get(struct thorium_dispatcher *self, int tag, int source)
 {
-    struct bsal_map *map;
-    struct bsal_vector *vector;
+    struct biosal_map *map;
+    struct biosal_vector *vector;
     struct thorium_route *route;
     int i;
     int size;
@@ -202,7 +202,7 @@ thorium_actor_receive_fn_t thorium_dispatcher_get(struct thorium_dispatcher *sel
     handler_with_condition = NULL;
     handler_without_condition = NULL;
 
-    map = bsal_map_get(&self->routes, &tag);
+    map = biosal_map_get(&self->routes, &tag);
 
     /*
      * This tag is not configured
@@ -211,7 +211,7 @@ thorium_actor_receive_fn_t thorium_dispatcher_get(struct thorium_dispatcher *sel
         return NULL;
     }
 
-    vector = bsal_map_get(map, &source);
+    vector = biosal_map_get(map, &source);
 
     /*
      * This source is not
@@ -226,11 +226,11 @@ thorium_actor_receive_fn_t thorium_dispatcher_get(struct thorium_dispatcher *sel
      * Pick up the first route with a satisfied condition
      */
 
-    size = bsal_vector_size(vector);
+    size = biosal_vector_size(vector);
 
     for (i = 0; i < size; i++) {
 
-        route = bsal_vector_at(vector, i);
+        route = biosal_vector_at(vector, i);
 
         if (thorium_route_test(route) == THORIUM_ROUTE_CONDITION_TRUE) {
             handler_with_condition = thorium_route_handler(route);

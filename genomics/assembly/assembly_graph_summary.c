@@ -10,7 +10,7 @@
 #include <stdint.h>
 #include <inttypes.h>
 
-void bsal_assembly_graph_summary_init(struct bsal_assembly_graph_summary *self)
+void biosal_assembly_graph_summary_init(struct biosal_assembly_graph_summary *self)
 {
     int i;
     int j;
@@ -20,62 +20,62 @@ void bsal_assembly_graph_summary_init(struct bsal_assembly_graph_summary *self)
     self->vertex_observation_count = 0;
     self->arc_count = 0;
 
-    size = BSAL_DNA_ALPHABET_SIZE;
+    size = BIOSAL_DNA_ALPHABET_SIZE;
 
-    for (i = 0; i <= BSAL_DNA_ALPHABET_SIZE; ++i) {
-        for (j = 0; j <= BSAL_DNA_ALPHABET_SIZE; ++j) {
-            bsal_assembly_graph_summary_set_degree_frequency(self, i, j, 0);
+    for (i = 0; i <= BIOSAL_DNA_ALPHABET_SIZE; ++i) {
+        for (j = 0; j <= BIOSAL_DNA_ALPHABET_SIZE; ++j) {
+            biosal_assembly_graph_summary_set_degree_frequency(self, i, j, 0);
         }
     }
 }
 
-void bsal_assembly_graph_summary_destroy(struct bsal_assembly_graph_summary *self)
+void biosal_assembly_graph_summary_destroy(struct biosal_assembly_graph_summary *self)
 {
     self->vertex_count = 0;
     self->vertex_observation_count = 0;
     self->arc_count = 0;
 }
 
-int bsal_assembly_graph_summary_pack_size(struct bsal_assembly_graph_summary *self)
+int biosal_assembly_graph_summary_pack_size(struct biosal_assembly_graph_summary *self)
 {
     int bytes;
 
-    bytes = bsal_assembly_graph_summary_pack_unpack(self, BSAL_PACKER_OPERATION_PACK_SIZE, NULL);
+    bytes = biosal_assembly_graph_summary_pack_unpack(self, BIOSAL_PACKER_OPERATION_PACK_SIZE, NULL);
 
     return bytes;
 }
 
-int bsal_assembly_graph_summary_pack(struct bsal_assembly_graph_summary *self, void *buffer)
+int biosal_assembly_graph_summary_pack(struct biosal_assembly_graph_summary *self, void *buffer)
 {
-    return bsal_assembly_graph_summary_pack_unpack(self, BSAL_PACKER_OPERATION_PACK, buffer);
+    return biosal_assembly_graph_summary_pack_unpack(self, BIOSAL_PACKER_OPERATION_PACK, buffer);
 }
 
-int bsal_assembly_graph_summary_unpack(struct bsal_assembly_graph_summary *self, void *buffer)
+int biosal_assembly_graph_summary_unpack(struct biosal_assembly_graph_summary *self, void *buffer)
 {
-    return bsal_assembly_graph_summary_pack_unpack(self, BSAL_PACKER_OPERATION_UNPACK, buffer);
+    return biosal_assembly_graph_summary_pack_unpack(self, BIOSAL_PACKER_OPERATION_UNPACK, buffer);
 }
 
-int bsal_assembly_graph_summary_pack_unpack(struct bsal_assembly_graph_summary *self, int operation, void *buffer)
+int biosal_assembly_graph_summary_pack_unpack(struct biosal_assembly_graph_summary *self, int operation, void *buffer)
 {
     int count;
-    struct bsal_packer packer;
+    struct biosal_packer packer;
     int bytes;
 
-    bsal_packer_init(&packer, operation, buffer);
-    bsal_packer_process_uint64_t(&packer, &self->vertex_count);
-    bsal_packer_process_uint64_t(&packer, &self->vertex_observation_count);
-    bsal_packer_process_uint64_t(&packer, &self->arc_count);
+    biosal_packer_init(&packer, operation, buffer);
+    biosal_packer_process_uint64_t(&packer, &self->vertex_count);
+    biosal_packer_process_uint64_t(&packer, &self->vertex_observation_count);
+    biosal_packer_process_uint64_t(&packer, &self->arc_count);
 
-    bytes = BSAL_DEGREE_VALUE_COUNT * BSAL_DEGREE_VALUE_COUNT * sizeof(uint64_t);
-    bsal_packer_process(&packer, &self->degree_frequencies, bytes);
+    bytes = BIOSAL_DEGREE_VALUE_COUNT * BIOSAL_DEGREE_VALUE_COUNT * sizeof(uint64_t);
+    biosal_packer_process(&packer, &self->degree_frequencies, bytes);
 
-    count = bsal_packer_get_byte_count(&packer);
-    bsal_packer_destroy(&packer);
+    count = biosal_packer_get_byte_count(&packer);
+    biosal_packer_destroy(&packer);
 
     return count;
 }
 
-void bsal_assembly_graph_summary_print(struct bsal_assembly_graph_summary *self)
+void biosal_assembly_graph_summary_print(struct biosal_assembly_graph_summary *self)
 {
     printf("GRAPH -> ");
     printf(" %" PRIu64 " vertices,",
@@ -88,8 +88,8 @@ void bsal_assembly_graph_summary_print(struct bsal_assembly_graph_summary *self)
     printf("\n");
 }
 
-void bsal_assembly_graph_summary_merge(struct bsal_assembly_graph_summary *self,
-            struct bsal_assembly_graph_summary *partial_summary)
+void biosal_assembly_graph_summary_merge(struct biosal_assembly_graph_summary *self,
+            struct biosal_assembly_graph_summary *partial_summary)
 {
     int range;
     int parent_count;
@@ -100,18 +100,18 @@ void bsal_assembly_graph_summary_merge(struct bsal_assembly_graph_summary *self,
     self->vertex_observation_count += partial_summary->vertex_observation_count;
     self->arc_count += partial_summary->arc_count;
 
-    range = BSAL_MAXIMUM_DEGREE;
+    range = BIOSAL_MAXIMUM_DEGREE;
 
     for (parent_count = 0; parent_count <= range; ++parent_count) {
         for (child_count = 0; child_count <= range; ++child_count) {
 
-            frequency = bsal_assembly_graph_summary_get_degree_frequency(partial_summary, parent_count, child_count);
-            bsal_assembly_graph_summary_increase_degree_frequency(self, parent_count, child_count, frequency);
+            frequency = biosal_assembly_graph_summary_get_degree_frequency(partial_summary, parent_count, child_count);
+            biosal_assembly_graph_summary_increase_degree_frequency(self, parent_count, child_count, frequency);
         }
     }
 }
 
-void bsal_assembly_graph_summary_add(struct bsal_assembly_graph_summary *self, int coverage, int parent_count,
+void biosal_assembly_graph_summary_add(struct biosal_assembly_graph_summary *self, int coverage, int parent_count,
                 int child_count)
 {
     ++self->vertex_count;
@@ -122,56 +122,56 @@ void bsal_assembly_graph_summary_add(struct bsal_assembly_graph_summary *self, i
      */
     self->arc_count += child_count;
 
-    bsal_assembly_graph_summary_increment_degree_frequency(self, parent_count, child_count);
+    biosal_assembly_graph_summary_increment_degree_frequency(self, parent_count, child_count);
 }
 
-uint64_t *bsal_assembly_graph_summary_get_degree_bucket(struct bsal_assembly_graph_summary *self, int parent_count,
+uint64_t *biosal_assembly_graph_summary_get_degree_bucket(struct biosal_assembly_graph_summary *self, int parent_count,
                 int child_count)
 {
-    BSAL_DEBUGGER_ASSERT(parent_count >= 0);
-    BSAL_DEBUGGER_ASSERT(parent_count <= BSAL_DNA_ALPHABET_SIZE);
-    BSAL_DEBUGGER_ASSERT(child_count >= 0);
-    BSAL_DEBUGGER_ASSERT(child_count <= BSAL_DNA_ALPHABET_SIZE);
+    BIOSAL_DEBUGGER_ASSERT(parent_count >= 0);
+    BIOSAL_DEBUGGER_ASSERT(parent_count <= BIOSAL_DNA_ALPHABET_SIZE);
+    BIOSAL_DEBUGGER_ASSERT(child_count >= 0);
+    BIOSAL_DEBUGGER_ASSERT(child_count <= BIOSAL_DNA_ALPHABET_SIZE);
 
-    return self->degree_frequencies + parent_count * BSAL_DEGREE_VALUE_COUNT + child_count;
+    return self->degree_frequencies + parent_count * BIOSAL_DEGREE_VALUE_COUNT + child_count;
 }
 
-uint64_t bsal_assembly_graph_summary_get_degree_frequency(struct bsal_assembly_graph_summary *self, int parent_count,
+uint64_t biosal_assembly_graph_summary_get_degree_frequency(struct biosal_assembly_graph_summary *self, int parent_count,
                 int child_count)
 {
     uint64_t *bucket;
-    bucket = bsal_assembly_graph_summary_get_degree_bucket(self, parent_count, child_count);
+    bucket = biosal_assembly_graph_summary_get_degree_bucket(self, parent_count, child_count);
     return *bucket;
 }
 
-void bsal_assembly_graph_summary_set_degree_frequency(struct bsal_assembly_graph_summary *self, int parent_count,
+void biosal_assembly_graph_summary_set_degree_frequency(struct biosal_assembly_graph_summary *self, int parent_count,
                 int child_count, uint64_t value)
 {
     uint64_t *bucket;
-    bucket = bsal_assembly_graph_summary_get_degree_bucket(self, parent_count, child_count);
+    bucket = biosal_assembly_graph_summary_get_degree_bucket(self, parent_count, child_count);
     *bucket = value;
 }
 
-void bsal_assembly_graph_summary_increase_degree_frequency(struct bsal_assembly_graph_summary *self, int parent_count,
+void biosal_assembly_graph_summary_increase_degree_frequency(struct biosal_assembly_graph_summary *self, int parent_count,
                 int child_count, uint64_t frequency)
 {
     uint64_t value;
-    value = bsal_assembly_graph_summary_get_degree_frequency(self, parent_count, child_count);
+    value = biosal_assembly_graph_summary_get_degree_frequency(self, parent_count, child_count);
 
 #if 0
     printf("old value %" PRIu64 "\n", value);
 #endif
 
-    bsal_assembly_graph_summary_set_degree_frequency(self, parent_count, child_count, value + frequency);
+    biosal_assembly_graph_summary_set_degree_frequency(self, parent_count, child_count, value + frequency);
 }
 
-void bsal_assembly_graph_summary_increment_degree_frequency(struct bsal_assembly_graph_summary *self, int parent_count,
+void biosal_assembly_graph_summary_increment_degree_frequency(struct biosal_assembly_graph_summary *self, int parent_count,
                 int child_count)
 {
-    bsal_assembly_graph_summary_increase_degree_frequency(self, parent_count, child_count, 1);
+    biosal_assembly_graph_summary_increase_degree_frequency(self, parent_count, child_count, 1);
 }
 
-void bsal_assembly_graph_summary_write_summary(struct bsal_assembly_graph_summary *self,
+void biosal_assembly_graph_summary_write_summary(struct biosal_assembly_graph_summary *self,
                 char *file_name, int kmer_length)
 {
     FILE *file;
@@ -180,7 +180,7 @@ void bsal_assembly_graph_summary_write_summary(struct bsal_assembly_graph_summar
     int child_count;
     int range;
 
-    range = BSAL_DNA_ALPHABET_SIZE;
+    range = BIOSAL_DNA_ALPHABET_SIZE;
 
     file = fopen(file_name, "w");
 
@@ -198,7 +198,7 @@ void bsal_assembly_graph_summary_write_summary(struct bsal_assembly_graph_summar
     for (parent_count = 0; parent_count <= range; ++parent_count) {
         for (child_count = 0; child_count <= range; ++child_count) {
 
-            frequency = bsal_assembly_graph_summary_get_degree_frequency(self, parent_count, child_count);
+            frequency = biosal_assembly_graph_summary_get_degree_frequency(self, parent_count, child_count);
 
             fprintf(file, "    <class>"
                             "<parent_count>%d</parent_count>"

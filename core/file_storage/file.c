@@ -3,7 +3,7 @@
 
 #include <stdio.h>
 
-uint64_t bsal_file_get_size(const char *file)
+uint64_t biosal_file_get_size(const char *file)
 {
     FILE *descriptor;
     uint64_t size;

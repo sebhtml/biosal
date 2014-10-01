@@ -8,25 +8,25 @@
 #include <stdio.h>
 
 /*
-#define BSAL_PACKER_DEBUG
+#define BIOSAL_PACKER_DEBUG
 */
 
-void bsal_packer_init(struct bsal_packer *self, int operation, void *buffer)
+void biosal_packer_init(struct biosal_packer *self, int operation, void *buffer)
 {
-    self->operation = BSAL_PACKER_OPERATION_NO_OPERATION;
+    self->operation = BIOSAL_PACKER_OPERATION_NO_OPERATION;
 
-#ifdef BSAL_PACKER_DEBUG
-    printf("DEBUG bsal_packer_init operation %d buffer %p\n", operation, buffer);
+#ifdef BIOSAL_PACKER_DEBUG
+    printf("DEBUG biosal_packer_init operation %d buffer %p\n", operation, buffer);
 #endif
 
     /* The buffer is not needed for dry runs
      */
-    if (operation == BSAL_PACKER_OPERATION_PACK_SIZE) {
+    if (operation == BIOSAL_PACKER_OPERATION_PACK_SIZE) {
         self->buffer = NULL;
         self->offset = 0;
         self->operation = operation;
 
-#ifdef BSAL_PACKER_DEBUG
+#ifdef BIOSAL_PACKER_DEBUG
         printf("DEBUG dry run.\n");
 #endif
 
@@ -34,13 +34,13 @@ void bsal_packer_init(struct bsal_packer *self, int operation, void *buffer)
     }
 
     if (buffer == NULL) {
-        self->operation = BSAL_PACKER_OPERATION_NO_OPERATION;
+        self->operation = BIOSAL_PACKER_OPERATION_NO_OPERATION;
         self->offset = 0;
         self->buffer = buffer;
     }
 
-    if (operation == BSAL_PACKER_OPERATION_PACK
-                    || operation == BSAL_PACKER_OPERATION_UNPACK) {
+    if (operation == BIOSAL_PACKER_OPERATION_PACK
+                    || operation == BIOSAL_PACKER_OPERATION_UNPACK) {
 
         self->buffer = buffer;
         self->operation = operation;
@@ -52,28 +52,28 @@ void bsal_packer_init(struct bsal_packer *self, int operation, void *buffer)
     self->offset = 0;
     self->buffer = buffer;
 
-#ifdef BSAL_PACKER_DEBUG
-    printf("DEBUG bsal_packer_init config: operation %d\n", self->operation);
+#ifdef BIOSAL_PACKER_DEBUG
+    printf("DEBUG biosal_packer_init config: operation %d\n", self->operation);
 #endif
 }
 
-void bsal_packer_destroy(struct bsal_packer *self)
+void biosal_packer_destroy(struct biosal_packer *self)
 {
-    self->operation = BSAL_PACKER_OPERATION_NO_OPERATION;
+    self->operation = BIOSAL_PACKER_OPERATION_NO_OPERATION;
     self->offset = 0;
     self->buffer = NULL;
 }
 
-int bsal_packer_process(struct bsal_packer *self, void *object, int bytes)
+int biosal_packer_process(struct biosal_packer *self, void *object, int bytes)
 {
 
-#ifdef BSAL_PACKER_DEBUG
-    printf("DEBUG ENTRY bsal_packer_process operation %d object %p bytes %d offset %d buffer %p\n",
+#ifdef BIOSAL_PACKER_DEBUG
+    printf("DEBUG ENTRY biosal_packer_process operation %d object %p bytes %d offset %d buffer %p\n",
                     self->operation,
                     object, bytes, self->offset, self->buffer);
 #endif
 
-    if (self->operation == BSAL_PACKER_OPERATION_NO_OPERATION) {
+    if (self->operation == BIOSAL_PACKER_OPERATION_NO_OPERATION) {
         return self->offset;
     }
 
@@ -81,55 +81,55 @@ int bsal_packer_process(struct bsal_packer *self, void *object, int bytes)
         return self->offset;
     }
 
-#ifdef BSAL_PACKER_DEBUG
+#ifdef BIOSAL_PACKER_DEBUG
     if (self->buffer != NULL) {
-        bsal_packer_print_bytes((char *)self->buffer + self->offset, bytes);
+        biosal_packer_print_bytes((char *)self->buffer + self->offset, bytes);
     }
 #endif
 
-    if (self->operation == BSAL_PACKER_OPERATION_PACK) {
-        bsal_memory_copy((char *)self->buffer + self->offset, object, bytes);
+    if (self->operation == BIOSAL_PACKER_OPERATION_PACK) {
+        biosal_memory_copy((char *)self->buffer + self->offset, object, bytes);
 
-    } else if (self->operation == BSAL_PACKER_OPERATION_UNPACK) {
+    } else if (self->operation == BIOSAL_PACKER_OPERATION_UNPACK) {
 
-#ifdef BSAL_PACKER_DEBUG
+#ifdef BIOSAL_PACKER_DEBUG
         printf("DEBUG unpack !\n");
 #endif
 
-        bsal_memory_copy(object, (char *)self->buffer + self->offset, bytes);
+        biosal_memory_copy(object, (char *)self->buffer + self->offset, bytes);
 
-    } else if (self->operation == BSAL_PACKER_OPERATION_PACK_SIZE) {
+    } else if (self->operation == BIOSAL_PACKER_OPERATION_PACK_SIZE) {
         /* just increase the offset.
          */
     }
 
-#ifdef BSAL_PACKER_DEBUG
+#ifdef BIOSAL_PACKER_DEBUG
     if (self->buffer != NULL) {
-        bsal_packer_print_bytes((char *)self->buffer + self->offset, bytes);
+        biosal_packer_print_bytes((char *)self->buffer + self->offset, bytes);
     }
 #endif
 
 
     self->offset += bytes;
 
-#ifdef BSAL_PACKER_DEBUG
-    printf("DEBUG bsal_packer_process final offset %d\n", self->offset);
+#ifdef BIOSAL_PACKER_DEBUG
+    printf("DEBUG biosal_packer_process final offset %d\n", self->offset);
 #endif
 
     return self->offset;
 }
 
-void bsal_packer_rewind(struct bsal_packer *self)
+void biosal_packer_rewind(struct biosal_packer *self)
 {
     self->offset = 0;
 }
 
-int bsal_packer_get_byte_count(struct bsal_packer *self)
+int biosal_packer_get_byte_count(struct biosal_packer *self)
 {
     return self->offset;
 }
 
-void bsal_packer_print_bytes(void *buffer, int bytes)
+void biosal_packer_print_bytes(void *buffer, int bytes)
 {
     int i;
     char byte;
@@ -147,12 +147,12 @@ void bsal_packer_print_bytes(void *buffer, int bytes)
     printf(" integer value: %d\n", *integer_value);
 }
 
-int bsal_packer_process_int(struct bsal_packer *self, int *object)
+int biosal_packer_process_int(struct biosal_packer *self, int *object)
 {
-    return bsal_packer_process(self, object, sizeof(int));
+    return biosal_packer_process(self, object, sizeof(int));
 }
 
-int bsal_packer_process_uint64_t(struct bsal_packer *self, uint64_t *object)
+int biosal_packer_process_uint64_t(struct biosal_packer *self, uint64_t *object)
 {
-    return bsal_packer_process(self, object, sizeof(uint64_t));
+    return biosal_packer_process(self, object, sizeof(uint64_t));
 }

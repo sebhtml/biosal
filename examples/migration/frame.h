@@ -11,7 +11,7 @@ struct frame {
     int migrated_other;
     int pings;
 
-    struct bsal_vector acquaintance_vector;
+    struct biosal_vector acquaintance_vector;
 };
 
 extern struct thorium_script frame_script;

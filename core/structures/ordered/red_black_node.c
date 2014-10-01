@@ -8,7 +8,7 @@
 
 #include <stdlib.h>
 
-void bsal_red_black_node_init(struct bsal_red_black_node *self, void *key, void *value)
+void biosal_red_black_node_init(struct biosal_red_black_node *self, void *key, void *value)
 {
     self->parent = NULL;
     self->left_node = NULL;
@@ -17,16 +17,16 @@ void bsal_red_black_node_init(struct bsal_red_black_node *self, void *key, void 
     self->key = key;
     self->value = value;
 
-    self->color = BSAL_COLOR_RED;
+    self->color = BIOSAL_COLOR_RED;
 
     /*
      * leaf nodes are NIL
      */
     if (self->key == NULL)
-        self->color = BSAL_COLOR_BLACK;
+        self->color = BIOSAL_COLOR_BLACK;
 }
 
-void bsal_red_black_node_destroy(struct bsal_red_black_node *self)
+void biosal_red_black_node_destroy(struct biosal_red_black_node *self)
 {
     self->parent = NULL;
     self->left_node = NULL;
@@ -35,68 +35,68 @@ void bsal_red_black_node_destroy(struct bsal_red_black_node *self)
     self->key = NULL;
     self->value = NULL;
 
-    self->color = BSAL_COLOR_NONE;
+    self->color = BIOSAL_COLOR_NONE;
 }
 
-void *bsal_red_black_node_key(struct bsal_red_black_node *self)
+void *biosal_red_black_node_key(struct biosal_red_black_node *self)
 {
     return self->key;
 }
 
-char bsal_red_black_node_color(struct bsal_red_black_node *self)
+char biosal_red_black_node_color(struct biosal_red_black_node *self)
 {
     return self->color;
 }
 
-void bsal_red_black_node_set_color(struct bsal_red_black_node *self, char color)
+void biosal_red_black_node_set_color(struct biosal_red_black_node *self, char color)
 {
     self->color = color;
 }
 
-struct bsal_red_black_node *bsal_red_black_node_left_node(struct bsal_red_black_node *self)
+struct biosal_red_black_node *biosal_red_black_node_left_node(struct biosal_red_black_node *self)
 {
     return self->left_node;
 }
 
-void bsal_red_black_node_set_left_node(struct bsal_red_black_node *self, struct bsal_red_black_node *node)
+void biosal_red_black_node_set_left_node(struct biosal_red_black_node *self, struct biosal_red_black_node *node)
 {
-    BSAL_DEBUGGER_ASSERT(self != NULL);
-    BSAL_DEBUGGER_ASSERT(node != NULL);
+    BIOSAL_DEBUGGER_ASSERT(self != NULL);
+    BIOSAL_DEBUGGER_ASSERT(node != NULL);
 
     self->left_node = node;
 
     node->parent = self;
 }
 
-struct bsal_red_black_node *bsal_red_black_node_right_node(struct bsal_red_black_node *self)
+struct biosal_red_black_node *biosal_red_black_node_right_node(struct biosal_red_black_node *self)
 {
     return self->right_node;
 }
 
-void bsal_red_black_node_set_right_node(struct bsal_red_black_node *self, struct bsal_red_black_node *node)
+void biosal_red_black_node_set_right_node(struct biosal_red_black_node *self, struct biosal_red_black_node *node)
 {
-    BSAL_DEBUGGER_ASSERT(self != NULL);
-    BSAL_DEBUGGER_ASSERT(node != NULL);
+    BIOSAL_DEBUGGER_ASSERT(self != NULL);
+    BIOSAL_DEBUGGER_ASSERT(node != NULL);
 
     self->right_node = node;
     node->parent = self;
 }
 
-struct bsal_red_black_node *bsal_red_black_node_parent(struct bsal_red_black_node *self)
+struct biosal_red_black_node *biosal_red_black_node_parent(struct biosal_red_black_node *self)
 {
     return self->parent;
 }
 
-void bsal_red_black_node_set_parent(struct bsal_red_black_node *self, struct bsal_red_black_node *node)
+void biosal_red_black_node_set_parent(struct biosal_red_black_node *self, struct biosal_red_black_node *node)
 {
     self->parent = node;
 }
 
-struct bsal_red_black_node *bsal_red_black_node_uncle(struct bsal_red_black_node *self)
+struct biosal_red_black_node *biosal_red_black_node_uncle(struct biosal_red_black_node *self)
 {
-    struct bsal_red_black_node *grandparent;
+    struct biosal_red_black_node *grandparent;
 
-    grandparent = bsal_red_black_node_grandparent(self);
+    grandparent = biosal_red_black_node_grandparent(self);
 
     if (grandparent == NULL)
         return NULL;
@@ -108,7 +108,7 @@ struct bsal_red_black_node *bsal_red_black_node_uncle(struct bsal_red_black_node
     }
 }
 
-struct bsal_red_black_node *bsal_red_black_node_grandparent(struct bsal_red_black_node *self)
+struct biosal_red_black_node *biosal_red_black_node_grandparent(struct biosal_red_black_node *self)
 {
     if (self != NULL && self->parent != NULL) {
         return self->parent->parent;
@@ -117,7 +117,7 @@ struct bsal_red_black_node *bsal_red_black_node_grandparent(struct bsal_red_blac
     }
 }
 
-void bsal_red_black_node_run_assertions(struct bsal_red_black_node *self, struct bsal_red_black_tree *tree)
+void biosal_red_black_node_run_assertions(struct biosal_red_black_node *self, struct biosal_red_black_tree *tree)
 {
     int key_size;
 
@@ -127,40 +127,40 @@ void bsal_red_black_node_run_assertions(struct bsal_red_black_node *self, struct
         return;
     }
 
-    if (bsal_red_black_node_is_leaf(self))
+    if (biosal_red_black_node_is_leaf(self))
         return;
 
-    if (!bsal_red_black_node_is_leaf(self->left_node)) {
+    if (!biosal_red_black_node_is_leaf(self->left_node)) {
         if (self->left_node->parent != self) {
             printf("Problem with %d -> %d (left_node parent should be %d, but it is %d)\n",
-                            bsal_red_black_node_get_key_as_int(self, key_size), bsal_red_black_node_get_key_as_int(self->left_node, key_size),
-                            bsal_red_black_node_get_key_as_int(self, key_size), bsal_red_black_node_get_key_as_int(self->left_node->parent, key_size));
+                            biosal_red_black_node_get_key_as_int(self, key_size), biosal_red_black_node_get_key_as_int(self->left_node, key_size),
+                            biosal_red_black_node_get_key_as_int(self, key_size), biosal_red_black_node_get_key_as_int(self->left_node->parent, key_size));
         }
 #if 1
-        BSAL_DEBUGGER_ASSERT(self->left_node->parent == self);
+        BIOSAL_DEBUGGER_ASSERT(self->left_node->parent == self);
 #endif
 
-        BSAL_DEBUGGER_ASSERT(bsal_red_black_tree_compare(tree, self->left_node->key, self->key) <= 0);
-        /*BSAL_DEBUGGER_ASSERT(bsal_red_black_tree_compare(tree, self->left_node->key, tree->root->key) <= 0);*/
+        BIOSAL_DEBUGGER_ASSERT(biosal_red_black_tree_compare(tree, self->left_node->key, self->key) <= 0);
+        /*BIOSAL_DEBUGGER_ASSERT(biosal_red_black_tree_compare(tree, self->left_node->key, tree->root->key) <= 0);*/
     }
-    if (!bsal_red_black_node_is_leaf(self->right_node)) {
-        BSAL_DEBUGGER_ASSERT(self->right_node->parent == self);
-        /*BSAL_DEBUGGER_ASSERT(bsal_red_black_tree_compare(tree, self->right_node->key, self->key) >= 0);*/
+    if (!biosal_red_black_node_is_leaf(self->right_node)) {
+        BIOSAL_DEBUGGER_ASSERT(self->right_node->parent == self);
+        /*BIOSAL_DEBUGGER_ASSERT(biosal_red_black_tree_compare(tree, self->right_node->key, self->key) >= 0);*/
     }
 
 #if 0
     if (self->parent == NULL) {
-        BSAL_DEBUGGER_ASSERT(self->color == BSAL_COLOR_BLACK);
+        BIOSAL_DEBUGGER_ASSERT(self->color == BIOSAL_COLOR_BLACK);
     }
 
-    if (self->color == BSAL_COLOR_RED) {
-        BSAL_DEBUGGER_ASSERT(self->left_node == NULL || self->left_node->color == BSAL_COLOR_BLACK);
-        BSAL_DEBUGGER_ASSERT(self->right_node == NULL || self->right_node->color == BSAL_COLOR_BLACK);
+    if (self->color == BIOSAL_COLOR_RED) {
+        BIOSAL_DEBUGGER_ASSERT(self->left_node == NULL || self->left_node->color == BIOSAL_COLOR_BLACK);
+        BIOSAL_DEBUGGER_ASSERT(self->right_node == NULL || self->right_node->color == BIOSAL_COLOR_BLACK);
     }
 #endif
 }
 
-int bsal_red_black_node_get_key_as_int(struct bsal_red_black_node *self, int key_size)
+int biosal_red_black_node_get_key_as_int(struct biosal_red_black_node *self, int key_size)
 {
     int key;
 
@@ -169,12 +169,12 @@ int bsal_red_black_node_get_key_as_int(struct bsal_red_black_node *self, int key
     if (key_size > (int)sizeof(key))
         key_size = sizeof(key);
 
-    bsal_memory_copy(&key, self->key, key_size);
+    biosal_memory_copy(&key, self->key, key_size);
 
     return key;
 }
 
-struct bsal_red_black_node *bsal_red_black_node_sibling(struct bsal_red_black_node *self)
+struct biosal_red_black_node *biosal_red_black_node_sibling(struct biosal_red_black_node *self)
 {
     /*
      * The root has no sibling.
@@ -200,24 +200,24 @@ struct bsal_red_black_node *bsal_red_black_node_sibling(struct bsal_red_black_no
     return NULL;
 }
 
-int bsal_red_black_node_is_red(struct bsal_red_black_node *self)
+int biosal_red_black_node_is_red(struct biosal_red_black_node *self)
 {
-    return self != NULL && self->color == BSAL_COLOR_RED;
+    return self != NULL && self->color == BIOSAL_COLOR_RED;
 }
 
-int bsal_red_black_node_is_black(struct bsal_red_black_node *self)
+int biosal_red_black_node_is_black(struct biosal_red_black_node *self)
 {
-    return self == NULL || self->color == BSAL_COLOR_BLACK;
+    return self == NULL || self->color == BIOSAL_COLOR_BLACK;
 }
 
-int bsal_red_black_node_is_leaf(struct bsal_red_black_node *self)
+int biosal_red_black_node_is_leaf(struct biosal_red_black_node *self)
 {
-    BSAL_DEBUGGER_ASSERT(self != NULL);
+    BIOSAL_DEBUGGER_ASSERT(self != NULL);
 
     return self->key == NULL;
 }
 
-int bsal_red_black_node_is_left_node(struct bsal_red_black_node *self)
+int biosal_red_black_node_is_left_node(struct biosal_red_black_node *self)
 {
     if (self->parent != NULL
                     && self->parent->left_node == self)
@@ -226,7 +226,7 @@ int bsal_red_black_node_is_left_node(struct bsal_red_black_node *self)
     return 0;
 }
 
-int bsal_red_black_node_is_right_node(struct bsal_red_black_node *self)
+int biosal_red_black_node_is_right_node(struct biosal_red_black_node *self)
 {
     if (self->parent != NULL
                     && self->parent->right_node == self)
@@ -235,19 +235,19 @@ int bsal_red_black_node_is_right_node(struct bsal_red_black_node *self)
     return 0;
 }
 
-int bsal_red_black_node_is_root(struct bsal_red_black_node *self)
+int biosal_red_black_node_is_root(struct biosal_red_black_node *self)
 {
     return self->parent == NULL;
 }
 
-void bsal_red_black_node_print(struct bsal_red_black_node *self, int key_size)
+void biosal_red_black_node_print(struct biosal_red_black_node *self, int key_size)
 {
-    if (bsal_red_black_node_is_leaf(self))
+    if (biosal_red_black_node_is_leaf(self))
         printf("NIL");
     else
-        printf("%d", bsal_red_black_node_get_key_as_int(self, key_size));
+        printf("%d", biosal_red_black_node_get_key_as_int(self, key_size));
 
-    if (bsal_red_black_node_is_red(self))
+    if (biosal_red_black_node_is_red(self))
         printf(" RED");
     else
         printf(" BLACK");

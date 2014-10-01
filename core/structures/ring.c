@@ -7,69 +7,69 @@
 
 #define MEMORY_RING 0x28fc4a42
 
-void bsal_ring_init(struct bsal_ring *self, int capacity, int cell_size)
+void biosal_ring_init(struct biosal_ring *self, int capacity, int cell_size)
 {
     self->number_of_cells = capacity + 1;
     self->cell_size = cell_size;
     self->head = 0;
     self->tail = 0;
 
-    self->cells = bsal_memory_allocate(self->number_of_cells * self->cell_size, MEMORY_RING);
+    self->cells = biosal_memory_allocate(self->number_of_cells * self->cell_size, MEMORY_RING);
 }
 
-void bsal_ring_destroy(struct bsal_ring *self)
+void biosal_ring_destroy(struct biosal_ring *self)
 {
     self->number_of_cells = 0;
     self->cell_size = 0;
     self->head = 0;
     self->tail = 0;
 
-    bsal_memory_free(self->cells, MEMORY_RING);
+    biosal_memory_free(self->cells, MEMORY_RING);
 
     self->cells = NULL;
 }
 
-int bsal_ring_push(struct bsal_ring *self, void *element)
+int biosal_ring_push(struct biosal_ring *self, void *element)
 {
     void *cell;
 
-    if (bsal_ring_is_full(self)) {
-        return BSAL_FALSE;
+    if (biosal_ring_is_full(self)) {
+        return BIOSAL_FALSE;
     }
 
-    cell = bsal_ring_get_cell(self, self->tail);
-    bsal_memory_copy(cell, element, self->cell_size);
-    self->tail = bsal_ring_increment(self, self->tail);
+    cell = biosal_ring_get_cell(self, self->tail);
+    biosal_memory_copy(cell, element, self->cell_size);
+    self->tail = biosal_ring_increment(self, self->tail);
 
-    return BSAL_TRUE;
+    return BIOSAL_TRUE;
 }
 
-int bsal_ring_pop(struct bsal_ring *self, void *element)
+int biosal_ring_pop(struct biosal_ring *self, void *element)
 {
     void *cell;
 
-    if (bsal_ring_is_empty(self)) {
-        return BSAL_FALSE;
+    if (biosal_ring_is_empty(self)) {
+        return BIOSAL_FALSE;
     }
 
-    cell = bsal_ring_get_cell(self, self->head);
-    bsal_memory_copy(element, cell, self->cell_size);
-    self->head = bsal_ring_increment(self, self->head);
+    cell = biosal_ring_get_cell(self, self->head);
+    biosal_memory_copy(element, cell, self->cell_size);
+    self->head = biosal_ring_increment(self, self->head);
 
-    return BSAL_TRUE;
+    return BIOSAL_TRUE;
 }
 
-int bsal_ring_is_full(struct bsal_ring *self)
+int biosal_ring_is_full(struct biosal_ring *self)
 {
-    return bsal_ring_increment(self, self->tail) == self->head;
+    return biosal_ring_increment(self, self->tail) == self->head;
 }
 
-int bsal_ring_is_empty(struct bsal_ring *self)
+int biosal_ring_is_empty(struct biosal_ring *self)
 {
     return self->head == self->tail;
 }
 
-int bsal_ring_size(struct bsal_ring *self)
+int biosal_ring_size(struct biosal_ring *self)
 {
     int tail;
 
@@ -82,17 +82,17 @@ int bsal_ring_size(struct bsal_ring *self)
     return tail - self->head;
 }
 
-int bsal_ring_capacity(struct bsal_ring *self)
+int biosal_ring_capacity(struct biosal_ring *self)
 {
     return self->number_of_cells - 1;
 }
 
-int bsal_ring_increment(struct bsal_ring *self, int index)
+int biosal_ring_increment(struct biosal_ring *self, int index)
 {
     return  (index + 1) % self->number_of_cells;
 }
 
-void *bsal_ring_get_cell(struct bsal_ring *self, int index)
+void *biosal_ring_get_cell(struct biosal_ring *self, int index)
 {
     return ((char *)self->cells) + index * self->cell_size;
 }

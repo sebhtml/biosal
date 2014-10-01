@@ -49,12 +49,12 @@ void process_receive(struct thorium_actor *actor, struct thorium_message *messag
 
     if (tag == ACTION_START) {
 
-        bsal_vector_init(&process1->initial_processes, 0);
-        bsal_vector_unpack(&process1->initial_processes, buffer);
+        biosal_vector_init(&process1->initial_processes, 0);
+        biosal_vector_unpack(&process1->initial_processes, buffer);
 
-        for (i = 0; i < bsal_vector_size(&process1->initial_processes); i++) {
+        for (i = 0; i < biosal_vector_size(&process1->initial_processes); i++) {
 
-            other = bsal_vector_at_as_int(&process1->initial_processes, i);
+            other = biosal_vector_at_as_int(&process1->initial_processes, i);
 
             if (other != name) {
                 break;
@@ -93,12 +93,12 @@ void process_receive(struct thorium_actor *actor, struct thorium_message *messag
             return;
         }
 
-        if (bsal_vector_at_as_int(&process1->initial_processes, 0) == name) {
+        if (biosal_vector_at_as_int(&process1->initial_processes, 0) == name) {
             thorium_actor_synchronize(actor, &process1->initial_processes);
         }
 
         if (process1->ready) {
-            thorium_actor_send_empty(actor, bsal_vector_at_as_int(&process1->initial_processes, 0),
+            thorium_actor_send_empty(actor, biosal_vector_at_as_int(&process1->initial_processes, 0),
                             ACTION_SYNCHRONIZE_REPLY);
         }
         process1->ready = 1;
@@ -106,7 +106,7 @@ void process_receive(struct thorium_actor *actor, struct thorium_message *messag
     } else if (tag == ACTION_SYNCHRONIZE) {
 
         if (process1->ready) {
-            thorium_actor_send_empty(actor, bsal_vector_at_as_int(&process1->initial_processes, 0),
+            thorium_actor_send_empty(actor, biosal_vector_at_as_int(&process1->initial_processes, 0),
                             ACTION_SYNCHRONIZE_REPLY);
         }
         process1->ready = 1;

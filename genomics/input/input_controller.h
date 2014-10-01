@@ -1,6 +1,6 @@
 
-#ifndef BSAL_INPUT_CONTROLLER_H
-#define BSAL_INPUT_CONTROLLER_H
+#ifndef BIOSAL_INPUT_CONTROLLER_H
+#define BIOSAL_INPUT_CONTROLLER_H
 
 #include <engine/thorium/actor.h>
 
@@ -15,28 +15,28 @@
 
 #define SCRIPT_INPUT_CONTROLLER 0x985607aa
 
-struct bsal_input_controller {
-    struct bsal_vector consumers;
+struct biosal_input_controller {
+    struct biosal_vector consumers;
 
-    struct bsal_dna_codec codec;
-    struct bsal_vector files;
+    struct biosal_dna_codec codec;
+    struct biosal_vector files;
 
-    struct bsal_vector counting_streams;
-    struct bsal_vector reading_streams;
+    struct biosal_vector counting_streams;
+    struct biosal_vector reading_streams;
 
-    struct bsal_map mega_blocks;
-    struct bsal_vector mega_block_vector;
-    struct bsal_map assigned_blocks;
+    struct biosal_map mega_blocks;
+    struct biosal_vector mega_block_vector;
+    struct biosal_map assigned_blocks;
 
-    struct bsal_vector spawners;
+    struct biosal_vector spawners;
     int partitioner;
 
     int opened_streams;
     int counted;
-    struct bsal_vector counts;
-    struct bsal_vector partition_commands;
-    struct bsal_vector stream_consumers;
-    struct bsal_queue unprepared_spawners;
+    struct biosal_vector counts;
+    struct biosal_vector partition_commands;
+    struct biosal_vector stream_consumers;
+    struct biosal_queue unprepared_spawners;
     int state;
     int block_size;
     int spawner;
@@ -44,14 +44,14 @@ struct bsal_input_controller {
     int ready_consumers;
     int filled_consumers;
     int ready_spawners;
-    struct bsal_vector stores_per_spawner;
+    struct biosal_vector stores_per_spawner;
     int stores_per_worker_per_spawner;
 
-    struct bsal_timer input_timer;
-    struct bsal_timer counting_timer;
-    struct bsal_timer distribution_timer;
+    struct biosal_timer input_timer;
+    struct biosal_timer counting_timer;
+    struct biosal_timer distribution_timer;
 
-    struct bsal_vector consumer_active_requests;
+    struct biosal_vector consumer_active_requests;
 };
 
 #define ACTION_INPUT_DISTRIBUTE 0x00003cbe
@@ -72,22 +72,22 @@ struct bsal_input_controller {
 #define ACTION_INPUT_CONTROLLER_PREPARE_SPAWNERS 0x00004a85
 #define ACTION_INPUT_CONTROLLER_CREATE_PARTITION 0x00005b68
 
-extern struct thorium_script bsal_input_controller_script;
+extern struct thorium_script biosal_input_controller_script;
 
-void bsal_input_controller_init(struct thorium_actor *actor);
-void bsal_input_controller_destroy(struct thorium_actor *actor);
-void bsal_input_controller_receive(struct thorium_actor *actor, struct thorium_message *message);
+void biosal_input_controller_init(struct thorium_actor *actor);
+void biosal_input_controller_destroy(struct thorium_actor *actor);
+void biosal_input_controller_receive(struct thorium_actor *actor, struct thorium_message *message);
 
-void bsal_input_controller_create_stores(struct thorium_actor *actor, struct thorium_message *message);
-void bsal_input_controller_get_node_name_reply(struct thorium_actor *actor, struct thorium_message *message);
-void bsal_input_controller_get_node_worker_count_reply(struct thorium_actor *actor, struct thorium_message *message);
-void bsal_input_controller_add_store(struct thorium_actor *actor, struct thorium_message *message);
-void bsal_input_controller_prepare_spawners(struct thorium_actor *actor, struct thorium_message *message);
-void bsal_input_controller_receive_store_entry_counts(struct thorium_actor *actor, struct thorium_message *message);
-void bsal_input_controller_receive_command(struct thorium_actor *actor, struct thorium_message *message);
+void biosal_input_controller_create_stores(struct thorium_actor *actor, struct thorium_message *message);
+void biosal_input_controller_get_node_name_reply(struct thorium_actor *actor, struct thorium_message *message);
+void biosal_input_controller_get_node_worker_count_reply(struct thorium_actor *actor, struct thorium_message *message);
+void biosal_input_controller_add_store(struct thorium_actor *actor, struct thorium_message *message);
+void biosal_input_controller_prepare_spawners(struct thorium_actor *actor, struct thorium_message *message);
+void biosal_input_controller_receive_store_entry_counts(struct thorium_actor *actor, struct thorium_message *message);
+void biosal_input_controller_receive_command(struct thorium_actor *actor, struct thorium_message *message);
 
-void bsal_input_controller_spawn_streams(struct thorium_actor *actor, struct thorium_message *message);
-void bsal_input_controller_set_offset_reply(struct thorium_actor *self, struct thorium_message *message);
-void bsal_input_controller_verify_requests(struct thorium_actor *self, struct thorium_message *message);
+void biosal_input_controller_spawn_streams(struct thorium_actor *actor, struct thorium_message *message);
+void biosal_input_controller_set_offset_reply(struct thorium_actor *self, struct thorium_message *message);
+void biosal_input_controller_verify_requests(struct thorium_actor *self, struct thorium_message *message);
 
 #endif

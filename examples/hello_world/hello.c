@@ -17,7 +17,7 @@ void hello_init(struct thorium_actor *actor)
     struct hello *hello1;
 
     hello1 = (struct hello *)thorium_actor_concrete_actor(actor);
-    bsal_vector_init(&hello1->initial_helloes, sizeof(int));
+    biosal_vector_init(&hello1->initial_helloes, sizeof(int));
 }
 
 void hello_destroy(struct thorium_actor *actor)
@@ -26,7 +26,7 @@ void hello_destroy(struct thorium_actor *actor)
 
     hello1 = (struct hello *)thorium_actor_concrete_actor(actor);
 
-    bsal_vector_destroy(&hello1->initial_helloes);
+    biosal_vector_destroy(&hello1->initial_helloes);
 }
 
 void hello_receive(struct thorium_actor *actor, struct thorium_message *message)
@@ -44,13 +44,13 @@ void hello_receive(struct thorium_actor *actor, struct thorium_message *message)
 
     if (tag == ACTION_START) {
 
-        bsal_vector_unpack(&hello1->initial_helloes, buffer);
+        biosal_vector_unpack(&hello1->initial_helloes, buffer);
 
         printf("Hello world ! my name is actor:%d and I have %d acquaintances:",
-                        name, (int)bsal_vector_size(&hello1->initial_helloes));
+                        name, (int)biosal_vector_size(&hello1->initial_helloes));
 
-        for (i = 0; i < bsal_vector_size(&hello1->initial_helloes); i++) {
-            printf(" actor:%d", bsal_vector_at_as_int(&hello1->initial_helloes, i));
+        for (i = 0; i < biosal_vector_size(&hello1->initial_helloes); i++) {
+            printf(" actor:%d", biosal_vector_at_as_int(&hello1->initial_helloes, i));
         }
         printf("\n");
 

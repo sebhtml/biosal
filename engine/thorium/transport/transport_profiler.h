@@ -11,7 +11,7 @@ struct thorium_message;
  * component.
  */
 struct thorium_transport_profiler {
-    struct bsal_map buffer_sizes;
+    struct biosal_map buffer_sizes;
     int rank;
 };
 

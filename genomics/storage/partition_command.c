@@ -9,7 +9,7 @@
 
 #include <inttypes.h>
 
-void bsal_partition_command_init(struct bsal_partition_command *self, int name,
+void biosal_partition_command_init(struct biosal_partition_command *self, int name,
                 int stream_index, uint64_t stream_first, uint64_t stream_last,
                 int store_index, uint64_t store_first, uint64_t store_last,
                 uint64_t global_first, uint64_t global_last)
@@ -28,7 +28,7 @@ void bsal_partition_command_init(struct bsal_partition_command *self, int name,
     self->global_last = global_last;
 }
 
-void bsal_partition_command_destroy(struct bsal_partition_command *self)
+void biosal_partition_command_destroy(struct biosal_partition_command *self)
 {
     self->name = -1;
 
@@ -44,61 +44,61 @@ void bsal_partition_command_destroy(struct bsal_partition_command *self)
     self->global_last = 0;
 }
 
-int bsal_partition_command_name(struct bsal_partition_command *self)
+int biosal_partition_command_name(struct biosal_partition_command *self)
 {
     return self->name;
 }
 
-int bsal_partition_command_stream_index(struct bsal_partition_command *self)
+int biosal_partition_command_stream_index(struct biosal_partition_command *self)
 {
     return self->stream_index;
 }
 
-uint64_t bsal_partition_command_global_first(struct bsal_partition_command *self)
+uint64_t biosal_partition_command_global_first(struct biosal_partition_command *self)
 {
     return self->global_first;
 }
 
-uint64_t bsal_partition_command_global_last(struct bsal_partition_command *self)
+uint64_t biosal_partition_command_global_last(struct biosal_partition_command *self)
 {
     return self->global_last;
 }
 
-uint64_t bsal_partition_command_stream_first(struct bsal_partition_command *self)
+uint64_t biosal_partition_command_stream_first(struct biosal_partition_command *self)
 {
     return self->stream_first;
 }
 
-uint64_t bsal_partition_command_stream_last(struct bsal_partition_command *self)
+uint64_t biosal_partition_command_stream_last(struct biosal_partition_command *self)
 {
     return self->stream_last;
 }
 
-int bsal_partition_command_store_index(struct bsal_partition_command *self)
+int biosal_partition_command_store_index(struct biosal_partition_command *self)
 {
     return self->store_index;
 }
 
-int bsal_partition_command_pack_size(struct bsal_partition_command *self)
+int biosal_partition_command_pack_size(struct biosal_partition_command *self)
 {
-    return bsal_partition_command_pack_unpack(self, NULL, BSAL_PACKER_OPERATION_PACK_SIZE);
+    return biosal_partition_command_pack_unpack(self, NULL, BIOSAL_PACKER_OPERATION_PACK_SIZE);
 }
 
-void bsal_partition_command_pack(struct bsal_partition_command *self, void *buffer)
+void biosal_partition_command_pack(struct biosal_partition_command *self, void *buffer)
 {
-    bsal_partition_command_pack_unpack(self, buffer, BSAL_PACKER_OPERATION_PACK);
+    biosal_partition_command_pack_unpack(self, buffer, BIOSAL_PACKER_OPERATION_PACK);
 }
 
-void bsal_partition_command_unpack(struct bsal_partition_command *self, void *buffer)
+void biosal_partition_command_unpack(struct biosal_partition_command *self, void *buffer)
 {
-#ifdef BSAL_PARTITION_COMMAND_DEBUG
-    printf("DEBUG bsal_partition_command_unpack \n");
+#ifdef BIOSAL_PARTITION_COMMAND_DEBUG
+    printf("DEBUG biosal_partition_command_unpack \n");
 #endif
 
-    bsal_partition_command_pack_unpack(self, buffer, BSAL_PACKER_OPERATION_UNPACK);
+    biosal_partition_command_pack_unpack(self, buffer, BIOSAL_PACKER_OPERATION_UNPACK);
 }
 
-void bsal_partition_command_print(struct bsal_partition_command *self)
+void biosal_partition_command_print(struct biosal_partition_command *self)
 {
     printf(">> partition command # %d"
                     ", stream %d range %" PRIu64 "-%" PRIu64 " (%" PRIu64 ")"
@@ -115,45 +115,45 @@ void bsal_partition_command_print(struct bsal_partition_command *self)
                     self->global_first, self->global_last);
 }
 
-uint64_t bsal_partition_command_store_first(struct bsal_partition_command *self)
+uint64_t biosal_partition_command_store_first(struct biosal_partition_command *self)
 {
     return self->store_first;
 }
 
-uint64_t bsal_partition_command_store_last(struct bsal_partition_command *self)
+uint64_t biosal_partition_command_store_last(struct biosal_partition_command *self)
 {
     return self->store_last;
 }
 
-int bsal_partition_command_pack_unpack(struct bsal_partition_command *self, void *buffer,
+int biosal_partition_command_pack_unpack(struct biosal_partition_command *self, void *buffer,
                 int operation)
 {
-    struct bsal_packer packer;
+    struct biosal_packer packer;
     int bytes;
 
-#ifdef BSAL_PARTITION_COMMAND_DEBUG
-    printf("DEBUG bsal_partition_command_pack_unpack operation %d\n",
+#ifdef BIOSAL_PARTITION_COMMAND_DEBUG
+    printf("DEBUG biosal_partition_command_pack_unpack operation %d\n",
                     operation);
 #endif
 
-    bsal_packer_init(&packer, operation, buffer);
+    biosal_packer_init(&packer, operation, buffer);
 
-    bsal_packer_process(&packer, &self->name, sizeof(self->name));
+    biosal_packer_process(&packer, &self->name, sizeof(self->name));
 
-    bsal_packer_process(&packer, &self->stream_index, sizeof(self->stream_index));
-    bsal_packer_process(&packer, &self->stream_first, sizeof(self->stream_first));
-    bsal_packer_process(&packer, &self->stream_last, sizeof(self->stream_last));
+    biosal_packer_process(&packer, &self->stream_index, sizeof(self->stream_index));
+    biosal_packer_process(&packer, &self->stream_first, sizeof(self->stream_first));
+    biosal_packer_process(&packer, &self->stream_last, sizeof(self->stream_last));
 
-    bsal_packer_process(&packer, &self->store_index, sizeof(self->store_index));
-    bsal_packer_process(&packer, &self->store_first, sizeof(self->store_first));
-    bsal_packer_process(&packer, &self->store_last, sizeof(self->store_last));
+    biosal_packer_process(&packer, &self->store_index, sizeof(self->store_index));
+    biosal_packer_process(&packer, &self->store_first, sizeof(self->store_first));
+    biosal_packer_process(&packer, &self->store_last, sizeof(self->store_last));
 
-    bsal_packer_process(&packer, &self->global_first, sizeof(self->global_first));
-    bsal_packer_process(&packer, &self->global_last, sizeof(self->global_last));
+    biosal_packer_process(&packer, &self->global_first, sizeof(self->global_first));
+    biosal_packer_process(&packer, &self->global_last, sizeof(self->global_last));
 
-    bytes = bsal_packer_get_byte_count(&packer);
+    bytes = biosal_packer_get_byte_count(&packer);
 
-    bsal_packer_destroy(&packer);
+    biosal_packer_destroy(&packer);
 
     return bytes;
 }

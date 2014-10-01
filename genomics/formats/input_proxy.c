@@ -8,13 +8,13 @@
 
 #include <inttypes.h>
 
-/*#define BSAL_INPUT_PROXY_DEBUG*/
+/*#define BIOSAL_INPUT_PROXY_DEBUG*/
 
-void bsal_input_proxy_init(struct bsal_input_proxy *proxy,
+void biosal_input_proxy_init(struct biosal_input_proxy *proxy,
                 char *file, uint64_t offset, uint64_t maximum_offset)
 {
-#ifdef BSAL_INPUT_PROXY_DEBUG
-    printf("DEBUG bsal_input_proxy_init open file %s @%" PRIu64 "\n", file,
+#ifdef BIOSAL_INPUT_PROXY_DEBUG
+    printf("DEBUG biosal_input_proxy_init open file %s @%" PRIu64 "\n", file,
                     offset);
 #endif
 
@@ -23,43 +23,43 @@ void bsal_input_proxy_init(struct bsal_input_proxy *proxy,
     /* Try to open the input with various formats
      */
 
-#ifdef BSAL_INPUT_PROXY_DEBUG
+#ifdef BIOSAL_INPUT_PROXY_DEBUG
     printf("Trying fastq\n");
 #endif
-    bsal_input_proxy_try(proxy, &proxy->input, &proxy->fastq,
-                    &bsal_fastq_input_operations, file, offset, maximum_offset);
+    biosal_input_proxy_try(proxy, &proxy->input, &proxy->fastq,
+                    &biosal_fastq_input_operations, file, offset, maximum_offset);
 
-#ifdef BSAL_INPUT_PROXY_DEBUG
+#ifdef BIOSAL_INPUT_PROXY_DEBUG
     printf("Trying fasta\n");
 #endif
 
-    bsal_input_proxy_try(proxy, &proxy->input, &proxy->fasta,
-                    &bsal_fasta_input_operations, file, offset, maximum_offset);
+    biosal_input_proxy_try(proxy, &proxy->input, &proxy->fasta,
+                    &biosal_fasta_input_operations, file, offset, maximum_offset);
 }
 
-int bsal_input_proxy_get_sequence(struct bsal_input_proxy *proxy,
+int biosal_input_proxy_get_sequence(struct biosal_input_proxy *proxy,
                 char *sequence)
 {
     int value;
 
-    value = bsal_input_format_get_sequence(&proxy->input, sequence);
+    value = biosal_input_format_get_sequence(&proxy->input, sequence);
 
 #if 0
-    printf("DEBUG bsal_input_format_get_sequence %s\n",
+    printf("DEBUG biosal_input_format_get_sequence %s\n",
                     sequence);
 #endif
 
     return value;
 }
 
-void bsal_input_proxy_destroy(struct bsal_input_proxy *proxy)
+void biosal_input_proxy_destroy(struct biosal_input_proxy *proxy)
 {
-#ifdef BSAL_INPUT_PROXY_DEBUG
-    printf("DEBUG bsal_input_proxy_destroy\n");
+#ifdef BIOSAL_INPUT_PROXY_DEBUG
+    printf("DEBUG biosal_input_proxy_destroy\n");
 #endif
 
     if (proxy->not_supported == 0) {
-        bsal_input_format_destroy(&proxy->input);
+        biosal_input_format_destroy(&proxy->input);
     }
 
     proxy->not_supported = 1;
@@ -67,42 +67,42 @@ void bsal_input_proxy_destroy(struct bsal_input_proxy *proxy)
     proxy->done = 1;
 }
 
-uint64_t bsal_input_proxy_size(struct bsal_input_proxy *proxy)
+uint64_t biosal_input_proxy_size(struct biosal_input_proxy *proxy)
 {
-#ifdef BSAL_INPUT_PROXY_DEBUG12
+#ifdef BIOSAL_INPUT_PROXY_DEBUG12
     printf("DEBUG size %i\n", proxy->sequences);
 #endif
 
-    return bsal_input_format_size(&proxy->input);
+    return biosal_input_format_size(&proxy->input);
 }
 
-uint64_t bsal_input_proxy_offset(struct bsal_input_proxy *self)
+uint64_t biosal_input_proxy_offset(struct biosal_input_proxy *self)
 {
 
-    return bsal_input_format_offset(&self->input);
+    return biosal_input_format_offset(&self->input);
 }
 
-int bsal_input_proxy_error(struct bsal_input_proxy *proxy)
+int biosal_input_proxy_error(struct biosal_input_proxy *proxy)
 {
     if (proxy->not_found) {
-        return BSAL_INPUT_ERROR_FILE_NOT_FOUND;
+        return BIOSAL_INPUT_ERROR_FILE_NOT_FOUND;
 
     } else if (proxy->not_supported) {
-        return BSAL_INPUT_ERROR_FORMAT_NOT_SUPPORTED;
+        return BIOSAL_INPUT_ERROR_FORMAT_NOT_SUPPORTED;
     }
 
-    return BSAL_INPUT_ERROR_NO_ERROR;
+    return BIOSAL_INPUT_ERROR_NO_ERROR;
 }
 
-void bsal_input_proxy_try(struct bsal_input_proxy *proxy,
-                struct bsal_input_format *input, void *implementation,
-                struct bsal_input_format_interface *operations, char *file,
+void biosal_input_proxy_try(struct biosal_input_proxy *proxy,
+                struct biosal_input_format *input, void *implementation,
+                struct biosal_input_format_interface *operations, char *file,
                 uint64_t offset, uint64_t maximum_offset)
 {
     int error;
 
-#ifdef BSAL_INPUT_DEBUG
-    printf("DEBUG bsal_input_proxy_try\n");
+#ifdef BIOSAL_INPUT_DEBUG
+    printf("DEBUG biosal_input_proxy_try\n");
 #endif
 
     if (proxy->done) {
@@ -114,15 +114,15 @@ void bsal_input_proxy_try(struct bsal_input_proxy *proxy,
     proxy->not_supported = 1;
     proxy->not_found = 1;
 
-    bsal_input_format_init(input, implementation, operations, file, offset,
+    biosal_input_format_init(input, implementation, operations, file, offset,
                     maximum_offset);
 
-    error = bsal_input_format_error(input);
+    error = biosal_input_format_error(input);
 
     /* File does not exist.
      */
-    if (error == BSAL_INPUT_ERROR_FILE_NOT_FOUND) {
-        bsal_input_format_destroy(input);
+    if (error == BIOSAL_INPUT_ERROR_FILE_NOT_FOUND) {
+        biosal_input_format_destroy(input);
         proxy->not_found = 1;
         proxy->not_supported = 0;
         proxy->done = 1;
@@ -131,10 +131,10 @@ void bsal_input_proxy_try(struct bsal_input_proxy *proxy,
 
     /* Format is not supported
      */
-    if (!bsal_input_format_detect(input)) {
+    if (!biosal_input_format_detect(input)) {
         proxy->not_supported = 1;
         proxy->not_found = 0;
-        bsal_input_format_destroy(input);
+        biosal_input_format_destroy(input);
 
     } else {
         /* Found the format
@@ -143,7 +143,7 @@ void bsal_input_proxy_try(struct bsal_input_proxy *proxy,
         proxy->not_found = 0;
         proxy->done = 1;
 
-#ifdef BSAL_INPUT_PROXY_DEBUG
+#ifdef BIOSAL_INPUT_PROXY_DEBUG
         printf("Found format.\n");
 #endif
     }

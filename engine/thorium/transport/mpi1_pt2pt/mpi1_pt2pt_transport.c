@@ -43,7 +43,7 @@ void thorium_mpi1_pt2pt_transport_init(struct thorium_transport *self, int *argc
 
     concrete_self = thorium_transport_get_concrete_transport(self);
 
-    bsal_fast_queue_init(&concrete_self->active_requests, sizeof(struct thorium_mpi1_pt2pt_active_request));
+    biosal_fast_queue_init(&concrete_self->active_requests, sizeof(struct thorium_mpi1_pt2pt_active_request));
 
     /*
     required = MPI_THREAD_MULTIPLE;
@@ -102,11 +102,11 @@ void thorium_mpi1_pt2pt_transport_destroy(struct thorium_transport *self)
 
     concrete_self = thorium_transport_get_concrete_transport(self);
 
-    while (bsal_fast_queue_dequeue(&concrete_self->active_requests, &active_request)) {
+    while (biosal_fast_queue_dequeue(&concrete_self->active_requests, &active_request)) {
         thorium_mpi1_pt2pt_active_request_destroy(&active_request);
     }
 
-    bsal_fast_queue_destroy(&concrete_self->active_requests);
+    biosal_fast_queue_destroy(&concrete_self->active_requests);
 
     /*
      * \see http://www.mpich.org/static/docs/v3.1/www3/MPI_Comm_free.html
@@ -148,7 +148,7 @@ int thorium_mpi1_pt2pt_transport_send(struct thorium_transport *self, struct tho
     thorium_mpi1_pt2pt_active_request_init(&active_request, buffer, worker);
     request = thorium_mpi1_pt2pt_active_request_request(&active_request);
 
-    BSAL_DEBUGGER_ASSERT(buffer == NULL || count > 0);
+    BIOSAL_DEBUGGER_ASSERT(buffer == NULL || count > 0);
 
     /* get return value */
     result = MPI_Isend(buffer, count, concrete_self->datatype, destination, tag,
@@ -165,7 +165,7 @@ int thorium_mpi1_pt2pt_transport_send(struct thorium_transport *self, struct tho
      */
     /*MPI_Request_free(&request);*/
 
-    bsal_fast_queue_enqueue(&concrete_self->active_requests, &active_request);
+    biosal_fast_queue_enqueue(&concrete_self->active_requests, &active_request);
 
     return 1;
 }
@@ -208,7 +208,7 @@ int thorium_mpi1_pt2pt_transport_receive(struct thorium_transport *self, struct 
     }
 
     /* actually allocate (slab allocator) a buffer with count bytes ! */
-    buffer = bsal_memory_pool_allocate(self->inbound_message_memory_pool,
+    buffer = biosal_memory_pool_allocate(self->inbound_message_memory_pool,
                     count * sizeof(char));
 
     source = status.MPI_SOURCE;
@@ -241,7 +241,7 @@ int thorium_mpi1_pt2pt_transport_test(struct thorium_transport *self, struct tho
 
     concrete_self = thorium_transport_get_concrete_transport(self);
 
-    if (bsal_fast_queue_dequeue(&concrete_self->active_requests, &active_request)) {
+    if (biosal_fast_queue_dequeue(&concrete_self->active_requests, &active_request)) {
 
         if (thorium_mpi1_pt2pt_active_request_test(&active_request)) {
 
@@ -256,7 +256,7 @@ int thorium_mpi1_pt2pt_transport_test(struct thorium_transport *self, struct tho
 
         /* Just put it back in the FIFO for later */
         } else {
-            bsal_fast_queue_enqueue(&concrete_self->active_requests, &active_request);
+            biosal_fast_queue_enqueue(&concrete_self->active_requests, &active_request);
 
             return 0;
         }

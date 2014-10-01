@@ -37,11 +37,11 @@ void ring_init(struct thorium_actor *actor)
     concrete_actor->ready_rings = 0;
     concrete_actor->ready_senders = 0;
 
-    bsal_vector_init(&concrete_actor->spawners, sizeof(int));
+    biosal_vector_init(&concrete_actor->spawners, sizeof(int));
 
     thorium_actor_add_script(actor, SCRIPT_SENDER, &sender_script);
 
-    bsal_vector_init(&concrete_actor->spawners, 0);
+    biosal_vector_init(&concrete_actor->spawners, 0);
 }
 
 void ring_destroy(struct thorium_actor *actor)
@@ -50,7 +50,7 @@ void ring_destroy(struct thorium_actor *actor)
 
     concrete_actor = (struct ring *)thorium_actor_concrete_actor(actor);
 
-    bsal_vector_destroy(&concrete_actor->spawners);
+    biosal_vector_destroy(&concrete_actor->spawners);
 }
 
 void ring_receive(struct thorium_actor *actor, struct thorium_message *message)
@@ -72,19 +72,19 @@ void ring_receive(struct thorium_actor *actor, struct thorium_message *message)
 
     if (tag == ACTION_START) {
 
-        bsal_vector_init(&concrete_actor->spawners, 0);
-        bsal_vector_unpack(&concrete_actor->spawners, buffer);
+        biosal_vector_init(&concrete_actor->spawners, 0);
+        biosal_vector_unpack(&concrete_actor->spawners, buffer);
         printf("actor %d ACTION_START, %d spawners\n", name,
-                        (int)bsal_vector_size(&concrete_actor->spawners));
+                        (int)biosal_vector_size(&concrete_actor->spawners));
 
-        destination = *(int *)bsal_vector_at(&concrete_actor->spawners, 0);
+        destination = *(int *)biosal_vector_at(&concrete_actor->spawners, 0);
         thorium_actor_send_empty(actor, destination, ACTION_RING_READY);
 
     } else if (tag == ACTION_RING_READY && concrete_actor->step == RING_STEP_RECEIVE_SPAWNERS) {
 
         concrete_actor->ready_rings++;
 
-        if (concrete_actor->ready_rings == (int)bsal_vector_size(&concrete_actor->spawners)) {
+        if (concrete_actor->ready_rings == (int)biosal_vector_size(&concrete_actor->spawners)) {
             thorium_actor_send_range_empty(actor, &concrete_actor->spawners, ACTION_RING_SPAWN);
             concrete_actor->step = RING_STEP_SPAWN;
             concrete_actor->ready_rings = 0;
@@ -113,10 +113,10 @@ void ring_receive(struct thorium_actor *actor, struct thorium_message *message)
         concrete_actor->ready_rings++;
 
 #if 0
-        printf("READY: %d/%d\n", concrete_actor->ready_rings, (int)bsal_vector_size(&concrete_actor->spawners));
+        printf("READY: %d/%d\n", concrete_actor->ready_rings, (int)biosal_vector_size(&concrete_actor->spawners));
 #endif
 
-        if (concrete_actor->ready_rings == bsal_vector_size(&concrete_actor->spawners)) {
+        if (concrete_actor->ready_rings == biosal_vector_size(&concrete_actor->spawners)) {
 
             thorium_actor_send_range_empty(actor, &concrete_actor->spawners, ACTION_RING_PUSH_NEXT);
             concrete_actor->ready_rings = 0;
@@ -124,14 +124,14 @@ void ring_receive(struct thorium_actor *actor, struct thorium_message *message)
         }
     } else if (tag == ACTION_RING_PUSH_NEXT) {
 
-        previous_actor = bsal_vector_index_of(&concrete_actor->spawners, &name) - 1;
+        previous_actor = biosal_vector_index_of(&concrete_actor->spawners, &name) - 1;
         if (previous_actor < 0) {
-            previous_actor = bsal_vector_size(&concrete_actor->spawners)- 1;
+            previous_actor = biosal_vector_size(&concrete_actor->spawners)- 1;
         }
 
         printf("%d received ACTION_RING_PUSH_NEXT\n", name);
         thorium_message_init(message, ACTION_RING_SET_NEXT, sizeof(concrete_actor->first), &concrete_actor->first);
-        thorium_actor_send(actor, *(int *)bsal_vector_at(&concrete_actor->spawners, previous_actor),
+        thorium_actor_send(actor, *(int *)biosal_vector_at(&concrete_actor->spawners, previous_actor),
                        message);
 
     } else if (tag == ACTION_RING_SET_NEXT) {
@@ -157,7 +157,7 @@ void ring_receive(struct thorium_actor *actor, struct thorium_message *message)
         if (concrete_actor->spawned_senders == concrete_actor->senders) {
 
             printf("RING_STEP_SPAWN completed.\n");
-            thorium_actor_send_empty(actor, *(int *)bsal_vector_at(&concrete_actor->spawners, 0), ACTION_RING_READY);
+            thorium_actor_send_empty(actor, *(int *)biosal_vector_at(&concrete_actor->spawners, 0), ACTION_RING_READY);
             concrete_actor->ready_senders = 0;
 
             concrete_actor->last = concrete_actor->previous;
@@ -181,7 +181,7 @@ void ring_receive(struct thorium_actor *actor, struct thorium_message *message)
                         1);
 
         if (concrete_actor->ready_senders == 1) {
-            thorium_actor_send_empty(actor, *(int *)bsal_vector_at(&concrete_actor->spawners, 0), ACTION_RING_READY);
+            thorium_actor_send_empty(actor, *(int *)biosal_vector_at(&concrete_actor->spawners, 0), ACTION_RING_READY);
             printf("RING_STEP_PUSH_NEXT completed.\n");
             concrete_actor->ready_senders = 0;
         }
@@ -190,7 +190,7 @@ void ring_receive(struct thorium_actor *actor, struct thorium_message *message)
     } else if (tag == ACTION_RING_READY && concrete_actor->step == RING_STEP_PUSH_NEXT) {
         concrete_actor->ready_rings++;
 
-        if (concrete_actor->ready_rings == bsal_vector_size(&concrete_actor->spawners)) {
+        if (concrete_actor->ready_rings == biosal_vector_size(&concrete_actor->spawners)) {
 
             printf("system is ready...\n");
             messages = 2000007;

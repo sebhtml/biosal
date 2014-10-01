@@ -10,25 +10,25 @@
 
 #include <inttypes.h>
 
-void bsal_input_format_init(struct bsal_input_format *input, void *implementation,
-                struct bsal_input_format_interface *operations, char *file,
+void biosal_input_format_init(struct biosal_input_format *input, void *implementation,
+                struct biosal_input_format_interface *operations, char *file,
                 uint64_t start_offset, uint64_t end_offset)
 {
-    bsal_input_format_interface_init_fn_t handler;
+    biosal_input_format_interface_init_fn_t handler;
     FILE *descriptor;
 
 #if 0
-    printf("DEBUG bsal_input_format_init\n");
+    printf("DEBUG biosal_input_format_init\n");
 #endif
 
     input->implementation = implementation;
 
-    BSAL_DEBUGGER_ASSERT(operations != NULL);
+    BIOSAL_DEBUGGER_ASSERT(operations != NULL);
 
     input->operations = operations;
     input->sequences = 0;
     input->file = file;
-    input->error = BSAL_INPUT_ERROR_NO_ERROR;
+    input->error = BIOSAL_INPUT_ERROR_NO_ERROR;
 
     input->start_offset = start_offset;
     input->end_offset = end_offset;
@@ -36,7 +36,7 @@ void bsal_input_format_init(struct bsal_input_format *input, void *implementatio
     descriptor = fopen(input->file, "r");
 
     if (descriptor == NULL) {
-        input->error = BSAL_INPUT_ERROR_FILE_NOT_FOUND;
+        input->error = BIOSAL_INPUT_ERROR_FILE_NOT_FOUND;
         return;
     } else {
         fclose(descriptor);
@@ -47,7 +47,7 @@ void bsal_input_format_init(struct bsal_input_format *input, void *implementatio
                     file, start_offset, end_offset);
 #endif
 
-    handler = bsal_input_format_interface_get_init(input->operations);
+    handler = biosal_input_format_interface_get_init(input->operations);
     handler(input);
 
 #if 0
@@ -55,12 +55,12 @@ void bsal_input_format_init(struct bsal_input_format *input, void *implementatio
 #endif
 }
 
-void bsal_input_format_destroy(struct bsal_input_format *input)
+void biosal_input_format_destroy(struct biosal_input_format *input)
 {
-    bsal_input_format_interface_destroy_fn_t handler;
+    biosal_input_format_interface_destroy_fn_t handler;
 
-    if (bsal_input_format_valid(input)) {
-        handler = bsal_input_format_interface_get_destroy(input->operations);
+    if (biosal_input_format_valid(input)) {
+        handler = biosal_input_format_interface_get_destroy(input->operations);
         handler(input);
     }
 
@@ -70,13 +70,13 @@ void bsal_input_format_destroy(struct bsal_input_format *input)
     input->file = NULL;
 }
 
-int bsal_input_format_get_sequence(struct bsal_input_format *input,
+int biosal_input_format_get_sequence(struct biosal_input_format *input,
                 char *sequence)
 {
-    bsal_input_format_interface_get_sequence_fn_t handler;
+    biosal_input_format_interface_get_sequence_fn_t handler;
     int value;
 
-    if (!bsal_input_format_valid(input)) {
+    if (!biosal_input_format_valid(input)) {
         return 0;
     }
 
@@ -89,16 +89,16 @@ int bsal_input_format_get_sequence(struct bsal_input_format *input,
         return 0;
     }
 
-    handler = bsal_input_format_interface_get_sequence(input->operations);
+    handler = biosal_input_format_interface_get_sequence(input->operations);
     value = handler(input, sequence);
 
     if (value) {
         input->sequences++;
     }
 
-#ifdef BSAL_INPUT_DEBUG
+#ifdef BIOSAL_INPUT_DEBUG
     if (input->sequences % 10000000 == 0) {
-        printf("DEBUG bsal_input_get_sequence %i\n",
+        printf("DEBUG biosal_input_get_sequence %i\n",
                         input->sequences);
     }
 #endif
@@ -106,44 +106,44 @@ int bsal_input_format_get_sequence(struct bsal_input_format *input,
     return value;
 }
 
-uint64_t bsal_input_format_size(struct bsal_input_format *input)
+uint64_t biosal_input_format_size(struct biosal_input_format *input)
 {
     return input->sequences;
 }
 
-char *bsal_input_format_file(struct bsal_input_format *input)
+char *biosal_input_format_file(struct biosal_input_format *input)
 {
     return input->file;
 }
 
-void *bsal_input_format_implementation(struct bsal_input_format *input)
+void *biosal_input_format_implementation(struct biosal_input_format *input)
 {
     return input->implementation;
 }
 
-int bsal_input_format_valid(struct bsal_input_format *input)
+int biosal_input_format_valid(struct biosal_input_format *input)
 {
-    return bsal_input_format_error(input) == BSAL_INPUT_ERROR_NO_ERROR;
+    return biosal_input_format_error(input) == BIOSAL_INPUT_ERROR_NO_ERROR;
 }
 
-int bsal_input_format_error(struct bsal_input_format *input)
+int biosal_input_format_error(struct biosal_input_format *input)
 {
     return input->error;
 }
 
-int bsal_input_format_detect(struct bsal_input_format *input)
+int biosal_input_format_detect(struct biosal_input_format *input)
 {
-    bsal_input_format_interface_detect_fn_t handler;
+    biosal_input_format_interface_detect_fn_t handler;
 
-    if (!bsal_input_format_valid(input)) {
+    if (!biosal_input_format_valid(input)) {
         return 0;
     }
 
-    handler = bsal_input_format_interface_get_detect(input->operations);
+    handler = biosal_input_format_interface_get_detect(input->operations);
     return handler(input);
 }
 
-int bsal_input_format_has_suffix(struct bsal_input_format *input, const char *suffix)
+int biosal_input_format_has_suffix(struct biosal_input_format *input, const char *suffix)
 {
     int position_in_file;
     int position_in_suffix;
@@ -167,19 +167,19 @@ int bsal_input_format_has_suffix(struct bsal_input_format *input, const char *su
     return 0;
 }
 
-uint64_t bsal_input_format_offset(struct bsal_input_format *input)
+uint64_t biosal_input_format_offset(struct biosal_input_format *input)
 {
-    BSAL_DEBUGGER_ASSERT(input->operations != NULL);
+    BIOSAL_DEBUGGER_ASSERT(input->operations != NULL);
 
     return input->operations->get_offset(input);
 }
 
-uint64_t bsal_input_format_start_offset(struct bsal_input_format *input)
+uint64_t biosal_input_format_start_offset(struct biosal_input_format *input)
 {
     return input->start_offset;
 }
 
-uint64_t bsal_input_format_end_offset(struct bsal_input_format *input)
+uint64_t biosal_input_format_end_offset(struct biosal_input_format *input)
 {
     return input->end_offset;
 }

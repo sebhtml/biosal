@@ -1,29 +1,29 @@
 
-#ifndef BSAL_UNITIG_HEURISTIC_H
-#define BSAL_UNITIG_HEURISTIC_H
+#ifndef BIOSAL_UNITIG_HEURISTIC_H
+#define BIOSAL_UNITIG_HEURISTIC_H
 
-struct bsal_vector;
-struct bsal_unitig_heuristic;
+struct biosal_vector;
+struct biosal_unitig_heuristic;
 
-#define BSAL_HEURISTIC_CHOICE_NONE (-1)
+#define BIOSAL_HEURISTIC_CHOICE_NONE (-1)
 
 /*
  * A heuristic for computing unitigs.
  */
-struct bsal_unitig_heuristic {
+struct biosal_unitig_heuristic {
 
-    int (*select)(struct bsal_unitig_heuristic *self,
-                int current_coverage, struct bsal_vector *coverage_values);
+    int (*select)(struct biosal_unitig_heuristic *self,
+                int current_coverage, struct biosal_vector *coverage_values);
 };
 
-void bsal_unitig_heuristic_init(struct bsal_unitig_heuristic *self);
-void bsal_unitig_heuristic_destroy(struct bsal_unitig_heuristic *self);
+void biosal_unitig_heuristic_init(struct biosal_unitig_heuristic *self);
+void biosal_unitig_heuristic_destroy(struct biosal_unitig_heuristic *self);
 
-int bsal_unitig_heuristic_select_with_flow_split(struct bsal_unitig_heuristic *self,
-                int current_coverage, struct bsal_vector *coverage_values);
-int bsal_unitig_heuristic_select(struct bsal_unitig_heuristic *self,
-                int current_coverage, struct bsal_vector *coverage_values);
-int bsal_unitig_heuristic_select_highest(struct bsal_unitig_heuristic *self,
-                int current_coverage, struct bsal_vector *coverage_values);
+int biosal_unitig_heuristic_select_with_flow_split(struct biosal_unitig_heuristic *self,
+                int current_coverage, struct biosal_vector *coverage_values);
+int biosal_unitig_heuristic_select(struct biosal_unitig_heuristic *self,
+                int current_coverage, struct biosal_vector *coverage_values);
+int biosal_unitig_heuristic_select_highest(struct biosal_unitig_heuristic *self,
+                int current_coverage, struct biosal_vector *coverage_values);
 
 #endif

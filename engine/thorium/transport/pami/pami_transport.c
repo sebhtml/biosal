@@ -41,34 +41,34 @@ void thorium_pami_transport_init(struct thorium_transport *self, int *argc, char
     int i = 0;
 
     /*Queue of available send cookies*/
-    pami_transport->avail_send_cookies_queue = (struct bsal_fast_queue *)malloc(sizeof(struct bsal_fast_queue));
-    bsal_fast_queue_init(pami_transport->avail_send_cookies_queue, sizeof(thorium_send_cookie_t *));
+    pami_transport->avail_send_cookies_queue = (struct biosal_fast_queue *)malloc(sizeof(struct biosal_fast_queue));
+    biosal_fast_queue_init(pami_transport->avail_send_cookies_queue, sizeof(thorium_send_cookie_t *));
     pami_transport->send_cookies = (thorium_send_cookie_t **)malloc(sizeof(thorium_send_cookie_t *) * NUM_SEND_COOKIES);
-    BSAL_DEBUGGER_ASSERT(pami_transport->send_cookies != NULL);
+    BIOSAL_DEBUGGER_ASSERT(pami_transport->send_cookies != NULL);
     for (i = 0; i < NUM_SEND_COOKIES; i++) {
 	pami_transport->send_cookies[i] = (thorium_send_cookie_t *)malloc(sizeof(thorium_send_cookie_t));
-        bsal_fast_queue_enqueue(pami_transport->avail_send_cookies_queue, (void *)&pami_transport->send_cookies[i]);
+        biosal_fast_queue_enqueue(pami_transport->avail_send_cookies_queue, (void *)&pami_transport->send_cookies[i]);
     }
 
     /*Queue of available recv cookies*/
-    pami_transport->avail_recv_cookies_queue = (struct bsal_fast_queue *)malloc(sizeof(struct bsal_fast_queue));
-    bsal_fast_queue_init(pami_transport->avail_recv_cookies_queue, sizeof(thorium_recv_cookie_t *));
+    pami_transport->avail_recv_cookies_queue = (struct biosal_fast_queue *)malloc(sizeof(struct biosal_fast_queue));
+    biosal_fast_queue_init(pami_transport->avail_recv_cookies_queue, sizeof(thorium_recv_cookie_t *));
     pami_transport->recv_cookies = (thorium_recv_cookie_t **)malloc(sizeof(thorium_recv_cookie_t *) * NUM_RECV_COOKIES);
-    BSAL_DEBUGGER_ASSERT(pami_transport->recv_cookies != NULL);
+    BIOSAL_DEBUGGER_ASSERT(pami_transport->recv_cookies != NULL);
     for (i = 0; i < NUM_RECV_COOKIES; i++) {
 	pami_transport->recv_cookies[i] = (thorium_recv_cookie_t *)malloc(sizeof(thorium_recv_cookie_t));
-	bsal_fast_queue_enqueue(pami_transport->avail_recv_cookies_queue, (void *)&pami_transport->recv_cookies[i]);
+	biosal_fast_queue_enqueue(pami_transport->avail_recv_cookies_queue, (void *)&pami_transport->recv_cookies[i]);
     }
 
     /*Queue for in use send cookies*/
-    pami_transport->in_use_send_cookies_queue = (struct bsal_fast_queue *)malloc(sizeof(struct bsal_fast_queue));
-    BSAL_DEBUGGER_ASSERT(pami_transport->in_use_send_cookies_queue != NULL);
-    bsal_fast_queue_init(pami_transport->in_use_send_cookies_queue, sizeof(thorium_send_info_t *));
+    pami_transport->in_use_send_cookies_queue = (struct biosal_fast_queue *)malloc(sizeof(struct biosal_fast_queue));
+    BIOSAL_DEBUGGER_ASSERT(pami_transport->in_use_send_cookies_queue != NULL);
+    biosal_fast_queue_init(pami_transport->in_use_send_cookies_queue, sizeof(thorium_send_info_t *));
 
     /*Queue for in use recv cookies*/
-    pami_transport->in_use_recv_cookies_queue = (struct bsal_fast_queue *)malloc(sizeof(struct bsal_fast_queue));
-    BSAL_DEBUGGER_ASSERT(pami_transport->in_use_recv_cookies_queue != NULL);
-    bsal_fast_queue_init(pami_transport->in_use_recv_cookies_queue, sizeof(thorium_recv_info_t *));
+    pami_transport->in_use_recv_cookies_queue = (struct biosal_fast_queue *)malloc(sizeof(struct biosal_fast_queue));
+    BIOSAL_DEBUGGER_ASSERT(pami_transport->in_use_recv_cookies_queue != NULL);
+    biosal_fast_queue_init(pami_transport->in_use_recv_cookies_queue, sizeof(thorium_recv_info_t *));
 
     /*
      * \see http://www-01.ibm.com/support/knowledgecenter/SSFK3V_1.3.0/com.ibm.cluster.protocols.v1r3.pp400.doc/bl510_pclientc.htm
@@ -76,7 +76,7 @@ void thorium_pami_transport_init(struct thorium_transport *self, int *argc, char
     result = PAMI_Client_create(client_name, &pami_transport->client, configurations,
                     configuration_count);
 
-    BSAL_DEBUGGER_ASSERT(result == PAMI_SUCCESS);
+    BIOSAL_DEBUGGER_ASSERT(result == PAMI_SUCCESS);
 
     if (result != PAMI_SUCCESS) {
         return;
@@ -84,7 +84,7 @@ void thorium_pami_transport_init(struct thorium_transport *self, int *argc, char
 
     /*Create context*/
     result = PAMI_Context_createv(pami_transport->client, configurations, configuration_count, &pami_transport->context, pami_transport->num_contexts);
-    BSAL_DEBUGGER_ASSERT(result == PAMI_SUCCESS);
+    BIOSAL_DEBUGGER_ASSERT(result == PAMI_SUCCESS);
 
     if (result != PAMI_SUCCESS) {
         return;
@@ -107,7 +107,7 @@ void thorium_pami_transport_init(struct thorium_transport *self, int *argc, char
 	PAMI_Endpoint_create(pami_transport->client, i, 0, &pami_transport->endpoints[i]);
     }
 
-    BSAL_DEBUGGER_ASSERT(contexts > 1);
+    BIOSAL_DEBUGGER_ASSERT(contexts > 1);
 
     /*Register dispatch IDs*/
     pami_dispatch_callback_function fn;
@@ -119,7 +119,7 @@ void thorium_pami_transport_init(struct thorium_transport *self, int *argc, char
             (void *) pami_transport,
             options);
 
-    BSAL_DEBUGGER_ASSERT(result == PAMI_SUCCESS);
+    BIOSAL_DEBUGGER_ASSERT(result == PAMI_SUCCESS);
     if (result != PAMI_SUCCESS) {
         return;
     }
@@ -137,34 +137,34 @@ void thorium_pami_transport_destroy(struct thorium_transport *self)
 
     /*Free memory*/
     thorium_send_cookie_t *send_cookie;
-    while (bsal_fast_queue_dequeue(pami_transport->avail_send_cookies_queue, &send_cookie)) {
+    while (biosal_fast_queue_dequeue(pami_transport->avail_send_cookies_queue, &send_cookie)) {
 	free(send_cookie);
     }
-    bsal_fast_queue_destroy(pami_transport->avail_send_cookies_queue);
+    biosal_fast_queue_destroy(pami_transport->avail_send_cookies_queue);
     free(pami_transport->avail_send_cookies_queue);
     free(pami_transport->send_cookies);
 
     thorium_recv_cookie_t *recv_cookie;
-    while (bsal_fast_queue_dequeue(pami_transport->avail_recv_cookies_queue, &recv_cookie)) {
+    while (biosal_fast_queue_dequeue(pami_transport->avail_recv_cookies_queue, &recv_cookie)) {
         free(recv_cookie);
     }
-     bsal_fast_queue_destroy(pami_transport->avail_recv_cookies_queue);
+     biosal_fast_queue_destroy(pami_transport->avail_recv_cookies_queue);
     free(pami_transport->avail_recv_cookies_queue);
     free(pami_transport->recv_cookies);
 
-    bsal_fast_queue_destroy(pami_transport->in_use_send_cookies_queue);
-    bsal_fast_queue_destroy(pami_transport->in_use_recv_cookies_queue);
+    biosal_fast_queue_destroy(pami_transport->in_use_send_cookies_queue);
+    biosal_fast_queue_destroy(pami_transport->in_use_recv_cookies_queue);
 
     free(pami_transport->in_use_send_cookies_queue);
     free(pami_transport->in_use_recv_cookies_queue);
 
     /*Destroy context*/
     result = PAMI_Context_destroyv(&pami_transport->context, pami_transport->num_contexts);
-    BSAL_DEBUGGER_ASSERT(result == PAMI_SUCCESS);
+    BIOSAL_DEBUGGER_ASSERT(result == PAMI_SUCCESS);
 
     /*Destroy client*/
     result = PAMI_Client_destroy(&pami_transport->client);
-    BSAL_DEBUGGER_ASSERT(result == PAMI_SUCCESS);
+    BIOSAL_DEBUGGER_ASSERT(result == PAMI_SUCCESS);
 
 #endif
 }
@@ -182,9 +182,9 @@ int thorium_pami_transport_send(struct thorium_transport *self, struct thorium_m
     pami_transport = thorium_transport_get_concrete_transport(self);
 
     thorium_send_cookie_t *send_cookie;
-    if (bsal_fast_queue_dequeue(pami_transport->avail_send_cookies_queue, &send_cookie) == BSAL_FALSE) {
+    if (biosal_fast_queue_dequeue(pami_transport->avail_send_cookies_queue, &send_cookie) == BIOSAL_FALSE) {
 	send_cookie = (thorium_send_cookie_t *)malloc(sizeof(thorium_send_cookie_t));
-	BSAL_DEBUGGER_ASSERT(send_cookie != NULL);
+	BIOSAL_DEBUGGER_ASSERT(send_cookie != NULL);
     }
 
     send_cookie->send_queue = pami_transport->in_use_send_cookies_queue;
@@ -201,12 +201,12 @@ int thorium_pami_transport_send(struct thorium_transport *self, struct thorium_m
 	parameter.dest = pami_transport->endpoints[destination_node];
 
         result = PAMI_Send_immediate (pami_transport->context, &parameter);
-	BSAL_DEBUGGER_ASSERT(result == PAMI_SUCCESS);
+	BIOSAL_DEBUGGER_ASSERT(result == PAMI_SUCCESS);
         if (result != PAMI_SUCCESS) {
 	    return 0;
         }
 	/*Add buffer and worker into send_queue*/
-	bsal_fast_queue_enqueue(send_cookie->send_queue, (void *)&send_cookie);
+	biosal_fast_queue_enqueue(send_cookie->send_queue, (void *)&send_cookie);
     } else {
 	pami_send_t param_send;
         param_send.send.dest = destination_node;
@@ -220,7 +220,7 @@ int thorium_pami_transport_send(struct thorium_transport *self, struct thorium_m
         param_send.events.remote_fn = NULL;
 
         result = PAMI_Send(pami_transport->context, &param_send);
-	BSAL_DEBUGGER_ASSERT(result == PAMI_SUCCESS);
+	BIOSAL_DEBUGGER_ASSERT(result == PAMI_SUCCESS);
         if (result != PAMI_SUCCESS) {
 	    return 0;
         }
@@ -240,7 +240,7 @@ int thorium_pami_transport_receive(struct thorium_transport *self, struct thoriu
     PAMI_Context_advance(pami_transport->context, 100);
 
     thorium_recv_cookie_t *recv_cookie;
-    if (bsal_fast_queue_dequeue(pami_transport->in_use_recv_cookies_queue, (void *)&recv_cookie)) {
+    if (biosal_fast_queue_dequeue(pami_transport->in_use_recv_cookies_queue, (void *)&recv_cookie)) {
 	thorium_message_init_with_nodes(message, recv_cookie->recv_info.count, recv_cookie->recv_info.buffer, recv_cookie->recv_info.source, self->rank);
     } else {
 	return 0;
@@ -262,9 +262,9 @@ int thorium_pami_transport_test(struct thorium_transport *self, struct thorium_w
     PAMI_Context_advance (pami_transport->context, 100);
 
     thorium_send_cookie_t *send_cookie;
-    if (bsal_fast_queue_dequeue(pami_transport->in_use_send_cookies_queue, (void *)&send_cookie)) {
+    if (biosal_fast_queue_dequeue(pami_transport->in_use_send_cookies_queue, (void *)&send_cookie)) {
 	thorium_worker_buffer_init(worker_buffer, send_cookie->send_info.worker, send_cookie->send_info.buffer);
-	bsal_fast_queue_enqueue(pami_transport->avail_send_cookies_queue, (void *)&send_cookie);
+	biosal_fast_queue_enqueue(pami_transport->avail_send_cookies_queue, (void *)&send_cookie);
     } else {
 	return 0;
     }
@@ -277,7 +277,7 @@ void thorium_send_done_fn(pami_context_t context, void *cookie, pami_result_t re
 {
 #ifdef THORIUM_TRANSPORT_USE_PAMI
     thorium_send_cookie_t *send_cookie = (thorium_send_cookie_t *)cookie;
-    bsal_fast_queue_enqueue(send_cookie->send_queue, (void *)&send_cookie);
+    biosal_fast_queue_enqueue(send_cookie->send_queue, (void *)&send_cookie);
 #endif
 }
 
@@ -285,7 +285,7 @@ void thorium_recv_done_fn(pami_context_t context, void *cookie, pami_result_t re
 {
 #ifdef THORIUM_TRANSPORT_USE_PAMI
     thorium_recv_cookie_t *recv_cookie = (thorium_recv_cookie_t *)cookie;
-    bsal_fast_queue_enqueue(recv_cookie->recv_queue, &recv_cookie);
+    biosal_fast_queue_enqueue(recv_cookie->recv_queue, &recv_cookie);
 #endif
 }
 
@@ -296,9 +296,9 @@ void thorium_recv_message_fn(pami_context_t context, void *cookie, const void *h
     struct thorium_pami_transport *pami_transport = (struct thorium_pami_transport *) cookie;
     thorium_recv_cookie_t *recv_cookie;
 
-    if (bsal_fast_queue_dequeue(pami_transport->avail_recv_cookies_queue, (void *)&recv_cookie) == BSAL_FALSE) {
+    if (biosal_fast_queue_dequeue(pami_transport->avail_recv_cookies_queue, (void *)&recv_cookie) == BIOSAL_FALSE) {
 	recv_cookie = (thorium_recv_cookie_t *)malloc(sizeof(thorium_recv_cookie_t));
-	BSAL_DEBUGGER_ASSERT(recv_cookie != NULL);
+	BIOSAL_DEBUGGER_ASSERT(recv_cookie != NULL);
     }
 
     recv_cookie->recv_queue = pami_transport->in_use_recv_cookies_queue;
@@ -306,11 +306,11 @@ void thorium_recv_message_fn(pami_context_t context, void *cookie, const void *h
     recv_cookie->recv_info.dest = pami_transport->rank;
     recv_cookie->recv_info.count = data_size;
 
-    recv_cookie->recv_info.buffer = (char *)bsal_memory_pool_allocate(pami_transport->self->inbound_message_memory_pool, recv_cookie->recv_info.count);
+    recv_cookie->recv_info.buffer = (char *)biosal_memory_pool_allocate(pami_transport->self->inbound_message_memory_pool, recv_cookie->recv_info.count);
 
     if (data != NULL) {
         memcpy(recv_cookie->recv_info.buffer, data, data_size);
-	bsal_fast_queue_enqueue(recv_cookie->recv_queue, (void *)&recv_cookie);
+	biosal_fast_queue_enqueue(recv_cookie->recv_queue, (void *)&recv_cookie);
     }
     else {
         recv->local_fn = thorium_recv_done_fn;

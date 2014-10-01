@@ -10,12 +10,12 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#define BSAL_STRING_APPEND 100
-#define BSAL_STRING_PREPEND 200
+#define BIOSAL_STRING_APPEND 100
+#define BIOSAL_STRING_PREPEND 200
 
 #define MEMORY_STRING 0x89fd5efd
 
-void bsal_string_init(struct bsal_string *string, const char *data)
+void biosal_string_init(struct biosal_string *string, const char *data)
 {
     int length;
 
@@ -24,35 +24,35 @@ void bsal_string_init(struct bsal_string *string, const char *data)
     if (data != NULL) {
         length = strlen(data);
 
-        string->data = (char *)bsal_memory_allocate(length + 1, MEMORY_STRING);
+        string->data = (char *)biosal_memory_allocate(length + 1, MEMORY_STRING);
         strcpy(string->data, data);
     }
 }
 
-void bsal_string_destroy(struct bsal_string *string)
+void biosal_string_destroy(struct biosal_string *string)
 {
     if (string->data != NULL) {
-        bsal_memory_free(string->data, MEMORY_STRING);
+        biosal_memory_free(string->data, MEMORY_STRING);
         string->data = NULL;
     }
 }
 
-void bsal_string_append(struct bsal_string *string, const char *data)
+void biosal_string_append(struct biosal_string *string, const char *data)
 {
-    bsal_string_combine(string, data, BSAL_STRING_APPEND);
+    biosal_string_combine(string, data, BIOSAL_STRING_APPEND);
 }
 
-void bsal_string_prepend(struct bsal_string *string, const char *data)
+void biosal_string_prepend(struct biosal_string *string, const char *data)
 {
-    bsal_string_combine(string, data, BSAL_STRING_PREPEND);
+    biosal_string_combine(string, data, BIOSAL_STRING_PREPEND);
 }
 
-char *bsal_string_get(struct bsal_string *string)
+char *biosal_string_get(struct biosal_string *string)
 {
     return string->data;
 }
 
-void bsal_string_combine(struct bsal_string *string, const char *data, int operation)
+void biosal_string_combine(struct biosal_string *string, const char *data, int operation)
 {
     int old_length;
     int length;
@@ -82,17 +82,17 @@ void bsal_string_combine(struct bsal_string *string, const char *data, int opera
 
     new_length = old_length + length;
 
-    new_data = (char *)bsal_memory_allocate(new_length + 1, MEMORY_STRING);
+    new_data = (char *)biosal_memory_allocate(new_length + 1, MEMORY_STRING);
 
     strcpy(new_data, "");
 
-    if (operation == BSAL_STRING_APPEND) {
+    if (operation == BIOSAL_STRING_APPEND) {
         if (string->data != NULL) {
             strcat(new_data, string->data);
         }
         strcat(new_data, data);
 
-    } else if (operation == BSAL_STRING_PREPEND) {
+    } else if (operation == BIOSAL_STRING_PREPEND) {
         strcat(new_data, data);
         if (string->data != NULL) {
             strcat(new_data, string->data);
@@ -100,53 +100,53 @@ void bsal_string_combine(struct bsal_string *string, const char *data, int opera
     }
 
     if (string->data != NULL) {
-        bsal_memory_free(string->data, MEMORY_STRING);
+        biosal_memory_free(string->data, MEMORY_STRING);
     }
 
     string->data = new_data;
 }
 
-int bsal_string_pack_size(struct bsal_string *self)
+int biosal_string_pack_size(struct biosal_string *self)
 {
-    return bsal_string_pack_unpack(self, BSAL_PACKER_OPERATION_PACK_SIZE, NULL);
+    return biosal_string_pack_unpack(self, BIOSAL_PACKER_OPERATION_PACK_SIZE, NULL);
 }
 
-int bsal_string_pack(struct bsal_string *self, void *buffer)
+int biosal_string_pack(struct biosal_string *self, void *buffer)
 {
-    return bsal_string_pack_unpack(self, BSAL_PACKER_OPERATION_PACK, buffer);
+    return biosal_string_pack_unpack(self, BIOSAL_PACKER_OPERATION_PACK, buffer);
 }
 
-int bsal_string_unpack(struct bsal_string *self, void *buffer)
+int biosal_string_unpack(struct biosal_string *self, void *buffer)
 {
-    return bsal_string_pack_unpack(self, BSAL_PACKER_OPERATION_UNPACK, buffer);
+    return biosal_string_pack_unpack(self, BIOSAL_PACKER_OPERATION_UNPACK, buffer);
 }
 
-int bsal_string_pack_unpack(struct bsal_string *self, int operation, void *buffer)
+int biosal_string_pack_unpack(struct biosal_string *self, int operation, void *buffer)
 {
-    struct bsal_packer packer;
+    struct biosal_packer packer;
     int bytes;
     int length;
 
-    length = bsal_string_length(self);
+    length = biosal_string_length(self);
 
-    bsal_packer_init(&packer, operation, buffer);
+    biosal_packer_init(&packer, operation, buffer);
 
-    bsal_packer_process(&packer, &length, sizeof(length));
+    biosal_packer_process(&packer, &length, sizeof(length));
 
-    if (operation == BSAL_PACKER_OPERATION_UNPACK) {
-        self->data = bsal_memory_allocate(length + 1, MEMORY_STRING);
+    if (operation == BIOSAL_PACKER_OPERATION_UNPACK) {
+        self->data = biosal_memory_allocate(length + 1, MEMORY_STRING);
     }
 
-    bsal_packer_process(&packer, self->data, length + 1);
+    biosal_packer_process(&packer, self->data, length + 1);
 
-    bytes = bsal_packer_get_byte_count(&packer);
+    bytes = biosal_packer_get_byte_count(&packer);
 
-    bsal_packer_destroy(&packer);
+    biosal_packer_destroy(&packer);
 
     return bytes;
 }
 
-int bsal_string_length(struct bsal_string *self)
+int biosal_string_length(struct biosal_string *self)
 {
     if (self->data == NULL) {
         return 0;
@@ -155,11 +155,11 @@ int bsal_string_length(struct bsal_string *self)
     return strlen(self->data);
 }
 
-void bsal_string_swap_c_string(char *sequence, int i, int j)
+void biosal_string_swap_c_string(char *sequence, int i, int j)
 {
     char value;
 
-    BSAL_DEBUGGER_ASSERT(sequence != NULL);
+    BIOSAL_DEBUGGER_ASSERT(sequence != NULL);
 
     value = sequence[i];
     sequence[i] = sequence[j];
@@ -170,7 +170,7 @@ void bsal_string_swap_c_string(char *sequence, int i, int j)
 #endif
 }
 
-void bsal_string_rotate_c_string(char *sequence, int length, int new_start)
+void biosal_string_rotate_c_string(char *sequence, int length, int new_start)
 {
     int offset;
 
@@ -191,15 +191,15 @@ void bsal_string_rotate_c_string(char *sequence, int length, int new_start)
     /*
      * See http://stackoverflow.com/questions/19316335/rotate-string-in-place-with-on
      */
-    bsal_string_reverse_c_string(sequence, 0, length - 1);
+    biosal_string_reverse_c_string(sequence, 0, length - 1);
 
     offset = length - new_start;
 
-    bsal_string_reverse_c_string(sequence, 0, offset - 1);
-    bsal_string_reverse_c_string(sequence, offset, length - 1);
+    biosal_string_reverse_c_string(sequence, 0, offset - 1);
+    biosal_string_reverse_c_string(sequence, offset, length - 1);
 }
 
-void bsal_string_reverse_c_string(char *sequence, int start, int end)
+void biosal_string_reverse_c_string(char *sequence, int start, int end)
 {
 #ifdef DEBUG_STRING
     printf("reverse before %s\n", sequence);
@@ -207,7 +207,7 @@ void bsal_string_reverse_c_string(char *sequence, int start, int end)
 
     while (start < end) {
 
-        bsal_string_swap_c_string(sequence, start, end);
+        biosal_string_swap_c_string(sequence, start, end);
         ++start;
         --end;
     }
@@ -217,8 +217,8 @@ void bsal_string_reverse_c_string(char *sequence, int start, int end)
 #endif
 }
 
-void bsal_string_rotate_path(char *sequence, int length, int rotation, int kmer_length,
-                struct bsal_memory_pool *pool)
+void biosal_string_rotate_path(char *sequence, int length, int rotation, int kmer_length,
+                struct biosal_memory_pool *pool)
 {
     char *buffer;
 
@@ -234,7 +234,7 @@ void bsal_string_rotate_path(char *sequence, int length, int rotation, int kmer_
      */
     rotation %= length;
 
-    buffer = bsal_memory_pool_allocate(pool, length);
+    buffer = biosal_memory_pool_allocate(pool, length);
 
     /*
      * Algorithm:
@@ -244,21 +244,21 @@ void bsal_string_rotate_path(char *sequence, int length, int rotation, int kmer_
      * 3. Copy (k - 1) from new @ 0 to new @ (l - k + 1)
      */
 
-    bsal_memory_copy(buffer + 0, sequence + rotation, (length - rotation));
+    biosal_memory_copy(buffer + 0, sequence + rotation, (length - rotation));
 
     /*
      * Copy the middle
      * */
     if ((rotation - kmer_length + 1) > 0)
-        bsal_memory_copy(buffer + (length - rotation), sequence + (kmer_length - 1),
+        biosal_memory_copy(buffer + (length - rotation), sequence + (kmer_length - 1),
                     (rotation - kmer_length + 1));
 
-    bsal_memory_copy(buffer + (length - kmer_length + 1), buffer + 0, (kmer_length - 1));
+    biosal_memory_copy(buffer + (length - kmer_length + 1), buffer + 0, (kmer_length - 1));
 
     /*
      * Copy the new sequence.
      */
-    bsal_memory_copy(sequence, buffer, length);
+    biosal_memory_copy(sequence, buffer, length);
 
-    bsal_memory_pool_free(pool, buffer);
+    biosal_memory_pool_free(pool, buffer);
 }

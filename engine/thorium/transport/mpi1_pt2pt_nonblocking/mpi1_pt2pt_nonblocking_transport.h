@@ -11,7 +11,7 @@
 
 struct thorium_node;
 struct thorium_message;
-struct bsal_active_buffer;
+struct biosal_active_buffer;
 struct thorium_transport;
 
 /*
@@ -24,8 +24,8 @@ struct thorium_transport;
  */
 struct thorium_mpi1_pt2pt_nonblocking_transport {
 
-    struct bsal_fast_queue send_requests;
-    struct bsal_fast_queue receive_requests;
+    struct biosal_fast_queue send_requests;
+    struct biosal_fast_queue receive_requests;
 
     MPI_Comm communicator;
     MPI_Datatype datatype;

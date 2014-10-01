@@ -6,52 +6,52 @@
 #include <string.h>
 #include <stdlib.h>
 
-void bsal_map_iterator_init(struct bsal_map_iterator *self, struct bsal_map *list)
+void biosal_map_iterator_init(struct biosal_map_iterator *self, struct biosal_map *list)
 {
     self->list = list;
-    bsal_dynamic_hash_table_iterator_init(&self->iterator, bsal_map_table(self->list));
+    biosal_dynamic_hash_table_iterator_init(&self->iterator, biosal_map_table(self->list));
 }
 
-void bsal_map_iterator_destroy(struct bsal_map_iterator *self)
+void biosal_map_iterator_destroy(struct biosal_map_iterator *self)
 {
-    bsal_dynamic_hash_table_iterator_destroy(&self->iterator);
+    biosal_dynamic_hash_table_iterator_destroy(&self->iterator);
 }
 
-int bsal_map_iterator_has_next(struct bsal_map_iterator *self)
+int biosal_map_iterator_has_next(struct biosal_map_iterator *self)
 {
-    return bsal_dynamic_hash_table_iterator_has_next(&self->iterator);
+    return biosal_dynamic_hash_table_iterator_has_next(&self->iterator);
 }
 
-int bsal_map_iterator_next(struct bsal_map_iterator *self, void **key, void **value)
+int biosal_map_iterator_next(struct biosal_map_iterator *self, void **key, void **value)
 {
-    if (!bsal_map_iterator_has_next(self)) {
+    if (!biosal_map_iterator_has_next(self)) {
         return 0;
     }
 
-    bsal_dynamic_hash_table_iterator_next(&self->iterator, key, value);
+    biosal_dynamic_hash_table_iterator_next(&self->iterator, key, value);
 
     return 1;
 }
 
-int bsal_map_iterator_get_next_key_and_value(struct bsal_map_iterator *self, void *key, void *value)
+int biosal_map_iterator_get_next_key_and_value(struct biosal_map_iterator *self, void *key, void *value)
 {
     void *key_bucket;
     void *value_bucket;
     int key_size;
     int value_size;
 
-    if (!bsal_map_iterator_next(self, (void **)&key_bucket, (void **)&value_bucket)) {
+    if (!biosal_map_iterator_next(self, (void **)&key_bucket, (void **)&value_bucket)) {
         return 0;
     }
 
     if (key != NULL) {
-        key_size = bsal_map_get_key_size(self->list);
-        bsal_memory_copy(key, key_bucket, key_size);
+        key_size = biosal_map_get_key_size(self->list);
+        biosal_memory_copy(key, key_bucket, key_size);
     }
 
     if (value != NULL) {
-        value_size = bsal_map_get_value_size(self->list);
-        bsal_memory_copy(value, value_bucket, value_size);
+        value_size = biosal_map_get_value_size(self->list);
+        biosal_memory_copy(value, value_bucket, value_size);
     }
 
     return 1;

@@ -7,7 +7,7 @@
 #define SCRIPT_RING 0x88ad8b92
 
 struct ring {
-    struct bsal_vector spawners;
+    struct biosal_vector spawners;
     int senders;
     int first;
     int last;

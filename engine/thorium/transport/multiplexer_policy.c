@@ -31,27 +31,27 @@ void thorium_multiplexer_policy_init(struct thorium_multiplexer_policy *self)
     /*self->threshold_time_in_nanoseconds = THORIUM_DYNAMIC_TIMEOUT;*/
     self->threshold_time_in_nanoseconds = THORIUM_MESSAGE_MULTIPLEXER_TIME_THRESHOLD_IN_NANOSECONDS;
 
-    bsal_set_init(&self->actions_to_skip, sizeof(int));
+    biosal_set_init(&self->actions_to_skip, sizeof(int));
 
     /*
      * We don't want to slow down things so the following actions
      * are not multiplexed.
      */
 
-    bsal_set_add_int(&self->actions_to_skip, ACTION_MULTIPLEXER_MESSAGE);
-    bsal_set_add_int(&self->actions_to_skip, ACTION_THORIUM_NODE_START);
-    bsal_set_add_int(&self->actions_to_skip, ACTION_THORIUM_NODE_ADD_INITIAL_ACTOR);
-    bsal_set_add_int(&self->actions_to_skip, ACTION_THORIUM_NODE_ADD_INITIAL_ACTORS);
-    bsal_set_add_int(&self->actions_to_skip, ACTION_THORIUM_NODE_ADD_INITIAL_ACTORS_REPLY);
-    bsal_set_add_int(&self->actions_to_skip, ACTION_SPAWN);
-    bsal_set_add_int(&self->actions_to_skip, ACTION_SPAWN_REPLY);
+    biosal_set_add_int(&self->actions_to_skip, ACTION_MULTIPLEXER_MESSAGE);
+    biosal_set_add_int(&self->actions_to_skip, ACTION_THORIUM_NODE_START);
+    biosal_set_add_int(&self->actions_to_skip, ACTION_THORIUM_NODE_ADD_INITIAL_ACTOR);
+    biosal_set_add_int(&self->actions_to_skip, ACTION_THORIUM_NODE_ADD_INITIAL_ACTORS);
+    biosal_set_add_int(&self->actions_to_skip, ACTION_THORIUM_NODE_ADD_INITIAL_ACTORS_REPLY);
+    biosal_set_add_int(&self->actions_to_skip, ACTION_SPAWN);
+    biosal_set_add_int(&self->actions_to_skip, ACTION_SPAWN_REPLY);
 
     self->disabled = 1;
 }
 
 void thorium_multiplexer_policy_destroy(struct thorium_multiplexer_policy *self)
 {
-    bsal_set_destroy(&self->actions_to_skip);
+    biosal_set_destroy(&self->actions_to_skip);
 
     self->threshold_buffer_size_in_bytes = -1;
     self->threshold_time_in_nanoseconds = -1;
@@ -59,7 +59,7 @@ void thorium_multiplexer_policy_destroy(struct thorium_multiplexer_policy *self)
 
 int thorium_multiplexer_policy_is_action_to_skip(struct thorium_multiplexer_policy *self, int action)
 {
-    return bsal_set_find(&self->actions_to_skip, &action);
+    return biosal_set_find(&self->actions_to_skip, &action);
 }
 
 int thorium_multiplexer_policy_is_disabled(struct thorium_multiplexer_policy *self)

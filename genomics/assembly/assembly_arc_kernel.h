@@ -1,6 +1,6 @@
 
-#ifndef BSAL_ASSEMBLY_ARC_KERNEL_H
-#define BSAL_ASSEMBLY_ARC_KERNEL_H
+#ifndef BIOSAL_ASSEMBLY_ARC_KERNEL_H
+#define BIOSAL_ASSEMBLY_ARC_KERNEL_H
 
 #include <engine/thorium/actor.h>
 
@@ -19,15 +19,15 @@
 /*
  * Arc generator for the assembly graph.
  */
-struct bsal_assembly_arc_kernel {
+struct biosal_assembly_arc_kernel {
     int kmer_length;
 
     int producer;
-    struct bsal_fast_queue producers_for_work_stealing;
+    struct biosal_fast_queue producers_for_work_stealing;
 
     int consumer;
 
-    struct bsal_dna_codec codec;
+    struct biosal_dna_codec codec;
 
     uint64_t produced_arcs;
 
@@ -37,16 +37,16 @@ struct bsal_assembly_arc_kernel {
     int flushed_messages;
 };
 
-extern struct thorium_script bsal_assembly_arc_kernel_script;
+extern struct thorium_script biosal_assembly_arc_kernel_script;
 
-void bsal_assembly_arc_kernel_init(struct thorium_actor *self);
-void bsal_assembly_arc_kernel_destroy(struct thorium_actor *self);
-void bsal_assembly_arc_kernel_receive(struct thorium_actor *self, struct thorium_message *message);
+void biosal_assembly_arc_kernel_init(struct thorium_actor *self);
+void biosal_assembly_arc_kernel_destroy(struct thorium_actor *self);
+void biosal_assembly_arc_kernel_receive(struct thorium_actor *self, struct thorium_message *message);
 
-void bsal_assembly_arc_kernel_set_kmer_length(struct thorium_actor *self, struct thorium_message *message);
-void bsal_assembly_arc_kernel_push_sequence_data_block(struct thorium_actor *self, struct thorium_message *message);
-void bsal_assembly_arc_kernel_ask(struct thorium_actor *self, struct thorium_message *message);
+void biosal_assembly_arc_kernel_set_kmer_length(struct thorium_actor *self, struct thorium_message *message);
+void biosal_assembly_arc_kernel_push_sequence_data_block(struct thorium_actor *self, struct thorium_message *message);
+void biosal_assembly_arc_kernel_ask(struct thorium_actor *self, struct thorium_message *message);
 
-void bsal_assembly_arc_kernel_set_producers_for_work_stealing(struct thorium_actor *self, struct thorium_message *message);
+void biosal_assembly_arc_kernel_set_producers_for_work_stealing(struct thorium_actor *self, struct thorium_message *message);
 
 #endif

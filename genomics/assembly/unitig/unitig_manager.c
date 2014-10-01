@@ -18,52 +18,52 @@
 #define STATE_VISITORS      1
 #define STATE_WALKERS       2
 
-struct thorium_script bsal_unitig_manager_script = {
+struct thorium_script biosal_unitig_manager_script = {
     .identifier = SCRIPT_UNITIG_MANAGER,
-    .name = "bsal_unitig_manager",
-    .init = bsal_unitig_manager_init,
-    .destroy = bsal_unitig_manager_destroy,
-    .receive = bsal_unitig_manager_receive,
-    .size = sizeof(struct bsal_unitig_manager),
+    .name = "biosal_unitig_manager",
+    .init = biosal_unitig_manager_init,
+    .destroy = biosal_unitig_manager_destroy,
+    .receive = biosal_unitig_manager_receive,
+    .size = sizeof(struct biosal_unitig_manager),
     .description = "The chief executive for unitig visitors and walkers"
 };
 
-void bsal_unitig_manager_init(struct thorium_actor *self)
+void biosal_unitig_manager_init(struct thorium_actor *self)
 {
-    struct bsal_unitig_manager *concrete_self;
+    struct biosal_unitig_manager *concrete_self;
 
-    concrete_self = (struct bsal_unitig_manager *)thorium_actor_concrete_actor(self);
+    concrete_self = (struct biosal_unitig_manager *)thorium_actor_concrete_actor(self);
 
-    bsal_vector_init(&concrete_self->spawners, sizeof(int));
-    bsal_vector_init(&concrete_self->graph_stores, sizeof(int));
+    biosal_vector_init(&concrete_self->spawners, sizeof(int));
+    biosal_vector_init(&concrete_self->graph_stores, sizeof(int));
 
-    bsal_vector_init(&concrete_self->visitors, sizeof(int));
-    bsal_vector_init(&concrete_self->walkers, sizeof(int));
+    biosal_vector_init(&concrete_self->visitors, sizeof(int));
+    biosal_vector_init(&concrete_self->walkers, sizeof(int));
 
     concrete_self->completed = 0;
     concrete_self->manager = THORIUM_ACTOR_NOBODY;
 
-    bsal_timer_init(&concrete_self->timer);
+    biosal_timer_init(&concrete_self->timer);
 
     concrete_self->state = STATE_VISITORS;
 }
 
-void bsal_unitig_manager_destroy(struct thorium_actor *self)
+void biosal_unitig_manager_destroy(struct thorium_actor *self)
 {
-    struct bsal_unitig_manager *concrete_self;
+    struct biosal_unitig_manager *concrete_self;
 
-    concrete_self = (struct bsal_unitig_manager *)thorium_actor_concrete_actor(self);
+    concrete_self = (struct biosal_unitig_manager *)thorium_actor_concrete_actor(self);
 
-    bsal_vector_destroy(&concrete_self->spawners);
-    bsal_vector_destroy(&concrete_self->graph_stores);
+    biosal_vector_destroy(&concrete_self->spawners);
+    biosal_vector_destroy(&concrete_self->graph_stores);
 
-    bsal_vector_destroy(&concrete_self->walkers);
-    bsal_vector_destroy(&concrete_self->visitors);
+    biosal_vector_destroy(&concrete_self->walkers);
+    biosal_vector_destroy(&concrete_self->visitors);
 
     concrete_self->completed = 0;
     concrete_self->manager = THORIUM_ACTOR_NOBODY;
 
-    bsal_timer_destroy(&concrete_self->timer);
+    biosal_timer_destroy(&concrete_self->timer);
 }
 
 /*
@@ -76,9 +76,9 @@ void bsal_unitig_manager_destroy(struct thorium_actor *self)
  * - kill the walkers
  * - return OK
  */
-void bsal_unitig_manager_receive(struct thorium_actor *self, struct thorium_message *message)
+void biosal_unitig_manager_receive(struct thorium_actor *self, struct thorium_message *message)
 {
-    struct bsal_unitig_manager *concrete_self;
+    struct biosal_unitig_manager *concrete_self;
     int tag;
     void *buffer;
     int spawner;
@@ -86,7 +86,7 @@ void bsal_unitig_manager_receive(struct thorium_actor *self, struct thorium_mess
     int script;
     int actor_count;
     int source;
-    struct bsal_string file_name;
+    struct biosal_string file_name;
     char *directory;
     int argc;
     char **argv;
@@ -96,11 +96,11 @@ void bsal_unitig_manager_receive(struct thorium_actor *self, struct thorium_mess
     source = thorium_message_source(message);
     buffer = thorium_message_buffer(message);
 
-    concrete_self = (struct bsal_unitig_manager *)thorium_actor_concrete_actor(self);
+    concrete_self = (struct biosal_unitig_manager *)thorium_actor_concrete_actor(self);
 
     if (tag == ACTION_START) {
 
-        bsal_vector_unpack(&concrete_self->spawners, buffer);
+        biosal_vector_unpack(&concrete_self->spawners, buffer);
 
         spawner = thorium_actor_get_random_spawner(self, &concrete_self->spawners);
 
@@ -119,16 +119,16 @@ void bsal_unitig_manager_receive(struct thorium_actor *self, struct thorium_mess
 
         argc = thorium_actor_argc(self);
         argv = thorium_actor_argv(self);
-        directory = bsal_command_get_output_directory(argc, argv);
-        bsal_string_init(&file_name, directory);
-        bsal_string_append(&file_name, "/");
-        bsal_string_append(&file_name, "unitigs.fasta");
-        path = bsal_string_get(&file_name);
+        directory = biosal_command_get_output_directory(argc, argv);
+        biosal_string_init(&file_name, directory);
+        biosal_string_append(&file_name, "/");
+        biosal_string_append(&file_name, "unitigs.fasta");
+        path = biosal_string_get(&file_name);
 
         thorium_actor_send_buffer(self, concrete_self->writer_process,
                         ACTION_OPEN, strlen(path) + 1, path);
 
-        bsal_string_destroy(&file_name);
+        biosal_string_destroy(&file_name);
 
     } else if (tag == ACTION_OPEN_REPLY
                     && source == concrete_self->writer_process) {
@@ -183,25 +183,25 @@ void bsal_unitig_manager_receive(struct thorium_actor *self, struct thorium_mess
 
     } else if (tag == ACTION_START_REPLY
                     && concrete_self->state == STATE_VISITORS
-                    && bsal_vector_size(&concrete_self->visitors) == 0) {
+                    && biosal_vector_size(&concrete_self->visitors) == 0) {
 
-        bsal_vector_unpack(&concrete_self->visitors, buffer);
+        biosal_vector_unpack(&concrete_self->visitors, buffer);
 
         printf("DEBUG the system has %d visitors\n",
-                        (int)bsal_vector_size(&concrete_self->visitors));
+                        (int)biosal_vector_size(&concrete_self->visitors));
 
         thorium_actor_send_to_supervisor_empty(self, ACTION_START_REPLY);
 
     } else if (tag == ACTION_START_REPLY
                     && concrete_self->state == STATE_WALKERS
-                    && bsal_vector_size(&concrete_self->walkers) == 0) {
+                    && biosal_vector_size(&concrete_self->walkers) == 0) {
 
-        bsal_vector_unpack(&concrete_self->walkers, buffer);
+        biosal_vector_unpack(&concrete_self->walkers, buffer);
 
         printf("DEBUG the system has %d walkers\n",
-                        (int)bsal_vector_size(&concrete_self->walkers));
+                        (int)biosal_vector_size(&concrete_self->walkers));
 
-        bsal_timer_start(&concrete_self->timer);
+        biosal_timer_start(&concrete_self->timer);
         concrete_self->completed = 0;
 
         thorium_actor_send_range_int(self, &concrete_self->walkers,
@@ -211,9 +211,9 @@ void bsal_unitig_manager_receive(struct thorium_actor *self, struct thorium_mess
 
     } else if (tag == ACTION_SET_PRODUCERS) {
 
-        bsal_vector_unpack(&concrete_self->graph_stores, buffer);
+        biosal_vector_unpack(&concrete_self->graph_stores, buffer);
 
-        bsal_timer_start(&concrete_self->timer);
+        biosal_timer_start(&concrete_self->timer);
 
         concrete_self->completed = 0;
         thorium_actor_send_range_vector(self, &concrete_self->visitors,
@@ -222,7 +222,7 @@ void bsal_unitig_manager_receive(struct thorium_actor *self, struct thorium_mess
     } else if (tag == ACTION_START_REPLY && concrete_self->state == STATE_VISITORS) {
 
         ++concrete_self->completed;
-        expected = bsal_vector_size(&concrete_self->visitors);
+        expected = biosal_vector_size(&concrete_self->visitors);
 
         if (concrete_self->completed % UNITIG_VISITOR_COUNT_PER_WORKER == 0
                         || concrete_self->completed == expected) {
@@ -233,8 +233,8 @@ void bsal_unitig_manager_receive(struct thorium_actor *self, struct thorium_mess
 
         if (concrete_self->completed == expected) {
 
-            bsal_timer_stop(&concrete_self->timer);
-            bsal_timer_print_with_description(&concrete_self->timer, "Visit vertices for unitigs");
+            biosal_timer_stop(&concrete_self->timer);
+            biosal_timer_print_with_description(&concrete_self->timer, "Visit vertices for unitigs");
 
             /*
              * Stop the visitor manager and all visitors too.
@@ -252,7 +252,7 @@ void bsal_unitig_manager_receive(struct thorium_actor *self, struct thorium_mess
     } else if (tag == ACTION_RESET_REPLY) {
 
         ++concrete_self->completed;
-        expected = bsal_vector_size(&concrete_self->graph_stores);
+        expected = biosal_vector_size(&concrete_self->graph_stores);
 
         if (concrete_self->completed == expected) {
             concrete_self->completed = 0;
@@ -266,7 +266,7 @@ void bsal_unitig_manager_receive(struct thorium_actor *self, struct thorium_mess
     } else if (tag == ACTION_START_REPLY && concrete_self->state == STATE_WALKERS) {
 
         ++concrete_self->completed;
-        expected = bsal_vector_size(&concrete_self->walkers);
+        expected = biosal_vector_size(&concrete_self->walkers);
 
         if (concrete_self->completed % UNITIG_WALKER_COUNT_PER_WORKER == 0
                         || concrete_self->completed == expected) {
@@ -277,8 +277,8 @@ void bsal_unitig_manager_receive(struct thorium_actor *self, struct thorium_mess
 
         if (concrete_self->completed == expected) {
 
-            bsal_timer_stop(&concrete_self->timer);
-            bsal_timer_print_with_description(&concrete_self->timer, "Walk for unitigs");
+            biosal_timer_stop(&concrete_self->timer);
+            biosal_timer_print_with_description(&concrete_self->timer, "Walk for unitigs");
 
             thorium_actor_send_to_supervisor_empty(self, ACTION_SET_PRODUCERS_REPLY);
         }

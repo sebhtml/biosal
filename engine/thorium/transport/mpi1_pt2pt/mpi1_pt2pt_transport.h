@@ -12,14 +12,14 @@
 
 struct thorium_node;
 struct thorium_message;
-struct bsal_active_buffer;
+struct biosal_active_buffer;
 struct thorium_transport;
 
 /*
  * MPI 1 point-to-point transport layer.
  */
 struct thorium_mpi1_pt2pt_transport {
-    struct bsal_fast_queue active_requests;
+    struct biosal_fast_queue active_requests;
     MPI_Comm comm;
     MPI_Datatype datatype;
 };

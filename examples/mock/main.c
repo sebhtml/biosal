@@ -9,5 +9,5 @@
  */
 int main(int argc, char **argv)
 {
-    return bsal_thorium_engine_boot_initial_actor(&argc, &argv, SCRIPT_MOCK, &mock_script);
+    return biosal_thorium_engine_boot_initial_actor(&argc, &argv, SCRIPT_MOCK, &mock_script);
 }

@@ -6,7 +6,7 @@
 
 #define PADDING "7"
 
-void bsal_test_print_result(int argc, char **argv, int passed_tests, int failed_tests)
+void biosal_test_print_result(int argc, char **argv, int passed_tests, int failed_tests)
 {
     int all;
     char *test_name;

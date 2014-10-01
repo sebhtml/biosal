@@ -1,20 +1,20 @@
 
-#ifndef BSAL_STATISTICS_H
-#define BSAL_STATISTICS_H
+#ifndef BIOSAL_STATISTICS_H
+#define BIOSAL_STATISTICS_H
 
-struct bsal_vector;
-struct bsal_map;
+struct biosal_vector;
+struct biosal_map;
 
-double bsal_statistics_get_mean_int(struct bsal_vector *vector);
-int bsal_statistics_get_median_int(struct bsal_vector *vector);
-double bsal_statistics_get_standard_deviation_int(struct bsal_vector *vector);
+double biosal_statistics_get_mean_int(struct biosal_vector *vector);
+int biosal_statistics_get_median_int(struct biosal_vector *vector);
+double biosal_statistics_get_standard_deviation_int(struct biosal_vector *vector);
 
-int bsal_statistics_get_percentile_int(struct bsal_vector *vector, int percentile);
-void bsal_statistics_print_percentiles_int(struct bsal_vector *vector);
+int biosal_statistics_get_percentile_int(struct biosal_vector *vector, int percentile);
+void biosal_statistics_print_percentiles_int(struct biosal_vector *vector);
 
-float bsal_statistics_get_percentile_float(struct bsal_vector *vector, int percentile);
-void bsal_statistics_print_percentiles_float(struct bsal_vector *vector);
+float biosal_statistics_get_percentile_float(struct biosal_vector *vector, int percentile);
+void biosal_statistics_print_percentiles_float(struct biosal_vector *vector);
 
-int bsal_statistics_get_percentile_int_map(struct bsal_map *map, int percentile);
+int biosal_statistics_get_percentile_int_map(struct biosal_map *map, int percentile);
 
 #endif

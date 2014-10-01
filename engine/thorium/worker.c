@@ -104,17 +104,17 @@ void thorium_worker_init(struct thorium_worker *worker, int name, struct thorium
     worker->counter_injected_inbound_buffers_from_thorium_core = 0;
 #endif
 
-    bsal_map_init(&worker->actor_received_messages, sizeof(int), sizeof(int));
+    biosal_map_init(&worker->actor_received_messages, sizeof(int), sizeof(int));
 
     worker->waiting_is_enabled = 0;
     worker->waiting_start_time = 0;
 
-    bsal_timer_init(&worker->timer);
+    biosal_timer_init(&worker->timer);
     capacity = THORIUM_WORKER_RING_CAPACITY;
     /*worker->work_queue = work_queue;*/
     worker->node = node;
     worker->name = name;
-    bsal_bitmap_clear_bit_uint32_t(&worker->flags, FLAG_DEAD);
+    biosal_bitmap_clear_bit_uint32_t(&worker->flags, FLAG_DEAD);
     worker->last_warning = 0;
 
     worker->last_wake_up_count = 0;
@@ -125,38 +125,38 @@ void thorium_worker_init(struct thorium_worker *worker, int name, struct thorium
      * 1. enable atomic operations for change visibility
      * 2. Use volatile head and tail.
      */
-    bsal_fast_ring_init(&worker->actors_to_schedule, capacity, sizeof(struct thorium_actor *));
+    biosal_fast_ring_init(&worker->actors_to_schedule, capacity, sizeof(struct thorium_actor *));
 
 #ifdef THORIUM_NODE_INJECT_CLEAN_WORKER_BUFFERS
     injected_buffer_ring_size = capacity;
-    bsal_fast_ring_init(&worker->injected_clean_outbound_buffers,
+    biosal_fast_ring_init(&worker->injected_clean_outbound_buffers,
                     injected_buffer_ring_size, sizeof(void *));
 
-    bsal_fast_ring_init(&worker->clean_message_ring_for_triage,
+    biosal_fast_ring_init(&worker->clean_message_ring_for_triage,
                     injected_buffer_ring_size,
                     sizeof(struct thorium_message));
 
-    bsal_fast_queue_init(&worker->clean_message_queue_for_triage,
+    biosal_fast_queue_init(&worker->clean_message_queue_for_triage,
                     sizeof(struct thorium_message));
 #endif
 
     thorium_scheduler_init(&worker->scheduler, thorium_node_name(worker->node),
                     worker->name);
-    bsal_map_init(&worker->actors, sizeof(int), sizeof(int));
-    bsal_map_iterator_init(&worker->actor_iterator, &worker->actors);
+    biosal_map_init(&worker->actors, sizeof(int), sizeof(int));
+    biosal_map_iterator_init(&worker->actor_iterator, &worker->actors);
 
-    bsal_fast_ring_init(&worker->outbound_message_queue, capacity, sizeof(struct thorium_message));
+    biosal_fast_ring_init(&worker->outbound_message_queue, capacity, sizeof(struct thorium_message));
 
-    bsal_fast_queue_init(&worker->outbound_message_queue_buffer, sizeof(struct thorium_message));
+    biosal_fast_queue_init(&worker->outbound_message_queue_buffer, sizeof(struct thorium_message));
 
-    bsal_bitmap_clear_bit_uint32_t(&worker->flags, FLAG_DEBUG);
-    bsal_bitmap_clear_bit_uint32_t(&worker->flags, FLAG_BUSY);
-    bsal_bitmap_clear_bit_uint32_t(&node->flags, FLAG_ENABLE_ACTOR_LOAD_PROFILER);
+    biosal_bitmap_clear_bit_uint32_t(&worker->flags, FLAG_DEBUG);
+    biosal_bitmap_clear_bit_uint32_t(&worker->flags, FLAG_BUSY);
+    biosal_bitmap_clear_bit_uint32_t(&node->flags, FLAG_ENABLE_ACTOR_LOAD_PROFILER);
 
     worker->flags = 0;
-    bsal_bitmap_clear_bit_uint32_t(&worker->flags, FLAG_DEBUG_ACTORS);
+    biosal_bitmap_clear_bit_uint32_t(&worker->flags, FLAG_DEBUG_ACTORS);
 
-    if (bsal_command_has_argument(argc, argv, DEBUG_WORKER_OPTION)) {
+    if (biosal_command_has_argument(argc, argv, DEBUG_WORKER_OPTION)) {
 
 #if 0
         printf("DEBUG has option %s\n", DEBUG_WORKER_OPTION);
@@ -168,7 +168,7 @@ void thorium_worker_init(struct thorium_worker *worker, int name, struct thorium
 #if 0
             printf("DEBUG setting bit FLAG_DEBUG_ACTORS because %s\n", DEBUG_WORKER_OPTION);
 #endif
-            bsal_bitmap_set_bit_uint32_t(&worker->flags, FLAG_DEBUG_ACTORS);
+            biosal_bitmap_set_bit_uint32_t(&worker->flags, FLAG_DEBUG_ACTORS);
         }
     }
 
@@ -188,35 +188,35 @@ void thorium_worker_init(struct thorium_worker *worker, int name, struct thorium
      */
     ephemeral_memory_block_size = 8388608;
     /*ephemeral_memory_block_size = 16777216;*/
-    bsal_memory_pool_init(&worker->ephemeral_memory, ephemeral_memory_block_size,
-                    BSAL_MEMORY_POOL_NAME_WORKER_EPHEMERAL);
-    bsal_memory_pool_set_name(&worker->ephemeral_memory, BSAL_MEMORY_POOL_NAME_WORKER_EPHEMERAL);
+    biosal_memory_pool_init(&worker->ephemeral_memory, ephemeral_memory_block_size,
+                    BIOSAL_MEMORY_POOL_NAME_WORKER_EPHEMERAL);
+    biosal_memory_pool_set_name(&worker->ephemeral_memory, BIOSAL_MEMORY_POOL_NAME_WORKER_EPHEMERAL);
 
-    bsal_memory_pool_disable_tracking(&worker->ephemeral_memory);
-    bsal_memory_pool_enable_ephemeral_mode(&worker->ephemeral_memory);
+    biosal_memory_pool_disable_tracking(&worker->ephemeral_memory);
+    biosal_memory_pool_enable_ephemeral_mode(&worker->ephemeral_memory);
 
-    bsal_lock_init(&worker->lock);
-    bsal_set_init(&worker->evicted_actors, sizeof(int));
+    biosal_lock_init(&worker->lock);
+    biosal_set_init(&worker->evicted_actors, sizeof(int));
 
-    bsal_memory_pool_init(&worker->outbound_message_memory_pool,
-                    BSAL_MEMORY_POOL_MESSAGE_BUFFER_BLOCK_SIZE, BSAL_MEMORY_POOL_NAME_WORKER_OUTBOUND);
-    bsal_memory_pool_set_name(&worker->outbound_message_memory_pool,
-                    BSAL_MEMORY_POOL_NAME_WORKER_OUTBOUND);
+    biosal_memory_pool_init(&worker->outbound_message_memory_pool,
+                    BIOSAL_MEMORY_POOL_MESSAGE_BUFFER_BLOCK_SIZE, BIOSAL_MEMORY_POOL_NAME_WORKER_OUTBOUND);
+    biosal_memory_pool_set_name(&worker->outbound_message_memory_pool,
+                    BIOSAL_MEMORY_POOL_NAME_WORKER_OUTBOUND);
 
     /*
      * Disable the pool so that it uses allocate and free
      * directly.
      */
 
-#ifdef BSAL_MEMORY_POOL_DISABLE_MESSAGE_BUFFER_POOL
-    bsal_memory_pool_disable(&worker->outbound_message_memory_pool);
+#ifdef BIOSAL_MEMORY_POOL_DISABLE_MESSAGE_BUFFER_POOL
+    biosal_memory_pool_disable(&worker->outbound_message_memory_pool);
 #endif
 
     /*
      * Transport message buffers are fancy objects.
      */
-    bsal_memory_pool_enable_normalization(&worker->outbound_message_memory_pool);
-    bsal_memory_pool_enable_alignment(&worker->outbound_message_memory_pool);
+    biosal_memory_pool_enable_normalization(&worker->outbound_message_memory_pool);
+    biosal_memory_pool_enable_alignment(&worker->outbound_message_memory_pool);
 
     worker->ticks_without_production = 0;
 
@@ -228,7 +228,7 @@ void thorium_worker_init(struct thorium_worker *worker, int name, struct thorium
      * thorium_worker_start is never called...
      */
     worker->last_report = time(NULL);
-    worker->epoch_start_in_nanoseconds = bsal_timer_get_nanoseconds(&worker->timer);
+    worker->epoch_start_in_nanoseconds = biosal_timer_get_nanoseconds(&worker->timer);
     worker->loop_start_in_nanoseconds = worker->epoch_start_in_nanoseconds;
     worker->loop_end_in_nanoseconds = worker->loop_start_in_nanoseconds;
     worker->scheduling_epoch_start_in_nanoseconds = worker->epoch_start_in_nanoseconds;
@@ -245,18 +245,18 @@ void thorium_worker_destroy(struct thorium_worker *worker)
 
     thorium_load_profiler_destroy(&worker->profiler);
 
-    if (bsal_bitmap_get_bit_uint32_t(&worker->flags, FLAG_ENABLE_ACTOR_LOAD_PROFILER)) {
-        bsal_buffered_file_writer_destroy(&worker->load_profile_writer);
+    if (biosal_bitmap_get_bit_uint32_t(&worker->flags, FLAG_ENABLE_ACTOR_LOAD_PROFILER)) {
+        biosal_buffered_file_writer_destroy(&worker->load_profile_writer);
     }
 
-    bsal_map_destroy(&worker->actor_received_messages);
+    biosal_map_destroy(&worker->actor_received_messages);
 
     /*
     thorium_worker_print_balance(worker);
     */
     while (thorium_worker_fetch_clean_outbound_buffer(worker, &buffer)) {
 
-        bsal_memory_pool_free(&worker->outbound_message_memory_pool, buffer);
+        biosal_memory_pool_free(&worker->outbound_message_memory_pool, buffer);
 
 #ifdef THORIUM_WORKER_DEBUG_INJECTION
         ++worker->counter_freed_outbound_buffers_from_other_workers;
@@ -268,40 +268,40 @@ void thorium_worker_destroy(struct thorium_worker *worker)
     thorium_worker_print_balance(worker);
 
     printf("THORIUM-> clean_message_queue_for_triage has %d items\n",
-                    bsal_fast_queue_size(&worker->clean_message_queue_for_triage));
+                    biosal_fast_queue_size(&worker->clean_message_queue_for_triage));
     printf("THORIUM-> clean_message_ring_for_triage has %d items\n",
-                    bsal_fast_ring_size_from_producer(&worker->clean_message_ring_for_triage));
+                    biosal_fast_ring_size_from_producer(&worker->clean_message_ring_for_triage));
     printf("THORIUM-> injected_clean_outbound_buffers has %d items\n",
-                    bsal_fast_ring_size_from_producer(&worker->injected_clean_outbound_buffers));
+                    biosal_fast_ring_size_from_producer(&worker->injected_clean_outbound_buffers));
 #endif
 
-    bsal_timer_destroy(&worker->timer);
-    bsal_lock_destroy(&worker->lock);
+    biosal_timer_destroy(&worker->timer);
+    biosal_lock_destroy(&worker->lock);
 
-    bsal_fast_ring_destroy(&worker->actors_to_schedule);
+    biosal_fast_ring_destroy(&worker->actors_to_schedule);
 
 #ifdef THORIUM_NODE_INJECT_CLEAN_WORKER_BUFFERS
-    bsal_fast_ring_destroy(&worker->injected_clean_outbound_buffers);
+    biosal_fast_ring_destroy(&worker->injected_clean_outbound_buffers);
 
-    bsal_fast_ring_destroy(&worker->clean_message_ring_for_triage);
-    bsal_fast_queue_destroy(&worker->clean_message_queue_for_triage);
+    biosal_fast_ring_destroy(&worker->clean_message_ring_for_triage);
+    biosal_fast_queue_destroy(&worker->clean_message_queue_for_triage);
 #endif
 
     thorium_scheduler_destroy(&worker->scheduler);
-    bsal_fast_ring_destroy(&worker->outbound_message_queue);
-    bsal_fast_queue_destroy(&worker->outbound_message_queue_buffer);
+    biosal_fast_ring_destroy(&worker->outbound_message_queue);
+    biosal_fast_queue_destroy(&worker->outbound_message_queue_buffer);
 
-    bsal_map_destroy(&worker->actors);
-    bsal_map_iterator_destroy(&worker->actor_iterator);
-    bsal_set_destroy(&worker->evicted_actors);
+    biosal_map_destroy(&worker->actors);
+    biosal_map_iterator_destroy(&worker->actor_iterator);
+    biosal_set_destroy(&worker->evicted_actors);
 
     worker->node = NULL;
 
     worker->name = -1;
-    bsal_bitmap_set_bit_uint32_t(&worker->flags, FLAG_DEAD);
+    biosal_bitmap_set_bit_uint32_t(&worker->flags, FLAG_DEAD);
 
-    bsal_memory_pool_destroy(&worker->ephemeral_memory);
-    bsal_memory_pool_destroy(&worker->outbound_message_memory_pool);
+    biosal_memory_pool_destroy(&worker->ephemeral_memory);
+    biosal_memory_pool_destroy(&worker->outbound_message_memory_pool);
 
     thorium_priority_assigner_destroy(&worker->assigner);
 }
@@ -331,7 +331,7 @@ void thorium_worker_send(struct thorium_worker *worker, struct thorium_message *
         buffer = thorium_worker_allocate(worker, count);
 
         /* according to
-         * http://stackoverflow.com/questions/3751797/can-i-call-bsal_memory_copy-and-bsal_memory_move-with-number-of-bytes-set-to-zero
+         * http://stackoverflow.com/questions/3751797/can-i-call-biosal_memory_copy-and-biosal_memory_move-with-number-of-bytes-set-to-zero
          * memcpy works with a count of 0, but the addresses must be valid
          * nonetheless
          *
@@ -344,7 +344,7 @@ void thorium_worker_send(struct thorium_worker *worker, struct thorium_message *
                             thorium_message_action(message), count, thorium_message_source(message),
                             thorium_message_destination(message));
 #endif
-            bsal_memory_copy(buffer, old_buffer, count);
+            biosal_memory_copy(buffer, old_buffer, count);
         }
 
         thorium_message_set_buffer(message, buffer);
@@ -395,13 +395,13 @@ void thorium_worker_send(struct thorium_worker *worker, struct thorium_message *
 
 void thorium_worker_start(struct thorium_worker *worker, int processor)
 {
-    bsal_thread_init(&worker->thread, thorium_worker_main, worker);
+    biosal_thread_init(&worker->thread, thorium_worker_main, worker);
 
-    bsal_thread_set_affinity(&worker->thread, processor);
+    biosal_thread_set_affinity(&worker->thread, processor);
 
     worker->started_in_thread = 1;
 
-    bsal_thread_start(&worker->thread);
+    biosal_thread_start(&worker->thread);
 }
 
 void *thorium_worker_main(void *worker1)
@@ -415,7 +415,7 @@ void *thorium_worker_main(void *worker1)
     printf("Starting worker thread\n");
 #endif
 
-    while (!bsal_bitmap_get_bit_uint32_t(&worker->flags, FLAG_DEAD)) {
+    while (!biosal_bitmap_get_bit_uint32_t(&worker->flags, FLAG_DEAD)) {
 
         thorium_worker_run(worker);
     }
@@ -449,11 +449,11 @@ void thorium_worker_stop(struct thorium_worker *worker)
      *
      * Only one thread is changing this value, so no thread are needed.
      */
-    bsal_bitmap_set_bit_uint32_t(&worker->flags, FLAG_DEAD);
+    biosal_bitmap_set_bit_uint32_t(&worker->flags, FLAG_DEAD);
 
     /* Make the change visible to other threads too
      */
-    bsal_memory_fence();
+    biosal_memory_fence();
 
     /* Wake the worker **after** killing it.
      * So basically, there is a case where the worker is killed
@@ -468,14 +468,14 @@ void thorium_worker_stop(struct thorium_worker *worker)
         thorium_worker_signal(worker);
     }
 
-    bsal_thread_join(&worker->thread);
+    biosal_thread_join(&worker->thread);
 
-    worker->loop_end_in_nanoseconds = bsal_timer_get_nanoseconds(&worker->timer);
+    worker->loop_end_in_nanoseconds = biosal_timer_get_nanoseconds(&worker->timer);
 }
 
 int thorium_worker_is_busy(struct thorium_worker *worker)
 {
-    return bsal_bitmap_get_bit_uint32_t(&worker->flags, FLAG_BUSY);
+    return biosal_bitmap_get_bit_uint32_t(&worker->flags, FLAG_BUSY);
 }
 
 
@@ -487,15 +487,15 @@ int thorium_worker_get_scheduled_actor_count(struct thorium_worker *self)
 int thorium_worker_get_scheduled_message_count(struct thorium_worker *worker)
 {
     int value;
-    struct bsal_map_iterator map_iterator;
+    struct biosal_map_iterator map_iterator;
     int actor_name;
     int messages;
     struct thorium_actor *actor;
 
-    bsal_map_iterator_init(&map_iterator, &worker->actors);
+    biosal_map_iterator_init(&map_iterator, &worker->actors);
 
     value = 0;
-    while (bsal_map_iterator_get_next_key_and_value(&map_iterator, &actor_name, NULL)) {
+    while (biosal_map_iterator_get_next_key_and_value(&map_iterator, &actor_name, NULL)) {
 
         actor = thorium_node_get_actor_from_name(worker->node, actor_name);
 
@@ -507,7 +507,7 @@ int thorium_worker_get_scheduled_message_count(struct thorium_worker *worker)
         value += messages;
     }
 
-    bsal_map_iterator_destroy(&map_iterator);
+    biosal_map_iterator_destroy(&map_iterator);
 
     return value;
 }
@@ -549,7 +549,7 @@ float thorium_worker_get_loop_load(struct thorium_worker *worker)
     return loop_load;
 }
 
-struct bsal_memory_pool *thorium_worker_get_ephemeral_memory(struct thorium_worker *worker)
+struct biosal_memory_pool *thorium_worker_get_ephemeral_memory(struct thorium_worker *worker)
 {
     return &worker->ephemeral_memory;
 }
@@ -572,16 +572,16 @@ int thorium_worker_dequeue_actor(struct thorium_worker *worker, struct thorium_a
     /* Move an actor from the ring to the real actor scheduling queue
      */
     while (operations--
-                    && bsal_fast_ring_pop_from_consumer(&worker->actors_to_schedule, &other_actor)) {
+                    && biosal_fast_ring_pop_from_consumer(&worker->actors_to_schedule, &other_actor)) {
 
-#ifdef BSAL_DEBUGGER_ENABLE_ASSERT
+#ifdef BIOSAL_DEBUGGER_ENABLE_ASSERT
         if (other_actor == NULL) {
             printf("NULL pointer pulled from ring, operations %d ring size %d\n",
-                            operations, bsal_fast_ring_size_from_consumer(&worker->actors_to_schedule));
+                            operations, biosal_fast_ring_size_from_consumer(&worker->actors_to_schedule));
         }
 #endif
 
-        BSAL_DEBUGGER_ASSERT(other_actor != NULL);
+        BIOSAL_DEBUGGER_ASSERT(other_actor != NULL);
 
         other_name = thorium_actor_name(other_actor);
 
@@ -589,7 +589,7 @@ int thorium_worker_dequeue_actor(struct thorium_worker *worker, struct thorium_a
         printf("ring.DEQUEUE %d\n", other_name);
 #endif
 
-        if (bsal_set_find(&worker->evicted_actors, &other_name)) {
+        if (biosal_set_find(&worker->evicted_actors, &other_name)) {
 
 #ifdef THORIUM_WORKER_DEBUG_SCHEDULER
             printf("ALREADY EVICTED\n");
@@ -597,16 +597,16 @@ int thorium_worker_dequeue_actor(struct thorium_worker *worker, struct thorium_a
             continue;
         }
 
-        if (!bsal_map_get_value(&worker->actors, &other_name, &status)) {
+        if (!biosal_map_get_value(&worker->actors, &other_name, &status)) {
             /* Add the actor to the list of actors.
              * This does nothing if it is already in the list.
              */
 
             status = STATUS_IDLE;
-            bsal_map_add_value(&worker->actors, &other_name, &status);
+            biosal_map_add_value(&worker->actors, &other_name, &status);
 
-            bsal_map_iterator_destroy(&worker->actor_iterator);
-            bsal_map_iterator_init(&worker->actor_iterator, &worker->actors);
+            biosal_map_iterator_destroy(&worker->actor_iterator);
+            biosal_map_iterator_init(&worker->actor_iterator, &worker->actors);
         }
 
         /* If the actor is not queued, queue it
@@ -614,14 +614,14 @@ int thorium_worker_dequeue_actor(struct thorium_worker *worker, struct thorium_a
         if (status == STATUS_IDLE) {
             status = STATUS_QUEUED;
 
-            bsal_map_update_value(&worker->actors, &other_name, &status);
+            biosal_map_update_value(&worker->actors, &other_name, &status);
 
             thorium_scheduler_enqueue(&worker->scheduler, other_actor);
         } else {
 
 #ifdef THORIUM_WORKER_DEBUG_SCHEDULER
             printf("SCHEDULER %d already scheduled to run, scheduled: %d\n", other_name,
-                            (int)bsal_set_size(&worker->queued_actors));
+                            (int)biosal_set_size(&worker->queued_actors));
 #endif
         }
     }
@@ -661,7 +661,7 @@ int thorium_worker_dequeue_actor(struct thorium_worker *worker, struct thorium_a
              * That could possibly be a problem...
              */
             status = STATUS_IDLE;
-            bsal_map_update_value(&worker->actors, &name, &status);
+            biosal_map_update_value(&worker->actors, &name, &status);
 
         /* The actor still has a lot of messages
          * to process. Keep them coming.
@@ -693,7 +693,7 @@ int thorium_worker_dequeue_actor(struct thorium_worker *worker, struct thorium_a
         } else /* if (mailbox_size == 0) */ {
 
             status = STATUS_IDLE;
-            bsal_map_update_value(&worker->actors, &name, &status);
+            biosal_map_update_value(&worker->actors, &name, &status);
 
             value = 0;
         }
@@ -711,9 +711,9 @@ int thorium_worker_enqueue_actor(struct thorium_worker *worker, struct thorium_a
 {
     int value;
 
-    BSAL_DEBUGGER_ASSERT(actor != NULL);
+    BIOSAL_DEBUGGER_ASSERT(actor != NULL);
 
-    value = bsal_fast_ring_push_from_producer(&worker->actors_to_schedule, &actor);
+    value = biosal_fast_ring_push_from_producer(&worker->actors_to_schedule, &actor);
 
     /*
      * Do a wake up if necessary when scheduling an actor in
@@ -738,11 +738,11 @@ int thorium_worker_enqueue_message(struct thorium_worker *worker, struct thorium
 
     /* Try to push the message in the output ring
      */
-    if (!bsal_fast_ring_push_from_producer(&worker->outbound_message_queue, message)) {
+    if (!biosal_fast_ring_push_from_producer(&worker->outbound_message_queue, message)) {
 
         /* If that does not work, push the message in the queue buffer.
          */
-        bsal_fast_queue_enqueue(&worker->outbound_message_queue_buffer, message);
+        biosal_fast_queue_enqueue(&worker->outbound_message_queue_buffer, message);
 
     }
 
@@ -753,7 +753,7 @@ int thorium_worker_dequeue_message(struct thorium_worker *worker, struct thorium
 {
     int answer;
 
-    answer = bsal_fast_ring_pop_from_consumer(&worker->outbound_message_queue, message);
+    answer = biosal_fast_ring_pop_from_consumer(&worker->outbound_message_queue, message);
 
     if (answer) {
         thorium_message_set_worker(message, worker->name);
@@ -764,7 +764,7 @@ int thorium_worker_dequeue_message(struct thorium_worker *worker, struct thorium
 
 void thorium_worker_print_actors(struct thorium_worker *worker, struct thorium_balancer *scheduler)
 {
-    struct bsal_map_iterator iterator;
+    struct biosal_map_iterator iterator;
     int name;
     int count;
     struct thorium_actor *actor;
@@ -773,7 +773,7 @@ void thorium_worker_print_actors(struct thorium_worker *worker, struct thorium_b
     int received;
     int difference;
     int script;
-    struct bsal_map distribution;
+    struct biosal_map distribution;
     int frequency;
     struct thorium_script *script_object;
     int dead;
@@ -784,7 +784,7 @@ void thorium_worker_print_actors(struct thorium_worker *worker, struct thorium_b
     node_name = thorium_node_name(worker->node);
     worker_name = worker->name;
 
-    bsal_map_iterator_init(&iterator, &worker->actors);
+    biosal_map_iterator_init(&iterator, &worker->actors);
 
     printf("node/%d worker/%d %d queued messages, received: %d busy: %d load: %f ring: %d scheduled actors: %d/%d\n",
                     node_name, worker_name,
@@ -792,13 +792,13 @@ void thorium_worker_print_actors(struct thorium_worker *worker, struct thorium_b
                     thorium_worker_get_sum_of_received_actor_messages(worker),
                     thorium_worker_is_busy(worker),
                     thorium_worker_get_scheduling_epoch_load(worker),
-                    bsal_fast_ring_size_from_producer(&worker->actors_to_schedule),
+                    biosal_fast_ring_size_from_producer(&worker->actors_to_schedule),
                     thorium_scheduler_size(&worker->scheduler),
-                    (int)bsal_map_size(&worker->actors));
+                    (int)biosal_map_size(&worker->actors));
 
-    bsal_map_init(&distribution, sizeof(int), sizeof(int));
+    biosal_map_init(&distribution, sizeof(int), sizeof(int));
 
-    while (bsal_map_iterator_get_next_key_and_value(&iterator, &name, NULL)) {
+    while (biosal_map_iterator_get_next_key_and_value(&iterator, &name, NULL)) {
 
         actor = thorium_node_get_actor_from_name(worker->node, name);
 
@@ -814,17 +814,17 @@ void thorium_worker_print_actors(struct thorium_worker *worker, struct thorium_b
 
         count = thorium_actor_get_mailbox_size(actor);
         received = thorium_actor_get_sum_of_received_messages(actor);
-        producers = bsal_map_size(thorium_actor_get_received_messages(actor));
-        consumers = bsal_map_size(thorium_actor_get_sent_messages(actor));
+        producers = biosal_map_size(thorium_actor_get_received_messages(actor));
+        consumers = biosal_map_size(thorium_actor_get_sent_messages(actor));
         previous_amount = 0;
 
-        bsal_map_get_value(&worker->actor_received_messages, &name,
+        biosal_map_get_value(&worker->actor_received_messages, &name,
                         &previous_amount);
         difference = received - previous_amount;;
 
-        if (!bsal_map_update_value(&worker->actor_received_messages, &name,
+        if (!biosal_map_update_value(&worker->actor_received_messages, &name,
                         &received)) {
-            bsal_map_add_value(&worker->actor_received_messages, &name, &received);
+            biosal_map_add_value(&worker->actor_received_messages, &name, &received);
         }
 
         printf("  [%s/%d] mailbox: %d received: %d (+%d) producers: %d consumers: %d\n",
@@ -835,27 +835,27 @@ void thorium_worker_print_actors(struct thorium_worker *worker, struct thorium_b
 
         script = thorium_actor_script(actor);
 
-        if (bsal_map_get_value(&distribution, &script, &frequency)) {
+        if (biosal_map_get_value(&distribution, &script, &frequency)) {
             ++frequency;
-            bsal_map_update_value(&distribution, &script, &frequency);
+            biosal_map_update_value(&distribution, &script, &frequency);
         } else {
             frequency = 1;
-            bsal_map_add_value(&distribution, &script, &frequency);
+            biosal_map_add_value(&distribution, &script, &frequency);
         }
     }
 
     /*printf("\n");*/
-    bsal_map_iterator_destroy(&iterator);
+    biosal_map_iterator_destroy(&iterator);
 
-    bsal_map_iterator_init(&iterator, &distribution);
+    biosal_map_iterator_init(&iterator, &distribution);
 
     printf("node/%d worker/%d Frequency list\n", node_name, worker_name);
 
-    while (bsal_map_iterator_get_next_key_and_value(&iterator, &script, &frequency)) {
+    while (biosal_map_iterator_get_next_key_and_value(&iterator, &script, &frequency)) {
 
         script_object = thorium_node_find_script(worker->node, script);
 
-        BSAL_DEBUGGER_ASSERT(script_object != NULL);
+        BIOSAL_DEBUGGER_ASSERT(script_object != NULL);
 
         printf("node/%d worker/%d Frequency %s => %d\n",
                         node_name,
@@ -864,20 +864,20 @@ void thorium_worker_print_actors(struct thorium_worker *worker, struct thorium_b
                         frequency);
     }
 
-    bsal_map_iterator_destroy(&iterator);
-    bsal_map_destroy(&distribution);
+    biosal_map_iterator_destroy(&iterator);
+    biosal_map_destroy(&distribution);
 }
 
 void thorium_worker_evict_actor(struct thorium_worker *worker, int actor_name)
 {
     struct thorium_actor *actor;
     int name;
-    struct bsal_fast_queue saved_actors;
+    struct biosal_fast_queue saved_actors;
     int count;
 
-    bsal_set_add(&worker->evicted_actors, &actor_name);
-    bsal_map_delete(&worker->actors, &actor_name);
-    bsal_fast_queue_init(&saved_actors, sizeof(struct thorium_actor *));
+    biosal_set_add(&worker->evicted_actors, &actor_name);
+    biosal_map_delete(&worker->actors, &actor_name);
+    biosal_fast_queue_init(&saved_actors, sizeof(struct thorium_actor *));
 
     /* evict the actor from the scheduling queue
      */
@@ -887,49 +887,49 @@ void thorium_worker_evict_actor(struct thorium_worker *worker, int actor_name)
 
         if (name != actor_name) {
 
-            bsal_fast_queue_enqueue(&saved_actors,
+            biosal_fast_queue_enqueue(&saved_actors,
                             &actor);
         }
     }
 
-    while (bsal_fast_queue_dequeue(&saved_actors, &actor)) {
+    while (biosal_fast_queue_dequeue(&saved_actors, &actor)) {
         thorium_scheduler_enqueue(&worker->scheduler, actor);
     }
 
-    bsal_fast_queue_destroy(&saved_actors);
+    biosal_fast_queue_destroy(&saved_actors);
 
     /* Evict the actor from the ring
      */
 
-    count = bsal_fast_ring_size_from_consumer(&worker->actors_to_schedule);
+    count = biosal_fast_ring_size_from_consumer(&worker->actors_to_schedule);
 
-    while (count-- && bsal_fast_ring_pop_from_consumer(&worker->actors_to_schedule,
+    while (count-- && biosal_fast_ring_pop_from_consumer(&worker->actors_to_schedule,
                             &actor)) {
 
         name = thorium_actor_name(actor);
 
         if (name != actor_name) {
 
-            bsal_fast_ring_push_from_producer(&worker->actors_to_schedule,
+            biosal_fast_ring_push_from_producer(&worker->actors_to_schedule,
                             &actor);
         }
     }
 
-    bsal_map_iterator_destroy(&worker->actor_iterator);
-    bsal_map_iterator_init(&worker->actor_iterator, &worker->actors);
+    biosal_map_iterator_destroy(&worker->actor_iterator);
+    biosal_map_iterator_init(&worker->actor_iterator, &worker->actors);
 }
 
 void thorium_worker_lock(struct thorium_worker *worker)
 {
-    bsal_lock_lock(&worker->lock);
+    biosal_lock_lock(&worker->lock);
 }
 
 void thorium_worker_unlock(struct thorium_worker *worker)
 {
-    bsal_lock_unlock(&worker->lock);
+    biosal_lock_unlock(&worker->lock);
 }
 
-struct bsal_map *thorium_worker_get_actors(struct thorium_worker *worker)
+struct biosal_map *thorium_worker_get_actors(struct thorium_worker *worker)
 {
     return &worker->actors;
 }
@@ -940,7 +940,7 @@ int thorium_worker_enqueue_actor_special(struct thorium_worker *worker, struct t
 
     name = thorium_actor_name(actor);
 
-    bsal_set_delete(&worker->evicted_actors, &name);
+    biosal_set_delete(&worker->evicted_actors, &name);
 
     return thorium_worker_enqueue_actor(worker, actor);
 }
@@ -948,15 +948,15 @@ int thorium_worker_enqueue_actor_special(struct thorium_worker *worker, struct t
 int thorium_worker_get_sum_of_received_actor_messages(struct thorium_worker *worker)
 {
     int value;
-    struct bsal_map_iterator iterator;
+    struct biosal_map_iterator iterator;
     int actor_name;
     int messages;
     struct thorium_actor *actor;
 
-    bsal_map_iterator_init(&iterator, &worker->actors);
+    biosal_map_iterator_init(&iterator, &worker->actors);
 
     value = 0;
-    while (bsal_map_iterator_get_next_key_and_value(&iterator, &actor_name, NULL)) {
+    while (biosal_map_iterator_get_next_key_and_value(&iterator, &actor_name, NULL)) {
 
         actor = thorium_node_get_actor_from_name(worker->node, actor_name);
 
@@ -969,7 +969,7 @@ int thorium_worker_get_sum_of_received_actor_messages(struct thorium_worker *wor
         value += messages;
     }
 
-    bsal_map_iterator_destroy(&iterator);
+    biosal_map_iterator_destroy(&iterator);
 
     return value;
 }
@@ -977,15 +977,15 @@ int thorium_worker_get_sum_of_received_actor_messages(struct thorium_worker *wor
 int thorium_worker_get_queued_messages(struct thorium_worker *worker)
 {
     int value;
-    struct bsal_map_iterator map_iterator;
+    struct biosal_map_iterator map_iterator;
     int actor_name;
     int messages;
     struct thorium_actor *actor;
 
-    bsal_map_iterator_init(&map_iterator, &worker->actors);
+    biosal_map_iterator_init(&map_iterator, &worker->actors);
 
     value = 0;
-    while (bsal_map_iterator_get_next_key_and_value(&map_iterator, &actor_name, NULL)) {
+    while (biosal_map_iterator_get_next_key_and_value(&map_iterator, &actor_name, NULL)) {
 
         actor = thorium_node_get_actor_from_name(worker->node, actor_name);
 
@@ -998,7 +998,7 @@ int thorium_worker_get_queued_messages(struct thorium_worker *worker)
         value += messages;
     }
 
-    bsal_map_iterator_destroy(&map_iterator);
+    biosal_map_iterator_destroy(&map_iterator);
 
     return value;
 
@@ -1009,7 +1009,7 @@ float thorium_worker_get_scheduling_epoch_load(struct thorium_worker *worker)
     uint64_t end_time;
     uint64_t period;
 
-    end_time = bsal_timer_get_nanoseconds(&worker->timer);
+    end_time = biosal_timer_get_nanoseconds(&worker->timer);
 
     period = end_time - worker->scheduling_epoch_start_in_nanoseconds;
 
@@ -1022,22 +1022,22 @@ float thorium_worker_get_scheduling_epoch_load(struct thorium_worker *worker)
 
 void thorium_worker_reset_scheduling_epoch(struct thorium_worker *worker)
 {
-    worker->scheduling_epoch_start_in_nanoseconds = bsal_timer_get_nanoseconds(&worker->timer);
+    worker->scheduling_epoch_start_in_nanoseconds = biosal_timer_get_nanoseconds(&worker->timer);
 
     worker->scheduling_epoch_used_nanoseconds = 0;
 }
 
 int thorium_worker_get_production(struct thorium_worker *worker, struct thorium_balancer *scheduler)
 {
-    struct bsal_map_iterator iterator;
+    struct biosal_map_iterator iterator;
     int name;
     struct thorium_actor *actor;
     int production;
 
     production = 0;
-    bsal_map_iterator_init(&iterator, &worker->actors);
+    biosal_map_iterator_init(&iterator, &worker->actors);
 
-    while (bsal_map_iterator_get_next_key_and_value(&iterator, &name, NULL)) {
+    while (biosal_map_iterator_get_next_key_and_value(&iterator, &name, NULL)) {
 
         actor = thorium_node_get_actor_from_name(worker->node, name);
 
@@ -1049,22 +1049,22 @@ int thorium_worker_get_production(struct thorium_worker *worker, struct thorium_
 
     }
 
-    bsal_map_iterator_destroy(&iterator);
+    biosal_map_iterator_destroy(&iterator);
 
     return production;
 }
 
 int thorium_worker_get_producer_count(struct thorium_worker *worker, struct thorium_balancer *scheduler)
 {
-    struct bsal_map_iterator iterator;
+    struct biosal_map_iterator iterator;
     int name;
     struct thorium_actor *actor;
     int count;
 
     count = 0;
-    bsal_map_iterator_init(&iterator, &worker->actors);
+    biosal_map_iterator_init(&iterator, &worker->actors);
 
-    while (bsal_map_iterator_get_next_key_and_value(&iterator, &name, NULL)) {
+    while (biosal_map_iterator_get_next_key_and_value(&iterator, &name, NULL)) {
 
         actor = thorium_node_get_actor_from_name(worker->node, name);
 
@@ -1078,7 +1078,7 @@ int thorium_worker_get_producer_count(struct thorium_worker *worker, struct thor
 
     }
 
-    bsal_map_iterator_destroy(&iterator);
+    biosal_map_iterator_destroy(&iterator);
     return count;
 }
 
@@ -1097,7 +1097,7 @@ void thorium_worker_free_message(struct thorium_worker *worker, struct thorium_m
 
         /* This is from the current worker
          */
-        bsal_memory_pool_free(&worker->outbound_message_memory_pool, buffer);
+        biosal_memory_pool_free(&worker->outbound_message_memory_pool, buffer);
 #ifdef THORIUM_WORKER_DEBUG_INJECTION
         ++worker->counter_freed_outbound_buffers_from_self;
 #endif
@@ -1108,7 +1108,7 @@ void thorium_worker_free_message(struct thorium_worker *worker, struct thorium_m
          * or from another BIOSAL node altogether.
          */
 
-        BSAL_DEBUGGER_ASSERT(thorium_message_buffer(message) != NULL);
+        BIOSAL_DEBUGGER_ASSERT(thorium_message_buffer(message) != NULL);
         thorium_worker_enqueue_message_for_triage(worker, message);
     }
 }
@@ -1119,11 +1119,11 @@ int thorium_worker_enqueue_message_for_triage(struct thorium_worker *worker, str
     int worker_name;
 #endif
 
-    BSAL_DEBUGGER_ASSERT(thorium_message_buffer(message) != NULL);
+    BIOSAL_DEBUGGER_ASSERT(thorium_message_buffer(message) != NULL);
 
-    if (!bsal_fast_ring_push_from_producer(&worker->clean_message_ring_for_triage, message)) {
+    if (!biosal_fast_ring_push_from_producer(&worker->clean_message_ring_for_triage, message)) {
 
-        bsal_fast_queue_enqueue(&worker->clean_message_queue_for_triage, message);
+        biosal_fast_queue_enqueue(&worker->clean_message_queue_for_triage, message);
 
 #ifdef THORIUM_WORKER_DEBUG_INJECTION
     } else {
@@ -1147,11 +1147,11 @@ int thorium_worker_dequeue_message_for_triage(struct thorium_worker *worker, str
 {
     int value;
 
-    value = bsal_fast_ring_pop_from_consumer(&worker->clean_message_ring_for_triage, message);
+    value = biosal_fast_ring_pop_from_consumer(&worker->clean_message_ring_for_triage, message);
 
-#ifdef BSAL_DEBUGGER_ENABLE_ASSERT
+#ifdef BIOSAL_DEBUGGER_ENABLE_ASSERT
     if (value) {
-        BSAL_DEBUGGER_ASSERT(thorium_message_buffer(message) != NULL);
+        BIOSAL_DEBUGGER_ASSERT(thorium_message_buffer(message) != NULL);
     }
 #endif
 
@@ -1166,9 +1166,9 @@ int thorium_worker_get_message_production_score(struct thorium_worker *worker)
 
     score = 0;
 
-    score += bsal_fast_ring_size_from_producer(&worker->outbound_message_queue);
+    score += biosal_fast_ring_size_from_producer(&worker->outbound_message_queue);
 
-    score += bsal_fast_queue_size(&worker->outbound_message_queue_buffer);
+    score += biosal_fast_queue_size(&worker->outbound_message_queue_buffer);
 
     return score;
 }
@@ -1206,7 +1206,7 @@ void thorium_worker_run(struct thorium_worker *worker)
 
     if (elapsed >= period) {
 
-        current_nanoseconds = bsal_timer_get_nanoseconds(&worker->timer);
+        current_nanoseconds = biosal_timer_get_nanoseconds(&worker->timer);
 
 #ifdef THORIUM_WORKER_DEBUG_LOAD
         printf("DEBUG Updating load report\n");
@@ -1216,7 +1216,7 @@ void thorium_worker_run(struct thorium_worker *worker)
         if (elapsed_nanoseconds > 0) {
             worker->epoch_load = (0.0 + worker->epoch_used_nanoseconds) / elapsed_nanoseconds;
             worker->epoch_used_nanoseconds = 0;
-            worker->last_wake_up_count = bsal_thread_get_wake_up_count(&worker->thread);
+            worker->last_wake_up_count = biosal_thread_get_wake_up_count(&worker->thread);
 
             /* \see http://stackoverflow.com/questions/9657993/negative-zero-in-c
              */
@@ -1243,14 +1243,14 @@ void thorium_worker_run(struct thorium_worker *worker)
         */
 #endif
 
-        if (bsal_bitmap_get_bit_uint32_t(&worker->flags, FLAG_DEBUG_ACTORS)) {
+        if (biosal_bitmap_get_bit_uint32_t(&worker->flags, FLAG_DEBUG_ACTORS)) {
             thorium_worker_print_actors(worker, NULL);
         }
     }
 #endif
 
 #ifdef THORIUM_WORKER_DEBUG
-    if (bsal_bitmap_get_bit_uint32_t(&worker->flags, FLAG_DEBUG)) {
+    if (biosal_bitmap_get_bit_uint32_t(&worker->flags, FLAG_DEBUG)) {
         printf("DEBUG worker/%d thorium_worker_run\n",
                         thorium_worker_name(worker));
     }
@@ -1260,7 +1260,7 @@ void thorium_worker_run(struct thorium_worker *worker)
     if (thorium_worker_dequeue_actor(worker, &actor)) {
 
 #ifdef THORIUM_WORKER_DEBUG
-        message = bsal_work_message(&work);
+        message = biosal_work_message(&work);
         tag = thorium_message_action(message);
         destination = thorium_message_destination(message);
 
@@ -1281,22 +1281,22 @@ void thorium_worker_run(struct thorium_worker *worker)
 #endif
 
 #ifdef THORIUM_NODE_ENABLE_INSTRUMENTATION
-        bsal_timer_start(&worker->timer);
+        biosal_timer_start(&worker->timer);
 #endif
 
-        bsal_bitmap_set_bit_uint32_t(&worker->flags, FLAG_BUSY);
+        biosal_bitmap_set_bit_uint32_t(&worker->flags, FLAG_BUSY);
 
         /*
          * Dispatch message to a worker
          */
         thorium_worker_work(worker, actor);
 
-        bsal_bitmap_clear_bit_uint32_t(&worker->flags, FLAG_BUSY);
+        biosal_bitmap_clear_bit_uint32_t(&worker->flags, FLAG_BUSY);
 
 #ifdef THORIUM_NODE_ENABLE_INSTRUMENTATION
-        bsal_timer_stop(&worker->timer);
+        biosal_timer_stop(&worker->timer);
 
-        elapsed_nanoseconds = bsal_timer_get_elapsed_nanoseconds(&worker->timer);
+        elapsed_nanoseconds = biosal_timer_get_elapsed_nanoseconds(&worker->timer);
 
         if (elapsed_nanoseconds >= THORIUM_GRANULARITY_WARNING_THRESHOLD) {
         }
@@ -1309,11 +1309,11 @@ void thorium_worker_run(struct thorium_worker *worker)
 
     /* queue buffered message
      */
-    if (bsal_fast_queue_dequeue(&worker->outbound_message_queue_buffer, &other_message)) {
+    if (biosal_fast_queue_dequeue(&worker->outbound_message_queue_buffer, &other_message)) {
 
-        if (!bsal_fast_ring_push_from_producer(&worker->outbound_message_queue, &other_message)) {
+        if (!biosal_fast_ring_push_from_producer(&worker->outbound_message_queue, &other_message)) {
 
-            bsal_fast_queue_enqueue(&worker->outbound_message_queue_buffer, &other_message);
+            biosal_fast_queue_enqueue(&worker->outbound_message_queue_buffer, &other_message);
         }
     }
 
@@ -1323,7 +1323,7 @@ void thorium_worker_run(struct thorium_worker *worker)
      */
 
     if (thorium_worker_fetch_clean_outbound_buffer(worker, &buffer)) {
-        bsal_memory_pool_free(&worker->outbound_message_memory_pool, buffer);
+        biosal_memory_pool_free(&worker->outbound_message_memory_pool, buffer);
 
 #ifdef THORIUM_WORKER_DEBUG_INJECTION
         ++worker->counter_freed_outbound_buffers_from_other_workers;
@@ -1335,9 +1335,9 @@ void thorium_worker_run(struct thorium_worker *worker)
      * Transfer messages for triage
      */
 
-    if (bsal_fast_queue_dequeue(&worker->clean_message_queue_for_triage, &other_message)) {
+    if (biosal_fast_queue_dequeue(&worker->clean_message_queue_for_triage, &other_message)) {
 
-        BSAL_DEBUGGER_ASSERT(thorium_message_buffer(&other_message) != NULL);
+        BIOSAL_DEBUGGER_ASSERT(thorium_message_buffer(&other_message) != NULL);
         thorium_worker_enqueue_message_for_triage(worker, &other_message);
     }
 
@@ -1372,7 +1372,7 @@ void thorium_worker_work(struct thorium_worker *worker, struct thorium_actor *ac
     /* lock the actor to prevent another worker from making work
      * on the same actor at the same time
      */
-    if (thorium_actor_trylock(actor) != BSAL_LOCK_SUCCESS) {
+    if (thorium_actor_trylock(actor) != BIOSAL_LOCK_SUCCESS) {
 
         printf("Warning: CONTENTION worker %d could not lock actor %d, returning the message...\n",
                         thorium_worker_name(worker),
@@ -1400,15 +1400,15 @@ void thorium_worker_work(struct thorium_worker *worker, struct thorium_actor *ac
 
     /* Free ephemeral memory
      */
-    bsal_memory_pool_free_all(&worker->ephemeral_memory);
+    biosal_memory_pool_free_all(&worker->ephemeral_memory);
 
     dead = thorium_actor_dead(actor);
 
     if (dead) {
 
-        bsal_map_delete(&worker->actors, &actor_name);
+        biosal_map_delete(&worker->actors, &actor_name);
 
-        if (bsal_bitmap_get_bit_uint32_t(&worker->flags,
+        if (biosal_bitmap_get_bit_uint32_t(&worker->flags,
                                 FLAG_ENABLE_ACTOR_LOAD_PROFILER)) {
             thorium_actor_write_profile(actor, &worker->load_profile_writer);
         }
@@ -1418,7 +1418,7 @@ void thorium_worker_work(struct thorium_worker *worker, struct thorium_actor *ac
     thorium_actor_set_worker(actor, NULL);
 
 #ifdef THORIUM_WORKER_DEBUG_20140601
-    if (bsal_bitmap_get_bit_uint32_t(&worker->flags, FLAG_DEBUG)) {
+    if (biosal_bitmap_get_bit_uint32_t(&worker->flags, FLAG_DEBUG)) {
         printf("DEBUG worker/%d after dead call\n",
                         thorium_worker_name(worker));
     }
@@ -1437,7 +1437,7 @@ void thorium_worker_work(struct thorium_worker *worker, struct thorium_actor *ac
 #endif
 
 #ifdef THORIUM_WORKER_DEBUG_20140601
-    if (bsal_bitmap_get_bit_uint32_t(&worker->flags, FLAG_DEBUG)) {
+    if (biosal_bitmap_get_bit_uint32_t(&worker->flags, FLAG_DEBUG)) {
         printf("DEBUG worker/%d exiting thorium_worker_work\n",
                         thorium_worker_name(worker));
     }
@@ -1451,7 +1451,7 @@ void thorium_worker_wait(struct thorium_worker *worker)
         return;
     }
 
-    bsal_thread_wait(&worker->thread);
+    biosal_thread_wait(&worker->thread);
 }
 
 void thorium_worker_signal(struct thorium_worker *worker)
@@ -1460,17 +1460,17 @@ void thorium_worker_signal(struct thorium_worker *worker)
         return;
     }
 
-    bsal_thread_signal(&worker->thread);
+    biosal_thread_signal(&worker->thread);
 }
 
 uint64_t thorium_worker_get_epoch_wake_up_count(struct thorium_worker *worker)
 {
-    return bsal_thread_get_wake_up_count(&worker->thread) - worker->last_wake_up_count;
+    return biosal_thread_get_wake_up_count(&worker->thread) - worker->last_wake_up_count;
 }
 
 uint64_t thorium_worker_get_loop_wake_up_count(struct thorium_worker *worker)
 {
-    return bsal_thread_get_wake_up_count(&worker->thread);
+    return biosal_thread_get_wake_up_count(&worker->thread);
 }
 
 void thorium_worker_enable_waiting(struct thorium_worker *worker)
@@ -1509,7 +1509,7 @@ void thorium_worker_check_production(struct thorium_worker *worker, int value, i
      */
     if (worker->ticks_without_production >= THORIUM_WORKER_UNPRODUCTIVE_TICK_LIMIT) {
 
-        if (bsal_map_iterator_get_next_key_and_value(&worker->actor_iterator, &name, NULL)) {
+        if (biosal_map_iterator_get_next_key_and_value(&worker->actor_iterator, &name, NULL)) {
 
             other_actor = thorium_node_get_actor_from_name(worker->node, name);
 
@@ -1522,14 +1522,14 @@ void thorium_worker_check_production(struct thorium_worker *worker, int value, i
                 thorium_scheduler_enqueue(&worker->scheduler, other_actor);
 
                 status = STATUS_QUEUED;
-                bsal_map_update_value(&worker->actors, &name, &status);
+                biosal_map_update_value(&worker->actors, &name, &status);
             }
         } else {
 
             /* Rewind the iterator.
              */
-            bsal_map_iterator_destroy(&worker->actor_iterator);
-            bsal_map_iterator_init(&worker->actor_iterator, &worker->actors);
+            biosal_map_iterator_destroy(&worker->actor_iterator);
+            biosal_map_iterator_init(&worker->actor_iterator, &worker->actors);
 
             /*worker->ticks_without_production = 0;*/
         }
@@ -1548,11 +1548,11 @@ void thorium_worker_check_production(struct thorium_worker *worker, int value, i
             /* This is a first warning
              */
             if (worker->waiting_start_time == 0) {
-                worker->waiting_start_time = bsal_timer_get_nanoseconds(&worker->timer);
+                worker->waiting_start_time = biosal_timer_get_nanoseconds(&worker->timer);
 
             } else {
 
-                time = bsal_timer_get_nanoseconds(&worker->timer);
+                time = biosal_timer_get_nanoseconds(&worker->timer);
 
                 elapsed = time - worker->waiting_start_time;
 
@@ -1591,13 +1591,13 @@ void thorium_worker_check_production(struct thorium_worker *worker, int value, i
 
 int thorium_worker_inject_clean_outbound_buffer(struct thorium_worker *self, void *buffer)
 {
-    return bsal_fast_ring_push_from_producer(&self->injected_clean_outbound_buffers,
+    return biosal_fast_ring_push_from_producer(&self->injected_clean_outbound_buffers,
                     &buffer);
 }
 
 int thorium_worker_fetch_clean_outbound_buffer(struct thorium_worker *self, void **buffer)
 {
-    return bsal_fast_ring_pop_from_consumer(&self->injected_clean_outbound_buffers,
+    return biosal_fast_ring_pop_from_consumer(&self->injected_clean_outbound_buffers,
                     buffer);
 }
 
@@ -1631,8 +1631,8 @@ void thorium_worker_examine(struct thorium_worker *self)
 {
     printf("DEBUG_WORKER Name= %d\n", self->name);
 
-    bsal_memory_pool_examine(&self->ephemeral_memory);
-    bsal_memory_pool_examine(&self->outbound_message_memory_pool);
+    biosal_memory_pool_examine(&self->ephemeral_memory);
+    biosal_memory_pool_examine(&self->outbound_message_memory_pool);
 }
 
 int thorium_worker_spawn(struct thorium_worker *self, int script)
@@ -1642,7 +1642,7 @@ int thorium_worker_spawn(struct thorium_worker *self, int script)
     name = thorium_node_spawn(self->node, script);
 
 #if 0
-    if (bsal_bitmap_get_bit_uint32_t(&node->flags, FLAG_ENABLE_ACTOR_LOAD_PROFILER)) {
+    if (biosal_bitmap_get_bit_uint32_t(&node->flags, FLAG_ENABLE_ACTOR_LOAD_PROFILER)) {
         thorium_actor_enable_profiler(actor);
     }
 #endif
@@ -1654,14 +1654,14 @@ void thorium_worker_enable_profiler(struct thorium_worker *self)
 {
     char file_name[100];
 
-    bsal_bitmap_set_bit_uint32_t(&self->flags, FLAG_ENABLE_ACTOR_LOAD_PROFILER);
+    biosal_bitmap_set_bit_uint32_t(&self->flags, FLAG_ENABLE_ACTOR_LOAD_PROFILER);
 
     sprintf(file_name, "node_%d_worker_%d_actor_load_profile.txt", thorium_node_name(self->node),
                     self->name);
 
-    bsal_buffered_file_writer_init(&self->load_profile_writer, file_name);
+    biosal_buffered_file_writer_init(&self->load_profile_writer, file_name);
 
-    bsal_buffered_file_writer_printf(&self->load_profile_writer, "start_time    end_time    actor   script\n");
+    biosal_buffered_file_writer_printf(&self->load_profile_writer, "start_time    end_time    actor   script\n");
 }
 
 void *thorium_worker_allocate(struct thorium_worker *self, size_t count)
@@ -1674,7 +1674,7 @@ void *thorium_worker_allocate(struct thorium_worker *self, size_t count)
     all = count + metadata_size;
 
     /* use slab allocator to allocate buffer... */
-    buffer = (char *)bsal_memory_pool_allocate(&self->outbound_message_memory_pool,
+    buffer = (char *)biosal_memory_pool_allocate(&self->outbound_message_memory_pool,
                     all * sizeof(char));
 
     self->zero_copy_buffer = buffer;

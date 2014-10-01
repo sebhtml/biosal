@@ -1,7 +1,7 @@
 
 #include "debugger.h"
 
-void bsal_debugger_examine(void *pointer, int bytes)
+void biosal_debugger_examine(void *pointer, int bytes)
 {
     int position;
     char *array;

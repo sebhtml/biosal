@@ -22,15 +22,15 @@
 #include <unistd.h>
 
 /*
-#define BSAL_THREAD_DEBUG_WAIT
+#define BIOSAL_THREAD_DEBUG_WAIT
 */
 /*
  * Enable thread affinity by uncommenting this option.
  */
 /*
-#define BSAL_THREAD_SET_AFFINITY
+#define BIOSAL_THREAD_SET_AFFINITY
 */
-void bsal_thread_init(struct bsal_thread *thread, void *(*function)(void *), void *argument)
+void biosal_thread_init(struct biosal_thread *thread, void *(*function)(void *), void *argument)
 {
     thread->function = function;
     thread->argument = argument;
@@ -50,7 +50,7 @@ void bsal_thread_init(struct bsal_thread *thread, void *(*function)(void *), voi
     thread->wake_up_event_count= 0;
 }
 
-void bsal_thread_destroy(struct bsal_thread *thread)
+void biosal_thread_destroy(struct biosal_thread *thread)
 {
     thread->function = NULL;
     thread->argument = NULL;
@@ -60,13 +60,13 @@ void bsal_thread_destroy(struct bsal_thread *thread)
     pthread_cond_destroy(&thread->waiting_condition);
 }
 
-void bsal_thread_start(struct bsal_thread *thread)
+void biosal_thread_start(struct biosal_thread *thread)
 {
     int set_affinity;
 
     set_affinity = 0;
 
-#ifdef BSAL_THREAD_SET_AFFINITY
+#ifdef BIOSAL_THREAD_SET_AFFINITY
     set_affinity = 1;
 #endif
 
@@ -116,31 +116,31 @@ void bsal_thread_start(struct bsal_thread *thread)
     }
 }
 
-void bsal_thread_set_affinity(struct bsal_thread *thread, int processor)
+void biosal_thread_set_affinity(struct biosal_thread *thread, int processor)
 {
     /*
      * Keep the processor value to -1
      * if affinity is not enabled.
      */
-#ifdef BSAL_THREAD_SET_AFFINITY
+#ifdef BIOSAL_THREAD_SET_AFFINITY
     thread->processor = processor;
 #endif
 }
 
-void bsal_thread_join(struct bsal_thread *thread)
+void biosal_thread_join(struct biosal_thread *thread)
 {
     /* http://man7.org/linux/man-pages/man3/pthread_join.3.html
      */
     pthread_join(thread->thread, NULL);
 }
 
-void bsal_set_affinity(int processor)
+void biosal_set_affinity(int processor)
 {
     int set_affinity;
 
     set_affinity = 0;
 
-#ifdef BSAL_THREAD_SET_AFFINITY
+#ifdef BIOSAL_THREAD_SET_AFFINITY
     set_affinity = 1;
 #endif
 
@@ -186,7 +186,7 @@ void bsal_set_affinity(int processor)
 /*
  * Based on the pseudocode at https://computing.llnl.gov/tutorials/pthreads/
  */
-void bsal_thread_wait(struct bsal_thread *thread)
+void biosal_thread_wait(struct biosal_thread *thread)
 {
     if (thread->waiting) {
         /* Don't do anything since the thread is already waiting.
@@ -194,8 +194,8 @@ void bsal_thread_wait(struct bsal_thread *thread)
         return;
     }
 
-#ifdef BSAL_THREAD_DEBUG_WAIT
-    printf("DEBUG bsal_thread_wait: Getting lock now\n");
+#ifdef BIOSAL_THREAD_DEBUG_WAIT
+    printf("DEBUG biosal_thread_wait: Getting lock now\n");
 #endif
 
     pthread_mutex_lock(&thread->waiting_mutex);
@@ -206,10 +206,10 @@ void bsal_thread_wait(struct bsal_thread *thread)
     thread->waiting = 1;
     ++thread->wake_up_event_count;
 
-    bsal_memory_fence();
+    biosal_memory_fence();
 
-#ifdef BSAL_THREAD_DEBUG_WAIT
-    printf("DEBUG bsal_thread_wait enter pthread_cond_wait\n");
+#ifdef BIOSAL_THREAD_DEBUG_WAIT
+    printf("DEBUG biosal_thread_wait enter pthread_cond_wait\n");
 #endif
     /*
      * The wait call below unlocks the mutex such that
@@ -219,8 +219,8 @@ void bsal_thread_wait(struct bsal_thread *thread)
      */
     pthread_cond_wait(&thread->waiting_condition, &thread->waiting_mutex);
 
-#ifdef BSAL_THREAD_DEBUG_WAIT
-    printf("DEBUG bsal_thread_wait exit pthread_cond_wait\n");
+#ifdef BIOSAL_THREAD_DEBUG_WAIT
+    printf("DEBUG biosal_thread_wait exit pthread_cond_wait\n");
 #endif
     /*
      * OK. The thread is not waiting anymore. The thread owns the waiting mutex
@@ -229,7 +229,7 @@ void bsal_thread_wait(struct bsal_thread *thread)
      * Set the waiting variable to 0 and make it visible
      */
     thread->waiting = 0;
-    bsal_memory_fence();
+    biosal_memory_fence();
 
     /*
      * Here, the thread gets the control, and the waiting_mutex is now locked.
@@ -237,12 +237,12 @@ void bsal_thread_wait(struct bsal_thread *thread)
      */
     pthread_mutex_unlock(&thread->waiting_mutex);
 
-#ifdef BSAL_THREAD_DEBUG_WAIT
-    printf("DEBUG bsal_thread_wait released lock\n");
+#ifdef BIOSAL_THREAD_DEBUG_WAIT
+    printf("DEBUG biosal_thread_wait released lock\n");
 #endif
 }
 
-void bsal_thread_signal(struct bsal_thread *thread)
+void biosal_thread_signal(struct biosal_thread *thread)
 {
     /* Don't signal if the thread is not waiting.
      * A lock is not required since the wait call
@@ -252,23 +252,23 @@ void bsal_thread_signal(struct bsal_thread *thread)
         return;
     }
 
-#ifdef BSAL_THREAD_DEBUG_WAIT
-    printf("DEBUG bsal_thread_signal sending signal to thread.\n");
+#ifdef BIOSAL_THREAD_DEBUG_WAIT
+    printf("DEBUG biosal_thread_signal sending signal to thread.\n");
 #endif
 
     /* Otherwise, signal the thread.
      */
     pthread_mutex_lock(&thread->waiting_mutex);
 
-#ifdef BSAL_THREAD_DEBUG_WAIT
-    printf("DEBUG bsal_thread_signal signal got lock\n");
+#ifdef BIOSAL_THREAD_DEBUG_WAIT
+    printf("DEBUG biosal_thread_signal signal got lock\n");
 #endif
 
     pthread_cond_signal(&thread->waiting_condition);
     pthread_mutex_unlock(&thread->waiting_mutex);
 }
 
-uint64_t bsal_thread_get_wake_up_count(struct bsal_thread *thread)
+uint64_t biosal_thread_get_wake_up_count(struct biosal_thread *thread)
 {
     return thread->wake_up_event_count;
 }

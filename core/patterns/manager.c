@@ -16,41 +16,41 @@
 #include <inttypes.h>
 
 /*
-#define BSAL_MANAGER_DEBUG
+#define BIOSAL_MANAGER_DEBUG
 */
 
 #define MEMORY_MANAGER 0x0021b5f1
 
-struct thorium_script bsal_manager_script = {
+struct thorium_script biosal_manager_script = {
     .identifier = SCRIPT_MANAGER,
-    .name = "bsal_manager",
+    .name = "biosal_manager",
     .description = "Manager",
     .author = "Sebastien Boisvert",
     .version = "",
-    .size = sizeof(struct bsal_manager),
-    .init = bsal_manager_init,
-    .destroy = bsal_manager_destroy,
-    .receive = bsal_manager_receive
+    .size = sizeof(struct biosal_manager),
+    .init = biosal_manager_init,
+    .destroy = biosal_manager_destroy,
+    .receive = biosal_manager_receive
 };
 
-void bsal_manager_init(struct thorium_actor *actor)
+void biosal_manager_init(struct thorium_actor *actor)
 {
-    struct bsal_manager *concrete_actor;
+    struct biosal_manager *concrete_actor;
 
-    concrete_actor = (struct bsal_manager *)thorium_actor_concrete_actor(actor);
+    concrete_actor = (struct biosal_manager *)thorium_actor_concrete_actor(actor);
 
-    bsal_vector_init(&concrete_actor->children, sizeof(int));
+    biosal_vector_init(&concrete_actor->children, sizeof(int));
 
     /*
      * Register the route for stopping
      */
 
     thorium_actor_add_action(actor, ACTION_ASK_TO_STOP,
-                    bsal_manager_ask_to_stop);
+                    biosal_manager_ask_to_stop);
 
-    bsal_map_init(&concrete_actor->spawner_child_count, sizeof(int), sizeof(int));
-    bsal_map_init(&concrete_actor->spawner_children, sizeof(int), sizeof(struct bsal_vector));
-    bsal_vector_init(&concrete_actor->indices, sizeof(int));
+    biosal_map_init(&concrete_actor->spawner_child_count, sizeof(int), sizeof(int));
+    biosal_map_init(&concrete_actor->spawner_children, sizeof(int), sizeof(struct biosal_vector));
+    biosal_vector_init(&concrete_actor->indices, sizeof(int));
 
     concrete_actor->ready_spawners = 0;
     concrete_actor->spawners = 0;
@@ -60,52 +60,52 @@ void bsal_manager_init(struct thorium_actor *actor)
     concrete_actor->script = THORIUM_ACTOR_NO_VALUE;
 }
 
-void bsal_manager_destroy(struct thorium_actor *actor)
+void biosal_manager_destroy(struct thorium_actor *actor)
 {
-    struct bsal_manager *concrete_actor;
-    struct bsal_map_iterator iterator;
-    struct bsal_vector *vector;
+    struct biosal_manager *concrete_actor;
+    struct biosal_map_iterator iterator;
+    struct biosal_vector *vector;
 
-    concrete_actor = (struct bsal_manager *)thorium_actor_concrete_actor(actor);
+    concrete_actor = (struct biosal_manager *)thorium_actor_concrete_actor(actor);
 
-    bsal_vector_destroy(&concrete_actor->children);
+    biosal_vector_destroy(&concrete_actor->children);
 
-    bsal_map_destroy(&concrete_actor->spawner_child_count);
+    biosal_map_destroy(&concrete_actor->spawner_child_count);
 
-    bsal_map_iterator_init(&iterator, &concrete_actor->spawner_children);
+    biosal_map_iterator_init(&iterator, &concrete_actor->spawner_children);
 
-    while (bsal_map_iterator_has_next(&iterator)) {
-        bsal_map_iterator_next(&iterator, NULL, (void **)&vector);
+    while (biosal_map_iterator_has_next(&iterator)) {
+        biosal_map_iterator_next(&iterator, NULL, (void **)&vector);
 
-        bsal_vector_destroy(vector);
+        biosal_vector_destroy(vector);
     }
 
-    bsal_map_iterator_destroy(&iterator);
+    biosal_map_iterator_destroy(&iterator);
 
-    bsal_map_destroy(&concrete_actor->spawner_children);
+    biosal_map_destroy(&concrete_actor->spawner_children);
 
-    bsal_vector_destroy(&concrete_actor->indices);
+    biosal_vector_destroy(&concrete_actor->indices);
 }
 
-void bsal_manager_receive(struct thorium_actor *actor, struct thorium_message *message)
+void biosal_manager_receive(struct thorium_actor *actor, struct thorium_message *message)
 {
     int tag;
-    struct bsal_vector spawners;
-    struct bsal_vector_iterator iterator;
+    struct biosal_vector spawners;
+    struct biosal_vector_iterator iterator;
     int *bucket;
     int index;
-    struct bsal_manager *concrete_actor;
-    struct bsal_vector *stores;
+    struct biosal_manager *concrete_actor;
+    struct biosal_vector *stores;
     int spawner;
     int workers;
     void *buffer;
     int source;
     int store;
-    struct bsal_vector all_stores;
+    struct biosal_vector all_stores;
     int new_count;
     void *new_buffer;
     struct thorium_message new_message;
-    struct bsal_memory_pool *ephemeral_memory;
+    struct biosal_memory_pool *ephemeral_memory;
 
     if (thorium_actor_take_action(actor, message)) {
         return;
@@ -114,7 +114,7 @@ void bsal_manager_receive(struct thorium_actor *actor, struct thorium_message *m
     ephemeral_memory = thorium_actor_get_ephemeral_memory(actor);
     source = thorium_message_source(message);
     buffer = thorium_message_buffer(message);
-    concrete_actor = (struct bsal_manager *)thorium_actor_concrete_actor(actor);
+    concrete_actor = (struct biosal_manager *)thorium_actor_concrete_actor(actor);
     tag = thorium_message_action(message);
 
     if (tag == ACTION_START) {
@@ -123,69 +123,69 @@ void bsal_manager_receive(struct thorium_actor *actor, struct thorium_message *m
          */
         if (concrete_actor->script == THORIUM_ACTOR_NO_VALUE) {
 
-            bsal_vector_init(&all_stores, sizeof(int));
+            biosal_vector_init(&all_stores, sizeof(int));
             thorium_actor_send_reply_vector(actor, ACTION_START_REPLY, &all_stores);
-            bsal_vector_destroy(&all_stores);
+            biosal_vector_destroy(&all_stores);
             return;
         }
 
-#ifdef BSAL_MANAGER_DEBUG
+#ifdef BIOSAL_MANAGER_DEBUG
         printf("DEBUG manager %d starts\n",
                         thorium_actor_name(actor));
 #endif
 
-        bsal_vector_init(&spawners, 0);
-        bsal_vector_set_memory_pool(&spawners, ephemeral_memory);
-        bsal_vector_unpack(&spawners, buffer);
+        biosal_vector_init(&spawners, 0);
+        biosal_vector_set_memory_pool(&spawners, ephemeral_memory);
+        biosal_vector_unpack(&spawners, buffer);
 
-        concrete_actor->spawners = bsal_vector_size(&spawners);
+        concrete_actor->spawners = biosal_vector_size(&spawners);
 
         printf("DEBUG manager %d starts, supervisor is %d, %d spawners provided\n",
                         thorium_actor_name(actor), thorium_actor_supervisor(actor),
-                        (int)bsal_vector_size(&spawners));
+                        (int)biosal_vector_size(&spawners));
 
-        bsal_vector_iterator_init(&iterator, &spawners);
+        biosal_vector_iterator_init(&iterator, &spawners);
 
-        while (bsal_vector_iterator_has_next(&iterator)) {
+        while (biosal_vector_iterator_has_next(&iterator)) {
 
-            bsal_vector_iterator_next(&iterator, (void **)&bucket);
+            biosal_vector_iterator_next(&iterator, (void **)&bucket);
 
             spawner = *bucket;
             index = spawner;
 
-            bsal_vector_push_back(&concrete_actor->indices, &index);
+            biosal_vector_push_back(&concrete_actor->indices, &index);
 
             printf("DEBUG manager %d add spawned processes for spawner %d\n",
                             thorium_actor_name(actor), spawner);
 
-            stores = bsal_map_add(&concrete_actor->spawner_children, &index);
+            stores = biosal_map_add(&concrete_actor->spawner_children, &index);
 
-#ifdef BSAL_MANAGER_DEBUG
+#ifdef BIOSAL_MANAGER_DEBUG
             printf("DEBUG adding %d to table\n", index);
 #endif
 
-            bucket = bsal_map_add(&concrete_actor->spawner_child_count, &index);
+            bucket = biosal_map_add(&concrete_actor->spawner_child_count, &index);
             *bucket = 0;
 
-#ifdef BSAL_MANAGER_DEBUG
+#ifdef BIOSAL_MANAGER_DEBUG
             printf("DEBUG685-1 spawner %d index %d bucket %p\n", spawner, index, (void *)bucket);
-            bsal_vector_print_int(thorium_actor_acquaintance_vector(actor));
+            biosal_vector_print_int(thorium_actor_acquaintance_vector(actor));
 #endif
 
-            bsal_vector_init(stores, sizeof(int));
+            biosal_vector_init(stores, sizeof(int));
 
             thorium_actor_send_empty(actor, spawner, ACTION_GET_NODE_WORKER_COUNT);
         }
 
-        bsal_vector_iterator_destroy(&iterator);
-        bsal_vector_destroy(&spawners);
+        biosal_vector_iterator_destroy(&iterator);
+        biosal_vector_destroy(&spawners);
 
     } else if (tag == ACTION_MANAGER_SET_SCRIPT) {
 
         concrete_actor->script = *(int *)buffer;
 
-#ifdef BSAL_MANAGER_DEBUG
-        BSAL_DEBUG_MARKER("set_the_script_now");
+#ifdef BIOSAL_MANAGER_DEBUG
+        BIOSAL_DEBUG_MARKER("set_the_script_now");
 #endif
 
         printf("manager %d sets script to script %x\n",
@@ -193,8 +193,8 @@ void bsal_manager_receive(struct thorium_actor *actor, struct thorium_message *m
 
         thorium_actor_send_reply_empty(actor, ACTION_MANAGER_SET_SCRIPT_REPLY);
 
-#ifdef BSAL_MANAGER_DEBUG
-        BSAL_DEBUG_MARKER("manager sends reply");
+#ifdef BIOSAL_MANAGER_DEBUG
+        BIOSAL_DEBUG_MARKER("manager sends reply");
 #endif
 
     } else if (tag == ACTION_MANAGER_SET_ACTORS_PER_SPAWNER) {
@@ -215,15 +215,15 @@ void bsal_manager_receive(struct thorium_actor *actor, struct thorium_message *m
         printf("DEBUG manager %d says that spawner %d is on a node with %d workers\n",
                         thorium_actor_name(actor), source, workers);
 
-#ifdef BSAL_MANAGER_DEBUG
+#ifdef BIOSAL_MANAGER_DEBUG
         printf("DEBUG getting table index %d\n", index);
 #endif
 
-        bucket = bsal_map_get(&concrete_actor->spawner_child_count, &index);
+        bucket = biosal_map_get(&concrete_actor->spawner_child_count, &index);
 
-#ifdef BSAL_MANAGER_DEBUG
+#ifdef BIOSAL_MANAGER_DEBUG
         printf("DEBUG685-2 spawner %d index %d bucket %p\n", source, index, (void *)bucket);
-        bsal_vector_print_int(thorium_actor_acquaintance_vector(actor));
+        biosal_vector_print_int(thorium_actor_acquaintance_vector(actor));
 #endif
 
         /* Option 1: Use a number of actors for each spawner. This number
@@ -268,64 +268,64 @@ void bsal_manager_receive(struct thorium_actor *actor, struct thorium_message *m
         store = *(int *)buffer;
         index = source;
 
-        stores = bsal_map_get(&concrete_actor->spawner_children, &index);
-        bucket = bsal_map_get(&concrete_actor->spawner_child_count, &index);
+        stores = biosal_map_get(&concrete_actor->spawner_children, &index);
+        bucket = biosal_map_get(&concrete_actor->spawner_child_count, &index);
 
-        bsal_vector_push_back(stores, &store);
+        biosal_vector_push_back(stores, &store);
 
-#ifdef BSAL_MANAGER_DEBUG
+#ifdef BIOSAL_MANAGER_DEBUG
         printf("DEBUG manager %d receives %d from spawner %d, now %d/%d\n",
                         thorium_actor_name(actor), store, source,
-                        (int)bsal_vector_size(stores), *bucket);
+                        (int)biosal_vector_size(stores), *bucket);
 #endif
 
-        if (bsal_vector_size(stores) >= *bucket) {
+        if (biosal_vector_size(stores) >= *bucket) {
 
             concrete_actor->ready_spawners++;
 
             printf("DEBUG manager %d says that spawner %d is ready, %d/%d (spawned %d actors)\n",
                         thorium_actor_name(actor), source,
                         concrete_actor->ready_spawners, concrete_actor->spawners,
-                        (int)bsal_vector_size(stores));
+                        (int)biosal_vector_size(stores));
 
             if (concrete_actor->ready_spawners == concrete_actor->spawners) {
 
                 printf("DEBUG manager %d says that all spawners are ready\n",
                         thorium_actor_name(actor));
 
-                bsal_vector_init(&all_stores, sizeof(int));
+                biosal_vector_init(&all_stores, sizeof(int));
 
-                bsal_vector_iterator_init(&iterator, &concrete_actor->indices);
+                biosal_vector_iterator_init(&iterator, &concrete_actor->indices);
 
-                while (bsal_vector_iterator_has_next(&iterator)) {
-                    bsal_vector_iterator_next(&iterator, (void **)&bucket);
+                while (biosal_vector_iterator_has_next(&iterator)) {
+                    biosal_vector_iterator_next(&iterator, (void **)&bucket);
 
                     index = *bucket;
 
-                    stores = (struct bsal_vector *)bsal_map_get(&concrete_actor->spawner_children,
+                    stores = (struct biosal_vector *)biosal_map_get(&concrete_actor->spawner_children,
                                     &index);
 
-                    bsal_vector_push_back_vector(&all_stores, stores);
+                    biosal_vector_push_back_vector(&all_stores, stores);
                 }
 
-                bsal_vector_iterator_destroy(&iterator);
+                biosal_vector_iterator_destroy(&iterator);
 
-                new_count = bsal_vector_pack_size(&all_stores);
-                new_buffer = bsal_memory_allocate(new_count, MEMORY_MANAGER);
-                bsal_vector_pack(&all_stores, new_buffer);
+                new_count = biosal_vector_pack_size(&all_stores);
+                new_buffer = biosal_memory_allocate(new_count, MEMORY_MANAGER);
+                biosal_vector_pack(&all_stores, new_buffer);
 
                 /*
                  * Save the list of actors for later
                  */
-                bsal_vector_push_back_vector(&concrete_actor->children,
+                biosal_vector_push_back_vector(&concrete_actor->children,
                                 &all_stores);
 
-                bsal_vector_destroy(&all_stores);
+                biosal_vector_destroy(&all_stores);
 
                 thorium_message_init(&new_message, ACTION_START_REPLY, new_count, new_buffer);
                 thorium_actor_send_to_supervisor(actor, &new_message);
 
-                bsal_memory_free(new_buffer, MEMORY_MANAGER);
+                biosal_memory_free(new_buffer, MEMORY_MANAGER);
 
                 thorium_message_destroy(&new_message);
             }
@@ -358,10 +358,10 @@ void bsal_manager_receive(struct thorium_actor *actor, struct thorium_message *m
     }
 }
 
-void bsal_manager_ask_to_stop(struct thorium_actor *actor, struct thorium_message *message)
+void biosal_manager_ask_to_stop(struct thorium_actor *actor, struct thorium_message *message)
 {
 
-    struct bsal_manager *concrete_actor;
+    struct biosal_manager *concrete_actor;
     int i;
     int size;
     int child;
@@ -370,18 +370,18 @@ void bsal_manager_ask_to_stop(struct thorium_actor *actor, struct thorium_messag
                     thorium_actor_script_name(actor),
                     thorium_actor_name(actor));
 
-    concrete_actor = (struct bsal_manager *)thorium_actor_concrete_actor(actor);
+    concrete_actor = (struct biosal_manager *)thorium_actor_concrete_actor(actor);
     thorium_actor_ask_to_stop(actor, message);
 
     /*
      * Stop children too
      */
 
-    size = bsal_vector_size(&concrete_actor->children);
+    size = biosal_vector_size(&concrete_actor->children);
 
     for (i = 0; i < size; i++) {
 
-        child = bsal_vector_at_as_int(&concrete_actor->children, i);
+        child = biosal_vector_at_as_int(&concrete_actor->children, i);
 
         thorium_actor_send_empty(actor, child, ACTION_ASK_TO_STOP);
     }

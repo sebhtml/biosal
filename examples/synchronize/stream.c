@@ -20,8 +20,8 @@ void stream_init(struct thorium_actor *actor)
     stream1->initial_synchronization = 1;
     stream1->ready = 0;
 
-    bsal_vector_init(&stream1->children, sizeof(int));
-    bsal_vector_init(&stream1->spawners, sizeof(int));
+    biosal_vector_init(&stream1->children, sizeof(int));
+    biosal_vector_init(&stream1->spawners, sizeof(int));
     stream1->is_king = 0;
 
     thorium_actor_add_script(actor, SCRIPT_STREAM, &stream_script);
@@ -33,8 +33,8 @@ void stream_destroy(struct thorium_actor *actor)
 
     stream1 = (struct stream *)thorium_actor_concrete_actor(actor);
 
-    bsal_vector_destroy(&stream1->children);
-    bsal_vector_destroy(&stream1->spawners);
+    biosal_vector_destroy(&stream1->children);
+    biosal_vector_destroy(&stream1->spawners);
 }
 
 void stream_receive(struct thorium_actor *actor, struct thorium_message *message)
@@ -57,9 +57,9 @@ void stream_receive(struct thorium_actor *actor, struct thorium_message *message
 
     if (tag == ACTION_START) {
 
-        bsal_vector_init(&stream1->spawners, 0);
-        bsal_vector_unpack(&stream1->spawners, buffer);
-        king = *(int *)bsal_vector_at(&stream1->spawners, bsal_vector_size(&stream1->spawners) / 2);
+        biosal_vector_init(&stream1->spawners, 0);
+        biosal_vector_unpack(&stream1->spawners, buffer);
+        king = *(int *)biosal_vector_at(&stream1->spawners, biosal_vector_size(&stream1->spawners) / 2);
 
         printf("actor %d says that king is %d\n",
                         thorium_actor_name(actor), king);
@@ -73,7 +73,7 @@ void stream_receive(struct thorium_actor *actor, struct thorium_message *message
         while (i < to_spawn) {
             new_actor = thorium_actor_spawn(actor, SCRIPT_STREAM);
 
-            bsal_vector_push_back(&stream1->children, &new_actor);
+            biosal_vector_push_back(&stream1->children, &new_actor);
             i++;
         }
 
@@ -107,10 +107,10 @@ void stream_receive(struct thorium_actor *actor, struct thorium_message *message
 
         if (stream1->ready % 1000 == 0) {
             printf("ACTION_SYNCHRONIZE_REPLY %d/%d\n", stream1->ready,
-                        (int)bsal_vector_size(&stream1->children));
+                        (int)biosal_vector_size(&stream1->children));
         }
 
-        if (stream1->ready == bsal_vector_size(&stream1->children)) {
+        if (stream1->ready == biosal_vector_size(&stream1->children)) {
 
             printf("READY\n");
             thorium_actor_send_range_empty(actor, &stream1->spawners, ACTION_STREAM_DIE);
@@ -123,14 +123,14 @@ void stream_receive(struct thorium_actor *actor, struct thorium_message *message
         /* synchronize with everyone ! */
 
         printf("actor %d sends ACTION_SYNCHRONIZE manually to %d actors\n",
-                        name, (int)bsal_vector_size(&stream1->children));
+                        name, (int)biosal_vector_size(&stream1->children));
 
-        for (i = 0 ; i < bsal_vector_size(&stream1->children); i++) {
+        for (i = 0 ; i < biosal_vector_size(&stream1->children); i++) {
 
             if (i % 1000 == 0) {
-                printf("sending %i/%i\n", i, (int)bsal_vector_size(&stream1->children));
+                printf("sending %i/%i\n", i, (int)biosal_vector_size(&stream1->children));
             }
-            new_actor = *(int *)bsal_vector_at(&stream1->children, i);
+            new_actor = *(int *)biosal_vector_at(&stream1->children, i);
 
             thorium_actor_send_empty(actor, new_actor, ACTION_SYNCHRONIZE);
         }
@@ -138,8 +138,8 @@ void stream_receive(struct thorium_actor *actor, struct thorium_message *message
         printf("done...\n");
     } else if (tag == ACTION_STREAM_DIE) {
 
-        for (i = 0 ; i < bsal_vector_size(&stream1->children); i++) {
-            new_actor = *(int *)bsal_vector_at(&stream1->children, i);
+        for (i = 0 ; i < biosal_vector_size(&stream1->children); i++) {
+            new_actor = *(int *)biosal_vector_at(&stream1->children, i);
 
             thorium_actor_send_empty(actor, new_actor, ACTION_STREAM_DIE);
         }

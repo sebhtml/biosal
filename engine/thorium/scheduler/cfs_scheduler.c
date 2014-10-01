@@ -13,7 +13,7 @@
 #include <inttypes.h>
 #include <stdint.h>
 
-#define BSAL_MEMORY_POOL_NAME_CFS_SCHEDULER 0x97b478ba
+#define BIOSAL_MEMORY_POOL_NAME_CFS_SCHEDULER 0x97b478ba
 
 /*
 #define SHOW_TIMELINE
@@ -37,19 +37,19 @@ void thorium_cfs_scheduler_init(struct thorium_scheduler *self)
 
     concrete_self = self->concrete_self;
 
-    bsal_memory_pool_init(&concrete_self->pool, 131072, BSAL_MEMORY_POOL_NAME_CFS_SCHEDULER);
+    biosal_memory_pool_init(&concrete_self->pool, 131072, BIOSAL_MEMORY_POOL_NAME_CFS_SCHEDULER);
 
-    bsal_red_black_tree_init(&concrete_self->tree, sizeof(uint64_t),
+    biosal_red_black_tree_init(&concrete_self->tree, sizeof(uint64_t),
                     sizeof(struct thorium_actor *), &concrete_self->pool);
 
 #if 0
-    bsal_red_black_tree_set_memory_pool(&concrete_self->tree, &concrete_self->pool);
+    biosal_red_black_tree_set_memory_pool(&concrete_self->tree, &concrete_self->pool);
 #endif
 
     /*
      * Use uint64_t keys for comparison instead of a memory comparison.
      */
-    bsal_red_black_tree_use_uint64_t_keys(&concrete_self->tree);
+    biosal_red_black_tree_use_uint64_t_keys(&concrete_self->tree);
 }
 
 void thorium_cfs_scheduler_destroy(struct thorium_scheduler *self)
@@ -58,11 +58,11 @@ void thorium_cfs_scheduler_destroy(struct thorium_scheduler *self)
 
     concrete_self = self->concrete_self;
 
-    bsal_red_black_tree_destroy(&concrete_self->tree);
+    biosal_red_black_tree_destroy(&concrete_self->tree);
 
-    BSAL_DEBUGGER_ASSERT(bsal_memory_pool_profile_balance_count(&concrete_self->pool) == 0);
+    BIOSAL_DEBUGGER_ASSERT(biosal_memory_pool_profile_balance_count(&concrete_self->pool) == 0);
 
-    bsal_memory_pool_destroy(&concrete_self->pool);
+    biosal_memory_pool_destroy(&concrete_self->pool);
 }
 
 /*
@@ -102,7 +102,7 @@ int thorium_cfs_scheduler_enqueue(struct thorium_scheduler *self, struct thorium
         virtual_runtime = 0;
     }
 
-    bsal_red_black_tree_add_key_and_value(&concrete_self->tree, &virtual_runtime,
+    biosal_red_black_tree_add_key_and_value(&concrete_self->tree, &virtual_runtime,
                     &actor);
 
     return 1;
@@ -121,7 +121,7 @@ int thorium_cfs_scheduler_dequeue(struct thorium_scheduler *self, struct thorium
     virtual_runtime = 0;
 
     concrete_self = self->concrete_self;
-    size = bsal_red_black_tree_size(&concrete_self->tree);
+    size = biosal_red_black_tree_size(&concrete_self->tree);
 
     if (size == 0) {
         return 0;
@@ -139,20 +139,20 @@ int thorium_cfs_scheduler_dequeue(struct thorium_scheduler *self, struct thorium
     /*
      * This is O(N)
      */
-    key = bsal_red_black_tree_get_lowest_key(&concrete_self->tree);
+    key = biosal_red_black_tree_get_lowest_key(&concrete_self->tree);
 
     /*
      * This is O(1) because the tree always keep a cache of the last node.
      */
-    value = bsal_red_black_tree_get(&concrete_self->tree, key);
+    value = biosal_red_black_tree_get(&concrete_self->tree, key);
 
     /*
      * This is also O(1) because the tree keeps a cache of the last node.
      */
-    bsal_red_black_tree_delete(&concrete_self->tree, key);
+    biosal_red_black_tree_delete(&concrete_self->tree, key);
 
-    bsal_memory_copy(&virtual_runtime, key, sizeof(virtual_runtime));
-    bsal_memory_copy(actor, value, sizeof(struct thorium_actor *));
+    biosal_memory_copy(&virtual_runtime, key, sizeof(virtual_runtime));
+    biosal_memory_copy(actor, value, sizeof(struct thorium_actor *));
 
 #if 0
     printf("CFS dequeue -> virtual_runtime= %" PRIu64 " actor= %d\n",
@@ -168,29 +168,29 @@ int thorium_cfs_scheduler_size(struct thorium_scheduler *self)
 
     concrete_self = self->concrete_self;
 
-    return bsal_red_black_tree_size(&concrete_self->tree);
+    return biosal_red_black_tree_size(&concrete_self->tree);
 }
 
 void thorium_cfs_scheduler_print(struct thorium_scheduler *self)
 {
     struct thorium_cfs_scheduler *concrete_self;
-    struct bsal_red_black_tree_iterator iterator;
+    struct biosal_red_black_tree_iterator iterator;
     uint64_t virtual_runtime;
     struct thorium_actor *actor;
     int i;
-    struct bsal_timer timer;
+    struct biosal_timer timer;
 
-    bsal_timer_init(&timer);
+    biosal_timer_init(&timer);
     concrete_self = self->concrete_self;
 
-    bsal_red_black_tree_iterator_init(&iterator, &concrete_self->tree);
+    biosal_red_black_tree_iterator_init(&iterator, &concrete_self->tree);
 
     printf("[cfs_scheduler] %" PRIu64 " ns, timeline contains %d actors\n",
-                    bsal_timer_get_nanoseconds(&timer),
-                    bsal_red_black_tree_size(&concrete_self->tree));
+                    biosal_timer_get_nanoseconds(&timer),
+                    biosal_red_black_tree_size(&concrete_self->tree));
 
     i = 0;
-    while (bsal_red_black_tree_iterator_get_next_key_and_value(&iterator, &virtual_runtime,
+    while (biosal_red_black_tree_iterator_get_next_key_and_value(&iterator, &virtual_runtime,
                             &actor)) {
         printf("[%d] virtual_runtime= %" PRIu64 " actor= %s/%d\n",
                         i, virtual_runtime,
@@ -198,8 +198,8 @@ void thorium_cfs_scheduler_print(struct thorium_scheduler *self)
         ++i;
     }
 
-    bsal_red_black_tree_iterator_destroy(&iterator);
-    bsal_timer_destroy(&timer);
+    biosal_red_black_tree_iterator_destroy(&iterator);
+    biosal_timer_destroy(&timer);
 }
 
 

@@ -62,64 +62,64 @@ void thorium_actor_ask_to_stop(struct thorium_actor *actor, struct thorium_messa
 }
 
 #ifdef THORIUM_ACTOR_EXPOSE_ACQUAINTANCE_VECTOR
-int thorium_actor_get_acquaintance(struct thorium_actor *actor, struct bsal_vector *indices,
+int thorium_actor_get_acquaintance(struct thorium_actor *actor, struct biosal_vector *indices,
                 int index)
 {
     int index2;
 
-    if (index >= bsal_vector_size(indices)) {
+    if (index >= biosal_vector_size(indices)) {
         return THORIUM_ACTOR_NOBODY;
     }
 
-    index2 = bsal_vector_at_as_int(indices, index);
+    index2 = biosal_vector_at_as_int(indices, index);
 
     return thorium_actor_get_acquaintance(actor, index2);
 }
 #endif
 
 #ifdef THORIUM_ACTOR_EXPOSE_ACQUAINTANCE_VECTOR
-void thorium_actor_get_acquaintances(struct thorium_actor *actor, struct bsal_vector *indices,
-                struct bsal_vector *names)
+void thorium_actor_get_acquaintances(struct thorium_actor *actor, struct biosal_vector *indices,
+                struct biosal_vector *names)
 {
-    struct bsal_vector_iterator iterator;
+    struct biosal_vector_iterator iterator;
     int index;
     int *bucket;
     int name;
 
 #if 0 /* The caller must call the constructor first.
          */
-    bsal_vector_init(names, sizeof(int));
+    biosal_vector_init(names, sizeof(int));
 #endif
 
-    bsal_vector_iterator_init(&iterator, indices);
+    biosal_vector_iterator_init(&iterator, indices);
 
-    while (bsal_vector_iterator_has_next(&iterator)) {
-        bsal_vector_iterator_next(&iterator, (void **)&bucket);
+    while (biosal_vector_iterator_has_next(&iterator)) {
+        biosal_vector_iterator_next(&iterator, (void **)&bucket);
 
         index = *bucket;
         name = thorium_actor_get_acquaintance(actor, index);
 
-        bsal_vector_push_back(names, &name);
+        biosal_vector_push_back(names, &name);
     }
 
-    bsal_vector_iterator_destroy(&iterator);
+    biosal_vector_iterator_destroy(&iterator);
 }
 
 #endif
 
 #ifdef THORIUM_ACTOR_EXPOSE_ACQUAINTANCE_VECTOR
 void thorium_actor_add_acquaintances(struct thorium_actor *actor,
-                struct bsal_vector *names, struct bsal_vector *indices)
+                struct biosal_vector *names, struct biosal_vector *indices)
 {
-    struct bsal_vector_iterator iterator;
+    struct biosal_vector_iterator iterator;
     int index;
     int *bucket;
     int name;
 
-    bsal_vector_iterator_init(&iterator, names);
+    biosal_vector_iterator_init(&iterator, names);
 
-    while (bsal_vector_iterator_has_next(&iterator)) {
-        bsal_vector_iterator_next(&iterator, (void **)&bucket);
+    while (biosal_vector_iterator_has_next(&iterator)) {
+        biosal_vector_iterator_next(&iterator, (void **)&bucket);
 
         name = *bucket;
         index = thorium_actor_add_acquaintance(actor, name);
@@ -129,22 +129,22 @@ void thorium_actor_add_acquaintances(struct thorium_actor *actor,
                         name, index);
 #endif
 
-        bsal_vector_push_back(indices, &index);
+        biosal_vector_push_back(indices, &index);
     }
 
-    bsal_vector_iterator_destroy(&iterator);
+    biosal_vector_iterator_destroy(&iterator);
 
 #ifdef THORIUM_ACTOR_HELPER_DEBUG
-    bsal_vector_print_int(names);
+    biosal_vector_print_int(names);
     printf("\n");
-    bsal_vector_print_int(indices);
+    biosal_vector_print_int(indices);
     printf("\n");
 #endif
 }
 #endif
 
 #ifdef THORIUM_ACTOR_EXPOSE_ACQUAINTANCE_VECTOR
-int thorium_actor_get_acquaintance_index(struct thorium_actor *actor, struct bsal_vector *indices,
+int thorium_actor_get_acquaintance_index(struct thorium_actor *actor, struct biosal_vector *indices,
                 int name)
 {
     int i;
@@ -152,11 +152,11 @@ int thorium_actor_get_acquaintance_index(struct thorium_actor *actor, struct bsa
     int actor_name;
     int size;
 
-    size = bsal_vector_size(indices);
+    size = biosal_vector_size(indices);
 
 
     for (i = 0; i < size; ++i) {
-        index = bsal_vector_at_as_int(indices, i);
+        index = biosal_vector_at_as_int(indices, i);
         actor_name = thorium_actor_get_acquaintance(actor, index);
 
         if (actor_name == name) {

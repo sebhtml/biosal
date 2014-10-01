@@ -1,5 +1,5 @@
-#ifndef BSAL_BUFFERED_FILE_WRITER_H
-#define BSAL_BUFFERED_FILE_WRITER_H
+#ifndef BIOSAL_BUFFERED_FILE_WRITER_H
+#define BIOSAL_BUFFERED_FILE_WRITER_H
 
 #include <core/structures/string.h>
 
@@ -9,7 +9,7 @@
 /*
  * A buffered file writer.
  */
-struct bsal_buffered_file_writer {
+struct biosal_buffered_file_writer {
     FILE *descriptor;
     char *buffer;
     char *format_buffer;
@@ -19,20 +19,20 @@ struct bsal_buffered_file_writer {
 
     FILE *null_file;
 
-    struct bsal_string file;
+    struct biosal_string file;
 };
 
-void bsal_buffered_file_writer_init(struct bsal_buffered_file_writer *self, const char *file);
-void bsal_buffered_file_writer_destroy(struct bsal_buffered_file_writer *self);
+void biosal_buffered_file_writer_init(struct biosal_buffered_file_writer *self, const char *file);
+void biosal_buffered_file_writer_destroy(struct biosal_buffered_file_writer *self);
 
-int bsal_buffered_file_writer_write(struct bsal_buffered_file_writer *self,
+int biosal_buffered_file_writer_write(struct biosal_buffered_file_writer *self,
                 const char *data, int length);
-int bsal_buffered_file_writer_printf(struct bsal_buffered_file_writer *self, const char *format,
+int biosal_buffered_file_writer_printf(struct biosal_buffered_file_writer *self, const char *format,
                 ...);
 
-int bsal_buffered_file_writer_flush(struct bsal_buffered_file_writer *self);
+int biosal_buffered_file_writer_flush(struct biosal_buffered_file_writer *self);
 
-size_t bsal_buffered_file_writer_write_back(struct bsal_buffered_file_writer *self,
+size_t biosal_buffered_file_writer_write_back(struct biosal_buffered_file_writer *self,
                 const void *buffer, size_t count);
 
 #endif

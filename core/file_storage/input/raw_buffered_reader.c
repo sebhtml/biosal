@@ -11,38 +11,38 @@
 
 #include <inttypes.h>
 
-struct bsal_buffered_reader_interface bsal_raw_buffered_reader_implementation = {
-    .init = bsal_raw_buffered_reader_init,
-    .destroy = bsal_raw_buffered_reader_destroy,
-    .read_line = bsal_raw_buffered_reader_read_line,
-    .detect = bsal_raw_buffered_reader_detect,
-    .get_offset = bsal_raw_buffered_reader_get_offset,
-    .get_previous_bytes = bsal_raw_buffered_reader_get_previous_bytes,
-    .size = sizeof(struct bsal_raw_buffered_reader)
+struct biosal_buffered_reader_interface biosal_raw_buffered_reader_implementation = {
+    .init = biosal_raw_buffered_reader_init,
+    .destroy = biosal_raw_buffered_reader_destroy,
+    .read_line = biosal_raw_buffered_reader_read_line,
+    .detect = biosal_raw_buffered_reader_detect,
+    .get_offset = biosal_raw_buffered_reader_get_offset,
+    .get_previous_bytes = biosal_raw_buffered_reader_get_previous_bytes,
+    .size = sizeof(struct biosal_raw_buffered_reader)
 };
 
 #define MEMORY_RAW_READER 0xf853376c
 
 /*
-#define BSAL_BUFFERED_READER_DEBUG
+#define BIOSAL_BUFFERED_READER_DEBUG
 */
 
-/*#define BSAL_BUFFERED_READER_BUFFER_SIZE 1048576*/
+/*#define BIOSAL_BUFFERED_READER_BUFFER_SIZE 1048576*/
 
 /*
  * On Mira (Blue Gene/Q with GPFS file system), I/O nodes
  * lock 8-MiB blocks when reading or writing
  */
-#define BSAL_BUFFERED_READER_BUFFER_SIZE 8388608
+#define BIOSAL_BUFFERED_READER_BUFFER_SIZE 8388608
 
-/*#define BSAL_BUFFERED_READER_BUFFER_SIZE 4194304*/
+/*#define BIOSAL_BUFFERED_READER_BUFFER_SIZE 4194304*/
 
-void bsal_raw_buffered_reader_init(struct bsal_buffered_reader *self,
+void biosal_raw_buffered_reader_init(struct biosal_buffered_reader *self,
                 const char *file, uint64_t offset)
 {
-    struct bsal_raw_buffered_reader *reader;
+    struct biosal_raw_buffered_reader *reader;
 
-    reader = bsal_buffered_reader_get_concrete_self(self);
+    reader = biosal_buffered_reader_get_concrete_self(self);
 
     reader->descriptor = fopen(file, "r");
 
@@ -50,25 +50,25 @@ void bsal_raw_buffered_reader_init(struct bsal_buffered_reader *self,
      */
     fseek(reader->descriptor, offset, SEEK_SET);
 
-#ifdef BSAL_BUFFERED_READER_DEBUG
+#ifdef BIOSAL_BUFFERED_READER_DEBUG
     printf("DEBUG fseek %" PRIu64 "\n", offset);
 #endif
 
-    reader->buffer = (char *)bsal_memory_allocate(BSAL_BUFFERED_READER_BUFFER_SIZE * sizeof(char), MEMORY_RAW_READER);
-    reader->buffer_capacity = BSAL_BUFFERED_READER_BUFFER_SIZE;
+    reader->buffer = (char *)biosal_memory_allocate(BIOSAL_BUFFERED_READER_BUFFER_SIZE * sizeof(char), MEMORY_RAW_READER);
+    reader->buffer_capacity = BIOSAL_BUFFERED_READER_BUFFER_SIZE;
     reader->position_in_buffer = 0;
     reader->buffer_size = 0;
 
     reader->offset = offset;
 }
 
-void bsal_raw_buffered_reader_destroy(struct bsal_buffered_reader *self)
+void biosal_raw_buffered_reader_destroy(struct biosal_buffered_reader *self)
 {
-    struct bsal_raw_buffered_reader *reader;
+    struct biosal_raw_buffered_reader *reader;
 
-    reader = bsal_buffered_reader_get_concrete_self(self);
+    reader = biosal_buffered_reader_get_concrete_self(self);
 
-    bsal_memory_free(reader->buffer, MEMORY_RAW_READER);
+    biosal_memory_free(reader->buffer, MEMORY_RAW_READER);
 
     reader->buffer = NULL;
     reader->buffer_capacity = 0;
@@ -79,15 +79,15 @@ void bsal_raw_buffered_reader_destroy(struct bsal_buffered_reader *self)
     reader->descriptor = NULL;
 }
 
-int bsal_raw_buffered_reader_read_line(struct bsal_buffered_reader *self,
+int biosal_raw_buffered_reader_read_line(struct biosal_buffered_reader *self,
                 char *buffer, int length)
 {
     int read;
-    struct bsal_raw_buffered_reader *reader;
+    struct biosal_raw_buffered_reader *reader;
 
-    reader = bsal_buffered_reader_get_concrete_self(self);
+    reader = biosal_buffered_reader_get_concrete_self(self);
 
-    read = bsal_raw_buffered_reader_read_line_private(self, buffer, length);
+    read = biosal_raw_buffered_reader_read_line_private(self, buffer, length);
 
     reader->offset += read;
 
@@ -99,12 +99,12 @@ int bsal_raw_buffered_reader_read_line(struct bsal_buffered_reader *self,
     return read;
 }
 
-int bsal_raw_buffered_reader_read_line_private(struct bsal_buffered_reader *self,
+int biosal_raw_buffered_reader_read_line_private(struct biosal_buffered_reader *self,
                 char *buffer, int length)
 {
-    struct bsal_raw_buffered_reader *reader;
+    struct biosal_raw_buffered_reader *reader;
 
-    reader = bsal_buffered_reader_get_concrete_self(self);
+    reader = biosal_buffered_reader_get_concrete_self(self);
 
     char new_line;
     int position;
@@ -150,7 +150,7 @@ int bsal_raw_buffered_reader_read_line_private(struct bsal_buffered_reader *self
         read = position - reader->position_in_buffer;
 
         if (read > 0)
-            bsal_memory_copy(buffer, reader->buffer + reader->position_in_buffer,
+            biosal_memory_copy(buffer, reader->buffer + reader->position_in_buffer,
                         read);
         buffer[read] = '\0';
 
@@ -158,8 +158,8 @@ int bsal_raw_buffered_reader_read_line_private(struct bsal_buffered_reader *self
          */
         reader->position_in_buffer += read;
 
-#ifdef BSAL_BUFFERED_READER_DEBUG9
-        printf("DEBUG bsal_buffered_reader_read_line has line"
+#ifdef BIOSAL_BUFFERED_READER_DEBUG9
+        printf("DEBUG biosal_buffered_reader_read_line has line"
                         "  %i to %i-1 : %s\n", position,
                         reader->position_in_buffer,
                         buffer);
@@ -169,8 +169,8 @@ int bsal_raw_buffered_reader_read_line_private(struct bsal_buffered_reader *self
     } else {
         /* try to pull some data and do a recursive call
          */
-        if (bsal_raw_buffered_reader_pull(self)) {
-            return bsal_raw_buffered_reader_read_line_private(self, buffer, length);
+        if (biosal_raw_buffered_reader_pull(self)) {
+            return biosal_raw_buffered_reader_read_line_private(self, buffer, length);
         } else {
             return 0;
         }
@@ -181,18 +181,18 @@ int bsal_raw_buffered_reader_read_line_private(struct bsal_buffered_reader *self
     return 0;
 }
 
-int bsal_raw_buffered_reader_pull(struct bsal_buffered_reader *self)
+int biosal_raw_buffered_reader_pull(struct biosal_buffered_reader *self)
 {
     int source;
     int destination;
     int count;
     int available;
     int read;
-    struct bsal_raw_buffered_reader *reader;
+    struct biosal_raw_buffered_reader *reader;
 
-    reader = bsal_buffered_reader_get_concrete_self(self);
+    reader = biosal_buffered_reader_get_concrete_self(self);
 
-#ifdef BSAL_BUFFERED_READER_DEBUG
+#ifdef BIOSAL_BUFFERED_READER_DEBUG
     printf("DEBUG ENTERING position_in_buffer %i, buffer_size %i\n",
                     reader->position_in_buffer,
                     reader->buffer_size);
@@ -202,16 +202,16 @@ int bsal_raw_buffered_reader_pull(struct bsal_buffered_reader *self)
     destination = 0;
     count = reader->buffer_size - reader->position_in_buffer;
 
-#ifdef BSAL_BUFFERED_READER_DEBUG
-    printf("DEBUG bsal_buffered_reader_pull moving data %i to %i\n",
+#ifdef BIOSAL_BUFFERED_READER_DEBUG
+    printf("DEBUG biosal_buffered_reader_pull moving data %i to %i\n",
                     source, destination);
 #endif
 
     if (destination < source) {
-        /* \see http://man7.org/linux/man-pages/man3/bsal_memory_move.3.html
+        /* \see http://man7.org/linux/man-pages/man3/biosal_memory_move.3.html
          * regions may overlap
          */
-        bsal_memory_move(reader->buffer + destination, reader->buffer + source,
+        biosal_memory_move(reader->buffer + destination, reader->buffer + source,
                     count);
 
         reader->position_in_buffer = 0;
@@ -225,14 +225,14 @@ int bsal_raw_buffered_reader_pull(struct bsal_buffered_reader *self)
     read = fread(reader->buffer + reader->buffer_size, 1, available,
                     reader->descriptor);
 
-#ifdef BSAL_BUFFERED_READER_DEBUG
-    printf("DEBUG bsal_buffered_reader_pull available %i, read %i\n",
+#ifdef BIOSAL_BUFFERED_READER_DEBUG
+    printf("DEBUG biosal_buffered_reader_pull available %i, read %i\n",
                     available, read);
 #endif
 
     reader->buffer_size += read;
 
-#ifdef BSAL_BUFFERED_READER_DEBUG
+#ifdef BIOSAL_BUFFERED_READER_DEBUG
     printf("DEBUG EXITING position_in_buffer %i, buffer_size %i\n",
                     reader->position_in_buffer,
                     reader->buffer_size);
@@ -241,32 +241,32 @@ int bsal_raw_buffered_reader_pull(struct bsal_buffered_reader *self)
     return read;
 }
 
-int bsal_raw_buffered_reader_detect(struct bsal_buffered_reader *self,
+int biosal_raw_buffered_reader_detect(struct biosal_buffered_reader *self,
                 const char *file)
 {
     return 1;
 }
 
-uint64_t bsal_raw_buffered_reader_get_offset(struct bsal_buffered_reader *self)
+uint64_t biosal_raw_buffered_reader_get_offset(struct biosal_buffered_reader *self)
 {
-    struct bsal_raw_buffered_reader *reader;
+    struct biosal_raw_buffered_reader *reader;
 
-    reader = bsal_buffered_reader_get_concrete_self(self);
+    reader = biosal_buffered_reader_get_concrete_self(self);
 
     return reader->offset;
 }
 
-int bsal_raw_buffered_reader_get_previous_bytes(struct bsal_buffered_reader *self,
+int biosal_raw_buffered_reader_get_previous_bytes(struct biosal_buffered_reader *self,
                 char *buffer, int length)
 {
 #ifdef CHECK_PREVIOUS
     uint64_t saved_offset;
     uint64_t offset;
-    struct bsal_raw_buffered_reader *reader;
+    struct biosal_raw_buffered_reader *reader;
     int bytes;
     uint64_t to_read;
 
-    reader = bsal_buffered_reader_get_concrete_self(self);
+    reader = biosal_buffered_reader_get_concrete_self(self);
     saved_offset = ftell(reader->descriptor);
 
     offset = saved_offset;

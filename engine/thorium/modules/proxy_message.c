@@ -53,7 +53,7 @@ void thorium_actor_pack_proxy_message(struct thorium_actor *self, struct thorium
     void *buffer;
     void *new_buffer;
     int offset;
-    struct bsal_memory_pool *ephemeral_memory;
+    struct biosal_memory_pool *ephemeral_memory;
 
     ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
     real_tag = thorium_message_action(message);
@@ -63,20 +63,20 @@ void thorium_actor_pack_proxy_message(struct thorium_actor *self, struct thorium
     new_count = count + sizeof(real_source) + sizeof(real_tag);
 
     /* use slab allocator */
-    new_buffer = bsal_memory_pool_allocate(ephemeral_memory, new_count);
+    new_buffer = biosal_memory_pool_allocate(ephemeral_memory, new_count);
 
 #ifdef THORIUM_ACTOR_DEBUG
-    printf("DEBUG12 bsal_memory_pool_allocate %p (pack proxy message)\n",
+    printf("DEBUG12 biosal_memory_pool_allocate %p (pack proxy message)\n",
                     new_buffer);
 #endif
 
     if (count > 0)
-        bsal_memory_copy(new_buffer, buffer, count);
+        biosal_memory_copy(new_buffer, buffer, count);
 
     offset = count;
-    bsal_memory_copy((char *)new_buffer + offset, &real_source, sizeof(real_source));
+    biosal_memory_copy((char *)new_buffer + offset, &real_source, sizeof(real_source));
     offset += sizeof(real_source);
-    bsal_memory_copy((char *)new_buffer + offset, &real_tag, sizeof(real_tag));
+    biosal_memory_copy((char *)new_buffer + offset, &real_tag, sizeof(real_tag));
     offset += sizeof(real_tag);
 
     thorium_message_init(message, ACTION_PROXY_MESSAGE, new_count, new_buffer);
@@ -85,7 +85,7 @@ void thorium_actor_pack_proxy_message(struct thorium_actor *self, struct thorium
 #if 0
     /* free the old buffer
      */
-    bsal_memory_free(buffer);
+    biosal_memory_free(buffer);
     buffer = NULL;
 #endif
 }
