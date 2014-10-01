@@ -1473,6 +1473,8 @@ void thorium_node_notify_death(struct thorium_node *node, struct thorium_actor *
      */
     thorium_actor_destroy(actor);
 
+    bsal_lock_lock(&node->spawn_and_death_lock);
+
     /* free the bytes of the concrete actor */
     bsal_memory_pool_free(&node->actor_memory_pool, state);
     state = NULL;
@@ -1481,8 +1483,6 @@ void thorium_node_notify_death(struct thorium_node *node, struct thorium_actor *
     /* maybe a lock is needed for this
      * because spawn also access this attribute
      */
-
-    bsal_lock_lock(&node->spawn_and_death_lock);
 
     bsal_map_delete(&node->actor_names, &name);
 
