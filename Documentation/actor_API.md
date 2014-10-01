@@ -3,14 +3,14 @@
 All the functions below (except **bsal_node_spawn** which is used
                 to spawn initial actors) must be called within an actor context (inside a
 **bsal_actor_receive_fn_t** function).
-Actors spawned with **bsal_node_spawn** (initial actors) receive a message with tag **BSAL_ACTOR_START**
+Actors spawned with **bsal_node_spawn** (initial actors) receive a message with tag **ACTION_START**
 when the system starts.
 
 When creating actors, the developer needs to provides 3 functions: init
 (**bsal_actor_init_fn_t**), destroy (**bsal_actor_destroy_fn_t**) and receive
 (**bsal_actor_receive_fn_t**)
 (with a **struct bsal_script**). init is called when the actor is spawned, destroy is called
-when **BSAL_ACTOR_STOP** is received, and receive is called whenever a message is received.
+when **ACTION_STOP** is received, and receive is called whenever a message is received.
 
 Custom actor example: [buddy.h](../examples/mock/buddy.h) [buddy.c](../examples/mock/buddy.c)
 
@@ -24,10 +24,10 @@ Custom actor example: [buddy.h](../examples/mock/buddy.h) [buddy.c](../examples/
 
 # Message tags
 
-## BSAL_ACTOR_START
+## ACTION_START
 
 ```C
-BSAL_ACTOR_START
+ACTION_START
 ```
 
 A message with this tag is sent to every actor present when the runtime system starts.
@@ -35,10 +35,10 @@ A message with this tag is sent to every actor present when the runtime system s
 - Request message buffer: not application, this is a received message
 - Responses: none
 
-## BSAL_ACTOR_SPAWN
+## ACTION_SPAWN
 
 ```C
-BSAL_ACTOR_SPAWN
+ACTION_SPAWN
 ```
 
 Spawn a remote actor. [Example](../examples/remote_spawn/table.c)
@@ -47,16 +47,16 @@ Spawn a remote actor. [Example](../examples/remote_spawn/table.c)
 - Responses:
 
 ```C
-BSAL_ACTOR_SPAWN_REPLY
+ACTION_SPAWN_REPLY
 ```
 
 Spawn an actor remotely
 - Response message buffer: actor name
 
-## BSAL_ACTOR_STOP
+## ACTION_STOP
 
 ```C
-BSAL_ACTOR_STOP
+ACTION_STOP
 ```
 
 Stop actor. This message tag can only be sent to an actor by
@@ -65,10 +65,10 @@ itself.
 - Request message buffer: empty
 - Responses: none
 
-## BSAL_ACTOR_PIN
+## ACTION_PIN
 
 ```C
-BSAL_ACTOR_PIN
+ACTION_PIN
 ```
 
 Pin an actor. Can only be sent to an actor by itself.
@@ -76,10 +76,10 @@ Pin an actor. Can only be sent to an actor by itself.
 - Request message buffer: empty
 - Responses: none
 
-## BSAL_ACTOR_UNPIN
+## ACTION_UNPIN
 
 ```C
-BSAL_ACTOR_UNPIN
+ACTION_UNPIN
 ```
 
 Unpin an actor. Can only be sent to an actor by itself.
@@ -87,15 +87,15 @@ Unpin an actor. Can only be sent to an actor by itself.
 - Request message buffer: empty
 - Responses: none
 
-## BSAL_ACTOR_SYNCHRONIZE
+## ACTION_SYNCHRONIZE
 
 The source started a synchronization. To accept the synchronization,
-the reply BSAL_ACTOR_SYNCHRONIZE_REPLY must be sent.
+the reply ACTION_SYNCHRONIZE_REPLY must be sent.
 
-## BSAL_ACTOR_SYNCHRONIZED
+## ACTION_SYNCHRONIZED
 
 ```C
-BSAL_ACTOR_SYNCHRONIZED
+ACTION_SYNCHRONIZED
 ```
 
 Notification of completed synchronization (started with **bsal_actor_synchronize**).
@@ -181,6 +181,6 @@ void bsal_actor_synchronize(struct bsal_actor *actor, int first_actor, int last_
 ```
 
 Begin a synchronization. A binomial-tree algorithm is used.
-A message with tag BSAL_ACTOR_SYNCHRONIZED is received when the
+A message with tag ACTION_SYNCHRONIZED is received when the
 synchronization has completed.
 

@@ -20,7 +20,7 @@ int bsal_node_spawn(struct bsal_node *node, int script);
 ```
 
 Spawn an actor. This is usually used to spawn the first actor of a node.
-Actors spawned with this function will receive a message with tag BSAL_ACTOR_START.
+Actors spawned with this function will receive a message with tag ACTION_START.
 
 ## bsal_node_add_script
 
