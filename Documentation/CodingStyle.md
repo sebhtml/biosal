@@ -1,23 +1,23 @@
 
 # Coding style
 
-
-Thorium things have the prefix thorium_ or THORIUM_
-
-BIOSAL things are prefixed with bsal_ or BSAL_.
-
-Any message tag must use the previx ACTION_
-
-Any actor script identifier must start with SCRIPT_
-
-
-New tags can be generated with ./scripts/generate-random-tag.py
-
-
 K & R style with 4 spaces for indentation
 http://en.wikipedia.org/wiki/Indent_style#K.26R_style
 
-The name of function types end with  *_fn_t
+# Names
 
-Whenever possible, use self for the current object like in Ruby, Smalltalk, Apple Swift
+| Project | Symbol prefix | Constant prefix |
+| --- | --- | --- |
+| Thorium actor engine (engine/thorium/) | thorium_ | THORIUM_ |
+| core support code (core/) things (support code) | core_ | CORE_ |
+| Actor library | biosal_ | BIOSAL_ |
+
+Any message action must use the prefix ACTION_.
+Any actor script identifier must start with SCRIPT_.
+
+New actions can be generated with ./scripts/generate-random-tag.py
+
+Use self for the current object like in Ruby, Smalltalk, Apple Swift
 or in Objective C.
+
+The name of function types end with  *_fn_t

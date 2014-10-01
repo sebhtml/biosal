@@ -3,7 +3,7 @@
 All the functions below (except **bsal_node_spawn** which is used
                 to spawn initial actors) must be called within an actor context (inside a
 **bsal_actor_receive_fn_t** function).
-Actors spawned with **bsal_node_spawn** (initial actors) receive a message with tag **ACTION_START**
+Actors spawned with **bsal_node_spawn** (initial actors) receive a message with action **ACTION_START**
 when the system starts.
 
 When creating actors, the developer needs to provides 3 functions: init
@@ -22,7 +22,7 @@ Custom actor example: [buddy.h](../examples/mock/buddy.h) [buddy.c](../examples/
 
 ([engine/actor.h](../engine/actor.h))
 
-# Message tags
+# Message actions
 
 ## ACTION_START
 
@@ -30,7 +30,7 @@ Custom actor example: [buddy.h](../examples/mock/buddy.h) [buddy.c](../examples/
 ACTION_START
 ```
 
-A message with this tag is sent to every actor present when the runtime system starts.
+A message with this action is sent to every actor present when the runtime system starts.
 
 - Request message buffer: not application, this is a received message
 - Responses: none
@@ -59,7 +59,7 @@ Spawn an actor remotely
 ACTION_STOP
 ```
 
-Stop actor. This message tag can only be sent to an actor by
+Stop actor. This message action can only be sent to an actor by
 itself.
 
 - Request message buffer: empty
@@ -181,6 +181,6 @@ void bsal_actor_synchronize(struct bsal_actor *actor, int first_actor, int last_
 ```
 
 Begin a synchronization. A binomial-tree algorithm is used.
-A message with tag ACTION_SYNCHRONIZED is received when the
+A message with action ACTION_SYNCHRONIZED is received when the
 synchronization has completed.
 

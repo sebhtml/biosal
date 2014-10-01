@@ -288,8 +288,16 @@ void thorium_actor_init(struct thorium_actor *self, void *state,
                 struct thorium_script *script, int name, struct thorium_node *node);
 void thorium_actor_destroy(struct thorium_actor *self);
 
+/*
+ * Get the current actor name.
+ */
 int thorium_actor_name(struct thorium_actor *self);
+
+/*
+ * Get the concrete actor (as a void *) from the abstract actor (struct thorium_actor *
+ */
 void *thorium_actor_concrete_actor(struct thorium_actor *self);
+
 void thorium_actor_set_name(struct thorium_actor *self, int name);
 
 void thorium_actor_set_worker(struct thorium_actor *self, struct thorium_worker *worker);
@@ -303,7 +311,8 @@ thorium_actor_init_fn_t thorium_actor_get_init(struct thorium_actor *self);
 thorium_actor_destroy_fn_t thorium_actor_get_destroy(struct thorium_actor *self);
 thorium_actor_receive_fn_t thorium_actor_get_receive(struct thorium_actor *self);
 
-/* send functions
+/*
+ * Send function
  */
 void thorium_actor_send(struct thorium_actor *self, int destination, struct thorium_message *message);
 
