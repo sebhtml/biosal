@@ -577,11 +577,25 @@ int thorium_node_spawn(struct thorium_node *node, int script)
         return -1;
     }
 
+    /*
+     * Get the number of bytes required to create such an actor.
+     */
     size = thorium_script_size(script1);
 
-    state = core_memory_pool_allocate(&node->actor_memory_pool, size);
+    /*
+     * Lock the node for:
+     * allocating and initializing the actor (and
+     * also generating and registering a name.
+     */
+    core_lock_lock(&node->spawn_and_death_lock);
 
+    state = core_memory_pool_allocate(&node->actor_memory_pool, size);
     name = thorium_node_spawn_state(node, state, script1);
+
+    /*
+     * Make the name visible to other cores.
+     */
+    core_memory_fence();
 
     /* send the initial actor to the master node
      */
@@ -607,6 +621,8 @@ int thorium_node_spawn(struct thorium_node *node, int script)
                     name, script);
 #endif
 
+    core_lock_unlock(&node->spawn_and_death_lock);
+
     return name;
 }
 
@@ -628,8 +644,6 @@ int thorium_node_spawn_state(struct thorium_node *node, void *state,
 #ifdef THORIUM_NODE_DEBUG
     printf("DEBUG thorium_node_spawn_state\n");
 #endif
-
-    core_lock_lock(&node->spawn_and_death_lock);
 
     /* add an actor in the vector of actors
      */
@@ -664,8 +678,6 @@ int thorium_node_spawn_state(struct thorium_node *node, void *state,
 #endif
 
     node->alive_actors++;
-
-    core_lock_unlock(&node->spawn_and_death_lock);
 
     return name;
 }
@@ -1468,9 +1480,13 @@ void thorium_node_notify_death(struct thorium_node *node, struct thorium_actor *
     printf("----------------------------------------------\n");
 #endif
 
-    /* destroy the abstract actor.
-     * this calls destroy on the concrete actor
-     * too
+    /*
+     * Destroy the abstract actor.
+     * This calls destroy on the concrete actor
+     * too.
+     *
+     * After that, the memory can be released and
+     * the actor name unregistered.
      */
     thorium_actor_destroy(actor);
 
@@ -1528,9 +1544,9 @@ void thorium_node_notify_death(struct thorium_node *node, struct thorium_actor *
                         node->alive_actors, node->dead_actors);
     }
 
-    core_lock_unlock(&node->spawn_and_death_lock);
-
     core_counter_add(&node->counter, CORE_COUNTER_KILLED_ACTORS, 1);
+
+    core_lock_unlock(&node->spawn_and_death_lock);
 
 #ifdef THORIUM_NODE_DEBUG_20140601_8
     printf("DEBUG exiting thorium_node_notify_death\n");
