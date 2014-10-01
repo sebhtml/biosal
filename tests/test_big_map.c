@@ -28,7 +28,7 @@ int main(int argc, char **argv)
         struct biosal_dna_codec codec;
         struct core_memory_pool memory;
 
-        core_memory_pool_init(&memory, 1048576, CORE_MEMORY_POOL_NAME_OTHER);
+        core_memory_pool_init(&memory, 1048576, -1);
         biosal_dna_codec_init(&codec);
 
         run_test = 1;

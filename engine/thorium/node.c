@@ -30,6 +30,11 @@
 
 #include <inttypes.h>
 
+#define MEMORY_POOL_NAME_NODE_INBOUND      0xee1344f0
+#define MEMORY_POOL_NAME_NODE_OUTBOUND     0xf3ad5880
+#define MEMORY_POOL_NAME_NONE              0xcef49361
+#define MEMORY_POOL_NAME_ACTORS            0x37ddf367
+
 /* options */
 /*
 #define THORIUM_NODE_DEBUG_ACTOR_COUNTERS
@@ -135,13 +140,11 @@ void thorium_node_init(struct thorium_node *node, int *argc, char ***argv)
      * Build memory pools
      */
 
-    core_memory_pool_init(&node->actor_memory_pool, 2097152, CORE_MEMORY_POOL_NAME_ACTORS);
+    core_memory_pool_init(&node->actor_memory_pool, 2097152, MEMORY_POOL_NAME_ACTORS);
     core_memory_pool_disable(&node->actor_memory_pool);
 
     core_memory_pool_init(&node->inbound_message_memory_pool,
-                    CORE_MEMORY_POOL_MESSAGE_BUFFER_BLOCK_SIZE, CORE_MEMORY_POOL_NAME_NODE_INBOUND);
-    core_memory_pool_set_name(&node->inbound_message_memory_pool,
-                    CORE_MEMORY_POOL_NAME_NODE_INBOUND);
+                    CORE_MEMORY_POOL_MESSAGE_BUFFER_BLOCK_SIZE, MEMORY_POOL_NAME_NODE_INBOUND);
     core_memory_pool_enable_normalization(&node->inbound_message_memory_pool);
     core_memory_pool_enable_alignment(&node->inbound_message_memory_pool);
 
@@ -150,9 +153,7 @@ void thorium_node_init(struct thorium_node *node, int *argc, char ***argv)
 #endif
 
     core_memory_pool_init(&node->outbound_message_memory_pool,
-                    CORE_MEMORY_POOL_MESSAGE_BUFFER_BLOCK_SIZE, CORE_MEMORY_POOL_NAME_NODE_OUTBOUND);
-    core_memory_pool_set_name(&node->outbound_message_memory_pool,
-                    CORE_MEMORY_POOL_NAME_NODE_OUTBOUND);
+                    CORE_MEMORY_POOL_MESSAGE_BUFFER_BLOCK_SIZE, MEMORY_POOL_NAME_NODE_OUTBOUND);
 
     core_memory_pool_enable_normalization(&node->outbound_message_memory_pool);
     core_memory_pool_enable_alignment(&node->outbound_message_memory_pool);

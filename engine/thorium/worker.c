@@ -27,6 +27,10 @@
 /*#define THORIUM_WORKER_DEBUG
   */
 
+#define MEMORY_POOL_NAME_WORKER_EPHEMERAL  0x2ee1c5a6
+#define MEMORY_POOL_NAME_WORKER_OUTBOUND   0x46d316e4
+
+
 #define STATUS_IDLE 0
 #define STATUS_QUEUED 1
 
@@ -189,8 +193,7 @@ void thorium_worker_init(struct thorium_worker *worker, int name, struct thorium
     ephemeral_memory_block_size = 8388608;
     /*ephemeral_memory_block_size = 16777216;*/
     core_memory_pool_init(&worker->ephemeral_memory, ephemeral_memory_block_size,
-                    CORE_MEMORY_POOL_NAME_WORKER_EPHEMERAL);
-    core_memory_pool_set_name(&worker->ephemeral_memory, CORE_MEMORY_POOL_NAME_WORKER_EPHEMERAL);
+                    MEMORY_POOL_NAME_WORKER_EPHEMERAL);
 
     core_memory_pool_disable_tracking(&worker->ephemeral_memory);
     core_memory_pool_enable_ephemeral_mode(&worker->ephemeral_memory);
@@ -199,9 +202,7 @@ void thorium_worker_init(struct thorium_worker *worker, int name, struct thorium
     core_set_init(&worker->evicted_actors, sizeof(int));
 
     core_memory_pool_init(&worker->outbound_message_memory_pool,
-                    CORE_MEMORY_POOL_MESSAGE_BUFFER_BLOCK_SIZE, CORE_MEMORY_POOL_NAME_WORKER_OUTBOUND);
-    core_memory_pool_set_name(&worker->outbound_message_memory_pool,
-                    CORE_MEMORY_POOL_NAME_WORKER_OUTBOUND);
+                    CORE_MEMORY_POOL_MESSAGE_BUFFER_BLOCK_SIZE, MEMORY_POOL_NAME_WORKER_OUTBOUND);
 
     /*
      * Disable the pool so that it uses allocate and free

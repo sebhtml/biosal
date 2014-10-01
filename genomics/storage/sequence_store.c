@@ -19,6 +19,8 @@
 
 #include <inttypes.h>
 
+#define MEMORY_POOL_NAME_SEQUENCE_STORE    0x84a83916
+
 /*
 #define BIOSAL_SEQUENCE_STORE_DEBUG
 */
@@ -48,7 +50,7 @@ void biosal_sequence_store_init(struct thorium_actor *actor)
 
     /* 2^26 */
     core_memory_pool_init(&concrete_actor->persistent_memory, block_size,
-                    CORE_MEMORY_POOL_NAME_SEQUENCE_STORE);
+                    MEMORY_POOL_NAME_SEQUENCE_STORE);
     core_memory_pool_disable_tracking(&concrete_actor->persistent_memory);
 
     core_vector_init(&concrete_actor->sequences, sizeof(struct biosal_dna_sequence));

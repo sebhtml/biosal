@@ -32,7 +32,7 @@ int main(int argc, char **argv)
 
     kmer_length = strlen(sequence);
     biosal_dna_codec_init(&codec);
-    core_memory_pool_init(&pool, 1000000, CORE_MEMORY_POOL_NAME_OTHER);
+    core_memory_pool_init(&pool, 1000000, -1);
 
     biosal_dna_kmer_init(&kmer, sequence, &codec, &pool);
 

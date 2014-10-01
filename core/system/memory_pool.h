@@ -14,16 +14,6 @@
 /*
 */
 
-#define CORE_MEMORY_POOL_NAME_WORKER_EPHEMERAL  0x2ee1c5a6
-#define CORE_MEMORY_POOL_NAME_WORKER_OUTBOUND   0x46d316e4
-#define CORE_MEMORY_POOL_NAME_NODE_INBOUND      0xee1344f0
-#define CORE_MEMORY_POOL_NAME_NODE_OUTBOUND     0xf3ad5880
-#define CORE_MEMORY_POOL_NAME_NONE              0xcef49361
-#define CORE_MEMORY_POOL_NAME_ACTORS            0x37ddf367
-#define CORE_MEMORY_POOL_NAME_SEQUENCE_STORE    0x84a83916
-#define CORE_MEMORY_POOL_NAME_OTHER             0x8b5b96d6
-#define CORE_MEMORY_POOL_NAME_GRAPH_STORE       0x89e9235d
-
 /*
  * Disable particular memory pool on IBM
  * Blue Gene/Q because otherwise it does not

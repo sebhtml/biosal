@@ -23,7 +23,7 @@ int main(int argc, char **argv)
     void *buffer_for_pack;
     struct core_memory_pool memory;
 
-    core_memory_pool_init(&memory, 4194304, CORE_MEMORY_POOL_NAME_OTHER);
+    core_memory_pool_init(&memory, 4194304, -1);
     buffer = core_memory_allocate(101, -1);
     strcpy((char *)buffer, "TCCCGAGCGCAGGTAGGCCTCGGGATCGATGTCCGGGGTGTTGAGGATGTTGGACGTGTATTCGTGGTTGTACTGGGTCCAGTCCGCCACCGGGCGCCGC");
     biosal_dna_codec_init(&codec);

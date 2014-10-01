@@ -37,6 +37,9 @@
 
 #define BIOSAL_DEBUG_ISSUE_540
 
+#define MEMORY_POOL_NAME_OTHER             0x8b5b96d6
+#define MEMORY_POOL_NAME_GRAPH_STORE       0x89e9235d
+
 struct thorium_script biosal_assembly_graph_store_script = {
     .identifier = SCRIPT_ASSEMBLY_GRAPH_STORE,
     .name = "biosal_assembly_graph_store",
@@ -60,7 +63,7 @@ void biosal_assembly_graph_store_init(struct thorium_actor *self)
     concrete_self = thorium_actor_concrete_actor(self);
 
     core_memory_pool_init(&concrete_self->persistent_memory, 0,
-                    CORE_MEMORY_POOL_NAME_GRAPH_STORE);
+                    MEMORY_POOL_NAME_GRAPH_STORE);
 
     concrete_self->consumed_canonical_vertex_count = 0;
 

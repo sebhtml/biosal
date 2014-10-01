@@ -80,6 +80,8 @@
 #define PATH_STATUS_IN_PROGRESS_WITH_CHALLENGERS 6
 #define PATH_STATUS_DUPLICATE_VERTEX 7
 
+#define MEMORY_POOL_NAME_WALKER 0x78e238cd
+
 struct thorium_script biosal_unitig_walker_script = {
     .identifier = SCRIPT_UNITIG_WALKER,
     .name = "biosal_unitig_walker",
@@ -112,7 +114,7 @@ void biosal_unitig_walker_init(struct thorium_actor *self)
      * Initialize the memory pool first.
      */
     core_memory_pool_init(&concrete_self->memory_pool, 1048576,
-                    CORE_MEMORY_POOL_NAME_OTHER);
+                    MEMORY_POOL_NAME_WALKER);
     core_map_init(&concrete_self->path_statuses, sizeof(int), sizeof(struct biosal_path_status));
     core_map_set_memory_pool(&concrete_self->path_statuses, &concrete_self->memory_pool);
 

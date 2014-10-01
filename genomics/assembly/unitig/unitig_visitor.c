@@ -21,6 +21,8 @@
 #define STEP_DECIDE_CHILD 9
 #define STEP_MARK_UNITIG 10
 
+#define MEMORY_POOL_NAME_VISITOR 0x185945f7
+
 struct thorium_script biosal_unitig_visitor_script = {
     .identifier = SCRIPT_UNITIG_VISITOR,
     .name = "biosal_unitig_visitor",
@@ -37,7 +39,7 @@ void biosal_unitig_visitor_init(struct thorium_actor *self)
 
     concrete_self = (struct biosal_unitig_visitor *)thorium_actor_concrete_actor(self);
     core_memory_pool_init(&concrete_self->memory_pool, 131072,
-                    CORE_MEMORY_POOL_NAME_OTHER);
+                    MEMORY_POOL_NAME_VISITOR);
 
     core_vector_init(&concrete_self->graph_stores, sizeof(int));
     core_vector_set_memory_pool(&concrete_self->graph_stores, &concrete_self->memory_pool);

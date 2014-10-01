@@ -67,7 +67,7 @@ int main(int argc, char **argv)
     {
         struct core_memory_pool memory;
 
-        core_memory_pool_init(&memory, 16777216, CORE_MEMORY_POOL_NAME_OTHER);
+        core_memory_pool_init(&memory, 16777216, -1);
 
         test_allocator(&memory);
 
