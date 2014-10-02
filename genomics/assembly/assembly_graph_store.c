@@ -1289,10 +1289,10 @@ void biosal_assembly_graph_store_set_vertex_flag(struct thorium_actor *self,
 
     position = 0;
     position += biosal_dna_kmer_unpack(&transport_kmer, buffer, concrete_self->kmer_length,
-                    ephemeral_memory, &concrete_self->storage_codec);
+                    ephemeral_memory, &concrete_self->transport_codec);
     core_memory_copy(&flag, buffer + position, sizeof(flag));
     position += sizeof(flag);
-    CORE_DEBUGGER_ASSERT(position == count);
+    CORE_DEBUGGER_ASSERT_IS_EQUAL_INT(position, count);
 
     CORE_DEBUGGER_ASSERT(flag >= BIOSAL_VERTEX_FLAG_START_VALUE);
     CORE_DEBUGGER_ASSERT(flag <= BIOSAL_VERTEX_FLAG_END_VALUE);
