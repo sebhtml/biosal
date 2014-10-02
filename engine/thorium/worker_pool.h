@@ -30,13 +30,15 @@ struct thorium_worker_pool {
 
     struct core_fast_queue messages_for_triage;
 
-    int workers;
+    int worker_count;
     struct core_vector worker_array;
     struct thorium_worker *worker_cache;
     char waiting_is_enabled;
 
+#ifdef THORIUM_WORKER_POOL_USE_COUNT_CACHE
     struct core_vector message_count_cache;
     int *message_cache;
+#endif
 
     struct thorium_node *node;
 
@@ -71,6 +73,8 @@ void thorium_worker_pool_stop(struct thorium_worker_pool *self);
 
 struct thorium_worker *thorium_worker_pool_select_worker_for_run(struct thorium_worker_pool *self);
 struct thorium_worker *thorium_worker_pool_select_worker_for_message(struct thorium_worker_pool *self);
+struct thorium_worker *thorium_worker_pool_select_worker_for_message_round_robin(struct thorium_worker_pool *pool);
+
 int thorium_worker_pool_next_worker(struct thorium_worker_pool *node, int thread);
 
 int thorium_worker_pool_worker_count(struct thorium_worker_pool *self);
@@ -87,8 +91,11 @@ void thorium_worker_pool_schedule_work_classic(struct thorium_worker_pool *self,
 #endif
 
 void thorium_worker_pool_toggle_debug_mode(struct thorium_worker_pool *self);
+
+#ifdef THORIUM_WORKER_POOL_USE_COUNT_CACHE
 void thorium_worker_pool_set_cached_value(struct thorium_worker_pool *self, int index, int value);
 int thorium_worker_pool_get_cached_value(struct thorium_worker_pool *self, int index);
+#endif
 
 int thorium_worker_pool_enqueue_message(struct thorium_worker_pool *self, struct thorium_message *message);
 int thorium_worker_pool_dequeue_message(struct thorium_worker_pool *self, struct thorium_message *message);

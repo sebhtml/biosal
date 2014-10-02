@@ -72,15 +72,15 @@ void thorium_worker_pool_init(struct thorium_worker_pool *pool, int workers,
     pool->last_warning = 0;
     pool->last_scheduling_warning = 0;
 
-    pool->workers = workers;
+    pool->worker_count = workers;
+
+    pool->worker_for_run = 0;
+    pool->worker_for_message = 0;
 
     /* with only one thread,  the main thread
      * handles everything.
      */
-    if (pool->workers >= 1) {
-        pool->worker_for_run = 0;
-        pool->worker_for_message = 0;
-    } else {
+    if (pool->worker_count < 1) {
         printf("Error: the number of workers must be at least 1.\n");
         exit(1);
     }
@@ -129,11 +129,11 @@ void thorium_worker_pool_delete_workers(struct thorium_worker_pool *pool)
     int i = 0;
     struct thorium_worker *worker;
 
-    if (pool->workers <= 0) {
+    if (pool->worker_count <= 0) {
         return;
     }
 
-    for (i = 0; i < pool->workers; i++) {
+    for (i = 0; i < pool->worker_count; i++) {
         worker = thorium_worker_pool_get_worker(pool, i);
 
 #if 0
@@ -145,7 +145,10 @@ void thorium_worker_pool_delete_workers(struct thorium_worker_pool *pool)
     }
 
     core_vector_destroy(&pool->worker_array);
+
+#ifdef THORIUM_WORKER_POOL_USE_COUNT_CACHE
     core_vector_destroy(&pool->message_count_cache);
+#endif
 }
 
 void thorium_worker_pool_create_workers(struct thorium_worker_pool *pool)
@@ -153,20 +156,26 @@ void thorium_worker_pool_create_workers(struct thorium_worker_pool *pool)
     int i;
     struct thorium_worker *worker;
 
-    if (pool->workers <= 0) {
+    if (pool->worker_count <= 0) {
         return;
     }
 
     core_vector_init(&pool->worker_array, sizeof(struct thorium_worker));
+#ifdef THORIUM_WORKER_POOL_USE_COUNT_CACHE
     core_vector_init(&pool->message_count_cache, sizeof(int));
+#endif
 
-    core_vector_resize(&pool->worker_array, pool->workers);
-    core_vector_resize(&pool->message_count_cache, pool->workers);
+    core_vector_resize(&pool->worker_array, pool->worker_count);
+#ifdef THORIUM_WORKER_POOL_USE_COUNT_CACHE
+    core_vector_resize(&pool->message_count_cache, pool->worker_count);
+#endif
 
     pool->worker_cache = (struct thorium_worker *)core_vector_at(&pool->worker_array, 0);
+#ifdef THORIUM_WORKER_POOL_USE_COUNT_CACHE
     pool->message_cache = (int *)core_vector_at(&pool->message_count_cache, 0);
+#endif
 
-    for (i = 0; i < pool->workers; i++) {
+    for (i = 0; i < pool->worker_count; i++) {
 
         worker = thorium_worker_pool_get_worker(pool, i);
         thorium_worker_init(worker, i, pool->node);
@@ -175,7 +184,9 @@ void thorium_worker_pool_create_workers(struct thorium_worker_pool *pool)
             thorium_worker_enable_waiting(worker);
         }
 
+#ifdef THORIUM_WORKER_POOL_USE_COUNT_CACHE
         core_vector_set_int(&pool->message_count_cache, i, 0);
+#endif
     }
 }
 
@@ -189,7 +200,7 @@ void thorium_worker_pool_start(struct thorium_worker_pool *pool)
      * we start at 1 because the thread 0 is
      * used by the main thread...
      */
-    for (i = 0; i < pool->workers; i++) {
+    for (i = 0; i < pool->worker_count; i++) {
         processor = i;
 
         if (thorium_node_nodes(pool->node) != 1) {
@@ -217,7 +228,7 @@ void thorium_worker_pool_stop(struct thorium_worker_pool *pool)
     printf("Stop workers\n");
 #endif
 
-    for (i = 0; i < pool->workers; i++) {
+    for (i = 0; i < pool->worker_count; i++) {
         thorium_worker_stop(thorium_worker_pool_get_worker(pool, i));
     }
 }
@@ -240,7 +251,7 @@ int thorium_worker_pool_enqueue_message(struct thorium_worker_pool *pool, struct
 
 int thorium_worker_pool_worker_count(struct thorium_worker_pool *pool)
 {
-    return pool->workers;
+    return pool->worker_count;
 }
 
 void thorium_worker_pool_print_load(struct thorium_worker_pool *self, int type)
@@ -378,13 +389,13 @@ float thorium_worker_pool_get_computation_load(struct thorium_worker_pool *pool)
 
     load = 0;
 
-    for (i = 0; i < pool->workers; i++) {
+    for (i = 0; i < pool->worker_count; i++) {
         worker = thorium_worker_pool_get_worker(pool, i);
         load += thorium_worker_get_loop_load(worker);
     }
 
-    if (pool->workers != 0) {
-        load /= pool->workers;
+    if (pool->worker_count != 0) {
+        load /= pool->worker_count;
     }
 
     return load;
@@ -652,7 +663,7 @@ int thorium_worker_pool_next_worker(struct thorium_worker_pool *pool, int worker
 
     /* wrap the counter
      */
-    if (worker == pool->workers) {
+    if (worker == pool->worker_count) {
         worker = 0;
     }
 
@@ -665,6 +676,7 @@ struct thorium_worker *thorium_worker_pool_get_worker(
     return self->worker_cache + index;
 }
 
+#ifdef THORIUM_WORKER_POOL_USE_COUNT_CACHE
 void thorium_worker_pool_set_cached_value(struct thorium_worker_pool *self, int index, int value)
 {
     self->message_cache[index] = value;
@@ -673,6 +685,19 @@ void thorium_worker_pool_set_cached_value(struct thorium_worker_pool *self, int 
 int thorium_worker_pool_get_cached_value(struct thorium_worker_pool *self, int index)
 {
     return self->message_cache[index];
+}
+#endif
+
+struct thorium_worker *thorium_worker_pool_select_worker_for_message_round_robin(struct thorium_worker_pool *self)
+{
+    struct thorium_worker *worker;
+
+    worker = core_vector_at(&self->worker_array, self->worker_for_message);
+    ++self->worker_for_message;
+    if (self->worker_for_message == self->worker_count)
+        self->worker_for_message = 0;
+
+    return worker;
 }
 
 /* select a worker to pull from */
@@ -685,9 +710,11 @@ struct thorium_worker *thorium_worker_pool_select_worker_for_message(struct thor
     int attempts;
     struct thorium_worker *best_worker;
     int best_score;
+#ifdef THORIUM_WORKER_POOL_USE_COUNT_CACHE
     int best_index;
 
     best_index = -1;
+#endif
     best_score = 0;
     best_worker = NULL;
 
@@ -701,7 +728,11 @@ struct thorium_worker *thorium_worker_pool_select_worker_for_message(struct thor
         index = pool->worker_for_message;
         pool->worker_for_message = thorium_worker_pool_next_worker(pool, index);
         worker = thorium_worker_pool_get_worker(pool, index);
+#ifdef THORIUM_WORKER_POOL_USE_COUNT_CACHE
         score = thorium_worker_pool_get_cached_value(pool, index);
+#else
+        score = -1;
+#endif
 
         /* Update the cache.
          * This is expensive because it will touch the cache line.
@@ -717,22 +748,28 @@ struct thorium_worker *thorium_worker_pool_select_worker_for_message(struct thor
          */
         if (1 || score == 0) {
             score = thorium_worker_get_message_production_score(worker);
+#ifdef THORIUM_WORKER_POOL_USE_COUNT_CACHE
             thorium_worker_pool_set_cached_value(pool, index, score);
+#endif
         }
 
         if (best_worker == NULL || score > best_score) {
             best_worker = worker;
             best_score = score;
+#ifdef THORIUM_WORKER_POOL_USE_COUNT_CACHE
             best_index = index;
+#endif
         }
 
         ++i;
     }
 
+#ifdef THORIUM_WORKER_POOL_USE_COUNT_CACHE
     /* Update the cached value for the winning worker to have an
      * accurate value for this worker.
      */
     core_vector_set_int(&pool->message_count_cache, best_index, best_score - 1);
+#endif
 
     return best_worker;
 }
@@ -742,7 +779,7 @@ int thorium_worker_pool_pull_classic(struct thorium_worker_pool *pool, struct th
     struct thorium_worker *worker;
     int answer;
 
-    worker = thorium_worker_pool_select_worker_for_message(pool);
+    worker = thorium_worker_pool_select_worker_for_message_round_robin(pool);
     answer = thorium_worker_dequeue_message(worker, message);
 
     return answer;
@@ -779,7 +816,7 @@ void thorium_worker_pool_wake_up_workers(struct thorium_worker_pool *pool)
     current_time = time(NULL);
 
     if (current_time - pool->last_signal_check >= period) {
-        while (i < pool->workers) {
+        while (i < pool->worker_count) {
 
             worker = thorium_worker_pool_get_worker(pool, i);
             load = thorium_worker_get_epoch_load(worker);
