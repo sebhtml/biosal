@@ -22,8 +22,8 @@ void biosal_assembly_graph_summary_init(struct biosal_assembly_graph_summary *se
 
     size = BIOSAL_DNA_ALPHABET_SIZE;
 
-    for (i = 0; i <= BIOSAL_DNA_ALPHABET_SIZE; ++i) {
-        for (j = 0; j <= BIOSAL_DNA_ALPHABET_SIZE; ++j) {
+    for (i = 0; i <= size; ++i) {
+        for (j = 0; j <= size; ++j) {
             biosal_assembly_graph_summary_set_degree_frequency(self, i, j, 0);
         }
     }

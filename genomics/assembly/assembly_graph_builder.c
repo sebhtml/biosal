@@ -297,21 +297,28 @@ void biosal_assembly_graph_builder_set_expected_message_count_reply(struct thori
 
 void biosal_assembly_graph_builder_set_script_reply_store_manager(struct thorium_actor *self, struct thorium_message *message)
 {
+        /*
     struct biosal_assembly_graph_builder *concrete_self;
-    int node_count;
+    */
+
+#if 0
     int actor_count;
+#endif
     int actors_per_spawner;
     int source;
 
     /*
      * Verify is the number of actors is too high.
      */
-    node_count = thorium_actor_get_node_count(self);
     actors_per_spawner = biosal_assembly_graph_store_get_store_count_per_node(self);
+    /*
     actor_count = node_count * actors_per_spawner;
+    */
     source = thorium_message_source(message);
 
+    /*
     concrete_self = thorium_actor_concrete_actor(self);
+    */
 
     thorium_actor_add_action_with_source(self, ACTION_MANAGER_SET_ACTORS_PER_SPAWNER_REPLY,
                     biosal_assembly_graph_builder_set_actors_reply_store_manager,
@@ -1296,7 +1303,6 @@ void biosal_assembly_graph_builder_get_summary_reply(struct thorium_actor *self,
     int expected;
     struct biosal_assembly_graph_builder *concrete_self;
     void *buffer;
-    struct core_memory_pool *ephemeral_memory;
     struct biosal_assembly_graph_summary partial_summary;
     char *file_name;
     struct core_string file_name_string;
@@ -1304,7 +1310,6 @@ void biosal_assembly_graph_builder_get_summary_reply(struct thorium_actor *self,
     int argc;
     char **argv;
 
-    ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
     concrete_self = thorium_actor_concrete_actor(self);
     buffer = thorium_message_buffer(message);
 

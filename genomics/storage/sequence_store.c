@@ -406,7 +406,6 @@ void biosal_sequence_store_ask(struct thorium_actor *self, struct thorium_messag
     float completion;
     int name;
     int period;
-    struct core_memory_pool *ephemeral_memory;
     double ratio;
     int kmer_length;
     int required_kmers;
@@ -421,7 +420,6 @@ void biosal_sequence_store_ask(struct thorium_actor *self, struct thorium_messag
 #ifdef BIOSAL_SEQUENCE_STORE_DEBUG
 #endif
 
-    ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
     concrete_actor = thorium_actor_concrete_actor(self);
 
     if (concrete_actor->received != concrete_actor->expected) {

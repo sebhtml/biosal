@@ -221,7 +221,6 @@ void biosal_input_controller_receive(struct thorium_actor *actor, struct thorium
     uint64_t offset;
     struct biosal_mega_block *block;
     int acquaintance_index;
-    struct core_memory_pool *ephemeral_memory;
 
     if (thorium_actor_take_action(actor, message)) {
         return;
@@ -229,7 +228,6 @@ void biosal_input_controller_receive(struct thorium_actor *actor, struct thorium
 
     thorium_message_get_all(message, &tag, &count, &buffer, &source);
 
-    ephemeral_memory = (struct core_memory_pool *)thorium_actor_get_ephemeral_memory(actor);
     name = thorium_actor_name(actor);
     controller = (struct biosal_input_controller *)thorium_actor_concrete_actor(actor);
     concrete_actor = controller;
@@ -1126,9 +1124,7 @@ void biosal_input_controller_receive_command(struct thorium_actor *actor, struct
     int *bucket;
     int *bucket_for_consumer;
     int consumer_index;
-    struct core_memory_pool *ephemeral_memory;
 
-    ephemeral_memory = thorium_actor_get_ephemeral_memory(actor);
     concrete_actor = (struct biosal_input_controller *)thorium_actor_concrete_actor(actor);
     buffer = thorium_message_buffer(message);
     biosal_partition_command_unpack(&command, buffer);

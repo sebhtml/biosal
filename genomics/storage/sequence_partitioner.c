@@ -82,9 +82,7 @@ void biosal_sequence_partitioner_receive(struct thorium_actor *actor, struct tho
     int stream_index;
     struct biosal_partition_command *command_bucket;
     int i;
-    struct core_memory_pool *ephemeral_memory;
 
-    ephemeral_memory = thorium_actor_get_ephemeral_memory(actor);
     thorium_message_get_all(message, &tag, &count, &buffer, &source);
 
     concrete_actor = (struct biosal_sequence_partitioner *)thorium_actor_concrete_actor(actor);
@@ -219,9 +217,7 @@ void biosal_sequence_partitioner_verify(struct thorium_actor *actor)
     int remainder;
     uint64_t *bucket_for_store_count;
     struct core_vector_iterator iterator;
-    struct core_memory_pool *ephemeral_memory;
 
-    ephemeral_memory = thorium_actor_get_ephemeral_memory(actor);
     concrete_actor = (struct biosal_sequence_partitioner *)thorium_actor_concrete_actor(actor);
 
     /*

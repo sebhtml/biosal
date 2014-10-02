@@ -95,15 +95,15 @@ struct thorium_script biosal_unitig_walker_script = {
 void biosal_unitig_walker_init(struct thorium_actor *self)
 {
     struct biosal_unitig_walker *concrete_self;
+#ifdef BIOSAL_UNITIG_WALKER_USE_PRIVATE_FILE
     int argc;
     char **argv;
 
-#ifdef BIOSAL_UNITIG_WALKER_USE_PRIVATE_FILE
     char name_as_string[64];
     char *directory_name;
     char *path;
-#endif
     int name;
+#endif
 
     concrete_self = thorium_actor_concrete_actor(self);
 
@@ -122,8 +122,10 @@ void biosal_unitig_walker_init(struct thorium_actor *self)
     concrete_self->skipped_at_start_used = 0;
     concrete_self->skipped_at_start_not_unitig = 0;
 
+    /*
     argc = thorium_actor_argc(self);
     argv = thorium_actor_argv(self);
+    */
 
     core_set_init(&concrete_self->visited, 0);
 
@@ -190,9 +192,9 @@ void biosal_unitig_walker_init(struct thorium_actor *self)
     directory_name = core_command_get_output_directory(argc, argv);
 #endif
 
+#ifdef BIOSAL_UNITIG_WALKER_USE_PRIVATE_FILE
     name = thorium_actor_name(self);
 
-#ifdef BIOSAL_UNITIG_WALKER_USE_PRIVATE_FILE
     sprintf(name_as_string, "%d", name);
     core_string_init(&concrete_self->file_path, directory_name);
     core_string_append(&concrete_self->file_path, "/unitig_walker_");
@@ -750,10 +752,11 @@ void biosal_unitig_walker_get_vertices_and_select(struct thorium_actor *self, st
 
 void biosal_unitig_walker_get_vertices_and_select_reply(struct thorium_actor *self, struct thorium_message *message)
 {
+        /*
     struct biosal_unitig_walker *concrete_self;
 
     concrete_self = thorium_actor_concrete_actor(self);
-
+*/
     biosal_unitig_walker_dump_path(self);
 
 #if 0
@@ -776,11 +779,9 @@ void biosal_unitig_walker_get_vertex_reply(struct thorium_actor *self, struct th
     int length;
     int new_count;
     char *new_buffer;
-    struct core_memory_pool *ephemeral_memory;
     int position;
 
     concrete_self = thorium_actor_concrete_actor(self);
-    ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
     buffer = thorium_message_buffer(message);
 
     biosal_assembly_vertex_init(&vertex);
@@ -869,10 +870,8 @@ void biosal_unitig_walker_notify(struct thorium_actor *self, struct thorium_mess
     int other_length;
     int source;
     int position;
-    struct core_memory_pool *ephemeral_memory;
     int path_index;
     struct biosal_path_status *bucket;
-    void *buffer;
     int name;
     int check_equal_length;
     int disable_battle;
@@ -883,9 +882,7 @@ void biosal_unitig_walker_notify(struct thorium_actor *self, struct thorium_mess
     concrete_self = thorium_actor_concrete_actor(self);
 
     position = 0;
-    ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
     source = thorium_message_source(message);
-    buffer = thorium_message_buffer(message);
 
     /*
      * Check if the kmer is in the current set. If not, it was in
@@ -1109,7 +1106,9 @@ void biosal_unitig_walker_dump_path(struct thorium_actor *self)
 {
     struct biosal_unitig_walker *concrete_self;
     char *sequence;
+#ifdef DEBUG_PATH_NAMES
     int start_position;
+#endif
     int left_path_arcs;
     int right_path_arcs;
     int sequence_length;
@@ -1165,7 +1164,9 @@ void biosal_unitig_walker_dump_path(struct thorium_actor *self)
                     concrete_self->kmer_length,
                     &concrete_self->codec);
 
+#ifdef DEBUG_PATH_NAMES
     start_position = position;
+#endif
 
 #ifdef HIGHLIGH_STARTING_POINT
     biosal_dna_helper_set_lower_case(sequence, position, position + concrete_self->kmer_length - 1);
@@ -1683,7 +1684,6 @@ void biosal_unitig_walker_make_decision(struct thorium_actor *self)
     struct biosal_assembly_vertex *vertex;
     int choice;
     void *key;
-    int coverage;
     struct biosal_unitig_walker *concrete_self;
     struct core_vector *selected_vertices;
     struct core_vector *selected_kmers;
@@ -1735,8 +1735,9 @@ void biosal_unitig_walker_make_decision(struct thorium_actor *self)
     if (choice != BIOSAL_HEURISTIC_CHOICE_NONE) {
 
         CORE_DEBUGGER_ASSERT(status == STATUS_WITH_CHOICE);
-
+/*
         coverage = biosal_assembly_vertex_coverage_depth(&concrete_self->current_vertex);
+        */
 
         if (concrete_self->select_operation == OPERATION_SELECT_CHILD) {
             code = biosal_assembly_vertex_get_child(&concrete_self->current_vertex, choice);
@@ -2181,10 +2182,8 @@ void biosal_unitig_walker_normalize_cycle(struct thorium_actor *self, int length
 {
     int i;
     int selected_start;
-    uint64_t selected_hash;
     struct biosal_dna_kmer selected_kmer;
     int selected_is_canonical;
-    uint64_t hash_value1;
     char saved_symbol;
     struct biosal_dna_kmer kmer1;
     struct biosal_unitig_walker *concrete_self;
@@ -2213,13 +2212,14 @@ void biosal_unitig_walker_normalize_cycle(struct thorium_actor *self, int length
                     ephemeral_memory);
         kmer_sequence[concrete_self->kmer_length] = saved_symbol;
 
+        /*
         hash_value1 = biosal_dna_kmer_canonical_hash(&kmer1,
                         concrete_self->kmer_length, &concrete_self->codec,
                        ephemeral_memory);
+                       */
 
         if (selected_start == -1 || biosal_dna_kmer_is_lower(&kmer1, &selected_kmer, concrete_self->kmer_length,
                                 &concrete_self->codec)) {
-            selected_hash = hash_value1;
             selected_start = i;
             selected_is_canonical = biosal_dna_kmer_is_canonical(&kmer1, concrete_self->kmer_length,
                             &concrete_self->codec);

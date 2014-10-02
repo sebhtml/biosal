@@ -373,9 +373,7 @@ void biosal_dna_kmer_counter_kernel_pack_message(struct thorium_actor *actor, st
     int *new_buffer;
     int new_count;
     struct thorium_message new_message;
-    struct core_memory_pool *ephemeral_memory;
 
-    ephemeral_memory = thorium_actor_get_ephemeral_memory(actor);
     new_count = biosal_dna_kmer_counter_kernel_pack_size(actor);
     new_buffer = thorium_actor_allocate(actor, new_count);
 

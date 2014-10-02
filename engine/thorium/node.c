@@ -426,16 +426,18 @@ void thorium_node_init(struct thorium_node *node, int *argc, char ***argv)
 
 void thorium_node_destroy(struct thorium_node *node)
 {
+#ifdef THORIUM_NODE_DEBUG_INJECTION
     int active_requests;
+#endif
 
     core_timer_destroy(&node->timer);
 
     if (core_bitmap_get_bit_uint32_t(&node->flags, FLAG_EXAMINE))
         thorium_node_examine(node);
 
+#ifdef THORIUM_NODE_DEBUG_INJECTION
     active_requests = thorium_transport_get_active_request_count(&node->transport);
 
-#ifdef THORIUM_NODE_DEBUG_INJECTION
     printf("THORIUM DEBUG clean_outbound_buffers_to_inject has %d items\n",
           core_fast_queue_size(&node->clean_outbound_buffers_to_inject));
 
@@ -582,7 +584,9 @@ int thorium_node_spawn(struct thorium_node *node, int script)
     int size;
     void *state;
     int name;
+#ifdef THORIUM_ACTOR_GATHER_MESSAGE_METADATA
     struct thorium_actor *actor;
+#endif
 
     /* in the current implementation, there can only be one initial
      * actor on each node
@@ -625,11 +629,11 @@ int thorium_node_spawn(struct thorium_node *node, int script)
         thorium_message_init(&message, ACTION_THORIUM_NODE_ADD_INITIAL_ACTOR, sizeof(name), &name);
         thorium_node_send_to_node(node, 0, &message);
 
+#ifdef THORIUM_ACTOR_GATHER_MESSAGE_METADATA
         /* initial actors are their own spawners.
          */
         actor = thorium_node_get_actor_from_name(node, name);
 
-#ifdef THORIUM_ACTOR_GATHER_MESSAGE_METADATA
         core_counter_add(thorium_actor_counter(actor), CORE_COUNTER_SPAWNED_ACTORS, 1);
 #endif
     }
@@ -1959,7 +1963,6 @@ void thorium_node_run_loop(struct thorium_node *node)
     int credits;
     const int starting_credits = 256;
     void *buffer;
-    uint64_t threshold;
     char send_in_thread;
     char use_transport;
 
@@ -1982,8 +1985,6 @@ void thorium_node_run_loop(struct thorium_node *node)
     send_in_thread = core_bitmap_get_bit_uint32_t(&node->flags,
                                 FLAG_SEND_IN_THREAD);
     use_transport = core_bitmap_get_bit_uint32_t(&node->flags, FLAG_USE_TRANSPORT);
-
-    threshold = 100 * 1000;
 
     while (credits > 0) {
 

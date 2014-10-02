@@ -202,14 +202,11 @@ void thorium_actor_send_range_binomial_tree_part(struct thorium_actor *actor,
     int real_source;
     int real_count;
     char *real_buffer;
-    struct core_memory_pool *ephemeral_memory;
     char *new_buffer;
     int new_tag;
     int new_count;
     int offset;
     struct thorium_message new_message;
-
-    ephemeral_memory = thorium_actor_get_ephemeral_memory(actor);
 
     real_tag = thorium_message_action(message);
     real_source = thorium_message_source(message);

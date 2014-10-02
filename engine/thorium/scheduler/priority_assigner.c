@@ -53,7 +53,9 @@ void thorium_priority_assigner_update(struct thorium_priority_assigner *schedule
     int new_priority;
     int old_source_count;
     int new_source_count;
+    /*
     int class_count;
+    */
     int name;
     time_t now;
 
@@ -126,7 +128,9 @@ void thorium_priority_assigner_update(struct thorium_priority_assigner *schedule
         }
     }
 
+    /*
     class_count = core_map_size(&scheduler->actor_source_frequencies);
+    */
 
     now = time(NULL);
 

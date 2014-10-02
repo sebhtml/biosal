@@ -644,14 +644,12 @@ int thorium_actor_receive_system(struct thorium_actor *self, struct thorium_mess
     struct thorium_message new_message;
     int offset;
     int bytes;
-    struct core_memory_pool *ephemeral_memory;
     int workers;
 
 #ifdef THORIUM_ACTOR_STORE_CHILDREN
     int new_actor;
 #endif
 
-    ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
     tag = thorium_message_action(message);
 
     /* the concrete actor must catch these otherwise.
@@ -968,9 +966,9 @@ void thorium_actor_receive(struct thorium_actor *self, struct thorium_message *m
 void thorium_actor_receive_private(struct thorium_actor *self, struct thorium_message *message)
 {
     thorium_actor_receive_fn_t receive;
+#ifdef THORIUM_ACTOR_GATHER_MESSAGE_METADATA
     int name;
     int source;
-#ifdef THORIUM_ACTOR_GATHER_MESSAGE_METADATA
     int *bucket;
 #endif
 
@@ -988,11 +986,11 @@ void thorium_actor_receive_private(struct thorium_actor *self, struct thorium_me
                     thorium_actor_name(self));
 #endif
 
-    source = thorium_message_source(message);
-
     self->current_message = message;
 
 #ifdef THORIUM_ACTOR_GATHER_MESSAGE_METADATA
+    source = thorium_message_source(message);
+
     /* Update counter
      */
     bucket = (int *)core_map_get(&self->received_messages, &source);
@@ -1035,9 +1033,9 @@ void thorium_actor_receive_private(struct thorium_actor *self, struct thorium_me
                     thorium_message_action(message));
 #endif
 
+#ifdef THORIUM_ACTOR_GATHER_MESSAGE_METADATA
     name = thorium_actor_name(self);
 
-#ifdef THORIUM_ACTOR_GATHER_MESSAGE_METADATA
     /* update counters
      */
     if (source == name) {

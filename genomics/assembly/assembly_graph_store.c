@@ -839,11 +839,9 @@ void biosal_assembly_graph_store_yield_reply_summary(struct thorium_actor *self,
     int coverage;
     int parent_count;
     int child_count;
-    struct core_memory_pool *ephemeral_memory;
     /*int child_count;*/
 
     concrete_self = thorium_actor_concrete_actor(self);
-    ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
 
     limit = 4321;
     processed = 0;
@@ -916,7 +914,6 @@ void biosal_assembly_graph_store_get_vertex(struct thorium_actor *self, struct t
     void *new_buffer;
     struct biosal_assembly_vertex *canonical_vertex;
     int is_canonical;
-    int source;
     int path;
     int position;
     int count;
@@ -925,7 +922,6 @@ void biosal_assembly_graph_store_get_vertex(struct thorium_actor *self, struct t
     ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
     concrete_self = thorium_actor_concrete_actor(self);
 
-    source = thorium_message_source(message);
     buffer = thorium_message_buffer(message);
     count = thorium_message_count(message);
 
@@ -985,12 +981,9 @@ void biosal_assembly_graph_store_get_starting_vertex(struct thorium_actor *self,
     char *sequence;
     void *storage_key;
     struct biosal_assembly_vertex *vertex;
-    int source;
 
     concrete_self = thorium_actor_concrete_actor(self);
     ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
-
-    source = thorium_message_source(message);
 
     while (core_map_iterator_has_next(&concrete_self->iterator)) {
 

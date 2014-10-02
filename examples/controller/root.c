@@ -76,9 +76,7 @@ void root_receive(struct thorium_actor *actor, struct thorium_message *message)
     struct thorium_message new_message;
     struct core_vector stores;
     int count;
-    struct core_memory_pool *ephemeral_memory;
 
-    ephemeral_memory = thorium_actor_get_ephemeral_memory(actor);
     concrete_self = (struct root *)thorium_actor_concrete_actor(actor);
     concrete_actor = concrete_self;
     source = thorium_message_source(message);

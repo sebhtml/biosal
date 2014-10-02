@@ -532,7 +532,6 @@ void biosal_input_stream_push_sequences(struct thorium_actor *actor,
     int has_sequence;
     int i;
     struct biosal_input_stream *concrete_self;
-    struct core_memory_pool *ephemeral_memory;
 
 #ifdef BIOSAL_INPUT_STREAM_DEBUG
     int count;
@@ -542,7 +541,6 @@ void biosal_input_stream_push_sequences(struct thorium_actor *actor,
     /* answer immediately
      */
     thorium_actor_send_reply_empty(actor, ACTION_INPUT_PUSH_SEQUENCES_READY);
-    ephemeral_memory = (struct core_memory_pool *)thorium_actor_get_ephemeral_memory(actor);
     has_sequence = 1;
 
 #ifdef BIOSAL_INPUT_STREAM_DEBUG

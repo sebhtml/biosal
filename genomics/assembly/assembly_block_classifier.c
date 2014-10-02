@@ -502,10 +502,8 @@ void biosal_assembly_block_classifier_pack_message(struct thorium_actor *actor, 
 {
     void *new_buffer;
     int new_count;
-    struct core_memory_pool *ephemeral_memory;
     struct thorium_message new_message;
 
-    ephemeral_memory = thorium_actor_get_ephemeral_memory(actor);
     new_count = biosal_assembly_block_classifier_pack_size(actor);
     new_buffer = thorium_actor_allocate(actor, new_count);
 

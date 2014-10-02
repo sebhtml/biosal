@@ -201,12 +201,10 @@ void process_send_ping(struct thorium_actor *self)
     uint64_t checksum;
     int count;
     char *buffer;
-    struct core_memory_pool *ephemeral_memory;
     int i;
     uint64_t *bucket;
 
     concrete_self = thorium_actor_concrete_actor(self);
-    ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
 
     range = concrete_self->maximum_buffer_size - concrete_self->minimum_buffer_size;
 
