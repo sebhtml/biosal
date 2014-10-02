@@ -1306,6 +1306,8 @@ void biosal_assembly_graph_store_set_vertex_flag(struct thorium_actor *self,
 #endif
     vertex = biosal_assembly_graph_store_find_vertex(self, &transport_kmer);
 
+    CORE_DEBUGGER_ASSERT_NOT_NULL(vertex);
+
     biosal_dna_kmer_destroy(&transport_kmer, ephemeral_memory);
 
     biosal_assembly_vertex_set_flag(vertex, flag);
