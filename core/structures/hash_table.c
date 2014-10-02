@@ -66,7 +66,15 @@ void core_hash_table_init(struct core_hash_table *table, uint64_t buckets,
 #endif
 
     table->buckets = buckets;
+
+    /*
+     * \see http://www.rohitab.com/discuss/topic/29723-modulus-with-bitwise-masks/
+     */
+    table->bucket_count_mask = table->buckets - 1;
+
     table->buckets_per_group = buckets_per_group;
+    table->group_bucket_count_mask = table->buckets_per_group - 1;
+
     table->key_size = key_size;
     table->value_size = value_size;
 

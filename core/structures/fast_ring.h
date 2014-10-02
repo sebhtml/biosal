@@ -42,7 +42,9 @@ struct core_fast_ring {
      * For consumer
      */
     uint64_t head;
+#ifdef CORE_FAST_RING_USE_CACHE
     uint64_t tail_cache;
+#endif
 
     /* PowerPC A2 has L1 cache line length of 64 bytes and L2 cache line length of
      * 128 bytes
@@ -61,7 +63,10 @@ struct core_fast_ring {
      * For producer
      */
     uint64_t tail;
+
+#ifdef CORE_FAST_RING_USE_CACHE
     uint64_t head_cache;
+#endif
 
 #ifdef CORE_FAST_RING_USE_PADDING
     uint64_t producer_padding_0;
@@ -96,8 +101,10 @@ int core_fast_ring_is_empty_from_consumer(struct core_fast_ring *self);
 int core_fast_ring_size_from_consumer(struct core_fast_ring *self);
 int core_fast_ring_size_from_producer(struct core_fast_ring *self);
 
+#ifdef CORE_FAST_RING_USE_CACHE
 void core_fast_ring_update_head_cache(struct core_fast_ring *self);
 void core_fast_ring_update_tail_cache(struct core_fast_ring *self);
+#endif
 
 uint64_t core_fast_ring_mock(struct core_fast_ring *self);
 int core_fast_ring_empty(struct core_fast_ring *self);

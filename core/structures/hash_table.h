@@ -42,6 +42,12 @@ struct core_hash_table {
     uint64_t elements;
     uint64_t buckets;
 
+    /*
+     * \see http://www.rohitab.com/discuss/topic/29723-modulus-with-bitwise-masks/
+     */
+    uint64_t bucket_count_mask;
+    uint64_t group_bucket_count_mask;
+
     int group_count;
     uint64_t buckets_per_group;
     int key_size;

@@ -124,10 +124,7 @@ int core_fast_queue_dequeue(struct core_fast_queue *self, void *item)
 
 int core_fast_queue_empty(struct core_fast_queue *self)
 {
-    if (core_fast_queue_size(self) == 0) {
-        return CORE_TRUE;
-    }
-    return CORE_FALSE;
+    return !self->size;
 }
 
 int core_fast_queue_enqueue(struct core_fast_queue *self, void *item)

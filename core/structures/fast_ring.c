@@ -27,8 +27,10 @@ void core_fast_ring_init(struct core_fast_ring *self, int capacity, int cell_siz
     self->head = 0;
     self->tail = 0;
 
+#ifdef CORE_FAST_RING_USE_CACHE
     self->head_cache = 0;
     self->tail_cache = 0;
+#endif
 
     self->cells = core_memory_allocate(self->number_of_cells * self->cell_size, MEMORY_FAST_RING);
 
@@ -57,8 +59,11 @@ void core_fast_ring_destroy(struct core_fast_ring *self)
     self->cell_size = 0;
     self->head = 0;
     self->tail = 0;
+
+#ifdef CORE_FAST_RING_USE_CACHE
     self->head_cache = 0;
     self->tail_cache = 0;
+#endif
 
     core_memory_free(self->cells, MEMORY_FAST_RING);
 
@@ -92,6 +97,7 @@ int core_fast_ring_push_from_producer(struct core_fast_ring *self, void *element
 
 int core_fast_ring_is_full_from_producer(struct core_fast_ring *self)
 {
+#ifdef CORE_FAST_RING_USE_CACHE
     /* check if the head cache must be updated
      */
     if (self->head_cache == core_fast_ring_increment(self, self->tail)) {
@@ -99,6 +105,9 @@ int core_fast_ring_is_full_from_producer(struct core_fast_ring *self)
         return self->head_cache == core_fast_ring_increment(self, self->tail);
     }
     return 0;
+#else
+    return self->head == core_fast_ring_increment(self, self->tail);
+#endif
 }
 
 int core_fast_ring_size_from_consumer(struct core_fast_ring *self)
@@ -106,12 +115,19 @@ int core_fast_ring_size_from_consumer(struct core_fast_ring *self)
     int head;
     int tail;
 
+#ifdef CORE_FAST_RING_USE_CACHE
     /* TODO: remove me
      */
     core_fast_ring_update_tail_cache(self);
+#endif
 
     head = self->head;
+
+#ifdef CORE_FAST_RING_USE_CACHE
     tail = self->tail_cache;
+#else
+    tail = self->tail;
+#endif
 
     if (tail < head) {
         tail += self->number_of_cells;
@@ -180,21 +196,28 @@ uint64_t core_fast_ring_mock(struct core_fast_ring *self)
     return sum;
 }
 
+#ifdef CORE_FAST_RING_USE_CACHE
 void core_fast_ring_update_head_cache(struct core_fast_ring *self)
 {
     self->head_cache = self->head;
 }
+#endif
 
 int core_fast_ring_size_from_producer(struct core_fast_ring *self)
 {
     int head;
     int tail;
 
+#ifdef CORE_FAST_RING_USE_CACHE
     /* TODO: remove me
      */
     core_fast_ring_update_head_cache(self);
 
     head = self->head_cache;
+#else
+    head = self->head;
+#endif
+
     tail = self->tail;
 
     if (tail < head) {
@@ -233,17 +256,23 @@ int core_fast_ring_pop_from_consumer(struct core_fast_ring *self, void *element)
     return 1;
 }
 
+#ifdef CORE_FAST_RING_USE_CACHE
 void core_fast_ring_update_tail_cache(struct core_fast_ring *self)
 {
     self->tail_cache = self->tail;
 }
+#endif
 
 int core_fast_ring_is_empty_from_consumer(struct core_fast_ring *self)
 {
+#ifdef CORE_FAST_RING_USE_CACHE
     if (self->tail_cache == self->head) {
         core_fast_ring_update_tail_cache(self);
         return self->tail_cache == self->head;
     }
+#else
+    return self->tail == self->head;
+#endif
 
     return 0;
 }
