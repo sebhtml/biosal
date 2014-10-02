@@ -27,9 +27,14 @@
 /*#define THORIUM_WORKER_DEBUG
   */
 
+#undef CORE_DEBUGGER_JITTER_DETECTION_START
+#undef CORE_DEBUGGER_JITTER_DETECTION_END
+#define CORE_DEBUGGER_JITTER_DETECTION_START(name)
+#define CORE_DEBUGGER_JITTER_DETECTION_END(name, actor_time)
+
 /*
-#define SHOW_FULL_RING_WARNINGS
  */
+#define SHOW_FULL_RING_WARNINGS
 
 #define MEMORY_POOL_NAME_WORKER_EPHEMERAL  0x2ee1c5a6
 #define MEMORY_POOL_NAME_WORKER_OUTBOUND   0x46d316e4
@@ -414,17 +419,8 @@ void thorium_worker_start(struct thorium_worker *worker, int processor)
 void *thorium_worker_main(void *worker1)
 {
     struct thorium_worker *worker;
-    uint64_t start_time;
-    uint64_t end_time;
-    uint64_t period;
-    uint64_t threshold;
 
     worker = (struct thorium_worker*)worker1;
-
-    /*
-     * 100 us
-     */
-    threshold = 100 * 1000;
 
 #ifdef THORIUM_WORKER_DEBUG
     thorium_worker_display(worker);
@@ -433,19 +429,13 @@ void *thorium_worker_main(void *worker1)
 
     while (!core_bitmap_get_bit_uint32_t(&worker->flags, FLAG_DEAD)) {
 
-        start_time = core_timer_get_nanoseconds(&worker->timer);
         worker->last_elapsed_nanoseconds = 0;
+
+        CORE_DEBUGGER_JITTER_DETECTION_START(worker_main_loop);
 
         thorium_worker_run(worker);
 
-        end_time = core_timer_get_nanoseconds(&worker->timer);
-        period = end_time - start_time;
-        period -= worker->last_elapsed_nanoseconds;
-
-        if (period >= threshold)
-            printf("thorium_worker: Warning: runtime jitter: %" PRIu64 " ns, node %d worker %d tick %" PRIu64 "\n",
-                        period, thorium_node_name(worker->node),
-                        worker->name, worker->tick_count);
+        CORE_DEBUGGER_JITTER_DETECTION_END(worker_main_loop, worker->last_elapsed_nanoseconds);
 
         ++worker->tick_count;
     }

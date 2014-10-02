@@ -29,7 +29,7 @@ void core_debugger_jitter_detection_start(struct core_timer *timer)
     core_timer_start(timer);
 }
 
-void core_debugger_jitter_detection_end(struct core_timer *timer, const char *name)
+void core_debugger_jitter_detection_end(struct core_timer *timer, const char *name, uint64_t actor_time)
 {
     uint64_t elapsed_time;
     uint64_t threshold;
@@ -38,7 +38,13 @@ void core_debugger_jitter_detection_end(struct core_timer *timer, const char *na
     elapsed_time = core_timer_get_elapsed_nanoseconds(timer);
     core_timer_destroy(timer);
 
-    threshold = 100 * 1000;
+    elapsed_time -= actor_time;
+
+    /*
+     * An iteration should not take more than
+     * 30 us.
+     */
+    threshold = 10 * 1000;
 
     if (elapsed_time >= threshold) {
         printf("core_debugger: Warning, detected jitter (%" PRIu64 " ns) at \"%s\"\n",

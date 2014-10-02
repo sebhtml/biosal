@@ -4,6 +4,8 @@
 
 struct core_timer;
 
+#include <stdint.h>
+
 /*
  * Enable debug mode.
  * Parameters for debugging are below.
@@ -122,17 +124,17 @@ void core_debugger_examine(void *pointer, int bytes);
     struct core_timer name ## _jitter_detection; \
     core_debugger_jitter_detection_start(&(name ## _jitter_detection));
 
-#define CORE_DEBUGGER_JITTER_DETECTION_END(name) \
-    core_debugger_jitter_detection_end(&(name ## _jitter_detection), # name);
+#define CORE_DEBUGGER_JITTER_DETECTION_END(name, actor_time) \
+    core_debugger_jitter_detection_end(&(name ## _jitter_detection), # name, actor_time);
 
 #else
 
 #define CORE_DEBUGGER_JITTER_DETECTION_START(name)
-#define CORE_DEBUGGER_JITTER_DETECTION_END(name)
+#define CORE_DEBUGGER_JITTER_DETECTION_END(name, actor_time)
 
 #endif
 
 void core_debugger_jitter_detection_start(struct core_timer *timer);
-void core_debugger_jitter_detection_end(struct core_timer *timer, const char *name);
+void core_debugger_jitter_detection_end(struct core_timer *timer, const char *name, uint64_t actor_time);
 
 #endif

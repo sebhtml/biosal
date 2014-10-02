@@ -20,6 +20,7 @@
 #include <core/system/command.h>
 #include <core/system/memory.h>
 #include <core/system/tracer.h>
+
 #include <core/system/debugger.h>
 
 #include <stdlib.h>
@@ -29,6 +30,13 @@
 #include <unistd.h>
 
 #include <inttypes.h>
+
+#if 1
+#undef CORE_DEBUGGER_JITTER_DETECTION_START
+#undef CORE_DEBUGGER_JITTER_DETECTION_END
+#define CORE_DEBUGGER_JITTER_DETECTION_START(name)
+#define CORE_DEBUGGER_JITTER_DETECTION_END(name, actor_time)
+#endif
 
 #define MEMORY_POOL_NAME_NODE_INBOUND      0xee1344f0
 #define MEMORY_POOL_NAME_NODE_OUTBOUND     0xf3ad5880
@@ -1926,6 +1934,7 @@ void thorium_node_run_loop(struct thorium_node *node)
     const int starting_credits = 256;
     void *buffer;
     uint64_t threshold;
+    char send_in_thread;
 
 #ifdef THORIUM_NODE_ENABLE_INSTRUMENTATION
     int period;
@@ -1943,11 +1952,15 @@ void thorium_node_run_loop(struct thorium_node *node)
 
     credits = starting_credits;
 
+    send_in_thread = core_bitmap_get_bit_uint32_t(&node->flags,
+                                FLAG_SEND_IN_THREAD);
     threshold = 100 * 1000;
 
     while (credits > 0) {
 
         CORE_DEBUGGER_JITTER_DETECTION_START(node_main_loop);
+
+        CORE_DEBUGGER_JITTER_DETECTION_START(node_print);
 
 #ifdef THORIUM_NODE_ENABLE_INSTRUMENTATION
         if (print_information) {
@@ -1978,6 +1991,7 @@ void thorium_node_run_loop(struct thorium_node *node)
             }
         }
 #endif
+        CORE_DEBUGGER_JITTER_DETECTION_END(node_print, 0);
 
 #ifdef THORIUM_NODE_DEBUG_LOOP
         if (worker->tick_count % 1000000 == 0) {
@@ -1990,6 +2004,8 @@ void thorium_node_run_loop(struct thorium_node *node)
             printf("DEBUG node/%d is running\n", thorium_node_name(node));
         }
 #endif
+
+        CORE_DEBUGGER_JITTER_DETECTION_START(node_receive);
 
         /* pull message from network and assign the message to a thread.
          * this code path will call lock if
@@ -2028,6 +2044,8 @@ void thorium_node_run_loop(struct thorium_node *node)
             }
         }
 
+        CORE_DEBUGGER_JITTER_DETECTION_END(node_receive, 0);
+
         /* the one worker works here if there is only
          * one thread
          */
@@ -2035,10 +2053,11 @@ void thorium_node_run_loop(struct thorium_node *node)
             thorium_worker_pool_run(&node->worker_pool);
         }
 
+        CORE_DEBUGGER_JITTER_DETECTION_START(node_send);
+
         /* with 3 or more threads, the sending operations are
          * in another thread */
-        if (!core_bitmap_get_bit_uint32_t(&node->flags,
-                                FLAG_SEND_IN_THREAD)) {
+        if (!send_in_thread) {
 
 #ifdef THORIUM_NODE_DEBUG_RUN
             if (node->alive_actors == 0) {
@@ -2047,6 +2066,10 @@ void thorium_node_run_loop(struct thorium_node *node)
 #endif
             thorium_node_send_message(node);
         }
+
+        CORE_DEBUGGER_JITTER_DETECTION_END(node_send, 0);
+
+        CORE_DEBUGGER_JITTER_DETECTION_START(node_pool_work);
 
         /* Flush queue buffers in the worker pool
          */
@@ -2069,6 +2092,10 @@ void thorium_node_run_loop(struct thorium_node *node)
             thorium_node_check_load(node);
         }
 
+        CORE_DEBUGGER_JITTER_DETECTION_END(node_pool_work, 0);
+
+        CORE_DEBUGGER_JITTER_DETECTION_START(node_test);
+
         /* Free buffers of active requests
          */
         if (core_bitmap_get_bit_uint32_t(&node->flags, FLAG_USE_TRANSPORT)) {
@@ -2085,8 +2112,9 @@ void thorium_node_run_loop(struct thorium_node *node)
             printf("THORIUM_NODE_DEBUG_RUN credits: %d\n", credits);
         }
 #endif
+        CORE_DEBUGGER_JITTER_DETECTION_END(node_test, 0);
 
-        CORE_DEBUGGER_JITTER_DETECTION_END(node_main_loop);
+        CORE_DEBUGGER_JITTER_DETECTION_END(node_main_loop, 0);
 
 #ifdef THORIUM_NODE_ENABLE_INSTRUMENTATION
         ++node->tick_count;
