@@ -55,7 +55,7 @@ void core_hash_table_init(struct core_hash_table *table, uint64_t buckets,
     /* google sparsehash uses 48. 64 is nice too */
     buckets_per_group = 64;
 
-    while (buckets % buckets_per_group != 0) {
+    while ((buckets & (buckets_per_group - 1)) != 0) {
         buckets++;
     }
 
@@ -71,6 +71,13 @@ void core_hash_table_init(struct core_hash_table *table, uint64_t buckets,
      * \see http://www.rohitab.com/discuss/topic/29723-modulus-with-bitwise-masks/
      */
     table->bucket_count_mask = table->buckets - 1;
+
+#if 0
+    printf("DEBUG buckets %" PRIu64 " bucket_count_mask %" PRIu64 "\n",
+                    table->buckets, table->bucket_count_mask);
+    printf("DEBUG buckets 0x%" PRIx64 " bucket_count_mask 0x%" PRIx64 "\n",
+                    table->buckets, table->bucket_count_mask);
+#endif
 
     table->buckets_per_group = buckets_per_group;
     table->group_bucket_count_mask = table->buckets_per_group - 1;
@@ -143,7 +150,7 @@ int core_hash_table_get_group(struct core_hash_table *table, uint64_t bucket)
 
 int core_hash_table_get_group_bucket(struct core_hash_table *table, uint64_t bucket)
 {
-    return bucket % table->buckets_per_group;
+    return bucket & table->group_bucket_count_mask;
 }
 
 /*
@@ -176,7 +183,10 @@ uint64_t core_hash_table_hash2(struct core_hash_table *table, void *key)
     if (hash2 == 0) {
         hash2 = 1;
     }
-    if (hash2 % 2 == 0) {
+
+    /* can not be a power of 2
+     */
+    if ((hash2 & 1) == 0) {
         hash2--;
     }
 
@@ -186,7 +196,11 @@ uint64_t core_hash_table_hash2(struct core_hash_table *table, void *key)
 uint64_t core_hash_table_double_hash(struct core_hash_table *table, uint64_t hash1,
                 uint64_t hash2, uint64_t stride)
 {
-    return (hash1 + stride * hash2) % table->buckets;
+    uint64_t result;
+
+    result = hash1 + stride * hash2;
+
+    return result & table->bucket_count_mask;
 }
 
 uint64_t core_hash_table_size(struct core_hash_table *table)
@@ -323,9 +337,11 @@ int core_hash_table_pack_unpack(struct core_hash_table *self, void *buffer, int 
 
     core_packer_process(&packer, &self->elements, sizeof(self->elements));
     core_packer_process(&packer, &self->buckets, sizeof(self->buckets));
+    core_packer_process(&packer, &self->bucket_count_mask, sizeof(self->buckets));
 
     core_packer_process(&packer, &self->group_count, sizeof(self->group_count));
     core_packer_process(&packer, &self->buckets_per_group, sizeof(self->buckets_per_group));
+    core_packer_process(&packer, &self->group_bucket_count_mask, sizeof(self->buckets_per_group));
     core_packer_process(&packer, &self->key_size, sizeof(self->key_size));
     core_packer_process(&packer, &self->value_size, sizeof(self->value_size));
 

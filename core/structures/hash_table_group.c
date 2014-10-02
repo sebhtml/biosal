@@ -148,7 +148,7 @@ void core_hash_table_group_set_bit(void *bitmap, uint64_t bucket, int value1)
 
     value = value1;
     unit = bucket / CORE_BITS_PER_BYTE;
-    bit = bucket % CORE_BITS_PER_BYTE;
+    bit = bucket & (CORE_BITS_PER_BYTE - 1);
 
     bits = (uint64_t)((char *)bitmap)[unit];
 
@@ -174,7 +174,7 @@ int core_hash_table_group_get_bit(void *bitmap, uint64_t bucket)
     int bit_value;
 
     unit = bucket / CORE_BITS_PER_BYTE;
-    bit = bucket % CORE_BITS_PER_BYTE;
+    bit = bucket & (CORE_BITS_PER_BYTE - 1);
 
     /*printf("core_hash_table_group_get_bit %p %i\n", group->bitmap, unit);*/
 
