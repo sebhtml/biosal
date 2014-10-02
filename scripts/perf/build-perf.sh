@@ -6,4 +6,4 @@ clear
 echo "CFLAGS: $CFLAGS"
 
 make clean
-make CFLAGS="$CFLAGS" all -j 8
+make CFLAGS="$CFLAGS" all -j 8 CONFIG_FLAGS="-DTHORIUM_DEBUG" 
