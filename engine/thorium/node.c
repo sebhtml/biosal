@@ -103,7 +103,10 @@ void thorium_node_init(struct thorium_node *node, int *argc, char ***argv)
     int processor;
 
     core_timer_init(&node->timer);
+
+#ifdef THORIUM_NODE_USE_TICKS
     node->tick_count = 0;
+#endif
 
 #ifdef THORIUM_NODE_DEBUG_INJECTION
     node->counter_allocated_node_inbound_buffers = 0;
@@ -380,8 +383,9 @@ void thorium_node_init(struct thorium_node *node, int *argc, char ***argv)
 
     core_queue_init(&node->dead_indices, sizeof(int));
 
+#ifdef THORIUM_NODE_USE_COUNTERS
     core_counter_init(&node->counter);
-
+#endif
 
     processor = workers;
 
@@ -416,6 +420,8 @@ void thorium_node_init(struct thorium_node *node, int *argc, char ***argv)
         thorium_worker_pool_enable_profiler(&node->worker_pool);
         core_bitmap_set_bit_uint32_t(&node->flags, FLAG_ENABLE_ACTOR_LOAD_PROFILES);
     }
+
+    node->worker_count = thorium_worker_pool_worker_count(&node->worker_pool);
 }
 
 void thorium_node_destroy(struct thorium_node *node)
@@ -472,7 +478,9 @@ void thorium_node_destroy(struct thorium_node *node)
     thorium_message_multiplexer_destroy(&node->multiplexer);
     thorium_multiplexer_policy_destroy(&node->multiplexer_policy);
 
+#ifdef THORIUM_NODE_USE_COUNTERS
     core_counter_destroy(&node->counter);
+#endif
 
     core_fast_queue_destroy(&node->clean_outbound_buffers_to_inject);
 
@@ -626,7 +634,9 @@ int thorium_node_spawn(struct thorium_node *node, int script)
 #endif
     }
 
+#ifdef THORIUM_NODE_USE_COUNTERS
     core_counter_add(&node->counter, CORE_COUNTER_SPAWNED_ACTORS, 1);
+#endif
 
 #ifdef THORIUM_NODE_DEBUG_SPAWN_KILL
     printf("DEBUG node/%d thorium_node_spawn actor/%d script/%x\n",
@@ -855,7 +865,11 @@ int thorium_node_run(struct thorium_node *node)
     /* Always print counters at the end, this is useful.
      */
     if (core_bitmap_get_bit_uint32_t(&node->flags, FLAG_PRINT_COUNTERS)) {
+#ifdef THORIUM_NODE_USE_COUNTERS
         thorium_node_print_counters(node);
+#else
+        printf("thorium_node: please recompile with THORIUM_NODE_USE_COUNTERS\n");
+#endif
     }
 
     /*
@@ -1235,6 +1249,8 @@ void thorium_node_send(struct thorium_node *node, struct thorium_message *messag
             printf("DEBUG local message 1100\n");
         }
 #endif
+
+#ifdef THORIUM_NODE_USE_COUNTERS
         core_counter_add(&node->counter, CORE_COUNTER_SENT_MESSAGES_TO_SELF, 1);
         core_counter_add(&node->counter, CORE_COUNTER_SENT_BYTES_TO_SELF,
                         thorium_message_count(message));
@@ -1242,6 +1258,7 @@ void thorium_node_send(struct thorium_node *node, struct thorium_message *messag
         core_counter_add(&node->counter, CORE_COUNTER_RECEIVED_MESSAGES_FROM_SELF, 1);
         core_counter_add(&node->counter, CORE_COUNTER_RECEIVED_BYTES_FROM_SELF,
                         thorium_message_count(message));
+#endif
 
     /* Otherwise, the message must be sent to another BIOSAL
      * node
@@ -1557,7 +1574,9 @@ void thorium_node_notify_death(struct thorium_node *node, struct thorium_actor *
                         node->alive_actors, node->dead_actors);
     }
 
+#ifdef THORIUM_NODE_USE_COUNTERS
     core_counter_add(&node->counter, CORE_COUNTER_KILLED_ACTORS, 1);
+#endif
 
     core_lock_unlock(&node->spawn_and_death_lock);
 
@@ -1630,6 +1649,7 @@ struct thorium_script *thorium_node_find_script(struct thorium_node *node, int i
     return *script;
 }
 
+#ifdef THORIUM_NODE_USE_COUNTERS
 void thorium_node_print_counters(struct thorium_node *node)
 {
     printf("----------------------------------------------\n");
@@ -1637,10 +1657,12 @@ void thorium_node_print_counters(struct thorium_node *node)
                     thorium_node_name(node));
     core_counter_print(&node->counter, thorium_node_name(node));
 }
+#endif
 
 /*
- * TODO: on segmentation fault, kill the actor and continue
- * computation
+ * That would be cool to be able to survive a segmentation fault.
+ * This could be done by killing the actor and continue
+ * computation.
  */
 void thorium_node_handle_signal(int signal)
 {
@@ -1813,7 +1835,11 @@ void thorium_node_reset_actor_counters(struct thorium_node *node)
 
 int64_t thorium_node_get_counter(struct thorium_node *node, int counter)
 {
+#ifdef THORIUM_NODE_USE_COUNTERS
     return core_counter_get(&node->counter, counter);
+#else
+    return 0;
+#endif
 }
 
 int thorium_node_send_system(struct thorium_node *node, struct thorium_message *message)
@@ -1935,6 +1961,7 @@ void thorium_node_run_loop(struct thorium_node *node)
     void *buffer;
     uint64_t threshold;
     char send_in_thread;
+    char use_transport;
 
 #ifdef THORIUM_NODE_ENABLE_INSTRUMENTATION
     int period;
@@ -1954,6 +1981,8 @@ void thorium_node_run_loop(struct thorium_node *node)
 
     send_in_thread = core_bitmap_get_bit_uint32_t(&node->flags,
                                 FLAG_SEND_IN_THREAD);
+    use_transport = core_bitmap_get_bit_uint32_t(&node->flags, FLAG_USE_TRANSPORT);
+
     threshold = 100 * 1000;
 
     while (credits > 0) {
@@ -1983,9 +2012,11 @@ void thorium_node_run_loop(struct thorium_node *node)
                                     core_memory_get_total_byte_count());
                 }
 
+#ifdef THORIUM_NODE_USE_COUNTERS
                 if (core_bitmap_get_bit_uint32_t(&node->flags, FLAG_PRINT_COUNTERS)) {
                     thorium_node_print_counters(node);
                 }
+#endif
 
                 node->last_report_time = current_time;
             }
@@ -1993,7 +2024,7 @@ void thorium_node_run_loop(struct thorium_node *node)
 #endif
         CORE_DEBUGGER_JITTER_DETECTION_END(node_print, 0);
 
-#ifdef THORIUM_NODE_DEBUG_LOOP
+#ifdef THORIUM_NODE_USE_TICKS
         if (worker->tick_count % 1000000 == 0) {
             thorium_node_print_counters(node);
         }
@@ -2011,8 +2042,7 @@ void thorium_node_run_loop(struct thorium_node *node)
          * this code path will call lock if
          * there is a message received.
          */
-        if (core_bitmap_get_bit_uint32_t(&node->flags, FLAG_USE_TRANSPORT)
-            && thorium_transport_receive(&node->transport, &message)) {
+        if (use_transport && thorium_transport_receive(&node->transport, &message)) {
 
 #ifdef THORIUM_NODE_DEBUG_INJECTION
             /*
@@ -2025,9 +2055,11 @@ void thorium_node_run_loop(struct thorium_node *node)
              */
             thorium_node_prepare_received_message(node, &message);
 
+#ifdef THORIUM_NODE_USE_COUNTERS
             core_counter_add(&node->counter, CORE_COUNTER_RECEIVED_MESSAGES_NOT_FROM_SELF, 1);
             core_counter_add(&node->counter, CORE_COUNTER_RECEIVED_BYTES_NOT_FROM_SELF,
                     thorium_message_count(&message));
+#endif
 
             if (!thorium_message_multiplexer_demultiplex(&node->multiplexer, &message)) {
                 thorium_node_dispatch_message(node, &message);
@@ -2098,7 +2130,7 @@ void thorium_node_run_loop(struct thorium_node *node)
 
         /* Free buffers of active requests
          */
-        if (core_bitmap_get_bit_uint32_t(&node->flags, FLAG_USE_TRANSPORT)) {
+        if (use_transport) {
 
             thorium_node_test_requests(node);
 
@@ -2116,7 +2148,7 @@ void thorium_node_run_loop(struct thorium_node *node)
 
         CORE_DEBUGGER_JITTER_DETECTION_END(node_main_loop, 0);
 
-#ifdef THORIUM_NODE_ENABLE_INSTRUMENTATION
+#ifdef THORIUM_NODE_USE_TICKS
         ++node->tick_count;
 #endif
     }
@@ -2270,7 +2302,6 @@ void thorium_node_free_worker_buffer(struct thorium_node *node,
 
 void thorium_node_do_message_triage(struct thorium_node *self)
 {
-    int worker_count;
     struct thorium_worker *worker;
     struct thorium_message message;
 
@@ -2286,15 +2317,13 @@ void thorium_node_do_message_triage(struct thorium_node *self)
         thorium_node_recycle_message(self, &message);
     }
 
-    worker_count = thorium_worker_pool_worker_count(&self->worker_pool);
-
     worker = thorium_worker_pool_get_worker(&self->worker_pool, self->worker_for_triage);
 
     /*
      * Position the index on the next worker to process.
      */
     ++self->worker_for_triage;
-    if (self->worker_for_triage == worker_count) {
+    if (self->worker_for_triage == self->worker_count) {
         self->worker_for_triage = 0;
     }
 
@@ -2430,10 +2459,11 @@ void thorium_node_send_with_transport(struct thorium_node *self, struct thorium_
 {
     thorium_transport_send(&self->transport, message);
 
+#ifdef THORIUM_NODE_USE_COUNTERS
     core_counter_add(&self->counter, CORE_COUNTER_SENT_MESSAGES_NOT_TO_SELF, 1);
     core_counter_add(&self->counter, CORE_COUNTER_SENT_BYTES_NOT_TO_SELF,
                         thorium_message_count(message));
-
+#endif
 }
 
 struct core_memory_pool *thorium_node_inbound_memory_pool(struct thorium_node *self)

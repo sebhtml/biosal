@@ -97,8 +97,12 @@ struct thorium_node {
     int ready;
 
     struct core_timer timer;
+
+#ifdef THORIUM_NODE_USE_TICKS
     uint64_t tick_count;
+#endif
     uint32_t flags;
+    int worker_count;
 
 #if 0
     /*
@@ -189,7 +193,9 @@ struct thorium_node {
     int argc;
     char **argv;
 
+#ifdef THORIUM_NODE_USE_COUNTERS
     struct core_counter counter;
+#endif
 
     /*
      * Requires -D_POSIX_C_SOURCE=200112L
@@ -277,8 +283,10 @@ void thorium_node_dispatch_message(struct thorium_node *self, struct thorium_mes
 void thorium_node_set_initial_actor(struct thorium_node *self, int node_name, int actor);
 int thorium_node_allocate_actor_index(struct thorium_node *self);
 
+#ifdef THORIUM_NODE_USE_COUNTERS
 void thorium_node_print_event_counters(struct thorium_node *self);
 void thorium_node_print_counters(struct thorium_node *self);
+#endif
 
 void thorium_node_handle_signal(int signal);
 void thorium_node_register_signal_handlers(struct thorium_node *self);
