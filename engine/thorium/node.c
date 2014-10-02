@@ -94,6 +94,9 @@ void thorium_node_init(struct thorium_node *node, int *argc, char ***argv)
     int actor_capacity;
     int processor;
 
+    core_timer_init(&node->timer);
+    node->tick_count = 0;
+
 #ifdef THORIUM_NODE_DEBUG_INJECTION
     node->counter_allocated_node_inbound_buffers = 0;
     node->counter_freed_multiplexed_inbound_buffers = 0;
@@ -410,6 +413,8 @@ void thorium_node_init(struct thorium_node *node, int *argc, char ***argv)
 void thorium_node_destroy(struct thorium_node *node)
 {
     int active_requests;
+
+    core_timer_destroy(&node->timer);
 
     if (core_bitmap_get_bit_uint32_t(&node->flags, FLAG_EXAMINE))
         thorium_node_examine(node);
@@ -1920,9 +1925,12 @@ void thorium_node_run_loop(struct thorium_node *node)
     int credits;
     const int starting_credits = 256;
     void *buffer;
+    uint64_t start_time;
+    uint64_t end_time;
+    uint64_t delay;
+    uint64_t threshold;
 
 #ifdef THORIUM_NODE_ENABLE_INSTRUMENTATION
-    int ticks;
     int period;
     time_t current_time;
     char print_information = 0;
@@ -1934,12 +1942,15 @@ void thorium_node_run_loop(struct thorium_node *node)
     }
 
     period = THORIUM_NODE_LOAD_PERIOD;
-    ticks = 0;
 #endif
 
     credits = starting_credits;
 
+    threshold = 100 * 1000;
+
     while (credits > 0) {
+
+        start_time = core_timer_get_nanoseconds(&node->timer);
 
 #ifdef THORIUM_NODE_ENABLE_INSTRUMENTATION
         if (print_information) {
@@ -1972,7 +1983,7 @@ void thorium_node_run_loop(struct thorium_node *node)
 #endif
 
 #ifdef THORIUM_NODE_DEBUG_LOOP
-        if (ticks % 1000000 == 0) {
+        if (worker->tick_count % 1000000 == 0) {
             thorium_node_print_counters(node);
         }
 #endif
@@ -2040,10 +2051,6 @@ void thorium_node_run_loop(struct thorium_node *node)
             thorium_node_send_message(node);
         }
 
-#ifdef THORIUM_NODE_ENABLE_INSTRUMENTATION
-        ticks++;
-#endif
-
         /* Flush queue buffers in the worker pool
          */
 
@@ -2080,6 +2087,18 @@ void thorium_node_run_loop(struct thorium_node *node)
         if (node->alive_actors == 0) {
             printf("THORIUM_NODE_DEBUG_RUN credits: %d\n", credits);
         }
+#endif
+
+        end_time = core_timer_get_nanoseconds(&node->timer);
+
+        delay = end_time - start_time;
+
+        if (delay >= threshold)
+            printf("thorium_node: Warning: runtime jitter: %" PRIu64 " ns, node %d tick %" PRIu64 "\n",
+                        delay, node->name, node->tick_count);
+
+#ifdef THORIUM_NODE_ENABLE_INSTRUMENTATION
+        ++node->tick_count;
 #endif
     }
 

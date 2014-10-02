@@ -28,8 +28,8 @@
   */
 
 /*
+ */
 #define SHOW_FULL_RING_WARNINGS
-*/
 
 #define MEMORY_POOL_NAME_WORKER_EPHEMERAL  0x2ee1c5a6
 #define MEMORY_POOL_NAME_WORKER_OUTBOUND   0x46d316e4
@@ -98,6 +98,8 @@ void thorium_worker_init(struct thorium_worker *worker, int name, struct thorium
     int injected_buffer_ring_size;
     int argc;
     char **argv;
+
+    worker->tick_count = 0;
 
     thorium_load_profiler_init(&worker->profiler);
 
@@ -412,8 +414,17 @@ void thorium_worker_start(struct thorium_worker *worker, int processor)
 void *thorium_worker_main(void *worker1)
 {
     struct thorium_worker *worker;
+    uint64_t start_time;
+    uint64_t end_time;
+    uint64_t period;
+    uint64_t threshold;
 
     worker = (struct thorium_worker*)worker1;
+
+    /*
+     * 100 us
+     */
+    threshold = 100 * 1000;
 
 #ifdef THORIUM_WORKER_DEBUG
     thorium_worker_display(worker);
@@ -422,7 +433,21 @@ void *thorium_worker_main(void *worker1)
 
     while (!core_bitmap_get_bit_uint32_t(&worker->flags, FLAG_DEAD)) {
 
+        start_time = core_timer_get_nanoseconds(&worker->timer);
+        worker->last_elapsed_nanoseconds = 0;
+
         thorium_worker_run(worker);
+
+        end_time = core_timer_get_nanoseconds(&worker->timer);
+        period = end_time - start_time;
+        period -= worker->last_elapsed_nanoseconds;
+
+        if (period >= threshold)
+            printf("thorium_worker: Warning: runtime jitter: %" PRIu64 " ns, node %d worker %d tick %" PRIu64 "\n",
+                        period, thorium_node_name(worker->node),
+                        worker->name, worker->tick_count);
+
+        ++worker->tick_count;
     }
 
     return NULL;
@@ -1144,7 +1169,8 @@ int thorium_worker_enqueue_message_for_triage(struct thorium_worker *worker, str
     if (!core_fast_ring_push_from_producer(&worker->clean_message_ring_for_triage, message)) {
 
 #ifdef SHOW_FULL_RING_WARNINGS
-        printf("thorium_worker: Warning: ring is full, clean_message_ring_for_triage\n");
+        printf("thorium_worker: Warning: ring is full, clean_message_ring_for_triage action= %x\n",
+                        thorium_message_action(message));
 #endif
 
         core_fast_queue_enqueue(&worker->clean_message_queue_for_triage, message);
@@ -1328,6 +1354,8 @@ void thorium_worker_run(struct thorium_worker *worker)
         worker->epoch_used_nanoseconds += elapsed_nanoseconds;
         worker->loop_used_nanoseconds += elapsed_nanoseconds;
         worker->scheduling_epoch_used_nanoseconds += elapsed_nanoseconds;
+
+        worker->last_elapsed_nanoseconds = elapsed_nanoseconds;
 #endif
     }
 

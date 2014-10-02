@@ -96,6 +96,8 @@ struct thorium_node {
     int received_initial_actors;
     int ready;
 
+    struct core_timer timer;
+    uint64_t tick_count;
     uint32_t flags;
 
 #if 0
