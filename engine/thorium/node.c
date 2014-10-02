@@ -1961,10 +1961,11 @@ void thorium_node_run_loop(struct thorium_node *node)
 {
     struct thorium_message message;
     int credits;
-    const int starting_credits = 256;
+    int starting_credits;
     void *buffer;
     char send_in_thread;
     char use_transport;
+    char run_in_main_thread;
 
 #ifdef THORIUM_NODE_ENABLE_INSTRUMENTATION
     int period;
@@ -1980,11 +1981,13 @@ void thorium_node_run_loop(struct thorium_node *node)
     period = THORIUM_NODE_LOAD_PERIOD;
 #endif
 
+    starting_credits = 1024;
     credits = starting_credits;
 
     send_in_thread = core_bitmap_get_bit_uint32_t(&node->flags,
                                 FLAG_SEND_IN_THREAD);
     use_transport = core_bitmap_get_bit_uint32_t(&node->flags, FLAG_USE_TRANSPORT);
+    run_in_main_thread = core_bitmap_get_bit_uint32_t(&node->flags, FLAG_WORKER_IN_MAIN_THREAD);
 
     while (credits > 0) {
 
@@ -2082,7 +2085,7 @@ void thorium_node_run_loop(struct thorium_node *node)
         /* the one worker works here if there is only
          * one thread
          */
-        if (core_bitmap_get_bit_uint32_t(&node->flags, FLAG_WORKER_IN_MAIN_THREAD)) {
+        if (run_in_main_thread) {
             thorium_worker_pool_run(&node->worker_pool);
         }
 
