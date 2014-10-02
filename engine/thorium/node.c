@@ -1925,9 +1925,6 @@ void thorium_node_run_loop(struct thorium_node *node)
     int credits;
     const int starting_credits = 256;
     void *buffer;
-    uint64_t start_time;
-    uint64_t end_time;
-    uint64_t delay;
     uint64_t threshold;
 
 #ifdef THORIUM_NODE_ENABLE_INSTRUMENTATION
@@ -1950,7 +1947,7 @@ void thorium_node_run_loop(struct thorium_node *node)
 
     while (credits > 0) {
 
-        start_time = core_timer_get_nanoseconds(&node->timer);
+        CORE_DEBUGGER_JITTER_DETECTION_START(node_main_loop);
 
 #ifdef THORIUM_NODE_ENABLE_INSTRUMENTATION
         if (print_information) {
@@ -2089,13 +2086,7 @@ void thorium_node_run_loop(struct thorium_node *node)
         }
 #endif
 
-        end_time = core_timer_get_nanoseconds(&node->timer);
-
-        delay = end_time - start_time;
-
-        if (delay >= threshold)
-            printf("thorium_node: Warning: runtime jitter: %" PRIu64 " ns, node %d tick %" PRIu64 "\n",
-                        delay, node->name, node->tick_count);
+        CORE_DEBUGGER_JITTER_DETECTION_END(node_main_loop);
 
 #ifdef THORIUM_NODE_ENABLE_INSTRUMENTATION
         ++node->tick_count;

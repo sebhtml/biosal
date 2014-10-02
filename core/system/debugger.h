@@ -2,6 +2,8 @@
 #ifndef CORE_DEBUGGER_H
 #define CORE_DEBUGGER_H
 
+struct core_timer;
+
 /*
  * Enable debug mode.
  * Parameters for debugging are below.
@@ -25,6 +27,11 @@
  * CORE_DEBUGGER_LEAK_DETECTION_BEGIN and CORE_DEBUGGER_LEAK_DETECTION_END
  */
 #define CORE_DEBUGGER_ENABLE_LEAK_DETECTION
+
+/*
+ * Detect jitter in Thorium
+ */
+#define CORE_DEBUGGER_DETECT_JITTER
 
 /*
  * Enable event counter for injections
@@ -104,4 +111,28 @@ void core_debugger_examine(void *pointer, int bytes);
 
 #define CORE_DEBUGGER_ASSERT_NOT_NULL(pointer) \
         CORE_DEBUGGER_ASSERT(pointer != NULL)
+
+/*
+ * Jitter detection
+ */
+
+#ifdef CORE_DEBUGGER_DETECT_JITTER
+
+#define CORE_DEBUGGER_JITTER_DETECTION_START(name) \
+    struct core_timer name ## _jitter_detection; \
+    core_debugger_jitter_detection_start(&(name ## _jitter_detection));
+
+#define CORE_DEBUGGER_JITTER_DETECTION_END(name) \
+    core_debugger_jitter_detection_end(&(name ## _jitter_detection), # name);
+
+#else
+
+#define CORE_DEBUGGER_JITTER_DETECTION_START(name)
+#define CORE_DEBUGGER_JITTER_DETECTION_END(name)
+
+#endif
+
+void core_debugger_jitter_detection_start(struct core_timer *timer);
+void core_debugger_jitter_detection_end(struct core_timer *timer, const char *name);
+
 #endif
