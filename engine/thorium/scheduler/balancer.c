@@ -208,6 +208,7 @@ void thorium_balancer_balance(struct thorium_balancer *self)
     thorium_balancer_detect_symmetric_scripts(self, &symmetric_actor_scripts);
 #endif
 
+#ifdef THORIUM_WORKER_ENABLE_LOCK
     /* Lock all workers first
      */
     for (i = 0; i < thorium_worker_pool_worker_count(self->pool); i++) {
@@ -215,7 +216,7 @@ void thorium_balancer_balance(struct thorium_balancer *self)
 
         thorium_worker_lock(worker);
     }
-
+#endif
 
     core_vector_init(&migrations, sizeof(struct thorium_migration));
 
@@ -608,6 +609,7 @@ void thorium_balancer_balance(struct thorium_balancer *self)
 
     core_vector_destroy(&migrations);
 
+#ifdef THORIUM_WORKER_ENABLE_LOCK
     /* Unlock all workers
      */
     for (i = 0; i < thorium_worker_pool_worker_count(self->pool); i++) {
@@ -615,6 +617,7 @@ void thorium_balancer_balance(struct thorium_balancer *self)
 
         thorium_worker_unlock(worker);
     }
+#endif
 
 #ifdef THORIUM_SCHEDULER_ENABLE_SYMMETRIC_SCHEDULING
     core_map_destroy(&symmetric_actor_scripts);

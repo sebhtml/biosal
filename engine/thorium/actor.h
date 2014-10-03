@@ -31,6 +31,14 @@
 #include <stdint.h>
 
 /*
+ * Enable actor locks.
+ * This is not a good thing to enable !
+ */
+/*
+#define THORIUM_ACTOR_ENABLE_LOCK
+*/
+
+/*
  * Expose the actor acquaintance API.
  *
  * This is not a good thing to do.
@@ -240,7 +248,9 @@ struct thorium_actor {
     struct thorium_message *current_message;
     void *concrete_actor;
 
+#ifdef THORIUM_ACTOR_ENABLE_LOCK
     struct core_lock receive_lock;
+#endif
 
     /*
      * The name of the actor
@@ -337,9 +347,11 @@ int thorium_actor_node_worker_count(struct thorium_actor *self);
  */
 int thorium_actor_spawn(struct thorium_actor *self, int script);
 
+#ifdef THORIUM_ACTOR_ENABLE_LOCK
 void thorium_actor_lock(struct thorium_actor *self);
 int thorium_actor_trylock(struct thorium_actor *self);
 void thorium_actor_unlock(struct thorium_actor *self);
+#endif
 
 int thorium_actor_argc(struct thorium_actor *self);
 char **thorium_actor_argv(struct thorium_actor *self);

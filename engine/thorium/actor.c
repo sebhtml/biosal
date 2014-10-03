@@ -106,8 +106,10 @@ void thorium_actor_init(struct thorium_actor *self, void *concrete_actor,
     self->synchronization_expected_responses = 0;
     self->synchronization_responses = 0;
 
+#ifdef THORIUM_ACTOR_ENABLE_LOCK
     core_lock_init(&self->receive_lock);
     core_bitmap_clear_bit_uint32_t(&self->flags, FLAG_LOCKED);
+#endif
 
     core_bitmap_clear_bit_uint32_t(&self->flags, FLAG_CAN_PACK);
 
@@ -219,12 +221,14 @@ void thorium_actor_destroy(struct thorium_actor *self)
     self->worker = NULL;
     self->concrete_actor = NULL;
 
+#ifdef THORIUM_ACTOR_ENABLE_LOCK
     /* unlock the actor if the actor is being destroyed while
      * being locked
      */
     thorium_actor_unlock(self);
 
     core_lock_destroy(&self->receive_lock);
+#endif
 
     /* when exiting the destructor, the actor is unlocked
      * and destroyed too
@@ -542,12 +546,15 @@ struct thorium_node *thorium_actor_node(struct thorium_actor *self)
     return thorium_worker_node(thorium_actor_worker(self));
 }
 
+#ifdef THORIUM_ACTOR_ENABLE_LOCK
 void thorium_actor_lock(struct thorium_actor *self)
 {
     core_lock_lock(&self->receive_lock);
     core_bitmap_set_bit_uint32_t(&self->flags, FLAG_LOCKED);
 }
+#endif
 
+#ifdef THORIUM_ACTOR_ENABLE_LOCK
 void thorium_actor_unlock(struct thorium_actor *self)
 {
     if (!core_bitmap_get_bit_uint32_t(&self->flags, FLAG_LOCKED)) {
@@ -557,6 +564,7 @@ void thorium_actor_unlock(struct thorium_actor *self)
     core_bitmap_clear_bit_uint32_t(&self->flags, FLAG_LOCKED);
     core_lock_unlock(&self->receive_lock);
 }
+#endif
 
 int thorium_actor_argc(struct thorium_actor *self)
 {
@@ -2055,6 +2063,7 @@ int thorium_actor_dead(struct thorium_actor *self)
     return core_bitmap_get_bit_uint32_t(&self->flags, FLAG_DEAD);
 }
 
+#ifdef THORIUM_ACTOR_ENABLE_LOCK
 /* return 0 if successful
  */
 int thorium_actor_trylock(struct thorium_actor *self)
@@ -2070,6 +2079,7 @@ int thorium_actor_trylock(struct thorium_actor *self)
 
     return result;
 }
+#endif
 
 #ifdef THORIUM_ACTOR_STORE_CHILDREN
 struct core_vector *thorium_actor_acquaintance_vector_private(struct thorium_actor *self)

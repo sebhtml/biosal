@@ -32,8 +32,8 @@ struct core_timer;
 
 /*
  * Detect jitter in Thorium
- */
 #define CORE_DEBUGGER_DETECT_JITTER
+ */
 
 /*
  * Enable event counter for injections

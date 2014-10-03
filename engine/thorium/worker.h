@@ -30,6 +30,13 @@ struct thorium_message;
 struct thorium_balancer;
 
 /*
+ * Enable locks in workers.
+ */
+/*
+#define THORIUM_WORKER_ENABLE_LOCK
+*/
+
+/*
  * Inject clean worker buffers into the worker rings
  */
 #define THORIUM_NODE_INJECT_CLEAN_WORKER_BUFFERS
@@ -107,7 +114,9 @@ struct thorium_worker {
 
     struct core_set evicted_actors;
 
+#ifdef THORIUM_WORKER_ENABLE_LOCK
     struct core_lock lock;
+#endif
 
     struct core_thread thread;
 
@@ -192,8 +201,12 @@ int thorium_worker_dequeue_message(struct thorium_worker *self, struct thorium_m
 void thorium_worker_print_actors(struct thorium_worker *self, struct thorium_balancer *scheduler);
 
 void thorium_worker_evict_actor(struct thorium_worker *self, int actor_name);
+
+#ifdef THORIUM_WORKER_ENABLE_LOCK
 void thorium_worker_lock(struct thorium_worker *self);
 void thorium_worker_unlock(struct thorium_worker *self);
+#endif
+
 struct core_map *thorium_worker_get_actors(struct thorium_worker *self);
 
 int thorium_worker_get_sum_of_received_actor_messages(struct thorium_worker *self);

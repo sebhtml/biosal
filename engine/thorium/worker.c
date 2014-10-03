@@ -209,7 +209,10 @@ void thorium_worker_init(struct thorium_worker *worker, int name, struct thorium
     core_memory_pool_disable_tracking(&worker->ephemeral_memory);
     core_memory_pool_enable_ephemeral_mode(&worker->ephemeral_memory);
 
+#ifdef THORIUM_WORKER_ENABLE_LOCK
     core_lock_init(&worker->lock);
+#endif
+
     core_set_init(&worker->evicted_actors, sizeof(int));
 
     core_memory_pool_init(&worker->outbound_message_memory_pool,
@@ -288,7 +291,10 @@ void thorium_worker_destroy(struct thorium_worker *worker)
 #endif
 
     core_timer_destroy(&worker->timer);
+
+#ifdef THORIUM_WORKER_ENABLE_LOCK
     core_lock_destroy(&worker->lock);
+#endif
 
     core_fast_ring_destroy(&worker->actors_to_schedule);
 
@@ -954,6 +960,7 @@ void thorium_worker_evict_actor(struct thorium_worker *worker, int actor_name)
     core_map_iterator_init(&worker->actor_iterator, &worker->actors);
 }
 
+#ifdef THORIUM_WORKER_ENABLE_LOCK
 void thorium_worker_lock(struct thorium_worker *worker)
 {
     core_lock_lock(&worker->lock);
@@ -963,6 +970,7 @@ void thorium_worker_unlock(struct thorium_worker *worker)
 {
     core_lock_unlock(&worker->lock);
 }
+#endif
 
 struct core_map *thorium_worker_get_actors(struct thorium_worker *worker)
 {
@@ -1236,7 +1244,9 @@ void thorium_worker_run(struct thorium_worker *worker)
     struct thorium_message *message;
 #endif
 
+#ifdef THORIUM_WORKER_ENABLE_LOCK
     thorium_worker_lock(worker);
+#endif
 
 #ifdef THORIUM_NODE_ENABLE_INSTRUMENTATION
     period = THORIUM_NODE_LOAD_PERIOD;
@@ -1387,7 +1397,9 @@ void thorium_worker_run(struct thorium_worker *worker)
         thorium_worker_enqueue_message_for_triage(worker, &other_message);
     }
 
+#ifdef THORIUM_WORKER_ENABLE_LOCK
     thorium_worker_unlock(worker);
+#endif
 }
 
 void thorium_worker_work(struct thorium_worker *worker, struct thorium_actor *actor)
@@ -1415,6 +1427,7 @@ void thorium_worker_work(struct thorium_worker *worker, struct thorium_actor *ac
         return;
     }
 
+#ifdef THORIUM_DISABLE_LOCKLESS_ACTORS
     /* lock the actor to prevent another worker from making work
      * on the same actor at the same time
      */
@@ -1428,6 +1441,7 @@ void thorium_worker_work(struct thorium_worker *worker, struct thorium_actor *ac
 
         return;
     }
+#endif
 
     /* the actor died while this worker was waiting for the lock
      */
@@ -1472,11 +1486,13 @@ void thorium_worker_work(struct thorium_worker *worker, struct thorium_actor *ac
     }
 #endif
 
+#ifdef THORIUM_DISABLE_LOCKLESS_ACTORS
     /* Unlock the actor.
      * This does not do anything if a death notification
      * was sent to the node
      */
     thorium_actor_unlock(actor);
+#endif
 
 #ifdef THORIUM_WORKER_DEBUG
     printf("thorium_worker_work Freeing buffer %p %i tag %i\n",
