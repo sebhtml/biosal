@@ -52,7 +52,9 @@ void core_hash_table_init(struct core_hash_table *table, uint64_t buckets,
 
     table->debug = 0;
 
-    /* google sparsehash uses 48. 64 is nice too */
+    /*
+     * Google sparsehash uses 48. 64 is nice too
+     */
     buckets_per_group = 64;
 
     while ((buckets & (buckets_per_group - 1)) != 0) {
@@ -60,7 +62,10 @@ void core_hash_table_init(struct core_hash_table *table, uint64_t buckets,
     }
 
 #ifdef CORE_HASH_TABLE_USE_ONE_GROUP
-    /* trick the code
+    /*
+     * Trick the code
+     * CORE_HASH_TABLE_USE_ONE_GROUP makes the code faster, but is not compatible
+     * with the idea of a sparse container.
      */
     buckets_per_group = buckets;
 #endif
@@ -237,8 +242,13 @@ int core_hash_table_state(struct core_hash_table *self, uint64_t bucket)
         return CORE_HASH_TABLE_BUCKET_EMPTY;
     }
 
-    group = core_hash_table_get_group(self, bucket);
+#ifdef CORE_HASH_TABLE_USE_ONE_GROUP
+    group = 0;
     bucket_in_group = core_hash_table_get_group_bucket(self, bucket);
+#else
+    group = core_hash_table_get_group(self, bucket);
+    bucket_in_group = bucket;
+#endif
 
     table_group = self->groups + group;
 

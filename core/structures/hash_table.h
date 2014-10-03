@@ -16,7 +16,8 @@
 
 #define CORE_HASH_TABLE_MATCH 0
 
-/* only use a single group
+/*
+ * Only use a single group
  */
 #define CORE_HASH_TABLE_USE_ONE_GROUP
 
