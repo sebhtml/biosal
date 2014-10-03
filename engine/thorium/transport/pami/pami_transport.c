@@ -40,32 +40,40 @@ void thorium_pami_transport_init(struct thorium_transport *self, int *argc, char
 
     int i = 0;
 
-    /*Queue of available send cookies*/
+    /*
+    * Queue of available send cookies
+    */
     pami_transport->avail_send_cookies_queue = (struct core_fast_queue *)malloc(sizeof(struct core_fast_queue));
     core_fast_queue_init(pami_transport->avail_send_cookies_queue, sizeof(thorium_send_cookie_t *));
     pami_transport->send_cookies = (thorium_send_cookie_t **)malloc(sizeof(thorium_send_cookie_t *) * NUM_SEND_COOKIES);
     CORE_DEBUGGER_ASSERT(pami_transport->send_cookies != NULL);
     for (i = 0; i < NUM_SEND_COOKIES; i++) {
-	pami_transport->send_cookies[i] = (thorium_send_cookie_t *)malloc(sizeof(thorium_send_cookie_t));
+        pami_transport->send_cookies[i] = (thorium_send_cookie_t *)malloc(sizeof(thorium_send_cookie_t));
         core_fast_queue_enqueue(pami_transport->avail_send_cookies_queue, (void *)&pami_transport->send_cookies[i]);
     }
 
-    /*Queue of available recv cookies*/
+    /*
+    * Queue of available recv cookies
+    */
     pami_transport->avail_recv_cookies_queue = (struct core_fast_queue *)malloc(sizeof(struct core_fast_queue));
     core_fast_queue_init(pami_transport->avail_recv_cookies_queue, sizeof(thorium_recv_cookie_t *));
     pami_transport->recv_cookies = (thorium_recv_cookie_t **)malloc(sizeof(thorium_recv_cookie_t *) * NUM_RECV_COOKIES);
     CORE_DEBUGGER_ASSERT(pami_transport->recv_cookies != NULL);
     for (i = 0; i < NUM_RECV_COOKIES; i++) {
-	pami_transport->recv_cookies[i] = (thorium_recv_cookie_t *)malloc(sizeof(thorium_recv_cookie_t));
-	core_fast_queue_enqueue(pami_transport->avail_recv_cookies_queue, (void *)&pami_transport->recv_cookies[i]);
+        pami_transport->recv_cookies[i] = (thorium_recv_cookie_t *)malloc(sizeof(thorium_recv_cookie_t));
+        core_fast_queue_enqueue(pami_transport->avail_recv_cookies_queue, (void *)&pami_transport->recv_cookies[i]);
     }
 
-    /*Queue for in use send cookies*/
+    /*
+    * Queue for in use send cookies
+    */
     pami_transport->in_use_send_cookies_queue = (struct core_fast_queue *)malloc(sizeof(struct core_fast_queue));
     CORE_DEBUGGER_ASSERT(pami_transport->in_use_send_cookies_queue != NULL);
     core_fast_queue_init(pami_transport->in_use_send_cookies_queue, sizeof(thorium_send_info_t *));
 
-    /*Queue for in use recv cookies*/
+    /*
+    * Queue for in use recv cookies
+    */
     pami_transport->in_use_recv_cookies_queue = (struct core_fast_queue *)malloc(sizeof(struct core_fast_queue));
     CORE_DEBUGGER_ASSERT(pami_transport->in_use_recv_cookies_queue != NULL);
     core_fast_queue_init(pami_transport->in_use_recv_cookies_queue, sizeof(thorium_recv_info_t *));
@@ -82,7 +90,9 @@ void thorium_pami_transport_init(struct thorium_transport *self, int *argc, char
         return;
     }
 
-    /*Create context*/
+    /*
+    * Create context
+    */
     result = PAMI_Context_createv(pami_transport->client, configurations, configuration_count, &pami_transport->context, pami_transport->num_contexts);
     CORE_DEBUGGER_ASSERT(result == PAMI_SUCCESS);
 
@@ -101,15 +111,19 @@ void thorium_pami_transport_init(struct thorium_transport *self, int *argc, char
 
     pami_transport->rank = self->rank;
 
-    /*Create immediate send parameters, so we need to create endpoint only once*/
+    /*
+    * Create immediate send parameters, so we need to create endpoint only once
+    */
     pami_transport->endpoints = (pami_endpoint_t *)malloc(sizeof(pami_endpoint_t) * self->size);
     for (i = 0; i < self->size; i++) {
-	PAMI_Endpoint_create(pami_transport->client, i, 0, &pami_transport->endpoints[i]);
+        PAMI_Endpoint_create(pami_transport->client, i, 0, &pami_transport->endpoints[i]);
     }
 
     CORE_DEBUGGER_ASSERT(contexts > 1);
 
-    /*Register dispatch IDs*/
+    /*
+    * Register dispatch IDs
+    */
     pami_dispatch_callback_function fn;
     pami_dispatch_hint_t options = {};
     fn.p2p = thorium_recv_message_fn;
@@ -135,10 +149,12 @@ void thorium_pami_transport_destroy(struct thorium_transport *self)
 
     pami_transport = thorium_transport_get_concrete_transport(self);
 
-    /*Free memory*/
+    /*
+    * Free memory
+    */
     thorium_send_cookie_t *send_cookie;
     while (core_fast_queue_dequeue(pami_transport->avail_send_cookies_queue, &send_cookie)) {
-	free(send_cookie);
+        free(send_cookie);
     }
     core_fast_queue_destroy(pami_transport->avail_send_cookies_queue);
     free(pami_transport->avail_send_cookies_queue);
@@ -158,11 +174,15 @@ void thorium_pami_transport_destroy(struct thorium_transport *self)
     free(pami_transport->in_use_send_cookies_queue);
     free(pami_transport->in_use_recv_cookies_queue);
 
-    /*Destroy context*/
+    /*
+    * Destroy context
+    */
     result = PAMI_Context_destroyv(&pami_transport->context, pami_transport->num_contexts);
     CORE_DEBUGGER_ASSERT(result == PAMI_SUCCESS);
 
-    /*Destroy client*/
+    /*
+    * Destroy client
+    */
     result = PAMI_Client_destroy(&pami_transport->client);
     CORE_DEBUGGER_ASSERT(result == PAMI_SUCCESS);
 
@@ -183,8 +203,8 @@ int thorium_pami_transport_send(struct thorium_transport *self, struct thorium_m
 
     thorium_send_cookie_t *send_cookie;
     if (core_fast_queue_dequeue(pami_transport->avail_send_cookies_queue, &send_cookie) == CORE_FALSE) {
-	send_cookie = (thorium_send_cookie_t *)malloc(sizeof(thorium_send_cookie_t));
-	CORE_DEBUGGER_ASSERT(send_cookie != NULL);
+        send_cookie = (thorium_send_cookie_t *)malloc(sizeof(thorium_send_cookie_t));
+        CORE_DEBUGGER_ASSERT(send_cookie != NULL);
     }
 
     send_cookie->send_queue = pami_transport->in_use_send_cookies_queue;
@@ -192,37 +212,39 @@ int thorium_pami_transport_send(struct thorium_transport *self, struct thorium_m
     send_cookie->send_info.buffer = buffer;
 
     if (nbytes <= MAX_SHORT_MESSAGE_LENGTH) {
-	pami_send_immediate_t parameter;
-	parameter.dispatch = RECV_MESSAGE_DISPATCH_ID;
+        pami_send_immediate_t parameter;
+        parameter.dispatch = RECV_MESSAGE_DISPATCH_ID;
         parameter.header.iov_base = NULL;
         parameter.header.iov_len = 0;
-	parameter.data.iov_base = (void *)buffer;
+        parameter.data.iov_base = (void *)buffer;
         parameter.data.iov_len = nbytes;
-	parameter.dest = pami_transport->endpoints[destination_node];
+        parameter.dest = pami_transport->endpoints[destination_node];
 
         result = PAMI_Send_immediate (pami_transport->context, &parameter);
-	CORE_DEBUGGER_ASSERT(result == PAMI_SUCCESS);
+        CORE_DEBUGGER_ASSERT(result == PAMI_SUCCESS);
         if (result != PAMI_SUCCESS) {
-	    return 0;
+            return 0;
         }
-	/*Add buffer and worker into send_queue*/
-	core_fast_queue_enqueue(send_cookie->send_queue, (void *)&send_cookie);
+        /*
+        * Add buffer and worker into send_queue
+        */
+        core_fast_queue_enqueue(send_cookie->send_queue, (void *)&send_cookie);
     } else {
-	pami_send_t param_send;
+        pami_send_t param_send;
         param_send.send.dest = destination_node;
         param_send.send.dispatch = RECV_MESSAGE_DISPATCH_ID;
-	param_send.send.header.iov_base = NULL;
+        param_send.send.header.iov_base = NULL;
         param_send.send.header.iov_len = 0;
-	param_send.send.data.iov_base = (void *)buffer;
+        param_send.send.data.iov_base = (void *)buffer;
         param_send.send.data.iov_len = nbytes;
         param_send.events.cookie = (void *)send_cookie;
         param_send.events.local_fn = thorium_send_done_fn;
         param_send.events.remote_fn = NULL;
 
         result = PAMI_Send(pami_transport->context, &param_send);
-	CORE_DEBUGGER_ASSERT(result == PAMI_SUCCESS);
+        CORE_DEBUGGER_ASSERT(result == PAMI_SUCCESS);
         if (result != PAMI_SUCCESS) {
-	    return 0;
+            return 0;
         }
     }
 
@@ -236,14 +258,16 @@ int thorium_pami_transport_receive(struct thorium_transport *self, struct thoriu
     struct thorium_pami_transport *pami_transport;
     pami_transport = thorium_transport_get_concrete_transport(self);
 
-    /* Check if any send requests have been done, if not repeat the checking loop for 100 times.*/
+    /*
+    * Check if any send requests have been done, if not repeat the checking loop for 100 times.
+    */
     PAMI_Context_advance(pami_transport->context, 100);
 
     thorium_recv_cookie_t *recv_cookie;
     if (core_fast_queue_dequeue(pami_transport->in_use_recv_cookies_queue, (void *)&recv_cookie)) {
-	thorium_message_init_with_nodes(message, recv_cookie->recv_info.count, recv_cookie->recv_info.buffer, recv_cookie->recv_info.source, self->rank);
+        thorium_message_init_with_nodes(message, recv_cookie->recv_info.count, recv_cookie->recv_info.buffer, recv_cookie->recv_info.source, self->rank);
     } else {
-	return 0;
+        return 0;
     }
 
     return 1;
@@ -258,15 +282,16 @@ int thorium_pami_transport_test(struct thorium_transport *self, struct thorium_w
 
     /*
     * Check if any send requests have been done, if not repeat the checking loop for 100 times.
-    * */
+    * The number 100 is used in PAMI code for MPI library too. I dont' really know why.
+    */
     PAMI_Context_advance (pami_transport->context, 100);
 
     thorium_send_cookie_t *send_cookie;
     if (core_fast_queue_dequeue(pami_transport->in_use_send_cookies_queue, (void *)&send_cookie)) {
-	thorium_worker_buffer_init(worker_buffer, send_cookie->send_info.worker, send_cookie->send_info.buffer);
-	core_fast_queue_enqueue(pami_transport->avail_send_cookies_queue, (void *)&send_cookie);
+        thorium_worker_buffer_init(worker_buffer, send_cookie->send_info.worker, send_cookie->send_info.buffer);
+        core_fast_queue_enqueue(pami_transport->avail_send_cookies_queue, (void *)&send_cookie);
     } else {
-	return 0;
+        return 0;
     }
 
     return 1;
@@ -297,8 +322,8 @@ void thorium_recv_message_fn(pami_context_t context, void *cookie, const void *h
     thorium_recv_cookie_t *recv_cookie;
 
     if (core_fast_queue_dequeue(pami_transport->avail_recv_cookies_queue, (void *)&recv_cookie) == CORE_FALSE) {
-	recv_cookie = (thorium_recv_cookie_t *)malloc(sizeof(thorium_recv_cookie_t));
-	CORE_DEBUGGER_ASSERT(recv_cookie != NULL);
+        recv_cookie = (thorium_recv_cookie_t *)malloc(sizeof(thorium_recv_cookie_t));
+        CORE_DEBUGGER_ASSERT(recv_cookie != NULL);
     }
 
     recv_cookie->recv_queue = pami_transport->in_use_recv_cookies_queue;
@@ -310,7 +335,7 @@ void thorium_recv_message_fn(pami_context_t context, void *cookie, const void *h
 
     if (data != NULL) {
         memcpy(recv_cookie->recv_info.buffer, data, data_size);
-	core_fast_queue_enqueue(recv_cookie->recv_queue, (void *)&recv_cookie);
+        core_fast_queue_enqueue(recv_cookie->recv_queue, (void *)&recv_cookie);
     }
     else {
         recv->local_fn = thorium_recv_done_fn;
