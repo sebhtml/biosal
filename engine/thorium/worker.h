@@ -45,8 +45,8 @@ struct thorium_balancer;
  * Enable wait and signal for workers
  */
 /*
-*/
 #define THORIUM_WORKER_ENABLE_WAIT
+*/
 
 #define THORIUM_WORKER_NONE (-99)
 
@@ -83,8 +83,6 @@ struct thorium_worker {
     struct core_map actors;
     struct core_map_iterator actor_iterator;
     int ticks_without_production;
-
-    char waiting_is_enabled;
 
     /*
      * Buffer for zero-copy send.

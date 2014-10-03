@@ -76,6 +76,7 @@
 #define FLAG_DEBUG                      2
 #define FLAG_BUSY                       3
 #define FLAG_ENABLE_ACTOR_LOAD_PROFILER 4
+#define FLAG_ENABLE_WAIT                5
 
 #define DEBUG_WORKER_OPTION "-debug-worker"
 
@@ -121,7 +122,6 @@ void thorium_worker_init(struct thorium_worker *worker, int name, struct thorium
 
     core_map_init(&worker->actor_received_messages, sizeof(int), sizeof(int));
 
-    worker->waiting_is_enabled = 0;
     worker->waiting_start_time = 0;
 
     core_timer_init(&worker->timer);
@@ -486,7 +486,7 @@ void thorium_worker_stop(struct thorium_worker *worker)
      * while sleeping. But since threads are cool, the worker will
      * wake up, and die for real this time.
      */
-    if (worker->waiting_is_enabled) {
+    if (core_bitmap_get_bit_uint32_t(&worker->flags, FLAG_ENABLE_WAIT)) {
         /*
          * Wake up if necessary because the worker might be
          * waiting for something...
@@ -726,7 +726,9 @@ int thorium_worker_dequeue_actor(struct thorium_worker *worker, struct thorium_a
 
     }
 
+#ifdef THORIUM_WORKER_ENABLE_WAIT
     thorium_worker_check_production(worker, value, name);
+#endif
 
     return value;
 }
@@ -751,7 +753,7 @@ int thorium_worker_enqueue_actor(struct thorium_worker *worker, struct thorium_a
      * Do a wake up if necessary when scheduling an actor in
      * the scheduling queue.
      */
-    if (value && worker->waiting_is_enabled) {
+    if (value && core_bitmap_get_bit_uint32_t(&worker->flags, FLAG_ENABLE_WAIT)) {
 
         /*
          * This call checks if the thread is currently waiting.
@@ -1342,6 +1344,7 @@ void thorium_worker_run(struct thorium_worker *worker)
         thorium_worker_work(worker, actor);
 
         core_bitmap_clear_bit_uint32_t(&worker->flags, FLAG_BUSY);
+        core_bitmap_clear_bit_uint32_t(&worker->flags, FLAG_ENABLE_WAIT);
 
 #ifdef THORIUM_NODE_ENABLE_INSTRUMENTATION
         core_timer_stop(&worker->timer);
@@ -1537,9 +1540,9 @@ uint64_t thorium_worker_get_loop_wake_up_count(struct thorium_worker *worker)
     return core_thread_get_wake_up_count(&worker->thread);
 }
 
-void thorium_worker_enable_waiting(struct thorium_worker *worker)
+void thorium_worker_enable_waiting(struct thorium_worker *self)
 {
-    worker->waiting_is_enabled = 1;
+    core_bitmap_set_bit_uint32_t(&self->flags, FLAG_ENABLE_WAIT);
 }
 
 void thorium_worker_check_production(struct thorium_worker *worker, int value, int name)
@@ -1607,7 +1610,7 @@ void thorium_worker_check_production(struct thorium_worker *worker, int value, i
      * - Linux on Cray XC30,
      * - IBM Compute Node Kernel (CNK) on IBM Blue Gene/Q),
      */
-        if (worker->waiting_is_enabled) {
+        if (core_bitmap_get_bit_uint32_t(&worker->flags, FLAG_ENABLE_WAIT)) {
 
             /* This is a first warning
              */
