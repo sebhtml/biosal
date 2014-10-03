@@ -31,6 +31,11 @@ without doing anything.
 
 Tools used: perf, valgrind, gprof, gdb
 
+To use perf, compile with scripts/perf/build-perf.sh (-fno-omit-frame-pointer).
+
+Then use scripts/perf/perf-record-lwp.sh to record a given thread (LWP).
+
+Otherwise, 'perf top' is your friend too.
 
 # Stateless actors
 
