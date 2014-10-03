@@ -126,12 +126,12 @@ int core_hash_table_group_state(struct core_hash_table_group *group, uint64_t bu
 {
     CORE_DEBUGGER_ASSERT(group != NULL);
 
-    if (core_hash_table_group_get_bit(group->occupancy_bitmap, bucket) == 1) {
+    if (core_hash_table_group_get_bit(group->occupancy_bitmap, bucket)) {
         return CORE_HASH_TABLE_BUCKET_OCCUPIED;
     }
 
     if (group->deletion_bitmap != NULL
-                    && core_hash_table_group_get_bit(group->deletion_bitmap, bucket) == 1) {
+                    && core_hash_table_group_get_bit(group->deletion_bitmap, bucket)) {
         return CORE_HASH_TABLE_BUCKET_DELETED;
     }
 
@@ -147,7 +147,13 @@ void core_hash_table_group_set_bit(void *bitmap, uint64_t bucket, int value1)
     uint64_t filter;
 
     value = value1;
+#if 0
     unit = bucket / CORE_BITS_PER_BYTE;
+#endif
+    /*
+     * CORE_BITS_PER_BYTE = 2^3 = 8
+     */
+    unit = bucket >> 3;
     bit = bucket & (CORE_BITS_PER_BYTE - 1);
 
     bits = (uint64_t)((char *)bitmap)[unit];
@@ -157,8 +163,7 @@ void core_hash_table_group_set_bit(void *bitmap, uint64_t bucket, int value1)
 
     /* set bit to 0 */
     } else if (value == CORE_BIT_ZERO) {
-        filter = CORE_BIT_ONE;
-        filter <<= bit;
+        filter = (1 << bit);
         filter =~ filter;
         bits &= filter;
     }
@@ -173,13 +178,21 @@ int core_hash_table_group_get_bit(void *bitmap, uint64_t bucket)
     uint64_t bits;
     int bit_value;
 
-    unit = bucket / CORE_BITS_PER_BYTE;
+    /*
+     * This is equivalent to this:
+     *
+     *      unit = bucket / CORE_BITS_PER_BYTE;
+     */
+    unit = bucket >> 3;
     bit = bucket & (CORE_BITS_PER_BYTE - 1);
 
     /*printf("core_hash_table_group_get_bit %p %i\n", group->bitmap, unit);*/
 
     bits = (uint64_t)(((char *)bitmap)[unit]);
+    /*
     bit_value = (bits << (63 - bit)) >> 63;
+    */
+    bit_value = bits & (1 << bit);
 
     return bit_value;
 }
