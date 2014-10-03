@@ -88,7 +88,9 @@ int core_fast_ring_push_from_producer(struct core_fast_ring *self, void *element
     cell = core_fast_ring_get_cell(self, self->tail);
     core_memory_copy(cell, element, self->cell_size);
 
+#ifdef USE_MEMORY_FENCE
     core_memory_fence();
+#endif
 
     self->tail = core_fast_ring_increment(self, self->tail);
 
@@ -249,7 +251,9 @@ int core_fast_ring_pop_from_consumer(struct core_fast_ring *self, void *element)
     cell = core_fast_ring_get_cell(self, self->head);
     core_memory_copy(element, cell, self->cell_size);
 
+#ifdef USE_MEMORY_FENCE
     core_memory_fence();
+#endif
 
     self->head = core_fast_ring_increment(self, self->head);
 
