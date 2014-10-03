@@ -21,5 +21,7 @@ echo "Push to master"
 (
 git push origin master
 git push --tags origin
+
+git checkout energy
 ) &> master-git-2.log
 
