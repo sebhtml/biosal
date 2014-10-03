@@ -64,6 +64,7 @@ void thorium_load_profiler_write(struct thorium_load_profiler *self, const char 
     uint64_t wait_time;
     int action;
     uint64_t last_end_time;
+    float ratio;
 
     last_end_time = 0;
     size = core_vector_size(&self->event_start_times);
@@ -75,17 +76,20 @@ void thorium_load_profiler_write(struct thorium_load_profiler *self, const char 
 
         compute_time = end_time - start_time;
         wait_time = 0;
+        ratio = 0;
 
-        if (last_end_time != 0)
+        if (last_end_time != 0) {
             wait_time = start_time - last_end_time;
+            ratio = (0.0 + compute_time) / wait_time;
+        }
 
         /*
          * start_time end_time actor script action compute_time wait_time
          */
         core_buffered_file_writer_printf(writer, "%" PRIu64 "\t%" PRIu64 "\t%d\t%s"
-                        "\t0x%x\t%" PRIu64 "\t%" PRIu64 "\n",
+                        "\t0x%x\t%" PRIu64 "\t%" PRIu64 "\t%0.4f\n",
                         start_time, end_time, name, script, action,
-                        compute_time, wait_time);
+                        compute_time, wait_time, ratio);
 
         last_end_time = end_time;
     }
