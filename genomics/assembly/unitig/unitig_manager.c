@@ -11,7 +11,7 @@
 
 #include <string.h>
 
-#define UNITIG_VISITOR_COUNT_PER_WORKER     32
+#define UNITIG_VISITOR_COUNT_PER_WORKER     8
 #define UNITIG_WALKER_COUNT_PER_WORKER      8
 
 #define STATE_SPAWN_WRITER  0
