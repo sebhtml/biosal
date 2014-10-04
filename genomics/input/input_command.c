@@ -17,13 +17,17 @@
 */
 
 void biosal_input_command_init(struct biosal_input_command *self,
-                int store_name, uint64_t store_first, uint64_t store_last)
+                int store_name, uint64_t store_first, uint64_t store_last,
+                struct core_memory_pool *memory_pool)
 {
     self->store_name = store_name;
     self->store_first = store_first;
     self->store_last = store_last;
 
     core_vector_init(&self->entries, sizeof(struct biosal_dna_sequence));
+
+    if (memory_pool != NULL)
+        core_vector_set_memory_pool(&self->entries, memory_pool);
 }
 
 void biosal_input_command_destroy(struct biosal_input_command *self, struct core_memory_pool *memory)
@@ -253,5 +257,5 @@ void biosal_input_command_add_entry(struct biosal_input_command *self,
 
 void biosal_input_command_init_empty(struct biosal_input_command *self)
 {
-    biosal_input_command_init(self, 0, 0, 0);
+    biosal_input_command_init(self, 0, 0, 0, NULL);
 }

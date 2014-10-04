@@ -33,6 +33,9 @@
 #define CORE_DEBUGGER_JITTER_DETECTION_END(name, actor_time)
 
 /*
+ * Display a warning when a ring becomes full.
+ */
+/*
 #define SHOW_FULL_RING_WARNINGS
  */
 
@@ -104,6 +107,7 @@ void thorium_worker_init(struct thorium_worker *worker, int name, struct thorium
     int injected_buffer_ring_size;
     int argc;
     char **argv;
+    int outbound_ring_capacity;
 
     worker->tick_count = 0;
 
@@ -162,7 +166,8 @@ void thorium_worker_init(struct thorium_worker *worker, int name, struct thorium
     core_map_init(&worker->actors, sizeof(int), sizeof(int));
     core_map_iterator_init(&worker->actor_iterator, &worker->actors);
 
-    core_fast_ring_init(&worker->outbound_message_queue, capacity, sizeof(struct thorium_message));
+    outbound_ring_capacity = THORIUM_WORKER_RING_CAPACITY;
+    core_fast_ring_init(&worker->outbound_message_queue, outbound_ring_capacity, sizeof(struct thorium_message));
 
     core_fast_queue_init(&worker->outbound_message_queue_buffer, sizeof(struct thorium_message));
 

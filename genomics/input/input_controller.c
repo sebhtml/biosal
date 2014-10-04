@@ -1124,7 +1124,9 @@ void biosal_input_controller_receive_command(struct thorium_actor *actor, struct
     int *bucket;
     int *bucket_for_consumer;
     int consumer_index;
+    struct core_memory_pool *ephemeral_memory;
 
+    ephemeral_memory = thorium_actor_get_ephemeral_memory(actor);
     concrete_actor = (struct biosal_input_controller *)thorium_actor_concrete_actor(actor);
     buffer = thorium_message_buffer(message);
     biosal_partition_command_unpack(&command, buffer);
@@ -1152,7 +1154,8 @@ void biosal_input_controller_receive_command(struct thorium_actor *actor, struct
     store_first = biosal_partition_command_store_first(&command);
     store_last = biosal_partition_command_store_last(&command);
 
-    biosal_input_command_init(&input_command, store_name, store_first, store_last);
+    biosal_input_command_init(&input_command, store_name, store_first, store_last,
+                    ephemeral_memory);
 
     bytes = biosal_input_command_pack_size(&input_command,
                     &concrete_actor->codec);

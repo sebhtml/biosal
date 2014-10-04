@@ -31,13 +31,13 @@
 
 #define DEBUG_ANY 0xcccccccc
 
-#define DEBUG_KEY 0xc170626e
-#define DEBUG_SIZE 16
-
 /*
+#define DEBUG_KEY 0xc170626e
+#define DEBUG_SIZE 24
+*/
+
 #define DEBUG_KEY DEBUG_ANY
 #define DEBUG_SIZE DEBUG_ANY
-*/
 
 void *core_memory_allocate_private(size_t size, const char *function, const char *file, int line, int key)
 {

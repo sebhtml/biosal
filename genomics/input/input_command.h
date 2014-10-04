@@ -9,7 +9,8 @@
 
 #include <core/structures/vector.h>
 
-/* This structure contains information
+/*
+ * This structure contains information
  * required to perform a stream operation
  */
 struct biosal_input_command {
@@ -20,7 +21,7 @@ struct biosal_input_command {
 };
 
 void biosal_input_command_init(struct biosal_input_command *self, int store_name,
-                uint64_t store_first, uint64_t store_last);
+                uint64_t store_first, uint64_t store_last, struct core_memory_pool *memory_pool);
 void biosal_input_command_init_empty(struct biosal_input_command *self);
 
 void biosal_input_command_destroy(struct biosal_input_command *self, struct core_memory_pool *memory);

@@ -412,7 +412,9 @@ void biosal_sequence_store_ask(struct thorium_actor *self, struct thorium_messag
     int kmers;
     int length;
     int sequence_kmers;
+    struct core_memory_pool *ephemeral_memory_pool;
 
+    ephemeral_memory_pool = thorium_actor_get_ephemeral_memory(self);
     required_kmers = biosal_sequence_store_get_required_kmers(self, message);
     thorium_message_unpack_int(message, 0, &kmer_length);
 
@@ -438,7 +440,7 @@ void biosal_sequence_store_ask(struct thorium_actor *self, struct thorium_messag
     /* the metadata are not important here.
      * This is just a container.
      */
-    biosal_input_command_init(&payload, -1, 0, 0);
+    biosal_input_command_init(&payload, -1, 0, 0, ephemeral_memory_pool);
 
     kmers = 0;
 

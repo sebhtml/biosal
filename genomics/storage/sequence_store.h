@@ -13,6 +13,11 @@
 
 #define SCRIPT_SEQUENCE_STORE 0x47e2e424
 
+/*
+ * This is a BIOSAL DNA sequence store.
+ *
+ * It is possibler to distribute data by using a lot of these actors.
+ */
 struct biosal_sequence_store {
     struct core_vector sequences;
     struct biosal_dna_codec codec;
