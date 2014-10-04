@@ -19,8 +19,10 @@
  * Blue Gene/Q because otherwise it does not
  * work.
  */
+#if 0
 #if defined(__bgq__)
 #define CORE_MEMORY_POOL_DISABLE_MESSAGE_BUFFER_POOL
+#endif
 #endif
 
 /*
