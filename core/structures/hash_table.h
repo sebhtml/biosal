@@ -6,21 +6,6 @@
 
 #include <stdint.h>
 
-#define CORE_HASH_TABLE_KEY_NOT_FOUND 0
-#define CORE_HASH_TABLE_KEY_FOUND 1
-#define CORE_HASH_TABLE_FULL 2
-
-#define CORE_HASH_TABLE_OPERATION_ADD 0x000000ff
-#define CORE_HASH_TABLE_OPERATION_GET 0x0000ff00
-#define CORE_HASH_TABLE_OPERATION_DELETE 0x00ff0000
-
-#define CORE_HASH_TABLE_MATCH 0
-
-/*
- * Only use a single group
- */
-#define CORE_HASH_TABLE_USE_ONE_GROUP
-
 struct core_memory_pool;
 
 /**
@@ -54,11 +39,9 @@ struct core_hash_table {
     int key_size;
     int value_size;
 
-    int debug;
+    uint32_t flags;
 
     struct core_memory_pool *memory;
-
-    int deletion_is_enabled;
 };
 
 /*
