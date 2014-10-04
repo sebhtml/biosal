@@ -11,6 +11,14 @@
 
 #define MEMORY_FAST_RING 0x02d9d481
 
+/*
+ * Use memory fences for making stuff visible
+ * across threads (Linux LWP in the case of Linux).
+ *
+ * \see http://mechanical-sympathy.blogspot.com/2011/07/memory-barriersfences.html
+ */
+#define USE_MEMORY_FENCE
+
 void core_fast_ring_init(struct core_fast_ring *self, int capacity, int cell_size)
 {
     /* +1 because an empty cell is needed
