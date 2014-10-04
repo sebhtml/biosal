@@ -4,6 +4,10 @@
 K & R style with 4 spaces for indentation
 http://en.wikipedia.org/wiki/Indent_style#K.26R_style
 
+The coding style is similar to the one used in Linux (aside from the 4 spaces instead of tabs).
+
+see https://www.kernel.org/doc/Documentation/CodingStyle
+
 # Names
 
 | Project | Symbol prefix | Constant prefix |
@@ -21,3 +25,11 @@ Use self for the current object like in Ruby, Smalltalk, Apple Swift
 or in Objective C.
 
 The name of function types end with  *_fn_t
+
+# Commits
+
+We try to use the git standardized tags in commits.
+
+These are described here:
+
+https://www.kernel.org/doc/Documentation/SubmittingPatches
