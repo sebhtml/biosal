@@ -655,7 +655,8 @@ void biosal_dna_kmer_counter_kernel_push_sequence_data_block(struct thorium_acto
         to_reserve += (sequence_length - concrete_actor->kmer_length + 1);
     }
 
-    biosal_dna_kmer_block_init(&block, concrete_actor->kmer_length, source_index, to_reserve);
+    biosal_dna_kmer_block_init(&block, concrete_actor->kmer_length, source_index, to_reserve,
+                    ephemeral_memory);
 
     sequence_data = core_memory_pool_allocate(ephemeral_memory, maximum_length + 1);
 

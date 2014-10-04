@@ -14,13 +14,18 @@
 #define BIOSAL_DNA_KMER_BLOCK_DEBUG
 */
 
-void biosal_dna_kmer_block_init(struct biosal_dna_kmer_block *self, int kmer_length, int source_index, int kmers)
+void biosal_dna_kmer_block_init(struct biosal_dna_kmer_block *self, int kmer_length, int source_index, int kmers,
+                struct core_memory_pool *pool)
 {
     self->source_index = source_index;
     self->kmer_length = kmer_length;
     core_vector_init(&self->kmers, sizeof(struct biosal_dna_kmer));
 
-    core_vector_reserve(&self->kmers, kmers);
+    if (pool != NULL)
+        core_vector_set_memory_pool(&self->kmers, pool);
+
+    if (kmers > 0)
+        core_vector_reserve(&self->kmers, kmers);
 }
 
 void biosal_dna_kmer_block_destroy(struct biosal_dna_kmer_block *self,
@@ -109,7 +114,7 @@ int biosal_dna_kmer_block_pack_unpack(struct biosal_dna_kmer_block *self, void *
 
     if (operation == CORE_PACKER_OPERATION_UNPACK) {
 
-        biosal_dna_kmer_block_init(self, self->kmer_length, self->source_index, elements);
+        biosal_dna_kmer_block_init(self, self->kmer_length, self->source_index, elements, memory);
     }
 
 #ifdef BIOSAL_DNA_KMER_BLOCK_DEBUG
@@ -170,5 +175,5 @@ int biosal_dna_kmer_block_size(struct biosal_dna_kmer_block *self)
 
 void biosal_dna_kmer_block_init_empty(struct biosal_dna_kmer_block *self)
 {
-    biosal_dna_kmer_block_init(self, -1, -1, -1);
+    biosal_dna_kmer_block_init(self, -1, -1, -1, NULL);
 }

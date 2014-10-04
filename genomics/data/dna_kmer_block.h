@@ -19,7 +19,7 @@ struct biosal_dna_kmer_block {
 };
 
 void biosal_dna_kmer_block_init(struct biosal_dna_kmer_block *self, int kmer_length,
-                int source_index, int kmers);
+                int source_index, int kmers, struct core_memory_pool *pool);
 void biosal_dna_kmer_block_init_empty(struct biosal_dna_kmer_block *self);
 
 void biosal_dna_kmer_block_destroy(struct biosal_dna_kmer_block *self, struct core_memory_pool *memory);
