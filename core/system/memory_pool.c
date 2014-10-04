@@ -45,7 +45,7 @@ void core_memory_pool_init(struct core_memory_pool *self, int block_size, int na
      * Configure flags
      */
     self->flags = 0;
-    core_bitmap_set_bit_uint32_t(&self->flags, FLAG_ENABLE_TRACKING);
+    CORE_SET_BIT(self->flags, FLAG_ENABLE_TRACKING);
     core_bitmap_clear_bit_uint32_t(&self->flags, FLAG_DISABLED);
     core_bitmap_clear_bit_uint32_t(&self->flags, FLAG_ENABLE_SEGMENT_NORMALIZATION);
     core_bitmap_clear_bit_uint32_t(&self->flags, FLAG_ALIGN);
@@ -138,7 +138,7 @@ void *core_memory_pool_allocate(struct core_memory_pool *self, size_t size)
      * Normalize the length of the segment to be a power of 2
      * if the flag FLAG_ENABLE_SEGMENT_NORMALIZATION is set.
      */
-    if (core_bitmap_get_bit_uint32_t(&self->flags, FLAG_ENABLE_SEGMENT_NORMALIZATION)) {
+    if (CORE_GET_BIT(self->flags, FLAG_ENABLE_SEGMENT_NORMALIZATION)) {
         normalize = 1;
     }
 
@@ -152,7 +152,7 @@ void *core_memory_pool_allocate(struct core_memory_pool *self, size_t size)
      */
 
     if (size > self->block_size
-              && core_bitmap_get_bit_uint32_t(&self->flags, FLAG_EPHEMERAL)) {
+              && CORE_GET_BIT(self->flags, FLAG_EPHEMERAL)) {
         normalize = 1;
     }
 
@@ -197,7 +197,7 @@ void *core_memory_pool_allocate(struct core_memory_pool *self, size_t size)
      * So 32-byte and 64-byte alignment can give better performance.
      * But what is the necessary alignment for getting correct behavior ?
      */
-    if (core_bitmap_get_bit_uint32_t(&self->flags, FLAG_ALIGN)) {
+    if (CORE_GET_BIT(self->flags, FLAG_ALIGN)) {
 
         new_size = core_memory_align(size);
 
@@ -209,7 +209,7 @@ void *core_memory_pool_allocate(struct core_memory_pool *self, size_t size)
 
     pointer = core_memory_pool_allocate_private(self, size);
 
-    if (core_bitmap_get_bit_uint32_t(&self->flags, FLAG_ENABLE_TRACKING)) {
+    if (CORE_GET_BIT(self->flags, FLAG_ENABLE_TRACKING)) {
             core_map_add_value(&self->allocated_blocks, &pointer, &size);
     }
 
@@ -236,7 +236,7 @@ void *core_memory_pool_allocate_private(struct core_memory_pool *self, size_t si
         return NULL;
     }
 
-    if (core_bitmap_get_bit_uint32_t(&self->flags, FLAG_DISABLED)) {
+    if (CORE_GET_BIT(self->flags, FLAG_DISABLED)) {
         return core_memory_allocate(size, self->name);
     }
 
@@ -256,7 +256,7 @@ void *core_memory_pool_allocate_private(struct core_memory_pool *self, size_t si
 
     queue = NULL;
 
-    if (core_bitmap_get_bit_uint32_t(&self->flags, FLAG_ENABLE_TRACKING)) {
+    if (CORE_GET_BIT(self->flags, FLAG_ENABLE_TRACKING)) {
         queue = core_map_get(&self->recycle_bin, &size);
     }
 
@@ -337,7 +337,7 @@ void core_memory_pool_free_private(struct core_memory_pool *self, void *pointer)
     struct core_queue *queue;
     size_t size;
 
-    if (core_bitmap_get_bit_uint32_t(&self->flags, FLAG_DISABLED)) {
+    if (CORE_GET_BIT(self->flags, FLAG_DISABLED)) {
         core_memory_free(pointer, self->name);
         return;
     }
@@ -359,7 +359,7 @@ void core_memory_pool_free_private(struct core_memory_pool *self, void *pointer)
      * for the ephemeral memory, core_memory_pool_free_all is
      * used.
      */
-    if (!core_bitmap_get_bit_uint32_t(&self->flags, FLAG_ENABLE_TRACKING)) {
+    if (!CORE_GET_BIT(self->flags, FLAG_ENABLE_TRACKING)) {
         return;
     }
 
@@ -387,7 +387,7 @@ void core_memory_pool_disable_tracking(struct core_memory_pool *self)
 
 void core_memory_pool_enable_normalization(struct core_memory_pool *self)
 {
-    core_bitmap_set_bit_uint32_t(&self->flags, FLAG_ENABLE_SEGMENT_NORMALIZATION);
+    CORE_SET_BIT(self->flags, FLAG_ENABLE_SEGMENT_NORMALIZATION);
 }
 
 void core_memory_pool_disable_normalization(struct core_memory_pool *self)
@@ -397,7 +397,7 @@ void core_memory_pool_disable_normalization(struct core_memory_pool *self)
 
 void core_memory_pool_enable_alignment(struct core_memory_pool *self)
 {
-    core_bitmap_set_bit_uint32_t(&self->flags, FLAG_ALIGN);
+    CORE_SET_BIT(self->flags, FLAG_ALIGN);
 }
 
 void core_memory_pool_disable_alignment(struct core_memory_pool *self)
@@ -407,7 +407,7 @@ void core_memory_pool_disable_alignment(struct core_memory_pool *self)
 
 void core_memory_pool_enable_tracking(struct core_memory_pool *self)
 {
-    core_bitmap_set_bit_uint32_t(&self->flags, FLAG_ENABLE_TRACKING);
+    CORE_SET_BIT(self->flags, FLAG_ENABLE_TRACKING);
 }
 
 void core_memory_pool_free_all(struct core_memory_pool *self)
@@ -455,19 +455,19 @@ void core_memory_pool_free_all(struct core_memory_pool *self)
     /*
      * Reset current structures.
      */
-    if (core_bitmap_get_bit_uint32_t(&self->flags, FLAG_ENABLE_TRACKING)) {
+    if (CORE_GET_BIT(self->flags, FLAG_ENABLE_TRACKING)) {
         core_map_clear(&self->allocated_blocks);
         core_map_clear(&self->recycle_bin);
     }
 
-    if (!core_bitmap_get_bit_uint32_t(&self->flags, FLAG_DISABLED)) {
+    if (!CORE_GET_BIT(self->flags, FLAG_DISABLED)) {
         core_set_clear(&self->large_blocks);
     }
 }
 
 void core_memory_pool_disable(struct core_memory_pool *self)
 {
-    core_bitmap_set_bit_uint32_t(&self->flags, FLAG_DISABLED);
+    CORE_SET_BIT(self->flags, FLAG_DISABLED);
 }
 
 void core_memory_pool_print(struct core_memory_pool *self)
@@ -495,7 +495,7 @@ void core_memory_pool_print(struct core_memory_pool *self)
 
 void core_memory_pool_enable_ephemeral_mode(struct core_memory_pool *self)
 {
-    core_bitmap_set_bit_uint32_t(&self->flags, FLAG_EPHEMERAL);
+    CORE_SET_BIT(self->flags, FLAG_EPHEMERAL);
 }
 
 void core_memory_pool_set_name(struct core_memory_pool *self, int name)

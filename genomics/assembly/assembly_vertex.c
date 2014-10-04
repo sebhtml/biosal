@@ -180,7 +180,7 @@ void biosal_assembly_vertex_set_flag(struct biosal_assembly_vertex *self, int fl
     CORE_DEBUGGER_ASSERT(flag >= BIOSAL_VERTEX_FLAG_START_VALUE);
     CORE_DEBUGGER_ASSERT(flag <= BIOSAL_VERTEX_FLAG_END_VALUE);
 
-    core_bitmap_set_bit_uint32_t(&self->flags, flag);
+    CORE_SET_BIT(self->flags, flag);
 }
 
 void biosal_assembly_vertex_clear_flag(struct biosal_assembly_vertex *self, int flag)
@@ -190,7 +190,7 @@ void biosal_assembly_vertex_clear_flag(struct biosal_assembly_vertex *self, int 
 
 int biosal_assembly_vertex_get_flag(struct biosal_assembly_vertex *self, int flag)
 {
-    return core_bitmap_get_bit_uint32_t(&self->flags, flag);
+    return CORE_GET_BIT(self->flags, flag);
 }
 
 void biosal_assembly_vertex_init_empty(struct biosal_assembly_vertex *self)

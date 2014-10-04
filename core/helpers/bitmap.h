@@ -21,4 +21,16 @@ void core_bitmap_clear_bit_uint32_t(uint32_t *self, int index);
 int core_bitmap_get_bit_uint64_t(uint64_t *self, int index);
 void core_bitmap_set_bit_value_uint64_t(uint64_t *self, int index, int value);
 
+#define CORE_CREATE_MASK(bit) \
+        (1 << bit)
+
+#define CORE_GET_BIT(bitmap, bit) \
+        (bitmap & CORE_CREATE_MASK(bit))
+
+#define CORE_SET_BIT(bitmap, bit) \
+        bitmap = (bitmap | CORE_CREATE_MASK(bit))
+
+#define CORE_CLEAR_BIT(bitmap, bit) \
+        bitmap = (bitmap & (~CORE_CREATE_MASK(bit)))
+
 #endif

@@ -93,7 +93,7 @@ void thorium_transport_init(struct thorium_transport *self, struct thorium_node 
 
         printf("Enable transport profiler\n");
 
-        core_bitmap_set_bit_uint32_t(&self->flags, FLAG_PROFILE);
+        CORE_SET_BIT(self->flags, FLAG_PROFILE);
     }
 
     if (self->rank == 0) {
@@ -102,7 +102,7 @@ void thorium_transport_init(struct thorium_transport *self, struct thorium_node 
     }
 
     if (core_command_has_argument(actual_argc, actual_argv, "-print-transport-events")) {
-        core_bitmap_set_bit_uint32_t(&self->flags, FLAG_PRINT_TRANSPORT_EVENTS);
+        CORE_SET_BIT(self->flags, FLAG_PRINT_TRANSPORT_EVENTS);
     }
 
     core_timer_init(&self->timer);
@@ -114,7 +114,7 @@ void thorium_transport_destroy(struct thorium_transport *self)
     /*
      * Print the report if requested.
      */
-    if (core_bitmap_get_bit_uint32_t(&self->flags, FLAG_PROFILE)) {
+    if (CORE_GET_BIT(self->flags, FLAG_PROFILE)) {
         thorium_transport_profiler_print_report(&self->transport_profiler);
     }
 
@@ -148,7 +148,7 @@ int thorium_transport_send(struct thorium_transport *self, struct thorium_messag
      * Send the message through the mock transport which is
      * a transport profiler.
      */
-    if (core_bitmap_get_bit_uint32_t(&self->flags, FLAG_PROFILE)) {
+    if (CORE_GET_BIT(self->flags, FLAG_PROFILE)) {
         thorium_transport_profiler_send_mock(&self->transport_profiler, message);
     }
 
@@ -164,7 +164,7 @@ int thorium_transport_send(struct thorium_transport *self, struct thorium_messag
 #endif
         ++self->active_request_count;
 
-        if (core_bitmap_get_bit_uint32_t(&self->flags, FLAG_PRINT_TRANSPORT_EVENTS)) {
+        if (CORE_GET_BIT(self->flags, FLAG_PRINT_TRANSPORT_EVENTS)) {
             thorium_transport_print_event(self, EVENT_TYPE_SEND, message);
         }
     }
@@ -191,7 +191,7 @@ int thorium_transport_receive(struct thorium_transport *self, struct thorium_mes
                         thorium_message_count(message));
 #endif
 
-        if (core_bitmap_get_bit_uint32_t(&self->flags, FLAG_PRINT_TRANSPORT_EVENTS)) {
+        if (CORE_GET_BIT(self->flags, FLAG_PRINT_TRANSPORT_EVENTS)) {
             thorium_transport_print_event(self, EVENT_TYPE_RECEIVE, message);
         }
     }
