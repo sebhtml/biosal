@@ -15,6 +15,6 @@
 module swap PrgEnv-cray/4.2.24 PrgEnv-cray/4.2.24
 
 make clean
-make CC=cc -j 4 CONFIG_FLAGS="-DTHORIUM_DEBUG" \
+make CC=cc -j 4 CONFIG_FLAGS="-DTHORIUM_DEBUG" LDFLAGS="-lm -lz -hsystem_alloc" \
         applications/argonnite_kmer_counter/argonnite \
         applications/spate_metagenome_assembler/spate
