@@ -20,6 +20,7 @@
 #include <core/structures/fast_ring.h>
 
 #include <core/system/lock.h>
+#include <core/system/memory_pool.h>
 #include <core/system/counter.h>
 
 /*
@@ -227,6 +228,7 @@ struct thorium_actor {
     int priority;
     uint32_t flags;
     struct core_fast_ring mailbox;
+    struct core_memory_pool abstract_memory_pool;
 
 #ifdef THORIUM_ACTOR_GATHER_MESSAGE_METADATA
     struct core_map received_messages;

@@ -16,9 +16,13 @@
 #define THORIUM_DISPATCHER_DEBUG_10335
 */
 
-void thorium_dispatcher_init(struct thorium_dispatcher *self)
+void thorium_dispatcher_init(struct thorium_dispatcher *self,
+                struct core_memory_pool *pool)
 {
+    self->pool = pool;
+
     core_map_init(&self->routes, sizeof(int), sizeof(struct core_map));
+    core_map_set_memory_pool(&self->routes, self->pool);
 }
 
 void thorium_dispatcher_destroy(struct thorium_dispatcher *self)
@@ -81,6 +85,7 @@ void thorium_dispatcher_add_action(struct thorium_dispatcher *self, int tag,
         map = core_map_add(&self->routes, &tag);
 
         core_map_init(map, sizeof(int), sizeof(struct core_vector));
+        core_map_set_memory_pool(map, self->pool);
     }
 
     vector = core_map_get(map, &source);
@@ -92,6 +97,7 @@ void thorium_dispatcher_add_action(struct thorium_dispatcher *self, int tag,
         vector = core_map_add(map, &source);
 
         core_vector_init(vector, sizeof(struct thorium_route));
+        core_vector_set_memory_pool(vector, self->pool);
     }
 
     /* Add the route in the vector

@@ -6,6 +6,8 @@
 
 #include <core/structures/map.h>
 
+struct core_memory_pool;
+
 /*
  * A message dispatcher.
  *
@@ -18,9 +20,10 @@
  */
 struct thorium_dispatcher {
     struct core_map routes;
+    struct core_memory_pool *pool;
 };
 
-void thorium_dispatcher_init(struct thorium_dispatcher *self);
+void thorium_dispatcher_init(struct thorium_dispatcher *self, struct core_memory_pool *pool);
 void thorium_dispatcher_destroy(struct thorium_dispatcher *self);
 
 void thorium_dispatcher_add_action(struct thorium_dispatcher *self, int tag, thorium_actor_receive_fn_t handler,

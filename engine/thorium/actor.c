@@ -47,6 +47,8 @@
  */
 #define THORIUM_ACTOR_ACQUAINTANCE_SUPERVISOR 0
 
+#define MEMORY_POOL_NAME_ABSTRACT_ACTOR 0x9739a8fa
+
 #define THORIUM_ACTOR_FORWARDING_NONE 0
 #define THORIUM_ACTOR_FORWARDING_CLONE 1
 #define THORIUM_ACTOR_FORWARDING_MIGRATE 2
@@ -70,6 +72,8 @@ void thorium_actor_init(struct thorium_actor *self, void *concrete_actor,
     thorium_actor_init_fn_t init;
     int capacity;
 
+    core_memory_pool_init(&self->abstract_memory_pool, 0, MEMORY_POOL_NAME_ABSTRACT_ACTOR);
+
     self->virtual_runtime = 0;
     core_timer_init(&self->timer);
 
@@ -87,7 +91,7 @@ void thorium_actor_init(struct thorium_actor *self, void *concrete_actor,
     /* initialize the dispatcher before calling
      * the concrete initializer
      */
-    thorium_dispatcher_init(&self->dispatcher);
+    thorium_dispatcher_init(&self->dispatcher, &self->abstract_memory_pool);
 
     self->concrete_actor = concrete_actor;
     self->name = name;
@@ -235,6 +239,8 @@ void thorium_actor_destroy(struct thorium_actor *self)
      */
 
     core_fast_ring_destroy(&self->mailbox);
+
+    core_memory_pool_destroy(&self->abstract_memory_pool);
 }
 
 int thorium_actor_name(struct thorium_actor *self)

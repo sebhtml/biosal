@@ -33,7 +33,7 @@
 
 /*
 #define DEBUG_KEY 0xc170626e
-#define DEBUG_SIZE 6496
+#define DEBUG_SIZE 8
 */
 
 #ifndef DEBUG_KEY
