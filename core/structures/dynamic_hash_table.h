@@ -60,6 +60,7 @@ int core_dynamic_hash_table_get_value_size(struct core_dynamic_hash_table *self)
 
 void core_dynamic_hash_table_set_memory_pool(struct core_dynamic_hash_table *self,
                 struct core_memory_pool *memory);
+struct core_memory_pool *core_dynamic_hash_table_memory_pool(struct core_dynamic_hash_table *self);
 
 void core_dynamic_hash_table_disable_deletion_support(struct core_dynamic_hash_table *self);
 void core_dynamic_hash_table_enable_deletion_support(struct core_dynamic_hash_table *self);

@@ -585,3 +585,8 @@ void core_dynamic_hash_table_clear(struct core_dynamic_hash_table *self)
 
     core_hash_table_clear(self->current);
 }
+
+struct core_memory_pool *core_dynamic_hash_table_memory_pool(struct core_dynamic_hash_table *self)
+{
+    return core_hash_table_memory_pool(self->current);
+}

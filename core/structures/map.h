@@ -59,6 +59,7 @@ void *core_map_pad_key(struct core_map *self, void *key);
 #endif
 
 void core_map_set_memory_pool(struct core_map *self, struct core_memory_pool *memory);
+struct core_memory_pool *core_map_memory_pool(struct core_map *self);
 
 void core_map_disable_deletion_support(struct core_map *self);
 void core_map_enable_deletion_support(struct core_map *self);

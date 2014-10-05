@@ -316,13 +316,21 @@ void core_map_clear(struct core_map *self)
 {
     int key_size;
     int value_size;
+    struct core_memory_pool *pool;
 
     key_size = core_map_get_key_size(self);
     value_size = core_map_get_value_size(self);
+    pool = core_map_memory_pool(self);
 
     core_map_destroy(self);
 
     core_map_init(self, key_size, value_size);
+    core_map_set_memory_pool(self, pool);
+
+    /*
+     * TODO: implement the clear operation directly inside
+     * the lower layer (core_dynamic_hash_table + core_hash_table)
+     */
     /*core_dynamic_hash_table_clear(&self->table);*/
 }
 
@@ -338,4 +346,9 @@ void core_map_examine(struct core_map *self)
 
     printf("core_map_examine key_size %d value_size %d size %" PRIu64 "\n",
                     key_size, value_size, size);
+}
+
+struct core_memory_pool *core_map_memory_pool(struct core_map *self)
+{
+    return core_dynamic_hash_table_memory_pool(&self->table);
 }
