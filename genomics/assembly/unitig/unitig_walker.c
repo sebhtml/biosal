@@ -127,7 +127,12 @@ void biosal_unitig_walker_init(struct thorium_actor *self)
     argv = thorium_actor_argv(self);
     */
 
+    /*
+     * Building the set with a key length of 0 does nothing
+     * and does not allocate any memory whatsoever.
+     */
     core_set_init(&concrete_self->visited, 0);
+    core_set_set_memory_pool(&concrete_self->visited, &concrete_self->memory_pool);
 
     core_vector_init(&concrete_self->graph_stores, sizeof(int));
 
@@ -318,6 +323,7 @@ void biosal_unitig_walker_receive(struct thorium_actor *self, struct thorium_mes
          * when there are at least 2 nodes.
          */
         core_set_init(&concrete_self->visited, concrete_self->key_length);
+        core_set_set_memory_pool(&concrete_self->visited, &concrete_self->memory_pool);
 
         biosal_dna_kmer_destroy(&kmer, ephemeral_memory);
 
