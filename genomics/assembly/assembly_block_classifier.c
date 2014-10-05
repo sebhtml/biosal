@@ -341,6 +341,7 @@ void biosal_assembly_block_classifier_aggregate_kernel_output(struct thorium_act
     buffer = thorium_message_buffer(message);
 
     core_vector_init(&buffers, sizeof(struct biosal_dna_kmer_frequency_block));
+    core_vector_set_memory_pool(&buffers, ephemeral_memory);
 
     core_vector_resize(&buffers,
                     core_vector_size(&concrete_actor->consumers));
