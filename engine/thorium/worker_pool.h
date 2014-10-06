@@ -83,18 +83,7 @@ struct thorium_worker *thorium_worker_pool_get_worker(
 
 void thorium_worker_pool_print_load(struct thorium_worker_pool *self, int type);
 
-#ifdef THORIUM_WORKER_HAS_OWN_QUEUES
-int thorium_worker_pool_pull_classic(struct thorium_worker_pool *self, struct thorium_message *message);
-void thorium_worker_pool_schedule_work_classic(struct thorium_worker_pool *self, struct biosal_work *work);
-
-#endif
-
 void thorium_worker_pool_toggle_debug_mode(struct thorium_worker_pool *self);
-
-#ifdef THORIUM_WORKER_POOL_USE_COUNT_CACHE
-void thorium_worker_pool_set_cached_value(struct thorium_worker_pool *self, int index, int value);
-int thorium_worker_pool_get_cached_value(struct thorium_worker_pool *self, int index);
-#endif
 
 int thorium_worker_pool_enqueue_message(struct thorium_worker_pool *self, struct thorium_message *message);
 int thorium_worker_pool_dequeue_message(struct thorium_worker_pool *self, struct thorium_message *message);
@@ -105,9 +94,7 @@ struct thorium_node *thorium_worker_pool_get_node(struct thorium_worker_pool *se
 int thorium_worker_pool_give_message_to_actor(struct thorium_worker_pool *self, struct thorium_message *message);
 
 void thorium_worker_pool_work(struct thorium_worker_pool *self);
-void thorium_worker_pool_assign_worker_to_actor(struct thorium_worker_pool *self, int name);
 float thorium_worker_pool_get_current_load(struct thorium_worker_pool *self);
-void thorium_worker_pool_wake_up_workers(struct thorium_worker_pool *self);
 
 int thorium_worker_pool_dequeue_message_for_triage(struct thorium_worker_pool *self,
                 struct thorium_message *message);

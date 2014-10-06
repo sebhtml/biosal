@@ -27,6 +27,12 @@
 
 #define MEMORY_MULTIPLEXER 0xb606aa9d
 
+/*
+ * Internal function for flushing stuff away.
+ */
+void thorium_message_multiplexer_flush(struct thorium_message_multiplexer *self, int index, int force);
+
+
 void thorium_message_multiplexer_init(struct thorium_message_multiplexer *self,
                 struct thorium_node *node, struct thorium_multiplexer_policy *policy)
 {

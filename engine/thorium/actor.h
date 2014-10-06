@@ -361,24 +361,9 @@ char **thorium_actor_argv(struct thorium_actor *self);
 int thorium_actor_supervisor(struct thorium_actor *self);
 void thorium_actor_set_supervisor(struct thorium_actor *self, int supervisor);
 
-/* synchronization functions
- */
-void thorium_actor_receive_synchronize(struct thorium_actor *self,
-                struct thorium_message *message);
-void thorium_actor_receive_synchronize_reply(struct thorium_actor *self,
-                struct thorium_message *message);
-int thorium_actor_synchronization_completed(struct thorium_actor *self);
-void thorium_actor_synchronize(struct thorium_actor *self, struct core_vector *actors);
-
-void thorium_actor_forward_messages(struct thorium_actor *self, struct thorium_message *message);
-
 int thorium_actor_script(struct thorium_actor *self);
 struct thorium_script *thorium_actor_get_script(struct thorium_actor *self);
 void thorium_actor_add_script(struct thorium_actor *self, int name, struct thorium_script *script);
-
-/* actor cloning */
-void thorium_actor_clone(struct thorium_actor *self, struct thorium_message *message);
-void thorium_actor_continue_clone(struct thorium_actor *self, struct thorium_message *message);
 
 struct core_counter *thorium_actor_counter(struct thorium_actor *self);
 
@@ -392,32 +377,6 @@ void thorium_actor_add_action_with_source_and_condition(struct thorium_actor *se
 
 struct thorium_dispatcher *thorium_actor_dispatcher(struct thorium_actor *self);
 void thorium_actor_set_node(struct thorium_actor *self, struct thorium_node *node);
-
-void thorium_actor_migrate(struct thorium_actor *self, struct thorium_message *message);
-
-#ifdef THORIUM_ACTOR_STORE_CHILDREN
-struct core_vector *thorium_actor_acquaintance_vector_private(struct thorium_actor *self);
-int thorium_actor_add_acquaintance_private(struct thorium_actor *self, int name);
-int thorium_actor_get_acquaintance_private(struct thorium_actor *self, int index);
-
-int thorium_actor_get_acquaintance_index_private(struct thorium_actor *self, int name);
-int thorium_actor_acquaintance_count_private(struct thorium_actor *self);
-int thorium_actor_add_child(struct thorium_actor *self, int name);
-int thorium_actor_get_child(struct thorium_actor *self, int index);
-int thorium_actor_get_child_index(struct thorium_actor *self, int name);
-int thorium_actor_child_count(struct thorium_actor *self);
-
-void thorium_actor_migrate_notify_acquaintances(struct thorium_actor *self, struct thorium_message *message);
-void thorium_actor_notify_name_change(struct thorium_actor *self, struct thorium_message *message);
-#endif
-
-void thorium_actor_queue_message(struct thorium_actor *self,
-                struct thorium_message *message);
-int thorium_actor_spawn_real(struct thorium_actor *self, int script);
-
-void thorium_actor_enqueue_message(struct thorium_actor *self, struct thorium_message *message);
-void thorium_actor_dequeue_message(struct thorium_actor *self, struct thorium_message *message);
-int thorium_actor_enqueued_message_count(struct thorium_actor *self);
 
 struct core_map *thorium_actor_get_received_messages(struct thorium_actor *self);
 struct core_map *thorium_actor_get_sent_messages(struct thorium_actor *self);
@@ -443,7 +402,6 @@ int thorium_actor_get_random_spawner(struct thorium_actor *self, struct core_vec
 
 void thorium_actor_enable_profiler(struct thorium_actor *self);
 void thorium_actor_disable_profiler(struct thorium_actor *self);
-void thorium_actor_receive_private(struct thorium_actor *self, struct thorium_message *message);
 
 void thorium_actor_write_profile(struct thorium_actor *self,
                struct core_buffered_file_writer *writer);
@@ -463,5 +421,6 @@ void thorium_actor_write_profile(struct thorium_actor *self,
 #endif
 
 void *thorium_actor_allocate(struct thorium_actor *self, size_t count);
+void thorium_actor_synchronize(struct thorium_actor *self, struct core_vector *actors);
 
 #endif

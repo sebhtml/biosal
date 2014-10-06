@@ -90,7 +90,61 @@
 #define FLAG_EXAMINE                    9
 #define FLAG_ENABLE_ACTOR_LOAD_PROFILES 10
 #define FLAG_MULTIPLEXER_IS_DISABLED    11
+
 struct thorium_node *thorium_node_global_self;
+
+
+void thorium_node_handle_signal(int signal);
+void thorium_node_register_signal_handlers(struct thorium_node *self);
+
+void thorium_node_print_structure(struct thorium_node *self, struct thorium_actor *actor);
+int thorium_node_has_actor(struct thorium_node *self, int name);
+
+struct thorium_worker_pool *thorium_node_get_worker_pool(struct thorium_node *self);
+
+void thorium_node_toggle_debug_mode(struct thorium_node *self);
+
+void thorium_node_reset_actor_counters(struct thorium_node *self);
+
+void thorium_node_test_requests(struct thorium_node *self);
+
+void thorium_node_free_worker_buffer(struct thorium_node *self,
+                struct thorium_worker_buffer *worker_buffer);
+
+void thorium_node_send_to_actor(struct thorium_node *self, int name, struct thorium_message *message);
+void thorium_node_check_efficiency(struct thorium_node *self);
+int thorium_node_send_system(struct thorium_node *self, struct thorium_message *message);
+
+void thorium_node_do_message_triage(struct thorium_node *self);
+void thorium_node_recycle_message(struct thorium_node *self, struct thorium_message *message);
+
+void thorium_node_resolve(struct thorium_node *self, struct thorium_message *message);
+/*
+ * Generate an actor name.
+ */
+int thorium_node_generate_random_name(struct thorium_node *self,
+                int minimal_value, int maximum_value);
+
+void thorium_node_inject_outbound_buffer(struct thorium_node *self, struct thorium_worker_buffer *worker_buffer);
+
+void thorium_node_send_to_node_empty(struct thorium_node *self, int destination, int tag);
+int thorium_node_receive_system(struct thorium_node *self, struct thorium_message *message);
+void thorium_node_set_initial_actor(struct thorium_node *self, int node_name, int actor);
+int thorium_node_allocate_actor_index(struct thorium_node *self);
+
+void thorium_node_inject_message_in_worker_pool(struct thorium_node *self, struct thorium_message *message);
+int thorium_node_pull(struct thorium_node *self, struct thorium_message *message);
+
+void *thorium_node_main(void *node1);
+int thorium_node_running(struct thorium_node *self);
+void thorium_node_start_send_thread(struct thorium_node *self);
+int thorium_node_generate_name(struct thorium_node *self);
+
+int thorium_node_actor_node(struct thorium_node *self, int name);
+int thorium_node_actor_index(struct thorium_node *self, int name);
+void thorium_node_run_loop(struct thorium_node *self);
+
+int thorium_node_has_script(struct thorium_node *self, struct thorium_script *script);
 
 void thorium_node_init(struct thorium_node *node, int *argc, char ***argv)
 {

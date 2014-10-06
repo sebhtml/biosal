@@ -31,7 +31,6 @@ void thorium_dispatcher_add_action(struct thorium_dispatcher *self, int tag, tho
 
 int thorium_dispatcher_dispatch(struct thorium_dispatcher *self, struct thorium_actor *actor,
                 struct thorium_message *message);
-thorium_actor_receive_fn_t thorium_dispatcher_get(struct thorium_dispatcher *self, int tag, int source);
 
 void thorium_dispatcher_print(struct thorium_dispatcher *self);
 

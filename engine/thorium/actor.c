@@ -66,6 +66,47 @@
 #define FLAG_SYNCHRONIZATION_STARTED        7
 #define FLAG_ENABLE_LOAD_PROFILER           8
 
+/* synchronization functions
+ */
+void thorium_actor_receive_synchronize(struct thorium_actor *self,
+                struct thorium_message *message);
+void thorium_actor_receive_synchronize_reply(struct thorium_actor *self,
+                struct thorium_message *message);
+int thorium_actor_synchronization_completed(struct thorium_actor *self);
+
+void thorium_actor_forward_messages(struct thorium_actor *self, struct thorium_message *message);
+void thorium_actor_queue_message(struct thorium_actor *self,
+                struct thorium_message *message);
+int thorium_actor_spawn_real(struct thorium_actor *self, int script);
+#ifdef THORIUM_ACTOR_STORE_CHILDREN
+struct core_vector *thorium_actor_acquaintance_vector_private(struct thorium_actor *self);
+int thorium_actor_add_acquaintance_private(struct thorium_actor *self, int name);
+int thorium_actor_get_acquaintance_private(struct thorium_actor *self, int index);
+
+int thorium_actor_get_acquaintance_index_private(struct thorium_actor *self, int name);
+int thorium_actor_acquaintance_count_private(struct thorium_actor *self);
+int thorium_actor_add_child(struct thorium_actor *self, int name);
+int thorium_actor_get_child(struct thorium_actor *self, int index);
+int thorium_actor_get_child_index(struct thorium_actor *self, int name);
+int thorium_actor_child_count(struct thorium_actor *self);
+
+void thorium_actor_migrate_notify_acquaintances(struct thorium_actor *self, struct thorium_message *message);
+void thorium_actor_notify_name_change(struct thorium_actor *self, struct thorium_message *message);
+#endif
+
+void thorium_actor_enqueue_message(struct thorium_actor *self, struct thorium_message *message);
+void thorium_actor_dequeue_message(struct thorium_actor *self, struct thorium_message *message);
+int thorium_actor_enqueued_message_count(struct thorium_actor *self);
+
+/* actor cloning */
+void thorium_actor_clone(struct thorium_actor *self, struct thorium_message *message);
+void thorium_actor_continue_clone(struct thorium_actor *self, struct thorium_message *message);
+void thorium_actor_migrate(struct thorium_actor *self, struct thorium_message *message);
+
+void thorium_actor_receive_private(struct thorium_actor *self, struct thorium_message *message);
+
+
+
 void thorium_actor_init(struct thorium_actor *self, void *concrete_actor,
                 struct thorium_script *script, int name, struct thorium_node *node)
 {

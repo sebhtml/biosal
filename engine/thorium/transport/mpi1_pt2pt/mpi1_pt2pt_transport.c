@@ -18,6 +18,15 @@
 #define MEANING_OF_LIFE_THE_UNIVERSE_AND_EVERYTHING 42
 #define DUMMY_TAG MEANING_OF_LIFE_THE_UNIVERSE_AND_EVERYTHING
 
+void thorium_mpi1_pt2pt_transport_init(struct thorium_transport *self, int *argc, char ***argv);
+void thorium_mpi1_pt2pt_transport_destroy(struct thorium_transport *self);
+
+int thorium_mpi1_pt2pt_transport_send(struct thorium_transport *self, struct thorium_message *message);
+int thorium_mpi1_pt2pt_transport_receive(struct thorium_transport *self, struct thorium_message *message);
+
+int thorium_mpi1_pt2pt_transport_test(struct thorium_transport *self, struct thorium_worker_buffer *worker_buffer);
+
+
 struct thorium_transport_interface thorium_mpi1_pt2pt_transport_implementation = {
     .name = "mpi1_pt2pt_transport",
     .size = sizeof(struct thorium_mpi1_pt2pt_transport),

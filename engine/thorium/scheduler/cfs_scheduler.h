@@ -52,14 +52,4 @@ struct thorium_cfs_scheduler {
 
 extern struct thorium_scheduler_interface thorium_cfs_scheduler_implementation;
 
-void thorium_cfs_scheduler_init(struct thorium_scheduler *self);
-void thorium_cfs_scheduler_destroy(struct thorium_scheduler *self);
-
-int thorium_cfs_scheduler_enqueue(struct thorium_scheduler *self, struct thorium_actor *actor);
-int thorium_cfs_scheduler_dequeue(struct thorium_scheduler *self, struct thorium_actor **actor);
-
-int thorium_cfs_scheduler_size(struct thorium_scheduler *self);
-
-void thorium_cfs_scheduler_print(struct thorium_scheduler *self);
-
 #endif

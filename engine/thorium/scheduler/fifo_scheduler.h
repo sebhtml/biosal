@@ -32,27 +32,4 @@ struct thorium_fifo_scheduler {
 
 extern struct thorium_scheduler_interface thorium_fifo_scheduler_implementation;
 
-void thorium_fifo_scheduler_init(struct thorium_scheduler *self);
-void thorium_fifo_scheduler_destroy(struct thorium_scheduler *self);
-
-int thorium_fifo_scheduler_enqueue(struct thorium_scheduler *self, struct thorium_actor *actor);
-int thorium_fifo_scheduler_dequeue(struct thorium_scheduler *self, struct thorium_actor **actor);
-
-int thorium_fifo_scheduler_size(struct thorium_scheduler *self);
-
-int thorium_fifo_scheduler_get_size_with_priority(struct thorium_fifo_scheduler *self, int priority);
-
-struct core_fast_queue *thorium_fifo_scheduler_select_queue(struct thorium_fifo_scheduler *self, int priority);
-uint64_t *thorium_fifo_scheduler_select_counter(struct thorium_fifo_scheduler *self, int priority);
-
-int thorium_fifo_scheduler_dequeue_with_priority(struct thorium_fifo_scheduler *self, int priority,
-                struct thorium_actor **actor);
-
-void thorium_fifo_scheduler_reset_counter(struct thorium_fifo_scheduler *self, int priority);
-uint64_t thorium_fifo_scheduler_get_counter(struct thorium_fifo_scheduler *self, int priority);
-
-void thorium_fifo_scheduler_print(struct thorium_scheduler *self);
-void thorium_fifo_scheduler_print_with_priority(struct thorium_fifo_scheduler *self, int priority, const char *name,
-                int node, int worker);
-
 #endif

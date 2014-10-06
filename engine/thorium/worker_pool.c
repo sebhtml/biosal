@@ -56,6 +56,20 @@
 #define THORIUM_WORKER_POOL_BALANCE
 */
 
+#ifdef THORIUM_WORKER_HAS_OWN_QUEUES
+int thorium_worker_pool_pull_classic(struct thorium_worker_pool *self, struct thorium_message *message);
+void thorium_worker_pool_schedule_work_classic(struct thorium_worker_pool *self, struct biosal_work *work);
+
+#endif
+
+#ifdef THORIUM_WORKER_POOL_USE_COUNT_CACHE
+void thorium_worker_pool_set_cached_value(struct thorium_worker_pool *self, int index, int value);
+int thorium_worker_pool_get_cached_value(struct thorium_worker_pool *self, int index);
+#endif
+
+void thorium_worker_pool_wake_up_workers(struct thorium_worker_pool *self);
+void thorium_worker_pool_assign_worker_to_actor(struct thorium_worker_pool *self, int name);
+
 void thorium_worker_pool_init(struct thorium_worker_pool *pool, int workers,
                 struct thorium_node *node)
 {

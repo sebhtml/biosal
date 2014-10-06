@@ -16,6 +16,8 @@
 #define THORIUM_DISPATCHER_DEBUG_10335
 */
 
+thorium_actor_receive_fn_t thorium_dispatcher_get(struct thorium_dispatcher *self, int tag, int source);
+
 void thorium_dispatcher_init(struct thorium_dispatcher *self,
                 struct core_memory_pool *pool)
 {

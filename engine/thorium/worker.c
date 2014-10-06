@@ -100,6 +100,8 @@
 #define THORIUM_WORKER_DEBUG_SYMMETRIC_PLACEMENT
 */
 
+void thorium_worker_work(struct thorium_worker *self, struct thorium_actor *actor);
+
 void thorium_worker_init(struct thorium_worker *worker, int name, struct thorium_node *node)
 {
     int capacity;

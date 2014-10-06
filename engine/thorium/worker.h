@@ -186,9 +186,8 @@ void thorium_worker_start(struct thorium_worker *self, int processor);
 void thorium_worker_stop(struct thorium_worker *self);
 
 void thorium_worker_run(struct thorium_worker *self);
-void thorium_worker_work(struct thorium_worker *self, struct thorium_actor *actor);
-struct thorium_node *thorium_worker_node(struct thorium_worker *self);
 
+struct thorium_node *thorium_worker_node(struct thorium_worker *self);
 void thorium_worker_send(struct thorium_worker *self, struct thorium_message *message);
 
 void *thorium_worker_main(void *worker1);
@@ -200,6 +199,7 @@ int thorium_worker_is_busy(struct thorium_worker *self);
 float thorium_worker_get_epoch_load(struct thorium_worker *self);
 float thorium_worker_get_loop_load(struct thorium_worker *self);
 float thorium_worker_get_scheduling_epoch_load(struct thorium_worker *self);
+
 void thorium_worker_reset_scheduling_epoch(struct thorium_worker *self);
 
 int thorium_worker_get_scheduled_message_count(struct thorium_worker *self);
