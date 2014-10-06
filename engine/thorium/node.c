@@ -1687,8 +1687,14 @@ void thorium_node_handle_signal(int signal)
         printf("Error, node/%d received signal %d\n", node, signal);
     }
 
+    /*
+     * Examine everything.
+     */
     thorium_node_examine(thorium_node_global_self);
 
+    /*
+     * Print call stack.
+     */
     core_tracer_print_stack_backtrace();
 
     fflush(stdout);
@@ -1722,12 +1728,12 @@ void thorium_node_register_signal_handlers(struct thorium_node *self)
 
     core_vector_push_back_int(&signals, SIGUSR1);
 
+#if 0
     /* kill signal */
     core_vector_push_back_int(&signals, SIGKILL);
     /* termination*/
     core_vector_push_back_int(&signals, SIGTERM);
 
-#if 0
     /* interruption */
     core_vector_push_back_int(&signals, SIGINT);
     /* kill */
