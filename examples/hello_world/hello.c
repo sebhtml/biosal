@@ -3,6 +3,10 @@
 
 #include <stdio.h>
 
+void hello_init(struct thorium_actor *self);
+void hello_destroy(struct thorium_actor *self);
+void hello_receive(struct thorium_actor *self, struct thorium_message *message);
+
 struct thorium_script hello_script = {
     .identifier = SCRIPT_HELLO,
     .init = hello_init,

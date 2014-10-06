@@ -6,6 +6,10 @@
 #include <stdio.h>
 #include <string.h>
 
+void ring_init(struct thorium_actor *self);
+void ring_destroy(struct thorium_actor *self);
+void ring_receive(struct thorium_actor *self, struct thorium_message *message);
+
 struct thorium_script ring_script = {
     .identifier = SCRIPT_RING,
     .init = ring_init,

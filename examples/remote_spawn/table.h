@@ -18,8 +18,4 @@ struct table {
 
 extern struct thorium_script table_script;
 
-void table_init(struct thorium_actor *self);
-void table_destroy(struct thorium_actor *self);
-void table_receive(struct thorium_actor *self, struct thorium_message *message);
-
 #endif

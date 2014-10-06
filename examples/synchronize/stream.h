@@ -22,8 +22,4 @@ struct stream {
 
 extern struct thorium_script stream_script;
 
-void stream_init(struct thorium_actor *self);
-void stream_destroy(struct thorium_actor *self);
-void stream_receive(struct thorium_actor *self, struct thorium_message *message);
-
 #endif

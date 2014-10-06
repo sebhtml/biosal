@@ -7,6 +7,10 @@
 #include <stdio.h>
 #include <string.h>
 
+void root_init(struct thorium_actor *self);
+void root_destroy(struct thorium_actor *self);
+void root_receive(struct thorium_actor *self, struct thorium_message *message);
+
 struct thorium_script root_script = {
     .identifier = SCRIPT_ROOT,
     .init = root_init,

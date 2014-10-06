@@ -4,6 +4,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+void frame_init(struct thorium_actor *self);
+void frame_destroy(struct thorium_actor *self);
+void frame_receive(struct thorium_actor *self, struct thorium_message *message);
+
 struct thorium_script frame_script = {
     .identifier = SCRIPT_FRAME,
     .init = frame_init,

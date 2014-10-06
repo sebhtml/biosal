@@ -16,8 +16,4 @@ struct frame {
 
 extern struct thorium_script frame_script;
 
-void frame_init(struct thorium_actor *self);
-void frame_destroy(struct thorium_actor *self);
-void frame_receive(struct thorium_actor *self, struct thorium_message *message);
-
 #endif

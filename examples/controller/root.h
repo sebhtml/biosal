@@ -21,8 +21,4 @@ struct root {
 
 extern struct thorium_script root_script;
 
-void root_init(struct thorium_actor *self);
-void root_destroy(struct thorium_actor *self);
-void root_receive(struct thorium_actor *self, struct thorium_message *message);
-
 #endif

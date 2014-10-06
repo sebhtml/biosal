@@ -17,8 +17,4 @@ struct buddy {
 
 extern struct thorium_script buddy_script;
 
-void buddy_init(struct thorium_actor *self);
-void buddy_destroy(struct thorium_actor *self);
-void buddy_receive(struct thorium_actor *self, struct thorium_message *message);
-
 #endif

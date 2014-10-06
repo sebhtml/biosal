@@ -5,6 +5,10 @@
 #include <stdio.h>
 #include <string.h>
 
+void sender_init(struct thorium_actor *self);
+void sender_destroy(struct thorium_actor *self);
+void sender_receive(struct thorium_actor *self, struct thorium_message *message);
+
 struct thorium_script sender_script = {
     .identifier = SCRIPT_SENDER,
     .init = sender_init,

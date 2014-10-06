@@ -21,15 +21,4 @@ struct mock {
 
 extern struct thorium_script mock_script;
 
-void mock_init(struct thorium_actor *self);
-void mock_destroy(struct thorium_actor *self);
-void mock_receive(struct thorium_actor *self, struct thorium_message *message);
-
-void mock_start(struct thorium_actor *self, struct thorium_message *message);
-void mock_spawn_children(struct thorium_actor *self);
-void mock_die(struct thorium_actor *self, struct thorium_message *message);
-
-void mock_add_contacts(struct thorium_actor *self, struct thorium_message *message);
-void mock_share(struct thorium_actor *self, struct thorium_message *message);
-
 #endif

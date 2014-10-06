@@ -3,6 +3,10 @@
 
 #include <stdio.h>
 
+void stream_init(struct thorium_actor *self);
+void stream_destroy(struct thorium_actor *self);
+void stream_receive(struct thorium_actor *self, struct thorium_message *message);
+
 struct thorium_script stream_script = {
     .identifier = SCRIPT_STREAM,
     .init = stream_init,

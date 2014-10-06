@@ -16,8 +16,4 @@ struct process {
 
 extern struct thorium_script process_script;
 
-void process_init(struct thorium_actor *self);
-void process_destroy(struct thorium_actor *self);
-void process_receive(struct thorium_actor *self, struct thorium_message *message);
-
 #endif

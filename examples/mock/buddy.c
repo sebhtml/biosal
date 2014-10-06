@@ -3,6 +3,10 @@
 
 #include <stdio.h>
 
+void buddy_init(struct thorium_actor *self);
+void buddy_destroy(struct thorium_actor *self);
+void buddy_receive(struct thorium_actor *self, struct thorium_message *message);
+
 /* this script is required */
 struct thorium_script buddy_script = {
     .identifier = SCRIPT_BUDDY,

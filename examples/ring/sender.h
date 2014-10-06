@@ -18,8 +18,4 @@ struct sender {
 
 extern struct thorium_script sender_script;
 
-void sender_init(struct thorium_actor *self);
-void sender_destroy(struct thorium_actor *self);
-void sender_receive(struct thorium_actor *self, struct thorium_message *message);
-
 #endif

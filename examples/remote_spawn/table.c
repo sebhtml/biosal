@@ -3,6 +3,10 @@
 
 #include <stdio.h>
 
+void table_init(struct thorium_actor *self);
+void table_destroy(struct thorium_actor *self);
+void table_receive(struct thorium_actor *self, struct thorium_message *message);
+
 struct thorium_script table_script = {
     .identifier = SCRIPT_TABLE,
     .init = table_init,

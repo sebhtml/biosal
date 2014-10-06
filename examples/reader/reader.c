@@ -7,6 +7,10 @@
 
 #include <inttypes.h>
 
+void reader_init(struct thorium_actor *self);
+void reader_destroy(struct thorium_actor *self);
+void reader_receive(struct thorium_actor *self, struct thorium_message *message);
+
 struct thorium_script reader_script = {
     .identifier = SCRIPT_READER,
     .init = reader_init,

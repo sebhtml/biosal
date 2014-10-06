@@ -26,8 +26,4 @@ struct ring {
 
 extern struct thorium_script ring_script;
 
-void ring_init(struct thorium_actor *self);
-void ring_destroy(struct thorium_actor *self);
-void ring_receive(struct thorium_actor *self, struct thorium_message *message);
-
 #endif
