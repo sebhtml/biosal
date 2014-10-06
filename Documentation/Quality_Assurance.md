@@ -42,6 +42,7 @@ scripts/development/run-argonnite-1-28.sh
 
 ```
 **JobName**
+**Goal**
 **Machine**
 **AllocationStatus**
 **Path**
