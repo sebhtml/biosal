@@ -67,7 +67,7 @@ void thorium_worker_pool_init(struct thorium_worker_pool *pool, int workers,
 
     pool->ticks_without_messages = 0;
 
-    core_fast_queue_init(&pool->messages_for_triage, sizeof(struct thorium_message));
+    core_fast_queue_init(&pool->clean_message_queue, sizeof(struct thorium_message));
 
     pool->last_warning = 0;
     pool->last_scheduling_warning = 0;
@@ -121,7 +121,7 @@ void thorium_worker_pool_destroy(struct thorium_worker_pool *pool)
 
     core_fast_queue_destroy(&pool->inbound_message_queue_buffer);
     core_fast_queue_destroy(&pool->scheduled_actor_queue_buffer);
-    core_fast_queue_destroy(&pool->messages_for_triage);
+    core_fast_queue_destroy(&pool->clean_message_queue);
 }
 
 void thorium_worker_pool_delete_workers(struct thorium_worker_pool *pool)
@@ -429,7 +429,7 @@ int thorium_worker_pool_give_message_to_actor(struct thorium_worker_pool *pool, 
         printf("DEAD LETTER CHANNEL...\n");
 #endif
 
-        core_fast_queue_enqueue(&pool->messages_for_triage, message);
+        core_fast_queue_enqueue(&pool->clean_message_queue, message);
 
         return 0;
     }
@@ -440,7 +440,7 @@ int thorium_worker_pool_give_message_to_actor(struct thorium_worker_pool *pool, 
      */
     if (dead) {
 
-        core_fast_queue_enqueue(&pool->messages_for_triage, message);
+        core_fast_queue_enqueue(&pool->clean_message_queue, message);
 
         return 0;
     }
@@ -839,7 +839,7 @@ void thorium_worker_pool_wake_up_workers(struct thorium_worker_pool *pool)
 int thorium_worker_pool_dequeue_message_for_triage(struct thorium_worker_pool *self,
                 struct thorium_message *message)
 {
-    return core_fast_queue_dequeue(&self->messages_for_triage, message);
+    return core_fast_queue_dequeue(&self->clean_message_queue, message);
 }
 
 void thorium_worker_pool_examine(struct thorium_worker_pool *self)
@@ -850,6 +850,13 @@ void thorium_worker_pool_examine(struct thorium_worker_pool *self)
 
     i = 0;
     size = thorium_worker_pool_worker_count(self);
+
+    printf("QUEUE Name= scheduled_actor_queue_buffer size= %d\n",
+                    core_fast_queue_size(&self->scheduled_actor_queue_buffer));
+    printf("QUEUE Name= inbound_message_queue_buffer size= %d\n",
+                    core_fast_queue_size(&self->inbound_message_queue_buffer));
+    printf("QUEUE Name= clean_message_queue size= %d\n",
+                    core_fast_queue_size(&self->clean_message_queue));
 
     for (i = 0; i < size; ++i) {
 

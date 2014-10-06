@@ -27,8 +27,7 @@ struct thorium_worker_pool {
 
     struct core_fast_queue scheduled_actor_queue_buffer;
     struct core_fast_queue inbound_message_queue_buffer;
-
-    struct core_fast_queue messages_for_triage;
+    struct core_fast_queue clean_message_queue;
 
     int worker_count;
     struct core_vector worker_array;

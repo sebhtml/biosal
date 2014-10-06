@@ -94,21 +94,39 @@ struct thorium_worker {
 
     /*
      * The worker pool push actors to schedule on this
-     * ring
+     * ring.
      */
-    struct core_fast_ring actors_to_schedule;
+    struct core_fast_ring input_actor_ring;
 
 #ifdef THORIUM_NODE_INJECT_CLEAN_WORKER_BUFFERS
-    struct core_fast_ring injected_clean_outbound_buffers;
+    /*
+     * Injected buffers for recycling.
+     */
+    struct core_fast_ring input_clean_outbound_buffer_ring;
 
-    struct core_fast_ring clean_message_ring_for_triage;
-    struct core_fast_queue clean_message_queue_for_triage;
+    /*
+     * Output ring for exporting messages for triage.
+     */
+    struct core_fast_ring output_message_ring_for_triage;
+
+    /*
+     * Queue for buffering exported messages for triage.
+     */
+    struct core_fast_queue output_message_queue_for_triage;
 #endif
 
-    struct thorium_scheduler scheduler;
-
+    /*
+     * Ring for publishing outbound buffers.
+     */
     struct core_fast_ring outbound_message_queue;
+
+    /*
+     * Queue for buffering outbound buffers when
+     * the ring is full.
+     */
     struct core_fast_queue outbound_message_queue_buffer;
+
+    struct thorium_scheduler scheduler;
 
     struct core_set evicted_actors;
 

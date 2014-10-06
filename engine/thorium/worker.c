@@ -146,18 +146,18 @@ void thorium_worker_init(struct thorium_worker *worker, int name, struct thorium
      * 1. enable atomic operations for change visibility
      * 2. Use volatile head and tail.
      */
-    core_fast_ring_init(&worker->actors_to_schedule, capacity, sizeof(struct thorium_actor *));
+    core_fast_ring_init(&worker->input_actor_ring, capacity, sizeof(struct thorium_actor *));
 
 #ifdef THORIUM_NODE_INJECT_CLEAN_WORKER_BUFFERS
     injected_buffer_ring_size = capacity;
-    core_fast_ring_init(&worker->injected_clean_outbound_buffers,
+    core_fast_ring_init(&worker->input_clean_outbound_buffer_ring,
                     injected_buffer_ring_size, sizeof(void *));
 
-    core_fast_ring_init(&worker->clean_message_ring_for_triage,
+    core_fast_ring_init(&worker->output_message_ring_for_triage,
                     injected_buffer_ring_size,
                     sizeof(struct thorium_message));
 
-    core_fast_queue_init(&worker->clean_message_queue_for_triage,
+    core_fast_queue_init(&worker->output_message_queue_for_triage,
                     sizeof(struct thorium_message));
 #endif
 
@@ -288,12 +288,12 @@ void thorium_worker_destroy(struct thorium_worker *worker)
     printf("AFTER COLLECTION\n");
     thorium_worker_print_balance(worker);
 
-    printf("THORIUM-> clean_message_queue_for_triage has %d items\n",
-                    core_fast_queue_size(&worker->clean_message_queue_for_triage));
-    printf("THORIUM-> clean_message_ring_for_triage has %d items\n",
-                    core_fast_ring_size_from_producer(&worker->clean_message_ring_for_triage));
-    printf("THORIUM-> injected_clean_outbound_buffers has %d items\n",
-                    core_fast_ring_size_from_producer(&worker->injected_clean_outbound_buffers));
+    printf("THORIUM-> output_message_queue_for_triage has %d items\n",
+                    core_fast_queue_size(&worker->output_message_queue_for_triage));
+    printf("THORIUM-> output_message_ring_for_triage has %d items\n",
+                    core_fast_ring_size_from_producer(&worker->output_message_ring_for_triage));
+    printf("THORIUM-> input_clean_outbound_buffer_ring has %d items\n",
+                    core_fast_ring_size_from_producer(&worker->input_clean_outbound_buffer_ring));
 #endif
 
     core_timer_destroy(&worker->timer);
@@ -302,13 +302,13 @@ void thorium_worker_destroy(struct thorium_worker *worker)
     core_lock_destroy(&worker->lock);
 #endif
 
-    core_fast_ring_destroy(&worker->actors_to_schedule);
+    core_fast_ring_destroy(&worker->input_actor_ring);
 
 #ifdef THORIUM_NODE_INJECT_CLEAN_WORKER_BUFFERS
-    core_fast_ring_destroy(&worker->injected_clean_outbound_buffers);
+    core_fast_ring_destroy(&worker->input_clean_outbound_buffer_ring);
 
-    core_fast_ring_destroy(&worker->clean_message_ring_for_triage);
-    core_fast_queue_destroy(&worker->clean_message_queue_for_triage);
+    core_fast_ring_destroy(&worker->output_message_ring_for_triage);
+    core_fast_queue_destroy(&worker->output_message_queue_for_triage);
 #endif
 
     thorium_scheduler_destroy(&worker->scheduler);
@@ -604,12 +604,12 @@ int thorium_worker_dequeue_actor(struct thorium_worker *worker, struct thorium_a
     /* Move an actor from the ring to the real actor scheduling queue
      */
     while (operations--
-                    && core_fast_ring_pop_from_consumer(&worker->actors_to_schedule, &other_actor)) {
+                    && core_fast_ring_pop_from_consumer(&worker->input_actor_ring, &other_actor)) {
 
 #ifdef CORE_DEBUGGER_ENABLE_ASSERT
         if (other_actor == NULL) {
             printf("NULL pointer pulled from ring, operations %d ring size %d\n",
-                            operations, core_fast_ring_size_from_consumer(&worker->actors_to_schedule));
+                            operations, core_fast_ring_size_from_consumer(&worker->input_actor_ring));
         }
 #endif
 
@@ -747,11 +747,11 @@ int thorium_worker_enqueue_actor(struct thorium_worker *worker, struct thorium_a
 
     CORE_DEBUGGER_ASSERT(actor != NULL);
 
-    value = core_fast_ring_push_from_producer(&worker->actors_to_schedule, &actor);
+    value = core_fast_ring_push_from_producer(&worker->input_actor_ring, &actor);
 
 #ifdef SHOW_FULL_RING_WARNINGS
     if (!value) {
-        printf("thorium_worker: Warning: ring is full, actors_to_schedule\n");
+        printf("thorium_worker: Warning: ring is full, input_actor_ring\n");
     }
 #endif
 
@@ -835,7 +835,7 @@ void thorium_worker_print_actors(struct thorium_worker *worker, struct thorium_b
                     thorium_worker_get_sum_of_received_actor_messages(worker),
                     thorium_worker_is_busy(worker),
                     thorium_worker_get_scheduling_epoch_load(worker),
-                    core_fast_ring_size_from_producer(&worker->actors_to_schedule),
+                    core_fast_ring_size_from_producer(&worker->input_actor_ring),
                     thorium_scheduler_size(&worker->scheduler),
                     (int)core_map_size(&worker->actors));
 
@@ -945,9 +945,9 @@ void thorium_worker_evict_actor(struct thorium_worker *worker, int actor_name)
     /* Evict the actor from the ring
      */
 
-    count = core_fast_ring_size_from_consumer(&worker->actors_to_schedule);
+    count = core_fast_ring_size_from_consumer(&worker->input_actor_ring);
 
-    while (count-- && core_fast_ring_pop_from_consumer(&worker->actors_to_schedule,
+    while (count-- && core_fast_ring_pop_from_consumer(&worker->input_actor_ring,
                             &actor)) {
 
         name = thorium_actor_name(actor);
@@ -957,7 +957,7 @@ void thorium_worker_evict_actor(struct thorium_worker *worker, int actor_name)
             /*
              * This can not fail logically.
              */
-            value = core_fast_ring_push_from_producer(&worker->actors_to_schedule,
+            value = core_fast_ring_push_from_producer(&worker->input_actor_ring,
                             &actor);
 
             CORE_DEBUGGER_ASSERT(value);
@@ -1172,14 +1172,14 @@ int thorium_worker_enqueue_message_for_triage(struct thorium_worker *worker, str
 
     CORE_DEBUGGER_ASSERT(thorium_message_buffer(message) != NULL);
 
-    if (!core_fast_ring_push_from_producer(&worker->clean_message_ring_for_triage, message)) {
+    if (!core_fast_ring_push_from_producer(&worker->output_message_ring_for_triage, message)) {
 
 #ifdef SHOW_FULL_RING_WARNINGS
-        printf("thorium_worker: Warning: ring is full, clean_message_ring_for_triage action= %x\n",
+        printf("thorium_worker: Warning: ring is full, output_message_ring_for_triage action= %x\n",
                         thorium_message_action(message));
 #endif
 
-        core_fast_queue_enqueue(&worker->clean_message_queue_for_triage, message);
+        core_fast_queue_enqueue(&worker->output_message_queue_for_triage, message);
 
 #ifdef THORIUM_WORKER_DEBUG_INJECTION
     } else {
@@ -1203,7 +1203,7 @@ int thorium_worker_dequeue_message_for_triage(struct thorium_worker *worker, str
 {
     int value;
 
-    value = core_fast_ring_pop_from_consumer(&worker->clean_message_ring_for_triage, message);
+    value = core_fast_ring_pop_from_consumer(&worker->output_message_ring_for_triage, message);
 
 #ifdef CORE_DEBUGGER_ENABLE_ASSERT
     if (value) {
@@ -1400,7 +1400,7 @@ void thorium_worker_run(struct thorium_worker *worker)
      * Transfer messages for triage
      */
 
-    if (core_fast_queue_dequeue(&worker->clean_message_queue_for_triage, &other_message)) {
+    if (core_fast_queue_dequeue(&worker->output_message_queue_for_triage, &other_message)) {
 
         CORE_DEBUGGER_ASSERT(thorium_message_buffer(&other_message) != NULL);
         thorium_worker_enqueue_message_for_triage(worker, &other_message);
@@ -1442,11 +1442,9 @@ void thorium_worker_work(struct thorium_worker *worker, struct thorium_actor *ac
      */
     if (thorium_actor_trylock(actor) != CORE_LOCK_SUCCESS) {
 
-#ifdef SHOW_FULL_RING_WARNINGS
         printf("Warning: CONTENTION worker %d could not lock actor %d, returning the message...\n",
                         thorium_worker_name(worker),
                         actor_name);
-#endif
 
         return;
     }
@@ -1666,12 +1664,12 @@ int thorium_worker_inject_clean_outbound_buffer(struct thorium_worker *self, voi
 {
     int value;
 
-    value = core_fast_ring_push_from_producer(&self->injected_clean_outbound_buffers,
+    value = core_fast_ring_push_from_producer(&self->input_clean_outbound_buffer_ring,
                     &buffer);
 
 #ifdef SHOW_FULL_RING_WARNINGS
     if (!value) {
-        printf("thorium_worker: Warning: ring is full, injected_clean_outbound_buffers\n");
+        printf("thorium_worker: Warning: ring is full, input_clean_outbound_buffer_ring\n");
     }
 #endif
 
@@ -1680,7 +1678,7 @@ int thorium_worker_inject_clean_outbound_buffer(struct thorium_worker *self, voi
 
 int thorium_worker_fetch_clean_outbound_buffer(struct thorium_worker *self, void **buffer)
 {
-    return core_fast_ring_pop_from_consumer(&self->injected_clean_outbound_buffers,
+    return core_fast_ring_pop_from_consumer(&self->input_clean_outbound_buffer_ring,
                     buffer);
 }
 
@@ -1716,6 +1714,22 @@ void thorium_worker_examine(struct thorium_worker *self)
 
     core_memory_pool_examine(&self->ephemeral_memory);
     core_memory_pool_examine(&self->outbound_message_memory_pool);
+
+    printf("RING (producer)= outbound_message_queue size= %d\n",
+                    core_fast_ring_size_from_producer(&self->outbound_message_queue));
+    printf("QUEUE= outbound_message_queue_buffer size= %d\n",
+                    core_fast_queue_size(&self->outbound_message_queue_buffer));
+
+    printf("RING (consumer)= input_actor_ring size= %d\n",
+                    core_fast_ring_size_from_producer(&self->input_actor_ring));
+
+    printf("RING (consumer)= input_clean_outbound_buffer_ring size= %d\n",
+                    core_fast_ring_size_from_producer(&self->input_clean_outbound_buffer_ring));
+
+    printf("RING (producer)= output_message_ring_for_triage size= %d\n",
+                    core_fast_ring_size_from_producer(&self->output_message_ring_for_triage));
+    printf("QUEUE= output_message_queue_for_triage size= %d\n",
+                    core_fast_queue_size(&self->output_message_queue_for_triage));
 }
 
 int thorium_worker_spawn(struct thorium_worker *self, int script)

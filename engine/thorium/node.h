@@ -112,7 +112,7 @@ struct thorium_node {
 #endif
 
 #ifdef THORIUM_NODE_INJECT_CLEAN_WORKER_BUFFERS
-    struct core_fast_queue clean_outbound_buffers_to_inject;
+    struct core_fast_queue output_clean_outbound_buffer_queue;
 
     int worker_for_triage;
 #endif

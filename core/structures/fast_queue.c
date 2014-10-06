@@ -216,4 +216,3 @@ int core_fast_queue_enqueue_private(struct core_fast_queue *self, void *item)
     return inserted;
 }
 
-

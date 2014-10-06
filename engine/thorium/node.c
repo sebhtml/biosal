@@ -191,7 +191,7 @@ void thorium_node_init(struct thorium_node *node, int *argc, char ***argv)
     srand(node->start_time * getpid() * node->name);
 
 #ifdef THORIUM_NODE_INJECT_CLEAN_WORKER_BUFFERS
-    core_fast_queue_init(&node->clean_outbound_buffers_to_inject, sizeof(struct thorium_worker_buffer));
+    core_fast_queue_init(&node->output_clean_outbound_buffer_queue, sizeof(struct thorium_worker_buffer));
 #endif
 
     CORE_BITMAP_SET_BIT(node->flags, FLAG_USE_TRANSPORT);
@@ -438,8 +438,8 @@ void thorium_node_destroy(struct thorium_node *node)
 #ifdef THORIUM_NODE_DEBUG_INJECTION
     active_requests = thorium_transport_get_active_request_count(&node->transport);
 
-    printf("THORIUM DEBUG clean_outbound_buffers_to_inject has %d items\n",
-          core_fast_queue_size(&node->clean_outbound_buffers_to_inject));
+    printf("THORIUM DEBUG output_clean_outbound_buffer_queue has %d items\n",
+          core_fast_queue_size(&node->output_clean_outbound_buffer_queue));
 
     printf("node/%d \n"
              "   counter_allocated_node_inbound_buffers %d\n"
@@ -484,7 +484,7 @@ void thorium_node_destroy(struct thorium_node *node)
     core_counter_destroy(&node->counter);
 #endif
 
-    core_fast_queue_destroy(&node->clean_outbound_buffers_to_inject);
+    core_fast_queue_destroy(&node->output_clean_outbound_buffer_queue);
 
     /*
      * Destroy the memory pool after the rest.
@@ -2250,7 +2250,7 @@ void thorium_node_test_requests(struct thorium_node *node)
 #ifdef THORIUM_NODE_INJECT_CLEAN_WORKER_BUFFERS
     /* Check if there are queued buffers to give to workers
      */
-    if (core_fast_queue_dequeue(&node->clean_outbound_buffers_to_inject, &worker_buffer)) {
+    if (core_fast_queue_dequeue(&node->output_clean_outbound_buffer_queue, &worker_buffer)) {
 
             /*
         printf("INJECT Dequeued buffer to inject\n");
@@ -2295,7 +2295,7 @@ void thorium_node_free_worker_buffer(struct thorium_node *node,
         /* If the ring is full, queue it locally
          * and try again later
          */
-        core_fast_queue_enqueue(&node->clean_outbound_buffers_to_inject, worker_buffer);
+        core_fast_queue_enqueue(&node->output_clean_outbound_buffer_queue, worker_buffer);
     }
 
 /* This is a node buffer
