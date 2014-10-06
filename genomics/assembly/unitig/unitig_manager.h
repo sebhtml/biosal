@@ -28,8 +28,4 @@ struct biosal_unitig_manager {
 
 extern struct thorium_script biosal_unitig_manager_script;
 
-void biosal_unitig_manager_init(struct thorium_actor *self);
-void biosal_unitig_manager_destroy(struct thorium_actor *self);
-void biosal_unitig_manager_receive(struct thorium_actor *self, struct thorium_message *message);
-
 #endif

@@ -96,42 +96,7 @@ struct biosal_assembly_graph_store {
 
 extern struct thorium_script biosal_assembly_graph_store_script;
 
-void biosal_assembly_graph_store_init(struct thorium_actor *actor);
-void biosal_assembly_graph_store_destroy(struct thorium_actor *actor);
-void biosal_assembly_graph_store_receive(struct thorium_actor *actor, struct thorium_message *message);
-
-void biosal_assembly_graph_store_print(struct thorium_actor *self);
-void biosal_assembly_graph_store_push_data(struct thorium_actor *self, struct thorium_message *message);
-void biosal_assembly_graph_store_yield_reply(struct thorium_actor *self, struct thorium_message *message);
-
-void biosal_assembly_graph_store_push_kmer_block(struct thorium_actor *self, struct thorium_message *message);
-void biosal_assembly_graph_store_push_arc_block(struct thorium_actor *self, struct thorium_message *message);
-
-void biosal_assembly_graph_store_add_arc(struct thorium_actor *self,
-                struct biosal_assembly_arc *arc, char *sequence, void *key);
-
-void biosal_assembly_graph_store_get_summary(struct thorium_actor *self, struct thorium_message *message);
-
-void biosal_assembly_graph_store_yield_reply_summary(struct thorium_actor *self, struct thorium_message *message);
-
-/*
- * This is the route for ACTION_ASSEMBLY_GET_VERTEX.
- * It returns a packed biosal_assembly_vertex.
- */
-void biosal_assembly_graph_store_get_vertex(struct thorium_actor *self, struct thorium_message *message);
-void biosal_assembly_graph_store_get_starting_vertex(struct thorium_actor *self, struct thorium_message *message);
-
 int biosal_assembly_graph_store_get_store_count_per_node(struct thorium_actor *self);
 
-void biosal_assembly_graph_store_print_progress(struct thorium_actor *self);
-
-void biosal_assembly_graph_store_mark_as_used(struct thorium_actor *self,
-                struct biosal_assembly_vertex *vertex, int source, int path);
-void biosal_assembly_graph_store_mark_vertex_as_visited(struct thorium_actor *self, struct thorium_message *message);
-
-void biosal_assembly_graph_store_set_vertex_flag(struct thorium_actor *self,
-                struct thorium_message *message);
-struct biosal_assembly_vertex *biosal_assembly_graph_store_find_vertex(struct thorium_actor *self,
-                struct biosal_dna_kmer *kmer);
 
 #endif

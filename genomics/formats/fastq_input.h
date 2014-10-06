@@ -23,14 +23,4 @@ struct core_fastq_input {
 
 extern struct biosal_input_format_interface core_fastq_input_operations;
 
-void core_fastq_input_init(struct biosal_input_format *self);
-void core_fastq_input_destroy(struct biosal_input_format *self);
-uint64_t core_fastq_input_get_sequence(struct biosal_input_format *self,
-                char *sequence);
-int core_fastq_input_detect(struct biosal_input_format *self);
-uint64_t core_fastq_input_get_offset(struct biosal_input_format *self);
-
-int core_fastq_input_is_identifier(struct biosal_input_format *self, const char *line);
-int core_fastq_input_is_identifier_mock(struct biosal_input_format *self, const char *line);
-
 #endif

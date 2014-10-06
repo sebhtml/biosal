@@ -28,6 +28,25 @@
 
 #define MEMORY_CODEC 0x9687799e
 
+int biosal_dna_codec_encoded_length_default(struct biosal_dna_codec *self, int length_in_nucleotides);
+void biosal_dna_codec_decode_default(struct biosal_dna_codec *self, int length_in_nucleotides, void *encoded_sequence, char *dna_sequence);
+void biosal_dna_codec_encode_default(struct biosal_dna_codec *self, int length_in_nucleotides, char *dna_sequence, void *encoded_sequence);
+
+#ifdef BIOSAL_DNA_CODEC_USE_TWO_BIT_BLOCK_ENCODER
+void biosal_dna_codec_encode_with_blocks(struct biosal_dna_codec *self,
+                int length_in_nucleotides, char *dna_sequence, void *encoded_sequence);
+
+void biosal_dna_codec_generate_blocks(struct biosal_dna_codec *self);
+
+void biosal_dna_codec_generate_block(struct biosal_dna_codec *self, int position, char symbol,
+                char *block);
+#endif
+
+#ifdef BIOSAL_DNA_CODEC_USE_TWO_BIT_BLOCK_DECODER
+void biosal_dna_codec_decode_with_blocks(struct biosal_dna_codec *self,
+                int length_in_nucleotides, void *encoded_sequence, char *dna_sequence);
+#endif
+
 void biosal_dna_codec_init(struct biosal_dna_codec *self)
 {
     /* 4 * 2 = 8 bits = 1 byte

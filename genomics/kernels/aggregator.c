@@ -44,6 +44,24 @@
 #define BIOSAL_AGGREGATOR_DEBUG_FLUSHING
 */
 
+void biosal_aggregator_init(struct thorium_actor *actor);
+void biosal_aggregator_destroy(struct thorium_actor *actor);
+void biosal_aggregator_receive(struct thorium_actor *actor, struct thorium_message *message);
+
+void biosal_aggregator_flush(struct thorium_actor *self, int customer_index, struct core_vector *buffers,
+                int force);
+void biosal_aggregator_verify(struct thorium_actor *self, struct thorium_message *message);
+void biosal_aggregator_aggregate_kernel_output(struct thorium_actor *self, struct thorium_message *message);
+
+void biosal_aggregator_unpack_message(struct thorium_actor *actor, struct thorium_message *message);
+void biosal_aggregator_pack_message(struct thorium_actor *actor, struct thorium_message *message);
+int biosal_aggregator_set_consumers(struct thorium_actor *actor, void *buffer);
+
+int biosal_aggregator_pack_unpack(struct thorium_actor *actor, int operation, void *buffer);
+int biosal_aggregator_pack(struct thorium_actor *actor, void *buffer);
+int biosal_aggregator_unpack(struct thorium_actor *actor, void *buffer);
+int biosal_aggregator_pack_size(struct thorium_actor *actor);
+
 struct thorium_script biosal_aggregator_script = {
     .identifier = SCRIPT_AGGREGATOR,
     .name = "biosal_aggregator",

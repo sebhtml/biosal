@@ -46,22 +46,4 @@ struct biosal_assembly_block_classifier {
 
 extern struct thorium_script biosal_assembly_block_classifier_script;
 
-void biosal_assembly_block_classifier_init(struct thorium_actor *actor);
-void biosal_assembly_block_classifier_destroy(struct thorium_actor *actor);
-void biosal_assembly_block_classifier_receive(struct thorium_actor *actor, struct thorium_message *message);
-
-void biosal_assembly_block_classifier_flush(struct thorium_actor *self, int customer_index, struct core_vector *buffers,
-                int force);
-void biosal_assembly_block_classifier_verify(struct thorium_actor *self, struct thorium_message *message);
-void biosal_assembly_block_classifier_aggregate_kernel_output(struct thorium_actor *self, struct thorium_message *message);
-
-void biosal_assembly_block_classifier_unpack_message(struct thorium_actor *actor, struct thorium_message *message);
-void biosal_assembly_block_classifier_pack_message(struct thorium_actor *actor, struct thorium_message *message);
-int biosal_assembly_block_classifier_set_consumers(struct thorium_actor *actor, void *buffer);
-
-int biosal_assembly_block_classifier_pack_unpack(struct thorium_actor *actor, int operation, void *buffer);
-int biosal_assembly_block_classifier_pack(struct thorium_actor *actor, void *buffer);
-int biosal_assembly_block_classifier_unpack(struct thorium_actor *actor, void *buffer);
-int biosal_assembly_block_classifier_pack_size(struct thorium_actor *actor);
-
 #endif

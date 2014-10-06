@@ -48,9 +48,9 @@ uint64_t biosal_input_format_start_offset(struct biosal_input_format *self);
 uint64_t biosal_input_format_end_offset(struct biosal_input_format *self);
 uint64_t biosal_input_format_offset(struct biosal_input_format *self);
 void *biosal_input_format_implementation(struct biosal_input_format *self);
+
 int biosal_input_format_detect(struct biosal_input_format *self);
-int biosal_input_format_has_suffix(struct biosal_input_format *self, const char *suffix);
-int biosal_input_format_valid(struct biosal_input_format *self);
 int biosal_input_format_error(struct biosal_input_format *self);
+int biosal_input_format_has_suffix(struct biosal_input_format *self, const char *suffix);
 
 #endif

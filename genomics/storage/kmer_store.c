@@ -23,6 +23,14 @@
 
 #define MEMORY_KMER_STORE 0x51daca18
 
+void biosal_kmer_store_init(struct thorium_actor *actor);
+void biosal_kmer_store_destroy(struct thorium_actor *actor);
+void biosal_kmer_store_receive(struct thorium_actor *actor, struct thorium_message *message);
+
+void biosal_kmer_store_print(struct thorium_actor *self);
+void biosal_kmer_store_push_data(struct thorium_actor *self, struct thorium_message *message);
+void biosal_kmer_store_yield_reply(struct thorium_actor *self, struct thorium_message *message);
+
 struct thorium_script biosal_kmer_store_script = {
     .identifier = SCRIPT_KMER_STORE,
     .init = biosal_kmer_store_init,

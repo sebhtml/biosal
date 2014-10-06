@@ -18,6 +18,10 @@
 #define STATE_VISITORS      1
 #define STATE_WALKERS       2
 
+void biosal_unitig_manager_init(struct thorium_actor *self);
+void biosal_unitig_manager_destroy(struct thorium_actor *self);
+void biosal_unitig_manager_receive(struct thorium_actor *self, struct thorium_message *message);
+
 struct thorium_script biosal_unitig_manager_script = {
     .identifier = SCRIPT_UNITIG_MANAGER,
     .name = "biosal_unitig_manager",

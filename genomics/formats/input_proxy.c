@@ -10,6 +10,11 @@
 
 /*#define BIOSAL_INPUT_PROXY_DEBUG*/
 
+void biosal_input_proxy_try(struct biosal_input_proxy *proxy,
+                struct biosal_input_format *input, void *implementation,
+                struct biosal_input_format_interface *operations, char *file,
+                uint64_t offset, uint64_t maximum_offset);
+
 void biosal_input_proxy_init(struct biosal_input_proxy *proxy,
                 char *file, uint64_t offset, uint64_t maximum_offset)
 {

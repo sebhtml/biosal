@@ -10,6 +10,15 @@
 
 #define MEMORY_FASTA 0x480002a5
 
+void core_fasta_input_init(struct biosal_input_format *self);
+void core_fasta_input_destroy(struct biosal_input_format *self);
+uint64_t core_fasta_input_get_sequence(struct biosal_input_format *self,
+                char *sequence);
+int core_fasta_input_detect(struct biosal_input_format *self);
+uint64_t core_fasta_input_get_offset(struct biosal_input_format *self);
+
+int core_fasta_input_check_header(struct biosal_input_format *self, const char *line);
+
 struct biosal_input_format_interface core_fasta_input_operations = {
     .init = core_fasta_input_init,
     .destroy = core_fasta_input_destroy,

@@ -21,6 +21,13 @@
 
 #include <inttypes.h>
 
+void biosal_coverage_distribution_init(struct thorium_actor *actor);
+void biosal_coverage_distribution_destroy(struct thorium_actor *actor);
+void biosal_coverage_distribution_receive(struct thorium_actor *actor, struct thorium_message *message);
+
+void biosal_coverage_distribution_write_distribution(struct thorium_actor *self);
+void biosal_coverage_distribution_ask_to_stop(struct thorium_actor *self, struct thorium_message *message);
+
 struct thorium_script biosal_coverage_distribution_script = {
     .identifier = SCRIPT_COVERAGE_DISTRIBUTION,
     .name = "biosal_coverage_distribution",

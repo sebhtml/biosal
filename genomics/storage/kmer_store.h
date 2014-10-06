@@ -45,12 +45,4 @@ struct biosal_kmer_store {
 
 extern struct thorium_script biosal_kmer_store_script;
 
-void biosal_kmer_store_init(struct thorium_actor *actor);
-void biosal_kmer_store_destroy(struct thorium_actor *actor);
-void biosal_kmer_store_receive(struct thorium_actor *actor, struct thorium_message *message);
-
-void biosal_kmer_store_print(struct thorium_actor *self);
-void biosal_kmer_store_push_data(struct thorium_actor *self, struct thorium_message *message);
-void biosal_kmer_store_yield_reply(struct thorium_actor *self, struct thorium_message *message);
-
 #endif

@@ -39,6 +39,30 @@
 
 #define MAXIMUM_AUTO_SCALING_KERNEL_COUNT 0
 
+void biosal_assembly_sliding_window_init(struct thorium_actor *actor);
+void biosal_assembly_sliding_window_destroy(struct thorium_actor *actor);
+void biosal_assembly_sliding_window_receive(struct thorium_actor *actor, struct thorium_message *message);
+
+void biosal_assembly_sliding_window_verify(struct thorium_actor *actor, struct thorium_message *message);
+void biosal_assembly_sliding_window_ask(struct thorium_actor *self, struct thorium_message *message);
+
+void biosal_assembly_sliding_window_do_auto_scaling(struct thorium_actor *self, struct thorium_message *message);
+
+void biosal_assembly_sliding_window_pack_message(struct thorium_actor *actor, struct thorium_message *message);
+void biosal_assembly_sliding_window_unpack_message(struct thorium_actor *actor, struct thorium_message *message);
+void biosal_assembly_sliding_window_clone_reply(struct thorium_actor *actor, struct thorium_message *message);
+
+int biosal_assembly_sliding_window_pack(struct thorium_actor *actor, void *buffer);
+int biosal_assembly_sliding_window_unpack(struct thorium_actor *actor, void *buffer);
+int biosal_assembly_sliding_window_pack_size(struct thorium_actor *actor);
+int biosal_assembly_sliding_window_pack_unpack(struct thorium_actor *actor, int operation, void *buffer);
+
+void biosal_assembly_sliding_window_notify(struct thorium_actor *actor, struct thorium_message *message);
+void biosal_assembly_sliding_window_notify_reply(struct thorium_actor *actor, struct thorium_message *message);
+void biosal_assembly_sliding_window_push_sequence_data_block(struct thorium_actor *actor, struct thorium_message *message);
+
+void biosal_assembly_sliding_window_set_producers_for_work_stealing(struct thorium_actor *self, struct thorium_message *message);
+
 struct thorium_script biosal_assembly_sliding_window_script = {
     .identifier = SCRIPT_ASSEMBLY_SLIDING_WINDOW,
     .init = biosal_assembly_sliding_window_init,

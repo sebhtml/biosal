@@ -34,13 +34,4 @@ struct biosal_assembly_arc_classifier {
 
 extern struct thorium_script biosal_assembly_arc_classifier_script;
 
-void biosal_assembly_arc_classifier_init(struct thorium_actor *self);
-void biosal_assembly_arc_classifier_destroy(struct thorium_actor *self);
-void biosal_assembly_arc_classifier_receive(struct thorium_actor *self, struct thorium_message *message);
-
-void biosal_assembly_arc_classifier_set_kmer_length(struct thorium_actor *self, struct thorium_message *message);
-
-void biosal_assembly_arc_classifier_push_arc_block(struct thorium_actor *self, struct thorium_message *message);
-void biosal_assembly_arc_classifier_verify_counters(struct thorium_actor *self);
-
 #endif

@@ -23,6 +23,14 @@
 
 #define MEMORY_POOL_NAME_VISITOR 0x185945f7
 
+void biosal_unitig_visitor_init(struct thorium_actor *self);
+void biosal_unitig_visitor_destroy(struct thorium_actor *self);
+void biosal_unitig_visitor_receive(struct thorium_actor *self, struct thorium_message *message);
+
+void biosal_unitig_visitor_execute(struct thorium_actor *self);
+
+void biosal_unitig_visitor_mark_vertex(struct thorium_actor *self, struct biosal_dna_kmer *kmer);
+
 struct thorium_script biosal_unitig_visitor_script = {
     .identifier = SCRIPT_UNITIG_VISITOR,
     .name = "biosal_unitig_visitor",

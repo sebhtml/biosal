@@ -10,6 +10,11 @@
 #define SUPER_CAREFUL_WITH_MULTIPLIER
 #define SUPER_CAREFUL_WITH_THRESHOLD
 
+int biosal_unitig_heuristic_select_highest(struct biosal_unitig_heuristic *self,
+                int current_coverage, struct core_vector *coverage_values);
+int biosal_unitig_heuristic_select_with_flow_split(struct biosal_unitig_heuristic *self,
+                int current_coverage, struct core_vector *coverage_values);
+
 void biosal_unitig_heuristic_init(struct biosal_unitig_heuristic *self)
 {
     self->select = biosal_unitig_heuristic_select_with_flow_split;

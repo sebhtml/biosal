@@ -39,14 +39,4 @@ struct biosal_assembly_arc_kernel {
 
 extern struct thorium_script biosal_assembly_arc_kernel_script;
 
-void biosal_assembly_arc_kernel_init(struct thorium_actor *self);
-void biosal_assembly_arc_kernel_destroy(struct thorium_actor *self);
-void biosal_assembly_arc_kernel_receive(struct thorium_actor *self, struct thorium_message *message);
-
-void biosal_assembly_arc_kernel_set_kmer_length(struct thorium_actor *self, struct thorium_message *message);
-void biosal_assembly_arc_kernel_push_sequence_data_block(struct thorium_actor *self, struct thorium_message *message);
-void biosal_assembly_arc_kernel_ask(struct thorium_actor *self, struct thorium_message *message);
-
-void biosal_assembly_arc_kernel_set_producers_for_work_stealing(struct thorium_actor *self, struct thorium_message *message);
-
 #endif

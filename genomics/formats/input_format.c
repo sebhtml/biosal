@@ -10,6 +10,8 @@
 
 #include <inttypes.h>
 
+int biosal_input_format_valid(struct biosal_input_format *self);
+
 void biosal_input_format_init(struct biosal_input_format *input, void *implementation,
                 struct biosal_input_format_interface *operations, char *file,
                 uint64_t start_offset, uint64_t end_offset)

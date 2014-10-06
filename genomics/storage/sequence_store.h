@@ -55,21 +55,4 @@ struct biosal_sequence_store {
 
 extern struct thorium_script biosal_sequence_store_script;
 
-void biosal_sequence_store_init(struct thorium_actor *actor);
-void biosal_sequence_store_destroy(struct thorium_actor *actor);
-void biosal_sequence_store_receive(struct thorium_actor *actor, struct thorium_message *message);
-
-int biosal_sequence_store_has_error(struct thorium_actor *actor,
-                struct thorium_message *message);
-
-int biosal_sequence_store_check_open_error(struct thorium_actor *actor,
-                struct thorium_message *message);
-void biosal_sequence_store_push_sequence_data_block(struct thorium_actor *actor, struct thorium_message *message);
-void biosal_sequence_store_reserve(struct thorium_actor *actor, struct thorium_message *message);
-void biosal_sequence_store_show_progress(struct thorium_actor *actor, struct thorium_message *message);
-
-void biosal_sequence_store_ask(struct thorium_actor *self, struct thorium_message *message);
-
-int biosal_sequence_store_get_required_kmers(struct thorium_actor *actor, struct thorium_message *message);
-
 #endif

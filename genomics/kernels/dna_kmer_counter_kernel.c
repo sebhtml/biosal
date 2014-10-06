@@ -41,6 +41,28 @@
 
 #define MAXIMUM_AUTO_SCALING_KERNEL_COUNT 0
 
+void biosal_dna_kmer_counter_kernel_init(struct thorium_actor *actor);
+void biosal_dna_kmer_counter_kernel_destroy(struct thorium_actor *actor);
+void biosal_dna_kmer_counter_kernel_receive(struct thorium_actor *actor, struct thorium_message *message);
+
+void biosal_dna_kmer_counter_kernel_verify(struct thorium_actor *actor, struct thorium_message *message);
+void biosal_dna_kmer_counter_kernel_ask(struct thorium_actor *self, struct thorium_message *message);
+
+void biosal_dna_kmer_counter_kernel_do_auto_scaling(struct thorium_actor *self, struct thorium_message *message);
+
+void biosal_dna_kmer_counter_kernel_pack_message(struct thorium_actor *actor, struct thorium_message *message);
+void biosal_dna_kmer_counter_kernel_unpack_message(struct thorium_actor *actor, struct thorium_message *message);
+void biosal_dna_kmer_counter_kernel_clone_reply(struct thorium_actor *actor, struct thorium_message *message);
+
+int biosal_dna_kmer_counter_kernel_pack(struct thorium_actor *actor, void *buffer);
+int biosal_dna_kmer_counter_kernel_unpack(struct thorium_actor *actor, void *buffer);
+int biosal_dna_kmer_counter_kernel_pack_size(struct thorium_actor *actor);
+int biosal_dna_kmer_counter_kernel_pack_unpack(struct thorium_actor *actor, int operation, void *buffer);
+
+void biosal_dna_kmer_counter_kernel_notify(struct thorium_actor *actor, struct thorium_message *message);
+void biosal_dna_kmer_counter_kernel_notify_reply(struct thorium_actor *actor, struct thorium_message *message);
+void biosal_dna_kmer_counter_kernel_push_sequence_data_block(struct thorium_actor *actor, struct thorium_message *message);
+
 struct thorium_script biosal_dna_kmer_counter_kernel_script = {
     .identifier = SCRIPT_DNA_KMER_COUNTER_KERNEL,
     .init = biosal_dna_kmer_counter_kernel_init,

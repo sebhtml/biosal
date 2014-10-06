@@ -74,20 +74,4 @@ struct biosal_input_controller {
 
 extern struct thorium_script biosal_input_controller_script;
 
-void biosal_input_controller_init(struct thorium_actor *actor);
-void biosal_input_controller_destroy(struct thorium_actor *actor);
-void biosal_input_controller_receive(struct thorium_actor *actor, struct thorium_message *message);
-
-void biosal_input_controller_create_stores(struct thorium_actor *actor, struct thorium_message *message);
-void biosal_input_controller_get_node_name_reply(struct thorium_actor *actor, struct thorium_message *message);
-void biosal_input_controller_get_node_worker_count_reply(struct thorium_actor *actor, struct thorium_message *message);
-void biosal_input_controller_add_store(struct thorium_actor *actor, struct thorium_message *message);
-void biosal_input_controller_prepare_spawners(struct thorium_actor *actor, struct thorium_message *message);
-void biosal_input_controller_receive_store_entry_counts(struct thorium_actor *actor, struct thorium_message *message);
-void biosal_input_controller_receive_command(struct thorium_actor *actor, struct thorium_message *message);
-
-void biosal_input_controller_spawn_streams(struct thorium_actor *actor, struct thorium_message *message);
-void biosal_input_controller_set_offset_reply(struct thorium_actor *self, struct thorium_message *message);
-void biosal_input_controller_verify_requests(struct thorium_actor *self, struct thorium_message *message);
-
 #endif
