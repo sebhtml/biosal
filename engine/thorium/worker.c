@@ -169,9 +169,10 @@ void thorium_worker_init(struct thorium_worker *worker, int name, struct thorium
     core_map_iterator_init(&worker->actor_iterator, &worker->actors);
 
     outbound_ring_capacity = THORIUM_WORKER_RING_CAPACITY;
-    core_fast_ring_init(&worker->outbound_message_queue, outbound_ring_capacity, sizeof(struct thorium_message));
 
-    core_fast_queue_init(&worker->outbound_message_queue_buffer, sizeof(struct thorium_message));
+    core_fast_ring_init(&worker->output_outbound_message_ring, outbound_ring_capacity, sizeof(struct thorium_message));
+
+    core_fast_queue_init(&worker->output_outbound_message_queue, sizeof(struct thorium_message));
 
     CORE_BITMAP_CLEAR_BIT(worker->flags, FLAG_DEBUG);
     CORE_BITMAP_CLEAR_BIT(worker->flags, FLAG_BUSY);
@@ -314,8 +315,8 @@ void thorium_worker_destroy(struct thorium_worker *worker)
 #endif
 
     thorium_scheduler_destroy(&worker->scheduler);
-    core_fast_ring_destroy(&worker->outbound_message_queue);
-    core_fast_queue_destroy(&worker->outbound_message_queue_buffer);
+    core_fast_ring_destroy(&worker->output_outbound_message_ring);
+    core_fast_queue_destroy(&worker->output_outbound_message_queue);
 
     core_map_destroy(&worker->actors);
     core_map_iterator_destroy(&worker->actor_iterator);
@@ -780,14 +781,16 @@ int thorium_worker_enqueue_message(struct thorium_worker *worker, struct thorium
 
     /* Try to push the message in the output ring
      */
-    if (!core_fast_ring_push_from_producer(&worker->outbound_message_queue, message)) {
+    if (!core_fast_ring_push_from_producer(&worker->output_outbound_message_ring, message)) {
 
 #ifdef SHOW_FULL_RING_WARNINGS
-        printf("thorium_worker: Warning: ring is full, outbound_message_queue\n");
+        printf("ENQUEUE thorium_worker: Warning: ring is full (ring: %d queue: %d), output_outbound_message_ring\n",
+                        core_fast_ring_size_from_producer(&worker->output_outbound_message_ring),
+                        core_fast_queue_size(&worker->output_outbound_message_queue));
 #endif
         /* If that does not work, push the message in the queue buffer.
          */
-        core_fast_queue_enqueue(&worker->outbound_message_queue_buffer, message);
+        core_fast_queue_enqueue(&worker->output_outbound_message_queue, message);
 
     }
 
@@ -798,7 +801,7 @@ int thorium_worker_dequeue_message(struct thorium_worker *worker, struct thorium
 {
     int answer;
 
-    answer = core_fast_ring_pop_from_consumer(&worker->outbound_message_queue, message);
+    answer = core_fast_ring_pop_from_consumer(&worker->output_outbound_message_ring, message);
 
     if (answer) {
         thorium_message_set_worker(message, worker->name);
@@ -1224,9 +1227,9 @@ int thorium_worker_get_message_production_score(struct thorium_worker *worker)
 
     score = 0;
 
-    score += core_fast_ring_size_from_producer(&worker->outbound_message_queue);
+    score += core_fast_ring_size_from_producer(&worker->output_outbound_message_ring);
 
-    score += core_fast_queue_size(&worker->outbound_message_queue_buffer);
+    score += core_fast_queue_size(&worker->output_outbound_message_queue);
 
     return score;
 }
@@ -1372,15 +1375,15 @@ void thorium_worker_run(struct thorium_worker *worker)
 
     /* queue buffered message
      */
-    if (core_fast_queue_dequeue(&worker->outbound_message_queue_buffer, &other_message)) {
+    if (core_fast_queue_dequeue(&worker->output_outbound_message_queue, &other_message)) {
 
-        if (!core_fast_ring_push_from_producer(&worker->outbound_message_queue, &other_message)) {
+        if (!core_fast_ring_push_from_producer(&worker->output_outbound_message_ring, &other_message)) {
 
 #ifdef SHOW_FULL_RING_WARNINGS
-            printf("thorium_worker: Warning: ring is full => outbound_message_queue\n");
+            printf("thorium_worker: Warning: ring is full => output_outbound_message_ring\n");
 #endif
 
-            core_fast_queue_enqueue(&worker->outbound_message_queue_buffer, &other_message);
+            core_fast_queue_enqueue(&worker->output_outbound_message_queue, &other_message);
         }
     }
 
@@ -1717,10 +1720,10 @@ void thorium_worker_examine(struct thorium_worker *self)
     core_memory_pool_examine(&self->ephemeral_memory);
     core_memory_pool_examine(&self->outbound_message_memory_pool);
 
-    printf("RING (producer)= outbound_message_queue size= %d\n",
-                    core_fast_ring_size_from_producer(&self->outbound_message_queue));
-    printf("QUEUE= outbound_message_queue_buffer size= %d\n",
-                    core_fast_queue_size(&self->outbound_message_queue_buffer));
+    printf("RING (producer)= output_outbound_message_ring size= %d\n",
+                    core_fast_ring_size_from_producer(&self->output_outbound_message_ring));
+    printf("QUEUE= output_outbound_message_queue size= %d\n",
+                    core_fast_queue_size(&self->output_outbound_message_queue));
 
     printf("RING (consumer)= input_actor_ring size= %d\n",
                     core_fast_ring_size_from_producer(&self->input_actor_ring));

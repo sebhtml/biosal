@@ -118,13 +118,13 @@ struct thorium_worker {
     /*
      * Ring for publishing outbound buffers.
      */
-    struct core_fast_ring outbound_message_queue;
+    struct core_fast_ring output_outbound_message_ring;
 
     /*
      * Queue for buffering outbound buffers when
      * the ring is full.
      */
-    struct core_fast_queue outbound_message_queue_buffer;
+    struct core_fast_queue output_outbound_message_queue;
 
     struct thorium_scheduler scheduler;
 
