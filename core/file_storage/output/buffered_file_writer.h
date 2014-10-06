@@ -30,9 +30,4 @@ int core_buffered_file_writer_write(struct core_buffered_file_writer *self,
 int core_buffered_file_writer_printf(struct core_buffered_file_writer *self, const char *format,
                 ...);
 
-int core_buffered_file_writer_flush(struct core_buffered_file_writer *self);
-
-size_t core_buffered_file_writer_write_back(struct core_buffered_file_writer *self,
-                const void *buffer, size_t count);
-
 #endif

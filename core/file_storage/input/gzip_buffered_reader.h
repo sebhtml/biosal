@@ -55,42 +55,4 @@ struct core_gzip_buffered_reader {
 
 extern struct core_buffered_reader_interface core_gzip_buffered_reader_implementation;
 
-void core_gzip_buffered_reader_init(struct core_buffered_reader *reader,
-                const char *file, uint64_t offset);
-void core_gzip_buffered_reader_destroy(struct core_buffered_reader *reader);
-
-/*
- * \return number of bytes copied in buffer
- * This does not include the discarded \n, if any
- */
-int core_gzip_buffered_reader_read_line(struct core_buffered_reader *reader,
-                char *buffer, int length);
-
-/* \return number of bytes copied in buffer
- */
-int core_gzip_buffered_reader_pull(struct core_buffered_reader *reader);
-
-void core_gzip_buffered_reader_open(struct core_buffered_reader *self,
-                const char *file, uint64_t offset);
-
-int core_gzip_buffered_reader_read(struct core_buffered_reader *self,
-                char *buffer, int length);
-
-#ifdef CORE_GZIP_BUFFERED_READER_USE_INFLATE
-int core_gzip_buffered_reader_pull_raw(struct core_buffered_reader *self);
-
-int core_gzip_buffered_reader_read_with_inflate(struct core_buffered_reader *self,
-                char *buffer, int length);
-#endif
-
-int core_gzip_buffered_reader_detect(struct core_buffered_reader *self,
-                const char *file);
-
-uint64_t core_gzip_buffered_reader_get_offset(struct core_buffered_reader *self);
-
-int core_gzip_buffered_reader_read_line_private(struct core_buffered_reader *self,
-                char *buffer, int length);
-int core_gzip_buffered_reader_get_previous_bytes(struct core_buffered_reader *self,
-                char *buffer, int length);
-
 #endif

@@ -41,9 +41,6 @@ void *core_hash_table_group_key(struct core_hash_table_group *self, uint64_t buc
 void *core_hash_table_group_value(struct core_hash_table_group *self, uint64_t bucket,
                int key_size, int value_size);
 
-int core_hash_table_group_get_bit(void *bitmap, uint64_t bucket);
-void core_hash_table_group_set_bit(void *bitmap, uint64_t bucket, int value);
-
 int core_hash_table_group_pack_unpack(struct core_hash_table_group *self, void *buffer, int operation,
                 uint64_t buckets_per_group, int key_size, int value_size,
                 struct core_memory_pool *memory, int deletion_is_enabled);

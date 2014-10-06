@@ -25,7 +25,4 @@ int core_ring_is_empty(struct core_ring *self);
 int core_ring_size(struct core_ring *self);
 int core_ring_capacity(struct core_ring *self);
 
-int core_ring_increment(struct core_ring *self, int index);
-void *core_ring_get_cell(struct core_ring *self, int index);
-
 #endif

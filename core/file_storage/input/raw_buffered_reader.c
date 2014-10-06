@@ -11,16 +11,6 @@
 
 #include <inttypes.h>
 
-struct core_buffered_reader_interface core_raw_buffered_reader_implementation = {
-    .init = core_raw_buffered_reader_init,
-    .destroy = core_raw_buffered_reader_destroy,
-    .read_line = core_raw_buffered_reader_read_line,
-    .detect = core_raw_buffered_reader_detect,
-    .get_offset = core_raw_buffered_reader_get_offset,
-    .get_previous_bytes = core_raw_buffered_reader_get_previous_bytes,
-    .size = sizeof(struct core_raw_buffered_reader)
-};
-
 #define MEMORY_RAW_READER 0xf853376c
 
 /*
@@ -36,6 +26,40 @@ struct core_buffered_reader_interface core_raw_buffered_reader_implementation = 
 #define CORE_BUFFERED_READER_BUFFER_SIZE 8388608
 
 /*#define CORE_BUFFERED_READER_BUFFER_SIZE 4194304*/
+
+void core_raw_buffered_reader_init(struct core_buffered_reader *self,
+                const char *file, uint64_t offset);
+void core_raw_buffered_reader_destroy(struct core_buffered_reader *self);
+
+/*
+ * \return number of bytes copied in buffer
+ * This does not include the discarded \n, if any
+ */
+int core_raw_buffered_reader_read_line(struct core_buffered_reader *self,
+                char *buffer, int length);
+
+/* \return number of bytes copied in buffer
+ */
+int core_raw_buffered_reader_pull(struct core_buffered_reader *self);
+
+int core_raw_buffered_reader_detect(struct core_buffered_reader *self,
+                const char *file);
+uint64_t core_raw_buffered_reader_get_offset(struct core_buffered_reader *self);
+
+int core_raw_buffered_reader_read_line_private(struct core_buffered_reader *self,
+                char *buffer, int length);
+int core_raw_buffered_reader_get_previous_bytes(struct core_buffered_reader *self,
+                char *buffer, int length);
+
+struct core_buffered_reader_interface core_raw_buffered_reader_implementation = {
+    .init = core_raw_buffered_reader_init,
+    .destroy = core_raw_buffered_reader_destroy,
+    .read_line = core_raw_buffered_reader_read_line,
+    .detect = core_raw_buffered_reader_detect,
+    .get_offset = core_raw_buffered_reader_get_offset,
+    .get_previous_bytes = core_raw_buffered_reader_get_previous_bytes,
+    .size = sizeof(struct core_raw_buffered_reader)
+};
 
 void core_raw_buffered_reader_init(struct core_buffered_reader *self,
                 const char *file, uint64_t offset)

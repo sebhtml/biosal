@@ -19,8 +19,6 @@ void core_string_append(struct core_string *self, const char *data);
 void core_string_prepend(struct core_string *self, const char *data);
 char *core_string_get(struct core_string *self);
 
-void core_string_combine(struct core_string *self, const char *data, int operation);
-
 int core_string_pack_size(struct core_string *self);
 int core_string_pack(struct core_string *self, void *buffer);
 int core_string_unpack(struct core_string *self, void *buffer);

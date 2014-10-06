@@ -46,7 +46,5 @@ void core_counter_increment(struct core_counter *self, int counter);
 void core_counter_add(struct core_counter *self, int counter, int quantity);
 void core_counter_reset(struct core_counter *self);
 void core_counter_print(struct core_counter *self, int name);
-int64_t core_counter_difference(struct core_counter *self, int counter1, int counter2);
-int64_t core_counter_sum(struct core_counter *self, int counter1, int counter2);
 
 #endif

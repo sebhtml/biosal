@@ -42,6 +42,13 @@
 #define NANOSECONDS_IN_SECOND (1000 * 1000 * 1000)
 #define SECONDS_IN_MINUTE 60
 
+uint64_t core_timer_get_nanoseconds_clock_gettime(struct core_timer *self);
+uint64_t core_timer_get_nanoseconds_gettimeofday(struct core_timer *self);
+uint64_t core_timer_get_nanoseconds_blue_gene_q(struct core_timer *self);
+uint64_t core_timer_get_nanoseconds_apple(struct core_timer *self);
+
+double core_timer_fetch_frequency(struct core_timer *self);
+
 void core_timer_init(struct core_timer *timer)
 {
     timer->start = 0;

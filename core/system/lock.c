@@ -6,6 +6,8 @@
 /*#define CORE_LOCK_READS_BETWEEN_WRITE_ATTEMPT 1024*/
 #define CORE_LOCK_READS_BETWEEN_WRITE_ATTEMPT 8
 
+int core_lock_lock_private(int *lock);
+
 void core_lock_init(struct core_lock *self)
 {
 #if defined(CORE_LOCK_USE_COMPARE_AND_SWAP)

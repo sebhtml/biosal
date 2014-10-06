@@ -70,19 +70,13 @@ void core_memory_pool_init(struct core_memory_pool *self, int block_size, int na
 void core_memory_pool_destroy(struct core_memory_pool *self);
 
 void *core_memory_pool_allocate(struct core_memory_pool *self, size_t size);
-void *core_memory_pool_allocate_private(struct core_memory_pool *self, size_t size);
-
 void core_memory_pool_free(struct core_memory_pool *self, void *pointer);
-void core_memory_pool_free_private(struct core_memory_pool *self, void *pointer);
-
 
 void core_memory_pool_enable_tracking(struct core_memory_pool *self);
 void core_memory_pool_disable_tracking(struct core_memory_pool *self);
 
 void core_memory_pool_free_all(struct core_memory_pool *self);
 void core_memory_pool_disable(struct core_memory_pool *self);
-
-void core_memory_pool_add_block(struct core_memory_pool *self);
 
 void core_memory_pool_disable_normalization(struct core_memory_pool *self);
 void core_memory_pool_enable_normalization(struct core_memory_pool *self);
@@ -91,7 +85,6 @@ void core_memory_pool_enable_ephemeral_mode(struct core_memory_pool *self);
 void core_memory_pool_disable_alignment(struct core_memory_pool *self);
 void core_memory_pool_enable_alignment(struct core_memory_pool *self);
 void core_memory_pool_print(struct core_memory_pool *self);
-void core_memory_pool_set_name(struct core_memory_pool *self, int name);
 
 void core_memory_pool_examine(struct core_memory_pool *self);
 void core_memory_pool_profile(struct core_memory_pool *self, int operation, size_t byte_count);

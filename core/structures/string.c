@@ -15,6 +15,8 @@
 
 #define MEMORY_STRING 0x89fd5efd
 
+void core_string_combine(struct core_string *self, const char *data, int operation);
+
 void core_string_init(struct core_string *string, const char *data)
 {
     int length;

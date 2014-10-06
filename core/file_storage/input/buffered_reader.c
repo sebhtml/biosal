@@ -23,6 +23,8 @@
 
 #define MEMORY_READER 0x5fb8b2cc
 
+void core_buffered_reader_select(struct core_buffered_reader *self, const char *file);
+
 void core_buffered_reader_init(struct core_buffered_reader *self,
                 const char *file, uint64_t offset)
 {

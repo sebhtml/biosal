@@ -37,6 +37,18 @@
 #define ARGONNITE_STATE_NONE 0
 #define ARGONNITE_STATE_PREPARE_SEQUENCE_STORES 1
 
+void argonnite_init(struct thorium_actor *actor);
+void argonnite_destroy(struct thorium_actor *actor);
+void argonnite_receive(struct thorium_actor *actor, struct thorium_message *message);
+
+void argonnite_add_file(struct thorium_actor *actor, struct thorium_message *message);
+void argonnite_help(struct thorium_actor *actor);
+
+void argonnite_prepare_sequence_stores_reply(struct thorium_actor *self, struct thorium_message *message);
+void argonnite_prepare_sequence_stores(struct thorium_actor *self, struct thorium_message *message);
+void argonnite_connect_kernels_with_stores(struct thorium_actor *self, struct thorium_message *message);
+void argonnite_request_progress_reply(struct thorium_actor *actor, struct thorium_message *message);
+
 struct thorium_script argonnite_script = {
     .identifier = SCRIPT_ARGONNITE,
     .init = argonnite_init,

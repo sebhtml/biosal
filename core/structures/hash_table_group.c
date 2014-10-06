@@ -18,6 +18,9 @@
 
 /*#define CORE_HASH_TABLE_GROUP_DEBUG */
 
+int core_hash_table_group_get_bit(void *bitmap, uint64_t bucket);
+void core_hash_table_group_set_bit(void *bitmap, uint64_t bucket, int value);
+
 void core_hash_table_group_init(struct core_hash_table_group *group,
                 uint64_t buckets_per_group, int key_size, int value_size,
                 struct core_memory_pool *memory, int deletion_is_enabled)

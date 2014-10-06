@@ -51,8 +51,9 @@ int core_map_pack_size(struct core_map *self);
 int core_map_pack(struct core_map *self, void *buffer);
 int core_map_unpack(struct core_map *self, void *buffer);
 
-int core_map_empty(struct core_map *self);
 int core_map_pack_unpack(struct core_map *self, int operation, void *buffer);
+
+int core_map_empty(struct core_map *self);
 
 #ifdef CORE_MAP_ALIGNMENT_ENABLED
 void *core_map_pad_key(struct core_map *self, void *key);

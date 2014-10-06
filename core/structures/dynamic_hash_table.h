@@ -38,26 +38,21 @@ void core_dynamic_hash_table_delete(struct core_dynamic_hash_table *self, void *
 uint64_t core_dynamic_hash_table_size(struct core_dynamic_hash_table *self);
 uint64_t core_dynamic_hash_table_buckets(struct core_dynamic_hash_table *self);
 
-/**
- * \return 1 if resizing was completed, 0 otherwise
- */
-int core_dynamic_hash_table_resize(struct core_dynamic_hash_table *self);
-void core_dynamic_hash_table_start_resizing(struct core_dynamic_hash_table *self);
+void core_dynamic_hash_table_clear(struct core_dynamic_hash_table *self);
 
-int core_dynamic_hash_table_state(struct core_dynamic_hash_table *self, uint64_t bucket);
 void *core_dynamic_hash_table_key(struct core_dynamic_hash_table *self, uint64_t bucket);
 void *core_dynamic_hash_table_value(struct core_dynamic_hash_table *self, uint64_t bucket);
 
-int core_dynamic_hash_table_pack_size(struct core_dynamic_hash_table *self);
-int core_dynamic_hash_table_pack(struct core_dynamic_hash_table *self, void *buffer);
-int core_dynamic_hash_table_unpack(struct core_dynamic_hash_table *self, void *buffer);
-
 void core_dynamic_hash_table_finish_resizing(struct core_dynamic_hash_table *self);
-void core_dynamic_hash_table_reset(struct core_dynamic_hash_table *self);
 
 int core_dynamic_hash_table_get_key_size(struct core_dynamic_hash_table *self);
 int core_dynamic_hash_table_get_value_size(struct core_dynamic_hash_table *self);
 
+int core_dynamic_hash_table_pack_size(struct core_dynamic_hash_table *self);
+int core_dynamic_hash_table_state(struct core_dynamic_hash_table *self, uint64_t bucket);
+
+int core_dynamic_hash_table_pack(struct core_dynamic_hash_table *self, void *buffer);
+int core_dynamic_hash_table_unpack(struct core_dynamic_hash_table *self, void *buffer);
 void core_dynamic_hash_table_set_memory_pool(struct core_dynamic_hash_table *self,
                 struct core_memory_pool *memory);
 struct core_memory_pool *core_dynamic_hash_table_memory_pool(struct core_dynamic_hash_table *self);
@@ -68,7 +63,5 @@ void core_dynamic_hash_table_set_current_size_estimate(struct core_dynamic_hash_
                 double value);
 void core_dynamic_hash_table_set_threshold(struct core_dynamic_hash_table *self, double threshold);
 int core_dynamic_hash_table_is_currently_resizing(struct core_dynamic_hash_table *self);
-
-void core_dynamic_hash_table_clear(struct core_dynamic_hash_table *self);
 
 #endif

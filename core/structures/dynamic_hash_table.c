@@ -21,6 +21,14 @@
 
 #define CORE_DYNAMIC_HASH_TABLE_THRESHOLD 0.70
 
+/**
+ * \return 1 if resizing was completed, 0 otherwise
+ */
+int core_dynamic_hash_table_resize(struct core_dynamic_hash_table *self);
+void core_dynamic_hash_table_start_resizing(struct core_dynamic_hash_table *self);
+
+void core_dynamic_hash_table_reset(struct core_dynamic_hash_table *self);
+
 void core_dynamic_hash_table_init(struct core_dynamic_hash_table *self, uint64_t buckets,
                 int key_size, int value_size)
 {

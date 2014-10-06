@@ -51,6 +51,9 @@ Uncomment this to force mutexes
 #endif
 */
 
+/*
+ * A lock.
+ */
 struct core_lock {
 
 #if defined(CORE_LOCK_USE_COMPARE_AND_SWAP)
@@ -66,10 +69,10 @@ struct core_lock {
 };
 
 void core_lock_init(struct core_lock *self);
+void core_lock_destroy(struct core_lock *self);
+
 int core_lock_lock(struct core_lock *self);
 int core_lock_unlock(struct core_lock *self);
 int core_lock_trylock(struct core_lock *self);
-void core_lock_destroy(struct core_lock *self);
-int core_lock_lock_private(int *lock);
 
 #endif

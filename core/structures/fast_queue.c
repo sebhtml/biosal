@@ -7,6 +7,14 @@
 
 #define MEMORY_FAST_QUEUE 0x771872d8
 
+#ifdef CORE_RING_QUEUE_THREAD_SAFE
+void core_fast_queue_lock(struct core_fast_queue *self);
+void core_fast_queue_unlock(struct core_fast_queue *self);
+#endif
+
+struct core_linked_ring *core_fast_queue_get_ring(struct core_fast_queue *self);
+int core_fast_queue_enqueue_private(struct core_fast_queue *self, void *item);
+
 void core_fast_queue_init(struct core_fast_queue *self, int bytes_per_unit)
 {
     self->head = NULL;

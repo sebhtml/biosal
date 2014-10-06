@@ -114,12 +114,6 @@ void *core_red_black_tree_get(struct core_red_black_tree *self, void *key);
  */
 void *core_red_black_tree_get_lowest_key(struct core_red_black_tree *self);
 
-/*
- * Check the 5 red-black tree rules.
- *
- * If there is a problem, a non-zero value is returned.
- */
-int core_red_black_tree_has_ignored_rules(struct core_red_black_tree *self);
 void core_red_black_tree_set_memory_pool(struct core_red_black_tree *self,
                 struct core_memory_pool *memory_pool);
 
@@ -130,59 +124,17 @@ void core_red_black_tree_set_memory_pool(struct core_red_black_tree *self,
  */
 int core_red_black_tree_size(struct core_red_black_tree *self);
 
-void core_red_black_tree_free_node(struct core_red_black_tree *self,
-                struct core_red_black_node *node);
-
-/*
- * 5 cases for insertion, based on the Wikipedia article.
- * \see http://en.wikipedia.org/wiki/Red%E2%80%93black_tree
- */
-
-void core_red_black_tree_insert_case1(struct core_red_black_tree *self,
-                struct core_red_black_node *node);
-void core_red_black_tree_insert_case2(struct core_red_black_tree *self,
-                struct core_red_black_node *node);
-void core_red_black_tree_insert_case3(struct core_red_black_tree *self,
-                struct core_red_black_node *node);
-void core_red_black_tree_insert_case4(struct core_red_black_tree *self,
-                struct core_red_black_node *node);
-void core_red_black_tree_insert_case5(struct core_red_black_tree *self,
-                struct core_red_black_node *node);
-
-void core_red_black_tree_rotate_left(struct core_red_black_tree *self,
-                struct core_red_black_node *node);
-void core_red_black_tree_rotate_right(struct core_red_black_tree *self,
-                struct core_red_black_node *node);
-
-void core_red_black_tree_print(struct core_red_black_tree *self);
-void core_red_black_tree_print_node(struct core_red_black_tree *self,
-                struct core_red_black_node *node, int depth);
+void core_red_black_tree_use_uint64_t_keys(struct core_red_black_tree *self);
 
 int core_red_black_tree_compare(struct core_red_black_tree *self, void *key1, void *key2);
-int core_red_black_tree_compare_memory_content(struct core_red_black_tree *self, void *key1, void *key2);
-int core_red_black_tree_compare_uint64_t(struct core_red_black_tree *self, void *key1, void *key2);
-void core_red_black_tree_use_uint64_t_keys(struct core_red_black_tree *self);
+
+/*
+ * Check the 5 red-black tree rules.
+ *
+ * If there is a problem, a non-zero value is returned.
+ */
+int core_red_black_tree_has_ignored_rules(struct core_red_black_tree *self);
+
 void core_red_black_tree_run_assertions(struct core_red_black_tree *self);
-void core_red_black_tree_run_assertions_on_node(struct core_red_black_tree *self, struct core_red_black_node *node);
-
-void core_red_black_tree_delete_one_child(struct core_red_black_tree *self, struct core_red_black_node *node);
-void core_red_black_tree_replace_node(struct core_red_black_tree *self, struct core_red_black_node *node,
-                struct core_red_black_node *child);
-void core_red_black_tree_delete_case1(struct core_red_black_tree *self, struct core_red_black_node *node);
-void core_red_black_tree_delete_case2(struct core_red_black_tree *self, struct core_red_black_node *node);
-void core_red_black_tree_delete_case3(struct core_red_black_tree *self, struct core_red_black_node *node);
-void core_red_black_tree_delete_case4(struct core_red_black_tree *self, struct core_red_black_node *node);
-void core_red_black_tree_delete_case5(struct core_red_black_tree *self, struct core_red_black_node *node);
-void core_red_black_tree_delete_case6(struct core_red_black_tree *self, struct core_red_black_node *node);
-
-struct core_red_black_node *core_red_black_tree_get_node(struct core_red_black_tree *self, void *key);
-
-void core_red_black_tree_delete_private(struct core_red_black_tree *self,
-                struct core_red_black_node *node);
-
-struct core_red_black_node *core_red_black_tree_allocate_normal_node(struct core_red_black_tree *self, void *key, void *value);
-void core_red_black_tree_free_normal_node(struct core_red_black_tree *self, struct core_red_black_node *node);
-struct core_red_black_node *core_red_black_tree_allocate_nil_node(struct core_red_black_tree *self);
-void core_red_black_tree_free_nil_node(struct core_red_black_tree *self, struct core_red_black_node *node);
 
 #endif

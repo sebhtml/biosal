@@ -8,6 +8,11 @@
 
 #define MEMORY_WRITER 0x17f124a5
 
+int core_buffered_file_writer_flush(struct core_buffered_file_writer *self);
+
+size_t core_buffered_file_writer_write_back(struct core_buffered_file_writer *self,
+                const void *buffer, size_t count);
+
 void core_buffered_file_writer_init(struct core_buffered_file_writer *self, const char *file)
 {
     core_string_init(&self->file, file);

@@ -35,7 +35,6 @@ int core_buffered_reader_read_line(struct core_buffered_reader *self,
                 char *buffer, int length);
 
 void *core_buffered_reader_get_concrete_self(struct core_buffered_reader *self);
-void core_buffered_reader_select(struct core_buffered_reader *self, const char *file);
 uint64_t core_buffered_reader_get_offset(struct core_buffered_reader *self);
 int core_buffered_reader_get_previous_bytes(struct core_buffered_reader *self, char *buffer, int length);
 

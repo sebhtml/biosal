@@ -89,12 +89,8 @@ void core_fast_ring_destroy(struct core_fast_ring *self);
 int core_fast_ring_push_from_producer(struct core_fast_ring *self, void *element);
 int core_fast_ring_pop_from_consumer(struct core_fast_ring *self, void *element);
 
-void *core_fast_ring_get_cell(struct core_fast_ring *self, uint64_t index);
-
-uint64_t core_fast_ring_increment(struct core_fast_ring *self, uint64_t index);
 int core_fast_ring_capacity(struct core_fast_ring *self);
 
-int core_fast_ring_get_next_power_of_two(int value);
 int core_fast_ring_is_full_from_producer(struct core_fast_ring *self);
 int core_fast_ring_is_empty_from_consumer(struct core_fast_ring *self);
 
@@ -106,7 +102,6 @@ void core_fast_ring_update_head_cache(struct core_fast_ring *self);
 void core_fast_ring_update_tail_cache(struct core_fast_ring *self);
 #endif
 
-uint64_t core_fast_ring_mock(struct core_fast_ring *self);
 int core_fast_ring_empty(struct core_fast_ring *self);
 
 #endif

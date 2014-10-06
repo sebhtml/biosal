@@ -65,28 +65,6 @@ int core_hash_table_state(struct core_hash_table *self, uint64_t bucket);
 void *core_hash_table_key(struct core_hash_table *self, uint64_t bucket);
 void *core_hash_table_value(struct core_hash_table *self, uint64_t bucket);
 
-/*
- * functions for the implementation
- */
-int core_hash_table_get_group(struct core_hash_table *self, uint64_t bucket);
-int core_hash_table_get_group_bucket(struct core_hash_table *self, uint64_t bucket);
-int core_hash_table_state(struct core_hash_table *self, uint64_t bucket);
-
-uint64_t core_hash_table_hash1(struct core_hash_table *self, void *key);
-uint64_t core_hash_table_hash2(struct core_hash_table *self, void *key);
-uint64_t core_hash_table_double_hash(struct core_hash_table *self, uint64_t hash1,
-                uint64_t hash2, uint64_t stride);
-int core_hash_table_find_bucket(struct core_hash_table *self, void *key,
-                int *group, int *bucket_in_group, int operation, uint64_t *last_stride);
-void core_hash_table_toggle_debug(struct core_hash_table *self);
-
-int core_hash_table_pack_size(struct core_hash_table *self);
-int core_hash_table_pack(struct core_hash_table *self, void *buffer);
-int core_hash_table_unpack(struct core_hash_table *self, void *buffer);
-
-int core_hash_table_pack_unpack(struct core_hash_table *self, void *buffer, int operation);
-void core_hash_table_start_groups(struct core_hash_table *self);
-
 void core_hash_table_set_memory_pool(struct core_hash_table *self, struct core_memory_pool *memory);
 struct core_memory_pool *core_hash_table_memory_pool(struct core_hash_table *self);
 
@@ -95,5 +73,11 @@ void core_hash_table_enable_deletion_support(struct core_hash_table *self);
 int core_hash_table_deletion_support_is_enabled(struct core_hash_table *self);
 
 void core_hash_table_clear(struct core_hash_table *self);
+
+int core_hash_table_pack_size(struct core_hash_table *self);
+int core_hash_table_pack(struct core_hash_table *self, void *buffer);
+int core_hash_table_unpack(struct core_hash_table *self, void *buffer);
+
+void core_hash_table_toggle_debug(struct core_hash_table *self);
 
 #endif

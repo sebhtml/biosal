@@ -51,6 +51,23 @@
 
 #define CORE_HASH_TABLE_MATCH 0
 
+/*
+ * functions for the implementation
+ */
+int core_hash_table_get_group(struct core_hash_table *self, uint64_t bucket);
+int core_hash_table_get_group_bucket(struct core_hash_table *self, uint64_t bucket);
+int core_hash_table_state(struct core_hash_table *self, uint64_t bucket);
+
+uint64_t core_hash_table_hash1(struct core_hash_table *self, void *key);
+uint64_t core_hash_table_hash2(struct core_hash_table *self, void *key);
+uint64_t core_hash_table_double_hash(struct core_hash_table *self, uint64_t hash1,
+                uint64_t hash2, uint64_t stride);
+int core_hash_table_find_bucket(struct core_hash_table *self, void *key,
+                int *group, int *bucket_in_group, int operation, uint64_t *last_stride);
+
+int core_hash_table_pack_unpack(struct core_hash_table *self, void *buffer, int operation);
+void core_hash_table_start_groups(struct core_hash_table *self);
+
 void core_hash_table_init(struct core_hash_table *table, uint64_t buckets,
                 int key_size, int value_size)
 {

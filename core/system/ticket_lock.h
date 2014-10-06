@@ -18,9 +18,10 @@ struct core_ticket_lock {
 };
 
 void core_ticket_lock_init(struct core_ticket_lock *self);
+void core_ticket_lock_destroy(struct core_ticket_lock *self);
+
 int core_ticket_lock_lock(struct core_ticket_lock *self);
 int core_ticket_lock_unlock(struct core_ticket_lock *self);
 int core_ticket_lock_trylock(struct core_ticket_lock *self);
-void core_ticket_lock_destroy(struct core_ticket_lock *self);
 
 #endif

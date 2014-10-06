@@ -19,6 +19,11 @@
  */
 #define USE_MEMORY_FENCE
 
+void *core_fast_ring_get_cell(struct core_fast_ring *self, uint64_t index);
+uint64_t core_fast_ring_increment(struct core_fast_ring *self, uint64_t index);
+int core_fast_ring_get_next_power_of_two(int value);
+uint64_t core_fast_ring_mock(struct core_fast_ring *self);
+
 void core_fast_ring_init(struct core_fast_ring *self, int capacity, int cell_size)
 {
     /* +1 because an empty cell is needed

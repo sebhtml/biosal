@@ -58,10 +58,4 @@ struct core_manager {
 
 extern struct thorium_script core_manager_script;
 
-void core_manager_init(struct thorium_actor *self);
-void core_manager_destroy(struct thorium_actor *self);
-void core_manager_receive(struct thorium_actor *self, struct thorium_message *message);
-
-void core_manager_ask_to_stop(struct thorium_actor *actor, struct thorium_message *message);
-
 #endif

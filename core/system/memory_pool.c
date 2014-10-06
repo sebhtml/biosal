@@ -27,6 +27,15 @@
 
 #define MEMORY_MEMORY_POOL 0xc170626e
 
+/*
+ * Private
+ */
+
+void core_memory_pool_add_block(struct core_memory_pool *self);
+void core_memory_pool_set_name(struct core_memory_pool *self, int name);
+void *core_memory_pool_allocate_private(struct core_memory_pool *self, size_t size);
+void core_memory_pool_free_private(struct core_memory_pool *self, void *pointer);
+
 void core_memory_pool_init(struct core_memory_pool *self, int block_size, int name)
 {
     core_map_init(&self->recycle_bin, sizeof(size_t), sizeof(struct core_queue));

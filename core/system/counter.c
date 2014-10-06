@@ -4,6 +4,9 @@
 #include <stdio.h>
 #include <inttypes.h>
 
+int64_t core_counter_difference(struct core_counter *self, int counter1, int counter2);
+int64_t core_counter_sum(struct core_counter *self, int counter1, int counter2);
+
 void core_counter_init(struct core_counter *self)
 {
     core_counter_reset(self);
