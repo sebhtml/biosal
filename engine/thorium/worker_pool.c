@@ -420,7 +420,6 @@ struct thorium_node *thorium_worker_pool_get_node(struct thorium_worker_pool *po
     return pool->node;
 }
 
-
 int thorium_worker_pool_give_message_to_actor(struct thorium_worker_pool *pool, struct thorium_message *message)
 {
     int destination;
@@ -895,4 +894,9 @@ void thorium_worker_pool_enable_profiler(struct thorium_worker_pool *self)
 
         thorium_worker_enable_profiler(worker);
     }
+}
+
+int thorium_worker_pool_buffered_message_count(struct thorium_worker_pool *self)
+{
+    return core_fast_queue_size(&self->inbound_message_queue_buffer);
 }

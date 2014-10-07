@@ -50,6 +50,13 @@
 #define THORIUM_NODE_REUSE_DEAD_INDICES
 
 /*
+ * Debug node regulator engine.
+ */
+/*
+#define DEBUG_NODE_REGULATOR
+*/
+
+/*
 #define USE_RANDOM_ACTOR_NAMES
 */
 
@@ -90,9 +97,14 @@
 #define FLAG_EXAMINE                    9
 #define FLAG_ENABLE_ACTOR_LOAD_PROFILES 10
 #define FLAG_MULTIPLEXER_IS_DISABLED    11
+#define FLAG_REGULATOR_IS_ENABLED       12
+
+/*
+ * Enable the regulator.
+ */
+#define THORIUM_NODE_CONFIG_USE_REGULATOR
 
 struct thorium_node *thorium_node_global_self;
-
 
 void thorium_node_handle_signal(int signal);
 void thorium_node_register_signal_handlers(struct thorium_node *self);
@@ -143,6 +155,10 @@ int thorium_node_generate_name(struct thorium_node *self);
 int thorium_node_actor_node(struct thorium_node *self, int name);
 int thorium_node_actor_index(struct thorium_node *self, int name);
 void thorium_node_run_loop(struct thorium_node *self);
+
+void thorium_node_regulator_configure(struct thorium_node *self);
+void thorium_node_regulator_run(struct thorium_node *self);
+int thorium_node_regulator_must_wait(struct thorium_node *self);
 
 int thorium_node_has_script(struct thorium_node *self, struct thorium_script *script);
 
@@ -2106,7 +2122,9 @@ void thorium_node_run_loop(struct thorium_node *node)
          * this code path will call lock if
          * there is a message received.
          */
-        if (use_transport && thorium_transport_receive(&node->transport, &message)) {
+        if (use_transport
+                        && !thorium_node_regulator_must_wait(node)
+                        && thorium_transport_receive(&node->transport, &message)) {
 
 #ifdef THORIUM_NODE_DEBUG_INJECTION
             /*
@@ -2211,6 +2229,8 @@ void thorium_node_run_loop(struct thorium_node *node)
         CORE_DEBUGGER_JITTER_DETECTION_END(node_test, 0);
 
         CORE_DEBUGGER_JITTER_DETECTION_END(node_main_loop, 0);
+
+        thorium_node_regulator_run(node);
 
 #ifdef THORIUM_NODE_USE_TICKS
         ++node->tick_count;
@@ -2588,4 +2608,52 @@ void thorium_node_inject_outbound_buffer(struct thorium_node *self, struct thori
         ++self->counter_injected_transport_outbound_buffer_for_workers;
 #endif
     }
+}
+
+void thorium_node_regulator_configure(struct thorium_node *self)
+{
+#ifdef THORIUM_NODE_CONFIG_USE_REGULATOR
+    CORE_BITMAP_CLEAR_BIT(self->flags, FLAG_REGULATOR_IS_ENABLED);
+#endif
+}
+
+void thorium_node_regulator_run(struct thorium_node *self)
+{
+#ifdef THORIUM_NODE_CONFIG_USE_REGULATOR
+    int count;
+    int minimum;
+
+    minimum = 512;
+
+    count = thorium_worker_pool_buffered_message_count(&self->worker_pool);
+
+    /*
+     * When the minimum is reached, activate the regulator.
+     */
+    if (count >= minimum && !CORE_BITMAP_GET_BIT(self->flags, FLAG_REGULATOR_IS_ENABLED)) {
+
+        CORE_BITMAP_SET_BIT(self->flags, FLAG_REGULATOR_IS_ENABLED);
+
+#ifdef DEBUG_NODE_REGULATOR
+        printf("thorium_node: Warning buffered_message_count= %d FLAG_REGULATOR_IS_ENABLED = 1\n",
+                            count);
+#endif
+    } else if (CORE_BITMAP_GET_BIT(self->flags, FLAG_REGULATOR_IS_ENABLED)) {
+        CORE_BITMAP_CLEAR_BIT(self->flags, FLAG_REGULATOR_IS_ENABLED);
+
+#ifdef DEBUG_NODE_REGULATOR
+        printf("thorium_node: Warning buffered_message_count= %d FLAG_REGULATOR_IS_ENABLED = 0\n",
+                            count);
+#endif
+    }
+#endif
+}
+
+int thorium_node_regulator_must_wait(struct thorium_node *self)
+{
+#ifdef THORIUM_NODE_CONFIG_USE_REGULATOR
+    return CORE_BITMAP_GET_BIT(self->flags, FLAG_REGULATOR_IS_ENABLED);
+#else
+    return 0;
+#endif
 }

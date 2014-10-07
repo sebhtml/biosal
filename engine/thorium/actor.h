@@ -209,8 +209,11 @@ struct core_memory_pool;
  */
 /*
 #define THORIUM_ACTOR_MAILBOX_SIZE 4
+#define THORIUM_ACTOR_MAILBOX_SIZE 2
 */
 #define THORIUM_ACTOR_MAILBOX_SIZE 256
+/*
+*/
 
 /*
  * The actor attribute is a void *

@@ -102,4 +102,6 @@ int thorium_worker_pool_dequeue_message_for_triage(struct thorium_worker_pool *s
 void thorium_worker_pool_examine(struct thorium_worker_pool *self);
 void thorium_worker_pool_enable_profiler(struct thorium_worker_pool *self);
 
+int thorium_worker_pool_buffered_message_count(struct thorium_worker_pool *self);
+
 #endif
