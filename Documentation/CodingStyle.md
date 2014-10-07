@@ -33,3 +33,13 @@ We try to use the git standardized tags in commits.
 These are described here:
 
 https://www.kernel.org/doc/Documentation/SubmittingPatches
+
+
+# Statements
+
+goto are not allowed in the BIOSAL project for readability purposes.
+
+break and continue statements are allowed.
+
+While having one single return statement in a function is easier to read,
+this is not a requirement neither.
