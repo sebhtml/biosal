@@ -43,3 +43,4 @@ break and continue statements are allowed.
 
 While having one single return statement in a function is easier to read,
 this is not a requirement neither.
+
