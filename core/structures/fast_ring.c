@@ -294,6 +294,11 @@ int core_fast_ring_is_empty_from_consumer(struct core_fast_ring *self)
     return 0;
 }
 
+int core_fast_ring_is_empty_from_producer(struct core_fast_ring *self)
+{
+    return self->tail == self->head;
+}
+
 int core_fast_ring_empty(struct core_fast_ring *self)
 {
     return core_fast_ring_size_from_producer(self) == 0;

@@ -93,6 +93,7 @@ int core_fast_ring_capacity(struct core_fast_ring *self);
 
 int core_fast_ring_is_full_from_producer(struct core_fast_ring *self);
 int core_fast_ring_is_empty_from_consumer(struct core_fast_ring *self);
+int core_fast_ring_is_empty_from_producer(struct core_fast_ring *self);
 
 int core_fast_ring_size_from_consumer(struct core_fast_ring *self);
 int core_fast_ring_size_from_producer(struct core_fast_ring *self);

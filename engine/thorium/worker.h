@@ -72,6 +72,11 @@ struct thorium_balancer;
 #define THORIUM_WORKER_USE_FAST_RINGS
 
 /*
+ * Ring backoff for increased efficiency.
+ */
+#define THORIUM_WORKER_CONFIG_USE_BACKOFF
+
+/*
  * This is similar to worker threads in linux ([kworker/0] [kworker/1])
  */
 struct thorium_worker {

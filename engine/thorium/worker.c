@@ -80,6 +80,7 @@
 #define FLAG_BUSY                       3
 #define FLAG_ENABLE_ACTOR_LOAD_PROFILER 4
 #define FLAG_ENABLE_WAIT                5
+#define FLAG_OUTPUT_OUTBOUND_MESSAGE_RING_IS_FULL        6
 
 #define DEBUG_WORKER_OPTION "-debug-worker"
 
@@ -101,6 +102,13 @@
 */
 
 void thorium_worker_work(struct thorium_worker *self, struct thorium_actor *actor);
+
+/*
+ * Backoff stuff.
+ */
+void thorium_worker_do_backoff(struct thorium_worker *self);
+void thorium_worker_activate_backoff(struct thorium_worker *self);
+void thorium_worker_configure_backoff(struct thorium_worker *self);
 
 void thorium_worker_init(struct thorium_worker *worker, int name, struct thorium_node *node)
 {
@@ -169,6 +177,9 @@ void thorium_worker_init(struct thorium_worker *worker, int name, struct thorium
     core_map_iterator_init(&worker->actor_iterator, &worker->actors);
 
     outbound_ring_capacity = THORIUM_WORKER_RING_CAPACITY;
+    /*
+    outbound_ring_capacity = 3;
+    */
 
     core_fast_ring_init(&worker->output_outbound_message_ring, outbound_ring_capacity, sizeof(struct thorium_message));
 
@@ -261,6 +272,8 @@ void thorium_worker_init(struct thorium_worker *worker, int name, struct thorium
      * Avoid valgrind warnings.
      */
     worker->epoch_load = 0;
+
+    thorium_worker_configure_backoff(worker);
 }
 
 void thorium_worker_destroy(struct thorium_worker *worker)
@@ -792,6 +805,7 @@ int thorium_worker_enqueue_message(struct thorium_worker *worker, struct thorium
          */
         core_fast_queue_enqueue(&worker->output_outbound_message_queue, message);
 
+        thorium_worker_activate_backoff(worker);
     }
 
     return 1;
@@ -1518,6 +1532,8 @@ void thorium_worker_work(struct thorium_worker *worker, struct thorium_actor *ac
                         thorium_worker_name(worker));
     }
 #endif
+
+    thorium_worker_do_backoff(worker);
 }
 
 void thorium_worker_wait(struct thorium_worker *worker)
@@ -1782,4 +1798,66 @@ void *thorium_worker_allocate(struct thorium_worker *self, size_t count)
     self->zero_copy_buffer = buffer;
 
     return buffer;
+}
+
+void thorium_worker_configure_backoff(struct thorium_worker *self)
+{
+#ifdef THORIUM_WORKER_CONFIG_USE_BACKOFF
+    CORE_BITMAP_CLEAR_BIT(self->flags, FLAG_OUTPUT_OUTBOUND_MESSAGE_RING_IS_FULL);
+#endif
+}
+
+void thorium_worker_activate_backoff(struct thorium_worker *self)
+{
+#ifdef THORIUM_WORKER_CONFIG_USE_BACKOFF
+    /*
+     * Switch mode if stalled to avoid over-production
+     */
+    if (!CORE_BITMAP_GET_BIT(self->flags, FLAG_OUTPUT_OUTBOUND_MESSAGE_RING_IS_FULL)) {
+
+        CORE_BITMAP_SET_BIT(self->flags, FLAG_OUTPUT_OUTBOUND_MESSAGE_RING_IS_FULL);
+    }
+#endif
+}
+
+void thorium_worker_do_backoff(struct thorium_worker *self)
+{
+    /*
+     * The idea of backoff for output outbound message rings is presented
+     * here.
+     * The thorium_actor_receive() function of an actor may generate a lot of messages.
+     * This function is called in thorium_actor_work(), which is called in
+     * thorium_worker_work.
+     *
+     * To avoid producer-consumer imbalance, the backoff idea basicaly waits
+     * for the ring to empty before doing anything else.
+     */
+#ifdef THORIUM_WORKER_CONFIG_USE_BACKOFF
+    int backoff;
+
+    /*
+     * Wait for the ring to clean up if necessary.
+     */
+    if (CORE_BITMAP_GET_BIT(self->flags, FLAG_OUTPUT_OUTBOUND_MESSAGE_RING_IS_FULL)) {
+
+        while (!core_fast_ring_is_empty_from_producer(&self->output_outbound_message_ring)) {
+
+            /*
+             * Use a backoff approach.
+             *
+             * \see http://lwn.net/Articles/531254/
+             */
+            backoff = 64;
+
+            while (backoff--) {
+
+            }
+        }
+
+        /*
+         * At this point, the ring is no longer full !
+         */
+        CORE_BITMAP_CLEAR_BIT(self->flags, FLAG_OUTPUT_OUTBOUND_MESSAGE_RING_IS_FULL);
+    }
+#endif
 }
