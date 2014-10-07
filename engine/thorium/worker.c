@@ -106,9 +106,9 @@ void thorium_worker_work(struct thorium_worker *self, struct thorium_actor *acto
 /*
  * Backoff stuff.
  */
-void thorium_worker_do_backoff(struct thorium_worker *self);
-void thorium_worker_activate_backoff(struct thorium_worker *self);
 void thorium_worker_configure_backoff(struct thorium_worker *self);
+void thorium_worker_activate_backoff(struct thorium_worker *self);
+void thorium_worker_do_backoff(struct thorium_worker *self);
 
 void thorium_worker_init(struct thorium_worker *worker, int name, struct thorium_node *node)
 {
@@ -176,10 +176,10 @@ void thorium_worker_init(struct thorium_worker *worker, int name, struct thorium
     core_map_init(&worker->actors, sizeof(int), sizeof(int));
     core_map_iterator_init(&worker->actor_iterator, &worker->actors);
 
-    outbound_ring_capacity = THORIUM_WORKER_RING_CAPACITY;
     /*
-    outbound_ring_capacity = 3;
+    outbound_ring_capacity = THORIUM_WORKER_RING_CAPACITY;
     */
+    outbound_ring_capacity = 256;
 
     core_fast_ring_init(&worker->output_outbound_message_ring, outbound_ring_capacity, sizeof(struct thorium_message));
 
@@ -1333,8 +1333,11 @@ void thorium_worker_run(struct thorium_worker *worker)
     }
 #endif
 
-    /* check for messages in inbound FIFO */
-    if (thorium_worker_dequeue_actor(worker, &actor)) {
+    /*
+     * Check for messages in inbound FIFO
+     */
+    if (!CORE_BITMAP_GET_BIT(worker->flags, FLAG_OUTPUT_OUTBOUND_MESSAGE_RING_IS_FULL)
+                    && thorium_worker_dequeue_actor(worker, &actor)) {
 
 #ifdef THORIUM_WORKER_DEBUG
         message = biosal_work_message(&work);
@@ -1428,6 +1431,8 @@ void thorium_worker_run(struct thorium_worker *worker)
 #ifdef THORIUM_WORKER_ENABLE_LOCK
     thorium_worker_unlock(worker);
 #endif
+
+    thorium_worker_do_backoff(worker);
 }
 
 void thorium_worker_work(struct thorium_worker *worker, struct thorium_actor *actor)
@@ -1532,8 +1537,6 @@ void thorium_worker_work(struct thorium_worker *worker, struct thorium_actor *ac
                         thorium_worker_name(worker));
     }
 #endif
-
-    thorium_worker_do_backoff(worker);
 }
 
 void thorium_worker_wait(struct thorium_worker *worker)
@@ -1816,12 +1819,17 @@ void thorium_worker_activate_backoff(struct thorium_worker *self)
     if (!CORE_BITMAP_GET_BIT(self->flags, FLAG_OUTPUT_OUTBOUND_MESSAGE_RING_IS_FULL)) {
 
         CORE_BITMAP_SET_BIT(self->flags, FLAG_OUTPUT_OUTBOUND_MESSAGE_RING_IS_FULL);
+
+#ifdef DEBUG_BACKOFF
+        printf("thorium_worker_activate_backoff !\n");
+#endif
     }
 #endif
 }
 
 void thorium_worker_do_backoff(struct thorium_worker *self)
 {
+#ifdef THORIUM_WORKER_CONFIG_USE_BACKOFF
     /*
      * The idea of backoff for output outbound message rings is presented
      * here.
@@ -1832,32 +1840,25 @@ void thorium_worker_do_backoff(struct thorium_worker *self)
      * To avoid producer-consumer imbalance, the backoff idea basicaly waits
      * for the ring to empty before doing anything else.
      */
-#ifdef THORIUM_WORKER_CONFIG_USE_BACKOFF
-    int backoff;
+    int size;
+    int capacity;
+    int threshold;
 
     /*
      * Wait for the ring to clean up if necessary.
      */
     if (CORE_BITMAP_GET_BIT(self->flags, FLAG_OUTPUT_OUTBOUND_MESSAGE_RING_IS_FULL)) {
 
-        while (!core_fast_ring_is_empty_from_producer(&self->output_outbound_message_ring)) {
+        size = core_fast_ring_size_from_producer(&self->output_outbound_message_ring);
+        capacity = core_fast_ring_capacity(&self->output_outbound_message_ring);
+        threshold = capacity / 2;
 
+        if (size <= threshold) {
             /*
-             * Use a backoff approach.
-             *
-             * \see http://lwn.net/Articles/531254/
+             * At this point, the ring is no longer full !
              */
-            backoff = 64;
-
-            while (backoff--) {
-
-            }
+            CORE_BITMAP_CLEAR_BIT(self->flags, FLAG_OUTPUT_OUTBOUND_MESSAGE_RING_IS_FULL);
         }
-
-        /*
-         * At this point, the ring is no longer full !
-         */
-        CORE_BITMAP_CLEAR_BIT(self->flags, FLAG_OUTPUT_OUTBOUND_MESSAGE_RING_IS_FULL);
     }
 #endif
 }

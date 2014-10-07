@@ -73,6 +73,8 @@ struct thorium_balancer;
 
 /*
  * Ring backoff for increased efficiency.
+ *
+ * \see http://en.wiktionary.org/wiki/back_off
  */
 #define THORIUM_WORKER_CONFIG_USE_BACKOFF
 
