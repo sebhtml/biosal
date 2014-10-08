@@ -14,6 +14,8 @@
 #include <core/structures/set_iterator.h>
 #include <core/structures/vector_iterator.h>
 
+#include <core/structures/fast_queue_iterator.h>
+
 #include <core/system/debugger.h>
 #include <core/system/memory.h>
 
@@ -860,14 +862,34 @@ void thorium_worker_pool_examine(struct thorium_worker_pool *self)
     int i;
     int size;
     struct thorium_worker *worker;
+    int queue_size;
+    struct core_fast_queue_iterator iterator;
+    struct thorium_message message;
 
     i = 0;
     size = thorium_worker_pool_worker_count(self);
 
     printf("QUEUE Name= scheduled_actor_queue_buffer size= %d\n",
                     core_fast_queue_size(&self->scheduled_actor_queue_buffer));
+
+    queue_size = core_fast_queue_size(&self->inbound_message_queue_buffer);
     printf("QUEUE Name= inbound_message_queue_buffer size= %d\n",
-                    core_fast_queue_size(&self->inbound_message_queue_buffer));
+                    queue_size);
+
+    /*
+     * Print the content of the queue.
+     */
+    if (queue_size > 4) {
+        core_fast_queue_iterator_init(&iterator, &self->inbound_message_queue_buffer);
+
+        while (core_fast_queue_iterator_next_value(&iterator, &message)) {
+
+            thorium_message_print(&message);
+        }
+
+        core_fast_queue_iterator_destroy(&iterator);
+    }
+
     printf("QUEUE Name= clean_message_queue size= %d\n",
                     core_fast_queue_size(&self->clean_message_queue));
 

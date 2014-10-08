@@ -81,7 +81,9 @@ void thorium_message_print(struct thorium_message *self)
                     self->source_actor,
                     self->destination_actor);
 
+    /*
     core_debugger_examine(self->buffer, self->count);
+    */
 }
 
 void *thorium_message_buffer(struct thorium_message *self)

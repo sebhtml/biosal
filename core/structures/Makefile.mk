@@ -8,6 +8,7 @@ CORE_OBJECTS += core/structures/fast_ring.o
 
 CORE_OBJECTS += core/structures/linked_ring.o
 CORE_OBJECTS += core/structures/fast_queue.o
+CORE_OBJECTS += core/structures/fast_queue_iterator.o
 CORE_OBJECTS += core/structures/queue.o
 
 # unordered structures
