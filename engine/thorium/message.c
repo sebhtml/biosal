@@ -75,7 +75,7 @@ void thorium_message_set_destination(struct thorium_message *self, int destinati
 
 void thorium_message_print(struct thorium_message *self)
 {
-    printf("Message Tag %d Count %d SourceActor %d DestinationActor %d\n",
+    printf("Message Tag %x Count %d SourceActor %d DestinationActor %d\n",
                     self->action,
                     self->count,
                     self->source_actor,
