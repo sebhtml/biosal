@@ -6,20 +6,20 @@
 void core_fast_queue_iterator_init(struct core_fast_queue_iterator *self, struct core_fast_queue *container)
 {
     self->container = container;
-    self->i = 0;
+    self->position = 0;
     self->size =core_fast_queue_size(container);
 }
 
 void core_fast_queue_iterator_destroy(struct core_fast_queue_iterator *self)
 {
     self->container = NULL;
-    self->i = 0;
+    self->position = 0;
     self->size = 0;
 }
 
 int core_fast_queue_iterator_has_next(struct core_fast_queue_iterator *self)
 {
-    if (self->i < self->size)
+    if (self->position < self->size)
         return 1;
 
     return 0;
@@ -32,6 +32,8 @@ int core_fast_queue_iterator_next_value(struct core_fast_queue_iterator *self, v
 
     core_fast_queue_dequeue(self->container, value);
     core_fast_queue_enqueue(self->container, value);
+
+    ++self->position;
 
     return 1;
 }

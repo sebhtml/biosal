@@ -5,7 +5,7 @@
 struct core_fast_queue;
 
 struct core_fast_queue_iterator {
-    int i;
+    int position;
     int size;
     struct core_fast_queue *container;
 };
