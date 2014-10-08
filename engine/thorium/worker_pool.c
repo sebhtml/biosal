@@ -72,6 +72,8 @@ int thorium_worker_pool_get_cached_value(struct thorium_worker_pool *self, int i
 void thorium_worker_pool_wake_up_workers(struct thorium_worker_pool *self);
 void thorium_worker_pool_assign_worker_to_actor(struct thorium_worker_pool *self, int name);
 
+void thorium_worker_pool_examine_inbound_queue(struct thorium_worker_pool *self);
+
 void thorium_worker_pool_init(struct thorium_worker_pool *pool, int workers,
                 struct thorium_node *node)
 {
@@ -472,6 +474,13 @@ int thorium_worker_pool_give_message_to_actor(struct thorium_worker_pool *pool, 
 
         core_fast_queue_enqueue(&pool->inbound_message_queue_buffer, message);
 
+#ifdef INSPECT_INBOUND_QUEUE
+        if (core_fast_queue_size(&pool->inbound_message_queue_buffer) >= 10000) {
+            thorium_worker_pool_examine_inbound_queue(pool);
+            CORE_DEBUGGER_ASSERT(0);
+        }
+#endif
+
     } else {
         /*
          * At this point, the message has been pushed to the actor.
@@ -862,9 +871,6 @@ void thorium_worker_pool_examine(struct thorium_worker_pool *self)
     int i;
     int size;
     struct thorium_worker *worker;
-    int queue_size;
-    struct core_fast_queue_iterator iterator;
-    struct thorium_message message;
 
     i = 0;
     size = thorium_worker_pool_worker_count(self);
@@ -872,23 +878,7 @@ void thorium_worker_pool_examine(struct thorium_worker_pool *self)
     printf("QUEUE Name= scheduled_actor_queue_buffer size= %d\n",
                     core_fast_queue_size(&self->scheduled_actor_queue_buffer));
 
-    queue_size = core_fast_queue_size(&self->inbound_message_queue_buffer);
-    printf("QUEUE Name= inbound_message_queue_buffer size= %d\n",
-                    queue_size);
-
-    /*
-     * Print the content of the queue.
-     */
-    if (queue_size > 4) {
-        core_fast_queue_iterator_init(&iterator, &self->inbound_message_queue_buffer);
-
-        while (core_fast_queue_iterator_next_value(&iterator, &message)) {
-
-            thorium_message_print(&message);
-        }
-
-        core_fast_queue_iterator_destroy(&iterator);
-    }
+    thorium_worker_pool_examine_inbound_queue(self);
 
     printf("QUEUE Name= clean_message_queue size= %d\n",
                     core_fast_queue_size(&self->clean_message_queue));
@@ -921,4 +911,29 @@ void thorium_worker_pool_enable_profiler(struct thorium_worker_pool *self)
 int thorium_worker_pool_buffered_message_count(struct thorium_worker_pool *self)
 {
     return core_fast_queue_size(&self->inbound_message_queue_buffer);
+}
+
+void thorium_worker_pool_examine_inbound_queue(struct thorium_worker_pool *self)
+{
+    int queue_size;
+    struct core_fast_queue_iterator iterator;
+    struct thorium_message message;
+
+    queue_size = core_fast_queue_size(&self->inbound_message_queue_buffer);
+    printf("QUEUE Name= inbound_message_queue_buffer size= %d\n",
+                    queue_size);
+
+    /*
+     * Print the content of the queue.
+     */
+    if (queue_size > 4) {
+        core_fast_queue_iterator_init(&iterator, &self->inbound_message_queue_buffer);
+
+        while (core_fast_queue_iterator_next_value(&iterator, &message)) {
+
+            thorium_message_print(&message);
+        }
+
+        core_fast_queue_iterator_destroy(&iterator);
+    }
 }
