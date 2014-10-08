@@ -2630,21 +2630,37 @@ void thorium_node_regulator_run(struct thorium_node *self)
     /*
      * When the minimum is reached, activate the regulator.
      */
-    if (count >= minimum && !CORE_BITMAP_GET_BIT(self->flags, FLAG_REGULATOR_IS_ENABLED)) {
+    if (count >= minimum) {
 
-        CORE_BITMAP_SET_BIT(self->flags, FLAG_REGULATOR_IS_ENABLED);
+        /*
+         * First, check if the bit is already set.
+         */
+        if (CORE_BITMAP_GET_BIT(self->flags, FLAG_REGULATOR_IS_ENABLED)) {
 
-#ifdef DEBUG_NODE_REGULATOR
-        printf("thorium_node: Warning buffered_message_count= %d FLAG_REGULATOR_IS_ENABLED = 1\n",
-                            count);
-#endif
-    } else if (CORE_BITMAP_GET_BIT(self->flags, FLAG_REGULATOR_IS_ENABLED)) {
-        CORE_BITMAP_CLEAR_BIT(self->flags, FLAG_REGULATOR_IS_ENABLED);
+            CORE_BITMAP_SET_BIT(self->flags, FLAG_REGULATOR_IS_ENABLED);
 
 #ifdef DEBUG_NODE_REGULATOR
-        printf("thorium_node: Warning buffered_message_count= %d FLAG_REGULATOR_IS_ENABLED = 0\n",
+            printf("thorium_node: Warning buffered_message_count= %d FLAG_REGULATOR_IS_ENABLED = 1\n",
                             count);
 #endif
+        }
+
+    /*
+     * Otherwise, the queue size is below the minimum required to
+     * activate the regulator.
+     *
+     * In that case, the regulator must be disabled.
+     */
+    } else {
+
+        if (CORE_BITMAP_GET_BIT(self->flags, FLAG_REGULATOR_IS_ENABLED)) {
+            CORE_BITMAP_CLEAR_BIT(self->flags, FLAG_REGULATOR_IS_ENABLED);
+
+#ifdef DEBUG_NODE_REGULATOR
+            printf("thorium_node: Warning buffered_message_count= %d FLAG_REGULATOR_IS_ENABLED = 0\n",
+                            count);
+#endif
+        }
     }
 #endif
 }
