@@ -156,6 +156,9 @@ int thorium_node_actor_node(struct thorium_node *self, int name);
 int thorium_node_actor_index(struct thorium_node *self, int name);
 void thorium_node_run_loop(struct thorium_node *self);
 
+/*
+ * Private prototypes for inbound message regulator
+ */
 void thorium_node_regulator_configure(struct thorium_node *self);
 void thorium_node_regulator_run(struct thorium_node *self);
 int thorium_node_regulator_must_wait(struct thorium_node *self);
@@ -492,6 +495,8 @@ void thorium_node_init(struct thorium_node *node, int *argc, char ***argv)
     }
 
     node->worker_count = thorium_worker_pool_worker_count(&node->worker_pool);
+
+    thorium_node_regulator_configure(node);
 }
 
 void thorium_node_destroy(struct thorium_node *node)
@@ -2633,9 +2638,9 @@ void thorium_node_regulator_run(struct thorium_node *self)
     if (count >= minimum) {
 
         /*
-         * First, check if the bit is already set.
+         * First, check if the bit is not already set.
          */
-        if (CORE_BITMAP_GET_BIT(self->flags, FLAG_REGULATOR_IS_ENABLED)) {
+        if (!CORE_BITMAP_GET_BIT(self->flags, FLAG_REGULATOR_IS_ENABLED)) {
 
             CORE_BITMAP_SET_BIT(self->flags, FLAG_REGULATOR_IS_ENABLED);
 
@@ -2653,6 +2658,9 @@ void thorium_node_regulator_run(struct thorium_node *self)
      */
     } else {
 
+        /*
+         * Clear the big FLAG_REGULATOR_IS_ENABLED if it is set.
+         */
         if (CORE_BITMAP_GET_BIT(self->flags, FLAG_REGULATOR_IS_ENABLED)) {
             CORE_BITMAP_CLEAR_BIT(self->flags, FLAG_REGULATOR_IS_ENABLED);
 

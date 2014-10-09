@@ -474,6 +474,10 @@ int thorium_worker_pool_give_message_to_actor(struct thorium_worker_pool *pool, 
 
         core_fast_queue_enqueue(&pool->inbound_message_queue_buffer, message);
 
+        /*
+         * It would be interesting to see what is in the queue,
+         * but this would produce huge log files.
+         */
 #ifdef INSPECT_INBOUND_QUEUE
         if (core_fast_queue_size(&pool->inbound_message_queue_buffer) >= 10000) {
             thorium_worker_pool_examine_inbound_queue(pool);
