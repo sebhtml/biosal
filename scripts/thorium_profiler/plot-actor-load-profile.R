@@ -4,7 +4,16 @@ arguments = commandArgs(trailingOnly = TRUE)
 file = arguments[1]
 data = read.table(file, header= TRUE)
 
-threshold = (500 * 1000)
+start = data[,1][1]
+
+# start time at 0
+data[,1] = data[,1] - start
+data[,2] = data[,2] - start
+
+data[,1] = data[,1] / 1000.0
+data[,2] = data[,2] / 1000.0
+
+threshold = (500 )
 
 bad_color = 'red'
 default_color = 'black'
@@ -24,7 +33,9 @@ maximum_y = -1
 i = 1
 
 utilizations = 1:lines
-window_minimum_size = ( 1000 * 1000 )
+
+# 1000 us
+window_minimum_size = ( 1000 )
 
 used_duration = 0
 total = 0
@@ -101,6 +112,9 @@ while (i <= lines) {
     i = i + 1
 }
 
+print(minimum)
+print(maximum)
+
 real_minimum_y = minimum_y
 minimum_y = minimum_y - real_minimum_y
 maximum_y = maximum_y - real_minimum_y
@@ -113,7 +127,7 @@ par(mfrow=c(3,1))
 
 # panel A
 plot(c(0), c(0), xlim = c(minimum, maximum), ylim = c(minimum_y, maximum_y), type='l', col='red',
-                xlab='Time (nanoseconds)', ylab='Actor index', main=paste("Timeline of actor execution",
+                xlab='Time (microseconds)', ylab='Actor index', main=paste("Timeline of actor execution",
 #"\n(any granularity >= ", threshold / 1000, " µs is shown in red)",
                         sep=""))
 
@@ -135,7 +149,7 @@ while (i <= lines) {
 
 # panel B
 plot(c(-1), c(-1), xlim = c(minimum, maximum), ylim = c(0, 0), type='l', col='red',
-                xlab='Time (nanoseconds)', ylab='Timeline', main= paste("Timeline of actor execution (collapsed)",
+                xlab='Time (microseconds)', ylab='Timeline', main= paste("Timeline of actor execution (collapsed)",
 # "\n(any granularity >= ", threshold / 1000, " µs is shown in red)",
                         sep=""))
 
@@ -155,12 +169,10 @@ while (i <= lines) {
 }
 
 
-
-
-# panel A
+# panel C
 plot(data[,1], utilizations, col='black', type='l',
 #ylim=c(0, 1), 
-                ylab='Processor core utilization', xlab='Time (nanoseconds)',
+                ylab='Processor core utilization', xlab='Time (microseconds)',
                 main=paste('Processor core utilization profile\n(Profile data file: ', file, ')', sep=''))
 
 
