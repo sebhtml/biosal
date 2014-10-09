@@ -25,6 +25,7 @@ struct biosal_assembly_block_classifier {
     uint64_t last;
     int kmer_length;
 
+    struct core_memory_pool persistent_pool;
     struct core_vector consumers;
 
     struct core_fast_queue stalled_producers;
@@ -41,6 +42,11 @@ struct biosal_assembly_block_classifier {
     struct biosal_dna_codec codec;
 
     int consumer_count_above_threshold;
+
+    /*
+     * bins
+     */
+    struct core_vector buffers;
 };
 
 
