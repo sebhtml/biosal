@@ -23,7 +23,7 @@
  * There are 1 000 000 000 ns in 1 second.
  */
 #define TIMEOUT_IN_MICRO_SECONDS 0
-#define THORIUM_MESSAGE_MULTIPLEXER_TIME_THRESHOLD_IN_NANOSECONDS ( TIMEOUT_IN_MICRO_SECONDS * 1000)
+#define THORIUM_MESSAGE_MULTIPLEXER_TIME_THRESHOLD_IN_NANOSECONDS ( TIMEOUT_IN_MICRO_SECONDS * 100)
 
 void thorium_multiplexer_policy_init(struct thorium_multiplexer_policy *self)
 {
@@ -46,7 +46,13 @@ void thorium_multiplexer_policy_init(struct thorium_multiplexer_policy *self)
     core_set_add_int(&self->actions_to_skip, ACTION_SPAWN);
     core_set_add_int(&self->actions_to_skip, ACTION_SPAWN_REPLY);
 
-    self->disabled = 1;
+    self->disabled = 0;
+
+    /*
+     * This is the minimum number of thorium nodes
+     * needed for enabling the multiplexer.
+     */
+    self->minimum_node_count = 16;
 }
 
 void thorium_multiplexer_policy_destroy(struct thorium_multiplexer_policy *self)
@@ -77,4 +83,7 @@ int thorium_multiplexer_policy_time_threshold(struct thorium_multiplexer_policy 
     return self->threshold_time_in_nanoseconds;
 }
 
-
+int thorium_multiplexer_policy_minimum_node_count(struct thorium_multiplexer_policy *self)
+{
+    return self->minimum_node_count;
+}

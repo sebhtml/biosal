@@ -98,6 +98,10 @@ void thorium_message_multiplexer_init(struct thorium_message_multiplexer *self,
         CORE_BITMAP_SET_BIT(self->flags, FLAG_DISABLED);
     }
 
+    if (thorium_node_nodes(self->node) < thorium_multiplexer_policy_minimum_node_count(self->policy)) {
+        CORE_BITMAP_SET_BIT(self->flags, FLAG_DISABLED);
+    }
+
     if (thorium_node_name(self->node) == 0) {
         if (self->timeout_in_nanoseconds == THORIUM_DYNAMIC_TIMEOUT) {
             printf("thorium_message_multiplexer: disabled=%d buffer_size_in_bytes=%d timeout_in_nanoseconds=dynamic\n",
@@ -480,3 +484,4 @@ int thorium_message_multiplexer_is_disabled(struct thorium_message_multiplexer *
 {
     return CORE_BITMAP_GET_BIT(self->flags, FLAG_DISABLED);
 }
+

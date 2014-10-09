@@ -17,6 +17,7 @@ struct thorium_multiplexer_policy {
     int threshold_time_in_nanoseconds;
     struct core_set actions_to_skip;
     int disabled;
+    int minimum_node_count;
 };
 
 void thorium_multiplexer_policy_init(struct thorium_multiplexer_policy *self);
@@ -26,5 +27,6 @@ int thorium_multiplexer_policy_is_action_to_skip(struct thorium_multiplexer_poli
 int thorium_multiplexer_policy_is_disabled(struct thorium_multiplexer_policy *self);
 int thorium_multiplexer_policy_size_threshold(struct thorium_multiplexer_policy *self);
 int thorium_multiplexer_policy_time_threshold(struct thorium_multiplexer_policy *self);
+int thorium_multiplexer_policy_minimum_node_count(struct thorium_multiplexer_policy *self);
 
 #endif
