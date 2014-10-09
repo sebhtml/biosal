@@ -1558,7 +1558,7 @@ void biosal_assembly_graph_builder_get_producers_for_work_stealing(struct thoriu
      */
     core_vector_clear(producers_for_work_stealing);
 
-#ifdef __bgq__
+#ifdef __bDISABLEgq__
     /*
      * Disable this right now
      * because sequence stores are generating very big messages.

@@ -1125,7 +1125,7 @@ void biosal_assembly_graph_store_get_starting_vertex(struct thorium_actor *self,
 
 int biosal_assembly_graph_store_get_store_count_per_node(struct thorium_actor *self)
 {
-#ifdef __bgq__DISABLED
+#ifdef __bDISABLEDgq__
     int powerpc_a2_processor_core_count;
     int nodes;
 
