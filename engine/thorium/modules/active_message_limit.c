@@ -46,7 +46,14 @@
 #define USE_MAXIMUM
 */
 
+int thorium_actor_active_message_limit_adaptive(struct thorium_actor *self);
+
 int thorium_actor_active_message_limit(struct thorium_actor *self)
+{
+    return 1;
+}
+
+int thorium_actor_active_message_limit_adaptive(struct thorium_actor *self)
 {
     int node_count;
     int bonus;
