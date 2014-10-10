@@ -171,7 +171,7 @@ while (i <= lines) {
 
 # panel C
 plot(data[,1], utilizations, col='black', type='l',
-#ylim=c(0, 1), 
+#ylim=c(0, 1),
                 ylab='Processor core utilization', xlab='Time (microseconds)',
                 main=paste('Processor core utilization profile\n(Profile data file: ', file, ')', sep=''))
 

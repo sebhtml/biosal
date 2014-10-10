@@ -330,13 +330,18 @@ void biosal_dna_kmer_counter_kernel_ask(struct thorium_actor *self, struct thori
 {
     struct biosal_dna_kmer_counter_kernel *concrete_actor;
     int producer;
+    void *buffer;
+    int count;
 
+    count = 2 * sizeof(int);
     concrete_actor = (struct biosal_dna_kmer_counter_kernel *)thorium_actor_concrete_actor(self);
+    buffer = thorium_actor_allocate(self, count);
 
     producer = concrete_actor->producer;
 
-    thorium_actor_send_int(self, producer, ACTION_SEQUENCE_STORE_ASK,
-                    concrete_actor->kmer_length);
+    core_memory_copy(buffer, &concrete_actor->kmer_length, sizeof(concrete_actor->kmer_length));
+    thorium_actor_send_buffer(self, producer, ACTION_SEQUENCE_STORE_ASK,
+                    count, buffer);
 
 #ifdef BIOSAL_DNA_KMER_COUNTER_KERNEL_DEBUG
     printf("DEBUG kernel asks producer\n");

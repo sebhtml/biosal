@@ -1,5 +1,5 @@
 Here are some guidelines to creating actor applications with
-Thorium. 
+Thorium.
 
 First, over-decomposition should be favored. An actor should do one thing
 and do it well (this is similar to the UNIX philosophy).

@@ -510,7 +510,7 @@ void biosal_assembly_block_classifier_aggregate_kernel_output(struct thorium_act
         BIOSAL_DEBUG_MARKER("assembly_block_classifier marker EXIT");
 #endif
 
-    /* 
+    /*
      * Flush blocks if they are big enough.
      */
 
@@ -712,7 +712,7 @@ void biosal_assembly_block_classifier_flush_all(struct thorium_actor *self)
 
     concrete_actor = (struct biosal_assembly_block_classifier *)thorium_actor_concrete_actor(self);
 
-    /* 
+    /*
      * Flush blocks
      */
 

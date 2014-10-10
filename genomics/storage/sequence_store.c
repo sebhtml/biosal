@@ -578,7 +578,10 @@ int biosal_sequence_store_get_required_kmers(struct thorium_actor *actor, struct
     struct biosal_sequence_store *concrete_actor;
     int kmer_length;
     int stores_per_node;
+    int position;
+    int count;
 
+    count = thorium_message_count(message);
     concrete_actor = thorium_actor_concrete_actor(actor);
 
     if (concrete_actor->required_kmers != NO_USEFUL_VALUE) {
@@ -594,17 +597,21 @@ int biosal_sequence_store_get_required_kmers(struct thorium_actor *actor, struct
      */
     stores_per_node = biosal_assembly_graph_store_get_store_count_per_node(actor);
 
-#if 0
-    total_kmer_stores = nodes * stores_per_node;
-#else
-    /*
-     * The current actor does not care what is being done with the
-     * message down the road.
-     */
-    total_kmer_stores = 1;
-#endif
+    position = 0;
+    position += thorium_message_unpack_int(message, 0, &kmer_length);
 
-    thorium_message_unpack_int(message, 0, &kmer_length);
+    /*
+     * A bigger buffer means that the source wants a big message.
+     */
+    if (count == 8) {
+        total_kmer_stores = nodes * stores_per_node;
+    } else {
+        /*
+         * The current actor does not care what is being done with the
+         * message down the road.
+         */
+        total_kmer_stores = 1;
+    }
 
     if (kmer_length <= 0) {
         printf("%s/%d Error, invalid kmer length: %d\n",
