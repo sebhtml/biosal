@@ -25,7 +25,7 @@ function run_checks() {
     run_check ")  {"
     run_check "}  ("
 
-    grep -n ") {" * -R |grep void|grep bsal_|grep -v check.sh|grep -v if|grep -v while
+    grep -n ") {" * -R |grep void|grep biosal_|grep -v check.sh|grep -v if|grep -v while
     grep -n " "$ * -R
     #grep -n " -> " * -R | grep -v printf|grep -v ^log
 }

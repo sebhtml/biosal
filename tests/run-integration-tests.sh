@@ -43,7 +43,7 @@ function main()
     passed=$(grep PASSED real.log | wc -l)
     failed=$(grep FAILED real.log | wc -l)
 
-    bsal_shell_summarize_test_result "IntegrationTests" $passed $failed
+    biosal_shell_summarize_test_result "IntegrationTests" $passed $failed
 }
 
 main

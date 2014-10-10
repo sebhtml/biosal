@@ -1,6 +1,6 @@
 #!/bin/bash
 
-function bsal_shell_summarize_test_result()
+function biosal_shell_summarize_test_result()
 {
     local title
     local passed

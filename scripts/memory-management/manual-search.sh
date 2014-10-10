@@ -8,8 +8,8 @@
 # Then run:
 #   scripts/leaks/manual-search.sh log
 
-grep bsal_memory_allocate log|grep DEBUG |awk '{print $5}' > allocate-addr
-grep bsal_memory_free log|grep DEBUG |awk '{print $3}' > free-addr
+grep biosal_memory_allocate log|grep DEBUG |awk '{print $5}' > allocate-addr
+grep biosal_memory_free log|grep DEBUG |awk '{print $3}' > free-addr
 cat allocate-addr  free-addr |sort|uniq -c|sort -n|grep " 1 " | awk '{print $2}' > leaks.txt
 
 echo "see leaks.txt"
