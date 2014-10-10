@@ -14,50 +14,50 @@ only includes the functions that are useful within an actor.
 
 # Functions
 
-## bsal_message_init
+## thorium_message_init
 
 ```C
-void bsal_message_init(struct bsal_message *message, int action, int count, void *buffer);
+void thorium_message_init(struct thorium_message *message, int action, int count, void *buffer);
 ```
 
 Initialize a message. count is a number of bytes.
 
-## bsal_message_source
+## thorium_message_source
 
 ```C
-int bsal_message_source(struct bsal_message *message);
+int thorium_message_source(struct thorium_message *message);
 ```
 
 Get the source actor.
 
-## bsal_message_action
+## thorium_message_action
 
 ```C
-int bsal_message_action(struct bsal_message *message);
+int thorium_message_action(struct thorium_message *message);
 ```
 
 Get action.
 
-## bsal_message_buffer
+## thorium_message_buffer
 
 ```C
-void *bsal_message_buffer(struct bsal_message *message);
+void *thorium_message_buffer(struct thorium_message *message);
 ```
 
 Get message buffer.
 
-## bsal_message_count
+## thorium_message_count
 
 ```C
-int bsal_message_count(struct bsal_message *message);
+int thorium_message_count(struct thorium_message *message);
 ```
 
 Get the number of bytes in the message buffer.
 
-## bsal_message_destroy
+## thorium_message_destroy
 
 ```C
-void bsal_message_destroy(struct bsal_message *message);
+void thorium_message_destroy(struct thorium_message *message);
 ```
 
 Destroy a message.
