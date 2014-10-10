@@ -71,7 +71,7 @@ void thorium_transport_profiler_send_mock(struct thorium_transport_profiler *sel
     size = thorium_message_count(message);
     rank = thorium_message_source_node(message);
 
-    if (self->rank < 0) {
+    if (self->rank >= 0) {
         self->rank = rank;
     }
 

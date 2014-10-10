@@ -98,6 +98,7 @@
 #define FLAG_ENABLE_ACTOR_LOAD_PROFILES 10
 #define FLAG_MULTIPLEXER_IS_DISABLED    11
 #define FLAG_REGULATOR_IS_ENABLED       12
+#define FLAG_PROFILE_MESSAGE_TRANSPORT  13
 
 /*
  * Enable the regulator.
@@ -192,6 +193,7 @@ void thorium_node_init(struct thorium_node *node, int *argc, char ***argv)
 #endif
 
     CORE_BITMAP_CLEAR(node->flags);
+    CORE_BITMAP_CLEAR_BIT(node->flags, FLAG_PROFILE_MESSAGE_TRANSPORT);
     node->worker_for_triage = 0;
 
     /*
@@ -497,6 +499,15 @@ void thorium_node_init(struct thorium_node *node, int *argc, char ***argv)
     node->worker_count = thorium_worker_pool_worker_count(&node->worker_pool);
 
     thorium_node_regulator_configure(node);
+
+    thorium_transport_profiler_init(&node->transport_profiler);
+
+    if (core_command_has_argument(node->argc, node->argv, "-enable-transport-profiler")) {
+
+        printf("Enable transport profiler\n");
+
+        CORE_BITMAP_SET_BIT(node->flags, FLAG_PROFILE_MESSAGE_TRANSPORT);
+    }
 }
 
 void thorium_node_destroy(struct thorium_node *node)
@@ -504,6 +515,15 @@ void thorium_node_destroy(struct thorium_node *node)
 #ifdef THORIUM_NODE_DEBUG_INJECTION
     int active_requests;
 #endif
+
+    /*
+     * Print the report if requested.
+     */
+    if (CORE_BITMAP_GET_BIT(node->flags, FLAG_PROFILE_MESSAGE_TRANSPORT)) {
+        thorium_transport_profiler_print_report(&node->transport_profiler);
+    }
+
+    thorium_transport_profiler_destroy(&node->transport_profiler);
 
     core_timer_destroy(&node->timer);
 
@@ -567,6 +587,7 @@ void thorium_node_destroy(struct thorium_node *node)
     core_memory_pool_destroy(&node->actor_memory_pool);
     core_memory_pool_destroy(&node->inbound_message_memory_pool);
     core_memory_pool_destroy(&node->outbound_message_memory_pool);
+
 }
 
 int thorium_node_threads_from_string(struct thorium_node *node,
@@ -1303,6 +1324,14 @@ void thorium_node_send(struct thorium_node *node, struct thorium_message *messag
     int worker;
     void *buffer;
     struct thorium_worker_buffer worker_buffer;
+
+    /*
+     * Send the message through the mock transport which is
+     * a transport profiler.
+     */
+    if (CORE_BITMAP_GET_BIT(node->flags, FLAG_PROFILE_MESSAGE_TRANSPORT)) {
+        thorium_transport_profiler_send_mock(&node->transport_profiler, message);
+    }
 
     /* Check the message to see
      * if it is a special message.
@@ -2273,8 +2302,12 @@ void thorium_node_send_message(struct thorium_node *node)
         }
 #endif
 
-        /* send it locally or over the network */
+        /*
+         * Send it locally or over the network
+         */
+
         thorium_node_send(node, &message);
+
     } else {
 #ifdef THORIUM_NODE_DEBUG_RUN
         if (node->alive_actors == 0) {

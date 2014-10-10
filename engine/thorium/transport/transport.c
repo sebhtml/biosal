@@ -34,8 +34,7 @@
 #define EVENT_STRING_SEND "EVENT_SEND"
 #define EVENT_STRING_RECEIVE "EVENT_RECEIVE"
 
-#define FLAG_PROFILE 0
-#define FLAG_PRINT_TRANSPORT_EVENTS 1
+#define FLAG_PRINT_TRANSPORT_EVENTS 0
 
 #define MEMORY_TRANSPORT 0xe1b48d97
 
@@ -53,7 +52,6 @@ void thorium_transport_init(struct thorium_transport *self, struct thorium_node 
     actual_argv = *argv;
 
     self->flags = 0;
-    CORE_BITMAP_CLEAR_BIT(self->flags, FLAG_PROFILE);
     CORE_BITMAP_CLEAR_BIT(self->flags, FLAG_PRINT_TRANSPORT_EVENTS);
 
     self->transport_interface = NULL;
@@ -87,15 +85,6 @@ void thorium_transport_init(struct thorium_transport *self, struct thorium_node 
     self->inbound_message_memory_pool = inbound_message_memory_pool;
     self->outbound_message_memory_pool = outbound_message_memory_pool;
 
-    thorium_transport_profiler_init(&self->transport_profiler);
-
-    if (core_command_has_argument(actual_argc, actual_argv, "-enable-transport-profiler")) {
-
-        printf("Enable transport profiler\n");
-
-        CORE_BITMAP_SET_BIT(self->flags, FLAG_PROFILE);
-    }
-
     if (self->rank == 0) {
         printf("thorium_transport: type %s\n",
                     self->transport_interface->name);
@@ -111,15 +100,6 @@ void thorium_transport_init(struct thorium_transport *self, struct thorium_node 
 
 void thorium_transport_destroy(struct thorium_transport *self)
 {
-    /*
-     * Print the report if requested.
-     */
-    if (CORE_BITMAP_GET_BIT(self->flags, FLAG_PROFILE)) {
-        thorium_transport_profiler_print_report(&self->transport_profiler);
-    }
-
-    thorium_transport_profiler_destroy(&self->transport_profiler);
-
     CORE_DEBUGGER_ASSERT(thorium_transport_get_active_request_count(self) == 0);
 
     if (self->transport_interface != NULL) {
@@ -142,14 +122,6 @@ int thorium_transport_send(struct thorium_transport *self, struct thorium_messag
 
     if (self->transport_interface == NULL) {
         return 0;
-    }
-
-    /*
-     * Send the message through the mock transport which is
-     * a transport profiler.
-     */
-    if (CORE_BITMAP_GET_BIT(self->flags, FLAG_PROFILE)) {
-        thorium_transport_profiler_send_mock(&self->transport_profiler, message);
     }
 
     value = self->transport_interface->send(self, message);

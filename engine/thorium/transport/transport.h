@@ -28,7 +28,6 @@ struct thorium_transport {
     /* Common stuff
      */
     struct thorium_node *node;
-    struct thorium_transport_profiler transport_profiler;
     int provided;
     int rank;
     int size;

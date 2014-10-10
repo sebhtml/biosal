@@ -191,7 +191,7 @@ void biosal_assembly_arc_classifier_push_arc_block(struct thorium_actor *self, s
     struct biosal_dna_kmer *kmer;
     int consumer_index;
     struct core_memory_pool *ephemeral_memory;
-    
+
     count = thorium_message_count(message);
     buffer = thorium_message_buffer(message);
     ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
@@ -431,7 +431,7 @@ void biosal_assembly_arc_classifier_set_consumers(struct thorium_actor *self,
 
         output_block = core_vector_at(&concrete_self->output_blocks, i);
 
-        biosal_assembly_arc_block_init(output_block, &concrete_self->persistent_memory, 
+        biosal_assembly_arc_block_init(output_block, &concrete_self->persistent_memory,
                         concrete_self->kmer_length,
                         &concrete_self->codec);
 

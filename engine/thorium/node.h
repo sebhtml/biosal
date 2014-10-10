@@ -91,6 +91,7 @@ struct thorium_node {
     struct core_vector actors;
     struct core_set auto_scaling_actors;
     struct thorium_worker_pool worker_pool;
+    struct thorium_transport_profiler transport_profiler;
     struct core_map actor_names;
     struct core_vector initial_actors;
     int received_initial_actors;
