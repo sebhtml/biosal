@@ -194,6 +194,10 @@ void biosal_sequence_store_receive(struct thorium_actor *actor, struct thorium_m
             core_vector_iterator_destroy(&concrete_actor->iterator);
             concrete_actor->iterator_started = 0;
 
+       /*
+        * THis is no longer needed
+        */
+#if 0
             /*
              * Assume that the second round will be for
              * arcs.
@@ -215,6 +219,7 @@ void biosal_sequence_store_receive(struct thorium_actor *actor, struct thorium_m
              */
 
             concrete_actor->required_kmers = NO_USEFUL_VALUE;
+#endif
         }
 
         concrete_actor->left = concrete_actor->received;
@@ -586,7 +591,16 @@ int biosal_sequence_store_get_required_kmers(struct thorium_actor *actor, struct
      * and any actor type can use that.
      */
     stores_per_node = biosal_assembly_graph_store_get_store_count_per_node(actor);
+
+#if 0
     total_kmer_stores = nodes * stores_per_node;
+#else
+    /*
+     * The current actor does not care what is being done with the
+     * message down the road.
+     */
+    total_kmer_stores = 1;
+#endif
 
     thorium_message_unpack_int(message, 0, &kmer_length);
 
