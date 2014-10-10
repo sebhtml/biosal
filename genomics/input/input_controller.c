@@ -134,6 +134,8 @@ void biosal_input_controller_init(struct thorium_actor *actor)
 
     /* configuration for the input controller
      * other values for block size: 512, 1024, 2048, 4096, 8192 * /
+     *
+     * This is a number of sequences and not a number of bytes.
      */
     concrete_actor->block_size = 4096;
     concrete_actor->stores_per_worker_per_spawner = 0;

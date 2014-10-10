@@ -13,6 +13,8 @@
 #include <core/helpers/message_helper.h>
 #include <core/system/memory.h>
 
+#include <biosal.h>
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -28,7 +30,7 @@
 #define MINIMUM_PERIOD 4096
 #define NO_USEFUL_VALUE (-879)
 
-#define BASIC_PRODUCTION_BYTE_COUNT 4096
+#define BASIC_PRODUCTION_BYTE_COUNT BIOSAL_IDEAL_BUFFER_SIZE
 
 void biosal_sequence_store_init(struct thorium_actor *actor);
 void biosal_sequence_store_destroy(struct thorium_actor *actor);

@@ -24,6 +24,8 @@
 #include <core/system/debugger.h>
 #include <core/system/memory.h>
 
+#include <biosal.h>
+
 #include <stdio.h>
 #include <inttypes.h>
 
@@ -239,10 +241,8 @@ void biosal_assembly_block_classifier_flush(struct thorium_actor *self, int cust
 
     /*
      * Only flush when required.
-     *
-     * This is 4000 bytes.
      */
-    threshold = 4000;
+    threshold = BIOSAL_IDEAL_BUFFER_SIZE;
 
     concrete_actor = (struct biosal_assembly_block_classifier *)thorium_actor_concrete_actor(self);
 

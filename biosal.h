@@ -2,6 +2,14 @@
 #ifndef BIOSAL_H
 #define BIOSAL_H
 
+/*
+ * This is the suggested buffer size.
+ *
+ * This is not a requirement because Thorium supports any
+ * buffer size, unlike RayPlatform.
+ */
+#define BIOSAL_IDEAL_BUFFER_SIZE 4096
+
 /* engine */
 
 #include "engine/thorium/thorium_engine.h"

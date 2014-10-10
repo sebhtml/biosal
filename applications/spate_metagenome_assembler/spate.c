@@ -157,6 +157,10 @@ void spate_init(struct thorium_actor *self)
     thorium_actor_add_script(self, SCRIPT_UNITIG_MANAGER,
                     &biosal_unitig_manager_script);
 
+    /*
+     * This is the I/O controller block size.
+     * This is a number of sequences.
+     */
     concrete_self->block_size = 16 * 4096;
 
     concrete_self->file_index = 0;
