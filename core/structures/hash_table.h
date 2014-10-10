@@ -42,6 +42,8 @@ struct core_hash_table {
     uint32_t flags;
 
     struct core_memory_pool *memory;
+
+    int (*get_state)(struct core_hash_table_group *self, uint64_t bucket);
 };
 
 /*

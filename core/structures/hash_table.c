@@ -145,6 +145,8 @@ void core_hash_table_init(struct core_hash_table *table, uint64_t buckets,
     table->groups = NULL;
     core_hash_table_set_memory_pool(table, NULL);
     core_hash_table_enable_deletion_support(table);
+
+    table->get_state = core_hash_table_group_state;
 }
 
 void core_hash_table_destroy(struct core_hash_table *table)
@@ -299,7 +301,7 @@ int core_hash_table_state(struct core_hash_table *self, uint64_t bucket)
 
     table_group = self->groups + group;
 
-    return core_hash_table_group_state(table_group, bucket_in_group);
+    return self->get_state(table_group, bucket_in_group);
 }
 
 void *core_hash_table_key(struct core_hash_table *self, uint64_t bucket)
@@ -485,11 +487,15 @@ void core_hash_table_set_memory_pool(struct core_hash_table *table, struct core_
 void core_hash_table_disable_deletion_support(struct core_hash_table *table)
 {
     CORE_BITMAP_CLEAR_BIT(table->flags, CORE_HASH_TABLE_FLAG_DELETION_SUPPORT);
+
+    table->get_state = core_hash_table_group_state_no_deletion;
 }
 
 void core_hash_table_enable_deletion_support(struct core_hash_table *table)
 {
     CORE_BITMAP_SET_BIT(table->flags, CORE_HASH_TABLE_FLAG_DELETION_SUPPORT);
+
+    table->get_state = core_hash_table_group_state;
 }
 
 int core_hash_table_deletion_support_is_enabled(struct core_hash_table *table)
@@ -730,7 +736,7 @@ int core_hash_table_find_bucket(struct core_hash_table *table, void *key,
         }
 #endif
 
-        state = core_hash_table_group_state(hash_group, local_bucket_in_group);
+        state = table->get_state(hash_group, local_bucket_in_group);
 
 #ifdef CORE_HASH_TABLE_DEBUG_DOUBLE_HASHING_DEBUG
         if (CORE_BITMAP_GET_BIT(table->flags, CORE_HASH_TABLE_FLAG_DEBUG)) {
@@ -788,8 +794,6 @@ int core_hash_table_find_bucket(struct core_hash_table *table, void *key,
             return CORE_HASH_TABLE_KEY_NOT_FOUND;
         }
 
-
-
         /*
          * Case 3.
          *
@@ -800,8 +804,8 @@ int core_hash_table_find_bucket(struct core_hash_table *table, void *key,
          * we only pick it up for CORE_HASH_TABLE_OPERATION_ADD
          * \see http://webdocs.cs.ualberta.ca/~holte/T26/open-addr.html
          */
-        if (state & CORE_HASH_TABLE_BUCKET_DELETED
-              && operation_is_delete_or_get) {
+        if (operation_is_delete_or_get
+                        && (state & CORE_HASH_TABLE_BUCKET_DELETED)) {
 
 #ifdef CORE_HASH_TABLE_DEBUG_DOUBLE_HASHING_DEBUG
             if (CORE_BITMAP_GET_BIT(table->flags, CORE_HASH_TABLE_FLAG_DEBUG)) {
@@ -819,8 +823,8 @@ int core_hash_table_find_bucket(struct core_hash_table *table, void *key,
          * A deleted bucket was found, it can be used to add
          * an item.
          */
-        if (state & CORE_HASH_TABLE_BUCKET_DELETED
-               && operation_is_add) {
+        if (operation_is_add
+                        && (state & CORE_HASH_TABLE_BUCKET_DELETED)) {
 
 #ifdef CORE_HASH_TABLE_DEBUG_DOUBLE_HASHING_DEBUG
             if (CORE_BITMAP_GET_BIT(table->flags, CORE_HASH_TABLE_FLAG_DEBUG)) {

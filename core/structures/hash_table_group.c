@@ -108,6 +108,10 @@ void *core_hash_table_group_add(struct core_hash_table_group *group,
 void *core_hash_table_group_get(struct core_hash_table_group *group,
                 uint64_t bucket, int key_size, int value_size)
 {
+    /*
+     * If check_state is 0, just return the bucket without checking the
+     * state.
+     */
     if (core_hash_table_group_state(group, bucket) ==
                     CORE_HASH_TABLE_BUCKET_OCCUPIED) {
 
@@ -136,6 +140,17 @@ int core_hash_table_group_state(struct core_hash_table_group *group, uint64_t bu
     if (group->deletion_bitmap != NULL
                     && core_hash_table_group_get_bit(group->deletion_bitmap, bucket)) {
         return CORE_HASH_TABLE_BUCKET_DELETED;
+    }
+
+    return CORE_HASH_TABLE_BUCKET_EMPTY;
+}
+
+int core_hash_table_group_state_no_deletion(struct core_hash_table_group *group, uint64_t bucket)
+{
+    CORE_DEBUGGER_ASSERT(group != NULL);
+
+    if (core_hash_table_group_get_bit(group->occupancy_bitmap, bucket)) {
+        return CORE_HASH_TABLE_BUCKET_OCCUPIED;
     }
 
     return CORE_HASH_TABLE_BUCKET_EMPTY;

@@ -35,6 +35,7 @@ void *core_hash_table_group_get(struct core_hash_table_group *self, uint64_t buc
 void core_hash_table_group_delete(struct core_hash_table_group *self, uint64_t bucket);
 
 int core_hash_table_group_state(struct core_hash_table_group *self, uint64_t bucket);
+int core_hash_table_group_state_no_deletion(struct core_hash_table_group *self, uint64_t bucket);
 
 void *core_hash_table_group_key(struct core_hash_table_group *self, uint64_t bucket,
                int key_size, int value_size);
