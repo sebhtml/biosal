@@ -208,3 +208,10 @@ void biosal_assembly_arc_block_add_arc_copy(struct biosal_assembly_arc_block *se
 
     core_vector_push_back(&self->arcs, &new_arc);
 }
+
+void biosal_assembly_arc_block_clear(struct biosal_assembly_arc_block *self, struct core_memory_pool *pool)
+{
+    core_vector_clear(&self->arcs);
+
+    core_set_clear(&self->set);
+}

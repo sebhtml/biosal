@@ -52,5 +52,6 @@ void biosal_assembly_arc_block_enable_redundancy_check(struct biosal_assembly_ar
 void biosal_assembly_arc_block_add_arc_copy(struct biosal_assembly_arc_block *self,
                 struct biosal_assembly_arc *arc, int kmer_length, struct biosal_dna_codec *codec,
                 struct core_memory_pool *pool);
+void biosal_assembly_arc_block_clear(struct biosal_assembly_arc_block *self, struct core_memory_pool *pool);
 
 #endif
