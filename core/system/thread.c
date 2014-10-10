@@ -206,7 +206,7 @@ void core_thread_wait(struct core_thread *thread)
     thread->waiting = 1;
     ++thread->wake_up_event_count;
 
-    core_memory_fence();
+    core_memory_store_fence();
 
 #ifdef CORE_THREAD_DEBUG_WAIT
     printf("DEBUG core_thread_wait enter pthread_cond_wait\n");
@@ -229,7 +229,7 @@ void core_thread_wait(struct core_thread *thread)
      * Set the waiting variable to 0 and make it visible
      */
     thread->waiting = 0;
-    core_memory_fence();
+    core_memory_store_fence();
 
     /*
      * Here, the thread gets the control, and the waiting_mutex is now locked.

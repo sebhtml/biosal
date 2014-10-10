@@ -139,10 +139,9 @@ int core_memory_has_enough_bytes();
 size_t core_memory_align(size_t unaligned);
 size_t core_memory_align_private(size_t unaligned, size_t alignment);
 
+void core_memory_load_fence();
+void core_memory_store_fence();
 void core_memory_fence();
-void core_l_fence();
-void core_s_fence();
-void core_fence();
 
 size_t core_memory_normalize_segment_length_power_of_2(size_t size);
 size_t core_memory_normalize_segment_length_page_size(size_t size);

@@ -223,7 +223,7 @@ void thorium_actor_destroy(struct thorium_actor *self)
      */
     CORE_BITMAP_SET_BIT(self->flags, FLAG_DEAD);
 
-    core_memory_fence();
+    core_memory_store_fence();
 
     thorium_dispatcher_destroy(&self->dispatcher);
 
@@ -568,7 +568,7 @@ void thorium_actor_die(struct thorium_actor *self)
      * Publish the memory transaction so that other threads see it
      * too.
      */
-    core_memory_fence();
+    core_memory_store_fence();
 }
 
 struct core_counter *thorium_actor_counter(struct thorium_actor *self)

@@ -14,6 +14,29 @@
 #include <stdint.h>
 
 /*
+ * Check if this is a x86 CPU.
+ * According to http://bartoszmilewski.com/2008/11/05/who-ordered-memory-fences-on-an-x86/
+ * write operations are not reordered.
+ *
+ * This is nice because in Thorium, we don't need to order
+ * load operations with write operations. But we do need
+ * to order load operations with load operations.
+ * And also we need to order write operations with write
+ * operations. In particular, this is required in the
+ * 1-producer 1-consumer rings.
+ *
+ * The list of macros is available at
+ *
+ * http://sourceforge.net/p/predef/wiki/Architectures/
+ */
+#if defined(__i386__) || defined(__x86_64__)
+
+#define STORE_OPERATIONS_ARE_ORDERED
+#define LOAD_OPERATIONS_ARE_ORDERED
+
+#endif
+
+/*
  * bound memory allocations in order
  * to detect provided negative numbers
  * size_t value of 18446744073709551615 corresponds to int value -1)
@@ -358,40 +381,50 @@ size_t core_memory_align_private(size_t unaligned, size_t alignment)
     return aligned;
 }
 
-void core_memory_fence()
+void core_memory_load_fence()
 {
-    core_fence();
-}
-
-void core_l_fence()
-{
-#if defined(__bgq__)
-
-    /* I am not sure if  __eieio  is a load fence */
-    core_fence();
+#ifdef LOAD_OPERATIONS_ARE_ORDERED
 
 #elif defined(__GNUC__)
 
-    core_fence();
+    __sync_synchronize();
+
+#elif defined(__bgq__)
+
+    /*
+     * The macros with XL is:
+     *
+     * _ARCH_PPC
+     * _ARCH_PPC64
+     *
+     * With GNU, it is __powerpc64__.
+     */
+    /* I am not sure if  __eieio  is a load fence */
+    core_memory_fence();
 
 #elif defined(_CRAYC)
     __builtin_ia32_lfence();
 
 #else
 
-    core_fence();
+    core_memory_fence();
 
 #endif
-
 }
 
-void core_s_fence()
+void core_memory_store_fence()
 {
-#if defined(__GNUC__)
+#ifdef STORE_OPERATIONS_ARE_ORDERED
 
-    core_fence();
+#elif defined(__GNUC__)
+
+    __sync_synchronize();
 
 #elif defined(__bgq__)
+
+    /*
+     * \see http://publib.boulder.ibm.com/infocenter/comphelp/v101v121/index.jsp?topic=/com.ibm.xlcpp101.aix.doc/compiler_ref/bif_lwsync_iospace_lwsync.html
+     */
     __lwsync();
 
 #elif defined(_CRAYC)
@@ -399,12 +432,11 @@ void core_s_fence()
 
 #else
 
-    core_fence();
-
+    core_memory_fence();
 #endif
 }
 
-void core_fence()
+void core_memory_fence()
 {
 #if defined(__GNUC__)
 
@@ -429,8 +461,6 @@ void core_fence()
      * \see http://publib.boulder.ibm.com/infocenter/cellcomp/v101v121/index.jsp?topic=/com.ibm.xlcpp101.cell.doc/compiler_ref/compiler_builtins.html
      */
     __sync();
-
-
 
 #elif defined(_CRAYC)
 

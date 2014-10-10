@@ -18,7 +18,9 @@
 #define STATE_VISITORS      1
 #define STATE_WALKERS       2
 
+/*
 #define DISABLED
+*/
 
 void biosal_unitig_manager_init(struct thorium_actor *self);
 void biosal_unitig_manager_destroy(struct thorium_actor *self);
