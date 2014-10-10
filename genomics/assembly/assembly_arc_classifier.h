@@ -35,6 +35,7 @@ struct biosal_assembly_arc_classifier {
      * Output bins
      */
     struct core_memory_pool persistent_memory;
+    int maximum_pending_requests;
     struct core_vector output_blocks;
 };
 

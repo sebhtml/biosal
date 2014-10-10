@@ -24,6 +24,9 @@ void biosal_assembly_arc_classifier_verify_counters(struct thorium_actor *self);
 void biosal_assembly_arc_classifier_set_consumers(struct thorium_actor *self,
                 struct thorium_message *message);
 
+void biosal_assembly_arc_classifier_flush_all(struct thorium_actor *self,
+                struct thorium_message *message);
+
 struct thorium_script biosal_assembly_arc_classifier_script = {
     .identifier = SCRIPT_ASSEMBLY_ARC_CLASSIFIER,
     .name = "biosal_assembly_arc_classifier",
@@ -82,6 +85,8 @@ void biosal_assembly_arc_classifier_init(struct thorium_actor *self)
                     thorium_actor_script_name(self),
                     thorium_actor_name(self),
                     concrete_self->maximum_pending_request_count);
+
+    concrete_self->maximum_pending_requests = 0;
 }
 
 void biosal_assembly_arc_classifier_destroy(struct thorium_actor *self)
@@ -166,7 +171,6 @@ void biosal_assembly_arc_classifier_push_arc_block(struct thorium_actor *self, s
     struct biosal_assembly_arc_block *output_block;
     int consumer_count;
     struct core_vector *input_arcs;
-    struct core_vector *output_arcs;
     int size;
     int i;
     struct biosal_assembly_arc *arc;
@@ -174,16 +178,8 @@ void biosal_assembly_arc_classifier_push_arc_block(struct thorium_actor *self, s
     int count;
     struct biosal_dna_kmer *kmer;
     int consumer_index;
-    int arc_count;
-    int consumer;
-    struct thorium_message new_message;
     struct core_memory_pool *ephemeral_memory;
-    int new_count;
-    void *new_buffer;
-    int *bucket;
-    int maximum_pending_requests;
-    int maximum_buffer_length;
-
+    
     count = thorium_message_count(message);
     buffer = thorium_message_buffer(message);
     ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
@@ -262,94 +258,7 @@ void biosal_assembly_arc_classifier_push_arc_block(struct thorium_actor *self, s
      * Finally, send these output blocks to consumers.
      */
 
-    maximum_pending_requests = 0;
-    maximum_buffer_length = 0;
-
-    /*
-     * Figure out the maximum buffer length tor
-     * messages.
-     */
-    for (i = 0; i < consumer_count; i++) {
-
-        output_block = core_vector_at(&concrete_self->output_blocks, i);
-        new_count = biosal_assembly_arc_block_pack_size(output_block, concrete_self->kmer_length,
-                    &concrete_self->codec);
-
-        if (new_count > maximum_buffer_length) {
-            maximum_buffer_length = new_count;
-        }
-    }
-
-#if 0
-    printf("POOL_BALANCE %d\n",
-                    core_memory_pool_profile_balance_count(ephemeral_memory));
-#endif
-
-    for (i = 0; i < consumer_count; i++) {
-
-        output_block = core_vector_at(&concrete_self->output_blocks, i);
-        output_arcs = biosal_assembly_arc_block_get_arcs(output_block);
-        arc_count = core_vector_size(output_arcs);
-
-        /*
-         * Don't send an empty message.
-         */
-        if (arc_count > 0) {
-
-            /*
-             * Allocation is not required because new_count <= maximum_buffer_length
-             */
-            new_count = biosal_assembly_arc_block_pack_size(output_block, concrete_self->kmer_length,
-                    &concrete_self->codec);
-
-            new_buffer = thorium_actor_allocate(self, maximum_buffer_length);
-
-            CORE_DEBUGGER_ASSERT(new_count <= maximum_buffer_length);
-
-            biosal_assembly_arc_block_pack(output_block, new_buffer, concrete_self->kmer_length,
-                    &concrete_self->codec);
-
-            thorium_message_init(&new_message, ACTION_ASSEMBLY_PUSH_ARC_BLOCK,
-                    new_count, new_buffer);
-
-            consumer = core_vector_at_as_int(&concrete_self->consumers, i);
-
-            /*
-             * Send the message.
-             */
-            thorium_actor_send(self, consumer, &new_message);
-            thorium_message_destroy(&new_message);
-
-            /* update event counters for control.
-             */
-            bucket = core_vector_at(&concrete_self->pending_requests, i);
-            ++(*bucket);
-            ++concrete_self->active_requests;
-
-            if (*bucket > maximum_pending_requests) {
-                maximum_pending_requests = *bucket;
-            }
-
-            if (*bucket > concrete_self->maximum_pending_request_count) {
-                ++concrete_self->consumer_count_above_threshold;
-            }
-        }
-
-        CORE_DEBUGGER_ASSERT(!core_memory_pool_has_double_free(ephemeral_memory));
-
-#if 0
-        printf("i = %d\n", i);
-#endif
-
-        /*
-         * Destroy output block.
-         */
-        biosal_assembly_arc_block_clear(output_block,
-                    &concrete_self->persistent_memory);
-
-        CORE_DEBUGGER_LEAK_CHECK_DOUBLE_FREE(ephemeral_memory);
-        CORE_DEBUGGER_ASSERT(!core_memory_pool_has_double_free(ephemeral_memory));
-    }
+    biosal_assembly_arc_classifier_flush_all(self, message);
 
     CORE_DEBUGGER_ASSERT(!core_memory_pool_has_double_free(ephemeral_memory));
 
@@ -368,8 +277,8 @@ void biosal_assembly_arc_classifier_push_arc_block(struct thorium_actor *self, s
      * As long as maximum_pending_requests is lower than maximum_pending_request_count,
      * there is still space for at least one additional request.
      */
-    if (maximum_pending_requests < concrete_self->maximum_pending_request_count
-            && core_memory_has_enough_bytes()) {
+    if (concrete_self->maximum_pending_requests < concrete_self->maximum_pending_request_count) {
+            /*&& core_memory_has_enough_bytes()) {*/
 
         thorium_actor_send_empty(self, concrete_self->source,
                     ACTION_ASSEMBLY_PUSH_ARC_BLOCK_REPLY);
@@ -500,4 +409,114 @@ void biosal_assembly_arc_classifier_set_consumers(struct thorium_actor *self,
     }
 
     thorium_actor_send_reply_empty(self, ACTION_SET_CONSUMERS_REPLY);
+}
+
+void biosal_assembly_arc_classifier_flush_all(struct thorium_actor *self,
+                struct thorium_message *message)
+{
+    int maximum_buffer_length;
+    int new_count;
+    void *new_buffer;
+    int consumer;
+    struct thorium_message new_message;
+    int *bucket;
+    int arc_count;
+    struct core_vector *output_arcs;
+    int i;
+    struct biosal_assembly_arc_classifier *concrete_self;
+    int consumer_count;
+    struct core_memory_pool *ephemeral_memory;
+    struct biosal_assembly_arc_block *output_block;
+
+    ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
+    concrete_self = thorium_actor_concrete_actor(self);
+
+    consumer_count = core_vector_size(&concrete_self->output_blocks);
+    maximum_buffer_length = 0;
+
+    /*
+     * Figure out the maximum buffer length tor
+     * messages.
+     */
+    for (i = 0; i < consumer_count; i++) {
+
+        output_block = core_vector_at(&concrete_self->output_blocks, i);
+        new_count = biosal_assembly_arc_block_pack_size(output_block, concrete_self->kmer_length,
+                    &concrete_self->codec);
+
+        if (new_count > maximum_buffer_length) {
+            maximum_buffer_length = new_count;
+        }
+    }
+
+#if 0
+    printf("POOL_BALANCE %d\n",
+                    core_memory_pool_profile_balance_count(ephemeral_memory));
+#endif
+
+    for (i = 0; i < consumer_count; i++) {
+
+        output_block = core_vector_at(&concrete_self->output_blocks, i);
+        output_arcs = biosal_assembly_arc_block_get_arcs(output_block);
+        arc_count = core_vector_size(output_arcs);
+
+        /*
+         * Don't send an empty message.
+         */
+        if (arc_count > 0) {
+
+            /*
+             * Allocation is not required because new_count <= maximum_buffer_length
+             */
+            new_count = biosal_assembly_arc_block_pack_size(output_block, concrete_self->kmer_length,
+                    &concrete_self->codec);
+
+            new_buffer = thorium_actor_allocate(self, new_count);
+
+            CORE_DEBUGGER_ASSERT(new_count <= maximum_buffer_length);
+
+            biosal_assembly_arc_block_pack(output_block, new_buffer, concrete_self->kmer_length,
+                    &concrete_self->codec);
+
+            thorium_message_init(&new_message, ACTION_ASSEMBLY_PUSH_ARC_BLOCK,
+                    new_count, new_buffer);
+
+            consumer = core_vector_at_as_int(&concrete_self->consumers, i);
+
+            /*
+             * Send the message.
+             */
+            thorium_actor_send(self, consumer, &new_message);
+            thorium_message_destroy(&new_message);
+
+            /* update event counters for control.
+             */
+            bucket = core_vector_at(&concrete_self->pending_requests, i);
+            ++(*bucket);
+            ++concrete_self->active_requests;
+
+            if (*bucket > concrete_self->maximum_pending_requests) {
+                concrete_self->maximum_pending_requests = *bucket;
+            }
+
+            if (*bucket > concrete_self->maximum_pending_request_count) {
+                ++concrete_self->consumer_count_above_threshold;
+            }
+        }
+
+        CORE_DEBUGGER_ASSERT(!core_memory_pool_has_double_free(ephemeral_memory));
+
+#if 0
+        printf("i = %d\n", i);
+#endif
+
+        /*
+         * Destroy output block.
+         */
+        biosal_assembly_arc_block_clear(output_block,
+                    &concrete_self->persistent_memory);
+
+        CORE_DEBUGGER_LEAK_CHECK_DOUBLE_FREE(ephemeral_memory);
+        CORE_DEBUGGER_ASSERT(!core_memory_pool_has_double_free(ephemeral_memory));
+    }
 }
