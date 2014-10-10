@@ -108,8 +108,6 @@ void biosal_assembly_arc_classifier_receive(struct thorium_actor *self, struct t
     int tag;
     void *buffer;
     struct biosal_assembly_arc_classifier *concrete_self;
-    int size;
-    int i;
     int *bucket;
     int source;
     int source_index;
@@ -166,7 +164,6 @@ void biosal_assembly_arc_classifier_push_arc_block(struct thorium_actor *self, s
     int source;
     struct biosal_assembly_arc_block input_block;
     struct biosal_assembly_arc_block *output_block;
-    struct core_memory_pool *ephemeral_memory;
     int consumer_count;
     struct core_vector *input_arcs;
     struct core_vector *output_arcs;
@@ -180,15 +177,16 @@ void biosal_assembly_arc_classifier_push_arc_block(struct thorium_actor *self, s
     int arc_count;
     int consumer;
     struct thorium_message new_message;
+    struct core_memory_pool *ephemeral_memory;
     int new_count;
     void *new_buffer;
     int *bucket;
     int maximum_pending_requests;
     int maximum_buffer_length;
-    int reservation;
 
     count = thorium_message_count(message);
     buffer = thorium_message_buffer(message);
+    ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
 
     if (count == 0) {
         printf("Error, count is 0 (classifier_push_arc_block)\n");
@@ -198,7 +196,6 @@ void biosal_assembly_arc_classifier_push_arc_block(struct thorium_actor *self, s
     concrete_self = (struct biosal_assembly_arc_classifier *)thorium_actor_concrete_actor(self);
     source = thorium_message_source(message);
     consumer_count = core_vector_size(&concrete_self->consumers);
-    ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
 
     CORE_DEBUGGER_LEAK_DETECTION_BEGIN(ephemeral_memory, classify_arcs);
 
@@ -480,7 +477,9 @@ void biosal_assembly_arc_classifier_set_consumers(struct thorium_actor *self,
 
     core_vector_resize(&concrete_self->output_blocks, consumer_count);
 
+    /*
     CORE_DEBUGGER_ASSERT(!core_memory_pool_has_double_free(ephemeral_memory));
+    */
 
     if (concrete_self->kmer_length < 0)
         printf("Error kmer_length not set\n");
