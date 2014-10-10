@@ -45,6 +45,8 @@ void biosal_assembly_block_classifier_receive(struct thorium_actor *actor, struc
 
 void biosal_assembly_block_classifier_flush(struct thorium_actor *self, int customer_index, struct core_vector *buffers,
                 int force);
+void biosal_assembly_block_classifier_flush_all(struct thorium_actor *self);
+
 void biosal_assembly_block_classifier_verify(struct thorium_actor *self, struct thorium_message *message);
 void biosal_assembly_block_classifier_aggregate_kernel_output(struct thorium_actor *self, struct thorium_message *message);
 
@@ -113,11 +115,15 @@ void biosal_assembly_block_classifier_init(struct thorium_actor *self)
     concrete_actor->consumer_count_above_threshold = 0;
 
     core_vector_init(&concrete_actor->buffers, 0);
+
+    concrete_actor->customer_block_size = 42;
 }
 
 void biosal_assembly_block_classifier_destroy(struct thorium_actor *self)
 {
     struct biosal_assembly_block_classifier *concrete_actor;
+    struct core_vector_iterator iterator;
+    struct biosal_dna_kmer_frequency_block *output_block;
 
     concrete_actor = (struct biosal_assembly_block_classifier *)thorium_actor_concrete_actor(self);
 
@@ -129,6 +135,20 @@ void biosal_assembly_block_classifier_destroy(struct thorium_actor *self)
     core_fast_queue_destroy(&concrete_actor->stalled_producers);
 
     core_vector_destroy(&concrete_actor->consumers);
+
+    core_vector_iterator_init(&iterator, &concrete_actor->buffers);
+
+    while (core_vector_iterator_has_next(&iterator)) {
+
+        core_vector_iterator_next(&iterator, (void **)&output_block);
+
+        /*
+         * Destroy block
+         */
+        biosal_dna_kmer_frequency_block_destroy(output_block, &concrete_actor->persistent_pool);
+    }
+
+    core_vector_iterator_destroy(&iterator);
 
     core_vector_destroy(&concrete_actor->buffers);
 
@@ -172,6 +192,8 @@ void biosal_assembly_block_classifier_receive(struct thorium_actor *self, struct
     } else if (tag == ACTION_AGGREGATOR_FLUSH) {
 
         concrete_actor->forced = 1;
+
+        biosal_assembly_block_classifier_flush_all(self);
 
         thorium_actor_send_reply_empty(self, ACTION_AGGREGATOR_FLUSH_REPLY);
 
@@ -217,8 +239,10 @@ void biosal_assembly_block_classifier_flush(struct thorium_actor *self, int cust
 
     /*
      * Only flush when required.
+     *
+     * This is 4000 bytes.
      */
-    threshold = -1;
+    threshold = 4000;
 
     concrete_actor = (struct biosal_assembly_block_classifier *)thorium_actor_concrete_actor(self);
 
@@ -278,7 +302,7 @@ void biosal_assembly_block_classifier_flush(struct thorium_actor *self, int cust
     biosal_dna_kmer_frequency_block_destroy(customer_block_pointer, ephemeral_memory);
 
     biosal_dna_kmer_frequency_block_init(customer_block_pointer, concrete_actor->kmer_length,
-                    ephemeral_memory, &concrete_actor->codec,
+                    &concrete_actor->persistent_pool, &concrete_actor->codec,
                         concrete_actor->customer_block_size);
 
     concrete_actor->flushed++;
@@ -381,6 +405,8 @@ void biosal_assembly_block_classifier_aggregate_kernel_output(struct thorium_act
 
     concrete_actor->received++;
 
+    CORE_DEBUGGER_LEAK_DETECTION_BEGIN(ephemeral_memory, input);
+
     biosal_dna_kmer_block_init_empty(&input_block);
     biosal_dna_kmer_block_unpack(&input_block, buffer, ephemeral_memory,
                         &concrete_actor->codec);
@@ -397,23 +423,14 @@ void biosal_assembly_block_classifier_aggregate_kernel_output(struct thorium_act
     entries = core_vector_size(kmers);
 
     customer_count = core_vector_size(&concrete_actor->consumers);
-    concrete_actor->customer_block_size = (entries / customer_count) * 2;
 
     /*
-     * Reserve entries
+     * Actually populate buffers.
      */
-
-    for (i = 0; i < core_vector_size(&concrete_actor->consumers); i++) {
-
-        customer_block_pointer = (struct biosal_dna_kmer_frequency_block *)core_vector_at(&concrete_actor->buffers,
-                        i);
-        biosal_dna_kmer_frequency_block_init(customer_block_pointer, concrete_actor->kmer_length,
-                        ephemeral_memory, &concrete_actor->codec,
-                        concrete_actor->customer_block_size);
-
-    }
-
     for (i = 0; i < entries; i++) {
+
+        CORE_DEBUGGER_LEAK_DETECTION_BEGIN(ephemeral_memory, iteration);
+
         kmer = (struct biosal_dna_kmer *)core_vector_at(kmers, i);
 
         /*
@@ -422,7 +439,7 @@ void biosal_assembly_block_classifier_aggregate_kernel_output(struct thorium_act
         */
 
         customer_index = biosal_dna_kmer_store_index(kmer, customer_count, concrete_actor->kmer_length,
-                        &concrete_actor->codec, thorium_actor_get_ephemeral_memory(self));
+                        &concrete_actor->codec, ephemeral_memory);
 
         customer_block_pointer = (struct biosal_dna_kmer_frequency_block *)core_vector_at(&concrete_actor->buffers,
                         customer_index);
@@ -438,11 +455,15 @@ void biosal_assembly_block_classifier_aggregate_kernel_output(struct thorium_act
          * add kmer to buffer and try to flush
          */
 
+        CORE_DEBUGGER_LEAK_DETECTION_BEGIN(ephemeral_memory, add);
+
         /* classify the kmer and put it in the good buffer.
          */
-        biosal_dna_kmer_frequency_block_add_kmer(customer_block_pointer, kmer, ephemeral_memory,
+        biosal_dna_kmer_frequency_block_add_kmer(customer_block_pointer, kmer,
+                        &concrete_actor->persistent_pool,
                         &concrete_actor->codec);
 
+        CORE_DEBUGGER_LEAK_DETECTION_END(ephemeral_memory, add);
 
         /*
          * The Flush() action below is only required when using
@@ -462,6 +483,7 @@ void biosal_assembly_block_classifier_aggregate_kernel_output(struct thorium_act
         BIOSAL_DEBUG_MARKER("assembly_block_classifier before flush");
 #endif
 
+        CORE_DEBUGGER_LEAK_DETECTION_END(ephemeral_memory, iteration);
     }
 
 #ifdef BIOSAL_ASSEMBLY_BLOCK_CLASSIFIER_DEBUG
@@ -480,18 +502,19 @@ void biosal_assembly_block_classifier_aggregate_kernel_output(struct thorium_act
 
     /* destroy the local copy of the block
      */
-    biosal_dna_kmer_block_destroy(&input_block, thorium_actor_get_ephemeral_memory(self));
+    biosal_dna_kmer_block_destroy(&input_block, ephemeral_memory);
+
+    CORE_DEBUGGER_LEAK_DETECTION_END(ephemeral_memory, input);
 
 #ifdef BIOSAL_ASSEMBLY_BLOCK_CLASSIFIER_DEBUG
         BIOSAL_DEBUG_MARKER("assembly_block_classifier marker EXIT");
 #endif
 
-    core_vector_iterator_init(&iterator, &concrete_actor->buffers);
-
-    /* Flush blocks.
-     * Destroy blocks and
-     * Destroy persistent memory pools, if any.
+    /* 
+     * Flush blocks if they are big enough.
      */
+
+    core_vector_iterator_init(&iterator, &concrete_actor->buffers);
 
     i = 0;
     while (core_vector_iterator_has_next(&iterator)) {
@@ -504,12 +527,14 @@ void biosal_assembly_block_classifier_aggregate_kernel_output(struct thorium_act
         printf("assembly_block_classifier flushing %d\n", customer_index);
 #endif
 
-        biosal_assembly_block_classifier_flush(self, customer_index, &concrete_actor->buffers, 1);
+        biosal_assembly_block_classifier_flush(self, customer_index, &concrete_actor->buffers, 0);
 
+#if 0
         /*
          * Destroy block
          */
         biosal_dna_kmer_frequency_block_destroy(output_block, ephemeral_memory);
+#endif
 
         i++;
     }
@@ -555,6 +580,7 @@ int biosal_assembly_block_classifier_set_consumers(struct thorium_actor *actor, 
     int size;
     int i;
     int zero;
+    struct biosal_dna_kmer_frequency_block *customer_block_pointer;
 
     concrete_actor = (struct biosal_assembly_block_classifier *)thorium_actor_concrete_actor(actor);
 
@@ -578,7 +604,7 @@ int biosal_assembly_block_classifier_set_consumers(struct thorium_actor *actor, 
      * The maximum number of active messages for any consumer is
      * set here.
      */
-    concrete_actor->maximum_active_messages = thorium_actor_active_message_limit(actor);
+    concrete_actor->maximum_active_messages = 1;
 
     printf("DEBUG45 classifier %d preparing %d buffers, kmer_length %d, ACTIVE_MESSAGE_LIMIT %d\n",
                     thorium_actor_name(actor),
@@ -599,6 +625,19 @@ int biosal_assembly_block_classifier_set_consumers(struct thorium_actor *actor, 
 
     core_vector_resize(&concrete_actor->buffers,
                     core_vector_size(&concrete_actor->consumers));
+
+    /*
+     * Reserve entries
+     */
+
+    for (i = 0; i < core_vector_size(&concrete_actor->consumers); i++) {
+
+        customer_block_pointer = (struct biosal_dna_kmer_frequency_block *)core_vector_at(&concrete_actor->buffers,
+                        i);
+        biosal_dna_kmer_frequency_block_init(customer_block_pointer, concrete_actor->kmer_length,
+                        &concrete_actor->persistent_pool, &concrete_actor->codec,
+                        concrete_actor->customer_block_size);
+    }
 
     return bytes;
 }
@@ -663,4 +702,33 @@ int biosal_assembly_block_classifier_pack_size(struct thorium_actor *actor)
     return biosal_assembly_block_classifier_pack_unpack(actor, CORE_PACKER_OPERATION_PACK_SIZE, NULL);
 }
 
+void biosal_assembly_block_classifier_flush_all(struct thorium_actor *self)
+{
+    int i;
+    int customer_index;
+    struct core_vector_iterator iterator;
+    struct biosal_dna_kmer_frequency_block *output_block;
+    struct biosal_assembly_block_classifier *concrete_actor;
 
+    concrete_actor = (struct biosal_assembly_block_classifier *)thorium_actor_concrete_actor(self);
+
+    /* 
+     * Flush blocks
+     */
+
+    core_vector_iterator_init(&iterator, &concrete_actor->buffers);
+
+    i = 0;
+    while (core_vector_iterator_has_next(&iterator)) {
+
+        core_vector_iterator_next(&iterator, (void **)&output_block);
+
+        customer_index = i;
+
+        biosal_assembly_block_classifier_flush(self, customer_index, &concrete_actor->buffers, 1);
+
+        i++;
+    }
+
+    core_vector_iterator_destroy(&iterator);
+}

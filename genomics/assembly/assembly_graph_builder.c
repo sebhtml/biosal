@@ -917,6 +917,9 @@ void biosal_assembly_graph_builder_notify_reply(struct thorium_actor *self, stru
     concrete_self->total_kmer_count += produced_kmer_count;
     ++concrete_self->notified_windows;
 
+    /*
+     * All sliding window terminated their job of extracting kmers.
+     */
     if (concrete_self->notified_windows == core_vector_size(&concrete_self->sliding_windows)) {
 
         printf("%s/%d : %" PRIu64 " kmers were generated during the actor computation.\n",
@@ -924,6 +927,18 @@ void biosal_assembly_graph_builder_notify_reply(struct thorium_actor *self, stru
             thorium_actor_name(self),
             concrete_self->total_kmer_count);
 
+        /*
+         * Tell all classifiers to flush now.
+         */
+
+        thorium_actor_send_range_empty(self, &concrete_self->block_classifiers,
+                        ACTION_AGGREGATOR_FLUSH);
+
+        /*
+         * Use message passing for control.
+         *
+         * \see http://dspace.mit.edu/handle/1721.1/6272
+         */
         thorium_actor_send_to_self_empty(self, ACTION_ASSEMBLY_GRAPH_BUILDER_CONTROL_COMPLEXITY);
     }
 }
