@@ -107,12 +107,13 @@ Key concepts
 | --- | --- | --- |
 | Message | Information with a source and a destination | struct thorium_message |
 | Actor | Something that receives messages and behaves according to a script | struct thorium_actor |
-| Actor mailbox | Messages for an actor are buffered there | thorium_fast_ring |
+| Actor mailbox | Messages for an actor are buffered there | struct core_fast_ring |
 | Script | Describes the behavior of an actor ([Hewitt, Bishop, Steiger 1973](http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.77.7898))| struct thorium_script |
 | Node | A runtime system that can be connected to other nodes (see [Erlang's definition](http://www.erlang.org/doc/reference_manual/distributed.html)) | struct thorium_node |
 | Worker pool | A set of available workers inside a node | struct thorium_worker_pool |
 | Worker | A instance that has a actor scheduling queue | struct thorium_worker |
-| Scheduling queue | Each worker has a actor scheduling queue and an outbound message queue | struct thorium_scheduling_queue |
+| Scheduler | Each worker has a actor scheduling queue and an outbound message queue | struct thorium_scheduler |
+| Transport | Each node has a transport subsystem for moving messages between nodes | struct thorium_transport |
 
 # Implementation of the runtime system
 
