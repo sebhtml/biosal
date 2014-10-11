@@ -221,8 +221,6 @@ int thorium_worker_enqueue_actor_special(struct thorium_worker *self, struct tho
 int thorium_worker_enqueue_message(struct thorium_worker *self, struct thorium_message *message);
 int thorium_worker_dequeue_message(struct thorium_worker *self, struct thorium_message *message);
 
-void thorium_worker_print_actors(struct thorium_worker *self, struct thorium_balancer *scheduler);
-
 void thorium_worker_evict_actor(struct thorium_worker *self, int actor_name);
 
 #ifdef THORIUM_WORKER_ENABLE_LOCK
