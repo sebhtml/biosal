@@ -52,7 +52,7 @@ int thorium_actor_active_message_limit_adaptive(struct thorium_actor *self);
 
 int thorium_actor_active_message_limit(struct thorium_actor *self)
 {
-    return 1;
+    return 3;
 }
 
 int thorium_actor_suggested_buffer_size(struct thorium_actor *self)
