@@ -383,7 +383,7 @@ size_t core_memory_align_private(size_t unaligned, size_t alignment)
 
 void core_memory_load_fence()
 {
-#ifdef LOAD_OPERATIONS_ARE_ORDERED
+#ifdef LOAD_OPERATIONS_ARE_ORDERED_disabled
 
 #elif defined(__GNUC__)
 
@@ -414,7 +414,7 @@ void core_memory_load_fence()
 
 void core_memory_store_fence()
 {
-#ifdef STORE_OPERATIONS_ARE_ORDERED
+#ifdef STORE_OPERATIONS_ARE_ORDERED_disabled
 
 #elif defined(__GNUC__)
 
