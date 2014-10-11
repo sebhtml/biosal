@@ -8,12 +8,12 @@
 #include <engine/thorium/node.h>
 #include <engine/thorium/actor.h>
 
+#include <biosal.h>
+
 /*
  * Size threshold.
- *
- * The current value is 8 KiB.
  */
-#define THORIUM_MESSAGE_MULTIPLEXER_SIZE_THRESHOLD_IN_BYTES (8 * 1024)
+#define THORIUM_MESSAGE_MULTIPLEXER_SIZE_THRESHOLD_IN_BYTES (0.90 * BIOSAL_IDEAL_BUFFER_SIZE)
 
 /*
  * Time threshold in microseconds.
