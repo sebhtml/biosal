@@ -242,7 +242,7 @@ void biosal_assembly_block_classifier_flush(struct thorium_actor *self, int cust
     /*
      * Only flush when required.
      */
-    threshold = BIOSAL_IDEAL_BUFFER_SIZE;
+    threshold = thorium_actor_suggested_buffer_size(self);
 
     concrete_actor = (struct biosal_assembly_block_classifier *)thorium_actor_concrete_actor(self);
 

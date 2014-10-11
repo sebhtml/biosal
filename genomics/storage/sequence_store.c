@@ -30,8 +30,6 @@
 #define MINIMUM_PERIOD 4096
 #define NO_USEFUL_VALUE (-879)
 
-#define BASIC_PRODUCTION_BYTE_COUNT BIOSAL_IDEAL_BUFFER_SIZE
-
 void biosal_sequence_store_init(struct thorium_actor *actor);
 void biosal_sequence_store_destroy(struct thorium_actor *actor);
 void biosal_sequence_store_receive(struct thorium_actor *actor, struct thorium_message *message);
@@ -112,7 +110,7 @@ void biosal_sequence_store_init(struct thorium_actor *actor)
      * generates twice the amount of bytes in the deliveries.
      */
 
-    concrete_actor->production_block_size = BASIC_PRODUCTION_BYTE_COUNT;
+    concrete_actor->production_block_size = thorium_actor_suggested_buffer_size(actor);
 }
 
 void biosal_sequence_store_destroy(struct thorium_actor *actor)
@@ -213,7 +211,7 @@ void biosal_sequence_store_receive(struct thorium_actor *actor, struct thorium_m
              * The reason is that arc payload are a bit larger and twice
              * in number too.
              */
-            concrete_actor->production_block_size = BASIC_PRODUCTION_BYTE_COUNT / 2;
+            concrete_actor->production_block_size = B2ASIC_PRODUCTION_BYTE_COUNT / 2;
 
             /*
              * Also reset the number of required kmers so that the old

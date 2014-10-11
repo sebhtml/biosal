@@ -459,7 +459,7 @@ void biosal_assembly_arc_classifier_flush_all(struct thorium_actor *self,
     struct biosal_assembly_arc_block *output_block;
     int threshold;
 
-    threshold = BIOSAL_IDEAL_BUFFER_SIZE;
+    threshold = thorium_actor_suggested_buffer_size(self);
 
     ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
     concrete_self = thorium_actor_concrete_actor(self);

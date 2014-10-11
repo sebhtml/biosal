@@ -8,13 +8,6 @@
 #include <engine/thorium/node.h>
 #include <engine/thorium/actor.h>
 
-#include <biosal.h>
-
-/*
- * Size threshold.
- */
-#define THORIUM_MESSAGE_MULTIPLEXER_SIZE_THRESHOLD_IN_BYTES (0.90 * BIOSAL_IDEAL_BUFFER_SIZE)
-
 /*
  * Time threshold in microseconds.
  *
@@ -27,7 +20,12 @@
 
 void thorium_multiplexer_policy_init(struct thorium_multiplexer_policy *self)
 {
-    self->threshold_buffer_size_in_bytes = THORIUM_MESSAGE_MULTIPLEXER_SIZE_THRESHOLD_IN_BYTES;
+
+    /*
+     * Size threshold.
+     */
+    self->threshold_buffer_size_in_bytes = (0.90 * thorium_actor_suggested_buffer_size(NULL));
+
     /*self->threshold_time_in_nanoseconds = THORIUM_DYNAMIC_TIMEOUT;*/
     self->threshold_time_in_nanoseconds = THORIUM_MESSAGE_MULTIPLEXER_TIME_THRESHOLD_IN_NANOSECONDS;
 
