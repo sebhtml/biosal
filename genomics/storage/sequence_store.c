@@ -578,6 +578,7 @@ int biosal_sequence_store_get_required_kmers(struct thorium_actor *actor, struct
     int stores_per_node;
     int position;
     int count;
+    int production_block_size;
 
     count = thorium_message_count(message);
     concrete_actor = thorium_actor_concrete_actor(actor);
@@ -598,6 +599,8 @@ int biosal_sequence_store_get_required_kmers(struct thorium_actor *actor, struct
     position = 0;
     position += thorium_message_unpack_int(message, 0, &kmer_length);
 
+    production_block_size = concrete_actor->production_block_size;
+
     /*
      * A bigger buffer means that the source wants a big message.
      */
@@ -607,8 +610,11 @@ int biosal_sequence_store_get_required_kmers(struct thorium_actor *actor, struct
         /*
          * The current actor does not care what is being done with the
          * message down the road.
+         *
+         * Request a block size of around 8 MiB.
          */
         total_kmer_stores = 1;
+        production_block_size *= (2 * 1024);
     }
 
     if (kmer_length <= 0) {
@@ -619,7 +625,7 @@ int biosal_sequence_store_get_required_kmers(struct thorium_actor *actor, struct
         return 0;
     }
 
-    minimum_end_buffer_size_in_bytes = concrete_actor->production_block_size;
+    minimum_end_buffer_size_in_bytes = production_block_size;
     sum_of_buffer_sizes = minimum_end_buffer_size_in_bytes * total_kmer_stores;
 
     /* Assume 1 byte per nucleotide since transportation does not use 2-bit encoding in the
