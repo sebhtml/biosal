@@ -28,6 +28,8 @@
 
 #define BIOSAL_IDEAL_BUFFER_SIZE 4096
 
+#define BIOSAL_IDEAL_ACTIVE_MESSAGE_LIMIT 4
+
 #define THORIUM_NODE_COUNT_PER_ACTIVE_MESSAGE_PORTABLE 256
 
 #ifdef __DISABLEbgq__
@@ -52,7 +54,7 @@ int thorium_actor_active_message_limit_adaptive(struct thorium_actor *self);
 
 int thorium_actor_active_message_limit(struct thorium_actor *self)
 {
-    return 3;
+    return BIOSAL_IDEAL_ACTIVE_MESSAGE_LIMIT;
 }
 
 int thorium_actor_suggested_buffer_size(struct thorium_actor *self)
