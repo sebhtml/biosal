@@ -79,7 +79,7 @@ void biosal_assembly_arc_classifier_init(struct thorium_actor *self)
 
     concrete_self->producer_is_waiting = 0;
 
-    concrete_self->maximum_pending_request_count = 1;
+    concrete_self->maximum_pending_request_count = thorium_actor_active_message_limit(self);
 
     concrete_self->consumer_count_above_threshold = 0;
 

@@ -604,7 +604,7 @@ int biosal_assembly_block_classifier_set_consumers(struct thorium_actor *actor, 
      * The maximum number of active messages for any consumer is
      * set here.
      */
-    concrete_actor->maximum_active_messages = 1;
+    concrete_actor->maximum_active_messages = thorium_actor_active_message_limit(actor);
 
     printf("DEBUG45 classifier %d preparing %d buffers, kmer_length %d, ACTIVE_MESSAGE_LIMIT %d\n",
                     thorium_actor_name(actor),
