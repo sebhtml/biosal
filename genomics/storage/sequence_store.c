@@ -110,7 +110,8 @@ void biosal_sequence_store_init(struct thorium_actor *actor)
      * generates twice the amount of bytes in the deliveries.
      */
 
-    concrete_actor->production_block_size = thorium_actor_suggested_buffer_size(actor);
+    concrete_actor->small_production_block_size = thorium_actor_suggested_buffer_size(actor);
+    concrete_actor->big_production_block_size = 256 * 1024;
 }
 
 void biosal_sequence_store_destroy(struct thorium_actor *actor)
@@ -220,6 +221,12 @@ void biosal_sequence_store_receive(struct thorium_actor *actor, struct thorium_m
 
             concrete_actor->required_kmers = NO_USEFUL_VALUE;
 #endif
+            /*
+             * Here, it is not required to reduce the production size.
+             */
+            /*
+            concrete_actor->big_production_block_size /= 2;
+            */
         }
 
         concrete_actor->left = concrete_actor->received;
@@ -599,13 +606,14 @@ int biosal_sequence_store_get_required_kmers(struct thorium_actor *actor, struct
     position = 0;
     position += thorium_message_unpack_int(message, 0, &kmer_length);
 
-    production_block_size = concrete_actor->production_block_size;
 
     /*
      * A bigger buffer means that the source wants a big message.
      */
     if (count == 8) {
         total_kmer_stores = nodes * stores_per_node;
+        production_block_size = concrete_actor->small_production_block_size;
+
     } else {
         /*
          * The current actor does not care what is being done with the
@@ -616,9 +624,9 @@ int biosal_sequence_store_get_required_kmers(struct thorium_actor *actor, struct
         total_kmer_stores = 1;
 
         /*
-         * 400 KiB instead of 4 KiB
+         * Use a larger buffer size
          */
-        production_block_size = 400 * 1024;
+        production_block_size = concrete_actor->big_production_block_size;
     }
 
     if (kmer_length <= 0) {

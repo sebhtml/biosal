@@ -37,7 +37,8 @@ struct biosal_sequence_store {
 
     int required_kmers;
 
-    int production_block_size;
+    int small_production_block_size;
+    int big_production_block_size;
 };
 
 #define ACTION_RESERVE 0x00000d3c
