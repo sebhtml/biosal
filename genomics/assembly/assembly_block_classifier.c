@@ -154,6 +154,7 @@ void biosal_assembly_block_classifier_destroy(struct thorium_actor *self)
 
     core_vector_destroy(&concrete_actor->buffers);
 
+    core_memory_pool_examine(&concrete_actor->persistent_pool);
     core_memory_pool_destroy(&concrete_actor->persistent_pool);
 }
 
@@ -297,10 +298,11 @@ void biosal_assembly_block_classifier_flush(struct thorium_actor *self, int cust
                         thorium_actor_name(self), concrete_actor->flushed);
     }
 
-    /* Reset the buffer
+    /*
+     * Reset the buffer
      */
 
-    biosal_dna_kmer_frequency_block_destroy(customer_block_pointer, ephemeral_memory);
+    biosal_dna_kmer_frequency_block_destroy(customer_block_pointer, &concrete_actor->persistent_pool);
 
     biosal_dna_kmer_frequency_block_init(customer_block_pointer, concrete_actor->kmer_length,
                     &concrete_actor->persistent_pool, &concrete_actor->codec,
