@@ -29,13 +29,13 @@ struct biosal_assembly_arc_classifier {
     int producer_is_waiting;
     int maximum_pending_request_count;
 
-    int consumer_count_above_threshold;
+    int consumer_count_with_maximum;
 
     /*
      * Output bins
      */
     struct core_memory_pool persistent_memory;
-    int maximum_pending_requests;
+    /*int maximum_pending_requests;*/
     struct core_vector output_blocks;
 };
 

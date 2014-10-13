@@ -81,14 +81,15 @@ void biosal_assembly_arc_classifier_init(struct thorium_actor *self)
 
     concrete_self->maximum_pending_request_count = thorium_actor_active_message_limit(self);
 
-    concrete_self->consumer_count_above_threshold = 0;
+    concrete_self->consumer_count_with_maximum = 0;
 
     printf("%s/%d is now active, ACTIVE_MESSAGE_LIMIT %d\n",
                     thorium_actor_script_name(self),
                     thorium_actor_name(self),
                     concrete_self->maximum_pending_request_count);
-
+/*
     concrete_self->maximum_pending_requests = 0;
+    */
 }
 
 void biosal_assembly_arc_classifier_destroy(struct thorium_actor *self)
@@ -139,9 +140,6 @@ void biosal_assembly_arc_classifier_receive(struct thorium_actor *self, struct t
          */
         source_index = core_vector_index_of(&concrete_self->consumers, &source);
         bucket = core_vector_at(&concrete_self->pending_requests, source_index);
-        --(*bucket);
-        --concrete_self->active_requests;
-
         /*
         printf("active_requests %d\n", concrete_self->active_requests);
         */
@@ -151,8 +149,15 @@ void biosal_assembly_arc_classifier_receive(struct thorium_actor *self, struct t
          */
         if (*bucket == concrete_self->maximum_pending_request_count) {
 
-            --concrete_self->consumer_count_above_threshold;
+            --concrete_self->consumer_count_with_maximum;
+
+            /*
+             * Find the new maximum pending request count
+             */
         }
+
+        --(*bucket);
+        --concrete_self->active_requests;
 
         biosal_assembly_arc_classifier_verify_counters(self);
 
@@ -315,8 +320,8 @@ void biosal_assembly_arc_classifier_verify_counters(struct thorium_actor *self)
     concrete_self = (struct biosal_assembly_arc_classifier *)thorium_actor_concrete_actor(self);
 
     /*
-    printf("verify_counters consumer_count_above_threshold %d\n",
-                    concrete_self->consumer_count_above_threshold);
+    printf("verify_counters consumer_count_with_maximum %d\n",
+                    concrete_self->consumer_count_with_maximum);
                     */
 
 #if 0
@@ -330,7 +335,7 @@ void biosal_assembly_arc_classifier_verify_counters(struct thorium_actor *self)
         return;
     }
 
-    if (concrete_self->consumer_count_above_threshold > 0) {
+    if (concrete_self->consumer_count_with_maximum > 0) {
         return;
     }
 
@@ -534,12 +539,13 @@ void biosal_assembly_arc_classifier_flush_all(struct thorium_actor *self,
             ++(*bucket);
             ++concrete_self->active_requests;
 
+            /*
             if (*bucket > concrete_self->maximum_pending_requests) {
                 concrete_self->maximum_pending_requests = *bucket;
             }
-
-            if (*bucket > concrete_self->maximum_pending_request_count) {
-                ++concrete_self->consumer_count_above_threshold;
+*/
+            if (*bucket == concrete_self->maximum_pending_request_count) {
+                ++concrete_self->consumer_count_with_maximum;
             }
 
             /*
