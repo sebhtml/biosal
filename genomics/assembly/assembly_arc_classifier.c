@@ -79,7 +79,17 @@ void biosal_assembly_arc_classifier_init(struct thorium_actor *self)
 
     concrete_self->producer_is_waiting = 0;
 
+    /*
+     * The number of active messages provided by
+     * thorium_actor_active_message_limit is typically 1.
+     *
+     * Here, adding arcs in the graph basically just turn on some bits.
+     * Because of that, we need to allow more in-flight active messages.
+     */
+    /*
     concrete_self->maximum_pending_request_count = thorium_actor_active_message_limit(self);
+    */
+    concrete_self->maximum_pending_request_count = (1 + 1);
 
     concrete_self->consumer_count_with_maximum = 0;
 
