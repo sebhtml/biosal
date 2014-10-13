@@ -385,7 +385,7 @@ void biosal_assembly_arc_kernel_push_sequence_data_block(struct thorium_actor *s
                 biosal_assembly_arc_block_add_arc(&output_block, BIOSAL_ARC_TYPE_CHILD,
                                 &previous_kmer,
                                 last_symbol, concrete_self->kmer_length,
-                                &concrete_self->codec, ephemeral_memory);
+                                &concrete_self->codec);
 #ifdef BIOSAL_ASSEMBLY_ADD_ARCS
                 ++concrete_self->produced_arcs;
 #endif
@@ -399,7 +399,7 @@ void biosal_assembly_arc_kernel_push_sequence_data_block(struct thorium_actor *s
                 biosal_assembly_arc_block_add_arc(&output_block, BIOSAL_ARC_TYPE_PARENT,
                                 &current_kmer, first_symbol,
                                 concrete_self->kmer_length,
-                                &concrete_self->codec, ephemeral_memory);
+                                &concrete_self->codec);
 #ifdef BIOSAL_ASSEMBLY_ADD_ARCS
                 ++concrete_self->produced_arcs;
 #endif
@@ -443,7 +443,7 @@ void biosal_assembly_arc_kernel_push_sequence_data_block(struct thorium_actor *s
     biosal_assembly_arc_block_pack(&output_block, new_buffer, concrete_self->kmer_length,
                     &concrete_self->codec);
 
-    biosal_assembly_arc_block_destroy(&output_block, ephemeral_memory);
+    biosal_assembly_arc_block_destroy(&output_block);
 
     biosal_input_command_destroy(&input_block, ephemeral_memory);
 

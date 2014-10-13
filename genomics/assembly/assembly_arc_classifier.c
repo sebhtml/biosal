@@ -95,8 +95,21 @@ void biosal_assembly_arc_classifier_init(struct thorium_actor *self)
 void biosal_assembly_arc_classifier_destroy(struct thorium_actor *self)
 {
     struct biosal_assembly_arc_classifier *concrete_self;
+    int i;
+    int consumer_count;
+    struct biosal_assembly_arc_block *output_block;
 
     concrete_self = (struct biosal_assembly_arc_classifier *)thorium_actor_concrete_actor(self);
+
+    consumer_count = core_vector_size(&concrete_self->consumers);
+
+    for (i = 0; i < consumer_count; i++) {
+
+        output_block = core_vector_at(&concrete_self->output_blocks, i);
+        biosal_assembly_arc_block_destroy(output_block);
+    }
+
+    core_vector_destroy(&concrete_self->output_blocks);
 
     concrete_self->kmer_length = -1;
 
@@ -107,6 +120,11 @@ void biosal_assembly_arc_classifier_destroy(struct thorium_actor *self)
     core_vector_destroy(&concrete_self->pending_requests);
 
     core_vector_destroy(&concrete_self->output_blocks);
+
+    /*
+     * Make sure that there is no memory leak.
+     */
+    core_memory_pool_examine(&concrete_self->persistent_memory);
 
     core_memory_pool_destroy(&concrete_self->persistent_memory);
 }
@@ -260,14 +278,13 @@ void biosal_assembly_arc_classifier_push_arc_block(struct thorium_actor *self, s
          */
 
         biosal_assembly_arc_block_add_arc_copy(output_block, arc,
-                        concrete_self->kmer_length, &concrete_self->codec,
-                        &concrete_self->persistent_memory);
+                        concrete_self->kmer_length, &concrete_self->codec);
     }
 
     /*
      * Input arcs are not needed anymore.
      */
-    biosal_assembly_arc_block_destroy(&input_block, ephemeral_memory);
+    biosal_assembly_arc_block_destroy(&input_block);
 
     CORE_DEBUGGER_ASSERT(!core_memory_pool_has_double_free(ephemeral_memory));
 
@@ -437,8 +454,7 @@ void biosal_assembly_arc_classifier_set_consumers(struct thorium_actor *self,
         output_block = core_vector_at(&concrete_self->output_blocks, i);
 
         biosal_assembly_arc_block_init(output_block, &concrete_self->persistent_memory,
-                        concrete_self->kmer_length,
-                        &concrete_self->codec);
+                        concrete_self->kmer_length, &concrete_self->codec);
 
         biosal_assembly_arc_block_reserve(output_block, reservation);
     }
@@ -548,11 +564,20 @@ void biosal_assembly_arc_classifier_flush_all(struct thorium_actor *self,
                 ++concrete_self->consumer_count_with_maximum;
             }
 
+#if 0
+            printf("Before biosal_assembly_arc_block_clear\n");
+            core_memory_pool_examine(&concrete_self->persistent_memory);
+#endif
+
             /*
              * Destroy output block.
              */
-            biosal_assembly_arc_block_clear(output_block,
-                    &concrete_self->persistent_memory);
+            biosal_assembly_arc_block_clear(output_block);
+
+#if 0
+            printf("After biosal_assembly_arc_block_clear\n");
+            core_memory_pool_examine(&concrete_self->persistent_memory);
+#endif
         }
 
         CORE_DEBUGGER_ASSERT(!core_memory_pool_has_double_free(ephemeral_memory));

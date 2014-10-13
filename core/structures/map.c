@@ -318,6 +318,9 @@ void core_map_clear(struct core_map *self)
     int value_size;
     struct core_memory_pool *pool;
 
+    /*
+     * Save key_size, value_size, and memory pool.
+     */
     key_size = core_map_get_key_size(self);
     value_size = core_map_get_value_size(self);
     pool = core_map_memory_pool(self);

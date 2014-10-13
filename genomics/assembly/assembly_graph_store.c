@@ -708,7 +708,7 @@ void biosal_assembly_graph_store_push_arc_block(struct thorium_actor *self, stru
 
     core_memory_pool_free(ephemeral_memory, key);
 
-    biosal_assembly_arc_block_destroy(&input_block, ephemeral_memory);
+    biosal_assembly_arc_block_destroy(&input_block);
 
     /*
      *

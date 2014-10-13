@@ -24,16 +24,16 @@ struct biosal_assembly_arc_block {
     struct core_set set;
     struct core_vector arcs;
     int enable_redundancy_check;
+    struct core_memory_pool *memory_pool;
 };
 
 void biosal_assembly_arc_block_init(struct biosal_assembly_arc_block *self, struct core_memory_pool *pool,
                 int kmer_length, struct biosal_dna_codec *codec);
 void biosal_assembly_arc_block_reserve(struct biosal_assembly_arc_block *self, int size);
-void biosal_assembly_arc_block_destroy(struct biosal_assembly_arc_block *self, struct core_memory_pool *pool);
+void biosal_assembly_arc_block_destroy(struct biosal_assembly_arc_block *self);
 void biosal_assembly_arc_block_add_arc(struct biosal_assembly_arc_block *self, int type,
                 struct biosal_dna_kmer *kmer, int destination,
-                int kmer_length, struct biosal_dna_codec *codec,
-                struct core_memory_pool *pool);
+                int kmer_length, struct biosal_dna_codec *codec);
 
 int biosal_assembly_arc_block_pack_size(struct biosal_assembly_arc_block *self, int kmer_length, struct biosal_dna_codec *codec);
 int biosal_assembly_arc_block_pack(struct biosal_assembly_arc_block *self, void *buffer,
@@ -50,8 +50,7 @@ struct core_vector *biosal_assembly_arc_block_get_arcs(struct biosal_assembly_ar
 void biosal_assembly_arc_block_enable_redundancy_check(struct biosal_assembly_arc_block *self);
 
 void biosal_assembly_arc_block_add_arc_copy(struct biosal_assembly_arc_block *self,
-                struct biosal_assembly_arc *arc, int kmer_length, struct biosal_dna_codec *codec,
-                struct core_memory_pool *pool);
-void biosal_assembly_arc_block_clear(struct biosal_assembly_arc_block *self, struct core_memory_pool *pool);
+                struct biosal_assembly_arc *arc, int kmer_length, struct biosal_dna_codec *codec);
+void biosal_assembly_arc_block_clear(struct biosal_assembly_arc_block *self);
 
 #endif

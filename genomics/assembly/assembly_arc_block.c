@@ -4,11 +4,15 @@
 #include <core/system/packer.h>
 #include <core/system/debugger.h>
 
+void biosal_assembly_arc_block_free_arcs(struct biosal_assembly_arc_block *self);
+
 void biosal_assembly_arc_block_init(struct biosal_assembly_arc_block *self, struct core_memory_pool *pool,
                 int kmer_length, struct biosal_dna_codec *codec)
 {
     int key_length;
     struct biosal_assembly_arc arc;
+
+    self->memory_pool = pool;
 
     CORE_DEBUGGER_LEAK_DETECTION_BEGIN(pool, arc_block_init);
 
@@ -35,27 +39,14 @@ void biosal_assembly_arc_block_init(struct biosal_assembly_arc_block *self, stru
     CORE_DEBUGGER_LEAK_DETECTION_END(pool, arc_block_init);
 }
 
-void biosal_assembly_arc_block_destroy(struct biosal_assembly_arc_block *self, struct core_memory_pool *pool)
+void biosal_assembly_arc_block_destroy(struct biosal_assembly_arc_block *self)
 {
-    int i;
-    int size;
-    struct biosal_assembly_arc *arc;
-
     core_set_destroy(&self->set);
 
-    size = core_vector_size(&self->arcs);
-
     /*
-     * Destroy arcs.
+     * Arcs are actual objects so we need to free their memory too.
      */
-    for (i = 0; i < size; i++) {
-
-        arc = core_vector_at(&self->arcs, i);
-
-        biosal_assembly_arc_destroy(arc, pool);
-
-        CORE_DEBUGGER_LEAK_CHECK_DOUBLE_FREE(pool);
-    }
+    biosal_assembly_arc_block_free_arcs(self);
 
     core_vector_destroy(&self->arcs);
 }
@@ -63,8 +54,7 @@ void biosal_assembly_arc_block_destroy(struct biosal_assembly_arc_block *self, s
 void biosal_assembly_arc_block_add_arc(struct biosal_assembly_arc_block *self,
                 int type, struct biosal_dna_kmer *source,
                 int destination,
-                int kmer_length, struct biosal_dna_codec *codec,
-                struct core_memory_pool *pool)
+                int kmer_length, struct biosal_dna_codec *codec)
 {
     int key_length;
     void *buffer;
@@ -82,7 +72,7 @@ void biosal_assembly_arc_block_add_arc(struct biosal_assembly_arc_block *self,
 
     biosal_assembly_arc_init(arc, type, source,
                                 destination,
-                                kmer_length, pool, codec);
+                                kmer_length, self->memory_pool, codec);
 
     /*
      * Verify if it is accepted.
@@ -90,7 +80,7 @@ void biosal_assembly_arc_block_add_arc(struct biosal_assembly_arc_block *self,
     if (self->enable_redundancy_check) {
 
         key_length = biosal_assembly_arc_pack_size(arc, kmer_length, codec);
-        buffer = core_memory_pool_allocate(pool, key_length);
+        buffer = core_memory_pool_allocate(self->memory_pool, key_length);
 
         /*
          * Generate a key to verify if this arc is already in the block.
@@ -105,7 +95,7 @@ void biosal_assembly_arc_block_add_arc(struct biosal_assembly_arc_block *self,
          */
         if (found) {
 
-            biosal_assembly_arc_destroy(arc, pool);
+            biosal_assembly_arc_destroy(arc, self->memory_pool);
             core_vector_resize(&self->arcs, size);
         } else {
 
@@ -116,7 +106,7 @@ void biosal_assembly_arc_block_add_arc(struct biosal_assembly_arc_block *self,
             core_set_add(&self->set, buffer);
         }
 
-        core_memory_pool_free(pool, buffer);
+        core_memory_pool_free(self->memory_pool, buffer);
     }
 }
 
@@ -199,19 +189,40 @@ void biosal_assembly_arc_block_enable_redundancy_check(struct biosal_assembly_ar
 }
 
 void biosal_assembly_arc_block_add_arc_copy(struct biosal_assembly_arc_block *self,
-                struct biosal_assembly_arc *arc, int kmer_length, struct biosal_dna_codec *codec,
-                struct core_memory_pool *pool)
+                struct biosal_assembly_arc *arc, int kmer_length, struct biosal_dna_codec *codec)
 {
     struct biosal_assembly_arc new_arc;
 
-    biosal_assembly_arc_init_copy(&new_arc, arc, kmer_length, pool, codec);
+    biosal_assembly_arc_init_copy(&new_arc, arc, kmer_length, self->memory_pool, codec);
 
     core_vector_push_back(&self->arcs, &new_arc);
 }
 
-void biosal_assembly_arc_block_clear(struct biosal_assembly_arc_block *self, struct core_memory_pool *pool)
+void biosal_assembly_arc_block_clear(struct biosal_assembly_arc_block *self)
 {
-    core_vector_clear(&self->arcs);
+    biosal_assembly_arc_block_free_arcs(self);
 
+    core_vector_clear(&self->arcs);
     core_set_clear(&self->set);
+}
+
+void biosal_assembly_arc_block_free_arcs(struct biosal_assembly_arc_block *self)
+{
+    int i;
+    int size;
+    struct biosal_assembly_arc *arc;
+
+    size = core_vector_size(&self->arcs);
+
+    /*
+     * Destroy arcs.
+     */
+    for (i = 0; i < size; i++) {
+
+        arc = core_vector_at(&self->arcs, i);
+
+        biosal_assembly_arc_destroy(arc, self->memory_pool);
+
+        CORE_DEBUGGER_LEAK_CHECK_DOUBLE_FREE(self->memory_pool);
+    }
 }
