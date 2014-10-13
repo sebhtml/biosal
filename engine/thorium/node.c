@@ -103,7 +103,9 @@
 /*
  * Enable the regulator.
  */
+/*
 #define THORIUM_NODE_CONFIG_USE_REGULATOR
+*/
 
 struct thorium_node *thorium_node_global_self;
 

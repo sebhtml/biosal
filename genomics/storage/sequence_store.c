@@ -614,7 +614,11 @@ int biosal_sequence_store_get_required_kmers(struct thorium_actor *actor, struct
          * Request a block size of around 8 MiB.
          */
         total_kmer_stores = 1;
-        production_block_size *= (2 * 1024);
+
+        /*
+         * 400 KiB instead of 4 KiB
+         */
+        production_block_size = 400 * 1024;
     }
 
     if (kmer_length <= 0) {
