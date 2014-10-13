@@ -41,7 +41,7 @@ struct biosal_assembly_block_classifier {
 
     struct biosal_dna_codec codec;
 
-    int consumer_count_above_threshold;
+    int consumer_count_with_maximum;
 
     /*
      * bins

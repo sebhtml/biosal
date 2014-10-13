@@ -114,7 +114,7 @@ void biosal_assembly_block_classifier_init(struct thorium_actor *self)
 
     printf("assembly_block_classifier %d is online\n", thorium_actor_name(self));
 
-    concrete_actor->consumer_count_above_threshold = 0;
+    concrete_actor->consumer_count_with_maximum = 0;
 
     core_vector_init(&concrete_actor->buffers, 0);
 
@@ -208,17 +208,18 @@ void biosal_assembly_block_classifier_receive(struct thorium_actor *self, struct
         consumer_index_index = core_vector_index_of(&concrete_actor->consumers, &source);
 
         bucket = (int *)core_vector_at(&concrete_actor->active_messages, consumer_index_index);
-        (*bucket)--;
-        --concrete_actor->active_requests;
 
         if (*bucket == concrete_actor->maximum_active_messages) {
 
             /*
-             * The count was maximum_active_messages + 1
+             * The count was maximum_active_messages
              * before removing 1 from it.
              */
-            --concrete_actor->consumer_count_above_threshold;
+            --concrete_actor->consumer_count_with_maximum;
         }
+
+        (*bucket)--;
+        --concrete_actor->active_requests;
 
         if (!concrete_actor->forced) {
             biosal_assembly_block_classifier_verify(self, message);
@@ -283,8 +284,8 @@ void biosal_assembly_block_classifier_flush(struct thorium_actor *self, int cust
     /*
      * Increment event counter
      */
-    if (*bucket > concrete_actor->maximum_active_messages) {
-        ++concrete_actor->consumer_count_above_threshold;
+    if (*bucket == concrete_actor->maximum_active_messages) {
+        ++concrete_actor->consumer_count_with_maximum;
     }
 
     thorium_message_destroy(&message);
@@ -339,7 +340,7 @@ void biosal_assembly_block_classifier_verify(struct thorium_actor *self, struct 
     }
 #endif
 
-    if (concrete_actor->consumer_count_above_threshold > 0) {
+    if (concrete_actor->consumer_count_with_maximum > 0) {
         return;
     }
 
