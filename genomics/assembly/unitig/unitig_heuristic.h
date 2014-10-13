@@ -12,11 +12,13 @@ struct biosal_unitig_heuristic;
  */
 struct biosal_unitig_heuristic {
 
+    int minimum_coverage;
+
     int (*select)(struct biosal_unitig_heuristic *self,
                 int current_coverage, struct core_vector *coverage_values);
 };
 
-void biosal_unitig_heuristic_init(struct biosal_unitig_heuristic *self);
+void biosal_unitig_heuristic_init(struct biosal_unitig_heuristic *self, int minimum_coverage);
 void biosal_unitig_heuristic_destroy(struct biosal_unitig_heuristic *self);
 
 int biosal_unitig_heuristic_select(struct biosal_unitig_heuristic *self,

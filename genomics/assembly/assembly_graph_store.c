@@ -19,6 +19,8 @@
 #include <genomics/data/dna_kmer_block.h>
 #include <genomics/data/dna_kmer_frequency_block.h>
 
+#include <genomics/helpers/command.h>
+
 #include <core/helpers/message_helper.h>
 #include <core/system/memory.h>
 
@@ -27,7 +29,9 @@
 
 #include <core/system/debugger.h>
 
+/*
 #include <engine/thorium/scheduler/fifo_scheduler.h>
+*/
 
 #include <inttypes.h>
 #include <stdint.h>
@@ -1017,9 +1021,17 @@ void biosal_assembly_graph_store_get_starting_vertex(struct thorium_actor *self,
     char *sequence;
     void *storage_key;
     struct biosal_assembly_vertex *vertex;
+    int minimum_coverage;
+    int argc;
+    char **argv;
+    int coverage;
+
+    argc = thorium_actor_argc(self);
+    argv = thorium_actor_argv(self);
 
     concrete_self = thorium_actor_concrete_actor(self);
     ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
+    minimum_coverage = biosal_command_get_minimum_coverage(argc, argv);
 
     while (core_map_iterator_has_next(&concrete_self->iterator)) {
 
@@ -1036,6 +1048,18 @@ void biosal_assembly_graph_store_get_starting_vertex(struct thorium_actor *self,
         if (biosal_assembly_vertex_get_flag(vertex, BIOSAL_VERTEX_FLAG_USED)) {
 
 
+            continue;
+        }
+
+        /*
+         * Skip the vertex if its coverage is below the minimum
+         * coverage.
+         *
+         * This is basically a trick just to go faster.
+         */
+        coverage = biosal_assembly_vertex_coverage_depth(vertex);
+
+        if (coverage < minimum_coverage) {
             continue;
         }
 

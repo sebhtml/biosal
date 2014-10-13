@@ -4,6 +4,8 @@
 #include <genomics/assembly/assembly_graph_store.h>
 #include <genomics/assembly/assembly_arc.h>
 
+#include <genomics/helpers/command.h>
+
 #include <core/structures/vector.h>
 #include <core/system/debugger.h>
 
@@ -71,7 +73,9 @@ void biosal_unitig_visitor_init(struct thorium_actor *self)
     biosal_vertex_neighborhood_init_empty(&concrete_self->parent_neighborhood);
     biosal_vertex_neighborhood_init_empty(&concrete_self->child_neighborhood);
 
-    biosal_unitig_heuristic_init(&concrete_self->heuristic);
+    biosal_unitig_heuristic_init(&concrete_self->heuristic,
+                    biosal_command_get_minimum_coverage(thorium_actor_argc(self),
+                            thorium_actor_argv(self)));
 
     biosal_dna_kmer_init_empty(&concrete_self->main_kmer);
     biosal_dna_kmer_init_empty(&concrete_self->parent_kmer);

@@ -11,6 +11,7 @@
 #include <genomics/data/dna_codec.h>
 
 #include <genomics/helpers/dna_helper.h>
+#include <genomics/helpers/command.h>
 
 #include <core/patterns/writer_process.h>
 
@@ -257,7 +258,9 @@ void biosal_unitig_walker_init(struct thorium_actor *self)
     concrete_self->fetch_operation = OPERATION_FETCH_FIRST;
     concrete_self->select_operation = OPERATION_SELECT_CHILD;
 
-    biosal_unitig_heuristic_init(&concrete_self->heuristic);
+    biosal_unitig_heuristic_init(&concrete_self->heuristic,
+                    biosal_command_get_minimum_coverage(thorium_actor_argc(self),
+                            thorium_actor_argv(self)));
 
     concrete_self->current_is_circular = 0;
 }

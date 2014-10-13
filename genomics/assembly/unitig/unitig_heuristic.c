@@ -15,10 +15,13 @@ int biosal_unitig_heuristic_select_highest(struct biosal_unitig_heuristic *self,
 int biosal_unitig_heuristic_select_with_flow_split(struct biosal_unitig_heuristic *self,
                 int current_coverage, struct core_vector *coverage_values);
 
-void biosal_unitig_heuristic_init(struct biosal_unitig_heuristic *self)
+void biosal_unitig_heuristic_init(struct biosal_unitig_heuristic *self,
+                int minimum_coverage)
 {
     self->select = biosal_unitig_heuristic_select_with_flow_split;
     /*self->select = biosal_unitig_heuristic_select_highest;*/
+
+    self->minimum_coverage = minimum_coverage;
 }
 
 void biosal_unitig_heuristic_destroy(struct biosal_unitig_heuristic *self)
@@ -29,7 +32,23 @@ void biosal_unitig_heuristic_destroy(struct biosal_unitig_heuristic *self)
 int biosal_unitig_heuristic_select(struct biosal_unitig_heuristic *self,
                 int current_coverage, struct core_vector *coverage_values)
 {
-    return self->select(self, current_coverage, coverage_values);
+    int choice;
+    int coverage;
+
+    choice = self->select(self, current_coverage, coverage_values);
+
+    /*
+     * Validate sequencing coverage depth.
+     */
+    if (choice != BIOSAL_HEURISTIC_CHOICE_NONE) {
+        coverage = core_vector_at_as_int(coverage_values, choice);
+
+        if (coverage < self->minimum_coverage) {
+            choice = BIOSAL_HEURISTIC_CHOICE_NONE;
+        }
+    }
+
+    return choice;
 }
 
 int biosal_unitig_heuristic_select_highest(struct biosal_unitig_heuristic *self,
