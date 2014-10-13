@@ -84,12 +84,23 @@ void biosal_assembly_arc_classifier_init(struct thorium_actor *self)
      * thorium_actor_active_message_limit is typically 1.
      *
      * Here, adding arcs in the graph basically just turn on some bits.
-     * Because of that, we need to allow more in-flight active messages.
+     * Because of that, we need to allow more in-flight active messages,
+     * or we need to use larger messages.
+     * In general, using larger messages is a better idea than having
+     * more in-flight messages because the same amount of work is produced
+     * in both case, but using messages that are 2 times larger has less
+     * overhead than using 2 times more in-flight messages.
      */
-    /*
     concrete_self->maximum_pending_request_count = thorium_actor_active_message_limit(self);
+    /*
     */
-    concrete_self->maximum_pending_request_count = (1 + 1);
+
+    /*
+     * Add some bonus points to keep the pipeline busy.
+     *
+     * This is a total of 4.
+     */
+    concrete_self->maximum_pending_request_count += 3;
 
     concrete_self->consumer_count_with_maximum = 0;
 
@@ -491,6 +502,19 @@ void biosal_assembly_arc_classifier_flush_all(struct thorium_actor *self,
     int threshold;
 
     threshold = thorium_actor_suggested_buffer_size(self);
+
+    /*
+     * Use a buffer size of 8 KiB instead of 4 KiB since
+     * adding edges is less time-consuming than
+     * adding vertices.
+     *
+     * The idea is that there is a cost for doing an actor
+     * context switch (the "gap" between two consecutive receive
+     * calls for any given actor.
+     */
+    /*
+    threshold *= 2;
+    */
 
     ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
     concrete_self = thorium_actor_concrete_actor(self);
