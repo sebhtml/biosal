@@ -14,6 +14,8 @@
 
 #include <genomics/input/input_controller.h>
 
+#include <genomics/helpers/command.h>
+
 #include <core/system/command.h>
 
 #include <core/file_storage/directory.h>
@@ -245,7 +247,7 @@ void spate_start(struct thorium_actor *self, struct thorium_message *message)
      */
     argc = thorium_actor_argc(self);
     argv = thorium_actor_argv(self);
-    directory_name = core_command_get_output_directory(argc, argv);
+    directory_name = biosal_command_get_output_directory(argc, argv);
     already_created = core_directory_verify_existence(directory_name);
 
     if (already_created) {
@@ -596,10 +598,10 @@ void spate_help(struct thorium_actor *self)
 
     printf("\n");
     printf("Default values:\n");
-    printf("    -k %d (no limit and no recompilation is required)\n", CORE_DEFAULT_KMER_LENGTH);
+    printf("    -k %d (no limit and no recompilation is required)\n", BIOSAL_DEFAULT_KMER_LENGTH);
     printf("    -threads-per-node %d\n", 1);
     printf("    -o %s\n",
-                    CORE_DEFAULT_OUTPUT);
+                    BIOSAL_DEFAULT_OUTPUT);
 
     printf("\n");
     printf("Example:\n");

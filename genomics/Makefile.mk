@@ -3,6 +3,7 @@ GENOMICS_OBJECTS=
 
 # genomics stuff
 GENOMICS_OBJECTS += genomics/helpers/dna_helper.o
+GENOMICS_OBJECTS += genomics/helpers/command.o
 
 GENOMICS_OBJECTS += genomics/kernels/aggregator.o
 GENOMICS_OBJECTS += genomics/kernels/dna_kmer_counter_kernel.o

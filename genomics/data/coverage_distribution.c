@@ -1,6 +1,8 @@
 
 #include "coverage_distribution.h"
 
+#include <genomics/helpers/command.h>
+
 #include <core/helpers/vector_helper.h>
 #include <core/helpers/message_helper.h>
 
@@ -175,7 +177,7 @@ void biosal_coverage_distribution_write_distribution(struct thorium_actor *self)
     argc = thorium_actor_argc(self);
     argv = thorium_actor_argv(self);
 
-    directory_name = core_command_get_output_directory(argc, argv);
+    directory_name = biosal_command_get_output_directory(argc, argv);
 
     /* Create the directory if it does not exist
      */

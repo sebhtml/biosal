@@ -5,8 +5,6 @@
 #include <stdio.h>
 #include <string.h>
 
-char CORE_DEFAULT_OUTPUT[] = "output";
-
 int core_command_has_argument(int argc, char **argv, const char *argument)
 {
     int i;
@@ -38,48 +36,6 @@ char *core_command_get_argument_value(int argc, char **argv, const char *argumen
     }
 
     return value;
-}
-
-
-char *core_command_get_output_directory(int argc, char **argv)
-{
-    char *directory_name;
-    char *value;
-
-    directory_name = CORE_DEFAULT_OUTPUT;
-
-    value = core_command_get_argument_value(argc, argv, "-o");
-
-    if (value != NULL) {
-        directory_name = value;
-    }
-
-    return directory_name;
-}
-
-int core_command_get_kmer_length(int argc, char **argv)
-{
-    int kmer_length;
-    int provided_value;
-
-    kmer_length = CORE_DEFAULT_KMER_LENGTH;
-
-    if (core_command_has_argument(argc, argv, "-k")) {
-        provided_value = core_command_get_argument_value_int(argc, argv, "-k");
-
-        /*
-         * Use a odd kmer length
-         */
-        if (provided_value % 2 == 0) {
-            ++provided_value;
-        }
-
-        kmer_length = provided_value;
-    }
-
-    printf("DEBUG kmer_length %d\n", kmer_length);
-
-    return kmer_length;
 }
 
 int core_command_get_argument_value_int(int argc, char **argv, const char *argument)

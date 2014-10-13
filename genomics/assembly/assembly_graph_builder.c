@@ -8,6 +8,8 @@
 #include "assembly_arc_kernel.h"
 #include "assembly_arc_classifier.h"
 
+#include <genomics/helpers/command.h>
+
 #include <core/system/debugger.h>
 #include <core/system/command.h>
 
@@ -899,8 +901,7 @@ int biosal_assembly_graph_builder_get_kmer_length(struct thorium_actor *self)
     argc = thorium_actor_argc(self);
     argv = thorium_actor_argv(self);
 
-    kmer_length = CORE_DEFAULT_KMER_LENGTH;
-    kmer_length = core_command_get_kmer_length(argc, argv);
+    kmer_length = biosal_command_get_kmer_length(argc, argv);
 
     return kmer_length;
 }
@@ -1434,7 +1435,7 @@ void biosal_assembly_graph_builder_get_summary_reply(struct thorium_actor *self,
 
         argc = thorium_actor_argc(self);
         argv = thorium_actor_argv(self);
-        output_directory = core_command_get_output_directory(argc, argv);
+        output_directory = biosal_command_get_output_directory(argc, argv);
         core_string_init(&file_name_string, output_directory);
         core_string_append(&file_name_string, "/assembly_graph_summary.xml");
         file_name = core_string_get(&file_name_string);

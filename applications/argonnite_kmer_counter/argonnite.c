@@ -7,6 +7,8 @@
 #include <genomics/data/coverage_distribution.h>
 #include <genomics/storage/kmer_store.h>
 
+#include <genomics/helpers/command.h>
+
 #include <core/structures/vector.h>
 #include <core/structures/vector_iterator.h>
 
@@ -25,8 +27,6 @@
 /*
 #define ARGONNITE_DEBUG
 */
-
-#define ARGONNITE_DEFAULT_KMER_LENGTH 41
 
 /*
 #define ARGONNITE_WORKERS_PER_AGGREGATOR 4
@@ -89,7 +89,7 @@ void argonnite_init(struct thorium_actor *actor)
     thorium_actor_add_script(actor, SCRIPT_COVERAGE_DISTRIBUTION,
                     &biosal_coverage_distribution_script);
 
-    concrete_actor->kmer_length = ARGONNITE_DEFAULT_KMER_LENGTH;
+    concrete_actor->kmer_length = -1;
     concrete_actor->not_ready_warnings = 0;
 
     /* The number of input sequences per I/O block.
@@ -198,7 +198,7 @@ void argonnite_receive(struct thorium_actor *actor, struct thorium_message *mess
                         ACTION_ENABLE_AUTO_SCALING);
                         */
 
-        concrete_actor->kmer_length = core_command_get_kmer_length(argc, argv);
+        concrete_actor->kmer_length = biosal_command_get_kmer_length(argc, argv);
 
 #ifdef ARGONNITE_DEBUG1
         BIOSAL_DEBUG_MARKER("foo_marker");
@@ -881,9 +881,9 @@ void argonnite_help(struct thorium_actor *actor)
     printf("Options\n");
     printf("-threads-per-node thread_count       threads per biosal node\n");
     printf("-k kmer_length                      kmer length (default: %d, no limit, no compilation option)\n",
-                    ARGONNITE_DEFAULT_KMER_LENGTH);
+                    BIOSAL_DEFAULT_KMER_LENGTH);
     printf("-o output                           output directory (default: %s)\n",
-                    CORE_DEFAULT_OUTPUT);
+                    BIOSAL_DEFAULT_OUTPUT);
     printf("-print-load                         display load, memory usage, actor count, active requests\n");
     printf("-print-counters                     print node-level biosal counters\n");
     printf("\n");

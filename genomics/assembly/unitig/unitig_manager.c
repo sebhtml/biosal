@@ -4,6 +4,8 @@
 #include "unitig_visitor.h"
 #include "unitig_walker.h"
 
+#include <genomics/helpers/command.h>
+
 #include <core/patterns/manager.h>
 #include <core/patterns/writer_process.h>
 
@@ -127,7 +129,7 @@ void biosal_unitig_manager_receive(struct thorium_actor *self, struct thorium_me
 
         argc = thorium_actor_argc(self);
         argv = thorium_actor_argv(self);
-        directory = core_command_get_output_directory(argc, argv);
+        directory = biosal_command_get_output_directory(argc, argv);
         core_string_init(&file_name, directory);
         core_string_append(&file_name, "/");
         core_string_append(&file_name, "unitigs.fasta");
