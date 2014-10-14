@@ -263,7 +263,7 @@ struct thorium_worker *thorium_worker_pool_select_worker_for_run(struct thorium_
     return thorium_worker_pool_get_worker(pool, index);
 }
 
-/* 
+/*
  * All messages go through here.
  */
 int thorium_worker_pool_enqueue_message(struct thorium_worker_pool *pool, struct thorium_message *message)

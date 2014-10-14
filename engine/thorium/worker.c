@@ -99,6 +99,13 @@
 #define THORIUM_WORKER_DEBUG_SYMMETRIC_PLACEMENT
 */
 
+/*
+ * Send messages to local actor directly.
+ */
+/*
+#define THORIUM_WORKER_SEND_TO_LOCAL_ACTOR
+*/
+
 void thorium_worker_work(struct thorium_worker *self, struct thorium_actor *actor);
 
 /*
@@ -107,6 +114,9 @@ void thorium_worker_work(struct thorium_worker *self, struct thorium_actor *acto
 void thorium_worker_configure_backoff(struct thorium_worker *self);
 void thorium_worker_activate_backoff(struct thorium_worker *self);
 void thorium_worker_do_backoff(struct thorium_worker *self);
+
+void thorium_worker_schedule_actor(struct thorium_worker *self, struct thorium_actor *actor);
+int thorium_worker_has_actor(struct thorium_worker *self, int actor);
 
 void thorium_worker_init(struct thorium_worker *worker, int name, struct thorium_node *node)
 {
@@ -359,6 +369,11 @@ void thorium_worker_send(struct thorium_worker *worker, struct thorium_message *
     int count;
     void *old_buffer;
 
+#ifdef THORIUM_WORKER_SEND_TO_LOCAL_ACTOR
+    int destination;
+    struct thorium_actor *destination_actor;
+#endif
+
     /*
      * There are 4 types of routes:
      *
@@ -438,10 +453,25 @@ void thorium_worker_send(struct thorium_worker *worker, struct thorium_message *
     }
 #endif
 
+#ifdef THORIUM_WORKER_SEND_TO_LOCAL_ACTOR
     /* if the destination is on the same node,
      * handle that directly here to avoid locking things
      * with the node.
      */
+    destination = thorium_message_destination(message);
+
+    if (thorium_worker_has_actor(worker, destination)) {
+
+        destination_actor = thorium_node_get_actor_from_name(worker->node, destination);
+        if (destination_actor != NULL
+                 && thorium_actor_enqueue_mailbox_message(destination_actor, message)) {
+
+            thorium_worker_schedule_actor(worker, destination_actor);
+
+            return;
+        }
+    }
+#endif
 
     thorium_worker_enqueue_message(worker, message);
     worker->zero_copy_buffer = NULL;
@@ -703,10 +733,9 @@ int thorium_worker_dequeue_actor(struct thorium_worker *worker, struct thorium_a
         /* If the actor is not queued, queue it
          */
         if (status == THORIUM_SCHEDULER_STATUS_IDLE) {
+
             status = THORIUM_SCHEDULER_STATUS_SCHEDULED;
-
             core_map_update_value(&worker->actors, &other_name, &status);
-
             thorium_scheduler_enqueue(&worker->scheduler, other_actor);
         } else {
 
@@ -1841,4 +1870,20 @@ void thorium_worker_do_backoff(struct thorium_worker *self)
 int thorium_worker_get_input_message_ring_size(struct thorium_worker *self)
 {
     return core_fast_ring_size_from_producer(&self->input_inbound_message_ring);
+}
+
+void thorium_worker_schedule_actor(struct thorium_worker *self, struct thorium_actor *actor)
+{
+    int status;
+    int name;
+
+    status = THORIUM_SCHEDULER_STATUS_SCHEDULED;
+    name = thorium_actor_name(actor);
+    core_map_update_value(&self->actors, &name, &status);
+    thorium_scheduler_enqueue(&self->scheduler, actor);
+}
+
+int thorium_worker_has_actor(struct thorium_worker *self, int actor)
+{
+    return core_map_get(&self->actors, &actor) != NULL;
 }

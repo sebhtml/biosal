@@ -504,6 +504,11 @@ void thorium_actor_send_with_source(struct thorium_actor *self, int name, struct
         return;
     }
 
+    /*
+     * Tag the message with the name of the worker.
+     */
+    thorium_message_set_worker(message, thorium_worker_name(self->worker));
+
 #ifdef THORIUM_ACTOR_FAST_SEND_TO_SELF
     /*
      * If the destination is the self actor,
