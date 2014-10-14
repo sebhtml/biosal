@@ -1404,6 +1404,7 @@ void thorium_worker_work(struct thorium_worker *worker, struct thorium_actor *ac
 {
     int dead;
     int actor_name;
+    int status;
 
 #ifdef THORIUM_WORKER_DEBUG
     int tag;
@@ -1481,6 +1482,19 @@ void thorium_worker_work(struct thorium_worker *worker, struct thorium_actor *ac
                         thorium_worker_name(worker));
     }
 #endif
+
+    /*
+     * If the actor still has messages, schedule it.
+     */
+    core_map_get_value(&worker->actors, &actor_name, &status);
+    if (status == STATUS_IDLE
+                    && thorium_actor_get_mailbox_size(actor) > 0) {
+
+        status = STATUS_QUEUED;
+        core_map_update_value(&worker->actors, &actor_name, &status);
+
+        thorium_scheduler_enqueue(&worker->scheduler, actor);
+    }
 
 #ifdef THORIUM_DISABLE_LOCKLESS_ACTORS
     /* Unlock the actor.

@@ -504,6 +504,27 @@ void thorium_actor_send_with_source(struct thorium_actor *self, int name, struct
         return;
     }
 
+#ifdef THORIUM_ACTOR_FAST_SEND_TO_SELF
+    /*
+     * If the destination is the self actor,
+     * then it is not required to go through the worker.
+     *
+     * Also, only one thread can push to an actor mailbox.
+     * The current actor runs in the same thread as the
+     * current worker, so it is safe to push the message in the mailbox.
+     */
+    if (name == thorium_actor_name(self)) {
+        if (thorium_actor_enqueue_mailbox_message(self, message)) {
+
+            /*
+             * It is not required to send the message with thorium_worker_send
+             * here.
+             */
+            return;
+        }
+    }
+#endif
+
     thorium_worker_send(self->worker, message);
 }
 
