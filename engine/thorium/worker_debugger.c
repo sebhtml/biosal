@@ -34,7 +34,7 @@ void thorium_worker_print_actors(struct thorium_worker *worker, struct thorium_b
                     thorium_worker_get_sum_of_received_actor_messages(worker),
                     thorium_worker_is_busy(worker),
                     thorium_worker_get_scheduling_epoch_load(worker),
-                    core_fast_ring_size_from_producer(&worker->input_actor_ring),
+                    thorium_worker_get_input_message_ring_size(worker),
                     thorium_scheduler_size(&worker->scheduler),
                     (int)core_map_size(&worker->actors));
 

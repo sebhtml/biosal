@@ -158,7 +158,9 @@ void thorium_worker_init(struct thorium_worker *worker, int name, struct thorium
      * 1. enable atomic operations for change visibility
      * 2. Use volatile head and tail.
      */
-    core_fast_ring_init(&worker->input_actor_ring, capacity, sizeof(struct thorium_actor *));
+    core_fast_ring_init(&worker->input_inbound_message_ring, capacity, sizeof(struct thorium_message));
+
+    core_fast_queue_init(&worker->input_inbound_message_queue, sizeof(struct thorium_message));
 
 #ifdef THORIUM_NODE_INJECT_CLEAN_WORKER_BUFFERS
     injected_buffer_ring_size = capacity;
@@ -320,7 +322,9 @@ void thorium_worker_destroy(struct thorium_worker *worker)
     core_lock_destroy(&worker->lock);
 #endif
 
-    core_fast_ring_destroy(&worker->input_actor_ring);
+    core_fast_ring_destroy(&worker->input_inbound_message_ring);
+
+    core_fast_queue_destroy(&worker->input_inbound_message_queue);
 
 #ifdef THORIUM_NODE_INJECT_CLEAN_WORKER_BUFFERS
     core_fast_ring_destroy(&worker->input_clean_outbound_buffer_ring);
@@ -358,6 +362,18 @@ void thorium_worker_send(struct thorium_worker *worker, struct thorium_message *
     void *buffer;
     int count;
     void *old_buffer;
+
+    /*
+     * There are 4 types of routes:
+     *
+     * 1. actor 1, actor 1 (same actor)
+     *
+     * 2. actor 1, worker 1, actor 2 (same worker)
+     *
+     * 3. actor 1, worker 1, node 1, worker 2, actor 2 (same node)
+     *
+     * 4. actor 1, worker 1, node 1, node 2, worker 2, actor 2 (different node)
+     */
 
     old_buffer = thorium_message_buffer(message);
 
@@ -610,6 +626,7 @@ int thorium_worker_dequeue_actor(struct thorium_worker *worker, struct thorium_a
 {
     int value;
     int name;
+    struct thorium_message message;
     struct thorium_actor *other_actor;
     int other_name;
     int operations;
@@ -619,21 +636,49 @@ int thorium_worker_dequeue_actor(struct thorium_worker *worker, struct thorium_a
     operations = 4;
     other_actor = NULL;
 
-    /* Move an actor from the ring to the real actor scheduling queue
+    /*
+     * Move an actor from the ring to the real actor scheduling queue
      */
     while (operations--
-                    && core_fast_ring_pop_from_consumer(&worker->input_actor_ring, &other_actor)) {
+                    && core_fast_ring_pop_from_consumer(&worker->input_inbound_message_ring,
+                            &message)) {
 
+        other_name = thorium_message_destination(&message);
+
+        other_actor = thorium_node_get_actor_from_name(worker->node, other_name);
+
+        /*
+         * The actor does not exist.
+         */
+        if (other_actor == NULL) {
+            thorium_worker_enqueue_message_for_triage(worker, &message);
+
+            continue;
+        }
+
+        /*
+         * Give the message to the actor.
+         *
+         * If that does not work, buffer it.
+         */
+        if (!thorium_actor_enqueue_mailbox_message(other_actor, &message)) {
+            core_fast_queue_enqueue(&worker->input_inbound_message_queue, &message);
+        }
+
+#if 0
 #ifdef CORE_DEBUGGER_ENABLE_ASSERT
         if (other_actor == NULL) {
             printf("NULL pointer pulled from ring, operations %d ring size %d\n",
                             operations, core_fast_ring_size_from_consumer(&worker->input_actor_ring));
         }
 #endif
+#endif
 
         CORE_DEBUGGER_ASSERT(other_actor != NULL);
 
+        /*
         other_name = thorium_actor_name(other_actor);
+        */
 
 #ifdef THORIUM_WORKER_DEBUG_SCHEDULER
         printf("ring.DEQUEUE %d\n", other_name);
@@ -759,17 +804,19 @@ int thorium_worker_dequeue_actor(struct thorium_worker *worker, struct thorium_a
 
 /* This can only be called from the PRODUCER
  */
-int thorium_worker_enqueue_actor(struct thorium_worker *worker, struct thorium_actor *actor)
+int thorium_worker_enqueue_inbound_message(struct thorium_worker *worker, struct thorium_message *message)
 {
     int value;
 
+#if 0
     CORE_DEBUGGER_ASSERT(actor != NULL);
+#endif
 
-    value = core_fast_ring_push_from_producer(&worker->input_actor_ring, &actor);
+    value = core_fast_ring_push_from_producer(&worker->input_inbound_message_ring, message);
 
 #ifdef SHOW_FULL_RING_WARNINGS
     if (!value) {
-        printf("thorium_worker: Warning: ring is full, input_actor_ring\n");
+        printf("thorium_worker: Warning: ring is full, input_inbound_message_ring\n");
     }
 #endif
 
@@ -831,8 +878,11 @@ void thorium_worker_evict_actor(struct thorium_worker *worker, int actor_name)
     struct thorium_actor *actor;
     int name;
     struct core_fast_queue saved_actors;
+
+    /*
     int count;
     int value;
+    */
 
     core_set_add(&worker->evicted_actors, &actor_name);
     core_map_delete(&worker->actors, &actor_name);
@@ -860,6 +910,7 @@ void thorium_worker_evict_actor(struct thorium_worker *worker, int actor_name)
     /* Evict the actor from the ring
      */
 
+#if 0
     count = core_fast_ring_size_from_consumer(&worker->input_actor_ring);
 
     while (count-- && core_fast_ring_pop_from_consumer(&worker->input_actor_ring,
@@ -878,6 +929,7 @@ void thorium_worker_evict_actor(struct thorium_worker *worker, int actor_name)
             CORE_DEBUGGER_ASSERT(value);
         }
     }
+#endif
 
     core_map_iterator_destroy(&worker->actor_iterator);
     core_map_iterator_init(&worker->actor_iterator, &worker->actors);
@@ -902,6 +954,7 @@ struct core_map *thorium_worker_get_actors(struct thorium_worker *worker)
 
 int thorium_worker_enqueue_actor_special(struct thorium_worker *worker, struct thorium_actor *actor)
 {
+#if 0
     int name;
 
     name = thorium_actor_name(actor);
@@ -909,6 +962,8 @@ int thorium_worker_enqueue_actor_special(struct thorium_worker *worker, struct t
     core_set_delete(&worker->evicted_actors, &name);
 
     return thorium_worker_enqueue_actor(worker, actor);
+#endif
+    return -1;
 }
 
 int thorium_worker_get_sum_of_received_actor_messages(struct thorium_worker *worker)
@@ -1148,6 +1203,7 @@ void thorium_worker_run(struct thorium_worker *worker)
 {
     struct thorium_actor *actor;
     struct thorium_message other_message;
+    int name;
 
 #ifdef THORIUM_NODE_INJECT_CLEAN_WORKER_BUFFERS
     void *buffer;
@@ -1322,6 +1378,19 @@ void thorium_worker_run(struct thorium_worker *worker)
 
         CORE_DEBUGGER_ASSERT(thorium_message_buffer(&other_message) != NULL);
         thorium_worker_enqueue_message_for_triage(worker, &other_message);
+    }
+
+    /*
+     * Transfer message to actor
+     */
+    if (core_fast_queue_dequeue(&worker->input_inbound_message_queue, &other_message)) {
+
+        name = thorium_message_destination(&other_message);
+        actor = thorium_node_get_actor_from_name(worker->node, name);
+
+        if (!thorium_actor_enqueue_mailbox_message(actor, &other_message)) {
+            core_fast_queue_enqueue(&worker->input_inbound_message_queue, &other_message);
+        }
     }
 
 #ifdef THORIUM_WORKER_ENABLE_LOCK
@@ -1640,8 +1709,8 @@ void thorium_worker_examine(struct thorium_worker *self)
     printf("QUEUE= output_outbound_message_queue size= %d\n",
                     core_fast_queue_size(&self->output_outbound_message_queue));
 
-    printf("RING (consumer)= input_actor_ring size= %d\n",
-                    core_fast_ring_size_from_producer(&self->input_actor_ring));
+    printf("RING (consumer)= input_inbound_message_ring size= %d\n",
+                    core_fast_ring_size_from_producer(&self->input_inbound_message_ring));
 
     printf("RING (consumer)= input_clean_outbound_buffer_ring size= %d\n",
                     core_fast_ring_size_from_producer(&self->input_clean_outbound_buffer_ring));
@@ -1757,4 +1826,9 @@ void thorium_worker_do_backoff(struct thorium_worker *self)
         }
     }
 #endif
+}
+
+int thorium_worker_get_input_message_ring_size(struct thorium_worker *self)
+{
+    return core_fast_ring_size_from_producer(&self->input_inbound_message_ring);
 }

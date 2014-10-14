@@ -120,7 +120,9 @@ void thorium_worker_pool_init(struct thorium_worker_pool *pool, int workers,
 
     pool->starting_time = time(NULL);
 
+    /*
     core_fast_queue_init(&pool->scheduled_actor_queue_buffer, sizeof(struct thorium_actor *));
+    */
     core_fast_queue_init(&pool->inbound_message_queue_buffer, sizeof(struct thorium_message));
 
     pool->last_balancing = pool->starting_time;
@@ -138,7 +140,9 @@ void thorium_worker_pool_destroy(struct thorium_worker_pool *pool)
     pool->node = NULL;
 
     core_fast_queue_destroy(&pool->inbound_message_queue_buffer);
+    /*
     core_fast_queue_destroy(&pool->scheduled_actor_queue_buffer);
+    */
     core_fast_queue_destroy(&pool->clean_message_queue);
 }
 
@@ -259,12 +263,12 @@ struct thorium_worker *thorium_worker_pool_select_worker_for_run(struct thorium_
     return thorium_worker_pool_get_worker(pool, index);
 }
 
-/* All messages go through here.
+/* 
+ * All messages go through here.
  */
 int thorium_worker_pool_enqueue_message(struct thorium_worker_pool *pool, struct thorium_message *message)
 {
-
-    return thorium_worker_pool_give_message_to_actor(pool, message);
+    return thorium_worker_pool_give_message_to_worker(pool, message);
 }
 
 int thorium_worker_pool_worker_count(struct thorium_worker_pool *pool)
@@ -424,9 +428,8 @@ struct thorium_node *thorium_worker_pool_get_node(struct thorium_worker_pool *po
     return pool->node;
 }
 
-int thorium_worker_pool_give_message_to_actor(struct thorium_worker_pool *pool, struct thorium_message *message)
+int thorium_worker_pool_give_message_to_worker(struct thorium_worker_pool *pool, struct thorium_message *message)
 {
-    int destination;
     struct thorium_actor *actor;
     struct thorium_worker *affinity_worker;
     int worker_index;
@@ -438,8 +441,8 @@ int thorium_worker_pool_give_message_to_actor(struct thorium_worker_pool *pool, 
 
     buffer = thorium_message_buffer(message);
     */
-    destination = thorium_message_destination(message);
-    actor = thorium_node_get_actor_from_name(pool->node, destination);
+    name = thorium_message_destination(message);
+    actor = thorium_node_get_actor_from_name(pool->node, name);
 
     if (actor == NULL) {
 #ifdef THORIUM_WORKER_POOL_DEBUG_DEAD_CHANNEL
@@ -462,11 +465,23 @@ int thorium_worker_pool_give_message_to_actor(struct thorium_worker_pool *pool, 
         return 0;
     }
 
-    name = thorium_actor_name(actor);
+    /* Check if the actor is already assigned to a worker
+     */
+    worker_index = thorium_balancer_get_actor_worker(&pool->balancer, name);
+
+    /* If not, ask the scheduler to assign the actor to a worker
+     */
+    if (worker_index < 0) {
+
+        thorium_worker_pool_assign_worker_to_actor(pool, name);
+        worker_index = thorium_balancer_get_actor_worker(&pool->balancer, name);
+    }
+
+    affinity_worker = thorium_worker_pool_get_worker(pool, worker_index);
 
     /* give the message to the actor
      */
-    if (!thorium_actor_enqueue_mailbox_message(actor, message)) {
+    if (!thorium_worker_enqueue_inbound_message(affinity_worker, message)) {
 
 #ifdef THORIUM_WORKER_POOL_DEBUG_MESSAGE_BUFFERING
         printf("DEBUG897 could not enqueue message, buffering...\n");
@@ -485,6 +500,12 @@ int thorium_worker_pool_give_message_to_actor(struct thorium_worker_pool *pool, 
         }
 #endif
 
+#if 0
+    /*
+     * The code block below was used for pushing actors to schedule to
+     * workers. The model has been refined and now only inbound messages
+     * are pushed to workers.
+     */
     } else {
         /*
          * At this point, the message has been pushed to the actor.
@@ -519,6 +540,7 @@ int thorium_worker_pool_give_message_to_actor(struct thorium_worker_pool *pool, 
         if (!thorium_worker_enqueue_actor(affinity_worker, actor)) {
             core_fast_queue_enqueue(&pool->scheduled_actor_queue_buffer, &actor);
         }
+#endif
     }
 
     return 1;
@@ -527,10 +549,13 @@ int thorium_worker_pool_give_message_to_actor(struct thorium_worker_pool *pool, 
 void thorium_worker_pool_work(struct thorium_worker_pool *pool)
 {
     struct thorium_message other_message;
+
+    /*
     struct thorium_actor *actor;
     int worker_index;
     struct thorium_worker *worker;
     int name;
+    */
 
 #ifdef THORIUM_WORKER_POOL_BALANCE
 #endif
@@ -539,12 +564,12 @@ void thorium_worker_pool_work(struct thorium_worker_pool *pool)
      * Try to give  them too.
      */
     if (core_fast_queue_dequeue(&pool->inbound_message_queue_buffer, &other_message)) {
-        thorium_worker_pool_give_message_to_actor(pool, &other_message);
+        thorium_worker_pool_give_message_to_worker(pool, &other_message);
     }
 
+#if 0
     /* Try to dequeue an actor for scheduling
      */
-
     if (core_fast_queue_dequeue(&pool->scheduled_actor_queue_buffer, &actor)) {
 
         name = thorium_actor_name(actor);
@@ -576,6 +601,7 @@ void thorium_worker_pool_work(struct thorium_worker_pool *pool)
             core_fast_queue_enqueue(&pool->scheduled_actor_queue_buffer, &actor);
         }
     }
+#endif
 
 #if 0
     printf("DEBUG pool receives message for actor %d\n",
@@ -879,8 +905,10 @@ void thorium_worker_pool_examine(struct thorium_worker_pool *self)
     i = 0;
     size = thorium_worker_pool_worker_count(self);
 
+    /*
     printf("QUEUE Name= scheduled_actor_queue_buffer size= %d\n",
                     core_fast_queue_size(&self->scheduled_actor_queue_buffer));
+                    */
 
     thorium_worker_pool_examine_inbound_queue(self);
 

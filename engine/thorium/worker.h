@@ -79,6 +79,15 @@ struct thorium_balancer;
 #define THORIUM_WORKER_CONFIG_USE_BACKOFF
 
 /*
+ * A Thorium worker.
+ *
+ * It has 4 rings:
+ *
+ * 1. input_inbound_message_ring
+ * 2. input_clean_outbound_buffer_ring
+ * 3. output_outbound_message_ring
+ * 4. output_message_queue_for_triage
+ *
  * This is similar to worker threads in linux ([kworker/0] [kworker/1])
  */
 struct thorium_worker {
@@ -103,7 +112,9 @@ struct thorium_worker {
      * The worker pool push actors to schedule on this
      * ring.
      */
-    struct core_fast_ring input_actor_ring;
+    struct core_fast_ring input_inbound_message_ring;
+
+    struct core_fast_queue input_inbound_message_queue;
 
 #ifdef THORIUM_NODE_INJECT_CLEAN_WORKER_BUFFERS
     /*
@@ -215,7 +226,7 @@ int thorium_worker_get_message_production_score(struct thorium_worker *self);
 struct core_memory_pool *thorium_worker_get_ephemeral_memory(struct thorium_worker *self);
 
 int thorium_worker_dequeue_actor(struct thorium_worker *self, struct thorium_actor **actor);
-int thorium_worker_enqueue_actor(struct thorium_worker *self, struct thorium_actor *actor);
+int thorium_worker_enqueue_inbound_message(struct thorium_worker *self, struct thorium_message *message);
 int thorium_worker_enqueue_actor_special(struct thorium_worker *self, struct thorium_actor *actor);
 
 int thorium_worker_enqueue_message(struct thorium_worker *self, struct thorium_message *message);
@@ -263,5 +274,6 @@ void thorium_worker_enable_profiler(struct thorium_worker *self);
 int thorium_worker_get_scheduled_actor_count(struct thorium_worker *self);
 
 void *thorium_worker_allocate(struct thorium_worker *self, size_t count);
+int thorium_worker_get_input_message_ring_size(struct thorium_worker *self);
 
 #endif

@@ -25,7 +25,9 @@ struct thorium_migration;
 struct thorium_worker_pool {
     struct thorium_balancer balancer;
 
+    /*
     struct core_fast_queue scheduled_actor_queue_buffer;
+    */
     struct core_fast_queue inbound_message_queue_buffer;
     struct core_fast_queue clean_message_queue;
 
@@ -91,7 +93,7 @@ int thorium_worker_pool_dequeue_message(struct thorium_worker_pool *self, struct
 float thorium_worker_pool_get_computation_load(struct thorium_worker_pool *self);
 
 struct thorium_node *thorium_worker_pool_get_node(struct thorium_worker_pool *self);
-int thorium_worker_pool_give_message_to_actor(struct thorium_worker_pool *self, struct thorium_message *message);
+int thorium_worker_pool_give_message_to_worker(struct thorium_worker_pool *self, struct thorium_message *message);
 
 void thorium_worker_pool_work(struct thorium_worker_pool *self);
 float thorium_worker_pool_get_current_load(struct thorium_worker_pool *self);
