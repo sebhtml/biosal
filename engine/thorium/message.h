@@ -27,8 +27,11 @@ struct thorium_message {
     int source_node;
     int destination_node;
 
+#ifdef THORIUM_MESSAGE_USE_ROUTING
     int routing_source;
     int routing_destination;
+#endif
+
     int worker;
 
     int type;

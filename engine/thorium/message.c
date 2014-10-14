@@ -21,12 +21,14 @@ void thorium_message_init(struct thorium_message *self, int action, int count,
     self->source_node = -1;
     self->destination_node = -1;
 
+#ifdef THORIUM_MESSAGE_USE_ROUTING
     self->routing_source = -1;
     self->routing_destination = -1;
+#endif
 
     self->worker = -1;
 
-    thorium_message_set_type(self,  THORIUM_MESSAGE_TYPE_NONE);
+    thorium_message_set_type(self, THORIUM_MESSAGE_TYPE_NONE);
 }
 
 void thorium_message_destroy(struct thorium_message *self)
