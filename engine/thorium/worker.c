@@ -44,10 +44,6 @@
 #define MEMORY_POOL_NAME_WORKER_EPHEMERAL  0x2ee1c5a6
 #define MEMORY_POOL_NAME_WORKER_OUTBOUND   0x46d316e4
 
-
-#define STATUS_IDLE 0
-#define STATUS_QUEUED 1
-
 /*
 #define THORIUM_WORKER_DEBUG_MEMORY
 #define THORIUM_BUG_594
@@ -697,7 +693,7 @@ int thorium_worker_dequeue_actor(struct thorium_worker *worker, struct thorium_a
              * This does nothing if it is already in the list.
              */
 
-            status = STATUS_IDLE;
+            status = THORIUM_SCHEDULER_STATUS_IDLE;
             core_map_add_value(&worker->actors, &other_name, &status);
 
             core_map_iterator_destroy(&worker->actor_iterator);
@@ -706,8 +702,8 @@ int thorium_worker_dequeue_actor(struct thorium_worker *worker, struct thorium_a
 
         /* If the actor is not queued, queue it
          */
-        if (status == STATUS_IDLE) {
-            status = STATUS_QUEUED;
+        if (status == THORIUM_SCHEDULER_STATUS_IDLE) {
+            status = THORIUM_SCHEDULER_STATUS_SCHEDULED;
 
             core_map_update_value(&worker->actors, &other_name, &status);
 
@@ -750,12 +746,12 @@ int thorium_worker_dequeue_actor(struct thorium_worker *worker, struct thorium_a
 #ifdef THORIUM_WORKER_DEBUG_SCHEDULER
             printf("SCHEDULER %d has no message to schedule...\n", name);
 #endif
-            /* Set the status of the worker to STATUS_IDLE
+            /* Set the status of the worker to THORIUM_SCHEDULER_STATUS_IDLE
              *
              * TODO: the ring new tail might not be visible too.
              * That could possibly be a problem...
              */
-            status = STATUS_IDLE;
+            status = THORIUM_SCHEDULER_STATUS_IDLE;
             core_map_update_value(&worker->actors, &name, &status);
 
         /* The actor still has a lot of messages
@@ -773,7 +769,7 @@ int thorium_worker_dequeue_actor(struct thorium_worker *worker, struct thorium_a
                         thorium_actor_get_mailbox_size(*actor));
 #endif
 
-            /* The status is still STATUS_QUEUED
+            /* The status is still THORIUM_SCHEDULER_STATUS_SCHEDULED
              */
             thorium_scheduler_enqueue(&worker->scheduler, *actor);
 
@@ -787,7 +783,7 @@ int thorium_worker_dequeue_actor(struct thorium_worker *worker, struct thorium_a
          */
         } else /* if (mailbox_size == 0) */ {
 
-            status = STATUS_IDLE;
+            status = THORIUM_SCHEDULER_STATUS_IDLE;
             core_map_update_value(&worker->actors, &name, &status);
 
             value = 0;
@@ -1487,10 +1483,10 @@ void thorium_worker_work(struct thorium_worker *worker, struct thorium_actor *ac
      * If the actor still has messages, schedule it.
      */
     core_map_get_value(&worker->actors, &actor_name, &status);
-    if (status == STATUS_IDLE
+    if (status == THORIUM_SCHEDULER_STATUS_IDLE
                     && thorium_actor_get_mailbox_size(actor) > 0) {
 
-        status = STATUS_QUEUED;
+        status = THORIUM_SCHEDULER_STATUS_SCHEDULED;
         core_map_update_value(&worker->actors, &actor_name, &status);
 
         thorium_scheduler_enqueue(&worker->scheduler, actor);
@@ -1595,7 +1591,7 @@ void thorium_worker_check_production(struct thorium_worker *worker, int value, i
             if (mailbox_size > 0) {
                 thorium_scheduler_enqueue(&worker->scheduler, other_actor);
 
-                status = STATUS_QUEUED;
+                status = THORIUM_SCHEDULER_STATUS_SCHEDULED;
                 core_map_update_value(&worker->actors, &name, &status);
             }
         } else {

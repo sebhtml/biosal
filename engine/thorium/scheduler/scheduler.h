@@ -16,6 +16,12 @@ struct thorium_actor;
 #define THORIUM_PRIORITY_HIGH 128
 #define THORIUM_PRIORITY_MAX 1048576
 
+#define THORIUM_SCHEDULER_STATUS_CREATED        0
+#define THORIUM_SCHEDULER_STATUS_TERMINATED     1
+#define THORIUM_SCHEDULER_STATUS_SCHEDULED      2
+#define THORIUM_SCHEDULER_STATUS_RECEIVING      3
+#define THORIUM_SCHEDULER_STATUS_IDLE           4
+
 /*
  * This is an actor scheduling queue.
  * Each worker has one of these.
