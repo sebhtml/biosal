@@ -2113,6 +2113,7 @@ void thorium_node_run_loop(struct thorium_node *node)
 
             if (current_time - node->last_report_time >= period) {
                 if (CORE_BITMAP_GET_BIT(node->flags, FLAG_PRINT_LOAD)) {
+
                     thorium_worker_pool_print_load(&node->worker_pool, THORIUM_WORKER_POOL_LOAD_EPOCH);
 
                     /* Display the number of actors,
@@ -2120,12 +2121,24 @@ void thorium_node_run_loop(struct thorium_node *node)
                      * and
                      * the heap size.
                      */
-                    printf("thorium_node: node/%d METRICS AliveActorCount: %d ActiveRequestCount: %d ByteCount: %" PRIu64 " / %" PRIu64 "\n",
+                    printf("thorium_node: node/%d METRICS AliveActorCount: %d ByteCount: %" PRIu64 " / %" PRIu64 "\n",
                                     node->name,
                                     node->alive_actors,
-                                    thorium_transport_get_active_request_count(&node->transport),
                                     core_memory_get_utilized_byte_count(),
                                     core_memory_get_total_byte_count());
+
+                    printf("thorium_node: node/%d MESSAGES"
+                                    " ReceivedMessageCount: %" PRIu64 ""
+                                    " SentMessageCount: %" PRIu64 ""
+                                    " BufferedInboundMessageCount: %d"
+                                    " ActiveRequestCount: %d"
+                                    "\n",
+                                    node->name,
+                                    core_counter_get(&node->counter, CORE_COUNTER_RECEIVED_MESSAGES),
+                                    core_counter_get(&node->counter, CORE_COUNTER_SENT_MESSAGES),
+                                    thorium_transport_get_active_request_count(&node->transport),
+                                    thorium_worker_pool_buffered_message_count(&node->worker_pool)
+                                    );
                 }
 
 #ifdef THORIUM_NODE_USE_COUNTERS

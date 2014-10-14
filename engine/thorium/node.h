@@ -23,6 +23,11 @@
  */
 #include <signal.h>
 
+/*
+ * Use event counters
+ */
+#define THORIUM_NODE_USE_COUNTERS
+
 /* Some message tags at the node level instead of the actor level
  */
 
