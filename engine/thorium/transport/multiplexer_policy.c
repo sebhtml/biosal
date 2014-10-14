@@ -15,8 +15,8 @@
  * There are 1 000 000 us in 1 second.
  * There are 1 000 000 000 ns in 1 second.
  */
-#define TIMEOUT_IN_MICRO_SECONDS 0
-#define THORIUM_MESSAGE_MULTIPLEXER_TIME_THRESHOLD_IN_NANOSECONDS ( TIMEOUT_IN_MICRO_SECONDS * 100)
+#define TIMEOUT_IN_MICRO_SECONDS 100
+#define THORIUM_MESSAGE_MULTIPLEXER_TIME_THRESHOLD_IN_NANOSECONDS ( TIMEOUT_IN_MICRO_SECONDS * 1000)
 
 void thorium_multiplexer_policy_init(struct thorium_multiplexer_policy *self)
 {
@@ -30,6 +30,7 @@ void thorium_multiplexer_policy_init(struct thorium_multiplexer_policy *self)
     self->threshold_time_in_nanoseconds = THORIUM_MESSAGE_MULTIPLEXER_TIME_THRESHOLD_IN_NANOSECONDS;
 
     core_set_init(&self->actions_to_skip, sizeof(int));
+    core_set_init(&self->actions_to_multiplex, sizeof(int));
 
     /*
      * We don't want to slow down things so the following actions
@@ -50,12 +51,23 @@ void thorium_multiplexer_policy_init(struct thorium_multiplexer_policy *self)
      * This is the minimum number of thorium nodes
      * needed for enabling the multiplexer.
      */
-    self->minimum_node_count = 16;
+    self->minimum_node_count = 1;
+
+    /*
+     * The new model is to use explicit registration of messages to
+     * multiplex.
+     *
+     * If no actions are registered, disable the multiplexer in the policy
+     * directly.
+     */
+    if (core_set_empty(&self->actions_to_multiplex))
+        self->disabled = 1;
 }
 
 void thorium_multiplexer_policy_destroy(struct thorium_multiplexer_policy *self)
 {
     core_set_destroy(&self->actions_to_skip);
+    core_set_destroy(&self->actions_to_multiplex);
 
     self->threshold_buffer_size_in_bytes = -1;
     self->threshold_time_in_nanoseconds = -1;

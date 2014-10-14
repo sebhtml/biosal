@@ -16,6 +16,7 @@ struct thorium_multiplexer_policy {
     int threshold_buffer_size_in_bytes;
     int threshold_time_in_nanoseconds;
     struct core_set actions_to_skip;
+    struct core_set actions_to_multiplex;
     int disabled;
     int minimum_node_count;
 };
