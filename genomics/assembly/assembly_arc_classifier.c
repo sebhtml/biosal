@@ -100,7 +100,9 @@ void biosal_assembly_arc_classifier_init(struct thorium_actor *self)
      *
      * This is a total of 4.
      */
+    /*
     concrete_self->maximum_pending_request_count += 3;
+    */
 
     concrete_self->consumer_count_with_maximum = 0;
 

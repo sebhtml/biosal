@@ -2136,8 +2136,8 @@ void thorium_node_run_loop(struct thorium_node *node)
                                     node->name,
                                     core_counter_get(&node->counter, CORE_COUNTER_RECEIVED_MESSAGES),
                                     core_counter_get(&node->counter, CORE_COUNTER_SENT_MESSAGES),
-                                    thorium_transport_get_active_request_count(&node->transport),
-                                    thorium_worker_pool_buffered_message_count(&node->worker_pool)
+                                    thorium_worker_pool_buffered_message_count(&node->worker_pool),
+                                    thorium_transport_get_active_request_count(&node->transport)
                                     );
                 }
 
