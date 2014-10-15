@@ -116,9 +116,9 @@ void biosal_sequence_store_init(struct thorium_actor *actor)
     */
 
     /*
-     * 2 MiB
+     * 8 MiB
      */
-    concrete_actor->big_production_block_size = 2 *1024 * 1024;
+    concrete_actor->big_production_block_size = 32 *1024 * 1024;
 }
 
 void biosal_sequence_store_destroy(struct thorium_actor *actor)
