@@ -1042,14 +1042,14 @@ void thorium_actor_receive(struct thorium_actor *self, struct thorium_message *m
 
     if (CORE_BITMAP_GET_BIT(self->flags, FLAG_ENABLE_LOAD_PROFILER)) {
         thorium_load_profiler_profile(&self->profiler, THORIUM_LOAD_PROFILER_RECEIVE_BEGIN,
-                        thorium_message_action(message));
+                        message);
     }
 
     thorium_actor_receive_private(self, message);
 
     if (CORE_BITMAP_GET_BIT(self->flags, FLAG_ENABLE_LOAD_PROFILER)) {
         thorium_load_profiler_profile(&self->profiler, THORIUM_LOAD_PROFILER_RECEIVE_END,
-                        thorium_message_action(message));
+                        message);
     }
 
     end = core_timer_get_nanoseconds(&self->timer);

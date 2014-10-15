@@ -29,10 +29,13 @@ void thorium_load_profiler_destroy(struct thorium_load_profiler *self)
     core_timer_destroy(&self->timer);
 }
 
-void thorium_load_profiler_profile(struct thorium_load_profiler *self, int event, int action)
+void thorium_load_profiler_profile(struct thorium_load_profiler *self, int event,
+                struct thorium_message *message)
 {
     uint64_t time;
+    int action;
 
+    action = thorium_message_action(message);
     time = core_timer_get_nanoseconds(&self->timer);
 
     switch (event) {
