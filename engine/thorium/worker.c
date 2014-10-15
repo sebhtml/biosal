@@ -368,11 +368,14 @@ void thorium_worker_send(struct thorium_worker *worker, struct thorium_message *
     void *buffer;
     int count;
     void *old_buffer;
+    int action;
 
 #ifdef THORIUM_WORKER_SEND_TO_LOCAL_ACTOR
     int destination;
     struct thorium_actor *destination_actor;
 #endif
+
+    action = thorium_message_action(message);
 
     /*
      * There are 4 types of routes:
@@ -466,7 +469,9 @@ void thorium_worker_send(struct thorium_worker *worker, struct thorium_message *
      */
     destination = thorium_message_destination(message);
 
-    if (thorium_worker_has_actor(worker, destination)) {
+    if (action != ACTION_ENABLE_AUTO_SCALING
+                    && action != ACTION_DISABLE_AUTO_SCALING
+                    && thorium_worker_has_actor(worker, destination)) {
 
         destination_actor = thorium_node_get_actor_from_name(worker->node, destination);
 
