@@ -129,8 +129,6 @@ void thorium_worker_init(struct thorium_worker *worker, int name, struct thorium
 
     worker->tick_count = 0;
 
-    thorium_load_profiler_init(&worker->profiler);
-
     argc = thorium_node_argc(node);
     argv = thorium_node_argv(node);
 
@@ -289,8 +287,6 @@ void thorium_worker_init(struct thorium_worker *worker, int name, struct thorium
 void thorium_worker_destroy(struct thorium_worker *worker)
 {
     void *buffer;
-
-    thorium_load_profiler_destroy(&worker->profiler);
 
     if (CORE_BITMAP_GET_BIT(worker->flags, FLAG_ENABLE_ACTOR_LOAD_PROFILER)) {
         core_buffered_file_writer_destroy(&worker->load_profile_writer);

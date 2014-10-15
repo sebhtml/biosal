@@ -1,5 +1,5 @@
 
-#include "load_profiler.h"
+#include "actor_profiler.h"
 
 #include <core/system/debugger.h>
 #include <core/system/timer.h>
@@ -7,7 +7,7 @@
 
 #include <stdio.h>
 
-void thorium_load_profiler_init(struct thorium_load_profiler *self)
+void thorium_actor_profiler_init(struct thorium_actor_profiler *self)
 {
     self->profile_begin_count = 0;
     self->profile_end_count = 0;
@@ -18,7 +18,7 @@ void thorium_load_profiler_init(struct thorium_load_profiler *self)
     core_vector_init(&self->event_actions, sizeof(int));
 }
 
-void thorium_load_profiler_destroy(struct thorium_load_profiler *self)
+void thorium_actor_profiler_destroy(struct thorium_actor_profiler *self)
 {
     self->profile_begin_count = 0;
     self->profile_end_count = 0;
@@ -29,7 +29,7 @@ void thorium_load_profiler_destroy(struct thorium_load_profiler *self)
     core_timer_destroy(&self->timer);
 }
 
-void thorium_load_profiler_profile(struct thorium_load_profiler *self, int event,
+void thorium_actor_profiler_profile(struct thorium_actor_profiler *self, int event,
                 struct thorium_message *message)
 {
     uint64_t time;
@@ -56,7 +56,7 @@ void thorium_load_profiler_profile(struct thorium_load_profiler *self, int event
     }
 }
 
-void thorium_load_profiler_write(struct thorium_load_profiler *self, const char *script,
+void thorium_actor_profiler_write(struct thorium_actor_profiler *self, const char *script,
                 int name, struct core_buffered_file_writer *writer)
 {
     int i;

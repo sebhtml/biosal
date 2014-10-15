@@ -13,7 +13,7 @@ THORIUM_OBJECTS += engine/thorium/thorium_engine.o
 THORIUM_OBJECTS += engine/thorium/dispatcher.o
 THORIUM_OBJECTS += engine/thorium/route.o
 THORIUM_OBJECTS += engine/thorium/worker_buffer.o
-THORIUM_OBJECTS += engine/thorium/load_profiler.o
+THORIUM_OBJECTS += engine/thorium/actor_profiler.o
 
 # actor modules. These are mostly traits.
 THORIUM_OBJECTS += engine/thorium/modules/binomial_tree_message.o

@@ -5,7 +5,7 @@
 #include "message.h"
 #include "script.h"
 #include "dispatcher.h"
-#include "load_profiler.h"
+#include "actor_profiler.h"
 
 #include "modules/binomial_tree_message.h"
 #include "modules/proxy_message.h"
@@ -219,7 +219,7 @@ struct core_memory_pool;
  * The actor attribute is a void *
  */
 struct thorium_actor {
-    struct thorium_load_profiler profiler;
+    struct thorium_actor_profiler profiler;
     struct thorium_script *script;
     struct thorium_worker *worker;
     struct thorium_node *node;

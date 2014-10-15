@@ -18,7 +18,7 @@ struct core_buffered_file_writer;
 /*
  * Event profiler.
  */
-struct thorium_load_profiler {
+struct thorium_actor_profiler {
     uint64_t profile_begin_count;
     uint64_t profile_end_count;
 
@@ -28,12 +28,12 @@ struct thorium_load_profiler {
     struct core_vector event_actions;
 };
 
-void thorium_load_profiler_init(struct thorium_load_profiler *self);
-void thorium_load_profiler_destroy(struct thorium_load_profiler *self);
-void thorium_load_profiler_profile(struct thorium_load_profiler *self, int event,
+void thorium_actor_profiler_init(struct thorium_actor_profiler *self);
+void thorium_actor_profiler_destroy(struct thorium_actor_profiler *self);
+void thorium_actor_profiler_profile(struct thorium_actor_profiler *self, int event,
                 struct thorium_message *message);
 
-void thorium_load_profiler_write(struct thorium_load_profiler *self, const char *script,
+void thorium_actor_profiler_write(struct thorium_actor_profiler *self, const char *script,
                 int name, struct core_buffered_file_writer *writer);
 
 #endif /* THORIUM_LOAD_PROFILER_H */

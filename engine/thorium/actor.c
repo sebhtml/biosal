@@ -129,7 +129,7 @@ void thorium_actor_init(struct thorium_actor *self, void *concrete_actor,
     self->virtual_runtime = 0;
     core_timer_init(&self->timer);
 
-    thorium_load_profiler_init(&self->profiler);
+    thorium_actor_profiler_init(&self->profiler);
 
     thorium_actor_set_priority(self, THORIUM_PRIORITY_NORMAL);
 
@@ -221,7 +221,7 @@ void thorium_actor_destroy(struct thorium_actor *self)
     self->virtual_runtime = 0;
     core_timer_destroy(&self->timer);
 
-    thorium_load_profiler_destroy(&self->profiler);
+    thorium_actor_profiler_destroy(&self->profiler);
 
     /* The concrete actor must first be destroyed.
      */
@@ -1041,14 +1041,14 @@ void thorium_actor_receive(struct thorium_actor *self, struct thorium_message *m
     start = core_timer_get_nanoseconds(&self->timer);
 
     if (CORE_BITMAP_GET_BIT(self->flags, FLAG_ENABLE_LOAD_PROFILER)) {
-        thorium_load_profiler_profile(&self->profiler, THORIUM_LOAD_PROFILER_RECEIVE_BEGIN,
+        thorium_actor_profiler_profile(&self->profiler, THORIUM_LOAD_PROFILER_RECEIVE_BEGIN,
                         message);
     }
 
     thorium_actor_receive_private(self, message);
 
     if (CORE_BITMAP_GET_BIT(self->flags, FLAG_ENABLE_LOAD_PROFILER)) {
-        thorium_load_profiler_profile(&self->profiler, THORIUM_LOAD_PROFILER_RECEIVE_END,
+        thorium_actor_profiler_profile(&self->profiler, THORIUM_LOAD_PROFILER_RECEIVE_END,
                         message);
     }
 
@@ -2277,7 +2277,7 @@ void thorium_actor_write_profile(struct thorium_actor *self,
     printf("thorium_actor_write_profile\n");
 #endif
 
-    thorium_load_profiler_write(&self->profiler, thorium_actor_script_name(self),
+    thorium_actor_profiler_write(&self->profiler, thorium_actor_script_name(self),
                     thorium_actor_name(self), writer);
 }
 
