@@ -1,8 +1,11 @@
-#ifndef THORIUM_LOAD_PROFILER_H
-#define THORIUM_LOAD_PROFILER_H
+#ifndef THORIUM_ACTOR_PROFILER_H
+#define THORIUM_ACTOR_PROFILER_H
 
-#define THORIUM_LOAD_PROFILER_RECEIVE_BEGIN   0
-#define THORIUM_LOAD_PROFILER_RECEIVE_END     1
+#define THORIUM_ACTOR_PROFILER_RECEIVE_BEGIN   0
+#define THORIUM_ACTOR_PROFILER_RECEIVE_END     1
+
+#define THORIUM_ACTOR_PROFILER_HEADER \
+    "start_time\tend_time\tactor\tscript\taction\tcount\tsource\tcommunication_time\tcompute_time\tcompute_to_communication_ratio\n"
 
 #include <core/structures/vector.h>
 
@@ -26,6 +29,8 @@ struct thorium_actor_profiler {
     struct core_vector event_start_times;
     struct core_vector event_end_times;
     struct core_vector event_actions;
+    struct core_vector event_counts;
+    struct core_vector event_sources;
 };
 
 void thorium_actor_profiler_init(struct thorium_actor_profiler *self);
@@ -36,4 +41,4 @@ void thorium_actor_profiler_profile(struct thorium_actor_profiler *self, int eve
 void thorium_actor_profiler_write(struct thorium_actor_profiler *self, const char *script,
                 int name, struct core_buffered_file_writer *writer);
 
-#endif /* THORIUM_LOAD_PROFILER_H */
+#endif /* THORIUM_ACTOR_PROFILER_H */

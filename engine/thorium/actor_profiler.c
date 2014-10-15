@@ -16,6 +16,8 @@ void thorium_actor_profiler_init(struct thorium_actor_profiler *self)
     core_vector_init(&self->event_start_times, sizeof(uint64_t));
     core_vector_init(&self->event_end_times, sizeof(uint64_t));
     core_vector_init(&self->event_actions, sizeof(int));
+    core_vector_init(&self->event_sources, sizeof(int));
+    core_vector_init(&self->event_counts, sizeof(int));
 }
 
 void thorium_actor_profiler_destroy(struct thorium_actor_profiler *self)
@@ -26,6 +28,9 @@ void thorium_actor_profiler_destroy(struct thorium_actor_profiler *self)
     core_vector_destroy(&self->event_start_times);
     core_vector_destroy(&self->event_end_times);
     core_vector_destroy(&self->event_actions);
+    core_vector_destroy(&self->event_sources);
+    core_vector_destroy(&self->event_counts);
+
     core_timer_destroy(&self->timer);
 }
 
@@ -34,20 +39,27 @@ void thorium_actor_profiler_profile(struct thorium_actor_profiler *self, int eve
 {
     uint64_t time;
     int action;
+    int count;
+    int source;
 
     action = thorium_message_action(message);
+    count = thorium_message_count(message);
+    source = thorium_message_source(message);
+
     time = core_timer_get_nanoseconds(&self->timer);
 
     switch (event) {
-        case THORIUM_LOAD_PROFILER_RECEIVE_BEGIN:
+        case THORIUM_ACTOR_PROFILER_RECEIVE_BEGIN:
 
             ++self->profile_begin_count;
 
             core_vector_push_back(&self->event_start_times, &time);
             core_vector_push_back(&self->event_actions, &action);
+            core_vector_push_back(&self->event_counts, &count);
+            core_vector_push_back(&self->event_sources, &source);
 
             break;
-        case THORIUM_LOAD_PROFILER_RECEIVE_END:
+        case THORIUM_ACTOR_PROFILER_RECEIVE_END:
             CORE_DEBUGGER_ASSERT(self->profile_end_count + 1 == self->profile_begin_count);
 
             ++self->profile_end_count;
@@ -68,6 +80,8 @@ void thorium_actor_profiler_write(struct thorium_actor_profiler *self, const cha
     int action;
     uint64_t last_end_time;
     float ratio;
+    int count;
+    int source;
 
     last_end_time = 0;
     size = core_vector_size(&self->event_start_times);
@@ -76,6 +90,8 @@ void thorium_actor_profiler_write(struct thorium_actor_profiler *self, const cha
         start_time = core_vector_at_as_uint64_t(&self->event_start_times, i);
         end_time = core_vector_at_as_uint64_t(&self->event_end_times, i);
         action = core_vector_at_as_int(&self->event_actions, i);
+        count = core_vector_at_as_int(&self->event_counts, i);
+        source = core_vector_at_as_int(&self->event_sources, i);
 
         compute_time = end_time - start_time;
         wait_time = 0;
@@ -87,12 +103,21 @@ void thorium_actor_profiler_write(struct thorium_actor_profiler *self, const cha
         }
 
         /*
-         * start_time end_time actor script action compute_time wait_time
+         * Order:
+    core_buffered_file_writer_printf(&self->load_profile_writer, "start_time\tend_time\tactor\tscript"
+                    "\taction\tcount\tsource\tcommunication_time\tcompute_time\tcompute_to_communication_ratio\n");
+         */
+        /*
+         * start_time end_time actor script action communication_time compute_time compute_to_communication_ratio
          */
         core_buffered_file_writer_printf(writer, "%" PRIu64 "\t%" PRIu64 "\t%d\t%s"
-                        "\t0x%x\t%" PRIu64 "\t%" PRIu64 "\t%0.4f\n",
+                        "\t0x%x\t%d\t%d" /* action count source */
+                        "\t%" PRIu64 "\t%" PRIu64 "\t%0.4f\n", /* wait compute ratio */
                         start_time, end_time, name, script, action,
-                        compute_time, wait_time, ratio);
+                        count, source,
+                        wait_time,
+                        compute_time,
+                        ratio);
 
         last_end_time = end_time;
     }

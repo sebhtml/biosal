@@ -1801,7 +1801,7 @@ void thorium_worker_enable_profiler(struct thorium_worker *self)
 
     core_buffered_file_writer_init(&self->load_profile_writer, file_name);
 
-    core_buffered_file_writer_printf(&self->load_profile_writer, "start_time\tend_time\tactor\tscript\taction\tcompute_time\tcommunication_time\tcompute_to_communication_ratio\n");
+    core_buffered_file_writer_printf(&self->load_profile_writer, THORIUM_ACTOR_PROFILER_HEADER);
 }
 
 void *thorium_worker_allocate(struct thorium_worker *self, size_t count)
