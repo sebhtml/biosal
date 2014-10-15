@@ -103,8 +103,8 @@
  * Send messages to local actor directly.
  */
 /*
-#define THORIUM_WORKER_SEND_TO_LOCAL_ACTOR
 */
+#define THORIUM_WORKER_SEND_TO_LOCAL_ACTOR
 
 void thorium_worker_work(struct thorium_worker *self, struct thorium_actor *actor);
 
@@ -377,7 +377,7 @@ void thorium_worker_send(struct thorium_worker *worker, struct thorium_message *
     /*
      * There are 4 types of routes:
      *
-     * 1. actor 1, actor 1 (same actor)
+     * 1. actor 1, actor 1 (same actor) (technically not feasible)
      *
      * 2. actor 1, worker 1, actor 2 (same worker)
      *
@@ -453,16 +453,23 @@ void thorium_worker_send(struct thorium_worker *worker, struct thorium_message *
     }
 #endif
 
+    /*
+     * Clear the zero-copy buffer now so that
+     * the next message is not falsely a zero-copy buffer.
+     */
+    worker->zero_copy_buffer = NULL;
+
 #ifdef THORIUM_WORKER_SEND_TO_LOCAL_ACTOR
-    /* if the destination is on the same node,
-     * handle that directly here to avoid locking things
-     * with the node.
+    /*
+     * If the destination actor is on the same worker,
+     * handle that directly here to avoid waiting for the node.
      */
     destination = thorium_message_destination(message);
 
     if (thorium_worker_has_actor(worker, destination)) {
 
         destination_actor = thorium_node_get_actor_from_name(worker->node, destination);
+
         if (destination_actor != NULL
                  && thorium_actor_enqueue_mailbox_message(destination_actor, message)) {
 
@@ -474,7 +481,6 @@ void thorium_worker_send(struct thorium_worker *worker, struct thorium_message *
 #endif
 
     thorium_worker_enqueue_message(worker, message);
-    worker->zero_copy_buffer = NULL;
 }
 
 void thorium_worker_start(struct thorium_worker *worker, int processor)
@@ -1137,6 +1143,14 @@ void thorium_worker_free_message(struct thorium_worker *worker, struct thorium_m
     void *buffer;
 
     buffer = thorium_message_buffer(message);
+
+    /*
+     * Nothing to do.
+     */
+    if (buffer == NULL) {
+        return;
+    }
+
     source_worker = thorium_message_worker(message);
 
     if (source_worker == worker->name) {
@@ -1509,7 +1523,7 @@ void thorium_worker_work(struct thorium_worker *worker, struct thorium_actor *ac
 #endif
 
     /*
-     * If the actor still has messages, schedule it.
+     * If the actor still has messages, schedule it again.
      */
     core_map_get_value(&worker->actors, &actor_name, &status);
     if (status == THORIUM_SCHEDULER_STATUS_IDLE

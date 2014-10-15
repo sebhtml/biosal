@@ -66,7 +66,18 @@
 #define FLAG_SYNCHRONIZATION_STARTED        7
 #define FLAG_ENABLE_LOAD_PROFILER           8
 
-/* synchronization functions
+/*
+ * Directly send messages to self without going through the worker.
+ *
+ * The current implementation of this is broken, presumably because
+ * it does not call thorium_actor_allocate.
+ */
+/*
+#define THORIUM_ACTOR_FAST_SEND_TO_SELF
+*/
+
+/*
+ * Synchronization functions
  */
 void thorium_actor_receive_synchronize(struct thorium_actor *self,
                 struct thorium_message *message);
@@ -521,6 +532,8 @@ void thorium_actor_send_with_source(struct thorium_actor *self, int name, struct
     if (name == thorium_actor_name(self)) {
         if (thorium_actor_enqueue_mailbox_message(self, message)) {
 
+            printf("DEBUG message %d is for self %d\n",
+                            thorium_message_action(message), name);
             /*
              * It is not required to send the message with thorium_worker_send
              * here.
@@ -2030,7 +2043,10 @@ int thorium_actor_work(struct thorium_actor *self)
 
         while (thorium_actor_dequeue_mailbox_message(self, &message)) {
 
+                /*
             CORE_DEBUGGER_ASSERT(thorium_message_buffer(&message) != NULL);
+            */
+
             thorium_worker_free_message(self->worker, &message);
         }
     }
