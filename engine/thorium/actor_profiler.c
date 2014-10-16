@@ -91,7 +91,7 @@ void thorium_actor_profiler_profile(struct thorium_actor_profiler *self, int eve
                  */
                 if (communication_time >= threshold) {
 
-                    printf("thorium_actor_profiler_profile communication_time= %" PRIu64 "\n",
+                    printf("thorium_actor_profiler_profile communication_time= %" PRIu64 " ns (roundtrip latency)\n",
                                     communication_time);
 
                     thorium_message_print(message);

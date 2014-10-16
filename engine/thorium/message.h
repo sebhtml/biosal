@@ -17,8 +17,8 @@
  * Use tracepoints to analyze the life cycle of messages.
  */
 /*
-#define THORIUM_MESSAGE_ENABLE_TRACEPOINTS
 */
+#define THORIUM_MESSAGE_ENABLE_TRACEPOINTS
 
 #ifdef THORIUM_MESSAGE_ENABLE_TRACEPOINTS
 
