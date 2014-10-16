@@ -41,7 +41,15 @@ void thorium_actor_profiler_profile(struct thorium_actor_profiler *self, int eve
     int action;
     int count;
     int source;
+    uint64_t communication_time;
+    uint64_t last_end_time;
+    int i;
+    uint64_t threshold;
 
+    /*
+     * 10 ms
+     */
+    threshold = 10 * 1000 * 1000;
     action = thorium_message_action(message);
     count = thorium_message_count(message);
     source = thorium_message_source(message);
@@ -57,6 +65,19 @@ void thorium_actor_profiler_profile(struct thorium_actor_profiler *self, int eve
             core_vector_push_back(&self->event_actions, &action);
             core_vector_push_back(&self->event_counts, &count);
             core_vector_push_back(&self->event_sources, &source);
+
+            i = core_vector_size(&self->event_end_times) - 1;
+
+            if (i >= 0) {
+                last_end_time = core_vector_at_as_uint64_t(&self->event_end_times, i);
+                communication_time = time - last_end_time;
+
+#ifdef THORIUM_MESSAGE_ENABLE_TRACEPOINTS
+                if (communication_time >= threshold) {
+                    thorium_message_print_tracepoints(message);
+                }
+#endif
+            }
 
             break;
         case THORIUM_ACTOR_PROFILER_RECEIVE_END:

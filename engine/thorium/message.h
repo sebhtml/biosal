@@ -6,12 +6,36 @@
 
 #include "core/helpers/message_helper.h"
 
+#include <stdint.h>
+
 #define THORIUM_MESSAGE_TYPE_NONE               0
 #define THORIUM_MESSAGE_TYPE_NODE_INBOUND       1
 #define THORIUM_MESSAGE_TYPE_NODE_OUTBOUND      2
 #define THORIUM_MESSAGE_TYPE_WORKER_OUTBOUND    3
 
 #define THORIUM_MESSAGE_METADATA_SIZE (3 * sizeof(int))
+
+/*
+ * Use tracepoints to analyze the life cycle of messages.
+ */
+/*
+#define THORIUM_MESSAGE_ENABLE_TRACEPOINTS
+*/
+
+#ifdef THORIUM_MESSAGE_ENABLE_TRACEPOINTS
+
+#define THORIUM_MESSAGE_TRACEPOINT_ACTOR_1      0
+#define THORIUM_MESSAGE_TRACEPOINT_WORKER_1     1
+#define THORIUM_MESSAGE_TRACEPOINT_NODE_1       2
+#define THORIUM_MESSAGE_TRACEPOINT_NODE_2       3
+#define THORIUM_MESSAGE_TRACEPOINT_WORKER_2     4
+#define THORIUM_MESSAGE_TRACEPOINT_ACTOR_2      5
+
+#define THORIUM_MESSAGE_TRACEPOINT_COUNT        6
+
+#define THORIUM_MESSAGE_TRACEPOINT_NO_VALUE     0
+
+#endif
 
 /*
  * This is a message.
@@ -35,6 +59,10 @@ struct thorium_message {
     int worker;
 
     int type;
+
+#ifdef THORIUM_MESSAGE_ENABLE_TRACEPOINTS
+    uint64_t tracepoint_times[THORIUM_MESSAGE_TRACEPOINT_COUNT];
+#endif
 };
 
 void thorium_message_init(struct thorium_message *self, int action, int count, void *buffer);
@@ -79,5 +107,13 @@ int thorium_message_pack_unpack(struct thorium_message *self, int operation, voi
 
 int thorium_message_type(struct thorium_message *self);
 void thorium_message_set_type(struct thorium_message *self, int type);
+
+#ifdef THORIUM_MESSAGE_ENABLE_TRACEPOINTS
+void thorium_message_set_tracepoint_time(struct thorium_message *self, int tracepoint,
+                uint64_t time);
+uint64_t thorium_message_get_tracepoint_time(struct thorium_message *self, int tracepoint);
+void thorium_message_print_tracepoints(struct thorium_message *self);
+
+#endif /* THORIUM_MESSAGE_ENABLE_TRACEPOINTS */
 
 #endif
