@@ -4,6 +4,8 @@
 #include "worker.h"
 #include "node.h"
 
+#include "tracepoints/message_tracepoints.h"
+
 #include "scheduler/fifo_scheduler.h"
 
 #include <core/structures/vector_iterator.h>
@@ -451,10 +453,8 @@ void thorium_actor_send(struct thorium_actor *self, int name, struct thorium_mes
 {
     int source;
 
-#ifdef THORIUM_MESSAGE_ENABLE_TRACEPOINTS
-    thorium_message_set_tracepoint_time(message, THORIUM_TRACEPOINT_ACTOR_1_SEND,
-                    core_timer_get_nanoseconds(&self->timer));
-#endif
+    /* trace message:actor_send events */
+    thorium_tracepoint(message, actor_send, message, core_timer_get_nanoseconds(&self->timer));
 
 #ifdef THORIUM_ACTOR_GATHER_MESSAGE_METADATA
     int *bucket;

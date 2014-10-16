@@ -20,8 +20,6 @@
 #define THORIUM_MESSAGE_ENABLE_TRACEPOINTS
 */
 
-#ifdef THORIUM_MESSAGE_ENABLE_TRACEPOINTS
-
 #define THORIUM_TRACEPOINT_ACTOR_1_SEND         0
 #define THORIUM_TRACEPOINT_WORKER_1_SEND        1
 #define THORIUM_TRACEPOINT_NODE_1_SEND          2
@@ -32,6 +30,11 @@
 #define THORIUM_MESSAGE_TRACEPOINT_COUNT        6
 
 #define THORIUM_MESSAGE_TRACEPOINT_NO_VALUE     0
+
+/*
+ * Tracepoints in messages is a compilation option.
+ */
+#ifdef THORIUM_MESSAGE_ENABLE_TRACEPOINTS
 
 #define TRACEPOINT_SIZE (THORIUM_MESSAGE_TRACEPOINT_COUNT * sizeof(uint64_t))
 
@@ -114,12 +117,9 @@ int thorium_message_pack_unpack(struct thorium_message *self, int operation, voi
 int thorium_message_type(struct thorium_message *self);
 void thorium_message_set_type(struct thorium_message *self, int type);
 
-#ifdef THORIUM_MESSAGE_ENABLE_TRACEPOINTS
 void thorium_message_set_tracepoint_time(struct thorium_message *self, int tracepoint,
                 uint64_t time);
 uint64_t thorium_message_get_tracepoint_time(struct thorium_message *self, int tracepoint);
 void thorium_message_print_tracepoints(struct thorium_message *self);
-
-#endif /* THORIUM_MESSAGE_ENABLE_TRACEPOINTS */
 
 #endif

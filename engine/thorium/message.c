@@ -252,18 +252,21 @@ void thorium_message_set_type(struct thorium_message *self, int type)
     self->type = type;
 }
 
-#ifdef THORIUM_MESSAGE_ENABLE_TRACEPOINTS
 void thorium_message_set_tracepoint_time(struct thorium_message *self, int tracepoint,
                 uint64_t time)
 {
+#ifdef THORIUM_MESSAGE_ENABLE_TRACEPOINTS
     if (tracepoint >= 0 && tracepoint < THORIUM_MESSAGE_TRACEPOINT_COUNT)
         self->tracepoint_times[tracepoint] = time;
+#endif
 }
 
 uint64_t thorium_message_get_tracepoint_time(struct thorium_message *self, int tracepoint)
 {
+#ifdef THORIUM_MESSAGE_ENABLE_TRACEPOINTS
     if (tracepoint >= 0 && tracepoint < THORIUM_MESSAGE_TRACEPOINT_COUNT)
         return self->tracepoint_times[tracepoint];
+#endif
 
     return THORIUM_MESSAGE_TRACEPOINT_NO_VALUE;
 }
@@ -318,4 +321,3 @@ void thorium_message_print_tracepoint(struct thorium_message *self, const char *
 
     *previous_time = time;
 }
-#endif

@@ -39,4 +39,6 @@ THORIUM_OBJECTS += engine/thorium/transport/transport_profiler.o
 
 include engine/thorium/transport/*/Makefile.mk
 
+# tracepoints
 
+THORIUM_OBJECTS += engine/thorium/tracepoints/message_tracepoints.o
