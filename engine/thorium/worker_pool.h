@@ -24,6 +24,7 @@ struct thorium_migration;
  */
 struct thorium_worker_pool {
     struct thorium_balancer balancer;
+    struct core_timer timer;
 
     /*
     struct core_fast_queue scheduled_actor_queue_buffer;

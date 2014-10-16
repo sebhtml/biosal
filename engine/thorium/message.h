@@ -23,16 +23,24 @@
 /*
  * There are 8 message tracepoints
  */
-#define THORIUM_TRACEPOINT_message_actor_send         0
-#define THORIUM_TRACEPOINT_message_worker_send        1
-#define THORIUM_TRACEPOINT_message_node_send          2
-#define THORIUM_TRACEPOINT_message_transport_send     3
-#define THORIUM_TRACEPOINT_message_transport_receive  4
-#define THORIUM_TRACEPOINT_message_node_receive       5
-#define THORIUM_TRACEPOINT_message_worker_receive     6
-#define THORIUM_TRACEPOINT_message_actor_receive      7
+#define THORIUM_TRACEPOINT_message_actor_send               0
+#define THORIUM_TRACEPOINT_message_worker_send              1
+#define THORIUM_TRACEPOINT_message_node_send                2
+#define THORIUM_TRACEPOINT_message_node_send_system         3
+#define THORIUM_TRACEPOINT_message_node_send_dispatch       4
+#define THORIUM_TRACEPOINT_message_worker_pool_enqueue      5
+#define THORIUM_TRACEPOINT_message_transport_send           6
+#define THORIUM_TRACEPOINT_message_transport_receive        7
+#define THORIUM_TRACEPOINT_message_node_receive             8
+#define THORIUM_TRACEPOINT_message_worker_receive           9
+#define THORIUM_TRACEPOINT_message_actor_receive           10
+#define THORIUM_TRACEPOINT_message_node_dispatch_message   11
+#define THORIUM_TRACEPOINT_message_worker_enqueue_message  12
+#define THORIUM_TRACEPOINT_message_worker_send_mailbox     13
+#define THORIUM_TRACEPOINT_message_worker_send_schedule    14
+#define THORIUM_TRACEPOINT_message_worker_dequeue_message  15
 
-#define THORIUM_MESSAGE_TRACEPOINT_COUNT        8
+#define THORIUM_MESSAGE_TRACEPOINT_COUNT        16
 
 #define THORIUM_MESSAGE_TRACEPOINT_NO_VALUE     0
 

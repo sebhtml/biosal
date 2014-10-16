@@ -1314,8 +1314,7 @@ void thorium_node_send_to_node(struct thorium_node *node, int destination,
 
     thorium_message_set_type(&new_message, THORIUM_MESSAGE_TYPE_NODE_OUTBOUND);
 
-    thorium_node_send(node, &new_message);
-}
+    thorium_node_send(node, &new_message); }
 
 int thorium_node_has_actor(struct thorium_node *self, int name)
 {
@@ -1368,6 +1367,8 @@ void thorium_node_send(struct thorium_node *node, struct thorium_message *messag
         return;
     }
 
+    thorium_tracepoint(message, node_send_system, message, core_timer_get_nanoseconds(&node->timer));
+
     name = thorium_message_destination(message);
     thorium_node_resolve(node, message);
 
@@ -1377,6 +1378,9 @@ void thorium_node_send(struct thorium_node *node, struct thorium_message *messag
 
         /* dispatch locally */
         thorium_node_dispatch_message(node, message);
+
+        /* message :node_dispatch */
+        thorium_tracepoint(message, node_send_dispatch, message, core_timer_get_nanoseconds(&node->timer));
 
 #ifdef THORIUM_NODE_DEBUG_20140601_8
         if (thorium_message_action(message) == 1100) {
@@ -1420,6 +1424,7 @@ void thorium_node_send(struct thorium_node *node, struct thorium_message *messag
 
         if (!thorium_message_multiplexer_multiplex(&node->multiplexer, message)) {
             thorium_node_send_with_transport(node, message);
+
         } else {
 
             /*
@@ -1493,6 +1498,8 @@ void thorium_node_dispatch_message(struct thorium_node *node, struct thorium_mes
 
         return;
     }
+
+    thorium_tracepoint(message, node_dispatch_message, message, core_timer_get_nanoseconds(&node->timer));
 
     /* otherwise, create work and dispatch work to a worker via
      * the worker pool

@@ -3,7 +3,12 @@ To enable all message tracepoints, use -enable-tracepoints message:*.
 
 - message:actor_send
 - message:worker_send
+- message:worker_send_enqueue
 - message:node_send
+- message:node_send_system
+- message:node_send_dispatch
+- message:node_dispatch_message
+- message:worker_pool_enqueue
 - message:transport_send
 - message:transport_receive
 - message:node_receive

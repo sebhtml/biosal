@@ -187,9 +187,11 @@ void thorium_worker_init(struct thorium_worker *worker, int name, struct thorium
     core_map_iterator_init(&worker->actor_iterator, &worker->actors);
 
     /*
-    outbound_ring_capacity = THORIUM_WORKER_RING_CAPACITY;
     */
+    outbound_ring_capacity = THORIUM_WORKER_RING_CAPACITY;
+    /*
     outbound_ring_capacity = 256;
+    */
 
     core_fast_ring_init(&worker->output_outbound_message_ring, outbound_ring_capacity, sizeof(struct thorium_message));
 
@@ -475,10 +477,16 @@ void thorium_worker_send(struct thorium_worker *worker, struct thorium_message *
 
         destination_actor = thorium_node_get_actor_from_name(worker->node, destination);
 
+        thorium_tracepoint(message, worker_send_mailbox, message, core_timer_get_nanoseconds(&worker->timer));
         if (destination_actor != NULL
                  && thorium_actor_enqueue_mailbox_message(destination_actor, message)) {
 
+
             thorium_worker_schedule_actor(worker, destination_actor);
+
+            /*
+            thorium_tracepoint(message, worker_send_schedule, message, core_timer_get_nanoseconds(&worker->timer));
+            */
 
             return;
         }
@@ -878,6 +886,7 @@ int thorium_worker_enqueue_inbound_message(struct thorium_worker *worker, struct
 
 int thorium_worker_enqueue_message(struct thorium_worker *worker, struct thorium_message *message)
 {
+    thorium_tracepoint(message, worker_enqueue_message, message, core_timer_get_nanoseconds(&worker->timer));
 
     /* Try to push the message in the output ring
      */
@@ -906,6 +915,8 @@ int thorium_worker_dequeue_message(struct thorium_worker *worker, struct thorium
 
     if (answer) {
         thorium_message_set_worker(message, worker->name);
+
+        thorium_tracepoint(message, worker_dequeue_message, message, core_timer_get_nanoseconds(&worker->timer));
     }
 
     return answer;

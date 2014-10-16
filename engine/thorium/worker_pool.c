@@ -5,6 +5,8 @@
 #include "worker.h"
 #include "node.h"
 
+#include "tracepoints/message_tracepoints.h"
+
 #include "scheduler/migration.h"
 
 #include <core/helpers/vector_helper.h>
@@ -77,6 +79,8 @@ void thorium_worker_pool_examine_inbound_queue(struct thorium_worker_pool *self)
 void thorium_worker_pool_init(struct thorium_worker_pool *pool, int workers,
                 struct thorium_node *node)
 {
+    core_timer_init(&pool->timer);
+
     pool->debug_mode = 0;
     pool->node = node;
     pool->waiting_is_enabled = 0;
@@ -135,6 +139,8 @@ void thorium_worker_pool_init(struct thorium_worker_pool *pool, int workers,
 
 void thorium_worker_pool_destroy(struct thorium_worker_pool *pool)
 {
+    core_timer_destroy(&pool->timer);
+
     thorium_balancer_destroy(&pool->balancer);
 
     thorium_worker_pool_delete_workers(pool);
@@ -272,7 +278,13 @@ struct thorium_worker *thorium_worker_pool_select_worker_for_run(struct thorium_
  */
 int thorium_worker_pool_enqueue_message(struct thorium_worker_pool *pool, struct thorium_message *message)
 {
-    return thorium_worker_pool_give_message_to_worker(pool, message);
+    int value;
+
+    value = thorium_worker_pool_give_message_to_worker(pool, message);
+
+    thorium_tracepoint(message, worker_pool_enqueue, message, core_timer_get_nanoseconds(&pool->timer));
+
+    return value;
 }
 
 int thorium_worker_pool_worker_count(struct thorium_worker_pool *pool)
