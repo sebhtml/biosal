@@ -30,6 +30,7 @@ struct thorium_mpi1_pt2pt_nonblocking_transport {
     MPI_Comm communicator;
     MPI_Datatype datatype;
 
+    int probe_operation_count;
     int maximum_buffer_size;
     int maximum_receive_request_count;
     int small_request_count;

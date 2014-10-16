@@ -15,3 +15,11 @@ To enable all message tracepoints, use -enable-tracepoints message:*.
 
 - transport:send
 - transport:receive
+
+- node:run_loop_print
+- node:run_loop_receive
+- node:run_loop_run
+- node:run_loop_send
+- node:run_loop_pool_work
+- node:run_loop_test_requests
+- node:run_loop_do_triage

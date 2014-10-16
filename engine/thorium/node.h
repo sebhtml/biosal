@@ -5,6 +5,8 @@
 #include "actor.h"
 #include "worker_pool.h"
 
+#include "tracepoints/tracepoint_session.h"
+
 #include "transport/transport.h"
 #include "transport/message_multiplexer.h"
 #include "transport/multiplexer_policy.h"
@@ -22,6 +24,14 @@
  * \see http://pubs.opengroup.org/onlinepubs/009696699/basedefs/signal.h.html
  */
 #include <signal.h>
+
+#define THORIUM_TRACEPOINT_node_run_loop_print          0
+#define THORIUM_TRACEPOINT_node_run_loop_receive        1
+#define THORIUM_TRACEPOINT_node_run_loop_run            2
+#define THORIUM_TRACEPOINT_node_run_loop_send           3
+#define THORIUM_TRACEPOINT_node_run_loop_pool_work      4
+#define THORIUM_TRACEPOINT_node_run_loop_test_requests  5
+#define THORIUM_TRACEPOINT_node_run_loop_do_triage      6
 
 /*
  * Use event counters
@@ -93,6 +103,7 @@ struct thorium_worker_buffer;
  *
  */
 struct thorium_node {
+    struct thorium_tracepoint_session tracepoint_session;
     struct core_vector actors;
     struct core_set auto_scaling_actors;
     struct thorium_worker_pool worker_pool;

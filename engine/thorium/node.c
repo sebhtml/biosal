@@ -10,6 +10,7 @@
 #include "worker_buffer.h"
 
 #include "tracepoints/message_tracepoints.h"
+#include "tracepoints/node_tracepoints.h"
 
 #include <core/structures/vector.h>
 #include <core/structures/map_iterator.h>
@@ -179,6 +180,25 @@ void thorium_node_init(struct thorium_node *node, int *argc, char ***argv)
     int detected;
     int actor_capacity;
     int processor;
+
+    /*
+     * Tracepoint session
+     */
+    thorium_tracepoint_session_init(&node->tracepoint_session);
+    thorium_tracepoint_session_add_tracepoint(&node->tracepoint_session,
+                    THORIUM_TRACEPOINT_node_run_loop_print, "node:run_loop_print");
+    thorium_tracepoint_session_add_tracepoint(&node->tracepoint_session,
+                    THORIUM_TRACEPOINT_node_run_loop_receive, "node:run_loop_receive");
+    thorium_tracepoint_session_add_tracepoint(&node->tracepoint_session,
+                    THORIUM_TRACEPOINT_node_run_loop_run, "node:run_loop_run");
+    thorium_tracepoint_session_add_tracepoint(&node->tracepoint_session,
+                    THORIUM_TRACEPOINT_node_run_loop_send, "node:run_loop_send");
+    thorium_tracepoint_session_add_tracepoint(&node->tracepoint_session,
+                    THORIUM_TRACEPOINT_node_run_loop_pool_work, "node:run_loop_pool_work");
+    thorium_tracepoint_session_add_tracepoint(&node->tracepoint_session,
+                    THORIUM_TRACEPOINT_node_run_loop_test_requests, "node:run_loop_test_requests");
+    thorium_tracepoint_session_add_tracepoint(&node->tracepoint_session,
+                    THORIUM_TRACEPOINT_node_run_loop_do_triage, "node:run_loop_do_triage");
 
     core_timer_init(&node->timer);
 
@@ -519,6 +539,8 @@ void thorium_node_destroy(struct thorium_node *node)
 #ifdef THORIUM_NODE_DEBUG_INJECTION
     int active_requests;
 #endif
+
+    thorium_tracepoint_session_destroy(&node->tracepoint_session);
 
     /*
      * Print the report if requested.
@@ -2105,6 +2127,9 @@ void thorium_node_run_loop(struct thorium_node *node)
 
     while (credits > 0) {
 
+        thorium_tracepoint(node, run_loop_print, &node->tracepoint_session,
+                        core_timer_get_nanoseconds(&node->timer));
+
         CORE_DEBUGGER_JITTER_DETECTION_START(node_main_loop);
 
         CORE_DEBUGGER_JITTER_DETECTION_START(node_print);
@@ -2211,6 +2236,9 @@ void thorium_node_run_loop(struct thorium_node *node)
             }
         }
 
+        thorium_tracepoint(node, run_loop_receive, &node->tracepoint_session,
+                        core_timer_get_nanoseconds(&node->timer));
+
         CORE_DEBUGGER_JITTER_DETECTION_END(node_receive, 0);
 
         /* the one worker works here if there is only
@@ -2219,6 +2247,9 @@ void thorium_node_run_loop(struct thorium_node *node)
         if (run_in_main_thread) {
             thorium_worker_pool_run(&node->worker_pool);
         }
+
+        thorium_tracepoint(node, run_loop_run, &node->tracepoint_session,
+                        core_timer_get_nanoseconds(&node->timer));
 
         CORE_DEBUGGER_JITTER_DETECTION_START(node_send);
 
@@ -2234,6 +2265,9 @@ void thorium_node_run_loop(struct thorium_node *node)
             thorium_node_send_message(node);
         }
 
+        thorium_tracepoint(node, run_loop_send, &node->tracepoint_session,
+                        core_timer_get_nanoseconds(&node->timer));
+
         CORE_DEBUGGER_JITTER_DETECTION_END(node_send, 0);
 
         CORE_DEBUGGER_JITTER_DETECTION_START(node_pool_work);
@@ -2242,6 +2276,9 @@ void thorium_node_run_loop(struct thorium_node *node)
          */
 
         thorium_worker_pool_work(&node->worker_pool);
+
+        thorium_tracepoint(node, run_loop_pool_work, &node->tracepoint_session,
+                        core_timer_get_nanoseconds(&node->timer));
 
         --credits;
 
@@ -2272,6 +2309,9 @@ void thorium_node_run_loop(struct thorium_node *node)
             thorium_message_multiplexer_test(&node->multiplexer);
         }
 
+        thorium_tracepoint(node, run_loop_test_requests, &node->tracepoint_session,
+                        core_timer_get_nanoseconds(&node->timer));
+
         thorium_node_do_message_triage(node);
 
 #ifdef THORIUM_NODE_DEBUG_RUN
@@ -2279,6 +2319,10 @@ void thorium_node_run_loop(struct thorium_node *node)
             printf("THORIUM_NODE_DEBUG_RUN credits: %d\n", credits);
         }
 #endif
+
+        thorium_tracepoint(node, run_loop_do_triage, &node->tracepoint_session,
+                        core_timer_get_nanoseconds(&node->timer));
+
         CORE_DEBUGGER_JITTER_DETECTION_END(node_test, 0);
 
         CORE_DEBUGGER_JITTER_DETECTION_END(node_main_loop, 0);

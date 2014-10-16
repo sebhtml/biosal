@@ -83,6 +83,7 @@ void thorium_mpi1_pt2pt_nonblocking_transport_init(struct thorium_transport *sel
 
     concrete_self->maximum_buffer_size = 8192;
     concrete_self->maximum_receive_request_count = 64;
+    concrete_self->probe_operation_count = 1;
 
     /*
      * Avoid a problem with MPICH:
@@ -105,13 +106,15 @@ void thorium_mpi1_pt2pt_nonblocking_transport_init(struct thorium_transport *sel
 #10 biosal_thorium_engine_boot_initial_actor (argc=<value optimized out>, argv=<value optimized out>, script_identifier=-1359079029, script=0x6524c0) at engine/thorium/thorium_engine.c:46
 #11 00000000000416083 in main (argc=6, argv=0x7fff5efe5548) at applications/spate_metagenome_assembler/main.c:8
      */
+#if 0
     if (self->size < 4) {
         concrete_self->maximum_receive_request_count = 4;
     }
+#endif
 
     concrete_self->small_request_count = 0;
 
-    concrete_self->maximum_big_receive_request_count = 4;
+    concrete_self->maximum_big_receive_request_count = 8;
     concrete_self->big_request_count = 0;
 
     core_fast_queue_init(&concrete_self->send_requests, sizeof(struct thorium_mpi1_request));
@@ -351,6 +354,8 @@ int thorium_mpi1_pt2pt_nonblocking_transport_receive(struct thorium_transport *s
     int tag;
     int size;
     int request_tag;
+    int request_count;
+    int has_request;
 
     concrete_self = thorium_transport_get_concrete_transport(self);
 
@@ -396,27 +401,56 @@ int thorium_mpi1_pt2pt_nonblocking_transport_receive(struct thorium_transport *s
 #endif
     }
 
-    /*
-     * Dequeue a request and check if it is ready.
-     */
-    if (!core_fast_queue_dequeue(&concrete_self->receive_requests, &request)) {
-
-        return 0;
-    }
+    request_count = concrete_self->probe_operation_count;
+    has_request = 0;
 
     /*
-     * Test the receive request now.
-     */
-    if (!thorium_mpi1_request_test(&request)) {
+    printf("DEBUG MPI TRANSPORT small_request_count %d big_request_count %d\n",
+                    concrete_self->small_request_count,
+                    concrete_self->big_request_count);
+                    */
+
+    while (request_count) {
+        /*
+         * Dequeue a request and check if it is ready.
+         */
+        if (!core_fast_queue_dequeue(&concrete_self->receive_requests, &request)) {
+
+            /*
+             * There is nothing in the queue.
+             */
+            break;
+        }
 
         /*
-         * Put it back in the queue now.
+         * Test the receive request now.
          */
 
-        core_fast_queue_enqueue(&concrete_self->receive_requests, &request);
+        if (!thorium_mpi1_request_test(&request)) {
 
-        return 0;
+            /*
+             * Put it back in the queue now.
+             */
+
+            core_fast_queue_enqueue(&concrete_self->receive_requests, &request);
+
+            /*
+             * Test another request.
+             */
+            --request_count;
+            continue;
+        } else {
+            has_request = 1;
+            break;
+        }
     }
+
+    if (!has_request)
+        return 0;
+
+    /*
+     * At this point, we have a request.
+     */
 
     source = thorium_mpi1_request_source(&request);
     destination = thorium_transport_get_rank(self);

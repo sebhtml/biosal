@@ -306,6 +306,8 @@ void thorium_message_print_tracepoints(struct thorium_message *self)
 
     thorium_message_print_tracepoint(self, "actor_receive",
                     THORIUM_TRACEPOINT_message_actor_receive, &last);
+
+    printf("\n");
 }
 
 void thorium_message_print_tracepoint(struct thorium_message *self, const char *name,
@@ -325,20 +327,20 @@ void thorium_message_print_tracepoint(struct thorium_message *self, const char *
      * No value
      */
     if (time == THORIUM_MESSAGE_TRACEPOINT_NO_VALUE) {
-        printf("message:%s - ns\n", name);
+        printf("tracepoint message:%s - ns\n", name);
 
     /*
      * With value and previous value
      */
     } else if (*previous_time != THORIUM_MESSAGE_TRACEPOINT_NO_VALUE) {
         difference = time - *previous_time;
-        printf("message:%s %" PRIu64 " ns (+ %" PRIu64 " ns)\n", name, time, difference);
+        printf("tracepoint message:%s %" PRIu64 " ns (+ %" PRIu64 " ns)\n", name, time, difference);
 
     /*
      * With value, but no previous value
      */
     } else {
-        printf("message:%s %" PRIu64 " ns\n", name, time);
+        printf("tracepoint message:%s %" PRIu64 " ns\n", name, time);
     }
 
     if (time != THORIUM_MESSAGE_TRACEPOINT_NO_VALUE)
