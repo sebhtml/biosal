@@ -1,11 +1,12 @@
+
 #ifndef THORIUM_ACTOR_PROFILER_H
 #define THORIUM_ACTOR_PROFILER_H
 
-#define THORIUM_TRACEPOINT_ACTOR_RECEIVE_BEGIN   6
-#define THORIUM_TRACEPOINT_ACTOR_RECEIVE_END     7
+#define THORIUM_TRACEPOINT_actor_receive_enter  0
+#define THORIUM_TRACEPOINT_actor_receive_exit   1
 
 #define THORIUM_ACTOR_PROFILER_HEADER \
-    "start_time\tend_time\tactor\tscript\taction\tcount\tsource\tcommunication_time\tcompute_time\tcompute_to_communication_ratio\n"
+    "actor:receive_enter\tactor:receive_exit\tactor\tscript\taction\tcount\tsource\tcommunication_time\tcompute_time\tcompute_to_communication_ratio\n"
 
 #include <core/structures/vector.h>
 

@@ -5,6 +5,7 @@
 #include "node.h"
 
 #include "tracepoints/message_tracepoints.h"
+#include "tracepoints/actor_tracepoints.h"
 
 #include "scheduler/fifo_scheduler.h"
 
@@ -1046,15 +1047,13 @@ void thorium_actor_receive(struct thorium_actor *self, struct thorium_message *m
     start = core_timer_get_nanoseconds(&self->timer);
 
     if (CORE_BITMAP_GET_BIT(self->flags, FLAG_ENABLE_LOAD_PROFILER)) {
-        thorium_actor_profiler_profile(&self->profiler, THORIUM_TRACEPOINT_ACTOR_RECEIVE_BEGIN,
-                        message);
+        thorium_tracepoint(actor, receive_enter, &self->profiler, message);
     }
 
     thorium_actor_receive_private(self, message);
 
     if (CORE_BITMAP_GET_BIT(self->flags, FLAG_ENABLE_LOAD_PROFILER)) {
-        thorium_actor_profiler_profile(&self->profiler, THORIUM_TRACEPOINT_ACTOR_RECEIVE_END,
-                        message);
+        thorium_tracepoint(actor, receive_exit, &self->profiler, message);
     }
 
     end = core_timer_get_nanoseconds(&self->timer);

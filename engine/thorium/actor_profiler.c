@@ -67,7 +67,7 @@ void thorium_actor_profiler_profile(struct thorium_actor_profiler *self, int eve
     time = core_timer_get_nanoseconds(&self->timer);
 
     switch (event) {
-        case THORIUM_TRACEPOINT_ACTOR_RECEIVE_BEGIN:
+        case THORIUM_TRACEPOINT_actor_receive_enter:
 
             ++self->profile_begin_count;
 
@@ -101,7 +101,7 @@ void thorium_actor_profiler_profile(struct thorium_actor_profiler *self, int eve
             }
 
             break;
-        case THORIUM_TRACEPOINT_ACTOR_RECEIVE_END:
+        case THORIUM_TRACEPOINT_actor_receive_exit:
             CORE_DEBUGGER_ASSERT(self->profile_end_count + 1 == self->profile_begin_count);
 
             ++self->profile_end_count;
