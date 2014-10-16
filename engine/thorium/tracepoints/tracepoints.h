@@ -18,6 +18,10 @@
  * \see https://www.kernel.org/doc/Documentation/trace/tracepoints.txt
  */
 
+/*
+ * Right now, tracepoints must be enabled with
+ * THORIUM_ENABLE_TRACEPOINTS
+ */
 #define THORIUM_ENABLE_TRACEPOINTS
 
 #define THORIUM_TRACEPOINT_NAME(provider_name, event_name) \

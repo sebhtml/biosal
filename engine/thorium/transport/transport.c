@@ -1,6 +1,8 @@
 
 #include "transport.h"
 
+#include <engine/thorium/tracepoints/message_tracepoints.h>
+
 /*
  * Implementations of the interface.
  */
@@ -127,6 +129,14 @@ int thorium_transport_send(struct thorium_transport *self, struct thorium_messag
     value = self->transport_interface->send(self, message);
 
     if (value) {
+
+        /*
+         * Trace the event "message:transport_send".
+         */
+        thorium_tracepoint(message, transport_send, message,
+            core_timer_get_nanoseconds(&self->timer));
+
+
 #ifdef THORIUM_TRANSPORT_DEBUG
         printf("TRANSPORT SEND Source %d Destination %d Tag %d Count %d\n",
                         thorium_message_source_node(message),
@@ -155,6 +165,13 @@ int thorium_transport_receive(struct thorium_transport *self, struct thorium_mes
     value = self->transport_interface->receive(self, message);
 
     if (value) {
+
+        /*
+         * Trace the event "message:transport_receive"
+         */
+        thorium_tracepoint(message, transport_receive, message,
+                    core_timer_get_nanoseconds(&self->timer));
+
 #ifdef THORIUM_TRANSPORT_DEBUG
         printf("TRANSPORT RECEIVE Source %d Destination %d Tag %d Count %d\n",
                         thorium_message_source_node(message),

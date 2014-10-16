@@ -20,6 +20,9 @@
 #define THORIUM_MESSAGE_ENABLE_TRACEPOINTS
 */
 
+/*
+ * There are 8 message tracepoints
+ */
 #define THORIUM_TRACEPOINT_message_actor_send         0
 #define THORIUM_TRACEPOINT_message_worker_send        1
 #define THORIUM_TRACEPOINT_message_node_send          2
