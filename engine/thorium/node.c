@@ -2059,6 +2059,22 @@ int thorium_node_pull(struct thorium_node *node, struct thorium_message *message
 
     value = thorium_worker_pool_dequeue_message(&node->worker_pool, message);
 
+#ifdef THORIUM_MESSAGE_ENABLE_TRACEPOINTS
+    if (value) {
+        thorium_message_set_tracepoint_time(message, THORIUM_MESSAGE_TRACEPOINT_NODE_1_SEND,
+                    core_timer_get_nanoseconds(&node->timer));
+        /*
+        thorium_message_set_count(message,
+                    thorium_message_count(message) - THORIUM_MESSAGE_METADATA_SIZE);
+                    */
+        thorium_message_write_metadata(message);
+        /*
+        thorium_message_set_count(message,
+                    thorium_message_count(message) + THORIUM_MESSAGE_METADATA_SIZE);
+        */
+    }
+#endif
+
 #ifdef TRANSPORT_DEBUG_ISSUE_594
     if (value && thorium_message_action(message) == 30202) {
         printf("BUG-594 thorium_node_pull\n");
@@ -2185,6 +2201,11 @@ void thorium_node_run_loop(struct thorium_node *node)
              * Prepare the message
              */
             thorium_node_prepare_received_message(node, &message);
+
+#ifdef THORIUM_MESSAGE_ENABLE_TRACEPOINTS
+    thorium_message_set_tracepoint_time(&message, THORIUM_MESSAGE_TRACEPOINT_NODE_2_RECEIVE,
+                    core_timer_get_nanoseconds(&node->timer));
+#endif
 
 #ifdef THORIUM_NODE_USE_COUNTERS
             core_counter_add(&node->counter, CORE_COUNTER_RECEIVED_MESSAGES_NOT_FROM_SELF, 1);

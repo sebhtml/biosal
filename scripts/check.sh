@@ -33,6 +33,8 @@ function run_checks() {
 make clean
 clear
 
+rm -rf log output
+
 echo "=== Quality Assurance ($(date)) ==="
 
 echo "User: $(whoami)"
