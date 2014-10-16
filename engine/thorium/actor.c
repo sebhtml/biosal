@@ -2003,10 +2003,7 @@ int thorium_actor_work(struct thorium_actor *self)
 #ifdef CORE_MEMORY_POOL_FIND_LEAKS
 #endif
 
-#ifdef THORIUM_MESSAGE_ENABLE_TRACEPOINTS
-    thorium_message_set_tracepoint_time(&message, THORIUM_TRACEPOINT_ACTOR_2_RECEIVE,
-                    core_timer_get_nanoseconds(&self->timer));
-#endif
+    thorium_tracepoint(message, actor_receive, &message, core_timer_get_nanoseconds(&self->timer));
 
     /*
      * Receive the message !

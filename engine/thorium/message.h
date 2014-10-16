@@ -20,14 +20,16 @@
 #define THORIUM_MESSAGE_ENABLE_TRACEPOINTS
 */
 
-#define THORIUM_TRACEPOINT_ACTOR_1_SEND         0
-#define THORIUM_TRACEPOINT_WORKER_1_SEND        1
-#define THORIUM_TRACEPOINT_NODE_1_SEND          2
-#define THORIUM_TRACEPOINT_NODE_2_RECEIVE       3
-#define THORIUM_TRACEPOINT_WORKER_2_RECEIVE     4
-#define THORIUM_TRACEPOINT_ACTOR_2_RECEIVE      5
+#define THORIUM_TRACEPOINT_message_actor_send         0
+#define THORIUM_TRACEPOINT_message_worker_send        1
+#define THORIUM_TRACEPOINT_message_node_send          2
+#define THORIUM_TRACEPOINT_message_transport_send     3
+#define THORIUM_TRACEPOINT_message_transport_receive  4
+#define THORIUM_TRACEPOINT_message_node_receive       5
+#define THORIUM_TRACEPOINT_message_worker_receive     6
+#define THORIUM_TRACEPOINT_message_actor_receive      7
 
-#define THORIUM_MESSAGE_TRACEPOINT_COUNT        6
+#define THORIUM_MESSAGE_TRACEPOINT_COUNT        8
 
 #define THORIUM_MESSAGE_TRACEPOINT_NO_VALUE     0
 

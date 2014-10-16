@@ -15,5 +15,12 @@
 struct thorium_message;
 
 void thorium_tracepoint_message_actor_send(struct thorium_message *message, uint64_t time);
+void thorium_tracepoint_message_worker_send(struct thorium_message *message, uint64_t time);
+void thorium_tracepoint_message_node_send(struct thorium_message *message, uint64_t time);
+void thorium_tracepoint_message_transport_send(struct thorium_message *message, uint64_t time);
+void thorium_tracepoint_message_transport_receive(struct thorium_message *message, uint64_t time);
+void thorium_tracepoint_message_node_receive(struct thorium_message *message, uint64_t time);
+void thorium_tracepoint_message_worker_receive(struct thorium_message *message, uint64_t time);
+void thorium_tracepoint_message_actor_receive(struct thorium_message *message, uint64_t time);
 
 #endif
