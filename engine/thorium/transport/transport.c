@@ -126,16 +126,25 @@ int thorium_transport_send(struct thorium_transport *self, struct thorium_messag
         return 0;
     }
 
+   /*
+    * Trace the event "message:transport_send".
+    */
+   thorium_tracepoint(message, transport_send, message,
+       core_timer_get_nanoseconds(&self->timer));
+
+#ifdef THORIUM_MESSAGE_ENABLE_TRACEPOINTS
+    thorium_message_set_count(message,
+                thorium_message_count(message) - THORIUM_MESSAGE_METADATA_SIZE);
+
+    thorium_message_write_metadata(message);
+
+    thorium_message_set_count(message,
+                    thorium_message_count(message) + THORIUM_MESSAGE_METADATA_SIZE);
+#endif
+
     value = self->transport_interface->send(self, message);
 
     if (value) {
-
-        /*
-         * Trace the event "message:transport_send".
-         */
-        thorium_tracepoint(message, transport_send, message,
-            core_timer_get_nanoseconds(&self->timer));
-
 
 #ifdef THORIUM_TRANSPORT_DEBUG
         printf("TRANSPORT SEND Source %d Destination %d Tag %d Count %d\n",
@@ -171,6 +180,18 @@ int thorium_transport_receive(struct thorium_transport *self, struct thorium_mes
          */
         thorium_tracepoint(message, transport_receive, message,
                     core_timer_get_nanoseconds(&self->timer));
+
+#if 0
+#ifdef THORIUM_MESSAGE_ENABLE_TRACEPOINTS
+        thorium_message_set_count(message,
+                    thorium_message_count(message) - THORIUM_MESSAGE_METADATA_SIZE);
+
+        thorium_message_write_metadata(message);
+
+        thorium_message_set_count(message,
+                    thorium_message_count(message) + THORIUM_MESSAGE_METADATA_SIZE);
+#endif
+#endif
 
 #ifdef THORIUM_TRANSPORT_DEBUG
         printf("TRANSPORT RECEIVE Source %d Destination %d Tag %d Count %d\n",

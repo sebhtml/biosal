@@ -34,6 +34,7 @@ make clean
 clear
 
 rm -rf log output
+rm node_*.txt
 
 echo "=== Quality Assurance ($(date)) ==="
 
