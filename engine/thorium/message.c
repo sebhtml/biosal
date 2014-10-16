@@ -287,6 +287,9 @@ void thorium_message_print_tracepoints(struct thorium_message *self)
     thorium_message_print_tracepoint(self, "message:worker_dequeue_message",
                     THORIUM_TRACEPOINT_message_worker_dequeue_message, &last);
 
+    thorium_message_print_tracepoint(self, "message:worker_pool_dequeue",
+                    THORIUM_TRACEPOINT_message_worker_pool_dequeue, &last);
+
     thorium_message_print_tracepoint(self, "message:node_send",
                     THORIUM_TRACEPOINT_message_node_send, &last);
 

@@ -879,6 +879,12 @@ int thorium_worker_pool_dequeue_message(struct thorium_worker_pool *pool, struct
 
     answer = thorium_worker_pool_pull_classic(pool, message);
 
+    /*
+    */
+    if (answer) {
+        thorium_tracepoint(message, worker_pool_dequeue, message, core_timer_get_nanoseconds(&pool->timer));
+    }
+
     return answer;
 }
 

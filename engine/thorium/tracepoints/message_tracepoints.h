@@ -30,5 +30,6 @@ void thorium_tracepoint_message_worker_enqueue_message(struct thorium_message *m
 void thorium_tracepoint_message_worker_send_mailbox(struct thorium_message *message, uint64_t time);
 void thorium_tracepoint_message_worker_send_schedule(struct thorium_message *message, uint64_t time);
 void thorium_tracepoint_message_worker_dequeue_message(struct thorium_message *message, uint64_t time);
+void thorium_tracepoint_message_worker_pool_dequeue(struct thorium_message *message, uint64_t time);
 
 #endif

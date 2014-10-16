@@ -39,8 +39,9 @@
 #define THORIUM_TRACEPOINT_message_worker_send_mailbox     13
 #define THORIUM_TRACEPOINT_message_worker_send_schedule    14
 #define THORIUM_TRACEPOINT_message_worker_dequeue_message  15
+#define THORIUM_TRACEPOINT_message_worker_pool_dequeue     16
 
-#define THORIUM_MESSAGE_TRACEPOINT_COUNT        16
+#define THORIUM_MESSAGE_TRACEPOINT_COUNT        17
 
 #define THORIUM_MESSAGE_TRACEPOINT_NO_VALUE     0
 

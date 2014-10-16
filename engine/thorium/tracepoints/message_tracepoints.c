@@ -90,3 +90,8 @@ void thorium_tracepoint_message_worker_dequeue_message(struct thorium_message *m
 {
     thorium_message_set_tracepoint_time(message, THORIUM_TRACEPOINT_message_worker_dequeue_message, time);
 }
+
+void thorium_tracepoint_message_worker_pool_dequeue(struct thorium_message *message, uint64_t time)
+{
+    thorium_message_set_tracepoint_time(message, THORIUM_TRACEPOINT_message_worker_pool_dequeue, time);
+}
