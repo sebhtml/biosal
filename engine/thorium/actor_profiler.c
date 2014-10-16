@@ -45,6 +45,15 @@ void thorium_actor_profiler_profile(struct thorium_actor_profiler *self, int eve
     uint64_t last_end_time;
     int i;
     uint64_t threshold;
+    int action_to_trace;
+    int actor_to_trace;
+    int actor;
+
+    /*
+     * Some configuration for the things to trace.
+     */
+    actor_to_trace = 1001601;
+    action_to_trace = 0x7724;
 
     /*
      * 10 ms
@@ -53,6 +62,7 @@ void thorium_actor_profiler_profile(struct thorium_actor_profiler *self, int eve
     action = thorium_message_action(message);
     count = thorium_message_count(message);
     source = thorium_message_source(message);
+    actor = thorium_message_destination(message);
 
     time = core_timer_get_nanoseconds(&self->timer);
 
@@ -68,12 +78,23 @@ void thorium_actor_profiler_profile(struct thorium_actor_profiler *self, int eve
 
             i = core_vector_size(&self->event_end_times) - 1;
 
-            if (i >= 0) {
+            if (i >= 0 && action == action_to_trace
+                            && actor == actor_to_trace) {
                 last_end_time = core_vector_at_as_uint64_t(&self->event_end_times, i);
                 communication_time = time - last_end_time;
 
 #ifdef THORIUM_MESSAGE_ENABLE_TRACEPOINTS
+                /*
+                 * Print the tracepoints if this is the good action,
+                 * if the communication time is too large, and
+                 * also if this is the good actor too.
+                 */
                 if (communication_time >= threshold) {
+
+                    printf("thorium_actor_profiler_profile communication_time= %" PRIu64 "\n",
+                                    communication_time);
+
+                    thorium_message_print(message);
                     thorium_message_print_tracepoints(message);
                 }
 #endif

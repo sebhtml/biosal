@@ -33,7 +33,7 @@ void thorium_message_init(struct thorium_message *self, int action, int count,
     thorium_message_set_type(self, THORIUM_MESSAGE_TYPE_NONE);
 
 #ifdef THORIUM_MESSAGE_ENABLE_TRACEPOINTS
-    thorium_message_set_tracepoint_time(self, THORIUM_MESSAGE_TRACEPOINT_ACTOR_1,
+    thorium_message_set_tracepoint_time(self, THORIUM_MESSAGE_TRACEPOINT_ACTOR_1_SEND,
                     THORIUM_MESSAGE_TRACEPOINT_NO_VALUE);
     thorium_message_set_tracepoint_time(self, THORIUM_MESSAGE_TRACEPOINT_WORKER_1,
                     THORIUM_MESSAGE_TRACEPOINT_NO_VALUE);
@@ -43,7 +43,7 @@ void thorium_message_init(struct thorium_message *self, int action, int count,
                     THORIUM_MESSAGE_TRACEPOINT_NO_VALUE);
     thorium_message_set_tracepoint_time(self, THORIUM_MESSAGE_TRACEPOINT_WORKER_2,
                     THORIUM_MESSAGE_TRACEPOINT_NO_VALUE);
-    thorium_message_set_tracepoint_time(self, THORIUM_MESSAGE_TRACEPOINT_ACTOR_2,
+    thorium_message_set_tracepoint_time(self, THORIUM_MESSAGE_TRACEPOINT_ACTOR_2_RECEIVE,
                     THORIUM_MESSAGE_TRACEPOINT_NO_VALUE);
 #endif
 }
@@ -219,6 +219,11 @@ int thorium_message_pack_unpack(struct thorium_message *self, int operation, voi
     core_packer_process(&packer, &self->destination_actor, sizeof(self->destination_actor));
     core_packer_process(&packer, &self->action, sizeof(self->action));
 
+#ifdef THORIUM_MESSAGE_ENABLE_TRACEPOINTS
+    core_packer_process(&packer, self->tracepoint_times,
+                    THORIUM_MESSAGE_TRACEPOINT_COUNT * sizeof(uint64_t));
+#endif
+
     count = core_packer_get_byte_count(&packer);
 
     core_packer_destroy(&packer);
@@ -256,23 +261,23 @@ void thorium_message_print_tracepoints(struct thorium_message *self)
 {
     printf("thorium_message_print_tracepoints\n");
 
-    printf("tracepoint %s %" PRIu64 "\n",
-                    "THORIUM_MESSAGE_TRACEPOINT_ACTOR_1",
-                    thorium_message_get_tracepoint_time(self, THORIUM_MESSAGE_TRACEPOINT_ACTOR_1));
-    printf("tracepoint %s %" PRIu64 "\n",
+    printf("message:%s %" PRIu64 "\n",
+                    "THORIUM_MESSAGE_TRACEPOINT_ACTOR_1_SEND",
+                    thorium_message_get_tracepoint_time(self, THORIUM_MESSAGE_TRACEPOINT_ACTOR_1_SEND));
+    printf("message:%s %" PRIu64 "\n",
                     "THORIUM_MESSAGE_TRACEPOINT_WORKER_1",
                     thorium_message_get_tracepoint_time(self, THORIUM_MESSAGE_TRACEPOINT_WORKER_1));
-    printf("tracepoint %s %" PRIu64 "\n",
+    printf("message:%s %" PRIu64 "\n",
                     "THORIUM_MESSAGE_TRACEPOINT_NODE_1",
                     thorium_message_get_tracepoint_time(self, THORIUM_MESSAGE_TRACEPOINT_NODE_1));
-    printf("tracepoint %s %" PRIu64 "\n",
+    printf("message:%s %" PRIu64 "\n",
                     "THORIUM_MESSAGE_TRACEPOINT_NODE_2",
                     thorium_message_get_tracepoint_time(self, THORIUM_MESSAGE_TRACEPOINT_NODE_2));
-    printf("tracepoint %s %" PRIu64 "\n",
+    printf("message:%s %" PRIu64 "\n",
                     "THORIUM_MESSAGE_TRACEPOINT_WORKER_2",
                     thorium_message_get_tracepoint_time(self, THORIUM_MESSAGE_TRACEPOINT_WORKER_2));
-    printf("tracepoint %s %" PRIu64 "\n",
-                    "THORIUM_MESSAGE_TRACEPOINT_ACTOR_2",
-                    thorium_message_get_tracepoint_time(self, THORIUM_MESSAGE_TRACEPOINT_ACTOR_2));
+    printf("message:%s %" PRIu64 "\n",
+                    "THORIUM_MESSAGE_TRACEPOINT_ACTOR_2_RECEIVE",
+                    thorium_message_get_tracepoint_time(self, THORIUM_MESSAGE_TRACEPOINT_ACTOR_2_RECEIVE));
 }
 #endif
