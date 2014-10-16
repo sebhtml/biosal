@@ -36,17 +36,17 @@ void thorium_message_init(struct thorium_message *self, int action, int count,
     thorium_message_set_type(self, THORIUM_MESSAGE_TYPE_NONE);
 
 #ifdef THORIUM_MESSAGE_ENABLE_TRACEPOINTS
-    thorium_message_set_tracepoint_time(self, THORIUM_MESSAGE_TRACEPOINT_ACTOR_1_SEND,
+    thorium_message_set_tracepoint_time(self, THORIUM_TRACEPOINT_ACTOR_1_SEND,
                     THORIUM_MESSAGE_TRACEPOINT_NO_VALUE);
-    thorium_message_set_tracepoint_time(self, THORIUM_MESSAGE_TRACEPOINT_WORKER_1_SEND,
+    thorium_message_set_tracepoint_time(self, THORIUM_TRACEPOINT_WORKER_1_SEND,
                     THORIUM_MESSAGE_TRACEPOINT_NO_VALUE);
-    thorium_message_set_tracepoint_time(self, THORIUM_MESSAGE_TRACEPOINT_NODE_1_SEND,
+    thorium_message_set_tracepoint_time(self, THORIUM_TRACEPOINT_NODE_1_SEND,
                     THORIUM_MESSAGE_TRACEPOINT_NO_VALUE);
-    thorium_message_set_tracepoint_time(self, THORIUM_MESSAGE_TRACEPOINT_NODE_2_RECEIVE,
+    thorium_message_set_tracepoint_time(self, THORIUM_TRACEPOINT_NODE_2_RECEIVE,
                     THORIUM_MESSAGE_TRACEPOINT_NO_VALUE);
-    thorium_message_set_tracepoint_time(self, THORIUM_MESSAGE_TRACEPOINT_WORKER_2_RECEIVE,
+    thorium_message_set_tracepoint_time(self, THORIUM_TRACEPOINT_WORKER_2_RECEIVE,
                     THORIUM_MESSAGE_TRACEPOINT_NO_VALUE);
-    thorium_message_set_tracepoint_time(self, THORIUM_MESSAGE_TRACEPOINT_ACTOR_2_RECEIVE,
+    thorium_message_set_tracepoint_time(self, THORIUM_TRACEPOINT_ACTOR_2_RECEIVE,
                     THORIUM_MESSAGE_TRACEPOINT_NO_VALUE);
 #endif
 }
@@ -276,28 +276,28 @@ void thorium_message_print_tracepoints(struct thorium_message *self)
 
     printf("thorium_message_print_tracepoints\n");
 
-    thorium_message_print_tracepoint(self, "THORIUM_MESSAGE_TRACEPOINT_ACTOR_1_SEND",
-                    thorium_message_get_tracepoint_time(self, THORIUM_MESSAGE_TRACEPOINT_ACTOR_1_SEND),
+    thorium_message_print_tracepoint(self, "THORIUM_TRACEPOINT_ACTOR_1_SEND",
+                    thorium_message_get_tracepoint_time(self, THORIUM_TRACEPOINT_ACTOR_1_SEND),
                     &last);
 
-    thorium_message_print_tracepoint(self, "THORIUM_MESSAGE_TRACEPOINT_WORKER_1_SEND",
-                    thorium_message_get_tracepoint_time(self, THORIUM_MESSAGE_TRACEPOINT_WORKER_1_SEND),
+    thorium_message_print_tracepoint(self, "THORIUM_TRACEPOINT_WORKER_1_SEND",
+                    thorium_message_get_tracepoint_time(self, THORIUM_TRACEPOINT_WORKER_1_SEND),
                     &last);
 
-    thorium_message_print_tracepoint(self, "THORIUM_MESSAGE_TRACEPOINT_NODE_1_SEND",
-                    thorium_message_get_tracepoint_time(self, THORIUM_MESSAGE_TRACEPOINT_NODE_1_SEND),
+    thorium_message_print_tracepoint(self, "THORIUM_TRACEPOINT_NODE_1_SEND",
+                    thorium_message_get_tracepoint_time(self, THORIUM_TRACEPOINT_NODE_1_SEND),
                     &last);
 
-    thorium_message_print_tracepoint(self, "THORIUM_MESSAGE_TRACEPOINT_NODE_2_RECEIVE",
-                    thorium_message_get_tracepoint_time(self, THORIUM_MESSAGE_TRACEPOINT_NODE_2_RECEIVE),
+    thorium_message_print_tracepoint(self, "THORIUM_TRACEPOINT_NODE_2_RECEIVE",
+                    thorium_message_get_tracepoint_time(self, THORIUM_TRACEPOINT_NODE_2_RECEIVE),
                     &last);
 
-    thorium_message_print_tracepoint(self, "THORIUM_MESSAGE_TRACEPOINT_WORKER_2_RECEIVE",
-                    thorium_message_get_tracepoint_time(self, THORIUM_MESSAGE_TRACEPOINT_WORKER_2_RECEIVE),
+    thorium_message_print_tracepoint(self, "THORIUM_TRACEPOINT_WORKER_2_RECEIVE",
+                    thorium_message_get_tracepoint_time(self, THORIUM_TRACEPOINT_WORKER_2_RECEIVE),
                     &last);
 
-    thorium_message_print_tracepoint(self, "THORIUM_MESSAGE_TRACEPOINT_ACTOR_2_RECEIVE",
-                    thorium_message_get_tracepoint_time(self, THORIUM_MESSAGE_TRACEPOINT_ACTOR_2_RECEIVE),
+    thorium_message_print_tracepoint(self, "THORIUM_TRACEPOINT_ACTOR_2_RECEIVE",
+                    thorium_message_get_tracepoint_time(self, THORIUM_TRACEPOINT_ACTOR_2_RECEIVE),
                     &last);
 }
 

@@ -2061,7 +2061,7 @@ int thorium_node_pull(struct thorium_node *node, struct thorium_message *message
 
 #ifdef THORIUM_MESSAGE_ENABLE_TRACEPOINTS
     if (value) {
-        thorium_message_set_tracepoint_time(message, THORIUM_MESSAGE_TRACEPOINT_NODE_1_SEND,
+        thorium_message_set_tracepoint_time(message, THORIUM_TRACEPOINT_NODE_1_SEND,
                     core_timer_get_nanoseconds(&node->timer));
         /*
         thorium_message_set_count(message,
@@ -2203,7 +2203,7 @@ void thorium_node_run_loop(struct thorium_node *node)
             thorium_node_prepare_received_message(node, &message);
 
 #ifdef THORIUM_MESSAGE_ENABLE_TRACEPOINTS
-    thorium_message_set_tracepoint_time(&message, THORIUM_MESSAGE_TRACEPOINT_NODE_2_RECEIVE,
+    thorium_message_set_tracepoint_time(&message, THORIUM_TRACEPOINT_NODE_2_RECEIVE,
                     core_timer_get_nanoseconds(&node->timer));
 #endif
 

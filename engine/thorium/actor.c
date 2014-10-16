@@ -452,7 +452,7 @@ void thorium_actor_send(struct thorium_actor *self, int name, struct thorium_mes
     int source;
 
 #ifdef THORIUM_MESSAGE_ENABLE_TRACEPOINTS
-    thorium_message_set_tracepoint_time(message, THORIUM_MESSAGE_TRACEPOINT_ACTOR_1_SEND,
+    thorium_message_set_tracepoint_time(message, THORIUM_TRACEPOINT_ACTOR_1_SEND,
                     core_timer_get_nanoseconds(&self->timer));
 #endif
 
@@ -1046,14 +1046,14 @@ void thorium_actor_receive(struct thorium_actor *self, struct thorium_message *m
     start = core_timer_get_nanoseconds(&self->timer);
 
     if (CORE_BITMAP_GET_BIT(self->flags, FLAG_ENABLE_LOAD_PROFILER)) {
-        thorium_actor_profiler_profile(&self->profiler, THORIUM_ACTOR_PROFILER_RECEIVE_BEGIN,
+        thorium_actor_profiler_profile(&self->profiler, THORIUM_TRACEPOINT_ACTOR_RECEIVE_BEGIN,
                         message);
     }
 
     thorium_actor_receive_private(self, message);
 
     if (CORE_BITMAP_GET_BIT(self->flags, FLAG_ENABLE_LOAD_PROFILER)) {
-        thorium_actor_profiler_profile(&self->profiler, THORIUM_ACTOR_PROFILER_RECEIVE_END,
+        thorium_actor_profiler_profile(&self->profiler, THORIUM_TRACEPOINT_ACTOR_RECEIVE_END,
                         message);
     }
 
@@ -2004,7 +2004,7 @@ int thorium_actor_work(struct thorium_actor *self)
 #endif
 
 #ifdef THORIUM_MESSAGE_ENABLE_TRACEPOINTS
-    thorium_message_set_tracepoint_time(&message, THORIUM_MESSAGE_TRACEPOINT_ACTOR_2_RECEIVE,
+    thorium_message_set_tracepoint_time(&message, THORIUM_TRACEPOINT_ACTOR_2_RECEIVE,
                     core_timer_get_nanoseconds(&self->timer));
 #endif
 
