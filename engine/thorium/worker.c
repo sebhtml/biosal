@@ -371,6 +371,11 @@ void thorium_worker_send(struct thorium_worker *worker, struct thorium_message *
     struct thorium_actor *destination_actor;
 #endif
 
+#ifdef THORIUM_MESSAGE_ENABLE_TRACEPOINTS
+    thorium_message_set_tracepoint_time(message, THORIUM_MESSAGE_TRACEPOINT_WORKER_1_SEND,
+                    core_timer_get_nanoseconds(&worker->timer));
+#endif
+
     action = thorium_message_action(message);
 
     /*
@@ -675,6 +680,11 @@ int thorium_worker_dequeue_actor(struct thorium_worker *worker, struct thorium_a
     while (operations--
                     && core_fast_ring_pop_from_consumer(&worker->input_inbound_message_ring,
                             &message)) {
+
+#ifdef THORIUM_MESSAGE_ENABLE_TRACEPOINTS
+    thorium_message_set_tracepoint_time(&message, THORIUM_MESSAGE_TRACEPOINT_WORKER_2_RECEIVE,
+                    core_timer_get_nanoseconds(&worker->timer));
+#endif
 
         other_name = thorium_message_destination(&message);
 
