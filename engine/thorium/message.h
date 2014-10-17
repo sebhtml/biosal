@@ -58,7 +58,7 @@
 
 #endif
 
-#define THORIUM_MESSAGE_METADATA_SIZE (3 * sizeof(int) + TRACEPOINT_SIZE)
+#define THORIUM_MESSAGE_METADATA_SIZE (4 * sizeof(int) + TRACEPOINT_SIZE)
 
 /*
  * This is a message.
@@ -86,6 +86,7 @@ struct thorium_message {
 #ifdef THORIUM_MESSAGE_ENABLE_TRACEPOINTS
     uint64_t tracepoint_times[THORIUM_MESSAGE_TRACEPOINT_COUNT];
 #endif
+    int number;
 };
 
 void thorium_message_init(struct thorium_message *self, int action, int count, void *buffer);
@@ -135,5 +136,7 @@ void thorium_message_set_tracepoint_time(struct thorium_message *self, int trace
                 uint64_t time);
 uint64_t thorium_message_get_tracepoint_time(struct thorium_message *self, int tracepoint);
 void thorium_message_print_tracepoints(struct thorium_message *self);
+
+void thorium_message_set_number(struct thorium_message *self, int number);
 
 #endif

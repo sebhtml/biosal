@@ -219,6 +219,7 @@ int thorium_message_pack_unpack(struct thorium_message *self, int operation, voi
     core_packer_process(&packer, &self->source_actor, sizeof(self->source_actor));
     core_packer_process(&packer, &self->destination_actor, sizeof(self->destination_actor));
     core_packer_process(&packer, &self->action, sizeof(self->action));
+    core_packer_process(&packer, &self->number, sizeof(self->number));
 
 #ifdef THORIUM_MESSAGE_ENABLE_TRACEPOINTS
     core_packer_process(&packer, self->tracepoint_times,
@@ -369,4 +370,9 @@ void thorium_message_initialize_tracepoints(struct thorium_message *self)
     for (i = 0; i < THORIUM_MESSAGE_TRACEPOINT_COUNT; ++i) {
         thorium_message_set_tracepoint_time(self, i, THORIUM_MESSAGE_TRACEPOINT_NO_VALUE);
     }
+}
+
+void thorium_message_set_number(struct thorium_message *self, int number)
+{
+    self->number = number;
 }

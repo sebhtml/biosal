@@ -129,7 +129,7 @@ int thorium_transport_send(struct thorium_transport *self, struct thorium_messag
     /*
      * Trace the event "message:transport_send".
      */
-    thorium_tracepoint(message, transport_send, message);
+    thorium_tracepoint_DISABLED(message, transport_send, message);
 
 #ifdef THORIUM_MESSAGE_ENABLE_TRACEPOINTS
     thorium_message_set_count(message,
@@ -193,7 +193,7 @@ int thorium_transport_receive(struct thorium_transport *self, struct thorium_mes
         /*
          * Trace the event "message:transport_receive"
          */
-        thorium_tracepoint(message, transport_receive, message);
+        thorium_tracepoint_DISABLED(message, transport_receive, message);
 
 #ifdef THORIUM_MESSAGE_ENABLE_TRACEPOINTS
         thorium_message_write_metadata(message);

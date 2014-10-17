@@ -4,6 +4,15 @@
 
 #include <core/system/timer.h>
 
+#ifdef THORIUM_USE_LTTNG
+#include "lttng/hello-tp.h"
+#include "lttng/message.h"
+#endif
+
+#include "actor_tracepoints.h"
+#include "message_tracepoints.h"
+#include "node_tracepoints.h"
+
 #include <stdint.h>
 
 /*
@@ -27,13 +36,20 @@
  * THORIUM_ENABLE_TRACEPOINTS
  */
 /*
-*/
 #define THORIUM_ENABLE_TRACEPOINTS
+*/
+
+#define thorium_tracepoint_DISABLED(...) \
 
 #define THORIUM_TRACEPOINT_NAME(provider_name, event_name) \
         thorium_tracepoint_##provider_name##_##event_name
 
-#ifdef THORIUM_ENABLE_TRACEPOINTS
+#ifdef THORIUM_USE_LTTNG
+
+#define thorium_tracepoint tracepoint
+
+
+#elif defined(THORIUM_ENABLE_TRACEPOINTS)
 
 /*
  * TODO: add a flag to activate these a run time.

@@ -297,6 +297,8 @@ struct thorium_actor {
      */
     uint64_t virtual_runtime;
     struct core_timer timer;
+
+    int message_number;
 };
 
 void thorium_actor_init(struct thorium_actor *self, void *state,

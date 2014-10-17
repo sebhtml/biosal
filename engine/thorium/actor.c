@@ -4,8 +4,7 @@
 #include "worker.h"
 #include "node.h"
 
-#include "tracepoints/message_tracepoints.h"
-#include "tracepoints/actor_tracepoints.h"
+#include "tracepoints/tracepoints.h"
 
 #include "scheduler/fifo_scheduler.h"
 
@@ -127,6 +126,7 @@ void thorium_actor_init(struct thorium_actor *self, void *concrete_actor,
     thorium_actor_init_fn_t init;
     int capacity;
 
+    self->message_number = 0;
     core_memory_pool_init(&self->abstract_memory_pool, 0, MEMORY_POOL_NAME_ABSTRACT_ACTOR);
 
     self->virtual_runtime = 0;
@@ -454,6 +454,20 @@ void thorium_actor_send(struct thorium_actor *self, int name, struct thorium_mes
 {
     int source;
 
+    /*
+     * Assign a number to the message.
+     * Message numbers are unique within any given actor.
+     */
+    thorium_message_set_number(message, self->message_number);
+    ++self->message_number;
+
+    source = thorium_actor_name(self);
+
+    /*
+     * Set the source too.
+     */
+    thorium_message_set_source(message, source);
+
     /* trace message:actor_send events */
     thorium_tracepoint(message, actor_send, message);
 
@@ -471,8 +485,6 @@ void thorium_actor_send(struct thorium_actor *self, int name, struct thorium_mes
 
     (*bucket)++;
 #endif
-
-    source = thorium_actor_name(self);
 
 #ifdef THORIUM_ACTOR_GATHER_MESSAGE_METADATA
     /* update counters
@@ -1047,13 +1059,13 @@ void thorium_actor_receive(struct thorium_actor *self, struct thorium_message *m
     start = core_timer_get_nanoseconds(&self->timer);
 
     if (CORE_BITMAP_GET_BIT(self->flags, FLAG_ENABLE_LOAD_PROFILER)) {
-        thorium_tracepoint(actor, receive_enter, &self->profiler, message);
+        thorium_tracepoint_DISABLED(actor, receive_enter, &self->profiler, message);
     }
 
     thorium_actor_receive_private(self, message);
 
     if (CORE_BITMAP_GET_BIT(self->flags, FLAG_ENABLE_LOAD_PROFILER)) {
-        thorium_tracepoint(actor, receive_exit, &self->profiler, message);
+        thorium_tracepoint_DISABLED(actor, receive_exit, &self->profiler, message);
     }
 
     end = core_timer_get_nanoseconds(&self->timer);
@@ -2002,7 +2014,7 @@ int thorium_actor_work(struct thorium_actor *self)
 #ifdef CORE_MEMORY_POOL_FIND_LEAKS
 #endif
 
-    thorium_tracepoint(message, actor_receive, &message);
+    thorium_tracepoint_DISABLED(message, actor_receive, &message);
 
     /*
      * Receive the message !
