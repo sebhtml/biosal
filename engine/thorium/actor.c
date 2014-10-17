@@ -467,6 +467,7 @@ void thorium_actor_send(struct thorium_actor *self, int name, struct thorium_mes
      * Set the source too.
      */
     thorium_message_set_source(message, source);
+    thorium_message_set_destination(message, name);
 
     /* trace message:actor_send events */
     thorium_tracepoint(message, actor_send, message);
@@ -513,8 +514,6 @@ void thorium_actor_send_with_source(struct thorium_actor *self, int name, struct
     int tag;
 
     tag = thorium_message_action(message);
-    thorium_message_set_source(message, source);
-    thorium_message_set_destination(message, name);
 
 #ifdef THORIUM_ACTOR_DEBUG9
     if (thorium_message_action(message) == 1100) {
@@ -1055,6 +1054,8 @@ void thorium_actor_receive(struct thorium_actor *self, struct thorium_message *m
     uint64_t start;
     uint64_t end;
     uint64_t consumed_virtual_runtime;
+
+    thorium_tracepoint(message, actor_receive, message);
 
     start = core_timer_get_nanoseconds(&self->timer);
 
@@ -2013,8 +2014,6 @@ int thorium_actor_work(struct thorium_actor *self)
     CORE_DEBUGGER_ASSERT(!core_memory_pool_has_leaks(ephemeral_memory));
 #ifdef CORE_MEMORY_POOL_FIND_LEAKS
 #endif
-
-    thorium_tracepoint(message, actor_receive, &message);
 
     /*
      * Receive the message !

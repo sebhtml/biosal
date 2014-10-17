@@ -10,11 +10,11 @@ rm -rf output
 lttng create
 
 # enable all userspace tracepoints
-lttng enable-event --userspace --all
+lttng enable-event --userspace message:actor_send,message:actor_receive
 
 lttng start
 
-mpiexec -n 4 ./applications/spate_metagenome_assembler/spate -k 51 -threads-per-node 8 ~/dropbox/S.aureus.fasta.gz
+mpiexec -n 4 ./applications/spate_metagenome_assembler/spate -k 51 -threads-per-node 7 ~/dropbox/S.aureus.fasta.gz
 
 lttng stop
 

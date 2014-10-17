@@ -1,5 +1,4 @@
-Here is a list of tracepoints (-enable-tracepoints provider:event).
-To enable all message tracepoints, use -enable-tracepoints message:*.
+Here is a list of LTTng tracepoints.
 
 - message:actor_send
 - message:worker_send
