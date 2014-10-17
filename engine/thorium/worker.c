@@ -375,7 +375,7 @@ void thorium_worker_send(struct thorium_worker *worker, struct thorium_message *
     struct thorium_actor *destination_actor;
 #endif
 
-    thorium_tracepoint(message, worker_send, message, core_timer_get_nanoseconds(&worker->timer));
+    thorium_tracepoint(message, worker_send, message);
 
     action = thorium_message_action(message);
 
@@ -477,16 +477,15 @@ void thorium_worker_send(struct thorium_worker *worker, struct thorium_message *
 
         destination_actor = thorium_node_get_actor_from_name(worker->node, destination);
 
-        thorium_tracepoint(message, worker_send_mailbox, message, core_timer_get_nanoseconds(&worker->timer));
+        thorium_tracepoint(message, worker_send_mailbox, message);
+
         if (destination_actor != NULL
                  && thorium_actor_enqueue_mailbox_message(destination_actor, message)) {
 
 
             thorium_worker_schedule_actor(worker, destination_actor);
 
-            /*
-            thorium_tracepoint(message, worker_send_schedule, message, core_timer_get_nanoseconds(&worker->timer));
-            */
+            thorium_tracepoint(message, worker_send_schedule, message);
 
             return;
         }
@@ -688,7 +687,7 @@ int thorium_worker_dequeue_actor(struct thorium_worker *worker, struct thorium_a
                     && core_fast_ring_pop_from_consumer(&worker->input_inbound_message_ring,
                             &message)) {
 
-        thorium_tracepoint(message, worker_receive, &message, core_timer_get_nanoseconds(&worker->timer));
+        thorium_tracepoint(message, worker_receive, &message);
 
         other_name = thorium_message_destination(&message);
 
@@ -886,7 +885,7 @@ int thorium_worker_enqueue_inbound_message(struct thorium_worker *worker, struct
 
 int thorium_worker_enqueue_message(struct thorium_worker *worker, struct thorium_message *message)
 {
-    thorium_tracepoint(message, worker_enqueue_message, message, core_timer_get_nanoseconds(&worker->timer));
+    thorium_tracepoint(message, worker_enqueue_message, message);
 
     /* Try to push the message in the output ring
      */
@@ -916,7 +915,7 @@ int thorium_worker_dequeue_message(struct thorium_worker *worker, struct thorium
     if (answer) {
         thorium_message_set_worker(message, worker->name);
 
-        thorium_tracepoint(message, worker_dequeue_message, message, core_timer_get_nanoseconds(&worker->timer));
+        thorium_tracepoint(message, worker_dequeue_message, message);
     }
 
     return answer;

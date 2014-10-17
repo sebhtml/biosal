@@ -2,6 +2,10 @@
 #ifndef THORIUM_TRACEPOINT_H
 #define THORIUM_TRACEPOINT_H
 
+#include <core/system/timer.h>
+
+#include <stdint.h>
+
 /*
  * Here, the tracepoints are similar to those in
  * lttng. The difference is that in Thorium, tracepoint data
@@ -22,6 +26,8 @@
  * Right now, tracepoints must be enabled with
  * THORIUM_ENABLE_TRACEPOINTS
  */
+/*
+*/
 #define THORIUM_ENABLE_TRACEPOINTS
 
 #define THORIUM_TRACEPOINT_NAME(provider_name, event_name) \
@@ -33,7 +39,15 @@
  * TODO: add a flag to activate these a run time.
  */
 #define thorium_tracepoint(provider_name, event_name, ...) \
-        THORIUM_TRACEPOINT_NAME(provider_name, event_name)(__VA_ARGS__)
+{ \
+    uint64_t tracepoint_time; \
+    tracepoint_time = 0; \
+    struct core_timer tracepoint_timer; \
+    core_timer_init(&tracepoint_timer); \
+    tracepoint_time = core_timer_get_nanoseconds(&tracepoint_timer); \
+    core_timer_destroy(&tracepoint_timer); \
+    THORIUM_TRACEPOINT_NAME(provider_name, event_name)(tracepoint_time, __VA_ARGS__); \
+}
 
 #else
 

@@ -6,7 +6,7 @@
 #include <stdint.h>
 #include <inttypes.h>
 
-void thorium_tracepoint_node_run_loop_print(struct thorium_tracepoint_session *tracepoint_session, uint64_t time)
+void thorium_tracepoint_node_run_loop_print(uint64_t time, struct thorium_tracepoint_session *tracepoint_session)
 {
         /*
     printf("DEBUG tracepoint node:run_loop_print time %" PRIu64 "\n", time);
@@ -15,37 +15,37 @@ void thorium_tracepoint_node_run_loop_print(struct thorium_tracepoint_session *t
                     THORIUM_TRACEPOINT_node_run_loop_print, time);
 }
 
-void thorium_tracepoint_node_run_loop_receive(struct thorium_tracepoint_session *tracepoint_session, uint64_t time)
+void thorium_tracepoint_node_run_loop_receive(uint64_t time, struct thorium_tracepoint_session *tracepoint_session)
 {
     thorium_tracepoint_session_set_tracepoint_time(tracepoint_session,
                     THORIUM_TRACEPOINT_node_run_loop_receive, time);
 }
 
-void thorium_tracepoint_node_run_loop_run(struct thorium_tracepoint_session *tracepoint_session, uint64_t time)
+void thorium_tracepoint_node_run_loop_run(uint64_t time, struct thorium_tracepoint_session *tracepoint_session)
 {
     thorium_tracepoint_session_set_tracepoint_time(tracepoint_session,
                     THORIUM_TRACEPOINT_node_run_loop_run, time);
 }
 
-void thorium_tracepoint_node_run_loop_send(struct thorium_tracepoint_session *tracepoint_session, uint64_t time)
+void thorium_tracepoint_node_run_loop_send(uint64_t time, struct thorium_tracepoint_session *tracepoint_session)
 {
     thorium_tracepoint_session_set_tracepoint_time(tracepoint_session,
                     THORIUM_TRACEPOINT_node_run_loop_send, time);
 }
 
-void thorium_tracepoint_node_run_loop_pool_work(struct thorium_tracepoint_session *tracepoint_session, uint64_t time)
+void thorium_tracepoint_node_run_loop_pool_work(uint64_t time, struct thorium_tracepoint_session *tracepoint_session)
 {
     thorium_tracepoint_session_set_tracepoint_time(tracepoint_session,
                     THORIUM_TRACEPOINT_node_run_loop_pool_work, time);
 }
 
-void thorium_tracepoint_node_run_loop_test_requests(struct thorium_tracepoint_session *tracepoint_session, uint64_t time)
+void thorium_tracepoint_node_run_loop_test_requests(uint64_t time, struct thorium_tracepoint_session *tracepoint_session)
 {
     thorium_tracepoint_session_set_tracepoint_time(tracepoint_session,
                     THORIUM_TRACEPOINT_node_run_loop_test_requests, time);
 }
 
-void thorium_tracepoint_node_run_loop_do_triage(struct thorium_tracepoint_session *tracepoint_session, uint64_t time)
+void thorium_tracepoint_node_run_loop_do_triage(uint64_t time, struct thorium_tracepoint_session *tracepoint_session)
 {
     thorium_tracepoint_session_set_tracepoint_time(tracepoint_session,
                     THORIUM_TRACEPOINT_node_run_loop_do_triage, time);

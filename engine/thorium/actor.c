@@ -455,7 +455,7 @@ void thorium_actor_send(struct thorium_actor *self, int name, struct thorium_mes
     int source;
 
     /* trace message:actor_send events */
-    thorium_tracepoint(message, actor_send, message, core_timer_get_nanoseconds(&self->timer));
+    thorium_tracepoint(message, actor_send, message);
 
 #ifdef THORIUM_ACTOR_GATHER_MESSAGE_METADATA
     int *bucket;
@@ -2002,7 +2002,7 @@ int thorium_actor_work(struct thorium_actor *self)
 #ifdef CORE_MEMORY_POOL_FIND_LEAKS
 #endif
 
-    thorium_tracepoint(message, actor_receive, &message, core_timer_get_nanoseconds(&self->timer));
+    thorium_tracepoint(message, actor_receive, &message);
 
     /*
      * Receive the message !
