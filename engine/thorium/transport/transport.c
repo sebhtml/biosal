@@ -129,17 +129,7 @@ int thorium_transport_send(struct thorium_transport *self, struct thorium_messag
     /*
      * Trace the event "message:transport_send".
      */
-    thorium_tracepoint_DISABLED(message, transport_send, message);
-
-#ifdef THORIUM_MESSAGE_ENABLE_TRACEPOINTS
-    thorium_message_set_count(message,
-                thorium_message_count(message) - THORIUM_MESSAGE_METADATA_SIZE);
-
-    thorium_message_write_metadata(message);
-
-    thorium_message_set_count(message,
-                    thorium_message_count(message) + THORIUM_MESSAGE_METADATA_SIZE);
-#endif
+    thorium_tracepoint(message, transport_send, message);
 
     value = self->transport_interface->send(self, message);
 
@@ -175,32 +165,9 @@ int thorium_transport_receive(struct thorium_transport *self, struct thorium_mes
     if (value) {
 
         /*
-         * Add the trace event:
-         *
-         * - First, update the count;
-         * - Then, read the metadata;
-         * - Call the tracepoint;
-         * - Write metadata;
-         * - Update count.
-         */
-#ifdef THORIUM_MESSAGE_ENABLE_TRACEPOINTS
-        thorium_message_set_count(message,
-                    thorium_message_count(message) - THORIUM_MESSAGE_METADATA_SIZE);
-
-        thorium_message_read_metadata(message);
-#endif
-
-        /*
          * Trace the event "message:transport_receive"
          */
-        thorium_tracepoint_DISABLED(message, transport_receive, message);
-
-#ifdef THORIUM_MESSAGE_ENABLE_TRACEPOINTS
-        thorium_message_write_metadata(message);
-
-        thorium_message_set_count(message,
-                    thorium_message_count(message) + THORIUM_MESSAGE_METADATA_SIZE);
-#endif
+        thorium_tracepoint(message, transport_receive, message);
 
 #ifdef THORIUM_TRANSPORT_DEBUG
         printf("TRANSPORT RECEIVE Source %d Destination %d Tag %d Count %d\n",

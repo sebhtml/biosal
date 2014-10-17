@@ -2014,7 +2014,7 @@ int thorium_actor_work(struct thorium_actor *self)
 #ifdef CORE_MEMORY_POOL_FIND_LEAKS
 #endif
 
-    thorium_tracepoint_DISABLED(message, actor_receive, &message);
+    thorium_tracepoint(message, actor_receive, &message);
 
     /*
      * Receive the message !
