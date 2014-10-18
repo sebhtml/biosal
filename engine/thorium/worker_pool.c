@@ -282,7 +282,7 @@ int thorium_worker_pool_enqueue_message(struct thorium_worker_pool *pool, struct
 
     value = thorium_worker_pool_give_message_to_worker(pool, message);
 
-    thorium_tracepoint(thorium_message, worker_pool_enqueue, message);
+    tracepoint(thorium_message, worker_pool_enqueue, message);
 
     return value;
 }
@@ -882,7 +882,7 @@ int thorium_worker_pool_dequeue_message(struct thorium_worker_pool *pool, struct
     /*
     */
     if (answer) {
-        thorium_tracepoint(thorium_message, worker_pool_dequeue, message);
+        tracepoint(thorium_message, worker_pool_dequeue, message);
     }
 
     return answer;

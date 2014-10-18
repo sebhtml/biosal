@@ -470,7 +470,7 @@ void thorium_actor_send(struct thorium_actor *self, int name, struct thorium_mes
     thorium_message_set_destination(message, name);
 
     /* trace message:actor_send events */
-    thorium_tracepoint(thorium_message, actor_send, message);
+    tracepoint(thorium_message, actor_send, message);
 
 #ifdef THORIUM_ACTOR_GATHER_MESSAGE_METADATA
     int *bucket;
@@ -1055,7 +1055,7 @@ void thorium_actor_receive(struct thorium_actor *self, struct thorium_message *m
     uint64_t end;
     uint64_t consumed_virtual_runtime;
 
-    thorium_tracepoint(thorium_message, actor_receive, message);
+    tracepoint(thorium_message, actor_receive, message);
 
     start = core_timer_get_nanoseconds(&self->timer);
 

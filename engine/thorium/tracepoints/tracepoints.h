@@ -46,15 +46,16 @@
 
 #ifdef THORIUM_USE_LTTNG
 
+/*
 #define thorium_tracepoint tracepoint
-
+*/
 
 #elif defined(THORIUM_ENABLE_TRACEPOINTS)
 
 /*
  * TODO: add a flag to activate these a run time.
  */
-#define thorium_tracepoint(provider_name, event_name, ...) \
+#define tracepoint(provider_name, event_name, ...) \
 { \
     uint64_t tracepoint_time; \
     tracepoint_time = 0; \
@@ -70,7 +71,7 @@
 /*
  * Do nothing.
  */
-#define thorium_tracepoint(provider_name, event_name, ...) \
+#define tracepoint(provider_name, event_name, ...) \
 
 #endif
 
