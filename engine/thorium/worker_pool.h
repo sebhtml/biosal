@@ -7,6 +7,7 @@
 #include "scheduler/balancer.h"
 
 #include <core/structures/fast_queue.h>
+#include <core/structures/fast_ring.h>
 #include <core/structures/vector.h>
 
 #include <time.h>
@@ -25,6 +26,8 @@ struct thorium_migration;
 struct thorium_worker_pool {
     struct thorium_balancer balancer;
     struct core_timer timer;
+
+    struct core_fast_ring outbound_message_ring;
 
     /*
     struct core_fast_queue scheduled_actor_queue_buffer;

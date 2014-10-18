@@ -24,6 +24,10 @@
 
 #include <stdint.h>
 
+/*
+#define THORIUM_WORKER_USE_MULTIPLE_PRODUCER_RING
+*/
+
 struct biosal_work;
 struct thorium_node;
 struct thorium_message;
@@ -135,7 +139,11 @@ struct thorium_worker {
     /*
      * Ring for publishing outbound buffers.
      */
+#ifdef THORIUM_WORKER_USE_MULTIPLE_PRODUCER_RING
+    struct core_fast_ring *output_outbound_message_ring_multiple;
+#else
     struct core_fast_ring output_outbound_message_ring;
+#endif
 
     /*
      * Queue for buffering outbound buffers when
@@ -274,5 +282,7 @@ int thorium_worker_get_scheduled_actor_count(struct thorium_worker *self);
 
 void *thorium_worker_allocate(struct thorium_worker *self, size_t count);
 int thorium_worker_get_input_message_ring_size(struct thorium_worker *self);
+
+void thorium_worker_set_outbound_message_ring(struct thorium_worker *self, struct core_fast_ring *ring);
 
 #endif

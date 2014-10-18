@@ -321,6 +321,7 @@ int core_fast_ring_push_compare_and_swap(struct core_fast_ring *self, void *elem
     int tail;
     int new_tail;
     int result;
+    int steps;
 
     if (core_fast_ring_is_full_from_producer(self)) {
         return 0;
@@ -330,11 +331,14 @@ int core_fast_ring_push_compare_and_swap(struct core_fast_ring *self, void *elem
      * Claim the cell.
      */
     result = 0;
+    steps = 64;
+
     do {
         tail = self->tail;
         new_tail = core_fast_ring_increment(self, tail);
         result = core_atomic_compare_and_swap_int(&self->tail, tail, new_tail);
-    } while (!result);
+        --steps;
+    } while (!result && steps);
 
     /*
      * At this point, the consumer may see something before it is available.

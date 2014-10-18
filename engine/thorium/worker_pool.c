@@ -79,6 +79,8 @@ void thorium_worker_pool_examine_inbound_queue(struct thorium_worker_pool *self)
 void thorium_worker_pool_init(struct thorium_worker_pool *pool, int workers,
                 struct thorium_node *node)
 {
+    int outbound_ring_capacity;
+
     core_timer_init(&pool->timer);
 
     pool->debug_mode = 0;
@@ -122,6 +124,11 @@ void thorium_worker_pool_init(struct thorium_worker_pool *pool, int workers,
     }
 #endif
 
+    outbound_ring_capacity = 1024;
+    core_fast_ring_init(&pool->outbound_message_ring, outbound_ring_capacity,
+                    sizeof(struct thorium_message));
+    core_fast_ring_use_multiple_producers(&pool->outbound_message_ring);
+
     thorium_worker_pool_create_workers(pool);
 
     pool->starting_time = time(NULL);
@@ -152,6 +159,8 @@ void thorium_worker_pool_destroy(struct thorium_worker_pool *pool)
     core_fast_queue_destroy(&pool->scheduled_actor_queue_buffer);
     */
     core_fast_queue_destroy(&pool->clean_message_queue);
+
+    core_fast_ring_destroy(&pool->outbound_message_ring);
 }
 
 void thorium_worker_pool_delete_workers(struct thorium_worker_pool *pool)
@@ -209,6 +218,7 @@ void thorium_worker_pool_create_workers(struct thorium_worker_pool *pool)
 
         worker = thorium_worker_pool_get_worker(pool, i);
         thorium_worker_init(worker, i, pool->node);
+        thorium_worker_set_outbound_message_ring(worker, &pool->outbound_message_ring);
 
 #ifdef THORIUM_WORKER_ENABLE_WAIT
         if (pool->waiting_is_enabled) {
@@ -877,10 +887,15 @@ int thorium_worker_pool_dequeue_message(struct thorium_worker_pool *pool, struct
 {
     int answer;
 
+#ifdef THORIUM_WORKER_USE_MULTIPLE_PRODUCER_RING
+    answer = core_fast_ring_pop_and_contend(&pool->outbound_message_ring, message);
+#else
     answer = thorium_worker_pool_pull_classic(pool, message);
+#endif
 
     /*
-    */
+     * Possibly record a tracepoint.
+     */
     if (answer) {
         tracepoint(thorium_message, worker_pool_dequeue, message);
     }
