@@ -7,6 +7,7 @@
 #ifdef THORIUM_USE_LTTNG
 #include "lttng/hello-tp.h"
 #include "lttng/message.h"
+#include "lttng/ring.h"
 #endif
 
 #include "actor_tracepoints.h"

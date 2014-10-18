@@ -1965,7 +1965,8 @@ void thorium_worker_set_outbound_message_ring(struct thorium_worker *self, struc
 int thorium_worker_publish_message(struct thorium_worker *self, struct thorium_message *message)
 {
 #ifdef THORIUM_WORKER_USE_MULTIPLE_PRODUCER_RING
-    return core_fast_ring_push_compare_and_swap(self->output_outbound_message_ring_multiple, message);
+    return core_fast_ring_push_compare_and_swap(self->output_outbound_message_ring_multiple, message,
+                    self->name);
 #else
     return core_fast_ring_push_from_producer(&self->output_outbound_message_ring, message);
 #endif

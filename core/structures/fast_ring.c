@@ -4,6 +4,8 @@
 #include <core/system/memory.h>
 #include <core/system/atomic.h>
 
+#include <engine/thorium/tracepoints/tracepoints.h>
+
 #include <engine/thorium/message.h>
 
 #include <string.h>
@@ -315,7 +317,7 @@ int core_fast_ring_empty(struct core_fast_ring *self)
     return core_fast_ring_size_from_producer(self) == 0;
 }
 
-int core_fast_ring_push_compare_and_swap(struct core_fast_ring *self, void *element)
+int core_fast_ring_push_compare_and_swap(struct core_fast_ring *self, void *element, int worker)
 {
     void *cell;
     int tail;
@@ -323,10 +325,19 @@ int core_fast_ring_push_compare_and_swap(struct core_fast_ring *self, void *elem
     int result;
     int steps;
 
+
+    /*
+     * Can't push, the ring is full.
+     */
     if (core_fast_ring_is_full_from_producer(self)) {
         return 0;
     }
 
+    tracepoint(ring, operation, 0, "push", "before", core_fast_ring_size_from_consumer(self),
+                    core_fast_ring_capacity(self),
+                    self->head, self->tail, worker);
+    /*
+*/
     /*
      * Claim the cell.
      */
@@ -341,19 +352,37 @@ int core_fast_ring_push_compare_and_swap(struct core_fast_ring *self, void *elem
     } while (!result && steps);
 
     /*
-     * At this point, the consumer may see something before it is available.
+     * 64 iterations were enough enough apparently
+     */
+    if (!result) {
+        return 0;
+    }
+
+    /*
+     * At this point, the consumer may see something before it is available
+     * because the tail is already updated, but there is nothing in the cell.
+     *
+     * To solve that issue, any empty cell contains a marker.
+     */
+
+    /*
+     * Get the cell with the tail value *before* the increment
+     * and install the content in the cell.
      */
     cell = core_fast_ring_get_cell(self, tail);
     core_memory_copy(cell, element, self->cell_size);
 
     /*
      * A memory store fence is needed because we want
-     * the content of the cell to be visible before
-     * the tail is incremented.
+     * the content of the cell to be visible.
      */
 #ifdef USE_MEMORY_FENCE
     core_memory_store_fence();
 #endif
+
+    tracepoint(ring, operation, 0, "push", "after", core_fast_ring_size_from_consumer(self),
+                    core_fast_ring_capacity(self),
+                    self->head, self->tail, worker);
 
     return 1;
 }
@@ -363,17 +392,23 @@ int core_fast_ring_pop_and_contend(struct core_fast_ring *self, void *element)
     void *cell;
     int marker;
 
+    /*
+     * Nothing to do, it is empty.
+     */
     if (core_fast_ring_is_empty_from_consumer(self)) {
         return 0;
     }
 
+    tracepoint(ring, operation, 0, "pop", "before", core_fast_ring_size_from_consumer(self),
+                    core_fast_ring_capacity(self),
+                    self->head, self->tail, -1);
+
     cell = core_fast_ring_get_cell(self, self->head);
-    core_memory_copy(element, cell, self->cell_size);
 
     /*
      * Check that the cell contains something useful.
      */
-    core_memory_copy(&marker, element, sizeof(marker));
+    core_memory_copy(&marker, cell, sizeof(marker));
 
     /*
      * The tail is visible before the data, we must wait in that case.
@@ -381,6 +416,12 @@ int core_fast_ring_pop_and_contend(struct core_fast_ring *self, void *element)
     if (marker == THORIUM_MESSAGE_INVALID_ACTION) {
         return 0;
     }
+
+    /*
+     * At this point, there is something to pop, and
+     * the content is also correct.
+     */
+    core_memory_copy(element, cell, self->cell_size);
 
     /*
      * The tail will sometimes be visible before
@@ -392,6 +433,8 @@ int core_fast_ring_pop_and_contend(struct core_fast_ring *self, void *element)
      * and an action can not be 0x00000000 (THORIUM_MESSAGE_INVALID_ACTION).
      *
      * \see http://psy-lob-saw.blogspot.com/2013/10/lock-free-mpsc-1.html
+     *
+     * Here we deposit a flag in the cell.
      */
     marker = THORIUM_MESSAGE_INVALID_ACTION;
     core_memory_copy(cell, &marker, sizeof(marker));
@@ -400,11 +443,16 @@ int core_fast_ring_pop_and_contend(struct core_fast_ring *self, void *element)
      * Same here, we want the content of the cell
      * to be visible before the head is updated.
      */
+
+    self->head = core_fast_ring_increment(self, self->head);
+
 #ifdef USE_MEMORY_FENCE
     core_memory_store_fence();
 #endif
 
-    self->head = core_fast_ring_increment(self, self->head);
+    tracepoint(ring, operation, 0, "pop", "after", core_fast_ring_size_from_consumer(self),
+                    core_fast_ring_capacity(self),
+                    self->head, self->tail, -1);
 
     return 1;
 }

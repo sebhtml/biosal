@@ -70,7 +70,7 @@ int main(int argc, char **argv)
 
         inserted = 0;
 
-        while (core_fast_ring_push_compare_and_swap(&ring, &message)) {
+        while (core_fast_ring_push_compare_and_swap(&ring, &message, 0)) {
             ++inserted;
         }
 
