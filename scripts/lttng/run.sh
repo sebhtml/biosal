@@ -10,7 +10,7 @@ rm -rf output
 lttng create
 
 # enable all userspace tracepoints
-lttng enable-event --userspace message:actor_send,message:actor_receive
+lttng enable-event --userspace message:* --filter "message_source_actor == 1001563"
 
 lttng start
 
