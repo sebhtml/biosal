@@ -13,6 +13,8 @@
 #define THORIUM_MESSAGE_TYPE_NODE_OUTBOUND      2
 #define THORIUM_MESSAGE_TYPE_WORKER_OUTBOUND    3
 
+#define THORIUM_MESSAGE_INVALID_ACTION          0x00000000
+
 /*
  * Use tracepoints to analyze the life cycle of messages.
  */
@@ -64,9 +66,10 @@
  * This is a message.
  */
 struct thorium_message {
+    int action;
+    int number;
     void *buffer;
     int count;
-    int action;
 
     int source_actor;
     int destination_actor;
@@ -86,7 +89,6 @@ struct thorium_message {
 #ifdef THORIUM_MESSAGE_ENABLE_TRACEPOINTS
     uint64_t tracepoint_times[THORIUM_MESSAGE_TRACEPOINT_COUNT];
 #endif
-    int number;
 };
 
 void thorium_message_init(struct thorium_message *self, int action, int count, void *buffer);

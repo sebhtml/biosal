@@ -33,7 +33,7 @@
         /*__sync_fetch_and_and (pointer, 0xffffffff)*/
 
 #define core_atomic_compare_and_swap_int(pointer, old_value, new_value) \
-        __sync_val_compare_and_swap(pointer, old_value, new_value)
+        __sync_bool_compare_and_swap(pointer, old_value, new_value)
 
 /* \see http://docs.cray.com/cgi-bin/craydoc.cgi?mode=View;id=S-2179-74 */
 #elif defined(_CRAYC)
@@ -45,7 +45,7 @@
         __sync_fetch_and_add (pointer, 0)
 
 #define core_atomic_compare_and_swap_int(pointer, old_value, new_value) \
-        __sync_val_compare_and_swap(pointer, old_value, new_value)
+        __sync_bool_compare_and_swap(pointer, old_value, new_value)
 
 /* Intel compiler
  * \see https://software.intel.com/en-us/forums/topic/281802
@@ -64,7 +64,7 @@
         __sync_fetch_and_add (pointer, 0)
 
 #define core_atomic_compare_and_swap_int(pointer, old_value, new_value) \
-        __sync_val_compare_and_swap(pointer, old_value, new_value)
+        __sync_bool_compare_and_swap(pointer, old_value, new_value)
 
 #else
 

@@ -4,6 +4,8 @@
 #include <core/system/memory.h>
 #include <core/system/atomic.h>
 
+#include <engine/thorium/message.h>
+
 #include <string.h>
 #include <stdio.h>
 
@@ -311,4 +313,111 @@ int core_fast_ring_is_empty_from_producer(struct core_fast_ring *self)
 int core_fast_ring_empty(struct core_fast_ring *self)
 {
     return core_fast_ring_size_from_producer(self) == 0;
+}
+
+int core_fast_ring_push_compare_and_swap(struct core_fast_ring *self, void *element)
+{
+    void *cell;
+    int tail;
+    int new_tail;
+    int result;
+
+    if (core_fast_ring_is_full_from_producer(self)) {
+        return 0;
+    }
+
+    /*
+     * Claim the cell.
+     */
+    result = 0;
+    do {
+        tail = self->tail;
+        new_tail = core_fast_ring_increment(self, tail);
+        result = core_atomic_compare_and_swap_int(&self->tail, tail, new_tail);
+    } while (!result);
+
+    /*
+     * At this point, the consumer may see something before it is available.
+     */
+    cell = core_fast_ring_get_cell(self, tail);
+    core_memory_copy(cell, element, self->cell_size);
+
+    /*
+     * A memory store fence is needed because we want
+     * the content of the cell to be visible before
+     * the tail is incremented.
+     */
+#ifdef USE_MEMORY_FENCE
+    core_memory_store_fence();
+#endif
+
+    return 1;
+}
+
+int core_fast_ring_pop_and_contend(struct core_fast_ring *self, void *element)
+{
+    void *cell;
+    int marker;
+
+    if (core_fast_ring_is_empty_from_consumer(self)) {
+        return 0;
+    }
+
+    cell = core_fast_ring_get_cell(self, self->head);
+    core_memory_copy(element, cell, self->cell_size);
+
+    /*
+     * Check that the cell contains something useful.
+     */
+    core_memory_copy(&marker, element, sizeof(marker));
+
+    /*
+     * The tail is visible before the data, we must wait in that case.
+     */
+    if (marker == THORIUM_MESSAGE_INVALID_ACTION) {
+        return 0;
+    }
+
+    /*
+     * The tail will sometimes be visible before
+     * the data is visible. To solve that, it is required
+     * to check that here.
+     *
+     * The only use case for core_fast_ring_push_compare_and_swap + core_fast_ring_pop_and_contend
+     * is with thorium_message objects. The first member of a message is its action,
+     * and an action can not be 0x00000000 (THORIUM_MESSAGE_INVALID_ACTION).
+     *
+     * \see http://psy-lob-saw.blogspot.com/2013/10/lock-free-mpsc-1.html
+     */
+    marker = THORIUM_MESSAGE_INVALID_ACTION;
+    core_memory_copy(cell, &marker, sizeof(marker));
+
+    /*
+     * Same here, we want the content of the cell
+     * to be visible before the head is updated.
+     */
+#ifdef USE_MEMORY_FENCE
+    core_memory_store_fence();
+#endif
+
+    self->head = core_fast_ring_increment(self, self->head);
+
+    return 1;
+}
+
+void core_fast_ring_use_multiple_producers(struct core_fast_ring *self)
+{
+    int i;
+    int marker;
+    void *cell;
+
+    marker = THORIUM_MESSAGE_INVALID_ACTION;
+
+    i = 0;
+    while (i < (int)self->number_of_cells) {
+
+        cell = core_fast_ring_get_cell(self, self->head);
+        core_memory_copy(cell, &marker, sizeof(marker));
+        ++i;
+    }
 }

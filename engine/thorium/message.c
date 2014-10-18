@@ -16,6 +16,8 @@ void thorium_message_initialize_tracepoints(struct thorium_message *self);
 void thorium_message_init(struct thorium_message *self, int action, int count,
                 void *buffer)
 {
+    CORE_DEBUGGER_ASSERT(action != THORIUM_MESSAGE_INVALID_ACTION);
+
     self->action= action;
     self->buffer = buffer;
     self->count = count;
