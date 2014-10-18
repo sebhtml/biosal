@@ -120,6 +120,8 @@ void thorium_worker_do_backoff(struct thorium_worker *self);
 void thorium_worker_schedule_actor(struct thorium_worker *self, struct thorium_actor *actor);
 int thorium_worker_has_actor(struct thorium_worker *self, int actor);
 
+int thorium_worker_publish_message(struct thorium_worker *self, struct thorium_message *message);
+
 void thorium_worker_init(struct thorium_worker *worker, int name, struct thorium_node *node)
 {
     int capacity;
@@ -896,11 +898,7 @@ int thorium_worker_enqueue_message(struct thorium_worker *worker, struct thorium
 
     /* Try to push the message in the output ring
      */
-#ifdef THORIUM_WORKER_USE_MULTIPLE_PRODUCER_RING
-    if (!core_fast_ring_push_compare_and_swap(worker->output_outbound_message_ring_multiple, message)) {
-#else
-    if (!core_fast_ring_push_from_producer(&worker->output_outbound_message_ring, message)) {
-#endif
+    if (!thorium_worker_publish_message(worker, message)) {
 
 #ifdef SHOW_FULL_RING_WARNINGS
         printf("ENQUEUE thorium_worker: Warning: ring is full (ring: %d queue: %d), output_outbound_message_ring\n",
@@ -1421,11 +1419,7 @@ void thorium_worker_run(struct thorium_worker *worker)
      */
     if (core_fast_queue_dequeue(&worker->output_outbound_message_queue, &other_message)) {
 
-#ifdef THORIUM_WORKER_USE_MULTIPLE_PRODUCER_RING
-        if (!core_fast_ring_push_compare_and_swap(worker->output_outbound_message_ring_multiple, &other_message)) {
-#else
-        if (!core_fast_ring_push_from_producer(&worker->output_outbound_message_ring, &other_message)) {
-#endif
+        if (!thorium_worker_publish_message(worker, &other_message)) {
 
 #ifdef SHOW_FULL_RING_WARNINGS
             printf("thorium_worker: Warning: ring is full => output_outbound_message_ring\n");
@@ -1962,5 +1956,14 @@ void thorium_worker_set_outbound_message_ring(struct thorium_worker *self, struc
 {
 #ifdef THORIUM_WORKER_USE_MULTIPLE_PRODUCER_RING
     self->output_outbound_message_ring_multiple = ring;
+#endif
+}
+
+int thorium_worker_publish_message(struct thorium_worker *self, struct thorium_message *message)
+{
+#ifdef THORIUM_WORKER_USE_MULTIPLE_PRODUCER_RING
+    return core_fast_ring_push_compare_and_swap(self->output_outbound_message_ring_multiple, message);
+#else
+    return core_fast_ring_push_from_producer(&self->output_outbound_message_ring, message);
 #endif
 }
