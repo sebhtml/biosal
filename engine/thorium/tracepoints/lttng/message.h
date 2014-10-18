@@ -1,6 +1,6 @@
 
 #undef TRACEPOINT_PROVIDER
-#define TRACEPOINT_PROVIDER message
+#define TRACEPOINT_PROVIDER thorium_message
 
 #undef TRACEPOINT_INCLUDE
 #define TRACEPOINT_INCLUDE "./engine/thorium/tracepoints/lttng/message.h"
@@ -13,7 +13,7 @@
 #include <engine/thorium/message.h>
 
 TRACEPOINT_EVENT(
-    message,
+    thorium_message,
     actor_send,
     TP_ARGS(
         struct thorium_message *, message
@@ -30,7 +30,7 @@ TRACEPOINT_EVENT(
 )
 
 TRACEPOINT_EVENT(
-    message,
+    thorium_message,
     node_send,
     TP_ARGS(
         struct thorium_message *, message
@@ -47,7 +47,7 @@ TRACEPOINT_EVENT(
 )
 
 TRACEPOINT_EVENT(
-    message,
+    thorium_message,
     worker_send,
     TP_ARGS(
         struct thorium_message *, message
@@ -64,7 +64,7 @@ TRACEPOINT_EVENT(
 )
 
 TRACEPOINT_EVENT(
-    message,
+    thorium_message,
     worker_receive,
     TP_ARGS(
         struct thorium_message *, message
@@ -81,7 +81,7 @@ TRACEPOINT_EVENT(
 )
 
 TRACEPOINT_EVENT(
-    message,
+    thorium_message,
     worker_send_mailbox,
     TP_ARGS(
         struct thorium_message *, message
@@ -98,7 +98,7 @@ TRACEPOINT_EVENT(
 )
 
 TRACEPOINT_EVENT(
-    message,
+    thorium_message,
     worker_send_schedule,
     TP_ARGS(
         struct thorium_message *, message
@@ -115,7 +115,7 @@ TRACEPOINT_EVENT(
 )
 
 TRACEPOINT_EVENT(
-    message,
+    thorium_message,
     worker_pool_enqueue,
     TP_ARGS(
         struct thorium_message *, message
@@ -132,7 +132,7 @@ TRACEPOINT_EVENT(
 )
 
 TRACEPOINT_EVENT(
-    message,
+    thorium_message,
     worker_pool_dequeue,
     TP_ARGS(
         struct thorium_message *, message
@@ -149,7 +149,7 @@ TRACEPOINT_EVENT(
 )
 
 TRACEPOINT_EVENT(
-    message,
+    thorium_message,
     worker_enqueue_message,
     TP_ARGS(
         struct thorium_message *, message
@@ -166,7 +166,7 @@ TRACEPOINT_EVENT(
 )
 
 TRACEPOINT_EVENT(
-    message,
+    thorium_message,
     actor_receive,
     TP_ARGS(
         struct thorium_message *, message
@@ -183,7 +183,7 @@ TRACEPOINT_EVENT(
 )
 
 TRACEPOINT_EVENT(
-    message,
+    thorium_message,
     worker_dequeue_message,
     TP_ARGS(
         struct thorium_message *, message
@@ -200,7 +200,7 @@ TRACEPOINT_EVENT(
 )
 
 TRACEPOINT_EVENT(
-    message,
+    thorium_message,
     node_send_system,
     TP_ARGS(
         struct thorium_message *, message
@@ -217,7 +217,7 @@ TRACEPOINT_EVENT(
 )
 
 TRACEPOINT_EVENT(
-    message,
+    thorium_message,
     node_receive,
     TP_ARGS(
         struct thorium_message *, message
@@ -234,7 +234,7 @@ TRACEPOINT_EVENT(
 )
 
 TRACEPOINT_EVENT(
-    message,
+    thorium_message,
     node_receive_message,
     TP_ARGS(
         struct thorium_message *, message
@@ -251,7 +251,7 @@ TRACEPOINT_EVENT(
 )
 
 TRACEPOINT_EVENT(
-    message,
+    thorium_message,
     node_send_dispatch,
     TP_ARGS(
         struct thorium_message *, message
@@ -268,7 +268,7 @@ TRACEPOINT_EVENT(
 )
 
 TRACEPOINT_EVENT(
-    message,
+    thorium_message,
     node_dispatch_message,
     TP_ARGS(
         struct thorium_message *, message
@@ -285,7 +285,7 @@ TRACEPOINT_EVENT(
 )
 
 TRACEPOINT_EVENT(
-    message,
+    thorium_message,
     transport_send,
     TP_ARGS(
         struct thorium_message *, message
@@ -302,7 +302,7 @@ TRACEPOINT_EVENT(
 )
 
 TRACEPOINT_EVENT(
-    message,
+    thorium_message,
     transport_receive,
     TP_ARGS(
         struct thorium_message *, message

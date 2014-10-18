@@ -1366,7 +1366,7 @@ void thorium_node_send(struct thorium_node *node, struct thorium_message *messag
         return;
     }
 
-    thorium_tracepoint(message, node_send_system, message);
+    thorium_tracepoint(thorium_message, node_send_system, message);
 
     name = thorium_message_destination(message);
     thorium_node_resolve(node, message);
@@ -1379,7 +1379,7 @@ void thorium_node_send(struct thorium_node *node, struct thorium_message *messag
         thorium_node_dispatch_message(node, message);
 
         /* message :node_dispatch */
-        thorium_tracepoint(message, node_send_dispatch, message);
+        thorium_tracepoint(thorium_message, node_send_dispatch, message);
 
 #ifdef THORIUM_NODE_DEBUG_20140601_8
         if (thorium_message_action(message) == 1100) {
@@ -1498,7 +1498,7 @@ void thorium_node_dispatch_message(struct thorium_node *node, struct thorium_mes
         return;
     }
 
-    thorium_tracepoint(message, node_dispatch_message, message);
+    thorium_tracepoint(thorium_message, node_dispatch_message, message);
 
     /* otherwise, create work and dispatch work to a worker via
      * the worker pool
@@ -2218,7 +2218,7 @@ void thorium_node_run_loop(struct thorium_node *node)
              */
             thorium_node_prepare_received_message(node, &message);
 
-            thorium_tracepoint(message, node_receive, &message);
+            thorium_tracepoint(thorium_message, node_receive, &message);
 
 #ifdef THORIUM_NODE_USE_COUNTERS
             core_counter_add(&node->counter, CORE_COUNTER_RECEIVED_MESSAGES_NOT_FROM_SELF, 1);
@@ -2349,7 +2349,7 @@ void thorium_node_send_message(struct thorium_node *node)
      */
     if (thorium_node_pull(node, &message)) {
 
-        thorium_tracepoint(message, node_send, &message);
+        thorium_tracepoint(thorium_message, node_send, &message);
 
         /*
         thorium_message_set_count(message,

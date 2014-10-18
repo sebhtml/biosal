@@ -129,7 +129,7 @@ int thorium_transport_send(struct thorium_transport *self, struct thorium_messag
     /*
      * Trace the event "message:transport_send".
      */
-    thorium_tracepoint(message, transport_send, message);
+    thorium_tracepoint(thorium_message, transport_send, message);
 
     value = self->transport_interface->send(self, message);
 
@@ -167,7 +167,7 @@ int thorium_transport_receive(struct thorium_transport *self, struct thorium_mes
         /*
          * Trace the event "message:transport_receive"
          */
-        thorium_tracepoint(message, transport_receive, message);
+        thorium_tracepoint(thorium_message, transport_receive, message);
 
 #ifdef THORIUM_TRANSPORT_DEBUG
         printf("TRANSPORT RECEIVE Source %d Destination %d Tag %d Count %d\n",

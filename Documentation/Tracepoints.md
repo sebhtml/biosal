@@ -1,18 +1,22 @@
-Here is a list of LTTng tracepoints.
+Here is a list of LTTng tracepoints for the delivery path of
+messages.
 
-- message:actor_send
-- message:worker_send
-- message:worker_send_enqueue
-- message:node_send
-- message:node_send_system
-- message:node_send_dispatch
-- message:node_dispatch_message
-- message:worker_pool_enqueue
-- message:transport_send
-- message:transport_receive
-- message:node_receive
-- message:worker_receive
-- message:actor_receive
+- thorium_message:actor_send
+- thorium_message:worker_send
+- thorium_message:worker_send_enqueue
+- thorium_message:node_send
+- thorium_message:node_send_system
+- thorium_message:node_send_dispatch
+- thorium_message:node_dispatch_message
+- thorium_message:worker_pool_enqueue
+- thorium_message:transport_send
+- thorium_message:transport_receive
+- thorium_message:node_receive
+- thorium_message:worker_receive
+- thorium_message:actor_receive
+
+
+Tracepoints (not with LTTng):
 
 - actor:receive_enter
 - actor:receive_exit
