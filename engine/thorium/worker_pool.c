@@ -79,7 +79,9 @@ void thorium_worker_pool_examine_inbound_queue(struct thorium_worker_pool *self)
 void thorium_worker_pool_init(struct thorium_worker_pool *pool, int workers,
                 struct thorium_node *node)
 {
+#ifdef THORIUM_WORKER_USE_MULTIPLE_PRODUCER_RING
     int outbound_ring_capacity;
+#endif
 
     core_timer_init(&pool->timer);
 
@@ -124,10 +126,12 @@ void thorium_worker_pool_init(struct thorium_worker_pool *pool, int workers,
     }
 #endif
 
+#ifdef THORIUM_WORKER_USE_MULTIPLE_PRODUCER_RING
     outbound_ring_capacity = 1024;
     core_fast_ring_init(&pool->outbound_message_ring, outbound_ring_capacity,
                     sizeof(struct thorium_message));
     core_fast_ring_use_multiple_producers(&pool->outbound_message_ring);
+#endif
 
     thorium_worker_pool_create_workers(pool);
 
@@ -160,7 +164,9 @@ void thorium_worker_pool_destroy(struct thorium_worker_pool *pool)
     */
     core_fast_queue_destroy(&pool->clean_message_queue);
 
+#ifdef THORIUM_WORKER_USE_MULTIPLE_PRODUCER_RING
     core_fast_ring_destroy(&pool->outbound_message_ring);
+#endif
 }
 
 void thorium_worker_pool_delete_workers(struct thorium_worker_pool *pool)
@@ -218,7 +224,13 @@ void thorium_worker_pool_create_workers(struct thorium_worker_pool *pool)
 
         worker = thorium_worker_pool_get_worker(pool, i);
         thorium_worker_init(worker, i, pool->node);
+
+#ifdef THORIUM_WORKER_USE_MULTIPLE_PRODUCER_RING
+        /*
+         * The worker will push to this ring.
+         */
         thorium_worker_set_outbound_message_ring(worker, &pool->outbound_message_ring);
+#endif
 
 #ifdef THORIUM_WORKER_ENABLE_WAIT
         if (pool->waiting_is_enabled) {
@@ -888,8 +900,15 @@ int thorium_worker_pool_dequeue_message(struct thorium_worker_pool *pool, struct
     int answer;
 
 #ifdef THORIUM_WORKER_USE_MULTIPLE_PRODUCER_RING
+    /*
+     * Pull message from the multiple-producer ring.
+     */
     answer = core_fast_ring_pop_and_contend(&pool->outbound_message_ring, message);
 #else
+
+    /*
+     * Pull message using a round-robin scheme on the workers' rings.
+     */
     answer = thorium_worker_pool_pull_classic(pool, message);
 #endif
 

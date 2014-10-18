@@ -27,7 +27,9 @@ struct thorium_worker_pool {
     struct thorium_balancer balancer;
     struct core_timer timer;
 
+#ifdef THORIUM_WORKER_USE_MULTIPLE_PRODUCER_RING
     struct core_fast_ring outbound_message_ring;
+#endif
 
     /*
     struct core_fast_queue scheduled_actor_queue_buffer;

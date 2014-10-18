@@ -25,8 +25,9 @@
 #include <stdint.h>
 
 /*
+ * Use a multiple-producer lockless ring for outbound messages.
 #define THORIUM_WORKER_USE_MULTIPLE_PRODUCER_RING
-*/
+ */
 
 struct biosal_work;
 struct thorium_node;

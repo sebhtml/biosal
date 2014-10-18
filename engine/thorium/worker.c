@@ -918,6 +918,9 @@ int thorium_worker_enqueue_message(struct thorium_worker *worker, struct thorium
 int thorium_worker_dequeue_message(struct thorium_worker *worker, struct thorium_message *message)
 {
 #ifdef THORIUM_WORKER_USE_MULTIPLE_PRODUCER_RING
+    /*
+     * This function is not called when using the multiple-producer ring.
+     */
     return 0;
 #else
     int answer;
