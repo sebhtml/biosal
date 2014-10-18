@@ -29,7 +29,7 @@ TRACEPOINT_EVENT( \
         ctf_integer(int, message_source_node, message->source_node) \
         ctf_integer(int, message_destination_node, message->destination_node) \
     ) \
-) \
+)
 
 */
 
