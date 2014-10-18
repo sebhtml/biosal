@@ -1,5 +1,26 @@
 #include <engine/thorium/message.h>
 
+/*
+#define THORIUM_MESSAGE_TRACEPOINT_EVENT(name) \
+TRACEPOINT_EVENT( \
+    thorium_message, \
+    name, \
+    TP_ARGS( \
+        struct thorium_message *, message \
+    ), \
+    TP_FIELDS( \
+        ctf_integer(int, message_number, message->number) \
+        ctf_integer(int, message_action, message->action) \
+        ctf_integer(int, message_count, message->count) \
+        ctf_integer(int, message_source_actor, message->source_actor) \
+        ctf_integer(int, message_destination_actor, message->destination_actor) \
+        ctf_integer(int, message_source_node, message->source_node) \
+        ctf_integer(int, message_destination_node, message->destination_node) \
+    ) \
+)
+
+*/
+
 TRACEPOINT_EVENT(
     thorium_message,
     actor_send,
