@@ -903,7 +903,7 @@ int thorium_worker_pool_dequeue_message(struct thorium_worker_pool *pool, struct
     /*
      * Pull message from the multiple-producer ring.
      */
-    answer = core_fast_ring_pop_and_contend(&pool->outbound_message_ring, message);
+    answer = core_fast_ring_pop_multiple_producers(&pool->outbound_message_ring, message);
 #else
 
     /*

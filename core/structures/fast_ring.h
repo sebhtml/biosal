@@ -4,6 +4,8 @@
 
 struct core_fast_ring;
 
+#include <core/system/lock.h>
+
 #include <stdint.h>
 
 /*
@@ -13,6 +15,8 @@ struct core_fast_ring;
 /*
 #define CORE_FAST_RING_ATOMIC
 */
+
+#define CORE_RING_USE_LOCK_FOR_MULTIPLE_PRODUCERS
 
 /*
 CORE_FAST_RING_USE_PADDING
@@ -81,6 +85,10 @@ struct core_fast_ring {
     uint64_t number_of_cells;
     uint64_t mask;
     int cell_size;
+
+#ifdef CORE_RING_USE_LOCK_FOR_MULTIPLE_PRODUCERS
+    struct core_lock lock;
+#endif
 };
 
 void core_fast_ring_init(struct core_fast_ring *self, int capacity, int cell_size);
@@ -109,7 +117,8 @@ int core_fast_ring_empty(struct core_fast_ring *self);
  * functions for multiple producers
  */
 void core_fast_ring_use_multiple_producers(struct core_fast_ring *self);
-int core_fast_ring_push_compare_and_swap(struct core_fast_ring *self, void *element, int worker);
-int core_fast_ring_pop_and_contend(struct core_fast_ring *self, void *element);
+
+int core_fast_ring_push_multiple_producers(struct core_fast_ring *self, void *element, int worker);
+int core_fast_ring_pop_multiple_producers(struct core_fast_ring *self, void *element);
 
 #endif

@@ -28,6 +28,9 @@ uint64_t core_fast_ring_increment(struct core_fast_ring *self, uint64_t index);
 int core_fast_ring_get_next_power_of_two(int value);
 uint64_t core_fast_ring_mock(struct core_fast_ring *self);
 
+int core_fast_ring_push_compare_and_swap(struct core_fast_ring *self, void *element, int worker);
+int core_fast_ring_pop_and_contend(struct core_fast_ring *self, void *element);
+
 void core_fast_ring_init(struct core_fast_ring *self, int capacity, int cell_size)
 {
     /* +1 because an empty cell is needed
@@ -68,6 +71,10 @@ void core_fast_ring_init(struct core_fast_ring *self, int capacity, int cell_siz
     self->producer_padding_4 = 0;
     self->producer_padding_5 = 0;
 #endif
+
+#ifdef CORE_RING_USE_LOCK_FOR_MULTIPLE_PRODUCERS
+    core_lock_init(&self->lock);
+#endif
 }
 
 void core_fast_ring_destroy(struct core_fast_ring *self)
@@ -85,6 +92,10 @@ void core_fast_ring_destroy(struct core_fast_ring *self)
     core_memory_free(self->cells, MEMORY_FAST_RING);
 
     self->cells = NULL;
+
+#ifdef CORE_RING_USE_LOCK_FOR_MULTIPLE_PRODUCERS
+    core_lock_destroy(&self->lock);
+#endif
 }
 
 /*
@@ -496,4 +507,28 @@ void core_fast_ring_use_multiple_producers(struct core_fast_ring *self)
         core_memory_copy(cell, &marker, sizeof(marker));
         ++i;
     }
+}
+
+int core_fast_ring_push_multiple_producers(struct core_fast_ring *self, void *element, int worker)
+{
+#ifdef CORE_RING_USE_LOCK_FOR_MULTIPLE_PRODUCERS
+    int value;
+
+    core_lock_lock(&self->lock);
+    value = core_fast_ring_push_from_producer(self, element);
+    core_lock_unlock(&self->lock);
+
+    return value;
+#else
+    return core_fast_ring_push_compare_and_swap(self, element, worker);
+#endif
+}
+
+int core_fast_ring_pop_multiple_producers(struct core_fast_ring *self, void *element)
+{
+#ifdef CORE_RING_USE_LOCK_FOR_MULTIPLE_PRODUCERS
+    return core_fast_ring_pop_from_consumer(self, element);
+#else
+    return core_fast_ring_pop_and_contend(self, element);
+#endif
 }
