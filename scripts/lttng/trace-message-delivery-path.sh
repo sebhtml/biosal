@@ -18,6 +18,22 @@ mpiexec -n 4 ./applications/spate_metagenome_assembler/spate -k 51 -threads-per-
 
 lttng stop
 
+lttng view > trace.txt
+
+clear
+
 # destroy current session
 lttng destroy
 ) | tee log
+
+echo ""
+echo ""
+
+echo "==================> trace.txt <==================== ;-)"
+
+echo ""
+echo ""
+
+cat trace.txt | grep "message_number = 99,"|awk '{print $4" "$2}'
+
+

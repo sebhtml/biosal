@@ -1964,6 +1964,13 @@ void thorium_worker_set_outbound_message_ring(struct thorium_worker *self, struc
 
 int thorium_worker_publish_message(struct thorium_worker *self, struct thorium_message *message)
 {
+    /*
+     * This is an instrumentation probe for the
+     * tracepoint event "thorium_message:worker_publish_message".
+     */
+    tracepoint(thorium_message, worker_publish_message, message,
+                    self->output_outbound_message_ring_multiple);
+
 #ifdef THORIUM_WORKER_USE_MULTIPLE_PRODUCER_RING
     return core_fast_ring_push_multiple_producers(self->output_outbound_message_ring_multiple, message,
                     self->name);
