@@ -320,7 +320,7 @@ int core_fast_ring_empty(struct core_fast_ring *self)
 int core_fast_ring_push_compare_and_swap(struct core_fast_ring *self, void *element, int worker)
 {
     void *cell;
-    int tail;
+    int claimed_tail;
     int new_tail;
     int result;
     int steps;
@@ -333,9 +333,12 @@ int core_fast_ring_push_compare_and_swap(struct core_fast_ring *self, void *elem
         return 0;
     }
 
-    tracepoint(ring, operation, 0, "push", "before", core_fast_ring_size_from_consumer(self),
-                    core_fast_ring_capacity(self),
-                    self->head, self->tail, worker);
+    tracepoint(ring, operation, "push_before_claim",
+                    thorium_message_action((struct thorium_message *)element),
+                    self->head, self->tail, -1, worker,
+                    core_fast_ring_size_from_consumer(self),
+                    core_fast_ring_capacity(self));
+
     /*
 */
     /*
@@ -345,11 +348,17 @@ int core_fast_ring_push_compare_and_swap(struct core_fast_ring *self, void *elem
     steps = 64;
 
     do {
-        tail = self->tail;
-        new_tail = core_fast_ring_increment(self, tail);
-        result = core_atomic_compare_and_swap_int(&self->tail, tail, new_tail);
+        claimed_tail = self->tail;
+        new_tail = core_fast_ring_increment(self, claimed_tail);
+        result = core_atomic_compare_and_swap_int(&self->tail, claimed_tail, new_tail);
         --steps;
     } while (!result && steps);
+
+    tracepoint(ring, operation, "push_after_claim",
+                    thorium_message_action((struct thorium_message *)element),
+                    self->head, self->tail, claimed_tail, worker,
+                    core_fast_ring_size_from_consumer(self),
+                    core_fast_ring_capacity(self));
 
     /*
      * 64 iterations were enough enough apparently
@@ -369,7 +378,7 @@ int core_fast_ring_push_compare_and_swap(struct core_fast_ring *self, void *elem
      * Get the cell with the tail value *before* the increment
      * and install the content in the cell.
      */
-    cell = core_fast_ring_get_cell(self, tail);
+    cell = core_fast_ring_get_cell(self, claimed_tail);
     core_memory_copy(cell, element, self->cell_size);
 
     /*
@@ -380,9 +389,11 @@ int core_fast_ring_push_compare_and_swap(struct core_fast_ring *self, void *elem
     core_memory_store_fence();
 #endif
 
-    tracepoint(ring, operation, 0, "push", "after", core_fast_ring_size_from_consumer(self),
-                    core_fast_ring_capacity(self),
-                    self->head, self->tail, worker);
+    tracepoint(ring, operation, "push_after_copy",
+                    thorium_message_action((struct thorium_message *)element),
+                    self->head, self->tail, claimed_tail, worker,
+                    core_fast_ring_size_from_consumer(self),
+                    core_fast_ring_capacity(self));
 
     return 1;
 }
@@ -399,9 +410,20 @@ int core_fast_ring_pop_and_contend(struct core_fast_ring *self, void *element)
         return 0;
     }
 
-    tracepoint(ring, operation, 0, "pop", "before", core_fast_ring_size_from_consumer(self),
-                    core_fast_ring_capacity(self),
-                    self->head, self->tail, -1);
+    /*
+     * Do a memory fence so that the current thread sees the correct memory.
+     */
+    /*
+#ifdef USE_MEMORY_FENCE
+    core_memory_store_fence();
+#endif
+*/
+
+    tracepoint(ring, operation, "pop_before",
+                    -1,
+                    self->head, self->tail, -1, -1,
+                    core_fast_ring_size_from_consumer(self),
+                    core_fast_ring_capacity(self));
 
     cell = core_fast_ring_get_cell(self, self->head);
 
@@ -450,9 +472,11 @@ int core_fast_ring_pop_and_contend(struct core_fast_ring *self, void *element)
     core_memory_store_fence();
 #endif
 
-    tracepoint(ring, operation, 0, "pop", "after", core_fast_ring_size_from_consumer(self),
-                    core_fast_ring_capacity(self),
-                    self->head, self->tail, -1);
+    tracepoint(ring, operation, "pop_after",
+                    thorium_message_action((struct thorium_message *)element),
+                    self->head, self->tail, -1, -1,
+                    core_fast_ring_size_from_consumer(self),
+                    core_fast_ring_capacity(self));
 
     return 1;
 }

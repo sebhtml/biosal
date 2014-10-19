@@ -2539,6 +2539,20 @@ void thorium_node_recycle_message(struct thorium_node *self, struct thorium_mess
      * This function recycle a message.
      * The type can not be THORIUM_MESSAGE_TYPE_NODE_OUTBOUND.
      */
+
+#ifdef CORE_DEBUGGER_ENABLE_ASSERT
+    if (!(thorium_message_type(message) == THORIUM_MESSAGE_TYPE_NODE_INBOUND
+                    || thorium_message_type(message) == THORIUM_MESSAGE_TYPE_WORKER_OUTBOUND)) {
+        printf("Error: invalid type in thorium_node_recycle_message, actual: %d\n",
+                        thorium_message_type(message));
+        thorium_message_print(message);
+    }
+#endif
+
+    /*
+     * It is not clear when a message can be passed with the type
+     * THORIUM_MESSAGE_TYPE_NONE.
+     */
     CORE_DEBUGGER_ASSERT(thorium_message_type(message) == THORIUM_MESSAGE_TYPE_NODE_INBOUND
                     || thorium_message_type(message) == THORIUM_MESSAGE_TYPE_WORKER_OUTBOUND);
 

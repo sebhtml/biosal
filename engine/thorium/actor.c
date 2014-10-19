@@ -534,6 +534,7 @@ void thorium_actor_send_with_source(struct thorium_actor *self, int name, struct
 
     /*
      * Tag the message with the name of the worker.
+     * This also sets the type to THORIUM_MESSAGE_TYPE_NODE_OUTBOUND.
      */
     thorium_message_set_worker(message, thorium_worker_name(self->worker));
 
