@@ -83,7 +83,7 @@ void thorium_mpi1_pt2pt_nonblocking_transport_init(struct thorium_transport *sel
 
     concrete_self->maximum_buffer_size = 8192;
     concrete_self->maximum_receive_request_count = 64;
-    concrete_self->probe_operation_count = 1;
+    concrete_self->probe_operation_count = 16;
 
     /*
      * Avoid a problem with MPICH:
@@ -525,10 +525,22 @@ int thorium_mpi1_pt2pt_nonblocking_transport_test(struct thorium_transport *self
     void *buffer;
     int worker;
     int marked;
+    int i;
+    int size;
+    int count;
+
+    i = 0;
+    count = 32;
 
     concrete_self = thorium_transport_get_concrete_transport(self);
 
-    if (core_fast_queue_dequeue(&concrete_self->send_requests, &active_request)) {
+    size = core_fast_queue_size(&concrete_self->send_requests);
+
+    if (size < count)
+        count = size;
+
+    while (i++ < count
+           && core_fast_queue_dequeue(&concrete_self->send_requests, &active_request)) {
 
         if (thorium_mpi1_request_test(&active_request)) {
 

@@ -169,6 +169,7 @@ void thorium_node_regulator_run(struct thorium_node *self);
 int thorium_node_regulator_must_wait(struct thorium_node *self);
 
 int thorium_node_has_script(struct thorium_node *self, struct thorium_script *script);
+void thorium_node_send_messages(struct thorium_node *self);
 
 void thorium_node_init(struct thorium_node *node, int *argc, char ***argv)
 {
@@ -1129,7 +1130,7 @@ void *thorium_node_main(void *node1)
     node = (struct thorium_node*)node1;
 
     while (thorium_node_running(node)) {
-        thorium_node_send_message(node);
+        thorium_node_send_messages(node);
     }
 
     return NULL;
@@ -2265,7 +2266,7 @@ void thorium_node_run_loop(struct thorium_node *node)
                 printf("THORIUM_NODE_DEBUG_RUN sending messages, no local actors\n");
             }
 #endif
-            thorium_node_send_message(node);
+            thorium_node_send_messages(node);
         }
 
         thorium_tracepoint_DISABLED(node, run_loop_send, &node->tracepoint_session);
@@ -2339,15 +2340,30 @@ void thorium_node_run_loop(struct thorium_node *node)
 #endif
 }
 
-void thorium_node_send_message(struct thorium_node *node)
+void thorium_node_send_messages(struct thorium_node *node)
 {
     struct thorium_message message;
+    int i;
+    int count;
 
-    /* check for messages to send from from threads */
-    /* this call lock only if there is at least
-     * a message in the FIFO
+    i = 0;
+    /*
+    count = node->worker_count;
+    */
+    count = 64;
+
+    /*
+    if (count == 0)
+        count = 1;
+        */
+
+    /*
+     * Check for messages to send from from worker threads.
+     * The loop pulls at most <count> messages.
+     *
+     * This loop is lockless.
      */
-    if (thorium_node_pull(node, &message)) {
+    while (i++ < count && thorium_node_pull(node, &message)) {
 
         tracepoint(thorium_message, node_send, &message);
 
@@ -2371,7 +2387,7 @@ void thorium_node_send_message(struct thorium_node *node)
 
 #ifdef THORIUM_NODE_DEBUG_RUN
         if (node->alive_actors == 0) {
-            printf("THORIUM_NODE_DEBUG_RUN thorium_node_send_message pulled a message, tag %d\n",
+            printf("THORIUM_NODE_DEBUG_RUN thorium_node_send_messages pulled a message, tag %d\n",
                             thorium_message_action(&message));
         }
 #endif
@@ -2382,11 +2398,13 @@ void thorium_node_send_message(struct thorium_node *node)
 
         thorium_node_send(node, &message);
 
+#if 0
     } else {
 #ifdef THORIUM_NODE_DEBUG_RUN
         if (node->alive_actors == 0) {
-            printf("THORIUM_NODE_DEBUG_RUN thorium_node_send_message no message\n");
+            printf("THORIUM_NODE_DEBUG_RUN thorium_node_send_messages no message\n");
         }
+#endif
 #endif
 
     }

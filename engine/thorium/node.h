@@ -262,7 +262,6 @@ int thorium_node_actors(struct thorium_node *self);
 
 void thorium_node_set_supervisor(struct thorium_node *self, int name, int supervisor);
 
-void thorium_node_send_message(struct thorium_node *self);
 void thorium_node_notify_death(struct thorium_node *self, struct thorium_actor *actor);
 
 int thorium_node_worker_count(struct thorium_node *self);
