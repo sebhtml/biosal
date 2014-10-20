@@ -7,6 +7,7 @@
 #ifdef THORIUM_USE_LTTNG
 #include "lttng/message.h"
 #include "lttng/transport.h"
+#include "lttng/scheduler.h"
 #include "lttng/actor.h"
 #include "lttng/ring.h"
 #endif

@@ -4,6 +4,8 @@
 #include "cfs_scheduler.h"
 #include "fifo_scheduler.h"
 
+#include <engine/thorium/tracepoints/tracepoints.h>
+
 #include <core/system/memory.h>
 #include <core/system/debugger.h>
 
@@ -59,12 +61,29 @@ void thorium_scheduler_destroy(struct thorium_scheduler *self)
 
 int thorium_scheduler_enqueue(struct thorium_scheduler *self, struct thorium_actor *actor)
 {
+    tracepoint(thorium_scheduler, enqueue, self->worker,
+            self->implementation->size(self),
+                    actor);
+
     return self->implementation->enqueue(self, actor);
 }
 
 int thorium_scheduler_dequeue(struct thorium_scheduler *self, struct thorium_actor **actor)
 {
-    return self->implementation->dequeue(self, actor);
+    int value;
+
+    value = self->implementation->dequeue(self, actor);
+
+    if (value) {
+
+        /*
+         * Provide the size before dequeue.
+         */
+        tracepoint(thorium_scheduler, dequeue, self->worker,
+            self->implementation->size(self) + 1, *actor);
+    }
+
+    return value;
 }
 
 int thorium_scheduler_size(struct thorium_scheduler *self)
