@@ -5,7 +5,6 @@
 #include <core/system/timer.h>
 
 #ifdef THORIUM_USE_LTTNG
-#include "lttng/hello-tp.h"
 #include "lttng/message.h"
 #include "lttng/actor.h"
 #include "lttng/ring.h"
