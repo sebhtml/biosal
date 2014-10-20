@@ -336,7 +336,6 @@ int core_fast_ring_push_compare_and_swap(struct core_fast_ring *self, void *elem
     int result;
     int steps;
 
-
     /*
      * Can't push, the ring is full.
      */
@@ -390,7 +389,21 @@ int core_fast_ring_push_compare_and_swap(struct core_fast_ring *self, void *elem
      * and install the content in the cell.
      */
     cell = core_fast_ring_get_cell(self, claimed_tail);
-    core_memory_copy(cell, element, self->cell_size);
+
+    /*
+     * First, copy the content, but don't copy the first 4 bytes (marker).
+     */
+    core_memory_copy((char *)cell + sizeof(int),
+                    (char *)element + sizeof(int), self->cell_size - sizeof(int));
+
+#ifdef USE_MEMORY_FENCE
+    core_memory_store_fence();
+#endif
+
+    /*
+     * Copy first 4 bytes
+     */
+    core_memory_copy(cell, element, sizeof(int));
 
     /*
      * A memory store fence is needed because we want

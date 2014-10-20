@@ -16,7 +16,9 @@ struct core_fast_ring;
 #define CORE_FAST_RING_ATOMIC
 */
 
+/*
 #define CORE_RING_USE_LOCK_FOR_MULTIPLE_PRODUCERS
+*/
 
 /*
 CORE_FAST_RING_USE_PADDING
