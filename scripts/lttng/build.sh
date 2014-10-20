@@ -1,5 +1,9 @@
 #!/bin/bash
 
+lttng-gen-tp engine/thorium/tracepoints/lttng/message.tp
+lttng-gen-tp engine/thorium/tracepoints/lttng/actor.tp
+lttng-gen-tp engine/thorium/tracepoints/lttng/ring.tp
+
 #-std=c99
 #
 CFLAGS=" -O3 -march=x86-64 -g -I."
