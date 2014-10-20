@@ -166,6 +166,13 @@ int thorium_transport_receive(struct thorium_transport *self, struct thorium_mes
 
     if (value) {
 
+        /*
+         * Prepare the message.
+         *
+         * This fetches the metadata from the buffer.
+         */
+        thorium_node_prepare_received_message(self->node, message);
+
         tracepoint(thorium_transport, receive, message);
 
         /*

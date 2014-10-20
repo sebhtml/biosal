@@ -2214,11 +2214,6 @@ void thorium_node_run_loop(struct thorium_node *node)
              */
             ++node->counter_allocated_node_inbound_buffers;
 #endif
-            /*
-             * Prepare the message
-             */
-            thorium_node_prepare_received_message(node, &message);
-
             tracepoint(thorium_message, node_receive, &message);
 
 #ifdef THORIUM_NODE_USE_COUNTERS

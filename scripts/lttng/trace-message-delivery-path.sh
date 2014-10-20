@@ -2,6 +2,9 @@
 
 ./scripts/lttng/build.sh
 
+# sometimes, this process is in a buggy state
+pkill lttng-sessiond
+
 time (
 
 rm -rf output
