@@ -26,32 +26,31 @@ TRACEPOINT_EVENT_CLASS(
     ),
     TP_FIELDS(
         ctf_integer(int, name, actor->name)
-        ctf_integer_hex(int, script, thorium_actor_script(actor))
+        ctf_integer_hex(int, script, actor->script->identifier)
         ctf_integer_hex(int, action, message->action)
         ctf_integer(int, count, message->count)
     )
 )
 
-TRACEPOINT_EVENT_INSTANCE(
-    thorium_actor,
-    thorium_event_template,
-    receive_enter,
+/*
+ * foo is required because TRACEPOINT_EVENT_INSTANCE takes exactly 4 arguments:
+ *
+ * - provider name;
+ * - event template name;
+ * - event name;
+ * - a 4th argument for arguments.
+ */
+
+TRACEPOINT_EVENT_INSTANCE(thorium_actor, thorium_event_template, receive_enter,
     TP_ARGS(
         struct thorium_actor *, actor,
         struct thorium_message *, message
-    )
-)
-
-TRACEPOINT_EVENT_INSTANCE(
-    thorium_actor,
-    thorium_event_template,
-    receive_exit,
+    ))
+TRACEPOINT_EVENT_INSTANCE(thorium_actor, thorium_event_template, receive_exit,
     TP_ARGS(
         struct thorium_actor *, actor,
         struct thorium_message *, message
-    )
-)
-
+    ))
 
 #endif /* ENGINE_THORIUM_TRACEPOINTS_LTTNG_ACTOR_H */
 

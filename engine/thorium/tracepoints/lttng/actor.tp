@@ -20,23 +20,22 @@ TRACEPOINT_EVENT_CLASS(
     )
 )
 
-TRACEPOINT_EVENT_INSTANCE(
-    thorium_actor,
-    thorium_event_template,
-    receive_enter,
+/*
+ * foo is required because TRACEPOINT_EVENT_INSTANCE takes exactly 4 arguments:
+ *
+ * - provider name;
+ * - event template name;
+ * - event name;
+ * - a 4th argument for arguments.
+ */
+
+TRACEPOINT_EVENT_INSTANCE(thorium_actor, thorium_event_template, receive_enter,
     TP_ARGS(
         struct thorium_actor *, actor,
         struct thorium_message *, message
-    )
-)
-
-TRACEPOINT_EVENT_INSTANCE(
-    thorium_actor,
-    thorium_event_template,
-    receive_exit,
+    ))
+TRACEPOINT_EVENT_INSTANCE(thorium_actor, thorium_event_template, receive_exit,
     TP_ARGS(
         struct thorium_actor *, actor,
         struct thorium_message *, message
-    )
-)
-
+    ))
