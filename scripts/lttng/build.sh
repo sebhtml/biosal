@@ -3,6 +3,7 @@
 lttng-gen-tp engine/thorium/tracepoints/lttng/message.tp
 lttng-gen-tp engine/thorium/tracepoints/lttng/actor.tp
 lttng-gen-tp engine/thorium/tracepoints/lttng/ring.tp
+lttng-gen-tp engine/thorium/tracepoints/lttng/transport.tp
 
 #-std=c99
 #

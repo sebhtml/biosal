@@ -126,6 +126,8 @@ int thorium_transport_send(struct thorium_transport *self, struct thorium_messag
         return 0;
     }
 
+    tracepoint(thorium_transport, send, message);
+
     /*
      * Trace the event "message:transport_send".
      */
@@ -163,6 +165,8 @@ int thorium_transport_receive(struct thorium_transport *self, struct thorium_mes
     value = self->transport_interface->receive(self, message);
 
     if (value) {
+
+        tracepoint(thorium_transport, receive, message);
 
         /*
          * Trace the event "message:transport_receive"

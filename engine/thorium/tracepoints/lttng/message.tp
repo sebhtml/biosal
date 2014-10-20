@@ -3,7 +3,7 @@
 
 TRACEPOINT_EVENT_CLASS(
     thorium_message,
-    thorium_event_template,
+    template,
     TP_ARGS(
         struct thorium_message *, message
     ),
@@ -36,10 +36,10 @@ TRACEPOINT_EVENT(
 )
 
 /*
- * This macro does not work at all.
+ * This macro does work.
  */
 #define THORIUM_MESSAGE_TRACEPOINT(event_name) \
-    TRACEPOINT_EVENT_INSTANCE(thorium_message, thorium_event_template, event_name, \
+    TRACEPOINT_EVENT_INSTANCE(thorium_message, template, event_name, \
     TP_ARGS(struct thorium_message *, message))
 
 THORIUM_MESSAGE_TRACEPOINT(actor_send)
