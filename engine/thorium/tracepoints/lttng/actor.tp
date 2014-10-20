@@ -1,0 +1,42 @@
+
+#include <engine/thorium/message.h>
+#include <engine/thorium/actor.h>
+
+/*
+ * The trick below is from: http://lists.lttng.org/pipermail/lttng-dev/2014-October/023607.html
+ */
+TRACEPOINT_EVENT_CLASS(
+    thorium_actor,
+    thorium_event_template,
+    TP_ARGS(
+        struct thorium_actor *, actor,
+        struct thorium_message *, message
+    ),
+    TP_FIELDS(
+        ctf_integer(int, name, actor->name)
+        ctf_integer_hex(int, script, actor->script->identifier)
+        ctf_integer_hex(int, action, message->action)
+        ctf_integer(int, count, message->count)
+    )
+)
+
+TRACEPOINT_EVENT_INSTANCE(
+    thorium_actor,
+    thorium_event_template,
+    receive_enter,
+    TP_ARGS(
+        struct thorium_actor *, actor,
+        struct thorium_message *, message
+    )
+)
+
+TRACEPOINT_EVENT_INSTANCE(
+    thorium_actor,
+    thorium_event_template,
+    receive_exit,
+    TP_ARGS(
+        struct thorium_actor *, actor,
+        struct thorium_message *, message
+    )
+)
+

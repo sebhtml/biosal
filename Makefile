@@ -48,3 +48,4 @@ clean:
 	$(Q)$(RM) -f $(TEST_OBJECTS) $(TEST_EXECUTABLES)
 	$(Q)$(RM) -f $(EXAMPLE_OBJECTS) $(EXAMPLE_EXECUTABLES)
 	$(Q)$(RM) -f $(APPLICATION_OBJECTS) $(APPLICATION_EXECUTABLES)
+	$(Q)$(RM) -f engine/thorium/tracepoints/lttng/*.o

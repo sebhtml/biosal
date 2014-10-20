@@ -1058,6 +1058,9 @@ void thorium_actor_receive(struct thorium_actor *self, struct thorium_message *m
 
     tracepoint(thorium_message, actor_receive, message);
 
+    /* thorium_actor:receive_enter */
+    tracepoint(thorium_actor, receive_enter, self, message);
+
     start = core_timer_get_nanoseconds(&self->timer);
 
     if (CORE_BITMAP_GET_BIT(self->flags, FLAG_ENABLE_LOAD_PROFILER)) {
@@ -1069,6 +1072,9 @@ void thorium_actor_receive(struct thorium_actor *self, struct thorium_message *m
     if (CORE_BITMAP_GET_BIT(self->flags, FLAG_ENABLE_LOAD_PROFILER)) {
         thorium_tracepoint_DISABLED(actor, receive_exit, &self->profiler, message);
     }
+
+    /* thorium_actor:receive_enter */
+    tracepoint(thorium_actor, receive_exit, self, message);
 
     end = core_timer_get_nanoseconds(&self->timer);
     consumed_virtual_runtime = end - start;
