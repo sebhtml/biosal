@@ -2,4 +2,4 @@
 
 make
 make tests
-make examples
+#make examples
