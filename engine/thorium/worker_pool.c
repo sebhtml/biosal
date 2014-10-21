@@ -127,7 +127,7 @@ void thorium_worker_pool_init(struct thorium_worker_pool *pool, int workers,
 #endif
 
 #ifdef THORIUM_WORKER_USE_MULTIPLE_PRODUCER_RING
-    outbound_ring_capacity = 1024;
+    outbound_ring_capacity = 8192;
     core_fast_ring_init(&pool->outbound_message_ring, outbound_ring_capacity,
                     sizeof(struct thorium_message));
     core_fast_ring_use_multiple_producers(&pool->outbound_message_ring);

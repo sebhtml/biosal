@@ -150,7 +150,6 @@ void thorium_node_set_initial_actor(struct thorium_node *self, int node_name, in
 int thorium_node_allocate_actor_index(struct thorium_node *self);
 
 void thorium_node_inject_message_in_worker_pool(struct thorium_node *self, struct thorium_message *message);
-int thorium_node_pull(struct thorium_node *self, struct thorium_message *message);
 
 void *thorium_node_main(void *node1);
 int thorium_node_running(struct thorium_node *self);
@@ -2090,22 +2089,6 @@ void thorium_node_check_load(struct thorium_node *node)
     core_lock_unlock(&node->auto_scaling_lock);
 }
 
-int thorium_node_pull(struct thorium_node *node, struct thorium_message *message)
-{
-    int value;
-
-    value = thorium_worker_pool_dequeue_message(&node->worker_pool, message);
-
-#ifdef TRANSPORT_DEBUG_ISSUE_594
-    if (value && thorium_message_action(message) == 30202) {
-        printf("BUG-594 thorium_node_pull\n");
-        thorium_message_print(message);
-    }
-#endif
-
-    return value;
-}
-
 void thorium_node_run_loop(struct thorium_node *node)
 {
     struct thorium_message message;
@@ -2352,7 +2335,15 @@ void thorium_node_send_messages(struct thorium_node *node)
     /*
     count = node->worker_count;
     */
-    count = 64;
+
+    /*
+     * This was tested with 1 node with 28 worker threads.
+     *
+     * When running in distributed setup, the ring won't have
+     * 256 elements most of the time since there are data
+     * dependencies with the outside world.
+     */
+    count = 128;
 
     /*
     if (count == 0)
@@ -2367,7 +2358,9 @@ void thorium_node_send_messages(struct thorium_node *node)
      *
      * This loop is lockless.
      */
-    while (i++ < count && thorium_node_pull(node, &message)) {
+    while (i < count && thorium_worker_pool_dequeue_message(&node->worker_pool, &message)) {
+
+        ++i;
 
         tracepoint(thorium_message, node_send, &message);
 
@@ -2380,8 +2373,6 @@ void thorium_node_send_messages(struct thorium_node *node)
         thorium_message_set_count(message,
                     thorium_message_count(message) + THORIUM_MESSAGE_METADATA_SIZE);
         */
-
-        node->last_transport_event_time = time(NULL);
 
 #ifdef THORIUM_NODE_DEBUG
         printf("thorium_node_run pulled tag %i buffer %p\n",
@@ -2399,7 +2390,6 @@ void thorium_node_send_messages(struct thorium_node *node)
         /*
          * Send it locally or over the network
          */
-
         thorium_node_send(node, &message);
 
 #if 0
@@ -2410,8 +2400,10 @@ void thorium_node_send_messages(struct thorium_node *node)
         }
 #endif
 #endif
-
     }
+
+    if (i)
+        node->last_transport_event_time = time(NULL);
 
     tracepoint(thorium_node, send_messages_exit, node->name, node->tick);
 }
