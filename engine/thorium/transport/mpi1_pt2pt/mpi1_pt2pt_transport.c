@@ -247,10 +247,24 @@ int thorium_mpi1_pt2pt_transport_test(struct thorium_transport *self, struct tho
     struct thorium_mpi1_pt2pt_transport *concrete_self;
     void *buffer;
     int worker;
+    int i;
+    int count;
+    int size;
 
     concrete_self = thorium_transport_get_concrete_transport(self);
 
-    if (core_fast_queue_dequeue(&concrete_self->active_requests, &active_request)) {
+    /*
+     * Make progress on these requests.
+     */
+    count = 64;
+    size = core_fast_queue_size(&concrete_self->active_requests);
+
+    if (size < count)
+        count = size;
+    i = 0;
+
+    while (i++ < count
+                    && core_fast_queue_dequeue(&concrete_self->active_requests, &active_request)) {
 
         if (thorium_mpi1_pt2pt_active_request_test(&active_request)) {
 
