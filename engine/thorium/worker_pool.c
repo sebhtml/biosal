@@ -302,9 +302,9 @@ int thorium_worker_pool_enqueue_message(struct thorium_worker_pool *pool, struct
 {
     int value;
 
-    value = thorium_worker_pool_give_message_to_worker(pool, message);
-
     tracepoint(thorium_message, worker_pool_enqueue, message);
+
+    value = thorium_worker_pool_give_message_to_worker(pool, message);
 
     return value;
 }

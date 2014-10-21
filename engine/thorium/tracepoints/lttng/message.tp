@@ -84,4 +84,24 @@ TRACEPOINT_EVENT(
     )
 )
 
+TRACEPOINT_EVENT(
+    thorium_message,
+    worker_enqueue_inbound_message,
+    TP_ARGS(
+        struct thorium_message *, message,
+        struct core_fast_ring *, ring
+    ),
+    TP_FIELDS(
+        ctf_integer(int, message_number, message->number)
+        ctf_integer(int, message_action, message->action)
+        ctf_integer(int, message_count, message->count)
+        ctf_integer(int, message_source_actor, message->source_actor)
+        ctf_integer(int, message_destination_actor, message->destination_actor)
+        ctf_integer(int, ring_size, core_fast_ring_size_from_producer(ring))
+        ctf_integer(int, ring_capacity, core_fast_ring_capacity(ring))
+        ctf_integer(int, ring_head, ring->head)
+        ctf_integer(int, ring_tail, ring->tail)
+    )
+)
+
 

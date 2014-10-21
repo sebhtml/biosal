@@ -866,6 +866,9 @@ int thorium_worker_enqueue_inbound_message(struct thorium_worker *worker, struct
     CORE_DEBUGGER_ASSERT(actor != NULL);
 #endif
 
+    tracepoint(thorium_message, worker_enqueue_inbound_message, message,
+                    &worker->input_inbound_message_ring);
+
     value = core_fast_ring_push_from_producer(&worker->input_inbound_message_ring, message);
 
 #ifdef SHOW_FULL_RING_WARNINGS

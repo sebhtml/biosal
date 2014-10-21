@@ -1376,11 +1376,11 @@ void thorium_node_send(struct thorium_node *node, struct thorium_message *messag
      */
     if (thorium_node_has_actor(node, name)) {
 
-        /* dispatch locally */
-        thorium_node_dispatch_message(node, message);
-
         /* message :node_dispatch */
         tracepoint(thorium_message, node_send_dispatch, message);
+
+        /* dispatch locally */
+        thorium_node_dispatch_message(node, message);
 
 #ifdef THORIUM_NODE_DEBUG_20140601_8
         if (thorium_message_action(message) == 1100) {
