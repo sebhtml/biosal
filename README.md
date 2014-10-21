@@ -59,6 +59,7 @@ see [CREDITS.md](CREDITS.md)
 - Issues: https://github.com/GeneAssembly/biosal/issues?state=open
 - Website: https://github.com/GeneAssembly/biosal
 - Mailing list: biosal@lists.cels.anl.gov https://lists.cels.anl.gov/mailman/listinfo/biosal
+- Jenkins Continuous Integration: http://jenkins.biosal.anl.boisvert.info:8080
 
 # Actor model
 
