@@ -1,5 +1,7 @@
 #!/bin/bash
 
+make clean
+
 for i in engine/thorium/tracepoints/lttng/*.tp
 do
     lttng-gen-tp $i
@@ -14,7 +16,4 @@ LDFLAGS=" -llttng-ust -ldl -lm -lz"
 clear
 echo "CFLAGS: $CFLAGS"
 
-lttng-gen-tp engine/thorium/tracepoints/lttng/message.tp
-
-make clean
 make CFLAGS="$CFLAGS" LDFLAGS="$LDFLAGS" all -j 8 THORIUM_USE_LTTNG=y
