@@ -103,7 +103,10 @@ struct thorium_worker_buffer;
  *
  */
 struct thorium_node {
+
+#ifdef THORIUM_NODE_USE_CUSTOM_TRACEPOINTS
     struct thorium_tracepoint_session tracepoint_session;
+#endif
     struct core_vector actors;
     struct core_set auto_scaling_actors;
     struct thorium_worker_pool worker_pool;
@@ -201,6 +204,7 @@ struct thorium_node {
     int provided;
 
     int name;
+    int tick;
     int nodes;
     int threads;
 

@@ -1,10 +1,9 @@
 #!/bin/bash
 
-lttng-gen-tp engine/thorium/tracepoints/lttng/message.tp
-lttng-gen-tp engine/thorium/tracepoints/lttng/actor.tp
-lttng-gen-tp engine/thorium/tracepoints/lttng/ring.tp
-lttng-gen-tp engine/thorium/tracepoints/lttng/transport.tp
-lttng-gen-tp engine/thorium/tracepoints/lttng/scheduler.tp
+for i in engine/thorium/tracepoints/lttng/*.tp
+do
+    lttng-gen-tp $i
+done
 
 #-std=c99
 #

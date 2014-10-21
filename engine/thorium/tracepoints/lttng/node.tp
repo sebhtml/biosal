@@ -1,0 +1,31 @@
+
+/*
+ * tracepoints for node
+ */
+TRACEPOINT_EVENT_CLASS(
+    thorium_node,
+    class0,
+    TP_ARGS(
+        int, node, int, tick
+    ),
+    TP_FIELDS(
+        ctf_integer(int, node, node)
+        ctf_integer(int, tick, tick)
+    )
+)
+
+#define THORIUM_NODE_TRACEPOINT(event_name) \
+    TRACEPOINT_EVENT_INSTANCE(thorium_node, class0, event_name, \
+    TP_ARGS(int, node, int, tick))
+
+THORIUM_NODE_TRACEPOINT(run_loop_print)
+THORIUM_NODE_TRACEPOINT(run_loop_run)
+THORIUM_NODE_TRACEPOINT(run_loop_send_after)
+THORIUM_NODE_TRACEPOINT(send_messages_enter)
+THORIUM_NODE_TRACEPOINT(send_messages_exit)
+THORIUM_NODE_TRACEPOINT(run_loop_do_triage)
+THORIUM_NODE_TRACEPOINT(run_loop_pool_work)
+THORIUM_NODE_TRACEPOINT(run_loop_receive)
+THORIUM_NODE_TRACEPOINT(run_loop_test_requests)
+
+

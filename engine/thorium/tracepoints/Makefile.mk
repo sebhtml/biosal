@@ -9,4 +9,10 @@ THORIUM_OBJECTS-$(THORIUM_USE_LTTNG) += engine/thorium/tracepoints/lttng/ring.o
 THORIUM_OBJECTS-$(THORIUM_USE_LTTNG) += engine/thorium/tracepoints/lttng/actor.o
 THORIUM_OBJECTS-$(THORIUM_USE_LTTNG) += engine/thorium/tracepoints/lttng/transport.o
 THORIUM_OBJECTS-$(THORIUM_USE_LTTNG) += engine/thorium/tracepoints/lttng/scheduler.o
+THORIUM_OBJECTS-$(THORIUM_USE_LTTNG) += engine/thorium/tracepoints/lttng/node.o
+
+#%.c: %.tp
+#	$(Q)$(ECHO) "  GEN $@"
+#	$(Q)$(LTTNG_GEN_TP) $(CFLAGS) $(CONFIG_FLAGS) -c $< -o $@
+
 
