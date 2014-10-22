@@ -7,6 +7,8 @@
 
 #include "node.h"
 
+#include "configuration.h"
+
 #include "worker_buffer.h"
 
 #include "tracepoints/tracepoints.h"
@@ -169,6 +171,7 @@ int thorium_node_regulator_must_wait(struct thorium_node *self);
 
 int thorium_node_has_script(struct thorium_node *self, struct thorium_script *script);
 void thorium_node_send_messages(struct thorium_node *self);
+void thorium_node_receive_messages(struct thorium_node *self);
 
 void thorium_node_init(struct thorium_node *node, int *argc, char ***argv)
 {
@@ -2189,41 +2192,15 @@ void thorium_node_run_loop(struct thorium_node *node)
 
         CORE_DEBUGGER_JITTER_DETECTION_START(node_receive);
 
+
         /* pull message from network and assign the message to a thread.
          * this code path will call lock if
          * there is a message received.
          */
         if (use_transport
-                        && !thorium_node_regulator_must_wait(node)
-                        && thorium_transport_receive(&node->transport, &message)) {
+                        && !thorium_node_regulator_must_wait(node)) {
 
-#ifdef THORIUM_NODE_DEBUG_INJECTION
-            /*
-             * This gives a list of inbound buffers allocated by the node.
-             */
-            ++node->counter_allocated_node_inbound_buffers;
-#endif
-            tracepoint(thorium_message, node_receive, &message);
-
-#ifdef THORIUM_NODE_USE_COUNTERS
-            core_counter_add(&node->counter, CORE_COUNTER_RECEIVED_MESSAGES_NOT_FROM_SELF, 1);
-            core_counter_add(&node->counter, CORE_COUNTER_RECEIVED_BYTES_NOT_FROM_SELF,
-                    thorium_message_count(&message));
-#endif
-
-            if (!thorium_message_multiplexer_demultiplex(&node->multiplexer, &message)) {
-                thorium_node_dispatch_message(node, &message);
-            } else {
-                /*
-                 * Don't leak memory
-                 */
-#ifdef THORIUM_NODE_DEBUG_INJECTION
-                ++node->counter_freed_multiplexed_inbound_buffers;
-#endif
-
-                buffer = thorium_message_buffer(&message);
-                core_memory_pool_free(&node->inbound_message_memory_pool, buffer);
-            }
+            thorium_node_receive_messages(node);
         }
 
         tracepoint(thorium_node, run_loop_receive, node->name, node->tick);
@@ -2343,7 +2320,7 @@ void thorium_node_send_messages(struct thorium_node *node)
      * 256 elements most of the time since there are data
      * dependencies with the outside world.
      */
-    count = 128;
+    count = THORIUM_NODE_MAXIMUM_SENT_MESSAGE_COUNT_PER_CALL;
 
     /*
     if (count == 0)
@@ -2817,4 +2794,50 @@ int thorium_node_regulator_must_wait(struct thorium_node *self)
 #else
     return 0;
 #endif
+}
+
+/*
+ * Receive messages from other thorium nodes.
+ */
+void thorium_node_receive_messages(struct thorium_node *node)
+{
+    int i;
+    int count;
+    struct thorium_message message;
+    void *buffer;
+
+    i = 0;
+    count = THORIUM_NODE_MAXIMUM_RECEIVED_MESSAGE_COUNT_PER_CALL;
+
+    while (i < count
+                && thorium_transport_receive(&node->transport, &message)) {
+
+#ifdef THORIUM_NODE_DEBUG_INJECTION
+        /*
+         * This gives a list of inbound buffers allocated by the node.
+         */
+        ++node->counter_allocated_node_inbound_buffers;
+#endif
+        tracepoint(thorium_message, node_receive, &message);
+
+#ifdef THORIUM_NODE_USE_COUNTERS
+        core_counter_add(&node->counter, CORE_COUNTER_RECEIVED_MESSAGES_NOT_FROM_SELF, 1);
+        core_counter_add(&node->counter, CORE_COUNTER_RECEIVED_BYTES_NOT_FROM_SELF,
+                thorium_message_count(&message));
+#endif
+
+        if (!thorium_message_multiplexer_demultiplex(&node->multiplexer, &message)) {
+            thorium_node_dispatch_message(node, &message);
+        } else {
+            /*
+             * Don't leak memory
+             */
+#ifdef THORIUM_NODE_DEBUG_INJECTION
+            ++node->counter_freed_multiplexed_inbound_buffers;
+#endif
+
+            buffer = thorium_message_buffer(&message);
+            core_memory_pool_free(&node->inbound_message_memory_pool, buffer);
+        }
+    }
 }

@@ -7,16 +7,7 @@
 
 #include <engine/thorium/node.h>
 #include <engine/thorium/actor.h>
-
-/*
- * Time threshold in microseconds.
- *
- * There are 1 000 ms in 1 second
- * There are 1 000 000 us in 1 second.
- * There are 1 000 000 000 ns in 1 second.
- */
-#define TIMEOUT_IN_MICRO_SECONDS 100
-#define THORIUM_MESSAGE_MULTIPLEXER_TIME_THRESHOLD_IN_NANOSECONDS ( TIMEOUT_IN_MICRO_SECONDS * 1000)
+#include <engine/thorium/configuration.h>
 
 void thorium_multiplexer_policy_init(struct thorium_multiplexer_policy *self)
 {
@@ -27,7 +18,15 @@ void thorium_multiplexer_policy_init(struct thorium_multiplexer_policy *self)
     self->threshold_buffer_size_in_bytes = (0.90 * thorium_actor_suggested_buffer_size(NULL));
 
     /*self->threshold_time_in_nanoseconds = THORIUM_DYNAMIC_TIMEOUT;*/
-    self->threshold_time_in_nanoseconds = THORIUM_MESSAGE_MULTIPLEXER_TIME_THRESHOLD_IN_NANOSECONDS;
+
+    /*
+     * Time threshold in microseconds.
+     *
+     * There are 1 000 ms in 1 second
+     * There are 1 000 000 us in 1 second.
+     * There are 1 000 000 000 ns in 1 second.
+     */
+    self->threshold_time_in_nanoseconds = THORIUM_MULTIPLEXER_TIMEOUT;
 
     core_set_init(&self->actions_to_skip, sizeof(int));
     core_set_init(&self->actions_to_multiplex, sizeof(int));
@@ -53,6 +52,7 @@ void thorium_multiplexer_policy_init(struct thorium_multiplexer_policy *self)
      */
     self->minimum_node_count = 1;
 
+#if 0
     /*
      * The new model is to use explicit registration of messages to
      * multiplex.
@@ -62,6 +62,7 @@ void thorium_multiplexer_policy_init(struct thorium_multiplexer_policy *self)
      */
     if (core_set_empty(&self->actions_to_multiplex))
         self->disabled = 1;
+#endif
 }
 
 void thorium_multiplexer_policy_destroy(struct thorium_multiplexer_policy *self)
