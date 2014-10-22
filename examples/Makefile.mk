@@ -4,8 +4,9 @@ examples: mock_examples
 
 mock_examples:
 
-EXAMPLE_EXECUTABLES=examples/example_mock examples/example_ring examples/example_reader examples/example_remote_spawn examples/example_synchronize examples/example_controller examples/example_hello_world \
-         examples/example_clone examples/example_migration
+EXAMPLE_EXECUTABLES=examples/example_mock examples/example_ring examples/example_reader examples/example_remote_spawn \
+	examples/example_synchronize examples/example_controller examples/example_hello_world examples/example_systolic \
+	examples/example_clone examples/example_migration
 EXAMPLE_OBJECTS=
 
 # examples
@@ -23,6 +24,8 @@ EXAMPLE_CONTROLLER=examples/controller/main.o examples/controller/root.o
 EXAMPLE_OBJECTS+=$(EXAMPLE_CONTROLLER)
 EXAMPLE_HELLO_WORLD=examples/hello_world/main.o examples/hello_world/hello.o
 EXAMPLE_OBJECTS+=$(EXAMPLE_HELLO_WORLD)
+EXAMPLE_SYSTOLIC=examples/systolic/main.o examples/systolic/systolic.o
+EXAMPLE_OBJECTS+=$(EXAMPLE_SYSTOLIC)
 EXAMPLE_CLONE=examples/clone/main.o examples/clone/process.o
 EXAMPLE_OBJECTS+=$(EXAMPLE_CLONE)
 EXAMPLE_MIGRATION=examples/migration/main.o examples/migration/frame.o
@@ -55,6 +58,10 @@ examples/example_controller: $(EXAMPLE_CONTROLLER) $(LIBRARY_OBJECTS)
 	$(Q)$(CC) $(CFLAGS) $^ -o $@ $(LDFLAGS)
 
 examples/example_hello_world: $(EXAMPLE_HELLO_WORLD) $(LIBRARY_OBJECTS)
+	$(Q)$(ECHO) "  LD $@"
+	$(Q)$(CC) $(CFLAGS) $^ -o $@ $(LDFLAGS)
+
+examples/example_systolic: $(EXAMPLE_SYSTOLIC) $(LIBRARY_OBJECTS)
 	$(Q)$(ECHO) "  LD $@"
 	$(Q)$(CC) $(CFLAGS) $^ -o $@ $(LDFLAGS)
 
@@ -97,6 +104,9 @@ not_found: examples/example_reader
 	mpiexec -n 3 $< -threads-per-node 7 -read void.fastq
 
 hello_world: examples/example_hello_world
+	mpiexec -n 3 $< -threads-per-node 5
+
+systolic: examples/example_systolic
 	mpiexec -n 3 $< -threads-per-node 5
 
 clone: examples/example_clone
