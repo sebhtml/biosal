@@ -7,7 +7,7 @@ dataset=/lustre/beagle/stevens/Great_Prairie/Iowa_Continuous_Corn
 
 __APP__=spate
 __JOB__=$(__APP__)-$(date +%Y-%m-%d-%H-%m)
-__SAMPLE__=samples/$(basename $dataset)
+__SAMPLE__=$(basename $dataset)
 
 if ! test -e $root
 then
@@ -23,7 +23,7 @@ fi
 
 if ! test -e biosal
 then
-    git clone https://github.com/sebhtml/biosal.git
+    git clone $repository
 fi
 
 cd biosal
