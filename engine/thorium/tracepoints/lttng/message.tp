@@ -59,7 +59,10 @@ THORIUM_MESSAGE_TRACEPOINT(node_receive_message)
 THORIUM_MESSAGE_TRACEPOINT(node_send_dispatch)
 THORIUM_MESSAGE_TRACEPOINT(node_dispatch_message)
 THORIUM_MESSAGE_TRACEPOINT(transport_send)
+THORIUM_MESSAGE_TRACEPOINT(transport_send_impl_enter)
+THORIUM_MESSAGE_TRACEPOINT(transport_send_impl_exit)
 THORIUM_MESSAGE_TRACEPOINT(transport_receive)
+THORIUM_MESSAGE_TRACEPOINT(transport_receive_impl)
 
 /*
  * This one is a bit more complex.

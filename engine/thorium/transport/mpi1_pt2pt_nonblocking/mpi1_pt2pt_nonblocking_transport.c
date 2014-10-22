@@ -2,6 +2,8 @@
 #include "mpi1_pt2pt_nonblocking_transport.h"
 #include "mpi1_request.h"
 
+#include <engine/thorium/tracepoints/tracepoints.h>
+
 #include <engine/thorium/transport/transport.h>
 
 #include <engine/thorium/worker_buffer.h>
@@ -260,6 +262,8 @@ int thorium_mpi1_pt2pt_nonblocking_transport_send(struct thorium_transport *self
     int result;
     int payload_tag;
 
+    tracepoint(thorium_message, transport_send_impl_enter, message);
+
     concrete_self = thorium_transport_get_concrete_transport(self);
 
     worker = thorium_message_worker(message);
@@ -336,6 +340,8 @@ int thorium_mpi1_pt2pt_nonblocking_transport_send(struct thorium_transport *self
     /*MPI_Request_free(&request);*/
 
     core_fast_queue_enqueue(&concrete_self->send_requests, &active_request);
+
+    tracepoint(thorium_message, transport_send_impl_exit, message);
 
     return 1;
 }
@@ -495,6 +501,12 @@ int thorium_mpi1_pt2pt_nonblocking_transport_receive(struct thorium_transport *s
      * code that this is not a worker buffer.
      */
     thorium_message_init_with_nodes(message, count, buffer, source, destination);
+
+#ifdef THORIUM_USE_LTTNG
+    thorium_message_read_metadata_for_tracepoint(message);
+#endif
+
+    tracepoint(thorium_message, transport_receive_impl, message);
 
 #ifdef THORIUM_MPI1_PT2PT_NON_BLOCKING_DEBUG
     printf("DEBUG Non Blocking Test is conclusive Tag %d Count %d Buffer %p Source %d\n",

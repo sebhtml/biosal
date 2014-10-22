@@ -148,6 +148,12 @@ int thorium_message_write_metadata(struct thorium_message *self)
                     (char *)self->buffer + self->count);
 }
 
+int thorium_message_read_metadata_for_tracepoint(struct thorium_message *self)
+{
+    return thorium_message_pack_unpack(self, CORE_PACKER_OPERATION_UNPACK,
+                    (char *)self->buffer + self->count - THORIUM_MESSAGE_METADATA_SIZE);
+}
+
 int thorium_message_read_metadata(struct thorium_message *self)
 {
     return thorium_message_pack_unpack(self, CORE_PACKER_OPERATION_UNPACK,
