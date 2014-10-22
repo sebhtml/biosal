@@ -63,6 +63,9 @@ void thorium_multiplexer_policy_init(struct thorium_multiplexer_policy *self)
     if (core_set_empty(&self->actions_to_multiplex))
         self->disabled = 1;
 #endif
+
+    if (self->threshold_time_in_nanoseconds == 0)
+        self->disabled = 1;
 }
 
 void thorium_multiplexer_policy_destroy(struct thorium_multiplexer_policy *self)
