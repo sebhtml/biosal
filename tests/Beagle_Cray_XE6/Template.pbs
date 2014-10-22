@@ -1,0 +1,15 @@
+#!/bin/bash
+#PBS -N __JOB__
+#PBS -A CI-DEB000002
+#PBS -l walltime=1:00:00
+#PBS -l mppwidth=6144
+
+cd $PBS_O_WORKDIR
+export MPICH_NEMESIS_ASYNC_PROGRESS=1
+export MPICH_MAX_THREAD_SAFETY=multiple
+export CRAY_MALLOPT_OFF=1
+
+aprun -n 256 -N 1 -d 23 -r 1 \
+              __APP__ -threads-per-node 23 -print-load \
+              -k 43 __SAMPLE__/*.fastq -o __JOB__ > __JOB__.stdout
+
