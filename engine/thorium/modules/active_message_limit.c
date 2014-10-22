@@ -1,6 +1,8 @@
 
 #include "active_message_limit.h"
 
+#include <engine/thorium/configuration.h>
+
 #include <engine/thorium/actor.h>
 
 /*
@@ -25,10 +27,6 @@
  * 1546 -> 1 + 4
  * 2048 -> 1 + 4
  */
-
-#define BIOSAL_IDEAL_BUFFER_SIZE 4096
-
-#define BIOSAL_IDEAL_ACTIVE_MESSAGE_LIMIT 1
 
 #define THORIUM_NODE_COUNT_PER_ACTIVE_MESSAGE_PORTABLE 256
 
