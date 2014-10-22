@@ -1,12 +1,12 @@
 #!/bin/bash
 
 root=/lustre/beagle/CompBIO/automated-tests
-repository=https://github.com/sebhtml/biosal.git
+repository=git://github.com/sebhtml/biosal.git
 branch=master
 dataset=/lustre/beagle/stevens/Great_Prairie/Iowa_Continuous_Corn
 
 __APP__=spate
-__JOB__=$(__APP__)-$(date +%Y-%m-%d-%H-%m)
+__JOB__=$__APP__-$(date +%Y-%m-%d-%H-%m)
 __SAMPLE__=$(basename $dataset)
 
 if ! test -e $root
@@ -31,6 +31,7 @@ git checkout $branch
 git pull origin $branch
 
 scripts/Cray_XE6/build-gnu.sh
+
 
 cd ..
 if ! test -e spate
