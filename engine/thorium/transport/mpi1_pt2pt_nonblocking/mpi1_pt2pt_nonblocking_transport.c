@@ -9,6 +9,8 @@
 #include <engine/thorium/worker_buffer.h>
 #include <engine/thorium/message.h>
 
+#include <engine/thorium/configuration.h>
+
 #include <core/system/memory.h>
 #include <core/system/memory_pool.h>
 #include <core/system/debugger.h>
@@ -85,7 +87,6 @@ void thorium_mpi1_pt2pt_nonblocking_transport_init(struct thorium_transport *sel
 
     concrete_self->maximum_buffer_size = 8192;
     concrete_self->maximum_receive_request_count = 64;
-    concrete_self->probe_operation_count = 16;
 
     /*
      * Avoid a problem with MPICH:
@@ -407,7 +408,7 @@ int thorium_mpi1_pt2pt_nonblocking_transport_receive(struct thorium_transport *s
 #endif
     }
 
-    request_count = concrete_self->probe_operation_count;
+    request_count = THORIUM_TRANSPORT_MAXIMUM_RECEIVED_MESSAGE_REQUEST_COUNT_PER_CALL;
     has_request = 0;
 
     /*
@@ -542,7 +543,7 @@ int thorium_mpi1_pt2pt_nonblocking_transport_test(struct thorium_transport *self
     int count;
 
     i = 0;
-    count = 32;
+    count = THORIUM_TRANSPORT_MAXIMUM_SENT_MESSAGE_REQUEST_COUNT_PER_CALL;
 
     concrete_self = thorium_transport_get_concrete_transport(self);
 

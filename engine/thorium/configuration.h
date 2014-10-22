@@ -2,10 +2,34 @@
 #ifndef THORIUM_CONFIGURATION_H
 #define THORIUM_CONFIGURATION_H
 
+/*
+ * Maximum number of messages received from transport in the
+ * main loop of node.
+ */
 #define THORIUM_NODE_MAXIMUM_RECEIVED_MESSAGE_COUNT_PER_CALL 8
+
+/*
+ * Maximum number of messages pulled from the worker
+ * outbound message ring in the main loop of the node.
+ */
 #define THORIUM_NODE_MAXIMUM_SENT_MESSAGE_COUNT_PER_CALL 8
 
+/*
+ * Maximum number of messages pulled from the inbound message
+ * ring in workers.
+ */
 #define THORIUM_WORKER_MAXIMUM_RECEIVED_MESSAGE_COUNT_PER_CALL 8
+
+/*
+ * Maximum number of received message requests to test in
+ * transport.
+ */
+#define THORIUM_TRANSPORT_MAXIMUM_RECEIVED_MESSAGE_REQUEST_COUNT_PER_CALL 8
+
+/*
+ * Maximum number of sent message requests to test in transport.
+ */
+#define THORIUM_TRANSPORT_MAXIMUM_SENT_MESSAGE_REQUEST_COUNT_PER_CALL 8
 
 /*
  * In nanoseconds
