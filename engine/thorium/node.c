@@ -2094,10 +2094,8 @@ void thorium_node_check_load(struct thorium_node *node)
 
 void thorium_node_run_loop(struct thorium_node *node)
 {
-    struct thorium_message message;
     int credits;
     int starting_credits;
-    void *buffer;
     char send_in_thread;
     char use_transport;
     char run_in_main_thread;
