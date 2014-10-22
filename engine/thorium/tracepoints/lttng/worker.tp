@@ -1,0 +1,29 @@
+
+/*
+ * tracepoints for worker
+ */
+TRACEPOINT_EVENT_CLASS(
+    thorium_worker,
+    class0,
+    TP_ARGS(
+        int, worker, int, tick
+    ),
+    TP_FIELDS(
+        ctf_integer(int, worker, worker)
+        ctf_integer(int, tick, tick)
+    )
+)
+
+#define THORIUM_WORKER_TRACEPOINT(event_name) \
+    TRACEPOINT_EVENT_INSTANCE(thorium_worker, class0, event_name, \
+    TP_ARGS(int, worker, int, tick))
+
+THORIUM_WORKER_TRACEPOINT(main)
+THORIUM_WORKER_TRACEPOINT(run_enter)
+THORIUM_WORKER_TRACEPOINT(run_exit)
+THORIUM_WORKER_TRACEPOINT(work_enter)
+THORIUM_WORKER_TRACEPOINT(work_exit)
+THORIUM_WORKER_TRACEPOINT(dequeue_message)
+THORIUM_WORKER_TRACEPOINT(scheduler_enqueue)
+THORIUM_WORKER_TRACEPOINT(scheduler_dequeue)
+

@@ -10,6 +10,7 @@ THORIUM_OBJECTS-$(THORIUM_USE_LTTNG) += engine/thorium/tracepoints/lttng/actor.o
 THORIUM_OBJECTS-$(THORIUM_USE_LTTNG) += engine/thorium/tracepoints/lttng/transport.o
 THORIUM_OBJECTS-$(THORIUM_USE_LTTNG) += engine/thorium/tracepoints/lttng/scheduler.o
 THORIUM_OBJECTS-$(THORIUM_USE_LTTNG) += engine/thorium/tracepoints/lttng/node.o
+THORIUM_OBJECTS-$(THORIUM_USE_LTTNG) += engine/thorium/tracepoints/lttng/worker.o
 
 #%.c: %.tp
 #	$(Q)$(ECHO) "  GEN $@"

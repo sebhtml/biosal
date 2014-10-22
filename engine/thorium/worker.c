@@ -4,6 +4,8 @@
 #include "message.h"
 #include "node.h"
 
+#include "configuration.h"
+
 #include "tracepoints/tracepoints.h"
 
 #include "worker_debugger.h"
@@ -532,6 +534,8 @@ void *thorium_worker_main(void *worker1)
 
         CORE_DEBUGGER_JITTER_DETECTION_START(worker_main_loop);
 
+        tracepoint(thorium_worker, main, worker->name, worker->tick_count);
+
         thorium_worker_run(worker);
 
         CORE_DEBUGGER_JITTER_DETECTION_END(worker_main_loop, worker->last_elapsed_nanoseconds);
@@ -686,8 +690,10 @@ int thorium_worker_dequeue_actor(struct thorium_worker *worker, struct thorium_a
     int status;
     int mailbox_size;
 
-    operations = 4;
+    operations = THORIUM_WORKER_MAXIMUM_RECEIVED_MESSAGE_COUNT_PER_CALL;
     other_actor = NULL;
+
+    tracepoint(thorium_worker, dequeue_message, worker->name, worker->tick_count);
 
     /*
      * Move an actor from the ring to the real actor scheduling queue
@@ -766,6 +772,9 @@ int thorium_worker_dequeue_actor(struct thorium_worker *worker, struct thorium_a
             status = THORIUM_SCHEDULER_STATUS_SCHEDULED;
             core_map_update_value(&worker->actors, &other_name, &status);
             thorium_scheduler_enqueue(&worker->scheduler, other_actor);
+
+            tracepoint(thorium_worker, scheduler_enqueue, worker->name, worker->tick_count);
+
         } else {
 
 #ifdef THORIUM_WORKER_DEBUG_SCHEDULER
@@ -779,6 +788,8 @@ int thorium_worker_dequeue_actor(struct thorium_worker *worker, struct thorium_a
      * If it has more than 1 message, re-enqueue it
      */
     value = thorium_scheduler_dequeue(&worker->scheduler, actor);
+
+    tracepoint(thorium_worker, scheduler_dequeue, worker->name, worker->tick_count);
 
     /* Setting name to nobody;
      * check_production at the end uses the value and the name;
@@ -1302,6 +1313,8 @@ void thorium_worker_run(struct thorium_worker *worker)
     struct thorium_message *message;
 #endif
 
+    tracepoint(thorium_worker, run_enter, worker->name, worker->tick_count);
+
 #ifdef THORIUM_WORKER_ENABLE_LOCK
     thorium_worker_lock(worker);
 #endif
@@ -1477,6 +1490,8 @@ void thorium_worker_run(struct thorium_worker *worker)
 #endif
 
     thorium_worker_do_backoff(worker);
+
+    tracepoint(thorium_worker, run_exit, worker->name, worker->tick_count);
 }
 
 void thorium_worker_work(struct thorium_worker *worker, struct thorium_actor *actor)
@@ -1489,6 +1504,8 @@ void thorium_worker_work(struct thorium_worker *worker, struct thorium_actor *ac
     int tag;
     int destination;
 #endif
+
+    tracepoint(thorium_worker, work_enter, worker->name, worker->tick_count);
 
     actor_name = thorium_actor_name(actor);
 
@@ -1595,6 +1612,8 @@ void thorium_worker_work(struct thorium_worker *worker, struct thorium_actor *ac
                         thorium_worker_name(worker));
     }
 #endif
+
+    tracepoint(thorium_worker, work_exit, worker->name, worker->tick_count);
 }
 
 void thorium_worker_wait(struct thorium_worker *worker)

@@ -109,7 +109,7 @@ struct thorium_worker {
      */
     void *zero_copy_buffer;
 
-    uint64_t tick_count;
+    int tick_count;
     uint64_t last_elapsed_nanoseconds;
 
     /*
