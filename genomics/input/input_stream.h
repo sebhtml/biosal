@@ -14,6 +14,9 @@
 
 #define SCRIPT_INPUT_STREAM 0xeb2fe16a
 
+/*
+ * An input stream actor operates on DNA sequence files.
+ */
 struct biosal_input_stream {
     struct biosal_input_proxy proxy;
     struct biosal_dna_codec codec;
