@@ -538,6 +538,11 @@ void thorium_node_init(struct thorium_node *node, int *argc, char ***argv)
 
         CORE_BITMAP_SET_BIT(node->flags, FLAG_PROFILE_MESSAGE_TRANSPORT);
     }
+
+    if (node->name == 0) {
+        printf("thorium_node: sizeof(struct thorium_actor) -> %d\n", (int)sizeof(struct thorium_actor));
+        printf("thorium_message: sizeof(struct thorium_message) -> %d\n", (int)sizeof(struct thorium_message));
+    }
 }
 
 void thorium_node_destroy(struct thorium_node *node)
