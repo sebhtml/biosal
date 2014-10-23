@@ -30,6 +30,8 @@ cd biosal
 git checkout $branch
 git pull origin $branch
 
+__COMMIT__=$(git log | head -n1 | awk '{print $2}'
+
 scripts/Cray_XE6/build-gnu.sh
 
 
@@ -49,3 +51,11 @@ sed -i "$template" $__JOB__.pbs
 
 template="s/__SAMPLE__/$__SAMPLE__/g"
 sed -i "$template" $__JOB__.pbs
+
+template="s/__COMMIT__/$__COMMIT__/g"
+sed -i "$template" $__JOB__.pbs
+
+module load moab/6.1.1
+module load torque/2.5.7
+
+qsub $__JOB__.pbs > $__JOB__.qsub
