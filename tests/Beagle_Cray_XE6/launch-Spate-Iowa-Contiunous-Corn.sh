@@ -6,7 +6,7 @@ branch=master
 dataset=/lustre/beagle/stevens/Great_Prairie/Iowa_Continuous_Corn
 
 __APP__=spate
-__JOB__=$__APP__-$(date +%Y-%m-%d-%H-%m)
+__JOB__=$__APP__-$(date +%Y-%m-%d-%H-%M:%S)
 __SAMPLE__=$(basename $dataset)
 
 if ! test -e $root
@@ -30,7 +30,7 @@ cd biosal
 git checkout $branch
 git pull origin $branch
 
-__COMMIT__=$(git log | head -n1 | awk '{print $2}'
+__COMMIT__=$(git log | head -n1 | awk '{print $2}')
 
 scripts/Cray_XE6/build-gnu.sh
 
@@ -55,7 +55,12 @@ sed -i "$template" $__JOB__.pbs
 template="s/__COMMIT__/$__COMMIT__/g"
 sed -i "$template" $__JOB__.pbs
 
+. /opt/modules/3.2.6.7/init/bash
+module purge
 module load moab/6.1.1
 module load torque/2.5.7
 
 qsub $__JOB__.pbs > $__JOB__.qsub
+
+echo "Submitted build $__JOB__ ($__COMMIT__)"
+cat $__JOB__.qsub
