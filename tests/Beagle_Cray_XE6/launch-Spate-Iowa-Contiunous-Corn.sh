@@ -39,4 +39,13 @@ then
     ln -s biosal/applications/spate_metagenome_assembler/spate
 fi
 
-cp biosal/tests/Beagle_Cray_XE6/Template.sh $__JOB__.pbs
+cp biosal/tests/Beagle_Cray_XE6/Template.pbs $__JOB__.pbs
+
+template="s/__JOB__/$__JOB__/g"
+sed -i "$template" $__JOB__.pbs
+
+template="s/__APP__/$__APP__/g"
+sed -i "$template" $__JOB__.pbs
+
+template="s/__SAMPLE__/$__SAMPLE__/g"
+sed -i "$template" $__JOB__.pbs
