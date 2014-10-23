@@ -6,7 +6,7 @@ branch=master
 dataset=/lustre/beagle/stevens/Great_Prairie/Iowa_Continuous_Corn
 
 __APP__=spate
-__JOB__=$__APP__-$(date +%Y-%m-%d-%H-%M:%S)
+__JOB__=$__APP__-$(date +%Y-%m-%d-%H-%M-%S)
 __SAMPLE__=$(basename $dataset)
 
 if ! test -e $root
