@@ -5,10 +5,15 @@
 #define THORIUM_DEFAULT_EVENT_COUNT 8
 
 /*
+ * Maximum number of messages in a message block.
+ */
+#define THORIUM_MESSAGE_BLOCK_MAXIMUM_SIZE 16
+
+/*
  * Maximum number of messages received from transport in the
  * main loop of node.
  */
-#define THORIUM_NODE_MAXIMUM_RECEIVED_MESSAGE_COUNT_PER_CALL THORIUM_DEFAULT_EVENT_COUNT
+#define THORIUM_NODE_MAXIMUM_RECEIVED_MESSAGE_COUNT_PER_CALL 4
 
 /*
  * Maximum number of messages pulled from the worker

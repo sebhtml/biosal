@@ -4,6 +4,8 @@
 
 #include <engine/thorium/node.h>
 
+#include <engine/thorium/tracepoints/tracepoints.h>
+
 #include <core/helpers/bitmap.h>
 
 #include <core/system/debugger.h>
@@ -378,6 +380,9 @@ int thorium_message_multiplexer_demultiplex(struct thorium_message_multiplexer *
         position += new_count;
         ++messages;
     }
+
+    tracepoint(thorium_node, demultiplex, self->node->name,
+                    self->node->tick, messages);
 
     CORE_DEBUGGER_ASSERT(messages > 0);
 

@@ -4,7 +4,7 @@
 
 #include <engine/thorium/message.h>
 
-#define THORIUM_MESSAGE_BLOCK_MAXIMUM_SIZE 8
+#include <engine/thorium/configuration.h>
 
 /*
  * A message block. This is used for grouping messages

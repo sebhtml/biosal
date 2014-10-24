@@ -2350,6 +2350,9 @@ void thorium_node_send_messages(struct thorium_node *node)
         message_count = thorium_message_block_size(&message_block);
         j = 0;
 
+        tracepoint(thorium_node, send_messages_loop, node->name, node->tick, message_count,
+                        thorium_worker_pool_outbound_ring_size(&node->worker_pool));
+
         while (j < message_count) {
             message = thorium_message_block_get_message(&message_block, j);
 
@@ -2828,6 +2831,8 @@ void thorium_node_receive_messages(struct thorium_node *node)
     while (i < count
                 && thorium_transport_receive(&node->transport, &message)) {
 
+        tracepoint(thorium_node, receive_message, node->name, node->tick);
+
         /*
          * Prepare the message
          */
@@ -2860,5 +2865,7 @@ void thorium_node_receive_messages(struct thorium_node *node)
             buffer = thorium_message_buffer(&message);
             core_memory_pool_free(&node->inbound_message_memory_pool, buffer);
         }
+
+        ++i;
     }
 }

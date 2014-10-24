@@ -1048,3 +1048,8 @@ void thorium_worker_pool_examine_inbound_queue(struct thorium_worker_pool *self)
         core_fast_queue_iterator_destroy(&iterator);
     }
 }
+
+int thorium_worker_pool_outbound_ring_size(struct thorium_worker_pool *self)
+{
+    return core_fast_ring_size_from_consumer(&self->outbound_message_ring);
+}

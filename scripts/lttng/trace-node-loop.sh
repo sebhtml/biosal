@@ -1,9 +1,9 @@
 #!/bin/bash
 
-duration=10
+duration=5
 
 lttng create
-lttng enable-event -u thorium_node:*
+lttng enable-event -u thorium_node:* --filter " node == 1"
 echo "Tracing for $duration seconds"
 lttng start
 sleep $duration

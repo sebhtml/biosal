@@ -27,5 +27,34 @@ THORIUM_NODE_TRACEPOINT(run_loop_do_triage)
 THORIUM_NODE_TRACEPOINT(run_loop_pool_work)
 THORIUM_NODE_TRACEPOINT(run_loop_receive)
 THORIUM_NODE_TRACEPOINT(run_loop_test_requests)
+THORIUM_NODE_TRACEPOINT(receive_message)
 
+TRACEPOINT_EVENT(
+    thorium_node,
+    send_messages_loop,
+    TP_ARGS(
+        int, node, int, tick,
+        int, message_count,
+        int, ring_size
+    ),
+    TP_FIELDS(
+        ctf_integer(int, node, node)
+        ctf_integer(int, tick, tick)
+        ctf_integer(int, message_count, message_count)
+        ctf_integer(int, ring_size, ring_size)
+    )
+)
 
+TRACEPOINT_EVENT(
+    thorium_node,
+    demultiplex,
+    TP_ARGS(
+        int, node, int, tick,
+        int, message_count
+    ),
+    TP_FIELDS(
+        ctf_integer(int, node, node)
+        ctf_integer(int, tick, tick)
+        ctf_integer(int, message_count, message_count)
+    )
+)
