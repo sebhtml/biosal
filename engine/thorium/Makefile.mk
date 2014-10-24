@@ -3,6 +3,7 @@ THORIUM_OBJECTS=
 
 # main objects for the actor system
 THORIUM_OBJECTS += engine/thorium/message.o
+THORIUM_OBJECTS += engine/thorium/message_block.o
 THORIUM_OBJECTS += engine/thorium/node.o
 THORIUM_OBJECTS += engine/thorium/actor.o
 THORIUM_OBJECTS += engine/thorium/script.o
