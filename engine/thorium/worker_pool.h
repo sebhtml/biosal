@@ -15,6 +15,8 @@
 struct thorium_node;
 struct thorium_worker;
 struct thorium_migration;
+struct thorium_message;
+struct thorium_message_block;
 
 /*
 #define THORIUM_WORKER_POOL_HAS_SPECIAL_QUEUES
@@ -94,7 +96,7 @@ void thorium_worker_pool_print_load(struct thorium_worker_pool *self, int type);
 void thorium_worker_pool_toggle_debug_mode(struct thorium_worker_pool *self);
 
 int thorium_worker_pool_enqueue_message(struct thorium_worker_pool *self, struct thorium_message *message);
-int thorium_worker_pool_dequeue_message(struct thorium_worker_pool *self, struct thorium_message *message);
+int thorium_worker_pool_dequeue_message_block(struct thorium_worker_pool *self, struct thorium_message_block *block);
 
 float thorium_worker_pool_get_computation_load(struct thorium_worker_pool *self);
 

@@ -14,7 +14,7 @@
  * Maximum number of messages pulled from the worker
  * outbound message ring in the main loop of the node.
  */
-#define THORIUM_NODE_MAXIMUM_SENT_MESSAGE_COUNT_PER_CALL THORIUM_DEFAULT_EVENT_COUNT
+#define THORIUM_NODE_MAXIMUM_PULLED_MESSAGE_COUNT_PER_CALL THORIUM_DEFAULT_EVENT_COUNT
 
 /*
  * Maximum number of messages pulled from the inbound message

@@ -7,6 +7,8 @@
 
 #include "node.h"
 
+#include "message_block.h"
+
 #include "configuration.h"
 
 #include "worker_buffer.h"
@@ -2307,9 +2309,12 @@ void thorium_node_run_loop(struct thorium_node *node)
 
 void thorium_node_send_messages(struct thorium_node *node)
 {
-    struct thorium_message message;
+    struct thorium_message_block message_block;
+    struct thorium_message *message;
     int i;
     int count;
+    int j;
+    int message_count;
 
     i = 0;
     /*
@@ -2323,7 +2328,7 @@ void thorium_node_send_messages(struct thorium_node *node)
      * 256 elements most of the time since there are data
      * dependencies with the outside world.
      */
-    count = THORIUM_NODE_MAXIMUM_SENT_MESSAGE_COUNT_PER_CALL;
+    count = THORIUM_NODE_MAXIMUM_PULLED_MESSAGE_COUNT_PER_CALL;
 
     /*
     if (count == 0)
@@ -2338,11 +2343,17 @@ void thorium_node_send_messages(struct thorium_node *node)
      *
      * This loop is lockless.
      */
-    while (i < count && thorium_worker_pool_dequeue_message(&node->worker_pool, &message)) {
+    while (i < count && thorium_worker_pool_dequeue_message_block(&node->worker_pool, &message_block)) {
 
         ++i;
 
-        tracepoint(thorium_message, node_send, &message);
+        message_count = thorium_message_block_count(&message_block);
+        j = 0;
+
+        while (j < message_count) {
+            message = thorium_message_block_get_message(&message_block, j);
+
+            tracepoint(thorium_message, node_send, message);
 
         /*
         thorium_message_set_count(message,
@@ -2355,23 +2366,25 @@ void thorium_node_send_messages(struct thorium_node *node)
         */
 
 #ifdef THORIUM_NODE_DEBUG
-        printf("thorium_node_run pulled tag %i buffer %p\n",
-                        thorium_message_action(&message),
-                        thorium_message_buffer(&message));
+            printf("thorium_node_run pulled tag %i buffer %p\n",
+                        thorium_message_action(message),
+                        thorium_message_buffer(message));
 #endif
 
 #ifdef THORIUM_NODE_DEBUG_RUN
-        if (node->alive_actors == 0) {
-            printf("THORIUM_NODE_DEBUG_RUN thorium_node_send_messages pulled a message, tag %d\n",
-                            thorium_message_action(&message));
-        }
+            if (node->alive_actors == 0) {
+                printf("THORIUM_NODE_DEBUG_RUN thorium_node_send_messages pulled a message, tag %d\n",
+                            thorium_message_action(message));
+            }
 #endif
 
-        /*
-         * Send it locally or over the network
-         */
-        thorium_node_send(node, &message);
+            /*
+             * Send it locally or over the network
+             */
+            thorium_node_send(node, message);
 
+            ++j;
+        }
 #if 0
     } else {
 #ifdef THORIUM_NODE_DEBUG_RUN
