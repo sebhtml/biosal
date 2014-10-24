@@ -40,21 +40,21 @@ then
     ln -s biosal/applications/spate_metagenome_assembler/spate
 fi
 
-cp biosal/tests/Beagle_Cray_XE6/Template.sh $__JOB__.sh
+cp biosal/tests/Cetus_IBM_Blue_Gene_Q/Template.sh $__JOB__.sh
 
 template="s/__JOB__/$__JOB__/g"
-sed -i "$template" $__JOB__.pbs
+sed -i "$template" $__JOB__.sh
 
 template="s/__APP__/$__APP__/g"
-sed -i "$template" $__JOB__.pbs
+sed -i "$template" $__JOB__.sh
 
 template="s/__SAMPLE__/$__SAMPLE__/g"
-sed -i "$template" $__JOB__.pbs
+sed -i "$template" $__JOB__.sh
 
 template="s/__COMMIT__/$__COMMIT__/g"
-sed -i "$template" $__JOB__.pbs
+sed -i "$template" $__JOB__.sh
 
-./$__JOB__.pbs > $__JOB__.job
+./$__JOB__.sh > $__JOB__.job
 
 echo "Submitted build $__JOB__ ($__COMMIT__)"
 cat $__JOB__.job

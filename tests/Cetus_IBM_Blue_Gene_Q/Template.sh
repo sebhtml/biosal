@@ -1,6 +1,6 @@
 #!/bin/bash
 
-echo "Commit= __COMMIT__"
+# echo "Commit= __COMMIT__"
 
 qsub \
  --env PAMID_THREAD_MULTIPLE=1 \
