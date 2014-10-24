@@ -167,11 +167,19 @@ int thorium_transport_receive(struct thorium_transport *self, struct thorium_mes
     if (value) {
 
         /*
+         * MPICH produces this error if this is enabled:
+         * Assertion failed in file /notbackedup/tmp/ulib/mpt/nightly/6.0/081313/mpich2/src/mpi/datatype/get_count.c at line 34: size >= 0 && status->count >= 0
+         *
+         * \see https://github.com/GeneAssembly/biosal/issues/774
+         */
+#if 0
+        /*
          * Prepare the message.
          *
          * This fetches the metadata from the buffer.
          */
         thorium_node_prepare_received_message(self->node, message);
+#endif
 
         tracepoint(thorium_transport, receive, message);
 

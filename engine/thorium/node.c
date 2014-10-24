@@ -2815,6 +2815,11 @@ void thorium_node_receive_messages(struct thorium_node *node)
     while (i < count
                 && thorium_transport_receive(&node->transport, &message)) {
 
+        /*
+         * Prepare the message
+         */
+        thorium_node_prepare_received_message(node, &message);
+
 #ifdef THORIUM_NODE_DEBUG_INJECTION
         /*
          * This gives a list of inbound buffers allocated by the node.
