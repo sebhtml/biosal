@@ -27,3 +27,21 @@ THORIUM_WORKER_TRACEPOINT(dequeue_message)
 THORIUM_WORKER_TRACEPOINT(scheduler_enqueue)
 THORIUM_WORKER_TRACEPOINT(scheduler_dequeue)
 
+TRACEPOINT_EVENT(
+    thorium_worker,
+    publish_message,
+    TP_ARGS(
+        int, worker, int, tick,
+        int, buffer_size, int, block_size,
+        uint64_t, current_time,
+        uint64_t, last_outbound_message_block_operation
+    ),
+    TP_FIELDS(
+        ctf_integer(int, worker, worker)
+        ctf_integer(int, tick, tick)
+        ctf_integer(int, buffer_size, buffer_size)
+        ctf_integer(int, block_size, block_size)
+        ctf_integer(uint64_t, current_time, current_time)
+        ctf_integer(uint64_t, last_outbound_message_block_operation, last_outbound_message_block_operation)
+    )
+)

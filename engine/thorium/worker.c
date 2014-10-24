@@ -112,6 +112,7 @@
 #define THORIUM_WORKER_SEND_TO_LOCAL_ACTOR
 
 void thorium_worker_work(struct thorium_worker *self, struct thorium_actor *actor);
+void thorium_worker_flush_outbound_message_block(struct thorium_worker *self);
 
 /*
  * Backoff stuff.
@@ -133,6 +134,8 @@ void thorium_worker_init(struct thorium_worker *worker, int name, struct thorium
     int argc;
     char **argv;
     int outbound_ring_capacity;
+
+    thorium_message_block_init(&worker->message_block);
 
     worker->tick_count = 0;
 
@@ -295,11 +298,15 @@ void thorium_worker_init(struct thorium_worker *worker, int name, struct thorium
     thorium_worker_configure_backoff(worker);
 
     thorium_worker_set_outbound_message_ring(worker, NULL);
+
+    worker->last_outbound_message_block_operation = core_timer_get_nanoseconds(&worker->timer);
 }
 
 void thorium_worker_destroy(struct thorium_worker *worker)
 {
     void *buffer;
+
+    thorium_message_block_destroy(&worker->message_block);
 
     if (CORE_BITMAP_GET_BIT(worker->flags, FLAG_ENABLE_ACTOR_LOAD_PROFILER)) {
         core_buffered_file_writer_destroy(&worker->load_profile_writer);
@@ -1466,7 +1473,6 @@ void thorium_worker_run(struct thorium_worker *worker)
     /*
      * Transfer messages for triage
      */
-
     if (core_fast_queue_dequeue(&worker->output_message_queue_for_triage, &other_message)) {
 
         CORE_DEBUGGER_ASSERT(thorium_message_buffer(&other_message) != NULL);
@@ -1485,6 +1491,11 @@ void thorium_worker_run(struct thorium_worker *worker)
             core_fast_queue_enqueue(&worker->input_inbound_message_queue, &other_message);
         }
     }
+
+    /*
+     * Flush outbound message block.
+     */
+    thorium_worker_flush_outbound_message_block(worker);
 
 #ifdef THORIUM_WORKER_ENABLE_LOCK
     thorium_worker_unlock(worker);
@@ -1987,22 +1998,79 @@ void thorium_worker_set_outbound_message_ring(struct thorium_worker *self, struc
 
 int thorium_worker_publish_message(struct thorium_worker *self, struct thorium_message *message)
 {
-    struct thorium_message_block block;
+    int return_value;
 
-    thorium_message_block_init(&block);
-    thorium_message_block_add_message(&block, message);
+    tracepoint(thorium_worker, publish_message, self->name, self->tick_count,
+                    thorium_message_count(message),
+                    thorium_message_block_size(&self->message_block),
+                    0, self->last_outbound_message_block_operation);
+
+    return_value = 0;
 
     /*
-     * This is an instrumentation probe for the
-     * tracepoint event "thorium_message:worker_publish_message".
+     * The block is not full, so the message can be appended.
      */
-    tracepoint(thorium_message, worker_publish_message, message,
+    if (!thorium_message_block_full(&self->message_block)) {
+        thorium_message_block_add_message(&self->message_block, message);
+        return_value = 1;
+
+        /*
+         * This is an instrumentation probe for the
+         * tracepoint event "thorium_message:worker_publish_message".
+         */
+        tracepoint(thorium_message, worker_publish_message, message,
                     self->output_outbound_message_ring_multiple);
+    }
 
 #ifdef THORIUM_WORKER_USE_MULTIPLE_PRODUCER_RING
-    return core_fast_ring_push_multiple_producers(self->output_outbound_message_ring_multiple, &block,
-                    self->name);
+
+    thorium_worker_flush_outbound_message_block(self);
+
+    /*
+     * Was the message given in argument consumed at all ?
+     */
+    return return_value;
+
 #else
     return core_fast_ring_push_from_producer(&self->output_outbound_message_ring, message);
 #endif
+}
+
+void thorium_worker_flush_outbound_message_block(struct thorium_worker *self)
+{
+    int push;
+    uint64_t current_time;
+    int group_messages;
+
+    if (thorium_message_block_empty(&self->message_block))
+        return;
+
+    group_messages = 1;
+    push = 1;
+
+    current_time = core_timer_get_nanoseconds(&self->timer);
+
+    /*
+     * Check if the block must be flushed.
+     */
+    if (group_messages
+                    && !thorium_message_block_full(&self->message_block))
+        push = 0;
+
+    /*
+     * Check some sort of timeout.
+     */
+    if (!push) {
+
+        if ((current_time - self->last_outbound_message_block_operation) >= (200 * 1000))
+            push = 1;
+    }
+
+    if (push) {
+        if (core_fast_ring_push_multiple_producers(self->output_outbound_message_ring_multiple,
+                        &self->message_block, self->name)) {
+            thorium_message_block_clear(&self->message_block);
+            self->last_outbound_message_block_operation = core_timer_get_nanoseconds(&self->timer);
+        }
+    }
 }

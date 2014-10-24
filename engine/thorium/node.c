@@ -2347,7 +2347,7 @@ void thorium_node_send_messages(struct thorium_node *node)
 
         ++i;
 
-        message_count = thorium_message_block_count(&message_block);
+        message_count = thorium_message_block_size(&message_block);
         j = 0;
 
         while (j < message_count) {

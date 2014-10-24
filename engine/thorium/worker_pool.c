@@ -915,12 +915,14 @@ int thorium_worker_pool_dequeue_message_block(struct thorium_worker_pool *pool, 
     answer = thorium_worker_pool_pull_classic(pool, message);
 #endif
 
+#if 0
     /*
      * Possibly record a tracepoint.
      */
     if (answer) {
         tracepoint(thorium_message, worker_pool_dequeue, message);
     }
+#endif
 
     return answer;
 }

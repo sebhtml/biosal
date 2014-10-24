@@ -4,6 +4,9 @@
 
 #include "actor.h"
 
+#include "message.h"
+#include "message_block.h"
+
 #include "actor_profiler.h"
 
 #include "scheduler/scheduler.h"
@@ -98,6 +101,8 @@ struct thorium_balancer;
 struct thorium_worker {
     struct core_buffered_file_writer load_profile_writer;
     struct thorium_node *node;
+
+    struct thorium_message_block message_block;
 
     struct core_timer timer;
     struct core_map actors;
@@ -195,6 +200,8 @@ struct thorium_worker {
     uint64_t last_wake_up_count;
 
     uint64_t waiting_start_time;
+
+    uint64_t last_outbound_message_block_operation;
 
 #ifdef THORIUM_WORKER_DEBUG_INJECTION
     int counter_allocated_outbound_buffers;
