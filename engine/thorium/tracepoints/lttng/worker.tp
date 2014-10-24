@@ -45,3 +45,19 @@ TRACEPOINT_EVENT(
         ctf_integer(uint64_t, last_outbound_message_block_operation, last_outbound_message_block_operation)
     )
 )
+
+TRACEPOINT_EVENT(
+    thorium_worker,
+    flush_outbound_message_block,
+    TP_ARGS(
+        int, worker, int, tick,
+        int, block_size,
+        int, ring_size
+    ),
+    TP_FIELDS(
+        ctf_integer(int, worker, worker)
+        ctf_integer(int, tick, tick)
+        ctf_integer(int, block_size, block_size)
+        ctf_integer(int, ring_size, ring_size)
+    )
+)

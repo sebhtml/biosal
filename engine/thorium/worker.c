@@ -2069,6 +2069,11 @@ void thorium_worker_flush_outbound_message_block(struct thorium_worker *self)
     if (push) {
         if (core_fast_ring_push_multiple_producers(self->output_outbound_message_ring_multiple,
                         &self->message_block, self->name)) {
+
+            tracepoint(thorium_worker, flush_outbound_message_block, self->name, self->tick_count,
+                    thorium_message_block_size(&self->message_block),
+                    core_fast_ring_size_from_producer(self->output_outbound_message_ring_multiple));
+
             thorium_message_block_clear(&self->message_block);
             self->last_outbound_message_block_operation = core_timer_get_nanoseconds(&self->timer);
         }
