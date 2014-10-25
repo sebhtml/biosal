@@ -973,6 +973,9 @@ void biosal_assembly_graph_builder_get_entry_count_reply(struct thorium_actor *s
 
     if (concrete_self->synchronized_graph_stores == core_vector_size(&concrete_self->graph_stores)) {
 
+        printf("graph store synchronization: actual_kmer_count %" PRIu64 " total_kmer_count %" PRIu64 "\n",
+                        concrete_self->actual_kmer_count,
+                        concrete_self->total_kmer_count);
         if (concrete_self->actual_kmer_count == concrete_self->total_kmer_count) {
 
             printf("%s/%d synchronized with %d graph stores\n",
@@ -992,6 +995,8 @@ void biosal_assembly_graph_builder_get_entry_count_reply(struct thorium_actor *s
             /*
              * Otherwise, there are still some messages in transit.
              */
+
+            printf("got mismatch, will try again\n");
 
             thorium_actor_send_to_self_empty(self, ACTION_ASSEMBLY_GRAPH_BUILDER_CONTROL_COMPLEXITY);
         }

@@ -196,6 +196,8 @@ void biosal_assembly_block_classifier_receive(struct thorium_actor *self, struct
 
         concrete_actor->forced = 1;
 
+        printf("block classifier, ACTION_AGGREGATOR_FLUSH flush all\n");
+
         biosal_assembly_block_classifier_flush_all(self);
 
         thorium_actor_send_reply_empty(self, ACTION_AGGREGATOR_FLUSH_REPLY);
