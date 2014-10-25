@@ -1,6 +1,8 @@
 
 #include "mpi1_request.h"
 
+#include <core/system/debugger.h>
+
 #include <stdlib.h>
 
 void thorium_mpi1_request_init(struct thorium_mpi1_request *self, void *buffer)
@@ -81,6 +83,8 @@ int thorium_mpi1_request_test(struct thorium_mpi1_request *self)
     }
 
     result = MPI_Get_count(&status, MPI_BYTE, &count);
+
+    CORE_DEBUGGER_ASSERT(count >= 0);
 
     if (result != MPI_SUCCESS) {
         return 0;
