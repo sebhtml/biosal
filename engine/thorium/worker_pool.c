@@ -2,7 +2,10 @@
 #include "worker_pool.h"
 
 #include "message.h"
+
+/*
 #include "message_block.h"
+*/
 
 #include "actor.h"
 #include "worker.h"
@@ -132,7 +135,7 @@ void thorium_worker_pool_init(struct thorium_worker_pool *pool, int workers,
 #ifdef THORIUM_WORKER_USE_MULTIPLE_PRODUCER_RING
     outbound_ring_capacity = 8192;
     core_fast_ring_init(&pool->outbound_message_ring, outbound_ring_capacity,
-                    sizeof(struct thorium_message_block));
+                    sizeof(struct thorium_message));
     core_fast_ring_use_multiple_producers(&pool->outbound_message_ring);
 #endif
 
@@ -898,7 +901,7 @@ int thorium_worker_pool_pull_classic(struct thorium_worker_pool *self, struct th
     return answer;
 }
 
-int thorium_worker_pool_dequeue_message_block(struct thorium_worker_pool *pool, struct thorium_message_block *block)
+int thorium_worker_pool_dequeue_message(struct thorium_worker_pool *pool, struct thorium_message *message)
 {
     int answer;
 
@@ -906,7 +909,7 @@ int thorium_worker_pool_dequeue_message_block(struct thorium_worker_pool *pool, 
     /*
      * Pull message from the multiple-producer ring.
      */
-    answer = core_fast_ring_pop_multiple_producers(&pool->outbound_message_ring, block);
+    answer = core_fast_ring_pop_multiple_producers(&pool->outbound_message_ring, message);
 #else
 
     /*

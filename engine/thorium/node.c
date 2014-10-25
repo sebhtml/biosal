@@ -7,7 +7,9 @@
 
 #include "node.h"
 
+/*
 #include "message_block.h"
+*/
 
 #include "configuration.h"
 
@@ -2352,12 +2354,16 @@ void thorium_node_run_loop(struct thorium_node *node)
 
 void thorium_node_send_messages(struct thorium_node *node)
 {
+        /*
     struct thorium_message_block message_block;
-    struct thorium_message *message;
+    */
+    struct thorium_message message;
     int i;
     int count;
+    /*
     int j;
     int message_count;
+    */
 
     i = 0;
     /*
@@ -2386,10 +2392,11 @@ void thorium_node_send_messages(struct thorium_node *node)
      *
      * This loop is lockless.
      */
-    while (i < count && thorium_worker_pool_dequeue_message_block(&node->worker_pool, &message_block)) {
+    while (i < count && thorium_worker_pool_dequeue_message(&node->worker_pool, &message)) {
 
         ++i;
 
+#if 0
         message_count = thorium_message_block_size(&message_block);
         j = 0;
 
@@ -2423,15 +2430,15 @@ void thorium_node_send_messages(struct thorium_node *node)
                             thorium_message_action(message));
             }
 #endif
-
+#endif
             /*
              * Send it locally or over the network
              */
-            thorium_node_send(node, message, 1);
+            thorium_node_send(node, &message, 1);
+#if 0
 
             ++j;
         }
-#if 0
     } else {
 #ifdef THORIUM_NODE_DEBUG_RUN
         if (node->alive_actors == 0) {

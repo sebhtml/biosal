@@ -5,7 +5,10 @@
 #include "actor.h"
 
 #include "message.h"
+
+/*
 #include "message_block.h"
+*/
 
 #include "actor_profiler.h"
 
@@ -102,7 +105,9 @@ struct thorium_worker {
     struct core_buffered_file_writer load_profile_writer;
     struct thorium_node *node;
 
+    /*
     struct thorium_message_block message_block;
+    */
 
     struct core_timer timer;
     struct core_map actors;

@@ -2,7 +2,9 @@
 #include "worker.h"
 
 #include "message.h"
+/*
 #include "message_block.h"
+*/
 #include "node.h"
 
 #include "configuration.h"
@@ -112,7 +114,9 @@
 #define THORIUM_WORKER_SEND_TO_LOCAL_ACTOR
 
 void thorium_worker_work(struct thorium_worker *self, struct thorium_actor *actor);
+/*
 void thorium_worker_flush_outbound_message_block(struct thorium_worker *self);
+*/
 
 /*
  * Backoff stuff.
@@ -135,7 +139,9 @@ void thorium_worker_init(struct thorium_worker *worker, int name, struct thorium
     char **argv;
     int outbound_ring_capacity;
 
+    /*
     thorium_message_block_init(&worker->message_block);
+    */
 
     worker->tick_count = 0;
 
@@ -306,7 +312,9 @@ void thorium_worker_destroy(struct thorium_worker *worker)
 {
     void *buffer;
 
+    /*
     thorium_message_block_destroy(&worker->message_block);
+    */
 
     if (CORE_BITMAP_GET_BIT(worker->flags, FLAG_ENABLE_ACTOR_LOAD_PROFILER)) {
         core_buffered_file_writer_destroy(&worker->load_profile_writer);
@@ -1495,7 +1503,9 @@ void thorium_worker_run(struct thorium_worker *worker)
     /*
      * Flush outbound message block.
      */
+    /*
     thorium_worker_flush_outbound_message_block(worker);
+    */
 
 #ifdef THORIUM_WORKER_ENABLE_LOCK
     thorium_worker_unlock(worker);
@@ -1998,12 +2008,16 @@ void thorium_worker_set_outbound_message_ring(struct thorium_worker *self, struc
 
 int thorium_worker_publish_message(struct thorium_worker *self, struct thorium_message *message)
 {
-    int return_value;
-
     tracepoint(thorium_worker, publish_message, self->name, self->tick_count,
                     thorium_message_count(message),
                     thorium_message_block_size(&self->message_block),
                     0, self->last_outbound_message_block_operation);
+
+    return core_fast_ring_push_multiple_producers(self->output_outbound_message_ring_multiple,
+                       message, self->name);
+
+#if 0
+    int return_value;
 
     return_value = 0;
 
@@ -2034,8 +2048,10 @@ int thorium_worker_publish_message(struct thorium_worker *self, struct thorium_m
 #else
     return core_fast_ring_push_from_producer(&self->output_outbound_message_ring, message);
 #endif
+#endif
 }
 
+#if 0
 void thorium_worker_flush_outbound_message_block(struct thorium_worker *self)
 {
     int push;
@@ -2079,3 +2095,4 @@ void thorium_worker_flush_outbound_message_block(struct thorium_worker *self)
         }
     }
 }
+#endif
