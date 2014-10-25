@@ -13,6 +13,7 @@ for line in sys.stdin:
     time = float(time_tokens[len(time_tokens) - 1].replace("]", ""))
     event = tokens[3].split(":")[1]
 
+    print(line.strip())
     if event == "tick_enter":
         enter = time
     elif event == "tick_exit":
@@ -21,6 +22,7 @@ for line in sys.stdin:
         elapsed = (exit - enter) * 1000 * 1000
 
         if elapsed >= threshold:
-            print("ELAPSED= " + str(elapsed) + line.strip())
+            print("ELAPSED= " + str(elapsed))
+            print("")
 
     #print(event + " " + str(time))

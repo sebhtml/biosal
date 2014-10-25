@@ -352,6 +352,10 @@ int thorium_message_multiplexer_demultiplex(struct thorium_message_multiplexer *
         return 0;
     }
 
+    messages = 0;
+    tracepoint(thorium_node, demultiplex_enter, self->node->name,
+                    self->node->tick, messages);
+
     source_node = thorium_message_source_node(message);
     destination_node = thorium_message_destination_node(message);
     count = thorium_message_count(message);
@@ -359,7 +363,6 @@ int thorium_message_multiplexer_demultiplex(struct thorium_message_multiplexer *
     pool = thorium_node_inbound_memory_pool(self->node);
 
     position = 0;
-    messages = 0;
 
     /*
      * Inject a message for each enclosed message.
@@ -377,14 +380,13 @@ int thorium_message_multiplexer_demultiplex(struct thorium_message_multiplexer *
         thorium_node_prepare_received_message(self->node, &new_message);
         thorium_node_dispatch_message(self->node, &new_message);
 
+        /*
         thorium_message_destroy(&new_message);
+        */
 
         position += new_count;
         ++messages;
     }
-
-    tracepoint(thorium_node, demultiplex, self->node->name,
-                    self->node->tick, messages);
 
     CORE_DEBUGGER_ASSERT(messages > 0);
 
@@ -392,6 +394,9 @@ int thorium_message_multiplexer_demultiplex(struct thorium_message_multiplexer *
     printf("thorium_message_multiplexer_demultiplex %d messages\n",
                     messages);
 #endif
+
+    tracepoint(thorium_node, demultiplex_exit, self->node->name,
+                    self->node->tick, messages);
 
     return 1;
 }

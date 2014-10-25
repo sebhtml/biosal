@@ -1372,7 +1372,7 @@ void thorium_node_send(struct thorium_node *node, struct thorium_message *messag
     void *buffer;
     struct thorium_worker_buffer worker_buffer;
 
-    tracepoint(thorium_node, send_enter, node->name, node->tick);
+    tracepoint(thorium_node, send_enter, node->name, node->tick, thorium_message_destination(message));
 
     /*
      * Thanks to LTTng, I disabled most of the crap here.
@@ -1520,7 +1520,8 @@ void thorium_node_dispatch_message(struct thorium_node *node, struct thorium_mes
 {
     void *buffer;
 
-    tracepoint(thorium_node, dispatch_message_enter, node->name, node->tick);
+    tracepoint(thorium_node, dispatch_message_enter, node->name, node->tick,
+                    thorium_message_destination(message));
 
     if (thorium_node_receive_system(node, message)) {
 
@@ -1556,9 +1557,11 @@ void thorium_node_dispatch_message(struct thorium_node *node, struct thorium_mes
 
 void thorium_node_inject_message_in_worker_pool(struct thorium_node *node, struct thorium_message *message)
 {
+#ifdef CHECK_FOR_DEAD_ACTOR_IN_NODE
     struct thorium_actor *actor;
     int name;
     int dead;
+#endif
 
     tracepoint(thorium_node, inject_enter, node->name, node->tick);
 

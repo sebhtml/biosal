@@ -28,11 +28,9 @@ THORIUM_NODE_TRACEPOINT(run_loop_pool_work)
 THORIUM_NODE_TRACEPOINT(run_loop_receive)
 THORIUM_NODE_TRACEPOINT(run_loop_test_requests)
 THORIUM_NODE_TRACEPOINT(receive_message)
-THORIUM_NODE_TRACEPOINT(send_enter)
 THORIUM_NODE_TRACEPOINT(send_exit)
 THORIUM_NODE_TRACEPOINT(tick_exit)
 THORIUM_NODE_TRACEPOINT(tick_enter)
-THORIUM_NODE_TRACEPOINT(dispatch_message_enter)
 THORIUM_NODE_TRACEPOINT(dispatch_message_exit)
 THORIUM_NODE_TRACEPOINT(inject_enter)
 THORIUM_NODE_TRACEPOINT(inject_exit)
@@ -55,7 +53,7 @@ TRACEPOINT_EVENT(
 
 TRACEPOINT_EVENT(
     thorium_node,
-    demultiplex,
+    demultiplex_enter,
     TP_ARGS(
         int, node, int, tick,
         int, message_count
@@ -64,5 +62,47 @@ TRACEPOINT_EVENT(
         ctf_integer(int, node, node)
         ctf_integer(int, tick, tick)
         ctf_integer(int, message_count, message_count)
+    )
+)
+
+TRACEPOINT_EVENT(
+    thorium_node,
+    demultiplex_exit,
+    TP_ARGS(
+        int, node, int, tick,
+        int, message_count
+    ),
+    TP_FIELDS(
+        ctf_integer(int, node, node)
+        ctf_integer(int, tick, tick)
+        ctf_integer(int, message_count, message_count)
+    )
+)
+
+TRACEPOINT_EVENT(
+    thorium_node,
+    dispatch_message_enter,
+    TP_ARGS(
+        int, node, int, tick,
+        int, destination_actor
+    ),
+    TP_FIELDS(
+        ctf_integer(int, node, node)
+        ctf_integer(int, tick, tick)
+        ctf_integer(int, destination_actor, destination_actor)
+    )
+)
+
+TRACEPOINT_EVENT(
+    thorium_node,
+    send_enter,
+    TP_ARGS(
+        int, node, int, tick,
+        int, destination_actor
+    ),
+    TP_FIELDS(
+        ctf_integer(int, node, node)
+        ctf_integer(int, tick, tick)
+        ctf_integer(int, destination_actor, destination_actor)
     )
 )
