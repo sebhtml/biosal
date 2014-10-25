@@ -245,6 +245,8 @@ struct thorium_node {
     int counter_injected_buffers_for_local_workers;
     int counter_injected_transport_outbound_buffer_for_workers;
 #endif
+
+    int cached_outbound_ring_size;
 };
 
 extern struct thorium_node *thorium_node_global_self;

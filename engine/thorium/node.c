@@ -187,6 +187,8 @@ void thorium_node_init(struct thorium_node *node, int *argc, char ***argv)
 
     node->tick = 0;
 
+    node->cached_outbound_ring_size = 0;
+
 #ifdef THORIUM_NODE_USE_CUSTOM_TRACEPOINTS
     /*
      * Tracepoint session
@@ -2398,8 +2400,10 @@ void thorium_node_send_messages(struct thorium_node *node)
 #endif
     }
 
-    if (i)
+    if (i) {
         node->last_transport_event_time = time(NULL);
+        node->cached_outbound_ring_size = thorium_worker_pool_outbound_ring_size(&node->worker_pool);
+    }
 
     tracepoint(thorium_node, send_messages_exit, node->name, node->tick);
 }
@@ -2828,7 +2832,7 @@ void thorium_node_receive_messages(struct thorium_node *node)
     i = 0;
     count = THORIUM_NODE_MAXIMUM_RECEIVED_MESSAGE_COUNT_PER_CALL;
 
-    while (i < count
+    while ((i < count || node->cached_outbound_ring_size < 16)
                 && thorium_transport_receive(&node->transport, &message)) {
 
         tracepoint(thorium_node, receive_message, node->name, node->tick);
