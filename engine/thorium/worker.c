@@ -2010,7 +2010,7 @@ int thorium_worker_publish_message(struct thorium_worker *self, struct thorium_m
 {
     tracepoint(thorium_worker, publish_message, self->name, self->tick_count,
                     thorium_message_count(message),
-                    thorium_message_block_size(&self->message_block),
+                    0,
                     0, self->last_outbound_message_block_operation);
 
     return core_fast_ring_push_multiple_producers(self->output_outbound_message_ring_multiple,
