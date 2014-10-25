@@ -205,6 +205,7 @@ int thorium_message_multiplexer_multiplex(struct thorium_message_multiplexer *se
 
     action = thorium_message_action(message);
 
+#ifdef THORIUM_MULTIPLEXER_USE_ACTIONS_TO_SKIP
     /*
      * Don't multiplex already-multiplexed messages.
      */
@@ -212,6 +213,7 @@ int thorium_message_multiplexer_multiplex(struct thorium_message_multiplexer *se
         ++self->real_message_count;
         return 0;
     }
+#endif
 
     count = thorium_message_count(message);
     required_size = sizeof(count) + count;

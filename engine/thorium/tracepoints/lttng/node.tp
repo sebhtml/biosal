@@ -28,6 +28,12 @@ THORIUM_NODE_TRACEPOINT(run_loop_pool_work)
 THORIUM_NODE_TRACEPOINT(run_loop_receive)
 THORIUM_NODE_TRACEPOINT(run_loop_test_requests)
 THORIUM_NODE_TRACEPOINT(receive_message)
+THORIUM_NODE_TRACEPOINT(send_enter)
+THORIUM_NODE_TRACEPOINT(send_exit)
+THORIUM_NODE_TRACEPOINT(tick_exit)
+THORIUM_NODE_TRACEPOINT(tick_enter)
+THORIUM_NODE_TRACEPOINT(dispatch_message_enter)
+THORIUM_NODE_TRACEPOINT(dispatch_message_exit)
 
 TRACEPOINT_EVENT(
     thorium_node,

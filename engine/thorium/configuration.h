@@ -7,13 +7,13 @@
 /*
  * Maximum number of messages in a message block.
  */
-#define THORIUM_MESSAGE_BLOCK_MAXIMUM_SIZE 16
+#define THORIUM_MESSAGE_BLOCK_MAXIMUM_SIZE 32
 
 /*
  * Maximum number of messages received from transport in the
  * main loop of node.
  */
-#define THORIUM_NODE_MAXIMUM_RECEIVED_MESSAGE_COUNT_PER_CALL 32
+#define THORIUM_NODE_MAXIMUM_RECEIVED_MESSAGE_COUNT_PER_CALL 16
 
 /*
  * Maximum number of messages pulled from the worker

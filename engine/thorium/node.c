@@ -175,6 +175,9 @@ int thorium_node_has_script(struct thorium_node *self, struct thorium_script *sc
 void thorium_node_send_messages(struct thorium_node *self);
 void thorium_node_receive_messages(struct thorium_node *self);
 
+void thorium_node_send(struct thorium_node *self, struct thorium_message *message,
+                int perform_multiplexing);
+
 void thorium_node_init(struct thorium_node *node, int *argc, char ***argv)
 {
     int i;
@@ -1331,7 +1334,8 @@ void thorium_node_send_to_node(struct thorium_node *node, int destination,
 
     thorium_message_set_type(&new_message, THORIUM_MESSAGE_TYPE_NODE_OUTBOUND);
 
-    thorium_node_send(node, &new_message); }
+    thorium_node_send(node, &new_message, 0);
+}
 
 int thorium_node_has_actor(struct thorium_node *self, int name)
 {
@@ -1357,7 +1361,8 @@ int thorium_node_has_actor(struct thorium_node *self, int name)
     return 0;
 }
 
-void thorium_node_send(struct thorium_node *node, struct thorium_message *message)
+void thorium_node_send(struct thorium_node *node, struct thorium_message *message,
+                int perform_multiplexing)
 {
     int name;
     int metadata_size;
@@ -1367,6 +1372,17 @@ void thorium_node_send(struct thorium_node *node, struct thorium_message *messag
     void *buffer;
     struct thorium_worker_buffer worker_buffer;
 
+    tracepoint(thorium_node, send_enter, node->name, node->tick);
+
+    /*
+     * Thanks to LTTng, I disabled most of the crap here.
+     *
+     * [boisvert@bigmem biosal]$ awk '{print $4}' lol.p|sort| uniq -c|sort -r -n|head -n3
+     * 90 thorium_node:send_exit:
+     * 90 thorium_node:send_enter:
+     *  8 thorium_node:send_messages_loop:
+     */
+#ifdef THORIUM_ENABLE_TRANSPORT_PROFILER
     /*
      * Send the message through the mock transport which is
      * a transport profiler.
@@ -1374,7 +1390,9 @@ void thorium_node_send(struct thorium_node *node, struct thorium_message *messag
     if (CORE_BITMAP_GET_BIT(node->flags, FLAG_PROFILE_MESSAGE_TRANSPORT)) {
         thorium_transport_profiler_send_mock(&node->transport_profiler, message);
     }
+#endif
 
+#ifdef THORIUM_ENABLE_AUTO_SCALING
     /* Check the message to see
      * if it is a special message.
      *
@@ -1385,8 +1403,13 @@ void thorium_node_send(struct thorium_node *node, struct thorium_message *messag
     }
 
     tracepoint(thorium_message, node_send_system, message);
+#endif
 
     name = thorium_message_destination(message);
+
+    /*
+     * Set nodes for the message.
+     */
     thorium_node_resolve(node, message);
 
     /* If the actor is local, dispatch the message locally
@@ -1419,6 +1442,7 @@ void thorium_node_send(struct thorium_node *node, struct thorium_message *messag
      * node
      */
     } else {
+
         /* If transport layer
          * is disable, this will never be reached anyway
          */
@@ -1439,7 +1463,8 @@ void thorium_node_send(struct thorium_node *node, struct thorium_message *messag
     }
 #endif
 
-        if (!thorium_message_multiplexer_multiplex(&node->multiplexer, message)) {
+        if (!perform_multiplexing
+                        || !thorium_message_multiplexer_multiplex(&node->multiplexer, message)) {
             thorium_node_send_with_transport(node, message);
 
         } else {
@@ -1461,8 +1486,9 @@ void thorium_node_send(struct thorium_node *node, struct thorium_message *messag
             CORE_BITMAP_SET_BIT(node->flags, FLAG_DEBUG);
         }
 #endif
-
     }
+
+    tracepoint(thorium_node, send_exit, node->name, node->tick);
 }
 
 struct thorium_actor *thorium_node_get_actor_from_name(struct thorium_node *node,
@@ -1494,6 +1520,8 @@ void thorium_node_dispatch_message(struct thorium_node *node, struct thorium_mes
 {
     void *buffer;
 
+    tracepoint(thorium_node, dispatch_message_enter, node->name, node->tick);
+
     if (thorium_node_receive_system(node, message)) {
 
         /*
@@ -1522,6 +1550,8 @@ void thorium_node_dispatch_message(struct thorium_node *node, struct thorium_mes
      * the worker pool
      */
     thorium_node_inject_message_in_worker_pool(node, message);
+
+    tracepoint(thorium_node, dispatch_message_exit, node->name, node->tick);
 }
 
 void thorium_node_inject_message_in_worker_pool(struct thorium_node *node, struct thorium_message *message)
@@ -2052,7 +2082,7 @@ void thorium_node_send_to_actor(struct thorium_node *node, int name, struct thor
     thorium_message_set_source(message, name);
     thorium_message_set_destination(message, name);
 
-    thorium_node_send(node, message);
+    thorium_node_send(node, message, 1);
 }
 
 void thorium_node_check_load(struct thorium_node *node)
@@ -2133,7 +2163,7 @@ void thorium_node_run_loop(struct thorium_node *node)
 
     while (credits > 0) {
 
-        tracepoint(thorium_node, run_loop_print, node->name, node->tick);
+        tracepoint(thorium_node, tick_enter, node->name, node->tick);
 
         CORE_DEBUGGER_JITTER_DETECTION_START(node_main_loop);
 
@@ -2301,6 +2331,8 @@ void thorium_node_run_loop(struct thorium_node *node)
         ++node->tick_count;
 #endif
         ++node->tick;
+
+        tracepoint(thorium_node, tick_exit, node->name, node->tick);
     }
 
 #ifdef THORIUM_NODE_DEBUG_20140601_8
@@ -2386,7 +2418,7 @@ void thorium_node_send_messages(struct thorium_node *node)
             /*
              * Send it locally or over the network
              */
-            thorium_node_send(node, message);
+            thorium_node_send(node, message, 1);
 
             ++j;
         }

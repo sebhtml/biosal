@@ -259,7 +259,6 @@ void thorium_node_start_initial_actor(struct thorium_node *self);
 int thorium_node_spawn_state(struct thorium_node *self, void *state,
                 struct thorium_script *script);
 int thorium_node_spawn(struct thorium_node *self, int script);
-void thorium_node_send(struct thorium_node *self, struct thorium_message *message);
 void thorium_node_send_with_transport(struct thorium_node *self, struct thorium_message *message);
 
 int thorium_node_name(struct thorium_node *self);

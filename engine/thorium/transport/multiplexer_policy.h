@@ -7,6 +7,11 @@
 #define THORIUM_DYNAMIC_TIMEOUT (-789)
 
 /*
+#define THORIUM_MULTIPLEXER_USE_ACTIONS_TO_SKIP
+#define THORIUM_MULTIPLEXER_USE_ACTIONS_TO_MULTIPLEX
+*/
+
+/*
  * Separate policy from mechanism
  *
  * \see http://en.wikipedia.org/wiki/Separation_of_mechanism_and_policy
