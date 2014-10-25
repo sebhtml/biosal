@@ -13,7 +13,7 @@
  * Maximum number of messages received from transport in the
  * main loop of node.
  */
-#define THORIUM_NODE_MAXIMUM_RECEIVED_MESSAGE_COUNT_PER_CALL 16
+#define THORIUM_NODE_MAXIMUM_RECEIVED_MESSAGE_COUNT_PER_CALL 4
 
 /*
  * Maximum number of messages pulled from the worker

@@ -34,6 +34,8 @@ THORIUM_NODE_TRACEPOINT(tick_exit)
 THORIUM_NODE_TRACEPOINT(tick_enter)
 THORIUM_NODE_TRACEPOINT(dispatch_message_enter)
 THORIUM_NODE_TRACEPOINT(dispatch_message_exit)
+THORIUM_NODE_TRACEPOINT(inject_enter)
+THORIUM_NODE_TRACEPOINT(inject_exit)
 
 TRACEPOINT_EVENT(
     thorium_node,

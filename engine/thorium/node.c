@@ -1560,11 +1560,14 @@ void thorium_node_inject_message_in_worker_pool(struct thorium_node *node, struc
     int name;
     int dead;
 
+    tracepoint(thorium_node, inject_enter, node->name, node->tick);
+
 #ifdef THORIUM_NODE_DEBUG
     int tag;
     int source;
 #endif
 
+#ifdef CHECK_FOR_DEAD_ACTOR_IN_NODE
     name = thorium_message_destination(message);
 
 #ifdef THORIUM_NODE_DEBUG
@@ -1602,11 +1605,14 @@ void thorium_node_inject_message_in_worker_pool(struct thorium_node *node, struc
         thorium_node_recycle_message(node, message);
         return;
     }
+#endif
 
 #if 0
     printf("DEBUG node enqueue message\n");
 #endif
     thorium_worker_pool_enqueue_message(&node->worker_pool, message);
+
+    tracepoint(thorium_node, inject_exit, node->name, node->tick);
 }
 
 int thorium_node_actor_index(struct thorium_node *node, int name)
@@ -2330,9 +2336,9 @@ void thorium_node_run_loop(struct thorium_node *node)
 #ifdef THORIUM_NODE_USE_TICKS
         ++node->tick_count;
 #endif
-        ++node->tick;
-
         tracepoint(thorium_node, tick_exit, node->name, node->tick);
+
+        ++node->tick;
     }
 
 #ifdef THORIUM_NODE_DEBUG_20140601_8
