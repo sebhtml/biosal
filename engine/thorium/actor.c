@@ -526,8 +526,9 @@ void thorium_actor_send_with_source(struct thorium_actor *self, int name, struct
      */
     if (self->worker == NULL) {
 
-        printf("Error, message was lost because it was sent in *_init() or *_destroy(), which is not allowed (tag: %d)\n",
-                        tag);
+        printf("Error %s/%d message was lost because it was sent in *_init() or *_destroy(), which is not allowed (tag: %d)\n",
+                        thorium_actor_script_name(self),
+                        thorium_actor_name(self), tag);
 
         return;
     }

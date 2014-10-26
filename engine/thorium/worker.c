@@ -1205,6 +1205,9 @@ void thorium_worker_free_message(struct thorium_worker *worker, struct thorium_m
     int source_worker;
     void *buffer;
 
+    CORE_DEBUGGER_ASSERT_NOT_NULL(worker);
+    CORE_DEBUGGER_ASSERT_NOT_NULL(message);
+
     buffer = thorium_message_buffer(message);
 
     /*
