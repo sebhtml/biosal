@@ -974,9 +974,11 @@ void biosal_assembly_graph_builder_get_entry_count_reply(struct thorium_actor *s
 
     ++concrete_self->synchronized_graph_stores;
 
-    printf("synchronized_graph_stores %d/%d\n",
+    printf("synchronized_graph_stores %d/%d %" PRIu64 "/%" PRIu64 "\n",
                     concrete_self->synchronized_graph_stores,
-                    (int)core_vector_size(&concrete_self->graph_stores));
+                    (int)core_vector_size(&concrete_self->graph_stores),
+                    concrete_self->actual_kmer_count,
+                    concrete_self->total_kmer_count);
 
     if (concrete_self->synchronized_graph_stores == core_vector_size(&concrete_self->graph_stores)) {
 
