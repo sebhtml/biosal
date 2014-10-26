@@ -296,6 +296,9 @@ void biosal_assembly_graph_store_receive(struct thorium_actor *self, struct thor
 
     } else if (tag == ACTION_STORE_GET_ENTRY_COUNT) {
 
+        printf("graph_Store receives ACTION_STORE_GET_ENTRY_COUNT from %d\n",
+                        thorium_message_source(message));
+
         thorium_actor_send_reply_uint64_t(self, ACTION_STORE_GET_ENTRY_COUNT_REPLY,
                         concrete_self->received);
 

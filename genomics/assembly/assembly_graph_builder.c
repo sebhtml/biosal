@@ -948,8 +948,6 @@ void biosal_assembly_graph_builder_control_complexity(struct thorium_actor *self
 {
     struct biosal_assembly_graph_builder *concrete_self;
 
-    printf("debug biosal_assembly_graph_builder_control_complexity\n");
-
     concrete_self = thorium_actor_concrete_actor(self);
 
     concrete_self->actual_kmer_count = 0;
@@ -957,6 +955,9 @@ void biosal_assembly_graph_builder_control_complexity(struct thorium_actor *self
 
     thorium_actor_send_range_empty(self, &concrete_self->graph_stores,
                     ACTION_STORE_GET_ENTRY_COUNT);
+
+    printf("debug biosal_assembly_graph_builder_control_complexity %d graph stores\n",
+                    (int)core_vector_size(&concrete_self->graph_stores));
 }
 
 void biosal_assembly_graph_builder_get_entry_count_reply(struct thorium_actor *self, struct thorium_message *message)
@@ -973,8 +974,9 @@ void biosal_assembly_graph_builder_get_entry_count_reply(struct thorium_actor *s
 
     ++concrete_self->synchronized_graph_stores;
 
-    printf("synchronized_graph_stores %d\n",
-                    concrete_self->synchronized_graph_stores);
+    printf("synchronized_graph_stores %d/%d\n",
+                    concrete_self->synchronized_graph_stores,
+                    (int)core_vector_size(&concrete_self->graph_stores));
 
     if (concrete_self->synchronized_graph_stores == core_vector_size(&concrete_self->graph_stores)) {
 
