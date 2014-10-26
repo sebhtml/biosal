@@ -13,6 +13,11 @@ struct process {
     struct core_vector children;
     struct core_vector actors;
     int size;
+
+    int message_count;
+    int completed;
+
+    int leader;
 };
 
 extern struct thorium_script process_script;
