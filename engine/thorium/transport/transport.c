@@ -260,7 +260,7 @@ void thorium_transport_select_implementation(struct thorium_transport *self, int
     component = &thorium_mpi1_pt2pt_transport_implementation;
     core_vector_push_back(&implementations, &component);
 
-    /* 
+    /*
      * MPI non-blocking.
      */
     component = &thorium_mpi1_pt2pt_nonblocking_transport_implementation;
