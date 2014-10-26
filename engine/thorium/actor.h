@@ -207,13 +207,14 @@ struct core_memory_pool;
  * The mailbox size of an actor.
  * When it is full, messages are buffered upstream.
  */
+
 /*
-#define THORIUM_ACTOR_MAILBOX_SIZE 4
+ * The size of actor mailboxes.
+ */
+/*
 #define THORIUM_ACTOR_MAILBOX_SIZE 2
 */
 #define THORIUM_ACTOR_MAILBOX_SIZE 256
-/*
-*/
 
 /*
  * The actor attribute is a void *

@@ -761,6 +761,7 @@ int thorium_worker_dequeue_actor(struct thorium_worker *worker, struct thorium_a
         printf("ring.DEQUEUE %d\n", other_name);
 #endif
 
+#ifdef THORIUM_WORKER_ENABLE_EVICTION
         if (core_set_find(&worker->evicted_actors, &other_name)) {
 
 #ifdef THORIUM_WORKER_DEBUG_SCHEDULER
@@ -768,6 +769,7 @@ int thorium_worker_dequeue_actor(struct thorium_worker *worker, struct thorium_a
 #endif
             continue;
         }
+#endif
 
         if (!core_map_get_value(&worker->actors, &other_name, &status)) {
             /* Add the actor to the list of actors.
@@ -1500,6 +1502,12 @@ void thorium_worker_run(struct thorium_worker *worker)
 
         if (!thorium_actor_enqueue_mailbox_message(actor, &other_message)) {
             core_fast_queue_enqueue(&worker->input_inbound_message_queue, &other_message);
+        } else {
+
+            /*
+             * Schedule it too.
+             */
+            thorium_worker_schedule_actor(worker, actor);
         }
     }
 
@@ -1990,10 +1998,20 @@ void thorium_worker_schedule_actor(struct thorium_worker *self, struct thorium_a
 {
     int status;
     int name;
+    int *bucket;
+
+    name = thorium_actor_name(actor);
+    bucket = core_map_get(&self->actors, &name);
 
     status = THORIUM_SCHEDULER_STATUS_SCHEDULED;
-    name = thorium_actor_name(actor);
-    core_map_update_value(&self->actors, &name, &status);
+
+    /*
+     * Already scheduled.
+     */
+    if (*bucket == status)
+        return;
+
+    *bucket = status;
     thorium_scheduler_enqueue(&self->scheduler, actor);
 }
 

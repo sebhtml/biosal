@@ -1977,7 +1977,17 @@ struct core_map *thorium_actor_get_sent_messages(struct thorium_actor *self)
 
 int thorium_actor_enqueue_mailbox_message(struct thorium_actor *self, struct thorium_message *message)
 {
-    return core_fast_ring_push_from_producer(&self->mailbox, message);
+    int value;
+
+    value = core_fast_ring_push_from_producer(&self->mailbox, message);
+
+#if 0
+    if (!value) {
+        printf("MAILBOX is full\n");
+    }
+#endif
+
+    return value;
 }
 
 int thorium_actor_dequeue_mailbox_message(struct thorium_actor *self, struct thorium_message *message)

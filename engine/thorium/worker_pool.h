@@ -23,6 +23,11 @@ struct thorium_message_block;
 */
 
 /*
+#define THORIUM_WORKER_POOL_OUTBOUND_RING_SIZE 4
+*/
+#define THORIUM_WORKER_POOL_OUTBOUND_RING_SIZE 8192
+
+/*
  * A worker pool.
  */
 struct thorium_worker_pool {
