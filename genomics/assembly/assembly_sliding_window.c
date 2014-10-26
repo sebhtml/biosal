@@ -338,11 +338,15 @@ void biosal_assembly_sliding_window_receive(struct thorium_actor *actor, struct 
 
     } else if (tag == ACTION_ENABLE_AUTO_SCALING) {
 
+        /*
+         * auto-scaling is not implemented.
+         */
+#if 0
         printf("AUTO-SCALING window %d enables auto-scaling (ACTION_ENABLE_AUTO_SCALING) via actor %d\n",
                         name, source);
 
         thorium_actor_send_to_self_empty(actor, ACTION_ENABLE_AUTO_SCALING);
-
+#endif
     }
 }
 
