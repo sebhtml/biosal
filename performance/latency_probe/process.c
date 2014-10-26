@@ -8,8 +8,8 @@
 #include <inttypes.h>
 #include <stdint.h>
 
-#define EVENT_COUNT 10
-#define ACTORS_PER_WORKER 1
+#define EVENT_COUNT 100000
+#define ACTORS_PER_WORKER 20
 
 void process_init(struct thorium_actor *self);
 void process_destroy(struct thorium_actor *self);
@@ -153,6 +153,11 @@ void process_receive(struct thorium_actor *self, struct thorium_message *message
 
         ++concrete_self->message_count;
 
+        if (concrete_self->message_count % 10000 == 0) {
+            printf("progress %d %d/%d\n",
+                            name, concrete_self->message_count, EVENT_COUNT);
+        }
+
         if (concrete_self->message_count == EVENT_COUNT) {
 
             leader = concrete_self->leader;
@@ -192,7 +197,9 @@ void process_send_ping(struct thorium_actor *self)
 
     target = core_vector_at_as_int(&concrete_self->actors, target);
 
+    /*
     printf("%d ping %d\n", thorium_actor_name(self), target);
+    */
 
     thorium_actor_send_empty(self, target, ACTION_PING);
 }
