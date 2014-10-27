@@ -256,6 +256,13 @@ void biosal_assembly_block_classifier_flush(struct thorium_actor *self, int cust
 
     CORE_DEBUGGER_ASSERT(customer_block_pointer != NULL);
 
+    /*
+     * Nothing to flush.
+     */
+    if (biosal_dna_kmer_frequency_block_empty(customer_block_pointer)) {
+        return;
+    }
+
     count = biosal_dna_kmer_frequency_block_pack_size(customer_block_pointer,
                     &concrete_actor->codec);
 
@@ -265,7 +272,6 @@ void biosal_assembly_block_classifier_flush(struct thorium_actor *self, int cust
      */
     if (!force && count < threshold) {
         return;
-
     }
 
 #ifdef BIOSAL_ASSEMBLY_BLOCK_CLASSIFIER_DEBUG_FLUSHING
@@ -303,7 +309,6 @@ void biosal_assembly_block_classifier_flush(struct thorium_actor *self, int cust
     /*
      * Reset the buffer
      */
-
     biosal_dna_kmer_frequency_block_destroy(customer_block_pointer, &concrete_actor->persistent_pool);
 
     biosal_dna_kmer_frequency_block_init(customer_block_pointer, concrete_actor->kmer_length,

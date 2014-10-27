@@ -108,3 +108,8 @@ struct core_map *biosal_dna_kmer_frequency_block_kmers(struct biosal_dna_kmer_fr
 {
     return &self->kmers;
 }
+
+int biosal_dna_kmer_frequency_block_empty(struct biosal_dna_kmer_frequency_block *self)
+{
+    return core_map_empty(&self->kmers);
+}

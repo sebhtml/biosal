@@ -296,8 +296,10 @@ void biosal_assembly_graph_store_receive(struct thorium_actor *self, struct thor
 
     } else if (tag == ACTION_STORE_GET_ENTRY_COUNT) {
 
+            /*
         printf("graph_Store receives ACTION_STORE_GET_ENTRY_COUNT from %d\n",
                         thorium_message_source(message));
+                        */
 
         thorium_actor_send_reply_uint64_t(self, ACTION_STORE_GET_ENTRY_COUNT_REPLY,
                         concrete_self->received);
@@ -526,6 +528,7 @@ void biosal_assembly_graph_store_push_kmer_block(struct thorium_actor *self, str
     int period;
     struct biosal_dna_kmer *kmer_pointer;
     int *frequency;
+    int kmer_frequency;
 
     ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
     concrete_self = thorium_actor_concrete_actor(self);
@@ -566,6 +569,7 @@ void biosal_assembly_graph_store_push_kmer_block(struct thorium_actor *self, str
          * add kmers to store
          */
         core_map_iterator_next(&iterator, (void **)&packed_kmer, (void **)&frequency);
+        kmer_frequency = *frequency;
 
         /* Store the kmer in 2 bit encoding
          */
@@ -583,7 +587,6 @@ void biosal_assembly_graph_store_push_kmer_block(struct thorium_actor *self, str
              */
             biosal_dna_kmer_get_sequence(kmer_pointer, raw_kmer, concrete_self->kmer_length,
                         &concrete_self->transport_codec);
-
 
             biosal_dna_kmer_init(&encoded_kmer, raw_kmer, &concrete_self->storage_codec,
                         thorium_actor_get_ephemeral_memory(self));
@@ -627,7 +630,7 @@ void biosal_assembly_graph_store_push_kmer_block(struct thorium_actor *self, str
 
         biosal_dna_kmer_destroy(&kmer, ephemeral_memory);
 
-        biosal_assembly_vertex_increase_coverage_depth(bucket, *frequency);
+        biosal_assembly_vertex_increase_coverage_depth(bucket, kmer_frequency);
 
         if (concrete_self->received >= concrete_self->last_received + period) {
             printf("%s/%d received %" PRIu64 " kmers so far,"
@@ -640,7 +643,7 @@ void biosal_assembly_graph_store_push_kmer_block(struct thorium_actor *self, str
             concrete_self->last_received = concrete_self->received;
         }
 
-        concrete_self->received += *frequency;
+        concrete_self->received += kmer_frequency;
     }
 
     core_memory_pool_free(ephemeral_memory, key);

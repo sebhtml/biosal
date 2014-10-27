@@ -36,5 +36,6 @@ int biosal_dna_kmer_frequency_block_pack_unpack(struct biosal_dna_kmer_frequency
                 struct biosal_dna_codec *codec);
 
 struct core_map *biosal_dna_kmer_frequency_block_kmers(struct biosal_dna_kmer_frequency_block *self);
+int biosal_dna_kmer_frequency_block_empty(struct biosal_dna_kmer_frequency_block *self);
 
 #endif
