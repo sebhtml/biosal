@@ -930,8 +930,9 @@ void biosal_assembly_graph_builder_notify_reply(struct thorium_actor *self, stru
 
         /*
          * Tell all classifiers to flush now.
+         *
+         * It may also be required to do this later on too.
          */
-
         thorium_actor_send_range_empty(self, &concrete_self->block_classifiers,
                         ACTION_AGGREGATOR_FLUSH);
 
@@ -947,6 +948,15 @@ void biosal_assembly_graph_builder_notify_reply(struct thorium_actor *self, stru
 void biosal_assembly_graph_builder_control_complexity(struct thorium_actor *self, struct thorium_message *message)
 {
     struct biosal_assembly_graph_builder *concrete_self;
+
+    /*
+     * Tell all classifiers to flush now.
+     *
+     * This second call is required because if the messages are passed too slowly (or too fast),
+     * the FLUSH signal can arrive before the bit messages actually get there.
+     */
+    thorium_actor_send_range_empty(self, &concrete_self->block_classifiers,
+                    ACTION_AGGREGATOR_FLUSH);
 
     concrete_self = thorium_actor_concrete_actor(self);
 
@@ -985,6 +995,7 @@ void biosal_assembly_graph_builder_get_entry_count_reply(struct thorium_actor *s
         printf("graph store synchronization: actual_kmer_count %" PRIu64 " total_kmer_count %" PRIu64 "\n",
                         concrete_self->actual_kmer_count,
                         concrete_self->total_kmer_count);
+
         if (concrete_self->actual_kmer_count == concrete_self->total_kmer_count) {
 
             printf("%s/%d synchronized with %d graph stores\n",
