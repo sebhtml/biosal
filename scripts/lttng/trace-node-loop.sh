@@ -1,6 +1,6 @@
 #!/bin/bash
 
-duration=5
+duration=1
 
 lttng create
 lttng enable-event -u thorium_node:* --filter " node == 1"

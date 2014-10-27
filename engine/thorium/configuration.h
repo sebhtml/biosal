@@ -18,8 +18,12 @@
 /*
  * Maximum number of messages pulled from the worker
  * outbound message ring in the main loop of the node.
+ *
+ * The number of clean messages to pull at every call must be
+ * greater.
  */
-#define THORIUM_NODE_MAXIMUM_PULLED_MESSAGE_COUNT_PER_CALL 32
+#define THORIUM_NODE_MAXIMUM_PULLED_MESSAGE_COUNT_PER_CALL 20
+#define THORIUM_NODE_MAXIMUM_PULLED_CLEAN_MESSAGE_COUNT_PER_CALL 32
 
 /*
  * Maximum number of messages pulled from the inbound message
@@ -52,6 +56,6 @@
 #define THORIUM_MULTIPLEXER_TIMEOUT 200000
 */
 #define THORIUM_MULTIPLEXER_TIMEOUT 200000
-#define THORIUM_MULTIPLEXER_BUFFER_SIZE 2048
+#define THORIUM_MULTIPLEXER_BUFFER_SIZE 1024
 
 #endif

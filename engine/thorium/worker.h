@@ -139,7 +139,7 @@ struct thorium_worker {
     /*
      * Output ring for exporting messages for triage.
      */
-    struct core_fast_ring output_message_ring_for_triage;
+    struct core_fast_ring *output_message_ring_for_triage;
 
     /*
      * Queue for buffering exported messages for triage.
@@ -297,5 +297,6 @@ void *thorium_worker_allocate(struct thorium_worker *self, size_t count);
 int thorium_worker_get_input_message_ring_size(struct thorium_worker *self);
 
 void thorium_worker_set_outbound_message_ring(struct thorium_worker *self, struct core_fast_ring *ring);
+void thorium_worker_set_triage_message_ring(struct thorium_worker *self, struct core_fast_ring *ring);
 
 #endif

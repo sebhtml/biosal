@@ -36,6 +36,7 @@ struct thorium_worker_pool {
 
 #ifdef THORIUM_WORKER_USE_MULTIPLE_PRODUCER_RING
     struct core_fast_ring outbound_message_ring;
+    struct core_fast_ring triage_message_ring;
 #endif
 
     /*
@@ -70,6 +71,7 @@ struct thorium_worker_pool {
     int ticks_without_messages;
 
     time_t starting_time;
+    int worker_for_triage;
 };
 
 #define THORIUM_WORKER_POOL_LOAD_LOOP 0

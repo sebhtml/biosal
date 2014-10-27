@@ -3,6 +3,8 @@
 
 #include "message.h"
 
+#include "configuration.h"
+
 /*
 #include "message_block.h"
 */
@@ -23,6 +25,7 @@
 #include <core/structures/vector_iterator.h>
 
 #include <core/structures/fast_queue_iterator.h>
+#include <core/structures/fast_ring.h>
 
 #include <core/system/debugger.h>
 #include <core/system/memory.h>
@@ -137,6 +140,9 @@ void thorium_worker_pool_init(struct thorium_worker_pool *pool, int workers,
     core_fast_ring_init(&pool->outbound_message_ring, outbound_ring_capacity,
                     sizeof(struct thorium_message));
     core_fast_ring_use_multiple_producers(&pool->outbound_message_ring);
+    core_fast_ring_init(&pool->triage_message_ring, outbound_ring_capacity,
+                    sizeof(struct thorium_message));
+    core_fast_ring_use_multiple_producers(&pool->triage_message_ring);
 #endif
 
     thorium_worker_pool_create_workers(pool);
@@ -172,6 +178,7 @@ void thorium_worker_pool_destroy(struct thorium_worker_pool *pool)
 
 #ifdef THORIUM_WORKER_USE_MULTIPLE_PRODUCER_RING
     core_fast_ring_destroy(&pool->outbound_message_ring);
+    core_fast_ring_destroy(&pool->triage_message_ring);
 #endif
 }
 
@@ -236,6 +243,7 @@ void thorium_worker_pool_create_workers(struct thorium_worker_pool *pool)
          * The worker will push to this ring.
          */
         thorium_worker_set_outbound_message_ring(worker, &pool->outbound_message_ring);
+        thorium_worker_set_triage_message_ring(worker, &pool->triage_message_ring);
 #endif
 
 #ifdef THORIUM_WORKER_ENABLE_WAIT
@@ -593,6 +601,8 @@ int thorium_worker_pool_give_message_to_worker(struct thorium_worker_pool *pool,
 void thorium_worker_pool_work(struct thorium_worker_pool *pool)
 {
     struct thorium_message other_message;
+    int i;
+    int size;
 
     /*
     struct thorium_actor *actor;
@@ -609,6 +619,16 @@ void thorium_worker_pool_work(struct thorium_worker_pool *pool)
      */
     if (core_fast_queue_dequeue(&pool->inbound_message_queue_buffer, &other_message)) {
         thorium_worker_pool_give_message_to_worker(pool, &other_message);
+    }
+
+    i = 0;
+    size = THORIUM_NODE_MAXIMUM_PULLED_CLEAN_MESSAGE_COUNT_PER_CALL;
+
+    while (i++ < size
+                    && core_fast_ring_pop_multiple_producers(&pool->triage_message_ring,
+                            &other_message)) {
+
+        core_fast_queue_enqueue(&pool->clean_message_queue, &other_message);
     }
 
 #if 0

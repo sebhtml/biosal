@@ -134,7 +134,6 @@ struct thorium_node {
 #ifdef THORIUM_NODE_INJECT_CLEAN_WORKER_BUFFERS
     struct core_fast_queue output_clean_outbound_buffer_queue;
 
-    int worker_for_triage;
 #endif
 
     struct core_map scripts;

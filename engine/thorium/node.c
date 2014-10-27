@@ -233,7 +233,6 @@ void thorium_node_init(struct thorium_node *node, int *argc, char ***argv)
 
     CORE_BITMAP_CLEAR(node->flags);
     CORE_BITMAP_CLEAR_BIT(node->flags, FLAG_PROFILE_MESSAGE_TRANSPORT);
-    node->worker_for_triage = 0;
 
     /*
     printf("Booting node\n");
@@ -2562,8 +2561,12 @@ void thorium_node_free_worker_buffer(struct thorium_node *node,
 
 void thorium_node_do_message_triage(struct thorium_node *self)
 {
-    struct thorium_worker *worker;
     struct thorium_message message;
+    int i;
+    int size;
+
+    i = 0;
+    size = THORIUM_NODE_MAXIMUM_PULLED_CLEAN_MESSAGE_COUNT_PER_CALL;
 
     /*
      * First, verify if any message needs to be processed from
@@ -2572,22 +2575,8 @@ void thorium_node_do_message_triage(struct thorium_node *self)
      * Such messages are for example messages that could not be sent to a
      * given already-dead actor.
      */
-    if (thorium_worker_pool_dequeue_message_for_triage(&self->worker_pool, &message)) {
-
-        thorium_node_recycle_message(self, &message);
-    }
-
-    worker = thorium_worker_pool_get_worker(&self->worker_pool, self->worker_for_triage);
-
-    /*
-     * Position the index on the next worker to process.
-     */
-    ++self->worker_for_triage;
-    if (self->worker_for_triage == self->worker_count) {
-        self->worker_for_triage = 0;
-    }
-
-    if (thorium_worker_dequeue_message_for_triage(worker, &message)) {
+    while (i++ < size
+                    && thorium_worker_pool_dequeue_message_for_triage(&self->worker_pool, &message)) {
 
         thorium_node_recycle_message(self, &message);
     }
