@@ -482,11 +482,13 @@ struct thorium_node *thorium_worker_pool_get_node(struct thorium_worker_pool *po
 
 int thorium_worker_pool_give_message_to_worker(struct thorium_worker_pool *pool, struct thorium_message *message)
 {
-    struct thorium_actor *actor;
     struct thorium_worker *affinity_worker;
     int worker_index;
     int name;
+#ifdef CHECK_IF_ACTOR_IS_DEAD
     int dead;
+    struct thorium_actor *actor;
+#endif
 
     /*
     void *buffer;
@@ -494,6 +496,8 @@ int thorium_worker_pool_give_message_to_worker(struct thorium_worker_pool *pool,
     buffer = thorium_message_buffer(message);
     */
     name = thorium_message_destination(message);
+
+#ifdef CHECK_IF_ACTOR_IS_DEAD
     actor = thorium_node_get_actor_from_name(pool->node, name);
 
     if (actor == NULL) {
@@ -516,6 +520,7 @@ int thorium_worker_pool_give_message_to_worker(struct thorium_worker_pool *pool,
 
         return 0;
     }
+#endif
 
     /* Check if the actor is already assigned to a worker
      */
