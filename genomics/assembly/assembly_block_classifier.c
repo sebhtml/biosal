@@ -196,7 +196,9 @@ void biosal_assembly_block_classifier_receive(struct thorium_actor *self, struct
 
         concrete_actor->forced = 1;
 
+        /*
         printf("block classifier, ACTION_AGGREGATOR_FLUSH flush all\n");
+        */
 
         biosal_assembly_block_classifier_flush_all(self);
 
@@ -265,6 +267,11 @@ void biosal_assembly_block_classifier_flush(struct thorium_actor *self, int cust
 
     count = biosal_dna_kmer_frequency_block_pack_size(customer_block_pointer,
                     &concrete_actor->codec);
+
+    /*
+    printf("%d flushes %d bytes\n",
+                    thorium_actor_name(self), count);
+                    */
 
     /*
      * Don't flush if the force parameter is not set and there are not enough

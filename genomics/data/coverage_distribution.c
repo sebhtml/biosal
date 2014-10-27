@@ -52,6 +52,10 @@ void biosal_coverage_distribution_init(struct thorium_actor *self)
 #endif
     concrete_actor->actual = 0;
     concrete_actor->expected = 0;
+
+    printf("%s/%d is ready\n",
+                    thorium_actor_script_name(self),
+                    thorium_actor_name(self));
 }
 
 void biosal_coverage_distribution_destroy(struct thorium_actor *self)

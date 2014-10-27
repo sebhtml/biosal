@@ -984,11 +984,16 @@ void biosal_assembly_graph_builder_get_entry_count_reply(struct thorium_actor *s
 
     ++concrete_self->synchronized_graph_stores;
 
-    printf("synchronized_graph_stores %d/%d %" PRIu64 "/%" PRIu64 "\n",
+    if (concrete_self->synchronized_graph_stores % 100 == 0
+                    || concrete_self->synchronized_graph_stores ==
+                    (int)core_vector_size(&concrete_self->graph_stores)) {
+
+        printf("synchronized_graph_stores %d/%d %" PRIu64 "/%" PRIu64 "\n",
                     concrete_self->synchronized_graph_stores,
                     (int)core_vector_size(&concrete_self->graph_stores),
                     concrete_self->actual_kmer_count,
                     concrete_self->total_kmer_count);
+    }
 
     if (concrete_self->synchronized_graph_stores == core_vector_size(&concrete_self->graph_stores)) {
 
@@ -1010,7 +1015,6 @@ void biosal_assembly_graph_builder_get_entry_count_reply(struct thorium_actor *s
 
             thorium_actor_send_int(self, spawner, ACTION_SPAWN,
                             SCRIPT_COVERAGE_DISTRIBUTION);
-
         } else {
             /*
              * Otherwise, there are still some messages in transit.
