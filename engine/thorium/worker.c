@@ -527,7 +527,10 @@ void thorium_worker_send(struct thorium_worker *worker, struct thorium_message *
     }
 #endif
 
+    /*
     thorium_worker_enqueue_message(worker, message);
+    */
+    core_fast_queue_enqueue(&worker->output_outbound_message_queue, message);
 }
 
 void thorium_worker_start(struct thorium_worker *worker, int processor)
