@@ -42,6 +42,9 @@ struct thorium_transport {
     uint32_t flags;
     struct core_timer timer;
     uint64_t start_time;
+
+    int sent_message_count;
+    int received_message_count;
 };
 
 void thorium_transport_init(struct thorium_transport *self, struct thorium_node *node,
@@ -70,5 +73,8 @@ void thorium_transport_select_implementation(struct thorium_transport *self, int
 
 void thorium_transport_print(struct thorium_transport *self);
 void thorium_transport_print_event(struct thorium_transport *self, int type, struct thorium_message *message);
+
+int thorium_transport_received_message_count(struct thorium_transport *self);
+int thorium_transport_sent_message_count(struct thorium_transport *self);
 
 #endif

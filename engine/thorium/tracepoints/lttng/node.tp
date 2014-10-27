@@ -30,7 +30,6 @@ THORIUM_NODE_TRACEPOINT(run_loop_test_requests)
 THORIUM_NODE_TRACEPOINT(receive_message)
 THORIUM_NODE_TRACEPOINT(send_exit)
 THORIUM_NODE_TRACEPOINT(tick_exit)
-THORIUM_NODE_TRACEPOINT(tick_enter)
 THORIUM_NODE_TRACEPOINT(dispatch_message_exit)
 THORIUM_NODE_TRACEPOINT(inject_enter)
 THORIUM_NODE_TRACEPOINT(inject_exit)
@@ -106,3 +105,33 @@ TRACEPOINT_EVENT(
         ctf_integer(int, destination_actor, destination_actor)
     )
 )
+
+TRACEPOINT_EVENT(
+    thorium_node,
+    worker_pool_dequeue,
+    TP_ARGS(
+        int, node,
+        int, ring_size
+    ),
+    TP_FIELDS(
+        ctf_integer(int, node, node)
+        ctf_integer(int, ring_size, ring_size)
+    )
+)
+
+TRACEPOINT_EVENT(
+    thorium_node,
+    tick_enter,
+    TP_ARGS(
+        int, node, int, tick,
+        int, received, int, sent
+    ),
+    TP_FIELDS(
+        ctf_integer(int, node, node)
+        ctf_integer(int, tick, tick)
+        ctf_integer(int, received, received)
+        ctf_integer(int, sent, sent)
+    )
+)
+
+

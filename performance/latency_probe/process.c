@@ -10,7 +10,7 @@
 
 #define EVENT_COUNT 10000
 #define ACTORS_PER_WORKER 1000
-#define PERIOD 100
+#define PERIOD 500
 
 void process_init(struct thorium_actor *self);
 void process_destroy(struct thorium_actor *self);

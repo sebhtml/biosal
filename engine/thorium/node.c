@@ -112,8 +112,8 @@
  * Enable the regulator.
  */
 /*
-#define THORIUM_NODE_CONFIG_USE_REGULATOR
 */
+#define THORIUM_NODE_CONFIG_USE_REGULATOR
 
 struct thorium_node *thorium_node_global_self;
 
@@ -2173,7 +2173,9 @@ void thorium_node_run_loop(struct thorium_node *node)
 
     while (credits > 0) {
 
-        tracepoint(thorium_node, tick_enter, node->name, node->tick);
+        tracepoint(thorium_node, tick_enter, node->name, node->tick,
+                        thorium_transport_sent_message_count(&node->transport),
+                        thorium_transport_received_message_count(&node->transport));
 
         CORE_DEBUGGER_JITTER_DETECTION_START(node_main_loop);
 
@@ -2200,15 +2202,19 @@ void thorium_node_run_loop(struct thorium_node *node)
                                     core_memory_get_total_byte_count());
 
                     printf("thorium_node: node/%d MESSAGES"
+                                    " Tick: %d "
                                     " ReceivedMessageCount: %" PRIu64 ""
                                     " SentMessageCount: %" PRIu64 ""
                                     " BufferedInboundMessageCount: %d"
+                                    " BufferedOutboundMessageCount: %d"
                                     " ActiveRequestCount: %d"
                                     "\n",
                                     node->name,
+                                    node->tick,
                                     core_counter_get(&node->counter, CORE_COUNTER_RECEIVED_MESSAGES),
                                     core_counter_get(&node->counter, CORE_COUNTER_SENT_MESSAGES),
                                     thorium_worker_pool_buffered_message_count(&node->worker_pool),
+                                    thorium_worker_pool_outbound_ring_size(&node->worker_pool),
                                     thorium_transport_get_active_request_count(&node->transport)
                                     );
                 }
@@ -2801,15 +2807,19 @@ void thorium_node_regulator_run(struct thorium_node *self)
 #ifdef THORIUM_NODE_CONFIG_USE_REGULATOR
     int count;
     int minimum;
+    int threshold;
+    int outbound_message_count;
 
+    threshold = THORIUM_WORKER_POOL_OUTBOUND_RING_SIZE / 2;
     minimum = 512;
 
     count = thorium_worker_pool_buffered_message_count(&self->worker_pool);
+    outbound_message_count = thorium_worker_pool_outbound_ring_size(&self->worker_pool);
 
     /*
      * When the minimum is reached, activate the regulator.
      */
-    if (count >= minimum) {
+    if (count >= minimum || outbound_message_count >= threshold) {
 
         /*
          * First, check if the bit is not already set.

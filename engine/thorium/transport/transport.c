@@ -98,6 +98,9 @@ void thorium_transport_init(struct thorium_transport *self, struct thorium_node 
 
     core_timer_init(&self->timer);
     self->start_time = core_timer_get_nanoseconds(&self->timer);
+
+    self->sent_message_count = 0;
+    self->received_message_count = 0;
 }
 
 void thorium_transport_destroy(struct thorium_transport *self)
@@ -145,6 +148,7 @@ int thorium_transport_send(struct thorium_transport *self, struct thorium_messag
                         thorium_message_count(message));
 #endif
         ++self->active_request_count;
+        ++self->sent_message_count;
 
         if (CORE_BITMAP_GET_BIT(self->flags, FLAG_PRINT_TRANSPORT_EVENTS)) {
             thorium_transport_print_event(self, EVENT_TYPE_SEND, message);
@@ -199,6 +203,8 @@ int thorium_transport_receive(struct thorium_transport *self, struct thorium_mes
         if (CORE_BITMAP_GET_BIT(self->flags, FLAG_PRINT_TRANSPORT_EVENTS)) {
             thorium_transport_print_event(self, EVENT_TYPE_RECEIVE, message);
         }
+
+        ++self->received_message_count;
     }
 
     return value;
@@ -360,4 +366,14 @@ void thorium_transport_print_event(struct thorium_transport *self, int type, str
     printf("thorium_transport print_event time_nanoseconds= %" PRIu64 " type= %s source= %d destination= %d count= %d\n",
                     time, description,
                     source_rank, destination_rank, count);
+}
+
+int thorium_transport_sent_message_count(struct thorium_transport *self)
+{
+    return self->sent_message_count;
+}
+
+int thorium_transport_received_message_count(struct thorium_transport *self)
+{
+    return self->received_message_count;
 }

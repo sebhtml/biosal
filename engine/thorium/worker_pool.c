@@ -930,6 +930,11 @@ int thorium_worker_pool_dequeue_message(struct thorium_worker_pool *pool, struct
      * Pull message from the multiple-producer ring.
      */
     answer = core_fast_ring_pop_multiple_producers(&pool->outbound_message_ring, message);
+
+    if (answer) {
+        tracepoint(thorium_node, worker_pool_dequeue, pool->node->name,
+                        core_fast_ring_size_from_producer(&pool->outbound_message_ring));
+    }
 #else
 
     /*
