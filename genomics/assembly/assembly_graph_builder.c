@@ -949,6 +949,8 @@ void biosal_assembly_graph_builder_control_complexity(struct thorium_actor *self
 {
     struct biosal_assembly_graph_builder *concrete_self;
 
+    concrete_self = thorium_actor_concrete_actor(self);
+
     /*
      * Tell all classifiers to flush now.
      *
@@ -957,8 +959,6 @@ void biosal_assembly_graph_builder_control_complexity(struct thorium_actor *self
      */
     thorium_actor_send_range_empty(self, &concrete_self->block_classifiers,
                     ACTION_AGGREGATOR_FLUSH);
-
-    concrete_self = thorium_actor_concrete_actor(self);
 
     concrete_self->actual_kmer_count = 0;
     concrete_self->synchronized_graph_stores = 0;
