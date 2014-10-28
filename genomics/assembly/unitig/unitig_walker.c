@@ -410,6 +410,12 @@ void biosal_unitig_walker_start(struct thorium_actor *self, struct thorium_messa
     int graph;
     int source;
     int size;
+    int count;
+    int position;
+    int action;
+
+    action = thorium_message_action(message);
+    count = thorium_message_count(message);
 
 #if 0
     thorium_actor_send_reply_empty(self, ACTION_START_REPLY);
@@ -424,15 +430,28 @@ void biosal_unitig_walker_start(struct thorium_actor *self, struct thorium_messa
      */
     ++concrete_self->start_messages;
 
-    if (concrete_self->start_messages != 2) {
-        return;
-    }
-
     source = thorium_message_source(message);
     buffer = thorium_message_buffer(message);
     concrete_self->source = source;
 
-    core_vector_unpack(&concrete_self->graph_stores, buffer);
+    CORE_DEBUGGER_ASSERT_NOT_NULL(buffer);
+
+    /*
+     * This entry point is invoked by ACTION_START and also by
+     * ACTION_SET_CONSUMER.
+     */
+    if (action == ACTION_START) {
+        position = core_vector_unpack(&concrete_self->graph_stores, buffer);
+        CORE_DEBUGGER_ASSERT(position <= count);
+    }
+
+    /*
+     * wait for ACTION_SET_CONSUMER...
+     */
+    if (concrete_self->start_messages != 2) {
+        return;
+    }
+
     size = core_vector_size(&concrete_self->graph_stores);
 
     printf("%s/%d is ready to surf the graph (%d stores => writer/%d)!\n",
