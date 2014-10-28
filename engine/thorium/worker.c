@@ -554,7 +554,7 @@ void thorium_worker_send(struct thorium_worker *worker, struct thorium_message *
      *
      * Batching is also called aggregation or multiplexing.
      */
-    if (0 && count <= THORIUM_MULTIPLEXER_BUFFER_SIZE_FOR_SMALL_MESSAGES) {
+    if (1 && count <= THORIUM_MULTIPLEXER_BUFFER_SIZE_FOR_SMALL_MESSAGES) {
 
         /*
          * Queue the message for multiplexing.
