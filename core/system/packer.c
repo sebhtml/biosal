@@ -2,6 +2,7 @@
 #include "packer.h"
 
 #include <core/system/memory.h>
+#include <core/system/debugger.h>
 
 #include <string.h>
 #include <stdlib.h>
@@ -66,6 +67,10 @@ void core_packer_destroy(struct core_packer *self)
 
 int core_packer_process(struct core_packer *self, void *object, int bytes)
 {
+    CORE_DEBUGGER_ASSERT_NOT_NULL(self);
+    CORE_DEBUGGER_ASSERT_NOT_NULL(object);
+    CORE_DEBUGGER_ASSERT(bytes != 0);
+    CORE_DEBUGGER_ASSERT(bytes > 0);
 
 #ifdef CORE_PACKER_DEBUG
     printf("DEBUG ENTRY core_packer_process operation %d object %p bytes %d offset %d buffer %p\n",

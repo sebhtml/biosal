@@ -9,6 +9,9 @@
 #include <stdio.h>
 #include <string.h>
 
+#include <stdint.h>
+#include <inttypes.h>
+
 /*
 #define CORE_VECTOR_DEBUG
 */
@@ -226,6 +229,7 @@ int core_vector_pack_unpack(struct core_vector *self, void *buffer, int operatio
     int64_t bytes;
     int size;
     struct core_memory_pool *memory;
+    int byte_count;
 
     core_packer_init(&packer, operation, buffer);
 
@@ -266,7 +270,20 @@ int core_vector_pack_unpack(struct core_vector *self, void *buffer, int operatio
 
     if (self->size > 0) {
 
-        core_packer_process(&packer, self->data, self->size * self->element_size);
+        CORE_DEBUGGER_ASSERT(self->element_size > 0);
+
+        byte_count = self->size * self->element_size;
+
+#ifdef CORE_DEBUGGER_ENABLE_ASSERT
+        if (!(byte_count > 0)) {
+            printf("size %" PRId64 " element_size %d\n",
+                            self->size, self->element_size);
+        }
+#endif
+
+        CORE_DEBUGGER_ASSERT(byte_count > 0);
+
+        core_packer_process(&packer, self->data, byte_count);
     }
 
     bytes = core_packer_get_byte_count(&packer);
