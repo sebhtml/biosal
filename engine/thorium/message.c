@@ -384,3 +384,15 @@ void thorium_message_set_number(struct thorium_message *self, int number)
 {
     self->number = number;
 }
+
+void thorium_message_add_metadata(struct thorium_message *self)
+{
+    int count;
+    int metadata_size;
+    int all;
+
+    count = thorium_message_count(self);
+    metadata_size = thorium_message_metadata_size(self);
+    all = count + metadata_size;
+    thorium_message_set_count(self, all);
+}

@@ -1366,12 +1366,16 @@ void thorium_node_send(struct thorium_node *node, struct thorium_message *messag
                 int perform_multiplexing)
 {
     int name;
+    /*
     int metadata_size;
     int all;
     int count;
+    */
+    /*
     int worker;
     void *buffer;
     struct thorium_worker_buffer worker_buffer;
+    */
 
     tracepoint(thorium_node, send_enter, node->name, node->tick, thorium_message_destination(message));
 
@@ -1452,10 +1456,7 @@ void thorium_node_send(struct thorium_node *node, struct thorium_message *messag
         /*
          * Add metadata size.
          */
-        count = thorium_message_count(message);
-        metadata_size = thorium_message_metadata_size(message);
-        all = count + metadata_size;
-        thorium_message_set_count(message, all);
+        thorium_message_add_metadata(message);
 
 #ifdef TRANSPORT_DEBUG_ISSUE_594
     if (thorium_message_action(message) == 30202) {
@@ -1464,10 +1465,13 @@ void thorium_node_send(struct thorium_node *node, struct thorium_message *messag
     }
 #endif
 
+    /*
         if (!perform_multiplexing
                         || !thorium_message_multiplexer_multiplex(&node->multiplexer, message)) {
-            thorium_node_send_with_transport(node, message);
+                        */
+        thorium_node_send_with_transport(node, message);
 
+#if 0
         } else {
 
             /*
@@ -1479,6 +1483,7 @@ void thorium_node_send(struct thorium_node *node, struct thorium_message *messag
             thorium_node_inject_outbound_buffer(node, &worker_buffer);
             thorium_worker_buffer_destroy(&worker_buffer);
         }
+#endif
 
 #ifdef THORIUM_NODE_DEBUG_20140601_8
         if (thorium_message_action(message) == 1100) {
@@ -2321,8 +2326,6 @@ void thorium_node_run_loop(struct thorium_node *node)
         if (use_transport) {
 
             thorium_node_test_requests(node);
-
-            thorium_message_multiplexer_test(&node->multiplexer);
         }
 
         tracepoint(thorium_node, run_loop_test_requests, node->name, node->tick);

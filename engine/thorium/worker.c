@@ -130,6 +130,9 @@ int thorium_worker_has_actor(struct thorium_worker *self, int actor);
 
 int thorium_worker_publish_message(struct thorium_worker *self, struct thorium_message *message);
 
+int thorium_worker_enqueue_message_for_multiplexer(struct thorium_worker *self,
+                struct thorium_message *message);
+
 void thorium_worker_init(struct thorium_worker *worker, int name, struct thorium_node *node)
 {
     int capacity;
@@ -181,6 +184,14 @@ void thorium_worker_init(struct thorium_worker *worker, int name, struct thorium
     core_fast_ring_init(&worker->input_inbound_message_ring, capacity, sizeof(struct thorium_message));
 
     core_fast_queue_init(&worker->input_inbound_message_queue, sizeof(struct thorium_message));
+
+    /*
+     * Multiplexer stuff
+     */
+    core_fast_ring_init(&worker->input_message_ring_for_multiplexer, capacity, sizeof(struct thorium_message));
+    core_fast_ring_use_multiple_producers(&worker->input_message_ring_for_multiplexer);
+
+    core_fast_queue_init(&worker->output_outbound_message_queue_for_multiplexer, sizeof(struct thorium_message));
 
 #ifdef THORIUM_NODE_INJECT_CLEAN_WORKER_BUFFERS
     injected_buffer_ring_size = capacity;
@@ -310,6 +321,10 @@ void thorium_worker_init(struct thorium_worker *worker, int name, struct thorium
     thorium_worker_set_outbound_message_ring(worker, NULL);
 
     worker->last_outbound_message_block_operation = core_timer_get_nanoseconds(&worker->timer);
+
+    thorium_multiplexer_policy_init(&worker->multiplexer_policy);
+    thorium_message_multiplexer_init(&worker->multiplexer, node,
+                    &worker->multiplexer_policy);
 }
 
 void thorium_worker_destroy(struct thorium_worker *worker)
@@ -358,6 +373,9 @@ void thorium_worker_destroy(struct thorium_worker *worker)
 
     core_fast_ring_destroy(&worker->input_inbound_message_ring);
 
+    core_fast_ring_destroy(&worker->input_message_ring_for_multiplexer);
+    core_fast_queue_destroy(&worker->output_outbound_message_queue_for_multiplexer);
+
     core_fast_queue_destroy(&worker->input_inbound_message_queue);
 
 #ifdef THORIUM_NODE_INJECT_CLEAN_WORKER_BUFFERS
@@ -392,6 +410,9 @@ void thorium_worker_destroy(struct thorium_worker *worker)
     core_memory_pool_destroy(&worker->outbound_message_memory_pool);
 
     thorium_priority_assigner_destroy(&worker->assigner);
+
+    thorium_message_multiplexer_destroy(&worker->multiplexer);
+    thorium_multiplexer_policy_destroy(&worker->multiplexer_policy);
 }
 
 struct thorium_node *thorium_worker_node(struct thorium_worker *worker)
@@ -429,6 +450,8 @@ void thorium_worker_send(struct thorium_worker *worker, struct thorium_message *
 
     old_buffer = thorium_message_buffer(message);
 
+    count = thorium_message_count(message);
+
     /*
      * Allocate a buffer if the actor provided a NULL buffer or if it
      * provided its own buffer.
@@ -436,7 +459,6 @@ void thorium_worker_send(struct thorium_worker *worker, struct thorium_message *
     if (old_buffer == NULL
                     || old_buffer != worker->zero_copy_buffer) {
 
-        count = thorium_message_count(message);
         /* use slab allocator */
         buffer = thorium_worker_allocate(worker, count);
 
@@ -528,9 +550,26 @@ void thorium_worker_send(struct thorium_worker *worker, struct thorium_message *
 #endif
 
     /*
+     * Small messages use a different delivery path in which batching is performed.
+     *
+     * Batching is also called aggregation or multiplexing.
+     */
+    if (0 && count <= THORIUM_MULTIPLEXER_BUFFER_SIZE_FOR_SMALL_MESSAGES) {
+
+        /*
+         * Queue the message for multiplexing.
+         */
+        core_fast_queue_enqueue(&worker->output_outbound_message_queue_for_multiplexer, message);
+    } else {
+    /*
     thorium_worker_enqueue_message(worker, message);
     */
-    core_fast_queue_enqueue(&worker->output_outbound_message_queue, message);
+        /*
+         * The message will use the fast path for delivery
+         * because it is large enough.
+         */
+        core_fast_queue_enqueue(&worker->output_outbound_message_queue, message);
+    }
 }
 
 void thorium_worker_start(struct thorium_worker *worker, int processor)
@@ -1332,6 +1371,9 @@ void thorium_worker_run(struct thorium_worker *worker)
     struct thorium_message other_message;
     int name;
 
+    int worker_index;
+    struct thorium_worker *worker_for_multiplexer;
+
 #ifdef THORIUM_NODE_INJECT_CLEAN_WORKER_BUFFERS
     void *buffer;
 #endif
@@ -1539,6 +1581,54 @@ void thorium_worker_run(struct thorium_worker *worker)
 #endif
 
     thorium_worker_do_backoff(worker);
+
+    /*
+     * Transfer messages to multiplex. This process will be done
+     * by another worker.
+     */
+    if (core_fast_queue_dequeue(&worker->output_outbound_message_queue_for_multiplexer,
+        &other_message)) {
+
+        /*
+        destination_node = thorium_message_destination_node(&other_message);
+
+        worker_index = destination_node % worker->worker_count;
+        */
+        worker_index = 0;
+
+        worker_for_multiplexer = worker->workers + worker_index;
+
+        if (!thorium_worker_enqueue_message_for_multiplexer(worker_for_multiplexer,
+                                &other_message)) {
+
+            /*
+             * Put it back in the queue if the ring is full already.
+             */
+            core_fast_queue_enqueue(&worker->output_outbound_message_queue_for_multiplexer,
+                            &other_message);
+        }
+    }
+
+    /*
+     * Consume messages for multiplexing.
+     */
+    if (core_fast_ring_pop_multiple_producers(&worker->input_message_ring_for_multiplexer,
+                            &other_message)) {
+
+        /*
+         * Put the message in the outbound ring.
+         */
+        if (!core_fast_ring_push_multiple_producers(worker->output_outbound_message_ring_multiple,
+                                &other_message, worker->name)) {
+
+            /*
+             * Buffer the message locally if the outbound ring is full.
+             */
+            core_fast_queue_enqueue(&worker->output_outbound_message_queue, &other_message);
+        }
+    }
+
+    thorium_message_multiplexer_test(&worker->multiplexer);
 
     tracepoint(thorium_worker, run_exit, worker->name, worker->tick_count);
 }
@@ -2138,3 +2228,20 @@ void thorium_worker_flush_outbound_message_block(struct thorium_worker *self)
     }
 }
 #endif
+
+int thorium_worker_enqueue_message_for_multiplexer(struct thorium_worker *self,
+                struct thorium_message *message)
+{
+    return core_fast_ring_push_multiple_producers(&self->input_message_ring_for_multiplexer,
+                    message, self->name);
+}
+
+void thorium_worker_set_siblings(struct thorium_worker *self,
+                struct thorium_worker *workers, int worker_count)
+{
+    /*
+     * Fetch some numbers for the node
+     */
+    self->workers = workers;
+    self->worker_count = worker_count;
+}

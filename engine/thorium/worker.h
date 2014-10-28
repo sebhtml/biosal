@@ -15,6 +15,9 @@
 #include "scheduler/scheduler.h"
 #include "scheduler/priority_assigner.h"
 
+#include "transport/message_multiplexer.h"
+#include "transport/multiplexer_policy.h"
+
 #include <core/structures/fast_ring.h>
 #include <core/structures/fast_queue.h>
 #include <core/structures/set.h>
@@ -105,6 +108,9 @@ struct thorium_worker {
     struct core_buffered_file_writer load_profile_writer;
     struct thorium_node *node;
 
+    struct thorium_worker *workers;
+    int worker_count;
+
     /*
     struct thorium_message_block message_block;
     */
@@ -127,6 +133,11 @@ struct thorium_worker {
      * ring.
      */
     struct core_fast_ring input_inbound_message_ring;
+
+    struct core_fast_ring input_message_ring_for_multiplexer;
+    struct core_fast_queue output_outbound_message_queue_for_multiplexer;
+    struct thorium_message_multiplexer multiplexer;
+    struct thorium_multiplexer_policy multiplexer_policy;
 
     struct core_fast_queue input_inbound_message_queue;
 
@@ -298,5 +309,7 @@ int thorium_worker_get_input_message_ring_size(struct thorium_worker *self);
 
 void thorium_worker_set_outbound_message_ring(struct thorium_worker *self, struct core_fast_ring *ring);
 void thorium_worker_set_triage_message_ring(struct thorium_worker *self, struct core_fast_ring *ring);
+void thorium_worker_set_siblings(struct thorium_worker *self,
+                struct thorium_worker *workers, int worker_count);
 
 #endif

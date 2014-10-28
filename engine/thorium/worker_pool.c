@@ -255,6 +255,9 @@ void thorium_worker_pool_create_workers(struct thorium_worker_pool *pool)
 #ifdef THORIUM_WORKER_POOL_USE_COUNT_CACHE
         core_vector_set_int(&pool->message_count_cache, i, 0);
 #endif
+
+        thorium_worker_set_siblings(worker, pool->worker_cache,
+                        pool->worker_count);
     }
 }
 
