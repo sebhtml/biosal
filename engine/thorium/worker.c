@@ -631,6 +631,11 @@ void thorium_worker_start(struct thorium_worker *worker, int processor)
 void *thorium_worker_main(void *worker1)
 {
     struct thorium_worker *worker;
+    int credits;
+    int starting_credits;
+
+    starting_credits = 1024;
+    credits = starting_credits;
 
     worker = (struct thorium_worker*)worker1;
 
@@ -639,7 +644,7 @@ void *thorium_worker_main(void *worker1)
     printf("Starting worker thread\n");
 #endif
 
-    while (!CORE_BITMAP_GET_BIT(worker->flags, FLAG_DEAD)) {
+    while (credits--) {
 
         worker->last_elapsed_nanoseconds = 0;
 
@@ -652,7 +657,14 @@ void *thorium_worker_main(void *worker1)
         CORE_DEBUGGER_JITTER_DETECTION_END(worker_main_loop, worker->last_elapsed_nanoseconds);
 
         ++worker->tick_count;
+
+        if (credits == 0) {
+            if (!CORE_BITMAP_GET_BIT(worker->flags, FLAG_DEAD))
+                credits = starting_credits;
+        }
     }
+
+    printf("WORKER_THREAD EXIT\n");
 
     return NULL;
 }
