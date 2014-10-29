@@ -292,9 +292,11 @@ void spate_ask_to_stop(struct thorium_actor *self, struct thorium_message *messa
 
     if (concrete_self->is_leader) {
 
-        thorium_actor_send_empty(self, concrete_self->assembly_graph_builder,
+        if (concrete_self->assembly_graph_builder != THORIUM_ACTOR_NOBODY)
+            thorium_actor_send_empty(self, concrete_self->assembly_graph_builder,
                         ACTION_ASK_TO_STOP);
-        thorium_actor_send_empty(self, concrete_self->manager_for_sequence_stores,
+        if (concrete_self->assembly_graph_builder != THORIUM_ACTOR_NOBODY)
+            thorium_actor_send_empty(self, concrete_self->manager_for_sequence_stores,
                         ACTION_ASK_TO_STOP);
 
         if (!spate_must_print_help(self)) {
