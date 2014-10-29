@@ -2245,3 +2245,10 @@ void thorium_worker_set_siblings(struct thorium_worker *self,
     self->workers = workers;
     self->worker_count = worker_count;
 }
+
+int thorium_worker_enqueue_outbound_message(struct thorium_worker *self,
+                struct thorium_message *message)
+{
+    return core_fast_queue_enqueue(&self->output_outbound_message_queue,
+                    message);
+}

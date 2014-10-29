@@ -311,5 +311,7 @@ void thorium_worker_set_outbound_message_ring(struct thorium_worker *self, struc
 void thorium_worker_set_triage_message_ring(struct thorium_worker *self, struct core_fast_ring *ring);
 void thorium_worker_set_siblings(struct thorium_worker *self,
                 struct thorium_worker *workers, int worker_count);
+int thorium_worker_enqueue_outbound_message(struct thorium_worker *self,
+                struct thorium_message *message);
 
 #endif

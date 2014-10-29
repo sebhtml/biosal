@@ -115,6 +115,8 @@ void thorium_message_multiplexer_init(struct thorium_message_multiplexer *self,
                         self->buffer_size_in_bytes, self->timeout_in_nanoseconds);
         }
     }
+
+    thorium_message_multiplexer_set_worker(self, NULL);
 }
 
 void thorium_message_multiplexer_destroy(struct thorium_message_multiplexer *self)
@@ -265,8 +267,6 @@ int thorium_message_multiplexer_multiplex(struct thorium_message_multiplexer *se
         printf("thorium_message_multiplexer: must FLUSH thorium_message_multiplexer_multiplex required_size %d new_size %d maximum_size %d\n",
                     required_size, new_size, maximum_size);
 #endif
-
-
 
         thorium_message_multiplexer_flush(self, destination_node, FORCE_YES_SIZE);
         current_size = real_multiplexed_buffer->current_size;
@@ -481,7 +481,8 @@ void thorium_message_multiplexer_flush(struct thorium_message_multiplexer *self,
 #endif
 
     thorium_message_init(&message, tag, count, buffer);
-    thorium_node_send_to_node(self->node, index, &message);
+
+    thorium_worker_enqueue_outbound_message(self->worker, &message);
 
     ++self->real_message_count;
     thorium_message_destroy(&message);
@@ -497,3 +498,8 @@ int thorium_message_multiplexer_is_disabled(struct thorium_message_multiplexer *
     return CORE_BITMAP_GET_BIT(self->flags, FLAG_DISABLED);
 }
 
+void thorium_message_multiplexer_set_worker(struct thorium_message_multiplexer *self,
+                struct thorium_worker *worker)
+{
+    self->worker = worker;
+}

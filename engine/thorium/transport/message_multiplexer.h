@@ -3,6 +3,7 @@
 #define THORIUM_MESSAGE_MULTIPLEXER_H
 
 struct thorium_node;
+struct thorium_worker;
 struct thorium_message;
 
 #include <core/structures/vector.h>
@@ -50,6 +51,7 @@ struct thorium_message_multiplexer {
     struct core_set buffers_with_content;
 
     struct thorium_node *node;
+    struct thorium_worker *worker;
     char *big_buffer;
 
     uint32_t flags;
@@ -102,5 +104,7 @@ int thorium_message_multiplexer_demultiplex(struct thorium_message_multiplexer *
 void thorium_message_multiplexer_test(struct thorium_message_multiplexer *self);
 
 int thorium_message_multiplexer_is_disabled(struct thorium_message_multiplexer *self);
+void thorium_message_multiplexer_set_worker(struct thorium_message_multiplexer *self,
+                struct thorium_worker *worker);
 
 #endif
