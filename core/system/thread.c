@@ -30,6 +30,9 @@
 /*
 #define CORE_THREAD_SET_AFFINITY
 */
+
+static void core_set_no_affinity();
+
 void core_thread_init(struct core_thread *thread, void *(*function)(void *), void *argument)
 {
     thread->function = function;
@@ -137,6 +140,18 @@ void core_thread_join(struct core_thread *thread)
 void core_set_affinity(int processor)
 {
     int set_affinity;
+
+    /*
+     * By default, OpenMPI 1.8.1 and after binds processes to cores.
+     * This means that any thread of the process will also be binded to
+     * the same core, which is not a good idea.
+     *
+     * The code below is a workaround for this.
+     */
+
+#if defined(__linux__)
+    core_set_no_affinity();
+#endif
 
     set_affinity = 0;
 
@@ -271,4 +286,27 @@ void core_thread_signal(struct core_thread *thread)
 uint64_t core_thread_get_wake_up_count(struct core_thread *thread)
 {
     return thread->wake_up_event_count;
+}
+
+static void core_set_no_affinity()
+{
+#ifdef __linux__
+    /*
+     * This code is Linux-specific.
+     */
+    cpu_set_t mask;
+    int cpu_count;
+    int i;
+
+    CPU_ZERO(&mask);
+
+    cpu_count = sysconf(_SC_NPROCESSORS_ONLN);
+
+    for (i = 0; i < cpu_count; ++i) {
+        CPU_SET(i, &mask);
+    }
+
+    sched_setaffinity(0, sizeof(mask), &mask);
+
+#endif
 }
