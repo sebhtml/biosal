@@ -3,6 +3,7 @@
 
 #include <core/system/memory.h>
 #include <core/system/atomic.h>
+#include <core/system/debugger.h>
 
 #include <engine/thorium/tracepoints/tracepoints.h>
 
@@ -28,8 +29,10 @@ uint64_t core_fast_ring_increment(struct core_fast_ring *self, uint64_t index);
 int core_fast_ring_get_next_power_of_two(int value);
 uint64_t core_fast_ring_mock(struct core_fast_ring *self);
 
-int core_fast_ring_push_compare_and_swap(struct core_fast_ring *self, void *element, int worker);
-int core_fast_ring_pop_and_contend(struct core_fast_ring *self, void *element);
+#ifdef CAS
+static int core_fast_ring_push_compare_and_swap(struct core_fast_ring *self, void *element, int worker);
+static int core_fast_ring_pop_and_contend(struct core_fast_ring *self, void *element);
+#endif
 
 void core_fast_ring_init(struct core_fast_ring *self, int capacity, int cell_size)
 {
@@ -306,6 +309,8 @@ void core_fast_ring_update_tail_cache(struct core_fast_ring *self)
 
 int core_fast_ring_is_empty_from_consumer(struct core_fast_ring *self)
 {
+    CORE_DEBUGGER_ASSERT_NOT_NULL(self);
+
 #ifdef CORE_FAST_RING_USE_CACHE
     if (self->tail_cache == self->head) {
         core_fast_ring_update_tail_cache(self);
@@ -328,7 +333,8 @@ int core_fast_ring_empty(struct core_fast_ring *self)
     return core_fast_ring_size_from_producer(self) == 0;
 }
 
-int core_fast_ring_push_compare_and_swap(struct core_fast_ring *self, void *element, int worker)
+#ifdef CAS
+static int core_fast_ring_push_compare_and_swap(struct core_fast_ring *self, void *element, int worker)
 {
     void *cell;
     int claimed_tail;
@@ -422,7 +428,7 @@ int core_fast_ring_push_compare_and_swap(struct core_fast_ring *self, void *elem
     return 1;
 }
 
-int core_fast_ring_pop_and_contend(struct core_fast_ring *self, void *element)
+static int core_fast_ring_pop_and_contend(struct core_fast_ring *self, void *element)
 {
     void *cell;
     int marker;
@@ -504,6 +510,7 @@ int core_fast_ring_pop_and_contend(struct core_fast_ring *self, void *element)
 
     return 1;
 }
+#endif
 
 void core_fast_ring_use_multiple_producers(struct core_fast_ring *self)
 {
@@ -542,6 +549,6 @@ int core_fast_ring_pop_multiple_producers(struct core_fast_ring *self, void *ele
 #ifdef CORE_RING_USE_LOCK_FOR_MULTIPLE_PRODUCERS
     return core_fast_ring_pop_from_consumer(self, element);
 #else
-    return core_fast_ring_pop_and_contend(self, element);
+    return core_fast_ring_pop_and_contend_foo(self, element);
 #endif
 }
