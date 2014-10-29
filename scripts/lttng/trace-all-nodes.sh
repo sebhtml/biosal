@@ -3,7 +3,7 @@
 duration=1
 
 lttng create
-lttng enable-event -u thorium_node:* 
+lttng enable-event -u thorium_node:*
 echo "Tracing for $duration seconds"
 lttng start
 sleep $duration
