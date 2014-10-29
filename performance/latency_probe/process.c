@@ -8,14 +8,14 @@
 #include <inttypes.h>
 #include <stdint.h>
 
-/*
 #define EVENT_COUNT 10000
 #define ACTORS_PER_WORKER 1000
 #define PERIOD 500
-*/
+/*
 #define EVENT_COUNT 100
 #define ACTORS_PER_WORKER 10
 #define PERIOD 5
+*/
 
 void process_init(struct thorium_actor *self);
 void process_destroy(struct thorium_actor *self);
@@ -68,12 +68,14 @@ void process_receive(struct thorium_actor *self, struct thorium_message *message
     struct process *concrete_self;
     struct core_vector actors;
     int name;
+    int count;
 
     concrete_self = (struct process *)thorium_actor_concrete_actor(self);
     action = thorium_message_action(message);
     buffer = thorium_message_buffer(message);
     source = thorium_message_source(message);
     name = thorium_actor_name(self);
+    count = thorium_message_count(message);
 
     if (action == ACTION_START) {
 
@@ -152,6 +154,17 @@ void process_receive(struct thorium_actor *self, struct thorium_message *message
         process_send_ping(self);
 
     } else if (action == ACTION_PING) {
+
+#ifdef CORE_DEBUGGER_ENABLE_ASSERT
+        if (count != 0) {
+            printf("Error, count is %d but should be %d.\n",
+                            count, 0);
+
+            thorium_message_print(message);
+        }
+#endif
+
+        CORE_DEBUGGER_ASSERT_IS_EQUAL_INT(count, 0);
 
         thorium_actor_send_reply_empty(self, ACTION_PING_REPLY);
 

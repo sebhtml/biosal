@@ -14,6 +14,7 @@
 #define THORIUM_MESSAGE_TYPE_WORKER_OUTBOUND    3
 
 #define THORIUM_MESSAGE_INVALID_ACTION          0x00000000
+#define ACTION_INVALID THORIUM_MESSAGE_INVALID_ACTION
 
 /*
  * Use tracepoints to analyze the life cycle of messages.

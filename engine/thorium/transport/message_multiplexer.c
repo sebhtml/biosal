@@ -388,6 +388,18 @@ int thorium_message_multiplexer_demultiplex(struct thorium_message_multiplexer *
                         source_node, destination_node);
 
         thorium_node_prepare_received_message(self->node, &new_message);
+
+#ifdef CORE_DEBUGGER_ENABLE_ASSERT
+        if (thorium_message_action(&new_message) == ACTION_INVALID) {
+            printf("Error invalid action DEMUL Multiplexer position %d count %d\n",
+                            position, count);
+        }
+#endif
+
+        CORE_DEBUGGER_ASSERT(thorium_message_action(&new_message) != ACTION_INVALID);
+
+        thorium_message_print(&new_message);
+
         thorium_node_dispatch_message(self->node, &new_message);
 
         /*

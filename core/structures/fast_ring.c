@@ -112,6 +112,9 @@ int core_fast_ring_push_from_producer(struct core_fast_ring *self, void *element
 {
     void *cell;
 
+    CORE_DEBUGGER_ASSERT_NOT_NULL(element);
+    CORE_DEBUGGER_ASSERT(self->cell_size > 0);
+
     if (core_fast_ring_is_full_from_producer(self)) {
         return 0;
     }

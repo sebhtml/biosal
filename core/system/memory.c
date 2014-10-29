@@ -561,6 +561,15 @@ size_t core_memory_normalize_segment_length_page_size(size_t size)
 
 void *core_memory_copy(void *destination, const void *source, size_t count)
 {
+#ifdef CORE_DEBUGGER_ASSERT
+    if (destination == NULL)
+        printf("Error destination is NULL\n");
+    if (source == NULL)
+        printf("Error source is NULL\n");
+    if (count < 1)
+        printf("Error count is %zu\n", count);
+#endif
+
     CORE_DEBUGGER_ASSERT(destination != NULL);
     CORE_DEBUGGER_ASSERT(source != NULL);
     CORE_DEBUGGER_ASSERT(count > 0);

@@ -2652,17 +2652,16 @@ void thorium_node_recycle_message(struct thorium_node *self, struct thorium_mess
 
 void thorium_node_prepare_received_message(struct thorium_node *self, struct thorium_message *message)
 {
+        /*
     int metadata_size;
     int count;
+    */
 
     /*
      * Remove the metadata from the count because
      * actors don't need that.
      */
-    count = thorium_message_count(message);
-    metadata_size = thorium_message_metadata_size(message);
-    count -= metadata_size;
-    thorium_message_set_count(message, count);
+    thorium_message_remove_metadata(message);
     thorium_message_read_metadata(message);
     thorium_node_resolve(self, message);
 }
