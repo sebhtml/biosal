@@ -454,6 +454,16 @@ void thorium_actor_send(struct thorium_actor *self, int name, struct thorium_mes
 {
     int source;
 
+    CORE_DEBUGGER_ASSERT(name != THORIUM_ACTOR_NOBODY);
+
+    /*
+     * Can not send a message to nobody.
+     *
+     * This is an issue in the calling code.
+     */
+    if (name == THORIUM_ACTOR_NOBODY)
+        return;
+
     /*
      * Assign a number to the message.
      * Message numbers are unique within any given actor.
