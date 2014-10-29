@@ -13,8 +13,8 @@
 #define ACTORS_PER_WORKER 1000
 #define PERIOD 500
 */
-#define EVENT_COUNT 100
-#define ACTORS_PER_WORKER 10
+#define EVENT_COUNT 1
+#define ACTORS_PER_WORKER 1
 #define PERIOD 5
 
 void process_init(struct thorium_actor *self);
