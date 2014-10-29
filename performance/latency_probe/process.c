@@ -7,15 +7,15 @@
 #include <stdio.h>
 #include <inttypes.h>
 #include <stdint.h>
+/*
 
 #define EVENT_COUNT 10000
 #define ACTORS_PER_WORKER 1000
 #define PERIOD 500
-/*
+*/
 #define EVENT_COUNT 100
 #define ACTORS_PER_WORKER 10
 #define PERIOD 5
-*/
 
 void process_init(struct thorium_actor *self);
 void process_destroy(struct thorium_actor *self);

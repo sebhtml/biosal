@@ -212,6 +212,8 @@ int thorium_message_multiplexer_multiplex(struct thorium_message_multiplexer *se
 
     action = thorium_message_action(message);
 
+    CORE_DEBUGGER_ASSERT(action != ACTION_INVALID);
+
 #ifdef THORIUM_MULTIPLEXER_USE_ACTIONS_TO_SKIP
     /*
      * Don't multiplex already-multiplexed messages.
@@ -226,6 +228,11 @@ int thorium_message_multiplexer_multiplex(struct thorium_message_multiplexer *se
     required_size = sizeof(count) + count;
     buffer = thorium_message_buffer(message);
     destination_actor = thorium_message_destination(message);
+
+#ifdef DEBUG_MULTIPLEXER
+    printf("DEBUG multiplex count %d required_size %d action %x\n",
+                    count, required_size, action);
+#endif
 
     /*
      * Don't multiplex non-actor messages.
@@ -391,14 +398,13 @@ int thorium_message_multiplexer_demultiplex(struct thorium_message_multiplexer *
 
 #ifdef CORE_DEBUGGER_ENABLE_ASSERT
         if (thorium_message_action(&new_message) == ACTION_INVALID) {
-            printf("Error invalid action DEMUL Multiplexer position %d count %d\n",
-                            position, count);
+            printf("Error invalid action DEMUL Multiplexer position %d count %d new_count %d\n",
+                            position, count, new_count);
+            thorium_message_print(&new_message);
         }
 #endif
 
         CORE_DEBUGGER_ASSERT(thorium_message_action(&new_message) != ACTION_INVALID);
-
-        thorium_message_print(&new_message);
 
         thorium_node_dispatch_message(self->node, &new_message);
 

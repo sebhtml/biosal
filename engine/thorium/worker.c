@@ -566,9 +566,45 @@ void thorium_worker_send(struct thorium_worker *worker, struct thorium_message *
     if (enable_multiplexer && count <= THORIUM_MULTIPLEXER_BUFFER_SIZE_FOR_SMALL_MESSAGES) {
 
         /*
-         * Queue the message for multiplexing.
+         * Before enqueuing the outbound message for multiplexing,
+         * 3 tasks must be performed:
+         *
+         * - its metadata must be written into its buffer;
+         * - the count must be increased to include the metadata;
+         * - the message must be resolved.
+         *
+         * Usually, the metadata is written inside thorium_worker_send since any
+         * actor message will be sent from this function in the first place.
          */
-        core_fast_queue_enqueue(&worker->output_outbound_message_queue_for_multiplexer, message);
+
+            /*
+        */
+
+        /*
+         * Set nodes for the message.
+         */
+        thorium_node_resolve(worker->node, message);
+
+        /*
+        thorium_message_remove_metadata(message);
+        */
+
+        if (thorium_message_destination_node(message) == thorium_message_source_node(message)) {
+
+            /*
+             * Don't multiplex local messages.
+             */
+            core_fast_queue_enqueue(&worker->output_outbound_message_queue,
+                            message);
+        } else {
+
+            thorium_message_add_metadata(message);
+
+            /*
+             * Queue the message for multiplexing.
+             */
+            core_fast_queue_enqueue(&worker->output_outbound_message_queue_for_multiplexer, message);
+        }
     } else {
     /*
     thorium_worker_enqueue_message(worker, message);
@@ -1607,32 +1643,7 @@ void thorium_worker_run(struct thorium_worker *worker)
 
         worker_for_multiplexer = worker->workers + worker_index;
 
-        /*
-         * Before enqueuing the outbound message for multiplexing,
-         * 3 tasks must be performed:
-         *
-         * - its metadata must be written into its buffer;
-         * - the count must be increased to include the metadata;
-         * - the message must be resolved.
-         *
-         * Usually, the metadata is written inside thorium_worker_send since any
-         * actor message will be sent from this function in the first place.
-         */
-
-        thorium_message_add_metadata(&other_message);
-
-        /*
-         * Set nodes for the message.
-         */
-        thorium_node_resolve(worker->node, &other_message);
-
-        if (thorium_message_destination_node(&other_message) == thorium_message_source_node(&other_message)) {
-
-            thorium_message_remove_metadata(&other_message);
-            core_fast_queue_enqueue(&worker->output_outbound_message_queue,
-                            &other_message);
-
-        } else if (!thorium_worker_enqueue_message_for_multiplexer(worker_for_multiplexer,
+        if (!thorium_worker_enqueue_message_for_multiplexer(worker_for_multiplexer,
                                 &other_message)) {
 
             /*
