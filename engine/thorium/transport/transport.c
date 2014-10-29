@@ -141,7 +141,7 @@ int thorium_transport_send(struct thorium_transport *self, struct thorium_messag
     if (value) {
 
 #ifdef THORIUM_TRANSPORT_DEBUG
-        printf("TRANSPORT SEND Source %d Destination %d Tag %d Count %d\n",
+        printf("TRANSPORT SEND Source %d Destination %d Action %x Count %d\n",
                         thorium_message_source_node(message),
                         thorium_message_destination_node(message),
                         thorium_message_action(message),
@@ -193,7 +193,7 @@ int thorium_transport_receive(struct thorium_transport *self, struct thorium_mes
         tracepoint(thorium_message, transport_receive, message);
 
 #ifdef THORIUM_TRANSPORT_DEBUG
-        printf("TRANSPORT RECEIVE Source %d Destination %d Tag %d Count %d\n",
+        printf("TRANSPORT RECEIVE Source %d Destination %d Action %x Count %d\n",
                         thorium_message_source_node(message),
                         thorium_message_destination_node(message),
                         thorium_message_action(message),

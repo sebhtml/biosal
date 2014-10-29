@@ -296,8 +296,8 @@ void thorium_worker_pool_stop(struct thorium_worker_pool *pool)
      */
 
 #ifdef THORIUM_WORKER_POOL_DEBUG
-    printf("Stop workers\n");
 #endif
+    printf("Stop workers\n");
 
     for (i = 0; i < pool->worker_count; i++) {
         thorium_worker_stop(thorium_worker_pool_get_worker(pool, i));

@@ -268,6 +268,8 @@ int thorium_message_multiplexer_multiplex(struct thorium_message_multiplexer *se
         return 0;
     }
 
+    printf("MULTIPLEX_MESSAGE\n");
+
     new_size = current_size + required_size;
 
     /*
@@ -369,6 +371,8 @@ int thorium_message_multiplexer_demultiplex(struct thorium_message_multiplexer *
         return 0;
     }
 
+    printf("MULTIPLEXER demultiplex\n");
+
     messages = 0;
     tracepoint(thorium_node, demultiplex_enter, self->node->name,
                     self->node->tick, messages);
@@ -405,6 +409,8 @@ int thorium_message_multiplexer_demultiplex(struct thorium_message_multiplexer *
 #endif
 
         CORE_DEBUGGER_ASSERT(thorium_message_action(&new_message) != ACTION_INVALID);
+
+        printf("DEMULTIPLEX_MESSAGE\n");
 
         thorium_node_dispatch_message(self->node, &new_message);
 
@@ -463,6 +469,7 @@ void thorium_message_multiplexer_test(struct thorium_message_multiplexer *self)
 
     while (core_set_iterator_get_next_value(&iterator, &index)) {
 
+        printf("MULTIPLEXER FLUSH buffer %d\n", index);
         thorium_message_multiplexer_flush(self, index, FORCE_YES_TIME);
     }
 
@@ -546,6 +553,8 @@ void thorium_message_multiplexer_flush(struct thorium_message_multiplexer *self,
      * Make a copy of the buffer because the multiplexer does not have communication buffers.
      */
     thorium_worker_enqueue_outbound_message(self->worker, &message);
+
+    printf("MULTIPLEXER FLUSH\n");
 
     ++self->real_message_count;
     thorium_message_destroy(&message);
