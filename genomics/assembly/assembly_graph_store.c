@@ -985,6 +985,12 @@ void biosal_assembly_graph_store_get_vertex(struct thorium_actor *self, struct t
         position += thorium_message_unpack_int(message, position, &path);
     }
 
+#ifdef CORE_DEBUGGER_ENABLE_ASSERT
+    if (position != count) {
+        printf("Error graph_store_get_vertex position %d count %d\n",
+                        position, count);
+    }
+#endif
     CORE_DEBUGGER_ASSERT_IS_EQUAL_INT(position, count);
     CORE_DEBUGGER_ASSERT(position == count);
 
