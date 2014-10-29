@@ -325,6 +325,12 @@ void thorium_worker_init(struct thorium_worker *worker, int name, struct thorium
     thorium_multiplexer_policy_init(&worker->multiplexer_policy);
     thorium_message_multiplexer_init(&worker->multiplexer, node,
                     &worker->multiplexer_policy);
+
+    /*
+     * Set the callback object for flushing outbound messages
+     * somewhere.
+     */
+    thorium_message_multiplexer_set_worker(&worker->multiplexer, worker);
 }
 
 void thorium_worker_destroy(struct thorium_worker *worker)
@@ -426,11 +432,14 @@ void thorium_worker_send(struct thorium_worker *worker, struct thorium_message *
     int count;
     void *old_buffer;
     int action;
+    int enable_multiplexer;
 
 #ifdef THORIUM_WORKER_SEND_TO_LOCAL_ACTOR
     int destination;
     struct thorium_actor *destination_actor;
 #endif
+
+    enable_multiplexer = 0;
 
     tracepoint(thorium_message, worker_send, message);
 
@@ -483,7 +492,7 @@ void thorium_worker_send(struct thorium_worker *worker, struct thorium_message *
     }
 
     /*
-     * Always write metadata.
+     * Always write metadata for any actor message.
      */
     thorium_message_write_metadata(message);
 
@@ -554,7 +563,7 @@ void thorium_worker_send(struct thorium_worker *worker, struct thorium_message *
      *
      * Batching is also called aggregation or multiplexing.
      */
-    if (1 && count <= THORIUM_MULTIPLEXER_BUFFER_SIZE_FOR_SMALL_MESSAGES) {
+    if (enable_multiplexer && count <= THORIUM_MULTIPLEXER_BUFFER_SIZE_FOR_SMALL_MESSAGES) {
 
         /*
          * Queue the message for multiplexing.
@@ -1598,7 +1607,32 @@ void thorium_worker_run(struct thorium_worker *worker)
 
         worker_for_multiplexer = worker->workers + worker_index;
 
-        if (!thorium_worker_enqueue_message_for_multiplexer(worker_for_multiplexer,
+        /*
+         * Before enqueuing the outbound message for multiplexing,
+         * 3 tasks must be performed:
+         *
+         * - its metadata must be written into its buffer;
+         * - the count must be increased to include the metadata;
+         * - the message must be resolved.
+         *
+         * Usually, the metadata is written inside thorium_worker_send since any
+         * actor message will be sent from this function in the first place.
+         */
+
+        thorium_message_add_metadata(&other_message);
+
+        /*
+         * Set nodes for the message.
+         */
+        thorium_node_resolve(worker->node, &other_message);
+
+        if (thorium_message_destination_node(&other_message) == thorium_message_source_node(&other_message)) {
+
+            thorium_message_remove_metadata(&other_message);
+            core_fast_queue_enqueue(&worker->output_outbound_message_queue,
+                            &other_message);
+
+        } else if (!thorium_worker_enqueue_message_for_multiplexer(worker_for_multiplexer,
                                 &other_message)) {
 
             /*
@@ -1616,15 +1650,29 @@ void thorium_worker_run(struct thorium_worker *worker)
                             &other_message)) {
 
         /*
-         * Put the message in the outbound ring.
+         * Multiplex the message.
          */
-        if (!core_fast_ring_push_multiple_producers(worker->output_outbound_message_ring_multiple,
+        if (thorium_message_multiplexer_multiplex(&worker->multiplexer,
+                                &other_message)) {
+            /*
+             * The message must be recycled now.
+             * It will be sent to its destination.
+             */
+
+            thorium_worker_enqueue_message_for_triage(worker, &other_message);
+
+        } else {
+            /*
+             * Otherwise, this is a regular outbound message.
+             */
+            if (!core_fast_ring_push_multiple_producers(worker->output_outbound_message_ring_multiple,
                                 &other_message, worker->name)) {
 
-            /*
-             * Buffer the message locally if the outbound ring is full.
-             */
-            core_fast_queue_enqueue(&worker->output_outbound_message_queue, &other_message);
+                /*
+                 * Buffer the message locally if the outbound ring is full.
+                 */
+                core_fast_queue_enqueue(&worker->output_outbound_message_queue, &other_message);
+            }
         }
     }
 
@@ -2252,3 +2300,10 @@ int thorium_worker_enqueue_outbound_message(struct thorium_worker *self,
     return core_fast_queue_enqueue(&self->output_outbound_message_queue,
                     message);
 }
+
+struct core_memory_pool *thorium_worker_get_outbound_message_memory_pool(struct thorium_worker *self)
+{
+    return &self->outbound_message_memory_pool;
+}
+
+

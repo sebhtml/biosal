@@ -141,7 +141,6 @@ int thorium_node_send_system(struct thorium_node *self, struct thorium_message *
 void thorium_node_do_message_triage(struct thorium_node *self);
 void thorium_node_recycle_message(struct thorium_node *self, struct thorium_message *message);
 
-void thorium_node_resolve(struct thorium_node *self, struct thorium_message *message);
 /*
  * Generate an actor name.
  */
@@ -1456,13 +1455,14 @@ void thorium_node_send(struct thorium_node *node, struct thorium_message *messag
         /*
          * Add metadata size.
          */
+        /*if (thorium_message_action(message) != ACTION_MULTIPLEXER_MESSAGE)*/
         thorium_message_add_metadata(message);
 
-#ifdef TRANSPORT_DEBUG_ISSUE_594
-    if (thorium_message_action(message) == 30202) {
-        printf("DEBUG-594 thorium_node_send\n");
-        thorium_message_print(message);
-    }
+#ifdef DEBUG_MULTIPLEXER
+        if (thorium_message_action(message) == ACTION_MULTIPLEXER_MESSAGE) {
+            printf("DEBUG-594 thorium_node_send\n");
+            thorium_message_print(message);
+        }
 #endif
 
     /*
@@ -2729,6 +2729,19 @@ int thorium_node_generate_random_name(struct thorium_node *self,
 
 void thorium_node_send_with_transport(struct thorium_node *self, struct thorium_message *message)
 {
+#ifdef CORE_DEBUGGER_ENABLE_ASSERT
+    if (!(thorium_message_destination_node(message) >= 0
+                 && thorium_message_destination_node(message) < self->nodes)) {
+        printf("Error, invalid destination node %d (action %x)\n",
+                        thorium_message_destination_node(message),
+                        thorium_message_action(message));
+        thorium_message_print(message);
+    }
+#endif
+
+    CORE_DEBUGGER_ASSERT(thorium_message_destination_node(message) >= 0
+                    && thorium_message_destination_node(message) < self->nodes);
+
     thorium_transport_send(&self->transport, message);
 
 #ifdef THORIUM_NODE_USE_COUNTERS

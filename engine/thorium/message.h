@@ -142,5 +142,6 @@ void thorium_message_print_tracepoints(struct thorium_message *self);
 void thorium_message_set_number(struct thorium_message *self, int number);
 int thorium_message_read_metadata_for_tracepoint(struct thorium_message *self);
 void thorium_message_add_metadata(struct thorium_message *self);
+void thorium_message_remove_metadata(struct thorium_message *self);
 
 #endif

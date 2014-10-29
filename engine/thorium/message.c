@@ -89,11 +89,14 @@ void thorium_message_set_destination(struct thorium_message *self, int destinati
 
 void thorium_message_print(struct thorium_message *self)
 {
-    printf("Message Action 0x%x Count %d SourceActor %d DestinationActor %d\n",
+    printf("Message Action 0x%x Count %d SourceActor %d DestinationActor %d"
+                    " SourceNode %d DestinationNode %d\n",
                     self->action,
                     self->count,
                     self->source_actor,
-                    self->destination_actor);
+                    self->destination_actor,
+                    self->source_node,
+                    self->destination_node);
 
     /*
     core_debugger_examine(self->buffer, self->count);
@@ -394,5 +397,17 @@ void thorium_message_add_metadata(struct thorium_message *self)
     count = thorium_message_count(self);
     metadata_size = thorium_message_metadata_size(self);
     all = count + metadata_size;
+    thorium_message_set_count(self, all);
+}
+
+void thorium_message_remove_metadata(struct thorium_message *self)
+{
+    int count;
+    int metadata_size;
+    int all;
+
+    count = thorium_message_count(self);
+    metadata_size = thorium_message_metadata_size(self);
+    all = count - metadata_size;
     thorium_message_set_count(self, all);
 }

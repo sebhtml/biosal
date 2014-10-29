@@ -80,7 +80,7 @@ void thorium_message_multiplexer_init(struct thorium_message_multiplexer *self,
         multiplexed_buffer->buffer = self->big_buffer + position;
         position += self->buffer_size_in_bytes;
 
-#ifdef DEBUG_MULTIPLEXER
+#ifdef DEBUG_MULTIPLEXER1
         printf("DEBUG_MULTIPLEXER thorium_message_multiplexer_init index %d buffer %p\n", i, buffer);
 #endif
 
@@ -199,6 +199,11 @@ int thorium_message_multiplexer_multiplex(struct thorium_message_multiplexer *se
     struct thorium_multiplexed_buffer *real_multiplexed_buffer;
 
     ++self->original_message_count;
+
+#ifdef DEBUG_MULTIPLEXER
+    printf("multiplex\n");
+    thorium_message_print(message);
+#endif
 
     if (CORE_BITMAP_GET_BIT(self->flags, FLAG_DISABLED)) {
         ++self->real_message_count;
@@ -342,6 +347,11 @@ int thorium_message_multiplexer_demultiplex(struct thorium_message_multiplexer *
     int source_node;
     int destination_node;
 
+#ifdef DEBUG_MULTIPLEXER
+    printf("demultiplex message\n");
+    thorium_message_print(message);
+#endif
+
     if (CORE_BITMAP_GET_BIT(self->flags, FLAG_DISABLED)) {
         return 0;
     }
@@ -457,6 +467,8 @@ void thorium_message_multiplexer_flush(struct thorium_message_multiplexer *self,
     int current_size;
     int maximum_size;
     struct thorium_multiplexed_buffer *multiplexed_buffer;
+    int destination_node;
+    struct core_memory_pool *pool;
 
     if (CORE_BITMAP_GET_BIT(self->flags, FLAG_DISABLED)) {
         return;
@@ -470,18 +482,51 @@ void thorium_message_multiplexer_flush(struct thorium_message_multiplexer *self,
         return;
     }
 
-    count = current_size;
-    tag = ACTION_MULTIPLEXER_MESSAGE;
-    buffer = multiplexed_buffer->buffer;
+    count = current_size + THORIUM_MESSAGE_METADATA_SIZE;
+    pool = thorium_worker_get_outbound_message_memory_pool(self->worker);
+    buffer = core_memory_pool_allocate(pool, count);
 
-#ifdef DEBUG_MULTIPLEXER
-    printf("DEBUG_MULTIPLEXER thorium_message_multiplexer_flush index %d buffer %p force %d message_count %d current_size %d maximum_size %d\n",
-                    index, buffer, force, multiplexed_buffer->message_count,
-                    current_size, maximum_size);
-#endif
+    tag = ACTION_MULTIPLEXER_MESSAGE;
+    count -= THORIUM_MESSAGE_METADATA_SIZE;
+
+    /*
+     * This count does not include metadata for the final big message.
+     *
+     * TODO: Avoid this copy by using an array of pointers in the first place.
+     */
+    core_memory_copy(buffer, multiplexed_buffer->buffer, count);
+
+    destination_node = index;
 
     thorium_message_init(&message, tag, count, buffer);
+    thorium_message_set_destination(&message,
+                    destination_node);
+    thorium_message_set_source(&message,
+            thorium_node_name(self->node));
+    /*
+     * Mark the message so that the buffer is eventually sent back here
+     * for recycling.
+     */
+    thorium_message_set_worker(&message, thorium_worker_name(self->worker));
 
+    thorium_message_write_metadata(&message);
+
+#ifdef DEBUG_MULTIPLEXER
+    printf("DEBUG_MULTIPLEXER thorium_message_multiplexer_flush index %d buffer %p force %d message_count %d current_size %d maximum_size %d"
+                    " destination_node %d\n",
+                    index, buffer, force, multiplexed_buffer->message_count,
+                    current_size, maximum_size,
+                    thorium_message_destination_node(&message));
+
+    printf("message in flush\n");
+    thorium_message_print(&message);
+#endif
+
+    CORE_DEBUGGER_ASSERT_NOT_NULL(self->worker);
+
+    /*
+     * Make a copy of the buffer because the multiplexer does not have communication buffers.
+     */
     thorium_worker_enqueue_outbound_message(self->worker, &message);
 
     ++self->real_message_count;
