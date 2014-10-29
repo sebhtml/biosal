@@ -1115,6 +1115,10 @@ int thorium_node_running(struct thorium_node *node)
         return 1;
     }
 
+    if (thorium_worker_pool_outbound_ring_size(&node->worker_pool) > 0) {
+        return 1;
+    }
+
     current_time = time(NULL);
 
     elapsed = current_time - node->last_transport_event_time;
@@ -2741,6 +2745,10 @@ void thorium_node_send_with_transport(struct thorium_node *self, struct thorium_
     CORE_DEBUGGER_ASSERT(thorium_message_destination_node(message) >= 0
                     && thorium_message_destination_node(message) < self->nodes);
 
+#ifdef DEBUG_NODE1
+    printf("NODE1 SEND %x\n", thorium_message_action(message));
+#endif
+
     thorium_transport_send(&self->transport, message);
 
 #ifdef THORIUM_NODE_USE_COUNTERS
@@ -2903,6 +2911,10 @@ void thorium_node_receive_messages(struct thorium_node *node)
          * Prepare the message
          */
         thorium_node_prepare_received_message(node, &message);
+
+#ifdef DEBUG_NODE1
+        printf("NODE1 RECEIVE %x\n", thorium_message_action(&message));
+#endif
 
 #ifdef THORIUM_NODE_DEBUG_INJECTION
         /*
