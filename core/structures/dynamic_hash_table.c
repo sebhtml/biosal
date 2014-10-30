@@ -24,10 +24,10 @@
 /**
  * \return 1 if resizing was completed, 0 otherwise
  */
-int core_dynamic_hash_table_resize(struct core_dynamic_hash_table *self);
-void core_dynamic_hash_table_start_resizing(struct core_dynamic_hash_table *self);
+static int core_dynamic_hash_table_resize(struct core_dynamic_hash_table *self);
+static void core_dynamic_hash_table_start_resizing(struct core_dynamic_hash_table *self);
 
-void core_dynamic_hash_table_reset(struct core_dynamic_hash_table *self);
+static void core_dynamic_hash_table_reset(struct core_dynamic_hash_table *self);
 
 void core_dynamic_hash_table_init(struct core_dynamic_hash_table *self, uint64_t buckets,
                 int key_size, int value_size)
@@ -64,7 +64,7 @@ void core_dynamic_hash_table_destroy(struct core_dynamic_hash_table *self)
     self->next = NULL;
 }
 
-void core_dynamic_hash_table_reset(struct core_dynamic_hash_table *self)
+static void core_dynamic_hash_table_reset(struct core_dynamic_hash_table *self)
 {
     self->current = &self->table1;
     self->next = &self->table2;
@@ -236,7 +236,7 @@ uint64_t core_dynamic_hash_table_buckets(struct core_dynamic_hash_table *self)
     return core_hash_table_buckets(self->current) + core_hash_table_buckets(self->next);
 }
 
-void core_dynamic_hash_table_start_resizing(struct core_dynamic_hash_table *self)
+static void core_dynamic_hash_table_start_resizing(struct core_dynamic_hash_table *self)
 {
     /*uint64_t old_size;*/
     uint64_t new_size;
@@ -290,7 +290,7 @@ void core_dynamic_hash_table_start_resizing(struct core_dynamic_hash_table *self
 #endif
 }
 
-int core_dynamic_hash_table_resize(struct core_dynamic_hash_table *self)
+static int core_dynamic_hash_table_resize(struct core_dynamic_hash_table *self)
 {
     int count;
     struct core_hash_table *table;
