@@ -8,7 +8,7 @@
 #include <inttypes.h>
 #include <stdint.h>
 
-#define EVENT_COUNT 10000
+#define EVENT_COUNT 40000
 #define ACTORS_PER_WORKER 100
 #define PERIOD 500
 /*
