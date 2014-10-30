@@ -12,7 +12,7 @@
 #define RUN_TREE_ASSERTIONS
 */
 
-void core_red_black_tree_free_node(struct core_red_black_tree *self,
+static void core_red_black_tree_free_node(struct core_red_black_tree *self,
                 struct core_red_black_node *node);
 
 /*
@@ -20,49 +20,50 @@ void core_red_black_tree_free_node(struct core_red_black_tree *self,
  * \see http://en.wikipedia.org/wiki/Red%E2%80%93black_tree
  */
 
-void core_red_black_tree_insert_case1(struct core_red_black_tree *self,
+static void core_red_black_tree_insert_case1(struct core_red_black_tree *self,
                 struct core_red_black_node *node);
-void core_red_black_tree_insert_case2(struct core_red_black_tree *self,
+static void core_red_black_tree_insert_case2(struct core_red_black_tree *self,
                 struct core_red_black_node *node);
-void core_red_black_tree_insert_case3(struct core_red_black_tree *self,
+static void core_red_black_tree_insert_case3(struct core_red_black_tree *self,
                 struct core_red_black_node *node);
-void core_red_black_tree_insert_case4(struct core_red_black_tree *self,
+static void core_red_black_tree_insert_case4(struct core_red_black_tree *self,
                 struct core_red_black_node *node);
-void core_red_black_tree_insert_case5(struct core_red_black_tree *self,
+static void core_red_black_tree_insert_case5(struct core_red_black_tree *self,
                 struct core_red_black_node *node);
 
-void core_red_black_tree_rotate_left(struct core_red_black_tree *self,
+static void core_red_black_tree_rotate_left(struct core_red_black_tree *self,
                 struct core_red_black_node *node);
-void core_red_black_tree_rotate_right(struct core_red_black_tree *self,
+static void core_red_black_tree_rotate_right(struct core_red_black_tree *self,
                 struct core_red_black_node *node);
 
 void core_red_black_tree_print(struct core_red_black_tree *self);
-void core_red_black_tree_print_node(struct core_red_black_tree *self,
+static void core_red_black_tree_print_node(struct core_red_black_tree *self,
                 struct core_red_black_node *node, int depth);
 
-int core_red_black_tree_compare_memory_content(struct core_red_black_tree *self, void *key1, void *key2);
-int core_red_black_tree_compare_uint64_t(struct core_red_black_tree *self, void *key1, void *key2);
-void core_red_black_tree_run_assertions_on_node(struct core_red_black_tree *self, struct core_red_black_node *node);
+static int core_red_black_tree_compare_memory_content(struct core_red_black_tree *self, void *key1, void *key2);
+static int core_red_black_tree_compare_uint64_t(struct core_red_black_tree *self, void *key1, void *key2);
+static void core_red_black_tree_run_assertions_on_node(struct core_red_black_tree *self, struct core_red_black_node *node);
 
-void core_red_black_tree_delete_one_child(struct core_red_black_tree *self, struct core_red_black_node *node);
-void core_red_black_tree_replace_node(struct core_red_black_tree *self, struct core_red_black_node *node,
+static void core_red_black_tree_delete_one_child(struct core_red_black_tree *self, struct core_red_black_node *node);
+static void core_red_black_tree_replace_node(struct core_red_black_tree *self, struct core_red_black_node *node,
                 struct core_red_black_node *child);
-void core_red_black_tree_delete_case1(struct core_red_black_tree *self, struct core_red_black_node *node);
-void core_red_black_tree_delete_case2(struct core_red_black_tree *self, struct core_red_black_node *node);
-void core_red_black_tree_delete_case3(struct core_red_black_tree *self, struct core_red_black_node *node);
-void core_red_black_tree_delete_case4(struct core_red_black_tree *self, struct core_red_black_node *node);
-void core_red_black_tree_delete_case5(struct core_red_black_tree *self, struct core_red_black_node *node);
-void core_red_black_tree_delete_case6(struct core_red_black_tree *self, struct core_red_black_node *node);
+static void core_red_black_tree_delete_case1(struct core_red_black_tree *self, struct core_red_black_node *node);
+static void core_red_black_tree_delete_case2(struct core_red_black_tree *self, struct core_red_black_node *node);
+static void core_red_black_tree_delete_case3(struct core_red_black_tree *self, struct core_red_black_node *node);
+static void core_red_black_tree_delete_case4(struct core_red_black_tree *self, struct core_red_black_node *node);
+static void core_red_black_tree_delete_case5(struct core_red_black_tree *self, struct core_red_black_node *node);
+static void core_red_black_tree_delete_case6(struct core_red_black_tree *self, struct core_red_black_node *node);
 
-struct core_red_black_node *core_red_black_tree_get_node(struct core_red_black_tree *self, void *key);
+static struct core_red_black_node *core_red_black_tree_get_node(struct core_red_black_tree *self, void *key);
 
-void core_red_black_tree_delete_private(struct core_red_black_tree *self,
+static void core_red_black_tree_delete_private(struct core_red_black_tree *self,
                 struct core_red_black_node *node);
 
-struct core_red_black_node *core_red_black_tree_allocate_normal_node(struct core_red_black_tree *self, void *key, void *value);
-void core_red_black_tree_free_normal_node(struct core_red_black_tree *self, struct core_red_black_node *node);
-struct core_red_black_node *core_red_black_tree_allocate_nil_node(struct core_red_black_tree *self);
-void core_red_black_tree_free_nil_node(struct core_red_black_tree *self, struct core_red_black_node *node);
+static struct core_red_black_node *core_red_black_tree_allocate_normal_node(struct core_red_black_tree *self, void *key, void *value);
+static void core_red_black_tree_free_normal_node(struct core_red_black_tree *self, struct core_red_black_node *node);
+
+static struct core_red_black_node *core_red_black_tree_allocate_nil_node(struct core_red_black_tree *self);
+static void core_red_black_tree_free_nil_node(struct core_red_black_tree *self, struct core_red_black_node *node);
 
 
 void core_red_black_tree_init(struct core_red_black_tree *self, int key_size, int value_size,
@@ -326,7 +327,7 @@ void core_red_black_tree_delete(struct core_red_black_tree *self, void *key)
     core_red_black_tree_delete_private(self, node);
 }
 
-void core_red_black_tree_delete_private(struct core_red_black_tree *self,
+static void core_red_black_tree_delete_private(struct core_red_black_tree *self,
                 struct core_red_black_node *node)
 {
     struct core_red_black_node *largest_value_node;
@@ -427,7 +428,7 @@ int core_red_black_tree_size(struct core_red_black_tree *self)
     return self->size;
 }
 
-void core_red_black_tree_free_node(struct core_red_black_tree *self,
+static void core_red_black_tree_free_node(struct core_red_black_tree *self,
                 struct core_red_black_node *node)
 {
     struct core_red_black_node *left_node;
@@ -464,7 +465,7 @@ void core_red_black_tree_free_node(struct core_red_black_tree *self,
  *
  * \see http://en.wikipedia.org/wiki/Red%E2%80%93black_tree
  */
-void core_red_black_tree_insert_case1(struct core_red_black_tree *self,
+static void core_red_black_tree_insert_case1(struct core_red_black_tree *self,
                 struct core_red_black_node *node)
 {
     if (node->parent == NULL) {
@@ -484,7 +485,7 @@ void core_red_black_tree_insert_case1(struct core_red_black_tree *self,
  *
  * Nothing to do.
  */
-void core_red_black_tree_insert_case2(struct core_red_black_tree *self,
+static void core_red_black_tree_insert_case2(struct core_red_black_tree *self,
                 struct core_red_black_node *node)
 {
     if (core_red_black_node_is_black(node->parent)) {
@@ -500,7 +501,7 @@ void core_red_black_tree_insert_case2(struct core_red_black_tree *self,
  *
  * \see http://en.wikipedia.org/wiki/Red%E2%80%93black_tree
  */
-void core_red_black_tree_insert_case3(struct core_red_black_tree *self,
+static void core_red_black_tree_insert_case3(struct core_red_black_tree *self,
                 struct core_red_black_node *node)
 {
     struct core_red_black_node *parent;
@@ -534,7 +535,7 @@ void core_red_black_tree_insert_case3(struct core_red_black_tree *self,
  *
  * \see http://en.wikipedia.org/wiki/Red%E2%80%93black_tree
  */
-void core_red_black_tree_insert_case4(struct core_red_black_tree *self,
+static void core_red_black_tree_insert_case4(struct core_red_black_tree *self,
                 struct core_red_black_node *node)
 {
     struct core_red_black_node *grandparent;
@@ -576,7 +577,7 @@ void core_red_black_tree_insert_case4(struct core_red_black_tree *self,
  *
  * \see http://en.wikipedia.org/wiki/Red%E2%80%93black_tree
  */
-void core_red_black_tree_insert_case5(struct core_red_black_tree *self,
+static void core_red_black_tree_insert_case5(struct core_red_black_tree *self,
                 struct core_red_black_node *node)
 {
     struct core_red_black_node *grandparent;
@@ -618,7 +619,7 @@ void core_red_black_tree_insert_case5(struct core_red_black_tree *self,
  *
  * Changes:
  */
-void core_red_black_tree_rotate_left(struct core_red_black_tree *self,
+static void core_red_black_tree_rotate_left(struct core_red_black_tree *self,
                 struct core_red_black_node *node)
 {
     struct core_red_black_node *node_N;
@@ -689,7 +690,7 @@ void core_red_black_tree_rotate_left(struct core_red_black_tree *self,
  *            F  N
  *              E C
  */
-void core_red_black_tree_rotate_right(struct core_red_black_tree *self,
+static void core_red_black_tree_rotate_right(struct core_red_black_tree *self,
                 struct core_red_black_node *node)
 {
     struct core_red_black_node *node_N;
@@ -739,7 +740,7 @@ void core_red_black_tree_rotate_right(struct core_red_black_tree *self,
 
 }
 
-void print_spaces(int depth)
+static void print_spaces(int depth)
 {
     while (depth--) {
         printf("    ");
@@ -747,7 +748,7 @@ void print_spaces(int depth)
     printf("-->");
 }
 
-void core_red_black_tree_print_node(struct core_red_black_tree *self,
+static void core_red_black_tree_print_node(struct core_red_black_tree *self,
                 struct core_red_black_node *node, int depth)
 {
     if (node == NULL)
@@ -795,7 +796,7 @@ void *core_red_black_tree_get(struct core_red_black_tree *self, void *key)
     return NULL;
 }
 
-struct core_red_black_node *core_red_black_tree_get_node(struct core_red_black_tree *self, void *key)
+static struct core_red_black_node *core_red_black_tree_get_node(struct core_red_black_tree *self, void *key)
 {
     struct core_red_black_node *node;
     int result;
@@ -872,7 +873,7 @@ int core_red_black_tree_compare(struct core_red_black_tree *self, void *key1, vo
     return self->compare(self, key1, key2);
 }
 
-int core_red_black_tree_compare_memory_content(struct core_red_black_tree *self, void *key1, void *key2)
+static int core_red_black_tree_compare_memory_content(struct core_red_black_tree *self, void *key1, void *key2)
 {
     int result;
 
@@ -894,7 +895,7 @@ int core_red_black_tree_compare_memory_content(struct core_red_black_tree *self,
     return result;
 }
 
-int core_red_black_tree_compare_uint64_t(struct core_red_black_tree *self, void *key1, void *key2)
+static int core_red_black_tree_compare_uint64_t(struct core_red_black_tree *self, void *key1, void *key2)
 {
     uint64_t key1_as_uint64_t;
     uint64_t key2_as_uint64_t;
@@ -921,7 +922,7 @@ void core_red_black_tree_run_assertions(struct core_red_black_tree *self)
     core_red_black_tree_run_assertions_on_node(self, self->root);
 }
 
-void core_red_black_tree_run_assertions_on_node(struct core_red_black_tree *self, struct core_red_black_node *node)
+static void core_red_black_tree_run_assertions_on_node(struct core_red_black_tree *self, struct core_red_black_node *node)
 {
     if (node == NULL)
         return;
@@ -940,7 +941,7 @@ void core_red_black_tree_run_assertions_on_node(struct core_red_black_tree *self
 /*
  * \see http://en.wikipedia.org/wiki/Red%E2%80%93black_tree#Removal
  */
-void core_red_black_tree_delete_one_child(struct core_red_black_tree *self, struct core_red_black_node *node)
+static void core_red_black_tree_delete_one_child(struct core_red_black_tree *self, struct core_red_black_node *node)
 {
     struct core_red_black_node *child;
     struct core_red_black_node *other_child;
@@ -1007,7 +1008,7 @@ void core_red_black_tree_delete_one_child(struct core_red_black_tree *self, stru
 /*
  * \see http://en.wikipedia.org/wiki/Red%E2%80%93black_tree#Removal
  */
-void core_red_black_tree_replace_node(struct core_red_black_tree *self, struct core_red_black_node *node,
+static void core_red_black_tree_replace_node(struct core_red_black_tree *self, struct core_red_black_node *node,
             struct core_red_black_node *child)
 {
 #if 0
@@ -1036,7 +1037,7 @@ void core_red_black_tree_replace_node(struct core_red_black_tree *self, struct c
  *
  * \see http://en.wikipedia.org/wiki/Red%E2%80%93black_tree#Removal
  */
-void core_red_black_tree_delete_case1(struct core_red_black_tree *self, struct core_red_black_node *node)
+static void core_red_black_tree_delete_case1(struct core_red_black_tree *self, struct core_red_black_node *node)
 {
     if (node->parent != NULL)
         core_red_black_tree_delete_case2(self, node);
@@ -1045,7 +1046,7 @@ void core_red_black_tree_delete_case1(struct core_red_black_tree *self, struct c
 /*
  * \see http://en.wikipedia.org/wiki/Red%E2%80%93black_tree#Removal
  */
-void core_red_black_tree_delete_case2(struct core_red_black_tree *self, struct core_red_black_node *node)
+static void core_red_black_tree_delete_case2(struct core_red_black_tree *self, struct core_red_black_node *node)
 {
     struct core_red_black_node *sibling;
 
@@ -1067,7 +1068,7 @@ void core_red_black_tree_delete_case2(struct core_red_black_tree *self, struct c
 /*
  * \see http://en.wikipedia.org/wiki/Red%E2%80%93black_tree#Removal
  */
-void core_red_black_tree_delete_case3(struct core_red_black_tree *self, struct core_red_black_node *node)
+static void core_red_black_tree_delete_case3(struct core_red_black_tree *self, struct core_red_black_node *node)
 {
     struct core_red_black_node *sibling;
 
@@ -1091,7 +1092,7 @@ void core_red_black_tree_delete_case3(struct core_red_black_tree *self, struct c
 /*
  * \see http://en.wikipedia.org/wiki/Red%E2%80%93black_tree#Removal
  */
-void core_red_black_tree_delete_case4(struct core_red_black_tree *self, struct core_red_black_node *node)
+static void core_red_black_tree_delete_case4(struct core_red_black_tree *self, struct core_red_black_node *node)
 {
     struct core_red_black_node *sibling;
 
@@ -1113,7 +1114,7 @@ void core_red_black_tree_delete_case4(struct core_red_black_tree *self, struct c
 /*
  * \see http://en.wikipedia.org/wiki/Red%E2%80%93black_tree#Removal
  */
-void core_red_black_tree_delete_case5(struct core_red_black_tree *self, struct core_red_black_node *node)
+static void core_red_black_tree_delete_case5(struct core_red_black_tree *self, struct core_red_black_node *node)
 {
     struct core_red_black_node *sibling;
 
@@ -1145,7 +1146,7 @@ void core_red_black_tree_delete_case5(struct core_red_black_tree *self, struct c
 /*
  * \see http://en.wikipedia.org/wiki/Red%E2%80%93black_tree#Removal
  */
-void core_red_black_tree_delete_case6(struct core_red_black_tree *self, struct core_red_black_node *node)
+static void core_red_black_tree_delete_case6(struct core_red_black_tree *self, struct core_red_black_node *node)
 {
     struct core_red_black_node *sibling;
 
@@ -1164,7 +1165,7 @@ void core_red_black_tree_delete_case6(struct core_red_black_tree *self, struct c
     }
 }
 
-struct core_red_black_node *core_red_black_tree_allocate_normal_node(struct core_red_black_tree *self, void *key, void *value)
+static struct core_red_black_node *core_red_black_tree_allocate_normal_node(struct core_red_black_tree *self, void *key, void *value)
 {
     struct core_red_black_node *node;
     void *new_key;
@@ -1195,7 +1196,7 @@ struct core_red_black_node *core_red_black_tree_allocate_normal_node(struct core
     return node;
 }
 
-void core_red_black_tree_free_normal_node(struct core_red_black_tree *self, struct core_red_black_node *node)
+static void core_red_black_tree_free_normal_node(struct core_red_black_tree *self, struct core_red_black_node *node)
 {
     CORE_DEBUGGER_ASSERT(node->key != NULL);
     CORE_DEBUGGER_ASSERT(node->value != NULL);
@@ -1211,7 +1212,7 @@ void core_red_black_tree_free_normal_node(struct core_red_black_tree *self, stru
 #endif
 }
 
-struct core_red_black_node *core_red_black_tree_allocate_nil_node(struct core_red_black_tree *self)
+static struct core_red_black_node *core_red_black_tree_allocate_nil_node(struct core_red_black_tree *self)
 {
     struct core_red_black_node *node;
 
@@ -1232,7 +1233,7 @@ struct core_red_black_node *core_red_black_tree_allocate_nil_node(struct core_re
     return node;
 }
 
-void core_red_black_tree_free_nil_node(struct core_red_black_tree *self, struct core_red_black_node *node)
+static void core_red_black_tree_free_nil_node(struct core_red_black_tree *self, struct core_red_black_node *node)
 {
 #ifdef CORE_RED_BLACK_TREE_USE_NIL_NODE_LIST
     node->left_node = self->nil_node_list;
