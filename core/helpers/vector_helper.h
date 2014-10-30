@@ -7,7 +7,7 @@
 /*
  * TODO: Include vector.h?
  */
- 
+
 struct core_vector;
 
 void core_vector_print_int(struct core_vector *self);

@@ -5,7 +5,6 @@
 /*
  * TODO: include actual vector/map headers instead of these opaque struct references?
  */
- 
 struct core_vector;
 struct core_map;
 

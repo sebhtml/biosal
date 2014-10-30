@@ -2,10 +2,9 @@
 #ifndef CORE_PAIR_H
 #define CORE_PAIR_H
 
-/* 
+/*
  * TODO: Consider renaming this to core_pair_int (as it is concrete, not abstract)
  */
-
 struct core_pair {
     int first;
     int second;
