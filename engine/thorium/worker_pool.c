@@ -752,6 +752,9 @@ void thorium_worker_pool_assign_worker_to_actor(struct thorium_worker_pool *pool
      * Somehow this actor dead a while ago.
      */
     if (actor == NULL) {
+/*
+        printf("Warning: actor %d does not exist\n", name);
+        */
         return;
     }
 
@@ -768,8 +771,8 @@ void thorium_worker_pool_assign_worker_to_actor(struct thorium_worker_pool *pool
     CORE_DEBUGGER_ASSERT(worker_index >= 0);
 
 #ifdef THORIUM_WORKER_POOL_DEBUG
-    printf("ASSIGNING %d to %d\n", name, worker_index);
 #endif
+    printf("ASSIGNING %d to %d\n", name, worker_index);
 
     thorium_balancer_set_actor_worker(&pool->balancer, name, worker_index);
 }

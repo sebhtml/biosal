@@ -447,8 +447,8 @@ void thorium_worker_send(struct thorium_worker *worker, struct thorium_message *
 
     int use_fast_delivery;
 
-    use_fast_delivery = 1;
-    enable_multiplexer = 1;
+    use_fast_delivery = YES;
+    enable_multiplexer = YES;
 
     tracepoint(thorium_message, worker_send, message);
 
