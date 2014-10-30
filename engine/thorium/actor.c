@@ -2336,6 +2336,13 @@ void *thorium_actor_allocate(struct thorium_actor *self, size_t count)
 void thorium_actor_set_assigned_worker(struct thorium_actor *self, int worker)
 {
     self->assigned_worker = worker;
+    printf("set_assigned_worker actor %d worker %d\n", self->name, worker);
+
+    /*
+     * This must be visible for the other threads too
+     * for the fast message delivery path between workers.
+     */
+    core_memory_store_fence();
 }
 
 int thorium_actor_assigned_worker(struct thorium_actor *self)
