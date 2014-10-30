@@ -15,7 +15,7 @@
 
 #define MEMORY_STRING 0x89fd5efd
 
-void core_string_combine(struct core_string *self, const char *data, int operation);
+static void core_string_combine(struct core_string *self, const char *data, int operation);
 
 void core_string_init(struct core_string *string, const char *data)
 {
@@ -54,7 +54,7 @@ char *core_string_get(struct core_string *string)
     return string->data;
 }
 
-void core_string_combine(struct core_string *string, const char *data, int operation)
+static void core_string_combine(struct core_string *string, const char *data, int operation)
 {
     int old_length;
     int length;
