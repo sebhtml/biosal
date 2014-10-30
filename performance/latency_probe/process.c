@@ -217,7 +217,7 @@ void process_send_ping(struct thorium_actor *self)
     target = core_vector_at_as_int(&concrete_self->actors, target);
 
     /*
-    printf("%d ping %d\n", thorium_actor_name(self), target);
+    printf("%d sends ACTION_PING to %d\n", thorium_actor_name(self), target);
     */
 
     thorium_actor_send_empty(self, target, ACTION_PING);

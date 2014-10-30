@@ -439,7 +439,7 @@ void thorium_worker_send(struct thorium_worker *worker, struct thorium_message *
     struct thorium_actor *destination_actor;
 #endif
 
-    enable_multiplexer = 0;
+    enable_multiplexer = 1;
 
     tracepoint(thorium_message, worker_send, message);
 

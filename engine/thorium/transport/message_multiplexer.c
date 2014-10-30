@@ -104,19 +104,7 @@ void thorium_message_multiplexer_init(struct thorium_message_multiplexer *self,
         CORE_BITMAP_SET_BIT(self->flags, FLAG_DISABLED);
     }
 
-    if (thorium_node_name(self->node) == 0) {
-        if (self->timeout_in_nanoseconds == THORIUM_DYNAMIC_TIMEOUT) {
-            printf("thorium_message_multiplexer: disabled=%d buffer_size_in_bytes=%d timeout_in_nanoseconds=dynamic\n",
-                            CORE_BITMAP_GET_BIT(self->flags, FLAG_DISABLED),
-                        self->buffer_size_in_bytes);
-        } else {
-            printf("thorium_message_multiplexer: disabled=%d buffer_size_in_bytes=%d timeout_in_nanoseconds=%d\n",
-                            CORE_BITMAP_GET_BIT(self->flags, FLAG_DISABLED),
-                        self->buffer_size_in_bytes, self->timeout_in_nanoseconds);
-        }
-    }
-
-    thorium_message_multiplexer_set_worker(self, NULL);
+    self->worker = NULL;
 }
 
 void thorium_message_multiplexer_destroy(struct thorium_message_multiplexer *self)
@@ -268,7 +256,9 @@ int thorium_message_multiplexer_multiplex(struct thorium_message_multiplexer *se
         return 0;
     }
 
+    /*
     printf("MULTIPLEX_MESSAGE\n");
+    */
 
     new_size = current_size + required_size;
 
@@ -371,7 +361,9 @@ int thorium_message_multiplexer_demultiplex(struct thorium_message_multiplexer *
         return 0;
     }
 
+    /*
     printf("MULTIPLEXER demultiplex\n");
+    */
 
     messages = 0;
     tracepoint(thorium_node, demultiplex_enter, self->node->name,
@@ -410,7 +402,9 @@ int thorium_message_multiplexer_demultiplex(struct thorium_message_multiplexer *
 
         CORE_DEBUGGER_ASSERT(thorium_message_action(&new_message) != ACTION_INVALID);
 
+        /*
         printf("DEMULTIPLEX_MESSAGE\n");
+        */
 
         thorium_node_dispatch_message(self->node, &new_message);
 
@@ -469,7 +463,9 @@ void thorium_message_multiplexer_test(struct thorium_message_multiplexer *self)
 
     while (core_set_iterator_get_next_value(&iterator, &index)) {
 
+            /*
         printf("MULTIPLEXER FLUSH buffer %d\n", index);
+        */
         thorium_message_multiplexer_flush(self, index, FORCE_YES_TIME);
     }
 
@@ -554,7 +550,9 @@ void thorium_message_multiplexer_flush(struct thorium_message_multiplexer *self,
      */
     thorium_worker_enqueue_outbound_message(self->worker, &message);
 
+    /*
     printf("MULTIPLEXER FLUSH\n");
+    */
 
     ++self->real_message_count;
     thorium_message_destroy(&message);
@@ -574,4 +572,18 @@ void thorium_message_multiplexer_set_worker(struct thorium_message_multiplexer *
                 struct thorium_worker *worker)
 {
     self->worker = worker;
+
+    if (thorium_node_name(self->node) == 0 && thorium_worker_name(self->worker) == 0) {
+        if (self->timeout_in_nanoseconds == THORIUM_DYNAMIC_TIMEOUT) {
+            printf("thorium_message_multiplexer: disabled=%d buffer_size_in_bytes=%d timeout_in_nanoseconds=dynamic\n",
+                            CORE_BITMAP_GET_BIT(self->flags, FLAG_DISABLED),
+                        self->buffer_size_in_bytes);
+        } else {
+            printf("thorium_message_multiplexer: disabled=%d buffer_size_in_bytes=%d timeout_in_nanoseconds=%d\n",
+                            CORE_BITMAP_GET_BIT(self->flags, FLAG_DISABLED),
+                        self->buffer_size_in_bytes, self->timeout_in_nanoseconds);
+        }
+    }
+
+
 }

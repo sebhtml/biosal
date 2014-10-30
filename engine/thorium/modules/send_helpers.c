@@ -18,7 +18,9 @@
 /*
  * Enable the binomial tree subsystem.
  */
+/*
 #define USE_BINOMIAL_TREE
+*/
 
 void thorium_actor_send_vector(struct thorium_actor *actor, int destination,
                 int tag, struct core_vector *vector)
