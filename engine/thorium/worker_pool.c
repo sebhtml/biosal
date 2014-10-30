@@ -537,6 +537,18 @@ int thorium_worker_pool_give_message_to_worker(struct thorium_worker_pool *pool,
         worker_index = thorium_balancer_get_actor_worker(&pool->balancer, name);
     }
 
+    if (worker_index == THORIUM_WORKER_NONE) {
+
+#ifdef DEBUG_DEAD_CHANNEL
+        printf("Warning, can not deliver action %x to %d\n",
+                        thorium_message_action(message), name);
+#endif
+
+        /*
+         * Deliver the message somewhere anyway to recycle the message.
+         */
+        worker_index = 0;
+    }
     affinity_worker = thorium_worker_pool_get_worker(pool, worker_index);
 
     /* give the message to the actor
