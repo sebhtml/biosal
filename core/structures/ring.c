@@ -7,8 +7,8 @@
 
 #define MEMORY_RING 0x28fc4a42
 
-int core_ring_increment(struct core_ring *self, int index);
-void *core_ring_get_cell(struct core_ring *self, int index);
+static int core_ring_increment(struct core_ring *self, int index);
+static void *core_ring_get_cell(struct core_ring *self, int index);
 
 void core_ring_init(struct core_ring *self, int capacity, int cell_size)
 {
@@ -90,12 +90,12 @@ int core_ring_capacity(struct core_ring *self)
     return self->number_of_cells - 1;
 }
 
-int core_ring_increment(struct core_ring *self, int index)
+static int core_ring_increment(struct core_ring *self, int index)
 {
     return  (index + 1) % self->number_of_cells;
 }
 
-void *core_ring_get_cell(struct core_ring *self, int index)
+static void *core_ring_get_cell(struct core_ring *self, int index)
 {
     return ((char *)self->cells) + index * self->cell_size;
 }
