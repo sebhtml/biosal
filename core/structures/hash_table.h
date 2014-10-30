@@ -61,9 +61,9 @@ uint64_t core_hash_table_size(struct core_hash_table *self);
 uint64_t core_hash_table_buckets(struct core_hash_table *self);
 int core_hash_table_value_size(struct core_hash_table *self);
 int core_hash_table_key_size(struct core_hash_table *self);
-uint64_t core_hash_table_hash(void *key, int key_size, unsigned int seed);
 
 int core_hash_table_state(struct core_hash_table *self, uint64_t bucket);
+
 void *core_hash_table_key(struct core_hash_table *self, uint64_t bucket);
 void *core_hash_table_value(struct core_hash_table *self, uint64_t bucket);
 

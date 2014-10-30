@@ -54,19 +54,19 @@
 /*
  * functions for the implementation
  */
-int core_hash_table_get_group(struct core_hash_table *self, uint64_t bucket);
-int core_hash_table_get_group_bucket(struct core_hash_table *self, uint64_t bucket);
-int core_hash_table_state(struct core_hash_table *self, uint64_t bucket);
+static int core_hash_table_get_group(struct core_hash_table *self, uint64_t bucket);
+static int core_hash_table_get_group_bucket(struct core_hash_table *self, uint64_t bucket);
 
-uint64_t core_hash_table_hash1(struct core_hash_table *self, void *key);
-uint64_t core_hash_table_hash2(struct core_hash_table *self, void *key);
-uint64_t core_hash_table_double_hash(struct core_hash_table *self, uint64_t hash1,
+static uint64_t core_hash_table_hash1(struct core_hash_table *self, void *key);
+static uint64_t core_hash_table_hash2(struct core_hash_table *self, void *key);
+static uint64_t core_hash_table_double_hash(struct core_hash_table *self, uint64_t hash1,
                 uint64_t hash2, uint64_t stride);
-int core_hash_table_find_bucket(struct core_hash_table *self, void *key,
+static int core_hash_table_find_bucket(struct core_hash_table *self, void *key,
                 int *group, int *bucket_in_group, int operation, uint64_t *last_stride);
 
-int core_hash_table_pack_unpack(struct core_hash_table *self, void *buffer, int operation);
-void core_hash_table_start_groups(struct core_hash_table *self);
+static int core_hash_table_pack_unpack(struct core_hash_table *self, void *buffer, int operation);
+static void core_hash_table_start_groups(struct core_hash_table *self);
+static uint64_t core_hash_table_hash(void *key, int key_size, unsigned int seed);
 
 void core_hash_table_init(struct core_hash_table *table, uint64_t buckets,
                 int key_size, int value_size)
@@ -197,12 +197,12 @@ void core_hash_table_delete(struct core_hash_table *table, void *key)
     }
 }
 
-int core_hash_table_get_group(struct core_hash_table *table, uint64_t bucket)
+static int core_hash_table_get_group(struct core_hash_table *table, uint64_t bucket)
 {
     return bucket / table->buckets_per_group;
 }
 
-int core_hash_table_get_group_bucket(struct core_hash_table *table, uint64_t bucket)
+static int core_hash_table_get_group_bucket(struct core_hash_table *table, uint64_t bucket)
 {
     return bucket & table->group_bucket_count_mask;
 }
@@ -219,12 +219,12 @@ uint64_t core_hash_table_hash(void *key, int key_size, unsigned int seed)
     return core_hash_data_uint64_t(key, key_size, seed);
 }
 
-uint64_t core_hash_table_hash1(struct core_hash_table *table, void *key)
+static uint64_t core_hash_table_hash1(struct core_hash_table *table, void *key)
 {
     return core_hash_table_hash(key, table->key_size, 0x5cd902cb);
 }
 
-uint64_t core_hash_table_hash2(struct core_hash_table *table, void *key)
+static uint64_t core_hash_table_hash2(struct core_hash_table *table, void *key)
 {
     uint64_t hash2;
 
@@ -247,7 +247,7 @@ uint64_t core_hash_table_hash2(struct core_hash_table *table, void *key)
     return hash2;
 }
 
-uint64_t core_hash_table_double_hash(struct core_hash_table *table, uint64_t hash1,
+static uint64_t core_hash_table_double_hash(struct core_hash_table *table, uint64_t hash1,
                 uint64_t hash2, uint64_t stride)
 {
     uint64_t result;
@@ -379,7 +379,7 @@ int core_hash_table_unpack(struct core_hash_table *self, void *buffer)
     return core_hash_table_pack_unpack(self, buffer, CORE_PACKER_OPERATION_UNPACK);
 }
 
-int core_hash_table_pack_unpack(struct core_hash_table *self, void *buffer, int operation)
+static int core_hash_table_pack_unpack(struct core_hash_table *self, void *buffer, int operation)
 {
     /* implement packing for the hash table
      */
@@ -452,7 +452,7 @@ int core_hash_table_pack_unpack(struct core_hash_table *self, void *buffer, int 
     return offset;
 }
 
-void core_hash_table_start_groups(struct core_hash_table *table)
+static void core_hash_table_start_groups(struct core_hash_table *table)
 {
     int i;
 
@@ -650,7 +650,7 @@ void *core_hash_table_get(struct core_hash_table *table, void *key)
  * \return value is CORE_HASH_TABLE_KEY_FOUND or CORE_HASH_TABLE_KEY_NOT_FOUND or
  * CORE_HASH_TABLE_FULL
  */
-int core_hash_table_find_bucket(struct core_hash_table *table, void *key,
+static int core_hash_table_find_bucket(struct core_hash_table *table, void *key,
                 int *group, int *bucket_in_group, int operation,
                 uint64_t *last_stride)
 {

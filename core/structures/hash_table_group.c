@@ -18,8 +18,8 @@
 
 /*#define CORE_HASH_TABLE_GROUP_DEBUG */
 
-int core_hash_table_group_get_bit(void *bitmap, uint64_t bucket);
-void core_hash_table_group_set_bit(void *bitmap, uint64_t bucket, int value);
+static int core_hash_table_group_get_bit(void *bitmap, uint64_t bucket);
+static void core_hash_table_group_set_bit(void *bitmap, uint64_t bucket, int value);
 
 void core_hash_table_group_init(struct core_hash_table_group *group,
                 uint64_t buckets_per_group, int key_size, int value_size,
@@ -156,7 +156,7 @@ int core_hash_table_group_state_no_deletion(struct core_hash_table_group *group,
     return CORE_HASH_TABLE_BUCKET_EMPTY;
 }
 
-void core_hash_table_group_set_bit(void *bitmap, uint64_t bucket, int value1)
+static void core_hash_table_group_set_bit(void *bitmap, uint64_t bucket, int value1)
 {
     int unit;
     int bit;
@@ -189,7 +189,7 @@ void core_hash_table_group_set_bit(void *bitmap, uint64_t bucket, int value1)
     (((char *)bitmap)[unit]) = bits;
 }
 
-int core_hash_table_group_get_bit(void *bitmap, uint64_t bucket)
+static int core_hash_table_group_get_bit(void *bitmap, uint64_t bucket)
 {
     int unit;
     int bit;
