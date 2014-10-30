@@ -1429,6 +1429,7 @@ void thorium_worker_run(struct thorium_worker *worker)
     int name;
 
     int worker_index;
+    int destination_node;
     struct thorium_worker *worker_for_multiplexer;
 
 #ifdef THORIUM_NODE_INJECT_CLEAN_WORKER_BUFFERS
@@ -1646,12 +1647,12 @@ void thorium_worker_run(struct thorium_worker *worker)
     if (core_fast_queue_dequeue(&worker->output_outbound_message_queue_for_multiplexer,
         &other_message)) {
 
-        /*
         destination_node = thorium_message_destination_node(&other_message);
 
         worker_index = destination_node % worker->worker_count;
-        */
+        /*
         worker_index = 0;
+        */
 
         worker_for_multiplexer = worker->workers + worker_index;
 
