@@ -8,7 +8,7 @@
 #include <inttypes.h>
 #include <stdint.h>
 
-#define EVENT_COUNT 1000
+#define EVENT_COUNT 10000
 #define ACTORS_PER_WORKER 100
 #define PERIOD 500
 /*
@@ -73,6 +73,10 @@ void process_receive(struct thorium_actor *self, struct thorium_message *message
     struct core_vector actors;
     int name;
     int count;
+    int nodes;
+    int number_of_actors;
+    int workers;
+    int workers_per_node;
 
     concrete_self = (struct process *)thorium_actor_concrete_actor(self);
     action = thorium_message_action(message);
@@ -136,12 +140,23 @@ void process_receive(struct thorium_actor *self, struct thorium_message *message
             total *= EVENT_COUNT;
             elapsed_seconds = ((elapsed_time + 0.0) / ( 1000 * 1000 * 1000));
 
-            printf("Total sent message count: %" PRIu64 " in %" PRIu64 " nanoseconds (%f s)\n",
-                            total, elapsed_time, elapsed_seconds);
+            nodes = thorium_actor_get_node_count(self);
+            workers_per_node = thorium_actor_node_worker_count(self);
+            workers = nodes * workers_per_node;
+            actors_per_worker = ACTORS_PER_WORKER;
+            number_of_actors = workers * actors_per_worker;
+
+            printf("%d nodes, %d worker threads (%d * %d), %d actors (%d * %d)\n",
+                            nodes, workers, nodes, workers_per_node,
+                            number_of_actors, workers, actors_per_worker);
+            printf("Total sent message count: %" PRIu64 " (%d * %d) in %" PRIu64 " nanoseconds (%f s)\n",
+                            total, number_of_actors,
+                           EVENT_COUNT, elapsed_time, elapsed_seconds);
             rate = (total + 0.0) / elapsed_seconds;
 
             printf("Messaging rate: %f messages / second\n", rate);
         }
+
         printf("%d receives ACTION_ASK_TO_STOP\n", thorium_actor_name(self));
         thorium_actor_send_range_empty(self, &concrete_self->children, ACTION_ASK_TO_STOP);
         thorium_actor_send_to_self_empty(self, ACTION_STOP);
