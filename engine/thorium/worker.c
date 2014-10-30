@@ -435,6 +435,9 @@ void thorium_worker_send(struct thorium_worker *worker, struct thorium_message *
     void *old_buffer;
     int action;
     int enable_multiplexer;
+    int message_was_pushed;
+    int worker_index;
+    struct thorium_worker *destination_worker;
 
 #ifdef THORIUM_WORKER_SEND_TO_LOCAL_ACTOR
     int destination;
@@ -594,9 +597,29 @@ void thorium_worker_send(struct thorium_worker *worker, struct thorium_message *
         if (thorium_message_destination_node(message) == thorium_message_source_node(message)) {
 
             /*
-             * Don't multiplex local messages.
+             * If this is a message for a local actor, send it right away
+             * to the destination actor.
              */
-            core_fast_queue_enqueue(&worker->output_outbound_message_queue,
+            destination = thorium_message_destination(message);
+            destination_actor = thorium_node_get_actor_from_name(worker->node, destination);
+            message_was_pushed = 0;
+
+            if (destination_actor != NULL) {
+
+                worker_index = thorium_actor_assigned_worker(destination_actor);
+
+                if (worker_index != THORIUM_WORKER_NONE) {
+                    destination_worker = worker->workers + worker_index;
+
+                    destination_worker = destination_worker;
+                }
+            }
+
+            /*
+             * Use the regular route if the fast path code path failed.
+             */
+            if (!message_was_pushed)
+                core_fast_queue_enqueue(&worker->output_outbound_message_queue,
                             message);
         } else {
 
