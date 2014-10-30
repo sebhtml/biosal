@@ -241,7 +241,9 @@ void biosal_assembly_block_classifier_flush(struct thorium_actor *self, int cust
     void *buffer;
     struct thorium_message message;
     int customer;
+    /*
     struct core_memory_pool *ephemeral_memory;
+    */
     int threshold;
     int *bucket;
 
@@ -252,7 +254,9 @@ void biosal_assembly_block_classifier_flush(struct thorium_actor *self, int cust
 
     concrete_actor = (struct biosal_assembly_block_classifier *)thorium_actor_concrete_actor(self);
 
+    /*
     ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
+    */
     customer = core_vector_at_as_int(&concrete_actor->consumers, customer_index);
     customer_block_pointer = (struct biosal_dna_kmer_frequency_block *)core_vector_at(buffers, customer_index);
 

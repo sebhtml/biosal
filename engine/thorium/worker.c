@@ -140,7 +140,9 @@ void thorium_worker_init(struct thorium_worker *worker, int name, struct thorium
     int injected_buffer_ring_size;
     int argc;
     char **argv;
+#ifndef THORIUM_WORKER_USE_MULTIPLE_PRODUCER_RING
     int outbound_ring_capacity;
+#endif
 
     /*
     thorium_message_block_init(&worker->message_block);
@@ -217,12 +219,12 @@ void thorium_worker_init(struct thorium_worker *worker, int name, struct thorium
 
     /*
     */
-    outbound_ring_capacity = THORIUM_WORKER_RING_CAPACITY;
     /*
     outbound_ring_capacity = 256;
     */
 
 #ifndef THORIUM_WORKER_USE_MULTIPLE_PRODUCER_RING
+    outbound_ring_capacity = THORIUM_WORKER_RING_CAPACITY;
     core_fast_ring_init(&worker->output_outbound_message_ring, outbound_ring_capacity, sizeof(struct thorium_message));
 #endif
 

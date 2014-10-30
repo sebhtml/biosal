@@ -202,7 +202,7 @@ void biosal_dna_kmer_counter_kernel_receive(struct thorium_actor *actor, struct 
     } else if (tag == ACTION_ASK_TO_STOP) {
 
         printf("kernel/%d generated %" PRIu64 " kmers from %" PRIu64 " entries (%d blocks)\n",
-                        thorium_actor_name(actor), concrete_actor->kmers,
+                        name, concrete_actor->kmers,
                         concrete_actor->actual, concrete_actor->blocks);
 
 #ifdef BIOSAL_KMER_COUNTER_KERNEL_DEBUG

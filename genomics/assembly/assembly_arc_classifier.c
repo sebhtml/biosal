@@ -155,7 +155,9 @@ void biosal_assembly_arc_classifier_destroy(struct thorium_actor *self)
 void biosal_assembly_arc_classifier_receive(struct thorium_actor *self, struct thorium_message *message)
 {
     int tag;
+    /*
     void *buffer;
+    */
     struct biosal_assembly_arc_classifier *concrete_self;
     int *bucket;
     int source;
@@ -167,7 +169,9 @@ void biosal_assembly_arc_classifier_receive(struct thorium_actor *self, struct t
 
     concrete_self = (struct biosal_assembly_arc_classifier *)thorium_actor_concrete_actor(self);
     tag = thorium_message_action(message);
+    /*
     buffer = thorium_message_buffer(message);
+    */
     source = thorium_message_source(message);
 
     if (tag == ACTION_SET_CONSUMERS) {
