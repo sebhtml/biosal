@@ -149,9 +149,7 @@ void core_set_affinity(int processor)
      * The code below is a workaround for this.
      */
 
-#if defined(__linux__)
     core_set_no_affinity();
-#endif
 
     set_affinity = 0;
 
