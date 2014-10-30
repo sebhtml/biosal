@@ -8,8 +8,8 @@
 #define MEMORY_FAST_QUEUE 0x771872d8
 
 #ifdef CORE_RING_QUEUE_THREAD_SAFE
-void core_fast_queue_lock(struct core_fast_queue *self);
-void core_fast_queue_unlock(struct core_fast_queue *self);
+static void core_fast_queue_lock(struct core_fast_queue *self);
+static void core_fast_queue_unlock(struct core_fast_queue *self);
 #endif
 
 struct core_linked_ring *core_fast_queue_get_ring(struct core_fast_queue *self);
@@ -62,13 +62,13 @@ int core_fast_queue_full(struct core_fast_queue *self)
 }
 
 #ifdef CORE_RING_QUEUE_THREAD_SAFE
-void core_fast_queue_lock(struct core_fast_queue *self)
+static void core_fast_queue_lock(struct core_fast_queue *self)
 {
     core_lock_lock(&self->lock);
     self->locked = CORE_LOCK_LOCKED;
 }
 
-void core_fast_queue_unlock(struct core_fast_queue *self)
+static void core_fast_queue_unlock(struct core_fast_queue *self)
 {
     self->locked = CORE_LOCK_UNLOCKED;
     core_lock_unlock(&self->lock);
