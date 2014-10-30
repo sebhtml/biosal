@@ -24,10 +24,12 @@
  */
 #define USE_MEMORY_FENCE
 
-void *core_fast_ring_get_cell(struct core_fast_ring *self, uint64_t index);
-uint64_t core_fast_ring_increment(struct core_fast_ring *self, uint64_t index);
-int core_fast_ring_get_next_power_of_two(int value);
-uint64_t core_fast_ring_mock(struct core_fast_ring *self);
+static void *core_fast_ring_get_cell(struct core_fast_ring *self, uint64_t index);
+static uint64_t core_fast_ring_increment(struct core_fast_ring *self, uint64_t index);
+static int core_fast_ring_get_next_power_of_two(int value);
+#ifdef CORE_FAST_RING_USE_PADDING
+static uint64_t core_fast_ring_mock(struct core_fast_ring *self);
+#endif
 
 #ifdef CAS
 static int core_fast_ring_push_compare_and_swap(struct core_fast_ring *self, void *element, int worker);
@@ -186,17 +188,17 @@ int core_fast_ring_capacity(struct core_fast_ring *self)
     return self->number_of_cells - 1;
 }
 
-uint64_t core_fast_ring_increment(struct core_fast_ring *self, uint64_t index)
+static uint64_t core_fast_ring_increment(struct core_fast_ring *self, uint64_t index)
 {
     return  (index + 1) & self->mask;
 }
 
-void *core_fast_ring_get_cell(struct core_fast_ring *self, uint64_t index)
+static void *core_fast_ring_get_cell(struct core_fast_ring *self, uint64_t index)
 {
     return ((char *)self->cells) + index * self->cell_size;
 }
 
-int core_fast_ring_get_next_power_of_two(int value)
+static int core_fast_ring_get_next_power_of_two(int value)
 {
     int power_of_two;
 
@@ -212,13 +214,13 @@ int core_fast_ring_get_next_power_of_two(int value)
 /*
  * Use the padding to avoid the losing that with optimizations
  */
-uint64_t core_fast_ring_mock(struct core_fast_ring *self)
+#ifdef CORE_FAST_RING_USE_PADDING
+static uint64_t core_fast_ring_mock(struct core_fast_ring *self)
 {
     uint64_t sum;
 
     sum = 0;
 
-#ifdef CORE_FAST_RING_USE_PADDING
     sum += self->consumer_padding_0;
     sum += self->consumer_padding_1;
     sum += self->consumer_padding_2;
@@ -232,10 +234,11 @@ uint64_t core_fast_ring_mock(struct core_fast_ring *self)
     sum += self->producer_padding_3;
     sum += self->producer_padding_4;
     sum += self->producer_padding_5;
-#endif
 
     return sum;
 }
+#endif
+
 
 #ifdef CORE_FAST_RING_USE_CACHE
 void core_fast_ring_update_head_cache(struct core_fast_ring *self)
