@@ -32,7 +32,11 @@ int main(int argc, char **argv)
         biosal_dna_codec_init(&codec);
 
         run_test = 1;
+
         count = 100000000;
+
+        if (argc == 2)
+            count = atoi(argv[1]);
 
         printf("STRESS TEST\n");
 
