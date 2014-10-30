@@ -531,7 +531,7 @@ int thorium_worker_pool_give_message_to_worker(struct thorium_worker_pool *pool,
 
     /* If not, ask the scheduler to assign the actor to a worker
      */
-    if (worker_index < 0) {
+    if (worker_index == THORIUM_WORKER_NONE) {
 
         thorium_worker_pool_assign_worker_to_actor(pool, name);
         worker_index = thorium_balancer_get_actor_worker(&pool->balancer, name);
@@ -728,7 +728,7 @@ void thorium_worker_pool_assign_worker_to_actor(struct thorium_worker_pool *pool
     /* assign this actor to the least busy actor
      */
 
-    worker_index = -1;
+    worker_index = THORIUM_WORKER_NONE;
 
 #ifdef THORIUM_WORKER_POOL_USE_LEAST_BUSY
     worker_index = thorium_balancer_select_worker_least_busy(&pool->scheduler, &score);
@@ -841,7 +841,7 @@ struct thorium_worker *thorium_worker_pool_select_worker_for_message(struct thor
 #ifdef THORIUM_WORKER_POOL_USE_COUNT_CACHE
     int best_index;
 
-    best_index = -1;
+    best_index = THORIUM_WORKER_NONE;
 #endif
     best_score = 0;
     best_worker = NULL;

@@ -57,7 +57,6 @@
 void thorium_balancer_init(struct thorium_balancer *self, struct thorium_worker_pool *pool)
 {
     self->pool = pool;
-    core_map_init(&self->actor_affinities, sizeof(int), sizeof(int));
     core_map_init(&self->last_actor_received_messages, sizeof(int), sizeof(int));
 
     self->worker_for_work = 0;
@@ -73,7 +72,6 @@ void thorium_balancer_init(struct thorium_balancer *self, struct thorium_worker_
 void thorium_balancer_destroy(struct thorium_balancer *self)
 {
     self->pool = NULL;
-    core_map_destroy(&self->actor_affinities);
     core_map_destroy(&self->last_actor_received_messages);
 
     core_map_destroy(&self->current_script_workers);
@@ -472,7 +470,7 @@ void thorium_balancer_balance(struct thorium_balancer *self)
         }
 
         messages = thorium_balancer_get_actor_production(self, actor);
-        core_map_get_value(&self->actor_affinities, &actor_name, &old_worker);
+        old_worker = thorium_actor_assigned_worker(actor);
 
         worker = thorium_worker_pool_get_worker(self->pool, old_worker);
 
@@ -660,7 +658,7 @@ void thorium_balancer_migrate(struct thorium_balancer *self, struct thorium_migr
     /* Redirect messages for this actor to the
      * new worker
      */
-    core_map_update_value(&self->actor_affinities, &actor_name, &new_worker);
+    thorium_actor_set_assigned_worker(actor, new_worker);
 
 #ifdef THORIUM_WORKER_POOL_DEBUG_MIGRATION
     printf("ROUTE actor %d ->  worker %d\n", actor_name, new_worker);
@@ -712,17 +710,25 @@ void thorium_balancer_update_actor_production(struct thorium_balancer *self, str
 int thorium_balancer_get_actor_worker(struct thorium_balancer *self, int name)
 {
     int worker_index;
+    struct thorium_actor *actor;
 
-    worker_index = -1;
+    worker_index = THORIUM_WORKER_NONE;
 
-    core_map_get_value(&self->actor_affinities, &name, &worker_index);
+    actor = thorium_node_get_actor_from_name(self->pool->node, name);
+
+    if (actor != NULL)
+        worker_index = thorium_actor_assigned_worker(actor);
 
     return worker_index;
 }
 
 void thorium_balancer_set_actor_worker(struct thorium_balancer *self, int name, int worker_index)
 {
-    core_map_add_value(&self->actor_affinities, &name, &worker_index);
+    struct thorium_actor *actor;
+    actor = thorium_node_get_actor_from_name(self->pool->node, name);
+
+    if (actor != NULL)
+        thorium_actor_set_assigned_worker(actor, worker_index);
 }
 
 #ifdef THORIUM_WORKER_HAS_OWN_QUEUES

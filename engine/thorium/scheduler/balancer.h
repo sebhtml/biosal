@@ -14,7 +14,6 @@ struct thorium_migration;
 
 struct thorium_balancer {
     struct thorium_worker_pool *pool;
-    struct core_map actor_affinities;
     struct core_map last_actor_received_messages;
 
     int worker_for_work;
