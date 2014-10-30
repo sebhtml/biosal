@@ -21,6 +21,8 @@
 #include <core/structures/map_iterator.h>
 #include <core/structures/set_iterator.h>
 
+#include <core/constants.h>
+
 #include <core/helpers/vector_helper.h>
 #include <core/helpers/bitmap.h>
 
