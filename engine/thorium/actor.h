@@ -223,6 +223,12 @@ struct thorium_actor {
     struct thorium_actor_profiler profiler;
     struct thorium_script *script;
     struct thorium_worker *worker;
+
+    /*
+     * The affinity worker for this actor.
+     */
+    int assigned_worker;
+
     struct thorium_node *node;
 
     /*
@@ -428,5 +434,8 @@ void thorium_actor_write_profile(struct thorium_actor *self,
 
 void *thorium_actor_allocate(struct thorium_actor *self, size_t count);
 void thorium_actor_synchronize(struct thorium_actor *self, struct core_vector *actors);
+
+int thorium_actor_assigned_worker(struct thorium_actor *self);
+void thorium_actor_set_assigned_worker(struct thorium_actor *self, int worker);
 
 #endif

@@ -214,6 +214,8 @@ void thorium_actor_init(struct thorium_actor *self, void *concrete_actor,
     init(self);
 
     CORE_DEBUGGER_ASSERT(self->name != THORIUM_ACTOR_NOBODY);
+
+    thorium_actor_set_assigned_worker(self, THORIUM_WORKER_NONE);
 }
 
 void thorium_actor_destroy(struct thorium_actor *self)
@@ -2329,4 +2331,14 @@ void thorium_actor_write_profile(struct thorium_actor *self,
 void *thorium_actor_allocate(struct thorium_actor *self, size_t count)
 {
     return thorium_worker_allocate(self->worker, count);
+}
+
+void thorium_actor_set_assigned_worker(struct thorium_actor *self, int worker)
+{
+    self->assigned_worker = worker;
+}
+
+int thorium_actor_assigned_worker(struct thorium_actor *self)
+{
+    return self->assigned_worker;
 }
