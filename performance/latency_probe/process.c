@@ -7,15 +7,15 @@
 #include <stdio.h>
 #include <inttypes.h>
 #include <stdint.h>
-/*
 
-#define EVENT_COUNT 10000
-#define ACTORS_PER_WORKER 1000
+#define EVENT_COUNT 1000
+#define ACTORS_PER_WORKER 100
 #define PERIOD 500
-*/
+/*
 #define EVENT_COUNT 1
 #define ACTORS_PER_WORKER 1
 #define PERIOD 5
+*/
 
 void process_init(struct thorium_actor *self);
 void process_destroy(struct thorium_actor *self);
@@ -58,6 +58,7 @@ void process_destroy(struct thorium_actor *self)
 void process_receive(struct thorium_actor *self, struct thorium_message *message)
 {
     int action;
+    uint64_t total;
     void *buffer;
     int leader;
     int worker_count;
@@ -65,6 +66,9 @@ void process_receive(struct thorium_actor *self, struct thorium_message *message
     int actors_per_worker;
     int i;
     int new_actor;
+    uint64_t elapsed_time;
+    double rate;
+    double elapsed_seconds;
     struct process *concrete_self;
     struct core_vector actors;
     int name;
@@ -121,6 +125,23 @@ void process_receive(struct thorium_actor *self, struct thorium_message *message
         }
     } else if (action == ACTION_ASK_TO_STOP) {
 
+        leader = core_vector_at_as_int(&concrete_self->initial_actors, 0);
+
+        if (name == leader) {
+
+            core_timer_stop(&concrete_self->timer);
+            elapsed_time = core_timer_get_elapsed_nanoseconds(&concrete_self->timer);
+
+            total = core_vector_size(&concrete_self->actors);
+            total *= EVENT_COUNT;
+            elapsed_seconds = ((elapsed_time + 0.0) / ( 1000 * 1000 * 1000));
+
+            printf("Total sent message count: %" PRIu64 " in %" PRIu64 " nanoseconds (%f s)\n",
+                            total, elapsed_time, elapsed_seconds);
+            rate = (total + 0.0) / elapsed_seconds;
+
+            printf("Messaging rate: %f messages / second\n", rate);
+        }
         printf("%d receives ACTION_ASK_TO_STOP\n", thorium_actor_name(self));
         thorium_actor_send_range_empty(self, &concrete_self->children, ACTION_ASK_TO_STOP);
         thorium_actor_send_to_self_empty(self, ACTION_STOP);
@@ -141,6 +162,9 @@ void process_receive(struct thorium_actor *self, struct thorium_message *message
 
             thorium_actor_send_range_vector(self, &concrete_self->actors, ACTION_NOTIFY,
                             &concrete_self->actors);
+
+            core_timer_init(&concrete_self->timer);
+            core_timer_start(&concrete_self->timer);
 
         }
     } else if (action == ACTION_NOTIFY) {
