@@ -184,6 +184,7 @@ void thorium_worker_init(struct thorium_worker *worker, int name, struct thorium
      * 2. Use volatile head and tail.
      */
     core_fast_ring_init(&worker->input_inbound_message_ring, capacity, sizeof(struct thorium_message));
+    core_fast_ring_use_multiple_producers(&worker->input_inbound_message_ring);
 
     core_fast_queue_init(&worker->input_inbound_message_queue, sizeof(struct thorium_message));
 
@@ -444,6 +445,9 @@ void thorium_worker_send(struct thorium_worker *worker, struct thorium_message *
     struct thorium_actor *destination_actor;
 #endif
 
+    int use_fast_delivery;
+
+    use_fast_delivery = 1;
     enable_multiplexer = 1;
 
     tracepoint(thorium_message, worker_send, message);
@@ -604,14 +608,15 @@ void thorium_worker_send(struct thorium_worker *worker, struct thorium_message *
             destination_actor = thorium_node_get_actor_from_name(worker->node, destination);
             message_was_pushed = 0;
 
-            if (destination_actor != NULL) {
+            if (use_fast_delivery && destination_actor != NULL) {
 
                 worker_index = thorium_actor_assigned_worker(destination_actor);
 
                 if (worker_index != THORIUM_WORKER_NONE) {
                     destination_worker = worker->workers + worker_index;
 
-                    destination_worker = destination_worker;
+                    if (thorium_worker_enqueue_inbound_message(destination_worker, message))
+                        message_was_pushed = 1;
                 }
             }
 
@@ -847,7 +852,7 @@ int thorium_worker_dequeue_actor(struct thorium_worker *worker, struct thorium_a
      * Move an actor from the ring to the real actor scheduling queue
      */
     while (operations--
-                    && core_fast_ring_pop_from_consumer(&worker->input_inbound_message_ring,
+                    && core_fast_ring_pop_multiple_producers(&worker->input_inbound_message_ring,
                             &message)) {
 
         tracepoint(thorium_message, worker_receive, &message);
@@ -1030,7 +1035,7 @@ int thorium_worker_enqueue_inbound_message(struct thorium_worker *worker, struct
     tracepoint(thorium_message, worker_enqueue_inbound_message, message,
                     &worker->input_inbound_message_ring);
 
-    value = core_fast_ring_push_from_producer(&worker->input_inbound_message_ring, message);
+    value = core_fast_ring_push_multiple_producers(&worker->input_inbound_message_ring, message, worker->name);
 
 #ifdef SHOW_FULL_RING_WARNINGS
     if (!value) {
