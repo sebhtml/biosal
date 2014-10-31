@@ -528,14 +528,6 @@ void thorium_node_init(struct thorium_node *node, int *argc, char ***argv)
 #endif
     }
 
-    thorium_multiplexer_policy_init(&node->multiplexer_policy);
-    thorium_message_multiplexer_init(&node->multiplexer, node,
-                    &node->multiplexer_policy);
-
-    if (thorium_message_multiplexer_is_disabled(&node->multiplexer)) {
-        CORE_BITMAP_SET_BIT(node->flags, FLAG_MULTIPLEXER_IS_DISABLED);
-    }
-
     if (core_command_has_argument(node->argc, node->argv, "-enable-actor-load-profiler")) {
         thorium_worker_pool_enable_profiler(&node->worker_pool);
         CORE_BITMAP_SET_BIT(node->flags, FLAG_ENABLE_ACTOR_LOAD_PROFILES);
@@ -626,8 +618,6 @@ void thorium_node_destroy(struct thorium_node *node)
     thorium_worker_pool_destroy(&node->worker_pool);
 
     thorium_transport_destroy(&node->transport);
-    thorium_message_multiplexer_destroy(&node->multiplexer);
-    thorium_multiplexer_policy_destroy(&node->multiplexer_policy);
 
 #ifdef THORIUM_NODE_USE_COUNTERS
     core_counter_destroy(&node->counter);
@@ -1482,10 +1472,6 @@ static void thorium_node_send(struct thorium_node *node, struct thorium_message 
         }
 #endif
 
-    /*
-        if (!perform_multiplexing
-                        || !thorium_message_multiplexer_multiplex(&node->multiplexer, message)) {
-                        */
         thorium_node_send_with_transport(node, message);
 
 #if 0
@@ -2903,7 +2889,6 @@ static void thorium_node_receive_messages(struct thorium_node *node)
     int i;
     int count;
     struct thorium_message message;
-    void *buffer;
 
     i = 0;
     count = THORIUM_NODE_MAXIMUM_RECEIVED_MESSAGE_COUNT_PER_CALL;
@@ -2936,19 +2921,10 @@ static void thorium_node_receive_messages(struct thorium_node *node)
                 thorium_message_count(&message));
 #endif
 
-        if (!thorium_message_multiplexer_demultiplex(&node->multiplexer, &message)) {
-            thorium_node_dispatch_message(node, &message);
-        } else {
-            /*
-             * Don't leak memory
-             */
-#ifdef THORIUM_NODE_DEBUG_INJECTION
-            ++node->counter_freed_multiplexed_inbound_buffers;
-#endif
-
-            buffer = thorium_message_buffer(&message);
-            core_memory_pool_free(&node->inbound_message_memory_pool, buffer);
-        }
+        /*
+         * Dispatch message.
+         */
+        thorium_node_dispatch_message(node, &message);
 
         ++i;
     }

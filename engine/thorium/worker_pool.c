@@ -89,6 +89,8 @@ static void thorium_worker_pool_assign_worker_to_actor(struct thorium_worker_poo
 
 static void thorium_worker_pool_examine_inbound_queue(struct thorium_worker_pool *self);
 
+static int thorium_worker_pool_give_message_to_worker(struct thorium_worker_pool *self, struct thorium_message *message);
+
 void thorium_worker_pool_init(struct thorium_worker_pool *pool, int workers,
                 struct thorium_node *node)
 {
@@ -487,15 +489,35 @@ struct thorium_node *thorium_worker_pool_get_node(struct thorium_worker_pool *po
     return pool->node;
 }
 
-int thorium_worker_pool_give_message_to_worker(struct thorium_worker_pool *pool, struct thorium_message *message)
+static int thorium_worker_pool_give_message_to_worker(struct thorium_worker_pool *pool, struct thorium_message *message)
 {
     struct thorium_worker *affinity_worker;
     int worker_index;
     int name;
+    int action;
+
 #ifdef CHECK_IF_ACTOR_IS_DEAD
     int dead;
     struct thorium_actor *actor;
 #endif
+
+    action = thorium_message_action(message);
+
+    /*
+     * Inject multiplexed message in one of the worker for
+     * distributed demultiplexing.
+     */
+    if (action == ACTION_MULTIPLEXER_MESSAGE) {
+        worker_index = 0;
+        affinity_worker = thorium_worker_pool_get_worker(pool, worker_index);
+
+        if (!thorium_worker_enqueue_inbound_message(affinity_worker, message)) {
+
+            core_fast_queue_enqueue(&pool->inbound_message_queue_buffer, message);
+        }
+
+        return 1;
+    }
 
     /*
     void *buffer;

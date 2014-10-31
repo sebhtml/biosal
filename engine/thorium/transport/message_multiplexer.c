@@ -380,7 +380,8 @@ int thorium_message_multiplexer_demultiplex(struct thorium_message_multiplexer *
     count = thorium_message_count(message);
 
     buffer = thorium_message_buffer(message);
-    pool = thorium_node_inbound_memory_pool(self->node);
+
+    pool = thorium_worker_get_outbound_message_memory_pool(self->worker);
 
     position = 0;
 
@@ -399,6 +400,11 @@ int thorium_message_multiplexer_demultiplex(struct thorium_message_multiplexer *
 
         thorium_node_prepare_received_message(self->node, &new_message);
 
+        /*
+         * Mark the message for recycling.
+         */
+        thorium_message_set_worker(&new_message, thorium_worker_name(self->worker));
+
 #ifdef CORE_DEBUGGER_ENABLE_ASSERT
         if (thorium_message_action(&new_message) == ACTION_INVALID) {
             printf("Error invalid action DEMUL Multiplexer position %d count %d new_count %d\n",
@@ -413,7 +419,12 @@ int thorium_message_multiplexer_demultiplex(struct thorium_message_multiplexer *
         printf("DEMULTIPLEX_MESSAGE\n");
         */
 
-        thorium_node_dispatch_message(self->node, &new_message);
+        /*
+        printf("demultiplex, local delivery: \n");
+        thorium_message_print(&new_message);
+        */
+
+        thorium_worker_execute_local_delivery(self->worker, &new_message);
 
         /*
         thorium_message_destroy(&new_message);

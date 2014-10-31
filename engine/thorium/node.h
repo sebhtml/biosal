@@ -8,8 +8,6 @@
 #include "tracepoints/tracepoint_session.h"
 
 #include "transport/transport.h"
-#include "transport/message_multiplexer.h"
-#include "transport/multiplexer_policy.h"
 
 #include <core/structures/vector.h>
 #include <core/structures/queue.h>
@@ -146,8 +144,6 @@ struct thorium_node {
  */
     struct core_thread thread;
     struct thorium_transport transport;
-    struct thorium_message_multiplexer multiplexer;
-    struct thorium_multiplexer_policy multiplexer_policy;
 
     /*
      * This lock can not be removed because

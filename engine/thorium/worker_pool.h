@@ -108,7 +108,6 @@ int thorium_worker_pool_dequeue_message(struct thorium_worker_pool *self, struct
 float thorium_worker_pool_get_computation_load(struct thorium_worker_pool *self);
 
 struct thorium_node *thorium_worker_pool_get_node(struct thorium_worker_pool *self);
-int thorium_worker_pool_give_message_to_worker(struct thorium_worker_pool *self, struct thorium_message *message);
 
 void thorium_worker_pool_work(struct thorium_worker_pool *self);
 float thorium_worker_pool_get_current_load(struct thorium_worker_pool *self);

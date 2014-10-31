@@ -438,9 +438,6 @@ void thorium_worker_send(struct thorium_worker *worker, struct thorium_message *
     void *old_buffer;
     int action;
     int enable_multiplexer;
-    int message_was_pushed;
-    int worker_index;
-    struct thorium_worker *destination_worker;
     struct thorium_message message_copy;
     struct thorium_message *message;
 
@@ -449,15 +446,12 @@ void thorium_worker_send(struct thorium_worker *worker, struct thorium_message *
     struct thorium_actor *destination_actor;
 #endif
 
-    int use_fast_delivery;
-
     /*
      * Make a copy of the message to avoid side effects.
      */
     message_copy = *message_argument;
     message = &message_copy;
 
-    use_fast_delivery = YES;
     enable_multiplexer = YES;
 
     tracepoint(thorium_message, worker_send, message);
@@ -616,32 +610,8 @@ void thorium_worker_send(struct thorium_worker *worker, struct thorium_message *
 
         if (thorium_message_destination_node(message) == thorium_message_source_node(message)) {
 
-            /*
-             * If this is a message for a local actor, send it right away
-             * to the destination actor.
-             */
-            destination = thorium_message_destination(message);
-            destination_actor = thorium_node_get_actor_from_name(worker->node, destination);
-            message_was_pushed = 0;
+             thorium_worker_execute_local_delivery(worker, message);
 
-            if (use_fast_delivery && destination_actor != NULL) {
-
-                worker_index = thorium_actor_assigned_worker(destination_actor);
-
-                if (worker_index != THORIUM_WORKER_NONE) {
-                    destination_worker = worker->workers + worker_index;
-
-                    if (thorium_worker_enqueue_inbound_message(destination_worker, message))
-                        message_was_pushed = 1;
-                }
-            }
-
-            /*
-             * Use the regular route if the fast path code path failed.
-             */
-            if (!message_was_pushed)
-                core_fast_queue_enqueue(&worker->output_outbound_message_queue,
-                            message);
         } else {
 
             /*
@@ -858,6 +828,7 @@ int thorium_worker_dequeue_actor(struct thorium_worker *worker, struct thorium_a
     int operations;
     int status;
     int mailbox_size;
+    int action;
 
     operations = THORIUM_WORKER_MAXIMUM_RECEIVED_MESSAGE_COUNT_PER_CALL;
     other_actor = NULL;
@@ -870,6 +841,16 @@ int thorium_worker_dequeue_actor(struct thorium_worker *worker, struct thorium_a
     while (operations--
                     && core_fast_ring_pop_multiple_producers(&worker->input_inbound_message_ring,
                             &message)) {
+
+        action = thorium_message_action(&message);
+
+        /*
+         * Give this message to the demultiplexer.
+         */
+        if (action == ACTION_MULTIPLEXER_MESSAGE) {
+            thorium_message_multiplexer_demultiplex(&worker->multiplexer, &message);
+            continue;
+        }
 
         tracepoint(thorium_message, worker_receive, &message);
 
@@ -2384,4 +2365,41 @@ struct core_memory_pool *thorium_worker_get_outbound_message_memory_pool(struct 
     return &self->outbound_message_memory_pool;
 }
 
+void thorium_worker_execute_local_delivery(struct thorium_worker *self, struct thorium_message *message)
+{
+    int message_was_pushed;
+    int worker_index;
+    struct thorium_worker *destination_worker;
+    int destination;
+    struct thorium_actor *destination_actor;
+    int use_fast_delivery;
 
+    use_fast_delivery = YES;
+
+    /*
+     * If this is a message for a local actor, send it right away
+     * to the destination actor.
+     */
+    destination = thorium_message_destination(message);
+    destination_actor = thorium_node_get_actor_from_name(self->node, destination);
+    message_was_pushed = 0;
+
+    if (use_fast_delivery && destination_actor != NULL) {
+
+        worker_index = thorium_actor_assigned_worker(destination_actor);
+
+        if (worker_index != THORIUM_WORKER_NONE) {
+            destination_worker = self->workers + worker_index;
+
+            if (thorium_worker_enqueue_inbound_message(destination_worker, message))
+                message_was_pushed = 1;
+        }
+    }
+
+    /*
+     * Use the regular route if the fast path code path failed.
+     */
+    if (!message_was_pushed)
+        core_fast_queue_enqueue(&self->output_outbound_message_queue,
+                    message);
+}
