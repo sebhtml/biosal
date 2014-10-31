@@ -10,7 +10,7 @@ echo "Tracing for $duration seconds"
 lttng start
 sleep $duration
 lttng stop
-lttng view > trace
-wc -l trace
+lttng view > worker.trace
+wc -l worker.trace
 lttng destroy
 

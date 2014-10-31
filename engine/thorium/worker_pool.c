@@ -164,6 +164,8 @@ void thorium_worker_pool_init(struct thorium_worker_pool *pool, int workers,
     pool->last_signal_check = pool->starting_time;
 
     pool->balance_period = THORIUM_SCHEDULER_PERIOD_IN_SECONDS;
+
+    pool->worker_for_demultiplex = 0;
 }
 
 void thorium_worker_pool_destroy(struct thorium_worker_pool *pool)
@@ -508,7 +510,16 @@ static int thorium_worker_pool_give_message_to_worker(struct thorium_worker_pool
      * distributed demultiplexing.
      */
     if (action == ACTION_MULTIPLEXER_MESSAGE) {
-        worker_index = 0;
+
+        /*
+         * Use a round-robin for messages to demultiplex.
+         */
+        worker_index = pool->worker_for_demultiplex;
+
+        ++pool->worker_for_demultiplex;
+        if (pool->worker_for_demultiplex == pool->worker_count)
+            pool->worker_for_demultiplex = 0;
+
         affinity_worker = thorium_worker_pool_get_worker(pool, worker_index);
 
         if (!thorium_worker_enqueue_inbound_message(affinity_worker, message)) {

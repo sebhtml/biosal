@@ -8,7 +8,7 @@ echo "Tracing for $duration seconds"
 lttng start
 sleep $duration
 lttng stop
-lttng view > node.trace
-wc -l node.trace
+lttng view > node-enter-exit.trace
+wc -l node-enter-exit.trace
 lttng destroy
 
