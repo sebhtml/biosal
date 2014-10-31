@@ -87,6 +87,11 @@ static void process_receive(struct thorium_actor *self, struct thorium_message *
 
     if (action == ACTION_START) {
 
+        /*
+         * Initial actors can not be NULL.
+         */
+        CORE_DEBUGGER_ASSERT_NOT_NULL(buffer);
+
         core_vector_unpack(&concrete_self->initial_actors, buffer);
 
         thorium_actor_send_to_self_empty(self, ACTION_GET_NODE_WORKER_COUNT);

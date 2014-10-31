@@ -1084,6 +1084,12 @@ void thorium_node_start_initial_actor(struct thorium_node *node)
 
         thorium_message_init(&message, ACTION_START, bytes, buffer);
 
+        /*
+         * Add metadata because workers strip metadata before
+         * giving messages to actors.
+         */
+        thorium_message_add_metadata_to_count(&message);
+
         thorium_node_send_to_actor(node, name, &message);
 
         thorium_message_destroy(&message);
