@@ -70,20 +70,24 @@
 */
 
 #ifdef THORIUM_WORKER_HAS_OWN_QUEUES
-int thorium_worker_pool_pull_classic(struct thorium_worker_pool *self, struct thorium_message *message);
-void thorium_worker_pool_schedule_work_classic(struct thorium_worker_pool *self, struct biosal_work *work);
+/*
+static int thorium_worker_pool_pull_classic(struct thorium_worker_pool *self, struct thorium_message *message);
+static void thorium_worker_pool_schedule_work_classic(struct thorium_worker_pool *self, struct biosal_work *work);
+*/
 
 #endif
 
 #ifdef THORIUM_WORKER_POOL_USE_COUNT_CACHE
-void thorium_worker_pool_set_cached_value(struct thorium_worker_pool *self, int index, int value);
-int thorium_worker_pool_get_cached_value(struct thorium_worker_pool *self, int index);
+static void thorium_worker_pool_set_cached_value(struct thorium_worker_pool *self, int index, int value);
+static int thorium_worker_pool_get_cached_value(struct thorium_worker_pool *self, int index);
 #endif
 
-void thorium_worker_pool_wake_up_workers(struct thorium_worker_pool *self);
-void thorium_worker_pool_assign_worker_to_actor(struct thorium_worker_pool *self, int name);
+/*
+static void thorium_worker_pool_wake_up_workers(struct thorium_worker_pool *self);
+*/
+static void thorium_worker_pool_assign_worker_to_actor(struct thorium_worker_pool *self, int name);
 
-void thorium_worker_pool_examine_inbound_queue(struct thorium_worker_pool *self);
+static void thorium_worker_pool_examine_inbound_queue(struct thorium_worker_pool *self);
 
 void thorium_worker_pool_init(struct thorium_worker_pool *pool, int workers,
                 struct thorium_node *node)
@@ -721,7 +725,7 @@ void thorium_worker_pool_work(struct thorium_worker_pool *pool)
 #endif
 }
 
-void thorium_worker_pool_assign_worker_to_actor(struct thorium_worker_pool *pool, int name)
+static void thorium_worker_pool_assign_worker_to_actor(struct thorium_worker_pool *pool, int name)
 {
     int worker_index;
 
@@ -820,12 +824,12 @@ struct thorium_worker *thorium_worker_pool_get_worker(
 }
 
 #ifdef THORIUM_WORKER_POOL_USE_COUNT_CACHE
-void thorium_worker_pool_set_cached_value(struct thorium_worker_pool *self, int index, int value)
+static void thorium_worker_pool_set_cached_value(struct thorium_worker_pool *self, int index, int value)
 {
     self->message_cache[index] = value;
 }
 
-int thorium_worker_pool_get_cached_value(struct thorium_worker_pool *self, int index)
+static inline int thorium_worker_pool_get_cached_value(struct thorium_worker_pool *self, int index)
 {
     return self->message_cache[index];
 }
@@ -917,7 +921,8 @@ struct thorium_worker *thorium_worker_pool_select_worker_for_message(struct thor
     return best_worker;
 }
 
-int thorium_worker_pool_pull_classic(struct thorium_worker_pool *self, struct thorium_message *message)
+#if 0
+static int thorium_worker_pool_pull_classic(struct thorium_worker_pool *self, struct thorium_message *message)
 {
     struct thorium_worker *worker;
     int answer;
@@ -943,6 +948,7 @@ int thorium_worker_pool_pull_classic(struct thorium_worker_pool *self, struct th
 
     return answer;
 }
+#endif
 
 int thorium_worker_pool_dequeue_message(struct thorium_worker_pool *pool, struct thorium_message *message)
 {
@@ -978,7 +984,8 @@ int thorium_worker_pool_dequeue_message(struct thorium_worker_pool *pool, struct
     return answer;
 }
 
-void thorium_worker_pool_wake_up_workers(struct thorium_worker_pool *pool)
+#if 0
+static void thorium_worker_pool_wake_up_workers(struct thorium_worker_pool *pool)
 {
     float load;
     int i;
@@ -1019,6 +1026,7 @@ void thorium_worker_pool_wake_up_workers(struct thorium_worker_pool *pool)
         pool->last_signal_check = current_time;
     }
 }
+#endif
 
 int thorium_worker_pool_dequeue_message_for_triage(struct thorium_worker_pool *self,
                 struct thorium_message *message)
@@ -1075,7 +1083,7 @@ int thorium_worker_pool_buffered_message_count(struct thorium_worker_pool *self)
     return core_fast_queue_size(&self->inbound_message_queue_buffer);
 }
 
-void thorium_worker_pool_examine_inbound_queue(struct thorium_worker_pool *self)
+static void thorium_worker_pool_examine_inbound_queue(struct thorium_worker_pool *self)
 {
     int queue_size;
     struct core_fast_queue_iterator iterator;
