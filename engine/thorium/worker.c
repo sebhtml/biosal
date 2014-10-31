@@ -431,7 +431,7 @@ struct thorium_node *thorium_worker_node(struct thorium_worker *worker)
     return worker->node;
 }
 
-void thorium_worker_send(struct thorium_worker *worker, struct thorium_message *message)
+void thorium_worker_send(struct thorium_worker *worker, struct thorium_message *message_argument)
 {
     void *buffer;
     int count;
@@ -441,6 +441,8 @@ void thorium_worker_send(struct thorium_worker *worker, struct thorium_message *
     int message_was_pushed;
     int worker_index;
     struct thorium_worker *destination_worker;
+    struct thorium_message message_copy;
+    struct thorium_message *message;
 
 #ifdef THORIUM_WORKER_SEND_TO_LOCAL_ACTOR
     int destination;
@@ -448,6 +450,12 @@ void thorium_worker_send(struct thorium_worker *worker, struct thorium_message *
 #endif
 
     int use_fast_delivery;
+
+    /*
+     * Make a copy of the message to avoid side effects.
+     */
+    message_copy = *message_argument;
+    message = &message_copy;
 
     use_fast_delivery = YES;
     enable_multiplexer = YES;

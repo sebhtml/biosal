@@ -231,6 +231,7 @@ void thorium_actor_send_range_loop(struct thorium_actor *actor, struct core_vect
 
 #ifdef DEBUG_BINOMIAL_TREE
         printf("send_range_loop, sending to %d\n", the_actor);
+        thorium_message_print(message);
 #endif
 
         thorium_actor_send(actor, the_actor, message);

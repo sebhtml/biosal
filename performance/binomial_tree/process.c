@@ -59,6 +59,8 @@ static void process_receive(struct thorium_actor *self, struct thorium_message *
 
     if (action == ACTION_START)
     {
+        CORE_DEBUGGER_ASSERT(count != 0);
+        CORE_DEBUGGER_ASSERT(buffer != NULL);
 
         core_vector_unpack(&concrete_self->initial_actors, buffer);
         leader = core_vector_at_as_int(&concrete_self->initial_actors, 0);
@@ -79,9 +81,7 @@ static void process_receive(struct thorium_actor *self, struct thorium_message *
             thorium_message_print(message);
 #endif
 
-        /*
         CORE_DEBUGGER_ASSERT(count == 0);
-        */
 
         printf("%d receives ACTION_PING from %d, reply with ACTION_PING_REPLY\n", name, source);
 
@@ -89,6 +89,8 @@ static void process_receive(struct thorium_actor *self, struct thorium_message *
     }
     else if (action == ACTION_PING_REPLY)
     {
+        CORE_DEBUGGER_ASSERT(count == 0);
+
         ++concrete_self->completed;
 
         if (concrete_self->completed == (int)core_vector_size(&concrete_self->initial_actors))
@@ -98,6 +100,8 @@ static void process_receive(struct thorium_actor *self, struct thorium_message *
     }
     else if (action == ACTION_ASK_TO_STOP)
     {
+        CORE_DEBUGGER_ASSERT(count == 0);
+
         thorium_actor_send_to_self_empty(self, ACTION_STOP);
     }
     else
