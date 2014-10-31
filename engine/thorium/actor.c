@@ -81,44 +81,46 @@
 /*
  * Synchronization functions
  */
-void thorium_actor_receive_synchronize(struct thorium_actor *self,
+/*
+static void thorium_actor_receive_synchronize(struct thorium_actor *self,
                 struct thorium_message *message);
-void thorium_actor_receive_synchronize_reply(struct thorium_actor *self,
+                */
+static void thorium_actor_receive_synchronize_reply(struct thorium_actor *self,
                 struct thorium_message *message);
-int thorium_actor_synchronization_completed(struct thorium_actor *self);
+static int thorium_actor_synchronization_completed(struct thorium_actor *self);
 
-void thorium_actor_forward_messages(struct thorium_actor *self, struct thorium_message *message);
-void thorium_actor_queue_message(struct thorium_actor *self,
+static void thorium_actor_forward_messages(struct thorium_actor *self, struct thorium_message *message);
+static void thorium_actor_queue_message(struct thorium_actor *self,
                 struct thorium_message *message);
-int thorium_actor_spawn_real(struct thorium_actor *self, int script);
+static int thorium_actor_spawn_real(struct thorium_actor *self, int script);
 #ifdef THORIUM_ACTOR_STORE_CHILDREN
-struct core_vector *thorium_actor_acquaintance_vector_private(struct thorium_actor *self);
-int thorium_actor_add_acquaintance_private(struct thorium_actor *self, int name);
-int thorium_actor_get_acquaintance_private(struct thorium_actor *self, int index);
+static struct core_vector *thorium_actor_acquaintance_vector_private(struct thorium_actor *self);
+static int thorium_actor_add_acquaintance_private(struct thorium_actor *self, int name);
+static int thorium_actor_get_acquaintance_private(struct thorium_actor *self, int index);
 
-int thorium_actor_get_acquaintance_index_private(struct thorium_actor *self, int name);
-int thorium_actor_acquaintance_count_private(struct thorium_actor *self);
-int thorium_actor_add_child(struct thorium_actor *self, int name);
-int thorium_actor_get_child(struct thorium_actor *self, int index);
-int thorium_actor_get_child_index(struct thorium_actor *self, int name);
-int thorium_actor_child_count(struct thorium_actor *self);
+static int thorium_actor_get_acquaintance_index_private(struct thorium_actor *self, int name);
+static int thorium_actor_acquaintance_count_private(struct thorium_actor *self);
+static int thorium_actor_add_child(struct thorium_actor *self, int name);
+static int thorium_actor_get_child(struct thorium_actor *self, int index);
+static int thorium_actor_get_child_index(struct thorium_actor *self, int name);
+static int thorium_actor_child_count(struct thorium_actor *self);
 
-void thorium_actor_migrate_notify_acquaintances(struct thorium_actor *self, struct thorium_message *message);
-void thorium_actor_notify_name_change(struct thorium_actor *self, struct thorium_message *message);
+static void thorium_actor_migrate_notify_acquaintances(struct thorium_actor *self, struct thorium_message *message);
+static void thorium_actor_notify_name_change(struct thorium_actor *self, struct thorium_message *message);
 #endif
 
-void thorium_actor_enqueue_message(struct thorium_actor *self, struct thorium_message *message);
-void thorium_actor_dequeue_message(struct thorium_actor *self, struct thorium_message *message);
-int thorium_actor_enqueued_message_count(struct thorium_actor *self);
+/*
+static void thorium_actor_enqueue_message(struct thorium_actor *self, struct thorium_message *message);
+static void thorium_actor_dequeue_message(struct thorium_actor *self, struct thorium_message *message);
+static int thorium_actor_enqueued_message_count(struct thorium_actor *self);
+*/
 
 /* actor cloning */
-void thorium_actor_clone(struct thorium_actor *self, struct thorium_message *message);
-void thorium_actor_continue_clone(struct thorium_actor *self, struct thorium_message *message);
-void thorium_actor_migrate(struct thorium_actor *self, struct thorium_message *message);
+static void thorium_actor_clone(struct thorium_actor *self, struct thorium_message *message);
+static void thorium_actor_continue_clone(struct thorium_actor *self, struct thorium_message *message);
+static void thorium_actor_migrate(struct thorium_actor *self, struct thorium_message *message);
 
-void thorium_actor_receive_private(struct thorium_actor *self, struct thorium_message *message);
-
-
+static void thorium_actor_receive_private(struct thorium_actor *self, struct thorium_message *message);
 
 void thorium_actor_init(struct thorium_actor *self, void *concrete_actor,
                 struct thorium_script *script, int name, struct thorium_node *node)
@@ -596,7 +598,7 @@ int thorium_actor_spawn(struct thorium_actor *self, int script)
     return name;
 }
 
-int thorium_actor_spawn_real(struct thorium_actor *self, int script)
+static int thorium_actor_spawn_real(struct thorium_actor *self, int script)
 {
     int name;
     int self_name = thorium_actor_name(self);
@@ -1094,7 +1096,7 @@ void thorium_actor_receive(struct thorium_actor *self, struct thorium_message *m
     self->virtual_runtime += consumed_virtual_runtime;
 }
 
-void thorium_actor_receive_private(struct thorium_actor *self, struct thorium_message *message)
+static void thorium_actor_receive_private(struct thorium_actor *self, struct thorium_message *message)
 {
     thorium_actor_receive_fn_t receive;
 #ifdef THORIUM_ACTOR_GATHER_MESSAGE_METADATA
@@ -1185,7 +1187,8 @@ void thorium_actor_receive_private(struct thorium_actor *self, struct thorium_me
     self->current_message = NULL;
 }
 
-void thorium_actor_receive_synchronize(struct thorium_actor *self,
+#if 0
+static void thorium_actor_receive_synchronize(struct thorium_actor *self,
                 struct thorium_message *message)
 {
 
@@ -1199,8 +1202,9 @@ void thorium_actor_receive_synchronize(struct thorium_actor *self,
 
     thorium_message_destroy(message);
 }
+#endif
 
-void thorium_actor_receive_synchronize_reply(struct thorium_actor *self,
+static void thorium_actor_receive_synchronize_reply(struct thorium_actor *self,
                 struct thorium_message *message)
 {
     int name;
@@ -1259,7 +1263,7 @@ void thorium_actor_synchronize(struct thorium_actor *self, struct core_vector *a
     thorium_message_destroy(&message);
 }
 
-int thorium_actor_synchronization_completed(struct thorium_actor *self)
+static int thorium_actor_synchronization_completed(struct thorium_actor *self)
 {
     if (CORE_BITMAP_GET_BIT(self->flags, FLAG_SYNCHRONIZATION_STARTED) == 0) {
         return 0;
@@ -1293,7 +1297,7 @@ void thorium_actor_add_script(struct thorium_actor *self, int name, struct thori
     thorium_node_add_script(thorium_actor_node(self), name, script);
 }
 
-void thorium_actor_clone(struct thorium_actor *self, struct thorium_message *message)
+static void thorium_actor_clone(struct thorium_actor *self, struct thorium_message *message)
 {
     int spawner;
     void *buffer;
@@ -1321,7 +1325,7 @@ void thorium_actor_clone(struct thorium_actor *self, struct thorium_message *mes
     self->cloning_status = THORIUM_ACTOR_STATUS_STARTED;
 }
 
-void thorium_actor_continue_clone(struct thorium_actor *self, struct thorium_message *message)
+static void thorium_actor_continue_clone(struct thorium_actor *self, struct thorium_message *message)
 {
     int tag;
     int source;
@@ -1453,7 +1457,7 @@ void thorium_actor_set_node(struct thorium_actor *self, struct thorium_node *nod
     self->node = node;
 }
 
-void thorium_actor_migrate(struct thorium_actor *self, struct thorium_message *message)
+static void thorium_actor_migrate(struct thorium_actor *self, struct thorium_message *message)
 {
     int spawner;
     void *buffer;
@@ -1604,7 +1608,7 @@ void thorium_actor_migrate(struct thorium_actor *self, struct thorium_message *m
 }
 
 #ifdef THORIUM_ACTOR_STORE_CHILDREN
-void thorium_actor_notify_name_change(struct thorium_actor *self, struct thorium_message *message)
+static void thorium_actor_notify_name_change(struct thorium_actor *self, struct thorium_message *message)
 {
     int old_name;
     int new_name;
@@ -1649,7 +1653,7 @@ void thorium_actor_notify_name_change(struct thorium_actor *self, struct thorium
 #endif
 
 #ifdef THORIUM_ACTOR_STORE_CHILDREN
-void thorium_actor_migrate_notify_acquaintances(struct thorium_actor *self, struct thorium_message *message)
+static void thorium_actor_migrate_notify_acquaintances(struct thorium_actor *self, struct thorium_message *message)
 {
     struct core_vector *acquaintance_vector;
     int acquaintance;
@@ -1670,7 +1674,7 @@ void thorium_actor_migrate_notify_acquaintances(struct thorium_actor *self, stru
 }
 #endif
 
-void thorium_actor_queue_message(struct thorium_actor *self,
+static void thorium_actor_queue_message(struct thorium_actor *self,
                 struct thorium_message *message)
 {
     void *buffer;
@@ -1713,7 +1717,7 @@ void thorium_actor_queue_message(struct thorium_actor *self,
     core_queue_enqueue(queue, &new_message);
 }
 
-void thorium_actor_forward_messages(struct thorium_actor *self, struct thorium_message *message)
+static void thorium_actor_forward_messages(struct thorium_actor *self, struct thorium_message *message)
 {
     struct thorium_message new_message;
     struct core_queue *queue;
@@ -1823,7 +1827,7 @@ int thorium_actor_acquaintance_count(struct thorium_actor *self)
 #endif
 
 #ifdef THORIUM_ACTOR_STORE_CHILDREN
-int thorium_actor_get_child(struct thorium_actor *self, int index)
+static int thorium_actor_get_child(struct thorium_actor *self, int index)
 {
     int index2;
 
@@ -1835,12 +1839,12 @@ int thorium_actor_get_child(struct thorium_actor *self, int index)
     return THORIUM_ACTOR_NOBODY;
 }
 
-int thorium_actor_child_count(struct thorium_actor *self)
+static int thorium_actor_child_count(struct thorium_actor *self)
 {
     return core_vector_size(&self->children);
 }
 
-int thorium_actor_add_child(struct thorium_actor *self, int name)
+static int thorium_actor_add_child(struct thorium_actor *self, int name)
 {
     int index;
 
@@ -1852,7 +1856,7 @@ int thorium_actor_add_child(struct thorium_actor *self, int name)
 #endif
 
 #ifdef THORIUM_ACTOR_STORE_CHILDREN
-int thorium_actor_add_acquaintance_private(struct thorium_actor *self, int name)
+static int thorium_actor_add_acquaintance_private(struct thorium_actor *self, int name)
 {
     int index;
     int *bucket;
@@ -1880,7 +1884,7 @@ int thorium_actor_add_acquaintance_private(struct thorium_actor *self, int name)
 #endif
 
 #ifdef THORIUM_ACTOR_STORE_CHILDREN
-int thorium_actor_get_acquaintance_index_private(struct thorium_actor *self, int name)
+static int thorium_actor_get_acquaintance_index_private(struct thorium_actor *self, int name)
 {
     int *bucket;
 
@@ -1899,7 +1903,7 @@ int thorium_actor_get_acquaintance_index_private(struct thorium_actor *self, int
 #endif
 
 #ifdef THORIUM_ACTOR_STORE_CHILDREN
-int thorium_actor_get_child_index(struct thorium_actor *self, int name)
+static int thorium_actor_get_child_index(struct thorium_actor *self, int name)
 {
     int i;
     int index;
@@ -1927,7 +1931,8 @@ int thorium_actor_get_child_index(struct thorium_actor *self, int name)
 }
 #endif
 
-void thorium_actor_enqueue_message(struct thorium_actor *self, struct thorium_message *message)
+#if 0
+static void thorium_actor_enqueue_message(struct thorium_actor *self, struct thorium_message *message)
 {
     void *new_buffer;
     int count;
@@ -1955,7 +1960,7 @@ void thorium_actor_enqueue_message(struct thorium_actor *self, struct thorium_me
     thorium_message_destroy(&new_message);
 }
 
-void thorium_actor_dequeue_message(struct thorium_actor *self, struct thorium_message *message)
+static void thorium_actor_dequeue_message(struct thorium_actor *self, struct thorium_message *message)
 {
     if (thorium_actor_enqueued_message_count(self) == 0) {
         return;
@@ -1964,10 +1969,11 @@ void thorium_actor_dequeue_message(struct thorium_actor *self, struct thorium_me
     core_queue_dequeue(&self->enqueued_messages, message);
 }
 
-int thorium_actor_enqueued_message_count(struct thorium_actor *self)
+static int thorium_actor_enqueued_message_count(struct thorium_actor *self)
 {
     return core_queue_size(&self->enqueued_messages);
 }
+#endif
 
 struct core_map *thorium_actor_get_received_messages(struct thorium_actor *self)
 {
@@ -2218,12 +2224,12 @@ int thorium_actor_trylock(struct thorium_actor *self)
 #endif
 
 #ifdef THORIUM_ACTOR_STORE_CHILDREN
-struct core_vector *thorium_actor_acquaintance_vector_private(struct thorium_actor *self)
+static struct core_vector *thorium_actor_acquaintance_vector_private(struct thorium_actor *self)
 {
     return &self->acquaintance_vector;
 }
 
-int thorium_actor_get_acquaintance_private(struct thorium_actor *self, int index)
+static int thorium_actor_get_acquaintance_private(struct thorium_actor *self, int index)
 {
     if (index < core_vector_size(thorium_actor_acquaintance_vector_private(self))) {
         return core_vector_at_as_int(thorium_actor_acquaintance_vector_private(self),

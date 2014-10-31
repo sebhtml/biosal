@@ -79,7 +79,7 @@ static void thorium_worker_pool_schedule_work_classic(struct thorium_worker_pool
 
 #ifdef THORIUM_WORKER_POOL_USE_COUNT_CACHE
 static void thorium_worker_pool_set_cached_value(struct thorium_worker_pool *self, int index, int value);
-static int thorium_worker_pool_get_cached_value(struct thorium_worker_pool *self, int index);
+static inline int thorium_worker_pool_get_cached_value(struct thorium_worker_pool *self, int index);
 #endif
 
 /*
