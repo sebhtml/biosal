@@ -119,10 +119,6 @@ void thorium_message_set_source_node(struct thorium_message *self, int source);
 int thorium_message_destination_node(struct thorium_message *self);
 void thorium_message_set_destination_node(struct thorium_message *self, int destination);
 
-int thorium_message_metadata_size(struct thorium_message *self);
-int thorium_message_read_metadata(struct thorium_message *self);
-int thorium_message_write_metadata(struct thorium_message *self);
-
 void thorium_message_print(struct thorium_message *self);
 
 void thorium_message_set_worker(struct thorium_message *self, int worker);
@@ -141,8 +137,16 @@ uint64_t thorium_message_get_tracepoint_time(struct thorium_message *self, int t
 void thorium_message_print_tracepoints(struct thorium_message *self);
 
 void thorium_message_set_number(struct thorium_message *self, int number);
+
+/*
+ * Metadata functions.
+ */
+int thorium_message_metadata_size(struct thorium_message *self);
+int thorium_message_read_metadata(struct thorium_message *self);
+int thorium_message_write_metadata(struct thorium_message *self);
+
 int thorium_message_read_metadata_for_tracepoint(struct thorium_message *self);
-void thorium_message_add_metadata(struct thorium_message *self);
-void thorium_message_remove_metadata(struct thorium_message *self);
+void thorium_message_add_metadata_to_count(struct thorium_message *self);
+void thorium_message_remove_metadata_from_count(struct thorium_message *self);
 
 #endif

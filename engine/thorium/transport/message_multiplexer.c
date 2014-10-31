@@ -371,7 +371,14 @@ int thorium_message_multiplexer_demultiplex(struct thorium_message_multiplexer *
 
     source_node = thorium_message_source_node(message);
     destination_node = thorium_message_destination_node(message);
+
+    /*
+     * Remove the metadata from the count.
+     */
+    thorium_message_remove_metadata_from_count(message);
+
     count = thorium_message_count(message);
+
     buffer = thorium_message_buffer(message);
     pool = thorium_node_inbound_memory_pool(self->node);
 
@@ -503,19 +510,20 @@ void thorium_message_multiplexer_flush(struct thorium_message_multiplexer *self,
         return;
     }
 
+    CORE_DEBUGGER_ASSERT(current_size > 0);
+
     count = current_size + THORIUM_MESSAGE_METADATA_SIZE;
     pool = thorium_worker_get_outbound_message_memory_pool(self->worker);
     buffer = core_memory_pool_allocate(pool, count);
 
     tag = ACTION_MULTIPLEXER_MESSAGE;
-    count -= THORIUM_MESSAGE_METADATA_SIZE;
 
     /*
      * This count does not include metadata for the final big message.
      *
      * TODO: Avoid this copy by using an array of pointers in the first place.
      */
-    core_memory_copy(buffer, multiplexed_buffer->buffer, count);
+    core_memory_copy(buffer, multiplexed_buffer->buffer, current_size);
 
     destination_node = index;
 

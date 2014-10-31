@@ -503,10 +503,6 @@ int thorium_mpi1_pt2pt_nonblocking_transport_receive(struct thorium_transport *s
      */
     thorium_message_init_with_nodes(message, count, buffer, source, destination);
 
-#ifdef THORIUM_USE_LTTNG
-    thorium_message_read_metadata_for_tracepoint(message);
-#endif
-
     tracepoint(thorium_message, transport_receive_impl, message);
 
 #ifdef THORIUM_MPI1_PT2PT_NON_BLOCKING_DEBUG

@@ -145,24 +145,37 @@ int thorium_message_write_metadata(struct thorium_message *self)
 {
     CORE_DEBUGGER_ASSERT_NOT_NULL(self->buffer);
 
+#ifdef CORE_DEBUGGER_ENABLE_ASSERT
+    if (self->count < (int)THORIUM_MESSAGE_METADATA_SIZE) {
+        printf("Error: count %d\n", self->count);
+    }
+#endif
+
+    CORE_DEBUGGER_ASSERT(self->count >= (int)THORIUM_MESSAGE_METADATA_SIZE);
+
     /*
     printf("thorium_message_write_metadata count %d\n", self->count);
     */
 
     return thorium_message_pack_unpack(self, CORE_PACKER_OPERATION_PACK,
-                    (char *)self->buffer + self->count);
+                    (char *)self->buffer + self->count - THORIUM_MESSAGE_METADATA_SIZE);
 }
 
 int thorium_message_read_metadata_for_tracepoint(struct thorium_message *self)
 {
+    CORE_DEBUGGER_ASSERT(self->count >= (int)THORIUM_MESSAGE_METADATA_SIZE);
+
     return thorium_message_pack_unpack(self, CORE_PACKER_OPERATION_UNPACK,
                     (char *)self->buffer + self->count - THORIUM_MESSAGE_METADATA_SIZE);
 }
 
 int thorium_message_read_metadata(struct thorium_message *self)
 {
+    /*
+     * metadata is stored at the end.
+     */
     return thorium_message_pack_unpack(self, CORE_PACKER_OPERATION_UNPACK,
-                    (char *)self->buffer + self->count);
+                    (char *)self->buffer + self->count - THORIUM_MESSAGE_METADATA_SIZE);
 }
 
 void thorium_message_set_count(struct thorium_message *self, int count)
@@ -390,19 +403,25 @@ void thorium_message_set_number(struct thorium_message *self, int number)
     self->number = number;
 }
 
-void thorium_message_add_metadata(struct thorium_message *self)
+void thorium_message_add_metadata_to_count(struct thorium_message *self)
 {
     int count;
     int metadata_size;
     int all;
 
     count = thorium_message_count(self);
+
+    CORE_DEBUGGER_ASSERT(count >= 0);
+
     metadata_size = thorium_message_metadata_size(self);
     all = count + metadata_size;
+
+    CORE_DEBUGGER_ASSERT(all >= (int)THORIUM_MESSAGE_METADATA_SIZE);
+
     thorium_message_set_count(self, all);
 }
 
-void thorium_message_remove_metadata(struct thorium_message *self)
+void thorium_message_remove_metadata_from_count(struct thorium_message *self)
 {
     int count;
     int metadata_size;

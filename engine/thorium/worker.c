@@ -505,6 +505,11 @@ void thorium_worker_send(struct thorium_worker *worker, struct thorium_message *
     /*
      * Always write metadata for any actor message.
      */
+    /*
+     * Set nodes for the message.
+     */
+    thorium_node_resolve(worker->node, message);
+    thorium_message_add_metadata_to_count(message);
     thorium_message_write_metadata(message);
 
 #ifdef THORIUM_WORKER_DEBUG_INJECTION
@@ -555,6 +560,11 @@ void thorium_worker_send(struct thorium_worker *worker, struct thorium_message *
 
         destination_actor = thorium_node_get_actor_from_name(worker->node, destination);
 
+        /*
+         * Remove metadata from the count.
+         */
+        thorium_message_remove_metadata_from_count(message);
+
         if (destination_actor != NULL
                  && thorium_actor_enqueue_mailbox_message(destination_actor, message)) {
 
@@ -566,6 +576,11 @@ void thorium_worker_send(struct thorium_worker *worker, struct thorium_message *
 
             return;
         }
+
+        /*
+         * Failed to enqueue the message, add the metadata again.
+         */
+        thorium_message_add_metadata_to_count(message);
     }
 #endif
 
@@ -589,15 +604,6 @@ void thorium_worker_send(struct thorium_worker *worker, struct thorium_message *
          */
 
             /*
-        */
-
-        /*
-         * Set nodes for the message.
-         */
-        thorium_node_resolve(worker->node, message);
-
-        /*
-        thorium_message_remove_metadata(message);
         */
 
         if (thorium_message_destination_node(message) == thorium_message_source_node(message)) {
@@ -629,8 +635,6 @@ void thorium_worker_send(struct thorium_worker *worker, struct thorium_message *
                 core_fast_queue_enqueue(&worker->output_outbound_message_queue,
                             message);
         } else {
-
-            thorium_message_add_metadata(message);
 
             /*
              * Queue the message for multiplexing.
@@ -873,6 +877,11 @@ int thorium_worker_dequeue_actor(struct thorium_worker *worker, struct thorium_a
 
             continue;
         }
+
+        /*
+         * Remove metadata from the count.
+         */
+        thorium_message_remove_metadata_from_count(&message);
 
         /*
          * Give the message to the actor.
@@ -2115,6 +2124,9 @@ void *thorium_worker_allocate(struct thorium_worker *self, size_t count)
     int all;
     int metadata_size;
 
+    /*
+     * Make some room for the metadata.
+     */
     metadata_size = THORIUM_MESSAGE_METADATA_SIZE;
     all = count + metadata_size;
 

@@ -1333,6 +1333,7 @@ void thorium_node_send_to_node(struct thorium_node *node, int destination,
     thorium_message_init(&new_message, tag, count, new_buffer);
     thorium_message_set_source(&new_message, thorium_node_name(node));
     thorium_message_set_destination(&new_message, destination);
+    thorium_message_add_metadata_to_count(&new_message);
     thorium_message_write_metadata(&new_message);
 
 #ifdef THORIUM_NODE_DEBUG
@@ -1467,7 +1468,6 @@ static void thorium_node_send(struct thorium_node *node, struct thorium_message 
          * Add metadata size.
          */
         /*if (thorium_message_action(message) != ACTION_MULTIPLEXER_MESSAGE)*/
-        thorium_message_add_metadata(message);
 
 #ifdef DEBUG_MULTIPLEXER
         if (thorium_message_action(message) == ACTION_MULTIPLEXER_MESSAGE) {
@@ -2432,16 +2432,6 @@ static void thorium_node_send_messages(struct thorium_node *node)
 
             tracepoint(thorium_message, node_send, message);
 
-        /*
-        thorium_message_set_count(message,
-                    thorium_message_count(message) - THORIUM_MESSAGE_METADATA_SIZE);
-                    */
-
-        /*
-        thorium_message_set_count(message,
-                    thorium_message_count(message) + THORIUM_MESSAGE_METADATA_SIZE);
-        */
-
 #ifdef THORIUM_NODE_DEBUG
             printf("thorium_node_run pulled tag %i buffer %p\n",
                         thorium_message_action(message),
@@ -2674,10 +2664,8 @@ void thorium_node_prepare_received_message(struct thorium_node *self, struct tho
     */
 
     /*
-     * Remove the metadata from the count because
-     * actors don't need that.
+     * Read the metadata (at the end of the buffer).
      */
-    thorium_message_remove_metadata(message);
     thorium_message_read_metadata(message);
     thorium_node_resolve(self, message);
 }
