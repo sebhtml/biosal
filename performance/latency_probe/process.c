@@ -17,11 +17,11 @@
 #define PERIOD 5
 */
 
-void process_init(struct thorium_actor *self);
-void process_destroy(struct thorium_actor *self);
-void process_receive(struct thorium_actor *self, struct thorium_message *message);
+static void process_init(struct thorium_actor *self);
+static void process_destroy(struct thorium_actor *self);
+static void process_receive(struct thorium_actor *self, struct thorium_message *message);
 
-void process_send_ping(struct thorium_actor *self);
+static void process_send_ping(struct thorium_actor *self);
 
 struct thorium_script process_script = {
     .identifier = SCRIPT_LATENCY_PROCESS,
@@ -32,7 +32,7 @@ struct thorium_script process_script = {
     .name = "process"
 };
 
-void process_init(struct thorium_actor *self)
+static void process_init(struct thorium_actor *self)
 {
     struct process *concrete_self;
 
@@ -45,7 +45,7 @@ void process_init(struct thorium_actor *self)
     concrete_self->completed = 0;
 }
 
-void process_destroy(struct thorium_actor *self)
+static void process_destroy(struct thorium_actor *self)
 {
     struct process *concrete_self;
 
@@ -55,7 +55,7 @@ void process_destroy(struct thorium_actor *self)
     core_vector_destroy(&concrete_self->initial_actors);
 }
 
-void process_receive(struct thorium_actor *self, struct thorium_message *message)
+static void process_receive(struct thorium_actor *self, struct thorium_message *message)
 {
     int action;
     uint64_t total;
@@ -248,7 +248,7 @@ void process_receive(struct thorium_actor *self, struct thorium_message *message
     }
 }
 
-void process_send_ping(struct thorium_actor *self)
+static void process_send_ping(struct thorium_actor *self)
 {
     int target;
     struct process *concrete_self;
