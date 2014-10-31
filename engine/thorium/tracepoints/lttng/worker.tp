@@ -1,4 +1,7 @@
 
+#include <engine/thorium/worker.h>
+#include <engine/thorium/node.h>
+
 /*
  * tracepoints for worker
  */
@@ -6,17 +9,18 @@ TRACEPOINT_EVENT_CLASS(
     thorium_worker,
     class0,
     TP_ARGS(
-        int, worker, int, tick
+        struct thorium_worker *, worker
     ),
     TP_FIELDS(
-        ctf_integer(int, worker, worker)
-        ctf_integer(int, tick, tick)
+        ctf_integer(int, node, worker->node->name)
+        ctf_integer(int, worker, worker->name)
+        ctf_integer(int, tick, worker->tick_count)
     )
 )
 
 #define THORIUM_WORKER_TRACEPOINT(event_name) \
     TRACEPOINT_EVENT_INSTANCE(thorium_worker, class0, event_name, \
-    TP_ARGS(int, worker, int, tick))
+    TP_ARGS(struct thorium_worker *, worker))
 
 THORIUM_WORKER_TRACEPOINT(main)
 THORIUM_WORKER_TRACEPOINT(run_enter)
