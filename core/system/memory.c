@@ -381,7 +381,7 @@ size_t core_memory_align_private(size_t unaligned, size_t alignment)
     return aligned;
 }
 
-void core_memory_load_fence()
+void core_memory_load_fence__()
 {
 #ifdef LOAD_OPERATIONS_ARE_ORDERED_disabled
 
@@ -400,19 +400,19 @@ void core_memory_load_fence()
      * With GNU, it is __powerpc64__.
      */
     /* I am not sure if  __eieio  is a load fence */
-    core_memory_fence();
+    core_memory_fence__();
 
 #elif defined(_CRAYC)
     __builtin_ia32_lfence();
 
 #else
 
-    core_memory_fence();
+    core_memory_fence__();
 
 #endif
 }
 
-void core_memory_store_fence()
+void core_memory_store_fence__()
 {
 #ifdef STORE_OPERATIONS_ARE_ORDERED_disabled
 
@@ -432,11 +432,11 @@ void core_memory_store_fence()
 
 #else
 
-    core_memory_fence();
+    core_memory_fence__();
 #endif
 }
 
-void core_memory_fence()
+void core_memory_fence__()
 {
 #if defined(__GNUC__)
 

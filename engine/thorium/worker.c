@@ -731,7 +731,7 @@ void thorium_worker_stop(struct thorium_worker *worker)
 
     /* Make the change visible to other threads too
      */
-    core_memory_store_fence();
+    CORE_MEMORY_STORE_FENCE();
 
     /* Wake the worker **after** killing it.
      * So basically, there is a case where the worker is killed

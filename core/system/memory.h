@@ -139,9 +139,13 @@ int core_memory_has_enough_bytes();
 size_t core_memory_align(size_t unaligned);
 size_t core_memory_align_private(size_t unaligned, size_t alignment);
 
-void core_memory_load_fence();
-void core_memory_store_fence();
-void core_memory_fence();
+#define CORE_MEMORY_LOAD_FENCE core_memory_load_fence__
+#define CORE_MEMORY_STORE_FENCE core_memory_store_fence__
+#define CORE_MEMORY_FENCE core_memory_fence__
+
+void core_memory_load_fence__();
+void core_memory_store_fence__();
+void core_memory_fence__();
 
 size_t core_memory_normalize_segment_length_power_of_2(size_t size);
 size_t core_memory_normalize_segment_length_page_size(size_t size);
