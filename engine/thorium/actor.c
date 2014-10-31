@@ -910,7 +910,11 @@ int thorium_actor_receive_system(struct thorium_actor *self, struct thorium_mess
         return 0;
 
     } else if (tag == ACTION_PROXY_MESSAGE) {
+        CORE_DEBUGGER_ASSERT(thorium_message_action(message) != ACTION_INVALID);
+
         thorium_actor_unpack_proxy_message(self, message);
+
+        CORE_DEBUGGER_ASSERT(thorium_message_action(message) != ACTION_INVALID);
 
         /*
          * Say 0 so that the concrete actor can pick it up.
@@ -1107,6 +1111,8 @@ static void thorium_actor_receive_private(struct thorium_actor *self, struct tho
     int *bucket;
 #endif
 
+    CORE_DEBUGGER_ASSERT(thorium_message_action(message) != ACTION_INVALID);
+
 #ifdef THORIUM_ACTOR_DEBUG_SYNC
     printf("\nDEBUG thorium_actor_receive...... tag %d\n",
                     thorium_message_action(message));
@@ -1183,6 +1189,8 @@ static void thorium_actor_receive_private(struct thorium_actor *self, struct tho
                         thorium_message_count(message));
     }
 #endif
+
+    CORE_DEBUGGER_ASSERT(thorium_message_action(message) != ACTION_INVALID);
 
     receive(self, message);
 
@@ -2060,6 +2068,8 @@ int thorium_actor_work(struct thorium_actor *self)
     CORE_DEBUGGER_ASSERT(!core_memory_pool_has_leaks(ephemeral_memory));
 #ifdef CORE_MEMORY_POOL_FIND_LEAKS
 #endif
+
+    CORE_DEBUGGER_ASSERT(thorium_message_action(&message) != ACTION_INVALID);
 
     /*
      * Receive the message !

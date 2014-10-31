@@ -1,10 +1,13 @@
 
 #include "proxy_message.h"
 
+#include "binomial_tree_message.h" /* for DEBUG_BINOMIAL_TREE */
+
 #include <engine/thorium/message.h>
 #include <engine/thorium/actor.h>
 
 #include <core/system/memory_pool.h>
+#include <core/system/debugger.h>
 
 #include <string.h>
 
@@ -27,6 +30,18 @@ void thorium_actor_unpack_proxy_message(struct thorium_actor *self,
     source = *(int *)((char *)buffer + offset);
     offset += sizeof(source);
     tag = *(int *)((char *)buffer + offset);
+
+#ifdef DEBUG_BINOMIAL_TREE
+    printf("DEBUG_BINOMIAL_TREE unpack_proxy_message real_count %d real_source %d real_action %x\n",
+                    new_count, source, tag);
+#endif
+
+    /*
+     * The action can not be ACTION_INVALID because it is invalid
+     * by convention.
+     */
+    CORE_DEBUGGER_ASSERT(tag != ACTION_INVALID);
+
     offset += sizeof(tag);
 
     /*thorium_message_init(message, tag, new_count, buffer);*/
@@ -55,10 +70,25 @@ void thorium_actor_pack_proxy_message(struct thorium_actor *self, struct thorium
     int offset;
     struct core_memory_pool *ephemeral_memory;
 
+    /*
+     * pack data in this order:
+     *
+     * - data (count bytes)
+     * - real_source
+     * - real_tag
+     */
     ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
     real_tag = thorium_message_action(message);
     buffer = thorium_message_buffer(message);
     count = thorium_message_count(message);
+
+#ifdef DEBUG_BINOMIAL_TREE
+    printf("DEBUG_BINOMIAL_TREE pack_proxy_message count %d source %d action %x\n", count,
+                    thorium_actor_name(self),
+                    real_tag);
+    thorium_message_print(message);
+
+#endif
 
     new_count = count + sizeof(real_source) + sizeof(real_tag);
 

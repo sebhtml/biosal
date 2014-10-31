@@ -1,6 +1,10 @@
 
 #include "send_helpers.h"
 
+#include "binomial_tree_message.h" /* for DEBUG_BINOMIAL_TREE */
+
+#include <engine/thorium/tracepoints/tracepoints.h>
+
 #include <engine/thorium/actor.h>
 #include <engine/thorium/message.h>
 
@@ -180,6 +184,8 @@ void thorium_actor_send_range_default(struct thorium_actor *actor, struct core_v
         return;
     }
 
+    tracepoint(thorium_binomial_tree, send_range, message, (int)core_vector_size(actors));
+
     /*
      * Otherwise, use the binomial tree code path. This algorithm is better since it distributed
      * the sending operations intot a binomial tree where there are a lot of intermediate
@@ -222,6 +228,11 @@ void thorium_actor_send_range_loop(struct thorium_actor *actor, struct core_vect
                        thorium_message_action(message), i);
 #endif
         the_actor = *(int *)core_vector_at(actors, i);
+
+#ifdef DEBUG_BINOMIAL_TREE
+        printf("send_range_loop, sending to %d\n", the_actor);
+#endif
+
         thorium_actor_send(actor, the_actor, message);
         i++;
     }

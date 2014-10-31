@@ -11,10 +11,6 @@
 
 #define BINOMIAL_TREE_MINIMUM 4
 
-/*
-#define DEBUG_BINOMIAL_TREE
-*/
-
 void thorium_actor_send_range_binomial_tree_part(struct thorium_actor *actor,
                int destination, struct core_vector *actors,
                struct thorium_message *message);
@@ -63,13 +59,16 @@ void thorium_actor_receive_binomial_tree_send(struct thorium_actor *actor, struc
 
     CORE_DEBUGGER_ASSERT(offset == count);
 
-#ifdef DEBUG_BINOMIAL_TREE
-    printf("DEBUG78 actor %i received ACTION_BINOMIAL_TREE_SEND "
-                    "real_source: %i real_tag: %i\n",
-                    thorium_actor_name(actor), real_source, real_tag);
-#endif
-
     amount = core_vector_size(&actors);
+
+#ifdef DEBUG_BINOMIAL_TREE
+    printf("DEBUG_BINOMIAL_TREE actor %i received ACTION_BINOMIAL_TREE_SEND "
+                    "real_source: %i real_tag: %i destinations: %d ",
+                    thorium_actor_name(actor), real_source, real_tag, amount);
+
+    core_vector_print_int(&actors);
+    printf("\n");
+#endif
 
     thorium_message_init(&new_message, real_tag, real_count, real_buffer);
     thorium_message_set_source(&new_message, real_source);
@@ -80,8 +79,14 @@ void thorium_actor_receive_binomial_tree_send(struct thorium_actor *actor, struc
     if (amount < limit) {
 
         CORE_DEBUGGER_LEAK_DETECTION_BEGIN(ephemeral_memory, send_range);
+
         thorium_actor_pack_proxy_message(actor, &new_message,
                         real_source);
+
+#ifdef DEBUG_BINOMIAL_TREE
+        printf("DEBUG_BINOMIAL_TREE below limit, using send_range_loop\n");
+#endif
+
         thorium_actor_send_range_loop(actor, &actors, 0, core_vector_size(&actors) - 1, &new_message);
 
         /*
@@ -93,6 +98,11 @@ void thorium_actor_receive_binomial_tree_send(struct thorium_actor *actor, struc
         CORE_DEBUGGER_LEAK_DETECTION_END(ephemeral_memory, send_range);
     } else {
         CORE_DEBUGGER_LEAK_DETECTION_BEGIN(ephemeral_memory, binomial_tree);
+
+#ifdef DEBUG_BINOMIAL_TREE
+        printf("DEBUG_BINOMIAL_TREE parallel-recursive call to send_range_binomial_tree\n");
+#endif
+
         thorium_actor_send_range_binomial_tree(actor, &actors, &new_message);
         CORE_DEBUGGER_LEAK_DETECTION_END(ephemeral_memory, binomial_tree);
     }
@@ -142,9 +152,9 @@ void thorium_actor_send_range_binomial_tree(struct thorium_actor *actor, struct 
     middle = first + (last - first) / 2;
 
 #ifdef DEBUG_BINOMIAL_TREE
-    printf("DEBUG %i thorium_actor_send_range_binomial_tree\n",
+    printf("DEBUG_BINOMIAL_TREE %i thorium_actor_send_range_binomial_tree\n",
                     thorium_actor_name(actor));
-    printf("DEBUG %i first: %i last: %i middle: %i size %d\n",
+    printf("DEBUG_BINOMIAL_TREE DEBUG %i first: %i last: %i middle: %i size %d\n",
                     thorium_actor_name(actor), first, last, middle,
                     (int)core_vector_size(actors));
 #endif
@@ -161,13 +171,16 @@ void thorium_actor_send_range_binomial_tree(struct thorium_actor *actor, struct 
     core_vector_set_memory_pool(&left_part, ephemeral_memory);
     core_vector_copy_range(actors, first1, last1, &left_part);
 
+    left_actor = *(int *)core_vector_at(&left_part, middle1);
+
+    CORE_DEBUGGER_ASSERT(left_actor != THORIUM_ACTOR_NOBODY);
+
 #ifdef DEBUG_BINOMIAL_TREE
-    printf("left_actor: %d left_part.size %d first1 %d last1 %d middle1 %d\n",
+    printf("DEBUG_BINOMIAL_TREE left_actor: %d left_part.size %d first1 %d last1 %d middle1 %d\n",
                     left_actor, (int)core_vector_size(&left_part),
                     first1, last1, middle1);
 #endif
 
-    left_actor = *(int *)core_vector_at(&left_part, middle1);
     thorium_actor_send_range_binomial_tree_part(actor, left_actor, &left_part, message);
     core_vector_destroy(&left_part);
 
@@ -183,16 +196,18 @@ void thorium_actor_send_range_binomial_tree(struct thorium_actor *actor, struct 
     core_vector_set_memory_pool(&right_part, ephemeral_memory);
     core_vector_copy_range(actors, first2, last2, &right_part);
 
-#ifdef DEBUG_BINOMIAL_TREE
-    printf("right_actor: %d right_part.size %d first2 %d last2 %d middle2 %d\n",
-                    right_actor, (int)core_vector_size(&right_part),
-                    first2, last2, middle2);
-#endif
-
     /*
      * Substract the first offset to get a 0-based index.
      */
     right_actor = *(int *)core_vector_at(&right_part, middle2 - first2);
+
+    CORE_DEBUGGER_ASSERT(right_actor != THORIUM_ACTOR_NOBODY);
+
+#ifdef DEBUG_BINOMIAL_TREE
+    printf("DEBUG_BINOMIAL_TREE right_actor: %d right_part.size %d first2 %d last2 %d middle2 %d\n",
+                    right_actor, (int)core_vector_size(&right_part),
+                    first2, last2, middle2);
+#endif
 
     thorium_actor_send_range_binomial_tree_part(actor, right_actor, &right_part, message);
     core_vector_destroy(&right_part);

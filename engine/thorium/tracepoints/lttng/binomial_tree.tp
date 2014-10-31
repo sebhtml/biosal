@@ -1,0 +1,27 @@
+#include <engine/thorium/message.h>
+
+TRACEPOINT_EVENT_CLASS(
+    thorium_binomial_tree,
+    class0,
+    TP_ARGS(
+struct thorium_message *, message,
+int, destinations
+    ),
+    TP_FIELDS(
+        ctf_integer(int, destinations, destinations)
+        ctf_integer(int, message_number, message->number)
+        ctf_integer_hex(int, message_action, message->action)
+        ctf_integer(int, message_count, message->count)
+        ctf_integer(int, message_source_actor, message->source_actor)
+        ctf_integer(int, message_destination_actor, message->destination_actor)
+        ctf_integer(int, message_source_node, message->source_node)
+        ctf_integer(int, message_destination_node, message->destination_node)
+    )
+)
+
+#define THORIUM_BINOMIAL_TREE_TRACEPOINT(event_name) \
+    TRACEPOINT_EVENT_INSTANCE(thorium_binomial_tree, class0, event_name, \
+    TP_ARGS(struct thorium_message *, message, int, destinations))
+
+THORIUM_BINOMIAL_TREE_TRACEPOINT(send_range)
+

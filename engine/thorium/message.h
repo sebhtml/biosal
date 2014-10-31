@@ -13,6 +13,10 @@
 #define THORIUM_MESSAGE_TYPE_NODE_OUTBOUND      2
 #define THORIUM_MESSAGE_TYPE_WORKER_OUTBOUND    3
 
+/*
+ * A message can not be distributed with the action specific
+ * ACTION_INVALID.
+ */
 #define THORIUM_MESSAGE_INVALID_ACTION          0x00000000
 #define ACTION_INVALID THORIUM_MESSAGE_INVALID_ACTION
 

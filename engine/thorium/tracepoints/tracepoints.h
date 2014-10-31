@@ -6,6 +6,7 @@
 
 #ifdef THORIUM_USE_LTTNG
 #include "lttng/message.h"
+#include "lttng/binomial_tree.h"
 #include "lttng/transport.h"
 #include "lttng/scheduler.h"
 #include "lttng/node.h"
