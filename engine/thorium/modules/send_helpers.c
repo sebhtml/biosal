@@ -155,11 +155,36 @@ void thorium_actor_send_range_default(struct thorium_actor *actor, struct core_v
                 int first, int last,
                 struct thorium_message *message)
 {
-#ifdef USE_BINOMIAL_TREE
+    int use_binomial_tree;
     struct core_vector destinations;
     struct core_memory_pool *ephemeral_memory;
     int name;
+    int action;
 
+    action = thorium_message_action(message);
+    use_binomial_tree = 0;
+
+#ifdef USE_BINOMIAL_TREE
+
+    /*
+     * ACTION_ASK_TO_STOP basically kills actors (if they agree to).
+     * It is a bad idea to use a binomial tree to send this death signal
+     * since intermediate actors can die before acting as relays.
+     */
+    if (action != ACTION_ASK_TO_STOP)
+        use_binomial_tree = 1;
+#endif
+
+    if (!use_binomial_tree) {
+        thorium_actor_send_range_loop(actor, actors, first, last, message);
+        return;
+    }
+
+    /*
+     * Otherwise, use the binomial tree code path. This algorithm is better since it distributed
+     * the sending operations intot a binomial tree where there are a lot of intermediate
+     * actors (to be exact, the number of intermediate actors is close to log2(actors.size)).
+     */
     ephemeral_memory = thorium_actor_get_ephemeral_memory(actor);
     core_vector_init(&destinations, sizeof(int));
     core_vector_set_memory_pool(&destinations, ephemeral_memory);
@@ -174,10 +199,6 @@ void thorium_actor_send_range_default(struct thorium_actor *actor, struct core_v
     thorium_actor_send_range_binomial_tree(actor, &destinations, message);
 
     core_vector_destroy(&destinations);
-#else
-
-    thorium_actor_send_range_loop(actor, actors, first, last, message);
-#endif
 }
 
 void thorium_actor_send_range_loop(struct thorium_actor *actor, struct core_vector *actors,
