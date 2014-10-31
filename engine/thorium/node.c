@@ -117,66 +117,74 @@
 
 struct thorium_node *thorium_node_global_self;
 
-void thorium_node_handle_signal(int signal);
-void thorium_node_register_signal_handlers(struct thorium_node *self);
+static void thorium_node_handle_signal(int signal);
+static void thorium_node_register_signal_handlers(struct thorium_node *self);
 
-void thorium_node_print_structure(struct thorium_node *self, struct thorium_actor *actor);
-int thorium_node_has_actor(struct thorium_node *self, int name);
+static void thorium_node_print_structure(struct thorium_node *self, struct thorium_actor *actor);
+static int thorium_node_has_actor(struct thorium_node *self, int name);
 
-struct thorium_worker_pool *thorium_node_get_worker_pool(struct thorium_node *self);
+/*
+static struct thorium_worker_pool *thorium_node_get_worker_pool(struct thorium_node *self);
+*/
 
-void thorium_node_toggle_debug_mode(struct thorium_node *self);
+static void thorium_node_toggle_debug_mode(struct thorium_node *self);
 
-void thorium_node_reset_actor_counters(struct thorium_node *self);
+/*
+static void thorium_node_reset_actor_counters(struct thorium_node *self);
+*/
 
-void thorium_node_test_requests(struct thorium_node *self);
+static void thorium_node_test_requests(struct thorium_node *self);
 
-void thorium_node_free_worker_buffer(struct thorium_node *self,
+static void thorium_node_free_worker_buffer(struct thorium_node *self,
                 struct thorium_worker_buffer *worker_buffer);
 
-void thorium_node_send_to_actor(struct thorium_node *self, int name, struct thorium_message *message);
-void thorium_node_check_efficiency(struct thorium_node *self);
-int thorium_node_send_system(struct thorium_node *self, struct thorium_message *message);
+static void thorium_node_send_to_actor(struct thorium_node *self, int name, struct thorium_message *message);
+/*
+static void thorium_node_check_efficiency(struct thorium_node *self);
+*/
+#ifdef THORIUM_ENABLE_AUTO_SCALING
+static int thorium_node_send_system(struct thorium_node *self, struct thorium_message *message);
+#endif
 
-void thorium_node_do_message_triage(struct thorium_node *self);
-void thorium_node_recycle_message(struct thorium_node *self, struct thorium_message *message);
+static void thorium_node_do_message_triage(struct thorium_node *self);
+static void thorium_node_recycle_message(struct thorium_node *self, struct thorium_message *message);
 
 /*
  * Generate an actor name.
  */
-int thorium_node_generate_random_name(struct thorium_node *self,
+static int thorium_node_generate_random_name(struct thorium_node *self,
                 int minimal_value, int maximum_value);
 
-void thorium_node_inject_outbound_buffer(struct thorium_node *self, struct thorium_worker_buffer *worker_buffer);
+static void thorium_node_inject_outbound_buffer(struct thorium_node *self, struct thorium_worker_buffer *worker_buffer);
 
-void thorium_node_send_to_node_empty(struct thorium_node *self, int destination, int tag);
-int thorium_node_receive_system(struct thorium_node *self, struct thorium_message *message);
-void thorium_node_set_initial_actor(struct thorium_node *self, int node_name, int actor);
-int thorium_node_allocate_actor_index(struct thorium_node *self);
+static void thorium_node_send_to_node_empty(struct thorium_node *self, int destination, int tag);
+static int thorium_node_receive_system(struct thorium_node *self, struct thorium_message *message);
+static void thorium_node_set_initial_actor(struct thorium_node *self, int node_name, int actor);
+static int thorium_node_allocate_actor_index(struct thorium_node *self);
 
-void thorium_node_inject_message_in_worker_pool(struct thorium_node *self, struct thorium_message *message);
+static void thorium_node_inject_message_in_worker_pool(struct thorium_node *self, struct thorium_message *message);
 
-void *thorium_node_main(void *node1);
-int thorium_node_running(struct thorium_node *self);
-void thorium_node_start_send_thread(struct thorium_node *self);
-int thorium_node_generate_name(struct thorium_node *self);
+static void *thorium_node_main(void *node1);
+static int thorium_node_running(struct thorium_node *self);
+static void thorium_node_start_send_thread(struct thorium_node *self);
+static int thorium_node_generate_name(struct thorium_node *self);
 
-int thorium_node_actor_node(struct thorium_node *self, int name);
-int thorium_node_actor_index(struct thorium_node *self, int name);
-void thorium_node_run_loop(struct thorium_node *self);
+static int thorium_node_actor_node(struct thorium_node *self, int name);
+static int thorium_node_actor_index(struct thorium_node *self, int name);
+static void thorium_node_run_loop(struct thorium_node *self);
 
 /*
  * Private prototypes for inbound message regulator
  */
-void thorium_node_regulator_configure(struct thorium_node *self);
-void thorium_node_regulator_run(struct thorium_node *self);
-int thorium_node_regulator_must_wait(struct thorium_node *self);
+static void thorium_node_regulator_configure(struct thorium_node *self);
+static void thorium_node_regulator_run(struct thorium_node *self);
+static int thorium_node_regulator_must_wait(struct thorium_node *self);
 
-int thorium_node_has_script(struct thorium_node *self, struct thorium_script *script);
-void thorium_node_send_messages(struct thorium_node *self);
-void thorium_node_receive_messages(struct thorium_node *self);
+static int thorium_node_has_script(struct thorium_node *self, struct thorium_script *script);
+static void thorium_node_send_messages(struct thorium_node *self);
+static void thorium_node_receive_messages(struct thorium_node *self);
 
-void thorium_node_send(struct thorium_node *self, struct thorium_message *message,
+static void thorium_node_send(struct thorium_node *self, struct thorium_message *message,
                 int perform_multiplexing);
 
 void thorium_node_init(struct thorium_node *node, int *argc, char ***argv)
@@ -851,7 +859,7 @@ int thorium_node_spawn_state(struct thorium_node *node, void *state,
     return name;
 }
 
-int thorium_node_allocate_actor_index(struct thorium_node *node)
+static int thorium_node_allocate_actor_index(struct thorium_node *node)
 {
     int index;
 
@@ -874,7 +882,7 @@ int thorium_node_allocate_actor_index(struct thorium_node *node)
     return index;
 }
 
-int thorium_node_generate_name(struct thorium_node *node)
+static int thorium_node_generate_name(struct thorium_node *node)
 {
     int minimal_value;
     int maximum_value;
@@ -939,7 +947,7 @@ int thorium_node_generate_name(struct thorium_node *node)
     return name;
 }
 
-void thorium_node_set_initial_actor(struct thorium_node *node, int node_name, int actor)
+static void thorium_node_set_initial_actor(struct thorium_node *node, int node_name, int actor)
 {
     int *bucket;
 
@@ -1087,7 +1095,7 @@ void thorium_node_start_initial_actor(struct thorium_node *node)
     */
 }
 
-int thorium_node_running(struct thorium_node *node)
+static int thorium_node_running(struct thorium_node *node)
 {
     time_t current_time;
     int elapsed;
@@ -1141,13 +1149,13 @@ int thorium_node_running(struct thorium_node *node)
 }
 
 /* TODO, this needs THORIUM_THREAD_MULTIPLE, this has not been tested */
-void thorium_node_start_send_thread(struct thorium_node *node)
+static void thorium_node_start_send_thread(struct thorium_node *node)
 {
     core_thread_init(&node->thread, thorium_node_main, node);
     core_thread_start(&node->thread);
 }
 
-void *thorium_node_main(void *node1)
+static void *thorium_node_main(void *node1)
 {
     struct thorium_node *node;
 
@@ -1160,7 +1168,7 @@ void *thorium_node_main(void *node1)
     return NULL;
 }
 
-int thorium_node_receive_system(struct thorium_node *node, struct thorium_message *message)
+static int thorium_node_receive_system(struct thorium_node *node, struct thorium_message *message)
 {
     int tag;
     void *buffer;
@@ -1288,7 +1296,7 @@ int thorium_node_receive_system(struct thorium_node *node, struct thorium_messag
     return 0;
 }
 
-void thorium_node_send_to_node_empty(struct thorium_node *node, int destination, int tag)
+static void thorium_node_send_to_node_empty(struct thorium_node *node, int destination, int tag)
 {
     struct thorium_message message;
     thorium_message_init(&message, tag, 0, NULL);
@@ -1341,7 +1349,7 @@ void thorium_node_send_to_node(struct thorium_node *node, int destination,
     thorium_node_send(node, &new_message, 0);
 }
 
-int thorium_node_has_actor(struct thorium_node *self, int name)
+static int thorium_node_has_actor(struct thorium_node *self, int name)
 {
     int node_name;
 
@@ -1365,7 +1373,7 @@ int thorium_node_has_actor(struct thorium_node *self, int name)
     return 0;
 }
 
-void thorium_node_send(struct thorium_node *node, struct thorium_message *message,
+static void thorium_node_send(struct thorium_node *node, struct thorium_message *message,
                 int perform_multiplexing)
 {
     int name;
@@ -1565,7 +1573,7 @@ void thorium_node_dispatch_message(struct thorium_node *node, struct thorium_mes
     tracepoint(thorium_node, dispatch_message_exit, node->name, node->tick);
 }
 
-void thorium_node_inject_message_in_worker_pool(struct thorium_node *node, struct thorium_message *message)
+static void thorium_node_inject_message_in_worker_pool(struct thorium_node *node, struct thorium_message *message)
 {
 #ifdef CHECK_FOR_DEAD_ACTOR_IN_NODE
     struct thorium_actor *actor;
@@ -1628,7 +1636,7 @@ void thorium_node_inject_message_in_worker_pool(struct thorium_node *node, struc
     tracepoint(thorium_node, inject_exit, node->name, node->tick);
 }
 
-int thorium_node_actor_index(struct thorium_node *node, int name)
+static int thorium_node_actor_index(struct thorium_node *node, int name)
 {
     int *bucket;
     int index;
@@ -1652,7 +1660,7 @@ int thorium_node_actor_index(struct thorium_node *node, int name)
     return index;
 }
 
-int thorium_node_actor_node(struct thorium_node *node, int name)
+static int thorium_node_actor_node(struct thorium_node *node, int name)
 {
     return name % node->nodes;
 }
@@ -1835,7 +1843,7 @@ void thorium_node_add_script(struct thorium_node *node, int name,
     core_lock_unlock(&node->script_lock);
 }
 
-int thorium_node_has_script(struct thorium_node *node, struct thorium_script *script)
+static int thorium_node_has_script(struct thorium_node *node, struct thorium_script *script)
 {
     if (thorium_node_find_script(node, thorium_script_identifier(script)) != NULL) {
         return 1;
@@ -1871,7 +1879,7 @@ void thorium_node_print_counters(struct thorium_node *node)
  * This could be done by killing the actor and continue
  * computation.
  */
-void thorium_node_handle_signal(int signal)
+static void thorium_node_handle_signal(int signal)
 {
     int node;
     struct thorium_node *self;
@@ -1910,7 +1918,7 @@ void thorium_node_handle_signal(int signal)
     sigaction(signal, &self->action, NULL);
 }
 
-void thorium_node_register_signal_handlers(struct thorium_node *self)
+static void thorium_node_register_signal_handlers(struct thorium_node *self)
 {
     struct core_vector signals;
     struct core_vector_iterator iterator;
@@ -1969,7 +1977,7 @@ void thorium_node_register_signal_handlers(struct thorium_node *self)
      */
 }
 
-void thorium_node_print_structure(struct thorium_node *node, struct thorium_actor *actor)
+static void thorium_node_print_structure(struct thorium_node *node, struct thorium_actor *actor)
 {
     struct core_map *structure;
     struct core_map_iterator iterator;
@@ -2014,12 +2022,13 @@ void thorium_node_print_structure(struct thorium_node *node, struct thorium_acto
     core_map_iterator_destroy(&iterator);
 }
 
-struct thorium_worker_pool *thorium_node_get_worker_pool(struct thorium_node *self)
+/*
+static struct thorium_worker_pool *thorium_node_get_worker_pool(struct thorium_node *self)
 {
     return &self->worker_pool;
-}
+}*/
 
-void thorium_node_toggle_debug_mode(struct thorium_node *self)
+static void thorium_node_toggle_debug_mode(struct thorium_node *self)
 {
     if (CORE_BITMAP_GET_BIT(self->flags, FLAG_DEBUG)) {
         CORE_BITMAP_CLEAR_BIT(self->flags, FLAG_DEBUG);
@@ -2029,7 +2038,8 @@ void thorium_node_toggle_debug_mode(struct thorium_node *self)
     thorium_worker_pool_toggle_debug_mode(&self->worker_pool);
 }
 
-void thorium_node_reset_actor_counters(struct thorium_node *node)
+#if 0
+static void thorium_node_reset_actor_counters(struct thorium_node *node)
 {
     struct core_map_iterator iterator;
     int *name;
@@ -2045,6 +2055,7 @@ void thorium_node_reset_actor_counters(struct thorium_node *node)
     }
     core_map_iterator_destroy(&iterator);
 }
+#endif
 
 int64_t thorium_node_get_counter(struct thorium_node *node, int counter)
 {
@@ -2055,7 +2066,8 @@ int64_t thorium_node_get_counter(struct thorium_node *node, int counter)
 #endif
 }
 
-int thorium_node_send_system(struct thorium_node *node, struct thorium_message *message)
+#ifdef THORIUM_ENABLE_AUTO_SCALING
+static int thorium_node_send_system(struct thorium_node *node, struct thorium_message *message)
 {
     int destination;
     int tag;
@@ -2094,9 +2106,10 @@ int thorium_node_send_system(struct thorium_node *node, struct thorium_message *
 
     return 0;
 }
+#endif
 
 
-void thorium_node_send_to_actor(struct thorium_node *node, int name, struct thorium_message *message)
+static void thorium_node_send_to_actor(struct thorium_node *node, int name, struct thorium_message *message)
 {
     thorium_message_set_source(message, name);
     thorium_message_set_destination(message, name);
@@ -2150,7 +2163,7 @@ void thorium_node_check_load(struct thorium_node *node)
     core_lock_unlock(&node->auto_scaling_lock);
 }
 
-void thorium_node_run_loop(struct thorium_node *node)
+static void thorium_node_run_loop(struct thorium_node *node)
 {
     int credits;
     int starting_credits;
@@ -2364,7 +2377,7 @@ void thorium_node_run_loop(struct thorium_node *node)
 #endif
 }
 
-void thorium_node_send_messages(struct thorium_node *node)
+static void thorium_node_send_messages(struct thorium_node *node)
 {
         /*
     struct thorium_message_block message_block;
@@ -2468,7 +2481,7 @@ void thorium_node_send_messages(struct thorium_node *node)
     tracepoint(thorium_node, send_messages_exit, node->name, node->tick);
 }
 
-void thorium_node_test_requests(struct thorium_node *node)
+static void thorium_node_test_requests(struct thorium_node *node)
 {
     struct thorium_worker_buffer worker_buffer;
     int requests;
@@ -2528,7 +2541,7 @@ void thorium_node_test_requests(struct thorium_node *node)
 #endif
 }
 
-void thorium_node_free_worker_buffer(struct thorium_node *node,
+static void thorium_node_free_worker_buffer(struct thorium_node *node,
                 struct thorium_worker_buffer *worker_buffer)
 {
     void *buffer;
@@ -2572,7 +2585,7 @@ void thorium_node_free_worker_buffer(struct thorium_node *node,
 #endif
 }
 
-void thorium_node_do_message_triage(struct thorium_node *self)
+static void thorium_node_do_message_triage(struct thorium_node *self)
 {
     struct thorium_message message;
     int i;
@@ -2595,7 +2608,7 @@ void thorium_node_do_message_triage(struct thorium_node *self)
     }
 }
 
-void thorium_node_recycle_message(struct thorium_node *self, struct thorium_message *message)
+static void thorium_node_recycle_message(struct thorium_node *self, struct thorium_message *message)
 {
     int worker_name;
     void *buffer;
@@ -2687,7 +2700,7 @@ void thorium_node_resolve(struct thorium_node *self, struct thorium_message *mes
     thorium_message_set_destination_node(message, node_name);
 }
 
-int thorium_node_generate_random_name(struct thorium_node *self,
+static int thorium_node_generate_random_name(struct thorium_node *self,
                 int minimal_value, int maximum_value)
 {
 #if defined(THORIUM_NODE_USE_DETERMINISTIC_ACTOR_NAMES)
@@ -2780,7 +2793,7 @@ void thorium_node_examine(struct thorium_node *self)
     thorium_worker_pool_examine(&self->worker_pool);
 }
 
-void thorium_node_inject_outbound_buffer(struct thorium_node *self, struct thorium_worker_buffer *worker_buffer)
+static void thorium_node_inject_outbound_buffer(struct thorium_node *self, struct thorium_worker_buffer *worker_buffer)
 {
     int worker;
     void *buffer;
@@ -2818,14 +2831,14 @@ void thorium_node_inject_outbound_buffer(struct thorium_node *self, struct thori
     }
 }
 
-void thorium_node_regulator_configure(struct thorium_node *self)
+static void thorium_node_regulator_configure(struct thorium_node *self)
 {
 #ifdef THORIUM_NODE_CONFIG_USE_REGULATOR
     CORE_BITMAP_CLEAR_BIT(self->flags, FLAG_REGULATOR_IS_ENABLED);
 #endif
 }
 
-void thorium_node_regulator_run(struct thorium_node *self)
+static void thorium_node_regulator_run(struct thorium_node *self)
 {
 #ifdef THORIUM_NODE_CONFIG_USE_REGULATOR
     int count;
@@ -2880,7 +2893,7 @@ void thorium_node_regulator_run(struct thorium_node *self)
 #endif
 }
 
-int thorium_node_regulator_must_wait(struct thorium_node *self)
+static int thorium_node_regulator_must_wait(struct thorium_node *self)
 {
 #ifdef THORIUM_NODE_CONFIG_USE_REGULATOR
     return CORE_BITMAP_GET_BIT(self->flags, FLAG_REGULATOR_IS_ENABLED);
@@ -2892,7 +2905,7 @@ int thorium_node_regulator_must_wait(struct thorium_node *self)
 /*
  * Receive messages from other thorium nodes.
  */
-void thorium_node_receive_messages(struct thorium_node *node)
+static void thorium_node_receive_messages(struct thorium_node *node)
 {
     int i;
     int count;
