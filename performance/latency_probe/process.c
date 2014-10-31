@@ -149,12 +149,16 @@ void process_receive(struct thorium_actor *self, struct thorium_message *message
             printf("%d nodes, %d worker threads (%d * %d), %d actors (%d * %d)\n",
                             nodes, workers, nodes, workers_per_node,
                             number_of_actors, workers, actors_per_worker);
-            printf("Total sent message count: %" PRIu64 " (%d * %d) in %" PRIu64 " nanoseconds (%f s)\n",
+            printf("Total sent message count: %" PRIu64 " (%d * %d)\n"
+                           "Time: %" PRIu64 " nanoseconds (%f s)\n",
                             total, number_of_actors,
                            EVENT_COUNT, elapsed_time, elapsed_seconds);
             rate = (total + 0.0) / elapsed_seconds;
 
-            printf("Messaging rate: %f messages / second\n", rate);
+            printf("Computation messaging rate: %f messages / second\n", rate);
+            printf("Node messaging rate: %f messages / second\n", rate / nodes);
+            printf("Worker messaging rate: %f messages / second\n", rate / workers);
+            printf("Actor messaging rate: %f messages / second\n", rate / number_of_actors);
         }
 
         printf("%d receives ACTION_ASK_TO_STOP\n", thorium_actor_name(self));
