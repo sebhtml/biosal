@@ -696,7 +696,9 @@ void *thorium_worker_main(void *worker1)
         }
     }
 
+#if 0
     printf("WORKER_THREAD EXIT\n");
+#endif
 
     return NULL;
 }

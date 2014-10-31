@@ -300,8 +300,8 @@ void thorium_worker_pool_stop(struct thorium_worker_pool *pool)
      */
 
 #ifdef THORIUM_WORKER_POOL_DEBUG
-#endif
     printf("Stop workers\n");
+#endif
 
     for (i = 0; i < pool->worker_count; i++) {
         thorium_worker_stop(thorium_worker_pool_get_worker(pool, i));
@@ -775,8 +775,8 @@ static void thorium_worker_pool_assign_worker_to_actor(struct thorium_worker_poo
     CORE_DEBUGGER_ASSERT(worker_index >= 0);
 
 #ifdef THORIUM_WORKER_POOL_DEBUG
-#endif
     printf("ASSIGNING %d to %d\n", name, worker_index);
+#endif
 
     thorium_balancer_set_actor_worker(&pool->balancer, name, worker_index);
 }
