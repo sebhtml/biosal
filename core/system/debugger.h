@@ -114,6 +114,9 @@ void core_debugger_examine(void *pointer, int bytes);
 #define CORE_DEBUGGER_ASSERT_NOT_NULL(pointer) \
         CORE_DEBUGGER_ASSERT(pointer != NULL)
 
+#define CORE_DEBUGGER_ASSERT_IS_NULL(pointer) \
+        CORE_DEBUGGER_ASSERT(pointer == NULL)
+
 /*
  * Jitter detection
  */

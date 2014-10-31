@@ -2036,6 +2036,14 @@ int thorium_actor_work(struct thorium_actor *self)
      */
     buffer = thorium_message_buffer(&message);
 
+    /*
+     * If the count is 0, set the buffer to NULL to avoid confusion.
+     * The original buffer is restored after the call to
+     * thorium_actor_receive, so this is safe.
+     */
+    if (thorium_message_count(&message) == 0)
+        thorium_message_set_buffer(&message, NULL);
+
 /*
 #ifdef CORE_DEBUGGER_ENABLE_ASSERT
     if (buffer == NULL) {

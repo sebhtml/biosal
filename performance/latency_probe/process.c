@@ -208,12 +208,16 @@ static void process_receive(struct thorium_actor *self, struct thorium_message *
 #endif
 
         CORE_DEBUGGER_ASSERT_IS_EQUAL_INT(count, 0);
+        CORE_DEBUGGER_ASSERT_IS_NULL(buffer);
 
         thorium_actor_send_reply_empty(self, ACTION_PING_REPLY);
 
     } else if (action == ACTION_PING_REPLY) {
 
         ++concrete_self->message_count;
+
+        CORE_DEBUGGER_ASSERT_IS_EQUAL_INT(count, 0);
+        CORE_DEBUGGER_ASSERT_IS_NULL(buffer);
 
         if (concrete_self->message_count % PERIOD == 0 || EVENT_COUNT < 500) {
             printf("progress %d %d/%d\n",
