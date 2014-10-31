@@ -115,7 +115,7 @@
 */
 #define THORIUM_WORKER_SEND_TO_LOCAL_ACTOR
 
-void thorium_worker_work(struct thorium_worker *self, struct thorium_actor *actor);
+static void thorium_worker_work(struct thorium_worker *self, struct thorium_actor *actor);
 /*
 void thorium_worker_flush_outbound_message_block(struct thorium_worker *self);
 */
@@ -123,16 +123,16 @@ void thorium_worker_flush_outbound_message_block(struct thorium_worker *self);
 /*
  * Backoff stuff.
  */
-void thorium_worker_configure_backoff(struct thorium_worker *self);
-void thorium_worker_activate_backoff(struct thorium_worker *self);
-void thorium_worker_do_backoff(struct thorium_worker *self);
+static void thorium_worker_configure_backoff(struct thorium_worker *self);
+static void thorium_worker_activate_backoff(struct thorium_worker *self);
+static void thorium_worker_do_backoff(struct thorium_worker *self);
 
-void thorium_worker_schedule_actor(struct thorium_worker *self, struct thorium_actor *actor);
-int thorium_worker_has_actor(struct thorium_worker *self, int actor);
+static void thorium_worker_schedule_actor(struct thorium_worker *self, struct thorium_actor *actor);
+static int thorium_worker_has_actor(struct thorium_worker *self, int actor);
 
-int thorium_worker_publish_message(struct thorium_worker *self, struct thorium_message *message);
+static int thorium_worker_publish_message(struct thorium_worker *self, struct thorium_message *message);
 
-int thorium_worker_enqueue_message_for_multiplexer(struct thorium_worker *self,
+static int thorium_worker_enqueue_message_for_multiplexer(struct thorium_worker *self,
                 struct thorium_message *message);
 
 void thorium_worker_init(struct thorium_worker *worker, int name, struct thorium_node *node)
@@ -1737,7 +1737,7 @@ void thorium_worker_run(struct thorium_worker *worker)
     tracepoint(thorium_worker, run_exit, worker->name, worker->tick_count);
 }
 
-void thorium_worker_work(struct thorium_worker *worker, struct thorium_actor *actor)
+static void thorium_worker_work(struct thorium_worker *worker, struct thorium_actor *actor)
 {
     int dead;
     int actor_name;
@@ -2125,14 +2125,14 @@ void *thorium_worker_allocate(struct thorium_worker *self, size_t count)
     return buffer;
 }
 
-void thorium_worker_configure_backoff(struct thorium_worker *self)
+static void thorium_worker_configure_backoff(struct thorium_worker *self)
 {
 #ifdef THORIUM_WORKER_CONFIG_USE_BACKOFF
     CORE_BITMAP_CLEAR_BIT(self->flags, FLAG_OUTPUT_OUTBOUND_MESSAGE_RING_IS_FULL);
 #endif
 }
 
-void thorium_worker_activate_backoff(struct thorium_worker *self)
+static void thorium_worker_activate_backoff(struct thorium_worker *self)
 {
 #ifdef THORIUM_WORKER_CONFIG_USE_BACKOFF
     /*
@@ -2149,7 +2149,7 @@ void thorium_worker_activate_backoff(struct thorium_worker *self)
 #endif
 }
 
-void thorium_worker_do_backoff(struct thorium_worker *self)
+static void thorium_worker_do_backoff(struct thorium_worker *self)
 {
 #ifdef THORIUM_WORKER_CONFIG_USE_BACKOFF
     /*
@@ -2204,7 +2204,7 @@ int thorium_worker_get_input_message_ring_size(struct thorium_worker *self)
     return core_fast_ring_size_from_producer(&self->input_inbound_message_ring);
 }
 
-void thorium_worker_schedule_actor(struct thorium_worker *self, struct thorium_actor *actor)
+static void thorium_worker_schedule_actor(struct thorium_worker *self, struct thorium_actor *actor)
 {
     int status;
     int name;
@@ -2225,7 +2225,7 @@ void thorium_worker_schedule_actor(struct thorium_worker *self, struct thorium_a
     thorium_scheduler_enqueue(&self->scheduler, actor);
 }
 
-int thorium_worker_has_actor(struct thorium_worker *self, int actor)
+static int thorium_worker_has_actor(struct thorium_worker *self, int actor)
 {
     return core_map_get(&self->actors, &actor) != NULL;
 }
@@ -2242,7 +2242,7 @@ void thorium_worker_set_outbound_message_ring(struct thorium_worker *self, struc
 #endif
 }
 
-int thorium_worker_publish_message(struct thorium_worker *self, struct thorium_message *message)
+static int thorium_worker_publish_message(struct thorium_worker *self, struct thorium_message *message)
 {
     tracepoint(thorium_worker, publish_message, self->name, self->tick_count,
                     thorium_message_count(message),
@@ -2333,7 +2333,7 @@ void thorium_worker_flush_outbound_message_block(struct thorium_worker *self)
 }
 #endif
 
-int thorium_worker_enqueue_message_for_multiplexer(struct thorium_worker *self,
+static int thorium_worker_enqueue_message_for_multiplexer(struct thorium_worker *self,
                 struct thorium_message *message)
 {
     return core_fast_ring_push_multiple_producers(&self->input_message_ring_for_multiplexer,
