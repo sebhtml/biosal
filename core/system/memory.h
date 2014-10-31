@@ -143,9 +143,13 @@ size_t core_memory_align_private(size_t unaligned, size_t alignment);
 #define CORE_MEMORY_STORE_FENCE core_memory_store_fence__
 #define CORE_MEMORY_FENCE core_memory_fence__
 
-inline void core_memory_load_fence__();
-inline void core_memory_store_fence__();
-inline void core_memory_fence__();
+/*
+ * static inline is needed so that each translation unit that uses these
+ * functions have their own copies.
+ */
+static inline void core_memory_load_fence__();
+static inline void core_memory_store_fence__();
+static inline void core_memory_fence__();
 
 size_t core_memory_normalize_segment_length_power_of_2(size_t size);
 size_t core_memory_normalize_segment_length_page_size(size_t size);
@@ -154,7 +158,7 @@ void *core_memory_copy(void *destination, const void *source, size_t count);
 void *core_memory_move(void *destination, const void *source, size_t count);
 
 
-inline void core_memory_load_fence__()
+static inline void core_memory_load_fence__()
 {
 #ifdef LOAD_OPERATIONS_ARE_ORDERED_disabled
 
@@ -185,7 +189,7 @@ inline void core_memory_load_fence__()
 #endif
 }
 
-inline void core_memory_store_fence__()
+static inline void core_memory_store_fence__()
 {
 #ifdef STORE_OPERATIONS_ARE_ORDERED_disabled
 
@@ -209,7 +213,7 @@ inline void core_memory_store_fence__()
 #endif
 }
 
-inline void core_memory_fence__()
+static inline void core_memory_fence__()
 {
 #if defined(__GNUC__)
 
