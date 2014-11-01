@@ -35,7 +35,12 @@ To use perf, compile with scripts/perf/build-perf.sh (-fno-omit-frame-pointer).
 
 Then use scripts/perf/perf-record-lwp.sh to record a given thread (LWP).
 
+# perf top
+
 Otherwise, 'perf top' is your friend too.
+
+- perf top -e cache-misses
+- perf top -e branch-misses
 
 # Stateless actors
 
