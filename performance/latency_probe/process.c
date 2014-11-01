@@ -69,6 +69,8 @@ static void process_receive(struct thorium_actor *self, struct thorium_message *
     int new_actor;
     uint64_t elapsed_time;
     double rate;
+    double actor_throughput;
+    double worker_throughput;
     double elapsed_seconds;
     struct process *concrete_self;
     struct core_vector actors;
@@ -153,6 +155,8 @@ static void process_receive(struct thorium_actor *self, struct thorium_message *
             number_of_actors = workers * actors_per_worker;
 
             rate = (total + 0.0) / elapsed_seconds;
+            worker_throughput = rate / workers;
+            actor_throughput = rate / number_of_actors;
 
             printf("PERFORMANCE_COUNTER node-count = %d\n", nodes);
             printf("PERFORMANCE_COUNTER worker-count-per-node = %d\n", workers_per_node);
@@ -166,8 +170,12 @@ static void process_receive(struct thorium_actor *self, struct thorium_message *
 
             printf("PERFORMANCE_COUNTER computation-throughput = %f messages / s\n", rate);
             printf("PERFORMANCE_COUNTER node-throughput = %f messages / s\n", rate / nodes);
-            printf("PERFORMANCE_COUNTER worker-throughput = %f messages / s\n", rate / workers);
-            printf("PERFORMANCE_COUNTER actor-throughput = %f messages / s\n", rate / number_of_actors);
+            printf("PERFORMANCE_COUNTER worker-throughput = %f messages / s\n", worker_throughput);
+            printf("PERFORMANCE_COUNTER worker-latency = %d ns\n",
+                            (int)((1000 * 1000 * 1000) / worker_throughput));
+            printf("PERFORMANCE_COUNTER actor-throughput = %f messages / s\n", actor_throughput);
+            printf("PERFORMANCE_COUNTER actor-latency = %d ns\n",
+                            (int)((1000 * 1000 * 1000) / actor_throughput));
         }
 
         printf("%d receives ACTION_ASK_TO_STOP\n", thorium_actor_name(self));
