@@ -1,6 +1,9 @@
 
 #include "message.h"
 
+#include "actor.h" /* for THORIUM_ACTOR_NOBODY */
+#include "worker.h" /* for THORIUM_WORKER_NONE */
+
 #include <core/system/packer.h>
 #include <core/system/debugger.h>
 
@@ -22,19 +25,19 @@ void thorium_message_init(struct thorium_message *self, int action, int count,
     self->buffer = buffer;
     self->count = count;
 
-    self->source_actor = -1;
-    self->destination_actor = -1;
+    self->source_actor = THORIUM_ACTOR_NOBODY;
+    self->destination_actor = THORIUM_ACTOR_NOBODY;
 
     /* ranks are set with thorium_node_resolve */
-    self->source_node = -1;
-    self->destination_node = -1;
+    self->source_node = self->source_actor;
+    self->destination_node = self->destination_actor;
 
 #ifdef THORIUM_MESSAGE_USE_ROUTING
-    self->routing_source = -1;
-    self->routing_destination = -1;
+    self->routing_source = self->source_node;
+    self->routing_destination = self->destination_node;
 #endif
 
-    self->worker = -1;
+    self->worker = THORIUM_WORKER_NONE;
 
     thorium_message_set_type(self, THORIUM_MESSAGE_TYPE_NONE);
 
@@ -45,11 +48,11 @@ void thorium_message_init(struct thorium_message *self, int action, int count,
 
 void thorium_message_destroy(struct thorium_message *self)
 {
-    self->source_actor = -1;
-    self->destination_actor = -1;
-    self->action= -1;
+    self->source_actor = THORIUM_ACTOR_NOBODY;
+    self->destination_actor = THORIUM_ACTOR_NOBODY;
+    self->action= ACTION_INVALID;
     self->buffer = NULL;
-    self->count= 0;
+    self->count = 0;
 }
 
 int thorium_message_source(struct thorium_message *self)
@@ -213,11 +216,16 @@ int thorium_message_worker(struct thorium_message *self)
 void thorium_message_init_with_nodes(struct thorium_message *self, int count, void *buffer, int source,
                 int destination)
 {
-    int action;
+    /*
+     * Use a valid action to create the message, then switch it to
+     * a different value.
+     */
+    thorium_message_init(self, ACTION_PING, count, buffer);
 
-    action = -1;
-
-    thorium_message_init(self, action, count, buffer);
+    /*
+     * Set an invalid action specifier.
+     */
+    thorium_message_set_action(self, ACTION_INVALID);
 
     /*
      * Initially assign the MPI source rank and MPI destination

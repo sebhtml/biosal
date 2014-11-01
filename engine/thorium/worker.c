@@ -135,6 +135,11 @@ static int thorium_worker_publish_message(struct thorium_worker *self, struct th
 static int thorium_worker_enqueue_message_for_multiplexer(struct thorium_worker *self,
                 struct thorium_message *message);
 
+static int thorium_worker_enqueue_message_for_triage(struct thorium_worker *worker, struct thorium_message *message);
+/*
+static int thorium_worker_dequeue_message_for_triage(struct thorium_worker *worker, struct thorium_message *message);
+*/
+
 void thorium_worker_init(struct thorium_worker *worker, int name, struct thorium_node *node)
 {
     int capacity;
@@ -202,6 +207,7 @@ void thorium_worker_init(struct thorium_worker *worker, int name, struct thorium
     injected_buffer_ring_size = capacity;
     core_fast_ring_init(&worker->input_clean_outbound_buffer_ring,
                     injected_buffer_ring_size, sizeof(void *));
+    core_fast_ring_use_multiple_producers(&worker->input_clean_outbound_buffer_ring);
 
     worker->output_message_ring_for_triage = NULL;
 
@@ -844,6 +850,13 @@ int thorium_worker_dequeue_actor(struct thorium_worker *worker, struct thorium_a
 
         action = thorium_message_action(&message);
 
+        CORE_DEBUGGER_ASSERT(action != ACTION_INVALID);
+
+        /*
+         * The worker always need metadata.
+         */
+        CORE_DEBUGGER_ASSERT(thorium_message_count(&message) > 0);
+
         /*
          * Give this message to the demultiplexer.
          */
@@ -862,7 +875,7 @@ int thorium_worker_dequeue_actor(struct thorium_worker *worker, struct thorium_a
          * The actor does not exist.
          */
         if (other_actor == NULL) {
-            thorium_worker_enqueue_message_for_triage(worker, &message);
+            thorium_worker_free_message(worker, &message);
 
             continue;
         }
@@ -1347,11 +1360,21 @@ void thorium_worker_free_message(struct thorium_worker *worker, struct thorium_m
 {
     int source_worker;
     void *buffer;
+    struct thorium_worker *sibling;
+    int injected_in_sibling;
+    int use_fast_path_for_dirty_message_injection;
+
+    use_fast_path_for_dirty_message_injection = YES;
 
     CORE_DEBUGGER_ASSERT_NOT_NULL(worker);
     CORE_DEBUGGER_ASSERT_NOT_NULL(message);
 
     buffer = thorium_message_buffer(message);
+
+    /*
+     * Messages that hit a worker can not have a NULL buffer.
+     */
+    CORE_DEBUGGER_ASSERT_NOT_NULL(buffer);
 
     /*
      * Nothing to do.
@@ -1364,7 +1387,8 @@ void thorium_worker_free_message(struct thorium_worker *worker, struct thorium_m
 
     if (source_worker == worker->name) {
 
-        /* This is from the current worker
+        /*
+         * This is from the current worker
          */
         core_memory_pool_free(&worker->outbound_message_memory_pool, buffer);
 #ifdef THORIUM_WORKER_DEBUG_INJECTION
@@ -1373,16 +1397,45 @@ void thorium_worker_free_message(struct thorium_worker *worker, struct thorium_m
 
     } else {
 
-        /* This is from another fellow local worker
+        /*
+         * This is from another fellow local worker
          * or from another BIOSAL node altogether.
          */
-
         CORE_DEBUGGER_ASSERT(thorium_message_buffer(message) != NULL);
-        thorium_worker_enqueue_message_for_triage(worker, message);
+
+        injected_in_sibling = NO;
+
+        /*
+         * Verify if the message has a marker.
+         */
+        if (use_fast_path_for_dirty_message_injection
+                        && source_worker != THORIUM_WORKER_NONE) {
+
+            CORE_DEBUGGER_ASSERT(source_worker >= 0);
+            CORE_DEBUGGER_ASSERT(source_worker < worker->worker_count);
+
+            /*
+            printf("DEBUG_INJECT_DIRTY injecting message for local worker %d\n", source_worker);
+            */
+
+            sibling = worker->workers + source_worker;
+
+            injected_in_sibling = thorium_worker_inject_clean_outbound_buffer(sibling, message);
+        }
+
+        /*
+         * Inject the message in the output ring. The message is either:
+         *
+         * - a node inbound message
+         * or
+         * - it is a worker outbound message and the input ring of this sibling worker is full.
+         */
+        if (!injected_in_sibling)
+            thorium_worker_enqueue_message_for_triage(worker, message);
     }
 }
 
-int thorium_worker_enqueue_message_for_triage(struct thorium_worker *worker, struct thorium_message *message)
+static int thorium_worker_enqueue_message_for_triage(struct thorium_worker *worker, struct thorium_message *message)
 {
 #ifdef THORIUM_WORKER_DEBUG_INJECTION
     int worker_name;
@@ -1637,7 +1690,7 @@ void thorium_worker_run(struct thorium_worker *worker)
     if (core_fast_queue_dequeue(&worker->output_message_queue_for_triage, &other_message)) {
 
         CORE_DEBUGGER_ASSERT(thorium_message_buffer(&other_message) != NULL);
-        thorium_worker_enqueue_message_for_triage(worker, &other_message);
+        thorium_worker_free_message(worker, &other_message);
     }
 
     /*
@@ -1715,7 +1768,7 @@ void thorium_worker_run(struct thorium_worker *worker)
              * It will be sent to its destination.
              */
 
-            thorium_worker_enqueue_message_for_triage(worker, &other_message);
+            thorium_worker_free_message(worker, &other_message);
 
         } else {
             /*
@@ -2008,8 +2061,8 @@ int thorium_worker_inject_clean_outbound_buffer(struct thorium_worker *self, voi
 {
     int value;
 
-    value = core_fast_ring_push_from_producer(&self->input_clean_outbound_buffer_ring,
-                    &buffer);
+    value = core_fast_ring_push_multiple_producers(&self->input_clean_outbound_buffer_ring,
+                    &buffer, self->name);
 
 #ifdef SHOW_FULL_RING_WARNINGS
     if (!value) {
@@ -2022,7 +2075,7 @@ int thorium_worker_inject_clean_outbound_buffer(struct thorium_worker *self, voi
 
 int thorium_worker_fetch_clean_outbound_buffer(struct thorium_worker *self, void **buffer)
 {
-    return core_fast_ring_pop_from_consumer(&self->input_clean_outbound_buffer_ring,
+    return core_fast_ring_pop_multiple_producers(&self->input_clean_outbound_buffer_ring,
                     buffer);
 }
 

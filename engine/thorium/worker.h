@@ -294,8 +294,6 @@ void thorium_worker_check_production(struct thorium_worker *self, int value, int
  */
 int thorium_worker_inject_clean_outbound_buffer(struct thorium_worker *self, void *buffer);
 int thorium_worker_fetch_clean_outbound_buffer(struct thorium_worker *self, void **buffer);
-int thorium_worker_enqueue_message_for_triage(struct thorium_worker *worker, struct thorium_message *message);
-int thorium_worker_dequeue_message_for_triage(struct thorium_worker *worker, struct thorium_message *message);
 
 void thorium_worker_print_balance(struct thorium_worker *self);
 int thorium_worker_spawn(struct thorium_worker *self, int script);
