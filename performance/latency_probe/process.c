@@ -152,19 +152,22 @@ static void process_receive(struct thorium_actor *self, struct thorium_message *
             actors_per_worker = ACTORS_PER_WORKER;
             number_of_actors = workers * actors_per_worker;
 
-            printf("%d nodes, %d worker threads (%d * %d), %d actors (%d * %d)\n",
-                            nodes, workers, nodes, workers_per_node,
-                            number_of_actors, workers, actors_per_worker);
-            printf("Total sent message count: %" PRIu64 " (%d * %d)\n"
-                           "Time: %" PRIu64 " ns (%f s)\n",
-                            total, number_of_actors,
-                           EVENT_COUNT, elapsed_time, elapsed_seconds);
             rate = (total + 0.0) / elapsed_seconds;
 
-            printf("Computation messaging rate: %f messages / s\n", rate);
-            printf("Node messaging rate: %f messages / s\n", rate / nodes);
-            printf("Worker messaging rate: %f messages / s\n", rate / workers);
-            printf("Actor messaging rate: %f messages / s\n", rate / number_of_actors);
+            printf("PERFORMANCE_COUNTER node-count = %d\n", nodes);
+            printf("PERFORMANCE_COUNTER worker-count-per-node = %d\n", workers_per_node);
+            printf("PERFORMANCE_COUNTER actor-count-per-worker = %d\n", actors_per_worker);
+            printf("PERFORMANCE_COUNTER worker-count = %d\n", workers);
+            printf("PERFORMANCE_COUNTER actor-count = %d\n", number_of_actors);
+            printf("PERFORMANCE_COUNTER message-count-per-actor = %d\n", EVENT_COUNT);
+            printf("PERFORMANCE_COUNTER message-count = %" PRIu64 "\n",
+                            total);
+            printf("PERFORMANCE_COUNTER elapsed-time = %f s\n", elapsed_seconds);
+
+            printf("PERFORMANCE_COUNTER computation-throughput = %f messages / s\n", rate);
+            printf("PERFORMANCE_COUNTER node-throughput = %f messages / s\n", rate / nodes);
+            printf("PERFORMANCE_COUNTER worker-throughput = %f messages / s\n", rate / workers);
+            printf("PERFORMANCE_COUNTER actor-throughput = %f messages / s\n", rate / number_of_actors);
         }
 
         printf("%d receives ACTION_ASK_TO_STOP\n", thorium_actor_name(self));
