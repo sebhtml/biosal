@@ -91,6 +91,7 @@ struct core_fast_ring {
 #ifdef CORE_RING_USE_LOCK_FOR_MULTIPLE_PRODUCERS
     struct core_lock lock;
 #endif
+    int use_multiple_producers;
 };
 
 void core_fast_ring_init(struct core_fast_ring *self, int capacity, int cell_size);

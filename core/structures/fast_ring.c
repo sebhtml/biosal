@@ -1,6 +1,7 @@
 
 #include "fast_ring.h"
 
+#include <core/constants.h>
 #include <core/system/memory.h>
 #include <core/system/atomic.h>
 #include <core/system/debugger.h>
@@ -38,6 +39,8 @@ static int core_fast_ring_pop_and_contend(struct core_fast_ring *self, void *ele
 
 void core_fast_ring_init(struct core_fast_ring *self, int capacity, int cell_size)
 {
+    self->use_multiple_producers = NO;
+
     /* +1 because an empty cell is needed
      */
     self->number_of_cells = core_fast_ring_get_next_power_of_two(capacity + 1);
@@ -130,7 +133,21 @@ int core_fast_ring_push_from_producer(struct core_fast_ring *self, void *element
      * the tail is incremented.
      */
 #ifdef USE_MEMORY_FENCE
-    CORE_MEMORY_STORE_FENCE();
+
+    /*
+     * The spinlock (with CORE_RING_USE_LOCK_FOR_MULTIPLE_PRODUCERS
+     * and core_fast_ring_use_multiple_producers())
+     * already does the job of a memory fence,
+     * so doing a second fence is not a good idea.
+     *
+     * On x86-64, this avoids an additional mfence instruction.
+     *
+     * Basically, this fence is only performed if the ring is
+     * a single-producer single-consumer ring (no spinlock).
+     */
+    if (!self->use_multiple_producers)
+        CORE_MEMORY_STORE_FENCE();
+
 #endif
 
     self->tail = core_fast_ring_increment(self, self->tail);
@@ -523,6 +540,8 @@ void core_fast_ring_use_multiple_producers(struct core_fast_ring *self)
     int i;
     int marker;
     void *cell;
+
+    self->use_multiple_producers = YES;
 
     marker = THORIUM_MESSAGE_INVALID_ACTION;
 
