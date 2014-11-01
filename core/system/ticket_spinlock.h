@@ -12,8 +12,8 @@
  * \see http://lwn.net/Articles/267968/
  */
 struct core_ticket_spinlock {
-    volatile int dequeue_ticket;
-    volatile int enqueue_ticket;
+    volatile int head;
+    volatile int tail;
 };
 
 static inline void core_ticket_spinlock_init(struct core_ticket_spinlock *self);
@@ -25,14 +25,14 @@ static inline int core_ticket_spinlock_trylock(struct core_ticket_spinlock *self
 
 static inline void core_ticket_spinlock_init(struct core_ticket_spinlock *self)
 {
-    self->dequeue_ticket = 0;
-    self->enqueue_ticket = 0;
+    self->head = 0;
+    self->tail = 0;
 }
 
 static inline void core_ticket_spinlock_destroy(struct core_ticket_spinlock *self)
 {
-    self->enqueue_ticket = 0;
-    self->dequeue_ticket = 0;
+    self->tail = 0;
+    self->head = 0;
 }
 
 static inline int core_ticket_spinlock_lock(struct core_ticket_spinlock *self)
@@ -49,18 +49,23 @@ static inline int core_ticket_spinlock_lock(struct core_ticket_spinlock *self)
      * remove the taken ticket from the ticket list.
      * This is done by incrementing the enqueue ticket.
      */
-    ticket = core_atomic_increment(&self->enqueue_ticket);
+    ticket = core_atomic_increment(&self->tail);
 
 #ifdef CORE_TICKET_LOCK_DEBUG
     printf("Got ticket %d\n", ticket);
 #endif
 
-    if (ticket == self->dequeue_ticket)
+    /*
+     * It is our turn already.
+     */
+    if (ticket == self->head)
         return 0;
 
-    while (ticket != self->dequeue_ticket) {
+    while (ticket != self->head) {
         /*
          * Spin for the win !!!
+         *
+         * On x86, _mm_fence is used (PAUSE + a couple of NOP).
          */
         core_atomic_spin();
     }
@@ -83,23 +88,23 @@ static inline int core_ticket_spinlock_unlock(struct core_ticket_spinlock *self)
      */
 
 #ifdef CORE_TICKET_LOCK_DEBUG
-    printf("Finished, ticket %d\n", self->dequeue_ticket);
+    printf("Finished, ticket %d\n", self->head);
 #endif
 
     /*core_spinlock_lock(&self->lock);*/
-    /*self->dequeue_ticket++;*/
+    /*self->head++;*/
 
     /*
      * This could be done with an atomic operation, but at this point
      * this value is not needed at all.
      */
-    core_atomic_increment(&self->dequeue_ticket);
+    core_atomic_increment(&self->head);
 
     /*core_spinlock_unlock(&self->lock);*/
 
     /*
      * Do a memory fence so that the other threads see the change
-     * made to memory. In particular, the new dequeue_ticket must be visible
+     * made to memory. In particular, the new head must be visible
      * for other threads.
      */
 /*
