@@ -7,6 +7,7 @@
 #include <stdint.h>
 #include <stdio.h>
 
+#ifdef THORIUM_USE_CUSTOM_TRACEPOINTS
 void thorium_tracepoint_message_actor_send(uint64_t time, struct thorium_message *message)
 {
     thorium_message_set_tracepoint_time(message, THORIUM_TRACEPOINT_message_actor_send, time);
@@ -95,3 +96,4 @@ void thorium_tracepoint_message_worker_pool_dequeue(uint64_t time, struct thoriu
 {
     thorium_message_set_tracepoint_time(message, THORIUM_TRACEPOINT_message_worker_pool_dequeue, time);
 }
+#endif

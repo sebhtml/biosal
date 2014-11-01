@@ -14,6 +14,7 @@
 
 struct thorium_message;
 
+#ifdef THORIUM_USE_CUSTOM_TRACEPOINTS
 void thorium_tracepoint_message_actor_send(uint64_t time, struct thorium_message *message);
 void thorium_tracepoint_message_worker_send(uint64_t time, struct thorium_message *message);
 void thorium_tracepoint_message_node_send(uint64_t time, struct thorium_message *message);
@@ -31,5 +32,6 @@ void thorium_tracepoint_message_worker_send_mailbox(uint64_t time, struct thoriu
 void thorium_tracepoint_message_worker_send_schedule(uint64_t time, struct thorium_message *message);
 void thorium_tracepoint_message_worker_dequeue_message(uint64_t time, struct thorium_message *message);
 void thorium_tracepoint_message_worker_pool_dequeue(uint64_t time, struct thorium_message *message);
+#endif
 
 #endif

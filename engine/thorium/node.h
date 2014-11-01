@@ -5,7 +5,7 @@
 #include "actor.h"
 #include "worker_pool.h"
 
-#ifdef THORIUM_NODE_USE_CUSTOM_TRACEPOINTS
+#ifdef THORIUM_USE_CUSTOM_TRACEPOINTS
 #include "tracepoints/tracepoint_session.h"
 #endif
 
@@ -104,7 +104,7 @@ struct thorium_worker_buffer;
  */
 struct thorium_node {
 
-#ifdef THORIUM_NODE_USE_CUSTOM_TRACEPOINTS
+#ifdef THORIUM_USE_CUSTOM_TRACEPOINTS
     struct thorium_tracepoint_session tracepoint_session;
 #endif
     struct core_vector actors;

@@ -4,6 +4,22 @@
 
 #include <core/system/timer.h>
 
+/*
+ * Use LTTng tracepoints
+ */
+/*
+#define THORIUM_USE_LTTNG
+*/
+
+/*
+ * Use custom tracepoints. These custom tracepoints are not very
+ * efficient and are hard to use. Lttng-UST tracepoints are better
+ * in every way.
+ */
+/*
+#define THORIUM_USE_CUSTOM_TRACEPOINTS
+*/
+
 #ifdef THORIUM_USE_LTTNG
 #include "lttng/message.h"
 #include "lttng/binomial_tree.h"

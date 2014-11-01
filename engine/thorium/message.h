@@ -135,10 +135,12 @@ int thorium_message_pack_unpack(struct thorium_message *self, int operation, voi
 int thorium_message_type(struct thorium_message *self);
 void thorium_message_set_type(struct thorium_message *self, int type);
 
+#ifdef THORIUM_MESSAGE_ENABLE_TRACEPOINTS
 void thorium_message_set_tracepoint_time(struct thorium_message *self, int tracepoint,
                 uint64_t time);
 uint64_t thorium_message_get_tracepoint_time(struct thorium_message *self, int tracepoint);
 void thorium_message_print_tracepoints(struct thorium_message *self);
+#endif
 
 void thorium_message_set_number(struct thorium_message *self, int number);
 

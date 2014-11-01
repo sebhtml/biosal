@@ -277,6 +277,7 @@ void thorium_message_set_type(struct thorium_message *self, int type)
     self->type = type;
 }
 
+#ifdef THORIUM_MESSAGE_ENABLE_TRACEPOINTS
 void thorium_message_set_tracepoint_time(struct thorium_message *self, int tracepoint,
                 uint64_t time)
 {
@@ -405,6 +406,7 @@ void thorium_message_initialize_tracepoints(struct thorium_message *self)
         thorium_message_set_tracepoint_time(self, i, THORIUM_MESSAGE_TRACEPOINT_NO_VALUE);
     }
 }
+#endif
 
 void thorium_message_set_number(struct thorium_message *self, int number)
 {

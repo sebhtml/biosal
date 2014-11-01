@@ -201,7 +201,7 @@ void thorium_node_init(struct thorium_node *node, int *argc, char ***argv)
 
     node->cached_outbound_ring_size = 0;
 
-#ifdef THORIUM_NODE_USE_CUSTOM_TRACEPOINTS
+#ifdef THORIUM_USE_CUSTOM_TRACEPOINTS
     /*
      * Tracepoint session
      */
@@ -558,7 +558,7 @@ void thorium_node_destroy(struct thorium_node *node)
     int active_requests;
 #endif
 
-#ifdef THORIUM_NODE_USE_CUSTOM_TRACEPOINTS
+#ifdef THORIUM_USE_CUSTOM_TRACEPOINTS
     thorium_tracepoint_session_destroy(node->name, node->tick);
 #endif
 
