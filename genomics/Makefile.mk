@@ -34,4 +34,4 @@ GENOMICS_OBJECTS += genomics/formats/input_format_interface.o
 GENOMICS_OBJECTS += genomics/formats/fastq_input.o
 GENOMICS_OBJECTS += genomics/formats/fasta_input.o
 
-
+LIBRARY_OBJECTS += $(GENOMICS_OBJECTS)

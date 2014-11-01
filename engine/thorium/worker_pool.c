@@ -13,8 +13,6 @@
 #include "worker.h"
 #include "node.h"
 
-#include "tracepoints/tracepoints.h"
-
 #include "scheduler/migration.h"
 
 #include <core/helpers/vector_helper.h>
@@ -29,6 +27,8 @@
 
 #include <core/system/debugger.h>
 #include <core/system/memory.h>
+
+#include <performance/tracepoints/tracepoints.h>
 
 #include <stdlib.h>
 #include <stdio.h>

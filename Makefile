@@ -11,6 +11,10 @@ ECHO=echo
 MAKE=make
 RM=rm
 
+APPLICATION_EXECUTABLES=
+APPLICATION_OBJECTS=
+LIBRARY_OBJECTS=
+
 # first target
 all:
 
@@ -18,19 +22,13 @@ include engine/thorium/Makefile.mk
 include genomics/Makefile.mk
 include core/Makefile.mk
 
-LIBRARY_OBJECTS=
-LIBRARY_OBJECTS += $(THORIUM_OBJECTS)
-LIBRARY_OBJECTS += $(GENOMICS_OBJECTS)
-LIBRARY_OBJECTS += $(CORE_OBJECTS)
+# tracepoints and performance apps.
+include performance/Makefile.mk
 
-# include these after the library
+# include these after the library Makefile.mk files
 include tests/Makefile.mk
 include examples/Makefile.mk
 
-APPLICATION_EXECUTABLES=
-APPLICATION_OBJECTS=
-
-include performance/Makefile.mk
 include applications/Makefile.mk
 
 # generic build rule
@@ -48,4 +46,4 @@ clean:
 	$(Q)$(RM) -f $(TEST_OBJECTS) $(TEST_EXECUTABLES)
 	$(Q)$(RM) -f $(EXAMPLE_OBJECTS) $(EXAMPLE_EXECUTABLES)
 	$(Q)$(RM) -f $(APPLICATION_OBJECTS) $(APPLICATION_EXECUTABLES)
-	$(Q)$(RM) -f engine/thorium/tracepoints/lttng/*.{o,h,c}
+	$(Q)$(RM) -f performance/tracepoints/lttng/*.{o,h,c}

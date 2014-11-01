@@ -9,8 +9,6 @@
 
 #include "configuration.h"
 
-#include "tracepoints/tracepoints.h"
-
 #include "worker_debugger.h"
 
 #include "scheduler/balancer.h"
@@ -30,6 +28,8 @@
 #include <core/system/memory.h>
 #include <core/system/timer.h>
 #include <core/system/debugger.h>
+
+#include <performance/tracepoints/tracepoints.h>
 
 #include <stdlib.h>
 #include <stdio.h>

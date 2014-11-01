@@ -45,3 +45,6 @@ CORE_OBJECTS += core/file_storage/directory.o
 CORE_OBJECTS += core/file_storage/file.o
 
 include core/structures/Makefile.mk
+
+LIBRARY_OBJECTS += $(CORE_OBJECTS)
+

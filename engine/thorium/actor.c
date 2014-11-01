@@ -4,8 +4,6 @@
 #include "worker.h"
 #include "node.h"
 
-#include "tracepoints/tracepoints.h"
-
 #include "scheduler/fifo_scheduler.h"
 
 #include <core/structures/vector_iterator.h>
@@ -23,6 +21,8 @@
 #include <string.h>
 #include <inttypes.h>
 #include <stdint.h>
+
+#include <performance/tracepoints/tracepoints.h>
 
 #define MEMORY_ACTOR_KEY 0x878a06c0
 

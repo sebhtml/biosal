@@ -2,7 +2,7 @@
 #include "mpi1_pt2pt_nonblocking_transport.h"
 #include "mpi1_request.h"
 
-#include <engine/thorium/tracepoints/tracepoints.h>
+#include <performance/tracepoints/tracepoints.h>
 
 #include <engine/thorium/transport/transport.h>
 

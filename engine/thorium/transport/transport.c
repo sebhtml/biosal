@@ -1,7 +1,7 @@
 
 #include "transport.h"
 
-#include <engine/thorium/tracepoints/tracepoints.h>
+#include <performance/tracepoints/tracepoints.h>
 
 /*
  * Implementations of the interface.

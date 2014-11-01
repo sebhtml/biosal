@@ -5,7 +5,7 @@
 #include <core/system/atomic.h>
 #include <core/system/debugger.h>
 
-#include <engine/thorium/tracepoints/tracepoints.h>
+#include <performance/tracepoints/tracepoints.h>
 
 #include <engine/thorium/message.h>
 

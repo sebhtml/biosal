@@ -5,7 +5,9 @@
 #include "actor.h"
 #include "worker_pool.h"
 
+#ifdef THORIUM_NODE_USE_CUSTOM_TRACEPOINTS
 #include "tracepoints/tracepoint_session.h"
+#endif
 
 #include "transport/transport.h"
 

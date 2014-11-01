@@ -1,5 +1,6 @@
 
 #include "node_tracepoints.h"
+#include "tracepoint_session.h"
 
 #include <engine/thorium/node.h>
 

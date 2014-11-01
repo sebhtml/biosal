@@ -15,8 +15,6 @@
 
 #include "worker_buffer.h"
 
-#include "tracepoints/tracepoints.h"
-
 #include <core/structures/vector.h>
 #include <core/structures/map_iterator.h>
 #include <core/structures/vector_iterator.h>
@@ -30,6 +28,8 @@
 #include <core/system/tracer.h>
 
 #include <core/system/debugger.h>
+
+#include <performance/tracepoints/tracepoints.h>
 
 #include <stdlib.h>
 #include <stdio.h>

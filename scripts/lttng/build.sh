@@ -2,7 +2,7 @@
 
 make clean
 
-for i in engine/thorium/tracepoints/lttng/*.tp
+for i in performance/tracepoints/lttng/*.tp
 do
     lttng-gen-tp $i
 done

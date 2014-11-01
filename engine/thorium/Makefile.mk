@@ -40,8 +40,4 @@ THORIUM_OBJECTS += engine/thorium/transport/transport_profiler.o
 
 include engine/thorium/transport/*/Makefile.mk
 
-# tracepoints
-
-include engine/thorium/tracepoints/Makefile.mk
-
-
+LIBRARY_OBJECTS += $(THORIUM_OBJECTS)
