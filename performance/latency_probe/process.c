@@ -10,7 +10,8 @@
 
 #define EVENT_COUNT 40000
 #define ACTORS_PER_WORKER 100
-#define PERIOD 500
+#define PERIOD 2000
+
 /*
 #define EVENT_COUNT 1
 #define ACTORS_PER_WORKER 1
