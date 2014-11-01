@@ -4,7 +4,7 @@
 
 struct core_fast_ring;
 
-#include <core/system/lock.h>
+#include <core/system/spinlock.h>
 
 #include <stdint.h>
 
@@ -89,7 +89,7 @@ struct core_fast_ring {
     int cell_size;
 
 #ifdef CORE_RING_USE_LOCK_FOR_MULTIPLE_PRODUCERS
-    struct core_lock lock;
+    struct core_spinlock lock;
 #endif
     int use_multiple_producers;
 };

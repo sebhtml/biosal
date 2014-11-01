@@ -19,7 +19,7 @@
 #include <core/structures/queue.h>
 #include <core/structures/fast_ring.h>
 
-#include <core/system/lock.h>
+#include <core/system/spinlock.h>
 #include <core/system/memory_pool.h>
 #include <core/system/counter.h>
 
@@ -261,7 +261,7 @@ struct thorium_actor {
     void *concrete_actor;
 
 #ifdef THORIUM_ACTOR_ENABLE_LOCK
-    struct core_lock receive_lock;
+    struct core_spinlock receive_lock;
 #endif
 
     /*

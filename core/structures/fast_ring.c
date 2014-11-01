@@ -81,7 +81,7 @@ void core_fast_ring_init(struct core_fast_ring *self, int capacity, int cell_siz
 #endif
 
 #ifdef CORE_RING_USE_LOCK_FOR_MULTIPLE_PRODUCERS
-    core_lock_init(&self->lock);
+    core_spinlock_init(&self->lock);
 #endif
 }
 
@@ -102,7 +102,7 @@ void core_fast_ring_destroy(struct core_fast_ring *self)
     self->cells = NULL;
 
 #ifdef CORE_RING_USE_LOCK_FOR_MULTIPLE_PRODUCERS
-    core_lock_destroy(&self->lock);
+    core_spinlock_destroy(&self->lock);
 #endif
 }
 
@@ -559,9 +559,9 @@ int core_fast_ring_push_multiple_producers(struct core_fast_ring *self, void *el
 #ifdef CORE_RING_USE_LOCK_FOR_MULTIPLE_PRODUCERS
     int value;
 
-    core_lock_lock(&self->lock);
+    core_spinlock_lock(&self->lock);
     value = core_fast_ring_push_from_producer(self, element);
-    core_lock_unlock(&self->lock);
+    core_spinlock_unlock(&self->lock);
 
     return value;
 #else

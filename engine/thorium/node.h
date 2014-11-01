@@ -15,7 +15,7 @@
 #include <core/structures/queue.h>
 #include <core/structures/map.h>
 
-#include <core/system/lock.h>
+#include <core/system/spinlock.h>
 #include <core/system/counter.h>
 #include <core/system/memory_pool.h>
 #include <core/system/debugger.h>
@@ -156,7 +156,7 @@ struct thorium_node {
      * If thorium_actor_spawn is removed from the API, then
      * this lock might be removed.
      */
-    struct core_lock spawn_and_death_lock;
+    struct core_spinlock spawn_and_death_lock;
 
     /*
      * This lock is required because of the
@@ -165,7 +165,7 @@ struct thorium_node {
      * A message tag THORIUM_ACTOR_ADD_SCRIPT could be added
      * in order to remove this lock.
      */
-    struct core_lock script_lock;
+    struct core_spinlock script_lock;
 
     /*
      * This lock is required because it is accessed when
@@ -177,7 +177,7 @@ struct thorium_node {
      * (the Thorium pacing thread would call thorium_node_notify_death
      * instead of the worker thread).
      */
-    struct core_lock auto_scaling_lock;
+    struct core_spinlock auto_scaling_lock;
 
     /*
      * Memory pool for concrete actors.

@@ -4,7 +4,7 @@
 
 #include "linked_ring.h"
 
-#include <core/system/lock.h>
+#include <core/system/spinlock.h>
 
 /*
 #define CORE_RING_QUEUE_THREAD_SAFE
@@ -23,7 +23,7 @@ struct core_fast_queue {
     int size;
 
 #ifdef CORE_RING_QUEUE_THREAD_SAFE
-    struct core_lock lock;
+    struct core_spinlock lock;
     int locked;
 #endif
 };

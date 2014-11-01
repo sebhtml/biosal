@@ -5,7 +5,7 @@
 
 void core_ticket_lock_init(struct core_ticket_lock *self)
 {
-    core_lock_init(&self->lock);
+    core_spinlock_init(&self->lock);
     self->dequeue_ticket = 0;
     self->queue_ticket = 0;
 }
@@ -17,14 +17,14 @@ int core_ticket_lock_lock(struct core_ticket_lock *self)
     /* get a ticket number
      * This is a critical section.
      */
-    core_lock_lock(&self->lock);
+    core_spinlock_lock(&self->lock);
 
     /* get ticket number and
      * remove the taken ticket from the ticket list
      */
     ticket = self->queue_ticket++;
 
-    core_lock_unlock(&self->lock);
+    core_spinlock_unlock(&self->lock);
 
 #ifdef CORE_TICKET_LOCK_DEBUG
     printf("Got ticket %d\n", ticket);
@@ -45,7 +45,7 @@ int core_ticket_lock_lock(struct core_ticket_lock *self)
 int core_ticket_lock_unlock(struct core_ticket_lock *self)
 {
     /*
-    return core_lock_unlock(&self->lock);
+    return core_spinlock_unlock(&self->lock);
     */
 
     /* The person calls in the next customer.
@@ -56,9 +56,9 @@ int core_ticket_lock_unlock(struct core_ticket_lock *self)
     printf("Finished, ticket %d\n", self->dequeue_ticket);
 #endif
 
-    /*core_lock_lock(&self->lock);*/
+    /*core_spinlock_lock(&self->lock);*/
     self->dequeue_ticket++;
-    /*core_lock_unlock(&self->lock);*/
+    /*core_spinlock_unlock(&self->lock);*/
 
     return 0;
 }
@@ -77,9 +77,9 @@ void core_ticket_lock_destroy(struct core_ticket_lock *self)
     self->queue_ticket = -1;
     self->dequeue_ticket = -1;
 
-    core_lock_unlock(&self->lock);
+    core_spinlock_unlock(&self->lock);
 
-    core_lock_destroy(&self->lock);
+    core_spinlock_destroy(&self->lock);
 }
 
 

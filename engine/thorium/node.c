@@ -497,9 +497,9 @@ void thorium_node_init(struct thorium_node *node, int *argc, char ***argv)
     node->received_initial_actors = 0;
     node->ready = 0;
 
-    core_lock_init(&node->spawn_and_death_lock);
-    core_lock_init(&node->script_lock);
-    core_lock_init(&node->auto_scaling_lock);
+    core_spinlock_init(&node->spawn_and_death_lock);
+    core_spinlock_init(&node->script_lock);
+    core_spinlock_init(&node->auto_scaling_lock);
 
     core_queue_init(&node->dead_indices, sizeof(int));
 
@@ -607,9 +607,9 @@ void thorium_node_destroy(struct thorium_node *node)
     /*printf("AFTER DESTROY\n");*/
 
     core_map_destroy(&node->scripts);
-    core_lock_destroy(&node->spawn_and_death_lock);
-    core_lock_destroy(&node->auto_scaling_lock);
-    core_lock_destroy(&node->script_lock);
+    core_spinlock_destroy(&node->spawn_and_death_lock);
+    core_spinlock_destroy(&node->auto_scaling_lock);
+    core_spinlock_destroy(&node->script_lock);
 
     core_vector_destroy(&node->actors);
 
@@ -752,7 +752,7 @@ int thorium_node_spawn(struct thorium_node *node, int script)
      * allocating and initializing the actor (and
      * also generating and registering a name.
      */
-    core_lock_lock(&node->spawn_and_death_lock);
+    core_spinlock_lock(&node->spawn_and_death_lock);
 
     state = core_memory_pool_allocate(&node->actor_memory_pool, size);
     name = thorium_node_spawn_state(node, state, script1);
@@ -788,7 +788,7 @@ int thorium_node_spawn(struct thorium_node *node, int script)
                     name, script);
 #endif
 
-    core_lock_unlock(&node->spawn_and_death_lock);
+    core_spinlock_unlock(&node->spawn_and_death_lock);
 
     return name;
 }
@@ -1726,7 +1726,7 @@ void thorium_node_notify_death(struct thorium_node *node, struct thorium_actor *
      */
     thorium_actor_destroy(actor);
 
-    core_lock_lock(&node->spawn_and_death_lock);
+    core_spinlock_lock(&node->spawn_and_death_lock);
 
     /* free the bytes of the concrete actor */
     core_memory_pool_free(&node->actor_memory_pool, state);
@@ -1756,7 +1756,7 @@ void thorium_node_notify_death(struct thorium_node *node, struct thorium_actor *
      * actors
      */
 
-    core_lock_lock(&node->auto_scaling_lock);
+    core_spinlock_lock(&node->auto_scaling_lock);
 
     if (core_set_find(&node->auto_scaling_actors, &name)) {
         core_set_delete(&node->auto_scaling_actors, &name);
@@ -1768,7 +1768,7 @@ void thorium_node_notify_death(struct thorium_node *node, struct thorium_actor *
         */
     }
 
-    core_lock_unlock(&node->auto_scaling_lock);
+    core_spinlock_unlock(&node->auto_scaling_lock);
 
     node->alive_actors--;
     node->dead_actors++;
@@ -1784,7 +1784,7 @@ void thorium_node_notify_death(struct thorium_node *node, struct thorium_actor *
     core_counter_add(&node->counter, CORE_COUNTER_KILLED_ACTORS, 1);
 #endif
 
-    core_lock_unlock(&node->spawn_and_death_lock);
+    core_spinlock_unlock(&node->spawn_and_death_lock);
 
 #ifdef THORIUM_NODE_DEBUG_20140601_8
     printf("DEBUG exiting thorium_node_notify_death\n");
@@ -1816,7 +1816,7 @@ void thorium_node_add_script(struct thorium_node *node, int name,
 {
     int can_add;
 
-    core_lock_lock(&node->script_lock);
+    core_spinlock_lock(&node->script_lock);
 
     can_add = 1;
     if (thorium_node_has_script(node, script)) {
@@ -1831,7 +1831,7 @@ void thorium_node_add_script(struct thorium_node *node, int name,
     printf("DEBUG added script %x %p\n", name, (void *)script);
 #endif
 
-    core_lock_unlock(&node->script_lock);
+    core_spinlock_unlock(&node->script_lock);
 }
 
 static int thorium_node_has_script(struct thorium_node *node, struct thorium_script *script)
@@ -2075,22 +2075,22 @@ static int thorium_node_send_system(struct thorium_node *node, struct thorium_me
                        thorium_node_name(node),
                        source);
 
-        core_lock_lock(&node->auto_scaling_lock);
+        core_spinlock_lock(&node->auto_scaling_lock);
 
         core_set_add(&node->auto_scaling_actors, &source);
 
-        core_lock_unlock(&node->auto_scaling_lock);
+        core_spinlock_unlock(&node->auto_scaling_lock);
 
         return 1;
 
     } else if (source == destination
            && tag == ACTION_DISABLE_AUTO_SCALING) {
 
-        core_lock_lock(&node->auto_scaling_lock);
+        core_spinlock_lock(&node->auto_scaling_lock);
 
         core_set_delete(&node->auto_scaling_actors, &source);
 
-        core_lock_unlock(&node->auto_scaling_lock);
+        core_spinlock_unlock(&node->auto_scaling_lock);
 
         return 1;
     }
@@ -2130,7 +2130,7 @@ void thorium_node_check_load(struct thorium_node *node)
     /* Check load to see if auto-scaling is needed
      */
 
-    core_lock_lock(&node->auto_scaling_lock);
+    core_spinlock_lock(&node->auto_scaling_lock);
 
     if (thorium_worker_pool_get_current_load(&node->worker_pool)
                     <= load_threshold) {
@@ -2151,7 +2151,7 @@ void thorium_node_check_load(struct thorium_node *node)
         core_set_iterator_destroy(&iterator);
     }
 
-    core_lock_unlock(&node->auto_scaling_lock);
+    core_spinlock_unlock(&node->auto_scaling_lock);
 }
 
 static void thorium_node_run_loop(struct thorium_node *node)

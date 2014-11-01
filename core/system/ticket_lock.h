@@ -2,7 +2,7 @@
 #ifndef CORE_TICKET_LOCK_H
 #define CORE_TICKET_LOCK_H
 
-#include "lock.h"
+#include "spinlock.h"
 
 /*
  * A fair spin lock
@@ -12,7 +12,7 @@
  * \see http://lwn.net/Articles/267968/
  */
 struct core_ticket_lock {
-    struct core_lock lock;
+    struct core_spinlock lock;
     int dequeue_ticket;
     int queue_ticket;
 };
