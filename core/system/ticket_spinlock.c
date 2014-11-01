@@ -1,16 +1,16 @@
 
-#include "ticket_lock.h"
+#include "ticket_spinlock.h"
 
 #include <stdio.h>
 
-void core_ticket_lock_init(struct core_ticket_lock *self)
+void core_ticket_spinlock_init(struct core_ticket_spinlock *self)
 {
     core_spinlock_init(&self->lock);
     self->dequeue_ticket = 0;
     self->queue_ticket = 0;
 }
 
-int core_ticket_lock_lock(struct core_ticket_lock *self)
+int core_ticket_spinlock_lock(struct core_ticket_spinlock *self)
 {
     int ticket;
 
@@ -42,7 +42,7 @@ int core_ticket_lock_lock(struct core_ticket_lock *self)
     return 0;
 }
 
-int core_ticket_lock_unlock(struct core_ticket_lock *self)
+int core_ticket_spinlock_unlock(struct core_ticket_spinlock *self)
 {
     /*
     return core_spinlock_unlock(&self->lock);
@@ -67,12 +67,12 @@ int core_ticket_lock_unlock(struct core_ticket_lock *self)
  * In order to work, we need to expose the ticket number to the
  * caller.
  */
-int core_ticket_lock_trylock(struct core_ticket_lock *self)
+int core_ticket_spinlock_trylock(struct core_ticket_spinlock *self)
 {
     return -1;
 }
 
-void core_ticket_lock_destroy(struct core_ticket_lock *self)
+void core_ticket_spinlock_destroy(struct core_ticket_spinlock *self)
 {
     self->queue_ticket = -1;
     self->dequeue_ticket = -1;
