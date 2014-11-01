@@ -2,6 +2,12 @@
 #ifndef CORE_ATOMIC_H
 #define CORE_ATOMIC_H
 
+#define USE_X86_PAUSE
+
+#if defined(USE_X86_PAUSE) && defined(__GNUC__) &&  defined(__SSE2__)
+#include <xmmintrin.h>
+#endif
+
 #define CORE_ATOMIC_HAS_COMPARE_AND_SWAP
 
 /*
@@ -18,8 +24,13 @@
  * XL compiler
  * \see http://pic.dhe.ibm.com/infocenter/compbg/v121v141/index.jsp?topic=%2Fcom.ibm.xlcpp121.bg.doc%2Fcompiler_ref%2Fbifs_gcc_atomic_fetch_op.html
  * int __lwarx (volatile int* addr);
+ *
+ * \see http://pic.dhe.ibm.com/infocenter/comphelp/v121v141/index.jsp?topic=%2Fcom.ibm.xlc121.aix.doc%2Fcompiler_ref%2Fbif_gcc_atomic_fetch_add.html
  */
 #if defined(__bg__) || defined(__bgp__) || defined(__bgq__)
+
+#define core_atomic_add(pointer, value) \
+        __sync_fetch_and_add(pointer, value)
 
 /*
  * \see http://pic.dhe.ibm.com/infocenter/compbg/v121v141/topic/com.ibm.xlcpp121.bg.doc/compiler_ref/bif_gcc_atomic_fetch_add.html
@@ -37,6 +48,9 @@
 
 /* \see http://docs.cray.com/cgi-bin/craydoc.cgi?mode=View;id=S-2179-74 */
 #elif defined(_CRAYC)
+
+#define core_atomic_add(pointer, value) \
+        __sync_fetch_and_add(pointer, value)
 
 /* Cray
  * \see https://fs.hlrs.de/projects/craydoc/docs_merged/man/xt_libintm/74/cat3/amo.3i.html
@@ -59,6 +73,9 @@
 
 #elif defined(__GNUC__)
 
+#define core_atomic_add(pointer, value) \
+        __sync_fetch_and_add(pointer, value)
+
 /*#error "GNU !"*/
 #define core_atomic_read_int(pointer) \
         __sync_fetch_and_add (pointer, 0)
@@ -72,18 +89,31 @@
  */
 #undef CORE_ATOMIC_HAS_COMPARE_AND_SWAP
 
-/* Otherwise, just return the value
+#error "No atomic features found for this system (currently supported: XL compiler, GNU compiler, Cray compiler)."
+#endif
+
+#define core_atomic_increment(pointer) \
+        core_atomic_add(pointer, 1)
+
+/*
+ * "NOP instruction can be between 0.4-0.5 clocks and PAUSE instruction can consume 38-40 clocks."
+ *
+ * \see http://stackoverflow.com/questions/7371869/minimum-time-a-thread-can-pause-in-linux
+ * \see https://software.intel.com/en-us/forums/topic/309231
  */
-#define core_atomic_read_int(pointer) \
-        core_atomic_read_int_mock(pointer)
+static inline void core_atomic_spin()
+{
+#if defined(USE_X86_PAUSE) && defined(__GNUC__) && defined(__SSE2__)
+     _mm_pause();
 
-#define core_atomic_compare_and_swap_int(pointer, old_value, new_value) \
-        core_atomic_compare_and_swap_int_mock(pointer, old_value, new_value)
+/*#warning "using SSE2 for PAUSE"*/
+#else
+     int i;
 
-#warning "No atomic features found for this system"
+     i = 512;
+     while (i--) {
+     }
 #endif
+}
 
-int core_atomic_read_int_mock(int *pointer);
-int core_atomic_compare_and_swap_int_mock(int *pointer, int old_value, int new_value);
-
-#endif
+#endif /* CORE_ATOMIC_H */

@@ -5,16 +5,15 @@
 #include "spinlock.h"
 
 /*
- * A fair spinlock
+ * A fair spinlock using tickets.
  *
  * \see http://en.wikipedia.org/wiki/Ticket_lock
  * \see http://nahratzah.wordpress.com/2012/10/12/a-trivial-fair-spinlock/
  * \see http://lwn.net/Articles/267968/
  */
 struct core_ticket_spinlock {
-    struct core_spinlock lock;
     volatile int dequeue_ticket;
-    volatile int queue_ticket;
+    volatile int enqueue_ticket;
 };
 
 void core_ticket_spinlock_init(struct core_ticket_spinlock *self);

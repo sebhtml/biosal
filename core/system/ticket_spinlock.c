@@ -2,6 +2,7 @@
 #include "ticket_spinlock.h"
 
 #include <core/system/memory.h>
+#include <core/system/atomic.h>
 
 #include <stdio.h>
 
@@ -11,36 +12,44 @@
 
 void core_ticket_spinlock_init(struct core_ticket_spinlock *self)
 {
-    core_spinlock_init(&self->lock);
     self->dequeue_ticket = 0;
-    self->queue_ticket = 0;
+    self->enqueue_ticket = 0;
+}
+
+void core_ticket_spinlock_destroy(struct core_ticket_spinlock *self)
+{
+    self->enqueue_ticket = 0;
+    self->dequeue_ticket = 0;
 }
 
 int core_ticket_spinlock_lock(struct core_ticket_spinlock *self)
 {
-    int ticket;
+    register int ticket;
 
-    /* get a ticket number
+    /*
+     * Get a ticket number using an atomic operation.
      * This is a critical section.
      */
-    core_spinlock_lock(&self->lock);
 
-    /* get ticket number and
-     * remove the taken ticket from the ticket list
+    /*
+     * Get ticket number and
+     * remove the taken ticket from the ticket list.
+     * This is done by incrementing the enqueue ticket.
      */
-    ticket = self->queue_ticket++;
-
-    CORE_MEMORY_STORE_FENCE();
-
-    core_spinlock_unlock(&self->lock);
+    ticket = core_atomic_increment(&self->enqueue_ticket);
 
 #ifdef CORE_TICKET_LOCK_DEBUG
     printf("Got ticket %d\n", ticket);
 #endif
 
+    if (ticket == self->dequeue_ticket)
+        return 0;
+
     while (ticket != self->dequeue_ticket) {
-        /* spin for the win !!!
+        /*
+         * Spin for the win !!!
          */
+        core_atomic_spin();
     }
 
 #ifdef CORE_TICKET_LOCK_DEBUG
@@ -65,15 +74,24 @@ int core_ticket_spinlock_unlock(struct core_ticket_spinlock *self)
 #endif
 
     /*core_spinlock_lock(&self->lock);*/
-    self->dequeue_ticket++;
+    /*self->dequeue_ticket++;*/
+
+    /*
+     * This could be done with an atomic operation, but at this point
+     * this value is not needed at all.
+     */
+    core_atomic_increment(&self->dequeue_ticket);
+
     /*core_spinlock_unlock(&self->lock);*/
 
     /*
      * Do a memory fence so that the other threads see the change
-     * made to memory.
+     * made to memory. In particular, the new dequeue_ticket must be visible
+     * for other threads.
      */
-
+/*
     CORE_MEMORY_STORE_FENCE();
+    */
 
     return 0;
 }
@@ -85,16 +103,6 @@ int core_ticket_spinlock_unlock(struct core_ticket_spinlock *self)
 int core_ticket_spinlock_trylock(struct core_ticket_spinlock *self)
 {
     return -1;
-}
-
-void core_ticket_spinlock_destroy(struct core_ticket_spinlock *self)
-{
-    self->queue_ticket = -1;
-    self->dequeue_ticket = -1;
-
-    core_spinlock_unlock(&self->lock);
-
-    core_spinlock_destroy(&self->lock);
 }
 
 
