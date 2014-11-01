@@ -1,7 +1,13 @@
 
 #include "ticket_spinlock.h"
 
+#include <core/system/memory.h>
+
 #include <stdio.h>
+
+/*
+#define CORE_TICKET_LOCK_DEBUG
+*/
 
 void core_ticket_spinlock_init(struct core_ticket_spinlock *self)
 {
@@ -23,6 +29,8 @@ int core_ticket_spinlock_lock(struct core_ticket_spinlock *self)
      * remove the taken ticket from the ticket list
      */
     ticket = self->queue_ticket++;
+
+    CORE_MEMORY_STORE_FENCE();
 
     core_spinlock_unlock(&self->lock);
 
@@ -59,6 +67,13 @@ int core_ticket_spinlock_unlock(struct core_ticket_spinlock *self)
     /*core_spinlock_lock(&self->lock);*/
     self->dequeue_ticket++;
     /*core_spinlock_unlock(&self->lock);*/
+
+    /*
+     * Do a memory fence so that the other threads see the change
+     * made to memory.
+     */
+
+    CORE_MEMORY_STORE_FENCE();
 
     return 0;
 }
