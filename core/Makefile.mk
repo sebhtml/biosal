@@ -22,7 +22,9 @@ CORE_OBJECTS += core/helpers/bitmap.o
 
 # system stuff
 CORE_OBJECTS += core/system/spinlock.o
-CORE_OBJECTS += core/system/ticket_spinlock.o
+
+# ticket spinlock is inline
+#CORE_OBJECTS += core/system/ticket_spinlock.o
 
 CORE_OBJECTS += core/system/command.o
 CORE_OBJECTS += core/system/counter.o
