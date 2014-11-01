@@ -1420,7 +1420,8 @@ void thorium_worker_free_message(struct thorium_worker *worker, struct thorium_m
 
             sibling = worker->workers + source_worker;
 
-            injected_in_sibling = thorium_worker_inject_clean_outbound_buffer(sibling, message);
+            injected_in_sibling = thorium_worker_inject_clean_outbound_buffer(sibling,
+                            thorium_message_buffer(message));
         }
 
         /*
