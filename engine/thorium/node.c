@@ -2468,8 +2468,8 @@ static void thorium_node_test_requests(struct thorium_node *node)
     int requests;
     int requests_to_test;
     int i;
-    int maximum;
     /*
+    int maximum;
     int worker;
     */
 
@@ -2486,12 +2486,17 @@ static void thorium_node_test_requests(struct thorium_node *node)
 
     requests_to_test = requests;
 
+    if (requests > 2)
+        requests_to_test = requests / 2;
+
+#if 0
     /*
      * Make sure the amount is within the bounds.
      */
     maximum = 64;
     if (requests_to_test > maximum)
         requests_to_test = maximum;
+#endif
 
     /* Test active buffer requests
      */
