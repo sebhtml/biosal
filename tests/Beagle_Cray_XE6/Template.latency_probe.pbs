@@ -13,6 +13,6 @@ echo "App= __APP__"
 echo "Job= __JOB__"
 echo "Commit= __COMMIT__"
 
-aprun -n 256 -N 1 -d 23 -r 1 __APP__ -threads-per-node 23 -print-load \
+aprun -n 256 -N 1 -d 23 -r 1 __JOB__.__APP__ -threads-per-node 23 -print-load \
               > __JOB__.stdout
 
