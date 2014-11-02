@@ -84,8 +84,10 @@ int thorium_mpi1_request_test(struct thorium_mpi1_request *self)
 
     result = MPI_Get_count(&status, MPI_BYTE, &count);
 
+    /*
+     This assert is invalid, a MPI request can have 0 bytes.
     CORE_DEBUGGER_ASSERT(count >= 0);
-
+    */
     if (result != MPI_SUCCESS) {
         return 0;
     }
