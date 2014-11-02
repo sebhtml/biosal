@@ -27,6 +27,9 @@ __COMMIT__=$(git log | head -n1 | awk '{print $2}')
 
 scripts/Cray_XE6/build-gnu.sh
 
+cd ..
+
+# copy the executable to a build artifact path
 cp biosal/performance/latency_probe/latency_probe $__JOB__.$__APP__
 
 cp biosal/tests/Beagle_Cray_XE6/Template.latency_probe.pbs $__JOB__.pbs

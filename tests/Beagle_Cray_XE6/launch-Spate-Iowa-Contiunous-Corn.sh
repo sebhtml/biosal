@@ -36,10 +36,8 @@ scripts/Cray_XE6/build-gnu.sh
 
 
 cd ..
-if ! test -e spate
-then
-    ln -s biosal/applications/spate_metagenome_assembler/spate
-fi
+
+cp biosal/applications/spate_metagenome_assembler/spate $__JOB__.$__APP__
 
 cp biosal/tests/Beagle_Cray_XE6/Template.pbs $__JOB__.pbs
 
