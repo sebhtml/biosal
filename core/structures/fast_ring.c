@@ -81,7 +81,12 @@ void core_fast_ring_init(struct core_fast_ring *self, int capacity, int cell_siz
 #endif
 
 #ifdef CORE_RING_USE_LOCK_FOR_MULTIPLE_PRODUCERS
+#ifdef CORE_RING_USE_TICKET_SPINLOCK
     core_ticket_spinlock_init(&self->lock);
+#else
+    core_spinlock_init(&self->lock);
+
+#endif
 #endif
 }
 
@@ -102,7 +107,11 @@ void core_fast_ring_destroy(struct core_fast_ring *self)
     self->cells = NULL;
 
 #ifdef CORE_RING_USE_LOCK_FOR_MULTIPLE_PRODUCERS
+#ifdef CORE_RING_USE_TICKET_SPINLOCK
     core_ticket_spinlock_destroy(&self->lock);
+#else
+    core_spinlock_destroy(&self->lock);
+#endif
 #endif
 }
 
@@ -559,9 +568,19 @@ int core_fast_ring_push_multiple_producers(struct core_fast_ring *self, void *el
 #ifdef CORE_RING_USE_LOCK_FOR_MULTIPLE_PRODUCERS
     int value;
 
+#ifdef CORE_RING_USE_TICKET_SPINLOCK
     core_ticket_spinlock_lock(&self->lock);
+#else
+    core_spinlock_lock(&self->lock);
+#endif
+
     value = core_fast_ring_push_from_producer(self, element);
+
+#ifdef CORE_RING_USE_TICKET_SPINLOCK
     core_ticket_spinlock_unlock(&self->lock);
+#else
+    core_spinlock_unlock(&self->lock);
+#endif
 
     return value;
 #else

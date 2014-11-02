@@ -90,7 +90,12 @@ struct core_fast_ring {
     int cell_size;
 
 #ifdef CORE_RING_USE_LOCK_FOR_MULTIPLE_PRODUCERS
+
+#ifdef CORE_RING_USE_TICKET_SPINLOCK
     struct core_ticket_spinlock lock;
+#else
+    struct core_spinlock lock;
+#endif
 #endif
     int use_multiple_producers;
 };
