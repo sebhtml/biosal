@@ -24,4 +24,5 @@ module load udreg/2.3.2-1.0402.7311.2.1.gem
 
 make clean
 make CC=cc -j 4 applications/argonnite_kmer_counter/argonnite CONFIG_FLAGS="-DTHORIUM_DEBUG" \
-        applications/spate_metagenome_assembler/spate
+        applications/spate_metagenome_assembler/spate \
+        performance/latency_probe/latency_probe
