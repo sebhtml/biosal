@@ -30,7 +30,7 @@ scripts/Cray_XE6/build-gnu.sh
 cd ..
 if ! test -e latency_probe
 then
-    ln -s performance/latency_probe/latency_probe
+    ln -s biosal/performance/latency_probe/latency_probe
 fi
 
 cp biosal/tests/Beagle_Cray_XE6/Template.latency_probe.pbs $__JOB__.pbs
