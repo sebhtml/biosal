@@ -226,6 +226,8 @@ struct thorium_worker {
     int counter_injected_outbound_buffers_other_local_workers;
     int counter_injected_inbound_buffers_from_thorium_core;
 #endif
+
+    unsigned int random_seed;
 };
 
 void thorium_worker_init(struct thorium_worker *self, int name, struct thorium_node *node);
@@ -313,5 +315,7 @@ int thorium_worker_enqueue_outbound_message(struct thorium_worker *self,
                 struct thorium_message *message);
 struct core_memory_pool *thorium_worker_get_outbound_message_memory_pool(struct thorium_worker *self);
 void thorium_worker_execute_local_delivery(struct thorium_worker *self, struct thorium_message *message);
+
+int thorium_worker_get_random_number(struct thorium_worker *self);
 
 #endif

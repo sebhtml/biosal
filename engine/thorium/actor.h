@@ -438,4 +438,6 @@ void thorium_actor_synchronize(struct thorium_actor *self, struct core_vector *a
 int thorium_actor_assigned_worker(struct thorium_actor *self);
 void thorium_actor_set_assigned_worker(struct thorium_actor *self, int worker);
 
+int thorium_actor_get_random_number(struct thorium_actor *self);
+
 #endif

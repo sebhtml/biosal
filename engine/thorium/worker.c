@@ -35,6 +35,8 @@
 #include <stdio.h>
 #include <string.h>
 
+#include <unistd.h> /*getpid */
+
 /*#define THORIUM_WORKER_DEBUG
   */
 
@@ -177,6 +179,8 @@ void thorium_worker_init(struct thorium_worker *worker, int name, struct thorium
     /*worker->work_queue = work_queue;*/
     worker->node = node;
     worker->name = name;
+
+    worker->random_seed = name * getpid();
 
     CORE_BITMAP_CLEAR(worker->flags);
     CORE_BITMAP_CLEAR_BIT(worker->flags, FLAG_DEAD);
@@ -2463,4 +2467,9 @@ void thorium_worker_execute_local_delivery(struct thorium_worker *self, struct t
     if (!message_was_pushed)
         core_fast_queue_enqueue(&self->output_outbound_message_queue,
                     message);
+}
+
+int thorium_worker_get_random_number(struct thorium_worker *self)
+{
+    return rand_r(&self->random_seed);
 }

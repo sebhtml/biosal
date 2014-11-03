@@ -275,7 +275,7 @@ static void process_send_ping(struct thorium_actor *self)
 
     concrete_self = thorium_actor_concrete_actor(self);
 
-    target = rand() % core_vector_size(&concrete_self->actors);
+    target = thorium_actor_get_random_number(self) % core_vector_size(&concrete_self->actors);
 
     target = core_vector_at_as_int(&concrete_self->actors, target);
 

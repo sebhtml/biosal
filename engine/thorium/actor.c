@@ -2378,3 +2378,8 @@ int thorium_actor_assigned_worker(struct thorium_actor *self)
 {
     return self->assigned_worker;
 }
+
+int thorium_actor_get_random_number(struct thorium_actor *self)
+{
+    return thorium_worker_get_random_number(self->worker);
+}
