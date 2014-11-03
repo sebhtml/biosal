@@ -31,10 +31,12 @@
  * Private
  */
 
-void core_memory_pool_add_block(struct core_memory_pool *self);
-void core_memory_pool_set_name(struct core_memory_pool *self, int name);
-void *core_memory_pool_allocate_private(struct core_memory_pool *self, size_t size);
-void core_memory_pool_free_private(struct core_memory_pool *self, void *pointer);
+static void core_memory_pool_add_block(struct core_memory_pool *self);
+static void core_memory_pool_set_name(struct core_memory_pool *self, int name);
+static void *core_memory_pool_allocate_private(struct core_memory_pool *self, size_t size);
+static void core_memory_pool_free_private(struct core_memory_pool *self, void *pointer);
+
+static void core_memory_pool_print_allocated_blocks(struct core_memory_pool *self);
 
 void core_memory_pool_init(struct core_memory_pool *self, int block_size, int name)
 {
@@ -43,7 +45,7 @@ void core_memory_pool_init(struct core_memory_pool *self, int block_size, int na
     core_set_init(&self->large_blocks, sizeof(void *));
 
     self->current_block = NULL;
-    self->name = name;
+    core_memory_pool_set_name(self, name);
 
     core_queue_init(&self->dried_blocks, sizeof(struct core_memory_block *));
     core_queue_init(&self->ready_blocks, sizeof(struct core_memory_block *));
@@ -140,6 +142,7 @@ void *core_memory_pool_allocate(struct core_memory_pool *self, size_t size)
         printf("Error: too high %zu\n", size);
     }
 #endif
+
     CORE_DEBUGGER_ASSERT(size >= CORE_MEMORY_MINIMUM);
     CORE_DEBUGGER_ASSERT(size <= CORE_MEMORY_MAXIMUM);
 
@@ -220,12 +223,6 @@ void *core_memory_pool_allocate(struct core_memory_pool *self, size_t size)
 
     pointer = core_memory_pool_allocate_private(self, size);
 
-    if (CORE_BITMAP_GET_BIT(self->flags, FLAG_ENABLE_TRACKING)) {
-            core_map_add_value(&self->allocated_blocks, &pointer, &size);
-    }
-
-    core_memory_pool_profile(self, OPERATION_ALLOCATE, size);
-
     if (pointer == NULL) {
         printf("Error, requested %zu bytes, returned pointer is NULL\n",
                         size);
@@ -235,10 +232,37 @@ void *core_memory_pool_allocate(struct core_memory_pool *self, size_t size)
         exit(1);
     }
 
+    if (CORE_BITMAP_GET_BIT(self->flags, FLAG_ENABLE_TRACKING)) {
+
+#ifdef CORE_DEBUGGER_ENABLE_ASSERT
+        if (core_map_get(&self->allocated_blocks, &pointer) != NULL) {
+            printf("Error, pointer %p is already in use, %zu bytes (on record: %zu bytes)\n",
+                            pointer, size,
+                            *(size_t *)core_map_get(&self->allocated_blocks, &pointer));
+        }
+#endif
+
+        /*
+         * Make sure that it is not allocated already.
+         */
+        CORE_DEBUGGER_ASSERT(core_map_get(&self->allocated_blocks, &pointer) == NULL);
+
+        core_map_add_value(&self->allocated_blocks, &pointer, &size);
+
+        CORE_DEBUGGER_ASSERT(core_map_get(&self->allocated_blocks, &pointer) != NULL);
+    }
+
+    core_memory_pool_profile(self, OPERATION_ALLOCATE, size);
+
+#ifdef DEBUG_MEMORY_POOL_ALLOCATE
+    printf("DEBUG pool_allocate name %d self %p pointer %p size %zu\n",
+                    self->name, (void *)self, pointer, size);
+#endif
+
     return pointer;
 }
 
-void *core_memory_pool_allocate_private(struct core_memory_pool *self, size_t size)
+static void *core_memory_pool_allocate_private(struct core_memory_pool *self, size_t size)
 {
     struct core_queue *queue;
     void *pointer;
@@ -282,6 +306,11 @@ void *core_memory_pool_allocate_private(struct core_memory_pool *self, size_t si
         }
 #endif
 
+#ifdef DEBUG_MEMORY_POOL_ALLOCATE
+        printf("DEBUG pool_allocate_private from recycle_bin size %zu pointer %p\n",
+                        size, pointer);
+#endif
+
         return pointer;
     }
 
@@ -301,12 +330,17 @@ void *core_memory_pool_allocate_private(struct core_memory_pool *self, size_t si
         core_memory_pool_add_block(self);
 
         pointer = core_memory_block_allocate(self->current_block, size);
+
+#ifdef DEBUG_MEMORY_POOL_ALLOCATE
+        printf("DEBUG pool_allocate_private from block size %zu pointer %p\n",
+                        size, pointer);
+#endif
     }
 
     return pointer;
 }
 
-void core_memory_pool_add_block(struct core_memory_pool *self)
+static void core_memory_pool_add_block(struct core_memory_pool *self)
 {
     /* Try to pick a block in the ready block list.
      * Otherwise, create one on-demand today.
@@ -330,7 +364,7 @@ int core_memory_pool_free(struct core_memory_pool *self, void *pointer)
     }
 
 #ifdef DEBUG_MEMORY_POOL_FREE
-    printf("pool_free self= %p pointer= %p\n", (void *)self, pointer);
+    printf("pool_free self= %p name= %d pointer= %p\n", (void *)self, self->name, pointer);
 #endif
 
     size = 0;
@@ -342,11 +376,44 @@ int core_memory_pool_free(struct core_memory_pool *self, void *pointer)
     if (core_map_get_value(&self->allocated_blocks, &pointer, &size)) {
 
         core_memory_pool_free_private(self, pointer);
+/*
+#ifdef CORE_DEBUGGER_ENABLE_ASSERT
+        if (!(self->profile_allocate_calls - self->profile_free_calls) ==
+                                                (int)core_map_size(&self->allocated_blocks)) {
+            printf("Error: balance is incorrect, profile_allocate_calls %d profile_free_calls %d allocated_blocks.size %d\n",
+                self->profile_allocate_calls, self->profile_free_calls,
+                (int)core_map_size(&self->allocated_blocks));
+        }
+#endif
 
+        CORE_DEBUGGER_ASSERT((self->profile_allocate_calls - self->profile_free_calls) ==
+                        (int)core_map_size(&self->allocated_blocks));
+*/
+#ifdef CORE_DEBUGGER_ENABLE_ASSERT_
+        void *before = core_map_get(&self->allocated_blocks, &pointer);
+#endif
         core_map_delete(&self->allocated_blocks, &pointer);
 /*
-        printf("DEBUG_MEMORY_POOL freed %zu bytes\n", size);
+        printf("DEBUG_MEMORY_POOL freed %zu bytes pointer %p\n", size, pointer);
         */
+
+#ifdef CORE_DEBUGGER_ENABLE_ASSERT
+        void *after = core_map_get(&self->allocated_blocks, &pointer);
+
+        if (after != NULL) {
+                /*
+            printf("Error, pointer is still here: %p, deleted bucket %p other bucket %p\n",
+                            pointer, before, after);
+                            */
+
+            core_memory_pool_print_allocated_blocks(self);
+        }
+#endif
+
+        /*
+         * Make sure that it is gone.
+         */
+        CORE_DEBUGGER_ASSERT(core_map_get(&self->allocated_blocks, &pointer) == NULL);
 
         value = 1;
     }
@@ -355,7 +422,7 @@ int core_memory_pool_free(struct core_memory_pool *self, void *pointer)
      * If FLAG_ENABLE_TRACKING is set, verify that the current memory pool
      * manages this pointer.
      */
-#ifdef CORE_DEBUGGER_ENABLE_ASSERT2
+#ifdef CORE_DEBUGGER_ENABLE_ASSERT
     if (CORE_BITMAP_GET_BIT(self->flags, FLAG_ENABLE_TRACKING)) {
         if (!value)
             printf("Error, memory pool (self= %p) 0x%x does not manage buffer %p\n",
@@ -374,7 +441,7 @@ int core_memory_pool_free(struct core_memory_pool *self, void *pointer)
     return value;
 }
 
-void core_memory_pool_free_private(struct core_memory_pool *self, void *pointer)
+static void core_memory_pool_free_private(struct core_memory_pool *self, void *pointer)
 {
     struct core_queue *queue;
     size_t size;
@@ -540,7 +607,7 @@ void core_memory_pool_enable_ephemeral_mode(struct core_memory_pool *self)
     CORE_BITMAP_SET_BIT(self->flags, FLAG_EPHEMERAL);
 }
 
-void core_memory_pool_set_name(struct core_memory_pool *self, int name)
+static void core_memory_pool_set_name(struct core_memory_pool *self, int name)
 {
     self->name = name;
 }
@@ -655,4 +722,27 @@ void core_memory_pool_check_double_free(struct core_memory_pool *self,
 int core_memory_pool_profile_balance_count(struct core_memory_pool *self)
 {
     return self->profile_allocate_calls - self->profile_free_calls;
+}
+
+static void core_memory_pool_print_allocated_blocks(struct core_memory_pool *self)
+{
+        /*
+    void *pointer;
+    size_t size;
+    */
+    struct core_map_iterator iterator;
+
+    core_map_iterator_init(&iterator, &self->allocated_blocks);
+
+#if 0
+    printf("Memory pool self= %p name= %x has %d allocated pointers\n",
+                    (void *)self, self->name,
+                    (int)core_map_size(&self->allocated_blocks));
+
+    while (core_map_iterator_get_next_key_and_value(&iterator, &pointer, &size)) {
+        printf("Pointer= %p Size= %zu\n", pointer, size);
+    }
+#endif
+
+    core_map_iterator_destroy(&iterator);
 }

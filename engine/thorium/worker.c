@@ -1423,7 +1423,7 @@ void thorium_worker_free_message(struct thorium_worker *worker, struct thorium_m
             sibling = worker->workers + source_worker;
 
             /*
-            printf("DEBUG inject\n");
+            printf("DEBUG worker_name %d DEBUG inject\n", worker->name);
             thorium_message_print(message);
             */
 
