@@ -443,7 +443,7 @@ void thorium_worker_send(struct thorium_worker *worker, struct thorium_message *
     int count;
     void *old_buffer;
     int action;
-    int enable_multiplexer;
+    int option_enable_multiplexer;
     struct thorium_message message_copy;
     struct thorium_message *message;
 
@@ -458,7 +458,7 @@ void thorium_worker_send(struct thorium_worker *worker, struct thorium_message *
     message_copy = *message_argument;
     message = &message_copy;
 
-    enable_multiplexer = YES;
+    option_enable_multiplexer = YES;
 
     tracepoint(thorium_message, worker_send, message);
 
@@ -597,7 +597,7 @@ void thorium_worker_send(struct thorium_worker *worker, struct thorium_message *
      *
      * Batching is also called aggregation or multiplexing.
      */
-    if (enable_multiplexer && count <= THORIUM_MULTIPLEXER_BUFFER_SIZE_FOR_SMALL_MESSAGES) {
+    if (option_enable_multiplexer && count <= THORIUM_MULTIPLEXER_BUFFER_SIZE_FOR_SMALL_MESSAGES) {
 
         /*
          * Before enqueuing the outbound message for multiplexing,
@@ -1362,9 +1362,9 @@ void thorium_worker_free_message(struct thorium_worker *worker, struct thorium_m
     void *buffer;
     struct thorium_worker *sibling;
     int injected_in_sibling;
-    int use_fast_path_for_dirty_message_injection;
+    int option_use_fast_path_for_dirty_message_injection;
 
-    use_fast_path_for_dirty_message_injection = YES;
+    option_use_fast_path_for_dirty_message_injection = YES;
 
     CORE_DEBUGGER_ASSERT_NOT_NULL(worker);
     CORE_DEBUGGER_ASSERT_NOT_NULL(message);
@@ -1408,17 +1408,24 @@ void thorium_worker_free_message(struct thorium_worker *worker, struct thorium_m
         /*
          * Verify if the message has a marker.
          */
-        if (use_fast_path_for_dirty_message_injection
+        if (option_use_fast_path_for_dirty_message_injection
                         && source_worker != THORIUM_WORKER_NONE) {
 
             CORE_DEBUGGER_ASSERT(source_worker >= 0);
             CORE_DEBUGGER_ASSERT(source_worker < worker->worker_count);
+
+            CORE_DEBUGGER_ASSERT(thorium_message_type(message) == THORIUM_MESSAGE_TYPE_WORKER_OUTBOUND);
 
             /*
             printf("DEBUG_INJECT_DIRTY injecting message for local worker %d\n", source_worker);
             */
 
             sibling = worker->workers + source_worker;
+
+            /*
+            printf("DEBUG inject\n");
+            thorium_message_print(message);
+            */
 
             injected_in_sibling = thorium_worker_inject_clean_outbound_buffer(sibling,
                             thorium_message_buffer(message));
@@ -2426,9 +2433,9 @@ void thorium_worker_execute_local_delivery(struct thorium_worker *self, struct t
     struct thorium_worker *destination_worker;
     int destination;
     struct thorium_actor *destination_actor;
-    int use_fast_delivery;
+    int option_use_fast_delivery;
 
-    use_fast_delivery = YES;
+    option_use_fast_delivery = YES;
 
     /*
      * If this is a message for a local actor, send it right away
@@ -2438,7 +2445,7 @@ void thorium_worker_execute_local_delivery(struct thorium_worker *self, struct t
     destination_actor = thorium_node_get_actor_from_name(self->node, destination);
     message_was_pushed = 0;
 
-    if (use_fast_delivery && destination_actor != NULL) {
+    if (option_use_fast_delivery && destination_actor != NULL) {
 
         worker_index = thorium_actor_assigned_worker(destination_actor);
 

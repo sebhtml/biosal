@@ -358,7 +358,7 @@ int core_memory_pool_free(struct core_memory_pool *self, void *pointer)
 #ifdef CORE_DEBUGGER_ENABLE_ASSERT2
     if (CORE_BITMAP_GET_BIT(self->flags, FLAG_ENABLE_TRACKING)) {
         if (!value)
-            printf("Error, memory pool (self= %p) 0x%x does not manage %p\n",
+            printf("Error, memory pool (self= %p) 0x%x does not manage buffer %p\n",
                         (void *)self, self->name, pointer);
 
         CORE_DEBUGGER_ASSERT(value);
