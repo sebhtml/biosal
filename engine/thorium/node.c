@@ -1528,6 +1528,7 @@ struct thorium_actor *thorium_node_get_actor_from_name(struct thorium_node *node
 void thorium_node_dispatch_message(struct thorium_node *node, struct thorium_message *message)
 {
     void *buffer;
+    int type;
 
     tracepoint(thorium_node, dispatch_message_enter, node->name, node->tick,
                     thorium_message_destination(message));
@@ -1538,8 +1539,13 @@ void thorium_node_dispatch_message(struct thorium_node *node, struct thorium_mes
          * The buffer must be freed.
          */
         buffer = thorium_message_buffer(message);
+/*
+        thorium_message_print(message);
+        */
 
         if (buffer != NULL) {
+
+            type = thorium_message_type(message);
 
             /*
              * This is a Thorium core buffer since the workers are not authorized to talk to
@@ -1548,7 +1554,11 @@ void thorium_node_dispatch_message(struct thorium_node *node, struct thorium_mes
              * Also, this system buffer needs to be freed now anyway because there is no other
              * place where it will have the change to be freed.
              */
-            core_memory_pool_free(&node->inbound_message_memory_pool, buffer);
+
+            if (type == THORIUM_MESSAGE_TYPE_NODE_OUTBOUND)
+                core_memory_pool_free(&node->outbound_message_memory_pool, buffer);
+            else if (type == THORIUM_MESSAGE_TYPE_NODE_INBOUND)
+                core_memory_pool_free(&node->inbound_message_memory_pool, buffer);
         }
 
         return;
@@ -2630,9 +2640,10 @@ static void thorium_node_recycle_message(struct thorium_node *self, struct thori
      * Otherwise, free the buffer here directly since this is a Thorium core
      * buffer for startup.
      */
-    if (worker_name < 0) {
+    if (worker_name == THORIUM_WORKER_NONE) {
 
         core_memory_pool_free(&self->inbound_message_memory_pool, buffer);
+
 #ifdef THORIUM_NODE_DEBUG_INJECTION
         ++self->counter_freed_injected_node_inbound_buffers;
 #endif

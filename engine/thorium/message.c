@@ -93,15 +93,17 @@ void thorium_message_set_destination(struct thorium_message *self, int destinati
 void thorium_message_print(struct thorium_message *self)
 {
     printf("Message Number %d"
-                    " Action 0x%x Count %d SourceActor %d DestinationActor %d"
-                    " SourceNode %d DestinationNode %d\n",
+                    " Action 0x%x Count %d Buffer %p SourceActor %d DestinationActor %d"
+                    " SourceNode %d DestinationNode %d Type %d\n",
                     self->number,
                     self->action,
                     self->count,
+                    self->buffer,
                     self->source_actor,
                     self->destination_actor,
                     self->source_node,
-                    self->destination_node);
+                    self->destination_node,
+                    self->type);
 
     /*
     core_debugger_examine(self->buffer, self->count);

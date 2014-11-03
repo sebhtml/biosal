@@ -70,7 +70,7 @@ void core_memory_pool_init(struct core_memory_pool *self, int block_size, int na
 void core_memory_pool_destroy(struct core_memory_pool *self);
 
 void *core_memory_pool_allocate(struct core_memory_pool *self, size_t size);
-void core_memory_pool_free(struct core_memory_pool *self, void *pointer);
+int core_memory_pool_free(struct core_memory_pool *self, void *pointer);
 
 void core_memory_pool_enable_tracking(struct core_memory_pool *self);
 void core_memory_pool_disable_tracking(struct core_memory_pool *self);

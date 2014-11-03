@@ -201,7 +201,6 @@ static void process_receive(struct thorium_actor *self, struct thorium_message *
 
             core_timer_init(&concrete_self->timer);
             core_timer_start(&concrete_self->timer);
-
         }
     } else if (action == ACTION_NOTIFY) {
 

@@ -317,30 +317,50 @@ void core_memory_pool_add_block(struct core_memory_pool *self)
     }
 }
 
-void core_memory_pool_free(struct core_memory_pool *self, void *pointer)
+int core_memory_pool_free(struct core_memory_pool *self, void *pointer)
 {
     size_t size;
+    int value;
 
     CORE_DEBUGGER_ASSERT(pointer != NULL);
 
     if (self == NULL) {
         core_memory_free(pointer, MEMORY_MEMORY_POOL);
-        return;
+        return 1;
     }
 
     size = 0;
-
-    core_memory_pool_free_private(self, pointer);
-
-    if (core_map_get_value(&self->allocated_blocks, &pointer, &size)) {
-
-        core_map_delete(&self->allocated_blocks, &pointer);
-    }
+    value = 0;
 
     /*
      * find out the actual size.
      */
+    if (core_map_get_value(&self->allocated_blocks, &pointer, &size)) {
+
+        core_memory_pool_free_private(self, pointer);
+
+        core_map_delete(&self->allocated_blocks, &pointer);
+/*
+        printf("DEBUG_MEMORY_POOL freed %zu bytes\n", size);
+        */
+
+        value = 1;
+    }
+
+#ifdef CORE_DEBUGGER_ENABLE_ASSERT2
+    if (!value)
+        printf("Error, memory pool 0x%x does not manage %p\n",
+                        self->name, pointer);
+
+    CORE_DEBUGGER_ASSERT(value);
+#endif
+
+    /*
+     * TODO: profile it only if it is found.
+     */
     core_memory_pool_profile(self, OPERATION_FREE, size);
+
+    return value;
 }
 
 void core_memory_pool_free_private(struct core_memory_pool *self, void *pointer)
