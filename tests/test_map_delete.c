@@ -23,10 +23,22 @@ int main(int argc, char **argv)
     for (i = 0; i < element_count; ++i) {
 
         TEST_POINTER_EQUALS(core_map_get(&container, &i), NULL);
-
         core_map_add(&container, &i);
-
         TEST_POINTER_NOT_EQUALS(core_map_get(&container, &i), NULL);
+
+        /*
+         * Delete something once in a while
+         */
+        if (i % 2 == 0) {
+
+            TEST_POINTER_NOT_EQUALS(core_map_get(&container, &i), NULL);
+            core_map_delete(&container, &i);
+            TEST_POINTER_EQUALS(core_map_get(&container, &i), NULL);
+
+            TEST_POINTER_EQUALS(core_map_get(&container, &i), NULL);
+            core_map_add(&container, &i);
+            TEST_POINTER_NOT_EQUALS(core_map_get(&container, &i), NULL);
+        }
     }
 
     core_map_destroy(&container);
