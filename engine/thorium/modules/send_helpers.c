@@ -194,6 +194,9 @@ void thorium_actor_send_range_default(struct thorium_actor *actor, struct core_v
     ephemeral_memory = thorium_actor_get_ephemeral_memory(actor);
     core_vector_init(&destinations, sizeof(int));
     core_vector_set_memory_pool(&destinations, ephemeral_memory);
+
+    CORE_DEBUGGER_ASSERT(core_vector_empty(&destinations));
+
     core_vector_copy_range(actors, first, last, &destinations);
 
     /*

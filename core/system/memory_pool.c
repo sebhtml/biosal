@@ -329,6 +329,10 @@ int core_memory_pool_free(struct core_memory_pool *self, void *pointer)
         return 1;
     }
 
+#ifdef DEBUG_MEMORY_POOL_FREE
+    printf("pool_free self= %p pointer= %p\n", (void *)self, pointer);
+#endif
+
     size = 0;
     value = 0;
 
@@ -347,16 +351,23 @@ int core_memory_pool_free(struct core_memory_pool *self, void *pointer)
         value = 1;
     }
 
+    /*
+     * If FLAG_ENABLE_TRACKING is set, verify that the current memory pool
+     * manages this pointer.
+     */
 #ifdef CORE_DEBUGGER_ENABLE_ASSERT2
-    if (!value)
-        printf("Error, memory pool 0x%x does not manage %p\n",
-                        self->name, pointer);
+    if (CORE_BITMAP_GET_BIT(self->flags, FLAG_ENABLE_TRACKING)) {
+        if (!value)
+            printf("Error, memory pool (self= %p) 0x%x does not manage %p\n",
+                        (void *)self, self->name, pointer);
 
-    CORE_DEBUGGER_ASSERT(value);
+        CORE_DEBUGGER_ASSERT(value);
+    }
 #endif
 
     /*
-     * TODO: profile it only if it is found.
+     * Profile the call. This is done even when FLAG_ENABLE_TRACKING
+     * is not set.
      */
     core_memory_pool_profile(self, OPERATION_FREE, size);
 

@@ -179,6 +179,12 @@ void core_vector_reserve(struct core_vector *self, int64_t size)
 #endif
 
     new_data = core_memory_pool_allocate(self->memory, new_byte_count);
+
+#ifdef CORE_VECTOR_DEBUG
+    printf("DEBUG vector_reserve (pool_allocate) old_data %p old_capacity %d new_data %p new_capacity %d pool %p\n",
+                    self->data, (int)self->maximum_size, new_data, (int)size, (void *)self->memory);
+#endif
+
     ++self->profile_allocate_calls;
 
 #ifdef CORE_VECTOR_DEBUG
@@ -191,6 +197,13 @@ void core_vector_reserve(struct core_vector *self, int64_t size)
      */
     if (self->size > 0) {
         core_memory_copy(new_data, self->data, old_byte_count);
+
+#ifdef CORE_VECTOR_DEBUG
+        printf("DEBUG vector_reserve data %p size %d maximum_size %d new_maximum_size %d pool %p\n",
+                        self->data, (int)self->size, (int)self->maximum_size,
+                        (int)size, (void *)self->memory);
+#endif
+
         core_memory_pool_free(self->memory, self->data);
         ++self->profile_free_calls;
 
