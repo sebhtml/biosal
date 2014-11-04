@@ -361,8 +361,6 @@ int thorium_mpi1_pt2pt_nonblocking_transport_receive(struct thorium_transport *s
     int tag;
     int size;
     int request_tag;
-    int request_count;
-    int has_request;
 
     concrete_self = thorium_transport_get_concrete_transport(self);
 
@@ -408,52 +406,32 @@ int thorium_mpi1_pt2pt_nonblocking_transport_receive(struct thorium_transport *s
 #endif
     }
 
-    request_count = THORIUM_TRANSPORT_MAXIMUM_RECEIVED_MESSAGE_REQUEST_COUNT_PER_CALL;
-    has_request = 0;
 
     /*
-    printf("DEBUG MPI TRANSPORT small_request_count %d big_request_count %d\n",
-                    concrete_self->small_request_count,
-                    concrete_self->big_request_count);
-                    */
-
-    while (request_count) {
-        /*
-         * Dequeue a request and check if it is ready.
-         */
-        if (!core_fast_queue_dequeue(&concrete_self->receive_requests, &request)) {
-
-            /*
-             * There is nothing in the queue.
-             */
-            break;
-        }
+     * Dequeue a request and check if it is ready.
+     */
+    if (!core_fast_queue_dequeue(&concrete_self->receive_requests, &request)) {
 
         /*
-         * Test the receive request now.
+         * There is nothing in the queue.
          */
-
-        if (!thorium_mpi1_request_test(&request)) {
-
-            /*
-             * Put it back in the queue now.
-             */
-
-            core_fast_queue_enqueue(&concrete_self->receive_requests, &request);
-
-            /*
-             * Test another request.
-             */
-            --request_count;
-            continue;
-        } else {
-            has_request = 1;
-            break;
-        }
+        return 0;
     }
 
-    if (!has_request)
+    /*
+     * Test the receive request now.
+     */
+
+    if (!thorium_mpi1_request_test(&request)) {
+
+        /*
+         * Put it back in the queue now.
+         */
+
+        core_fast_queue_enqueue(&concrete_self->receive_requests, &request);
+
         return 0;
+    }
 
     /*
      * At this point, we have a request.

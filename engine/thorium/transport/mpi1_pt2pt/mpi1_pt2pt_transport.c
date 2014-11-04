@@ -26,7 +26,6 @@ int thorium_mpi1_pt2pt_transport_receive(struct thorium_transport *self, struct 
 
 int thorium_mpi1_pt2pt_transport_test(struct thorium_transport *self, struct thorium_worker_buffer *worker_buffer);
 
-
 struct thorium_transport_interface thorium_mpi1_pt2pt_transport_implementation = {
     .name = "mpi1_pt2pt_transport",
     .size = sizeof(struct thorium_mpi1_pt2pt_transport),
