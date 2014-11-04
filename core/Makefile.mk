@@ -20,23 +20,7 @@ CORE_OBJECTS += core/helpers/pair.o
 CORE_OBJECTS += core/helpers/statistics.o
 CORE_OBJECTS += core/helpers/bitmap.o
 
-# system stuff
-CORE_OBJECTS += core/system/spinlock.o
-
-# ticket spinlock
-CORE_OBJECTS += core/system/ticket_spinlock.o
-
-CORE_OBJECTS += core/system/command.o
-CORE_OBJECTS += core/system/counter.o
-CORE_OBJECTS += core/system/debugger.o
-CORE_OBJECTS += core/system/packer.o
-CORE_OBJECTS += core/system/memory.o
-CORE_OBJECTS += core/system/timer.o
-CORE_OBJECTS += core/system/tracer.o
-CORE_OBJECTS += core/system/memory_pool.o
-CORE_OBJECTS += core/system/memory_block.o
-CORE_OBJECTS += core/system/atomic.o
-CORE_OBJECTS += core/system/thread.o
+include core/system/Makefile.mk
 
 include core/file_storage/Makefile.mk
 

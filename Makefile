@@ -1,6 +1,6 @@
 CC=mpicc
 CFLAGS=-O3 -g -I.
-LDFLAGS=-lm -lpthread -lrt
+LDFLAGS=-lm -lpthread
 LD=$(CC)
 
 # conditional flags

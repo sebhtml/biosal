@@ -18,6 +18,9 @@
 #include <mach/mach.h>
 #endif
 
+#ifndef CONFIG_CLOCK_GETTIME
+#define CORE_DISABLE_CLOCK_GETTIME
+#endif
 
 /*
  * clock_gettime is defective on IBM Blue Gene/Q according
