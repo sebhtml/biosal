@@ -512,22 +512,10 @@ int thorium_mpi1_pt2pt_nonblocking_transport_test(struct thorium_transport *self
     void *buffer;
     int worker;
     int marked;
-    int i;
-    int size;
-    int count;
-
-    i = 0;
-    count = THORIUM_TRANSPORT_MAXIMUM_SENT_MESSAGE_REQUEST_COUNT_PER_CALL;
 
     concrete_self = thorium_transport_get_concrete_transport(self);
 
-    size = core_fast_queue_size(&concrete_self->send_requests);
-
-    if (size < count)
-        count = size;
-
-    while (i++ < count
-           && core_fast_queue_dequeue(&concrete_self->send_requests, &active_request)) {
+    if (core_fast_queue_dequeue(&concrete_self->send_requests, &active_request)) {
 
         if (thorium_mpi1_request_test(&active_request)) {
 
