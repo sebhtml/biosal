@@ -32,12 +32,6 @@ THORIUM_OBJECTS += engine/thorium/scheduler/cfs_scheduler.o
 THORIUM_OBJECTS += engine/thorium/scheduler/fifo_scheduler.o
 THORIUM_OBJECTS += engine/thorium/scheduler/priority_assigner.o
 
-# transport system
-THORIUM_OBJECTS += engine/thorium/transport/transport.o
-THORIUM_OBJECTS += engine/thorium/transport/message_multiplexer.o
-THORIUM_OBJECTS += engine/thorium/transport/multiplexer_policy.o
-THORIUM_OBJECTS += engine/thorium/transport/transport_profiler.o
-
-include engine/thorium/transport/*/Makefile.mk
+include engine/thorium/transport/Makefile.mk
 
 LIBRARY_OBJECTS += $(THORIUM_OBJECTS)
