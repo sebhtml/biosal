@@ -5,8 +5,6 @@
 #include <engine/thorium/transport/transport_interface.h>
 #include <core/structures/fast_queue.h>
 
-#define THORIUM_TRANSPORT_USE_MPI1_PT2PT_NONBLOCKING
-
 #include <mpi.h>
 
 struct thorium_node;
