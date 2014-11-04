@@ -21,8 +21,4 @@ TRACEPOINTS_OBJECTS-$(THORIUM_USE_LTTNG) += performance/tracepoints/lttng/worker
 
 LIBRARY_OBJECTS += $(TRACEPOINTS_OBJECTS-y)
 
-#%.c: %.tp
-#	$(Q)$(ECHO) "  GEN $@"
-#	$(Q)$(LTTNG_GEN_TP) $(CFLAGS) $(CONFIG_FLAGS) -c $< -o $@
-
 

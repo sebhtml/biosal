@@ -1,8 +1,11 @@
 CC=mpicc
 CFLAGS=-O3 -g -I.
-CONFIG_FLAGS=
-LDFLAGS=-lm -lz
+LDFLAGS=-lm
 LD=$(CC)
+
+# conditional flags
+CONFIG_FLAGS=
+CONFIG_LDFLAGS=
 
 # Run in quiet mode
 Q=@
