@@ -7,6 +7,8 @@
 #define SCRIPT_LATENCY_PROCESS 0xb4a99051
 
 /*
+ * A ping-pong actor for testing and debugging
+ * Thorium and hardware platforms.
  */
 struct process {
     struct core_timer timer;
@@ -19,6 +21,8 @@ struct process {
     int completed;
 
     int leader;
+
+    int event_count;
 };
 
 extern struct thorium_script process_script;

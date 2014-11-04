@@ -3,20 +3,16 @@
 
 #include <core/helpers/statistics.h>
 #include <core/system/timer.h>
+#include <core/system/command.h>
 
 #include <stdio.h>
 #include <inttypes.h>
 #include <stdint.h>
 
+#define OPTION_EVENT_COUNT "-ping-event-count-per-worker"
 #define EVENT_COUNT 40000
 #define ACTORS_PER_WORKER 100
 #define PERIOD 2000
-
-/*
-#define EVENT_COUNT 1
-#define ACTORS_PER_WORKER 1
-#define PERIOD 5
-*/
 
 static void process_init(struct thorium_actor *self);
 static void process_destroy(struct thorium_actor *self);
@@ -36,6 +32,8 @@ struct thorium_script process_script = {
 static void process_init(struct thorium_actor *self)
 {
     struct process *concrete_self;
+    int argc;
+    char **argv;
 
     concrete_self = thorium_actor_concrete_actor(self);
     core_vector_init(&concrete_self->actors, sizeof(int));
@@ -44,6 +42,15 @@ static void process_init(struct thorium_actor *self)
 
     concrete_self->message_count = 0;
     concrete_self->completed = 0;
+
+    argc = thorium_actor_argc(self);
+    argv = thorium_actor_argv(self);
+
+    concrete_self->event_count = EVENT_COUNT;
+
+    if (core_command_has_argument(argc, argv, OPTION_EVENT_COUNT)) {
+        concrete_self->event_count = core_command_get_argument_value_int(argc, argv, OPTION_EVENT_COUNT);
+    }
 }
 
 static void process_destroy(struct thorium_actor *self)
@@ -147,7 +154,12 @@ static void process_receive(struct thorium_actor *self, struct thorium_message *
             elapsed_time = core_timer_get_elapsed_nanoseconds(&concrete_self->timer);
 
             total = core_vector_size(&concrete_self->actors);
-            total *= EVENT_COUNT;
+            total *= concrete_self->event_count;
+
+            /*
+             * Count ACTION_PING and ACTION_PING_REPLY
+             */
+            total *= 2;
             elapsed_seconds = ((elapsed_time + 0.0) / ( 1000 * 1000 * 1000));
 
             nodes = thorium_actor_get_node_count(self);
@@ -160,12 +172,19 @@ static void process_receive(struct thorium_actor *self, struct thorium_message *
             worker_throughput = rate / workers;
             actor_throughput = rate / number_of_actors;
 
+            printf("PERFORMANCE_COUNTER type = ping-pong\n");
+            printf("PERFORMANCE_COUNTER ping-action = ACTION_PING\n");
+            printf("PERFORMANCE_COUNTER pong-action = ACTION_PING_REPLY\n");
             printf("PERFORMANCE_COUNTER node-count = %d\n", nodes);
             printf("PERFORMANCE_COUNTER worker-count-per-node = %d\n", workers_per_node);
             printf("PERFORMANCE_COUNTER actor-count-per-worker = %d\n", actors_per_worker);
             printf("PERFORMANCE_COUNTER worker-count = %d\n", workers);
             printf("PERFORMANCE_COUNTER actor-count = %d\n", number_of_actors);
-            printf("PERFORMANCE_COUNTER message-count-per-actor = %d\n", EVENT_COUNT);
+            printf("PERFORMANCE_COUNTER ping-message-count-per-actor = %d\n", EVENT_COUNT);
+            printf("PERFORMANCE_COUNTER ping-message-count = %" PRIu64 "\n",
+                            total / 2);
+            printf("PERFORMANCE_COUNTER pong-message-count = %" PRIu64 "\n",
+                            total / 2);
             printf("PERFORMANCE_COUNTER message-count = %" PRIu64 "\n",
                             total);
             printf("PERFORMANCE_COUNTER elapsed-time = %f s\n", elapsed_seconds);
