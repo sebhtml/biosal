@@ -603,6 +603,4 @@ void thorium_message_multiplexer_set_worker(struct thorium_message_multiplexer *
                         self->buffer_size_in_bytes, self->timeout_in_nanoseconds);
         }
     }
-
-
 }
