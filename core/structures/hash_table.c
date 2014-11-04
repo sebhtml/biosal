@@ -486,6 +486,30 @@ void core_hash_table_set_memory_pool(struct core_hash_table *table, struct core_
 
 void core_hash_table_disable_deletion_support(struct core_hash_table *table)
 {
+    /*
+     * Is no deletion can occur, then any key is always either in core_hash_table "current"
+     * or in core_hash_table "next" or both. When it is in both, it means that the copy in "next"
+     * is the primary copy and the other has no importance and will be garbage-collected anyway.
+     *
+     * Proof:
+     *
+     * Let x be a key and t be a core_map.
+     *
+     * t is currently resizing (each call to add / get / delete move 2 items from
+     * "current" to "next").
+     *
+     * 1. key x is in core_hash_table "current"
+     * 2. key x is moved from "current" to "next"
+     * 3. key x is deleted from t ("next").
+     * 4. key "x" is still in "current" and can be obtained with get().
+     *
+     * This situation can only arise if delete() is supported. Hence, core_dynamic_hash_table_resize()
+     * must call core_hash_table_delete when moving data from "current" to "next" in the case
+     * that the core_map (and core_dynamic_hash_table) supports deletion operations.
+     *
+     * Otherwise, this is fine.
+     */
+
     CORE_BITMAP_CLEAR_BIT(table->flags, CORE_HASH_TABLE_FLAG_DELETION_SUPPORT);
 
     table->get_state = core_hash_table_group_state_no_deletion;

@@ -72,6 +72,8 @@ void core_map_delete(struct core_map *self, void *key)
 #endif
 
     core_dynamic_hash_table_delete(&self->table, key);
+
+    CORE_DEBUGGER_ASSERT(core_map_get(self, key) == NULL);
 }
 
 uint64_t core_map_size(struct core_map *self)

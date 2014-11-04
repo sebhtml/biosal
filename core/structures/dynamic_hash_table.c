@@ -3,6 +3,7 @@
 
 #include <core/system/tracer.h>
 #include <core/system/memory.h>
+#include <core/system/debugger.h>
 
 #include <string.h>
 #include <stdlib.h>
@@ -184,6 +185,9 @@ void core_dynamic_hash_table_delete(struct core_dynamic_hash_table *self, void *
 
     if (!self->resize_in_progress) {
         core_hash_table_delete(self->current, key);
+
+        CORE_DEBUGGER_ASSERT(core_dynamic_hash_table_get(self, key) == NULL);
+
         return;
     }
 
@@ -192,6 +196,9 @@ void core_dynamic_hash_table_delete(struct core_dynamic_hash_table *self, void *
     if (core_dynamic_hash_table_resize(self)) {
 
         core_hash_table_delete(self->current, key);
+
+        CORE_DEBUGGER_ASSERT(core_dynamic_hash_table_get(self, key) == NULL);
+
         return;
     }
 
@@ -200,11 +207,17 @@ void core_dynamic_hash_table_delete(struct core_dynamic_hash_table *self, void *
      */
     bucket = core_hash_table_get(self->next, key);
     if (bucket != NULL) {
+
         core_hash_table_delete(self->next, key);
+
+        CORE_DEBUGGER_ASSERT(core_dynamic_hash_table_get(self, key) == NULL);
+
         return;
     }
 
     core_hash_table_delete(self->current, key);
+
+    CORE_DEBUGGER_ASSERT(core_dynamic_hash_table_get(self, key) == NULL);
 }
 
 uint64_t core_dynamic_hash_table_size(struct core_dynamic_hash_table *self)
@@ -329,7 +342,10 @@ static int core_dynamic_hash_table_resize(struct core_dynamic_hash_table *self)
         } else {
             core_hash_table_iterator_next(&self->iterator, &key, &value);
 
-            /* Only copy the value if it is not already there.
+            /*
+             * Only copy the value if it is not already there.
+             *
+             * Thinking about it, the key can not be already there.
              */
             if (core_hash_table_get(self->next, key) == NULL) {
                 new_value = core_hash_table_add(self->next, key);
@@ -347,10 +363,16 @@ static int core_dynamic_hash_table_resize(struct core_dynamic_hash_table *self)
         }
 
         /* Remove the old copy from current.
-         * This is not required in this algorithm,
+         * This is not required in this algorithm.
          * regardless if deletion support is enabled.
+         *
+         * Update 2014-11-03: This is actually required if deletion support
+         * is enabled.
+         * Otherwise,
+         * _get() will fall back on self->current and will return keys that don't exist.
+         *
          */
-#if 0
+#if 1
         core_hash_table_delete(self->current, key);
 #endif
     }
