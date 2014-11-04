@@ -1,12 +1,9 @@
 
-#ifndef THORIUM_MPI1_P2P_TRANSPORT_H
-#define THORIUM_MPI1_P2P_TRANSPORT_H
+#ifndef THORIUM_MPI1_PT2PT_TRANSPORT_H
+#define THORIUM_MPI1_PT2PT_TRANSPORT_H
 
 #include <engine/thorium/transport/transport_interface.h>
 #include <core/structures/fast_queue.h>
-
-#define THORIUM_TRANSPORT_USE_MPI1_P2P
-#define THORIUM_TRANSPORT_MPI1_P2P_IDENTIFIER 10
 
 #include <mpi.h>
 

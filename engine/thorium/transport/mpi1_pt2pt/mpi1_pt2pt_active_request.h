@@ -8,7 +8,7 @@
  * An MPI active request.
  */
 struct thorium_mpi1_pt2pt_active_request {
-#ifdef THORIUM_TRANSPORT_USE_MPI1_P2P
+#ifdef CONFIG_MPI
     void *buffer;
     MPI_Request request;
     int worker;
