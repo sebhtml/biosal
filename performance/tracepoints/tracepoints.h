@@ -8,7 +8,7 @@
  * Use LTTng tracepoints
  */
 /*
-#define THORIUM_USE_LTTNG
+#define CONFIG_LTTNG
 */
 
 /*
@@ -20,7 +20,7 @@
 #define THORIUM_USE_CUSTOM_TRACEPOINTS
 */
 
-#ifdef THORIUM_USE_LTTNG
+#ifdef CONFIG_LTTNG
 #include "lttng/message.h"
 #include "lttng/binomial_tree.h"
 #include "lttng/transport.h"
@@ -66,7 +66,7 @@
 #define THORIUM_TRACEPOINT_NAME(provider_name, event_name) \
         thorium_tracepoint_##provider_name##_##event_name
 
-#ifdef THORIUM_USE_LTTNG
+#ifdef CONFIG_LTTNG
 
 /*
 #define thorium_tracepoint tracepoint
