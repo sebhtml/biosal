@@ -11,4 +11,4 @@ export INTEL_LICENSE_FILE=28518@ftsn2
 source /soft/compilers/intel/composer_xe_2013_sp1.1.106/bin/compilervars.sh
 
 make clean
-make -j CFLAGS="-mmic -O3 -I." CC=icc
+make -j CFLAGS="-mmic -O3 -I." CC=icc CONFIG_MPI=n CONFIG_ZLIB=n
