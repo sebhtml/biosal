@@ -35,6 +35,8 @@ make tests # run tests
 make examples # run examples
 ```
 
+- To disable zlib support: "make CONFIG_ZLIB=n"
+
 see [examples](examples) and [tests](tests)
 
 # Branches

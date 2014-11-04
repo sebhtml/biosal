@@ -2,7 +2,10 @@
 #include "buffered_reader.h"
 
 #include "raw_buffered_reader.h"
+
+#ifdef CONFIG_ZLIB
 #include "gzip_buffered_reader.h"
+#endif
 
 #include <core/system/memory.h>
 #include <core/system/debugger.h>
@@ -73,13 +76,15 @@ void *core_buffered_reader_get_concrete_self(struct core_buffered_reader *self)
 
 void core_buffered_reader_select(struct core_buffered_reader *self, const char *file)
 {
+#ifdef CONFIG_ZLIB
     if (core_gzip_buffered_reader_implementation.detect(self, file)) {
 
         self->interface = &core_gzip_buffered_reader_implementation;
-    } else {
-
-        self->interface = &core_raw_buffered_reader_implementation;
+        return;
     }
+#endif
+
+    self->interface = &core_raw_buffered_reader_implementation;
 }
 
 uint64_t core_buffered_reader_get_offset(struct core_buffered_reader *self)
