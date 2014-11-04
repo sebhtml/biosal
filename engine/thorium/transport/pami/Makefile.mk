@@ -1,4 +1,6 @@
 
+CONFIG_PAMI=n
+
 # Define the macro for the compiler
 CONFIG_PAMI-$(CONFIG_PAMI)=-DCONFIG_PAMI
 MACRO_PAMI_CONFIG=$(CONFIG_PAMI-y)
