@@ -1,10 +1,10 @@
 CC=mpicc
-CFLAGS=-O3 -g -I.
+CFLAGS=-O3 -g
 LDFLAGS=-lm -lpthread
 LD=$(CC)
 
 # conditional flags
-CONFIG_CFLAGS=
+CONFIG_CFLAGS=-I.
 CONFIG_LDFLAGS=
 
 # pick up debug mode option
