@@ -1,3 +1,6 @@
+To use LTTng to trace Thorium applications, the compilation
+option "CONFIG_LTTNG" is required.
+
 Here is a list of LTTng tracepoints for the delivery path of
 messages.
 
