@@ -548,7 +548,11 @@ void thorium_node_init(struct thorium_node *node, int *argc, char ***argv)
 
     if (node->name == 0) {
         printf("thorium_node: sizeof(struct thorium_actor) -> %d\n", (int)sizeof(struct thorium_actor));
-        printf("thorium_message: sizeof(struct thorium_message) -> %d\n", (int)sizeof(struct thorium_message));
+        printf("thorium_node: sizeof(struct thorium_message) -> %d\n", (int)sizeof(struct thorium_message));
+
+#ifdef THORIUM_DEBUG
+        printf("thorium_node: THORIUM_DEBUG= yes\n");
+#endif
     }
 }
 
