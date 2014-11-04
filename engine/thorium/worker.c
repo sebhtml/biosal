@@ -866,6 +866,12 @@ int thorium_worker_dequeue_actor(struct thorium_worker *worker, struct thorium_a
          */
         if (action == ACTION_MULTIPLEXER_MESSAGE) {
             thorium_message_multiplexer_demultiplex(&worker->multiplexer, &message);
+
+            /*
+             * The message must be recycled to avoid leaking memory.
+             */
+            thorium_worker_free_message(worker, &message);
+
             continue;
         }
 
