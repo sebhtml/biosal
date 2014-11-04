@@ -35,11 +35,8 @@ make tests # run tests
 make examples # run examples
 ```
 
-- To disable zlib support: "make CONFIG_ZLIB=n"
-- To disable MPI transport support: "make CONFIG_MPI=n" (mock_transport will be used)
-- To turn on assertions: "make CONFIG_DEBUG=y"
-
-see [examples](examples) and [tests](tests)
+- see [API](Documentation/Compilation_Options.md)
+- see [examples](examples) and [tests](tests)
 
 # Branches
 
