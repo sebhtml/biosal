@@ -103,7 +103,9 @@ static void process_receive(struct thorium_actor *self, struct thorium_message *
 
         thorium_message_unpack_int(message, 0, &worker_count);
 
+        /*
         printf("worker_count %d\n", worker_count);
+        */
         actors_per_worker = ACTORS_PER_WORKER;
         concrete_self->size = worker_count * actors_per_worker;
 
