@@ -16,6 +16,14 @@
 #include "mpi1_pt2pt_nonblocking/mpi1_pt2pt_nonblocking_transport.h"
 #endif
 
+/*
+ * The mock transport does nothing. It is required however when
+ * no other transport implementation is available.
+ *
+ * The only thing it does is set the rank (to 0) and size (to 1).
+ */
+#include "mock/mock_transport.h"
+
 #include <core/system/command.h>
 #include <core/helpers/bitmap.h>
 
@@ -293,6 +301,13 @@ void thorium_transport_select_implementation(struct thorium_transport *self, int
     component = &thorium_gni_transport_implementation;
     core_vector_push_back(&implementations, &component);
 #endif
+
+    /*
+     * Add the mock transport at the end so that it acts as a
+     * fall-back implementation when nothing else is available.
+     */
+    component = &thorium_mock_transport_implementation;
+    core_vector_push_back(&implementations, &component);
 
     requested_implementation_name = core_command_get_argument_value(argc, argv, "-transport");
 
