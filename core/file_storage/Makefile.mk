@@ -16,7 +16,7 @@ CORE_OBJECTS-y += core/file_storage/file.o
 
 CORE_OBJECTS-$(CONFIG_ZLIB) += core/file_storage/input/gzip_buffered_reader.o
 
-CONFIG_FLAGS += $(ZLIB_FLAGS-y)
+CONFIG_CFLAGS += $(ZLIB_FLAGS-y)
 CONFIG_LDFLAGS += $(ZLIB_LDFLAGS-y)
 
 CORE_OBJECTS += $(CORE_OBJECTS-y)

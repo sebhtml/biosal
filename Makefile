@@ -4,7 +4,7 @@ LDFLAGS=-lm
 LD=$(CC)
 
 # conditional flags
-CONFIG_FLAGS=
+CONFIG_CFLAGS=
 CONFIG_LDFLAGS=
 
 # Run in quiet mode
@@ -36,9 +36,9 @@ include applications/Makefile.mk
 
 # generic build rule
 %.o: %.c
-#$(Q)$(ECHO) " CFLAGS= $(CFLAGS) $(CONFIG_FLAGS)"
+#$(Q)$(ECHO) " CFLAGS= $(CFLAGS) $(CONFIG_CFLAGS)"
 	$(Q)$(ECHO) "  CC $@"
-	$(Q)$(CC) $(CFLAGS) $(CONFIG_FLAGS) -c $< -o $@
+	$(Q)$(CC) $(CFLAGS) $(CONFIG_CFLAGS) -c $< -o $@
 
 all: $(TEST_EXECUTABLES) $(EXAMPLE_EXECUTABLES) $(APPLICATION_EXECUTABLES)
 
