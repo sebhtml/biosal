@@ -10,8 +10,7 @@ done
 #-std=c99
 #
 CFLAGS=" -O3 -march=x86-64 -g -I."
-CFLAGS+=" -D CONFIG_LTTNG"
-LDFLAGS=" -llttng-ust -ldl -lm -lz"
+
 clear
 echo "CFLAGS: $CFLAGS"
 
