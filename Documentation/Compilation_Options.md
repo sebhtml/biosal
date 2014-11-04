@@ -4,7 +4,7 @@ Some compilation options are activated with ifdef statements.
 Other option can be changed at compile time.
 
 | Option | Possible values | Default value | Description | Notes |
-| --- |
+| --- | --- | --- | --- | --- |
 | CC | anything (icc, mpicc, gcc, cc, craycc, and so on) | mpicc | C compiler (C 1999) | |
 | CFLAGS |  | -O3 -g | Compilation flags | |
 | LDFLAGS |  | -lm -lpthread | Linking options | |
