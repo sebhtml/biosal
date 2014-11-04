@@ -35,7 +35,7 @@ make tests # run tests
 make examples # run examples
 ```
 
-- see [API](Documentation/Compilation_Options.md)
+- see [compilation options](Documentation/Compilation_Options.md)
 - see [examples](examples) and [tests](tests)
 
 # Branches
