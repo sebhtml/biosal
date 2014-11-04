@@ -5,7 +5,14 @@
 #include <engine/thorium/transport/transport_interface.h>
 
 /*
- * MPI 1 point-to-point transport layer.
+ * The mock transport only do one thing: it sets the rank to 0
+ * and it sets the size to 1.
+ *
+ * It always fail when sending messages.
+ *
+ * This is a fallback mechanism so that the thorium_node can still
+ * rely on the transport subsystem to obtain specific information
+ * (rank and size).
  */
 struct thorium_mock_transport {
     int foo;
