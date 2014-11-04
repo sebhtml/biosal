@@ -36,7 +36,7 @@ static void core_memory_pool_set_name(struct core_memory_pool *self, int name);
 static void *core_memory_pool_allocate_private(struct core_memory_pool *self, size_t size);
 static void core_memory_pool_free_private(struct core_memory_pool *self, void *pointer);
 
-static void core_memory_pool_print_allocated_blocks(struct core_memory_pool *self);
+void core_memory_pool_print_allocated_blocks(struct core_memory_pool *self);
 
 void core_memory_pool_init(struct core_memory_pool *self, int block_size, int name)
 {
@@ -724,7 +724,7 @@ int core_memory_pool_profile_balance_count(struct core_memory_pool *self)
     return self->profile_allocate_calls - self->profile_free_calls;
 }
 
-static void core_memory_pool_print_allocated_blocks(struct core_memory_pool *self)
+void core_memory_pool_print_allocated_blocks(struct core_memory_pool *self)
 {
         /*
     void *pointer;

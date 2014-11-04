@@ -7,6 +7,10 @@ LD=$(CC)
 CONFIG_CFLAGS=
 CONFIG_LDFLAGS=
 
+# pick up debug mode option
+DEBUG_CFLAGS-$(CONFIG_DEBUG) = -DCONFIG_DEBUG
+CONFIG_CFLAGS += $(DEBUG_CFLAGS-y)
+
 # Run in quiet mode
 Q=@
 
