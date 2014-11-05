@@ -37,6 +37,9 @@ static int core_fast_ring_push_compare_and_swap(struct core_fast_ring *self, voi
 static int core_fast_ring_pop_and_contend(struct core_fast_ring *self, void *element);
 #endif
 
+static int core_fast_ring_unlock(struct core_fast_ring *self);
+static int core_fast_ring_lock(struct core_fast_ring *self);
+
 void core_fast_ring_init(struct core_fast_ring *self, int capacity, int cell_size)
 {
     self->use_multiple_producers = NO;
@@ -126,10 +129,18 @@ int core_fast_ring_push_from_producer(struct core_fast_ring *self, void *element
 {
     void *cell;
 
+    if (self->use_multiple_producers) {
+        core_fast_ring_lock(self);
+    }
+
     CORE_DEBUGGER_ASSERT_NOT_NULL(element);
     CORE_DEBUGGER_ASSERT(self->cell_size > 0);
 
     if (core_fast_ring_is_full_from_producer(self)) {
+
+        if (self->use_multiple_producers)
+            core_fast_ring_unlock(self);
+
         return 0;
     }
 
@@ -160,6 +171,9 @@ int core_fast_ring_push_from_producer(struct core_fast_ring *self, void *element
 #endif
 
     self->tail = core_fast_ring_increment(self, self->tail);
+
+    if (self->use_multiple_producers)
+        core_fast_ring_unlock(self);
 
     return 1;
 }
@@ -568,19 +582,7 @@ int core_fast_ring_push_multiple_producers(struct core_fast_ring *self, void *el
 #ifdef CORE_RING_USE_LOCK_FOR_MULTIPLE_PRODUCERS
     int value;
 
-#ifdef CORE_RING_USE_TICKET_SPINLOCK
-    core_ticket_spinlock_lock(&self->lock);
-#else
-    core_spinlock_lock(&self->lock);
-#endif
-
     value = core_fast_ring_push_from_producer(self, element);
-
-#ifdef CORE_RING_USE_TICKET_SPINLOCK
-    core_ticket_spinlock_unlock(&self->lock);
-#else
-    core_spinlock_unlock(&self->lock);
-#endif
 
     return value;
 #else
@@ -594,5 +596,23 @@ int core_fast_ring_pop_multiple_producers(struct core_fast_ring *self, void *ele
     return core_fast_ring_pop_from_consumer(self, element);
 #else
     return core_fast_ring_pop_and_contend_foo(self, element);
+#endif
+}
+
+static int core_fast_ring_unlock(struct core_fast_ring *self)
+{
+#ifdef CORE_RING_USE_TICKET_SPINLOCK
+    return core_ticket_spinlock_unlock(&self->lock);
+#else
+    return core_spinlock_unlock(&self->lock);
+#endif
+}
+
+static int core_fast_ring_lock(struct core_fast_ring *self)
+{
+#ifdef CORE_RING_USE_TICKET_SPINLOCK
+    return core_ticket_spinlock_lock(&self->lock);
+#else
+    return core_spinlock_lock(&self->lock);
 #endif
 }
