@@ -28,7 +28,7 @@ __COMMIT__=$(git log | head -n1 | awk '{print $2}')
 scripts/IBM_Blue_Gene_Q/build-xl.sh
 
 cd ..
-cp performance/latency_probe/latency_probe $__JOB__.$__APP__
+cp biosal/performance/latency_probe/latency_probe $__JOB__.$__APP__
 
 cp biosal/tests/Cetus_IBM_Blue_Gene_Q/Template.$__APP__.sh $__JOB__.sh
 
