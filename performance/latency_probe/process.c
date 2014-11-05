@@ -9,8 +9,8 @@
 #include <inttypes.h>
 #include <stdint.h>
 
-#define OPTION_EVENT_COUNT "-ping-event-count-per-worker"
-#define EVENT_COUNT 40000
+#define OPTION_EVENT_COUNT "-ping-event-count-per-actor"
+#define DEFAULT_EVENT_COUNT 40000
 #define ACTORS_PER_WORKER 100
 #define PERIOD 2000
 
@@ -46,7 +46,7 @@ static void process_init(struct thorium_actor *self)
     argc = thorium_actor_argc(self);
     argv = thorium_actor_argv(self);
 
-    concrete_self->event_count = EVENT_COUNT;
+    concrete_self->event_count = DEFAULT_EVENT_COUNT;
 
     if (core_command_has_argument(argc, argv, OPTION_EVENT_COUNT)) {
         concrete_self->event_count = core_command_get_argument_value_int(argc, argv, OPTION_EVENT_COUNT);
@@ -180,7 +180,7 @@ static void process_receive(struct thorium_actor *self, struct thorium_message *
             printf("PERFORMANCE_COUNTER actor-count-per-worker = %d\n", actors_per_worker);
             printf("PERFORMANCE_COUNTER worker-count = %d\n", workers);
             printf("PERFORMANCE_COUNTER actor-count = %d\n", number_of_actors);
-            printf("PERFORMANCE_COUNTER ping-message-count-per-actor = %d\n", EVENT_COUNT);
+            printf("PERFORMANCE_COUNTER ping-message-count-per-actor = %d\n", concrete_self->event_count);
             printf("PERFORMANCE_COUNTER ping-message-count = %" PRIu64 "\n",
                             total / 2);
             printf("PERFORMANCE_COUNTER pong-message-count = %" PRIu64 "\n",
@@ -256,12 +256,12 @@ static void process_receive(struct thorium_actor *self, struct thorium_message *
         CORE_DEBUGGER_ASSERT_IS_EQUAL_INT(count, 0);
         CORE_DEBUGGER_ASSERT_IS_NULL(buffer);
 
-        if (concrete_self->message_count % PERIOD == 0 || EVENT_COUNT < 500) {
+        if (concrete_self->message_count % PERIOD == 0 || concrete_self->event_count < 500) {
             printf("progress %d %d/%d\n",
-                            name, concrete_self->message_count, EVENT_COUNT);
+                            name, concrete_self->message_count, concrete_self->event_count);
         }
 
-        if (concrete_self->message_count == EVENT_COUNT) {
+        if (concrete_self->message_count == concrete_self->event_count) {
 
             leader = concrete_self->leader;
             thorium_actor_send_empty(self, leader, ACTION_NOTIFY_REPLY);
