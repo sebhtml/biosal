@@ -14,29 +14,6 @@
 #include <stdint.h>
 
 /*
- * Check if this is a x86 CPU.
- * According to http://bartoszmilewski.com/2008/11/05/who-ordered-memory-fences-on-an-x86/
- * write operations are not reordered.
- *
- * This is nice because in Thorium, we don't need to order
- * load operations with write operations. But we do need
- * to order load operations with load operations.
- * And also we need to order write operations with write
- * operations. In particular, this is required in the
- * 1-producer 1-consumer rings.
- *
- * The list of macros is available at
- *
- * http://sourceforge.net/p/predef/wiki/Architectures/
- */
-#if defined(__i386__) || defined(__x86_64__)
-
-#define STORE_OPERATIONS_ARE_ORDERED
-#define LOAD_OPERATIONS_ARE_ORDERED
-
-#endif
-
-/*
  * bound memory allocations in order
  * to detect provided negative numbers
  * size_t value of 18446744073709551615 corresponds to int value -1)

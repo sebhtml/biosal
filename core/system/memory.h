@@ -8,6 +8,29 @@
 #include <stdint.h>
 
 /*
+ * Check if this is a x86 CPU.
+ * According to http://bartoszmilewski.com/2008/11/05/who-ordered-memory-fences-on-an-x86/
+ * write operations are not reordered.
+ *
+ * This is nice because in Thorium, we don't need to order
+ * load operations with write operations. But we do need
+ * to order load operations with load operations.
+ * And also we need to order write operations with write
+ * operations. In particular, this is required in the
+ * 1-producer 1-consumer rings.
+ *
+ * The list of macros is available at
+ *
+ * http://sourceforge.net/p/predef/wiki/Architectures/
+ */
+#if defined(__i386__) || defined(__x86_64__)
+
+#define CORE_MEMORY_STORE_OPERATIONS_ARE_ORDERED
+#define CORE_MEMORY_LOAD_OPERATIONS_ARE_ORDERED
+
+#endif
+
+/*
  * \see http://stackoverflow.com/questions/15884793/how-to-get-the-name-or-file-and-line-of-caller-method
  */
 
