@@ -11,7 +11,7 @@ struct core_timer;
  * Parameters for debugging are below.
  */
 
-#ifdef THORIUM_DEBUG
+#ifdef CONFIG_DEBUG
 
 #define CORE_DEBUGGER_ENABLE_ASSERT
 
