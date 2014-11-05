@@ -70,7 +70,7 @@ int main(int argc, char **argv)
 
         inserted = 0;
 
-        while (core_fast_ring_push_multiple_producers(&ring, &message, 0)) {
+        while (core_fast_ring_push_from_producer(&ring, &message)) {
             ++inserted;
         }
 
@@ -83,7 +83,7 @@ int main(int argc, char **argv)
 
         pulled = 0;
 
-        while (core_fast_ring_pop_multiple_producers(&ring, &message)) {
+        while (core_fast_ring_pop_from_consumer(&ring, &message)) {
             ++pulled;
         }
 

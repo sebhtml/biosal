@@ -127,7 +127,4 @@ int core_fast_ring_empty(struct core_fast_ring *self);
  */
 void core_fast_ring_use_multiple_producers(struct core_fast_ring *self);
 
-int core_fast_ring_push_multiple_producers(struct core_fast_ring *self, void *element, int worker);
-int core_fast_ring_pop_multiple_producers(struct core_fast_ring *self, void *element);
-
 #endif

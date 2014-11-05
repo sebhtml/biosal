@@ -682,7 +682,7 @@ void thorium_worker_pool_work(struct thorium_worker_pool *pool)
     size = THORIUM_NODE_MAXIMUM_PULLED_CLEAN_MESSAGE_COUNT_PER_CALL;
 
     while (i++ < size
-                    && core_fast_ring_pop_multiple_producers(&pool->triage_message_ring,
+                    && core_fast_ring_pop_from_consumer(&pool->triage_message_ring,
                             &other_message)) {
 
         core_fast_queue_enqueue(&pool->clean_message_queue, &other_message);
@@ -991,7 +991,7 @@ int thorium_worker_pool_dequeue_message(struct thorium_worker_pool *pool, struct
     /*
      * Pull message from the multiple-producer ring.
      */
-    answer = core_fast_ring_pop_multiple_producers(&pool->outbound_message_ring, message);
+    answer = core_fast_ring_pop_from_consumer(&pool->outbound_message_ring, message);
 
     if (answer) {
         tracepoint(thorium_node, worker_pool_dequeue, pool->node->name,

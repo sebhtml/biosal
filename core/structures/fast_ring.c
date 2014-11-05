@@ -40,6 +40,11 @@ static int core_fast_ring_pop_and_contend(struct core_fast_ring *self, void *ele
 static int core_fast_ring_unlock(struct core_fast_ring *self);
 static int core_fast_ring_lock(struct core_fast_ring *self);
 
+/*
+int core_fast_ring_push_multiple_producers(struct core_fast_ring *self, void *element, int worker);
+int core_fast_ring_pop_multiple_producers(struct core_fast_ring *self, void *element);
+*/
+
 void core_fast_ring_init(struct core_fast_ring *self, int capacity, int cell_size)
 {
     self->use_multiple_producers = NO;
@@ -577,6 +582,7 @@ void core_fast_ring_use_multiple_producers(struct core_fast_ring *self)
     }
 }
 
+/*
 int core_fast_ring_push_multiple_producers(struct core_fast_ring *self, void *element, int worker)
 {
 #ifdef CORE_RING_USE_LOCK_FOR_MULTIPLE_PRODUCERS
@@ -598,6 +604,7 @@ int core_fast_ring_pop_multiple_producers(struct core_fast_ring *self, void *ele
     return core_fast_ring_pop_and_contend_foo(self, element);
 #endif
 }
+*/
 
 static int core_fast_ring_unlock(struct core_fast_ring *self)
 {

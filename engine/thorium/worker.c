@@ -849,7 +849,7 @@ int thorium_worker_dequeue_actor(struct thorium_worker *worker, struct thorium_a
      * Move an actor from the ring to the real actor scheduling queue
      */
     while (operations--
-                    && core_fast_ring_pop_multiple_producers(&worker->input_inbound_message_ring,
+                    && core_fast_ring_pop_from_consumer(&worker->input_inbound_message_ring,
                             &message)) {
 
         action = thorium_message_action(&message);
@@ -1060,7 +1060,7 @@ int thorium_worker_enqueue_inbound_message(struct thorium_worker *worker, struct
     tracepoint(thorium_message, worker_enqueue_inbound_message, message,
                     &worker->input_inbound_message_ring);
 
-    value = core_fast_ring_push_multiple_producers(&worker->input_inbound_message_ring, message, worker->name);
+    value = core_fast_ring_push_from_producer(&worker->input_inbound_message_ring, message);
 
 #ifdef SHOW_FULL_RING_WARNINGS
     if (!value) {
@@ -1461,8 +1461,7 @@ static int thorium_worker_enqueue_message_for_triage(struct thorium_worker *work
 
     CORE_DEBUGGER_ASSERT(thorium_message_buffer(message) != NULL);
 
-    if (!core_fast_ring_push_multiple_producers(worker->output_message_ring_for_triage, message,
-                            worker->name)) {
+    if (!core_fast_ring_push_from_producer(worker->output_message_ring_for_triage, message)) {
 
 #ifdef SHOW_FULL_RING_WARNINGS
         printf("thorium_worker: Warning: ring is full, output_message_ring_for_triage action= %x\n",
@@ -1773,7 +1772,7 @@ void thorium_worker_run(struct thorium_worker *worker)
     /*
      * Consume messages for multiplexing.
      */
-    if (core_fast_ring_pop_multiple_producers(&worker->input_message_ring_for_multiplexer,
+    if (core_fast_ring_pop_from_consumer(&worker->input_message_ring_for_multiplexer,
                             &other_message)) {
 
         /*
@@ -1792,8 +1791,8 @@ void thorium_worker_run(struct thorium_worker *worker)
             /*
              * Otherwise, this is a regular outbound message.
              */
-            if (!core_fast_ring_push_multiple_producers(worker->output_outbound_message_ring_multiple,
-                                &other_message, worker->name)) {
+            if (!core_fast_ring_push_from_producer(worker->output_outbound_message_ring_multiple,
+                                &other_message)) {
 
                 /*
                  * Buffer the message locally if the outbound ring is full.
@@ -2079,8 +2078,8 @@ int thorium_worker_inject_clean_outbound_buffer(struct thorium_worker *self, voi
 {
     int value;
 
-    value = core_fast_ring_push_multiple_producers(&self->input_clean_outbound_buffer_ring,
-                    &buffer, self->name);
+    value = core_fast_ring_push_from_producer(&self->input_clean_outbound_buffer_ring,
+                    &buffer);
 
 #ifdef SHOW_FULL_RING_WARNINGS
     if (!value) {
@@ -2093,7 +2092,7 @@ int thorium_worker_inject_clean_outbound_buffer(struct thorium_worker *self, voi
 
 int thorium_worker_fetch_clean_outbound_buffer(struct thorium_worker *self, void **buffer)
 {
-    return core_fast_ring_pop_multiple_producers(&self->input_clean_outbound_buffer_ring,
+    return core_fast_ring_pop_from_consumer(&self->input_clean_outbound_buffer_ring,
                     buffer);
 }
 
@@ -2323,8 +2322,8 @@ static int thorium_worker_publish_message(struct thorium_worker *self, struct th
                     0,
                     0, self->last_outbound_message_block_operation);
 
-    return core_fast_ring_push_multiple_producers(self->output_outbound_message_ring_multiple,
-                       message, self->name);
+    return core_fast_ring_push_from_producer(self->output_outbound_message_ring_multiple,
+                       message);
 
 #if 0
     int return_value;
@@ -2393,7 +2392,7 @@ void thorium_worker_flush_outbound_message_block(struct thorium_worker *self)
     }
 
     if (push) {
-        if (core_fast_ring_push_multiple_producers(self->output_outbound_message_ring_multiple,
+        if (core_fast_ring_push_from_producer(self->output_outbound_message_ring_multiple,
                         &self->message_block, self->name)) {
 
             tracepoint(thorium_worker, flush_outbound_message_block, self->name, self->tick_count,
@@ -2410,8 +2409,8 @@ void thorium_worker_flush_outbound_message_block(struct thorium_worker *self)
 static int thorium_worker_enqueue_message_for_multiplexer(struct thorium_worker *self,
                 struct thorium_message *message)
 {
-    return core_fast_ring_push_multiple_producers(&self->input_message_ring_for_multiplexer,
-                    message, self->name);
+    return core_fast_ring_push_from_producer(&self->input_message_ring_for_multiplexer,
+                    message);
 }
 
 void thorium_worker_set_siblings(struct thorium_worker *self,
