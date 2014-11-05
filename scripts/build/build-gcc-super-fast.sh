@@ -1,6 +1,6 @@
 #!/bin/bash
 
-CFLAGS="-O3 -march=native -I. "
+CFLAGS="-O3 -march=native"
 clear
 echo "CFLAGS: $CFLAGS"
 
