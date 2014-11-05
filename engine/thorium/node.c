@@ -764,7 +764,7 @@ int thorium_node_spawn(struct thorium_node *node, int script)
     /*
      * Make the name visible to other cores.
      */
-    CORE_MEMORY_STORE_FENCE();
+    core_memory_fence();
 
     /* send the initial actor to the master node
      */
@@ -840,7 +840,7 @@ int thorium_node_spawn_state(struct thorium_node *node, void *state,
     /*
      * Make the name visible to all threads
      */
-    CORE_MEMORY_STORE_FENCE();
+    core_memory_fence();
 
 #ifdef THORIUM_NODE_DEBUG_SPAWN
     printf("DEBUG added Actor %d, index is %d, bucket: %p\n", name, index,
@@ -1756,7 +1756,7 @@ void thorium_node_notify_death(struct thorium_node *node, struct thorium_actor *
     /*
      * Make this change visible
      */
-    CORE_MEMORY_STORE_FENCE();
+    core_memory_fence();
 
 #ifdef THORIUM_NODE_REUSE_DEAD_INDICES
     core_queue_enqueue(&node->dead_indices, &index);
@@ -1778,7 +1778,7 @@ void thorium_node_notify_death(struct thorium_node *node, struct thorium_actor *
         /* This fence is not required.
          */
         /*
-        CORE_MEMORY_STORE_FENCE();
+        core_memory_fence();
         */
     }
 

@@ -241,7 +241,7 @@ void thorium_actor_destroy(struct thorium_actor *self)
      */
     CORE_BITMAP_SET_BIT(self->flags, FLAG_DEAD);
 
-    CORE_MEMORY_STORE_FENCE();
+    core_memory_fence();
 
     thorium_dispatcher_destroy(&self->dispatcher);
 
@@ -640,7 +640,7 @@ void thorium_actor_die(struct thorium_actor *self)
      * Publish the memory transaction so that other threads see it
      * too.
      */
-    CORE_MEMORY_STORE_FENCE();
+    core_memory_fence();
 }
 
 struct core_counter *thorium_actor_counter(struct thorium_actor *self)
@@ -2371,7 +2371,7 @@ void thorium_actor_set_assigned_worker(struct thorium_actor *self, int worker)
      * This must be visible for the other threads too
      * for the fast message delivery path between workers.
      */
-    CORE_MEMORY_STORE_FENCE();
+    core_memory_fence();
 }
 
 int thorium_actor_assigned_worker(struct thorium_actor *self)

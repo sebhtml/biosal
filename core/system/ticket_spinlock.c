@@ -88,7 +88,7 @@ int core_ticket_spinlock_unlock(struct core_ticket_spinlock *self)
      * for other threads.
      */
 /*
-    CORE_MEMORY_STORE_FENCE();
+    core_memory_fence();
     */
 
     return 0;

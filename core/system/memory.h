@@ -139,135 +139,19 @@ int core_memory_has_enough_bytes();
 size_t core_memory_align(size_t unaligned);
 size_t core_memory_align_private(size_t unaligned, size_t alignment);
 
-#define CORE_MEMORY_LOAD_FENCE core_memory_load_fence__
-#define CORE_MEMORY_STORE_FENCE core_memory_store_fence__
-#define CORE_MEMORY_FENCE core_memory_fence__
-
 /*
- * static inline is needed so that each translation unit that uses these
+ * When using 'static inline',
+ * static is needed so that each translation unit that uses these
  * functions have their own copies.
  */
-static inline void core_memory_load_fence__();
-static inline void core_memory_store_fence__();
-static inline void core_memory_fence__();
+void core_memory_load_fence();
+void core_memory_store_fence();
+void core_memory_fence();
 
 size_t core_memory_normalize_segment_length_power_of_2(size_t size);
 size_t core_memory_normalize_segment_length_page_size(size_t size);
 
 void *core_memory_copy(void *destination, const void *source, size_t count);
 void *core_memory_move(void *destination, const void *source, size_t count);
-
-
-static inline void core_memory_load_fence__()
-{
-#ifdef LOAD_OPERATIONS_ARE_ORDERED_disabled
-
-#elif defined(__GNUC__)
-
-    __sync_synchronize();
-
-#elif defined(__bgq__)
-
-    /*
-     * The macros with XL is:
-     *
-     * _ARCH_PPC
-     * _ARCH_PPC64
-     *
-     * With GNU, it is __powerpc64__.
-     */
-    /* I am not sure if  __eieio  is a load fence */
-    core_memory_fence__();
-
-#elif defined(_CRAYC)
-    __builtin_ia32_lfence();
-
-#else
-
-    core_memory_fence__();
-
-#endif
-}
-
-static inline void core_memory_store_fence__()
-{
-#ifdef STORE_OPERATIONS_ARE_ORDERED_disabled
-
-#elif defined(__GNUC__)
-
-    __sync_synchronize();
-
-#elif defined(__bgq__)
-
-    /*
-     * \see http://publib.boulder.ibm.com/infocenter/comphelp/v101v121/index.jsp?topic=/com.ibm.xlcpp101.aix.doc/compiler_ref/bif_lwsync_iospace_lwsync.html
-     */
-    __lwsync();
-
-#elif defined(_CRAYC)
-    __builtin_ia32_sfence();
-
-#else
-
-    core_memory_fence__();
-#endif
-}
-
-static inline void core_memory_fence__()
-{
-#if defined(__GNUC__)
-
-    /*
-     * \see http://stackoverflow.com/questions/982129/what-does-sync-synchronize-do
-     */
-    /* on x86, write are not re-ordered according to
-     * http://www.xml.com/ldd/chapter/book/ch08.html
-     *
-     * For example, on the x86 architecture, wmb() currently does nothing, since
-     * writes outside the processor are not reordered. Reads are reordered, however, so mb() will be slower than wmb().
-     */
-
-    /*
-     * \see https://gcc.gnu.org/onlinedocs/gcc-4.4.5/gcc/Atomic-Builtins.html
-     */
-    __sync_synchronize();
-
-#elif defined(__bgq__)
-
-    /*
-     * \see http://publib.boulder.ibm.com/infocenter/cellcomp/v101v121/index.jsp?topic=/com.ibm.xlcpp101.cell.doc/compiler_ref/compiler_builtins.html
-     */
-    __sync();
-
-#elif defined(_CRAYC)
-
-    /*
-     * \see http://docs.cray.com/books/004-2179-001/html-004-2179-001/imwlrwh.html
-     */
-    /*
-    _memory_barrier();
-    */
-
-    /*
-     * \see http://docs.cray.com/books/S-2179-52/html-S-2179-52/fixedcdw3qe3i7.html
-     * _gsync();
-     *
-     */
-
-    /*
-     * \see http://docs.cray.com/books/S-2179-81/S-2179-81.pdf
-     */
-    __builtin_ia32_mfence();
-
-#elif defined(__APPLE__)
-
-#error "Memory fence is not implemented for __APPLE__ systems"
-
-#else
-
-#error "Memory fence is not implemented for unknown systems"
-    /* Do nothing... */
-#endif
-}
 
 #endif

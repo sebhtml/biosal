@@ -171,7 +171,7 @@ int core_fast_ring_push_from_producer(struct core_fast_ring *self, void *element
      * a single-producer single-consumer ring (no spinlock).
      */
     if (!self->use_multiple_producers)
-        CORE_MEMORY_STORE_FENCE();
+        core_memory_fence();
 
 #endif
 
@@ -343,7 +343,7 @@ int core_fast_ring_pop_from_consumer(struct core_fast_ring *self, void *element)
      * to be visible before the head is updated.
      */
 #ifdef USE_MEMORY_FENCE
-    CORE_MEMORY_STORE_FENCE();
+    core_memory_fence();
 #endif
 
     self->head = core_fast_ring_increment(self, self->head);
@@ -454,7 +454,7 @@ static int core_fast_ring_push_compare_and_swap(struct core_fast_ring *self, voi
                     (char *)element + sizeof(int), self->cell_size - sizeof(int));
 
 #ifdef USE_MEMORY_FENCE
-    CORE_MEMORY_STORE_FENCE();
+    core_memory_fence();
 #endif
 
     /*
@@ -467,7 +467,7 @@ static int core_fast_ring_push_compare_and_swap(struct core_fast_ring *self, voi
      * the content of the cell to be visible.
      */
 #ifdef USE_MEMORY_FENCE
-    CORE_MEMORY_STORE_FENCE();
+    core_memory_fence();
 #endif
 
     tracepoint(ring, operation, "push_after_copy",
@@ -496,7 +496,7 @@ static int core_fast_ring_pop_and_contend(struct core_fast_ring *self, void *ele
      */
     /*
 #ifdef USE_MEMORY_FENCE
-    CORE_MEMORY_STORE_FENCE();
+    core_memory_fence();
 #endif
 */
 
@@ -550,7 +550,7 @@ static int core_fast_ring_pop_and_contend(struct core_fast_ring *self, void *ele
     self->head = core_fast_ring_increment(self, self->head);
 
 #ifdef USE_MEMORY_FENCE
-    CORE_MEMORY_STORE_FENCE();
+    core_memory_fence();
 #endif
 
     tracepoint(ring, operation, "pop_after",
