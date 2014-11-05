@@ -488,14 +488,14 @@ void core_memory_load_fence()
      * With GNU, it is __powerpc64__.
      */
     /* I am not sure if  __eieio  is a load fence */
-    core_memory_fence__();
+    core_memory_fence();
 
 #elif defined(_CRAYC)
     __builtin_ia32_lfence();
 
 #else
 
-    core_memory_fence__();
+    core_memory_fence();
 
 #endif
 }
@@ -520,7 +520,7 @@ void core_memory_store_fence()
 
 #else
 
-    core_memory_fence__();
+    core_memory_fence();
 #endif
 }
 
