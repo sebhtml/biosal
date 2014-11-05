@@ -43,6 +43,8 @@ static void process_init(struct thorium_actor *self)
     concrete_self->message_count = 0;
     concrete_self->completed = 0;
 
+    concrete_self->received = 0;
+
     argc = thorium_actor_argc(self);
     argv = thorium_actor_argv(self);
 
@@ -235,6 +237,8 @@ static void process_receive(struct thorium_actor *self, struct thorium_message *
 
     } else if (action == ACTION_PING) {
 
+        ++concrete_self->received;
+
 #ifdef CORE_DEBUGGER_ENABLE_ASSERT
         if (count != 0) {
             printf("Error, count is %d but should be %d.\n",
@@ -266,7 +270,9 @@ static void process_receive(struct thorium_actor *self, struct thorium_message *
             leader = concrete_self->leader;
             thorium_actor_send_empty(self, leader, ACTION_NOTIFY_REPLY);
 
-            printf("%d sent ACTION_NOTIFY_REPLY to %d\n", thorium_actor_name(self),
+            printf("%d (ACTION_PING sent: %d, ACTION_PING_REPLY sent: %d)"
+                            " sends ACTION_NOTIFY_REPLY to %d\n", thorium_actor_name(self),
+                            concrete_self->message_count, concrete_self->received,
                             leader);
         } else {
 

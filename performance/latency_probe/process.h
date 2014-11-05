@@ -21,7 +21,7 @@ struct process {
     int completed;
 
     int leader;
-
+    int received;
     int event_count;
 };
 
