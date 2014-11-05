@@ -23,6 +23,8 @@ struct process {
     int leader;
     int received;
     int event_count;
+
+    int index;
 };
 
 extern struct thorium_script process_script;

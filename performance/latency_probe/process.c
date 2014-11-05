@@ -20,6 +20,8 @@ static void process_receive(struct thorium_actor *self, struct thorium_message *
 
 static void process_send_ping(struct thorium_actor *self);
 
+static int process_is_important(struct thorium_actor *self);
+
 struct thorium_script process_script = {
     .identifier = SCRIPT_LATENCY_PROCESS,
     .init = process_init,
@@ -132,7 +134,9 @@ static void process_receive(struct thorium_actor *self, struct thorium_message *
 
         core_vector_push_back_int(&concrete_self->children, new_actor);
 
+        /*
         printf("receive %d\n", new_actor);
+        */
 
         if (core_vector_size(&concrete_self->children) == concrete_self->size) {
 
@@ -144,7 +148,8 @@ static void process_receive(struct thorium_actor *self, struct thorium_message *
             thorium_actor_send_vector(self, leader, ACTION_PUSH_DATA,
                             &concrete_self->children);
 
-            printf("send ACTION_PUSH_DATA to %d\n", leader);
+            printf("%d sends ACTION_PUSH_DATA (%d actors) to leader %d\n", name,
+                            concrete_self->size, leader);
         }
     } else if (action == ACTION_ASK_TO_STOP) {
 
@@ -229,8 +234,16 @@ static void process_receive(struct thorium_actor *self, struct thorium_message *
 
         core_vector_unpack(&concrete_self->actors, buffer);
 
-        printf("%d has %d friends\n", thorium_actor_name(self),
+        /* find out the index of ourselves
+         */
+        concrete_self->index = core_vector_index_of(&concrete_self->actors, &name);
+
+        CORE_DEBUGGER_ASSERT(concrete_self->index >= 0);
+
+        if (process_is_important(self)) {
+            printf("%d has %d friends\n", thorium_actor_name(self),
                         (int)core_vector_size(&concrete_self->actors));
+        }
 
         concrete_self->leader = source;
         process_send_ping(self);
@@ -261,8 +274,10 @@ static void process_receive(struct thorium_actor *self, struct thorium_message *
         CORE_DEBUGGER_ASSERT_IS_NULL(buffer);
 
         if (concrete_self->message_count % PERIOD == 0 || concrete_self->event_count < 500) {
-            printf("progress %d %d/%d\n",
+            if (process_is_important(self)) {
+                printf("progress %d %d/%d\n",
                             name, concrete_self->message_count, concrete_self->event_count);
+            }
         }
 
         if (concrete_self->message_count == concrete_self->event_count) {
@@ -270,7 +285,8 @@ static void process_receive(struct thorium_actor *self, struct thorium_message *
             leader = concrete_self->leader;
             thorium_actor_send_empty(self, leader, ACTION_NOTIFY_REPLY);
 
-            printf("%d (ACTION_PING sent: %d, ACTION_PING_REPLY sent: %d)"
+            if (process_is_important(self))
+                printf("%d (ACTION_PING sent: %d, ACTION_PING_REPLY sent: %d)"
                             " sends ACTION_NOTIFY_REPLY to %d\n", thorium_actor_name(self),
                             concrete_self->message_count, concrete_self->received,
                             leader);
@@ -283,9 +299,14 @@ static void process_receive(struct thorium_actor *self, struct thorium_message *
 
         ++concrete_self->completed;
 
-        printf("%d received ACTION_NOTIFY_REPLY from %d, %d/%d\n",
+        /*
+         * This will show up also when the whole thing is finished.
+         */
+        if (concrete_self->completed % ACTORS_PER_WORKER == 0) {
+            printf("%d received ACTION_NOTIFY_REPLY from %d, %d/%d\n",
                         name, source, concrete_self->completed,
                         (int)core_vector_size(&concrete_self->actors));
+        }
 
         if (concrete_self->completed == (int)core_vector_size(&concrete_self->actors)) {
 
@@ -311,4 +332,13 @@ static void process_send_ping(struct thorium_actor *self)
     */
 
     thorium_actor_send_empty(self, target, ACTION_PING);
+}
+
+static int process_is_important(struct thorium_actor *self)
+{
+    struct process *concrete_self;
+
+    concrete_self = thorium_actor_concrete_actor(self);
+
+    return (concrete_self->index % ACTORS_PER_WORKER) == 0;
 }
