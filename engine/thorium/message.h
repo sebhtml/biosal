@@ -17,8 +17,8 @@
  * A message can not be distributed with the action specific
  * ACTION_INVALID.
  */
-#define THORIUM_MESSAGE_INVALID_ACTION          0x00000000
-#define ACTION_INVALID THORIUM_MESSAGE_INVALID_ACTION
+
+#define ACTION_INVALID -1
 
 /*
  * Use tracepoints to analyze the life cycle of messages.

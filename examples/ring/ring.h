@@ -18,11 +18,15 @@ struct ring {
     int previous;
 };
 
-#define ACTION_RING_READY 0x000067db
-#define ACTION_RING_KILL 0x00004cfe
-#define ACTION_RING_SET_NEXT 0x00003833
-#define ACTION_RING_PUSH_NEXT 0x0000153c
-#define ACTION_RING_SPAWN 0x00001bd7
+/* see notes in actor.h about how we number internal Thorium engine messages */
+
+#define RING_ACTION_BASE -2000
+
+#define ACTION_RING_READY (RING_ACTION_BASE + 0)
+#define ACTION_RING_KILL (RING_ACTION_BASE + 1)
+#define ACTION_RING_SET_NEXT (RING_ACTION_BASE + 2)
+#define ACTION_RING_PUSH_NEXT (RING_ACTION_BASE + 3)
+#define ACTION_RING_SPAWN (RING_ACTION_BASE + 4)
 
 extern struct thorium_script ring_script;
 

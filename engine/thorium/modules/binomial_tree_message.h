@@ -7,7 +7,10 @@ struct thorium_message;
 struct thorium_actor;
 
 /* binomial-tree */
-#define ACTION_BINOMIAL_TREE_SEND 0x00005b36
+
+#define BINOMIAL_TREE_ACTION_BASE -4000
+
+#define ACTION_BINOMIAL_TREE_SEND (BINOMIAL_TREE_ACTION_BASE + 0)
 
 /*
 #define DEBUG_BINOMIAL_TREE

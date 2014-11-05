@@ -532,7 +532,7 @@ static int core_fast_ring_pop_and_contend(struct core_fast_ring *self, void *ele
     /*
      * The tail is visible before the data, we must wait in that case.
      */
-    if (marker == THORIUM_MESSAGE_INVALID_ACTION) {
+    if (marker == ACTION_INVALID) {
         return 0;
     }
 
@@ -549,13 +549,13 @@ static int core_fast_ring_pop_and_contend(struct core_fast_ring *self, void *ele
      *
      * The only use case for core_fast_ring_push_compare_and_swap + core_fast_ring_pop_and_contend
      * is with thorium_message objects. The first member of a message is its action,
-     * and an action can not be 0x00000000 (THORIUM_MESSAGE_INVALID_ACTION).
+     * and an action can not be 0x00000000 (ACTION_INVALID).
      *
      * \see http://psy-lob-saw.blogspot.com/2013/10/lock-free-mpsc-1.html
      *
      * Here we deposit a flag in the cell.
      */
-    marker = THORIUM_MESSAGE_INVALID_ACTION;
+    marker = ACTION_INVALID;
     core_memory_copy(cell, &marker, sizeof(marker));
 
     /*
@@ -587,8 +587,7 @@ void core_fast_ring_use_multiple_producers(struct core_fast_ring *self)
 
     self->use_multiple_producers = YES;
 
-    marker = THORIUM_MESSAGE_INVALID_ACTION;
-
+    marker = ACTION_INVALID;
     i = 0;
     while (i < (int)self->number_of_cells) {
 

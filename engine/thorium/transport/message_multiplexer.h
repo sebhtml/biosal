@@ -17,7 +17,9 @@ struct thorium_message;
 /*
  * The multiplexer needs its own action
  */
-#define ACTION_MULTIPLEXER_MESSAGE 0x0024afc9
+
+#define MULTIPLEXER_ACTION_BASE -7000
+#define ACTION_MULTIPLEXER_MESSAGE (MULTIPLEXER_ACTION_BASE + 0)
 
 /*
  * Genomic graph traversal is characterized by:

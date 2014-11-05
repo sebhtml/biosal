@@ -12,20 +12,23 @@
  * ACTOR_PING can be used by concrete actors, it is
  * not being used by biosal systems.
  */
-#define ACTION_PING 0x000040b3
-#define ACTION_PING_REPLY 0x00006eda
+
+#define PING_ACTION_BASE -3000
+
+#define ACTION_PING (PING_ACTION_BASE + 0)
+#define ACTION_PING_REPLY (PING_ACTION_BASE + 1)
 
 /*
  * The notify messages can be used freely.
  */
-#define ACTION_NOTIFY 0x0000710b
-#define ACTION_NOTIFY_REPLY 0x00005f82
+#define ACTION_NOTIFY (PING_ACTION_BASE + 2)
+#define ACTION_NOTIFY_REPLY (PING_ACTION_BASE + 3)
 
-#define ACTION_RESET 0x00005045
-#define ACTION_RESET_REPLY 0x0000056d
+#define ACTION_RESET (PING_ACTION_BASE + 4)
+#define ACTION_RESET_REPLY (PING_ACTION_BASE + 5)
 
-#define ACTION_BEGIN 0x0000125f
-#define ACTION_BEGIN_REPLY 0x0000214a
+#define ACTION_BEGIN (PING_ACTION_BASE + 6)
+#define ACTION_BEGIN_REPLY (PING_ACTION_BASE + 7)
 
 struct core_vector;
 struct thorium_actor;

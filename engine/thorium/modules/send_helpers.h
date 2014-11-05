@@ -6,8 +6,9 @@
 
 #include <stdint.h>
 
-#define ACTION_SET_PRODUCERS_FOR_WORK_STEALING 0x002f77ab
-#define ACTION_SET_PRODUCERS_FOR_WORK_STEALING_REPLY 0x0038c869
+#define SEND_HELPERS_ACTION_BASE -5000
+#define ACTION_SET_PRODUCERS_FOR_WORK_STEALING (SEND_HELPERS_ACTION_BASE + 0)
+#define ACTION_SET_PRODUCERS_FOR_WORK_STEALING_REPLY (SEND_HELPERS_ACTION_BASE + 1)
 
 /*
  * Actor helpers are function that work on a thorium_actor but that do not access attributes
