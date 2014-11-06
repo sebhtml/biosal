@@ -218,6 +218,8 @@ void thorium_actor_init(struct thorium_actor *self, void *concrete_actor,
     CORE_DEBUGGER_ASSERT(self->name != THORIUM_ACTOR_NOBODY);
 
     thorium_actor_set_assigned_worker(self, THORIUM_WORKER_NONE);
+
+    self->random_seed = self->name;
 }
 
 void thorium_actor_destroy(struct thorium_actor *self)
@@ -2381,5 +2383,5 @@ int thorium_actor_assigned_worker(struct thorium_actor *self)
 
 int thorium_actor_get_random_number(struct thorium_actor *self)
 {
-    return thorium_worker_get_random_number(self->worker);
+    return rand_r(&self->random_seed);
 }

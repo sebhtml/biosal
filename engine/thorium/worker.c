@@ -180,8 +180,6 @@ void thorium_worker_init(struct thorium_worker *worker, int name, struct thorium
     worker->node = node;
     worker->name = name;
 
-    worker->random_seed = name * getpid();
-
     CORE_BITMAP_CLEAR(worker->flags);
     CORE_BITMAP_CLEAR_BIT(worker->flags, FLAG_DEAD);
     worker->last_warning = 0;
@@ -2474,7 +2472,3 @@ void thorium_worker_execute_local_delivery(struct thorium_worker *self, struct t
                     message);
 }
 
-int thorium_worker_get_random_number(struct thorium_worker *self)
-{
-    return rand_r(&self->random_seed);
-}

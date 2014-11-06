@@ -315,6 +315,8 @@ struct thorium_actor {
     struct core_timer timer;
 
     int message_number;
+
+    unsigned int random_seed;
 };
 
 void thorium_actor_init(struct thorium_actor *self, void *state,
