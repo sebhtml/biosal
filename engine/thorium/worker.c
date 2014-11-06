@@ -142,6 +142,9 @@ static int thorium_worker_enqueue_message_for_triage(struct thorium_worker *work
 static int thorium_worker_dequeue_message_for_triage(struct thorium_worker *worker, struct thorium_message *message);
 */
 
+static void thorium_worker_send_for_multiplexer(struct thorium_worker *self,
+                struct thorium_message *message);
+
 void thorium_worker_init(struct thorium_worker *worker, int name, struct thorium_node *node)
 {
     int capacity;
@@ -1528,10 +1531,6 @@ void thorium_worker_run(struct thorium_worker *worker)
     struct thorium_message other_message;
     int name;
 
-    int worker_index;
-    int destination_node;
-    struct thorium_worker *worker_for_multiplexer;
-
 #ifdef THORIUM_NODE_INJECT_CLEAN_WORKER_BUFFERS
     void *buffer;
 #endif
@@ -1747,24 +1746,7 @@ void thorium_worker_run(struct thorium_worker *worker)
     if (core_fast_queue_dequeue(&worker->output_outbound_message_queue_for_multiplexer,
         &other_message)) {
 
-        destination_node = thorium_message_destination_node(&other_message);
-
-        worker_index = destination_node % worker->worker_count;
-        /*
-        worker_index = 0;
-        */
-
-        worker_for_multiplexer = worker->workers + worker_index;
-
-        if (!thorium_worker_enqueue_message_for_multiplexer(worker_for_multiplexer,
-                                &other_message)) {
-
-            /*
-             * Put it back in the queue if the ring is full already.
-             */
-            core_fast_queue_enqueue(&worker->output_outbound_message_queue_for_multiplexer,
-                            &other_message);
-        }
+        thorium_worker_send_for_multiplexer(worker, &other_message);
     }
 
     /*
@@ -2472,3 +2454,30 @@ void thorium_worker_execute_local_delivery(struct thorium_worker *self, struct t
                     message);
 }
 
+static void thorium_worker_send_for_multiplexer(struct thorium_worker *self,
+                struct thorium_message *message)
+{
+    int worker_index;
+    int destination_node;
+    struct thorium_worker *worker_for_multiplexer;
+
+    destination_node = thorium_message_destination_node(message);
+
+    worker_index = destination_node % self->worker_count;
+
+    /*
+    worker_index = 0;
+    */
+
+    worker_for_multiplexer = self->workers + worker_index;
+
+    if (!thorium_worker_enqueue_message_for_multiplexer(worker_for_multiplexer,
+                            message)) {
+
+        /*
+         * Put it back in the queue if the ring is full already.
+         */
+        core_fast_queue_enqueue(&self->output_outbound_message_queue_for_multiplexer,
+                        message);
+    }
+}
