@@ -630,7 +630,7 @@ void thorium_worker_send(struct thorium_worker *worker, struct thorium_message *
             /*
              * Queue the message for multiplexing.
              */
-            core_fast_queue_enqueue(&worker->output_outbound_message_queue_for_multiplexer, message);
+            thorium_worker_send_for_multiplexer(worker, message);
         }
     } else {
     /*
