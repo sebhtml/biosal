@@ -39,7 +39,7 @@ cd ..
 
 cp biosal/applications/spate_metagenome_assembler/spate $__JOB__.$__APP__
 
-cp biosal/tests/Beagle_Cray_XE6/Template.pbs $__JOB__.pbs
+cp biosal/tests/Beagle_Cray_XE6/Template.$__APP__.pbs $__JOB__.pbs
 
 template="s/__JOB__/$__JOB__/g"
 sed -i "$template" $__JOB__.pbs
