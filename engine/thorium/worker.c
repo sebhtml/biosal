@@ -144,6 +144,8 @@ static int thorium_worker_dequeue_message_for_triage(struct thorium_worker *work
 
 static void thorium_worker_send_for_multiplexer(struct thorium_worker *self,
                 struct thorium_message *message);
+static void thorium_worker_send_to_other_node(struct thorium_worker *self,
+                struct thorium_message *message);
 
 void thorium_worker_init(struct thorium_worker *worker, int name, struct thorium_node *node)
 {
@@ -1674,14 +1676,7 @@ void thorium_worker_run(struct thorium_worker *worker)
      */
     if (core_fast_queue_dequeue(&worker->output_outbound_message_queue, &other_message)) {
 
-        if (!thorium_worker_publish_message(worker, &other_message)) {
-
-#ifdef SHOW_FULL_RING_WARNINGS
-            printf("thorium_worker: Warning: ring is full => output_outbound_message_ring\n");
-#endif
-
-            core_fast_queue_enqueue(&worker->output_outbound_message_queue, &other_message);
-        }
+        thorium_worker_send_to_other_node(worker, &other_message);
     }
 
 #ifdef THORIUM_NODE_INJECT_CLEAN_WORKER_BUFFERS
@@ -2479,5 +2474,18 @@ static void thorium_worker_send_for_multiplexer(struct thorium_worker *self,
          */
         core_fast_queue_enqueue(&self->output_outbound_message_queue_for_multiplexer,
                         message);
+    }
+}
+
+static void thorium_worker_send_to_other_node(struct thorium_worker *self,
+                struct thorium_message *message)
+{
+   if (!thorium_worker_publish_message(self, message)) {
+
+#ifdef SHOW_FULL_RING_WARNINGS
+        printf("thorium_worker: Warning: ring is full => output_outbound_message_ring\n");
+#endif
+
+        core_fast_queue_enqueue(&self->output_outbound_message_queue, message);
     }
 }
