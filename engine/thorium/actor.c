@@ -1436,6 +1436,11 @@ int thorium_actor_node_name(struct thorium_actor *self)
     return thorium_node_name(thorium_actor_node(self));
 }
 
+int thorium_actor_worker_name(struct thorium_actor *self)
+{
+    return thorium_worker_name(thorium_actor_worker(self));
+}
+
 int thorium_actor_get_node_count(struct thorium_actor *self)
 {
     return thorium_node_nodes(thorium_actor_node(self));

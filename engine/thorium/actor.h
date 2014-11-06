@@ -364,6 +364,7 @@ int thorium_actor_receive_system_no_pack(struct thorium_actor *self, struct thor
 
 struct thorium_node *thorium_actor_node(struct thorium_actor *self);
 int thorium_actor_node_name(struct thorium_actor *self);
+int thorium_actor_worker_name(struct thorium_actor *self);
 int thorium_actor_get_node_count(struct thorium_actor *self);
 int thorium_actor_node_worker_count(struct thorium_actor *self);
 
