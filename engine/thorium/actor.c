@@ -2388,6 +2388,9 @@ int thorium_actor_assigned_worker(struct thorium_actor *self)
 
 int thorium_actor_get_random_number(struct thorium_actor *self)
 {
+    /*
+     * When called inside thorium_actor_receive(), the worker implementation is used.
+     */
     if (self->worker != NULL)
         return thorium_worker_get_random_number(self->worker);
 

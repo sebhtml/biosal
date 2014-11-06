@@ -19,6 +19,8 @@
 #include <core/structures/map_iterator.h>
 #include <core/structures/set_iterator.h>
 
+#include <core/hash/hash.h>
+
 #include <core/constants.h>
 
 #include <core/helpers/vector_helper.h>
@@ -350,7 +352,13 @@ void thorium_worker_init(struct thorium_worker *worker, int name, struct thorium
      */
     thorium_message_multiplexer_set_worker(&worker->multiplexer, worker);
 
-    worker->random_seed = worker->name * getpid();
+    worker->random_seed = thorium_node_name(worker->node) + worker->name * 1000000;
+
+    /*
+     * Hash the value to get a better seed.
+     */
+    worker->random_seed = core_hash_data_uint64_t(&worker->random_seed, sizeof(worker->random_seed),
+                    0xf18d686d);
 }
 
 void thorium_worker_destroy(struct thorium_worker *worker)
