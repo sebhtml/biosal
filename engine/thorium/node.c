@@ -792,10 +792,12 @@ int thorium_node_spawn(struct thorium_node *node, int script)
                     name, script);
 #endif
 
+#if 0
     /*
      * assign the actor to a worker.
      */
     thorium_worker_pool_assign_worker_to_actor(&node->worker_pool, name);
+#endif
 
     core_spinlock_unlock(&node->spawn_and_death_lock);
 
