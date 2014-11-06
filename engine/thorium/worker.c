@@ -354,11 +354,13 @@ void thorium_worker_init(struct thorium_worker *worker, int name, struct thorium
 
     worker->random_seed = thorium_node_name(worker->node) + worker->name * 1000000;
 
+#if 0
     /*
      * Hash the value to get a better seed.
      */
     worker->random_seed = core_hash_data_uint64_t(&worker->random_seed, sizeof(worker->random_seed),
                     0xf18d686d);
+#endif
 }
 
 void thorium_worker_destroy(struct thorium_worker *worker)
