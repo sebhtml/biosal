@@ -349,6 +349,8 @@ void thorium_worker_init(struct thorium_worker *worker, int name, struct thorium
      * somewhere.
      */
     thorium_message_multiplexer_set_worker(&worker->multiplexer, worker);
+
+    worker->random_seed = worker->name * getpid();
 }
 
 void thorium_worker_destroy(struct thorium_worker *worker)
@@ -2492,4 +2494,9 @@ static void thorium_worker_send_to_other_node(struct thorium_worker *self,
 
         core_fast_queue_enqueue(&self->output_outbound_message_queue, message);
     }
+}
+
+int thorium_worker_get_random_number(struct thorium_worker *self)
+{
+    return rand_r(&self->random_seed);
 }
