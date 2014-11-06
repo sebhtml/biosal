@@ -170,7 +170,7 @@ void process_send_ping(struct thorium_actor *self)
     concrete_self = (struct process *)thorium_actor_concrete_actor(self);
 
     size = core_vector_size(&concrete_self->actors);
-    index = rand() % size;
+    index = thorium_actor_get_random_number(self) % size;
 
     destination = core_vector_at_as_int(&concrete_self->actors, index);
 
