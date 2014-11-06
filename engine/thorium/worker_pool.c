@@ -85,7 +85,6 @@ static inline int thorium_worker_pool_get_cached_value(struct thorium_worker_poo
 /*
 static void thorium_worker_pool_wake_up_workers(struct thorium_worker_pool *self);
 */
-static void thorium_worker_pool_assign_worker_to_actor(struct thorium_worker_pool *self, int name);
 
 static void thorium_worker_pool_examine_inbound_queue(struct thorium_worker_pool *self);
 
@@ -758,7 +757,7 @@ void thorium_worker_pool_work(struct thorium_worker_pool *pool)
 #endif
 }
 
-static void thorium_worker_pool_assign_worker_to_actor(struct thorium_worker_pool *pool, int name)
+void thorium_worker_pool_assign_worker_to_actor(struct thorium_worker_pool *pool, int name)
 {
     int worker_index;
 
