@@ -640,7 +640,7 @@ void thorium_worker_send(struct thorium_worker *worker, struct thorium_message *
          * The message will use the fast path for delivery
          * because it is large enough.
          */
-        core_fast_queue_enqueue(&worker->output_outbound_message_queue, message);
+        thorium_worker_send_to_other_node(worker, message);
     }
 }
 
@@ -2480,6 +2480,10 @@ static void thorium_worker_send_for_multiplexer(struct thorium_worker *self,
 static void thorium_worker_send_to_other_node(struct thorium_worker *self,
                 struct thorium_message *message)
 {
+   /*
+    * Publish the message on the ring. If that fails, put the message in the
+    * overflow queue.
+    */
    if (!thorium_worker_publish_message(self, message)) {
 
 #ifdef SHOW_FULL_RING_WARNINGS
