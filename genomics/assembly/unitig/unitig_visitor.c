@@ -158,7 +158,7 @@ void biosal_unitig_visitor_receive(struct thorium_actor *self, struct thorium_me
 
         core_vector_unpack(&concrete_self->graph_stores, buffer);
         size = core_vector_size(&concrete_self->graph_stores);
-        concrete_self->graph_store_index = rand() % size;
+        concrete_self->graph_store_index = thorium_actor_get_random_number(self) % size;
 
         concrete_self->step = STEP_GET_KMER_LENGTH;
         biosal_unitig_visitor_execute(self);

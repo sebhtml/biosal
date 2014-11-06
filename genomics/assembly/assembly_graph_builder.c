@@ -1626,7 +1626,7 @@ void biosal_assembly_graph_builder_get_producers_for_work_stealing(struct thoriu
 
         while (index == current_index
                         && --steps) {
-            index = rand() % store_count;
+            index = thorium_actor_get_random_number(self) % store_count;
         }
 
         producer = core_vector_at_as_int(&concrete_self->sequence_stores, index);

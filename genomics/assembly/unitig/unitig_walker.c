@@ -462,7 +462,7 @@ void biosal_unitig_walker_start(struct thorium_actor *self, struct thorium_messa
     /*
      * Use a random starting point.
      */
-    concrete_self->store_index = rand() % size;
+    concrete_self->store_index = thorium_actor_get_random_number(self) % size;
 
     graph = core_vector_at_as_int(&concrete_self->graph_stores, concrete_self->store_index);
 

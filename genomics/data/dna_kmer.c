@@ -134,11 +134,13 @@ void biosal_dna_kmer_init_random(struct biosal_dna_kmer *sequence, int kmer_leng
     char *dna;
     int i;
     int code;
+    unsigned int seed;
 
+    seed = 42;
     dna = (char *)core_memory_pool_allocate(memory, kmer_length + 1);
 
     for (i = 0; i < kmer_length; i++) {
-        code = rand() % 4;
+        code = rand_r(&seed) % 4;
 
         if (code == 0) {
             dna[i] = 'A';
