@@ -424,7 +424,7 @@ int thorium_message_multiplexer_demultiplex(struct thorium_message_multiplexer *
         thorium_message_print(&new_message);
         */
 
-        thorium_worker_execute_local_delivery(self->worker, &new_message);
+        thorium_worker_send_local_delivery(self->worker, &new_message);
 
         /*
         thorium_message_destroy(&new_message);

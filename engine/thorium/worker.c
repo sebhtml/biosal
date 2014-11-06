@@ -623,7 +623,7 @@ void thorium_worker_send(struct thorium_worker *worker, struct thorium_message *
 
         if (thorium_message_destination_node(message) == thorium_message_source_node(message)) {
 
-             thorium_worker_execute_local_delivery(worker, message);
+             thorium_worker_send_local_delivery(worker, message);
 
         } else {
 
@@ -2410,7 +2410,7 @@ struct core_memory_pool *thorium_worker_get_outbound_message_memory_pool(struct 
     return &self->outbound_message_memory_pool;
 }
 
-void thorium_worker_execute_local_delivery(struct thorium_worker *self, struct thorium_message *message)
+void thorium_worker_send_local_delivery(struct thorium_worker *self, struct thorium_message *message)
 {
     int message_was_pushed;
     int worker_index;

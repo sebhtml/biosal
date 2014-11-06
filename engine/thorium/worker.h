@@ -312,6 +312,6 @@ void thorium_worker_set_siblings(struct thorium_worker *self,
 int thorium_worker_enqueue_outbound_message(struct thorium_worker *self,
                 struct thorium_message *message);
 struct core_memory_pool *thorium_worker_get_outbound_message_memory_pool(struct thorium_worker *self);
-void thorium_worker_execute_local_delivery(struct thorium_worker *self, struct thorium_message *message);
+void thorium_worker_send_local_delivery(struct thorium_worker *self, struct thorium_message *message);
 
 #endif
