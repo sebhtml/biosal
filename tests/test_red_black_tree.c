@@ -26,6 +26,7 @@ int main(int argc, char **argv)
     struct core_vector keys;
     int *result;
     int size;
+    unsigned int seed;
 
     lowest = 0;
     core_memory_pool_init(&memory_pool, 1024*1024, -1);
@@ -39,7 +40,7 @@ int main(int argc, char **argv)
     count = 1;
 #endif
 
-    srand(88);
+    seed = 88;
 
     core_red_black_tree_init(&tree, sizeof(int), sizeof(int), &memory_pool);
 
@@ -52,7 +53,7 @@ int main(int argc, char **argv)
 #endif
 
     for (i = 0; i < count; ++i) {
-        key = rand() % (2 * count);
+        key = rand_r(&seed) % (2 * count);
 
         core_vector_push_back(&keys, &key);
 
@@ -143,13 +144,13 @@ int main(int argc, char **argv)
         size = 100000;
 
         while (i < size) {
-            key = rand() % (2 * size);
+            key = rand_r(&seed) % (2 * size);
 
             /*
              * For this test, we don't want duplicates.
              */
             while (core_red_black_tree_get(&tree, &key) != NULL) {
-                key = rand() % (2 * size);
+                key = rand_r(&seed) % (2 * size);
             }
 #if 0
             printf("Add %d\n", key);

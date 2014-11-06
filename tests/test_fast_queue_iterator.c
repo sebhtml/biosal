@@ -19,8 +19,9 @@ int main(int argc, char **argv)
     int value2;
     int sum2;
     struct core_vector vector;
+    unsigned int seed;
 
-    srand(42);
+    seed = 42;
 
     core_vector_init(&vector, sizeof(int));
     core_fast_queue_init(&queue, sizeof(int));
@@ -34,7 +35,7 @@ int main(int argc, char **argv)
 
     for (i = 0; i < size; ++i) {
 
-        value = rand();
+        value = rand_r(&seed);
         core_fast_queue_enqueue(&queue, &value);
         sum += value;
 
