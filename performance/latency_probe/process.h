@@ -15,6 +15,7 @@ struct process {
     struct core_vector initial_actors;
     struct core_vector children;
     struct core_vector actors;
+    struct core_vector targets;
     int size;
 
     int message_count;

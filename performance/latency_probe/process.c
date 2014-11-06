@@ -55,6 +55,8 @@ static void process_init(struct thorium_actor *self)
     if (core_command_has_argument(argc, argv, OPTION_EVENT_COUNT)) {
         concrete_self->event_count = core_command_get_argument_value_int(argc, argv, OPTION_EVENT_COUNT);
     }
+
+    core_vector_init(&concrete_self->targets, sizeof(int));
 }
 
 static void process_destroy(struct thorium_actor *self)
@@ -65,6 +67,8 @@ static void process_destroy(struct thorium_actor *self)
     core_vector_destroy(&concrete_self->actors);
     core_vector_destroy(&concrete_self->children);
     core_vector_destroy(&concrete_self->initial_actors);
+
+    core_vector_destroy(&concrete_self->targets);
 }
 
 static void process_receive(struct thorium_actor *self, struct thorium_message *message)
@@ -91,6 +95,7 @@ static void process_receive(struct thorium_actor *self, struct thorium_message *
     int number_of_actors;
     int workers;
     int workers_per_node;
+    int target;
 
     concrete_self = (struct process *)thorium_actor_concrete_actor(self);
     action = thorium_message_action(message);
@@ -120,14 +125,9 @@ static void process_receive(struct thorium_actor *self, struct thorium_message *
         actors_per_worker = ACTORS_PER_WORKER;
         concrete_self->size = worker_count * actors_per_worker;
 
-        i = 0;
-        while (i < concrete_self->size) {
-
-            thorium_actor_send_to_self_int(self, ACTION_SPAWN,
+        thorium_actor_send_to_self_int(self, ACTION_SPAWN,
                             SCRIPT_LATENCY_PROCESS);
 
-            ++i;
-        }
     } else if (action == ACTION_SPAWN_REPLY) {
 
         thorium_message_unpack_int(message, 0, &new_actor);
@@ -150,6 +150,10 @@ static void process_receive(struct thorium_actor *self, struct thorium_message *
 
             printf("%d sends ACTION_PUSH_DATA (%d actors) to leader %d\n", name,
                             concrete_self->size, leader);
+        } else {
+
+            thorium_actor_send_to_self_int(self, ACTION_SPAWN,
+                            SCRIPT_LATENCY_PROCESS);
         }
     } else if (action == ACTION_ASK_TO_STOP) {
 
@@ -216,33 +220,47 @@ static void process_receive(struct thorium_actor *self, struct thorium_message *
         core_vector_unpack(&actors, buffer);
 
         core_vector_push_back_vector(&concrete_self->actors, &actors);
+
+        worker_count = thorium_actor_node_worker_count(self);
+
+        /*
+         * Only a few actors will receive ACTION_PING.
+         */
+        for (i = 0; i < worker_count; ++i) {
+            target = core_vector_at_as_int(&actors, i);
+
+            core_vector_push_back(&concrete_self->targets, &target);
+        }
         core_vector_destroy(&actors);
 
         if (core_vector_size(&concrete_self->actors) ==
                         core_vector_size(&concrete_self->initial_actors) * concrete_self->size) {
 
-            printf("OK send ACTION_NOTIFY with %d actors\n",
+            printf("%d sends ACTION_NOTIFY to %d actors\n",
+                            name,
                             (int)core_vector_size(&concrete_self->actors));
 
             thorium_actor_send_range_vector(self, &concrete_self->actors, ACTION_NOTIFY,
-                            &concrete_self->actors);
+                            &concrete_self->targets);
 
             core_timer_init(&concrete_self->timer);
             core_timer_start(&concrete_self->timer);
         }
     } else if (action == ACTION_NOTIFY) {
 
-        core_vector_unpack(&concrete_self->actors, buffer);
+        CORE_DEBUGGER_ASSERT(core_vector_empty(&concrete_self->targets));
+
+        core_vector_unpack(&concrete_self->targets, buffer);
 
         /* find out the index of ourselves
          */
-        concrete_self->index = core_vector_index_of(&concrete_self->actors, &name);
-
-        CORE_DEBUGGER_ASSERT(concrete_self->index >= 0);
+        concrete_self->index = core_vector_index_of(&concrete_self->targets, &name);
 
         if (process_is_important(self)) {
-            printf("%d has %d friends\n", thorium_actor_name(self),
-                        (int)core_vector_size(&concrete_self->actors));
+            printf("%d (node %d worker %d) has %d targets\n", thorium_actor_name(self),
+                            thorium_actor_node_name(self),
+                            thorium_actor_worker_name(self),
+                        (int)core_vector_size(&concrete_self->targets));
         }
 
         concrete_self->leader = source;
@@ -323,9 +341,9 @@ static void process_send_ping(struct thorium_actor *self)
 
     concrete_self = thorium_actor_concrete_actor(self);
 
-    target = thorium_actor_get_random_number(self) % core_vector_size(&concrete_self->actors);
+    target = thorium_actor_get_random_number(self) % core_vector_size(&concrete_self->targets);
 
-    target = core_vector_at_as_int(&concrete_self->actors, target);
+    target = core_vector_at_as_int(&concrete_self->targets, target);
 
     /*
     printf("%d sends ACTION_PING to %d\n", thorium_actor_name(self), target);
@@ -340,5 +358,5 @@ static int process_is_important(struct thorium_actor *self)
 
     concrete_self = thorium_actor_concrete_actor(self);
 
-    return (concrete_self->index % ACTORS_PER_WORKER) == 0;
+    return concrete_self->index >= 0;
 }
