@@ -22,7 +22,7 @@ void frame_init(struct thorium_actor *actor)
     struct frame *concrete_actor;
 
     concrete_actor = (struct frame *)thorium_actor_concrete_actor(actor);
-    concrete_actor->value = rand() % 12345;
+    concrete_actor->value = thorium_actor_get_random_number(actor) % 12345;
 
     thorium_actor_send_to_self_empty(actor, ACTION_PACK_ENABLE);
 
