@@ -287,7 +287,7 @@ int core_vector_pack_unpack(struct core_vector *self, void *buffer, int operatio
 
         byte_count = self->size * self->element_size;
 
-#ifdef CORE_DEBUGGER_ENABLE_ASSERT
+#ifdef CORE_DEBUGGER_ASSERT_ENABLED
         if (!(byte_count > 0)) {
             printf("size %" PRId64 " element_size %d\n",
                             self->size, self->element_size);

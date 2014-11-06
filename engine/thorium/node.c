@@ -2619,7 +2619,7 @@ static void thorium_node_recycle_message(struct thorium_node *self, struct thori
      * The type can not be THORIUM_MESSAGE_TYPE_NODE_OUTBOUND.
      */
 
-#ifdef CORE_DEBUGGER_ENABLE_ASSERT
+#ifdef CORE_DEBUGGER_ASSERT_ENABLED
     if (!(thorium_message_type(message) == THORIUM_MESSAGE_TYPE_NODE_INBOUND
                     || thorium_message_type(message) == THORIUM_MESSAGE_TYPE_WORKER_OUTBOUND)) {
         printf("Error: invalid type in thorium_node_recycle_message, actual: %d\n",
@@ -2743,7 +2743,7 @@ static int thorium_node_generate_random_name(struct thorium_node *self,
 
 void thorium_node_send_with_transport(struct thorium_node *self, struct thorium_message *message)
 {
-#ifdef CORE_DEBUGGER_ENABLE_ASSERT
+#ifdef CORE_DEBUGGER_ASSERT_ENABLED
     if (!(thorium_message_destination_node(message) >= 0
                  && thorium_message_destination_node(message) < self->nodes)) {
         printf("Error, invalid destination node %d (action %x)\n",

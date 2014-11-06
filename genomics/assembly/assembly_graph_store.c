@@ -797,7 +797,7 @@ void biosal_assembly_graph_store_add_arc(struct thorium_actor *self,
 
     vertex = core_map_get(&concrete_self->table, key);
 
-#ifdef CORE_DEBUGGER_ENABLE_ASSERT
+#ifdef CORE_DEBUGGER_ASSERT_ENABLED
     if (vertex == NULL) {
         printf("Error: vertex is NULL, key_length_in_bytes %d size %" PRIu64 "\n",
                         concrete_self->key_length_in_bytes,
@@ -985,7 +985,7 @@ void biosal_assembly_graph_store_get_vertex(struct thorium_actor *self, struct t
         position += thorium_message_unpack_int(message, position, &path);
     }
 
-#ifdef CORE_DEBUGGER_ENABLE_ASSERT
+#ifdef CORE_DEBUGGER_ASSERT_ENABLED
     if (position != count) {
         printf("Error graph_store_get_vertex position %d count %d\n",
                         position, count);

@@ -2053,7 +2053,7 @@ int thorium_actor_work(struct thorium_actor *self)
         thorium_message_set_buffer(&message, NULL);
 
 /*
-#ifdef CORE_DEBUGGER_ENABLE_ASSERT
+#ifdef CORE_DEBUGGER_ASSERT_ENABLED
     if (buffer == NULL) {
         printf("Error: actor message is NULL, source %d destination %d action %x\n",
                         thorium_message_source(&message),
@@ -2076,7 +2076,7 @@ int thorium_actor_work(struct thorium_actor *self)
      */
     thorium_actor_receive(self, &message);
 
-#ifdef CORE_DEBUGGER_ENABLE_ASSERT
+#ifdef CORE_DEBUGGER_ASSERT_ENABLED
     if (core_memory_pool_has_leaks(ephemeral_memory)) {
         printf("Error: detected leak in %s/%d action %x source %d\n",
                         thorium_actor_script_name(self),

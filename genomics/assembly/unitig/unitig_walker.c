@@ -977,7 +977,7 @@ void biosal_unitig_walker_notify(struct thorium_actor *self, struct thorium_mess
                     length, bucket->status, source, other_length);
 #endif
 
-#ifdef CORE_DEBUGGER_ENABLE_ASSERT
+#ifdef CORE_DEBUGGER_ASSERT_ENABLED
     if (bucket == NULL) {
         printf("Error %d received ACTION_NOTIFY, not found path_index= %d (current path_index %d)\n",
                         thorium_actor_name(self),
@@ -1009,7 +1009,7 @@ void biosal_unitig_walker_notify(struct thorium_actor *self, struct thorium_mess
                     other_length);
 #endif
 
-#ifdef CORE_DEBUGGER_ENABLE_ASSERT_disabled
+#ifdef CORE_DEBUGGER_ASSERT_ENABLED_disabled
         if (!(other_length <= length)) {
             printf("Error, this is false: %d <= %d\n",
                             other_length, length);
@@ -1286,7 +1286,7 @@ void biosal_unitig_walker_dump_path(struct thorium_actor *self)
     victory = 0;
     bucket->length_in_nucleotides = sequence_length;
 
-#ifdef CORE_DEBUGGER_ENABLE_ASSERT
+#ifdef CORE_DEBUGGER_ASSERT_ENABLED
     if (!(bucket->status == PATH_STATUS_IN_PROGRESS_WITH_CHALLENGERS
                     || bucket->status == PATH_STATUS_IN_PROGRESS_WITHOUT_CHALLENGERS
                     || bucket->status == PATH_STATUS_DEFEAT_WITH_CHALLENGER

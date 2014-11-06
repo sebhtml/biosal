@@ -13,7 +13,7 @@ struct core_timer;
 
 #ifdef CONFIG_DEBUG
 
-#define CORE_DEBUGGER_ENABLE_ASSERT
+#define CORE_DEBUGGER_ASSERT_ENABLED
 
 /*
 #define CORE_DEBUGGER_CHECK_DOUBLE_FREE_IN_POOL
@@ -57,7 +57,7 @@ struct core_timer;
 #define CORE_DEBUG_MARKER(marker) \
         printf("biosal> CORE_DEBUG_MARKER File: %s Line: %d Function %s: Marker: %s\n", __FILE__, __LINE__, __func__, marker);
 
-#ifdef CORE_DEBUGGER_ENABLE_ASSERT
+#ifdef CORE_DEBUGGER_ASSERT_ENABLED
 
 #define CORE_DEBUGGER_ASSERT(condition) \
     if (!(condition)) { \

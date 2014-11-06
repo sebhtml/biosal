@@ -76,7 +76,7 @@ static void process_receive(struct thorium_actor *self, struct thorium_message *
     }
     else if (action == ACTION_PING)
     {
-#ifdef CORE_DEBUGGER_ENABLE_ASSERT
+#ifdef CORE_DEBUGGER_ASSERT_ENABLED
         if (count != 0)
             thorium_message_print(message);
 #endif

@@ -905,7 +905,7 @@ int thorium_worker_dequeue_actor(struct thorium_worker *worker, struct thorium_a
         }
 
 #if 0
-#ifdef CORE_DEBUGGER_ENABLE_ASSERT
+#ifdef CORE_DEBUGGER_ASSERT_ENABLED
         if (other_actor == NULL) {
             printf("NULL pointer pulled from ring, operations %d ring size %d\n",
                             operations, core_fast_ring_size_from_consumer(&worker->input_actor_ring));
@@ -1495,7 +1495,7 @@ int thorium_worker_dequeue_message_for_triage(struct thorium_worker *worker, str
 
     value = core_fast_ring_pop_from_consumer(&worker->output_message_ring_for_triage, message);
 
-#ifdef CORE_DEBUGGER_ENABLE_ASSERT
+#ifdef CORE_DEBUGGER_ASSERT_ENABLED
     if (value) {
         CORE_DEBUGGER_ASSERT(thorium_message_buffer(message) != NULL);
     }

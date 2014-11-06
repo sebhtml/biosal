@@ -122,7 +122,7 @@ void thorium_message_multiplexer_destroy(struct thorium_message_multiplexer *sel
     printf("thorium_message_multiplexer: original_message_count %d real_message_count %d (%.4f)\n",
                     self->original_message_count, self->real_message_count, ratio);
 
-#ifdef CORE_DEBUGGER_ENABLE_ASSERT
+#ifdef CORE_DEBUGGER_ASSERT_ENABLED
 #endif
     size = core_vector_size(&self->buffers);
 
@@ -405,7 +405,7 @@ int thorium_message_multiplexer_demultiplex(struct thorium_message_multiplexer *
          */
         thorium_message_set_worker(&new_message, thorium_worker_name(self->worker));
 
-#ifdef CORE_DEBUGGER_ENABLE_ASSERT
+#ifdef CORE_DEBUGGER_ASSERT_ENABLED
         if (thorium_message_action(&new_message) == ACTION_INVALID) {
             printf("Error invalid action DEMUL Multiplexer position %d count %d new_count %d\n",
                             position, count, new_count);

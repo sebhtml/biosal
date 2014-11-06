@@ -252,7 +252,7 @@ static void process_receive(struct thorium_actor *self, struct thorium_message *
 
         ++concrete_self->received;
 
-#ifdef CORE_DEBUGGER_ENABLE_ASSERT
+#ifdef CORE_DEBUGGER_ASSERT_ENABLED
         if (count != 0) {
             printf("Error, count is %d but should be %d.\n",
                             count, 0);

@@ -545,7 +545,7 @@ int thorium_mpi1_pt2pt_nonblocking_transport_test(struct thorium_transport *self
             }
 #endif
 
-#ifdef CORE_DEBUGGER_ENABLE_ASSERT
+#ifdef CORE_DEBUGGER_ASSERT_ENABLED
 
 #endif
             /*

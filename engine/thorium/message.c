@@ -151,7 +151,7 @@ int thorium_message_write_metadata(struct thorium_message *self)
 {
     CORE_DEBUGGER_ASSERT_NOT_NULL(self->buffer);
 
-#ifdef CORE_DEBUGGER_ENABLE_ASSERT
+#ifdef CORE_DEBUGGER_ASSERT_ENABLED
     if (self->count < (int)THORIUM_MESSAGE_METADATA_SIZE) {
         printf("Error: count %d\n", self->count);
     }

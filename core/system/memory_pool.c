@@ -134,7 +134,7 @@ void *core_memory_pool_allocate(struct core_memory_pool *self, size_t size)
         return core_memory_allocate(size, MEMORY_MEMORY_POOL);
     }
 
-#ifdef CORE_DEBUGGER_ENABLE_ASSERT
+#ifdef CORE_DEBUGGER_ASSERT_ENABLED
     if (size < CORE_MEMORY_MINIMUM) {
         printf("Error: too low %zu\n", size);
     }
@@ -234,7 +234,7 @@ void *core_memory_pool_allocate(struct core_memory_pool *self, size_t size)
 
     if (CORE_BITMAP_GET_BIT(self->flags, FLAG_ENABLE_TRACKING)) {
 
-#ifdef CORE_DEBUGGER_ENABLE_ASSERT
+#ifdef CORE_DEBUGGER_ASSERT_ENABLED
         if (core_map_get(&self->allocated_blocks, &pointer) != NULL) {
             printf("Error, pointer %p is already in use, %zu bytes (on record: %zu bytes)\n",
                             pointer, size,
@@ -377,7 +377,7 @@ int core_memory_pool_free(struct core_memory_pool *self, void *pointer)
 
         core_memory_pool_free_private(self, pointer);
 /*
-#ifdef CORE_DEBUGGER_ENABLE_ASSERT
+#ifdef CORE_DEBUGGER_ASSERT_ENABLED
         if (!(self->profile_allocate_calls - self->profile_free_calls) ==
                                                 (int)core_map_size(&self->allocated_blocks)) {
             printf("Error: balance is incorrect, profile_allocate_calls %d profile_free_calls %d allocated_blocks.size %d\n",
@@ -389,7 +389,7 @@ int core_memory_pool_free(struct core_memory_pool *self, void *pointer)
         CORE_DEBUGGER_ASSERT((self->profile_allocate_calls - self->profile_free_calls) ==
                         (int)core_map_size(&self->allocated_blocks));
 */
-#ifdef CORE_DEBUGGER_ENABLE_ASSERT_
+#ifdef CORE_DEBUGGER_ASSERT_ENABLED_
         void *before = core_map_get(&self->allocated_blocks, &pointer);
 #endif
         core_map_delete(&self->allocated_blocks, &pointer);
@@ -397,7 +397,7 @@ int core_memory_pool_free(struct core_memory_pool *self, void *pointer)
         printf("DEBUG_MEMORY_POOL freed %zu bytes pointer %p\n", size, pointer);
         */
 
-#ifdef CORE_DEBUGGER_ENABLE_ASSERT
+#ifdef CORE_DEBUGGER_ASSERT_ENABLED
         void *after = core_map_get(&self->allocated_blocks, &pointer);
 
         if (after != NULL) {
@@ -422,7 +422,7 @@ int core_memory_pool_free(struct core_memory_pool *self, void *pointer)
      * If FLAG_ENABLE_TRACKING is set, verify that the current memory pool
      * manages this pointer.
      */
-#ifdef CORE_DEBUGGER_ENABLE_ASSERT
+#ifdef CORE_DEBUGGER_ASSERT_ENABLED
     if (CORE_BITMAP_GET_BIT(self->flags, FLAG_ENABLE_TRACKING)) {
         if (!value)
             printf("Error, memory pool (self= %p) 0x%x does not manage buffer %p\n",
@@ -525,7 +525,7 @@ void core_memory_pool_free_all(struct core_memory_pool *self)
     int i;
     int size;
 
-#ifdef CORE_DEBUGGER_ENABLE_ASSERT
+#ifdef CORE_DEBUGGER_ASSERT_ENABLED
     if (core_memory_pool_has_leaks(self)) {
         core_memory_pool_examine(self);
     }
@@ -643,7 +643,7 @@ void core_memory_pool_profile(struct core_memory_pool *self, int operation, size
     }
 
 #ifdef CORE_DEBUGGER_CHECK_DOUBLE_FREE_IN_POOL
-#ifdef CORE_DEBUGGER_ENABLE_ASSERT
+#ifdef CORE_DEBUGGER_ASSERT_ENABLED
     if (!(self->profile_allocate_calls >= self->profile_free_calls)) {
         core_memory_pool_examine(self);
     }

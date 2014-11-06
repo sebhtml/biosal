@@ -295,7 +295,7 @@ void biosal_coverage_distribution_ask_to_stop(struct thorium_actor *self, struct
         core_map_iterator_next(&iterator, (void **)&coverage,
                         (void **)&frequency);
 
-#ifdef CORE_DEBUGGER_ENABLE_ASSERT
+#ifdef CORE_DEBUGGER_ASSERT_ENABLED
         if (coverage == NULL) {
             printf("DEBUG map has %d buckets\n", (int)core_map_size(&concrete_actor->distribution));
         }
