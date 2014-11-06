@@ -2324,7 +2324,7 @@ int thorium_actor_get_random_spawner(struct thorium_actor *self, struct core_vec
         return THORIUM_ACTOR_NOBODY;
     }
 
-    index = rand() % size;
+    index = thorium_actor_get_random_number(self) % size;
     actor = core_vector_at_as_int(spawners, index);
 
     return actor;

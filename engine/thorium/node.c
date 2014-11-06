@@ -308,7 +308,7 @@ void thorium_node_init(struct thorium_node *node, int *argc, char ***argv)
      * On Blue Gene/Q, the starting time and PID is the same for all ranks.
      * Therefore, the name of the rank is also used.
      */
-    srand(node->start_time * getpid() * node->name);
+    node->random_seed = node->start_time * getpid() * node->name;
 
 #ifdef THORIUM_NODE_INJECT_CLEAN_WORKER_BUFFERS
     core_fast_queue_init(&node->output_clean_outbound_buffer_queue, sizeof(struct thorium_worker_buffer));
@@ -2735,9 +2735,8 @@ static int thorium_node_generate_random_name(struct thorium_node *self,
     int range;
 
     range = maximum_value - minimal_value;
-    name = rand() % range + minimal_value;
+    name = rand_r(&node->random_seed) % range + minimal_value;
     return name;
-
 
 #endif
 }

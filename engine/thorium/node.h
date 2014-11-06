@@ -245,6 +245,8 @@ struct thorium_node {
 #endif
 
     int cached_outbound_ring_size;
+
+    unsigned int random_seed;
 };
 
 extern struct thorium_node *thorium_node_global_self;
