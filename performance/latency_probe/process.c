@@ -1,6 +1,8 @@
 
 #include "process.h"
 
+#include "target.h"
+
 #include <core/helpers/statistics.h>
 #include <core/system/timer.h>
 #include <core/system/command.h>
