@@ -171,23 +171,25 @@ int core_fast_ring_push_from_producer(struct core_fast_ring *self, void *element
      * a single-producer single-consumer ring (no spinlock).
      */
 
-#ifdef CORE_MEMORY_STORE_OPERATIONS_ARE_ORDERED
-
-    /*
-     * The fence is still required if there is no spinlock because otherwise
-     * the change will never be visible outside of local memory cache.
-     */
-    if (!self->use_multiple_producers)
-        core_memory_fence();
-#else
     /*
      * The memory model of x86-64 is consistent.
      *
      * On POWER7, this fence is always required because the memory ordering
      * is weak.
      */
+
+    /*
+     * Update: this fence is *always* required because the content of the
+     * cell must be visible before the new tail value is visible.
+     *
+     * The following instruction must not be reordered, either by the compiler
+     * or by the hardware.
+     *
+     * - Thread 0 update cell (STORE)
+     * - Thread 0 update tail (STORE)
+     * - Thread 1 read tail (LOAD)
+     */
     core_memory_fence();
-#endif
 
 #endif
 
