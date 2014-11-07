@@ -1,5 +1,10 @@
 #!/bin/bash
 
+# environment variables:
+#
+# BUILD_DEBUG: enable assertions (CONFIG_DEBUG)
+# BUILD_COMMIT: build a specific commit, if none, use HEAD
+
 root=/lustre/beagle/CompBIO/automated-tests
 repository=git://github.com/sebhtml/biosal.git
 branch=master
@@ -28,9 +33,17 @@ fi
 
 cd biosal
 git checkout $branch
+
 git pull origin $branch
 
 __COMMIT__=$(git log | head -n1 | awk '{print $2}')
+
+if test -n "$BUILD_COMMIT"
+then
+    __COMMIT__=$BUILD_COMMIT
+
+    git checkout $__COMMIT__
+fi
 
 scripts/Cray_XE6/build-gnu.sh
 
