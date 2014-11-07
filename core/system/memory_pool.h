@@ -64,6 +64,8 @@ struct core_memory_pool {
 
     int profile_allocate_calls;
     int profile_free_calls;
+
+    int final;
 };
 
 void core_memory_pool_init(struct core_memory_pool *self, int block_size, int name);

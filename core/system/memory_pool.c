@@ -14,6 +14,13 @@
 #include <stdint.h>
 
 /*
+ * Examine memory pool on destruct().
+ */
+/*
+#define CORE_MEMORY_POOL_EXAMINE
+*/
+
+/*
  * Some flags.
  */
 #define FLAG_ENABLE_TRACKING 0
@@ -68,6 +75,8 @@ void core_memory_pool_init(struct core_memory_pool *self, int block_size, int na
     self->profile_freed_byte_count = 0;
     self->profile_allocate_calls = 0;
     self->profile_free_calls = 0;
+
+    self->final = 0;
 }
 
 void core_memory_pool_destroy(struct core_memory_pool *self)
@@ -75,6 +84,12 @@ void core_memory_pool_destroy(struct core_memory_pool *self)
     struct core_queue *queue;
     struct core_map_iterator iterator;
     struct core_memory_block *block;
+
+    self->final = 1;
+
+#ifdef CORE_MEMORY_POOL_EXAMINE
+    core_memory_pool_examine(self);
+#endif
 
 #ifdef CORE_MEMORY_POOL_FIND_LEAKS
     CORE_DEBUGGER_ASSERT(!core_memory_pool_has_leaks(self));
@@ -614,14 +629,19 @@ static void core_memory_pool_set_name(struct core_memory_pool *self, int name)
 
 void core_memory_pool_examine(struct core_memory_pool *self)
 {
-    printf("DEBUG_POOL Name= 0x%x"
+    int balance;
+
+    balance = self->profile_allocate_calls - self->profile_free_calls;
+
+    printf("DEBUG_POOL Name= 0x%x Self=%p Result= %s"
                     " AllocatedPointerCount= %d (%d - %d)"
                     " AllocatedByteCount= %" PRIu64 " (%" PRIu64 " - %" PRIu64 ")"
                     "\n",
 
                     self->name,
-
-                    self->profile_allocate_calls - self->profile_free_calls,
+                    (void *)self,
+                    (self->final == 1  ? (balance == 0 ? "PASSED" : "FAILED") : "-"),
+                    balance,
                     self->profile_allocate_calls, self->profile_free_calls,
 
                     self->profile_allocated_byte_count - self->profile_freed_byte_count,
