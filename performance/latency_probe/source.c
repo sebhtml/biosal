@@ -48,6 +48,8 @@ static void source_init(struct thorium_actor *self)
     }
 
     core_vector_init(&concrete_self->targets, sizeof(int));
+
+    concrete_self->target = -1;
 }
 
 static void source_destroy(struct thorium_actor *self)
@@ -140,7 +142,13 @@ static void source_send_ping(struct thorium_actor *self)
     concrete_self = thorium_actor_concrete_actor(self);
 
     CORE_DEBUGGER_ASSERT(!core_vector_empty(&concrete_self->targets));
-    target = thorium_actor_get_random_number(self) % core_vector_size(&concrete_self->targets);
+
+    if (concrete_self->target == -1)
+        concrete_self->target = thorium_actor_get_random_number(self) % core_vector_size(&concrete_self->targets);
+
+    target = concrete_self->target;
+    ++concrete_self->target;
+    concrete_self->target %= core_vector_size(&concrete_self->targets);
 
     target = core_vector_at_as_int(&concrete_self->targets, target);
 

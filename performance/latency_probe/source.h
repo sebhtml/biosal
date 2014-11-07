@@ -24,6 +24,8 @@ struct source {
 
     int leader;
     int event_count;
+
+    int target;
 };
 
 extern struct thorium_script script_source;
