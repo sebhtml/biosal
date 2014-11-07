@@ -702,7 +702,20 @@ void core_memory_pool_profile(struct core_memory_pool *self, int operation, size
 
 int core_memory_pool_has_leaks(struct core_memory_pool *self)
 {
-    return self->profile_allocate_calls != self->profile_free_calls;
+    int balance;
+
+    balance = self->profile_allocate_calls != self->profile_free_calls;
+
+    if (balance != 0)
+        return 1;
+
+    if (!core_set_empty(&self->large_blocks))
+        return 1;
+
+    if (!core_map_empty(&self->allocated_blocks))
+        return 1;
+
+    return 0;
 }
 
 void core_memory_pool_begin(struct core_memory_pool *self, struct core_memory_pool_state *state)
