@@ -39,12 +39,14 @@ void test_allocator(struct core_memory_pool *memory)
     core_timer_stop(&timer);
     elapsed = core_timer_get_elapsed_nanoseconds(&timer);
 
+#ifdef VERBOSE
     if (memory == NULL) {
         printf("Not using memory pool... ");
     } else {
         printf("Using memory pool... ");
     }
     printf("Elapsed : %" PRIu64 " milliseconds\n", elapsed / 1000 / 1000);
+#endif
 
     size = core_vector_size(&vector);
     for (i = 0; i < size; ++i) {
@@ -77,6 +79,20 @@ int main(int argc, char **argv)
 
         core_memory_pool_destroy(&memory);
     }
+
+    struct core_memory_pool pool;
+    int block_size;
+    int name;
+
+    name = 123;
+    block_size = 16777216;
+
+    core_memory_pool_init(&pool, block_size, name);
+
+    TEST_BOOLEAN_EQUALS(core_memory_pool_has_double_free(&pool), 0);
+    TEST_BOOLEAN_EQUALS(core_memory_pool_has_leaks(&pool), 0);
+
+    core_memory_pool_destroy(&pool);
 
     END_TESTS();
 
