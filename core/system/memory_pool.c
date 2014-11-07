@@ -702,11 +702,7 @@ void core_memory_pool_profile(struct core_memory_pool *self, int operation, size
 
 int core_memory_pool_has_leaks(struct core_memory_pool *self)
 {
-#ifdef CORE_DEBUGGER_CHECK_LEAKS_IN_POOL
     return self->profile_allocate_calls != self->profile_free_calls;
-#else
-    return 0;
-#endif
 }
 
 void core_memory_pool_begin(struct core_memory_pool *self, struct core_memory_pool_state *state)
