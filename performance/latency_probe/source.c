@@ -11,10 +11,6 @@
 #include <inttypes.h>
 #include <stdint.h>
 
-#define OPTION_EVENT_COUNT "-ping-event-count-per-actor"
-#define DEFAULT_EVENT_COUNT 40000
-#define PERIOD 2000
-
 static void source_init(struct thorium_actor *self);
 static void source_destroy(struct thorium_actor *self);
 static void source_receive(struct thorium_actor *self, struct thorium_message *message);
@@ -23,8 +19,8 @@ static void source_send_ping(struct thorium_actor *self);
 
 static int source_is_important(struct thorium_actor *self);
 
-struct thorium_script source_script = {
-    .identifier = SCRIPT_LATENCY_TARGET,
+struct thorium_script script_source = {
+    .identifier = SCRIPT_SOURCE,
     .init = source_init,
     .destroy = source_destroy,
     .receive = source_receive,
@@ -89,10 +85,6 @@ static void source_receive(struct thorium_actor *self, struct thorium_message *m
         CORE_DEBUGGER_ASSERT(core_vector_empty(&concrete_self->targets));
 
         core_vector_unpack(&concrete_self->targets, buffer);
-
-        /* find out the index of ourselves
-         */
-        concrete_self->index = core_vector_index_of(&concrete_self->targets, &name);
 
         if (source_is_important(self)) {
             printf("%d (node %d worker %d) has %d targets\n", thorium_actor_name(self),
@@ -163,9 +155,12 @@ static int source_is_important(struct thorium_actor *self)
 
     concrete_self = thorium_actor_concrete_actor(self);
 
-    return concrete_self->index >= 0;
 #endif
 
+#ifdef VERBOSITY
+    return 1;
+#else
     return 0;
+#endif
 }
 

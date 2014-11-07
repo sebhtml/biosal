@@ -6,8 +6,11 @@
 
 #define SCRIPT_LATENCY_TARGET 0xb7854b7e
 
+/*
+ * This actor receives ACTION_PING
+ * and sends ACTION_PING_REPLY.
+ */
 struct target {
-
     int received;
 };
 

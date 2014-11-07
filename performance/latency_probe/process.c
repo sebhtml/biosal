@@ -2,6 +2,7 @@
 #include "process.h"
 
 #include "target.h"
+#include "source.h"
 
 #include <core/helpers/statistics.h>
 #include <core/system/timer.h>
@@ -11,22 +12,11 @@
 #include <inttypes.h>
 #include <stdint.h>
 
-#define BASE 5000000
-#define ACTION_SPAWN_TARGETS (BASE + 1)
-#define ACTION_SPAWN_TARGETS_REPLY (BASE + 2)
-
-#define OPTION_EVENT_COUNT "-ping-event-count-per-actor"
-#define DEFAULT_EVENT_COUNT 40000
 #define ACTORS_PER_WORKER 100
-#define PERIOD 2000
 
 static void process_init(struct thorium_actor *self);
 static void process_destroy(struct thorium_actor *self);
 static void process_receive(struct thorium_actor *self, struct thorium_message *message);
-
-static void process_send_ping(struct thorium_actor *self);
-
-static int process_is_important(struct thorium_actor *self);
 
 struct thorium_script process_script = {
     .identifier = SCRIPT_LATENCY_PROCESS,
@@ -49,7 +39,6 @@ static void process_init(struct thorium_actor *self)
     core_vector_init(&concrete_self->target_children, sizeof(int));
     core_vector_init(&concrete_self->initial_actors, sizeof(int));
 
-    concrete_self->message_count = 0;
     concrete_self->completed = 0;
 
     argc = thorium_actor_argc(self);
@@ -63,9 +52,10 @@ static void process_init(struct thorium_actor *self)
 
     core_vector_init(&concrete_self->targets, sizeof(int));
 
-    concrete_self->mode = SCRIPT_LATENCY_PROCESS;
+    concrete_self->mode = SCRIPT_SOURCE;
 
     thorium_actor_add_script(self, SCRIPT_LATENCY_TARGET, &script_target);
+    thorium_actor_add_script(self, SCRIPT_SOURCE, &script_source);
 }
 
 static void process_destroy(struct thorium_actor *self)
@@ -137,10 +127,10 @@ static void process_receive(struct thorium_actor *self, struct thorium_message *
         concrete_self->size = worker_count * actors_per_worker;
 
         thorium_actor_send_to_self_int(self, ACTION_SPAWN,
-                            SCRIPT_LATENCY_PROCESS);
+                            SCRIPT_SOURCE);
 
     } else if (action == ACTION_SPAWN_REPLY
-                    && concrete_self->mode == (int)SCRIPT_LATENCY_PROCESS) {
+                    && concrete_self->mode == (int)SCRIPT_SOURCE) {
 
         thorium_message_unpack_int(message, 0, &new_actor);
 
@@ -165,7 +155,7 @@ static void process_receive(struct thorium_actor *self, struct thorium_message *
         } else {
 
             thorium_actor_send_to_self_int(self, ACTION_SPAWN,
-                            SCRIPT_LATENCY_PROCESS);
+                            SCRIPT_SOURCE);
         }
 
     } else if (action == ACTION_SPAWN_REPLY && concrete_self->mode == (int)SCRIPT_LATENCY_TARGET) {
@@ -265,55 +255,6 @@ static void process_receive(struct thorium_actor *self, struct thorium_message *
             thorium_actor_send_to_self_int(self, ACTION_SPAWN, SCRIPT_LATENCY_TARGET);
         }
 
-    } else if (action == ACTION_NOTIFY) {
-
-        CORE_DEBUGGER_ASSERT(core_vector_empty(&concrete_self->targets));
-
-        core_vector_unpack(&concrete_self->targets, buffer);
-
-        /* find out the index of ourselves
-         */
-        concrete_self->index = core_vector_index_of(&concrete_self->targets, &name);
-
-        if (process_is_important(self)) {
-            printf("%d (node %d worker %d) has %d targets\n", thorium_actor_name(self),
-                            thorium_actor_node_name(self),
-                            thorium_actor_worker_name(self),
-                        (int)core_vector_size(&concrete_self->targets));
-        }
-
-        concrete_self->leader = source;
-        process_send_ping(self);
-
-    } else if (action == ACTION_PING_REPLY) {
-
-        ++concrete_self->message_count;
-
-        CORE_DEBUGGER_ASSERT_IS_EQUAL_INT(count, 0);
-        CORE_DEBUGGER_ASSERT_IS_NULL(buffer);
-
-        if (concrete_self->message_count % PERIOD == 0 || concrete_self->event_count < 500) {
-            if (process_is_important(self)) {
-                printf("progress %d %d/%d\n",
-                            name, concrete_self->message_count, concrete_self->event_count);
-            }
-        }
-
-        if (concrete_self->message_count == concrete_self->event_count) {
-
-            leader = concrete_self->leader;
-            thorium_actor_send_empty(self, leader, ACTION_NOTIFY_REPLY);
-
-            if (process_is_important(self))
-                printf("%d (ACTION_PING sent: %d)"
-                            " sends ACTION_NOTIFY_REPLY to %d\n", thorium_actor_name(self),
-                            concrete_self->message_count,
-                            leader);
-        } else {
-
-            process_send_ping(self);
-        }
-
     } else if (action == ACTION_NOTIFY_REPLY) {
 
         ++concrete_self->completed;
@@ -355,41 +296,11 @@ static void process_receive(struct thorium_actor *self, struct thorium_message *
             thorium_actor_send_range_vector(self, &concrete_self->actors, ACTION_NOTIFY,
                             &concrete_self->targets);
 
+            printf("Please wait, this can take a while...\n");
+
             core_timer_init(&concrete_self->timer);
             core_timer_start(&concrete_self->timer);
         }
     }
-}
-
-static void process_send_ping(struct thorium_actor *self)
-{
-    int target;
-    struct process *concrete_self;
-
-    concrete_self = thorium_actor_concrete_actor(self);
-
-    CORE_DEBUGGER_ASSERT(!core_vector_empty(&concrete_self->targets));
-    target = thorium_actor_get_random_number(self) % core_vector_size(&concrete_self->targets);
-
-    target = core_vector_at_as_int(&concrete_self->targets, target);
-
-    /*
-    printf("%d sends ACTION_PING to %d\n", thorium_actor_name(self), target);
-    */
-
-    thorium_actor_send_empty(self, target, ACTION_PING);
-}
-
-static int process_is_important(struct thorium_actor *self)
-{
-#if 0
-    struct process *concrete_self;
-
-    concrete_self = thorium_actor_concrete_actor(self);
-
-    return concrete_self->index >= 0;
-#endif
-
-    return 0;
 }
 

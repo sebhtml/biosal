@@ -6,9 +6,13 @@
 
 #define SCRIPT_LATENCY_PROCESS 0xb4a99051
 
+#define _LATENCY_PROBE_BASE 5000000
+#define ACTION_SPAWN_TARGETS (_LATENCY_PROBE_BASE + 1)
+#define ACTION_SPAWN_TARGETS_REPLY (_LATENCY_PROBE_BASE + 2)
+
 /*
- * A ping-pong actor for testing and debugging
- * Thorium and hardware platforms.
+ * This actor is an initial actor. It spawns source and target
+ * actors and synchronize with a leader.
  */
 struct process {
     struct core_vector initial_actors;
@@ -20,13 +24,9 @@ struct process {
     struct core_timer timer;
     int size;
 
-    int message_count;
     int completed;
 
-    int leader;
     int event_count;
-
-    int index;
 
     int mode;
 };
