@@ -448,6 +448,34 @@ int core_memory_pool_free(struct core_memory_pool *self, void *pointer)
 #endif
 
     /*
+     * If the FLAG_ENABLE_TRACKING bit is 0, then the map "allocated_blocks"
+     * never contains anything (even for large segments). Thus, the if block
+     * just above this comment never does anything when FLAG_ENABLE_TRACKING
+     * is 0.
+     *
+     * The solution, when FLAG_ENABLE_TRACKING is cleared, is to send every
+     * allocation through the core_memory_pool_free_private() code path. In
+     * this function, large_blocks are still tracked even if
+     * FLAG_ENABLE_TRACKING is 0.
+     *
+     * This is to avoid errors when memory blocks of the memory pool can not
+     * fulfill allocations that are too large.
+     *
+     * This memory leak was affecting performance as well, when the ephemeral
+     * memory pool of any worker allocates large segments of memory because
+     * these were not freed anymore.
+     *
+     * The call to core_memory_pool_free_private() below call fixes the
+     * regression added in commit 153eea9 ("thorium_node: use message type to
+     * select pool to free buffer").
+     *
+     * Link: https://github.com/GeneAssembly/biosal/issues/788#issuecomment-62002496
+     */
+    if (!CORE_BITMAP_GET_BIT(self->flags, FLAG_ENABLE_TRACKING)) {
+        core_memory_pool_free_private(self, pointer);
+    }
+
+    /*
      * Profile the call. This is done even when FLAG_ENABLE_TRACKING
      * is not set.
      */
