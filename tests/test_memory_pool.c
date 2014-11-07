@@ -83,16 +83,108 @@ int main(int argc, char **argv)
     struct core_memory_pool pool;
     int block_size;
     int name;
+    int i;
+    void *object;
+    struct core_vector vector;
 
     name = 123;
     block_size = 16777216;
 
     core_memory_pool_init(&pool, block_size, name);
 
+    core_vector_init(&vector, sizeof(void *));
+
+    TEST_BOOLEAN_EQUALS(core_memory_pool_has_double_free(&pool), 0);
+    TEST_BOOLEAN_EQUALS(core_memory_pool_has_leaks(&pool), 0);
+
+    /*
+     * With tracking
+     */
+    i = 9999;
+    while (i--) {
+        object = core_memory_pool_allocate(&pool, 77);
+
+        TEST_POINTER_NOT_EQUALS(object, NULL);
+
+        core_vector_push_back(&vector, &object);
+    }
+
+    for (i = 0; i < (int)core_vector_size(&vector); ++i) {
+        object = core_vector_at_as_void_pointer(&vector, i);
+
+        TEST_POINTER_NOT_EQUALS(object, NULL);
+
+        core_memory_pool_free(&pool, object);
+
+        TEST_BOOLEAN_EQUALS(core_memory_pool_has_double_free(&pool), 0);
+    }
+
+    TEST_BOOLEAN_EQUALS(core_memory_pool_has_double_free(&pool), 0);
+    TEST_BOOLEAN_EQUALS(core_memory_pool_has_leaks(&pool), 0);
+
+    /*
+     * big segments
+     */
+
+    object = core_memory_pool_allocate(&pool, block_size * 10);
+
+    TEST_POINTER_NOT_EQUALS(object, NULL);
+
+    core_memory_pool_free(&pool, object);
+
+    TEST_BOOLEAN_EQUALS(core_memory_pool_has_double_free(&pool), 0);
+    TEST_BOOLEAN_EQUALS(core_memory_pool_has_leaks(&pool), 0);
+
+    core_memory_pool_disable_tracking(&pool);
+
+    core_vector_clear(&vector);
+
+    /*
+     * Without tracking
+     */
+
+    i = 9999;
+    while (i--) {
+        object = core_memory_pool_allocate(&pool, 77);
+
+        TEST_POINTER_NOT_EQUALS(object, NULL);
+
+        core_vector_push_back(&vector, &object);
+    }
+
+    for (i = 0; i < (int)core_vector_size(&vector); ++i) {
+        object = core_vector_at_as_void_pointer(&vector, i);
+
+        TEST_POINTER_NOT_EQUALS(object, NULL);
+
+        core_memory_pool_free(&pool, object);
+
+        TEST_BOOLEAN_EQUALS(core_memory_pool_has_double_free(&pool), 0);
+    }
+
+    TEST_BOOLEAN_EQUALS(core_memory_pool_has_double_free(&pool), 0);
+    TEST_BOOLEAN_EQUALS(core_memory_pool_has_leaks(&pool), 0);
+
+    /*
+     * big segments
+     */
+
+    i = 4;
+
+    while (i--) {
+        object = core_memory_pool_allocate(&pool, block_size * 10);
+
+        TEST_POINTER_NOT_EQUALS(object, NULL);
+
+        core_memory_pool_free(&pool, object);
+        TEST_BOOLEAN_EQUALS(core_memory_pool_has_leaks(&pool), 0);
+    }
+
     TEST_BOOLEAN_EQUALS(core_memory_pool_has_double_free(&pool), 0);
     TEST_BOOLEAN_EQUALS(core_memory_pool_has_leaks(&pool), 0);
 
     core_memory_pool_destroy(&pool);
+    core_vector_destroy(&vector);
 
     END_TESTS();
 
