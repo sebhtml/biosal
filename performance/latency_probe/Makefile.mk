@@ -1,6 +1,9 @@
 
 APPLICATION_LATENCY_PROBE_PRODUCT=performance/latency_probe/latency_probe
-APPLICATION_LATENCY_PROBE_OBJECTS=performance/latency_probe/main.o performance/latency_probe/process.o performance/latency_probe/target.o
+APPLICATION_LATENCY_PROBE_OBJECTS=performance/latency_probe/main.o
+APPLICATION_LATENCY_PROBE_OBJECTS+= performance/latency_probe/process.o
+APPLICATION_LATENCY_PROBE_OBJECTS+= performance/latency_probe/target.o
+APPLICATION_LATENCY_PROBE_OBJECTS+= performance/latency_probe/source.o
 
 APPLICATION_EXECUTABLES+=$(APPLICATION_LATENCY_PROBE_PRODUCT)
 APPLICATION_OBJECTS+=$(APPLICATION_LATENCY_PROBE_OBJECTS)

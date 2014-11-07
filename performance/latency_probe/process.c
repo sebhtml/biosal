@@ -104,6 +104,7 @@ static void process_receive(struct thorium_actor *self, struct thorium_message *
     int nodes;
     int number_of_actors;
     int workers;
+    int expected;
     int workers_per_node;
 
     concrete_self = (struct process *)thorium_actor_concrete_actor(self);
@@ -339,9 +340,9 @@ static void process_receive(struct thorium_actor *self, struct thorium_message *
         core_vector_push_back_vector(&concrete_self->targets, &actors);
 
         core_vector_destroy(&actors);
+        expected = core_vector_size(&concrete_self->initial_actors) * worker_count;
 
-        if (core_vector_size(&concrete_self->targets) == 
-                        core_vector_size(&concrete_self->initial_actors) * worker_count) {
+        if (core_vector_size(&concrete_self->targets) == expected) {
 
             printf("%d has %d targets ready\n", name,
                             (int)core_vector_size(&concrete_self->targets));
