@@ -18,6 +18,7 @@ function main()
     #echo "line $count"
 
     (
+    echo "<?xml version=\"1.0\"?>"
     echo "<testsuites>"
 
     for i in $(seq 1 $count)
