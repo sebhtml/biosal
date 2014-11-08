@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/gkthiruvathukal/biosal.svg?branch=granularity)](https://travis-ci.org/gkthiruvathukal/biosal)
+
 biosal is a distributed BIOlogical Sequence Actor Library.
 
 biosal applications are written in the form of actors which send each other messages,
