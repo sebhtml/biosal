@@ -1,5 +1,7 @@
 #!/bin/bash
 
+maximum_test_count=9999
+
 function biosal_shell_summarize_test_result()
 {
     local title

@@ -13,8 +13,7 @@ function main()
     local failed
     local wall_time
 
-    #for real_test in $(cat tests/application-tests.txt | head -n 1)
-    for real_test in $(cat tests/application-tests.txt)
+    for real_test in $(cat tests/application-tests.txt | head -n $maximum_test_count)
     do
         rm -rf output &> /dev/null
 
