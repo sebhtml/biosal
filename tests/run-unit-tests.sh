@@ -23,7 +23,7 @@ function main()
     (
     echo "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>"
     echo "<testsuites>"
-    echo "<testsuite name=\"unit-tests\" tests=\"$count\" failures=\"$total_failures\" timestamp=\"$timestamp\">"
+    echo "<testsuite package=\"biosal\" name=\"unit-tests\" tests=\"$count\" failures=\"$total_failures\" timestamp=\"$timestamp\">"
 
     for i in $(seq 1 $count)
     do
@@ -35,7 +35,7 @@ function main()
         #echo $timestamp
 
         # \see http://nelsonwells.net/2012/09/how-jenkins-ci-parses-and-displays-junit-output/
-        echo "        <testcase name=\"$name\" classname=\"NULL\">"
+        echo "        <testcase classname=\"NULL\" name=\"$name\">"
 
         if test $failures != "0"
         then
@@ -50,9 +50,9 @@ function main()
     echo "</testsuites>"
     ) > unit-tests.junit.xml
 
-    echo "see unit-tests.junit.xml"
-
     tests/summarize-tests.sh tests.log
+
+    echo "see unit-tests.junit.xml"
 }
 
 main
