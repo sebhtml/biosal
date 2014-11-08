@@ -49,7 +49,7 @@ function biosal_test_junit_start_testsuite()
     total_failures=$3
 
     timestamp=$(get_date)
-    echo "<testsuite package=\"biosal\" name=\"unit-tests\" tests=\"$count\" failures=\"$total_failures\" timestamp=\"$timestamp\">"
+    echo "<testsuite package=\"biosal\" name=\"$name\" tests=\"$count\" failures=\"$total_failures\" timestamp=\"$timestamp\">"
 }
 
 function biosal_test_junit_close_xml_stream()
