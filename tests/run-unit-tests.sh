@@ -13,13 +13,17 @@ function main()
     make -s test_private | tee tests.log
 
     count=$(cat tests.log | wc -l)
+    total_failures=$(cat tests.log | grep FAILED | wc -l)
+
     timestamp=$(get_date)
 
     #echo "line $count"
 
+    # \see http://help.catchsoftware.com/display/ET/JUnit+Format
     (
-    echo "<?xml version=\"1.0\"?>"
+    echo "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>"
     echo "<testsuites>"
+    echo "<testsuite name=\"unit-tests\" tests=\"$count\" failures=\"$total_failures\" timestamp=\"$timestamp\">"
 
     for i in $(seq 1 $count)
     do
@@ -31,9 +35,17 @@ function main()
         #echo $timestamp
 
         # \see http://nelsonwells.net/2012/09/how-jenkins-ci-parses-and-displays-junit-output/
-        echo "    <testsuite name=\"$name\" tests=\"$tests\" failures=\"$failures\" timestamp=\"$timestamp\">"
-        echo "    </testsuite>"
+        echo "        <testcase name=\"$name\" classname=\"NULL\">"
+
+        if test $failures != "0"
+        then
+            echo "<error message=\"$line\"></error>"
+        fi
+        echo "        </testcase>"
+
     done
+
+    echo "    </testsuite>"
 
     echo "</testsuites>"
     ) > unit-tests.junit.xml
