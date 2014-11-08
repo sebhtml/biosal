@@ -1,9 +1,4 @@
 
-examples: mock_examples
-	examples/run-examples.sh
-
-mock_examples:
-
 EXAMPLE_EXECUTABLES=examples/example_mock examples/example_ring examples/example_reader examples/example_remote_spawn \
 	examples/example_synchronize examples/example_controller examples/example_hello_world examples/example_systolic \
 	examples/example_clone examples/example_migration

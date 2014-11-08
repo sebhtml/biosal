@@ -58,3 +58,10 @@ example-tests: examples
 
 application-tests:
 	tests/run-integration-tests.sh
+
+examples: mock_examples
+	tests/run-examples.sh
+
+mock_examples:
+
+
