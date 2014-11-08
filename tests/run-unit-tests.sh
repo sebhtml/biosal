@@ -16,7 +16,6 @@ function main()
     # \see http://help.catchsoftware.com/display/ET/JUnit+Format
     (
     biosal_test_junit_open_xml_stream
-
     biosal_test_junit_start_testsuite "unit-tests" $count $total_failures
 
     for i in $(seq 1 $count)
@@ -26,7 +25,7 @@ function main()
         failures=$(echo $line | awk '{print $6}')
         name=$(echo $line | awk '{print $2}')
         error=""
-        time_value=""
+        time_value="-"
 
         # \see http://nelsonwells.net/2012/09/how-jenkins-ci-parses-and-displays-junit-output/
 
@@ -35,7 +34,7 @@ function main()
             error=$line
         fi
 
-        biosal_test_junit_emit_testcase "NULL" "$name" "$error" "$time_value"
+        biosal_test_junit_emit_testcase "NULL" "$name" "$time_value" "$error"
     done
 
     biosal_test_junit_end_testsuite
