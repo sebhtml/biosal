@@ -66,13 +66,15 @@ function biosal_test_junit_emit_testcase()
 {
     local classname
     local name
+    local time_value
     local error
 
     classname=$1
     name=$2
-    error=$3
+    time_value=$3
+    error=$4
 
-    echo "        <testcase classname=\"$classname\" name=\"$name\">"
+    echo "        <testcase classname=\"$classname\" name=\"$name\" time=\"$time_value\">"
 
     if test "$error" != ""
     then

@@ -26,6 +26,7 @@ function main()
         failures=$(echo $line | awk '{print $6}')
         name=$(echo $line | awk '{print $2}')
         error=""
+        time_value=""
 
         # \see http://nelsonwells.net/2012/09/how-jenkins-ci-parses-and-displays-junit-output/
 
@@ -34,8 +35,7 @@ function main()
             error=$line
         fi
 
-        biosal_test_junit_emit_testcase "NULL" "$name" $error
-
+        biosal_test_junit_emit_testcase "NULL" "$name" "$error" "$time_value"
     done
 
     biosal_test_junit_end_testsuite
