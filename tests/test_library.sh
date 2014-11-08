@@ -23,3 +23,60 @@ function biosal_shell_summarize_test_result()
 
     echo ""
 }
+
+function biosal_test_junit_open_xml_stream()
+{
+    echo "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>"
+    echo "<testsuites>"
+}
+
+function get_date()
+{
+    # \see http://askubuntu.com/questions/355188/date-format-in-unix
+
+    date +%Y-%m-%dT%H:%M:%S%z
+}
+
+function biosal_test_junit_start_testsuite()
+{
+    local timestamp
+    local name
+    local count
+    local total_failures
+
+    name=$1
+    count=$2
+    total_failures=$3
+
+    timestamp=$(get_date)
+    echo "<testsuite package=\"biosal\" name=\"unit-tests\" tests=\"$count\" failures=\"$total_failures\" timestamp=\"$timestamp\">"
+}
+
+function biosal_test_junit_close_xml_stream()
+{
+    echo "</testsuites>"
+}
+
+function biosal_test_junit_end_testsuite()
+{
+    echo "    </testsuite>"
+}
+
+function biosal_test_junit_emit_testcase()
+{
+    local classname
+    local name
+    local error
+
+    classname=$1
+    name=$2
+    error=$3
+
+    echo "        <testcase classname=\"$classname\" name=\"$name\">"
+
+    if test "$error" != ""
+    then
+        echo "<error message=\"$error\"></error>"
+    fi
+    echo "        </testcase>"
+}
