@@ -1,6 +1,33 @@
 
 test: tests
 
+# Targets for quality assurance:
+#
+# - unit-tests			(synonym: tests)
+#   Run unit tests in tests/
+#
+# - example-tests 		(synonym: examples)
+#   Run examples in examples/
+#
+# - performance-tests
+#   Run performance tests in performance/
+#
+# - application-tests
+#   Run applications in applications/
+#
+# - all-tests				(synonym: qa, this runs all tests)
+#
+# Test results are generated in standard output.
+# Also, these files are generated:
+#
+# - unit-tests.junit.xml
+# - example-tests.junit.xml
+# - performance-tests.junit.xml
+# - application-tests.junit.xml
+#
+# The XSD file is
+# https://svn.jenkins-ci.org/trunk/hudson/dtkit/dtkit-format/dtkit-junit-model/src/main/resources/com/thalesgroup/dtkit/junit/model/xsd/junit-4.xsd
+
 TEST_LIBRARY_OBJECTS=tests/test.o
 TEST_EXECUTABLES=
 TEST_OBJECTS=
@@ -20,7 +47,14 @@ mock_test_target:
 quality-assurance: qa
 
 
-qa:
+qa: all-tests
+
+all-tests:
 	tests/perform-quality-assurance.sh
 
+unit-tests: tests
 
+example-tests: examples
+
+application-tests:
+	tests/run-integration-tests.sh
