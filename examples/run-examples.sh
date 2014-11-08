@@ -81,6 +81,7 @@ function main()
 
     xml_file="example-tests.junit.xml"
 
+    #for example in $(cat examples/example-tests.txt | head -n 1)
     for example in $(cat examples/example-tests.txt)
     do
         run_example $example

@@ -2,5 +2,5 @@
 
 make clean
 make
-make tests
+make unit-tests
 #make examples

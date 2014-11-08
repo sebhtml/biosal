@@ -12,18 +12,15 @@ function run_tests_private()
     echo "see build.log"
 
     echo ""
-    echo "Unit tests (make tests)"
-
-    make -s unit-tests > unit-tests.log
-    grep ^UnitTestSuite unit-tests.log
-    echo "see unit-tests.log"
+    echo "Unit tests (make unit-tests)"
+    make -s unit-tests
 
     echo ""
-    echo "Examples (make examples)"
+    echo "Examples (make example-tests)"
     make -s example-tests
 
     echo ""
-    echo "Real use cases (tests/run-integration-tests.sh)"
+    echo "Applications (make application-tests)"
     make -s application-tests
 }
 
