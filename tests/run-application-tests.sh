@@ -40,7 +40,7 @@ function dump_example_xml_result()
             error=$line
         fi
 
-        biosal_test_junit_emit_testcase "NULL" "$name" "$time_value" "$error"
+        biosal_test_junit_emit_testcase "biosal.ApplicationTest" "$name" "$time_value" "$error"
     done
 
     biosal_test_junit_end_testsuite
