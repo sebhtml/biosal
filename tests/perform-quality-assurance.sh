@@ -19,12 +19,12 @@ function run_tests_private()
     echo "see unit-tests.log"
 
     echo ""
-    echo "Real use cases (tests/run-integration-tests.sh)"
-    tests/run-integration-tests.sh
-
-    echo ""
     echo "Examples (make examples)"
     make -s examples
+
+    echo ""
+    echo "Real use cases (tests/run-integration-tests.sh)"
+    tests/run-integration-tests.sh
 }
 
 function run_tests()
