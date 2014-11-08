@@ -13,8 +13,7 @@ include tests/test_*.mk
 test_private: $(TEST_RUNS)
 
 tests: mock_test_target
-	$(Q)$(MAKE) -s test_private | tee tests.log
-	$(Q)tests/summarize-tests.sh tests.log
+	$(Q)tests/run-unit-tests.sh
 
 mock_test_target:
 
