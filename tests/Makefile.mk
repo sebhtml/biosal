@@ -57,7 +57,7 @@ unit-tests: tests
 example-tests: examples
 
 application-tests:
-	tests/run-integration-tests.sh
+	tests/run-application-tests.sh
 
 examples: mock_examples
 	tests/run-examples.sh

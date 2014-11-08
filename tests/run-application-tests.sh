@@ -13,12 +13,12 @@ function main()
     local failed
     local wall_time
 
-    #for real_test in $(cat tests/integration-tests.txt | head -n 1)
-    for real_test in $(cat tests/integration-tests.txt)
+    #for real_test in $(cat tests/application-tests.txt | head -n 1)
+    for real_test in $(cat tests/application-tests.txt)
     do
         rm -rf output &> /dev/null
 
-        tests/run-integration-test.sh $real_test > $real_test.log
+        tests/run-application-test.sh $real_test > $real_test.log
 
         wall_time=$(tail -n 3 $real_test.log | grep real | awk '{print $2}')
 
