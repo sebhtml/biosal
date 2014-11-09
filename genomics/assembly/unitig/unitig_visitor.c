@@ -67,6 +67,10 @@ void biosal_unitig_visitor_init(struct thorium_actor *self)
     }
 
     concrete_self->visited = 0;
+
+    concrete_self->last_second_count = thorium_actor_get_time_in_seconds(self);
+    concrete_self->last_visited_count = concrete_self->visited;
+
     concrete_self->unitig_flags = 0;
 
     biosal_vertex_neighborhood_init_empty(&concrete_self->main_neighborhood);
@@ -228,6 +232,8 @@ void biosal_unitig_visitor_execute(struct thorium_actor *self)
     struct biosal_unitig_visitor *concrete_self;
     int code;
     int expected_code;
+    float velocity;
+    uint64_t current_time;
 
     concrete_self = thorium_actor_concrete_actor(self);
     size = core_vector_size(&concrete_self->graph_stores);
@@ -363,9 +369,18 @@ void biosal_unitig_visitor_execute(struct thorium_actor *self)
         concrete_self->step = STEP_GET_MAIN_KMER;
 
         if (concrete_self->visited % 500 == 0) {
-            printf("%s/%d visited %d vertices so far\n",
+
+            current_time = thorium_actor_get_time_in_seconds(self);
+
+            velocity = (concrete_self->visited - concrete_self->last_visited_count + 0.0);
+            current_time -= concrete_self->last_second_count;
+
+            if (current_time != 0)
+                velocity /= current_time;
+
+            printf("%s/%d visited %d vertices so far (velocity: %f vertices / s)\n",
                             thorium_actor_script_name(self), thorium_actor_name(self),
-                            concrete_self->visited);
+                            concrete_self->visited, velocity);
         }
 
         ++concrete_self->visited;

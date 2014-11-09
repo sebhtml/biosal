@@ -50,6 +50,13 @@ struct biosal_unitig_visitor {
     int unitig_flags;
 
     struct biosal_unitig_heuristic heuristic;
+
+    /*
+     * Attributes for progress.
+     */
+
+    int last_visited_count;
+    uint64_t last_second_count;
 };
 
 extern struct thorium_script biosal_unitig_visitor_script;
