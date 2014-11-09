@@ -53,9 +53,6 @@ make examples # run examples
 - The [**Integration Manager Workflow**](http://git-scm.com/about/distributed) is used.
 - Nightly build of master branch: [![Build Status](http://jenkins.biosal.anl.boisvert.info:8080/buildStatus/icon?job=big-system-tests)](http://jenkins.biosal.anl.boisvert.info:8080/job/big-system-tests/)
 
-# Product team
-see [CREDITS.md](CREDITS.md)
-
 # Community
 
 - Issues: https://github.com/GeneAssembly/biosal/issues?state=open
@@ -184,5 +181,8 @@ Alternative name: BIOlogy Scalable Actor Library
 - XPS 13 with Fedora
 - Xeon E7-4830 with CentOS 6.5
 - Apple Mavericks
+
+# Product team
+see [CREDITS.md](CREDITS.md)
 
 
