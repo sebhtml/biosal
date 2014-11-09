@@ -52,6 +52,11 @@ function biosal_filter_time_value()
         time_value=$(($hours * 60 * 60 + $minutes *  60 + $seconds))
     fi
 
+    if test $time_value = "-"
+    then
+        time_value=0
+    fi
+
     echo $time_value
 }
 
