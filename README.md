@@ -1,4 +1,3 @@
-[![Build Status](https://travis-ci.org/gkthiruvathukal/biosal.svg?branch=granularity)](https://travis-ci.org/gkthiruvathukal/biosal)
 
 biosal is a distributed BIOlogical Sequence Actor Library.
 
@@ -42,13 +41,13 @@ make examples # run examples
 
 # Branches
 
-| Branch name | Person (alphabetical order) | Clone URL |
-| --- | --- | --- |
-| [master](https://github.com/sebhtml/biosal/tree/master) | Sébastien Boisvert | [HTTPS](https://github.com/GeneAssembly/biosal.git) |
-| [energy](https://github.com/sebhtml/biosal/tree/energy) | Sébastien Boisvert| [HTTPS](https://github.com/sebhtml/biosal.git) |
-| [pami](https://github.com/huyba/biosal/tree/master) | Huy Bui | [HTTPS](https://github.com/huyba/biosal.git) |
-| [granularity](https://github.com/gkthiruvathukal/biosal/tree/granularity) | George K. Thiruvathukal | [HTTPS](https://github.com/gkthiruvathukal/biosal.git) |
-| [entropy](https://github.com/levinas/biosal/tree/entropy) | Fangfang Xia | [HTTPS](https://github.com/levinas/biosal.git) |
+| Branch name | Person (alphabetical order) | Clone URL | Branch Build Status |
+| --- | --- | --- | --- |
+| [master](https://github.com/sebhtml/biosal/tree/master) | Sébastien Boisvert | [HTTPS](https://github.com/GeneAssembly/biosal.git) | |
+| [energy](https://github.com/sebhtml/biosal/tree/energy) | Sébastien Boisvert| [HTTPS](https://github.com/sebhtml/biosal.git) | |
+| [pami](https://github.com/huyba/biosal/tree/master) | Huy Bui | [HTTPS](https://github.com/huyba/biosal.git) | |
+| [granularity](https://github.com/gkthiruvathukal/biosal/tree/granularity) | George K. Thiruvathukal | [HTTPS](https://github.com/gkthiruvathukal/biosal.git) |[![Build Status](https://travis-ci.org/gkthiruvathukal/biosal.svg?branch=granularity)](https://travis-ci.org/gkthiruvathukal/biosal)  |
+| [entropy](https://github.com/levinas/biosal/tree/entropy) | Fangfang Xia | [HTTPS](https://github.com/levinas/biosal.git) | |
 
 There is also a read-only [mirror](https://github.com/GeneAssembly/biosal/tree/mirror).
 

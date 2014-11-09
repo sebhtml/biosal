@@ -1,6 +1,6 @@
 language: c
 before_install:
-  - sh ./scripts/install-travis-prereqs.sh
+  - sh ./tests/travis-ci/install-travis-prereqs.sh
 before_script:
   - make CONFIG_CLOCK_GETTIME=n CONFIG_MPI=y CONFIG_ZLIB=y CC=mpicc
 script:
