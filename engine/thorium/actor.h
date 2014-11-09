@@ -13,6 +13,7 @@
 #include "modules/send_helpers.h"
 #include "modules/active_message_limit.h"
 #include "modules/stop.h"
+#include "modules/time_in_seconds.h"
 
 #include <core/structures/vector.h>
 #include <core/structures/map.h>

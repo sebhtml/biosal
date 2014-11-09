@@ -23,6 +23,7 @@ THORIUM_OBJECTS += engine/thorium/modules/actions.o
 THORIUM_OBJECTS += engine/thorium/modules/send_helpers.o
 THORIUM_OBJECTS += engine/thorium/modules/active_message_limit.o
 THORIUM_OBJECTS += engine/thorium/modules/stop.o
+THORIUM_OBJECTS += engine/thorium/modules/time_in_seconds.o
 
 include engine/thorium/scheduler/Makefile.mk
 
