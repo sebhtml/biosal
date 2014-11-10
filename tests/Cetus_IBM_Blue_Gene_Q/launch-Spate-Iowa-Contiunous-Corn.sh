@@ -37,7 +37,7 @@ scripts/IBM_Blue_Gene_Q/build-spate-xl.sh
 cd ..
 cp biosal/applications/spate_metagenome_assembler/spate $__JOB__.$__APP__
 
-cp biosal/tests/Cetus_IBM_Blue_Gene_Q/Template.sh $__JOB__.sh
+cp biosal/tests/Cetus_IBM_Blue_Gene_Q/Template.$__APP__.sh $__JOB__.sh
 
 template="s/__JOB__/$__JOB__/g"
 sed -i "$template" $__JOB__.sh
