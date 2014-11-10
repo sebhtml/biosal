@@ -14,25 +14,31 @@ then
     target="all-tests"
 fi
 
-if $compiler = "gcc"
+if test $compiler = "gcc"
 then
     echo "" > /dev/null
-elif $compiler = "clang"
+elif test $compiler = "clang"
 then
     echo "" > /dev/null
 fi
 
+echo "cc -v"
 cc -v
+
+echo "mpicc -v"
 mpicc -v
+
+echo "mpiexec -v"
+mpiexec -v
 
 make clean
 
 options=""
 
-if $build = "default"
+if test $build = "default"
 then
     echo "" > /dev/null
-elif $build = "debug"
+elif test $build = "debug"
 then
     options="$options CONFIG_DEBUG=y"
 fi
