@@ -22,12 +22,15 @@ then
     echo "" > /dev/null
 fi
 
+echo ""
 echo "cc -v"
 cc -v
 
+echo ""
 echo "mpicc -v"
 mpicc -v
 
+echo ""
 echo "mpiexec -v"
 mpiexec -v
 
@@ -43,8 +46,12 @@ then
     options="$options CONFIG_DEBUG=y"
 fi
 
+echo ""
+echo "build executables"
 # build executables
 make $options
 
+echo ""
+echo "run tests"
 # run tests
 make $target
