@@ -35,10 +35,7 @@ __COMMIT__=$(git log | head -n1 | awk '{print $2}')
 scripts/IBM_Blue_Gene_Q/build-spate-xl.sh
 
 cd ..
-if ! test -e spate
-then
-    ln -s biosal/applications/spate_metagenome_assembler/spate
-fi
+cp biosal/applications/spate_metagenome_assembler/spate $__JOB__.$__APP__
 
 cp biosal/tests/Cetus_IBM_Blue_Gene_Q/Template.sh $__JOB__.sh
 
