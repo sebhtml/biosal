@@ -43,7 +43,7 @@ make examples # run examples
 
 | Branch name | Person (alphabetical order) | Clone URL | Branch Build Status |
 | --- | --- | --- | --- |
-| [master](https://github.com/sebhtml/biosal/tree/master) | Sébastien Boisvert | [HTTPS](https://github.com/GeneAssembly/biosal.git) | [![Build Status](http://jenkins.biosal.anl.boisvert.info:8080/buildStatus/icon?job=biosal-configuration-matrix)](http://jenkins.biosal.anl.boisvert.info:8080/view/Active/job/biosal-configuration-matrix/) |
+| [master](https://github.com/sebhtml/biosal/tree/master) | Sébastien Boisvert | [HTTPS](https://github.com/GeneAssembly/biosal.git) | [![Build Status](http://jenkins.biosal.anl.boisvert.info:8080/buildStatus/icon?job=biosal-configuration-matrix)](http://jenkins.biosal.anl.boisvert.info:8080/view/All/job/biosal-configuration-matrix/) |
 | [energy](https://github.com/sebhtml/biosal/tree/energy) | Sébastien Boisvert| [HTTPS](https://github.com/sebhtml/biosal.git) | |
 | [pami](https://github.com/huyba/biosal/tree/master) | Huy Bui | [HTTPS](https://github.com/huyba/biosal.git) | |
 | [granularity](https://github.com/gkthiruvathukal/biosal/tree/granularity) | George K. Thiruvathukal | [HTTPS](https://github.com/gkthiruvathukal/biosal.git) |[![Build Status](https://travis-ci.org/gkthiruvathukal/biosal.svg?branch=granularity)](https://travis-ci.org/gkthiruvathukal/biosal)  |
