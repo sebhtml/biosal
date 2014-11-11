@@ -65,15 +65,6 @@ void thorium_multiplexer_policy_init(struct thorium_multiplexer_policy *self)
 
     if (self->threshold_time_in_nanoseconds == 0)
         self->disabled = 1;
-
-#if 0
-    /*
-     * There is a regression on BGQ with the multiplexer code path.
-     */
-#ifdef __bgq__
-    self->disabled = 1;
-#endif
-#endif
 }
 
 void thorium_multiplexer_policy_destroy(struct thorium_multiplexer_policy *self)
