@@ -30,6 +30,13 @@
 #define MEMORY_MULTIPLEXER 0xb606aa9d
 
 /*
+ * Debug the _test() function.
+ */
+/*
+#define DEBUG_MULTIPLEXER_TEST
+*/
+
+/*
  * Internal function for flushing stuff away.
  */
 void thorium_message_multiplexer_flush(struct thorium_message_multiplexer *self, int index, int force);
@@ -51,7 +58,7 @@ void thorium_message_multiplexer_init(struct thorium_message_multiplexer *self,
     CORE_BITMAP_CLEAR(self->flags);
     CORE_BITMAP_CLEAR_BIT(self->flags, FLAG_DISABLED);
 
-    core_set_init(&self->buffers_with_content, sizeof(int));
+    core_map_init(&self->buffers_with_content, sizeof(int), sizeof(uint64_t));
 
     core_timer_init(&self->timer);
 
@@ -94,8 +101,6 @@ void thorium_message_multiplexer_init(struct thorium_message_multiplexer *self,
         multiplexed_buffer->maximum_size = self->buffer_size_in_bytes;
     }
 
-    self->last_flush = core_timer_get_nanoseconds(&self->timer);
-
     if (thorium_multiplexer_policy_is_disabled(self->policy)) {
         CORE_BITMAP_SET_BIT(self->flags, FLAG_DISABLED);
     }
@@ -105,6 +110,8 @@ void thorium_message_multiplexer_init(struct thorium_message_multiplexer *self,
     }
 
     self->worker = NULL;
+
+    core_vector_init(&self->to_flush, sizeof(int));
 }
 
 void thorium_message_multiplexer_destroy(struct thorium_message_multiplexer *self)
@@ -126,9 +133,12 @@ void thorium_message_multiplexer_destroy(struct thorium_message_multiplexer *sel
 #endif
     size = core_vector_size(&self->buffers);
 
-    CORE_DEBUGGER_ASSERT(core_set_empty(&self->buffers_with_content));
+    /*
+     * There can be no messages that are not flushed already.
+     */
+    CORE_DEBUGGER_ASSERT(core_map_empty(&self->buffers_with_content));
 
-    core_set_destroy(&self->buffers_with_content);
+    core_map_destroy(&self->buffers_with_content);
 
     for (i = 0; i < size; ++i) {
         multiplexed_buffer = core_vector_at(&self->buffers, i);
@@ -148,9 +158,9 @@ void thorium_message_multiplexer_destroy(struct thorium_message_multiplexer *sel
     core_memory_free(self->big_buffer, MEMORY_MULTIPLEXER);
     self->big_buffer = NULL;
 
-    self->last_flush = 0;
-
     core_timer_destroy(&self->timer);
+
+    core_vector_destroy(&self->to_flush);
 }
 
 /*
@@ -185,6 +195,7 @@ int thorium_message_multiplexer_multiplex(struct thorium_message_multiplexer *se
     void *destination_in_buffer;
     int required_size;
     struct thorium_multiplexed_buffer *real_multiplexed_buffer;
+    uint64_t time;
 
     ++self->original_message_count;
 
@@ -301,10 +312,11 @@ int thorium_message_multiplexer_multiplex(struct thorium_message_multiplexer *se
     CORE_DEBUGGER_ASSERT(current_size <= maximum_size);
 
     /*
-     * Add the key for this buffer with content.
+     * Add the key for this buffer with content if it was not flushed.
      */
     if (current_size > 0) {
-        core_set_add(&self->buffers_with_content, &destination_node);
+        time = core_timer_get_nanoseconds(&self->timer);
+        core_map_add_value(&self->buffers_with_content, &destination_node, &time);
     }
 
     /*
@@ -457,44 +469,74 @@ void thorium_message_multiplexer_test(struct thorium_message_multiplexer *self)
      */
 
     uint64_t time;
-    struct core_set_iterator iterator;
+    struct core_map_iterator iterator;
     int duration;
     int index;
+    uint64_t buffer_time;
+    int i;
+    int size;
+
+    CORE_DEBUGGER_ASSERT(core_vector_empty(&self->to_flush));
 
     if (CORE_BITMAP_GET_BIT(self->flags, FLAG_DISABLED)) {
         return;
     }
 
+    /*
+     * Nothing to do, there is nothing to flush
+     * in the system.
+     */
+    if (core_map_empty(&self->buffers_with_content)) {
+        return;
+    }
+
+    core_map_iterator_init(&iterator, &self->buffers_with_content);
+
+    size = core_map_size(&self->buffers_with_content);
+
+#ifdef DEBUG_MULTIPLEXER_TEST
+    if (size >= 2)
+        printf("DEBUG multiplexer_test buffers with content: %d\n",
+                    size);
+#endif
+
+    /*
+     * Flush only the buffers with a elapsed time that is greater or equal to the
+     * timeout.
+     */
     time = core_timer_get_nanoseconds(&self->timer);
 
-    duration = time - self->last_flush;
+    while (core_map_iterator_get_next_key_and_value(&iterator, &index, &buffer_time)) {
 
-    if (duration < self->timeout_in_nanoseconds) {
-        return;
-    }
+        duration = time - buffer_time;
 
-    if (core_set_empty(&self->buffers_with_content)) {
-        return;
-    }
+#ifdef DEBUG_MULTIPLEXER_TEST
+        if (size >= 2)
+            printf("DEBUG ....... index %d elapsed %d ns\n", index, duration);
+#endif
 
-    core_set_iterator_init(&iterator, &self->buffers_with_content);
-
-    while (core_set_iterator_get_next_value(&iterator, &index)) {
-
-            /*
+        /*
         printf("MULTIPLEXER FLUSH buffer %d\n", index);
         */
+        if (duration >= self->timeout_in_nanoseconds) {
+            core_vector_push_back(&self->to_flush, &index);
+        }
+    }
+
+    core_map_iterator_destroy(&iterator);
+
+    size = core_vector_size(&self->to_flush);
+
+    /*
+     * Flush entries
+     */
+    for (i = 0; i < size; ++i) {
+        index = core_vector_at_as_int(&self->to_flush, i);
+
         thorium_message_multiplexer_flush(self, index, FORCE_YES_TIME);
     }
 
-    core_set_iterator_destroy(&iterator);
-
-    core_set_clear(&self->buffers_with_content);
-
-    /*
-     * Update the counter for last flush event.
-     */
-    self->last_flush = core_timer_get_nanoseconds(&self->timer);
+    core_vector_clear(&self->to_flush);
 }
 
 void thorium_message_multiplexer_flush(struct thorium_message_multiplexer *self, int index, int force)
@@ -579,7 +621,7 @@ void thorium_message_multiplexer_flush(struct thorium_message_multiplexer *self,
     multiplexed_buffer->current_size = 0;
     multiplexed_buffer->message_count = 0;
 
-    core_set_delete(&self->buffers_with_content, &index);
+    core_map_delete(&self->buffers_with_content, &index);
 }
 
 int thorium_message_multiplexer_is_disabled(struct thorium_message_multiplexer *self)
