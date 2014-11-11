@@ -38,6 +38,8 @@
 #define DEBUG_MULTIPLEXER_FLUSH
 */
 
+#define OPTION_DISABLE_MULTIPLEXER "-disable-multiplexer"
+
 /*
  * Internal function for flushing stuff away.
  */
@@ -52,6 +54,8 @@ void thorium_message_multiplexer_init(struct thorium_message_multiplexer *self,
     int bytes;
     int position;
     struct thorium_multiplexed_buffer *multiplexed_buffer;
+    int argc;
+    char **argv;
 
     self->policy = policy;
     self->original_message_count = 0;
@@ -114,6 +118,16 @@ void thorium_message_multiplexer_init(struct thorium_message_multiplexer *self,
     self->worker = NULL;
 
     core_vector_init(&self->to_flush, sizeof(int));
+
+    argc = node->argc;
+    argv = node->argv;
+
+    /*
+     * Aside from the policy, the end user can also disable the multiplexer code path
+     */
+    if (core_command_has_argument(argc, argv, OPTION_DISABLE_MULTIPLEXER)) {
+        CORE_BITMAP_SET_BIT(self->flags, FLAG_DISABLED);
+    }
 }
 
 void thorium_message_multiplexer_destroy(struct thorium_message_multiplexer *self)
