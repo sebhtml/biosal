@@ -9,11 +9,10 @@
 #include <stdint.h>
 
 void thorium_multiplexed_buffer_init(struct thorium_multiplexed_buffer *self,
-                int maximum_size, void *buffer)
+                int maximum_size)
 {
     thorium_multiplexed_buffer_reset(self);
 
-    self->buffer_ = buffer;
     self->maximum_size_ = maximum_size;
 }
 
@@ -55,6 +54,8 @@ void thorium_multiplexed_buffer_append(struct thorium_multiplexed_buffer *self,
     void *multiplexed_buffer;
     void *destination_in_buffer;
     int required_size;
+
+    CORE_DEBUGGER_ASSERT(self->buffer_ != NULL);
 
     required_size = thorium_multiplexed_buffer_required_size(self, count);
 
@@ -107,4 +108,12 @@ void thorium_multiplexed_buffer_reset(struct thorium_multiplexed_buffer *self)
     self->current_size_ = 0;
     self->message_count_ = 0;
     self->timestamp_ = 0;
+
+    self->buffer_ = NULL;
+}
+
+void thorium_multiplexed_buffer_set_buffer(struct thorium_multiplexed_buffer *self,
+                void *buffer)
+{
+    self->buffer_ = buffer;
 }

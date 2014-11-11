@@ -57,8 +57,6 @@ struct thorium_message_multiplexer {
 
     struct thorium_node *node;
     struct thorium_worker *worker;
-    char *big_buffer;
-
     uint32_t flags;
 
     /*

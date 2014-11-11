@@ -16,7 +16,7 @@ struct thorium_multiplexed_buffer {
 };
 
 void thorium_multiplexed_buffer_init(struct thorium_multiplexed_buffer *self,
-                int maximum_size, void *buffer);
+                int maximum_size);
 void thorium_multiplexed_buffer_destroy(struct thorium_multiplexed_buffer *self);
 
 void thorium_multiplexed_buffer_print(struct thorium_multiplexed_buffer *self);
@@ -32,6 +32,8 @@ void thorium_multiplexed_buffer_set_time(struct thorium_multiplexed_buffer *self
                 uint64_t time);
 
 void *thorium_multiplexed_buffer_buffer(struct thorium_multiplexed_buffer *self);
+void thorium_multiplexed_buffer_set_buffer(struct thorium_multiplexed_buffer *self,
+                void *buffer);
 
 void thorium_multiplexed_buffer_reset(struct thorium_multiplexed_buffer *self);
 
