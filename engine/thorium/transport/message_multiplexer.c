@@ -90,7 +90,11 @@ void thorium_message_multiplexer_init(struct thorium_message_multiplexer *self,
     for (i = 0; i < size; ++i) {
         multiplexed_buffer = core_vector_at(&self->buffers, i);
 
-        multiplexed_buffer->buffer = self->big_buffer + position;
+        CORE_DEBUGGER_ASSERT(multiplexed_buffer != NULL);
+
+        thorium_multiplexed_buffer_init(multiplexed_buffer, self->buffer_size_in_bytes,
+                        self->big_buffer + position);
+
         position += self->buffer_size_in_bytes;
 
 #ifdef DEBUG_MULTIPLEXER1
@@ -101,10 +105,6 @@ void thorium_message_multiplexer_init(struct thorium_message_multiplexer *self,
         printf("DEBUG_MULTIPLEXER thorium_message_multiplexer_init (after) index %d buffer %p\n", i,
                         core_vector_at(&self->buffers, i));
 #endif
-
-        multiplexed_buffer->current_size = 0;
-        multiplexed_buffer->message_count = 0;
-        multiplexed_buffer->maximum_size = self->buffer_size_in_bytes;
     }
 
     if (thorium_multiplexer_policy_is_disabled(self->policy)) {
@@ -159,9 +159,9 @@ void thorium_message_multiplexer_destroy(struct thorium_message_multiplexer *sel
     for (i = 0; i < size; ++i) {
         multiplexed_buffer = core_vector_at(&self->buffers, i);
 
-        CORE_DEBUGGER_ASSERT(multiplexed_buffer->current_size == 0);
+        CORE_DEBUGGER_ASSERT(thorium_multiplexed_buffer_current_size(multiplexed_buffer) == 0);
 
-        multiplexed_buffer->buffer = 0;
+        thorium_multiplexed_buffer_destroy(multiplexed_buffer);
     }
 
     core_vector_destroy(&self->buffers);
@@ -207,8 +207,6 @@ int thorium_message_multiplexer_multiplex(struct thorium_message_multiplexer *se
     int destination_node;
     int destination_actor;
     int new_size;
-    void *multiplexed_buffer;
-    void *destination_in_buffer;
     int required_size;
     struct thorium_multiplexed_buffer *real_multiplexed_buffer;
     uint64_t time;
@@ -240,7 +238,15 @@ int thorium_message_multiplexer_multiplex(struct thorium_message_multiplexer *se
 #endif
 
     count = thorium_message_count(message);
-    required_size = sizeof(count) + count;
+
+    destination_node = thorium_message_destination_node(message);
+
+    real_multiplexed_buffer = core_vector_at(&self->buffers, destination_node);
+
+    CORE_DEBUGGER_ASSERT(real_multiplexed_buffer != NULL);
+
+    required_size = thorium_multiplexed_buffer_required_size(real_multiplexed_buffer, count);
+
     buffer = thorium_message_buffer(message);
     destination_actor = thorium_message_destination(message);
 
@@ -256,10 +262,6 @@ int thorium_message_multiplexer_multiplex(struct thorium_message_multiplexer *se
         return 0;
     }
 
-    destination_node = thorium_message_destination_node(message);
-
-    real_multiplexed_buffer = core_vector_at(&self->buffers, destination_node);
-
 #ifdef CORE_DEBUGGER_ASSERT
     if (real_multiplexed_buffer == NULL) {
         printf("Error action %d destination_node %d destination_actor %d\n", action, destination_node,
@@ -267,10 +269,8 @@ int thorium_message_multiplexer_multiplex(struct thorium_message_multiplexer *se
     }
 #endif
 
-    CORE_DEBUGGER_ASSERT(real_multiplexed_buffer != NULL);
-
-    current_size = real_multiplexed_buffer->current_size;
-    maximum_size = real_multiplexed_buffer->maximum_size;
+    current_size = thorium_multiplexed_buffer_current_size(real_multiplexed_buffer);
+    maximum_size = thorium_multiplexed_buffer_maximum_size(real_multiplexed_buffer);
 
     /*
      * Don't multiplex large messages.
@@ -300,20 +300,10 @@ int thorium_message_multiplexer_multiplex(struct thorium_message_multiplexer *se
 #endif
 
         thorium_message_multiplexer_flush(self, destination_node, FORCE_YES_SIZE);
-        current_size = real_multiplexed_buffer->current_size;
+        current_size = thorium_multiplexed_buffer_current_size(real_multiplexed_buffer);
 
         CORE_DEBUGGER_ASSERT(current_size == 0);
     }
-
-    multiplexed_buffer = real_multiplexed_buffer->buffer;
-    destination_in_buffer = ((char *)multiplexed_buffer) + current_size;
-
-    /*
-     * Append <count><buffer> to the <multiplexed_buffer>
-     */
-    core_memory_copy(destination_in_buffer, &count, sizeof(count));
-    core_memory_copy((char *)destination_in_buffer + sizeof(count),
-                    buffer, count);
 
     /*
      * If the buffer is empty before adding the data, it means that it is not
@@ -322,25 +312,19 @@ int thorium_message_multiplexer_multiplex(struct thorium_message_multiplexer *se
     if (current_size == 0) {
 
         time = core_timer_get_nanoseconds(&self->timer);
-        real_multiplexed_buffer->timestamp = time;
+        thorium_multiplexed_buffer_set_time(real_multiplexed_buffer, time);
 
         core_set_add(&self->buffers_with_content, &destination_node);
     }
 
-    /*
-     * Add the message.
-     */
-    current_size += required_size;
-    CORE_DEBUGGER_ASSERT(current_size <= maximum_size);
-    real_multiplexed_buffer->current_size = current_size;
-    ++real_multiplexed_buffer->message_count;
+    thorium_multiplexed_buffer_append(real_multiplexed_buffer, count, buffer);
 
     thorium_message_multiplexer_flush(self, destination_node, FORCE_NO);
 
     /*
      * Verify invariant.
      */
-    CORE_DEBUGGER_ASSERT(real_multiplexed_buffer->current_size <= maximum_size);
+    CORE_DEBUGGER_ASSERT(thorium_multiplexed_buffer_current_size(real_multiplexed_buffer)<= maximum_size);
 
     /*
      * Inject the buffer into the worker too.
@@ -533,7 +517,7 @@ void thorium_message_multiplexer_test(struct thorium_message_multiplexer *self)
     while (core_set_iterator_get_next_value(&iterator, &index)) {
 
         multiplexed_buffer = core_vector_at(&self->buffers, index);
-        buffer_time = multiplexed_buffer->timestamp;
+        buffer_time = thorium_multiplexed_buffer_time(multiplexed_buffer);
 
         duration = time - buffer_time;
 
@@ -594,8 +578,8 @@ void thorium_message_multiplexer_flush(struct thorium_message_multiplexer *self,
     CORE_DEBUGGER_ASSERT(core_set_find(&self->buffers_with_content, &index));
 
     multiplexed_buffer = core_vector_at(&self->buffers, index);
-    current_size = multiplexed_buffer->current_size;
-    maximum_size = multiplexed_buffer->maximum_size;
+    current_size = thorium_multiplexed_buffer_current_size(multiplexed_buffer);
+    maximum_size = thorium_multiplexed_buffer_maximum_size(multiplexed_buffer);
 
     if (force == FORCE_NO && current_size < maximum_size) {
         return;
@@ -614,7 +598,8 @@ void thorium_message_multiplexer_flush(struct thorium_message_multiplexer *self,
      *
      * TODO: Avoid this copy by using an array of pointers in the first place.
      */
-    core_memory_copy(buffer, multiplexed_buffer->buffer, current_size);
+    core_memory_copy(buffer,
+                    thorium_multiplexed_buffer_buffer(multiplexed_buffer), current_size);
 
     destination_node = index;
 
@@ -656,9 +641,7 @@ void thorium_message_multiplexer_flush(struct thorium_message_multiplexer *self,
     ++self->real_message_count;
     thorium_message_destroy(&message);
 
-    multiplexed_buffer->current_size = 0;
-    multiplexed_buffer->message_count = 0;
-    multiplexed_buffer->timestamp = 0;
+    thorium_multiplexed_buffer_reset(multiplexed_buffer);
 
     core_set_delete(&self->buffers_with_content, &index);
 }
