@@ -110,5 +110,7 @@ void thorium_message_multiplexer_test(struct thorium_message_multiplexer *self);
 int thorium_message_multiplexer_is_disabled(struct thorium_message_multiplexer *self);
 void thorium_message_multiplexer_set_worker(struct thorium_message_multiplexer *self,
                 struct thorium_worker *worker);
+int thorium_message_multiplexer_message_should_be_multiplexed(struct thorium_message_multiplexer *self,
+                struct thorium_message *message);
 
 #endif

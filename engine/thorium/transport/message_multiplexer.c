@@ -8,6 +8,7 @@
 
 #include <core/helpers/bitmap.h>
 
+#include <core/system/command.h>
 #include <core/system/debugger.h>
 #include <core/system/memory.h>
 
@@ -653,4 +654,19 @@ void thorium_message_multiplexer_set_worker(struct thorium_message_multiplexer *
                         self->buffer_size_in_bytes, self->timeout_in_nanoseconds);
         }
     }
+}
+
+int thorium_message_multiplexer_message_should_be_multiplexed(struct thorium_message_multiplexer *self,
+                struct thorium_message *message)
+{
+    int buffer_size;
+    int threshold;
+
+    if (thorium_message_multiplexer_is_disabled(self))
+        return 0;
+
+    buffer_size = thorium_message_count(message);
+    threshold = self->buffer_size_in_bytes / 2;
+
+    return buffer_size <= threshold;
 }

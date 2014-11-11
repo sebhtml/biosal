@@ -469,7 +469,6 @@ void thorium_worker_send(struct thorium_worker *worker, struct thorium_message *
     int count;
     void *old_buffer;
     int action;
-    int option_enable_multiplexer;
     struct thorium_message message_copy;
     struct thorium_message *message;
 
@@ -483,8 +482,6 @@ void thorium_worker_send(struct thorium_worker *worker, struct thorium_message *
      */
     message_copy = *message_argument;
     message = &message_copy;
-
-    option_enable_multiplexer = YES;
 
     tracepoint(thorium_message, worker_send, message);
 
@@ -623,7 +620,7 @@ void thorium_worker_send(struct thorium_worker *worker, struct thorium_message *
      *
      * Batching is also called aggregation or multiplexing.
      */
-    if (option_enable_multiplexer && count <= THORIUM_MULTIPLEXER_BUFFER_SIZE_FOR_SMALL_MESSAGES) {
+    if (thorium_message_multiplexer_message_should_be_multiplexed(&worker->multiplexer, message)) {
 
         /*
          * Before enqueuing the outbound message for multiplexing,
