@@ -315,28 +315,32 @@ int thorium_message_multiplexer_multiplex(struct thorium_message_multiplexer *se
     core_memory_copy((char *)destination_in_buffer + sizeof(count),
                     buffer, count);
 
-    current_size += required_size;
+    /*
+     * If the buffer is empty before adding the data, it means that it is not
+     * in the list of buffers with content and it must be added.
+     */
+    if (current_size == 0) {
 
+        time = core_timer_get_nanoseconds(&self->timer);
+        real_multiplexed_buffer->timestamp = time;
+
+        core_set_add(&self->buffers_with_content, &destination_node);
+    }
+
+    /*
+     * Add the message.
+     */
+    current_size += required_size;
     CORE_DEBUGGER_ASSERT(current_size <= maximum_size);
     real_multiplexed_buffer->current_size = current_size;
     ++real_multiplexed_buffer->message_count;
 
     thorium_message_multiplexer_flush(self, destination_node, FORCE_NO);
 
-    current_size = real_multiplexed_buffer->current_size;
-
-    CORE_DEBUGGER_ASSERT(current_size <= maximum_size);
-
     /*
-     * Add the key for this buffer with content if it was not flushed.
+     * Verify invariant.
      */
-    if (current_size > 0) {
-        time = core_timer_get_nanoseconds(&self->timer);
-
-        real_multiplexed_buffer->timestamp = time;
-
-        core_set_add(&self->buffers_with_content, &destination_node);
-    }
+    CORE_DEBUGGER_ASSERT(real_multiplexed_buffer->current_size <= maximum_size);
 
     /*
      * Inject the buffer into the worker too.
@@ -578,6 +582,17 @@ void thorium_message_multiplexer_flush(struct thorium_message_multiplexer *self,
         return;
     }
 
+#ifdef CORE_DEBUGGER_ASSERT_ENABLED
+    if (!(core_set_find(&self->buffers_with_content, &index))) {
+        multiplexed_buffer = core_vector_at(&self->buffers, index);
+        printf("index %d has no content\n", index);
+
+        thorium_multiplexed_buffer_print(multiplexed_buffer);
+    }
+#endif
+
+    CORE_DEBUGGER_ASSERT(core_set_find(&self->buffers_with_content, &index));
+
     multiplexed_buffer = core_vector_at(&self->buffers, index);
     current_size = multiplexed_buffer->current_size;
     maximum_size = multiplexed_buffer->maximum_size;
@@ -643,6 +658,7 @@ void thorium_message_multiplexer_flush(struct thorium_message_multiplexer *self,
 
     multiplexed_buffer->current_size = 0;
     multiplexed_buffer->message_count = 0;
+    multiplexed_buffer->timestamp = 0;
 
     core_set_delete(&self->buffers_with_content, &index);
 }
