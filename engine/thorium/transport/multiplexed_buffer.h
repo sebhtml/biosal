@@ -15,4 +15,6 @@ struct thorium_multiplexed_buffer {
     int message_count;
 };
 
+void thorium_multiplexed_buffer_print(struct thorium_multiplexed_buffer *self);
+
 #endif

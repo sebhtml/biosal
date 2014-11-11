@@ -3,6 +3,7 @@
 THORIUM_OBJECTS += engine/thorium/transport/transport.o
 THORIUM_OBJECTS += engine/thorium/transport/message_multiplexer.o
 THORIUM_OBJECTS += engine/thorium/transport/multiplexer_policy.o
+THORIUM_OBJECTS += engine/thorium/transport/multiplexed_buffer.o
 THORIUM_OBJECTS += engine/thorium/transport/transport_profiler.o
 
 CONFIG_MPI=y
