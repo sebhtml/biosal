@@ -36,6 +36,7 @@
 /*
 #define DEBUG_MULTIPLEXER_TEST
 #define DEBUG_MULTIPLEXER_FLUSH
+#define DEBUG_MINIMUM_COUNT 3
 */
 
 #define OPTION_DISABLE_MULTIPLEXER "-disable-multiplexer"
@@ -513,7 +514,7 @@ void thorium_message_multiplexer_test(struct thorium_message_multiplexer *self)
     size = core_set_size(&self->buffers_with_content);
 
 #ifdef DEBUG_MULTIPLEXER_TEST
-    if (size >= 2)
+    if (size >= DEBUG_MINIMUM_COUNT)
         printf("DEBUG multiplexer_test buffers with content: %d\n",
                     size);
 #endif
@@ -532,7 +533,7 @@ void thorium_message_multiplexer_test(struct thorium_message_multiplexer *self)
         duration = time - buffer_time;
 
 #ifdef DEBUG_MULTIPLEXER_TEST
-        if (size >= 2)
+        if (size >= DEBUG_MINIMUM_COUNT)
             printf("DEBUG ....... index %d elapsed %d ns\n", index, duration);
 #endif
 
@@ -624,9 +625,9 @@ void thorium_message_multiplexer_flush(struct thorium_message_multiplexer *self,
     thorium_message_write_metadata(&message);
 
 #ifdef DEBUG_MULTIPLEXER_FLUSH
-    printf("DEBUG_MULTIPLEXER thorium_message_multiplexer_flush index %d buffer %p force %d message_count %d current_size %d maximum_size %d"
+    printf("DEBUG_MULTIPLEXER thorium_message_multiplexer_flush index %d buffer %p force %d current_size %d maximum_size %d"
                     " destination_node %d\n",
-                    index, buffer, force, multiplexed_buffer->message_count,
+                    index, buffer, force,
                     current_size, maximum_size,
                     thorium_message_destination_node(&message));
 
