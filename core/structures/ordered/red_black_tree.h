@@ -123,6 +123,7 @@ void core_red_black_tree_set_memory_pool(struct core_red_black_tree *self,
  * Time complexity: O(1)
  */
 int core_red_black_tree_size(struct core_red_black_tree *self);
+int core_red_black_tree_empty(struct core_red_black_tree *self);
 
 void core_red_black_tree_use_uint64_t_keys(struct core_red_black_tree *self);
 

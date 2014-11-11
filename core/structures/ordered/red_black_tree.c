@@ -428,6 +428,11 @@ int core_red_black_tree_size(struct core_red_black_tree *self)
     return self->size;
 }
 
+int core_red_black_tree_empty(struct core_red_black_tree *self)
+{
+    return core_red_black_tree_size(self) == 0;
+}
+
 static void core_red_black_tree_free_node(struct core_red_black_tree *self,
                 struct core_red_black_node *node)
 {
