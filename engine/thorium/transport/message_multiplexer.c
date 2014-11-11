@@ -34,6 +34,7 @@
  */
 /*
 #define DEBUG_MULTIPLEXER_TEST
+#define DEBUG_MULTIPLEXER_FLUSH
 */
 
 /*
@@ -58,7 +59,7 @@ void thorium_message_multiplexer_init(struct thorium_message_multiplexer *self,
     CORE_BITMAP_CLEAR(self->flags);
     CORE_BITMAP_CLEAR_BIT(self->flags, FLAG_DISABLED);
 
-    core_map_init(&self->buffers_with_content, sizeof(int), sizeof(uint64_t));
+    core_set_init(&self->buffers_with_content, sizeof(int));
 
     core_timer_init(&self->timer);
 
@@ -136,9 +137,9 @@ void thorium_message_multiplexer_destroy(struct thorium_message_multiplexer *sel
     /*
      * There can be no messages that are not flushed already.
      */
-    CORE_DEBUGGER_ASSERT(core_map_empty(&self->buffers_with_content));
+    CORE_DEBUGGER_ASSERT(core_set_empty(&self->buffers_with_content));
 
-    core_map_destroy(&self->buffers_with_content);
+    core_set_destroy(&self->buffers_with_content);
 
     for (i = 0; i < size; ++i) {
         multiplexed_buffer = core_vector_at(&self->buffers, i);
@@ -316,7 +317,10 @@ int thorium_message_multiplexer_multiplex(struct thorium_message_multiplexer *se
      */
     if (current_size > 0) {
         time = core_timer_get_nanoseconds(&self->timer);
-        core_map_add_value(&self->buffers_with_content, &destination_node, &time);
+
+        real_multiplexed_buffer->timestamp = time;
+
+        core_set_add(&self->buffers_with_content, &destination_node);
     }
 
     /*
@@ -469,12 +473,13 @@ void thorium_message_multiplexer_test(struct thorium_message_multiplexer *self)
      */
 
     uint64_t time;
-    struct core_map_iterator iterator;
+    struct core_set_iterator iterator;
     int duration;
     int index;
     uint64_t buffer_time;
     int i;
     int size;
+    struct thorium_multiplexed_buffer *multiplexed_buffer;
 
     CORE_DEBUGGER_ASSERT(core_vector_empty(&self->to_flush));
 
@@ -486,13 +491,13 @@ void thorium_message_multiplexer_test(struct thorium_message_multiplexer *self)
      * Nothing to do, there is nothing to flush
      * in the system.
      */
-    if (core_map_empty(&self->buffers_with_content)) {
+    if (core_set_empty(&self->buffers_with_content)) {
         return;
     }
 
-    core_map_iterator_init(&iterator, &self->buffers_with_content);
+    core_set_iterator_init(&iterator, &self->buffers_with_content);
 
-    size = core_map_size(&self->buffers_with_content);
+    size = core_set_size(&self->buffers_with_content);
 
 #ifdef DEBUG_MULTIPLEXER_TEST
     if (size >= 2)
@@ -506,7 +511,10 @@ void thorium_message_multiplexer_test(struct thorium_message_multiplexer *self)
      */
     time = core_timer_get_nanoseconds(&self->timer);
 
-    while (core_map_iterator_get_next_key_and_value(&iterator, &index, &buffer_time)) {
+    while (core_set_iterator_get_next_value(&iterator, &index)) {
+
+        multiplexed_buffer = core_vector_at(&self->buffers, index);
+        buffer_time = multiplexed_buffer->timestamp;
 
         duration = time - buffer_time;
 
@@ -523,7 +531,7 @@ void thorium_message_multiplexer_test(struct thorium_message_multiplexer *self)
         }
     }
 
-    core_map_iterator_destroy(&iterator);
+    core_set_iterator_destroy(&iterator);
 
     size = core_vector_size(&self->to_flush);
 
@@ -593,7 +601,7 @@ void thorium_message_multiplexer_flush(struct thorium_message_multiplexer *self,
 
     thorium_message_write_metadata(&message);
 
-#ifdef DEBUG_MULTIPLEXER
+#ifdef DEBUG_MULTIPLEXER_FLUSH
     printf("DEBUG_MULTIPLEXER thorium_message_multiplexer_flush index %d buffer %p force %d message_count %d current_size %d maximum_size %d"
                     " destination_node %d\n",
                     index, buffer, force, multiplexed_buffer->message_count,
@@ -621,7 +629,7 @@ void thorium_message_multiplexer_flush(struct thorium_message_multiplexer *self,
     multiplexed_buffer->current_size = 0;
     multiplexed_buffer->message_count = 0;
 
-    core_map_delete(&self->buffers_with_content, &index);
+    core_set_delete(&self->buffers_with_content, &index);
 }
 
 int thorium_message_multiplexer_is_disabled(struct thorium_message_multiplexer *self)

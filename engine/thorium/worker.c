@@ -119,6 +119,13 @@
 */
 #define THORIUM_WORKER_SEND_TO_LOCAL_ACTOR
 
+/*
+ * Route all small messages through the same exporter.
+ */
+/*
+#define ROUTE_ALL_SMALL_MESSAGES_To_SAME_EXPORTER_WORKER
+*/
+
 static void thorium_worker_work(struct thorium_worker *self, struct thorium_actor *actor);
 /*
 void thorium_worker_flush_outbound_message_block(struct thorium_worker *self);
@@ -2472,9 +2479,9 @@ static void thorium_worker_send_for_multiplexer(struct thorium_worker *self,
 
     worker_index = destination_node % self->worker_count;
 
-    /*
+#ifdef ROUTE_ALL_SMALL_MESSAGES_To_SAME_EXPORTER_WORKER
     worker_index = 0;
-    */
+#endif
 
     worker_for_multiplexer = self->workers + worker_index;
 

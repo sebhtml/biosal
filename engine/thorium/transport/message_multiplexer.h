@@ -53,7 +53,7 @@ struct thorium_message_multiplexer {
     struct core_timer timer;
 
     struct core_vector buffers;
-    struct core_map buffers_with_content;
+    struct core_set buffers_with_content;
 
     struct thorium_node *node;
     struct thorium_worker *worker;
