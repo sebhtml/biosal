@@ -53,7 +53,7 @@ int biosal_command_get_minimum_coverage(int argc, char **argv)
 {
     int value;
 
-    value = 2;
+    value = BIOSAL_DEFAULT_MINIMUM_COVERAGE;
 
     return value;
 }

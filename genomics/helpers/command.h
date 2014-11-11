@@ -6,6 +6,8 @@ extern char BIOSAL_DEFAULT_OUTPUT[];
 
 #define BIOSAL_DEFAULT_KMER_LENGTH 49
 
+#define BIOSAL_DEFAULT_MINIMUM_COVERAGE 2
+
 int biosal_command_get_kmer_length(int argc, char **argv);
 char *biosal_command_get_output_directory(int argc, char **argv);
 
