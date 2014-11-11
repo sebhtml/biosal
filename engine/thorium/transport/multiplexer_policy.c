@@ -11,7 +11,6 @@
 
 void thorium_multiplexer_policy_init(struct thorium_multiplexer_policy *self)
 {
-
     /*
      * Size threshold.
      */
