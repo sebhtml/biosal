@@ -1,7 +1,8 @@
 
 EXAMPLE_EXECUTABLES=examples/example_mock examples/example_ring examples/example_reader examples/example_remote_spawn \
 	examples/example_synchronize examples/example_controller examples/example_hello_world examples/example_systolic \
-	examples/example_clone examples/example_migration
+	examples/example_clone examples/example_migration \
+	examples/example_hello_world_acq
 EXAMPLE_OBJECTS=
 
 # examples
@@ -19,6 +20,8 @@ EXAMPLE_CONTROLLER=examples/controller/main.o examples/controller/root.o
 EXAMPLE_OBJECTS+=$(EXAMPLE_CONTROLLER)
 EXAMPLE_HELLO_WORLD=examples/hello_world/main.o examples/hello_world/hello.o
 EXAMPLE_OBJECTS+=$(EXAMPLE_HELLO_WORLD)
+EXAMPLE_HELLO_WORLD_ACQ=examples/hello_acquaintances/main.o examples/hello_acquaintances/hello_acq.o
+EXAMPLE_OBJECTS+=$(EXAMPLE_HELLO_WORLD_ACQ)
 EXAMPLE_SYSTOLIC=examples/systolic/main.o examples/systolic/systolic.o
 EXAMPLE_OBJECTS+=$(EXAMPLE_SYSTOLIC)
 EXAMPLE_CLONE=examples/clone/main.o examples/clone/process.o
@@ -53,6 +56,10 @@ examples/example_controller: $(EXAMPLE_CONTROLLER) $(LIBRARY_OBJECTS)
 	$(Q)$(CC) $(CFLAGS) $^ -o $@ $(LDFLAGS) $(CONFIG_LDFLAGS)
 
 examples/example_hello_world: $(EXAMPLE_HELLO_WORLD) $(LIBRARY_OBJECTS)
+	$(Q)$(ECHO) "  LD $@"
+	$(Q)$(CC) $(CFLAGS) $^ -o $@ $(LDFLAGS) $(CONFIG_LDFLAGS)
+
+examples/example_hello_world_acq: $(EXAMPLE_HELLO_WORLD_ACQ) $(LIBRARY_OBJECTS)
 	$(Q)$(ECHO) "  LD $@"
 	$(Q)$(CC) $(CFLAGS) $^ -o $@ $(LDFLAGS) $(CONFIG_LDFLAGS)
 
