@@ -30,6 +30,11 @@ void thorium_multiplexed_buffer_init(struct thorium_multiplexed_buffer *self,
     int i;
 
     self->timeout_ = timeout;
+
+    /*
+     * Use a very big value so that the code works
+     * with or without PREDICT_FUTURE.
+     */
     self->predicted_message_count_ = 99999999;
 
     thorium_multiplexed_buffer_reset(self);
@@ -204,22 +209,51 @@ void thorium_multiplexed_buffer_predict(struct thorium_multiplexed_buffer *self)
 {
     int i;
     int message_count;
+    int predicted_message_count;
+    int must_increase;
 
-    self->predicted_message_count_ = 0;
+    must_increase = self->message_count_ == self->predicted_message_count_;
+
+    predicted_message_count = 0;
 
     /*
      * Use the maximum message count in the past history to
      * predict the message count for the next period.
+     *
+     * This is O(PREDICTION_EVENT_COUNT).
      */
     for (i = 0; i < PREDICTION_EVENT_COUNT; ++i) {
 
         message_count = self->prediction_message_count[i];
 
-        if (message_count > self->predicted_message_count_)
-            self->predicted_message_count_ = message_count;
+        if (message_count > predicted_message_count)
+            predicted_message_count = message_count;
+
+        /*
+         * Break the loop if the maximum count was already found.
+         */
+        if (predicted_message_count == self->predicted_message_count_)
+            break;
+    }
+
+    /*
+     * Increase the value by 1 if the current period reached the maximum
+     * value.
+     */
+    if (must_increase
+                    && predicted_message_count == self->predicted_message_count_) {
+        ++predicted_message_count;
     }
 
 #ifdef PRINT_HISTORY
-    printf("DEBUG _predict() -> prediction is %d\n", message_count);
+    printf("DEBUG _predict() (must_increase: %d) -> "
+                    "predicted_message_count %d (old %d\n",
+                    must_increase, predicted_message_count,
+                    self->predicted_message_count_);
 #endif
+
+    /*
+     * Update the real value for the next period.
+     */
+    self->predicted_message_count_ = predicted_message_count;
 }
