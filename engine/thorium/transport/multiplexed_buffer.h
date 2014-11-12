@@ -4,6 +4,8 @@
 
 #include <stdint.h>
 
+#define PREDICTION_EVENT_COUNT 16
+
 /*
  * A multiplexed buffer.
  */
@@ -13,6 +15,11 @@ struct thorium_multiplexed_buffer {
     int current_size_;
     int maximum_size_;
     int message_count_;
+
+    int prediction_iterator;
+    int prediction_ages[PREDICTION_EVENT_COUNT];
+    int prediction_message_count[PREDICTION_EVENT_COUNT];
+    int prediction_buffer_sizes[PREDICTION_EVENT_COUNT];
 };
 
 void thorium_multiplexed_buffer_init(struct thorium_multiplexed_buffer *self,
@@ -36,5 +43,7 @@ void thorium_multiplexed_buffer_set_buffer(struct thorium_multiplexed_buffer *se
                 void *buffer);
 
 void thorium_multiplexed_buffer_reset(struct thorium_multiplexed_buffer *self);
+
+void thorium_multiplexed_buffer_profile(struct thorium_multiplexed_buffer *self, uint64_t time);
 
 #endif

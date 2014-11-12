@@ -34,8 +34,8 @@
  */
 /*
 #define DEBUG_MULTIPLEXER_TEST
-#define DEBUG_MULTIPLEXER_FLUSH
 #define DEBUG_MINIMUM_COUNT 3
+#define DEBUG_MULTIPLEXER_FLUSH
 */
 
 #define OPTION_DISABLE_MULTIPLEXER "-disable-multiplexer"
@@ -612,7 +612,6 @@ void thorium_message_multiplexer_flush(struct thorium_message_multiplexer *self,
     int maximum_size;
     struct thorium_multiplexed_buffer *multiplexed_buffer;
     int destination_node;
-    uint64_t virtual_time;
 
     if (CORE_BITMAP_GET_BIT(self->flags, FLAG_DISABLED)) {
         return;
@@ -687,6 +686,7 @@ void thorium_message_multiplexer_flush(struct thorium_message_multiplexer *self,
                     thorium_message_destination_node(&message));
 
     printf("message in flush\n");
+    thorium_multiplexed_buffer_print(multiplexed_buffer);
     thorium_message_print(&message);
 #endif
 
@@ -704,7 +704,8 @@ void thorium_message_multiplexer_flush(struct thorium_message_multiplexer *self,
     ++self->real_message_count;
     thorium_message_destroy(&message);
 
-    virtual_time = thorium_multiplexed_buffer_time(multiplexed_buffer);
+    thorium_multiplexed_buffer_profile(multiplexed_buffer,
+                    core_timer_get_nanoseconds(&self->timer));
 
     thorium_multiplexed_buffer_reset(multiplexed_buffer);
 
