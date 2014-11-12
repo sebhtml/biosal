@@ -9,9 +9,8 @@ integrate changes in the master tree.
 
 The project has a Jenkins deployment.
 The build machines are in Magellan/OpenStack at Argonne and at Oak Ridge (bare metal).
-The DNS name currently ends with boisvert.info, pending a DNS A entry at MCS.
 
-- The dashboard is available at http://jenkins.biosal.anl.boisvert.info:8080/
+- Dashboard: see README.md at the top level
 
 - Every 5 minutes, the system checks for change and create builds with Clang and with GCC.
 

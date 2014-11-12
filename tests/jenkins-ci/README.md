@@ -1,4 +1,4 @@
 
-- Jenkins deployment: http://jenkins.biosal.anl.boisvert.info:8080
+- Jenkins deployment: see README.md at the top level
 
 
