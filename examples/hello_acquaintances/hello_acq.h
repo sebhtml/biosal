@@ -1,10 +1,10 @@
 
-#ifndef _HELLO_H
-#define _HELLO_H
+#ifndef _HELLO_ACQ_H
+#define _HELLO_ACQ_H
 
 #include <biosal.h>
 
-#define SCRIPT_HELLO 0xfbcedbb5
+#define SCRIPT_HELLO_ACQ 0xcdabeb5
 
 struct hello_acq {
     struct core_vector initial_helloes;

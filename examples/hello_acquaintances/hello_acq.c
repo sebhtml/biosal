@@ -12,23 +12,23 @@ struct thorium_script hello_acq_script = {
     .init = hello_acq_init,
     .destroy = hello_acq_destroy,
     .receive = hello_acq_receive,
-    .size = sizeof(struct hello),
+    .size = sizeof(struct hello_acq),
     .name = "hello"
 };
 
 void hello_acq_init(struct thorium_actor *actor)
 {
-    struct hello *hello1;
+    struct hello_acq *hello1;
 
-    hello1 = (struct hello *)thorium_actor_concrete_actor(actor);
+    hello1 = (struct hello_acq *)thorium_actor_concrete_actor(actor);
     core_vector_init(&hello1->initial_helloes, sizeof(int));
 }
 
 void hello_acq_destroy(struct thorium_actor *actor)
 {
-    struct hello *hello1;
+    struct hello_acq *hello1;
 
-    hello1 = (struct hello *)thorium_actor_concrete_actor(actor);
+    hello1 = (struct hello_acq *)thorium_actor_concrete_actor(actor);
 
     core_vector_destroy(&hello1->initial_helloes);
 }
@@ -38,10 +38,10 @@ void hello_acq_receive(struct thorium_actor *actor, struct thorium_message *mess
     int tag;
     int name;
     void *buffer;
-    struct hello *hello1;
+    struct hello_acq *hello1;
     int i;
 
-    hello1 = (struct hello *)thorium_actor_concrete_actor(actor);
+    hello1 = (struct hello_acq *)thorium_actor_concrete_actor(actor);
     tag = thorium_message_action(message);
     name = thorium_actor_name(actor);
     buffer = thorium_message_buffer(message);
