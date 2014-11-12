@@ -46,8 +46,8 @@ struct biosal_unitig_visitor {
 
     int kmer_length;
     int step;
-    int visited;
-    int unitig_flags;
+    int visited_vertices;
+    int vertices_with_unitig_flag;
 
     struct biosal_unitig_heuristic heuristic;
 

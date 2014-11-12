@@ -28,6 +28,9 @@ void biosal_unitig_manager_init(struct thorium_actor *self);
 void biosal_unitig_manager_destroy(struct thorium_actor *self);
 void biosal_unitig_manager_receive(struct thorium_actor *self, struct thorium_message *message);
 
+void biosal_unitig_manager_receive_answer_from_visitor(struct thorium_actor *self,
+                struct thorium_message *message);
+
 struct thorium_script biosal_unitig_manager_script = {
     .identifier = SCRIPT_UNITIG_MANAGER,
     .name = "biosal_unitig_manager",
@@ -56,6 +59,9 @@ void biosal_unitig_manager_init(struct thorium_actor *self)
     core_timer_init(&concrete_self->timer);
 
     concrete_self->state = STATE_VISITORS;
+
+    concrete_self->processed_vertices = 0;
+    concrete_self->vertices_with_unitig_flag = 0;
 }
 
 void biosal_unitig_manager_destroy(struct thorium_actor *self)
@@ -236,33 +242,7 @@ void biosal_unitig_manager_receive(struct thorium_actor *self, struct thorium_me
 
     } else if (tag == ACTION_START_REPLY && concrete_self->state == STATE_VISITORS) {
 
-        ++concrete_self->completed;
-        expected = core_vector_size(&concrete_self->visitors);
-
-        if (concrete_self->completed % UNITIG_VISITOR_COUNT_PER_WORKER == 0
-                        || concrete_self->completed == expected) {
-            printf("PROGRESS unitig visitors %d/%d\n",
-                        concrete_self->completed,
-                        expected);
-        }
-
-        if (concrete_self->completed == expected) {
-
-            core_timer_stop(&concrete_self->timer);
-            core_timer_print_with_description(&concrete_self->timer, "Visit vertices for unitigs");
-
-            /*
-             * Stop the visitor manager and all visitors too.
-             */
-            thorium_actor_send_empty(self, concrete_self->manager, ACTION_ASK_TO_STOP);
-
-            /*
-             * Reset graph stores.
-             */
-            thorium_actor_send_range_empty(self, &concrete_self->graph_stores,
-                            ACTION_RESET);
-            concrete_self->completed = 0;
-        }
+        biosal_unitig_manager_receive_answer_from_visitor(self, message);
 
     } else if (tag == ACTION_RESET_REPLY) {
 
@@ -300,3 +280,59 @@ void biosal_unitig_manager_receive(struct thorium_actor *self, struct thorium_me
     }
 }
 
+void biosal_unitig_manager_receive_answer_from_visitor(struct thorium_actor *self,
+                struct thorium_message *message)
+{
+    int expected;
+    int processed_vertices;
+    int vertices_with_unitig_flag;
+    struct biosal_unitig_manager *concrete_self;
+    void *buffer;
+    int offset;
+
+    buffer = thorium_message_buffer(message);
+    offset = 0;
+
+    concrete_self = (struct biosal_unitig_manager *)thorium_actor_concrete_actor(self);
+
+    ++concrete_self->completed;
+    offset += thorium_message_unpack_int(message, offset, &processed_vertices);
+    offset += thorium_message_unpack_int(message, offset, &vertices_with_unitig_flag);
+
+    concrete_self->processed_vertices += processed_vertices;
+    concrete_self->vertices_with_unitig_flag += vertices_with_unitig_flag;
+
+    expected = core_vector_size(&concrete_self->visitors);
+
+    if (concrete_self->completed % UNITIG_VISITOR_COUNT_PER_WORKER == 0
+                    || concrete_self->completed == expected) {
+        printf("PROGRESS unitig visitors %d/%d\n",
+                    concrete_self->completed,
+                    expected);
+    }
+
+    if (concrete_self->completed == expected) {
+
+        printf("DEBUG %s/%d processed_vertices %" PRIu64
+                        " vertices_with_unitig_flag %" PRIu64 "\n",
+                        thorium_actor_script_name(self),
+                        thorium_actor_name(self),
+                        concrete_self->processed_vertices,
+                        concrete_self->vertices_with_unitig_flag);
+
+        core_timer_stop(&concrete_self->timer);
+        core_timer_print_with_description(&concrete_self->timer, "Visit vertices for unitigs");
+
+        /*
+         * Stop the visitor manager and all visitors too.
+         */
+        thorium_actor_send_empty(self, concrete_self->manager, ACTION_ASK_TO_STOP);
+
+        /*
+         * Reset graph stores.
+         */
+        thorium_actor_send_range_empty(self, &concrete_self->graph_stores,
+                        ACTION_RESET);
+        concrete_self->completed = 0;
+    }
+}

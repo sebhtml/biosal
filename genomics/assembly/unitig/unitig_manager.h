@@ -6,6 +6,8 @@
 
 #include <core/system/timer.h>
 
+#include <stdint.h>
+
 #define SCRIPT_UNITIG_MANAGER 0x3bf29ca1
 
 /*
@@ -24,6 +26,9 @@ struct biosal_unitig_manager {
     int state;
 
     int writer_process;
+
+    uint64_t processed_vertices;
+    uint64_t vertices_with_unitig_flag;
 };
 
 extern struct thorium_script biosal_unitig_manager_script;

@@ -66,12 +66,12 @@ void biosal_unitig_visitor_init(struct thorium_actor *self)
         biosal_dna_codec_enable_two_bit_encoding(&concrete_self->codec);
     }
 
-    concrete_self->visited = 0;
+    concrete_self->visited_vertices = 0;
 
     concrete_self->last_second_count = thorium_actor_get_time_in_seconds(self);
-    concrete_self->last_visited_count = concrete_self->visited;
+    concrete_self->last_visited_count = concrete_self->visited_vertices;
 
-    concrete_self->unitig_flags = 0;
+    concrete_self->vertices_with_unitig_flag = 0;
 
     biosal_vertex_neighborhood_init_empty(&concrete_self->main_neighborhood);
     biosal_vertex_neighborhood_init_empty(&concrete_self->parent_neighborhood);
@@ -93,7 +93,7 @@ void biosal_unitig_visitor_destroy(struct thorium_actor *self)
     concrete_self = thorium_actor_concrete_actor(self);
     printf("%s/%d vertex_count: %d BIOSAL_VERTEX_FLAG_UNITIG: %d\n",
                     thorium_actor_script_name(self), thorium_actor_name(self),
-                    concrete_self->visited, concrete_self->unitig_flags);
+                    concrete_self->visited_vertices, concrete_self->vertices_with_unitig_flag);
 
     biosal_dna_codec_destroy(&concrete_self->codec);
 
@@ -234,6 +234,8 @@ void biosal_unitig_visitor_execute(struct thorium_actor *self)
     int expected_code;
     float velocity;
     uint64_t current_time;
+    char *new_buffer;
+    int new_count;
 
     concrete_self = thorium_actor_concrete_actor(self);
     size = core_vector_size(&concrete_self->graph_stores);
@@ -245,7 +247,17 @@ void biosal_unitig_visitor_execute(struct thorium_actor *self)
 #endif
 
     if (concrete_self->completed == core_vector_size(&concrete_self->graph_stores)) {
-        thorium_actor_send_empty(self, concrete_self->manager, ACTION_START_REPLY);
+
+        new_count = sizeof(concrete_self->visited_vertices) + sizeof(concrete_self->vertices_with_unitig_flag);
+        new_buffer = thorium_actor_allocate(self, new_count);
+
+        core_memory_copy(new_buffer, &concrete_self->visited_vertices, sizeof(concrete_self->visited_vertices));
+        core_memory_copy(new_buffer + sizeof(concrete_self->visited_vertices),
+                        &concrete_self->vertices_with_unitig_flag,
+                        sizeof(concrete_self->vertices_with_unitig_flag));
+
+        thorium_actor_send_buffer(self, concrete_self->manager, ACTION_START_REPLY,
+                        new_count, new_buffer);
 
 #if 0
         printf("visitor Finished\n");
@@ -368,11 +380,11 @@ void biosal_unitig_visitor_execute(struct thorium_actor *self)
 
         concrete_self->step = STEP_GET_MAIN_KMER;
 
-        if (concrete_self->visited % 500 == 0) {
+        if (concrete_self->visited_vertices % 500 == 0) {
 
             current_time = thorium_actor_get_time_in_seconds(self);
 
-            velocity = (concrete_self->visited - concrete_self->last_visited_count + 0.0);
+            velocity = (concrete_self->visited_vertices - concrete_self->last_visited_count + 0.0);
             current_time -= concrete_self->last_second_count;
 
             if (current_time != 0)
@@ -380,10 +392,10 @@ void biosal_unitig_visitor_execute(struct thorium_actor *self)
 
             printf("%s/%d visited %d vertices so far (velocity: %f vertices / s)\n",
                             thorium_actor_script_name(self), thorium_actor_name(self),
-                            concrete_self->visited, velocity);
+                            concrete_self->visited_vertices, velocity);
         }
 
-        ++concrete_self->visited;
+        ++concrete_self->visited_vertices;
         biosal_unitig_visitor_execute(self);
 
     } else if (concrete_self->step == STEP_GET_PARENT_VERTEX_DATA) {
@@ -551,7 +563,7 @@ void biosal_unitig_visitor_mark_vertex(struct thorium_actor *self, struct biosal
     concrete_self = thorium_actor_concrete_actor(self);
     ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
 
-    ++concrete_self->unitig_flags;
+    ++concrete_self->vertices_with_unitig_flag;
 
     /*
      * Mark the vertex with the BIOSAL_VERTEX_FLAG_UNITIG
