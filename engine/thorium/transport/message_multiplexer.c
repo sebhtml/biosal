@@ -93,6 +93,11 @@ void thorium_message_multiplexer_init(struct thorium_message_multiplexer *self,
 
         CORE_DEBUGGER_ASSERT(multiplexed_buffer != NULL);
 
+        /*
+         * Initially, these multiplexed buffers have a NULL buffer.
+         * It is only allocated when needed because each worker is an exporter
+         * of small messages for a subset of all the destination nodes.
+         */
         thorium_multiplexed_buffer_init(multiplexed_buffer, self->buffer_size_in_bytes);
 
         position += self->buffer_size_in_bytes;
@@ -323,6 +328,8 @@ int thorium_message_multiplexer_multiplex(struct thorium_message_multiplexer *se
 
     /*
      * The allocation of buffer is lazy.
+     * The current worker is an exporter of small message for the destination
+     * "destination_node".
      */
     if (thorium_multiplexed_buffer_buffer(real_multiplexed_buffer) == NULL) {
         pool = thorium_worker_get_outbound_message_memory_pool(self->worker);
