@@ -100,7 +100,8 @@ void thorium_message_multiplexer_init(struct thorium_message_multiplexer *self,
          * It is only allocated when needed because each worker is an exporter
          * of small messages for a subset of all the destination nodes.
          */
-        thorium_multiplexed_buffer_init(multiplexed_buffer, self->buffer_size_in_bytes);
+        thorium_multiplexed_buffer_init(multiplexed_buffer, self->buffer_size_in_bytes,
+                        self->timeout_in_nanoseconds);
 
         position += self->buffer_size_in_bytes;
 
@@ -511,6 +512,7 @@ void thorium_message_multiplexer_test(struct thorium_message_multiplexer *self)
     struct thorium_multiplexed_buffer *multiplexed_buffer;
     uint64_t *lowest_key;
     int *index_bucket;
+    int timeout;
 
     if (CORE_BITMAP_GET_BIT(self->flags, FLAG_DISABLED)) {
         return;
@@ -568,12 +570,14 @@ void thorium_message_multiplexer_test(struct thorium_message_multiplexer *self)
          */
         duration = time - buffer_time;
 
+        timeout = thorium_multiplexed_buffer_timeout(multiplexed_buffer);
+
         /*
          * The oldest item is too recent.
          * Therefore, all the others are too recent too
          * because the timeline is ordered.
          */
-        if (duration < self->timeout_in_nanoseconds) {
+        if (duration < timeout) {
             return;
         }
 
@@ -725,15 +729,9 @@ void thorium_message_multiplexer_set_worker(struct thorium_message_multiplexer *
     self->worker = worker;
 
     if (thorium_node_name(self->node) == 0 && thorium_worker_name(self->worker) == 0) {
-        if (self->timeout_in_nanoseconds == THORIUM_DYNAMIC_TIMEOUT) {
-            printf("thorium_message_multiplexer: disabled=%d buffer_size_in_bytes=%d timeout_in_nanoseconds=dynamic\n",
-                            CORE_BITMAP_GET_BIT(self->flags, FLAG_DISABLED),
-                        self->buffer_size_in_bytes);
-        } else {
-            printf("thorium_message_multiplexer: disabled=%d buffer_size_in_bytes=%d timeout_in_nanoseconds=%d\n",
+        printf("thorium_message_multiplexer: disabled=%d buffer_size_in_bytes=%d timeout_in_nanoseconds=%d\n",
                             CORE_BITMAP_GET_BIT(self->flags, FLAG_DISABLED),
                         self->buffer_size_in_bytes, self->timeout_in_nanoseconds);
-        }
     }
 }
 

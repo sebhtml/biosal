@@ -15,6 +15,7 @@ struct thorium_multiplexed_buffer {
     int current_size_;
     int maximum_size_;
     int message_count_;
+    int timeout_;
 
     int prediction_iterator;
     int prediction_ages[PREDICTION_EVENT_COUNT];
@@ -23,7 +24,7 @@ struct thorium_multiplexed_buffer {
 };
 
 void thorium_multiplexed_buffer_init(struct thorium_multiplexed_buffer *self,
-                int maximum_size);
+                int maximum_size, int timeout);
 void thorium_multiplexed_buffer_destroy(struct thorium_multiplexed_buffer *self);
 
 void thorium_multiplexed_buffer_print(struct thorium_multiplexed_buffer *self);
@@ -45,5 +46,7 @@ void thorium_multiplexed_buffer_set_buffer(struct thorium_multiplexed_buffer *se
 void thorium_multiplexed_buffer_reset(struct thorium_multiplexed_buffer *self);
 
 void thorium_multiplexed_buffer_profile(struct thorium_multiplexed_buffer *self, uint64_t time);
+
+int thorium_multiplexed_buffer_timeout(struct thorium_multiplexed_buffer *self);
 
 #endif

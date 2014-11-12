@@ -11,9 +11,11 @@
 void thorium_multiplexed_buffer_print_history(struct thorium_multiplexed_buffer *self);
 
 void thorium_multiplexed_buffer_init(struct thorium_multiplexed_buffer *self,
-                int maximum_size)
+                int maximum_size, int timeout)
 {
     int i;
+
+    self->timeout_ = timeout;
 
     thorium_multiplexed_buffer_reset(self);
 
@@ -165,4 +167,9 @@ void thorium_multiplexed_buffer_print_history(struct thorium_multiplexed_buffer 
                         i, age, current_size, self->maximum_size_,
                         message_count);
     }
+}
+
+int thorium_multiplexed_buffer_timeout(struct thorium_multiplexed_buffer *self)
+{
+    return self->timeout_;
 }
