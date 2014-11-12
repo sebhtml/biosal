@@ -12,11 +12,40 @@ struct core_memory_pool;
 
 /* TODO: implement sparse hash method with bitmap */
 
+/*
+ * Interleave keys and values. This provides better performance
+ * because the only time where memory cache will be used is when
+ * the key is the good one. In that case, the associated value will
+ * be right after the key, and presumably in the same cache line.
+ */
+/*
+*/
+#define CORE_USE_INTERLEAVED_KEYS_AND_VALUES
+
 /**
  * This is a hash table group
  */
 struct core_hash_table_group {
+#ifdef CORE_USE_INTERLEAVED_KEYS_AND_VALUES
     void *array;
+#else
+    /*
+     * This is based on this patch:
+     *
+     * http://biosal.s3.amazonaws.com/patches/separate-keys-and-values-in-hash-table.c
+     */
+    /*
+     * The keys and values are stored separately to increase
+     * memory locality while doing searches in small hash tables.
+     * For big hash tables, this will decrease performance.
+     *
+     * In practice, this probably does not change much since
+     * memory accesses are random.
+     */
+    void *key_array;
+    void *value_array;
+#endif
+
     void *occupancy_bitmap;
     void *deletion_bitmap;
 };

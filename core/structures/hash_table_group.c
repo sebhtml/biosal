@@ -32,8 +32,17 @@ void core_hash_table_group_init(struct core_hash_table_group *group,
     printf("DEBUG init group\n");
 #endif
 
+    /*
+     * Allocate memory for data.
+     * With CORE_USE_INTERLEAVED_KEYS_AND_VALUES, keys and values are
+     * interleaved.
+     */
+#ifdef CORE_USE_INTERLEAVED_KEYS_AND_VALUES
     array_bytes = buckets_per_group * (key_size + value_size);
-    bitmap_bytes = buckets_per_group / CORE_BITS_PER_BYTE;
+
+    group->array = core_memory_pool_allocate(memory, array_bytes);
+#else
+    array_bytes = buckets_per_group * key_size;
 
 #ifdef CORE_HASH_TABLE_GROUP_DEBUG
     printf("DEBUG buckets_per_group %" PRIu64 " key_size %d value_size %d\n",
@@ -42,7 +51,21 @@ void core_hash_table_group_init(struct core_hash_table_group *group,
 #endif
 
     /* use slab allocator */
-    group->array = core_memory_pool_allocate(memory, array_bytes);
+    group->key_array = core_memory_pool_allocate(memory, array_bytes);
+
+    group->value_array = NULL;
+
+    if (value_size) {
+        array_bytes = buckets_per_group * value_size;
+        group->value_array = core_memory_pool_allocate(memory, array_bytes);
+    }
+#endif
+
+    /*
+     * Allocate memory for bitmaps.
+     */
+    bitmap_bytes = buckets_per_group / CORE_BITS_PER_BYTE;
+
     group->occupancy_bitmap = core_memory_pool_allocate(memory, bitmap_bytes);
 
     group->deletion_bitmap = NULL;
@@ -71,8 +94,22 @@ void core_hash_table_group_destroy(struct core_hash_table_group *group,
         group->deletion_bitmap = NULL;
     }
 
-    core_memory_pool_free(memory, group->array);
-    group->array = NULL;
+#ifdef CORE_USE_INTERLEAVED_KEYS_AND_VALUES
+    if (group->array != NULL) {
+        core_memory_pool_free(memory, group->array);
+        group->array = NULL;
+    }
+#else
+    if (group->key_array != NULL) {
+        core_memory_pool_free(memory, group->key_array);
+        group->key_array = NULL;
+    }
+
+    if (group->value_array != NULL) {
+        core_memory_pool_free(memory, group->value_array);
+        group->value_array = NULL;
+    }
+#endif
 }
 
 void core_hash_table_group_delete(struct core_hash_table_group *group, uint64_t bucket)
@@ -218,13 +255,28 @@ static int core_hash_table_group_get_bit(void *bitmap, uint64_t bucket)
 void *core_hash_table_group_key(struct core_hash_table_group *group, uint64_t bucket,
                 int key_size, int value_size)
 {
+    int stride;
+    void *array;
+
+#ifdef CORE_USE_INTERLEAVED_KEYS_AND_VALUES
+    array = group->array;
+    stride = key_size + value_size;
+#else
+    array = group->key_array;
+    stride = key_size;
+#endif
+
     /* we assume that the key is stored first */
-    return (char *)group->array + bucket * (key_size + value_size);
+    return (char *)array + bucket * stride;
 }
 
 void *core_hash_table_group_value(struct core_hash_table_group *group, uint64_t bucket,
                 int key_size, int value_size)
 {
+    void *array;
+    int stride;
+    int offset;
+
     /*
      * It would be logical to return a NULL pointer
      * if value size is 0.
@@ -233,15 +285,30 @@ void *core_hash_table_group_value(struct core_hash_table_group *group, uint64_t 
      * Otherwise, it is impossible to verify if a key
      * is inside with the current interface
      *
+     * TODO The core_set code should be fixed since this does not make much sense.
      */
+    if (value_size == 0)
+        return core_hash_table_group_key(group, bucket, key_size, value_size);
+
 #if 0
     if (value_size == 0) {
         return NULL;
     }
 #endif
 
+#ifdef CORE_USE_INTERLEAVED_KEYS_AND_VALUES
+    offset = key_size;
+    array = group->array;
+    stride = key_size + value_size;
+#else
+    offset = 0;
+    array = group->value_array;
+    stride = value_size;
+#endif
+
     /* we assume that the key is stored first */
-    return (char *)core_hash_table_group_key(group, bucket, key_size, value_size) + key_size;
+
+    return (char *)array + bucket * stride + offset;
 }
 
 int core_hash_table_group_pack_unpack(struct core_hash_table_group *self, void *buffer, int operation,
@@ -265,11 +332,23 @@ int core_hash_table_group_pack_unpack(struct core_hash_table_group *self, void *
     }
 
     bitmap_bytes = buckets_per_group / CORE_BITS_PER_BYTE;
-    array_bytes = buckets_per_group * (key_size + value_size);
 
     core_packer_init(&packer, operation, buffer);
 
-    core_packer_process(&packer, self->array, array_bytes);
+#ifdef CORE_USE_INTERLEAVED_KEYS_AND_VALUES
+    array_bytes = buckets_per_group * (key_size + value_size);
+    if (self->array != NULL)
+        core_packer_process(&packer, self->array, array_bytes);
+#else
+    array_bytes = buckets_per_group * key_size;
+    if (self->key_array != NULL)
+        core_packer_process(&packer, self->key_array, array_bytes);
+
+    array_bytes = buckets_per_group * value_size;
+    if (self->value_array != NULL)
+        core_packer_process(&packer, self->value_array, array_bytes);
+#endif
+
     core_packer_process(&packer, self->occupancy_bitmap, bitmap_bytes);
 
     if (deletion_is_enabled) {
