@@ -1,0 +1,42 @@
+# Object files
+*.o
+*.ko
+*.obj
+*.elf
+.deps/
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Libraries
+*.lib
+*.a
+*.la
+*.lo
+
+# Shared objects (inc. Windows DLLs)
+*.dll
+*.so
+*.so.*
+*.dylib
+
+# Executables
+*.exe
+*.out
+*.app
+*.i*86
+*.x86_64
+*.hex
+
+# Editor Files
+*~
+
+# IDE Files (from George's explorations of Eclipse, CLion, etc.
+
+.cproject
+.idea/
+.project
+.settings/
+CMakeLists.txt
+
