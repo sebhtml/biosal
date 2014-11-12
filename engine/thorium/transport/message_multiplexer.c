@@ -14,7 +14,6 @@
 
 #include <core/structures/vector.h>
 #include <core/helpers/set_helper.h>
-#include <core/structures/set_iterator.h>
 
 #include <stdlib.h>
 
@@ -46,7 +45,6 @@
  */
 void thorium_message_multiplexer_flush(struct thorium_message_multiplexer *self, int index, int force);
 
-
 void thorium_message_multiplexer_init(struct thorium_message_multiplexer *self,
                 struct thorium_node *node, struct thorium_multiplexer_policy *policy)
 {
@@ -57,6 +55,9 @@ void thorium_message_multiplexer_init(struct thorium_message_multiplexer *self,
     struct thorium_multiplexed_buffer *multiplexed_buffer;
     int argc;
     char **argv;
+
+    core_red_black_tree_init(&self->timeline, sizeof(uint64_t), sizeof(int), NULL);
+    core_red_black_tree_use_uint64_t_keys(&self->timeline);
 
     self->policy = policy;
     self->original_message_count = 0;
@@ -116,8 +117,6 @@ void thorium_message_multiplexer_init(struct thorium_message_multiplexer *self,
 
     self->worker = NULL;
 
-    core_vector_init(&self->to_flush, sizeof(int));
-
     argc = node->argc;
     argv = node->argv;
 
@@ -172,7 +171,7 @@ void thorium_message_multiplexer_destroy(struct thorium_message_multiplexer *sel
 
     core_timer_destroy(&self->timer);
 
-    core_vector_destroy(&self->to_flush);
+    core_red_black_tree_destroy(&self->timeline);
 }
 
 /*
@@ -314,6 +313,12 @@ int thorium_message_multiplexer_multiplex(struct thorium_message_multiplexer *se
         thorium_multiplexed_buffer_set_time(real_multiplexed_buffer, time);
 
         core_set_add(&self->buffers_with_content, &destination_node);
+
+        /*
+         * Add it to the timeline.
+         */
+
+        core_red_black_tree_add_key_and_value(&self->timeline, &time, &destination_node);
     }
 
     /*
@@ -487,15 +492,12 @@ void thorium_message_multiplexer_test(struct thorium_message_multiplexer *self)
      */
 
     uint64_t time;
-    struct core_set_iterator iterator;
     int duration;
     int index;
     uint64_t buffer_time;
-    int i;
-    int size;
     struct thorium_multiplexed_buffer *multiplexed_buffer;
-
-    CORE_DEBUGGER_ASSERT(core_vector_empty(&self->to_flush));
+    uint64_t *lowest_key;
+    int *index_bucket;
 
     if (CORE_BITMAP_GET_BIT(self->flags, FLAG_DISABLED)) {
         return;
@@ -509,10 +511,6 @@ void thorium_message_multiplexer_test(struct thorium_message_multiplexer *self)
         return;
     }
 
-    core_set_iterator_init(&iterator, &self->buffers_with_content);
-
-    size = core_set_size(&self->buffers_with_content);
-
 #ifdef DEBUG_MULTIPLEXER_TEST
     if (size >= DEBUG_MINIMUM_COUNT)
         printf("DEBUG multiplexer_test buffers with content: %d\n",
@@ -525,40 +523,62 @@ void thorium_message_multiplexer_test(struct thorium_message_multiplexer *self)
      */
     time = core_timer_get_nanoseconds(&self->timer);
 
-    while (core_set_iterator_get_next_value(&iterator, &index)) {
+    /*
+     * Get the destination with the oldest buffer.
+     * If this one has not waited enough, then any other more recent
+     * buffer has not waited enough neither.
+     */
+    while (1) {
+        lowest_key = core_red_black_tree_get_lowest_key(&self->timeline);
+
+        /*
+         * The timeline is empty.
+         */
+        if (lowest_key == NULL)
+            return;
+
+        /*
+         * Get the index.
+         * The index is the destination.
+         */
+        index_bucket = core_red_black_tree_get(&self->timeline, lowest_key);
+        index = *index_bucket;
 
         multiplexed_buffer = core_vector_at(&self->buffers, index);
         buffer_time = thorium_multiplexed_buffer_time(multiplexed_buffer);
 
+        /*
+         * Get the current time. This current time will be compared
+         * with the virtual time of each item in the timeline.
+         */
         duration = time - buffer_time;
 
-#ifdef DEBUG_MULTIPLEXER_TEST
-        if (size >= DEBUG_MINIMUM_COUNT)
-            printf("DEBUG ....... index %d elapsed %d ns\n", index, duration);
-#endif
+        /*
+         * The oldest item is too recent.
+         * Therefore, all the others are too recent too
+         * because the timeline is ordered.
+         */
+        if (duration < self->timeout_in_nanoseconds) {
+            return;
+        }
 
         /*
-        printf("MULTIPLEXER FLUSH buffer %d\n", index);
-        */
-        if (duration >= self->timeout_in_nanoseconds) {
-            core_vector_push_back(&self->to_flush, &index);
-        }
+         * Remove the object from the timeline.
+         */
+        core_red_black_tree_delete(&self->timeline, lowest_key);
+
+        /*
+         * The item won't have content in the case were _flush()
+         * was called elsewhere with FORCE_YES_SIZE.
+         */
+        if (core_set_find(&self->buffers_with_content, &index))
+            thorium_message_multiplexer_flush(self, index, FORCE_YES_TIME);
+
+        /*
+         * Otherwise, keep flushing stuff.
+         * This will eventually end anyway.
+         */
     }
-
-    core_set_iterator_destroy(&iterator);
-
-    size = core_vector_size(&self->to_flush);
-
-    /*
-     * Flush entries
-     */
-    for (i = 0; i < size; ++i) {
-        index = core_vector_at_as_int(&self->to_flush, i);
-
-        thorium_message_multiplexer_flush(self, index, FORCE_YES_TIME);
-    }
-
-    core_vector_clear(&self->to_flush);
 }
 
 void thorium_message_multiplexer_flush(struct thorium_message_multiplexer *self, int index, int force)
@@ -571,6 +591,7 @@ void thorium_message_multiplexer_flush(struct thorium_message_multiplexer *self,
     int maximum_size;
     struct thorium_multiplexed_buffer *multiplexed_buffer;
     int destination_node;
+    uint64_t virtual_time;
 
     if (CORE_BITMAP_GET_BIT(self->flags, FLAG_DISABLED)) {
         return;
@@ -648,6 +669,8 @@ void thorium_message_multiplexer_flush(struct thorium_message_multiplexer *self,
 
     ++self->real_message_count;
     thorium_message_destroy(&message);
+
+    virtual_time = thorium_multiplexed_buffer_time(multiplexed_buffer);
 
     thorium_multiplexed_buffer_reset(multiplexed_buffer);
 

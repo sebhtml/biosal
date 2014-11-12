@@ -7,11 +7,10 @@ struct thorium_worker;
 struct thorium_message;
 
 #include <core/structures/vector.h>
-#include <core/structures/set.h>
-#include <core/structures/set_iterator.h>
 
-#include <core/structures/map.h>
-#include <core/structures/map_iterator.h>
+#include <core/structures/ordered/red_black_tree.h>
+
+#include <core/structures/set.h>
 
 #include <core/system/timer.h>
 
@@ -55,6 +54,8 @@ struct thorium_message_multiplexer {
     struct core_vector buffers;
     struct core_set buffers_with_content;
 
+    struct core_red_black_tree timeline;
+
     struct thorium_node *node;
     struct thorium_worker *worker;
     uint32_t flags;
@@ -82,7 +83,6 @@ struct thorium_message_multiplexer {
     int real_message_count;
 
     struct thorium_multiplexer_policy *policy;
-    struct core_vector to_flush;
 };
 
 void thorium_message_multiplexer_init(struct thorium_message_multiplexer *self,
