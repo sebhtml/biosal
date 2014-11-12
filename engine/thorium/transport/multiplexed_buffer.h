@@ -17,6 +17,7 @@ struct thorium_multiplexed_buffer {
     int message_count_;
     int timeout_;
 
+    int predicted_message_count_;
     int prediction_iterator;
     int prediction_ages[PREDICTION_EVENT_COUNT];
     int prediction_message_count[PREDICTION_EVENT_COUNT];

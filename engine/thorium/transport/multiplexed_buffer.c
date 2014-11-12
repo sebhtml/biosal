@@ -8,7 +8,21 @@
 #include <inttypes.h>
 #include <stdint.h>
 
+/*
+ * Print the past history in the prediction engine.
+ */
+/*
+#define PRINT_HISTORY
+*/
+
+/*
+ * This compilation option enables the future prediction
+ * subsystem.
+ */
+#define PREDICT_FUTURE
+
 void thorium_multiplexed_buffer_print_history(struct thorium_multiplexed_buffer *self);
+void thorium_multiplexed_buffer_predict(struct thorium_multiplexed_buffer *self);
 
 void thorium_multiplexed_buffer_init(struct thorium_multiplexed_buffer *self,
                 int maximum_size, int timeout)
@@ -16,6 +30,7 @@ void thorium_multiplexed_buffer_init(struct thorium_multiplexed_buffer *self,
     int i;
 
     self->timeout_ = timeout;
+    self->predicted_message_count_ = 99999999;
 
     thorium_multiplexed_buffer_reset(self);
 
@@ -146,6 +161,10 @@ void thorium_multiplexed_buffer_profile(struct thorium_multiplexed_buffer *self,
         thorium_multiplexed_buffer_print_history(self);
 #endif
 
+#ifdef PREDICT_FUTURE
+        thorium_multiplexed_buffer_predict(self);
+#endif
+
         self->prediction_iterator = 0;
     }
 }
@@ -171,5 +190,36 @@ void thorium_multiplexed_buffer_print_history(struct thorium_multiplexed_buffer 
 
 int thorium_multiplexed_buffer_timeout(struct thorium_multiplexed_buffer *self)
 {
+    /*
+     * When the predicted message count is reached, return a timeout of
+     * 0 nanoseconds so that the buffer will be flushed right away.
+     */
+    if (self->message_count_ >= self->predicted_message_count_)
+        return 0;
+
     return self->timeout_;
+}
+
+void thorium_multiplexed_buffer_predict(struct thorium_multiplexed_buffer *self)
+{
+    int i;
+    int message_count;
+
+    self->predicted_message_count_ = 0;
+
+    /*
+     * Use the maximum message count in the past history to
+     * predict the message count for the next period.
+     */
+    for (i = 0; i < PREDICTION_EVENT_COUNT; ++i) {
+
+        message_count = self->prediction_message_count[i];
+
+        if (message_count > self->predicted_message_count_)
+            self->predicted_message_count_ = message_count;
+    }
+
+#ifdef PRINT_HISTORY
+    printf("DEBUG _predict() -> prediction is %d\n", message_count);
+#endif
 }
