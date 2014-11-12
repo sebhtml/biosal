@@ -24,6 +24,10 @@ struct thorium_message;
 #define ACTION_MULTIPLEXER_MESSAGE (MULTIPLEXER_ACTION_BASE + 0)
 
 /*
+#define THORIUM_MULTIPLEXER_TRACK_BUFFERS_WITH_CONTENT
+*/
+
+/*
  * Genomic graph traversal is characterized by:
  *
  * - a high ratio of consumer actors (visitors, walkers, and so on) to producer actors (graph stores)
@@ -52,7 +56,10 @@ struct thorium_message_multiplexer {
     struct core_timer timer;
 
     struct core_vector buffers;
+
+#ifdef THORIUM_MULTIPLEXER_TRACK_BUFFERS_WITH_CONTENT
     struct core_set buffers_with_content;
+#endif
 
     struct core_red_black_tree timeline;
 

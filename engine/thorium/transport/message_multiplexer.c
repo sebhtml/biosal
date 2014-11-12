@@ -66,7 +66,9 @@ void thorium_message_multiplexer_init(struct thorium_message_multiplexer *self,
     CORE_BITMAP_CLEAR(self->flags);
     CORE_BITMAP_CLEAR_BIT(self->flags, FLAG_DISABLED);
 
+#ifdef THORIUM_MULTIPLEXER_TRACK_BUFFERS_WITH_CONTENT
     core_set_init(&self->buffers_with_content, sizeof(int));
+#endif
 
     core_timer_init(&self->timer);
 
@@ -152,12 +154,14 @@ void thorium_message_multiplexer_destroy(struct thorium_message_multiplexer *sel
 #endif
     size = core_vector_size(&self->buffers);
 
+#ifdef THORIUM_MULTIPLEXER_TRACK_BUFFERS_WITH_CONTENT
     /*
      * There can be no messages that are not flushed already.
      */
     CORE_DEBUGGER_ASSERT(core_set_empty(&self->buffers_with_content));
 
     core_set_destroy(&self->buffers_with_content);
+#endif
 
     for (i = 0; i < size; ++i) {
         multiplexed_buffer = core_vector_at(&self->buffers, i);
@@ -317,7 +321,9 @@ int thorium_message_multiplexer_multiplex(struct thorium_message_multiplexer *se
         time = core_timer_get_nanoseconds(&self->timer);
         thorium_multiplexed_buffer_set_time(real_multiplexed_buffer, time);
 
+#ifdef THORIUM_MULTIPLEXER_TRACK_BUFFERS_WITH_CONTENT
         core_set_add(&self->buffers_with_content, &destination_node);
+#endif
 
         /*
          * Add it to the timeline.
@@ -510,6 +516,7 @@ void thorium_message_multiplexer_test(struct thorium_message_multiplexer *self)
         return;
     }
 
+#ifdef THORIUM_MULTIPLEXER_TRACK_BUFFERS_WITH_CONTENT
     /*
      * Nothing to do, there is nothing to flush
      * in the system.
@@ -517,6 +524,7 @@ void thorium_message_multiplexer_test(struct thorium_message_multiplexer *self)
     if (core_set_empty(&self->buffers_with_content)) {
         return;
     }
+#endif
 
 #ifdef DEBUG_MULTIPLEXER_TEST
     if (size >= DEBUG_MINIMUM_COUNT)
@@ -578,8 +586,14 @@ void thorium_message_multiplexer_test(struct thorium_message_multiplexer *self)
          * The item won't have content in the case were _flush()
          * was called elsewhere with FORCE_YES_SIZE.
          */
-        if (core_set_find(&self->buffers_with_content, &index))
+#ifdef THORIUM_MULTIPLEXER_TRACK_BUFFERS_WITH_CONTENT
+        if (core_set_find(&self->buffers_with_content, &index)) {
+#endif
             thorium_message_multiplexer_flush(self, index, FORCE_YES_TIME);
+
+#ifdef THORIUM_MULTIPLEXER_TRACK_BUFFERS_WITH_CONTENT
+        }
+#endif
 
         /*
          * Otherwise, keep flushing stuff.
@@ -604,6 +618,7 @@ void thorium_message_multiplexer_flush(struct thorium_message_multiplexer *self,
         return;
     }
 
+#ifdef THORIUM_MULTIPLEXER_TRACK_BUFFERS_WITH_CONTENT
 #ifdef CORE_DEBUGGER_ASSERT_ENABLED
     if (!(core_set_find(&self->buffers_with_content, &index))) {
         multiplexed_buffer = core_vector_at(&self->buffers, index);
@@ -614,14 +629,26 @@ void thorium_message_multiplexer_flush(struct thorium_message_multiplexer *self,
 #endif
 
     CORE_DEBUGGER_ASSERT(core_set_find(&self->buffers_with_content, &index));
+#endif
 
     multiplexed_buffer = core_vector_at(&self->buffers, index);
     current_size = thorium_multiplexed_buffer_current_size(multiplexed_buffer);
     maximum_size = thorium_multiplexed_buffer_maximum_size(multiplexed_buffer);
 
+    /*
+     * The buffer was still in the timeline, but it was flushed elsewhere.
+     */
+    if (current_size == 0)
+        return;
+
     if (force == FORCE_NO && current_size < maximum_size) {
         return;
     }
+
+#ifdef CORE_DEBUGGER_ASSERT_ENABLED
+    if (current_size <= 0)
+        printf("current_size %d maximum_size %d\n", current_size, maximum_size);
+#endif
 
     CORE_DEBUGGER_ASSERT(current_size > 0);
 
@@ -681,7 +708,9 @@ void thorium_message_multiplexer_flush(struct thorium_message_multiplexer *self,
 
     thorium_multiplexed_buffer_reset(multiplexed_buffer);
 
+#ifdef THORIUM_MULTIPLEXER_TRACK_BUFFERS_WITH_CONTENT
     core_set_delete(&self->buffers_with_content, &index);
+#endif
 }
 
 int thorium_message_multiplexer_is_disabled(struct thorium_message_multiplexer *self)
