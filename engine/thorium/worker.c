@@ -1726,12 +1726,25 @@ void thorium_worker_run(struct thorium_worker *worker)
         name = thorium_message_destination(&other_message);
         actor = thorium_node_get_actor_from_name(worker->node, name);
 
-        if (!thorium_actor_enqueue_mailbox_message(actor, &other_message)) {
+        /*
+         * If the actor is dead or if the pointer is NULL,
+         * recycle the message.
+         */
+        if (actor == NULL
+               || thorium_actor_dead(actor)) {
+            thorium_worker_free_message(worker, &other_message);
+
+        /*
+         * If the actor is alive, give it the message.
+         */
+        } else if (!thorium_actor_enqueue_mailbox_message(actor, &other_message)) {
             core_fast_queue_enqueue(&worker->input_inbound_message_queue, &other_message);
+
         } else {
 
             /*
-             * Schedule it too.
+             * After giving the message to the actor,
+             * schedule it too.
              */
             thorium_worker_schedule_actor(worker, actor);
         }
