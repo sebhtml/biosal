@@ -313,13 +313,14 @@ int thorium_message_multiplexer_multiplex(struct thorium_message_multiplexer *se
         CORE_DEBUGGER_ASSERT(current_size == 0);
     }
 
+    time = core_timer_get_nanoseconds(&self->timer);
+
     /*
      * If the buffer is empty before adding the data, it means that it is not
      * in the list of buffers with content and it must be added.
      */
     if (current_size == 0) {
 
-        time = core_timer_get_nanoseconds(&self->timer);
         thorium_multiplexed_buffer_set_time(real_multiplexed_buffer, time);
 
 #ifdef THORIUM_MULTIPLEXER_TRACK_BUFFERS_WITH_CONTENT
@@ -347,7 +348,7 @@ int thorium_message_multiplexer_multiplex(struct thorium_message_multiplexer *se
         thorium_multiplexed_buffer_set_buffer(real_multiplexed_buffer, new_buffer);
     }
 
-    thorium_multiplexed_buffer_append(real_multiplexed_buffer, count, buffer);
+    thorium_multiplexed_buffer_append(real_multiplexed_buffer, count, buffer, time);
 
     thorium_message_multiplexer_flush(self, destination_node, FORCE_NO);
 
@@ -707,11 +708,6 @@ void thorium_message_multiplexer_flush(struct thorium_message_multiplexer *self,
 
     ++self->real_message_count;
     thorium_message_destroy(&message);
-
-#ifdef THORIUM_MULTIPLEXED_BUFFER_PREDICT_MESSAGE_COUNT
-    thorium_multiplexed_buffer_profile(multiplexed_buffer,
-                    core_timer_get_nanoseconds(&self->timer));
-#endif
 
     thorium_multiplexed_buffer_reset(multiplexed_buffer);
 

@@ -18,6 +18,10 @@ struct thorium_multiplexed_buffer {
     int maximum_size_;
     int message_count_;
     int timeout_;
+    int configured_timeout;
+
+    uint64_t profile_start;
+    int profile_actor_message_count;
 
 #ifdef THORIUM_MULTIPLEXED_BUFFER_PREDICT_MESSAGE_COUNT
     int predicted_message_count_;
@@ -37,8 +41,11 @@ uint64_t thorium_multiplexed_buffer_time(struct thorium_multiplexed_buffer *self
 int thorium_multiplexed_buffer_current_size(struct thorium_multiplexed_buffer *self);
 int thorium_multiplexed_buffer_maximum_size(struct thorium_multiplexed_buffer *self);
 
+/*
+ * All small actor messages go through this function.
+ */
 void thorium_multiplexed_buffer_append(struct thorium_multiplexed_buffer *self,
-                int count, void *buffer);
+                int count, void *buffer, uint64_t time);
 int thorium_multiplexed_buffer_required_size(struct thorium_multiplexed_buffer *self,
                 int count);
 void thorium_multiplexed_buffer_set_time(struct thorium_multiplexed_buffer *self,
@@ -49,8 +56,6 @@ void thorium_multiplexed_buffer_set_buffer(struct thorium_multiplexed_buffer *se
                 void *buffer);
 
 void thorium_multiplexed_buffer_reset(struct thorium_multiplexed_buffer *self);
-
-void thorium_multiplexed_buffer_profile(struct thorium_multiplexed_buffer *self, uint64_t time);
 
 int thorium_multiplexed_buffer_timeout(struct thorium_multiplexed_buffer *self);
 
