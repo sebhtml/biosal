@@ -35,8 +35,8 @@
 /*
 #define DEBUG_MULTIPLEXER_TEST
 #define DEBUG_MINIMUM_COUNT 3
-*/
 #define DEBUG_MULTIPLEXER_FLUSH
+*/
 
 #define OPTION_DISABLE_MULTIPLEXER "-disable-multiplexer"
 
