@@ -12,8 +12,8 @@
  * Print the past history in the prediction engine.
  */
 /*
-#define PRINT_HISTORY
 */
+#define PRINT_HISTORY
 
 /*
  * This compilation option enables the future prediction
@@ -21,21 +21,48 @@
  */
 #define PREDICT_FUTURE
 
+#define PREDICTED_VARIATION 0
+
+#define NO_TIME 0
+#define EVALUATION_PERIOD 512
+/*
+*/
+#define UPDATE_TIMEOUT_DYNAMICALLY
+
+/*
+ * This corresponds to a message promotion rate of 5%.
+ */
+#define MESSAGE_COUNT_PER_PARCEL 20
+
 void thorium_multiplexed_buffer_print_history(struct thorium_multiplexed_buffer *self);
 void thorium_multiplexed_buffer_predict(struct thorium_multiplexed_buffer *self);
+
+void thorium_multiplexed_buffer_profile(struct thorium_multiplexed_buffer *self, uint64_t time);
+void thorium_multiplexed_buffer_profile_for_prediction(struct thorium_multiplexed_buffer *self, uint64_t time);
 
 void thorium_multiplexed_buffer_init(struct thorium_multiplexed_buffer *self,
                 int maximum_size, int timeout)
 {
+#ifdef THORIUM_MULTIPLEXED_BUFFER_PREDICT_MESSAGE_COUNT
     int i;
+#endif
 
-    self->timeout_ = timeout;
+    self->configured_timeout = timeout;
+    self->timeout_ = self->configured_timeout;
+
+#ifdef THORIUM_MULTIPLEXED_BUFFER_PREDICT_MESSAGE_COUNT
+    /*
+     * Use a very big value so that the code works
+     * with or without PREDICT_FUTURE.
+     */
     self->predicted_message_count_ = 99999999;
+#endif
 
     thorium_multiplexed_buffer_reset(self);
 
     self->maximum_size_ = maximum_size;
 
+#ifdef THORIUM_MULTIPLEXED_BUFFER_PREDICT_MESSAGE_COUNT
     self->prediction_iterator = 0;
 
     for (i = 0; i < PREDICTION_EVENT_COUNT; ++i) {
@@ -43,6 +70,10 @@ void thorium_multiplexed_buffer_init(struct thorium_multiplexed_buffer *self,
         self->prediction_buffer_sizes[i] = -1;
         self->prediction_message_count[i] = -1;
     }
+#endif
+
+    self->profile_start = 0;
+    self->profile_actor_message_count = 0;
 }
 
 void thorium_multiplexed_buffer_destroy(struct thorium_multiplexed_buffer *self)
@@ -78,7 +109,7 @@ int thorium_multiplexed_buffer_maximum_size(struct thorium_multiplexed_buffer *s
 }
 
 void thorium_multiplexed_buffer_append(struct thorium_multiplexed_buffer *self,
-                int count, void *buffer)
+                int count, void *buffer, uint64_t time)
 {
     void *multiplexed_buffer;
     void *destination_in_buffer;
@@ -111,6 +142,8 @@ void thorium_multiplexed_buffer_append(struct thorium_multiplexed_buffer *self,
     ++self->message_count_;
 
     CORE_DEBUGGER_ASSERT(self->message_count_ >= 1);
+
+    thorium_multiplexed_buffer_profile(self, time);
 }
 
 int thorium_multiplexed_buffer_required_size(struct thorium_multiplexed_buffer *self,
@@ -147,8 +180,9 @@ void thorium_multiplexed_buffer_set_buffer(struct thorium_multiplexed_buffer *se
     self->buffer_ = buffer;
 }
 
-void thorium_multiplexed_buffer_profile(struct thorium_multiplexed_buffer *self, uint64_t time)
+void thorium_multiplexed_buffer_profile_for_prediction(struct thorium_multiplexed_buffer *self, uint64_t time)
 {
+#ifdef THORIUM_MULTIPLEXED_BUFFER_PREDICT_MESSAGE_COUNT
     self->prediction_ages[self->prediction_iterator] = time - self->timestamp_;
     self->prediction_message_count[self->prediction_iterator] = self->message_count_;
     self->prediction_buffer_sizes[self->prediction_iterator] = self->current_size_;
@@ -167,10 +201,12 @@ void thorium_multiplexed_buffer_profile(struct thorium_multiplexed_buffer *self,
 
         self->prediction_iterator = 0;
     }
+#endif
 }
 
 void thorium_multiplexed_buffer_print_history(struct thorium_multiplexed_buffer *self)
 {
+#ifdef THORIUM_MULTIPLEXED_BUFFER_PREDICT_MESSAGE_COUNT
     int i;
     int age;
     int current_size;
@@ -186,40 +222,129 @@ void thorium_multiplexed_buffer_print_history(struct thorium_multiplexed_buffer 
                         i, age, current_size, self->maximum_size_,
                         message_count);
     }
+#endif
 }
 
 int thorium_multiplexed_buffer_timeout(struct thorium_multiplexed_buffer *self)
 {
+#ifdef THORIUM_MULTIPLEXED_BUFFER_PREDICT_MESSAGE_COUNT
     /*
      * When the predicted message count is reached, return a timeout of
      * 0 nanoseconds so that the buffer will be flushed right away.
      */
-    if (self->message_count_ >= self->predicted_message_count_)
+    if (self->message_count_ >= self->predicted_message_count_ + PREDICTED_VARIATION)
         return 0;
+#endif
 
     return self->timeout_;
 }
 
 void thorium_multiplexed_buffer_predict(struct thorium_multiplexed_buffer *self)
 {
+#ifdef THORIUM_MULTIPLEXED_BUFFER_PREDICT_MESSAGE_COUNT
     int i;
     int message_count;
+    int predicted_message_count;
+    int must_increase;
 
-    self->predicted_message_count_ = 0;
+    must_increase = self->message_count_ == self->predicted_message_count_;
+
+    predicted_message_count = 0;
 
     /*
      * Use the maximum message count in the past history to
      * predict the message count for the next period.
+     *
+     * This is O(PREDICTION_EVENT_COUNT).
      */
     for (i = 0; i < PREDICTION_EVENT_COUNT; ++i) {
 
         message_count = self->prediction_message_count[i];
 
-        if (message_count > self->predicted_message_count_)
-            self->predicted_message_count_ = message_count;
+        if (message_count > predicted_message_count)
+            predicted_message_count = message_count;
+
+        /*
+         * Break the loop if the maximum count was already found.
+         */
+        if (predicted_message_count == self->predicted_message_count_)
+            break;
+    }
+
+    /*
+     * Increase the value by 1 if the current period reached the maximum
+     * value.
+     */
+    if (must_increase
+                    && predicted_message_count >= self->predicted_message_count_) {
+        ++predicted_message_count;
     }
 
 #ifdef PRINT_HISTORY
-    printf("DEBUG _predict() -> prediction is %d\n", message_count);
+    printf("DEBUG _predict() (must_increase: %d) -> "
+                    "predicted_message_count %d (old %d\n",
+                    must_increase, predicted_message_count,
+                    self->predicted_message_count_);
 #endif
+
+    /*
+     * Update the real value for the next period.
+     */
+    self->predicted_message_count_ = predicted_message_count;
+#endif
+}
+
+void thorium_multiplexed_buffer_profile(struct thorium_multiplexed_buffer *self,
+                uint64_t time)
+{
+    uint64_t delta;
+    int actor_message_period;
+    int threshold;
+
+    if (self->profile_start == NO_TIME)
+        self->profile_start = time;
+
+    ++self->profile_actor_message_count;
+
+    /*
+     * At the end of the period, evaluate the utilization profile,
+     * and possibly turn off the multiplexer for the next period.
+     */
+    if (self->profile_actor_message_count == EVALUATION_PERIOD) {
+
+        threshold = self->configured_timeout / 2;
+        delta = time - self->profile_start;
+        actor_message_period = delta / self->profile_actor_message_count;
+
+#ifdef PRINT_ACTOR_MESSAGE_PERIOD
+        printf("thorium_multiplexed_buffer actor_message_period: %d ns profile_actor_message_count %d\n",
+                        actor_message_period, self->profile_actor_message_count);
+#endif
+
+        /*
+         * Reset the profile.
+         */
+        self->profile_start = time;
+        self->profile_actor_message_count = 0;
+
+#ifdef UPDATE_TIMEOUT_DYNAMICALLY
+        /*
+         * Turn off the multiplexer if the period is too high.
+         */
+        if (actor_message_period >= threshold) {
+            self->timeout_ = 0;
+        } else {
+            self->timeout_ = MESSAGE_COUNT_PER_PARCEL * actor_message_period;
+
+            if (self->timeout_ > self->configured_timeout)
+                self->timeout_ = self->configured_timeout;
+        }
+
+#ifdef PRINT_TIMEOUT_UPDATE
+        printf("thorium_multiplexed_buffer new timeout: %d ns\n",
+                        self->timeout_);
+#endif /* PRINT_TIMEOUT_UPDATE */
+
+#endif
+    }
 }
