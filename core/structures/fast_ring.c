@@ -134,6 +134,8 @@ int core_fast_ring_push_from_producer(struct core_fast_ring *self, void *element
 {
     void *cell;
 
+    CORE_DEBUGGER_ASSERT_NOT_NULL(self);
+
     if (self->use_multiple_producers) {
         core_fast_ring_lock(self);
     }
