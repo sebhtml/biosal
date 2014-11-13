@@ -45,6 +45,7 @@ function main()
     tests/summarize-tests.sh tests.log
 
     echo "see unit-tests.junit.xml"
+    return $total_failures
 }
 
 main
