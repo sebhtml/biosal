@@ -4,7 +4,9 @@
 
 #include <stdint.h>
 
+#ifdef THORIUM_MULTIPLEXED_BUFFER_PREDICT_MESSAGE_COUNT
 #define PREDICTION_EVENT_COUNT 16
+#endif
 
 /*
  * A multiplexed buffer.
@@ -17,11 +19,13 @@ struct thorium_multiplexed_buffer {
     int message_count_;
     int timeout_;
 
+#ifdef THORIUM_MULTIPLEXED_BUFFER_PREDICT_MESSAGE_COUNT
     int predicted_message_count_;
     int prediction_iterator;
     int prediction_ages[PREDICTION_EVENT_COUNT];
     int prediction_message_count[PREDICTION_EVENT_COUNT];
     int prediction_buffer_sizes[PREDICTION_EVENT_COUNT];
+#endif
 };
 
 void thorium_multiplexed_buffer_init(struct thorium_multiplexed_buffer *self,

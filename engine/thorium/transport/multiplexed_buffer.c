@@ -12,14 +12,16 @@
  * Print the past history in the prediction engine.
  */
 /*
-#define PRINT_HISTORY
 */
+#define PRINT_HISTORY
 
 /*
  * This compilation option enables the future prediction
  * subsystem.
  */
 #define PREDICT_FUTURE
+
+#define PREDICTED_VARIATION 0
 
 void thorium_multiplexed_buffer_print_history(struct thorium_multiplexed_buffer *self);
 void thorium_multiplexed_buffer_predict(struct thorium_multiplexed_buffer *self);
@@ -31,16 +33,19 @@ void thorium_multiplexed_buffer_init(struct thorium_multiplexed_buffer *self,
 
     self->timeout_ = timeout;
 
+#ifdef THORIUM_MULTIPLEXED_BUFFER_PREDICT_MESSAGE_COUNT
     /*
      * Use a very big value so that the code works
      * with or without PREDICT_FUTURE.
      */
     self->predicted_message_count_ = 99999999;
+#endif
 
     thorium_multiplexed_buffer_reset(self);
 
     self->maximum_size_ = maximum_size;
 
+#ifdef THORIUM_MULTIPLEXED_BUFFER_PREDICT_MESSAGE_COUNT
     self->prediction_iterator = 0;
 
     for (i = 0; i < PREDICTION_EVENT_COUNT; ++i) {
@@ -48,6 +53,7 @@ void thorium_multiplexed_buffer_init(struct thorium_multiplexed_buffer *self,
         self->prediction_buffer_sizes[i] = -1;
         self->prediction_message_count[i] = -1;
     }
+#endif
 }
 
 void thorium_multiplexed_buffer_destroy(struct thorium_multiplexed_buffer *self)
@@ -154,6 +160,7 @@ void thorium_multiplexed_buffer_set_buffer(struct thorium_multiplexed_buffer *se
 
 void thorium_multiplexed_buffer_profile(struct thorium_multiplexed_buffer *self, uint64_t time)
 {
+#ifdef THORIUM_MULTIPLEXED_BUFFER_PREDICT_MESSAGE_COUNT
     self->prediction_ages[self->prediction_iterator] = time - self->timestamp_;
     self->prediction_message_count[self->prediction_iterator] = self->message_count_;
     self->prediction_buffer_sizes[self->prediction_iterator] = self->current_size_;
@@ -172,10 +179,12 @@ void thorium_multiplexed_buffer_profile(struct thorium_multiplexed_buffer *self,
 
         self->prediction_iterator = 0;
     }
+#endif
 }
 
 void thorium_multiplexed_buffer_print_history(struct thorium_multiplexed_buffer *self)
 {
+#ifdef THORIUM_MULTIPLEXED_BUFFER_PREDICT_MESSAGE_COUNT
     int i;
     int age;
     int current_size;
@@ -191,22 +200,26 @@ void thorium_multiplexed_buffer_print_history(struct thorium_multiplexed_buffer 
                         i, age, current_size, self->maximum_size_,
                         message_count);
     }
+#endif
 }
 
 int thorium_multiplexed_buffer_timeout(struct thorium_multiplexed_buffer *self)
 {
+#ifdef THORIUM_MULTIPLEXED_BUFFER_PREDICT_MESSAGE_COUNT
     /*
      * When the predicted message count is reached, return a timeout of
      * 0 nanoseconds so that the buffer will be flushed right away.
      */
-    if (self->message_count_ >= self->predicted_message_count_)
+    if (self->message_count_ >= self->predicted_message_count_ + PREDICTED_VARIATION)
         return 0;
+#endif
 
     return self->timeout_;
 }
 
 void thorium_multiplexed_buffer_predict(struct thorium_multiplexed_buffer *self)
 {
+#ifdef THORIUM_MULTIPLEXED_BUFFER_PREDICT_MESSAGE_COUNT
     int i;
     int message_count;
     int predicted_message_count;
@@ -241,7 +254,7 @@ void thorium_multiplexed_buffer_predict(struct thorium_multiplexed_buffer *self)
      * value.
      */
     if (must_increase
-                    && predicted_message_count == self->predicted_message_count_) {
+                    && predicted_message_count >= self->predicted_message_count_) {
         ++predicted_message_count;
     }
 
@@ -256,4 +269,5 @@ void thorium_multiplexed_buffer_predict(struct thorium_multiplexed_buffer *self)
      * Update the real value for the next period.
      */
     self->predicted_message_count_ = predicted_message_count;
+#endif
 }

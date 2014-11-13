@@ -35,8 +35,8 @@
 /*
 #define DEBUG_MULTIPLEXER_TEST
 #define DEBUG_MINIMUM_COUNT 3
-#define DEBUG_MULTIPLEXER_FLUSH
 */
+#define DEBUG_MULTIPLEXER_FLUSH
 
 #define OPTION_DISABLE_MULTIPLEXER "-disable-multiplexer"
 
@@ -708,8 +708,10 @@ void thorium_message_multiplexer_flush(struct thorium_message_multiplexer *self,
     ++self->real_message_count;
     thorium_message_destroy(&message);
 
+#ifdef THORIUM_MULTIPLEXED_BUFFER_PREDICT_MESSAGE_COUNT
     thorium_multiplexed_buffer_profile(multiplexed_buffer,
                     core_timer_get_nanoseconds(&self->timer));
+#endif
 
     thorium_multiplexed_buffer_reset(multiplexed_buffer);
 
