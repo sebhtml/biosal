@@ -76,44 +76,44 @@ examples/example_migration: $(EXAMPLE_MIGRATION) $(LIBRARY_OBJECTS)
 	$(Q)$(CC) $(CFLAGS) $^ -o $@ $(LDFLAGS) $(CONFIG_LDFLAGS)
 
 ring: examples/example_ring
-	mpiexec -n 2 $< -threads-per-node 8
+	mpiexec -n 2 $< -threads-per-node 8 -print-load
 
 mock: examples/example_mock
-	mpiexec -n 3 $< -threads-per-node 7
+	mpiexec -n 3 $< -threads-per-node 7 -print-load
 
 mock1: examples/example_mock
 	mpiexec -n 3 $< -print-load -threads-per-node 1
 
 reader: examples/example_reader
-	mpiexec -n 2 $< -threads-per-node 13 -read ~/dropbox/GPIC.1424-1.1371.fastq
+	mpiexec -n 2 $< -threads-per-node 13 -read ~/dropbox/GPIC.1424-1.1371.fastq -print-load
 
 synchronize: examples/example_synchronize
-	mpiexec -n 3 $< -threads-per-node 9
+	mpiexec -n 3 $< -threads-per-node 9 -print-load
 
 controller: examples/example_controller
-	mpiexec -n 3 $< -threads-per-node 9 ~/dropbox/GPIC.1424-1.1371.fastq
+	mpiexec -n 3 $< -threads-per-node 9 ~/dropbox/GPIC.1424-1.1371.fastq -print-load
 
 mini: examples/example_controller
-	mpiexec -n 3 $< -threads-per-node 9 ~/mini.fastq
+	mpiexec -n 3 $< -threads-per-node 9 ~/mini.fastq -print-load
 
 void_controller: examples/example_controller
-	mpiexec -n 3 $< -threads-per-node 9 void.fastq
+	mpiexec -n 3 $< -threads-per-node 9 void.fastq -print-load
 
 remote_spawn: examples/example_remote_spawn
-	mpiexec -n 6 $< -threads-per-node 1,2,3
+	mpiexec -n 6 $< -threads-per-node 1,2,3 -print-load
 
 not_found: examples/example_reader
-	mpiexec -n 3 $< -threads-per-node 7 -read void.fastq
+	mpiexec -n 3 $< -threads-per-node 7 -read void.fastq -print-load
 
 hello_world: examples/example_hello_world
-	mpiexec -n 3 $< -threads-per-node 5
+	mpiexec -n 3 $< -threads-per-node 5 -print-load
 
 systolic: examples/example_systolic
-	mpiexec -n 3 $< -threads-per-node 5
+	mpiexec -n 3 $< -threads-per-node 5 -print-load
 
 clone: examples/example_clone
-	mpiexec -n 3 $< -threads-per-node 5
+	mpiexec -n 3 $< -threads-per-node 5 -print-load
 
 migration: examples/example_migration
-	mpiexec -n 3 $< -threads-per-node 5
+	mpiexec -n 3 $< -threads-per-node 5 -print-load
 

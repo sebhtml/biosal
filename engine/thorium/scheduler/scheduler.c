@@ -42,9 +42,6 @@ void thorium_scheduler_init(struct thorium_scheduler *self, int node, int worker
     self->concrete_self = core_memory_allocate(self->implementation->object_size, MEMORY_SCHEDULER);
 
     self->implementation->init(self);
-
-    if (self->node == 0 && self->worker == 0)
-        printf("thorium_scheduler: type %s\n", self->implementation->name);
 }
 
 void thorium_scheduler_destroy(struct thorium_scheduler *self)
@@ -94,4 +91,10 @@ int thorium_scheduler_size(struct thorium_scheduler *self)
 void thorium_scheduler_print(struct thorium_scheduler *self)
 {
     self->implementation->print(self);
+}
+
+void thorium_scheduler_print_type(struct thorium_scheduler *self)
+{
+    if (self->node == 0 && self->worker == 0)
+        printf("thorium_scheduler: type %s\n", self->implementation->name);
 }

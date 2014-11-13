@@ -298,5 +298,6 @@ void thorium_node_examine(struct thorium_node *self);
 struct thorium_actor *thorium_node_get_actor_from_name(struct thorium_node *self,
                 int name);
 void thorium_node_resolve(struct thorium_node *self, struct thorium_message *message);
+int thorium_node_must_print_load(struct thorium_node *self);
 
 #endif

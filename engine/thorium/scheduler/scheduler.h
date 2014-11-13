@@ -43,5 +43,6 @@ int thorium_scheduler_dequeue(struct thorium_scheduler *self, struct thorium_act
 int thorium_scheduler_size(struct thorium_scheduler *self);
 
 void thorium_scheduler_print(struct thorium_scheduler *self);
+void thorium_scheduler_print_type(struct thorium_scheduler *self);
 
 #endif

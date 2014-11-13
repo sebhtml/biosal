@@ -546,7 +546,9 @@ void thorium_node_init(struct thorium_node *node, int *argc, char ***argv)
         CORE_BITMAP_SET_BIT(node->flags, FLAG_PROFILE_MESSAGE_TRANSPORT);
     }
 
-    if (node->name == 0) {
+    if (node->name == 0
+                    && thorium_node_must_print_load(node)) {
+
         printf("thorium_node: sizeof(struct thorium_actor) -> %d\n", (int)sizeof(struct thorium_actor));
         printf("thorium_node: sizeof(struct thorium_message) -> %d\n", (int)sizeof(struct thorium_message));
 
@@ -1041,6 +1043,10 @@ int thorium_node_run(struct thorium_node *node)
             print_final_load = 0;
         }
     }
+
+    if (!thorium_node_must_print_load(node))
+        print_final_load = 0;
+
     if (CORE_BITMAP_GET_BIT(node->flags, FLAG_PRINT_LOAD)
                     || print_final_load) {
 
@@ -2954,4 +2960,9 @@ static void thorium_node_receive_messages(struct thorium_node *node)
 
         ++i;
     }
+}
+
+int thorium_node_must_print_load(struct thorium_node *self)
+{
+    return CORE_BITMAP_GET_BIT(self->flags, FLAG_PRINT_LOAD);
 }

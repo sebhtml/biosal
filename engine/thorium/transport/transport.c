@@ -97,7 +97,8 @@ void thorium_transport_init(struct thorium_transport *self, struct thorium_node 
     self->inbound_message_memory_pool = inbound_message_memory_pool;
     self->outbound_message_memory_pool = outbound_message_memory_pool;
 
-    if (self->rank == 0) {
+    if (self->rank == 0
+         && thorium_node_must_print_load(self->node)) {
         printf("thorium_transport: type %s\n",
                     self->transport_interface->name);
     }
