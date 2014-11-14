@@ -32,6 +32,13 @@
  */
 
 /*
+ * Find memory leaks
+ */
+/*
+#define CORE_MEMORY_POOL_FIND_LEAKS
+*/
+
+/*
  * The block size for the memory pool.
  */
 #define CORE_MEMORY_POOL_MESSAGE_BUFFER_BLOCK_SIZE (2 * 1024 * 1024)
