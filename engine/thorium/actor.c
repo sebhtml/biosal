@@ -201,8 +201,16 @@ void thorium_actor_init(struct thorium_actor *self, void *concrete_actor,
 #endif
 
     core_queue_init(&self->queued_messages_for_clone, sizeof(struct thorium_message));
+    core_queue_set_memory_pool(&self->queued_messages_for_clone,
+                    &self->abstract_memory_pool);
+
     core_queue_init(&self->queued_messages_for_migration, sizeof(struct thorium_message));
+    core_queue_set_memory_pool(&self->queued_messages_for_migration,
+                    &self->abstract_memory_pool);
+
     core_queue_init(&self->forwarding_queue, sizeof(struct thorium_message));
+    core_queue_set_memory_pool(&self->forwarding_queue,
+                    &self->abstract_memory_pool);
 
 #ifdef THORIUM_ACTOR_STORE_CHILDREN
     core_map_init(&self->acquaintance_map, sizeof(int), sizeof(int));
@@ -214,6 +222,8 @@ void thorium_actor_init(struct thorium_actor *self, void *concrete_actor,
     */
 
     core_queue_init(&self->enqueued_messages, sizeof(struct thorium_message));
+    core_queue_set_memory_pool(&self->enqueued_messages,
+                    &self->abstract_memory_pool);
 
     capacity = THORIUM_ACTOR_MAILBOX_SIZE;
     core_fast_ring_init(&self->mailbox, capacity, sizeof(struct thorium_message));
