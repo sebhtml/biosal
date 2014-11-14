@@ -1,6 +1,6 @@
 
-#ifndef CORE_FIFO_H
-#define CORE_FIFO_H
+#ifndef CORE_FAST_QUEUE_H
+#define CORE_FAST_QUEUE_H
 
 #include "linked_ring.h"
 
