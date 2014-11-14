@@ -57,6 +57,9 @@ static void target_receive(struct thorium_actor *self, struct thorium_message *m
 
     } else if (action == ACTION_PING) {
 
+        if (concrete_self->received == 0) {
+            thorium_actor_send_to_self_empty(self, ACTION_ENABLE_MULTIPLEXER);
+        }
         ++concrete_self->received;
 
 #ifdef CORE_DEBUGGER_ASSERT_ENABLED

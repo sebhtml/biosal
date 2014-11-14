@@ -87,6 +87,8 @@ static void source_receive(struct thorium_actor *self, struct thorium_message *m
 
     } else if (action == ACTION_NOTIFY) {
 
+        thorium_actor_send_to_self_empty(self, ACTION_ENABLE_MULTIPLEXER);
+
         CORE_DEBUGGER_ASSERT(core_vector_empty(&concrete_self->targets));
 
         core_vector_unpack(&concrete_self->targets, buffer);
