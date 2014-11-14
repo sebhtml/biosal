@@ -26,8 +26,8 @@
 #define NO_TIME 0
 #define EVALUATION_PERIOD 512
 /*
-*/
 #define UPDATE_TIMEOUT_DYNAMICALLY
+*/
 
 /*
  * This corresponds to a message promotion rate of 5%.
