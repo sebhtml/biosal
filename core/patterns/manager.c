@@ -301,6 +301,11 @@ void core_manager_receive(struct thorium_actor *actor, struct thorium_message *m
 
                 core_vector_init(&all_stores, sizeof(int));
 
+                /*
+                 * Use a memory pool to avoid memory fragmentation.
+                 */
+                core_vector_set_memory_pool(&all_stores, ephemeral_memory);
+
                 core_vector_iterator_init(&iterator, &concrete_actor->indices);
 
                 while (core_vector_iterator_has_next(&iterator)) {
@@ -317,7 +322,7 @@ void core_manager_receive(struct thorium_actor *actor, struct thorium_message *m
                 core_vector_iterator_destroy(&iterator);
 
                 new_count = core_vector_pack_size(&all_stores);
-                new_buffer = core_memory_allocate(new_count, MEMORY_MANAGER);
+                new_buffer = thorium_actor_allocate(actor, new_count);
                 core_vector_pack(&all_stores, new_buffer);
 
                 /*
@@ -330,8 +335,6 @@ void core_manager_receive(struct thorium_actor *actor, struct thorium_message *m
 
                 thorium_message_init(&new_message, ACTION_START_REPLY, new_count, new_buffer);
                 thorium_actor_send_to_supervisor(actor, &new_message);
-
-                core_memory_free(new_buffer, MEMORY_MANAGER);
 
                 thorium_message_destroy(&new_message);
             }
