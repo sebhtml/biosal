@@ -119,6 +119,8 @@
 */
 #define THORIUM_WORKER_SEND_TO_LOCAL_ACTOR
 
+#define PROFILE_EVENT_COUNT 1024
+
 /*
  * Route all small messages through the same exporter.
  */
@@ -373,6 +375,10 @@ void thorium_worker_init(struct thorium_worker *worker, int name, struct thorium
     worker->random_seed = core_hash_data_uint64_t(&worker->random_seed, sizeof(worker->random_seed),
                     0xf18d686d);
 #endif
+
+    worker->profile_latency = 0;
+    worker->profile_event_count = 0;
+    worker->profile_start = 0;
 }
 
 void thorium_worker_destroy(struct thorium_worker *worker)
@@ -1674,6 +1680,11 @@ void thorium_worker_run(struct thorium_worker *worker)
          */
         thorium_worker_work(worker, actor);
 
+        /*
+         * Update profile
+         */
+        ++worker->profile_event_count;
+
         CORE_BITMAP_CLEAR_BIT(worker->flags, FLAG_BUSY);
         CORE_BITMAP_CLEAR_BIT(worker->flags, FLAG_ENABLE_WAIT);
 
@@ -1812,6 +1823,20 @@ void thorium_worker_run(struct thorium_worker *worker)
     }
 
     thorium_message_multiplexer_test(&worker->multiplexer);
+
+    if (worker->profile_event_count == PROFILE_EVENT_COUNT) {
+
+        current_nanoseconds = core_timer_get_nanoseconds(&worker->timer);
+        elapsed_nanoseconds = current_nanoseconds - worker->profile_start;
+
+        worker->profile_latency = elapsed_nanoseconds / worker->profile_event_count;
+
+        /*
+         * Start next period.
+         */
+        worker->profile_event_count = 0;
+        worker->profile_start = current_nanoseconds;
+    }
 
     tracepoint(thorium_worker, run_exit, worker);
 }
@@ -2531,4 +2556,9 @@ static void thorium_worker_send_to_other_node(struct thorium_worker *self,
 int thorium_worker_get_random_number(struct thorium_worker *self)
 {
     return rand_r(&self->random_seed);
+}
+
+int thorium_worker_latency(struct thorium_worker *self)
+{
+    return self->profile_latency;
 }

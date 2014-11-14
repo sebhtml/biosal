@@ -228,6 +228,10 @@ struct thorium_worker {
 #endif
 
     unsigned int random_seed;
+
+    uint64_t profile_start;
+    int profile_event_count;
+    int profile_latency;
 };
 
 void thorium_worker_init(struct thorium_worker *self, int name, struct thorium_node *node);
@@ -317,5 +321,7 @@ struct core_memory_pool *thorium_worker_get_outbound_message_memory_pool(struct 
 void thorium_worker_send_local_delivery(struct thorium_worker *self, struct thorium_message *message);
 
 int thorium_worker_get_random_number(struct thorium_worker *self);
+
+int thorium_worker_latency(struct thorium_worker *self);
 
 #endif
