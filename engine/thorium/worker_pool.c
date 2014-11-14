@@ -22,7 +22,7 @@
 #include <core/structures/set_iterator.h>
 #include <core/structures/vector_iterator.h>
 
-#include <core/structures/fast_queue_iterator.h>
+#include <core/structures/queue.h>
 #include <core/structures/fast_ring.h>
 
 #include <core/system/debugger.h>
@@ -1118,8 +1118,8 @@ int thorium_worker_pool_buffered_message_count(struct thorium_worker_pool *self)
 static void thorium_worker_pool_examine_inbound_queue(struct thorium_worker_pool *self)
 {
     int queue_size;
-    struct core_fast_queue_iterator iterator;
     struct thorium_message message;
+    int i;
 
     queue_size = core_fast_queue_size(&self->inbound_message_queue_buffer);
     printf("QUEUE Name= inbound_message_queue_buffer size= %d\n",
@@ -1129,14 +1129,16 @@ static void thorium_worker_pool_examine_inbound_queue(struct thorium_worker_pool
      * Print the content of the queue.
      */
     if (queue_size > 4) {
-        core_fast_queue_iterator_init(&iterator, &self->inbound_message_queue_buffer);
 
-        while (core_fast_queue_iterator_next_value(&iterator, &message)) {
+        i = 0;
+        while (i < queue_size) {
 
+            core_fast_queue_dequeue(&self->inbound_message_queue_buffer, &message);
             thorium_message_print(&message);
-        }
+            core_fast_queue_enqueue(&self->inbound_message_queue_buffer, &message);
 
-        core_fast_queue_iterator_destroy(&iterator);
+            ++i;
+        }
     }
 }
 
