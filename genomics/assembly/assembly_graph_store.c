@@ -308,6 +308,11 @@ void biosal_assembly_graph_store_receive(struct thorium_actor *self, struct thor
 
         thorium_actor_send_reply_uint64_t(self, ACTION_GET_RECEIVED_ARC_COUNT_REPLY,
                         concrete_self->received_arc_count);
+
+        /*
+         * At this point, the distributed graph is ready.
+         */
+        thorium_actor_send_to_self_empty(self, ACTION_ENABLE_MULTIPLEXER);
     }
 }
 

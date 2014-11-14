@@ -154,6 +154,8 @@ void biosal_unitig_visitor_receive(struct thorium_actor *self, struct thorium_me
 
     if (tag == ACTION_START) {
 
+        thorium_actor_send_to_self_empty(self, ACTION_ENABLE_MULTIPLEXER);
+
         concrete_self->manager = source;
 
         printf("%s/%d is ready to visit places in the universe\n",
