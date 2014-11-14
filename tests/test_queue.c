@@ -122,6 +122,13 @@ int main(int argc, char **argv)
 
         TEST_INT_EQUALS(core_queue_full(&queue), 0);
 
+        /*
+         * At any time, there is 0 or 1 elements in the queue.
+         */
+        /*
+        TEST_INT_IS_LOWER_THAN(core_queue_capacity(&queue), 10);
+        */
+
         core_queue_destroy(&queue);
     }
 
