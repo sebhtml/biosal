@@ -120,8 +120,8 @@ void thorium_mpi1_pt2pt_nonblocking_transport_init(struct thorium_transport *sel
     concrete_self->maximum_big_receive_request_count = 8;
     concrete_self->big_request_count = 0;
 
-    core_fast_queue_init(&concrete_self->send_requests, sizeof(struct thorium_mpi1_request));
-    core_fast_queue_init(&concrete_self->receive_requests, sizeof(struct thorium_mpi1_request));
+    core_queue_init(&concrete_self->send_requests, sizeof(struct thorium_mpi1_request));
+    core_queue_init(&concrete_self->receive_requests, sizeof(struct thorium_mpi1_request));
 
     /*
     required = MPI_THREAD_MULTIPLE;
@@ -213,22 +213,22 @@ void thorium_mpi1_pt2pt_nonblocking_transport_destroy(struct thorium_transport *
     /*
      * Destroy send requests.
      */
-    while (core_fast_queue_dequeue(&concrete_self->send_requests, &active_request)) {
+    while (core_queue_dequeue(&concrete_self->send_requests, &active_request)) {
         MPI_Request_free(thorium_mpi1_request_request(&active_request));
     }
 
-    core_fast_queue_destroy(&concrete_self->send_requests);
+    core_queue_destroy(&concrete_self->send_requests);
 
     /*
      * Destroy receive requests.
      */
-    while (core_fast_queue_dequeue(&concrete_self->receive_requests, &active_request)) {
+    while (core_queue_dequeue(&concrete_self->receive_requests, &active_request)) {
         buffer = thorium_mpi1_request_buffer(&active_request);
         core_memory_pool_free(self->inbound_message_memory_pool, buffer);
         MPI_Request_free(thorium_mpi1_request_request(&active_request));
     }
 
-    core_fast_queue_destroy(&concrete_self->receive_requests);
+    core_queue_destroy(&concrete_self->receive_requests);
 
     /*
      * \see http://www.mpich.org/static/docs/v3.1/www3/MPI_Comm_free.html
@@ -313,7 +313,7 @@ int thorium_mpi1_pt2pt_nonblocking_transport_send(struct thorium_transport *self
             return 0;
         }
 
-        core_fast_queue_enqueue(&concrete_self->send_requests, &active_request2);
+        core_queue_enqueue(&concrete_self->send_requests, &active_request2);
     }
 
     thorium_mpi1_request_init_with_worker(&active_request, buffer, worker);
@@ -340,7 +340,7 @@ int thorium_mpi1_pt2pt_nonblocking_transport_send(struct thorium_transport *self
      */
     /*MPI_Request_free(&request);*/
 
-    core_fast_queue_enqueue(&concrete_self->send_requests, &active_request);
+    core_queue_enqueue(&concrete_self->send_requests, &active_request);
 
     tracepoint(thorium_message, transport_send_impl_exit, message);
 
@@ -410,7 +410,7 @@ int thorium_mpi1_pt2pt_nonblocking_transport_receive(struct thorium_transport *s
     /*
      * Dequeue a request and check if it is ready.
      */
-    if (!core_fast_queue_dequeue(&concrete_self->receive_requests, &request)) {
+    if (!core_queue_dequeue(&concrete_self->receive_requests, &request)) {
 
         /*
          * There is nothing in the queue.
@@ -428,7 +428,7 @@ int thorium_mpi1_pt2pt_nonblocking_transport_receive(struct thorium_transport *s
          * Put it back in the queue now.
          */
 
-        core_fast_queue_enqueue(&concrete_self->receive_requests, &request);
+        core_queue_enqueue(&concrete_self->receive_requests, &request);
 
         return 0;
     }
@@ -515,7 +515,7 @@ int thorium_mpi1_pt2pt_nonblocking_transport_test(struct thorium_transport *self
 
     concrete_self = thorium_transport_get_concrete_transport(self);
 
-    if (core_fast_queue_dequeue(&concrete_self->send_requests, &active_request)) {
+    if (core_queue_dequeue(&concrete_self->send_requests, &active_request)) {
 
         if (thorium_mpi1_request_test(&active_request)) {
 
@@ -558,7 +558,7 @@ int thorium_mpi1_pt2pt_nonblocking_transport_test(struct thorium_transport *self
 
         /* Just put it back in the FIFO for later */
         } else {
-            core_fast_queue_enqueue(&concrete_self->send_requests, &active_request);
+            core_queue_enqueue(&concrete_self->send_requests, &active_request);
 
             return 0;
         }
@@ -601,11 +601,11 @@ void thorium_mpi1_pt2pt_nonblocking_transport_add_receive_request(struct thorium
         return;
     }
 
-    core_fast_queue_enqueue(&concrete_self->receive_requests, &request);
+    core_queue_enqueue(&concrete_self->receive_requests, &request);
 
 #ifdef THORIUM_MPI1_PT2PT_NON_BLOCKING_DEBUG
     printf("DEBUG Non Blocking added a request, now with %d/%d\n",
-                        (int)core_fast_queue_size(&concrete_self->receive_requests),
+                        (int)core_queue_size(&concrete_self->receive_requests),
                         concrete_self->maximum_receive_request_count);
 #endif
 }

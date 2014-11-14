@@ -51,7 +51,7 @@ void thorium_mpi1_pt2pt_transport_init(struct thorium_transport *self, int *argc
 
     concrete_self = thorium_transport_get_concrete_transport(self);
 
-    core_fast_queue_init(&concrete_self->active_requests, sizeof(struct thorium_mpi1_pt2pt_active_request));
+    core_queue_init(&concrete_self->active_requests, sizeof(struct thorium_mpi1_pt2pt_active_request));
 
     /*
     required = MPI_THREAD_MULTIPLE;
@@ -110,11 +110,11 @@ void thorium_mpi1_pt2pt_transport_destroy(struct thorium_transport *self)
 
     concrete_self = thorium_transport_get_concrete_transport(self);
 
-    while (core_fast_queue_dequeue(&concrete_self->active_requests, &active_request)) {
+    while (core_queue_dequeue(&concrete_self->active_requests, &active_request)) {
         thorium_mpi1_pt2pt_active_request_destroy(&active_request);
     }
 
-    core_fast_queue_destroy(&concrete_self->active_requests);
+    core_queue_destroy(&concrete_self->active_requests);
 
     /*
      * \see http://www.mpich.org/static/docs/v3.1/www3/MPI_Comm_free.html
@@ -173,7 +173,7 @@ int thorium_mpi1_pt2pt_transport_send(struct thorium_transport *self, struct tho
      */
     /*MPI_Request_free(&request);*/
 
-    core_fast_queue_enqueue(&concrete_self->active_requests, &active_request);
+    core_queue_enqueue(&concrete_self->active_requests, &active_request);
 
     return 1;
 }
@@ -249,7 +249,7 @@ int thorium_mpi1_pt2pt_transport_test(struct thorium_transport *self, struct tho
 
     concrete_self = thorium_transport_get_concrete_transport(self);
 
-    if (core_fast_queue_dequeue(&concrete_self->active_requests, &active_request)) {
+    if (core_queue_dequeue(&concrete_self->active_requests, &active_request)) {
 
         if (thorium_mpi1_pt2pt_active_request_test(&active_request)) {
 
@@ -264,7 +264,7 @@ int thorium_mpi1_pt2pt_transport_test(struct thorium_transport *self, struct tho
 
         /* Just put it back in the FIFO for later */
         } else {
-            core_fast_queue_enqueue(&concrete_self->active_requests, &active_request);
+            core_queue_enqueue(&concrete_self->active_requests, &active_request);
 
             return 0;
         }

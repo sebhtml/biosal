@@ -3,7 +3,7 @@
 #define THORIUM_MPI1_PT2PT_NONBLOCKING_TRANSPORT_H
 
 #include <engine/thorium/transport/transport_interface.h>
-#include <core/structures/fast_queue.h>
+#include <core/structures/queue.h>
 
 #include <mpi.h>
 
@@ -22,8 +22,8 @@ struct thorium_transport;
  */
 struct thorium_mpi1_pt2pt_nonblocking_transport {
 
-    struct core_fast_queue send_requests;
-    struct core_fast_queue receive_requests;
+    struct core_queue send_requests;
+    struct core_queue receive_requests;
 
     MPI_Comm communicator;
     MPI_Datatype datatype;

@@ -133,7 +133,7 @@ struct thorium_node {
 #endif
 
 #ifdef THORIUM_NODE_INJECT_CLEAN_WORKER_BUFFERS
-    struct core_fast_queue output_clean_outbound_buffer_queue;
+    struct core_queue output_clean_outbound_buffer_queue;
 
 #endif
 
