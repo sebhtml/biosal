@@ -92,6 +92,7 @@
 #define FLAG_ENABLE_ACTOR_LOAD_PROFILER 4
 #define FLAG_ENABLE_WAIT                5
 #define FLAG_OUTPUT_OUTBOUND_MESSAGE_RING_IS_FULL        6
+#define FLAG_USE_MULTIPLEXER            7
 
 #define DEBUG_WORKER_OPTION "-debug-worker"
 
@@ -379,6 +380,8 @@ void thorium_worker_init(struct thorium_worker *worker, int name, struct thorium
     worker->profile_latency = 0;
     worker->profile_event_count = 0;
     worker->profile_start = 0;
+
+    CORE_BITMAP_CLEAR_BIT(worker->flags, FLAG_USE_MULTIPLEXER);
 }
 
 void thorium_worker_destroy(struct thorium_worker *worker)
@@ -631,7 +634,8 @@ void thorium_worker_send(struct thorium_worker *worker, struct thorium_message *
      *
      * Batching is also called aggregation or multiplexing.
      */
-    if (thorium_message_multiplexer_message_should_be_multiplexed(&worker->multiplexer, message)) {
+    if (CORE_BITMAP_GET_BIT(worker->flags, FLAG_USE_MULTIPLEXER)
+                    && thorium_message_multiplexer_message_should_be_multiplexed(&worker->multiplexer, message)) {
 
         /*
          * Before enqueuing the outbound message for multiplexing,
@@ -1898,7 +1902,13 @@ static void thorium_worker_work(struct thorium_worker *worker, struct thorium_ac
      */
     thorium_actor_set_worker(actor, worker);
 
+    if (thorium_actor_multiplexer_is_enabled(actor)) {
+        CORE_BITMAP_SET_BIT(worker->flags, FLAG_USE_MULTIPLEXER);
+    }
+
     thorium_actor_work(actor);
+
+    CORE_BITMAP_CLEAR_BIT(worker->flags, FLAG_USE_MULTIPLEXER);
 
     /* Free ephemeral memory
      */
