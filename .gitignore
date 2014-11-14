@@ -40,3 +40,9 @@
 .settings/
 CMakeLists.txt
 
+# Unit Test Results
+*.junit.xml
+
+# Other unwanted products
+
+*.log
