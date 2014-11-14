@@ -135,11 +135,11 @@ struct thorium_worker {
     struct core_fast_ring input_inbound_message_ring;
 
     struct core_fast_ring input_message_ring_for_multiplexer;
-    struct core_fast_queue output_outbound_message_queue_for_multiplexer;
+    struct core_queue output_outbound_message_queue_for_multiplexer;
     struct thorium_message_multiplexer multiplexer;
     struct thorium_multiplexer_policy multiplexer_policy;
 
-    struct core_fast_queue input_inbound_message_queue;
+    struct core_queue input_inbound_message_queue;
 
 #ifdef THORIUM_NODE_INJECT_CLEAN_WORKER_BUFFERS
     /*
@@ -155,7 +155,7 @@ struct thorium_worker {
     /*
      * Queue for buffering exported messages for triage.
      */
-    struct core_fast_queue output_message_queue_for_triage;
+    struct core_queue output_message_queue_for_triage;
 #endif
 
     /*
@@ -171,7 +171,7 @@ struct thorium_worker {
      * Queue for buffering outbound buffers when
      * the ring is full.
      */
-    struct core_fast_queue output_outbound_message_queue;
+    struct core_queue output_outbound_message_queue;
 
     struct thorium_scheduler scheduler;
 
