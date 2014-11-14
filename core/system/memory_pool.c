@@ -6,7 +6,7 @@
 
 #include <core/helpers/bitmap.h>
 
-#include <core/structures/queue.h>
+#include <core/structures/fast_queue.h>
 #include <core/structures/map_iterator.h>
 
 #include <stdio.h>
@@ -47,15 +47,15 @@ void core_memory_pool_print_allocated_blocks(struct core_memory_pool *self);
 
 void core_memory_pool_init(struct core_memory_pool *self, int block_size, int name)
 {
-    core_map_init(&self->recycle_bin, sizeof(size_t), sizeof(struct core_queue));
+    core_map_init(&self->recycle_bin, sizeof(size_t), sizeof(struct core_fast_queue));
     core_map_init(&self->allocated_blocks, sizeof(void *), sizeof(size_t));
     core_set_init(&self->large_blocks, sizeof(void *));
 
     self->current_block = NULL;
     core_memory_pool_set_name(self, name);
 
-    core_queue_init(&self->dried_blocks, sizeof(struct core_memory_block *));
-    core_queue_init(&self->ready_blocks, sizeof(struct core_memory_block *));
+    core_fast_queue_init(&self->dried_blocks, sizeof(struct core_memory_block *));
+    core_fast_queue_init(&self->ready_blocks, sizeof(struct core_memory_block *));
 
     self->block_size = block_size;
 
@@ -81,7 +81,7 @@ void core_memory_pool_init(struct core_memory_pool *self, int block_size, int na
 
 void core_memory_pool_destroy(struct core_memory_pool *self)
 {
-    struct core_queue *queue;
+    struct core_fast_queue *queue;
     struct core_map_iterator iterator;
     struct core_memory_block *block;
 
@@ -102,7 +102,7 @@ void core_memory_pool_destroy(struct core_memory_pool *self)
     while (core_map_iterator_has_next(&iterator)) {
         core_map_iterator_next(&iterator, NULL, (void **)&queue);
 
-        core_queue_destroy(queue);
+        core_fast_queue_destroy(queue);
     }
     core_map_iterator_destroy(&iterator);
     core_map_destroy(&self->recycle_bin);
@@ -112,19 +112,19 @@ void core_memory_pool_destroy(struct core_memory_pool *self)
 
     /* destroy dried blocks
      */
-    while (core_queue_dequeue(&self->dried_blocks, &block)) {
+    while (core_fast_queue_dequeue(&self->dried_blocks, &block)) {
         core_memory_block_destroy(block);
         core_memory_free(block, self->name);
     }
-    core_queue_destroy(&self->dried_blocks);
+    core_fast_queue_destroy(&self->dried_blocks);
 
     /* destroy ready blocks
      */
-    while (core_queue_dequeue(&self->ready_blocks, &block)) {
+    while (core_fast_queue_dequeue(&self->ready_blocks, &block)) {
         core_memory_block_destroy(block);
         core_memory_free(block, self->name);
     }
-    core_queue_destroy(&self->ready_blocks);
+    core_fast_queue_destroy(&self->ready_blocks);
 
     /* destroy the current block
      */
@@ -279,7 +279,7 @@ void *core_memory_pool_allocate(struct core_memory_pool *self, size_t size)
 
 static void *core_memory_pool_allocate_private(struct core_memory_pool *self, size_t size)
 {
-    struct core_queue *queue;
+    struct core_fast_queue *queue;
     void *pointer;
 
     if (size == 0) {
@@ -312,11 +312,11 @@ static void *core_memory_pool_allocate_private(struct core_memory_pool *self, si
 
     /* recycling is good for the environment
      */
-    if (queue != NULL && core_queue_dequeue(queue, &pointer)) {
+    if (queue != NULL && core_fast_queue_dequeue(queue, &pointer)) {
 
 #ifdef CORE_MEMORY_POOL_DISCARD_EMPTY_QUEUES
-        if (core_queue_empty(queue)) {
-            core_queue_destroy(queue);
+        if (core_fast_queue_empty(queue)) {
+            core_fast_queue_destroy(queue);
             core_map_delete(&self->recycle_bin, &size);
         }
 #endif
@@ -339,7 +339,7 @@ static void *core_memory_pool_allocate_private(struct core_memory_pool *self, si
     /* the current block is exausted...
      */
     if (pointer == NULL) {
-        core_queue_enqueue(&self->dried_blocks, &self->current_block);
+        core_fast_queue_enqueue(&self->dried_blocks, &self->current_block);
         self->current_block = NULL;
 
         core_memory_pool_add_block(self);
@@ -360,7 +360,7 @@ static void core_memory_pool_add_block(struct core_memory_pool *self)
     /* Try to pick a block in the ready block list.
      * Otherwise, create one on-demand today.
      */
-    if (!core_queue_dequeue(&self->ready_blocks, &self->current_block)) {
+    if (!core_fast_queue_dequeue(&self->ready_blocks, &self->current_block)) {
         self->current_block = core_memory_allocate(sizeof(struct core_memory_block), self->name);
         core_memory_block_init(self->current_block, self->block_size);
     }
@@ -486,7 +486,7 @@ int core_memory_pool_free(struct core_memory_pool *self, void *pointer)
 
 static void core_memory_pool_free_private(struct core_memory_pool *self, void *pointer)
 {
-    struct core_queue *queue;
+    struct core_fast_queue *queue;
     size_t size;
 
     if (CORE_BITMAP_GET_BIT(self->flags, FLAG_DISABLED)) {
@@ -526,10 +526,10 @@ static void core_memory_pool_free_private(struct core_memory_pool *self, void *p
 
     if (queue == NULL) {
         queue = core_map_add(&self->recycle_bin, &size);
-        core_queue_init(queue, sizeof(void *));
+        core_fast_queue_init(queue, sizeof(void *));
     }
 
-    core_queue_enqueue(queue, &pointer);
+    core_fast_queue_enqueue(queue, &pointer);
 }
 
 void core_memory_pool_disable_tracking(struct core_memory_pool *self)
@@ -586,12 +586,12 @@ void core_memory_pool_free_all(struct core_memory_pool *self)
     /*
      * Reset all ready blocks
      */
-    size = core_queue_size(&self->ready_blocks);
+    size = core_fast_queue_size(&self->ready_blocks);
     i = 0;
     while (i < size
-                   && core_queue_dequeue(&self->ready_blocks, &block)) {
+                   && core_fast_queue_dequeue(&self->ready_blocks, &block)) {
         core_memory_block_free_all(block);
-        core_queue_enqueue(&self->ready_blocks, &block);
+        core_fast_queue_enqueue(&self->ready_blocks, &block);
 
         i++;
     }
@@ -599,9 +599,9 @@ void core_memory_pool_free_all(struct core_memory_pool *self)
     /*
      * Reset all dried blocks
      */
-    while (core_queue_dequeue(&self->dried_blocks, &block)) {
+    while (core_fast_queue_dequeue(&self->dried_blocks, &block)) {
         core_memory_block_free_all(block);
-        core_queue_enqueue(&self->ready_blocks, &block);
+        core_fast_queue_enqueue(&self->ready_blocks, &block);
     }
 
     /*
@@ -633,8 +633,8 @@ void core_memory_pool_print(struct core_memory_pool *self)
         ++block_count;
     }
 
-    block_count += core_queue_size(&self->dried_blocks);
-    block_count += core_queue_size(&self->ready_blocks);
+    block_count += core_fast_queue_size(&self->dried_blocks);
+    block_count += core_fast_queue_size(&self->ready_blocks);
 
     byte_count = (uint64_t)block_count * (uint64_t)self->block_size;
 
