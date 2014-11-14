@@ -224,3 +224,16 @@ int core_fast_queue_enqueue_private(struct core_fast_queue *self, void *item)
     return inserted;
 }
 
+int core_fast_queue_capacity(struct core_fast_queue *self)
+{
+    return -1;
+}
+
+void core_fast_queue_set_memory_pool(struct core_fast_queue *self,
+                struct core_memory_pool *pool)
+{
+
+}
+
+
+

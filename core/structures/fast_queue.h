@@ -10,6 +10,8 @@
 #define CORE_RING_QUEUE_THREAD_SAFE
 */
 
+struct core_memory_pool;
+
 /*
  * This is a linked list of ring that offers
  * the interface of a queue (enqueue/dequeue)
@@ -37,5 +39,9 @@ int core_fast_queue_dequeue(struct core_fast_queue *self, void *item);
 int core_fast_queue_empty(struct core_fast_queue *self);
 int core_fast_queue_full(struct core_fast_queue *self);
 int core_fast_queue_size(struct core_fast_queue *self);
+
+int core_fast_queue_capacity(struct core_fast_queue *self);
+void core_fast_queue_set_memory_pool(struct core_fast_queue *self,
+                struct core_memory_pool *pool);
 
 #endif

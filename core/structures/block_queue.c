@@ -1,5 +1,5 @@
 
-#include "queue.h"
+#include "block_queue.h"
 
 #include <core/system/memory.h>
 
@@ -15,9 +15,9 @@
 */
 #define CORE_QUEUE_DEBUG_COMPACT
 
-void core_queue_compact(struct core_queue *self);
+void core_block_queue_compact(struct core_block_queue *self);
 
-void core_queue_init(struct core_queue *self, int bytes_per_unit)
+void core_block_queue_init(struct core_block_queue *self, int bytes_per_unit)
 {
     self->size = 0;
     self->enqueue_index = 0;
@@ -27,7 +27,7 @@ void core_queue_init(struct core_queue *self, int bytes_per_unit)
     core_vector_init(&self->vector, bytes_per_unit);
 }
 
-void core_queue_destroy(struct core_queue *self)
+void core_block_queue_destroy(struct core_block_queue *self)
 {
     self->size = 0;
     self->enqueue_index = 0;
@@ -37,7 +37,7 @@ void core_queue_destroy(struct core_queue *self)
     core_vector_destroy(&self->vector);
 }
 
-int core_queue_enqueue(struct core_queue *self, void *item)
+int core_block_queue_enqueue(struct core_block_queue *self, void *item)
 {
     void *bucket1;
 
@@ -49,7 +49,7 @@ int core_queue_enqueue(struct core_queue *self, void *item)
     printf("DEBUG enqueue %d, size %d\n", value, self->size);
 #endif
 
-    core_queue_compact(self);
+    core_block_queue_compact(self);
 
     /* There was no place, append the item in the vector
      */
@@ -72,7 +72,7 @@ int core_queue_enqueue(struct core_queue *self, void *item)
     return 1;
 }
 
-int core_queue_dequeue(struct core_queue *self, void *item)
+int core_block_queue_dequeue(struct core_block_queue *self, void *item)
 {
     void *bucket;
 
@@ -85,45 +85,45 @@ int core_queue_dequeue(struct core_queue *self, void *item)
     self->dequeue_index++;
     self->size--;
 
-    core_queue_compact(self);
+    core_block_queue_compact(self);
 
     return 1;
 }
 
-int core_queue_empty(struct core_queue *self)
+int core_block_queue_empty(struct core_block_queue *self)
 {
     return self->size == 0;
 }
 
-int core_queue_full(struct core_queue *self)
+int core_block_queue_full(struct core_block_queue *self)
 {
     return 0;
 }
 
-int core_queue_size(struct core_queue *self)
+int core_block_queue_size(struct core_block_queue *self)
 {
     return self->size;
 }
 
-void core_queue_set_memory_pool(struct core_queue *self,
+void core_block_queue_set_memory_pool(struct core_block_queue *self,
                 struct core_memory_pool *pool)
 {
     core_vector_set_memory_pool(&self->vector, pool);
 }
 
-void core_queue_print(struct core_queue *self)
+void core_block_queue_print(struct core_block_queue *self)
 {
-    printf("core_queue_print size %d dequeue_index %d enqueue_index %d vector_capacity %" PRId64 "\n",
+    printf("core_block_queue_print size %d dequeue_index %d enqueue_index %d vector_capacity %" PRId64 "\n",
                     self->size, self->dequeue_index, self->enqueue_index,
                     core_vector_capacity(&self->vector));
 }
 
-int core_queue_capacity(struct core_queue *self)
+int core_block_queue_capacity(struct core_block_queue *self)
 {
     return core_vector_capacity(&self->vector);
 }
 
-void core_queue_compact(struct core_queue *self)
+void core_block_queue_compact(struct core_block_queue *self)
 {
     int available;
     int minimum;
@@ -136,7 +136,7 @@ void core_queue_compact(struct core_queue *self)
     minimum = 64;
 
     /*
-    printf("core_queue_compact size %d dequeue_index %d enqueue_index %d\n",
+    printf("core_block_queue_compact size %d dequeue_index %d enqueue_index %d\n",
                     self->size, self->dequeue_index, self->enqueue_index);
                     */
 

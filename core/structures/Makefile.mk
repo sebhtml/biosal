@@ -9,7 +9,7 @@ CORE_OBJECTS += core/structures/fast_ring.o
 CORE_OBJECTS += core/structures/linked_ring.o
 CORE_OBJECTS += core/structures/fast_queue.o
 CORE_OBJECTS += core/structures/fast_queue_iterator.o
-CORE_OBJECTS += core/structures/queue.o
+CORE_OBJECTS += core/structures/block_queue.o
 
 # unordered structures
 CORE_OBJECTS += core/structures/hash_table_group.o

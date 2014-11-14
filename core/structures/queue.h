@@ -2,43 +2,23 @@
 #ifndef CORE_QUEUE_H
 #define CORE_QUEUE_H
 
-#include "vector.h"
+#include "block_queue.h"
+#include "fast_queue.h"
 
-struct core_memory_pool;
+#define core_queue                  core_fast_queue
 
-/*
- * A FIFO (first in, first out)
- */
-struct core_queue {
-    struct core_vector vector;
-    int enqueue_index;
-    int dequeue_index;
-    int size;
-    int bytes_per_element;
-};
+#define core_queue_init             core_fast_queue_init
+#define core_queue_destroy          core_fast_queue_destroy
 
-void core_queue_init(struct core_queue *self, int bytes_per_unit);
-void core_queue_destroy(struct core_queue *self);
+#define core_queue_enqueue          core_fast_queue_enqueue
+#define core_queue_dequeue          core_fast_queue_dequeue
 
-/*
- * \returns 1 if successful, 0 otherwise
- */
-int core_queue_enqueue(struct core_queue *self, void *item);
+#define core_queue_set_memory_pool  core_fast_queue_set_memory_pool
 
-/*
- * \returns 1 if something was dequeued. 0 otherwise.
- */
-int core_queue_dequeue(struct core_queue *self, void *item);
-
-int core_queue_empty(struct core_queue *self);
-int core_queue_full(struct core_queue *self);
-
-int core_queue_size(struct core_queue *self);
-
-void core_queue_set_memory_pool(struct core_queue *self,
-                struct core_memory_pool *pool);
-
-void core_queue_print(struct core_queue *self);
-int core_queue_capacity(struct core_queue *self);
+#define core_queue_size             core_fast_queue_size
+#define core_queue_empty            core_fast_queue_empty
+#define core_queue_full             core_fast_queue_full
+#define core_queue_capacity         core_fast_queue_capacity
 
 #endif
+
