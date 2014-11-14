@@ -32,8 +32,15 @@
 #define DEBUG_ANY 0xcccccccc
 
 /*
+ * Show memory allocation events.
+ */
+/*
+#define CORE_MEMORY_DEBUG
+*/
+
+/*
 #define DEBUG_KEY 0xc170626e
-#define DEBUG_SIZE 8
+#define DEBUG_SIZE 16368
 */
 
 #ifndef DEBUG_KEY

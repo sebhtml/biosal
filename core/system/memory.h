@@ -46,13 +46,6 @@
 #define CORE_TRUE 1
 #define CORE_FALSE 0
 
-/*
- * Show memory allocation events.
- */
-/*
-#define CORE_MEMORY_DEBUG
-*/
-
 /* Intel processors usually have a cache line of 64 bytes.
  * At least, it is the case for Sandy Bridge, Ivy Bridge, and Haswell.
  *
