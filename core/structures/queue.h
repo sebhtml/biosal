@@ -38,4 +38,7 @@ int core_queue_size(struct core_queue *self);
 void core_queue_set_memory_pool(struct core_queue *self,
                 struct core_memory_pool *pool);
 
+void core_queue_print(struct core_queue *self);
+int core_queue_capacity(struct core_queue *self);
+
 #endif

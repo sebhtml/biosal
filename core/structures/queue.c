@@ -7,6 +7,10 @@
 #include <stdio.h>
 #include <string.h>
 
+#include <stdint.h>
+#include <inttypes.h>
+
+
 /*
 #define CORE_QUEUE_DEBUG
 */
@@ -150,4 +154,13 @@ void core_queue_set_memory_pool(struct core_queue *self,
     core_vector_set_memory_pool(&self->vector, pool);
 }
 
+void core_queue_print(struct core_queue *self)
+{
+    printf("core_queue_print capacity is %" PRId64 "\n",
+                    core_vector_capacity(&self->vector));
+}
 
+int core_queue_capacity(struct core_queue *self)
+{
+    return core_vector_capacity(&self->vector);
+}
