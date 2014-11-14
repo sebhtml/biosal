@@ -6,6 +6,8 @@
 
 #include <genomics/assembly/assembly_vertex.h>
 
+#include <core/structures/vector.h>
+
 struct core_memory_pool;
 struct biosal_dna_codec;
 struct thorium_actor;
