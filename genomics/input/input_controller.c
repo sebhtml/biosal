@@ -253,6 +253,9 @@ void biosal_input_controller_receive(struct thorium_actor *actor, struct thorium
     if (tag == ACTION_START) {
 
         core_vector_init(&concrete_actor->spawners, 0);
+        core_vector_set_memory_pool(&concrete_actor->spawners,
+                        thorium_actor_get_persistent_memory_pool(actor));
+
         core_vector_unpack(&concrete_actor->spawners, buffer);
 
         core_vector_resize(&concrete_actor->stores_per_spawner,
