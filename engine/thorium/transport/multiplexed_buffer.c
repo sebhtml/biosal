@@ -34,6 +34,10 @@
  */
 #define MESSAGE_COUNT_PER_PARCEL 20
 
+/*
+#define PRINT_TIMEOUT_UPDATE
+*/
+
 void thorium_multiplexed_buffer_print_history(struct thorium_multiplexed_buffer *self);
 void thorium_multiplexed_buffer_predict(struct thorium_multiplexed_buffer *self);
 
@@ -316,7 +320,7 @@ void thorium_multiplexed_buffer_profile(struct thorium_multiplexed_buffer *self,
         delta = time - self->profile_start;
         actor_message_period = delta / self->profile_actor_message_count;
 
-#ifdef PRINT_ACTOR_MESSAGE_PERIOD
+#ifdef PRINT_TIMEOUT_UPDATE
         printf("thorium_multiplexed_buffer actor_message_period: %d ns profile_actor_message_count %d\n",
                         actor_message_period, self->profile_actor_message_count);
 #endif

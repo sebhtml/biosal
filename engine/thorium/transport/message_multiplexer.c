@@ -351,6 +351,11 @@ int thorium_message_multiplexer_multiplex(struct thorium_message_multiplexer *se
         thorium_multiplexed_buffer_set_buffer(real_multiplexed_buffer, new_buffer);
     }
 
+    /*
+    printf("DEBUG worker_latency %d ns\n",
+                    thorium_worker_latency(self->worker));
+                    */
+
     thorium_multiplexed_buffer_append(real_multiplexed_buffer, count, buffer, time);
 
     thorium_message_multiplexer_flush(self, destination_node, FORCE_NO);
