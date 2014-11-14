@@ -249,6 +249,7 @@ struct thorium_actor {
     uint32_t flags;
     struct core_fast_ring mailbox;
     struct core_memory_pool abstract_memory_pool;
+    struct core_memory_pool concrete_memory_pool;
 
 #ifdef THORIUM_ACTOR_GATHER_MESSAGE_METADATA
     struct core_map received_messages;
@@ -407,6 +408,8 @@ struct core_map *thorium_actor_get_received_messages(struct thorium_actor *self)
 struct core_map *thorium_actor_get_sent_messages(struct thorium_actor *self);
 
 struct core_memory_pool *thorium_actor_get_ephemeral_memory(struct thorium_actor *self);
+struct core_memory_pool *thorium_actor_get_persistent_memory_pool(struct thorium_actor *self);
+
 struct thorium_worker *thorium_actor_get_last_worker(struct thorium_actor *self);
 
 int thorium_actor_enqueue_mailbox_message(struct thorium_actor *self, struct thorium_message *message);

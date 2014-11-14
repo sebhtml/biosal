@@ -50,6 +50,7 @@
 #define THORIUM_ACTOR_ACQUAINTANCE_SUPERVISOR 0
 
 #define MEMORY_POOL_NAME_ABSTRACT_ACTOR 0x9739a8fa
+#define MEMORY_POOL_NAME_CONCRETE_ACTOR 0x39acca5f
 
 #define THORIUM_ACTOR_FORWARDING_NONE 0
 #define THORIUM_ACTOR_FORWARDING_CLONE 1
@@ -136,6 +137,7 @@ void thorium_actor_init(struct thorium_actor *self, void *concrete_actor,
      * This is to avoid memory frargmentation.
      */
     core_memory_pool_init(&self->abstract_memory_pool, 131072, MEMORY_POOL_NAME_ABSTRACT_ACTOR);
+    core_memory_pool_init(&self->concrete_memory_pool, 131072, MEMORY_POOL_NAME_CONCRETE_ACTOR);
 
     self->virtual_runtime = 0;
     core_timer_init(&self->timer);
@@ -309,6 +311,7 @@ void thorium_actor_destroy(struct thorium_actor *self)
     core_fast_ring_destroy(&self->mailbox);
 
     core_memory_pool_destroy(&self->abstract_memory_pool);
+    core_memory_pool_destroy(&self->concrete_memory_pool);
 }
 
 int thorium_actor_name(struct thorium_actor *self)
@@ -2415,4 +2418,9 @@ int thorium_actor_get_random_number(struct thorium_actor *self)
 int thorium_actor_multiplexer_is_enabled(struct thorium_actor *self)
 {
     return CORE_BITMAP_GET_BIT(self->flags, FLAG_ENABLE_MULTIPLEXER);
+}
+
+struct core_memory_pool *thorium_actor_get_persistent_memory_pool(struct thorium_actor *self)
+{
+    return &self->concrete_memory_pool;
 }
