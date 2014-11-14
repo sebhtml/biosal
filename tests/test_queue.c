@@ -107,27 +107,38 @@ int main(int argc, char **argv)
 
         struct core_queue queue;
         int i;
+        int expected;
         core_queue_init(&queue, sizeof(int));
 
         TEST_INT_EQUALS(core_queue_empty(&queue), 1);
 
         i = 3000;
         while (i--) {
+            expected = i;
+
             TEST_INT_EQUALS(core_queue_enqueue(&queue, &i), 1);
             TEST_INT_EQUALS(core_queue_dequeue(&queue, &i), 1);
+
+            TEST_INT_EQUALS(i, expected);
+
             TEST_INT_EQUALS(core_queue_empty(&queue), 1);
             TEST_INT_EQUALS(core_queue_enqueue(&queue, &i), 1);
             TEST_INT_EQUALS(core_queue_dequeue(&queue, &i), 1);
+
+            TEST_INT_EQUALS(i, expected);
         }
 
         TEST_INT_EQUALS(core_queue_full(&queue), 0);
+        TEST_INT_EQUALS(core_queue_empty(&queue), 1);
 
         /*
          * At any time, there is 0 or 1 elements in the queue.
          */
         /*
-        TEST_INT_IS_LOWER_THAN(core_queue_capacity(&queue), 10);
+        core_queue_print(&queue);
         */
+
+        TEST_INT_IS_LOWER_THAN(core_queue_capacity(&queue), 100);
 
         core_queue_destroy(&queue);
     }
