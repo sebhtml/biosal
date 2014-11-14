@@ -22,7 +22,7 @@ struct biosal_aggregator {
 
     struct core_vector consumers;
 
-    struct core_fast_queue stalled_producers;
+    struct core_queue stalled_producers;
 
     int maximum_active_messages;
     struct core_vector active_messages;

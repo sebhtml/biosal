@@ -47,7 +47,7 @@ void biosal_assembly_arc_kernel_init(struct thorium_actor *self)
 
     concrete_self->kmer_length = -1;
 
-    core_fast_queue_init(&concrete_self->producers_for_work_stealing, sizeof(int));
+    core_queue_init(&concrete_self->producers_for_work_stealing, sizeof(int));
 
     thorium_actor_add_action(self, ACTION_SET_KMER_LENGTH,
                     biosal_assembly_arc_kernel_set_kmer_length);
@@ -95,7 +95,7 @@ void biosal_assembly_arc_kernel_destroy(struct thorium_actor *self)
     concrete_self->producer = THORIUM_ACTOR_NOBODY;
     concrete_self->consumer = THORIUM_ACTOR_NOBODY;
 
-    core_fast_queue_destroy(&concrete_self->producers_for_work_stealing);
+    core_queue_destroy(&concrete_self->producers_for_work_stealing);
 }
 
 void biosal_assembly_arc_kernel_receive(struct thorium_actor *self, struct thorium_message *message)
@@ -137,7 +137,7 @@ void biosal_assembly_arc_kernel_receive(struct thorium_actor *self, struct thori
 
     } else if (tag == ACTION_SEQUENCE_STORE_ASK_REPLY) {
 
-        if (core_fast_queue_dequeue(&concrete_self->producers_for_work_stealing, &producer)) {
+        if (core_queue_dequeue(&concrete_self->producers_for_work_stealing, &producer)) {
 
             /*
              * Do some work stealing with the producer of another consumer.
@@ -484,7 +484,7 @@ void biosal_assembly_arc_kernel_set_producers_for_work_stealing(struct thorium_a
     while (i < size) {
 
         producer = core_vector_at_as_int(&producers, i);
-        core_fast_queue_enqueue(&concrete_self->producers_for_work_stealing, &producer);
+        core_queue_enqueue(&concrete_self->producers_for_work_stealing, &producer);
 
         ++i;
     }

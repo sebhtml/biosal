@@ -27,7 +27,7 @@ struct biosal_assembly_sliding_window {
     int blocks;
     int consumer;
     int producer;
-    struct core_fast_queue producers_for_work_stealing;
+    struct core_queue producers_for_work_stealing;
     int kmer_length;
 
     int producer_source;

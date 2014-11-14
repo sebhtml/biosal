@@ -92,7 +92,7 @@ void biosal_aggregator_init(struct thorium_actor *self)
         biosal_dna_codec_enable_two_bit_encoding(&concrete_actor->codec);
     }
 
-    core_fast_queue_init(&concrete_actor->stalled_producers, sizeof(int));
+    core_queue_init(&concrete_actor->stalled_producers, sizeof(int));
     core_vector_init(&concrete_actor->active_messages, sizeof(int));
 
     concrete_actor->forced = BIOSAL_FALSE;
@@ -123,7 +123,7 @@ void biosal_aggregator_destroy(struct thorium_actor *self)
     concrete_actor->last = 0;
     biosal_dna_codec_destroy(&concrete_actor->codec);
 
-    core_fast_queue_destroy(&concrete_actor->stalled_producers);
+    core_queue_destroy(&concrete_actor->stalled_producers);
 
     core_vector_destroy(&concrete_actor->consumers);
 
@@ -293,7 +293,7 @@ void biosal_aggregator_verify(struct thorium_actor *self, struct thorium_message
         }
     }
 
-    while (core_fast_queue_dequeue(&concrete_actor->stalled_producers, &producer_index)) {
+    while (core_queue_dequeue(&concrete_actor->stalled_producers, &producer_index)) {
         /* tell the producer to continue...
          */
         producer = producer_index;
@@ -340,7 +340,7 @@ void biosal_aggregator_aggregate_kernel_output(struct thorium_actor *self, struc
     /* enqueue the producer
      */
     producer_index = source;
-    core_fast_queue_enqueue(&concrete_actor->stalled_producers, &producer_index);
+    core_queue_enqueue(&concrete_actor->stalled_producers, &producer_index);
 
 
 #ifdef BIOSAL_AGGREGATOR_DEBUG

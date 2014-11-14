@@ -23,7 +23,7 @@ struct biosal_assembly_arc_kernel {
     int kmer_length;
 
     int producer;
-    struct core_fast_queue producers_for_work_stealing;
+    struct core_queue producers_for_work_stealing;
 
     int consumer;
 
