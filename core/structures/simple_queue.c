@@ -11,6 +11,10 @@
 */
 #define USE_BLOCK_ALLOCATION
 
+/*
+#define DEBUG_QUEUE
+*/
+
 struct core_simple_queue_item *core_simple_queue_allocate_item(struct core_simple_queue *self);
 void core_simple_queue_free_item(struct core_simple_queue *self,
                 struct core_simple_queue_item *item);
@@ -61,6 +65,7 @@ int core_simple_queue_enqueue(struct core_simple_queue *self, void *data)
     CORE_DEBUGGER_ASSERT(new_item != NULL);
     CORE_DEBUGGER_ASSERT(new_item->data_ != NULL);
     CORE_DEBUGGER_ASSERT(new_item->next_ == NULL);
+
     core_memory_copy(new_item->data_, data, self->bytes_per_unit_);
 
     ++self->size_;
@@ -149,10 +154,13 @@ struct core_simple_queue_item *core_simple_queue_allocate_item(struct core_simpl
     if (self->garbage_ != NULL) {
         item = self->garbage_;
 
+        /* Move the garbage pointer.
+         */
+        self->garbage_ = self->garbage_->next_;
+
         item->data_ = ((char *)item) + sizeof(struct core_simple_queue_item);
         item->next_ = NULL;
 
-        self->garbage_ = self->garbage_->next_;
         return item;
     }
 
@@ -169,7 +177,7 @@ struct core_simple_queue_item *core_simple_queue_allocate_item(struct core_simpl
     self->allocations_ = allocation;
 
 #ifdef DEBUG_QUEUE
-    printf("generate %d items from %d bytes\n", count, block_size);
+    printf("generate %d items from %d bytes\n", count - 1, block_size);
 #endif
 
     /*
