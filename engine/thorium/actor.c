@@ -130,7 +130,12 @@ void thorium_actor_init(struct thorium_actor *self, void *concrete_actor,
     int capacity;
 
     self->message_number = 0;
-    core_memory_pool_init(&self->abstract_memory_pool, 0, MEMORY_POOL_NAME_ABSTRACT_ACTOR);
+
+    /*
+     * Each actor has an initial heap of 131072.
+     * This is to avoid memory frargmentation.
+     */
+    core_memory_pool_init(&self->abstract_memory_pool, 131072, MEMORY_POOL_NAME_ABSTRACT_ACTOR);
 
     self->virtual_runtime = 0;
     core_timer_init(&self->timer);
