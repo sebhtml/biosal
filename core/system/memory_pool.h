@@ -7,7 +7,7 @@
 
 #include <core/structures/map.h>
 #include <core/structures/set.h>
-#include <core/structures/fast_queue.h>
+#include <core/structures/queue.h>
 
 #include <stdint.h>
 
@@ -58,8 +58,8 @@ struct core_memory_pool {
     struct core_map allocated_blocks;
     struct core_set large_blocks;
     struct core_memory_block *current_block;
-    struct core_fast_queue ready_blocks;
-    struct core_fast_queue dried_blocks;
+    struct core_queue ready_blocks;
+    struct core_queue dried_blocks;
 
     uint32_t flags;
     size_t block_size;
