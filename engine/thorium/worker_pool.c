@@ -107,7 +107,7 @@ void thorium_worker_pool_init(struct thorium_worker_pool *pool, int workers,
 
     pool->ticks_without_messages = 0;
 
-    core_fast_queue_init(&pool->clean_message_queue, sizeof(struct thorium_message));
+    core_queue_init(&pool->clean_message_queue, sizeof(struct thorium_message));
 
     pool->last_warning = 0;
     pool->last_scheduling_warning = 0;
@@ -155,9 +155,9 @@ void thorium_worker_pool_init(struct thorium_worker_pool *pool, int workers,
     pool->starting_time = time(NULL);
 
     /*
-    core_fast_queue_init(&pool->scheduled_actor_queue_buffer, sizeof(struct thorium_actor *));
+    core_queue_init(&pool->scheduled_actor_queue_buffer, sizeof(struct thorium_actor *));
     */
-    core_fast_queue_init(&pool->inbound_message_queue_buffer, sizeof(struct thorium_message));
+    core_queue_init(&pool->inbound_message_queue_buffer, sizeof(struct thorium_message));
 
     pool->last_balancing = pool->starting_time;
     pool->last_signal_check = pool->starting_time;
@@ -177,11 +177,11 @@ void thorium_worker_pool_destroy(struct thorium_worker_pool *pool)
 
     pool->node = NULL;
 
-    core_fast_queue_destroy(&pool->inbound_message_queue_buffer);
+    core_queue_destroy(&pool->inbound_message_queue_buffer);
     /*
-    core_fast_queue_destroy(&pool->scheduled_actor_queue_buffer);
+    core_queue_destroy(&pool->scheduled_actor_queue_buffer);
     */
-    core_fast_queue_destroy(&pool->clean_message_queue);
+    core_queue_destroy(&pool->clean_message_queue);
 
 #ifdef THORIUM_WORKER_USE_MULTIPLE_PRODUCER_RING
     core_fast_ring_destroy(&pool->outbound_message_ring);
@@ -523,7 +523,7 @@ static int thorium_worker_pool_give_message_to_worker(struct thorium_worker_pool
 
         if (!thorium_worker_enqueue_inbound_message(affinity_worker, message)) {
 
-            core_fast_queue_enqueue(&pool->inbound_message_queue_buffer, message);
+            core_queue_enqueue(&pool->inbound_message_queue_buffer, message);
         }
 
         return 1;
@@ -544,7 +544,7 @@ static int thorium_worker_pool_give_message_to_worker(struct thorium_worker_pool
         printf("DEAD LETTER CHANNEL...\n");
 #endif
 
-        core_fast_queue_enqueue(&pool->clean_message_queue, message);
+        core_queue_enqueue(&pool->clean_message_queue, message);
 
         return 0;
     }
@@ -555,7 +555,7 @@ static int thorium_worker_pool_give_message_to_worker(struct thorium_worker_pool
      */
     if (dead) {
 
-        core_fast_queue_enqueue(&pool->clean_message_queue, message);
+        core_queue_enqueue(&pool->clean_message_queue, message);
 
         return 0;
     }
@@ -595,14 +595,14 @@ static int thorium_worker_pool_give_message_to_worker(struct thorium_worker_pool
         printf("DEBUG897 could not enqueue message, buffering...\n");
 #endif
 
-        core_fast_queue_enqueue(&pool->inbound_message_queue_buffer, message);
+        core_queue_enqueue(&pool->inbound_message_queue_buffer, message);
 
         /*
          * It would be interesting to see what is in the queue,
          * but this would produce huge log files.
          */
 #ifdef INSPECT_INBOUND_QUEUE
-        if (core_fast_queue_size(&pool->inbound_message_queue_buffer) >= 10000) {
+        if (core_queue_size(&pool->inbound_message_queue_buffer) >= 10000) {
             thorium_worker_pool_examine_inbound_queue(pool);
             CORE_DEBUGGER_ASSERT(0);
         }
@@ -646,7 +646,7 @@ static int thorium_worker_pool_give_message_to_worker(struct thorium_worker_pool
          * If that fails, queue the actor.
          */
         if (!thorium_worker_enqueue_actor(affinity_worker, actor)) {
-            core_fast_queue_enqueue(&pool->scheduled_actor_queue_buffer, &actor);
+            core_queue_enqueue(&pool->scheduled_actor_queue_buffer, &actor);
         }
 #endif
     }
@@ -673,7 +673,7 @@ void thorium_worker_pool_work(struct thorium_worker_pool *pool)
     /* If there are messages in the inbound message buffer,
      * Try to give  them too.
      */
-    if (core_fast_queue_dequeue(&pool->inbound_message_queue_buffer, &other_message)) {
+    if (core_queue_dequeue(&pool->inbound_message_queue_buffer, &other_message)) {
         thorium_worker_pool_give_message_to_worker(pool, &other_message);
     }
 
@@ -684,13 +684,13 @@ void thorium_worker_pool_work(struct thorium_worker_pool *pool)
                     && core_fast_ring_pop_from_consumer(&pool->triage_message_ring,
                             &other_message)) {
 
-        core_fast_queue_enqueue(&pool->clean_message_queue, &other_message);
+        core_queue_enqueue(&pool->clean_message_queue, &other_message);
     }
 
 #if 0
     /* Try to dequeue an actor for scheduling
      */
-    if (core_fast_queue_dequeue(&pool->scheduled_actor_queue_buffer, &actor)) {
+    if (core_queue_dequeue(&pool->scheduled_actor_queue_buffer, &actor)) {
 
         name = thorium_actor_name(actor);
         worker_index = thorium_balancer_get_actor_worker(&pool->balancer, name);
@@ -718,7 +718,7 @@ void thorium_worker_pool_work(struct thorium_worker_pool *pool)
         worker = thorium_worker_pool_get_worker(pool, worker_index);
 
         if (!thorium_worker_enqueue_actor(worker, actor)) {
-            core_fast_queue_enqueue(&pool->scheduled_actor_queue_buffer, &actor);
+            core_queue_enqueue(&pool->scheduled_actor_queue_buffer, &actor);
         }
     }
 #endif
@@ -1063,7 +1063,7 @@ static void thorium_worker_pool_wake_up_workers(struct thorium_worker_pool *pool
 int thorium_worker_pool_dequeue_message_for_triage(struct thorium_worker_pool *self,
                 struct thorium_message *message)
 {
-    return core_fast_queue_dequeue(&self->clean_message_queue, message);
+    return core_queue_dequeue(&self->clean_message_queue, message);
 }
 
 void thorium_worker_pool_examine(struct thorium_worker_pool *self)
@@ -1077,13 +1077,13 @@ void thorium_worker_pool_examine(struct thorium_worker_pool *self)
 
     /*
     printf("QUEUE Name= scheduled_actor_queue_buffer size= %d\n",
-                    core_fast_queue_size(&self->scheduled_actor_queue_buffer));
+                    core_queue_size(&self->scheduled_actor_queue_buffer));
                     */
 
     thorium_worker_pool_examine_inbound_queue(self);
 
     printf("QUEUE Name= clean_message_queue size= %d\n",
-                    core_fast_queue_size(&self->clean_message_queue));
+                    core_queue_size(&self->clean_message_queue));
 
     for (i = 0; i < size; ++i) {
 
@@ -1112,7 +1112,7 @@ void thorium_worker_pool_enable_profiler(struct thorium_worker_pool *self)
 
 int thorium_worker_pool_buffered_message_count(struct thorium_worker_pool *self)
 {
-    return core_fast_queue_size(&self->inbound_message_queue_buffer);
+    return core_queue_size(&self->inbound_message_queue_buffer);
 }
 
 static void thorium_worker_pool_examine_inbound_queue(struct thorium_worker_pool *self)
@@ -1121,7 +1121,7 @@ static void thorium_worker_pool_examine_inbound_queue(struct thorium_worker_pool
     struct thorium_message message;
     int i;
 
-    queue_size = core_fast_queue_size(&self->inbound_message_queue_buffer);
+    queue_size = core_queue_size(&self->inbound_message_queue_buffer);
     printf("QUEUE Name= inbound_message_queue_buffer size= %d\n",
                     queue_size);
 
@@ -1133,9 +1133,9 @@ static void thorium_worker_pool_examine_inbound_queue(struct thorium_worker_pool
         i = 0;
         while (i < queue_size) {
 
-            core_fast_queue_dequeue(&self->inbound_message_queue_buffer, &message);
+            core_queue_dequeue(&self->inbound_message_queue_buffer, &message);
             thorium_message_print(&message);
-            core_fast_queue_enqueue(&self->inbound_message_queue_buffer, &message);
+            core_queue_enqueue(&self->inbound_message_queue_buffer, &message);
 
             ++i;
         }
