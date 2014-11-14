@@ -32,7 +32,7 @@
 #define OPERATION_ALLOCATE  0
 #define OPERATION_FREE      1
 
-#define MEMORY_MEMORY_POOL 0xc170626e
+#define MEMORY_MEMORY_POOL_NULL_SELF 0xc170626e
 
 /*
  * Private
@@ -146,7 +146,7 @@ void *core_memory_pool_allocate(struct core_memory_pool *self, size_t size)
     CORE_DEBUGGER_ASSERT(size > 0);
 
     if (self == NULL) {
-        return core_memory_allocate(size, MEMORY_MEMORY_POOL);
+        return core_memory_allocate(size, MEMORY_MEMORY_POOL_NULL_SELF);
     }
 
 #ifdef CORE_DEBUGGER_ASSERT_ENABLED
@@ -374,7 +374,7 @@ int core_memory_pool_free(struct core_memory_pool *self, void *pointer)
     CORE_DEBUGGER_ASSERT(pointer != NULL);
 
     if (self == NULL) {
-        core_memory_free(pointer, MEMORY_MEMORY_POOL);
+        core_memory_free(pointer, MEMORY_MEMORY_POOL_NULL_SELF);
         return 1;
     }
 
