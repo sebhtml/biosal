@@ -94,6 +94,8 @@ function main()
     dump_example_xml_result examples.log > $xml_file
 
     echo "see $xml_file"
+
+    return $failed
 }
 
 main
