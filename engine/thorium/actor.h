@@ -452,5 +452,6 @@ int thorium_actor_assigned_worker(struct thorium_actor *self);
 void thorium_actor_set_assigned_worker(struct thorium_actor *self, int worker);
 
 int thorium_actor_get_random_number(struct thorium_actor *self);
+int thorium_actor_multiplexer_is_enabled(struct thorium_actor *self);
 
 #endif

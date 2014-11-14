@@ -67,6 +67,7 @@
 #define FLAG_CLONING_PROGRESSED             6
 #define FLAG_SYNCHRONIZATION_STARTED        7
 #define FLAG_ENABLE_LOAD_PROFILER           8
+#define FLAG_ENABLE_MULTIPLEXER             9
 
 /*
  * Directly send messages to self without going through the worker.
@@ -181,6 +182,7 @@ void thorium_actor_init(struct thorium_actor *self, void *concrete_actor,
 
     CORE_BITMAP_CLEAR_BIT(self->flags, FLAG_ENABLE_LOAD_PROFILER);
 
+    CORE_BITMAP_CLEAR_BIT(self->flags, FLAG_ENABLE_MULTIPLEXER);
 /*
 */
 #ifdef THORIUM_ACTOR_STORE_CHILDREN
@@ -431,6 +433,14 @@ int thorium_actor_send_system_self(struct thorium_actor *self, struct thorium_me
     } else if (tag == ACTION_STOP) {
 
         thorium_actor_die(self);
+        return 1;
+
+    } else if (tag == ACTION_ENABLE_MULTIPLEXER) {
+
+        CORE_BITMAP_SET_BIT(self->flags, FLAG_ENABLE_MULTIPLEXER);
+        return 1;
+    } else if (tag == ACTION_DISABLE_MULTIPLEXER) {
+        CORE_BITMAP_CLEAR_BIT(self->flags, FLAG_ENABLE_MULTIPLEXER);
         return 1;
     }
 
@@ -2395,4 +2405,9 @@ int thorium_actor_get_random_number(struct thorium_actor *self)
         return thorium_worker_get_random_number(self->worker);
 
     return rand_r(&self->random_seed);
+}
+
+int thorium_actor_multiplexer_is_enabled(struct thorium_actor *self)
+{
+    return CORE_BITMAP_GET_BIT(self->flags, FLAG_ENABLE_MULTIPLEXER);
 }

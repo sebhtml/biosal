@@ -30,6 +30,9 @@
 #define ACTION_BEGIN (PING_ACTION_BASE + 6)
 #define ACTION_BEGIN_REPLY (PING_ACTION_BASE + 7)
 
+#define ACTION_ENABLE_MULTIPLEXER (PING_ACTION_BASE + 8)
+#define ACTION_DISABLE_MULTIPLEXER (PING_ACTION_BASE + 9)
+
 struct core_vector;
 struct thorium_actor;
 struct thorium_message;
