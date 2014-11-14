@@ -144,4 +144,10 @@ int core_queue_size(struct core_queue *self)
     return self->size;
 }
 
+void core_queue_set_memory_pool(struct core_queue *self,
+                struct core_memory_pool *pool)
+{
+    core_vector_set_memory_pool(&self->vector, pool);
+}
+
 

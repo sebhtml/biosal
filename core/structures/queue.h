@@ -4,6 +4,11 @@
 
 #include "vector.h"
 
+struct core_memory_pool;
+
+/*
+ * A FIFO (first in, first out)
+ */
 struct core_queue {
     struct core_vector vector;
     int enqueue_index;
@@ -29,5 +34,8 @@ int core_queue_empty(struct core_queue *self);
 int core_queue_full(struct core_queue *self);
 
 int core_queue_size(struct core_queue *self);
+
+void core_queue_set_memory_pool(struct core_queue *self,
+                struct core_memory_pool *pool);
 
 #endif
