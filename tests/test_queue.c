@@ -41,7 +41,6 @@ int main(int argc, char **argv)
         }
 
         core_queue_destroy(&queue);
-
     }
 
     {
@@ -69,6 +68,8 @@ int main(int argc, char **argv)
         }
 
         TEST_INT_EQUALS(core_queue_empty(&queue), 1);
+
+        core_queue_destroy(&queue);
     }
 
     {
@@ -96,6 +97,8 @@ int main(int argc, char **argv)
         }
 
         TEST_INT_EQUALS(core_queue_empty(&queue), 1);
+
+        core_queue_destroy(&queue);
     }
 
     {
@@ -118,6 +121,8 @@ int main(int argc, char **argv)
         }
 
         TEST_INT_EQUALS(core_queue_full(&queue), 0);
+
+        core_queue_destroy(&queue);
     }
 
     {
@@ -136,8 +141,8 @@ int main(int argc, char **argv)
             TEST_INT_EQUALS(core_queue_dequeue(&queue, &value), 1);
         }
 
+        core_queue_destroy(&queue);
     }
-
 
     END_TESTS();
 
