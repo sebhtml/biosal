@@ -91,8 +91,15 @@ void core_memory_pool_destroy(struct core_memory_pool *self)
     core_memory_pool_examine(self);
 #endif
 
+    if (core_memory_pool_has_leaks(self)) {
+        printf("Error, memory leak detected.\n");
+        core_memory_pool_examine(self);
+    }
+
 #ifdef CORE_MEMORY_POOL_FIND_LEAKS
+#ifdef CORE_DEBUGGER_ASSERT_ENABLED
     CORE_DEBUGGER_ASSERT(!core_memory_pool_has_leaks(self));
+#endif
 #endif
 
     /* destroy recycled objects
