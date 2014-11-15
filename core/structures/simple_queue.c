@@ -166,7 +166,7 @@ struct core_simple_queue_item *core_simple_queue_allocate_item(struct core_simpl
 
     unit_size = sizeof(struct core_simple_queue_item) + self->bytes_per_unit_;
 
-    block_size = 16384;
+    block_size = 32768;
     count = block_size / unit_size;
 
     block_size = count * unit_size;
