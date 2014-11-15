@@ -48,6 +48,7 @@ void *core_memory_pool_allocate_private(struct core_memory_pool *self, size_t si
 void core_memory_pool_free_private(struct core_memory_pool *self, void *pointer);
 
 void core_memory_pool_print_allocated_blocks(struct core_memory_pool *self);
+void core_memory_pool_store_size(void *pointer, size_t size);
 
 void core_memory_pool_init(struct core_memory_pool *self, int block_size, int name)
 {
@@ -308,6 +309,7 @@ void *core_memory_pool_allocate_private(struct core_memory_pool *self, size_t si
 {
     struct core_free_list *queue;
     void *pointer;
+    size_t metadata;
 
     if (size == 0) {
         return NULL;
@@ -331,10 +333,12 @@ void *core_memory_pool_allocate_private(struct core_memory_pool *self, size_t si
         return pointer;
     }
 
+    metadata = 0;
     queue = NULL;
 
     if (CORE_BITMAP_GET_BIT(self->flags, FLAG_ENABLE_TRACKING)) {
         queue = core_map_get(&self->recycle_bin, &size);
+        metadata = sizeof(size_t);
     }
 
     /* recycling is good for the environment
@@ -366,7 +370,7 @@ void *core_memory_pool_allocate_private(struct core_memory_pool *self, size_t si
         core_memory_pool_add_block(self);
     }
 
-    pointer = core_memory_block_allocate(self->current_block, size);
+    pointer = core_memory_block_allocate(self->current_block, size + metadata);
 
     /* the current block is exausted...
      */
@@ -376,12 +380,19 @@ void *core_memory_pool_allocate_private(struct core_memory_pool *self, size_t si
 
         core_memory_pool_add_block(self);
 
-        pointer = core_memory_block_allocate(self->current_block, size);
+        pointer = core_memory_block_allocate(self->current_block, size + metadata);
 
 #ifdef DEBUG_MEMORY_POOL_ALLOCATE
         printf("DEBUG pool_allocate_private from block size %zu pointer %p\n",
                         size, pointer);
 #endif
+    }
+
+    /*
+     * Store size.
+     */
+    if (metadata) {
+        core_memory_pool_store_size(pointer, size);
     }
 
     return pointer;
@@ -859,4 +870,9 @@ void core_memory_pool_print_allocated_blocks(struct core_memory_pool *self)
 #endif
 
     core_map_iterator_destroy(&iterator);
+}
+
+void core_memory_pool_store_size(void *pointer, size_t size)
+{
+    *(size_t *)(((char *)pointer) + size) = size;
 }
