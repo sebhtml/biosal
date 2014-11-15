@@ -149,6 +149,9 @@ int main(int argc, char **argv)
         int value;
         core_queue_init(&queue, sizeof(int));
 
+#if 0
+        printf("Test 3\n");
+#endif
         TEST_INT_EQUALS(core_queue_empty(&queue), 1);
 
         i = 3000;
@@ -158,6 +161,39 @@ int main(int argc, char **argv)
             TEST_INT_EQUALS(core_queue_enqueue(&queue, &value), 1);
             TEST_INT_EQUALS(core_queue_dequeue(&queue, &value), 1);
         }
+
+#if 0
+        printf("Test 3, size %d\n",
+                        core_queue_size(&queue));
+#endif
+
+        core_queue_destroy(&queue);
+    }
+
+    {
+        struct core_queue queue;
+        int i;
+        int value;
+        core_queue_init(&queue, sizeof(int));
+
+#if 0
+        printf("Test 4\n");
+#endif
+        TEST_INT_EQUALS(core_queue_empty(&queue), 1);
+
+        i = 3000000;
+        while (i--) {
+            value = i;
+            TEST_INT_EQUALS(core_queue_enqueue(&queue, &value), 1);
+            TEST_INT_EQUALS(core_queue_enqueue(&queue, &value), 1);
+            TEST_INT_EQUALS(core_queue_dequeue(&queue, &value), 1);
+            TEST_INT_EQUALS(core_queue_dequeue(&queue, &value), 1);
+        }
+
+#if 0
+        printf("Test 4, size %d\n",
+                        core_queue_size(&queue));
+#endif
 
         core_queue_destroy(&queue);
     }
