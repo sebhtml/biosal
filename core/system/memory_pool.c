@@ -34,14 +34,16 @@
 
 #define MEMORY_MEMORY_POOL_NULL_SELF 0xc170626e
 
+#define MINIMUM_SIZE (sizeof(void *))
+
 /*
  * Private
  */
 
-static void core_memory_pool_add_block(struct core_memory_pool *self);
-static void core_memory_pool_set_name(struct core_memory_pool *self, int name);
-static void *core_memory_pool_allocate_private(struct core_memory_pool *self, size_t size);
-static void core_memory_pool_free_private(struct core_memory_pool *self, void *pointer);
+void core_memory_pool_add_block(struct core_memory_pool *self);
+void core_memory_pool_set_name(struct core_memory_pool *self, int name);
+void *core_memory_pool_allocate_private(struct core_memory_pool *self, size_t size);
+void core_memory_pool_free_private(struct core_memory_pool *self, void *pointer);
 
 void core_memory_pool_print_allocated_blocks(struct core_memory_pool *self);
 
@@ -291,7 +293,7 @@ void *core_memory_pool_allocate(struct core_memory_pool *self, size_t size)
     return pointer;
 }
 
-static void *core_memory_pool_allocate_private(struct core_memory_pool *self, size_t size)
+void *core_memory_pool_allocate_private(struct core_memory_pool *self, size_t size)
 {
     struct core_queue *queue;
     void *pointer;
@@ -369,7 +371,7 @@ static void *core_memory_pool_allocate_private(struct core_memory_pool *self, si
     return pointer;
 }
 
-static void core_memory_pool_add_block(struct core_memory_pool *self)
+void core_memory_pool_add_block(struct core_memory_pool *self)
 {
     /* Try to pick a block in the ready block list.
      * Otherwise, create one on-demand today.
@@ -498,7 +500,7 @@ int core_memory_pool_free(struct core_memory_pool *self, void *pointer)
     return value;
 }
 
-static void core_memory_pool_free_private(struct core_memory_pool *self, void *pointer)
+void core_memory_pool_free_private(struct core_memory_pool *self, void *pointer)
 {
     struct core_queue *queue;
     size_t size;
@@ -539,11 +541,36 @@ static void core_memory_pool_free_private(struct core_memory_pool *self, void *p
     queue = core_map_get(&self->recycle_bin, &size);
 
     if (queue == NULL) {
+
+#ifdef DEBUG_9
+        if (size == 9) {
+            printf("DEBUG Create list for items with %zu bytes\n",
+                            size);
+        }
+#endif
         queue = core_map_add(&self->recycle_bin, &size);
         core_queue_init(queue, sizeof(void *));
     }
 
+#ifdef DEBUG_9
+    if (size == 9) {
+        printf("DEBUG Free %zu bytes to list with %d items\n",
+                    size,
+                    core_queue_size(queue));
+        core_tracer_print_stack_backtrace();
+    }
+#endif
+
     core_queue_enqueue(queue, &pointer);
+
+#ifdef DEBUG_9
+    if (size == 9) {
+        printf("DEBUG Free (after) %zu bytes to list with %d items\n",
+                    size,
+                    core_queue_size(queue));
+        core_tracer_print_stack_backtrace();
+    }
+#endif
 }
 
 void core_memory_pool_disable_tracking(struct core_memory_pool *self)
@@ -664,7 +691,7 @@ void core_memory_pool_enable_ephemeral_mode(struct core_memory_pool *self)
     CORE_BITMAP_SET_BIT(self->flags, FLAG_EPHEMERAL);
 }
 
-static void core_memory_pool_set_name(struct core_memory_pool *self, int name)
+void core_memory_pool_set_name(struct core_memory_pool *self, int name)
 {
     self->name = name;
 }
