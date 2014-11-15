@@ -1,6 +1,8 @@
 
 #include "free_list.h"
 
+#include <core/system/debugger.h>
+
 #include <stdlib.h>
 
 void core_free_list_init(struct core_free_list *self)
@@ -18,6 +20,8 @@ void core_free_list_destroy(struct core_free_list *self)
 void core_free_list_add(struct core_free_list *self, void *element)
 {
     struct core_free_list_element *item;
+
+    CORE_DEBUGGER_ASSERT_NOT_NULL(element);
 
     item = element;
     item->next = self->next;
