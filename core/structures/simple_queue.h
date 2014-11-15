@@ -24,6 +24,7 @@ struct core_simple_queue {
 
     int bytes_per_unit_;
     int size_;
+    int garbage_mode_;
 };
 
 void core_simple_queue_init(struct core_simple_queue *self, int bytes_per_unit);
@@ -39,5 +40,6 @@ int core_simple_queue_size(struct core_simple_queue *self);
 int core_simple_queue_capacity(struct core_simple_queue *self);
 void core_simple_queue_set_memory_pool(struct core_simple_queue *self,
                 struct core_memory_pool *pool);
+void core_simple_queue_set_garbage_mode(struct core_simple_queue *self);
 
 #endif

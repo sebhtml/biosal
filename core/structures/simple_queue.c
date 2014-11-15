@@ -29,6 +29,7 @@ void core_simple_queue_init(struct core_simple_queue *self, int bytes_per_unit)
 
     self->bytes_per_unit_ = bytes_per_unit;
     self->size_ = 0;
+    self->garbage_mode_ = 0;
 }
 
 void core_simple_queue_destroy(struct core_simple_queue *self)
@@ -225,4 +226,9 @@ void core_simple_queue_free_item(struct core_simple_queue *self,
 #else
     core_memory_pool_free(self->pool_, item);
 #endif
+}
+
+void core_simple_queue_set_garbage_mode(struct core_simple_queue *self)
+{
+    self->garbage_mode_ = 1;
 }
