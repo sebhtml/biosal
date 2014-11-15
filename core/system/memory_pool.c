@@ -153,6 +153,13 @@ void *core_memory_pool_allocate(struct core_memory_pool *self, size_t size)
     CORE_DEBUGGER_ASSERT(size > 0);
 
     if (self == NULL) {
+
+        /*
+         * Use a power of 2 to avoid (some) memory
+         * fragmentation.
+         */
+        size = core_memory_normalize_segment_length_power_of_2(size);
+
         return core_memory_allocate(size, MEMORY_MEMORY_POOL_NULL_SELF);
     }
 
