@@ -48,12 +48,21 @@ void *core_memory_pool_allocate_private(struct core_memory_pool *self, size_t si
 void core_memory_pool_free_private(struct core_memory_pool *self, void *pointer);
 
 void core_memory_pool_print_allocated_blocks(struct core_memory_pool *self);
+
 void core_memory_pool_store_size(void *pointer, size_t size);
+size_t core_memory_pool_load_size(void *pointer);
+
+void *core_memory_pool_move_right(void *pointer);
+void *core_memory_pool_move_left(void *pointer);
 
 void core_memory_pool_init(struct core_memory_pool *self, int block_size, int name)
 {
     core_map_init(&self->recycle_bin, sizeof(size_t), sizeof(struct core_free_list));
+
+#ifdef CORE_MEMORY_USE_MAP_FOR_TRACKING
     core_map_init(&self->allocated_blocks, sizeof(void *), sizeof(size_t));
+#endif
+
     core_set_init(&self->large_blocks, sizeof(void *));
 
     self->current_block = NULL;
@@ -119,8 +128,10 @@ void core_memory_pool_destroy(struct core_memory_pool *self)
     core_map_iterator_destroy(&iterator);
     core_map_destroy(&self->recycle_bin);
 
+#ifdef CORE_MEMORY_USE_MAP_FOR_TRACKING
     /* destroy allocated blocks */
     core_map_destroy(&self->allocated_blocks);
+#endif
 
     /* destroy dried blocks
      */
@@ -275,6 +286,7 @@ void *core_memory_pool_allocate(struct core_memory_pool *self, size_t size)
         exit(1);
     }
 
+#ifdef CORE_MEMORY_USE_MAP_FOR_TRACKING
     if (CORE_BITMAP_GET_BIT(self->flags, FLAG_ENABLE_TRACKING)) {
 
 #ifdef CORE_DEBUGGER_ASSERT_ENABLED
@@ -294,6 +306,7 @@ void *core_memory_pool_allocate(struct core_memory_pool *self, size_t size)
 
         CORE_DEBUGGER_ASSERT(core_map_get(&self->allocated_blocks, &pointer) != NULL);
     }
+#endif
 
     core_memory_pool_profile(self, OPERATION_ALLOCATE, size);
 
@@ -392,6 +405,7 @@ void *core_memory_pool_allocate_private(struct core_memory_pool *self, size_t si
      * Store size.
      */
     if (metadata) {
+        pointer = core_memory_pool_move_right(pointer);
         core_memory_pool_store_size(pointer, size);
     }
 
@@ -428,6 +442,7 @@ int core_memory_pool_free(struct core_memory_pool *self, void *pointer)
     size = 0;
     value = 0;
 
+#ifdef CORE_MEMORY_USE_MAP_FOR_TRACKING
     /*
      * find out the actual size.
      */
@@ -517,6 +532,10 @@ int core_memory_pool_free(struct core_memory_pool *self, void *pointer)
     if (!CORE_BITMAP_GET_BIT(self->flags, FLAG_ENABLE_TRACKING)) {
         core_memory_pool_free_private(self, pointer);
     }
+#else
+
+    core_memory_pool_free_private(self, pointer);
+#endif
 
     /*
      * Profile the call. This is done even when FLAG_ENABLE_TRACKING
@@ -558,12 +577,16 @@ void core_memory_pool_free_private(struct core_memory_pool *self, void *pointer)
         return;
     }
 
+#ifdef CORE_MEMORY_USE_MAP_FOR_TRACKING
     /*
      * This was not allocated by this pool.
      */
     if (!core_map_get_value(&self->allocated_blocks, &pointer, &size)) {
         return;
     }
+#else
+    size = core_memory_pool_load_size(pointer);
+#endif
 
     queue = core_map_get(&self->recycle_bin, &size);
 
@@ -676,7 +699,10 @@ void core_memory_pool_free_all(struct core_memory_pool *self)
      * Reset current structures.
      */
     if (CORE_BITMAP_GET_BIT(self->flags, FLAG_ENABLE_TRACKING)) {
+
+#ifdef CORE_MEMORY_USE_MAP_FOR_TRACKING
         core_map_clear(&self->allocated_blocks);
+#endif
         core_map_clear(&self->recycle_bin);
     }
 
@@ -780,8 +806,10 @@ int core_memory_pool_has_leaks(struct core_memory_pool *self)
     if (!core_set_empty(&self->large_blocks))
         return 1;
 
+#ifdef CORE_MEMORY_USE_MAP_FOR_TRACKING
     if (!core_map_empty(&self->allocated_blocks))
         return 1;
+#endif
 
     return 0;
 }
@@ -851,6 +879,7 @@ int core_memory_pool_profile_balance_count(struct core_memory_pool *self)
 
 void core_memory_pool_print_allocated_blocks(struct core_memory_pool *self)
 {
+#ifdef CORE_MEMORY_USE_MAP_FOR_TRACKING
         /*
     void *pointer;
     size_t size;
@@ -870,9 +899,33 @@ void core_memory_pool_print_allocated_blocks(struct core_memory_pool *self)
 #endif
 
     core_map_iterator_destroy(&iterator);
+#endif
 }
 
 void core_memory_pool_store_size(void *pointer, size_t size)
 {
-    *(size_t *)(((char *)pointer) + size) = size;
+    size_t *bucket;
+
+    bucket = core_memory_pool_move_left(pointer);
+
+    *bucket = size;
+}
+
+size_t core_memory_pool_load_size(void *pointer)
+{
+    size_t *bucket;
+
+    bucket = core_memory_pool_move_left(pointer);
+
+    return *bucket;
+}
+
+void *core_memory_pool_move_left(void *pointer)
+{
+    return ((char *)pointer) - sizeof(size_t);
+}
+
+void *core_memory_pool_move_right(void *pointer)
+{
+    return ((char *)pointer) + sizeof(size_t);
 }

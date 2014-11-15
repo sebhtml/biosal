@@ -38,6 +38,8 @@
 #define CORE_MEMORY_POOL_FIND_LEAKS
 */
 
+#define CORE_MEMORY_USE_MAP_FOR_TRACKING
+
 /*
  * The block size for the memory pool.
  */
@@ -55,7 +57,11 @@ struct core_memory_pool_state {
  */
 struct core_memory_pool {
     struct core_map recycle_bin;
+
+#ifdef CORE_MEMORY_USE_MAP_FOR_TRACKING
     struct core_map allocated_blocks;
+#endif
+
     struct core_set large_blocks;
     struct core_memory_block *current_block;
     struct core_queue ready_blocks;
