@@ -27,8 +27,8 @@ struct core_timer;
 /*
  * Enable leak detection using
  * CORE_DEBUGGER_LEAK_DETECTION_BEGIN and CORE_DEBUGGER_LEAK_DETECTION_END
- */
 #define CORE_DEBUGGER_ENABLE_LEAK_DETECTION
+ */
 
 /*
  * Detect jitter in Thorium
