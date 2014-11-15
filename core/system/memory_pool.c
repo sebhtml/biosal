@@ -9,6 +9,8 @@
 #include <core/structures/queue.h>
 #include <core/structures/map_iterator.h>
 
+#include <core/structures/free_list.h>
+
 #include <stdio.h>
 #include <inttypes.h>
 #include <stdint.h>
@@ -49,7 +51,7 @@ void core_memory_pool_print_allocated_blocks(struct core_memory_pool *self);
 
 void core_memory_pool_init(struct core_memory_pool *self, int block_size, int name)
 {
-    core_map_init(&self->recycle_bin, sizeof(size_t), sizeof(struct core_queue));
+    core_map_init(&self->recycle_bin, sizeof(size_t), sizeof(struct core_free_list));
     core_map_init(&self->allocated_blocks, sizeof(void *), sizeof(size_t));
     core_set_init(&self->large_blocks, sizeof(void *));
 
@@ -83,7 +85,7 @@ void core_memory_pool_init(struct core_memory_pool *self, int block_size, int na
 
 void core_memory_pool_destroy(struct core_memory_pool *self)
 {
-    struct core_queue *queue;
+    struct core_free_list *queue;
     struct core_map_iterator iterator;
     struct core_memory_block *block;
 
@@ -111,7 +113,7 @@ void core_memory_pool_destroy(struct core_memory_pool *self)
     while (core_map_iterator_has_next(&iterator)) {
         core_map_iterator_next(&iterator, NULL, (void **)&queue);
 
-        core_queue_destroy(queue);
+        core_free_list_destroy(queue);
     }
     core_map_iterator_destroy(&iterator);
     core_map_destroy(&self->recycle_bin);
@@ -163,6 +165,15 @@ void *core_memory_pool_allocate(struct core_memory_pool *self, size_t size)
         size = core_memory_normalize_segment_length_power_of_2(size);
 
         return core_memory_allocate(size, MEMORY_MEMORY_POOL_NULL_SELF);
+    }
+
+    /*
+     * Any small allocations are resized for the free lists.
+     */
+    if (CORE_BITMAP_GET_BIT(self->flags, FLAG_ENABLE_TRACKING)
+                 && size < sizeof(struct core_free_list_element)) {
+
+        size = sizeof(struct core_free_list_element);
     }
 
 #ifdef CORE_DEBUGGER_ASSERT_ENABLED
@@ -295,7 +306,7 @@ void *core_memory_pool_allocate(struct core_memory_pool *self, size_t size)
 
 void *core_memory_pool_allocate_private(struct core_memory_pool *self, size_t size)
 {
-    struct core_queue *queue;
+    struct core_free_list *queue;
     void *pointer;
 
     if (size == 0) {
@@ -328,8 +339,13 @@ void *core_memory_pool_allocate_private(struct core_memory_pool *self, size_t si
 
     /* recycling is good for the environment
      */
-    if (queue != NULL && core_queue_dequeue(queue, &pointer)) {
+    if (queue != NULL
+                  && (pointer = core_free_list_remove(queue)) != NULL) {
 
+        /*
+         * The option CORE_MEMORY_POOL_DISCARD_EMPTY_QUEUES
+         * is not enabled by default.
+         */
 #ifdef CORE_MEMORY_POOL_DISCARD_EMPTY_QUEUES
         if (core_queue_empty(queue)) {
             core_queue_destroy(queue);
@@ -502,7 +518,7 @@ int core_memory_pool_free(struct core_memory_pool *self, void *pointer)
 
 void core_memory_pool_free_private(struct core_memory_pool *self, void *pointer)
 {
-    struct core_queue *queue;
+    struct core_free_list *queue;
     size_t size;
 
     if (CORE_BITMAP_GET_BIT(self->flags, FLAG_DISABLED)) {
@@ -549,25 +565,25 @@ void core_memory_pool_free_private(struct core_memory_pool *self, void *pointer)
         }
 #endif
         queue = core_map_add(&self->recycle_bin, &size);
-        core_queue_init(queue, sizeof(void *));
+        core_free_list_init(queue);
     }
 
 #ifdef DEBUG_9
     if (size == 9) {
         printf("DEBUG Free %zu bytes to list with %d items\n",
                     size,
-                    core_queue_size(queue));
+                    core_free_list_size(queue));
         core_tracer_print_stack_backtrace();
     }
 #endif
 
-    core_queue_enqueue(queue, &pointer);
+    core_free_list_add(queue, pointer);
 
 #ifdef DEBUG_9
     if (size == 9) {
         printf("DEBUG Free (after) %zu bytes to list with %d items\n",
                     size,
-                    core_queue_size(queue));
+                    core_free_list_size(queue));
         core_tracer_print_stack_backtrace();
     }
 #endif
