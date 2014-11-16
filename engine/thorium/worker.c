@@ -54,9 +54,6 @@
 #define SHOW_FULL_RING_WARNINGS
  */
 
-#define MEMORY_POOL_NAME_WORKER_EPHEMERAL  0x2ee1c5a6
-#define MEMORY_POOL_NAME_WORKER_OUTBOUND   0x46d316e4
-
 /*
 #define THORIUM_WORKER_DEBUG_MEMORY
 #define THORIUM_BUG_594
@@ -316,6 +313,8 @@ void thorium_worker_init(struct thorium_worker *worker, int name, struct thorium
     core_memory_pool_init(&worker->outbound_message_memory_pool,
                     CORE_MEMORY_POOL_MESSAGE_BUFFER_BLOCK_SIZE, MEMORY_POOL_NAME_WORKER_OUTBOUND);
 
+    core_memory_pool_init(&worker->persistent_memory,
+                    262144, MEMORY_POOL_NAME_WORKER_PERSISTENT);
     /*
      * Disable the pool so that it uses allocate and free
      * directly.
@@ -463,13 +462,19 @@ void thorium_worker_destroy(struct thorium_worker *worker)
     worker->name = -1;
     CORE_BITMAP_SET_BIT(worker->flags, FLAG_DEAD);
 
-    core_memory_pool_destroy(&worker->ephemeral_memory);
-    core_memory_pool_destroy(&worker->outbound_message_memory_pool);
-
     thorium_priority_assigner_destroy(&worker->assigner);
 
     thorium_message_multiplexer_destroy(&worker->multiplexer);
     thorium_multiplexer_policy_destroy(&worker->multiplexer_policy);
+
+    /*
+     * Memory pools must be destroyed after everything else
+     * because other components are going to return pointers
+     * to memory pools.
+     */
+    core_memory_pool_destroy(&worker->ephemeral_memory);
+    core_memory_pool_destroy(&worker->outbound_message_memory_pool);
+    core_memory_pool_destroy(&worker->persistent_memory);
 }
 
 struct thorium_node *thorium_worker_node(struct thorium_worker *worker)
@@ -2571,4 +2576,16 @@ int thorium_worker_get_random_number(struct thorium_worker *self)
 int thorium_worker_latency(struct thorium_worker *self)
 {
     return self->profile_latency;
+}
+
+struct core_memory_pool *thorium_worker_get_memory_pool(struct thorium_worker *self, int name)
+{
+    if (name == MEMORY_POOL_NAME_WORKER_PERSISTENT)
+        return &self->persistent_memory;
+    else if (name == MEMORY_POOL_NAME_WORKER_OUTBOUND)
+        return &self->outbound_message_memory_pool;
+    else if (name == MEMORY_POOL_NAME_WORKER_EPHEMERAL)
+        return &self->ephemeral_memory;
+
+    return NULL;
 }

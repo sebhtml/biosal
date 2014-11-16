@@ -92,6 +92,10 @@ struct thorium_balancer;
  */
 #define THORIUM_WORKER_CONFIG_USE_BACKOFF
 
+#define MEMORY_POOL_NAME_WORKER_EPHEMERAL  0x2ee1c5a6
+#define MEMORY_POOL_NAME_WORKER_OUTBOUND   0x46d316e4
+#define MEMORY_POOL_NAME_WORKER_PERSISTENT 0x2c6a06d3
+
 /*
  * A Thorium worker.
  *
@@ -210,6 +214,7 @@ struct thorium_worker {
 
     struct core_memory_pool ephemeral_memory;
     struct core_memory_pool outbound_message_memory_pool;
+    struct core_memory_pool persistent_memory;
 
     struct thorium_priority_assigner assigner;
 
@@ -323,5 +328,6 @@ void thorium_worker_send_local_delivery(struct thorium_worker *self, struct thor
 int thorium_worker_get_random_number(struct thorium_worker *self);
 
 int thorium_worker_latency(struct thorium_worker *self);
+struct core_memory_pool *thorium_worker_get_memory_pool(struct thorium_worker *self, int name);
 
 #endif
