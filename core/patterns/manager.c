@@ -57,6 +57,8 @@ void core_manager_init(struct thorium_actor *actor)
     core_map_init(&concrete_actor->spawner_child_count, sizeof(int), sizeof(int));
     core_map_init(&concrete_actor->spawner_children, sizeof(int), sizeof(struct core_vector));
     core_vector_init(&concrete_actor->indices, sizeof(int));
+    core_vector_set_memory_pool(&concrete_actor->indices,
+                    thorium_actor_get_persistent_memory_pool(actor));
 
     concrete_actor->ready_spawners = 0;
     concrete_actor->spawners = 0;
