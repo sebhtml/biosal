@@ -56,10 +56,6 @@ void thorium_message_multiplexer_init(struct thorium_message_multiplexer *self,
     int argc;
     char **argv;
 
-    core_red_black_tree_init(&self->timeline, sizeof(uint64_t), sizeof(int),
-                    NULL);
-    core_red_black_tree_use_uint64_t_keys(&self->timeline);
-
     self->policy = policy;
     self->original_message_count = 0;
     self->real_message_count = 0;
@@ -738,7 +734,10 @@ void thorium_message_multiplexer_set_worker(struct thorium_message_multiplexer *
     self->worker = worker;
     pool = thorium_worker_get_memory_pool(self->worker,
                             MEMORY_POOL_NAME_WORKER_PERSISTENT);
-    core_red_black_tree_set_memory_pool(&self->timeline, pool);
+
+    core_red_black_tree_init(&self->timeline, sizeof(uint64_t), sizeof(int),
+                    pool);
+    core_red_black_tree_use_uint64_t_keys(&self->timeline);
 
     if (thorium_node_name(self->node) == 0 && thorium_worker_name(self->worker) == 0
                     && thorium_node_must_print_load(self->node)) {
