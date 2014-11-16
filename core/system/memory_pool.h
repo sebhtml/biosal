@@ -38,7 +38,12 @@
 #define CORE_MEMORY_POOL_FIND_LEAKS
 */
 
+/*
+ * Store tracking information in a hash table.
+ */
+/*
 #define CORE_MEMORY_USE_MAP_FOR_TRACKING
+*/
 
 /*
  * The block size for the memory pool.
