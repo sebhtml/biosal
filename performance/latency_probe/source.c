@@ -48,6 +48,8 @@ static void source_init(struct thorium_actor *self)
     }
 
     core_vector_init(&concrete_self->targets, sizeof(int));
+    core_vector_set_memory_pool(&concrete_self->targets,
+                    thorium_actor_get_persistent_memory_pool(self));
 
     concrete_self->target = -1;
 }
