@@ -13,6 +13,10 @@
 #include <inttypes.h>
 #include <stdint.h>
 
+#ifdef CONFIG_JEMALLOC
+#include <jemalloc/jemalloc.h>
+#endif
+
 /*
  * bound memory allocations in order
  * to detect provided negative numbers
@@ -50,6 +54,12 @@
 #ifndef DEBUG_SIZE
 #define DEBUG_SIZE DEBUG_ANY
 #endif
+
+/*
+ * \see http://linux.die.net/man/3/jemalloc
+ */
+void *wrapper_malloc(size_t size);
+void wrapper_free(void *pointer);
 
 void *core_memory_allocate_private(size_t size, const char *function, const char *file, int line, int key)
 {
@@ -95,7 +105,7 @@ void *core_memory_allocate_private(size_t size, const char *function, const char
 #if 0
     printf("Size is %d\n", (int)size);
 #endif
-    pointer = malloc(size);
+    pointer = wrapper_malloc(size);
 
 #ifdef CORE_MEMORY_DEBUG
 
@@ -156,7 +166,7 @@ void core_memory_free_private(void *pointer, const char *function, const char *f
 #ifdef CORE_MEMORY_DEBUG
 #endif
 
-    free(pointer);
+    wrapper_free(pointer);
 
     /*
      * Nothing else to do.
@@ -585,5 +595,24 @@ void core_memory_fence()
 
 #error "Memory fence is not implemented for unknown systems"
     /* Do nothing... */
+#endif
+}
+
+void *wrapper_malloc(size_t size)
+{
+#ifdef CONFIG_JEMALLOC
+    #warning "Using jemalloc."
+    return jemalloc_malloc(size);
+#else
+    return malloc(size);
+#endif
+}
+
+void wrapper_free(void *pointer)
+{
+#ifdef CONFIG_JEMALLOC
+    jemalloc_free(pointer);
+#else
+    free(pointer);
 #endif
 }

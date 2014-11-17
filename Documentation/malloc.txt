@@ -1,0 +1,8 @@
+
+# jemalloc
+
+To build jemalloc for Blue Gene/Q:
+
+scripts/IBM_Blue_Gene_Q/build-jemalloc.sh
+
+The compilation option that is needed is CONFIG_JEMALLOC=y
