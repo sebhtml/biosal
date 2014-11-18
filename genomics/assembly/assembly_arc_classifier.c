@@ -150,6 +150,8 @@ void biosal_assembly_arc_classifier_destroy(struct thorium_actor *self)
     core_memory_pool_examine(&concrete_self->persistent_memory);
 
     core_memory_pool_destroy(&concrete_self->persistent_memory);
+
+    printf("ISSUE-819 biosal_assembly_arc_classifier dies\n");
 }
 
 void biosal_assembly_arc_classifier_receive(struct thorium_actor *self, struct thorium_message *message)

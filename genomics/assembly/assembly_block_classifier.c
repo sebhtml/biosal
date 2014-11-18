@@ -156,6 +156,8 @@ void biosal_assembly_block_classifier_destroy(struct thorium_actor *self)
 
     core_memory_pool_examine(&concrete_actor->persistent_pool);
     core_memory_pool_destroy(&concrete_actor->persistent_pool);
+
+    printf("ISSUE-819 biosal_assembly_block_classifier dies\n");
 }
 
 void biosal_assembly_block_classifier_receive(struct thorium_actor *self, struct thorium_message *message)
