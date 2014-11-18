@@ -33,28 +33,6 @@
 
 #define FAST_MEMORY
 
-#define DEBUG_ANY 0xcccccccc
-
-/*
- * Show memory allocation events.
- */
-/*
-#define CORE_MEMORY_DEBUG
-*/
-
-/*
-*/
-#define DEBUG_KEY 0xc170626e
-#define DEBUG_SIZE 2048
-
-#ifndef DEBUG_KEY
-#define DEBUG_KEY DEBUG_ANY
-#endif
-
-#ifndef DEBUG_SIZE
-#define DEBUG_SIZE DEBUG_ANY
-#endif
-
 /*
  * \see http://linux.die.net/man/3/jemalloc
  */
