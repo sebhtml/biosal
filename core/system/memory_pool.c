@@ -419,7 +419,8 @@ void core_memory_pool_add_block(struct core_memory_pool *self)
      */
     if (!core_queue_dequeue(&self->ready_blocks, &self->current_block)) {
         self->current_block = core_memory_allocate(sizeof(struct core_memory_block), self->name);
-        core_memory_block_init(self->current_block, self->block_size);
+        core_memory_block_init(self->current_block, self->block_size,
+                        self->name);
     }
 }
 

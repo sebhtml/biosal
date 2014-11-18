@@ -43,9 +43,9 @@
 */
 
 /*
-#define DEBUG_KEY 0xc170626e
-#define DEBUG_SIZE 64
 */
+#define DEBUG_KEY 0xc170626e
+#define DEBUG_SIZE 2048
 
 #ifndef DEBUG_KEY
 #define DEBUG_KEY DEBUG_ANY

@@ -5,13 +5,12 @@
 
 #include <stdlib.h>
 
-#define MEMORY_BLOCK 0x146f7d15
-
-void core_memory_block_init(struct core_memory_block *self, int total_bytes)
+void core_memory_block_init(struct core_memory_block *self, int total_bytes, int name)
 {
     self->total_bytes = total_bytes;
     self->offset = 0;
     self->memory = NULL;
+    self->name = name;
 }
 
 void core_memory_block_destroy(struct core_memory_block *self)
@@ -20,7 +19,7 @@ void core_memory_block_destroy(struct core_memory_block *self)
     self->offset = 0;
 
     if (self->memory != NULL) {
-        core_memory_free(self->memory, MEMORY_BLOCK);
+        core_memory_free(self->memory, self->name);
         self->memory = NULL;
     }
 }
@@ -30,7 +29,7 @@ void *core_memory_block_allocate(struct core_memory_block *self, int size)
     void *pointer;
 
     if (self->memory == NULL) {
-        self->memory = core_memory_allocate(self->total_bytes, MEMORY_BLOCK);
+        self->memory = core_memory_allocate(self->total_bytes, self->name);
     }
 
     if (self->offset + size > self->total_bytes) {
