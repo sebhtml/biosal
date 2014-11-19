@@ -107,6 +107,9 @@
 #define FLAG_MULTIPLEXER_IS_DISABLED    11
 #define FLAG_REGULATOR_IS_ENABLED       12
 #define FLAG_PROFILE_MESSAGE_TRANSPORT  13
+#define FLAG_USE_FREOPEN_FOR_STDOUT     14
+
+#define OPTION_USE_FREOPEN_STDOUT "-freopen-stdout"
 
 /*
  * Enable the regulator.
@@ -187,6 +190,9 @@ static void thorium_node_receive_messages(struct thorium_node *self);
 static void thorium_node_send(struct thorium_node *self, struct thorium_message *message,
                 int perform_multiplexing);
 
+void thorium_node_open_log_file(struct thorium_node *self);
+void thorium_node_close_log_file(struct thorium_node *self);
+
 void thorium_node_init(struct thorium_node *node, int *argc, char ***argv)
 {
     int i;
@@ -196,6 +202,9 @@ void thorium_node_init(struct thorium_node *node, int *argc, char ***argv)
     int detected;
     int actor_capacity;
     int processor;
+
+    node->argc = *argc;
+    node->argv = *argv;
 
     node->tick = 0;
 
@@ -304,6 +313,8 @@ void thorium_node_init(struct thorium_node *node, int *argc, char ***argv)
     node->name = thorium_transport_get_rank(&node->transport);
     node->nodes = thorium_transport_get_size(&node->transport);
 
+    thorium_node_open_log_file(node);
+
     /*
      * On Blue Gene/Q, the starting time and PID is the same for all ranks.
      * Therefore, the name of the rank is also used.
@@ -332,8 +343,6 @@ void thorium_node_init(struct thorium_node *node, int *argc, char ***argv)
     threads = 1;
 
     node->threads = threads;
-    node->argc = *argc;
-    node->argv = *argv;
 
     if (core_command_has_argument(node->argc, node->argv, "-debug-memory-pools"))
         CORE_BITMAP_SET_BIT(node->flags, FLAG_EXAMINE);
@@ -567,6 +576,8 @@ void thorium_node_destroy(struct thorium_node *node)
 #ifdef THORIUM_USE_CUSTOM_TRACEPOINTS
     thorium_tracepoint_session_destroy(node->name, node->tick);
 #endif
+
+    thorium_node_close_log_file(node);
 
     /*
      * Print the report if requested.
@@ -2965,4 +2976,33 @@ static void thorium_node_receive_messages(struct thorium_node *node)
 int thorium_node_must_print_load(struct thorium_node *self)
 {
     return CORE_BITMAP_GET_BIT(self->flags, FLAG_PRINT_LOAD);
+}
+
+void thorium_node_open_log_file(struct thorium_node *self)
+{
+    char rank[32];
+
+    if (!core_command_has_argument(self->argc, self->argv, OPTION_USE_FREOPEN_STDOUT))
+        return;
+
+    core_string_init(&self->log_file_name, "");
+    core_string_append(&self->log_file_name, "stdout.");
+
+    /* http://www.cplusplus.com/reference/cstdio/sprintf/ */
+    sprintf(rank, "%d", self->name);
+    core_string_append(&self->log_file_name, rank);
+
+    /* http://www.cplusplus.com/reference/cstdio/freopen/ */
+    freopen(core_string_get(&self->log_file_name),
+                    "w", stdout);
+}
+
+void thorium_node_close_log_file(struct thorium_node *self)
+{
+    if (!core_command_has_argument(self->argc, self->argv, OPTION_USE_FREOPEN_STDOUT))
+        return;
+
+    fclose(stdout);
+
+    core_string_destroy(&self->log_file_name);
 }

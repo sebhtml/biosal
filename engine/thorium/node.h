@@ -117,6 +117,8 @@ struct thorium_node {
     int received_initial_actors;
     int ready;
 
+    struct core_string log_file_name;
+
     struct core_timer timer;
 
 #ifdef THORIUM_NODE_USE_TICKS
