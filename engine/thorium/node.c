@@ -31,6 +31,9 @@
 
 #include <performance/tracepoints/tracepoints.h>
 
+/* for biosal_command_get_output_directory */
+#include <genomics/helpers/command.h>
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -2981,16 +2984,43 @@ int thorium_node_must_print_load(struct thorium_node *self)
 void thorium_node_open_log_file(struct thorium_node *self)
 {
     char rank[32];
+    char output[512];
+    char *output_parameter;
+    int has_slashes;
+    int i;
+    int length;
 
     if (!core_command_has_argument(self->argc, self->argv, OPTION_USE_FREOPEN_STDOUT))
         return;
 
+    strcpy(output, "stdout");
+
+    has_slashes = 0;
+
+    output_parameter = biosal_command_get_output_directory(self->argc, self->argv);
+    length = strlen(output_parameter);
+    i = 0;
+    while (i < length) {
+        if (output_parameter[i] == '/') {
+            has_slashes = 1;
+            break;
+        }
+        ++i;
+    }
+
+    if (strlen(output_parameter) <= (512 - 1)
+                    && !has_slashes)
+        strcpy(output, output_parameter);
+
+
     core_string_init(&self->log_file_name, "");
-    core_string_append(&self->log_file_name, "stdout.");
+    core_string_append(&self->log_file_name, output);
+    core_string_append(&self->log_file_name, ".");
 
     /* http://www.cplusplus.com/reference/cstdio/sprintf/ */
-    sprintf(rank, "%d", self->name);
+    sprintf(rank, "%05d", self->name);
     core_string_append(&self->log_file_name, rank);
+    core_string_append(&self->log_file_name, ".txt");
 
     /* http://www.cplusplus.com/reference/cstdio/freopen/ */
     freopen(core_string_get(&self->log_file_name),
