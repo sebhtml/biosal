@@ -92,7 +92,7 @@ void *core_memory_allocate_private(size_t size, const char *function, const char
      */
     if ((DEBUG_KEY == DEBUG_ANY || key == (int)DEBUG_KEY)
                             && (DEBUG_SIZE == DEBUG_ANY || size == DEBUG_SIZE)) {
-        printf("CORE_MEMORY_DEBUG core_memory_allocate %d bytes %p %s %s %d key= 0x%x\n",
+        printf("TRACEPOINT memory:allocate size= %d pointer= %p function= %s file= %s line= %d key= 0x%x\n",
                     (int)size, pointer, function, file, line, key);
 
 #if 1
@@ -132,7 +132,7 @@ void core_memory_free_private(void *pointer, const char *function, const char *f
 {
 #ifdef CORE_MEMORY_DEBUG
     if (DEBUG_KEY == DEBUG_ANY || key == (int)DEBUG_KEY) {
-        printf("CORE_MEMORY_DEBUG core_memory_free %p %s %s %d key= 0x%x\n",
+        printf("TRACEPOINT memory:free pointer= %p function= %s file= %s line= %d key= 0x%x\n",
                    pointer, function, file, line, key);
     }
 #endif
