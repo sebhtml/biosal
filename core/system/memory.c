@@ -122,6 +122,14 @@ void *core_memory_allocate_private(size_t size, const char *function, const char
 
         core_tracer_print_stack_backtrace();
 
+        /*
+         * Flush file descriptos.
+         * This is required on Blue Gene/Q, otherwise information
+         * sometimes vanish.
+         */
+        fflush(stdout);
+        fflush(stderr);
+
         exit(1);
     }
 
