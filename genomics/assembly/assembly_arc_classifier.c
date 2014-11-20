@@ -47,6 +47,10 @@ void biosal_assembly_arc_classifier_init(struct thorium_actor *self)
     concrete_self = (struct biosal_assembly_arc_classifier *)thorium_actor_concrete_actor(self);
 
     core_memory_pool_init(&concrete_self->persistent_memory, 1048576, MEMORY_NAME_ARC_CLASSIFIER);
+    /*
+    core_memory_pool_enable_tracepoints(&concrete_self->persistent_memory);
+    */
+
     concrete_self->kmer_length = -1;
 
     thorium_actor_add_action(self, ACTION_ASK_TO_STOP,
@@ -219,10 +223,16 @@ void biosal_assembly_arc_classifier_receive(struct thorium_actor *self, struct t
 void biosal_assembly_arc_classifier_set_kmer_length(struct thorium_actor *self, struct thorium_message *message)
 {
     struct biosal_assembly_arc_classifier *concrete_self;
+    int encoded_length;
 
     concrete_self = (struct biosal_assembly_arc_classifier *)thorium_actor_concrete_actor(self);
 
     thorium_message_unpack_int(message, 0, &concrete_self->kmer_length);
+
+    encoded_length = biosal_dna_codec_encoded_length(&concrete_self->codec,
+                    concrete_self->kmer_length);
+
+    core_memory_pool_use_cache(&concrete_self->persistent_memory, encoded_length);
 
     thorium_actor_send_reply_empty(self, ACTION_SET_KMER_LENGTH_REPLY);
 }
