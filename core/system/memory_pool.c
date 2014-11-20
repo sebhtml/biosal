@@ -953,7 +953,3 @@ void core_memory_pool_enable_tracepoints(struct core_memory_pool *self)
     CORE_BITMAP_SET_BIT(self->flags, FLAG_ENABLE_TRACEPOINTS);
 }
 
-void core_memory_pool_use_cache(struct core_memory_pool *self, size_t size)
-{
-    printf("DEBUG core_memory_pool_use_cache size= %zu\n", size);
-}

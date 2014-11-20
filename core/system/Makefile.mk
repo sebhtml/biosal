@@ -28,6 +28,7 @@ CORE_OBJECTS += core/system/memory.o
 CORE_OBJECTS += core/system/timer.o
 CORE_OBJECTS += core/system/tracer.o
 CORE_OBJECTS += core/system/memory_pool.o
+CORE_OBJECTS += core/system/memory_cache.o
 CORE_OBJECTS += core/system/memory_block.o
 CORE_OBJECTS += core/system/atomic.o
 CORE_OBJECTS += core/system/thread.o

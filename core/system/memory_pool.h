@@ -121,6 +121,5 @@ void core_memory_pool_check_double_free(struct core_memory_pool *self,
 int core_memory_pool_profile_balance_count(struct core_memory_pool *self);
 
 void core_memory_pool_enable_tracepoints(struct core_memory_pool *self);
-void core_memory_pool_use_cache(struct core_memory_pool *self, size_t size);
 
 #endif

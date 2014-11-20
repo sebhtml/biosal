@@ -8,6 +8,7 @@
 #include <core/structures/vector.h>
 
 #include <core/system/memory_pool.h>
+#include <core/system/memory_cache.h>
 
 #define SCRIPT_ASSEMBLY_ARC_CLASSIFIER 0x115b87ed
 
@@ -35,6 +36,9 @@ struct biosal_assembly_arc_classifier {
      * Output bins
      */
     struct core_memory_pool persistent_memory;
+
+    struct core_memory_cache memory_cache;
+
     /*int maximum_pending_requests;*/
     struct core_vector output_blocks;
 };

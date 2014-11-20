@@ -6,6 +6,8 @@
 
 #include <genomics/kernels/dna_kmer_counter_kernel.h>
 
+#include <core/system/memory_cache.h>
+
 #include <core/system/debugger.h>
 
 #include <biosal.h>
@@ -13,6 +15,9 @@
 #include <stdio.h>
 
 #define MEMORY_NAME_ARC_CLASSIFIER 0x1d4f2792
+
+#define ARC_CLASSIFIER_CACHE 0x93dd7074
+#define ARC_CLASSIFIER_CACHE_CHUNK_SIZE 8388608
 
 void biosal_assembly_arc_classifier_init(struct thorium_actor *self);
 void biosal_assembly_arc_classifier_destroy(struct thorium_actor *self);
@@ -117,6 +122,8 @@ void biosal_assembly_arc_classifier_init(struct thorium_actor *self)
 /*
     concrete_self->maximum_pending_requests = 0;
     */
+
+    core_memory_cache_init(&concrete_self->memory_cache, ARC_CLASSIFIER_CACHE, 0, 0);
 }
 
 void biosal_assembly_arc_classifier_destroy(struct thorium_actor *self)
@@ -156,6 +163,8 @@ void biosal_assembly_arc_classifier_destroy(struct thorium_actor *self)
     core_memory_pool_destroy(&concrete_self->persistent_memory);
 
     printf("ISSUE-819 biosal_assembly_arc_classifier dies\n");
+
+    core_memory_cache_destroy(&concrete_self->memory_cache);
 }
 
 void biosal_assembly_arc_classifier_receive(struct thorium_actor *self, struct thorium_message *message)
@@ -232,7 +241,9 @@ void biosal_assembly_arc_classifier_set_kmer_length(struct thorium_actor *self, 
     encoded_length = biosal_dna_codec_encoded_length(&concrete_self->codec,
                     concrete_self->kmer_length);
 
-    core_memory_pool_use_cache(&concrete_self->persistent_memory, encoded_length);
+    core_memory_cache_destroy(&concrete_self->memory_cache);
+    core_memory_cache_init(&concrete_self->memory_cache, ARC_CLASSIFIER_CACHE, encoded_length,
+                    ARC_CLASSIFIER_CACHE_CHUNK_SIZE);
 
     thorium_actor_send_reply_empty(self, ACTION_SET_KMER_LENGTH_REPLY);
 }
