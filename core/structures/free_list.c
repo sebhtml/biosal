@@ -54,4 +54,13 @@ int core_free_list_size(struct core_free_list *self)
     return self->size;
 }
 
+size_t core_free_list_check_size(struct core_free_list *self, size_t size)
+{
+    size_t minimum;
 
+    minimum = sizeof(struct core_free_list_element);
+
+    if (size < minimum)
+        return minimum;
+    return size;
+}

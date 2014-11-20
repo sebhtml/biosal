@@ -2,6 +2,8 @@
 #ifndef CORE_FREE_LIST_H
 #define CORE_FREE_LIST_H
 
+#include <string.h>
+
 struct core_free_list_element {
     struct core_free_list_element *next;
 };
@@ -29,5 +31,10 @@ void *core_free_list_remove(struct core_free_list *self);
 
 int core_free_list_empty(struct core_free_list *self);
 int core_free_list_size(struct core_free_list *self);
+
+/*
+ * Check the size of elements (and correct it if necessary.
+ */
+size_t core_free_list_check_size(struct core_free_list *self, size_t size);
 
 #endif
