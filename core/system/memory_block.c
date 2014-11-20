@@ -11,6 +11,8 @@ void core_memory_block_init(struct core_memory_block *self, int total_bytes, int
     self->offset = 0;
     self->memory = NULL;
     self->name = name;
+
+    core_memory_block_set_next(self, NULL);
 }
 
 void core_memory_block_destroy(struct core_memory_block *self)
@@ -22,6 +24,8 @@ void core_memory_block_destroy(struct core_memory_block *self)
         core_memory_free(self->memory, self->name);
         self->memory = NULL;
     }
+
+    core_memory_block_set_next(self, NULL);
 }
 
 void *core_memory_block_allocate(struct core_memory_block *self, int size)
@@ -52,4 +56,14 @@ void core_memory_block_free_all(struct core_memory_block *self)
     /* constant-time massive deallocation of memory blocks
      */
     self->offset = 0;
+}
+
+struct core_memory_block *core_memory_block_next(struct core_memory_block *self)
+{
+    return self->next;
+}
+
+void core_memory_block_set_next(struct core_memory_block *self, struct core_memory_block *next)
+{
+    self->next = next;
 }
