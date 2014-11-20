@@ -232,7 +232,7 @@ void biosal_dna_kmer_counter_kernel_receive(struct thorium_actor *actor, struct 
         thorium_message_unpack_int(message, 0, &concrete_actor->kmer_length);
 
         biosal_dna_kmer_init_mock(&kmer, concrete_actor->kmer_length, &concrete_actor->codec,
-                        thorium_actor_get_ephemeral_memory(actor));
+                        thorium_actor_get_ephemeral_memory(actor), NULL);
         concrete_actor->bytes_per_kmer = biosal_dna_kmer_pack_size(&kmer, concrete_actor->kmer_length,
                         &concrete_actor->codec);
         biosal_dna_kmer_destroy(&kmer, thorium_actor_get_ephemeral_memory(actor));
@@ -712,7 +712,8 @@ void biosal_dna_kmer_counter_kernel_push_sequence_data_block(struct thorium_acto
             sequence_data[j + concrete_actor->kmer_length] = '\0';
 
             biosal_dna_kmer_init(&kmer, sequence_data + j,
-                            &concrete_actor->codec, thorium_actor_get_ephemeral_memory(actor));
+                            &concrete_actor->codec, thorium_actor_get_ephemeral_memory(actor),
+                            NULL);
 
 #ifdef BIOSAL_KMER_COUNTER_KERNEL_DEBUG_LEVEL_2
             printf("KERNEL kmer %d,%d %s\n", i, j, sequence_data + j);

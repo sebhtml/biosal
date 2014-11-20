@@ -362,7 +362,7 @@ void biosal_assembly_arc_kernel_push_sequence_data_block(struct thorium_actor *s
             kmer_sequence[concrete_self->kmer_length] = '\0';
 
             biosal_dna_kmer_init(&current_kmer, kmer_sequence, &concrete_self->codec,
-                            ephemeral_memory);
+                            ephemeral_memory, NULL);
             ++profile_kmer_init_calls;
 
             /*

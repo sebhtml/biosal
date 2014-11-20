@@ -4,17 +4,21 @@
 
 #include "dna_codec.h"
 
-#include <core/system/memory_pool.h>
-
 #include <stdint.h>
 
+struct core_memory_pool;
+struct core_memory_cache;
+
+/*
+ * A DNA kmer.
+ */
 struct biosal_dna_kmer {
     void *encoded_data;
 };
 
 void biosal_dna_kmer_init(struct biosal_dna_kmer *self,
                 char *data, struct biosal_dna_codec *codec,
-                struct core_memory_pool *memory);
+                struct core_memory_pool *memory, struct core_memory_cache *cache);
 void biosal_dna_kmer_destroy(struct biosal_dna_kmer *self, struct core_memory_pool *memory);
 
 void biosal_dna_kmer_init_empty(struct biosal_dna_kmer *self);
@@ -30,9 +34,9 @@ int biosal_dna_kmer_pack_unpack(struct biosal_dna_kmer *self,
 
 int biosal_dna_kmer_length(struct biosal_dna_kmer *self, int kmer_length);
 void biosal_dna_kmer_init_mock(struct biosal_dna_kmer *self, int kmer_length, struct biosal_dna_codec *codec,
-                struct core_memory_pool *memory);
+                struct core_memory_pool *memory, struct core_memory_cache *cache);
 void biosal_dna_kmer_init_random(struct biosal_dna_kmer *self, int kmer_length, struct biosal_dna_codec *codec,
-                struct core_memory_pool *memory);
+                struct core_memory_pool *memory, struct core_memory_cache *cache);
 void biosal_dna_kmer_init_copy(struct biosal_dna_kmer *self, struct biosal_dna_kmer *other,
                 int kmer_length, struct core_memory_pool *memory, struct biosal_dna_codec *codec);
 void biosal_dna_kmer_init_as_child(struct biosal_dna_kmer *self, struct biosal_dna_kmer *other,
