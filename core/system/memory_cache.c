@@ -64,9 +64,17 @@ void *core_memory_cache_allocate(struct core_memory_cache *self, size_t size)
 
     ++self->profile_allocate_call_count;
 
-    if (!core_free_list_empty(&self->free_list))
-        return core_free_list_remove(&self->free_list);
+    if (!core_free_list_empty(&self->free_list)) {
+        pointer = core_free_list_remove(&self->free_list);
 
+        CORE_DEBUGGER_ASSERT_NOT_NULL(pointer);
+
+        return pointer;
+    }
+
+    /*
+     * This is the first block.
+     */
     if (self->block == NULL)
         core_memory_cache_add_block(self);
 
@@ -74,10 +82,13 @@ void *core_memory_cache_allocate(struct core_memory_cache *self, size_t size)
 
     pointer = core_memory_block_allocate(self->block, self->size);
 
-    if (pointer == NULL)
+    /*
+     * The current head block is dried and can not allocate this request.
+     */
+    if (pointer == NULL) {
         core_memory_cache_add_block(self);
-
-    pointer = core_memory_block_allocate(self->block, self->size);
+        pointer = core_memory_block_allocate(self->block, self->size);
+    }
 
     CORE_DEBUGGER_ASSERT(pointer != NULL);
 
@@ -97,7 +108,13 @@ void core_memory_cache_add_block(struct core_memory_cache *self)
 
     block = core_memory_allocate(sizeof(struct core_memory_block), self->name);
 
+    CORE_DEBUGGER_ASSERT(self->chunk_size > 0);
+
     core_memory_block_init(block, self->chunk_size, self->name);
+
+#ifdef DEBUG_DISPLAY_BLOCK_INIT
+    printf("DEBUG add block.\n");
+#endif
 
     core_memory_block_set_next(block, self->block);
     self->block = block;
