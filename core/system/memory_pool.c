@@ -30,6 +30,7 @@
 #define FLAG_ENABLE_SEGMENT_NORMALIZATION 2
 #define FLAG_ALIGN 3
 #define FLAG_EPHEMERAL 4
+#define FLAG_ENABLE_TRACEPOINTS 5
 
 #define OPERATION_ALLOCATE  0
 #define OPERATION_FREE      1
@@ -84,6 +85,8 @@ void core_memory_pool_init(struct core_memory_pool *self, int block_size, int na
     CORE_BITMAP_CLEAR_BIT(self->flags, FLAG_ENABLE_SEGMENT_NORMALIZATION);
     CORE_BITMAP_CLEAR_BIT(self->flags, FLAG_ALIGN);
     CORE_BITMAP_CLEAR_BIT(self->flags, FLAG_EPHEMERAL);
+
+    CORE_BITMAP_CLEAR_BIT(self->flags, FLAG_ENABLE_TRACEPOINTS);
 
     self->profile_allocated_byte_count = 0;
     self->profile_freed_byte_count = 0;
@@ -177,6 +180,15 @@ void *core_memory_pool_allocate(struct core_memory_pool *self, size_t size)
         size = core_memory_normalize_segment_length_power_of_2(size);
 
         return core_memory_allocate(size, MEMORY_MEMORY_POOL_NULL_SELF);
+    }
+
+    if (CORE_BITMAP_GET_BIT(self->flags, FLAG_ENABLE_TRACEPOINTS)) {
+        printf("TRACEPOINT_EVENT memory_pool:allocate name %x size %zu\n",
+                        self->name, size);
+
+        if (size == 9) {
+            core_tracer_print_stack_backtrace();
+        }
     }
 
     /*
@@ -434,6 +446,11 @@ int core_memory_pool_free(struct core_memory_pool *self, void *pointer)
     if (self == NULL) {
         core_memory_free(pointer, MEMORY_MEMORY_POOL_NULL_SELF);
         return 1;
+    }
+
+    if (CORE_BITMAP_GET_BIT(self->flags, FLAG_ENABLE_TRACEPOINTS)) {
+        printf("TRACEPOINT_EVENT memory_pool:free name %x pointer %p\n",
+                        self->name, (void *)pointer);
     }
 
 #ifdef DEBUG_MEMORY_POOL_FREE
@@ -929,4 +946,14 @@ void *core_memory_pool_move_left(void *pointer)
 void *core_memory_pool_move_right(void *pointer)
 {
     return ((char *)pointer) + sizeof(size_t);
+}
+
+void core_memory_pool_enable_tracepoints(struct core_memory_pool *self)
+{
+    CORE_BITMAP_SET_BIT(self->flags, FLAG_ENABLE_TRACEPOINTS);
+}
+
+void core_memory_pool_use_cache(struct core_memory_pool *self, size_t size)
+{
+    printf("DEBUG core_memory_pool_use_cache size= %zu\n", size);
 }
