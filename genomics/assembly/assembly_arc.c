@@ -116,7 +116,7 @@ void biosal_assembly_arc_init_mock(struct biosal_assembly_arc *self,
 
     type = BIOSAL_ARC_TYPE_PARENT;
     destination = BIOSAL_NUCLEOTIDE_CODE_A;
-    biosal_dna_kmer_init_mock(&kmer, kmer_length, codec, memory, NULL);
+    biosal_dna_kmer_init_mock(&kmer, kmer_length, codec, memory);
 
     biosal_assembly_arc_init(self, type, &kmer, destination, kmer_length, memory, codec);
 

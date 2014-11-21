@@ -135,8 +135,7 @@ void biosal_kmer_store_receive(struct thorium_actor *self, struct thorium_messag
         thorium_message_unpack_int(message, 0, &concrete_actor->kmer_length);
 
         biosal_dna_kmer_init_mock(&kmer, concrete_actor->kmer_length,
-                        &concrete_actor->storage_codec, thorium_actor_get_ephemeral_memory(self),
-                        NULL);
+                        &concrete_actor->storage_codec, thorium_actor_get_ephemeral_memory(self));
         concrete_actor->key_length_in_bytes = biosal_dna_kmer_pack_size(&kmer,
                         concrete_actor->kmer_length, &concrete_actor->storage_codec);
         biosal_dna_kmer_destroy(&kmer, thorium_actor_get_ephemeral_memory(self));
@@ -222,7 +221,7 @@ void biosal_kmer_store_receive(struct thorium_actor *self, struct thorium_messag
             biosal_dna_kmer_destroy(&kmer, ephemeral_memory);
 
             biosal_dna_kmer_init(&encoded_kmer, raw_kmer, &concrete_actor->storage_codec,
-                            thorium_actor_get_ephemeral_memory(self), NULL);
+                            thorium_actor_get_ephemeral_memory(self));
 
             biosal_dna_kmer_pack_store_key(&encoded_kmer, key,
                             concrete_actor->kmer_length, &concrete_actor->storage_codec,

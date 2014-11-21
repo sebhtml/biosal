@@ -23,8 +23,7 @@
 #define BIOSAL_DNA_SEQUENCE_DEBUG
 */
 void biosal_dna_kmer_init(struct biosal_dna_kmer *sequence, char *data,
-                struct biosal_dna_codec *codec, struct core_memory_pool *memory,
-                struct core_memory_cache *cache)
+                struct biosal_dna_codec *codec, struct core_memory_pool *memory)
 {
     int encoded_length;
     int kmer_length;
@@ -130,8 +129,7 @@ int biosal_dna_kmer_pack_unpack(struct biosal_dna_kmer *sequence,
 }
 
 void biosal_dna_kmer_init_random(struct biosal_dna_kmer *sequence, int kmer_length,
-        struct biosal_dna_codec *codec, struct core_memory_pool *memory,
-        struct core_memory_cache *cache)
+        struct biosal_dna_codec *codec, struct core_memory_pool *memory)
 {
     char *dna;
     int i;
@@ -157,13 +155,12 @@ void biosal_dna_kmer_init_random(struct biosal_dna_kmer *sequence, int kmer_leng
 
     dna[kmer_length] = '\0';
 
-    biosal_dna_kmer_init(sequence, dna, codec, memory, cache);
+    biosal_dna_kmer_init(sequence, dna, codec, memory);
     core_memory_pool_free(memory, dna);
 }
 
 void biosal_dna_kmer_init_mock(struct biosal_dna_kmer *sequence, int kmer_length,
-                struct biosal_dna_codec *codec, struct core_memory_pool *memory,
-        struct core_memory_cache *cache)
+                struct biosal_dna_codec *codec, struct core_memory_pool *memory)
 {
     char *dna;
     int i;
@@ -176,7 +173,7 @@ void biosal_dna_kmer_init_mock(struct biosal_dna_kmer *sequence, int kmer_length
 
     dna[kmer_length] = '\0';
 
-    biosal_dna_kmer_init(sequence, dna, codec, memory, cache);
+    biosal_dna_kmer_init(sequence, dna, codec, memory);
     core_memory_pool_free(memory, dna);
 }
 

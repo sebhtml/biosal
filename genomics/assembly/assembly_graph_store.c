@@ -213,8 +213,7 @@ void biosal_assembly_graph_store_receive(struct thorium_actor *self, struct thor
         thorium_message_unpack_int(message, 0, &concrete_self->kmer_length);
 
         biosal_dna_kmer_init_mock(&kmer, concrete_self->kmer_length,
-                        &concrete_self->storage_codec, thorium_actor_get_ephemeral_memory(self),
-                        NULL);
+                        &concrete_self->storage_codec, thorium_actor_get_ephemeral_memory(self));
         concrete_self->key_length_in_bytes = biosal_dna_kmer_pack_size(&kmer,
                         concrete_self->kmer_length, &concrete_self->storage_codec);
         biosal_dna_kmer_destroy(&kmer, thorium_actor_get_ephemeral_memory(self));
@@ -595,7 +594,7 @@ void biosal_assembly_graph_store_push_kmer_block(struct thorium_actor *self, str
                         &concrete_self->transport_codec);
 
             biosal_dna_kmer_init(&encoded_kmer, raw_kmer, &concrete_self->storage_codec,
-                        thorium_actor_get_ephemeral_memory(self), NULL);
+                        thorium_actor_get_ephemeral_memory(self));
             kmer_pointer = &encoded_kmer;
         }
 
@@ -792,7 +791,7 @@ void biosal_assembly_graph_store_add_arc(struct thorium_actor *self,
         biosal_dna_kmer_get_sequence(source, sequence, concrete_self->kmer_length,
                         &concrete_self->transport_codec);
         biosal_dna_kmer_init(&real_source, sequence, &concrete_self->storage_codec,
-                        ephemeral_memory, NULL);
+                        ephemeral_memory);
 
         source = &real_source;
     }
@@ -1114,7 +1113,7 @@ void biosal_assembly_graph_store_get_starting_vertex(struct thorium_actor *self,
 #endif
 
         biosal_dna_kmer_init(&transport_kmer, sequence, &concrete_self->transport_codec,
-                        ephemeral_memory, NULL);
+                        ephemeral_memory);
 
         new_count = biosal_dna_kmer_pack_size(&transport_kmer, concrete_self->kmer_length,
                         &concrete_self->transport_codec);
@@ -1304,7 +1303,7 @@ void biosal_assembly_graph_store_mark_vertex_as_visited(struct thorium_actor *se
     biosal_dna_kmer_get_sequence(&kmer, sequence, concrete_self->kmer_length,
                         &concrete_self->transport_codec);
     biosal_dna_kmer_init(&storage_kmer, sequence, &concrete_self->storage_codec,
-                        ephemeral_memory, NULL);
+                        ephemeral_memory);
 
     /*
      * Get store key
@@ -1405,7 +1404,7 @@ struct biosal_assembly_vertex *biosal_assembly_graph_store_find_vertex(struct th
                         &concrete_self->transport_codec);
 
     biosal_dna_kmer_init(&storage_kmer, sequence, &concrete_self->storage_codec,
-                        ephemeral_memory, NULL);
+                        ephemeral_memory);
 
     key = core_memory_pool_allocate(ephemeral_memory, concrete_self->key_length_in_bytes);
 

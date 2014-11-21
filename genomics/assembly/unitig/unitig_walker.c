@@ -359,7 +359,7 @@ void biosal_unitig_walker_receive(struct thorium_actor *self, struct thorium_mes
         thorium_message_unpack_int(message, 0, &concrete_self->kmer_length);
 
         biosal_dna_kmer_init_mock(&kmer, concrete_self->kmer_length, &concrete_self->codec,
-                        ephemeral_memory, NULL);
+                        ephemeral_memory);
 
         concrete_self->key_length = biosal_dna_kmer_pack_size(&kmer, concrete_self->kmer_length,
                         &concrete_self->codec);
@@ -1958,7 +1958,7 @@ uint64_t biosal_unitig_walker_get_path_name(struct thorium_actor *self, int leng
     kmer_sequence[concrete_self->kmer_length] = '\0';
 
     biosal_dna_kmer_init(&kmer1, kmer_sequence, &concrete_self->codec,
-                    ephemeral_memory, NULL);
+                    ephemeral_memory);
     kmer_sequence[concrete_self->kmer_length] = saved_symbol;
 
     hash_value1 = biosal_dna_kmer_canonical_hash(&kmer1,
@@ -1974,7 +1974,7 @@ uint64_t biosal_unitig_walker_get_path_name(struct thorium_actor *self, int leng
     kmer_sequence = sequence + length - concrete_self->kmer_length;
 
     biosal_dna_kmer_init(&kmer2, kmer_sequence, &concrete_self->codec,
-                    ephemeral_memory, NULL);
+                    ephemeral_memory);
     hash_value2 = biosal_dna_kmer_canonical_hash(&kmer2,
                         concrete_self->kmer_length, &concrete_self->codec,
                        ephemeral_memory);
@@ -2282,7 +2282,7 @@ void biosal_unitig_walker_normalize_cycle(struct thorium_actor *self, int length
         kmer_sequence[concrete_self->kmer_length] = '\0';
 
         biosal_dna_kmer_init(&kmer1, kmer_sequence, &concrete_self->codec,
-                    ephemeral_memory, NULL);
+                    ephemeral_memory);
         kmer_sequence[concrete_self->kmer_length] = saved_symbol;
 
         /*
@@ -2338,7 +2338,7 @@ void biosal_unitig_walker_select_strand(struct thorium_actor *self, int length, 
     kmer_sequence[concrete_self->kmer_length] = '\0';
 
     biosal_dna_kmer_init(&kmer1, kmer_sequence, &concrete_self->codec,
-                    ephemeral_memory, NULL);
+                    ephemeral_memory);
     kmer_sequence[concrete_self->kmer_length] = saved_symbol;
 
     CORE_DEBUGGER_ASSERT(concrete_self->kmer_length <= length);
@@ -2349,7 +2349,7 @@ void biosal_unitig_walker_select_strand(struct thorium_actor *self, int length, 
     kmer_sequence = sequence + length - concrete_self->kmer_length;
 
     biosal_dna_kmer_init(&kmer2, kmer_sequence, &concrete_self->codec,
-                    ephemeral_memory, NULL);
+                    ephemeral_memory);
     biosal_dna_kmer_reverse_complement_self(&kmer2, concrete_self->kmer_length, &concrete_self->codec,
                     ephemeral_memory);
 

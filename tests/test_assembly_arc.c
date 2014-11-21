@@ -34,7 +34,7 @@ int main(int argc, char **argv)
     biosal_dna_codec_init(&codec);
     core_memory_pool_init(&pool, 1000000, -1);
 
-    biosal_dna_kmer_init(&kmer, sequence, &codec, &pool, NULL);
+    biosal_dna_kmer_init(&kmer, sequence, &codec, &pool);
 
     biosal_assembly_arc_init(&arc, type, &kmer, nucleotide, kmer_length,
                     &pool, &codec);

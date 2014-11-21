@@ -14,7 +14,7 @@ void biosal_dna_kmer_frequency_block_init(struct biosal_dna_kmer_frequency_block
     struct biosal_dna_kmer kmer;
     int key_size;
 
-    biosal_dna_kmer_init_mock(&kmer, kmer_length, codec, memory, NULL);
+    biosal_dna_kmer_init_mock(&kmer, kmer_length, codec, memory);
     key_size = biosal_dna_kmer_pack_size(&kmer, kmer_length, codec);
 
     biosal_dna_kmer_destroy(&kmer, memory);

@@ -27,7 +27,7 @@ int main(int argc, char **argv)
 
     core_memory_pool_init(&pool, 1000000, -1);
 
-    biosal_dna_kmer_init(&kmer, sequence, &codec, &pool, NULL);
+    biosal_dna_kmer_init(&kmer, sequence, &codec, &pool);
 
     count = biosal_dna_kmer_pack_size(&kmer, kmer_length, &codec);
 

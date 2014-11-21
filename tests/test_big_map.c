@@ -40,7 +40,7 @@ int main(int argc, char **argv)
 
         printf("STRESS TEST\n");
 
-        biosal_dna_kmer_init_mock(&kmer, kmer_length, &codec, &memory, NULL);
+        biosal_dna_kmer_init_mock(&kmer, kmer_length, &codec, &memory);
         key_length = biosal_dna_kmer_pack_size(&kmer, kmer_length, &codec);
         biosal_dna_kmer_destroy(&kmer, &memory);
 
@@ -51,7 +51,7 @@ int main(int argc, char **argv)
         i = 0;
         while (i < count && run_test) {
 
-            biosal_dna_kmer_init_random(&kmer, kmer_length, &codec, &memory, NULL);
+            biosal_dna_kmer_init_random(&kmer, kmer_length, &codec, &memory);
             biosal_dna_kmer_pack_store_key(&kmer, key, kmer_length, &codec, &memory);
 
             bucket = core_map_add(&big_map, key);
