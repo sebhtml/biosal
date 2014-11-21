@@ -186,9 +186,11 @@ void *core_memory_pool_allocate(struct core_memory_pool *self, size_t size)
         printf("TRACEPOINT_EVENT memory_pool:allocate name %x size %zu\n",
                         self->name, size);
 
+#if 0
         if (size == 9) {
             core_tracer_print_stack_backtrace();
         }
+#endif
     }
 
     /*
@@ -366,6 +368,12 @@ void *core_memory_pool_allocate_private(struct core_memory_pool *self, size_t si
         metadata = sizeof(size_t);
     }
 
+    if (CORE_BITMAP_GET_BIT(self->flags, FLAG_ENABLE_TRACEPOINTS)) {
+        printf("TRACEPOINT_EVENT memory_pool:allocate_private name %x size %zu free_list_size %d\n",
+                        self->name, size,
+                        (queue != NULL ? core_free_list_size(queue) : 0));
+    }
+
     /* recycling is good for the environment
      */
     if (queue != NULL
@@ -397,6 +405,9 @@ void *core_memory_pool_allocate_private(struct core_memory_pool *self, size_t si
 
     pointer = core_memory_block_allocate(self->current_block, size + metadata);
 
+    if (CORE_BITMAP_GET_BIT(self->flags, FLAG_ENABLE_TRACEPOINTS))
+        printf("TRACEPOINT_EVENT memory_block:allocate size %zu\n", size + metadata);
+
     /* the current block is exausted...
      */
     if (pointer == NULL) {
@@ -406,6 +417,9 @@ void *core_memory_pool_allocate_private(struct core_memory_pool *self, size_t si
         core_memory_pool_add_block(self);
 
         pointer = core_memory_block_allocate(self->current_block, size + metadata);
+
+        if (CORE_BITMAP_GET_BIT(self->flags, FLAG_ENABLE_TRACEPOINTS))
+            printf("TRACEPOINT_EVENT memory_block:allocate size %zu\n", size + metadata);
 
 #ifdef DEBUG_MEMORY_POOL_ALLOCATE
         printf("DEBUG pool_allocate_private from block size %zu pointer %p\n",
