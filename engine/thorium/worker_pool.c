@@ -122,7 +122,7 @@ void thorium_worker_pool_init(struct thorium_worker_pool *pool, int workers,
      */
     if (pool->worker_count < 1) {
         printf("Error: the number of workers must be at least 1.\n");
-        exit(1);
+        core_exit_with_error();
     }
 
 #ifdef THORIUM_WORKER_POOL_HAS_SPECIAL_QUEUES

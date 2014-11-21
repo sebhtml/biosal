@@ -56,7 +56,7 @@ void *core_memory_allocate_private(size_t size, const char *function, const char
                     (int)size, pointer, function, file, line);
         }
         core_tracer_print_stack_backtrace();
-        exit(1);
+        core_exit_with_error();
     }
 
     if (size > CORE_MEMORY_MAXIMUM) {
@@ -67,7 +67,7 @@ void *core_memory_allocate_private(size_t size, const char *function, const char
                     (int)size, pointer, function, file, line);
         }
         core_tracer_print_stack_backtrace();
-        exit(1);
+        core_exit_with_error();
     }
 
     CORE_DEBUGGER_ASSERT(size <= CORE_MEMORY_MAXIMUM);
@@ -130,7 +130,7 @@ void *core_memory_allocate_private(size_t size, const char *function, const char
         fflush(stdout);
         fflush(stderr);
 
-        exit(1);
+        core_exit_with_error();
     }
 
     return pointer;

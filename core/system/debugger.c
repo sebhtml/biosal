@@ -52,3 +52,28 @@ void core_debugger_jitter_detection_end(struct core_timer *timer, const char *na
     }
 }
 
+void core_exit_with_error()
+{
+    int error_status;
+
+    /*
+     * From ALCF support:
+     *
+     * According to Tom Gooding from IBM, the default behaviour is
+     * this:
+     *
+     *                by default  job completes when
+     *                             ---------------------------------
+     *                             exit(0)       all tasks have exited
+     *                             exit(1)       immediately
+     *                             exit(2)       all taks have exited
+     *                             exit(30)     all tasks have exited
+     */
+#ifdef __bgq__
+    error_status = 2;
+#else
+    error_status = 1;
+#endif
+
+    exit(error_status);
+}

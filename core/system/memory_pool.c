@@ -299,7 +299,7 @@ void *core_memory_pool_allocate(struct core_memory_pool *self, size_t size)
 
         core_tracer_print_stack_backtrace();
 
-        exit(1);
+        core_exit_with_error();
     }
 
 #ifdef CORE_MEMORY_USE_MAP_FOR_TRACKING

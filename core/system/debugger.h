@@ -65,7 +65,7 @@ struct core_timer;
         core_tracer_print_stack_backtrace(); \
         fflush(stdout); \
         fflush(stderr); \
-        exit(1); \
+        core_exit_with_error(); \
     }
 
 #define CORE_DEBUGGER_ASSERT_IS_EQUAL_INT(actual, expected) \
@@ -75,7 +75,7 @@ struct core_timer;
         core_tracer_print_stack_backtrace(); \
         fflush(stdout); \
         fflush(stderr); \
-        exit(1); \
+        core_exit_with_error(); \
     }
 
 #else
@@ -139,5 +139,7 @@ void core_debugger_examine(void *pointer, int bytes);
 
 void core_debugger_jitter_detection_start(struct core_timer *timer);
 void core_debugger_jitter_detection_end(struct core_timer *timer, const char *name, uint64_t actor_time);
+
+void core_exit_with_error();
 
 #endif
