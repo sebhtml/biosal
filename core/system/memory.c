@@ -31,6 +31,10 @@
 #include <spi/include/kernel/memory.h>
 #endif
 
+#ifdef __bgq__
+#include <malloc.h> /* for mallopt */
+#endif
+
 #define FAST_MEMORY
 
 /*
@@ -600,5 +604,30 @@ void wrapper_free(void *pointer)
     jemalloc_free(pointer);
 #else
     free(pointer);
+#endif
+}
+
+void core_memory_initialize_memory_subsystem()
+{
+    /*
+     * \Link: http://man7.org/linux/man-pages/man3/mallopt.3.html
+     * [alcf-support #240569] Sparse memory versus flat memory on Blue Gene/Q
+     *
+     * This was suggested by Hal Finkel at ALCF.
+     *
+     * \Link: https://github.com/GeneAssembly/biosal/issues/819
+     * \Link: https://github.com/GeneAssembly/biosal/issues/824
+     * \Link: https://github.com/GeneAssembly/biosal/issues/825
+     *
+     * The glibc on Blue Gene/Q seems to generate a lot of memory fragmentation.
+     *
+     * The code below was proposed by Hal Finkel (ALCF).
+     *
+     * This is not required on Linux thanks to CONFIG_SPARSEMEM.
+     */
+#ifdef __bgq__
+    mallopt(M_MMAP_THRESHOLD, sysconf(_SC_PAGESIZE));
+    mallopt(M_TRIM_THRESHOLD, 0);
+    mallopt(M_TOP_PAD, 0);
 #endif
 }

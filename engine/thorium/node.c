@@ -206,6 +206,8 @@ void thorium_node_init(struct thorium_node *node, int *argc, char ***argv)
     int actor_capacity;
     int processor;
 
+    core_memory_initialize_memory_subsystem();
+
     node->argc = *argc;
     node->argv = *argv;
 

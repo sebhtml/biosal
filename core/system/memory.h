@@ -191,5 +191,6 @@ size_t core_memory_normalize_segment_length_page_size(size_t size);
 
 void *core_memory_copy(void *destination, const void *source, size_t count);
 void *core_memory_move(void *destination, const void *source, size_t count);
+void core_memory_initialize_memory_subsystem();
 
 #endif
