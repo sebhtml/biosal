@@ -43,7 +43,7 @@ make examples # run examples
 
 | Branch name | Person (alphabetical order) | Clone URL | Branch Build Status |
 | --- | --- | --- | --- |
-| [master](https://github.com/sebhtml/biosal/tree/master) | Sébastien Boisvert | [HTTPS](https://github.com/GeneAssembly/biosal.git) | [![Build Status](http://jenkins-biosal.mcs.anl.gov:8080//buildStatus/icon?job=biosal-configuration-matrix)](http://jenkins-biosal.mcs.anl.gov:8080//view/All/job/biosal-configuration-matrix/) |
+| [master](https://github.com/sebhtml/biosal/tree/master) | Sébastien Boisvert | [HTTPS](https://github.com/GeneAssembly/biosal.git) | [![Build Status](http://jenkins.biosal.anl.boisvert.info:8080/buildStatus/icon?job=biosal-configuration-matrix)](http://jenkins.biosal.anl.boisvert.info:8080/view/All/job/biosal-configuration-matrix/) |
 | [energy](https://github.com/sebhtml/biosal/tree/energy) | Sébastien Boisvert| [HTTPS](https://github.com/sebhtml/biosal.git) | |
 | [pami](https://github.com/huyba/biosal/tree/master) | Huy Bui | [HTTPS](https://github.com/huyba/biosal.git) | |
 | [granularity](https://github.com/gkthiruvathukal/biosal/tree/granularity) | George K. Thiruvathukal | [HTTPS](https://github.com/gkthiruvathukal/biosal.git) |[![Build Status](https://travis-ci.org/gkthiruvathukal/biosal.svg?branch=granularity)](https://travis-ci.org/gkthiruvathukal/biosal)  |
@@ -51,14 +51,15 @@ make examples # run examples
 
 - There is also a read-only [mirror](https://github.com/GeneAssembly/biosal/tree/mirror).
 - The [**Integration Manager Workflow**](http://git-scm.com/about/distributed) is used.
-- Nightly build of master branch: [![Build Status](http://jenkins-biosal.mcs.anl.gov:8080/buildStatus/icon?job=big-system-tests)](http://jenkins-biosal.mcs.anl.gov:8080/job/big-system-tests/)
+- Nightly build of master branch: [![Build Status](http://jenkins.biosal.anl.boisvert.info:8080//buildStatus/icon?job=big-system-tests)](http://jenkins.biosal.anl.boisvert.info:8080/job/big-system-tests/)
 
 # Community
 
 - Issues: https://github.com/GeneAssembly/biosal/issues?state=open
 - Website: https://github.com/GeneAssembly/biosal
 - Mailing list: biosal@lists.cels.anl.gov https://lists.cels.anl.gov/mailman/listinfo/biosal
-- Jenkins Continuous Integration: http://jenkins-biosal.mcs.anl.gov:8080/ (Hosted in Magellan OpenStack cloud at Argonne)
+- Jenkins Continuous Integration: http://jenkins.biosal.anl.boisvert.info:8080/ (Hosted in Magellan OpenStack cloud at Argonne)
+    - Alternate address: http://jenkins-biosal.mcs.anl.gov:8080/ (does not seems to work everywhere)
 
 # Actor model
 
