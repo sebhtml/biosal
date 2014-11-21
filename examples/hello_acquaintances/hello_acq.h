@@ -8,6 +8,7 @@
 
 struct hello_acq {
     struct core_vector initial_helloes;
+    struct core_vector actors_to_greet;
 };
 
 #define HELLO_ACQ_ACTION_BASE -13000
