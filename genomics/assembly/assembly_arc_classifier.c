@@ -51,7 +51,7 @@ void biosal_assembly_arc_classifier_init(struct thorium_actor *self)
 
     concrete_self = (struct biosal_assembly_arc_classifier *)thorium_actor_concrete_actor(self);
 
-    core_memory_pool_init(&concrete_self->persistent_memory, 1048576, MEMORY_NAME_ARC_CLASSIFIER);
+    core_memory_pool_init(&concrete_self->persistent_memory, 16 * 1048576, MEMORY_NAME_ARC_CLASSIFIER);
     /*
     core_memory_pool_enable_tracepoints(&concrete_self->persistent_memory);
     */

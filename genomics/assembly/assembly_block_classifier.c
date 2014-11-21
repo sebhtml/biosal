@@ -79,7 +79,7 @@ void biosal_assembly_block_classifier_init(struct thorium_actor *self)
 
     concrete_actor = (struct biosal_assembly_block_classifier *)thorium_actor_concrete_actor(self);
 
-    core_memory_pool_init(&concrete_actor->persistent_pool, 1048576, MEMORY_POOL_NAME_VERTEX_CLASSIFIER);
+    core_memory_pool_init(&concrete_actor->persistent_pool, 16 * 1048576, MEMORY_POOL_NAME_VERTEX_CLASSIFIER);
 
     concrete_actor->received = 0;
     concrete_actor->last = 0;
