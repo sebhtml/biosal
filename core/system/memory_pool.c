@@ -108,10 +108,12 @@ void core_memory_pool_destroy(struct core_memory_pool *self)
     core_memory_pool_examine(self);
 #endif
 
+#ifdef CORE_MEMORY_POOL_FIND_LEAKS
     if (core_memory_pool_has_leaks(self)) {
         printf("Error, memory leak detected.\n");
         core_memory_pool_examine(self);
     }
+#endif
 
 #ifdef CORE_MEMORY_POOL_FIND_LEAKS
 #ifdef CORE_DEBUGGER_ASSERT_ENABLED
