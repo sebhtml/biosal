@@ -198,6 +198,8 @@ static void thorium_node_send(struct thorium_node *self, struct thorium_message 
 void thorium_node_open_log_file(struct thorium_node *self);
 void thorium_node_close_log_file(struct thorium_node *self);
 
+#define AVOID_QUEUE_CLUTTER
+
 void thorium_node_send_queued_message(struct thorium_node *self);
 int thorium_node_check_clutter(struct thorium_node *self,
                 struct thorium_message *message);
@@ -3060,6 +3062,7 @@ void thorium_node_close_log_file(struct thorium_node *self)
  */
 void thorium_node_send_queued_message(struct thorium_node *self)
 {
+#ifdef AVOID_QUEUE_CLUTTER
     struct thorium_message message;
     int active_request_count;
     int maximum;
@@ -3081,11 +3084,13 @@ void thorium_node_send_queued_message(struct thorium_node *self)
 
         thorium_transport_send(&self->transport, &message);
     }
+#endif
 }
 
 int thorium_node_check_clutter(struct thorium_node *self,
                 struct thorium_message *message)
 {
+#ifdef AVOID_QUEUE_CLUTTER
     int active_request_count;
     int maximum;
 
@@ -3106,4 +3111,5 @@ int thorium_node_check_clutter(struct thorium_node *self,
     }
 
     return 0;
+#endif
 }
