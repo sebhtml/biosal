@@ -1,5 +1,5 @@
 /*
- * hello_acq.c: 
+ * hello_acq.c:
  *   A distributed version of Hello, World, works as follows:
  *     - An actor starts by having a list of acquaintances (one per node).
  *     - We use a vector to greet the other n-1 nodes.
@@ -80,7 +80,7 @@ void hello_acq_receive(struct thorium_actor *actor, struct thorium_message *mess
         print_core_vector_int(&hello1->initial_helloes);
         printf("\n");
 
-        /* This creates a vector to greet the other n-1 initial acquaintances (besides myself) */        
+        /* This creates a vector to greet the other n-1 initial acquaintances (besides myself) */
         core_vector_push_back_int(&hello1->actors_to_greet, name);
         for (i = 0; i < core_vector_size(&hello1->initial_helloes); i++) {
             int acq_name = core_vector_at_as_int(&hello1->initial_helloes, i);
@@ -115,7 +115,7 @@ void hello_acq_receive(struct thorium_actor *actor, struct thorium_message *mess
     } else if (tag == ACTION_HELLO_DONE_GREETING_ALL) {
         printf("The original greeter %d was ack'd by %d\n", name, source);
         /* Need to check with Seb whether action stop stops everthing.
-         * Termination detection issue with messages still in transit? 
+         * Termination detection issue with messages still in transit?
          */
 
         thorium_actor_send_to_self_empty(actor, ACTION_STOP);
