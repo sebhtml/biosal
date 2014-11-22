@@ -127,6 +127,8 @@ struct thorium_node {
     uint32_t flags;
     int worker_count;
 
+    struct core_queue outbound_message_queue;
+
 #if 0
     /*
      * Last number of active requests.

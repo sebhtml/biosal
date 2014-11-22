@@ -121,6 +121,8 @@
 */
 #define THORIUM_NODE_CONFIG_USE_REGULATOR
 
+#define MAXIMUM_ACTIVE_REQUEST_COUNT 256
+
 struct thorium_node *thorium_node_global_self;
 
 static void thorium_node_handle_signal(int signal);
@@ -195,6 +197,10 @@ static void thorium_node_send(struct thorium_node *self, struct thorium_message 
 
 void thorium_node_open_log_file(struct thorium_node *self);
 void thorium_node_close_log_file(struct thorium_node *self);
+
+void thorium_node_send_queued_message(struct thorium_node *self);
+int thorium_node_check_clutter(struct thorium_node *self,
+                struct thorium_message *message);
 
 void thorium_node_init(struct thorium_node *node, int *argc, char ***argv)
 {
@@ -570,6 +576,10 @@ void thorium_node_init(struct thorium_node *node, int *argc, char ***argv)
         printf("thorium_node: CONFIG_DEBUG= yes\n");
 #endif
     }
+
+    core_queue_init(&node->outbound_message_queue, sizeof(struct thorium_message));
+    core_queue_set_memory_pool(&node->outbound_message_queue,
+                    &node->outbound_message_memory_pool);
 }
 
 void thorium_node_destroy(struct thorium_node *node)
@@ -647,13 +657,14 @@ void thorium_node_destroy(struct thorium_node *node)
 
     core_queue_destroy(&node->output_clean_outbound_buffer_queue);
 
+    core_queue_destroy(&node->outbound_message_queue);
+
     /*
      * Destroy the memory pool after the rest.
      */
     core_memory_pool_destroy(&node->actor_memory_pool);
     core_memory_pool_destroy(&node->inbound_message_memory_pool);
     core_memory_pool_destroy(&node->outbound_message_memory_pool);
-
 }
 
 int thorium_node_threads_from_string(struct thorium_node *node,
@@ -2397,6 +2408,8 @@ static void thorium_node_run_loop(struct thorium_node *node)
 
         thorium_node_regulator_run(node);
 
+        thorium_node_send_queued_message(node);
+
 #ifdef THORIUM_NODE_USE_TICKS
         ++node->tick_count;
 #endif
@@ -2789,6 +2802,9 @@ void thorium_node_send_with_transport(struct thorium_node *self, struct thorium_
     printf("NODE1 SEND %x\n", thorium_message_action(message));
 #endif
 
+    if (thorium_node_check_clutter(self, message))
+        return;
+
     thorium_transport_send(&self->transport, message);
 
 #ifdef THORIUM_NODE_USE_COUNTERS
@@ -3037,4 +3053,57 @@ void thorium_node_close_log_file(struct thorium_node *self)
     fclose(stdout);
 
     core_string_destroy(&self->log_file_name);
+}
+
+/*
+ * Send any queued outbound message with transport.
+ */
+void thorium_node_send_queued_message(struct thorium_node *self)
+{
+    struct thorium_message message;
+    int active_request_count;
+    int maximum;
+
+    active_request_count = thorium_transport_get_active_request_count(&self->transport);
+    maximum = MAXIMUM_ACTIVE_REQUEST_COUNT;
+
+    /*
+     * Too much clutter already.
+     */
+    if (active_request_count > maximum)
+        return;
+
+    if (core_queue_dequeue(&self->outbound_message_queue, &message)) {
+
+#ifdef SHOW_TRANSFER
+        printf("Popped message\n");
+#endif
+
+        thorium_transport_send(&self->transport, &message);
+    }
+}
+
+int thorium_node_check_clutter(struct thorium_node *self,
+                struct thorium_message *message)
+{
+    int active_request_count;
+    int maximum;
+
+    /*
+     * A maximum is needed because all of these requests (typically MPI_Request)
+     * need a bunch of calls to MPI_Test so that they complete.
+     */
+    maximum = MAXIMUM_ACTIVE_REQUEST_COUNT;
+
+    /*
+     * Put messages in the queue if there are too many active requests already.
+     */
+    active_request_count = thorium_transport_get_active_request_count(&self->transport);
+
+    if (active_request_count > maximum) {
+        core_queue_enqueue(&self->outbound_message_queue, message);
+        return 1;
+    }
+
+    return 0;
 }
