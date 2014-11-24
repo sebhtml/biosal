@@ -12,5 +12,5 @@ CFLAGS="$CFLAGS -L/soft/libraries/alcf/current/xl/ZLIB/lib -I/soft/libraries/alc
 #exit
 
 make clean CONFIG_PAMI=y
-make -j 8 CFLAGS="$CFLAGS" CONFIG_PAMI=y CONFIG_DEBUG=n CONFIG_JEMALLOC=y \
+make -j 8 CFLAGS="$CFLAGS" CONFIG_PAMI=y CONFIG_DEBUG=n CONFIG_JEMALLOC=n \
     applications/spate_metagenome_assembler/spate
