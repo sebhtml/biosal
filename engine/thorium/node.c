@@ -1971,6 +1971,15 @@ static void thorium_node_register_signal_handlers(struct thorium_node *self)
     struct core_vector_iterator iterator;
     int *signal;
 
+#ifdef __bgq__
+    /*
+     * On Blue Gene/Q, don't register signal handlers. Instead, let the
+     * operating system generate core dumps.
+     */
+
+    return;
+#endif
+
     core_vector_init(&signals, sizeof(int));
     /*
      * \see http://unixhelp.ed.ac.uk/CGI/man-cgi?signal+7
