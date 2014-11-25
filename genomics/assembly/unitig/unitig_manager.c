@@ -313,10 +313,8 @@ void biosal_unitig_manager_receive_answer_from_visitor(struct thorium_actor *sel
 
     if (concrete_self->completed == expected) {
 
-        printf("DEBUG %s/%d processed_vertices %" PRIu64
-                        " vertices_with_unitig_flag %" PRIu64 "\n",
-                        thorium_actor_script_name(self),
-                        thorium_actor_name(self),
+        thorium_actor_log(self, "processed_vertices %" PRIu64
+                        " vertices_with_unitig_flag %" PRIu64 "",
                         concrete_self->processed_vertices,
                         concrete_self->vertices_with_unitig_flag);
 
