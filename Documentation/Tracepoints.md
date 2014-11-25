@@ -1,5 +1,23 @@
+
+LTTng tracepoints
+=================
+
 To use LTTng to trace Thorium applications, the compilation
 option "CONFIG_LTTNG" is required.
+
+
+To get a complete list, use the command **lttng list -u**.
+
+To learn how to use LTTng, go to http://lttng.org/docs/
+
+Actor events
+------------
+
+- thorium_actor:receive_enter
+- thorium_actor:receive_exit
+
+Message delivery path
+---------------------
 
 Here is a list of LTTng tracepoints for the delivery path of
 messages.
@@ -19,7 +37,10 @@ messages.
 - thorium_message:actor_receive
 
 
-Tracepoints (not with LTTng):
+Other tracepoints (not with LTTng)
+===========================
+
+These tracepoints are outdated. LTTng is better.
 
 - actor:receive_enter
 - actor:receive_exit
