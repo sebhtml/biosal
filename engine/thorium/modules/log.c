@@ -3,6 +3,8 @@
 
 #include <engine/thorium/actor.h>
 
+#include <core/system/timer.h>
+
 #include <stdio.h>
 
 void thorium_actor_log(struct thorium_actor *self, const char *format, ...)
@@ -11,6 +13,7 @@ void thorium_actor_log(struct thorium_actor *self, const char *format, ...)
     FILE *stream;
     char *script_name;
     int name;
+    struct core_timer timer;
 
     /*
      * For the time, we adopt the format used by LTTng:
@@ -22,6 +25,8 @@ void thorium_actor_log(struct thorium_actor *self, const char *format, ...)
     int hour;
     int minute;
     int second;
+    uint64_t raw_nanosecond;
+    int nanosecond;
 
     /*
      * \see http://www.cplusplus.com/reference/ctime/localtime/
@@ -40,11 +45,16 @@ void thorium_actor_log(struct thorium_actor *self, const char *format, ...)
     minute = timeinfo.tm_min;
     second = timeinfo.tm_sec;
 
+    core_timer_init(&timer);
+    raw_nanosecond = core_timer_get_nanoseconds(&timer);
+    core_timer_destroy(&timer);
+    nanosecond = raw_nanosecond % (1000 * 1000 * 1000);
+
     /*
      * \see http://www.cplusplus.com/reference/ctime/tm/
      */
-    sprintf(time_string, "[%d:%d:%d.xxxxxxxxx]",
-                    hour, minute, second);
+    sprintf(time_string, "[%d:%d:%d.%d]",
+                    hour, minute, second, nanosecond);
 
     name = thorium_actor_name(self);
     script_name = thorium_actor_script_name(self);
