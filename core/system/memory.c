@@ -269,7 +269,7 @@ uint64_t core_memory_get_utilized_byte_count()
     bytes = 0;
 
 #if defined(__bgq__)
-    Kernel_GetMemorySize(KERNEL_MEMSIZE_HEAP,&bytes);
+    Kernel_GetMemorySize(KERNEL_MEMSIZE_HEAP, &bytes);
 
 #elif defined(__linux__)
 
