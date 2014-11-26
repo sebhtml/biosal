@@ -17,6 +17,10 @@
  * Binary heap.
  *
  * This is either a min-heap or a max-heap.
+ *
+ * The implementation is based on the Wikipedia page.
+ *
+ * @see http://en.wikipedia.org/wiki/Binary_heap
  */
 struct core_binary_heap {
     struct core_vector vector;
