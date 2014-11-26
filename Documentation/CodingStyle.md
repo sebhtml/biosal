@@ -59,3 +59,19 @@ Example
  */
 
 See http://www.stack.nl/~dimitri/doxygen/manual/docblocks.html
+
+# init / destroy
+
+Any data structure should have a constructor ending with _init and
+a destructor ending with _destroy.
+
+# add / remove / get
+
+When a data structure has functions to add and/or remove and/or get elements,
+the function names should be:
+
+- add (instead of push or insert)
+- remove (instead of delete; delete means erase whereas remove means take away)
+- get (instead of find)
+
+@see http://english.stackexchange.com/questions/52508/difference-between-delete-and-remove
