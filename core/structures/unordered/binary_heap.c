@@ -16,8 +16,8 @@ static inline int core_binary_heap_get_first_child(int i);
 static inline int core_binary_heap_get_parent(int i);
 static inline int core_binary_heap_get_second_child(int i);
 
-void core_binary_heap_move_up(struct core_binary_heap *self, int i);
-void core_binary_heap_move_down(struct core_binary_heap *self, int i);
+void core_binary_heap_sift_up(struct core_binary_heap *self, int i);
+void core_binary_heap_sift_down(struct core_binary_heap *self, int i);
 
 void core_binary_heap_swap(struct core_binary_heap *self, int i, int j);
 
@@ -117,7 +117,7 @@ int core_binary_heap_delete_root(struct core_binary_heap *self)
     core_binary_heap_swap(self, root, last);
     --self->size;
 
-    core_binary_heap_move_down(self, root);
+    core_binary_heap_sift_down(self, root);
 
     return TRUE;
 }
@@ -157,12 +157,12 @@ int core_binary_heap_insert(struct core_binary_heap *self, void *key, void *valu
         core_memory_copy(stored_value, value, self->value_size);
 
 #ifdef HEAP_DEBUG_INSERT
-    printf("DEBUG before move_up\n");
+    printf("DEBUG before sift_up\n");
     core_vector_print_int(&self->vector);
     printf("\n");
 #endif
 
-    core_binary_heap_move_up(self, position);
+    core_binary_heap_sift_up(self, position);
 
     return TRUE;
 }
@@ -185,7 +185,7 @@ void *core_binary_heap_get_value(struct core_binary_heap *self, int i)
     return stored_value;
 }
 
-void core_binary_heap_move_up(struct core_binary_heap *self, int i)
+void core_binary_heap_sift_up(struct core_binary_heap *self, int i)
 {
     int parent;
 
@@ -347,7 +347,7 @@ int core_binary_heap_empty(struct core_binary_heap *self)
     return self->size == 0;
 }
 
-void core_binary_heap_move_down(struct core_binary_heap *self, int i)
+void core_binary_heap_sift_down(struct core_binary_heap *self, int i)
 {
     int left_child;
     int right_child;
