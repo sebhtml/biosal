@@ -144,6 +144,62 @@ int main(int argc, char **argv)
         core_binary_heap_destroy(&heap2);
     }
 
+    {
+        struct core_binary_heap heap2;
+        uint64_t key;
+        size_t value;
+        uint64_t *key_pointer;
+        size_t *value_pointer;
+        int i;
+        int count;
+        uint64_t previous;
+
+        core_binary_heap_init(&heap2, sizeof(key), sizeof(value),
+                        CORE_BINARY_HEAP_MIN | CORE_BINARY_HEAP_UINT64_T_KEYS);
+
+        i = 0;
+        count = 1000;
+
+        while (i < count) {
+            key = i * 2 + 1;
+            value = i + 1;
+            ++i;
+            core_binary_heap_insert(&heap2, &key, &value);
+
+            TEST_INT_EQUALS(core_binary_heap_size(&heap2), i);
+        }
+
+        key_pointer = NULL;
+        value_pointer = NULL;
+
+        previous = 0;
+
+        while (core_binary_heap_get_root(&heap2, (void **)&key_pointer,
+                                (void **)&value_pointer)) {
+
+            TEST_POINTER_NOT_EQUALS(key_pointer, NULL);
+            TEST_POINTER_NOT_EQUALS(value_pointer, NULL);
+
+            key = *key_pointer;
+            value = *value_pointer;
+
+            if (previous == 0) {
+                previous = key;
+            } else {
+                TEST_BOOLEAN_EQUALS(previous <= key, TRUE);
+            }
+
+            TEST_INT_IS_GREATER_THAN_OR_EQUAL(value, 1);
+
+            key_pointer = NULL;
+            value_pointer = NULL;
+
+            TEST_BOOLEAN_EQUALS(core_binary_heap_delete_root(&heap2), TRUE);
+        }
+
+        core_binary_heap_destroy(&heap2);
+    }
+
     END_TESTS();
 
     return 0;
