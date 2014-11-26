@@ -153,9 +153,13 @@ int main(int argc, char **argv)
         int i;
         int count;
         uint64_t previous;
+        struct core_memory_pool memory_pool;
 
+        core_memory_pool_init(&memory_pool, 1024*1024, -1);
         core_binary_heap_init(&heap2, sizeof(key), sizeof(value),
                         CORE_BINARY_HEAP_MIN | CORE_BINARY_HEAP_UINT64_T_KEYS);
+
+        core_binary_heap_set_memory_pool(&heap2, &memory_pool);
 
         i = 0;
         count = 1000;
@@ -198,6 +202,10 @@ int main(int argc, char **argv)
         }
 
         core_binary_heap_destroy(&heap2);
+
+        TEST_INT_EQUALS(core_memory_pool_profile_balance_count(&memory_pool), 0);
+
+        core_memory_pool_destroy(&memory_pool);
     }
 
     END_TESTS();
