@@ -21,6 +21,7 @@ int main(int argc, char **argv)
     int i;
     int minimum;
     int count;
+    int last;
 
     BEGIN_TESTS();
 
@@ -35,11 +36,11 @@ int main(int argc, char **argv)
     */
 
     i = 0;
-    minimum = 999999999;
+    minimum = -1;
 
     while (i < count) {
         key = 9 + i;
-        if (key < minimum)
+        if (key < minimum || minimum == -1)
             minimum = key;
 
         value = 1234 * key;
@@ -54,6 +55,30 @@ int main(int argc, char **argv)
 
         TEST_INT_EQUALS(*key_pointer, minimum);
         /*TEST_INT_EQUALS(*value_pointer, value);*/
+    }
+
+    last = -1;
+
+    while (!core_binary_heap_empty(&heap)) {
+
+        core_binary_heap_get_root(&heap, (void **)&key_pointer, NULL);
+        key = *key_pointer;
+
+        if (last == -1) {
+            last = key;
+        } else {
+            /*
+             * This test uses unique keys.
+             */
+            TEST_INT_NOT_EQUALS(last, key);
+        }
+
+        TEST_INT_IS_LOWER_THAN_OR_EQUAL(last, key);
+
+
+        count = core_binary_heap_size(&heap);
+        TEST_BOOLEAN_EQUALS(core_binary_heap_delete_root(&heap), TRUE);
+        TEST_INT_EQUALS(core_binary_heap_size(&heap), count - 1);
     }
 
     core_binary_heap_destroy(&heap);
