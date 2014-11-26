@@ -111,7 +111,17 @@ int core_binary_heap_insert(struct core_binary_heap *self, void *key, void *valu
     void *stored_key;
     void *stored_value;
 
+#ifdef HEAP_DEBUG_INSERT
+    printf("DEBUG before insert, %d elements\n", self->size);
+    core_vector_print_int(&self->vector);
+    printf("\n");
+#endif
+
     position = self->size;
+
+#ifdef HEAP_DEBUG_INSERT
+    printf("DEBUG insert at position %d\n", position);
+#endif
 
     if (position + 1 > core_vector_size(&self->vector))
         core_vector_resize(&self->vector, position + 1);
@@ -129,6 +139,12 @@ int core_binary_heap_insert(struct core_binary_heap *self, void *key, void *valu
     if (self->value_size)
         core_memory_copy(stored_value, value, self->value_size);
 
+#ifdef HEAP_DEBUG_INSERT
+    printf("DEBUG before move_up\n");
+    core_vector_print_int(&self->vector);
+    printf("\n");
+#endif
+
     core_binary_heap_move_up(self, position);
 
     return TRUE;
@@ -138,7 +154,7 @@ void *core_binary_heap_get_key(struct core_binary_heap *self, int i)
 {
     void *stored_key;
 
-    stored_key = core_vector_at(&self->vector, 0);
+    stored_key = core_vector_at(&self->vector, i);
 
     return stored_key;
 }
@@ -147,7 +163,7 @@ void *core_binary_heap_get_value(struct core_binary_heap *self, int i)
 {
     void *stored_value;
 
-    stored_value = ((char *)core_vector_at(&self->vector, 0)) + self->key_size;
+    stored_value = ((char *)core_vector_at(&self->vector, i)) + self->key_size;
 
     return stored_value;
 }
@@ -194,6 +210,10 @@ int core_binary_heap_test_relation(struct core_binary_heap *self, int i, int j)
     key_i = core_binary_heap_get_key(self, i);
     key_j = core_binary_heap_get_key(self, j);
 
+#ifdef HEAP_DEBUG_INSERT
+    printf("DEBUG Test %d %d\n", i, j);
+#endif
+
     return self->test_relation(self, key_i, key_j);
 }
 
@@ -226,6 +246,10 @@ int core_binary_heap_test_relation_lower_than_int(struct core_binary_heap *self,
 
     a = *(int *)key1;
     b = *(int *)key2;
+
+#ifdef HEAP_DEBUG_INSERT
+    printf("DEBUG lower_than_int %d %d\n", a, b);
+#endif
 
     return a < b;
 }
