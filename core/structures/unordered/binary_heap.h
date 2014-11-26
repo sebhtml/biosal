@@ -60,4 +60,9 @@ int core_binary_heap_delete_root(struct core_binary_heap *self);
  */
 int core_binary_heap_size(struct core_binary_heap *self);
 
+/**
+ * @return true if empty, false otherwise.
+ */
+int core_binary_heap_empty(struct core_binary_heap *self);
+
 #endif

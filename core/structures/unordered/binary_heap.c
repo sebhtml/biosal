@@ -16,6 +16,17 @@ static inline int core_binary_heap_get_first_child(int i);
 static inline int core_binary_heap_get_parent(int i);
 static inline int core_binary_heap_get_second_child(int i);
 
+void core_binary_heap_move_up(struct core_binary_heap *self, int i);
+void core_binary_heap_move_down(struct core_binary_heap *self, int i);
+
+void core_binary_heap_swap(struct core_binary_heap *self, int i, int j);
+
+/*
+ * relation functions.
+ */
+
+int core_binary_heap_test_relation(struct core_binary_heap *self, int i, int j);
+
 int core_binary_heap_test_relation_lower_than_int(struct core_binary_heap *self,
                 void *key1, void *key2);
 int core_binary_heap_test_relation_lower_than_uint64_t(struct core_binary_heap *self,
@@ -29,12 +40,6 @@ int core_binary_heap_test_relation_greater_than_uint64_t(struct core_binary_heap
                 void *key1, void *key2);
 int core_binary_heap_test_relation_greater_than_void_pointer(struct core_binary_heap *self,
                 void *key1, void *key2);
-
-void core_binary_heap_move_up(struct core_binary_heap *self, int i);
-
-void core_binary_heap_swap(struct core_binary_heap *self, int i, int j);
-
-int core_binary_heap_test_relation(struct core_binary_heap *self, int i, int j);
 
 void core_binary_heap_init(struct core_binary_heap *self, int key_size,
                 int value_size, uint32_t flags)
@@ -97,10 +102,22 @@ int core_binary_heap_get_root(struct core_binary_heap *self, void **key, void **
 
 int core_binary_heap_delete_root(struct core_binary_heap *self)
 {
+    int last;
+    int root;
+
     if (self->size == 0)
         return FALSE;
 
+    last = self->size - 1;
+    root = 0;
+
+    /*
+     * Swap with the end.
+     */
+    core_binary_heap_swap(self, root, last);
     --self->size;
+
+    core_binary_heap_move_down(self, root);
 
     return TRUE;
 }
@@ -323,4 +340,69 @@ void core_binary_heap_swap(struct core_binary_heap *self, int i, int j)
 int core_binary_heap_size(struct core_binary_heap *self)
 {
     return self->size;
+}
+
+int core_binary_heap_empty(struct core_binary_heap *self)
+{
+    return self->size == 0;
+}
+
+void core_binary_heap_move_down(struct core_binary_heap *self, int i)
+{
+    int left_child;
+    int right_child;
+    int selected_child;
+
+    while (1) {
+        left_child = core_binary_heap_get_first_child(i);
+        right_child = core_binary_heap_get_second_child(i);
+
+        /*
+         * The node i is already at the good place with respect to
+         * its children (which are possible not existent).
+         */
+        if ((!(left_child < self->size) || !core_binary_heap_test_relation(self, left_child, i))
+            && (!(right_child < self->size) || !core_binary_heap_test_relation(self, right_child, i)))
+            return;
+
+        selected_child = -1;
+
+        /*
+         * At this point, some swap operations are required.
+         *
+         * There is at least 1 child.
+         */
+         if (left_child < self->size)
+            selected_child = left_child;
+
+        /*
+         * There is no right child (and therefore there is a left child)
+         * or the RELATION(left, right) is TRUE (left < right or left > right).
+         */
+        if (selected_child == -1
+               || (right_child < self->size
+                       && core_binary_heap_test_relation(self, left_child, right_child)))
+            selected_child = right_child;
+
+        /*
+        */
+
+        CORE_DEBUGGER_ASSERT(selected_child != -1);
+
+#ifdef CORE_DEBUGGER_ASSERT_ENABLED
+        if (!(selected_child < self->size)) {
+            printf("selected_child = %d size = %d\n", selected_child,
+                            self->size);
+        }
+#endif
+
+        CORE_DEBUGGER_ASSERT(selected_child < self->size);
+        CORE_DEBUGGER_ASSERT(selected_child >= 0);
+
+        /*
+         * Swap items and continue.
+         */
+        core_binary_heap_swap(self, i, selected_child);
+        i = selected_child;
+    }
 }
