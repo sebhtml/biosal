@@ -28,6 +28,13 @@ int main(int argc, char **argv)
     int size;
     unsigned int seed;
 
+    /*
+     * This is a test to see how to print an integer with leading 0s.
+     */
+    /*
+    printf("%02d\n", 3);
+    */
+
     lowest = 0;
     core_memory_pool_init(&memory_pool, 1024*1024, -1);
 
