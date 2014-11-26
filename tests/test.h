@@ -44,6 +44,14 @@ if ((a) > (b)) { \
     printf("Error File: %s, Function: %s, Line: %i\n", __FILE__, __func__, __LINE__); \
 }
 
+#define TEST_INT_IS_GREATER_THAN_OR_EQUAL(a, b) \
+if ((a) >= (b)) { \
+    correct_tests++; \
+} else { \
+    incorrect_tests++; \
+    printf("Error File: %s, Function: %s, Line: %i\n", __FILE__, __func__, __LINE__); \
+}
+
 #define TEST_BOOLEAN_EQUALS(a, b) \
 if (( a && b ) || ( !a && !b)) { \
     correct_tests++; \
