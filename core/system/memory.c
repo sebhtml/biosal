@@ -654,3 +654,16 @@ void core_memory_initialize_memory_subsystem()
     */
 #endif
 }
+
+int core_memory_compare(void *value1, const void *value2, size_t count)
+{
+    CORE_DEBUGGER_ASSERT(count >= 1);
+    CORE_DEBUGGER_ASSERT_NOT_NULL(value1);
+    CORE_DEBUGGER_ASSERT_NOT_NULL(value2);
+
+    /**
+     * @see http://www.cplusplus.com/reference/cstring/memcmp/
+     */
+
+    return memcmp(value1, value2, count);
+}

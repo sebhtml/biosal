@@ -190,6 +190,7 @@ size_t core_memory_normalize_segment_length_power_of_2(size_t size);
 size_t core_memory_normalize_segment_length_page_size(size_t size);
 
 void *core_memory_copy(void *destination, const void *source, size_t count);
+int core_memory_compare(void *value1, const void *value2, size_t count);
 void *core_memory_move(void *destination, const void *source, size_t count);
 void core_memory_initialize_memory_subsystem();
 
