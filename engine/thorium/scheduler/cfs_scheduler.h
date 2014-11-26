@@ -47,7 +47,7 @@ struct thorium_actor;
  */
 struct thorium_cfs_scheduler {
     struct core_memory_pool pool;
-    struct core_red_black_tree tree;
+    struct core_red_black_tree timeline;
 };
 
 extern struct thorium_scheduler_interface thorium_cfs_scheduler_implementation;
