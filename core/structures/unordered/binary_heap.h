@@ -30,6 +30,8 @@ struct core_binary_heap {
     int (*test_relation)(struct core_binary_heap *self, void *key1, void *key2);
 };
 
+struct core_memory_pool;
+
 /**
  * @param flags setup flags, can include CORE_BINARY_HEAP_MIN or CORE_BINARY_HEAP_MAX.
  */
@@ -64,5 +66,8 @@ int core_binary_heap_size(struct core_binary_heap *self);
  * @return true if empty, false otherwise.
  */
 int core_binary_heap_empty(struct core_binary_heap *self);
+
+void core_binary_heap_set_memory_pool(struct core_binary_heap *self,
+                struct core_memory_pool *pool);
 
 #endif

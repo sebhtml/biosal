@@ -412,3 +412,9 @@ void core_binary_heap_sift_down(struct core_binary_heap *self, int i)
         i = selected_child;
     }
 }
+
+void core_binary_heap_set_memory_pool(struct core_binary_heap *self,
+                struct core_memory_pool *pool)
+{
+    core_vector_set_memory_pool(&self->vector, pool);
+}
