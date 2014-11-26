@@ -100,6 +100,9 @@ int core_binary_heap_get_root(struct core_binary_heap *self, void **key, void **
     return TRUE;
 }
 
+/**
+ * @see http://en.wikipedia.org/wiki/Binary_heap#Delete
+ */
 int core_binary_heap_delete_root(struct core_binary_heap *self)
 {
     int last;
@@ -122,6 +125,9 @@ int core_binary_heap_delete_root(struct core_binary_heap *self)
     return TRUE;
 }
 
+/**
+ * @see http://en.wikipedia.org/wiki/Binary_heap#Insert
+ */
 int core_binary_heap_insert(struct core_binary_heap *self, void *key, void *value)
 {
     int position;
