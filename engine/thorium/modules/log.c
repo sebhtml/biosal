@@ -53,7 +53,7 @@ void thorium_actor_log(struct thorium_actor *self, const char *format, ...)
     /*
      * \see http://www.cplusplus.com/reference/ctime/tm/
      */
-    sprintf(time_string, "[%d:%d:%d.%d]",
+    sprintf(time_string, "[%02d:%02d:%02d.%09d]",
                     hour, minute, second, nanosecond);
 
     name = thorium_actor_name(self);
