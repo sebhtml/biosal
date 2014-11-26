@@ -83,6 +83,67 @@ int main(int argc, char **argv)
 
     core_binary_heap_destroy(&heap);
 
+    {
+        struct core_binary_heap heap2;
+        int key;
+        int value;
+        int actual_sum;
+        int expected_sum;
+        int *key_pointer;
+        int *value_pointer;
+        int i;
+        int count;
+
+        core_binary_heap_init(&heap2, sizeof(key), sizeof(value), CORE_BINARY_HEAP_MAX);
+
+        i = 0;
+        count = 1000;
+        expected_sum = 0;
+
+        while (i < count) {
+            key = count;
+            value = i + 1;
+            expected_sum += value;
+            ++i;
+            core_binary_heap_insert(&heap2, &key, &value);
+
+            TEST_INT_EQUALS(core_binary_heap_size(&heap2), i);
+        }
+
+        key_pointer = NULL;
+        value_pointer = NULL;
+
+        actual_sum = 0;
+
+        while (core_binary_heap_get_root(&heap2, (void **)&key_pointer,
+                                (void **)&value_pointer)) {
+
+            TEST_POINTER_NOT_EQUALS(key_pointer, NULL);
+            TEST_POINTER_NOT_EQUALS(value_pointer, NULL);
+
+            key = *key_pointer;
+            value = *value_pointer;
+
+            TEST_INT_EQUALS(key, count);
+
+            TEST_INT_IS_GREATER_THAN_OR_EQUAL(value, 1);
+
+            actual_sum += value;
+
+            TEST_INT_IS_GREATER_THAN_OR_EQUAL(actual_sum, 1);
+            TEST_INT_IS_LOWER_THAN_OR_EQUAL(actual_sum, expected_sum);
+
+            key_pointer = NULL;
+            value_pointer = NULL;
+
+            TEST_BOOLEAN_EQUALS(core_binary_heap_delete_root(&heap2), TRUE);
+        }
+
+        TEST_INT_EQUALS(actual_sum, expected_sum);
+
+        core_binary_heap_destroy(&heap2);
+    }
+
     END_TESTS();
 
     return 0;
