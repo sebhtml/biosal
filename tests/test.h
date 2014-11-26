@@ -2,6 +2,8 @@
 #ifndef BIOSAL_TEST_H
 #define BIOSAL_TEST_H
 
+#include <core/constants.h>
+
 #include <stdio.h>
 #include <stdlib.h>
 
