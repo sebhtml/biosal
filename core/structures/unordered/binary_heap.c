@@ -43,6 +43,8 @@ void core_binary_heap_init(struct core_binary_heap *self, int key_size,
 
     self->size = 0;
     self->test_relation = NULL;
+    self->key_size = key_size;
+    self->value_size = value_size;
 
     if (flags & CORE_BINARY_HEAP_MIN) {
 
@@ -64,6 +66,8 @@ void core_binary_heap_init(struct core_binary_heap *self, int key_size,
     }
 
     CORE_DEBUGGER_ASSERT_NOT_NULL(self->test_relation);
+    CORE_DEBUGGER_ASSERT(self->key_size >= 1);
+    CORE_DEBUGGER_ASSERT(self->value_size >= 0);
 }
 
 void core_binary_heap_destroy(struct core_binary_heap *self)
@@ -121,7 +125,9 @@ int core_binary_heap_insert(struct core_binary_heap *self, void *key, void *valu
     stored_value = core_binary_heap_get_value(self, position);
 
     core_memory_copy(stored_key, key, self->key_size);
-    core_memory_copy(stored_value, value, self->value_size);
+
+    if (self->value_size)
+        core_memory_copy(stored_value, value, self->value_size);
 
     core_binary_heap_move_up(self, position);
 
