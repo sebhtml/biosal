@@ -181,7 +181,11 @@ void thorium_message_multiplexer_destroy(struct thorium_message_multiplexer *sel
 
     core_timer_destroy(&self->timer);
 
+#ifdef THORIUM_MULTIPLEXER_USE_TREE
     core_red_black_tree_destroy(&self->timeline);
+#elif defined(THORIUM_MULTIPLEXER_USE_HEAP)
+    core_binary_heap_destroy(&self->timeline);
+#endif
 }
 
 /*
@@ -331,7 +335,12 @@ int thorium_message_multiplexer_multiplex(struct thorium_message_multiplexer *se
          * Add it to the timeline.
          */
 
+#ifdef THORIUM_MULTIPLEXER_USE_TREE
         core_red_black_tree_add_key_and_value(&self->timeline, &time, &destination_node);
+
+#elif defined(THORIUM_MULTIPLEXER_USE_HEAP)
+        core_binary_heap_insert(&self->timeline, &time, &destination_node);
+#endif
     }
 
     /*
@@ -552,7 +561,15 @@ void thorium_message_multiplexer_test(struct thorium_message_multiplexer *self)
      * buffer has not waited enough neither.
      */
     while (1) {
+
+#ifdef THORIUM_MULTIPLEXER_USE_TREE
         lowest_key = core_red_black_tree_get_lowest_key(&self->timeline);
+
+#elif defined(THORIUM_MULTIPLEXER_USE_HEAP)
+        lowest_key = NULL;
+        core_binary_heap_get_root(&self->timeline, (void **)&lowest_key,
+                        (void **)&index_bucket);
+#endif
 
         /*
          * The timeline is empty.
@@ -564,7 +581,9 @@ void thorium_message_multiplexer_test(struct thorium_message_multiplexer *self)
          * Get the index.
          * The index is the destination.
          */
+#ifdef THORIUM_MULTIPLEXER_USE_TREE
         index_bucket = core_red_black_tree_get(&self->timeline, lowest_key);
+#endif
         index = *index_bucket;
 
         multiplexed_buffer = core_vector_at(&self->buffers, index);
@@ -590,7 +609,12 @@ void thorium_message_multiplexer_test(struct thorium_message_multiplexer *self)
         /*
          * Remove the object from the timeline.
          */
+
+#ifdef THORIUM_MULTIPLEXER_USE_TREE
         core_red_black_tree_delete(&self->timeline, lowest_key);
+#elif defined(THORIUM_MULTIPLEXER_USE_HEAP)
+        core_binary_heap_delete_root(&self->timeline);
+#endif
 
         /*
          * The item won't have content in the case were _flush()
@@ -735,9 +759,16 @@ void thorium_message_multiplexer_set_worker(struct thorium_message_multiplexer *
     pool = thorium_worker_get_memory_pool(self->worker,
                             MEMORY_POOL_NAME_WORKER_PERSISTENT);
 
+#ifdef THORIUM_MULTIPLEXER_USE_TREE
     core_red_black_tree_init(&self->timeline, sizeof(uint64_t), sizeof(int),
                     pool);
     core_red_black_tree_use_uint64_t_keys(&self->timeline);
+
+#elif defined(THORIUM_MULTIPLEXER_USE_HEAP)
+    core_binary_heap_init(&self->timeline, sizeof(uint64_t), sizeof(int),
+                    CORE_BINARY_HEAP_MIN | CORE_BINARY_HEAP_UINT64_T_KEYS);
+    core_binary_heap_set_memory_pool(&self->timeline, pool);
+#endif
 
     if (thorium_node_name(self->node) == 0 && thorium_worker_name(self->worker) == 0
                     && thorium_node_must_print_load(self->node)) {
