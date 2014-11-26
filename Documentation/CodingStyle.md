@@ -44,3 +44,18 @@ break and continue statements are allowed.
 While having one single return statement in a function is easier to read,
 this is not a requirement neither.
 
+# Doxygen
+
+Use the Javadoc style.
+
+Example
+
+/**
+ * A function
+ *
+ * @param foo parameter 1
+ * @param bar parameter 2
+ * @return something
+ */
+
+See http://www.stack.nl/~dimitri/doxygen/manual/docblocks.html
