@@ -49,6 +49,7 @@ void thorium_cfs_scheduler_init(struct thorium_scheduler *self)
 
     core_memory_pool_init(&concrete_self->pool, 131072, CORE_MEMORY_POOL_NAME_CFS_SCHEDULER);
 
+#ifdef THORIUM_CFS_SCHEDULER_USE_RED_BLACK_TREE
     core_red_black_tree_init(&concrete_self->timeline, sizeof(uint64_t),
                     sizeof(struct thorium_actor *), &concrete_self->pool);
 
@@ -60,6 +61,15 @@ void thorium_cfs_scheduler_init(struct thorium_scheduler *self)
      * Use uint64_t keys for comparison instead of a memory comparison.
      */
     core_red_black_tree_use_uint64_t_keys(&concrete_self->timeline);
+
+#elif defined(THORIUM_CFS_SCHEDULER_USE_BINARY_HEAP)
+
+    core_binary_heap_init(&concrete_self->timeline, sizeof(uint64_t),
+                    sizeof(struct thorium_actor *),
+                    CORE_BINARY_HEAP_MIN | CORE_BINARY_HEAP_UINT64_T_KEYS);
+    core_binary_heap_set_memory_pool(&concrete_self->timeline,
+                    &concrete_self->pool);
+#endif
 }
 
 void thorium_cfs_scheduler_destroy(struct thorium_scheduler *self)
@@ -68,7 +78,12 @@ void thorium_cfs_scheduler_destroy(struct thorium_scheduler *self)
 
     concrete_self = self->concrete_self;
 
+#ifdef THORIUM_CFS_SCHEDULER_USE_RED_BLACK_TREE
     core_red_black_tree_destroy(&concrete_self->timeline);
+
+#elif defined(THORIUM_CFS_SCHEDULER_USE_BINARY_HEAP)
+    core_binary_heap_destroy(&concrete_self->timeline);
+#endif
 
     CORE_DEBUGGER_ASSERT(core_memory_pool_profile_balance_count(&concrete_self->pool) == 0);
 
@@ -112,8 +127,14 @@ int thorium_cfs_scheduler_enqueue(struct thorium_scheduler *self, struct thorium
         virtual_runtime = 0;
     }
 
+#ifdef THORIUM_CFS_SCHEDULER_USE_RED_BLACK_TREE
     core_red_black_tree_add_key_and_value(&concrete_self->timeline, &virtual_runtime,
                     &actor);
+
+#elif defined(THORIUM_CFS_SCHEDULER_USE_BINARY_HEAP)
+    core_binary_heap_insert(&concrete_self->timeline, &virtual_runtime,
+                    &actor);
+#endif
 
     return 1;
 }
@@ -131,7 +152,13 @@ int thorium_cfs_scheduler_dequeue(struct thorium_scheduler *self, struct thorium
     virtual_runtime = 0;
 
     concrete_self = self->concrete_self;
+
+#ifdef THORIUM_CFS_SCHEDULER_USE_RED_BLACK_TREE
     size = core_red_black_tree_size(&concrete_self->timeline);
+
+#elif defined(THORIUM_CFS_SCHEDULER_USE_BINARY_HEAP)
+    size = core_binary_heap_size(&concrete_self->timeline);
+#endif
 
     if (size == 0) {
         return 0;
@@ -146,6 +173,7 @@ int thorium_cfs_scheduler_dequeue(struct thorium_scheduler *self, struct thorium
     }
 #endif
 
+#ifdef THORIUM_CFS_SCHEDULER_USE_RED_BLACK_TREE
     /*
      * This is O(N)
      */
@@ -156,13 +184,28 @@ int thorium_cfs_scheduler_dequeue(struct thorium_scheduler *self, struct thorium
      */
     value = core_red_black_tree_get(&concrete_self->timeline, key);
 
+#elif defined(THORIUM_CFS_SCHEDULER_USE_BINARY_HEAP)
     /*
-     * This is also O(1) because the tree keeps a cache of the last node.
+     * This is O(1).
      */
-    core_red_black_tree_delete(&concrete_self->timeline, key);
+    core_binary_heap_get_root(&concrete_self->timeline, (void **)&key,
+                    (void **)&value);
+#endif
 
     core_memory_copy(&virtual_runtime, key, sizeof(virtual_runtime));
     core_memory_copy(actor, value, sizeof(struct thorium_actor *));
+
+#ifdef THORIUM_CFS_SCHEDULER_USE_RED_BLACK_TREE
+    /*
+     * Although the tree keeps a cache of the last node,
+     * rotations and balancing is O(log(n)).
+     */
+    core_red_black_tree_delete(&concrete_self->timeline, key);
+
+#elif defined(THORIUM_CFS_SCHEDULER_USE_BINARY_HEAP)
+
+    core_binary_heap_delete_root(&concrete_self->timeline);
+#endif
 
 #if 0
     printf("CFS dequeue -> virtual_runtime= %" PRIu64 " actor= %d\n",
@@ -178,11 +221,17 @@ int thorium_cfs_scheduler_size(struct thorium_scheduler *self)
 
     concrete_self = self->concrete_self;
 
+#ifdef THORIUM_CFS_SCHEDULER_USE_RED_BLACK_TREE
     return core_red_black_tree_size(&concrete_self->timeline);
+
+#elif defined(THORIUM_CFS_SCHEDULER_USE_BINARY_HEAP)
+    return core_binary_heap_size(&concrete_self->timeline);
+#endif
 }
 
 void thorium_cfs_scheduler_print(struct thorium_scheduler *self)
 {
+#ifdef THORIUM_CFS_SCHEDULER_USE_RED_BLACK_TREE
     struct thorium_cfs_scheduler *concrete_self;
     struct core_red_black_tree_iterator iterator;
     uint64_t virtual_runtime;
@@ -210,6 +259,15 @@ void thorium_cfs_scheduler_print(struct thorium_scheduler *self)
 
     core_red_black_tree_iterator_destroy(&iterator);
     core_timer_destroy(&timer);
+
+#elif defined(THORIUM_CFS_SCHEDULER_USE_BINARY_HEAP)
+
+    /*
+     * The timeline can not be printed when using a binary heap
+     * because only the next actor scheduled is available. Everything else
+     * is not ordered.
+     */
+#endif
 }
 
 

@@ -5,11 +5,18 @@
 #include <core/system/memory_pool.h>
 
 #include <core/structures/ordered/red_black_tree.h>
+#include <core/structures/unordered/binary_heap.h>
 
 #define THORIUM_CFS_SCHEDULER 2
 
 struct thorium_scheduler;
 struct thorium_actor;
+
+#define THORIUM_CFS_SCHEDULER_USE_BINARY_HEAP
+
+/*
+#define THORIUM_CFS_SCHEDULER_USE_RED_BLACK_TREE
+*/
 
 /*
  * A fair scheduler based on the algorithm of
@@ -47,7 +54,12 @@ struct thorium_actor;
  */
 struct thorium_cfs_scheduler {
     struct core_memory_pool pool;
+
+#ifdef THORIUM_CFS_SCHEDULER_USE_RED_BLACK_TREE
     struct core_red_black_tree timeline;
+#else
+    struct core_binary_heap timeline;
+#endif
 };
 
 extern struct thorium_scheduler_interface thorium_cfs_scheduler_implementation;
