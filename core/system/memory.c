@@ -628,12 +628,12 @@ void core_memory_initialize_memory_subsystem()
      */
 #ifdef __bgq__
 
-        /*
-         * Configuration suggested by Hal Finkel:
+    /*
+     * Configuration suggested by Hal Finkel in the HACC code.
+     */
     mallopt(M_MMAP_THRESHOLD, sysconf(_SC_PAGESIZE));
     mallopt(M_TRIM_THRESHOLD, 0);
     mallopt(M_TOP_PAD, 0);
-    */
 
     /*
      * According to the glibc 2.12.2 patch ( https://repo.anl-external.org/viewvc/bgq-driver/V1R1M1/toolchain/glibc-2.12.2.diff?revision=1&content-type=text%2Fplain&pathrev=4 ),
@@ -647,8 +647,10 @@ void core_memory_initialize_memory_subsystem()
      * is 128 * 1024 in the glibc.
      */
 
+    /*
     mallopt(M_MMAP_THRESHOLD, 128 * 1024);
     mallopt(M_TRIM_THRESHOLD, 128 * 1024);
     mallopt(M_TOP_PAD, 128 * 1024);
+    */
 #endif
 }

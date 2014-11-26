@@ -15,6 +15,7 @@
 #include "modules/stop.h"
 #include "modules/time_in_seconds.h"
 #include "modules/log.h"
+#include "modules/adaptive_actor.h"
 
 #include <core/structures/vector.h>
 #include <core/structures/map.h>

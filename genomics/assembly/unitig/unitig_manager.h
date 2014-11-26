@@ -19,6 +19,7 @@ struct biosal_unitig_manager {
     struct core_vector visitors;
     struct core_vector walkers;
 
+    int visitor_count_per_worker;
     int completed;
     int manager;
 
