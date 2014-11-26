@@ -1,20 +1,23 @@
 /*
- * hello_acq.c:
+ * hello_acq.c: 
  *   A distributed version of Hello, World, works as follows:
- *     - An actor starts by having a list of acquaintances (one per node).
- *     - We use a vector to greet the other n-1 nodes.
- *       - vector @ 0 contains the actor who originated the greeting
- *       - vector @ 1..n-1 contains the actors to be greeted
- *     - The greet others action (ACTION_HELLO_GREET_OTHERS) pops the vector (if |vector| > 1)
- *       - vector is sent to the popped actor with the rest of the actors to be greeted
- *     - if |vector| == 1, that means we have greeted all of the acquaintances
- *       - send the done greeting all message to the originating actor
- *     - When the done greeting all message is received, we can stop.
+ *     - There are many possible ways to say a distributed "hello"
+ *       - original hello.c is a great example: each of the initial actors says hello!
+ *         only issue: no coordination involved, so it is more of a straight parallel example
+ *     - this hello works by having the first actor in the list say hello to the other n-1 actors
+ *       - a state vector of which of the n-1 peers has been greeted is sent from one actor to the next
+ *       - when an actor is greeted, we indicate this by negating the (int) actor name. I would prefer to use
+ *         a map but don't know whether we have pack/unpack yet. (It's also easier to send vectors in Thorium right now.)
+ *       - when all of the n-1 peers have been greeted, each will have a negative entry in the state vector
+ *       - when an actor is greeted, it has nothing left to do and can stop
+ *       - the lone remaining actor will be the originator of the first hello message.
+ * 
  */
 
 #include "hello_acq.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 
 void hello_acq_init(struct thorium_actor *self);
 void hello_acq_destroy(struct thorium_actor *self);
@@ -48,14 +51,6 @@ void hello_acq_destroy(struct thorium_actor *actor)
 
 }
 
-void print_core_vector_int(struct core_vector *vector) {
-    int i;
-    for (i = 0; i < core_vector_size(vector); i++) {
-        printf("@%d = %d; ", i, core_vector_at_as_int(vector, i));
-    }
-    printf("\n");
-}
-
 void hello_acq_receive(struct thorium_actor *actor, struct thorium_message *message)
 {
     int tag;
@@ -73,51 +68,43 @@ void hello_acq_receive(struct thorium_actor *actor, struct thorium_message *mess
 
     if (tag == ACTION_START) {
         core_vector_unpack(&hello1->initial_helloes, buffer);
+        if (core_vector_at_as_int(&hello1->initial_helloes, 0) == name) {
+            printf("Actor %d initiating greetings to its initial peers (below, if present):\n", name);
+            core_vector_print_int(&hello1->initial_helloes);
+            printf("\n");
+            thorium_actor_send_vector(actor, name, ACTION_HELLO_ACQ_GREET_OTHERS, &hello1->initial_helloes);
+        }
 
-        printf("Hello world! My name is (actor) %d and I have %d acquaintances:\n",
-                        name, (int)core_vector_size(&hello1->initial_helloes));
+    } else if (tag == ACTION_HELLO_ACQ_GREET_OTHERS) {
+        int actor_name = -1;
 
-        print_core_vector_int(&hello1->initial_helloes);
+        core_vector_unpack(&hello1->actors_to_greet, buffer);
+        printf("Actor %d received state vector of peers remaining to be greeted (negative means already greeted):\n", name);
+        core_vector_print_int(&hello1->actors_to_greet);
         printf("\n");
 
-        /* This creates a vector to greet the other n-1 initial acquaintances (besides myself) */
-        core_vector_push_back_int(&hello1->actors_to_greet, name);
-        for (i = 0; i < core_vector_size(&hello1->initial_helloes); i++) {
-            int acq_name = core_vector_at_as_int(&hello1->initial_helloes, i);
-            if (name != acq_name) {
-                core_vector_push_back_int(&hello1->actors_to_greet, acq_name);
-            }
+        /* replace with map that knows all actors that have been greeted */
+        for (i = 1; i < core_vector_size(&hello1->actors_to_greet); i++) {
+            actor_name = core_vector_at_as_int(&hello1->actors_to_greet, i);
+            if (actor_name >= 0)
+                break;
         }
-        printf("Actors to be greeted (except the first):\n");
-        print_core_vector_int(&hello1->actors_to_greet);
-        thorium_actor_send_vector(actor, name, ACTION_HELLO_GREET_OTHERS, &hello1->actors_to_greet);
 
-    } else if (tag == ACTION_HELLO_GREET_OTHERS) {
-        /* This passes on greetings by shriking the vector one greeted actor at a time until only the source remains */
-        printf("Hello received by actor %d from actor %d\n", name, source);
-        core_vector_unpack(&hello1->actors_to_greet, buffer);
-        printf("Old List to Greet: ");
-        print_core_vector_int(&hello1->actors_to_greet);
-        if (core_vector_size(&hello1->actors_to_greet) > 1) {
-            int size = core_vector_size(&hello1->actors_to_greet);
-            int next_to_greet = core_vector_at_as_int(&hello1->actors_to_greet, size-1);
-            core_vector_resize(&hello1->actors_to_greet, size-1);
-            printf("New List (of remaining) to Greet: ");
-            print_core_vector_int(&hello1->actors_to_greet);
-            thorium_actor_send_vector(actor, next_to_greet, ACTION_HELLO_GREET_OTHERS, &hello1->actors_to_greet);
-        } else {
+        if (actor_name < 0) {
             int greeter = core_vector_at_as_int(&hello1->actors_to_greet, 0);
-            printf("Notifying Original Greeter = %d\n", greeter);
-            thorium_actor_send_int(actor, greeter, ACTION_HELLO_DONE_GREETING_ALL, name);
+            thorium_actor_send_to_self_empty(actor, ACTION_HELLO_ACQ_PEER);
+            printf("\n");
+        } else {
+            core_vector_set_int(&hello1->actors_to_greet, i, -actor_name);  /* flip sign to indicate we greeted it. */
+            core_vector_print_int(&hello1->actors_to_greet);
+            printf("\n");
+            thorium_actor_send_vector(actor, actor_name, ACTION_HELLO_ACQ_GREET_OTHERS, &hello1->actors_to_greet);
+            thorium_actor_send_to_self_empty(actor, ACTION_HELLO_ACQ_PEER);
+            printf("\n");
         }
-        printf("ACTION_HELLO_GREET_OTHERS - end\n");
 
-    } else if (tag == ACTION_HELLO_DONE_GREETING_ALL) {
-        printf("The original greeter %d was ack'd by %d\n", name, source);
-        /* Need to check with Seb whether action stop stops everthing.
-         * Termination detection issue with messages still in transit?
-         */
-
+    } else if (tag == ACTION_HELLO_ACQ_PEER) {
+        printf("Hello, World (received by %d).\n\n", name);
         thorium_actor_send_to_self_empty(actor, ACTION_STOP);
     }
 }
