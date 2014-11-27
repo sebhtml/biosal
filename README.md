@@ -47,7 +47,7 @@ make examples # run examples
 | [energy](https://github.com/sebhtml/biosal/tree/energy) | Sébastien Boisvert| [HTTPS](https://github.com/sebhtml/biosal.git) | |
 | [pami](https://github.com/huyba/biosal/tree/master) | Huy Bui | [HTTPS](https://github.com/huyba/biosal.git) | |
 | [granularity](https://github.com/gkthiruvathukal/biosal/tree/granularity) | George K. Thiruvathukal | [HTTPS](https://github.com/gkthiruvathukal/biosal.git) |[![Build Status](https://travis-ci.org/gkthiruvathukal/biosal.svg?branch=granularity)](https://travis-ci.org/gkthiruvathukal/biosal)  |
-| [entropy](https://github.com/levinas/biosal/tree/entropy) | Fangfang Xia | [HTTPS](https://github.com/levinas/biosal.git) | |
+| [entropy](https://github.com/levinas/biosal/tree/entropy) | Fangfang Xia | [HTTPS](https://github.com/levinas/biosal.git) | [![Build Status](https://travis-ci.org/levinas/biosal.svg?branch=entropy)](https://travis-ci.org/levinas/biosal) |
 
 - There is also a read-only [mirror](https://github.com/GeneAssembly/biosal/tree/mirror).
 - The [**Integration Manager Workflow**](http://git-scm.com/about/distributed) is used.
