@@ -17,11 +17,11 @@ struct thorium_message;
 
 #include <stdint.h>
 
-#define THORIUM_MULTIPLEXER_USE_HEAP
-
 /*
-#define THORIUM_MULTIPLEXER_USE_TREE
+#define THORIUM_MULTIPLEXER_USE_HEAP
 */
+
+#define THORIUM_MULTIPLEXER_USE_TREE
 
 /*
  * The multiplexer needs its own action
