@@ -12,11 +12,11 @@
 struct thorium_scheduler;
 struct thorium_actor;
 
-#define THORIUM_CFS_SCHEDULER_USE_BINARY_HEAP
-
 /*
-#define THORIUM_CFS_SCHEDULER_USE_RED_BLACK_TREE
+#define THORIUM_CFS_SCHEDULER_USE_BINARY_HEAP
 */
+
+#define THORIUM_CFS_SCHEDULER_USE_RED_BLACK_TREE
 
 /*
  * A fair scheduler based on the algorithm of
