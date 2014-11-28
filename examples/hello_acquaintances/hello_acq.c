@@ -91,7 +91,9 @@ void hello_acq_receive(struct thorium_actor *actor, struct thorium_message *mess
         }
 
         if (actor_name < 0) {
+                /*
             int greeter = core_vector_at_as_int(&hello1->actors_to_greet, 0);
+            */
             thorium_actor_send_to_self_empty(actor, ACTION_HELLO_ACQ_PEER);
             printf("\n");
         } else {
