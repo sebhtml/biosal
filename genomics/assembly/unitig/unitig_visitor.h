@@ -19,7 +19,7 @@
 
 #define SCRIPT_UNITIG_VISITOR 0xeb3b39fd
 
-/*
+/**
  * A visitor for unitigs.
  */
 struct biosal_unitig_visitor {
