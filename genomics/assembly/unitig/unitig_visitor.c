@@ -250,6 +250,11 @@ void biosal_unitig_visitor_execute(struct thorium_actor *self)
 
     if (concrete_self->completed == core_vector_size(&concrete_self->graph_stores)) {
 
+        printf("%s/%d : %d graph stores gave nothing !\n",
+                        thorium_actor_script_name(self),
+                        thorium_actor_name(self),
+                        concrete_self->completed);
+
         new_count = sizeof(concrete_self->visited_vertices) + sizeof(concrete_self->vertices_with_unitig_flag);
         new_buffer = thorium_actor_allocate(self, new_count);
 
@@ -281,7 +286,17 @@ void biosal_unitig_visitor_execute(struct thorium_actor *self)
          */
         graph_store_index = concrete_self->graph_store_index;
         ++concrete_self->graph_store_index;
-        concrete_self->graph_store_index %= size;
+
+        /*
+         * Reset the index.
+         * Also, reset the number of graph stores that have nothing more to yield
+         * to avoid a false ending.
+         */
+        if (concrete_self->graph_store_index == size) {
+            concrete_self->graph_store_index = 0;
+            concrete_self->completed = 0;
+        }
+
         graph_store = core_vector_at_as_int(&concrete_self->graph_stores, graph_store_index);
 
         thorium_actor_send_empty(self, graph_store, ACTION_ASSEMBLY_GET_STARTING_KMER);
