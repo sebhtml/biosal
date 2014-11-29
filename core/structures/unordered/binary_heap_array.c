@@ -1,4 +1,6 @@
 
+#include "binary_heap_array.h"
+
 #include "binary_heap.h"
 
 #include <core/constants.h>
@@ -9,39 +11,39 @@
 #include <stdlib.h>
 #include <string.h>
 
-void *core_binary_heap_get_key(struct core_binary_heap *self, int i);
-void *core_binary_heap_get_value(struct core_binary_heap *self, int i);
+void *core_binary_heap_array_get_key(struct core_binary_heap_array *self, int i);
+void *core_binary_heap_array_get_value(struct core_binary_heap_array *self, int i);
 
-static inline int core_binary_heap_get_first_child(int i);
-static inline int core_binary_heap_get_parent(int i);
-static inline int core_binary_heap_get_second_child(int i);
+static inline int core_binary_heap_array_get_first_child(int i);
+static inline int core_binary_heap_array_get_parent(int i);
+static inline int core_binary_heap_array_get_second_child(int i);
 
-void core_binary_heap_sift_up(struct core_binary_heap *self, int i);
-void core_binary_heap_sift_down(struct core_binary_heap *self, int i);
+void core_binary_heap_array_sift_up(struct core_binary_heap_array *self, int i);
+void core_binary_heap_array_sift_down(struct core_binary_heap_array *self, int i);
 
-void core_binary_heap_swap(struct core_binary_heap *self, int i, int j);
+void core_binary_heap_array_swap(struct core_binary_heap_array *self, int i, int j);
 
 /*
  * relation functions.
  */
 
-int core_binary_heap_test_relation(struct core_binary_heap *self, int i, int j);
+int core_binary_heap_array_test_relation(struct core_binary_heap_array *self, int i, int j);
 
-int core_binary_heap_test_relation_lower_than_int(struct core_binary_heap *self,
+int core_binary_heap_array_test_relation_lower_than_int(struct core_binary_heap_array *self,
                 void *key1, void *key2);
-int core_binary_heap_test_relation_lower_than_uint64_t(struct core_binary_heap *self,
+int core_binary_heap_array_test_relation_lower_than_uint64_t(struct core_binary_heap_array *self,
                 void *key1, void *key2);
-int core_binary_heap_test_relation_lower_than_void_pointer(struct core_binary_heap *self,
-                void *key1, void *key2);
-
-int core_binary_heap_test_relation_greater_than_int(struct core_binary_heap *self,
-                void *key1, void *key2);
-int core_binary_heap_test_relation_greater_than_uint64_t(struct core_binary_heap *self,
-                void *key1, void *key2);
-int core_binary_heap_test_relation_greater_than_void_pointer(struct core_binary_heap *self,
+int core_binary_heap_array_test_relation_lower_than_void_pointer(struct core_binary_heap_array *self,
                 void *key1, void *key2);
 
-void core_binary_heap_init(struct core_binary_heap *self, int key_size,
+int core_binary_heap_array_test_relation_greater_than_int(struct core_binary_heap_array *self,
+                void *key1, void *key2);
+int core_binary_heap_array_test_relation_greater_than_uint64_t(struct core_binary_heap_array *self,
+                void *key1, void *key2);
+int core_binary_heap_array_test_relation_greater_than_void_pointer(struct core_binary_heap_array *self,
+                void *key1, void *key2);
+
+void core_binary_heap_array_init(struct core_binary_heap_array *self, int key_size,
                 int value_size, uint32_t flags)
 {
     core_vector_init(&self->vector, key_size + value_size);
@@ -54,20 +56,20 @@ void core_binary_heap_init(struct core_binary_heap *self, int key_size,
     if (flags & CORE_BINARY_HEAP_MIN) {
 
         if (flags & CORE_BINARY_HEAP_INT_KEYS)
-            self->test_relation = core_binary_heap_test_relation_lower_than_int;
+            self->test_relation = core_binary_heap_array_test_relation_lower_than_int;
         else if (flags & CORE_BINARY_HEAP_UINT64_T_KEYS)
-            self->test_relation = core_binary_heap_test_relation_lower_than_uint64_t;
+            self->test_relation = core_binary_heap_array_test_relation_lower_than_uint64_t;
         else
-            self->test_relation = core_binary_heap_test_relation_lower_than_void_pointer;
+            self->test_relation = core_binary_heap_array_test_relation_lower_than_void_pointer;
 
     } else if (flags & CORE_BINARY_HEAP_MAX) {
 
         if (flags & CORE_BINARY_HEAP_INT_KEYS)
-            self->test_relation = core_binary_heap_test_relation_greater_than_int;
+            self->test_relation = core_binary_heap_array_test_relation_greater_than_int;
         else if (flags & CORE_BINARY_HEAP_UINT64_T_KEYS)
-            self->test_relation = core_binary_heap_test_relation_greater_than_uint64_t;
+            self->test_relation = core_binary_heap_array_test_relation_greater_than_uint64_t;
         else
-            self->test_relation = core_binary_heap_test_relation_greater_than_void_pointer;
+            self->test_relation = core_binary_heap_array_test_relation_greater_than_void_pointer;
     }
 
     CORE_DEBUGGER_ASSERT_NOT_NULL(self->test_relation);
@@ -75,12 +77,12 @@ void core_binary_heap_init(struct core_binary_heap *self, int key_size,
     CORE_DEBUGGER_ASSERT(self->value_size >= 0);
 }
 
-void core_binary_heap_destroy(struct core_binary_heap *self)
+void core_binary_heap_array_destroy(struct core_binary_heap_array *self)
 {
     core_vector_destroy(&self->vector);
 }
 
-int core_binary_heap_get_root(struct core_binary_heap *self, void **key, void **value)
+int core_binary_heap_array_get_root(struct core_binary_heap_array *self, void **key, void **value)
 {
     void *stored_key;
     void *stored_value;
@@ -88,8 +90,8 @@ int core_binary_heap_get_root(struct core_binary_heap *self, void **key, void **
     if (self->size == 0)
         return FALSE;
 
-    stored_key = core_binary_heap_get_key(self, 0);
-    stored_value = core_binary_heap_get_value(self, 0);
+    stored_key = core_binary_heap_array_get_key(self, 0);
+    stored_value = core_binary_heap_array_get_value(self, 0);
 
     if (key != NULL)
         *key = stored_key;
@@ -103,7 +105,7 @@ int core_binary_heap_get_root(struct core_binary_heap *self, void **key, void **
 /**
  * @see http://en.wikipedia.org/wiki/Binary_heap#Delete
  */
-int core_binary_heap_delete_root(struct core_binary_heap *self)
+int core_binary_heap_array_delete_root(struct core_binary_heap_array *self)
 {
     int last;
     int root;
@@ -117,10 +119,10 @@ int core_binary_heap_delete_root(struct core_binary_heap *self)
     /*
      * Swap with the end.
      */
-    core_binary_heap_swap(self, root, last);
+    core_binary_heap_array_swap(self, root, last);
     --self->size;
 
-    core_binary_heap_sift_down(self, root);
+    core_binary_heap_array_sift_down(self, root);
 
     return TRUE;
 }
@@ -128,7 +130,7 @@ int core_binary_heap_delete_root(struct core_binary_heap *self)
 /**
  * @see http://en.wikipedia.org/wiki/Binary_heap#Insert
  */
-int core_binary_heap_insert(struct core_binary_heap *self, void *key, void *value)
+int core_binary_heap_array_insert(struct core_binary_heap_array *self, void *key, void *value)
 {
     int position;
     void *stored_key;
@@ -154,8 +156,8 @@ int core_binary_heap_insert(struct core_binary_heap *self, void *key, void *valu
     /*
      * Add the pair at the end on the last level.
      */
-    stored_key = core_binary_heap_get_key(self, position);
-    stored_value = core_binary_heap_get_value(self, position);
+    stored_key = core_binary_heap_array_get_key(self, position);
+    stored_value = core_binary_heap_array_get_value(self, position);
 
     core_memory_copy(stored_key, key, self->key_size);
 
@@ -168,12 +170,12 @@ int core_binary_heap_insert(struct core_binary_heap *self, void *key, void *valu
     printf("\n");
 #endif
 
-    core_binary_heap_sift_up(self, position);
+    core_binary_heap_array_sift_up(self, position);
 
     return TRUE;
 }
 
-void *core_binary_heap_get_key(struct core_binary_heap *self, int i)
+void *core_binary_heap_array_get_key(struct core_binary_heap_array *self, int i)
 {
     void *stored_key;
 
@@ -182,7 +184,7 @@ void *core_binary_heap_get_key(struct core_binary_heap *self, int i)
     return stored_key;
 }
 
-void *core_binary_heap_get_value(struct core_binary_heap *self, int i)
+void *core_binary_heap_array_get_value(struct core_binary_heap_array *self, int i)
 {
     void *stored_value;
 
@@ -191,7 +193,7 @@ void *core_binary_heap_get_value(struct core_binary_heap *self, int i)
     return stored_value;
 }
 
-void core_binary_heap_sift_up(struct core_binary_heap *self, int i)
+void core_binary_heap_array_sift_up(struct core_binary_heap_array *self, int i)
 {
     int parent;
 
@@ -203,7 +205,7 @@ void core_binary_heap_sift_up(struct core_binary_heap *self, int i)
 
     while (1) {
 
-        parent = core_binary_heap_get_parent(i);
+        parent = core_binary_heap_array_get_parent(i);
 
         /*
          * This is already correct.
@@ -214,24 +216,24 @@ void core_binary_heap_sift_up(struct core_binary_heap *self, int i)
          *
          * If key(i) and key(parent) are equal, no change is required.
          */
-        if (!core_binary_heap_test_relation(self, i, parent))
+        if (!core_binary_heap_array_test_relation(self, i, parent))
             break;
 
         /*
          * Otherwise, swap the entries and continue.
          */
-        core_binary_heap_swap(self, parent, i);
+        core_binary_heap_array_swap(self, parent, i);
         i = parent;
     }
 }
 
-int core_binary_heap_test_relation(struct core_binary_heap *self, int i, int j)
+int core_binary_heap_array_test_relation(struct core_binary_heap_array *self, int i, int j)
 {
     void *key_i;
     void *key_j;
 
-    key_i = core_binary_heap_get_key(self, i);
-    key_j = core_binary_heap_get_key(self, j);
+    key_i = core_binary_heap_array_get_key(self, i);
+    key_j = core_binary_heap_array_get_key(self, j);
 
 #ifdef HEAP_DEBUG_INSERT
     printf("DEBUG Test %d %d\n", i, j);
@@ -240,28 +242,28 @@ int core_binary_heap_test_relation(struct core_binary_heap *self, int i, int j)
     return self->test_relation(self, key_i, key_j);
 }
 
-int core_binary_heap_test_relation_lower_than_void_pointer(struct core_binary_heap *self,
+int core_binary_heap_array_test_relation_lower_than_void_pointer(struct core_binary_heap_array *self,
                 void *key1, void *key2)
 {
     return core_memory_compare(key1, key2, self->key_size) < 0;
 }
 
-static inline int core_binary_heap_get_first_child(int i)
+static inline int core_binary_heap_array_get_first_child(int i)
 {
     return 2 * i + 1;
 }
 
-static inline int core_binary_heap_get_second_child(int i)
+static inline int core_binary_heap_array_get_second_child(int i)
 {
     return 2 * i + 2;
 }
 
-static inline int core_binary_heap_get_parent(int i)
+static inline int core_binary_heap_array_get_parent(int i)
 {
     return (i - 1) / 2;
 }
 
-int core_binary_heap_test_relation_lower_than_int(struct core_binary_heap *self,
+int core_binary_heap_array_test_relation_lower_than_int(struct core_binary_heap_array *self,
                 void *key1, void *key2)
 {
     int a;
@@ -277,7 +279,7 @@ int core_binary_heap_test_relation_lower_than_int(struct core_binary_heap *self,
     return a < b;
 }
 
-int core_binary_heap_test_relation_lower_than_uint64_t(struct core_binary_heap *self,
+int core_binary_heap_array_test_relation_lower_than_uint64_t(struct core_binary_heap_array *self,
                 void *key1, void *key2)
 {
     uint64_t a;
@@ -289,7 +291,7 @@ int core_binary_heap_test_relation_lower_than_uint64_t(struct core_binary_heap *
     return a < b;
 }
 
-int core_binary_heap_test_relation_greater_than_int(struct core_binary_heap *self,
+int core_binary_heap_array_test_relation_greater_than_int(struct core_binary_heap_array *self,
                 void *key1, void *key2)
 {
     int a;
@@ -301,7 +303,7 @@ int core_binary_heap_test_relation_greater_than_int(struct core_binary_heap *sel
     return a > b;
 }
 
-int core_binary_heap_test_relation_greater_than_uint64_t(struct core_binary_heap *self,
+int core_binary_heap_array_test_relation_greater_than_uint64_t(struct core_binary_heap_array *self,
                 void *key1, void *key2)
 {
     uint64_t a;
@@ -313,13 +315,13 @@ int core_binary_heap_test_relation_greater_than_uint64_t(struct core_binary_heap
     return a > b;
 }
 
-int core_binary_heap_test_relation_greater_than_void_pointer(struct core_binary_heap *self,
+int core_binary_heap_array_test_relation_greater_than_void_pointer(struct core_binary_heap_array *self,
                 void *key1, void *key2)
 {
     return core_memory_compare(key1, key2, self->key_size) > 0;
 }
 
-void core_binary_heap_swap(struct core_binary_heap *self, int i, int j)
+void core_binary_heap_array_swap(struct core_binary_heap_array *self, int i, int j)
 {
     void *item_i;
     void *item_j;
@@ -343,32 +345,32 @@ void core_binary_heap_swap(struct core_binary_heap *self, int i, int j)
     core_memory_copy(item_j, temporary_place, pair_size);
 }
 
-int core_binary_heap_size(struct core_binary_heap *self)
+int core_binary_heap_array_size(struct core_binary_heap_array *self)
 {
     return self->size;
 }
 
-int core_binary_heap_empty(struct core_binary_heap *self)
+int core_binary_heap_array_empty(struct core_binary_heap_array *self)
 {
     return self->size == 0;
 }
 
-void core_binary_heap_sift_down(struct core_binary_heap *self, int i)
+void core_binary_heap_array_sift_down(struct core_binary_heap_array *self, int i)
 {
     int left_child;
     int right_child;
     int selected_child;
 
     while (1) {
-        left_child = core_binary_heap_get_first_child(i);
-        right_child = core_binary_heap_get_second_child(i);
+        left_child = core_binary_heap_array_get_first_child(i);
+        right_child = core_binary_heap_array_get_second_child(i);
 
         /*
          * The node i is already at the good place with respect to
          * its children (which are possible not existent).
          */
-        if ((!(left_child < self->size) || !core_binary_heap_test_relation(self, left_child, i))
-            && (!(right_child < self->size) || !core_binary_heap_test_relation(self, right_child, i)))
+        if ((!(left_child < self->size) || !core_binary_heap_array_test_relation(self, left_child, i))
+            && (!(right_child < self->size) || !core_binary_heap_array_test_relation(self, right_child, i)))
             return;
 
         selected_child = -1;
@@ -387,7 +389,7 @@ void core_binary_heap_sift_down(struct core_binary_heap *self, int i)
          */
         if (selected_child == -1
                || (right_child < self->size
-                       && core_binary_heap_test_relation(self, left_child, right_child)))
+                       && core_binary_heap_array_test_relation(self, left_child, right_child)))
             selected_child = right_child;
 
         /*
@@ -408,12 +410,12 @@ void core_binary_heap_sift_down(struct core_binary_heap *self, int i)
         /*
          * Swap items and continue.
          */
-        core_binary_heap_swap(self, i, selected_child);
+        core_binary_heap_array_swap(self, i, selected_child);
         i = selected_child;
     }
 }
 
-void core_binary_heap_set_memory_pool(struct core_binary_heap *self,
+void core_binary_heap_array_set_memory_pool(struct core_binary_heap_array *self,
                 struct core_memory_pool *pool)
 {
     core_vector_set_memory_pool(&self->vector, pool);

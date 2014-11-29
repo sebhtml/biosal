@@ -31,5 +31,5 @@ CORE_OBJECTS += core/structures/ordered/red_black_node.o
 CORE_OBJECTS += core/structures/ordered/red_black_tree.o
 CORE_OBJECTS += core/structures/ordered/red_black_tree_iterator.o
 
-CORE_OBJECTS += core/structures/unordered/binary_heap.o
+CORE_OBJECTS += core/structures/unordered/binary_heap_array.o
 
