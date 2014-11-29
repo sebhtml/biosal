@@ -1,5 +1,5 @@
 /*
- * hello_acq.c: 
+ * hello_acq.c:
  *   A distributed version of Hello, World, works as follows:
  *     - There are many possible ways to say a distributed "hello"
  *       - original hello.c is a great example: each of the initial actors says hello!
@@ -11,7 +11,7 @@
  *       - when all of the n-1 peers have been greeted, each will have a negative entry in the state vector
  *       - when an actor is greeted, it has nothing left to do and can stop
  *       - the lone remaining actor will be the originator of the first hello message.
- * 
+ *
  */
 
 #include "hello_acq.h"
