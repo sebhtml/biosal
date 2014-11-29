@@ -393,7 +393,16 @@ void biosal_unitig_walker_begin(struct thorium_actor *self, struct thorium_messa
     size = core_vector_size(&concrete_self->graph_stores);
     store_index = concrete_self->store_index;
     ++concrete_self->store_index;
-    concrete_self->store_index %= size;
+
+    if (concrete_self->store_index == size) {
+        concrete_self->store_index = 0;
+
+        /*
+         * Reset the dried_stores counter to avoid counting the same graph store
+         * more than once.
+         */
+        concrete_self->dried_stores = 0;
+    }
 
     store = core_vector_at_as_int(&concrete_self->graph_stores, store_index);
 
