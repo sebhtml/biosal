@@ -164,6 +164,8 @@ void biosal_assembly_graph_store_init(struct thorium_actor *self)
     concrete_self->summary_in_progress = 0;
 
     concrete_self->unitig_vertex_count = 0;
+
+    concrete_self->iterated_vertex_count = 0;
 }
 
 void biosal_assembly_graph_store_destroy(struct thorium_actor *self)
@@ -250,12 +252,25 @@ void biosal_assembly_graph_store_receive(struct thorium_actor *self, struct thor
     } else if (tag == ACTION_RESET) {
 
         /*
+         * Make sure the iterator is at the end of the line.
+         */
+        CORE_DEBUGGER_ASSERT(!core_map_iterator_has_next(&concrete_self->iterator));
+
+        /*
          * Reset the iterator.
          */
         core_map_iterator_init(&concrete_self->iterator, &concrete_self->table);
 
-        printf("DEBUG unitig_vertex_count %d\n",
+        CORE_DEBUGGER_ASSERT_IS_EQUAL_INT(concrete_self->iterated_vertex_count,
+                        (int)core_map_size(&concrete_self->table));
+
+        printf("%s/%d iterated_vertex_count %d unitig_vertex_count %d",
+                        thorium_actor_script_name(self),
+                        thorium_actor_name(self),
+                        concrete_self->iterated_vertex_count,
                         concrete_self->unitig_vertex_count);
+
+        concrete_self->iterated_vertex_count = 0;
 
         thorium_actor_send_reply_empty(self, ACTION_RESET_REPLY);
 
@@ -1058,12 +1073,13 @@ void biosal_assembly_graph_store_get_starting_vertex(struct thorium_actor *self,
         core_map_iterator_next(&concrete_self->iterator, (void **)&storage_key,
                         (void **)&vertex);
 
+        ++concrete_self->iterated_vertex_count;
+
         /*
          * Skip the vertex if it does have the status
          * BIOSAL_VERTEX_FLAG_USED.
          */
         if (biosal_assembly_vertex_get_flag(vertex, BIOSAL_VERTEX_FLAG_USED)) {
-
 
             continue;
         }
@@ -1148,6 +1164,9 @@ void biosal_assembly_graph_store_get_starting_vertex(struct thorium_actor *self,
 
         return;
     }
+
+    CORE_DEBUGGER_ASSERT_IS_EQUAL_INT(concrete_self->iterated_vertex_count,
+                        (int)core_map_size(&concrete_self->table));
 
     /*
      * An empty reply means that the store has nothing more to yield.

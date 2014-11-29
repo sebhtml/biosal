@@ -92,6 +92,8 @@ struct biosal_assembly_graph_store {
 
     uint64_t consumed_canonical_vertex_count;
     uint64_t last_progress;
+
+    int iterated_vertex_count;
 };
 
 extern struct thorium_script biosal_assembly_graph_store_script;
