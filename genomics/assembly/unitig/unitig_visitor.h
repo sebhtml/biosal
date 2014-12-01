@@ -57,6 +57,8 @@ struct biosal_unitig_visitor {
 
     int last_visited_count;
     uint64_t last_second_count;
+
+    int verbose;
 };
 
 extern struct thorium_script biosal_unitig_visitor_script;

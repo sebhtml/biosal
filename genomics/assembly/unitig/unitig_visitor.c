@@ -9,6 +9,8 @@
 #include <core/structures/vector.h>
 #include <core/system/debugger.h>
 
+#include <core/constants.h>
+
 #include <stdio.h>
 
 #define STEP_GET_KMER_LENGTH 0
@@ -84,6 +86,8 @@ void biosal_unitig_visitor_init(struct thorium_actor *self)
     biosal_dna_kmer_init_empty(&concrete_self->main_kmer);
     biosal_dna_kmer_init_empty(&concrete_self->parent_kmer);
     biosal_dna_kmer_init_empty(&concrete_self->child_kmer);
+
+    concrete_self->verbose = FALSE;
 }
 
 void biosal_unitig_visitor_destroy(struct thorium_actor *self)
@@ -91,9 +95,12 @@ void biosal_unitig_visitor_destroy(struct thorium_actor *self)
     struct biosal_unitig_visitor *concrete_self;
 
     concrete_self = thorium_actor_concrete_actor(self);
-    printf("%s/%d vertex_count: %d BIOSAL_VERTEX_FLAG_UNITIG: %d\n",
+
+    if (concrete_self->verbose) {
+        printf("%s/%d vertex_count: %d BIOSAL_VERTEX_FLAG_UNITIG: %d\n",
                     thorium_actor_script_name(self), thorium_actor_name(self),
                     concrete_self->visited_vertices, concrete_self->vertices_with_unitig_flag);
+    }
 
     biosal_dna_codec_destroy(&concrete_self->codec);
 
@@ -118,12 +125,14 @@ void biosal_unitig_visitor_receive(struct thorium_actor *self, struct thorium_me
     struct biosal_unitig_visitor *concrete_self;
     int size;
     int count;
+    int action;
 
     tag = thorium_message_action(message);
     count = thorium_message_count(message);
     buffer = thorium_message_buffer(message);
     concrete_self = thorium_actor_concrete_actor(self);
     source = thorium_message_source(message);
+    action = tag;
 
     if (concrete_self->step == STEP_GET_MAIN_VERTEX_DATA) {
         if (biosal_vertex_neighborhood_receive(&concrete_self->main_neighborhood, message)) {
@@ -158,9 +167,11 @@ void biosal_unitig_visitor_receive(struct thorium_actor *self, struct thorium_me
 
         concrete_self->manager = source;
 
-        printf("%s/%d is ready to visit places in the universe\n",
+        if (concrete_self->verbose) {
+            printf("%s/%d is ready to visit places in the universe\n",
                         thorium_actor_script_name(self),
                         thorium_actor_name(self));
+        }
 
         core_vector_unpack(&concrete_self->graph_stores, buffer);
         size = core_vector_size(&concrete_self->graph_stores);
@@ -174,6 +185,12 @@ void biosal_unitig_visitor_receive(struct thorium_actor *self, struct thorium_me
 
         thorium_actor_send_reply_empty(self, ACTION_ASK_TO_STOP_REPLY);
 
+    } else if (action == ACTION_ENABLE_VERBOSE_MODE) {
+
+        concrete_self->verbose = TRUE;
+    } else if (action == ACTION_DISABLE_VERBOSE_MODE) {
+
+        concrete_self->verbose = FALSE;
     } else if (tag == ACTION_SET_VERTEX_FLAG_REPLY) {
 
         concrete_self->step = STEP_DO_RESET;
@@ -250,10 +267,12 @@ void biosal_unitig_visitor_execute(struct thorium_actor *self)
 
     if (concrete_self->completed == core_vector_size(&concrete_self->graph_stores)) {
 
-        printf("%s/%d : %d graph stores gave nothing !\n",
+        if (concrete_self->verbose) {
+            printf("%s/%d : %d graph stores gave nothing !\n",
                         thorium_actor_script_name(self),
                         thorium_actor_name(self),
                         concrete_self->completed);
+        }
 
         new_count = sizeof(concrete_self->visited_vertices) + sizeof(concrete_self->vertices_with_unitig_flag);
         new_buffer = thorium_actor_allocate(self, new_count);
@@ -397,7 +416,8 @@ void biosal_unitig_visitor_execute(struct thorium_actor *self)
 
         concrete_self->step = STEP_GET_MAIN_KMER;
 
-        if (concrete_self->visited_vertices % 500 == 0) {
+        if (concrete_self->verbose
+                        && concrete_self->visited_vertices % 500 == 0) {
 
             current_time = thorium_actor_get_time_in_seconds(self);
 
