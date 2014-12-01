@@ -440,17 +440,17 @@ void thorium_worker_pool_print_load(struct thorium_worker_pool *self, int type)
 
     load = sum / count;
 
-    printf("thorium_worker_pool: node/%d %s LOAD %d s %.2f/%d (%.2f)%s\n",
+    printf("[thorium] node %d %s LOAD %d s %.2f/%d (%.2f)%s\n",
                     node_name,
                     description, elapsed,
                     sum, count, load, buffer);
 
-    printf("thorium_worker_pool: node/%d %s FUTURE_TIMELINE %d s %s\n",
+    printf("[thorium] node %d %s FUTURE_TIMELINE %d s %s\n",
                     node_name,
                     description, elapsed,
                     buffer_for_future_timeline);
 
-    printf("thorium_worker_pool: node/%d %s WAKE_UP_COUNT %d s %s\n",
+    printf("[thorium] node %d %s WAKE_UP_COUNT %d s %s\n",
                     node_name,
                     description, elapsed,
                     buffer_for_wake_up_events);

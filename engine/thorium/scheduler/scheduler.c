@@ -96,5 +96,5 @@ void thorium_scheduler_print(struct thorium_scheduler *self)
 void thorium_scheduler_print_type(struct thorium_scheduler *self)
 {
     if (self->node == 0 && self->worker == 0)
-        printf("thorium_scheduler: type %s\n", self->implementation->name);
+        printf("[thorium] thorium_scheduler: type %s\n", self->implementation->name);
 }

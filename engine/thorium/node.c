@@ -539,7 +539,7 @@ void thorium_node_init(struct thorium_node *node, int *argc, char ***argv)
     core_set_affinity(processor);
 
     if (CORE_BITMAP_GET_BIT(node->flags, FLAG_PRINT_LOAD)) {
-        printf("thorium_node: booted node %d (%d nodes), threads: %d, workers: %d, pacing: %d\n",
+        printf("[thorium] node %d booted successfully (%d nodes), thread count: %d, worker thread count: %d, pacing thread count: %d\n",
                     node->name,
             node->nodes,
             node->threads,
@@ -572,11 +572,13 @@ void thorium_node_init(struct thorium_node *node, int *argc, char ***argv)
     if (node->name == 0
                     && thorium_node_must_print_load(node)) {
 
-        printf("thorium_node: sizeof(struct thorium_actor) -> %d\n", (int)sizeof(struct thorium_actor));
-        printf("thorium_node: sizeof(struct thorium_message) -> %d\n", (int)sizeof(struct thorium_message));
+        printf("[thorium] thorium_node sizeof(struct thorium_actor) -> %d\n", (int)sizeof(struct thorium_actor));
+        printf("[thorium] sizeof(struct thorium_message) -> %d\n", (int)sizeof(struct thorium_message));
 
 #ifdef CONFIG_DEBUG
-        printf("thorium_node: CONFIG_DEBUG= yes\n");
+        printf("[thorium] thorium_node CONFIG_DEBUG= yes\n");
+#else
+        printf("[thorium] thorium_node CONFIG_DEBUG= no\n");
 #endif
     }
 
@@ -1085,7 +1087,7 @@ int thorium_node_run(struct thorium_node *node)
 
         load = thorium_worker_pool_get_computation_load(&node->worker_pool);
 
-        printf("thorium_node: node/%d COMPUTATION LOAD %.2f\n",
+        printf("[thorium] node %d COMPUTATION LOAD %.2f\n",
                     thorium_node_name(node),
                     load);
     }
@@ -1836,7 +1838,8 @@ void thorium_node_notify_death(struct thorium_node *node, struct thorium_actor *
     if (node->alive_actors == 0
                     && CORE_BITMAP_GET_BIT(node->flags, FLAG_PRINT_LOAD)) {
 
-        printf("thorium_node: all local actors are dead now, %d alive actors, %d dead actors\n",
+        printf("[thorium] node %d, all local actors are dead now, %d alive actors, %d dead actors\n",
+                        node->name,
                         node->alive_actors, node->dead_actors);
     }
 
@@ -3111,7 +3114,7 @@ void thorium_node_print_information(struct thorium_node *self)
      * and
      * the heap size.
      */
-    printf("thorium_node: node/%d METRICS AliveActorCount: %d ByteCount: %" PRIu64 " / %" PRIu64 "\n",
+    printf("[thorium] node %d METRICS AliveActorCount: %d ByteCount: %" PRIu64 " / %" PRIu64 "\n",
                     self->name,
                     self->alive_actors,
                     core_memory_get_utilized_byte_count(),
@@ -3122,18 +3125,20 @@ void thorium_node_print_information(struct thorium_node *self)
     sent_message_count =
                     core_counter_get(&self->counter, CORE_COUNTER_SENT_MESSAGES);
 
-    printf("thorium_node: node/%d MESSAGES"
-                    " Tick: %d "
-                    " ReceivedMessageCount: %" PRIu64 ""
-                    " SentMessageCount: %" PRIu64 ""
-                    " BufferedInboundMessageCount: %d"
+    printf("[thorium] node %d MESSAGE_TRANSPORT ReceivedMessageCount: %" PRIu64 ""
+                    " SentMessageCount: %" PRIu64 "\n",
+                    self->name,
+                    received_message_count,
+                    sent_message_count);
+
+    printf("[thorium] node %d MESSAGE_QUEUES "
+                    "Tick: %d "
+                    "BufferedInboundMessageCount: %d"
                     " BufferedOutboundMessageCount: %d"
                     " ActiveRequestCount: %d"
                     "\n",
                     self->name,
                     self->tick,
-                    received_message_count,
-                    sent_message_count,
                     thorium_worker_pool_buffered_message_count(&self->worker_pool),
                     thorium_worker_pool_outbound_ring_size(&self->worker_pool),
                     thorium_transport_get_active_request_count(&self->transport)
