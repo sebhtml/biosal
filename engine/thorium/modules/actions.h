@@ -33,6 +33,9 @@
 #define ACTION_ENABLE_MULTIPLEXER (PING_ACTION_BASE + 8)
 #define ACTION_DISABLE_MULTIPLEXER (PING_ACTION_BASE + 9)
 
+#define ACTION_ENABLE_VERBOSE_MODE (PING_ACTION_BASE + 10)
+#define ACTION_DISABLE_VERBOSE_MODE (PING_ACTION_BASE + 11)
+
 struct core_vector;
 struct thorium_actor;
 struct thorium_message;
