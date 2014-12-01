@@ -147,10 +147,19 @@ void thorium_message_multiplexer_destroy(struct thorium_message_multiplexer *sel
         if (self->original_message_count != 0) {
             ratio = self->real_message_count / (0.0 + self->original_message_count);
 
+            /*
+             * Jack M. Nilles
+             * "Traffic reduction by telecommuting: A status review and selected bibliography"
+             * Transportation Research Part A: General
+             * Volume 22, Issue 4, July 1988, Pages 301–317.
+             *
+             * @see http://www.sciencedirect.com/science/article/pii/0191260788900088
+             * @see http://ww2.cityofpasadena.net/councilagendas/2007%20agendas/feb_26_07/pasadena%20traffic%20reduction%20strategies%2011-20-06%20draft.pdf
+             */
             printf("[thorium] node %d worker %d message_multiplexer:"
-                            " original_message_count %d real_message_count %d (%.4f)\n",
+                            " original_message_count %d real_message_count %d (traffic reduction: %.2f%)\n",
                             thorium_node_name(self->node), thorium_worker_name(self->worker),
-                    self->original_message_count, self->real_message_count, ratio);
+                    self->original_message_count, self->real_message_count, (1.0 - ratio) * 100);
         }
     }
 
