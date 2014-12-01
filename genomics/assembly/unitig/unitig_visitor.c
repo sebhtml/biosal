@@ -253,6 +253,7 @@ void biosal_unitig_visitor_execute(struct thorium_actor *self)
     int expected_code;
     float velocity;
     uint64_t current_time;
+    int delta;
     char *new_buffer;
     int new_count;
 
@@ -421,15 +422,24 @@ void biosal_unitig_visitor_execute(struct thorium_actor *self)
 
             current_time = thorium_actor_get_time_in_seconds(self);
 
-            velocity = (concrete_self->visited_vertices - concrete_self->last_visited_count + 0.0);
-            current_time -= concrete_self->last_second_count;
+            delta = current_time - concrete_self->last_second_count;
 
-            if (current_time != 0)
-                velocity /= current_time;
+            /*
+             * Wait at least 4 seconds.
+             */
+            if (delta >= 4) {
 
-            printf("%s/%d visited %d vertices so far (velocity: %f vertices / s)\n",
+                velocity = (concrete_self->visited_vertices - concrete_self->last_visited_count + 0.0);
+
+                velocity /= delta;
+
+                printf("%s/%d visited %d vertices so far (velocity: %f vertices / s)\n",
                             thorium_actor_script_name(self), thorium_actor_name(self),
                             concrete_self->visited_vertices, velocity);
+
+                concrete_self->last_second_count = current_time;
+                concrete_self->last_visited_count = concrete_self->visited_vertices;
+            }
         }
 
         ++concrete_self->visited_vertices;
