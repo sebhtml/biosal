@@ -146,10 +146,10 @@ void thorium_message_multiplexer_destroy(struct thorium_message_multiplexer *sel
 
         if (self->original_message_count != 0) {
             ratio = self->real_message_count / (0.0 + self->original_message_count);
-        }
 
-        printf("[thorium] thorium_message_multiplexer: original_message_count %d real_message_count %d (%.4f)\n",
+            printf("[thorium] thorium_message_multiplexer: original_message_count %d real_message_count %d (%.4f)\n",
                     self->original_message_count, self->real_message_count, ratio);
+        }
     }
 
 #ifdef CORE_DEBUGGER_ASSERT_ENABLED
