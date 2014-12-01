@@ -116,6 +116,10 @@ void biosal_unitig_manager_receive(struct thorium_actor *self, struct thorium_me
     int argc;
     char **argv;
     char *path;
+    int i;
+    int size;
+    int stride;
+    int visitor;
 
     tag = thorium_message_action(message);
     source = thorium_message_source(message);
@@ -248,6 +252,25 @@ void biosal_unitig_manager_receive(struct thorium_actor *self, struct thorium_me
         concrete_self->completed = 0;
         thorium_actor_send_range_vector(self, &concrete_self->visitors,
                         ACTION_START, &concrete_self->graph_stores);
+
+        /*
+         * Also, enable the verbose mode for one visitor on each node.
+         */
+
+        stride = thorium_actor_node_worker_count(self);
+        stride *= concrete_self->visitor_count_per_worker;
+        size = core_vector_size(&concrete_self->visitors);
+
+        CORE_DEBUGGER_ASSERT(size % stride == 0);
+
+        i = 0;
+        while (i < size) {
+            visitor = core_vector_at_as_int(&concrete_self->visitors, i);
+
+            thorium_actor_send_empty(self, visitor,
+                            ACTION_ENABLE_VERBOSE_MODE);
+            i += stride;
+        }
 
     } else if (tag == ACTION_START_REPLY && concrete_self->state == STATE_VISITORS) {
 
