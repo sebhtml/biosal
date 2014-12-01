@@ -56,6 +56,8 @@ struct biosal_unitig_visitor {
      */
 
     int last_visited_count;
+    int last_received_message_count;
+    int last_sent_message_count;
     uint64_t last_second_count;
 
     int verbose;

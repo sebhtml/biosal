@@ -72,6 +72,8 @@ void biosal_unitig_visitor_init(struct thorium_actor *self)
 
     concrete_self->last_second_count = thorium_actor_get_time_in_seconds(self);
     concrete_self->last_visited_count = concrete_self->visited_vertices;
+    concrete_self->last_received_message_count = 0;
+    concrete_self->last_sent_message_count = 0;
 
     concrete_self->vertices_with_unitig_flag = 0;
 
@@ -252,6 +254,10 @@ void biosal_unitig_visitor_execute(struct thorium_actor *self)
     int code;
     int expected_code;
     float velocity;
+    float inbound_velocity;
+    float outbound_velocity;
+    int received_message_count;
+    int sent_message_count;
     uint64_t current_time;
     int delta;
     char *new_buffer;
@@ -430,15 +436,28 @@ void biosal_unitig_visitor_execute(struct thorium_actor *self)
             if (delta >= 4) {
 
                 velocity = (concrete_self->visited_vertices - concrete_self->last_visited_count + 0.0);
-
                 velocity /= delta;
 
-                printf("%s/%d visited %d vertices so far (velocity: %f vertices / s)\n",
+                received_message_count = thorium_actor_get_counter_value(self, CORE_COUNTER_RECEIVED_MESSAGES);
+                inbound_velocity = received_message_count;
+                inbound_velocity -= concrete_self->last_received_message_count;
+                inbound_velocity /= delta;
+
+                sent_message_count = thorium_actor_get_counter_value(self, CORE_COUNTER_SENT_MESSAGES);
+                outbound_velocity = sent_message_count;
+                outbound_velocity -= concrete_self->last_sent_message_count;
+                outbound_velocity /= delta;
+
+                printf("%s/%d visited %d vertices so far. velocity: %f vertices / s,"
+                               " %f received messages / s, %f sent messages / s\n",
                             thorium_actor_script_name(self), thorium_actor_name(self),
-                            concrete_self->visited_vertices, velocity);
+                            concrete_self->visited_vertices, velocity,
+                            inbound_velocity, outbound_velocity);
 
                 concrete_self->last_second_count = current_time;
                 concrete_self->last_visited_count = concrete_self->visited_vertices;
+                concrete_self->last_received_message_count = received_message_count;
+                concrete_self->last_sent_message_count = sent_message_count;
             }
         }
 
