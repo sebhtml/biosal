@@ -3104,6 +3104,8 @@ void thorium_node_print_information(struct thorium_node *self)
     time_t current_time;
     int delta;
     int period;
+    float inbound_throughput;
+    float outbound_throughput;
 
     current_time = time(NULL);
     delta = current_time - self->last_report_time;
@@ -3141,11 +3143,23 @@ void thorium_node_print_information(struct thorium_node *self)
     sent_message_count =
                     core_counter_get(&self->counter, CORE_COUNTER_SENT_MESSAGES);
 
+    inbound_throughput = received_message_count;
+    inbound_throughput -= self->counter_last_received_message_count;
+    inbound_throughput /= delta;
+
+    outbound_throughput = sent_message_count;
+    outbound_throughput -= self->counter_last_sent_message_count;
+    outbound_throughput /= delta;
+
     printf("[thorium] node %d MESSAGE_TRANSPORT ReceivedMessageCount: %" PRIu64 ""
-                    " SentMessageCount: %" PRIu64 "\n",
+                    " SentMessageCount: %" PRIu64 ""
+                    " InboundThroughput: %f messages / s OutboundThroughput: %f messages / s"
+                    "\n",
                     self->name,
                     received_message_count,
-                    sent_message_count);
+                    sent_message_count,
+                    inbound_throughput,
+                    outbound_throughput);
 
     printf("[thorium] node %d MESSAGE_QUEUES "
                     "Tick: %d "
