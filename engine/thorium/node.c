@@ -2246,7 +2246,6 @@ static void thorium_node_run_loop(struct thorium_node *node)
 
 #ifdef THORIUM_NODE_ENABLE_INSTRUMENTATION
     int period;
-    time_t current_time;
     char print_information = 0;
 
     if (CORE_BITMAP_GET_BIT(node->flags, FLAG_PRINT_THORIUM_DATA)
@@ -2278,22 +2277,8 @@ static void thorium_node_run_loop(struct thorium_node *node)
 
 #ifdef THORIUM_NODE_ENABLE_INSTRUMENTATION
         if (print_information) {
-            current_time = time(NULL);
 
-            if (current_time - node->last_report_time >= period) {
-                if (CORE_BITMAP_GET_BIT(node->flags, FLAG_PRINT_THORIUM_DATA)) {
-
-                    thorium_node_print_information(node);
-                }
-
-#ifdef THORIUM_NODE_USE_COUNTERS
-                if (CORE_BITMAP_GET_BIT(node->flags, FLAG_PRINT_COUNTERS)) {
-                    thorium_node_print_counters(node);
-                }
-#endif
-
-                node->last_report_time = current_time;
-            }
+            thorium_node_print_information(node);
         }
 #endif
         CORE_DEBUGGER_JITTER_DETECTION_END(node_print, 0);
@@ -3116,6 +3101,27 @@ void thorium_node_print_information(struct thorium_node *self)
 {
     uint64_t received_message_count;
     uint64_t sent_message_count;
+    time_t current_time;
+    int delta;
+    int period;
+
+    current_time = time(NULL);
+    delta = current_time - self->last_report_time;
+    period = THORIUM_NODE_LOAD_PERIOD;
+
+    if (delta < period) {
+        return;
+    }
+
+    if (!CORE_BITMAP_GET_BIT(self->flags, FLAG_PRINT_THORIUM_DATA)) {
+        return;
+    }
+
+#ifdef THORIUM_NODE_USE_COUNTERS
+    if (CORE_BITMAP_GET_BIT(self->flags, FLAG_PRINT_COUNTERS)) {
+        thorium_node_print_counters(self);
+    }
+#endif
 
     thorium_worker_pool_print_load(&self->worker_pool, THORIUM_WORKER_POOL_LOAD_EPOCH);
 
@@ -3154,6 +3160,11 @@ void thorium_node_print_information(struct thorium_node *self)
                     thorium_transport_get_active_request_count(&self->transport)
           );
 
+    /*
+     * Update state.
+     */
     self->counter_last_received_message_count = received_message_count;
     self->counter_last_sent_message_count = sent_message_count;
+
+    self->last_report_time = current_time;
 }
