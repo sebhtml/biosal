@@ -457,15 +457,15 @@ void thorium_worker_destroy(struct thorium_worker *worker)
     core_map_iterator_destroy(&worker->actor_iterator);
     core_set_destroy(&worker->evicted_actors);
 
-    worker->node = NULL;
-
-    worker->name = -1;
     CORE_BITMAP_SET_BIT(worker->flags, FLAG_DEAD);
 
     thorium_priority_assigner_destroy(&worker->assigner);
 
     thorium_message_multiplexer_destroy(&worker->multiplexer);
     thorium_multiplexer_policy_destroy(&worker->multiplexer_policy);
+
+    worker->node = NULL;
+    worker->name = -1;
 
     /*
      * Memory pools must be destroyed after everything else
