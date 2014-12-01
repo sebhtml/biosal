@@ -583,6 +583,9 @@ void thorium_node_init(struct thorium_node *node, int *argc, char ***argv)
     core_queue_init(&node->outbound_message_queue, sizeof(struct thorium_message));
     core_queue_set_memory_pool(&node->outbound_message_queue,
                     &node->outbound_message_memory_pool);
+
+    node->counter_last_received_message_count = 0;
+    node->counter_last_sent_message_count = 0;
 }
 
 void thorium_node_destroy(struct thorium_node *node)
@@ -3098,6 +3101,9 @@ int thorium_node_check_clutter(struct thorium_node *self,
 
 void thorium_node_print_information(struct thorium_node *self)
 {
+    uint64_t received_message_count;
+    uint64_t sent_message_count;
+
     thorium_worker_pool_print_load(&self->worker_pool, THORIUM_WORKER_POOL_LOAD_EPOCH);
 
     /* Display the number of actors,
@@ -3111,6 +3117,11 @@ void thorium_node_print_information(struct thorium_node *self)
                     core_memory_get_utilized_byte_count(),
                     core_memory_get_total_byte_count());
 
+    received_message_count =
+                    core_counter_get(&self->counter, CORE_COUNTER_RECEIVED_MESSAGES);
+    sent_message_count =
+                    core_counter_get(&self->counter, CORE_COUNTER_SENT_MESSAGES);
+
     printf("thorium_node: node/%d MESSAGES"
                     " Tick: %d "
                     " ReceivedMessageCount: %" PRIu64 ""
@@ -3121,10 +3132,13 @@ void thorium_node_print_information(struct thorium_node *self)
                     "\n",
                     self->name,
                     self->tick,
-                    core_counter_get(&self->counter, CORE_COUNTER_RECEIVED_MESSAGES),
-                    core_counter_get(&self->counter, CORE_COUNTER_SENT_MESSAGES),
+                    received_message_count,
+                    sent_message_count,
                     thorium_worker_pool_buffered_message_count(&self->worker_pool),
                     thorium_worker_pool_outbound_ring_size(&self->worker_pool),
                     thorium_transport_get_active_request_count(&self->transport)
-                    );
+          );
+
+    self->counter_last_received_message_count = received_message_count;
+    self->counter_last_sent_message_count = sent_message_count;
 }

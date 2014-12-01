@@ -220,6 +220,9 @@ struct thorium_node {
     struct core_counter counter;
 #endif
 
+    int counter_last_received_message_count;
+    int counter_last_sent_message_count;
+
     /*
      * Requires -D_POSIX_C_SOURCE=200112L
      */
