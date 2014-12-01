@@ -157,7 +157,7 @@ void thorium_message_multiplexer_destroy(struct thorium_message_multiplexer *sel
              * @see http://ww2.cityofpasadena.net/councilagendas/2007%20agendas/feb_26_07/pasadena%20traffic%20reduction%20strategies%2011-20-06%20draft.pdf
              */
             printf("[thorium] node %d worker %d message_multiplexer:"
-                            " original_message_count %d real_message_count %d (traffic reduction: %.2f%)\n",
+                            " original_message_count %d real_message_count %d (traffic reduction: %.2f%%)\n",
                             thorium_node_name(self->node), thorium_worker_name(self->worker),
                     self->original_message_count, self->real_message_count, (1.0 - ratio) * 100);
         }
@@ -235,15 +235,12 @@ int thorium_message_multiplexer_multiplex(struct thorium_message_multiplexer *se
     struct thorium_multiplexed_buffer *real_multiplexed_buffer;
     uint64_t time;
 
-    ++self->original_message_count;
-
 #ifdef DEBUG_MULTIPLEXER
     printf("multiplex\n");
     thorium_message_print(message);
 #endif
 
     if (CORE_BITMAP_GET_BIT(self->flags, FLAG_DISABLED)) {
-        ++self->real_message_count;
         return 0;
     }
 
@@ -256,10 +253,11 @@ int thorium_message_multiplexer_multiplex(struct thorium_message_multiplexer *se
      * Don't multiplex already-multiplexed messages.
      */
     if (thorium_multiplexer_policy_is_action_to_skip(self->policy, action)) {
-        ++self->real_message_count;
         return 0;
     }
 #endif
+
+    ++self->original_message_count;
 
     count = thorium_message_count(message);
 

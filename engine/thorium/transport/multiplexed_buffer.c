@@ -78,6 +78,9 @@ void thorium_multiplexed_buffer_init(struct thorium_multiplexed_buffer *self,
 
     self->profile_start = 0;
     self->profile_actor_message_count = 0;
+
+    self->counter_original_message_count = 0;
+    self->counter_real_message_count = 0;
 }
 
 void thorium_multiplexed_buffer_destroy(struct thorium_multiplexed_buffer *self)
@@ -118,6 +121,8 @@ void thorium_multiplexed_buffer_append(struct thorium_multiplexed_buffer *self,
     void *multiplexed_buffer;
     void *destination_in_buffer;
     int required_size;
+
+    ++self->counter_original_message_count;
 
     CORE_DEBUGGER_ASSERT(self->buffer_ != NULL);
 
@@ -176,6 +181,11 @@ void thorium_multiplexed_buffer_reset(struct thorium_multiplexed_buffer *self)
     self->timestamp_ = 0;
 
     self->buffer_ = NULL;
+
+    /*
+     * Assume that this generated a network message.
+     */
+    ++self->counter_real_message_count;
 }
 
 void thorium_multiplexed_buffer_set_buffer(struct thorium_multiplexed_buffer *self,

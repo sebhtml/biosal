@@ -30,6 +30,9 @@ struct thorium_multiplexed_buffer {
     int prediction_message_count[PREDICTION_EVENT_COUNT];
     int prediction_buffer_sizes[PREDICTION_EVENT_COUNT];
 #endif
+
+    int counter_original_message_count;
+    int counter_real_message_count;
 };
 
 void thorium_multiplexed_buffer_init(struct thorium_multiplexed_buffer *self,
