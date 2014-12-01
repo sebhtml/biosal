@@ -45,6 +45,8 @@
  */
 void thorium_message_multiplexer_flush(struct thorium_message_multiplexer *self, int index, int force);
 
+void thorium_message_multiplexer_print_traffic_reduction(struct thorium_message_multiplexer *self);
+
 void thorium_message_multiplexer_init(struct thorium_message_multiplexer *self,
                 struct thorium_node *node, struct thorium_multiplexer_policy *policy)
 {
@@ -160,6 +162,8 @@ void thorium_message_multiplexer_destroy(struct thorium_message_multiplexer *sel
                             " original_message_count %d real_message_count %d (traffic reduction: %.2f%%)\n",
                             thorium_node_name(self->node), thorium_worker_name(self->worker),
                     self->original_message_count, self->real_message_count, (1.0 - ratio) * 100);
+
+            thorium_message_multiplexer_print_traffic_reduction(self);
         }
     }
 
@@ -802,3 +806,43 @@ int thorium_message_multiplexer_message_should_be_multiplexed(struct thorium_mes
 
     return buffer_size <= threshold;
 }
+
+void thorium_message_multiplexer_print_traffic_reduction(struct thorium_message_multiplexer *self)
+{
+    char buffer[1024];
+    int position;
+    int i;
+    int size;
+    struct thorium_multiplexed_buffer *multiplexed_buffer;
+    int original_message_count;
+    int real_message_count;
+    float reduction;
+    
+    position = 0;
+
+    position += sprintf(buffer + position, "[thorium] node %d worker %d multiplexer channels",
+                    thorium_node_name(self->node), thorium_worker_name(self->worker));
+
+    size = core_vector_size(&self->buffers);
+    for (i = 0; i < size; ++i) {
+        multiplexed_buffer = core_vector_at(&self->buffers, i);
+
+        original_message_count = thorium_multiplexed_buffer_original_message_count(multiplexed_buffer);
+        real_message_count = thorium_multiplexed_buffer_real_message_count(multiplexed_buffer);
+
+        if (original_message_count == 0)
+            continue;
+
+        reduction = (0.0 + original_message_count - real_message_count) / original_message_count;
+        reduction *= 100.0;
+
+        position += sprintf(buffer + position, " [%d: %d %d %.2f%%]",
+                        i, original_message_count, real_message_count,
+                        reduction);
+    }
+
+    position += sprintf(buffer + position, "\n");
+
+    printf("%s", buffer);
+}
+

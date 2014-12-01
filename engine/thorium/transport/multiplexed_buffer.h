@@ -62,4 +62,7 @@ void thorium_multiplexed_buffer_reset(struct thorium_multiplexed_buffer *self);
 
 int thorium_multiplexed_buffer_timeout(struct thorium_multiplexed_buffer *self);
 
+int thorium_multiplexed_buffer_original_message_count(struct thorium_multiplexed_buffer *self);
+int thorium_multiplexed_buffer_real_message_count(struct thorium_multiplexed_buffer *self);
+
 #endif
