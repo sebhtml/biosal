@@ -327,6 +327,12 @@ void thorium_node_init(struct thorium_node *node, int *argc, char ***argv)
     node->name = thorium_transport_get_rank(&node->transport);
     node->nodes = thorium_transport_get_size(&node->transport);
 
+    /*
+     * To open the log file with -freopen-stdout, the rank identifier
+     * is required. Therefore, anything written before that
+     * will appear in the standard output stream that was in use
+     * before the call to freopen.
+     */
     thorium_node_open_log_file(node);
 
     /*
@@ -600,8 +606,6 @@ void thorium_node_destroy(struct thorium_node *node)
     thorium_tracepoint_session_destroy(node->name, node->tick);
 #endif
 
-    thorium_node_close_log_file(node);
-
     /*
      * Print the report if requested.
      */
@@ -673,6 +677,12 @@ void thorium_node_destroy(struct thorium_node *node)
     core_memory_pool_destroy(&node->actor_memory_pool);
     core_memory_pool_destroy(&node->inbound_message_memory_pool);
     core_memory_pool_destroy(&node->outbound_message_memory_pool);
+
+    /*
+     * Close the log file at the end so that nothing is
+     * discarded.
+     */
+    thorium_node_close_log_file(node);
 }
 
 int thorium_node_threads_from_string(struct thorium_node *node,
