@@ -239,6 +239,9 @@ void thorium_actor_init(struct thorium_actor *self, void *concrete_actor,
     thorium_actor_set_assigned_worker(self, THORIUM_WORKER_NONE);
 
     self->random_seed = self->name;
+
+    self->counter_received_message_count = 0;
+    self->counter_sent_message_count = 0;
 }
 
 void thorium_actor_destroy(struct thorium_actor *self)
@@ -497,6 +500,8 @@ void thorium_actor_send(struct thorium_actor *self, int name, struct thorium_mes
      */
     if (name == THORIUM_ACTOR_NOBODY)
         return;
+
+    ++self->counter_sent_message_count;
 
     /*
      * Assign a number to the message.
@@ -1108,6 +1113,8 @@ void thorium_actor_receive(struct thorium_actor *self, struct thorium_message *m
     uint64_t consumed_virtual_runtime;
 
     tracepoint(thorium_message, actor_receive, message);
+
+    ++self->counter_received_message_count;
 
     /* thorium_actor:receive_enter */
     tracepoint(thorium_actor, receive_enter, self, message);
@@ -2433,4 +2440,15 @@ int thorium_actor_multiplexer_is_enabled(struct thorium_actor *self)
 struct core_memory_pool *thorium_actor_get_persistent_memory_pool(struct thorium_actor *self)
 {
     return &self->concrete_memory_pool;
+}
+
+int thorium_actor_get_counter_value(struct thorium_actor *self, int field)
+{
+    if (field == CORE_COUNTER_RECEIVED_MESSAGES)
+        return self->counter_received_message_count;
+
+    if (field == CORE_COUNTER_SENT_MESSAGES)
+        return self->counter_sent_message_count;
+
+    return 0;
 }

@@ -321,6 +321,9 @@ struct thorium_actor {
     int message_number;
 
     unsigned int random_seed;
+
+    int counter_received_message_count;
+    int counter_sent_message_count;
 };
 
 void thorium_actor_init(struct thorium_actor *self, void *state,
@@ -458,5 +461,7 @@ void thorium_actor_set_assigned_worker(struct thorium_actor *self, int worker);
 
 int thorium_actor_get_random_number(struct thorium_actor *self);
 int thorium_actor_multiplexer_is_enabled(struct thorium_actor *self);
+
+int thorium_actor_get_counter_value(struct thorium_actor *self, int field);
 
 #endif
