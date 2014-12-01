@@ -203,6 +203,7 @@ void thorium_node_close_log_file(struct thorium_node *self);
 void thorium_node_send_queued_message(struct thorium_node *self);
 int thorium_node_check_clutter(struct thorium_node *self,
                 struct thorium_message *message);
+void thorium_node_print_information(struct thorium_node *self);
 
 void thorium_node_init(struct thorium_node *node, int *argc, char ***argv)
 {
@@ -2266,35 +2267,7 @@ static void thorium_node_run_loop(struct thorium_node *node)
             if (current_time - node->last_report_time >= period) {
                 if (CORE_BITMAP_GET_BIT(node->flags, FLAG_PRINT_LOAD)) {
 
-                    thorium_worker_pool_print_load(&node->worker_pool, THORIUM_WORKER_POOL_LOAD_EPOCH);
-
-                    /* Display the number of actors,
-                     * the number of active buffers/requests/messages,
-                     * and
-                     * the heap size.
-                     */
-                    printf("thorium_node: node/%d METRICS AliveActorCount: %d ByteCount: %" PRIu64 " / %" PRIu64 "\n",
-                                    node->name,
-                                    node->alive_actors,
-                                    core_memory_get_utilized_byte_count(),
-                                    core_memory_get_total_byte_count());
-
-                    printf("thorium_node: node/%d MESSAGES"
-                                    " Tick: %d "
-                                    " ReceivedMessageCount: %" PRIu64 ""
-                                    " SentMessageCount: %" PRIu64 ""
-                                    " BufferedInboundMessageCount: %d"
-                                    " BufferedOutboundMessageCount: %d"
-                                    " ActiveRequestCount: %d"
-                                    "\n",
-                                    node->name,
-                                    node->tick,
-                                    core_counter_get(&node->counter, CORE_COUNTER_RECEIVED_MESSAGES),
-                                    core_counter_get(&node->counter, CORE_COUNTER_SENT_MESSAGES),
-                                    thorium_worker_pool_buffered_message_count(&node->worker_pool),
-                                    thorium_worker_pool_outbound_ring_size(&node->worker_pool),
-                                    thorium_transport_get_active_request_count(&node->transport)
-                                    );
+                    thorium_node_print_information(node);
                 }
 
 #ifdef THORIUM_NODE_USE_COUNTERS
@@ -3121,4 +3094,37 @@ int thorium_node_check_clutter(struct thorium_node *self,
 
     return 0;
 #endif
+}
+
+void thorium_node_print_information(struct thorium_node *self)
+{
+    thorium_worker_pool_print_load(&self->worker_pool, THORIUM_WORKER_POOL_LOAD_EPOCH);
+
+    /* Display the number of actors,
+     * the number of active buffers/requests/messages,
+     * and
+     * the heap size.
+     */
+    printf("thorium_node: node/%d METRICS AliveActorCount: %d ByteCount: %" PRIu64 " / %" PRIu64 "\n",
+                    self->name,
+                    self->alive_actors,
+                    core_memory_get_utilized_byte_count(),
+                    core_memory_get_total_byte_count());
+
+    printf("thorium_node: node/%d MESSAGES"
+                    " Tick: %d "
+                    " ReceivedMessageCount: %" PRIu64 ""
+                    " SentMessageCount: %" PRIu64 ""
+                    " BufferedInboundMessageCount: %d"
+                    " BufferedOutboundMessageCount: %d"
+                    " ActiveRequestCount: %d"
+                    "\n",
+                    self->name,
+                    self->tick,
+                    core_counter_get(&self->counter, CORE_COUNTER_RECEIVED_MESSAGES),
+                    core_counter_get(&self->counter, CORE_COUNTER_SENT_MESSAGES),
+                    thorium_worker_pool_buffered_message_count(&self->worker_pool),
+                    thorium_worker_pool_outbound_ring_size(&self->worker_pool),
+                    thorium_transport_get_active_request_count(&self->transport)
+                    );
 }
