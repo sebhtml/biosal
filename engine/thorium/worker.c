@@ -240,7 +240,7 @@ void thorium_worker_init(struct thorium_worker *worker, int name, struct thorium
     thorium_scheduler_init(&worker->scheduler, thorium_node_name(worker->node),
                     worker->name);
 
-    if (thorium_node_must_print_load(worker->node)) {
+    if (thorium_node_must_print_data(worker->node)) {
         thorium_scheduler_print_type(&worker->scheduler);
     }
 

@@ -884,7 +884,7 @@ void argonnite_help(struct thorium_actor *actor)
                     BIOSAL_DEFAULT_KMER_LENGTH);
     printf("-o output                           output directory (default: %s)\n",
                     BIOSAL_DEFAULT_OUTPUT);
-    printf("-print-load                         display load, memory usage, actor count, active requests\n");
+    printf("-print-thorium-data                         display load, memory usage, actor count, active requests\n");
     printf("-print-counters                     print node-level biosal counters\n");
     printf("\n");
 

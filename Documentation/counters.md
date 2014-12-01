@@ -37,7 +37,7 @@ BSAL_COUNTER_SENT_BYTES 84
 
 # Processor load
 
--print-load
+-print-thorium-data
 
 
 # Actor load profiler

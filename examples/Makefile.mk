@@ -76,44 +76,44 @@ examples/example_migration: $(EXAMPLE_MIGRATION) $(LIBRARY_OBJECTS)
 	$(Q)$(CC) $(CFLAGS) $^ -o $@ $(LDFLAGS) $(CONFIG_LDFLAGS)
 
 ring: examples/example_ring
-	mpiexec -n 2 $< -threads-per-node 8 -print-load
+	mpiexec -n 2 $< -threads-per-node 8 -print-thorium-data
 
 mock: examples/example_mock
-	mpiexec -n 3 $< -threads-per-node 7 -print-load
+	mpiexec -n 3 $< -threads-per-node 7 -print-thorium-data
 
 mock1: examples/example_mock
-	mpiexec -n 3 $< -print-load -threads-per-node 1
+	mpiexec -n 3 $< -print-thorium-data -threads-per-node 1
 
 reader: examples/example_reader
-	mpiexec -n 2 $< -threads-per-node 13 -read ~/dropbox/GPIC.1424-1.1371.fastq -print-load
+	mpiexec -n 2 $< -threads-per-node 13 -read ~/dropbox/GPIC.1424-1.1371.fastq -print-thorium-data
 
 synchronize: examples/example_synchronize
-	mpiexec -n 3 $< -threads-per-node 9 -print-load
+	mpiexec -n 3 $< -threads-per-node 9 -print-thorium-data
 
 controller: examples/example_controller
-	mpiexec -n 3 $< -threads-per-node 9 ~/dropbox/GPIC.1424-1.1371.fastq -print-load
+	mpiexec -n 3 $< -threads-per-node 9 ~/dropbox/GPIC.1424-1.1371.fastq -print-thorium-data
 
 mini: examples/example_controller
-	mpiexec -n 3 $< -threads-per-node 9 ~/mini.fastq -print-load
+	mpiexec -n 3 $< -threads-per-node 9 ~/mini.fastq -print-thorium-data
 
 void_controller: examples/example_controller
-	mpiexec -n 3 $< -threads-per-node 9 void.fastq -print-load
+	mpiexec -n 3 $< -threads-per-node 9 void.fastq -print-thorium-data
 
 remote_spawn: examples/example_remote_spawn
-	mpiexec -n 6 $< -threads-per-node 1,2,3 -print-load
+	mpiexec -n 6 $< -threads-per-node 1,2,3 -print-thorium-data
 
 not_found: examples/example_reader
-	mpiexec -n 3 $< -threads-per-node 7 -read void.fastq -print-load
+	mpiexec -n 3 $< -threads-per-node 7 -read void.fastq -print-thorium-data
 
 hello_world: examples/example_hello_world
-	mpiexec -n 3 $< -threads-per-node 5 -print-load
+	mpiexec -n 3 $< -threads-per-node 5 -print-thorium-data
 
 systolic: examples/example_systolic
-	mpiexec -n 3 $< -threads-per-node 5 -print-load
+	mpiexec -n 3 $< -threads-per-node 5 -print-thorium-data
 
 clone: examples/example_clone
-	mpiexec -n 3 $< -threads-per-node 5 -print-load
+	mpiexec -n 3 $< -threads-per-node 5 -print-thorium-data
 
 migration: examples/example_migration
-	mpiexec -n 3 $< -threads-per-node 5 -print-load
+	mpiexec -n 3 $< -threads-per-node 5 -print-thorium-data
 

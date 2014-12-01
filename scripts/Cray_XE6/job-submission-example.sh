@@ -17,6 +17,6 @@ export MPICH_MAX_THREAD_SAFETY=multiple
 # -r 1 tells aprun to use 1 core for specialization
 # The nemesis engine in MPI will then be able to use that.
 aprun -n 256 -N 1 -d 23 -r 1 \
-              spate -threads-per-node 23 -print-load \
+              spate -threads-per-node 23 -print-thorium-data \
               -k 43 Iowa_Continuous_Corn/*.fastq -o spate-work-stealing-607-256x24-10 > spate-work-stealing-607-256x24-10.stdout
 

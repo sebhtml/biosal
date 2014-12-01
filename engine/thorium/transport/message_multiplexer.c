@@ -140,7 +140,7 @@ void thorium_message_multiplexer_destroy(struct thorium_message_multiplexer *sel
     struct thorium_multiplexed_buffer *multiplexed_buffer;
     float ratio;
 
-    if (thorium_node_must_print_load(self->node)) {
+    if (thorium_node_must_print_data(self->node)) {
 
         ratio = 0.0;
 
@@ -772,7 +772,7 @@ void thorium_message_multiplexer_set_worker(struct thorium_message_multiplexer *
 #endif
 
     if (thorium_node_name(self->node) == 0 && thorium_worker_name(self->worker) == 0
-                    && thorium_node_must_print_load(self->node)) {
+                    && thorium_node_must_print_data(self->node)) {
         printf("[thorium] thorium_message_multiplexer: disabled=%d buffer_size_in_bytes=%d timeout_in_nanoseconds=%d\n",
                             CORE_BITMAP_GET_BIT(self->flags, FLAG_DISABLED),
                         self->buffer_size_in_bytes, self->timeout_in_nanoseconds);
