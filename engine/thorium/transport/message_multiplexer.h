@@ -53,7 +53,7 @@ struct thorium_message;
  */
 
 /*
- * A message multiplerxser.
+ * A message multiplexer.
  * The 2 options are:
  *
  * buffer_size_in_bytes
@@ -129,5 +129,8 @@ void thorium_message_multiplexer_set_worker(struct thorium_message_multiplexer *
                 struct thorium_worker *worker);
 int thorium_message_multiplexer_message_should_be_multiplexed(struct thorium_message_multiplexer *self,
                 struct thorium_message *message);
+
+int thorium_message_multiplexer_get_original_message_count(struct thorium_message_multiplexer *self);
+int thorium_message_multiplexer_get_real_message_count(struct thorium_message_multiplexer *self);
 
 #endif

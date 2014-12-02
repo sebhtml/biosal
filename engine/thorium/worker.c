@@ -381,6 +381,9 @@ void thorium_worker_init(struct thorium_worker *worker, int name, struct thorium
     worker->profile_start = 0;
 
     CORE_BITMAP_CLEAR_BIT(worker->flags, FLAG_USE_MULTIPLEXER);
+
+    worker->counter_last_original_message_count = 0;
+    worker->counter_last_real_message_count = 0;
 }
 
 void thorium_worker_destroy(struct thorium_worker *worker)
@@ -2588,4 +2591,39 @@ struct core_memory_pool *thorium_worker_get_memory_pool(struct thorium_worker *s
         return &self->ephemeral_memory;
 
     return NULL;
+}
+
+float thorium_worker_get_epoch_traffic_reduction(struct thorium_worker *self)
+{
+    int original_message_count;
+    int original_message_count_difference;
+    int real_message_count;
+    int real_message_count_difference;
+    float reduction;
+
+    original_message_count = thorium_message_multiplexer_get_original_message_count(&self->multiplexer);
+    original_message_count_difference = original_message_count - self->counter_last_original_message_count;
+
+    real_message_count = thorium_message_multiplexer_get_real_message_count(&self->multiplexer);
+    real_message_count_difference = real_message_count - self->counter_last_real_message_count;
+
+    reduction = 0.0;
+
+    /*
+     * Avoid a SIGFPE signal.
+     */
+    if (original_message_count_difference > 0) {
+
+        reduction += original_message_count_difference;
+        reduction -= real_message_count_difference;
+        reduction /= (0.0 + original_message_count_difference);
+    }
+
+    /*
+     * Update last status.
+     */
+    self->counter_last_original_message_count = original_message_count;
+    self->counter_last_real_message_count = real_message_count;
+
+    return reduction;
 }

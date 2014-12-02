@@ -817,7 +817,7 @@ void thorium_message_multiplexer_print_traffic_reduction(struct thorium_message_
     int original_message_count;
     int real_message_count;
     float reduction;
-    
+
     position = 0;
 
     position += sprintf(buffer + position, "[thorium] node %d worker %d multiplexer channels",
@@ -846,3 +846,12 @@ void thorium_message_multiplexer_print_traffic_reduction(struct thorium_message_
     printf("%s", buffer);
 }
 
+int thorium_message_multiplexer_get_original_message_count(struct thorium_message_multiplexer *self)
+{
+    return self->original_message_count;
+}
+
+int thorium_message_multiplexer_get_real_message_count(struct thorium_message_multiplexer *self)
+{
+    return self->real_message_count;
+}
