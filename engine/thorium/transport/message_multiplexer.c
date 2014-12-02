@@ -378,6 +378,9 @@ int thorium_message_multiplexer_multiplex(struct thorium_message_multiplexer *se
 
     thorium_multiplexed_buffer_append(real_multiplexed_buffer, count, buffer, time);
 
+    /*
+     * Try to flush. This only flushes something if the buffer is full.
+     */
     thorium_message_multiplexer_flush(self, destination_node, FORCE_NO);
 
     /*
@@ -556,6 +559,14 @@ void thorium_message_multiplexer_test(struct thorium_message_multiplexer *self)
         return;
     }
 #endif
+
+    /*
+     * Don't flush anything if the outbound ring is full,
+     * which means there is congestion.
+     */
+    if (thorium_worker_has_congestion(self->worker)) {
+        return;
+    }
 
 #ifdef DEBUG_MULTIPLEXER_TEST
     if (size >= DEBUG_MINIMUM_COUNT)

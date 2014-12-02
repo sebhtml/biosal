@@ -2627,3 +2627,15 @@ float thorium_worker_get_epoch_traffic_reduction(struct thorium_worker *self)
 
     return reduction;
 }
+
+int thorium_worker_has_congestion(struct thorium_worker *self)
+{
+    int size;
+    int threshold;
+
+    size = core_fast_ring_size_from_producer(self->output_outbound_message_ring_multiple);
+    threshold = core_fast_ring_capacity(self->output_outbound_message_ring_multiple);
+    threshold /= 4;
+
+    return size >= threshold;
+}

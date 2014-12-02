@@ -335,4 +335,6 @@ struct core_memory_pool *thorium_worker_get_memory_pool(struct thorium_worker *s
 
 float thorium_worker_get_epoch_traffic_reduction(struct thorium_worker *self);
 
+int thorium_worker_has_congestion(struct thorium_worker *self);
+
 #endif
