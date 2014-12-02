@@ -1,8 +1,11 @@
 #!/bin/bash
 #PBS -N __JOB__
-#PBS -A CI-DEB000002
+#PBS -A m1523
 #PBS -l walltime=3:00:00
 #PBS -l mppwidth=6144
+#PBS -q regular
+
+# 256 * 24 = 6144
 
 cd $PBS_O_WORKDIR
 export MPICH_NEMESIS_ASYNC_PROGRESS=1
