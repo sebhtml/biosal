@@ -455,20 +455,24 @@ void thorium_worker_pool_print_load(struct thorium_worker_pool *self, int type)
                     description, elapsed,
                     sum, count, load, buffer);
 
-    printf("[thorium] node %d %s FUTURE_TIMELINE %d s %s\n",
+    if (type == THORIUM_WORKER_POOL_LOAD_EPOCH) {
+        printf("[thorium] node %d %s FUTURE_TIMELINE %d s %s\n",
                     node_name,
                     description, elapsed,
                     buffer_for_future_timeline);
+    }
 
     printf("[thorium] node %d %s WAKE_UP_COUNT %d s %s\n",
                     node_name,
                     description, elapsed,
                     buffer_for_wake_up_events);
 
-    printf("[thorium] node %d %s TRAFFIC_REDUCTION %d s %s\n",
+    if (type == THORIUM_WORKER_POOL_LOAD_EPOCH) {
+        printf("[thorium] node %d %s TRAFFIC_REDUCTION %d s %s\n",
                     node_name,
                     description, elapsed,
                     buffer_for_traffic_reduction);
+    }
 
     core_memory_free(buffer, MEMORY_WORKER_POOL_KEY);
     core_memory_free(buffer_for_wake_up_events, MEMORY_WORKER_POOL_KEY);
