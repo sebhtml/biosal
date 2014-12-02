@@ -6,8 +6,8 @@ branch=master
 dataset=/projects/CompBIO/Datasets/Great_Prairie/Iowa_Continuous_Corn/
 
 __APP__=spate
-__JOB__=$__APP__-$(date +%Y-%m-%d-%H-%M-%S)
 __SAMPLE__=$(basename $dataset)
+__JOB__=$__APP__-$__SAMPLE__-$(date +%Y-%m-%d-%H-%M-%S)
 
 if ! test -e $root
 then

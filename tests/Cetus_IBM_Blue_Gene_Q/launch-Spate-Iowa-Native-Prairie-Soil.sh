@@ -6,8 +6,8 @@ branch=master
 dataset=/gpfs/mira-fs1/projects/CompBIO/Datasets/JGI/Great_Prairie_Soil_Metagenome_Grand_Challenge/Datasets/Iowa_Native_Prairie_Soil
 
 __APP__=spate
-__JOB__=$__APP__-$(date +%Y-%m-%d-%H-%M-%S)
 __SAMPLE__=$(basename $dataset)
+__JOB__=$__APP__-$__SAMPLE__-$(date +%Y-%m-%d-%H-%M-%S)
 
 if ! test -e $root
 then
