@@ -3104,8 +3104,8 @@ void thorium_node_print_information(struct thorium_node *self)
     time_t current_time;
     int delta;
     int period;
-    float inbound_throughput;
-    float outbound_throughput;
+    double inbound_throughput;
+    double outbound_throughput;
 
     current_time = time(NULL);
     delta = current_time - self->last_report_time;
