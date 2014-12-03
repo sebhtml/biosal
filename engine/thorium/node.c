@@ -3162,7 +3162,7 @@ void thorium_node_print_information(struct thorium_node *self)
                     outbound_throughput);
 
     printf("[thorium] node %d MESSAGE_QUEUES "
-                    "Tick: %d "
+                    "Tick: %" PRIu64 " "
                     "BufferedInboundMessageCount: %d"
                     " BufferedOutboundMessageCount: %d"
                     " ActiveRequestCount: %d"
