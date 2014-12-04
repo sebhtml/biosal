@@ -3166,7 +3166,7 @@ void thorium_node_print_information(struct thorium_node *self)
                     "BufferedInboundMessageCount: %d"
                     " BufferedOutboundMessageCountInRing: %d"
                     " BufferedOutboundMessageCountInQueue: %d"
-                    " ActiveRequestCount: %d"
+                    " MessageCountInTransport: %d"
                     "\n",
                     self->name,
                     self->tick,
