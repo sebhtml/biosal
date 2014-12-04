@@ -2634,8 +2634,12 @@ int thorium_worker_has_congestion(struct thorium_worker *self)
     int threshold;
 
     size = core_fast_ring_size_from_producer(self->output_outbound_message_ring_multiple);
-    threshold = core_fast_ring_capacity(self->output_outbound_message_ring_multiple);
-    threshold /= 4;
+
+    /*
+     * If there are at least 128 messages, declare a congestion state
+     * and return true.
+     */
+    threshold = 128;
 
     return size >= threshold;
 }
