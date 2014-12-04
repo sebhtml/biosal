@@ -2,6 +2,7 @@
 #include "adaptive_actor.h"
 
 #include <engine/thorium/actor.h>
+#include <engine/thorium/configuration.h>
 
 #include <core/system/debugger.h>
 
@@ -64,7 +65,7 @@ int thorium_actor_compute_count_small_messages_and_node_scope(struct thorium_act
      * A lower ratio means more actors.
      * More actors mean more messages.
      */
-    ratio = 0.05;
+    ratio = THORIUM_ACTOR_COUNT_PER_NODE_TO_NODE_COUNT_RATIO;
     node_count = thorium_actor_get_node_count(self);
 
     actor_count = node_count / ratio;
