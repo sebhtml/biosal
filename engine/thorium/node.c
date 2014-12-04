@@ -3127,6 +3127,16 @@ void thorium_node_print_information(struct thorium_node *self)
     }
 #endif
 
+    frequency = self->tick;
+    frequency -= self->last_tick;
+    frequency /= delta;
+
+    printf("[thorium] node %d FREQ "
+                    "Tick: %" PRIu64 " (%f Hz)\n",
+                    self->name,
+                    self->tick,
+                    frequency);
+
     thorium_worker_pool_print_load(&self->worker_pool, THORIUM_WORKER_POOL_LOAD_EPOCH);
 
     /* Display the number of actors,
@@ -3153,10 +3163,6 @@ void thorium_node_print_information(struct thorium_node *self)
     outbound_throughput -= self->counter_last_sent_message_count;
     outbound_throughput /= delta;
 
-    frequency = self->tick;
-    frequency -= self->last_tick;
-    frequency /= delta;
-
     printf("[thorium] node %d MESSAGE_TRANSPORT ReceivedMessageCount: %" PRIu64 ""
                     " SentMessageCount: %" PRIu64 ""
                     " InboundThroughput: %f messages / s OutboundThroughput: %f messages / s"
@@ -3167,16 +3173,14 @@ void thorium_node_print_information(struct thorium_node *self)
                     inbound_throughput,
                     outbound_throughput);
 
-    printf("[thorium] node %d MESSAGE_QUEUES "
-                    "Tick: %" PRIu64 " (%f Hz) "
+    printf("[thorium] node %d SUMMARY "
+                    " MESSAGING "
                     "BufferedInboundMessageCount: %d"
                     " BufferedOutboundMessageCountInRing: %d"
                     " BufferedOutboundMessageCountInQueue: %d"
                     " MessageCountInTransport: %d"
                     "\n",
                     self->name,
-                    self->tick,
-                    frequency,
                     thorium_worker_pool_buffered_message_count(&self->worker_pool),
                     thorium_worker_pool_outbound_ring_size(&self->worker_pool),
                     core_queue_size(&self->outbound_message_queue),
