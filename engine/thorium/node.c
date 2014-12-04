@@ -3164,13 +3164,15 @@ void thorium_node_print_information(struct thorium_node *self)
     printf("[thorium] node %d MESSAGE_QUEUES "
                     "Tick: %" PRIu64 " "
                     "BufferedInboundMessageCount: %d"
-                    " BufferedOutboundMessageCount: %d"
+                    " BufferedOutboundMessageCountInRing: %d"
+                    " BufferedOutboundMessageCountInQueue: %d"
                     " ActiveRequestCount: %d"
                     "\n",
                     self->name,
                     self->tick,
                     thorium_worker_pool_buffered_message_count(&self->worker_pool),
                     thorium_worker_pool_outbound_ring_size(&self->worker_pool),
+                    core_queue_size(&self->outbound_message_queue),
                     thorium_transport_get_active_request_count(&self->transport)
           );
 
