@@ -207,6 +207,7 @@ struct thorium_node {
 
     int name;
     uint64_t tick;
+    uint64_t last_tick;
     int nodes;
     int threads;
 

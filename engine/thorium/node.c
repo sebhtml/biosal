@@ -221,6 +221,7 @@ void thorium_node_init(struct thorium_node *node, int *argc, char ***argv)
     node->argv = *argv;
 
     node->tick = 0;
+    node->last_tick = 0;
 
     node->cached_outbound_ring_size = 0;
 
@@ -3106,6 +3107,7 @@ void thorium_node_print_information(struct thorium_node *self)
     int period;
     double inbound_throughput;
     double outbound_throughput;
+    double frequency;
 
     current_time = time(NULL);
     delta = current_time - self->last_report_time;
@@ -3151,6 +3153,10 @@ void thorium_node_print_information(struct thorium_node *self)
     outbound_throughput -= self->counter_last_sent_message_count;
     outbound_throughput /= delta;
 
+    frequency = self->tick;
+    frequency -= self->last_tick;
+    frequency /= delta;
+
     printf("[thorium] node %d MESSAGE_TRANSPORT ReceivedMessageCount: %" PRIu64 ""
                     " SentMessageCount: %" PRIu64 ""
                     " InboundThroughput: %f messages / s OutboundThroughput: %f messages / s"
@@ -3162,7 +3168,7 @@ void thorium_node_print_information(struct thorium_node *self)
                     outbound_throughput);
 
     printf("[thorium] node %d MESSAGE_QUEUES "
-                    "Tick: %" PRIu64 " "
+                    "Tick: %" PRIu64 " (%f Hz) "
                     "BufferedInboundMessageCount: %d"
                     " BufferedOutboundMessageCountInRing: %d"
                     " BufferedOutboundMessageCountInQueue: %d"
@@ -3170,6 +3176,7 @@ void thorium_node_print_information(struct thorium_node *self)
                     "\n",
                     self->name,
                     self->tick,
+                    frequency,
                     thorium_worker_pool_buffered_message_count(&self->worker_pool),
                     thorium_worker_pool_outbound_ring_size(&self->worker_pool),
                     core_queue_size(&self->outbound_message_queue),
@@ -3183,4 +3190,5 @@ void thorium_node_print_information(struct thorium_node *self)
     self->counter_last_sent_message_count = sent_message_count;
 
     self->last_report_time = current_time;
+    self->last_tick = self->tick;
 }
