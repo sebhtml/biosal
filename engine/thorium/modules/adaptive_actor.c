@@ -60,7 +60,11 @@ int thorium_actor_compute_count_small_messages_and_node_scope(struct thorium_act
     int node_count;
     float ratio;
 
-    ratio = 0.10;
+    /*
+     * A lower ratio means more actors.
+     * More actors mean more messages.
+     */
+    ratio = 0.05;
     node_count = thorium_actor_get_node_count(self);
 
     actor_count = node_count / ratio;
