@@ -3163,7 +3163,7 @@ void thorium_node_print_information(struct thorium_node *self)
     outbound_throughput -= self->counter_last_sent_message_count;
     outbound_throughput /= delta;
 
-    printf("[thorium] node %d MESSAGE_TRANSPORT ReceivedMessageCount: %" PRIu64 ""
+    printf("[thorium] node %d TRANSPORT ReceivedMessageCount: %" PRIu64 ""
                     " SentMessageCount: %" PRIu64 ""
                     " InboundThroughput: %f messages / s OutboundThroughput: %f messages / s"
                     "\n",
