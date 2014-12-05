@@ -7,6 +7,8 @@
 #include "dispatcher.h"
 #include "actor_profiler.h"
 
+#include "cache/message_cache.h"
+
 #include "modules/binomial_tree_message.h"
 #include "modules/proxy_message.h"
 #include "modules/actions.h"
@@ -245,11 +247,18 @@ struct core_memory_pool;
 */
 #define THORIUM_ACTOR_MAILBOX_SIZE 256
 
+#define THORIUM_ENABLE_MESSAGE_CACHE
+
 /*
  * The actor attribute is a void *
  */
 struct thorium_actor {
     struct thorium_actor_profiler profiler;
+
+#ifdef THORIUM_ENABLE_MESSAGE_CACHE
+    struct thorium_message_cache message_cache;
+#endif
+
     struct thorium_script *script;
     struct thorium_worker *worker;
 

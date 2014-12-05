@@ -69,6 +69,7 @@
 #define FLAG_SYNCHRONIZATION_STARTED        7
 #define FLAG_ENABLE_LOAD_PROFILER           8
 #define FLAG_ENABLE_MULTIPLEXER             9
+#define FLAG_ENABLE_MESSAGE_CACHE           10
 
 /*
  * Directly send messages to self without going through the worker.
@@ -193,6 +194,7 @@ void thorium_actor_init(struct thorium_actor *self, void *concrete_actor,
     CORE_BITMAP_CLEAR_BIT(self->flags, FLAG_ENABLE_LOAD_PROFILER);
 
     CORE_BITMAP_CLEAR_BIT(self->flags, FLAG_ENABLE_MULTIPLEXER);
+    CORE_BITMAP_CLEAR_BIT(self->flags, FLAG_ENABLE_MESSAGE_CACHE);
 /*
 */
 #ifdef THORIUM_ACTOR_STORE_CHILDREN
@@ -245,6 +247,8 @@ void thorium_actor_init(struct thorium_actor *self, void *concrete_actor,
 
     self->counter_received_message_count = 0;
     self->counter_sent_message_count = 0;
+
+    thorium_message_cache_init(&self->message_cache);
 }
 
 void thorium_actor_destroy(struct thorium_actor *self)
@@ -328,6 +332,8 @@ void thorium_actor_destroy(struct thorium_actor *self)
 
     core_memory_pool_destroy(&self->abstract_memory_pool);
     core_memory_pool_destroy(&self->concrete_memory_pool);
+
+    thorium_message_cache_destroy(&self->message_cache);
 }
 
 int thorium_actor_name(struct thorium_actor *self)
@@ -408,8 +414,10 @@ void thorium_actor_set_worker(struct thorium_actor *self, struct thorium_worker 
 int thorium_actor_send_system_self(struct thorium_actor *self, struct thorium_message *message)
 {
     int tag;
+    int action;
 
-    tag = thorium_message_action(message);
+    action = thorium_message_action(message);
+    tag = action;
 
 #if 0
     if (tag == ACTION_PIN_TO_WORKER) {
@@ -466,6 +474,24 @@ int thorium_actor_send_system_self(struct thorium_actor *self, struct thorium_me
     } else if (tag == ACTION_DISABLE_MULTIPLEXER) {
         CORE_BITMAP_CLEAR_BIT(self->flags, FLAG_ENABLE_MULTIPLEXER);
         return 1;
+
+#ifdef THORIUM_ENABLE_MESSAGE_CACHE
+    } else if (action == ACTION_ENABLE_MESSAGE_CACHE) {
+
+        CORE_BITMAP_SET_BIT(self->flags, FLAG_ENABLE_MESSAGE_CACHE);
+        return 1;
+
+    } else if (action == ACTION_DISABLE_MESSAGE_CACHE) {
+
+        CORE_BITMAP_CLEAR_BIT(self->flags, FLAG_ENABLE_MESSAGE_CACHE);
+        return 1;
+
+    } else if (action == ACTION_CLEAR_MESSAGE_CACHE) {
+
+        thorium_message_cache_clear(&self->message_cache);
+
+        return 1;
+#endif
     }
 
     return 0;
