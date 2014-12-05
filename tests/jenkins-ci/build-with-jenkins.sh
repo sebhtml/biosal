@@ -14,10 +14,10 @@ then
     target="all-tests"
 fi
 
-if test $compiler = "gcc"
+if test "$compiler" = "gcc"
 then
     echo "" > /dev/null
-elif test $compiler = "clang"
+elif test "$compiler" = "clang"
 then
     echo "" > /dev/null
 fi
@@ -38,10 +38,10 @@ make clean
 
 options=""
 
-if test $build = "default"
+if test "$build" = "default"
 then
     echo "" > /dev/null
-elif test $build = "debug"
+elif test "$build" = "debug"
 then
     options="$options CONFIG_DEBUG=y"
 fi
