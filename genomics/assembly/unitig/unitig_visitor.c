@@ -167,6 +167,13 @@ void biosal_unitig_visitor_receive(struct thorium_actor *self, struct thorium_me
 
         thorium_actor_send_to_self_empty(self, ACTION_ENABLE_MULTIPLEXER);
 
+        /*
+         * Use a message cache for messages with action
+         * ACTION_ASSEMBLY_GET_VERTEX.
+         */
+        thorium_actor_send_to_self_int(self, ACTION_ENABLE_MESSAGE_CACHE,
+                        ACTION_ASSEMBLY_GET_VERTEX);
+
         concrete_self->manager = source;
 
         if (concrete_self->verbose) {
@@ -326,6 +333,11 @@ void biosal_unitig_visitor_execute(struct thorium_actor *self)
         graph_store = core_vector_at_as_int(&concrete_self->graph_stores, graph_store_index);
 
         thorium_actor_send_empty(self, graph_store, ACTION_ASSEMBLY_GET_STARTING_KMER);
+
+        /*
+         * Clear the cache here.
+         */
+        thorium_actor_send_to_self_empty(self, ACTION_CLEAR_MESSAGE_CACHE);
 
 #if 0
         printf("visitor STEP_GET_MAIN_KMER\n");
