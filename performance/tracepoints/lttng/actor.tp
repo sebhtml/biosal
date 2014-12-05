@@ -15,7 +15,7 @@ TRACEPOINT_EVENT_CLASS(
     TP_FIELDS(
         ctf_integer(int, name, actor->name)
         ctf_integer_hex(int, script, actor->script->identifier)
-        ctf_integer_hex(int, action, message->action)
+        ctf_integer(int, action, message->action)
         ctf_integer(int, count, message->count)
     )
 )
@@ -35,6 +35,11 @@ TRACEPOINT_EVENT_INSTANCE(thorium_actor, thorium_event_template, receive_enter,
         struct thorium_message *, message
     ))
 TRACEPOINT_EVENT_INSTANCE(thorium_actor, thorium_event_template, receive_exit,
+    TP_ARGS(
+        struct thorium_actor *, actor,
+        struct thorium_message *, message
+    ))
+TRACEPOINT_EVENT_INSTANCE(thorium_actor, thorium_event_template, send,
     TP_ARGS(
         struct thorium_actor *, actor,
         struct thorium_message *, message
