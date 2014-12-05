@@ -3173,7 +3173,7 @@ void thorium_node_print_information(struct thorium_node *self)
                     inbound_throughput,
                     outbound_throughput);
 
-    printf("[thorium] node %d SUMMARY "
+    printf("[thorium] node %d "
                     " MESSAGING "
                     "BufferedInboundMessageCount: %d"
                     " BufferedOutboundMessageCountInRing: %d"
