@@ -2472,10 +2472,58 @@ int thorium_actor_get_counter_value(struct thorium_actor *self, int field)
 
 void thorium_actor_spawn_many(struct thorium_actor *self, struct thorium_message *message)
 {
+    char *buffer;
+    int script;
+    int size;
+    int actor;
+    struct core_vector vector;
+    int i;
+    int source;
+    struct core_memory_pool *ephemeral_memory;
 
+    ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
+
+    CORE_DEBUGGER_ASSERT(thorium_message_count(message) == 2 * sizeof(int));
+
+    source = thorium_message_source(message);
+    buffer = thorium_message_buffer(message);
+
+    CORE_DEBUGGER_ASSERT(buffer != NULL);
+
+    script = *(int *)buffer + 0;
+    CORE_DEBUGGER_ASSERT(script >= 0);
+
+    size = *(int *)buffer + sizeof(int);
+    CORE_DEBUGGER_ASSERT(size >= 1);
+
+    core_vector_init(&vector, sizeof(int));
+    core_vector_set_memory_pool(&vector, ephemeral_memory);
+    core_vector_reserve(&vector, size);
+
+    /*
+     * Spawn @size actors.
+     */
+    for (i = 0; i < size; ++i) {
+
+        actor = thorium_actor_spawn_real(self, script);
+        thorium_node_set_supervisor(thorium_actor_node(self), actor, source);
+
+        core_vector_push_back_int(&vector, actor);
+    }
+
+    /*
+     * Emit ACTION_SPAWN_REPLY
+     */
+    thorium_actor_send_reply_vector(self, ACTION_SPAWN_MANY_REPLY, &vector);
+
+    core_vector_destroy(&vector);
 }
 
 void thorium_actor_spawn_many_reply(struct thorium_actor *self, struct thorium_message *message)
 {
-
+    /*
+     * TODO Not implemented.
+     * Anyway, this needs THORIUM_ACTOR_STORE_CHILDREN to be called.
+     * THORIUM_ACTOR_STORE_CHILDREN is disabled by default.
+     */
 }
