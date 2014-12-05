@@ -3131,7 +3131,7 @@ void thorium_node_print_information(struct thorium_node *self)
     frequency -= self->last_tick;
     frequency /= delta;
 
-    printf("[thorium] node %d FREQ "
+    printf("[thorium] node %d SUMMARY "
                     "Tick: %" PRIu64 " (%f Hz)\n",
                     self->name,
                     self->tick,
