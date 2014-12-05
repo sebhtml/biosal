@@ -32,6 +32,7 @@ void thorium_actor_send_reply_int(struct thorium_actor *actor, int tag, int valu
 void thorium_actor_send_reply_int64_t(struct thorium_actor *actor, int tag, int64_t value);
 void thorium_actor_send_reply_uint64_t(struct thorium_actor *actor, int tag, uint64_t value);
 void thorium_actor_send_reply_vector(struct thorium_actor *actor, int tag, struct core_vector *vector);
+void thorium_actor_send_reply_buffer(struct thorium_actor *actor, int action, int count, void *buffer);
 
 void thorium_actor_send_to_self_empty(struct thorium_actor *actor, int tag);
 void thorium_actor_send_to_self_int(struct thorium_actor *actor, int tag, int value);

@@ -350,3 +350,8 @@ void thorium_actor_send_range_positions_vector(struct thorium_actor *actor, stru
 
     core_memory_pool_free(ephemeral_memory, buffer);
 }
+
+void thorium_actor_send_reply_buffer(struct thorium_actor *actor, int action, int count, void *buffer)
+{
+    thorium_actor_send_buffer(actor, thorium_actor_source(actor), action, count, buffer);
+}
