@@ -496,6 +496,8 @@ void thorium_actor_send(struct thorium_actor *self, int name, struct thorium_mes
 
     CORE_DEBUGGER_ASSERT(name != THORIUM_ACTOR_NOBODY);
 
+    tracepoint(thorium_actor, send, self, message);
+
     /*
      * Can not send a message to nobody.
      *
