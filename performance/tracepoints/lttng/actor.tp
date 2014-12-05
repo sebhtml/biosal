@@ -2,6 +2,8 @@
 #include <engine/thorium/message.h>
 #include <engine/thorium/actor.h>
 
+#include <stdint.h> /* for uint64_t */
+
 /*
  * The trick below is from: http://lists.lttng.org/pipermail/lttng-dev/2014-October/023607.html
  */
@@ -17,6 +19,7 @@ TRACEPOINT_EVENT_CLASS(
         ctf_integer_hex(int, script, actor->script->identifier)
         ctf_integer(int, action, message->action)
         ctf_integer(int, count, message->count)
+        ctf_integer_hex(uint64_t, signature, thorium_message_signature(message))
     )
 )
 
