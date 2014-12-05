@@ -249,6 +249,8 @@ void thorium_actor_init(struct thorium_actor *self, void *concrete_actor,
     self->counter_sent_message_count = 0;
 
     thorium_message_cache_init(&self->message_cache);
+    thorium_message_cache_set_memory_pool(&self->message_cache,
+                    &self->abstract_memory_pool);
 }
 
 void thorium_actor_destroy(struct thorium_actor *self)
@@ -330,10 +332,10 @@ void thorium_actor_destroy(struct thorium_actor *self)
 
     core_fast_ring_destroy(&self->mailbox);
 
+    thorium_message_cache_destroy(&self->message_cache);
+
     core_memory_pool_destroy(&self->abstract_memory_pool);
     core_memory_pool_destroy(&self->concrete_memory_pool);
-
-    thorium_message_cache_destroy(&self->message_cache);
 }
 
 int thorium_actor_name(struct thorium_actor *self)
@@ -415,9 +417,12 @@ int thorium_actor_send_system_self(struct thorium_actor *self, struct thorium_me
 {
     int tag;
     int action;
+    char *buffer;
+    int cache_action;
 
     action = thorium_message_action(message);
     tag = action;
+    buffer = thorium_message_buffer(message);
 
 #if 0
     if (tag == ACTION_PIN_TO_WORKER) {
@@ -479,11 +484,17 @@ int thorium_actor_send_system_self(struct thorium_actor *self, struct thorium_me
     } else if (action == ACTION_ENABLE_MESSAGE_CACHE) {
 
         CORE_BITMAP_SET_BIT(self->flags, FLAG_ENABLE_MESSAGE_CACHE);
+
+        cache_action = *(int *)buffer;
+        thorium_message_cache_enable(&self->message_cache, cache_action);
+
         return 1;
 
     } else if (action == ACTION_DISABLE_MESSAGE_CACHE) {
 
-        CORE_BITMAP_CLEAR_BIT(self->flags, FLAG_ENABLE_MESSAGE_CACHE);
+        cache_action = *(int *)buffer;
+        thorium_message_cache_disable(&self->message_cache, cache_action);
+
         return 1;
 
     } else if (action == ACTION_CLEAR_MESSAGE_CACHE) {
