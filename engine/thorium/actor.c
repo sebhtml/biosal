@@ -2490,15 +2490,20 @@ void thorium_actor_spawn_many(struct thorium_actor *self, struct thorium_message
 
     CORE_DEBUGGER_ASSERT(buffer != NULL);
 
-    script = *(int *)buffer + 0;
-    CORE_DEBUGGER_ASSERT(script >= 0);
+    script = *(int *)(buffer + 0);
+    CORE_DEBUGGER_ASSERT(script != 0);
 
-    size = *(int *)buffer + sizeof(int);
+    size = *(int *)(buffer + sizeof(int));
     CORE_DEBUGGER_ASSERT(size >= 1);
 
     core_vector_init(&vector, sizeof(int));
     core_vector_set_memory_pool(&vector, ephemeral_memory);
     core_vector_reserve(&vector, size);
+
+#ifdef DEBUG_SPAWN_MANY
+    printf("DEBUG ACTION_SPAWN_MANY script %x size %d\n",
+                    script, size);
+#endif
 
     /*
      * Spawn @size actors.
