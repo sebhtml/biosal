@@ -21,6 +21,11 @@
 
 #define MEMORY_MANAGER 0x0021b5f1
 
+/*
+ * Use ACTION_SPAWN_MANY to avoid sending too many messages.
+ */
+#define USE_ACTION_SPAWN_MANY
+
 void core_manager_init(struct thorium_actor *self);
 void core_manager_destroy(struct thorium_actor *self);
 void core_manager_receive(struct thorium_actor *self, struct thorium_message *message);
@@ -111,9 +116,12 @@ void core_manager_receive(struct thorium_actor *actor, struct thorium_message *m
     int store;
     struct core_vector all_stores;
     int new_count;
-    void *new_buffer;
+    char *new_buffer;
     struct thorium_message new_message;
     struct core_memory_pool *ephemeral_memory;
+    struct core_vector received_actors;
+    char use_spawn_many;
+    int offset;
 
     if (thorium_actor_take_action(actor, message)) {
         return;
@@ -266,20 +274,50 @@ void core_manager_receive(struct thorium_actor *actor, struct thorium_message *m
         } else {
 
             (*bucket) = workers * 1;
-
         }
 
-        thorium_actor_send_reply_int(actor, ACTION_SPAWN, concrete_actor->script);
+#ifdef USE_ACTION_SPAWN_MANY
+        use_spawn_many = 1;
+#else
+        use_spawn_many = 0;
+#endif
 
-    } else if (tag == ACTION_SPAWN_REPLY) {
+        if (use_spawn_many) {
+            new_buffer = thorium_actor_allocate(actor, 2 * sizeof(int));
+            offset = 0;
 
-        store = *(int *)buffer;
+            core_memory_copy(new_buffer + 0, &concrete_actor->script, sizeof(concrete_actor->script));
+            offset += sizeof(concrete_actor->script);
+
+            core_memory_copy(new_buffer + offset, bucket, sizeof(*bucket));
+            offset += sizeof(*bucket);
+
+            thorium_actor_send_reply_buffer(actor, ACTION_SPAWN_MANY, offset, new_buffer);
+
+        } else {
+            thorium_actor_send_reply_int(actor, ACTION_SPAWN, concrete_actor->script);
+        }
+
+    } else if (tag == ACTION_SPAWN_REPLY
+                    || tag == ACTION_SPAWN_MANY_REPLY) {
+
         index = source;
-
         stores = core_map_get(&concrete_actor->spawner_children, &index);
-        bucket = core_map_get(&concrete_actor->spawner_child_count, &index);
 
-        core_vector_push_back(stores, &store);
+        if (tag == ACTION_SPAWN_REPLY) {
+            store = *(int *)buffer;
+            core_vector_push_back(stores, &store);
+
+        } else if (tag == ACTION_SPAWN_MANY_REPLY) {
+            core_vector_init(&received_actors, sizeof(int));
+            core_vector_set_memory_pool(&received_actors, ephemeral_memory);
+
+            core_vector_unpack(&received_actors, buffer);
+            core_vector_push_back_vector(stores, &received_actors);
+            core_vector_destroy(&received_actors);
+        }
+
+        bucket = core_map_get(&concrete_actor->spawner_child_count, &index);
 
 #ifdef CORE_MANAGER_DEBUG
         printf("DEBUG manager %d receives %d from spawner %d, now %d/%d\n",
@@ -287,6 +325,9 @@ void core_manager_receive(struct thorium_actor *actor, struct thorium_message *m
                         (int)core_vector_size(stores), *bucket);
 #endif
 
+        /*
+         * There are still some actors to spawn.
+         */
         if (core_vector_size(stores) >= *bucket) {
 
             concrete_actor->ready_spawners++;
@@ -342,9 +383,10 @@ void core_manager_receive(struct thorium_actor *actor, struct thorium_message *m
             }
         } else {
 
+            CORE_DEBUGGER_ASSERT(tag == ACTION_SPAWN_REPLY);
+
             thorium_actor_send_reply_int(actor, ACTION_SPAWN, concrete_actor->script);
         }
-
 
     } else if (tag == ACTION_MANAGER_SET_ACTORS_PER_WORKER) {
 
