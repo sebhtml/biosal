@@ -987,7 +987,7 @@ int thorium_actor_receive_system(struct thorium_actor *self, struct thorium_mess
 
     /* queue messages during a hot migration
      *
-     * ACTION_CLONE messsages are also queued during cloning...
+     * ACTION_CLONE messages are also queued during cloning...
      */
     if (self->migration_status == THORIUM_ACTOR_STATUS_STARTED) {
 
