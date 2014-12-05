@@ -7,10 +7,14 @@
 #include <core/system/packer.h>
 #include <core/system/debugger.h>
 
+#include <core/hash/hash.h>
+
 #include <stdlib.h>
 #include <string.h>
 
 #include <inttypes.h>
+
+#define MESSAGE_SIGNATURE_SEED 0x19bb4bb7
 
 void thorium_message_print_tracepoint(struct thorium_message *self, const char *name,
                 int tracepoint, uint64_t *previous_time);
@@ -444,4 +448,18 @@ void thorium_message_remove_metadata_from_count(struct thorium_message *self)
     metadata_size = thorium_message_metadata_size(self);
     all = count - metadata_size;
     thorium_message_set_count(self, all);
+}
+
+uint64_t thorium_message_signature(struct thorium_message *self)
+{
+    int count;
+    char *buffer;
+
+    count = thorium_message_count(self);
+    buffer = thorium_message_buffer(self);
+
+    if (count == 0)
+        return 42;
+
+    return core_hash_data_uint64_t(buffer, count, MESSAGE_SIGNATURE_SEED);
 }

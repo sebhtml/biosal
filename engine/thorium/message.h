@@ -155,4 +155,6 @@ int thorium_message_read_metadata_for_tracepoint(struct thorium_message *self);
 void thorium_message_add_metadata_to_count(struct thorium_message *self);
 void thorium_message_remove_metadata_from_count(struct thorium_message *self);
 
+uint64_t thorium_message_signature(struct thorium_message *self);
+
 #endif
