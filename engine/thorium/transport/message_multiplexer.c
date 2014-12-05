@@ -563,8 +563,11 @@ void thorium_message_multiplexer_test(struct thorium_message_multiplexer *self)
     /*
      * Don't flush anything if the outbound ring is full,
      * which means there is congestion.
+     *
+     * This means that the throughput is at its maximum value. In that case,
+     * it is better to generate even larger messages.
      */
-    if (thorium_worker_has_congestion(self->worker)) {
+    if (thorium_worker_has_outbound_traffic_congestion(self->worker)) {
         return;
     }
 

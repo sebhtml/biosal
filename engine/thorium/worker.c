@@ -2628,7 +2628,7 @@ float thorium_worker_get_epoch_traffic_reduction(struct thorium_worker *self)
     return reduction;
 }
 
-int thorium_worker_has_congestion(struct thorium_worker *self)
+int thorium_worker_has_outbound_traffic_congestion(struct thorium_worker *self)
 {
     int size;
     int threshold;
@@ -2636,10 +2636,10 @@ int thorium_worker_has_congestion(struct thorium_worker *self)
     size = core_fast_ring_size_from_producer(self->output_outbound_message_ring_multiple);
 
     /*
-     * If there are at least 128 messages, declare a congestion state
+     * If there are at least N messages, declare a congestion state
      * and return true.
      */
-    threshold = 128;
+    threshold = 1;
 
     return size >= threshold;
 }
