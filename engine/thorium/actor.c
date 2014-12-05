@@ -124,6 +124,9 @@ static void thorium_actor_migrate(struct thorium_actor *self, struct thorium_mes
 
 static void thorium_actor_receive_private(struct thorium_actor *self, struct thorium_message *message);
 
+void thorium_actor_spawn_many_reply(struct thorium_actor *self, struct thorium_message *message);
+void thorium_actor_spawn_many(struct thorium_actor *self, struct thorium_message *message);
+
 void thorium_actor_init(struct thorium_actor *self, void *concrete_actor,
                 struct thorium_script *script, int name, struct thorium_node *node)
 {
@@ -807,12 +810,14 @@ int thorium_actor_receive_system(struct thorium_actor *self, struct thorium_mess
     int offset;
     int bytes;
     int workers;
+    int action;
 
 #ifdef THORIUM_ACTOR_STORE_CHILDREN
     int new_actor;
 #endif
 
-    tag = thorium_message_action(message);
+    action = thorium_message_action(message);
+    tag = action;
 
     /* the concrete actor must catch these otherwise.
      * Also, clone and migrate depend on these.
@@ -921,6 +926,18 @@ int thorium_actor_receive_system(struct thorium_actor *self, struct thorium_mess
         thorium_message_destroy(&new_message);
 
         return 1;
+
+    } else if (action == ACTION_SPAWN_MANY) {
+
+        thorium_actor_spawn_many(self, message);
+        return 1;
+
+#ifdef THORIUM_ACTOR_STORE_CHILDREN
+    } else if (action == ACTION_SPAWN_MANY_REPLY) {
+
+        thorium_actor_spawn_many_reply(self, message);
+        return 0;
+#endif
 
 #ifdef THORIUM_ACTOR_STORE_CHILDREN
     } else if (tag == ACTION_MIGRATE_NOTIFY_ACQUAINTANCES) {
@@ -2451,4 +2468,14 @@ int thorium_actor_get_counter_value(struct thorium_actor *self, int field)
         return self->counter_sent_message_count;
 
     return 0;
+}
+
+void thorium_actor_spawn_many(struct thorium_actor *self, struct thorium_message *message)
+{
+
+}
+
+void thorium_actor_spawn_many_reply(struct thorium_actor *self, struct thorium_message *message)
+{
+
 }

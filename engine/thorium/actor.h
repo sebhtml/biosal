@@ -188,6 +188,23 @@ new name.
 #define ACTION_DO_AUTO_SCALING (ACTOR_ACTION_BASE + 47)
 
 /*
+ * Type: Request
+ * Input: script (int), actor_count (int)
+ * Output: a vector contains actor names.
+ */
+#define ACTION_SPAWN_MANY (ACTOR_ACTION_BASE + 48)
+
+/*
+ * Type: Reply
+ * The buffer contains a vector with actor names.
+ */
+#define ACTION_SPAWN_MANY_REPLY (ACTOR_ACTION_BASE + 49)
+
+/*
+ * End of action specifiers
+ */
+
+/*
  * some actor constants
  */
 
