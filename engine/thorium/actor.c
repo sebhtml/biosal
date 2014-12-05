@@ -596,6 +596,13 @@ void thorium_actor_send(struct thorium_actor *self, int name, struct thorium_mes
         return;
     }
 
+    /*
+     * Save the request message if necessary.
+     */
+    if (CORE_BITMAP_GET_BIT(self->flags, FLAG_ENABLE_MESSAGE_CACHE)) {
+        thorium_message_cache_save_request_message(&self->message_cache, message);
+    }
+
     thorium_actor_send_with_source(self, name, message, source);
 }
 
@@ -1174,6 +1181,13 @@ void thorium_actor_receive(struct thorium_actor *self, struct thorium_message *m
 
     /* thorium_actor:receive_enter */
     tracepoint(thorium_actor, receive_enter, self, message);
+
+    /*
+     * Save the reply message in the caching system if necessary.
+     */
+    if (CORE_BITMAP_GET_BIT(self->flags, FLAG_ENABLE_MESSAGE_CACHE)) {
+        thorium_message_cache_save_reply_message(&self->message_cache, message);
+    }
 
     start = core_timer_get_nanoseconds(&self->timer);
 

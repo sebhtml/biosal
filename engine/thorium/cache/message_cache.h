@@ -20,6 +20,8 @@ struct thorium_message_cache {
     struct core_set actions;
     struct core_map entries;
     struct core_memory_pool *pool;
+
+    struct thorium_message *request_message;
 };
 
 void thorium_message_cache_init(struct thorium_message_cache *self);
@@ -32,12 +34,14 @@ void thorium_message_cache_clear(struct thorium_message_cache *self);
 struct thorium_message *thorium_message_cache_get(struct thorium_message_cache *self,
                 struct thorium_message *request_message);
 
-void thorium_message_cache_add(struct thorium_message_cache *self,
-                struct thorium_message *request_message,
-                struct thorium_message *reply_message);
 void thorium_message_cache_enable(struct thorium_message_cache *self,
                 int action);
 void thorium_message_cache_disable(struct thorium_message_cache *self,
                 int action);
+
+void thorium_message_cache_save_request_message(struct thorium_message_cache *self,
+                struct thorium_message *message);
+void thorium_message_cache_save_reply_message(struct thorium_message_cache *self,
+                struct thorium_message *message);
 
 #endif

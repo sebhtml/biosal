@@ -12,6 +12,8 @@ void thorium_message_cache_init(struct thorium_message_cache *self)
                     sizeof(struct thorium_message));
 
     core_set_init(&self->actions, sizeof(int));
+
+    self->request_message = NULL;
 }
 
 void thorium_message_cache_destroy(struct thorium_message_cache *self)
@@ -44,12 +46,21 @@ struct thorium_message *thorium_message_cache_get(struct thorium_message_cache *
     return NULL;
 }
 
-void thorium_message_cache_add(struct thorium_message_cache *self,
-                struct thorium_message *request_message,
-                struct thorium_message *reply_message)
+void thorium_message_cache_save_reply_message(struct thorium_message_cache *self,
+                struct thorium_message *message)
 {
     /*
-     * Generate a cache tag and add the entry.
+     * This is not a reply to a request that needs to use
+     * caching.
+     */
+    if (self->request_message == NULL)
+        return;
+
+    /*
+     * Generate a cache tag for the request_message and add the reply
+     * message in an entry.
+     *
+     * After that, free the request message.
      */
 }
 
@@ -63,4 +74,19 @@ void thorium_message_cache_disable(struct thorium_message_cache *self,
                 int action)
 {
     core_set_delete(&self->actions, &action);
+}
+
+void thorium_message_cache_save_request_message(struct thorium_message_cache *self,
+                struct thorium_message *message)
+{
+    int action;
+
+    action = thorium_message_action(message);
+
+    if (!core_set_find(&self->actions, &action))
+        return;
+
+    /*
+     * Save the message cache tag for later.
+     */
 }
