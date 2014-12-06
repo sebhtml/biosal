@@ -50,6 +50,11 @@ void thorium_message_cache_clear(struct thorium_message_cache *self)
     struct thorium_message *reply_message;
     void *buffer;
 
+#ifdef DEBUG_MESSAGE_CACHE_CLEAR
+    printf("DEBUG thorium_message_cache_clear entries: %d\n",
+                    (int)core_map_size(&self->entries));
+#endif
+
     core_map_iterator_init(&iterator, &self->entries);
 
     while (core_map_iterator_next(&iterator, (void **)&request_tag,
