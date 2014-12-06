@@ -230,6 +230,21 @@ new name.
  ********************************************
  */
 
+/*
+ * Flags.
+ */
+#define THORIUM_ACTOR_FLAG_DEAD                           0
+#define THORIUM_ACTOR_FLAG_CAN_PACK                       1
+#define THORIUM_ACTOR_FLAG_MIGRATION_PROGRESSED           2
+#define THORIUM_ACTOR_FLAG_LOCKED                         3
+#define THORIUM_ACTOR_FLAG_MIGRATION_CLONED               4
+#define THORIUM_ACTOR_FLAG_MIGRATION_FORWARDED_MESSAGES   5
+#define THORIUM_ACTOR_FLAG_CLONING_PROGRESSED             6
+#define THORIUM_ACTOR_FLAG_SYNCHRONIZATION_STARTED        7
+#define THORIUM_ACTOR_FLAG_ENABLE_LOAD_PROFILER           8
+#define THORIUM_ACTOR_FLAG_ENABLE_MULTIPLEXER             9
+#define THORIUM_ACTOR_FLAG_ENABLE_MESSAGE_CACHE           10
+
 struct thorium_node;
 struct thorium_worker;
 struct core_memory_pool;
