@@ -4,9 +4,12 @@
 #include "cache_tag.h"
 
 #include <engine/thorium/message.h>
+
 #include <core/structures/map.h>
+#include <core/structures/map_iterator.h>
 
 #include <core/system/debugger.h>
+#include <core/system/memory_pool.h>
 
 #include <stdio.h>
 
@@ -42,6 +45,29 @@ void thorium_message_cache_set_memory_pool(struct thorium_message_cache *self,
 
 void thorium_message_cache_clear(struct thorium_message_cache *self)
 {
+    struct core_map_iterator iterator;
+    struct thorium_cache_tag *request_tag;
+    struct thorium_message *reply_message;
+    void *buffer;
+
+    core_map_iterator_init(&iterator, &self->entries);
+
+    while (core_map_iterator_next(&iterator, (void **)&request_tag,
+                            (void **)&reply_message)) {
+
+        thorium_cache_tag_destroy(request_tag);
+
+        buffer = thorium_message_buffer(reply_message);
+
+        if (buffer != NULL) {
+            core_memory_pool_free(self->pool, buffer);
+        }
+
+        thorium_message_destroy(reply_message);
+    }
+
+    core_map_iterator_destroy(&iterator);
+
     core_map_clear(&self->entries);
 }
 
@@ -57,11 +83,26 @@ struct thorium_message *thorium_message_cache_get(struct thorium_message_cache *
 void thorium_message_cache_save_reply_message(struct thorium_message_cache *self,
                 struct thorium_message *message)
 {
+    struct thorium_message stored_message;
+    void *buffer;
+
+    CORE_DEBUGGER_ASSERT_NOT_NULL(self);
+    CORE_DEBUGGER_ASSERT_NOT_NULL(message);
+
     /*
      * This is not a reply to a request that needs to use
      * caching.
      */
     if (thorium_cache_tag_action(&self->last_tag) == ACTION_INVALID) {
+        return;
+    }
+
+    /*
+     * The last_tag is already in the cache entries.
+     * This code path should not actually happen...
+     */
+    if (core_map_get(&self->entries, &self->last_tag) != NULL) {
+        thorium_cache_tag_reset(&self->last_tag);
         return;
     }
 
@@ -73,9 +114,24 @@ void thorium_message_cache_save_reply_message(struct thorium_message_cache *self
      * Use the cache tag in self->last_tag to add the reply
      * message in an entry.
      */
-    /* TODO */
 
     CORE_DEBUGGER_ASSERT(self->pool != NULL);
+
+    core_memory_copy(&stored_message, message, sizeof(stored_message));
+
+    /*
+     * Copy the buffer if it is not NULL.
+     */
+    if (thorium_message_buffer(message) != NULL) {
+        buffer = core_memory_pool_allocate(self->pool,
+                    thorium_message_count(&stored_message));
+        thorium_message_set_buffer(&stored_message, buffer);
+        core_memory_copy(thorium_message_buffer(&stored_message),
+                        thorium_message_buffer(message),
+                        thorium_message_count(message));
+    }
+
+    core_map_add_value(&self->entries, &self->last_tag, &stored_message);
 
     /*
      * After that, free/reset the request message.
