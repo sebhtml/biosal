@@ -60,4 +60,7 @@ run_checks
 
 ./scripts/check-scripts.sh
 
+echo "Action bases:"
+grep BASE * -R|grep -v " ACTION"|grep "define "|awk '{print $3}'|sort|uniq -c
+
 echo "Thank you."
