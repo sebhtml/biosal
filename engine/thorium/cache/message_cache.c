@@ -6,6 +6,8 @@
 #include <engine/thorium/message.h>
 #include <core/structures/map.h>
 
+#include <core/system/debugger.h>
+
 #include <stdio.h>
 
 void thorium_message_cache_init(struct thorium_message_cache *self)
@@ -16,6 +18,8 @@ void thorium_message_cache_init(struct thorium_message_cache *self)
     core_set_init(&self->actions, sizeof(int));
 
     thorium_cache_tag_init(&self->last_tag);
+
+    self->pool = NULL;
 }
 
 void thorium_message_cache_destroy(struct thorium_message_cache *self)
@@ -70,6 +74,8 @@ void thorium_message_cache_save_reply_message(struct thorium_message_cache *self
      * message in an entry.
      */
     /* TODO */
+
+    CORE_DEBUGGER_ASSERT(self->pool != NULL);
 
     /*
      * After that, free/reset the request message.
