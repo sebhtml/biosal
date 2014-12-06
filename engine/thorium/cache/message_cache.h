@@ -7,12 +7,6 @@
 #include <core/structures/map.h>
 #include <core/structures/set.h>
 
-#define THORIUM_CACHE_BASE  -20000
-
-#define ACTION_ENABLE_MESSAGE_CACHE (THORIUM_CACHE_BASE + 1)
-#define ACTION_DISABLE_MESSAGE_CACHE (THORIUM_CACHE_BASE + 2)
-#define ACTION_CLEAR_MESSAGE_CACHE (THORIUM_CACHE_BASE + 3)
-
 struct thorium_message;
 struct core_memory_pool;
 
