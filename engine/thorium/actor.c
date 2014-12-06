@@ -2605,6 +2605,14 @@ void thorium_actor_disable_message_cache(struct thorium_actor *self,
     cache_action = *(int *)buffer;
 
     thorium_message_cache_disable(&self->message_cache, cache_action);
+
+    /*
+     * Set the flag FLAG_ENABLE_MESSAGE_CACHE to 0 when no actions are
+     * configured to use the message cache subsystem.
+     */
+    if (thorium_message_cache_action_count(&self->message_cache) == 0) {
+        CORE_BITMAP_CLEAR_BIT(self->flags, FLAG_ENABLE_MESSAGE_CACHE);
+    }
 }
 
 void thorium_actor_clear_message_cache(struct thorium_actor *self, struct thorium_message *message)
