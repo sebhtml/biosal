@@ -2,6 +2,8 @@
 #ifndef THORIUM_MESSAGE_CACHE_H_
 #define THORIUM_MESSAGE_CACHE_H_
 
+#include "cache_tag.h"
+
 #include <core/structures/map.h>
 #include <core/structures/set.h>
 
@@ -21,7 +23,7 @@ struct thorium_message_cache {
     struct core_map entries;
     struct core_memory_pool *pool;
 
-    struct thorium_message *request_message;
+    struct thorium_cache_tag last_tag;
 };
 
 void thorium_message_cache_init(struct thorium_message_cache *self);
