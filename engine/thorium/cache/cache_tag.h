@@ -23,5 +23,6 @@ void thorium_cache_tag_set(struct thorium_cache_tag *self,
                 struct thorium_message *message);
 int thorium_cache_tag_action(struct thorium_cache_tag *self);
 void thorium_cache_tag_reset(struct thorium_cache_tag *self);
+void thorium_cache_tag_print(struct thorium_cache_tag *self);
 
 #endif
