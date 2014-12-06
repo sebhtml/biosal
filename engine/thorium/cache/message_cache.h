@@ -18,7 +18,7 @@ struct thorium_message_cache {
     struct core_map entries;
     struct core_memory_pool *pool;
 
-    struct thorium_cache_tag last_tag;
+    struct thorium_cache_tag saved_reply_message_cache_tag;
 };
 
 void thorium_message_cache_init(struct thorium_message_cache *self);

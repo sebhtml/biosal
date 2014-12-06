@@ -20,7 +20,7 @@ void thorium_message_cache_init(struct thorium_message_cache *self)
 
     core_set_init(&self->actions, sizeof(int));
 
-    thorium_cache_tag_init(&self->last_tag);
+    thorium_cache_tag_init(&self->saved_reply_message_cache_tag);
 
     self->pool = NULL;
 }
@@ -32,7 +32,7 @@ void thorium_message_cache_destroy(struct thorium_message_cache *self)
     core_map_destroy(&self->entries);
     core_set_destroy(&self->actions);
 
-    thorium_cache_tag_destroy(&self->last_tag);
+    thorium_cache_tag_destroy(&self->saved_reply_message_cache_tag);
 }
 
 void thorium_message_cache_set_memory_pool(struct thorium_message_cache *self,
@@ -101,7 +101,7 @@ struct thorium_message *thorium_message_cache_get_reply_message(struct thorium_m
 
     /*
      * If the key is NULL, save the request message for later use.
-     * This basically sets the attribute last_tag.
+     * This basically sets the attribute saved_reply_message_cache_tag.
      */
     if (reply_message == NULL) {
 
@@ -131,16 +131,16 @@ void thorium_message_cache_save_reply_message(struct thorium_message_cache *self
      * This is not a reply to a request that needs to use
      * caching.
      */
-    if (thorium_cache_tag_action(&self->last_tag) == ACTION_INVALID) {
+    if (thorium_cache_tag_action(&self->saved_reply_message_cache_tag) == ACTION_INVALID) {
         return;
     }
 
     /*
-     * The last_tag is already in the cache entries.
+     * The saved_reply_message_cache_tag is already in the cache entries.
      * This code path should not actually happen...
      */
-    if (core_map_get(&self->entries, &self->last_tag) != NULL) {
-        thorium_cache_tag_reset(&self->last_tag);
+    if (core_map_get(&self->entries, &self->saved_reply_message_cache_tag) != NULL) {
+        thorium_cache_tag_reset(&self->saved_reply_message_cache_tag);
         return;
     }
 
@@ -149,7 +149,7 @@ void thorium_message_cache_save_reply_message(struct thorium_message_cache *self
                     thorium_message_action(message));
     */
     /*
-     * Use the cache tag in self->last_tag to add the reply
+     * Use the cache tag in self->saved_reply_message_cache_tag to add the reply
      * message in an entry.
      */
 
@@ -169,12 +169,12 @@ void thorium_message_cache_save_reply_message(struct thorium_message_cache *self
                         thorium_message_count(message));
     }
 
-    core_map_add_value(&self->entries, &self->last_tag, &stored_message);
+    core_map_add_value(&self->entries, &self->saved_reply_message_cache_tag, &stored_message);
 
     /*
      * After that, free/reset the request message.
      */
-    thorium_cache_tag_reset(&self->last_tag);
+    thorium_cache_tag_reset(&self->saved_reply_message_cache_tag);
 }
 
 void thorium_message_cache_enable(struct thorium_message_cache *self,
@@ -200,16 +200,16 @@ void thorium_message_cache_save_request_message(struct thorium_message_cache *se
         return;
 
     /*
-     * At this point, the last_tag may be already set.
+     * At this point, the saved_reply_message_cache_tag may be already set.
      * In such a case, it is just overwritten anyway.
      */
     /*
      * Save the message cache tag for later.
      */
-    thorium_cache_tag_set(&self->last_tag, message);
+    thorium_cache_tag_set(&self->saved_reply_message_cache_tag, message);
 
     /*
-    thorium_cache_tag_print(&self->last_tag);
+    thorium_cache_tag_print(&self->saved_reply_message_cache_tag);
     */
 }
 
