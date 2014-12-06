@@ -337,4 +337,7 @@ float thorium_worker_get_epoch_traffic_reduction(struct thorium_worker *self);
 
 int thorium_worker_has_outbound_traffic_congestion(struct thorium_worker *self);
 
+void thorium_worker_free_zero_copy_buffer(struct thorium_worker *self,
+                void *buffer);
+
 #endif

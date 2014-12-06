@@ -76,13 +76,46 @@ void thorium_message_cache_clear(struct thorium_message_cache *self)
     core_map_clear(&self->entries);
 }
 
-struct thorium_message *thorium_message_cache_get(struct thorium_message_cache *self,
+struct thorium_message *thorium_message_cache_get_reply_message(struct thorium_message_cache *self,
                 struct thorium_message *request_message)
 {
+    struct thorium_cache_tag cache_tag;
+    int action;
+    struct thorium_message *reply_message;
+
     /*
-     * Generate a tag and query it in the cache entries.
+     * Verify if the action is supported.
      */
-    return NULL;
+    action = thorium_message_action(request_message);
+
+    if (!core_set_find(&self->actions, &action)) {
+        return NULL;
+    }
+
+    /*
+     * Generate a cache tag and perform a lookup.
+     * In other words, generate a tag and query it in the cache entries.
+     */
+    thorium_cache_tag_set(&cache_tag, request_message);
+    reply_message = core_map_get(&self->entries, &cache_tag);
+
+    /*
+     * If the key is NULL, save the request message for later use.
+     * This basically sets the attribute last_tag.
+     */
+    if (reply_message == NULL) {
+
+        /*
+         * Save the request message if necessary.
+         */
+        thorium_message_cache_save_request_message(self, request_message);
+    }
+
+    /*
+     * Return the reply message.
+     * This can be NULL.
+     */
+    return reply_message;
 }
 
 void thorium_message_cache_save_reply_message(struct thorium_message_cache *self,
@@ -166,6 +199,10 @@ void thorium_message_cache_save_request_message(struct thorium_message_cache *se
     if (!core_set_find(&self->actions, &action))
         return;
 
+    /*
+     * At this point, the last_tag may be already set.
+     * In such a case, it is just overwritten anyway.
+     */
     /*
      * Save the message cache tag for later.
      */

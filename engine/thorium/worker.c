@@ -2643,3 +2643,17 @@ int thorium_worker_has_outbound_traffic_congestion(struct thorium_worker *self)
 
     return size >= threshold;
 }
+
+void thorium_worker_free_zero_copy_buffer(struct thorium_worker *self,
+                void *buffer)
+{
+    if (buffer == NULL)
+        return;
+
+    if (buffer != self->zero_copy_buffer)
+        return;
+
+    core_memory_pool_free(&self->outbound_message_memory_pool,
+                        buffer);
+    self->zero_copy_buffer = NULL;
+}

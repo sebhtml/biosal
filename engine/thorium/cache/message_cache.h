@@ -34,7 +34,7 @@ void thorium_message_cache_set_memory_pool(struct thorium_message_cache *self,
                 struct core_memory_pool *pool);
 void thorium_message_cache_clear(struct thorium_message_cache *self);
 
-struct thorium_message *thorium_message_cache_get(struct thorium_message_cache *self,
+struct thorium_message *thorium_message_cache_get_reply_message(struct thorium_message_cache *self,
                 struct thorium_message *request_message);
 
 void thorium_message_cache_enable(struct thorium_message_cache *self,

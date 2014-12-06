@@ -133,6 +133,9 @@ void thorium_actor_disable_message_cache(struct thorium_actor *self,
                 struct thorium_message *message);
 void thorium_actor_clear_message_cache(struct thorium_actor *self, struct thorium_message *message);
 
+int thorium_actor_fetch_reply_message_from_cache(struct thorium_actor *self,
+                struct thorium_message *message);
+
 void thorium_actor_init(struct thorium_actor *self, void *concrete_actor,
                 struct thorium_script *script, int name, struct thorium_node *node)
 {
@@ -593,11 +596,23 @@ void thorium_actor_send(struct thorium_actor *self, int name, struct thorium_mes
         return;
     }
 
-    /*
-     * Save the request message if necessary.
-     */
     if (CORE_BITMAP_GET_BIT(self->flags, FLAG_ENABLE_MESSAGE_CACHE)) {
-        thorium_message_cache_save_request_message(&self->message_cache, message);
+
+        /*
+         * Attempt to retrieve a cached version of the reply message given
+         * the current request message.
+         *
+         * If this is successful, don't send the message over the network.
+         */
+        if (thorium_actor_fetch_reply_message_from_cache(self, message)) {
+
+            /*
+             * Free the buffer if it is a zero-copy buffer.
+             */
+            thorium_worker_free_zero_copy_buffer(self->worker,
+                            thorium_message_buffer(message));
+            return;
+        }
     }
 
     thorium_actor_send_with_source(self, name, message, source);
@@ -2618,4 +2633,33 @@ void thorium_actor_disable_message_cache(struct thorium_actor *self,
 void thorium_actor_clear_message_cache(struct thorium_actor *self, struct thorium_message *message)
 {
     thorium_message_cache_clear(&self->message_cache);
+}
+
+int thorium_actor_fetch_reply_message_from_cache(struct thorium_actor *self,
+                struct thorium_message *message)
+{
+    struct thorium_message *reply_message;
+
+    /*
+     * Try to get the reply message from the message cache using the request
+     * message.
+     */
+    reply_message = thorium_message_cache_get_reply_message(&self->message_cache, message);
+
+    if (reply_message != NULL) {
+        /*
+         * Inject the reply message and return 1.
+         */
+        /* TODO */
+
+#ifdef DISPLAY_CACHE_HIT
+        printf("Found reply message in message cache !\n");
+        printf("Request: ");
+        thorium_message_print(message);
+        printf("Reply: ");
+        thorium_message_print(reply_message);
+#endif
+    }
+
+    return 0;
 }
