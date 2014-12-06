@@ -128,6 +128,11 @@ static void thorium_actor_receive_private(struct thorium_actor *self, struct tho
 void thorium_actor_spawn_many_reply(struct thorium_actor *self, struct thorium_message *message);
 void thorium_actor_spawn_many(struct thorium_actor *self, struct thorium_message *message);
 
+void thorium_actor_enable_message_cache(struct thorium_actor *self, struct thorium_message *message);
+void thorium_actor_disable_message_cache(struct thorium_actor *self,
+                struct thorium_message *message);
+void thorium_actor_clear_message_cache(struct thorium_actor *self, struct thorium_message *message);
+
 void thorium_actor_init(struct thorium_actor *self, void *concrete_actor,
                 struct thorium_script *script, int name, struct thorium_node *node)
 {
@@ -418,7 +423,6 @@ int thorium_actor_send_system_self(struct thorium_actor *self, struct thorium_me
     int tag;
     int action;
     char *buffer;
-    int cache_action;
 
     action = thorium_message_action(message);
     tag = action;
@@ -483,24 +487,17 @@ int thorium_actor_send_system_self(struct thorium_actor *self, struct thorium_me
 #ifdef THORIUM_ENABLE_MESSAGE_CACHE
     } else if (action == ACTION_ENABLE_MESSAGE_CACHE) {
 
-        CORE_BITMAP_SET_BIT(self->flags, FLAG_ENABLE_MESSAGE_CACHE);
-
-        cache_action = *(int *)buffer;
-        thorium_message_cache_enable(&self->message_cache, cache_action);
-
+        thorium_actor_enable_message_cache(self, message);
         return 1;
 
     } else if (action == ACTION_DISABLE_MESSAGE_CACHE) {
 
-        cache_action = *(int *)buffer;
-        thorium_message_cache_disable(&self->message_cache, cache_action);
-
+        thorium_actor_disable_message_cache(self, message);
         return 1;
 
     } else if (action == ACTION_CLEAR_MESSAGE_CACHE) {
 
-        thorium_message_cache_clear(&self->message_cache);
-
+        thorium_actor_clear_message_cache(self, message);
         return 1;
 #endif
     }
@@ -2584,4 +2581,33 @@ void thorium_actor_spawn_many_reply(struct thorium_actor *self, struct thorium_m
      * Anyway, this needs THORIUM_ACTOR_STORE_CHILDREN to be called.
      * THORIUM_ACTOR_STORE_CHILDREN is disabled by default.
      */
+}
+
+void thorium_actor_enable_message_cache(struct thorium_actor *self, struct thorium_message *message)
+{
+    int cache_action;
+    char *buffer;
+
+    CORE_BITMAP_SET_BIT(self->flags, FLAG_ENABLE_MESSAGE_CACHE);
+
+    buffer = thorium_message_buffer(message);
+    cache_action = *(int *)buffer;
+    thorium_message_cache_enable(&self->message_cache, cache_action);
+}
+
+void thorium_actor_disable_message_cache(struct thorium_actor *self,
+                struct thorium_message *message)
+{
+    int cache_action;
+    char *buffer;
+
+    buffer = thorium_message_buffer(message);
+    cache_action = *(int *)buffer;
+
+    thorium_message_cache_disable(&self->message_cache, cache_action);
+}
+
+void thorium_actor_clear_message_cache(struct thorium_actor *self, struct thorium_message *message)
+{
+    thorium_message_cache_clear(&self->message_cache);
 }
