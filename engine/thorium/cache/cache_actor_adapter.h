@@ -11,11 +11,16 @@
 struct thorium_actor;
 struct thorium_message;
 
+void thorium_actor_init_message_cache(struct thorium_actor *self);
+void thorium_actor_destroy_message_cache(struct thorium_actor *self);
+
 void thorium_actor_enable_message_cache(struct thorium_actor *self, struct thorium_message *message);
 void thorium_actor_disable_message_cache(struct thorium_actor *self,
                 struct thorium_message *message);
 void thorium_actor_clear_message_cache(struct thorium_actor *self, struct thorium_message *message);
 
+void thorium_actor_save_reply_message_in_cache(struct  thorium_actor *self,
+                struct thorium_message *message);
 int thorium_actor_fetch_reply_message_from_cache(struct thorium_actor *self,
                 struct thorium_message *message);
 

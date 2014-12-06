@@ -233,9 +233,7 @@ void thorium_actor_init(struct thorium_actor *self, void *concrete_actor,
     self->counter_received_message_count = 0;
     self->counter_sent_message_count = 0;
 
-    thorium_message_cache_init(&self->message_cache);
-    thorium_message_cache_set_memory_pool(&self->message_cache,
-                    &self->abstract_memory_pool);
+    thorium_actor_init_message_cache(self);
 }
 
 void thorium_actor_destroy(struct thorium_actor *self)
@@ -317,7 +315,7 @@ void thorium_actor_destroy(struct thorium_actor *self)
 
     core_fast_ring_destroy(&self->mailbox);
 
-    thorium_message_cache_destroy(&self->message_cache);
+    thorium_actor_destroy_message_cache(self);
 
     core_memory_pool_destroy(&self->abstract_memory_pool);
     core_memory_pool_destroy(&self->concrete_memory_pool);
@@ -1175,7 +1173,7 @@ void thorium_actor_receive(struct thorium_actor *self, struct thorium_message *m
      * Save the reply message in the caching system if necessary.
      */
     if (CORE_BITMAP_GET_BIT(self->flags, THORIUM_ACTOR_FLAG_ENABLE_MESSAGE_CACHE)) {
-        thorium_message_cache_save_reply_message(&self->message_cache, message);
+        thorium_actor_save_reply_message_in_cache(self, message);
     }
 
     start = core_timer_get_nanoseconds(&self->timer);

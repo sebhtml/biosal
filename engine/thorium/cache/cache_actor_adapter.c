@@ -6,6 +6,18 @@
 
 #include <core/helpers/bitmap.h>
 
+void thorium_actor_init_message_cache(struct thorium_actor *self)
+{
+    thorium_message_cache_init(&self->message_cache);
+    thorium_message_cache_set_memory_pool(&self->message_cache,
+                    &self->abstract_memory_pool);
+}
+
+void thorium_actor_destroy_message_cache(struct thorium_actor *self)
+{
+    thorium_message_cache_destroy(&self->message_cache);
+}
+
 void thorium_actor_enable_message_cache(struct thorium_actor *self, struct thorium_message *message)
 {
     int cache_action;
@@ -71,3 +83,10 @@ int thorium_actor_fetch_reply_message_from_cache(struct thorium_actor *self,
 
     return 0;
 }
+
+void thorium_actor_save_reply_message_in_cache(struct  thorium_actor *self,
+                struct thorium_message *message)
+{
+    thorium_message_cache_save_reply_message(&self->message_cache, message);
+}
+
