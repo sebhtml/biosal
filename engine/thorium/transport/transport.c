@@ -1,7 +1,7 @@
 
 #include "transport.h"
 
-#include <performance/tracepoints/tracepoints.h>
+#include <tracepoints/tracepoints.h>
 
 /*
  * Implementations of the interface.

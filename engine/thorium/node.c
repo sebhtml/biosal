@@ -29,7 +29,7 @@
 
 #include <core/system/debugger.h>
 
-#include <performance/tracepoints/tracepoints.h>
+#include <tracepoints/tracepoints.h>
 
 /* for biosal_command_get_output_directory */
 #include <genomics/helpers/command.h>

@@ -29,8 +29,11 @@ include engine/thorium/Makefile.mk
 include genomics/Makefile.mk
 include core/Makefile.mk
 
-# tracepoints and performance apps.
+# performance apps.
 include performance/Makefile.mk
+
+# tracepoints
+include tracepoints/Makefile.mk
 
 # include these after the library Makefile.mk files
 include tests/Makefile.mk

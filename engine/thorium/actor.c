@@ -22,7 +22,7 @@
 #include <inttypes.h>
 #include <stdint.h>
 
-#include <performance/tracepoints/tracepoints.h>
+#include <tracepoints/tracepoints.h>
 
 #define MEMORY_ACTOR_KEY 0x878a06c0
 

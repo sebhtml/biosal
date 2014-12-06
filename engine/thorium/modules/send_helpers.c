@@ -3,7 +3,7 @@
 
 #include "binomial_tree_message.h" /* for DEBUG_BINOMIAL_TREE */
 
-#include <performance/tracepoints/tracepoints.h>
+#include <tracepoints/tracepoints.h>
 
 #include <engine/thorium/actor.h>
 #include <engine/thorium/message.h>

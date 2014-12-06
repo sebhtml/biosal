@@ -28,7 +28,7 @@
 #include <core/system/debugger.h>
 #include <core/system/memory.h>
 
-#include <performance/tracepoints/tracepoints.h>
+#include <tracepoints/tracepoints.h>
 
 #include <stdlib.h>
 #include <stdio.h>

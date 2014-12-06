@@ -4,7 +4,7 @@
 #include "cfs_scheduler.h"
 #include "fifo_scheduler.h"
 
-#include <performance/tracepoints/tracepoints.h>
+#include <tracepoints/tracepoints.h>
 
 #include <core/system/memory.h>
 #include <core/system/debugger.h>

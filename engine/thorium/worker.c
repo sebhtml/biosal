@@ -31,7 +31,7 @@
 #include <core/system/timer.h>
 #include <core/system/debugger.h>
 
-#include <performance/tracepoints/tracepoints.h>
+#include <tracepoints/tracepoints.h>
 
 #include <stdlib.h>
 #include <stdio.h>

@@ -4,7 +4,7 @@
 
 #include <engine/thorium/node.h>
 
-#include <performance/tracepoints/tracepoints.h>
+#include <tracepoints/tracepoints.h>
 
 #include <core/helpers/bitmap.h>
 
