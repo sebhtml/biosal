@@ -45,5 +45,6 @@ void thorium_message_cache_save_request_message(struct thorium_message_cache *se
                 struct thorium_message *message);
 void thorium_message_cache_save_reply_message(struct thorium_message_cache *self,
                 struct thorium_message *message);
+int thorium_message_cache_action_count(struct thorium_message_cache *self);
 
 #endif

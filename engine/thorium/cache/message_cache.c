@@ -95,3 +95,8 @@ void thorium_message_cache_save_request_message(struct thorium_message_cache *se
      * Save the message cache tag for later.
      */
 }
+
+int thorium_message_cache_action_count(struct thorium_message_cache *self)
+{
+    return core_set_size(&self->actions);
+}
