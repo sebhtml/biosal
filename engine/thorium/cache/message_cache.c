@@ -6,6 +6,8 @@
 #include <engine/thorium/message.h>
 #include <core/structures/map.h>
 
+#include <stdio.h>
+
 void thorium_message_cache_init(struct thorium_message_cache *self)
 {
     core_map_init(&self->entries, sizeof(struct thorium_cache_tag),
@@ -60,12 +62,18 @@ void thorium_message_cache_save_reply_message(struct thorium_message_cache *self
     }
 
     /*
-     * Generate a cache tag for the request_message and add the reply
+    printf("DEBUG thorium_message_cache_save_reply_message action %d\n",
+                    thorium_message_action(message));
+    */
+    /*
+     * Use the cache tag in self->last_tag to add the reply
      * message in an entry.
-     *
-     * After that, free the request message.
      */
+    /* TODO */
 
+    /*
+     * After that, free/reset the request message.
+     */
     thorium_cache_tag_reset(&self->last_tag);
 }
 
@@ -94,6 +102,11 @@ void thorium_message_cache_save_request_message(struct thorium_message_cache *se
     /*
      * Save the message cache tag for later.
      */
+    thorium_cache_tag_set(&self->last_tag, message);
+
+    /*
+    thorium_cache_tag_print(&self->last_tag);
+    */
 }
 
 int thorium_message_cache_action_count(struct thorium_message_cache *self)
