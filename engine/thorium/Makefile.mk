@@ -33,5 +33,6 @@ include engine/thorium/transport/Makefile.mk
 
 THORIUM_OBJECTS += engine/thorium/cache/cache_tag.o
 THORIUM_OBJECTS += engine/thorium/cache/message_cache.o
+THORIUM_OBJECTS += engine/thorium/cache/cache_actor_adapter.o
 
 LIBRARY_OBJECTS += $(THORIUM_OBJECTS)

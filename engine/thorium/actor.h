@@ -8,6 +8,7 @@
 #include "actor_profiler.h"
 
 #include "cache/message_cache.h"
+#include "cache/cache_actor_adapter.h"
 
 #include "modules/binomial_tree_message.h"
 #include "modules/proxy_message.h"
