@@ -39,7 +39,7 @@ void thorium_actor_clear_message_cache(struct thorium_actor *self, struct thoriu
  * This hook is called in thorium_actor_receive()
  * to cache the reply message, if desired.
  */
-void thorium_actor_save_reply_message_in_cache(struct  thorium_actor *self,
+void thorium_actor_save_reply_message_in_cache(struct thorium_actor *self,
                 struct thorium_message *message);
 
 /**
