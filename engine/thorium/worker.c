@@ -138,8 +138,6 @@ static void thorium_worker_configure_backoff(struct thorium_worker *self);
 static void thorium_worker_activate_backoff(struct thorium_worker *self);
 static void thorium_worker_do_backoff(struct thorium_worker *self);
 
-int thorium_worker_schedule_actor(struct thorium_worker *self, struct thorium_actor *actor,
-                struct thorium_message *message);
 static int thorium_worker_has_actor(struct thorium_worker *self, int actor);
 
 static int thorium_worker_publish_message(struct thorium_worker *self, struct thorium_message *message);

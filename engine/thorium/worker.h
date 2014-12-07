@@ -342,4 +342,12 @@ void thorium_worker_free_zero_copy_buffer(struct thorium_worker *self,
 int thorium_worker_enqueue_inbound_message_in_queue(struct thorium_worker *self,
                 struct thorium_message *message);
 
+/**
+ * Schedule a message to be received by an actor.
+ * This adds the message in the actor mailbox, sets the scheduling status,
+ * and add the actor to the scheduler execution timeline.
+ */
+int thorium_worker_schedule_actor(struct thorium_worker *self, struct thorium_actor *actor,
+                struct thorium_message *message);
+
 #endif
