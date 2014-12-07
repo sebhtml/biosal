@@ -938,7 +938,7 @@ int thorium_worker_dequeue_actor(struct thorium_worker *worker, struct thorium_a
          *
          * If that does not work, buffer it.
          */
-        if (!thorium_actor_enqueue_mailbox_message(other_actor, &message)) {
+        if (!thorium_worker_schedule_actor(worker, other_actor, &message)) {
             thorium_worker_enqueue_inbound_message_in_queue(worker, &message);
         }
 
@@ -971,6 +971,7 @@ int thorium_worker_dequeue_actor(struct thorium_worker *worker, struct thorium_a
         }
 #endif
 
+#if 0
         if (!core_map_get_value(&worker->actors, &other_name, &status)) {
             /* Add the actor to the list of actors.
              * This does nothing if it is already in the list.
@@ -1000,6 +1001,7 @@ int thorium_worker_dequeue_actor(struct thorium_worker *worker, struct thorium_a
                             (int)core_set_size(&worker->queued_actors));
 #endif
         }
+#endif
     }
 
     /* Now, dequeue an actor from the real queue.
