@@ -943,7 +943,7 @@ int thorium_worker_dequeue_actor(struct thorium_worker *worker, struct thorium_a
          * If that does not work, buffer it.
          */
         if (!thorium_actor_enqueue_mailbox_message(other_actor, &message)) {
-            core_queue_enqueue(&worker->input_inbound_message_queue, &message);
+            thorium_worker_enqueue_inbound_message_in_queue(worker, &message);
         }
 
 #if 0
@@ -1766,8 +1766,7 @@ void thorium_worker_run(struct thorium_worker *worker)
          * If the actor is alive, give it the message.
          */
         } else if (!thorium_actor_enqueue_mailbox_message(actor, &other_message)) {
-            core_queue_enqueue(&worker->input_inbound_message_queue, &other_message);
-
+            thorium_worker_enqueue_inbound_message_in_queue(worker, &other_message);
         } else {
 
             /*
@@ -2656,4 +2655,10 @@ void thorium_worker_free_zero_copy_buffer(struct thorium_worker *self,
     core_memory_pool_free(&self->outbound_message_memory_pool,
                         buffer);
     self->zero_copy_buffer = NULL;
+}
+
+int thorium_worker_enqueue_inbound_message_in_queue(struct thorium_worker *self,
+                struct thorium_message *message)
+{
+    return core_queue_enqueue(&self->input_inbound_message_queue, message);
 }

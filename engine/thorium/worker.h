@@ -339,5 +339,7 @@ int thorium_worker_has_outbound_traffic_congestion(struct thorium_worker *self);
 
 void thorium_worker_free_zero_copy_buffer(struct thorium_worker *self,
                 void *buffer);
+int thorium_worker_enqueue_inbound_message_in_queue(struct thorium_worker *self,
+                struct thorium_message *message);
 
 #endif
