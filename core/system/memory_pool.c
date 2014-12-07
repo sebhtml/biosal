@@ -16,7 +16,14 @@
 #include <stdint.h>
 
 /*
- * Examine memory pool on destruct().
+ * Report memory leaks in destruct() calls.
+ */
+/*
+#define CORE_MEMORY_POOL_SHOW_MEMORY_LEAKS
+*/
+
+/*
+ * Examine memory pool in destruct() calls.
  */
 /*
 #define CORE_MEMORY_POOL_EXAMINE
@@ -108,7 +115,7 @@ void core_memory_pool_destroy(struct core_memory_pool *self)
     core_memory_pool_examine(self);
 #endif
 
-#ifdef CORE_MEMORY_POOL_FIND_LEAKS
+#ifdef CORE_MEMORY_POOL_SHOW_MEMORY_LEAKS
     if (core_memory_pool_has_leaks(self)) {
         printf("Error, memory leak detected.\n");
         core_memory_pool_examine(self);
