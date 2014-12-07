@@ -2324,6 +2324,7 @@ int thorium_worker_schedule_actor(struct thorium_worker *self, struct thorium_ac
 {
     int name;
     int *bucket;
+    int already_scheduled;
 
     /*
      * Put the message in the mailbox.
@@ -2340,14 +2341,27 @@ int thorium_worker_schedule_actor(struct thorium_worker *self, struct thorium_ac
     name = thorium_actor_name(actor);
     bucket = core_map_get(&self->actors, &name);
 
+    already_scheduled = 0;
+
+    /*
+     * This is the first message delivered to this actor.
+     */
     if (bucket == NULL) {
         bucket = core_map_add(&self->actors, &name);
         *bucket = THORIUM_SCHEDULER_STATUS_SCHEDULED;
 
+    /*
+     * The actor is already scheduled.
+     */
     } else if (*bucket == THORIUM_SCHEDULER_STATUS_SCHEDULED) {
         /*
          * Nothing to do.
          */
+        already_scheduled = 1;
+
+    /*
+     * The actor was waiting for a message.
+     */
     } else if (*bucket == THORIUM_SCHEDULER_STATUS_IDLE) {
         *bucket = THORIUM_SCHEDULER_STATUS_SCHEDULED;
     }
@@ -2360,7 +2374,9 @@ int thorium_worker_schedule_actor(struct thorium_worker *self, struct thorium_ac
      * schedule it too.
      * Schedule the actor in the timeline.
      */
-    thorium_scheduler_enqueue(&self->scheduler, actor);
+    if (!already_scheduled) {
+        thorium_scheduler_enqueue(&self->scheduler, actor);
+    }
 
     tracepoint(thorium_message, worker_send_schedule, message);
 
