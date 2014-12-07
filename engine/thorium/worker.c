@@ -2330,22 +2330,30 @@ int thorium_worker_get_input_message_ring_size(struct thorium_worker *self)
 
 static void thorium_worker_schedule_actor(struct thorium_worker *self, struct thorium_actor *actor)
 {
-    int status;
     int name;
     int *bucket;
 
     name = thorium_actor_name(actor);
     bucket = core_map_get(&self->actors, &name);
 
-    status = THORIUM_SCHEDULER_STATUS_SCHEDULED;
+    if (bucket == NULL) {
+        bucket = core_map_add(&self->actors, &name);
+        *bucket = THORIUM_SCHEDULER_STATUS_SCHEDULED;
+
+    } else if (*bucket == THORIUM_SCHEDULER_STATUS_SCHEDULED) {
+        /*
+         * Nothing to do.
+         */
+    } else if (*bucket == THORIUM_SCHEDULER_STATUS_IDLE) {
+        *bucket = THORIUM_SCHEDULER_STATUS_SCHEDULED;
+    }
+
+    CORE_DEBUGGER_ASSERT(*bucket == THORIUM_SCHEDULER_STATUS_SCHEDULED ||
+                    *bucket == THORIUM_SCHEDULER_STATUS_IDLE);
 
     /*
-     * Already scheduled.
+     * Schedule the actor in the timeline.
      */
-    if (*bucket == status)
-        return;
-
-    *bucket = status;
     thorium_scheduler_enqueue(&self->scheduler, actor);
 }
 
