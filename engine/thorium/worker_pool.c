@@ -462,10 +462,12 @@ void thorium_worker_pool_print_load(struct thorium_worker_pool *self, int type)
                     buffer_for_future_timeline);
     }
 
+#ifdef THORIUM_WORKER_ENABLE_WAIT_AND_SIGNAL
     printf("[thorium] node %d %s WAKE_UP_COUNT %d s %s\n",
                     node_name,
                     description, elapsed,
                     buffer_for_wake_up_events);
+#endif
 
     if (type == THORIUM_WORKER_POOL_LOAD_EPOCH) {
         printf("[thorium] node %d %s TRAFFIC_REDUCTION %d s %s\n",
