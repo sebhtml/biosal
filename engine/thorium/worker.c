@@ -138,7 +138,8 @@ static void thorium_worker_configure_backoff(struct thorium_worker *self);
 static void thorium_worker_activate_backoff(struct thorium_worker *self);
 static void thorium_worker_do_backoff(struct thorium_worker *self);
 
-static void thorium_worker_schedule_actor(struct thorium_worker *self, struct thorium_actor *actor);
+int thorium_worker_schedule_actor(struct thorium_worker *self, struct thorium_actor *actor,
+                struct thorium_message *message);
 static int thorium_worker_has_actor(struct thorium_worker *self, int actor);
 
 static int thorium_worker_publish_message(struct thorium_worker *self, struct thorium_message *message);
@@ -618,14 +619,11 @@ void thorium_worker_send(struct thorium_worker *worker, struct thorium_message *
          */
         thorium_message_remove_metadata_from_count(message);
 
+        /*
+         * Attempt a direct delivery.
+         */
         if (destination_actor != NULL
-                 && thorium_actor_enqueue_mailbox_message(destination_actor, message)) {
-
-            tracepoint(thorium_message, worker_send_mailbox, message);
-
-            thorium_worker_schedule_actor(worker, destination_actor);
-
-            tracepoint(thorium_message, worker_send_schedule, message);
+            && thorium_worker_schedule_actor(worker, destination_actor, message)) {
 
             return;
         }
@@ -1765,15 +1763,8 @@ void thorium_worker_run(struct thorium_worker *worker)
         /*
          * If the actor is alive, give it the message.
          */
-        } else if (!thorium_actor_enqueue_mailbox_message(actor, &other_message)) {
+        } else if (!thorium_worker_schedule_actor(worker, actor, &other_message)) {
             thorium_worker_enqueue_inbound_message_in_queue(worker, &other_message);
-        } else {
-
-            /*
-             * After giving the message to the actor,
-             * schedule it too.
-             */
-            thorium_worker_schedule_actor(worker, actor);
         }
     }
 
@@ -2328,11 +2319,24 @@ int thorium_worker_get_input_message_ring_size(struct thorium_worker *self)
     return core_fast_ring_size_from_producer(&self->input_inbound_message_ring);
 }
 
-static void thorium_worker_schedule_actor(struct thorium_worker *self, struct thorium_actor *actor)
+int thorium_worker_schedule_actor(struct thorium_worker *self, struct thorium_actor *actor,
+                struct thorium_message *message)
 {
     int name;
     int *bucket;
 
+    /*
+     * Put the message in the mailbox.
+     */
+    if (!thorium_actor_enqueue_mailbox_message(actor, message)) {
+        return 0;
+    }
+
+    tracepoint(thorium_message, worker_send_mailbox, message);
+
+    /*
+     * Set the status.
+     */
     name = thorium_actor_name(actor);
     bucket = core_map_get(&self->actors, &name);
 
@@ -2352,9 +2356,15 @@ static void thorium_worker_schedule_actor(struct thorium_worker *self, struct th
                     *bucket == THORIUM_SCHEDULER_STATUS_IDLE);
 
     /*
+     * After giving the message to the actor,
+     * schedule it too.
      * Schedule the actor in the timeline.
      */
     thorium_scheduler_enqueue(&self->scheduler, actor);
+
+    tracepoint(thorium_message, worker_send_schedule, message);
+
+    return 1;
 }
 
 static int thorium_worker_has_actor(struct thorium_worker *self, int actor)
