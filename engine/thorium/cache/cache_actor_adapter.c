@@ -3,8 +3,13 @@
 
 #include <engine/thorium/actor.h>
 #include <engine/thorium/message.h>
+#include <engine/thorium/worker.h>
 
 #include <core/helpers/bitmap.h>
+
+/*
+*/
+#define CONFIG_INJECT_CACHED_REPLY_MESSAGE
 
 void thorium_actor_init_message_cache(struct thorium_actor *self)
 {
@@ -59,18 +64,28 @@ int thorium_actor_fetch_reply_message_from_cache(struct thorium_actor *self,
                 struct thorium_message *message)
 {
     struct thorium_message *reply_message;
+    struct thorium_message new_message;
+    int count;
+    void *buffer;
+    void *new_buffer;
+    struct thorium_worker *worker;
+    int worker_name;
+    struct core_memory_pool *pool;
 
     /*
      * Try to get the reply message from the message cache using the request
      * message.
      */
+#ifdef CONFIG_INJECT_CACHED_REPLY_MESSAGE
     reply_message = thorium_message_cache_get_reply_message(&self->message_cache, message);
+#else
+    reply_message = NULL;
+#endif
 
     if (reply_message != NULL) {
         /*
          * Inject the reply message and return 1.
          */
-        /* TODO */
 
 #ifdef DISPLAY_CACHE_HIT
         printf("Found reply message in message cache !\n");
@@ -79,12 +94,61 @@ int thorium_actor_fetch_reply_message_from_cache(struct thorium_actor *self,
         printf("Reply: ");
         thorium_message_print(reply_message);
 #endif
+
+        /*
+         * Make a copy of the reply_message.
+         */
+        core_memory_copy(&new_message, reply_message, sizeof(new_message));
+
+        /*
+         * Set the worker name for this message so that if there is
+         * a buffer allocated, it can be eventually routed back here to be
+         * freed.
+         */
+        worker = thorium_actor_worker(self);
+        worker_name = thorium_worker_name(worker);
+        thorium_message_set_worker(&new_message, worker_name);
+
+        /*
+         * Allocate a outbound buffer and
+         * copy the data.
+         */
+        buffer = thorium_message_buffer(reply_message);
+
+        if (buffer != NULL) {
+            count = thorium_message_count(reply_message);
+
+            /*
+             * Use the outbound message allocator from the worker.
+             */
+            pool = thorium_worker_get_memory_pool(worker,
+                            MEMORY_POOL_NAME_WORKER_OUTBOUND);
+            new_buffer = core_memory_pool_allocate(pool, count);
+            core_memory_copy(new_buffer, buffer, count);
+
+            thorium_message_set_buffer(&new_message, new_buffer);
+        }
+
+        /*
+         * And inject the message. To do so,
+         * enqueue the message in the actor mailbox. If that does not work,
+         * enqueue the message in the inbound queue of the worker.
+         */
+        if (!thorium_actor_enqueue_mailbox_message(self, &new_message)) {
+            thorium_worker_enqueue_inbound_message_in_queue(worker, &new_message);
+        }
+
+        /*
+         * Tell the calling code that a reply message was found and that it was
+         * injected into the actor fabric.
+         */
+        return 1;
     }
 
     return 0;
 }
 
-void thorium_actor_save_reply_message_in_cache(struct  thorium_actor *self,
+void thorium_actor_save_reply_message_in_cache(struct thorium_actor *self,
                 struct thorium_message *message)
 {
     thorium_message_cache_save_reply_message(&self->message_cache, message);
