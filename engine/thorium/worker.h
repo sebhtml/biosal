@@ -59,7 +59,7 @@ struct thorium_balancer;
  * Enable wait and signal for workers
  */
 /*
-#define THORIUM_WORKER_ENABLE_WAIT
+#define THORIUM_WORKER_ENABLE_WAIT_AND_SIGNAL
 */
 
 #define THORIUM_WORKER_NONE (-99)

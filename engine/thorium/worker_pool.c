@@ -130,7 +130,7 @@ void thorium_worker_pool_init(struct thorium_worker_pool *pool, int workers,
     thorium_message_queue_init(&pool->message_queue);
 #endif
 
-#ifdef THORIUM_WORKER_ENABLE_WAIT
+#ifdef THORIUM_WORKER_ENABLE_WAIT_AND_SIGNAL
     /*
      * Enable the wait/notify algorithm if running on more than
      * one node.
@@ -253,7 +253,7 @@ void thorium_worker_pool_create_workers(struct thorium_worker_pool *pool)
         thorium_worker_set_triage_message_ring(worker, &pool->triage_message_ring);
 #endif
 
-#ifdef THORIUM_WORKER_ENABLE_WAIT
+#ifdef THORIUM_WORKER_ENABLE_WAIT_AND_SIGNAL
         if (pool->waiting_is_enabled) {
             thorium_worker_enable_waiting(worker);
         }
@@ -760,7 +760,7 @@ void thorium_worker_pool_work(struct thorium_worker_pool *pool)
     }
 #endif
 
-#ifdef THORIUM_WORKER_ENABLE_WAIT
+#ifdef THORIUM_WORKER_ENABLE_WAIT_AND_SIGNAL
     /*
      * If waiting is enabled, it is required to wake up workers
      * once in a while because of the ordering

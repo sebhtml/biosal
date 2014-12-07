@@ -1082,7 +1082,7 @@ int thorium_worker_dequeue_actor(struct thorium_worker *worker, struct thorium_a
 
     }
 
-#ifdef THORIUM_WORKER_ENABLE_WAIT
+#ifdef THORIUM_WORKER_ENABLE_WAIT_AND_SIGNAL
     thorium_worker_check_production(worker, value, name);
 #endif
 
@@ -1110,7 +1110,7 @@ int thorium_worker_enqueue_inbound_message(struct thorium_worker *worker, struct
     }
 #endif
 
-#ifdef THORIUM_WORKER_ENABLE_WAIT
+#ifdef THORIUM_WORKER_ENABLE_WAIT_AND_SIGNAL
     /*
      * Do a wake up if necessary when scheduling an actor in
      * the scheduling queue.
