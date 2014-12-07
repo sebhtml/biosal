@@ -134,7 +134,7 @@ int thorium_actor_fetch_reply_message_from_cache(struct thorium_actor *self,
          * enqueue the message in the actor mailbox. If that does not work,
          * enqueue the message in the inbound queue of the worker.
          */
-        if (!thorium_actor_enqueue_mailbox_message(self, &new_message)) {
+        if (!thorium_worker_schedule_actor(worker, self, &new_message)) {
             thorium_worker_enqueue_inbound_message_in_queue(worker, &new_message);
         }
 
