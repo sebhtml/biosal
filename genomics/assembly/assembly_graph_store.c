@@ -986,7 +986,10 @@ void biosal_assembly_graph_store_get_vertex(struct thorium_actor *self, struct t
     int path;
     int position;
     int count;
+    int action;
+    int flag;
 
+    action = thorium_message_action(message);
     path = -1;
     ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
     concrete_self = thorium_actor_concrete_actor(self);
@@ -1044,6 +1047,19 @@ void biosal_assembly_graph_store_get_vertex(struct thorium_actor *self, struct t
     thorium_actor_send_reply(self, &new_message);
 
     thorium_message_destroy(&new_message);
+
+    /*
+     * Set the flag of the vertex.
+     */
+    if (action == ACTION_ASSEMBLY_GET_VERTEX_AND_SET_VISITOR_FLAG) {
+
+#ifdef DEBUG_CODE_PATH_9
+        printf("DEBUG CODE PATH 9\n");
+#endif
+
+        flag = BIOSAL_VERTEX_FLAG_PROCESSED_BY_VISITOR;
+        biosal_assembly_vertex_set_flag(canonical_vertex, flag);
+    }
 }
 
 void biosal_assembly_graph_store_get_starting_vertex(struct thorium_actor *self, struct thorium_message *message)
