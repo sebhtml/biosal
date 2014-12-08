@@ -147,6 +147,9 @@ void biosal_assembly_graph_store_init(struct thorium_actor *self)
     thorium_actor_add_action(self, ACTION_ASSEMBLY_GET_VERTEX,
                     biosal_assembly_graph_store_get_vertex);
 
+    thorium_actor_add_action(self, ACTION_ASSEMBLY_GET_VERTEX_AND_SET_VISITOR_FLAG,
+                    biosal_assembly_graph_store_get_vertex);
+
     thorium_actor_add_action(self, ACTION_ASSEMBLY_GET_STARTING_KMER,
                     biosal_assembly_graph_store_get_starting_vertex);
 
