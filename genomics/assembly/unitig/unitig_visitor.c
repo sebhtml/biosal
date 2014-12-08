@@ -31,6 +31,8 @@
 #define CONFIG_INCREASE_LOCALITY
 */
 
+#define CONFIG_VISITOR_USE_MESSAGE_CACHE
+
 void biosal_unitig_visitor_init(struct thorium_actor *self);
 void biosal_unitig_visitor_destroy(struct thorium_actor *self);
 void biosal_unitig_visitor_receive(struct thorium_actor *self, struct thorium_message *message);
@@ -175,12 +177,14 @@ void biosal_unitig_visitor_receive(struct thorium_actor *self, struct thorium_me
 
         thorium_actor_send_to_self_empty(self, ACTION_ENABLE_MULTIPLEXER);
 
+#ifdef CONFIG_VISITOR_USE_MESSAGE_CACHE
         /*
          * Use a message cache for messages with action
          * ACTION_ASSEMBLY_GET_VERTEX.
          */
         thorium_actor_send_to_self_int(self, ACTION_ENABLE_MESSAGE_CACHE,
                         ACTION_ASSEMBLY_GET_VERTEX);
+#endif
 
         concrete_self->manager = source;
 
@@ -346,10 +350,12 @@ void biosal_unitig_visitor_execute(struct thorium_actor *self)
         thorium_actor_send_int(self, graph_store, ACTION_ASSEMBLY_GET_STARTING_KMER,
                         BIOSAL_VERTEX_FLAG_PROCESSED_BY_VISITOR);
 
+#ifdef CONFIG_VISITOR_USE_MESSAGE_CACHE
         /*
          * Clear the cache here.
          */
         thorium_actor_send_to_self_empty(self, ACTION_CLEAR_MESSAGE_CACHE);
+#endif
 
         biosal_dna_kmer_destroy(&concrete_self->local_kmer, &concrete_self->memory_pool);
         biosal_dna_kmer_init_empty(&concrete_self->local_kmer);
