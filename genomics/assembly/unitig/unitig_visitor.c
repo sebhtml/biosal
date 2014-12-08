@@ -332,7 +332,11 @@ void biosal_unitig_visitor_execute(struct thorium_actor *self)
 
         graph_store = core_vector_at_as_int(&concrete_self->graph_stores, graph_store_index);
 
-        thorium_actor_send_empty(self, graph_store, ACTION_ASSEMBLY_GET_STARTING_KMER);
+        /*
+         * Request a vertex with the flag BIOSAL_VERTEX_FLAG_PROCESSED_BY_VISITOR cleared.
+         */
+        thorium_actor_send_int(self, graph_store, ACTION_ASSEMBLY_GET_STARTING_KMER,
+                        BIOSAL_VERTEX_FLAG_PROCESSED_BY_VISITOR);
 
         /*
          * Clear the cache here.

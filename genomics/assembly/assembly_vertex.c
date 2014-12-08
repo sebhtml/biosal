@@ -16,11 +16,12 @@ void biosal_assembly_vertex_init(struct biosal_assembly_vertex *self)
 
     CORE_BITMAP_CLEAR(self->flags);
 
-    biosal_assembly_vertex_clear_flag(self, BIOSAL_VERTEX_FLAG_USED);
+    biosal_assembly_vertex_clear_flag(self, BIOSAL_VERTEX_FLAG_USED_BY_WALKER);
     biosal_assembly_vertex_clear_flag(self, BIOSAL_VERTEX_FLAG_TIP);
     biosal_assembly_vertex_clear_flag(self, BIOSAL_VERTEX_FLAG_BUBBLE);
     biosal_assembly_vertex_clear_flag(self, BIOSAL_VERTEX_FLAG_VISITED);
     biosal_assembly_vertex_clear_flag(self, BIOSAL_VERTEX_FLAG_UNITIG);
+    biosal_assembly_vertex_clear_flag(self, BIOSAL_VERTEX_FLAG_PROCESSED_BY_VISITOR);
 
     biosal_assembly_vertex_set_last_actor(self, THORIUM_ACTOR_NOBODY, -1);
 

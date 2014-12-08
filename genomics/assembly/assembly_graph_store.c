@@ -1057,9 +1057,17 @@ void biosal_assembly_graph_store_get_starting_vertex(struct thorium_actor *self,
     int argc;
     char **argv;
     int coverage;
+    int required_cleared_flag;
+    char *buffer;
 
     argc = thorium_actor_argc(self);
     argv = thorium_actor_argv(self);
+    buffer = thorium_message_buffer(message);
+
+    CORE_DEBUGGER_ASSERT(buffer != NULL);
+    CORE_DEBUGGER_ASSERT(thorium_message_count(message) >= (int)sizeof(required_cleared_flag));
+
+    required_cleared_flag = *(int *)buffer;
 
     concrete_self = thorium_actor_concrete_actor(self);
     ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
@@ -1076,12 +1084,25 @@ void biosal_assembly_graph_store_get_starting_vertex(struct thorium_actor *self,
         ++concrete_self->iterated_vertex_count;
 
         /*
-         * Skip the vertex if it does have the status
-         * BIOSAL_VERTEX_FLAG_USED.
+         * Skip the vertex if it has the status
+         * BIOSAL_VERTEX_FLAG_USED_BY_WALKER.
          */
-        if (biosal_assembly_vertex_get_flag(vertex, BIOSAL_VERTEX_FLAG_USED)) {
+        if (required_cleared_flag == BIOSAL_VERTEX_FLAG_USED_BY_WALKER) {
 
-            continue;
+            if (biosal_assembly_vertex_get_flag(vertex, required_cleared_flag)) {
+                continue;
+            }
+        }
+
+        /*
+         * Skip the vertex if it has the flag
+         * BIOSAL_VERTEX_FLAG_PROCESSED_BY_VISITOR.
+         */
+        if (required_cleared_flag == BIOSAL_VERTEX_FLAG_PROCESSED_BY_VISITOR) {
+
+            if (biosal_assembly_vertex_get_flag(vertex, required_cleared_flag)) {
+                continue;
+            }
         }
 
         /*
@@ -1274,8 +1295,8 @@ void biosal_assembly_graph_store_mark_as_used(struct thorium_actor *self,
 
     concrete_self = thorium_actor_concrete_actor(self);
 
-    if (!biosal_assembly_vertex_get_flag(vertex, BIOSAL_VERTEX_FLAG_USED)) {
-        biosal_assembly_vertex_set_flag(vertex, BIOSAL_VERTEX_FLAG_USED);
+    if (!biosal_assembly_vertex_get_flag(vertex, BIOSAL_VERTEX_FLAG_USED_BY_WALKER)) {
+        biosal_assembly_vertex_set_flag(vertex, BIOSAL_VERTEX_FLAG_USED_BY_WALKER);
         ++concrete_self->consumed_canonical_vertex_count;
         biosal_assembly_graph_store_print_progress(self);
     }
@@ -1349,7 +1370,7 @@ void biosal_assembly_graph_store_mark_vertex_as_visited(struct thorium_actor *se
     /*
      * This is a good idea to always update with the last one.
      */
-    if (force || !biosal_assembly_vertex_get_flag(canonical_vertex, BIOSAL_VERTEX_FLAG_USED)) {
+    if (force || !biosal_assembly_vertex_get_flag(canonical_vertex, BIOSAL_VERTEX_FLAG_USED_BY_WALKER)) {
         biosal_assembly_graph_store_mark_as_used(self, canonical_vertex, source, path_index);
     }
 #if 0

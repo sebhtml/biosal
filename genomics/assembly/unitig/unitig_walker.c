@@ -409,7 +409,12 @@ void biosal_unitig_walker_begin(struct thorium_actor *self, struct thorium_messa
 #if 0
     printf("DEBUG_WALKER BEGIN\n");
 #endif
-    thorium_actor_send_empty(self, store, ACTION_ASSEMBLY_GET_STARTING_KMER);
+    /*
+     * Get a kmer with the flag
+     * BIOSAL_VERTEX_FLAG_USED_BY_WALKER cleared.
+     */
+    thorium_actor_send_int(self, store, ACTION_ASSEMBLY_GET_STARTING_KMER,
+                    BIOSAL_VERTEX_FLAG_USED_BY_WALKER);
 }
 
 void biosal_unitig_walker_start(struct thorium_actor *self, struct thorium_message *message)
@@ -599,7 +604,7 @@ void biosal_unitig_walker_get_vertex_reply_starting_vertex(struct thorium_actor 
      */
 
     if (biosal_assembly_vertex_get_flag(&concrete_self->current_vertex,
-                            BIOSAL_VERTEX_FLAG_USED)) {
+                            BIOSAL_VERTEX_FLAG_USED_BY_WALKER)) {
 
         biosal_assembly_vertex_destroy(&concrete_self->current_vertex);
         ++concrete_self->skipped_at_start_used;
@@ -897,7 +902,7 @@ void biosal_unitig_walker_get_vertex_reply(struct thorium_actor *self, struct th
     last_actor = biosal_assembly_vertex_last_actor(&vertex);
     name = thorium_actor_name(self);
 
-    if (biosal_assembly_vertex_get_flag(&vertex, BIOSAL_VERTEX_FLAG_USED)
+    if (biosal_assembly_vertex_get_flag(&vertex, BIOSAL_VERTEX_FLAG_USED_BY_WALKER)
                     && last_actor != name) {
 
         last_path_index = biosal_assembly_vertex_last_path_index(&vertex);
