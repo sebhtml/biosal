@@ -293,7 +293,7 @@ void thorium_transport_select_implementation(struct thorium_transport *self, int
 #endif
 #endif
 
-#if defined(_CRAYC) && 0
+#if defined(_CRA__disabled__YC) && 0
     component = &thorium_gni_transport_implementation;
     core_vector_push_back(&implementations, &component);
 #endif
@@ -321,7 +321,7 @@ void thorium_transport_select_implementation(struct thorium_transport *self, int
      *
      * Evaluation: https://github.com/GeneAssembly/biosal/issues/789
      */
-#ifdef _CRAYC
+#ifdef _CRA__disabled__YC
     self->transport_interface = &thorium_mpi1_pt2pt_transport_implementation;
 
     /*
@@ -329,7 +329,7 @@ void thorium_transport_select_implementation(struct thorium_transport *self, int
      *
      * Evaluation: https://github.com/GeneAssembly/biosal/issues/834
      */
-#elif defined(__bgq__)
+#elif defined(__bg__disabled__q__)
     self->transport_interface = &thorium_mpi1_pt2pt_nonblocking_transport_implementation;
 #endif
 
