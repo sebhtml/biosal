@@ -313,10 +313,14 @@ void thorium_transport_select_implementation(struct thorium_transport *self, int
 
     requested_implementation_name = core_command_get_argument_value(argc, argv, "-transport");
 
+    self->transport_interface = NULL;
+
     /*
      * The default is the first one in the list.
      */
-    self->transport_interface = *(struct thorium_transport_interface **)core_vector_at(&implementations, 0);
+    if (!core_vector_empty(&implementations)) {
+        self->transport_interface = *(struct thorium_transport_interface **)core_vector_at(&implementations, 0);
+    }
 
     /*
      * The option -transport was provided.
