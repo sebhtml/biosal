@@ -380,6 +380,8 @@ void thorium_node_init(struct thorium_node *node, int *argc, char ***argv)
         CORE_BITMAP_SET_BIT(node->flags, FLAG_PRINT_STRUCTURE);
     }
 
+    thorium_transport_print(&node->transport);
+
     for (i = 0; i < *argc; i++) {
         if (strcmp((*argv)[i], "-threads-per-node") == 0 && i + 1 < *argc) {
             /*printf("thorium_node_init threads: %s\n",
