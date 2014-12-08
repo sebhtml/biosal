@@ -323,6 +323,15 @@ void thorium_transport_select_implementation(struct thorium_transport *self, int
     }
 
     /*
+     * For MPI 1 point-to-point implementation.
+     *
+     * Evaluation: https://github.com/GeneAssembly/biosal/issues/789
+     */
+#ifdef _CRAYC
+    self->transport_interface = &thorium_mpi1_pt2pt_transport_implementation;
+#endif
+
+    /*
      * The option -transport was provided.
      *
      * Possible values are:
