@@ -8,8 +8,6 @@
 
 typedef int coverage_t;
 
-#define BIOSAL_VERTEX_FLAG_START_VALUE 0
-
 #define BIOSAL_VERTEX_FLAG_USED_BY_WALKER 0
 #define BIOSAL_VERTEX_FLAG_TIP 1
 #define BIOSAL_VERTEX_FLAG_BUBBLE 2
@@ -17,8 +15,13 @@ typedef int coverage_t;
 #define BIOSAL_VERTEX_FLAG_UNITIG 4
 #define BIOSAL_VERTEX_FLAG_PROCESSED_BY_VISITOR 5
 
-#define BIOSAL_VERTEX_FLAG_END_VALUE 5
 /*
+ * For bound checking.
+ */
+#define BIOSAL_VERTEX_FLAG_START_VALUE BIOSAL_VERTEX_FLAG_USED_BY_WALKER
+#define BIOSAL_VERTEX_FLAG_END_VALUE BIOSAL_VERTEX_FLAG_PROCESSED_BY_VISITOR
+
+/**
  * Attributes of an assembly vertex
  */
 struct biosal_assembly_vertex {
