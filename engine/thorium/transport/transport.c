@@ -329,6 +329,14 @@ void thorium_transport_select_implementation(struct thorium_transport *self, int
      */
 #ifdef _CRAYC
     self->transport_interface = &thorium_mpi1_pt2pt_transport_implementation;
+
+    /*
+     * On IBM Blue Gene/Q, use MPI 1 point-to-point non-blocking.
+     *
+     * Evaluation: https://github.com/GeneAssembly/biosal/issues/834
+     */
+#elif defined(__bgq__)
+    self->transport_interface = &thorium_mpi1_pt2pt_nonblocking_transport_implementation;
 #endif
 
     /*
