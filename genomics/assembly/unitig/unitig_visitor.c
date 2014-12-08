@@ -32,6 +32,7 @@
 */
 
 #define CONFIG_VISITOR_USE_MESSAGE_CACHE
+#define CONFIG_VISITOR_USE_MULTIPLEXER
 
 void biosal_unitig_visitor_init(struct thorium_actor *self);
 void biosal_unitig_visitor_destroy(struct thorium_actor *self);
@@ -175,7 +176,9 @@ void biosal_unitig_visitor_receive(struct thorium_actor *self, struct thorium_me
 
     if (tag == ACTION_START) {
 
+#ifdef CONFIG_VISITOR_USE_MULTIPLEXER
         thorium_actor_send_to_self_empty(self, ACTION_ENABLE_MULTIPLEXER);
+#endif
 
 #ifdef CONFIG_VISITOR_USE_MESSAGE_CACHE
         /*
