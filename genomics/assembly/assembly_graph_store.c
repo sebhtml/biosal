@@ -998,6 +998,8 @@ void biosal_assembly_graph_store_get_vertex(struct thorium_actor *self, struct t
                 ephemeral_memory,
                 &concrete_self->transport_codec);
 
+    CORE_DEBUGGER_ASSERT(position == count);
+
     /*
      * Check if a path index was provided too.
      */

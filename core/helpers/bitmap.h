@@ -9,6 +9,9 @@
 
 #define CORE_BITS_PER_BYTE 8
 
+#define CORE_BITMAP_MAKE_FLAG(i) \
+        (1 << i)
+
 int core_bitmap_get_bit_uint8_t(uint8_t *self, int index);
 void core_bitmap_set_bit_value_uint8_t(uint8_t *self, int index, int value);
 

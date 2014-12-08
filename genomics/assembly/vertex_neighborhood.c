@@ -29,6 +29,8 @@ void biosal_vertex_neighborhood_init(struct biosal_vertex_neighborhood *self,
 
     self->step = STEP_GET_MAIN_VERTEX;
 
+    self->flags = 0;
+
     if (arcs == BIOSAL_ARC_TYPE_ANY) {
         self->fetch_parents = true;
         self->fetch_children = true;

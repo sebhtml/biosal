@@ -8,10 +8,16 @@
 
 #include <core/structures/vector.h>
 
+#include <core/helpers/bitmap.h>
+
+#include <stdint.h>
+
 struct core_memory_pool;
 struct biosal_dna_codec;
 struct thorium_actor;
 struct thorium_message;
+
+#define BIOSAL_VERTEX_NEIGHBORHOOD_FLAG_SET_VISITOR_FLAG CORE_BITMAP_MAKE_FLAG(0)
 
 /*
  * A vertex neighborhood.
@@ -35,6 +41,8 @@ struct biosal_vertex_neighborhood {
     int kmer_length;
     int step;
     struct thorium_actor *actor;
+
+    uint32_t flags;
 };
 
 void biosal_vertex_neighborhood_init(struct biosal_vertex_neighborhood *self,
