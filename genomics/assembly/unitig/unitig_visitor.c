@@ -355,7 +355,7 @@ void biosal_unitig_visitor_execute(struct thorium_actor *self)
         biosal_vertex_neighborhood_init(&concrete_self->main_neighborhood,
                             &concrete_self->main_kmer, BIOSAL_ARC_TYPE_ANY, &concrete_self->graph_stores,
                             concrete_self->kmer_length, &concrete_self->memory_pool,
-                            &concrete_self->codec, self);
+                            &concrete_self->codec, self, BIOSAL_VERTEX_NEIGHBORHOOD_FLAG_SET_VISITOR_FLAG);
 
         /*
          * Start first one.
@@ -494,7 +494,7 @@ void biosal_unitig_visitor_execute(struct thorium_actor *self)
         biosal_vertex_neighborhood_init(&concrete_self->parent_neighborhood,
                             &concrete_self->parent_kmer, BIOSAL_ARC_TYPE_CHILD, &concrete_self->graph_stores,
                             concrete_self->kmer_length, &concrete_self->memory_pool,
-                            &concrete_self->codec, self);
+                            &concrete_self->codec, self, BIOSAL_VERTEX_NEIGHBORHOOD_FLAG_NONE);
 
         /*
          * Start first one.
@@ -566,7 +566,7 @@ void biosal_unitig_visitor_execute(struct thorium_actor *self)
         biosal_vertex_neighborhood_init(&concrete_self->child_neighborhood,
                             &concrete_self->child_kmer, BIOSAL_ARC_TYPE_PARENT, &concrete_self->graph_stores,
                             concrete_self->kmer_length, &concrete_self->memory_pool,
-                            &concrete_self->codec, self);
+                            &concrete_self->codec, self, BIOSAL_VERTEX_NEIGHBORHOOD_FLAG_NONE);
 
         /*
          * Start first one.

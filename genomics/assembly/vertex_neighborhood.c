@@ -4,6 +4,8 @@
 #include "genomics/assembly/assembly_arc.h"
 #include "genomics/assembly/assembly_graph_store.h"
 
+#include <core/constants.h>
+
 #include <stdbool.h>
 #include <stdio.h>
 
@@ -16,7 +18,7 @@ void biosal_vertex_neighborhood_init(struct biosal_vertex_neighborhood *self,
                struct biosal_dna_kmer *kmer,
                 int arcs, struct core_vector *graph_stores, int kmer_length,
                 struct core_memory_pool *memory, struct biosal_dna_codec *codec,
-                struct thorium_actor *actor)
+                struct thorium_actor *actor, uint32_t flags)
 {
     self->kmer_length = kmer_length;
     self->memory = memory;
@@ -51,6 +53,8 @@ void biosal_vertex_neighborhood_init(struct biosal_vertex_neighborhood *self,
 #if 0
     printf("DEBUG init vertex_neighborhood\n");
 #endif
+
+    self->flags = flags;
 }
 
 void biosal_vertex_neighborhood_destroy(struct biosal_vertex_neighborhood *self)
@@ -135,7 +139,8 @@ void biosal_vertex_neighborhood_init_empty(struct biosal_vertex_neighborhood *se
     core_vector_init(&self->child_vertices, 0);
 }
 
-void biosal_vertex_neighborhood_get_remote_memory(struct biosal_vertex_neighborhood *self, struct biosal_dna_kmer *kmer)
+void biosal_vertex_neighborhood_get_remote_memory(struct biosal_vertex_neighborhood *self, struct biosal_dna_kmer *kmer,
+                int is_main_vertex)
 {
     struct core_memory_pool *ephemeral_memory;
     struct thorium_message new_message;
@@ -144,6 +149,20 @@ void biosal_vertex_neighborhood_get_remote_memory(struct biosal_vertex_neighborh
     int store_index;
     int store;
     int size;
+    int action;
+
+    action = ACTION_ASSEMBLY_GET_VERTEX;
+
+    if (self->flags & BIOSAL_VERTEX_NEIGHBORHOOD_FLAG_SET_VISITOR_FLAG) {
+        if (is_main_vertex) {
+
+            /*
+             * Change the action to set the flag
+             * BIOSAL_VERTEX_FLAG_PROCESSED_BY_VISITOR.
+             */
+            action = ACTION_ASSEMBLY_GET_VERTEX_AND_SET_VISITOR_FLAG;
+        }
+    }
 
     ephemeral_memory = thorium_actor_get_ephemeral_memory(self->actor);
 
@@ -157,7 +176,8 @@ void biosal_vertex_neighborhood_get_remote_memory(struct biosal_vertex_neighborh
                 self->codec, ephemeral_memory);
     store = core_vector_at_as_int(self->graph_stores, store_index);
 
-    thorium_message_init(&new_message, ACTION_ASSEMBLY_GET_VERTEX, new_count, new_buffer);
+    thorium_message_init(&new_message, action, new_count, new_buffer);
+
     thorium_actor_send(self->actor, store, &new_message);
     thorium_message_destroy(&new_message);
 }
@@ -172,7 +192,10 @@ int biosal_vertex_neighborhood_execute(struct biosal_vertex_neighborhood *self)
 
     if (self->step == STEP_GET_MAIN_VERTEX) {
 
-        biosal_vertex_neighborhood_get_remote_memory(self, &self->main_kmer);
+        /*
+         * Do a remote memory access to get the main vertex.
+         */
+        biosal_vertex_neighborhood_get_remote_memory(self, &self->main_kmer, TRUE);
 
 #if 0
         printf("neighborhood STEP_GET_MAIN_VERTEX\n");
@@ -215,9 +238,9 @@ int biosal_vertex_neighborhood_execute(struct biosal_vertex_neighborhood *self)
                             self->codec);
 
             /*
-             * Do some remote-memory access.
+             * Do some remote-memory access to fetch parents.
              */
-            biosal_vertex_neighborhood_get_remote_memory(self, &other_kmer);
+            biosal_vertex_neighborhood_get_remote_memory(self, &other_kmer, FALSE);
             biosal_dna_kmer_destroy(&other_kmer, self->memory);
         }
     } else if (self->step == STEP_GET_CHILDREN) {
@@ -249,9 +272,9 @@ int biosal_vertex_neighborhood_execute(struct biosal_vertex_neighborhood *self)
                             self->codec);
 
             /*
-             * Do some remote-memory access.
+             * Do some remote-memory access to get children.
              */
-            biosal_vertex_neighborhood_get_remote_memory(self, &other_kmer);
+            biosal_vertex_neighborhood_get_remote_memory(self, &other_kmer, FALSE);
             biosal_dna_kmer_destroy(&other_kmer, self->memory);
         }
     } else if (self->step == STEP_FINISH) {

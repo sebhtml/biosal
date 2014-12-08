@@ -17,7 +17,8 @@ struct biosal_dna_codec;
 struct thorium_actor;
 struct thorium_message;
 
-#define BIOSAL_VERTEX_NEIGHBORHOOD_FLAG_SET_VISITOR_FLAG CORE_BITMAP_MAKE_FLAG(0)
+#define BIOSAL_VERTEX_NEIGHBORHOOD_FLAG_NONE CORE_BITMAP_MAKE_FLAG(0)
+#define BIOSAL_VERTEX_NEIGHBORHOOD_FLAG_SET_VISITOR_FLAG CORE_BITMAP_MAKE_FLAG(1)
 
 /*
  * A vertex neighborhood.
@@ -49,7 +50,7 @@ void biosal_vertex_neighborhood_init(struct biosal_vertex_neighborhood *self,
                struct biosal_dna_kmer *kmer,
                 int arcs, struct core_vector *graph_stores, int kmer_length,
                 struct core_memory_pool *memory, struct biosal_dna_codec *codec,
-                struct thorium_actor *actor);
+                struct thorium_actor *actor, uint32_t flags);
 
 void biosal_vertex_neighborhood_init_empty(struct biosal_vertex_neighborhood *self);
 
