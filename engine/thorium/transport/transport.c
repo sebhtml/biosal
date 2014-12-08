@@ -97,12 +97,6 @@ void thorium_transport_init(struct thorium_transport *self, struct thorium_node 
     self->inbound_message_memory_pool = inbound_message_memory_pool;
     self->outbound_message_memory_pool = outbound_message_memory_pool;
 
-    if (self->rank == 0
-         && thorium_node_must_print_data(self->node)) {
-        printf("thorium_transport: type %s\n",
-                    self->transport_interface->name);
-    }
-
     if (core_command_has_argument(actual_argc, actual_argv, "-print-transport-events")) {
         CORE_BITMAP_SET_BIT(self->flags, FLAG_PRINT_TRANSPORT_EVENTS);
     }
@@ -384,9 +378,16 @@ const char *thorium_transport_get_name(struct thorium_transport *self)
 
 void thorium_transport_print(struct thorium_transport *self)
 {
+        /*
     printf("thorium_transport: TRANSPORT Rank: %d RankCount: %d Implementation: %s\n",
                 self->rank, self->size,
                 thorium_transport_get_name(self));
+                */
+    if (self->rank == 0
+         && thorium_node_must_print_data(self->node)) {
+        printf("[thorium] thorium_transport: type %s\n",
+                    self->transport_interface->name);
+    }
 }
 
 void thorium_transport_print_event(struct thorium_transport *self, int type, struct thorium_message *message)
