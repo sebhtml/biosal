@@ -19,6 +19,9 @@ struct thorium_message_cache {
     struct core_memory_pool *pool;
 
     struct thorium_cache_tag saved_reply_message_cache_tag;
+
+    int profile_cache_miss_count;
+    int profile_cache_hit_count;
 };
 
 void thorium_message_cache_init(struct thorium_message_cache *self);
@@ -52,5 +55,6 @@ void thorium_message_cache_save_request_message(struct thorium_message_cache *se
 void thorium_message_cache_save_reply_message(struct thorium_message_cache *self,
                 struct thorium_message *message);
 int thorium_message_cache_action_count(struct thorium_message_cache *self);
+void thorium_message_cache_print_profile(struct thorium_message_cache *self);
 
 #endif

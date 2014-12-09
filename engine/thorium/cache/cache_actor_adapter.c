@@ -11,6 +11,10 @@
 */
 #define CONFIG_INJECT_CACHED_REPLY_MESSAGE
 
+/*
+#define CONFIG_PRINT_MESSAGE_CACHE_STATISTICS
+*/
+
 void thorium_actor_init_message_cache(struct thorium_actor *self)
 {
     thorium_message_cache_init(&self->message_cache);
@@ -20,6 +24,10 @@ void thorium_actor_init_message_cache(struct thorium_actor *self)
 
 void thorium_actor_destroy_message_cache(struct thorium_actor *self)
 {
+#ifdef CONFIG_PRINT_MESSAGE_CACHE_STATISTICS
+    thorium_message_cache_print_profile(&self->message_cache);
+#endif
+
     thorium_message_cache_destroy(&self->message_cache);
 }
 

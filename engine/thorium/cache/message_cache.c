@@ -23,6 +23,9 @@ void thorium_message_cache_init(struct thorium_message_cache *self)
     thorium_cache_tag_init(&self->saved_reply_message_cache_tag);
 
     self->pool = NULL;
+
+    self->profile_cache_miss_count = 0;
+    self->profile_cache_hit_count = 0;
 }
 
 void thorium_message_cache_destroy(struct thorium_message_cache *self)
@@ -109,6 +112,19 @@ struct thorium_message *thorium_message_cache_get_reply_message(struct thorium_m
          * Save the request message if necessary.
          */
         thorium_message_cache_save_request_message(self, request_message);
+
+    }
+
+    if (reply_message == NULL) {
+        /*
+         * This is a cache miss.
+         */
+        ++self->profile_cache_miss_count;
+    } else {
+        /*
+         * This is a cache hit.
+         */
+        ++self->profile_cache_hit_count;
     }
 
     /*
@@ -216,4 +232,29 @@ void thorium_message_cache_save_request_message(struct thorium_message_cache *se
 int thorium_message_cache_action_count(struct thorium_message_cache *self)
 {
     return core_set_size(&self->actions);
+}
+
+void thorium_message_cache_print_profile(struct thorium_message_cache *self)
+{
+    double cache_miss_rate;
+    double cache_hit_rate;
+    int total;
+
+    total = 0;
+    total += self->profile_cache_hit_count;
+    total += self->profile_cache_miss_count;
+
+    if (total == 0)
+        return;
+
+    cache_miss_rate = 0;
+    cache_hit_rate = 0;
+
+    if (total > 0) {
+        cache_miss_rate = (0.0 + self->profile_cache_miss_count) / total;
+        cache_hit_rate = (0.0 + self->profile_cache_hit_count) / total;
+    }
+
+    printf("thorium_message_cache_print_profile... cache_miss_rate %f cache_hit_rate %f total %d\n",
+                    cache_miss_rate, cache_hit_rate, total);
 }
