@@ -172,5 +172,34 @@ void thorium_actor_save_reply_message_in_cache(struct thorium_actor *self,
 
 void thorium_actor_print_message_cache(struct thorium_actor *self)
 {
-    thorium_message_cache_print_profile(&self->message_cache);
+    double cache_miss_rate;
+    double cache_hit_rate;
+    int total;
+    int profile_cache_hit_count;
+    int profile_cache_miss_count;
+
+    profile_cache_miss_count = 0;
+    profile_cache_hit_count = 0;
+
+    thorium_message_cache_get_profile(&self->message_cache, &profile_cache_miss_count,
+                    &profile_cache_hit_count);
+
+    total = 0;
+    total += profile_cache_hit_count;
+    total += profile_cache_miss_count;
+
+    if (total == 0)
+        return;
+
+    cache_miss_rate = 0;
+    cache_hit_rate = 0;
+
+    if (total > 0) {
+        cache_miss_rate = (0.0 + profile_cache_miss_count) / total;
+        cache_hit_rate = (0.0 + profile_cache_hit_count) / total;
+    }
+
+    printf("%s/%d thorium_message_cache... cache_miss_rate %.4f cache_hit_rate %.4f total %d\n",
+                    thorium_actor_script_name(self), thorium_actor_name(self),
+                    cache_miss_rate, cache_hit_rate, total);
 }

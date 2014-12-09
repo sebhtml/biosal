@@ -246,27 +246,9 @@ int thorium_message_cache_action_count(struct thorium_message_cache *self)
     return core_map_size(&self->actions);
 }
 
-void thorium_message_cache_print_profile(struct thorium_message_cache *self)
+void thorium_message_cache_get_profile(struct thorium_message_cache *self,
+                int *cache_miss_count, int *cache_hit_count)
 {
-    double cache_miss_rate;
-    double cache_hit_rate;
-    int total;
-
-    total = 0;
-    total += self->profile_cache_hit_count;
-    total += self->profile_cache_miss_count;
-
-    if (total == 0)
-        return;
-
-    cache_miss_rate = 0;
-    cache_hit_rate = 0;
-
-    if (total > 0) {
-        cache_miss_rate = (0.0 + self->profile_cache_miss_count) / total;
-        cache_hit_rate = (0.0 + self->profile_cache_hit_count) / total;
-    }
-
-    printf("thorium_message_cache... cache_miss_rate %.4f cache_hit_rate %.4f total %d\n",
-                    cache_miss_rate, cache_hit_rate, total);
+    *cache_miss_count = self->profile_cache_miss_count;
+    *cache_hit_count = self->profile_cache_hit_count;
 }
