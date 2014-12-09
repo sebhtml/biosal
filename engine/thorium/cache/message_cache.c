@@ -255,6 +255,6 @@ void thorium_message_cache_print_profile(struct thorium_message_cache *self)
         cache_hit_rate = (0.0 + self->profile_cache_hit_count) / total;
     }
 
-    printf("thorium_message_cache_print_profile... cache_miss_rate %f cache_hit_rate %f total %d\n",
+    printf("thorium_message_cache... cache_miss_rate %.4f cache_hit_rate %.4f total %d\n",
                     cache_miss_rate, cache_hit_rate, total);
 }
