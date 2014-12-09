@@ -30,6 +30,7 @@
 /*
 */
 #define CONFIG_VISITOR_INCREASE_LOCALITY
+#define CONFIG_VISITOR_LOCALITY_WIDTH 8192
 
 #define CONFIG_VISITOR_USE_MESSAGE_CACHE
 #define CONFIG_VISITOR_USE_MULTIPLEXER
@@ -677,7 +678,7 @@ void biosal_unitig_visitor_execute(struct thorium_actor *self)
         /*
          * Avoid circular loops.
          */
-        if (concrete_self->length_of_locality < 1024
+        if (concrete_self->length_of_locality < CONFIG_VISITOR_LOCALITY_WIDTH
                         && !visited) {
             /*
              * Make a copy of the kmer for the locality algorithm.
