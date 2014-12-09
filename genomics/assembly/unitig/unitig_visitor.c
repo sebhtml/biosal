@@ -42,6 +42,8 @@ void biosal_unitig_visitor_receive(struct thorium_actor *self, struct thorium_me
 void biosal_unitig_visitor_execute(struct thorium_actor *self);
 
 void biosal_unitig_visitor_mark_vertex(struct thorium_actor *self, struct biosal_dna_kmer *kmer);
+void biosal_unitig_visitor_set_locality_kmer(struct thorium_actor *self,
+                struct biosal_assembly_vertex *vertex);
 
 struct thorium_script biosal_unitig_visitor_script = {
     .identifier = SCRIPT_UNITIG_VISITOR,
@@ -285,7 +287,6 @@ void biosal_unitig_visitor_execute(struct thorium_actor *self)
     int delta;
     char *new_buffer;
     int new_count;
-    int visited;
 
     concrete_self = thorium_actor_concrete_actor(self);
     size = core_vector_size(&concrete_self->graph_stores);
@@ -442,6 +443,7 @@ void biosal_unitig_visitor_execute(struct thorium_actor *self)
         } else {
             concrete_self->step = STEP_DO_RESET;
         }
+
         biosal_unitig_visitor_execute(self);
 
     } else if (concrete_self->step == STEP_DO_RESET) {
@@ -671,32 +673,7 @@ void biosal_unitig_visitor_execute(struct thorium_actor *self)
             concrete_self->step = STEP_DO_RESET;
         }
 
-#ifdef CONFIG_VISITOR_INCREASE_LOCALITY
-
-        visited = biosal_assembly_vertex_get_flag(other_vertex,
-                        BIOSAL_VERTEX_FLAG_PROCESSED_BY_VISITOR);
-        /*
-         * Avoid circular loops.
-         */
-        if (concrete_self->length_of_locality < CONFIG_VISITOR_LOCALITY_WIDTH
-                        && !visited) {
-            /*
-             * Make a copy of the kmer for the locality algorithm.
-             */
-            biosal_dna_kmer_destroy(&concrete_self->local_kmer, &concrete_self->memory_pool);
-            biosal_dna_kmer_init_copy(&concrete_self->local_kmer, &concrete_self->child_kmer,
-                        concrete_self->kmer_length, &concrete_self->memory_pool,
-                        &concrete_self->codec);
-            concrete_self->has_local_kmer = TRUE;
-            ++concrete_self->length_of_locality;
-
-#if 0
-            printf("Generated locality object with length %d\n", concrete_self->length_of_locality);
-#endif
-        } else {
-            concrete_self->has_local_kmer = FALSE;
-        }
-#endif
+        biosal_unitig_visitor_set_locality_kmer(self, other_vertex);
 
         /* recursive call.
          *
@@ -754,4 +731,55 @@ void biosal_unitig_visitor_mark_vertex(struct thorium_actor *self, struct biosal
     thorium_message_init(&new_message, ACTION_SET_VERTEX_FLAG, new_count, new_buffer);
     thorium_actor_send(self, store, &new_message);
     thorium_message_destroy(&new_message);
+}
+
+void biosal_unitig_visitor_set_locality_kmer(struct thorium_actor *self,
+                struct biosal_assembly_vertex *vertex)
+{
+#ifdef CONFIG_VISITOR_INCREASE_LOCALITY
+
+    struct biosal_unitig_visitor *concrete_self;
+    int visited;
+
+    concrete_self = thorium_actor_concrete_actor(self);
+
+#if 0
+    /*
+     * Check if the flag BIOSAL_VERTEX_FLAG_PROCESSED_BY_VISITOR is set.
+     * If it is the case, set the step to STEP_DO_RESET because this vertex
+     * was already processed.
+     */
+    if (biosal_assembly_vertex_get_flag(vertex, BIOSAL_VERTEX_FLAG_PROCESSED_BY_VISITOR)) {
+        concrete_self->step = STEP_DO_RESET;
+    }
+#endif
+
+    /*
+     * Use this vertex for the next starting point if it is not visited
+     * already.
+     */
+    visited = biosal_assembly_vertex_get_flag(vertex,
+                    BIOSAL_VERTEX_FLAG_PROCESSED_BY_VISITOR);
+    /*
+     * Avoid circular loops.
+     */
+    if (concrete_self->length_of_locality < CONFIG_VISITOR_LOCALITY_WIDTH
+                    && !visited) {
+        /*
+         * Make a copy of the kmer for the locality algorithm.
+         */
+        biosal_dna_kmer_destroy(&concrete_self->local_kmer, &concrete_self->memory_pool);
+        biosal_dna_kmer_init_copy(&concrete_self->local_kmer, &concrete_self->child_kmer,
+                    concrete_self->kmer_length, &concrete_self->memory_pool,
+                    &concrete_self->codec);
+        concrete_self->has_local_kmer = TRUE;
+        ++concrete_self->length_of_locality;
+
+#if 0
+        printf("Generated locality object with length %d\n", concrete_self->length_of_locality);
+#endif
+    } else {
+        concrete_self->has_local_kmer = FALSE;
+    }
+#endif
 }
