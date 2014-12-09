@@ -363,16 +363,18 @@ void thorium_actor_send_2_int(struct thorium_actor *actor, int destination, int 
     int count;
     int offset;
 
-    offset = 0;
     count = sizeof(value1) + sizeof(value2);
     buffer = thorium_actor_allocate(actor, count);
+
+    offset = 0;
     core_memory_copy(buffer + offset, &value1, sizeof(value1));
+    offset += sizeof(value1);
     core_memory_copy(buffer + offset, &value2, sizeof(value2));
+    offset += sizeof(value2);
 
     thorium_message_init(&message, action, count, buffer);
     thorium_actor_send(actor, destination, &message);
     thorium_message_destroy(&message);
-
 }
 
 void thorium_actor_send_to_self_2_int(struct thorium_actor *actor, int action, int value1, int value2)
