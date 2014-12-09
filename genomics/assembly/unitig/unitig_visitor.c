@@ -116,6 +116,8 @@ void biosal_unitig_visitor_destroy(struct thorium_actor *self)
         printf("%s/%d vertex_count: %d BIOSAL_VERTEX_FLAG_UNITIG: %d\n",
                     thorium_actor_script_name(self), thorium_actor_name(self),
                     concrete_self->visited_vertices, concrete_self->vertices_with_unitig_flag);
+
+        thorium_actor_print_message_cache(self);
     }
 
     biosal_dna_codec_destroy(&concrete_self->codec);
