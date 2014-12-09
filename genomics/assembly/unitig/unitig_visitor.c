@@ -13,17 +13,17 @@
 
 #include <stdio.h>
 
-#define STEP_GET_KMER_LENGTH 0
-#define STEP_GET_MAIN_KMER 1
-#define STEP_GET_MAIN_VERTEX_DATA 2
-#define STEP_DECIDE_MAIN 3
-#define STEP_DO_RESET 4
-#define STEP_ABORT 5
-#define STEP_GET_PARENT_VERTEX_DATA 6
-#define STEP_DECIDE_PARENT 7
-#define STEP_GET_CHILD_VERTEX_DATA 8
-#define STEP_DECIDE_CHILD 9
-#define STEP_MARK_UNITIG 10
+#define STEP_GET_KMER_LENGTH            0
+#define STEP_GET_MAIN_KMER              1
+#define STEP_GET_MAIN_VERTEX_DATA       2
+#define STEP_DECIDE_MAIN                3
+#define STEP_DO_RESET                   4
+#define STEP_ABORT                      5
+#define STEP_GET_PARENT_VERTEX_DATA     6
+#define STEP_DECIDE_PARENT              7
+#define STEP_GET_CHILD_VERTEX_DATA      8
+#define STEP_DECIDE_CHILD               9
+#define STEP_MARK_UNITIG               10
 
 #define MEMORY_POOL_NAME_VISITOR 0x185945f7
 
