@@ -28,8 +28,8 @@
 #define MEMORY_POOL_NAME_VISITOR 0x185945f7
 
 /*
-#define CONFIG_INCREASE_LOCALITY
 */
+#define CONFIG_VISITOR_INCREASE_LOCALITY
 
 #define CONFIG_VISITOR_USE_MESSAGE_CACHE
 #define CONFIG_VISITOR_USE_MULTIPLEXER
@@ -284,6 +284,7 @@ void biosal_unitig_visitor_execute(struct thorium_actor *self)
     int delta;
     char *new_buffer;
     int new_count;
+    int visited;
 
     concrete_self = thorium_actor_concrete_actor(self);
     size = core_vector_size(&concrete_self->graph_stores);
@@ -448,28 +449,6 @@ void biosal_unitig_visitor_execute(struct thorium_actor *self)
 
         biosal_dna_kmer_destroy(&concrete_self->main_kmer, &concrete_self->memory_pool);
         biosal_dna_kmer_destroy(&concrete_self->parent_kmer, &concrete_self->memory_pool);
-
-        if (concrete_self->has_local_kmer) {
-            /*
-             * Here, use the child_kmer as the new main_kmer to avoid many network
-             * messages and to increase locality too.
-             */
-            biosal_dna_kmer_init_copy(&concrete_self->main_kmer, &concrete_self->local_kmer,
-                        concrete_self->kmer_length, &concrete_self->memory_pool,
-                        &concrete_self->codec);
-
-            /*
-             * The step STEP_GET_MAIN_KMER is not required anymore here.
-             * The message cache will be used whenever possible.
-             * The cache is cleared with ACTION_CLEAR_MESSAGE_CACHE at the same
-             * time that the starting kmer is obtained using
-             * ACTION_ASSEMBLY_GET_STARTING_KMER.
-             *
-             * Therefore, the cache should be useful a lot here.
-             */
-            concrete_self->step = STEP_GET_MAIN_VERTEX_DATA;
-        }
-
         biosal_dna_kmer_destroy(&concrete_self->child_kmer, &concrete_self->memory_pool);
 
         biosal_vertex_neighborhood_destroy(&concrete_self->main_neighborhood);
@@ -520,6 +499,38 @@ void biosal_unitig_visitor_execute(struct thorium_actor *self)
         }
 
         ++concrete_self->visited_vertices;
+
+        /*
+         * Possibly use the locality code path.
+         */
+        if (concrete_self->has_local_kmer) {
+            /*
+             * Here, use the local_kmer as the new main_kmer to avoid many network
+             * messages and increase locality too.
+             */
+            biosal_dna_kmer_init_copy(&concrete_self->main_kmer, &concrete_self->local_kmer,
+                        concrete_self->kmer_length, &concrete_self->memory_pool,
+                        &concrete_self->codec);
+
+            /*
+             * The step STEP_GET_MAIN_KMER is not required anymore here.
+             * The message cache will be used whenever possible.
+             * The cache is cleared with ACTION_CLEAR_MESSAGE_CACHE at the same
+             * time that the starting kmer is obtained using
+             * ACTION_ASSEMBLY_GET_STARTING_KMER.
+             *
+             * Therefore, the cache should be useful a lot here.
+             */
+            concrete_self->step = STEP_GET_MAIN_VERTEX_DATA;
+
+            /*
+             * Invalidate the local kmer.
+             */
+            biosal_dna_kmer_destroy(&concrete_self->local_kmer, &concrete_self->memory_pool);
+            biosal_dna_kmer_init_empty(&concrete_self->local_kmer);
+            concrete_self->has_local_kmer = FALSE;
+        }
+
         biosal_unitig_visitor_execute(self);
 
     } else if (concrete_self->step == STEP_GET_PARENT_VERTEX_DATA) {
@@ -610,23 +621,6 @@ void biosal_unitig_visitor_execute(struct thorium_actor *self)
                             concrete_self->kmer_length, &concrete_self->memory_pool,
                             &concrete_self->codec, self, BIOSAL_VERTEX_NEIGHBORHOOD_FLAG_NONE);
 
-#ifdef CONFIG_INCREASE_LOCALITY
-        /*
-         * Avoid circular loops.
-         */
-        if (concrete_self->length_of_locality < 1024) {
-            /*
-             * Make a copy of the kmer for the locality algorithm.
-             */
-            biosal_dna_kmer_destroy(&concrete_self->local_kmer, &concrete_self->memory_pool);
-            biosal_dna_kmer_init_copy(&concrete_self->local_kmer, &concrete_self->child_kmer,
-                        concrete_self->kmer_length, &concrete_self->memory_pool,
-                        &concrete_self->codec);
-            concrete_self->has_local_kmer = TRUE;
-            ++concrete_self->length_of_locality;
-        }
-#endif
-
         /*
          * Start first one.
          */
@@ -675,6 +669,33 @@ void biosal_unitig_visitor_execute(struct thorium_actor *self)
         } else {
             concrete_self->step = STEP_DO_RESET;
         }
+
+#ifdef CONFIG_VISITOR_INCREASE_LOCALITY
+
+        visited = biosal_assembly_vertex_get_flag(other_vertex,
+                        BIOSAL_VERTEX_FLAG_PROCESSED_BY_VISITOR);
+        /*
+         * Avoid circular loops.
+         */
+        if (concrete_self->length_of_locality < 1024
+                        && !visited) {
+            /*
+             * Make a copy of the kmer for the locality algorithm.
+             */
+            biosal_dna_kmer_destroy(&concrete_self->local_kmer, &concrete_self->memory_pool);
+            biosal_dna_kmer_init_copy(&concrete_self->local_kmer, &concrete_self->child_kmer,
+                        concrete_self->kmer_length, &concrete_self->memory_pool,
+                        &concrete_self->codec);
+            concrete_self->has_local_kmer = TRUE;
+            ++concrete_self->length_of_locality;
+
+#if 0
+            printf("Generated locality object with length %d\n", concrete_self->length_of_locality);
+#endif
+        } else {
+            concrete_self->has_local_kmer = FALSE;
+        }
+#endif
 
         /* recursive call.
          *
