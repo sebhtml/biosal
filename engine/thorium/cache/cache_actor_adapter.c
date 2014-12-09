@@ -162,3 +162,7 @@ void thorium_actor_save_reply_message_in_cache(struct thorium_actor *self,
     thorium_message_cache_save_reply_message(&self->message_cache, message);
 }
 
+void thorium_actor_print_message_cache(struct thorium_actor *self)
+{
+    thorium_message_cache_print_profile(&self->message_cache);
+}
