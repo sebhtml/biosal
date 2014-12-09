@@ -46,3 +46,8 @@ void thorium_cache_tag_print(struct thorium_cache_tag *self)
                    self->action, self->destination, self->count,
                    self->signature);
 }
+
+int thorium_cache_tag_destination(struct thorium_cache_tag *self)
+{
+    return self->destination;
+}

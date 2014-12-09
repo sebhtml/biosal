@@ -7,7 +7,8 @@
 struct thorium_message;
 
 /**
- * A Thorium cache tag for message cache
+ * A Thorium cache tag (for request message)
+ * for message cache.
  */
 struct thorium_cache_tag {
     int action;
@@ -25,6 +26,7 @@ void thorium_cache_tag_destroy(struct thorium_cache_tag *self);
 void thorium_cache_tag_set(struct thorium_cache_tag *self,
                 struct thorium_message *message);
 int thorium_cache_tag_action(struct thorium_cache_tag *self);
+int thorium_cache_tag_destination(struct thorium_cache_tag *self);
 
 /**
  * Invalidate the cache tag attribute values.
