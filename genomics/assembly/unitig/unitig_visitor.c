@@ -188,8 +188,9 @@ void biosal_unitig_visitor_receive(struct thorium_actor *self, struct thorium_me
          * Use a message cache for messages with action
          * ACTION_ASSEMBLY_GET_VERTEX.
          */
-        thorium_actor_send_to_self_int(self, ACTION_ENABLE_MESSAGE_CACHE,
-                        ACTION_ASSEMBLY_GET_VERTEX);
+        thorium_actor_send_to_self_2_int(self, ACTION_ENABLE_MESSAGE_CACHE,
+                        ACTION_ASSEMBLY_GET_VERTEX,
+                        ACTION_ASSEMBLY_GET_VERTEX_REPLY);
 #endif
 
         concrete_self->manager = source;
