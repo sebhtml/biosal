@@ -33,14 +33,22 @@ void thorium_actor_destroy_message_cache(struct thorium_actor *self)
 
 void thorium_actor_enable_message_cache(struct thorium_actor *self, struct thorium_message *message)
 {
-    int cache_action;
-    char *buffer;
+    int request_action;
+    int reply_action;
+    int count;
 
     CORE_BITMAP_SET_BIT(self->flags, THORIUM_ACTOR_FLAG_ENABLE_MESSAGE_CACHE);
 
-    buffer = thorium_message_buffer(message);
-    cache_action = *(int *)buffer;
-    thorium_message_cache_enable(&self->message_cache, cache_action);
+    count = thorium_message_count(message);
+
+    if (count < (int)(sizeof(request_action) + sizeof(reply_action))) {
+        return;
+    }
+
+    thorium_message_unpack_2_int(message, &request_action, &reply_action);
+
+    thorium_message_cache_enable(&self->message_cache, request_action,
+                    reply_action);
 }
 
 void thorium_actor_disable_message_cache(struct thorium_actor *self,

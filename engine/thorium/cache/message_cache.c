@@ -18,7 +18,7 @@ void thorium_message_cache_init(struct thorium_message_cache *self)
     core_map_init(&self->entries, sizeof(struct thorium_cache_tag),
                     sizeof(struct thorium_message));
 
-    core_set_init(&self->actions, sizeof(int));
+    core_map_init(&self->actions, sizeof(int), sizeof(int));
 
     thorium_cache_tag_init(&self->saved_reply_message_cache_tag);
 
@@ -33,7 +33,7 @@ void thorium_message_cache_destroy(struct thorium_message_cache *self)
     thorium_message_cache_clear(self);
 
     core_map_destroy(&self->entries);
-    core_set_destroy(&self->actions);
+    core_map_destroy(&self->actions);
 
     thorium_cache_tag_destroy(&self->saved_reply_message_cache_tag);
 }
@@ -43,7 +43,7 @@ void thorium_message_cache_set_memory_pool(struct thorium_message_cache *self,
 {
     self->pool = pool;
     core_map_set_memory_pool(&self->entries, pool);
-    core_set_set_memory_pool(&self->actions, pool);
+    core_map_set_memory_pool(&self->actions, pool);
 }
 
 void thorium_message_cache_clear(struct thorium_message_cache *self)
@@ -91,7 +91,7 @@ struct thorium_message *thorium_message_cache_get_reply_message(struct thorium_m
      */
     action = thorium_message_action(request_message);
 
-    if (!core_set_find(&self->actions, &action)) {
+    if (core_map_get(&self->actions, &action) == NULL) {
         return NULL;
     }
 
@@ -206,15 +206,15 @@ void thorium_message_cache_save_reply_message(struct thorium_message_cache *self
 }
 
 void thorium_message_cache_enable(struct thorium_message_cache *self,
-                int action)
+                int request_action, int reply_action)
 {
-    core_set_add(&self->actions, &action);
+    core_map_add_value(&self->actions, &request_action, &reply_action);
 }
 
 void thorium_message_cache_disable(struct thorium_message_cache *self,
-                int action)
+                int request_action)
 {
-    core_set_delete(&self->actions, &action);
+    core_map_delete(&self->actions, &request_action);
 }
 
 void thorium_message_cache_save_request_message(struct thorium_message_cache *self,
@@ -224,7 +224,7 @@ void thorium_message_cache_save_request_message(struct thorium_message_cache *se
 
     action = thorium_message_action(message);
 
-    if (!core_set_find(&self->actions, &action))
+    if (core_map_get(&self->actions, &action) == NULL)
         return;
 
     /*
@@ -243,7 +243,7 @@ void thorium_message_cache_save_request_message(struct thorium_message_cache *se
 
 int thorium_message_cache_action_count(struct thorium_message_cache *self)
 {
-    return core_set_size(&self->actions);
+    return core_map_size(&self->actions);
 }
 
 void thorium_message_cache_print_profile(struct thorium_message_cache *self)

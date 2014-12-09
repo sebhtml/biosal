@@ -14,7 +14,7 @@ struct core_memory_pool;
  * An implementation of a message cache.
  */
 struct thorium_message_cache {
-    struct core_set actions;
+    struct core_map actions;
     struct core_map entries;
     struct core_memory_pool *pool;
 
@@ -42,7 +42,7 @@ struct thorium_message *thorium_message_cache_get_reply_message(struct thorium_m
  * This is called in the ACTION_ENABLE_MESSAGE_CACHE code path.
  */
 void thorium_message_cache_enable(struct thorium_message_cache *self,
-                int action);
+                int request_action, int reply_action);
 
 /**
  * This is called in the ACTION_DISABLE_MESSAGE_CACHE code path.
