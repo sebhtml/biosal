@@ -139,6 +139,8 @@ void thorium_message_cache_save_reply_message(struct thorium_message_cache *self
 {
     struct thorium_message stored_message;
     void *buffer;
+    int expected_source;
+    int actual_source;
 
     CORE_DEBUGGER_ASSERT_NOT_NULL(self);
     CORE_DEBUGGER_ASSERT_NOT_NULL(message);
@@ -148,6 +150,16 @@ void thorium_message_cache_save_reply_message(struct thorium_message_cache *self
      * caching.
      */
     if (thorium_cache_tag_action(&self->saved_reply_message_cache_tag) == ACTION_INVALID) {
+        return;
+    }
+
+    actual_source = thorium_message_source(message);
+    expected_source = thorium_cache_tag_destination(&self->saved_reply_message_cache_tag);
+
+    /*
+     * This is not the good message.
+     */
+    if (actual_source != expected_source) {
         return;
     }
 
