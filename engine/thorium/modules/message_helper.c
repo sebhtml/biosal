@@ -92,3 +92,24 @@ int thorium_message_unpack_double(struct thorium_message *message, int offset, d
 
     return bytes;
 }
+
+int thorium_message_unpack_2_int(struct thorium_message *message, int *value1, int *value2)
+{
+    int offset;
+    int count;
+    int required;
+
+    count = thorium_message_count(message);
+
+    required = sizeof(*value1) + sizeof(*value2);
+
+    if (required > count) {
+        return -1;
+    }
+
+    offset = 0;
+    offset += thorium_message_unpack_int(message, offset, value1);
+    offset += thorium_message_unpack_int(message, offset, value2);
+
+    return offset;
+}

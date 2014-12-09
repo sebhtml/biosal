@@ -12,4 +12,6 @@ int thorium_message_unpack_uint64_t(struct thorium_message *message, int offset,
 int thorium_message_unpack_int64_t(struct thorium_message *message, int offset, int64_t *value);
 void thorium_message_get_all(struct thorium_message *message, int *tag, int *count, void **buffer, int *source);
 
+int thorium_message_unpack_2_int(struct thorium_message *message, int *value1, int *value2);
+
 #endif
