@@ -4,7 +4,7 @@
 #include <genomics/helpers/command.h>
 
 #include <core/helpers/vector_helper.h>
-#include <core/helpers/message_helper.h>
+#include <engine/thorium/modules/message_helper.h>
 
 #include <core/structures/map_iterator.h>
 #include <core/structures/vector_iterator.h>

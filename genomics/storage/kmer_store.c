@@ -9,7 +9,7 @@
 #include <genomics/data/dna_kmer_block.h>
 #include <genomics/data/dna_kmer_frequency_block.h>
 
-#include <core/helpers/message_helper.h>
+#include <engine/thorium/modules/message_helper.h>
 
 #include <core/system/memory.h>
 

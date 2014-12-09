@@ -12,7 +12,6 @@ CORE_OBJECTS += core/hash/murmur_hash_2_64_a.o
 CORE_OBJECTS += core/hash/hash.o
 
 # helpers
-CORE_OBJECTS += core/helpers/message_helper.o
 CORE_OBJECTS += core/helpers/vector_helper.o
 CORE_OBJECTS += core/helpers/map_helper.o
 CORE_OBJECTS += core/helpers/set_helper.o

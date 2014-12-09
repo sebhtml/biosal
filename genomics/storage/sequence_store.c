@@ -10,7 +10,7 @@
 #include <genomics/assembly/assembly_graph_store.h>
 
 #include <core/structures/vector_iterator.h>
-#include <core/helpers/message_helper.h>
+#include <engine/thorium/modules/message_helper.h>
 #include <core/system/memory.h>
 
 #include <biosal.h>

@@ -4,7 +4,7 @@
 
 /* helpers */
 
-#include "core/helpers/message_helper.h"
+#include "modules/message_helper.h"
 
 #include <stdint.h>
 

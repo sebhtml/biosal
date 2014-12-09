@@ -11,7 +11,7 @@
 #include <genomics/data/dna_sequence.h>
 #include <genomics/input/input_command.h>
 
-#include <core/helpers/message_helper.h>
+#include <engine/thorium/modules/message_helper.h>
 
 #include <core/system/packer.h>
 #include <core/system/memory.h>

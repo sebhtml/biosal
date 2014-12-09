@@ -92,4 +92,3 @@ int thorium_message_unpack_double(struct thorium_message *message, int offset, d
 
     return bytes;
 }
-

@@ -9,7 +9,7 @@
 
 #include <core/file_storage/file.h>
 
-#include <core/helpers/message_helper.h>
+#include <engine/thorium/modules/message_helper.h>
 
 #include <core/system/memory.h>
 

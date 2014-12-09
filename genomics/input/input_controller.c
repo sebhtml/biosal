@@ -15,7 +15,7 @@
 
 #include <core/helpers/vector_helper.h>
 #include <core/helpers/map_helper.h>
-#include <core/helpers/message_helper.h>
+#include <engine/thorium/modules/message_helper.h>
 #include <core/system/memory.h>
 
 #include <stdlib.h>
