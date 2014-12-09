@@ -39,7 +39,7 @@
 
 #define BIOSAL_IDEAL_BUFFER_SIZE (1 * 4096)
 
-#define BIOSAL_IDEAL_ACTIVE_MESSAGE_LIMIT 1
+#define BIOSAL_IDEAL_ACTIVE_MESSAGE_LIMIT 2
 
 /*
  * Multiplexer options.
