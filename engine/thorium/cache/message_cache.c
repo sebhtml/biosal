@@ -141,6 +141,10 @@ void thorium_message_cache_save_reply_message(struct thorium_message_cache *self
     void *buffer;
     int expected_source;
     int actual_source;
+    int expected_request_action;
+    int *bucket;
+    int expected_reply_action;
+    int actual_reply_action;
 
     CORE_DEBUGGER_ASSERT_NOT_NULL(self);
     CORE_DEBUGGER_ASSERT_NOT_NULL(message);
@@ -160,6 +164,26 @@ void thorium_message_cache_save_reply_message(struct thorium_message_cache *self
      * This is not the good message.
      */
     if (actual_source != expected_source) {
+        return;
+    }
+
+    expected_request_action = thorium_cache_tag_action(&self->saved_reply_message_cache_tag);
+    bucket = core_map_get(&self->actions, &expected_request_action);
+
+    /*
+     * Not supported.
+     */
+    if (bucket == NULL) {
+        return;
+    }
+
+    expected_reply_action = *bucket;
+    actual_reply_action = thorium_message_action(message);
+
+    /*
+     * This is not the message we are looking for.
+     */
+    if (actual_reply_action != expected_reply_action) {
         return;
     }
 
