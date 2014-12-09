@@ -22,6 +22,7 @@ struct thorium_message;
 void thorium_actor_send_buffer(struct thorium_actor *actor, int destination, int action, int count, void *buffer);
 void thorium_actor_send_empty(struct thorium_actor *actor, int destination, int action);
 void thorium_actor_send_int(struct thorium_actor *actor, int destination, int action, int value);
+void thorium_actor_send_2_int(struct thorium_actor *actor, int destination, int action, int value1, int value2);
 void thorium_actor_send_double(struct thorium_actor *actor, int destination, int action, double value);
 void thorium_actor_send_uint64_t(struct thorium_actor *actor, int destination, int action, uint64_t value);
 void thorium_actor_send_int64_t(struct thorium_actor *actor, int destination, int action, int64_t value);
@@ -36,6 +37,7 @@ void thorium_actor_send_reply_buffer(struct thorium_actor *actor, int action, in
 
 void thorium_actor_send_to_self_empty(struct thorium_actor *actor, int action);
 void thorium_actor_send_to_self_int(struct thorium_actor *actor, int action, int value);
+void thorium_actor_send_to_self_2_int(struct thorium_actor *actor, int action, int value1, int value2);
 void thorium_actor_send_to_self_buffer(struct thorium_actor *actor, int action, int count, void *buffer);
 
 void thorium_actor_send_to_supervisor_empty(struct thorium_actor *actor, int action);

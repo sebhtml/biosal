@@ -355,3 +355,28 @@ void thorium_actor_send_reply_buffer(struct thorium_actor *actor, int action, in
 {
     thorium_actor_send_buffer(actor, thorium_actor_source(actor), action, count, buffer);
 }
+
+void thorium_actor_send_2_int(struct thorium_actor *actor, int destination, int action, int value1, int value2)
+{
+    struct thorium_message message;
+    char *buffer;
+    int count;
+    int offset;
+
+    offset = 0;
+    count = sizeof(value1) + sizeof(value2);
+    buffer = thorium_actor_allocate(actor, count);
+    core_memory_copy(buffer + offset, &value1, sizeof(value1));
+    core_memory_copy(buffer + offset, &value2, sizeof(value2));
+
+    thorium_message_init(&message, action, count, buffer);
+    thorium_actor_send(actor, destination, &message);
+    thorium_message_destroy(&message);
+
+}
+
+void thorium_actor_send_to_self_2_int(struct thorium_actor *actor, int action, int value1, int value2)
+{
+    thorium_actor_send_2_int(actor, thorium_actor_name(actor), action, value1,
+                    value2);
+}
