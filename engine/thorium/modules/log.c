@@ -90,7 +90,11 @@ void thorium_actor_log(struct thorium_actor *self, const char *format, ...)
      */
     required += 1;
 
-    memory_pool = thorium_actor_get_abstract_memory_pool(self);
+    memory_pool = thorium_actor_get_memory_pool(self,
+                    MEMORY_POOL_NAME_ABSTRACT_ACTOR);
+
+    CORE_DEBUGGER_ASSERT(memory_pool != NULL);
+
     buffer = core_memory_pool_allocate(memory_pool, required);
     offset = 0;
 
