@@ -460,6 +460,7 @@ struct core_map *thorium_actor_get_received_messages(struct thorium_actor *self)
 struct core_map *thorium_actor_get_sent_messages(struct thorium_actor *self);
 
 struct core_memory_pool *thorium_actor_get_ephemeral_memory(struct thorium_actor *self);
+struct core_memory_pool *thorium_actor_get_ephemeral_memory_pool(struct thorium_actor *self);
 struct core_memory_pool *thorium_actor_get_persistent_memory_pool(struct thorium_actor *self);
 struct core_memory_pool *thorium_actor_get_abstract_memory_pool(struct thorium_actor *self);
 struct core_memory_pool *thorium_actor_get_concrete_memory_pool(struct thorium_actor *self);

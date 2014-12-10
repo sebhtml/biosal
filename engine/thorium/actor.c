@@ -2361,6 +2361,11 @@ static int thorium_actor_get_acquaintance_private(struct thorium_actor *self, in
 
 struct core_memory_pool *thorium_actor_get_ephemeral_memory(struct thorium_actor *self)
 {
+    return thorium_actor_get_ephemeral_memory_pool(self);
+}
+
+struct core_memory_pool *thorium_actor_get_ephemeral_memory_pool(struct thorium_actor *self)
+{
     struct thorium_worker *worker;
 
     worker = thorium_actor_worker(self);
@@ -2605,7 +2610,7 @@ struct core_memory_pool *thorium_actor_get_memory_pool(struct thorium_actor *sel
     else if (pool == (int)MEMORY_POOL_NAME_ABSTRACT_ACTOR)
         return thorium_actor_get_abstract_memory_pool(self);
     else if (pool == (int)MEMORY_POOL_NAME_WORKER_EPHEMERAL)
-        return thorium_actor_get_ephemeral_memory(self);
+        return thorium_actor_get_ephemeral_memory_pool(self);
 
     return NULL;
 }
