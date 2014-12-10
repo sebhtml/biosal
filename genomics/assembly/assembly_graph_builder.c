@@ -640,10 +640,12 @@ void biosal_assembly_graph_builder_set_kmer_reply(struct thorium_actor *self, st
 
     if (concrete_self->actors_with_kmer_length % 100 == 0) {
 
+#ifdef EXAMINE_GRAPH_BUILDER
         printf("EXAMINE: progress SET_KMER_LENGTH %d/%d\n",
                         concrete_self->actors_with_kmer_length,
                         expected);
         thorium_actor_print(self);
+#endif
     }
 
     /*
@@ -689,8 +691,10 @@ void biosal_assembly_graph_builder_connect_actors(struct thorium_actor *self)
             thorium_actor_script_name(self),
             thorium_actor_name(self));
 
+#ifdef EXAMINE_GRAPH_BUILDER
     printf("EXAMINE: connecting actors\n");
     thorium_actor_print(self);
+#endif
 
     thorium_actor_add_action_with_sources(self, ACTION_SET_PRODUCERS_FOR_WORK_STEALING_REPLY,
                     biosal_assembly_graph_builder_set_consumer_reply_windows,
@@ -705,8 +709,10 @@ void biosal_assembly_graph_builder_connect_actors(struct thorium_actor *self)
                         &producers_for_work_stealing);
     }
 
+#ifdef EXAMINE_GRAPH_BUILDER
     printf("EXAMINE: after sending producers for work stealing\n");
     thorium_actor_print(self);
+#endif
 
     for (i = 0; i < core_vector_size(&concrete_self->sliding_windows); i++) {
 
@@ -735,8 +741,10 @@ void biosal_assembly_graph_builder_connect_actors(struct thorium_actor *self)
                         consumer);
     }
 
+#ifdef EXAMINE_GRAPH_BUILDER
     printf("EXAMINE: before SET_CONSUMERS\n");
     thorium_actor_print(self);
+#endif
 
     thorium_actor_send_range_vector(self, &concrete_self->block_classifiers,
                     ACTION_SET_CONSUMERS,
@@ -744,8 +752,10 @@ void biosal_assembly_graph_builder_connect_actors(struct thorium_actor *self)
 
     core_vector_destroy(&producers_for_work_stealing);
 
+#ifdef EXAMINE_GRAPH_BUILDER
     printf("EXAMINE: after connecting actors\n");
     thorium_actor_print(self);
+#endif
 }
 
 void biosal_assembly_graph_builder_set_consumer_reply(struct thorium_actor *self, struct thorium_message *message)
@@ -808,8 +818,10 @@ void biosal_assembly_graph_builder_verify(struct thorium_actor *self)
             thorium_actor_script_name(self),
             thorium_actor_name(self));
 
+#ifdef EXAMINE_GRAPH_BUILDER
     printf("EXAMINE: ready to build\n");
     thorium_actor_print(self);
+#endif
 
     /* Set the producer for every sliding window.
      */
