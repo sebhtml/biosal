@@ -6,6 +6,7 @@
 #include <core/system/timer.h>
 #include <core/system/memory_pool.h>
 #include <core/system/debugger.h>
+#include <core/helpers/bitmap.h>
 
 #include <stdio.h>
 
@@ -33,6 +34,10 @@ void thorium_actor_log(struct thorium_actor *self, const char *format, ...)
     char *buffer;
     int offset;
     struct core_memory_pool *memory_pool;
+
+    if (!thorium_actor_get_flag(self, THORIUM_ACTOR_FLAG_DEFAULT_LOG_LEVEL)) {
+        return;
+    }
 
     /*
      * \see http://www.cplusplus.com/reference/ctime/localtime/
