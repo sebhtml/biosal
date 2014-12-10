@@ -50,9 +50,6 @@
  */
 #define THORIUM_ACTOR_ACQUAINTANCE_SUPERVISOR 0
 
-#define MEMORY_POOL_NAME_ABSTRACT_ACTOR 0x9739a8fa
-#define MEMORY_POOL_NAME_CONCRETE_ACTOR 0x39acca5f
-
 #define THORIUM_ACTOR_FORWARDING_NONE 0
 #define THORIUM_ACTOR_FORWARDING_CLONE 1
 #define THORIUM_ACTOR_FORWARDING_MIGRATE 2
@@ -2594,4 +2591,21 @@ void thorium_actor_set_flag(struct thorium_actor *self, int flag)
 void thorium_actor_clear_flag(struct thorium_actor *self, int flag)
 {
     CORE_BITMAP_CLEAR_BIT(self->flags, flag);
+}
+
+struct core_memory_pool *thorium_actor_get_concrete_memory_pool(struct thorium_actor *self)
+{
+    return &self->concrete_memory_pool;
+}
+
+struct core_memory_pool *thorium_actor_get_memory_pool(struct thorium_actor *self, int pool)
+{
+    if (pool == (int)MEMORY_POOL_NAME_CONCRETE_ACTOR)
+        return thorium_actor_get_concrete_memory_pool(self);
+    else if (pool == (int)MEMORY_POOL_NAME_ABSTRACT_ACTOR)
+        return thorium_actor_get_abstract_memory_pool(self);
+    else if (pool == (int)MEMORY_POOL_NAME_WORKER_EPHEMERAL)
+        return thorium_actor_get_ephemeral_memory(self);
+
+    return NULL;
 }

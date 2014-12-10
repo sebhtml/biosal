@@ -54,6 +54,9 @@
 #define THORIUM_ACTOR_EXPOSE_ACQUAINTANCE_VECTOR
 */
 
+#define MEMORY_POOL_NAME_ABSTRACT_ACTOR 0x9739a8fa
+#define MEMORY_POOL_NAME_CONCRETE_ACTOR 0x39acca5f
+
 /*
  * We are going to use the Minix convention:
  * - predefined actions all have negative values
@@ -459,6 +462,8 @@ struct core_map *thorium_actor_get_sent_messages(struct thorium_actor *self);
 struct core_memory_pool *thorium_actor_get_ephemeral_memory(struct thorium_actor *self);
 struct core_memory_pool *thorium_actor_get_persistent_memory_pool(struct thorium_actor *self);
 struct core_memory_pool *thorium_actor_get_abstract_memory_pool(struct thorium_actor *self);
+struct core_memory_pool *thorium_actor_get_concrete_memory_pool(struct thorium_actor *self);
+struct core_memory_pool *thorium_actor_get_memory_pool(struct thorium_actor *self, int pool);
 
 struct thorium_worker *thorium_actor_get_last_worker(struct thorium_actor *self);
 
