@@ -215,10 +215,10 @@ void biosal_unitig_visitor_receive(struct thorium_actor *self, struct thorium_me
 
         thorium_actor_send_reply_empty(self, ACTION_ASK_TO_STOP_REPLY);
 
-    } else if (action == ACTION_ENABLE_VERBOSE_MODE) {
+    } else if (action == ACTION_ENABLE_DEFAULT_LOG_LEVEL) {
 
         concrete_self->verbose = TRUE;
-    } else if (action == ACTION_DISABLE_VERBOSE_MODE) {
+    } else if (action == ACTION_DISABLE_DEFAULT_LOG_LEVEL) {
 
         concrete_self->verbose = FALSE;
     } else if (tag == ACTION_SET_VERTEX_FLAG_REPLY) {
