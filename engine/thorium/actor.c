@@ -235,6 +235,8 @@ void thorium_actor_init(struct thorium_actor *self, void *concrete_actor,
     self->counter_sent_message_count = 0;
 
     thorium_actor_init_message_cache(self);
+
+    CORE_BITMAP_SET_BIT(self->flags, THORIUM_ACTOR_FLAG_DEFAULT_LOG_LEVEL);
 }
 
 void thorium_actor_destroy(struct thorium_actor *self)
@@ -2577,4 +2579,19 @@ void thorium_actor_spawn_many_reply(struct thorium_actor *self, struct thorium_m
 struct core_memory_pool *thorium_actor_get_abstract_memory_pool(struct thorium_actor *self)
 {
     return &self->abstract_memory_pool;
+}
+
+int thorium_actor_get_flag(struct thorium_actor *self, int flag)
+{
+    return CORE_BITMAP_GET_BIT(self->flags, flag);
+}
+
+void thorium_actor_set_flag(struct thorium_actor *self, int flag)
+{
+    CORE_BITMAP_SET_BIT(self->flags, flag);
+}
+
+void thorium_actor_clear_flag(struct thorium_actor *self, int flag)
+{
+    CORE_BITMAP_CLEAR_BIT(self->flags, flag);
 }

@@ -246,6 +246,8 @@ new name.
 #define THORIUM_ACTOR_FLAG_ENABLE_MULTIPLEXER             9
 #define THORIUM_ACTOR_FLAG_ENABLE_MESSAGE_CACHE           10
 
+#define THORIUM_ACTOR_FLAG_DEFAULT_LOG_LEVEL                31
+
 struct thorium_node;
 struct thorium_worker;
 struct core_memory_pool;
@@ -506,5 +508,9 @@ int thorium_actor_get_random_number(struct thorium_actor *self);
 int thorium_actor_multiplexer_is_enabled(struct thorium_actor *self);
 
 int thorium_actor_get_counter_value(struct thorium_actor *self, int field);
+
+int thorium_actor_get_flag(struct thorium_actor *self, int flag);
+void thorium_actor_set_flag(struct thorium_actor *self, int flag);
+void thorium_actor_clear_flag(struct thorium_actor *self, int flag);
 
 #endif
