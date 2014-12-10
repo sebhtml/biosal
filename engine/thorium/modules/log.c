@@ -10,13 +10,46 @@
 
 #include <stdio.h>
 
+void thorium_actor_log_private(struct thorium_actor *self, int level, const char *format,
+                va_list arguments);
+
 void thorium_actor_log(struct thorium_actor *self, const char *format, ...)
 {
     va_list arguments;
+    int level;
+
+    /*
+     * Ideally, we would call thorium_actor_log_with_level() directly.
+     * However, it is unclear how to call a variadic function from a
+     * variadic function.
+     *
+     * @see http://stackoverflow.com/questions/150543/forward-an-invocation-of-a-variadic-function-in-c
+     * @see http://c-faq.com/varargs/handoff.html
+     */
+    level = THORIUM_ACTOR_FLAG_DEFAULT_LOG_LEVEL;
+
+    va_start(arguments, format);
+    thorium_actor_log_private(self, level, format, arguments);
+    va_end(arguments);
+}
+
+void thorium_actor_log_with_level(struct thorium_actor *self, int level, const char *format, ...)
+{
+    va_list arguments;
+
+    va_start(arguments, format);
+    thorium_actor_log_private(self, level, format, arguments);
+    va_end(arguments);
+}
+
+void thorium_actor_log_private(struct thorium_actor *self, int level, const char *format,
+                va_list arguments)
+{
     FILE *stream;
     char *script_name;
     int name;
     struct core_timer timer;
+    va_list arguments2;
 
     /*
      * For the time, we adopt the format used by LTTng:
@@ -35,9 +68,14 @@ void thorium_actor_log(struct thorium_actor *self, const char *format, ...)
     int offset;
     struct core_memory_pool *memory_pool;
 
-    if (!thorium_actor_get_flag(self, THORIUM_ACTOR_FLAG_DEFAULT_LOG_LEVEL)) {
+    if (!thorium_actor_get_flag(self, level)) {
         return;
     }
+
+    /*
+     * va_copy is available in C 1999.
+     */
+    va_copy(arguments2, arguments);
 
     /*
      * \see http://www.cplusplus.com/reference/ctime/localtime/
@@ -80,10 +118,8 @@ void thorium_actor_log(struct thorium_actor *self, const char *format, ...)
 
     required += snprintf(NULL, 0, "%s ACTOR %s %d : ",
                     time_string, script_name, name);
-    va_start(arguments, format);
     required += vsnprintf(NULL, 0, format, arguments);
     required += snprintf(NULL, 0, "\n");
-    va_end(arguments);
 
     /*
      * null character.
@@ -100,14 +136,14 @@ void thorium_actor_log(struct thorium_actor *self, const char *format, ...)
 
     offset += sprintf(buffer + offset, "%s ACTOR %s %d : ",
                     time_string, script_name, name);
-    va_start(arguments, format);
-    offset += vsprintf(buffer + offset, format, arguments);
+    offset += vsprintf(buffer + offset, format, arguments2);
     offset += sprintf(buffer + offset, "\n");
-    va_end(arguments);
 
     CORE_DEBUGGER_ASSERT(offset + 1 == required);
 
     fwrite(buffer, sizeof(char), offset, stream);
 
     core_memory_pool_free(memory_pool, buffer);
+
+    va_end(arguments2);
 }

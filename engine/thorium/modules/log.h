@@ -12,5 +12,6 @@
 struct thorium_actor;
 
 void thorium_actor_log(struct thorium_actor *self, const char *format, ...);
+void thorium_actor_log_with_level(struct thorium_actor *self, int level, const char *format, ...);
 
 #endif
