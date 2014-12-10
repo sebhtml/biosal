@@ -1,6 +1,6 @@
 
-#ifndef ACTOR_LOG_H
-#define ACTOR_LOG_H
+#ifndef THORIUM_ACTOR_LOG_H
+#define THORIUM_ACTOR_LOG_H
 
 #include <stdarg.h>
 
