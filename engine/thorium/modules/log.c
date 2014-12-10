@@ -73,7 +73,7 @@ void thorium_actor_log(struct thorium_actor *self, const char *format, ...)
 
     required = 0;
 
-    required += snprintf(NULL, 0, "%s [ACTOR_LOG] %s %d ... ",
+    required += snprintf(NULL, 0, "%s ACTOR %s %d : ",
                     time_string, script_name, name);
     va_start(arguments, format);
     required += vsnprintf(NULL, 0, format, arguments);
@@ -89,7 +89,7 @@ void thorium_actor_log(struct thorium_actor *self, const char *format, ...)
     buffer = core_memory_pool_allocate(memory_pool, required);
     offset = 0;
 
-    offset += sprintf(buffer + offset, "%s [ACTOR_LOG] %s %d ... ",
+    offset += sprintf(buffer + offset, "%s ACTOR %s %d : ",
                     time_string, script_name, name);
     va_start(arguments, format);
     offset += vsprintf(buffer + offset, format, arguments);
