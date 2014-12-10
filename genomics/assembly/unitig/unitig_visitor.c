@@ -115,7 +115,7 @@ void biosal_unitig_visitor_destroy(struct thorium_actor *self)
     thorium_actor_log(self, "vertex_count: %d BIOSAL_VERTEX_FLAG_UNITIG: %d",
                     concrete_self->visited_vertices, concrete_self->vertices_with_unitig_flag);
 
-    if (thorium_actor_get_flag(self, THORIUM_ACTOR_FLAG_DEFAULT_LOG_LEVEL)) {
+    if (thorium_actor_get_flag(self, LOG_LEVEL_DEFAULT)) {
         thorium_actor_print_message_cache(self);
     }
 
