@@ -37,9 +37,18 @@
  */
 #define THORIUM_TRANSPORT_MAXIMUM_RECEIVED_MESSAGE_REQUEST_COUNT_PER_CALL THORIUM_DEFAULT_EVENT_COUNT
 
+/*
+ * Settings for a distributed system.
+ */
 #define BIOSAL_IDEAL_BUFFER_SIZE 2048
-
 #define BIOSAL_IDEAL_ACTIVE_MESSAGE_LIMIT 2
+
+/*
+ * Settings for a shared memory system (1 process on 1 machine
+ * yielding 1 Thorium runtime node.
+ */
+#define BIOSAL_IDEAL_BUFFER_SIZE_SHARED_MEMORY  4096
+#define BIOSAL_IDEAL_ACTIVE_MESSAGE_LIMIT_SHARED_MEMORY 1
 
 /*
  * Multiplexer options.
