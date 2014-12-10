@@ -34,8 +34,8 @@
 /*
  * Hash table flags.
  */
-#define CORE_HASH_TABLE_FLAG_DEBUG              0
-#define CORE_HASH_TABLE_FLAG_DELETION_SUPPORT   1
+#define CORE_HASH_TABLE_FLAG_DEBUG              CORE_BITMAP_MAKE_FLAG(0)
+#define CORE_HASH_TABLE_FLAG_DELETION_SUPPORT   CORE_BITMAP_MAKE_FLAG(1)
 
 /*
  * Hash table results.

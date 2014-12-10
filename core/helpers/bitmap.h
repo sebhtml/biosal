@@ -27,16 +27,13 @@ void core_bitmap_set_bit_value_uint64_t(uint64_t *self, int index, int value);
 #define CORE_BITMAP_CLEAR_FLAGS(bitmap) \
         bitmap = 0;
 
-#define CORE_BITMAP_CREATE_MASK(bit) \
-        (1 << bit)
-
 #define CORE_BITMAP_GET_FLAG(bitmap, bit) \
-        (bitmap & CORE_BITMAP_CREATE_MASK(bit))
+        (bitmap & (bit))
 
 #define CORE_BITMAP_SET_FLAG(bitmap, bit) \
-        bitmap = (bitmap | CORE_BITMAP_CREATE_MASK(bit))
+        bitmap = (bitmap | (bit))
 
 #define CORE_BITMAP_CLEAR_FLAG(bitmap, bit) \
-        bitmap = (bitmap & (~CORE_BITMAP_CREATE_MASK(bit)))
+        bitmap = (bitmap & (~(bit)))
 
 #endif

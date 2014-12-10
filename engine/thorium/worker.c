@@ -82,14 +82,14 @@
 /*
  * Worker flags.
  */
-#define FLAG_DEBUG_ACTORS               0
-#define FLAG_DEAD                       1
-#define FLAG_DEBUG                      2
-#define FLAG_BUSY                       3
-#define FLAG_ENABLE_ACTOR_LOAD_PROFILER 4
-#define FLAG_ENABLE_WAIT                5
-#define FLAG_OUTPUT_OUTBOUND_MESSAGE_RING_IS_FULL        6
-#define FLAG_USE_MULTIPLEXER            7
+#define FLAG_DEBUG_ACTORS                           CORE_BITMAP_MAKE_FLAG(0)
+#define FLAG_DEAD                                   CORE_BITMAP_MAKE_FLAG(1)
+#define FLAG_DEBUG                                  CORE_BITMAP_MAKE_FLAG(2)
+#define FLAG_BUSY                                   CORE_BITMAP_MAKE_FLAG(3)
+#define FLAG_ENABLE_ACTOR_LOAD_PROFILER             CORE_BITMAP_MAKE_FLAG(4)
+#define FLAG_ENABLE_WAIT                            CORE_BITMAP_MAKE_FLAG(5)
+#define FLAG_OUTPUT_OUTBOUND_MESSAGE_RING_IS_FULL   CORE_BITMAP_MAKE_FLAG(6)
+#define FLAG_USE_MULTIPLEXER                        CORE_BITMAP_MAKE_FLAG(7)
 
 #define DEBUG_WORKER_OPTION "-debug-worker"
 
