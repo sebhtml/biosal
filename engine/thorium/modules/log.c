@@ -26,7 +26,7 @@ void thorium_actor_log(struct thorium_actor *self, const char *format, ...)
      * @see http://stackoverflow.com/questions/150543/forward-an-invocation-of-a-variadic-function-in-c
      * @see http://c-faq.com/varargs/handoff.html
      */
-    level = THORIUM_ACTOR_FLAG_DEFAULT_LOG_LEVEL;
+    level = LOG_LEVEL_DEFAULT;
 
     va_start(arguments, format);
     thorium_actor_log_private(self, level, format, arguments);
