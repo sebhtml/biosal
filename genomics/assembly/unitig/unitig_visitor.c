@@ -99,11 +99,11 @@ void biosal_unitig_visitor_init(struct thorium_actor *self)
     biosal_dna_kmer_init_empty(&concrete_self->parent_kmer);
     biosal_dna_kmer_init_empty(&concrete_self->child_kmer);
 
-    concrete_self->verbose = FALSE;
-
     concrete_self->has_local_kmer = FALSE;
     biosal_dna_kmer_init_empty(&concrete_self->local_kmer);
     concrete_self->length_of_locality = 0;
+
+    thorium_actor_send_to_self_empty(self, ACTION_DISABLE_DEFAULT_LOG_LEVEL);
 }
 
 void biosal_unitig_visitor_destroy(struct thorium_actor *self)
@@ -112,11 +112,10 @@ void biosal_unitig_visitor_destroy(struct thorium_actor *self)
 
     concrete_self = thorium_actor_concrete_actor(self);
 
-    if (concrete_self->verbose) {
-        printf("%s/%d vertex_count: %d BIOSAL_VERTEX_FLAG_UNITIG: %d\n",
-                    thorium_actor_script_name(self), thorium_actor_name(self),
+    thorium_actor_log(self, "vertex_count: %d BIOSAL_VERTEX_FLAG_UNITIG: %d",
                     concrete_self->visited_vertices, concrete_self->vertices_with_unitig_flag);
 
+    if (thorium_actor_get_flag(self, THORIUM_ACTOR_FLAG_DEFAULT_LOG_LEVEL)) {
         thorium_actor_print_message_cache(self);
     }
 
@@ -197,11 +196,7 @@ void biosal_unitig_visitor_receive(struct thorium_actor *self, struct thorium_me
 
         concrete_self->manager = source;
 
-        if (concrete_self->verbose) {
-            printf("%s/%d is ready to visit places in the universe\n",
-                        thorium_actor_script_name(self),
-                        thorium_actor_name(self));
-        }
+        thorium_actor_log(self, "is ready to visit places in the universe");
 
         core_vector_unpack(&concrete_self->graph_stores, buffer);
         size = core_vector_size(&concrete_self->graph_stores);
@@ -215,12 +210,14 @@ void biosal_unitig_visitor_receive(struct thorium_actor *self, struct thorium_me
 
         thorium_actor_send_reply_empty(self, ACTION_ASK_TO_STOP_REPLY);
 
+        /*
     } else if (action == ACTION_ENABLE_DEFAULT_LOG_LEVEL) {
 
         concrete_self->verbose = TRUE;
     } else if (action == ACTION_DISABLE_DEFAULT_LOG_LEVEL) {
 
         concrete_self->verbose = FALSE;
+        */
     } else if (tag == ACTION_SET_VERTEX_FLAG_REPLY) {
 
         concrete_self->step = STEP_DO_RESET;
@@ -302,12 +299,8 @@ void biosal_unitig_visitor_execute(struct thorium_actor *self)
 
     if (concrete_self->completed == core_vector_size(&concrete_self->graph_stores)) {
 
-        if (concrete_self->verbose) {
-            printf("%s/%d : %d graph stores gave nothing !\n",
-                        thorium_actor_script_name(self),
-                        thorium_actor_name(self),
+        thorium_actor_log(self, "%d graph stores gave nothing !",
                         concrete_self->completed);
-        }
 
         new_count = sizeof(concrete_self->visited_vertices) + sizeof(concrete_self->vertices_with_unitig_flag);
         new_buffer = thorium_actor_allocate(self, new_count);
@@ -466,8 +459,7 @@ void biosal_unitig_visitor_execute(struct thorium_actor *self)
         biosal_vertex_neighborhood_destroy(&concrete_self->child_neighborhood);
         biosal_vertex_neighborhood_init_empty(&concrete_self->child_neighborhood);
 
-        if (concrete_self->verbose
-                        && concrete_self->visited_vertices % 500 == 0) {
+        if (concrete_self->visited_vertices % 500 == 0) {
 
             current_time = thorium_actor_get_time_in_seconds(self);
 
@@ -491,9 +483,8 @@ void biosal_unitig_visitor_execute(struct thorium_actor *self)
                 outbound_velocity -= concrete_self->last_sent_message_count;
                 outbound_velocity /= delta;
 
-                printf("%s/%d visited %d vertices so far. velocity: %f vertices / s,"
-                               " %f received messages / s, %f sent messages / s\n",
-                            thorium_actor_script_name(self), thorium_actor_name(self),
+                thorium_actor_log(self, "visited %d vertices so far. velocity: %f vertices / s,"
+                               " %f received messages / s, %f sent messages / s",
                             concrete_self->visited_vertices, velocity,
                             inbound_velocity, outbound_velocity);
 

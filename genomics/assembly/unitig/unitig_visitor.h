@@ -60,8 +60,6 @@ struct biosal_unitig_visitor {
     int last_sent_message_count;
     uint64_t last_second_count;
 
-    int verbose;
-
     struct biosal_dna_kmer local_kmer;
     int has_local_kmer;
     int length_of_locality;
