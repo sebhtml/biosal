@@ -216,14 +216,6 @@ void thorium_actor_init(struct thorium_actor *self, void *concrete_actor,
     capacity = THORIUM_ACTOR_MAILBOX_SIZE;
     core_fast_ring_init(&self->mailbox, capacity, sizeof(struct thorium_message));
 
-    /* call the concrete initializer
-     * this must be the last call.
-     */
-    init = thorium_actor_get_init(self);
-    init(self);
-
-    CORE_DEBUGGER_ASSERT(self->name != THORIUM_ACTOR_NOBODY);
-
     thorium_actor_set_assigned_worker(self, THORIUM_WORKER_NONE);
 
     self->random_seed = self->name;
@@ -234,6 +226,14 @@ void thorium_actor_init(struct thorium_actor *self, void *concrete_actor,
     thorium_actor_init_message_cache(self);
 
     CORE_BITMAP_SET_BIT(self->flags, THORIUM_ACTOR_FLAG_DEFAULT_LOG_LEVEL);
+
+    /* call the concrete initializer
+     * this must be the last call.
+     */
+    init = thorium_actor_get_init(self);
+    init(self);
+
+    CORE_DEBUGGER_ASSERT(self->name != THORIUM_ACTOR_NOBODY);
 }
 
 void thorium_actor_destroy(struct thorium_actor *self)
@@ -478,6 +478,15 @@ int thorium_actor_send_system_self(struct thorium_actor *self, struct thorium_me
         thorium_actor_clear_message_cache(self, message);
         return 1;
 #endif
+    } else if (action == ACTION_ENABLE_DEFAULT_LOG_LEVEL) {
+
+        thorium_actor_set_flag(self, THORIUM_ACTOR_FLAG_DEFAULT_LOG_LEVEL);
+        return 1;
+
+    } else if (action == ACTION_DISABLE_DEFAULT_LOG_LEVEL) {
+
+        thorium_actor_clear_flag(self, THORIUM_ACTOR_FLAG_DEFAULT_LOG_LEVEL);
+        return 1;
     }
 
     return 0;
@@ -971,6 +980,16 @@ int thorium_actor_receive_system(struct thorium_actor *self, struct thorium_mess
         thorium_actor_spawn_many_reply(self, message);
         return 0;
 #endif
+
+    } else if (action == ACTION_ENABLE_DEFAULT_LOG_LEVEL) {
+
+        thorium_actor_set_flag(self, THORIUM_ACTOR_FLAG_DEFAULT_LOG_LEVEL);
+        return 1;
+
+    } else if (action == ACTION_DISABLE_DEFAULT_LOG_LEVEL) {
+
+        thorium_actor_clear_flag(self, THORIUM_ACTOR_FLAG_DEFAULT_LOG_LEVEL);
+        return 1;
 
 #ifdef THORIUM_ACTOR_STORE_CHILDREN
     } else if (tag == ACTION_MIGRATE_NOTIFY_ACQUAINTANCES) {

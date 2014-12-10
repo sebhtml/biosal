@@ -249,7 +249,7 @@ new name.
 #define THORIUM_ACTOR_FLAG_ENABLE_MULTIPLEXER             9
 #define THORIUM_ACTOR_FLAG_ENABLE_MESSAGE_CACHE           10
 
-#define THORIUM_ACTOR_FLAG_DEFAULT_LOG_LEVEL                31
+#define THORIUM_ACTOR_FLAG_DEFAULT_LOG_LEVEL                15
 
 struct thorium_node;
 struct thorium_worker;
