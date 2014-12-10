@@ -4,6 +4,8 @@
 #include <engine/thorium/actor.h>
 
 #include <core/system/timer.h>
+#include <core/system/memory_pool.h>
+#include <core/system/debugger.h>
 
 #include <stdio.h>
 
@@ -27,6 +29,10 @@ void thorium_actor_log(struct thorium_actor *self, const char *format, ...)
     int second;
     uint64_t raw_nanosecond;
     int nanosecond;
+    int required;
+    char *buffer;
+    int offset;
+    struct core_memory_pool *memory_pool;
 
     /*
      * \see http://www.cplusplus.com/reference/ctime/localtime/
@@ -65,16 +71,34 @@ void thorium_actor_log(struct thorium_actor *self, const char *format, ...)
      * \see http://stackoverflow.com/questions/1516370/wrapper-printf-function-that-filters-according-to-user-preferences
      */
 
-    va_start(arguments, format);
+    required = 0;
 
-    fprintf(stream, "%s [ACTOR_LOG] %s %d ... ",
+    required += snprintf(NULL, 0, "%s [ACTOR_LOG] %s %d ... ",
                     time_string, script_name, name);
-
-    vfprintf(stream, format, arguments);
-
-    fprintf(stream, "\n");
-
-    fflush(stream);
-
+    va_start(arguments, format);
+    required += vsnprintf(NULL, 0, format, arguments);
+    required += snprintf(NULL, 0, "\n");
     va_end(arguments);
+
+    /*
+     * null character.
+     */
+    required += 1;
+
+    memory_pool = thorium_actor_get_abstract_memory_pool(self);
+    buffer = core_memory_pool_allocate(memory_pool, required);
+    offset = 0;
+
+    offset += sprintf(buffer + offset, "%s [ACTOR_LOG] %s %d ... ",
+                    time_string, script_name, name);
+    va_start(arguments, format);
+    offset += vsprintf(buffer + offset, format, arguments);
+    offset += sprintf(buffer + offset, "\n");
+    va_end(arguments);
+
+    CORE_DEBUGGER_ASSERT(offset + 1 == required);
+
+    fwrite(buffer, sizeof(char), offset, stream);
+
+    core_memory_pool_free(memory_pool, buffer);
 }
