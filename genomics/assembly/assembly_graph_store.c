@@ -267,9 +267,7 @@ void biosal_assembly_graph_store_receive(struct thorium_actor *self, struct thor
         CORE_DEBUGGER_ASSERT_IS_EQUAL_INT(concrete_self->iterated_vertex_count,
                         (int)core_map_size(&concrete_self->table));
 
-        printf("%s/%d iterated_vertex_count %d unitig_vertex_count %d",
-                        thorium_actor_script_name(self),
-                        thorium_actor_name(self),
+        thorium_actor_log(self, "iterated_vertex_count %d unitig_vertex_count %d",
                         concrete_self->iterated_vertex_count,
                         concrete_self->unitig_vertex_count);
 
