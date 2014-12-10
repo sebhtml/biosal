@@ -483,8 +483,8 @@ void biosal_unitig_visitor_execute(struct thorium_actor *self)
                 outbound_velocity -= concrete_self->last_sent_message_count;
                 outbound_velocity /= delta;
 
-                thorium_actor_log(self, "visited %d vertices so far. velocity: %f vertices / s,"
-                               " %f received messages / s, %f sent messages / s",
+                thorium_actor_log(self, "visited %d vertices so far. velocity: %.2f vertices / s,"
+                               " %.2f received messages / s, %.2f sent messages / s",
                             concrete_self->visited_vertices, velocity,
                             inbound_velocity, outbound_velocity);
 
