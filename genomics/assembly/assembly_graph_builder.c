@@ -652,7 +652,10 @@ void biosal_assembly_graph_builder_set_kmer_reply(struct thorium_actor *self, st
     if (concrete_self->actors_with_kmer_length == expected) {
 
         printf("EXAMINE: configured kmer length\n");
+
+#if 0
         thorium_actor_print(self);
+#endif
 
         printf("%s/%d configured (%d actors) the kmer length value for sliding windows, block classifiers and graph stores\n",
                         thorium_actor_script_name(self),

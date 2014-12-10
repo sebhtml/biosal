@@ -81,7 +81,10 @@ void biosal_kmer_store_destroy(struct thorium_actor *self)
                     thorium_actor_script_name(self),
                     thorium_actor_name(self));
 
+#ifdef SHOW_MEMORY_POOL_STATUS
     core_memory_pool_examine(&concrete_actor->persistent_memory);
+#endif
+
     core_map_examine(&concrete_actor->table);
 
     if (concrete_actor->kmer_length != -1) {

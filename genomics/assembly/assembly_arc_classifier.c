@@ -158,11 +158,16 @@ void biosal_assembly_arc_classifier_destroy(struct thorium_actor *self)
     /*
      * Make sure that there is no memory leak.
      */
+
+#ifdef SHOW_MEMORY_POOL_STATUS
     core_memory_pool_examine(&concrete_self->persistent_memory);
+#endif
 
     core_memory_pool_destroy(&concrete_self->persistent_memory);
 
+#if 0
     printf("ISSUE-819 biosal_assembly_arc_classifier dies\n");
+#endif
 
     core_memory_cache_destroy(&concrete_self->memory_cache);
 }

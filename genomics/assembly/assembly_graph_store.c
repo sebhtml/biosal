@@ -424,7 +424,9 @@ void biosal_assembly_graph_store_push_data(struct thorium_actor *self, struct th
                     name, core_map_size(&concrete_self->table),
                     2 * core_map_size(&concrete_self->table));
 
+#ifdef SHOW_MEMORY_POOL_STATUS
     core_memory_pool_examine(&concrete_self->persistent_memory);
+#endif
 
     core_map_iterator_init(&concrete_self->iterator, &concrete_self->table);
 
