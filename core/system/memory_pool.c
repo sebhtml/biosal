@@ -84,16 +84,16 @@ void core_memory_pool_init(struct core_memory_pool *self, int block_size, int na
     /*
      * Configure flags
      */
-    CORE_BITMAP_CLEAR(self->flags);
+    CORE_BITMAP_CLEAR_FLAGS(self->flags);
 
-    CORE_BITMAP_SET_BIT(self->flags, FLAG_ENABLE_TRACKING);
+    CORE_BITMAP_SET_FLAG(self->flags, FLAG_ENABLE_TRACKING);
 
-    CORE_BITMAP_CLEAR_BIT(self->flags, FLAG_DISABLED);
-    CORE_BITMAP_CLEAR_BIT(self->flags, FLAG_ENABLE_SEGMENT_NORMALIZATION);
-    CORE_BITMAP_CLEAR_BIT(self->flags, FLAG_ALIGN);
-    CORE_BITMAP_CLEAR_BIT(self->flags, FLAG_EPHEMERAL);
+    CORE_BITMAP_CLEAR_FLAG(self->flags, FLAG_DISABLED);
+    CORE_BITMAP_CLEAR_FLAG(self->flags, FLAG_ENABLE_SEGMENT_NORMALIZATION);
+    CORE_BITMAP_CLEAR_FLAG(self->flags, FLAG_ALIGN);
+    CORE_BITMAP_CLEAR_FLAG(self->flags, FLAG_EPHEMERAL);
 
-    CORE_BITMAP_CLEAR_BIT(self->flags, FLAG_ENABLE_TRACEPOINTS);
+    CORE_BITMAP_CLEAR_FLAG(self->flags, FLAG_ENABLE_TRACEPOINTS);
 
     self->profile_allocated_byte_count = 0;
     self->profile_freed_byte_count = 0;
@@ -191,7 +191,7 @@ void *core_memory_pool_allocate(struct core_memory_pool *self, size_t size)
         return core_memory_allocate(size, MEMORY_MEMORY_POOL_NULL_SELF);
     }
 
-    if (CORE_BITMAP_GET_BIT(self->flags, FLAG_ENABLE_TRACEPOINTS)) {
+    if (CORE_BITMAP_GET_FLAG(self->flags, FLAG_ENABLE_TRACEPOINTS)) {
         printf("TRACEPOINT_EVENT memory_pool:allocate name %x size %zu\n",
                         self->name, size);
 
@@ -205,7 +205,7 @@ void *core_memory_pool_allocate(struct core_memory_pool *self, size_t size)
     /*
      * Any small allocations are resized for the free lists.
      */
-    if (CORE_BITMAP_GET_BIT(self->flags, FLAG_ENABLE_TRACKING)
+    if (CORE_BITMAP_GET_FLAG(self->flags, FLAG_ENABLE_TRACKING)
                  && size < sizeof(struct core_free_list_element)) {
 
         size = sizeof(struct core_free_list_element);
@@ -229,7 +229,7 @@ void *core_memory_pool_allocate(struct core_memory_pool *self, size_t size)
      * Normalize the length of the segment to be a power of 2
      * if the flag FLAG_ENABLE_SEGMENT_NORMALIZATION is set.
      */
-    if (CORE_BITMAP_GET_BIT(self->flags, FLAG_ENABLE_SEGMENT_NORMALIZATION)) {
+    if (CORE_BITMAP_GET_FLAG(self->flags, FLAG_ENABLE_SEGMENT_NORMALIZATION)) {
         normalize = 1;
     }
 
@@ -243,7 +243,7 @@ void *core_memory_pool_allocate(struct core_memory_pool *self, size_t size)
      */
 
     if (size > self->block_size
-              && CORE_BITMAP_GET_BIT(self->flags, FLAG_EPHEMERAL)) {
+              && CORE_BITMAP_GET_FLAG(self->flags, FLAG_EPHEMERAL)) {
         normalize = 1;
     }
 
@@ -288,7 +288,7 @@ void *core_memory_pool_allocate(struct core_memory_pool *self, size_t size)
      * So 32-byte and 64-byte alignment can give better performance.
      * But what is the necessary alignment for getting correct behavior ?
      */
-    if (CORE_BITMAP_GET_BIT(self->flags, FLAG_ALIGN)) {
+    if (CORE_BITMAP_GET_FLAG(self->flags, FLAG_ALIGN)) {
 
         new_size = core_memory_align(size);
 
@@ -310,7 +310,7 @@ void *core_memory_pool_allocate(struct core_memory_pool *self, size_t size)
     }
 
 #ifdef CORE_MEMORY_USE_MAP_FOR_TRACKING
-    if (CORE_BITMAP_GET_BIT(self->flags, FLAG_ENABLE_TRACKING)) {
+    if (CORE_BITMAP_GET_FLAG(self->flags, FLAG_ENABLE_TRACKING)) {
 
 #ifdef CORE_DEBUGGER_ASSERT_ENABLED
         if (core_map_get(&self->allocated_blocks, &pointer) != NULL) {
@@ -351,7 +351,7 @@ void *core_memory_pool_allocate_private(struct core_memory_pool *self, size_t si
         return NULL;
     }
 
-    if (CORE_BITMAP_GET_BIT(self->flags, FLAG_DISABLED)) {
+    if (CORE_BITMAP_GET_FLAG(self->flags, FLAG_DISABLED)) {
         return core_memory_allocate(size, self->name);
     }
 
@@ -372,12 +372,12 @@ void *core_memory_pool_allocate_private(struct core_memory_pool *self, size_t si
     metadata = 0;
     queue = NULL;
 
-    if (CORE_BITMAP_GET_BIT(self->flags, FLAG_ENABLE_TRACKING)) {
+    if (CORE_BITMAP_GET_FLAG(self->flags, FLAG_ENABLE_TRACKING)) {
         queue = core_map_get(&self->recycle_bin, &size);
         metadata = sizeof(size_t);
     }
 
-    if (CORE_BITMAP_GET_BIT(self->flags, FLAG_ENABLE_TRACEPOINTS)) {
+    if (CORE_BITMAP_GET_FLAG(self->flags, FLAG_ENABLE_TRACEPOINTS)) {
         printf("TRACEPOINT_EVENT memory_pool:allocate_private name %x size %zu free_list_size %d\n",
                         self->name, size,
                         (queue != NULL ? core_free_list_size(queue) : 0));
@@ -414,7 +414,7 @@ void *core_memory_pool_allocate_private(struct core_memory_pool *self, size_t si
 
     pointer = core_memory_block_allocate(self->current_block, size + metadata);
 
-    if (CORE_BITMAP_GET_BIT(self->flags, FLAG_ENABLE_TRACEPOINTS))
+    if (CORE_BITMAP_GET_FLAG(self->flags, FLAG_ENABLE_TRACEPOINTS))
         printf("TRACEPOINT_EVENT memory_block:allocate size %zu\n", size + metadata);
 
     /* the current block is exausted...
@@ -427,7 +427,7 @@ void *core_memory_pool_allocate_private(struct core_memory_pool *self, size_t si
 
         pointer = core_memory_block_allocate(self->current_block, size + metadata);
 
-        if (CORE_BITMAP_GET_BIT(self->flags, FLAG_ENABLE_TRACEPOINTS))
+        if (CORE_BITMAP_GET_FLAG(self->flags, FLAG_ENABLE_TRACEPOINTS))
             printf("TRACEPOINT_EVENT memory_block:allocate size %zu\n", size + metadata);
 
 #ifdef DEBUG_MEMORY_POOL_ALLOCATE
@@ -471,7 +471,7 @@ int core_memory_pool_free(struct core_memory_pool *self, void *pointer)
         return 1;
     }
 
-    if (CORE_BITMAP_GET_BIT(self->flags, FLAG_ENABLE_TRACEPOINTS)) {
+    if (CORE_BITMAP_GET_FLAG(self->flags, FLAG_ENABLE_TRACEPOINTS)) {
         printf("TRACEPOINT_EVENT memory_pool:free name %x pointer %p\n",
                         self->name, (void *)pointer);
     }
@@ -537,7 +537,7 @@ int core_memory_pool_free(struct core_memory_pool *self, void *pointer)
      * manages this pointer.
      */
 #ifdef CORE_DEBUGGER_ASSERT_ENABLED
-    if (CORE_BITMAP_GET_BIT(self->flags, FLAG_ENABLE_TRACKING)) {
+    if (CORE_BITMAP_GET_FLAG(self->flags, FLAG_ENABLE_TRACKING)) {
         if (!value)
             printf("Error, memory pool (self= %p) 0x%x does not manage buffer %p\n",
                         (void *)self, self->name, pointer);
@@ -570,7 +570,7 @@ int core_memory_pool_free(struct core_memory_pool *self, void *pointer)
      *
      * Link: https://github.com/GeneAssembly/biosal/issues/788#issuecomment-62002496
      */
-    if (!CORE_BITMAP_GET_BIT(self->flags, FLAG_ENABLE_TRACKING)) {
+    if (!CORE_BITMAP_GET_FLAG(self->flags, FLAG_ENABLE_TRACKING)) {
         core_memory_pool_free_private(self, pointer);
     }
 #else
@@ -592,7 +592,7 @@ void core_memory_pool_free_private(struct core_memory_pool *self, void *pointer)
     struct core_free_list *queue;
     size_t size;
 
-    if (CORE_BITMAP_GET_BIT(self->flags, FLAG_DISABLED)) {
+    if (CORE_BITMAP_GET_FLAG(self->flags, FLAG_DISABLED)) {
         core_memory_free(pointer, self->name);
         return;
     }
@@ -614,7 +614,7 @@ void core_memory_pool_free_private(struct core_memory_pool *self, void *pointer)
      * for the ephemeral memory, core_memory_pool_free_all is
      * used.
      */
-    if (!CORE_BITMAP_GET_BIT(self->flags, FLAG_ENABLE_TRACKING)) {
+    if (!CORE_BITMAP_GET_FLAG(self->flags, FLAG_ENABLE_TRACKING)) {
         return;
     }
 
@@ -666,32 +666,32 @@ void core_memory_pool_free_private(struct core_memory_pool *self, void *pointer)
 
 void core_memory_pool_disable_tracking(struct core_memory_pool *self)
 {
-    CORE_BITMAP_CLEAR_BIT(self->flags, FLAG_ENABLE_TRACKING);
+    CORE_BITMAP_CLEAR_FLAG(self->flags, FLAG_ENABLE_TRACKING);
 }
 
 void core_memory_pool_enable_normalization(struct core_memory_pool *self)
 {
-    CORE_BITMAP_SET_BIT(self->flags, FLAG_ENABLE_SEGMENT_NORMALIZATION);
+    CORE_BITMAP_SET_FLAG(self->flags, FLAG_ENABLE_SEGMENT_NORMALIZATION);
 }
 
 void core_memory_pool_disable_normalization(struct core_memory_pool *self)
 {
-    CORE_BITMAP_CLEAR_BIT(self->flags, FLAG_ENABLE_SEGMENT_NORMALIZATION);
+    CORE_BITMAP_CLEAR_FLAG(self->flags, FLAG_ENABLE_SEGMENT_NORMALIZATION);
 }
 
 void core_memory_pool_enable_alignment(struct core_memory_pool *self)
 {
-    CORE_BITMAP_SET_BIT(self->flags, FLAG_ALIGN);
+    CORE_BITMAP_SET_FLAG(self->flags, FLAG_ALIGN);
 }
 
 void core_memory_pool_disable_alignment(struct core_memory_pool *self)
 {
-    CORE_BITMAP_CLEAR_BIT(self->flags, FLAG_ALIGN);
+    CORE_BITMAP_CLEAR_FLAG(self->flags, FLAG_ALIGN);
 }
 
 void core_memory_pool_enable_tracking(struct core_memory_pool *self)
 {
-    CORE_BITMAP_SET_BIT(self->flags, FLAG_ENABLE_TRACKING);
+    CORE_BITMAP_SET_FLAG(self->flags, FLAG_ENABLE_TRACKING);
 }
 
 void core_memory_pool_free_all(struct core_memory_pool *self)
@@ -739,7 +739,7 @@ void core_memory_pool_free_all(struct core_memory_pool *self)
     /*
      * Reset current structures.
      */
-    if (CORE_BITMAP_GET_BIT(self->flags, FLAG_ENABLE_TRACKING)) {
+    if (CORE_BITMAP_GET_FLAG(self->flags, FLAG_ENABLE_TRACKING)) {
 
 #ifdef CORE_MEMORY_USE_MAP_FOR_TRACKING
         core_map_clear(&self->allocated_blocks);
@@ -747,14 +747,14 @@ void core_memory_pool_free_all(struct core_memory_pool *self)
         core_map_clear(&self->recycle_bin);
     }
 
-    if (!CORE_BITMAP_GET_BIT(self->flags, FLAG_DISABLED)) {
+    if (!CORE_BITMAP_GET_FLAG(self->flags, FLAG_DISABLED)) {
         core_set_clear(&self->large_blocks);
     }
 }
 
 void core_memory_pool_disable(struct core_memory_pool *self)
 {
-    CORE_BITMAP_SET_BIT(self->flags, FLAG_DISABLED);
+    CORE_BITMAP_SET_FLAG(self->flags, FLAG_DISABLED);
 }
 
 void core_memory_pool_print(struct core_memory_pool *self)
@@ -782,7 +782,7 @@ void core_memory_pool_print(struct core_memory_pool *self)
 
 void core_memory_pool_enable_ephemeral_mode(struct core_memory_pool *self)
 {
-    CORE_BITMAP_SET_BIT(self->flags, FLAG_EPHEMERAL);
+    CORE_BITMAP_SET_FLAG(self->flags, FLAG_EPHEMERAL);
 }
 
 void core_memory_pool_set_name(struct core_memory_pool *self, int name)
@@ -973,6 +973,6 @@ void *core_memory_pool_move_right(void *pointer)
 
 void core_memory_pool_enable_tracepoints(struct core_memory_pool *self)
 {
-    CORE_BITMAP_SET_BIT(self->flags, FLAG_ENABLE_TRACEPOINTS);
+    CORE_BITMAP_SET_FLAG(self->flags, FLAG_ENABLE_TRACEPOINTS);
 }
 

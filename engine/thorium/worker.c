@@ -193,8 +193,8 @@ void thorium_worker_init(struct thorium_worker *worker, int name, struct thorium
     worker->node = node;
     worker->name = name;
 
-    CORE_BITMAP_CLEAR(worker->flags);
-    CORE_BITMAP_CLEAR_BIT(worker->flags, FLAG_DEAD);
+    CORE_BITMAP_CLEAR_FLAGS(worker->flags);
+    CORE_BITMAP_CLEAR_FLAG(worker->flags, FLAG_DEAD);
     worker->last_warning = 0;
 
     worker->last_wake_up_count = 0;
@@ -259,11 +259,11 @@ void thorium_worker_init(struct thorium_worker *worker, int name, struct thorium
 
     core_queue_init(&worker->output_outbound_message_queue, sizeof(struct thorium_message));
 
-    CORE_BITMAP_CLEAR_BIT(worker->flags, FLAG_DEBUG);
-    CORE_BITMAP_CLEAR_BIT(worker->flags, FLAG_BUSY);
-    CORE_BITMAP_CLEAR_BIT(worker->flags, FLAG_ENABLE_ACTOR_LOAD_PROFILER);
+    CORE_BITMAP_CLEAR_FLAG(worker->flags, FLAG_DEBUG);
+    CORE_BITMAP_CLEAR_FLAG(worker->flags, FLAG_BUSY);
+    CORE_BITMAP_CLEAR_FLAG(worker->flags, FLAG_ENABLE_ACTOR_LOAD_PROFILER);
 
-    CORE_BITMAP_CLEAR_BIT(worker->flags, FLAG_DEBUG_ACTORS);
+    CORE_BITMAP_CLEAR_FLAG(worker->flags, FLAG_DEBUG_ACTORS);
 
     if (core_command_has_argument(argc, argv, DEBUG_WORKER_OPTION)) {
 
@@ -277,7 +277,7 @@ void thorium_worker_init(struct thorium_worker *worker, int name, struct thorium
 #if 0
             printf("DEBUG setting bit FLAG_DEBUG_ACTORS because %s\n", DEBUG_WORKER_OPTION);
 #endif
-            CORE_BITMAP_SET_BIT(worker->flags, FLAG_DEBUG_ACTORS);
+            CORE_BITMAP_SET_FLAG(worker->flags, FLAG_DEBUG_ACTORS);
         }
     }
 
@@ -379,7 +379,7 @@ void thorium_worker_init(struct thorium_worker *worker, int name, struct thorium
     worker->profile_event_count = 0;
     worker->profile_start = 0;
 
-    CORE_BITMAP_CLEAR_BIT(worker->flags, FLAG_USE_MULTIPLEXER);
+    CORE_BITMAP_CLEAR_FLAG(worker->flags, FLAG_USE_MULTIPLEXER);
 
     worker->counter_last_original_message_count = 0;
     worker->counter_last_real_message_count = 0;
@@ -393,7 +393,7 @@ void thorium_worker_destroy(struct thorium_worker *worker)
     thorium_message_block_destroy(&worker->message_block);
     */
 
-    if (CORE_BITMAP_GET_BIT(worker->flags, FLAG_ENABLE_ACTOR_LOAD_PROFILER)) {
+    if (CORE_BITMAP_GET_FLAG(worker->flags, FLAG_ENABLE_ACTOR_LOAD_PROFILER)) {
         core_buffered_file_writer_destroy(&worker->load_profile_writer);
     }
 
@@ -459,7 +459,7 @@ void thorium_worker_destroy(struct thorium_worker *worker)
     core_map_iterator_destroy(&worker->actor_iterator);
     core_set_destroy(&worker->evicted_actors);
 
-    CORE_BITMAP_SET_BIT(worker->flags, FLAG_DEAD);
+    CORE_BITMAP_SET_FLAG(worker->flags, FLAG_DEAD);
 
     thorium_priority_assigner_destroy(&worker->assigner);
 
@@ -638,7 +638,7 @@ void thorium_worker_send(struct thorium_worker *worker, struct thorium_message *
      *
      * Batching is also called aggregation or multiplexing.
      */
-    if (CORE_BITMAP_GET_BIT(worker->flags, FLAG_USE_MULTIPLEXER)
+    if (CORE_BITMAP_GET_FLAG(worker->flags, FLAG_USE_MULTIPLEXER)
                     && thorium_message_multiplexer_message_should_be_multiplexed(&worker->multiplexer, message)) {
 
         /*
@@ -721,7 +721,7 @@ void *thorium_worker_main(void *worker1)
         ++worker->tick_count;
 
         if (credits == 0) {
-            if (!CORE_BITMAP_GET_BIT(worker->flags, FLAG_DEAD))
+            if (!CORE_BITMAP_GET_FLAG(worker->flags, FLAG_DEAD))
                 credits = starting_credits;
         }
     }
@@ -759,7 +759,7 @@ void thorium_worker_stop(struct thorium_worker *worker)
      *
      * Only one thread is changing this value, so no thread are needed.
      */
-    CORE_BITMAP_SET_BIT(worker->flags, FLAG_DEAD);
+    CORE_BITMAP_SET_FLAG(worker->flags, FLAG_DEAD);
 
     /* Make the change visible to other threads too
      */
@@ -770,7 +770,7 @@ void thorium_worker_stop(struct thorium_worker *worker)
      * while sleeping. But since threads are cool, the worker will
      * wake up, and die for real this time.
      */
-    if (CORE_BITMAP_GET_BIT(worker->flags, FLAG_ENABLE_WAIT)) {
+    if (CORE_BITMAP_GET_FLAG(worker->flags, FLAG_ENABLE_WAIT)) {
         /*
          * Wake up if necessary because the worker might be
          * waiting for something...
@@ -785,7 +785,7 @@ void thorium_worker_stop(struct thorium_worker *worker)
 
 int thorium_worker_is_busy(struct thorium_worker *worker)
 {
-    return CORE_BITMAP_GET_BIT(worker->flags, FLAG_BUSY);
+    return CORE_BITMAP_GET_FLAG(worker->flags, FLAG_BUSY);
 }
 
 
@@ -1113,7 +1113,7 @@ int thorium_worker_enqueue_inbound_message(struct thorium_worker *worker, struct
      * Do a wake up if necessary when scheduling an actor in
      * the scheduling queue.
      */
-    if (value && CORE_BITMAP_GET_BIT(worker->flags, FLAG_ENABLE_WAIT)) {
+    if (value && CORE_BITMAP_GET_FLAG(worker->flags, FLAG_ENABLE_WAIT)) {
 
         /*
          * This call checks if the thread is currently waiting.
@@ -1639,14 +1639,14 @@ void thorium_worker_run(struct thorium_worker *worker)
         */
 #endif
 
-        if (CORE_BITMAP_GET_BIT(worker->flags, FLAG_DEBUG_ACTORS)) {
+        if (CORE_BITMAP_GET_FLAG(worker->flags, FLAG_DEBUG_ACTORS)) {
             thorium_worker_print_actors(worker, NULL);
         }
     }
 #endif
 
 #ifdef THORIUM_WORKER_DEBUG
-    if (CORE_BITMAP_GET_BIT(worker->flags, FLAG_DEBUG)) {
+    if (CORE_BITMAP_GET_FLAG(worker->flags, FLAG_DEBUG)) {
         printf("DEBUG worker/%d thorium_worker_run\n",
                         thorium_worker_name(worker));
     }
@@ -1655,7 +1655,7 @@ void thorium_worker_run(struct thorium_worker *worker)
     /*
      * Check for messages in inbound FIFO
      */
-    if (!CORE_BITMAP_GET_BIT(worker->flags, FLAG_OUTPUT_OUTBOUND_MESSAGE_RING_IS_FULL)
+    if (!CORE_BITMAP_GET_FLAG(worker->flags, FLAG_OUTPUT_OUTBOUND_MESSAGE_RING_IS_FULL)
                     && thorium_worker_dequeue_actor(worker, &actor)) {
 
 #ifdef THORIUM_WORKER_DEBUG
@@ -1683,7 +1683,7 @@ void thorium_worker_run(struct thorium_worker *worker)
         core_timer_start(&worker->timer);
 #endif
 
-        CORE_BITMAP_SET_BIT(worker->flags, FLAG_BUSY);
+        CORE_BITMAP_SET_FLAG(worker->flags, FLAG_BUSY);
 
         /*
          * Dispatch message to a worker
@@ -1695,8 +1695,8 @@ void thorium_worker_run(struct thorium_worker *worker)
          */
         ++worker->profile_event_count;
 
-        CORE_BITMAP_CLEAR_BIT(worker->flags, FLAG_BUSY);
-        CORE_BITMAP_CLEAR_BIT(worker->flags, FLAG_ENABLE_WAIT);
+        CORE_BITMAP_CLEAR_FLAG(worker->flags, FLAG_BUSY);
+        CORE_BITMAP_CLEAR_FLAG(worker->flags, FLAG_ENABLE_WAIT);
 
 #ifdef THORIUM_NODE_ENABLE_INSTRUMENTATION
         core_timer_stop(&worker->timer);
@@ -1901,12 +1901,12 @@ static void thorium_worker_work(struct thorium_worker *worker, struct thorium_ac
     thorium_actor_set_worker(actor, worker);
 
     if (thorium_actor_multiplexer_is_enabled(actor)) {
-        CORE_BITMAP_SET_BIT(worker->flags, FLAG_USE_MULTIPLEXER);
+        CORE_BITMAP_SET_FLAG(worker->flags, FLAG_USE_MULTIPLEXER);
     }
 
     thorium_actor_work(actor);
 
-    CORE_BITMAP_CLEAR_BIT(worker->flags, FLAG_USE_MULTIPLEXER);
+    CORE_BITMAP_CLEAR_FLAG(worker->flags, FLAG_USE_MULTIPLEXER);
 
     /* Free ephemeral memory
      */
@@ -1918,7 +1918,7 @@ static void thorium_worker_work(struct thorium_worker *worker, struct thorium_ac
 
         core_map_delete(&worker->actors, &actor_name);
 
-        if (CORE_BITMAP_GET_BIT(worker->flags,
+        if (CORE_BITMAP_GET_FLAG(worker->flags,
                                 FLAG_ENABLE_ACTOR_LOAD_PROFILER)) {
             thorium_actor_write_profile(actor, &worker->load_profile_writer);
         }
@@ -1928,7 +1928,7 @@ static void thorium_worker_work(struct thorium_worker *worker, struct thorium_ac
     thorium_actor_set_worker(actor, NULL);
 
 #ifdef THORIUM_WORKER_DEBUG_20140601
-    if (CORE_BITMAP_GET_BIT(worker->flags, FLAG_DEBUG)) {
+    if (CORE_BITMAP_GET_FLAG(worker->flags, FLAG_DEBUG)) {
         printf("DEBUG worker/%d after dead call\n",
                         thorium_worker_name(worker));
     }
@@ -1962,7 +1962,7 @@ static void thorium_worker_work(struct thorium_worker *worker, struct thorium_ac
 #endif
 
 #ifdef THORIUM_WORKER_DEBUG_20140601
-    if (CORE_BITMAP_GET_BIT(worker->flags, FLAG_DEBUG)) {
+    if (CORE_BITMAP_GET_FLAG(worker->flags, FLAG_DEBUG)) {
         printf("DEBUG worker/%d exiting thorium_worker_work\n",
                         thorium_worker_name(worker));
     }
@@ -2002,7 +2002,7 @@ uint64_t thorium_worker_get_loop_wake_up_count(struct thorium_worker *worker)
 
 void thorium_worker_enable_waiting(struct thorium_worker *self)
 {
-    CORE_BITMAP_SET_BIT(self->flags, FLAG_ENABLE_WAIT);
+    CORE_BITMAP_SET_FLAG(self->flags, FLAG_ENABLE_WAIT);
 }
 
 void thorium_worker_check_production(struct thorium_worker *worker, int value, int name)
@@ -2070,7 +2070,7 @@ void thorium_worker_check_production(struct thorium_worker *worker, int value, i
      * - Linux on Cray XC30,
      * - IBM Compute Node Kernel (CNK) on IBM Blue Gene/Q),
      */
-        if (CORE_BITMAP_GET_BIT(worker->flags, FLAG_ENABLE_WAIT)) {
+        if (CORE_BITMAP_GET_FLAG(worker->flags, FLAG_ENABLE_WAIT)) {
 
             /* This is a first warning
              */
@@ -2197,7 +2197,7 @@ int thorium_worker_spawn(struct thorium_worker *self, int script)
     name = thorium_node_spawn(self->node, script);
 
 #if 0
-    if (CORE_BITMAP_GET_BIT(node->flags, FLAG_ENABLE_ACTOR_LOAD_PROFILER)) {
+    if (CORE_BITMAP_GET_FLAG(node->flags, FLAG_ENABLE_ACTOR_LOAD_PROFILER)) {
         thorium_actor_enable_profiler(actor);
     }
 #endif
@@ -2209,7 +2209,7 @@ void thorium_worker_enable_profiler(struct thorium_worker *self)
 {
     char file_name[100];
 
-    CORE_BITMAP_SET_BIT(self->flags, FLAG_ENABLE_ACTOR_LOAD_PROFILER);
+    CORE_BITMAP_SET_FLAG(self->flags, FLAG_ENABLE_ACTOR_LOAD_PROFILER);
 
     sprintf(file_name, "node_%d_worker_%d_actor_load_profile.txt", thorium_node_name(self->node),
                     self->name);
@@ -2243,7 +2243,7 @@ void *thorium_worker_allocate(struct thorium_worker *self, size_t count)
 static void thorium_worker_configure_backoff(struct thorium_worker *self)
 {
 #ifdef THORIUM_WORKER_CONFIG_USE_BACKOFF
-    CORE_BITMAP_CLEAR_BIT(self->flags, FLAG_OUTPUT_OUTBOUND_MESSAGE_RING_IS_FULL);
+    CORE_BITMAP_CLEAR_FLAG(self->flags, FLAG_OUTPUT_OUTBOUND_MESSAGE_RING_IS_FULL);
 #endif
 }
 
@@ -2253,9 +2253,9 @@ static void thorium_worker_activate_backoff(struct thorium_worker *self)
     /*
      * Switch mode if stalled to avoid over-production
      */
-    if (!CORE_BITMAP_GET_BIT(self->flags, FLAG_OUTPUT_OUTBOUND_MESSAGE_RING_IS_FULL)) {
+    if (!CORE_BITMAP_GET_FLAG(self->flags, FLAG_OUTPUT_OUTBOUND_MESSAGE_RING_IS_FULL)) {
 
-        CORE_BITMAP_SET_BIT(self->flags, FLAG_OUTPUT_OUTBOUND_MESSAGE_RING_IS_FULL);
+        CORE_BITMAP_SET_FLAG(self->flags, FLAG_OUTPUT_OUTBOUND_MESSAGE_RING_IS_FULL);
 
 #ifdef DEBUG_BACKOFF
         printf("thorium_worker_activate_backoff !\n");
@@ -2284,7 +2284,7 @@ static void thorium_worker_do_backoff(struct thorium_worker *self)
     /*
      * Wait for the ring to clean up if necessary.
      */
-    if (CORE_BITMAP_GET_BIT(self->flags, FLAG_OUTPUT_OUTBOUND_MESSAGE_RING_IS_FULL)) {
+    if (CORE_BITMAP_GET_FLAG(self->flags, FLAG_OUTPUT_OUTBOUND_MESSAGE_RING_IS_FULL)) {
 
 #ifdef THORIUM_WORKER_USE_MULTIPLE_PRODUCER_RING
         /*
@@ -2308,7 +2308,7 @@ static void thorium_worker_do_backoff(struct thorium_worker *self)
             /*
              * At this point, the ring is no longer full !
              */
-            CORE_BITMAP_CLEAR_BIT(self->flags, FLAG_OUTPUT_OUTBOUND_MESSAGE_RING_IS_FULL);
+            CORE_BITMAP_CLEAR_FLAG(self->flags, FLAG_OUTPUT_OUTBOUND_MESSAGE_RING_IS_FULL);
         }
     }
 #endif

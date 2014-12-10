@@ -37,7 +37,7 @@ void thorium_actor_enable_message_cache(struct thorium_actor *self, struct thori
     int reply_action;
     int count;
 
-    CORE_BITMAP_SET_BIT(self->flags, THORIUM_ACTOR_FLAG_ENABLE_MESSAGE_CACHE);
+    CORE_BITMAP_SET_FLAG(self->flags, THORIUM_ACTOR_FLAG_ENABLE_MESSAGE_CACHE);
 
     count = thorium_message_count(message);
 
@@ -67,7 +67,7 @@ void thorium_actor_disable_message_cache(struct thorium_actor *self,
      * configured to use the message cache subsystem.
      */
     if (thorium_message_cache_action_count(&self->message_cache) == 0) {
-        CORE_BITMAP_CLEAR_BIT(self->flags, THORIUM_ACTOR_FLAG_ENABLE_MESSAGE_CACHE);
+        CORE_BITMAP_CLEAR_FLAG(self->flags, THORIUM_ACTOR_FLAG_ENABLE_MESSAGE_CACHE);
     }
 }
 

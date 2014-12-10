@@ -14,7 +14,7 @@ void biosal_assembly_vertex_init(struct biosal_assembly_vertex *self)
 {
     self->coverage_depth = 0;
 
-    CORE_BITMAP_CLEAR(self->flags);
+    CORE_BITMAP_CLEAR_FLAGS(self->flags);
 
     biosal_assembly_vertex_clear_flag(self, BIOSAL_VERTEX_FLAG_USED_BY_WALKER);
     biosal_assembly_vertex_clear_flag(self, BIOSAL_VERTEX_FLAG_TIP);
@@ -181,17 +181,17 @@ void biosal_assembly_vertex_set_flag(struct biosal_assembly_vertex *self, int fl
     CORE_DEBUGGER_ASSERT(flag >= BIOSAL_VERTEX_FLAG_START_VALUE);
     CORE_DEBUGGER_ASSERT(flag <= BIOSAL_VERTEX_FLAG_END_VALUE);
 
-    CORE_BITMAP_SET_BIT(self->flags, flag);
+    CORE_BITMAP_SET_FLAG(self->flags, flag);
 }
 
 void biosal_assembly_vertex_clear_flag(struct biosal_assembly_vertex *self, int flag)
 {
-    CORE_BITMAP_CLEAR_BIT(self->flags, flag);
+    CORE_BITMAP_CLEAR_FLAG(self->flags, flag);
 }
 
 int biosal_assembly_vertex_get_flag(struct biosal_assembly_vertex *self, int flag)
 {
-    return CORE_BITMAP_GET_BIT(self->flags, flag);
+    return CORE_BITMAP_GET_FLAG(self->flags, flag);
 }
 
 void biosal_assembly_vertex_init_empty(struct biosal_assembly_vertex *self)

@@ -95,9 +95,9 @@ void core_hash_table_init(struct core_hash_table *table, uint64_t buckets,
                     (int)buckets, key_size, value_size);
 #endif
 
-    CORE_BITMAP_CLEAR(table->flags);
+    CORE_BITMAP_CLEAR_FLAGS(table->flags);
 
-    CORE_BITMAP_CLEAR_BIT(table->flags, CORE_HASH_TABLE_FLAG_DEBUG);
+    CORE_BITMAP_CLEAR_FLAG(table->flags, CORE_HASH_TABLE_FLAG_DEBUG);
 
     /*
      * Google sparsehash uses 48. 64 is nice too
@@ -153,7 +153,7 @@ void core_hash_table_destroy(struct core_hash_table *table)
 {
     int i;
 
-    CORE_BITMAP_CLEAR_BIT(table->flags, CORE_HASH_TABLE_FLAG_DEBUG);
+    CORE_BITMAP_CLEAR_FLAG(table->flags, CORE_HASH_TABLE_FLAG_DEBUG);
 
     if (table->groups != NULL) {
         for (i = 0; i < table->group_count; i++) {
@@ -178,7 +178,7 @@ void core_hash_table_delete(struct core_hash_table *table, void *key)
         return;
     }
 
-    if (!CORE_BITMAP_GET_BIT(table->flags, CORE_HASH_TABLE_FLAG_DELETION_SUPPORT)) {
+    if (!CORE_BITMAP_GET_FLAG(table->flags, CORE_HASH_TABLE_FLAG_DELETION_SUPPORT)) {
         return;
     }
 
@@ -269,12 +269,12 @@ uint64_t core_hash_table_buckets(struct core_hash_table *table)
 
 void core_hash_table_toggle_debug(struct core_hash_table *table)
 {
-    if (CORE_BITMAP_GET_BIT(table->flags, CORE_HASH_TABLE_FLAG_DEBUG)) {
-        CORE_BITMAP_CLEAR_BIT(table->flags, CORE_HASH_TABLE_FLAG_DEBUG);
+    if (CORE_BITMAP_GET_FLAG(table->flags, CORE_HASH_TABLE_FLAG_DEBUG)) {
+        CORE_BITMAP_CLEAR_FLAG(table->flags, CORE_HASH_TABLE_FLAG_DEBUG);
         return;
     }
 
-    CORE_BITMAP_SET_BIT(table->flags, CORE_HASH_TABLE_FLAG_DEBUG);
+    CORE_BITMAP_SET_FLAG(table->flags, CORE_HASH_TABLE_FLAG_DEBUG);
 }
 
 int core_hash_table_state(struct core_hash_table *self, uint64_t bucket)
@@ -446,7 +446,7 @@ static int core_hash_table_pack_unpack(struct core_hash_table *self, void *buffe
                         (char *)buffer + offset, operation,
                         self->buckets_per_group, self->key_size,
                         self->value_size, self->memory,
-                        CORE_BITMAP_GET_BIT(self->flags, CORE_HASH_TABLE_FLAG_DELETION_SUPPORT));
+                        CORE_BITMAP_GET_FLAG(self->flags, CORE_HASH_TABLE_FLAG_DELETION_SUPPORT));
     }
 
     return offset;
@@ -475,7 +475,7 @@ static void core_hash_table_start_groups(struct core_hash_table *table)
 
     for (i = 0; i < table->group_count; i++) {
         core_hash_table_group_init(table->groups + i, table->buckets_per_group,
-                        table->key_size, table->value_size, table->memory, CORE_BITMAP_GET_BIT(table->flags, CORE_HASH_TABLE_FLAG_DELETION_SUPPORT));
+                        table->key_size, table->value_size, table->memory, CORE_BITMAP_GET_FLAG(table->flags, CORE_HASH_TABLE_FLAG_DELETION_SUPPORT));
     }
 }
 
@@ -510,21 +510,21 @@ void core_hash_table_disable_deletion_support(struct core_hash_table *table)
      * Otherwise, this is fine.
      */
 
-    CORE_BITMAP_CLEAR_BIT(table->flags, CORE_HASH_TABLE_FLAG_DELETION_SUPPORT);
+    CORE_BITMAP_CLEAR_FLAG(table->flags, CORE_HASH_TABLE_FLAG_DELETION_SUPPORT);
 
     table->get_state = core_hash_table_group_state_no_deletion;
 }
 
 void core_hash_table_enable_deletion_support(struct core_hash_table *table)
 {
-    CORE_BITMAP_SET_BIT(table->flags, CORE_HASH_TABLE_FLAG_DELETION_SUPPORT);
+    CORE_BITMAP_SET_FLAG(table->flags, CORE_HASH_TABLE_FLAG_DELETION_SUPPORT);
 
     table->get_state = core_hash_table_group_state;
 }
 
 int core_hash_table_deletion_support_is_enabled(struct core_hash_table *table)
 {
-    return CORE_BITMAP_GET_BIT(table->flags, CORE_HASH_TABLE_FLAG_DELETION_SUPPORT);
+    return CORE_BITMAP_GET_FLAG(table->flags, CORE_HASH_TABLE_FLAG_DELETION_SUPPORT);
 }
 
 void *core_hash_table_add(struct core_hash_table *table, void *key)
@@ -539,7 +539,7 @@ void *core_hash_table_add(struct core_hash_table *table, void *key)
     int query_value;
     int key_value;
 
-    if (CORE_BITMAP_GET_BIT(table->flags, CORE_HASH_TABLE_FLAG_DEBUG)) {
+    if (CORE_BITMAP_GET_FLAG(table->flags, CORE_HASH_TABLE_FLAG_DEBUG)) {
         printf("DEBUG core_hash_table_add\n");
     }
 #endif
@@ -560,7 +560,7 @@ void *core_hash_table_add(struct core_hash_table *table, void *key)
 #endif
 
 #ifdef CORE_HASH_TABLE_DEBUG_DOUBLE_HASHING_DEBUG
-    if (CORE_BITMAP_GET_BIT(table->flags, CORE_HASH_TABLE_FLAG_DEBUG)) {
+    if (CORE_BITMAP_GET_FLAG(table->flags, CORE_HASH_TABLE_FLAG_DEBUG)) {
         printf("DEBUG core_hash_table_add group %d bucket_in_group %d code %d\n",
                         group, bucket_in_group, code);
     }
@@ -578,7 +578,7 @@ void *core_hash_table_add(struct core_hash_table *table, void *key)
                         bucket_in_group, table->key_size, table->value_size);
 
 #ifdef CORE_HASH_TABLE_DEBUG_DOUBLE_HASHING_DEBUG
-        if (CORE_BITMAP_GET_BIT(table->flags, CORE_HASH_TABLE_FLAG_DEBUG)) {
+        if (CORE_BITMAP_GET_FLAG(table->flags, CORE_HASH_TABLE_FLAG_DEBUG)) {
             printf("DEBUG get key group %d bucket_in_group %d key_size %d value_size %d\n",
                             group, bucket_in_group, table->key_size, table->value_size);
 
@@ -589,7 +589,7 @@ void *core_hash_table_add(struct core_hash_table *table, void *key)
         core_memory_copy(bucket_key, key, table->key_size);
 
 #ifdef CORE_HASH_TABLE_DEBUG_DOUBLE_HASHING_DEBUG
-        if (CORE_BITMAP_GET_BIT(table->flags, CORE_HASH_TABLE_FLAG_DEBUG)) {
+        if (CORE_BITMAP_GET_FLAG(table->flags, CORE_HASH_TABLE_FLAG_DEBUG)) {
 
             query_value = *(int *)key;
             key_value = *(int *)bucket_key;
@@ -643,7 +643,7 @@ void *core_hash_table_get(struct core_hash_table *table, void *key)
                     CORE_HASH_TABLE_OPERATION_GET, &last_stride);
 
 #ifdef CORE_HASH_TABLE_DEBUG_DOUBLE_HASHING_DEBUG
-    if (CORE_BITMAP_GET_BIT(table->flags, CORE_HASH_TABLE_FLAG_DEBUG)) {
+    if (CORE_BITMAP_GET_FLAG(table->flags, CORE_HASH_TABLE_FLAG_DEBUG)) {
         printf("DEBUG core_hash_table_get key %p group %d bucket_in_group %d code %d\n",
                         key, group, bucket_in_group, code);
     }
@@ -708,7 +708,7 @@ static int core_hash_table_find_bucket(struct core_hash_table *table, void *key,
     int query_value;
     int key_value;
 
-    if (CORE_BITMAP_GET_BIT(table->flags, CORE_HASH_TABLE_FLAG_DEBUG)) {
+    if (CORE_BITMAP_GET_FLAG(table->flags, CORE_HASH_TABLE_FLAG_DEBUG)) {
         printf("DEBUG core_hash_table_find_bucket\n");
     }
 #endif
@@ -763,7 +763,7 @@ static int core_hash_table_find_bucket(struct core_hash_table *table, void *key,
         state = table->get_state(hash_group, local_bucket_in_group);
 
 #ifdef CORE_HASH_TABLE_DEBUG_DOUBLE_HASHING_DEBUG
-        if (CORE_BITMAP_GET_BIT(table->flags, CORE_HASH_TABLE_FLAG_DEBUG)) {
+        if (CORE_BITMAP_GET_FLAG(table->flags, CORE_HASH_TABLE_FLAG_DEBUG)) {
             printf("DEBUG stride %d bucket %d state %d\n", (int)stride, (int)bucket,
                             state);
         }
@@ -786,7 +786,7 @@ static int core_hash_table_find_bucket(struct core_hash_table *table, void *key,
                 CORE_HASH_TABLE_MATCH) {
 
 #ifdef CORE_HASH_TABLE_DEBUG_DOUBLE_HASHING_DEBUG
-                if (CORE_BITMAP_GET_BIT(table->flags, CORE_HASH_TABLE_FLAG_DEBUG)) {
+                if (CORE_BITMAP_GET_FLAG(table->flags, CORE_HASH_TABLE_FLAG_DEBUG)) {
                     printf("DEBUG state= OCCUPIED, match !\n");
                 }
 #endif
@@ -806,7 +806,7 @@ static int core_hash_table_find_bucket(struct core_hash_table *table, void *key,
         if (state & CORE_HASH_TABLE_BUCKET_EMPTY) {
 
 #ifdef CORE_HASH_TABLE_DEBUG_DOUBLE_HASHING_DEBUG
-            if (CORE_BITMAP_GET_BIT(table->flags, CORE_HASH_TABLE_FLAG_DEBUG)) {
+            if (CORE_BITMAP_GET_FLAG(table->flags, CORE_HASH_TABLE_FLAG_DEBUG)) {
                 printf("DEBUG state= EMPTY\n");
             }
 #endif
@@ -832,7 +832,7 @@ static int core_hash_table_find_bucket(struct core_hash_table *table, void *key,
                         && (state & CORE_HASH_TABLE_BUCKET_DELETED)) {
 
 #ifdef CORE_HASH_TABLE_DEBUG_DOUBLE_HASHING_DEBUG
-            if (CORE_BITMAP_GET_BIT(table->flags, CORE_HASH_TABLE_FLAG_DEBUG)) {
+            if (CORE_BITMAP_GET_FLAG(table->flags, CORE_HASH_TABLE_FLAG_DEBUG)) {
                 printf("DEBUG state= DELETE, op= DELETE or op= GET\n");
             }
 #endif
@@ -851,7 +851,7 @@ static int core_hash_table_find_bucket(struct core_hash_table *table, void *key,
                         && (state & CORE_HASH_TABLE_BUCKET_DELETED)) {
 
 #ifdef CORE_HASH_TABLE_DEBUG_DOUBLE_HASHING_DEBUG
-            if (CORE_BITMAP_GET_BIT(table->flags, CORE_HASH_TABLE_FLAG_DEBUG)) {
+            if (CORE_BITMAP_GET_FLAG(table->flags, CORE_HASH_TABLE_FLAG_DEBUG)) {
                 printf("DEBUG state= DELETED, op= ADD\n");
             }
 #endif
@@ -867,7 +867,7 @@ static int core_hash_table_find_bucket(struct core_hash_table *table, void *key,
          * No match was found
          */
 #ifdef CORE_HASH_TABLE_DEBUG_DOUBLE_HASHING_DEBUG
-        if (CORE_BITMAP_GET_BIT(table->flags, CORE_HASH_TABLE_FLAG_DEBUG)) {
+        if (CORE_BITMAP_GET_FLAG(table->flags, CORE_HASH_TABLE_FLAG_DEBUG)) {
             printf("DEBUG state= OCCUPIED, no match, %d bytes\n",
                             table->key_size);
             query_value = *(int *)key;

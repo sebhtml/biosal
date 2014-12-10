@@ -151,33 +151,33 @@ void thorium_actor_init(struct thorium_actor *self, void *concrete_actor,
 
     self->flags = 0;
 
-    CORE_BITMAP_CLEAR_BIT(self->flags, THORIUM_ACTOR_FLAG_DEAD);
+    CORE_BITMAP_CLEAR_FLAG(self->flags, THORIUM_ACTOR_FLAG_DEAD);
 
     self->script = script;
     self->worker = NULL;
 
     self->spawner_index = THORIUM_ACTOR_NO_VALUE;
 
-    CORE_BITMAP_CLEAR_BIT(self->flags, THORIUM_ACTOR_FLAG_SYNCHRONIZATION_STARTED);
+    CORE_BITMAP_CLEAR_FLAG(self->flags, THORIUM_ACTOR_FLAG_SYNCHRONIZATION_STARTED);
     self->synchronization_expected_responses = 0;
     self->synchronization_responses = 0;
 
 #ifdef THORIUM_ACTOR_ENABLE_LOCK
     core_lock_init(&self->receive_lock);
-    CORE_BITMAP_CLEAR_BIT(self->flags, THORIUM_ACTOR_FLAG_LOCKED);
+    CORE_BITMAP_CLEAR_FLAG(self->flags, THORIUM_ACTOR_FLAG_LOCKED);
 #endif
 
-    CORE_BITMAP_CLEAR_BIT(self->flags, THORIUM_ACTOR_FLAG_CAN_PACK);
+    CORE_BITMAP_CLEAR_FLAG(self->flags, THORIUM_ACTOR_FLAG_CAN_PACK);
 
     self->cloning_status = THORIUM_ACTOR_STATUS_NOT_STARTED;
     self->migration_status = THORIUM_ACTOR_STATUS_NOT_STARTED;
-    CORE_BITMAP_CLEAR_BIT(self->flags, THORIUM_ACTOR_FLAG_MIGRATION_CLONED);
-    CORE_BITMAP_CLEAR_BIT(self->flags, THORIUM_ACTOR_FLAG_MIGRATION_FORWARDED_MESSAGES);
+    CORE_BITMAP_CLEAR_FLAG(self->flags, THORIUM_ACTOR_FLAG_MIGRATION_CLONED);
+    CORE_BITMAP_CLEAR_FLAG(self->flags, THORIUM_ACTOR_FLAG_MIGRATION_FORWARDED_MESSAGES);
 
-    CORE_BITMAP_CLEAR_BIT(self->flags, THORIUM_ACTOR_FLAG_ENABLE_LOAD_PROFILER);
+    CORE_BITMAP_CLEAR_FLAG(self->flags, THORIUM_ACTOR_FLAG_ENABLE_LOAD_PROFILER);
 
-    CORE_BITMAP_CLEAR_BIT(self->flags, THORIUM_ACTOR_FLAG_ENABLE_MULTIPLEXER);
-    CORE_BITMAP_CLEAR_BIT(self->flags, THORIUM_ACTOR_FLAG_ENABLE_MESSAGE_CACHE);
+    CORE_BITMAP_CLEAR_FLAG(self->flags, THORIUM_ACTOR_FLAG_ENABLE_MULTIPLEXER);
+    CORE_BITMAP_CLEAR_FLAG(self->flags, THORIUM_ACTOR_FLAG_ENABLE_MESSAGE_CACHE);
 /*
 */
 #ifdef THORIUM_ACTOR_STORE_CHILDREN
@@ -225,7 +225,7 @@ void thorium_actor_init(struct thorium_actor *self, void *concrete_actor,
 
     thorium_actor_init_message_cache(self);
 
-    CORE_BITMAP_SET_BIT(self->flags, THORIUM_ACTOR_FLAG_DEFAULT_LOG_LEVEL);
+    CORE_BITMAP_SET_FLAG(self->flags, THORIUM_ACTOR_FLAG_DEFAULT_LOG_LEVEL);
 
     /* call the concrete initializer
      * this must be the last call.
@@ -255,7 +255,7 @@ void thorium_actor_destroy(struct thorium_actor *self)
      * Make sure that everyone see that this actor is
      * dead.
      */
-    CORE_BITMAP_SET_BIT(self->flags, THORIUM_ACTOR_FLAG_DEAD);
+    CORE_BITMAP_SET_FLAG(self->flags, THORIUM_ACTOR_FLAG_DEAD);
 
     core_memory_fence();
 
@@ -432,7 +432,7 @@ int thorium_actor_send_system_self(struct thorium_actor *self, struct thorium_me
                         thorium_actor_name(self));
                         */
 
-        CORE_BITMAP_SET_BIT(self->flags, THORIUM_ACTOR_FLAG_CAN_PACK);
+        CORE_BITMAP_SET_FLAG(self->flags, THORIUM_ACTOR_FLAG_CAN_PACK);
 
         /*
         thorium_actor_send_to_self_empty(self, ACTION_UNPIN_FROM_WORKER);
@@ -442,7 +442,7 @@ int thorium_actor_send_system_self(struct thorium_actor *self, struct thorium_me
         return 1;
 
     } else if (tag == ACTION_PACK_DISABLE) {
-        CORE_BITMAP_CLEAR_BIT(self->flags, THORIUM_ACTOR_FLAG_CAN_PACK);
+        CORE_BITMAP_CLEAR_FLAG(self->flags, THORIUM_ACTOR_FLAG_CAN_PACK);
         return 1;
 
     } else if (tag == ACTION_YIELD) {
@@ -456,10 +456,10 @@ int thorium_actor_send_system_self(struct thorium_actor *self, struct thorium_me
 
     } else if (tag == ACTION_ENABLE_MULTIPLEXER) {
 
-        CORE_BITMAP_SET_BIT(self->flags, THORIUM_ACTOR_FLAG_ENABLE_MULTIPLEXER);
+        CORE_BITMAP_SET_FLAG(self->flags, THORIUM_ACTOR_FLAG_ENABLE_MULTIPLEXER);
         return 1;
     } else if (tag == ACTION_DISABLE_MULTIPLEXER) {
-        CORE_BITMAP_CLEAR_BIT(self->flags, THORIUM_ACTOR_FLAG_ENABLE_MULTIPLEXER);
+        CORE_BITMAP_CLEAR_FLAG(self->flags, THORIUM_ACTOR_FLAG_ENABLE_MULTIPLEXER);
         return 1;
 
 #ifdef THORIUM_ENABLE_MESSAGE_CACHE
@@ -580,7 +580,7 @@ void thorium_actor_send(struct thorium_actor *self, int name, struct thorium_mes
         return;
     }
 
-    if (CORE_BITMAP_GET_BIT(self->flags, THORIUM_ACTOR_FLAG_ENABLE_MESSAGE_CACHE)) {
+    if (CORE_BITMAP_GET_FLAG(self->flags, THORIUM_ACTOR_FLAG_ENABLE_MESSAGE_CACHE)) {
 
         /*
          * Attempt to retrieve a cached version of the reply message given
@@ -714,7 +714,7 @@ void thorium_actor_die(struct thorium_actor *self)
     core_counter_add(&self->counter, CORE_COUNTER_KILLED_ACTORS, 1);
 #endif
 
-    CORE_BITMAP_SET_BIT(self->flags, THORIUM_ACTOR_FLAG_DEAD);
+    CORE_BITMAP_SET_FLAG(self->flags, THORIUM_ACTOR_FLAG_DEAD);
 
     /*
      * Publish the memory transaction so that other threads see it
@@ -749,18 +749,18 @@ struct thorium_node *thorium_actor_node(struct thorium_actor *self)
 void thorium_actor_lock(struct thorium_actor *self)
 {
     core_lock_lock(&self->receive_lock);
-    CORE_BITMAP_SET_BIT(self->flags, THORIUM_ACTOR_FLAG_LOCKED);
+    CORE_BITMAP_SET_FLAG(self->flags, THORIUM_ACTOR_FLAG_LOCKED);
 }
 #endif
 
 #ifdef THORIUM_ACTOR_ENABLE_LOCK
 void thorium_actor_unlock(struct thorium_actor *self)
 {
-    if (!CORE_BITMAP_GET_BIT(self->flags, THORIUM_ACTOR_FLAG_LOCKED)) {
+    if (!CORE_BITMAP_GET_FLAG(self->flags, THORIUM_ACTOR_FLAG_LOCKED)) {
         return;
     }
 
-    CORE_BITMAP_CLEAR_BIT(self->flags, THORIUM_ACTOR_FLAG_LOCKED);
+    CORE_BITMAP_CLEAR_FLAG(self->flags, THORIUM_ACTOR_FLAG_LOCKED);
     core_lock_unlock(&self->receive_lock);
 }
 #endif
@@ -864,7 +864,7 @@ int thorium_actor_receive_system(struct thorium_actor *self, struct thorium_mess
     /* the concrete actor must catch these otherwise.
      * Also, clone and migrate depend on these.
      */
-    if (!CORE_BITMAP_GET_BIT(self->flags, THORIUM_ACTOR_FLAG_CAN_PACK)) {
+    if (!CORE_BITMAP_GET_FLAG(self->flags, THORIUM_ACTOR_FLAG_CAN_PACK)) {
 
         if (thorium_actor_receive_system_no_pack(self, message)) {
             return 1;
@@ -919,20 +919,20 @@ int thorium_actor_receive_system(struct thorium_actor *self, struct thorium_mess
         /* call a function called
          * thorium_actor_continue_clone
          */
-        CORE_BITMAP_CLEAR_BIT(self->flags, THORIUM_ACTOR_FLAG_CLONING_PROGRESSED);
+        CORE_BITMAP_CLEAR_FLAG(self->flags, THORIUM_ACTOR_FLAG_CLONING_PROGRESSED);
         thorium_actor_continue_clone(self, message);
 
-        if (CORE_BITMAP_GET_BIT(self->flags, THORIUM_ACTOR_FLAG_CLONING_PROGRESSED)) {
+        if (CORE_BITMAP_GET_FLAG(self->flags, THORIUM_ACTOR_FLAG_CLONING_PROGRESSED)) {
             return 1;
         }
     }
 
     if (self->migration_status == THORIUM_ACTOR_STATUS_STARTED) {
 
-        CORE_BITMAP_CLEAR_BIT(self->flags, THORIUM_ACTOR_FLAG_MIGRATION_PROGRESSED);
+        CORE_BITMAP_CLEAR_FLAG(self->flags, THORIUM_ACTOR_FLAG_MIGRATION_PROGRESSED);
         thorium_actor_migrate(self, message);
 
-        if (CORE_BITMAP_GET_BIT(self->flags, THORIUM_ACTOR_FLAG_MIGRATION_PROGRESSED)) {
+        if (CORE_BITMAP_GET_FLAG(self->flags, THORIUM_ACTOR_FLAG_MIGRATION_PROGRESSED)) {
             return 1;
         }
     }
@@ -1191,19 +1191,19 @@ void thorium_actor_receive(struct thorium_actor *self, struct thorium_message *m
     /*
      * Save the reply message in the caching system if necessary.
      */
-    if (CORE_BITMAP_GET_BIT(self->flags, THORIUM_ACTOR_FLAG_ENABLE_MESSAGE_CACHE)) {
+    if (CORE_BITMAP_GET_FLAG(self->flags, THORIUM_ACTOR_FLAG_ENABLE_MESSAGE_CACHE)) {
         thorium_actor_save_reply_message_in_cache(self, message);
     }
 
     start = core_timer_get_nanoseconds(&self->timer);
 
-    if (CORE_BITMAP_GET_BIT(self->flags, THORIUM_ACTOR_FLAG_ENABLE_LOAD_PROFILER)) {
+    if (CORE_BITMAP_GET_FLAG(self->flags, THORIUM_ACTOR_FLAG_ENABLE_LOAD_PROFILER)) {
         thorium_tracepoint_DISABLED(actor, receive_enter, &self->profiler, message);
     }
 
     thorium_actor_receive_private(self, message);
 
-    if (CORE_BITMAP_GET_BIT(self->flags, THORIUM_ACTOR_FLAG_ENABLE_LOAD_PROFILER)) {
+    if (CORE_BITMAP_GET_FLAG(self->flags, THORIUM_ACTOR_FLAG_ENABLE_LOAD_PROFILER)) {
         thorium_tracepoint_DISABLED(actor, receive_exit, &self->profiler, message);
     }
 
@@ -1332,7 +1332,7 @@ static void thorium_actor_receive_synchronize_reply(struct thorium_actor *self,
 {
     int name;
 
-    if (CORE_BITMAP_GET_BIT(self->flags, THORIUM_ACTOR_FLAG_SYNCHRONIZATION_STARTED)) {
+    if (CORE_BITMAP_GET_FLAG(self->flags, THORIUM_ACTOR_FLAG_SYNCHRONIZATION_STARTED)) {
 
 #ifdef THORIUM_ACTOR_DEBUG
         printf("DEBUG99 synchronization_reply %i/%i\n",
@@ -1357,7 +1357,7 @@ static void thorium_actor_receive_synchronize_reply(struct thorium_actor *self,
             name = thorium_actor_name(self);
 
             thorium_actor_send(self, name, &new_message);
-            CORE_BITMAP_CLEAR_BIT(self->flags, THORIUM_ACTOR_FLAG_SYNCHRONIZATION_STARTED);
+            CORE_BITMAP_CLEAR_FLAG(self->flags, THORIUM_ACTOR_FLAG_SYNCHRONIZATION_STARTED);
         }
     }
 }
@@ -1366,7 +1366,7 @@ void thorium_actor_synchronize(struct thorium_actor *self, struct core_vector *a
 {
     struct thorium_message message;
 
-    CORE_BITMAP_SET_BIT(self->flags, THORIUM_ACTOR_FLAG_SYNCHRONIZATION_STARTED);
+    CORE_BITMAP_SET_FLAG(self->flags, THORIUM_ACTOR_FLAG_SYNCHRONIZATION_STARTED);
     self->synchronization_expected_responses = core_vector_size(actors);
     self->synchronization_responses = 0;
 
@@ -1388,7 +1388,7 @@ void thorium_actor_synchronize(struct thorium_actor *self, struct core_vector *a
 
 static int thorium_actor_synchronization_completed(struct thorium_actor *self)
 {
-    if (CORE_BITMAP_GET_BIT(self->flags, THORIUM_ACTOR_FLAG_SYNCHRONIZATION_STARTED) == 0) {
+    if (CORE_BITMAP_GET_FLAG(self->flags, THORIUM_ACTOR_FLAG_SYNCHRONIZATION_STARTED) == 0) {
         return 0;
     }
 
@@ -1478,7 +1478,7 @@ static void thorium_actor_continue_clone(struct thorium_actor *self, struct thor
 
         thorium_actor_send_to_self_empty(self, ACTION_PACK);
 
-        CORE_BITMAP_SET_BIT(self->flags, THORIUM_ACTOR_FLAG_CLONING_PROGRESSED);
+        CORE_BITMAP_SET_FLAG(self->flags, THORIUM_ACTOR_FLAG_CLONING_PROGRESSED);
 
     } else if (tag == ACTION_PACK_REPLY && source == self_name) {
 
@@ -1491,7 +1491,7 @@ static void thorium_actor_continue_clone(struct thorium_actor *self, struct thor
         thorium_message_init(&new_message, ACTION_UNPACK, count, buffer);
         thorium_actor_send(self, self->cloning_new_actor, &new_message);
 
-        CORE_BITMAP_SET_BIT(self->flags, THORIUM_ACTOR_FLAG_CLONING_PROGRESSED);
+        CORE_BITMAP_SET_FLAG(self->flags, THORIUM_ACTOR_FLAG_CLONING_PROGRESSED);
 
         thorium_message_destroy(&new_message);
 
@@ -1527,7 +1527,7 @@ static void thorium_actor_continue_clone(struct thorium_actor *self, struct thor
 
         thorium_actor_send_to_self_empty(self, ACTION_FORWARD_MESSAGES);
 
-        CORE_BITMAP_SET_BIT(self->flags, THORIUM_ACTOR_FLAG_CLONING_PROGRESSED);
+        CORE_BITMAP_SET_FLAG(self->flags, THORIUM_ACTOR_FLAG_CLONING_PROGRESSED);
     }
 }
 
@@ -1609,7 +1609,7 @@ static void thorium_actor_migrate(struct thorium_actor *self, struct thorium_mes
 
     return;
 
-    if (CORE_BITMAP_GET_BIT(self->flags, THORIUM_ACTOR_FLAG_MIGRATION_CLONED) == 0) {
+    if (CORE_BITMAP_GET_FLAG(self->flags, THORIUM_ACTOR_FLAG_MIGRATION_CLONED) == 0) {
 
 #ifdef THORIUM_ACTOR_DEBUG_MIGRATE
         printf("DEBUG thorium_actor_migrate thorium_actor_migrate: cloning self...\n");
@@ -1628,9 +1628,9 @@ static void thorium_actor_migrate(struct thorium_actor *self, struct thorium_mes
         thorium_actor_send_to_self_int(self, ACTION_CLONE, spawner);
 
         self->migration_status = THORIUM_ACTOR_STATUS_STARTED;
-        CORE_BITMAP_SET_BIT(self->flags, THORIUM_ACTOR_FLAG_MIGRATION_CLONED);
+        CORE_BITMAP_SET_FLAG(self->flags, THORIUM_ACTOR_FLAG_MIGRATION_CLONED);
 
-        CORE_BITMAP_SET_BIT(self->flags, THORIUM_ACTOR_FLAG_MIGRATION_PROGRESSED);
+        CORE_BITMAP_SET_FLAG(self->flags, THORIUM_ACTOR_FLAG_MIGRATION_PROGRESSED);
 
     } else if (tag == ACTION_CLONE_REPLY && source == name) {
 
@@ -1650,7 +1650,7 @@ static void thorium_actor_migrate(struct thorium_actor *self, struct thorium_mes
 #ifdef THORIUM_ACTOR_DEBUG_MIGRATE
         printf("DEBUG thorium_actor_migrate: notify acquaintance of name change.\n");
 #endif
-        CORE_BITMAP_SET_BIT(self->flags, THORIUM_ACTOR_FLAG_MIGRATION_PROGRESSED);
+        CORE_BITMAP_SET_FLAG(self->flags, THORIUM_ACTOR_FLAG_MIGRATION_PROGRESSED);
 
     } else if (tag == ACTION_MIGRATE_NOTIFY_ACQUAINTANCES_REPLY && source == name) {
 
@@ -1677,10 +1677,10 @@ static void thorium_actor_migrate(struct thorium_actor *self, struct thorium_mes
         thorium_actor_send(self, self->migration_new_actor, &new_message);
         thorium_message_destroy(&new_message);
 
-        CORE_BITMAP_SET_BIT(self->flags, THORIUM_ACTOR_FLAG_MIGRATION_PROGRESSED);
+        CORE_BITMAP_SET_FLAG(self->flags, THORIUM_ACTOR_FLAG_MIGRATION_PROGRESSED);
 
     } else if (tag == ACTION_FORWARD_MESSAGES_REPLY
-                    && CORE_BITMAP_GET_BIT(self->flags,
+                    && CORE_BITMAP_GET_FLAG(self->flags,
                             THORIUM_ACTOR_FLAG_MIGRATION_FORWARDED_MESSAGES)) {
 
         /* send the name of the new copy and die of a peaceful death.
@@ -1696,7 +1696,7 @@ static void thorium_actor_migrate(struct thorium_actor *self, struct thorium_mes
         printf("DEBUG thorium_actor_migrate: OK, now killing self and returning clone name to client.\n");
 #endif
 
-        CORE_BITMAP_SET_BIT(self->flags, THORIUM_ACTOR_FLAG_MIGRATION_PROGRESSED);
+        CORE_BITMAP_SET_FLAG(self->flags, THORIUM_ACTOR_FLAG_MIGRATION_PROGRESSED);
 
     } else if (tag == ACTION_SET_SUPERVISOR_REPLY
                     && source == self->migration_new_actor) {
@@ -1714,7 +1714,7 @@ static void thorium_actor_migrate(struct thorium_actor *self, struct thorium_mes
 #endif
 
             thorium_actor_send_to_self_empty(self, ACTION_FORWARD_MESSAGES);
-            CORE_BITMAP_SET_BIT(self->flags,
+            CORE_BITMAP_SET_FLAG(self->flags,
                                 THORIUM_ACTOR_FLAG_MIGRATION_FORWARDED_MESSAGES);
 
         /* wait for the clone queue to be empty.
@@ -1731,7 +1731,7 @@ static void thorium_actor_migrate(struct thorium_actor *self, struct thorium_mes
             core_queue_enqueue(&self->forwarding_queue, &selector);
         }
 
-        CORE_BITMAP_SET_BIT(self->flags, THORIUM_ACTOR_FLAG_MIGRATION_PROGRESSED);
+        CORE_BITMAP_SET_FLAG(self->flags, THORIUM_ACTOR_FLAG_MIGRATION_PROGRESSED);
     }
 }
 
@@ -1915,7 +1915,7 @@ static void thorium_actor_forward_messages(struct thorium_actor *self, struct th
                             self->forwarding_selector);
 #endif
             if (self->forwarding_selector == THORIUM_ACTOR_FORWARDING_MIGRATE) {
-                CORE_BITMAP_SET_BIT(self->flags,
+                CORE_BITMAP_SET_FLAG(self->flags,
                                 THORIUM_ACTOR_FLAG_MIGRATION_FORWARDED_MESSAGES);
             }
 
@@ -2340,7 +2340,7 @@ struct thorium_worker *thorium_actor_worker(struct thorium_actor *self)
 
 int thorium_actor_dead(struct thorium_actor *self)
 {
-    return CORE_BITMAP_GET_BIT(self->flags, THORIUM_ACTOR_FLAG_DEAD);
+    return CORE_BITMAP_GET_FLAG(self->flags, THORIUM_ACTOR_FLAG_DEAD);
 }
 
 #ifdef THORIUM_ACTOR_ENABLE_LOCK
@@ -2353,7 +2353,7 @@ int thorium_actor_trylock(struct thorium_actor *self)
     result = core_lock_trylock(&self->receive_lock);
 
     if (result == CORE_LOCK_SUCCESS) {
-        CORE_BITMAP_SET_BIT(self->flags, THORIUM_ACTOR_FLAG_LOCKED);
+        CORE_BITMAP_SET_FLAG(self->flags, THORIUM_ACTOR_FLAG_LOCKED);
         return result;
     }
 
@@ -2458,12 +2458,12 @@ void thorium_actor_enable_profiler(struct thorium_actor *self)
 #if 0
     printf("thorium_actor_enable_profiler\n");
 #endif
-    CORE_BITMAP_SET_BIT(self->flags, THORIUM_ACTOR_FLAG_ENABLE_LOAD_PROFILER);
+    CORE_BITMAP_SET_FLAG(self->flags, THORIUM_ACTOR_FLAG_ENABLE_LOAD_PROFILER);
 }
 
 void thorium_actor_disable_profiler(struct thorium_actor *self)
 {
-    CORE_BITMAP_CLEAR_BIT(self->flags, THORIUM_ACTOR_FLAG_ENABLE_LOAD_PROFILER);
+    CORE_BITMAP_CLEAR_FLAG(self->flags, THORIUM_ACTOR_FLAG_ENABLE_LOAD_PROFILER);
 }
 
 void thorium_actor_write_profile(struct thorium_actor *self,
@@ -2515,7 +2515,7 @@ int thorium_actor_get_random_number(struct thorium_actor *self)
 
 int thorium_actor_multiplexer_is_enabled(struct thorium_actor *self)
 {
-    return CORE_BITMAP_GET_BIT(self->flags, THORIUM_ACTOR_FLAG_ENABLE_MULTIPLEXER);
+    return CORE_BITMAP_GET_FLAG(self->flags, THORIUM_ACTOR_FLAG_ENABLE_MULTIPLEXER);
 }
 
 struct core_memory_pool *thorium_actor_get_persistent_memory_pool(struct thorium_actor *self)
@@ -2604,17 +2604,17 @@ struct core_memory_pool *thorium_actor_get_abstract_memory_pool(struct thorium_a
 
 int thorium_actor_get_flag(struct thorium_actor *self, int flag)
 {
-    return CORE_BITMAP_GET_BIT(self->flags, flag);
+    return CORE_BITMAP_GET_FLAG(self->flags, flag);
 }
 
 void thorium_actor_set_flag(struct thorium_actor *self, int flag)
 {
-    CORE_BITMAP_SET_BIT(self->flags, flag);
+    CORE_BITMAP_SET_FLAG(self->flags, flag);
 }
 
 void thorium_actor_clear_flag(struct thorium_actor *self, int flag)
 {
-    CORE_BITMAP_CLEAR_BIT(self->flags, flag);
+    CORE_BITMAP_CLEAR_FLAG(self->flags, flag);
 }
 
 struct core_memory_pool *thorium_actor_get_concrete_memory_pool(struct thorium_actor *self)

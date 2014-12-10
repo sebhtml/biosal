@@ -262,8 +262,8 @@ void thorium_node_init(struct thorium_node *node, int *argc, char ***argv)
     node->counter_injected_transport_outbound_buffer_for_workers = 0;
 #endif
 
-    CORE_BITMAP_CLEAR(node->flags);
-    CORE_BITMAP_CLEAR_BIT(node->flags, FLAG_PROFILE_MESSAGE_TRANSPORT);
+    CORE_BITMAP_CLEAR_FLAGS(node->flags);
+    CORE_BITMAP_CLEAR_FLAG(node->flags, FLAG_PROFILE_MESSAGE_TRANSPORT);
 
     /*
     printf("Booting node\n");
@@ -274,14 +274,14 @@ void thorium_node_init(struct thorium_node *node, int *argc, char ***argv)
 
     core_set_init(&node->auto_scaling_actors, sizeof(int));
 
-    CORE_BITMAP_CLEAR_BIT(node->flags, FLAG_STARTED);
-    CORE_BITMAP_CLEAR_BIT(node->flags, FLAG_PRINT_THORIUM_DATA);
-    CORE_BITMAP_CLEAR_BIT(node->flags, FLAG_PRINT_STRUCTURE);
-    CORE_BITMAP_CLEAR_BIT(node->flags, FLAG_DEBUG);
-    CORE_BITMAP_CLEAR_BIT(node->flags, FLAG_PRINT_COUNTERS);
-    CORE_BITMAP_CLEAR_BIT(node->flags, FLAG_EXAMINE);
-    CORE_BITMAP_CLEAR_BIT(node->flags, FLAG_ENABLE_ACTOR_LOAD_PROFILES);
-    CORE_BITMAP_CLEAR_BIT(node->flags, FLAG_MULTIPLEXER_IS_DISABLED);
+    CORE_BITMAP_CLEAR_FLAG(node->flags, FLAG_STARTED);
+    CORE_BITMAP_CLEAR_FLAG(node->flags, FLAG_PRINT_THORIUM_DATA);
+    CORE_BITMAP_CLEAR_FLAG(node->flags, FLAG_PRINT_STRUCTURE);
+    CORE_BITMAP_CLEAR_FLAG(node->flags, FLAG_DEBUG);
+    CORE_BITMAP_CLEAR_FLAG(node->flags, FLAG_PRINT_COUNTERS);
+    CORE_BITMAP_CLEAR_FLAG(node->flags, FLAG_EXAMINE);
+    CORE_BITMAP_CLEAR_FLAG(node->flags, FLAG_ENABLE_ACTOR_LOAD_PROFILES);
+    CORE_BITMAP_CLEAR_FLAG(node->flags, FLAG_MULTIPLEXER_IS_DISABLED);
 
     thorium_node_global_self = node;
 
@@ -346,12 +346,12 @@ void thorium_node_init(struct thorium_node *node, int *argc, char ***argv)
     core_queue_init(&node->output_clean_outbound_buffer_queue, sizeof(struct thorium_worker_buffer));
 #endif
 
-    CORE_BITMAP_SET_BIT(node->flags, FLAG_USE_TRANSPORT);
+    CORE_BITMAP_SET_FLAG(node->flags, FLAG_USE_TRANSPORT);
 
-    CORE_BITMAP_CLEAR_BIT(node->flags, FLAG_DEBUG);
+    CORE_BITMAP_CLEAR_FLAG(node->flags, FLAG_DEBUG);
 
 #ifdef THORIUM_NODE_DEBUG_LOOP
-    CORE_BITMAP_SET_BIT(node->flags, FLAG_DEBUG);
+    CORE_BITMAP_SET_FLAG(node->flags, FLAG_DEBUG);
 #endif
 
     core_map_init(&node->scripts, sizeof(int), sizeof(struct thorium_script *));
@@ -366,18 +366,18 @@ void thorium_node_init(struct thorium_node *node, int *argc, char ***argv)
     node->threads = threads;
 
     if (core_command_has_argument(node->argc, node->argv, "-debug-memory-pools"))
-        CORE_BITMAP_SET_BIT(node->flags, FLAG_EXAMINE);
+        CORE_BITMAP_SET_FLAG(node->flags, FLAG_EXAMINE);
 
     if (core_command_has_argument(node->argc, node->argv, "-print-counters")) {
-        CORE_BITMAP_SET_BIT(node->flags, FLAG_PRINT_COUNTERS);
+        CORE_BITMAP_SET_FLAG(node->flags, FLAG_PRINT_COUNTERS);
     }
 
     if (core_command_has_argument(node->argc, node->argv, "-print-thorium-data")) {
-        CORE_BITMAP_SET_BIT(node->flags, FLAG_PRINT_THORIUM_DATA);
+        CORE_BITMAP_SET_FLAG(node->flags, FLAG_PRINT_THORIUM_DATA);
     }
 
     if (core_command_has_argument(node->argc, node->argv, "-print-structure")) {
-        CORE_BITMAP_SET_BIT(node->flags, FLAG_PRINT_STRUCTURE);
+        CORE_BITMAP_SET_FLAG(node->flags, FLAG_PRINT_STRUCTURE);
     }
 
     thorium_transport_print(&node->transport);
@@ -432,17 +432,17 @@ void thorium_node_init(struct thorium_node *node, int *argc, char ***argv)
         node->threads = 1;
     }
 
-    CORE_BITMAP_SET_BIT(node->flags, FLAG_WORKER_IN_MAIN_THREAD);
+    CORE_BITMAP_SET_FLAG(node->flags, FLAG_WORKER_IN_MAIN_THREAD);
 
     if (node->threads >= 2) {
-        CORE_BITMAP_CLEAR_BIT(node->flags, FLAG_WORKER_IN_MAIN_THREAD);
+        CORE_BITMAP_CLEAR_FLAG(node->flags, FLAG_WORKER_IN_MAIN_THREAD);
     }
 
-    CORE_BITMAP_CLEAR_BIT(node->flags, FLAG_WORKERS_IN_THREADS);
+    CORE_BITMAP_CLEAR_FLAG(node->flags, FLAG_WORKERS_IN_THREADS);
 
     /* with 2 threads, one of them runs a worker */
     if (node->threads >= 2) {
-        CORE_BITMAP_SET_BIT(node->flags, FLAG_WORKERS_IN_THREADS);
+        CORE_BITMAP_SET_FLAG(node->flags, FLAG_WORKERS_IN_THREADS);
     }
 
 	/*
@@ -474,7 +474,7 @@ void thorium_node_init(struct thorium_node *node, int *argc, char ***argv)
          */
     }
 
-    CORE_BITMAP_CLEAR_BIT(node->flags, FLAG_SEND_IN_THREAD);
+    CORE_BITMAP_CLEAR_FLAG(node->flags, FLAG_SEND_IN_THREAD);
 
     if (node->threads >= 3) {
 
@@ -482,7 +482,7 @@ void thorium_node_init(struct thorium_node *node, int *argc, char ***argv)
         printf("DEBUG= threads: %i\n", node->threads);
 #endif
         if (node->provided == THORIUM_THREAD_MULTIPLE) {
-            CORE_BITMAP_SET_BIT(node->flags, FLAG_SEND_IN_THREAD);
+            CORE_BITMAP_SET_FLAG(node->flags, FLAG_SEND_IN_THREAD);
             workers = node->threads - 2;
 
         /* assume THORIUM_THREAD_FUNNELED
@@ -499,7 +499,7 @@ void thorium_node_init(struct thorium_node *node, int *argc, char ***argv)
 #ifdef THORIUM_NODE_DEBUG
     printf("DEBUG threads: %i workers: %i send_in_thread: %i\n",
                     node->threads, workers,
-                    CORE_BITMAP_GET_BIT(node->flags, FLAG_SEND_IN_THREAD));
+                    CORE_BITMAP_GET_FLAG(node->flags, FLAG_SEND_IN_THREAD));
 #endif
 
     thorium_worker_pool_init(&node->worker_pool, workers, node);
@@ -547,7 +547,7 @@ void thorium_node_init(struct thorium_node *node, int *argc, char ***argv)
 
     core_set_affinity(processor);
 
-    if (CORE_BITMAP_GET_BIT(node->flags, FLAG_PRINT_THORIUM_DATA)) {
+    if (CORE_BITMAP_GET_FLAG(node->flags, FLAG_PRINT_THORIUM_DATA)) {
         printf("[thorium] node %d booted successfully (%d nodes), thread count: %d, worker thread count: %d, pacing thread count: %d\n",
                     node->name,
             node->nodes,
@@ -562,7 +562,7 @@ void thorium_node_init(struct thorium_node *node, int *argc, char ***argv)
 
     if (core_command_has_argument(node->argc, node->argv, "-enable-actor-load-profiler")) {
         thorium_worker_pool_enable_profiler(&node->worker_pool);
-        CORE_BITMAP_SET_BIT(node->flags, FLAG_ENABLE_ACTOR_LOAD_PROFILES);
+        CORE_BITMAP_SET_FLAG(node->flags, FLAG_ENABLE_ACTOR_LOAD_PROFILES);
     }
 
     node->worker_count = thorium_worker_pool_worker_count(&node->worker_pool);
@@ -575,7 +575,7 @@ void thorium_node_init(struct thorium_node *node, int *argc, char ***argv)
 
         printf("Enable transport profiler\n");
 
-        CORE_BITMAP_SET_BIT(node->flags, FLAG_PROFILE_MESSAGE_TRANSPORT);
+        CORE_BITMAP_SET_FLAG(node->flags, FLAG_PROFILE_MESSAGE_TRANSPORT);
     }
 
     if (node->name == 0
@@ -612,7 +612,7 @@ void thorium_node_destroy(struct thorium_node *node)
     /*
      * Print the report if requested.
      */
-    if (CORE_BITMAP_GET_BIT(node->flags, FLAG_PROFILE_MESSAGE_TRANSPORT)) {
+    if (CORE_BITMAP_GET_FLAG(node->flags, FLAG_PROFILE_MESSAGE_TRANSPORT)) {
         thorium_transport_profiler_print_report(&node->transport_profiler);
     }
 
@@ -620,7 +620,7 @@ void thorium_node_destroy(struct thorium_node *node)
 
     core_timer_destroy(&node->timer);
 
-    if (CORE_BITMAP_GET_BIT(node->flags, FLAG_EXAMINE))
+    if (CORE_BITMAP_GET_FLAG(node->flags, FLAG_EXAMINE))
         thorium_node_examine(node);
 
 #ifdef THORIUM_NODE_DEBUG_INJECTION
@@ -785,7 +785,7 @@ int thorium_node_spawn(struct thorium_node *node, int script)
     /* in the current implementation, there can only be one initial
      * actor on each node
      */
-    if (CORE_BITMAP_GET_BIT(node->flags, FLAG_STARTED) == 0
+    if (CORE_BITMAP_GET_FLAG(node->flags, FLAG_STARTED) == 0
                     && thorium_node_actors(node) > 0) {
         return -1;
     }
@@ -885,7 +885,7 @@ int thorium_node_spawn_state(struct thorium_node *node, void *state,
 
     thorium_actor_init(actor, state, script, name, node);
 
-    if (CORE_BITMAP_GET_BIT(node->flags, FLAG_ENABLE_ACTOR_LOAD_PROFILES)) {
+    if (CORE_BITMAP_GET_FLAG(node->flags, FLAG_ENABLE_ACTOR_LOAD_PROFILES)) {
         thorium_actor_enable_profiler(actor);
     }
 
@@ -1016,7 +1016,7 @@ int thorium_node_run(struct thorium_node *node)
     int print_final_load;
     int i;
 
-    if (CORE_BITMAP_GET_BIT(node->flags, FLAG_PRINT_COUNTERS)) {
+    if (CORE_BITMAP_GET_FLAG(node->flags, FLAG_PRINT_COUNTERS)) {
 
         printf("----------------------------------------------\n");
         printf("biosal> node/%d: %d threads, %d workers\n", thorium_node_name(node),
@@ -1024,9 +1024,9 @@ int thorium_node_run(struct thorium_node *node)
                     thorium_node_worker_count(node));
     }
 
-    CORE_BITMAP_SET_BIT(node->flags, FLAG_STARTED);
+    CORE_BITMAP_SET_FLAG(node->flags, FLAG_STARTED);
 
-    if (CORE_BITMAP_GET_BIT(node->flags, FLAG_WORKERS_IN_THREADS)) {
+    if (CORE_BITMAP_GET_FLAG(node->flags, FLAG_WORKERS_IN_THREADS)) {
 #ifdef THORIUM_NODE_DEBUG_RUN
         printf("THORIUM_NODE_DEBUG_RUN DEBUG starting %i worker threads\n",
                         thorium_worker_pool_worker_count(&node->worker_pool));
@@ -1035,7 +1035,7 @@ int thorium_node_run(struct thorium_node *node)
     }
 
 
-    if (CORE_BITMAP_GET_BIT(node->flags, FLAG_SEND_IN_THREAD)) {
+    if (CORE_BITMAP_GET_FLAG(node->flags, FLAG_SEND_IN_THREAD)) {
 #ifdef THORIUM_NODE_DEBUG_RUN
         printf("THORIUM_NODE_DEBUG_RUN starting send thread\n");
 #endif
@@ -1052,23 +1052,23 @@ int thorium_node_run(struct thorium_node *node)
     printf("THORIUM_NODE_DEBUG_RUN after loop in thorium_node_run\n");
 #endif
 
-    if (CORE_BITMAP_GET_BIT(node->flags, FLAG_WORKERS_IN_THREADS)) {
+    if (CORE_BITMAP_GET_FLAG(node->flags, FLAG_WORKERS_IN_THREADS)) {
         thorium_worker_pool_stop(&node->worker_pool);
     }
 
-    if (CORE_BITMAP_GET_BIT(node->flags, FLAG_PRINT_THORIUM_DATA)) {
+    if (CORE_BITMAP_GET_FLAG(node->flags, FLAG_PRINT_THORIUM_DATA)) {
         thorium_worker_pool_print_load(&node->worker_pool, THORIUM_WORKER_POOL_LOAD_EPOCH);
         thorium_worker_pool_print_load(&node->worker_pool, THORIUM_WORKER_POOL_LOAD_LOOP);
     }
 
-    if (CORE_BITMAP_GET_BIT(node->flags,
+    if (CORE_BITMAP_GET_FLAG(node->flags,
                             FLAG_SEND_IN_THREAD)) {
         core_thread_join(&node->thread);
     }
 
     /* Always print counters at the end, this is useful.
      */
-    if (CORE_BITMAP_GET_BIT(node->flags, FLAG_PRINT_COUNTERS)) {
+    if (CORE_BITMAP_GET_FLAG(node->flags, FLAG_PRINT_COUNTERS)) {
 #ifdef THORIUM_NODE_USE_COUNTERS
         thorium_node_print_counters(node);
 #else
@@ -1095,7 +1095,7 @@ int thorium_node_run(struct thorium_node *node)
     if (!thorium_node_must_print_data(node))
         print_final_load = 0;
 
-    if (CORE_BITMAP_GET_BIT(node->flags, FLAG_PRINT_THORIUM_DATA)
+    if (CORE_BITMAP_GET_FLAG(node->flags, FLAG_PRINT_THORIUM_DATA)
                     || print_final_load) {
 
         load = thorium_worker_pool_get_computation_load(&node->worker_pool);
@@ -1196,7 +1196,7 @@ static int thorium_node_running(struct thorium_node *node)
      * if no message were pulled for a duration of at least
      * 4 seconds.
      */
-    if (CORE_BITMAP_GET_BIT(node->flags, FLAG_USE_TRANSPORT)
+    if (CORE_BITMAP_GET_FLAG(node->flags, FLAG_USE_TRANSPORT)
                     && elapsed < 4) {
 #ifdef THORIUM_NODE_DEBUG_RUN
         printf("THORIUM_NODE_DEBUG_RUN a message was received in the last period %d %d\n",
@@ -1337,7 +1337,7 @@ static int thorium_node_receive_system(struct thorium_node *node, struct thorium
          * if there is only one node
          */
         if (node->nodes == 1) {
-            CORE_BITMAP_CLEAR_BIT(node->flags, FLAG_USE_TRANSPORT);
+            CORE_BITMAP_CLEAR_FLAG(node->flags, FLAG_USE_TRANSPORT);
         }
 
 #ifdef THORIUM_NODE_DEBUG_RECEIVE_SYSTEM
@@ -1464,7 +1464,7 @@ static void thorium_node_send(struct thorium_node *node, struct thorium_message 
      * Send the message through the mock transport which is
      * a transport profiler.
      */
-    if (CORE_BITMAP_GET_BIT(node->flags, FLAG_PROFILE_MESSAGE_TRANSPORT)) {
+    if (CORE_BITMAP_GET_FLAG(node->flags, FLAG_PROFILE_MESSAGE_TRANSPORT)) {
         thorium_transport_profiler_send_mock(&node->transport_profiler, message);
     }
 #endif
@@ -1557,7 +1557,7 @@ static void thorium_node_send(struct thorium_node *node, struct thorium_message 
         if (thorium_message_action(message) == 1100) {
             printf("DEBUG outbound message 1100\n");
 
-            CORE_BITMAP_SET_BIT(node->flags, FLAG_DEBUG);
+            CORE_BITMAP_SET_FLAG(node->flags, FLAG_DEBUG);
         }
 #endif
     }
@@ -1758,7 +1758,7 @@ void thorium_node_notify_death(struct thorium_node *node, struct thorium_actor *
     name = thorium_actor_name(actor);
     */
 
-    if (CORE_BITMAP_GET_BIT(node->flags, FLAG_PRINT_STRUCTURE)) {
+    if (CORE_BITMAP_GET_FLAG(node->flags, FLAG_PRINT_STRUCTURE)) {
         thorium_node_print_structure(node, actor);
     }
 
@@ -1849,7 +1849,7 @@ void thorium_node_notify_death(struct thorium_node *node, struct thorium_actor *
     node->dead_actors++;
 
     if (node->alive_actors == 0
-                    && CORE_BITMAP_GET_BIT(node->flags, FLAG_PRINT_THORIUM_DATA)) {
+                    && CORE_BITMAP_GET_FLAG(node->flags, FLAG_PRINT_THORIUM_DATA)) {
 
         printf("[thorium] node %d, all local actors are dead now, %d alive actors, %d dead actors\n",
                         node->name,
@@ -2106,10 +2106,10 @@ static struct thorium_worker_pool *thorium_node_get_worker_pool(struct thorium_n
 
 static void thorium_node_toggle_debug_mode(struct thorium_node *self)
 {
-    if (CORE_BITMAP_GET_BIT(self->flags, FLAG_DEBUG)) {
-        CORE_BITMAP_CLEAR_BIT(self->flags, FLAG_DEBUG);
+    if (CORE_BITMAP_GET_FLAG(self->flags, FLAG_DEBUG)) {
+        CORE_BITMAP_CLEAR_FLAG(self->flags, FLAG_DEBUG);
     } else {
-        CORE_BITMAP_SET_BIT(self->flags, FLAG_DEBUG);
+        CORE_BITMAP_SET_FLAG(self->flags, FLAG_DEBUG);
     }
     thorium_worker_pool_toggle_debug_mode(&self->worker_pool);
 }
@@ -2251,8 +2251,8 @@ static void thorium_node_run_loop(struct thorium_node *node)
     int period;
     char print_information = 0;
 
-    if (CORE_BITMAP_GET_BIT(node->flags, FLAG_PRINT_THORIUM_DATA)
-            || CORE_BITMAP_GET_BIT(node->flags, FLAG_PRINT_COUNTERS)) {
+    if (CORE_BITMAP_GET_FLAG(node->flags, FLAG_PRINT_THORIUM_DATA)
+            || CORE_BITMAP_GET_FLAG(node->flags, FLAG_PRINT_COUNTERS)) {
 
         print_information = 1;
     }
@@ -2263,10 +2263,10 @@ static void thorium_node_run_loop(struct thorium_node *node)
     starting_credits = 1024;
     credits = starting_credits;
 
-    send_in_thread = CORE_BITMAP_GET_BIT(node->flags,
+    send_in_thread = CORE_BITMAP_GET_FLAG(node->flags,
                                 FLAG_SEND_IN_THREAD);
-    use_transport = CORE_BITMAP_GET_BIT(node->flags, FLAG_USE_TRANSPORT);
-    run_in_main_thread = CORE_BITMAP_GET_BIT(node->flags, FLAG_WORKER_IN_MAIN_THREAD);
+    use_transport = CORE_BITMAP_GET_FLAG(node->flags, FLAG_USE_TRANSPORT);
+    run_in_main_thread = CORE_BITMAP_GET_FLAG(node->flags, FLAG_WORKER_IN_MAIN_THREAD);
 
     while (credits > 0) {
 
@@ -2293,7 +2293,7 @@ static void thorium_node_run_loop(struct thorium_node *node)
 #endif
 
 #ifdef THORIUM_NODE_DEBUG_LOOP1
-        if (CORE_BITMAP_GET_BIT(node->flags, FLAG_DEBUG)) {
+        if (CORE_BITMAP_GET_FLAG(node->flags, FLAG_DEBUG)) {
             printf("DEBUG node/%d is running\n", thorium_node_name(node));
         }
 #endif
@@ -2865,7 +2865,7 @@ static void thorium_node_inject_outbound_buffer(struct thorium_node *self, struc
 static void thorium_node_regulator_configure(struct thorium_node *self)
 {
 #ifdef THORIUM_NODE_CONFIG_USE_REGULATOR
-    CORE_BITMAP_CLEAR_BIT(self->flags, FLAG_REGULATOR_IS_ENABLED);
+    CORE_BITMAP_CLEAR_FLAG(self->flags, FLAG_REGULATOR_IS_ENABLED);
 #endif
 }
 
@@ -2891,9 +2891,9 @@ static void thorium_node_regulator_run(struct thorium_node *self)
         /*
          * First, check if the bit is not already set.
          */
-        if (!CORE_BITMAP_GET_BIT(self->flags, FLAG_REGULATOR_IS_ENABLED)) {
+        if (!CORE_BITMAP_GET_FLAG(self->flags, FLAG_REGULATOR_IS_ENABLED)) {
 
-            CORE_BITMAP_SET_BIT(self->flags, FLAG_REGULATOR_IS_ENABLED);
+            CORE_BITMAP_SET_FLAG(self->flags, FLAG_REGULATOR_IS_ENABLED);
 
 #ifdef DEBUG_NODE_REGULATOR
             printf("thorium_node: Warning buffered_message_count= %d FLAG_REGULATOR_IS_ENABLED = 1\n",
@@ -2912,8 +2912,8 @@ static void thorium_node_regulator_run(struct thorium_node *self)
         /*
          * Clear the big FLAG_REGULATOR_IS_ENABLED if it is set.
          */
-        if (CORE_BITMAP_GET_BIT(self->flags, FLAG_REGULATOR_IS_ENABLED)) {
-            CORE_BITMAP_CLEAR_BIT(self->flags, FLAG_REGULATOR_IS_ENABLED);
+        if (CORE_BITMAP_GET_FLAG(self->flags, FLAG_REGULATOR_IS_ENABLED)) {
+            CORE_BITMAP_CLEAR_FLAG(self->flags, FLAG_REGULATOR_IS_ENABLED);
 
 #ifdef DEBUG_NODE_REGULATOR
             printf("thorium_node: Warning buffered_message_count= %d FLAG_REGULATOR_IS_ENABLED = 0\n",
@@ -2927,7 +2927,7 @@ static void thorium_node_regulator_run(struct thorium_node *self)
 static int thorium_node_regulator_must_wait(struct thorium_node *self)
 {
 #ifdef THORIUM_NODE_CONFIG_USE_REGULATOR
-    return CORE_BITMAP_GET_BIT(self->flags, FLAG_REGULATOR_IS_ENABLED);
+    return CORE_BITMAP_GET_FLAG(self->flags, FLAG_REGULATOR_IS_ENABLED);
 #else
     return 0;
 #endif
@@ -2984,7 +2984,7 @@ static void thorium_node_receive_messages(struct thorium_node *node)
 
 int thorium_node_must_print_data(struct thorium_node *self)
 {
-    return CORE_BITMAP_GET_BIT(self->flags, FLAG_PRINT_THORIUM_DATA);
+    return CORE_BITMAP_GET_FLAG(self->flags, FLAG_PRINT_THORIUM_DATA);
 }
 
 void thorium_node_open_log_file(struct thorium_node *self)
@@ -3119,12 +3119,12 @@ void thorium_node_print_information(struct thorium_node *self)
         return;
     }
 
-    if (!CORE_BITMAP_GET_BIT(self->flags, FLAG_PRINT_THORIUM_DATA)) {
+    if (!CORE_BITMAP_GET_FLAG(self->flags, FLAG_PRINT_THORIUM_DATA)) {
         return;
     }
 
 #ifdef THORIUM_NODE_USE_COUNTERS
-    if (CORE_BITMAP_GET_BIT(self->flags, FLAG_PRINT_COUNTERS)) {
+    if (CORE_BITMAP_GET_FLAG(self->flags, FLAG_PRINT_COUNTERS)) {
         thorium_node_print_counters(self);
     }
 #endif

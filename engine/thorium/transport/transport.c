@@ -64,7 +64,7 @@ void thorium_transport_init(struct thorium_transport *self, struct thorium_node 
     actual_argv = *argv;
 
     self->flags = 0;
-    CORE_BITMAP_CLEAR_BIT(self->flags, FLAG_PRINT_TRANSPORT_EVENTS);
+    CORE_BITMAP_CLEAR_FLAG(self->flags, FLAG_PRINT_TRANSPORT_EVENTS);
 
     self->transport_interface = NULL;
     self->concrete_transport = NULL;
@@ -98,7 +98,7 @@ void thorium_transport_init(struct thorium_transport *self, struct thorium_node 
     self->outbound_message_memory_pool = outbound_message_memory_pool;
 
     if (core_command_has_argument(actual_argc, actual_argv, "-print-transport-events")) {
-        CORE_BITMAP_SET_BIT(self->flags, FLAG_PRINT_TRANSPORT_EVENTS);
+        CORE_BITMAP_SET_FLAG(self->flags, FLAG_PRINT_TRANSPORT_EVENTS);
     }
 
     core_timer_init(&self->timer);
@@ -155,7 +155,7 @@ int thorium_transport_send(struct thorium_transport *self, struct thorium_messag
         ++self->active_request_count;
         ++self->sent_message_count;
 
-        if (CORE_BITMAP_GET_BIT(self->flags, FLAG_PRINT_TRANSPORT_EVENTS)) {
+        if (CORE_BITMAP_GET_FLAG(self->flags, FLAG_PRINT_TRANSPORT_EVENTS)) {
             thorium_transport_print_event(self, EVENT_TYPE_SEND, message);
         }
     }
@@ -205,7 +205,7 @@ int thorium_transport_receive(struct thorium_transport *self, struct thorium_mes
                         thorium_message_count(message));
 #endif
 
-        if (CORE_BITMAP_GET_BIT(self->flags, FLAG_PRINT_TRANSPORT_EVENTS)) {
+        if (CORE_BITMAP_GET_FLAG(self->flags, FLAG_PRINT_TRANSPORT_EVENTS)) {
             thorium_transport_print_event(self, EVENT_TYPE_RECEIVE, message);
         }
 
