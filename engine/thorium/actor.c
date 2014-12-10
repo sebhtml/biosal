@@ -2501,7 +2501,7 @@ int thorium_actor_multiplexer_is_enabled(struct thorium_actor *self)
 
 struct core_memory_pool *thorium_actor_get_persistent_memory_pool(struct thorium_actor *self)
 {
-    return &self->concrete_memory_pool;
+    return thorium_actor_get_concrete_memory_pool(self);
 }
 
 int thorium_actor_get_counter_value(struct thorium_actor *self, int field)
