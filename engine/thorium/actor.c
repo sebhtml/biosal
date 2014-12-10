@@ -2574,3 +2574,7 @@ void thorium_actor_spawn_many_reply(struct thorium_actor *self, struct thorium_m
      */
 }
 
+struct core_memory_pool *thorium_actor_get_abstract_memory_pool(struct thorium_actor *self)
+{
+    return &self->abstract_memory_pool;
+}
