@@ -12,5 +12,5 @@ qsub \
  -O __JOB__ \
  --mode c1 \
      __JOB__.__APP__ -threads-per-node 16 \
-    -k 27 __SAMPLE__/*.fastq -print-thorium-data \
+    -k 27 __SAMPLE__/*.fastq \
     -o __JOB__
