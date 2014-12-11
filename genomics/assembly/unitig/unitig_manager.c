@@ -267,8 +267,8 @@ void biosal_unitig_manager_receive(struct thorium_actor *self, struct thorium_me
         while (i < size) {
             visitor = core_vector_at_as_int(&concrete_self->visitors, i);
 
-            thorium_actor_send_empty(self, visitor,
-                            ACTION_ENABLE_DEFAULT_LOG_LEVEL);
+            thorium_actor_send_int(self, visitor,
+                            ACTION_ENABLE_LOG_LEVEL, LOG_LEVEL_DEFAULT);
             i += stride;
         }
 

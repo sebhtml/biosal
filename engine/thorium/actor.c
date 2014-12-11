@@ -228,7 +228,7 @@ void thorium_actor_init(struct thorium_actor *self, void *concrete_actor,
     /*
      * Disable the log level LOG_LEVEL_DEFAULT by default.
      */
-    thorium_actor_send_to_self_empty(self, ACTION_DISABLE_DEFAULT_LOG_LEVEL);
+    thorium_actor_clear_flag(self, LOG_LEVEL_DEFAULT);
 
     /* call the concrete initializer
      * this must be the last call.
@@ -481,12 +481,12 @@ int thorium_actor_send_system_self(struct thorium_actor *self, struct thorium_me
         thorium_actor_clear_message_cache(self, message);
         return 1;
 #endif
-    } else if (action == ACTION_ENABLE_DEFAULT_LOG_LEVEL) {
+    } else if (action == ACTION_ENABLE_LOG_LEVEL) {
 
         thorium_actor_set_flag(self, THORIUM_ACTOR_FLAG_DEFAULT_LOG_LEVEL);
         return 1;
 
-    } else if (action == ACTION_DISABLE_DEFAULT_LOG_LEVEL) {
+    } else if (action == ACTION_DISABLE_LOG_LEVEL) {
 
         thorium_actor_clear_flag(self, THORIUM_ACTOR_FLAG_DEFAULT_LOG_LEVEL);
         return 1;
@@ -984,14 +984,14 @@ int thorium_actor_receive_system(struct thorium_actor *self, struct thorium_mess
         return 0;
 #endif
 
-    } else if (action == ACTION_ENABLE_DEFAULT_LOG_LEVEL) {
+    } else if (action == ACTION_ENABLE_LOG_LEVEL) {
 
-        thorium_actor_set_flag(self, THORIUM_ACTOR_FLAG_DEFAULT_LOG_LEVEL);
+        thorium_actor_enable_log_level(self, message);
         return 1;
 
-    } else if (action == ACTION_DISABLE_DEFAULT_LOG_LEVEL) {
+    } else if (action == ACTION_DISABLE_LOG_LEVEL) {
 
-        thorium_actor_clear_flag(self, THORIUM_ACTOR_FLAG_DEFAULT_LOG_LEVEL);
+        thorium_actor_disable_log_level(self, message);
         return 1;
 
 #ifdef THORIUM_ACTOR_STORE_CHILDREN

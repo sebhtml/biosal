@@ -10,8 +10,14 @@
 
 #include <stdio.h>
 
+#define OPERATION_ENABLE    99
+#define OPERATION_DISABLE   2
+
 void thorium_actor_log_private(struct thorium_actor *self, int level, const char *format,
                 va_list arguments);
+
+void thorium_actor_change_log_level(struct thorium_actor *self, int operation,
+                struct thorium_message *message);
 
 void thorium_actor_log_implementation(struct thorium_actor *self, const char *format, ...)
 {
@@ -146,4 +152,43 @@ void thorium_actor_log_private(struct thorium_actor *self, int level, const char
     core_memory_pool_free(memory_pool, buffer);
 
     va_end(arguments2);
+}
+
+void thorium_actor_enable_log_level(struct thorium_actor *self, struct thorium_message *message)
+{
+    thorium_actor_change_log_level(self, OPERATION_ENABLE, message);
+}
+
+void thorium_actor_disable_log_level(struct thorium_actor *self, struct thorium_message *message)
+{
+    thorium_actor_change_log_level(self, OPERATION_DISABLE, message);
+}
+
+void thorium_actor_change_log_level(struct thorium_actor *self, int operation,
+                struct thorium_message *message)
+{
+    int log_level;
+    int count;
+
+    count = thorium_message_count(message);
+
+    CORE_DEBUGGER_ASSERT(count == sizeof(log_level));
+
+    if (count < (int)sizeof(log_level))
+        return;
+
+    thorium_message_unpack_int(message, 0, &log_level);
+
+    /*
+     * Validate the log level.
+     */
+    if (!(log_level == LOG_LEVEL_DEFAULT)) {
+        return;
+    }
+
+    if (operation == OPERATION_ENABLE) {
+        thorium_actor_set_flag(self, log_level);
+    } else if (operation == OPERATION_DISABLE) {
+        thorium_actor_clear_flag(self, log_level);
+    }
 }
