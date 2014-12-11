@@ -13,7 +13,7 @@
 void thorium_actor_log_private(struct thorium_actor *self, int level, const char *format,
                 va_list arguments);
 
-void thorium_actor_log(struct thorium_actor *self, const char *format, ...)
+void thorium_actor_log_implementation(struct thorium_actor *self, const char *format, ...)
 {
     va_list arguments;
     int level;
@@ -33,7 +33,7 @@ void thorium_actor_log(struct thorium_actor *self, const char *format, ...)
     va_end(arguments);
 }
 
-void thorium_actor_log_with_level(struct thorium_actor *self, int level, const char *format, ...)
+void thorium_actor_log_with_level_implementation(struct thorium_actor *self, int level, const char *format, ...)
 {
     va_list arguments;
 
