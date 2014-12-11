@@ -9,6 +9,7 @@
 #include <core/helpers/bitmap.h>
 
 #include <stdio.h>
+#include <string.h>
 
 #define OPERATION_ENABLE    99
 #define OPERATION_DISABLE   2
@@ -73,9 +74,14 @@ void thorium_actor_log_private(struct thorium_actor *self, int level, const char
     char *buffer;
     int offset;
     struct core_memory_pool *memory_pool;
+    int needs_new_line = 0;
 
     if (!thorium_actor_get_flag(self, level)) {
         return;
+    }
+
+    if (format[strlen(format) - 1] != '\n') {
+        needs_new_line = 1;
     }
 
     /*
@@ -125,7 +131,9 @@ void thorium_actor_log_private(struct thorium_actor *self, int level, const char
     required += snprintf(NULL, 0, "%s ACTOR %s %d : ",
                     time_string, script_name, name);
     required += vsnprintf(NULL, 0, format, arguments);
-    required += snprintf(NULL, 0, "\n");
+
+    if (needs_new_line)
+        required += snprintf(NULL, 0, "\n");
 
     /*
      * null character.
@@ -143,7 +151,9 @@ void thorium_actor_log_private(struct thorium_actor *self, int level, const char
     offset += sprintf(buffer + offset, "%s ACTOR %s %d : ",
                     time_string, script_name, name);
     offset += vsprintf(buffer + offset, format, arguments2);
-    offset += sprintf(buffer + offset, "\n");
+
+    if (needs_new_line)
+        offset += sprintf(buffer + offset, "\n");
 
     CORE_DEBUGGER_ASSERT(offset + 1 == required);
 
