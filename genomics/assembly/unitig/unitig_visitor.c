@@ -196,7 +196,7 @@ void biosal_unitig_visitor_receive(struct thorium_actor *self, struct thorium_me
 
         concrete_self->manager = source;
 
-        thorium_actor_log(self, "is ready to visit places in the universe");
+        thorium_actor_log(self, "%s", "is ready to visit places in the universe");
 
         core_vector_unpack(&concrete_self->graph_stores, buffer);
         size = core_vector_size(&concrete_self->graph_stores);
