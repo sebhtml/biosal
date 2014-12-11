@@ -202,6 +202,9 @@ void spate_start(struct thorium_actor *self, struct thorium_message *message)
     int argc;
     char **argv;
 
+    thorium_actor_send_to_self_int(self, ACTION_ENABLE_LOG_LEVEL,
+                    LOG_LEVEL_DEFAULT);
+
     concrete_self = (struct spate *)thorium_actor_concrete_actor(self);
     buffer = thorium_message_buffer(message);
     name = thorium_actor_name(self);
@@ -212,7 +215,7 @@ void spate_start(struct thorium_actor *self, struct thorium_message *message)
     core_vector_unpack(&concrete_self->initial_actors, buffer);
 
     if (!spate_must_print_help(self)) {
-        printf("spate/%d starts\n", name);
+        thorium_actor_log(self, "spate/%d starts", name);
     }
 
     if (core_vector_index_of(&concrete_self->initial_actors, &name) == 0) {
@@ -251,7 +254,7 @@ void spate_start(struct thorium_actor *self, struct thorium_message *message)
     already_created = core_directory_verify_existence(directory_name);
 
     if (already_created) {
-        printf("%s/%d Error: output directory \"%s\" already exists, please delete it or use a different output directory\n",
+        thorium_actor_log(self, "%s/%d Error: output directory \"%s\" already exists, please delete it or use a different output directory",
                         thorium_actor_script_name(self),
                         thorium_actor_name(self),
                         directory_name);
@@ -274,7 +277,7 @@ void spate_ask_to_stop(struct thorium_actor *self, struct thorium_message *messa
     source = thorium_message_source(message);
 
     if (!spate_must_print_help(self)) {
-        printf("spate %d stops\n", thorium_actor_name(self));
+        thorium_actor_log(self, "spate %d stops", thorium_actor_name(self));
     }
 
 #if 0
@@ -325,7 +328,7 @@ void spate_spawn_reply(struct thorium_actor *self, struct thorium_message *messa
                     spate_start_reply_controller,
                     concrete_self->input_controller);
 
-        printf("spate %d spawned controller %d\n", thorium_actor_name(self),
+        thorium_actor_log(self, "spate %d spawned controller %d", thorium_actor_name(self),
                         new_actor);
 
         spawner = thorium_actor_get_spawner(self, &concrete_self->initial_actors);
@@ -341,7 +344,7 @@ void spate_spawn_reply(struct thorium_actor *self, struct thorium_message *messa
                     spate_start_reply_manager,
                     concrete_self->manager_for_sequence_stores);
 
-        printf("spate %d spawned manager %d\n", thorium_actor_name(self),
+        thorium_actor_log(self, "spate %d spawned manager %d", thorium_actor_name(self),
                         new_actor);
 
         spawner = thorium_actor_get_spawner(self, &concrete_self->initial_actors);
@@ -362,7 +365,7 @@ void spate_spawn_reply(struct thorium_actor *self, struct thorium_message *messa
                     spate_set_producers_reply,
                     concrete_self->assembly_graph_builder);
 
-        printf("spate %d spawned graph builder %d\n", thorium_actor_name(self),
+        thorium_actor_log(self, "spate %d spawned graph builder %d", thorium_actor_name(self),
                         new_actor);
 
         thorium_actor_send_int(self, concrete_self->manager_for_sequence_stores, ACTION_MANAGER_SET_SCRIPT,
@@ -396,7 +399,7 @@ void spate_start_reply_manager(struct thorium_actor *self, struct thorium_messag
 
     core_vector_unpack(&consumers, buffer);
 
-    printf("spate %d sends the names of %d consumers to controller %d\n",
+    thorium_actor_log(self, "spate %d sends the names of %d consumers to controller %d",
                     thorium_actor_name(self),
                     (int)core_vector_size(&consumers),
                     concrete_self->input_controller);
@@ -414,7 +417,7 @@ void spate_set_consumers_reply(struct thorium_actor *self, struct thorium_messag
 
     concrete_self = (struct spate *)thorium_actor_concrete_actor(self);
 
-    printf("spate %d sends %d spawners to controller %d\n",
+    thorium_actor_log(self, "spate %d sends %d spawners to controller %d",
                     thorium_actor_name(self),
                     (int)core_vector_size(&concrete_self->initial_actors),
                     concrete_self->input_controller);
@@ -426,7 +429,7 @@ void spate_start_reply_controller(struct thorium_actor *self, struct thorium_mes
 {
     struct spate *concrete_self;
 
-    printf("received reply from controller\n");
+    thorium_actor_log(self, "received reply from controller");
     concrete_self = (struct spate *)thorium_actor_concrete_actor(self);
 
     /*
@@ -465,7 +468,7 @@ void spate_distribute_reply(struct thorium_actor *self, struct thorium_message *
 
     concrete_self = (struct spate *)thorium_actor_concrete_actor(self);
 
-    printf("spate %d: all sequence stores are ready\n",
+    thorium_actor_log(self, "spate %d: all sequence stores are ready",
                     thorium_actor_name(self));
 
     thorium_actor_send_vector(self, concrete_self->assembly_graph_builder,
@@ -497,7 +500,7 @@ void spate_start_reply_builder(struct thorium_actor *self, struct thorium_messag
 
     core_vector_unpack(&concrete_self->graph_stores, buffer);
 
-    printf("%s/%d has %d graph stores\n",
+    thorium_actor_log(self, "%s/%d has %d graph stores",
                     thorium_actor_script_name(self),
                     thorium_actor_name(self),
                     (int)core_vector_size(&concrete_self->graph_stores));
