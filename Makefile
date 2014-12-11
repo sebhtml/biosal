@@ -56,5 +56,5 @@ clean:
 	$(Q)$(RM) -f $(TEST_OBJECTS) $(TEST_EXECUTABLES)
 	$(Q)$(RM) -f $(EXAMPLE_OBJECTS) $(EXAMPLE_EXECUTABLES)
 	$(Q)$(RM) -f $(APPLICATION_OBJECTS) $(APPLICATION_EXECUTABLES)
-	$(Q)$(RM) -f performance/tracepoints/lttng/*.{o,h,c}
+	$(Q)$(RM) -f tracepoints/lttng/*.{o,h,c}
 	$(Q)$(RM) -f tests.log* *.junit.xml *.log

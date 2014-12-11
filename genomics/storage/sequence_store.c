@@ -420,7 +420,9 @@ void biosal_sequence_store_show_progress(struct thorium_actor *actor, struct tho
                     concrete_actor->received,
                     core_vector_size(&concrete_actor->sequences));
 
-    /* core_memory_pool_examine(&concrete_actor->persistent_memory); */
+#if 0
+    core_memory_pool_examine(&concrete_actor->persistent_memory);
+#endif
 
     if (concrete_actor->received == concrete_actor->expected) {
 

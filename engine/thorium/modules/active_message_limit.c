@@ -52,12 +52,34 @@ int thorium_actor_active_message_limit_adaptive(struct thorium_actor *self);
 
 int thorium_actor_active_message_limit(struct thorium_actor *self)
 {
-    return BIOSAL_IDEAL_ACTIVE_MESSAGE_LIMIT;
+    int node_count;
+    int limit;
+
+    limit = BIOSAL_IDEAL_ACTIVE_MESSAGE_LIMIT;
+
+    node_count = thorium_actor_get_node_count(self);
+
+    if (node_count == 1) {
+        limit = BIOSAL_IDEAL_ACTIVE_MESSAGE_LIMIT_SHARED_MEMORY;
+    }
+
+    return limit;
 }
 
 int thorium_actor_suggested_buffer_size(struct thorium_actor *self)
 {
-    return BIOSAL_IDEAL_BUFFER_SIZE;
+    int node_count;
+    int buffer_size;
+
+    buffer_size = BIOSAL_IDEAL_BUFFER_SIZE;
+
+    node_count = thorium_actor_get_node_count(self);
+
+    if (node_count == 1) {
+        buffer_size = BIOSAL_IDEAL_BUFFER_SIZE_SHARED_MEMORY;
+    }
+
+    return buffer_size;
 }
 
 int thorium_actor_active_message_limit_adaptive(struct thorium_actor *self)

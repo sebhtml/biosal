@@ -70,6 +70,7 @@ void biosal_input_stream_init(struct thorium_actor *actor)
 {
     struct biosal_input_stream *input;
     struct biosal_input_stream *concrete_self;
+    struct thorium_actor *self = actor;
 
     input = (struct biosal_input_stream *)thorium_actor_concrete_actor(actor);
     concrete_self = input;
@@ -146,9 +147,7 @@ void biosal_input_stream_init(struct thorium_actor *actor)
 
     core_vector_init(&concrete_self->parallel_mega_blocks, sizeof(struct core_vector));
 
-    printf("%s/%d is now online on node %d\n",
-                    thorium_actor_script_name(actor),
-                    thorium_actor_name(actor),
+    thorium_actor_log(self, "is now online on node %d",
                     thorium_actor_node_name(actor));
 }
 
@@ -210,6 +209,7 @@ void biosal_input_stream_receive(struct thorium_actor *actor, struct thorium_mes
     char *read_buffer;
     struct biosal_mega_block mega_block;
     char *file_name_in_buffer;
+    struct thorium_actor *self = actor;
 
     if (thorium_actor_take_action(actor, message)) {
         return;
@@ -262,7 +262,7 @@ void biosal_input_stream_receive(struct thorium_actor *actor, struct thorium_mes
         /*core_memory_copy(&concrete_self->file_index, buffer, sizeof(concrete_self->file_index));*/
         file_name_in_buffer = buffer;
 
-        printf("stream/%d (node/%d) opens file %s offset %" PRIu64 "\n", thorium_actor_name(actor),
+        thorium_actor_log(self, "(node/%d) opens file %s offset %" PRIu64 "",
                         thorium_actor_node_name(actor), file_name_in_buffer,
                         concrete_self->starting_offset);
 
@@ -391,8 +391,8 @@ void biosal_input_stream_receive(struct thorium_actor *actor, struct thorium_mes
         thorium_actor_send_vector(actor, concrete_self->count_customer, ACTION_INPUT_COUNT_REPLY,
                         &concrete_self->mega_blocks);
 
-        printf("input_stream/%d on node/%d counted entries in %s, %" PRIu64 "\n",
-                        thorium_actor_name(actor), thorium_actor_node_name(actor),
+        thorium_actor_log(self, "on node/%d counted entries in %s, %" PRIu64 "",
+                        thorium_actor_node_name(actor),
                         concrete_self->file_name, count);
 
     } else if (tag == ACTION_INPUT_CLOSE) {
@@ -766,7 +766,7 @@ void biosal_input_stream_count_in_parallel(struct thorium_actor *self, struct th
 
     file_size = core_file_get_size(file);
 
-    printf("COUNT_IN_PARALLEL %s %" PRIu64 "\n",
+    thorium_actor_log(self, "COUNT_IN_PARALLEL %s %" PRIu64 "",
                     file, file_size);
 
     start_offset = 0;
@@ -784,7 +784,7 @@ void biosal_input_stream_count_in_parallel(struct thorium_actor *self, struct th
         core_vector_push_back_uint64_t(&concrete_self->start_offsets, start_offset);
         core_vector_push_back_uint64_t(&concrete_self->end_offsets, end_offset);
 
-        printf("DEBUG PARALLEL BLOCK %s %i %" PRIu64 " %" PRIu64 "\n",
+        thorium_actor_log(self, "DEBUG PARALLEL BLOCK %s %i %" PRIu64 " %" PRIu64 "",
                         file,
                         i,
                         start_offset,
@@ -798,8 +798,7 @@ void biosal_input_stream_count_in_parallel(struct thorium_actor *self, struct th
 
     thorium_actor_add_action(self, ACTION_SPAWN_REPLY, biosal_input_stream_spawn_reply);
 
-    printf("DEBUG stream/%d spawns %d streams for counting\n",
-                    thorium_actor_name(self),
+    thorium_actor_log(self, "DEBUG spawns %d streams for counting",
                     size);
 
     for (i = 0; i < size; i++) {
@@ -936,7 +935,7 @@ void biosal_input_stream_count_reply(struct thorium_actor *self, struct thorium_
     concrete_self->total_entries += result;
     ++concrete_self->finished_parallel_stream_count;
 
-    printf("DEBUG count_reply %d/%d\n",
+    thorium_actor_log(self, " count_reply %d/%d",
                     concrete_self->finished_parallel_stream_count,
                     (int)core_vector_size(&concrete_self->parallel_streams));
 
@@ -1011,7 +1010,7 @@ void biosal_input_stream_count_reply(struct thorium_actor *self, struct thorium_
 
         core_vector_resize(&concrete_self->parallel_mega_blocks, 0);
 
-        printf("DEBUG send ACTION_INPUT_COUNT_IN_PARALLEL_REPLY to %d\n",
+        thorium_actor_log(self, "send ACTION_INPUT_COUNT_IN_PARALLEL_REPLY to %d",
                         concrete_self->controller);
 
         thorium_actor_send_vector(self, concrete_self->controller,
@@ -1034,9 +1033,7 @@ void biosal_input_stream_count_in_parallel_mock(struct thorium_actor *self, stru
 
     file = concrete_self->file_name;
 
-    printf("%s/%d receives ACTION_INPUT_COUNT_IN_PARALLEL file %s\n",
-                    thorium_actor_script_name(self),
-                    thorium_actor_name(self),
+    thorium_actor_log(self, "receives ACTION_INPUT_COUNT_IN_PARALLEL file %s\n",
                     file);
 
     thorium_actor_send_to_self_buffer(self, ACTION_INPUT_COUNT, count, buffer);
@@ -1072,9 +1069,7 @@ void biosal_input_stream_count_reply_mock(struct thorium_actor *self, struct tho
 
     file = concrete_self->file_name;
 
-    printf("%s/%d COUNT_IN_PARALLEL result for %s is %" PRIu64 "\n",
-                    thorium_actor_script_name(self),
-                    thorium_actor_name(self),
+    thorium_actor_log(self, "COUNT_IN_PARALLEL result for %s is %" PRIu64 "",
                     file,
                     result);
 
@@ -1114,7 +1109,7 @@ void biosal_input_stream_set_offset_reply(struct thorium_actor *self, struct tho
                         strlen(concrete_self->file_name) + 1,
                         concrete_self->file_name);
 
-        printf("DEBUG SEND ACTION_INPUT_OPEN to %d actors with file %s\n",
+        thorium_actor_log(self, "DEBUG SEND ACTION_INPUT_OPEN to %d actors with file %s",
                         (int)core_vector_size(&concrete_self->parallel_streams),
                         concrete_self->file_name);
     }

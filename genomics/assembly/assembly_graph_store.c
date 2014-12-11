@@ -267,9 +267,7 @@ void biosal_assembly_graph_store_receive(struct thorium_actor *self, struct thor
         CORE_DEBUGGER_ASSERT_IS_EQUAL_INT(concrete_self->iterated_vertex_count,
                         (int)core_map_size(&concrete_self->table));
 
-        printf("%s/%d iterated_vertex_count %d unitig_vertex_count %d",
-                        thorium_actor_script_name(self),
-                        thorium_actor_name(self),
+        thorium_actor_log(self, "iterated_vertex_count %d unitig_vertex_count %d",
                         concrete_self->iterated_vertex_count,
                         concrete_self->unitig_vertex_count);
 
@@ -424,7 +422,9 @@ void biosal_assembly_graph_store_push_data(struct thorium_actor *self, struct th
                     name, core_map_size(&concrete_self->table),
                     2 * core_map_size(&concrete_self->table));
 
+#ifdef SHOW_MEMORY_POOL_STATUS
     core_memory_pool_examine(&concrete_self->persistent_memory);
+#endif
 
     core_map_iterator_init(&concrete_self->iterator, &concrete_self->table);
 

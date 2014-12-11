@@ -4,16 +4,18 @@
 
 #include "assembly_connectivity.h"
 
+#include <core/helpers/bitmap.h>
+
 #include <genomics/data/dna_codec.h>
 
 typedef int coverage_t;
 
-#define BIOSAL_VERTEX_FLAG_USED_BY_WALKER 0
-#define BIOSAL_VERTEX_FLAG_TIP 1
-#define BIOSAL_VERTEX_FLAG_BUBBLE 2
-#define BIOSAL_VERTEX_FLAG_VISITED 3
-#define BIOSAL_VERTEX_FLAG_UNITIG 4
-#define BIOSAL_VERTEX_FLAG_PROCESSED_BY_VISITOR 5
+#define BIOSAL_VERTEX_FLAG_USED_BY_WALKER           CORE_BITMAP_MAKE_FLAG(0)
+#define BIOSAL_VERTEX_FLAG_TIP                      CORE_BITMAP_MAKE_FLAG(1)
+#define BIOSAL_VERTEX_FLAG_BUBBLE                   CORE_BITMAP_MAKE_FLAG(2)
+#define BIOSAL_VERTEX_FLAG_VISITED                  CORE_BITMAP_MAKE_FLAG(3)
+#define BIOSAL_VERTEX_FLAG_UNITIG                   CORE_BITMAP_MAKE_FLAG(4)
+#define BIOSAL_VERTEX_FLAG_PROCESSED_BY_VISITOR     CORE_BITMAP_MAKE_FLAG(5)
 
 /*
  * For bound checking.

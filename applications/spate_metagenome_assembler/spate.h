@@ -1,6 +1,6 @@
 
-#ifndef _SPATE_H_
-#define _SPATE_H_
+#ifndef BIOSAL_SPATE_H_
+#define BIOSAL_SPATE_H_
 
 #include <biosal.h>
 

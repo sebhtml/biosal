@@ -21,7 +21,7 @@
 #define FORCE_YES_SIZE 1
 #define FORCE_YES_TIME 1
 
-#define FLAG_DISABLED 0
+#define FLAG_DISABLED CORE_BITMAP_MAKE_FLAG(0)
 
 /*
 #define DEBUG_MULTIPLEXER
@@ -62,8 +62,8 @@ void thorium_message_multiplexer_init(struct thorium_message_multiplexer *self,
     self->original_message_count = 0;
     self->real_message_count = 0;
 
-    CORE_BITMAP_CLEAR(self->flags);
-    CORE_BITMAP_CLEAR_BIT(self->flags, FLAG_DISABLED);
+    CORE_BITMAP_CLEAR_FLAGS(self->flags);
+    CORE_BITMAP_CLEAR_FLAG(self->flags, FLAG_DISABLED);
 
 #ifdef THORIUM_MULTIPLEXER_TRACK_BUFFERS_WITH_CONTENT
     core_set_init(&self->buffers_with_content, sizeof(int));
@@ -115,11 +115,11 @@ void thorium_message_multiplexer_init(struct thorium_message_multiplexer *self,
     }
 
     if (thorium_multiplexer_policy_is_disabled(self->policy)) {
-        CORE_BITMAP_SET_BIT(self->flags, FLAG_DISABLED);
+        CORE_BITMAP_SET_FLAG(self->flags, FLAG_DISABLED);
     }
 
     if (thorium_node_nodes(self->node) < thorium_multiplexer_policy_minimum_node_count(self->policy)) {
-        CORE_BITMAP_SET_BIT(self->flags, FLAG_DISABLED);
+        CORE_BITMAP_SET_FLAG(self->flags, FLAG_DISABLED);
     }
 
     self->worker = NULL;
@@ -131,7 +131,7 @@ void thorium_message_multiplexer_init(struct thorium_message_multiplexer *self,
      * Aside from the policy, the end user can also disable the multiplexer code path
      */
     if (core_command_has_argument(argc, argv, OPTION_DISABLE_MULTIPLEXER)) {
-        CORE_BITMAP_SET_BIT(self->flags, FLAG_DISABLED);
+        CORE_BITMAP_SET_FLAG(self->flags, FLAG_DISABLED);
     }
 }
 
@@ -244,7 +244,7 @@ int thorium_message_multiplexer_multiplex(struct thorium_message_multiplexer *se
     thorium_message_print(message);
 #endif
 
-    if (CORE_BITMAP_GET_BIT(self->flags, FLAG_DISABLED)) {
+    if (CORE_BITMAP_GET_FLAG(self->flags, FLAG_DISABLED)) {
         return 0;
     }
 
@@ -432,7 +432,7 @@ int thorium_message_multiplexer_demultiplex(struct thorium_message_multiplexer *
     thorium_message_print(message);
 #endif
 
-    if (CORE_BITMAP_GET_BIT(self->flags, FLAG_DISABLED)) {
+    if (CORE_BITMAP_GET_FLAG(self->flags, FLAG_DISABLED)) {
         return 0;
     }
 
@@ -546,7 +546,7 @@ void thorium_message_multiplexer_test(struct thorium_message_multiplexer *self)
     int *index_bucket;
     int timeout;
 
-    if (CORE_BITMAP_GET_BIT(self->flags, FLAG_DISABLED)) {
+    if (CORE_BITMAP_GET_FLAG(self->flags, FLAG_DISABLED)) {
         return;
     }
 
@@ -675,7 +675,7 @@ void thorium_message_multiplexer_flush(struct thorium_message_multiplexer *self,
     struct thorium_multiplexed_buffer *multiplexed_buffer;
     int destination_node;
 
-    if (CORE_BITMAP_GET_BIT(self->flags, FLAG_DISABLED)) {
+    if (CORE_BITMAP_GET_FLAG(self->flags, FLAG_DISABLED)) {
         return;
     }
 
@@ -775,7 +775,7 @@ void thorium_message_multiplexer_flush(struct thorium_message_multiplexer *self,
 
 int thorium_message_multiplexer_is_disabled(struct thorium_message_multiplexer *self)
 {
-    return CORE_BITMAP_GET_BIT(self->flags, FLAG_DISABLED);
+    return CORE_BITMAP_GET_FLAG(self->flags, FLAG_DISABLED);
 }
 
 void thorium_message_multiplexer_set_worker(struct thorium_message_multiplexer *self,
@@ -801,7 +801,7 @@ void thorium_message_multiplexer_set_worker(struct thorium_message_multiplexer *
     if (thorium_node_name(self->node) == 0 && thorium_worker_name(self->worker) == 0
                     && thorium_node_must_print_data(self->node)) {
         printf("[thorium] message_multiplexer: disabled=%d buffer_size_in_bytes=%d timeout_in_nanoseconds=%d\n",
-                            CORE_BITMAP_GET_BIT(self->flags, FLAG_DISABLED),
+                            CORE_BITMAP_GET_FLAG(self->flags, FLAG_DISABLED),
                         self->buffer_size_in_bytes, self->timeout_in_nanoseconds);
     }
 }
