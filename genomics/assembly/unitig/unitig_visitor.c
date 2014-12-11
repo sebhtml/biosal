@@ -102,8 +102,6 @@ void biosal_unitig_visitor_init(struct thorium_actor *self)
     concrete_self->has_local_kmer = FALSE;
     biosal_dna_kmer_init_empty(&concrete_self->local_kmer);
     concrete_self->length_of_locality = 0;
-
-    thorium_actor_send_to_self_empty(self, ACTION_DISABLE_DEFAULT_LOG_LEVEL);
 }
 
 void biosal_unitig_visitor_destroy(struct thorium_actor *self)
