@@ -225,7 +225,10 @@ void thorium_actor_init(struct thorium_actor *self, void *concrete_actor,
 
     thorium_actor_init_message_cache(self);
 
-    CORE_BITMAP_SET_FLAG(self->flags, THORIUM_ACTOR_FLAG_DEFAULT_LOG_LEVEL);
+    /*
+     * Disable the log level LOG_LEVEL_DEFAULT by default.
+     */
+    thorium_actor_send_to_self_empty(self, ACTION_DISABLE_DEFAULT_LOG_LEVEL);
 
     /* call the concrete initializer
      * this must be the last call.
