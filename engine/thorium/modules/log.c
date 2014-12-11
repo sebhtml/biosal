@@ -108,7 +108,7 @@ void thorium_actor_log_private(struct thorium_actor *self, int level, const char
     name = thorium_actor_name(self);
     script_name = thorium_actor_script_name(self);
 
-    stream = stdout;
+    stream = stderr;
 
     /*
      * \see http://stackoverflow.com/questions/1516370/wrapper-printf-function-that-filters-according-to-user-preferences
