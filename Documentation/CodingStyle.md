@@ -75,3 +75,7 @@ the function names should be:
 - get (instead of find)
 
 @see http://english.stackexchange.com/questions/52508/difference-between-delete-and-remove
+
+# Logging
+
+Inside an actor script, one should use thorium_actor_log instead of printf.
