@@ -243,7 +243,9 @@ int core_fasta_input_check_header(struct biosal_input_format *self, const char *
      * symbol after the first > symbol.
      */
 
+    /*
     printf("DEBUG is FASTA header.\n");
+    */
 
     return 1;
 }

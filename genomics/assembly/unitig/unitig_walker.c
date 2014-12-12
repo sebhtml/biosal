@@ -1849,8 +1849,11 @@ void biosal_unitig_walker_make_decision(struct thorium_actor *self)
         thorium_actor_log(self, "Added (%d)\n",
                         (int)core_set_size(&concrete_self->visited));
 
+#ifdef BIOSAL_UNITIG_WALKER_DEBUG
         biosal_dna_kmer_print(kmer, concrete_self->kmer_length, &concrete_self->codec,
                         ephemeral_memory);
+#endif
+
         #endif
         #ifdef BIOSAL_UNITIG_WALKER_DEBUG
         thorium_actor_log(self, "coverage= %d, path now has %d arcs\n", coverage,
@@ -2189,12 +2192,18 @@ void biosal_unitig_walker_check_usage(struct thorium_actor *self, int *choice, i
     if (found) {
         thorium_actor_log(self, "This one was already visited:\n");
 
+#ifdef BIOSAL_UNITIG_WALKER_DEBUG_CIRCULAR
         biosal_dna_kmer_print(kmer, concrete_self->kmer_length, &concrete_self->codec,
                     ephemeral_memory);
+#endif
 
         thorium_actor_log(self, "Starting kmer\n");
+
+#ifdef BIOSAL_UNITIG_WALKER_DEBUG_CIRCULAR
         biosal_dna_kmer_print(&concrete_self->starting_kmer, concrete_self->kmer_length, &concrete_self->codec,
                     ephemeral_memory);
+#endif
+
         concrete_self->current_is_circular = 1;
 
         *choice = BIOSAL_HEURISTIC_CHOICE_NONE;
