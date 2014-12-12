@@ -34,8 +34,8 @@
 /*
  * Settings for a distributed system.
  */
-#define BIOSAL_IDEAL_BUFFER_SIZE 1024
-#define BIOSAL_IDEAL_ACTIVE_MESSAGE_LIMIT 4
+#define BIOSAL_IDEAL_BUFFER_SIZE (2 * 1024)
+#define BIOSAL_IDEAL_ACTIVE_MESSAGE_LIMIT 2
 
 /*
  * Settings for a shared memory system (1 process on 1 machine
