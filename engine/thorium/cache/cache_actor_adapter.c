@@ -199,7 +199,7 @@ void thorium_actor_print_message_cache(struct thorium_actor *self)
         cache_hit_rate = (0.0 + profile_cache_hit_count) / total;
     }
 
-    printf("%s/%d thorium_message_cache... cache_miss_rate %.4f cache_hit_rate %.4f total %d\n",
-                    thorium_actor_script_name(self), thorium_actor_name(self),
+    thorium_actor_log(self,
+                    "thorium_message_cache... cache_miss_rate %.4f cache_hit_rate %.4f total %d\n",
                     cache_miss_rate, cache_hit_rate, total);
 }
