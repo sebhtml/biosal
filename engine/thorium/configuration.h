@@ -4,18 +4,16 @@
 
 #define THORIUM_DEFAULT_EVENT_COUNT 8
 
-#define THORIUM_STRIDE 32
-
 /*
  * Maximum number of messages in a message block.
  */
-#define THORIUM_MESSAGE_BLOCK_MAXIMUM_SIZE THORIUM_STRIDE
+#define THORIUM_MESSAGE_BLOCK_MAXIMUM_SIZE THORIUM_DEFAULT_EVENT_COUNT
 
 /*
  * Maximum number of messages received from transport in the
  * main loop of node.
  */
-#define THORIUM_NODE_MAXIMUM_RECEIVED_MESSAGE_COUNT_PER_CALL THORIUM_STRIDE
+#define THORIUM_NODE_MAXIMUM_RECEIVED_MESSAGE_COUNT_PER_CALL THORIUM_DEFAULT_EVENT_COUNT
 
 /*
  * Maximum number of messages pulled from the worker
@@ -24,20 +22,14 @@
  * The number of clean messages to pull at every call must be
  * greater.
  */
-#define THORIUM_NODE_MAXIMUM_PULLED_MESSAGE_COUNT_PER_CALL THORIUM_STRIDE
-#define THORIUM_NODE_MAXIMUM_PULLED_CLEAN_MESSAGE_COUNT_PER_CALL THORIUM_STRIDE
+#define THORIUM_NODE_MAXIMUM_PULLED_MESSAGE_COUNT_PER_CALL THORIUM_DEFAULT_EVENT_COUNT
+#define THORIUM_NODE_MAXIMUM_PULLED_CLEAN_MESSAGE_COUNT_PER_CALL THORIUM_DEFAULT_EVENT_COUNT
 
 /*
  * Maximum number of messages pulled from the inbound message
  * ring in workers.
  */
 #define THORIUM_WORKER_MAXIMUM_RECEIVED_MESSAGE_COUNT_PER_CALL THORIUM_DEFAULT_EVENT_COUNT
-
-/*
- * Maximum number of received message requests to test in
- * transport.
- */
-#define THORIUM_TRANSPORT_MAXIMUM_RECEIVED_MESSAGE_REQUEST_COUNT_PER_CALL THORIUM_DEFAULT_EVENT_COUNT
 
 /*
  * Settings for a distributed system.
