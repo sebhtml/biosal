@@ -81,7 +81,7 @@ void core_timer_stop(struct core_timer *timer)
     timer->stopped = 1;
 
 #ifdef CORE_TIMER_DEBUG
-    printf("TIMER start %" PRIu64 " stop %" PRIu64 "\n", stop, timer->start);
+    fprintf(stderr, "TIMER start %" PRIu64 " stop %" PRIu64 "\n", stop, timer->start);
 #endif
 
 }
@@ -202,19 +202,19 @@ void core_timer_print_with_description(struct core_timer *timer, const char *des
     float float_seconds;
     int minutes;
 
-    printf("TIMER [%s] ", description);
+    fprintf(stderr, "TIMER [%s] ", description);
 
     nanoseconds = core_timer_get_elapsed_nanoseconds(timer);
 
     if (!timer->started || !timer->stopped) {
-        printf("timer error\n");
+        fprintf(stderr, "timer error\n");
         return;
     }
 
     /* Show nanoseconds
      */
     if (nanoseconds < NANOSECONDS_IN_MICROSECOND) {
-        printf("%d nanoseconds\n",
+        fprintf(stderr, "%d nanoseconds\n",
                     (int)nanoseconds);
 
     /* Show microseconds
@@ -222,7 +222,7 @@ void core_timer_print_with_description(struct core_timer *timer, const char *des
     } else if (nanoseconds < NANOSECONDS_IN_MILLISECOND) {
         microseconds = (0.0 + nanoseconds) / NANOSECONDS_IN_MICROSECOND;
 
-        printf("%f microseconds\n",
+        fprintf(stderr, "%f microseconds\n",
                     microseconds);
 
     /* Show milliseconds
@@ -230,7 +230,7 @@ void core_timer_print_with_description(struct core_timer *timer, const char *des
     } else if (nanoseconds < NANOSECONDS_IN_SECOND) {
         milliseconds = (0.0 + nanoseconds) / NANOSECONDS_IN_MILLISECOND;
 
-        printf("%f milliseconds\n",
+        fprintf(stderr, "%f milliseconds\n",
                     milliseconds);
 
     /* Show minutes and seconds
@@ -250,21 +250,19 @@ void core_timer_print_with_description(struct core_timer *timer, const char *des
         float_seconds -= minutes * SECONDS_IN_MINUTE;
 
         if (minutes != 0) {
-            printf("%d minutes", minutes);
+            fprintf(stderr, "%d minutes", minutes);
         }
 
         if (seconds != 0) {
             if (minutes != 0) {
-                printf(", ");
+                fprintf(stderr, ", ");
             }
 
-            printf("%f seconds", float_seconds);
+            fprintf(stderr, "%f seconds", float_seconds);
         }
 
-        printf("\n");
+        fprintf(stderr, "\n");
     }
-
-    fflush(stdout);
 }
 
 double core_timer_fetch_frequency(struct core_timer *timer)

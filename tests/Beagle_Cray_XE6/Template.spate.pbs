@@ -1,7 +1,7 @@
 #!/bin/bash
 #PBS -N __JOB__
 #PBS -A CI-DEB000002
-#PBS -l walltime=1:00:00
+#PBS -l walltime=3:00:00
 #PBS -l mppwidth=6144
 
 cd $PBS_O_WORKDIR
@@ -12,6 +12,9 @@ export CRAY_MALLOPT_OFF=1
 echo "Commit= __COMMIT__"
 
 aprun -n 256 -N 1 -d 23 -r 1 \
-              __JOB__.__APP__ -threads-per-node 23 -print-thorium-data \
-              -k 43 __SAMPLE__/*.fastq -o __JOB__ > __JOB__.stdout
+              __JOB__.__APP__ -threads-per-node 23 \
+              -print-thorium-data \
+              -k 27 __SAMPLE__/*.fastq \
+              -o __JOB__ \
+             -minimum-coverage 2 \
 

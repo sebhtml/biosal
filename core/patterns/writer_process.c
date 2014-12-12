@@ -22,7 +22,7 @@ void core_writer_process_init(struct thorium_actor *self)
 
     concrete_self->has_file = 0;
 
-    printf("%s/%d is ready to do input/output operations\n",
+    thorium_actor_log(self, "%s/%d is ready to do input/output operations\n",
                     thorium_actor_script_name(self),
                     thorium_actor_name(self));
 }
@@ -55,7 +55,7 @@ void core_writer_process_receive(struct thorium_actor *self, struct thorium_mess
     if (action == ACTION_OPEN) {
 
         if (concrete_self->has_file) {
-            printf("actor error, already open, can not open\n");
+            thorium_actor_log(self, "actor error, already open, can not open\n");
             return;
         }
 
@@ -76,7 +76,7 @@ void core_writer_process_receive(struct thorium_actor *self, struct thorium_mess
     } else if (action == ACTION_CLOSE) {
 
         if (!concrete_self->has_file) {
-            printf("Error, can not close a file that is not open\n");
+            thorium_actor_log(self, "Error, can not close a file that is not open\n");
             return;
         }
 

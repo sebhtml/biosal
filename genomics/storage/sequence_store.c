@@ -60,6 +60,7 @@ void biosal_sequence_store_init(struct thorium_actor *actor)
 {
     struct biosal_sequence_store *concrete_actor;
     int block_size;
+    struct thorium_actor *self = actor;
 
     concrete_actor = thorium_actor_concrete_actor(actor);
 
@@ -76,7 +77,7 @@ void biosal_sequence_store_init(struct thorium_actor *actor)
 
     concrete_actor->required_kmers = NO_USEFUL_VALUE;
 
-    printf("DEBUG sequence store %d is online on node %d\n",
+    thorium_actor_log(self, "DEBUG sequence store %d is online on node %d\n",
                     thorium_actor_name(actor),
                     thorium_actor_node_name(actor));
 #ifdef BIOSAL_SEQUENCE_STORE_DEBUG
@@ -126,6 +127,7 @@ void biosal_sequence_store_destroy(struct thorium_actor *actor)
     struct biosal_sequence_store *concrete_actor;
     struct core_vector_iterator iterator;
     struct biosal_dna_sequence *sequence;
+    struct thorium_actor *self = actor;
 
     concrete_actor = thorium_actor_concrete_actor(actor);
 
@@ -142,7 +144,7 @@ void biosal_sequence_store_destroy(struct thorium_actor *actor)
 
     if (concrete_actor->iterator_started) {
 
-        printf("%s/%d starts iterator for production\n",
+        thorium_actor_log(self, "%s/%d starts iterator for production\n",
                         thorium_actor_script_name(actor),
                         thorium_actor_name(actor));
 
@@ -158,6 +160,7 @@ void biosal_sequence_store_receive(struct thorium_actor *actor, struct thorium_m
     int tag;
     int source;
     struct biosal_sequence_store *concrete_actor;
+    struct thorium_actor *self = actor;
 
     if (thorium_actor_take_action(actor, message)) {
         return;
@@ -177,7 +180,7 @@ void biosal_sequence_store_receive(struct thorium_actor *actor, struct thorium_m
 
     } else if (tag == ACTION_ASK_TO_STOP) {
 
-        printf("%s/%d %d dies\n",
+        thorium_actor_log(self, "%s/%d %d dies\n",
                         thorium_actor_script_name(actor),
                         thorium_actor_name(actor),
                         thorium_actor_name(actor));
@@ -193,7 +196,7 @@ void biosal_sequence_store_receive(struct thorium_actor *actor, struct thorium_m
     } else if (tag == ACTION_RESET) {
 
 #if 0
-        printf("RESET\n");
+        thorium_actor_log(self, "RESET\n");
 #endif
 
         /* Destroy iterator if it is started.
@@ -267,7 +270,7 @@ void biosal_sequence_store_push_sequence_data_block(struct thorium_actor *actor,
 
 #ifdef BIOSAL_SEQUENCE_STORE_DEBUG
     count = thorium_message_count(message);
-    printf("DEBUG store receives ACTION_PUSH_SEQUENCE_DATA_BLOCK %d bytes\n",
+    thorium_actor_log(self, "DEBUG store receives ACTION_PUSH_SEQUENCE_DATA_BLOCK %d bytes\n",
                     count);
 #endif
 
@@ -276,7 +279,7 @@ void biosal_sequence_store_push_sequence_data_block(struct thorium_actor *actor,
                     &concrete_actor->codec);
 
 #ifdef BIOSAL_SEQUENCE_STORE_DEBUG
-    printf("DEBUG store %d biosal_sequence_store_receive command:\n",
+    thorium_actor_log(self, "DEBUG store %d biosal_sequence_store_receive command:\n",
                     thorium_actor_name(actor));
 
     biosal_input_command_print(&payload);
@@ -289,7 +292,7 @@ void biosal_sequence_store_push_sequence_data_block(struct thorium_actor *actor,
     new_entries = biosal_input_command_entries(&payload);
 
 #ifdef BIOSAL_SEQUENCE_STORE_DEBUG
-    printf("DEBUG store %d biosal_sequence_store_push_sequence_data_block entries %d\n",
+    thorium_actor_log(self, "DEBUG store %d biosal_sequence_store_push_sequence_data_block entries %d\n",
                     thorium_actor_name(actor),
                     (int)core_vector_size(new_entries));
 #endif
@@ -314,12 +317,12 @@ void biosal_sequence_store_push_sequence_data_block(struct thorium_actor *actor,
 
 #ifdef BIOSAL_SEQUENCE_STORE_DEBUG
         if (i == 0) {
-            printf("DEBUG first in payload\n");
-            printf("DEBUG-thor i %d bucket_in_store %p bucket_in_message %p\n",
+            thorium_actor_log(self, "DEBUG first in payload\n");
+            thorium_actor_log(self, "DEBUG-thor i %d bucket_in_store %p bucket_in_message %p\n",
                         (int)i,
                         (void *)bucket_in_store, (void *)bucket_in_message);
 
-            printf("DEBUG i %d first %d size %d store size %d\n",
+            thorium_actor_log(self, "DEBUG i %d first %d size %d store size %d\n",
                    (int)i, (int)first,
                    (int)core_vector_size(new_entries),
                    (int)core_vector_size(&concrete_actor->sequences));
@@ -334,7 +337,7 @@ void biosal_sequence_store_push_sequence_data_block(struct thorium_actor *actor,
         concrete_actor->received++;
 
 #ifdef BIOSAL_SEQUENCE_STORE_DEBUG
-        printf("%" PRId64 "/%" PRId64 "\n",
+        thorium_actor_log(self, "%" PRId64 "/%" PRId64 "\n",
                         concrete_actor->received,
                         core_vector_size(&concrete_actor->sequences));
 #endif
@@ -348,7 +351,7 @@ void biosal_sequence_store_push_sequence_data_block(struct thorium_actor *actor,
     }
 
 #ifdef BIOSAL_SEQUENCE_STORE_DEBUG
-    printf("DONE.\n");
+    thorium_actor_log(self, "DONE.\n");
 #endif
 
     /* The DNA sequences are kept and are not
@@ -370,6 +373,7 @@ void biosal_sequence_store_reserve(struct thorium_actor *actor, struct thorium_m
     struct biosal_dna_sequence *dna_sequence;
     struct biosal_sequence_store *concrete_actor;
     int source;
+    struct thorium_actor *self = actor;
 
     source = thorium_message_source(message);
     buffer = thorium_message_buffer(message);
@@ -379,14 +383,14 @@ void biosal_sequence_store_reserve(struct thorium_actor *actor, struct thorium_m
     concrete_actor->expected = amount;
 
     concrete_actor->reservation_producer = source;
-    printf("DEBUG store %d reserves %" PRIu64 " buckets\n",
+    thorium_actor_log(self, "DEBUG store %d reserves %" PRIu64 " buckets\n",
                     thorium_actor_name(actor),
                     amount);
 
     core_vector_resize(&concrete_actor->sequences, amount);
 
 #ifdef BIOSAL_SEQUENCE_STORE_DEBUG
-    printf("DEBUG store %d now has %d buckets\n",
+    thorium_actor_log(self, "DEBUG store %d now has %d buckets\n",
                     thorium_actor_name(actor),
                     (int)core_vector_size(&concrete_actor->sequences));
 #endif
@@ -412,10 +416,11 @@ void biosal_sequence_store_reserve(struct thorium_actor *actor, struct thorium_m
 void biosal_sequence_store_show_progress(struct thorium_actor *actor, struct thorium_message *message)
 {
     struct biosal_sequence_store *concrete_actor;
+    struct thorium_actor *self = actor;
 
     concrete_actor = thorium_actor_concrete_actor(actor);
 
-    printf("sequence store %d has %" PRId64 "/%" PRId64 " entries\n",
+    thorium_actor_log(self, "sequence store %d has %" PRId64 "/%" PRId64 " entries\n",
                     thorium_actor_name(actor),
                     concrete_actor->received,
                     core_vector_size(&concrete_actor->sequences));
@@ -463,7 +468,7 @@ void biosal_sequence_store_ask(struct thorium_actor *self, struct thorium_messag
     concrete_actor = thorium_actor_concrete_actor(self);
 
     if (concrete_actor->received != concrete_actor->expected) {
-        printf("Error: sequence store %d is not ready %" PRIu64 "/%" PRIu64 " (reservation producer %d)\n",
+        thorium_actor_log(self, "Error: sequence store %d is not ready %" PRIu64 "/%" PRIu64 " (reservation producer %d)\n",
                         name,
                         concrete_actor->received, concrete_actor->expected,
                         concrete_actor->reservation_producer);
@@ -487,7 +492,7 @@ void biosal_sequence_store_ask(struct thorium_actor *self, struct thorium_messag
 
         core_vector_iterator_next(&concrete_actor->iterator, (void **)&sequence);
 
-        /*printf("ADDING %d\n", i);*/
+        /*thorium_actor_log(self, "ADDING %d\n", i);*/
         biosal_input_command_add_entry(&payload, sequence, &concrete_actor->codec,
                         thorium_actor_get_ephemeral_memory(self));
 
@@ -497,7 +502,7 @@ void biosal_sequence_store_ask(struct thorium_actor *self, struct thorium_messag
         kmers += sequence_kmers;
 
         /*
-        printf("Yielded %d kmers... %d/%d\n",
+        thorium_actor_log(self, "Yielded %d kmers... %d/%d\n",
                         sequence_kmers, kmers, required_kmers);
                         */
     }
@@ -518,7 +523,7 @@ void biosal_sequence_store_ask(struct thorium_actor *self, struct thorium_messag
         thorium_message_destroy(&new_message);
 
 #ifdef BIOSAL_SEQUENCE_STORE_DEBUG
-        printf("store/%d fulfill order\n", name);
+        thorium_actor_log(self, "store/%d fulfill order\n", name);
 #endif
 
         concrete_actor->left -= entry_count;
@@ -526,7 +531,7 @@ void biosal_sequence_store_ask(struct thorium_actor *self, struct thorium_messag
     } else {
         thorium_actor_send_reply_empty(self, ACTION_SEQUENCE_STORE_ASK_REPLY);
 #ifdef BIOSAL_SEQUENCE_STORE_DEBUG
-        printf("store/%d can not fulfill order\n", name);
+        thorium_actor_log(self, "store/%d can not fulfill order\n", name);
 #endif
     }
 
@@ -549,7 +554,7 @@ void biosal_sequence_store_ask(struct thorium_actor *self, struct thorium_messag
             completion = (concrete_actor->left + 0.0) / concrete_actor->received;
         }
 
-        printf("sequence store %d has %" PRId64 "/%" PRId64 " (%.2f) entries left to produce\n",
+        thorium_actor_log(self, "sequence store %d has %" PRId64 "/%" PRId64 " (%.2f) entries left to produce\n",
                         name,
                         concrete_actor->left, concrete_actor->received,
                         completion);
@@ -595,6 +600,7 @@ int biosal_sequence_store_get_required_kmers(struct thorium_actor *actor, struct
     int position;
     int count;
     int production_block_size;
+    struct thorium_actor *self = actor;
 
     count = thorium_message_count(message);
     concrete_actor = thorium_actor_concrete_actor(actor);
@@ -639,7 +645,7 @@ int biosal_sequence_store_get_required_kmers(struct thorium_actor *actor, struct
     }
 
     if (kmer_length <= 0) {
-        printf("%s/%d Error, invalid kmer length: %d\n",
+        thorium_actor_log(self, "%s/%d Error, invalid kmer length: %d\n",
                         thorium_actor_script_name(actor),
                         thorium_actor_name(actor),
                         kmer_length);
@@ -672,7 +678,7 @@ int biosal_sequence_store_get_required_kmers(struct thorium_actor *actor, struct
 
     concrete_actor->required_kmers = minimum_end_buffer_size_in_ascii_kmers * total_kmer_stores;
 
-    printf("INFO KmerLength %d Workers: %d Consumers: %d BufferSizeForConsumer: %d BufferSizeForWorker: %zu required_kmers %d\n",
+    thorium_actor_log(self, "INFO KmerLength %d Workers: %d Consumers: %d BufferSizeForConsumer: %d BufferSizeForWorker: %zu required_kmers %d\n",
                     kmer_length,
                     workers,
                     total_kmer_stores,

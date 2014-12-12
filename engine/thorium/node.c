@@ -205,6 +205,8 @@ int thorium_node_check_clutter(struct thorium_node *self,
                 struct thorium_message *message);
 void thorium_node_print_information(struct thorium_node *self);
 
+void thorium_node_change_log_level(struct thorium_node *self, int actor_name);
+
 void thorium_node_init(struct thorium_node *node, int *argc, char ***argv)
 {
     int i;
@@ -223,7 +225,9 @@ void thorium_node_init(struct thorium_node *node, int *argc, char ***argv)
     node->tick = 0;
     node->last_tick = 0;
 
+#ifdef THORIUM_NODE_USE_WATCHDOG_ON_OUTBOUND_RING
     node->cached_outbound_ring_size = 0;
+#endif
 
 #ifdef THORIUM_USE_CUSTOM_TRACEPOINTS
     /*
@@ -850,6 +854,8 @@ int thorium_node_spawn(struct thorium_node *node, int script)
 #endif
 
     core_spinlock_unlock(&node->spawn_and_death_lock);
+
+    thorium_node_change_log_level(node, name);
 
     return name;
 }
@@ -1976,6 +1982,7 @@ static void thorium_node_handle_signal(int signal)
     core_tracer_print_stack_backtrace();
 
     fflush(stdout);
+    fflush(stderr);
 
     /* remove handler
      * \see http://stackoverflow.com/questions/9302464/how-do-i-remove-a-signal-handler
@@ -2500,7 +2507,9 @@ static void thorium_node_send_messages(struct thorium_node *node)
 
     if (i) {
         node->last_transport_event_time = time(NULL);
+#ifdef THORIUM_NODE_USE_WATCHDOG_ON_OUTBOUND_RING
         node->cached_outbound_ring_size = thorium_worker_pool_outbound_ring_size(&node->worker_pool);
+#endif
     }
 
     tracepoint(thorium_node, send_messages_exit, node->name, node->tick);
@@ -2945,7 +2954,11 @@ static void thorium_node_receive_messages(struct thorium_node *node)
     i = 0;
     count = THORIUM_NODE_MAXIMUM_RECEIVED_MESSAGE_COUNT_PER_CALL;
 
-    while ((i < count || node->cached_outbound_ring_size < 16)
+    while ((i < count
+#ifdef THORIUM_NODE_USE_WATCHDOG_ON_OUTBOUND_RING
+                            || node->cached_outbound_ring_size < 16
+#endif
+                            )
                 && thorium_transport_receive(&node->transport, &message)) {
 
         tracepoint(thorium_node, receive_message, node->name, node->tick);
@@ -3197,4 +3210,62 @@ void thorium_node_print_information(struct thorium_node *self)
 
     self->last_report_time = current_time;
     self->last_tick = self->tick;
+}
+
+void thorium_node_change_log_level(struct thorium_node *self, int actor_name)
+{
+    struct thorium_actor *actor;
+    struct thorium_script *actor_script;
+    const char *script_name;
+    int i;
+    const char *argument;
+    const char *script_argument;
+
+    actor = thorium_node_get_actor_from_name(self, actor_name);
+
+    if (actor == NULL) {
+        return;
+    }
+
+    actor_script = thorium_actor_get_script(actor);
+
+    CORE_DEBUGGER_ASSERT(actor_script != NULL);
+    script_name = thorium_script_name(actor_script);
+
+    for (i = 0; i < self->argc - 1; ++i) {
+        argument = self->argv[i];
+        script_argument = self->argv[i + 1];
+
+        if (strcmp(script_argument, "all") == 0
+                            || strcmp(script_argument, script_name) == 0) {
+
+            if (strcmp(argument, "-enable-actor-log") == 0) {
+
+                /*
+                 * Examples:
+                 *
+                 * -enable-actor-log all
+                 *  or
+                 * -enable-actor-log biosal_assembly_graph_store
+                 */
+                thorium_actor_set_flag(actor, LOG_LEVEL_DEFAULT);
+
+            } else if (strcmp(argument, "-disable-actor-log") == 0) {
+
+                /*
+                 * Examples:
+                 *
+                 * -enable-actor-log all
+                 *  or
+                 * -enable-actor-log biosal_assembly_graph_store
+                 */
+                thorium_actor_clear_flag(actor, LOG_LEVEL_DEFAULT);
+            }
+
+            /*
+             * The script was matched already.
+             * We could do a break, but we want to process all arguments anyway.
+             */
+        }
+    }
 }

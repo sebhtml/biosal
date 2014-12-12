@@ -44,7 +44,9 @@ int biosal_command_get_kmer_length(int argc, char **argv)
         kmer_length = provided_value;
     }
 
+    /*
     printf("DEBUG kmer_length %d\n", kmer_length);
+    */
 
     return kmer_length;
 }
@@ -54,6 +56,10 @@ int biosal_command_get_minimum_coverage(int argc, char **argv)
     int value;
 
     value = BIOSAL_DEFAULT_MINIMUM_COVERAGE;
+
+    if (core_command_has_argument(argc, argv, "-minimum-coverage")) {
+        value = core_command_get_argument_value_int(argc, argv, "-minimum-coverage");
+    }
 
     return value;
 }

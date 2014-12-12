@@ -29,6 +29,8 @@
 #include <core/system/memory_pool.h>
 #include <core/system/counter.h>
 
+#include <core/helpers/bitmap.h>
+
 /*
  * For priority levels.
  */

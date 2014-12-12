@@ -226,7 +226,7 @@ void biosal_assembly_graph_builder_ask_to_stop(struct thorium_actor *self, struc
     name = thorium_actor_name(self);
     concrete_self = thorium_actor_concrete_actor(self);
 
-    printf("builder/%d dies\n", name);
+    thorium_actor_log(self, "builder/%d dies\n", name);
 
     thorium_actor_ask_to_stop(self, message);
 
@@ -259,7 +259,7 @@ void biosal_assembly_graph_builder_start(struct thorium_actor *self, struct thor
 
     core_vector_unpack(&concrete_self->spawners, buffer);
 
-    printf("%s/%d received a urgent request from source %d to build an assembly graph using %d sequence stores (producers) and %d spawners\n",
+    thorium_actor_log(self, "%s/%d received a urgent request from source %d to build an assembly graph using %d sequence stores (producers) and %d spawners\n",
                     thorium_actor_script_name(self),
                     thorium_actor_name(self),
                     source,
@@ -321,7 +321,7 @@ void biosal_assembly_graph_builder_spawn_reply(struct thorium_actor *self, struc
     struct biosal_assembly_graph_builder *concrete_self;
 
     concrete_self = thorium_actor_concrete_actor(self);
-    printf("DEBUG biosal_assembly_graph_builder_spawn_reply\n");
+    thorium_actor_log(self, "DEBUG biosal_assembly_graph_builder_spawn_reply\n");
 
     /*
      * Configure the manager for block classifiers
@@ -358,7 +358,7 @@ void biosal_assembly_graph_builder_spawn_reply(struct thorium_actor *self, struc
 
     } else {
 
-        printf("Warning: unknown state when receiveing ACTION_SPAWN_REPLY\n");
+        thorium_actor_log(self, "Warning: unknown state when receiveing ACTION_SPAWN_REPLY\n");
     }
 }
 
@@ -433,7 +433,7 @@ void biosal_assembly_graph_builder_start_reply_store_manager(struct thorium_acto
 
     core_vector_unpack(&concrete_self->graph_stores, buffer);
 
-    printf("%s/%d has %d graph stores for assembly\n",
+    thorium_actor_log(self, "%s/%d has %d graph stores for assembly\n",
                     thorium_actor_script_name(self),
                     thorium_actor_name(self),
                     (int)core_vector_size(&concrete_self->graph_stores));
@@ -472,7 +472,7 @@ void biosal_assembly_graph_builder_spawn_reply_window_manager(struct thorium_act
 
     thorium_message_unpack_int(message, 0, &concrete_self->manager_for_windows);
 
-    printf("%s/%d says that the manager for windows is %d\n",
+    thorium_actor_log(self, "%s/%d says that the manager for windows is %d\n",
                     thorium_actor_script_name(self),
                     thorium_actor_name(self),
                     concrete_self->manager_for_windows);
@@ -502,7 +502,7 @@ void biosal_assembly_graph_builder_set_producers(struct thorium_actor *self, str
 
     buffer = thorium_message_buffer(message);
 
-    printf("%s/%d received a %d sequence stores from source %d\n",
+    thorium_actor_log(self, "%s/%d received a %d sequence stores from source %d\n",
                     thorium_actor_script_name(self),
                     thorium_actor_name(self),
                     (int)core_vector_size(&concrete_self->sequence_stores),
@@ -544,7 +544,7 @@ void biosal_assembly_graph_builder_start_reply_window_manager(struct thorium_act
                     biosal_assembly_graph_builder_set_consumer_reply_windows,
                     &concrete_self->sliding_windows);
 
-    printf("%s/%d has %d sliding windows for assembly\n",
+    thorium_actor_log(self, "%s/%d has %d sliding windows for assembly\n",
                     thorium_actor_script_name(self),
                     thorium_actor_name(self),
                     (int)core_vector_size(&concrete_self->sliding_windows));
@@ -572,7 +572,7 @@ void biosal_assembly_graph_builder_start_reply_classifier_manager(struct thorium
     buffer = thorium_message_buffer(message);
     core_vector_unpack(&concrete_self->block_classifiers, buffer);
 
-    printf("%s/%d has %d block classifiers for assembly\n",
+    thorium_actor_log(self, "%s/%d has %d block classifiers for assembly\n",
                     thorium_actor_script_name(self),
                     thorium_actor_name(self),
                     (int)core_vector_size(&concrete_self->block_classifiers));
@@ -595,11 +595,11 @@ void biosal_assembly_graph_builder_configure(struct thorium_actor *self)
     concrete_self->kmer_length = biosal_assembly_graph_builder_get_kmer_length(self);
 
 #if 0
-    printf("EXAMINE: before configuring kmer length\n");
+    thorium_actor_log(self, "EXAMINE: before configuring kmer length\n");
     thorium_actor_print(self);
 #endif
 
-    printf("%s/%d configures the kmer length (%d) for the actor computation\n",
+    thorium_actor_log(self, "%s/%d configures the kmer length (%d) for the actor computation\n",
                     thorium_actor_script_name(self),
                     thorium_actor_name(self),
                     concrete_self->kmer_length);
@@ -620,7 +620,7 @@ void biosal_assembly_graph_builder_configure(struct thorium_actor *self)
     /*
      * There will be a response for this.
      */
-    printf("EXAMINE: after configuring kmer length\n");
+    thorium_actor_log(self, "EXAMINE: after configuring kmer length\n");
     thorium_actor_print(self);
 #endif
 }
@@ -641,7 +641,7 @@ void biosal_assembly_graph_builder_set_kmer_reply(struct thorium_actor *self, st
     if (concrete_self->actors_with_kmer_length % 100 == 0) {
 
 #ifdef EXAMINE_GRAPH_BUILDER
-        printf("EXAMINE: progress SET_KMER_LENGTH %d/%d\n",
+        thorium_actor_log(self, "EXAMINE: progress SET_KMER_LENGTH %d/%d\n",
                         concrete_self->actors_with_kmer_length,
                         expected);
         thorium_actor_print(self);
@@ -653,13 +653,13 @@ void biosal_assembly_graph_builder_set_kmer_reply(struct thorium_actor *self, st
      */
     if (concrete_self->actors_with_kmer_length == expected) {
 
-        printf("EXAMINE: configured kmer length\n");
+        thorium_actor_log(self, "EXAMINE: configured kmer length\n");
 
 #if 0
         thorium_actor_print(self);
 #endif
 
-        printf("%s/%d configured (%d actors) the kmer length value for sliding windows, block classifiers and graph stores\n",
+        thorium_actor_log(self, "%s/%d configured (%d actors) the kmer length value for sliding windows, block classifiers and graph stores\n",
                         thorium_actor_script_name(self),
                         thorium_actor_name(self),
                         expected);
@@ -687,12 +687,12 @@ void biosal_assembly_graph_builder_connect_actors(struct thorium_actor *self)
      * sequence store ===> sliding window ===> block classifier ===> graph store
      */
 
-    printf("%s/%d connects actors\n",
+    thorium_actor_log(self, "%s/%d connects actors\n",
             thorium_actor_script_name(self),
             thorium_actor_name(self));
 
 #ifdef EXAMINE_GRAPH_BUILDER
-    printf("EXAMINE: connecting actors\n");
+    thorium_actor_log(self, "EXAMINE: connecting actors\n");
     thorium_actor_print(self);
 #endif
 
@@ -710,7 +710,7 @@ void biosal_assembly_graph_builder_connect_actors(struct thorium_actor *self)
     }
 
 #ifdef EXAMINE_GRAPH_BUILDER
-    printf("EXAMINE: after sending producers for work stealing\n");
+    thorium_actor_log(self, "EXAMINE: after sending producers for work stealing\n");
     thorium_actor_print(self);
 #endif
 
@@ -729,20 +729,20 @@ void biosal_assembly_graph_builder_connect_actors(struct thorium_actor *self)
         thorium_actor_send_int(self, producer, ACTION_SET_CONSUMER,
                         consumer);
 
-        printf("DEBUG neural LINK %d -> %d\n",
+        thorium_actor_log(self, "DEBUG neural LINK %d -> %d\n",
                         producer, consumer);
 
         /*
          * set the consumers for each classifier
          */
 
-        printf("DEBUG sending %d store names to classifier %d\n",
+        thorium_actor_log(self, "DEBUG sending %d store names to classifier %d\n",
                         (int)core_vector_size(&concrete_self->graph_stores),
                         consumer);
     }
 
 #ifdef EXAMINE_GRAPH_BUILDER
-    printf("EXAMINE: before SET_CONSUMERS\n");
+    thorium_actor_log(self, "EXAMINE: before SET_CONSUMERS\n");
     thorium_actor_print(self);
 #endif
 
@@ -753,7 +753,7 @@ void biosal_assembly_graph_builder_connect_actors(struct thorium_actor *self)
     core_vector_destroy(&producers_for_work_stealing);
 
 #ifdef EXAMINE_GRAPH_BUILDER
-    printf("EXAMINE: after connecting actors\n");
+    thorium_actor_log(self, "EXAMINE: after connecting actors\n");
     thorium_actor_print(self);
 #endif
 }
@@ -788,7 +788,7 @@ void biosal_assembly_graph_builder_set_consumer_reply_windows(struct thorium_act
     ++concrete_self->configured_sliding_windows;
 
 #ifdef BIOSAL_ASSEMBLY_GRAPH_BUILDER_DEBUG
-    printf("DEBUG windows UP %d\n",
+    thorium_actor_log(self, "DEBUG windows UP %d\n",
         concrete_self->configured_sliding_windows);
 #endif
 
@@ -814,12 +814,12 @@ void biosal_assembly_graph_builder_verify(struct thorium_actor *self)
         return;
     }
 
-    printf("%s/%d is ready to build the graph\n",
+    thorium_actor_log(self, "%s/%d is ready to build the graph\n",
             thorium_actor_script_name(self),
             thorium_actor_name(self));
 
 #ifdef EXAMINE_GRAPH_BUILDER
-    printf("EXAMINE: ready to build\n");
+    thorium_actor_log(self, "EXAMINE: ready to build\n");
     thorium_actor_print(self);
 #endif
 
@@ -831,7 +831,7 @@ void biosal_assembly_graph_builder_verify(struct thorium_actor *self)
         producer = core_vector_at_as_int(&concrete_self->sequence_stores, i);
         consumer = core_vector_at_as_int(&concrete_self->sliding_windows, i);
 
-        printf("CONFIGURE neural LINK store %d -> window %d\n",
+        thorium_actor_log(self, "CONFIGURE neural LINK store %d -> window %d\n",
                         producer, consumer);
 
         thorium_actor_send_int(self, consumer, ACTION_SET_PRODUCER,
@@ -847,7 +847,7 @@ void biosal_assembly_graph_builder_set_consumers_reply(struct thorium_actor *sel
     ++concrete_self->configured_block_classifiers;
 
 #ifdef BIOSAL_ASSEMBLY_GRAPH_BUILDER_DEBUG
-    printf("DEBUG classifiers UP %d\n", concrete_self->configured_block_classifiers);
+    thorium_actor_log(self, "DEBUG classifiers UP %d\n", concrete_self->configured_block_classifiers);
 #endif
 
     biosal_assembly_graph_builder_verify(self);
@@ -938,7 +938,7 @@ void biosal_assembly_graph_builder_notify_reply(struct thorium_actor *self, stru
      */
     if (concrete_self->notified_windows == core_vector_size(&concrete_self->sliding_windows)) {
 
-        printf("%s/%d : %" PRIu64 " kmers were generated during the actor computation.\n",
+        thorium_actor_log(self, "%s/%d : %" PRIu64 " kmers were generated during the actor computation.\n",
             thorium_actor_script_name(self),
             thorium_actor_name(self),
             concrete_self->total_kmer_count);
@@ -981,7 +981,7 @@ void biosal_assembly_graph_builder_control_complexity(struct thorium_actor *self
     thorium_actor_send_range_empty(self, &concrete_self->graph_stores,
                     ACTION_STORE_GET_ENTRY_COUNT);
 
-    printf("debug biosal_assembly_graph_builder_control_complexity %d graph stores\n",
+    thorium_actor_log(self, "debug biosal_assembly_graph_builder_control_complexity %d graph stores\n",
                     (int)core_vector_size(&concrete_self->graph_stores));
 }
 
@@ -1003,7 +1003,7 @@ void biosal_assembly_graph_builder_get_entry_count_reply(struct thorium_actor *s
                     || concrete_self->synchronized_graph_stores ==
                     (int)core_vector_size(&concrete_self->graph_stores)) {
 
-        printf("synchronized_graph_stores %d/%d %" PRIu64 "/%" PRIu64 "\n",
+        thorium_actor_log(self, "synchronized_graph_stores %d/%d %" PRIu64 "/%" PRIu64 "\n",
                     concrete_self->synchronized_graph_stores,
                     (int)core_vector_size(&concrete_self->graph_stores),
                     concrete_self->actual_kmer_count,
@@ -1012,13 +1012,13 @@ void biosal_assembly_graph_builder_get_entry_count_reply(struct thorium_actor *s
 
     if (concrete_self->synchronized_graph_stores == core_vector_size(&concrete_self->graph_stores)) {
 
-        printf("graph store synchronization: actual_kmer_count %" PRIu64 " total_kmer_count %" PRIu64 "\n",
+        thorium_actor_log(self, "graph store synchronization: actual_kmer_count %" PRIu64 " total_kmer_count %" PRIu64 "\n",
                         concrete_self->actual_kmer_count,
                         concrete_self->total_kmer_count);
 
         if (concrete_self->actual_kmer_count == concrete_self->total_kmer_count) {
 
-            printf("%s/%d synchronized with %d graph stores\n",
+            thorium_actor_log(self, "%s/%d synchronized with %d graph stores\n",
                             thorium_actor_script_name(self),
                             thorium_actor_name(self),
                             (int)core_vector_size(&concrete_self->graph_stores));
@@ -1035,7 +1035,7 @@ void biosal_assembly_graph_builder_get_entry_count_reply(struct thorium_actor *s
              * Otherwise, there are still some messages in transit.
              */
 
-            printf("got mismatch, will try again\n");
+            thorium_actor_log(self, "got mismatch, will try again\n");
 
             thorium_actor_send_to_self_empty(self, ACTION_ASSEMBLY_GRAPH_BUILDER_CONTROL_COMPLEXITY);
         }
@@ -1230,7 +1230,7 @@ void biosal_assembly_graph_builder_set_kmer_reply_arcs(struct thorium_actor *sel
     core_vector_set_memory_pool(&producers_for_work_stealing,
                 ephemeral_memory);
 
-    printf("%s/%d configured the kmer length for arc actors\n",
+    thorium_actor_log(self, "%s/%d configured the kmer length for arc actors\n",
                     thorium_actor_script_name(self),
                     thorium_actor_name(self));
 
@@ -1332,7 +1332,7 @@ void biosal_assembly_graph_builder_configure_arc_actors(struct thorium_actor *se
 
     if (concrete_self->configured_actors_for_arcs % 1000 == 0
                     || concrete_self->configured_actors_for_arcs == expected) {
-        printf("PROGRESS ARC configuration %d/%d %d %d %d\n",
+        thorium_actor_log(self, "PROGRESS ARC configuration %d/%d %d %d %d\n",
                     concrete_self->configured_actors_for_arcs,
                     expected,
                     (int)core_vector_size(&concrete_self->arc_kernels),
@@ -1344,7 +1344,7 @@ void biosal_assembly_graph_builder_configure_arc_actors(struct thorium_actor *se
         return;
     }
 
-    printf("%s/%d configured the neural links for arc actors\n",
+    thorium_actor_log(self, "%s/%d configured the neural links for arc actors\n",
                     thorium_actor_script_name(self),
                     thorium_actor_name(self));
 
@@ -1414,7 +1414,7 @@ void biosal_assembly_graph_builder_notify_reply_arc_kernels(struct thorium_actor
 
     if (concrete_self->completed_arc_kernels == expected) {
 
-        printf("%s/%d %" PRIu64 " arcs were extracted from raw data by arc actors\n",
+        thorium_actor_log(self, "%s/%d %" PRIu64 " arcs were extracted from raw data by arc actors\n",
                         thorium_actor_script_name(self),
                         thorium_actor_name(self),
                         concrete_self->expected_arc_count);
@@ -1466,12 +1466,14 @@ void biosal_assembly_graph_builder_get_summary_reply(struct thorium_actor *self,
 
     expected = core_vector_size(&concrete_self->graph_stores);
 
-    printf("PROGRESS %d/%d\n", concrete_self->ready_graph_store_count,
+    thorium_actor_log(self, "PROGRESS %d/%d\n", concrete_self->ready_graph_store_count,
                     expected);
 
     if (concrete_self->ready_graph_store_count == expected) {
 
+            /*
         biosal_assembly_graph_summary_print(&concrete_self->graph_summary);
+        */
 
         /*
          * Write summary file too in XML
@@ -1587,10 +1589,10 @@ void biosal_assembly_graph_builder_get_producers_for_work_stealing(struct thoriu
     probability = 1 - pow(1.0 - probability_of_having_an_alone_actor, 1.0 / actors);
 
 #ifdef DISPLAY_WORK_STEALING_STATISTICS
-    printf("PROBABILITY p of having an actor not selected by anyone %f, given %d actors\n",
+    thorium_actor_log(self, "PROBABILITY p of having an actor not selected by anyone %f, given %d actors\n",
                     probability_of_having_an_alone_actor, actors);
 
-    printf("PROBABILITY p for an actor to not being selected by anyone: %f\n",
+    thorium_actor_log(self, "PROBABILITY p for an actor to not being selected by anyone: %f\n",
                     probability);
 #endif
 
@@ -1602,7 +1604,7 @@ void biosal_assembly_graph_builder_get_producers_for_work_stealing(struct thoriu
 
 #ifdef DISPLAY_WORK_STEALING_STATISTICS
 #endif
-    printf("WORK_STEALING DEBUG victim count is %d\n", victim_count);
+    thorium_actor_log(self, "WORK_STEALING DEBUG victim count is %d\n", victim_count);
 
     /*
      * Algorithm:

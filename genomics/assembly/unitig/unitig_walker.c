@@ -299,7 +299,7 @@ void biosal_unitig_walker_destroy(struct thorium_actor *self)
 
     biosal_unitig_heuristic_destroy(&concrete_self->heuristic);
 
-    printf("DEBUG unitig_walker skipped_at_start_used %d skipped_at_start_not_unitig %d\n",
+    thorium_actor_log(self, "DEBUG unitig_walker skipped_at_start_used %d skipped_at_start_not_unitig %d\n",
                     concrete_self->skipped_at_start_used,
                     concrete_self->skipped_at_start_not_unitig);
 
@@ -374,7 +374,7 @@ void biosal_unitig_walker_receive(struct thorium_actor *self, struct thorium_mes
         biosal_dna_kmer_destroy(&kmer, ephemeral_memory);
 
 #if 0
-        printf("KeyLength %d\n", concrete_self->key_length);
+        thorium_actor_log(self, "KeyLength %d\n", concrete_self->key_length);
 #endif
 
         thorium_actor_send_to_self_empty(self, ACTION_BEGIN);
@@ -407,7 +407,7 @@ void biosal_unitig_walker_begin(struct thorium_actor *self, struct thorium_messa
     store = core_vector_at_as_int(&concrete_self->graph_stores, store_index);
 
 #if 0
-    printf("DEBUG_WALKER BEGIN\n");
+    thorium_actor_log(self, "DEBUG_WALKER BEGIN\n");
 #endif
     /*
      * Get a kmer with the flag
@@ -470,7 +470,7 @@ void biosal_unitig_walker_start(struct thorium_actor *self, struct thorium_messa
 
     thorium_actor_send_to_self_empty(self, ACTION_ENABLE_MULTIPLEXER);
 
-    printf("%s/%d is ready to surf the graph (%d stores => writer/%d)!\n",
+    thorium_actor_log(self, "%s/%d is ready to surf the graph (%d stores => writer/%d)!\n",
                         thorium_actor_script_name(self),
                         thorium_actor_name(self),
                         size, concrete_self->writer_process);
@@ -530,7 +530,7 @@ void biosal_unitig_walker_get_starting_kmer_reply(struct thorium_actor *self, st
                     &concrete_self->memory_pool, &concrete_self->codec);
 
 #ifdef BIOSAL_UNITIG_WALKER_DEBUG
-    printf("%s/%d received starting vertex (%d bytes) from source %d hash %" PRIu64 "\n",
+    thorium_actor_log(self, "%s/%d received starting vertex (%d bytes) from source %d hash %" PRIu64 "\n",
                     thorium_actor_script_name(self),
                     thorium_actor_name(self),
                     count,
@@ -575,7 +575,7 @@ void biosal_unitig_walker_get_starting_kmer_reply(struct thorium_actor *self, st
     /*core_memory_copy(new_buffer + count, &concrete_self->path_index, sizeof(concrete_self->path_index));*/
 
 #if 0
-    printf("ACTION_ASSEMBLY_GET_VERTEX path_index %d\n", concrete_self->path_index);
+    thorium_actor_log(self, "ACTION_ASSEMBLY_GET_VERTEX path_index %d\n", concrete_self->path_index);
 #endif
 
     thorium_message_init(&new_message, ACTION_ASSEMBLY_GET_VERTEX, new_count, new_buffer);
@@ -633,7 +633,7 @@ void biosal_unitig_walker_get_vertex_reply_starting_vertex(struct thorium_actor 
                     &concrete_self->path_index);
 
 #if 0
-    printf("%d DEBUG add status path_index %d PATH_STATUS_IN_PROGRESS_WITHOUT_CHALLENGERS\n",
+    thorium_actor_log(self, "%d DEBUG add status path_index %d PATH_STATUS_IN_PROGRESS_WITHOUT_CHALLENGERS\n",
                     thorium_actor_name(self),
                     concrete_self->path_index);
 #endif
@@ -648,7 +648,7 @@ void biosal_unitig_walker_get_vertex_reply_starting_vertex(struct thorium_actor 
                     &concrete_self->current_vertex);
 
 #ifdef BIOSAL_UNITIG_WALKER_DEBUG
-    printf("Connectivity for starting vertex: \n");
+    thorium_actor_log(self, "Connectivity for starting vertex: \n");
 
     biosal_assembly_vertex_print(&concrete_self->current_vertex);
 #endif
@@ -708,7 +708,7 @@ void biosal_unitig_walker_get_vertices_and_select(struct thorium_actor *self, st
                     child_count) {
 
 #ifdef BIOSAL_UNITIG_WALKER_DEBUG
-        printf("Generate child kmers\n");
+        thorium_actor_log(self, "Generate child kmers\n");
 #endif
         for (i = 0; i < child_count; i++) {
 
@@ -805,11 +805,11 @@ void biosal_unitig_walker_get_vertices_and_select(struct thorium_actor *self, st
         concrete_self->fetch_operation = OPERATION_FETCH_PARENTS;
 
 #if 0
-        printf("DEBUG send %d/%d ACTION_ASSEMBLY_GET_VERTEX Parent ",
+        thorium_actor_log(self, "DEBUG send %d/%d ACTION_ASSEMBLY_GET_VERTEX Parent ",
                         concrete_self->current_parent, parent_count);
         biosal_dna_kmer_print(parent_kmer_to_fetch, concrete_self->kmer_length, &concrete_self->codec,
                 ephemeral_memory);
-        printf("Current: ");
+        thorium_actor_log(self, "Current: ");
         biosal_dna_kmer_print(&concrete_self->current_kmer, concrete_self->kmer_length, &concrete_self->codec,
                     ephemeral_memory);
 #endif
@@ -829,7 +829,7 @@ void biosal_unitig_walker_get_vertices_and_select(struct thorium_actor *self, st
          */
 
 #ifdef BIOSAL_UNITIG_WALKER_DEBUG
-        printf("Got all child vertices (%d)\n",
+        thorium_actor_log(self, "Got all child vertices (%d)\n",
                         size);
 #endif
 
@@ -848,7 +848,7 @@ void biosal_unitig_walker_get_vertices_and_select_reply(struct thorium_actor *se
 
 #if 0
     if (concrete_self->path_index % 1000 == 0) {
-        printf("path_index is %d\n", concrete_self->path_index);
+        thorium_actor_log(self, "path_index is %d\n", concrete_self->path_index);
     }
 #endif
 
@@ -875,7 +875,7 @@ void biosal_unitig_walker_get_vertex_reply(struct thorium_actor *self, struct th
     biosal_assembly_vertex_unpack(&vertex, buffer);
 
 #ifdef BIOSAL_UNITIG_WALKER_DEBUG
-    printf("Vertex after reception: \n");
+    thorium_actor_log(self, "Vertex after reception: \n");
 
     biosal_assembly_vertex_print(&vertex);
 #endif
@@ -909,7 +909,7 @@ void biosal_unitig_walker_get_vertex_reply(struct thorium_actor *self, struct th
 #if 0
         /* ask the other actor about it.
          */
-        printf("actor/%d needs to ask actor/%d for solving BIOSAL_VERTEX_FLAG_USED\n",
+        thorium_actor_log(self, "actor/%d needs to ask actor/%d for solving BIOSAL_VERTEX_FLAG_USED\n",
                         thorium_actor_name(self), actor);
 #endif
 
@@ -928,7 +928,7 @@ void biosal_unitig_walker_get_vertex_reply(struct thorium_actor *self, struct th
         position += sizeof(length);
 
 #ifdef BIOSAL_UNITIG_WALKER_DEBUG
-        printf("%d sends to %d ACTION_NOTIFY last_path_index %d current_path %d length %d\n",
+        thorium_actor_log(self, "%d sends to %d ACTION_NOTIFY last_path_index %d current_path %d length %d\n",
                         thorium_actor_name(self),
                         last_actor, last_path_index,
                         concrete_self->path_index, length);
@@ -988,14 +988,14 @@ void biosal_unitig_walker_notify(struct thorium_actor *self, struct thorium_mess
     bucket = core_map_get(&concrete_self->path_statuses, &path_index);
 
 #ifdef BIOSAL_UNITIG_WALKER_DEBUG
-    printf("DEBUG ACTION_NOTIFY actor/%d (self) has %d (status %d), actor/%d has %d\n",
+    thorium_actor_log(self, "DEBUG ACTION_NOTIFY actor/%d (self) has %d (status %d), actor/%d has %d\n",
                     thorium_actor_name(self),
                     length, bucket->status, source, other_length);
 #endif
 
 #ifdef CORE_DEBUGGER_ASSERT_ENABLED
     if (bucket == NULL) {
-        printf("Error %d received ACTION_NOTIFY, not found path_index= %d (current path_index %d)\n",
+        thorium_actor_log(self, "Error %d received ACTION_NOTIFY, not found path_index= %d (current path_index %d)\n",
                         thorium_actor_name(self),
                         path_index, concrete_self->path_index);
     }
@@ -1020,14 +1020,14 @@ void biosal_unitig_walker_notify(struct thorium_actor *self, struct thorium_mess
          */
 
 #ifdef BIOSAL_UNITIG_WALKER_DEBUG
-        printf("actor %d path %d past victory status %d length_in_nucleotides %d challenger length %d\n", thorium_actor_name(self),
+        thorium_actor_log(self, "actor %d path %d past victory status %d length_in_nucleotides %d challenger length %d\n", thorium_actor_name(self),
                     path_index, bucket->status, bucket->length_in_nucleotides,
                     other_length);
 #endif
 
 #ifdef CORE_DEBUGGER_ASSERT_ENABLED_disabled
         if (!(other_length <= length)) {
-            printf("Error, this is false: %d <= %d\n",
+            thorium_actor_log(self, "Error, this is false: %d <= %d\n",
                             other_length, length);
         }
 #endif
@@ -1063,7 +1063,7 @@ void biosal_unitig_walker_notify(struct thorium_actor *self, struct thorium_mess
             *bucket = PATH_STATUS_VICTORY_WITH_CHALLENGERS;
             */
 #if 0
-            printf("%d victory with length\n", thorium_actor_name(self));
+            thorium_actor_log(self, "%d victory with length\n", thorium_actor_name(self));
 #endif
 
         } else {
@@ -1071,7 +1071,7 @@ void biosal_unitig_walker_notify(struct thorium_actor *self, struct thorium_mess
 
             /*
              *
-            printf("%d DEBUG PATH_STATUS_DEFEAT_WITH_CHALLENGER length %d other_length %d\n",
+            thorium_actor_log(self, "%d DEBUG PATH_STATUS_DEFEAT_WITH_CHALLENGER length %d other_length %d\n",
                             thorium_actor_name(self), length, other_length);
              */
 
@@ -1126,7 +1126,7 @@ void biosal_unitig_walker_notify_reply(struct thorium_actor *self, struct thoriu
         bucket->status = PATH_STATUS_DEFEAT_BY_FAILED_CHALLENGE;
 
 #if 0
-        printf("%d path_index %d source %d current_length %d DEBUG PATH_STATUS_DEFEAT_BY_FAILED_CHALLENGE !!!\n",
+        thorium_actor_log(self, "%d path_index %d source %d current_length %d DEBUG PATH_STATUS_DEFEAT_BY_FAILED_CHALLENGE !!!\n",
                         thorium_actor_name(self),
                         concrete_self->path_index, thorium_message_source(message),
                         biosal_unitig_walker_get_current_length(self));
@@ -1134,7 +1134,7 @@ void biosal_unitig_walker_notify_reply(struct thorium_actor *self, struct thoriu
     }
 
 #ifdef DEBUG_SYNCHRONIZATION
-    printf("DEBUG received ACTION_NOTIFY_REPLY, other_is_longer-> %d\n",
+    thorium_actor_log(self, "DEBUG received ACTION_NOTIFY_REPLY, other_is_longer-> %d\n",
                     authorized_to_continue);
 #endif
 
@@ -1218,7 +1218,7 @@ void biosal_unitig_walker_dump_path(struct thorium_actor *self)
     sequence_length = 0;
 
 #if 0
-    printf("DEBUG dump_path() kmer_length %d left_path_arcs %d right_path_arcs %d\n",
+    thorium_actor_log(self, "DEBUG dump_path() kmer_length %d left_path_arcs %d right_path_arcs %d\n",
                     concrete_self->kmer_length,
                     left_path_arcs, right_path_arcs);
 #endif
@@ -1308,7 +1308,7 @@ void biosal_unitig_walker_dump_path(struct thorium_actor *self)
                     || bucket->status == PATH_STATUS_DEFEAT_WITH_CHALLENGER
                     || bucket->status == PATH_STATUS_DEFEAT_BY_FAILED_CHALLENGE)) {
 
-        printf("Error status %d\n", bucket->status);
+        thorium_actor_log(self, "Error status %d\n", bucket->status);
     }
 #endif
 
@@ -1328,7 +1328,7 @@ void biosal_unitig_walker_dump_path(struct thorium_actor *self)
     if (bucket->status == PATH_STATUS_IN_PROGRESS_WITHOUT_CHALLENGERS) {
 
 #if 0
-        printf("actor/%d path %d sequence_length %d PATH_STATUS_IN_PROGRESS_WITHOUT_CHALLENGERS\n",
+        thorium_actor_log(self, "actor/%d path %d sequence_length %d PATH_STATUS_IN_PROGRESS_WITHOUT_CHALLENGERS\n",
                         thorium_actor_name(self),
                         concrete_self->path_index, sequence_length);
 #endif
@@ -1338,7 +1338,7 @@ void biosal_unitig_walker_dump_path(struct thorium_actor *self)
     } else if (bucket->status == PATH_STATUS_IN_PROGRESS_WITH_CHALLENGERS) {
 
 #if 0
-        printf("actor %d path %d sequence_length %d PATH_STATUS_IN_PROGRESS_WITH_CHALLENGERS\n",
+        thorium_actor_log(self, "actor %d path %d sequence_length %d PATH_STATUS_IN_PROGRESS_WITH_CHALLENGERS\n",
                         thorium_actor_name(self),
                         concrete_self->path_index, sequence_length);
 #endif
@@ -1349,7 +1349,7 @@ void biosal_unitig_walker_dump_path(struct thorium_actor *self)
 #if 0
     if (!victory) {
 
-        printf("%d sequence_length %d not victorious -> %d\n",
+        thorium_actor_log(self, "%d sequence_length %d not victorious -> %d\n",
                         thorium_actor_name(self), sequence_length,
                         *bucket);
     }
@@ -1361,7 +1361,7 @@ void biosal_unitig_walker_dump_path(struct thorium_actor *self)
         bucket->status = PATH_STATUS_DUPLICATE_VERTEX;
 #endif
         if (victory) {
-            printf("DEBUG current_is_circular name= %" PRIu64 " sequence_length= %d victory %d\n",
+            thorium_actor_log(self, "DEBUG current_is_circular name= %" PRIu64 " sequence_length= %d victory %d\n",
                         path_name, sequence_length, victory);
         }
     }
@@ -1370,7 +1370,7 @@ void biosal_unitig_walker_dump_path(struct thorium_actor *self)
              && sequence_length >= MINIMUM_PATH_LENGTH_IN_NUCLEOTIDES) {
 
 #ifdef DEBUG_PATH_NAMES
-    printf("DEBUG path_name= %" PRIu64 " path_length= %d start_position= %d\n",
+    thorium_actor_log(self, "DEBUG path_name= %" PRIu64 " path_length= %d start_position= %d\n",
                     path_name, sequence_length, start_position);
 #endif
 
@@ -1590,7 +1590,7 @@ int biosal_unitig_walker_select_old_version(struct thorium_actor *self, int *out
 
     if (print_status) {
 
-        printf("actor %d path_index %d Notice: can not select, current_coverage %d, selected_path.size %d",
+        thorium_actor_log(self, "actor %d path_index %d Notice: can not select, current_coverage %d, selected_path.size %d",
                         thorium_actor_name(self), concrete_self->path_index,
                         current_coverage,
                         (int)core_vector_size(selected_path));
@@ -1598,54 +1598,54 @@ int biosal_unitig_walker_select_old_version(struct thorium_actor *self, int *out
         /*
          * Print edges.
          */
-        printf(", %d parents: ", parent_size);
+        thorium_actor_log(self, ", %d parents: ", parent_size);
         for (i = 0; i < parent_size; i++) {
 
             code = biosal_assembly_vertex_get_parent(&concrete_self->current_vertex, i);
             coverage = core_vector_at_as_int(&parent_coverage_values, i);
             nucleotide = biosal_dna_codec_get_nucleotide_from_code(code);
 
-            printf(" (%c %d)", nucleotide, coverage);
+            thorium_actor_log(self, " (%c %d)", nucleotide, coverage);
         }
 
-        printf(", %d children: ", child_size);
+        thorium_actor_log(self, ", %d children: ", child_size);
         for (i = 0; i < child_size; i++) {
 
             code = biosal_assembly_vertex_get_child(&concrete_self->current_vertex, i);
             coverage = core_vector_at_as_int(&child_coverage_values, i);
             nucleotide = biosal_dna_codec_get_nucleotide_from_code(code);
 
-            printf(" (%c %d)", nucleotide, coverage);
+            thorium_actor_log(self, " (%c %d)", nucleotide, coverage);
         }
 
-        printf("\n");
+        thorium_actor_log(self, "\n");
 
-        printf("operation= ");
+        thorium_actor_log(self, "operation= ");
 
         if (concrete_self->select_operation == OPERATION_SELECT_CHILD)
-            printf("OPERATION_SELECT_CHILD");
+            thorium_actor_log(self, "OPERATION_SELECT_CHILD");
         else
-            printf("OPERATION_SELECT_PARENT");
+            thorium_actor_log(self, "OPERATION_SELECT_PARENT");
 
-        printf(" status= ");
+        thorium_actor_log(self, " status= ");
 
         CORE_DEBUGGER_ASSERT(status != STATUS_WITH_CHOICE
                         && status != STATUS_NO_STATUS);
 
         if (status == STATUS_NO_EDGE)
-            printf("STATUS_NO_EDGE");
+            thorium_actor_log(self, "STATUS_NO_EDGE");
         else if (status == STATUS_ALREADY_VISITED)
-            printf("STATUS_ALREADY_VISITED");
+            thorium_actor_log(self, "STATUS_ALREADY_VISITED");
         else if (status == STATUS_NOT_REGULAR)
-            printf("STATUS_NOT_REGULAR");
+            thorium_actor_log(self, "STATUS_NOT_REGULAR");
         else if (status == STATUS_IMPOSSIBLE_CHOICE)
-            printf("STATUS_IMPOSSIBLE_CHOICE");
+            thorium_actor_log(self, "STATUS_IMPOSSIBLE_CHOICE");
         else if (status == STATUS_DISAGREEMENT)
-            printf("STATUS_DISAGREEMENT");
+            thorium_actor_log(self, "STATUS_DISAGREEMENT");
         else if (status == STATUS_DEFEAT)
-            printf("STATUS_DEFEAT");
+            thorium_actor_log(self, "STATUS_DEFEAT");
 
-        printf("\n");
+        thorium_actor_log(self, "\n");
     }
 
     core_vector_destroy(&parent_coverage_values);
@@ -1700,7 +1700,7 @@ void biosal_unitig_walker_write(struct thorium_actor *self, uint64_t name,
     required = 0;
 
 #if 0
-    printf("LENGTH=%d\n", sequence_length);
+    thorium_actor_log(self, "LENGTH=%d\n", sequence_length);
 #endif
 
     /*
@@ -1846,14 +1846,17 @@ void biosal_unitig_walker_make_decision(struct thorium_actor *self)
         core_set_add(&concrete_self->visited, key);
 
         #ifdef BIOSAL_UNITIG_WALKER_DEBUG
-        printf("Added (%d)\n",
+        thorium_actor_log(self, "Added (%d)\n",
                         (int)core_set_size(&concrete_self->visited));
 
+#ifdef BIOSAL_UNITIG_WALKER_DEBUG
         biosal_dna_kmer_print(kmer, concrete_self->kmer_length, &concrete_self->codec,
                         ephemeral_memory);
+#endif
+
         #endif
         #ifdef BIOSAL_UNITIG_WALKER_DEBUG
-        printf("coverage= %d, path now has %d arcs\n", coverage,
+        thorium_actor_log(self, "coverage= %d, path now has %d arcs\n", coverage,
                         (int)core_vector_size(&concrete_self->path));
         #endif
 
@@ -2073,10 +2076,10 @@ void biosal_unitig_walker_check_agreement(struct thorium_actor *self, int parent
             if (parent_code != expected_parent_code) {
 
 #if 0
-                printf("DEBUG STATUS_DISAGREEMENT child actual %d expected %d",
+                thorium_actor_log(self, "DEBUG STATUS_DISAGREEMENT child actual %d expected %d",
                         parent_code, expected_parent_code);
-                printf(" MISMATCH");
-                printf("\n");
+                thorium_actor_log(self, " MISMATCH");
+                thorium_actor_log(self, "\n");
 #endif
 
                 *choice = BIOSAL_HEURISTIC_CHOICE_NONE;
@@ -2087,7 +2090,7 @@ void biosal_unitig_walker_check_agreement(struct thorium_actor *self, int parent
         tail_size = 5;
 
         if (right_path_size >= concrete_self->kmer_length + tail_size) {
-            printf("actor/%d Test for STATUS_DISAGREEMENT parent_choice_code= %d child_choice_code= %d right_path_size %d last %d codes: [",
+            thorium_actor_log(self, "actor/%d Test for STATUS_DISAGREEMENT parent_choice_code= %d child_choice_code= %d right_path_size %d last %d codes: [",
                             thorium_actor_name(self),
                             parent_code, child_code, right_path_size, tail_size);
 
@@ -2095,10 +2098,10 @@ void biosal_unitig_walker_check_agreement(struct thorium_actor *self, int parent
                 other_code = core_vector_at_as_int(&concrete_self->right_path,
                                 right_path_size - concrete_self->kmer_length - tail_size + i);
 
-                printf(" %d", other_code);
+                thorium_actor_log(self, " %d", other_code);
             }
 
-            printf("]\n");
+            thorium_actor_log(self, "]\n");
         }
         #endif
 
@@ -2137,10 +2140,10 @@ void biosal_unitig_walker_check_agreement(struct thorium_actor *self, int parent
 
             if (child_code != expected_child_code) {
 #if 0
-                printf("DEBUG STATUS_DISAGREEMENT parent actual %d expected %d",
+                thorium_actor_log(self, "DEBUG STATUS_DISAGREEMENT parent actual %d expected %d",
                         child_code, expected_child_code);
-                printf(" MISMATCH");
-                printf("\n");
+                thorium_actor_log(self, " MISMATCH");
+                thorium_actor_log(self, "\n");
 #endif
 
                 *choice = BIOSAL_HEURISTIC_CHOICE_NONE;
@@ -2180,28 +2183,34 @@ void biosal_unitig_walker_check_usage(struct thorium_actor *self, int *choice, i
     found = core_set_find(&concrete_self->visited, key);
 
 #ifdef BIOSAL_UNITIG_WALKER_DEBUG
-    printf("Find result %d\n", found);
+    thorium_actor_log(self, "Find result %d\n", found);
 
     biosal_dna_kmer_print(kmer, concrete_self->kmer_length, &concrete_self->codec,
                         ephemeral_memory);
 #endif
 
     if (found) {
-        printf("This one was already visited:\n");
+        thorium_actor_log(self, "This one was already visited:\n");
 
+#ifdef BIOSAL_UNITIG_WALKER_DEBUG_CIRCULAR
         biosal_dna_kmer_print(kmer, concrete_self->kmer_length, &concrete_self->codec,
                     ephemeral_memory);
+#endif
 
-        printf("Starting kmer\n");
+        thorium_actor_log(self, "Starting kmer\n");
+
+#ifdef BIOSAL_UNITIG_WALKER_DEBUG_CIRCULAR
         biosal_dna_kmer_print(&concrete_self->starting_kmer, concrete_self->kmer_length, &concrete_self->codec,
                     ephemeral_memory);
+#endif
+
         concrete_self->current_is_circular = 1;
 
         *choice = BIOSAL_HEURISTIC_CHOICE_NONE;
         *status = STATUS_ALREADY_VISITED;
     }
 #ifdef BIOSAL_UNITIG_WALKER_DEBUG
-    printf("Choice is %d\n", choice);
+    thorium_actor_log(self, "Choice is %d\n", choice);
 #endif
 
     core_memory_pool_free(ephemeral_memory, key);
@@ -2322,14 +2331,14 @@ void biosal_unitig_walker_normalize_cycle(struct thorium_actor *self, int length
     /*
      * at this point, do some rotation.
      */
-    printf("DEBUG CYCLE biosal_unitig_walker_normalize_cycle length= %d selected_start= %d selected_is_canonical= %d\n",
+    thorium_actor_log(self, "DEBUG CYCLE biosal_unitig_walker_normalize_cycle length= %d selected_start= %d selected_is_canonical= %d\n",
                     length, selected_start, selected_is_canonical);
 
     biosal_dna_kmer_destroy(&selected_kmer, ephemeral_memory);
 
-    printf("CYCLE before %s\n", sequence);
+    thorium_actor_log(self, "CYCLE before %s\n", sequence);
     core_string_rotate_path(sequence, length, selected_start, concrete_self->kmer_length, ephemeral_memory);
-    printf("CYCLE after %s\n", sequence);
+    thorium_actor_log(self, "CYCLE after %s\n", sequence);
 }
 
 void biosal_unitig_walker_select_strand(struct thorium_actor *self, int length, char *sequence)
@@ -2369,7 +2378,7 @@ void biosal_unitig_walker_select_strand(struct thorium_actor *self, int length, 
 
     if (length == 6936) {
 
-        printf("DEBUG_6936 ends\n");
+        thorium_actor_log(self, "DEBUG_6936 ends\n");
 
         biosal_dna_kmer_print(&kmer1, concrete_self->kmer_length, &concrete_self->codec,
                     ephemeral_memory);

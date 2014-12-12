@@ -112,7 +112,7 @@ void biosal_assembly_block_classifier_init(struct thorium_actor *self)
     thorium_actor_add_action(self, ACTION_AGGREGATE_KERNEL_OUTPUT,
                     biosal_assembly_block_classifier_aggregate_kernel_output);
 
-    printf("assembly_block_classifier %d is online\n", thorium_actor_name(self));
+    thorium_actor_log(self, "assembly_block_classifier %d is online\n", thorium_actor_name(self));
 
     concrete_actor->consumer_count_with_maximum = 0;
 
@@ -159,7 +159,7 @@ void biosal_assembly_block_classifier_destroy(struct thorium_actor *self)
 #endif
     core_memory_pool_destroy(&concrete_actor->persistent_pool);
 
-    printf("ISSUE-819 biosal_assembly_block_classifier dies\n");
+    thorium_actor_log(self, "ISSUE-819 biosal_assembly_block_classifier dies\n");
 }
 
 void biosal_assembly_block_classifier_receive(struct thorium_actor *self, struct thorium_message *message)
@@ -201,7 +201,7 @@ void biosal_assembly_block_classifier_receive(struct thorium_actor *self, struct
         concrete_actor->forced = 1;
 
         /*
-        printf("block classifier, ACTION_AGGREGATOR_FLUSH flush all\n");
+        thorium_actor_log(self, "block classifier, ACTION_AGGREGATOR_FLUSH flush all\n");
         */
 
         biosal_assembly_block_classifier_flush_all(self);
@@ -211,7 +211,7 @@ void biosal_assembly_block_classifier_receive(struct thorium_actor *self, struct
     } else if (tag == ACTION_PUSH_KMER_BLOCK_REPLY) {
 
 #ifdef BIOSAL_ASSEMBLY_BLOCK_CLASSIFIER_DEBUG
-        printf("BEFORE ACTION_PUSH_KMER_BLOCK_REPLY %d\n", concrete_actor->active_messages);
+        thorium_actor_log(self, "BEFORE ACTION_PUSH_KMER_BLOCK_REPLY %d\n", concrete_actor->active_messages);
 #endif
 
         consumer_index_index = core_vector_index_of(&concrete_actor->consumers, &source);
@@ -277,7 +277,7 @@ void biosal_assembly_block_classifier_flush(struct thorium_actor *self, int cust
                     &concrete_actor->codec);
 
     /*
-    printf("%d flushes %d bytes\n",
+    thorium_actor_log(self, "%d flushes %d bytes\n",
                     thorium_actor_name(self), count);
                     */
 
@@ -290,7 +290,7 @@ void biosal_assembly_block_classifier_flush(struct thorium_actor *self, int cust
     }
 
 #ifdef BIOSAL_ASSEMBLY_BLOCK_CLASSIFIER_DEBUG_FLUSHING
-    printf("DEBUG biosal_assembly_block_classifier_flush actual %d threshold %d\n", count,
+    thorium_actor_log(self, "DEBUG biosal_assembly_block_classifier_flush actual %d threshold %d\n", count,
                     threshold);
 #endif
 
@@ -317,7 +317,7 @@ void biosal_assembly_block_classifier_flush(struct thorium_actor *self, int cust
     buffer = NULL;
 
     if (concrete_actor->flushed % 50000 == 0) {
-        printf("assembly_block_classifier %d flushed %d blocks so far\n",
+        thorium_actor_log(self, "assembly_block_classifier %d flushed %d blocks so far\n",
                         thorium_actor_name(self), concrete_actor->flushed);
     }
 
@@ -407,7 +407,7 @@ void biosal_assembly_block_classifier_aggregate_kernel_output(struct thorium_act
     concrete_actor = (struct biosal_assembly_block_classifier *)thorium_actor_concrete_actor(self);
 
     if (core_vector_size(&concrete_actor->consumers) == 0) {
-        printf("Error: classifier %d has no configured buffers\n",
+        thorium_actor_log(self, "Error: classifier %d has no configured buffers\n",
                         thorium_actor_name(self));
         return;
     }
@@ -424,7 +424,7 @@ void biosal_assembly_block_classifier_aggregate_kernel_output(struct thorium_act
 
 #ifdef BIOSAL_ASSEMBLY_BLOCK_CLASSIFIER_DEBUG
     BIOSAL_DEBUG_MARKER("assembly_block_classifier receives");
-    printf("name %d source %d UNPACK ON %d bytes\n",
+    thorium_actor_log(self, "name %d source %d UNPACK ON %d bytes\n",
                         thorium_actor_name(self), source, thorium_message_count(message));
 #endif
 
@@ -470,7 +470,7 @@ void biosal_assembly_block_classifier_aggregate_kernel_output(struct thorium_act
                         customer_index);
 
 #ifdef BIOSAL_ASSEMBLY_BLOCK_CLASSIFIER_DEBUG
-        printf("DEBUG customer_index %d block pointer %p\n",
+        thorium_actor_log(self, "DEBUG customer_index %d block pointer %p\n",
                         customer_index, (void *)customer_block_pointer);
 
         BIOSAL_DEBUG_MARKER("assembly_block_classifier before add");
@@ -518,7 +518,7 @@ void biosal_assembly_block_classifier_aggregate_kernel_output(struct thorium_act
     if (concrete_actor->last == 0
                     || concrete_actor->received >= concrete_actor->last + 10000) {
 
-        printf("assembly_block_classifier/%d received %" PRIu64 " kernel outputs so far\n",
+        thorium_actor_log(self, "assembly_block_classifier/%d received %" PRIu64 " kernel outputs so far\n",
                         thorium_actor_name(self),
                         concrete_actor->received);
 
@@ -549,7 +549,7 @@ void biosal_assembly_block_classifier_aggregate_kernel_output(struct thorium_act
         customer_index = i;
 
 #ifdef BIOSAL_ASSEMBLY_BLOCK_CLASSIFIER_DEBUG
-        printf("assembly_block_classifier flushing %d\n", customer_index);
+        thorium_actor_log(self, "assembly_block_classifier flushing %d\n", customer_index);
 #endif
 
         biosal_assembly_block_classifier_flush(self, customer_index, &concrete_actor->buffers, 0);
@@ -606,6 +606,7 @@ int biosal_assembly_block_classifier_set_consumers(struct thorium_actor *actor, 
     int i;
     int zero;
     struct biosal_dna_kmer_frequency_block *customer_block_pointer;
+    struct thorium_actor *self = actor;
 
     concrete_actor = (struct biosal_assembly_block_classifier *)thorium_actor_concrete_actor(actor);
 
@@ -631,14 +632,14 @@ int biosal_assembly_block_classifier_set_consumers(struct thorium_actor *actor, 
      */
     concrete_actor->maximum_active_messages = thorium_actor_active_message_limit(actor);
 
-    printf("DEBUG45 classifier %d preparing %d buffers, kmer_length %d, ACTIVE_MESSAGE_LIMIT %d\n",
+    thorium_actor_log(self, "DEBUG45 classifier %d preparing %d buffers, kmer_length %d, ACTIVE_MESSAGE_LIMIT %d\n",
                     thorium_actor_name(actor),
                         (int)core_vector_size(&concrete_actor->consumers),
                         concrete_actor->kmer_length,
                         concrete_actor->maximum_active_messages);
 
 #ifdef BIOSAL_ASSEMBLY_BLOCK_CLASSIFIER_DEBUG
-    printf("DEBUG classifier configured %d consumers\n",
+    thorium_actor_log(self, "DEBUG classifier configured %d consumers\n",
                         (int)core_vector_size(&concrete_actor->consumers));
 #endif
 
@@ -688,7 +689,7 @@ int biosal_assembly_block_classifier_pack_unpack(struct thorium_actor *actor, in
 
     /*
     if (operation == CORE_PACKER_OPERATION_UNPACK) {
-        printf("assembly_block_classifier %d unpacked kmer length %d\n",
+        thorium_actor_log(self, "assembly_block_classifier %d unpacked kmer length %d\n",
                         thorium_actor_name(actor),
                         concrete_actor->kmer_length);
     }

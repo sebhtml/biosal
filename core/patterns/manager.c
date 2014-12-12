@@ -122,6 +122,7 @@ void core_manager_receive(struct thorium_actor *actor, struct thorium_message *m
     struct core_vector received_actors;
     char use_spawn_many;
     int offset;
+    struct thorium_actor *self = actor;
 
     if (thorium_actor_take_action(actor, message)) {
         return;
@@ -146,7 +147,7 @@ void core_manager_receive(struct thorium_actor *actor, struct thorium_message *m
         }
 
 #ifdef CORE_MANAGER_DEBUG
-        printf("DEBUG manager %d starts\n",
+        thorium_actor_log(self, "DEBUG manager %d starts\n",
                         thorium_actor_name(actor));
 #endif
 
@@ -156,7 +157,7 @@ void core_manager_receive(struct thorium_actor *actor, struct thorium_message *m
 
         concrete_actor->spawners = core_vector_size(&spawners);
 
-        printf("DEBUG manager %d starts, supervisor is %d, %d spawners provided\n",
+        thorium_actor_log(self, "DEBUG manager %d starts, supervisor is %d, %d spawners provided\n",
                         thorium_actor_name(actor), thorium_actor_supervisor(actor),
                         (int)core_vector_size(&spawners));
 
@@ -171,20 +172,20 @@ void core_manager_receive(struct thorium_actor *actor, struct thorium_message *m
 
             core_vector_push_back(&concrete_actor->indices, &index);
 
-            printf("DEBUG manager %d add spawned processes for spawner %d\n",
+            thorium_actor_log(self, "DEBUG manager %d add spawned processes for spawner %d\n",
                             thorium_actor_name(actor), spawner);
 
             stores = core_map_add(&concrete_actor->spawner_children, &index);
 
 #ifdef CORE_MANAGER_DEBUG
-            printf("DEBUG adding %d to table\n", index);
+            thorium_actor_log(self, "DEBUG adding %d to table\n", index);
 #endif
 
             bucket = core_map_add(&concrete_actor->spawner_child_count, &index);
             *bucket = 0;
 
 #ifdef CORE_MANAGER_DEBUG
-            printf("DEBUG685-1 spawner %d index %d bucket %p\n", spawner, index, (void *)bucket);
+            thorium_actor_log(self, "DEBUG685-1 spawner %d index %d bucket %p\n", spawner, index, (void *)bucket);
             core_vector_print_int(thorium_actor_acquaintance_vector(actor));
 #endif
 
@@ -204,7 +205,7 @@ void core_manager_receive(struct thorium_actor *actor, struct thorium_message *m
         CORE_DEBUG_MARKER("set_the_script_now");
 #endif
 
-        printf("manager %d sets script to script %x\n",
+        thorium_actor_log(self, "manager %d sets script to script %x\n",
                         thorium_actor_name(actor), concrete_actor->script);
 
         thorium_actor_send_reply_empty(actor, ACTION_MANAGER_SET_SCRIPT_REPLY);
@@ -228,17 +229,17 @@ void core_manager_receive(struct thorium_actor *actor, struct thorium_message *m
 
         index = source;
 
-        printf("DEBUG manager %d says that spawner %d is on a node with %d workers\n",
+        thorium_actor_log(self, "DEBUG manager %d says that spawner %d is on a node with %d workers\n",
                         thorium_actor_name(actor), source, workers);
 
 #ifdef CORE_MANAGER_DEBUG
-        printf("DEBUG getting table index %d\n", index);
+        thorium_actor_log(self, "DEBUG getting table index %d\n", index);
 #endif
 
         bucket = core_map_get(&concrete_actor->spawner_child_count, &index);
 
 #ifdef CORE_MANAGER_DEBUG
-        printf("DEBUG685-2 spawner %d index %d bucket %p\n", source, index, (void *)bucket);
+        thorium_actor_log(self, "DEBUG685-2 spawner %d index %d bucket %p\n", source, index, (void *)bucket);
         core_vector_print_int(thorium_actor_acquaintance_vector(actor));
 #endif
 
@@ -320,7 +321,7 @@ void core_manager_receive(struct thorium_actor *actor, struct thorium_message *m
         bucket = core_map_get(&concrete_actor->spawner_child_count, &index);
 
 #ifdef CORE_MANAGER_DEBUG
-        printf("DEBUG manager %d receives %d from spawner %d, now %d/%d\n",
+        thorium_actor_log(self, "DEBUG manager %d receives %d from spawner %d, now %d/%d",
                         thorium_actor_name(actor), store, source,
                         (int)core_vector_size(stores), *bucket);
 #endif
@@ -332,14 +333,14 @@ void core_manager_receive(struct thorium_actor *actor, struct thorium_message *m
 
             concrete_actor->ready_spawners++;
 
-            printf("DEBUG manager %d says that spawner %d is ready, %d/%d (spawned %d actors)\n",
+            thorium_actor_log(self, "DEBUG manager %d says that spawner %d is ready, %d/%d (spawned %d actors)",
                         thorium_actor_name(actor), source,
                         concrete_actor->ready_spawners, concrete_actor->spawners,
                         (int)core_vector_size(stores));
 
             if (concrete_actor->ready_spawners == concrete_actor->spawners) {
 
-                printf("DEBUG manager %d says that all spawners are ready\n",
+                thorium_actor_log(self, "DEBUG manager %d says that all spawners are ready",
                         thorium_actor_name(actor));
 
                 core_vector_init(&all_stores, sizeof(int));
@@ -418,8 +419,9 @@ void core_manager_ask_to_stop(struct thorium_actor *actor, struct thorium_messag
     int i;
     int size;
     int child;
+    struct thorium_actor *self = actor;
 
-    printf("%s/%d dies\n",
+    thorium_actor_log(self, "%s/%d dies",
                     thorium_actor_script_name(actor),
                     thorium_actor_name(actor));
 

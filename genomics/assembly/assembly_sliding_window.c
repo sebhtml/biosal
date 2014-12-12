@@ -75,6 +75,7 @@ struct thorium_script biosal_assembly_sliding_window_script = {
 void biosal_assembly_sliding_window_init(struct thorium_actor *actor)
 {
     struct biosal_assembly_sliding_window *concrete_actor;
+    struct thorium_actor *self = actor;
 
     concrete_actor = (struct biosal_assembly_sliding_window *)thorium_actor_concrete_actor(actor);
 
@@ -121,7 +122,7 @@ void biosal_assembly_sliding_window_init(struct thorium_actor *actor)
     thorium_actor_add_action(actor, ACTION_SET_PRODUCERS_FOR_WORK_STEALING,
                     biosal_assembly_sliding_window_set_producers_for_work_stealing);
 
-    printf("%s/%d is online on node node/%d\n",
+    thorium_actor_log(self, "%s/%d is online on node node/%d\n",
                     thorium_actor_script_name(actor),
                     thorium_actor_name(actor),
                     thorium_actor_node_name(actor));
@@ -164,6 +165,7 @@ void biosal_assembly_sliding_window_receive(struct thorium_actor *actor, struct 
     int consumer;
     int count;
     int producer;
+    struct thorium_actor *self = actor;
 
     if (thorium_actor_take_action(actor, message)) {
         return;
@@ -201,7 +203,7 @@ void biosal_assembly_sliding_window_receive(struct thorium_actor *actor, struct 
 
     } else if (tag == ACTION_RESERVE) {
 
-        printf("%s/%d is online !\n",
+        thorium_actor_log(self, "%s/%d is online !\n",
                         thorium_actor_script_name(actor), name);
 
         concrete_actor->expected = *(uint64_t *)buffer;
@@ -210,14 +212,14 @@ void biosal_assembly_sliding_window_receive(struct thorium_actor *actor, struct 
 
     } else if (tag == ACTION_ASK_TO_STOP) {
 
-        printf("window/%d generated %" PRIu64 " kmers from %" PRIu64
+        thorium_actor_log(self, "window/%d generated %" PRIu64 " kmers from %" PRIu64
                         " entries (%d blocks), sent %d messages to consumer \n",
                         thorium_actor_name(actor), concrete_actor->kmers,
                         concrete_actor->actual, concrete_actor->blocks,
                         concrete_actor->flushed_payloads);
 
 #ifdef BIOSAL_WINDOW_DEBUG
-        printf("window %d receives request to stop from %d, supervisor is %d\n",
+        thorium_actor_log(self, "window %d receives request to stop from %d, supervisor is %d\n",
                         name, source, thorium_actor_supervisor(actor));
 #endif
 
@@ -231,7 +233,7 @@ void biosal_assembly_sliding_window_receive(struct thorium_actor *actor, struct 
         concrete_actor->consumer = consumer;
 
 #ifdef BIOSAL_WINDOW_DEBUG
-        printf("window %d ACTION_SET_CONSUMER consumer %d index %d\n",
+        thorium_actor_log(self, "window %d ACTION_SET_CONSUMER consumer %d index %d\n",
                         thorium_actor_name(actor), consumer,
                         concrete_actor->consumer);
 #endif
@@ -242,7 +244,7 @@ void biosal_assembly_sliding_window_receive(struct thorium_actor *actor, struct 
 
         thorium_message_unpack_int(message, 0, &concrete_actor->kmer_length);
 
-        printf("%s/%d kmer length is %d\n",
+        thorium_actor_log(self, "%s/%d kmer length is %d\n",
                         thorium_actor_script_name(actor),
                         thorium_actor_name(actor),
                         concrete_actor->kmer_length);
@@ -258,18 +260,18 @@ void biosal_assembly_sliding_window_receive(struct thorium_actor *actor, struct 
     } else if (tag == ACTION_SET_PRODUCER) {
 
         if (count == 0) {
-            printf("Error: window needs producer\n");
+            thorium_actor_log(self, "Error: window needs producer\n");
             return;
         }
 
         if (concrete_actor->consumer == THORIUM_ACTOR_NOBODY) {
-            printf("Error: window needs a consumer\n");
+            thorium_actor_log(self, "Error: window needs a consumer\n");
             return;
         }
 
         if (concrete_actor->kmer_length <= 0) {
 
-            printf("%s/%d Error: invalid kmer length, %d\n",
+            thorium_actor_log(self, "%s/%d Error: invalid kmer length, %d\n",
                             thorium_actor_script_name(actor),
                             thorium_actor_name(actor),
                             concrete_actor->kmer_length);
@@ -290,7 +292,7 @@ void biosal_assembly_sliding_window_receive(struct thorium_actor *actor, struct 
          */
 
 #ifdef BIOSAL_ASSEMBLY_SLIDING_WINDOW_DEBUG
-        printf("DEBUG window was told by producer that nothing is left to do\n");
+        thorium_actor_log(self, "DEBUG window was told by producer that nothing is left to do\n");
 #endif
 
         if (core_queue_dequeue(&concrete_actor->producers_for_work_stealing, &producer)) {
@@ -301,14 +303,14 @@ void biosal_assembly_sliding_window_receive(struct thorium_actor *actor, struct 
              */
             concrete_actor->producer = producer;
 
-            printf("DEBUG window %d asks new producer %d (work stealing)\n",
+            thorium_actor_log(self, "DEBUG window %d asks new producer %d (work stealing)\n",
                     thorium_actor_name(actor),
                     producer);
             biosal_assembly_sliding_window_ask(actor, message);
 
         } else {
 
-            printf("DEBUG %s/%d DONE\n",
+            thorium_actor_log(self, "DEBUG %s/%d DONE\n",
                             thorium_actor_script_name(actor),
                     thorium_actor_name(actor));
 
@@ -329,7 +331,7 @@ void biosal_assembly_sliding_window_receive(struct thorium_actor *actor, struct 
         concrete_actor->scaling_operations++;
         concrete_actor->auto_scaling_clone = THORIUM_ACTOR_NOBODY;
 
-        printf("window %d completed auto-scaling # %d\n",
+        thorium_actor_log(self, "window %d completed auto-scaling # %d\n",
                         thorium_actor_name(actor),
                         concrete_actor->scaling_operations);
 
@@ -342,7 +344,7 @@ void biosal_assembly_sliding_window_receive(struct thorium_actor *actor, struct 
          * auto-scaling is not implemented.
          */
 #if 0
-        printf("AUTO-SCALING window %d enables auto-scaling (ACTION_ENABLE_AUTO_SCALING) via actor %d\n",
+        thorium_actor_log(self, "AUTO-SCALING window %d enables auto-scaling (ACTION_ENABLE_AUTO_SCALING) via actor %d\n",
                         name, source);
 
         thorium_actor_send_to_self_empty(actor, ACTION_ENABLE_AUTO_SCALING);
@@ -385,7 +387,7 @@ void biosal_assembly_sliding_window_ask(struct thorium_actor *self, struct thori
                     concrete_actor->kmer_length);
 
 #ifdef BIOSAL_ASSEMBLY_SLIDING_WINDOW_DEBUG
-    printf("DEBUG window %d asks producer %d\n",
+    thorium_actor_log(self, "DEBUG window %d asks producer %d\n",
                     thorium_actor_name(self),
                     producer);
 #endif
@@ -396,6 +398,7 @@ void biosal_assembly_sliding_window_do_auto_scaling(struct thorium_actor *actor,
     struct biosal_assembly_sliding_window *concrete_actor;
     int name;
     int source;
+    struct thorium_actor *self = actor;
 
     name = thorium_actor_name(actor);
     source = thorium_message_source(message);
@@ -430,7 +433,7 @@ void biosal_assembly_sliding_window_do_auto_scaling(struct thorium_actor *actor,
      * - set a sequence store as the producer of the kernel (ACTION_SET_PRODUCER)
      */
 
-    printf("AUTO-SCALING window %d receives auto-scale message (ACTION_DO_AUTO_SCALING) via actor %d\n",
+    thorium_actor_log(self, "AUTO-SCALING window %d receives auto-scale message (ACTION_DO_AUTO_SCALING) via actor %d\n",
                     name, source);
 
     concrete_actor->auto_scaling_in_progress = 1;
@@ -476,6 +479,7 @@ void biosal_assembly_sliding_window_clone_reply(struct thorium_actor *actor, str
     int consumer;
     /*int producer;*/
     int clone_index;
+    struct thorium_actor *self = actor;
 
     source = thorium_message_source(message);
     concrete_actor = (struct biosal_assembly_sliding_window *)thorium_actor_concrete_actor(actor);
@@ -485,7 +489,7 @@ void biosal_assembly_sliding_window_clone_reply(struct thorium_actor *actor, str
     /*producer = concrete_actor->producer);*/
 
     if (source == name) {
-        printf("window %d cloned itself !!! clone name is %d\n",
+        thorium_actor_log(self, "window %d cloned itself !!! clone name is %d\n",
                     name, clone);
 
         thorium_actor_send_int(actor, consumer, ACTION_CLONE, name);
@@ -497,7 +501,7 @@ void biosal_assembly_sliding_window_clone_reply(struct thorium_actor *actor, str
         core_vector_push_back(&concrete_actor->kernels, &clone_index);
 
     } else if (source == consumer) {
-        printf("window %d cloned aggregator %d, clone name is %d\n",
+        thorium_actor_log(self, "window %d cloned aggregator %d, clone name is %d\n",
                         name, consumer, clone);
 
         thorium_actor_send_int(actor, concrete_actor->auto_scaling_clone,
@@ -653,6 +657,7 @@ void biosal_assembly_sliding_window_push_sequence_data_block(struct thorium_acto
     int maximum_length;
     struct core_memory_pool *ephemeral_memory;
     int kmers_for_sequence;
+    struct thorium_actor *self = actor;
 
     concrete_actor = (struct biosal_assembly_sliding_window *)thorium_actor_concrete_actor(actor);
     ephemeral_memory = thorium_actor_get_ephemeral_memory(actor);
@@ -661,17 +666,17 @@ void biosal_assembly_sliding_window_push_sequence_data_block(struct thorium_acto
     buffer = thorium_message_buffer(message);
 
     if (concrete_actor->kmer_length == THORIUM_ACTOR_NOBODY) {
-        printf("Error no kmer length set\n");
+        thorium_actor_log(self, "Error no kmer length set\n");
         return;
     }
 
     if (concrete_actor->consumer == THORIUM_ACTOR_NOBODY) {
-        printf("Error no consumer set\n");
+        thorium_actor_log(self, "Error no consumer set\n");
         return;
     }
 
     if (concrete_actor->producer_source == THORIUM_ACTOR_NOBODY) {
-        printf("Error, no producer_source set\n");
+        thorium_actor_log(self, "Error, no producer_source set\n");
         return;
     }
 
@@ -690,7 +695,7 @@ void biosal_assembly_sliding_window_push_sequence_data_block(struct thorium_acto
     entries = core_vector_size(command_entries);
 
     if (entries == 0) {
-        printf("Error: received empty payload...\n");
+        thorium_actor_log(self, "Error: received empty payload...\n");
     }
 
     to_reserve = 0;
@@ -736,7 +741,7 @@ void biosal_assembly_sliding_window_push_sequence_data_block(struct thorium_acto
                             &concrete_actor->codec, thorium_actor_get_ephemeral_memory(actor));
 
 #ifdef BIOSAL_WINDOW_DEBUG_LEVEL_2
-            printf("KERNEL kmer %d,%d %s\n", i, j, sequence_data + j);
+            thorium_actor_log(self, "KERNEL kmer %d,%d %s\n", i, j, sequence_data + j);
 #endif
 
             /*
@@ -753,7 +758,7 @@ void biosal_assembly_sliding_window_push_sequence_data_block(struct thorium_acto
         }
 
 #ifdef BIOSAL_PRIVATE_DEBUG_EMIT
-        printf("DEBUG EMIT KMERS INPUT: %d nucleotides, k: %d output %d kmers\n",
+        thorium_actor_log(self, "DEBUG EMIT KMERS INPUT: %d nucleotides, k: %d output %d kmers\n",
                         sequence_length, concrete_actor->kmer_length,
                         kmers_for_sequence);
 #endif
@@ -780,7 +785,7 @@ void biosal_assembly_sliding_window_push_sequence_data_block(struct thorium_acto
                         &concrete_actor->codec);
 
 #ifdef BIOSAL_WINDOW_DEBUG
-    printf("name %d destination %d PACK with %d bytes\n", name,
+    thorium_actor_log(self, "name %d destination %d PACK with %d bytes\n", name,
                        consumer, new_count);
 #endif
 
@@ -805,7 +810,7 @@ void biosal_assembly_sliding_window_push_sequence_data_block(struct thorium_acto
                     || concrete_actor->actual >= concrete_actor->last + 300000
                     || concrete_actor->last == 0) {
 
-        printf("sliding window %d processed %" PRIu64 " entries (%d blocks) so far\n",
+        thorium_actor_log(self, "sliding window %d processed %" PRIu64 " entries (%d blocks) so far\n",
                         name, concrete_actor->actual,
                         concrete_actor->blocks);
 

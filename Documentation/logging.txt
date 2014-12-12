@@ -1,0 +1,23 @@
+
+thorium_actor_log (LOG_LEVEL_DEFAULT)
+------------------------------------
+
+The arguments are the same as the ones of printf, except that there is an
+additional first argument: the actor.
+
+
+void thorium_actor_log(struct thorium_actor *self, const char *format, ...);
+
+
+The output looks like this:
+
+[20:30:36.114762649] ACTOR biosal_unitig_visitor 1000266 : vertex_count: 10348 BIOSAL_VERTEX_FLAG_UNITIG: 10335
+
+
+Command-line options
+--------------------
+
+-enable-actor-log all           Enable logging for all actor scripts
+-disable-actor-log all          Disable logging for all actor scripts
+-enable-actor-log script_name   Enable logging for script script_name
+-disable-actor-log script_name  Disable logging for script script_name
