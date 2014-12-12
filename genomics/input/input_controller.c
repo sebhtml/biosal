@@ -109,7 +109,7 @@ void biosal_input_controller_init(struct thorium_actor *actor)
     concrete_actor->state = BIOSAL_INPUT_CONTROLLER_STATE_NONE;
 
 #ifdef BIOSAL_INPUT_CONTROLLER_DEBUG_10355
-    printf("DEBUG actor %d register ACTION_INPUT_CONTROLLER_CREATE_STORES\n",
+    thorium_actor_log(self, "DEBUG actor %d register ACTION_INPUT_CONTROLLER_CREATE_STORES\n",
                     thorium_actor_name(actor));
 #endif
 
@@ -141,7 +141,7 @@ void biosal_input_controller_init(struct thorium_actor *actor)
     concrete_actor->stores_per_worker_per_spawner = 0;
 
 #ifdef BIOSAL_INPUT_CONTROLLER_DEBUG
-    printf("DEBUG %d init controller\n",
+    thorium_actor_log(self, "DEBUG %d init controller\n",
                     thorium_actor_name(actor));
 #endif
 
@@ -239,6 +239,7 @@ void biosal_input_controller_receive(struct thorium_actor *actor, struct thorium
     uint64_t offset;
     struct biosal_mega_block *block;
     int acquaintance_index;
+    struct thorium_actor *self = actor;
 
     if (thorium_actor_take_action(actor, message)) {
         return;
@@ -273,7 +274,7 @@ void biosal_input_controller_receive(struct thorium_actor *actor, struct thorium
         concrete_actor->state = BIOSAL_INPUT_CONTROLLER_STATE_PREPARE_SPAWNERS;
 
 #ifdef BIOSAL_INPUT_CONTROLLER_DEBUG_LEVEL
-        printf("DEBUG preparing first spawner\n");
+        thorium_actor_log(self, "DEBUG preparing first spawner\n");
 #endif
 
         thorium_actor_send_to_self_empty(actor, ACTION_INPUT_CONTROLLER_PREPARE_SPAWNERS);
@@ -289,7 +290,7 @@ void biosal_input_controller_receive(struct thorium_actor *actor, struct thorium
         local_file = core_memory_allocate(strlen(file) + 1, MEMORY_CONTROLLER);
         strcpy(local_file, file);
 
-        printf("controller %d ACTION_ADD_FILE %s\n",
+        thorium_actor_log(self, "controller %d ACTION_ADD_FILE %s\n",
                         thorium_actor_name(actor),
                         local_file);
 
@@ -299,7 +300,7 @@ void biosal_input_controller_receive(struct thorium_actor *actor, struct thorium
         local_file = *(char **)bucket;
 
 #ifdef BIOSAL_INPUT_CONTROLLER_DEBUG_LEVEL_2
-        printf("DEBUG11 ACTION_ADD_FILE %s %p bucket %p index %d\n",
+        thorium_actor_log(self, "DEBUG11 ACTION_ADD_FILE %s %p bucket %p index %d\n",
                         local_file, local_file, (void *)bucket, core_vector_size(&concrete_actor->files) - 1);
 #endif
 
@@ -322,7 +323,7 @@ void biosal_input_controller_receive(struct thorium_actor *actor, struct thorium
             if (concrete_actor->ready_spawners == (int)core_vector_size(&concrete_actor->spawners)) {
 
 #ifdef BIOSAL_INPUT_CONTROLLER_DEBUG
-                printf("DEBUG all spawners are prepared\n");
+                thorium_actor_log(self, "DEBUG all spawners are prepared\n");
 #endif
                 thorium_actor_send_to_supervisor_empty(actor, ACTION_START_REPLY);
             }
@@ -332,7 +333,7 @@ void biosal_input_controller_receive(struct thorium_actor *actor, struct thorium
         } else if (concrete_actor->state == BIOSAL_INPUT_CONTROLLER_STATE_SPAWN_PARTITIONER) {
 
 #ifdef BIOSAL_INPUT_CONTROLLER_DEBUG
-            printf("DEBUG received spawn reply, state is spawn_partitioner\n");
+            thorium_actor_log(self, "DEBUG received spawn reply, state is spawn_partitioner\n");
 #endif
 
             thorium_message_unpack_int(message, 0, &concrete_actor->partitioner);
@@ -361,7 +362,7 @@ void biosal_input_controller_receive(struct thorium_actor *actor, struct thorium
             new_buffer = thorium_actor_allocate(actor, new_count);
 
 #ifdef BIOSAL_INPUT_CONTROLLER_DEBUG
-            printf("DEBUG packed counts, %d bytes\n", count);
+            thorium_actor_log(self, "DEBUG packed counts, %d bytes\n", count);
 #endif
 
             core_vector_pack(&block_counts, new_buffer);
@@ -394,7 +395,7 @@ void biosal_input_controller_receive(struct thorium_actor *actor, struct thorium
                             &stream_index, &mega_block_index);
 
 #ifdef BIOSAL_INPUT_CONTROLLER_DEBUG_READING_STREAMS
-            printf("DEBUG setting offset to %" PRIu64 " for stream/%d\n",
+            thorium_actor_log(self, "DEBUG setting offset to %" PRIu64 " for stream/%d\n",
                             offset, stream);
 #endif
 
@@ -409,7 +410,7 @@ void biosal_input_controller_receive(struct thorium_actor *actor, struct thorium
         local_file = *(char **)core_vector_at(&concrete_actor->files, file_index);
 
 #ifdef BIOSAL_INPUT_CONTROLLER_DEBUG_READING_STREAMS
-        printf("DEBUG actor %d receives stream %d from spawner %d for file %s\n",
+        thorium_actor_log(self, "DEBUG actor %d receives stream %d from spawner %d for file %s\n",
                         name, stream, source,
                         local_file);
 #endif
@@ -417,13 +418,13 @@ void biosal_input_controller_receive(struct thorium_actor *actor, struct thorium
         core_vector_push_back(&concrete_actor->counting_streams, &stream);
 
 #ifdef BIOSAL_INPUT_CONTROLLER_DEBUG_READING_STREAMS
-        printf("asking stream/%d to open %s\n", stream, local_file);
+        thorium_actor_log(self, "asking stream/%d to open %s\n", stream, local_file);
 #endif
         thorium_message_init(&new_message, ACTION_INPUT_OPEN, strlen(local_file) + 1, local_file);
 
 #ifdef DEBUG_ISSUE_594
         thorium_message_print(&new_message);
-        printf("SEND Buffer %s\n", local_file);
+        thorium_actor_log(self, "SEND Buffer %s\n", local_file);
 #endif
 
         thorium_actor_send(actor, stream, &new_message);
@@ -436,7 +437,7 @@ void biosal_input_controller_receive(struct thorium_actor *actor, struct thorium
         }
 
 #ifdef DEBUG_ISSUE_594
-        printf("EXIT Buffer %s\n", local_file);
+        thorium_actor_log(self, "EXIT Buffer %s\n", local_file);
 #endif
 
     } else if (tag == ACTION_INPUT_OPEN_REPLY) {
@@ -444,7 +445,7 @@ void biosal_input_controller_receive(struct thorium_actor *actor, struct thorium
         if (concrete_actor->state == BIOSAL_INPUT_CONTROLLER_STATE_SPAWN_READING_STREAMS) {
 
 #ifdef BIOSAL_INPUT_CONTROLLER_DEBUG_READING_STREAMS
-            printf("DEBUG receives open.reply for reading stream/%d\n", source);
+            thorium_actor_log(self, "DEBUG receives open.reply for reading stream/%d\n", source);
 #endif
             concrete_actor->opened_streams++;
 
@@ -463,7 +464,7 @@ void biosal_input_controller_receive(struct thorium_actor *actor, struct thorium
         if (error == BIOSAL_INPUT_ERROR_NO_ERROR) {
 
 #ifdef BIOSAL_INPUT_CONTROLLER_DEBUG_LEVEL_2
-            printf("DEBUG actor %d asks %d ACTION_INPUT_COUNT_IN_PARALLEL\n", name, stream);
+            thorium_actor_log(self, "DEBUG actor %d asks %d ACTION_INPUT_COUNT_IN_PARALLEL\n", name, stream);
 #endif
 
             thorium_actor_send_vector(actor, stream, ACTION_INPUT_COUNT_IN_PARALLEL,
@@ -471,7 +472,7 @@ void biosal_input_controller_receive(struct thorium_actor *actor, struct thorium
         } else {
 
 #ifdef BIOSAL_INPUT_CONTROLLER_DEBUG_LEVEL_2
-            printf("DEBUG actor %d received error %d from %d\n", name, error, stream);
+            thorium_actor_log(self, "DEBUG actor %d received error %d from %d\n", name, error, stream);
 #endif
             concrete_actor->counted++;
         }
@@ -481,7 +482,7 @@ void biosal_input_controller_receive(struct thorium_actor *actor, struct thorium
 
 #ifdef BIOSAL_INPUT_CONTROLLER_DEBUG_LEVEL_2
 #endif
-            printf("DEBUG %d: Error all streams failed.\n",
+            thorium_actor_log(self, "DEBUG %d: Error all streams failed.\n",
                             thorium_actor_name(actor));
             thorium_actor_send_to_supervisor_empty(actor, ACTION_INPUT_DISTRIBUTE_REPLY);
         }
@@ -490,7 +491,7 @@ void biosal_input_controller_receive(struct thorium_actor *actor, struct thorium
         if (concrete_actor->opened_streams == core_vector_size(&concrete_actor->files)) {
 
 #ifdef BIOSAL_INPUT_CONTROLLER_DEBUG
-            printf("DEBUG controller %d sends ACTION_INPUT_DISTRIBUTE_REPLY to supervisor %d [%d/%d]\n",
+            thorium_actor_log(self, "DEBUG controller %d sends ACTION_INPUT_DISTRIBUTE_REPLY to supervisor %d [%d/%d]\n",
                             name, thorium_actor_supervisor(actor),
                             concrete_actor->opened_streams, core_vector_size(&concrete_actor->files));
 #endif
@@ -506,7 +507,7 @@ void biosal_input_controller_receive(struct thorium_actor *actor, struct thorium
 
         bucket = (int64_t *)core_vector_at(&concrete_actor->counts, stream_index);
 
-        printf("controller/%d receives progress from stream/%d file %s %" PRIu64 " entries so far\n",
+        thorium_actor_log(self, "controller/%d receives progress from stream/%d file %s %" PRIu64 " entries so far\n",
                         name, source, local_file, entries);
         *bucket = entries;
 
@@ -518,7 +519,7 @@ void biosal_input_controller_receive(struct thorium_actor *actor, struct thorium
         core_vector_init(&mega_blocks, 0);
         core_vector_unpack(&mega_blocks, buffer);
 
-        printf("DEBUG receive mega blocks from %d\n", source);
+        thorium_actor_log(self, "DEBUG receive mega blocks from %d\n", source);
         /*
          * Update the file index for every mega block.
          */
@@ -530,12 +531,12 @@ void biosal_input_controller_receive(struct thorium_actor *actor, struct thorium
         while (core_vector_iterator_has_next(&vector_iterator)) {
             core_vector_iterator_next(&vector_iterator, (void **)&mega_block);
 
-            printf("SETTING setting file to %d for mega block\n", stream_index);
+            thorium_actor_log(self, "SETTING setting file to %d for mega block\n", stream_index);
             biosal_mega_block_set_file(mega_block, stream_index);
 
             entries = biosal_mega_block_get_entries_from_start(mega_block);
 
-            printf("Cataloging %d ENTRIES\n", (int)entries);
+            thorium_actor_log(self, "Cataloging %d ENTRIES\n", (int)entries);
 
             (*bucket) = entries;
 
@@ -551,7 +552,7 @@ void biosal_input_controller_receive(struct thorium_actor *actor, struct thorium
 
         concrete_actor->counted++;
 
-        printf("controller/%d received from stream/%d for file %s %" PRIu64 " entries (final) %d/%d\n",
+        thorium_actor_log(self, "controller/%d received from stream/%d for file %s %" PRIu64 " entries (final) %d/%d\n",
                         name, source, local_file, entries,
                         concrete_actor->counted, (int)core_vector_size(&concrete_actor->files));
 
@@ -574,23 +575,23 @@ void biosal_input_controller_receive(struct thorium_actor *actor, struct thorium
          */
         if (core_vector_size(&concrete_actor->files) == 0) {
 
-            printf("Error: no file to distribute...\n");
+            thorium_actor_log(self, "Error: no file to distribute...\n");
             thorium_actor_send_reply_empty(actor, ACTION_INPUT_DISTRIBUTE_REPLY);
             return;
         }
 
 #ifdef BIOSAL_INPUT_CONTROLLER_DEBUG_LEVEL_2
-        printf("DEBUG actor %d receives ACTION_INPUT_DISTRIBUTE\n", name);
+        thorium_actor_log(self, "DEBUG actor %d receives ACTION_INPUT_DISTRIBUTE\n", name);
 #endif
 
 #ifdef BIOSAL_INPUT_CONTROLLER_DEBUG_LEVEL_2
-        printf("DEBUG send ACTION_INPUT_SPAWN to self\n");
+        thorium_actor_log(self, "DEBUG send ACTION_INPUT_SPAWN to self\n");
 #endif
 
         thorium_actor_send_to_self_empty(actor, ACTION_INPUT_SPAWN);
 
 #ifdef BIOSAL_INPUT_CONTROLLER_DEBUG_LEVEL_2
-        printf("DEBUG resizing counts to %d\n", core_vector_size(&concrete_actor->files));
+        thorium_actor_log(self, "DEBUG resizing counts to %d\n", core_vector_size(&concrete_actor->files));
 #endif
 
         core_vector_resize(&concrete_actor->counts, core_vector_size(&concrete_actor->files));
@@ -603,7 +604,7 @@ void biosal_input_controller_receive(struct thorium_actor *actor, struct thorium
     } else if (tag == ACTION_INPUT_SPAWN && source == name) {
 
 #ifdef BIOSAL_INPUT_CONTROLLER_DEBUG_LEVEL_2
-        printf("DEBUG ACTION_INPUT_SPAWN\n");
+        thorium_actor_log(self, "DEBUG ACTION_INPUT_SPAWN\n");
 #endif
 
         script = SCRIPT_INPUT_STREAM;
@@ -623,12 +624,12 @@ void biosal_input_controller_receive(struct thorium_actor *actor, struct thorium
         local_file = *(char **)core_vector_at(&concrete_actor->files, i);
 
 #ifdef BIOSAL_INPUT_CONTROLLER_DEBUG_LEVEL_2
-        printf("DEBUG890 local_file %p bucket %p index %d\n", local_file, (void *)bucket,
+        thorium_actor_log(self, "DEBUG890 local_file %p bucket %p index %d\n", local_file, (void *)bucket,
                         i);
 #endif
 
 #ifdef BIOSAL_INPUT_CONTROLLER_DEBUG
-        printf("DEBUG actor %d spawns a stream for file %d/%d via spawner %d\n",
+        thorium_actor_log(self, "DEBUG actor %d spawns a stream for file %d/%d via spawner %d\n",
                         name, i, core_vector_size(&concrete_actor->files), destination);
 #endif
 
@@ -673,7 +674,7 @@ void biosal_input_controller_receive(struct thorium_actor *actor, struct thorium
                         ACTION_ASK_TO_STOP);
 
 #ifdef BIOSAL_INPUT_CONTROLLER_DEBUG
-            printf("DEBUG controller %d sends ACTION_ASK_TO_STOP_REPLY to %d\n",
+            thorium_actor_log(self, "DEBUG controller %d sends ACTION_ASK_TO_STOP_REPLY to %d\n",
                         thorium_actor_name(actor),
                         thorium_message_source(message));
 #endif
@@ -688,7 +689,7 @@ void biosal_input_controller_receive(struct thorium_actor *actor, struct thorium
 
         thorium_actor_ask_to_stop(actor, message);
 
-        printf("DEBUG controller %d dies\n", name);
+        thorium_actor_log(self, "DEBUG controller %d dies\n", name);
 #ifdef BIOSAL_INPUT_CONTROLLER_DEBUG
 #endif
 
@@ -702,14 +703,14 @@ void biosal_input_controller_receive(struct thorium_actor *actor, struct thorium
         concrete_actor->state = BIOSAL_INPUT_CONTROLLER_STATE_SPAWN_PARTITIONER;
 
 #ifdef BIOSAL_INPUT_CONTROLLER_DEBUG
-        printf("DEBUG input controller %d spawns a partitioner via spawner %d\n",
+        thorium_actor_log(self, "DEBUG input controller %d spawns a partitioner via spawner %d\n",
                         name,  spawner);
 #endif
 
     } else if (tag == ACTION_SEQUENCE_PARTITIONER_COMMAND_IS_READY) {
 
 #ifdef BIOSAL_INPUT_CONTROLLER_DEBUG
-        printf("DEBUG controller receives ACTION_SEQUENCE_PARTITIONER_COMMAND_IS_READY, asks for command\n");
+        thorium_actor_log(self, "DEBUG controller receives ACTION_SEQUENCE_PARTITIONER_COMMAND_IS_READY, asks for command\n");
 #endif
 
         thorium_actor_send_reply_empty(actor, ACTION_SEQUENCE_PARTITIONER_GET_COMMAND);
@@ -734,14 +735,14 @@ void biosal_input_controller_receive(struct thorium_actor *actor, struct thorium
 
         concrete_actor->ready_consumers++;
 
-        printf("DEBUG marker ACTION_RESERVE_REPLY %d/%d\n",
+        thorium_actor_log(self, "DEBUG marker ACTION_RESERVE_REPLY %d/%d\n",
                         concrete_actor->ready_consumers,
                         (int)core_vector_size(&concrete_actor->consumers));
 
         if (concrete_actor->ready_consumers == core_vector_size(&concrete_actor->consumers)) {
 
             concrete_actor->ready_consumers = 0;
-            printf("DEBUG all consumers are ready\n");
+            thorium_actor_log(self, "DEBUG all consumers are ready\n");
             thorium_actor_send_empty(actor,
                             concrete_actor->partitioner,
                             ACTION_SEQUENCE_PARTITIONER_PROVIDE_STORE_ENTRY_COUNTS_REPLY);
@@ -750,7 +751,7 @@ void biosal_input_controller_receive(struct thorium_actor *actor, struct thorium
     } else if (tag == ACTION_INPUT_PUSH_SEQUENCES_READY) {
 
 #ifdef BIOSAL_INPUT_CONTROLLER_DEBUG
-        printf("DEBUG biosal_input_controller_receive received ACTION_INPUT_PUSH_SEQUENCES_READY\n");
+        thorium_actor_log(self, "DEBUG biosal_input_controller_receive received ACTION_INPUT_PUSH_SEQUENCES_READY\n");
 #endif
 
         stream_name = source;
@@ -781,7 +782,7 @@ void biosal_input_controller_receive(struct thorium_actor *actor, struct thorium
         biosal_input_controller_verify_requests(actor, message);
 
 #ifdef BIOSAL_INPUT_CONTROLLER_DEBUG_CONSUMERS
-        printf("DEBUG consumer # %d has %d active requests\n",
+        thorium_actor_log(self, "DEBUG consumer # %d has %d active requests\n",
                         consumer_index, *bucket_for_requests);
 #endif
 
@@ -791,7 +792,7 @@ void biosal_input_controller_receive(struct thorium_actor *actor, struct thorium
         core_vector_init(&concrete_actor->consumers, 0);
         core_vector_unpack(&concrete_actor->consumers, buffer);
 
-        printf("controller %d receives %d consumers\n",
+        thorium_actor_log(self, "controller %d receives %d consumers\n",
                         thorium_actor_name(actor),
                         (int)core_vector_size(&concrete_actor->consumers));
 
@@ -801,7 +802,7 @@ void biosal_input_controller_receive(struct thorium_actor *actor, struct thorium
 
 #ifdef BIOSAL_INPUT_CONTROLLER_DEBUG
         core_vector_print_int(&concrete_actor->consumers);
-        printf("\n");
+        thorium_actor_log(self, "\n");
 #endif
         thorium_actor_send_reply_empty(actor, ACTION_SET_CONSUMERS_REPLY);
 
@@ -815,14 +816,14 @@ void biosal_input_controller_receive(struct thorium_actor *actor, struct thorium
         concrete_actor->filled_consumers++;
 
 #ifdef BIOSAL_INPUT_CONTROLLER_DEBUG
-        printf("DEBUG ACTION_SEQUENCE_STORE_READY %d/%d\n", concrete_actor->filled_consumers,
+        thorium_actor_log(self, "DEBUG ACTION_SEQUENCE_STORE_READY %d/%d\n", concrete_actor->filled_consumers,
                         (int)core_vector_size(&concrete_actor->consumers));
 #endif
 
         if (concrete_actor->filled_consumers == core_vector_size(&concrete_actor->consumers)) {
             concrete_actor->filled_consumers = 0;
 
-            printf("DEBUG: all consumers are filled,  sending ACTION_INPUT_DISTRIBUTE_REPLY\n");
+            thorium_actor_log(self, "DEBUG: all consumers are filled,  sending ACTION_INPUT_DISTRIBUTE_REPLY\n");
 
             core_timer_stop(&concrete_actor->input_timer);
             core_timer_stop(&concrete_actor->distribution_timer);
@@ -848,6 +849,7 @@ void biosal_input_controller_receive_store_entry_counts(struct thorium_actor *ac
     uint64_t entries;
     struct thorium_message new_message;
     int name;
+    struct thorium_actor *self = actor;
 
     core_vector_init(&store_entries, sizeof(uint64_t));
 
@@ -857,7 +859,7 @@ void biosal_input_controller_receive_store_entry_counts(struct thorium_actor *ac
     concrete_actor->ready_consumers = 0;
 
 #ifdef BIOSAL_INPUT_CONTROLLER_DEBUG
-    printf("DEBUG biosal_input_controller_receive_store_entry_counts unpacking entries\n");
+    thorium_actor_log(self, "DEBUG biosal_input_controller_receive_store_entry_counts unpacking entries\n");
 #endif
 
     core_vector_init(&store_entries, 0);
@@ -867,7 +869,7 @@ void biosal_input_controller_receive_store_entry_counts(struct thorium_actor *ac
         store = *(int *)core_vector_at(&concrete_actor->consumers, i);
         entries = *(uint64_t *)core_vector_at(&store_entries, i);
 
-        printf("DEBUG controller/%d tells consumer/%d to reserve %" PRIu64 " buckets\n",
+        thorium_actor_log(self, "DEBUG controller/%d tells consumer/%d to reserve %" PRIu64 " buckets\n",
                         name, store, entries);
 
         thorium_message_init(&new_message, ACTION_RESERVE,
@@ -876,7 +878,7 @@ void biosal_input_controller_receive_store_entry_counts(struct thorium_actor *ac
     }
 
 #ifdef BIOSAL_INPUT_CONTROLLER_DEBUG
-    printf("DEBUG biosal_input_controller_receive_store_entry_counts will wait for replies\n");
+    thorium_actor_log(self, "DEBUG biosal_input_controller_receive_store_entry_counts will wait for replies\n");
 #endif
 
     core_vector_destroy(&store_entries);
@@ -898,12 +900,13 @@ void biosal_input_controller_create_stores(struct thorium_actor *actor, struct t
     uint64_t entries;
     char *local_file;
     int name;
+    struct thorium_actor *self = actor;
 
     concrete_actor = (struct biosal_input_controller *)thorium_actor_concrete_actor(actor);
 
     thorium_message_get_all(message, &tag, &count, &buffer, &source);
 /*
-    printf("DEBUG biosal_input_controller_create_stores\n");
+    thorium_actor_log(self, "DEBUG biosal_input_controller_create_stores\n");
     */
 
     for (i = 0; i < core_vector_size(&concrete_actor->stores_per_spawner); i++) {
@@ -912,7 +915,7 @@ void biosal_input_controller_create_stores(struct thorium_actor *actor, struct t
         if (value == -1) {
 
                 /*
-            printf("DEBUG need more information about spawner at %i\n",
+            thorium_actor_log(self, "DEBUG need more information about spawner at %i\n",
                             i);
                             */
 
@@ -931,7 +934,7 @@ void biosal_input_controller_create_stores(struct thorium_actor *actor, struct t
 
     for (i = 0; i < core_vector_size(&concrete_actor->stores_per_spawner); i++) {
             /*
-        printf("DEBUG polling spawner %i/%d\n", i,
+        thorium_actor_log(self, "DEBUG polling spawner %i/%d\n", i,
                         core_vector_size(&concrete_actor->stores_per_spawner));
 */
         value = core_vector_at_as_int(&concrete_actor->stores_per_spawner, i);
@@ -940,29 +943,29 @@ void biosal_input_controller_create_stores(struct thorium_actor *actor, struct t
 
             spawner = core_vector_at_as_int(&concrete_actor->spawners, i);
 /*
-            printf("DEBUG spawner %d is %d\n", i, spawner);
+            thorium_actor_log(self, "DEBUG spawner %d is %d\n", i, spawner);
 */
             thorium_actor_send_int(actor, spawner, ACTION_SPAWN, SCRIPT_SEQUENCE_STORE);
 
             return;
         }
 /*
-        printf("DEBUG spawner %i spawned all its stores\n", i);
+        thorium_actor_log(self, "DEBUG spawner %i spawned all its stores\n", i);
         */
     }
 
-    printf("DEBUG controller %d: consumers are ready (%d)\n",
+    thorium_actor_log(self, "DEBUG controller %d: consumers are ready (%d)\n",
                     thorium_actor_name(actor),
                     (int)core_vector_size(&concrete_actor->consumers));
 
     for (i = 0; i < core_vector_size(&concrete_actor->consumers); i++) {
         value = core_vector_at_as_int(&concrete_actor->consumers, i);
 
-        printf("DEBUG controller %d: consumer %i is %d\n",
+        thorium_actor_log(self, "DEBUG controller %d: consumer %i is %d\n",
                         thorium_actor_name(actor), i, value);
     }
 
-    printf("DEBUG controller %d: streams are\n",
+    thorium_actor_log(self, "DEBUG controller %d: streams are\n",
                     thorium_actor_name(actor));
 
     total = 0;
@@ -973,7 +976,7 @@ void biosal_input_controller_create_stores(struct thorium_actor *actor, struct t
         local_file = core_vector_at_as_char_pointer(&concrete_actor->files, i);
         name = *(int *)core_vector_at(&concrete_actor->counting_streams, i);
 
-        printf("stream %d, %d/%d %s %" PRIu64 "\n",
+        thorium_actor_log(self, "stream %d, %d/%d %s %" PRIu64 "\n",
                         name, i,
                         (int)core_vector_size(&concrete_actor->files),
                         local_file,
@@ -993,23 +996,23 @@ void biosal_input_controller_create_stores(struct thorium_actor *actor, struct t
     core_timer_print_with_description(&concrete_actor->counting_timer,
                     "Load input / Count input data");
 
-    printf("DEBUG controller %d: Partition Total: %" PRIu64 ", block_size: %d, blocks: %d\n",
+    thorium_actor_log(self, "DEBUG controller %d: Partition Total: %" PRIu64 ", block_size: %d, blocks: %d\n",
                     thorium_actor_name(actor),
                     total, block_size, blocks);
 
 #ifdef BIOSAL_INPUT_CONTROLLER_DEBUG_10355
-    printf("DEBUG send ACTION_INPUT_CONTROLLER_CREATE_STORES to self %d\n",
+    thorium_actor_log(self, "DEBUG send ACTION_INPUT_CONTROLLER_CREATE_STORES to self %d\n",
                             thorium_actor_name(actor));
 #endif
 
 #ifdef BIOSAL_INPUT_CONTROLLER_DEBUG
-    printf("DEBUG biosal_input_controller_create_stores send ACTION_INPUT_CONTROLLER_CREATE_PARTITION\n");
+    thorium_actor_log(self, "DEBUG biosal_input_controller_create_stores send ACTION_INPUT_CONTROLLER_CREATE_PARTITION\n");
 #endif
 
     /* no sequences at all !
      */
     if (total == 0) {
-        printf("Error, total is 0, can not distribute\n");
+        thorium_actor_log(self, "Error, total is 0, can not distribute\n");
         thorium_actor_send_to_supervisor_empty(actor, ACTION_INPUT_DISTRIBUTE_REPLY);
         return;
     } else {
@@ -1029,12 +1032,13 @@ void biosal_input_controller_get_node_name_reply(struct thorium_actor *actor, st
     int count;
     int spawner;
     int node;
+    struct thorium_actor *self = actor;
 
     thorium_message_get_all(message, &tag, &count, &buffer, &source);
     spawner = source;
     thorium_message_unpack_int(message, 0, &node);
 
-    printf("DEBUG spawner %d is on node node/%d\n", spawner, node);
+    thorium_actor_log(self, "DEBUG spawner %d is on node node/%d\n", spawner, node);
 
     thorium_actor_send_reply_empty(actor, ACTION_GET_NODE_WORKER_COUNT);
 }
@@ -1050,6 +1054,7 @@ void biosal_input_controller_get_node_worker_count_reply(struct thorium_actor *a
     int spawner;
     int worker_count;
     int *bucket;
+    struct thorium_actor *self = actor;
 
     concrete_actor = (struct biosal_input_controller *)thorium_actor_concrete_actor(actor);
 
@@ -1061,7 +1066,7 @@ void biosal_input_controller_get_node_worker_count_reply(struct thorium_actor *a
     bucket = core_vector_at(&concrete_actor->stores_per_spawner, index);
     *bucket = worker_count * concrete_actor->stores_per_worker_per_spawner;
 
-    printf("DEBUG spawner %d (node %d) is on a node that has %d workers\n", spawner,
+    thorium_actor_log(self, "DEBUG spawner %d (node %d) is on a node that has %d workers\n", spawner,
                     index, worker_count);
 
     thorium_actor_send_to_self_empty(actor, ACTION_INPUT_CONTROLLER_CREATE_STORES);
@@ -1076,7 +1081,7 @@ void biosal_input_controller_add_store(struct thorium_actor *actor, struct thori
     int *bucket;
 
     /*
-    printf("DEBUG biosal_input_controller_add_store\n");
+    thorium_actor_log(self, "DEBUG biosal_input_controller_add_store\n");
     */
 
     concrete_actor = (struct biosal_input_controller *)thorium_actor_concrete_actor(actor);
@@ -1086,7 +1091,7 @@ void biosal_input_controller_add_store(struct thorium_actor *actor, struct thori
     index = core_vector_index_of(&concrete_actor->spawners, &source);
 
     /*
-    printf("DEBUG biosal_input_controller_add_store index %d\n", index);
+    thorium_actor_log(self, "DEBUG biosal_input_controller_add_store index %d\n", index);
     */
 
     bucket = core_vector_at(&concrete_actor->stores_per_spawner, index);
@@ -1100,7 +1105,7 @@ void biosal_input_controller_add_store(struct thorium_actor *actor, struct thori
     thorium_actor_send_to_self_empty(actor, ACTION_INPUT_CONTROLLER_CREATE_STORES);
 
     /*
-    printf("DEBUG remaining to spawn: %d (before returning)\n", *bucket);
+    thorium_actor_log(self, "DEBUG remaining to spawn: %d (before returning)\n", *bucket);
     */
 }
 
@@ -1112,7 +1117,7 @@ void biosal_input_controller_prepare_spawners(struct thorium_actor *actor, struc
     concrete_actor = (struct biosal_input_controller *)thorium_actor_concrete_actor(actor);
 
 #ifdef BIOSAL_INPUT_CONTROLLER_DEBUG
-    printf("DEBUG biosal_input_controller_prepare_spawners \n");
+    thorium_actor_log(self, "DEBUG biosal_input_controller_prepare_spawners \n");
 #endif
 
     /* spawn an actor of the same script on every spawner to load required
@@ -1154,7 +1159,7 @@ void biosal_input_controller_receive_command(struct thorium_actor *actor, struct
     stream_index = biosal_partition_command_stream_index(&command);
 
 #ifdef BIOSAL_INPUT_CONTROLLER_DEBUG_COMMANDS
-    printf("DEBUG biosal_input_controller_receive_command controller receives command for stream %d\n", stream_index);
+    thorium_actor_log(self, "DEBUG biosal_input_controller_receive_command controller receives command for stream %d\n", stream_index);
     biosal_partition_command_print(&command);
 #endif
 
@@ -1168,7 +1173,7 @@ void biosal_input_controller_receive_command(struct thorium_actor *actor, struct
                     stream_index);
 
 #ifdef BIOSAL_INPUT_CONTROLLER_DEBUG_COMMANDS
-    printf("DEBUG stream_index %d stream_name %d\n", stream_index, stream_name);
+    thorium_actor_log(self, "DEBUG stream_index %d stream_name %d\n", stream_index, stream_name);
 #endif
 
     store_name = *(int *)core_vector_at(&concrete_actor->consumers, store_index);
@@ -1182,10 +1187,10 @@ void biosal_input_controller_receive_command(struct thorium_actor *actor, struct
                     &concrete_actor->codec);
 
 #ifdef BIOSAL_INPUT_CONTROLLER_DEBUG_COMMANDS
-    printf("DEBUG input command\n");
+    thorium_actor_log(self, "DEBUG input command\n");
     biosal_input_command_print(&input_command);
 
-    printf("DEBUG biosal_input_controller_receive_command bytes %d\n",
+    thorium_actor_log(self, "DEBUG biosal_input_controller_receive_command bytes %d\n",
                     bytes);
 #endif
 
@@ -1197,11 +1202,11 @@ void biosal_input_controller_receive_command(struct thorium_actor *actor, struct
                     new_buffer);
 
 #ifdef BIOSAL_INPUT_CONTROLLER_DEBUG_COMMANDS
-    printf("DEBUG biosal_input_controller_receive_command sending ACTION_INPUT_PUSH_SEQUENCES to %d (index %d)\n",
+    thorium_actor_log(self, "DEBUG biosal_input_controller_receive_command sending ACTION_INPUT_PUSH_SEQUENCES to %d (index %d)\n",
                     stream_name, stream_index);
     biosal_input_command_print(&input_command);
 
-    printf("SENDING COMMAND TO stream/%d\n", stream_name);
+    thorium_actor_log(self, "SENDING COMMAND TO stream/%d\n", stream_name);
 #endif
 
     thorium_actor_send(actor, stream_name, &new_message);
@@ -1209,7 +1214,7 @@ void biosal_input_controller_receive_command(struct thorium_actor *actor, struct
     command_name = biosal_partition_command_name(&command);
 
 #ifdef BIOSAL_INPUT_CONTROLLER_DEBUG_COMMANDS
-    printf("controller/%d processed input command %d %p\n", thorium_actor_name(actor), command_name,
+    thorium_actor_log(self, "controller/%d processed input command %d %p\n", thorium_actor_name(actor), command_name,
                     (void *)bucket_for_command_name);
 #endif
 
@@ -1223,7 +1228,7 @@ void biosal_input_controller_receive_command(struct thorium_actor *actor, struct
     (*bucket)++;
 
 #ifdef BIOSAL_INPUT_CONTROLLER_DEBUG_CONSUMERS
-    printf("DEBUG consumer # %d has %d active requests\n",
+    thorium_actor_log(self, "DEBUG consumer # %d has %d active requests\n",
                         consumer_index, *bucket);
 #endif
 }
@@ -1238,9 +1243,10 @@ void biosal_input_controller_spawn_streams(struct thorium_actor *actor, struct t
     int block_index;
     struct core_vector *vector;
     struct biosal_mega_block *block;
+    struct thorium_actor *self = actor;
 
 #ifdef BIOSAL_INPUT_CONTROLLER_DEBUG_READING_STREAMS
-    printf("DEBUG biosal_input_controller_spawn_streams\n");
+    thorium_actor_log(self, "DEBUG biosal_input_controller_spawn_streams\n");
 #endif
 
     concrete_actor = (struct biosal_input_controller *)thorium_actor_concrete_actor(actor);
@@ -1251,7 +1257,7 @@ void biosal_input_controller_spawn_streams(struct thorium_actor *actor, struct t
      */
 
     block_index = 0;
-    printf("DEBUG received MEGA BLOCKS\n");
+    thorium_actor_log(self, "DEBUG received MEGA BLOCKS\n");
     for (i = 0; i < core_vector_size(&concrete_actor->files); i++) {
 
         vector = (struct core_vector *)core_map_get(&concrete_actor->mega_blocks, &i);
@@ -1263,14 +1269,14 @@ void biosal_input_controller_spawn_streams(struct thorium_actor *actor, struct t
         for (j = 0; j < core_vector_size(vector); j++) {
             block = (struct biosal_mega_block *)core_vector_at(vector, j);
 
-            printf("BLOCK # %d ", block_index);
+            thorium_actor_log(self, "BLOCK # %d ", block_index);
             block_index++;
             biosal_mega_block_print(block);
 
             core_vector_push_back(&concrete_actor->mega_block_vector, block);
         }
     }
-    printf("DEBUG MEGA BLOCKS (total: %d)\n", block_index);
+    thorium_actor_log(self, "DEBUG MEGA BLOCKS (total: %d)\n", block_index);
 
     core_vector_iterator_init(&iterator, &concrete_actor->mega_block_vector);
 
@@ -1282,7 +1288,7 @@ void biosal_input_controller_spawn_streams(struct thorium_actor *actor, struct t
         concrete_actor->spawner %= core_vector_size(&concrete_actor->spawners);
 
 #ifdef BIOSAL_INPUT_CONTROLLER_DEBUG_READING_STREAMS
-        printf("DEBUG asking %d to spawn script %d\n", spawner, SCRIPT_INPUT_STREAM);
+        thorium_actor_log(self, "DEBUG asking %d to spawn script %d\n", spawner, SCRIPT_INPUT_STREAM);
 #endif
 
         thorium_actor_send_int(actor, spawner, ACTION_SPAWN, SCRIPT_INPUT_STREAM);
@@ -1313,7 +1319,7 @@ void biosal_input_controller_set_offset_reply(struct thorium_actor *self, struct
     block_index = core_map_get_int(&concrete_actor->assigned_blocks, &stream_index);
 
 #ifdef BIOSAL_INPUT_CONTROLLER_DEBUG_READING_STREAMS
-    printf("DEBUG got reply from stream/%d for offset, stream_index %d block_index %d\n", source,
+    thorium_actor_log(self, "DEBUG got reply from stream/%d for offset, stream_index %d block_index %d\n", source,
                     stream_index, block_index);
 #endif
 
@@ -1323,7 +1329,7 @@ void biosal_input_controller_set_offset_reply(struct thorium_actor *self, struct
     file_index = biosal_mega_block_get_file(block);
     file_name = *(char **)core_vector_at(&concrete_actor->files, file_index);
 
-    printf("DEBUG send ACTION_INPUT_OPEN %s\n", file_name);
+    thorium_actor_log(self, "DEBUG send ACTION_INPUT_OPEN %s\n", file_name);
 
     thorium_message_init(&new_message, ACTION_INPUT_OPEN, strlen(file_name) + 1, file_name);
 
