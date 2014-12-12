@@ -225,7 +225,7 @@ void argonnite_receive(struct thorium_actor *actor, struct thorium_message *mess
             return;
         }
 
-        printf("argonnite %d starts\n", name);
+        thorium_actor_log(actor, "argonnite %d starts\n", name);
 
         /*
          * Run only one argonnite actor
@@ -244,7 +244,7 @@ void argonnite_receive(struct thorium_actor *actor, struct thorium_message *mess
 
 #ifdef ARGONNITE_DEBUG1
         BIOSAL_DEBUG_MARKER("after setting script");
-        printf("manager %d, index %d\n", manager_for_directors, concrete_actor->manager_for_directors);
+        thorium_actor_log(actor, "manager %d, index %d\n", manager_for_directors, concrete_actor->manager_for_directors);
 #endif
 
         for (i = 0; i < core_vector_size(&concrete_actor->initial_actors); i++) {
@@ -266,7 +266,7 @@ void argonnite_receive(struct thorium_actor *actor, struct thorium_message *mess
 
         spawner_index = core_vector_index_of(&concrete_actor->initial_actors, &source);
 
-        printf("MANY_AGGREGATORS argonnite %d: spawner %d is on a node with %d workers\n",
+        thorium_actor_log(actor, "MANY_AGGREGATORS argonnite %d: spawner %d is on a node with %d workers\n",
                         name, source, workers);
 
         core_vector_set_int(&concrete_actor->worker_counts, spawner_index, workers);
@@ -330,7 +330,7 @@ void argonnite_receive(struct thorium_actor *actor, struct thorium_message *mess
 
         controller = concrete_actor->controller;
 
-        printf("DEBUG Y got kernels !\n");
+        thorium_actor_log(actor, "DEBUG Y got kernels !\n");
 
         thorium_actor_send_to_self_empty(actor, ACTION_ARGONNITE_PREPARE_SEQUENCE_STORES);
 
@@ -366,7 +366,7 @@ void argonnite_receive(struct thorium_actor *actor, struct thorium_message *mess
             manager_for_aggregators = thorium_actor_spawn(actor,
                             SCRIPT_MANAGER);
 
-            printf("argonnite %d spawns manager %d for aggregators\n",
+            thorium_actor_log(actor, "argonnite %d spawns manager %d for aggregators\n",
                             thorium_actor_name(actor), manager_for_aggregators);
 
             concrete_actor->manager_for_aggregators = manager_for_aggregators;
@@ -391,7 +391,7 @@ void argonnite_receive(struct thorium_actor *actor, struct thorium_message *mess
 
         /*
         workers_per_aggregator = ARGONNITE_WORKERS_PER_AGGREGATOR;
-        printf("MANY_AGGREGATORS argonnite %d sets count per spawner to %d for aggregator manager %d\n",
+        thorium_actor_log(self, "MANY_AGGREGATORS argonnite %d sets count per spawner to %d for aggregator manager %d\n",
                         thorium_actor_name(actor),
                         workers_per_aggregator, manager_for_aggregators);
 
@@ -412,7 +412,7 @@ void argonnite_receive(struct thorium_actor *actor, struct thorium_message *mess
         thorium_actor_send_reply_vector(actor, ACTION_START,
                         &concrete_actor->initial_actors);
 
-        printf("argonnite %d ask manager %d to spawn children for work\n",
+        thorium_actor_log(actor, "argonnite %d ask manager %d to spawn children for work\n",
                         thorium_actor_name(actor), manager_for_aggregators);
 
 
@@ -429,7 +429,7 @@ void argonnite_receive(struct thorium_actor *actor, struct thorium_message *mess
          * It is like a brain, with some connections
          */
 
-        printf("argonnite %d wires the brain, %d kernels, %d aggregators\n",
+        thorium_actor_log(actor, "argonnite %d wires the brain, %d kernels, %d aggregators\n",
                         thorium_actor_name(actor),
                         (int)core_vector_size(&concrete_actor->kernels),
                         (int)core_vector_size(&concrete_actor->aggregators));
@@ -458,7 +458,7 @@ void argonnite_receive(struct thorium_actor *actor, struct thorium_message *mess
             */
 
 #ifdef ARGONNITE_DEBUG_WIRING
-            printf("Wiring %d, %d kernels\n", spawner_index, workers);
+            thorium_actor_log(self, "Wiring %d, %d kernels\n", spawner_index, workers);
 #endif
 
             while (workers > 0) {
@@ -468,7 +468,7 @@ void argonnite_receive(struct thorium_actor *actor, struct thorium_message *mess
                 kernel = kernel_index;
                 aggregator = aggregator_index;
 
-                printf("wiring kernel %d to aggregator %d\n", kernel, aggregator);
+                thorium_actor_log(self, "wiring kernel %d to aggregator %d\n", kernel, aggregator);
 #ifdef ARGONNITE_DEBUG_WIRING
 #endif
 
@@ -507,7 +507,7 @@ void argonnite_receive(struct thorium_actor *actor, struct thorium_message *mess
 
         if (concrete_actor->configured_actors == core_vector_size(&concrete_actor->kmer_stores)) {
 
-            printf("DEBUG all kmer stores are wired.\n");
+            thorium_actor_log(actor, "DEBUG all kmer stores are wired.\n");
 
             thorium_actor_send_empty(actor, concrete_actor->controller, ACTION_INPUT_DISTRIBUTE);
 
@@ -521,7 +521,7 @@ void argonnite_receive(struct thorium_actor *actor, struct thorium_message *mess
 
         if (concrete_actor->wired_kernels == (int)core_vector_size(&concrete_actor->kernels)) {
 
-            printf("argonnite %d completed the wiring of the brain\n",
+            thorium_actor_log(actor, "argonnite %d completed the wiring of the brain\n",
                 thorium_actor_name(actor));
 
             concrete_actor->configured_actors = 0;
@@ -553,7 +553,7 @@ void argonnite_receive(struct thorium_actor *actor, struct thorium_message *mess
         concrete_actor->manager_for_kmer_stores = manager_for_kmer_stores;
 
 #ifdef ARGONNITE_DEBUG
-        printf("DEBUG manager_for_kmer_stores %d\n", concrete_actor->manager_for_kmer_stores);
+        thorium_actor_log(self, "DEBUG manager_for_kmer_stores %d\n", concrete_actor->manager_for_kmer_stores);
 #endif
 
         thorium_actor_send_int(actor, manager_for_kmer_stores, ACTION_MANAGER_SET_SCRIPT,
@@ -574,7 +574,7 @@ void argonnite_receive(struct thorium_actor *actor, struct thorium_message *mess
     } else if (tag == ACTION_START_REPLY
                     && source == concrete_actor->manager_for_kmer_stores) {
 
-        printf("DEBUG kmer stores READY\n");
+        thorium_actor_log(actor, "DEBUG kmer stores READY\n");
         concrete_actor->spawned_stores = 1;
 
         core_vector_unpack(&concrete_actor->kmer_stores, buffer);
@@ -595,7 +595,7 @@ void argonnite_receive(struct thorium_actor *actor, struct thorium_message *mess
 
         if (concrete_actor->configured_aggregators == core_vector_size(&concrete_actor->aggregators)) {
 
-            printf("DEBUG all aggregator configured...\n");
+            thorium_actor_log(actor, "DEBUG all aggregator configured...\n");
 
             concrete_actor->configured_actors = 0;
 
@@ -612,7 +612,7 @@ void argonnite_receive(struct thorium_actor *actor, struct thorium_message *mess
 
         if (concrete_actor->configured_actors == core_vector_size(&concrete_actor->kmer_stores)) {
 
-            printf("DEBUG all kmer store have kmer length\n");
+            thorium_actor_log(actor, "DEBUG all kmer store have kmer length\n");
             concrete_actor->configured_actors = 0;
 
 
@@ -654,7 +654,7 @@ void argonnite_receive(struct thorium_actor *actor, struct thorium_message *mess
         if (bucket != NULL) {
 
             print_stuff = 1;
-            printf("DEBUG finished kernels %d/%d, plentiful stores %d/%d\n", concrete_actor->finished_kernels,
+            thorium_actor_log(actor, "DEBUG finished kernels %d/%d, plentiful stores %d/%d\n", concrete_actor->finished_kernels,
                         (int)core_vector_size(&concrete_actor->kernels),
                         (int)core_map_size(&concrete_actor->plentiful_stores),
                         (int)core_vector_size(&concrete_actor->sequence_stores));
@@ -697,13 +697,13 @@ void argonnite_receive(struct thorium_actor *actor, struct thorium_message *mess
             thorium_actor_send_int(actor, kernel, ACTION_SET_PRODUCER, sequence_store);
 
             if (print_stuff) {
-                printf("argonnite %d tells kernel %d to steal work from kernel %d (%d), producer is sequence store %d\n",
+                thorium_actor_log(actor, "argonnite %d tells kernel %d to steal work from kernel %d (%d), producer is sequence store %d\n",
                             thorium_actor_name(actor),
                             kernel,
                             other_kernel,
                             sequence_store_index_index,
                             sequence_store);
-                printf("any further thefts by kernel %d will not be reported\n",
+                thorium_actor_log(actor, "any further thefts by kernel %d will not be reported\n",
                             kernel);
             }
 
@@ -713,7 +713,7 @@ void argonnite_receive(struct thorium_actor *actor, struct thorium_message *mess
         if (concrete_actor->finished_kernels == core_vector_size(&concrete_actor->kernels)) {
 
 
-            printf("sending ACTION_NOTIFY\n");
+            thorium_actor_log(actor, "sending ACTION_NOTIFY\n");
             thorium_actor_send_range_empty(actor, &concrete_actor->kernels, ACTION_NOTIFY);
 
             concrete_actor->finished_kernels = 0;
@@ -723,7 +723,7 @@ void argonnite_receive(struct thorium_actor *actor, struct thorium_message *mess
 
         thorium_message_unpack_uint64_t(message, 0, &produced);
 
-        printf("kernel/%d generated %" PRIu64 " kmers\n",
+        thorium_actor_log(actor, "kernel/%d generated %" PRIu64 " kmers\n",
                         source, produced);
 
         concrete_actor->total_kmers += produced;
@@ -732,7 +732,7 @@ void argonnite_receive(struct thorium_actor *actor, struct thorium_message *mess
 
         if (concrete_actor->ready_kernels == core_vector_size(&concrete_actor->kernels)) {
 
-            printf("DEBUG probing kmer stores\n");
+            thorium_actor_log(actor, "DEBUG probing kmer stores\n");
             thorium_actor_send_to_self_empty(actor, ACTION_ARGONNITE_PROBE_KMER_STORES);
         }
 
@@ -746,7 +746,7 @@ void argonnite_receive(struct thorium_actor *actor, struct thorium_message *mess
 
             if (concrete_actor->actual_kmers == concrete_actor->total_kmers) {
 
-                printf("argonnite %d: stores are ready, %" PRIu64 "/%" PRIu64 " kmers\n",
+                thorium_actor_log(actor, "argonnite %d: stores are ready, %" PRIu64 "/%" PRIu64 " kmers\n",
                                 name, concrete_actor->actual_kmers, concrete_actor->total_kmers);
 
                 distribution = concrete_actor->distribution;
@@ -756,7 +756,7 @@ void argonnite_receive(struct thorium_actor *actor, struct thorium_message *mess
                 thorium_actor_send_int(actor, distribution, ACTION_SET_EXPECTED_MESSAGE_COUNT,
                                 core_vector_size(&concrete_actor->kmer_stores));
 
-                printf("ISSUE_481 argonnite %d sends ACTION_PUSH_DATA to %d stores\n",
+                thorium_actor_log(actor, "ISSUE_481 argonnite %d sends ACTION_PUSH_DATA to %d stores\n",
                                 thorium_actor_name(actor),
                                 (int)core_vector_size(&kmer_stores));
 
@@ -765,7 +765,7 @@ void argonnite_receive(struct thorium_actor *actor, struct thorium_message *mess
             } else {
 
                 if (concrete_actor->not_ready_warnings % 100 == 0) {
-                    printf("argonnite %d: stores are not ready, %" PRIu64 "/%" PRIu64 " kmers\n",
+                    thorium_actor_log(actor, "argonnite %d: stores are not ready, %" PRIu64 "/%" PRIu64 " kmers\n",
                                 name, concrete_actor->actual_kmers, concrete_actor->total_kmers);
                 }
 
@@ -800,7 +800,7 @@ void argonnite_receive(struct thorium_actor *actor, struct thorium_message *mess
 
             other_name = *bucket;
 
-            printf("argonnite %d stops argonnite %d\n",
+            thorium_actor_log(actor, "argonnite %d stops argonnite %d\n",
                             name, other_name);
 
             thorium_actor_send_empty(actor, other_name, ACTION_ASK_TO_STOP);
@@ -819,7 +819,7 @@ void argonnite_receive(struct thorium_actor *actor, struct thorium_message *mess
             core_timer_print_with_description(&concrete_actor->timer, "Actor computation");
         }
 
-        printf("argonnite %d stops\n", name);
+        thorium_actor_log(actor, "argonnite %d stops\n", name);
 
         /*
          * STOP everything
