@@ -14,4 +14,5 @@ qsub \
      __JOB__.__APP__ -threads-per-node 16 \
     -k 27 __SAMPLE__/*.fastq \
     -minimum-coverage 2 \
-    -o __JOB__
+    -print-thorium-data \
+    -o __JOB__ \
