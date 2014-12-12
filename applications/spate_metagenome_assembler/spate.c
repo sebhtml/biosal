@@ -202,8 +202,10 @@ void spate_start(struct thorium_actor *self, struct thorium_message *message)
     int argc;
     char **argv;
 
+#ifdef SPATE_VERBOSE
     thorium_actor_send_to_self_int(self, ACTION_ENABLE_LOG_LEVEL,
                     LOG_LEVEL_DEFAULT);
+#endif
 
     concrete_self = (struct spate *)thorium_actor_concrete_actor(self);
     buffer = thorium_message_buffer(message);
