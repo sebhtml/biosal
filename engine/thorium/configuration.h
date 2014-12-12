@@ -13,7 +13,7 @@
  * Maximum number of messages received from transport in the
  * main loop of node.
  */
-#define THORIUM_NODE_MAXIMUM_RECEIVED_MESSAGE_COUNT_PER_CALL THORIUM_DEFAULT_EVENT_COUNT
+#define THORIUM_NODE_MAXIMUM_RECEIVED_MESSAGE_COUNT_PER_CALL 1
 
 /*
  * Maximum number of messages pulled from the worker
@@ -22,7 +22,8 @@
  * The number of clean messages to pull at every call must be
  * greater.
  */
-#define THORIUM_NODE_MAXIMUM_PULLED_MESSAGE_COUNT_PER_CALL THORIUM_DEFAULT_EVENT_COUNT
+#define THORIUM_NODE_MAXIMUM_PULLED_MESSAGE_COUNT_PER_CALL 1
+
 #define THORIUM_NODE_MAXIMUM_PULLED_CLEAN_MESSAGE_COUNT_PER_CALL THORIUM_DEFAULT_EVENT_COUNT
 
 /*
