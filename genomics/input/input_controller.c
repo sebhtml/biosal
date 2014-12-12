@@ -15,8 +15,10 @@
 
 #include <core/helpers/vector_helper.h>
 #include <core/helpers/map_helper.h>
-#include <engine/thorium/modules/message_helper.h>
 #include <core/system/memory.h>
+
+#include <engine/thorium/modules/message_helper.h>
+#include <engine/thorium/actor.h>
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -540,7 +542,8 @@ void biosal_input_controller_receive(struct thorium_actor *actor, struct thorium
 
             (*bucket) = entries;
 
-            biosal_mega_block_print(mega_block);
+            if (thorium_actor_get_flag(actor, LOG_LEVEL_DEFAULT))
+                biosal_mega_block_print(mega_block);
         }
 
         core_vector_iterator_destroy(&vector_iterator);
