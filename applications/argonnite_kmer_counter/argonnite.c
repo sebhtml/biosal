@@ -391,7 +391,7 @@ void argonnite_receive(struct thorium_actor *actor, struct thorium_message *mess
 
         /*
         workers_per_aggregator = ARGONNITE_WORKERS_PER_AGGREGATOR;
-        thorium_actor_log(self, "MANY_AGGREGATORS argonnite %d sets count per spawner to %d for aggregator manager %d\n",
+        thorium_actor_log(actor, "MANY_AGGREGATORS argonnite %d sets count per spawner to %d for aggregator manager %d\n",
                         thorium_actor_name(actor),
                         workers_per_aggregator, manager_for_aggregators);
 
@@ -458,7 +458,7 @@ void argonnite_receive(struct thorium_actor *actor, struct thorium_message *mess
             */
 
 #ifdef ARGONNITE_DEBUG_WIRING
-            thorium_actor_log(self, "Wiring %d, %d kernels\n", spawner_index, workers);
+            thorium_actor_log(actor, "Wiring %d, %d kernels\n", spawner_index, workers);
 #endif
 
             while (workers > 0) {
@@ -468,7 +468,7 @@ void argonnite_receive(struct thorium_actor *actor, struct thorium_message *mess
                 kernel = kernel_index;
                 aggregator = aggregator_index;
 
-                thorium_actor_log(self, "wiring kernel %d to aggregator %d\n", kernel, aggregator);
+                thorium_actor_log(actor, "wiring kernel %d to aggregator %d\n", kernel, aggregator);
 #ifdef ARGONNITE_DEBUG_WIRING
 #endif
 
@@ -553,7 +553,7 @@ void argonnite_receive(struct thorium_actor *actor, struct thorium_message *mess
         concrete_actor->manager_for_kmer_stores = manager_for_kmer_stores;
 
 #ifdef ARGONNITE_DEBUG
-        thorium_actor_log(self, "DEBUG manager_for_kmer_stores %d\n", concrete_actor->manager_for_kmer_stores);
+        thorium_actor_log(actor, "DEBUG manager_for_kmer_stores %d\n", concrete_actor->manager_for_kmer_stores);
 #endif
 
         thorium_actor_send_int(actor, manager_for_kmer_stores, ACTION_MANAGER_SET_SCRIPT,
