@@ -13,5 +13,7 @@ echo "Commit= __COMMIT__"
 
 aprun -n 256 -N 1 -d 23 -r 1 \
               __JOB__.__APP__ -threads-per-node 23 -print-thorium-data \
-              -k 43 __SAMPLE__/*.fastq -o __JOB__ > __JOB__.stdout
+              -k 27 __SAMPLE__/*.fastq -o \
+             -minimum-coverage 2 \
+             __JOB__ > __JOB__.stdout
 
