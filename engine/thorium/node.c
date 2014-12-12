@@ -3263,8 +3263,8 @@ void thorium_node_change_log_level(struct thorium_node *self, int actor_name)
 
             /*
              * The script was matched already.
+             * We could do a break, but we want to process all arguments anyway.
              */
-            break;
         }
     }
 }
