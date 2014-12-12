@@ -252,7 +252,9 @@ struct thorium_node {
     int counter_injected_transport_outbound_buffer_for_workers;
 #endif
 
+#ifdef THORIUM_NODE_USE_WATCHDOG_ON_OUTBOUND_RING
     int cached_outbound_ring_size;
+#endif
 
     unsigned int random_seed;
 };
