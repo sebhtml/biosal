@@ -14,7 +14,9 @@ export CRAY_MALLOPT_OFF=1
 
 echo "Commit= __COMMIT__"
 
+# -print-thorium-data
+
 aprun -n 256 -N 1 -d 23 -r 1 \
-              ./__JOB__.__APP__ -threads-per-node 23 -print-thorium-data \
+              ./__JOB__.__APP__ -threads-per-node 23 \
               -k 27 __SAMPLE__/*.fastq -o __JOB__ > __JOB__.stdout
 
