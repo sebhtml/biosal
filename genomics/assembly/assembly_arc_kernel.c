@@ -52,7 +52,7 @@ void biosal_assembly_arc_kernel_init(struct thorium_actor *self)
     thorium_actor_add_action(self, ACTION_SET_KMER_LENGTH,
                     biosal_assembly_arc_kernel_set_kmer_length);
 
-    printf("%s/%d is now active\n",
+    thorium_actor_log(self, "%s/%d is now active\n",
                     thorium_actor_script_name(self),
                     thorium_actor_name(self));
 
@@ -118,7 +118,7 @@ void biosal_assembly_arc_kernel_receive(struct thorium_actor *self, struct thori
         thorium_message_unpack_int(message, 0, &concrete_self->producer);
         concrete_self->source = source;
 
-        printf("%s/%d received ACTION_SET_PRODUCER, starting now!\n",
+        thorium_actor_log(self, "%s/%d received ACTION_SET_PRODUCER, starting now!\n",
                         thorium_actor_script_name(self),
                         thorium_actor_name(self));
 
@@ -144,7 +144,7 @@ void biosal_assembly_arc_kernel_receive(struct thorium_actor *self, struct thori
              */
             concrete_self->producer = producer;
 
-            printf("%s/%d will steal work from producer %d now\n",
+            thorium_actor_log(self, "%s/%d will steal work from producer %d now\n",
                             thorium_actor_script_name(self),
                             thorium_actor_name(self),
                             concrete_self->producer);
@@ -153,7 +153,7 @@ void biosal_assembly_arc_kernel_receive(struct thorium_actor *self, struct thori
 
         } else {
 
-            printf("%s/%d DONE\n",
+            thorium_actor_log(self, "%s/%d DONE\n",
                             thorium_actor_script_name(self),
                             thorium_actor_name(self));
 
@@ -162,7 +162,7 @@ void biosal_assembly_arc_kernel_receive(struct thorium_actor *self, struct thori
         }
     } else if (tag == ACTION_ASK_TO_STOP) {
 
-        printf("%s/%d generated %" PRIu64 " arcs from %d sequence blocks, generated %d messages for consumer\n",
+        thorium_actor_log(self, "%s/%d generated %" PRIu64 " arcs from %d sequence blocks, generated %d messages for consumer\n",
                         thorium_actor_script_name(self),
                         thorium_actor_name(self),
                         concrete_self->produced_arcs,
@@ -198,12 +198,12 @@ void biosal_assembly_arc_kernel_ask(struct thorium_actor *self, struct thorium_m
     concrete_self = thorium_actor_concrete_actor(self);
 
     if (concrete_self->consumer == THORIUM_ACTOR_NOBODY) {
-        printf("Error: no consumer in arc kernel\n");
+        thorium_actor_log(self, "Error: no consumer in arc kernel\n");
         return;
     }
 
     if (concrete_self->producer == THORIUM_ACTOR_NOBODY) {
-        printf("Error: no producer in arc kernel\n");
+        thorium_actor_log(self, "Error: no producer in arc kernel\n");
         return;
     }
 
@@ -258,17 +258,17 @@ void biosal_assembly_arc_kernel_push_sequence_data_block(struct thorium_actor *s
     ++concrete_self->received_blocks;
 
     if (concrete_self->kmer_length == THORIUM_ACTOR_NOBODY) {
-        printf("Error no kmer length set in kernel\n");
+        thorium_actor_log(self, "Error no kmer length set in kernel\n");
         return;
     }
 
     if (concrete_self->consumer == THORIUM_ACTOR_NOBODY) {
-        printf("Error no consumer set in kernel\n");
+        thorium_actor_log(self, "Error no consumer set in kernel\n");
         return;
     }
 
     if (concrete_self->source == THORIUM_ACTOR_NOBODY || concrete_self->producer == THORIUM_ACTOR_NOBODY) {
-        printf("Error, no producer_source set\n");
+        thorium_actor_log(self, "Error, no producer_source set\n");
         return;
     }
 
@@ -283,7 +283,7 @@ void biosal_assembly_arc_kernel_push_sequence_data_block(struct thorium_actor *s
     entries = core_vector_size(sequences);
 
 #if 0
-    printf("ENTRIES %d\n", entries);
+    thorium_actor_log(self, "ENTRIES %d\n", entries);
 #endif
 
     biosal_assembly_arc_block_init(&output_block, ephemeral_memory,
@@ -304,7 +304,7 @@ void biosal_assembly_arc_kernel_push_sequence_data_block(struct thorium_actor *s
     to_reserve = 0;
 
 #ifdef DEBUG_MODE_FOR_PAYLOAD
-    printf("arc_kernel ACTION_PUSH_SEQUENCE_DATA_BLOCK with %d DNA sequences\n",
+    thorium_actor_log(self, "arc_kernel ACTION_PUSH_SEQUENCE_DATA_BLOCK with %d DNA sequences\n",
                     entries);
 #endif
 
@@ -430,7 +430,7 @@ void biosal_assembly_arc_kernel_push_sequence_data_block(struct thorium_actor *s
     }
 
 #if 0
-    printf("DEBUG profile_kmer_init_calls %d profile_kmer_destroy_calls %d\n",
+    thorium_actor_log(self, "DEBUG profile_kmer_init_calls %d profile_kmer_destroy_calls %d\n",
                     profile_kmer_init_calls, profile_kmer_destroy_calls);
 #endif
 
@@ -490,9 +490,9 @@ void biosal_assembly_arc_kernel_set_producers_for_work_stealing(struct thorium_a
     }
 
 #if 0
-    printf("ACTION_SET_PRODUCERS_FOR_WORK_STEALING: \n");
+    thorium_actor_log(self, "ACTION_SET_PRODUCERS_FOR_WORK_STEALING: \n");
     core_vector_print_int(&producers);
-    printf("\n");
+    thorium_actor_log(self, "\n");
 #endif
 
     core_vector_destroy(&producers);
