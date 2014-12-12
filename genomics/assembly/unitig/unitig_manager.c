@@ -216,7 +216,7 @@ void biosal_unitig_manager_receive(struct thorium_actor *self, struct thorium_me
 
         core_vector_unpack(&concrete_self->visitors, buffer);
 
-        printf("DEBUG the system has %d visitors\n",
+        thorium_actor_log(self, "DEBUG the system has %d visitors\n",
                         (int)core_vector_size(&concrete_self->visitors));
 
         thorium_actor_send_to_supervisor_empty(self, ACTION_START_REPLY);
@@ -227,7 +227,7 @@ void biosal_unitig_manager_receive(struct thorium_actor *self, struct thorium_me
 
         core_vector_unpack(&concrete_self->walkers, buffer);
 
-        printf("DEBUG the system has %d walkers\n",
+        thorium_actor_log(self, "DEBUG the system has %d walkers\n",
                         (int)core_vector_size(&concrete_self->walkers));
 
         core_timer_start(&concrete_self->timer);
@@ -297,7 +297,7 @@ void biosal_unitig_manager_receive(struct thorium_actor *self, struct thorium_me
 
         if (concrete_self->completed % UNITIG_WALKER_COUNT_PER_WORKER == 0
                         || concrete_self->completed == expected) {
-            printf("PROGRESS unitig walkers %d/%d\n",
+            thorium_actor_log(self, "PROGRESS unitig walkers %d/%d\n",
                         concrete_self->completed,
                         expected);
         }
@@ -338,7 +338,7 @@ void biosal_unitig_manager_receive_answer_from_visitor(struct thorium_actor *sel
 
     if (concrete_self->completed % concrete_self->visitor_count_per_worker == 0
                     || concrete_self->completed == expected) {
-        printf("PROGRESS unitig visitors %d/%d\n",
+        thorium_actor_log(self, "PROGRESS unitig visitors %d/%d\n",
                     concrete_self->completed,
                     expected);
     }
