@@ -57,5 +57,9 @@ int biosal_command_get_minimum_coverage(int argc, char **argv)
 
     value = BIOSAL_DEFAULT_MINIMUM_COVERAGE;
 
+    if (core_command_has_argument(argc, argv, "-minimum-coverage")) {
+        value = core_command_get_argument_value_int(argc, argv, "-minimum-coverage");
+    }
+
     return value;
 }
