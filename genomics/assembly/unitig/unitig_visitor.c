@@ -153,7 +153,7 @@ void biosal_unitig_visitor_receive(struct thorium_actor *self, struct thorium_me
         if (biosal_vertex_neighborhood_receive(&concrete_self->main_neighborhood, message)) {
 
 #if 0
-            printf("VISITOR fetched main vertex data.\n");
+            thorium_actor_log(self, "VISITOR fetched main vertex data.\n");
 #endif
             concrete_self->step = STEP_DECIDE_MAIN;
             biosal_unitig_visitor_execute(self);
@@ -291,7 +291,7 @@ void biosal_unitig_visitor_execute(struct thorium_actor *self)
     ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
 
 #if 0
-    printf("biosal_unitig_visitor_execute step= %d\n",
+    thorium_actor_log(self, "biosal_unitig_visitor_execute step= %d\n",
                     concrete_self->step);
 #endif
 
@@ -312,7 +312,7 @@ void biosal_unitig_visitor_execute(struct thorium_actor *self)
                         new_count, new_buffer);
 
 #if 0
-        printf("visitor Finished\n");
+        thorium_actor_log(self, "visitor Finished\n");
 #endif
     } else if (concrete_self->step == STEP_GET_KMER_LENGTH) {
         graph_store_index = concrete_self->graph_store_index;
@@ -321,7 +321,7 @@ void biosal_unitig_visitor_execute(struct thorium_actor *self)
         thorium_actor_send_empty(self, graph_store, ACTION_ASSEMBLY_GET_KMER_LENGTH);
 
 #if 0
-        printf("visitor STEP_GET_KMER_LENGTH\n");
+        thorium_actor_log(self, "visitor STEP_GET_KMER_LENGTH\n");
 #endif
 
     } else if (concrete_self->step == STEP_GET_MAIN_KMER) {
@@ -362,7 +362,7 @@ void biosal_unitig_visitor_execute(struct thorium_actor *self)
         concrete_self->has_local_kmer = FALSE;
 
 #if 0
-        printf("visitor STEP_GET_MAIN_KMER\n");
+        thorium_actor_log(self, "visitor STEP_GET_MAIN_KMER\n");
 #endif
 
     } else if (concrete_self->step == STEP_GET_MAIN_VERTEX_DATA) {
@@ -381,7 +381,7 @@ void biosal_unitig_visitor_execute(struct thorium_actor *self)
         biosal_vertex_neighborhood_receive(&concrete_self->main_neighborhood, NULL);
 
 #if 0
-        printf("visitor STEP_GET_MAIN_VERTEX_DATA\n");
+        thorium_actor_log(self, "visitor STEP_GET_MAIN_VERTEX_DATA\n");
 #endif
 
     } else if (concrete_self->step == STEP_DECIDE_MAIN) {
@@ -427,7 +427,7 @@ void biosal_unitig_visitor_execute(struct thorium_actor *self)
         core_vector_destroy(&coverages);
 
 #if 0
-        printf("DEBUG selected_parent %d selected_child %d\n",
+        thorium_actor_log(self, "DEBUG selected_parent %d selected_child %d\n",
                         concrete_self->selected_parent, concrete_self->selected_child);
 #endif
 
@@ -552,7 +552,7 @@ void biosal_unitig_visitor_execute(struct thorium_actor *self)
     } else if (concrete_self->step == STEP_DECIDE_PARENT) {
 
 #if 0
-        printf("DEBUG STEP_DECIDE_PARENT\n");
+        thorium_actor_log(self, "DEBUG STEP_DECIDE_PARENT\n");
 #endif
         /*
          * Verify if the child selected by the parent is the current vertex.
@@ -585,7 +585,7 @@ void biosal_unitig_visitor_execute(struct thorium_actor *self)
                 concrete_self->step = STEP_GET_CHILD_VERTEX_DATA;
             } else {
 #if 0
-                printf("Info: parent code mismatch !\n");
+                thorium_actor_log(self, "Info: parent code mismatch !\n");
 #endif
                 concrete_self->step = STEP_DO_RESET;
             }
@@ -624,7 +624,7 @@ void biosal_unitig_visitor_execute(struct thorium_actor *self)
     } else if (concrete_self->step == STEP_DECIDE_CHILD) {
 
 #if 0
-        printf("step = STEP_DECIDE_CHILD\n");
+        thorium_actor_log(self, "step = STEP_DECIDE_CHILD\n");
 #endif
 
         /*
@@ -657,7 +657,7 @@ void biosal_unitig_visitor_execute(struct thorium_actor *self)
                 concrete_self->step = STEP_MARK_UNITIG;
             } else {
 #if 0
-                printf("Info: child code mismatch !\n");
+                thorium_actor_log(self, "Info: child code mismatch !\n");
 #endif
                 concrete_self->step = STEP_DO_RESET;
             }
@@ -768,7 +768,7 @@ void biosal_unitig_visitor_set_locality_kmer(struct thorium_actor *self,
         ++concrete_self->length_of_locality;
 
 #if 0
-        printf("Generated locality object with length %d\n", concrete_self->length_of_locality);
+        thorium_actor_log(self, "Generated locality object with length %d\n", concrete_self->length_of_locality);
 #endif
     } else {
         concrete_self->has_local_kmer = FALSE;
