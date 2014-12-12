@@ -44,7 +44,9 @@ int biosal_command_get_kmer_length(int argc, char **argv)
         kmer_length = provided_value;
     }
 
+    /*
     printf("DEBUG kmer_length %d\n", kmer_length);
+    */
 
     return kmer_length;
 }

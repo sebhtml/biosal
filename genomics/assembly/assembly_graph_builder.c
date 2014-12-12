@@ -1471,7 +1471,9 @@ void biosal_assembly_graph_builder_get_summary_reply(struct thorium_actor *self,
 
     if (concrete_self->ready_graph_store_count == expected) {
 
+            /*
         biosal_assembly_graph_summary_print(&concrete_self->graph_summary);
+        */
 
         /*
          * Write summary file too in XML

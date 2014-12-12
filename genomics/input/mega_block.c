@@ -26,7 +26,7 @@ void biosal_mega_block_destroy(struct biosal_mega_block *self)
 
 void biosal_mega_block_print(struct biosal_mega_block *self)
 {
-    printf("MEGA BLOCK file %d offset %" PRIu64 " entries %" PRIu64 " %" PRIu64 "\n", self->file,
+    fprintf(stderr, "MEGA BLOCK file %d offset %" PRIu64 " entries %" PRIu64 " %" PRIu64 "\n", self->file,
                     self->offset, self->entries, self->entries_from_start);
 }
 

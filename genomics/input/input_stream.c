@@ -974,7 +974,10 @@ void biosal_input_stream_count_reply(struct thorium_actor *self, struct thorium_
             for (j = 0; j < core_vector_size(vector); j++) {
 
                 block = core_vector_at(vector, j);
-                biosal_mega_block_print(block);
+
+                if (thorium_actor_get_flag(self, LOG_LEVEL_DEFAULT)) {
+                    biosal_mega_block_print(block);
+                }
             }
 
             core_vector_push_back_vector(&concrete_self->mega_blocks,

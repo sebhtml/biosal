@@ -1274,7 +1274,10 @@ void biosal_input_controller_spawn_streams(struct thorium_actor *actor, struct t
 
             thorium_actor_log(self, "BLOCK # %d ", block_index);
             block_index++;
-            biosal_mega_block_print(block);
+
+            if (thorium_actor_get_flag(actor, LOG_LEVEL_DEFAULT)) {
+                biosal_mega_block_print(block);
+            }
 
             core_vector_push_back(&concrete_actor->mega_block_vector, block);
         }
