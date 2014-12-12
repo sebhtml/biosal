@@ -1982,6 +1982,7 @@ static void thorium_node_handle_signal(int signal)
     core_tracer_print_stack_backtrace();
 
     fflush(stdout);
+    fflush(stderr);
 
     /* remove handler
      * \see http://stackoverflow.com/questions/9302464/how-do-i-remove-a-signal-handler
