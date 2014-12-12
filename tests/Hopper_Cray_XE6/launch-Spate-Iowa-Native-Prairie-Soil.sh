@@ -54,7 +54,7 @@ cd ..
 cp biosal/applications/spate_metagenome_assembler/spate $__JOB__.$__APP__
 
 # create submission script
-cp biosal/tests/Edison_Cray_XC30/Template.$__APP__.pbs $__JOB__.pbs
+cp biosal/tests/Hopper_Cray_XE6/Template.$__APP__.pbs $__JOB__.pbs
 
 template="s/__JOB__/$__JOB__/g"
 sed -i "$template" $__JOB__.pbs
