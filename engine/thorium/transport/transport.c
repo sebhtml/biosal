@@ -50,6 +50,8 @@
 
 #define MEMORY_TRANSPORT 0xe1b48d97
 
+#define CONFIG_USE_MPI_NONBLOCKING_BY_DEFAULT
+
 void thorium_transport_init(struct thorium_transport *self, struct thorium_node *node,
                 int *argc, char ***argv,
                 struct core_memory_pool *inbound_message_memory_pool,
@@ -309,10 +311,15 @@ void thorium_transport_select_implementation(struct thorium_transport *self, int
 
     self->transport_interface = NULL;
 
+#ifdef CONFIG_USE_MPI_NONBLOCKING_BY_DEFAULT
+    self->transport_interface = &thorium_mpi1_pt2pt_nonblocking_transport_implementation;
+#endif
+
     /*
      * The default is the first one in the list.
      */
-    if (!core_vector_empty(&implementations)) {
+    if (self->transport_interface == NULL
+                    && !core_vector_empty(&implementations)) {
         self->transport_interface = *(struct thorium_transport_interface **)core_vector_at(&implementations, 0);
     }
 
