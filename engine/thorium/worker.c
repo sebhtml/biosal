@@ -119,7 +119,10 @@
 
 #define PROFILE_EVENT_COUNT 1024
 
+/*
 #define CONFIG_USE_TRANSPORT_MESSAGE_COUNT_FOR_CONGESTION_DETECTION
+*/
+#define CONFIG_USE_OUTBOUND_RING_FOR_CONGESTION_DETECTION
 
 /*
  * Route all small messages through the same exporter.
@@ -2675,7 +2678,7 @@ int thorium_worker_has_outbound_traffic_congestion(struct thorium_worker *self)
      * If there are at least N messages, declare a congestion state
      * and return true.
      */
-    threshold = 1;
+    threshold = 64;
 
     return size >= threshold;
 
