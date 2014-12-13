@@ -6,6 +6,8 @@
 
 #include <engine/thorium/configuration.h>
 
+#define THORIUM_MESSAGE_BLOCK_MAXIMUM_SIZE 1
+
 /*
  * A message block. This is used for grouping messages
  * in the worker-to-node pipe.

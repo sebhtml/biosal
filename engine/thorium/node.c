@@ -2426,8 +2426,8 @@ static void thorium_node_send_messages(struct thorium_node *node)
     */
     struct thorium_message message;
     int i;
-    int count;
     /*
+    int count;
     int j;
     int message_count;
     */
@@ -2444,7 +2444,6 @@ static void thorium_node_send_messages(struct thorium_node *node)
      * 256 elements most of the time since there are data
      * dependencies with the outside world.
      */
-    count = THORIUM_NODE_MAXIMUM_PULLED_MESSAGE_COUNT_PER_CALL;
 
     /*
     if (count == 0)
@@ -2459,11 +2458,11 @@ static void thorium_node_send_messages(struct thorium_node *node)
      *
      * This loop is lockless.
      */
-    while (i < count && thorium_worker_pool_dequeue_message(&node->worker_pool, &message)) {
+    if (thorium_worker_pool_dequeue_message(&node->worker_pool, &message)) {
 
         ++i;
-
 #if 0
+
         message_count = thorium_message_block_size(&message_block);
         j = 0;
 
@@ -2631,7 +2630,7 @@ static void thorium_node_do_message_triage(struct thorium_node *self)
     int size;
 
     i = 0;
-    size = THORIUM_NODE_MAXIMUM_PULLED_CLEAN_MESSAGE_COUNT_PER_CALL;
+    size = 1;
 
     /*
      * First, verify if any message needs to be processed from
@@ -2952,7 +2951,7 @@ static void thorium_node_receive_messages(struct thorium_node *node)
     struct thorium_message message;
 
     i = 0;
-    count = THORIUM_NODE_MAXIMUM_RECEIVED_MESSAGE_COUNT_PER_CALL;
+    count = 1;
 
     while ((i < count
 #ifdef THORIUM_NODE_USE_WATCHDOG_ON_OUTBOUND_RING

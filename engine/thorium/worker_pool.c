@@ -679,8 +679,6 @@ static int thorium_worker_pool_give_message_to_worker(struct thorium_worker_pool
 void thorium_worker_pool_work(struct thorium_worker_pool *pool)
 {
     struct thorium_message other_message;
-    int i;
-    int size;
 
     /*
     struct thorium_actor *actor;
@@ -699,11 +697,7 @@ void thorium_worker_pool_work(struct thorium_worker_pool *pool)
         thorium_worker_pool_give_message_to_worker(pool, &other_message);
     }
 
-    i = 0;
-    size = THORIUM_NODE_MAXIMUM_PULLED_CLEAN_MESSAGE_COUNT_PER_CALL;
-
-    while (i++ < size
-                    && core_fast_ring_pop_from_consumer(&pool->triage_message_ring,
+    if (core_fast_ring_pop_from_consumer(&pool->triage_message_ring,
                             &other_message)) {
 
         core_queue_enqueue(&pool->clean_message_queue, &other_message);

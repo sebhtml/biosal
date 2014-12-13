@@ -873,15 +873,15 @@ int thorium_worker_dequeue_actor(struct thorium_worker *worker, struct thorium_a
     struct thorium_message message;
     struct thorium_actor *other_actor;
     int other_name;
-    int operations;
     int status;
     int mailbox_size;
     int action;
+    int operations;
 
-    operations = THORIUM_WORKER_MAXIMUM_RECEIVED_MESSAGE_COUNT_PER_CALL;
     other_actor = NULL;
 
     tracepoint(thorium_worker, dequeue_message, worker);
+    operations = 1;
 
     /*
      * Move an actor from the ring to the real actor scheduling queue
