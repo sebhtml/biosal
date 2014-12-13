@@ -119,6 +119,8 @@
 
 #define PROFILE_EVENT_COUNT 1024
 
+#define CONFIG_USE_TRANSPORT_MESSAGE_COUNT_FOR_CONGESTION_DETECTION
+
 /*
  * Route all small messages through the same exporter.
  */
@@ -2663,6 +2665,7 @@ float thorium_worker_get_epoch_traffic_reduction(struct thorium_worker *self)
 
 int thorium_worker_has_outbound_traffic_congestion(struct thorium_worker *self)
 {
+#ifdef CONFIG_USE_OUTBOUND_RING_FOR_CONGESTION_DETECTION
     int size;
     int threshold;
 
@@ -2675,6 +2678,11 @@ int thorium_worker_has_outbound_traffic_congestion(struct thorium_worker *self)
     threshold = 1;
 
     return size >= threshold;
+
+#elif defined(CONFIG_USE_TRANSPORT_MESSAGE_COUNT_FOR_CONGESTION_DETECTION)
+
+    return thorium_node_has_transport_congestion(self->node);
+#endif
 }
 
 void thorium_worker_free_zero_copy_buffer(struct thorium_worker *self,
