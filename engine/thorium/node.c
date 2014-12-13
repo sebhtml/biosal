@@ -3062,16 +3062,11 @@ void thorium_node_send_queued_message(struct thorium_node *self)
 {
 #ifdef AVOID_QUEUE_CLUTTER
     struct thorium_message message;
-    int active_request_count;
-    int maximum;
-
-    active_request_count = thorium_transport_get_active_request_count(&self->transport);
-    maximum = MAXIMUM_ACTIVE_REQUEST_COUNT;
 
     /*
      * Too much clutter already.
      */
-    if (active_request_count > maximum)
+    if (thorium_node_has_transport_congestion(self))
         return;
 
     if (core_queue_dequeue(&self->outbound_message_queue, &message)) {
@@ -3089,25 +3084,17 @@ int thorium_node_check_clutter(struct thorium_node *self,
                 struct thorium_message *message)
 {
 #ifdef AVOID_QUEUE_CLUTTER
-    int active_request_count;
-    int maximum;
-
-    /*
-     * A maximum is needed because all of these requests (typically MPI_Request)
-     * need a bunch of calls to MPI_Test so that they complete.
-     */
-    maximum = MAXIMUM_ACTIVE_REQUEST_COUNT;
 
     /*
      * Put messages in the queue if there are too many active requests already.
      */
-    active_request_count = thorium_transport_get_active_request_count(&self->transport);
-
-    if (active_request_count > maximum) {
+    if (thorium_node_has_transport_congestion(self)) {
         core_queue_enqueue(&self->outbound_message_queue, message);
         return 1;
     }
 
+    return 0;
+#else
     return 0;
 #endif
 }
@@ -3267,4 +3254,26 @@ void thorium_node_change_log_level(struct thorium_node *self, int actor_name)
              */
         }
     }
+}
+
+int thorium_node_has_transport_congestion(struct thorium_node *self)
+{
+    int active_request_count;
+    int maximum;
+
+    active_request_count = thorium_transport_get_active_request_count(&self->transport);
+
+    /*
+     * A maximum is needed because all of these requests (typically MPI_Request)
+     * need a bunch of calls to MPI_Test so that they complete.
+     */
+    maximum = MAXIMUM_ACTIVE_REQUEST_COUNT;
+
+    /*
+     * Too much clutter already.
+     */
+    if (active_request_count > maximum)
+        return 1;
+
+    return 0;
 }

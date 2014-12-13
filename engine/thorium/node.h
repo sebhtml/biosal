@@ -310,4 +310,6 @@ struct thorium_actor *thorium_node_get_actor_from_name(struct thorium_node *self
 void thorium_node_resolve(struct thorium_node *self, struct thorium_message *message);
 int thorium_node_must_print_data(struct thorium_node *self);
 
+int thorium_node_has_transport_congestion(struct thorium_node *self);
+
 #endif
