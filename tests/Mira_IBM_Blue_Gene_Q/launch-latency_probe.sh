@@ -1,47 +1,18 @@
 #!/bin/bash
 
-root=/projects/CompBIO/Projects/automated-tests
-repository=git://github.com/sebhtml/biosal.git
-branch=master
+center=alcf
+system=mira
+nodes=512
+threads=16
 
-__APP__=latency_probe
-__JOB__=$__APP__-$(date +%Y-%m-%d-%H-%M-%S)
+build_script=scripts/IBM_Blue_Gene_Q/build-xl.sh
+app_path=performance/latency_probe/latency_probe
+job_template=tests/Mira_IBM_Blue_Gene_Q/Template.latency_probe.sh
 
-if ! test -e $root
-then
-    mkdir -p $root
-fi
+root=/projects/CompBIO/Projects/automated-tests-mira
+dataset=/gpfs/mira-fs1/projects/CompBIO/Datasets/JGI/Great_Prairie_Soil_Metagenome_Grand_Challenge/Datasets/Iowa_Native_Prairie_Soil
 
-cd $root
+submit_command=bash
 
-if ! test -e biosal
-then
-    git clone $repository
-fi
+source tests/submit-actor-job-to-scheduler.sh
 
-cd biosal
-git checkout $branch
-git pull origin $branch
-
-__COMMIT__=$(git log | head -n1 | awk '{print $2}')
-
-scripts/IBM_Blue_Gene_Q/build-xl.sh
-
-cd ..
-cp biosal/performance/latency_probe/latency_probe $__JOB__.$__APP__
-
-cp biosal/tests/Mira_IBM_Blue_Gene_Q/Template.$__APP__.sh $__JOB__.sh
-
-template="s/__JOB__/$__JOB__/g"
-sed -i "$template" $__JOB__.sh
-
-template="s/__APP__/$__APP__/g"
-sed -i "$template" $__JOB__.sh
-
-template="s/__COMMIT__/$__COMMIT__/g"
-sed -i "$template" $__JOB__.sh
-
-./$__JOB__.sh > $__JOB__.job
-
-echo "Submitted build $__JOB__ ($__COMMIT__)"
-cat $__JOB__.job
