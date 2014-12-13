@@ -203,6 +203,22 @@ void thorium_node_print_information(struct thorium_node *self);
 
 void thorium_node_change_log_level(struct thorium_node *self, int actor_name);
 
+void thorium_node_tracepoint(struct thorium_node *self, const char *event);
+
+/*
+#define USE_THORIUM_NODE_TRACEPOINT
+*/
+
+#ifdef USE_THORIUM_NODE_TRACEPOINT
+#define THORIUM_NODE_TRACEPOINT(event) \
+    if (print_information) { \
+        thorium_node_tracepoint(node, event); \
+    } \
+
+#else
+#define THORIUM_NODE_TRACEPOINT(event)
+#endif
+
 void thorium_node_init(struct thorium_node *node, int *argc, char ***argv)
 {
     int i;
@@ -593,6 +609,8 @@ void thorium_node_init(struct thorium_node *node, int *argc, char ***argv)
 
     node->counter_last_received_message_count = 0;
     node->counter_last_sent_message_count = 0;
+
+    node->last_time = 0;
 }
 
 void thorium_node_destroy(struct thorium_node *node)
@@ -2266,6 +2284,8 @@ static void thorium_node_run_loop(struct thorium_node *node)
 
     while (credits > 0) {
 
+        THORIUM_NODE_TRACEPOINT("enter")
+
         tracepoint(thorium_node, tick_enter, node->name, node->tick,
                         thorium_transport_sent_message_count(&node->transport),
                         thorium_transport_received_message_count(&node->transport));
@@ -2307,6 +2327,8 @@ static void thorium_node_run_loop(struct thorium_node *node)
             thorium_node_receive_messages(node);
         }
 
+        THORIUM_NODE_TRACEPOINT("after_receive")
+
         tracepoint(thorium_node, run_loop_receive, node->name, node->tick);
 
         CORE_DEBUGGER_JITTER_DETECTION_END(node_receive, 0);
@@ -2334,6 +2356,8 @@ static void thorium_node_run_loop(struct thorium_node *node)
             thorium_node_send_messages(node);
         }
 
+        THORIUM_NODE_TRACEPOINT("after_send")
+
         tracepoint(thorium_node, run_loop_send_after, node->name, node->tick);
 
         CORE_DEBUGGER_JITTER_DETECTION_END(node_send, 0);
@@ -2344,6 +2368,8 @@ static void thorium_node_run_loop(struct thorium_node *node)
          */
 
         thorium_worker_pool_work(&node->worker_pool);
+
+        THORIUM_NODE_TRACEPOINT("after_worker_pool_work")
 
         tracepoint(thorium_node, run_loop_pool_work, node->name, node->tick);
 
@@ -2365,6 +2391,8 @@ static void thorium_node_run_loop(struct thorium_node *node)
 #endif
         }
 
+        THORIUM_NODE_TRACEPOINT("after_node_running")
+
         CORE_DEBUGGER_JITTER_DETECTION_END(node_pool_work, 0);
 
         CORE_DEBUGGER_JITTER_DETECTION_START(node_test);
@@ -2376,9 +2404,13 @@ static void thorium_node_run_loop(struct thorium_node *node)
             thorium_node_test_requests(node);
         }
 
+        THORIUM_NODE_TRACEPOINT("after_node_test")
+
         tracepoint(thorium_node, run_loop_test_requests, node->name, node->tick);
 
         thorium_node_do_message_triage(node);
+
+        THORIUM_NODE_TRACEPOINT("after_triage")
 
 #ifdef THORIUM_NODE_DEBUG_RUN
         if (node->alive_actors == 0) {
@@ -2394,12 +2426,16 @@ static void thorium_node_run_loop(struct thorium_node *node)
 
         thorium_node_regulator_run(node);
 
+        THORIUM_NODE_TRACEPOINT("after_regulator")
+
 #ifdef THORIUM_NODE_USE_TICKS
         ++node->tick_count;
 #endif
         tracepoint(thorium_node, tick_exit, node->name, node->tick);
 
         ++node->tick;
+
+        THORIUM_NODE_TRACEPOINT("exit")
     }
 
 #ifdef THORIUM_NODE_DEBUG_20140601_8
@@ -3174,4 +3210,18 @@ int thorium_node_has_transport_congestion(struct thorium_node *self)
         return 1;
 
     return 0;
+}
+
+void thorium_node_tracepoint(struct thorium_node *self, const char *event)
+{
+    uint64_t time;
+    int delta;
+
+    time = core_timer_get_nanoseconds(&self->timer);
+    delta = time - self->last_time;
+
+    fprintf(stderr, "%" PRIu64 " (+%d) thorium_node:%s\n",
+                    time, delta, event);
+
+    self->last_time = time;
 }

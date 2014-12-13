@@ -255,6 +255,8 @@ struct thorium_node {
 #endif
 
     unsigned int random_seed;
+
+    uint64_t last_time;
 };
 
 extern struct thorium_node *thorium_node_global_self;
