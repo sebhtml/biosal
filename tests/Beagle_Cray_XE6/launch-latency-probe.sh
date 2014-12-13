@@ -5,7 +5,7 @@ repository=git://github.com/sebhtml/biosal.git
 branch=master
 
 __APP__=latency_probe
-__JOB__=$__APP__-$(date +%Y-%m-%d-%H-%M-%S)
+__JOB__=$__APP__-ci-beagle-256x24-$(date +%Y-%m-%d-%H-%M-%S)
 
 if ! test -e $root
 then
