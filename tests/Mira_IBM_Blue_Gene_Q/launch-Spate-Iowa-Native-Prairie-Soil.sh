@@ -1,57 +1,18 @@
 #!/bin/bash
 
-root=/projects/CompBIO/Projects/automated-tests
-repository=git://github.com/sebhtml/biosal.git
-branch=master
+center=alcf
+system=mira
+nodes=512
+threads=16
+
+build_script=scripts/IBM_Blue_Gene_Q/build-spate-xl.sh
+app_path=applications/spate_metagenome_assembler/spate
+job_template=tests/Mira_IBM_Blue_Gene_Q/Template.spate.sh
+
+root=/projects/CompBIO/Projects/automated-tests-mira
 dataset=/gpfs/mira-fs1/projects/CompBIO/Datasets/JGI/Great_Prairie_Soil_Metagenome_Grand_Challenge/Datasets/Iowa_Native_Prairie_Soil
 
-__APP__=spate
-__SAMPLE__=$(basename $dataset)
-__JOB__=$__APP__-$__SAMPLE__-$(date +%Y-%m-%d-%H-%M-%S)
+submit_command=bash
 
-if ! test -e $root
-then
-    mkdir -p $root
-fi
+source tests/submit-actor-job-to-scheduler.sh
 
-cd $root
-
-if ! test -e $__SAMPLE__
-then
-    ln -s $dataset $__SAMPLE__
-fi
-
-if ! test -e biosal
-then
-    git clone $repository
-fi
-
-cd biosal
-git checkout $branch
-git pull origin $branch
-
-__COMMIT__=$(git log | head -n1 | awk '{print $2}')
-
-scripts/IBM_Blue_Gene_Q/build-spate-xl.sh
-
-cd ..
-cp biosal/applications/spate_metagenome_assembler/spate $__JOB__.$__APP__
-
-cp biosal/tests/Mira_IBM_Blue_Gene_Q/Template.$__APP__.sh $__JOB__.sh
-
-template="s/__JOB__/$__JOB__/g"
-sed -i "$template" $__JOB__.sh
-
-template="s/__APP__/$__APP__/g"
-sed -i "$template" $__JOB__.sh
-
-template="s/__SAMPLE__/$__SAMPLE__/g"
-sed -i "$template" $__JOB__.sh
-
-template="s/__COMMIT__/$__COMMIT__/g"
-sed -i "$template" $__JOB__.sh
-
-./$__JOB__.sh > $__JOB__.job
-
-echo "Submitted build $__JOB__ ($__COMMIT__)"
-cat $__JOB__.job
