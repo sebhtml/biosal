@@ -11,7 +11,7 @@ app_path=performance/latency_probe/latency_probe
 job_template=tests/Mira_IBM_Blue_Gene_Q/Template.latency_probe.sh
 
 root=/projects/CompBIO/Projects/automated-tests-mira
-dataset=/gpfs/mira-fs1/projects/CompBIO/Datasets/JGI/Great_Prairie_Soil_Metagenome_Grand_Challenge/Datasets/Iowa_Native_Prairie_Soil
+dataset=/dev/null
 
 submit_command=bash
 
