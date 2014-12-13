@@ -645,6 +645,17 @@ void thorium_message_multiplexer_test(struct thorium_message_multiplexer *self)
 #endif
 
         /*
+         * Verify if the buffer can grow more.
+         */
+        if (!thorium_multiplexed_buffer_has_reached_target(multiplexed_buffer)) {
+            thorium_multiplexed_buffer_set_time(multiplexed_buffer, time);
+
+            core_red_black_tree_add_key_and_value(&self->timeline, &time, &index);
+
+            return;
+        }
+
+        /*
          * The item won't have content in the case were _flush()
          * was called elsewhere with FORCE_YES_SIZE.
          */

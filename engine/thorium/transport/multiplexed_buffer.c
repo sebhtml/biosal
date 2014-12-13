@@ -166,8 +166,6 @@ int thorium_multiplexed_buffer_required_size(struct thorium_multiplexed_buffer *
 void thorium_multiplexed_buffer_set_time(struct thorium_multiplexed_buffer *self,
                 uint64_t time)
 {
-    CORE_DEBUGGER_ASSERT(self->timestamp_ == 0);
-
     self->timestamp_ = time;
 }
 
@@ -379,6 +377,10 @@ int thorium_multiplexed_buffer_has_reached_target(struct thorium_multiplexed_buf
 {
     int result;
 
+    /*
+     * The target starts at 0.
+     * Then it changes dynamically.
+     */
     result = self->message_count_ >= self->target_message_count;
 
     /*
