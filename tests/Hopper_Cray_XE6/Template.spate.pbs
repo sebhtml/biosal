@@ -21,4 +21,5 @@ aprun -n 200 -N 1 -d 23 -r 1 \
               -k 27 __SAMPLE__/*.fastq -o __JOB__ \
               -minimum-coverage 2 \
               -print-thorium-data \
+                -enable-actor-log all \
 
