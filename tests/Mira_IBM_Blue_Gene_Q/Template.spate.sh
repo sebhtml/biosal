@@ -16,3 +16,4 @@ qsub \
     -minimum-coverage 2 \
     -print-thorium-data \
     -o __JOB__ \
+    -enable-actor-log all \
