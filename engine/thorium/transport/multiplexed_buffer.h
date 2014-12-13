@@ -33,6 +33,8 @@ struct thorium_multiplexed_buffer {
 
     int counter_original_message_count;
     int counter_real_message_count;
+
+    int target_message_count;
 };
 
 void thorium_multiplexed_buffer_init(struct thorium_multiplexed_buffer *self,
@@ -64,5 +66,7 @@ int thorium_multiplexed_buffer_timeout(struct thorium_multiplexed_buffer *self);
 
 int thorium_multiplexed_buffer_original_message_count(struct thorium_multiplexed_buffer *self);
 int thorium_multiplexed_buffer_real_message_count(struct thorium_multiplexed_buffer *self);
+
+int thorium_multiplexed_buffer_has_reached_target(struct thorium_multiplexed_buffer *self);
 
 #endif

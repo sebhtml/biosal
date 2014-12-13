@@ -64,6 +64,8 @@ void thorium_multiplexed_buffer_init(struct thorium_multiplexed_buffer *self,
 
     thorium_multiplexed_buffer_reset(self);
 
+    self->target_message_count = 0;
+
     self->maximum_size_ = maximum_size;
 
 #ifdef THORIUM_MULTIPLEXED_BUFFER_PREDICT_MESSAGE_COUNT
@@ -371,4 +373,26 @@ int thorium_multiplexed_buffer_original_message_count(struct thorium_multiplexed
 int thorium_multiplexed_buffer_real_message_count(struct thorium_multiplexed_buffer *self)
 {
     return self->counter_real_message_count;
+}
+
+int thorium_multiplexed_buffer_has_reached_target(struct thorium_multiplexed_buffer *self)
+{
+    int result;
+
+    result = self->message_count_ >= self->target_message_count;
+
+    /*
+     * We can do better !
+     */
+    if (result) {
+        ++self->target_message_count;
+    } else {
+
+        /*
+         * The target was too high.
+         */
+        --self->target_message_count;
+    }
+
+    return result;
 }
