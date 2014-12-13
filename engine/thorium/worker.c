@@ -2678,7 +2678,7 @@ int thorium_worker_has_outbound_traffic_congestion(struct thorium_worker *self)
      * If there are at least N messages, declare a congestion state
      * and return true.
      */
-    threshold = 64;
+    threshold = 1;
 
     return size >= threshold;
 
