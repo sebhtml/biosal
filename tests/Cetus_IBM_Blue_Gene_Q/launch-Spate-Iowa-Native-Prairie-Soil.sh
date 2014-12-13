@@ -7,7 +7,7 @@ dataset=/gpfs/mira-fs1/projects/CompBIO/Datasets/JGI/Great_Prairie_Soil_Metageno
 
 __APP__=spate
 __SAMPLE__=$(basename $dataset)
-__JOB__=$__APP__-$__SAMPLE__-$(date +%Y-%m-%d-%H-%M-%S)
+__JOB__=$__APP__-$__SAMPLE__-1024x16-$(date +%Y-%m-%d-%H-%M-%S)
 
 if ! test -e $root
 then

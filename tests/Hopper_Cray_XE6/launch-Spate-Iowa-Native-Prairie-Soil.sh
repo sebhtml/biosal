@@ -12,7 +12,7 @@ dataset=/scratch/scratchdirs/boisvert/Iowa_Native_Prairie_Soil
 
 __APP__=spate
 __SAMPLE__=$(basename $dataset)
-__JOB__=$__APP__-$__SAMPLE__-$(date +%Y-%m-%d-%H-%M-%S)
+__JOB__=$__APP__-$__SAMPLE__-nersc-hopper-200x24-$(date +%Y-%m-%d-%H-%M-%S)
 
 if ! test -e $root
 then
