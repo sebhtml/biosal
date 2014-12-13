@@ -192,17 +192,13 @@ static int thorium_node_has_script(struct thorium_node *self, struct thorium_scr
 static void thorium_node_send_messages(struct thorium_node *self);
 static void thorium_node_receive_messages(struct thorium_node *self);
 
-static void thorium_node_send(struct thorium_node *self, struct thorium_message *message,
-                int perform_multiplexing);
+static void thorium_node_send(struct thorium_node *self, struct thorium_message *message);
 
 void thorium_node_open_log_file(struct thorium_node *self);
 void thorium_node_close_log_file(struct thorium_node *self);
 
 #define AVOID_QUEUE_CLUTTER
 
-void thorium_node_send_queued_message(struct thorium_node *self);
-int thorium_node_check_clutter(struct thorium_node *self,
-                struct thorium_message *message);
 void thorium_node_print_information(struct thorium_node *self);
 
 void thorium_node_change_log_level(struct thorium_node *self, int actor_name);
@@ -595,10 +591,6 @@ void thorium_node_init(struct thorium_node *node, int *argc, char ***argv)
 #endif
     }
 
-    core_queue_init(&node->outbound_message_queue, sizeof(struct thorium_message));
-    core_queue_set_memory_pool(&node->outbound_message_queue,
-                    &node->outbound_message_memory_pool);
-
     node->counter_last_received_message_count = 0;
     node->counter_last_sent_message_count = 0;
 }
@@ -675,8 +667,6 @@ void thorium_node_destroy(struct thorium_node *node)
 #endif
 
     core_queue_destroy(&node->output_clean_outbound_buffer_queue);
-
-    core_queue_destroy(&node->outbound_message_queue);
 
     /*
      * Destroy the memory pool after the rest.
@@ -1413,7 +1403,7 @@ void thorium_node_send_to_node(struct thorium_node *node, int destination,
 
     thorium_message_set_type(&new_message, THORIUM_MESSAGE_TYPE_NODE_OUTBOUND);
 
-    thorium_node_send(node, &new_message, 0);
+    thorium_node_send(node, &new_message);
 }
 
 static int thorium_node_has_actor(struct thorium_node *self, int name)
@@ -1440,8 +1430,7 @@ static int thorium_node_has_actor(struct thorium_node *self, int name)
     return 0;
 }
 
-static void thorium_node_send(struct thorium_node *node, struct thorium_message *message,
-                int perform_multiplexing)
+static void thorium_node_send(struct thorium_node *node, struct thorium_message *message)
 {
     int name;
     /*
@@ -2197,7 +2186,7 @@ static void thorium_node_send_to_actor(struct thorium_node *node, int name, stru
     thorium_message_set_source(message, name);
     thorium_message_set_destination(message, name);
 
-    thorium_node_send(node, message, 1);
+    thorium_node_send(node, message);
 }
 
 void thorium_node_check_load(struct thorium_node *node)
@@ -2403,8 +2392,6 @@ static void thorium_node_run_loop(struct thorium_node *node)
 
         thorium_node_regulator_run(node);
 
-        thorium_node_send_queued_message(node);
-
 #ifdef THORIUM_NODE_USE_TICKS
         ++node->tick_count;
 #endif
@@ -2421,21 +2408,21 @@ static void thorium_node_run_loop(struct thorium_node *node)
 
 static void thorium_node_send_messages(struct thorium_node *node)
 {
-        /*
-    struct thorium_message_block message_block;
-    */
     struct thorium_message message;
     int i;
-    /*
-    int count;
-    int j;
-    int message_count;
-    */
 
     i = 0;
+
     /*
-    count = node->worker_count;
-    */
+     * Don't transfer outbound messages from workers to the transport layer
+     * when the transport layer is saturated already.
+     *
+     * The workers don't put messages in the outbound message ring when
+     * they are for local actors.
+     */
+    if (thorium_node_has_transport_congestion(node)) {
+        return;
+    }
 
     /*
      * This was tested with 1 node with 28 worker threads.
@@ -2444,11 +2431,6 @@ static void thorium_node_send_messages(struct thorium_node *node)
      * 256 elements most of the time since there are data
      * dependencies with the outside world.
      */
-
-    /*
-    if (count == 0)
-        count = 1;
-        */
 
     tracepoint(thorium_node, send_messages_enter, node->name, node->tick);
 
@@ -2461,47 +2443,10 @@ static void thorium_node_send_messages(struct thorium_node *node)
     if (thorium_worker_pool_dequeue_message(&node->worker_pool, &message)) {
 
         ++i;
-#if 0
-
-        message_count = thorium_message_block_size(&message_block);
-        j = 0;
-
-        tracepoint(thorium_node, send_messages_loop, node->name, node->tick, message_count,
-                        thorium_worker_pool_outbound_ring_size(&node->worker_pool));
-
-        while (j < message_count) {
-            message = thorium_message_block_get_message(&message_block, j);
-
-            tracepoint(thorium_message, node_send, message);
-
-#ifdef THORIUM_NODE_DEBUG
-            printf("thorium_node_run pulled tag %i buffer %p\n",
-                        thorium_message_action(message),
-                        thorium_message_buffer(message));
-#endif
-
-#ifdef THORIUM_NODE_DEBUG_RUN
-            if (node->alive_actors == 0) {
-                printf("THORIUM_NODE_DEBUG_RUN thorium_node_send_messages pulled a message, tag %d\n",
-                            thorium_message_action(message));
-            }
-#endif
-#endif
-            /*
-             * Send it locally or over the network
-             */
-            thorium_node_send(node, &message, 1);
-#if 0
-
-            ++j;
-        }
-    } else {
-#ifdef THORIUM_NODE_DEBUG_RUN
-        if (node->alive_actors == 0) {
-            printf("THORIUM_NODE_DEBUG_RUN thorium_node_send_messages no message\n");
-        }
-#endif
-#endif
+        /*
+         * Send it locally or over the network
+         */
+        thorium_node_send(node, &message);
     }
 
     if (i) {
@@ -2798,9 +2743,6 @@ void thorium_node_send_with_transport(struct thorium_node *self, struct thorium_
     printf("NODE1 SEND %x\n", thorium_message_action(message));
 #endif
 
-    if (thorium_node_check_clutter(self, message))
-        return;
-
     thorium_transport_send(&self->transport, message);
 
 #ifdef THORIUM_NODE_USE_COUNTERS
@@ -3055,50 +2997,6 @@ void thorium_node_close_log_file(struct thorium_node *self)
     core_string_destroy(&self->log_file_name);
 }
 
-/*
- * Send any queued outbound message with transport.
- */
-void thorium_node_send_queued_message(struct thorium_node *self)
-{
-#ifdef AVOID_QUEUE_CLUTTER
-    struct thorium_message message;
-
-    /*
-     * Too much clutter already.
-     */
-    if (thorium_node_has_transport_congestion(self))
-        return;
-
-    if (core_queue_dequeue(&self->outbound_message_queue, &message)) {
-
-#ifdef SHOW_TRANSFER
-        printf("Popped message\n");
-#endif
-
-        thorium_transport_send(&self->transport, &message);
-    }
-#endif
-}
-
-int thorium_node_check_clutter(struct thorium_node *self,
-                struct thorium_message *message)
-{
-#ifdef AVOID_QUEUE_CLUTTER
-
-    /*
-     * Put messages in the queue if there are too many active requests already.
-     */
-    if (thorium_node_has_transport_congestion(self)) {
-        core_queue_enqueue(&self->outbound_message_queue, message);
-        return 1;
-    }
-
-    return 0;
-#else
-    return 0;
-#endif
-}
-
 void thorium_node_print_information(struct thorium_node *self)
 {
     uint64_t received_message_count;
@@ -3178,13 +3076,11 @@ void thorium_node_print_information(struct thorium_node *self)
                     " MESSAGING "
                     "BufferedInboundMessageCount: %d"
                     " BufferedOutboundMessageCountInRing: %d"
-                    " BufferedOutboundMessageCountInQueue: %d"
                     " MessageCountInTransport: %d"
                     "\n",
                     self->name,
                     thorium_worker_pool_buffered_message_count(&self->worker_pool),
                     thorium_worker_pool_outbound_ring_size(&self->worker_pool),
-                    core_queue_size(&self->outbound_message_queue),
                     thorium_transport_get_active_request_count(&self->transport)
           );
 
