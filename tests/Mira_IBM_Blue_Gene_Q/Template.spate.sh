@@ -7,7 +7,7 @@
 qsub \
  --env PAMID_THREAD_MULTIPLE=1 \
  -A CompBIO \
- -n 1024 \
+ -n 512 \
  -t 03:00:00 \
  -O __JOB__ \
  --mode c1 \
