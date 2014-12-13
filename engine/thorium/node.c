@@ -2360,7 +2360,9 @@ static void thorium_node_run_loop(struct thorium_node *node)
 #endif
             }
 
+#ifdef THORIUM_NODE_CHECK_LOAD
             thorium_node_check_load(node);
+#endif
         }
 
         CORE_DEBUGGER_JITTER_DETECTION_END(node_pool_work, 0);
