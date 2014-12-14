@@ -1,7 +1,7 @@
 #!/bin/bash
 #PBS -N __JOB__
 #PBS -A m1523
-#PBS -l walltime=3:00:00
+#PBS -l walltime=__WALLTIME__
 #PBS -l mppwidth=3072
 #PBS -q regular
 
@@ -16,7 +16,7 @@ echo "Commit= __COMMIT__"
 
 # -print-thorium-data
 
-aprun -n 128 -N 1 -d 23 -r 1 \
+aprun -n __NODE__ -N 1 -d 23 -r 1 \
               ./__JOB__.__APP__ -threads-per-node 23 \
               -k 27 __SAMPLE__/*.fastq -o __JOB__ \
               -minimum-coverage 2 \
