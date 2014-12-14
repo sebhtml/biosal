@@ -1,7 +1,7 @@
 #!/bin/bash
 #PBS -N __JOB__
 #PBS -A m1523
-#PBS -l walltime=3:00:00
+#PBS -l walltime=__WALLTIME__
 #PBS -l mppwidth=4800
 #PBS -q regular
 
