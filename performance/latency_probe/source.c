@@ -82,7 +82,7 @@ static void source_receive(struct thorium_actor *self, struct thorium_message *m
 
     if (action == ACTION_ASK_TO_STOP) {
 
-        printf("source %d sent %d ACTION_PING messages\n", name,
+        thorium_actor_log(self, "sent %d ACTION_PING messages\n",
                         concrete_self->message_count);
 
         thorium_actor_send_to_self_empty(self, ACTION_STOP);
