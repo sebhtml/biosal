@@ -4,6 +4,7 @@ center=alcf
 system=mira
 nodes=512
 threads=16
+walltime=03:00:00
 
 build_script=scripts/IBM_Blue_Gene_Q/build-spate-xl.sh
 app_path=applications/spate_metagenome_assembler/spate
