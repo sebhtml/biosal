@@ -16,7 +16,7 @@ echo "Commit= __COMMIT__"
 
 # -print-thorium-data
 
-aprun -n __NODE__ -N 1 -d 23 -r 1 \
+aprun -n __NODES__ -N 1 -d 23 -r 1 \
               ./__JOB__.__APP__ -threads-per-node 23 \
               -k 27 __SAMPLE__/*.fastq -o __JOB__ \
               -minimum-coverage 2 \
