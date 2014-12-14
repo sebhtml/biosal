@@ -111,6 +111,7 @@
 #define FLAG_REGULATOR_IS_ENABLED           CORE_BITMAP_MAKE_FLAG(12)
 #define FLAG_PROFILE_MESSAGE_TRANSPORT      CORE_BITMAP_MAKE_FLAG(13)
 #define FLAG_USE_FREOPEN_FOR_STDOUT         CORE_BITMAP_MAKE_FLAG(14)
+#define FLAG_STARTED_INITIAL_ACTORS         CORE_BITMAP_MAKE_FLAG(15)
 
 #define OPTION_USE_FREOPEN_STDOUT "-freopen-stdout"
 
@@ -118,8 +119,8 @@
  * Enable the regulator.
  */
 /*
-*/
 #define THORIUM_NODE_CONFIG_USE_REGULATOR
+*/
 
 #define MAXIMUM_ACTIVE_REQUEST_COUNT 256
 
@@ -291,6 +292,7 @@ void thorium_node_init(struct thorium_node *node, int *argc, char ***argv)
     core_set_init(&node->auto_scaling_actors, sizeof(int));
 
     CORE_BITMAP_CLEAR_FLAG(node->flags, FLAG_STARTED);
+    CORE_BITMAP_CLEAR_FLAG(node->flags, FLAG_STARTED_INITIAL_ACTORS);
     CORE_BITMAP_CLEAR_FLAG(node->flags, FLAG_PRINT_THORIUM_DATA);
     CORE_BITMAP_CLEAR_FLAG(node->flags, FLAG_PRINT_STRUCTURE);
     CORE_BITMAP_CLEAR_FLAG(node->flags, FLAG_DEBUG);
@@ -1167,6 +1169,8 @@ void thorium_node_start_initial_actor(struct thorium_node *node)
     /*
     core_memory_pool_free(&node->inbound_message_memory_pool, buffer);
     */
+
+    CORE_BITMAP_SET_FLAG(node->flags, FLAG_STARTED_INITIAL_ACTORS);
 }
 
 static int thorium_node_running(struct thorium_node *node)
@@ -1611,7 +1615,8 @@ void thorium_node_dispatch_message(struct thorium_node *node, struct thorium_mes
     tracepoint(thorium_node, dispatch_message_enter, node->name, node->tick,
                     thorium_message_destination(message));
 
-    if (thorium_node_receive_system(node, message)) {
+    if (!CORE_BITMAP_GET_FLAG(node->flags, FLAG_STARTED_INITIAL_ACTORS)
+                    && thorium_node_receive_system(node, message)) {
 
         /*
          * The buffer must be freed.
@@ -2274,7 +2279,7 @@ static void thorium_node_run_loop(struct thorium_node *node)
     period = THORIUM_NODE_LOAD_PERIOD;
 #endif
 
-    starting_credits = 1024;
+    starting_credits = 16384;
     credits = starting_credits;
 
     send_in_thread = CORE_BITMAP_GET_FLAG(node->flags,
@@ -2316,13 +2321,15 @@ static void thorium_node_run_loop(struct thorium_node *node)
 
         CORE_DEBUGGER_JITTER_DETECTION_START(node_receive);
 
-
         /* pull message from network and assign the message to a thread.
          * this code path will call lock if
          * there is a message received.
          */
         if (use_transport
-                        && !thorium_node_regulator_must_wait(node)) {
+#ifdef THORIUM_NODE_CONFIG_USE_REGULATOR
+                        && !thorium_node_regulator_must_wait(node)
+#endif
+                        ) {
 
             thorium_node_receive_messages(node);
         }
@@ -2926,19 +2933,9 @@ static int thorium_node_regulator_must_wait(struct thorium_node *self)
  */
 static void thorium_node_receive_messages(struct thorium_node *node)
 {
-    int i;
-    int count;
     struct thorium_message message;
 
-    i = 0;
-    count = 1;
-
-    while ((i < count
-#ifdef THORIUM_NODE_USE_WATCHDOG_ON_OUTBOUND_RING
-                            || node->cached_outbound_ring_size < 16
-#endif
-                            )
-                && thorium_transport_receive(&node->transport, &message)) {
+    if (thorium_transport_receive(&node->transport, &message)) {
 
         tracepoint(thorium_node, receive_message, node->name, node->tick);
 
@@ -2969,8 +2966,6 @@ static void thorium_node_receive_messages(struct thorium_node *node)
          * Dispatch message.
          */
         thorium_node_dispatch_message(node, &message);
-
-        ++i;
     }
 }
 
