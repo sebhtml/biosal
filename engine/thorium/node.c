@@ -2431,7 +2431,9 @@ static void thorium_node_run_loop(struct thorium_node *node)
 
         CORE_DEBUGGER_JITTER_DETECTION_END(node_main_loop, 0);
 
+#ifdef THORIUM_NODE_CONFIG_USE_REGULATOR
         thorium_node_regulator_run(node);
+#endif
 
         THORIUM_NODE_TRACEPOINT("after_regulator")
 
@@ -3212,10 +3214,13 @@ void thorium_node_tracepoint(struct thorium_node *self, const char *event)
     uint64_t time;
     int delta;
 
+    if (self->name != 3)
+        return;
+
     time = core_timer_get_nanoseconds(&self->timer);
     delta = time - self->last_time;
 
-    fprintf(stderr, "%" PRIu64 " (+%d) thorium_node:%s\n",
+    printf("%" PRIu64 " (+%d) thorium_node:%s\n",
                     time, delta, event);
 
     self->last_time = time;
