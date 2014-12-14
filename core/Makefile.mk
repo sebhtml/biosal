@@ -18,6 +18,7 @@ CORE_OBJECTS += core/helpers/set_helper.o
 CORE_OBJECTS += core/helpers/pair.o
 CORE_OBJECTS += core/helpers/statistics.o
 CORE_OBJECTS += core/helpers/bitmap.o
+CORE_OBJECTS += core/helpers/unit_prefix.o
 
 include core/system/Makefile.mk
 
