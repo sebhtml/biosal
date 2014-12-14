@@ -96,6 +96,9 @@ struct thorium_balancer;
 #define MEMORY_POOL_NAME_WORKER_OUTBOUND   0x46d316e4
 #define MEMORY_POOL_NAME_WORKER_PERSISTENT 0x2c6a06d3
 
+#define THORIUM_EVENT_ACTOR_SEND 0
+#define THORIUM_EVENT_ACTOR_RECEIVE 1
+
 /*
  * A Thorium worker.
  *
@@ -240,6 +243,10 @@ struct thorium_worker {
 
     int counter_last_original_message_count;
     int counter_last_real_message_count;
+
+    uint64_t event_counters[2];
+    uint64_t counter_previous_actor_receive_event_count;
+    uint64_t counter_previous_actor_send_event_count;
 };
 
 void thorium_worker_init(struct thorium_worker *self, int name, struct thorium_node *node);
@@ -350,5 +357,7 @@ int thorium_worker_enqueue_inbound_message_in_queue(struct thorium_worker *self,
 int thorium_worker_schedule_actor(struct thorium_worker *self, struct thorium_actor *actor,
                 struct thorium_message *message);
 int thorium_worker_has_no_outbound_traffic(struct thorium_worker *self);
+
+void thorium_worker_increment_event_counter(struct thorium_worker *self, int event);
 
 #endif

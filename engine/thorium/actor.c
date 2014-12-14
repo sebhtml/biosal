@@ -532,6 +532,8 @@ void thorium_actor_send(struct thorium_actor *self, int name, struct thorium_mes
 
     ++self->counter_sent_message_count;
 
+    thorium_worker_increment_event_counter(self->worker, THORIUM_EVENT_ACTOR_SEND);
+
     /*
      * Assign a number to the message.
      * Message numbers are unique within any given actor.
@@ -1187,6 +1189,8 @@ void thorium_actor_receive(struct thorium_actor *self, struct thorium_message *m
     tracepoint(thorium_message, actor_receive, message);
 
     ++self->counter_received_message_count;
+
+    thorium_worker_increment_event_counter(self->worker, THORIUM_EVENT_ACTOR_RECEIVE);
 
     /* thorium_actor:receive_enter */
     tracepoint(thorium_actor, receive_enter, self, message);
