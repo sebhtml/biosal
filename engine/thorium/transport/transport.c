@@ -172,10 +172,6 @@ int thorium_transport_receive(struct thorium_transport *self, struct thorium_mes
 {
     int value;
 
-    if (self->transport_interface == NULL) {
-        return 0;
-    }
-
     value = self->transport_interface->receive(self, message);
 
     if (value) {
