@@ -644,6 +644,7 @@ void thorium_message_multiplexer_test(struct thorium_message_multiplexer *self)
         core_binary_heap_delete_root(&self->timeline);
 #endif
 
+#ifdef VERIFY_TARGET
         /*
          * Verify if the buffer can grow more.
          */
@@ -654,6 +655,7 @@ void thorium_message_multiplexer_test(struct thorium_message_multiplexer *self)
 
             return;
         }
+#endif
 
         /*
          * The item won't have content in the case were _flush()

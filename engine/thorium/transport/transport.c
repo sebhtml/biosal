@@ -50,7 +50,10 @@
 
 #define MEMORY_TRANSPORT 0xe1b48d97
 
+/*
 #define CONFIG_USE_MPI_NONBLOCKING_BY_DEFAULT
+#define USE_PAMI_ON_BGQ
+*/
 
 void thorium_transport_init(struct thorium_transport *self, struct thorium_node *node,
                 int *argc, char ***argv,
@@ -313,6 +316,12 @@ void thorium_transport_select_implementation(struct thorium_transport *self, int
 
 #ifdef CONFIG_USE_MPI_NONBLOCKING_BY_DEFAULT
     self->transport_interface = &thorium_mpi1_pt2pt_nonblocking_transport_implementation;
+#endif
+
+#ifdef __bgq__
+#ifdef USE_PAMI_ON_BGQ
+    self->transport_interface = &thorium_pami_transport_implementation;
+#endif
 #endif
 
     /*
