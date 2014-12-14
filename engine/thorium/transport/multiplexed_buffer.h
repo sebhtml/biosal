@@ -69,4 +69,6 @@ int thorium_multiplexed_buffer_real_message_count(struct thorium_multiplexed_buf
 
 int thorium_multiplexed_buffer_has_reached_target(struct thorium_multiplexed_buffer *self);
 
+double thorium_multiplexed_buffer_get_traffic_reduction(struct thorium_multiplexed_buffer *self);
+
 #endif

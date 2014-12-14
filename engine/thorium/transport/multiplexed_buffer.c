@@ -398,3 +398,27 @@ int thorium_multiplexed_buffer_has_reached_target(struct thorium_multiplexed_buf
 
     return result;
 }
+
+double thorium_multiplexed_buffer_get_traffic_reduction(struct thorium_multiplexed_buffer *self)
+{
+    double value;
+
+    if (self->message_count_ == 0)
+        return 0;
+
+    /*
+     * y: traffic reduction
+     * x: message count
+     *
+     * y = 1 - 1 / x
+     *
+     * y - 1 = - 1 / x
+     *
+     * 1 - y = 1 / x
+     *
+     * x = 1 / (1 - y)
+     */
+    value = 1.0 - 1.0 / self->message_count_;
+
+    return value;
+}
