@@ -2,6 +2,8 @@
 
 # echo "Commit= __COMMIT__"
 
+#  -print-thorium-data
+
 qsub \
  --env PAMID_THREAD_MULTIPLE=1 \
  -A CompBIO \
@@ -9,4 +11,4 @@ qsub \
  -t __WALLTIME__ \
  -O __JOB__ \
  --mode c1 \
-     __JOB__.__APP__ -print-thorium-data -threads-per-node __THREADS__
+     __JOB__.__APP__ -threads-per-node __THREADS__
