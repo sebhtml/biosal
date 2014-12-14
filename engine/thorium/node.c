@@ -22,6 +22,7 @@
 
 #include <core/helpers/vector_helper.h>
 #include <core/helpers/bitmap.h>
+#include <core/helpers/unit_prefix.h>
 
 #include <core/system/command.h>
 #include <core/system/memory.h>
@@ -3042,6 +3043,8 @@ void thorium_node_print_information(struct thorium_node *self)
     double inbound_throughput;
     double outbound_throughput;
     double frequency;
+    char input_prefix;
+    char output_prefix;
 
     current_time = time(NULL);
     delta = current_time - self->last_report_time;
@@ -3097,15 +3100,23 @@ void thorium_node_print_information(struct thorium_node *self)
     outbound_throughput -= self->counter_last_sent_message_count;
     outbound_throughput /= delta;
 
+    input_prefix = ' ';
+    output_prefix = ' ';
+
+    core_get_metric_system_unit_prefix(inbound_throughput, &input_prefix, &inbound_throughput);
+    core_get_metric_system_unit_prefix(outbound_throughput, &output_prefix, &outbound_throughput);
+
     printf("[thorium] node %d TRANSPORT ReceivedMessageCount: %" PRIu64 ""
                     " SentMessageCount: %" PRIu64 ""
-                    " input: %.2f MPS output: %.2f MPS"
+                    " input: %.2f %cMPS output: %.2f %cMPS"
                     "\n",
                     self->name,
                     received_message_count,
                     sent_message_count,
                     inbound_throughput,
-                    outbound_throughput);
+                    input_prefix,
+                    outbound_throughput,
+                    output_prefix);
 
     printf("[thorium] node %d "
                     " MESSAGING "
