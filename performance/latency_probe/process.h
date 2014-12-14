@@ -29,6 +29,7 @@ struct process {
     int event_count;
 
     int mode;
+    int actors_per_worker;
 };
 
 extern struct thorium_script process_script;

@@ -12,8 +12,6 @@
 #include <inttypes.h>
 #include <stdint.h>
 
-#define ACTORS_PER_WORKER 100
-
 static void process_init(struct thorium_actor *self);
 static void process_destroy(struct thorium_actor *self);
 static void process_receive(struct thorium_actor *self, struct thorium_message *message);
@@ -38,6 +36,9 @@ static void process_init(struct thorium_actor *self)
     core_vector_init(&concrete_self->children, sizeof(int));
     core_vector_init(&concrete_self->target_children, sizeof(int));
     core_vector_init(&concrete_self->initial_actors, sizeof(int));
+
+    concrete_self->actors_per_worker = thorium_actor_get_suggested_actor_count(self,
+               THORIUM_ADAPTATION_FLAG_SMALL_MESSAGES | THORIUM_ADAPTATION_FLAG_SCOPE_WORKER);
 
     concrete_self->completed = 0;
 
@@ -123,7 +124,7 @@ static void process_receive(struct thorium_actor *self, struct thorium_message *
         /*
         printf("worker_count %d\n", worker_count);
         */
-        actors_per_worker = ACTORS_PER_WORKER;
+        actors_per_worker = concrete_self->actors_per_worker;
         concrete_self->size = worker_count * actors_per_worker;
 
         thorium_actor_send_to_self_int(self, ACTION_SPAWN,
@@ -192,7 +193,7 @@ static void process_receive(struct thorium_actor *self, struct thorium_message *
             nodes = thorium_actor_get_node_count(self);
             workers_per_node = thorium_actor_node_worker_count(self);
             workers = nodes * workers_per_node;
-            actors_per_worker = ACTORS_PER_WORKER;
+            actors_per_worker = concrete_self->actors_per_worker;
             number_of_actors = workers * actors_per_worker;
 
             rate = (total + 0.0) / elapsed_seconds;
@@ -262,7 +263,7 @@ static void process_receive(struct thorium_actor *self, struct thorium_message *
         /*
          * This will show up also when the whole thing is finished.
          */
-        if (concrete_self->completed % ACTORS_PER_WORKER == 0) {
+        if (concrete_self->completed % concrete_self->actors_per_worker == 0) {
             printf("%d received ACTION_NOTIFY_REPLY from %d, %d/%d\n",
                         name, source, concrete_self->completed,
                         (int)core_vector_size(&concrete_self->actors));
