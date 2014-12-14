@@ -11,12 +11,7 @@
 #include <core/system/memory_pool.h>
 #include <core/system/debugger.h>
 
-/*
- * Use a dummy tag since the tag is actually stored inside the buffer
- * to avoid the MPI_TAG_UB bug / limitation in MPI.
- */
-#define MEANING_OF_LIFE_THE_UNIVERSE_AND_EVERYTHING 42
-#define DUMMY_TAG MEANING_OF_LIFE_THE_UNIVERSE_AND_EVERYTHING
+#define DUMMY_TAG 42
 
 void thorium_mpi1_pt2pt_transport_init(struct thorium_transport *self, int *argc, char ***argv);
 void thorium_mpi1_pt2pt_transport_destroy(struct thorium_transport *self);
@@ -195,7 +190,7 @@ int thorium_mpi1_pt2pt_transport_receive(struct thorium_transport *self, struct 
 
     concrete_self = thorium_transport_get_concrete_transport(self);
     source = MPI_ANY_SOURCE;
-    tag = DUMMY_TAG;
+    tag = MPI_ANY_TAG;
 
     /* get return value */
     result = MPI_Iprobe(source, tag, concrete_self->comm, &flag, &status);
