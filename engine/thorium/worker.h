@@ -349,5 +349,6 @@ int thorium_worker_enqueue_inbound_message_in_queue(struct thorium_worker *self,
  */
 int thorium_worker_schedule_actor(struct thorium_worker *self, struct thorium_actor *actor,
                 struct thorium_message *message);
+int thorium_worker_has_no_outbound_traffic(struct thorium_worker *self);
 
 #endif

@@ -2707,3 +2707,12 @@ int thorium_worker_enqueue_inbound_message_in_queue(struct thorium_worker *self,
 {
     return core_queue_enqueue(&self->input_inbound_message_queue, message);
 }
+
+int thorium_worker_has_no_outbound_traffic(struct thorium_worker *self)
+{
+    int size;
+
+    size = core_fast_ring_size_from_producer(self->output_outbound_message_ring_multiple);
+
+    return size == 0;
+}
