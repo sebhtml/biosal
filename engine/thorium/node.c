@@ -3099,7 +3099,7 @@ void thorium_node_print_information(struct thorium_node *self)
 
     printf("[thorium] node %d TRANSPORT ReceivedMessageCount: %" PRIu64 ""
                     " SentMessageCount: %" PRIu64 ""
-                    " InboundThroughput: %f messages / s OutboundThroughput: %f messages / s"
+                    " input: %f MPS output: %f MPS"
                     "\n",
                     self->name,
                     received_message_count,

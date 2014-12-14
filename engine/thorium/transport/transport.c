@@ -399,6 +399,8 @@ void thorium_transport_print(struct thorium_transport *self)
          && thorium_node_must_print_data(self->node)) {
         printf("[thorium] thorium_transport: type %s\n",
                     self->transport_interface->name);
+
+        printf("[thorium] MPS: Messages Per Second\n");
     }
 }
 
