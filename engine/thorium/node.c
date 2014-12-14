@@ -185,9 +185,9 @@ static void thorium_node_run_loop(struct thorium_node *self);
 /*
  * Private prototypes for inbound message regulator
  */
-static void thorium_node_regulator_configure(struct thorium_node *self);
-static void thorium_node_regulator_run(struct thorium_node *self);
-static int thorium_node_regulator_must_wait(struct thorium_node *self);
+void thorium_node_regulator_configure(struct thorium_node *self);
+void thorium_node_regulator_run(struct thorium_node *self);
+int thorium_node_regulator_must_wait(struct thorium_node *self);
 
 static int thorium_node_has_script(struct thorium_node *self, struct thorium_script *script);
 static void thorium_node_send_messages(struct thorium_node *self);
@@ -2859,14 +2859,14 @@ static void thorium_node_inject_outbound_buffer(struct thorium_node *self, struc
     }
 }
 
-static void thorium_node_regulator_configure(struct thorium_node *self)
+void thorium_node_regulator_configure(struct thorium_node *self)
 {
 #ifdef THORIUM_NODE_CONFIG_USE_REGULATOR
     CORE_BITMAP_CLEAR_FLAG(self->flags, FLAG_REGULATOR_IS_ENABLED);
 #endif
 }
 
-static void thorium_node_regulator_run(struct thorium_node *self)
+void thorium_node_regulator_run(struct thorium_node *self)
 {
 #ifdef THORIUM_NODE_CONFIG_USE_REGULATOR
     int count;
@@ -2921,7 +2921,7 @@ static void thorium_node_regulator_run(struct thorium_node *self)
 #endif
 }
 
-static int thorium_node_regulator_must_wait(struct thorium_node *self)
+int thorium_node_regulator_must_wait(struct thorium_node *self)
 {
 #ifdef THORIUM_NODE_CONFIG_USE_REGULATOR
     return CORE_BITMAP_GET_FLAG(self->flags, FLAG_REGULATOR_IS_ENABLED);
