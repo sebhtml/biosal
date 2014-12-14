@@ -3045,6 +3045,7 @@ void thorium_node_print_information(struct thorium_node *self)
     double frequency;
     char input_prefix;
     char output_prefix;
+    char frequency_prefix;
 
     current_time = time(NULL);
     delta = current_time - self->last_report_time;
@@ -3068,11 +3069,15 @@ void thorium_node_print_information(struct thorium_node *self)
     frequency -= self->last_tick;
     frequency /= delta;
 
+    frequency_prefix = ' ';
+    core_get_metric_system_unit_prefix(frequency, &frequency_prefix, &frequency);
+
     printf("[thorium] node %d SUMMARY "
-                    "Tick: %" PRIu64 " (%f Hz)\n",
+                    "Tick: %" PRIu64 " (%.2f %cHz)\n",
                     self->name,
                     self->tick,
-                    frequency);
+                    frequency,
+                    frequency_prefix);
 
     thorium_worker_pool_print_load(&self->worker_pool, THORIUM_WORKER_POOL_LOAD_EPOCH);
 
