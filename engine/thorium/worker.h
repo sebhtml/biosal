@@ -345,6 +345,8 @@ float thorium_worker_get_epoch_traffic_reduction(struct thorium_worker *self);
 
 int thorium_worker_has_outbound_traffic_congestion(struct thorium_worker *self);
 
+int thorium_worker_has_reached_maximum_outbound_throughput(struct thorium_worker *self);
+
 void thorium_worker_free_zero_copy_buffer(struct thorium_worker *self,
                 void *buffer);
 int thorium_worker_enqueue_inbound_message_in_queue(struct thorium_worker *self,
@@ -363,5 +365,7 @@ void thorium_worker_increment_event_counter(struct thorium_worker *self, int eve
 uint64_t thorium_worker_get_event_counter(struct thorium_worker *self, int event);
 uint64_t thorium_worker_get_last_event_counter(struct thorium_worker *self, int event);
 void thorium_worker_set_last_event_counter(struct thorium_worker *self, int event);
+
+
 
 #endif

@@ -2755,3 +2755,8 @@ void thorium_worker_set_last_event_counter(struct thorium_worker *self, int even
 {
     self->last_event_counters[event] = self->event_counters[event];
 }
+
+int thorium_worker_has_reached_maximum_outbound_throughput(struct thorium_worker *self)
+{
+    return thorium_node_has_reached_maximum_outbound_throughput(self->node);
+}
