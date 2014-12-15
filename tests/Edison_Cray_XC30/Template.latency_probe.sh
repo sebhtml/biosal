@@ -1,0 +1,18 @@
+#!/bin/bash
+#PBS -N __JOB__
+#PBS -A m1523
+#PBS -l walltime=__WALLTIME__
+#PBS -l mppwidth=3072
+#PBS -q regular
+
+# 128 * 24 = 3072
+
+cd $PBS_O_WORKDIR
+export MPICH_NEMESIS_ASYNC_PROGRESS=1
+export MPICH_MAX_THREAD_SAFETY=multiple
+export CRAY_MALLOPT_OFF=1
+
+echo "Commit= __COMMIT__"
+
+aprun -n __NODES__ -N 1 -d 23 -r 1 \
+              ./__JOB__.__APP__ -threads-per-node 23 \
