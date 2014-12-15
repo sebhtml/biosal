@@ -2625,7 +2625,19 @@ static void thorium_node_do_message_triage(struct thorium_node *self)
     int size;
 
     i = 0;
-    size = 1;
+
+    /*
+     * Here, we need to process at least 2 items to avoid increased memory
+     * usage.
+     *
+     * In one iteration of the main loop, the worst case is:
+     *
+     * - 1 message is received from network;
+     * - 1 message is pulled from a worker and sent to the network.
+     *
+     * This is 2 items. To balance the force, 2 items must go through triage.
+     */
+    size = 2;
 
     /*
      * First, verify if any message needs to be processed from
