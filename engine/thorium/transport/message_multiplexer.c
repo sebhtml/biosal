@@ -52,7 +52,9 @@ void thorium_message_multiplexer_init(struct thorium_message_multiplexer *self,
 {
     int size;
     int i;
+    /*
     int bytes;
+    */
     int position;
     struct thorium_multiplexed_buffer *multiplexed_buffer;
     int argc;
@@ -81,7 +83,9 @@ void thorium_message_multiplexer_init(struct thorium_message_multiplexer *self,
     size = thorium_node_nodes(self->node);
     core_vector_resize(&self->buffers, size);
 
+    /*
     bytes = size * self->buffer_size_in_bytes;
+    */
 
 #ifdef DEBUG_MULTIPLEXER
     printf("DEBUG_MULTIPLEXER size %d bytes %d\n", size, bytes);
