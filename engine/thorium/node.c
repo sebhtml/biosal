@@ -2515,6 +2515,12 @@ static void thorium_node_test_requests(struct thorium_node *node)
     int requests;
     int requests_to_test;
     int i;
+
+    /*
+     * Update throughput too.
+     */
+    thorium_transport_update_outbound_throughput(&node->transport);
+
     /*
     int maximum;
     int worker;
@@ -3070,6 +3076,8 @@ void thorium_node_print_information(struct thorium_node *self)
     char input_prefix;
     char output_prefix;
     char frequency_prefix;
+    double current_output_throughput;
+    double maximum_output_throughput;
 
     current_time = time(NULL);
     delta = current_time - self->last_report_time;
@@ -3082,6 +3090,9 @@ void thorium_node_print_information(struct thorium_node *self)
     if (!CORE_BITMAP_GET_FLAG(self->flags, FLAG_PRINT_THORIUM_DATA)) {
         return;
     }
+
+    current_output_throughput = thorium_transport_get_outbound_throughput(&self->transport);
+    maximum_output_throughput = thorium_transport_get_maximum_outbound_throughput(&self->transport);
 
 #ifdef THORIUM_NODE_USE_COUNTERS
     if (CORE_BITMAP_GET_FLAG(self->flags, FLAG_PRINT_COUNTERS)) {
@@ -3144,7 +3155,7 @@ void thorium_node_print_information(struct thorium_node *self)
 
     printf("[thorium] node %d TRANSPORT ReceivedMessageCount: %" PRIu64 ""
                     " SentMessageCount: %" PRIu64 ""
-                    " input: %.2f %cMPS (%.2f Bps) output: %.2f %cMPS (%.2f Bps)"
+                    " input: %.2f %cMPS (%.2f Bps) output: %.2f %cMPS (current: %.2f max. %.2f) (%.2f Bps)"
                     "\n",
                     self->name,
                     received_message_count,
@@ -3154,6 +3165,7 @@ void thorium_node_print_information(struct thorium_node *self)
                     inbound_bandwidth,
                     outbound_throughput,
                     output_prefix,
+                    current_output_throughput, maximum_output_throughput,
                     outbound_bandwidth);
 
     printf("[thorium] node %d"
