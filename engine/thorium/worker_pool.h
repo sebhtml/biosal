@@ -124,5 +124,6 @@ int thorium_worker_pool_buffered_message_count(struct thorium_worker_pool *self)
 int thorium_worker_pool_outbound_ring_size(struct thorium_worker_pool *self);
 
 void thorium_worker_pool_assign_worker_to_actor(struct thorium_worker_pool *self, int name);
+int thorium_worker_pool_triage_message_queue_size(struct thorium_worker_pool *self);
 
 #endif

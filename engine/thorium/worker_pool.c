@@ -1162,3 +1162,8 @@ int thorium_worker_pool_outbound_ring_size(struct thorium_worker_pool *self)
 {
     return core_fast_ring_size_from_consumer(&self->outbound_message_ring);
 }
+
+int thorium_worker_pool_triage_message_queue_size(struct thorium_worker_pool *self)
+{
+    return core_queue_size(&self->clean_message_queue);
+}
