@@ -2634,10 +2634,16 @@ static void thorium_node_do_message_triage(struct thorium_node *self)
      *
      * - 1 message is received from network;
      * - 1 message is pulled from a worker and sent to the network.
-     *
-     * This is 2 items. To balance the force, 2 items must go through triage.
      */
-    size = 2;
+
+    /*
+     * Also, because workers can communicate directly with one another,
+     * stuff must be drained from the triage queue.
+     */
+    size = thorium_worker_pool_triage_message_queue_size(&self->worker_pool);
+    if (size >= THORIUM_DRAIN_LIMIT) {
+        size /= 2;
+    }
 
     /*
      * First, verify if any message needs to be processed from
