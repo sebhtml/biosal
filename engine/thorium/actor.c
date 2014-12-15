@@ -111,6 +111,8 @@ static void thorium_actor_receive_private(struct thorium_actor *self, struct tho
 void thorium_actor_spawn_many_reply(struct thorium_actor *self, struct thorium_message *message);
 void thorium_actor_spawn_many(struct thorium_actor *self, struct thorium_message *message);
 
+void thorium_actor_increment_event_counter(struct thorium_actor *self, int event);
+
 void thorium_actor_init(struct thorium_actor *self, void *concrete_actor,
                 struct thorium_script *script, int name, struct thorium_node *node)
 {
@@ -532,7 +534,7 @@ void thorium_actor_send(struct thorium_actor *self, int name, struct thorium_mes
 
     ++self->counter_sent_message_count;
 
-    thorium_worker_increment_event_counter(self->worker, THORIUM_EVENT_ACTOR_SEND);
+    thorium_actor_increment_event_counter(self, THORIUM_EVENT_ACTOR_SEND);
 
     /*
      * Assign a number to the message.
@@ -1190,7 +1192,7 @@ void thorium_actor_receive(struct thorium_actor *self, struct thorium_message *m
 
     ++self->counter_received_message_count;
 
-    thorium_worker_increment_event_counter(self->worker, THORIUM_EVENT_ACTOR_RECEIVE);
+    thorium_actor_increment_event_counter(self, THORIUM_EVENT_ACTOR_RECEIVE);
 
     /* thorium_actor:receive_enter */
     tracepoint(thorium_actor, receive_enter, self, message);
@@ -2639,4 +2641,16 @@ struct core_memory_pool *thorium_actor_get_memory_pool(struct thorium_actor *sel
         return thorium_actor_get_ephemeral_memory_pool(self);
 
     return NULL;
+}
+
+void thorium_actor_increment_event_counter(struct thorium_actor *self, int event)
+{
+    /*
+     * There is no worker when thorium_actor_send() is called
+     * inside thorium_actor_init().
+     */
+    if (self->worker == NULL)
+        return;
+
+    thorium_worker_increment_event_counter(self->worker, event);
 }
