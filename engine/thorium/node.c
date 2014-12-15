@@ -2270,7 +2270,7 @@ static void thorium_node_run_loop(struct thorium_node *node)
     char run_in_main_thread;
 
 #ifdef THORIUM_NODE_ENABLE_INSTRUMENTATION
-    int period;
+    /*int period;*/
     char print_information = 0;
 
     if (CORE_BITMAP_GET_FLAG(node->flags, FLAG_PRINT_THORIUM_DATA)
@@ -2279,7 +2279,7 @@ static void thorium_node_run_loop(struct thorium_node *node)
         print_information = 1;
     }
 
-    period = THORIUM_NODE_LOAD_PERIOD;
+    /*period = THORIUM_NODE_LOAD_PERIOD;*/
 #endif
 
     starting_credits = 16384;
