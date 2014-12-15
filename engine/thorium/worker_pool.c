@@ -477,22 +477,20 @@ void thorium_worker_pool_print_load(struct thorium_worker_pool *self, int type)
 
     load = sum / count;
 
-    printf("[thorium] node %d %s LOAD %d s %.2f/%d (%.2f)%s\n",
-                    node_name,
-                    description, elapsed,
+    printf("[thorium] node %d LOAD %d s %.2f/%d (%.2f)%s\n",
+                    node_name, elapsed,
                     sum, count, load, buffer);
 
     if (type == THORIUM_WORKER_POOL_LOAD_EPOCH) {
-        printf("[thorium] node %d %s FUTURE_TIMELINE %d s %s\n",
-                    node_name,
-                    description, elapsed,
+        printf("[thorium] node %d FUTURE_TIMELINE %d s %s\n",
+                    node_name, elapsed,
                     buffer_for_future_timeline);
 
-        printf("[thorium] node %dINPUT_MPS %d s %s\n",
+        printf("[thorium] node %d INPUT_MPS %d s%s\n",
                     node_name, elapsed,
                     buffer_for_input_throughput);
 
-        printf("[thorium] node %dOUTPUT_MPS %d s %s\n",
+        printf("[thorium] node %d OUTPUT_MPS %d s%s\n",
                     node_name, elapsed,
                     buffer_for_output_throughput);
     }
@@ -505,9 +503,8 @@ void thorium_worker_pool_print_load(struct thorium_worker_pool *self, int type)
 #endif
 
     if (type == THORIUM_WORKER_POOL_LOAD_EPOCH) {
-        printf("[thorium] node %d %s TRAFFIC_REDUCTION %d s %s\n",
-                    node_name,
-                    description, elapsed,
+        printf("[thorium] node %d TRAFFIC_REDUCTION %d s %s\n",
+                    node_name, elapsed,
                     buffer_for_traffic_reduction);
     }
 
