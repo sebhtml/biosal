@@ -50,6 +50,8 @@ struct thorium_balancer;
 #define THORIUM_WORKER_ENABLE_LOCK
 */
 
+#define THORIUM_DRAIN_LIMIT 8
+
 /*
  * Inject clean worker buffers into the worker rings
  */

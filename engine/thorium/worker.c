@@ -413,6 +413,7 @@ void thorium_worker_destroy(struct thorium_worker *worker)
     /*
     thorium_worker_print_balance(worker);
     */
+
     while (thorium_worker_fetch_clean_outbound_buffer(worker, &buffer)) {
 
         core_memory_pool_free(&worker->outbound_message_memory_pool, buffer);
@@ -1599,6 +1600,9 @@ void thorium_worker_run(struct thorium_worker *worker)
     struct thorium_message *message;
 #endif
 
+    int i;
+    int size;
+
     tracepoint(thorium_worker, run_enter, worker);
 
 #ifdef THORIUM_WORKER_ENABLE_LOCK
@@ -1737,7 +1741,17 @@ void thorium_worker_run(struct thorium_worker *worker)
      * Free outbound buffers, if any
      */
 
-    if (thorium_worker_fetch_clean_outbound_buffer(worker, &buffer)) {
+    /*
+     * Drain some things from the queue.
+     */
+    i = 0;
+    size = core_fast_ring_size_from_consumer(&worker->input_clean_outbound_buffer_ring);
+    if (size >= THORIUM_DRAIN_LIMIT)
+        size /= 2;
+
+    while (i++ < size
+                    &&thorium_worker_fetch_clean_outbound_buffer(worker, &buffer)) {
+
         core_memory_pool_free(&worker->outbound_message_memory_pool, buffer);
 
 #ifdef THORIUM_WORKER_DEBUG_INJECTION
