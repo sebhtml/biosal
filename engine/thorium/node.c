@@ -3298,5 +3298,5 @@ int thorium_node_has_reached_maximum_outbound_throughput(struct thorium_node *se
     current = thorium_transport_get_outbound_throughput(&self->transport);
     maximum = thorium_transport_get_maximum_outbound_throughput(&self->transport);
 
-    return current >= (0.90 * maximum);
+    return current >= (0.95 * maximum);
 }
