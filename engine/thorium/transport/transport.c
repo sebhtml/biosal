@@ -114,6 +114,12 @@ void thorium_transport_init(struct thorium_transport *self, struct thorium_node 
 
     self->sent_byte_count = 0;
     self->received_message_count = 0;
+
+    self->last_time_low_resolution = time(NULL);
+    self->last_time_high_resolution = core_timer_get_nanoseconds(&self->timer);
+    self->last_sent_message_count = 0;
+    self->current_outbound_throughput = 0;
+    self->maximum_outbound_throughput = 0;
 }
 
 void thorium_transport_destroy(struct thorium_transport *self)
@@ -453,4 +459,55 @@ uint64_t thorium_transport_sent_byte_count(struct thorium_transport *self)
 uint64_t thorium_transport_received_byte_count(struct thorium_transport *self)
 {
     return self->received_byte_count;
+}
+
+void thorium_transport_update_outbound_throughput(struct thorium_transport *self)
+{
+    time_t the_time;
+    int delta;
+    uint64_t high_resolution_time;
+    uint64_t delta_in_ns;
+    int threshold;
+
+    threshold = 1;
+
+    the_time = time(NULL);
+    delta = the_time - self->last_time_low_resolution;
+
+    if (delta < threshold) {
+        return;
+    }
+
+    high_resolution_time = core_timer_get_nanoseconds(&self->timer);
+
+    delta_in_ns = high_resolution_time - self->last_time_high_resolution;
+
+    self->current_outbound_throughput = self->sent_message_count;
+    self->current_outbound_throughput -= self->last_sent_message_count;
+    self->current_outbound_throughput /= ((0.0 + delta_in_ns) / (1000*1000*1000));
+
+#if 0
+    printf("delta %d sent %" PRIu64 " last %" PRIu64 " delta_ns %" PRIu64 ""
+                  "  New value %f\n", delta, self->sent_message_count,
+                  self->last_sent_message_count, delta_in_ns,
+                    self->current_outbound_throughput);
+#endif
+
+    if (self->current_outbound_throughput > self->maximum_outbound_throughput) {
+        self->maximum_outbound_throughput = self->current_outbound_throughput;
+    }
+
+    self->last_time_low_resolution = the_time;
+    self->last_time_high_resolution = high_resolution_time;
+    self->last_sent_message_count = self->sent_message_count;
+}
+
+double thorium_transport_get_outbound_throughput(struct thorium_transport *self)
+{
+    return self->current_outbound_throughput;
+}
+
+double thorium_transport_get_maximum_outbound_throughput(struct thorium_transport *self)
+{
+    return self->maximum_outbound_throughput;
 }

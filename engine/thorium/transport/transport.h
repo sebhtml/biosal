@@ -7,6 +7,8 @@
 
 #include <core/system/timer.h>
 
+#include <time.h>
+
 #define THORIUM_TRANSPORT_IMPLEMENTATION_MOCK 0
 
 #define THORIUM_THREAD_SINGLE 0
@@ -47,6 +49,13 @@ struct thorium_transport {
     uint64_t sent_message_count;
     uint64_t received_byte_count;
     uint64_t sent_byte_count;
+
+    uint64_t last_sent_message_count;
+    uint64_t last_time_high_resolution;
+    time_t last_time_low_resolution;
+
+    double current_outbound_throughput;
+    double maximum_outbound_throughput;
 };
 
 void thorium_transport_init(struct thorium_transport *self, struct thorium_node *node,
@@ -80,5 +89,10 @@ uint64_t thorium_transport_received_message_count(struct thorium_transport *self
 uint64_t thorium_transport_sent_message_count(struct thorium_transport *self);
 uint64_t thorium_transport_received_byte_count(struct thorium_transport *self);
 uint64_t thorium_transport_sent_byte_count(struct thorium_transport *self);
+
+double thorium_transport_get_maximum_outbound_throughput(struct thorium_transport *self);
+double thorium_transport_get_outbound_throughput(struct thorium_transport *self);
+
+void thorium_transport_update_outbound_throughput(struct thorium_transport *self);
 
 #endif
