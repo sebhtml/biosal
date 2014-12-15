@@ -3154,12 +3154,13 @@ void thorium_node_print_information(struct thorium_node *self)
     core_get_metric_system_unit_prefix(outbound_throughput, &output_prefix, &outbound_throughput);
 
     printf("[thorium] node %d TRANSPORT ReceivedMessageCount: %" PRIu64 ""
-                    " SentMessageCount: %" PRIu64 ""
+                    " SentMessageCount: %" PRIu64 "\n", self->name,
+                    received_message_count, sent_message_count);
+
+    printf("[thorium] node %d THROUGHPUT"
                     " input: %.2f %cMPS (%.2f Bps) output: %.2f %cMPS (current: %.2f max. %.2f) (%.2f Bps)"
                     "\n",
                     self->name,
-                    received_message_count,
-                    sent_message_count,
                     inbound_throughput,
                     input_prefix,
                     inbound_bandwidth,
@@ -3170,8 +3171,8 @@ void thorium_node_print_information(struct thorium_node *self)
 
     printf("[thorium] node %d"
                     " MESSAGING"
-                    " BufferedInboundMessageCount: %d"
-                    " BufferedOutboundMessageCountInRing: %d"
+                    " InboundMessageCountInQueue: %d"
+                    " OutboundMessageCountInRing: %d"
                     " MessageCountInTransport: %d"
                     "\n",
                     self->name,
