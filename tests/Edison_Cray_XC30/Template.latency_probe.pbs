@@ -16,3 +16,4 @@ echo "Commit= __COMMIT__"
 
 aprun -n __NODES__ -N 1 -d 23 -r 1 \
               ./__JOB__.__APP__ -threads-per-node 23 \
+              -print-thorium-data \
