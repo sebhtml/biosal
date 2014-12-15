@@ -405,11 +405,15 @@ int thorium_actor_send_system_self(struct thorium_actor *self, struct thorium_me
 {
     int tag;
     int action;
+    /*
     char *buffer;
+    */
 
     action = thorium_message_action(message);
     tag = action;
+    /*
     buffer = thorium_message_buffer(message);
+    */
 
 #if 0
     if (tag == ACTION_PIN_TO_WORKER) {
