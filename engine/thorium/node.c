@@ -612,6 +612,8 @@ void thorium_node_init(struct thorium_node *node, int *argc, char ***argv)
 
     node->counter_last_received_message_count = 0;
     node->counter_last_sent_message_count = 0;
+    node->counter_last_received_byte_count = 0;
+    node->counter_last_sent_byte_count = 0;
 
     node->last_time = 0;
 }
@@ -3037,11 +3039,15 @@ void thorium_node_print_information(struct thorium_node *self)
 {
     uint64_t received_message_count;
     uint64_t sent_message_count;
+    uint64_t received_byte_count;
+    uint64_t sent_byte_count;
     time_t current_time;
     int delta;
     int period;
     double inbound_throughput;
     double outbound_throughput;
+    double inbound_bandwidth;
+    double outbound_bandwidth;
     double frequency;
     char input_prefix;
     char output_prefix;
@@ -3092,15 +3098,22 @@ void thorium_node_print_information(struct thorium_node *self)
                     core_memory_get_utilized_byte_count(),
                     core_memory_get_total_byte_count());
 
-    received_message_count =
-                    core_counter_get(&self->counter, CORE_COUNTER_RECEIVED_MESSAGES);
-    sent_message_count =
-                    core_counter_get(&self->counter, CORE_COUNTER_SENT_MESSAGES);
+    received_byte_count = thorium_transport_received_byte_count(&self->transport);
+    inbound_bandwidth = received_byte_count;
+    inbound_bandwidth -= self->counter_last_received_byte_count;
+    inbound_bandwidth /= delta;
 
+    sent_byte_count = thorium_transport_sent_byte_count(&self->transport);
+    outbound_bandwidth = sent_byte_count;
+    outbound_bandwidth -= self->counter_last_sent_byte_count;
+    outbound_bandwidth /= delta;
+
+    received_message_count = thorium_transport_received_message_count(&self->transport);
     inbound_throughput = received_message_count;
     inbound_throughput -= self->counter_last_received_message_count;
     inbound_throughput /= delta;
 
+    sent_message_count = thorium_transport_sent_message_count(&self->transport);
     outbound_throughput = sent_message_count;
     outbound_throughput -= self->counter_last_sent_message_count;
     outbound_throughput /= delta;
@@ -3113,15 +3126,17 @@ void thorium_node_print_information(struct thorium_node *self)
 
     printf("[thorium] node %d TRANSPORT ReceivedMessageCount: %" PRIu64 ""
                     " SentMessageCount: %" PRIu64 ""
-                    " input: %.2f %cMPS output: %.2f %cMPS"
+                    " input: %.2f %cMPS (%.2f Bps) output: %.2f %cMPS (%.2f Bps)"
                     "\n",
                     self->name,
                     received_message_count,
                     sent_message_count,
                     inbound_throughput,
                     input_prefix,
+                    inbound_bandwidth,
                     outbound_throughput,
-                    output_prefix);
+                    output_prefix,
+                    outbound_bandwidth);
 
     printf("[thorium] node %d "
                     " MESSAGING "
@@ -3140,6 +3155,8 @@ void thorium_node_print_information(struct thorium_node *self)
      */
     self->counter_last_received_message_count = received_message_count;
     self->counter_last_sent_message_count = sent_message_count;
+    self->counter_last_received_byte_count = received_byte_count;
+    self->counter_last_sent_byte_count = sent_byte_count;
 
     self->last_report_time = current_time;
     self->last_tick = self->tick;

@@ -111,6 +111,9 @@ void thorium_transport_init(struct thorium_transport *self, struct thorium_node 
 
     self->sent_message_count = 0;
     self->received_message_count = 0;
+
+    self->sent_byte_count = 0;
+    self->received_message_count = 0;
 }
 
 void thorium_transport_destroy(struct thorium_transport *self)
@@ -158,7 +161,9 @@ int thorium_transport_send(struct thorium_transport *self, struct thorium_messag
                         thorium_message_count(message));
 #endif
         ++self->active_request_count;
+
         ++self->sent_message_count;
+        self->sent_byte_count += thorium_message_count(message);
 
         if (CORE_BITMAP_GET_FLAG(self->flags, FLAG_PRINT_TRANSPORT_EVENTS)) {
             thorium_transport_print_event(self, EVENT_TYPE_SEND, message);
@@ -211,6 +216,7 @@ int thorium_transport_receive(struct thorium_transport *self, struct thorium_mes
         }
 
         ++self->received_message_count;
+        self->received_byte_count += thorium_message_count(message);
     }
 
     return value;
@@ -401,6 +407,7 @@ void thorium_transport_print(struct thorium_transport *self)
                     self->transport_interface->name);
 
         printf("[thorium] MPS: Messages Per Second\n");
+        printf("[thorium] Bps: Bytes Per Second\n");
     }
 }
 
@@ -428,12 +435,22 @@ void thorium_transport_print_event(struct thorium_transport *self, int type, str
                     source_rank, destination_rank, count);
 }
 
-int thorium_transport_sent_message_count(struct thorium_transport *self)
+uint64_t thorium_transport_sent_message_count(struct thorium_transport *self)
 {
     return self->sent_message_count;
 }
 
-int thorium_transport_received_message_count(struct thorium_transport *self)
+uint64_t thorium_transport_received_message_count(struct thorium_transport *self)
 {
     return self->received_message_count;
+}
+
+uint64_t thorium_transport_sent_byte_count(struct thorium_transport *self)
+{
+    return self->sent_byte_count;
+}
+
+uint64_t thorium_transport_received_byte_count(struct thorium_transport *self)
+{
+    return self->received_byte_count;
 }

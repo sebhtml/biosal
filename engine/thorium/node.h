@@ -221,6 +221,8 @@ struct thorium_node {
 
     uint64_t counter_last_received_message_count;
     uint64_t counter_last_sent_message_count;
+    uint64_t counter_last_received_byte_count;
+    uint64_t counter_last_sent_byte_count;
 
     /*
      * Requires -D_POSIX_C_SOURCE=200112L
