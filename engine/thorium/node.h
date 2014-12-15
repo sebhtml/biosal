@@ -314,4 +314,6 @@ int thorium_node_must_print_data(struct thorium_node *self);
 
 int thorium_node_has_transport_congestion(struct thorium_node *self);
 
+int thorium_node_has_reached_maximum_outbound_throughput(struct thorium_node *self);
+
 #endif

@@ -3289,3 +3289,14 @@ void thorium_node_tracepoint(struct thorium_node *self, const char *event)
 
     self->last_time = time;
 }
+
+int thorium_node_has_reached_maximum_outbound_throughput(struct thorium_node *self)
+{
+    double current;
+    double maximum;
+
+    current = thorium_transport_get_outbound_throughput(&self->transport);
+    maximum = thorium_transport_get_maximum_outbound_throughput(&self->transport);
+
+    return current >= (0.90 * maximum);
+}
