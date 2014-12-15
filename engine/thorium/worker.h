@@ -247,8 +247,7 @@ struct thorium_worker {
     int counter_last_real_message_count;
 
     uint64_t event_counters[2];
-    uint64_t counter_previous_actor_receive_event_count;
-    uint64_t counter_previous_actor_send_event_count;
+    uint64_t last_event_counters[2];
 };
 
 void thorium_worker_init(struct thorium_worker *self, int name, struct thorium_node *node);
@@ -361,5 +360,8 @@ int thorium_worker_schedule_actor(struct thorium_worker *self, struct thorium_ac
 int thorium_worker_has_no_outbound_traffic(struct thorium_worker *self);
 
 void thorium_worker_increment_event_counter(struct thorium_worker *self, int event);
+uint64_t thorium_worker_get_event_counter(struct thorium_worker *self, int event);
+uint64_t thorium_worker_get_last_event_counter(struct thorium_worker *self, int event);
+void thorium_worker_set_last_event_counter(struct thorium_worker *self, int event);
 
 #endif

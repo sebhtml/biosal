@@ -389,11 +389,10 @@ void thorium_worker_init(struct thorium_worker *worker, int name, struct thorium
     worker->counter_last_original_message_count = 0;
     worker->counter_last_real_message_count = 0;
 
-    worker->event_counters[THORIUM_EVENT_ACTOR_SEND] = 0;
     worker->event_counters[THORIUM_EVENT_ACTOR_RECEIVE] = 0;
-
-    worker->counter_previous_actor_receive_event_count = 0;
-    worker->counter_previous_actor_send_event_count = 0;
+    worker->event_counters[THORIUM_EVENT_ACTOR_SEND] = 0;
+    worker->last_event_counters[THORIUM_EVENT_ACTOR_RECEIVE] = 0;
+    worker->last_event_counters[THORIUM_EVENT_ACTOR_SEND] = 0;
 }
 
 void thorium_worker_destroy(struct thorium_worker *worker)
@@ -2740,4 +2739,19 @@ int thorium_worker_has_no_outbound_traffic(struct thorium_worker *self)
 void thorium_worker_increment_event_counter(struct thorium_worker *self, int event)
 {
     ++self->event_counters[event];
+}
+
+uint64_t thorium_worker_get_event_counter(struct thorium_worker *self, int event)
+{
+    return self->event_counters[event];
+}
+
+uint64_t thorium_worker_get_last_event_counter(struct thorium_worker *self, int event)
+{
+    return self->last_event_counters[event];
+}
+
+void thorium_worker_set_last_event_counter(struct thorium_worker *self, int event)
+{
+    self->last_event_counters[event] = self->event_counters[event];
 }
