@@ -311,9 +311,11 @@ void thorium_multiplexed_buffer_predict(struct thorium_multiplexed_buffer *self)
 void thorium_multiplexed_buffer_profile(struct thorium_multiplexed_buffer *self,
                 uint64_t time)
 {
+#ifdef UPDATE_TIMEOUT_DYNAMICALLY
     uint64_t delta;
     int actor_message_period;
     int threshold;
+#endif
 
     if (self->profile_start == NO_TIME)
         self->profile_start = time;
@@ -326,9 +328,11 @@ void thorium_multiplexed_buffer_profile(struct thorium_multiplexed_buffer *self,
      */
     if (self->profile_actor_message_count == EVALUATION_PERIOD) {
 
-        threshold = self->configured_timeout / 2;
+#ifdef UPDATE_TIMEOUT_DYNAMICALLY
         delta = time - self->profile_start;
+        threshold = self->configured_timeout / 2;
         actor_message_period = delta / self->profile_actor_message_count;
+#endif
 
 #ifdef PRINT_TIMEOUT_UPDATE
         printf("thorium_multiplexed_buffer actor_message_period: %d ns profile_actor_message_count %d\n",
