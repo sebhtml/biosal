@@ -8,7 +8,7 @@ walltime=00:30:00
 
 build_script=scripts/IBM_Blue_Gene_Q/build-xl.sh
 app_path=performance/latency_probe/latency_probe
-job_template=tests/Mira_IBM_Blue_Gene_Q/Template.latency_probe.sh
+job_template=tests/Cetus_IBM_Blue_Gene_Q/Template.latency_probe.sh
 
 root=/projects/CompBIO/Projects/automated-tests-cetus
 dataset=/dev/null
