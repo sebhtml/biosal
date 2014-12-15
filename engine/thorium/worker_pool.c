@@ -477,6 +477,8 @@ void thorium_worker_pool_print_load(struct thorium_worker_pool *self, int type)
 
     load = sum / count;
 
+    printf("[thorium] node %d ---------------------------------\n", node_name);
+
     printf("[thorium] node %d LOAD %d s %.2f/%d (%.2f)%s\n",
                     node_name, elapsed,
                     sum, count, load, buffer);
