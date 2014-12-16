@@ -20,6 +20,13 @@
 #include "modules/log.h"
 #include "modules/adaptive_actor.h"
 
+/*
+ * For priority levels.
+ */
+#include "scheduler/scheduler.h"
+
+#include "configuration.h"
+
 #include <core/structures/vector.h>
 #include <core/structures/map.h>
 #include <core/structures/queue.h>
@@ -30,11 +37,6 @@
 #include <core/system/counter.h>
 
 #include <core/helpers/bitmap.h>
-
-/*
- * For priority levels.
- */
-#include <engine/thorium/scheduler/scheduler.h>
 
 #include <pthread.h>
 #include <stdint.h>
