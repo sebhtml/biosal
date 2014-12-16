@@ -89,7 +89,9 @@ static void source_receive(struct thorium_actor *self, struct thorium_message *m
 
     } else if (action == ACTION_NOTIFY) {
 
+#ifdef LATENCY_PROBE_USE_MULTIPLEXER
         thorium_actor_send_to_self_empty(self, ACTION_ENABLE_MULTIPLEXER);
+#endif
 
         CORE_DEBUGGER_ASSERT(core_vector_empty(&concrete_self->targets));
 

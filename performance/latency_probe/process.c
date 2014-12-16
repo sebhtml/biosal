@@ -37,8 +37,12 @@ static void process_init(struct thorium_actor *self)
     core_vector_init(&concrete_self->target_children, sizeof(int));
     core_vector_init(&concrete_self->initial_actors, sizeof(int));
 
+#ifdef LATENCY_PROBE_USE_MULTIPLEXER
     concrete_self->actors_per_worker = thorium_actor_get_suggested_actor_count(self,
                THORIUM_ADAPTATION_FLAG_SMALL_MESSAGES | THORIUM_ADAPTATION_FLAG_SCOPE_WORKER);
+#else
+    concrete_self->actors_per_worker = THORIUM_LIGHTWEIGHT_ACTOR_COUNT_PER_WORKER;
+#endif
 
     concrete_self->completed = 0;
 

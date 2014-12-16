@@ -11,6 +11,10 @@
 #define PERIOD 2000
 
 /*
+#define LATENCY_PROBE_USE_MULTIPLEXER
+*/
+
+/*
 #define VERBOSITY
 */
 
