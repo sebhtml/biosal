@@ -3107,6 +3107,8 @@ void thorium_node_print_information(struct thorium_node *self)
     frequency_prefix = ' ';
     core_get_metric_system_unit_prefix(frequency, &frequency_prefix, &frequency);
 
+    printf("[thorium] node %d ---------------------------------\n", self->name);
+
     printf("[thorium] node %d SUMMARY "
                     "Tick: %" PRIu64 " (%.2f %cHz)\n",
                     self->name,
