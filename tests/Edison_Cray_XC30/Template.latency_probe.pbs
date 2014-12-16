@@ -3,7 +3,7 @@
 #PBS -A m1523
 #PBS -l walltime=__WALLTIME__
 #PBS -l mppwidth=3072
-#PBS -q regular
+#PBS -q debug
 
 # 128 * 24 = 3072
 
