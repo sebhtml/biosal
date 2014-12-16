@@ -653,7 +653,8 @@ void thorium_message_multiplexer_test(struct thorium_message_multiplexer *self)
          * Don't flush now since the transport layer has already reached its maximum
          * throughput.
          */
-        if (thorium_worker_has_reached_maximum_outbound_throughput(self->worker)) {
+        if (thorium_worker_has_reached_maximum_outbound_throughput(self->worker)
+                      && traffic_reduction < acceptable_traffic_reduction) {
             return;
         }
 
