@@ -12,6 +12,7 @@ struct thorium_message;
 #include <core/structures/unordered/binary_heap.h>
 
 #include <core/structures/set.h>
+#include <core/structures/queue.h>
 
 #include <core/system/timer.h>
 
@@ -20,9 +21,9 @@ struct thorium_message;
 /*
 #define THORIUM_MULTIPLEXER_USE_HEAP
 */
-
+/*
 #define THORIUM_MULTIPLEXER_USE_TREE
-
+*/
 /*
  * The multiplexer needs its own action
  */
@@ -67,6 +68,8 @@ struct thorium_message_multiplexer {
 #ifdef THORIUM_MULTIPLEXER_TRACK_BUFFERS_WITH_CONTENT
     struct core_set buffers_with_content;
 #endif
+
+    struct core_queue timeline;
 
 #ifdef THORIUM_MULTIPLEXER_USE_TREE
     struct core_red_black_tree timeline;

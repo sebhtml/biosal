@@ -201,6 +201,8 @@ void thorium_message_multiplexer_destroy(struct thorium_message_multiplexer *sel
 
     core_timer_destroy(&self->timer);
 
+    core_queue_destroy(&self->timeline);
+
 #ifdef THORIUM_MULTIPLEXER_USE_TREE
     core_red_black_tree_destroy(&self->timeline);
 #elif defined(THORIUM_MULTIPLEXER_USE_HEAP)
@@ -359,6 +361,8 @@ int thorium_message_multiplexer_multiplex(struct thorium_message_multiplexer *se
 #elif defined(THORIUM_MULTIPLEXER_USE_HEAP)
         core_binary_heap_insert(&self->timeline, &time, &destination_node);
 #endif
+
+        core_queue_enqueue(&self->timeline, &destination_node);
     }
 
     /*
@@ -546,8 +550,10 @@ void thorium_message_multiplexer_test(struct thorium_message_multiplexer *self)
     int index;
     uint64_t buffer_time;
     struct thorium_multiplexed_buffer *multiplexed_buffer;
+    /*
     uint64_t *lowest_key;
     int *index_bucket;
+    */
     int timeout;
     double acceptable_traffic_reduction;
     double traffic_reduction;
@@ -566,6 +572,7 @@ void thorium_message_multiplexer_test(struct thorium_message_multiplexer *self)
     }
 #endif
 
+#if 0
     /*
      * Don't flush anything if the outbound ring is full,
      * which means there is congestion.
@@ -576,6 +583,7 @@ void thorium_message_multiplexer_test(struct thorium_message_multiplexer *self)
     if (thorium_worker_has_outbound_traffic_congestion(self->worker)) {
         return;
     }
+#endif
 
 #ifdef DEBUG_MULTIPLEXER_TEST
     if (size >= DEBUG_MINIMUM_COUNT)
@@ -599,7 +607,7 @@ void thorium_message_multiplexer_test(struct thorium_message_multiplexer *self)
      * If this one has not waited enough, then any other more recent
      * buffer has not waited enough neither.
      */
-    while (1) {
+    if (core_queue_dequeue(&self->timeline, &index)) {
 
 #ifdef THORIUM_MULTIPLEXER_USE_TREE
         lowest_key = core_red_black_tree_get_lowest_key(&self->timeline);
@@ -610,12 +618,13 @@ void thorium_message_multiplexer_test(struct thorium_message_multiplexer *self)
                         (void **)&index_bucket);
 #endif
 
-
+#if 0
         /*
          * The timeline is empty.
          */
         if (lowest_key == NULL)
             return;
+#endif
 
         /*
          * Get the index.
@@ -624,7 +633,9 @@ void thorium_message_multiplexer_test(struct thorium_message_multiplexer *self)
 #ifdef THORIUM_MULTIPLEXER_USE_TREE
         index_bucket = core_red_black_tree_get(&self->timeline, lowest_key);
 #endif
+        /*
         index = *index_bucket;
+        */
 
         multiplexed_buffer = core_vector_at(&self->buffers, index);
         buffer_time = thorium_multiplexed_buffer_time(multiplexed_buffer);
@@ -646,6 +657,7 @@ void thorium_message_multiplexer_test(struct thorium_message_multiplexer *self)
          */
         if (traffic_reduction < acceptable_traffic_reduction
                         && duration < timeout) {
+            core_queue_enqueue(&self->timeline, &index);
             return;
         }
 
@@ -655,6 +667,7 @@ void thorium_message_multiplexer_test(struct thorium_message_multiplexer *self)
          */
         if (thorium_worker_has_reached_maximum_outbound_throughput(self->worker)
                       && traffic_reduction < acceptable_traffic_reduction) {
+            core_queue_enqueue(&self->timeline, &index);
             return;
         }
 
@@ -823,6 +836,8 @@ void thorium_message_multiplexer_set_worker(struct thorium_message_multiplexer *
     self->worker = worker;
     pool = thorium_worker_get_memory_pool(self->worker,
                             MEMORY_POOL_NAME_WORKER_PERSISTENT);
+
+    core_queue_init(&self->timeline, sizeof(int));
 
 #ifdef THORIUM_MULTIPLEXER_USE_TREE
     core_red_black_tree_init(&self->timeline, sizeof(uint64_t), sizeof(int),
