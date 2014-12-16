@@ -468,7 +468,9 @@ void biosal_unitig_walker_start(struct thorium_actor *self, struct thorium_messa
 
     size = core_vector_size(&concrete_self->graph_stores);
 
+#ifdef CONFIG_WALKER_USE_MULTIPLEXER
     thorium_actor_send_to_self_empty(self, ACTION_ENABLE_MULTIPLEXER);
+#endif
 
     thorium_actor_log(self, "%s/%d is ready to surf the graph (%d stores => writer/%d)!\n",
                         thorium_actor_script_name(self),

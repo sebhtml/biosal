@@ -33,7 +33,9 @@
 #define CONFIG_VISITOR_LOCALITY_WIDTH 8192
 
 #define CONFIG_VISITOR_USE_MESSAGE_CACHE
+/*
 #define CONFIG_VISITOR_USE_MULTIPLEXER
+*/
 
 void biosal_unitig_visitor_init(struct thorium_actor *self);
 void biosal_unitig_visitor_destroy(struct thorium_actor *self);
