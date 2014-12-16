@@ -14,8 +14,6 @@
 
 #include <string.h>
 
-#define UNITIG_WALKER_COUNT_PER_WORKER      8
-
 #define STATE_SPAWN_WRITER  0
 #define STATE_VISITORS      1
 #define STATE_WALKERS       2
@@ -66,6 +64,11 @@ void biosal_unitig_manager_init(struct thorium_actor *self)
     concrete_self->visitor_count_per_worker =
             thorium_actor_get_suggested_actor_count(self,
                THORIUM_ADAPTATION_FLAG_SMALL_MESSAGES | THORIUM_ADAPTATION_FLAG_SCOPE_WORKER);
+    concrete_self->walker_count_per_worker = 8;
+    /*
+            thorium_actor_get_suggested_actor_count(self,
+               THORIUM_ADAPTATION_FLAG_SMALL_MESSAGES | THORIUM_ADAPTATION_FLAG_SCOPE_WORKER);
+               */
 
     CORE_DEBUGGER_ASSERT(concrete_self->visitor_count_per_worker >= 1);
 
@@ -200,7 +203,7 @@ void biosal_unitig_manager_receive(struct thorium_actor *self, struct thorium_me
         actor_count = concrete_self->visitor_count_per_worker;
 
         if (concrete_self->state == STATE_WALKERS)
-            actor_count = UNITIG_WALKER_COUNT_PER_WORKER;
+            actor_count = concrete_self->walker_count_per_worker;
 
         thorium_actor_send_reply_int(self, ACTION_MANAGER_SET_ACTORS_PER_WORKER,
                         actor_count);
@@ -295,7 +298,7 @@ void biosal_unitig_manager_receive(struct thorium_actor *self, struct thorium_me
         ++concrete_self->completed;
         expected = core_vector_size(&concrete_self->walkers);
 
-        if (concrete_self->completed % UNITIG_WALKER_COUNT_PER_WORKER == 0
+        if (concrete_self->completed % concrete_self->walker_count_per_worker == 0
                         || concrete_self->completed == expected) {
             thorium_actor_log(self, "PROGRESS unitig walkers %d/%d\n",
                         concrete_self->completed,
