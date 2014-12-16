@@ -61,13 +61,13 @@ void biosal_unitig_manager_init(struct thorium_actor *self)
     concrete_self->processed_vertices = 0;
     concrete_self->vertices_with_unitig_flag = 0;
 
-    concrete_self->visitor_count_per_worker = 8;
+    concrete_self->visitor_count_per_worker = THORIUM_LIGHTWEIGHT_ACTOR_COUNT_PER_WORKER;
     /*
             thorium_actor_get_suggested_actor_count(self,
                THORIUM_ADAPTATION_FLAG_SMALL_MESSAGES | THORIUM_ADAPTATION_FLAG_SCOPE_WORKER);
                */
 
-    concrete_self->walker_count_per_worker = 8;
+    concrete_self->walker_count_per_worker = THORIUM_LIGHTWEIGHT_ACTOR_COUNT_PER_WORKER;
     /*
             thorium_actor_get_suggested_actor_count(self,
                THORIUM_ADAPTATION_FLAG_SMALL_MESSAGES | THORIUM_ADAPTATION_FLAG_SCOPE_WORKER);
