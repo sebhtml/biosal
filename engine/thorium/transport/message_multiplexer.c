@@ -201,12 +201,13 @@ void thorium_message_multiplexer_destroy(struct thorium_message_multiplexer *sel
 
     core_timer_destroy(&self->timer);
 
-    core_queue_destroy(&self->timeline);
-
 #ifdef THORIUM_MULTIPLEXER_USE_TREE
     core_red_black_tree_destroy(&self->timeline);
 #elif defined(THORIUM_MULTIPLEXER_USE_HEAP)
     core_binary_heap_destroy(&self->timeline);
+#elif defined(THORIUM_MULTIPLEXER_USE_QUEUE)
+    core_queue_destroy(&self->timeline);
+
 #endif
 }
 
@@ -360,9 +361,10 @@ int thorium_message_multiplexer_multiplex(struct thorium_message_multiplexer *se
 
 #elif defined(THORIUM_MULTIPLEXER_USE_HEAP)
         core_binary_heap_insert(&self->timeline, &time, &destination_node);
+#elif defined(THORIUM_MULTIPLEXER_USE_QUEUE)
+        core_queue_enqueue(&self->timeline, &destination_node);
 #endif
 
-        core_queue_enqueue(&self->timeline, &destination_node);
     }
 
     /*
@@ -550,10 +552,12 @@ void thorium_message_multiplexer_test(struct thorium_message_multiplexer *self)
     int index;
     uint64_t buffer_time;
     struct thorium_multiplexed_buffer *multiplexed_buffer;
-    /*
+
+#if defined(THORIUM_MULTIPLEXER_USE_TREE) || defined(THORIUM_MULTIPLEXER_USE_HEAP)
     uint64_t *lowest_key;
     int *index_bucket;
-    */
+#endif
+
     int timeout;
     double acceptable_traffic_reduction;
     double traffic_reduction;
@@ -592,128 +596,138 @@ void thorium_message_multiplexer_test(struct thorium_message_multiplexer *self)
 #endif
 
     /*
-     * Flush only the buffers with a elapsed time that is greater or equal to the
-     * timeout.
-     */
-    time = core_timer_get_nanoseconds(&self->timer);
-
-    /*
      * 0.95 corresponds to 20 actor messages in 1 network message.
+     * 0.90 corresponds to 10 actor messages in 1 network message.
      */
-    acceptable_traffic_reduction = 0.95;
+    acceptable_traffic_reduction = 0.90;
 
     /*
      * Get the destination with the oldest buffer.
      * If this one has not waited enough, then any other more recent
      * buffer has not waited enough neither.
      */
-    if (core_queue_dequeue(&self->timeline, &index)) {
-
 #ifdef THORIUM_MULTIPLEXER_USE_TREE
-        lowest_key = core_red_black_tree_get_lowest_key(&self->timeline);
+    lowest_key = core_red_black_tree_get_lowest_key(&self->timeline);
+    /*
+     * The timeline is empty.
+     */
+    if (lowest_key == NULL)
+        return;
 
 #elif defined(THORIUM_MULTIPLEXER_USE_HEAP)
-        lowest_key = NULL;
-        core_binary_heap_get_root(&self->timeline, (void **)&lowest_key,
+    lowest_key = NULL;
+    core_binary_heap_get_root(&self->timeline, (void **)&lowest_key,
                         (void **)&index_bucket);
+    /*
+     * The timeline is empty.
+     */
+    if (lowest_key == NULL)
+        return;
+
+#elif defined(THORIUM_MULTIPLEXER_USE_QUEUE)
+
+    if (!core_queue_dequeue(&self->timeline, &index)) {
+        return;
+    }
+
 #endif
 
-#if 0
-        /*
-         * The timeline is empty.
-         */
-        if (lowest_key == NULL)
-            return;
-#endif
 
-        /*
-         * Get the index.
-         * The index is the destination.
-         */
+    /*
+     * Get the index.
+     * The index is the destination.
+     */
 #ifdef THORIUM_MULTIPLEXER_USE_TREE
-        index_bucket = core_red_black_tree_get(&self->timeline, lowest_key);
+    index_bucket = core_red_black_tree_get(&self->timeline, lowest_key);
+    index = *index_bucket;
 #endif
-        /*
-        index = *index_bucket;
-        */
 
-        multiplexed_buffer = core_vector_at(&self->buffers, index);
-        buffer_time = thorium_multiplexed_buffer_time(multiplexed_buffer);
+    multiplexed_buffer = core_vector_at(&self->buffers, index);
+    buffer_time = thorium_multiplexed_buffer_time(multiplexed_buffer);
 
-        /*
-         * Get the current time. This current time will be compared
-         * with the virtual time of each item in the timeline.
-         */
-        duration = time - buffer_time;
+    /*
+     * Flush only the buffers with a elapsed time that is greater or equal to the
+     * timeout.
+     */
+    time = core_timer_get_nanoseconds(&self->timer);
 
-        timeout = thorium_multiplexed_buffer_timeout(multiplexed_buffer);
+    /*
+     * Get the current time. This current time will be compared
+     * with the virtual time of each item in the timeline.
+     */
+    duration = time - buffer_time;
 
-        traffic_reduction = thorium_multiplexed_buffer_get_traffic_reduction(multiplexed_buffer);
+    timeout = thorium_multiplexed_buffer_timeout(multiplexed_buffer);
 
-        /*
-         * The oldest item is too recent.
-         * Therefore, all the others are too recent too
-         * because the timeline is ordered.
-         */
-        if (traffic_reduction < acceptable_traffic_reduction
-                        && duration < timeout) {
-            core_queue_enqueue(&self->timeline, &index);
-            return;
-        }
+    traffic_reduction = thorium_multiplexed_buffer_get_traffic_reduction(multiplexed_buffer);
+
+    /*
+     * The oldest item is too recent.
+     * Therefore, all the others are too recent too
+     * because the timeline is ordered.
+     */
+    if (traffic_reduction < acceptable_traffic_reduction
+                   && duration < timeout) {
+#ifdef THORIUM_MULTIPLEXER_USE_QUEUE
+        core_queue_enqueue(&self->timeline, &index);
+#endif
+        return;
+    }
 
 #ifdef CHECK_OUTBOUND_THROUGHPUT
-        /*
-         * Don't flush now since the transport layer has already reached its maximum
-         * throughput.
-         */
-        if (thorium_worker_has_reached_maximum_outbound_throughput(self->worker)
+    /*
+     * Don't flush now since the transport layer has already reached its maximum
+     * throughput.
+     */
+    if (thorium_worker_has_reached_maximum_outbound_throughput(self->worker)
                       && traffic_reduction < acceptable_traffic_reduction) {
-            core_queue_enqueue(&self->timeline, &index);
-            return;
-        }
+#ifdef THORIUM_MULTIPLEXER_USE_QUEUE
+        core_queue_enqueue(&self->timeline, &index);
+#endif
+        return;
+    }
 #endif
 
-        /*
-         * Remove the object from the timeline.
-         */
+    /*
+     * Remove the object from the timeline.
+     */
 
 #ifdef THORIUM_MULTIPLEXER_USE_TREE
-        core_red_black_tree_delete(&self->timeline, lowest_key);
+    core_red_black_tree_delete(&self->timeline, lowest_key);
 #elif defined(THORIUM_MULTIPLEXER_USE_HEAP)
-        core_binary_heap_delete_root(&self->timeline);
+    core_binary_heap_delete_root(&self->timeline);
 #endif
 
 #ifdef VERIFY_TARGET
-        /*
-         * Verify if the buffer can grow more.
-         */
-        if (!thorium_multiplexed_buffer_has_reached_target(multiplexed_buffer)) {
-            thorium_multiplexed_buffer_set_time(multiplexed_buffer, time);
+    /*
+     * Verify if the buffer can grow more.
+     */
+    if (!thorium_multiplexed_buffer_has_reached_target(multiplexed_buffer)) {
+        thorium_multiplexed_buffer_set_time(multiplexed_buffer, time);
 
-            core_red_black_tree_add_key_and_value(&self->timeline, &time, &index);
+        core_red_black_tree_add_key_and_value(&self->timeline, &time, &index);
 
-            return;
-        }
-#endif
-
-        /*
-         * The item won't have content in the case were _flush()
-         * was called elsewhere with FORCE_YES_SIZE.
-         */
-#ifdef THORIUM_MULTIPLEXER_TRACK_BUFFERS_WITH_CONTENT
-        if (core_set_find(&self->buffers_with_content, &index)) {
-#endif
-            thorium_message_multiplexer_flush(self, index, FORCE_YES_TIME);
-
-#ifdef THORIUM_MULTIPLEXER_TRACK_BUFFERS_WITH_CONTENT
-        }
-#endif
-
-        /*
-         * Otherwise, keep flushing stuff.
-         * This will eventually end anyway.
-         */
+        return;
     }
+#endif
+
+    /*
+     * The item won't have content in the case were _flush()
+     * was called elsewhere with FORCE_YES_SIZE.
+     */
+#ifdef THORIUM_MULTIPLEXER_TRACK_BUFFERS_WITH_CONTENT
+    if (core_set_find(&self->buffers_with_content, &index)) {
+#endif
+        thorium_message_multiplexer_flush(self, index, FORCE_YES_TIME);
+
+#ifdef THORIUM_MULTIPLEXER_TRACK_BUFFERS_WITH_CONTENT
+    }
+#endif
+
+    /*
+     * Otherwise, keep flushing stuff.
+     * This will eventually end anyway.
+     */
 }
 
 void thorium_message_multiplexer_flush(struct thorium_message_multiplexer *self, int index, int force)
@@ -839,8 +853,6 @@ void thorium_message_multiplexer_set_worker(struct thorium_message_multiplexer *
     pool = thorium_worker_get_memory_pool(self->worker,
                             MEMORY_POOL_NAME_WORKER_PERSISTENT);
 
-    core_queue_init(&self->timeline, sizeof(int));
-
 #ifdef THORIUM_MULTIPLEXER_USE_TREE
     core_red_black_tree_init(&self->timeline, sizeof(uint64_t), sizeof(int),
                     pool);
@@ -850,6 +862,11 @@ void thorium_message_multiplexer_set_worker(struct thorium_message_multiplexer *
     core_binary_heap_init(&self->timeline, sizeof(uint64_t), sizeof(int),
                     CORE_BINARY_HEAP_MIN | CORE_BINARY_HEAP_UINT64_T_KEYS);
     core_binary_heap_set_memory_pool(&self->timeline, pool);
+
+#elif defined(THORIUM_MULTIPLEXER_USE_QUEUE)
+
+    core_queue_init(&self->timeline, sizeof(int));
+
 #endif
 
     if (thorium_node_name(self->node) == 0 && thorium_worker_name(self->worker) == 0

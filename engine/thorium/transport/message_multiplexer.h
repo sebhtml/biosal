@@ -21,8 +21,8 @@ struct thorium_message;
 /*
 #define THORIUM_MULTIPLEXER_USE_HEAP
 */
-/*
 #define THORIUM_MULTIPLEXER_USE_TREE
+/*
 */
 /*
  * The multiplexer needs its own action
@@ -69,13 +69,14 @@ struct thorium_message_multiplexer {
     struct core_set buffers_with_content;
 #endif
 
-    struct core_queue timeline;
 
 #ifdef THORIUM_MULTIPLEXER_USE_TREE
     struct core_red_black_tree timeline;
 
 #elif defined(THORIUM_MULTIPLEXER_USE_HEAP)
     struct core_binary_heap timeline;
+#elif defined(THORIUM_MULTIPLEXER_USE_QUEUE)
+    struct core_queue timeline;
 #endif
 
     struct thorium_node *node;
