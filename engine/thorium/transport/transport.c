@@ -495,8 +495,10 @@ void thorium_transport_update_outbound_throughput(struct thorium_transport *self
 
     if (self->current_outbound_throughput > self->maximum_outbound_throughput) {
         self->maximum_outbound_throughput = self->current_outbound_throughput;
+        /*
     } else {
         self->maximum_outbound_throughput = 0.75 * self->maximum_outbound_throughput + 0.25 * self->current_outbound_throughput;
+        */
     }
 
     self->last_time_low_resolution = the_time;
