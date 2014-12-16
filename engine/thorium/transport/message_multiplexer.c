@@ -661,6 +661,7 @@ void thorium_message_multiplexer_test(struct thorium_message_multiplexer *self)
             return;
         }
 
+#ifdef CHECK_OUTBOUND_THROUGHPUT
         /*
          * Don't flush now since the transport layer has already reached its maximum
          * throughput.
@@ -670,6 +671,7 @@ void thorium_message_multiplexer_test(struct thorium_message_multiplexer *self)
             core_queue_enqueue(&self->timeline, &index);
             return;
         }
+#endif
 
         /*
          * Remove the object from the timeline.
