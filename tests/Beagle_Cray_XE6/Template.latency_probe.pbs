@@ -3,6 +3,7 @@
 #PBS -A CI-DEB000002
 #PBS -l walltime=__WALLTIME__
 #PBS -l mppwidth=4096
+#PBS -q batch
 
 cd $PBS_O_WORKDIR
 export MPICH_NEMESIS_ASYNC_PROGRESS=1
