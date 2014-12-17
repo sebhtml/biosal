@@ -559,8 +559,10 @@ void thorium_message_multiplexer_test(struct thorium_message_multiplexer *self)
 #endif
 
     int timeout;
+#ifdef CHECK_PREDICTED_TRAFFIC_REDUCTION
     double acceptable_traffic_reduction;
     double traffic_reduction;
+#endif
 
     if (CORE_BITMAP_GET_FLAG(self->flags, FLAG_DISABLED)) {
         return;
@@ -595,11 +597,13 @@ void thorium_message_multiplexer_test(struct thorium_message_multiplexer *self)
                     size);
 #endif
 
+#ifdef CHECK_PREDICTED_TRAFFIC_REDUCTION
     /*
      * 0.95 corresponds to 20 actor messages in 1 network message.
      * 0.90 corresponds to 10 actor messages in 1 network message.
      */
     acceptable_traffic_reduction = 0.90;
+#endif
 
     /*
      * Get the destination with the oldest buffer.
@@ -657,17 +661,22 @@ void thorium_message_multiplexer_test(struct thorium_message_multiplexer *self)
      */
     duration = time - buffer_time;
 
-    timeout = thorium_multiplexed_buffer_timeout(multiplexed_buffer);
+    timeout = self->timeout_in_nanoseconds;
 
+#ifdef CHECK_PREDICTED_TRAFFIC_REDUCTION
     traffic_reduction = thorium_multiplexed_buffer_get_traffic_reduction(multiplexed_buffer);
+#endif
 
     /*
      * The oldest item is too recent.
      * Therefore, all the others are too recent too
      * because the timeline is ordered.
      */
-    if (traffic_reduction < acceptable_traffic_reduction
-                   && duration < timeout) {
+    if (duration < timeout
+#ifdef CHECK_PREDICTED_TRAFFIC_REDUCTION
+                   traffic_reduction < acceptable_traffic_reduction
+#endif
+        ) {
 #ifdef THORIUM_MULTIPLEXER_USE_QUEUE
         core_queue_enqueue(&self->timeline, &index);
 #endif
