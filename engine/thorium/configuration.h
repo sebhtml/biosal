@@ -26,6 +26,20 @@
 
 #define THORIUM_LIGHTWEIGHT_ACTOR_COUNT_PER_WORKER 1
 
-#define THORIUM_ACTOR_COUNT_PER_NODE_TO_NODE_COUNT_RATIO 0.01
+/*
+ * N: number of nodes
+ * W: number of workers per node
+ * A: number of actors per worker
+ *
+ * Ratio = (W * A) / N
+ *
+ * Example:
+ * N = 4
+ * W = 7
+ * A = 57
+ *
+ * Ratio = (7 * 57) / 4 = 99.75
+ */
+#define THORIUM_ACTOR_COUNT_PER_NODE_TO_NODE_COUNT_RATIO 100
 
 #endif
