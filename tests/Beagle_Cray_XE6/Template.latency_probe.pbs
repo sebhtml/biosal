@@ -1,18 +1,17 @@
 #!/bin/bash
 #PBS -N __JOB__
 #PBS -A CI-DEB000002
-#PBS -l walltime=1:00:00
-#PBS -l mppwidth=6144
+#PBS -l walltime=__WALLTIME__
+#PBS -l mppwidth=4096
+#PBS -q batch
 
 cd $PBS_O_WORKDIR
 export MPICH_NEMESIS_ASYNC_PROGRESS=1
 export MPICH_MAX_THREAD_SAFETY=multiple
 export CRAY_MALLOPT_OFF=1
 
-echo "App= __APP__"
-echo "Job= __JOB__"
 echo "Commit= __COMMIT__"
 
-aprun -n 256 -N 1 -d 23 -r 1 __JOB__.__APP__ -threads-per-node 23 -print-thorium-data \
-              > __JOB__.stdout
-
+aprun -n __NODES__ -N 1 -d 31 -r 1 \
+              ./__JOB__.__APP__ -threads-per-node 31 \
+              -print-thorium-data \
