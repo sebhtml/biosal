@@ -694,7 +694,8 @@ void thorium_message_multiplexer_test(struct thorium_message_multiplexer *self)
      * Therefore, all the others are too recent too
      * because the timeline is ordered.
      */
-    if (duration < timeout
+    if (timeout != 0
+                    && duration < timeout
 #ifdef CHECK_PREDICTED_TRAFFIC_REDUCTION
                    traffic_reduction < acceptable_traffic_reduction
 #endif
