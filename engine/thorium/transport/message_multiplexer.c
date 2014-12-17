@@ -42,8 +42,8 @@
 
 #define OPTION_DISABLE_MULTIPLEXER "-disable-multiplexer"
 
-/*
 #define MULTIPLEXER_IS_VERBOSE
+/*
 */
 
 /*
@@ -82,7 +82,11 @@ void thorium_message_multiplexer_init(struct thorium_message_multiplexer *self,
     core_timer_init(&self->timer);
 
     self->buffer_size_in_bytes = thorium_multiplexer_policy_size_threshold(self->policy);
-    self->timeout_in_nanoseconds = thorium_multiplexer_policy_time_threshold(self->policy);
+
+    self->timeout_in_nanoseconds = thorium_decision_maker_get_best_timeout(&self->decision_maker,
+                    THORIUM_NO_TIMEOUT);
+
+    CORE_DEBUGGER_ASSERT(self->timeout_in_nanoseconds >= 0);
 
     self->node = node;
 
@@ -977,6 +981,13 @@ void thorium_message_multiplexer_update_timeout(struct thorium_message_multiplex
     int timeout;
     uint64_t now_nanoseconds;
     uint64_t event_count;
+    int new_timeout;
+
+#ifdef MULTIPLEXER_IS_VERBOSE
+    int print = 0;
+    if (self->worker->node->name == 0 && self->worker->name == 1)
+        print = 1;
+#endif
 
     period = 1;
     now = time(NULL);
@@ -987,6 +998,8 @@ void thorium_message_multiplexer_update_timeout(struct thorium_message_multiplex
         return;
 
     timeout = self->timeout_in_nanoseconds;
+
+    CORE_DEBUGGER_ASSERT(timeout >= 0);
     now_nanoseconds = core_timer_get_nanoseconds(&self->timer);
 
     elapsed = now_nanoseconds - self->last_time;
@@ -999,7 +1012,8 @@ void thorium_message_multiplexer_update_timeout(struct thorium_message_multiplex
     throughput /= elapsed;
 
 #ifdef MULTIPLEXER_IS_VERBOSE
-    printf("event_count %" PRIu64 " last %" PRIu64 " elapsed %" PRIu64 " = %" PRIu64 " MPS\n",
+    if (print)
+        printf("event_count %" PRIu64 " last %" PRIu64 " elapsed %" PRIu64 " = %" PRIu64 " MPS\n",
                     event_count, self->last_send_event_count, elapsed, throughput);
 #endif
 
@@ -1007,8 +1021,23 @@ void thorium_message_multiplexer_update_timeout(struct thorium_message_multiplex
                     (int)throughput);
 
 #ifdef MULTIPLEXER_IS_VERBOSE
-    thorium_decision_maker_print(&self->decision_maker);
+    if (print)
+        thorium_decision_maker_print(&self->decision_maker, timeout);
 #endif
+
+    new_timeout = thorium_decision_maker_get_best_timeout(&self->decision_maker,
+                    self->timeout_in_nanoseconds);
+
+    if (new_timeout != THORIUM_NO_TIMEOUT) {
+#ifdef MULTIPLEXER_IS_VERBOSE
+        if (print)
+            printf("TIMEOUT -> old value %d new value %d\n",
+                            self->timeout_in_nanoseconds,
+                            new_timeout);
+#endif
+
+        self->timeout_in_nanoseconds = new_timeout;
+    }
 
     self->last_update_time = now;
     self->last_time = now_nanoseconds;
