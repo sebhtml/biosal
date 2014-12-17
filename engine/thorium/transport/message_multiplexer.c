@@ -985,7 +985,8 @@ void thorium_message_multiplexer_update_timeout(struct thorium_message_multiplex
 
 #ifdef MULTIPLEXER_IS_VERBOSE
     int print = 0;
-    if (self->worker->node->name == 0 && self->worker->name == 1)
+    if (thorium_node_must_print_data(self->worker->node)
+        && self->worker->node->name == 0 && self->worker->name == 1)
         print = 1;
 #endif
 
