@@ -7,6 +7,9 @@
 
 #define NO_MPS (-1)
 
+#define SELECTOR_PREVIOUS   0
+#define SELECTOR_NEXT       1
+
 int thorium_decision_maker_get_index(struct thorium_decision_maker *self,
                 int timeout);
 
@@ -107,18 +110,37 @@ int thorium_decision_maker_get_best_timeout(struct thorium_decision_maker *self,
         previous_throughput = thorium_decision_maker_get_throughput(self, previous_timeout);
         next_throughput = thorium_decision_maker_get_throughput(self, next_timeout);
 
-        if (previous_throughput == NO_MPS) {
+        if (previous_throughput == NO_MPS && next_throughput == NO_MPS) {
+
+            if (self->selector == SELECTOR_PREVIOUS) {
+                best_timeout = previous_timeout;
+                self->selector = SELECTOR_NEXT;
+            } else if (self->selector == SELECTOR_NEXT) {
+                best_timeout = next_timeout;
+                self->selector = SELECTOR_PREVIOUS;
+            }
+
+        } else if (previous_throughput == NO_MPS) {
+
             /*
              * We have no MPS data for the previous timeout.
              */
-            best_timeout = previous_timeout;
+            if (next_throughput > current_throughput) {
+                best_timeout = next_timeout;
+            } else {
+                best_timeout = previous_timeout;
+            }
 
         } else if (next_throughput == NO_MPS) {
 
             /*
              * We have no MPS data for the next timeout.
              */
-            best_timeout = next_timeout;
+            if (previous_throughput > current_throughput) {
+                best_timeout = previous_timeout;
+            } else {
+                best_timeout = next_timeout;
+            }
 
         } else {
             /*

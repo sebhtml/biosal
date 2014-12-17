@@ -6,7 +6,7 @@
 
 #define THORIUM_TIMEOUT_STRIDE_VALUE           (50 * 1000)
 #define THORIUM_TIMEOUT_MINIMUM_VALUE         (0 * 1000)
-#define THORIUM_TIMEOUT_INITIAL_VALUE           (500 * 1000)
+#define THORIUM_TIMEOUT_INITIAL_VALUE           (0 * 1000)
 #define THORIUM_TIMEOUT_MAXIMUM_VALUE         (2 * 1000 * 1000)
 
 #define THORIUM_DECISION_MAKER_ARRAY_SIZE (((THORIUM_TIMEOUT_MAXIMUM_VALUE - THORIUM_TIMEOUT_MINIMUM_VALUE) / THORIUM_TIMEOUT_STRIDE_VALUE) + 1)
@@ -23,6 +23,7 @@ struct thorium_decision_maker {
     int output_throughputs[THORIUM_DECISION_MAKER_ARRAY_SIZE];
 
     int change;
+    int selector;
 };
 
 void thorium_decision_maker_init(struct thorium_decision_maker *self);
