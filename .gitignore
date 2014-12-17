@@ -40,6 +40,8 @@
 .settings/
 CMakeLists.txt
 
+# Sphinx build products
+build.sphinx/
 # Unit Test Results
 *.junit.xml
 
