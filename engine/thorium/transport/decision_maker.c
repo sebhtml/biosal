@@ -23,11 +23,9 @@ void thorium_decision_maker_init(struct thorium_decision_maker *self)
 
     size = THORIUM_DECISION_MAKER_ARRAY_SIZE;
 
-    for (i = MINIMUM_TIMEOUT; i <= MAXIMUM_TIMEOUT; i += CHANGE_STRIDE) {
+    for (i = THORIUM_TIMEOUT_MINIMUM_VALUE; i <= THORIUM_TIMEOUT_MAXIMUM_VALUE; i += THORIUM_TIMEOUT_STRIDE_VALUE) {
         thorium_decision_maker_set_throughput(self, i, NO_MPS);
     }
-
-    self->change = CHANGE_INCREASE;
 }
 
 void thorium_decision_maker_destroy(struct thorium_decision_maker *self)
@@ -44,7 +42,7 @@ void thorium_decision_maker_add_data_point(struct thorium_decision_maker *self,
     printf("New timeout %d\n", timeout);
     */
 
-    CORE_DEBUGGER_ASSERT(timeout >= MINIMUM_TIMEOUT);
+    CORE_DEBUGGER_ASSERT(timeout >= THORIUM_TIMEOUT_MINIMUM_VALUE);
 
     thorium_decision_maker_set_throughput(self, timeout, output_throughput);
 }
@@ -60,8 +58,8 @@ int thorium_decision_maker_get_best_timeout(struct thorium_decision_maker *self,
     int best_timeout;
     int current_throughput;
 
-    if (current_timeout == THORIUM_NO_TIMEOUT)
-        return TIMEOUT_INITIAL_VALUE;
+    if (current_timeout == THORIUM_TIMEOUT_NO_VALUE)
+        return THORIUM_TIMEOUT_INITIAL_VALUE;
 
     current_throughput = thorium_decision_maker_get_throughput(self, current_timeout);
 
@@ -75,10 +73,10 @@ int thorium_decision_maker_get_best_timeout(struct thorium_decision_maker *self,
     best_timeout = current_timeout;
     best_throughput = current_throughput;
 
-    previous_timeout = current_timeout - CHANGE_STRIDE;
-    next_timeout = current_timeout + CHANGE_STRIDE;
+    previous_timeout = current_timeout - THORIUM_TIMEOUT_STRIDE_VALUE;
+    next_timeout = current_timeout + THORIUM_TIMEOUT_STRIDE_VALUE;
 
-    if (previous_timeout < MINIMUM_TIMEOUT) {
+    if (previous_timeout < THORIUM_TIMEOUT_MINIMUM_VALUE) {
         /*
          * The timeout can only increase.
          */
@@ -90,7 +88,7 @@ int thorium_decision_maker_get_best_timeout(struct thorium_decision_maker *self,
             best_throughput = next_throughput;
         }
 
-    } else if (next_timeout > MAXIMUM_TIMEOUT) {
+    } else if (next_timeout > THORIUM_TIMEOUT_MAXIMUM_VALUE) {
         /*
          * The timeout can only decrease.
          */
@@ -146,7 +144,7 @@ void thorium_decision_maker_print(struct thorium_decision_maker *self, int curre
     char marker;
 
     size = THORIUM_DECISION_MAKER_ARRAY_SIZE;
-    for (i = MINIMUM_TIMEOUT; i <= MAXIMUM_TIMEOUT; i += CHANGE_STRIDE) {
+    for (i = THORIUM_TIMEOUT_MINIMUM_VALUE; i <= THORIUM_TIMEOUT_MAXIMUM_VALUE; i += THORIUM_TIMEOUT_STRIDE_VALUE) {
         timeout_i = i;
         throughput_i = thorium_decision_maker_get_throughput(self, timeout_i);
         marker = ' ';
@@ -164,7 +162,7 @@ void thorium_decision_maker_set_throughput(struct thorium_decision_maker *self,
 {
     int index;
 
-    CORE_DEBUGGER_ASSERT(timeout >= MINIMUM_TIMEOUT);
+    CORE_DEBUGGER_ASSERT(timeout >= THORIUM_TIMEOUT_MINIMUM_VALUE);
 
     index = thorium_decision_maker_get_index(self, timeout);
 
@@ -175,14 +173,14 @@ int thorium_decision_maker_get_index(struct thorium_decision_maker *self,
                 int timeout)
 {
     int index;
-    
+
     /*
     printf("%d\n", timeout);
     */
-    CORE_DEBUGGER_ASSERT(timeout >= MINIMUM_TIMEOUT);
-    CORE_DEBUGGER_ASSERT(timeout <= MAXIMUM_TIMEOUT);
+    CORE_DEBUGGER_ASSERT(timeout >= THORIUM_TIMEOUT_MINIMUM_VALUE);
+    CORE_DEBUGGER_ASSERT(timeout <= THORIUM_TIMEOUT_MAXIMUM_VALUE);
 
-    index = (timeout - MINIMUM_TIMEOUT) / CHANGE_STRIDE;
+    index = (timeout - THORIUM_TIMEOUT_MINIMUM_VALUE) / THORIUM_TIMEOUT_STRIDE_VALUE;
 
     /*
     */
@@ -198,7 +196,7 @@ int thorium_decision_maker_get_throughput(struct thorium_decision_maker *self,
 {
     int index;
 
-    CORE_DEBUGGER_ASSERT(timeout >= MINIMUM_TIMEOUT);
+    CORE_DEBUGGER_ASSERT(timeout >= THORIUM_TIMEOUT_MINIMUM_VALUE);
 
     index = thorium_decision_maker_get_index(self, timeout);
 

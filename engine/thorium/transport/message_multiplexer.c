@@ -84,7 +84,7 @@ void thorium_message_multiplexer_init(struct thorium_message_multiplexer *self,
     self->buffer_size_in_bytes = thorium_multiplexer_policy_size_threshold(self->policy);
 
     self->timeout_in_nanoseconds = thorium_decision_maker_get_best_timeout(&self->decision_maker,
-                    THORIUM_NO_TIMEOUT);
+                    THORIUM_TIMEOUT_NO_VALUE);
 
     CORE_DEBUGGER_ASSERT(self->timeout_in_nanoseconds >= 0);
 
@@ -1028,7 +1028,7 @@ void thorium_message_multiplexer_update_timeout(struct thorium_message_multiplex
     new_timeout = thorium_decision_maker_get_best_timeout(&self->decision_maker,
                     self->timeout_in_nanoseconds);
 
-    if (new_timeout != THORIUM_NO_TIMEOUT) {
+    if (new_timeout != THORIUM_TIMEOUT_NO_VALUE) {
 #ifdef MULTIPLEXER_IS_VERBOSE
         if (print)
             printf("TIMEOUT -> old value %d new value %d\n",
