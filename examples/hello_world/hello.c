@@ -7,6 +7,8 @@ void hello_init(struct thorium_actor *self);
 void hello_destroy(struct thorium_actor *self);
 void hello_receive(struct thorium_actor *self, struct thorium_message *message);
 
+/* hello-hello_script */
+
 struct thorium_script hello_script = {
     .identifier = SCRIPT_HELLO,
     .init = hello_init,
@@ -16,6 +18,7 @@ struct thorium_script hello_script = {
     .name = "hello"
 };
 
+/* hello-hello_init */
 void hello_init(struct thorium_actor *actor)
 {
     struct hello *hello1;
@@ -23,6 +26,8 @@ void hello_init(struct thorium_actor *actor)
     hello1 = (struct hello *)thorium_actor_concrete_actor(actor);
     core_vector_init(&hello1->initial_helloes, sizeof(int));
 }
+
+/* hello-hello_destroy */
 
 void hello_destroy(struct thorium_actor *actor)
 {
@@ -33,6 +38,7 @@ void hello_destroy(struct thorium_actor *actor)
     core_vector_destroy(&hello1->initial_helloes);
 }
 
+/* hello-hello_receive */
 void hello_receive(struct thorium_actor *actor, struct thorium_message *message)
 {
     int tag;
@@ -61,3 +67,4 @@ void hello_receive(struct thorium_actor *actor, struct thorium_message *message)
         thorium_actor_send_to_self_empty(actor, ACTION_STOP);
     }
 }
+/* hello-end */
