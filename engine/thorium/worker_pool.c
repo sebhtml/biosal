@@ -355,7 +355,7 @@ void thorium_worker_pool_print_load(struct thorium_worker_pool *self, int type)
     char *buffer;
     char *buffer_for_wake_up_events;
     char *buffer_for_future_timeline;
-    char *buffer_for_traffic_reduction;
+    char *buffer_for_traffic_aggregation;
     char *buffer_for_input_throughput;
     char *buffer_for_output_throughput;
     int allocated;
@@ -402,7 +402,7 @@ void thorium_worker_pool_print_load(struct thorium_worker_pool *self, int type)
     buffer = core_memory_allocate(allocated, MEMORY_WORKER_POOL_KEY);
     buffer_for_wake_up_events = core_memory_allocate(allocated, MEMORY_WORKER_POOL_KEY);
     buffer_for_future_timeline = core_memory_allocate(allocated, MEMORY_WORKER_POOL_KEY);
-    buffer_for_traffic_reduction = core_memory_allocate(allocated, MEMORY_WORKER_POOL_KEY);
+    buffer_for_traffic_aggregation = core_memory_allocate(allocated, MEMORY_WORKER_POOL_KEY);
     buffer_for_input_throughput = core_memory_allocate(allocated, MEMORY_WORKER_POOL_KEY);
     buffer_for_output_throughput= core_memory_allocate(allocated, MEMORY_WORKER_POOL_KEY);
 
@@ -462,8 +462,8 @@ void thorium_worker_pool_print_load(struct thorium_worker_pool *self, int type)
         offset_for_future += sprintf(buffer_for_future_timeline + offset_for_future, " %d",
                         thorium_worker_get_scheduled_actor_count(worker));
 
-        offset_for_traffic_reduction += sprintf(buffer_for_traffic_reduction + offset_for_traffic_reduction,
-                        " %.2f", thorium_worker_get_epoch_traffic_reduction(worker));
+        offset_for_traffic_reduction += sprintf(buffer_for_traffic_aggregation + offset_for_traffic_reduction,
+                        " %d", thorium_worker_get_epoch_degree_of_aggregation(worker));
 
         offset_for_input_throughput += sprintf(buffer_for_input_throughput + offset_for_input_throughput,
                         " %.2f", input_throughput);
@@ -503,15 +503,15 @@ void thorium_worker_pool_print_load(struct thorium_worker_pool *self, int type)
 #endif
 
     if (type == THORIUM_WORKER_POOL_LOAD_EPOCH) {
-        printf("[thorium] node %d TRAFFIC_REDUCTION %d s %s\n",
+        printf("[thorium] node %d DOA %d s%s\n",
                     node_name, elapsed,
-                    buffer_for_traffic_reduction);
+                    buffer_for_traffic_aggregation);
     }
 
     core_memory_free(buffer, MEMORY_WORKER_POOL_KEY);
     core_memory_free(buffer_for_wake_up_events, MEMORY_WORKER_POOL_KEY);
     core_memory_free(buffer_for_future_timeline, MEMORY_WORKER_POOL_KEY);
-    core_memory_free(buffer_for_traffic_reduction, MEMORY_WORKER_POOL_KEY);
+    core_memory_free(buffer_for_traffic_aggregation, MEMORY_WORKER_POOL_KEY);
     core_memory_free(buffer_for_input_throughput, MEMORY_WORKER_POOL_KEY);
     core_memory_free(buffer_for_output_throughput, MEMORY_WORKER_POOL_KEY);
 }

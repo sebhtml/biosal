@@ -2650,13 +2650,13 @@ struct core_memory_pool *thorium_worker_get_memory_pool(struct thorium_worker *s
     return NULL;
 }
 
-float thorium_worker_get_epoch_traffic_reduction(struct thorium_worker *self)
+int thorium_worker_get_epoch_degree_of_aggregation(struct thorium_worker *self)
 {
     int original_message_count;
     int original_message_count_difference;
     int real_message_count;
     int real_message_count_difference;
-    float reduction;
+    int degree_of_aggregation;
 
     original_message_count = thorium_message_multiplexer_get_original_message_count(&self->multiplexer);
     original_message_count_difference = original_message_count - self->counter_last_original_message_count;
@@ -2664,16 +2664,14 @@ float thorium_worker_get_epoch_traffic_reduction(struct thorium_worker *self)
     real_message_count = thorium_message_multiplexer_get_real_message_count(&self->multiplexer);
     real_message_count_difference = real_message_count - self->counter_last_real_message_count;
 
-    reduction = 0.0;
+    degree_of_aggregation = 0;
 
     /*
      * Avoid a SIGFPE signal.
      */
-    if (original_message_count_difference > 0) {
+    if (real_message_count_difference > 0) {
 
-        reduction += original_message_count_difference;
-        reduction -= real_message_count_difference;
-        reduction /= (0.0 + original_message_count_difference);
+        degree_of_aggregation = original_message_count_difference / real_message_count_difference;
     }
 
     /*
@@ -2682,7 +2680,7 @@ float thorium_worker_get_epoch_traffic_reduction(struct thorium_worker *self)
     self->counter_last_original_message_count = original_message_count;
     self->counter_last_real_message_count = real_message_count;
 
-    return reduction;
+    return degree_of_aggregation;
 }
 
 int thorium_worker_has_outbound_traffic_congestion(struct thorium_worker *self)

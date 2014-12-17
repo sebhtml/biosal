@@ -413,6 +413,7 @@ void thorium_transport_print(struct thorium_transport *self)
                     self->transport_interface->name);
 
         printf("[thorium] MPS: Messages Per Second\n");
+        printf("[thorium] DOA: Degree Of Aggregation\n");
         printf("[thorium] Bps: Bytes Per Second\n");
     }
 }

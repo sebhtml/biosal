@@ -341,7 +341,7 @@ int thorium_worker_get_random_number(struct thorium_worker *self);
 int thorium_worker_latency(struct thorium_worker *self);
 struct core_memory_pool *thorium_worker_get_memory_pool(struct thorium_worker *self, int name);
 
-float thorium_worker_get_epoch_traffic_reduction(struct thorium_worker *self);
+int thorium_worker_get_epoch_degree_of_aggregation(struct thorium_worker *self);
 
 int thorium_worker_has_outbound_traffic_congestion(struct thorium_worker *self);
 
