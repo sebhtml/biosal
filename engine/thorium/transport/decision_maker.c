@@ -166,6 +166,9 @@ void thorium_decision_maker_print(struct thorium_decision_maker *self, int curre
     char marker;
 
     size = THORIUM_DECISION_MAKER_ARRAY_SIZE;
+
+    printf("THORIUM_DECISION_MAKER_ARRAY_SIZE %d\n", size);
+
     for (i = THORIUM_TIMEOUT_MINIMUM_VALUE; i <= THORIUM_TIMEOUT_MAXIMUM_VALUE; i += THORIUM_TIMEOUT_STRIDE_VALUE) {
         timeout_i = i;
         throughput_i = thorium_decision_maker_get_throughput(self, timeout_i);
