@@ -15,6 +15,7 @@ Contents:
 
    biosal
    actors
+   example
    actor_api
    message_api
    node_api
