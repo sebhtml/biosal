@@ -19,6 +19,9 @@ int thorium_decision_maker_get_throughput(struct thorium_decision_maker *self,
 void thorium_decision_maker_set_throughput(struct thorium_decision_maker *self,
                 int timeout, int throughput);
 
+int thorium_decision_maker_is_better(struct thorium_decision_maker *self,
+                int value1, int value2);
+
 void thorium_decision_maker_init(struct thorium_decision_maker *self)
 {
     int i;
@@ -79,6 +82,16 @@ int thorium_decision_maker_get_best_timeout(struct thorium_decision_maker *self,
     previous_timeout = current_timeout - THORIUM_TIMEOUT_STRIDE_VALUE;
     next_timeout = current_timeout + THORIUM_TIMEOUT_STRIDE_VALUE;
 
+#if 0
+    if (next_timeout <= THORIUM_TIMEOUT_MAXIMUM_VALUE) {
+        next_throughput = thorium_decision_maker_get_throughput(self, next_timeout);
+
+        if (next_throughput == NO_MPS) {
+            return next_timeout;
+        }
+    }
+#endif
+
     if (previous_timeout < THORIUM_TIMEOUT_MINIMUM_VALUE) {
         /*
          * The timeout can only increase.
@@ -86,7 +99,7 @@ int thorium_decision_maker_get_best_timeout(struct thorium_decision_maker *self,
         next_throughput = thorium_decision_maker_get_throughput(self, next_timeout);
 
         if (next_throughput == NO_MPS
-                        || next_throughput > best_throughput) {
+                        || thorium_decision_maker_is_better(self, next_throughput, best_throughput)) {
             best_timeout = next_timeout;
             best_throughput = next_throughput;
         }
@@ -99,7 +112,7 @@ int thorium_decision_maker_get_best_timeout(struct thorium_decision_maker *self,
         previous_throughput = thorium_decision_maker_get_throughput(self, previous_timeout);
 
         if (previous_throughput == NO_MPS
-                        || previous_throughput > best_throughput) {
+                        || thorium_decision_maker_is_better(self, previous_throughput, best_throughput)) {
             best_timeout = previous_timeout;
             best_throughput = previous_throughput;
         }
@@ -110,6 +123,9 @@ int thorium_decision_maker_get_best_timeout(struct thorium_decision_maker *self,
         previous_throughput = thorium_decision_maker_get_throughput(self, previous_timeout);
         next_throughput = thorium_decision_maker_get_throughput(self, next_timeout);
 
+        /*
+         * Both choice have no MPS data.
+         */
         if (previous_throughput == NO_MPS && next_throughput == NO_MPS) {
 
             if (self->selector == SELECTOR_PREVIOUS) {
@@ -125,7 +141,7 @@ int thorium_decision_maker_get_best_timeout(struct thorium_decision_maker *self,
             /*
              * We have no MPS data for the previous timeout.
              */
-            if (next_throughput > current_throughput) {
+            if (thorium_decision_maker_is_better(self, next_throughput, current_throughput)) {
                 best_timeout = next_timeout;
             } else {
                 best_timeout = previous_timeout;
@@ -136,7 +152,7 @@ int thorium_decision_maker_get_best_timeout(struct thorium_decision_maker *self,
             /*
              * We have no MPS data for the next timeout.
              */
-            if (previous_throughput > current_throughput) {
+            if (thorium_decision_maker_is_better(self, previous_throughput, current_throughput)) {
                 best_timeout = previous_timeout;
             } else {
                 best_timeout = next_timeout;
@@ -146,7 +162,7 @@ int thorium_decision_maker_get_best_timeout(struct thorium_decision_maker *self,
             /*
              * We have MPS data for the previous and the next ones.
              */
-            if (previous_throughput > next_throughput) {
+            if (thorium_decision_maker_is_better(self, previous_throughput, next_throughput)) {
                 best_timeout = previous_timeout;
             } else {
                 best_timeout = next_timeout;
@@ -228,4 +244,18 @@ int thorium_decision_maker_get_throughput(struct thorium_decision_maker *self,
     return self->output_throughputs[index];
 }
 
+int thorium_decision_maker_is_better(struct thorium_decision_maker *self,
+                int value1, int value2)
+{
+    int smaller_value1;
 
+    /*
+     * Decision criterion:
+     *
+     * 90% of value1 is still greater than value2
+     */
+
+    smaller_value1 = (value1 / 10) * 9;
+
+    return smaller_value1 >= value2;
+}
