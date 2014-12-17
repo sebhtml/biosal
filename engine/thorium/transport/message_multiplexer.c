@@ -16,6 +16,8 @@
 #include <core/helpers/set_helper.h>
 
 #include <stdlib.h>
+#include <stdio.h>
+#include <inttypes.h>
 
 #define FORCE_NO 0
 #define FORCE_YES_SIZE 1
@@ -41,11 +43,17 @@
 #define OPTION_DISABLE_MULTIPLEXER "-disable-multiplexer"
 
 /*
+#define MULTIPLEXER_IS_VERBOSE
+*/
+
+/*
  * Internal function for flushing stuff away.
  */
 void thorium_message_multiplexer_flush(struct thorium_message_multiplexer *self, int index, int force);
 
 void thorium_message_multiplexer_print_traffic_reduction(struct thorium_message_multiplexer *self);
+
+void thorium_message_multiplexer_update_timeout(struct thorium_message_multiplexer *self);
 
 void thorium_message_multiplexer_init(struct thorium_message_multiplexer *self,
                 struct thorium_node *node, struct thorium_multiplexer_policy *policy)
@@ -137,6 +145,12 @@ void thorium_message_multiplexer_init(struct thorium_message_multiplexer *self,
     if (core_command_has_argument(argc, argv, OPTION_DISABLE_MULTIPLEXER)) {
         CORE_BITMAP_SET_FLAG(self->flags, FLAG_DISABLED);
     }
+
+    self->last_send_event_count = 0;
+    self->last_time = core_timer_get_nanoseconds(&self->timer);
+    self->last_update_time = time(NULL);
+
+    thorium_decision_maker_init(&self->decision_maker);
 }
 
 void thorium_message_multiplexer_destroy(struct thorium_message_multiplexer *self)
@@ -209,6 +223,8 @@ void thorium_message_multiplexer_destroy(struct thorium_message_multiplexer *sel
     core_queue_destroy(&self->timeline);
 
 #endif
+
+    thorium_decision_maker_destroy(&self->decision_maker);
 }
 
 /*
@@ -267,6 +283,8 @@ int thorium_message_multiplexer_multiplex(struct thorium_message_multiplexer *se
         return 0;
     }
 #endif
+
+    thorium_message_multiplexer_update_timeout(self);
 
     ++self->original_message_count;
 
@@ -948,4 +966,51 @@ int thorium_message_multiplexer_get_original_message_count(struct thorium_messag
 int thorium_message_multiplexer_get_real_message_count(struct thorium_message_multiplexer *self)
 {
     return self->real_message_count;
+}
+
+void thorium_message_multiplexer_update_timeout(struct thorium_message_multiplexer *self)
+{
+    time_t now;
+    uint64_t elapsed;
+    int period;
+    uint64_t throughput;
+    int timeout;
+    uint64_t now_nanoseconds;
+    uint64_t event_count;
+
+    period = 1;
+    now = time(NULL);
+
+    elapsed = now - self->last_update_time;
+
+    if ((int)elapsed < period)
+        return;
+
+    timeout = self->timeout_in_nanoseconds;
+    now_nanoseconds = core_timer_get_nanoseconds(&self->timer);
+
+    elapsed = now_nanoseconds - self->last_time;
+    event_count = thorium_worker_get_event_counter(self->worker,
+                    THORIUM_EVENT_ACTOR_SEND);
+
+    throughput = event_count;
+    throughput -= self->last_send_event_count;
+    throughput *= (1000 * 1000 * 1000);
+    throughput /= elapsed;
+
+#ifdef MULTIPLEXER_IS_VERBOSE
+    printf("event_count %" PRIu64 " last %" PRIu64 " elapsed %" PRIu64 " = %" PRIu64 " MPS\n",
+                    event_count, self->last_send_event_count, elapsed, throughput);
+#endif
+
+    thorium_decision_maker_add_data_point(&self->decision_maker, timeout,
+                    (int)throughput);
+
+#ifdef MULTIPLEXER_IS_VERBOSE
+    thorium_decision_maker_print(&self->decision_maker);
+#endif
+
+    self->last_update_time = now;
+    self->last_time = now_nanoseconds;
+    self->last_send_event_count = event_count;
 }

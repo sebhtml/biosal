@@ -6,6 +6,8 @@ struct thorium_node;
 struct thorium_worker;
 struct thorium_message;
 
+#include "decision_maker.h"
+
 #include <core/structures/vector.h>
 
 #include <core/structures/ordered/red_black_tree.h>
@@ -61,6 +63,7 @@ struct thorium_message;
  * timeout_in_nanoseconds
  */
 struct thorium_message_multiplexer {
+    struct thorium_decision_maker decision_maker;
     struct core_timer timer;
 
     struct core_vector buffers;
@@ -106,6 +109,10 @@ struct thorium_message_multiplexer {
     int real_message_count;
 
     struct thorium_multiplexer_policy *policy;
+
+    uint64_t last_send_event_count;
+    uint64_t last_time;
+    time_t last_update_time;
 };
 
 void thorium_message_multiplexer_init(struct thorium_message_multiplexer *self,
