@@ -103,6 +103,12 @@ struct thorium_message_multiplexer {
      */
     int timeout_in_nanoseconds;
 
+    /*
+     * The maximum number of messages to put in one network
+     * message.
+     */
+    int degree_of_aggregation_limit;
+
     int dynamic_timeout;
 
     int original_message_count;

@@ -27,6 +27,11 @@ void thorium_multiplexer_policy_init(struct thorium_multiplexer_policy *self)
      */
     self->threshold_time_in_nanoseconds = THORIUM_MULTIPLEXER_TIMEOUT;
 
+    /*
+     * -degree_of_aggregation-limit 20
+     */
+    self->degree_of_aggregation_limit = 20;
+
     core_set_init(&self->actions_to_skip, sizeof(int));
     core_set_init(&self->actions_to_multiplex, sizeof(int));
 

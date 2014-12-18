@@ -155,6 +155,8 @@ void thorium_message_multiplexer_init(struct thorium_message_multiplexer *self,
     self->last_update_time = time(NULL);
 
     thorium_decision_maker_init(&self->decision_maker);
+
+    self->degree_of_aggregation_limit = self->policy->degree_of_aggregation_limit;
 }
 
 void thorium_message_multiplexer_destroy(struct thorium_message_multiplexer *self)
@@ -585,6 +587,7 @@ void thorium_message_multiplexer_test(struct thorium_message_multiplexer *self)
     double acceptable_traffic_reduction;
     double traffic_reduction;
 #endif
+    int message_count;
 
     if (CORE_BITMAP_GET_FLAG(self->flags, FLAG_DISABLED)) {
         return;
@@ -670,6 +673,7 @@ void thorium_message_multiplexer_test(struct thorium_message_multiplexer *self)
 
     multiplexed_buffer = core_vector_at(&self->buffers, index);
     buffer_time = thorium_multiplexed_buffer_time(multiplexed_buffer);
+    message_count = multiplexed_buffer->message_count_;
 
     /*
      * Flush only the buffers with a elapsed time that is greater or equal to the
@@ -696,6 +700,7 @@ void thorium_message_multiplexer_test(struct thorium_message_multiplexer *self)
      */
     if (timeout != 0
                     && duration < timeout
+                    && message_count < self->degree_of_aggregation_limit
 #ifdef CHECK_PREDICTED_TRAFFIC_REDUCTION
                    traffic_reduction < acceptable_traffic_reduction
 #endif

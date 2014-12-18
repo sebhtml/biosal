@@ -17,7 +17,7 @@
  * \see http://en.wikipedia.org/wiki/Separation_of_mechanism_and_policy
  */
 struct thorium_multiplexer_policy {
-
+    int degree_of_aggregation_limit;
     int threshold_buffer_size_in_bytes;
     int threshold_time_in_nanoseconds;
     struct core_set actions_to_skip;
