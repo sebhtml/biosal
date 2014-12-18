@@ -2536,8 +2536,19 @@ void thorium_worker_set_siblings(struct thorium_worker *self,
 int thorium_worker_enqueue_outbound_message(struct thorium_worker *self,
                 struct thorium_message *message)
 {
-    return core_queue_enqueue(&self->output_outbound_message_queue,
-                    message);
+    /*
+     * Otherwise, this is a regular outbound message.
+     */
+    if (!core_fast_ring_push_from_producer(self->output_outbound_message_ring_multiple,
+                        message)) {
+
+        /*
+         * Buffer the message locally if the outbound ring is full.
+         */
+        core_queue_enqueue(&self->output_outbound_message_queue, message);
+    }
+
+    return 1;
 }
 
 struct core_memory_pool *thorium_worker_get_outbound_message_memory_pool(struct thorium_worker *self)
