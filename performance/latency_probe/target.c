@@ -50,7 +50,7 @@ static void target_receive(struct thorium_actor *self, struct thorium_message *m
 
     if (action == ACTION_ASK_TO_STOP) {
 
-        printf("target %d received %d ACTION_PING messages\n",
+        thorium_actor_log(self, "target %d received %d ACTION_PING messages\n",
                         name, concrete_self->received);
 
         thorium_actor_send_to_self_empty(self, ACTION_STOP);
