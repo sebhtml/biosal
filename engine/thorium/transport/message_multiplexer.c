@@ -786,8 +786,10 @@ void thorium_message_multiplexer_flush(struct thorium_message_multiplexer *self,
     int maximum_size;
     struct thorium_multiplexed_buffer *multiplexed_buffer;
     int destination_node;
+    /*
     int elapsed;
     int message_count;
+    */
 
     if (CORE_BITMAP_GET_FLAG(self->flags, FLAG_DISABLED)) {
         return;
@@ -813,7 +815,7 @@ void thorium_message_multiplexer_flush(struct thorium_message_multiplexer *self,
     /*
      * The buffer was still in the timeline, but it was flushed elsewhere.
      */
-    if (current_size == 0)
+    if (current_size == 0) {
         return;
 
         /*
